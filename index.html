@@ -188,25 +188,6 @@
     45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
     70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
   }
-  /* zwevend labeltje met de naam van het pasje (boven de avatar) */
-  .move-label {
-    position: absolute; left: 50%; top: 6px; transform: translateX(-50%); z-index: 8; pointer-events: none;
-    font-size: 19px; font-weight: 600; color: #fff; opacity: 0;
-    text-shadow: 0 2px 6px rgba(0,0,0,.6); white-space: nowrap;
-  }
-  .move-label.go { animation: moveLabel 1.1s ease forwards; }
-  @keyframes moveLabel {
-    0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(.6); }
-    30% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1.1); }
-    70% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-26px) scale(1); }
-  }
-  /* teller van danspasjes in de show */
-  .dance-count {
-    margin-top: 8px; align-self: center;
-    background: rgba(0,0,0,.4); border-radius: 999px; padding: 5px 14px;
-    font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap;
-  }
 
   /* ---- Home ---- */
   .screen-header {
@@ -278,7 +259,6 @@
   }
   .fan-fill.full { animation: fanPulse .5s ease infinite alternate; }
   @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.45); } }
-  .fan-pct { font-size: 12px; font-weight: 600; opacity: .9; }
   .show-stage { width: 188px; height: 218px; }
 
   .math-panel { display: flex; flex-direction: column; align-items: center; }
@@ -564,14 +544,11 @@
           <div class="fan-col">
             <div class="fan-icon">🔥</div>
             <div class="fan-track"><div class="fan-fill" id="fanmeter-fill"></div></div>
-            <div class="fan-pct" id="fan-pct">0%</div>
           </div>
           <div class="stage show-stage" id="show-stage">
             <div class="avatar-holder idle" id="game-avatar-inner"></div>
-            <div class="move-label" id="move-label"></div>
           </div>
         </div>
-        <div class="dance-count" id="dance-count">💃 0 pasjes</div>
       </div>
       <div class="math-panel">
         <div class="question-card" id="question-card"></div>
@@ -1169,7 +1146,6 @@ function startLevel(lvl) {
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
   applyStage($('show-stage'), p);
-  $('dance-count').textContent = '💃 0 pasjes';
   updateFan();
   show('screen-game');
   renderQuestion();
@@ -1178,7 +1154,6 @@ function updateFan() {
   const fill = $('fanmeter-fill');
   fill.style.height = G.fan + '%';
   fill.classList.toggle('full', G.fan >= 100);
-  $('fan-pct').textContent = Math.round(G.fan) + '%';
 }
 
 function quitGame() {
@@ -1383,13 +1358,10 @@ function dance(elId) {
   const el = $(elId);
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
-  if (G) { G.moveIdx++; G.dances++; $('dance-count').textContent = `💃 ${G.dances} ${G.dances === 1 ? 'pasje' : 'pasjes'}`; }
+  if (G) { G.moveIdx++; G.dances++; }   // pasjes tellen door voor het eindscherm
   el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
   void el.offsetWidth;
   el.classList.add('dancing', move.cls);
-  // toon de naam van het pasje even boven de avatar
-  const lbl = $('move-label');
-  if (lbl) { lbl.textContent = move.label; lbl.classList.remove('go'); void lbl.offsetWidth; lbl.classList.add('go'); }
   setTimeout(() => { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }, 950);
 }
 // Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
