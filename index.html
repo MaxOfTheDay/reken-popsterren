@@ -1160,7 +1160,8 @@ function startLevel(lvl) {
   // Vragen worden nu per stuk gebouwd (zodat zwakke sommen kunnen terugkomen); vooraf enkel
   // de gouden-vraag-index kiezen: hoogstens één per optreden, ± elke 2 shows, nooit de eerste.
   const goldIdx = (s.perLevel > 1 && Math.random() < 0.5) ? rnd(1, s.perLevel - 1) : -1;
-  // Fanmeter vult over de hele show, zodat een sterke show één encore als climax oplevert.
+  // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
+  // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0 };
   const city = cityFor(lvl);
@@ -1291,11 +1292,18 @@ function submitAnswer(val, btnEl) {
     if (q.gold) { gain *= 3; p.goldHits++; }     // gouden vraag: 3× zoveel
     G.earned += gain;
     p.diamonds += gain;
-    // fanmeter vult geleidelijk over de show; vol = encore-bonus (climax van het optreden)
-    G.fan += G.fanStep;
+    // Fanmeter vult over de show; hoe béter je speelt, hoe sneller. Vol = encore (climax).
+    let fanMul = 1;
+    if (!firstTry) fanMul = 0.5;               // een herkansing laat het publiek maar half zo hard juichen
+    else {
+      if (G.spot > 0) fanMul += 0.5;           // snel, binnen de spotlight
+      if (streakBonus) fanMul += 0.5;          // op een streak-mijlpaal (3 op een rij)
+      if (q.gold) fanMul += 1;                 // gouden vraag laat de zaal helemaal los
+    }
+    G.fan += G.fanStep * fanMul;
     let encore = false;
     if (G.fan >= 100) {
-      G.fan = 0; encore = true;
+      G.fan -= 100; encore = true;             // overschot blijft staan voor een mogelijke tweede encore
       p.diamonds += 5; G.earned += 5; p.encores++;
     }
     updateFan();
@@ -1444,6 +1452,10 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   const dances = G.dances;
+  // Overgebleven fanmeter telt altijd mee: +1 💎 per volle 25% publieksenthousiasme,
+  // zodat inspanning ook loont als de encore (100%) net niet gehaald is.
+  const fanBonus = Math.floor(G.fan / 25);
+  if (fanBonus > 0) p.diamonds += fanBonus;
   $('end-avatar').innerHTML = avatarSVG(p, 150);
   applyStage($('end-stage'), p);
   if (success) {
@@ -1460,7 +1472,8 @@ function endLevel(success) {
     $('end-stars').innerHTML = '⭐'.repeat(stars) + `<span class="dim">${'⭐'.repeat(3 - stars)}</span>`;
     $('end-text').innerHTML = `Het publiek juicht en danst mee! 👏🎶<div style="margin-top:6px;font-size:17px">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`
       + (trofees.length ? `<div style="margin-top:8px;color:#ffd740;font-weight:bold">🏆 Nieuwe trofee: ${trofees.map(t => t.emoji + ' ' + t.name).join(', ')}!</div>` : '');
-    $('end-earn').textContent = `+${G.earned} 💎 verdiend  +${bonus} 💎 bonus!`;
+    $('end-earn').textContent = `+${G.earned} 💎 verdiend  +${bonus} 💎 sterren-bonus`
+      + (fanBonus > 0 ? `  +${fanBonus} 💎 publiek!` : '');
     $('btn-end-next').textContent = '🎤 Volgend optreden';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl + 1 <= p.level ? lvl + 1 : p.level); };
     sndWin();
@@ -1471,7 +1484,8 @@ function endLevel(success) {
     $('end-title').textContent = '🎭 Bijna!';
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Drie valse noten... maar oefening baart kunst! Probeer nog eens, je kan het!';
-    $('end-earn').textContent = G.earned > 0 ? `Je hield wel ${G.earned} 💎!` : '';
+    const kept = G.earned + fanBonus;
+    $('end-earn').textContent = kept > 0 ? `Je hield wel ${kept} 💎!` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
   }
