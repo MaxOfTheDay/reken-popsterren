@@ -114,6 +114,15 @@
     to   { filter: hue-rotate(120deg); opacity: 1; }
   }
   .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,.3); }
+  .stage.tappable { cursor: pointer; }
+  .stage.tappable:active { transform: scale(.98); }
+  .tap-hint {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3;
+    font-size: 14px; font-weight: 600; color: #fff; background: rgba(0,0,0,.35);
+    padding: 3px 12px; border-radius: 999px; pointer-events: none;
+    animation: hintPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes hintPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
   .avatar-holder { line-height: 0; }
   .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
   @keyframes sway {
@@ -201,6 +210,13 @@
   .lvl-btn.next { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; animation: pulseBtn 1.2s ease-in-out infinite; }
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
   .lvl-btn .stars { position: absolute; bottom: 3px; left: 0; right: 0; font-size: 12px; letter-spacing: -1px; }
+  .home-summary {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 2px 0 12px;
+  }
+  .home-summary span {
+    background: rgba(0,0,0,.28); border-radius: 999px; padding: 5px 13px;
+    font-size: 15px; font-weight: 600;
+  }
 
   /* ---- Spel ---- */
   #screen-game { padding: 8px; justify-content: flex-start; }
@@ -214,8 +230,8 @@
 
   /* arena: linkerpaneel = de show (avatar + fanmeter), rechts = het rekenen (focus) */
   .game-arena {
-    display: flex; gap: 22px; align-items: center; justify-content: center;
-    width: 100%; max-width: 860px; margin-top: 6px; flex-wrap: wrap;
+    display: flex; gap: 22px; align-items: center; align-content: center; justify-content: center;
+    width: 100%; max-width: 860px; margin-top: 6px; flex-wrap: wrap; flex: 1 1 auto;
   }
   .show-panel { display: flex; flex-direction: column; align-items: center; }
   .show-inner { display: flex; align-items: flex-end; gap: 12px; }
@@ -452,8 +468,10 @@
       <div style="font-size:26px;font-weight:bold" id="home-name"></div>
       <div class="diamond-badge">💎 <span id="home-diamonds">0</span></div>
     </div>
-    <div class="stage" id="home-stage" style="width:min(92vw,340px);height:300px;">
+    <div class="home-summary" id="home-summary"></div>
+    <div class="stage tappable" id="home-stage" style="width:min(92vw,340px);height:300px;" onclick="tapDance('home-avatar')">
       <div class="avatar-holder idle" id="home-avatar"></div>
+      <div class="tap-hint">👆 Tik op je ster!</div>
     </div>
     <div style="display:flex;gap:14px;margin-top:16px;flex-wrap:wrap;justify-content:center">
       <button class="btn big" id="btn-play">🎤 Optreden <span id="next-lvl-num"></span></button>
@@ -512,7 +530,7 @@
   <div class="screen" id="screen-end">
     <div class="result-card">
       <h1 class="title" id="end-title"></h1>
-      <div class="stage" id="end-stage" style="width:180px;height:200px;margin:6px auto 2px;">
+      <div class="stage tappable" id="end-stage" style="width:180px;height:200px;margin:6px auto 2px;" onclick="tapDance('end-avatar')">
         <div class="avatar-holder idle" id="end-avatar"></div>
       </div>
       <div class="result-stars" id="end-stars"></div>
@@ -534,7 +552,7 @@
     </div>
     <div class="shop-wrap">
       <div class="shop-left">
-        <div class="stage" id="shop-stage" style="width:210px;height:250px;">
+        <div class="stage tappable" id="shop-stage" style="width:210px;height:250px;" onclick="tapDance('shop-avatar')">
           <div class="avatar-holder idle" id="shop-avatar"></div>
         </div>
         <div style="font-size:15px;opacity:.85;text-align:center">Verdien 💎 door<br>optredens te spelen!</div>
@@ -751,6 +769,7 @@ function sndWin() {
   [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, 0.18, i * 0.14));
 }
 function sndStreak() { beep(880, 0.1); beep(1109, 0.1, 0.09); beep(1319, 0.1, 0.18); beep(1760, 0.25, 0.27); }
+function sndTap() { const n = pick([784, 880, 988, 1047, 1175]); beep(n, 0.12, 0, 'triangle', 0.12); }
 function toggleSound() {
   db.sound = !db.sound; save();
   $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
@@ -878,6 +897,9 @@ function goHome() {
   $('home-diamonds').textContent = p.diamonds;
   $('home-avatar').innerHTML = avatarSVG(p, 200);
   applyStage($('home-stage'), p);
+  const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
+  $('home-summary').innerHTML =
+    `<span>⭐ ${totalStars} sterren</span><span>🏆 ${p.trophies.length} trofeeën</span><span>🎤 Show ${p.level}</span>`;
   const nextCity = cityFor(p.level);
   $('next-lvl-num').textContent = 'in ' + nextCity.name + ' ' + nextCity.flag;
   $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
@@ -1023,7 +1045,7 @@ function renderQuestion() {
     d.className = 'qdot' + (i < G.idx ? ' done' : i === G.idx ? ' now' : '');
     prog.appendChild(d);
   });
-  $('notes-left').textContent = '🎵'.repeat(3 - G.errors) + '💥'.repeat(G.errors);
+  $('notes-left').textContent = livesText();
   drawQuestion();
   // antwoorden
   const area = $('answer-area');
@@ -1131,10 +1153,15 @@ function submitAnswer(val, btnEl) {
     $('question-card').classList.add('wobble');
     setTimeout(() => $('question-card').classList.remove('wobble'), 700);
     slipNote();
-    $('notes-left').textContent = '🎵'.repeat(Math.max(0, 3 - G.errors)) + '💫'.repeat(Math.min(3, G.errors));
+    $('notes-left').textContent = livesText();
     showToast(`Bijna! Het juiste antwoord is: ${q.text} = ${q.ans}`);
     setTimeout(nextStep, 2100);
   }
+}
+// levens: 3 hartjes, verloren kansen worden een gebroken hartje
+function livesText() {
+  const left = Math.max(0, 3 - G.errors);
+  return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
 function slipNote() {
   const el = $('slip-note');
@@ -1165,6 +1192,30 @@ function dance(elId) {
   const lbl = $('move-label');
   if (lbl) { lbl.textContent = move.label; lbl.classList.remove('go'); void lbl.offsetWidth; lbl.classList.add('go'); }
   setTimeout(() => { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }, 950);
+}
+// Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
+function tapDance(elId) {
+  const el = $(elId);
+  if (!el || el.classList.contains('dancing')) return;
+  const move = pick(MOVES);
+  el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
+  void el.offsetWidth;
+  el.classList.add('dancing', move.cls);
+  sndTap();
+  sparkle(el);
+  setTimeout(() => { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }, 950);
+}
+// klein sterretje dat oppopt bij een tik-dans
+function sparkle(el) {
+  const r = el.getBoundingClientRect();
+  const s = document.createElement('div');
+  s.className = 'confetti-bit';
+  s.textContent = pick(['✨', '⭐', '💖', '🎵', '💫']);
+  s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
+  s.style.top = (r.top + 10) + 'px';
+  s.style.animationDuration = '1.2s';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 1400);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 function finaleDance(elId, count) {
