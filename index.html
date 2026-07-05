@@ -335,9 +335,10 @@
     100% { opacity: 0; transform: translate(-50%,-70%) scale(1); }
   }
   .toast {
-    position: fixed; left: 50%; bottom: 18%; transform: translateX(-50%);
-    background: rgba(0,0,0,.75); color: #fff; font-size: 22px; padding: 12px 22px;
+    position: fixed; left: 50%; top: 12%; transform: translateX(-50%);
+    background: rgba(0,0,0,.8); color: #fff; font-size: 20px; padding: 11px 20px;
     border-radius: 16px; z-index: 60; display: none;
+    max-width: min(92vw, 520px); text-align: center; pointer-events: none;
   }
   .shake { animation: shake .4s; }
   @keyframes shake {
@@ -484,6 +485,19 @@
     font-family: inherit; font-size: 18px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ab47bc; width: 160px;
   }
   .danger-btn { background: #ef5350; color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-family: inherit; font-weight: bold; cursor: pointer; }
+
+  /* ---- Ouder-statistiek ---- */
+  .stats-box { background: #f5eefc; border-radius: 14px; padding: 12px 14px; margin: 4px 0 6px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .stat-tile { background: #fff; border: 1px solid #e5d6f2; border-radius: 12px; padding: 8px 6px; text-align: center; }
+  .stat-tile .num { font-size: 22px; font-weight: 700; color: #7b1fa2; line-height: 1.1; }
+  .stat-tile .cap { font-size: 12px; color: #666; margin-top: 2px; }
+  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: #4a148c; margin: 10px 2px 3px; font-weight: 600; }
+  .stat-bar { height: 12px; background: #e5d6f2; border-radius: 999px; overflow: hidden; }
+  .stat-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ab47bc, #ff80ab); }
+  .practice-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .practice-chip { background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; border-radius: 999px; padding: 4px 11px; font-weight: 700; font-size: 15px; }
+  .stats-empty { font-size: 14px; color: #2e7d32; font-weight: 600; margin-top: 4px; }
 
   /* ---- Modal (oudervraag) ---- */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -794,7 +808,8 @@ function defaultProfile(name, dress) {
     settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
     trophies: [], goldHits: 0, encores: 0,
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
-    weak: {}    // zwakke sommen: "7 × 8" -> { ans, op, w } om gericht te herhalen
+    weak: {},   // zwakke sommen: "7 × 8" -> { ans, op, w } om gericht te herhalen
+    stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
   };
 }
 // Zorgt dat oudere opgeslagen profielen de nieuwe velden krijgen.
@@ -804,6 +819,7 @@ function migrate(p) {
   if (p.encores == null) p.encores = 0;
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
+  if (!p.stats) p.stats = { correct: 0, wrong: 0 };
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
 }
 // Werkt de vaardigheidsinschatting bij na elk antwoord (exponentieel voortschrijdend gemiddelde).
@@ -1166,6 +1182,7 @@ function updateFan() {
 
 function quitGame() {
   stopSpot();
+  hideToast();
   G = null;
   goHome();
 }
@@ -1264,6 +1281,7 @@ function submitAnswer(val, btnEl) {
     stopSpot();
     const firstTry = !G.retried;                 // in één keer goed?
     updatePerf(p, true, firstTry && G.spot > 0);
+    p.stats.correct++;
     if (firstTry) decWeak(p, q);                 // enkel een directe treffer telt als "beheerst"
     let gain = 2;
     if (firstTry && G.spot > 0) gain += 1;       // spotlight-bonus enkel bij directe treffer
@@ -1298,6 +1316,7 @@ function submitAnswer(val, btnEl) {
   }
   // ---- fout ---- (zachte, vriendelijke animatie)
   updatePerf(p, false, false);
+  p.stats.wrong++;
   incWeak(p, q);                                  // deze som vaker laten terugkomen
   G.streak = 0;
   sndWrong();
@@ -1321,6 +1340,11 @@ function submitAnswer(val, btnEl) {
   G.errors++;
   save();
   if (btnEl) btnEl.classList.add('bad');
+  // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
+  if (G.mode === 'kies') {
+    const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
+    if (cb) cb.classList.add('good');
+  }
   $('notes-left').textContent = livesText();
   showToast(`Het juiste antwoord is: ${q.text} = ${q.ans}`);
   setTimeout(nextStep, 2100);
@@ -1601,6 +1625,37 @@ function closeSettings() {
   save();
   goProfiles();
 }
+// Ouder-overzicht: leesbare voortgang + concrete lijst met sommen om te oefenen.
+function statsHtml(p) {
+  const shows = playedCount(p);
+  const stars = totalStarCount(p);
+  const perfect = perfectCount(p);
+  const answered = p.stats.correct + p.stats.wrong;
+  const acc = answered ? Math.round(100 * p.stats.correct / answered) : 0;
+  const skill = Math.round(p.perf * 100);
+  const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8).map(e => e[0]);
+  const practice = weak.length
+    ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
+    : `<div class="stats-empty">Geen moeilijke sommen op dit moment — goed bezig! 🎉</div>`;
+  return `
+    <div class="set-row"><span class="lbl">📊 Statistieken van ${p.name}</span>
+      <div class="stats-box">
+        <div class="stats-grid">
+          <div class="stat-tile"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
+          <div class="stat-tile"><div class="num">${answered}</div><div class="cap">sommen gemaakt</div></div>
+          <div class="stat-tile"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
+          <div class="stat-tile"><div class="num">${stars}</div><div class="cap">sterren</div></div>
+          <div class="stat-tile"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
+          <div class="stat-tile"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
+        </div>
+        <div class="stat-line"><span>Niveau-inschatting</span><span>${skill}%</span></div>
+        <div class="stat-bar"><div style="width:${skill}%"></div></div>
+        <div class="stat-line"><span>Sommen om te oefenen</span><span></span></div>
+        ${practice}
+      </div>
+    </div>`;
+}
+
 function renderSettings() {
   const tabs = $('settings-tabs');
   tabs.innerHTML = '';
@@ -1618,6 +1673,7 @@ function renderSettings() {
   const opDefs = [['+', 'Plus (+)'], ['-', 'Min (−)'], ['x', 'Maal (×)'], [':', 'Delen (:)']];
   card.innerHTML = `
     <h3>Instellingen voor dit profiel</h3>
+    ${statsHtml(p)}
     <div class="set-row"><span class="lbl">Naam</span>
       <input type="text" id="set-name" value="${p.name}" maxlength="12"></div>
     <div class="set-row"><span class="lbl">Bewerkingen</span>
@@ -1640,8 +1696,8 @@ function renderSettings() {
         `<button class="chip ${s.perLevel === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
     <div class="set-row"><span class="lbl">Back-up (alle profielen)</span>
       <div class="chip-row">
-        <button class="btn small green" id="set-export">📥 Opslaan als bestand</button>
-        <button class="btn small purple" id="set-import">📤 Laden uit bestand</button>
+        <button class="btn small green" id="set-export">💾 Opslaan als bestand</button>
+        <button class="btn small purple" id="set-import">📂 Laden uit bestand</button>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
       <div style="font-size:13px;opacity:.75;margin-top:6px;color:#555">Bewaar diamanten, trofeeën en spulletjes veilig, of zet ze over naar een ander toestel.</div>
