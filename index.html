@@ -370,7 +370,6 @@
   .fanmeter-fill { height: 100%; width: 0%; border-radius: 999px;
     background: linear-gradient(90deg, #ff80ab, #ff4081, #f50057); transition: width .5s ease; }
   .fanmeter-fill.full { animation: fanPulse .5s ease infinite alternate; }
-  @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.4); } }
 
   /* ---- Gouden vraag ---- */
   .question-card.golden {
@@ -633,24 +632,12 @@
 
 <div class="corner-btns" id="corner-btns">
   <button class="icon-btn" id="btn-sound" onclick="toggleSound()">🔊</button>
-  <button class="icon-btn" onclick="askParentGate()">⚙️</button>
+  <button class="icon-btn" onclick="openSettings()">⚙️</button>
 </div>
 
 <div class="praise" id="praise"></div>
 <div class="slip-note" id="slip-note">🎵</div>
 <div class="toast" id="toast"></div>
-
-<div class="modal-bg" id="gate-bg">
-  <div class="modal" id="gate-modal">
-    <h3>Vraag voor mama of papa 😉</h3>
-    <div style="font-size:26px;font-weight:bold" id="gate-q"></div>
-    <input id="gate-input" type="number" inputmode="numeric">
-    <div style="display:flex;gap:10px;justify-content:center">
-      <button class="btn small" onclick="checkGate()">OK</button>
-      <button class="btn small ghost" style="color:#7b1fa2" onclick="closeGate()">Annuleer</button>
-    </div>
-  </div>
-</div>
 
 <script>
 "use strict";
@@ -805,7 +792,8 @@ function defaultProfile(name, dress) {
     owned: ['hair_blond', 'dress_roze', 'dress_paars', 'stage_disco'],
     equipped: { hair: 'hair_blond', dress: dress, mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
-    trophies: [], goldHits: 0, encores: 0
+    trophies: [], goldHits: 0, encores: 0,
+    perf: 0.5   // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
   };
 }
 // Zorgt dat oudere opgeslagen profielen de nieuwe velden krijgen.
@@ -813,7 +801,14 @@ function migrate(p) {
   if (!p.trophies) p.trophies = [];
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  if (p.perf == null) p.perf = 0.5;
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
+}
+// Werkt de vaardigheidsinschatting bij na elk antwoord (exponentieel voortschrijdend gemiddelde).
+// Goed = omhoog (extra beloond bij snel binnen de spotlight), fout = omlaag.
+function updatePerf(p, correct, fast) {
+  const target = correct ? (fast ? 1 : 0.85) : 0;
+  p.perf = Math.max(0, Math.min(1, p.perf * 0.8 + target * 0.2));
 }
 let db;
 function load() {
@@ -929,7 +924,6 @@ function applyStage(el, p) {
   const st = item(p.equipped.stage);
   el.style.background = st.bg;
   el.querySelectorAll('.deco').forEach(d => d.remove());
-  const spots = [['8px', '8px'], ['', '8px', '8px'], ['8px', '', '', '8px']];
   st.deco.forEach((emoji, i) => {
     const d = document.createElement('div');
     d.className = 'deco';
@@ -1040,10 +1034,13 @@ function openTrophies() {
 }
 
 /* ================= Vragen maken ================= */
-function genQuestion(s, lvl) {
+function genQuestion(s, lvl, perf) {
   const ops = s.ops.length ? s.ops : ['+'];
   const op = pick(ops);
-  const t = Math.min(1, 0.35 + lvl * 0.07);           // moeilijker per level
+  // Moeilijkheid = basis per level + bijsturing op vaardigheid (perf 0..1 → ±0.25).
+  // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
+  const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
+  const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
   const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, ans, text;
@@ -1058,11 +1055,12 @@ function genQuestion(s, lvl) {
   } else if (op === 'x') {
     b = pick(tables);
     const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
-    a = rnd(1, maxA);
+    a = rnd(1, Math.max(1, Math.round(maxA * t)));
     ans = a * b; text = `${a} × ${b}`;
   } else { // ':'
     b = pick(tables);
-    const q = rnd(1, Math.max(1, Math.min(10, Math.floor(s.max / b))));
+    const maxQ = Math.max(1, Math.min(10, Math.floor(s.max / b)));
+    const q = rnd(1, Math.max(1, Math.round(maxQ * t)));
     a = q * b; ans = q; text = `${a} : ${b}`;
   }
   return { text, ans };
@@ -1095,7 +1093,7 @@ function startLevel(lvl) {
   const p = P();
   const s = p.settings;
   const qs = [];
-  for (let i = 0; i < s.perLevel; i++) qs.push(genQuestion(s, lvl));
+  for (let i = 0; i < s.perLevel; i++) qs.push(genQuestion(s, lvl, p.perf));
   // Gouden vraag: hoogstens één per optreden, en niet elke keer (± elke 2 shows) — houdt het speciaal.
   if (s.perLevel > 1 && Math.random() < 0.5) qs[rnd(1, s.perLevel - 1)].gold = true;   // nooit de eerste vraag
   // Fanmeter vult over de hele show, zodat een sterke show één encore als climax oplevert.
@@ -1209,6 +1207,7 @@ function submitAnswer(val, btnEl) {
   stopSpot();
   if (val === q.ans) {
     // ---- juist ----
+    updatePerf(p, true, G.spot > 0);
     let gain = 2;
     if (G.spot > 0) gain += 1;               // spotlight-bonus
     G.streak++;
@@ -1239,6 +1238,8 @@ function submitAnswer(val, btnEl) {
     setTimeout(nextStep, encore || q.gold ? 1400 : 1100);
   } else {
     // ---- fout ---- (zachte, vriendelijke animatie)
+    updatePerf(p, false, false);
+    save();
     G.errors++;
     G.streak = 0;
     sndWrong();
@@ -1515,56 +1516,7 @@ function unequipShopItem(id) {
   }
 }
 
-function shopClick(it) {
-  const p = P();
-  const owned = p.owned.includes(it.id);
-  if (!owned) {
-    if (p.diamonds < it.price) {
-      sndWrong();
-      showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
-      setTimeout(hideToast, 1800);
-      return;
-    }
-    p.diamonds -= it.price;
-    p.owned.push(it.id);
-    p.equipped[it.cat] = it.id;
-    sndCoin();
-    confetti(12);
-    const trofees = checkTrophies(p);
-    if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
-  } else {
-    // aan/uit of wisselen
-    if (['mic', 'instrument', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) p.equipped[it.cat] = null;
-    else p.equipped[it.cat] = it.id;
-    sndClick();
-  }
-  save();
-  renderShop();
-}
-
-/* ================= Oudervraag + instellingen ================= */
-let gateAns = 0;
-function askParentGate() {
-  const a = rnd(6, 9), b = rnd(6, 9);
-  gateAns = a * b;
-  $('gate-q').textContent = `${a} × ${b} = ?`;
-  $('gate-input').value = '';
-  $('gate-bg').classList.add('open');
-  setTimeout(() => $('gate-input').focus(), 100);
-}
-function closeGate() { $('gate-bg').classList.remove('open'); }
-function checkGate() {
-  if (parseInt($('gate-input').value, 10) === gateAns) {
-    closeGate();
-    openSettings();
-  } else {
-    $('gate-modal').classList.add('shake');
-    setTimeout(() => $('gate-modal').classList.remove('shake'), 450);
-    askParentGate();
-  }
-}
-$('gate-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkGate(); });
-
+/* ================= Instellingen ================= */
 let setKey = 'p1';
 function openSettings() {
   setKey = cur || 'p1';
@@ -1612,6 +1564,14 @@ function renderSettings() {
     <div class="set-row"><span class="lbl">Vragen per optreden</span>
       <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v =>
         `<button class="chip ${s.perLevel === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+    <div class="set-row"><span class="lbl">Back-up (alle profielen)</span>
+      <div class="chip-row">
+        <button class="btn small green" id="set-export">📥 Opslaan als bestand</button>
+        <button class="btn small purple" id="set-import">📤 Laden uit bestand</button>
+      </div>
+      <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
+      <div style="font-size:13px;opacity:.75;margin-top:6px;color:#555">Bewaar diamanten, trofeeën en spulletjes veilig, of zet ze over naar een ander toestel.</div>
+    </div>
     <div class="set-row">
       <button class="danger-btn" id="set-reset">Voortgang van ${p.name} wissen</button>
     </div>`;
@@ -1640,6 +1600,50 @@ function renderSettings() {
       save(); renderSettings();
     }
   };
+  $('set-export').onclick = exportData;
+  $('set-import').onclick = () => $('set-import-file').click();
+  $('set-import-file').onchange = e => {
+    if (e.target.files[0]) importData(e.target.files[0]);
+    e.target.value = '';   // zelfde bestand opnieuw kunnen kiezen
+  };
+}
+
+// Alle profielen + instellingen als JSON-bestand downloaden.
+function exportData() {
+  const data = JSON.stringify(db, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `reken-popsterren-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Een eerder opgeslagen back-upbestand inlezen en terugzetten.
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || typeof data !== 'object' || !data.profiles || !data.profiles.p1 || !data.profiles.p2) {
+        throw new Error('ongeldig back-upbestand');
+      }
+      db = data;
+      if (typeof db.sound !== 'boolean') db.sound = true;
+      Object.values(db.profiles).forEach(migrate);
+      save();
+      alert('Back-up geladen! 🎉');
+      renderSettings();
+    } catch (e) {
+      alert('Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
+    }
+  };
+  reader.onerror = () => alert('Kon dit bestand niet lezen.');
+  reader.readAsText(file);
 }
 
 /* ================= Start ================= */
