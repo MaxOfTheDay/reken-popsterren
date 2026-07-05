@@ -97,10 +97,13 @@
 
   /* ---- Podium / avatar ---- */
   .stage {
-    position: relative; border-radius: 24px; overflow: hidden;
+    position: relative; border-radius: 24px; overflow: hidden; flex-shrink: 0;
     border: 4px solid rgba(255,255,255,.5); box-shadow: 0 10px 24px rgba(0,0,0,.35);
     display: flex; align-items: flex-end; justify-content: center;
   }
+  /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
+  .stage .avatar-holder { height: 92%; }
+  .stage .avatar-holder svg { height: 100%; width: auto; display: block; }
   .stage::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background:
@@ -231,6 +234,7 @@
     background: rgba(0,0,0,.28); border-radius: 999px; padding: 5px 13px;
     font-size: 15px; font-weight: 600;
   }
+  @media (max-width: 500px) { #home-stage { height: 250px !important; } }
 
   /* ---- Spel ---- */
   #screen-game { padding: 8px; justify-content: flex-start; }
@@ -264,8 +268,6 @@
   @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.45); } }
   .fan-pct { font-size: 12px; font-weight: 600; opacity: .9; }
   .show-stage { width: 188px; height: 218px; }
-  .show-stage .avatar-holder { height: 96%; }
-  .show-stage .avatar-holder svg { height: 100%; width: auto; display: block; }
 
   .math-panel { display: flex; flex-direction: column; align-items: center; }
   .question-card {
@@ -675,6 +677,13 @@ const ITEMS = [
   { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
   { id: 'mic_goud',   cat: 'mic', name: 'Gouden micro',   price: 60, color: '#ffd54f' },
   { id: 'mic_roze',   cat: 'mic', name: 'Roze glittermicro', price: 90, color: '#ff80ab' },
+  // Instrumenten
+  { id: 'instr_gitaar',  cat: 'instrument', name: 'Gitaar',    price: 40, emoji: '🎸' },
+  { id: 'instr_piano',   cat: 'instrument', name: 'Keyboard',  price: 45, emoji: '🎹' },
+  { id: 'instr_drums',   cat: 'instrument', name: 'Drumstel',  price: 55, emoji: '🥁' },
+  { id: 'instr_viool',   cat: 'instrument', name: 'Viool',     price: 60, emoji: '🎻' },
+  { id: 'instr_sax',     cat: 'instrument', name: 'Saxofoon',  price: 70, emoji: '🎷' },
+  { id: 'instr_trompet', cat: 'instrument', name: 'Trompet',   price: 80, emoji: '🎺' },
   // Extra's
   { id: 'acc_strik',    cat: 'acc', name: 'Grote strik',    price: 25, emoji: '🎀' },
   { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
@@ -699,10 +708,13 @@ const CATS = [
   { id: 'hair',  name: '💇 Haar' },
   { id: 'dress', name: '👗 Jurken' },
   { id: 'mic',   name: '🎤 Micro' },
+  { id: 'instrument', name: '🎸 Muziek' },
   { id: 'acc',   name: '🎀 Extra' },
   { id: 'pet',   name: '🐾 Dieren' },
   { id: 'stage', name: '🎪 Podium' },
 ];
+const INSTR_TOTAL = ITEMS.filter(i => i.cat === 'instrument').length;
+function instrCount(p) { return p.owned.filter(id => { const it = item(id); return it && it.cat === 'instrument'; }).length; }
 
 /* ================= Wereldtournee ================= */
 // Speelse stad-emoji i.p.v. landvlaggen: renderen op elk toestel (ook Windows) en
@@ -747,6 +759,8 @@ const TROPHIES = [
   { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: 'Heb 250 diamanten',              has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
   { id: 'shopper',    emoji: '🛍️', name: 'Shopper',         desc: 'Koop 5 spulletjes',              has: p => boughtCount(p) >= 5, progress: p => trophyProgress(boughtCount(p), 5, 'spulletjes gekocht') },
   { id: 'collector',  emoji: '🎁', name: 'Verzamelaar',     desc: 'Koop 12 spulletjes',             has: p => boughtCount(p) >= 12, progress: p => trophyProgress(boughtCount(p), 12, 'spulletjes gekocht') },
+  { id: 'muzikant',   emoji: '🎶', name: 'Muzikant',        desc: 'Koop 3 instrumenten',            has: p => instrCount(p) >= 3, progress: p => trophyProgress(instrCount(p), 3, 'instrumenten') },
+  { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Verzamel alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
@@ -777,7 +791,7 @@ function defaultProfile(name, dress) {
     level: 1,
     stars: {},
     owned: ['hair_blond', 'dress_roze', 'dress_paars', 'stage_disco'],
-    equipped: { hair: 'hair_blond', dress: dress, mic: null, acc: null, pet: null, stage: 'stage_disco' },
+    equipped: { hair: 'hair_blond', dress: dress, mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
     trophies: [], goldHits: 0, encores: 0
   };
@@ -787,6 +801,7 @@ function migrate(p) {
   if (!p.trophies) p.trophies = [];
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  if (!('instrument' in p.equipped)) p.equipped.instrument = null;
 }
 let db;
 function load() {
@@ -841,6 +856,7 @@ function avatarSVG(p, width) {
   const mic = eq.mic ? item(eq.mic) : null;
   const acc = eq.acc ? item(eq.acc) : null;
   const pet = eq.pet ? item(eq.pet) : null;
+  const instr = eq.instrument ? item(eq.instrument) : null;
   const uid = ++svgUid;
   const skin = '#ffdcb8';
   const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
@@ -852,6 +868,7 @@ function avatarSVG(p, width) {
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
     <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
   if (pet) s += `<text x="18" y="240" font-size="34">${pet.emoji}</text>`;
+  if (instr) s += `<text x="120" y="246" font-size="42">${instr.emoji}</text>`;
   // haar achter + staartjes
   s += `<circle cx="100" cy="62" r="37" fill="${hc}"/>`;
   s += `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
@@ -1066,13 +1083,12 @@ function startLevel(lvl) {
   const p = P();
   const s = p.settings;
   const qs = [];
-  for (let i = 0; i < s.perLevel; i++) {
-    const q = genQuestion(s, lvl);
-    q.gold = i > 0 && Math.random() < 0.16;   // eerste vraag nooit goud
-    qs.push(q);
-  }
-  if (!qs.some(q => q.gold)) qs[qs.length - 1].gold = true;  // altijd minstens 1 gouden vraag
-  G = { lvl, qs, idx: 0, errors: 0, streak: 0, earned: 0, lock: false, input: '', spot: 100, timer: null, fan: 0, dances: 0, moveIdx: 0 };
+  for (let i = 0; i < s.perLevel; i++) qs.push(genQuestion(s, lvl));
+  // Gouden vraag: hoogstens één per optreden, en niet elke keer (± elke 2 shows) — houdt het speciaal.
+  if (s.perLevel > 1 && Math.random() < 0.5) qs[rnd(1, s.perLevel - 1)].gold = true;   // nooit de eerste vraag
+  // Fanmeter vult over de hele show, zodat een sterke show één encore als climax oplevert.
+  const fanStep = 100 / Math.max(5, s.perLevel - 1);
+  G = { lvl, qs, idx: 0, errors: 0, streak: 0, earned: 0, lock: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0 };
   const city = cityFor(lvl);
   $('game-lvl-label').textContent = `${city.flag} Optreden in ${city.name}`;
   $('game-diamonds').textContent = p.diamonds;
@@ -1189,8 +1205,8 @@ function submitAnswer(val, btnEl) {
     if (q.gold) { gain *= 3; p.goldHits++; }  // gouden vraag: 3× zoveel
     G.earned += gain;
     p.diamonds += gain;
-    // fanmeter vult per goed antwoord; vol = encore-bonus
-    G.fan += 20;
+    // fanmeter vult geleidelijk over de show; vol = encore-bonus (climax van het optreden)
+    G.fan += G.fanStep;
     let encore = false;
     if (G.fan >= 100) {
       G.fan = 0; encore = true;
@@ -1438,7 +1454,7 @@ function renderShopChoice(it, p) {
     <div class="choice-price">${equipped ? 'Dit heb je aan' : 'Al gekocht'}</div>
     <div class="choice-actions">
       <button class="btn green" id="shop-wear-btn">${equipped ? 'Aan laten' : 'Aandoen'}</button>
-      ${equipped && ['mic', 'acc', 'pet'].includes(it.cat) ? '<button class="btn ghost" id="shop-off-btn">Afdoen</button>' : ''}
+      ${equipped && ['mic', 'instrument', 'acc', 'pet'].includes(it.cat) ? '<button class="btn ghost" id="shop-off-btn">Afdoen</button>' : ''}
     </div>`;
   $('shop-wear-btn').onclick = () => equipShopItem(it.id);
   const off = $('shop-off-btn');
@@ -1479,7 +1495,7 @@ function equipShopItem(id) {
 function unequipShopItem(id) {
   const it = item(id);
   const p = P();
-  if (['mic', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) {
+  if (['mic', 'instrument', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) {
     p.equipped[it.cat] = null;
     sndClick();
     save();
@@ -1506,7 +1522,7 @@ function shopClick(it) {
     if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
   } else {
     // aan/uit of wisselen
-    if (['mic', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) p.equipped[it.cat] = null;
+    if (['mic', 'instrument', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) p.equipped[it.cat] = null;
     else p.equipped[it.cat] = it.id;
     sndClick();
   }
