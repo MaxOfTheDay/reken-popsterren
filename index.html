@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>🎤 Reken Popsterren</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#7b2ff7">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
+    background: linear-gradient(160deg, #4a0d67 0%, #7b2ff7 45%, #f107a3 100%);
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+  }
+  #app { height: 100%; display: flex; flex-direction: column; }
+
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; }
+  .screen.active { display: flex; }
+
+  h1.title {
+    font-size: clamp(26px, 5vw, 44px);
+    text-shadow: 0 3px 0 rgba(0,0,0,.25);
+    margin: 10px 0 4px;
+    text-align: center;
+  }
+  .subtitle { opacity: .9; margin-bottom: 18px; text-align: center; }
+
+  .btn {
+    font-family: inherit; font-size: 20px; font-weight: bold; color: #fff;
+    background: linear-gradient(180deg, #ffb300, #ff8f00);
+    border: none; border-radius: 18px; padding: 14px 26px; cursor: pointer;
+    box-shadow: 0 5px 0 #b36200, 0 8px 14px rgba(0,0,0,.3);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b36200; }
+  .btn.big { font-size: 26px; padding: 18px 40px; }
+  .btn.purple { background: linear-gradient(180deg, #ab47bc, #8e24aa); box-shadow: 0 5px 0 #4a148c, 0 8px 14px rgba(0,0,0,.3); }
+  .btn.purple:active { box-shadow: 0 1px 0 #4a148c; }
+  .btn.green { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 5px 0 #1b5e20, 0 8px 14px rgba(0,0,0,.3); }
+  .btn.green:active { box-shadow: 0 1px 0 #1b5e20; }
+  .btn.small { font-size: 16px; padding: 8px 16px; border-radius: 12px; box-shadow: 0 3px 0 #b36200; }
+  .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
+  .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
+
+  /* ---- Profielkeuze ---- */
+  .profile-row { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .profile-card {
+    background: rgba(255,255,255,.13); border: 3px solid rgba(255,255,255,.4);
+    border-radius: 24px; padding: 16px 22px; text-align: center; cursor: pointer;
+    transition: transform .15s; width: 200px;
+  }
+  .profile-card:hover { transform: scale(1.05); background: rgba(255,255,255,.22); }
+  .profile-card .pname { font-size: 26px; font-weight: bold; margin-top: 4px; }
+  .profile-card .pinfo { font-size: 17px; margin-top: 4px; }
+
+  .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
+  .icon-btn {
+    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 22px; background: rgba(255,255,255,.2); color: #fff;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,.35); }
+
+  /* ---- Podium / avatar ---- */
+  .stage {
+    position: relative; border-radius: 24px; overflow: hidden;
+    border: 4px solid rgba(255,255,255,.5); box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .stage::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle 60px at 20% 15%, rgba(255,255,120,.35), transparent 70%),
+      radial-gradient(circle 60px at 80% 20%, rgba(120,220,255,.35), transparent 70%),
+      radial-gradient(circle 70px at 55% 8%, rgba(255,120,220,.30), transparent 70%);
+    animation: lights 3.5s ease-in-out infinite alternate;
+  }
+  @keyframes lights {
+    from { filter: hue-rotate(0deg); opacity: .8; }
+    to   { filter: hue-rotate(120deg); opacity: 1; }
+  }
+  .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,.3); }
+  .avatar-holder { line-height: 0; }
+  .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
+  @keyframes sway {
+    0%,100% { transform: rotate(-2.5deg); }
+    50%     { transform: rotate(2.5deg); }
+  }
+  .avatar-holder.dancing { animation: dance .45s ease-in-out 4; transform-origin: 50% 95%; }
+  @keyframes dance {
+    0%   { transform: rotate(-8deg) translateY(0); }
+    25%  { transform: rotate(0deg) translateY(-16px) scale(1.05); }
+    50%  { transform: rotate(8deg) translateY(0); }
+    75%  { transform: rotate(0deg) translateY(-16px) scale(1.05); }
+    100% { transform: rotate(-8deg) translateY(0); }
+  }
+
+  /* ---- Home ---- */
+  .home-top { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 700px; justify-content: space-between; margin-bottom: 8px; }
+  .diamond-badge {
+    background: rgba(0,0,0,.3); border-radius: 999px; padding: 8px 18px;
+    font-size: 22px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .level-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 620px; margin-top: 14px; }
+  .lvl-btn {
+    width: 72px; height: 72px; border-radius: 18px; border: none; cursor: pointer;
+    font-family: inherit; font-size: 22px; font-weight: bold; color: #fff; position: relative;
+    background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b;
+  }
+  .lvl-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #01579b; }
+  .lvl-btn.locked { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; cursor: default; opacity: .75; }
+  .lvl-btn.next { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; animation: pulseBtn 1.2s ease-in-out infinite; }
+  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+  .lvl-btn .stars { position: absolute; bottom: 3px; left: 0; right: 0; font-size: 12px; letter-spacing: -1px; }
+
+  /* ---- Spel ---- */
+  #screen-game { padding: 8px; }
+  .game-top { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 760px; gap: 8px; }
+  .notes-left { font-size: 24px; letter-spacing: 2px; }
+  .qprogress { display: flex; gap: 5px; }
+  .qdot { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.3); }
+  .qdot.done { background: #ffd740; box-shadow: 0 0 6px #ffd740; }
+  .qdot.now { background: #fff; transform: scale(1.25); }
+
+  .question-card {
+    background: rgba(255,255,255,.95); color: #4a148c; border-radius: 26px;
+    padding: 22px 30px; margin: 14px 0 8px; text-align: center;
+    font-size: clamp(40px, 9vw, 64px); font-weight: bold; min-width: min(90vw, 420px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.3);
+  }
+  .spotlight-wrap { width: min(90vw, 420px); height: 14px; background: rgba(0,0,0,.35); border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+  .spotlight-bar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffee58, #ffb300); transition: width .1s linear; }
+  .spotlight-label { font-size: 14px; opacity: .85; margin-bottom: 6px; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(92vw, 460px); margin-top: 6px; }
+  .choice-btn {
+    font-family: inherit; font-size: 34px; font-weight: bold; color: #fff; border: none; cursor: pointer;
+    padding: 18px 8px; border-radius: 20px;
+    background: linear-gradient(180deg, #7e57c2, #5e35b1); box-shadow: 0 5px 0 #311b92;
+  }
+  .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #311b92; }
+  .choice-btn.good { background: linear-gradient(180deg, #66bb6a, #388e3c); box-shadow: 0 5px 0 #1b5e20; }
+  .choice-btn.bad { background: linear-gradient(180deg, #ef5350, #d32f2f); box-shadow: 0 5px 0 #8e0000; }
+
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(80vw, 320px); margin-top: 6px; }
+  .num-btn {
+    font-family: inherit; font-size: 28px; font-weight: bold; color: #fff; border: none; cursor: pointer;
+    padding: 13px 0; border-radius: 16px;
+    background: linear-gradient(180deg, #7e57c2, #5e35b1); box-shadow: 0 4px 0 #311b92;
+  }
+  .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #311b92; }
+  .num-btn.ok { background: linear-gradient(180deg, #66bb6a, #388e3c); box-shadow: 0 4px 0 #1b5e20; }
+  .num-btn.del { background: linear-gradient(180deg, #ef5350, #d32f2f); box-shadow: 0 4px 0 #8e0000; font-size: 22px; }
+
+  #game-avatar { position: fixed; left: 6px; bottom: 4px; width: 130px; pointer-events: none; z-index: 5; }
+  @media (max-width: 640px) { #game-avatar { width: 88px; opacity: .95; } }
+
+  .praise {
+    position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.3);
+    font-size: clamp(36px, 8vw, 60px); font-weight: bold; color: #ffee58;
+    text-shadow: 0 0 18px #ff6f00, 0 3px 0 rgba(0,0,0,.4);
+    pointer-events: none; opacity: 0; z-index: 60;
+  }
+  .praise.pop { animation: praisePop 1s ease forwards; }
+  @keyframes praisePop {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(.3); }
+    30% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+    70% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-70%) scale(1); }
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 18%; transform: translateX(-50%);
+    background: rgba(0,0,0,.75); color: #fff; font-size: 22px; padding: 12px 22px;
+    border-radius: 16px; z-index: 60; display: none;
+  }
+  .shake { animation: shake .4s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); }
+  }
+
+  /* ---- Level einde ---- */
+  .result-card {
+    background: rgba(255,255,255,.14); border: 3px solid rgba(255,255,255,.4);
+    border-radius: 28px; padding: 26px 34px; text-align: center; max-width: 460px; margin-top: 20px;
+  }
+  .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
+  .result-stars .dim { opacity: .25; }
+  .earn-line { font-size: 26px; margin: 8px 0 16px; }
+
+  /* ---- Winkel ---- */
+  .shop-wrap { display: flex; gap: 16px; width: 100%; max-width: 860px; flex-wrap: wrap; justify-content: center; }
+  .shop-left { flex: 0 0 220px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .shop-right { flex: 1; min-width: 300px; }
+  .shop-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tab-btn {
+    font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
+    padding: 8px 14px; border-radius: 999px; color: #fff; background: rgba(255,255,255,.18);
+  }
+  .tab-btn.active { background: #ffb300; color: #4a148c; }
+  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .item-card {
+    background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.35);
+    border-radius: 16px; padding: 10px; text-align: center; cursor: pointer;
+  }
+  .item-card:hover { background: rgba(255,255,255,.22); }
+  .item-card.equipped { border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.6); }
+  .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
+  .item-name { font-size: 14px; font-weight: bold; }
+  .item-price { font-size: 15px; margin-top: 4px; }
+  .item-price.owned { color: #b9f6ca; }
+
+  /* ---- Instellingen ---- */
+  .settings-card {
+    background: rgba(255,255,255,.95); color: #333; border-radius: 20px;
+    padding: 18px 22px; max-width: 560px; width: 100%; margin-top: 8px; font-size: 17px;
+  }
+  .settings-card h3 { color: #7b1fa2; margin-bottom: 8px; }
+  .set-row { margin: 12px 0; }
+  .set-row .lbl { font-weight: bold; display: block; margin-bottom: 5px; color: #4a148c; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border: 2px solid #ab47bc; border-radius: 999px; padding: 6px 14px; cursor: pointer;
+    font-family: inherit; font-size: 17px; font-weight: bold; background: #fff; color: #7b1fa2;
+  }
+  .chip.on { background: #ab47bc; color: #fff; }
+  .settings-tabs { display: flex; gap: 8px; margin-top: 10px; }
+  .settings-card input[type=text] {
+    font-family: inherit; font-size: 18px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ab47bc; width: 160px;
+  }
+  .danger-btn { background: #ef5350; color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-family: inherit; font-weight: bold; cursor: pointer; }
+
+  /* ---- Modal (oudervraag) ---- */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; color: #333; border-radius: 20px; padding: 24px 28px; text-align: center; max-width: 340px;
+  }
+  .modal h3 { color: #7b1fa2; margin-bottom: 10px; }
+  .modal input {
+    font-family: inherit; font-size: 26px; text-align: center; width: 110px;
+    border: 3px solid #ab47bc; border-radius: 12px; padding: 6px; margin: 10px 0;
+  }
+
+  .confetti-bit { position: fixed; top: -40px; font-size: 26px; z-index: 90; pointer-events: none; animation: fall linear forwards; }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+  .back-fixed { position: fixed; top: 10px; left: 10px; z-index: 50; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== Profielkeuze ===== -->
+  <div class="screen active" id="screen-profile">
+    <h1 class="title">🎤 Reken Popsterren 🎶</h1>
+    <div class="subtitle">Wie gaat er vandaag schitteren op het podium?</div>
+    <div class="profile-row" id="profile-row"></div>
+  </div>
+
+  <!-- ===== Home / kleedkamer ===== -->
+  <div class="screen" id="screen-home">
+    <div class="home-top">
+      <button class="btn small ghost" onclick="goProfiles()">⬅ Wissel ster</button>
+      <div style="font-size:26px;font-weight:bold" id="home-name"></div>
+      <div class="diamond-badge">💎 <span id="home-diamonds">0</span></div>
+    </div>
+    <div class="stage" id="home-stage" style="width:min(92vw,340px);height:300px;">
+      <div class="avatar-holder idle" id="home-avatar"></div>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+      <button class="btn big" id="btn-play">🎤 Optreden <span id="next-lvl-num"></span></button>
+      <button class="btn purple" onclick="openShop()">🛍️ Winkel</button>
+    </div>
+    <div style="margin-top:14px;font-size:18px;opacity:.9">Alle optredens:</div>
+    <div class="level-grid" id="level-grid"></div>
+  </div>
+
+  <!-- ===== Spel ===== -->
+  <div class="screen" id="screen-game">
+    <div class="game-top">
+      <button class="btn small ghost" onclick="quitGame()">🏠</button>
+      <div class="qprogress" id="qprogress"></div>
+      <div class="notes-left" id="notes-left"></div>
+      <div class="diamond-badge" style="font-size:18px">💎 <span id="game-diamonds">0</span></div>
+    </div>
+    <div style="font-size:20px;margin-top:8px;font-weight:bold" id="game-lvl-label"></div>
+    <div class="question-card" id="question-card"></div>
+    <div class="spotlight-label">⭐ Spotlight-bonus!</div>
+    <div class="spotlight-wrap"><div class="spotlight-bar" id="spotlight-bar"></div></div>
+    <div id="answer-area"></div>
+    <div id="game-avatar"><div class="avatar-holder idle" id="game-avatar-inner"></div></div>
+  </div>
+
+  <!-- ===== Level einde ===== -->
+  <div class="screen" id="screen-end">
+    <div class="result-card">
+      <h1 class="title" id="end-title"></h1>
+      <div class="result-stars" id="end-stars"></div>
+      <div id="end-text" style="font-size:19px"></div>
+      <div class="earn-line" id="end-earn"></div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn green big" id="btn-end-next"></button>
+        <button class="btn purple" onclick="goHome()">🏠 Kleedkamer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Winkel ===== -->
+  <div class="screen" id="screen-shop">
+    <div class="home-top">
+      <button class="btn small ghost" onclick="goHome()">⬅ Terug</button>
+      <div style="font-size:24px;font-weight:bold">🛍️ Winkel</div>
+      <div class="diamond-badge">💎 <span id="shop-diamonds">0</span></div>
+    </div>
+    <div class="shop-wrap">
+      <div class="shop-left">
+        <div class="stage" id="shop-stage" style="width:210px;height:250px;">
+          <div class="avatar-holder idle" id="shop-avatar"></div>
+        </div>
+        <div style="font-size:15px;opacity:.85;text-align:center">Verdien 💎 door<br>optredens te spelen!</div>
+      </div>
+      <div class="shop-right">
+        <div class="shop-tabs" id="shop-tabs"></div>
+        <div class="item-grid" id="item-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Instellingen (ouders) ===== -->
+  <div class="screen" id="screen-settings">
+    <h1 class="title" style="font-size:30px">⚙️ Instellingen (voor ouders)</h1>
+    <div class="settings-tabs" id="settings-tabs"></div>
+    <div class="settings-card" id="settings-card"></div>
+    <div style="display:flex;gap:12px;margin:16px 0">
+      <button class="btn green" onclick="closeSettings()">✔ Klaar</button>
+    </div>
+  </div>
+</div>
+
+<div class="corner-btns" id="corner-btns">
+  <button class="icon-btn" id="btn-sound" onclick="toggleSound()">🔊</button>
+  <button class="icon-btn" onclick="askParentGate()">⚙️</button>
+</div>
+
+<div class="praise" id="praise"></div>
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="gate-bg">
+  <div class="modal" id="gate-modal">
+    <h3>Vraag voor mama of papa 😉</h3>
+    <div style="font-size:26px;font-weight:bold" id="gate-q"></div>
+    <input id="gate-input" type="number" inputmode="numeric">
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn small" onclick="checkGate()">OK</button>
+      <button class="btn small ghost" style="color:#7b1fa2" onclick="closeGate()">Annuleer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= Helpers ================= */
+const $ = id => document.getElementById(id);
+const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = arr => arr[rnd(0, arr.length - 1)];
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = rnd(0, i);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ================= Items ================= */
+const ITEMS = [
+  // Haar
+  { id: 'hair_blond',    cat: 'hair', name: 'Blond haar',     price: 0,   color: '#f7d774' },
+  { id: 'hair_bruin',    cat: 'hair', name: 'Bruin haar',     price: 15,  color: '#8d5a2b' },
+  { id: 'hair_zwart',    cat: 'hair', name: 'Zwart haar',     price: 15,  color: '#3a3a3a' },
+  { id: 'hair_rood',     cat: 'hair', name: 'Rood haar',      price: 25,  color: '#d84315' },
+  { id: 'hair_roze',     cat: 'hair', name: 'Roze haar',      price: 40,  color: '#f06292' },
+  { id: 'hair_blauw',    cat: 'hair', name: 'Blauw haar',     price: 40,  color: '#42a5f5' },
+  { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog haar', price: 90,  color: 'RAINBOW' },
+  // Jurken
+  { id: 'dress_roze',    cat: 'dress', name: 'Roze jurk',      price: 0,   color: '#ec407a' },
+  { id: 'dress_paars',   cat: 'dress', name: 'Paarse jurk',    price: 0,   color: '#7e57c2' },
+  { id: 'dress_blauw',   cat: 'dress', name: 'Blauwe jurk',    price: 15,  color: '#29b6f6' },
+  { id: 'dress_groen',   cat: 'dress', name: 'Groene jurk',    price: 15,  color: '#66bb6a' },
+  { id: 'dress_rood',    cat: 'dress', name: 'Rode jurk',      price: 20,  color: '#ef5350' },
+  { id: 'dress_sterren', cat: 'dress', name: 'Sterrenjurk',    price: 60,  color: '#5c6bc0', pattern: 'stars' },
+  { id: 'dress_disco',   cat: 'dress', name: 'Discojurk',      price: 80,  color: '#b0bec5', pattern: 'disco' },
+  { id: 'dress_regenboog',cat:'dress', name: 'Regenboogjurk',  price: 110, color: 'RAINBOW' },
+  // Microfoons
+  { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
+  { id: 'mic_goud',   cat: 'mic', name: 'Gouden micro',   price: 60, color: '#ffd54f' },
+  { id: 'mic_roze',   cat: 'mic', name: 'Roze glittermicro', price: 90, color: '#ff80ab' },
+  // Extra's
+  { id: 'acc_strik',    cat: 'acc', name: 'Grote strik',    price: 25, emoji: '🎀' },
+  { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
+  { id: 'acc_bril',     cat: 'acc', name: 'Coole zonnebril',price: 35, emoji: '🕶️' },
+  { id: 'acc_koptel',   cat: 'acc', name: 'Hoofdtelefoon',  price: 50, emoji: '🎧' },
+  { id: 'acc_kroon',    cat: 'acc', name: 'Kroontje',       price: 75, emoji: '👑' },
+  // Huisdieren
+  { id: 'pet_hond',   cat: 'pet', name: 'Danshondje',    price: 50,  emoji: '🐶' },
+  { id: 'pet_kat',    cat: 'pet', name: 'Zangpoesje',    price: 50,  emoji: '🐱' },
+  { id: 'pet_konijn', cat: 'pet', name: 'Konijntje',     price: 60,  emoji: '🐰' },
+  { id: 'pet_papegaai',cat:'pet', name: 'Papegaai',      price: 80,  emoji: '🦜' },
+  { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
+  // Podium
+  { id: 'stage_disco',    cat: 'stage', name: 'Discopodium',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
+  { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
+  { id: 'stage_kasteel',  cat: 'stage', name: 'Prinsessenkasteel',price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
+  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimteshow',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
+  { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
+];
+const item = id => ITEMS.find(i => i.id === id);
+const CATS = [
+  { id: 'hair',  name: '💇 Haar' },
+  { id: 'dress', name: '👗 Jurken' },
+  { id: 'mic',   name: '🎤 Micro' },
+  { id: 'acc',   name: '🎀 Extra' },
+  { id: 'pet',   name: '🐾 Dieren' },
+  { id: 'stage', name: '🎪 Podium' },
+];
+
+/* ================= Opslag ================= */
+const LS_KEY = 'rekenPopsterren_v1';
+function defaultProfile(name, dress) {
+  return {
+    name: name,
+    diamonds: 30,
+    level: 1,
+    stars: {},
+    owned: ['hair_blond', 'dress_roze', 'dress_paars', 'stage_disco'],
+    equipped: { hair: 'hair_blond', dress: dress, mic: null, acc: null, pet: null, stage: 'stage_disco' },
+    settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 }
+  };
+}
+let db;
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { db = JSON.parse(raw); return; }
+  } catch (e) { /* verse start */ }
+  db = { sound: true, profiles: { p1: defaultProfile('Marie', 'dress_roze'), p2: defaultProfile('Anna', 'dress_paars') } };
+  save();
+}
+function save() { localStorage.setItem(LS_KEY, JSON.stringify(db)); }
+
+let cur = null;                 // huidige profielsleutel: 'p1' | 'p2'
+const P = () => db.profiles[cur];
+
+/* ================= Geluid ================= */
+let actx = null;
+function beep(freq, dur, delay, type, vol) {
+  if (!db.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    o.connect(g); g.connect(actx.destination);
+    const t = actx.currentTime + (delay || 0);
+    g.gain.setValueAtTime(vol || 0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur);
+  } catch (e) { /* geen audio */ }
+}
+const sndClick = () => beep(700, 0.06, 0, 'triangle', 0.1);
+function sndGood() { beep(523, 0.14); beep(659, 0.14, 0.11); beep(784, 0.22, 0.22); }
+function sndWrong() { beep(200, 0.35, 0, 'sawtooth', 0.1); }
+function sndCoin() { beep(988, 0.08, 0, 'square', 0.08); beep(1319, 0.18, 0.08, 'square', 0.08); }
+function sndWin() {
+  [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, 0.18, i * 0.14));
+}
+function sndStreak() { beep(880, 0.1); beep(1109, 0.1, 0.09); beep(1319, 0.1, 0.18); beep(1760, 0.25, 0.27); }
+function toggleSound() {
+  db.sound = !db.sound; save();
+  $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
+  if (db.sound) sndClick();
+}
+
+/* ================= Avatar (SVG) ================= */
+let svgUid = 0;
+function avatarSVG(p, width) {
+  const eq = p.equipped;
+  const hair = item(eq.hair), dress = item(eq.dress);
+  const mic = eq.mic ? item(eq.mic) : null;
+  const acc = eq.acc ? item(eq.acc) : null;
+  const pet = eq.pet ? item(eq.pet) : null;
+  const uid = ++svgUid;
+  const skin = '#ffdcb8';
+  const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
+  const dc = dress.color === 'RAINBOW' ? `url(#rb${uid})` : dress.color;
+
+  let s = `<svg viewBox="0 0 200 250" width="${width}" xmlns="http://www.w3.org/2000/svg">`;
+  s += `<defs><linearGradient id="rb${uid}" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
+    <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
+    <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
+  if (pet) s += `<text x="18" y="240" font-size="34">${pet.emoji}</text>`;
+  // haar achter + staartjes
+  s += `<circle cx="100" cy="62" r="37" fill="${hc}"/>`;
+  s += `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+  // hoofd
+  s += `<circle cx="100" cy="72" r="32" fill="${skin}"/>`;
+  s += `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
+  s += `<circle cx="88" cy="72" r="3.6" fill="#333"/><circle cx="112" cy="72" r="3.6" fill="#333"/>`;
+  s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
+  s += `<path d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  // accessoire op het hoofd / gezicht
+  if (acc) {
+    if (acc.id === 'acc_strik') s += `<g transform="translate(100,36)"><path d="M0 0 L-17 -9 L-17 9 Z" fill="#ff4081"/><path d="M0 0 L17 -9 L17 9 Z" fill="#ff4081"/><circle r="5" fill="#c2185b"/></g>`;
+    if (acc.id === 'acc_bloem') s += `<text x="55" y="52" font-size="22">🌸</text>`;
+    if (acc.id === 'acc_bril') s += `<g><circle cx="88" cy="72" r="8.5" fill="#222"/><circle cx="112" cy="72" r="8.5" fill="#222"/><line x1="96" y1="72" x2="104" y2="72" stroke="#222" stroke-width="3"/></g>`;
+    if (acc.id === 'acc_koptel') s += `<path d="M68 58 A33 35 0 0 1 132 58" stroke="#e91e63" fill="none" stroke-width="7" stroke-linecap="round"/><circle cx="67" cy="68" r="8" fill="#ad1457"/><circle cx="133" cy="68" r="8" fill="#ad1457"/>`;
+    if (acc.id === 'acc_kroon') s += `<path d="M78 40 L84 22 L94 34 L100 18 L106 34 L116 22 L122 40 Z" fill="#ffd740" stroke="#c8a200" stroke-width="2"/><circle cx="100" cy="18" r="3" fill="#ff4081"/>`;
+  }
+  // jurk
+  s += `<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}"/>`;
+  if (dress.pattern === 'stars') {
+    s += `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text>
+          <text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`;
+  }
+  if (dress.pattern === 'disco') {
+    s += `<circle cx="90" cy="140" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity="0.8"/>
+          <circle cx="85" cy="175" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity="0.8"/>`;
+  }
+  // armen
+  s += `<path d="M84 116 Q68 134 60 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  if (mic) {
+    s += `<path d="M116 116 Q132 104 142 88" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    s += `<line x1="142" y1="88" x2="150" y2="76" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+    s += `<circle cx="153" cy="71" r="9" fill="${mic.color}" stroke="#666" stroke-width="1.5"/>`;
+    s += `<text x="160" y="55" font-size="15">🎵</text>`;
+  } else {
+    s += `<path d="M116 116 Q132 134 140 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  }
+  // benen + schoenen
+  s += `<line x1="90" y1="198" x2="88" y2="228" stroke="${skin}" stroke-width="9" stroke-linecap="round"/>`;
+  s += `<line x1="110" y1="198" x2="112" y2="228" stroke="${skin}" stroke-width="9" stroke-linecap="round"/>`;
+  s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="#e91e63"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="#e91e63"/>`;
+  s += `</svg>`;
+  return s;
+}
+function applyStage(el, p) {
+  const st = item(p.equipped.stage);
+  el.style.background = st.bg;
+  el.querySelectorAll('.deco').forEach(d => d.remove());
+  const spots = [['8px', '8px'], ['', '8px', '8px'], ['8px', '', '', '8px']];
+  st.deco.forEach((emoji, i) => {
+    const d = document.createElement('div');
+    d.className = 'deco';
+    d.textContent = emoji;
+    if (i === 0) { d.style.top = '8px'; d.style.left = '8px'; }
+    if (i === 1) { d.style.top = '8px'; d.style.right = '8px'; }
+    if (i === 2) { d.style.bottom = '8px'; d.style.right = '8px'; }
+    el.appendChild(d);
+  });
+}
+
+/* ================= Schermen ================= */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  $('corner-btns').style.display = (id === 'screen-profile') ? 'flex' : 'none';
+}
+
+function goProfiles() {
+  cur = null;
+  renderProfiles();
+  show('screen-profile');
+}
+function renderProfiles() {
+  const row = $('profile-row');
+  row.innerHTML = '';
+  for (const key of ['p1', 'p2']) {
+    const p = db.profiles[key];
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.innerHTML = `<div class="stage" style="width:150px;height:170px;margin:0 auto">
+        <div class="avatar-holder idle">${avatarSVG(p, 130)}</div></div>
+      <div class="pname">${p.name}</div>
+      <div class="pinfo">💎 ${p.diamonds} &nbsp; ⭐ Optreden ${p.level}</div>`;
+    applyStage(card.querySelector('.stage'), p);
+    card.onclick = () => { sndClick(); selectProfile(key); };
+    row.appendChild(card);
+  }
+  $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
+}
+function selectProfile(key) { cur = key; goHome(); }
+
+function goHome() {
+  const p = P();
+  $('home-name').textContent = '🌟 ' + p.name;
+  $('home-diamonds').textContent = p.diamonds;
+  $('home-avatar').innerHTML = avatarSVG(p, 200);
+  applyStage($('home-stage'), p);
+  $('next-lvl-num').textContent = p.level;
+  $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
+  const grid = $('level-grid');
+  grid.innerHTML = '';
+  const maxShow = Math.max(10, p.level + 2);
+  for (let l = 1; l <= maxShow; l++) {
+    const b = document.createElement('button');
+    b.className = 'lvl-btn';
+    if (l > p.level) {
+      b.classList.add('locked');
+      b.textContent = '🔒';
+    } else {
+      b.textContent = l;
+      if (l === p.level) b.classList.add('next');
+      const st = p.stars[l];
+      if (st) b.innerHTML = l + `<div class="stars">${'⭐'.repeat(st)}</div>`;
+      b.onclick = () => { sndClick(); startLevel(l); };
+    }
+    grid.appendChild(b);
+  }
+  show('screen-home');
+}
+
+/* ================= Vragen maken ================= */
+function genQuestion(s, lvl) {
+  const ops = s.ops.length ? s.ops : ['+'];
+  const op = pick(ops);
+  const t = Math.min(1, 0.35 + lvl * 0.07);           // moeilijker per level
+  const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
+  const tables = s.tables.length ? s.tables : [2, 5, 10];
+  let a, b, ans, text;
+  if (op === '+') {
+    a = rnd(1, effMax - 1);
+    b = rnd(1, effMax - a);
+    ans = a + b; text = `${a} + ${b}`;
+  } else if (op === '-') {
+    a = rnd(2, effMax);
+    b = rnd(1, a - 1);
+    ans = a - b; text = `${a} − ${b}`;
+  } else if (op === 'x') {
+    b = pick(tables);
+    const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
+    a = rnd(1, maxA);
+    ans = a * b; text = `${a} × ${b}`;
+  } else { // ':'
+    b = pick(tables);
+    const q = rnd(1, Math.max(1, Math.min(10, Math.floor(s.max / b))));
+    a = q * b; ans = q; text = `${a} : ${b}`;
+  }
+  return { text, ans };
+}
+function makeChoices(ans) {
+  const set = new Set([ans]);
+  const cand = shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]);
+  for (const c of cand) {
+    if (set.size >= 4) break;
+    if (c >= 0 && !set.has(c)) set.add(c);
+  }
+  while (set.size < 4) set.add(rnd(0, ans + 12));
+  return shuffle([...set]);
+}
+
+/* ================= Spel ================= */
+const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 💃', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
+let G = null;
+
+function startLevel(lvl) {
+  const p = P();
+  const s = p.settings;
+  const qs = [];
+  for (let i = 0; i < s.perLevel; i++) qs.push(genQuestion(s, lvl));
+  G = { lvl, qs, idx: 0, errors: 0, streak: 0, earned: 0, lock: false, input: '', spot: 100, timer: null };
+  $('game-lvl-label').textContent = `🎪 Optreden ${lvl}`;
+  $('game-diamonds').textContent = p.diamonds;
+  $('game-avatar-inner').innerHTML = avatarSVG(p, 130);
+  show('screen-game');
+  renderQuestion();
+}
+
+function quitGame() {
+  stopSpot();
+  G = null;
+  goHome();
+}
+
+function renderQuestion() {
+  const q = G.qs[G.idx];
+  const s = P().settings;
+  G.mode = s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode;
+  G.input = '';
+  G.lock = false;
+  // voortgang
+  const prog = $('qprogress');
+  prog.innerHTML = '';
+  G.qs.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'qdot' + (i < G.idx ? ' done' : i === G.idx ? ' now' : '');
+    prog.appendChild(d);
+  });
+  $('notes-left').textContent = '🎵'.repeat(3 - G.errors) + '💥'.repeat(G.errors);
+  drawQuestion();
+  // antwoorden
+  const area = $('answer-area');
+  if (G.mode === 'kies') {
+    const choices = makeChoices(q.ans);
+    area.innerHTML = '<div class="choices">' +
+      choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
+    area.querySelectorAll('.choice-btn').forEach(b => {
+      b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
+    });
+  } else {
+    area.innerHTML = `<div class="numpad">
+      ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-btn" data-n="${n}">${n}</button>`).join('')}
+      <button class="num-btn del" data-n="del">⌫</button>
+      <button class="num-btn" data-n="0">0</button>
+      <button class="num-btn ok" data-n="ok">✔</button>
+    </div>`;
+    area.querySelectorAll('.num-btn').forEach(b => {
+      b.onclick = () => numpadPress(b.dataset.n);
+    });
+  }
+  startSpot();
+}
+function drawQuestion() {
+  const q = G.qs[G.idx];
+  const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
+  $('question-card').textContent = `${q.text} = ${shown}`;
+}
+function numpadPress(n) {
+  if (!G || G.lock) return;
+  if (n === 'del') { G.input = G.input.slice(0, -1); }
+  else if (n === 'ok') { if (G.input !== '') submitAnswer(parseInt(G.input, 10), null); return; }
+  else if (G.input.length < 3) { G.input += n; sndClick(); }
+  drawQuestion();
+}
+document.addEventListener('keydown', e => {
+  if (!G || G.lock) return;
+  if (!$('screen-game').classList.contains('active')) return;
+  if (G.mode !== 'typ') return;
+  if (e.key >= '0' && e.key <= '9') numpadPress(e.key);
+  else if (e.key === 'Backspace') numpadPress('del');
+  else if (e.key === 'Enter') numpadPress('ok');
+});
+
+/* Spotlight-bonus balk (12 seconden) */
+function startSpot() {
+  stopSpot();
+  G.spot = 100;
+  $('spotlight-bar').style.width = '100%';
+  G.timer = setInterval(() => {
+    G.spot = Math.max(0, G.spot - 100 / 120);
+    $('spotlight-bar').style.width = G.spot + '%';
+    if (G.spot <= 0) stopSpot();
+  }, 100);
+}
+function stopSpot() {
+  if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
+}
+
+function submitAnswer(val, btnEl) {
+  if (!G || G.lock) return;
+  G.lock = true;
+  const q = G.qs[G.idx];
+  const p = P();
+  stopSpot();
+  if (val === q.ans) {
+    // ---- juist ----
+    let gain = 2;
+    if (G.spot > 0) gain += 1;               // spotlight-bonus
+    G.streak++;
+    let streakBonus = false;
+    if (G.streak % 3 === 0) { gain += 2; streakBonus = true; }
+    G.earned += gain;
+    p.diamonds += gain;
+    save();
+    $('game-diamonds').textContent = p.diamonds;
+    if (btnEl) btnEl.classList.add('good');
+    if (G.mode === 'typ') $('question-card').textContent = `${q.text} = ${q.ans}`;
+    if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij! +2 💎'); }
+    else { sndGood(); showPraise(pick(PRAISE) + ' +' + gain + ' 💎'); }
+    dance('game-avatar-inner');
+    setTimeout(nextStep, 1100);
+  } else {
+    // ---- fout ----
+    G.errors++;
+    G.streak = 0;
+    sndWrong();
+    if (btnEl) btnEl.classList.add('bad');
+    $('question-card').classList.add('shake');
+    setTimeout(() => $('question-card').classList.remove('shake'), 450);
+    $('notes-left').textContent = '🎵'.repeat(Math.max(0, 3 - G.errors)) + '💥'.repeat(Math.min(3, G.errors));
+    showToast(`Oei, een valse noot! Het was: ${q.text} = ${q.ans}`);
+    setTimeout(nextStep, 2100);
+  }
+}
+function nextStep() {
+  hideToast();
+  if (!G) return;
+  if (G.errors >= 3) { endLevel(false); return; }
+  G.idx++;
+  if (G.idx >= G.qs.length) endLevel(true);
+  else renderQuestion();
+}
+
+function dance(elId) {
+  const el = $(elId);
+  el.classList.remove('idle', 'dancing');
+  void el.offsetWidth;
+  el.classList.add('dancing');
+  setTimeout(() => { el.classList.remove('dancing'); el.classList.add('idle'); }, 1900);
+}
+function showPraise(txt) {
+  const el = $('praise');
+  el.textContent = txt;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+function showToast(txt) { const t = $('toast'); t.textContent = txt; t.style.display = 'block'; }
+function hideToast() { $('toast').style.display = 'none'; }
+
+function endLevel(success) {
+  stopSpot();
+  const p = P();
+  const lvl = G.lvl;
+  if (success) {
+    const stars = G.errors === 0 ? 3 : G.errors === 1 ? 2 : 1;
+    const bonus = stars * 5;
+    p.diamonds += bonus;
+    p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
+    if (lvl === p.level) p.level++;
+    save();
+    $('end-title').textContent = '🎉 Optreden geslaagd!';
+    $('end-stars').innerHTML = '⭐'.repeat(stars) + `<span class="dim">${'⭐'.repeat(3 - stars)}</span>`;
+    $('end-text').textContent = 'Het publiek juicht en danst mee! 👏🎶';
+    $('end-earn').textContent = `+${G.earned} 💎 verdiend  +${bonus} 💎 bonus!`;
+    $('btn-end-next').textContent = '🎤 Volgend optreden';
+    $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl + 1 <= p.level ? lvl + 1 : p.level); };
+    sndWin();
+    confetti(40);
+  } else {
+    save();
+    $('end-title').textContent = '🎭 Bijna!';
+    $('end-stars').textContent = '💪';
+    $('end-text').textContent = 'Drie valse noten... maar oefening baart kunst! Probeer nog eens, je kan het!';
+    $('end-earn').textContent = G.earned > 0 ? `Je hield wel ${G.earned} 💎!` : '';
+    $('btn-end-next').textContent = '🔁 Opnieuw proberen';
+    $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
+  }
+  G = null;
+  show('screen-end');
+}
+
+function confetti(n) {
+  const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div');
+    d.className = 'confetti-bit';
+    d.textContent = pick(emo);
+    d.style.left = rnd(0, 96) + 'vw';
+    d.style.animationDuration = (rnd(18, 34) / 10) + 's';
+    d.style.animationDelay = (rnd(0, 8) / 10) + 's';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 4500);
+  }
+}
+
+/* ================= Winkel ================= */
+let shopCat = 'hair';
+function openShop() { shopCat = 'hair'; renderShop(); show('screen-shop'); }
+function renderShop() {
+  const p = P();
+  $('shop-diamonds').textContent = p.diamonds;
+  $('shop-avatar').innerHTML = avatarSVG(p, 165);
+  applyStage($('shop-stage'), p);
+  const tabs = $('shop-tabs');
+  tabs.innerHTML = '';
+  CATS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'tab-btn' + (c.id === shopCat ? ' active' : '');
+    b.textContent = c.name;
+    b.onclick = () => { sndClick(); shopCat = c.id; renderShop(); };
+    tabs.appendChild(b);
+  });
+  const grid = $('item-grid');
+  grid.innerHTML = '';
+  ITEMS.filter(i => i.cat === shopCat).forEach(it => {
+    const owned = p.owned.includes(it.id);
+    const equipped = p.equipped[it.cat] === it.id;
+    const card = document.createElement('div');
+    card.className = 'item-card' + (equipped ? ' equipped' : '');
+    let swatch;
+    if (it.emoji) swatch = `<div class="item-swatch" style="border:none;font-size:34px">${it.emoji}</div>`;
+    else if (it.bg) swatch = `<div class="item-swatch" style="background:${it.bg}"></div>`;
+    else if (it.color === 'RAINBOW') swatch = `<div class="item-swatch" style="background:linear-gradient(45deg,#ff5f6d,#ffc371,#8bd450,#47c9ff,#b06ab3)"></div>`;
+    else swatch = `<div class="item-swatch" style="background:${it.color}"></div>`;
+    const priceLine = equipped ? '<div class="item-price owned">✔ Aan</div>'
+      : owned ? '<div class="item-price owned">Gekocht</div>'
+      : `<div class="item-price">💎 ${it.price}</div>`;
+    card.innerHTML = swatch + `<div class="item-name">${it.name}</div>` + priceLine;
+    card.onclick = () => shopClick(it);
+    grid.appendChild(card);
+  });
+}
+function shopClick(it) {
+  const p = P();
+  const owned = p.owned.includes(it.id);
+  if (!owned) {
+    if (p.diamonds < it.price) {
+      sndWrong();
+      showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
+      setTimeout(hideToast, 1800);
+      return;
+    }
+    p.diamonds -= it.price;
+    p.owned.push(it.id);
+    p.equipped[it.cat] = it.id;
+    sndCoin();
+    confetti(12);
+  } else {
+    // aan/uit of wisselen
+    if (['mic', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) p.equipped[it.cat] = null;
+    else p.equipped[it.cat] = it.id;
+    sndClick();
+  }
+  save();
+  renderShop();
+}
+
+/* ================= Oudervraag + instellingen ================= */
+let gateAns = 0;
+function askParentGate() {
+  const a = rnd(6, 9), b = rnd(6, 9);
+  gateAns = a * b;
+  $('gate-q').textContent = `${a} × ${b} = ?`;
+  $('gate-input').value = '';
+  $('gate-bg').classList.add('open');
+  setTimeout(() => $('gate-input').focus(), 100);
+}
+function closeGate() { $('gate-bg').classList.remove('open'); }
+function checkGate() {
+  if (parseInt($('gate-input').value, 10) === gateAns) {
+    closeGate();
+    openSettings();
+  } else {
+    $('gate-modal').classList.add('shake');
+    setTimeout(() => $('gate-modal').classList.remove('shake'), 450);
+    askParentGate();
+  }
+}
+$('gate-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkGate(); });
+
+let setKey = 'p1';
+function openSettings() {
+  setKey = cur || 'p1';
+  renderSettings();
+  show('screen-settings');
+}
+function closeSettings() {
+  save();
+  goProfiles();
+}
+function renderSettings() {
+  const tabs = $('settings-tabs');
+  tabs.innerHTML = '';
+  for (const key of ['p1', 'p2']) {
+    const b = document.createElement('button');
+    b.className = 'tab-btn' + (key === setKey ? ' active' : '');
+    b.style.fontSize = '18px';
+    b.textContent = '🌟 ' + db.profiles[key].name;
+    b.onclick = () => { setKey = key; renderSettings(); };
+    tabs.appendChild(b);
+  }
+  const p = db.profiles[setKey];
+  const s = p.settings;
+  const card = $('settings-card');
+  const opDefs = [['+', 'Plus (+)'], ['-', 'Min (−)'], ['x', 'Maal (×)'], [':', 'Delen (:)']];
+  card.innerHTML = `
+    <h3>Instellingen voor dit profiel</h3>
+    <div class="set-row"><span class="lbl">Naam</span>
+      <input type="text" id="set-name" value="${p.name}" maxlength="12"></div>
+    <div class="set-row"><span class="lbl">Bewerkingen</span>
+      <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) =>
+        `<button class="chip ${s.ops.includes(v) ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
+    <div class="set-row"><span class="lbl">Getallen tot</span>
+      <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v =>
+        `<button class="chip ${s.max === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+    <div class="set-row"><span class="lbl">Tafels van (voor × en :)</span>
+      <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v =>
+        `<button class="chip ${s.tables.includes(v) ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+    <div class="set-row"><span class="lbl">Antwoorden</span>
+      <div class="chip-row" id="set-mode">
+        <button class="chip ${s.mode === 'kies' ? 'on' : ''}" data-v="kies">Kiezen uit 4</button>
+        <button class="chip ${s.mode === 'typ' ? 'on' : ''}" data-v="typ">Zelf typen</button>
+        <button class="chip ${s.mode === 'mix' ? 'on' : ''}" data-v="mix">Afwisselen</button>
+      </div></div>
+    <div class="set-row"><span class="lbl">Vragen per optreden</span>
+      <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v =>
+        `<button class="chip ${s.perLevel === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+    <div class="set-row">
+      <button class="danger-btn" id="set-reset">Voortgang van ${p.name} wissen</button>
+    </div>`;
+  $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; save(); };
+  // meerkeuze-chips (aan/uit)
+  $('set-ops').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const v = c.dataset.v;
+    if (s.ops.includes(v)) { if (s.ops.length > 1) s.ops = s.ops.filter(o => o !== v); }
+    else s.ops.push(v);
+    save(); renderSettings();
+  });
+  $('set-tables').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const v = parseInt(c.dataset.v, 10);
+    if (s.tables.includes(v)) { if (s.tables.length > 1) s.tables = s.tables.filter(t => t !== v); }
+    else s.tables.push(v);
+    save(); renderSettings();
+  });
+  // enkelkeuze-chips
+  $('set-max').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.max = parseInt(c.dataset.v, 10); save(); renderSettings(); });
+  $('set-mode').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.mode = c.dataset.v; save(); renderSettings(); });
+  $('set-perlevel').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.perLevel = parseInt(c.dataset.v, 10); save(); renderSettings(); });
+  $('set-reset').onclick = () => {
+    if (confirm(`Alle voortgang, diamanten en spulletjes van ${p.name} wissen?`)) {
+      const dress = setKey === 'p1' ? 'dress_roze' : 'dress_paars';
+      db.profiles[setKey] = defaultProfile(p.name, dress);
+      save(); renderSettings();
+    }
+  };
+}
+
+/* ================= Start ================= */
+load();
+renderProfiles();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
