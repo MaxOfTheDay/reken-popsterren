@@ -183,6 +183,70 @@
     0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
     40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); }
   }
+  /* zachte "foute noot" animatie */
+  .wobble { animation: wobble .7s ease; }
+  @keyframes wobble {
+    0%,100% { transform: rotate(0) scale(1); }
+    20% { transform: rotate(-3deg) scale(.98); }
+    45% { transform: rotate(2.5deg) scale(.99); }
+    70% { transform: rotate(-1.5deg); }
+  }
+  .slip-note {
+    position: fixed; left: 50%; top: 34%; transform: translateX(-50%);
+    font-size: 52px; z-index: 60; pointer-events: none; opacity: 0;
+  }
+  .slip-note.go { animation: slipNote 1.6s ease forwards; }
+  @keyframes slipNote {
+    0% { opacity: 0; transform: translate(-50%, 0) rotate(0); }
+    20% { opacity: 1; transform: translate(-50%, 6px) rotate(-8deg); }
+    100% { opacity: 0; transform: translate(-50%, 90px) rotate(30deg); }
+  }
+
+  /* ---- Fanmeter ---- */
+  .fanmeter-wrap { width: min(90vw, 420px); margin: 6px 0 2px; }
+  .fanmeter-label { font-size: 14px; opacity: .9; display: flex; justify-content: space-between; margin-bottom: 3px; }
+  .fanmeter-track { height: 18px; background: rgba(0,0,0,.32); border-radius: 999px; overflow: hidden; border: 2px solid rgba(255,255,255,.35); }
+  .fanmeter-fill { height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, #ff80ab, #ff4081, #f50057); transition: width .5s ease; }
+  .fanmeter-fill.full { animation: fanPulse .5s ease infinite alternate; }
+  @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.4); } }
+
+  /* ---- Gouden vraag ---- */
+  .question-card.golden {
+    background: linear-gradient(135deg, #fff9c4, #ffd54f, #ffca28);
+    color: #7a4f00; box-shadow: 0 0 26px rgba(255,193,7,.9), 0 8px 20px rgba(0,0,0,.3);
+    animation: goldGlow 1s ease-in-out infinite alternate;
+  }
+  @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px rgba(0,0,0,.3); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px rgba(0,0,0,.3); } }
+  .gold-banner { font-size: 18px; font-weight: bold; color: #ffe082; text-shadow: 0 0 10px #ff6f00; margin-top: 6px; height: 22px; }
+
+  /* ---- Wereldtournee-kaart ---- */
+  .tour-map { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 680px; margin-top: 12px; }
+  .tour-stop {
+    width: 120px; border: none; cursor: pointer; font-family: inherit; color: #fff;
+    border-radius: 16px; padding: 10px 6px; text-align: center; position: relative;
+    background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b;
+  }
+  .tour-stop:active { transform: translateY(3px); box-shadow: 0 1px 0 #01579b; }
+  .tour-stop.locked { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; cursor: default; opacity: .75; }
+  .tour-stop.next { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; color: #4a148c; animation: pulseBtn 1.2s ease-in-out infinite; }
+  .tour-stop .flag { font-size: 30px; line-height: 1; }
+  .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 3px; }
+  .tour-stop .lvlnr { font-size: 11px; opacity: .85; }
+  .tour-stop .stars { font-size: 12px; letter-spacing: -1px; height: 14px; }
+
+  /* ---- Trofeeën ---- */
+  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; max-width: 640px; width: 100%; margin-top: 10px; }
+  .trophy-card {
+    background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.3);
+    border-radius: 16px; padding: 12px 8px; text-align: center;
+  }
+  .trophy-card.earned { border-color: #ffd740; background: rgba(255,215,64,.16); box-shadow: 0 0 12px rgba(255,215,64,.4); }
+  .trophy-card .temoji { font-size: 40px; }
+  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .4; }
+  .trophy-card .tname { font-size: 15px; font-weight: bold; margin-top: 4px; }
+  .trophy-card .tdesc { font-size: 12px; opacity: .85; margin-top: 2px; }
+  .trophy-card.locked .tname { opacity: .6; }
 
   /* ---- Level einde ---- */
   .result-card {
@@ -277,9 +341,10 @@
     <div style="display:flex;gap:14px;margin-top:16px;flex-wrap:wrap;justify-content:center">
       <button class="btn big" id="btn-play">🎤 Optreden <span id="next-lvl-num"></span></button>
       <button class="btn purple" onclick="openShop()">🛍️ Winkel</button>
+      <button class="btn green" onclick="openTrophies()">🏆 Trofeeën</button>
     </div>
-    <div style="margin-top:14px;font-size:18px;opacity:.9">Alle optredens:</div>
-    <div class="level-grid" id="level-grid"></div>
+    <div style="margin-top:14px;font-size:18px;opacity:.9">🗺️ Jouw wereldtournee:</div>
+    <div class="tour-map" id="tour-map"></div>
   </div>
 
   <!-- ===== Spel ===== -->
@@ -291,11 +356,26 @@
       <div class="diamond-badge" style="font-size:18px">💎 <span id="game-diamonds">0</span></div>
     </div>
     <div style="font-size:20px;margin-top:8px;font-weight:bold" id="game-lvl-label"></div>
+    <div class="fanmeter-wrap">
+      <div class="fanmeter-label"><span>🎉 Fanmeter</span><span id="fan-pct">0%</span></div>
+      <div class="fanmeter-track"><div class="fanmeter-fill" id="fanmeter-fill"></div></div>
+    </div>
     <div class="question-card" id="question-card"></div>
+    <div class="gold-banner" id="gold-banner"></div>
     <div class="spotlight-label">⭐ Spotlight-bonus!</div>
     <div class="spotlight-wrap"><div class="spotlight-bar" id="spotlight-bar"></div></div>
     <div id="answer-area"></div>
     <div id="game-avatar"><div class="avatar-holder idle" id="game-avatar-inner"></div></div>
+  </div>
+
+  <!-- ===== Trofeeën ===== -->
+  <div class="screen" id="screen-trophies">
+    <div class="home-top">
+      <button class="btn small ghost" onclick="goHome()">⬅ Terug</button>
+      <div style="font-size:24px;font-weight:bold">🏆 Trofeeënkast</div>
+      <div class="diamond-badge" id="trophy-count">0/0</div>
+    </div>
+    <div class="trophy-grid" id="trophy-grid"></div>
   </div>
 
   <!-- ===== Level einde ===== -->
@@ -350,6 +430,7 @@
 </div>
 
 <div class="praise" id="praise"></div>
+<div class="slip-note" id="slip-note">🎵</div>
 <div class="toast" id="toast"></div>
 
 <div class="modal-bg" id="gate-bg">
@@ -430,6 +511,53 @@ const CATS = [
   { id: 'stage', name: '🎪 Podium' },
 ];
 
+/* ================= Wereldtournee ================= */
+const CITIES = [
+  { name: 'Brussel',   flag: '🇧🇪' },
+  { name: 'Parijs',    flag: '🇫🇷' },
+  { name: 'Amsterdam', flag: '🇳🇱' },
+  { name: 'Londen',    flag: '🇬🇧' },
+  { name: 'Berlijn',   flag: '🇩🇪' },
+  { name: 'Rome',      flag: '🇮🇹' },
+  { name: 'Madrid',    flag: '🇪🇸' },
+  { name: 'New York',  flag: '🇺🇸' },
+  { name: 'Rio',       flag: '🇧🇷' },
+  { name: 'Kaïro',     flag: '🇪🇬' },
+  { name: 'Tokio',     flag: '🇯🇵' },
+  { name: 'Sydney',    flag: '🇦🇺' },
+];
+function cityFor(lvl) {
+  const c = CITIES[(lvl - 1) % CITIES.length];
+  const ronde = Math.floor((lvl - 1) / CITIES.length) + 1;
+  return { name: c.name, flag: c.flag, ronde };
+}
+
+/* ================= Trofeeën ================= */
+const TROPHIES = [
+  { id: 'first',     emoji: '🎫', name: 'Eerste optreden', desc: 'Speel je eerste show',        has: p => p.level > 1 || Object.keys(p.stars).length > 0 },
+  { id: 'city5',     emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Bereik optreden 5',           has: p => p.level >= 5 },
+  { id: 'city10',    emoji: '✈️', name: 'Globetrotter',    desc: 'Bereik optreden 10',          has: p => p.level >= 10 },
+  { id: 'worldtour', emoji: '🌍', name: 'Wereldtournee',   desc: 'Bezoek alle 12 steden',       has: p => p.level > CITIES.length },
+  { id: 'perfect3',  emoji: '💿', name: 'Gouden plaat',    desc: '3 shows met 3 sterren',       has: p => perfectCount(p) >= 3 },
+  { id: 'perfect10', emoji: '🏆', name: 'Platina plaat',   desc: '10 shows met 3 sterren',      has: p => perfectCount(p) >= 10 },
+  { id: 'gold5',     emoji: '🌟', name: 'Goudzoeker',      desc: '5 gouden vragen goed',        has: p => p.goldHits >= 5 },
+  { id: 'encore',    emoji: '🎆', name: 'Encore!',         desc: 'Vul de fanmeter helemaal',    has: p => p.encores >= 1 },
+  { id: 'rich',      emoji: '💰', name: 'Rijke ster',      desc: 'Heb 100 diamanten',           has: p => p.diamonds >= 100 },
+  { id: 'shopper',   emoji: '🛍️', name: 'Shopper',         desc: 'Koop 5 spulletjes',           has: p => p.owned.length >= 9 },
+];
+function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
+// Kent nieuwe trofeeën toe; geeft de namen van nieuw behaalde terug.
+function checkTrophies(p) {
+  const nieuw = [];
+  for (const t of TROPHIES) {
+    if (!p.trophies.includes(t.id) && t.has(p)) {
+      p.trophies.push(t.id);
+      nieuw.push(t);
+    }
+  }
+  return nieuw;
+}
+
 /* ================= Opslag ================= */
 const LS_KEY = 'rekenPopsterren_v1';
 function defaultProfile(name, dress) {
@@ -440,14 +568,21 @@ function defaultProfile(name, dress) {
     stars: {},
     owned: ['hair_blond', 'dress_roze', 'dress_paars', 'stage_disco'],
     equipped: { hair: 'hair_blond', dress: dress, mic: null, acc: null, pet: null, stage: 'stage_disco' },
-    settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 }
+    settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
+    trophies: [], goldHits: 0, encores: 0
   };
+}
+// Zorgt dat oudere opgeslagen profielen de nieuwe velden krijgen.
+function migrate(p) {
+  if (!p.trophies) p.trophies = [];
+  if (p.goldHits == null) p.goldHits = 0;
+  if (p.encores == null) p.encores = 0;
 }
 let db;
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) { db = JSON.parse(raw); return; }
+    if (raw) { db = JSON.parse(raw); Object.values(db.profiles).forEach(migrate); return; }
   } catch (e) { /* verse start */ }
   db = { sound: true, profiles: { p1: defaultProfile('Marie', 'dress_roze'), p2: defaultProfile('Anna', 'dress_paars') } };
   save();
@@ -603,27 +738,49 @@ function goHome() {
   $('home-diamonds').textContent = p.diamonds;
   $('home-avatar').innerHTML = avatarSVG(p, 200);
   applyStage($('home-stage'), p);
-  $('next-lvl-num').textContent = p.level;
+  const nextCity = cityFor(p.level);
+  $('next-lvl-num').textContent = 'in ' + nextCity.name + ' ' + nextCity.flag;
   $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
-  const grid = $('level-grid');
-  grid.innerHTML = '';
-  const maxShow = Math.max(10, p.level + 2);
+  const map = $('tour-map');
+  map.innerHTML = '';
+  const maxShow = Math.max(CITIES.length, p.level + 2);
   for (let l = 1; l <= maxShow; l++) {
+    const city = cityFor(l);
     const b = document.createElement('button');
-    b.className = 'lvl-btn';
+    b.className = 'tour-stop';
     if (l > p.level) {
       b.classList.add('locked');
-      b.textContent = '🔒';
+      b.innerHTML = `<div class="flag">🔒</div><div class="cname">${city.name}</div><div class="lvlnr">Show ${l}</div><div class="stars"></div>`;
     } else {
-      b.textContent = l;
       if (l === p.level) b.classList.add('next');
-      const st = p.stars[l];
-      if (st) b.innerHTML = l + `<div class="stars">${'⭐'.repeat(st)}</div>`;
+      const st = p.stars[l] || 0;
+      b.innerHTML = `<div class="flag">${city.flag}</div><div class="cname">${city.name}</div>`
+        + `<div class="lvlnr">Show ${l}</div><div class="stars">${'⭐'.repeat(st)}</div>`;
       b.onclick = () => { sndClick(); startLevel(l); };
     }
-    grid.appendChild(b);
+    map.appendChild(b);
   }
   show('screen-home');
+}
+
+/* ================= Trofeeën-scherm ================= */
+function openTrophies() {
+  sndClick();
+  const p = P();
+  checkTrophies(p); save();  // laat trofeeën die al verdiend zijn zeker zien
+  const earned = p.trophies.length;
+  $('trophy-count').textContent = `🏆 ${earned}/${TROPHIES.length}`;
+  const grid = $('trophy-grid');
+  grid.innerHTML = '';
+  TROPHIES.forEach(t => {
+    const has = p.trophies.includes(t.id);
+    const card = document.createElement('div');
+    card.className = 'trophy-card ' + (has ? 'earned' : 'locked');
+    card.innerHTML = `<div class="temoji">${has ? t.emoji : '🔒'}</div>`
+      + `<div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
+    grid.appendChild(card);
+  });
+  show('screen-trophies');
 }
 
 /* ================= Vragen maken ================= */
@@ -673,13 +830,26 @@ function startLevel(lvl) {
   const p = P();
   const s = p.settings;
   const qs = [];
-  for (let i = 0; i < s.perLevel; i++) qs.push(genQuestion(s, lvl));
-  G = { lvl, qs, idx: 0, errors: 0, streak: 0, earned: 0, lock: false, input: '', spot: 100, timer: null };
-  $('game-lvl-label').textContent = `🎪 Optreden ${lvl}`;
+  for (let i = 0; i < s.perLevel; i++) {
+    const q = genQuestion(s, lvl);
+    q.gold = i > 0 && Math.random() < 0.16;   // eerste vraag nooit goud
+    qs.push(q);
+  }
+  if (!qs.some(q => q.gold)) qs[qs.length - 1].gold = true;  // altijd minstens 1 gouden vraag
+  G = { lvl, qs, idx: 0, errors: 0, streak: 0, earned: 0, lock: false, input: '', spot: 100, timer: null, fan: 0 };
+  const city = cityFor(lvl);
+  $('game-lvl-label').textContent = `${city.flag} Optreden in ${city.name}`;
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 130);
+  updateFan();
   show('screen-game');
   renderQuestion();
+}
+function updateFan() {
+  const fill = $('fanmeter-fill');
+  fill.style.width = G.fan + '%';
+  fill.classList.toggle('full', G.fan >= 100);
+  $('fan-pct').textContent = Math.round(G.fan) + '%';
 }
 
 function quitGame() {
@@ -729,7 +899,10 @@ function renderQuestion() {
 function drawQuestion() {
   const q = G.qs[G.idx];
   const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
-  $('question-card').textContent = `${q.text} = ${shown}`;
+  const card = $('question-card');
+  card.textContent = `${q.text} = ${shown}`;
+  card.classList.toggle('golden', !!q.gold);
+  $('gold-banner').textContent = q.gold ? '🌟 GOUDEN VRAAG — 3× diamanten! 🌟' : '';
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -775,28 +948,49 @@ function submitAnswer(val, btnEl) {
     G.streak++;
     let streakBonus = false;
     if (G.streak % 3 === 0) { gain += 2; streakBonus = true; }
+    if (q.gold) { gain *= 3; p.goldHits++; }  // gouden vraag: 3× zoveel
     G.earned += gain;
     p.diamonds += gain;
+    // fanmeter vult per goed antwoord; vol = encore-bonus
+    G.fan += 20;
+    let encore = false;
+    if (G.fan >= 100) {
+      G.fan = 0; encore = true;
+      p.diamonds += 5; G.earned += 5; p.encores++;
+    }
+    updateFan();
     save();
     $('game-diamonds').textContent = p.diamonds;
     if (btnEl) btnEl.classList.add('good');
     if (G.mode === 'typ') $('question-card').textContent = `${q.text} = ${q.ans}`;
-    if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij! +2 💎'); }
+    if (encore) { sndWin(); confetti(24); showPraise('🎆 ENCORE! +5 💎 bonus!'); }
+    else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag! +' + gain + ' 💎'); }
+    else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij! +' + gain + ' 💎'); }
     else { sndGood(); showPraise(pick(PRAISE) + ' +' + gain + ' 💎'); }
+    const trofees = checkTrophies(p);
+    if (trofees.length) { save(); setTimeout(() => announceTrophy(trofees[0]), 900); }
     dance('game-avatar-inner');
-    setTimeout(nextStep, 1100);
+    setTimeout(nextStep, encore || q.gold ? 1400 : 1100);
   } else {
-    // ---- fout ----
+    // ---- fout ---- (zachte, vriendelijke animatie)
     G.errors++;
     G.streak = 0;
     sndWrong();
     if (btnEl) btnEl.classList.add('bad');
-    $('question-card').classList.add('shake');
-    setTimeout(() => $('question-card').classList.remove('shake'), 450);
-    $('notes-left').textContent = '🎵'.repeat(Math.max(0, 3 - G.errors)) + '💥'.repeat(Math.min(3, G.errors));
-    showToast(`Oei, een valse noot! Het was: ${q.text} = ${q.ans}`);
+    $('question-card').classList.add('wobble');
+    setTimeout(() => $('question-card').classList.remove('wobble'), 700);
+    slipNote();
+    $('notes-left').textContent = '🎵'.repeat(Math.max(0, 3 - G.errors)) + '💫'.repeat(Math.min(3, G.errors));
+    showToast(`Bijna! Het juiste antwoord is: ${q.text} = ${q.ans}`);
     setTimeout(nextStep, 2100);
   }
+}
+function slipNote() {
+  const el = $('slip-note');
+  el.textContent = pick(['🎵', '🎶', '😅']);
+  el.classList.remove('go');
+  void el.offsetWidth;
+  el.classList.add('go');
 }
 function nextStep() {
   hideToast();
@@ -823,6 +1017,11 @@ function showPraise(txt) {
 }
 function showToast(txt) { const t = $('toast'); t.textContent = txt; t.style.display = 'block'; }
 function hideToast() { $('toast').style.display = 'none'; }
+function announceTrophy(t) {
+  sndStreak();
+  showPraise(`${t.emoji} Nieuwe trofee: ${t.name}!`);
+  confetti(16);
+}
 
 function endLevel(success) {
   stopSpot();
@@ -834,10 +1033,13 @@ function endLevel(success) {
     p.diamonds += bonus;
     p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
     if (lvl === p.level) p.level++;
+    const trofees = checkTrophies(p);
     save();
-    $('end-title').textContent = '🎉 Optreden geslaagd!';
+    const city = cityFor(lvl);
+    $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
     $('end-stars').innerHTML = '⭐'.repeat(stars) + `<span class="dim">${'⭐'.repeat(3 - stars)}</span>`;
-    $('end-text').textContent = 'Het publiek juicht en danst mee! 👏🎶';
+    $('end-text').innerHTML = 'Het publiek juicht en danst mee! 👏🎶'
+      + (trofees.length ? `<div style="margin-top:8px;color:#ffd740;font-weight:bold">🏆 Nieuwe trofee: ${trofees.map(t => t.emoji + ' ' + t.name).join(', ')}!</div>` : '');
     $('end-earn').textContent = `+${G.earned} 💎 verdiend  +${bonus} 💎 bonus!`;
     $('btn-end-next').textContent = '🎤 Volgend optreden';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl + 1 <= p.level ? lvl + 1 : p.level); };
@@ -922,6 +1124,8 @@ function shopClick(it) {
     p.equipped[it.cat] = it.id;
     sndCoin();
     confetti(12);
+    const trofees = checkTrophies(p);
+    if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
   } else {
     // aan/uit of wisselen
     if (['mic', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) p.equipped[it.cat] = null;
