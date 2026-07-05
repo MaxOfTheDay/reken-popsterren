@@ -194,10 +194,24 @@
   }
 
   /* ---- Home ---- */
+  .screen-header {
+    display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
+    align-items: center; gap: 12px; width: 100%; max-width: 700px; margin-bottom: 8px;
+  }
+  .screen-header .header-title {
+    font-size: 24px; font-weight: 700; text-align: center; white-space: nowrap;
+    text-shadow: 0 2px 0 rgba(0,0,0,.18);
+  }
+  .screen-header .header-left { justify-self: start; }
+  .screen-header .header-right { justify-self: end; }
   .home-top { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 700px; justify-content: space-between; margin-bottom: 8px; }
   .diamond-badge {
     background: rgba(0,0,0,.3); border-radius: 999px; padding: 8px 18px;
     font-size: 22px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .mini-summary {
+    background: rgba(0,0,0,.28); border-radius: 999px; padding: 5px 13px;
+    font-size: 15px; font-weight: 600; margin: 0 0 10px;
   }
   .level-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 620px; margin-top: 14px; }
   .lvl-btn {
@@ -369,17 +383,32 @@
   .tour-stop .stars { font-size: 12px; letter-spacing: -1px; height: 14px; }
 
   /* ---- Trofeeën ---- */
-  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; max-width: 640px; width: 100%; margin-top: 10px; }
+  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: 12px; max-width: 680px; width: 100%; margin-top: 4px; align-items: stretch; }
   .trophy-card {
     background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.3);
-    border-radius: 16px; padding: 12px 8px; text-align: center;
+    border-radius: 16px; padding: 12px 10px; text-align: center;
+    min-height: 174px; display: flex; flex-direction: column; align-items: stretch;
   }
   .trophy-card.earned { border-color: #ffd740; background: rgba(255,215,64,.16); box-shadow: 0 0 12px rgba(255,215,64,.4); }
-  .trophy-card .temoji { font-size: 40px; }
+  .trophy-card .temoji { font-size: 40px; line-height: 1; height: 44px; }
   .trophy-card.locked .temoji { filter: grayscale(1); opacity: .4; }
   .trophy-card .tname { font-size: 15px; font-weight: bold; margin-top: 4px; }
   .trophy-card .tdesc { font-size: 12px; opacity: .85; margin-top: 2px; }
   .trophy-card.locked .tname { opacity: .6; }
+  .trophy-progress-wrap { margin-top: auto; padding-top: 9px; }
+  .trophy-progress-text { font-size: 12px; font-weight: 600; color: #fff59d; min-height: 30px; display: flex; align-items: flex-end; justify-content: center; line-height: 1.15; }
+  .trophy-progress {
+    height: 9px; margin-top: 5px; border-radius: 999px; overflow: hidden;
+    background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.28);
+  }
+  .trophy-progress-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #ffd740, #ff80ab);
+  }
+  @media (max-width: 520px) {
+    .screen-header { grid-template-columns: 1fr; justify-items: center; gap: 8px; }
+    .screen-header .header-left, .screen-header .header-right { justify-self: center; }
+  }
 
   /* ---- Level einde ---- */
   .result-card {
@@ -406,11 +435,22 @@
     border-radius: 16px; padding: 10px; text-align: center; cursor: pointer;
   }
   .item-card:hover { background: rgba(255,255,255,.22); }
+  .item-card.selected { background: rgba(255,255,255,.28); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.18); }
   .item-card.equipped { border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.6); }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
   .item-name { font-size: 14px; font-weight: bold; }
   .item-price { font-size: 15px; margin-top: 4px; }
   .item-price.owned { color: #b9f6ca; }
+  .shop-choice {
+    width: 210px; min-height: 118px; text-align: center;
+    background: rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.28);
+    border-radius: 18px; padding: 10px;
+  }
+  .shop-choice .hint { font-size: 15px; font-weight: 600; line-height: 1.2; opacity: .95; }
+  .shop-choice .choice-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+  .shop-choice .choice-price { font-size: 16px; margin-bottom: 8px; }
+  .shop-choice .choice-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .shop-choice .btn { font-size: 16px; padding: 8px 14px; border-radius: 12px; }
 
   /* ---- Instellingen ---- */
   .settings-card {
@@ -463,10 +503,10 @@
 
   <!-- ===== Home / kleedkamer ===== -->
   <div class="screen" id="screen-home">
-    <div class="home-top">
-      <button class="btn small ghost" onclick="goProfiles()">⬅ Wissel ster</button>
-      <div style="font-size:26px;font-weight:bold" id="home-name"></div>
-      <div class="diamond-badge">💎 <span id="home-diamonds">0</span></div>
+    <div class="screen-header">
+      <button class="btn small ghost header-left" onclick="goProfiles()">⬅ Wissel ster</button>
+      <div class="header-title" id="home-name"></div>
+      <div class="diamond-badge header-right">💎 <span id="home-diamonds">0</span></div>
     </div>
     <div class="home-summary" id="home-summary"></div>
     <div class="stage tappable" id="home-stage" style="width:min(92vw,340px);height:300px;" onclick="tapDance('home-avatar')">
@@ -518,11 +558,12 @@
 
   <!-- ===== Trofeeën ===== -->
   <div class="screen" id="screen-trophies">
-    <div class="home-top">
-      <button class="btn small ghost" onclick="goHome()">⬅ Terug</button>
-      <div style="font-size:24px;font-weight:bold">🏆 Trofeeënkast</div>
-      <div class="diamond-badge" id="trophy-count">0/0</div>
+    <div class="screen-header">
+      <button class="btn small ghost header-left" onclick="goHome()">⬅ Terug</button>
+      <div class="header-title">🏆 Trofeeënkast</div>
+      <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
     </div>
+    <div class="mini-summary" id="trophy-count">🏆 0/0 trofeeën</div>
     <div class="trophy-grid" id="trophy-grid"></div>
   </div>
 
@@ -545,16 +586,17 @@
 
   <!-- ===== Winkel ===== -->
   <div class="screen" id="screen-shop">
-    <div class="home-top">
-      <button class="btn small ghost" onclick="goHome()">⬅ Terug</button>
-      <div style="font-size:24px;font-weight:bold">🛍️ Winkel</div>
-      <div class="diamond-badge">💎 <span id="shop-diamonds">0</span></div>
+    <div class="screen-header">
+      <button class="btn small ghost header-left" onclick="goHome()">⬅ Terug</button>
+      <div class="header-title">🛍️ Winkel</div>
+      <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
     </div>
     <div class="shop-wrap">
       <div class="shop-left">
         <div class="stage tappable" id="shop-stage" style="width:210px;height:250px;" onclick="tapDance('shop-avatar')">
           <div class="avatar-holder idle" id="shop-avatar"></div>
         </div>
+        <div class="shop-choice" id="shop-choice"></div>
         <div style="font-size:15px;opacity:.85;text-align:center">Verdien 💎 door<br>optredens te spelen!</div>
       </div>
       <div class="shop-right">
@@ -687,18 +729,33 @@ function cityFor(lvl) {
 
 /* ================= Trofeeën ================= */
 const TROPHIES = [
-  { id: 'first',     emoji: '🎫', name: 'Eerste optreden', desc: 'Speel je eerste show',        has: p => p.level > 1 || Object.keys(p.stars).length > 0 },
-  { id: 'city5',     emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Bereik optreden 5',           has: p => p.level >= 5 },
-  { id: 'city10',    emoji: '✈️', name: 'Globetrotter',    desc: 'Bereik optreden 10',          has: p => p.level >= 10 },
-  { id: 'worldtour', emoji: '🌍', name: 'Wereldtournee',   desc: 'Bezoek alle 12 steden',       has: p => p.level > CITIES.length },
-  { id: 'perfect3',  emoji: '💿', name: 'Gouden plaat',    desc: '3 shows met 3 sterren',       has: p => perfectCount(p) >= 3 },
-  { id: 'perfect10', emoji: '🏆', name: 'Platina plaat',   desc: '10 shows met 3 sterren',      has: p => perfectCount(p) >= 10 },
-  { id: 'gold5',     emoji: '🌟', name: 'Goudzoeker',      desc: '5 gouden vragen goed',        has: p => p.goldHits >= 5 },
-  { id: 'encore',    emoji: '🎆', name: 'Encore!',         desc: 'Vul de fanmeter helemaal',    has: p => p.encores >= 1 },
-  { id: 'rich',      emoji: '💰', name: 'Rijke ster',      desc: 'Heb 100 diamanten',           has: p => p.diamonds >= 100 },
-  { id: 'shopper',   emoji: '🛍️', name: 'Shopper',         desc: 'Koop 5 spulletjes',           has: p => p.owned.length >= 9 },
+  { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Speel je eerste show',           has: p => playedCount(p) >= 1, progress: p => trophyProgress(playedCount(p), 1, 'show gespeeld') },
+  { id: 'rookie3',    emoji: '🎤', name: 'Podiumstarter',   desc: 'Speel 3 shows',                  has: p => playedCount(p) >= 3, progress: p => trophyProgress(playedCount(p), 3, 'shows gespeeld') },
+  { id: 'city5',      emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Bereik optreden 5',              has: p => p.level >= 5, progress: p => trophyProgress(p.level, 5, 'show bereikt') },
+  { id: 'city10',     emoji: '✈️', name: 'Globetrotter',    desc: 'Bereik optreden 10',             has: p => p.level >= 10, progress: p => trophyProgress(p.level, 10, 'show bereikt') },
+  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Bezoek alle 12 steden',          has: p => p.level > CITIES.length, progress: p => trophyProgress(Math.min(p.level - 1, CITIES.length), CITIES.length, 'steden bezocht') },
+  { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Haal je eerste perfecte show',    has: p => perfectCount(p) >= 1, progress: p => trophyProgress(perfectCount(p), 1, 'perfecte show') },
+  { id: 'perfect3',   emoji: '💿', name: 'Gouden plaat',    desc: '3 shows met 3 sterren',          has: p => perfectCount(p) >= 3, progress: p => trophyProgress(perfectCount(p), 3, 'perfecte shows') },
+  { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: '10 shows met 3 sterren',         has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: 'Verzamel 15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
+  { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: 'Verzamel 30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
+  { id: 'gold5',      emoji: '🌟', name: 'Goudzoeker',      desc: '5 gouden vragen goed',           has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',     emoji: '👑', name: 'Gouden kroon',    desc: '20 gouden vragen goed',          has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+  { id: 'encore',     emoji: '🎆', name: 'Encore!',         desc: 'Vul de fanmeter helemaal',       has: p => p.encores >= 1, progress: p => trophyProgress(p.encores, 1, 'volle fanmeters') },
+  { id: 'encore5',    emoji: '🔥', name: 'Publiekslieveling', desc: 'Vul 5 keer de fanmeter',       has: p => p.encores >= 5, progress: p => trophyProgress(p.encores, 5, 'volle fanmeters') },
+  { id: 'rich',       emoji: '💰', name: 'Rijke ster',      desc: 'Heb 100 diamanten',              has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
+  { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: 'Heb 250 diamanten',              has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
+  { id: 'shopper',    emoji: '🛍️', name: 'Shopper',         desc: 'Koop 5 spulletjes',              has: p => boughtCount(p) >= 5, progress: p => trophyProgress(boughtCount(p), 5, 'spulletjes gekocht') },
+  { id: 'collector',  emoji: '🎁', name: 'Verzamelaar',     desc: 'Koop 12 spulletjes',             has: p => boughtCount(p) >= 12, progress: p => trophyProgress(boughtCount(p), 12, 'spulletjes gekocht') },
 ];
+function playedCount(p) { return Object.keys(p.stars).length; }
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
+function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
+function boughtCount(p) { return Math.max(0, p.owned.length - 4); }
+function trophyProgress(value, target, label) {
+  const now = Math.max(0, Math.min(value, target));
+  return { now, target, label, pct: Math.round((now / target) * 100) };
+}
 // Kent nieuwe trofeeën toe; geeft de namen van nieuw behaalde terug.
 function checkTrophies(p) {
   const nieuw = [];
@@ -872,6 +929,7 @@ function renderProfiles() {
   row.innerHTML = '';
   for (const key of ['p1', 'p2']) {
     const p = db.profiles[key];
+    const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
     const card = document.createElement('div');
     card.className = 'profile-card';
     card.innerHTML =
@@ -879,8 +937,9 @@ function renderProfiles() {
            <div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
         <div class="pname">${p.name}</div>
         <div class="stat-row">
-          <span class="stat-badge dia">💎 ${p.diamonds}</span>
+          <span class="stat-badge">⭐ ${totalStars}</span>
           <span class="stat-badge tro">🏆 ${p.trophies.length}</span>
+          <span class="stat-badge dia">💎 ${p.diamonds}</span>
         </div>
         <div class="podium-base"><span class="cta"><span class="cta-pulse">▶</span> Speel!</span></div>`;
     applyStage(card.querySelector('.stage'), p);
@@ -931,15 +990,21 @@ function openTrophies() {
   const p = P();
   checkTrophies(p); save();  // laat trofeeën die al verdiend zijn zeker zien
   const earned = p.trophies.length;
-  $('trophy-count').textContent = `🏆 ${earned}/${TROPHIES.length}`;
+  $('trophy-diamonds').textContent = p.diamonds;
+  $('trophy-count').textContent = `🏆 ${earned}/${TROPHIES.length} trofeeën`;
   const grid = $('trophy-grid');
   grid.innerHTML = '';
   TROPHIES.forEach(t => {
     const has = p.trophies.includes(t.id);
+    const prog = t.progress ? t.progress(p) : null;
+    const progressHtml = !has && prog
+      ? `<div class="trophy-progress-wrap"><div class="trophy-progress-text">${prog.now}/${prog.target} ${prog.label}</div>`
+        + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${prog.pct}%"></div></div></div>`
+      : '';
     const card = document.createElement('div');
     card.className = 'trophy-card ' + (has ? 'earned' : 'locked');
-    card.innerHTML = `<div class="temoji">${has ? t.emoji : '🔒'}</div>`
-      + `<div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
+    card.innerHTML = `<div class="temoji">${t.emoji}</div>`
+      + `<div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>${progressHtml}`;
     grid.appendChild(card);
   });
   show('screen-trophies');
@@ -1303,19 +1368,23 @@ function confetti(n) {
 
 /* ================= Winkel ================= */
 let shopCat = 'hair';
-function openShop() { shopCat = 'hair'; renderShop(); show('screen-shop'); }
+let shopSelectedId = null;
+function openShop() { shopCat = 'hair'; shopSelectedId = null; renderShop(); show('screen-shop'); }
 function renderShop() {
   const p = P();
+  const selected = shopSelectedId ? item(shopSelectedId) : null;
+  const preview = selected ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
-  $('shop-avatar').innerHTML = avatarSVG(p, 165);
-  applyStage($('shop-stage'), p);
+  $('shop-avatar').innerHTML = avatarSVG(preview, 165);
+  applyStage($('shop-stage'), preview);
+  renderShopChoice(selected, p);
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
   CATS.forEach(c => {
     const b = document.createElement('button');
     b.className = 'tab-btn' + (c.id === shopCat ? ' active' : '');
     b.textContent = c.name;
-    b.onclick = () => { sndClick(); shopCat = c.id; renderShop(); };
+    b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; renderShop(); };
     tabs.appendChild(b);
   });
   const grid = $('item-grid');
@@ -1324,7 +1393,7 @@ function renderShop() {
     const owned = p.owned.includes(it.id);
     const equipped = p.equipped[it.cat] === it.id;
     const card = document.createElement('div');
-    card.className = 'item-card' + (equipped ? ' equipped' : '');
+    card.className = 'item-card' + (equipped ? ' equipped' : '') + (shopSelectedId === it.id ? ' selected' : '');
     let swatch;
     if (it.emoji) swatch = `<div class="item-swatch" style="border:none;font-size:34px">${it.emoji}</div>`;
     else if (it.bg) swatch = `<div class="item-swatch" style="background:${it.bg}"></div>`;
@@ -1334,10 +1403,90 @@ function renderShop() {
       : owned ? '<div class="item-price owned">Gekocht</div>'
       : `<div class="item-price">💎 ${it.price}</div>`;
     card.innerHTML = swatch + `<div class="item-name">${it.name}</div>` + priceLine;
-    card.onclick = () => shopClick(it);
+    card.onclick = () => { sndClick(); shopSelectedId = it.id; renderShop(); };
     grid.appendChild(card);
   });
 }
+
+function previewProfile(p, it) {
+  const preview = { ...p, equipped: { ...p.equipped } };
+  preview.equipped[it.cat] = it.id;
+  return preview;
+}
+
+function renderShopChoice(it, p) {
+  const panel = $('shop-choice');
+  if (!it) {
+    panel.innerHTML = '<div class="hint">Tik op iets om het eerst te passen.</div>';
+    return;
+  }
+  const owned = p.owned.includes(it.id);
+  const equipped = p.equipped[it.cat] === it.id;
+  if (!owned) {
+    const enough = p.diamonds >= it.price;
+    panel.innerHTML = `
+      <div class="choice-name">${it.name}</div>
+      <div class="choice-price">Kost 💎 ${it.price}</div>
+      <div class="choice-actions">
+        <button class="btn green" id="shop-buy-btn" ${enough ? '' : 'disabled'}>${enough ? 'Ja, koop!' : 'Te weinig 💎'}</button>
+      </div>`;
+    $('shop-buy-btn').onclick = () => confirmShopBuy(it.id);
+    return;
+  }
+  panel.innerHTML = `
+    <div class="choice-name">${it.name}</div>
+    <div class="choice-price">${equipped ? 'Dit heb je aan' : 'Al gekocht'}</div>
+    <div class="choice-actions">
+      <button class="btn green" id="shop-wear-btn">${equipped ? 'Aan laten' : 'Aandoen'}</button>
+      ${equipped && ['mic', 'acc', 'pet'].includes(it.cat) ? '<button class="btn ghost" id="shop-off-btn">Afdoen</button>' : ''}
+    </div>`;
+  $('shop-wear-btn').onclick = () => equipShopItem(it.id);
+  const off = $('shop-off-btn');
+  if (off) off.onclick = () => unequipShopItem(it.id);
+}
+
+function confirmShopBuy(id) {
+  const it = item(id);
+  const p = P();
+  if (p.owned.includes(it.id)) return equipShopItem(id);
+  if (p.diamonds < it.price) {
+    sndWrong();
+    showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
+    setTimeout(hideToast, 1800);
+    return;
+  }
+  p.diamonds -= it.price;
+  p.owned.push(it.id);
+  p.equipped[it.cat] = it.id;
+  sndCoin();
+  confetti(12);
+  const trofees = checkTrophies(p);
+  if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
+  save();
+  renderShop();
+}
+
+function equipShopItem(id) {
+  const it = item(id);
+  const p = P();
+  if (!p.owned.includes(it.id)) return;
+  p.equipped[it.cat] = it.id;
+  sndClick();
+  save();
+  renderShop();
+}
+
+function unequipShopItem(id) {
+  const it = item(id);
+  const p = P();
+  if (['mic', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) {
+    p.equipped[it.cat] = null;
+    sndClick();
+    save();
+    renderShop();
+  }
+}
+
 function shopClick(it) {
   const p = P();
   const owned = p.owned.includes(it.id);
