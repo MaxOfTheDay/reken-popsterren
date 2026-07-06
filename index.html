@@ -446,38 +446,77 @@
   .shop-choice .choice-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .shop-choice .btn { font-size: 16px; padding: 8px 14px; border-radius: 12px; }
 
-  /* ---- Instellingen ---- */
-  .settings-card {
-    background: rgba(255,255,255,.95); color: #333; border-radius: 20px;
-    padding: 18px 22px; max-width: 560px; width: 100%; margin-top: 8px; font-size: 17px;
-  }
-  .settings-card h3 { color: #7b1fa2; margin-bottom: 8px; }
-  .set-row { margin: 12px 0; }
-  .set-row .lbl { font-weight: bold; display: block; margin-bottom: 5px; color: #4a148c; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip {
-    border: 2px solid #ab47bc; border-radius: 999px; padding: 6px 14px; cursor: pointer;
-    font-family: inherit; font-size: 17px; font-weight: bold; background: #fff; color: #7b1fa2;
-  }
-  .chip.on { background: #ab47bc; color: #fff; }
-  .settings-tabs { display: flex; gap: 8px; margin-top: 10px; }
-  .settings-card input[type=text] {
-    font-family: inherit; font-size: 18px; padding: 6px 10px; border-radius: 10px; border: 2px solid #ab47bc; width: 160px;
-  }
-  .danger-btn { background: #ef5350; color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-family: inherit; font-weight: bold; cursor: pointer; }
+  /* ---- Instellingen (ouder-dashboard) ---- */
+  .settings-sheet { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
+  .settings-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .settings-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; opacity: .82; }
+  .settings-h1 { font-size: 30px; font-weight: 700; line-height: 1.05; text-shadow: 0 2px 0 rgba(0,0,0,.18); }
 
-  /* ---- Ouder-statistiek ---- */
-  .stats-box { background: #f5eefc; border-radius: 14px; padding: 12px 14px; margin: 4px 0 6px; }
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
-  .stat-tile { background: #fff; border: 1px solid #e5d6f2; border-radius: 12px; padding: 8px 6px; text-align: center; }
-  .stat-tile .num { font-size: 22px; font-weight: 700; color: #7b1fa2; line-height: 1.1; }
-  .stat-tile .cap { font-size: 12px; color: #666; margin-top: 2px; }
-  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: #4a148c; margin: 10px 2px 3px; font-weight: 600; }
-  .stat-bar { height: 12px; background: #e5d6f2; border-radius: 999px; overflow: hidden; }
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: rgba(0,0,0,.26); }
+  .segmented button {
+    flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: #fff;
+    border: none; background: transparent; border-radius: 12px; padding: 10px 8px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .segmented button .who { font-size: 19px; }
+  .segmented button.on { background: #fff; color: #8e24aa; box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+  .segmented.tabs button.on { background: linear-gradient(180deg, #fff, #f4e9fb); }
+
+  .settings-panel { display: flex; flex-direction: column; gap: 14px; }
+  .set-card { background: #fff; color: #333; border-radius: 20px; padding: 16px 18px; box-shadow: 0 10px 26px rgba(30,0,50,.24); }
+  .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .set-card-head .ico { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: #faf6ff; border: 1px solid #ecdcf6; }
+  .set-card-head h2 { font-size: 18px; font-weight: 700; color: #8e24aa; }
+  .set-card-head .sub { font-size: 12.5px; color: #6b5b7a; font-weight: 500; margin-top: 1px; }
+
+  .set-field { display: flex; flex-direction: column; gap: 7px; }
+  .set-field + .set-field { margin-top: 15px; }
+  .set-field .lbl { font-size: 13px; font-weight: 700; color: #3a0f56; }
+  .set-field .note { font-size: 12px; color: #6b5b7a; font-weight: 500; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
+    border: 2px solid #ecdcf6; background: #fff; color: #8e24aa; border-radius: 999px; padding: 7px 15px;
+    transition: transform .07s, background .12s, border-color .12s, color .12s;
+  }
+  .chip:hover { border-color: #ab47bc; }
+  .chip:active { transform: scale(.95); }
+  .chip.on { background: linear-gradient(180deg, #ab47bc, #8e24aa); border-color: transparent; color: #fff; box-shadow: 0 3px 9px rgba(142,36,170,.32); }
+
+  .settings-sheet input[type=text] {
+    font-family: inherit; font-size: 17px; font-weight: 600; color: #3a0f56;
+    border: 2px solid #ecdcf6; border-radius: 12px; padding: 9px 13px; width: 100%; max-width: 220px; background: #faf6ff;
+  }
+  .settings-sheet input[type=text]:focus-visible { outline: none; border-color: #ab47bc; background: #fff; }
+  .data-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .settings-sheet :focus-visible { outline: 3px solid #ffd54f; outline-offset: 2px; }
+
+  .danger-zone {
+    background: #fff0f0; border: 1.5px dashed #f2b2b2; border-radius: 20px; padding: 15px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  }
+  .danger-zone .t { font-size: 14.5px; font-weight: 700; color: #b71c1c; }
+  .danger-zone .d { font-size: 12.5px; color: #9a4a4a; font-weight: 500; margin-top: 2px; max-width: 42ch; }
+  .danger-btn { background: linear-gradient(180deg, #ef5350, #e53935); color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 4px 0 #a31414; white-space: nowrap; }
+  .danger-btn:active { transform: translateY(3px); box-shadow: none; }
+
+  /* ---- Ouder-statistiek (tegels + meter) ---- */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+  .stat-tile { position: relative; background: #faf6ff; border: 1px solid #ecdcf6; border-radius: 14px; padding: 12px 8px 10px; text-align: center; overflow: hidden; }
+  .stat-tile::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--tint, #ab47bc); }
+  .stat-tile .num { font-size: 26px; font-weight: 700; color: #3a0f56; line-height: 1; }
+  .stat-tile .cap { font-size: 11.5px; color: #6b5b7a; margin-top: 5px; font-weight: 500; line-height: 1.2; }
+  .stat-line { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 2px 7px; }
+  .stat-line .k { font-size: 14px; font-weight: 600; color: #3a0f56; }
+  .stat-line .v { font-size: 16px; font-weight: 700; color: #8e24aa; }
+  .stat-bar { height: 13px; background: #efe4f7; border-radius: 999px; overflow: hidden; }
   .stat-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ab47bc, #ff80ab); }
-  .practice-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .practice-chip { background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; border-radius: 999px; padding: 4px 11px; font-weight: 700; font-size: 15px; }
-  .stats-empty { font-size: 14px; color: #2e7d32; font-weight: 600; margin-top: 4px; }
+  .practice-hint { font-size: 12.5px; color: #6b5b7a; font-weight: 500; margin: 14px 2px 8px; }
+  .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .practice-chip { background: #fff3e0; border: 1px solid #ffd9a0; color: #b3560d; border-radius: 999px; padding: 6px 13px; font-weight: 700; font-size: 15px; }
+  .stats-empty { font-size: 13.5px; color: #2e7d32; font-weight: 600; margin-top: 6px; }
+  @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .settings-h1 { font-size: 25px; } }
 
   /* ---- Modal (oudervraag) ---- */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -612,11 +651,17 @@
 
   <!-- ===== Instellingen (ouders) ===== -->
   <div class="screen" id="screen-settings">
-    <h1 class="title" style="font-size:30px">⚙️ Instellingen (voor ouders)</h1>
-    <div class="settings-tabs" id="settings-tabs"></div>
-    <div class="settings-card" id="settings-card"></div>
-    <div style="display:flex;gap:12px;margin:16px 0">
-      <button class="btn green" onclick="closeSettings()">✔ Klaar</button>
+    <div class="settings-sheet">
+      <div class="settings-top">
+        <div>
+          <div class="settings-eyebrow">Voor ouders</div>
+          <div class="settings-h1">Instellingen</div>
+        </div>
+        <button class="btn green" onclick="closeSettings()">✓ Klaar</button>
+      </div>
+      <div class="segmented" id="settings-profiles"></div>
+      <div class="segmented tabs" id="settings-subtabs"></div>
+      <div id="settings-body"></div>
     </div>
   </div>
 </div>
@@ -1602,8 +1647,10 @@ function unequipShopItem(id) {
 
 /* ================= Instellingen ================= */
 let setKey = 'p1';
+let setTab = 'voortgang';   // 'voortgang' (alleen lezen) | 'oefening' (instellen)
 function openSettings() {
   setKey = cur || 'p1';
+  setTab = 'voortgang';
   renderSettings();
   show('screen-settings');
 }
@@ -1611,8 +1658,9 @@ function closeSettings() {
   save();
   goProfiles();
 }
-// Ouder-overzicht: leesbare voortgang + concrete lijst met sommen om te oefenen.
-function statsHtml(p) {
+// Tabblad "Voortgang" — alleen-lezen ouderrapport: kerncijfers, niveau-inschatting
+// en de concrete sommen waar het spel nu extra op oefent.
+function statsPanelHtml(p) {
   const shows = playedCount(p);
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
@@ -1621,76 +1669,99 @@ function statsHtml(p) {
   const skill = Math.round(p.perf * 100);
   const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8).map(e => e[0]);
   const practice = weak.length
-    ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
+    ? `<div class="practice-hint">🎯 Sommen die nu nog lastig zijn — hier oefent het spel extra op:</div>
+       <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
     : `<div class="stats-empty">Geen moeilijke sommen op dit moment — goed bezig! 🎉</div>`;
-  return `
-    <div class="set-row"><span class="lbl">📊 Statistieken van ${p.name}</span>
-      <div class="stats-box">
-        <div class="stats-grid">
-          <div class="stat-tile"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
-          <div class="stat-tile"><div class="num">${answered}</div><div class="cap">sommen gemaakt</div></div>
-          <div class="stat-tile"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
-          <div class="stat-tile"><div class="num">${stars}</div><div class="cap">sterren</div></div>
-          <div class="stat-tile"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
-          <div class="stat-tile"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
-        </div>
-        <div class="stat-line"><span>Niveau-inschatting</span><span>${skill}%</span></div>
-        <div class="stat-bar"><div style="width:${skill}%"></div></div>
-        <div class="stat-line"><span>Sommen om te oefenen</span><span></span></div>
-        ${practice}
-      </div>
-    </div>`;
+  return `<div class="settings-panel"><div class="set-card">
+    <div class="set-card-head"><div class="ico">📊</div>
+      <div><h2>Voortgang van ${p.name}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
+    <div class="stat-grid">
+      <div class="stat-tile" style="--tint:#ab47bc"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
+      <div class="stat-tile" style="--tint:#7e57c2"><div class="num">${answered}</div><div class="cap">sommen gemaakt</div></div>
+      <div class="stat-tile" style="--tint:#2e9e4f"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
+      <div class="stat-tile" style="--tint:#ffb300"><div class="num">${stars}</div><div class="cap">sterren</div></div>
+      <div class="stat-tile" style="--tint:#ff80ab"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
+      <div class="stat-tile" style="--tint:#ff8f00"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
+    </div>
+    <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
+    <div class="stat-bar"><div style="width:${skill}%"></div></div>
+    ${practice}
+  </div></div>`;
 }
 
-function renderSettings() {
-  const tabs = $('settings-tabs');
-  tabs.innerHTML = '';
-  for (const key of ['p1', 'p2']) {
-    const b = document.createElement('button');
-    b.className = 'tab-btn' + (key === setKey ? ' active' : '');
-    b.style.fontSize = '18px';
-    b.textContent = '🌟 ' + db.profiles[key].name;
-    b.onclick = () => { setKey = key; renderSettings(); };
-    tabs.appendChild(b);
-  }
-  const p = db.profiles[setKey];
-  const s = p.settings;
-  const card = $('settings-card');
-  const opDefs = [['+', 'Plus (+)'], ['-', 'Min (−)'], ['x', 'Maal (×)'], [':', 'Delen (:)']];
-  card.innerHTML = `
-    <h3>Instellingen voor dit profiel</h3>
-    ${statsHtml(p)}
-    <div class="set-row"><span class="lbl">Naam</span>
-      <input type="text" id="set-name" value="${p.name}" maxlength="12"></div>
-    <div class="set-row"><span class="lbl">Bewerkingen</span>
-      <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) =>
-        `<button class="chip ${s.ops.includes(v) ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
-    <div class="set-row"><span class="lbl">Getallen tot</span>
-      <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v =>
-        `<button class="chip ${s.max === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
-    <div class="set-row"><span class="lbl">Tafels van (voor × en :)</span>
-      <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v =>
-        `<button class="chip ${s.tables.includes(v) ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
-    <div class="set-row"><span class="lbl">Antwoorden</span>
-      <div class="chip-row" id="set-mode">
-        <button class="chip ${s.mode === 'kies' ? 'on' : ''}" data-v="kies">Kiezen uit 4</button>
-        <button class="chip ${s.mode === 'typ' ? 'on' : ''}" data-v="typ">Zelf typen</button>
-        <button class="chip ${s.mode === 'mix' ? 'on' : ''}" data-v="mix">Afwisselen</button>
-      </div></div>
-    <div class="set-row"><span class="lbl">Vragen per optreden</span>
-      <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v =>
-        `<button class="chip ${s.perLevel === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
-    <div class="set-row"><span class="lbl">Back-up (alle profielen)</span>
-      <div class="chip-row">
+// Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
+function oefeningPanelHtml(p, s) {
+  const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
+  return `<div class="settings-panel">
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">🎓</div><div><h2>Wat oefenen</h2><div class="sub">Kies de bewerkingen en het bereik</div></div></div>
+      <div class="set-field"><span class="lbl">Bewerkingen</span>
+        <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) =>
+          `<button class="chip ${s.ops.includes(v) ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Getallen tot</span>
+        <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v =>
+          `<button class="chip ${s.max === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Tafels van <span class="note">(voor ✖️ en ➗)</span></span>
+        <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v =>
+          `<button class="chip ${s.tables.includes(v) ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+    </div>
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">🎮</div><div><h2>Hoe spelen</h2><div class="sub">De manier van antwoorden en de lengte</div></div></div>
+      <div class="set-field"><span class="lbl">Antwoorden</span>
+        <div class="chip-row" id="set-mode">
+          <button class="chip ${s.mode === 'kies' ? 'on' : ''}" data-v="kies">Kiezen uit 4</button>
+          <button class="chip ${s.mode === 'typ' ? 'on' : ''}" data-v="typ">Zelf typen</button>
+          <button class="chip ${s.mode === 'mix' ? 'on' : ''}" data-v="mix">Afwisselen</button>
+        </div></div>
+      <div class="set-field"><span class="lbl">Vragen per optreden</span>
+        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v =>
+          `<button class="chip ${s.perLevel === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+    </div>
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">Naam van deze ster</div></div></div>
+      <div class="set-field"><span class="lbl">Naam</span>
+        <input type="text" id="set-name" value="${p.name}" maxlength="12"></div>
+    </div>
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">💾</div><div><h2>Back-up</h2><div class="sub">Bewaar of verplaats alle profielen</div></div></div>
+      <div class="data-btns">
         <button class="btn small green" id="set-export">💾 Opslaan als bestand</button>
         <button class="btn small purple" id="set-import">📂 Laden uit bestand</button>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
-      <div style="font-size:13px;opacity:.75;margin-top:6px;color:#555">Bewaar diamanten, trofeeën en spulletjes veilig, of zet ze over naar een ander toestel.</div>
+      <div class="note" style="margin-top:9px">Bewaart diamanten, trofeeën en spulletjes veilig, of zet ze over naar een ander toestel.</div>
     </div>
-    <div class="set-row">
-      <button class="danger-btn" id="set-reset">Voortgang van ${p.name} wissen</button>
-    </div>`;
+    <div class="danger-zone">
+      <div><div class="t">⚠️ Voortgang van ${p.name} wissen</div><div class="d">Verwijdert alle diamanten, sterren en spulletjes. Kan niet ongedaan gemaakt worden.</div></div>
+      <button class="danger-btn" id="set-reset">Wissen</button>
+    </div>
+  </div>`;
+}
+
+function renderSettings() {
+  // profielkiezer (segmented)
+  const profiles = $('settings-profiles');
+  profiles.innerHTML = '';
+  for (const key of ['p1', 'p2']) {
+    const b = document.createElement('button');
+    if (key === setKey) b.className = 'on';
+    b.innerHTML = `<span class="who">🌟</span> ${db.profiles[key].name}`;
+    b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
+    profiles.appendChild(b);
+  }
+  // tabbladen: Voortgang (lezen) / Oefening (instellen)
+  const subtabs = $('settings-subtabs');
+  subtabs.innerHTML =
+    `<button class="${setTab === 'voortgang' ? 'on' : ''}" data-t="voortgang">📊 Voortgang</button>
+     <button class="${setTab === 'oefening' ? 'on' : ''}" data-t="oefening">⚙️ Oefening</button>`;
+  subtabs.querySelectorAll('button').forEach(b => b.onclick = () => { sndClick(); setTab = b.dataset.t; renderSettings(); });
+
+  const p = db.profiles[setKey];
+  const s = p.settings;
+  const body = $('settings-body');
+  if (setTab === 'voortgang') { body.innerHTML = statsPanelHtml(p); return; }
+
+  body.innerHTML = oefeningPanelHtml(p, s);
   $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; save(); };
   // meerkeuze-chips (aan/uit)
   $('set-ops').querySelectorAll('.chip').forEach(c => c.onclick = () => {
