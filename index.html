@@ -730,11 +730,18 @@ const ITEMS = [
   { id: 'acc_koptel',   cat: 'acc', name: 'Hoofdtelefoon',  price: 50, emoji: '🎧' },
   { id: 'acc_kroon',    cat: 'acc', name: 'Kroontje',       price: 75, emoji: '👑' },
   // Huisdieren
+  { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
   { id: 'pet_hond',   cat: 'pet', name: 'Danshondje',    price: 50,  emoji: '🐶' },
   { id: 'pet_kat',    cat: 'pet', name: 'Zangpoesje',    price: 50,  emoji: '🐱' },
+  { id: 'pet_pinguin',cat: 'pet', name: 'Pinguïn',       price: 55,  emoji: '🐧' },
   { id: 'pet_konijn', cat: 'pet', name: 'Konijntje',     price: 60,  emoji: '🐰' },
+  { id: 'pet_schildpad',cat:'pet', name: 'Schildpadje',  price: 65,  emoji: '🐢' },
+  { id: 'pet_vos',    cat: 'pet', name: 'Slim vosje',    price: 70,  emoji: '🦊' },
   { id: 'pet_papegaai',cat:'pet', name: 'Papegaai',      price: 80,  emoji: '🦜' },
+  { id: 'pet_panda',  cat: 'pet', name: 'Pandabeer',     price: 90,  emoji: '🐼' },
+  { id: 'pet_leeuw',  cat: 'pet', name: 'Leeuwenwelp',   price: 100, emoji: '🦁' },
   { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
+  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 160, emoji: '🐉' },
   // Podium
   { id: 'stage_disco',    cat: 'stage', name: 'Discopodium',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
   { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
@@ -754,6 +761,8 @@ const CATS = [
 ];
 const INSTR_TOTAL = ITEMS.filter(i => i.cat === 'instrument').length;
 function instrCount(p) { return p.owned.filter(id => { const it = item(id); return it && it.cat === 'instrument'; }).length; }
+const PET_TOTAL = ITEMS.filter(i => i.cat === 'pet').length;
+function petCount(p) { return p.owned.filter(id => { const it = item(id); return it && it.cat === 'pet'; }).length; }
 
 /* ================= Wereldtournee ================= */
 // Speelse stad-emoji i.p.v. landvlaggen: renderen op elk toestel (ook Windows) en
@@ -800,6 +809,10 @@ const TROPHIES = [
   { id: 'collector',  emoji: '🎁', name: 'Verzamelaar',     desc: 'Koop 12 spulletjes',             has: p => boughtCount(p) >= 12, progress: p => trophyProgress(boughtCount(p), 12, 'spulletjes gekocht') },
   { id: 'muzikant',   emoji: '🎶', name: 'Muzikant',        desc: 'Koop 3 instrumenten',            has: p => instrCount(p) >= 3, progress: p => trophyProgress(instrCount(p), 3, 'instrumenten') },
   { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Verzamel alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
+  { id: 'dierenvriend', emoji: '🐾', name: 'Dierenvriend',   desc: 'Koop je eerste dier',            has: p => petCount(p) >= 1, progress: p => trophyProgress(petCount(p), 1, 'dieren') },
+  { id: 'dierenteam', emoji: '🐕', name: 'Dierenteam',       desc: 'Verzamel 3 dieren',              has: p => petCount(p) >= 3, progress: p => trophyProgress(petCount(p), 3, 'dieren') },
+  { id: 'dierentuin', emoji: '🦁', name: 'Eigen dierentuin', desc: 'Verzamel 6 dieren',              has: p => petCount(p) >= 6, progress: p => trophyProgress(petCount(p), 6, 'dieren') },
+  { id: 'dierenkoning', emoji: '🐘', name: 'Dierenkoning',   desc: 'Verzamel alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
