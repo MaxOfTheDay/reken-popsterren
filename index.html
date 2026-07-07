@@ -286,7 +286,9 @@
   }
   .spotlight-wrap { width: min(88vw, 400px); height: 12px; background: rgba(0,0,0,.32); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
   .spotlight-bar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffee58, #ffb300); transition: width .1s linear; }
-  .spotlight-label { font-size: 13px; opacity: .85; margin-bottom: 5px; }
+  .spotlight-label { font-size: 13px; opacity: .85; margin-bottom: 5px; transition: opacity .4s ease; }
+  /* dimt mee met de balk zodra de spotlight-bonus verlopen is */
+  .spotlight-label.spent { opacity: .3; }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
@@ -639,7 +641,7 @@
       <div class="math-panel">
         <div class="question-card" id="question-card"></div>
         <div class="gold-banner" id="gold-banner"></div>
-        <div class="spotlight-label">⭐ Spotlight-bonus!</div>
+        <div class="spotlight-label" id="spotlight-label">⭐ Spotlight-bonus!</div>
         <div class="spotlight-wrap"><div class="spotlight-bar" id="spotlight-bar"></div></div>
         <div id="answer-area"></div>
       </div>
@@ -1398,10 +1400,11 @@ function startSpot() {
   stopSpot();
   G.spot = 100;
   $('spotlight-bar').style.width = '100%';
+  $('spotlight-label').classList.remove('spent');
   G.timer = setInterval(() => {
     G.spot = Math.max(0, G.spot - 100 / 120);
     $('spotlight-bar').style.width = G.spot + '%';
-    if (G.spot <= 0) stopSpot();
+    if (G.spot <= 0) { $('spotlight-label').classList.add('spent'); stopSpot(); }
   }, 100);
 }
 function stopSpot() {
@@ -1471,7 +1474,7 @@ function submitAnswer(val, btnEl) {
     // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
     G.retried = true;
     G.misses++;
-    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%';
+    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%'; $('spotlight-label').classList.add('spent');
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
