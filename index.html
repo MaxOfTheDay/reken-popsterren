@@ -47,7 +47,7 @@
     transition: transform .08s, box-shadow .08s;
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b36200; }
-  .btn.big { font-size: 26px; padding: 18px 40px; }
+  .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
   .btn.purple { background: linear-gradient(180deg, #ab47bc, #8e24aa); box-shadow: 0 5px 0 #4a148c, 0 8px 14px rgba(0,0,0,.3); }
   .btn.purple:active { box-shadow: 0 1px 0 #4a148c; }
   .btn.green { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 5px 0 #1b5e20, 0 8px 14px rgba(0,0,0,.3); }
@@ -251,7 +251,8 @@
   }
   /* knop-hiërarchie: Optreden is de hoofdknop (volle breedte), Winkel/Trofeeën secundair eronder */
   .home-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 16px; width: min(92vw, 400px); }
-  .home-actions .btn.big { width: 100%; }
+  /* hoofdknop past altijd op één regel, ook bij lange stadsnamen (schaalt mee met breedte) */
+  .home-actions .btn.big { width: 100%; font-size: clamp(17px, 4.6vw, 24px); padding: 16px 14px; }
   .home-actions-row { display: flex; gap: 10px; }
   .home-actions-row .btn { flex: 1; }
   @media (max-width: 500px) { #home-stage { height: 250px !important; } }
@@ -458,7 +459,14 @@
   }
   .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
   .result-stars .dim { opacity: .25; }
-  .earn-line { font-size: 26px; margin: 8px 0 16px; }
+  /* opbrengst als badges — zelfde taal als de stat-badges elders in de app */
+  .earn-line { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0 18px; }
+  .earn-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 16px; font-weight: bold; line-height: 1;
+    background: rgba(0,0,0,.3); border-radius: 999px; padding: 8px 14px; }
+  .earn-chip.dia { background: rgba(41,182,246,.34); }
+  .earn-chip.star { background: rgba(255,215,64,.26); }
+  .earn-chip.fan { background: rgba(255,64,129,.28); }
+  .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* ---- Winkel ---- */
   .shop-wrap { display: flex; gap: 16px; width: 100%; max-width: 860px; flex-wrap: wrap; justify-content: center; }
@@ -668,9 +676,9 @@
       <div class="result-stars" id="end-stars"></div>
       <div id="end-text" style="font-size:19px"></div>
       <div class="earn-line" id="end-earn"></div>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <button class="btn green big" id="btn-end-next"></button>
-        <button class="btn purple" onclick="goHome()">🏠 Kleedkamer</button>
+      <div class="end-actions">
+        <button class="btn big" id="btn-end-next"></button>
+        <button class="btn soft" onclick="goHome()">🏠 Kleedkamer</button>
       </div>
     </div>
   </div>
@@ -1566,8 +1574,12 @@ function endLevel(success) {
     $('end-stars').innerHTML = '⭐'.repeat(stars) + `<span class="dim">${'⭐'.repeat(3 - stars)}</span>`;
     $('end-text').innerHTML = `Het publiek juicht en danst mee! 👏🎶<div style="margin-top:6px;font-size:17px">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`
       + (trofees.length ? `<div style="margin-top:8px;color:#ffd740;font-weight:bold">🏆 Nieuwe trofee: ${trofees.map(t => t.emoji + ' ' + t.name).join(', ')}!</div>` : '');
-    $('end-earn').textContent = `+${G.earned} 💎 verdiend  +${bonus} 💎 sterren-bonus`
-      + (fanBonus > 0 ? `  +${fanBonus} 💎 publiek!` : '');
+    const earnChips = [
+      `<span class="earn-chip dia">💎 +${G.earned} verdiend</span>`,
+      `<span class="earn-chip star">⭐ +${bonus} sterrenbonus</span>`
+    ];
+    if (fanBonus > 0) earnChips.push(`<span class="earn-chip fan">🔥 +${fanBonus} publiek</span>`);
+    $('end-earn').innerHTML = earnChips.join('');
     $('btn-end-next').textContent = '🎤 Volgend optreden';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl + 1 <= p.level ? lvl + 1 : p.level); };
     sndWin();
@@ -1579,7 +1591,7 @@ function endLevel(success) {
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Drie valse noten... maar oefening baart kunst! Probeer nog eens, je kan het!';
     const kept = G.earned + fanBonus;
-    $('end-earn').textContent = kept > 0 ? `Je hield wel ${kept} 💎!` : '';
+    $('end-earn').innerHTML = kept > 0 ? `<span class="earn-chip dia">💎 +${kept} gehouden</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
   }
