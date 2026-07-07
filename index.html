@@ -54,6 +54,10 @@
   .btn.green:active { box-shadow: 0 1px 0 #1b5e20; }
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: 12px; box-shadow: 0 3px 0 #b36200; }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
+  /* icoon-only, rustige terugknop naar profielkeuze */
+  .btn.switch-star { padding: 8px 12px; border-radius: 12px; opacity: .6; background: rgba(255,255,255,.1); }
+  .btn.switch-star:hover { opacity: .85; }
+  .btn.switch-star:active { opacity: 1; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
     font-size: 17px; padding: 12px 18px; border-radius: 16px; color: #fff;
@@ -408,12 +412,12 @@
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
   .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 0 10px; }
   /* de reisweg loopt dóór het midden van de haltes */
-  .tour-track::before { content: ""; position: absolute; top: 27px; left: 44px; right: 44px; height: 5px; border-radius: 999px;
+  .tour-track::before { content: ""; position: absolute; top: 32px; left: 49px; right: 49px; height: 5px; border-radius: 999px;
     background: repeating-linear-gradient(90deg, rgba(255,255,255,.5) 0 9px, transparent 9px 18px); }
-  .tour-stop { width: 84px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
+  .tour-stop { width: 94px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
-  .tour-stop .dot { width: 54px; height: 54px; margin: 0 auto; border-radius: 16px; display: flex; align-items: center; justify-content: center;
-    font-size: 25px; background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b; border: 2px solid rgba(255,255,255,.35); }
+  .tour-stop .dot { width: 64px; height: 64px; margin: 0 auto; border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    font-size: 30px; background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b; border: 2px solid rgba(255,255,255,.35); }
   .tour-stop:active .dot { transform: translateY(2px); box-shadow: 0 1px 0 #01579b; }
   .tour-stop.locked { cursor: default; }
   .tour-stop.locked .dot { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; opacity: .72; }
@@ -424,10 +428,10 @@
     font-size: 11px; font-weight: bold; color: #4a148c; background: linear-gradient(180deg, #ffe082, #ffca28);
     padding: 2px 9px; border-radius: 999px; box-shadow: 0 2px 5px rgba(0,0,0,.35); animation: pinBob 1.3s ease-in-out infinite; }
   @keyframes pinBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-3px); } }
-  .tour-stop .cname { font-size: 12px; font-weight: bold; margin-top: 7px; }
+  .tour-stop .cname { font-size: 13px; font-weight: bold; margin-top: 8px; }
   .tour-stop.next .cname { color: #ffe082; }
   .tour-stop.locked .cname { opacity: .7; }
-  .tour-stop .lvlnr { font-size: 10px; opacity: .82; }
+  .tour-stop .lvlnr { font-size: 11px; opacity: .82; }
   .tour-stop .stars { font-size: 11px; letter-spacing: -1px; height: 13px; }
 
   /* ---- Trofeeën ---- */
@@ -613,7 +617,7 @@
   <!-- ===== Home / kleedkamer ===== -->
   <div class="screen" id="screen-home">
     <div class="screen-header">
-      <button class="btn small ghost header-left" onclick="goProfiles()">⬅ Wissel ster</button>
+      <button class="btn small ghost header-left switch-star" onclick="goProfiles()" aria-label="Wissel ster" title="Wissel ster">⬅</button>
       <div class="header-title" id="home-name"></div>
       <div class="diamond-badge header-right">💎 <span id="home-diamonds">0</span></div>
     </div>
@@ -622,7 +626,7 @@
       <div class="avatar-holder idle" id="home-avatar"></div>
     </div>
     <div class="home-actions">
-      <button class="btn big" id="btn-play">🎤 Optreden <span id="next-lvl-num"></span></button>
+      <button class="btn big" id="btn-play">🎤 Start show <span id="next-lvl-num"></span></button>
       <div class="home-actions-row">
         <button class="btn soft shop" onclick="openShop()">🛍️ Winkel</button>
         <button class="btn soft tro" onclick="openTrophies()">🏆 Trofeeën</button>
@@ -1138,7 +1142,7 @@ function goHome() {
   $('home-summary').innerHTML =
     `<span>⭐ ${totalStars} sterren</span><span>🏆 ${p.trophies.length} trofeeën</span>`;
   const nextCity = cityFor(p.level);
-  $('next-lvl-num').textContent = 'in ' + nextCity.name + ' ' + nextCity.flag;
+  $('next-lvl-num').textContent = 'in ' + nextCity.name;
   $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
   const map = $('tour-map');
   map.innerHTML = '';
