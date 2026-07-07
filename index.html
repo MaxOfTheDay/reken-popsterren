@@ -129,9 +129,38 @@
   .icon-btn {
     width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
     font-size: 22px; background: rgba(255,255,255,.2); color: #fff;
+    transition: transform .12s, background .12s;
   }
   .icon-btn:hover { background: rgba(255,255,255,.35); }
   .icon-btn:active { transform: scale(.9); }
+  .icon-btn.on { background: rgba(255,255,255,.42); transform: rotate(35deg); }
+
+  /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
+  .gear-menu {
+    position: absolute; top: 54px; right: 0; min-width: 216px;
+    background: #fff; color: #333; border-radius: 16px; padding: 6px;
+    box-shadow: 0 14px 34px rgba(30,0,50,.42); display: none; flex-direction: column;
+    transform-origin: top right;
+  }
+  .gear-menu.open { display: flex; animation: gearPop .16s ease; }
+  @keyframes gearPop { from { opacity: 0; transform: scale(.9) translateY(-6px); } to { opacity: 1; transform: none; } }
+  .gear-item {
+    font-family: inherit; font-size: 16px; font-weight: 600; color: #3a0f56;
+    background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 11px;
+  }
+  .gear-item:hover { background: #faf6ff; }
+  .gear-item:active { transform: scale(.98); }
+  .gear-item .gi-ico { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
+  .gear-item .gi-label { flex: 1; }
+  .gear-item .gi-state {
+    font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: 999px;
+    background: #e3f7e7; color: #2e7d32;
+  }
+  .gear-item .gi-state.off { background: #eceaef; color: #9a90a6; }
+  .gear-item .gi-chev { font-size: 22px; color: #ab47bc; line-height: 1; }
+  .gear-item.parents { color: #8e24aa; }
+  .gear-sep { height: 1px; background: #ecdcf6; margin: 5px 8px; }
 
   /* ---- Podium / avatar ---- */
   .stage {
@@ -716,9 +745,19 @@
 </div>
 
 <div class="corner-btns" id="corner-btns">
-  <button class="icon-btn" id="btn-sound" onclick="toggleSound()">🔊</button>
-  <button class="icon-btn" id="btn-haptics" onclick="toggleHaptics()" style="display:none" title="Trillen aan/uit">📳</button>
-  <button class="icon-btn" onclick="openSettings()">⚙️</button>
+  <button class="icon-btn" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen">⚙️</button>
+  <div class="gear-menu" id="gear-menu" role="menu">
+    <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
+      <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
+    </button>
+    <button class="gear-item" id="gear-haptics" onclick="toggleHaptics()" role="menuitemcheckbox">
+      <span class="gi-ico">📳</span><span class="gi-label">Trillen</span><span class="gi-state" id="gear-haptics-state">Aan</span>
+    </button>
+    <div class="gear-sep"></div>
+    <button class="gear-item parents" onclick="openSettings()" role="menuitem">
+      <span class="gi-ico">👨‍👩‍👧</span><span class="gi-label">Voor ouders</span><span class="gi-chev">›</span>
+    </button>
+  </div>
 </div>
 
 <div class="praise" id="praise"></div>
@@ -963,14 +1002,50 @@ function sndStreak() { buzz([0, 25, 35, 25, 35, 55]); beep(880, 0.1); beep(1109,
 function sndTap() { buzz(12); const n = pick([784, 880, 988, 1047, 1175]); beep(n, 0.12, 0, 'triangle', 0.12); }
 function toggleSound() {
   db.sound = !db.sound; save();
-  $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
+  renderGearMenu();
   if (db.sound) sndClick();
 }
 function toggleHaptics() {
   db.haptics = !db.haptics; save();
-  $('btn-haptics').textContent = db.haptics ? '📳' : '📴';
+  renderGearMenu();
   if (db.haptics) buzz(20);   // even voelen dat trillen nu aan staat
 }
+
+/* ---- Instellingen-menu onder het tandwiel ---- */
+// Zet de aan/uit-labels goed en verbergt "Trillen" op apparaten zonder trilmotor.
+function renderGearMenu() {
+  const setRow = (id, stateId, on, icoOn, icoOff) => {
+    const item = $(id), st = $(stateId);
+    if (!item || !st) return;
+    st.textContent = on ? 'Aan' : 'Uit';
+    st.classList.toggle('off', !on);
+    item.querySelector('.gi-ico').textContent = on ? icoOn : icoOff;
+  };
+  setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
+  const hi = $('gear-haptics');
+  if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
+  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📴');
+}
+function toggleGearMenu(e) {
+  if (e) e.stopPropagation();
+  const m = $('gear-menu'), g = $('btn-gear');
+  const open = !m.classList.contains('open');
+  if (open) renderGearMenu();
+  m.classList.toggle('open', open);
+  g.classList.toggle('on', open);
+  g.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) sndClick();
+}
+function closeGearMenu() {
+  const m = $('gear-menu'), g = $('btn-gear');
+  if (m) m.classList.remove('open');
+  if (g) { g.classList.remove('on'); g.setAttribute('aria-expanded', 'false'); }
+}
+// klik buiten het menu (maar niet op het tandwiel/menu zelf) sluit het
+document.addEventListener('click', e => {
+  const cb = $('corner-btns'), m = $('gear-menu');
+  if (m && m.classList.contains('open') && cb && !cb.contains(e.target)) closeGearMenu();
+});
 
 /* ================= Avatar (SVG) ================= */
 let svgUid = 0;
@@ -1056,7 +1131,9 @@ function applyStage(el, p) {
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
-  $('corner-btns').style.display = (id === 'screen-profile') ? 'flex' : 'none';
+  const onProfile = (id === 'screen-profile');
+  $('corner-btns').style.display = onProfile ? 'flex' : 'none';
+  if (!onProfile) closeGearMenu();
 }
 
 function goProfiles() {
@@ -1086,26 +1163,27 @@ function renderProfiles() {
     card.onclick = () => { sndClick(); selectProfile(key); };
     row.appendChild(card);
   }
-  $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
-  const hb = $('btn-haptics');
-  if ('vibrate' in navigator) { hb.style.display = ''; hb.textContent = db.haptics ? '📳' : '📴'; }
+  renderGearMenu();
   fitProfileHeader();
 }
-// De titel schaalt mee met de schermbreedte en zou op smalle schermen onder de
-// vaste hoekknoppen (geluid/trillen/instellingen) verdwijnen. Meet of ze elkaar
-// raken en reserveer dan precies genoeg ruimte erboven — klopt bij elke breedte
-// én bij elk aantal knoppen, dus ook als er later een instelling bij komt.
+// De titel schaalt mee met de schermbreedte en zou op smalle schermen onder het
+// instellingen-tandwiel rechtsboven schuiven. In plaats van de titel omlaag te
+// duwen, maken we hem daar een fractie kleiner zodat hij op één regel bovenaan
+// naast de knop past. De schaal volgt uit de echte knoprand, dus dit klopt bij
+// elke breedte en ook als er later nog een instelling bij komt.
 function fitProfileHeader() {
   const sp = $('screen-profile'), cb = $('corner-btns');
   if (!sp || !cb) return;
-  sp.style.paddingTop = '';                                  // eerst terug naar natuurlijke stand
   const title = sp.querySelector('.title');
+  if (title) title.style.fontSize = '';                      // eerst terug naar de CSS-clamp
   if (!title || getComputedStyle(cb).display === 'none') return;
   const cbb = cb.getBoundingClientRect(), tb = title.getBoundingClientRect();
-  const touches = tb.top < cbb.bottom + 4 && tb.right > cbb.left - 6 && tb.left < cbb.right + 6;
-  if (!touches) return;
-  const delta = Math.ceil(cbb.bottom + 12 - tb.top);         // titel net onder de knoppenrij duwen
-  if (delta > 0) sp.style.paddingTop = (12 + delta) + 'px';  // 12 = bestaande schermpadding
+  const center = tb.left + tb.width / 2;                      // blijft vast (titel is gecentreerd)
+  const half = (cbb.left - 8) - center;                      // ruimte van midden tot vlak vóór de knop
+  const maxW = 2 * half;                                      // zoveel mag de titel breed zijn
+  if (half <= 0 || tb.width <= maxW) return;                 // past al → niets doen
+  const fs = parseFloat(getComputedStyle(title).fontSize) * (maxW / tb.width);
+  title.style.fontSize = Math.max(20, fs) + 'px';            // niet kleiner dan leesbaar
 }
 function selectProfile(key) { cur = key; goHome(); }
 
@@ -1806,6 +1884,7 @@ function unequipShopItem(id) {
 let setKey = 'p1';
 let setTab = 'voortgang';   // 'voortgang' (alleen lezen) | 'oefening' (instellen)
 function openSettings() {
+  closeGearMenu();
   setKey = cur || 'p1';
   setTab = 'voortgang';
   renderSettings();
