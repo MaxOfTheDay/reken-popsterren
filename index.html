@@ -100,7 +100,6 @@
     display: inline-flex; align-items: center; gap: 4px; font-size: 15px; font-weight: bold;
     background: rgba(0,0,0,.32); border-radius: 999px; padding: 5px 11px; line-height: 1;
   }
-  .stat-badge.dia { background: rgba(41,182,246,.35); }
   .stat-badge.tro { background: rgba(255,193,7,.32); }
   /* sappige "Speel!"-knop */
   .play-btn {
@@ -132,6 +131,7 @@
     font-size: 22px; background: rgba(255,255,255,.2); color: #fff;
   }
   .icon-btn:hover { background: rgba(255,255,255,.35); }
+  .icon-btn:active { transform: scale(.9); }
 
   /* ---- Podium / avatar ---- */
   .stage {
@@ -157,13 +157,6 @@
   .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,.3); }
   .stage.tappable { cursor: pointer; }
   .stage.tappable:active { transform: scale(.98); }
-  .tap-hint {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3;
-    font-size: 14px; font-weight: 600; color: #fff; background: rgba(0,0,0,.35);
-    padding: 3px 12px; border-radius: 999px; pointer-events: none;
-    animation: hintPulse 1.8s ease-in-out infinite;
-  }
-  @keyframes hintPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
   .avatar-holder { line-height: 0; }
   .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
   @keyframes sway {
@@ -226,26 +219,17 @@
   }
   .screen-header .header-left { justify-self: start; }
   .screen-header .header-right { justify-self: end; }
-  .home-top { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 700px; justify-content: space-between; margin-bottom: 8px; }
   .diamond-badge {
     background: rgba(0,0,0,.3); border-radius: 999px; padding: 8px 18px;
     font-size: 22px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;
   }
+  /* compacte variant voor de drukke spel-bovenbalk */
+  .diamond-badge.compact { font-size: 18px; padding: 6px 14px; }
   .mini-summary {
     background: rgba(0,0,0,.28); border-radius: 999px; padding: 5px 13px;
     font-size: 15px; font-weight: 600; margin: 0 0 10px;
   }
-  .level-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 620px; margin-top: 14px; }
-  .lvl-btn {
-    width: 72px; height: 72px; border-radius: 18px; border: none; cursor: pointer;
-    font-family: inherit; font-size: 22px; font-weight: bold; color: #fff; position: relative;
-    background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b;
-  }
-  .lvl-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #01579b; }
-  .lvl-btn.locked { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; cursor: default; opacity: .75; }
-  .lvl-btn.next { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; animation: pulseBtn 1.2s ease-in-out infinite; }
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
-  .lvl-btn .stars { position: absolute; bottom: 3px; left: 0; right: 0; font-size: 12px; letter-spacing: -1px; }
   .home-summary {
     display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 2px 0 12px;
   }
@@ -302,7 +286,9 @@
   }
   .spotlight-wrap { width: min(88vw, 400px); height: 12px; background: rgba(0,0,0,.32); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
   .spotlight-bar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffee58, #ffb300); transition: width .1s linear; }
-  .spotlight-label { font-size: 13px; opacity: .85; margin-bottom: 5px; }
+  .spotlight-label { font-size: 13px; opacity: .85; margin-bottom: 5px; transition: opacity .4s ease; }
+  /* dimt mee met de balk zodra de spotlight-bonus verlopen is */
+  .spotlight-label.spent { opacity: .3; }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
@@ -379,14 +365,6 @@
     20% { opacity: 1; transform: translate(-50%, 6px) rotate(-8deg); }
     100% { opacity: 0; transform: translate(-50%, 90px) rotate(30deg); }
   }
-
-  /* ---- Fanmeter ---- */
-  .fanmeter-wrap { width: min(90vw, 420px); margin: 6px 0 2px; }
-  .fanmeter-label { font-size: 14px; opacity: .9; display: flex; justify-content: space-between; margin-bottom: 3px; }
-  .fanmeter-track { height: 18px; background: rgba(0,0,0,.32); border-radius: 999px; overflow: hidden; border: 2px solid rgba(255,255,255,.35); }
-  .fanmeter-fill { height: 100%; width: 0%; border-radius: 999px;
-    background: linear-gradient(90deg, #ff80ab, #ff4081, #f50057); transition: width .5s ease; }
-  .fanmeter-fill.full { animation: fanPulse .5s ease infinite alternate; }
 
   /* ---- Gouden vraag ---- */
   .question-card.golden {
@@ -488,14 +466,18 @@
   .tab-btn {
     font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
     padding: 8px 14px; border-radius: 999px; color: #fff; background: rgba(255,255,255,.18);
+    transition: transform .07s, background .12s;
   }
+  .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: #ffb300; color: #4a148c; }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
   .item-card {
     background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.35);
     border-radius: 16px; padding: 10px; text-align: center; cursor: pointer;
+    transition: transform .07s, background .12s;
   }
   .item-card:hover { background: rgba(255,255,255,.22); }
+  .item-card:active { transform: scale(.97); }
   .item-card.selected { background: rgba(255,255,255,.28); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.18); }
   .item-card.equipped { border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.6); }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
@@ -601,7 +583,6 @@
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); }
   }
-  .back-fixed { position: fixed; top: 10px; left: 10px; z-index: 50; }
 </style>
 </head>
 <body>
@@ -642,7 +623,7 @@
       <button class="btn small ghost" onclick="quitGame()">🏠</button>
       <div class="qprogress" id="qprogress"></div>
       <div class="notes-left" id="notes-left"></div>
-      <div class="diamond-badge" style="font-size:18px">💎 <span id="game-diamonds">0</span></div>
+      <div class="diamond-badge compact">💎 <span id="game-diamonds">0</span></div>
     </div>
     <div id="game-lvl-label"></div>
     <div class="game-arena">
@@ -660,7 +641,7 @@
       <div class="math-panel">
         <div class="question-card" id="question-card"></div>
         <div class="gold-banner" id="gold-banner"></div>
-        <div class="spotlight-label">⭐ Spotlight-bonus!</div>
+        <div class="spotlight-label" id="spotlight-label">⭐ Spotlight-bonus!</div>
         <div class="spotlight-wrap"><div class="spotlight-bar" id="spotlight-bar"></div></div>
         <div id="answer-area"></div>
       </div>
@@ -1419,10 +1400,11 @@ function startSpot() {
   stopSpot();
   G.spot = 100;
   $('spotlight-bar').style.width = '100%';
+  $('spotlight-label').classList.remove('spent');
   G.timer = setInterval(() => {
     G.spot = Math.max(0, G.spot - 100 / 120);
     $('spotlight-bar').style.width = G.spot + '%';
-    if (G.spot <= 0) stopSpot();
+    if (G.spot <= 0) { $('spotlight-label').classList.add('spent'); stopSpot(); }
   }, 100);
 }
 function stopSpot() {
@@ -1492,7 +1474,7 @@ function submitAnswer(val, btnEl) {
     // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
     G.retried = true;
     G.misses++;
-    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%';
+    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%'; $('spotlight-label').classList.add('spent');
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
