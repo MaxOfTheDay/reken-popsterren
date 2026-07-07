@@ -395,9 +395,17 @@
 
   /* ---- Wereldtournee: horizontale reisroute (schaalt mee met elk aantal shows) ---- */
   .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 680px; margin-top: 12px;
-    padding: 28px 6px 10px; -webkit-overflow-scrolling: touch;
+    padding: 28px 6px 10px; -webkit-overflow-scrolling: touch; cursor: grab;
     scrollbar-width: none; -ms-overflow-style: none; }
   .tour-map::-webkit-scrollbar { display: none; }
+  .tour-map.dragging, .tour-map.dragging * { cursor: grabbing; }
+  /* zachte fade-randen: verschijnen alleen aan de kant waar nog meer te scrollen valt */
+  .tour-map.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
+  .tour-map.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px);
+    mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
+  .tour-map.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
   .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 0 10px; }
   /* de reisweg loopt dóór het midden van de haltes */
   .tour-track::before { content: ""; position: absolute; top: 27px; left: 44px; right: 44px; height: 5px; border-radius: 999px;
@@ -1082,6 +1090,44 @@ function renderProfiles() {
 }
 function selectProfile(key) { cur = key; goHome(); }
 
+// Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt.
+function updateTourFades(map) {
+  const max = map.scrollWidth - map.clientWidth;
+  map.classList.toggle('can-left', map.scrollLeft > 2);
+  map.classList.toggle('can-right', map.scrollLeft < max - 2);
+}
+// Bindt (eenmalig) de scroll-fade en muis-klik-&-sleep om horizontaal te scrollen.
+// Touch/pen scrollt al native; alleen de muis krijgt sleep-gedrag.
+function setupTourMap(map) {
+  if (map.dataset.tourBound) return;
+  map.dataset.tourBound = '1';
+  map.addEventListener('scroll', () => updateTourFades(map), { passive: true });
+  let down = false, startX = 0, startScroll = 0, moved = false;
+  map.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    down = true; moved = false; startX = e.clientX; startScroll = map.scrollLeft;
+    try { map.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  map.addEventListener('pointermove', e => {
+    if (!down) return;
+    const dx = e.clientX - startX;
+    if (!moved && Math.abs(dx) > 4) moved = true;
+    if (moved) { map.scrollLeft = startScroll - dx; map.classList.add('dragging'); e.preventDefault(); }
+  });
+  const end = () => { if (down) { down = false; map.classList.remove('dragging'); } };
+  map.addEventListener('pointerup', () => {
+    if (moved) {
+      // een klik ná het slepen niet als "start dit optreden" laten tellen
+      const swallow = ev => { ev.stopPropagation(); ev.preventDefault(); map.removeEventListener('click', swallow, true); };
+      map.addEventListener('click', swallow, true);
+      setTimeout(() => map.removeEventListener('click', swallow, true), 150);
+    }
+    end();
+  });
+  map.addEventListener('pointercancel', end);
+  map.addEventListener('pointerleave', end);
+}
+
 function goHome() {
   const p = P();
   $('home-name').textContent = '🌟 ' + p.name;
@@ -1121,15 +1167,17 @@ function goHome() {
     track.appendChild(b);
   }
   map.appendChild(track);
+  setupTourMap(map);
   show('screen-home');
   // huidige show ("HIER") altijd netjes in beeld: centreer die halte in het venster
-  if (currentEl) {
-    requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    if (currentEl) {
       const mr = map.getBoundingClientRect();
       const er = currentEl.getBoundingClientRect();
       map.scrollLeft += (er.left - mr.left) - (map.clientWidth - currentEl.offsetWidth) / 2;
-    });
-  }
+    }
+    updateTourFades(map);
+  });
 }
 
 /* ================= Trofeeën-scherm ================= */
