@@ -717,6 +717,7 @@
 
 <div class="corner-btns" id="corner-btns">
   <button class="icon-btn" id="btn-sound" onclick="toggleSound()">🔊</button>
+  <button class="icon-btn" id="btn-haptics" onclick="toggleHaptics()" style="display:none" title="Trillen aan/uit">📳</button>
   <button class="icon-btn" onclick="openSettings()">⚙️</button>
 </div>
 
@@ -916,15 +917,23 @@ let db;
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) { db = JSON.parse(raw); Object.values(db.profiles).forEach(migrate); return; }
+    if (raw) { db = JSON.parse(raw); if (typeof db.haptics !== 'boolean') db.haptics = true; Object.values(db.profiles).forEach(migrate); return; }
   } catch (e) { /* verse start */ }
-  db = { sound: true, profiles: { p1: defaultProfile('Marie', 'dress_roze'), p2: defaultProfile('Anna', 'dress_paars') } };
+  db = { sound: true, haptics: true, profiles: { p1: defaultProfile('Marie', 'dress_roze'), p2: defaultProfile('Anna', 'dress_paars') } };
   save();
 }
 function save() { localStorage.setItem(LS_KEY, JSON.stringify(db)); }
 
 let cur = null;                 // huidige profielsleutel: 'p1' | 'p2'
 const P = () => db.profiles[cur];
+
+/* ================= Trilfeedback (haptics) ================= */
+// Werkt op mobiele browsers die de Vibration API ondersteunen (Android/Chrome).
+// Staat los van geluid, zodat trillen ook aan kan met de app op stil.
+function buzz(pattern) {
+  if (!db.haptics) return;
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* geen trilmotor */ }
+}
 
 /* ================= Geluid ================= */
 let actx = null;
@@ -942,19 +951,25 @@ function beep(freq, dur, delay, type, vol) {
     o.start(t); o.stop(t + dur);
   } catch (e) { /* geen audio */ }
 }
-const sndClick = () => beep(700, 0.06, 0, 'triangle', 0.1);
-function sndGood() { beep(523, 0.14); beep(659, 0.14, 0.11); beep(784, 0.22, 0.22); }
-function sndWrong() { beep(200, 0.35, 0, 'sawtooth', 0.1); }
-function sndCoin() { beep(988, 0.08, 0, 'square', 0.08); beep(1319, 0.18, 0.08, 'square', 0.08); }
+const sndClick = () => { buzz(8); beep(700, 0.06, 0, 'triangle', 0.1); };
+function sndGood() { buzz(30); beep(523, 0.14); beep(659, 0.14, 0.11); beep(784, 0.22, 0.22); }
+function sndWrong() { buzz([0, 55, 45, 55]); beep(200, 0.35, 0, 'sawtooth', 0.1); }
+function sndCoin() { buzz(15); beep(988, 0.08, 0, 'square', 0.08); beep(1319, 0.18, 0.08, 'square', 0.08); }
 function sndWin() {
+  buzz([0, 45, 60, 45, 60, 90]);
   [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, 0.18, i * 0.14));
 }
-function sndStreak() { beep(880, 0.1); beep(1109, 0.1, 0.09); beep(1319, 0.1, 0.18); beep(1760, 0.25, 0.27); }
-function sndTap() { const n = pick([784, 880, 988, 1047, 1175]); beep(n, 0.12, 0, 'triangle', 0.12); }
+function sndStreak() { buzz([0, 25, 35, 25, 35, 55]); beep(880, 0.1); beep(1109, 0.1, 0.09); beep(1319, 0.1, 0.18); beep(1760, 0.25, 0.27); }
+function sndTap() { buzz(12); const n = pick([784, 880, 988, 1047, 1175]); beep(n, 0.12, 0, 'triangle', 0.12); }
 function toggleSound() {
   db.sound = !db.sound; save();
   $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
   if (db.sound) sndClick();
+}
+function toggleHaptics() {
+  db.haptics = !db.haptics; save();
+  $('btn-haptics').textContent = db.haptics ? '📳' : '📴';
+  if (db.haptics) buzz(20);   // even voelen dat trillen nu aan staat
 }
 
 /* ================= Avatar (SVG) ================= */
@@ -1072,6 +1087,8 @@ function renderProfiles() {
     row.appendChild(card);
   }
   $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
+  const hb = $('btn-haptics');
+  if ('vibrate' in navigator) { hb.style.display = ''; hb.textContent = db.haptics ? '📳' : '📴'; }
 }
 function selectProfile(key) { cur = key; goHome(); }
 
@@ -1944,6 +1961,7 @@ function importData(file) {
       }
       db = data;
       if (typeof db.sound !== 'boolean') db.sound = true;
+      if (typeof db.haptics !== 'boolean') db.haptics = true;
       Object.values(db.profiles).forEach(migrate);
       save();
       alert('Back-up geladen! 🎉');
