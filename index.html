@@ -54,6 +54,18 @@
   .btn.green:active { box-shadow: 0 1px 0 #1b5e20; }
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: 12px; box-shadow: 0 3px 0 #b36200; }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
+  /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
+  .btn.soft {
+    font-size: 17px; padding: 12px 18px; border-radius: 16px; color: #fff;
+    border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  }
+  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .btn.soft.shop { background: linear-gradient(180deg, rgba(171,71,188,.55), rgba(142,36,170,.38)); border-color: rgba(206,147,216,.6); box-shadow: 0 3px 0 rgba(74,20,140,.55); }
+  .btn.soft.shop:active { box-shadow: 0 1px 0 rgba(74,20,140,.55); }
+  .btn.soft.tro { background: linear-gradient(180deg, rgba(102,187,106,.55), rgba(56,142,60,.38)); border-color: rgba(165,214,167,.6); box-shadow: 0 3px 0 rgba(27,94,32,.55); }
+  .btn.soft.tro:active { box-shadow: 0 1px 0 rgba(27,94,32,.55); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
   /* ---- Profielkeuze (podium-stijl kaarten) ---- */
@@ -67,6 +79,14 @@
   }
   .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px rgba(0,0,0,.4); }
   .profile-card:active { transform: translateY(-2px) scale(1.01); }
+  /* diamanten als rustig stat-label rechtsboven (portemonnee), altijd bovenop het podium */
+  .profile-card .wallet {
+    position: absolute; top: 12px; right: 12px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 15px; font-weight: bold; color: #eaf7ff;
+    border-radius: 999px; padding: 5px 11px;
+    background: rgba(41,182,246,.5); border: 1px solid rgba(255,255,255,.22);
+  }
   .profile-card .pname { font-size: 27px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
   /* stat-badges */
   .stat-row { display: flex; gap: 8px; justify-content: center; margin: 8px 0 2px; }
@@ -227,6 +247,11 @@
     background: rgba(0,0,0,.28); border-radius: 999px; padding: 5px 13px;
     font-size: 15px; font-weight: 600;
   }
+  /* knop-hiërarchie: Optreden is de hoofdknop (volle breedte), Winkel/Trofeeën secundair eronder */
+  .home-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 16px; width: min(92vw, 400px); }
+  .home-actions .btn.big { width: 100%; }
+  .home-actions-row { display: flex; gap: 10px; }
+  .home-actions-row .btn { flex: 1; }
   @media (max-width: 500px) { #home-stage { height: 250px !important; } }
 
   /* ---- Spel ---- */
@@ -365,20 +390,32 @@
   @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px rgba(0,0,0,.3); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px rgba(0,0,0,.3); } }
   .gold-banner { font-size: 18px; font-weight: bold; color: #ffe082; text-shadow: 0 0 10px #ff6f00; margin-top: 6px; height: 22px; }
 
-  /* ---- Wereldtournee-kaart ---- */
-  .tour-map { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 680px; margin-top: 12px; }
-  .tour-stop {
-    width: 120px; border: none; cursor: pointer; font-family: inherit; color: #fff;
-    border-radius: 16px; padding: 10px 6px; text-align: center; position: relative;
-    background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b;
-  }
-  .tour-stop:active { transform: translateY(3px); box-shadow: 0 1px 0 #01579b; }
-  .tour-stop.locked { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; cursor: default; opacity: .75; }
-  .tour-stop.next { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; color: #4a148c; animation: pulseBtn 1.2s ease-in-out infinite; }
-  .tour-stop .flag { font-size: 30px; line-height: 1; }
-  .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 3px; }
-  .tour-stop .lvlnr { font-size: 11px; opacity: .85; }
-  .tour-stop .stars { font-size: 12px; letter-spacing: -1px; height: 14px; }
+  /* ---- Wereldtournee: horizontale reisroute (schaalt mee met elk aantal shows) ---- */
+  .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 680px; margin-top: 12px;
+    padding: 28px 6px 10px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 0 10px; }
+  /* de reisweg loopt dóór het midden van de haltes */
+  .tour-track::before { content: ""; position: absolute; top: 27px; left: 44px; right: 44px; height: 5px; border-radius: 999px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.5) 0 9px, transparent 9px 18px); }
+  .tour-stop { width: 84px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
+    background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
+  .tour-stop .dot { width: 54px; height: 54px; margin: 0 auto; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 25px; background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b; border: 2px solid rgba(255,255,255,.35); }
+  .tour-stop:active .dot { transform: translateY(2px); box-shadow: 0 1px 0 #01579b; }
+  .tour-stop.locked { cursor: default; }
+  .tour-stop.locked .dot { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; opacity: .72; }
+  .tour-stop.done .dot { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 4px 0 #1b5e20; }
+  .tour-stop.next .dot { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; border-color: #fff; animation: pulseBtn 1.2s ease-in-out infinite; }
+  /* "HIER"-pin boven de huidige show */
+  .tour-pin { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+    font-size: 11px; font-weight: bold; color: #4a148c; background: linear-gradient(180deg, #ffe082, #ffca28);
+    padding: 2px 9px; border-radius: 999px; box-shadow: 0 2px 5px rgba(0,0,0,.35); animation: pinBob 1.3s ease-in-out infinite; }
+  @keyframes pinBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-3px); } }
+  .tour-stop .cname { font-size: 12px; font-weight: bold; margin-top: 7px; }
+  .tour-stop.next .cname { color: #ffe082; }
+  .tour-stop.locked .cname { opacity: .7; }
+  .tour-stop .lvlnr { font-size: 10px; opacity: .82; }
+  .tour-stop .stars { font-size: 11px; letter-spacing: -1px; height: 13px; }
 
   /* ---- Trofeeën ---- */
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: 12px; max-width: 680px; width: 100%; margin-top: 4px; align-items: stretch; }
@@ -404,8 +441,10 @@
     background: linear-gradient(90deg, #ffd740, #ff80ab);
   }
   @media (max-width: 520px) {
-    .screen-header { grid-template-columns: 1fr; justify-items: center; gap: 8px; }
-    .screen-header .header-left, .screen-header .header-right { justify-self: center; }
+    /* header blijft één compacte rij (terug · naam · 💎) i.p.v. een hoge stapel */
+    .screen-header { grid-template-columns: auto 1fr auto; gap: 8px; }
+    .screen-header .header-title { font-size: 20px; overflow: hidden; text-overflow: ellipsis; }
+    .screen-header .header-left .btn.small { opacity: .72; }
   }
 
   /* ---- Level einde ---- */
@@ -561,12 +600,13 @@
     <div class="home-summary" id="home-summary"></div>
     <div class="stage tappable" id="home-stage" style="width:min(92vw,340px);height:300px;" onclick="tapDance('home-avatar')">
       <div class="avatar-holder idle" id="home-avatar"></div>
-      <div class="tap-hint">👆 Tik op je ster!</div>
     </div>
-    <div style="display:flex;gap:14px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+    <div class="home-actions">
       <button class="btn big" id="btn-play">🎤 Optreden <span id="next-lvl-num"></span></button>
-      <button class="btn purple" onclick="openShop()">🛍️ Winkel</button>
-      <button class="btn green" onclick="openTrophies()">🏆 Trofeeën</button>
+      <div class="home-actions-row">
+        <button class="btn soft shop" onclick="openShop()">🛍️ Winkel</button>
+        <button class="btn soft tro" onclick="openTrophies()">🏆 Trofeeën</button>
+      </div>
     </div>
     <div style="margin-top:14px;font-size:18px;opacity:.9">🗺️ Jouw wereldtournee:</div>
     <div class="tour-map" id="tour-map"></div>
@@ -1013,13 +1053,13 @@ function renderProfiles() {
     const card = document.createElement('div');
     card.className = 'profile-card';
     card.innerHTML =
-      `<div class="stage" style="width:154px;height:170px;margin:0 auto">
+      `<span class="wallet">💎 ${p.diamonds}</span>
+        <div class="stage" style="width:154px;height:170px;margin:0 auto">
            <div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
-        <div class="pname">${p.name}</div>
+        <div class="pname">🌟 ${p.name}</div>
         <div class="stat-row">
           <span class="stat-badge">⭐ ${totalStars}</span>
           <span class="stat-badge tro">🏆 ${p.trophies.length}</span>
-          <span class="stat-badge dia">💎 ${p.diamonds}</span>
         </div>
         <div class="play-btn"><span class="play-ico">▶</span>Speel!</div>`;
     applyStage(card.querySelector('.stage'), p);
@@ -1038,30 +1078,46 @@ function goHome() {
   applyStage($('home-stage'), p);
   const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
   $('home-summary').innerHTML =
-    `<span>⭐ ${totalStars} sterren</span><span>🏆 ${p.trophies.length} trofeeën</span><span>🎤 Show ${p.level}</span>`;
+    `<span>⭐ ${totalStars} sterren</span><span>🏆 ${p.trophies.length} trofeeën</span>`;
   const nextCity = cityFor(p.level);
   $('next-lvl-num').textContent = 'in ' + nextCity.name + ' ' + nextCity.flag;
   $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
   const map = $('tour-map');
   map.innerHTML = '';
+  const track = document.createElement('div');
+  track.className = 'tour-track';
+  // toont alle steden + een paar shows vooruit; de horizontale route schaalt met elk aantal shows
   const maxShow = Math.max(CITIES.length, p.level + 2);
+  let currentEl = null;
   for (let l = 1; l <= maxShow; l++) {
     const city = cityFor(l);
     const b = document.createElement('button');
     b.className = 'tour-stop';
+    const st = p.stars[l] || 0;
     if (l > p.level) {
       b.classList.add('locked');
-      b.innerHTML = `<div class="flag">🔒</div><div class="cname">${city.name}</div><div class="lvlnr">Show ${l}</div><div class="stars"></div>`;
+      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>`
+        + `<div class="lvlnr">Show ${l}</div><div class="stars"></div>`;
     } else {
-      if (l === p.level) b.classList.add('next');
-      const st = p.stars[l] || 0;
-      b.innerHTML = `<div class="flag">${city.flag}</div><div class="cname">${city.name}</div>`
+      const pin = (l === p.level) ? '<div class="tour-pin">📍 HIER</div>' : '';
+      b.classList.add(l === p.level ? 'next' : 'done');
+      b.innerHTML = `${pin}<div class="dot">${city.flag}</div><div class="cname">${city.name}</div>`
         + `<div class="lvlnr">Show ${l}</div><div class="stars">${'⭐'.repeat(st)}</div>`;
       b.onclick = () => { sndClick(); startLevel(l); };
     }
-    map.appendChild(b);
+    if (l === p.level) currentEl = b;
+    track.appendChild(b);
   }
+  map.appendChild(track);
   show('screen-home');
+  // huidige show ("HIER") altijd netjes in beeld: centreer die halte in het venster
+  if (currentEl) {
+    requestAnimationFrame(() => {
+      const mr = map.getBoundingClientRect();
+      const er = currentEl.getBoundingClientRect();
+      map.scrollLeft += (er.left - mr.left) - (map.clientWidth - currentEl.offsetWidth) / 2;
+    });
+  }
 }
 
 /* ================= Trofeeën-scherm ================= */
