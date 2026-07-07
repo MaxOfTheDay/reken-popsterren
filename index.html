@@ -258,7 +258,6 @@
     background: rgba(0,0,0,.28); border-radius: 999px; padding: 5px 13px;
     font-size: 15px; font-weight: 600; margin: 0 0 10px;
   }
-  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
   .home-summary {
     display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 2px 0 12px;
   }
@@ -419,27 +418,38 @@
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
   .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 0 10px; }
   /* de reisweg loopt dóór het midden van de haltes */
-  .tour-track::before { content: ""; position: absolute; top: 32px; left: 49px; right: 49px; height: 5px; border-radius: 999px;
-    background: repeating-linear-gradient(90deg, rgba(255,255,255,.5) 0 9px, transparent 9px 18px); }
-  .tour-stop { width: 94px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
+  .tour-track::before { content: ""; position: absolute; top: 26px; left: 49px; right: 49px; height: 4px; border-radius: 999px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 9px, transparent 9px 18px); }
+  .tour-stop { width: 84px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
-  .tour-stop .dot { width: 64px; height: 64px; margin: 0 auto; border-radius: 18px; display: flex; align-items: center; justify-content: center;
-    font-size: 30px; background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 4px 0 #01579b; border: 2px solid rgba(255,255,255,.35); }
-  .tour-stop:active .dot { transform: translateY(2px); box-shadow: 0 1px 0 #01579b; }
+  /* de haltes zijn voortgangs-context, geen tweede CTA: plat, gedempt, zonder puls of 3D-knopgevoel */
+  .tour-stop .dot { width: 52px; height: 52px; margin: 0 auto; border-radius: 15px; display: flex; align-items: center; justify-content: center;
+    font-size: 25px; background: linear-gradient(180deg, #4d8fbf, #35678f); box-shadow: 0 2px 5px rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.22); }
+  .tour-stop:active .dot { transform: scale(.94); }
   .tour-stop.locked { cursor: default; }
-  .tour-stop.locked .dot { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; opacity: .72; }
-  .tour-stop.done .dot { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 4px 0 #1b5e20; }
-  .tour-stop.next .dot { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 4px 0 #b36200; border-color: #fff; animation: pulseBtn 1.2s ease-in-out infinite; }
+  /* op slot = rustige "ghost", geen valse knop-affordance */
+  .tour-stop.locked .dot { background: rgba(255,255,255,.07); border: 2px dashed rgba(255,255,255,.26); box-shadow: none; opacity: .8; }
+  .tour-stop.done .dot { background: linear-gradient(180deg, rgba(102,187,106,.85), rgba(67,160,71,.85)); box-shadow: 0 2px 5px rgba(0,0,0,.24); }
+  /* huidige show: goud maar STATISCH (alleen de CTA beweegt) + witte ring als "je bent hier" */
+  .tour-stop.next .dot { background: linear-gradient(180deg, #ffca28, #ffa000);
+    box-shadow: 0 2px 6px rgba(0,0,0,.3), 0 0 0 3px rgba(255,255,255,.85); border-color: #fff; }
   /* "HIER"-pin boven de huidige show */
-  .tour-pin { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap;
-    font-size: 11px; font-weight: bold; color: #4a148c; background: linear-gradient(180deg, #ffe082, #ffca28);
-    padding: 2px 9px; border-radius: 999px; box-shadow: 0 2px 5px rgba(0,0,0,.35); animation: pinBob 1.3s ease-in-out infinite; }
-  @keyframes pinBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-3px); } }
-  .tour-stop .cname { font-size: 13px; font-weight: bold; margin-top: 8px; }
+  .tour-pin { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+    font-size: 10px; font-weight: bold; color: #4a148c; background: linear-gradient(180deg, #ffe082, #ffca28);
+    padding: 2px 8px; border-radius: 999px; box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+  .tour-stop .cname { font-size: 12px; font-weight: bold; margin-top: 7px; }
   .tour-stop.next .cname { color: #ffe082; }
-  .tour-stop.locked .cname { opacity: .7; }
-  .tour-stop .lvlnr { font-size: 11px; opacity: .82; }
-  .tour-stop .stars { font-size: 11px; letter-spacing: -1px; height: 13px; }
+  .tour-stop.locked .cname { opacity: .62; }
+  .tour-stop .lvlnr { font-size: 10px; opacity: .72; }
+  .tour-stop .stars { font-size: 10px; letter-spacing: -1px; height: 12px; }
+  /* voortgangs-kop boven de kaart: geeft de reisroute een eigen taak (hoe ver ben je?) */
+  .tour-head { width: 100%; max-width: 680px; margin: 18px 0 2px; }
+  .tour-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-weight: 600; }
+  .tour-head .tour-title { font-size: 16px; opacity: .9; }
+  .tour-head .tour-progress-label { font-size: 13px; opacity: .72; white-space: nowrap; }
+  .tour-progress-track { height: 6px; border-radius: 999px; background: rgba(0,0,0,.28); overflow: hidden; margin-top: 7px; }
+  .tour-progress-fill { height: 100%; border-radius: 999px; width: 0;
+    background: linear-gradient(90deg, #66bb6a, #43a047); transition: width .5s ease; }
 
   /* ---- Trofeeën ---- */
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: 12px; max-width: 680px; width: 100%; margin-top: 4px; align-items: stretch; }
@@ -642,7 +652,13 @@
         <button class="btn soft tro" onclick="openTrophies()">🏆 Trofeeën</button>
       </div>
     </div>
-    <div style="margin-top:14px;font-size:18px;opacity:.9">🗺️ Jouw wereldtournee:</div>
+    <div class="tour-head">
+      <div class="tour-head-row">
+        <span class="tour-title">🗺️ Jouw wereldtournee</span>
+        <span class="tour-progress-label" id="tour-progress-label"></span>
+      </div>
+      <div class="tour-progress-track"><div class="tour-progress-fill" id="tour-progress-fill"></div></div>
+    </div>
     <div class="tour-map" id="tour-map"></div>
   </div>
 
@@ -1237,6 +1253,12 @@ function goHome() {
   const nextCity = cityFor(p.level);
   $('next-lvl-num').textContent = 'in ' + nextCity.name;
   $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
+  // voortgang van de tournee: hoeveel steden van deze ronde bezocht
+  const totalCities = CITIES.length;
+  const posInRound = ((p.level - 1) % totalCities) + 1;
+  $('tour-progress-label').textContent =
+    `Show ${posInRound} van ${totalCities}` + (nextCity.ronde > 1 ? ` · ronde ${nextCity.ronde}` : '');
+  $('tour-progress-fill').style.width = (posInRound / totalCities * 100) + '%';
   const map = $('tour-map');
   map.innerHTML = '';
   const track = document.createElement('div');
