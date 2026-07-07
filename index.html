@@ -446,6 +446,16 @@
   .tour-head { width: 100%; max-width: 680px; margin: 18px 0 2px; }
   .tour-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-weight: 600; }
   .tour-head .tour-title { font-size: 16px; opacity: .9; }
+  /* trots-teller: hoeveel keer de hele wereld al rond is gereisd */
+  .trip-badge { font-size: 12px; font-weight: 700; color: #ffe082; opacity: 1;
+    background: rgba(255,193,7,.16); border: 1px solid rgba(255,224,130,.4);
+    padding: 2px 8px; border-radius: 999px; margin-left: 6px; white-space: nowrap; }
+  /* "wereldreis"-scheiding tussen twee rondes op de route */
+  .tour-round-sep { flex: 0 0 auto; width: 46px; align-self: flex-start; text-align: center; position: relative; z-index: 2; }
+  .tour-round-sep .rs-globe { width: 34px; height: 34px; margin: 9px auto 0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    background: #3a0f56; border: 2px solid rgba(255,255,255,.5); box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  .tour-round-sep .rs-label { font-size: 10px; font-weight: bold; margin-top: 7px; opacity: .85; color: #ffe082; }
   .tour-head .tour-progress-label { font-size: 13px; opacity: .72; white-space: nowrap; }
   .tour-progress-track { height: 6px; border-radius: 999px; background: rgba(0,0,0,.28); overflow: hidden; margin-top: 7px; }
   .tour-progress-fill { height: 100%; border-radius: 999px; width: 0;
@@ -654,7 +664,7 @@
     </div>
     <div class="tour-head">
       <div class="tour-head-row">
-        <span class="tour-title">🗺️ Jouw wereldtournee</span>
+        <span class="tour-title" id="tour-title">🗺️ Jouw wereldtournee</span>
         <span class="tour-progress-label" id="tour-progress-label"></span>
       </div>
       <div class="tour-progress-track"><div class="tour-progress-fill" id="tour-progress-fill"></div></div>
@@ -1253,11 +1263,16 @@ function goHome() {
   const nextCity = cityFor(p.level);
   $('next-lvl-num').textContent = 'in ' + nextCity.name;
   $('btn-play').onclick = () => { sndClick(); startLevel(p.level); };
-  // voortgang van de tournee: hoeveel steden van deze ronde bezocht
+  // voortgang binnen de huidige wereldreis; elke ronde = alle 12 steden opnieuw (eindeloos)
   const totalCities = CITIES.length;
   const posInRound = ((p.level - 1) % totalCities) + 1;
-  $('tour-progress-label').textContent =
-    `Show ${posInRound} van ${totalCities}` + (nextCity.ronde > 1 ? ` · ronde ${nextCity.ronde}` : '');
+  const trip = nextCity.ronde;                                 // huidige wereldreis (1, 2, 3, ...)
+  const tripsDone = Math.floor((p.level - 1) / totalCities);   // volledig voltooide reizen
+  $('tour-title').innerHTML = '🗺️ Jouw wereldtournee'
+    + (tripsDone > 0 ? ` <span class="trip-badge">🌍 ${tripsDone}× rond</span>` : '');
+  $('tour-progress-label').textContent = trip === 1
+    ? `Show ${posInRound} van ${totalCities}`
+    : `Wereldreis ${trip} · stad ${posInRound}/${totalCities}`;
   $('tour-progress-fill').style.width = (posInRound / totalCities * 100) + '%';
   const map = $('tour-map');
   map.innerHTML = '';
@@ -1267,6 +1282,13 @@ function goHome() {
   const maxShow = Math.max(CITIES.length, p.level + 2);
   let currentEl = null;
   for (let l = 1; l <= maxShow; l++) {
+    // aan het begin van elke nieuwe ronde een "wereldreis"-scheiding op de route
+    if (l > 1 && (l - 1) % CITIES.length === 0) {
+      const sep = document.createElement('div');
+      sep.className = 'tour-round-sep';
+      sep.innerHTML = `<div class="rs-globe">🌍</div><div class="rs-label">Reis ${(l - 1) / CITIES.length + 1}</div>`;
+      track.appendChild(sep);
+    }
     const city = cityFor(l);
     const b = document.createElement('button');
     b.className = 'tour-stop';
@@ -1734,13 +1756,20 @@ function endLevel(success) {
     const bonus = stars * 5;
     p.diamonds += bonus;
     p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
-    if (lvl === p.level) p.level++;
+    // een volle ronde (alle 12 steden) = een voltooide "wereldreis": extra feestmoment
+    const advanced = (lvl === p.level);
+    if (advanced) p.level++;
+    const finishedTrip = advanced && (lvl % CITIES.length === 0);
+    const tripNo = lvl / CITIES.length;
     const trofees = checkTrophies(p);
     save();
     const city = cityFor(lvl);
-    $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
+    $('end-title').textContent = finishedTrip
+      ? `🌍 Wereldreis ${tripNo} voltooid!`
+      : `🎉 ${city.name} was geweldig!`;
     $('end-stars').innerHTML = '⭐'.repeat(stars) + `<span class="dim">${'⭐'.repeat(3 - stars)}</span>`;
     $('end-text').innerHTML = `Het publiek juicht en danst mee! 👏🎶<div style="margin-top:6px;font-size:17px">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`
+      + (finishedTrip ? `<div style="margin-top:8px;color:#7fe0ff;font-weight:bold">🌍 Alle ${CITIES.length} steden bezocht! De tournee gaat door — ronde ${tripNo + 1} begint!</div>` : '')
       + (trofees.length ? `<div style="margin-top:8px;color:#ffd740;font-weight:bold">🏆 Nieuwe trofee: ${trofees.map(t => t.emoji + ' ' + t.name).join(', ')}!</div>` : '');
     const earnChips = [
       `<span class="earn-chip dia">💎 +${G.earned} verdiend</span>`,
@@ -1751,7 +1780,7 @@ function endLevel(success) {
     $('btn-end-next').textContent = '🎤 Volgend optreden';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl + 1 <= p.level ? lvl + 1 : p.level); };
     sndWin();
-    confetti(40);
+    confetti(finishedTrip ? 60 : 40);
     finaleDance('end-avatar', 6);   // grote slotchoreografie
   } else {
     save();
