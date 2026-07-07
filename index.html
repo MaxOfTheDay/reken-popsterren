@@ -1089,6 +1089,23 @@ function renderProfiles() {
   $('btn-sound').textContent = db.sound ? '🔊' : '🔇';
   const hb = $('btn-haptics');
   if ('vibrate' in navigator) { hb.style.display = ''; hb.textContent = db.haptics ? '📳' : '📴'; }
+  fitProfileHeader();
+}
+// De titel schaalt mee met de schermbreedte en zou op smalle schermen onder de
+// vaste hoekknoppen (geluid/trillen/instellingen) verdwijnen. Meet of ze elkaar
+// raken en reserveer dan precies genoeg ruimte erboven — klopt bij elke breedte
+// én bij elk aantal knoppen, dus ook als er later een instelling bij komt.
+function fitProfileHeader() {
+  const sp = $('screen-profile'), cb = $('corner-btns');
+  if (!sp || !cb) return;
+  sp.style.paddingTop = '';                                  // eerst terug naar natuurlijke stand
+  const title = sp.querySelector('.title');
+  if (!title || getComputedStyle(cb).display === 'none') return;
+  const cbb = cb.getBoundingClientRect(), tb = title.getBoundingClientRect();
+  const touches = tb.top < cbb.bottom + 4 && tb.right > cbb.left - 6 && tb.left < cbb.right + 6;
+  if (!touches) return;
+  const delta = Math.ceil(cbb.bottom + 12 - tb.top);         // titel net onder de knoppenrij duwen
+  if (delta > 0) sp.style.paddingTop = (12 + delta) + 'px';  // 12 = bestaande schermpadding
 }
 function selectProfile(key) { cur = key; goHome(); }
 
@@ -1977,6 +1994,9 @@ function importData(file) {
 /* ================= Start ================= */
 load();
 renderProfiles();
+// titel opnieuw uitlijnen als de breedte verandert of het lettertype net geladen is
+window.addEventListener('resize', fitProfileHeader);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitProfileHeader);
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
 }
