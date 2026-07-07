@@ -79,13 +79,15 @@
   }
   .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px rgba(0,0,0,.4); }
   .profile-card:active { transform: translateY(-2px) scale(1.01); }
-  /* diamanten als rustig stat-label rechtsboven (portemonnee), altijd bovenop het podium */
+  /* diamanten als duidelijk stat-label rechtsboven (portemonnee), altijd bovenop het podium.
+     Vol blauw + zachte gelijkmatige schaduw = goed leesbaar, maar geen 3D-knopgevoel. */
   .profile-card .wallet {
-    position: absolute; top: 12px; right: 12px; z-index: 6;
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 15px; font-weight: bold; color: #eaf7ff;
-    border-radius: 999px; padding: 5px 11px;
-    background: rgba(41,182,246,.5); border: 1px solid rgba(255,255,255,.22);
+    position: absolute; top: 10px; right: 10px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 16px; font-weight: bold; color: #fff;
+    border-radius: 999px; padding: 6px 13px;
+    background: #1e88e5; border: 1.5px solid rgba(255,255,255,.6);
+    box-shadow: 0 2px 7px rgba(0,0,0,.4);
   }
   .profile-card .pname { font-size: 27px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
   /* stat-badges */
@@ -392,7 +394,9 @@
 
   /* ---- Wereldtournee: horizontale reisroute (schaalt mee met elk aantal shows) ---- */
   .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 680px; margin-top: 12px;
-    padding: 28px 6px 10px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+    padding: 28px 6px 10px; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; -ms-overflow-style: none; }
+  .tour-map::-webkit-scrollbar { display: none; }
   .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 0 10px; }
   /* de reisweg loopt dóór het midden van de haltes */
   .tour-track::before { content: ""; position: absolute; top: 27px; left: 44px; right: 44px; height: 5px; border-radius: 999px;
