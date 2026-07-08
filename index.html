@@ -321,17 +321,34 @@
 
   /* ---- Spel ---- */
   #screen-game { padding: 8px; justify-content: flex-start; }
-  .game-top { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 820px; gap: 8px; }
-  .notes-left { font-size: 22px; letter-spacing: 2px; }
-  .qprogress { display: flex; gap: 5px; }
+  /* bovenbalk als één donker lint (zelfde familie als navigatie/actiebalk):
+     terug · stad · hartjes · 💎 — alles op één regel, ook op smalle schermen */
+  .game-top {
+    display: flex; align-items: center; width: 100%; max-width: 820px; gap: 8px;
+    padding: 6px 9px; border-radius: 18px;
+    background: rgba(30, 4, 52, .5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(255,255,255,.16);
+  }
+  .game-city {
+    flex: 1; min-width: 0; text-align: center; font-size: 16.5px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  }
+  .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; display: inline-block; flex-shrink: 0; }
+  .qprogress { display: flex; gap: 5px; justify-content: center; margin-top: 8px; }
   .qdot { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,.3); }
   .qdot.done { background: #ffd740; box-shadow: 0 0 6px #ffd740; }
   .qdot.now { background: #fff; transform: scale(1.25); }
-  #game-lvl-label { font-size: 19px; margin: 8px 0 2px; font-weight: 600; }
+  @media (max-width: 430px) {
+    .game-city .lvl-pre { display: none; }   /* "Optreden in " valt weg, de stad blijft */
+    .notes-left { font-size: 17px; letter-spacing: 0; }
+    .game-top .diamond-badge.compact { font-size: 15px; padding: 5px 10px; }
+  }
 
-  /* arena: linkerpaneel = de show (avatar + fanmeter), rechts = het rekenen (focus) */
+  /* arena: linkerpaneel = de show (avatar + fanmeter), rechts = het rekenen (focus);
+     space-evenly verdeelt de resthoogte gelijkmatig i.p.v. één groot gat bovenaan */
   .game-arena {
-    display: flex; gap: 22px; align-items: center; align-content: center; justify-content: center;
+    display: flex; gap: 22px; align-items: center; align-content: space-evenly; justify-content: center;
     width: 100%; max-width: 860px; margin-top: 6px; flex-wrap: wrap; flex: 1 1 auto;
   }
   .show-panel { display: flex; flex-direction: column; align-items: center; }
@@ -353,16 +370,20 @@
 
   .math-panel { display: flex; flex-direction: column; align-items: center; }
   .question-card {
+    position: relative; overflow: hidden;
     background: linear-gradient(180deg, #ffffff, #f3e9ff); color: #4a148c; border-radius: 26px;
-    padding: 20px 32px; margin: 0 0 8px; text-align: center;
+    padding: 18px 32px 26px; margin: 0 0 8px; text-align: center;
     font-size: clamp(42px, 8.5vw, 62px); font-weight: 700; min-width: min(88vw, 400px);
     box-shadow: 0 10px 24px rgba(0,0,0,.32); border: 3px solid rgba(255,255,255,.7);
   }
-  .spotlight-wrap { width: min(88vw, 400px); height: 12px; background: rgba(0,0,0,.32); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
+  /* de spotlight-bonus leeft ín de somkaart: een gouden randje dat langzaam dooft —
+     geen aparte tijdbalk-rij die als "haast je!" leest */
+  .spot-rail {
+    position: absolute; left: 16px; right: 16px; bottom: 9px; height: 7px;
+    border-radius: 999px; background: rgba(74, 20, 140, .10);
+  }
+  .question-card.golden .spot-rail { background: rgba(122, 79, 0, .16); }
   .spotlight-bar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffee58, #ffb300); transition: width .1s linear; }
-  .spotlight-label { font-size: 13px; opacity: .85; margin-bottom: 5px; transition: opacity .4s ease; }
-  /* dimt mee met de balk zodra de spotlight-bonus verlopen is */
-  .spotlight-label.spent { opacity: .3; }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
@@ -383,14 +404,35 @@
   }
   .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #311b92; }
   .num-btn.ok { background: linear-gradient(180deg, #66bb6a, #388e3c); box-shadow: 0 4px 0 #1b5e20; }
-  .num-btn.del { background: linear-gradient(180deg, #ef5350, #d32f2f); box-shadow: 0 4px 0 #8e0000; font-size: 22px; }
+  /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
+  .num-btn.del { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; font-size: 22px; }
 
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
     .game-arena { gap: 12px; }
     .show-stage { width: 128px; height: 150px; }
     .fan-track { height: 132px; width: 24px; }
-    .question-card { font-size: clamp(38px, 12vw, 56px); padding: 16px 22px; }
+    .question-card { font-size: clamp(38px, 12vw, 56px); padding: 14px 22px 24px; }
+  }
+  /* op lage schermen alles compacter: som + alle antwoorden moeten ALTIJD
+     zonder scrollen in beeld staan */
+  @media (max-height: 700px) {
+    .show-stage { width: 106px; height: 124px; }
+    .fan-track { height: 104px; width: 20px; }
+    .fan-icon { font-size: 16px; }
+    .game-arena { gap: 8px; margin-top: 2px; }
+    .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
+    .gold-banner { height: 18px; font-size: 14.5px; margin-top: 2px; }
+    .choice-btn { padding: 12px 8px; font-size: 27px; }
+    .choices { gap: 10px; }
+    .num-btn { padding: 9px 0; font-size: 23px; }
+    .numpad { gap: 8px; }
+    .qprogress { margin-top: 5px; }
+  }
+  /* ruime schermen: de show mag wat groter schitteren */
+  @media (min-width: 900px) and (min-height: 760px) {
+    .show-stage { width: 224px; height: 258px; }
+    .fan-track { height: 232px; }
   }
 
   .praise {
@@ -760,17 +802,17 @@
   <!-- ===== Spel ===== -->
   <div class="screen" id="screen-game">
     <div class="game-top">
-      <button class="btn small ghost" onclick="quitGame()" aria-label="Terug naar de kaart">⬅ Terug</button>
-      <div class="qprogress" id="qprogress"></div>
+      <button class="btn small ghost" onclick="askQuit()" aria-label="Show stoppen">⬅</button>
+      <div class="game-city" id="game-lvl-label"></div>
       <div class="notes-left" id="notes-left"></div>
       <div class="diamond-badge compact">💎 <span id="game-diamonds">0</span></div>
     </div>
-    <div id="game-lvl-label"></div>
+    <div class="qprogress" id="qprogress"></div>
     <div class="game-arena">
       <div class="show-panel">
         <div class="show-inner">
           <div class="fan-col">
-            <div class="fan-icon">🔥</div>
+            <div class="fan-icon">👏</div>
             <div class="fan-track"><div class="fan-fill" id="fanmeter-fill"></div></div>
           </div>
           <div class="stage show-stage" id="show-stage">
@@ -779,11 +821,24 @@
         </div>
       </div>
       <div class="math-panel">
-        <div class="question-card" id="question-card"></div>
+        <div class="question-card" id="question-card">
+          <div id="question-text"></div>
+          <div class="spot-rail" aria-hidden="true"><div class="spotlight-bar" id="spotlight-bar"></div></div>
+        </div>
         <div class="gold-banner" id="gold-banner"></div>
-        <div class="spotlight-label" id="spotlight-label">⭐ Spotlight-bonus!</div>
-        <div class="spotlight-wrap"><div class="spotlight-bar" id="spotlight-bar"></div></div>
         <div id="answer-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bevestiging vóór het verlaten van een show (voorkomt per-ongeluk-tikken) -->
+  <div class="modal-bg" id="quit-modal" onclick="if(event.target===this)closeQuitModal()">
+    <div class="modal">
+      <h3>🎭 Show stoppen?</h3>
+      <div style="font-size:15px;color:#6b5b7a;margin-bottom:14px">Dan stopt dit optreden en ga je terug naar de kaart.</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn green" onclick="closeQuitModal()">🎤 Doorspelen</button>
+        <button class="btn small" style="background:linear-gradient(180deg,#90a4ae,#607d8b);box-shadow:0 3px 0 #37474f" onclick="quitGame()">Stoppen</button>
       </div>
     </div>
   </div>
@@ -1607,7 +1662,7 @@ function startLevel(lvl) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0 };
   const city = cityFor(lvl);
-  $('game-lvl-label').textContent = `${city.flag} Optreden in ${city.name}`;
+  $('game-lvl-label').innerHTML = `${city.flag} <span class="lvl-pre">Optreden in </span>${city.name}`;
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
   applyStage($('show-stage'), p);
@@ -1621,7 +1676,11 @@ function updateFan() {
   fill.classList.toggle('full', G.fan >= 100);
 }
 
+/* Stoppen gaat via een bevestiging: één per-ongeluk-tik mag geen show kosten. */
+function askQuit() { sndClick(); $('quit-modal').classList.add('open'); }
+function closeQuitModal() { sndClick(); $('quit-modal').classList.remove('open'); }
 function quitGame() {
+  $('quit-modal').classList.remove('open');
   stopSpot();
   hideToast();
   G = null;
@@ -1676,9 +1735,8 @@ function renderQuestion() {
 function drawQuestion() {
   const q = G.qs[G.idx];
   const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
-  const card = $('question-card');
-  card.textContent = `${q.text} = ${shown}`;
-  card.classList.toggle('golden', !!q.gold);
+  $('question-text').textContent = `${q.text} = ${shown}`;
+  $('question-card').classList.toggle('golden', !!q.gold);
   $('gold-banner').textContent = q.gold ? '🌟 GOUDEN VRAAG — 3× diamanten! 🌟' : '';
 }
 function numpadPress(n) {
@@ -1697,16 +1755,15 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Enter') numpadPress('ok');
 });
 
-/* Spotlight-bonus balk (12 seconden) */
+/* Spotlight-bonus (12 seconden): het gouden randje onderin de somkaart dooft langzaam */
 function startSpot() {
   stopSpot();
   G.spot = 100;
   $('spotlight-bar').style.width = '100%';
-  $('spotlight-label').classList.remove('spent');
   G.timer = setInterval(() => {
     G.spot = Math.max(0, G.spot - 100 / 120);
     $('spotlight-bar').style.width = G.spot + '%';
-    if (G.spot <= 0) { $('spotlight-label').classList.add('spent'); stopSpot(); }
+    if (G.spot <= 0) stopSpot();
   }, 100);
 }
 function stopSpot() {
@@ -1750,8 +1807,10 @@ function submitAnswer(val, btnEl) {
     updateFan();
     save();
     $('game-diamonds').textContent = p.diamonds;
+    // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
+    flyDiamonds(btnEl || $('question-card'), encore || q.gold ? 3 : 2, 'game-diamonds');
     if (btnEl) btnEl.classList.add('good');
-    if (G.mode === 'typ') $('question-card').textContent = `${q.text} = ${q.ans}`;
+    if (G.mode === 'typ') $('question-text').textContent = `${q.text} = ${q.ans}`;
     if (encore) { sndWin(); confetti(24); showPraise('🎆 ENCORE! +5 💎 bonus!'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag! +' + gain + ' 💎'); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij! +' + gain + ' 💎'); }
@@ -1776,7 +1835,7 @@ function submitAnswer(val, btnEl) {
     // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
     G.retried = true;
     G.misses++;
-    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%'; $('spotlight-label').classList.add('spent');
+    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%';
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
@@ -1794,9 +1853,19 @@ function submitAnswer(val, btnEl) {
     const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
     if (cb) cb.classList.add('good');
   }
-  $('notes-left').textContent = livesText();
+  loseHeart();
   showToast(`Het juiste antwoord is: ${q.text} = ${q.ans}`);
   setTimeout(nextStep, 2100);
+}
+// het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
+function loseHeart() {
+  const el = $('notes-left');
+  const left = Math.max(0, 3 - G.errors);
+  el.textContent = '❤️'.repeat(left) + '💔' + '🤍'.repeat(Math.max(0, 2 - left));
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+  setTimeout(() => { el.classList.remove('shake'); if (G) el.textContent = livesText(); }, 900);
 }
 // levens: 3 hartjes, verloren kansen worden een gebroken hartje
 function livesText() {
@@ -2066,10 +2135,10 @@ function renderDressBar(it, p) {
   if (off) off.onclick = () => unequipShopItem(it.id);
 }
 
-// Aankoop-feedback: een paar diamanten vliegen van de koopknop naar de teller,
-// die even oppulst — zo ziet een kind wáár de diamanten heengaan.
-function flyDiamonds(fromEl, n) {
-  const to = $('shop-diamonds');
+// Diamant-feedback: een paar diamanten vliegen van de bron (koopknop, antwoord)
+// naar de teller, die even oppulst — zo ziet een kind wáár de diamanten heengaan.
+function flyDiamonds(fromEl, n, toId) {
+  const to = $(toId || 'shop-diamonds');
   if (!fromEl || !to || !fromEl.animate) return;
   const f = fromEl.getBoundingClientRect(), t = to.getBoundingClientRect();
   const dx = t.left + t.width / 2 - (f.left + f.width / 2);
@@ -2111,7 +2180,7 @@ function confirmShopBuy(id) {
   p.equipped[it.cat] = it.id;
   sndCoin();
   confetti(12);
-  flyDiamonds($('db-buy'), 3);          // vóór renderShop: daarna bestaat de knop niet meer
+  flyDiamonds($('db-buy'), 3, 'shop-diamonds');   // vóór renderShop: daarna bestaat de knop niet meer
   const trofees = checkTrophies(p);
   if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
   save();
