@@ -306,19 +306,18 @@
     flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
     width: 100%; min-height: 0; z-index: 1;
   }
-  /* klein en rustig, direct onder de topbalk — de kaart legt zichzelf uit */
-  .map-headline { font-size: 14px; font-weight: 600; opacity: .75; margin-top: 4px; text-shadow: 0 1px 0 rgba(0,0,0,.2); z-index: 1; }
   .map-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .map-sky > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
   @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
-  /* zachte microfoon in de lucht: on-brand en rendert op elk toestel goed
-     (stad-emoji als 🧇 werden op sommige apparaten onherkenbare vlekken) */
+  /* poster-compositie: een grote schuine microfoon half óver de linkerrand,
+     nootjes rechts — de diagonaal breekt de gestapelde middenas en de mic
+     rendert op elk toestel goed (stad-emoji werden soms onherkenbare vlekken) */
   .brand-sky span { position: absolute; opacity: .15; }
-  .brand-sky .mic { display: block; left: 0; right: 0; top: 9%; text-align: center; font-size: 118px; animation: floatyMic 7s ease-in-out infinite alternate; }
-  .brand-sky .n1 { right: 12%; top: 32%; font-size: 30px; animation: floaty 6s ease-in-out infinite alternate; animation-delay: -2s; }
-  .brand-sky .n2 { left: 9%; bottom: 15%; font-size: 26px; animation: floaty 8s ease-in-out infinite alternate; animation-delay: -4.5s; }
+  .brand-sky .mic { left: -58px; top: 26%; font-size: 175px; opacity: .13; animation: floatyMic 7s ease-in-out infinite alternate; }
+  .brand-sky .n1 { right: 9%; top: 19%; font-size: 32px; animation: floaty 6s ease-in-out infinite alternate; animation-delay: -2s; }
+  .brand-sky .n2 { right: 17%; bottom: 19%; font-size: 26px; animation: floaty 8s ease-in-out infinite alternate; animation-delay: -4.5s; }
   @keyframes floaty { from { transform: translateY(0); } to { transform: translateY(-14px); } }
-  @keyframes floatyMic { from { transform: rotate(-16deg) translateY(0); } to { transform: rotate(-16deg) translateY(-14px); } }
+  @keyframes floatyMic { from { transform: rotate(-24deg) translateY(0); } to { transform: rotate(-24deg) translateY(-14px); } }
   @media (max-height: 700px) { .brand-sky { display: none; } }   /* op lage schermen is er geen lucht over */
 
   .main-nav {
@@ -586,7 +585,6 @@
     .tour-stop .stars { font-size: 13px; height: 16px; }
     .tour-hero { width: 118px; bottom: calc(100% - 12px); }
     .tour-speel { font-size: 22px; padding: 15px 30px; }
-    .map-headline { font-size: 21px; }
   }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
@@ -893,7 +891,6 @@
         <span class="chip-badge">⭐ <span id="map-stars">0</span></span>
       </div>
     </div>
-    <div class="map-headline">🗺️ Jouw wereldtournee</div>
     <div class="map-flex">
       <div class="tour-map hscroll-fade" id="tour-map"></div>
     </div>
