@@ -455,12 +455,13 @@
     scrollbar-width: none; -ms-overflow-style: none; }
   .tour-map::-webkit-scrollbar { display: none; }
   .tour-map.dragging, .tour-map.dragging * { cursor: grabbing; }
-  /* zachte fade-randen: verschijnen alleen aan de kant waar nog meer te scrollen valt */
-  .tour-map.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%);
+  /* zachte fade-randen op horizontale scrollers (reisroute, tabbladen):
+     verschijnen alleen aan de kant waar nog meer te scrollen valt */
+  .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
-  .tour-map.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px);
+  .hscroll-fade.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px);
     mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
-  .tour-map.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+  .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
   /* ruimte boven de haltes voor de avatar, eronder voor de Speel-knop */
   .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 132px 26px 88px; }
@@ -558,42 +559,80 @@
   .earn-chip.fan { background: rgba(255,64,129,.28); }
   .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-  /* ---- Winkel ---- */
-  .shop-wrap { display: flex; gap: 16px; width: 100%; max-width: 860px; flex-wrap: wrap; justify-content: center; }
-  .shop-left { flex: 0 0 220px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .shop-right { flex: 1; min-width: 300px; }
-  .shop-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  /* ---- Kleedkamer ----
+     Opbouw: vaste kop (titel + 💎 + paspop + tabbladen) blijft plakken bovenaan,
+     het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
+     zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
+  #screen-dress { padding-bottom: 190px; }
+  .dress-sticky {
+    position: sticky; top: -12px; z-index: 5;
+    display: flex; flex-direction: column; align-items: center;
+    width: calc(100% + 24px); margin: -12px 0 12px; padding: 12px 12px 13px;
+    background: linear-gradient(180deg, rgba(43,7,71,.96), rgba(43,7,71,.82));
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 2px solid rgba(255,255,255,.14);
+    border-radius: 0 0 26px 26px;
+    box-shadow: 0 10px 24px rgba(20,0,40,.3);
+  }
+  .dress-sticky .screen-header { margin-bottom: 4px; }
+  .dress-stage { width: 200px; height: 168px; }
+  .dress-stage .deco { font-size: 20px; }
+  @media (max-height: 700px) { .dress-stage { width: 170px; height: 132px; } }
+  .shop-tabs {
+    display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 100%;
+    margin-top: 10px; padding: 2px 4px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .shop-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
     font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
     padding: 8px 14px; border-radius: 999px; color: #fff; background: rgba(255,255,255,.18);
-    transition: transform .07s, background .12s;
+    transition: transform .07s, background .12s; white-space: nowrap; flex-shrink: 0;
   }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: #ffb300; color: #4a148c; }
-  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
   .item-card {
-    background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.35);
+    position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.35);
     border-radius: 16px; padding: 10px; text-align: center; cursor: pointer;
     transition: transform .07s, background .12s;
   }
   .item-card:hover { background: rgba(255,255,255,.22); }
   .item-card:active { transform: scale(.97); }
-  .item-card.selected { background: rgba(255,255,255,.28); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.18); }
+  .item-card.selected { background: rgba(255,255,255,.28); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.28); transform: scale(1.04); }
   .item-card.equipped { border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.6); }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
   .item-name { font-size: 14px; font-weight: bold; }
-  .item-price { font-size: 15px; margin-top: 4px; }
-  .item-price.owned { color: #b9f6ca; }
-  .shop-choice {
-    width: 210px; min-height: 118px; text-align: center;
-    background: rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.28);
-    border-radius: 18px; padding: 10px;
+  .item-price { font-size: 15px; margin-top: 4px; min-height: 19px; }
+  /* prijs die (nog) niet betaalbaar is: gedimd, maar passen mag altijd */
+  .item-price.dim { opacity: .5; }
+  /* leesloze eigendoms-badges: dikke gouden ✔ = aan, kleine ✓ = al gekocht */
+  .own-badge {
+    position: absolute; top: -8px; right: -8px; width: 25px; height: 25px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 13px; font-weight: bold;
+    background: rgba(255,255,255,.94); color: #2e7d32; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
   }
-  .shop-choice .hint { font-size: 15px; font-weight: 600; line-height: 1.2; opacity: .95; }
-  .shop-choice .choice-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
-  .shop-choice .choice-price { font-size: 16px; margin-bottom: 8px; }
-  .shop-choice .choice-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-  .shop-choice .btn { font-size: 16px; padding: 8px 14px; border-radius: 12px; }
+  .own-badge.on {
+    width: 31px; height: 31px; font-size: 16px;
+    background: linear-gradient(180deg, #ffd54f, #ffb300); color: #4a148c;
+  }
+  /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
+  .dress-bar {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 39;
+    display: none; align-items: center; gap: 10px; width: min(94vw, 430px); min-height: 64px;
+    background: rgba(30, 4, 52, .86); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255,255,255,.22); border-radius: 20px;
+    padding: 10px 14px; box-shadow: 0 10px 26px rgba(0,0,0,.4);
+  }
+  .dress-bar .db-hint { width: 100%; text-align: center; font-size: 15.5px; font-weight: 600; opacity: .85; }
+  .dress-bar .db-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  .dress-bar .db-name { font-size: 16.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dress-bar .db-sub { font-size: 13.5px; opacity: .92; font-weight: 600; }
+  .dress-bar .db-sub.warn { color: #ffd54f; opacity: 1; }
+  .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
+  /* wegvliegende diamant bij een aankoop */
+  .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
 
   /* ---- Instellingen (ouder-dashboard) ---- */
   .settings-sheet { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
@@ -714,7 +753,7 @@
     </div>
     <div class="map-flex">
       <div class="map-headline">🗺️ Jouw wereldtournee</div>
-      <div class="tour-map" id="tour-map"></div>
+      <div class="tour-map hscroll-fade" id="tour-map"></div>
     </div>
   </div>
 
@@ -779,24 +818,18 @@
 
   <!-- ===== Kleedkamer (passen én kopen op één plek) ===== -->
   <div class="screen hub" id="screen-dress">
-    <div class="screen-header">
-      <div class="header-left"></div>
-      <div class="header-title">👗 Kleedkamer</div>
-      <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
-    </div>
-    <div class="shop-wrap">
-      <div class="shop-left">
-        <div class="stage tappable" id="shop-stage" style="width:210px;height:250px;" onclick="tapDance('shop-avatar')">
-          <div class="avatar-holder idle" id="shop-avatar"></div>
-        </div>
-        <div class="shop-choice" id="shop-choice"></div>
-        <div style="font-size:15px;opacity:.85;text-align:center">Verdien 💎 door<br>optredens te spelen!</div>
+    <div class="dress-sticky">
+      <div class="screen-header">
+        <div class="header-left"></div>
+        <div class="header-title">👗 Kleedkamer</div>
+        <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
-      <div class="shop-right">
-        <div class="shop-tabs" id="shop-tabs"></div>
-        <div class="item-grid" id="item-grid"></div>
+      <div class="stage tappable dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
+        <div class="avatar-holder idle" id="shop-avatar"></div>
       </div>
+      <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
     </div>
+    <div class="item-grid" id="item-grid"></div>
   </div>
 
   <!-- ===== Instellingen (ouders) ===== -->
@@ -815,6 +848,9 @@
     </div>
   </div>
 </div>
+
+<!-- actiebalk van de kleedkamer: passen/kopen, altijd in beeld boven de navigatie -->
+<div class="dress-bar" id="dress-bar"></div>
 
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën -->
 <div class="main-nav" id="main-nav">
@@ -914,9 +950,10 @@ const ITEMS = [
   { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
+// Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
 const CATS = [
-  { id: 'hair',  name: '💇 Haar' },
   { id: 'dress', name: '👗 Jurken' },
+  { id: 'hair',  name: '💇 Haar' },
   { id: 'mic',   name: '🎤 Micro' },
   { id: 'instrument', name: '🎸 Muziek' },
   { id: 'acc',   name: '🎀 Extra' },
@@ -1128,7 +1165,9 @@ document.addEventListener('click', e => {
 
 /* ================= Avatar (SVG) ================= */
 let svgUid = 0;
-function avatarSVG(p, width) {
+// bigProps: in de kleedkamer krijgen huisdier en instrument een groter formaat,
+// zodat het spulletje dat je aan het passen bent ook echt te zien is.
+function avatarSVG(p, width, bigProps) {
   const eq = p.equipped;
   const hair = item(eq.hair), dress = item(eq.dress);
   const mic = eq.mic ? item(eq.mic) : null;
@@ -1145,8 +1184,10 @@ function avatarSVG(p, width) {
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
     <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
-  if (pet) s += `<text x="18" y="240" font-size="34">${pet.emoji}</text>`;
-  if (instr) s += `<text x="120" y="246" font-size="42">${instr.emoji}</text>`;
+  if (pet) s += bigProps ? `<text x="6" y="244" font-size="46">${pet.emoji}</text>`
+                         : `<text x="18" y="240" font-size="34">${pet.emoji}</text>`;
+  if (instr) s += bigProps ? `<text x="112" y="248" font-size="52">${instr.emoji}</text>`
+                           : `<text x="120" y="246" font-size="42">${instr.emoji}</text>`;
   // haar achter + staartjes
   s += `<circle cx="100" cy="62" r="37" fill="${hc}"/>`;
   s += `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
@@ -1218,6 +1259,7 @@ function show(id) {
   const navId = NAV_FOR_SCREEN[id];
   $('main-nav').style.display = navId ? 'flex' : 'none';
   ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
+  $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
 }
 function navGo(t) {
   sndClick();
@@ -1277,18 +1319,19 @@ function fitProfileHeader() {
 }
 function selectProfile(key) { cur = key; goMap(); }
 
-// Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt.
-function updateTourFades(map) {
-  const max = map.scrollWidth - map.clientWidth;
-  map.classList.toggle('can-left', map.scrollLeft > 2);
-  map.classList.toggle('can-right', map.scrollLeft < max - 2);
+// Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt
+// (gedeeld door de reisroute en de kleedkamer-tabbladen).
+function updateFades(el) {
+  const max = el.scrollWidth - el.clientWidth;
+  el.classList.toggle('can-left', el.scrollLeft > 2);
+  el.classList.toggle('can-right', el.scrollLeft < max - 2);
 }
 // Bindt (eenmalig) de scroll-fade en muis-klik-&-sleep om horizontaal te scrollen.
 // Touch/pen scrollt al native; alleen de muis krijgt sleep-gedrag.
 function setupTourMap(map) {
   if (map.dataset.tourBound) return;
   map.dataset.tourBound = '1';
-  map.addEventListener('scroll', () => updateTourFades(map), { passive: true });
+  map.addEventListener('scroll', () => updateFades(map), { passive: true });
   let down = false, startX = 0, startScroll = 0, moved = false;
   map.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse' || e.button !== 0) return;
@@ -1338,7 +1381,7 @@ function goMap() {
     const focus = map.querySelector(`.tour-stop[data-lvl="${travel ? travel.from : p.level}"]`);
     // vlak vóór de reis iets naar rechts centreren, zodat de nieuwe stad ook al in beeld staat
     if (focus) centerStop(map, focus, travel ? Math.round(focus.offsetWidth / 2) : 0, false);
-    updateTourFades(map);
+    updateFades(map);
     if (travel) runTravel(travel);
   });
 }
@@ -1397,7 +1440,7 @@ function runTravel(t) {
     requestAnimationFrame(() => {
       const el = map.querySelector(`.tour-stop[data-lvl="${P().level}"]`);
       if (el) centerStop(map, el, 0, true);
-      updateTourFades(map);
+      updateFades(map);
       const dot = el && el.querySelector('.dot');
       if (dot && dot.animate) dot.animate(
         [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
@@ -1914,17 +1957,22 @@ function confetti(n) {
 }
 
 /* ================= Kleedkamer (passen én kopen) ================= */
-let shopCat = 'hair';
+let shopCat = 'dress';
 let shopSelectedId = null;
-function openKleedkamer() { shopCat = 'hair'; shopSelectedId = null; renderShop(); show('screen-dress'); }
+function openKleedkamer() {
+  shopCat = 'dress'; shopSelectedId = null;
+  renderShop();
+  show('screen-dress');
+  $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
+}
 function renderShop() {
   const p = P();
   const selected = shopSelectedId ? item(shopSelectedId) : null;
   const preview = selected ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
-  $('shop-avatar').innerHTML = avatarSVG(preview, 165);
+  $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
   applyStage($('shop-stage'), preview);
-  renderShopChoice(selected, p);
+  renderDressBar(selected, p);
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
   CATS.forEach(c => {
@@ -1933,6 +1981,16 @@ function renderShop() {
     b.textContent = c.name;
     b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; renderShop(); };
     tabs.appendChild(b);
+  });
+  if (!tabs.dataset.fadeBound) {
+    tabs.dataset.fadeBound = '1';
+    tabs.addEventListener('scroll', () => updateFades(tabs), { passive: true });
+  }
+  // actieve tab in beeld + fade-randen goed zetten
+  requestAnimationFrame(() => {
+    const act = tabs.querySelector('.active');
+    if (act && act.scrollIntoView) act.scrollIntoView({ inline: 'center', block: 'nearest' });
+    updateFades(tabs);
   });
   const grid = $('item-grid');
   grid.innerHTML = '';
@@ -1946,10 +2004,13 @@ function renderShop() {
     else if (it.bg) swatch = `<div class="item-swatch" style="background:${it.bg}"></div>`;
     else if (it.color === 'RAINBOW') swatch = `<div class="item-swatch" style="background:linear-gradient(45deg,#ff5f6d,#ffc371,#8bd450,#47c9ff,#b06ab3)"></div>`;
     else swatch = `<div class="item-swatch" style="background:${it.color}"></div>`;
-    const priceLine = equipped ? '<div class="item-price owned">✔ Aan</div>'
-      : owned ? '<div class="item-price owned">Gekocht</div>'
-      : `<div class="item-price">💎 ${it.price}</div>`;
-    card.innerHTML = swatch + `<div class="item-name">${it.name}</div>` + priceLine;
+    // leesloze status: badge i.p.v. tekst (✔ = aan, ✓ = al gekocht);
+    // een (nog) niet betaalbare prijs staat gedimd, maar passen mag altijd
+    const badge = equipped ? '<span class="own-badge on">✔</span>'
+      : owned ? '<span class="own-badge">✓</span>' : '';
+    const priceLine = owned ? '<div class="item-price"></div>'
+      : `<div class="item-price${p.diamonds < it.price ? ' dim' : ''}">💎 ${it.price}</div>`;
+    card.innerHTML = badge + swatch + `<div class="item-name">${it.name}</div>` + priceLine;
     card.onclick = () => { sndClick(); shopSelectedId = it.id; renderShop(); };
     grid.appendChild(card);
   });
@@ -1961,35 +2022,78 @@ function previewProfile(p, it) {
   return preview;
 }
 
-function renderShopChoice(it, p) {
-  const panel = $('shop-choice');
+// De actiebalk onderaan: naam + status links, dé knop rechts. Bij te weinig
+// diamanten geen dood spoor maar een concreet doel: "Nog X 💎" + meteen spelen.
+function renderDressBar(it, p) {
+  const bar = $('dress-bar');
+  const naam = (it2) => `${it2.emoji ? it2.emoji + ' ' : ''}${it2.name}`;
   if (!it) {
-    panel.innerHTML = '<div class="hint">Tik op iets om het eerst te passen.</div>';
+    bar.innerHTML = '<div class="db-hint">👆 Tik op iets om het te passen</div>';
     return;
   }
   const owned = p.owned.includes(it.id);
   const equipped = p.equipped[it.cat] === it.id;
   if (!owned) {
-    const enough = p.diamonds >= it.price;
-    panel.innerHTML = `
-      <div class="choice-name">${it.name}</div>
-      <div class="choice-price">Kost 💎 ${it.price}</div>
-      <div class="choice-actions">
-        <button class="btn green" id="shop-buy-btn" ${enough ? '' : 'disabled'}>${enough ? 'Ja, koop!' : 'Te weinig 💎'}</button>
-      </div>`;
-    $('shop-buy-btn').onclick = () => confirmShopBuy(it.id);
+    const tekort = it.price - p.diamonds;
+    if (tekort > 0) {
+      bar.innerHTML = `
+        <div class="db-info"><span class="db-name">${naam(it)}</span>
+          <span class="db-sub warn">Nog ${tekort} 💎 nodig</span></div>
+        <button class="btn small" id="db-earn">🎤 Speel een show</button>`;
+      $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
+    } else {
+      bar.innerHTML = `
+        <div class="db-info"><span class="db-name">${naam(it)}</span>
+          <span class="db-sub">Kost 💎 ${it.price}</span></div>
+        <button class="btn small" id="db-buy">🛍️ Ja, koop!</button>`;
+      $('db-buy').onclick = () => confirmShopBuy(it.id);
+    }
     return;
   }
-  panel.innerHTML = `
-    <div class="choice-name">${it.name}</div>
-    <div class="choice-price">${equipped ? 'Dit heb je aan' : 'Al gekocht'}</div>
-    <div class="choice-actions">
-      <button class="btn green" id="shop-wear-btn">${equipped ? 'Aan laten' : 'Aandoen'}</button>
-      ${equipped && ['mic', 'instrument', 'acc', 'pet'].includes(it.cat) ? '<button class="btn ghost" id="shop-off-btn">Afdoen</button>' : ''}
-    </div>`;
-  $('shop-wear-btn').onclick = () => equipShopItem(it.id);
-  const off = $('shop-off-btn');
+  if (!equipped) {
+    bar.innerHTML = `
+      <div class="db-info"><span class="db-name">${naam(it)}</span>
+        <span class="db-sub">✓ Al van jou</span></div>
+      <button class="btn small green" id="db-wear">Aandoen</button>`;
+    $('db-wear').onclick = () => equipShopItem(it.id);
+    return;
+  }
+  bar.innerHTML = `
+    <div class="db-info"><span class="db-name">${naam(it)}</span>
+      <span class="db-sub">✔ Dit heb je aan</span></div>
+    ${['mic', 'instrument', 'acc', 'pet'].includes(it.cat) ? '<button class="btn small ghost" id="db-off">Afdoen</button>' : ''}`;
+  const off = $('db-off');
   if (off) off.onclick = () => unequipShopItem(it.id);
+}
+
+// Aankoop-feedback: een paar diamanten vliegen van de koopknop naar de teller,
+// die even oppulst — zo ziet een kind wáár de diamanten heengaan.
+function flyDiamonds(fromEl, n) {
+  const to = $('shop-diamonds');
+  if (!fromEl || !to || !fromEl.animate) return;
+  const f = fromEl.getBoundingClientRect(), t = to.getBoundingClientRect();
+  const dx = t.left + t.width / 2 - (f.left + f.width / 2);
+  const dy = t.top + t.height / 2 - f.top;
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div');
+    d.className = 'fly-dia';
+    d.textContent = '💎';
+    d.style.left = (f.left + f.width / 2 - 11) + 'px';
+    d.style.top = f.top + 'px';
+    document.body.appendChild(d);
+    d.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx * 0.5 + (i - 1) * 26}px, ${dy * 0.4 - 46}px) scale(1.2)`, offset: .5 },
+      { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: .85 }
+    ], { duration: 620 + i * 110, easing: 'ease-in-out' }).onfinish = () => d.remove();
+    setTimeout(() => d.remove(), 900 + i * 110);
+  }
+  setTimeout(() => {
+    const badge = to.closest('.diamond-badge');
+    if (badge && badge.animate) badge.animate(
+      [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
+      { duration: 340, easing: 'ease-out' });
+  }, 600);
 }
 
 function confirmShopBuy(id) {
@@ -2007,10 +2111,12 @@ function confirmShopBuy(id) {
   p.equipped[it.cat] = it.id;
   sndCoin();
   confetti(12);
+  flyDiamonds($('db-buy'), 3);          // vóór renderShop: daarna bestaat de knop niet meer
   const trofees = checkTrophies(p);
   if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
   save();
   renderShop();
+  tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
 }
 
 function equipShopItem(id) {
