@@ -654,10 +654,10 @@
   }
   .nav-item.has-new .nav-dot { display: block; }
   @media (max-width: 520px) {
-    /* header blijft één compacte rij (terug · naam · 💎) i.p.v. een hoge stapel */
-    .screen-header { grid-template-columns: auto 1fr auto; gap: 8px; }
+    /* gelijke flexibele zijkolommen: de titel blijft écht in het schermmidden,
+       ook nu de linkercel leeg is (met auto|1fr|auto hing hij ~47px naar links) */
+    .screen-header { grid-template-columns: 1fr auto 1fr; gap: 8px; }
     .screen-header .header-title { font-size: 20px; overflow: hidden; text-overflow: ellipsis; }
-    .screen-header .header-left .btn.small { opacity: .72; }
   }
 
   /* ---- Level einde ---- */
@@ -936,7 +936,7 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <div class="header-left"></div>
-        <div class="header-title" id="trophy-title">🏆 Trofeeën</div>
+        <div class="header-title">🏆 Trofeeënkast</div>
         <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
       </div>
       <div class="kast-progress">
@@ -1513,7 +1513,7 @@ function setupTourMap(map) {
 let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
 function goMap() {
   const p = P();
-  $('map-name').textContent = '🌟 ' + p.name;
+  $('map-name').textContent = p.name;
   $('map-diamonds').textContent = p.diamonds;
   $('map-stars').textContent = totalStarCount(p);
   $('map-portrait').innerHTML = `<span class="pframe">${avatarSVG(p, 80)}</span><span class="dressdot">👗</span>`;
@@ -1641,7 +1641,6 @@ function openTrophies() {
   const p = P();
   checkTrophies(p);   // laat trofeeën die al verdiend zijn zeker zien
   const earned = p.trophies.length;
-  $('trophy-title').textContent = `🏆 Trofeeën van ${p.name}`;
   $('trophy-diamonds').textContent = p.diamonds;
   $('trophy-count').textContent = `${earned} van ${TROPHIES.length} verzameld`;
   $('trophy-bar').style.width = Math.round(100 * earned / TROPHIES.length) + '%';
