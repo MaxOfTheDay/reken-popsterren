@@ -1065,18 +1065,34 @@ const ITEMS = [
   { id: 'hair_rood',     cat: 'hair', name: 'Rood haar',      price: 25,  color: '#d84315' },
   { id: 'hair_roze',     cat: 'hair', name: 'Roze haar',      price: 40,  color: '#f06292' },
   { id: 'hair_blauw',    cat: 'hair', name: 'Blauw haar',     price: 40,  color: '#42a5f5' },
+  { id: 'hair_paars',    cat: 'hair', name: 'Paars haar',     price: 40,  color: '#ab47bc' },
+  { id: 'hair_groen',    cat: 'hair', name: 'Groen haar',     price: 45,  color: '#66bb6a' },
+  { id: 'hair_zilver',   cat: 'hair', name: 'Zilvergrijs haar', price: 60, color: '#cfd8dc' },
   { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog haar', price: 90,  color: 'RAINBOW' },
   // Jurken
   { id: 'dress_roze',    cat: 'dress', name: 'Roze jurk',      price: 0,   color: '#ec407a' },
   { id: 'dress_paars',   cat: 'dress', name: 'Paarse jurk',    price: 0,   color: '#7e57c2' },
+  { id: 'dress_geel',    cat: 'dress', name: 'Gele jurk',      price: 15,  color: '#fdd835' },
   { id: 'dress_blauw',   cat: 'dress', name: 'Blauwe jurk',    price: 15,  color: '#29b6f6' },
   { id: 'dress_groen',   cat: 'dress', name: 'Groene jurk',    price: 15,  color: '#66bb6a' },
+  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje jurk',    price: 20,  color: '#fb8c00' },
   { id: 'dress_rood',    cat: 'dress', name: 'Rode jurk',      price: 20,  color: '#ef5350' },
   { id: 'dress_sterren', cat: 'dress', name: 'Sterrenjurk',    price: 60,  color: '#5c6bc0', pattern: 'stars' },
+  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjesjurk',    price: 70,  color: '#f06292', pattern: 'hearts' },
   { id: 'dress_disco',   cat: 'dress', name: 'Discojurk',      price: 80,  color: '#b0bec5', pattern: 'disco' },
   { id: 'dress_regenboog',cat:'dress', name: 'Regenboogjurk',  price: 110, color: 'RAINBOW' },
+  // Schoentjes (kleuren de vaste schoentjes van de paspop)
+  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze schoentjes',   price: 0,  color: '#e91e63' },
+  { id: 'shoes_rood',  cat: 'shoes', name: 'Rode schoentjes',   price: 10, color: '#e53935' },
+  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauwe schoentjes', price: 15, color: '#1e88e5' },
+  { id: 'shoes_geel',  cat: 'shoes', name: 'Gele schoentjes',   price: 15, color: '#fdd835' },
+  { id: 'shoes_groen', cat: 'shoes', name: 'Groene schoentjes', price: 20, color: '#43a047' },
+  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitterschoentjes', price: 60, color: '#ffd54f' },
   // Microfoons
   { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
+  { id: 'mic_blauw',  cat: 'mic', name: 'Blauwe micro',   price: 35, color: '#42a5f5' },
+  { id: 'mic_groen',  cat: 'mic', name: 'Groene micro',   price: 40, color: '#66bb6a' },
+  { id: 'mic_zwart',  cat: 'mic', name: 'Zwarte rockmicro', price: 55, color: '#37474f' },
   { id: 'mic_goud',   cat: 'mic', name: 'Gouden micro',   price: 60, color: '#ffd54f' },
   { id: 'mic_roze',   cat: 'mic', name: 'Roze glittermicro', price: 90, color: '#ff80ab' },
   // Instrumenten
@@ -1092,6 +1108,10 @@ const ITEMS = [
   { id: 'acc_bril',     cat: 'acc', name: 'Coole zonnebril',price: 35, emoji: '🕶️' },
   { id: 'acc_koptel',   cat: 'acc', name: 'Hoofdtelefoon',  price: 50, emoji: '🎧' },
   { id: 'acc_kroon',    cat: 'acc', name: 'Kroontje',       price: 75, emoji: '👑' },
+  // nieuwe extra's tekenen generiek via hun emoji (spot: 'zij' = in het haar, 'top' = op het hoofd)
+  { id: 'acc_vlinder',  cat: 'acc', name: 'Vlinder',        price: 30, emoji: '🦋', spot: 'zij' },
+  { id: 'acc_ster',     cat: 'acc', name: 'Sterspeldje',    price: 35, emoji: '💫', spot: 'zij' },
+  { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
   // Huisdieren
   { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
   { id: 'pet_hond',   cat: 'pet', name: 'Danshondje',    price: 50,  emoji: '🐶' },
@@ -1100,8 +1120,11 @@ const ITEMS = [
   { id: 'pet_konijn', cat: 'pet', name: 'Konijntje',     price: 60,  emoji: '🐰' },
   { id: 'pet_schildpad',cat:'pet', name: 'Schildpadje',  price: 65,  emoji: '🐢' },
   { id: 'pet_vos',    cat: 'pet', name: 'Slim vosje',    price: 70,  emoji: '🦊' },
+  { id: 'pet_uil',    cat: 'pet', name: 'Wijze uil',     price: 75,  emoji: '🦉' },
   { id: 'pet_papegaai',cat:'pet', name: 'Papegaai',      price: 80,  emoji: '🦜' },
+  { id: 'pet_dolfijn',cat: 'pet', name: 'Dolfijn',       price: 85,  emoji: '🐬' },
   { id: 'pet_panda',  cat: 'pet', name: 'Pandabeer',     price: 90,  emoji: '🐼' },
+  { id: 'pet_flamingo',cat:'pet', name: 'Flamingo',      price: 95,  emoji: '🦩' },
   { id: 'pet_leeuw',  cat: 'pet', name: 'Leeuwenwelp',   price: 100, emoji: '🦁' },
   { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
   { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 160, emoji: '🐉' },
@@ -1110,12 +1133,17 @@ const ITEMS = [
   { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
   { id: 'stage_kasteel',  cat: 'stage', name: 'Prinsessenkasteel',price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
   { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimteshow',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
+  { id: 'stage_jungle',   cat: 'stage', name: 'Junglepodium',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
+  { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'] },
+  { id: 'stage_onderwater',cat:'stage', name: 'Onderwatershow',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
   { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
+  { id: 'stage_arena',    cat: 'stage', name: 'Grote arena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
 // Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
 const CATS = [
   { id: 'dress', name: '👗 Jurken' },
+  { id: 'shoes', name: '👟 Schoentjes' },
   { id: 'hair',  name: '💇 Haar' },
   { id: 'mic',   name: '🎤 Micro' },
   { id: 'instrument', name: '🎸 Muziek' },
@@ -1123,10 +1151,13 @@ const CATS = [
   { id: 'pet',   name: '🐾 Dieren' },
   { id: 'stage', name: '🎪 Podium' },
 ];
+function catCount(p, cat) { return p.owned.filter(id => { const it = item(id); return it && it.cat === cat; }).length; }
 const INSTR_TOTAL = ITEMS.filter(i => i.cat === 'instrument').length;
-function instrCount(p) { return p.owned.filter(id => { const it = item(id); return it && it.cat === 'instrument'; }).length; }
+function instrCount(p) { return catCount(p, 'instrument'); }
 const PET_TOTAL = ITEMS.filter(i => i.cat === 'pet').length;
-function petCount(p) { return p.owned.filter(id => { const it = item(id); return it && it.cat === 'pet'; }).length; }
+function petCount(p) { return catCount(p, 'pet'); }
+const DRESS_TOTAL = ITEMS.filter(i => i.cat === 'dress').length;
+const SHOES_TOTAL = ITEMS.filter(i => i.cat === 'shoes').length;
 
 /* ================= Wereldtournee ================= */
 // Speelse stad-emoji i.p.v. landvlaggen: renderen op elk toestel (ook Windows) en
@@ -1173,6 +1204,8 @@ const TROPHIES = [
   { id: 'collector',  emoji: '🎁', name: 'Verzamelaar',     desc: 'Koop 12 spulletjes',             has: p => boughtCount(p) >= 12, progress: p => trophyProgress(boughtCount(p), 12, 'spulletjes gekocht') },
   { id: 'muzikant',   emoji: '🎶', name: 'Muzikant',        desc: 'Koop 3 instrumenten',            has: p => instrCount(p) >= 3, progress: p => trophyProgress(instrCount(p), 3, 'instrumenten') },
   { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Verzamel alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
+  { id: 'modekoningin', emoji: '👗', name: 'Modekoningin',  desc: 'Verzamel alle jurken',           has: p => catCount(p, 'dress') >= DRESS_TOTAL, progress: p => trophyProgress(catCount(p, 'dress'), DRESS_TOTAL, 'jurken') },
+  { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Verzamel alle schoentjes',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoentjes') },
   { id: 'dierenvriend', emoji: '🐾', name: 'Dierenvriend',   desc: 'Koop je eerste dier',            has: p => petCount(p) >= 1, progress: p => trophyProgress(petCount(p), 1, 'dieren') },
   { id: 'dierenteam', emoji: '🐕', name: 'Dierenteam',       desc: 'Verzamel 3 dieren',              has: p => petCount(p) >= 3, progress: p => trophyProgress(petCount(p), 3, 'dieren') },
   { id: 'dierentuin', emoji: '🦁', name: 'Eigen dierentuin', desc: 'Verzamel 6 dieren',              has: p => petCount(p) >= 6, progress: p => trophyProgress(petCount(p), 6, 'dieren') },
@@ -1192,7 +1225,7 @@ const TROPHY_SHELVES = [
   { name: '⭐ Sterren',          ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30'] },
   { name: '🧮 Rekenwerk',        ids: ['sums100', 'sums500', 'sums1000', 'perfecttour'] },
   { name: '🌟 Goud & publiek',   ids: ['gold5', 'gold20', 'encore', 'encore5'] },
-  { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest'] },
+  { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest', 'modekoningin', 'schoenenkast'] },
   { name: '🐾 Dieren',           ids: ['dierenvriend', 'dierenteam', 'dierentuin', 'dierenkoning'] },
   { name: '🎖️ Alles verzameld',  ids: ['kastvol'] },
 ];
@@ -1205,7 +1238,7 @@ function perfectCities(p) {
 }
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
 function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
-function boughtCount(p) { return Math.max(0, p.owned.length - 4); }
+function boughtCount(p) { return Math.max(0, p.owned.length - 5); }   // 5 = de gratis startspullen
 function trophyProgress(value, target, label) {
   const now = Math.max(0, Math.min(value, target));
   return { now, target, label, pct: Math.round((now / target) * 100) };
@@ -1230,8 +1263,8 @@ function defaultProfile(name, dress) {
     diamonds: 30,
     level: 1,
     stars: {},
-    owned: ['hair_blond', 'dress_roze', 'dress_paars', 'stage_disco'],
-    equipped: { hair: 'hair_blond', dress: dress, mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
+    owned: ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'],
+    equipped: { hair: 'hair_blond', dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
     trophies: [], seenTrophies: [], goldHits: 0, encores: 0,
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
@@ -1250,6 +1283,11 @@ function migrate(p) {
   if (!p.weak) p.weak = {};
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
+  // schoentjes-categorie: bestaande profielen krijgen de gratis roze schoentjes aan
+  if (!('shoes' in p.equipped)) {
+    p.equipped.shoes = 'shoes_roze';
+    if (!p.owned.includes('shoes_roze')) p.owned.push('shoes_roze');
+  }
 }
 // Werkt de vaardigheidsinschatting bij na elk antwoord (exponentieel voortschrijdend gemiddelde).
 // Goed = omhoog (extra beloond bij snel binnen de spotlight), fout = omlaag.
@@ -1393,6 +1431,9 @@ function avatarSVG(p, width, bigProps) {
     if (acc.id === 'acc_bril') s += `<g><circle cx="88" cy="72" r="8.5" fill="#222"/><circle cx="112" cy="72" r="8.5" fill="#222"/><line x1="96" y1="72" x2="104" y2="72" stroke="#222" stroke-width="3"/></g>`;
     if (acc.id === 'acc_koptel') s += `<path d="M68 58 A33 35 0 0 1 132 58" stroke="#e91e63" fill="none" stroke-width="7" stroke-linecap="round"/><circle cx="67" cy="68" r="8" fill="#ad1457"/><circle cx="133" cy="68" r="8" fill="#ad1457"/>`;
     if (acc.id === 'acc_kroon') s += `<path d="M78 40 L84 22 L94 34 L100 18 L106 34 L116 22 L122 40 Z" fill="#ffd740" stroke="#c8a200" stroke-width="2"/><circle cx="100" cy="18" r="3" fill="#ff4081"/>`;
+    // nieuwe extra's tekenen generiek via hun emoji: 'zij' = in het haar, 'top' = op het hoofd
+    if (acc.spot === 'zij') s += `<text x="53" y="54" font-size="24">${acc.emoji}</text>`;
+    if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
   }
   // jurk
   s += `<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}"/>`;
@@ -1404,6 +1445,10 @@ function avatarSVG(p, width, bigProps) {
     s += `<circle cx="90" cy="140" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity="0.8"/>
           <circle cx="85" cy="175" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity="0.8"/>`;
   }
+  if (dress.pattern === 'hearts') {
+    s += `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text>
+          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`;
+  }
   // armen
   s += `<path d="M84 116 Q68 134 60 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
   if (mic) {
@@ -1414,10 +1459,12 @@ function avatarSVG(p, width, bigProps) {
   } else {
     s += `<path d="M116 116 Q132 134 140 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
   }
-  // benen + schoenen
+  // benen + schoenen (schoenkleur is een eigen categorie in de kleedkamer)
+  const shoe = eq.shoes ? item(eq.shoes) : null;
+  const sc = shoe ? shoe.color : '#e91e63';
   s += `<line x1="90" y1="198" x2="88" y2="228" stroke="${skin}" stroke-width="9" stroke-linecap="round"/>`;
   s += `<line x1="110" y1="198" x2="112" y2="228" stroke="${skin}" stroke-width="9" stroke-linecap="round"/>`;
-  s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="#e91e63"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="#e91e63"/>`;
+  s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
   s += `</svg>`;
   return s;
 }
