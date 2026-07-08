@@ -1923,7 +1923,7 @@ function submitAnswer(val, btnEl) {
     save();
     $('game-diamonds').textContent = p.diamonds;
     // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
-    flyDiamonds(btnEl || $('question-card'), encore || q.gold ? 3 : 2, 'game-diamonds');
+    flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), encore || q.gold ? 3 : 2);
     if (btnEl) btnEl.classList.add('good');
     if (G.mode === 'typ') $('question-text').textContent = `${q.text} = ${q.ans}`;
     if (encore) { sndWin(); confetti(24); showPraise('🎆 ENCORE! +5 💎 bonus!'); }
@@ -2251,20 +2251,20 @@ function renderDressBar(it, p) {
   if (off) off.onclick = () => unequipShopItem(it.id);
 }
 
-// Diamant-feedback: een paar diamanten vliegen van de bron (koopknop, antwoord)
-// naar de teller, die even oppulst — zo ziet een kind wáár de diamanten heengaan.
-function flyDiamonds(fromEl, n, toId) {
-  const to = $(toId || 'shop-diamonds');
-  if (!fromEl || !to || !fromEl.animate) return;
-  const f = fromEl.getBoundingClientRect(), t = to.getBoundingClientRect();
+// Diamant-feedback: een paar diamanten vliegen van A naar B, en de teller-pil
+// pulseert aan de portemonnee-kant. Verdienen = naar de portemonnee toe
+// (spelscherm), betalen = van de portemonnee wég (kleedkamer).
+function flyDiamonds(fromEl, toEl, n) {
+  if (!fromEl || !toEl || !fromEl.animate) return;
+  const f = fromEl.getBoundingClientRect(), t = toEl.getBoundingClientRect();
   const dx = t.left + t.width / 2 - (f.left + f.width / 2);
-  const dy = t.top + t.height / 2 - f.top;
+  const dy = t.top + t.height / 2 - (f.top + f.height / 2);
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
     d.className = 'fly-dia';
     d.textContent = '💎';
     d.style.left = (f.left + f.width / 2 - 11) + 'px';
-    d.style.top = f.top + 'px';
+    d.style.top = (f.top + f.height / 2 - 11) + 'px';
     document.body.appendChild(d);
     d.animate([
       { transform: 'translate(0,0) scale(1)', opacity: 1 },
@@ -2273,12 +2273,14 @@ function flyDiamonds(fromEl, n, toId) {
     ], { duration: 620 + i * 110, easing: 'ease-in-out' }).onfinish = () => d.remove();
     setTimeout(() => d.remove(), 900 + i * 110);
   }
-  setTimeout(() => {
-    const badge = to.closest('.diamond-badge');
-    if (badge && badge.animate) badge.animate(
-      [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
-      { duration: 340, easing: 'ease-out' });
-  }, 600);
+  // pulseer de portemonnee: meteen als de diamanten eruit vertrekken,
+  // pas bij aankomst als ze erin vallen
+  const fromBadge = fromEl.closest && fromEl.closest('.diamond-badge');
+  const toBadge = toEl.closest && toEl.closest('.diamond-badge');
+  const badge = fromBadge || toBadge;
+  if (badge && badge.animate) setTimeout(() => badge.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
+    { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : 600);
 }
 
 function confirmShopBuy(id) {
@@ -2296,7 +2298,7 @@ function confirmShopBuy(id) {
   p.equipped[it.cat] = it.id;
   sndCoin();
   confetti(12);
-  flyDiamonds($('db-buy'), 3, 'shop-diamonds');   // vóór renderShop: daarna bestaat de knop niet meer
+  flyDiamonds($('shop-diamonds'), $('shop-stage'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
   const trofees = checkTrophies(p);
   if (trofees.length) setTimeout(() => announceTrophy(trofees[0]), 400);
   save();
