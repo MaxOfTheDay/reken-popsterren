@@ -74,42 +74,46 @@
   .btn.soft.tro:active { box-shadow: 0 1px 0 rgba(27,94,32,.55); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
-  /* ---- Profielkeuze (podium-stijl kaarten) ---- */
-  .profile-row { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; align-items: flex-end; margin: 6px auto 0; }
+  /* ---- Profielkeuze (podium-stijl kaarten) ----
+     Twee sterren altijd náást elkaar in beeld, ook op 320px: geen scrollen om
+     jezelf te vinden. De kaart vertelt het verhaal (waar op de tournee) i.p.v.
+     een scorebord — geen kale tellers om zusjes mee te vergelijken. */
+  /* verticaal gecentreerd via auto-marges: veilig bij overloop (justify-content:
+     center zou op lage/liggende schermen de bovenkant onbereikbaar knippen) */
+  #screen-profile { position: relative; padding-bottom: 30px; }
+  #screen-profile .title { margin-top: auto; padding: 0 54px; font-size: clamp(23px, 6vw, 40px); }
+  .profile-row {
+    display: flex; gap: 14px; justify-content: center; align-items: stretch;
+    width: 100%; max-width: 560px; margin: 16px 0 auto; z-index: 1;
+  }
   .profile-card {
-    position: relative; width: 220px; cursor: pointer; text-align: center;
+    position: relative; flex: 1 1 0; min-width: 0; max-width: 250px;
+    cursor: pointer; text-align: center; font-family: inherit; color: #fff;
     background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.08));
     border: 3px solid rgba(255,255,255,.45); border-radius: 26px;
-    padding: 16px 16px 20px; transition: transform .18s, box-shadow .18s;
+    padding: 11px 10px 16px; transition: transform .18s, box-shadow .18s;
     box-shadow: 0 10px 26px rgba(0,0,0,.32);
   }
   .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px rgba(0,0,0,.4); }
   .profile-card:active { transform: translateY(-2px) scale(1.01); }
-  /* diamanten als duidelijk stat-label rechtsboven (portemonnee), altijd bovenop het podium.
-     Vol blauw + zachte gelijkmatige schaduw = goed leesbaar, maar geen 3D-knopgevoel. */
-  .profile-card .wallet {
-    position: absolute; top: 10px; right: 10px; z-index: 6;
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 16px; font-weight: bold; color: #fff;
-    border-radius: 999px; padding: 6px 13px;
-    background: #1e88e5; border: 1.5px solid rgba(255,255,255,.6);
-    box-shadow: 0 2px 7px rgba(0,0,0,.4);
+  /* het podium schaalt mee met de kaartbreedte; de scène blijft schoon (geen zwevende teller) */
+  .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
+  .profile-card .deco { font-size: 18px; }
+  .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  /* waar op de wereldtournee ben ik? — verhaal i.p.v. scorebord */
+  .tour-chip {
+    display: inline-block; max-width: calc(100% - 4px);
+    background: rgba(0,0,0,.30); border-radius: 999px; padding: 5px 11px;
+    font-size: 13px; font-weight: 700; margin: 6px 0 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .profile-card .pname { font-size: 27px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
-  /* stat-badges */
-  .stat-row { display: flex; gap: 8px; justify-content: center; margin: 8px 0 2px; }
-  .stat-badge {
-    display: inline-flex; align-items: center; gap: 4px; font-size: 15px; font-weight: bold;
-    background: rgba(0,0,0,.32); border-radius: 999px; padding: 5px 11px; line-height: 1;
-  }
-  .stat-badge.tro { background: rgba(255,193,7,.32); }
-  /* sappige "Speel!"-knop */
+  /* sappige "Speel!"-knop — goud, net als op de kaart: goud = spelen */
   .play-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    margin-top: 14px; padding: 11px 30px; border-radius: 999px;
-    font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .3px; position: relative;
-    background: linear-gradient(180deg, #7ee787, #3fa93f);
-    box-shadow: 0 5px 0 #2e7d32, 0 8px 13px rgba(0,0,0,.35);
+    margin-top: 12px; padding: 10px 22px; border-radius: 999px;
+    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: .3px; position: relative;
+    background: linear-gradient(180deg, #ffc23d, #ff8f00);
+    box-shadow: 0 5px 0 #b36200, 0 8px 13px rgba(0,0,0,.35);
     transition: transform .1s, box-shadow .1s;
     animation: playGlow 1.7s ease-in-out infinite;
   }
@@ -120,12 +124,22 @@
   }
   .play-btn .play-ico {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 50%; font-size: 13px;
-    background: rgba(255,255,255,.92); color: #2e7d32; box-shadow: inset 0 -1px 2px rgba(0,0,0,.15);
+    width: 24px; height: 24px; border-radius: 50%; font-size: 12px; flex-shrink: 0;
+    background: rgba(255,255,255,.92); color: #b36200; box-shadow: inset 0 -1px 2px rgba(0,0,0,.15);
   }
   @keyframes playGlow { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.14); } }
-  .profile-card:hover .play-btn { transform: translateY(-2px); box-shadow: 0 7px 0 #2e7d32, 0 11px 16px rgba(0,0,0,.42); }
-  .profile-card:active .play-btn { transform: translateY(3px); box-shadow: 0 2px 0 #2e7d32, 0 4px 8px rgba(0,0,0,.3); }
+  .profile-card:hover .play-btn { transform: translateY(-2px); box-shadow: 0 7px 0 #b36200, 0 11px 16px rgba(0,0,0,.42); }
+  .profile-card:active .play-btn { transform: translateY(3px); box-shadow: 0 2px 0 #b36200, 0 4px 8px rgba(0,0,0,.3); }
+  /* op telefoons alleen de stad (het verhaal); het shownummer erbij op brede schermen */
+  @media (max-width: 480px) { .chip-shownr { display: none; } }
+  /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
+  @media (max-width: 380px) {
+    .profile-row { gap: 10px; }
+    .profile-card .pname { font-size: 18px; }
+    .tour-chip { font-size: 11.5px; padding: 4px 9px; }
+    .play-btn { font-size: 15px; padding: 8px 15px; }
+    .play-btn .play-ico { width: 20px; height: 20px; font-size: 10px; }
+  }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
   .icon-btn {
@@ -640,7 +654,7 @@
   }
   .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
   .result-stars .dim { opacity: .25; }
-  /* opbrengst als badges — zelfde taal als de stat-badges elders in de app */
+  /* opbrengst als badges — zelfde taal als de teller-pillen elders in de app */
   .earn-line { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0 18px; }
   .earn-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 16px; font-weight: bold; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: 999px; padding: 8px 14px; }
@@ -819,6 +833,11 @@
 
   <!-- ===== Profielkeuze ===== -->
   <div class="screen active" id="screen-profile">
+    <div class="map-sky" aria-hidden="true">
+      <span style="top:16%;font-size:30px;animation-duration:80s;animation-delay:-25s">☁️</span>
+      <span style="top:42%;font-size:24px;animation-duration:95s;animation-delay:-58s">☁️</span>
+      <span style="top:82%;font-size:28px;animation-duration:85s;animation-delay:-40s">☁️</span>
+    </div>
     <h1 class="title">🎤 Reken Popsterren 🎶</h1>
     <div class="subtitle">Wie gaat er vandaag schitteren op het podium?</div>
     <div class="profile-row" id="profile-row"></div>
@@ -1398,44 +1417,30 @@ function renderProfiles() {
   row.innerHTML = '';
   for (const key of ['p1', 'p2']) {
     const p = db.profiles[key];
-    const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
-    const card = document.createElement('div');
+    const city = cityFor(p.level);
+    const card = document.createElement('button');
     card.className = 'profile-card';
     card.innerHTML =
-      `<span class="wallet">💎 ${p.diamonds}</span>
-        <div class="stage" style="width:154px;height:170px;margin:0 auto">
-           <div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
-        <div class="pname">🌟 ${p.name}</div>
-        <div class="stat-row">
-          <span class="stat-badge">⭐ ${totalStars}</span>
-          <span class="stat-badge tro">🏆 ${p.trophies.length}</span>
-        </div>
+      `<div class="stage"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
+        <div class="pname">${p.name}</div>
+        <div class="tour-chip">${city.flag} ${city.name}<span class="chip-shownr"> · Show ${p.level}</span></div>
         <div class="play-btn"><span class="play-ico">▶</span>Speel!</div>`;
     applyStage(card.querySelector('.stage'), p);
     card.onclick = () => { sndClick(); selectProfile(key); };
     row.appendChild(card);
   }
   renderGearMenu();
-  fitProfileHeader();
-}
-// De titel schaalt mee met de schermbreedte en zou op smalle schermen onder het
-// instellingen-tandwiel rechtsboven schuiven. In plaats van de titel omlaag te
-// duwen, maken we hem daar een fractie kleiner zodat hij op één regel bovenaan
-// naast de knop past. De schaal volgt uit de echte knoprand, dus dit klopt bij
-// elke breedte en ook als er later nog een instelling bij komt.
-function fitProfileHeader() {
-  const sp = $('screen-profile'), cb = $('corner-btns');
-  if (!sp || !cb) return;
-  const title = sp.querySelector('.title');
-  if (title) title.style.fontSize = '';                      // eerst terug naar de CSS-clamp
-  if (!title || getComputedStyle(cb).display === 'none') return;
-  const cbb = cb.getBoundingClientRect(), tb = title.getBoundingClientRect();
-  const center = tb.left + tb.width / 2;                      // blijft vast (titel is gecentreerd)
-  const half = (cbb.left - 8) - center;                      // ruimte van midden tot vlak vóór de knop
-  const maxW = 2 * half;                                      // zoveel mag de titel breed zijn
-  if (half <= 0 || tb.width <= maxW) return;                 // past al → niets doen
-  const fs = parseFloat(getComputedStyle(title).fontSize) * (maxW / tb.width);
-  title.style.fontSize = Math.max(20, fs) + 'px';            // niet kleiner dan leesbaar
+  // begroeting: de sterren zwaaien even naar je, daarna wiegen ze rustig verder
+  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    row.querySelectorAll('.avatar-holder').forEach((el, i) => {
+      setTimeout(() => {
+        if (!el.isConnected) return;
+        el.classList.remove('idle');
+        el.classList.add('dancing', 'move-wave');
+        setTimeout(() => { el.classList.remove('dancing', 'move-wave'); el.classList.add('idle'); }, 950);
+      }, 400 + i * 300);
+    });
+  }
 }
 function selectProfile(key) { cur = key; goMap(); }
 
@@ -2514,9 +2519,6 @@ function importData(file) {
 /* ================= Start ================= */
 load();
 renderProfiles();
-// titel opnieuw uitlijnen als de breedte verandert of het lettertype net geladen is
-window.addEventListener('resize', fitProfileHeader);
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitProfileHeader);
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
 }
