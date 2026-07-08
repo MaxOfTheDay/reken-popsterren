@@ -698,6 +698,18 @@
   .dress-stage { width: 200px; height: 168px; }
   .dress-stage .deco { font-size: 20px; }
   @media (max-height: 700px) { .dress-stage { width: 170px; height: 132px; } }
+  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit */
+  .stage-wrap { position: relative; }
+  .shuffle-btn {
+    position: absolute; right: -16px; bottom: -4px; width: 46px; height: 46px;
+    border-radius: 50%; border: 2px solid rgba(255,255,255,.75); cursor: pointer;
+    font-size: 22px; line-height: 1; font-family: inherit;
+    background: linear-gradient(180deg, #ab47bc, #8e24aa);
+    box-shadow: 0 4px 0 #4a148c, 0 6px 12px rgba(0,0,0,.35);
+    transition: transform .15s;
+  }
+  .shuffle-btn:hover { transform: rotate(20deg) scale(1.06); }
+  .shuffle-btn:active { transform: rotate(180deg) scale(.92); box-shadow: 0 1px 0 #4a148c; }
   .shop-tabs {
     display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 100%;
     margin-top: 10px; padding: 2px 4px;
@@ -972,8 +984,11 @@
         <div class="header-title">👗 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
-      <div class="stage tappable dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
-        <div class="avatar-holder idle" id="shop-avatar"></div>
+      <div class="stage-wrap">
+        <div class="stage tappable dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
+          <div class="avatar-holder idle" id="shop-avatar"></div>
+        </div>
+        <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
       <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
     </div>
@@ -1162,16 +1177,32 @@ const TROPHIES = [
   { id: 'dierenteam', emoji: '🐕', name: 'Dierenteam',       desc: 'Verzamel 3 dieren',              has: p => petCount(p) >= 3, progress: p => trophyProgress(petCount(p), 3, 'dieren') },
   { id: 'dierentuin', emoji: '🦁', name: 'Eigen dierentuin', desc: 'Verzamel 6 dieren',              has: p => petCount(p) >= 6, progress: p => trophyProgress(petCount(p), 6, 'dieren') },
   { id: 'dierenkoning', emoji: '🐘', name: 'Dierenkoning',   desc: 'Verzamel alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
+  // Rekenwerk: het échte oefenen zichtbaar belonen (stats.correct telt al elk goed antwoord)
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: '100 sommen goed',                 has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: '500 sommen goed',                 has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: '1000 sommen goed',                has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Alle 12 steden met 3 sterren', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
+  // Moet de laatste zijn: checkTrophies kent trofeeën in volgorde toe, dus alle
+  // andere zijn dan al geteld voor deze meta-trofee.
+  { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
 ];
 // De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
 const TROPHY_SHELVES = [
   { name: '🎤 Shows & reizen',   ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
   { name: '⭐ Sterren',          ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30'] },
+  { name: '🧮 Rekenwerk',        ids: ['sums100', 'sums500', 'sums1000', 'perfecttour'] },
   { name: '🌟 Goud & publiek',   ids: ['gold5', 'gold20', 'encore', 'encore5'] },
   { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest'] },
   { name: '🐾 Dieren',           ids: ['dierenvriend', 'dierenteam', 'dierentuin', 'dierenkoning'] },
+  { name: '🎖️ Alles verzameld',  ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
+// hoeveel van de 12 steden staan op drie sterren? (ronde 2 telt niet dubbel)
+function perfectCities(p) {
+  let n = 0;
+  for (let l = 1; l <= CITIES.length; l++) if (p.stars[l] === 3) n++;
+  return n;
+}
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
 function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
 function boughtCount(p) { return Math.max(0, p.owned.length - 4); }
@@ -2278,6 +2309,25 @@ function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
   preview.equipped[it.cat] = it.id;
   return preview;
+}
+
+// 🎲 Verras me: een willekeurige outfit uit wat ze al bezit, met een vreugdedansje.
+// Optionele spullen (micro, instrument, extra, dier) blijven soms bewust weg,
+// anders staat ze altijd vol behangen.
+function surpriseOutfit() {
+  const p = P();
+  const optioneel = ['mic', 'instrument', 'acc', 'pet'];
+  CATS.forEach(c => {
+    const bezit = ITEMS.filter(i => i.cat === c.id && p.owned.includes(i.id));
+    if (!bezit.length) return;
+    if (optioneel.includes(c.id)) p.equipped[c.id] = Math.random() < 0.35 ? null : pick(bezit).id;
+    else p.equipped[c.id] = pick(bezit).id;
+  });
+  shopSelectedId = null;
+  save();
+  renderShop();
+  tapDance('shop-avatar');
+  buzz(20);
 }
 
 // De actiebalk onderaan: naam + status links, dé knop rechts. Bij te weinig
