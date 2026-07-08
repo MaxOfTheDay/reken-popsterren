@@ -298,8 +298,15 @@
   }
   .map-headline { font-size: 19px; font-weight: 600; opacity: .92; text-shadow: 0 2px 0 rgba(0,0,0,.18); }
   .map-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  .map-sky span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
+  .map-sky > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
   @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
+  /* stille skyline van de huidige stad: reist mee met de tournee en maakt
+     de lege lucht op hoge schermen betekenisvol (waar ben ik?) */
+  .city-sky span { position: absolute; opacity: .2; animation: floaty 7s ease-in-out infinite alternate; }
+  .city-sky .big { display: block; left: 0; right: 0; top: 11%; text-align: center; font-size: 122px; }
+  .city-sky .echo { font-size: 34px; right: 10%; bottom: 13%; animation-delay: -3.5s; }
+  @keyframes floaty { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+  @media (max-height: 700px) { .city-sky { display: none; } }   /* op lage schermen is er geen lucht over */
 
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
@@ -544,6 +551,20 @@
     .tour-hero { width: 82px; }
     .tour-speel { font-size: 18px; padding: 11px 22px; }
   }
+  /* hoge schermen: de kaart mag juist groter schitteren — grotere haltes,
+     ster en speelknop claimen de ruimte die anders leeg blijft */
+  @media (min-height: 800px) {
+    .tour-track { padding: 154px 30px 102px; }
+    .tour-track::before { top: 196px; left: 92px; right: 92px; }
+    .tour-stop { width: 124px; }
+    .tour-stop .dot { width: 90px; height: 90px; font-size: 44px; border-radius: 25px; }
+    .tour-stop .cname { font-size: 16px; }
+    .tour-stop .lvlnr { font-size: 13px; }
+    .tour-stop .stars { font-size: 13px; height: 16px; }
+    .tour-hero { width: 118px; bottom: calc(100% - 12px); }
+    .tour-speel { font-size: 22px; padding: 15px 30px; }
+    .map-headline { font-size: 21px; }
+  }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
     .map-name { font-size: 17px; }
@@ -783,6 +804,7 @@
       <span style="top:38%;font-size:26px;animation-duration:95s;animation-delay:-62s">☁️</span>
       <span style="top:78%;font-size:30px;animation-duration:85s;animation-delay:-41s">☁️</span>
       <span style="top:62%;font-size:23px;animation-duration:58s;animation-delay:-12s">✈️</span>
+      <div class="city-sky" id="city-sky"></div>
     </div>
     <div class="map-topbar">
       <button class="btn small ghost switch-star" onclick="goProfiles()" aria-label="Wissel ster" title="Wissel ster">⬅</button>
@@ -1427,6 +1449,9 @@ function goMap() {
   $('map-diamonds').textContent = p.diamonds;
   $('map-stars').textContent = totalStarCount(p);
   $('map-portrait').innerHTML = `<span class="pframe">${avatarSVG(p, 80)}</span><span class="dressdot">👗</span>`;
+  // de lucht toont zacht de huidige stad (tijdens een reis alvast de bestemming)
+  const skyCity = cityFor(p.level);
+  $('city-sky').innerHTML = `<span class="big">${skyCity.flag}</span><span class="echo">${skyCity.flag}</span>`;
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
