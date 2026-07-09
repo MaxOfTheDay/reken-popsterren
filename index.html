@@ -738,7 +738,7 @@
   .item-thumb { height: 52px; display: flex; align-items: flex-end; justify-content: center; margin: 0 auto 6px; }
   .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
   .item-thumb .thumb-emo { font-size: 34px; line-height: 52px; }
-  .item-name { font-size: 14px; font-weight: bold; }
+  .item-name { font-size: 14px; font-weight: bold; overflow-wrap: break-word; hyphens: auto; }
   .item-price { font-size: 15px; margin-top: 4px; min-height: 19px; }
   /* prijs die (nog) niet betaalbaar is: gedimd, maar passen mag altijd */
   .item-price.dim { opacity: .5; }
@@ -1086,6 +1086,7 @@ const ITEMS = [
   { id: 'dress_hartjes', cat: 'dress', name: 'Hartjesjurk',    price: 70,  color: '#f06292', pattern: 'hearts' },
   { id: 'dress_disco',   cat: 'dress', name: 'Discojurk',      price: 80,  color: '#b0bec5', pattern: 'disco' },
   { id: 'dress_voetbal', cat: 'dress', name: 'Voetbaljurk',    price: 65,  color: '#fafafa', pattern: 'ohl' },
+  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeerminjurk', price: 85, color: '#26a69a', pattern: 'scales' },
   { id: 'dress_tover',   cat: 'dress', name: 'Toverjurk',      price: 95,  color: '#4527a0', pattern: 'magic' },
   { id: 'dress_regenboog',cat:'dress', name: 'Regenboogjurk',  price: 110, color: 'RAINBOW' },
   // Schoentjes (kleuren de vaste schoentjes van de paspop)
@@ -1097,7 +1098,7 @@ const ITEMS = [
   { id: 'shoes_groen', cat: 'shoes', name: 'Groene schoentjes', price: 20, color: '#43a047' },
   { id: 'shoes_zwart', cat: 'shoes', name: 'Stoere laarsjes',   price: 25, color: '#37474f' },
   { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitterschoentjes', price: 60, color: '#ffd54f' },
-  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboogschoentjes', price: 80, color: 'RAINBOW' },
+  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog schoentjes', price: 80, color: 'RAINBOW' },
   // Microfoons
   { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauwe micro',   price: 35, color: '#42a5f5' },
@@ -1239,10 +1240,26 @@ const TROPHIES = [
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Alle 12 steden met 3 sterren', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
   // Speciale outfit-combo's: vier stukken tegelijk aan = trofee. De kaartjes
   // staan gewoon zichtbaar in de kast als spaardoel, met voortgang per stuk.
-  { id: 'magicus', emoji: '🧙', name: 'Maximum Magicus', desc: 'Tovenaarshoed, toverjurk, toverstaf én de wijze uil tegelijk aan',
-    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'toverstukken tegelijk aan') },
-  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Voetbaljurk, pintje en eekhoorn Lionel in het voetbalstadion',
-    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'supporterstukken tegelijk aan') },
+  { id: 'magicus', emoji: '🧙', name: 'Maximum Magicus', desc: 'Tovenaarshoed, toverjurk, toverstaf en de wijze uil',
+    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'stukken tegelijk aan') },
+  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Voetbaljurk, pintje, eekhoorn Lionel en het voetbalstadion',
+    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'stukken tegelijk aan') },
+  { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Zwarte rockmicro, stoere laarsjes, gitaar en een coole zonnebril',
+    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'stukken tegelijk aan') },
+  { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Discojurk, gouden glitterschoentjes, roze glittermicro en het discopodium',
+    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'stukken tegelijk aan') },
+  { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Prinsessenkasteel, kroontje, hartjesjurk en een konijntje',
+    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'stukken tegelijk aan') },
+  { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Ruimteshow, sterrenjurk, sterspeldje en zilvergrijs haar',
+    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'stukken tegelijk aan') },
+  { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Winterwonderland, wit haar, een pinguïn en de zilveren micro',
+    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'stukken tegelijk aan') },
+  { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Junglepodium, leeuwenwelp, groene jurk en een bloemenkrans',
+    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'stukken tegelijk aan') },
+  { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Zeemeerminjurk, onderwatershow, een dolfijn en turquoise haar',
+    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
+  { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Regenboog-haar, -jurk, -schoentjes, -micro én -podium',
+    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
   // Moet de laatste zijn: checkTrophies kent trofeeën in volgorde toe, dus alle
   // andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -1255,13 +1272,21 @@ const TROPHY_SHELVES = [
   { name: '🌟 Goud & publiek',   ids: ['gold5', 'gold20', 'encore', 'encore5'] },
   { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest', 'modekoningin', 'schoenenkast', 'haarstylist', 'podiumbouwer'] },
   { name: '🐾 Dieren',           ids: ['dierenvriend', 'dierenteam', 'dierentuin', 'dierenkoning'] },
-  { name: '✨ Speciale outfits', ids: ['magicus', 'thuismatch'] },
+  { name: '✨ Speciale outfits', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
   { name: '🎖️ Alles verzameld',  ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
 // de speciale outfit-combo's: welk stuk hoort in welk kledingvak
 const MAGICUS_SET = { acc: 'acc_tovenaarshoed', dress: 'dress_tover', mic: 'mic_toverstaf', pet: 'pet_uil' };
 const OHELLE_SET = { dress: 'dress_voetbal', mic: 'mic_pintje', pet: 'pet_eekhoorn', stage: 'stage_stadion' };
+const ROCKSTER_SET = { mic: 'mic_zwart', shoes: 'shoes_zwart', instrument: 'instr_gitaar', acc: 'acc_bril' };
+const DISCO_SET = { dress: 'dress_disco', shoes: 'shoes_goud', mic: 'mic_roze', stage: 'stage_disco' };
+const PRINSES_SET = { stage: 'stage_kasteel', acc: 'acc_kroon', dress: 'dress_hartjes', pet: 'pet_konijn' };
+const RUIMTE_SET = { stage: 'stage_ruimte', dress: 'dress_sterren', acc: 'acc_ster', hair: 'hair_zilver' };
+const WINTER_SET = { stage: 'stage_winter', hair: 'hair_wit', pet: 'pet_pinguin', mic: 'mic_zilver' };
+const JUNGLE_SET = { stage: 'stage_jungle', pet: 'pet_leeuw', dress: 'dress_groen', acc: 'acc_bloemkrans' };
+const ZEE_SET = { dress: 'dress_zeemeermin', stage: 'stage_onderwater', pet: 'pet_dolfijn', hair: 'hair_turkoois' };
+const REGENBOOG_SET = { hair: 'hair_regenboog', dress: 'dress_regenboog', shoes: 'shoes_regenboog', mic: 'mic_regenboog', stage: 'stage_regenboog' };
 function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.equipped[vak] === id).length; }
 // hoeveel van de 12 steden staan op drie sterren? (ronde 2 telt niet dubbel)
 function perfectCities(p) {
@@ -1490,6 +1515,13 @@ function avatarSVG(p, width, bigProps) {
     s += `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text>
           <text x="80" y="188" font-size="11" fill="#ffd54f">★</text>
           <path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`;
+  }
+  if (dress.pattern === 'scales') {
+    // zeemeermin-schubben: rijen lichte koepeltjes
+    s += `<g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5">
+      <path d="M82 152 a7 7 0 0 1 14 0 M96 152 a7 7 0 0 1 14 0"/>
+      <path d="M80 168 a7 7 0 0 1 14 0 M94 168 a7 7 0 0 1 14 0 M108 168 a7 7 0 0 1 14 0"/>
+      <path d="M84 184 a7 7 0 0 1 14 0 M98 184 a7 7 0 0 1 14 0"/></g>`;
   }
   if (dress.pattern === 'ohl') {
     // clubkleuren van Leuven: groen-rode banen op wit met een zwarte zoom
@@ -2366,6 +2398,7 @@ function dressThumb(it) {
   if (it.pattern === 'magic') inner = `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text><text x="80" y="188" font-size="11" fill="#ffd54f">★</text><path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`;
   if (it.pattern === 'disco') inner = `<circle cx="90" cy="140" r="4" fill="#fff" opacity=".8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity=".8"/><circle cx="85" cy="175" r="4" fill="#f48fb1" opacity=".8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity=".8"/>`;
   if (it.pattern === 'ohl') inner = `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/><path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/><path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`;
+  if (it.pattern === 'scales') inner = `<g fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5"><path d="M82 152 a7 7 0 0 1 14 0 M96 152 a7 7 0 0 1 14 0"/><path d="M80 168 a7 7 0 0 1 14 0 M94 168 a7 7 0 0 1 14 0 M108 168 a7 7 0 0 1 14 0"/><path d="M84 184 a7 7 0 0 1 14 0 M98 184 a7 7 0 0 1 14 0"/></g>`;
   return `<svg viewBox="62 104 76 108" xmlns="http://www.w3.org/2000/svg">${defs}<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>${inner}</svg>`;
 }
 function hairThumb(it) {

@@ -1,5 +1,5 @@
 // Service worker: maakt het spel offline speelbaar na het eerste bezoek.
-const CACHE = 'rekenpop-v24';
+const CACHE = 'rekenpop-v25';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
