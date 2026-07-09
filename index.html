@@ -659,14 +659,6 @@
     background: rgba(255,255,255,.16);
   }
   .tro-btn:active { transform: scale(.96); }
-  /* pas verdiend en nog niet bekeken: feestelijk plakkertje */
-  .new-badge {
-    position: absolute; top: -9px; left: 50%; transform: translateX(-50%); z-index: 2; white-space: nowrap;
-    font-size: 11px; font-weight: 700; color: #4a148c;
-    background: linear-gradient(180deg, #ffe082, #ffca28);
-    padding: 2px 10px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.35);
-    animation: pulseBtn 1.3s ease-in-out infinite;
-  }
   .trophy-progress-wrap { padding-top: 0; }
   /* "Nog X ..." staat duidelijk boven de balk, met wat lucht ertussen */
   .trophy-progress-text { font-size: 12px; font-weight: 700; color: #fff59d; min-height: 16px; line-height: 1.2; }
@@ -711,7 +703,7 @@
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready, .trophy-card.theme.ready, .claim-btn, .new-badge { animation: none; }
+    .trophy-card.ready, .trophy-card.theme.ready, .claim-btn { animation: none; }
     .trophy-pop { animation: none; }
   }
   /* rood stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt */
@@ -1419,7 +1411,7 @@ function defaultProfile(name, dress) {
     owned: ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'],
     equipped: { hair: 'hair_blond', dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
-    trophies: [], readyTrophies: [], seenTrophies: [], goldHits: 0, encores: 0,
+    trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
     weak: {},   // zwakke sommen: "7 × 8" -> { ans, op, w } om gericht te herhalen
     stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
@@ -1432,8 +1424,6 @@ function migrate(p) {
   // readyTrophies begint leeg; alleen echt nog-niet-geclaimde-maar-gehaalde trofeeën
   // komen daarna 'klaar' te liggen — geen plotse muur van "Klaar!" voor oude saves.
   if (!p.readyTrophies) p.readyTrophies = [];
-  // bestaande spelers krijgen geen "Nieuw!"-regen: alles wat er al is telt als gezien
-  if (!p.seenTrophies) p.seenTrophies = p.trophies.slice();
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
   if (p.perf == null) p.perf = 0.5;
@@ -1924,7 +1914,6 @@ function renderShelves() {
   $('trophy-diamonds').textContent = p.diamonds;
   $('trophy-count').textContent = `${earned} van ${TROPHIES.length} verzameld`;
   $('trophy-bar').style.width = Math.round(100 * earned / TROPHIES.length) + '%';
-  const nieuw = p.trophies.filter(id => !p.seenTrophies.includes(id));
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
@@ -1948,12 +1937,10 @@ function renderShelves() {
     grid.className = 'trophy-grid';
     shelf.ids.forEach(id => {
       const t = TROPHIES.find(x => x.id === id);
-      if (t) grid.appendChild(trophyCard(t, p, shelf.action, nieuw.includes(id)));
+      if (t) grid.appendChild(trophyCard(t, p, shelf.action));
     });
     wrap.appendChild(grid);
   });
-  // de "Nieuw!"-plakkertjes gelden voor dit bezoek; daarna telt alles als gezien
-  p.seenTrophies = p.trophies.slice();
   save();
   updateTroDot();
 }
@@ -1992,18 +1979,17 @@ function progressHTML(t, p) {
     + `<div class="trophy-progress-text">Nog ${rem} ${unitText(prog.label, rem)}</div>`
     + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${w}%"></div></div></div>`;
 }
-function trophyCard(t, p, action, isNew) {
+function trophyCard(t, p, action) {
   const status = trophyStatus(p, t);
   const theme = !!THEME_SETS[t.id];
   const card = document.createElement('div');
   card.className = `trophy-card ${theme ? 'theme ' : ''}` + status;
-  card.innerHTML = theme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status, action, isNew);
+  card.innerHTML = theme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status, action);
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
-function normalCardHTML(t, p, status, action, isNew) {
-  const top = (isNew && status === 'done' ? '<span class="new-badge">✨ Nieuw!</span>' : '')
-    + `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
+function normalCardHTML(t, p, status, action) {
+  const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
   let bottom;
   if (status === 'done') bottom = '<div class="trophy-done">✅ Behaald!</div>';
   else if (status === 'ready') bottom = '<div class="trophy-ready">🎁 Klaar!</div>' + claimButton(t.id);
