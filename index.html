@@ -732,6 +732,12 @@
   .item-card.selected { background: rgba(255,255,255,.28); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.28); transform: scale(1.04); }
   .item-card.equipped { border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.6); }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
+  /* podium-bol met een herkennende emoji erin */
+  .item-swatch.stage-swatch { display: grid; place-items: center; font-size: 24px; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+  /* getekend item (jurk/haar/schoen/micro) i.p.v. een kleurbolletje */
+  .item-thumb { height: 52px; display: flex; align-items: flex-end; justify-content: center; margin: 0 auto 6px; }
+  .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .item-thumb .thumb-emo { font-size: 34px; line-height: 52px; }
   .item-name { font-size: 14px; font-weight: bold; }
   .item-price { font-size: 15px; margin-top: 4px; min-height: 19px; }
   /* prijs die (nog) niet betaalbaar is: gedimd, maar passen mag altijd */
@@ -2331,6 +2337,61 @@ function confetti(n) {
 }
 
 /* ================= Kleedkamer (passen én kopen) ================= */
+/* ---- Item-miniaturen: teken het echte kledingstuk in zijn kleur (en patroon)
+   i.p.v. een kaal kleurbolletje. Emoji-items (dieren, instrumenten, pintje,
+   toverstaf, extra's) houden hun emoji; podia krijgen hun eerste deco-emoji in
+   de bol. De vormen komen uit dezelfde tekencode als de paspop. ---- */
+let thumbUid = 0;
+const RB_STOPS = '<stop offset="0" stop-color="#ff5f6d"/><stop offset=".3" stop-color="#ffc371"/><stop offset=".6" stop-color="#8bd450"/><stop offset="1" stop-color="#47c9ff"/>';
+function dressThumb(it) {
+  const uid = ++thumbUid;
+  const rainbow = it.color === 'RAINBOW';
+  const dc = rainbow ? `url(#dt${uid})` : it.color;
+  const defs = rainbow ? `<defs><linearGradient id="dt${uid}" x1="0" y1="0" x2="1" y2="1">${RB_STOPS}</linearGradient></defs>` : '';
+  let inner = '';
+  if (it.pattern === 'stars') inner = `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text><text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`;
+  if (it.pattern === 'hearts') inner = `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text><text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`;
+  if (it.pattern === 'magic') inner = `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text><text x="80" y="188" font-size="11" fill="#ffd54f">★</text><path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`;
+  if (it.pattern === 'disco') inner = `<circle cx="90" cy="140" r="4" fill="#fff" opacity=".8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity=".8"/><circle cx="85" cy="175" r="4" fill="#f48fb1" opacity=".8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity=".8"/>`;
+  if (it.pattern === 'ohl') inner = `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/><path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/><path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`;
+  return `<svg viewBox="62 104 76 108" xmlns="http://www.w3.org/2000/svg">${defs}<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>${inner}</svg>`;
+}
+function hairThumb(it) {
+  const uid = ++thumbUid;
+  const rainbow = it.color === 'RAINBOW';
+  const hc = rainbow ? `url(#ht${uid})` : it.color;
+  const defs = rainbow ? `<defs><linearGradient id="ht${uid}" x1="0" y1="0" x2="1" y2="1">${RB_STOPS}</linearGradient></defs>` : '';
+  return `<svg viewBox="38 22 124 88" xmlns="http://www.w3.org/2000/svg">${defs}
+    <circle cx="100" cy="62" r="37" fill="${hc}"/>
+    <circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>
+    <circle cx="100" cy="72" r="32" fill="#ffdcb8"/>
+    <path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/></svg>`;
+}
+function shoesThumb(it) {
+  const c = it.color;
+  return `<svg viewBox="2 0 56 46" xmlns="http://www.w3.org/2000/svg">
+    <line x1="20" y1="8" x2="19" y2="28" stroke="#ffdcb8" stroke-width="7" stroke-linecap="round"/>
+    <line x1="40" y1="8" x2="41" y2="28" stroke="#ffdcb8" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="18" cy="33" rx="13" ry="7" fill="${c}"/><ellipse cx="42" cy="33" rx="13" ry="7" fill="${c}"/></svg>`;
+}
+function micThumb(it) {
+  return `<svg viewBox="0 0 48 62" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="24" width="8" height="34" rx="4" fill="#546e7a"/>
+    <rect x="14" y="52" width="20" height="6" rx="3" fill="#455a64"/>
+    <circle cx="24" cy="16" r="15" fill="${it.color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
+    <path d="M14 12 h20 M14 16 h20 M14 20 h20" stroke="rgba(0,0,0,.16)" stroke-width="1.3"/>
+    <ellipse cx="19" cy="10" rx="4" ry="3" fill="rgba(255,255,255,.5)"/></svg>`;
+}
+function itemThumb(it) {
+  if (it.emoji) return `<div class="item-thumb"><span class="thumb-emo">${it.emoji}</span></div>`;
+  if (it.cat === 'dress') return `<div class="item-thumb">${dressThumb(it)}</div>`;
+  if (it.cat === 'hair')  return `<div class="item-thumb">${hairThumb(it)}</div>`;
+  if (it.cat === 'shoes') return `<div class="item-thumb">${shoesThumb(it)}</div>`;
+  if (it.cat === 'mic')   return `<div class="item-thumb">${micThumb(it)}</div>`;
+  if (it.bg) return `<div class="item-swatch stage-swatch" style="background:${it.bg}">${(it.deco && it.deco[0]) || ''}</div>`;
+  return `<div class="item-swatch" style="background:${it.color}"></div>`;
+}
+
 let shopCat = 'dress';
 let shopSelectedId = null;
 function openKleedkamer() {
@@ -2374,11 +2435,7 @@ function renderShop() {
     const equipped = p.equipped[it.cat] === it.id;
     const card = document.createElement('div');
     card.className = 'item-card' + (equipped ? ' equipped' : '') + (shopSelectedId === it.id ? ' selected' : '');
-    let swatch;
-    if (it.emoji) swatch = `<div class="item-swatch" style="border:none;font-size:34px">${it.emoji}</div>`;
-    else if (it.bg) swatch = `<div class="item-swatch" style="background:${it.bg}"></div>`;
-    else if (it.color === 'RAINBOW') swatch = `<div class="item-swatch" style="background:linear-gradient(45deg,#ff5f6d,#ffc371,#8bd450,#47c9ff,#b06ab3)"></div>`;
-    else swatch = `<div class="item-swatch" style="background:${it.color}"></div>`;
+    const swatch = itemThumb(it);
     // leesloze status: badge i.p.v. tekst (✔ = aan, ✓ = al gekocht);
     // een (nog) niet betaalbare prijs staat gedimd, maar passen mag altijd
     const badge = equipped ? '<span class="own-badge on">✔</span>'
