@@ -607,11 +607,11 @@
   .kast-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffd740, #ff80ab); transition: width .6s ease; }
   /* de kast heeft planken: kleine themakopjes met een teller per plank */
   #trophy-shelves { width: 100%; max-width: 680px; }
-  .shelf-title {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-    font-size: 15.5px; font-weight: 700; margin: 10px 2px 0; text-shadow: 0 1px 0 rgba(0,0,0,.25);
-  }
-  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 600; opacity: .9; background: rgba(0,0,0,.28); border-radius: 999px; padding: 3px 10px; }
+  .shelf-title { margin: 10px 2px 0; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+  .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 15.5px; font-weight: 700; }
+  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 600; opacity: .9; background: rgba(0,0,0,.28); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  /* zachte hint: het eerstvolgende doel in deze plank */
+  .shelf-next { font-size: 11.5px; font-weight: 600; opacity: .82; margin-top: 3px; color: #fff59d; }
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; margin: 7px 0 6px; align-items: stretch; }
   .trophy-card {
     position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.3);
@@ -619,9 +619,16 @@
     display: flex; flex-direction: column; align-items: stretch;
   }
   .trophy-card:active { transform: scale(.97); }
-  .trophy-card.earned { border-color: #ffd740; background: rgba(255,215,64,.16); box-shadow: 0 0 12px rgba(255,215,64,.4); }
+  /* 3 staten: behaald (subtiel gouden accent), bezig (actiever), nog-niet-gestart (rustig) */
+  .trophy-card.earned {
+    border-color: #ffd740; background: rgba(255,215,64,.09);
+    box-shadow: 0 0 10px rgba(255,215,64,.28), inset 0 0 0 1px rgba(255,215,64,.22);
+  }
+  .trophy-card.busy { border-color: rgba(255,245,157,.5); background: rgba(255,255,255,.16); }
   .trophy-card .temoji { font-size: 32px; line-height: 1; height: 36px; }
-  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .4; }
+  .trophy-card.earned .temoji { filter: drop-shadow(0 0 5px rgba(255,215,64,.6)); }
+  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .32; }   /* nog niet gestart: silhouet */
+  .trophy-card.busy .temoji { filter: grayscale(.35); opacity: .82; }   /* bezig: helderder */
   .trophy-card .tname { font-size: 13.5px; font-weight: bold; margin-top: 3px; line-height: 1.15; }
   .trophy-card .tdesc { font-size: 11.5px; opacity: .85; margin-top: 2px; line-height: 1.2; }
   .trophy-card.locked .tname { opacity: .6; }
@@ -636,13 +643,14 @@
     animation: pulseBtn 1.3s ease-in-out infinite;
   }
   .trophy-progress-wrap { margin-top: auto; padding-top: 7px; }
-  .trophy-progress-text { font-size: 11px; font-weight: 600; color: #fff59d; min-height: 25px; display: flex; align-items: flex-end; justify-content: center; line-height: 1.15; }
+  /* "Nog X ..." staat duidelijk boven de balk, met wat lucht ertussen */
+  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #fff59d; min-height: 16px; line-height: 1.2; }
   .trophy-progress {
-    height: 8px; margin-top: 4px; border-radius: 999px; overflow: hidden;
-    background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.28);
+    height: 11px; margin-top: 5px; border-radius: 999px; overflow: hidden;
+    background: rgba(74,20,110,.55); border: 1px solid rgba(255,255,255,.25);
   }
   .trophy-progress-fill {
-    height: 100%; border-radius: 999px;
+    height: 100%; border-radius: 999px; transition: width .5s ease;
     background: linear-gradient(90deg, #ffd740, #ff80ab);
   }
   /* rood stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt */
@@ -1230,7 +1238,7 @@ const TROPHIES = [
   { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: 'Haal 10 shows met 3 sterren',    has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
   { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: 'Verzamel 15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
   { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: 'Verzamel 30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
-  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Haal 3 sterren in alle 12 steden', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
+  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
   { id: 'rich',       emoji: '💰', name: 'Diamantenster',   desc: 'Spaar 100 diamanten',            has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
   { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: 'Spaar 250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
@@ -1822,7 +1830,18 @@ function openTrophies() {
     const got = shelf.ids.filter(id => p.trophies.includes(id)).length;
     const head = document.createElement('div');
     head.className = 'shelf-title';
-    head.innerHTML = `<span>${shelf.name}</span><span class="shelf-count">${got}/${shelf.ids.length}</span>`;
+    // "volgende doel": de eerste nog-niet-behaalde trofee in deze plank
+    const nextId = shelf.ids.find(id => !p.trophies.includes(id));
+    const next = nextId ? TROPHIES.find(x => x.id === nextId) : null;
+    let sub = '';
+    if (next && next.progress) {
+      const np = next.progress(p), rem = Math.max(0, np.target - np.now);
+      sub = `<div class="shelf-next">Volgende: ${next.name} · nog ${rem} ${unitText(np.label, rem)}</div>`;
+    } else if (next) {
+      sub = `<div class="shelf-next">Volgende: ${next.name}</div>`;
+    }
+    head.innerHTML = `<div class="shelf-head-row"><span>${shelf.name}</span>`
+      + `<span class="shelf-count">🏆 ${got} van ${shelf.ids.length}</span></div>` + sub;
     wrap.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid';
@@ -1839,20 +1858,44 @@ function openTrophies() {
   show('screen-trophies');
   $('screen-trophies').scrollTop = 0;
 }
+// Enkelvoud voor "Nog 1 ..."; alleen waar het meervoud lelijk zou staan.
+const TROPHY_UNIT_SINGULAR = {
+  'shows': 'show', 'steden': 'stad', 'sommen': 'som', 'sterren': 'ster',
+  'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
+  'spulletjes': 'spulletje', 'jurken': 'jurk', 'schoentjes': 'schoentje',
+  'haarkleuren': 'haarkleur', 'instrumenten': 'instrument', 'podia': 'podium',
+  'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee'
+};
+// Maakt van een voortgangslabel ("steden bereikt") een kaal zelfstandig
+// naamwoord ("steden") voor de "Nog X ..."-tekst; enkelvoud bij precies 1.
+function unitText(label, remaining) {
+  let noun = label
+    .replace(/^paar /, '')
+    .replace(/ (gespeeld|bereikt|bezocht|verzameld|goed|gekocht|perfect|tegelijk aan)$/, '');
+  if (remaining === 1 && TROPHY_UNIT_SINGULAR[noun]) noun = TROPHY_UNIT_SINGULAR[noun];
+  return noun;
+}
 function trophyCard(t, p, isNew) {
   const has = p.trophies.includes(t.id);
   const prog = !has && t.progress ? t.progress(p) : null;
+  const busy = prog && prog.now > 0;                // bezig = enige voortgang geboekt
   const card = document.createElement('div');
-  card.className = 'trophy-card ' + (has ? 'earned' : 'locked');
+  card.className = 'trophy-card ' + (has ? 'earned' : (busy ? 'locked busy' : 'locked'));
+  let body = '';
+  if (has) {
+    body = '<div class="trophy-done">✅ Behaald!</div>';
+  } else if (prog) {
+    const rem = Math.max(0, prog.target - prog.now);
+    // lage voortgang toch zichtbaar houden: een dun streepje vanaf 6%
+    const w = prog.now > 0 ? Math.max(prog.pct, 6) : 0;
+    body = '<div class="trophy-progress-wrap">'
+      + `<div class="trophy-progress-text">Nog ${rem} ${unitText(prog.label, rem)}</div>`
+      + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${w}%"></div></div></div>`;
+  }
   card.innerHTML =
     (isNew ? '<span class="new-badge">✨ Nieuw!</span>' : '')
     + `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`
-    + (has
-      ? '<div class="trophy-done">✔ Behaald!</div>'
-      : prog
-        ? `<div class="trophy-progress-wrap"><div class="trophy-progress-text">${prog.now}/${prog.target} ${prog.label}</div>`
-          + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${prog.pct}%"></div></div></div>`
-        : '');
+    + body;
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
@@ -1862,8 +1905,8 @@ function tapTrophy(t, card) {
   if (p.trophies.includes(t.id)) { sndTap(); sparkle(card); return; }
   if (!t.progress) return;
   sndClick();
-  const pr = t.progress(p);
-  showToast(`${t.emoji} Al ${pr.now} van ${pr.target} ${pr.label}!`);
+  const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
+  showToast(rem > 0 ? `${t.emoji} Nog ${rem} ${unitText(pr.label, rem)}!` : `${t.emoji} Bijna daar!`);
   setTimeout(hideToast, 1700);
 }
 // rood stipje op het Trofeeën-tabblad zolang er onbekeken trofeeën zijn
