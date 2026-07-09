@@ -1206,76 +1206,78 @@ function cityFor(lvl) {
 }
 
 /* ================= Trofeeën ================= */
+// De zichtbare namen en beschrijvingen zijn kort en kindvriendelijk gehouden.
+// Interne id's, has()- en progress()-logica blijven ongewijzigd zodat bestaande
+// save-data en progressie intact blijven (uitzondering: bewust verhoogde
+// shop-drempels bij 'shopper' en 'collector', afgesproken in de refactor).
 const TROPHIES = [
+  // 🎤 Tournee — voortgang in shows, steden en reizen
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Speel je eerste show',           has: p => playedCount(p) >= 1, progress: p => trophyProgress(playedCount(p), 1, 'show gespeeld') },
   { id: 'rookie3',    emoji: '🎤', name: 'Podiumstarter',   desc: 'Speel 3 shows',                  has: p => playedCount(p) >= 3, progress: p => trophyProgress(playedCount(p), 3, 'shows gespeeld') },
-  { id: 'city5',      emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Bereik optreden 5',              has: p => p.level >= 5, progress: p => trophyProgress(p.level, 5, 'show bereikt') },
-  { id: 'city10',     emoji: '✈️', name: 'Globetrotter',    desc: 'Bereik optreden 10',             has: p => p.level >= 10, progress: p => trophyProgress(p.level, 10, 'show bereikt') },
+  { id: 'city5',      emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Bereik stad 5',                  has: p => p.level >= 5, progress: p => trophyProgress(p.level, 5, 'steden bereikt') },
+  { id: 'city10',     emoji: '✈️', name: 'Wereldster',      desc: 'Bereik stad 10',                 has: p => p.level >= 10, progress: p => trophyProgress(p.level, 10, 'steden bereikt') },
   { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Bezoek alle 12 steden',          has: p => p.level > CITIES.length, progress: p => trophyProgress(Math.min(p.level - 1, CITIES.length), CITIES.length, 'steden bezocht') },
+  // 🧮 Rekenkracht — goed rekenen en gouden vragen (stats.correct telt elk goed antwoord)
+  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',      desc: 'Los 25 sommen goed op',           has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: 'Los 100 sommen goed op',          has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: 'Los 500 sommen goed op',          has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: 'Los 1000 sommen goed op',         has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'gold5',      emoji: '🌟', name: 'Goudzoeker',      desc: 'Los 5 gouden vragen goed op',    has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',     emoji: '👑', name: 'Gouden kroon',    desc: 'Los 20 gouden vragen goed op',   has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+  // ⭐ Shows & sterren — kwaliteit van je shows
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Haal je eerste perfecte show',    has: p => perfectCount(p) >= 1, progress: p => trophyProgress(perfectCount(p), 1, 'perfecte show') },
-  { id: 'perfect3',   emoji: '💿', name: 'Gouden plaat',    desc: '3 shows met 3 sterren',          has: p => perfectCount(p) >= 3, progress: p => trophyProgress(perfectCount(p), 3, 'perfecte shows') },
-  { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: '10 shows met 3 sterren',         has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  { id: 'perfect3',   emoji: '💿', name: 'Gouden plaat',    desc: 'Haal 3 shows met 3 sterren',     has: p => perfectCount(p) >= 3, progress: p => trophyProgress(perfectCount(p), 3, 'perfecte shows') },
+  { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: 'Haal 10 shows met 3 sterren',    has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
   { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: 'Verzamel 15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
   { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: 'Verzamel 30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
-  { id: 'gold5',      emoji: '🌟', name: 'Goudzoeker',      desc: '5 gouden vragen goed',           has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',     emoji: '👑', name: 'Gouden kroon',    desc: '20 gouden vragen goed',          has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
-  { id: 'encore',     emoji: '🎆', name: 'Encore!',         desc: 'Vul de fanmeter helemaal',       has: p => p.encores >= 1, progress: p => trophyProgress(p.encores, 1, 'volle fanmeters') },
-  { id: 'encore5',    emoji: '🔥', name: 'Publiekslieveling', desc: 'Vul 5 keer de fanmeter',       has: p => p.encores >= 5, progress: p => trophyProgress(p.encores, 5, 'volle fanmeters') },
-  { id: 'rich',       emoji: '💰', name: 'Rijke ster',      desc: 'Heb 100 diamanten',              has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
-  { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: 'Heb 250 diamanten',              has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
-  { id: 'shopper',    emoji: '🛍️', name: 'Shopper',         desc: 'Koop 5 spulletjes',              has: p => boughtCount(p) >= 5, progress: p => trophyProgress(boughtCount(p), 5, 'spulletjes gekocht') },
-  { id: 'collector',  emoji: '🎁', name: 'Verzamelaar',     desc: 'Koop 12 spulletjes',             has: p => boughtCount(p) >= 12, progress: p => trophyProgress(boughtCount(p), 12, 'spulletjes gekocht') },
-  { id: 'muzikant',   emoji: '🎶', name: 'Muzikant',        desc: 'Koop 3 instrumenten',            has: p => instrCount(p) >= 3, progress: p => trophyProgress(instrCount(p), 3, 'instrumenten') },
-  { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Verzamel alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
+  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Haal 3 sterren in alle 12 steden', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
+  // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
+  { id: 'rich',       emoji: '💰', name: 'Diamantenster',   desc: 'Spaar 100 diamanten',            has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
+  { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: 'Spaar 250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
+  { id: 'shopper',    emoji: '🛍️', name: 'Shopster',        desc: 'Koop 10 spulletjes',             has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
+  { id: 'collector',  emoji: '🎁', name: 'Schattenverzamelaar', desc: 'Koop 25 spulletjes',         has: p => boughtCount(p) >= 25, progress: p => trophyProgress(boughtCount(p), 25, 'spulletjes gekocht') },
+  // 👗 Kleedkamercollecties — volledige item-sets verzamelen
   { id: 'modekoningin', emoji: '👗', name: 'Modekoningin',  desc: 'Verzamel alle jurken',           has: p => catCount(p, 'dress') >= DRESS_TOTAL, progress: p => trophyProgress(catCount(p, 'dress'), DRESS_TOTAL, 'jurken') },
   { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Verzamel alle schoentjes',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoentjes') },
   { id: 'haarstylist',  emoji: '💇', name: 'Haarstylist',   desc: 'Verzamel alle haarkleuren',      has: p => catCount(p, 'hair') >= HAIR_TOTAL, progress: p => trophyProgress(catCount(p, 'hair'), HAIR_TOTAL, 'haarkleuren') },
+  { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Verzamel alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
   { id: 'podiumbouwer', emoji: '🎪', name: 'Podiumbouwer',  desc: 'Verzamel alle podia',            has: p => catCount(p, 'stage') >= STAGE_TOTAL, progress: p => trophyProgress(catCount(p, 'stage'), STAGE_TOTAL, 'podia') },
-  { id: 'dierenvriend', emoji: '🐾', name: 'Dierenvriend',   desc: 'Koop je eerste dier',            has: p => petCount(p) >= 1, progress: p => trophyProgress(petCount(p), 1, 'dieren') },
-  { id: 'dierenteam', emoji: '🐕', name: 'Dierenteam',       desc: 'Verzamel 3 dieren',              has: p => petCount(p) >= 3, progress: p => trophyProgress(petCount(p), 3, 'dieren') },
-  { id: 'dierentuin', emoji: '🦁', name: 'Eigen dierentuin', desc: 'Verzamel 6 dieren',              has: p => petCount(p) >= 6, progress: p => trophyProgress(petCount(p), 6, 'dieren') },
   { id: 'dierenkoning', emoji: '🐘', name: 'Dierenkoning',   desc: 'Verzamel alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
-  // Rekenwerk: het échte oefenen zichtbaar belonen (stats.correct telt al elk goed antwoord)
-  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: '100 sommen goed',                 has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: '500 sommen goed',                 has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: '1000 sommen goed',                has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Alle 12 steden met 3 sterren', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
-  // Speciale outfit-combo's: vier stukken tegelijk aan = trofee. De kaartjes
-  // staan gewoon zichtbaar in de kast als spaardoel, met voortgang per stuk.
-  { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Tovenaarshoed, toverjurk, toverstaf en de wijze uil',
+  // ✨ Thema-looks — speciale combinaties: alle stukken tegelijk aan = trofee.
+  // De kaartjes staan zichtbaar in de kast als spaardoel, met voortgang per stuk.
+  { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Draag de hele tovenaarslook',
     has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'stukken tegelijk aan') },
-  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Voetbaljurk, pintje, eekhoorn Lionel en het voetbalstadion',
+  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Draag de hele voetballook',
     has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Zwarte rockmicro, stoere laarsjes, gitaar en een coole zonnebril',
+  { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Draag de hele rocklook',
     has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'stukken tegelijk aan') },
-  { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Discojurk, gouden glitterschoentjes, roze glittermicro en het discopodium',
+  { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Maak de volledige discolook',
     has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'stukken tegelijk aan') },
-  { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Prinsessenkasteel, kroontje, hartjesjurk en een konijntje',
+  { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Draag de hele prinsessenlook',
     has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'stukken tegelijk aan') },
-  { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Ruimteshow, sterrenjurk, sterspeldje en zilvergrijs haar',
+  { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Draag de hele ruimtelook',
     has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Winterwonderland, wit haar, een pinguïn en de zilveren micro',
+  { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Draag de hele winterlook',
     has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'stukken tegelijk aan') },
-  { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Junglepodium, leeuwenwelp, groene jurk en een bloemenkrans',
+  { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Draag de hele junglelook',
     has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Zeemeerminjurk, onderwatershow, een dolfijn en turquoise haar',
+  { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
     has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Regenboog-haar, -jurk, -schoentjes, -micro én -podium',
+  { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
     has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
-  // Moet de laatste zijn: checkTrophies kent trofeeën in volgorde toe, dus alle
-  // andere zijn dan al geteld voor deze meta-trofee.
+  // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
+  // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
 ];
 // De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
 const TROPHY_SHELVES = [
-  { name: '🎤 Shows & reizen',   ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
-  { name: '⭐ Sterren',          ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30'] },
-  { name: '🧮 Rekenwerk',        ids: ['sums100', 'sums500', 'sums1000', 'perfecttour'] },
-  { name: '🌟 Goud & publiek',   ids: ['gold5', 'gold20', 'encore', 'encore5'] },
-  { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest', 'modekoningin', 'schoenenkast', 'haarstylist', 'podiumbouwer'] },
-  { name: '🐾 Dieren',           ids: ['dierenvriend', 'dierenteam', 'dierentuin', 'dierenkoning'] },
-  { name: '✨ Speciale outfits', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
-  { name: '🎖️ Alles verzameld',  ids: ['kastvol'] },
+  { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
+  { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour'] },
+  { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
+  { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
+  { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
+  { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
 // de speciale outfit-combo's: welk stuk hoort in welk kledingvak
