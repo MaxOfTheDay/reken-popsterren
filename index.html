@@ -607,84 +607,74 @@
   .kast-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffd740, #ff80ab); transition: width .6s ease; }
   /* de kast heeft planken: kleine themakopjes met een teller per plank */
   #trophy-shelves { width: 100%; max-width: 680px; }
-  .shelf-title { margin: 10px 2px 0; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
-  .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 15.5px; font-weight: 700; }
-  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 600; opacity: .9; background: rgba(0,0,0,.28); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-  /* zachte hint: het eerstvolgende doel in deze plank */
-  .shelf-next { font-size: 11.5px; font-weight: 600; opacity: .82; margin-top: 3px; color: #fff59d; }
-  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; margin: 7px 0 6px; align-items: stretch; }
+  /* elke categorie zit in een eigen paneel: duidelijke visuele groepering */
+  .shelf { background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 6px 12px 13px; margin: 14px 0; }
+  .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 rgba(0,0,0,.25); border-bottom: 1px solid rgba(255,255,255,.13); padding-bottom: 7px; }
+  .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 800; }
+  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 11px; white-space: nowrap; }
+  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
   .trophy-card {
     position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.3);
     border-radius: 14px; padding: 10px 8px 9px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch;
   }
   .trophy-card:active { transform: scale(.97); }
-  /* 3 staten: behaald (subtiel gouden accent), bezig (actiever), nog-niet-gestart (rustig) */
-  .trophy-card.earned {
-    border-color: #ffd740; background: rgba(255,215,64,.09);
-    box-shadow: 0 0 10px rgba(255,215,64,.28), inset 0 0 0 1px rgba(255,215,64,.22);
-  }
-  .trophy-card.busy { border-color: rgba(255,245,157,.5); background: rgba(255,255,255,.16); }
   .trophy-card .temoji { font-size: 32px; line-height: 1; height: 36px; }
-  .trophy-card.earned .temoji { filter: drop-shadow(0 0 5px rgba(255,215,64,.6)); }
-  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .32; }   /* nog niet gestart: silhouet */
-  .trophy-card.busy .temoji { filter: grayscale(.35); opacity: .82; }   /* bezig: helderder */
   .trophy-card .tname { font-size: 13.5px; font-weight: bold; margin-top: 3px; line-height: 1.15; }
   .trophy-card .tdesc { font-size: 11.5px; opacity: .85; margin-top: 2px; line-height: 1.2; }
-  .trophy-card.locked .tname { opacity: .6; }
-  /* onderste blok (voortgang/knop/status) zakt netjes naar de kaartbodem */
-  .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 7px; }
-  /* behaald: rustige gouden bevestiging */
-  .trophy-done { font-size: 12.5px; font-weight: 700; color: #ffd740; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
-  /* klaar om te openen: feestelijk, maar niet schreeuwerig */
-  .trophy-card.ready {
-    border-color: #ffca28; background: rgba(255,193,7,.15);
-    box-shadow: 0 0 13px rgba(255,193,7,.5); animation: readyPulse 1.7s ease-in-out infinite;
-  }
-  .trophy-card.ready .temoji { filter: drop-shadow(0 0 6px rgba(255,213,79,.85)); }
-  @keyframes readyPulse { 0%,100% { box-shadow: 0 0 10px rgba(255,193,7,.4); } 50% { box-shadow: 0 0 18px rgba(255,193,7,.7); } }
-  .trophy-ready { font-size: 13px; font-weight: 800; color: #fff3c4; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
-  /* claimknop: dé actie op een klare kaart */
-  .claim-btn {
-    border: 0; cursor: pointer; width: 100%; min-height: 34px; padding: 7px 10px;
-    border-radius: 999px; font-size: 12.5px; font-weight: 800; color: #5d2a00;
-    background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 2px 6px rgba(0,0,0,.3);
-    animation: pulseBtn 1.3s ease-in-out infinite;
-  }
-  .claim-btn:active { transform: scale(.96); }
-  /* zachte hulp-knop: brengt het kind naar de juiste plek, zonder te schreeuwen */
-  .tro-btn {
-    border: 1px solid rgba(255,255,255,.4); cursor: pointer; width: 100%; min-height: 32px; padding: 6px 10px;
-    border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff;
-    background: rgba(255,255,255,.16);
-  }
-  .tro-btn:active { transform: scale(.96); }
+  /* ===== 3 heldere staten ===== */
+  /* NOG VERAF: gedempt en grijs, icoon als silhouet */
+  .trophy-card.fresh { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
+  .trophy-card.fresh .temoji { filter: grayscale(1); opacity: .26; }
+  .trophy-card.fresh .tname { opacity: .55; }
+  .trophy-card.fresh .tdesc { opacity: .42; }
+  /* BEZIG: fris blauw accent, icoon bijna vol */
+  .trophy-card.busy { background: rgba(40,150,220,.17); border-color: rgba(95,200,255,.7); box-shadow: 0 0 10px rgba(70,170,255,.22); }
+  .trophy-card.busy .temoji { filter: grayscale(.12); opacity: .96; }
+  /* BEHAALD: warm goud, volle glanzende icoon */
+  .trophy-card.done { background: rgba(255,215,64,.13); border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.3), inset 0 0 0 1px rgba(255,215,64,.28); }
+  .trophy-card.done .temoji { filter: drop-shadow(0 0 5px rgba(255,215,64,.75)); }
+  /* onderste blok (voortgang/status) zakt netjes naar de kaartbodem */
+  .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .trophy-done { font-size: 12.5px; font-weight: 800; color: #ffe082; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
   .trophy-progress-wrap { padding-top: 0; }
-  /* "Nog X ..." staat duidelijk boven de balk, met wat lucht ertussen */
-  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #fff59d; min-height: 16px; line-height: 1.2; }
+  /* "Nog X ..." staat duidelijk boven de balk */
+  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #cfeaff; min-height: 16px; line-height: 1.2; }
+  .trophy-card.fresh .trophy-progress-text { color: #d8d0ea; opacity: .8; }
   .trophy-progress {
     height: 11px; margin-top: 5px; border-radius: 999px; overflow: hidden;
-    background: rgba(74,20,110,.55); border: 1px solid rgba(255,255,255,.25);
+    background: rgba(20,10,45,.6); border: 1px solid rgba(255,255,255,.22);
   }
   .trophy-progress-fill {
     height: 100%; border-radius: 999px; transition: width .5s ease;
-    background: linear-gradient(90deg, #ffd740, #ff80ab);
+    background: linear-gradient(90deg, #4fc3f7, #7e6bff);
   }
+  /* ===== KLAAR: de hele kaart is één grote 'Open trofee'-knop die de aandacht pakt ===== */
+  .trophy-card.ready {
+    grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px; text-align: left;
+    padding: 14px 18px; color: #5d2a00; border: 3px solid #fff3c4;
+    background: linear-gradient(135deg, #ffe27a, #ffb300);
+    box-shadow: 0 5px 22px rgba(255,170,0,.55); animation: readyPulse 1.4s ease-in-out infinite;
+  }
+  .ready-emoji { font-size: 42px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); }
+  .ready-lines { display: flex; flex-direction: column; }
+  .ready-big { font-size: 19px; font-weight: 900; letter-spacing: .4px; }
+  .ready-name { font-size: 13.5px; font-weight: 700; opacity: .82; }
+  @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 5px 18px rgba(255,170,0,.5); } 50% { transform: scale(1.015); box-shadow: 0 7px 28px rgba(255,170,0,.85); } }
   /* ---- Thema-looks: brede outfit-challenge-kaarten met checklist ---- */
   .trophy-card.theme { grid-column: 1 / -1; text-align: left; padding: 12px 14px; }
-  .trophy-card.theme.ready { animation: readyPulse 1.7s ease-in-out infinite; }
   .theme-top { display: flex; align-items: center; gap: 10px; }
   .theme-emoji { font-size: 30px; line-height: 1; }
-  .trophy-card.theme .tname { margin-top: 0; font-size: 15px; }
+  .trophy-card.theme.fresh .theme-emoji { filter: grayscale(1); opacity: .4; }
+  .trophy-card.theme .tname { margin-top: 0; font-size: 15px; opacity: 1; }
   .theme-tag { font-size: 11px; font-weight: 700; color: #ffd6f4; opacity: .9; letter-spacing: .3px; }
   .theme-sub { font-size: 12px; font-weight: 600; opacity: .9; margin-top: 9px; }
-  .theme-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px 12px; }
+  .theme-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 4px 12px; }
   .theme-list li { font-size: 12.5px; line-height: 1.35; }
-  .theme-list li.off { opacity: .72; }
+  .theme-list li.off { opacity: .68; }
   .theme-list li.on { color: #c8ffca; font-weight: 600; }
   .theme-count { font-size: 12.5px; font-weight: 700; color: #fff59d; margin-top: 9px; }
   .trophy-card.theme .trophy-bottom { margin-top: 10px; padding-top: 0; }
-  .trophy-card.theme .tro-btn, .trophy-card.theme .claim-btn { width: auto; align-self: flex-start; padding-left: 18px; padding-right: 18px; }
   /* ---- Claim-feestje: klein, vrolijk, verdwijnt vanzelf ---- */
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
@@ -703,7 +693,7 @@
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready, .trophy-card.theme.ready, .claim-btn { animation: none; }
+    .trophy-card.ready { animation: none; }
     .trophy-pop { animation: none; }
   }
   /* rood stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt */
@@ -1331,13 +1321,12 @@ const TROPHIES = [
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
 ];
 // De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
-// action = één duidelijke hulp-knop op nog-niet-behaalde kaarten in die plank.
 const TROPHY_SHELVES = [
-  { name: '🎤 Tournee',             action: { label: '🎬 Speel show', fn: 'goMap()' },        ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
-  { name: '🧮 Rekenkracht',         action: { label: '🎬 Speel show', fn: 'goMap()' },        ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
-  { name: '⭐ Shows & sterren',      action: { label: '🎬 Speel show', fn: 'goMap()' },        ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour'] },
-  { name: '💎 Diamanten & shoppen',  action: { label: '🛍️ Naar winkel', fn: 'openKleedkamer()' }, ids: ['rich', 'diamond250', 'shopper', 'collector'] },
-  { name: '👗 Kleedkamercollecties', action: { label: '👗 Naar kleedkamer', fn: 'openKleedkamer()' }, ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
+  { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
+  { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour'] },
+  { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
+  { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
   { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
@@ -1365,11 +1354,10 @@ const THEME_ITEM_LABEL = {
   shoes_goud: 'Gouden schoentjes', mic_zwart: 'Rockmicro', acc_bril: 'Zonnebril',
   pet_eekhoorn: 'Eekhoorn', hair_zilver: 'Zilver haar'
 };
-// Toont een stuk als "emoji naam" met een korte, duidelijke naam.
+// Korte, duidelijke naam van een stuk (zonder emoji — rustiger in de checklist).
 function pieceLabel(id) {
   const it = item(id);
-  const naam = THEME_ITEM_LABEL[id] || (it && it.name) || id;
-  return (it && it.emoji ? it.emoji + ' ' : '') + naam;
+  return THEME_ITEM_LABEL[id] || (it && it.name) || id;
 }
 // hoeveel van de 12 steden staan op drie sterren? (ronde 2 telt niet dubbel)
 function perfectCities(p) {
@@ -1918,28 +1906,21 @@ function renderShelves() {
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
     const got = shelf.ids.filter(id => p.trophies.includes(id)).length;
+    const panel = document.createElement('div');
+    panel.className = 'shelf';
     const head = document.createElement('div');
     head.className = 'shelf-title';
-    // "volgende doel": de eerste nog-niet-behaalde trofee in deze plank
-    const nextId = shelf.ids.find(id => !p.trophies.includes(id));
-    const next = nextId ? TROPHIES.find(x => x.id === nextId) : null;
-    let sub = '';
-    if (next && next.progress && !THEME_SETS[next.id]) {
-      const np = next.progress(p), rem = Math.max(0, np.target - np.now);
-      sub = `<div class="shelf-next">Volgende: ${next.name} · nog ${rem} ${unitText(np.label, rem)}</div>`;
-    } else if (next) {
-      sub = `<div class="shelf-next">Volgende: ${next.name}</div>`;
-    }
     head.innerHTML = `<div class="shelf-head-row"><span>${shelf.name}</span>`
-      + `<span class="shelf-count">🏆 ${got} van ${shelf.ids.length}</span></div>` + sub;
-    wrap.appendChild(head);
+      + `<span class="shelf-count">${got} van ${shelf.ids.length}</span></div>`;
+    panel.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid';
     shelf.ids.forEach(id => {
       const t = TROPHIES.find(x => x.id === id);
-      if (t) grid.appendChild(trophyCard(t, p, shelf.action));
+      if (t) grid.appendChild(trophyCard(t, p));
     });
-    wrap.appendChild(grid);
+    panel.appendChild(grid);
+    wrap.appendChild(panel);
   });
   save();
   updateTroDot();
@@ -1961,13 +1942,11 @@ function unitText(label, remaining) {
   if (remaining === 1 && TROPHY_UNIT_SINGULAR[noun]) noun = TROPHY_UNIT_SINGULAR[noun];
   return noun;
 }
-// bouwsteentjes voor de kaartbodem
-function claimButton(id) {
-  return `<button class="claim-btn" onclick="event.stopPropagation();openTrophy('${id}')">🎁 Open trofee</button>`;
-}
-function actionButton(action) {
-  if (!action) return '';
-  return `<button class="tro-btn" onclick="event.stopPropagation();sndClick();${action.fn}">${action.label}</button>`;
+// Een klare trofee: de hele kaart is één grote 'Open trofee'-knop.
+function readyCardHTML(t) {
+  return `<div class="ready-emoji">${t.emoji}</div>`
+    + '<div class="ready-lines"><div class="ready-big">🎁 Open trofee!</div>'
+    + `<div class="ready-name">${t.name}</div></div>`;
 }
 function progressHTML(t, p) {
   const prog = t.progress ? t.progress(p) : null;
@@ -1979,21 +1958,20 @@ function progressHTML(t, p) {
     + `<div class="trophy-progress-text">Nog ${rem} ${unitText(prog.label, rem)}</div>`
     + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${w}%"></div></div></div>`;
 }
-function trophyCard(t, p, action) {
+function trophyCard(t, p) {
   const status = trophyStatus(p, t);
-  const theme = !!THEME_SETS[t.id];
+  // een klare trofee is altijd de grote gouden 'Open trofee'-kaart (ook thema-looks)
+  const theme = !!THEME_SETS[t.id] && status !== 'ready';
   const card = document.createElement('div');
   card.className = `trophy-card ${theme ? 'theme ' : ''}` + status;
-  card.innerHTML = theme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status, action);
+  card.innerHTML = status === 'ready' ? readyCardHTML(t)
+    : theme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status);
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
-function normalCardHTML(t, p, status, action) {
+function normalCardHTML(t, p, status) {
   const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
-  let bottom;
-  if (status === 'done') bottom = '<div class="trophy-done">✅ Behaald!</div>';
-  else if (status === 'ready') bottom = '<div class="trophy-ready">🎁 Klaar!</div>' + claimButton(t.id);
-  else bottom = progressHTML(t, p) + actionButton(action);
+  const bottom = status === 'done' ? '<div class="trophy-done">✅ Behaald!</div>' : progressHTML(t, p);
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
 // Thema-look = outfit-challenge: toon de exacte stukken, wat al aan is en wat nog mist.
@@ -2004,23 +1982,16 @@ function themeCardHTML(t, p, status) {
   const on = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
   const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
     + `<div><div class="tname">${t.name}</div><div class="theme-tag">✨ Speciale look</div></div></div>`;
-  let bottom;
   if (status === 'done') {
-    bottom = `<div class="theme-sub">${t.desc}</div><div class="trophy-bottom"><div class="trophy-done">✅ Behaald!</div></div>`;
-  } else if (status === 'ready') {
-    bottom = `<div class="theme-count">Alle ${total} stukken aan — top!</div>`
-      + `<div class="trophy-bottom"><div class="trophy-ready">🎁 Klaar!</div>${claimButton(t.id)}</div>`;
-  } else {
-    const list = pieces.map(([cat, id]) => {
-      const aan = p.equipped[cat] === id;
-      return `<li class="${aan ? 'on' : 'off'}">${aan ? '✅' : '⬜'} ${pieceLabel(id)}</li>`;
-    }).join('');
-    bottom = `<div class="theme-sub">Draag deze look:</div>`
-      + `<ul class="theme-list">${list}</ul>`
-      + `<div class="theme-count">${on} van ${total} stukken aan</div>`
-      + `<div class="trophy-bottom"><button class="tro-btn" onclick="event.stopPropagation();sndClick();openKleedkamer()">👗 Bekijk look</button></div>`;
+    return head + `<div class="theme-sub">${t.desc}</div><div class="trophy-bottom"><div class="trophy-done">✅ Behaald!</div></div>`;
   }
-  return head + bottom;
+  const list = pieces.map(([cat, id]) => {
+    const aan = p.equipped[cat] === id;
+    return `<li class="${aan ? 'on' : 'off'}">${aan ? '✅' : '⬜'} ${pieceLabel(id)}</li>`;
+  }).join('');
+  return head + `<div class="theme-sub">Draag deze look:</div>`
+    + `<ul class="theme-list">${list}</ul>`
+    + `<div class="theme-count">${on} van ${total} stukken aan</div>`;
 }
 // tikken mag: behaald glinstert, klaar opent, bezig vertelt hoe ver je bent
 function tapTrophy(t, card) {
