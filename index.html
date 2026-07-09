@@ -1077,6 +1077,8 @@ const ITEMS = [
   { id: 'dress_sterren', cat: 'dress', name: 'Sterrenjurk',    price: 60,  color: '#5c6bc0', pattern: 'stars' },
   { id: 'dress_hartjes', cat: 'dress', name: 'Hartjesjurk',    price: 70,  color: '#f06292', pattern: 'hearts' },
   { id: 'dress_disco',   cat: 'dress', name: 'Discojurk',      price: 80,  color: '#b0bec5', pattern: 'disco' },
+  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbaljurk',    price: 65,  color: '#fafafa', pattern: 'ohl' },
+  { id: 'dress_tover',   cat: 'dress', name: 'Toverjurk',      price: 95,  color: '#4527a0', pattern: 'magic' },
   { id: 'dress_regenboog',cat:'dress', name: 'Regenboogjurk',  price: 110, color: 'RAINBOW' },
   // Schoentjes (kleuren de vaste schoentjes van de paspop)
   { id: 'shoes_roze',  cat: 'shoes', name: 'Roze schoentjes',   price: 0,  color: '#e91e63' },
@@ -1109,6 +1111,7 @@ const ITEMS = [
   { id: 'acc_vlinder',  cat: 'acc', name: 'Vlinder',        price: 30, emoji: '🦋', spot: 'zij' },
   { id: 'acc_ster',     cat: 'acc', name: 'Sterspeldje',    price: 35, emoji: '💫', spot: 'zij' },
   { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
+  { id: 'acc_tovenaarshoed', cat: 'acc', name: 'Tovenaarshoed', price: 85, emoji: '🧙' },
   // Huisdieren
   { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
   { id: 'pet_hond',   cat: 'pet', name: 'Danshondje',    price: 50,  emoji: '🐶' },
@@ -1131,6 +1134,7 @@ const ITEMS = [
   { id: 'stage_kasteel',  cat: 'stage', name: 'Prinsessenkasteel',price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
   { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimteshow',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
   { id: 'stage_jungle',   cat: 'stage', name: 'Junglepodium',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
+  { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'] },
   { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'] },
   { id: 'stage_onderwater',cat:'stage', name: 'Onderwatershow',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
   { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
@@ -1212,6 +1216,14 @@ const TROPHIES = [
   { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: '500 sommen goed',                 has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
   { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: '1000 sommen goed',                has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Alle 12 steden met 3 sterren', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
+  // Geheime combo-trofeeën: in de kast onherkenbaar (❓) tot je de juiste outfit
+  // tegelijk aan hebt; tikken geeft een cryptische hint.
+  { id: 'magicus', emoji: '🧙', name: 'Maximum Magicus', desc: 'Tovenaarshoed, toverjurk én een wijze uil tegelijk aan', secret: true,
+    hint: 'Iets met een puntige hoed, een fonkelende jurk… en een wijze vogel. 🦉',
+    has: p => p.equipped.acc === 'acc_tovenaarshoed' && p.equipped.dress === 'dress_tover' && p.equipped.pet === 'pet_uil' },
+  { id: 'thuismatch', emoji: '⚽', name: 'Thuismatch!', desc: 'Voetbaljurk en leeuwenwelp op het voetbalstadion', secret: true,
+    hint: 'Kleed je als échte Leuven-supporter — vergeet de leeuw en het veld niet! 🟢🔴',
+    has: p => p.equipped.dress === 'dress_voetbal' && p.equipped.pet === 'pet_leeuw' && p.equipped.stage === 'stage_stadion' },
   // Moet de laatste zijn: checkTrophies kent trofeeën in volgorde toe, dus alle
   // andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -1224,6 +1236,7 @@ const TROPHY_SHELVES = [
   { name: '🌟 Goud & publiek',   ids: ['gold5', 'gold20', 'encore', 'encore5'] },
   { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest', 'modekoningin', 'schoenenkast'] },
   { name: '🐾 Dieren',           ids: ['dierenvriend', 'dierenteam', 'dierentuin', 'dierenkoning'] },
+  { name: '✨ Geheimen',         ids: ['magicus', 'thuismatch'] },
   { name: '🎖️ Alles verzameld',  ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
@@ -1428,6 +1441,9 @@ function avatarSVG(p, width, bigProps) {
     if (acc.id === 'acc_bril') s += `<g><circle cx="88" cy="72" r="8.5" fill="#222"/><circle cx="112" cy="72" r="8.5" fill="#222"/><line x1="96" y1="72" x2="104" y2="72" stroke="#222" stroke-width="3"/></g>`;
     if (acc.id === 'acc_koptel') s += `<path d="M68 58 A33 35 0 0 1 132 58" stroke="#e91e63" fill="none" stroke-width="7" stroke-linecap="round"/><circle cx="67" cy="68" r="8" fill="#ad1457"/><circle cx="133" cy="68" r="8" fill="#ad1457"/>`;
     if (acc.id === 'acc_kroon') s += `<path d="M78 40 L84 22 L94 34 L100 18 L106 34 L116 22 L122 40 Z" fill="#ffd740" stroke="#c8a200" stroke-width="2"/><circle cx="100" cy="18" r="3" fill="#ff4081"/>`;
+    if (acc.id === 'acc_tovenaarshoed') s += `<path d="M100 0 L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>
+      <path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
+      <text x="92" y="38" font-size="12" fill="#ffd54f">★</text><text x="99" y="24" font-size="9" fill="#ffd54f">★</text>`;
     // nieuwe extra's tekenen generiek via hun emoji: 'zij' = in het haar, 'top' = op het hoofd
     if (acc.spot === 'zij') s += `<text x="53" y="54" font-size="24">${acc.emoji}</text>`;
     if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
@@ -1445,6 +1461,18 @@ function avatarSVG(p, width, bigProps) {
   if (dress.pattern === 'hearts') {
     s += `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text>
           <text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`;
+  }
+  if (dress.pattern === 'magic') {
+    // gouden sterren + maantje: de toverjurk
+    s += `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text>
+          <text x="80" y="188" font-size="11" fill="#ffd54f">★</text>
+          <path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`;
+  }
+  if (dress.pattern === 'ohl') {
+    // clubkleuren van Leuven: groen-rode banen op wit met een zwarte zoom
+    s += `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/>
+          <path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/>
+          <path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`;
   }
   // armen
   s += `<path d="M84 116 Q68 134 60 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
@@ -1748,6 +1776,13 @@ function trophyCard(t, p, isNew) {
   const prog = !has && t.progress ? t.progress(p) : null;
   const card = document.createElement('div');
   card.className = 'trophy-card ' + (has ? 'earned' : 'locked');
+  // geheim en nog niet behaald: onherkenbaar mysteriekaartje
+  if (t.secret && !has) {
+    card.innerHTML = '<div class="temoji">❓</div><div class="tname">Geheim</div>'
+      + '<div class="tdesc">Ontdek de speciale combinatie…</div>';
+    card.onclick = () => tapTrophy(t, card);
+    return card;
+  }
   card.innerHTML =
     (isNew ? '<span class="new-badge">✨ Nieuw!</span>' : '')
     + `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`
@@ -1760,10 +1795,16 @@ function trophyCard(t, p, isNew) {
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
-// tikken mag: een behaalde trofee glinstert, een gesloten vertelt hoe ver je bent
+// tikken mag: behaald glinstert, gesloten vertelt hoe ver je bent, geheim fluistert een hint
 function tapTrophy(t, card) {
   const p = P();
   if (p.trophies.includes(t.id)) { sndTap(); sparkle(card); return; }
+  if (t.secret) {
+    sndClick();
+    showToast(`🤫 ${t.hint}`);
+    setTimeout(hideToast, 2600);
+    return;
+  }
   if (!t.progress) return;
   sndClick();
   const pr = t.progress(p);
@@ -2368,6 +2409,9 @@ function surpriseOutfit() {
     else p.equipped[c.id] = pick(bezit).id;
   });
   shopSelectedId = null;
+  // ook een gegokte outfit kan per toeval een geheime combo raken
+  const trofees = checkTrophies(p);
+  if (trofees.length) { setTimeout(() => announceTrophy(trofees[0]), 300); updateTroDot(); }
   save();
   renderShop();
   tapDance('shop-avatar');
@@ -2480,6 +2524,9 @@ function equipShopItem(id) {
   if (!p.owned.includes(it.id)) return;
   p.equipped[it.cat] = it.id;
   sndClick();
+  // een outfit-combo kan een (geheime) trofee zijn — check dus ook bij het aandoen
+  const trofees = checkTrophies(p);
+  if (trofees.length) { setTimeout(() => announceTrophy(trofees[0]), 300); updateTroDot(); }
   save();
   renderShop();
 }
