@@ -1091,7 +1091,9 @@ const ITEMS = [
   { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauwe micro',   price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groene micro',   price: 40, color: '#66bb6a' },
+  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',         price: 45, emoji: '🍺' },
   { id: 'mic_zwart',  cat: 'mic', name: 'Zwarte rockmicro', price: 55, color: '#37474f' },
+  { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf',   price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Gouden micro',   price: 60, color: '#ffd54f' },
   { id: 'mic_roze',   cat: 'mic', name: 'Roze glittermicro', price: 90, color: '#ff80ab' },
   // Instrumenten
@@ -1123,6 +1125,7 @@ const ITEMS = [
   { id: 'pet_uil',    cat: 'pet', name: 'Wijze uil',     price: 75,  emoji: '🦉' },
   { id: 'pet_papegaai',cat:'pet', name: 'Papegaai',      price: 80,  emoji: '🦜' },
   { id: 'pet_dolfijn',cat: 'pet', name: 'Dolfijn',       price: 85,  emoji: '🐬' },
+  { id: 'pet_eekhoorn',cat:'pet', name: 'Eekhoorn Lionel', price: 90, emoji: '🐿️' },
   { id: 'pet_panda',  cat: 'pet', name: 'Pandabeer',     price: 90,  emoji: '🐼' },
   { id: 'pet_flamingo',cat:'pet', name: 'Flamingo',      price: 95,  emoji: '🦩' },
   { id: 'pet_leeuw',  cat: 'pet', name: 'Leeuwenwelp',   price: 100, emoji: '🦁' },
@@ -1216,14 +1219,12 @@ const TROPHIES = [
   { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: '500 sommen goed',                 has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
   { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: '1000 sommen goed',                has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: 'Alle 12 steden met 3 sterren', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
-  // Geheime combo-trofeeën: in de kast onherkenbaar (❓) tot je de juiste outfit
-  // tegelijk aan hebt; tikken geeft een cryptische hint.
-  { id: 'magicus', emoji: '🧙', name: 'Maximum Magicus', desc: 'Tovenaarshoed, toverjurk én een wijze uil tegelijk aan', secret: true,
-    hint: 'Iets met een puntige hoed, een fonkelende jurk… en een wijze vogel. 🦉',
-    has: p => p.equipped.acc === 'acc_tovenaarshoed' && p.equipped.dress === 'dress_tover' && p.equipped.pet === 'pet_uil' },
-  { id: 'thuismatch', emoji: '⚽', name: 'Thuismatch!', desc: 'Voetbaljurk en leeuwenwelp op het voetbalstadion', secret: true,
-    hint: 'Kleed je als échte Leuven-supporter — vergeet de leeuw en het veld niet! 🟢🔴',
-    has: p => p.equipped.dress === 'dress_voetbal' && p.equipped.pet === 'pet_leeuw' && p.equipped.stage === 'stage_stadion' },
+  // Speciale outfit-combo's: vier stukken tegelijk aan = trofee. De kaartjes
+  // staan gewoon zichtbaar in de kast als spaardoel, met voortgang per stuk.
+  { id: 'magicus', emoji: '🧙', name: 'Maximum Magicus', desc: 'Tovenaarshoed, toverjurk, toverstaf én de wijze uil tegelijk aan',
+    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'toverstukken tegelijk aan') },
+  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Voetbaljurk, pintje en eekhoorn Lionel in het voetbalstadion',
+    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'supporterstukken tegelijk aan') },
   // Moet de laatste zijn: checkTrophies kent trofeeën in volgorde toe, dus alle
   // andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -1236,10 +1237,14 @@ const TROPHY_SHELVES = [
   { name: '🌟 Goud & publiek',   ids: ['gold5', 'gold20', 'encore', 'encore5'] },
   { name: '🛍️ Winkel & rijkdom', ids: ['rich', 'diamond250', 'shopper', 'collector', 'muzikant', 'orkest', 'modekoningin', 'schoenenkast'] },
   { name: '🐾 Dieren',           ids: ['dierenvriend', 'dierenteam', 'dierentuin', 'dierenkoning'] },
-  { name: '✨ Geheimen',         ids: ['magicus', 'thuismatch'] },
+  { name: '✨ Speciale outfits', ids: ['magicus', 'thuismatch'] },
   { name: '🎖️ Alles verzameld',  ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
+// de speciale outfit-combo's: welk stuk hoort in welk kledingvak
+const MAGICUS_SET = { acc: 'acc_tovenaarshoed', dress: 'dress_tover', mic: 'mic_toverstaf', pet: 'pet_uil' };
+const OHELLE_SET = { dress: 'dress_voetbal', mic: 'mic_pintje', pet: 'pet_eekhoorn', stage: 'stage_stadion' };
+function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.equipped[vak] === id).length; }
 // hoeveel van de 12 steden staan op drie sterren? (ronde 2 telt niet dubbel)
 function perfectCities(p) {
   let n = 0;
@@ -1478,9 +1483,18 @@ function avatarSVG(p, width, bigProps) {
   s += `<path d="M84 116 Q68 134 60 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
   if (mic) {
     s += `<path d="M116 116 Q132 104 142 88" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
-    s += `<line x1="142" y1="88" x2="150" y2="76" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
-    s += `<circle cx="153" cy="71" r="9" fill="${mic.color}" stroke="#666" stroke-width="1.5"/>`;
-    s += `<text x="160" y="55" font-size="15">🎵</text>`;
+    if (mic.id === 'mic_pintje') {
+      // proost! een pintje in de opgeheven hand
+      s += `<text x="132" y="90" font-size="26">🍺</text>`;
+    } else if (mic.id === 'mic_toverstaf') {
+      // toverstaf met fonkelende sterpunt
+      s += `<line x1="142" y1="88" x2="156" y2="62" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
+      s += `<text x="147" y="66" font-size="18">⭐</text><text x="162" y="48" font-size="12">✨</text>`;
+    } else {
+      s += `<line x1="142" y1="88" x2="150" y2="76" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<circle cx="153" cy="71" r="9" fill="${mic.color}" stroke="#666" stroke-width="1.5"/>`;
+      s += `<text x="160" y="55" font-size="15">🎵</text>`;
+    }
   } else {
     s += `<path d="M116 116 Q132 134 140 152" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
   }
@@ -1776,13 +1790,6 @@ function trophyCard(t, p, isNew) {
   const prog = !has && t.progress ? t.progress(p) : null;
   const card = document.createElement('div');
   card.className = 'trophy-card ' + (has ? 'earned' : 'locked');
-  // geheim en nog niet behaald: onherkenbaar mysteriekaartje
-  if (t.secret && !has) {
-    card.innerHTML = '<div class="temoji">❓</div><div class="tname">Geheim</div>'
-      + '<div class="tdesc">Ontdek de speciale combinatie…</div>';
-    card.onclick = () => tapTrophy(t, card);
-    return card;
-  }
   card.innerHTML =
     (isNew ? '<span class="new-badge">✨ Nieuw!</span>' : '')
     + `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`
@@ -1795,16 +1802,10 @@ function trophyCard(t, p, isNew) {
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
-// tikken mag: behaald glinstert, gesloten vertelt hoe ver je bent, geheim fluistert een hint
+// tikken mag: een behaalde trofee glinstert, een gesloten vertelt hoe ver je bent
 function tapTrophy(t, card) {
   const p = P();
   if (p.trophies.includes(t.id)) { sndTap(); sparkle(card); return; }
-  if (t.secret) {
-    sndClick();
-    showToast(`🤫 ${t.hint}`);
-    setTimeout(hideToast, 2600);
-    return;
-  }
   if (!t.progress) return;
   sndClick();
   const pr = t.progress(p);
