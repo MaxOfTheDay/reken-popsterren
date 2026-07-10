@@ -694,27 +694,24 @@
   .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
   .theme-list li { font-size: 13px; line-height: 1.25; display: flex; align-items: center; gap: 8px; }
   .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); box-sizing: border-box; position: relative; }
-  /* 3 per-stuk-staten, als een opvullende reeks:
-     nog halen (leeg, dim) -> in je kast (vol wit) -> nu aan (blauw vinkje) */
-  .theme-list li.miss { color: rgba(255,255,255,.44); }
-  .theme-list li.miss .pc { border-color: rgba(255,255,255,.26); }
-  .theme-list li.have { color: rgba(255,255,255,.92); }
-  .theme-list li.have .pc { background: rgba(255,255,255,.62); border-color: rgba(255,255,255,.62); }
-  .theme-list li.on { color: #8fd6ff; font-weight: 600; }
-  .theme-list li.on .pc { background: #4fc3f7; border-color: #4fc3f7; }
-  .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #06263a; }
-  /* behaalde look: rustige witte tekst en witte vinkjes, zonder geel accent. */
-  .trophy-card.theme.done .theme-list li { color: rgba(255,255,255,.92); font-weight: 600; }
-  .trophy-card.theme.done .pc { background: transparent; border-color: rgba(255,255,255,.86); }
-  .trophy-card.theme.done .pc::after { color: rgba(255,255,255,.95); }
+  /* 3 per-stuk-staten: niet in kleerkast (leeg/dim), in kleerkast (grijs vinkje), nu aan (blauw actief). */
+  .theme-list li.miss { color: rgba(255,255,255,.42); }
+  .theme-list li.miss .pc { border-color: rgba(255,255,255,.24); background: transparent; }
+  .theme-list li.have { color: rgba(255,255,255,.74); }
+  .theme-list li.have .pc { background: rgba(180,184,196,.62); border-color: rgba(180,184,196,.72); }
+  .theme-list li.have .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-weight: 900; color: rgba(255,255,255,.94); }
+  .theme-list li.on { color: #8fd6ff; font-weight: 700; }
+  .theme-list li.on .pc { background: #40bdf8; border-color: #40bdf8; box-shadow: 0 0 0 2px rgba(64,189,248,.16); }
+  .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #32115f; }
+  .trophy-card.theme.done { padding-bottom: 42px; }
   /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
   .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: #ffd54f; }
   .look-hint.action { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 16px; border-radius: 999px; color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 3px 10px rgba(255,179,0,.35); animation: readyPulse 1.4s ease-in-out infinite; }
   .look-hint.action:active { transform: scale(.96); }
-  /* actie op een behaalde look: meteen aandoen & bekijken in de kleedkamer */
+  /* actie op een behaalde look: kort label, rechts onder de content vrijgezet */
   .look-action {
-    position: absolute; right: 12px; bottom: 10px; border: 0; cursor: pointer;
-    padding: 5px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #5d2a00;
+    position: absolute; right: 14px; bottom: 10px; border: 0; cursor: pointer;
+    padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #5d2a00;
     background: linear-gradient(180deg, rgba(255,224,130,.95), rgba(255,179,0,.92)); box-shadow: 0 2px 5px rgba(0,0,0,.2);
   }
   .look-action:active { transform: scale(.96); }
@@ -2056,8 +2053,8 @@ function normalCardHTML(t, p, status) {
   }
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
-// Thema-look = verzamel-de-set: elk stuk heeft 3 staten (nog halen / in je kast /
-// nu aan). De teller toont bezit én dragen; 'Aan' is primair, want dat haalt de trofee.
+// Thema-look = verzamel-de-set: elk stuk heeft 3 visuele staten (niet in kast /
+// in kast / nu aan). De 🏆 op kaartniveau blijft de enige status voor ooit behaalde looks.
 function themeCardHTML(t, p, status) {
   const set = THEME_SETS[t.id];
   const pieces = Object.entries(set);
@@ -2071,12 +2068,12 @@ function themeCardHTML(t, p, status) {
     + (done ? '' : `<div class="theme-count"><span class="worn${wornCls}">Aan: ${wornN}/${total}</span></div>`) + '</div>';
   const won = done ? '<span class="trophy-won">🏆</span>' : '';
   const list = pieces.map(([cat, id]) => {
-    const cls = (done || p.equipped[cat] === id) ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
+    const cls = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
     return `<li class="${cls}"><span class="pc"></span>${pieceLabel(id)}</li>`;
   }).join('');
   // afsluiting: behaalde look kan je meteen aandoen; alles-in-bezit krijgt een duidelijke CTA
   const foot = done
-    ? `<button class="look-action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Doe aan &amp; bekijk</button>`
+    ? `<button class="look-action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Doe aan</button>`
     : (ownedN === total && wornN < total ? `<button class="look-hint action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>` : '');
   return won + head + `<ul class="theme-list">${list}</ul>` + foot;
 }
