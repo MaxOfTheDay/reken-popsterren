@@ -2619,6 +2619,7 @@ function submitAnswer(val, btnEl) {
     // ---- juist ----
     G.lock = true;
     stopSpot();
+    hideToast();   // een hint van een vorige misser mag het "Goed zo!"-moment niet overschaduwen
     const firstTry = !G.retried;                 // in één keer goed?
     updatePerf(p, true, firstTry && G.spot > 0);
     p.stats.correct++;
