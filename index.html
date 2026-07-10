@@ -533,9 +533,16 @@
      loopt (punten & kromming gezet door updateRoad/renderTourMap); het afgelegde
      deel licht warm op, de weg vooruit blijft dof. */
   .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; }
+  .tour-road-bg, .tour-road-fg, .tour-road-fg-glow, .tour-road-fade { fill: none; stroke-linecap: round; }
+  /* de weg vooruit (nog te ontdekken) blijft een dof stippelpad */
   .tour-road-bg { stroke: rgba(255,255,255,.35); stroke-width: 6; stroke-dasharray: 2 15; }
-  .tour-road-fg { stroke: rgba(255,215,64,.85); stroke-width: 6; stroke-dasharray: 2 15; }
+  /* het afgelegde deel is nu een vol, zacht gloeiend gouden lint i.p.v. een stippellijn —
+     leest in één oogopslag als "hier heb je al gelopen" */
+  .tour-road-fg-glow { stroke: rgba(255,193,7,.6); stroke-width: 15; filter: blur(5px); animation: playGlow 1.7s ease-in-out infinite; }
+  .tour-road-fg { stroke: #ffda6a; stroke-width: 6; }
+  /* de weg loopt nog een stukje door ná de laatst getoonde halte en dooft daar uit —
+     een hint dat de tournee (oneindig) verder gaat dan wat nu in beeld is */
+  .tour-road-fade { stroke: url(#roadFadeGrad); stroke-width: 6; stroke-dasharray: 2 15; }
   /* subtiel twinkelend sterretje dat vanzelf oppopt op het afgelegde deel van de weg
      (los van de reisanimatie) — geen val-beweging, gewoon even oplichten */
   .road-twinkle { position: fixed; font-size: 15px; z-index: 2; pointer-events: none; opacity: 0;
@@ -1894,6 +1901,9 @@ function updateRoad(map) {
   const svg = track.querySelector('.tour-road-svg');
   const bg = track.querySelector('.tour-road-bg');
   const fg = track.querySelector('.tour-road-fg');
+  const fgGlow = track.querySelector('.tour-road-fg-glow');
+  const fade = track.querySelector('.tour-road-fade');
+  const fadeGrad = track.querySelector('#roadFadeGrad');
   const stops = [...track.querySelectorAll('.tour-stop')];
   if (!svg || !stops.length) return;
   svg.setAttribute('width', track.scrollWidth);
@@ -1908,7 +1918,24 @@ function updateRoad(map) {
   const hero = track.querySelector('.tour-hero');
   const target = track.querySelector('.tour-stop.next') || (hero && hero.closest('.tour-stop'));
   const targetIdx = target ? stops.indexOf(target) : -1;
-  fg.setAttribute('d', targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '');
+  const traveledD = targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '';
+  fg.setAttribute('d', traveledD);
+  if (fgGlow) fgGlow.setAttribute('d', traveledD);
+  // laat de weg nog twee "haltes" ver doorlopen ná de laatste die we tonen en
+  // laat 'm daar uitdoven: een hint dat de tournee verder gaat dan dit stukje kaart
+  const n = pts.length;
+  if (fade && n >= 2) {
+    const amp = waveAmplitude();
+    const stepDx = pts[n - 1].x - pts[n - 2].x;
+    const baseY = pts[n - 1].y - waveY(n - 1, amp);
+    const extPts = [pts[n - 1]];
+    for (let k = 1; k <= 2; k++) extPts.push({ x: pts[n - 1].x + stepDx * k, y: baseY + waveY(n - 1 + k, amp) });
+    fade.setAttribute('d', smoothPath(extPts));
+    if (fadeGrad) {
+      fadeGrad.setAttribute('x1', extPts[0].x); fadeGrad.setAttribute('y1', extPts[0].y);
+      fadeGrad.setAttribute('x2', extPts[2].x); fadeGrad.setAttribute('y2', extPts[2].y);
+    }
+  } else if (fade) fade.setAttribute('d', '');
 }
 // Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
 // de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
@@ -1924,11 +1951,31 @@ function renderTourMap(travelFrom) {
   const roadSvg = document.createElementNS(svgNS, 'svg');
   roadSvg.setAttribute('class', 'tour-road-svg');
   roadSvg.setAttribute('aria-hidden', 'true');
+  const defs = document.createElementNS(svgNS, 'defs');
+  const fadeGrad = document.createElementNS(svgNS, 'linearGradient');
+  fadeGrad.setAttribute('id', 'roadFadeGrad');
+  fadeGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+  const fadeStop1 = document.createElementNS(svgNS, 'stop');
+  fadeStop1.setAttribute('offset', '0%');
+  fadeStop1.setAttribute('stop-color', 'rgba(255,255,255,.35)');
+  const fadeStop2 = document.createElementNS(svgNS, 'stop');
+  fadeStop2.setAttribute('offset', '100%');
+  fadeStop2.setAttribute('stop-color', 'rgba(255,255,255,0)');
+  fadeGrad.appendChild(fadeStop1);
+  fadeGrad.appendChild(fadeStop2);
+  defs.appendChild(fadeGrad);
   const bgPath = document.createElementNS(svgNS, 'path');
   bgPath.setAttribute('class', 'tour-road-bg');
+  const fadePath = document.createElementNS(svgNS, 'path');
+  fadePath.setAttribute('class', 'tour-road-fade');
+  const fgGlowPath = document.createElementNS(svgNS, 'path');
+  fgGlowPath.setAttribute('class', 'tour-road-fg-glow');
   const fgPath = document.createElementNS(svgNS, 'path');
   fgPath.setAttribute('class', 'tour-road-fg');
+  roadSvg.appendChild(defs);
   roadSvg.appendChild(bgPath);
+  roadSvg.appendChild(fadePath);
+  roadSvg.appendChild(fgGlowPath);
   roadSvg.appendChild(fgPath);
   track.appendChild(roadSvg);
   // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
