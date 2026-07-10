@@ -543,12 +543,16 @@
   }
   /* grote, gedimde decor-iconen op de achtergrond van de route (zie addRouteDecor) —
      dezelfde stijl als de vroegere vaste "poster-mic": groot, dof, licht schuin,
-     zachtjes zwevend. Leven ín de track, scrollen dus mee en herhalen zich
-     eindeloos. Géén eigen z-index nodig: ze staan vóór de weg/haltes in de DOM
-     en blijven zo vanzelf achter alles zitten.
-     Twee lagen: .tour-decor (buiten) krijgt alleen de scroll-parallax
-     (JS, updateParallax) — .tour-decor-inner (binnen) de vaste rotatie + het
-     zweven (CSS), zodat animatie en parallax elkaars transform niet overschrijven. */
+     zachtjes zwevend, en herhalen zich eindeloos.
+     Eigen laag, los van .tour-track: die laag scrolt zelf NIET mee (overflow:hidden,
+     positie wordt bij het scrollen steeds vers herberekend, zie updateParallax) —
+     zou decor wél ín de scrollende track leven, dan duwt elke scroll 'm net iets
+     verder naar buiten, wat de scrollbare route weer verbreedt: een oneindige-
+     scroll-lus. Géén eigen z-index nodig op de laag zelf: ze staat vóór de
+     weg/haltes in de DOM en blijft zo vanzelf achter alles zitten.
+     Twee lagen ín elk decor-icoon: .tour-decor (buiten) krijgt alleen de vaste
+     centrering — .tour-decor-inner (binnen) de vaste rotatie + het zweven (CSS). */
+  .tour-decor-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   .tour-decor { position: absolute; pointer-events: none; user-select: none; }
   .tour-decor-inner { line-height: 1; animation: decorFloat 7s ease-in-out infinite alternate; }
   @keyframes decorFloat {
@@ -1866,14 +1870,19 @@ const ROUTE_DECOR = ['🎤', '🪩', '🎧', '🎶', '⭐', '🎸'];
 // Achtergrond-decor scrollt trager dan de route zelf (0 = staat helemaal stil,
 // 1 = scrollt exact mee) — dat kleine verschil geeft het dieptegevoel van parallax.
 const DECOR_PARALLAX_RATE = 0.55;
-function addRouteDecor(track, maxShow, stopW, padX) {
+// "layer" is de losse .tour-decor-layer (géén kind van de scrollende .tour-track!)
+// — homeX blijft de track-lokale positie, maar wordt bewaard in data-home-x en pas
+// bij het scrollen omgerekend naar een absolute (niet-scrollende) links-positie.
+function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
   let n = 0;
   for (let l = 2; l <= maxShow; l += 4, n++) {
     const h = hash01(l * 7.31);
+    const homeX = padX + (l - 0.5) * stopW;
     const outer = document.createElement('div');
     outer.className = 'tour-decor';
-    outer.style.left = (padX + (l - 0.5) * stopW) + 'px';
-    outer.style.transform = 'translateX(-50%)';   // parallax-verschuiving komt er via JS (updateParallax) bij
+    outer.dataset.homeX = homeX;
+    outer.style.left = (homeX - scrollLeft * DECOR_PARALLAX_RATE) + 'px';
+    outer.style.transform = 'translateX(-50%)';   // alleen centreren — blijft vast, geen scroll-afhankelijke transform
     if (n % 2 === 0) outer.style.top = Math.round(18 + hash01(l * 3.1) * 46) + 'px';
     else outer.style.bottom = Math.round(14 + hash01(l * 5.7) * 40) + 'px';
     const inner = document.createElement('div');
@@ -1885,19 +1894,22 @@ function addRouteDecor(track, maxShow, stopW, padX) {
     inner.style.animationDuration = (6 + h * 3).toFixed(1) + 's';
     inner.style.animationDelay = (-hash01(l * 4.4) * 8).toFixed(1) + 's';
     outer.appendChild(inner);
-    track.appendChild(outer);
+    layer.appendChild(outer);
   }
 }
 // Schuift de achtergrondlucht en de route-decor mee bij het scrollen door de
 // route, allebei trager dan de haltes zelf — het klassieke parallax-dieptetrucje.
+// BELANGRIJK: de decor-laag leeft buiten .tour-track (met overflow:hidden) en de
+// positie wordt hier altijd vérs uitgerekend (nooit een transform bóvenop een
+// eerdere transform) — anders duwt elke scroll de decor verder naar buiten, wat
+// de scrollbare breedte weer vergroot: een oneindige-scroll-lus.
 function updateParallax(map) {
   const sky = document.querySelector('#screen-map .map-sky');
   if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
-  const track = map.querySelector('.tour-track');
-  if (!track) return;
-  const shift = map.scrollLeft * (1 - DECOR_PARALLAX_RATE);
-  track.querySelectorAll('.tour-decor').forEach(el => {
-    el.style.transform = `translateX(calc(-50% + ${shift}px))`;
+  const layer = map.querySelector('.tour-decor-layer');
+  if (!layer) return;
+  layer.querySelectorAll('.tour-decor').forEach(el => {
+    el.style.left = (parseFloat(el.dataset.homeX) - map.scrollLeft * DECOR_PARALLAX_RATE) + 'px';
   });
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
@@ -2016,12 +2028,17 @@ function renderTourMap(travelFrom) {
   const heroLvl = travelFrom || p.level;
   const map = $('tour-map');
   map.innerHTML = '';
+  // eigen, niet-scrollende laag vóór de track (zie .tour-decor-layer hierboven)
+  const decorLayer = document.createElement('div');
+  decorLayer.className = 'tour-decor-layer';
+  decorLayer.setAttribute('aria-hidden', 'true');
+  map.appendChild(decorLayer);
   const track = document.createElement('div');
   track.className = 'tour-track';
   // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
   const maxShow = Math.max(CITIES.length, p.level + 2);
   const amp = waveAmplitude();
-  addRouteDecor(track, maxShow, stopWidth(), trackPad());
+  addRouteDecor(decorLayer, maxShow, stopWidth(), trackPad(), map.scrollLeft);
   const svgNS = 'http://www.w3.org/2000/svg';
   const roadSvg = document.createElementNS(svgNS, 'svg');
   roadSvg.setAttribute('class', 'tour-road-svg');
