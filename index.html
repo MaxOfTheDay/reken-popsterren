@@ -646,9 +646,9 @@
      Zakt licht naar de achtergrond zodat de actieve doelen opvallen. */
   .trophy-card.done { background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); opacity: .9; }
   .trophy-card.done .temoji { filter: none; }
-  .trophy-star {
-    position: absolute; top: -7px; right: -5px; font-size: 19px; z-index: 3;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
+  .trophy-won {
+    position: absolute; top: -8px; right: -6px; font-size: 20px; z-index: 3;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
   }
   /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
   .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
@@ -682,10 +682,14 @@
   .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
   .theme-list li { font-size: 12.5px; line-height: 1.3; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.6); }
   .theme-list li.on { color: #8fd6ff; font-weight: 600; }
-  /* moderne, ronde checks: leeg bolletje = nog nodig, blauw vinkje = aan */
+  /* moderne, ronde checks: leeg bolletje = nog nodig, BLAUW vinkje = nu aan */
   .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); box-sizing: border-box; position: relative; }
   .theme-list li.on .pc { background: #4fc3f7; border-color: #4fc3f7; }
   .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #06263a; }
+  /* behaalde look: GOUD vinkje = verzameld (i.p.v. blauw = nu aan) */
+  .trophy-card.theme.done .theme-list li { color: #ffe08a; }
+  .trophy-card.theme.done .pc { background: #ffce4d; border-color: #ffce4d; }
+  .trophy-card.theme.done .pc::after { color: #5a3b00; }
   /* ---- Claim-feestje: klein, vrolijk, verdwijnt vanzelf ---- */
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
@@ -1987,7 +1991,7 @@ function trophyCard(t, p) {
 }
 function normalCardHTML(t, p, status) {
   const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
-  if (status === 'done') return '<span class="trophy-star">⭐</span>' + top;
+  if (status === 'done') return '<span class="trophy-won">🏆</span>' + top;
   if (status === 'locked') {
     return '<span class="trophy-lock">🔒</span>' + top
       + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Nog niet vrij</div></div>';
@@ -2013,7 +2017,7 @@ function themeCardHTML(t, p, status) {
   const on = done ? total : pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
   const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
     + `<div class="tname">${t.name}</div><span class="theme-count">${on}/${total}</span></div>`;
-  const star = done ? '<span class="trophy-star">⭐</span>' : '';
+  const star = done ? '<span class="trophy-won">🏆</span>' : '';
   const list = pieces.map(([cat, id]) => {
     const aan = done || p.equipped[cat] === id;
     return `<li class="${aan ? 'on' : 'off'}"><span class="pc"></span>${pieceLabel(id)}</li>`;
