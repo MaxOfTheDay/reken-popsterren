@@ -144,7 +144,10 @@
   /* zelfde plek als voorheen, maar nu de vertrouwde .btn.small.ghost-taal die de
      rest van de app ook gebruikt voor kleine icoon-knoppen (bv. de ⬅ terugknoppen),
      i.p.v. een losse, nergens anders herhaalde cirkelstijl */
-  #btn-gear.on { background: rgba(255,255,255,.32); transform: rotate(35deg); }
+  #btn-gear.on { background: rgba(255,255,255,.32); }
+  /* alleen het tandwiel zélf draait — niet de hele (nu rechthoekige) knop eromheen */
+  #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
+  #btn-gear.on .gear-ico { transform: rotate(35deg); }
 
   /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
   .gear-menu {
@@ -1147,7 +1150,7 @@
 </div>
 
 <div class="corner-btns" id="corner-btns">
-  <button class="btn small ghost" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen">⚙️</button>
+  <button class="btn small ghost" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen"><span class="gear-ico">⚙️</span></button>
   <div class="gear-menu" id="gear-menu" role="menu">
     <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
       <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
