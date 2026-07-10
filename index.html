@@ -684,11 +684,13 @@
   .theme-emoji { font-size: 30px; line-height: 1; }
   .trophy-card.theme.fresh .theme-emoji { filter: grayscale(1); opacity: .4; }
   .trophy-card.theme .tname { margin-top: 0; font-size: 15px; opacity: 1; }
-  /* korte teller 'x/y' rechtsboven: volgt dezelfde 3 staten als de checklist
-     zelf (dim = nog niks, wit = aan het verzamelen, goud = alles binnen) */
-  .theme-count { margin-left: auto; font-size: 13px; font-weight: 800; color: #cfc6df; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 11px; }
-  .theme-count.some { color: #fff; }
-  .theme-count.full { color: #ffe08a; background: rgba(255,206,77,.25); }
+  /* dubbele teller rechtsboven: 'Aan' is de primaire voortgang omdat die de trofee haalt */
+  .theme-count { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; font-size: 12px; font-weight: 800; }
+  .theme-count span { color: #cfc6df; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+  .theme-count .owned.some { color: #fff; }
+  .theme-count .owned.full { color: #ffe08a; background: rgba(255,206,77,.2); }
+  .theme-count .worn { color: #07283a; background: linear-gradient(180deg, #8fd6ff, #4fc3f7); box-shadow: 0 0 0 2px rgba(143,214,255,.28), 0 2px 7px rgba(79,195,247,.28); }
+  .theme-count .worn.full { color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 0 0 2px rgba(255,224,130,.28), 0 2px 7px rgba(255,179,0,.34); }
   .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
   .theme-list li { font-size: 12.5px; line-height: 1.3; display: flex; align-items: center; gap: 8px; }
   .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); box-sizing: border-box; position: relative; }
@@ -708,6 +710,8 @@
   .trophy-card.theme.done .pc::after { color: #5a3b00; }
   /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
   .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: #ffd54f; }
+  .look-hint.action { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 16px; border-radius: 999px; color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 3px 10px rgba(255,179,0,.35); animation: readyPulse 1.4s ease-in-out infinite; }
+  .look-hint.action:active { transform: scale(.96); }
   /* actie op een behaalde look: meteen aandoen & bekijken in de kleedkamer */
   .look-action {
     margin-top: 11px; align-self: flex-start; border: 0; cursor: pointer;
@@ -1337,25 +1341,25 @@ const TROPHIES = [
   // ✨ Thema-looks — speciale combinaties: alle stukken tegelijk aan = trofee.
   // De kaartjes staan zichtbaar in de kast als spaardoel, met voortgang per stuk.
   { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Draag de hele tovenaarslook',
-    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'aan') },
   { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Draag de hele voetballook',
-    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'aan') },
   { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Draag de hele rocklook',
-    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'aan') },
   { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Maak de volledige discolook',
-    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'aan') },
   { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Draag de hele prinsessenlook',
-    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'aan') },
   { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Draag de hele ruimtelook',
-    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'aan') },
   { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Draag de hele winterlook',
-    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'aan') },
   { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Draag de hele junglelook',
-    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'aan') },
   { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
-    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'aan') },
   { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
-    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
+    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'aan') },
   // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
   // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Verzamel alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -1367,7 +1371,7 @@ const TROPHY_SHELVES = [
   { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
   { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
-  { name: '✨ Thema-looks',          note: 'Draag alle stukken samen om de look te halen.', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
+  { name: '✨ Thema-looks',          note: 'Heb je alles? Trek de hele look aan!', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
@@ -2034,7 +2038,7 @@ function normalCardHTML(t, p, status) {
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
 // Thema-look = verzamel-de-set: elk stuk heeft 3 staten (nog halen / in je kast /
-// nu aan). Teller = hoeveel stukken je al hebt. Behaald toont geen teller (🏆).
+// nu aan). De teller toont bezit én dragen; 'Aan' is primair, want dat haalt de trofee.
 function themeCardHTML(t, p, status) {
   const set = THEME_SETS[t.id];
   const pieces = Object.entries(set);
@@ -2042,20 +2046,20 @@ function themeCardHTML(t, p, status) {
   const done = status === 'done';
   const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
   const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
-  // teller volgt dezelfde 3 staten als de checklist: dim (0) -> wit (aan het verzamelen) -> goud (alles binnen)
-  const countCls = ownedN === 0 ? '' : ownedN === total ? ' full' : ' some';
+  const ownedCls = ownedN === 0 ? '' : ownedN === total ? ' full' : ' some';
+  const wornCls = wornN === total ? ' full' : '';
   const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
     + `<div class="tname">${t.name}</div>`
-    + (done ? '' : `<span class="theme-count${countCls}">${ownedN}/${total}</span>`) + '</div>';
+    + (done ? '' : `<div class="theme-count"><span class="owned${ownedCls}">In kast: ${ownedN}/${total}</span><span class="worn${wornCls}">Aan: ${wornN}/${total}</span></div>`) + '</div>';
   const won = done ? '<span class="trophy-won">🏆</span>' : '';
   const list = pieces.map(([cat, id]) => {
     const cls = (done || p.equipped[cat] === id) ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
     return `<li class="${cls}"><span class="pc"></span>${pieceLabel(id)}</li>`;
   }).join('');
-  // afsluiting: behaalde look kan je meteen aandoen; alles-in-bezit krijgt een duwtje
+  // afsluiting: behaalde look kan je meteen aandoen; alles-in-bezit krijgt een duidelijke CTA
   const foot = done
     ? `<button class="look-action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Doe aan &amp; bekijk</button>`
-    : (ownedN === total && wornN < total ? '<div class="look-hint">Je hebt alles — trek het samen aan! 🎉</div>' : '');
+    : (ownedN === total && wornN < total ? `<button class="look-hint action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>` : '');
   return won + head + `<ul class="theme-list">${list}</ul>` + foot;
 }
 // Trekt in één klik alle stukken van een look aan en toont ze in de kleedkamer.
@@ -2074,7 +2078,14 @@ function tapTrophy(t, card) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  if (THEME_SETS[t.id]) { sndClick(); if (st === 'done') wearLook(t.id); else openKleedkamer(); return; }
+  if (THEME_SETS[t.id]) {
+    sndClick();
+    const pieces = Object.entries(THEME_SETS[t.id]);
+    const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
+    if (st === 'done' || ownedN === pieces.length) wearLook(t.id);
+    else openKleedkamer();
+    return;
+  }
   if (st === 'done') { sndTap(); sparkle(card); return; }
   if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
   if (!t.progress) return;
