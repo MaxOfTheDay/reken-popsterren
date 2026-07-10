@@ -612,6 +612,8 @@
   .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 rgba(0,0,0,.25); border-bottom: 1px solid rgba(255,255,255,.13); padding-bottom: 7px; }
   .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 800; }
   .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 11px; white-space: nowrap; }
+  /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
+  .shelf-title .shelf-count.full { color: #ffe08a; background: rgba(255,206,77,.25); opacity: 1; }
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
   .trophy-card {
     position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.3);
@@ -652,9 +654,11 @@
   }
   /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
   .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
-  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #fff59d; min-height: 16px; line-height: 1.2; }
+  /* tekstkleur volgt de balk: blauw = bezig (default), goud = bijna, neutraal = niet gestart/locked */
+  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #7dd3fc; min-height: 16px; line-height: 1.2; }
   .trophy-progress-text.sub { color: #cfc6df; font-weight: 600; opacity: .75; }
-  .trophy-card.fresh .trophy-progress-text { color: #d8d0ea; opacity: .82; }
+  .trophy-card.fresh .trophy-progress-text { color: #cfc6df; opacity: .82; }
+  .trophy-card.almost .trophy-progress-text { color: #ffd54f; }
   /* dunne progressbalk onderaan de kaart */
   .trophy-progress { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid rgba(255,255,255,.18); }
   /* BLAUW = bezig/actief (zelfde taal als 'nu aan' bij thema-looks en de diamant) */
@@ -678,8 +682,11 @@
   .theme-emoji { font-size: 30px; line-height: 1; }
   .trophy-card.theme.fresh .theme-emoji { filter: grayscale(1); opacity: .4; }
   .trophy-card.theme .tname { margin-top: 0; font-size: 15px; opacity: 1; }
-  /* korte teller 'x/y' rechtsboven, in progress-stijl */
-  .theme-count { margin-left: auto; font-size: 13px; font-weight: 800; color: #8fd6ff; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 11px; }
+  /* korte teller 'x/y' rechtsboven: volgt dezelfde 3 staten als de checklist
+     zelf (dim = nog niks, wit = aan het verzamelen, goud = alles binnen) */
+  .theme-count { margin-left: auto; font-size: 13px; font-weight: 800; color: #cfc6df; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 11px; }
+  .theme-count.some { color: #fff; }
+  .theme-count.full { color: #ffe08a; background: rgba(255,206,77,.25); }
   .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
   .theme-list li { font-size: 12.5px; line-height: 1.3; display: flex; align-items: center; gap: 8px; }
   .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); box-sizing: border-box; position: relative; }
@@ -1946,8 +1953,9 @@ function renderShelves() {
     panel.className = 'shelf';
     const head = document.createElement('div');
     head.className = 'shelf-title';
+    const shelfFull = got === shelf.ids.length ? ' full' : '';
     head.innerHTML = `<div class="shelf-head-row"><span>${shelf.name}</span>`
-      + `<span class="shelf-count">${got} van ${shelf.ids.length}</span></div>`
+      + `<span class="shelf-count${shelfFull}">${got} van ${shelf.ids.length}</span></div>`
       + (shelf.note ? `<div class="shelf-note">${shelf.note}</div>` : '');
     panel.appendChild(head);
     const grid = document.createElement('div');
@@ -2031,9 +2039,11 @@ function themeCardHTML(t, p, status) {
   const done = status === 'done';
   const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
   const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
+  // teller volgt dezelfde 3 staten als de checklist: dim (0) -> wit (aan het verzamelen) -> goud (alles binnen)
+  const countCls = ownedN === 0 ? '' : ownedN === total ? ' full' : ' some';
   const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
     + `<div class="tname">${t.name}</div>`
-    + (done ? '' : `<span class="theme-count">${ownedN}/${total}</span>`) + '</div>';
+    + (done ? '' : `<span class="theme-count${countCls}">${ownedN}/${total}</span>`) + '</div>';
   const won = done ? '<span class="trophy-won">🏆</span>' : '';
   const list = pieces.map(([cat, id]) => {
     const cls = (done || p.equipped[cat] === id) ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
