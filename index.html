@@ -544,14 +544,18 @@
   /* grote, gedimde decor-iconen op de achtergrond van de route (zie addRouteDecor) —
      dezelfde stijl als de vroegere vaste "poster-mic": groot, dof, licht schuin,
      zachtjes zwevend, en herhalen zich eindeloos.
-     Eigen laag, los van .tour-track: die laag scrolt zelf NIET mee (overflow:hidden,
-     positie wordt bij het scrollen steeds vers herberekend, zie updateParallax) —
-     zou decor wél ín de scrollende track leven, dan duwt elke scroll 'm net iets
-     verder naar buiten, wat de scrollbare route weer verbreedt: een oneindige-
-     scroll-lus. Géén eigen z-index nodig op de laag zelf: ze staat vóór de
-     weg/haltes in de DOM en blijft zo vanzelf achter alles zitten.
+     Eigen laag, BUITEN .tour-map (de scroller) — een kind van de scrollende
+     container blijft altijd meescrollen, ook met position:absolute (alleen
+     position:fixed ontsnapt daaraan); zou de laag ín .tour-map zitten, dan
+     schuift elke scroll 'm dubbel op (de native scroll + onze eigen parallax-
+     verschuiving bovenop) en groeit de scrollbare route bovendien eindeloos
+     mee. Vandaar .tour-map-wrap: een strakke, even grote omhulling met daarin
+     de decor-laag (overflow:hidden, blijft op zijn plek) als vaste buur van
+     .tour-map, niet als kind ervan. Positie wordt bij het scrollen steeds vers
+     herberekend (zie updateParallax), nooit een transform bovenop een vorige.
      Twee lagen ín elk decor-icoon: .tour-decor (buiten) krijgt alleen de vaste
      centrering — .tour-decor-inner (binnen) de vaste rotatie + het zweven (CSS). */
+  .tour-map-wrap { position: relative; width: 100%; max-width: 760px; }
   .tour-decor-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   .tour-decor { position: absolute; pointer-events: none; user-select: none; }
   .tour-decor-inner { line-height: 1; animation: decorFloat 7s ease-in-out infinite alternate; }
@@ -1025,7 +1029,10 @@
       </div>
     </div>
     <div class="map-flex">
-      <div class="tour-map hscroll-fade" id="tour-map"></div>
+      <div class="tour-map-wrap">
+        <div class="tour-decor-layer" id="tour-decor-layer" aria-hidden="true"></div>
+        <div class="tour-map hscroll-fade" id="tour-map"></div>
+      </div>
     </div>
   </div>
 
@@ -1899,14 +1906,14 @@ function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
 }
 // Schuift de achtergrondlucht en de route-decor mee bij het scrollen door de
 // route, allebei trager dan de haltes zelf — het klassieke parallax-dieptetrucje.
-// BELANGRIJK: de decor-laag leeft buiten .tour-track (met overflow:hidden) en de
-// positie wordt hier altijd vérs uitgerekend (nooit een transform bóvenop een
-// eerdere transform) — anders duwt elke scroll de decor verder naar buiten, wat
-// de scrollbare breedte weer vergroot: een oneindige-scroll-lus.
+// BELANGRIJK: de decor-laag leeft buiten .tour-map (zie .tour-map-wrap hierboven)
+// en de positie wordt hier altijd vérs uitgerekend op basis van map.scrollLeft
+// (nooit een transform bóvenop een eerdere transform) — anders schuift de decor
+// dubbel op en/of groeit de scrollbare route eindeloos mee.
 function updateParallax(map) {
   const sky = document.querySelector('#screen-map .map-sky');
   if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
-  const layer = map.querySelector('.tour-decor-layer');
+  const layer = $('tour-decor-layer');
   if (!layer) return;
   layer.querySelectorAll('.tour-decor').forEach(el => {
     el.style.left = (parseFloat(el.dataset.homeX) - map.scrollLeft * DECOR_PARALLAX_RATE) + 'px';
@@ -2028,11 +2035,11 @@ function renderTourMap(travelFrom) {
   const heroLvl = travelFrom || p.level;
   const map = $('tour-map');
   map.innerHTML = '';
-  // eigen, niet-scrollende laag vóór de track (zie .tour-decor-layer hierboven)
-  const decorLayer = document.createElement('div');
-  decorLayer.className = 'tour-decor-layer';
-  decorLayer.setAttribute('aria-hidden', 'true');
-  map.appendChild(decorLayer);
+  // vaste, niet-scrollende laag naast .tour-map (zie .tour-map-wrap/.tour-decor-layer
+  // hierboven) — geen kind van map, dus map.innerHTML='' laat 'm met rust; we
+  // bouwen 'm hier gewoon opnieuw op
+  const decorLayer = $('tour-decor-layer');
+  decorLayer.innerHTML = '';
   const track = document.createElement('div');
   track.className = 'tour-track';
   // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
