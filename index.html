@@ -789,14 +789,17 @@
   .earn-chip.fan { background: rgba(255,64,129,.28); }
   /* eigen, opvallend blokje i.p.v. een tekstregel tussen de andere zinnen — zelfde
      gouden puls als een "klaar om te openen"-trofee in de kast, zodat dit al
-     vooruitwijst naar wat je zo meteen ziet als je op de knop eronder tikt */
+     vooruitwijst naar wat je zo meteen ziet. Zelf ook klikbaar (net als die
+     trofeekaartjes): een gouden pulserende pil roept nu eenmaal om aangetikt
+     te worden, dus de knop eronder alleen was niet genoeg. */
   .end-trophy-banner {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    color: #5d2a00; font-weight: 800; font-size: 16.5px;
-    background: linear-gradient(180deg, #ffe082, #ffb300); border-radius: 999px;
+    color: #5d2a00; font-weight: 800; font-size: 16.5px; font-family: inherit;
+    background: linear-gradient(180deg, #ffe082, #ffb300); border: none; border-radius: 999px;
     padding: 10px 18px; margin: 0 0 14px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
-    animation: readyPulse 1.4s ease-in-out infinite;
+    animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
   }
+  .end-trophy-banner:active { transform: scale(.96); }
   .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* ---- Kleedkamer ----
@@ -1092,7 +1095,7 @@
       <div class="result-stars" id="end-stars"></div>
       <div id="end-text" style="font-size:19px"></div>
       <div class="earn-line" id="end-earn"></div>
-      <div class="end-trophy-banner" id="end-trophy" style="display:none"></div>
+      <button class="end-trophy-banner" id="end-trophy" style="display:none"></button>
       <div class="end-actions">
         <button class="btn big" id="btn-end-next"></button>
         <button class="btn soft" id="btn-end-alt"></button>
@@ -2804,10 +2807,12 @@ function endLevel(success) {
       // eigen blokje i.p.v. een tekstregel — en dé knop eronder brengt je er meteen naartoe
       trophyBanner.style.display = 'flex';
       trophyBanner.textContent = trofees.length === 1 ? '🎁 Nieuwe trofee klaar in je kast!' : `🎁 ${trofees.length} nieuwe trofeeën klaar in je kast!`;
+      trophyBanner.onclick = () => { sndClick(); openTrophies(); };
       $('btn-end-alt').textContent = '🏆 Bekijk trofee' + (trofees.length === 1 ? '' : 'ën');
       $('btn-end-alt').onclick = () => { sndClick(); openTrophies(); };
     } else {
       trophyBanner.style.display = 'none';
+      trophyBanner.onclick = null;
       $('btn-end-alt').textContent = '👗 Kleedkamer';
       $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
     }
