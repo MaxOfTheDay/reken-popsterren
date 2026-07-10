@@ -817,12 +817,16 @@
   .item-card {
     position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.35);
     border-radius: 16px; padding: 10px; text-align: center; cursor: pointer;
-    transition: transform .07s, background .12s;
+    transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
   .item-card:hover { background: rgba(255,255,255,.22); }
   .item-card:active { transform: scale(.97); }
-  .item-card.selected { background: rgba(255,255,255,.28); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.28); transform: scale(1.04); }
-  .item-card.equipped { border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.6); }
+  /* kaart-staten volgen de prijzenkast: blauw = actief/preview, goud = aan/beloning */
+  .item-card.selected { background: rgba(56,189,248,.16); border-color: #8fd6ff; box-shadow: 0 0 0 3px rgba(56,189,248,.22); transform: scale(1.025); }
+  .item-card.equipped { border-color: #ffd740; background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.48); }
+  .item-card.selected.equipped { border-color: #ffd740; box-shadow: 0 0 0 3px rgba(56,189,248,.20), 0 0 14px rgba(255,215,64,.55); }
+  .item-card.just-bought { animation: boughtPop .85s ease; }
+  @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
   /* podium-bol met een herkennende emoji erin */
   .item-swatch.stage-swatch { display: grid; place-items: center; font-size: 24px; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
@@ -831,14 +835,23 @@
   .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
   .item-thumb .thumb-emo { font-size: 34px; line-height: 52px; }
   .item-name { font-size: 14px; font-weight: bold; overflow-wrap: break-word; hyphens: auto; }
-  .item-price { font-size: 15px; margin-top: 4px; min-height: 19px; }
-  /* prijs die (nog) niet betaalbaar is: gedimd, maar passen mag altijd */
-  .item-price.dim { opacity: .5; }
-  /* leesloze eigendoms-badges: dikke gouden ✔ = aan, kleine ✓ = al gekocht */
+  .item-status {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap;
+    background: rgba(0,0,0,.24); color: #d8d0e4;
+  }
+  .item-status.price { color: #ffe082; background: rgba(255,179,0,.16); }
+  .item-status.need { color: #ffd54f; background: rgba(0,0,0,.30); opacity: .88; }
+  .item-status.owned { color: #e1e5ea; background: rgba(180,184,196,.25); }
+  .item-status.on { color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 1px 5px rgba(255,179,0,.35); }
+  .item-status.preview { color: #8fd6ff; background: rgba(56,189,248,.16); box-shadow: 0 0 0 1px rgba(143,214,255,.2); }
+  .item-status.new { color: #5d2a00; background: linear-gradient(180deg, #fff176, #ffca28); animation: readyPulse 1.4s ease-in-out 2; }
+  /* leesloze eigendoms-badges: goud = aan, grijs = al gekocht (zelfde stap als prijzenkast 'have') */
   .own-badge {
     position: absolute; top: -8px; right: -8px; width: 25px; height: 25px; border-radius: 50%;
     display: grid; place-items: center; font-size: 13px; font-weight: bold;
-    background: rgba(255,255,255,.94); color: #2e7d32; border: 2px solid #fff;
+    background: rgba(180,184,196,.94); color: #fff; border: 2px solid rgba(255,255,255,.85);
     box-shadow: 0 2px 6px rgba(0,0,0,.35);
   }
   .own-badge.on {
@@ -1335,46 +1348,26 @@ const TROPHIES = [
   { id: 'dierenkoning', emoji: '🐘', name: 'Dierenkoning',   desc: 'Alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
   // ✨ Thema-looks — speciale combinaties: alle stukken tegelijk aan = trofee.
   // De kaartjes staan zichtbaar in de kast als spaardoel, met voortgang per stuk.
-  { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Hele tovenaarslook',
-    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'stukken tegelijk aan') },
-  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Hele voetballook',
-    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Hele rocklook',
-    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'stukken tegelijk aan') },
-  { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Hele discolook',
-    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'stukken tegelijk aan') },
-  { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Hele prinsessenlook',
-    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'stukken tegelijk aan') },
-  { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Hele ruimtelook',
-    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Hele winterlook',
-    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'stukken tegelijk aan') },
-  { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Hele junglelook',
-    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Hele zeemeerminlook',
-    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
-  { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Hele regenbooglook',
-    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
   { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Draag de hele tovenaarslook',
-    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'aan') },
+    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'stukken tegelijk aan') },
   { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Draag de hele voetballook',
-    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'aan') },
+    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'stukken tegelijk aan') },
   { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Draag de hele rocklook',
-    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'aan') },
+    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'stukken tegelijk aan') },
   { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Maak de volledige discolook',
-    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'aan') },
+    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'stukken tegelijk aan') },
   { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Draag de hele prinsessenlook',
-    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'aan') },
+    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'stukken tegelijk aan') },
   { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Draag de hele ruimtelook',
-    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'aan') },
+    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'stukken tegelijk aan') },
   { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Draag de hele winterlook',
-    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'aan') },
+    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'stukken tegelijk aan') },
   { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Draag de hele junglelook',
-    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'aan') },
+    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'stukken tegelijk aan') },
   { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
-    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'aan') },
+    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
   { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
-    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'aan') },
+    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
   // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
   // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -2732,6 +2725,7 @@ function itemThumb(it) {
 
 let shopCat = 'dress';
 let shopSelectedId = null;
+let shopJustBoughtId = null;
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null;
   renderShop();
@@ -2773,16 +2767,24 @@ function renderShop() {
     const owned = p.owned.includes(it.id);
     const equipped = p.equipped[it.cat] === it.id;
     const card = document.createElement('div');
-    card.className = 'item-card' + (equipped ? ' equipped' : '') + (shopSelectedId === it.id ? ' selected' : '');
+    const selected = shopSelectedId === it.id;
+    card.className = 'item-card'
+      + (equipped ? ' equipped' : '')
+      + (selected ? ' selected' : '')
+      + (shopJustBoughtId === it.id ? ' just-bought' : '');
     const swatch = itemThumb(it);
-    // leesloze status: badge i.p.v. tekst (✔ = aan, ✓ = al gekocht);
-    // een (nog) niet betaalbare prijs staat gedimd, maar passen mag altijd
+    // kaartstatus is snel scanbaar; de actiebalk blijft de plek voor de hoofdactie.
     const badge = equipped ? '<span class="own-badge on">✔</span>'
       : owned ? '<span class="own-badge">✓</span>' : '';
-    const priceLine = owned ? '<div class="item-price"></div>'
-      : `<div class="item-price${p.diamonds < it.price ? ' dim' : ''}">💎 ${it.price}</div>`;
-    card.innerHTML = badge + swatch + `<div class="item-name">${it.name}</div>` + priceLine;
-    card.onclick = () => { sndClick(); shopSelectedId = it.id; renderShop(); };
+    let statusLine = '';
+    if (shopJustBoughtId === it.id) statusLine = '<div class="item-status new">Nieuw!</div>';
+    else if (equipped) statusLine = '<div class="item-status on">Aan</div>';
+    else if (selected) statusLine = '<div class="item-status preview">Passen</div>';
+    else if (owned) statusLine = '<div class="item-status owned">Van jou</div>';
+    else if (p.diamonds < it.price) statusLine = `<div class="item-status need">Nog ${it.price - p.diamonds} 💎</div>`;
+    else statusLine = `<div class="item-status price">💎 ${it.price}</div>`;
+    card.innerHTML = badge + swatch + `<div class="item-name">${it.name}</div>` + statusLine;
+    card.onclick = () => { sndClick(); shopJustBoughtId = null; shopSelectedId = it.id; renderShop(); };
     grid.appendChild(card);
   });
 }
@@ -2821,7 +2823,7 @@ function renderDressBar(it, p) {
   const bar = $('dress-bar');
   const naam = (it2) => `${it2.emoji ? it2.emoji + ' ' : ''}${it2.name}`;
   if (!it) {
-    bar.innerHTML = '<div class="db-hint">👆 Tik op iets om het te passen</div>';
+    bar.innerHTML = '<div class="db-hint">👆 Tik op iets om te passen, kopen of aandoen</div>';
     return;
   }
   const owned = p.owned.includes(it.id);
@@ -2831,13 +2833,13 @@ function renderDressBar(it, p) {
     if (tekort > 0) {
       bar.innerHTML = `
         <div class="db-info"><span class="db-name">${naam(it)}</span>
-          <span class="db-sub warn">Nog ${tekort} 💎 nodig</span></div>
+          <span class="db-sub warn">Je past dit even · nog ${tekort} 💎 nodig</span></div>
         <button class="btn small" id="db-earn">🎤 Speel een show</button>`;
       $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
     } else {
       bar.innerHTML = `
         <div class="db-info"><span class="db-name">${naam(it)}</span>
-          <span class="db-sub">Kost 💎 ${it.price}</span></div>
+          <span class="db-sub">Je past dit even · koop om te houden</span></div>
         <button class="btn small" id="db-buy">🛍️ Ja, koop!</button>`;
       $('db-buy').onclick = () => confirmShopBuy(it.id);
     }
@@ -2846,14 +2848,14 @@ function renderDressBar(it, p) {
   if (!equipped) {
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
-        <span class="db-sub">✓ Al van jou</span></div>
+        <span class="db-sub">✓ Van jou · nog niet aan</span></div>
       <button class="btn small green" id="db-wear">Aandoen</button>`;
     $('db-wear').onclick = () => equipShopItem(it.id);
     return;
   }
   bar.innerHTML = `
     <div class="db-info"><span class="db-name">${naam(it)}</span>
-      <span class="db-sub">✔ Dit heb je aan</span></div>
+      <span class="db-sub">✔ Dit heb je aan op het podium</span></div>
     ${['mic', 'instrument', 'acc', 'pet'].includes(it.cat) ? '<button class="btn small ghost" id="db-off">Afdoen</button>' : ''}`;
   const off = $('db-off');
   if (off) off.onclick = () => unequipShopItem(it.id);
@@ -2904,6 +2906,8 @@ function confirmShopBuy(id) {
   p.diamonds -= it.price;
   p.owned.push(it.id);
   p.equipped[it.cat] = it.id;
+  shopSelectedId = it.id;
+  shopJustBoughtId = it.id;
   sndCoin();
   confetti(12);
   flyDiamonds($('shop-diamonds'), $('shop-stage'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
@@ -2911,6 +2915,9 @@ function confirmShopBuy(id) {
   save();
   noticeReady(trofees);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
   renderShop();
+  showToast(`✨ Nieuw in je kleedkamer: ${it.name}!`);
+  setTimeout(hideToast, 1500);
+  setTimeout(() => { if (shopJustBoughtId === it.id) { shopJustBoughtId = null; renderShop(); } }, 1800);
   tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
 }
 
@@ -2919,6 +2926,7 @@ function equipShopItem(id) {
   const p = P();
   if (!p.owned.includes(it.id)) return;
   p.equipped[it.cat] = it.id;
+  shopJustBoughtId = null;
   sndClick();
   // een outfit-combo kan een (geheime) trofee zijn — check dus ook bij het aandoen
   const trofees = checkTrophies(p);
