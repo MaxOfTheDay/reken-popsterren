@@ -2837,7 +2837,7 @@ function renderDressBar(it, p) {
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
         <span class="db-sub">· Van jou</span></div>
-      <button class="btn small green" id="db-wear">Aandoen</button>`;
+      <button class="btn small" id="db-wear">Aandoen</button>`;
     $('db-wear').onclick = () => equipShopItem(it.id);
     return;
   }
