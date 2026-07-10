@@ -703,14 +703,13 @@
   .theme-list li.on { color: #8fd6ff; font-weight: 700; }
   .theme-list li.on .pc { background: #40bdf8; border-color: #40bdf8; box-shadow: 0 0 0 2px rgba(64,189,248,.16); }
   .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #32115f; }
-  .trophy-card.theme.done { padding-bottom: 42px; }
   /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
   .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: #ffd54f; }
   .look-hint.action { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 16px; border-radius: 999px; color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 3px 10px rgba(255,179,0,.35); animation: readyPulse 1.4s ease-in-out infinite; }
   .look-hint.action:active { transform: scale(.96); }
-  /* actie op een behaalde look: kort label, rechts onder de content vrijgezet */
+  /* actie op een behaalde look: kort label, in de kop op de plek van de Aan-teller */
   .look-action {
-    position: absolute; right: 14px; bottom: 10px; border: 0; cursor: pointer;
+    margin-left: auto; flex: 0 0 auto; border: 0; cursor: pointer;
     padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #5d2a00;
     background: linear-gradient(180deg, rgba(255,224,130,.95), rgba(255,179,0,.92)); box-shadow: 0 2px 5px rgba(0,0,0,.2);
   }
@@ -2065,16 +2064,18 @@ function themeCardHTML(t, p, status) {
   const wornCls = wornN === 0 ? '' : wornN === total ? ' full' : ' some';
   const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
     + `<div class="tname">${t.name}</div>`
-    + (done ? '' : `<div class="theme-count"><span class="worn${wornCls}">Aan: ${wornN}/${total}</span></div>`) + '</div>';
+    + (done
+      ? `<button class="look-action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Doe aan</button>`
+      : `<div class="theme-count"><span class="worn${wornCls}">Aan: ${wornN}/${total}</span></div>`) + '</div>';
   const won = done ? '<span class="trophy-won">🏆</span>' : '';
   const list = pieces.map(([cat, id]) => {
     const cls = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
     return `<li class="${cls}"><span class="pc"></span>${pieceLabel(id)}</li>`;
   }).join('');
-  // afsluiting: behaalde look kan je meteen aandoen; alles-in-bezit krijgt een duidelijke CTA
-  const foot = done
-    ? `<button class="look-action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Doe aan</button>`
-    : (ownedN === total && wornN < total ? `<button class="look-hint action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>` : '');
+  // afsluiting: alles-in-bezit krijgt een duidelijke CTA; behaalde looks hebben de knop in de kop.
+  const foot = !done && ownedN === total && wornN < total
+    ? `<button class="look-hint action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>`
+    : '';
   return won + head + `<ul class="theme-list">${list}</ul>` + foot;
 }
 // Trekt in één klik alle stukken van een look aan en toont ze in de kleedkamer.
