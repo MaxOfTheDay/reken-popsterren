@@ -526,13 +526,14 @@
      loopt (punten & kromming gezet door updateRoad/renderTourMap); het afgelegde
      deel licht warm op, de weg vooruit blijft dof. */
   .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .tour-road-bg, .tour-road-fg, .tour-road-fg-glow, .tour-road-fade { fill: none; stroke-linecap: round; }
+  .tour-road-bg, .tour-road-fg, .tour-road-fade { fill: none; stroke-linecap: round; }
   /* de weg vooruit (nog te ontdekken) blijft een dof stippelpad */
   .tour-road-bg { stroke: rgba(255,255,255,.35); stroke-width: 6; stroke-dasharray: 2 15; }
-  /* het afgelegde deel is nu een vol, zacht gloeiend gouden lint i.p.v. een stippellijn —
-     leest in één oogopslag als "hier heb je al gelopen" */
-  .tour-road-fg-glow { stroke: rgba(255,193,7,.6); stroke-width: 15; filter: blur(5px); animation: playGlow 1.7s ease-in-out infinite; }
-  .tour-road-fg { stroke: #ffda6a; stroke-width: 6; }
+  /* het afgelegde deel is een vol lint i.p.v. een stippellijn (leest in één oogopslag als
+     "hier heb je al gelopen"), zelfde dikte als het stippelpad — geen extra gloeirand.
+     Groen (net als de voltooide haltes) lopend naar goud toe naar de volgende halte,
+     als een klein "je bent er bijna"-effect (kleurverloop gezet door updateRoad). */
+  .tour-road-fg { stroke: url(#roadTraveledGrad); stroke-width: 6; }
   /* de weg loopt nog een stukje door ná de laatst getoonde halte en dooft daar uit —
      een hint dat de tournee (oneindig) verder gaat dan wat nu in beeld is */
   .tour-road-fade { stroke: url(#roadFadeGrad); stroke-width: 6; stroke-dasharray: 2 15; }
@@ -1956,7 +1957,7 @@ function updateRoad(map) {
   const svg = track.querySelector('.tour-road-svg');
   const bg = track.querySelector('.tour-road-bg');
   const fg = track.querySelector('.tour-road-fg');
-  const fgGlow = track.querySelector('.tour-road-fg-glow');
+  const fgGrad = track.querySelector('#roadTraveledGrad');
   const fade = track.querySelector('.tour-road-fade');
   const fadeGrad = track.querySelector('#roadFadeGrad');
   const stops = [...track.querySelectorAll('.tour-stop')];
@@ -1975,7 +1976,11 @@ function updateRoad(map) {
   const targetIdx = target ? stops.indexOf(target) : -1;
   const traveledD = targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '';
   fg.setAttribute('d', traveledD);
-  if (fgGlow) fgGlow.setAttribute('d', traveledD);
+  if (fgGrad && targetIdx > 0) {
+    // groen (start van het afgelegde stuk) naar goud (bij de halte waar je nu staat)
+    fgGrad.setAttribute('x1', pts[0].x); fgGrad.setAttribute('y1', pts[0].y);
+    fgGrad.setAttribute('x2', pts[targetIdx].x); fgGrad.setAttribute('y2', pts[targetIdx].y);
+  }
   // laat de weg nog twee "haltes" ver doorlopen ná de laatste die we tonen en
   // laat 'm daar uitdoven: een hint dat de tournee verder gaat dan dit stukje kaart
   const n = pts.length;
@@ -2023,18 +2028,29 @@ function renderTourMap(travelFrom) {
   fadeGrad.appendChild(fadeStop1);
   fadeGrad.appendChild(fadeStop2);
   defs.appendChild(fadeGrad);
+  // afgelegd pad: groen (bij de haltes die je al hebt gedaan) naar goud toe,
+  // richting de halte waar je nu staat
+  const traveledGrad = document.createElementNS(svgNS, 'linearGradient');
+  traveledGrad.setAttribute('id', 'roadTraveledGrad');
+  traveledGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+  const travStop1 = document.createElementNS(svgNS, 'stop');
+  travStop1.setAttribute('offset', '0%');
+  travStop1.setAttribute('stop-color', '#5ac25f');
+  const travStop2 = document.createElementNS(svgNS, 'stop');
+  travStop2.setAttribute('offset', '100%');
+  travStop2.setAttribute('stop-color', '#ffda6a');
+  traveledGrad.appendChild(travStop1);
+  traveledGrad.appendChild(travStop2);
+  defs.appendChild(traveledGrad);
   const bgPath = document.createElementNS(svgNS, 'path');
   bgPath.setAttribute('class', 'tour-road-bg');
   const fadePath = document.createElementNS(svgNS, 'path');
   fadePath.setAttribute('class', 'tour-road-fade');
-  const fgGlowPath = document.createElementNS(svgNS, 'path');
-  fgGlowPath.setAttribute('class', 'tour-road-fg-glow');
   const fgPath = document.createElementNS(svgNS, 'path');
   fgPath.setAttribute('class', 'tour-road-fg');
   roadSvg.appendChild(defs);
   roadSvg.appendChild(bgPath);
   roadSvg.appendChild(fadePath);
-  roadSvg.appendChild(fgGlowPath);
   roadSvg.appendChild(fgPath);
   track.appendChild(roadSvg);
   for (let l = 1; l <= maxShow; l++) {
