@@ -1882,7 +1882,10 @@ const DECOR_PARALLAX_RATE = 0.55;
 // bij het scrollen omgerekend naar een absolute (niet-scrollende) links-positie.
 function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
   let n = 0;
-  for (let l = 2; l <= maxShow; l += 4, n++) {
+  // om de 2 haltes i.p.v. om de 4: op een lang scherm zie je anders maar één
+  // decor-stukje per beeld, ver uit elkaar — dichter bij elkaar vult de
+  // achtergrond ook op een lange tournee merkbaar op
+  for (let l = 2; l <= maxShow; l += 2, n++) {
     const h = hash01(l * 7.31);
     const homeX = padX + (l - 0.5) * stopW;
     const outer = document.createElement('div');
