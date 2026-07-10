@@ -54,6 +54,9 @@
   .btn.purple:active { box-shadow: 0 1px 0 #4a148c; }
   .btn.green { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 5px 0 #1b5e20, 0 8px 14px rgba(0,0,0,.3); }
   .btn.green:active { box-shadow: 0 1px 0 #1b5e20; }
+  /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
+  .btn.gray { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 5px 0 #37474f, 0 8px 14px rgba(0,0,0,.3); }
+  .btn.gray:active { box-shadow: 0 1px 0 #37474f; }
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: 12px; box-shadow: 0 3px 0 #b36200; }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
   /* icoon-only, rustige terugknop naar profielkeuze */
@@ -1054,8 +1057,8 @@
       <h3>🎭 Show stoppen?</h3>
       <div style="font-size:15px;color:#6b5b7a;margin-bottom:14px">Dan stopt dit optreden en ga je terug naar de kaart.</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button class="btn green" onclick="closeQuitModal()">🎤 Doorspelen</button>
-        <button class="btn small" style="background:linear-gradient(180deg,#90a4ae,#607d8b);box-shadow:0 3px 0 #37474f" onclick="quitGame()">Stoppen</button>
+        <button class="btn" onclick="closeQuitModal()">🎤 Doorspelen</button>
+        <button class="btn gray" onclick="quitGame()">Stoppen</button>
       </div>
     </div>
   </div>
