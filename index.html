@@ -2724,18 +2724,37 @@ function tapDance(elId) {
   sndTap();
   sparkle(el);
   setTimeout(() => { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }, 950);
+  maybeProost(el);
 }
 // klein sterretje dat oppopt bij een tik-dans
-function sparkle(el) {
+function sparkle(el, emojis) {
   const r = el.getBoundingClientRect();
   const s = document.createElement('div');
   s.className = 'confetti-bit';
-  s.textContent = pick(['✨', '⭐', '💖', '🎵', '💫']);
+  s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
   s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
   s.style.top = (r.top + 10) + 'px';
   s.style.animationDuration = '1.2s';
   document.body.appendChild(s);
   setTimeout(() => s.remove(), 1400);
+}
+// Easter egg 🍺: 5x snel achter elkaar tikken op een ster mét het pintje-mic'je
+// op, en ze heft 'm even toastend — "Proost!" met een klein bubbelfeestje.
+let pintjeTaps = 0, pintjeTapTimer = null;
+function maybeProost(el) {
+  const p = P();
+  if (!p || p.equipped.mic !== 'mic_pintje') { pintjeTaps = 0; return; }
+  clearTimeout(pintjeTapTimer);
+  pintjeTaps++;
+  // elke tik zet een dansje van ~1s in gang (zie tapDance) — de reset moet dus ruim
+  // langer zijn dan die cooldown, anders kan een kind de 5 tikken nooit op tijd halen
+  pintjeTapTimer = setTimeout(() => { pintjeTaps = 0; }, 3000);
+  if (pintjeTaps < 5) return;
+  pintjeTaps = 0;
+  for (let i = 0; i < 10; i++) setTimeout(() => { if (el.isConnected) sparkle(el, ['🍺', '🍻', '🫧']); }, i * 70);
+  showPraise('Proost! 🍻');
+  sndCoin();
+  buzz([0, 20, 60, 20]);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 function finaleDance(elId, count) {
