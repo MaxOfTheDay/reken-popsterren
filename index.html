@@ -2965,13 +2965,13 @@ function renderDressBar(it, p) {
       bar.innerHTML = `
         <div class="db-info"><span class="db-name">${naam(it)}</span>
           <span class="db-sub warn">· Nog ${tekort} 💎 nodig</span></div>
-        <button class="btn small" id="db-earn">Speel</button>`;
+        <button class="btn small" id="db-earn">🎤 Speel</button>`;
       $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
     } else {
       bar.innerHTML = `
         <div class="db-info"><span class="db-name">${naam(it)}</span>
           <span class="db-sub">· ${it.price} 💎</span></div>
-        <button class="btn small" id="db-buy">Koop</button>`;
+        <button class="btn small" id="db-buy">🛍️ Koop</button>`;
       $('db-buy').onclick = () => confirmShopBuy(it.id);
     }
     return;
@@ -2980,7 +2980,7 @@ function renderDressBar(it, p) {
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
         <span class="db-sub">· Van jou</span></div>
-      <button class="btn small" id="db-wear">Aandoen</button>`;
+      <button class="btn small" id="db-wear">✨ Aandoen</button>`;
     $('db-wear').onclick = () => equipShopItem(it.id);
     return;
   }
