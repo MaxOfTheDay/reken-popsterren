@@ -71,10 +71,6 @@
     box-shadow: 0 3px 0 rgba(0,0,0,.28);
   }
   .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
-  .btn.soft.shop { background: linear-gradient(180deg, rgba(171,71,188,.55), rgba(142,36,170,.38)); border-color: rgba(206,147,216,.6); box-shadow: 0 3px 0 rgba(74,20,140,.55); }
-  .btn.soft.shop:active { box-shadow: 0 1px 0 rgba(74,20,140,.55); }
-  .btn.soft.tro { background: linear-gradient(180deg, rgba(102,187,106,.55), rgba(56,142,60,.38)); border-color: rgba(165,214,167,.6); box-shadow: 0 3px 0 rgba(27,94,32,.55); }
-  .btn.soft.tro:active { box-shadow: 0 1px 0 rgba(27,94,32,.55); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
   /* ---- Profielkeuze (podium-stijl kaarten) ----
@@ -757,6 +753,7 @@
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready { animation: none; }
     .trophy-pop { animation: none; }
+    .end-trophy-banner { animation: none; }
   }
   /* rood stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt */
   .nav-item { position: relative; }
@@ -790,6 +787,16 @@
   .earn-chip.dia { background: rgba(41,182,246,.34); }
   .earn-chip.star { background: rgba(255,215,64,.26); }
   .earn-chip.fan { background: rgba(255,64,129,.28); }
+  /* eigen, opvallend blokje i.p.v. een tekstregel tussen de andere zinnen — zelfde
+     gouden puls als een "klaar om te openen"-trofee in de kast, zodat dit al
+     vooruitwijst naar wat je zo meteen ziet als je op de knop eronder tikt */
+  .end-trophy-banner {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    color: #5d2a00; font-weight: 800; font-size: 16.5px;
+    background: linear-gradient(180deg, #ffe082, #ffb300); border-radius: 999px;
+    padding: 10px 18px; margin: 0 0 14px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
+    animation: readyPulse 1.4s ease-in-out infinite;
+  }
   .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* ---- Kleedkamer ----
@@ -1085,6 +1092,7 @@
       <div class="result-stars" id="end-stars"></div>
       <div id="end-text" style="font-size:19px"></div>
       <div class="earn-line" id="end-earn"></div>
+      <div class="end-trophy-banner" id="end-trophy" style="display:none"></div>
       <div class="end-actions">
         <button class="btn big" id="btn-end-next"></button>
         <button class="btn soft" id="btn-end-alt"></button>
@@ -2782,8 +2790,7 @@ function endLevel(success) {
     const juich = stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
-    $('end-text').innerHTML = `${juich}<div style="margin-top:6px;font-size:17px">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`
-      + (trofees.length ? `<div style="margin-top:8px;color:#ffd740;font-weight:bold">🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'} klaar in je kast!</div>` : '');
+    $('end-text').innerHTML = `${juich}<div style="margin-top:6px;font-size:17px">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`;
     const earnChips = [
       `<span class="earn-chip dia">💎 +${G.earned} verdiend</span>`,
       `<span class="earn-chip star">⭐ +${bonus} sterrenbonus</span>`
@@ -2792,8 +2799,18 @@ function endLevel(success) {
     $('end-earn').innerHTML = earnChips.join('');
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(); };
-    $('btn-end-alt').textContent = '👗 Kleedkamer';
-    $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
+    const trophyBanner = $('end-trophy');
+    if (trofees.length) {
+      // eigen blokje i.p.v. een tekstregel — en dé knop eronder brengt je er meteen naartoe
+      trophyBanner.style.display = 'flex';
+      trophyBanner.textContent = trofees.length === 1 ? '🎁 Nieuwe trofee klaar in je kast!' : `🎁 ${trofees.length} nieuwe trofeeën klaar in je kast!`;
+      $('btn-end-alt').textContent = '🏆 Bekijk trofee' + (trofees.length === 1 ? '' : 'ën');
+      $('btn-end-alt').onclick = () => { sndClick(); openTrophies(); };
+    } else {
+      trophyBanner.style.display = 'none';
+      $('btn-end-alt').textContent = '👗 Kleedkamer';
+      $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
+    }
     sndWin();
     confetti(40);
     finaleDance('end-avatar', 6);   // grote slotchoreografie
@@ -2802,6 +2819,7 @@ function endLevel(success) {
     $('end-title').textContent = '🎭 Bijna!';
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Drie valse noten... maar oefening baart kunst! Probeer nog eens, je kan het!';
+    $('end-trophy').style.display = 'none';
     const kept = G.earned + fanBonus;
     $('end-earn').innerHTML = kept > 0 ? `<span class="earn-chip dia">💎 +${kept} gehouden</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
