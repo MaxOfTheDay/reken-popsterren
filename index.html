@@ -629,8 +629,10 @@
   /* ===== staten ===== */
   /* NIET GESTART: normale paarse kaart, icoon licht gedimd, lege dunne balk */
   .trophy-card.fresh .temoji { opacity: .78; }
-  /* BEZIG: normale kaart, icoon vol, dunne balk met duidelijke vulling (geen glow) */
-  /* (geen aparte regels nodig; basiskaart + progressbalk volstaan) */
+  /* BEZIG: normale kaart, icoon vol, dunne balk met duidelijke vulling (geen glow).
+     Dunne, gedempte blauwe rand — rustiger dan bijna/open, maar wél meteen
+     te onderscheiden van 'niet gestart' zonder de tekst te moeten lezen. */
+  .trophy-card.busy { border-color: rgba(90,190,245,.55); }
   /* BIJNA BEHAALD: sterke balkvulling + subtiele gouden glow (glow via inline style) */
   .trophy-card.almost .trophy-progress-fill { background: linear-gradient(90deg, #ffd54f, #ffb300); }
   /* LOCKED: donkerder, icoon sterk gedimd, klein slotje (voorlopig sluimerend) */
@@ -699,8 +701,9 @@
   .theme-list li.on { color: #8fd6ff; font-weight: 600; }
   .theme-list li.on .pc { background: #4fc3f7; border-color: #4fc3f7; }
   .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #06263a; }
-  /* behaalde look: GOUD vinkje = verzameld (i.p.v. blauw = nu aan) */
-  .trophy-card.theme.done .theme-list li { color: #ffe08a; }
+  /* behaalde look: rustige witte tekst (zoals een gewone behaalde trofee) —
+     enkel het bolletje zelf wordt goud, als klein 'verzameld'-accent */
+  .trophy-card.theme.done .theme-list li { color: rgba(255,255,255,.92); font-weight: 600; }
   .trophy-card.theme.done .pc { background: #ffce4d; border-color: #ffce4d; }
   .trophy-card.theme.done .pc::after { color: #5a3b00; }
   /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
