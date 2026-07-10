@@ -526,15 +526,25 @@
     mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
   .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
-  /* ruimte boven de haltes voor de avatar, eronder voor de Speel-knop */
-  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 132px 26px 88px; }
-  /* de reisweg loopt dóór het midden van de haltes; het afgelegde deel licht
-     warm op (::after, breedte gezet door updateTraveled), de weg vooruit is dof */
-  .tour-track::before { content: ""; position: absolute; top: 166px; left: 80px; right: 80px; height: 6px; border-radius: 999px;
-    background: repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 10px, transparent 10px 20px); }
-  .tour-track::after { content: ""; position: absolute; top: var(--line-top, 166px); left: var(--line-left, 80px);
-    width: var(--traveled, 0px); height: 6px; border-radius: 999px;
-    background: repeating-linear-gradient(90deg, rgba(255,215,64,.85) 0 10px, transparent 10px 20px); }
+  /* ruimte boven de haltes voor de avatar, eronder voor de Speel-knop, plus wat
+     extra lucht boven/onder voor de golvende weg (haltes zwaaien op/neer) */
+  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 154px 26px 104px; }
+  /* de reisweg is een zacht slingerend SVG-pad dat dóór het midden van elke halte
+     loopt (punten & kromming gezet door updateRoad/renderTourMap); het afgelegde
+     deel licht warm op, de weg vooruit blijft dof. */
+  .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
+  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; }
+  .tour-road-bg { stroke: rgba(255,255,255,.35); stroke-width: 6; stroke-dasharray: 2 15; }
+  .tour-road-fg { stroke: rgba(255,215,64,.85); stroke-width: 6; stroke-dasharray: 2 15; }
+  /* subtiel twinkelend sterretje dat vanzelf oppopt op het afgelegde deel van de weg
+     (los van de reisanimatie) — geen val-beweging, gewoon even oplichten */
+  .road-twinkle { position: fixed; font-size: 15px; z-index: 2; pointer-events: none; opacity: 0;
+    animation: roadTwinkle 1.8s ease-out forwards; }
+  @keyframes roadTwinkle {
+    0% { opacity: 0; transform: scale(.4); }
+    35% { opacity: .95; transform: scale(1.05); }
+    100% { opacity: 0; transform: scale(.7) translateY(-8px); }
+  }
   .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
   .tour-stop .dot { width: 74px; height: 74px; margin: 0 auto; border-radius: 21px; display: flex; align-items: center; justify-content: center;
@@ -568,8 +578,7 @@
     border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid #ffc23d; }
   /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
   @media (max-height: 700px) {
-    .tour-track { padding: 112px 22px 80px; }
-    .tour-track::before { top: 140px; left: 70px; right: 70px; }
+    .tour-track { padding: 124px 22px 90px; }
     .tour-stop { width: 96px; }
     .tour-stop .dot { width: 62px; height: 62px; font-size: 31px; border-radius: 18px; }
     .tour-hero { width: 82px; }
@@ -578,8 +587,7 @@
   /* hoge schermen: de kaart mag juist groter schitteren — grotere haltes,
      ster en speelknop claimen de ruimte die anders leeg blijft */
   @media (min-height: 800px) {
-    .tour-track { padding: 154px 30px 102px; }
-    .tour-track::before { top: 196px; left: 92px; right: 92px; }
+    .tour-track { padding: 178px 30px 118px; }
     .tour-stop { width: 124px; }
     .tour-stop .dot { width: 90px; height: 90px; font-size: 44px; border-radius: 25px; }
     .tour-stop .cname { font-size: 16px; }
@@ -1697,6 +1705,10 @@ const NAV_FOR_SCREEN = { 'screen-map': 'nav-map', 'screen-dress': 'nav-dress', '
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
+  // twinkeltjes op de reisweg lopen alleen terwijl de kaart in beeld is
+  const wantsTwinkle = id === 'screen-map' && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (wantsTwinkle && !roadTwinkleTimer) scheduleRoadTwinkle();
+  else if (!wantsTwinkle && roadTwinkleTimer) { clearTimeout(roadTwinkleTimer); roadTwinkleTimer = null; }
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   if (!onProfile) closeGearMenu();
@@ -1763,7 +1775,12 @@ function updateFades(el) {
 function setupTourMap(map) {
   if (map.dataset.tourBound) return;
   map.dataset.tourBound = '1';
-  map.addEventListener('scroll', () => updateFades(map), { passive: true });
+  const sky = document.querySelector('#screen-map .map-sky');
+  map.addEventListener('scroll', () => {
+    updateFades(map);
+    // lichte parallax: de lucht schuift trager mee dan de weg, geeft diepte bij het scrollen
+    if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
+  }, { passive: true });
   let down = false, startX = 0, startScroll = 0, moved = false;
   map.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse' || e.button !== 0) return;
@@ -1798,6 +1815,57 @@ function setupTourMap(map) {
    show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
    zichtbaar door naar de nieuwe stad (zie runTravel). */
 let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
+let roadTwinkleTimer = null;   // plant af en toe een twinkeltje op het afgelegde deel van de weg
+
+// Hoeveel elke halte boven/onder de basislijn zwaait: kleiner op lage schermen
+// (minder verticale ruimte), groter op hoge schermen, net als de rest van de kaart.
+function waveAmplitude() {
+  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 14;
+  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 30;
+  return 22;
+}
+// Een zachte S-vormige golf: elke volgende halte zwaait een beetje verder de
+// andere kant op, zodat de route als geheel kronkelt in plaats van recht loopt.
+function waveY(i, amp) { return Math.round(Math.sin(i * 0.9) * amp); }
+// Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
+// zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
+function smoothPath(pts) {
+  if (!pts.length) return '';
+  if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
+  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+// Plant met wat willekeurige tussenpozen een klein sterretje op de afgelegde weg
+// (los van de reisanimatie) — een rustig, doorlopend levensteken op de kaart.
+function scheduleRoadTwinkle() {
+  roadTwinkleTimer = setTimeout(() => { twinkleOnRoad(); scheduleRoadTwinkle(); }, rnd(2600, 4600));
+}
+function twinkleOnRoad() {
+  const map = $('tour-map');
+  const track = map && map.querySelector('.tour-track');
+  const fg = track && track.querySelector('.tour-road-fg');
+  if (!fg || !fg.getTotalLength) return;
+  const len = fg.getTotalLength();
+  if (!len) return;
+  const pt = fg.getPointAtLength(rnd(0, Math.round(len)));
+  const trackRect = track.getBoundingClientRect();
+  const s = document.createElement('div');
+  s.className = 'road-twinkle';
+  s.textContent = pick(['✨', '⭐', '💫']);
+  s.style.left = (trackRect.left + pt.x - 8) + 'px';
+  s.style.top = (trackRect.top + pt.y - 8) + 'px';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 1900);
+}
 function goMap() {
   const p = P();
   $('map-name').textContent = p.name;
@@ -1814,24 +1882,33 @@ function goMap() {
     // vlak vóór de reis iets naar rechts centreren, zodat de nieuwe stad ook al in beeld staat
     if (focus) centerStop(map, focus, travel ? Math.round(focus.offsetWidth / 2) : 0, false);
     updateFades(map);
-    updateTraveled(map);
+    updateRoad(map);
     if (travel) runTravel(travel);
   });
 }
-// Laat het afgelegde deel van de reisweg warm oplichten: van de eerste halte
-// tot de halte waar de ster nu staat (goud, of tijdens de reis de vertrekstad).
-function updateTraveled(map) {
+// Tekent de golvende reisweg als vloeiend SVG-pad dóór het midden van elke halte:
+// het afgelegde deel licht warm op (tot de halte waar de ster nu staat), de rest blijft dof.
+function updateRoad(map) {
   const track = map.querySelector('.tour-track');
   if (!track) return;
-  const first = track.querySelector('.tour-stop');
+  const svg = track.querySelector('.tour-road-svg');
+  const bg = track.querySelector('.tour-road-bg');
+  const fg = track.querySelector('.tour-road-fg');
+  const stops = [...track.querySelectorAll('.tour-stop')];
+  if (!svg || !stops.length) return;
+  svg.setAttribute('width', track.scrollWidth);
+  svg.setAttribute('height', track.scrollHeight);
+  const trackRect = track.getBoundingClientRect();
+  const pts = stops.map(st => {
+    const dot = st.querySelector('.dot');
+    const r = dot.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
+  });
+  bg.setAttribute('d', smoothPath(pts));
   const hero = track.querySelector('.tour-hero');
   const target = track.querySelector('.tour-stop.next') || (hero && hero.closest('.tour-stop'));
-  if (!first || !target) return;
-  const center = el => el.offsetLeft + el.offsetWidth / 2;
-  const dot = first.querySelector('.dot');
-  track.style.setProperty('--line-left', center(first) + 'px');
-  track.style.setProperty('--line-top', (first.offsetTop + dot.offsetTop + dot.offsetHeight / 2 - 3) + 'px');
-  track.style.setProperty('--traveled', Math.max(0, center(target) - center(first)) + 'px');
+  const targetIdx = target ? stops.indexOf(target) : -1;
+  fg.setAttribute('d', targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '');
 }
 // Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
 // de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
@@ -1843,13 +1920,30 @@ function renderTourMap(travelFrom) {
   map.innerHTML = '';
   const track = document.createElement('div');
   track.className = 'tour-track';
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const roadSvg = document.createElementNS(svgNS, 'svg');
+  roadSvg.setAttribute('class', 'tour-road-svg');
+  roadSvg.setAttribute('aria-hidden', 'true');
+  const bgPath = document.createElementNS(svgNS, 'path');
+  bgPath.setAttribute('class', 'tour-road-bg');
+  const fgPath = document.createElementNS(svgNS, 'path');
+  fgPath.setAttribute('class', 'tour-road-fg');
+  roadSvg.appendChild(bgPath);
+  roadSvg.appendChild(fgPath);
+  track.appendChild(roadSvg);
   // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
   const maxShow = Math.max(CITIES.length, p.level + 2);
+  const amp = waveAmplitude();
   for (let l = 1; l <= maxShow; l++) {
     const city = cityFor(l);
     const b = document.createElement('button');
     b.className = 'tour-stop';
     b.dataset.lvl = l;
+    // elke halte zwaait een beetje op/neer t.o.v. de vorige — dat maakt van de weg
+    // een zachte S-curve i.p.v. een rechte lijn (zie waveY/smoothPath in updateRoad)
+    const wy = waveY(l - 1, amp);
+    b.style.transform = `translateY(${wy}px)`;
+    b.dataset.waveY = wy;
     const st = p.stars[l] || 0;
     const open = travelFrom ? l <= travelFrom : l <= p.level;
     if (!open) {
@@ -1892,7 +1986,7 @@ function runTravel(t) {
       const el = map.querySelector(`.tour-stop[data-lvl="${P().level}"]`);
       if (el) centerStop(map, el, 0, true);
       updateFades(map);
-      updateTraveled(map);   // de reisweg licht nu op tot aan de nieuwe stad
+      updateRoad(map);   // de reisweg licht nu op tot aan de nieuwe stad
       const dot = el && el.querySelector('.dot');
       if (dot && dot.animate) dot.animate(
         [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
@@ -1906,11 +2000,13 @@ function runTravel(t) {
   const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
   const dx = to.offsetLeft - from.offsetLeft;
+  // de golfhoogte van vertrek- en aankomsthalte verschilt (S-curve): de huppel volgt die kromming mee
+  const dy = parseFloat(to.dataset.waveY || 0) - parseFloat(from.dataset.waveY || 0);
   // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
   const frames = [];
   for (let i = 0; i <= 6; i++) {
     frames.push({
-      transform: `translate(calc(-50% + ${dx * i / 6}px), ${i % 2 ? -34 : 0}px)`,
+      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -34 : 0)}px)`,
       offset: i / 6,
       easing: i % 2 ? 'ease-in' : 'ease-out'
     });
