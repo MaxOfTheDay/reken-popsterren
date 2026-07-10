@@ -141,14 +141,10 @@
   }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
-  .icon-btn {
-    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
-    font-size: 22px; background: rgba(255,255,255,.2); color: #fff;
-    transition: transform .12s, background .12s;
-  }
-  .icon-btn:hover { background: rgba(255,255,255,.35); }
-  .icon-btn:active { transform: scale(.9); }
-  .icon-btn.on { background: rgba(255,255,255,.42); transform: rotate(35deg); }
+  /* zelfde plek als voorheen, maar nu de vertrouwde .btn.small.ghost-taal die de
+     rest van de app ook gebruikt voor kleine icoon-knoppen (bv. de ⬅ terugknoppen),
+     i.p.v. een losse, nergens anders herhaalde cirkelstijl */
+  #btn-gear.on { background: rgba(255,255,255,.32); transform: rotate(35deg); }
 
   /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
   .gear-menu {
@@ -1151,7 +1147,7 @@
 </div>
 
 <div class="corner-btns" id="corner-btns">
-  <button class="icon-btn" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen">⚙️</button>
+  <button class="btn small ghost" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen">⚙️</button>
   <div class="gear-menu" id="gear-menu" role="menu">
     <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
       <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
