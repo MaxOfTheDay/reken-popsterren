@@ -2779,9 +2779,8 @@ function renderShop() {
     let statusLine = '';
     if (shopJustBoughtId === it.id) statusLine = '<div class="item-status new">Nieuw!</div>';
     else if (equipped) statusLine = '<div class="item-status on">Aan</div>';
-    else if (selected) statusLine = '<div class="item-status preview">Passen</div>';
     else if (owned) statusLine = '<div class="item-status owned">Van jou</div>';
-    else if (p.diamonds < it.price) statusLine = `<div class="item-status need">Nog ${it.price - p.diamonds} 💎</div>`;
+    else if (p.diamonds < it.price) statusLine = `<div class="item-status need">💎 ${it.price}</div>`;
     else statusLine = `<div class="item-status price">💎 ${it.price}</div>`;
     card.innerHTML = badge + swatch + `<div class="item-name">${it.name}</div>` + statusLine;
     card.onclick = () => { sndClick(); shopJustBoughtId = null; shopSelectedId = it.id; renderShop(); };
@@ -2915,8 +2914,6 @@ function confirmShopBuy(id) {
   save();
   noticeReady(trofees);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
   renderShop();
-  showToast(`✨ Nieuw in je kleedkamer: ${it.name}!`);
-  setTimeout(hideToast, 1500);
   setTimeout(() => { if (shopJustBoughtId === it.id) { shopJustBoughtId = null; renderShop(); } }, 1800);
   tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
 }
