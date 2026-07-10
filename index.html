@@ -622,30 +622,43 @@
   .trophy-card .temoji { font-size: 32px; line-height: 1; height: 36px; }
   .trophy-card .tname { font-size: 13.5px; font-weight: bold; margin-top: 3px; line-height: 1.15; }
   .trophy-card .tdesc { font-size: 11.5px; opacity: .85; margin-top: 2px; line-height: 1.2; }
-  /* ===== 3 heldere staten ===== */
-  /* NOG VERAF: gedempt en grijs, icoon als silhouet */
-  .trophy-card.fresh { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
-  .trophy-card.fresh .temoji { filter: grayscale(1); opacity: .26; }
-  .trophy-card.fresh .tname { opacity: .55; }
-  .trophy-card.fresh .tdesc { opacity: .42; }
-  /* BEZIG: de kaart vult van onderen op in blauw, evenredig met de voortgang
-     (achtergrond wordt per kaart inline gezet). Zo zie je meteen hoe ver je bent. */
-  .trophy-card.busy { border-color: rgba(95,200,255,.7); }
-  .trophy-card.busy .temoji { filter: grayscale(.12); opacity: .96; }
-  /* BEHAALD: warm goud met een gouden vinkje rechtsboven (zoals een item dat aan is) */
-  .trophy-card.done { background: rgba(255,215,64,.13); border-color: #ffd740; box-shadow: 0 0 10px rgba(255,215,64,.3), inset 0 0 0 1px rgba(255,215,64,.28); }
-  .trophy-card.done .temoji { filter: drop-shadow(0 0 5px rgba(255,215,64,.75)); }
+  /* 'Kast vol!' (eindtrofee) over de volle breedte */
+  .trophy-card.wide { grid-column: 1 / -1; }
+  /* ===== staten ===== */
+  /* NIET GESTART: normale paarse kaart, icoon licht gedimd, lege dunne balk */
+  .trophy-card.fresh .temoji { opacity: .78; }
+  /* BEZIG: normale kaart, icoon vol, dunne balk met duidelijke vulling (geen glow) */
+  /* (geen aparte regels nodig; basiskaart + progressbalk volstaan) */
+  /* BIJNA BEHAALD: sterke balkvulling + subtiele gouden glow (glow via inline style) */
+  .trophy-card.almost .trophy-progress-fill { background: linear-gradient(90deg, #ffd54f, #ffb300); }
+  /* LOCKED: donkerder, icoon sterk gedimd, klein slotje (voorlopig sluimerend) */
+  .trophy-card.locked { background: rgba(0,0,0,.26); border-color: rgba(255,255,255,.1); }
+  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .5; }
+  .trophy-card.locked .tname { opacity: .6; }
+  .trophy-card.locked .tdesc { opacity: .45; }
+  .trophy-lock {
+    position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 13px; z-index: 3;
+    background: rgba(30,15,55,.95); border: 2px solid rgba(255,255,255,.4);
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  }
+  /* BEHAALD: warm goud met een gouden vinkje rechtsboven (rustig, geen sterke glow) */
+  .trophy-card.done { background: rgba(255,215,64,.13); border-color: #ffd740; box-shadow: 0 0 8px rgba(255,215,64,.22), inset 0 0 0 1px rgba(255,215,64,.28); }
+  .trophy-card.done .temoji { filter: drop-shadow(0 0 4px rgba(255,215,64,.6)); }
   .trophy-check {
     position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; border-radius: 50%;
     display: grid; place-items: center; font-size: 15px; font-weight: bold; z-index: 3;
     background: linear-gradient(180deg, #ffd54f, #ffb300); color: #4a148c; border: 2px solid #fff;
     box-shadow: 0 2px 6px rgba(0,0,0,.35);
   }
-  /* onderste blok (status) zakt netjes naar de kaartbodem */
-  .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-  /* "Nog X ..." — helder leesbaar op de blauwe vulling */
-  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #fff; min-height: 16px; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
-  .trophy-card.fresh .trophy-progress-text { color: #d8d0ea; opacity: .8; text-shadow: none; }
+  /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
+  .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .trophy-progress-text { font-size: 12px; font-weight: 700; color: #fff59d; min-height: 16px; line-height: 1.2; }
+  .trophy-progress-text.sub { color: #cfc6df; font-weight: 600; opacity: .75; }
+  .trophy-card.fresh .trophy-progress-text { color: #d8d0ea; opacity: .82; }
+  /* dunne progressbalk onderaan de kaart */
+  .trophy-progress { height: 6px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.16); }
+  .trophy-progress-fill { height: 100%; border-radius: 999px; transition: width .5s ease; background: linear-gradient(90deg, #ce93d8, #f48fb1); }
   /* ===== KLAAR: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat) ===== */
   .trophy-card.ready {
     justify-content: center; gap: 3px; color: #5d2a00; border: 3px solid #fff3c4;
@@ -1883,12 +1896,18 @@ function openTrophies() {
   show('screen-trophies');
   $('screen-trophies').scrollTop = 0;
 }
-// De status van een trofee: behaald | klaar (om te openen) | bezig | nog-niet-gestart.
+// De status van een trofee, in prioriteitsvolgorde:
+// ready (open trofee) > done (behaald) > locked > almost (bijna) > busy (bezig) > fresh (niet gestart).
+// 'locked' is voorzien voor trofeeën die nog niet vrij zijn (via een optionele
+// t.locked(p)); geen enkele trofee gebruikt dit nu, dus het blijft voorlopig sluimerend.
 function trophyStatus(p, t) {
-  if (p.trophies.includes(t.id)) return 'done';
   if ((p.readyTrophies || []).includes(t.id)) return 'ready';
+  if (p.trophies.includes(t.id)) return 'done';
+  if (t.locked && t.locked(p)) return 'locked';
   const prog = t.progress ? t.progress(p) : null;
-  return (prog && prog.now > 0) ? 'busy' : 'fresh';
+  if (!prog || prog.now <= 0) return 'fresh';
+  const rem = prog.target - prog.now;
+  return (prog.pct >= 80 || rem === 1) ? 'almost' : 'busy';
 }
 // (Her)tekent de hele kast. Losgemaakt van openTrophies zodat "Open trofee"
 // meteen kan hertekenen zónder de scrollpositie te verliezen.
@@ -1939,21 +1958,24 @@ function unitText(label, remaining) {
   if (remaining === 1 && TROPHY_UNIT_SINGULAR[noun]) noun = TROPHY_UNIT_SINGULAR[noun];
   return noun;
 }
-// Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat).
+// Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop (cadeau-icoon).
 function readyCardHTML(t) {
-  return `<div class="temoji">${t.emoji}</div>`
-    + '<div class="ready-big">🎁 Open trofee!</div>'
+  return '<div class="temoji">🎁</div>'
+    + '<div class="ready-big">Open trofee!</div>'
     + `<div class="ready-name">${t.name}</div>`;
 }
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
   const theme = !!THEME_SETS[t.id] && status !== 'ready';
   const card = document.createElement('div');
-  card.className = `trophy-card ${theme ? 'theme ' : ''}` + status;
-  // bezig: vul de kaart van onderen op in blauw, evenredig met de voortgang
-  if (status === 'busy' && !theme && t.progress) {
-    const pct = Math.max(6, Math.min(100, t.progress(p).pct));
-    card.style.background = `linear-gradient(0deg, rgba(56,170,235,.62) ${pct}%, rgba(255,255,255,.05) ${pct}%)`;
+  // 'Kast vol!' (de eindtrofee) krijgt de volle breedte
+  const wide = t.id === 'kastvol' ? 'wide ' : '';
+  card.className = `trophy-card ${theme ? 'theme ' : ''}${wide}` + status;
+  // bijna behaald: subtiele gouden glow die iets sterker wordt richting 100%
+  if (status === 'almost' && !theme && t.progress) {
+    const pct = Math.min(100, t.progress(p).pct);
+    const a = Math.max(.25, .25 + (pct - 80) / 20 * .3);
+    card.style.boxShadow = `0 0 12px rgba(255,213,79,${a.toFixed(2)})`;
   }
   card.innerHTML = status === 'ready' ? readyCardHTML(t)
     : theme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status);
@@ -1963,11 +1985,18 @@ function trophyCard(t, p) {
 function normalCardHTML(t, p, status) {
   const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
   if (status === 'done') return '<span class="trophy-check">✔</span>' + top;
+  if (status === 'locked') {
+    return '<span class="trophy-lock">🔒</span>' + top
+      + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Nog niet vrij</div></div>';
+  }
+  // niet gestart / bezig / bijna: "Nog X" + een dunne progressbalk onderaan
   let bottom = '';
   const prog = t.progress ? t.progress(p) : null;
   if (prog) {
     const rem = Math.max(0, prog.target - prog.now);
-    bottom = `<div class="trophy-progress-text">Nog ${rem} ${unitText(prog.label, rem)}</div>`;
+    const w = status === 'fresh' ? 0 : Math.max(4, Math.min(100, prog.pct));
+    bottom = `<div class="trophy-progress-text">Nog ${rem} ${unitText(prog.label, rem)}</div>`
+      + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${w}%"></div></div>`;
   }
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
@@ -1993,6 +2022,7 @@ function tapTrophy(t, card) {
   const st = trophyStatus(p, t);
   if (st === 'done') { sndTap(); sparkle(card); return; }
   if (st === 'ready') { openTrophy(t.id); return; }
+  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
   if (!t.progress) return;
   sndClick();
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
