@@ -642,14 +642,13 @@
     background: rgba(30,15,55,.95); border: 2px solid rgba(255,255,255,.4);
     box-shadow: 0 2px 6px rgba(0,0,0,.35);
   }
-  /* BEHAALD: warm goud met een gouden vinkje rechtsboven (rustig, geen sterke glow) */
-  .trophy-card.done { background: rgba(255,215,64,.13); border-color: #ffd740; box-shadow: 0 0 8px rgba(255,215,64,.22), inset 0 0 0 1px rgba(255,215,64,.28); }
-  .trophy-card.done .temoji { filter: drop-shadow(0 0 4px rgba(255,215,64,.6)); }
-  .trophy-check {
-    position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; border-radius: 50%;
-    display: grid; place-items: center; font-size: 15px; font-weight: bold; z-index: 3;
-    background: linear-gradient(180deg, #ffd54f, #ffb300); color: #4a148c; border: 2px solid #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  /* BEHAALD: rustig, verzameld. Zacht goud, volle-kleur icoon, klein sterretje.
+     Zakt licht naar de achtergrond zodat de actieve doelen opvallen. */
+  .trophy-card.done { background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); opacity: .9; }
+  .trophy-card.done .temoji { filter: none; }
+  .trophy-star {
+    position: absolute; top: -7px; right: -5px; font-size: 19px; z-index: 3;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
   }
   /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
   .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
@@ -657,8 +656,10 @@
   .trophy-progress-text.sub { color: #cfc6df; font-weight: 600; opacity: .75; }
   .trophy-card.fresh .trophy-progress-text { color: #d8d0ea; opacity: .82; }
   /* dunne progressbalk onderaan de kaart */
-  .trophy-progress { height: 6px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.16); }
-  .trophy-progress-fill { height: 100%; border-radius: 999px; transition: width .5s ease; background: linear-gradient(90deg, #ce93d8, #f48fb1); }
+  .trophy-progress { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid rgba(255,255,255,.18); }
+  .trophy-progress-fill { height: 100%; border-radius: 999px; transition: width .5s ease; background: linear-gradient(90deg, #d9a3ff, #ff8fc7); }
+  /* korte uitleg onder een categoriekop (bv. bij thema-looks) */
+  .shelf-note { font-size: 12px; font-weight: 600; color: #e6d6ff; opacity: .82; margin: -3px 2px 9px; }
   /* ===== KLAAR: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat) ===== */
   .trophy-card.ready {
     justify-content: center; gap: 3px; color: #5d2a00; border: 3px solid #fff3c4;
@@ -671,7 +672,7 @@
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 4px 13px rgba(255,170,0,.45); } 50% { transform: scale(1.03); box-shadow: 0 6px 22px rgba(255,170,0,.75); } }
   /* ---- Thema-looks: brede outfit-challenge-kaarten met een strakke checklist ---- */
   .trophy-card.theme { grid-column: 1 / -1; text-align: left; padding: 12px 14px; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); box-shadow: none; }
-  .trophy-card.theme.done { background: rgba(255,215,64,.13); border-color: #ffd740; }
+  .trophy-card.theme.done { background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); opacity: .92; }
   .theme-top { display: flex; align-items: center; gap: 10px; }
   .theme-emoji { font-size: 30px; line-height: 1; }
   .trophy-card.theme.fresh .theme-emoji { filter: grayscale(1); opacity: .4; }
@@ -1337,7 +1338,7 @@ const TROPHY_SHELVES = [
   { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
   { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
-  { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
+  { name: '✨ Thema-looks',          note: 'Draag alle stukken samen om de look te halen.', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
@@ -1927,7 +1928,8 @@ function renderShelves() {
     const head = document.createElement('div');
     head.className = 'shelf-title';
     head.innerHTML = `<div class="shelf-head-row"><span>${shelf.name}</span>`
-      + `<span class="shelf-count">${got} van ${shelf.ids.length}</span></div>`;
+      + `<span class="shelf-count">${got} van ${shelf.ids.length}</span></div>`
+      + (shelf.note ? `<div class="shelf-note">${shelf.note}</div>` : '');
     panel.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid';
@@ -1966,10 +1968,11 @@ function readyCardHTML(t) {
 }
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
-  const theme = !!THEME_SETS[t.id] && status !== 'ready';
+  const isTheme = !!THEME_SETS[t.id];
+  const theme = isTheme && status !== 'ready';   // klare thema-look = gouden open-kaart
   const card = document.createElement('div');
-  // 'Kast vol!' (de eindtrofee) krijgt de volle breedte
-  const wide = t.id === 'kastvol' ? 'wide ' : '';
+  // volle breedte: 'Kast vol!' en thema-looks (ook wanneer die klaarstaan om te openen)
+  const wide = (t.id === 'kastvol' || (isTheme && status === 'ready')) ? 'wide ' : '';
   card.className = `trophy-card ${theme ? 'theme ' : ''}${wide}` + status;
   // bijna behaald: subtiele gouden glow die iets sterker wordt richting 100%
   if (status === 'almost' && !theme && t.progress) {
@@ -1984,7 +1987,7 @@ function trophyCard(t, p) {
 }
 function normalCardHTML(t, p, status) {
   const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
-  if (status === 'done') return '<span class="trophy-check">✔</span>' + top;
+  if (status === 'done') return '<span class="trophy-star">⭐</span>' + top;
   if (status === 'locked') {
     return '<span class="trophy-lock">🔒</span>' + top
       + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Nog niet vrij</div></div>';
@@ -2005,16 +2008,17 @@ function themeCardHTML(t, p, status) {
   const set = THEME_SETS[t.id];
   const pieces = Object.entries(set);
   const total = pieces.length;
-  const on = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
-  const count = status === 'done' ? '' : `<span class="theme-count">${on}/${total}</span>`;
+  // behaalde look = alle stukken 'aan' (het is een verzamelde look), zelfde formaat als anders
+  const done = status === 'done';
+  const on = done ? total : pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
   const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
-    + `<div class="tname">${t.name}</div>${count}</div>`;
-  if (status === 'done') return '<span class="trophy-check">✔</span>' + head;
+    + `<div class="tname">${t.name}</div><span class="theme-count">${on}/${total}</span></div>`;
+  const star = done ? '<span class="trophy-star">⭐</span>' : '';
   const list = pieces.map(([cat, id]) => {
-    const aan = p.equipped[cat] === id;
+    const aan = done || p.equipped[cat] === id;
     return `<li class="${aan ? 'on' : 'off'}"><span class="pc"></span>${pieceLabel(id)}</li>`;
   }).join('');
-  return head + `<ul class="theme-list">${list}</ul>`;
+  return star + head + `<ul class="theme-list">${list}</ul>`;
 }
 // tikken mag: behaald glinstert, klaar opent, bezig vertelt hoe ver je bent
 function tapTrophy(t, card) {
