@@ -2727,8 +2727,8 @@ function tapDance(elId) {
   maybeProost(el);
 }
 // klein sterretje dat oppopt bij een tik-dans
-function sparkle(el, emojis) {
-  const r = el.getBoundingClientRect();
+function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
+function sparkleAt(r, emojis) {
   const s = document.createElement('div');
   s.className = 'confetti-bit';
   s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
@@ -2738,23 +2738,32 @@ function sparkle(el, emojis) {
   document.body.appendChild(s);
   setTimeout(() => s.remove(), 1400);
 }
-// Easter egg 🍺: 5x snel achter elkaar tikken op een ster mét het pintje-mic'je
-// op, en ze heft 'm even toastend — "Proost!" met een klein bubbelfeestje.
+// Easter egg 🍺: 5x tikken — op de ster mét het pintje-mic'je op, óf los op het
+// pintje-kaartje in de winkel (telt allebei mee voor dezelfde teller) — en ze
+// heft 'm toastend: "Schol!" met een klein bubbelfeestje.
 let pintjeTaps = 0, pintjeTapTimer = null;
-function maybeProost(el) {
-  const p = P();
-  if (!p || p.equipped.mic !== 'mic_pintje') { pintjeTaps = 0; return; }
+function bumpPintjeTaps(el) {
   clearTimeout(pintjeTapTimer);
   pintjeTaps++;
-  // elke tik zet een dansje van ~1s in gang (zie tapDance) — de reset moet dus ruim
-  // langer zijn dan die cooldown, anders kan een kind de 5 tikken nooit op tijd halen
+  // elke avatar-tik zet een dansje van ~1s in gang (zie tapDance) — de reset moet
+  // dus ruim langer zijn dan die cooldown, anders is de 5e tik nooit op tijd
   pintjeTapTimer = setTimeout(() => { pintjeTaps = 0; }, 3000);
   if (pintjeTaps < 5) return;
   pintjeTaps = 0;
-  for (let i = 0; i < 10; i++) setTimeout(() => { if (el.isConnected) sparkle(el, ['🍺', '🍻', '🫧']); }, i * 70);
-  showPraise('Proost! 🍻');
+  // positie nú al vastleggen: bij het winkelkaartje verdwijnt "el" meteen na de klik
+  // (renderShop bouwt de hele grid opnieuw op), dus in de latere timeouts bestaat
+  // het element niet meer — de plek op het scherm blijft wel gewoon kloppen
+  const r = el.getBoundingClientRect();
+  for (let i = 0; i < 10; i++) setTimeout(() => sparkleAt(r, ['🍺', '🍻', '🫧']), i * 70);
+  showPraise('Schol! 🍻');
   sndCoin();
   buzz([0, 20, 60, 20]);
+}
+// avatar-tik: telt alleen mee als het pintje ook echt aanstaat
+function maybeProost(el) {
+  const p = P();
+  if (!p || p.equipped.mic !== 'mic_pintje') { pintjeTaps = 0; return; }
+  bumpPintjeTaps(el);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 function finaleDance(elId, count) {
@@ -3030,7 +3039,11 @@ function renderShop() {
     else if (p.diamonds < it.price) statusLine = `<div class="item-status need">💎 ${it.price}</div>`;
     else statusLine = `<div class="item-status price">💎 ${it.price}</div>`;
     card.innerHTML = swatch + `<div class="item-name">${it.name}</div>` + statusLine;
-    card.onclick = () => { sndClick(); shopJustBoughtId = null; shopSelectedId = it.id; renderShop(); };
+    card.onclick = () => {
+      sndClick();
+      if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
+      shopJustBoughtId = null; shopSelectedId = it.id; renderShop();
+    };
     grid.appendChild(card);
   });
 }
