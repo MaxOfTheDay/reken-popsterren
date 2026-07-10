@@ -552,6 +552,10 @@
     35% { opacity: .95; transform: scale(1.05); }
     100% { opacity: 0; transform: scale(.7) translateY(-8px); }
   }
+  /* grote, gedimde decor-iconen op de achtergrond van de route (zie addRouteDecor);
+     géén eigen z-index — ze staan vóór de weg/haltes in de DOM en blijven dus
+     vanzelf achter alles zitten, zonder gedoe met losse stacking contexts */
+  .tour-decor { position: absolute; line-height: 1; pointer-events: none; user-select: none; }
   .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
   .tour-stop .dot { width: 74px; height: 74px; margin: 0 auto; border-radius: 21px; display: flex; align-items: center; justify-content: center;
@@ -1834,6 +1838,40 @@ function waveAmplitude() {
 // Een zachte S-vormige golf: elke volgende halte zwaait een beetje verder de
 // andere kant op, zodat de route als geheel kronkelt in plaats van recht loopt.
 function waveY(i, amp) { return Math.round(Math.sin(i * 0.9) * amp); }
+// Breedte van een halte en de zijmarge van de route: volgt dezelfde drie
+// schermgroottes als de CSS-breakpoints (zie .tour-stop / .tour-track).
+function stopWidth() {
+  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 96;
+  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 124;
+  return 108;
+}
+function trackPad() {
+  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 22;
+  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 30;
+  return 26;
+}
+// Vast (niet random) "toeval" op basis van een getal: dezelfde halte geeft
+// steeds dezelfde uitkomst, zodat decor niet rondspringt bij elke re-render.
+function hash01(n) { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+// Grote, sterk gedimde decor-iconen op de achtergrond van de reisweg (disco,
+// muziek, sterren...) — leven ín de track en scrollen dus vanzelf mee, en
+// blijven zich herhalen zolang de route doorloopt (ook voorbij de laatste stad).
+const ROUTE_DECOR = ['🪩', '🎧', '🎶', '⭐', '🎸'];
+function addRouteDecor(track, maxShow, stopW, padX) {
+  for (let l = 4; l <= maxShow; l += 4) {
+    const h = hash01(l * 7.31);
+    const d = document.createElement('div');
+    d.className = 'tour-decor';
+    d.textContent = ROUTE_DECOR[(l / 4 - 1) % ROUTE_DECOR.length];
+    d.style.left = (padX + (l - 0.5) * stopW) + 'px';
+    d.style.fontSize = Math.round(70 + h * 55) + 'px';
+    d.style.opacity = (0.10 + h * 0.07).toFixed(2);
+    d.style.transform = `translateX(-50%) rotate(${Math.round(-20 + h * 40)}deg)`;
+    if (Math.floor(l / 4) % 2 === 0) d.style.top = Math.round(18 + hash01(l * 3.1) * 46) + 'px';
+    else d.style.bottom = Math.round(14 + hash01(l * 5.7) * 40) + 'px';
+    track.appendChild(d);
+  }
+}
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
 // zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
 function smoothPath(pts) {
@@ -1947,6 +1985,10 @@ function renderTourMap(travelFrom) {
   map.innerHTML = '';
   const track = document.createElement('div');
   track.className = 'tour-track';
+  // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
+  const maxShow = Math.max(CITIES.length, p.level + 2);
+  const amp = waveAmplitude();
+  addRouteDecor(track, maxShow, stopWidth(), trackPad());
   const svgNS = 'http://www.w3.org/2000/svg';
   const roadSvg = document.createElementNS(svgNS, 'svg');
   roadSvg.setAttribute('class', 'tour-road-svg');
@@ -1978,9 +2020,6 @@ function renderTourMap(travelFrom) {
   roadSvg.appendChild(fgGlowPath);
   roadSvg.appendChild(fgPath);
   track.appendChild(roadSvg);
-  // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
-  const maxShow = Math.max(CITIES.length, p.level + 2);
-  const amp = waveAmplitude();
   for (let l = 1; l <= maxShow; l++) {
     const city = cityFor(l);
     const b = document.createElement('button');
