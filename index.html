@@ -44,13 +44,6 @@
        "edge" between the button face and its shadow, flattening the 3D look). ---- */
     --green-top: #457f48; --green-deep: #2e7d32; --green-shadow: #1b5e20;
     --green-badge-bg: #e3f7e7;
-    /* Muted variant for the tour map's "done" city tiles specifically -- a
-       repeated small marker competing for attention with the single, larger,
-       pulsing gold "next" tile needs to recede, which the vivid button green
-       (tuned for a one-off legible CTA) doesn't. Same green identity, pulled
-       toward the gray/locked family's desaturation so done+locked read as one
-       calmer "not actionable right now" tier, distinguished by hue not punch. */
-    --green-muted-top: #6d8f6f; --green-muted-deep: #4f6b51; --green-muted-shadow: #33442f;
 
     /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone).
        red-danger-500 is a darkened red-500 (not a plain reuse) so white button
@@ -668,7 +661,7 @@
      win over a plain "transform: translateY(2px)" here and swallow the press
      animation entirely -- so this explicitly combines both instead of just
      translating, keeping the size AND the tap feedback. */
-  .tour-stop.done:active .dot { box-shadow: 0 2px 0 var(--green-muted-shadow); transform: scale(.85) translateY(2px); }
+  .tour-stop.done:active .dot { box-shadow: 0 2px 0 var(--green-shadow); transform: scale(.85) translateY(2px); }
   .tour-stop.next:active .dot { box-shadow: 0 2px 0 var(--gold-cta-shadow); }
   .tour-stop.locked { cursor: default; }
   /* op slot: dekkend (geen doorschijnende reisweg door de tegel) en een maatje
@@ -678,8 +671,10 @@
   /* same size tier as .locked (.85 scale): "done" and "not yet unlocked" both
      recede equally, only gold's "act here now" tile stays full-size. The star
      rating underneath still carries the achievement -- shrinking the tile
-     itself doesn't understate what was earned there. */
-  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-muted-top), var(--green-muted-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-muted-shadow); transform: scale(.85); }
+     itself doesn't understate what was earned there. Color-wise, kept the
+     same vivid green as the buttons (--green-top/--green-deep) -- a muted,
+     desaturated variant was tried here but read as too dull/flat in practice. */
+  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); transform: scale(.85); }
   .tour-stop.next .dot { background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow); border-color: var(--c-white); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14.5px; font-weight: bold; margin-top: 8px; }
   .tour-stop.next .cname { color: var(--gold-light); }
@@ -972,6 +967,16 @@
   .item-card.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); box-shadow: 0 0 0 3px rgba(56,189,248,.22); transform: scale(1.025); }
   .item-card.equipped { border-color: var(--gold-accent); background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.48); }
   .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 0 3px rgba(56,189,248,.20), 0 0 14px rgba(255,215,64,.55); }
+  /* .owned and .selected are two plain (non-combined) classes with identical
+     specificity, both setting background/border-color -- .owned happened to
+     be declared later in the file, so it silently won that tie and previewing
+     an owned item showed a half-gray, half-blue card (gray body, blue ring
+     only, since .owned doesn't touch box-shadow/transform). Ownership is
+     already communicated by the status badge below, so the card itself
+     should just show the same full "you're looking at this" blue as any
+     other selected item -- this combined selector's higher specificity wins
+     outright, no reliance on rule order. */
+  .item-card.owned.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
@@ -2204,18 +2209,19 @@ function renderTourMap(travelFrom) {
   fadeGrad.appendChild(fadeStop1);
   fadeGrad.appendChild(fadeStop2);
   defs.appendChild(fadeGrad);
-  // afgelegd pad: rustig donker groen (--green-muted-deep, zelfde familie als
-  // de voltooide haltes) dat pas in het allerlaatste stukje opwarmt naar goud,
-  // vlak vóór de halte waar je nu staat (zie updateRoad voor de x1/y1/x2/y2 die
-  // dat stukje afbakenen). Bewust het donkerdere van de twee gedempte tinten:
-  // hoe verder de tournee vordert, hoe langer dit pad wordt, en de rustige
-  // tint moet dan niet steeds opvallender worden.
+  // afgelegd pad: zelfde groen als de voltooide haltes zelf (--green-deep,
+  // het donkerdere van de twee knoppen-groentinten) dat pas in het
+  // allerlaatste stukje opwarmt naar goud, vlak vóór de halte waar je nu
+  // staat (zie updateRoad voor de x1/y1/x2/y2 die dat stukje afbakenen).
+  // Bewust de donkerdere tint, niet de lichtere: hoe verder de tournee
+  // vordert, hoe langer dit pad wordt, en het mag dan niet juist
+  // opvallender worden naarmate er meer steden bij komen.
   const traveledGrad = document.createElementNS(svgNS, 'linearGradient');
   traveledGrad.setAttribute('id', 'roadTraveledGrad');
   traveledGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
   const travStop1 = document.createElementNS(svgNS, 'stop');
   travStop1.setAttribute('offset', '0%');
-  travStop1.setAttribute('stop-color', '#4f6b51');
+  travStop1.setAttribute('stop-color', '#2e7d32');
   const travStop2 = document.createElementNS(svgNS, 'stop');
   travStop2.setAttribute('offset', '100%');
   travStop2.setAttribute('stop-color', '#ffda6a');
