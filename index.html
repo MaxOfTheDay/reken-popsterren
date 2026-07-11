@@ -386,8 +386,16 @@
     flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
     width: 100%; min-height: 0; z-index: 1;
   }
+  /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
+     plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
+     parallax-transform (zie updateParallax). Ooit zat de transform op
+     .map-sky zelf -- dan verschuift de knip-grens mee met de parallax, en
+     ontstaat er een onzichtbare strook aan de kant van het scherm waar
+     nooit meer een wolk kan verschijnen (precies dezelfde reden dat
+     .tour-decor-layer en .tour-map-wrap al wél gesplitst waren). */
   .map-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  .map-sky > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
+  .map-sky-inner { position: absolute; inset: 0; }
+  .map-sky-inner > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
   @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
 
   .main-nav {
@@ -602,8 +610,13 @@
   .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
   /* ruimte boven de haltes voor de avatar, eronder voor de Speel-knop, plus wat
-     extra lucht boven/onder voor de golvende weg (haltes zwaaien op/neer) */
-  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 154px 26px 104px; }
+     extra lucht boven/onder voor de golvende weg (haltes zwaaien op/neer).
+     De onderkant heeft ook nog 10px extra bovenop de knop zelf: .tour-map's
+     overflow-x:auto dwingt overflow-y ook naar auto (CSS-spec-gedrag, niet
+     bewust gekozen), dus alles voorbij deze padding wordt geknipt -- zonder
+     die 10px viel de zachte slagschaduw van de Speel-knop er net buiten bij
+     haltes die door de golvende route wat lager uitkomen. */
+  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 154px 26px 114px; }
   /* de reisweg is een zacht slingerend SVG-pad dat dóór het midden van elke halte
      loopt (punten & kromming gezet door updateRoad/renderTourMap); het afgelegde
      deel licht warm op, de weg vooruit blijft dof. */
@@ -702,7 +715,7 @@
     border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
   /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
   @media (max-height: 700px) {
-    .tour-track { padding: 124px 22px 90px; }
+    .tour-track { padding: 124px 22px 100px; }
     .tour-stop { width: 96px; }
     .tour-stop .dot { width: 62px; height: 62px; font-size: 31px; border-radius: var(--radius-button); }
     .tour-hero { width: 82px; }
@@ -711,7 +724,7 @@
   /* hoge schermen: de kaart mag juist groter schitteren — grotere haltes,
      ster en speelknop claimen de ruimte die anders leeg blijft */
   @media (min-height: 800px) {
-    .tour-track { padding: 178px 30px 118px; }
+    .tour-track { padding: 178px 30px 128px; }
     .tour-stop { width: 124px; }
     .tour-stop .dot { width: 90px; height: 90px; font-size: 44px; border-radius: 25px; }
     .tour-stop .cname { font-size: 16px; }
@@ -1138,9 +1151,11 @@
   <!-- ===== Profielkeuze ===== -->
   <div class="screen active" id="screen-profile">
     <div class="map-sky" aria-hidden="true">
-      <span style="top:16%;font-size:30px;animation-duration:80s;animation-delay:-25s">☁️</span>
-      <span style="top:42%;font-size:24px;animation-duration:95s;animation-delay:-58s">☁️</span>
-      <span style="top:82%;font-size:28px;animation-duration:85s;animation-delay:-40s">☁️</span>
+      <div class="map-sky-inner">
+        <span style="top:16%;font-size:30px;animation-duration:80s;animation-delay:-25s">☁️</span>
+        <span style="top:42%;font-size:24px;animation-duration:95s;animation-delay:-58s">☁️</span>
+        <span style="top:82%;font-size:28px;animation-duration:85s;animation-delay:-40s">☁️</span>
+      </div>
     </div>
     <h1 class="title">🎤 Reken Popsterren 🎶</h1>
     <div class="subtitle">Wie gaat er vandaag schitteren op het podium?</div>
@@ -1150,10 +1165,12 @@
   <!-- ===== Kaart / wereldtournee (hoofdscherm) ===== -->
   <div class="screen hub" id="screen-map">
     <div class="map-sky" aria-hidden="true">
-      <span style="top:15%;font-size:34px;animation-duration:75s;animation-delay:-20s">☁️</span>
-      <span style="top:38%;font-size:26px;animation-duration:95s;animation-delay:-62s">☁️</span>
-      <span style="top:78%;font-size:30px;animation-duration:85s;animation-delay:-41s">☁️</span>
-      <span style="top:62%;font-size:23px;animation-duration:58s;animation-delay:-12s">✈️</span>
+      <div class="map-sky-inner">
+        <span style="top:15%;font-size:34px;animation-duration:75s;animation-delay:-20s">☁️</span>
+        <span style="top:38%;font-size:26px;animation-duration:95s;animation-delay:-62s">☁️</span>
+        <span style="top:78%;font-size:30px;animation-duration:85s;animation-delay:-41s">☁️</span>
+        <span style="top:62%;font-size:23px;animation-duration:58s;animation-delay:-12s">✈️</span>
+      </div>
     </div>
     <div class="map-topbar">
       <button class="btn small ghost switch-star" onclick="goProfiles()" aria-label="Wissel ster" title="Wissel ster">⬅</button>
@@ -2033,10 +2050,10 @@ const DECOR_PARALLAX_RATE = 0.55;
 // bij het scrollen omgerekend naar een absolute (niet-scrollende) links-positie.
 function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
   let n = 0;
-  // om de 2 haltes i.p.v. om de 4: op een lang scherm zie je anders maar één
+  // om de halte i.p.v. om de 2: op een lang scherm zag je anders maar één
   // decor-stukje per beeld, ver uit elkaar — dichter bij elkaar vult de
   // achtergrond ook op een lange tournee merkbaar op
-  for (let l = 2; l <= maxShow; l += 2, n++) {
+  for (let l = 1; l <= maxShow; l++, n++) {
     const h = hash01(l * 7.31);
     const homeX = padX + (l - 0.5) * stopW;
     const outer = document.createElement('div');
@@ -2044,8 +2061,11 @@ function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
     outer.dataset.homeX = homeX;
     outer.style.left = (homeX - scrollLeft * DECOR_PARALLAX_RATE) + 'px';
     outer.style.transform = 'translateX(-50%)';   // alleen centreren — blijft vast, geen scroll-afhankelijke transform
-    if (n % 2 === 0) outer.style.top = Math.round(18 + hash01(l * 3.1) * 46) + 'px';
-    else outer.style.bottom = Math.round(14 + hash01(l * 5.7) * 40) + 'px';
+    // ruimer bereik dan voorheen (was 18-64px/14-54px): benut meer van de
+    // bestaande padding-band boven/onder de haltes i.p.v. vlak tegen de rand
+    // te blijven plakken, zodat de nu-lege ruimte daar ook wat opvult
+    if (n % 2 === 0) outer.style.top = Math.round(20 + hash01(l * 3.1) * 80) + 'px';
+    else outer.style.bottom = Math.round(15 + hash01(l * 5.7) * 60) + 'px';
     const inner = document.createElement('div');
     inner.className = 'tour-decor-inner';
     inner.textContent = ROUTE_DECOR[n % ROUTE_DECOR.length];
@@ -2065,7 +2085,9 @@ function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
 // (nooit een transform bóvenop een eerdere transform) — anders schuift de decor
 // dubbel op en/of groeit de scrollbare route eindeloos mee.
 function updateParallax(map) {
-  const sky = document.querySelector('#screen-map .map-sky');
+  // de transform hoort op de binnenste laag (zie .map-sky-inner hierboven),
+  // niet op .map-sky zelf, anders schuift de knip-grens mee met de parallax
+  const sky = document.querySelector('#screen-map .map-sky-inner');
   if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
   const layer = $('tour-decor-layer');
   if (!layer) return;
