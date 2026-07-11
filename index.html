@@ -549,6 +549,11 @@
     max-width: min(94vw, 560px); text-align: center; text-wrap: balance;
     pointer-events: none;
   }
+  /* "tik om verder te gaan": een onzichtbare, schermvullende laag ónder de
+     toast (die zelf pointer-events:none heeft, dus een tik daarop valt door
+     naar deze laag) zodat een kind overal mag tikken, niet precies op de
+     kleine bubbel zelf moet mikken. */
+  .tap-veil { position: fixed; inset: 0; z-index: 59; display: none; }
   .shake { animation: shake .4s; }
   @keyframes shake {
     0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
@@ -902,7 +907,11 @@
      trofeekaartjes): een gouden pulserende pil roept nu eenmaal om aangetikt
      te worden, dus de knop eronder alleen was niet genoeg. */
   .end-trophy-banner {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    /* inline-flex (niet flex): flex nog altijd voor het eigen emoji+tekst-gedrag,
+       maar block-level flex rekt vanzelf uit tot de volle kaartbreedte i.p.v. een
+       pil op maat van zijn eigen inhoud -- inline-flex laat .result-card's
+       text-align:center 'm juist wél als vanzelf centreren. */
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
     background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border: none; border-radius: var(--radius-pill);
     padding: 10px 18px; margin: 0 0 14px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
@@ -1315,6 +1324,11 @@
 
 <div class="praise" id="praise"></div>
 <div class="slip-note" id="slip-note">🎵</div>
+<!-- vangt een tik overal op het scherm op tijdens "tik om verder te gaan" i.p.v.
+     alleen op de kleine toast-bubbel zelf -- zit onder de toast (lagere z-index)
+     zodat die zelf nog leesbaar bovenop blijft, maar tikken erop valt gewoon door
+     naar deze laag (de toast zelf heeft pointer-events:none) -->
+<div class="tap-veil" id="tap-veil"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2977,28 +2991,28 @@ function showPraise(txt) {
   void el.offsetWidth;
   el.classList.add('pop');
 }
-// onTap (optioneel): maakt de toast zelf aantikbaar i.p.v. na een vaste tijd te
-// verdwijnen -- gebruikt bij de "dit was het juiste antwoord"-toast, zodat het
-// kind zelf de tijd neemt om te lezen i.p.v. dat een timer raadt hoe lang dat duurt.
+// onTap (optioneel): maakt het hele scherm aantikbaar i.p.v. na een vaste tijd
+// te verdwijnen -- gebruikt bij de "dit was het juiste antwoord"-toast, zodat
+// het kind zelf de tijd neemt om te lezen i.p.v. dat een timer raadt hoe lang
+// dat duurt. Bewust niet alleen de kleine toast-bubbel zelf: die precies
+// moeten raken is minder vergevingsgezind dan overal mogen tikken.
 function showToast(txt, onTap) {
   const t = $('toast');
   t.textContent = txt;
   t.style.display = 'block';
-  t.onclick = null;
-  t.style.pointerEvents = '';
-  t.style.cursor = '';
+  const veil = $('tap-veil');
+  veil.onclick = null;
+  veil.style.display = 'none';
   if (onTap) {
-    t.style.pointerEvents = 'auto';
-    t.style.cursor = 'pointer';
-    t.onclick = () => { hideToast(); onTap(); };
+    veil.onclick = () => { hideToast(); onTap(); };
+    veil.style.display = 'block';
   }
 }
 function hideToast() {
-  const t = $('toast');
-  t.style.display = 'none';
-  t.onclick = null;
-  t.style.pointerEvents = '';
-  t.style.cursor = '';
+  $('toast').style.display = 'none';
+  const veil = $('tap-veil');
+  veil.onclick = null;
+  veil.style.display = 'none';
 }
 
 function endLevel(success) {
@@ -3042,18 +3056,18 @@ function endLevel(success) {
     $('btn-end-next').onclick = () => { sndClick(); goMap(); };
     const trophyBanner = $('end-trophy');
     if (trofees.length) {
-      // eigen blokje i.p.v. een tekstregel — en dé knop eronder brengt je er meteen naartoe
-      trophyBanner.style.display = 'flex';
+      // eigen blokje i.p.v. een tekstregel — het blokje zelf brengt je er al naartoe,
+      // dus de knop eronder hoeft daar niet ook nog voor te veranderen: die blijft
+      // gewoon altijd de kleedkamer-snelkoppeling
+      trophyBanner.style.display = 'inline-flex';
       trophyBanner.textContent = trofees.length === 1 ? '🎁 Nieuwe trofee klaar in je kast!' : `🎁 ${trofees.length} nieuwe trofeeën klaar in je kast!`;
       trophyBanner.onclick = () => { sndClick(); openTrophies(); };
-      $('btn-end-alt').textContent = '🏆 Bekijk trofee' + (trofees.length === 1 ? '' : 'ën');
-      $('btn-end-alt').onclick = () => { sndClick(); openTrophies(); };
     } else {
       trophyBanner.style.display = 'none';
       trophyBanner.onclick = null;
-      $('btn-end-alt').textContent = '👗 Kleedkamer';
-      $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
     }
+    $('btn-end-alt').textContent = '👗 Kleedkamer';
+    $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
     sndWin();
     confetti(40);
     finaleDance('end-avatar', 6);   // grote slotchoreografie
