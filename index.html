@@ -29,7 +29,7 @@
     --gold-marigold: #ffca28; --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
 
     /* ---- Purple: brand / secondary actions ---- */
-    --purple-light: #ab47bc; --purple-mid: #8e24aa; --purple-shadow: #4a148c;
+    --purple-light: #ab47bc; --purple-mid: #8e24aa; --purple-mid-rgb: 142,36,170; --purple-shadow: #4a148c;
     /* ---- Purple: answer-input controls (choice-btn / num-btn), kept distinct ---- */
     --purple-input-top: #8e5fd6; --purple-input-bottom: #5e35b1; --purple-input-shadow: #311b92;
     /* ---- Purple: misc singles, kept distinct ---- */
@@ -39,10 +39,13 @@
     --green-top: #66bb6a; --green-bottom: #43a047; --green-shadow: #1b5e20;
     --green-badge-bg: #e3f7e7; --green-badge-text: #2e7d32;
 
-    /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone) ---- */
+    /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone).
+       red-danger-500 is a darkened red-500 (not a plain reuse) so white button
+       text clears WCAG AA contrast (4.5:1) at every point of the gradient --
+       the original #ef5350/#e53935 pair only reached 3.49-4.23:1. ---- */
     --red-500: #ef5350;
     --red-answer-600: #d32f2f; --red-answer-shadow: #8e0000;
-    --red-danger-600: #e53935; --red-danger-shadow: #a31414;
+    --red-danger-500: #cb4744; --red-danger-shadow: #a31414;
 
     /* ---- Gray: neutral / locked / unavailable ---- */
     --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
@@ -63,6 +66,9 @@
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
     --practice-bg: #fff3e0; --practice-text: #b3560d;
+    /* stat-tile accent tints (Voortgang tab): distinct from the reused brand
+       colors below, kept as their own tokens rather than inline literals */
+    --stat-violet: #7e57c2; --stat-green: #2e9e4f;
 
     /* ---- Glass / overlay surfaces (exact-duplicate alpha values only; true one-offs stay inline) ---- */
     --glass-black-30: rgba(0,0,0,.3); --glass-black-35: rgba(0,0,0,.35); --glass-black-40: rgba(0,0,0,.4);
@@ -1012,6 +1018,9 @@
   .set-field + .set-field { margin-top: 15px; }
   .set-field .lbl { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
   .set-field .note { font-size: 12px; color: var(--paper-ink-muted); font-weight: 500; }
+  /* "Tafels van" only matters once Maal/Delen is on -- dimmed (not disabled: still
+     tappable, so a parent can pre-select tables before turning the operation on) */
+  .set-field.inactive { opacity: .5; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
@@ -1020,11 +1029,19 @@
   }
   .chip:hover { border-color: var(--purple-light); }
   .chip:active { transform: scale(.95); }
-  .chip.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; color: var(--c-white); box-shadow: 0 3px 9px rgba(142,36,170,.32); }
+  .chip.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; color: var(--c-white); box-shadow: 0 3px 9px rgba(var(--purple-mid-rgb), .32); }
 
+  /* de naam is het enige tekstveld in de hele app -- zonder duidelijk signaal
+     ziet het eruit als platte tekst i.p.v. iets aantikbaars, dus een potloodje
+     maakt "dit kun je wijzigen" expliciet i.p.v. impliciet aan de rand */
+  .name-edit-wrap { position: relative; max-width: 220px; }
+  .name-edit-wrap .name-edit-ico {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; opacity: .5; pointer-events: none;
+  }
   .settings-sheet input[type=text] {
     font-family: inherit; font-size: 17px; font-weight: 600; color: var(--paper-ink);
-    border: 2px solid var(--paper-border); border-radius: var(--radius-sm); padding: 9px 13px; width: 100%; max-width: 220px; background: var(--paper-tint);
+    border: 2px solid var(--paper-border); border-radius: var(--radius-sm); padding: 9px 34px 9px 13px; width: 100%; background: var(--paper-tint);
   }
   .settings-sheet input[type=text]:focus-visible { outline: none; border-color: var(--purple-light); background: var(--c-white); }
   .data-btns { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -1036,7 +1053,7 @@
   }
   .danger-zone .t { font-size: 14.5px; font-weight: 700; color: var(--danger-title); }
   .danger-zone .d { font-size: 12.5px; color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
-  .danger-btn { background: linear-gradient(180deg, var(--red-500), var(--red-danger-600)); color: var(--c-white); border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
+  .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
   /* ---- Ouder-statistiek (tegels + meter) ---- */
@@ -3385,12 +3402,12 @@ function statsPanelHtml(p) {
     <div class="set-card-head"><div class="ico">📊</div>
       <div><h2>Voortgang van ${p.name}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
     <div class="stat-grid">
-      <div class="stat-tile" style="--tint:#ab47bc"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
-      <div class="stat-tile" style="--tint:#7e57c2"><div class="num">${answered}</div><div class="cap">sommen gemaakt</div></div>
-      <div class="stat-tile" style="--tint:#2e9e4f"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
-      <div class="stat-tile" style="--tint:#ffb300"><div class="num">${stars}</div><div class="cap">sterren</div></div>
-      <div class="stat-tile" style="--tint:#ff80ab"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
-      <div class="stat-tile" style="--tint:#ff8f00"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
+      <div class="stat-tile" style="--tint:var(--stat-violet)"><div class="num">${answered}</div><div class="cap">sommen gemaakt</div></div>
+      <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
+      <div class="stat-tile" style="--tint:var(--gold-deep)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
+      <div class="stat-tile" style="--tint:var(--pink-accent)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
+      <div class="stat-tile" style="--tint:var(--gold-cta-bottom)"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
     </div>
     <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
     <div class="stat-bar"><div style="width:${skill}%"></div></div>
@@ -3399,42 +3416,49 @@ function statsPanelHtml(p) {
 }
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
+// Meerkeuze-chips (kies-er-meerdere) krijgen een ✓-voorvoegsel zodra ze aan staan,
+// zodat het verschil met de enkelkeuze-chips (Getallen tot/Antwoorden/Vragen per
+// optreden -- die alleen kleur wisselen) meteen zichtbaar is, zonder te hoeven
+// uitproberen of een tik de vorige keuze vervangt of ernaast komt.
+function multiChip(v, label, on) {
+  return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${on ? '✓ ' : ''}${label}</button>`;
+}
+function singleChip(v, label, on) {
+  return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
+}
 function oefeningPanelHtml(p, s) {
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
+  const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   return `<div class="settings-panel">
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🎓</div><div><h2>Wat oefenen</h2><div class="sub">Kies de bewerkingen en het bereik</div></div></div>
       <div class="set-field"><span class="lbl">Bewerkingen</span>
-        <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) =>
-          `<button class="chip ${s.ops.includes(v) ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
+        <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) => multiChip(v, l, s.ops.includes(v))).join('')}</div></div>
       <div class="set-field"><span class="lbl">Getallen tot</span>
-        <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v =>
-          `<button class="chip ${s.max === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Tafels van <span class="note">(voor ✖️ en ➗)</span></span>
-        <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v =>
-          `<button class="chip ${s.tables.includes(v) ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+        <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v => singleChip(v, v, s.max === v)).join('')}</div></div>
+      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
+        <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => multiChip(v, v, s.tables.includes(v))).join('')}</div></div>
     </div>
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🎮</div><div><h2>Hoe spelen</h2><div class="sub">De manier van antwoorden en de lengte</div></div></div>
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="set-mode">
-          <button class="chip ${s.mode === 'kies' ? 'on' : ''}" data-v="kies">Kiezen uit 4</button>
-          <button class="chip ${s.mode === 'typ' ? 'on' : ''}" data-v="typ">Zelf typen</button>
-          <button class="chip ${s.mode === 'mix' ? 'on' : ''}" data-v="mix">Afwisselen</button>
+          ${singleChip('kies', 'Kiezen uit 4', s.mode === 'kies')}
+          ${singleChip('typ', 'Zelf typen', s.mode === 'typ')}
+          ${singleChip('mix', 'Afwisselen', s.mode === 'mix')}
         </div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v =>
-          `<button class="chip ${s.perLevel === v ? 'on' : ''}" data-v="${v}">${v}</button>`).join('')}</div></div>
+        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => singleChip(v, v, s.perLevel === v)).join('')}</div></div>
     </div>
     <div class="set-card">
       <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">Naam van deze ster</div></div></div>
-      <div class="set-field"><span class="lbl">Naam</span>
-        <input type="text" id="set-name" value="${p.name}" maxlength="12"></div>
+      <div class="set-field"><label class="lbl" for="set-name">Naam</label>
+        <div class="name-edit-wrap"><input type="text" id="set-name" value="${p.name}" maxlength="12"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
     </div>
     <div class="set-card">
       <div class="set-card-head"><div class="ico">💾</div><div><h2>Back-up</h2><div class="sub">Bewaar of verplaats alle profielen</div></div></div>
       <div class="data-btns">
-        <button class="btn small green" id="set-export">💾 Opslaan als bestand</button>
+        <button class="btn small purple" id="set-export">💾 Opslaan als bestand</button>
         <button class="btn small purple" id="set-import">📂 Laden uit bestand</button>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
@@ -3447,6 +3471,14 @@ function oefeningPanelHtml(p, s) {
   </div>`;
 }
 
+// Feedback wanneer een meerkeuze-chip niet uit mag (de laatste blijft altijd aan).
+function blockedMinOne(el) {
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+  showToast('Kies er minstens 1 👆');
+  setTimeout(hideToast, 1500);
+}
 function renderSettings() {
   // profielkiezer (segmented)
   const profiles = $('settings-profiles');
@@ -3472,18 +3504,22 @@ function renderSettings() {
 
   body.innerHTML = oefeningPanelHtml(p, s);
   $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; save(); };
-  // meerkeuze-chips (aan/uit)
+  // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
+  // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
+  // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
   $('set-ops').querySelectorAll('.chip').forEach(c => c.onclick = () => {
     const v = c.dataset.v;
-    if (s.ops.includes(v)) { if (s.ops.length > 1) s.ops = s.ops.filter(o => o !== v); }
-    else s.ops.push(v);
-    save(); renderSettings();
+    if (s.ops.includes(v)) {
+      if (s.ops.length > 1) { s.ops = s.ops.filter(o => o !== v); save(); renderSettings(); }
+      else blockedMinOne(c);
+    } else { s.ops.push(v); save(); renderSettings(); }
   });
   $('set-tables').querySelectorAll('.chip').forEach(c => c.onclick = () => {
     const v = parseInt(c.dataset.v, 10);
-    if (s.tables.includes(v)) { if (s.tables.length > 1) s.tables = s.tables.filter(t => t !== v); }
-    else s.tables.push(v);
-    save(); renderSettings();
+    if (s.tables.includes(v)) {
+      if (s.tables.length > 1) { s.tables = s.tables.filter(t => t !== v); save(); renderSettings(); }
+      else blockedMinOne(c);
+    } else { s.tables.push(v); save(); renderSettings(); }
   });
   // enkelkeuze-chips
   $('set-max').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.max = parseInt(c.dataset.v, 10); save(); renderSettings(); });
@@ -3498,6 +3534,8 @@ function renderSettings() {
         const dress = setKey === 'p1' ? 'dress_roze' : 'dress_paars';
         db.profiles[setKey] = defaultProfile(p.name, dress);
         save(); renderSettings();
+        showToast('✅ Voortgang gewist.');
+        setTimeout(hideToast, 1800);
       }
     );
   };
