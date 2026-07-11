@@ -44,6 +44,13 @@
        "edge" between the button face and its shadow, flattening the 3D look). ---- */
     --green-top: #457f48; --green-deep: #2e7d32; --green-shadow: #1b5e20;
     --green-badge-bg: #e3f7e7;
+    /* Muted variant for the tour map's "done" city tiles specifically -- a
+       repeated small marker competing for attention with the single, larger,
+       pulsing gold "next" tile needs to recede, which the vivid button green
+       (tuned for a one-off legible CTA) doesn't. Same green identity, pulled
+       toward the gray/locked family's desaturation so done+locked read as one
+       calmer "not actionable right now" tier, distinguished by hue not punch. */
+    --green-muted-top: #6d8f6f; --green-muted-deep: #4f6b51; --green-muted-shadow: #33442f;
 
     /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone).
        red-danger-500 is a darkened red-500 (not a plain reuse) so white button
@@ -656,14 +663,23 @@
      (higher specificity via the compound .done:active / .next:active selector)
      so the press visually collapses in that state's own color. .locked isn't
      tappable (no onclick), so it's left without one. */
-  .tour-stop.done:active .dot { box-shadow: 0 2px 0 var(--green-shadow); }
+  /* .done's resting rule now sets its own transform (scale(.85)) too, and per
+     the same specificity-tie behavior documented above, that would silently
+     win over a plain "transform: translateY(2px)" here and swallow the press
+     animation entirely -- so this explicitly combines both instead of just
+     translating, keeping the size AND the tap feedback. */
+  .tour-stop.done:active .dot { box-shadow: 0 2px 0 var(--green-muted-shadow); transform: scale(.85) translateY(2px); }
   .tour-stop.next:active .dot { box-shadow: 0 2px 0 var(--gold-cta-shadow); }
   .tour-stop.locked { cursor: default; }
   /* op slot: dekkend (geen doorschijnende reisweg door de tegel) en een maatje
      kleiner — hiërarchie: goud (nu) > groen (gedaan) > grijs (nog niet) */
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip-sm) 0 var(--gray-shadow);
     border-color: var(--glass-white-22); transform: scale(.85); }
-  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  /* same size tier as .locked (.85 scale): "done" and "not yet unlocked" both
+     recede equally, only gold's "act here now" tile stays full-size. The star
+     rating underneath still carries the achievement -- shrinking the tile
+     itself doesn't understate what was earned there. */
+  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-muted-top), var(--green-muted-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-muted-shadow); transform: scale(.85); }
   .tour-stop.next .dot { background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow); border-color: var(--c-white); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14.5px; font-weight: bold; margin-top: 8px; }
   .tour-stop.next .cname { color: var(--gold-light); }
@@ -2183,14 +2199,15 @@ function renderTourMap(travelFrom) {
   fadeGrad.appendChild(fadeStop2);
   defs.appendChild(fadeGrad);
   // afgelegd pad: groen (bij de haltes die je al hebt gedaan) naar goud toe,
-  // richting de halte waar je nu staat -- zelfde groen als de voltooide
-  // haltes zelf (--green-top), was voorheen een ongerelateerde losse tint
+  // richting de halte waar je nu staat -- zelfde (gedempte) groen als de
+  // voltooide haltes zelf (--green-muted-top), was voorheen een
+  // ongerelateerde losse tint
   const traveledGrad = document.createElementNS(svgNS, 'linearGradient');
   traveledGrad.setAttribute('id', 'roadTraveledGrad');
   traveledGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
   const travStop1 = document.createElementNS(svgNS, 'stop');
   travStop1.setAttribute('offset', '0%');
-  travStop1.setAttribute('stop-color', '#457f48');
+  travStop1.setAttribute('stop-color', '#6d8f6f');
   const travStop2 = document.createElementNS(svgNS, 'stop');
   travStop2.setAttribute('offset', '100%');
   travStop2.setAttribute('stop-color', '#ffda6a');
