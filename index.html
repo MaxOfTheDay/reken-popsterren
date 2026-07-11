@@ -37,9 +37,12 @@
 
     /* ---- Green: success / done. The original #66bb6a/#43a047 gradient only
        reached 2.36-3.3:1 contrast for the white text/glyphs on top of it --
-       well under WCAG AA's 4.5:1. --green-deep replaces both stops (paired
-       with the existing --green-shadow) so every green button clears AA. ---- */
-    --green-deep: #2e7d32; --green-shadow: #1b5e20;
+       well under WCAG AA's 4.5:1. --green-top/--green-deep is a darker two-stop
+       gradient that clears AA at both ends (4.79:1 / 5.13:1); --green-shadow
+       stays a genuinely separate, darker shadow-lip color (not reused as the
+       gradient's own bottom stop -- doing that once collapsed the visible
+       "edge" between the button face and its shadow, flattening the 3D look). ---- */
+    --green-top: #457f48; --green-deep: #2e7d32; --green-shadow: #1b5e20;
     --green-badge-bg: #e3f7e7;
 
     /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone).
@@ -131,7 +134,7 @@
   .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
   .btn.purple { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.green { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.green { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.green:active { box-shadow: 0 1px 0 var(--green-shadow); }
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
   .btn.gray { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
@@ -481,7 +484,7 @@
     transition: transform .07s, box-shadow .07s;
   }
   .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .choice-btn.good { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
@@ -491,7 +494,7 @@
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
   }
   .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .num-btn.ok { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
 
@@ -660,7 +663,7 @@
      kleiner — hiërarchie: goud (nu) > groen (gedaan) > grijs (nog niet) */
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip-sm) 0 var(--gray-shadow);
     border-color: var(--glass-white-22); transform: scale(.85); }
-  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   .tour-stop.next .dot { background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow); border-color: var(--c-white); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14.5px; font-weight: bold; margin-top: 8px; }
   .tour-stop.next .cname { color: var(--gold-light); }
@@ -2180,13 +2183,14 @@ function renderTourMap(travelFrom) {
   fadeGrad.appendChild(fadeStop2);
   defs.appendChild(fadeGrad);
   // afgelegd pad: groen (bij de haltes die je al hebt gedaan) naar goud toe,
-  // richting de halte waar je nu staat
+  // richting de halte waar je nu staat -- zelfde groen als de voltooide
+  // haltes zelf (--green-top), was voorheen een ongerelateerde losse tint
   const traveledGrad = document.createElementNS(svgNS, 'linearGradient');
   traveledGrad.setAttribute('id', 'roadTraveledGrad');
   traveledGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
   const travStop1 = document.createElementNS(svgNS, 'stop');
   travStop1.setAttribute('offset', '0%');
-  travStop1.setAttribute('stop-color', '#5ac25f');
+  travStop1.setAttribute('stop-color', '#457f48');
   const travStop2 = document.createElementNS(svgNS, 'stop');
   travStop2.setAttribute('offset', '100%');
   travStop2.setAttribute('stop-color', '#ffda6a');
