@@ -2142,8 +2142,14 @@ function updateRoad(map) {
   const traveledD = targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '';
   fg.setAttribute('d', traveledD);
   if (fgGrad && targetIdx > 0) {
-    // groen (start van het afgelegde stuk) naar goud (bij de halte waar je nu staat)
-    fgGrad.setAttribute('x1', pts[0].x); fgGrad.setAttribute('y1', pts[0].y);
+    // het "warmt op naar goud"-effect hoort maar bij het laatste stukje (vorige
+    // halte -> nu), niet over de hele afgelegde route uitgesmeerd -- anders
+    // schuift de kleur bij elke volgende stad geleidelijk mee op en oogt een
+    // stad van vroeg in de tournee alsof daar ook nog iets "in wording" is.
+    // De gradient-spreadMethod is standaard "pad", dus alles vóór dit laatste
+    // stukje klemt vanzelf vast op de eerste stop-kleur (het rustige donkere
+    // groen) -- geen aparte path nodig voor het oudere, al voltooide stuk.
+    fgGrad.setAttribute('x1', pts[targetIdx - 1].x); fgGrad.setAttribute('y1', pts[targetIdx - 1].y);
     fgGrad.setAttribute('x2', pts[targetIdx].x); fgGrad.setAttribute('y2', pts[targetIdx].y);
   }
   // laat de weg nog twee "haltes" ver doorlopen ná de laatste die we tonen en
@@ -2198,16 +2204,18 @@ function renderTourMap(travelFrom) {
   fadeGrad.appendChild(fadeStop1);
   fadeGrad.appendChild(fadeStop2);
   defs.appendChild(fadeGrad);
-  // afgelegd pad: groen (bij de haltes die je al hebt gedaan) naar goud toe,
-  // richting de halte waar je nu staat -- zelfde (gedempte) groen als de
-  // voltooide haltes zelf (--green-muted-top), was voorheen een
-  // ongerelateerde losse tint
+  // afgelegd pad: rustig donker groen (--green-muted-deep, zelfde familie als
+  // de voltooide haltes) dat pas in het allerlaatste stukje opwarmt naar goud,
+  // vlak vóór de halte waar je nu staat (zie updateRoad voor de x1/y1/x2/y2 die
+  // dat stukje afbakenen). Bewust het donkerdere van de twee gedempte tinten:
+  // hoe verder de tournee vordert, hoe langer dit pad wordt, en de rustige
+  // tint moet dan niet steeds opvallender worden.
   const traveledGrad = document.createElementNS(svgNS, 'linearGradient');
   traveledGrad.setAttribute('id', 'roadTraveledGrad');
   traveledGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
   const travStop1 = document.createElementNS(svgNS, 'stop');
   travStop1.setAttribute('offset', '0%');
-  travStop1.setAttribute('stop-color', '#6d8f6f');
+  travStop1.setAttribute('stop-color', '#4f6b51');
   const travStop2 = document.createElementNS(svgNS, 'stop');
   travStop2.setAttribute('offset', '100%');
   travStop2.setAttribute('stop-color', '#ffda6a');
