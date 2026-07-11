@@ -357,11 +357,18 @@
      -12px die .hub-sticky's basisregel gebruikt. */
   #screen-map { position: relative; padding: 10px 0 100px; }
   #screen-map .hub-sticky { width: 100%; margin: -10px 0 12px; top: -10px; }
-  .map-header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; max-width: 700px; }
-  /* avatar + naam = nu de link terug naar spelerskeuze i.p.v. naar de kleedkamer
-     (die zit al in de vaste ondernavigatie) */
+  /* avatar + naam = de link terug naar spelerskeuze i.p.v. naar de kleedkamer
+     (die zit al in de vaste ondernavigatie); zit in de .header-left cel van
+     .screen-header, zodat "🗺️ Kaart" gewoon als .header-title mee-centreert
+     zoals bij de andere schermen, ongeacht hoe breed avatar+naam vs. de
+     diamant-pil rechts zijn. .header-left staat elders altijd leeg, dus
+     justify-self:start (krimpt de cel naar zijn inhoud) was daar nooit een
+     probleem -- met een lange naam erin duwde dat 'm dwars door de
+     gecentreerde titel heen. Hier dus stretch: de knop vult de kolom, en de
+     naam kan daarbinnen normaal afkappen (min-width:0 + ellipsis). */
+  #screen-map .header-left { justify-self: stretch; }
   .map-id-btn {
-    display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1;
+    display: flex; align-items: center; gap: 9px; min-width: 0;
     border: none; background: none; padding: 0; cursor: pointer; font-family: inherit;
     color: inherit; text-align: left; transition: transform .12s;
   }
@@ -378,14 +385,13 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: 0 2px 0 var(--glass-black-20);
   }
-  .map-chips { display: flex; gap: 8px; flex-shrink: 0; }
   .map-flex {
     flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
     width: 100%; min-height: 0; z-index: 1;
   }
-  /* tweede regel in .hub-sticky: welke tournee (set van 12 steden) en waar
-     daarbinnen, plus dezelfde dunne voortgangsbalk als de trofeeënkast */
-  .tour-tournee { font-size: 15px; font-weight: 800; text-align: center; text-shadow: 0 1px 0 var(--glass-black-18); }
+  /* compacte, enkele regel onder de kop: sterren + welke tournee (set van 12
+     steden) + waar daarbinnen, alles in één oogopslag */
+  .tour-line { font-size: 13.5px; font-weight: 600; opacity: .92; text-align: center; margin-top: 3px; text-shadow: 0 1px 0 var(--glass-black-18); }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform (zie updateParallax). Ooit zat de transform op
@@ -726,7 +732,7 @@
   @media (max-width: 390px) {
     .map-name { font-size: 17px; }
     .chip-badge { font-size: 14px; padding: 5px 10px; }
-    .map-header-row .diamond-badge { font-size: 17px; padding: 6px 13px; }
+    #screen-map .diamond-badge { font-size: 17px; padding: 6px 13px; }
     .map-portrait { width: 38px; height: 38px; }
     .map-portrait svg { top: -5px; width: 65px; }
   }
@@ -1178,21 +1184,15 @@
       </div>
     </div>
     <div class="hub-sticky">
-      <div class="map-header-row">
-        <button class="map-id-btn" onclick="goProfiles()" aria-label="Terug naar spelerskeuze" title="Terug naar spelerskeuze">
+      <div class="screen-header">
+        <button class="map-id-btn header-left" onclick="goProfiles()" aria-label="Terug naar spelerskeuze" title="Terug naar spelerskeuze">
           <span class="map-portrait" id="map-portrait"></span>
           <span class="map-name" id="map-name"></span>
         </button>
-        <div class="map-chips">
-          <div class="diamond-badge">⭐ <span id="map-stars">0</span></div>
-          <div class="diamond-badge">💎 <span id="map-diamonds">0</span></div>
-        </div>
+        <div class="header-title">🗺️ Kaart</div>
+        <div class="diamond-badge header-right">💎 <span id="map-diamonds">0</span></div>
       </div>
-      <div class="kast-progress">
-        <div class="tour-tournee" id="tour-tournee"></div>
-        <div class="kast-progress-text" id="tour-city"></div>
-        <div class="kast-bar"><div class="kast-bar-fill" id="tour-bar"></div></div>
-      </div>
+      <div class="tour-line" id="tour-line"></div>
     </div>
     <div class="map-flex">
       <div class="tour-map-wrap">
@@ -2042,13 +2042,10 @@ function goMap() {
   const p = P();
   $('map-name').textContent = p.name;
   $('map-diamonds').textContent = p.diamonds;
-  $('map-stars').textContent = totalStarCount(p);
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   const posInRound = ((p.level - 1) % CITIES.length) + 1;
   const round = cityFor(p.level).ronde;
-  $('tour-tournee').textContent = `🌍 Tournee ${round}`;
-  $('tour-city').textContent = `Stad ${posInRound} van ${CITIES.length}`;
-  $('tour-bar').style.width = Math.round(posInRound / CITIES.length * 100) + '%';
+  $('tour-line').textContent = `⭐ ${totalStarCount(p)} · Tournee ${round} · Stad ${posInRound} van ${CITIES.length}`;
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
