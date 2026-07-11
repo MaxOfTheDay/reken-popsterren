@@ -12,16 +12,86 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  :root {
+    /* ---- Backdrop / brand gradient ---- */
+    --bg-1: #3d0a58; --bg-2: #7b2ff7; --bg-3: #f107a3;
+    --bg-glow-pink: rgba(255,120,220,.35); --bg-glow-blue: rgba(80,200,255,.28);
+
+    /* ---- Neutrals ---- */
+    --c-white: #fff; --c-ink: #333;
+
+    /* ---- Gold: primary CTA gradient (play/main button) ---- */
+    --gold-cta-top: #ffc23d; --gold-cta-bottom: #ff8f00; --gold-cta-shadow: #b36200;
+    /* ---- Gold: accent / reward tones (distinct roles, not merged) ---- */
+    --gold-accent: #ffd740; --gold-warm: #ffd54f; --gold-deep: #ffb300; --gold-light: #ffe082;
+    --gold-cream: #fff9c4; --gold-bright: #ffee58; --gold-flame: #ff6f00; --gold-ready: #ffe27a;
+    --gold-shelf: #ffe08a; --gold-pale: #ffd9a0; --gold-flash: #fff176; --gold-ready-border: #fff3c4;
+    --gold-marigold: #ffca28; --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
+
+    /* ---- Purple: brand / secondary actions ---- */
+    --purple-light: #ab47bc; --purple-mid: #8e24aa; --purple-shadow: #4a148c;
+    /* ---- Purple: answer-input controls (choice-btn / num-btn), kept distinct ---- */
+    --purple-input-top: #8e5fd6; --purple-input-bottom: #5e35b1; --purple-input-shadow: #311b92;
+    /* ---- Purple: misc singles, kept distinct ---- */
+    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a; --purple-ink: #32115f;
+
+    /* ---- Green: success / done ---- */
+    --green-top: #66bb6a; --green-bottom: #43a047; --green-shadow: #1b5e20;
+    --green-badge-bg: #e3f7e7; --green-badge-text: #2e7d32;
+
+    /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone) ---- */
+    --red-500: #ef5350;
+    --red-answer-600: #d32f2f; --red-answer-shadow: #8e0000;
+    --red-danger-600: #e53935; --red-danger-shadow: #a31414;
+
+    /* ---- Gray: neutral / locked / unavailable ---- */
+    --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
+
+    /* ---- Blue: active / selected / info ---- */
+    --blue-fill-top: #38bdf8; --blue-fill-bottom: #6ad3ff; --blue-text: #8fd6ff;
+    --blue-ring: rgba(143,214,255,.2);
+
+    /* ---- Pink accents (fan meter / kast bar / stat bar / trophy pop) ---- */
+    --pink-accent: #ff80ab; --pink-hot: #ff4081; --pink-deep: #f50057; --pink-light: #ffd6f4;
+
+    /* ---- "Paper" theme: parent-facing screens (settings / modal / gear-menu) ---- */
+    --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
+    --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
+    --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
+    --muted-lavender-text: #cfc6df; --muted-text-2: #d8d0e4; --muted-text-3: #e1e5ea; --lavender-text: #e6d6ff;
+
+    /* ---- Danger zone / practice chips (parent settings) ---- */
+    --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
+    --practice-bg: #fff3e0; --practice-text: #b3560d;
+
+    /* ---- Glass / overlay surfaces (exact-duplicate alpha values only; true one-offs stay inline) ---- */
+    --glass-black-30: rgba(0,0,0,.3); --glass-black-35: rgba(0,0,0,.35); --glass-black-40: rgba(0,0,0,.4);
+    --glass-black-18: rgba(0,0,0,.18); --glass-black-32: rgba(0,0,0,.32); --glass-black-28: rgba(0,0,0,.28);
+    --glass-black-25: rgba(0,0,0,.25); --glass-black-20: rgba(0,0,0,.2); --glass-black-26: rgba(0,0,0,.26);
+    --glass-black-50: rgba(0,0,0,.5); --glass-black-24: rgba(0,0,0,.24);
+    --glass-white-22: rgba(255,255,255,.22); --glass-white-30: rgba(255,255,255,.3); --glass-white-40: rgba(255,255,255,.4);
+    --glass-white-13: rgba(255,255,255,.13); --glass-white-10: rgba(255,255,255,.1); --glass-white-28: rgba(255,255,255,.28);
+    --glass-white-20: rgba(255,255,255,.2); --glass-white-16: rgba(255,255,255,.16); --glass-white-35: rgba(255,255,255,.35);
+    --glass-white-18: rgba(255,255,255,.18); --glass-white-14: rgba(255,255,255,.14);
+
+    /* ---- Border radii ---- */
+    --radius-pill: 999px; --radius-md: 16px; --radius-sm: 12px; --radius-lg: 20px;
+    --radius-button: 18px; --radius-2xl: 26px; --radius-xl: 24px; --radius-card-sm: 14px;
+
+    /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ---- */
+    --btn-lip: 5px; --btn-lip-sm: 4px;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
     font-family: "Fredoka", "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
     background:
-      radial-gradient(circle at 18% 12%, rgba(255,120,220,.35), transparent 45%),
-      radial-gradient(circle at 82% 88%, rgba(80,200,255,.28), transparent 48%),
-      linear-gradient(160deg, #3d0a58 0%, #7b2ff7 48%, #f107a3 100%);
+      radial-gradient(circle at 18% 12%, var(--bg-glow-pink), transparent 45%),
+      radial-gradient(circle at 82% 88%, var(--bg-glow-blue), transparent 48%),
+      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
     background-attachment: fixed;
-    color: #fff;
+    color: var(--c-white);
     overflow: hidden;
     user-select: none;
   }
@@ -35,42 +105,42 @@
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
     font-weight: 700; letter-spacing: .5px;
-    text-shadow: 0 2px 0 rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.28);
+    text-shadow: 0 2px 0 var(--glass-black-18), 0 4px 12px var(--glass-black-28);
     margin: 10px 0 4px;
     text-align: center;
   }
   .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: 17px; font-weight: 500; }
 
   .btn {
-    font-family: inherit; font-size: 20px; font-weight: 600; color: #fff;
-    background: linear-gradient(180deg, #ffc23d, #ff8f00);
-    border: none; border-radius: 18px; padding: 14px 26px; cursor: pointer;
-    box-shadow: 0 5px 0 #b36200, 0 8px 14px rgba(0,0,0,.3);
+    font-family: inherit; font-size: 20px; font-weight: 600; color: var(--c-white);
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    border: none; border-radius: var(--radius-button); padding: 14px 26px; cursor: pointer;
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 14px var(--glass-black-30);
     transition: transform .08s, box-shadow .08s;
   }
-  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b36200; }
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
   .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
-  .btn.purple { background: linear-gradient(180deg, #ab47bc, #8e24aa); box-shadow: 0 5px 0 #4a148c, 0 8px 14px rgba(0,0,0,.3); }
-  .btn.purple:active { box-shadow: 0 1px 0 #4a148c; }
-  .btn.green { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 5px 0 #1b5e20, 0 8px 14px rgba(0,0,0,.3); }
-  .btn.green:active { box-shadow: 0 1px 0 #1b5e20; }
+  .btn.purple { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
+  .btn.green { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.green:active { box-shadow: 0 1px 0 var(--green-shadow); }
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
-  .btn.gray { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 5px 0 #37474f, 0 8px 14px rgba(0,0,0,.3); }
-  .btn.gray:active { box-shadow: 0 1px 0 #37474f; }
-  .btn.small { font-size: 16px; padding: 8px 16px; border-radius: 12px; box-shadow: 0 3px 0 #b36200; }
+  .btn.gray { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
+  .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--radius-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
   /* icoon-only, rustige terugknop naar profielkeuze */
-  .btn.switch-star { padding: 8px 12px; border-radius: 12px; opacity: .6; background: rgba(255,255,255,.1); }
+  .btn.switch-star { padding: 8px 12px; border-radius: var(--radius-sm); opacity: .6; background: var(--glass-white-10); }
   .btn.switch-star:hover { opacity: .85; }
   .btn.switch-star:active { opacity: 1; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
-    font-size: 17px; padding: 12px 18px; border-radius: 16px; color: #fff;
-    border: 1.5px solid rgba(255,255,255,.28);
-    background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+    font-size: 17px; padding: 12px 18px; border-radius: var(--radius-md); color: var(--c-white);
+    border: 1.5px solid var(--glass-white-28);
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 var(--glass-black-28);
   }
-  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
   /* ---- Profielkeuze (podium-stijl kaarten) ----
@@ -87,48 +157,48 @@
   }
   .profile-card {
     position: relative; flex: 1 1 0; min-width: 0; max-width: 250px;
-    cursor: pointer; text-align: center; font-family: inherit; color: #fff;
-    background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.08));
-    border: 3px solid rgba(255,255,255,.45); border-radius: 26px;
+    cursor: pointer; text-align: center; font-family: inherit; color: var(--c-white);
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.08));
+    border: 3px solid rgba(255,255,255,.45); border-radius: var(--radius-2xl);
     padding: 11px 10px 16px; transition: transform .18s, box-shadow .18s;
-    box-shadow: 0 10px 26px rgba(0,0,0,.32);
+    box-shadow: 0 10px 26px var(--glass-black-32);
   }
-  .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px rgba(0,0,0,.4); }
+  .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px var(--glass-black-40); }
   .profile-card:active { transform: translateY(-2px) scale(1.01); }
   /* het podium schaalt mee met de kaartbreedte; de scène blijft schoon (geen zwevende teller) */
   .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
   .profile-card .deco { font-size: 18px; }
-  .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 var(--glass-black-25); }
   /* waar op de wereldtournee ben ik? — verhaal i.p.v. scorebord */
   .tour-chip {
     display: inline-block; max-width: calc(100% - 4px);
-    background: rgba(0,0,0,.30); border-radius: 999px; padding: 5px 11px;
+    background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 5px 11px;
     font-size: 13px; font-weight: 700; margin: 6px 0 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   /* sappige "Speel!"-knop — goud, net als op de kaart: goud = spelen */
   .play-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    margin-top: 12px; padding: 10px 22px; border-radius: 999px;
-    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: .3px; position: relative;
-    background: linear-gradient(180deg, #ffc23d, #ff8f00);
-    box-shadow: 0 5px 0 #b36200, 0 8px 13px rgba(0,0,0,.35);
+    margin-top: 12px; padding: 10px 22px; border-radius: var(--radius-pill);
+    font-size: 18px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; position: relative;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 13px var(--glass-black-35);
     transition: transform .1s, box-shadow .1s;
     animation: playGlow 1.7s ease-in-out infinite;
   }
   .play-btn::before {
     content: ""; position: absolute; left: 10px; right: 10px; top: 4px; height: 40%;
-    border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,.55), transparent);
+    border-radius: var(--radius-pill); background: linear-gradient(180deg, rgba(255,255,255,.55), transparent);
     pointer-events: none;
   }
   .play-btn .play-ico {
     display: inline-flex; align-items: center; justify-content: center;
     width: 24px; height: 24px; border-radius: 50%; font-size: 12px; flex-shrink: 0;
-    background: rgba(255,255,255,.92); color: #b36200; box-shadow: inset 0 -1px 2px rgba(0,0,0,.15);
+    background: rgba(255,255,255,.92); color: var(--gold-cta-shadow); box-shadow: inset 0 -1px 2px rgba(0,0,0,.15);
   }
   @keyframes playGlow { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.14); } }
-  .profile-card:hover .play-btn { transform: translateY(-2px); box-shadow: 0 7px 0 #b36200, 0 11px 16px rgba(0,0,0,.42); }
-  .profile-card:active .play-btn { transform: translateY(3px); box-shadow: 0 2px 0 #b36200, 0 4px 8px rgba(0,0,0,.3); }
+  .profile-card:hover .play-btn { transform: translateY(-2px); box-shadow: 0 7px 0 var(--gold-cta-shadow), 0 11px 16px rgba(0,0,0,.42); }
+  .profile-card:active .play-btn { transform: translateY(3px); box-shadow: 0 2px 0 var(--gold-cta-shadow), 0 4px 8px var(--glass-black-30); }
   /* op telefoons alleen de stad (het verhaal); het shownummer erbij op brede schermen */
   @media (max-width: 480px) { .chip-shownr { display: none; } }
   /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
@@ -152,34 +222,34 @@
   /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
   .gear-menu {
     position: absolute; top: 54px; right: 0; min-width: 216px;
-    background: #fff; color: #333; border-radius: 16px; padding: 6px;
+    background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-md); padding: 6px;
     box-shadow: 0 14px 34px rgba(30,0,50,.42); display: none; flex-direction: column;
     transform-origin: top right;
   }
   .gear-menu.open { display: flex; animation: gearPop .16s ease; }
   @keyframes gearPop { from { opacity: 0; transform: scale(.9) translateY(-6px); } to { opacity: 1; transform: none; } }
   .gear-item {
-    font-family: inherit; font-size: 16px; font-weight: 600; color: #3a0f56;
+    font-family: inherit; font-size: 16px; font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
     display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 11px;
   }
-  .gear-item:hover { background: #faf6ff; }
+  .gear-item:hover { background: var(--paper-tint); }
   .gear-item:active { transform: scale(.98); }
   .gear-item .gi-ico { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
   .gear-item .gi-label { flex: 1; }
   .gear-item .gi-state {
-    font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: 999px;
-    background: #e3f7e7; color: #2e7d32;
+    font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: var(--radius-pill);
+    background: var(--green-badge-bg); color: var(--green-badge-text);
   }
-  .gear-item .gi-state.off { background: #eceaef; color: #9a90a6; }
-  .gear-item .gi-chev { font-size: 22px; color: #ab47bc; line-height: 1; }
-  .gear-item.parents { color: #8e24aa; }
-  .gear-sep { height: 1px; background: #ecdcf6; margin: 5px 8px; }
+  .gear-item .gi-state.off { background: var(--paper-muted-bg); color: var(--paper-muted-text); }
+  .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; }
+  .gear-item.parents { color: var(--purple-mid); }
+  .gear-sep { height: 1px; background: var(--paper-border); margin: 5px 8px; }
 
   /* ---- Podium / avatar ---- */
   .stage {
-    position: relative; border-radius: 24px; overflow: hidden; flex-shrink: 0;
-    border: 4px solid rgba(255,255,255,.5); box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    position: relative; border-radius: var(--radius-xl); overflow: hidden; flex-shrink: 0;
+    border: 4px solid rgba(255,255,255,.5); box-shadow: 0 10px 24px var(--glass-black-35);
     display: flex; align-items: flex-end; justify-content: center;
   }
   /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
@@ -197,7 +267,7 @@
     from { filter: hue-rotate(0deg); opacity: .8; }
     to   { filter: hue-rotate(120deg); opacity: 1; }
   }
-  .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,.3); }
+  .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px var(--glass-black-30); }
   .stage.tappable { cursor: pointer; }
   .stage.tappable:active { transform: scale(.98); }
   .avatar-holder { line-height: 0; }
@@ -258,13 +328,13 @@
   }
   .screen-header .header-title {
     font-size: 24px; font-weight: 700; text-align: center; white-space: nowrap;
-    text-shadow: 0 2px 0 rgba(0,0,0,.18);
+    text-shadow: 0 2px 0 var(--glass-black-18);
   }
   .screen-header .header-left { justify-self: start; }
   .screen-header .header-right { justify-self: end; }
   /* één teller-pil, in twee maten: groot (schermkoppen) en klein (kaart-topbalk, spelbalk) */
   .diamond-badge, .chip-badge {
-    background: rgba(0,0,0,.32); border-radius: 999px; font-weight: bold;
+    background: var(--glass-black-32); border-radius: var(--radius-pill); font-weight: bold;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   }
   .diamond-badge { padding: 8px 18px; font-size: 22px; }
@@ -285,19 +355,19 @@
   .map-portrait:active { transform: scale(.93); }
   .map-portrait .pframe {
     position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-    background: rgba(0,0,0,.3); border: 2px solid rgba(255,255,255,.65);
-    box-shadow: 0 2px 7px rgba(0,0,0,.35);
+    background: var(--glass-black-30); border: 2px solid rgba(255,255,255,.65);
+    box-shadow: 0 2px 7px var(--glass-black-35);
   }
   .map-portrait .pframe svg { position: absolute; left: 50%; top: -7px; transform: translateX(-50%); }
   .map-portrait .dressdot {
     position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%;
-    background: linear-gradient(180deg, #ffca28, #ffa000); border: 1.5px solid #fff;
-    font-size: 11px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border: 1.5px solid var(--c-white);
+    font-size: 11px; display: grid; place-items: center; box-shadow: 0 1px 4px var(--glass-black-35);
   }
   .map-name {
     font-size: 20px; font-weight: 700; flex: 1; min-width: 0; text-align: left;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    text-shadow: 0 2px 0 rgba(0,0,0,.2);
+    text-shadow: 0 2px 0 var(--glass-black-20);
   }
   .map-chips { display: flex; gap: 6px; }
   .map-flex {
@@ -310,13 +380,13 @@
 
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
-    display: none; gap: 5px; padding: 7px; border-radius: 26px; width: min(94vw, 430px);
+    display: none; gap: 5px; padding: 7px; border-radius: var(--radius-2xl); width: min(94vw, 430px);
     background: rgba(30, 4, 52, .78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255,255,255,.22); box-shadow: 0 10px 26px rgba(0,0,0,.4);
+    border: 1.5px solid var(--glass-white-22); box-shadow: 0 10px 26px var(--glass-black-40);
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: inherit; font-size: 12.5px; font-weight: 700; color: #fff; opacity: .75;
+    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .75;
     background: transparent; border: none; border-radius: 19px; padding: 7px 4px 6px; cursor: pointer;
     transition: transform .1s, background .15s, opacity .15s;
   }
@@ -332,20 +402,20 @@
      terug · stad · hartjes · 💎 — alles op één regel, ook op smalle schermen */
   .game-top {
     display: flex; align-items: center; width: 100%; max-width: 820px; gap: 8px;
-    padding: 6px 9px; border-radius: 18px;
+    padding: 6px 9px; border-radius: var(--radius-button);
     background: rgba(30, 4, 52, .5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    border: 1.5px solid rgba(255,255,255,.16);
+    border: 1.5px solid var(--glass-white-16);
   }
   .game-city {
     flex: 1; min-width: 0; text-align: center; font-size: 16.5px; font-weight: 600;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    text-shadow: 0 1px 0 rgba(0,0,0,.25);
+    text-shadow: 0 1px 0 var(--glass-black-25);
   }
   .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; display: inline-block; flex-shrink: 0; }
   .qprogress { display: flex; gap: 5px; justify-content: center; margin-top: 8px; }
-  .qdot { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,.3); }
-  .qdot.done { background: #ffd740; box-shadow: 0 0 6px #ffd740; }
-  .qdot.now { background: #fff; transform: scale(1.25); }
+  .qdot { width: 13px; height: 13px; border-radius: 50%; background: var(--glass-white-30); }
+  .qdot.done { background: var(--gold-accent); box-shadow: 0 0 6px var(--gold-accent); }
+  .qdot.now { background: var(--c-white); transform: scale(1.25); }
   @media (max-width: 430px) {
     .game-city .lvl-pre { display: none; }   /* "Optreden in " valt weg, de stad blijft */
     .notes-left { font-size: 17px; letter-spacing: 0; }
@@ -363,13 +433,13 @@
   .fan-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .fan-icon { font-size: 20px; line-height: 1; }
   .fan-track {
-    width: 28px; height: 200px; border-radius: 999px; overflow: hidden;
-    background: rgba(0,0,0,.32); border: 2px solid rgba(255,255,255,.4);
+    width: 28px; height: 200px; border-radius: var(--radius-pill); overflow: hidden;
+    background: var(--glass-black-32); border: 2px solid var(--glass-white-40);
     display: flex; align-items: flex-end;
   }
   .fan-fill {
-    width: 100%; height: 0%; border-radius: 999px;
-    background: linear-gradient(0deg, #ff80ab, #ff4081, #f50057); transition: height .5s ease;
+    width: 100%; height: 0%; border-radius: var(--radius-pill);
+    background: linear-gradient(0deg, var(--pink-accent), var(--pink-hot), var(--pink-deep)); transition: height .5s ease;
   }
   .fan-fill.full { animation: fanPulse .5s ease infinite alternate; }
   @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.45); } }
@@ -378,43 +448,43 @@
   .math-panel { display: flex; flex-direction: column; align-items: center; }
   .question-card {
     position: relative; overflow: hidden;
-    background: linear-gradient(180deg, #ffffff, #f3e9ff); color: #4a148c; border-radius: 26px;
+    background: linear-gradient(180deg, var(--c-white), var(--lavender-wash)); color: var(--purple-shadow); border-radius: var(--radius-2xl);
     padding: 18px 32px 26px; margin: 0 0 8px; text-align: center;
     font-size: clamp(42px, 8.5vw, 62px); font-weight: 700; min-width: min(88vw, 400px);
-    box-shadow: 0 10px 24px rgba(0,0,0,.32); border: 3px solid rgba(255,255,255,.7);
+    box-shadow: 0 10px 24px var(--glass-black-32); border: 3px solid rgba(255,255,255,.7);
   }
   /* de spotlight-bonus leeft ín de somkaart: een gouden randje dat langzaam dooft —
      geen aparte tijdbalk-rij die als "haast je!" leest */
   .spot-rail {
     position: absolute; left: 16px; right: 16px; bottom: 9px; height: 7px;
-    border-radius: 999px; background: rgba(74, 20, 140, .10);
+    border-radius: var(--radius-pill); background: rgba(74, 20, 140, .10);
   }
-  .spotlight-bar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffee58, #ffb300); transition: width .1s linear; }
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .1s linear; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
-  .question-card.golden .spotlight-bar { background: linear-gradient(90deg, #ab47bc, #6a1b9a); }
+  .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
-    font-family: inherit; font-size: 34px; font-weight: 700; color: #fff; border: none; cursor: pointer;
-    padding: 18px 8px; border-radius: 20px;
-    background: linear-gradient(180deg, #8e5fd6, #5e35b1); box-shadow: 0 5px 0 #311b92;
+    font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
+    padding: 18px 8px; border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
     transition: transform .07s, box-shadow .07s;
   }
-  .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #311b92; }
-  .choice-btn.good { background: linear-gradient(180deg, #66bb6a, #388e3c); box-shadow: 0 5px 0 #1b5e20; }
-  .choice-btn.bad { background: linear-gradient(180deg, #ef5350, #d32f2f); box-shadow: 0 5px 0 #8e0000; }
+  .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
+  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
   .num-btn {
-    font-family: inherit; font-size: 28px; font-weight: 700; color: #fff; border: none; cursor: pointer;
-    padding: 13px 0; border-radius: 16px;
-    background: linear-gradient(180deg, #8e5fd6, #5e35b1); box-shadow: 0 4px 0 #311b92;
+    font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
+    padding: 13px 0; border-radius: var(--radius-md);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
   }
-  .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #311b92; }
-  .num-btn.ok { background: linear-gradient(180deg, #66bb6a, #388e3c); box-shadow: 0 4px 0 #1b5e20; }
+  .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
+  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
-  .num-btn.del { background: linear-gradient(180deg, #90a4ae, #607d8b); box-shadow: 0 4px 0 #37474f; font-size: 22px; }
+  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
 
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
@@ -446,10 +516,10 @@
 
   .praise {
     position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.3);
-    font-size: clamp(34px, 7.4vw, 58px); font-weight: bold; color: #ffee58;
+    font-size: clamp(34px, 7.4vw, 58px); font-weight: bold; color: var(--gold-bright);
     line-height: 1.12; text-align: center; text-wrap: balance;
     max-width: min(92vw, 640px);
-    text-shadow: 0 0 18px #ff6f00, 0 3px 0 rgba(0,0,0,.4);
+    text-shadow: 0 0 18px var(--gold-flame), 0 3px 0 var(--glass-black-40);
     pointer-events: none; opacity: 0; z-index: 60;
   }
   .praise.pop { animation: praisePop 1s ease forwards; }
@@ -461,9 +531,9 @@
   }
   .toast {
     position: fixed; left: 50%; top: 12%; transform: translateX(-50%);
-    background: rgba(0,0,0,.8); color: #fff;
+    background: rgba(0,0,0,.8); color: var(--c-white);
     font-size: clamp(16px, 4.6vw, 20px); line-height: 1.35;
-    padding: 11px 20px; border-radius: 16px; z-index: 60; display: none;
+    padding: 11px 20px; border-radius: var(--radius-md); z-index: 60; display: none;
     max-width: min(94vw, 560px); text-align: center; text-wrap: balance;
     pointer-events: none;
   }
@@ -493,12 +563,12 @@
 
   /* ---- Gouden vraag ---- */
   .question-card.golden {
-    background: linear-gradient(135deg, #fff9c4, #ffd54f, #ffca28);
-    color: #7a4f00; box-shadow: 0 0 26px rgba(255,193,7,.9), 0 8px 20px rgba(0,0,0,.3);
+    background: linear-gradient(135deg, var(--gold-cream), var(--gold-warm), var(--gold-marigold));
+    color: var(--ink-on-gold-card); box-shadow: 0 0 26px rgba(255,193,7,.9), 0 8px 20px var(--glass-black-30);
     animation: goldGlow 1s ease-in-out infinite alternate;
   }
-  @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px rgba(0,0,0,.3); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px rgba(0,0,0,.3); } }
-  .gold-banner { font-size: 18px; font-weight: bold; color: #ffe082; text-shadow: 0 0 10px #ff6f00; margin-top: 6px; height: 22px; }
+  @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px var(--glass-black-30); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px var(--glass-black-30); } }
+  .gold-banner { font-size: 18px; font-weight: bold; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-flame); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: de horizontale reisroute is het hart van het hoofdscherm ---- */
   .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 760px;
@@ -523,7 +593,7 @@
   .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
   .tour-road-bg, .tour-road-fg, .tour-road-fade { fill: none; stroke-linecap: round; }
   /* de weg vooruit (nog te ontdekken) blijft een dof stippelpad */
-  .tour-road-bg { stroke: rgba(255,255,255,.35); stroke-width: 6; stroke-dasharray: 2 15; }
+  .tour-road-bg { stroke: var(--glass-white-35); stroke-width: 6; stroke-dasharray: 2 15; }
   /* het afgelegde deel is een vol lint i.p.v. een stippellijn (leest in één oogopslag als
      "hier heb je al gelopen"), zelfde dikte als het stippelpad — geen extra gloeirand.
      Groen (net als de voltooide haltes) lopend naar goud toe naar de volgende halte,
@@ -563,20 +633,20 @@
     from { transform: rotate(var(--rot, 0deg)) translateY(0); }
     to { transform: rotate(var(--rot, 0deg)) translateY(-14px); }
   }
-  .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: #fff;
+  .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
   .tour-stop .dot { width: 74px; height: 74px; margin: 0 auto; border-radius: 21px; display: flex; align-items: center; justify-content: center;
-    font-size: 36px; background: linear-gradient(180deg, #29b6f6, #0288d1); box-shadow: 0 5px 0 #01579b; border: 2px solid rgba(255,255,255,.35); }
+    font-size: 36px; border: 2px solid var(--glass-white-35); }
   .tour-stop:active .dot { transform: translateY(2px); box-shadow: 0 2px 0 #01579b; }
   .tour-stop.locked { cursor: default; }
   /* op slot: dekkend (geen doorschijnende reisweg door de tegel) en een maatje
      kleiner — hiërarchie: goud (nu) > groen (gedaan) > grijs (nog niet) */
-  .tour-stop.locked .dot { background: linear-gradient(180deg, #7e8d95, #57666e); box-shadow: 0 4px 0 #37474f;
-    border-color: rgba(255,255,255,.22); transform: scale(.85); }
-  .tour-stop.done .dot { background: linear-gradient(180deg, #66bb6a, #43a047); box-shadow: 0 5px 0 #1b5e20; }
-  .tour-stop.next .dot { background: linear-gradient(180deg, #ffca28, #ffa000); box-shadow: 0 5px 0 #b36200; border-color: #fff; animation: pulseBtn 1.2s ease-in-out infinite; }
+  .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip-sm) 0 var(--gray-shadow);
+    border-color: var(--glass-white-22); transform: scale(.85); }
+  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .tour-stop.next .dot { background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow); border-color: var(--c-white); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14.5px; font-weight: bold; margin-top: 8px; }
-  .tour-stop.next .cname { color: #ffe082; }
+  .tour-stop.next .cname { color: var(--gold-light); }
   .tour-stop.locked .cname { opacity: .6; }
   .tour-stop .lvlnr { font-size: 12px; opacity: .82; }
   .tour-stop.locked .lvlnr { opacity: .5; }
@@ -589,16 +659,16 @@
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* dé speelknop van het spel: zit vast aan de huidige halte */
   .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%; transform: translateX(-50%);
-    font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .3px; white-space: nowrap;
-    background: linear-gradient(180deg, #ffc23d, #ff8f00); border-radius: 999px; padding: 13px 26px;
-    box-shadow: 0 5px 0 #b36200, 0 9px 18px rgba(0,0,0,.35); animation: playGlow 1.7s ease-in-out infinite; }
+    font-size: 20px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; white-space: nowrap;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--radius-pill); padding: 13px 26px;
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: playGlow 1.7s ease-in-out infinite; }
   .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
-    border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid #ffc23d; }
+    border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
   /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
   @media (max-height: 700px) {
     .tour-track { padding: 124px 22px 90px; }
     .tour-stop { width: 96px; }
-    .tour-stop .dot { width: 62px; height: 62px; font-size: 31px; border-radius: 18px; }
+    .tour-stop .dot { width: 62px; height: 62px; font-size: 31px; border-radius: var(--radius-button); }
     .tour-hero { width: 82px; }
     .tour-speel { font-size: 18px; padding: 11px 22px; }
   }
@@ -629,21 +699,21 @@
   /* kast-voortgang in de plakkende kop: hoeveel van de kast is gevuld */
   .kast-progress { width: min(100%, 340px); margin-top: 3px; }
   .kast-progress-text { font-size: 13.5px; font-weight: 600; opacity: .92; text-align: center; margin-bottom: 4px; }
-  .kast-bar { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.28); }
-  .kast-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffd740, #ff80ab); transition: width .6s ease; }
+  .kast-bar { height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: var(--glass-black-35); border: 1px solid var(--glass-white-28); }
+  .kast-bar-fill { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-accent), var(--pink-accent)); transition: width .6s ease; }
   /* de kast heeft planken: kleine themakopjes met een teller per plank */
   #trophy-shelves { width: 100%; max-width: 680px; }
   /* elke categorie zit in een eigen paneel: duidelijke visuele groepering */
-  .shelf { background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 6px 12px 13px; margin: 14px 0; }
-  .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 rgba(0,0,0,.25); border-bottom: 1px solid rgba(255,255,255,.13); padding-bottom: 7px; }
+  .shelf { background: var(--glass-black-18); border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius-button); padding: 6px 12px 13px; margin: 14px 0; }
+  .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 var(--glass-black-25); border-bottom: 1px solid var(--glass-white-13); padding-bottom: 7px; }
   .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 800; }
-  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: rgba(0,0,0,.3); border-radius: 999px; padding: 3px 11px; white-space: nowrap; }
+  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 3px 11px; white-space: nowrap; }
   /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
-  .shelf-title .shelf-count.full { color: #ffe08a; background: rgba(255,206,77,.25); opacity: 1; }
+  .shelf-title .shelf-count.full { color: var(--gold-shelf); background: rgba(255,206,77,.25); opacity: 1; }
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
   .trophy-card {
-    position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.3);
-    border-radius: 14px; padding: 12px 8px 11px; text-align: center; cursor: pointer;
+    position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
+    border-radius: var(--radius-card-sm); padding: 12px 8px 11px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch;
   }
   .trophy-card:active { transform: scale(.97); }
@@ -660,17 +730,17 @@
      te onderscheiden van 'niet gestart' zonder de tekst te moeten lezen. */
   .trophy-card.busy { border-color: rgba(90,190,245,.55); }
   /* BIJNA BEHAALD: sterke balkvulling + subtiele gouden glow (glow via inline style) */
-  .trophy-card.almost .trophy-progress-fill { background: linear-gradient(90deg, #ffd54f, #ffb300); }
+  .trophy-card.almost .trophy-progress-fill { background: linear-gradient(90deg, var(--gold-warm), var(--gold-deep)); }
   /* LOCKED: donkerder, icoon sterk gedimd, klein slotje (voorlopig sluimerend) */
-  .trophy-card.locked { background: rgba(0,0,0,.26); border-color: rgba(255,255,255,.1); }
+  .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); }
   .trophy-card.locked .temoji { filter: grayscale(1); opacity: .5; }
   .trophy-card.locked .tname { opacity: .6; }
   .trophy-card.locked .tdesc { opacity: .45; }
   .trophy-lock {
     position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
     display: grid; place-items: center; font-size: 13px; z-index: 3;
-    background: rgba(30,15,55,.95); border: 2px solid rgba(255,255,255,.4);
-    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    background: rgba(30,15,55,.95); border: 2px solid var(--glass-white-40);
+    box-shadow: 0 2px 6px var(--glass-black-35);
   }
   /* BEHAALD: rustig, verzameld. Zacht goud, volle-kleur icoon, klein sterretje.
      Zakt licht naar de achtergrond zodat de actieve doelen opvallen. */
@@ -678,33 +748,33 @@
   .trophy-card.done .temoji { filter: none; }
   .trophy-won {
     position: absolute; top: -8px; right: -6px; font-size: 20px; z-index: 3;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+    filter: drop-shadow(0 1px 2px var(--glass-black-50));
   }
   /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
   .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
   /* tekstkleur volgt de balk: blauw = bezig (default), goud = bijna, neutraal = niet gestart/locked */
-  .trophy-progress-text { font-size: 13px; font-weight: 700; color: #7dd3fc; min-height: 17px; line-height: 1.15; }
-  .trophy-progress-text.sub { color: #cfc6df; font-weight: 600; opacity: .75; }
-  .trophy-card.fresh .trophy-progress-text { color: #cfc6df; opacity: .82; }
-  .trophy-card.almost .trophy-progress-text { color: #ffd54f; }
+  .trophy-progress-text { font-size: 13px; font-weight: 700; color: var(--blue-text); min-height: 17px; line-height: 1.15; }
+  .trophy-progress-text.sub { color: var(--muted-lavender-text); font-weight: 600; opacity: .75; }
+  .trophy-card.fresh .trophy-progress-text { color: var(--muted-lavender-text); opacity: .82; }
+  .trophy-card.almost .trophy-progress-text { color: var(--gold-warm); }
   /* dunne progressbalk onderaan de kaart */
-  .trophy-progress { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid rgba(255,255,255,.18); }
+  .trophy-progress { height: 7px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid var(--glass-white-18); }
   /* BLAUW = bezig/actief (zelfde taal als 'nu aan' bij thema-looks en de diamant) */
-  .trophy-progress-fill { height: 100%; border-radius: 999px; transition: width .5s ease; background: linear-gradient(90deg, #38bdf8, #6ad3ff); }
+  .trophy-progress-fill { height: 100%; border-radius: var(--radius-pill); transition: width .5s ease; background: linear-gradient(90deg, var(--blue-fill-top), var(--blue-fill-bottom)); }
   /* korte uitleg onder een categoriekop (bv. bij thema-looks) */
-  .shelf-note { font-size: 12px; font-weight: 600; color: #e6d6ff; opacity: .82; margin: -3px 2px 9px; }
+  .shelf-note { font-size: 12px; font-weight: 600; color: var(--lavender-text); opacity: .82; margin: -3px 2px 9px; }
   /* ===== KLAAR: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat) ===== */
   .trophy-card.ready {
-    justify-content: center; gap: 3px; color: #5d2a00; border: 3px solid #fff3c4;
-    background: linear-gradient(135deg, #ffe27a, #ffb300);
+    justify-content: center; gap: 3px; color: var(--ink-on-gold); border: 3px solid var(--gold-ready-border);
+    background: linear-gradient(135deg, var(--gold-ready), var(--gold-deep));
     box-shadow: 0 4px 15px rgba(255,170,0,.5); animation: readyPulse 1.4s ease-in-out infinite;
   }
-  .trophy-card.ready .temoji { filter: drop-shadow(0 1px 2px rgba(0,0,0,.2)); }
+  .trophy-card.ready .temoji { filter: drop-shadow(0 1px 2px var(--glass-black-20)); }
   .ready-big { font-size: 16px; font-weight: 900; line-height: 1.08; }
   .ready-name { font-size: 13px; font-weight: 700; opacity: .82; line-height: 1.12; }
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 4px 13px rgba(255,170,0,.45); } 50% { transform: scale(1.03); box-shadow: 0 6px 22px rgba(255,170,0,.75); } }
   /* ---- Thema-looks: brede outfit-challenge-kaarten met een strakke checklist ---- */
-  .trophy-card.theme { grid-column: 1 / -1; text-align: left; padding: 14px 14px; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); box-shadow: none; }
+  .trophy-card.theme { grid-column: 1 / -1; text-align: left; padding: 14px 14px; background: rgba(255,255,255,.06); border-color: var(--glass-white-16); box-shadow: none; }
   .trophy-card.theme.busy, .trophy-card.theme.almost { border-color: rgba(90,190,245,.55); }
   .trophy-card.theme.done { background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); opacity: .92; }
   .theme-top { display: flex; align-items: center; gap: 10px; }
@@ -714,30 +784,30 @@
   .trophy-card.theme.fresh .tname { opacity: .6; }
   /* Eén rustige Aan-teller rechtsboven: 0 blijft inactief, voortgang kleurt blauw. */
   .theme-count { margin-left: auto; font-size: 12px; font-weight: 800; }
-  .theme-count span { color: #cfc6df; background: rgba(0,0,0,.24); border-radius: 999px; padding: 3px 9px; white-space: nowrap; opacity: .72; }
-  .theme-count .worn.some { color: #8fd6ff; background: rgba(56,189,248,.15); box-shadow: 0 0 0 1px rgba(143,214,255,.2); opacity: 1; }
-  .theme-count .worn.full { color: #8fd6ff; background: rgba(56,189,248,.18); box-shadow: 0 0 0 1px rgba(143,214,255,.24); opacity: 1; }
+  .theme-count span { color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 9px; white-space: nowrap; opacity: .72; }
+  .theme-count .worn.some { color: var(--blue-text); background: rgba(56,189,248,.15); box-shadow: 0 0 0 1px var(--blue-ring); opacity: 1; }
+  .theme-count .worn.full { color: var(--blue-text); background: rgba(56,189,248,.18); box-shadow: 0 0 0 1px rgba(143,214,255,.24); opacity: 1; }
   .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
   .theme-list li { font-size: 13px; line-height: 1.25; display: flex; align-items: center; gap: 8px; }
-  .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); box-sizing: border-box; position: relative; }
+  .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--glass-white-30); box-sizing: border-box; position: relative; }
   /* 3 per-stuk-staten: niet in kleerkast (leeg/dim), in kleerkast (grijs vinkje), nu aan (blauw actief). */
   .theme-list li.miss { color: rgba(255,255,255,.42); }
   .theme-list li.miss .pc { border-color: rgba(255,255,255,.24); background: transparent; }
   .theme-list li.have { color: rgba(255,255,255,.74); }
   .theme-list li.have .pc { background: rgba(180,184,196,.62); border-color: rgba(180,184,196,.72); }
   .theme-list li.have .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-weight: 900; color: rgba(255,255,255,.94); }
-  .theme-list li.on { color: #8fd6ff; font-weight: 700; }
-  .theme-list li.on .pc { background: #40bdf8; border-color: #40bdf8; box-shadow: 0 0 0 2px rgba(64,189,248,.16); }
-  .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #32115f; }
+  .theme-list li.on { color: var(--blue-text); font-weight: 700; }
+  .theme-list li.on .pc { background: var(--blue-fill-top); border-color: var(--blue-fill-top); box-shadow: 0 0 0 2px rgba(56,189,248,.16); }
+  .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: var(--purple-ink); }
   /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
-  .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: #ffd54f; }
-  .look-hint.action { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 16px; border-radius: 999px; color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 3px 10px rgba(255,179,0,.35); animation: readyPulse 1.4s ease-in-out infinite; }
+  .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: var(--gold-warm); }
+  .look-hint.action { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 16px; border-radius: var(--radius-pill); color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); box-shadow: 0 3px 10px rgba(255,179,0,.35); animation: readyPulse 1.4s ease-in-out infinite; }
   .look-hint.action:active { transform: scale(.96); }
   /* actie op een behaalde look: kort label, in de kop op de plek van de Aan-teller */
   .look-action {
     margin-left: auto; flex: 0 0 auto; border: 0; cursor: pointer;
-    padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #5d2a00;
-    background: linear-gradient(180deg, rgba(255,224,130,.95), rgba(255,179,0,.92)); box-shadow: 0 2px 5px rgba(0,0,0,.2);
+    padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11.5px; font-weight: 800; color: var(--ink-on-gold);
+    background: linear-gradient(180deg, rgba(255,224,130,.95), rgba(255,179,0,.92)); box-shadow: 0 2px 5px var(--glass-black-20);
   }
   .look-action:active { transform: scale(.96); }
   /* ---- Claim-feestje: klein, vrolijk, verdwijnt vanzelf ---- */
@@ -747,14 +817,14 @@
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
   .trophy-pop {
-    text-align: center; padding: 22px 30px; border-radius: 24px;
-    background: linear-gradient(180deg, #7b1fa2, #4a148c); border: 3px solid #ffd740;
-    box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: popIn .45s cubic-bezier(.2,1.3,.4,1);
+    text-align: center; padding: 22px 30px; border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, var(--purple-deep), var(--purple-shadow)); border: 3px solid var(--gold-accent);
+    box-shadow: 0 10px 40px var(--glass-black-50); animation: popIn .45s cubic-bezier(.2,1.3,.4,1);
   }
-  .tp-head { font-size: 16px; font-weight: 800; color: #ffe082; }
+  .tp-head { font-size: 16px; font-weight: 800; color: var(--gold-light); }
   .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(255,215,64,.8)); }
-  .tp-name { font-size: 20px; font-weight: 800; color: #fff; }
-  .tp-joepie { font-size: 15px; font-weight: 700; color: #ffd6f4; margin-top: 4px; }
+  .tp-name { font-size: 20px; font-weight: 800; color: var(--c-white); }
+  .tp-joepie { font-size: 15px; font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
   @media (prefers-reduced-motion: reduce) {
@@ -767,8 +837,8 @@
   .nav-item { position: relative; }
   .nav-item .nav-dot {
     position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
-    border-radius: 50%; background: #ffca28; border: 2px solid #fff; display: none;
-    box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    border-radius: 50%; background: var(--gold-marigold); border: 2px solid var(--c-white); display: none;
+    box-shadow: 0 1px 4px var(--glass-black-40);
   }
   .nav-item.has-new .nav-dot { display: block; }
   @media (max-width: 520px) {
@@ -781,7 +851,7 @@
   /* ---- Level einde ---- */
   /* verticaal gecentreerd via veilige auto-marges (knipt nooit af bij overloop) */
   .result-card {
-    background: rgba(255,255,255,.14); border: 3px solid rgba(255,255,255,.4);
+    background: var(--glass-white-14); border: 3px solid var(--glass-white-40);
     border-radius: 28px; padding: 24px 30px; text-align: center; max-width: 460px; margin: auto 0;
   }
   .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
@@ -791,7 +861,7 @@
   /* opbrengst als badges — zelfde taal als de teller-pillen elders in de app */
   .earn-line { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0 18px; }
   .earn-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 16px; font-weight: bold; line-height: 1;
-    background: rgba(0,0,0,.3); border-radius: 999px; padding: 8px 14px; }
+    background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 8px 14px; }
   .earn-chip.dia { background: rgba(41,182,246,.34); }
   .earn-chip.star { background: rgba(255,215,64,.26); }
   .earn-chip.fan { background: rgba(255,64,129,.28); }
@@ -802,8 +872,8 @@
      te worden, dus de knop eronder alleen was niet genoeg. */
   .end-trophy-banner {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    color: #5d2a00; font-weight: 800; font-size: 16.5px; font-family: inherit;
-    background: linear-gradient(180deg, #ffe082, #ffb300); border: none; border-radius: 999px;
+    color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border: none; border-radius: var(--radius-pill);
     padding: 10px 18px; margin: 0 0 14px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
     animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
   }
@@ -821,7 +891,7 @@
     width: calc(100% + 24px); margin: -12px 0 12px; padding: 12px 12px 13px;
     background: linear-gradient(180deg, rgba(43,7,71,.96), rgba(43,7,71,.82));
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border-bottom: 2px solid rgba(255,255,255,.14);
+    border-bottom: 2px solid var(--glass-white-14);
     border-radius: 0 0 26px 26px;
     box-shadow: 0 10px 24px rgba(20,0,40,.3);
   }
@@ -835,12 +905,12 @@
     position: absolute; right: -16px; bottom: -4px; width: 46px; height: 46px;
     border-radius: 50%; border: 2px solid rgba(255,255,255,.75); cursor: pointer;
     font-size: 22px; line-height: 1; font-family: inherit;
-    background: linear-gradient(180deg, #ab47bc, #8e24aa);
-    box-shadow: 0 4px 0 #4a148c, 0 6px 12px rgba(0,0,0,.35);
+    background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
+    box-shadow: 0 var(--btn-lip-sm) 0 var(--purple-shadow), 0 6px 12px var(--glass-black-35);
     transition: transform .15s;
   }
   .shuffle-btn:hover { transform: rotate(20deg) scale(1.06); }
-  .shuffle-btn:active { transform: rotate(180deg) scale(.92); box-shadow: 0 1px 0 #4a148c; }
+  .shuffle-btn:active { transform: rotate(180deg) scale(.92); box-shadow: 0 1px 0 var(--purple-shadow); }
   .shop-tabs {
     display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 100%;
     margin-top: 10px; padding: 2px 4px;
@@ -849,23 +919,23 @@
   .shop-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
     font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
-    padding: 8px 14px; border-radius: 999px; color: #fff; background: rgba(255,255,255,.18);
+    padding: 8px 14px; border-radius: var(--radius-pill); color: var(--c-white); background: var(--glass-white-18);
     transition: transform .07s, background .12s; white-space: nowrap; flex-shrink: 0;
   }
   .tab-btn:active { transform: scale(.95); }
-  .tab-btn.active { background: #ffb300; color: #4a148c; }
+  .tab-btn.active { background: var(--gold-deep); color: var(--purple-shadow); }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
   .item-card {
-    position: relative; background: rgba(255,255,255,.13); border: 2px solid rgba(255,255,255,.35);
-    border-radius: 16px; padding: 10px; text-align: center; cursor: pointer;
+    position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
+    border-radius: var(--radius-md); padding: 10px; text-align: center; cursor: pointer;
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
-  .item-card:hover { background: rgba(255,255,255,.22); }
+  .item-card:hover { background: var(--glass-white-22); }
   .item-card:active { transform: scale(.97); }
   /* kaart-staten volgen de prijzenkast: blauw = actief/preview, goud = aan/beloning */
-  .item-card.selected { background: rgba(56,189,248,.16); border-color: #8fd6ff; box-shadow: 0 0 0 3px rgba(56,189,248,.22); transform: scale(1.025); }
-  .item-card.equipped { border-color: #ffd740; background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.48); }
-  .item-card.selected.equipped { border-color: #ffd740; box-shadow: 0 0 0 3px rgba(56,189,248,.20), 0 0 14px rgba(255,215,64,.55); }
+  .item-card.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); box-shadow: 0 0 0 3px rgba(56,189,248,.22); transform: scale(1.025); }
+  .item-card.equipped { border-color: var(--gold-accent); background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.48); }
+  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 0 3px rgba(56,189,248,.20), 0 0 14px rgba(255,215,64,.55); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
@@ -873,21 +943,21 @@
   .item-swatch.stage-swatch { display: grid; place-items: center; font-size: 24px; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
   /* getekend item (jurk/haar/schoen/micro) i.p.v. een kleurbolletje */
   .item-thumb { height: 52px; display: flex; align-items: flex-end; justify-content: center; margin: 0 auto 6px; }
-  .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
   .item-thumb .thumb-emo { font-size: 34px; line-height: 52px; }
   .item-name { font-size: 14px; font-weight: bold; overflow-wrap: break-word; hyphens: auto; }
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: 999px;
+    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--radius-pill);
     font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap;
-    background: rgba(0,0,0,.24); color: #d8d0e4;
+    background: var(--glass-black-24); color: var(--muted-text-2);
   }
-  .item-status.price { color: #ffe082; background: rgba(255,179,0,.16); }
-  .item-status.need { color: #ffd54f; background: rgba(0,0,0,.30); opacity: .88; }
-  .item-status.owned { color: #e1e5ea; background: rgba(180,184,196,.25); }
-  .item-status.on { color: #5d2a00; background: linear-gradient(180deg, #ffe082, #ffb300); box-shadow: 0 1px 5px rgba(255,179,0,.35); }
-  .item-status.preview { color: #8fd6ff; background: rgba(56,189,248,.16); box-shadow: 0 0 0 1px rgba(143,214,255,.2); }
-  .item-status.new { color: #5d2a00; background: linear-gradient(180deg, #fff176, #ffca28); animation: readyPulse 1.4s ease-in-out 2; }
+  .item-status.price { color: var(--gold-light); background: rgba(255,179,0,.16); }
+  .item-status.need { color: var(--gold-warm); background: var(--glass-black-30); opacity: .88; }
+  .item-status.owned { color: var(--muted-text-3); background: rgba(180,184,196,.25); }
+  .item-status.on { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); box-shadow: 0 1px 5px rgba(255,179,0,.35); }
+  .item-status.preview { color: var(--blue-text); background: rgba(56,189,248,.16); box-shadow: 0 0 0 1px var(--blue-ring); }
+  .item-status.new { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-flash), var(--gold-marigold)); animation: readyPulse 1.4s ease-in-out 2; }
   /* bezit/aan staat op het kaartje via rustige kaartkleur: grijs = hebben, goud = aan. */
   .item-card.owned { border-color: rgba(180,184,196,.64); background: rgba(180,184,196,.10); }
   /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
@@ -895,13 +965,13 @@
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 39;
     display: none; align-items: center; gap: 10px; width: min(94vw, 430px); min-height: 52px;
     background: rgba(30, 4, 52, .86); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255,255,255,.22); border-radius: 20px;
-    padding: 10px 14px; box-shadow: 0 10px 26px rgba(0,0,0,.4);
+    border: 1.5px solid var(--glass-white-22); border-radius: var(--radius-lg);
+    padding: 10px 14px; box-shadow: 0 10px 26px var(--glass-black-40);
   }
   .dress-bar .db-info { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; text-align: left; white-space: nowrap; overflow: hidden; }
   .dress-bar .db-name { font-size: 16.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: 13.5px; opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dress-bar .db-sub.warn { color: #ffd54f; opacity: 1; }
+  .dress-bar .db-sub.warn { color: var(--gold-warm); opacity: 1; }
   .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
@@ -910,84 +980,84 @@
   .settings-sheet { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
   .settings-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .settings-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; opacity: .82; }
-  .settings-h1 { font-size: 30px; font-weight: 700; line-height: 1.05; text-shadow: 0 2px 0 rgba(0,0,0,.18); }
+  .settings-h1 { font-size: 30px; font-weight: 700; line-height: 1.05; text-shadow: 0 2px 0 var(--glass-black-18); }
 
-  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: rgba(0,0,0,.26); }
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--glass-black-26); }
   .segmented button {
-    flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: #fff;
-    border: none; background: transparent; border-radius: 12px; padding: 10px 8px;
+    flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
+    border: none; background: transparent; border-radius: var(--radius-sm); padding: 10px 8px;
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     transition: background .15s, color .15s, box-shadow .15s;
   }
   .segmented button .who { font-size: 19px; }
-  .segmented button.on { background: #fff; color: #8e24aa; box-shadow: 0 2px 8px rgba(0,0,0,.22); }
-  .segmented.tabs button.on { background: linear-gradient(180deg, #fff, #f4e9fb); }
+  .segmented button.on { background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+  .segmented.tabs button.on { background: linear-gradient(180deg, var(--c-white), var(--lavender-wash-2)); }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
-  .set-card { background: #fff; color: #333; border-radius: 20px; padding: 16px 18px; box-shadow: 0 10px 26px rgba(30,0,50,.24); }
+  .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: 0 10px 26px rgba(30,0,50,.24); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .set-card-head .ico { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: #faf6ff; border: 1px solid #ecdcf6; }
-  .set-card-head h2 { font-size: 18px; font-weight: 700; color: #8e24aa; }
-  .set-card-head .sub { font-size: 12.5px; color: #6b5b7a; font-weight: 500; margin-top: 1px; }
+  .set-card-head .ico { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
+  .set-card-head h2 { font-size: 18px; font-weight: 700; color: var(--purple-mid); }
+  .set-card-head .sub { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin-top: 1px; }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
-  .set-field .lbl { font-size: 13px; font-weight: 700; color: #3a0f56; }
-  .set-field .note { font-size: 12px; color: #6b5b7a; font-weight: 500; }
+  .set-field .lbl { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
+  .set-field .note { font-size: 12px; color: var(--paper-ink-muted); font-weight: 500; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
-    border: 2px solid #ecdcf6; background: #fff; color: #8e24aa; border-radius: 999px; padding: 7px 15px;
+    border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--radius-pill); padding: 7px 15px;
     transition: transform .07s, background .12s, border-color .12s, color .12s;
   }
-  .chip:hover { border-color: #ab47bc; }
+  .chip:hover { border-color: var(--purple-light); }
   .chip:active { transform: scale(.95); }
-  .chip.on { background: linear-gradient(180deg, #ab47bc, #8e24aa); border-color: transparent; color: #fff; box-shadow: 0 3px 9px rgba(142,36,170,.32); }
+  .chip.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; color: var(--c-white); box-shadow: 0 3px 9px rgba(142,36,170,.32); }
 
   .settings-sheet input[type=text] {
-    font-family: inherit; font-size: 17px; font-weight: 600; color: #3a0f56;
-    border: 2px solid #ecdcf6; border-radius: 12px; padding: 9px 13px; width: 100%; max-width: 220px; background: #faf6ff;
+    font-family: inherit; font-size: 17px; font-weight: 600; color: var(--paper-ink);
+    border: 2px solid var(--paper-border); border-radius: var(--radius-sm); padding: 9px 13px; width: 100%; max-width: 220px; background: var(--paper-tint);
   }
-  .settings-sheet input[type=text]:focus-visible { outline: none; border-color: #ab47bc; background: #fff; }
+  .settings-sheet input[type=text]:focus-visible { outline: none; border-color: var(--purple-light); background: var(--c-white); }
   .data-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-  .settings-sheet :focus-visible { outline: 3px solid #ffd54f; outline-offset: 2px; }
+  .settings-sheet :focus-visible { outline: 3px solid var(--gold-warm); outline-offset: 2px; }
 
   .danger-zone {
-    background: #fff0f0; border: 1.5px dashed #f2b2b2; border-radius: 20px; padding: 15px 18px;
+    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--radius-lg); padding: 15px 18px;
     display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   }
-  .danger-zone .t { font-size: 14.5px; font-weight: 700; color: #b71c1c; }
-  .danger-zone .d { font-size: 12.5px; color: #9a4a4a; font-weight: 500; margin-top: 2px; max-width: 42ch; }
-  .danger-btn { background: linear-gradient(180deg, #ef5350, #e53935); color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 4px 0 #a31414; white-space: nowrap; }
+  .danger-zone .t { font-size: 14.5px; font-weight: 700; color: var(--danger-title); }
+  .danger-zone .d { font-size: 12.5px; color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
+  .danger-btn { background: linear-gradient(180deg, var(--red-500), var(--red-danger-600)); color: var(--c-white); border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
   /* ---- Ouder-statistiek (tegels + meter) ---- */
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-  .stat-tile { position: relative; background: #faf6ff; border: 1px solid #ecdcf6; border-radius: 14px; padding: 12px 8px 10px; text-align: center; overflow: hidden; }
-  .stat-tile::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--tint, #ab47bc); }
-  .stat-tile .num { font-size: 26px; font-weight: 700; color: #3a0f56; line-height: 1; }
-  .stat-tile .cap { font-size: 11.5px; color: #6b5b7a; margin-top: 5px; font-weight: 500; line-height: 1.2; }
+  .stat-tile { position: relative; background: var(--paper-tint); border: 1px solid var(--paper-border); border-radius: var(--radius-card-sm); padding: 12px 8px 10px; text-align: center; overflow: hidden; }
+  .stat-tile::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--tint, var(--purple-light)); }
+  .stat-tile .num { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1; }
+  .stat-tile .cap { font-size: 11.5px; color: var(--paper-ink-muted); margin-top: 5px; font-weight: 500; line-height: 1.2; }
   .stat-line { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 2px 7px; }
-  .stat-line .k { font-size: 14px; font-weight: 600; color: #3a0f56; }
-  .stat-line .v { font-size: 16px; font-weight: 700; color: #8e24aa; }
-  .stat-bar { height: 13px; background: #efe4f7; border-radius: 999px; overflow: hidden; }
-  .stat-bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ab47bc, #ff80ab); }
-  .practice-hint { font-size: 12.5px; color: #6b5b7a; font-weight: 500; margin: 14px 2px 8px; }
+  .stat-line .k { font-size: 14px; font-weight: 600; color: var(--paper-ink); }
+  .stat-line .v { font-size: 16px; font-weight: 700; color: var(--purple-mid); }
+  .stat-bar { height: 13px; background: var(--lavender-wash-3); border-radius: var(--radius-pill); overflow: hidden; }
+  .stat-bar > div { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--purple-light), var(--pink-accent)); }
+  .practice-hint { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin: 14px 2px 8px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .practice-chip { background: #fff3e0; border: 1px solid #ffd9a0; color: #b3560d; border-radius: 999px; padding: 6px 13px; font-weight: 700; font-size: 15px; }
-  .stats-empty { font-size: 13.5px; color: #2e7d32; font-weight: 600; margin-top: 6px; }
+  .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-pale); color: var(--practice-text); border-radius: var(--radius-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
+  .stats-empty { font-size: 13.5px; color: var(--green-badge-text); font-weight: 600; margin-top: 6px; }
   @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .settings-h1 { font-size: 25px; } }
 
   /* ---- Modal (oudervraag) ---- */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
   .modal-bg.open { display: flex; }
   .modal {
-    background: #fff; color: #333; border-radius: 20px; padding: 24px 28px; text-align: center; max-width: 340px;
+    background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-lg); padding: 24px 28px; text-align: center; max-width: 340px;
   }
-  .modal h3 { color: #7b1fa2; margin-bottom: 10px; }
+  .modal h3 { color: var(--purple-deep); margin-bottom: 10px; }
   .modal input {
     font-family: inherit; font-size: 26px; text-align: center; width: 110px;
-    border: 3px solid #ab47bc; border-radius: 12px; padding: 6px; margin: 10px 0;
+    border: 3px solid var(--purple-light); border-radius: var(--radius-sm); padding: 6px; margin: 10px 0;
   }
 
   .confetti-bit { position: fixed; top: -40px; font-size: 26px; z-index: 90; pointer-events: none; animation: fall linear forwards; }
@@ -1072,7 +1142,7 @@
   <div class="modal-bg" id="quit-modal" onclick="if(event.target===this)closeQuitModal()">
     <div class="modal">
       <h3>🎭 Show stoppen?</h3>
-      <div style="font-size:15px;color:#6b5b7a;margin-bottom:14px">Dan stopt dit optreden en ga je terug naar de kaart.</div>
+      <div style="font-size:15px;color:var(--paper-ink-muted);margin-bottom:14px">Dan stopt dit optreden en ga je terug naar de kaart.</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn" onclick="closeQuitModal()">🎤 Doorspelen</button>
         <button class="btn gray" onclick="quitGame()">Stoppen</button>
