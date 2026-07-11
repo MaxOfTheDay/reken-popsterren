@@ -24,8 +24,8 @@
     --gold-cta-top: #ffc23d; --gold-cta-bottom: #ff8f00; --gold-cta-shadow: #b36200;
     /* ---- Gold: accent / reward tones (distinct roles, not merged) ---- */
     --gold-accent: #ffd740; --gold-warm: #ffd54f; --gold-deep: #ffb300; --gold-light: #ffe082;
-    --gold-cream: #fff9c4; --gold-bright: #ffee58; --gold-flame: #ff6f00; --gold-ready: #ffe27a;
-    --gold-shelf: #ffe08a; --gold-pale: #ffd9a0; --gold-flash: #fff176; --gold-ready-border: #fff3c4;
+    --gold-cream: #fff9c4; --gold-bright: #ffee58; --gold-flame: #ff6f00;
+    --gold-pale: #ffd9a0; --gold-flash: #fff176; --gold-ready-border: #fff3c4;
     --gold-marigold: #ffca28; --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
 
     /* ---- Purple: brand / secondary actions ---- */
@@ -637,7 +637,15 @@
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
   .tour-stop .dot { width: 74px; height: 74px; margin: 0 auto; border-radius: 21px; display: flex; align-items: center; justify-content: center;
     font-size: 36px; border: 2px solid var(--glass-white-35); }
-  .tour-stop:active .dot { transform: translateY(2px); box-shadow: 0 2px 0 #01579b; }
+  .tour-stop:active .dot { transform: translateY(2px); }
+  /* the two rules above/below tie in specificity with the plain .done/.next state
+     rules and lose on source order, so a shared fallback color here would never
+     actually render -- each tappable state needs its own :active box-shadow
+     (higher specificity via the compound .done:active / .next:active selector)
+     so the press visually collapses in that state's own color. .locked isn't
+     tappable (no onclick), so it's left without one. */
+  .tour-stop.done:active .dot { box-shadow: 0 2px 0 var(--green-shadow); }
+  .tour-stop.next:active .dot { box-shadow: 0 2px 0 var(--gold-cta-shadow); }
   .tour-stop.locked { cursor: default; }
   /* op slot: dekkend (geen doorschijnende reisweg door de tegel) en een maatje
      kleiner — hiërarchie: goud (nu) > groen (gedaan) > grijs (nog niet) */
@@ -709,7 +717,7 @@
   .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 800; }
   .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 3px 11px; white-space: nowrap; }
   /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
-  .shelf-title .shelf-count.full { color: var(--gold-shelf); background: rgba(255,206,77,.25); opacity: 1; }
+  .shelf-title .shelf-count.full { color: var(--gold-light); background: rgba(255,206,77,.25); opacity: 1; }
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
   .trophy-card {
     position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
@@ -766,7 +774,7 @@
   /* ===== KLAAR: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat) ===== */
   .trophy-card.ready {
     justify-content: center; gap: 3px; color: var(--ink-on-gold); border: 3px solid var(--gold-ready-border);
-    background: linear-gradient(135deg, var(--gold-ready), var(--gold-deep));
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-deep));
     box-shadow: 0 4px 15px rgba(255,170,0,.5); animation: readyPulse 1.4s ease-in-out infinite;
   }
   .trophy-card.ready .temoji { filter: drop-shadow(0 1px 2px var(--glass-black-20)); }
@@ -1147,6 +1155,16 @@
         <button class="btn" onclick="closeQuitModal()">🎤 Doorspelen</button>
         <button class="btn gray" onclick="quitGame()">Stoppen</button>
       </div>
+    </div>
+  </div>
+
+  <!-- generieke mededeling/bevestiging in de eigen stijl van de app (i.p.v. de
+       systeem-confirm/alert die overal elders in de app afwijkt) -->
+  <div class="modal-bg" id="confirm-modal" onclick="if(event.target===this)closeConfirmModal()">
+    <div class="modal">
+      <h3 id="confirm-title"></h3>
+      <div style="font-size:15px;color:var(--paper-ink-muted);margin-bottom:14px" id="confirm-body"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap" id="confirm-actions"></div>
     </div>
   </div>
 
@@ -2598,6 +2616,29 @@ function quitGame() {
   goMap();
 }
 
+/* Generieke mededeling/bevestiging in de eigen stijl van de app -- vervangt de
+   systeem-confirm()/alert() die verder nergens in de app voorkomen en er (vooral
+   rond het definitief wissen van voortgang) als een foutmelding uitzien i.p.v.
+   een vraag van de app zelf. */
+function closeConfirmModal() { $('confirm-modal').classList.remove('open'); }
+function showConfirm(title, body, confirmLabel, onConfirm) {
+  $('confirm-title').textContent = title;
+  $('confirm-body').textContent = body;
+  $('confirm-actions').innerHTML =
+    `<button class="btn" id="confirm-no">Nee, terug</button>
+     <button class="danger-btn" id="confirm-yes">${confirmLabel}</button>`;
+  $('confirm-no').onclick = closeConfirmModal;
+  $('confirm-yes').onclick = () => { closeConfirmModal(); onConfirm(); };
+  $('confirm-modal').classList.add('open');
+}
+function showNotice(title, body) {
+  $('confirm-title').textContent = title;
+  $('confirm-body').textContent = body;
+  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok">Oké</button>`;
+  $('confirm-ok').onclick = closeConfirmModal;
+  $('confirm-modal').classList.add('open');
+}
+
 function renderQuestion() {
   const p = P();
   const s = p.settings;
@@ -2766,8 +2807,7 @@ function submitAnswer(val, btnEl) {
     if (cb) cb.classList.add('good');
   }
   loseHeart();
-  showToast(`Het juiste antwoord is: ${q.text} = ${q.ans}`);
-  setTimeout(nextStep, 2100);
+  showToast(`Het juiste antwoord is: ${q.text} = ${q.ans} · tik om verder te gaan 👉`, nextStep);
 }
 // het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 function loseHeart() {
@@ -2877,8 +2917,29 @@ function showPraise(txt) {
   void el.offsetWidth;
   el.classList.add('pop');
 }
-function showToast(txt) { const t = $('toast'); t.textContent = txt; t.style.display = 'block'; }
-function hideToast() { $('toast').style.display = 'none'; }
+// onTap (optioneel): maakt de toast zelf aantikbaar i.p.v. na een vaste tijd te
+// verdwijnen -- gebruikt bij de "dit was het juiste antwoord"-toast, zodat het
+// kind zelf de tijd neemt om te lezen i.p.v. dat een timer raadt hoe lang dat duurt.
+function showToast(txt, onTap) {
+  const t = $('toast');
+  t.textContent = txt;
+  t.style.display = 'block';
+  t.onclick = null;
+  t.style.pointerEvents = '';
+  t.style.cursor = '';
+  if (onTap) {
+    t.style.pointerEvents = 'auto';
+    t.style.cursor = 'pointer';
+    t.onclick = () => { hideToast(); onTap(); };
+  }
+}
+function hideToast() {
+  const t = $('toast');
+  t.style.display = 'none';
+  t.onclick = null;
+  t.style.pointerEvents = '';
+  t.style.cursor = '';
+}
 
 function endLevel(success) {
   stopSpot();
@@ -3429,11 +3490,16 @@ function renderSettings() {
   $('set-mode').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.mode = c.dataset.v; save(); renderSettings(); });
   $('set-perlevel').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.perLevel = parseInt(c.dataset.v, 10); save(); renderSettings(); });
   $('set-reset').onclick = () => {
-    if (confirm(`Alle voortgang, diamanten en spulletjes van ${p.name} wissen?`)) {
-      const dress = setKey === 'p1' ? 'dress_roze' : 'dress_paars';
-      db.profiles[setKey] = defaultProfile(p.name, dress);
-      save(); renderSettings();
-    }
+    showConfirm(
+      '⚠️ Weet je het zeker?',
+      `Alle voortgang, diamanten en spulletjes van ${p.name} wissen? Dit kan niet ongedaan gemaakt worden.`,
+      'Ja, wissen',
+      () => {
+        const dress = setKey === 'p1' ? 'dress_roze' : 'dress_paars';
+        db.profiles[setKey] = defaultProfile(p.name, dress);
+        save(); renderSettings();
+      }
+    );
   };
   $('set-export').onclick = exportData;
   $('set-import').onclick = () => $('set-import-file').click();
@@ -3472,13 +3538,13 @@ function importData(file) {
       if (typeof db.haptics !== 'boolean') db.haptics = true;
       Object.values(db.profiles).forEach(migrate);
       save();
-      alert('Back-up geladen! 🎉');
+      showNotice('🎉 Gelukt!', 'Back-up geladen!');
       renderSettings();
     } catch (e) {
-      alert('Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
+      showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
     }
   };
-  reader.onerror = () => alert('Kon dit bestand niet lezen.');
+  reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
 }
 
