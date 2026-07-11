@@ -637,9 +637,12 @@
      dof ("nog te ontdekken"), het afgelegde stuk daar bovenop vol goud
      ("al gehaald"), zelfde taal als de gelijknamige tegel-staten. */
   .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; }
+  .tour-road-bg, .tour-road-fg, .tour-road-fade { fill: none; stroke-linecap: round; }
   .tour-road-bg { stroke: var(--glass-white-35); stroke-width: 6; }
   .tour-road-fg { stroke: var(--gold-accent); stroke-width: 6; }
+  /* alleen de allerlaatste staart van de weg (ná de laatst getoonde halte)
+     dooft uit -- de rest van het pad blijft gewoon even dof-vast */
+  .tour-road-fade { stroke: url(#roadFadeGrad); stroke-width: 6; }
   .tour-map-wrap { position: relative; width: 100%; max-width: 760px; }
   .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
@@ -651,14 +654,16 @@
      goud-tint (beide zijn gewoon tikbaar); alleen de huidige halte krijgt
      er een puls + gloed + de Speel-knop bovenop. Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
-     de reisweg erdoorheen. .locked hergebruikt gewoon diezelfde paarse vulling
-     via grayscale(1) i.p.v. een eigen kleur te zetten. */
+     de reisweg erdoorheen. */
   .tour-stop .dot { position: relative; width: 70px; height: 70px; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 33px; border: 2px solid var(--glass-white-30); background: var(--purple-shadow); }
   .tour-stop:active .dot { transform: scale(.92); }
   .tour-stop.locked { cursor: default; }
-  .tour-stop.locked .dot { filter: grayscale(1); }
+  /* een grayscale(1) filter over de paarse basiskleur oogde bijna zwart --
+     gewoon de bestaande "uitgeschakeld/nog niet beschikbaar"-grijstint
+     hergebruiken (dezelfde tokens als vroeger de knop-variant .btn.gray) */
+  .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); }
   .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); }
   /* pulseBtn animeert zelf al transform (scale) -- een :active transform
      zou dat gewoon overschrijven zolang de animatie loopt, dus tikfeedback
@@ -678,18 +683,31 @@
      ook geen stadsicoon: je "verdient" dat nog door de show te spelen, je
      ziet het pas op het volgende scherm. Zelfde element voor de reisanimatie
      (zie runTravel): tijdens het huppelen staat ze op de vorige halte. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 14px); transform: translateX(-50%);
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 26px); transform: translateX(-50%);
     width: 92px; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven */
   .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
     width: 34px; height: 9px; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
-  /* dé speelknop van het spel: zit vast aan de huidige halte */
-  .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%; transform: translateX(-50%);
+  /* dé speelknop van het spel: zit vast aan de huidige halte. Puls + gloed
+     geïnspireerd op .trophy-card.ready (de "open trofee"-knop) i.p.v. de
+     stillere brightness-only playGlow -- dit is de belangrijkste tik op de
+     kaart, mag zich ook zo aanvoelen. translateX(-50%) zit ín de eigen
+     keyframes gebakken (i.p.v. los op het element), anders overschrijft de
+     animatie 'm elk frame en springt de knop uit het midden. */
+  .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%;
     font-size: 20px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; white-space: nowrap;
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--radius-pill); padding: 13px 26px;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: playGlow 1.7s ease-in-out infinite; }
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: speelPulse 1.4s ease-in-out infinite; }
+  @keyframes speelPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); }
+    50% { transform: translateX(-50%) scale(1.045); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 13px 26px rgba(255,170,0,.55); }
+  }
+  /* tikfeedback via filter i.p.v. transform -- de puls-animatie hierboven
+     bezet transform al elk frame, dus een :active transform zou meteen weer
+     overschreven worden (zelfde patroon als bij .tour-stop.next .dot) */
+  .tour-stop:active .tour-speel { filter: brightness(.85); }
   .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
     border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
   /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
@@ -708,7 +726,7 @@
     .tour-stop .dot { width: 84px; height: 84px; font-size: 40px; }
     .tour-stop .cname { font-size: 16px; }
     .tour-stop .cstars { font-size: 13px; }
-    .tour-hero { width: 118px; bottom: calc(100% - 12px); }
+    .tour-hero { width: 118px; bottom: calc(100% - 24px); }
     .tour-speel { font-size: 22px; padding: 15px 30px; }
   }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
@@ -2065,6 +2083,8 @@ function updateRoad(map) {
   const svg = track.querySelector('.tour-road-svg');
   const bg = track.querySelector('.tour-road-bg');
   const fg = track.querySelector('.tour-road-fg');
+  const fade = track.querySelector('.tour-road-fade');
+  const fadeGrad = track.querySelector('#roadFadeGrad');
   const stops = [...track.querySelectorAll('.tour-stop')];
   if (!svg || !stops.length) return;
   svg.setAttribute('width', track.scrollWidth);
@@ -2081,6 +2101,20 @@ function updateRoad(map) {
   const target = track.querySelector('.tour-stop.next') || (hero && hero.closest('.tour-stop'));
   const targetIdx = target ? stops.indexOf(target) : -1;
   fg.setAttribute('d', targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '');
+  // een korte staart ná de laatst getoonde halte die uitdooft -- begint nog
+  // vanaf die halte zelf (dus eerst nog onder de ondoorzichtige tegel) en
+  // vervaagt daarna naar niets: een hint dat de tournee verder doorloopt
+  const n = pts.length;
+  if (fade && n >= 2) {
+    const dx = pts[n - 1].x - pts[n - 2].x, dy = pts[n - 1].y - pts[n - 2].y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ex = pts[n - 1].x + (dx / len) * 90, ey = pts[n - 1].y + (dy / len) * 90;
+    fade.setAttribute('d', `M${pts[n - 1].x.toFixed(1)},${pts[n - 1].y.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}`);
+    if (fadeGrad) {
+      fadeGrad.setAttribute('x1', pts[n - 1].x); fadeGrad.setAttribute('y1', pts[n - 1].y);
+      fadeGrad.setAttribute('x2', ex); fadeGrad.setAttribute('y2', ey);
+    }
+  } else if (fade) fade.setAttribute('d', '');
 }
 // Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
 // de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
@@ -2100,11 +2134,27 @@ function renderTourMap(travelFrom) {
   const roadSvg = document.createElementNS(svgNS, 'svg');
   roadSvg.setAttribute('class', 'tour-road-svg');
   roadSvg.setAttribute('aria-hidden', 'true');
+  const defs = document.createElementNS(svgNS, 'defs');
+  // dooft de allerlaatste stukje weg uit -- alleen die staart, niet de hele
+  // (verder overal even dof-vaste) weg. x1/y1/x2/y2 worden in updateRoad gezet.
+  const fadeGrad = document.createElementNS(svgNS, 'linearGradient');
+  fadeGrad.setAttribute('id', 'roadFadeGrad');
+  fadeGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+  const fadeStop1 = document.createElementNS(svgNS, 'stop');
+  fadeStop1.setAttribute('offset', '0%'); fadeStop1.setAttribute('stop-color', 'rgba(255,255,255,.35)');
+  const fadeStop2 = document.createElementNS(svgNS, 'stop');
+  fadeStop2.setAttribute('offset', '100%'); fadeStop2.setAttribute('stop-color', 'rgba(255,255,255,0)');
+  fadeGrad.appendChild(fadeStop1); fadeGrad.appendChild(fadeStop2);
+  defs.appendChild(fadeGrad);
   const bgPath = document.createElementNS(svgNS, 'path');
   bgPath.setAttribute('class', 'tour-road-bg');
+  const fadePath = document.createElementNS(svgNS, 'path');
+  fadePath.setAttribute('class', 'tour-road-fade');
   const fgPath = document.createElementNS(svgNS, 'path');
   fgPath.setAttribute('class', 'tour-road-fg');
+  roadSvg.appendChild(defs);
   roadSvg.appendChild(bgPath);
+  roadSvg.appendChild(fadePath);
   roadSvg.appendChild(fgPath);
   track.appendChild(roadSvg);
   for (let l = 1; l <= maxShow; l++) {
@@ -2121,10 +2171,9 @@ function renderTourMap(travelFrom) {
     const open = travelFrom ? l <= travelFrom : l <= p.level;
     if (!open) {
       b.classList.add('locked');
-      // hoe verder vooruit op slot, hoe minder nadruk -- alleen de eerstvolgende
-      // op-slot halte oogt nog "bijna bereikbaar", de rest dooft geleidelijk uit
-      const dist = l - heroLvl;
-      b.style.opacity = dist <= 1 ? '1' : dist === 2 ? '.6' : '.35';
+      // alle op-slot haltes krijgen dezelfde rustige "uitgeschakeld"-grijstint --
+      // een per-halte verval (donkerder of lichter per stap) trok net te veel
+      // aandacht naar iets dat toch nog niet te doen is
       b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>`;
     } else {
       b.classList.add(l === curLvl ? 'next' : 'done');
@@ -2133,7 +2182,7 @@ function renderTourMap(travelFrom) {
       // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
       // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      const speel = l === curLvl ? '<div class="tour-speel">▶ Speel!</div>' : '';
+      const speel = l === curLvl ? '<div class="tour-speel">🎤 Speel!</div>' : '';
       // gespeelde stad: sterren als gewone regel onder de naam -- geen aparte
       // badge/positionering meer nodig. Nog niet gespeeld (curLvl) toont niets.
       const sterren = l === curLvl ? '' :
