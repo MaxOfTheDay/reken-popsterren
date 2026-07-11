@@ -141,10 +141,6 @@
   .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--radius-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
-  /* icoon-only, rustige terugknop naar profielkeuze */
-  .btn.switch-star { padding: 8px 12px; border-radius: var(--radius-sm); opacity: .6; background: var(--glass-white-10); }
-  .btn.switch-star:hover { opacity: .85; }
-  .btn.switch-star:active { opacity: 1; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
     font-size: 17px; padding: 12px 18px; border-radius: var(--radius-md); color: var(--c-white);
@@ -355,44 +351,41 @@
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
   /* ---- Kaart (hoofdscherm): topbalk, wolkjes en vaste navigatie onderaan ---- */
+  /* #screen-map heeft (net als de andere hub-schermen) 12px padding, behalve
+     links/rechts (0, de route mag edge-to-edge scrollen) en boven (10px i.p.v.
+     12px) -- vandaar de losse -10px/top:-10px hieronder i.p.v. de standaard
+     -12px die .hub-sticky's basisregel gebruikt. */
   #screen-map { position: relative; padding: 10px 0 100px; }
-  .map-topbar { display: flex; align-items: center; gap: 9px; width: 100%; max-width: 760px; padding: 2px 12px; z-index: 2; }
-  /* mini-portret = deurtje naar de kleedkamer (het 👗-plakkertje maakt dat duidelijk) */
-  .map-portrait {
-    position: relative; width: 47px; height: 47px; flex-shrink: 0;
-    border: none; padding: 0; background: none; cursor: pointer; font-family: inherit;
-    transition: transform .12s;
+  #screen-map .hub-sticky { width: 100%; margin: -10px 0 12px; top: -10px; }
+  .map-header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; max-width: 700px; }
+  /* avatar + naam = nu de link terug naar spelerskeuze i.p.v. naar de kleedkamer
+     (die zit al in de vaste ondernavigatie) */
+  .map-id-btn {
+    display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1;
+    border: none; background: none; padding: 0; cursor: pointer; font-family: inherit;
+    color: inherit; text-align: left; transition: transform .12s;
   }
-  .map-portrait:hover { transform: scale(1.07); }
-  .map-portrait:active { transform: scale(.93); }
-  .map-portrait .pframe {
-    position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+  .map-id-btn:hover { transform: scale(1.02); }
+  .map-id-btn:active { transform: scale(.96); }
+  .map-portrait {
+    position: relative; width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
     background: var(--glass-black-30); border: 2px solid rgba(255,255,255,.65);
     box-shadow: 0 2px 7px var(--glass-black-35);
   }
-  .map-portrait .pframe svg { position: absolute; left: 50%; top: -7px; transform: translateX(-50%); }
-  .map-portrait .dressdot {
-    position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border: 1.5px solid var(--c-white);
-    font-size: 11px; display: grid; place-items: center; box-shadow: 0 1px 4px var(--glass-black-35);
-  }
+  .map-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
   .map-name {
-    font-size: 20px; font-weight: 700; flex: 1; min-width: 0; text-align: left;
+    font-size: 19px; font-weight: 700; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: 0 2px 0 var(--glass-black-20);
   }
-  .map-chips { display: flex; gap: 6px; }
+  .map-chips { display: flex; gap: 8px; flex-shrink: 0; }
   .map-flex {
     flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
     width: 100%; min-height: 0; z-index: 1;
   }
-  /* algehele tournee-voortgang ("Stad 3 van 12") stond eerst als "Show N" op élk
-     kaartje herhaald -- overbodig naast de positie op het pad zelf, en het nam
-     een hele tekstregel per stad in beslag. Hier staat het maar één keer. */
-  .tour-progress {
-    font-size: 13.5px; font-weight: 700; opacity: .85; margin-bottom: 8px;
-    text-shadow: 0 1px 0 var(--glass-black-18); text-align: center;
-  }
+  /* tweede regel in .hub-sticky: welke tournee (set van 12 steden) en waar
+     daarbinnen, plus dezelfde dunne voortgangsbalk als de trofeeënkast */
+  .tour-tournee { font-size: 15px; font-weight: 800; text-align: center; text-shadow: 0 1px 0 var(--glass-black-18); }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform (zie updateParallax). Ooit zat de transform op
@@ -733,8 +726,9 @@
   @media (max-width: 390px) {
     .map-name { font-size: 17px; }
     .chip-badge { font-size: 14px; padding: 5px 10px; }
-    .map-portrait { width: 42px; height: 42px; }
-    .map-portrait .pframe svg { top: -6px; width: 72px; }
+    .map-header-row .diamond-badge { font-size: 17px; padding: 6px 13px; }
+    .map-portrait { width: 38px; height: 38px; }
+    .map-portrait svg { top: -5px; width: 65px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .tour-speel, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
@@ -1183,17 +1177,24 @@
         <span class="rev" style="top:68%;font-size:20px;animation-duration:72s;animation-delay:-40s;opacity:.2">✈️</span>
       </div>
     </div>
-    <div class="map-topbar">
-      <button class="btn small ghost switch-star" onclick="goProfiles()" aria-label="Wissel ster" title="Wissel ster">⬅</button>
-      <button class="map-portrait" id="map-portrait" onclick="navGo('dress')" aria-label="Naar de kleedkamer" title="Kleedkamer"></button>
-      <div class="map-name" id="map-name"></div>
-      <div class="map-chips">
-        <span class="chip-badge">💎 <span id="map-diamonds">0</span></span>
-        <span class="chip-badge">⭐ <span id="map-stars">0</span></span>
+    <div class="hub-sticky">
+      <div class="map-header-row">
+        <button class="map-id-btn" onclick="goProfiles()" aria-label="Terug naar spelerskeuze" title="Terug naar spelerskeuze">
+          <span class="map-portrait" id="map-portrait"></span>
+          <span class="map-name" id="map-name"></span>
+        </button>
+        <div class="map-chips">
+          <div class="diamond-badge">⭐ <span id="map-stars">0</span></div>
+          <div class="diamond-badge">💎 <span id="map-diamonds">0</span></div>
+        </div>
+      </div>
+      <div class="kast-progress">
+        <div class="tour-tournee" id="tour-tournee"></div>
+        <div class="kast-progress-text" id="tour-city"></div>
+        <div class="kast-bar"><div class="kast-bar-fill" id="tour-bar"></div></div>
       </div>
     </div>
     <div class="map-flex">
-      <div class="tour-progress" id="tour-progress"></div>
       <div class="tour-map-wrap">
         <div class="tour-map hscroll-fade" id="tour-map"></div>
       </div>
@@ -2042,10 +2043,12 @@ function goMap() {
   $('map-name').textContent = p.name;
   $('map-diamonds').textContent = p.diamonds;
   $('map-stars').textContent = totalStarCount(p);
-  $('map-portrait').innerHTML = `<span class="pframe">${avatarSVG(p, 80)}</span><span class="dressdot">👗</span>`;
+  $('map-portrait').innerHTML = avatarSVG(p, 80);
   const posInRound = ((p.level - 1) % CITIES.length) + 1;
   const round = cityFor(p.level).ronde;
-  $('tour-progress').textContent = `🌍 Stad ${posInRound} van ${CITIES.length}` + (round > 1 ? ` · Ronde ${round}` : '');
+  $('tour-tournee').textContent = `🌍 Tournee ${round}`;
+  $('tour-city').textContent = `Stad ${posInRound} van ${CITIES.length}`;
+  $('tour-bar').style.width = Math.round(posInRound / CITIES.length * 100) + '%';
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
