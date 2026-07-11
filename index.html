@@ -166,11 +166,14 @@
     display: flex; gap: 14px; justify-content: center; align-items: stretch;
     width: 100%; max-width: 560px; margin: 16px 0 auto; z-index: 1;
   }
+  /* rustige, middenpaarse kaart met één subtiele rand -- de avatar (.stage-frame,
+     zie hierboven) mag de sterkste visuele structuur zijn, dus hier bewust geen
+     dikke/felle tweede rand ernaast (geen "dubbele rand"-gevoel meer). */
   .profile-card {
     position: relative; flex: 1 1 0; min-width: 0; max-width: 250px;
     cursor: pointer; text-align: center; font-family: inherit; color: var(--c-white);
-    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.08));
-    border: 3px solid rgba(255,255,255,.45); border-radius: var(--radius-2xl);
+    background: linear-gradient(180deg, rgba(142,36,170,.24), rgba(74,20,140,.22));
+    border: 1.5px solid var(--glass-white-22); border-radius: var(--radius-2xl);
     padding: 11px 10px 16px; transition: transform .18s, box-shadow .18s;
     box-shadow: 0 10px 26px var(--glass-black-32);
   }
@@ -180,45 +183,14 @@
   .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
   .profile-card .deco { font-size: 18px; }
   .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 var(--glass-black-25); }
-  /* waar op de wereldtournee ben ik? — verhaal i.p.v. scorebord */
-  .tour-chip {
-    display: inline-block; max-width: calc(100% - 4px);
-    background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 5px 11px;
-    font-size: 13px; font-weight: 700; margin: 6px 0 2px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  /* sappige "Speel!"-knop — goud, net als op de kaart: goud = spelen */
-  .play-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    margin-top: 12px; padding: 10px 22px; border-radius: var(--radius-pill);
-    font-size: 18px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; position: relative;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 13px var(--glass-black-35);
-    transition: transform .1s, box-shadow .1s;
-    animation: playGlow 1.7s ease-in-out infinite;
-  }
-  .play-btn::before {
-    content: ""; position: absolute; left: 10px; right: 10px; top: 4px; height: 40%;
-    border-radius: var(--radius-pill); background: linear-gradient(180deg, rgba(255,255,255,.55), transparent);
-    pointer-events: none;
-  }
-  .play-btn .play-ico {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 24px; height: 24px; border-radius: 50%; font-size: 12px; flex-shrink: 0;
-    background: rgba(255,255,255,.92); color: var(--gold-cta-shadow); box-shadow: inset 0 -1px 2px rgba(0,0,0,.15);
-  }
-  @keyframes playGlow { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.14); } }
-  .profile-card:hover .play-btn { transform: translateY(-2px); box-shadow: 0 7px 0 var(--gold-cta-shadow), 0 11px 16px rgba(0,0,0,.42); }
-  .profile-card:active .play-btn { transform: translateY(3px); box-shadow: 0 2px 0 var(--gold-cta-shadow), 0 4px 8px var(--glass-black-30); }
-  /* op telefoons alleen de stad (het verhaal); het shownummer erbij op brede schermen */
-  @media (max-width: 480px) { .chip-shownr { display: none; } }
+  /* alleen het totaal aantal sterren -- geen stad/tournee-details nodig om te
+     kiezen wie er gaat spelen; hergebruikt de kleine pil (zie .chip-badge) */
+  .profile-card .chip-badge { margin: 6px 0 2px; }
   /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
   @media (max-width: 380px) {
     .profile-row { gap: 10px; }
     .profile-card .pname { font-size: 18px; }
-    .tour-chip { font-size: 11.5px; padding: 4px 9px; }
-    .play-btn { font-size: 15px; padding: 8px 15px; }
-    .play-btn .play-ico { width: 20px; height: 20px; font-size: 10px; }
+    .profile-card .speel-pill { font-size: 15px; padding: 8px 15px; }
   }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
@@ -262,6 +234,16 @@
     position: relative; border-radius: var(--radius-xl); overflow: hidden; flex-shrink: 0;
     border: 4px solid rgba(255,255,255,.5); box-shadow: 0 10px 24px var(--glass-black-35);
     display: flex; align-items: flex-end; justify-content: center;
+  }
+  /* verfijnde randbehandeling, gedeeld door elke plek waar de avatar het
+     hoofdelement is (kleedkamer, profielkeuze): dunner en minder grijs dan de
+     kale .stage hierboven, dezelfde lichte lavendel/wit-rand als een
+     item-card (var(--glass-white-35)), met een zachte paarse gloed erbij
+     i.p.v. alleen de kale slagschaduw. Bewust géén goud -- dat blijft
+     voorbehouden aan geselecteerd/primaire acties. */
+  .stage-frame {
+    border-width: 2px; border-color: var(--glass-white-35);
+    box-shadow: 0 10px 24px var(--glass-black-35), 0 0 20px rgba(123,47,247,.28);
   }
   /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
   .stage .avatar-holder { height: 92%; }
@@ -692,16 +674,21 @@
      zonder dit oogt ze net zo goed los zwevend erboven */
   .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
     width: 34px; height: 9px; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
-  /* dé speelknop van het spel: zit vast aan de huidige halte. Puls + gloed
-     geïnspireerd op .trophy-card.ready (de "open trofee"-knop) i.p.v. de
-     stillere brightness-only playGlow -- dit is de belangrijkste tik op de
-     kaart, mag zich ook zo aanvoelen. translateX(-50%) zit ín de eigen
-     keyframes gebakken (i.p.v. los op het element), anders overschrijft de
-     animatie 'm elk frame en springt de knop uit het midden. */
-  .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%;
+  /* .speel-pill: het gedeelde "Speel!"-knop-uiterlijk -- zelfde maat,
+     verloop, schaduw en paarse tekst op de kaart én bij profielkeuze. Puls +
+     gloed geïnspireerd op .trophy-card.ready (de "open trofee"-knop) i.p.v.
+     de stillere brightness-only playGlow -- dit is de belangrijkste tik op
+     elk van die schermen, mag zich ook zo aanvoelen. */
+  .speel-pill {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--radius-pill); padding: 13px 26px;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: speelPulse 1.2s ease-in-out infinite; }
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35);
+  }
+  /* dé speelknop van het spel: zit vast aan de huidige halte. translateX(-50%)
+     zit ín de eigen keyframes gebakken (i.p.v. los op het element), anders
+     overschrijft de animatie 'm elk frame en springt de knop uit het midden. */
+  .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%; animation: speelPulse 1.2s ease-in-out infinite; }
   /* zelfde duur/easing/schaal als pulseBtn (de gouden "next"-tegel) zodat
      beide echt gelijk lopen i.p.v. losjes uit de pas -- alleen translateX(-50%)
      zit erbij gebakken (zie hierboven), de rest is bewust identiek. Geen
@@ -711,10 +698,17 @@
     0%, 100% { transform: translateX(-50%) scale(1); }
     50% { transform: translateX(-50%) scale(1.09); }
   }
+  /* profielkeuze: zelfde puls, maar zonder de translateX-truc -- deze knop
+     staat gewoon in de normale flow, niet absoluut gepositioneerd */
+  .profile-card .speel-pill { margin-top: 12px; animation: speelPulseFlow 1.2s ease-in-out infinite; }
+  @keyframes speelPulseFlow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.09); }
+  }
   /* tikfeedback via filter i.p.v. transform -- de puls-animatie hierboven
      bezet transform al elk frame, dus een :active transform zou meteen weer
      overschreven worden (zelfde patroon als bij .tour-stop.next .dot) */
-  .tour-stop:active .tour-speel { filter: brightness(.85); }
+  .tour-stop:active .tour-speel, .profile-card:active .speel-pill { filter: brightness(.85); }
   .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
     border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
   /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
@@ -723,7 +717,7 @@
     .tour-stop { width: 96px; }
     .tour-stop .dot { width: 58px; height: 58px; font-size: 27px; }
     .tour-hero { width: 82px; }
-    .tour-speel { font-size: 18px; padding: 11px 22px; }
+    .speel-pill { font-size: 18px; padding: 11px 22px; }
   }
   /* hoge schermen: de kaart mag juist groter schitteren — grotere haltes,
      ster en speelknop claimen de ruimte die anders leeg blijft */
@@ -734,7 +728,7 @@
     .tour-stop .cname { font-size: 16px; }
     .tour-stop .cstars { font-size: 13px; }
     .tour-hero { width: 118px; bottom: calc(100% - 28px); }
-    .tour-speel { font-size: 22px; padding: 15px 30px; }
+    .speel-pill { font-size: 22px; padding: 15px 30px; }
   }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
@@ -745,7 +739,7 @@
     .map-portrait svg { top: -5px; width: 65px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .map-sky span, .tour-speel, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
+    .map-sky span, .speel-pill, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
   }
 
   /* ---- Trofeeën ---- */
@@ -953,15 +947,9 @@
     box-shadow: 0 10px 24px rgba(20,0,40,.3);
   }
   .hub-sticky .screen-header { margin-bottom: 4px; }
-  /* eigen, wat rustiger randbehandeling dan de gedeelde .stage (die ook op
-     profielkeuze/spel/eindscherm zit): dunner en minder grijs, dezelfde
-     lichte lavendel/wit-rand als een item-card (var(--glass-white-35)), met
-     een zachte paarse gloed erbij i.p.v. de kale slagschaduw. Bewust géén
-     goud -- dat blijft voorbehouden aan geselecteerd/primaire acties. */
-  .dress-stage {
-    width: 200px; height: 168px; border-width: 2px; border-color: var(--glass-white-35);
-    box-shadow: 0 10px 24px var(--glass-black-35), 0 0 20px rgba(123,47,247,.28);
-  }
+  /* de rand-/gloedbehandeling zit nu in de gedeelde .stage-frame (zie .stage
+     hierboven) -- hier alleen nog de eigen afmeting van de kleedkamer-scène */
+  .dress-stage { width: 200px; height: 168px; }
   .dress-stage .deco { font-size: 20px; }
   @media (max-height: 700px) { .dress-stage { width: 170px; height: 132px; } }
   /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit.
@@ -1326,7 +1314,7 @@
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
       <div class="stage-wrap">
-        <div class="stage tappable dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
+        <div class="stage tappable stage-frame dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
           <div class="avatar-holder idle" id="shop-avatar"></div>
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
@@ -1973,14 +1961,13 @@ function renderProfiles() {
   row.innerHTML = '';
   for (const key of ['p1', 'p2']) {
     const p = db.profiles[key];
-    const city = cityFor(p.level);
     const card = document.createElement('button');
     card.className = 'profile-card';
     card.innerHTML =
-      `<div class="stage"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
+      `<div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
         <div class="pname">${p.name}</div>
-        <div class="tour-chip">${city.flag} ${city.name}<span class="chip-shownr"> · Show ${p.level}</span></div>
-        <div class="play-btn"><span class="play-ico">▶</span>Speel!</div>`;
+        <div class="chip-badge">⭐ ${totalStarCount(p)}</div>
+        <div class="speel-pill">🎤 Speel!</div>`;
     applyStage(card.querySelector('.stage'), p);
     card.onclick = () => { sndClick(); selectProfile(key); };
     row.appendChild(card);
@@ -2212,7 +2199,7 @@ function renderTourMap(travelFrom) {
       // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
       // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      const speel = l === curLvl ? '<div class="tour-speel">🎤 Speel!</div>' : '';
+      const speel = l === curLvl ? '<div class="tour-speel speel-pill">🎤 Speel!</div>' : '';
       // gespeelde stad: sterren als gewone regel onder de naam -- geen aparte
       // badge/positionering meer nodig. Nog niet gespeeld (curLvl) toont niets.
       const sterren = l === curLvl ? '' :
