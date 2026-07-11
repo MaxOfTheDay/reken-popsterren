@@ -124,7 +124,7 @@
   .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: 17px; font-weight: 500; }
 
   .btn {
-    font-family: inherit; font-size: 20px; font-weight: 600; color: var(--c-white);
+    font-family: inherit; font-size: 20px; font-weight: 600; color: var(--purple-shadow);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     border: none; border-radius: var(--radius-button); padding: 14px 26px; cursor: pointer;
     box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 14px var(--glass-black-30);
@@ -132,12 +132,15 @@
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
   .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
-  .btn.purple { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), 0 8px 14px var(--glass-black-30); }
+  /* .purple/.green/.gray zetten hun eigen achtergrond, dus ook expliciet hun
+     eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
+     gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is */
+  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.green { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.green { color: var(--c-white); background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.green:active { box-shadow: 0 1px 0 var(--green-shadow); }
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
-  .btn.gray { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--radius-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
@@ -188,7 +191,7 @@
   .play-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     margin-top: 12px; padding: 10px 22px; border-radius: var(--radius-pill);
-    font-size: 18px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; position: relative;
+    font-size: 18px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; position: relative;
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 13px var(--glass-black-35);
     transition: transform .1s, box-shadow .1s;
@@ -696,7 +699,7 @@
      keyframes gebakken (i.p.v. los op het element), anders overschrijft de
      animatie 'm elk frame en springt de knop uit het midden. */
   .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%;
-    font-size: 20px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; white-space: nowrap;
+    font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--radius-pill); padding: 13px 26px;
     box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: speelPulse 1.2s ease-in-out infinite; }
   /* zelfde duur/easing/schaal als pulseBtn (de gouden "next"-tegel) zodat
@@ -950,17 +953,29 @@
     box-shadow: 0 10px 24px rgba(20,0,40,.3);
   }
   .hub-sticky .screen-header { margin-bottom: 4px; }
-  .dress-stage { width: 200px; height: 168px; }
+  /* eigen, wat rustiger randbehandeling dan de gedeelde .stage (die ook op
+     profielkeuze/spel/eindscherm zit): dunner en minder grijs, dezelfde
+     lichte lavendel/wit-rand als een item-card (var(--glass-white-35)), met
+     een zachte paarse gloed erbij i.p.v. de kale slagschaduw. Bewust géén
+     goud -- dat blijft voorbehouden aan geselecteerd/primaire acties. */
+  .dress-stage {
+    width: 200px; height: 168px; border-width: 2px; border-color: var(--glass-white-35);
+    box-shadow: 0 10px 24px var(--glass-black-35), 0 0 20px rgba(123,47,247,.28);
+  }
   .dress-stage .deco { font-size: 20px; }
   @media (max-height: 700px) { .dress-stage { width: 170px; height: 132px; } }
-  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit */
+  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit.
+     Zit los van .dress-stage (buiten de overflow:hidden), dus overlapt de
+     afgeronde hoek fysiek -- de extra buitenste ring in dezelfde lavendel-
+     tint als de tegenwoordig dunnere kadervulling laat 'm daar als bewust
+     "badge op de rand" ogen i.p.v. een rand die er zomaar stopt. */
   .stage-wrap { position: relative; }
   .shuffle-btn {
     position: absolute; right: -16px; bottom: -4px; width: 46px; height: 46px;
     border-radius: 50%; border: 2px solid rgba(255,255,255,.75); cursor: pointer;
     font-size: 22px; line-height: 1; font-family: inherit;
     background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
-    box-shadow: 0 var(--btn-lip-sm) 0 var(--purple-shadow), 0 6px 12px var(--glass-black-35);
+    box-shadow: 0 var(--btn-lip-sm) 0 var(--purple-shadow), 0 6px 12px var(--glass-black-35), 0 0 0 3px var(--glass-white-18);
     transition: transform .15s;
   }
   .shuffle-btn:hover { transform: rotate(20deg) scale(1.06); }
