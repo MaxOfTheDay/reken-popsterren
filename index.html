@@ -35,9 +35,12 @@
     /* ---- Purple: misc singles, kept distinct ---- */
     --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a; --purple-ink: #32115f;
 
-    /* ---- Green: success / done ---- */
-    --green-top: #66bb6a; --green-bottom: #43a047; --green-shadow: #1b5e20;
-    --green-badge-bg: #e3f7e7; --green-badge-text: #2e7d32;
+    /* ---- Green: success / done. The original #66bb6a/#43a047 gradient only
+       reached 2.36-3.3:1 contrast for the white text/glyphs on top of it --
+       well under WCAG AA's 4.5:1. --green-deep replaces both stops (paired
+       with the existing --green-shadow) so every green button clears AA. ---- */
+    --green-deep: #2e7d32; --green-shadow: #1b5e20;
+    --green-badge-bg: #e3f7e7;
 
     /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone).
        red-danger-500 is a darkened red-500 (not a plain reuse) so white button
@@ -128,7 +131,7 @@
   .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
   .btn.purple { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.green { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.green { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.green:active { box-shadow: 0 1px 0 var(--green-shadow); }
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
   .btn.gray { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
@@ -245,7 +248,7 @@
   .gear-item .gi-label { flex: 1; }
   .gear-item .gi-state {
     font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: var(--radius-pill);
-    background: var(--green-badge-bg); color: var(--green-badge-text);
+    background: var(--green-badge-bg); color: var(--green-deep);
   }
   .gear-item .gi-state.off { background: var(--paper-muted-bg); color: var(--paper-muted-text); }
   .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; }
@@ -478,7 +481,7 @@
     transition: transform .07s, box-shadow .07s;
   }
   .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .choice-btn.good { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
@@ -488,7 +491,7 @@
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
   }
   .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .num-btn.ok { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
 
@@ -657,7 +660,7 @@
      kleiner — hiërarchie: goud (nu) > groen (gedaan) > grijs (nog niet) */
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip-sm) 0 var(--gray-shadow);
     border-color: var(--glass-white-22); transform: scale(.85); }
-  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-top), var(--green-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-deep), var(--green-shadow)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   .tour-stop.next .dot { background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow); border-color: var(--c-white); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14.5px; font-weight: bold; margin-top: 8px; }
   .tour-stop.next .cname { color: var(--gold-light); }
@@ -1022,6 +1025,11 @@
      tappable, so a parent can pre-select tables before turning the operation on) */
   .set-field.inactive { opacity: .5; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  /* Bewerkingen (+ - x :) as a fixed 2x2 grid: +/- (optellen/aftrekken) and x/:
+     (vermenigvuldigen/delen) are natural pairs, and the natural flex-wrap on
+     narrow screens gave an unbalanced 3-then-1 instead. max-content columns
+     keep each chip its own width -- no stretching to fill the grid cell. */
+  #set-ops { display: grid; grid-template-columns: repeat(2, max-content); }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--radius-pill); padding: 7px 15px;
@@ -1070,7 +1078,7 @@
   .practice-hint { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin: 14px 2px 8px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-pale); color: var(--practice-text); border-radius: var(--radius-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
-  .stats-empty { font-size: 13.5px; color: var(--green-badge-text); font-weight: 600; margin-top: 6px; }
+  .stats-empty { font-size: 13.5px; color: var(--green-deep); font-weight: 600; margin-top: 6px; }
   @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .settings-h1 { font-size: 25px; } }
 
   /* ---- Modal (oudervraag) ---- */
@@ -3416,14 +3424,10 @@ function statsPanelHtml(p) {
 }
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
-// Meerkeuze-chips (kies-er-meerdere) krijgen een ✓-voorvoegsel zodra ze aan staan,
-// zodat het verschil met de enkelkeuze-chips (Getallen tot/Antwoorden/Vragen per
-// optreden -- die alleen kleur wisselen) meteen zichtbaar is, zonder te hoeven
-// uitproberen of een tik de vorige keuze vervangt of ernaast komt.
-function multiChip(v, label, on) {
-  return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${on ? '✓ ' : ''}${label}</button>`;
-}
-function singleChip(v, label, on) {
+// Meerkeuze- en enkelkeuze-chips zien er bewust hetzelfde uit (alleen kleur
+// wisselt) -- dit is een laagdrempelig, direct-manipulatie schermpje: één tik
+// laat meteen zien of een groep er meerdere naast elkaar toestaat of niet.
+function chip(v, label, on) {
   return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
 }
 function oefeningPanelHtml(p, s) {
@@ -3433,22 +3437,22 @@ function oefeningPanelHtml(p, s) {
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🎓</div><div><h2>Wat oefenen</h2><div class="sub">Kies de bewerkingen en het bereik</div></div></div>
       <div class="set-field"><span class="lbl">Bewerkingen</span>
-        <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) => multiChip(v, l, s.ops.includes(v))).join('')}</div></div>
+        <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
       <div class="set-field"><span class="lbl">Getallen tot</span>
-        <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v => singleChip(v, v, s.max === v)).join('')}</div></div>
+        <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v => chip(v, v, s.max === v)).join('')}</div></div>
       <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
-        <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => multiChip(v, v, s.tables.includes(v))).join('')}</div></div>
+        <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>
     </div>
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🎮</div><div><h2>Hoe spelen</h2><div class="sub">De manier van antwoorden en de lengte</div></div></div>
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="set-mode">
-          ${singleChip('kies', 'Kiezen uit 4', s.mode === 'kies')}
-          ${singleChip('typ', 'Zelf typen', s.mode === 'typ')}
-          ${singleChip('mix', 'Afwisselen', s.mode === 'mix')}
+          ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
+          ${chip('typ', 'Zelf typen', s.mode === 'typ')}
+          ${chip('mix', 'Afwisselen', s.mode === 'mix')}
         </div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => singleChip(v, v, s.perLevel === v)).join('')}</div></div>
+        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
     </div>
     <div class="set-card">
       <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">Naam van deze ster</div></div></div>
