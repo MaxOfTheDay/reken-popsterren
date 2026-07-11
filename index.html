@@ -960,16 +960,24 @@
   }
   .shuffle-btn:hover { transform: rotate(20deg) scale(1.06); }
   .shuffle-btn:active { transform: rotate(180deg) scale(.92); box-shadow: 0 1px 0 var(--purple-shadow); }
-  .shop-tabs {
-    display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 100%;
-    margin-top: 10px; padding: 2px 4px;
-    -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;
+  /* alle 8 categorieën blijven altijd zichtbaar (geen scroll-carrousel meer) --
+     container query i.p.v. een viewport-breakpoint: kijkt naar hoeveel ruimte
+     .shop-tabs zelf heeft (via .shop-tabs-wrap), niet naar het schermformaat.
+     Onder de drempel: vaste 4x2-grid (8 categorieën, geen scroll nodig).
+     Erboven: 1 rij van 8, allemaal even breed. */
+  .shop-tabs-wrap { width: 100%; max-width: 960px; margin-top: 10px; container-type: inline-size; }
+  .shop-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 2px 4px; }
+  /* 855px = de gemeten breedte die alle 8 knoppen nodig hebben op hun eigen,
+     ongekrompen (content-based) breedte -- pas daarboven schakelt het naar 1
+     rij, anders zou "Schoenen" (de breedste) worden afgeknot */
+  @container (min-width: 855px) {
+    .shop-tabs { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   }
-  .shop-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
-    font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
-    padding: 8px 14px; border-radius: var(--radius-pill); color: var(--c-white); background: var(--glass-white-18);
-    transition: transform .07s, background .12s; white-space: nowrap; flex-shrink: 0;
+    font-family: inherit; font-size: 14px; font-weight: bold; border: none; cursor: pointer;
+    letter-spacing: -.3px; padding: 10px 2px; border-radius: var(--radius-pill); color: var(--c-white); background: var(--glass-white-18);
+    transition: transform .07s, background .12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 44px;
   }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: var(--gold-deep); color: var(--purple-shadow); }
@@ -1303,7 +1311,9 @@
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
-      <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
+      <div class="shop-tabs-wrap">
+        <div class="shop-tabs" id="shop-tabs"></div>
+      </div>
     </div>
     <div class="item-grid" id="item-grid"></div>
   </div>
@@ -1404,16 +1414,16 @@ const ITEMS = [
   { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeerminjurk', price: 85, color: '#26a69a', pattern: 'scales' },
   { id: 'dress_tover',   cat: 'dress', name: 'Toverjurk',      price: 95,  color: '#4527a0', pattern: 'magic' },
   { id: 'dress_regenboog',cat:'dress', name: 'Regenboogjurk',  price: 110, color: 'RAINBOW' },
-  // Schoentjes (kleuren de vaste schoentjes van de paspop)
-  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze schoentjes',   price: 0,  color: '#e91e63' },
-  { id: 'shoes_rood',  cat: 'shoes', name: 'Rode schoentjes',   price: 10, color: '#e53935' },
-  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauwe schoentjes', price: 15, color: '#1e88e5' },
-  { id: 'shoes_geel',  cat: 'shoes', name: 'Gele schoentjes',   price: 15, color: '#fdd835' },
-  { id: 'shoes_paars', cat: 'shoes', name: 'Paarse schoentjes', price: 15, color: '#8e24aa' },
-  { id: 'shoes_groen', cat: 'shoes', name: 'Groene schoentjes', price: 20, color: '#43a047' },
+  // Schoenen (kleuren de vaste schoenen van de paspop)
+  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze schoenen',   price: 0,  color: '#e91e63' },
+  { id: 'shoes_rood',  cat: 'shoes', name: 'Rode schoenen',   price: 10, color: '#e53935' },
+  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauwe schoenen', price: 15, color: '#1e88e5' },
+  { id: 'shoes_geel',  cat: 'shoes', name: 'Gele schoenen',   price: 15, color: '#fdd835' },
+  { id: 'shoes_paars', cat: 'shoes', name: 'Paarse schoenen', price: 15, color: '#8e24aa' },
+  { id: 'shoes_groen', cat: 'shoes', name: 'Groene schoenen', price: 20, color: '#43a047' },
   { id: 'shoes_zwart', cat: 'shoes', name: 'Stoere laarsjes',   price: 25, color: '#37474f' },
-  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitterschoentjes', price: 60, color: '#ffd54f' },
-  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog schoentjes', price: 80, color: 'RAINBOW' },
+  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitterschoenen', price: 60, color: '#ffd54f' },
+  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog schoenen', price: 80, color: 'RAINBOW' },
   // Microfoons
   { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauwe micro',   price: 35, color: '#42a5f5' },
@@ -1477,7 +1487,7 @@ const item = id => ITEMS.find(i => i.id === id);
 // Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
 const CATS = [
   { id: 'dress', name: '👗 Jurken' },
-  { id: 'shoes', name: '👟 Schoentjes' },
+  { id: 'shoes', name: '👟 Schoenen' },
   { id: 'hair',  name: '💇 Haar' },
   { id: 'mic',   name: '🎤 Micro' },
   { id: 'instrument', name: '🎸 Muziek' },
@@ -1551,7 +1561,7 @@ const TROPHIES = [
   { id: 'collector',  emoji: '🎁', name: 'Koopgek', desc: '25 spulletjes',         has: p => boughtCount(p) >= 25, progress: p => trophyProgress(boughtCount(p), 25, 'spulletjes gekocht') },
   // 👗 Kleedkamercollecties — volledige item-sets verzamelen
   { id: 'modekoningin', emoji: '👗', name: 'Modekoningin',  desc: 'Alle jurken',           has: p => catCount(p, 'dress') >= DRESS_TOTAL, progress: p => trophyProgress(catCount(p, 'dress'), DRESS_TOTAL, 'jurken') },
-  { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Alle schoentjes',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoentjes') },
+  { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Alle schoenen',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoenen') },
   { id: 'haarstylist',  emoji: '💇', name: 'Haarstylist',   desc: 'Alle haarkleuren',      has: p => catCount(p, 'hair') >= HAIR_TOTAL, progress: p => trophyProgress(catCount(p, 'hair'), HAIR_TOTAL, 'haarkleuren') },
   { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
   { id: 'podiumbouwer', emoji: '🎪', name: 'Podiumbouwer',  desc: 'Alle podia',            has: p => catCount(p, 'stage') >= STAGE_TOTAL, progress: p => trophyProgress(catCount(p, 'stage'), STAGE_TOTAL, 'podia') },
@@ -1613,7 +1623,7 @@ const THEME_SETS = {
 };
 // Kortere, kindvriendelijke labels voor lange itemnamen in de look-checklist.
 const THEME_ITEM_LABEL = {
-  shoes_goud: 'Gouden schoentjes', mic_zwart: 'Rockmicro', acc_bril: 'Zonnebril',
+  shoes_goud: 'Gouden schoenen', mic_zwart: 'Rockmicro', acc_bril: 'Zonnebril',
   pet_eekhoorn: 'Eekhoorn', hair_zilver: 'Zilver haar'
 };
 // Korte, duidelijke naam van een stuk (zonder emoji — rustiger in de checklist).
@@ -1680,7 +1690,7 @@ function migrate(p) {
   if (!p.weak) p.weak = {};
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
-  // schoentjes-categorie: bestaande profielen krijgen de gratis roze schoentjes aan
+  // schoenen-categorie: bestaande profielen krijgen de gratis roze schoenen aan
   if (!('shoes' in p.equipped)) {
     p.equipped.shoes = 'shoes_roze';
     if (!p.owned.includes('shoes_roze')) p.owned.push('shoes_roze');
@@ -2310,7 +2320,7 @@ function renderShelves() {
 const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'steden': 'stad', 'sommen': 'som', 'sterren': 'ster',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
-  'spulletjes': 'spulletje', 'jurken': 'jurk', 'schoentjes': 'schoentje',
+  'spulletjes': 'spulletje', 'jurken': 'jurk', 'schoenen': 'schoen',
   'haarkleuren': 'haarkleur', 'instrumenten': 'instrument', 'podia': 'podium',
   'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee'
 };
@@ -3138,23 +3148,14 @@ function renderShop() {
   renderDressBar(selected, p);
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
+  // alle 8 categorieën staan altijd in beeld (1 rij of een vaste 4x2-grid,
+  // zie .shop-tabs @container hieronder) -- geen scroll-gedoe meer nodig
   CATS.forEach(c => {
     const b = document.createElement('button');
     b.className = 'tab-btn' + (c.id === shopCat ? ' active' : '');
     b.textContent = c.name;
     b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; renderShop(); };
     tabs.appendChild(b);
-  });
-  if (!tabs.dataset.fadeBound) {
-    tabs.dataset.fadeBound = '1';
-    tabs.addEventListener('scroll', () => updateFades(tabs), { passive: true });
-  }
-  // actieve tab in beeld + fade-randen goed zetten. Bewust géén scrollIntoView:
-  // dat scrolt ook het scherm zelf opzij (zichtbaar als "verschuiving" bij Dieren/Podium).
-  requestAnimationFrame(() => {
-    const act = tabs.querySelector('.active');
-    if (act) centerStop(tabs, act, 0, false);
-    updateFades(tabs);
   });
   const grid = $('item-grid');
   grid.innerHTML = '';
