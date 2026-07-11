@@ -386,17 +386,31 @@
     flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
     width: 100%; min-height: 0; z-index: 1;
   }
+  /* algehele tournee-voortgang ("Stad 3 van 12") stond eerst als "Show N" op élk
+     kaartje herhaald -- overbodig naast de positie op het pad zelf, en het nam
+     een hele tekstregel per stad in beslag. Hier staat het maar één keer. */
+  .tour-progress {
+    font-size: 13.5px; font-weight: 700; opacity: .85; margin-bottom: 8px;
+    text-shadow: 0 1px 0 var(--glass-black-18); text-align: center;
+  }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform (zie updateParallax). Ooit zat de transform op
      .map-sky zelf -- dan verschuift de knip-grens mee met de parallax, en
      ontstaat er een onzichtbare strook aan de kant van het scherm waar
-     nooit meer een wolk kan verschijnen (precies dezelfde reden dat
-     .tour-decor-layer en .tour-map-wrap al wél gesplitst waren). */
+     nooit meer een wolk kan verschijnen (zelfde reden dat .tour-map-wrap
+     hieronder ook een eigen, niet-transformerende omhulling heeft). */
   .map-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .map-sky-inner { position: absolute; inset: 0; }
   .map-sky-inner > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
   @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
+  /* een enkel vliegtuig de andere kant op, voor wat diepte -- gespiegeld
+     zodat de neus ook echt de reisrichting op wijst */
+  .map-sky-inner > span.rev { animation-name: driftReverse; }
+  @keyframes driftReverse {
+    from { transform: translateX(calc(100vw + 80px)) scaleX(-1); }
+    to { transform: translateX(-80px) scaleX(-1); }
+  }
 
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
@@ -617,95 +631,60 @@
      die 10px viel de zachte slagschaduw van de Speel-knop er net buiten bij
      haltes die door de golvende route wat lager uitkomen. */
   .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 154px 26px 114px; }
-  /* de reisweg is een zacht slingerend SVG-pad dat dóór het midden van elke halte
-     loopt (punten & kromming gezet door updateRoad/renderTourMap); het afgelegde
-     deel licht warm op, de weg vooruit blijft dof. */
+  /* de reisweg is één rechte, volle lijn dóór het midden van elke halte
+     (punten gezet door updateRoad/renderTourMap), gewoon dóór de tegels heen
+     -- die zijn ondoorzichtig, dus dekt vanzelf af. Twee lagen: het hele pad
+     dof ("nog te ontdekken"), het afgelegde stuk daar bovenop vol goud
+     ("al gehaald"), zelfde taal als de gelijknamige tegel-staten. */
   .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .tour-road-bg, .tour-road-fg, .tour-road-fade { fill: none; stroke-linecap: round; }
-  /* de weg vooruit (nog te ontdekken) blijft een dof stippelpad */
-  .tour-road-bg { stroke: var(--glass-white-35); stroke-width: 6; stroke-dasharray: 2 15; }
-  /* het afgelegde deel is een vol lint i.p.v. een stippellijn (leest in één oogopslag als
-     "hier heb je al gelopen"), zelfde dikte als het stippelpad — geen extra gloeirand.
-     Groen (net als de voltooide haltes) lopend naar goud toe naar de volgende halte,
-     als een klein "je bent er bijna"-effect (kleurverloop gezet door updateRoad). */
-  .tour-road-fg { stroke: url(#roadTraveledGrad); stroke-width: 6; }
-  /* de weg loopt nog een stukje door ná de laatst getoonde halte en dooft daar uit —
-     een hint dat de tournee (oneindig) verder gaat dan wat nu in beeld is */
-  .tour-road-fade { stroke: url(#roadFadeGrad); stroke-width: 6; stroke-dasharray: 2 15; }
-  /* subtiel twinkelend sterretje dat vanzelf oppopt op het afgelegde deel van de weg
-     (los van de reisanimatie) — geen val-beweging, gewoon even oplichten */
-  .road-twinkle { position: fixed; font-size: 15px; z-index: 2; pointer-events: none; opacity: 0;
-    animation: roadTwinkle 1.8s ease-out forwards; }
-  @keyframes roadTwinkle {
-    0% { opacity: 0; transform: scale(.4); }
-    35% { opacity: .95; transform: scale(1.05); }
-    100% { opacity: 0; transform: scale(.7) translateY(-8px); }
-  }
-  /* grote, gedimde decor-iconen op de achtergrond van de route (zie addRouteDecor) —
-     dezelfde stijl als de vroegere vaste "poster-mic": groot, dof, licht schuin,
-     zachtjes zwevend, en herhalen zich eindeloos.
-     Eigen laag, BUITEN .tour-map (de scroller) — een kind van de scrollende
-     container blijft altijd meescrollen, ook met position:absolute (alleen
-     position:fixed ontsnapt daaraan); zou de laag ín .tour-map zitten, dan
-     schuift elke scroll 'm dubbel op (de native scroll + onze eigen parallax-
-     verschuiving bovenop) en groeit de scrollbare route bovendien eindeloos
-     mee. Vandaar .tour-map-wrap: een strakke, even grote omhulling met daarin
-     de decor-laag (overflow:hidden, blijft op zijn plek) als vaste buur van
-     .tour-map, niet als kind ervan. Positie wordt bij het scrollen steeds vers
-     herberekend (zie updateParallax), nooit een transform bovenop een vorige.
-     Twee lagen ín elk decor-icoon: .tour-decor (buiten) krijgt alleen de vaste
-     centrering — .tour-decor-inner (binnen) de vaste rotatie + het zweven (CSS). */
+  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; }
+  .tour-road-bg { stroke: var(--glass-white-35); stroke-width: 6; }
+  .tour-road-fg { stroke: var(--gold-accent); stroke-width: 6; }
   .tour-map-wrap { position: relative; width: 100%; max-width: 760px; }
-  .tour-decor-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-  .tour-decor { position: absolute; pointer-events: none; user-select: none; }
-  .tour-decor-inner { line-height: 1; animation: decorFloat 7s ease-in-out infinite alternate; }
-  @keyframes decorFloat {
-    from { transform: rotate(var(--rot, 0deg)) translateY(0); }
-    to { transform: rotate(var(--rot, 0deg)) translateY(-14px); }
-  }
   .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
     background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
-  .tour-stop .dot { width: 74px; height: 74px; margin: 0 auto; border-radius: 21px; display: flex; align-items: center; justify-content: center;
-    font-size: 36px; border: 2px solid var(--glass-white-35); }
-  .tour-stop:active .dot { transform: translateY(2px); }
-  /* the two rules above/below tie in specificity with the plain .done/.next state
-     rules and lose on source order, so a shared fallback color here would never
-     actually render -- each tappable state needs its own :active box-shadow
-     (higher specificity via the compound .done:active / .next:active selector)
-     so the press visually collapses in that state's own color. .locked isn't
-     tappable (no onclick), so it's left without one. */
-  /* .done's resting rule now sets its own transform (scale(.85)) too, and per
-     the same specificity-tie behavior documented above, that would silently
-     win over a plain "transform: translateY(2px)" here and swallow the press
-     animation entirely -- so this explicitly combines both instead of just
-     translating, keeping the size AND the tap feedback. */
-  .tour-stop.done:active .dot { box-shadow: 0 2px 0 var(--green-shadow); transform: scale(.85) translateY(2px); }
-  .tour-stop.next:active .dot { box-shadow: 0 2px 0 var(--gold-cta-shadow); }
+  /* Minimale medaillon-stijl i.p.v. een 3D-knop: plat rondje, dunne rand,
+     geen drop-shadow-lip. Een halte is een plek op een kaart, geen knop --
+     de "tik me in" actie zit al in de losse Speel!-knop hieronder.
+     Alle tegels zelfde maat, ongeacht staat -- alleen kleur/opaciteit
+     vertelt het verhaal. "Gedaan" en "nu speelbaar" delen bewust dezelfde
+     goud-tint (beide zijn gewoon tikbaar); alleen de huidige halte krijgt
+     er een puls + gloed + de Speel-knop bovenop. Op slot = ontkleurd. */
+  /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
+     de reisweg erdoorheen. .locked hergebruikt gewoon diezelfde paarse vulling
+     via grayscale(1) i.p.v. een eigen kleur te zetten. */
+  .tour-stop .dot { position: relative; width: 70px; height: 70px; margin: 0 auto; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 33px; border: 2px solid var(--glass-white-30); background: var(--purple-shadow); }
+  .tour-stop:active .dot { transform: scale(.92); }
   .tour-stop.locked { cursor: default; }
-  /* op slot: dekkend (geen doorschijnende reisweg door de tegel) en een maatje
-     kleiner — hiërarchie: goud (nu) > groen (gedaan) > grijs (nog niet) */
-  .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip-sm) 0 var(--gray-shadow);
-    border-color: var(--glass-white-22); transform: scale(.85); }
-  /* same size tier as .locked (.85 scale): "done" and "not yet unlocked" both
-     recede equally, only gold's "act here now" tile stays full-size. The star
-     rating underneath still carries the achievement -- shrinking the tile
-     itself doesn't understate what was earned there. Color-wise, kept the
-     same vivid green as the buttons (--green-top/--green-deep) -- a muted,
-     desaturated variant was tried here but read as too dull/flat in practice. */
-  .tour-stop.done .dot { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); transform: scale(.85); }
-  .tour-stop.next .dot { background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow); border-color: var(--c-white); animation: pulseBtn 1.2s ease-in-out infinite; }
-  .tour-stop .cname { font-size: 14.5px; font-weight: bold; margin-top: 8px; }
+  .tour-stop.locked .dot { filter: grayscale(1); }
+  .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); }
+  /* pulseBtn animeert zelf al transform (scale) -- een :active transform
+     zou dat gewoon overschrijven zolang de animatie loopt, dus tikfeedback
+     op "next" gaat via filter (dat de animatie niet aanraakt) i.p.v. transform.
+     Zelfde aanpak voor "done" erbij, voor identieke tikrespons in beide staten. */
+  .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.85); }
+  .tour-stop.next .dot { box-shadow: 0 0 0 5px rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
+  .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 7px; }
   .tour-stop.next .cname { color: var(--gold-light); }
   .tour-stop.locked .cname { opacity: .6; }
-  .tour-stop .lvlnr { font-size: 12px; opacity: .82; }
-  .tour-stop.locked .lvlnr { opacity: .5; }
-  .tour-stop .stars { font-size: 12px; letter-spacing: -1px; height: 15px; }
-  /* nog te verdienen sterren op een gespeelde stad: dof — nodigt uit tot overspelen */
-  .tour-stop .stars .star-miss { opacity: .3; filter: grayscale(1); }
-  /* de eigen ster staat óp de kaart, bij haar volgende show — zij is de "je bent hier"-pin */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 10px); transform: translateX(-50%);
-    width: 96px; pointer-events: none; z-index: 2; }
+  /* sterren als gewone tekstregel onder de naam i.p.v. een badge óp de tegel --
+     geen aparte positionering/overlap meer nodig, past vanzelf altijd netjes */
+  .tour-stop .cstars { font-size: 11.5px; letter-spacing: -1px; opacity: .92; margin-top: 1px; }
+  .tour-stop .cstars .star-miss { opacity: .4; filter: grayscale(1); }
+  /* de eigen ster staat vol in beeld, boven op de huidige halte (voeten net
+     over de rand van de tegel) i.p.v. ín een uitsnede -- die tegel toont dan
+     ook geen stadsicoon: je "verdient" dat nog door de show te spelen, je
+     ziet het pas op het volgende scherm. Zelfde element voor de reisanimatie
+     (zie runTravel): tijdens het huppelen staat ze op de vorige halte. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 14px); transform: translateX(-50%);
+    width: 92px; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
+  /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
+     zonder dit oogt ze net zo goed los zwevend erboven */
+  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
+    width: 34px; height: 9px; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
   /* dé speelknop van het spel: zit vast aan de huidige halte */
   .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%; transform: translateX(-50%);
     font-size: 20px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; white-space: nowrap;
@@ -717,7 +696,7 @@
   @media (max-height: 700px) {
     .tour-track { padding: 124px 22px 100px; }
     .tour-stop { width: 96px; }
-    .tour-stop .dot { width: 62px; height: 62px; font-size: 31px; border-radius: var(--radius-button); }
+    .tour-stop .dot { width: 58px; height: 58px; font-size: 27px; }
     .tour-hero { width: 82px; }
     .tour-speel { font-size: 18px; padding: 11px 22px; }
   }
@@ -726,10 +705,9 @@
   @media (min-height: 800px) {
     .tour-track { padding: 178px 30px 128px; }
     .tour-stop { width: 124px; }
-    .tour-stop .dot { width: 90px; height: 90px; font-size: 44px; border-radius: 25px; }
+    .tour-stop .dot { width: 84px; height: 84px; font-size: 40px; }
     .tour-stop .cname { font-size: 16px; }
-    .tour-stop .lvlnr { font-size: 13px; }
-    .tour-stop .stars { font-size: 13px; height: 16px; }
+    .tour-stop .cstars { font-size: 13px; }
     .tour-hero { width: 118px; bottom: calc(100% - 12px); }
     .tour-speel { font-size: 22px; padding: 15px 30px; }
   }
@@ -741,7 +719,7 @@
     .map-portrait .pframe svg { top: -6px; width: 72px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .map-sky span, .tour-speel, .tour-stop.next .dot, .avatar-holder.idle, .tour-decor-inner { animation: none; }
+    .map-sky span, .tour-speel, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
   }
 
   /* ---- Trofeeën ---- */
@@ -999,6 +977,17 @@
      other selected item -- this combined selector's higher specificity wins
      outright, no reliance on rule order. */
   .item-card.owned.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); }
+  /* zelfde tie als hierboven, maar dan voor :hover -- .owned/.equipped/.selected
+     zetten allemaal hun eigen achtergrond, met dezelfde specificiteit als de
+     kale .item-card:hover regel. Die verliest dus stilzwijgend de tie (bron-
+     volgorde), en een owned/equipped/selected kaartje reageerde daardoor
+     helemaal niet op hover terwijl een niet-bezeten kaartje wél oplichtte.
+     Hier expliciet per staat een eigen, iets lichtere hover-tint (in de eigen
+     kleur van die staat) zodat ieder kaartje evengoed op hover reageert. */
+  .item-card.owned:hover { background: rgba(180,184,196,.18); }
+  .item-card.equipped:hover { background: rgba(255,214,90,.18); }
+  .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.24); }
+  .item-card.selected.equipped:hover { background: rgba(255,214,90,.18); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
   .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
@@ -1152,9 +1141,10 @@
   <div class="screen active" id="screen-profile">
     <div class="map-sky" aria-hidden="true">
       <div class="map-sky-inner">
-        <span style="top:16%;font-size:30px;animation-duration:80s;animation-delay:-25s">☁️</span>
-        <span style="top:42%;font-size:24px;animation-duration:95s;animation-delay:-58s">☁️</span>
-        <span style="top:82%;font-size:28px;animation-duration:85s;animation-delay:-40s">☁️</span>
+        <span style="top:14%;font-size:28px;animation-duration:85s;animation-delay:-20s;opacity:.24">☁️</span>
+        <span style="top:36%;font-size:22px;animation-duration:95s;animation-delay:-55s;opacity:.18">☁️</span>
+        <span style="top:60%;font-size:32px;animation-duration:75s;animation-delay:-10s;opacity:.3">☁️</span>
+        <span style="top:84%;font-size:26px;animation-duration:88s;animation-delay:-42s;opacity:.22">☁️</span>
       </div>
     </div>
     <h1 class="title">🎤 Reken Popsterren 🎶</h1>
@@ -1166,10 +1156,13 @@
   <div class="screen hub" id="screen-map">
     <div class="map-sky" aria-hidden="true">
       <div class="map-sky-inner">
-        <span style="top:15%;font-size:34px;animation-duration:75s;animation-delay:-20s">☁️</span>
-        <span style="top:38%;font-size:26px;animation-duration:95s;animation-delay:-62s">☁️</span>
-        <span style="top:78%;font-size:30px;animation-duration:85s;animation-delay:-41s">☁️</span>
-        <span style="top:62%;font-size:23px;animation-duration:58s;animation-delay:-12s">✈️</span>
+        <span style="top:8%;font-size:26px;animation-duration:88s;animation-delay:-30s;opacity:.22">☁️</span>
+        <span style="top:24%;font-size:34px;animation-duration:70s;animation-delay:-15s;opacity:.3">☁️</span>
+        <span style="top:40%;font-size:22px;animation-duration:100s;animation-delay:-70s;opacity:.18">☁️</span>
+        <span style="top:58%;font-size:30px;animation-duration:80s;animation-delay:-45s;opacity:.26">☁️</span>
+        <span style="top:80%;font-size:36px;animation-duration:65s;animation-delay:-8s;opacity:.32">☁️</span>
+        <span style="top:33%;font-size:24px;animation-duration:58s;animation-delay:-12s;opacity:.3">✈️</span>
+        <span class="rev" style="top:68%;font-size:20px;animation-duration:72s;animation-delay:-40s;opacity:.2">✈️</span>
       </div>
     </div>
     <div class="map-topbar">
@@ -1182,8 +1175,8 @@
       </div>
     </div>
     <div class="map-flex">
+      <div class="tour-progress" id="tour-progress"></div>
       <div class="tour-map-wrap">
-        <div class="tour-decor-layer" id="tour-decor-layer" aria-hidden="true"></div>
         <div class="tour-map hscroll-fade" id="tour-map"></div>
       </div>
     </div>
@@ -1904,10 +1897,6 @@ const NAV_FOR_SCREEN = { 'screen-map': 'nav-map', 'screen-dress': 'nav-dress', '
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
-  // twinkeltjes op de reisweg lopen alleen terwijl de kaart in beeld is
-  const wantsTwinkle = id === 'screen-map' && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  if (wantsTwinkle && !roadTwinkleTimer) scheduleRoadTwinkle();
-  else if (!wantsTwinkle && roadTwinkleTimer) { clearTimeout(roadTwinkleTimer); roadTwinkleTimer = null; }
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   if (!onProfile) closeGearMenu();
@@ -2009,7 +1998,6 @@ function setupTourMap(map) {
    show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
    zichtbaar door naar de nieuwe stad (zie runTravel). */
 let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
-let roadTwinkleTimer = null;   // plant af en toe een twinkeltje op het afgelegde deel van de weg
 
 // Hoeveel elke halte boven/onder de basislijn zwaait: kleiner op lage schermen
 // (minder verticale ruimte), groter op hoge schermen, net als de rest van de kaart.
@@ -2023,116 +2011,13 @@ function waveAmplitude() {
 function waveY(i, amp) { return Math.round(Math.sin(i * 0.9) * amp); }
 // Breedte van een halte en de zijmarge van de route: volgt dezelfde drie
 // schermgroottes als de CSS-breakpoints (zie .tour-stop / .tour-track).
-function stopWidth() {
-  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 96;
-  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 124;
-  return 108;
-}
-function trackPad() {
-  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 22;
-  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 30;
-  return 26;
-}
-// Vast (niet random) "toeval" op basis van een getal: dezelfde halte geeft
-// steeds dezelfde uitkomst, zodat decor niet rondspringt bij elke re-render.
-function hash01(n) { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
-// Grote, sterk gedimde decor-iconen op de achtergrond van de reisweg — allemaal
-// in dezelfde stijl als de vroegere vaste poster-mic (groot, dof, schuin,
-// zwevend). De mic zelf is nu ook onderdeel van deze reeks (als eerste, dus
-// meteen zichtbaar bij het openen van de kaart) i.p.v. los vastgeplakt aan het
-// scherm. Leeft ín de track, scrolt dus mee en herhaalt zich eindeloos.
-const ROUTE_DECOR = ['🎤', '🪩', '🎧', '🎶', '⭐', '🎸'];
-// Achtergrond-decor scrollt trager dan de route zelf (0 = staat helemaal stil,
-// 1 = scrollt exact mee) — dat kleine verschil geeft het dieptegevoel van parallax.
-const DECOR_PARALLAX_RATE = 0.55;
-// "layer" is de losse .tour-decor-layer (géén kind van de scrollende .tour-track!)
-// — homeX blijft de track-lokale positie, maar wordt bewaard in data-home-x en pas
-// bij het scrollen omgerekend naar een absolute (niet-scrollende) links-positie.
-function addRouteDecor(layer, maxShow, stopW, padX, scrollLeft) {
-  let n = 0;
-  // om de halte i.p.v. om de 2: op een lang scherm zag je anders maar één
-  // decor-stukje per beeld, ver uit elkaar — dichter bij elkaar vult de
-  // achtergrond ook op een lange tournee merkbaar op
-  for (let l = 1; l <= maxShow; l++, n++) {
-    const h = hash01(l * 7.31);
-    const homeX = padX + (l - 0.5) * stopW;
-    const outer = document.createElement('div');
-    outer.className = 'tour-decor';
-    outer.dataset.homeX = homeX;
-    outer.style.left = (homeX - scrollLeft * DECOR_PARALLAX_RATE) + 'px';
-    outer.style.transform = 'translateX(-50%)';   // alleen centreren — blijft vast, geen scroll-afhankelijke transform
-    // ruimer bereik dan voorheen (was 18-64px/14-54px): benut meer van de
-    // bestaande padding-band boven/onder de haltes i.p.v. vlak tegen de rand
-    // te blijven plakken, zodat de nu-lege ruimte daar ook wat opvult
-    if (n % 2 === 0) outer.style.top = Math.round(20 + hash01(l * 3.1) * 80) + 'px';
-    else outer.style.bottom = Math.round(15 + hash01(l * 5.7) * 60) + 'px';
-    const inner = document.createElement('div');
-    inner.className = 'tour-decor-inner';
-    inner.textContent = ROUTE_DECOR[n % ROUTE_DECOR.length];
-    inner.style.fontSize = Math.round(70 + h * 55) + 'px';
-    inner.style.opacity = (0.10 + h * 0.07).toFixed(2);
-    inner.style.setProperty('--rot', Math.round(-20 + h * 40) + 'deg');
-    inner.style.animationDuration = (6 + h * 3).toFixed(1) + 's';
-    inner.style.animationDelay = (-hash01(l * 4.4) * 8).toFixed(1) + 's';
-    outer.appendChild(inner);
-    layer.appendChild(outer);
-  }
-}
-// Schuift de achtergrondlucht en de route-decor mee bij het scrollen door de
-// route, allebei trager dan de haltes zelf — het klassieke parallax-dieptetrucje.
-// BELANGRIJK: de decor-laag leeft buiten .tour-map (zie .tour-map-wrap hierboven)
-// en de positie wordt hier altijd vérs uitgerekend op basis van map.scrollLeft
-// (nooit een transform bóvenop een eerdere transform) — anders schuift de decor
-// dubbel op en/of groeit de scrollbare route eindeloos mee.
+// Schuift de achtergrondlucht mee bij het scrollen door de route, trager dan
+// de haltes zelf — het klassieke parallax-dieptetrucje. De transform hoort op
+// de binnenste laag (zie .map-sky-inner hierboven), niet op .map-sky zelf,
+// anders schuift de knip-grens mee met de parallax.
 function updateParallax(map) {
-  // de transform hoort op de binnenste laag (zie .map-sky-inner hierboven),
-  // niet op .map-sky zelf, anders schuift de knip-grens mee met de parallax
   const sky = document.querySelector('#screen-map .map-sky-inner');
   if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
-  const layer = $('tour-decor-layer');
-  if (!layer) return;
-  layer.querySelectorAll('.tour-decor').forEach(el => {
-    el.style.left = (parseFloat(el.dataset.homeX) - map.scrollLeft * DECOR_PARALLAX_RATE) + 'px';
-  });
-}
-// Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
-// zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
-function smoothPath(pts) {
-  if (!pts.length) return '';
-  if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
-  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] || pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] || p2;
-    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
-    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-  }
-  return d;
-}
-// Plant met wat willekeurige tussenpozen een klein sterretje op de afgelegde weg
-// (los van de reisanimatie) — een rustig, doorlopend levensteken op de kaart.
-function scheduleRoadTwinkle() {
-  roadTwinkleTimer = setTimeout(() => { twinkleOnRoad(); scheduleRoadTwinkle(); }, rnd(2600, 4600));
-}
-function twinkleOnRoad() {
-  const map = $('tour-map');
-  const track = map && map.querySelector('.tour-track');
-  const fg = track && track.querySelector('.tour-road-fg');
-  if (!fg || !fg.getTotalLength) return;
-  const len = fg.getTotalLength();
-  if (!len) return;
-  const pt = fg.getPointAtLength(rnd(0, Math.round(len)));
-  const trackRect = track.getBoundingClientRect();
-  const s = document.createElement('div');
-  s.className = 'road-twinkle';
-  s.textContent = pick(['✨', '⭐', '💫']);
-  s.style.left = (trackRect.left + pt.x - 8) + 'px';
-  s.style.top = (trackRect.top + pt.y - 8) + 'px';
-  document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1900);
 }
 function goMap() {
   const p = P();
@@ -2140,6 +2025,9 @@ function goMap() {
   $('map-diamonds').textContent = p.diamonds;
   $('map-stars').textContent = totalStarCount(p);
   $('map-portrait').innerHTML = `<span class="pframe">${avatarSVG(p, 80)}</span><span class="dressdot">👗</span>`;
+  const posInRound = ((p.level - 1) % CITIES.length) + 1;
+  const round = cityFor(p.level).ronde;
+  $('tour-progress').textContent = `🌍 Stad ${posInRound} van ${CITIES.length}` + (round > 1 ? ` · Ronde ${round}` : '');
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
@@ -2155,6 +2043,20 @@ function goMap() {
     if (travel) runTravel(travel);
   });
 }
+// Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
+// zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
+function smoothPath(ps) {
+  if (!ps.length) return '';
+  if (ps.length === 1) return `M${ps[0].x},${ps[0].y}`;
+  let d = `M${ps[0].x.toFixed(1)},${ps[0].y.toFixed(1)}`;
+  for (let i = 0; i < ps.length - 1; i++) {
+    const p0 = ps[i - 1] || ps[i], p1 = ps[i], p2 = ps[i + 1], p3 = ps[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
 // Tekent de golvende reisweg als vloeiend SVG-pad dóór het midden van elke halte:
 // het afgelegde deel licht warm op (tot de halte waar de ster nu staat), de rest blijft dof.
 function updateRoad(map) {
@@ -2163,51 +2065,22 @@ function updateRoad(map) {
   const svg = track.querySelector('.tour-road-svg');
   const bg = track.querySelector('.tour-road-bg');
   const fg = track.querySelector('.tour-road-fg');
-  const fgGrad = track.querySelector('#roadTraveledGrad');
-  const fade = track.querySelector('.tour-road-fade');
-  const fadeGrad = track.querySelector('#roadFadeGrad');
   const stops = [...track.querySelectorAll('.tour-stop')];
   if (!svg || !stops.length) return;
   svg.setAttribute('width', track.scrollWidth);
   svg.setAttribute('height', track.scrollHeight);
   const trackRect = track.getBoundingClientRect();
   const pts = stops.map(st => {
-    const dot = st.querySelector('.dot');
-    const r = dot.getBoundingClientRect();
+    const r = st.querySelector('.dot').getBoundingClientRect();
     return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
   });
+  // één vloeiende curve dóór alle haltes -- de tegels hebben een ondoorzichtige
+  // vulling (zie .tour-stop .dot) en dekken het pad vanzelf volledig af
   bg.setAttribute('d', smoothPath(pts));
   const hero = track.querySelector('.tour-hero');
   const target = track.querySelector('.tour-stop.next') || (hero && hero.closest('.tour-stop'));
   const targetIdx = target ? stops.indexOf(target) : -1;
-  const traveledD = targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '';
-  fg.setAttribute('d', traveledD);
-  if (fgGrad && targetIdx > 0) {
-    // het "warmt op naar goud"-effect hoort maar bij het laatste stukje (vorige
-    // halte -> nu), niet over de hele afgelegde route uitgesmeerd -- anders
-    // schuift de kleur bij elke volgende stad geleidelijk mee op en oogt een
-    // stad van vroeg in de tournee alsof daar ook nog iets "in wording" is.
-    // De gradient-spreadMethod is standaard "pad", dus alles vóór dit laatste
-    // stukje klemt vanzelf vast op de eerste stop-kleur (het rustige donkere
-    // groen) -- geen aparte path nodig voor het oudere, al voltooide stuk.
-    fgGrad.setAttribute('x1', pts[targetIdx - 1].x); fgGrad.setAttribute('y1', pts[targetIdx - 1].y);
-    fgGrad.setAttribute('x2', pts[targetIdx].x); fgGrad.setAttribute('y2', pts[targetIdx].y);
-  }
-  // laat de weg nog twee "haltes" ver doorlopen ná de laatste die we tonen en
-  // laat 'm daar uitdoven: een hint dat de tournee verder gaat dan dit stukje kaart
-  const n = pts.length;
-  if (fade && n >= 2) {
-    const amp = waveAmplitude();
-    const stepDx = pts[n - 1].x - pts[n - 2].x;
-    const baseY = pts[n - 1].y - waveY(n - 1, amp);
-    const extPts = [pts[n - 1]];
-    for (let k = 1; k <= 2; k++) extPts.push({ x: pts[n - 1].x + stepDx * k, y: baseY + waveY(n - 1 + k, amp) });
-    fade.setAttribute('d', smoothPath(extPts));
-    if (fadeGrad) {
-      fadeGrad.setAttribute('x1', extPts[0].x); fadeGrad.setAttribute('y1', extPts[0].y);
-      fadeGrad.setAttribute('x2', extPts[2].x); fadeGrad.setAttribute('y2', extPts[2].y);
-    }
-  } else if (fade) fade.setAttribute('d', '');
+  fg.setAttribute('d', targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '');
 }
 // Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
 // de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
@@ -2217,62 +2090,21 @@ function renderTourMap(travelFrom) {
   const heroLvl = travelFrom || p.level;
   const map = $('tour-map');
   map.innerHTML = '';
-  // vaste, niet-scrollende laag naast .tour-map (zie .tour-map-wrap/.tour-decor-layer
-  // hierboven) — geen kind van map, dus map.innerHTML='' laat 'm met rust; we
-  // bouwen 'm hier gewoon opnieuw op
-  const decorLayer = $('tour-decor-layer');
-  decorLayer.innerHTML = '';
   const track = document.createElement('div');
   track.className = 'tour-track';
-  // toont alle steden + een paar shows vooruit; de route schaalt met elk aantal shows
-  const maxShow = Math.max(CITIES.length, p.level + 2);
+  // toont alleen de huidige halte + 3 op-slot haltes erna -- verder dan dat
+  // hoeft niet zichtbaar/scrollbaar te zijn
+  const maxShow = heroLvl + 3;
   const amp = waveAmplitude();
-  addRouteDecor(decorLayer, maxShow, stopWidth(), trackPad(), map.scrollLeft);
   const svgNS = 'http://www.w3.org/2000/svg';
   const roadSvg = document.createElementNS(svgNS, 'svg');
   roadSvg.setAttribute('class', 'tour-road-svg');
   roadSvg.setAttribute('aria-hidden', 'true');
-  const defs = document.createElementNS(svgNS, 'defs');
-  const fadeGrad = document.createElementNS(svgNS, 'linearGradient');
-  fadeGrad.setAttribute('id', 'roadFadeGrad');
-  fadeGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
-  const fadeStop1 = document.createElementNS(svgNS, 'stop');
-  fadeStop1.setAttribute('offset', '0%');
-  fadeStop1.setAttribute('stop-color', 'rgba(255,255,255,.35)');
-  const fadeStop2 = document.createElementNS(svgNS, 'stop');
-  fadeStop2.setAttribute('offset', '100%');
-  fadeStop2.setAttribute('stop-color', 'rgba(255,255,255,0)');
-  fadeGrad.appendChild(fadeStop1);
-  fadeGrad.appendChild(fadeStop2);
-  defs.appendChild(fadeGrad);
-  // afgelegd pad: zelfde groen als de voltooide haltes zelf (--green-deep,
-  // het donkerdere van de twee knoppen-groentinten) dat pas in het
-  // allerlaatste stukje opwarmt naar goud, vlak vóór de halte waar je nu
-  // staat (zie updateRoad voor de x1/y1/x2/y2 die dat stukje afbakenen).
-  // Bewust de donkerdere tint, niet de lichtere: hoe verder de tournee
-  // vordert, hoe langer dit pad wordt, en het mag dan niet juist
-  // opvallender worden naarmate er meer steden bij komen.
-  const traveledGrad = document.createElementNS(svgNS, 'linearGradient');
-  traveledGrad.setAttribute('id', 'roadTraveledGrad');
-  traveledGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
-  const travStop1 = document.createElementNS(svgNS, 'stop');
-  travStop1.setAttribute('offset', '0%');
-  travStop1.setAttribute('stop-color', '#2e7d32');
-  const travStop2 = document.createElementNS(svgNS, 'stop');
-  travStop2.setAttribute('offset', '100%');
-  travStop2.setAttribute('stop-color', '#ffda6a');
-  traveledGrad.appendChild(travStop1);
-  traveledGrad.appendChild(travStop2);
-  defs.appendChild(traveledGrad);
   const bgPath = document.createElementNS(svgNS, 'path');
   bgPath.setAttribute('class', 'tour-road-bg');
-  const fadePath = document.createElementNS(svgNS, 'path');
-  fadePath.setAttribute('class', 'tour-road-fade');
   const fgPath = document.createElementNS(svgNS, 'path');
   fgPath.setAttribute('class', 'tour-road-fg');
-  roadSvg.appendChild(defs);
   roadSvg.appendChild(bgPath);
-  roadSvg.appendChild(fadePath);
   roadSvg.appendChild(fgPath);
   track.appendChild(roadSvg);
   for (let l = 1; l <= maxShow; l++) {
@@ -2281,7 +2113,7 @@ function renderTourMap(travelFrom) {
     b.className = 'tour-stop';
     b.dataset.lvl = l;
     // elke halte zwaait een beetje op/neer t.o.v. de vorige — dat maakt van de weg
-    // een zachte S-curve i.p.v. een rechte lijn (zie waveY/smoothPath in updateRoad)
+    // een zachte S-curve i.p.v. een rechte lijn op elkaar gestapeld (zie waveY)
     const wy = waveY(l - 1, amp);
     b.style.transform = `translateY(${wy}px)`;
     b.dataset.waveY = wy;
@@ -2289,17 +2121,28 @@ function renderTourMap(travelFrom) {
     const open = travelFrom ? l <= travelFrom : l <= p.level;
     if (!open) {
       b.classList.add('locked');
-      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>`
-        + `<div class="lvlnr">Show ${l}</div><div class="stars"></div>`;
+      // hoe verder vooruit op slot, hoe minder nadruk -- alleen de eerstvolgende
+      // op-slot halte oogt nog "bijna bereikbaar", de rest dooft geleidelijk uit
+      const dist = l - heroLvl;
+      b.style.opacity = dist <= 1 ? '1' : dist === 2 ? '.6' : '.35';
+      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>`;
     } else {
       b.classList.add(l === curLvl ? 'next' : 'done');
+      // de eigen ster staat vol in beeld, boven op haar huidige/vorige halte --
+      // bij een gewone weergave is dat de speelbare halte (curLvl); tijdens de
+      // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
+      // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
       const speel = l === curLvl ? '<div class="tour-speel">▶ Speel!</div>' : '';
-      // gespeelde stad: doffe sterren voor wat er nog te halen valt (nodigt uit tot overspelen)
+      // gespeelde stad: sterren als gewone regel onder de naam -- geen aparte
+      // badge/positionering meer nodig. Nog niet gespeeld (curLvl) toont niets.
       const sterren = l === curLvl ? '' :
-        '⭐'.repeat(st) + (st < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - st)}</span>` : '');
-      b.innerHTML = `${hero}<div class="dot">${city.flag}</div><div class="cname">${city.name}</div>`
-        + `<div class="lvlnr">Show ${l}</div><div class="stars">${sterren}</div>${speel}`;
+        `<div class="cstars">${'⭐'.repeat(st)}${st < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - st)}</span>` : ''}</div>`;
+      // op de huidige halte staat je eigen ster er al bovenop -- geen stadsicoon
+      // eronder, je "verdient" dat nog door de show te spelen, je ziet het pas
+      // op het volgende scherm
+      const dotContent = l === curLvl ? '' : city.flag;
+      b.innerHTML = `${hero}<div class="dot">${dotContent}</div><div class="cname">${city.name}</div>${sterren}${speel}`;
       b.onclick = () => { sndClick(); startLevel(l); };
     }
     track.appendChild(b);
