@@ -682,7 +682,7 @@
      ook geen stadsicoon: je "verdient" dat nog door de show te spelen, je
      ziet het pas op het volgende scherm. Zelfde element voor de reisanimatie
      (zie runTravel): tijdens het huppelen staat ze op de vorige halte. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 26px); transform: translateX(-50%);
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 30px); transform: translateX(-50%);
     width: 92px; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
@@ -698,10 +698,15 @@
   .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%;
     font-size: 20px; font-weight: 700; color: var(--c-white); letter-spacing: .3px; white-space: nowrap;
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--radius-pill); padding: 13px 26px;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: speelPulse 1.4s ease-in-out infinite; }
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); animation: speelPulse 1.2s ease-in-out infinite; }
+  /* zelfde duur/easing/schaal als pulseBtn (de gouden "next"-tegel) zodat
+     beide echt gelijk lopen i.p.v. losjes uit de pas -- alleen translateX(-50%)
+     zit erbij gebakken (zie hierboven), de rest is bewust identiek. Geen
+     box-shadow-animatie meer erbovenop: dat maakte 'm ook nog eens "voller"
+     ogend dan de tegel, terwijl ze juist hetzelfde moment moeten voelen. */
   @keyframes speelPulse {
-    0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35); }
-    50% { transform: translateX(-50%) scale(1.045); box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 13px 26px rgba(255,170,0,.55); }
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.09); }
   }
   /* tikfeedback via filter i.p.v. transform -- de puls-animatie hierboven
      bezet transform al elk frame, dus een :active transform zou meteen weer
@@ -725,7 +730,7 @@
     .tour-stop .dot { width: 84px; height: 84px; font-size: 40px; }
     .tour-stop .cname { font-size: 16px; }
     .tour-stop .cstars { font-size: 13px; }
-    .tour-hero { width: 118px; bottom: calc(100% - 24px); }
+    .tour-hero { width: 118px; bottom: calc(100% - 28px); }
     .tour-speel { font-size: 22px; padding: 15px 30px; }
   }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
