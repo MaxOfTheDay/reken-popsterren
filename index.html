@@ -358,7 +358,7 @@
   #screen-map .hub-sticky { width: 100%; margin: -10px 0 12px; top: -10px; }
   /* avatar + naam = de link terug naar spelerskeuze i.p.v. naar de kleedkamer
      (die zit al in de vaste ondernavigatie); zit in de .header-left cel van
-     .screen-header, zodat "🗺️ Kaart" gewoon als .header-title mee-centreert
+     .screen-header, zodat "🎤 Tournee X" gewoon als .header-title mee-centreert
      zoals bij de andere schermen, ongeacht hoe breed avatar+naam vs. de
      diamant-pil rechts zijn. .header-left staat elders altijd leeg, dus
      justify-self:start (krimpt de cel naar zijn inhoud) was daar nooit een
@@ -690,12 +690,14 @@
      geen aparte positionering/overlap meer nodig, past vanzelf altijd netjes */
   .tour-stop .cstars { font-size: 11.5px; letter-spacing: -1px; opacity: .92; margin-top: 1px; }
   .tour-stop .cstars .star-miss { opacity: .4; filter: grayscale(1); }
-  /* de eigen ster staat vol in beeld, boven op de huidige halte (voeten net
-     over de rand van de tegel) i.p.v. ín een uitsnede -- die tegel toont dan
-     ook geen stadsicoon: je "verdient" dat nog door de show te spelen, je
-     ziet het pas op het volgende scherm. Zelfde element voor de reisanimatie
-     (zie runTravel): tijdens het huppelen staat ze op de vorige halte. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 30px); transform: translateX(-50%);
+  /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
+     stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
+     net op de bovenrand van de tegel (klein overlapje voor het "staat erop"-
+     gevoel + contactschaduw), niet halverwege: dieper zakken zou het
+     gecentreerde stadsicoon onder haar voeten bedekken. Zelfde element voor
+     de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
+     vorige halte. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 11px); transform: translateX(-50%);
     width: 92px; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
@@ -755,7 +757,7 @@
     .tour-stop .dot { width: 84px; height: 84px; font-size: 40px; }
     .tour-stop .cname { font-size: 16px; }
     .tour-stop .cstars { font-size: 13px; }
-    .tour-hero { width: 118px; bottom: calc(100% - 28px); }
+    .tour-hero { width: 118px; bottom: calc(100% - 14px); }
     .speel-pill { font-size: 22px; padding: 15px 30px; }
   }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
@@ -1239,7 +1241,7 @@
           <span class="map-portrait" id="map-portrait"></span>
           <span class="map-name" id="map-name"></span>
         </button>
-        <div class="header-title">🗺️ Kaart</div>
+        <div class="header-title" id="map-tournee-label"></div>
         <div class="diamond-badge header-right">💎 <span id="map-diamonds">0</span></div>
       </div>
       <div class="tour-line" id="tour-line"></div>
@@ -2100,7 +2102,8 @@ function goMap() {
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   const posInRound = ((p.level - 1) % CITIES.length) + 1;
   const round = cityFor(p.level).ronde;
-  $('tour-line').textContent = `⭐ ${totalStarCount(p)} · Tournee ${round} · Stad ${posInRound} van ${CITIES.length}`;
+  $('map-tournee-label').textContent = `🎤 Tournee ${round}`;
+  $('tour-line').textContent = `⭐ ${totalStarCount(p)} · Stad ${posInRound}/${CITIES.length}`;
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
@@ -2242,10 +2245,10 @@ function renderTourMap(travelFrom) {
       // badge/positionering meer nodig. Nog niet gespeeld (curLvl) toont niets.
       const sterren = l === curLvl ? '' :
         `<div class="cstars">${'⭐'.repeat(st)}${st < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - st)}</span>` : ''}</div>`;
-      // op de huidige halte staat je eigen ster er al bovenop -- geen stadsicoon
-      // eronder, je "verdient" dat nog door de show te spelen, je ziet het pas
-      // op het volgende scherm
-      const dotContent = l === curLvl ? '' : city.flag;
+      // stadsicoon blijft altijd zichtbaar in de tegel, ook op de huidige
+      // halte -- de eigen ster staat er los bovenop (.tour-hero, voeten net
+      // op de bovenrand), zonder het icoon te bedekken
+      const dotContent = city.flag;
       b.innerHTML = `${hero}<div class="dot">${dotContent}</div><div class="cname">${city.name}</div>${sterren}${speel}`;
       b.onclick = () => { sndClick(); startLevel(l); };
     }
