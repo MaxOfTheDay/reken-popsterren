@@ -1014,9 +1014,14 @@
   .tab-btn {
     font-family: inherit; font-size: 14px; font-weight: bold; border: none; cursor: pointer;
     letter-spacing: -.3px; padding: 10px 2px; border-radius: var(--radius-pill); color: var(--c-white); background: var(--glass-white-18);
-    transition: transform .07s, background .12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: transform .07s, background .12s;
     display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 44px;
   }
+  /* text-overflow:ellipsis werkt niet betrouwbaar rechtstreeks op een flex-
+     container (.tab-btn hierboven) -- de labeltekst zit daarom in een eigen
+     inline kindje met min-width:0, zodat een te lang tabblad-label (bv. op de
+     smalste telefoons) netjes afkapt met "…" i.p.v. hard te knippen */
+  .tab-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: var(--gold-deep); color: var(--purple-shadow); }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
@@ -1435,53 +1440,53 @@ function shuffle(arr) {
 /* ================= Items ================= */
 const ITEMS = [
   // Haar
-  { id: 'hair_blond',    cat: 'hair', name: 'Blond haar',     price: 0,   color: '#f7d774' },
-  { id: 'hair_bruin',    cat: 'hair', name: 'Bruin haar',     price: 15,  color: '#8d5a2b' },
-  { id: 'hair_zwart',    cat: 'hair', name: 'Zwart haar',     price: 15,  color: '#3a3a3a' },
-  { id: 'hair_rood',     cat: 'hair', name: 'Rood haar',      price: 25,  color: '#d84315' },
-  { id: 'hair_roze',     cat: 'hair', name: 'Roze haar',      price: 40,  color: '#f06292' },
-  { id: 'hair_blauw',    cat: 'hair', name: 'Blauw haar',     price: 40,  color: '#42a5f5' },
-  { id: 'hair_paars',    cat: 'hair', name: 'Paars haar',     price: 40,  color: '#ab47bc' },
-  { id: 'hair_groen',    cat: 'hair', name: 'Groen haar',     price: 45,  color: '#66bb6a' },
-  { id: 'hair_wit',      cat: 'hair', name: 'Wit haar',       price: 20,  color: '#f5f5f5' },
-  { id: 'hair_turkoois', cat: 'hair', name: 'Turquoise haar', price: 40,  color: '#26c6da' },
-  { id: 'hair_zilver',   cat: 'hair', name: 'Zilvergrijs haar', price: 60, color: '#cfd8dc' },
-  { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog haar', price: 90,  color: 'RAINBOW' },
+  { id: 'hair_blond',    cat: 'hair', name: 'Blond',     price: 0,   color: '#f7d774' },
+  { id: 'hair_bruin',    cat: 'hair', name: 'Bruin',     price: 15,  color: '#8d5a2b' },
+  { id: 'hair_zwart',    cat: 'hair', name: 'Zwart',     price: 15,  color: '#3a3a3a' },
+  { id: 'hair_rood',     cat: 'hair', name: 'Rood',      price: 25,  color: '#d84315' },
+  { id: 'hair_roze',     cat: 'hair', name: 'Roze',      price: 40,  color: '#f06292' },
+  { id: 'hair_blauw',    cat: 'hair', name: 'Blauw',     price: 40,  color: '#42a5f5' },
+  { id: 'hair_paars',    cat: 'hair', name: 'Paars',     price: 40,  color: '#ab47bc' },
+  { id: 'hair_groen',    cat: 'hair', name: 'Groen',     price: 45,  color: '#66bb6a' },
+  { id: 'hair_wit',      cat: 'hair', name: 'Wit',       price: 20,  color: '#f5f5f5' },
+  { id: 'hair_turkoois', cat: 'hair', name: 'Turquoise', price: 40,  color: '#26c6da' },
+  { id: 'hair_zilver',   cat: 'hair', name: 'Zilvergrijs', price: 60, color: '#cfd8dc' },
+  { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog', price: 90,  color: 'RAINBOW' },
   // Jurken
-  { id: 'dress_roze',    cat: 'dress', name: 'Roze jurk',      price: 0,   color: '#ec407a' },
-  { id: 'dress_paars',   cat: 'dress', name: 'Paarse jurk',    price: 0,   color: '#7e57c2' },
-  { id: 'dress_geel',    cat: 'dress', name: 'Gele jurk',      price: 15,  color: '#fdd835' },
-  { id: 'dress_blauw',   cat: 'dress', name: 'Blauwe jurk',    price: 15,  color: '#29b6f6' },
-  { id: 'dress_groen',   cat: 'dress', name: 'Groene jurk',    price: 15,  color: '#66bb6a' },
-  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje jurk',    price: 20,  color: '#fb8c00' },
-  { id: 'dress_rood',    cat: 'dress', name: 'Rode jurk',      price: 20,  color: '#ef5350' },
-  { id: 'dress_sterren', cat: 'dress', name: 'Sterrenjurk',    price: 60,  color: '#5c6bc0', pattern: 'stars' },
-  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjesjurk',    price: 70,  color: '#f06292', pattern: 'hearts' },
-  { id: 'dress_disco',   cat: 'dress', name: 'Discojurk',      price: 80,  color: '#b0bec5', pattern: 'disco' },
-  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbaljurk',    price: 65,  color: '#fafafa', pattern: 'ohl' },
-  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeerminjurk', price: 85, color: '#26a69a', pattern: 'scales' },
+  { id: 'dress_roze',    cat: 'dress', name: 'Roze',      price: 0,   color: '#ec407a' },
+  { id: 'dress_paars',   cat: 'dress', name: 'Paars',    price: 0,   color: '#7e57c2' },
+  { id: 'dress_geel',    cat: 'dress', name: 'Geel',      price: 15,  color: '#fdd835' },
+  { id: 'dress_blauw',   cat: 'dress', name: 'Blauw',    price: 15,  color: '#29b6f6' },
+  { id: 'dress_groen',   cat: 'dress', name: 'Groen',    price: 15,  color: '#66bb6a' },
+  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje',    price: 20,  color: '#fb8c00' },
+  { id: 'dress_rood',    cat: 'dress', name: 'Rood',      price: 20,  color: '#ef5350' },
+  { id: 'dress_sterren', cat: 'dress', name: 'Sterren',    price: 60,  color: '#5c6bc0', pattern: 'stars' },
+  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjes',    price: 70,  color: '#f06292', pattern: 'hearts' },
+  { id: 'dress_disco',   cat: 'dress', name: 'Disco',      price: 80,  color: '#b0bec5', pattern: 'disco' },
+  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    price: 65,  color: '#fafafa', pattern: 'ohl' },
+  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', price: 85, color: '#26a69a', pattern: 'scales' },
   { id: 'dress_tover',   cat: 'dress', name: 'Toverjurk',      price: 95,  color: '#4527a0', pattern: 'magic' },
-  { id: 'dress_regenboog',cat:'dress', name: 'Regenboogjurk',  price: 110, color: 'RAINBOW' },
+  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  price: 110, color: 'RAINBOW' },
   // Schoenen (kleuren de vaste schoenen van de paspop)
-  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze schoenen',   price: 0,  color: '#e91e63' },
-  { id: 'shoes_rood',  cat: 'shoes', name: 'Rode schoenen',   price: 10, color: '#e53935' },
-  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauwe schoenen', price: 15, color: '#1e88e5' },
-  { id: 'shoes_geel',  cat: 'shoes', name: 'Gele schoenen',   price: 15, color: '#fdd835' },
-  { id: 'shoes_paars', cat: 'shoes', name: 'Paarse schoenen', price: 15, color: '#8e24aa' },
-  { id: 'shoes_groen', cat: 'shoes', name: 'Groene schoenen', price: 20, color: '#43a047' },
+  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze',   price: 0,  color: '#e91e63' },
+  { id: 'shoes_rood',  cat: 'shoes', name: 'Rood',   price: 10, color: '#e53935' },
+  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauw', price: 15, color: '#1e88e5' },
+  { id: 'shoes_geel',  cat: 'shoes', name: 'Geel',   price: 15, color: '#fdd835' },
+  { id: 'shoes_paars', cat: 'shoes', name: 'Paars', price: 15, color: '#8e24aa' },
+  { id: 'shoes_groen', cat: 'shoes', name: 'Groen', price: 20, color: '#43a047' },
   { id: 'shoes_zwart', cat: 'shoes', name: 'Stoere laarsjes',   price: 25, color: '#37474f' },
-  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitterschoenen', price: 60, color: '#ffd54f' },
-  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog schoenen', price: 80, color: 'RAINBOW' },
+  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitter', price: 60, color: '#ffd54f' },
+  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog', price: 80, color: 'RAINBOW' },
   // Microfoons
-  { id: 'mic_zilver', cat: 'mic', name: 'Zilveren micro', price: 30, color: '#cfd8dc' },
-  { id: 'mic_blauw',  cat: 'mic', name: 'Blauwe micro',   price: 35, color: '#42a5f5' },
-  { id: 'mic_groen',  cat: 'mic', name: 'Groene micro',   price: 40, color: '#66bb6a' },
+  { id: 'mic_zilver', cat: 'mic', name: 'Zilver', price: 30, color: '#cfd8dc' },
+  { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   price: 35, color: '#42a5f5' },
+  { id: 'mic_groen',  cat: 'mic', name: 'Groen',   price: 40, color: '#66bb6a' },
   { id: 'mic_pintje', cat: 'mic', name: 'Pintje',         price: 45, emoji: '🍺' },
-  { id: 'mic_zwart',  cat: 'mic', name: 'Zwarte rockmicro', price: 55, color: '#37474f' },
+  { id: 'mic_zwart',  cat: 'mic', name: 'Rock', price: 55, color: '#37474f' },
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf',   price: 70, emoji: '🪄' },
-  { id: 'mic_goud',   cat: 'mic', name: 'Gouden micro',   price: 60, color: '#ffd54f' },
-  { id: 'mic_roze',   cat: 'mic', name: 'Roze glittermicro', price: 90, color: '#ff80ab' },
-  { id: 'mic_regenboog', cat: 'mic', name: 'Regenboogmicro', price: 100, color: 'RAINBOW' },
+  { id: 'mic_goud',   cat: 'mic', name: 'Goud',   price: 60, color: '#ffd54f' },
+  { id: 'mic_roze',   cat: 'mic', name: 'Roze glitter', price: 90, color: '#ff80ab' },
+  { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', price: 100, color: 'RAINBOW' },
   // Instrumenten
   { id: 'instr_gitaar',  cat: 'instrument', name: 'Gitaar',    price: 40, emoji: '🎸' },
   { id: 'instr_piano',   cat: 'instrument', name: 'Keyboard',  price: 45, emoji: '🎹' },
@@ -1490,9 +1495,9 @@ const ITEMS = [
   { id: 'instr_sax',     cat: 'instrument', name: 'Saxofoon',  price: 70, emoji: '🎷' },
   { id: 'instr_trompet', cat: 'instrument', name: 'Trompet',   price: 80, emoji: '🎺' },
   // Extra's
-  { id: 'acc_strik',    cat: 'acc', name: 'Grote strik',    price: 25, emoji: '🎀' },
+  { id: 'acc_strik',    cat: 'acc', name: 'Strik',    price: 25, emoji: '🎀' },
   { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
-  { id: 'acc_bril',     cat: 'acc', name: 'Coole zonnebril',price: 35, emoji: '🕶️' },
+  { id: 'acc_bril',     cat: 'acc', name: 'Zonnebril',price: 35, emoji: '🕶️' },
   { id: 'acc_koptel',   cat: 'acc', name: 'Hoofdtelefoon',  price: 50, emoji: '🎧' },
   { id: 'acc_kroon',    cat: 'acc', name: 'Kroontje',       price: 75, emoji: '👑' },
   // nieuwe extra's tekenen generiek via hun emoji (spot: 'zij' = in het haar, 'top' = op het hoofd)
@@ -1520,16 +1525,16 @@ const ITEMS = [
   { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
   { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 160, emoji: '🐉' },
   // Podium
-  { id: 'stage_disco',    cat: 'stage', name: 'Discopodium',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
+  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
   { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
   { id: 'stage_kasteel',  cat: 'stage', name: 'Prinsessenkasteel',price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
-  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimteshow',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
-  { id: 'stage_jungle',   cat: 'stage', name: 'Junglepodium',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
+  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
+  { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
   { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'] },
   { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'] },
-  { id: 'stage_onderwater',cat:'stage', name: 'Onderwatershow',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
+  { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
   { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
-  { id: 'stage_arena',    cat: 'stage', name: 'Grote arena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'] },
+  { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
 // Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
@@ -1539,7 +1544,7 @@ const CATS = [
   { id: 'hair',  name: '💇 Haar' },
   { id: 'mic',   name: '🎤 Micro' },
   { id: 'instrument', name: '🎸 Muziek' },
-  { id: 'acc',   name: '🎀 Extra' },
+  { id: 'acc',   name: '🎀 Accessoires' },
   { id: 'pet',   name: '🐾 Dieren' },
   { id: 'stage', name: '🎪 Podium' },
 ];
@@ -1669,10 +1674,21 @@ const THEME_SETS = {
   discodiva: DISCO_SET, prinses: PRINSES_SET, ruimteheld: RUIMTE_SET,
   winter: WINTER_SET, jungle: JUNGLE_SET, zeemeermin: ZEE_SET, regenboogster: REGENBOOG_SET
 };
-// Kortere, kindvriendelijke labels voor lange itemnamen in de look-checklist.
+// De kleedkamer laat de categorie het werk doen (tabblad "Jurken" + een kleur-
+// bolletje maakt "Roze" al duidelijk genoeg), maar in de look-checklist hangt
+// zo'n stuk los van zijn tabblad -- daar staat elk stuk maar als kaal
+// tekstregeltje, zonder icoon of categorie erbij. Vandaar deze langere,
+// duidelijkere labels specifiek voor die plek (zie pieceLabel).
 const THEME_ITEM_LABEL = {
-  shoes_goud: 'Gouden schoenen', mic_zwart: 'Rockmicro', acc_bril: 'Zonnebril',
-  pet_eekhoorn: 'Eekhoorn', hair_zilver: 'Zilver haar'
+  shoes_goud: 'Gouden schoenen', mic_zwart: 'Rockmicro',
+  pet_eekhoorn: 'Eekhoorn', hair_zilver: 'Zilver haar',
+  dress_groen: 'Groene jurk', dress_sterren: 'Sterrenjurk', dress_hartjes: 'Hartjesjurk',
+  dress_disco: 'Discojurk', dress_voetbal: 'Voetbaljurk', dress_zeemeermin: 'Zeemeerminjurk',
+  dress_regenboog: 'Regenboogjurk', shoes_regenboog: 'Regenboog schoenen',
+  hair_wit: 'Wit haar', hair_turkoois: 'Turquoise haar', hair_regenboog: 'Regenboog haar',
+  mic_zilver: 'Zilveren micro', mic_roze: 'Roze glittermicro', mic_regenboog: 'Regenboogmicro',
+  stage_disco: 'Discopodium', stage_jungle: 'Junglepodium',
+  stage_ruimte: 'Ruimteshow', stage_onderwater: 'Onderwatershow'
 };
 // Korte, duidelijke naam van een stuk (zonder emoji — rustiger in de checklist).
 function pieceLabel(id) {
@@ -3254,7 +3270,7 @@ function renderShop() {
   CATS.forEach(c => {
     const b = document.createElement('button');
     b.className = 'tab-btn' + (c.id === shopCat ? ' active' : '');
-    b.textContent = c.name;
+    b.innerHTML = `<span class="tab-label">${c.name}</span>`;
     b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; renderShop(); };
     tabs.appendChild(b);
   });
