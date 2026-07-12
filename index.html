@@ -857,7 +857,7 @@
     background: linear-gradient(180deg, rgba(255,224,130,.95), rgba(255,179,0,.92)); box-shadow: 0 2px 5px var(--glass-black-20);
   }
   .look-action:active { transform: scale(.96); }
-  /* ---- Claim-feestje: klein, vrolijk, verdwijnt vanzelf ---- */
+  /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
     background: rgba(20,4,40,.45); animation: popFade .25s ease; cursor: pointer;
@@ -2453,7 +2453,10 @@ function openTrophy(id) {
   celebrateTrophy(t);
   renderShelves();    // kaart wordt 'Behaald!', scrollpositie blijft
 }
-// Klein beloningsmoment: pop-up + confetti, verdwijnt vanzelf (tikken sluit ook).
+// Klein beloningsmoment: pop-up + confetti, blijft in beeld tot er ergens
+// op het scherm getikt wordt (geen auto-sluit-timer meer) -- de overlay
+// beslaat het hele scherm (position:fixed; inset:0), dus "ergens tikken"
+// werkt overal, niet alleen op het kaartje zelf.
 function celebrateTrophy(t) {
   sndWin();
   buzz([0, 40, 60, 40, 80]);
@@ -2466,7 +2469,6 @@ function celebrateTrophy(t) {
   document.body.appendChild(ov);
   const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
   ov.onclick = close;
-  setTimeout(close, 1700);
 }
 // tijdens het spelen: geen groot feest, wél een vriendelijke hint naar de kast
 function noticeReady(trofees) {
