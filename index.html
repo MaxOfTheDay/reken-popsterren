@@ -414,30 +414,33 @@
   /* schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter verdwijnt */
   .screen.hub { padding-bottom: 100px; }
 
-  /* ---- Spel ---- */
+  /* ---- Spel ----
+     Zelfde donkerpaarse .hub-sticky-kop als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·
+     stad · 💎 op de eerste regel, hartjes + vraag-voortgang samen gecentreerd op de tweede.
+     #screen-game heeft (anders dan de andere hub-schermen) overal gelijke 8px padding,
+     dus de negatieve marge/breedte/top hieronder wijkt af van .hub-sticky's -12px/24px-basis. */
   #screen-game { padding: 8px; justify-content: flex-start; }
-  /* bovenbalk als één donker lint (zelfde familie als navigatie/actiebalk):
-     terug · stad · hartjes · 💎 — alles op één regel, ook op smalle schermen */
-  .game-top {
-    display: flex; align-items: center; width: 100%; max-width: 820px; gap: 8px;
-    padding: 6px 9px; border-radius: var(--radius-button);
-    background: rgba(30, 4, 52, .5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    border: 1.5px solid var(--glass-white-16);
+  #screen-game .hub-sticky { width: calc(100% + 16px); margin: -8px -8px 10px; top: -8px; }
+  /* .btn.ghost (zie .btn-gear) is met opzet bijna onzichtbaar -- prima voor een
+     instellingen-knopje, maar hier moet je 'm ook zonder zoeken kunnen vinden.
+     Leent daarom .btn.soft's taal (rand + glazen vulling + rustige schaduw-lip),
+     alleen compact als rond icoontje i.p.v. soft's volle pil-formaat, zodat hij
+     rustig blijft en niet met de gouden actie-knoppen concurreert. */
+  #screen-game .header-left {
+    width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--c-white); border-radius: 50%; border: 1.5px solid var(--glass-white-28);
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 var(--glass-black-28);
   }
-  .game-city {
-    flex: 1; min-width: 0; text-align: center; font-size: 16.5px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    text-shadow: 0 1px 0 var(--glass-black-25);
-  }
-  .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; display: inline-block; flex-shrink: 0; }
-  .qprogress { display: flex; gap: 5px; justify-content: center; margin-top: 8px; }
+  #screen-game .header-left:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
+  .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; }
+  .qprogress { display: flex; gap: 5px; }
   .qdot { width: 13px; height: 13px; border-radius: 50%; background: var(--glass-white-30); }
   .qdot.done { background: var(--gold-accent); box-shadow: 0 0 6px var(--gold-accent); }
   .qdot.now { background: var(--c-white); transform: scale(1.25); }
   @media (max-width: 430px) {
-    .game-city .lvl-pre { display: none; }   /* "Optreden in " valt weg, de stad blijft */
     .notes-left { font-size: 17px; letter-spacing: 0; }
-    .game-top .diamond-badge.compact { font-size: 15px; padding: 5px 10px; }
   }
 
   /* arena: linkerpaneel = de show (avatar + fanmeter), rechts = het rekenen (focus);
@@ -447,11 +450,18 @@
     width: 100%; max-width: 860px; margin-top: 6px; flex-wrap: wrap; flex: 1 1 auto;
   }
   .show-panel { display: flex; flex-direction: column; align-items: center; }
-  .show-inner { display: flex; align-items: flex-end; gap: 12px; }
+  /* dichter tegen de paspop aan zodat meter + avatar als één "podium" aanvoelen
+     i.p.v. twee losse widgets naast elkaar */
+  .show-inner { display: flex; align-items: flex-end; gap: 7px; }
   .fan-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .fan-icon { font-size: 20px; line-height: 1; }
+  /* het klapicoon blijft altijd zichtbaar als label van de meter, maar wordt
+     feller naarmate G.fan stijgt (zie updateFan) -- brightness i.p.v. opacity
+     zodat het nooit helemaal "verdwijnt" bij een lege meter */
+  .fan-icon { font-size: 20px; line-height: 1; filter: brightness(.65); transition: filter .4s ease; }
+  .fan-icon.pulse { animation: fanIconPulse .5s ease; }
+  @keyframes fanIconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
   .fan-track {
-    width: 28px; height: 200px; border-radius: var(--radius-pill); overflow: hidden;
+    width: 28px; height: 171px; border-radius: var(--radius-pill); overflow: hidden;
     background: var(--glass-black-32); border: 2px solid var(--glass-white-40);
     display: flex; align-items: flex-end;
   }
@@ -461,7 +471,21 @@
   }
   .fan-fill.full { animation: fanPulse .5s ease infinite alternate; }
   @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.45); } }
-  .show-stage { width: 188px; height: 218px; }
+  /* encore: de meter "lost op" naar boven i.p.v. gewoon leeg te lopen, zodat het
+     als een omgezette beloning voelt i.p.v. verloren voortgang (zie updateFan) */
+  .fan-fill.encore-clear { animation: fanEncoreClear .7s ease forwards; }
+  @keyframes fanEncoreClear {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-36px); }
+  }
+  /* zelfde breedte/hoogte-verhouding als de kleedkamer se .dress-stage (~1.19 : 1)
+     i.p.v. het vorige, veel smallere/hogere kader -- anders staat de paspop hier
+     verdrukt tegen de zijkanten terwijl ze in de kleedkamer juist lucht krijgt */
+  .show-stage { width: 220px; height: 186px; }
+  /* alleen de paspop zélf ~13% groter (92% -> 104% van de scène-hoogte), niet de
+     scène-doos eromheen -- houdt de gedeelde .stage .avatar-holder (kleedkamer,
+     profielkaarten) ongemoeid en blijft ruim binnen .show-stage's overflow:hidden */
+  .show-stage .avatar-holder { height: 104%; }
 
   .math-panel { display: flex; flex-direction: column; align-items: center; }
   .question-card {
@@ -507,15 +531,15 @@
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
     .game-arena { gap: 12px; }
-    .show-stage { width: 128px; height: 150px; }
-    .fan-track { height: 132px; width: 24px; }
+    .show-stage { width: 152px; height: 128px; }
+    .fan-track { height: 113px; width: 24px; }
     .question-card { font-size: clamp(38px, 12vw, 56px); padding: 14px 22px 24px; }
   }
   /* op lage schermen alles compacter: som + alle antwoorden moeten ALTIJD
      zonder scrollen in beeld staan */
   @media (max-height: 700px) {
-    .show-stage { width: 106px; height: 124px; }
-    .fan-track { height: 104px; width: 20px; }
+    .show-stage { width: 126px; height: 106px; }
+    .fan-track { height: 89px; width: 20px; }
     .fan-icon { font-size: 16px; }
     .game-arena { gap: 8px; margin-top: 2px; }
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
@@ -528,8 +552,8 @@
   }
   /* ruime schermen: de show mag wat groter schitteren */
   @media (min-width: 900px) and (min-height: 760px) {
-    .show-stage { width: 224px; height: 258px; }
-    .fan-track { height: 232px; }
+    .show-stage { width: 262px; height: 220px; }
+    .fan-track { height: 198px; }
   }
 
   .praise {
@@ -1219,21 +1243,25 @@
 
   <!-- ===== Spel ===== -->
   <div class="screen" id="screen-game">
-    <div class="game-top">
-      <button class="btn small ghost" onclick="askQuit()" aria-label="Show stoppen">⬅</button>
-      <div class="game-city" id="game-lvl-label"></div>
-      <div class="notes-left" id="notes-left"></div>
-      <div class="diamond-badge compact">💎 <span id="game-diamonds">0</span></div>
+    <div class="hub-sticky">
+      <div class="screen-header">
+        <button class="btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen">✕</button>
+        <div class="header-title" id="game-lvl-label"></div>
+        <div class="diamond-badge header-right">💎 <span id="game-diamonds">0</span></div>
+      </div>
+      <div class="game-progress-row">
+        <span class="notes-left" id="notes-left"></span>
+        <div class="qprogress" id="qprogress"></div>
+      </div>
     </div>
-    <div class="qprogress" id="qprogress"></div>
     <div class="game-arena">
       <div class="show-panel">
         <div class="show-inner">
-          <div class="fan-col">
-            <div class="fan-icon">👏</div>
+          <div class="fan-col" id="fan-col">
+            <div class="fan-icon" id="fan-icon">👏</div>
             <div class="fan-track"><div class="fan-fill" id="fanmeter-fill"></div></div>
           </div>
-          <div class="stage show-stage" id="show-stage">
+          <div class="stage stage-frame show-stage" id="show-stage">
             <div class="avatar-holder idle" id="game-avatar-inner"></div>
           </div>
         </div>
@@ -2598,7 +2626,7 @@ function startLevel(lvl) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0 };
   const city = cityFor(lvl);
-  $('game-lvl-label').innerHTML = `${city.flag} <span class="lvl-pre">Optreden in </span>${city.name}`;
+  $('game-lvl-label').textContent = `${city.flag} ${city.name}`;
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
   applyStage($('show-stage'), p);
@@ -2606,14 +2634,52 @@ function startLevel(lvl) {
   show('screen-game');
   renderQuestion();
 }
-function updateFan() {
+/* fill+icoon in sync houden met G.fan; icoon wordt feller naarmate de meter vult.
+   Bij een encore (meter net vol geklapt) blijft de balk eerst even vol pulseren,
+   de bonus-diamanten vliegen vanaf de meter zelf naar de teller, en pas dáárna
+   lost de balk omhoog op en herstart hij leeg -- voelt zo als een omgezette
+   beloning i.p.v. voortgang die zomaar wegvalt. */
+function updateFan(encore) {
   const fill = $('fanmeter-fill');
+  const icon = $('fan-icon');
+  const glow = b => icon.style.filter = `brightness(${b.toFixed(2)})`;
+  if (encore) {
+    fill.style.height = '100%';
+    fill.classList.add('full');
+    glow(1.5);
+    icon.classList.remove('pulse');
+    void icon.offsetWidth;
+    icon.classList.add('pulse');
+    flyDiamonds($('fan-col'), $('game-diamonds'), 3);
+    setTimeout(() => {
+      fill.classList.remove('full');
+      fill.classList.add('encore-clear');
+      setTimeout(() => {
+        fill.classList.remove('encore-clear');
+        fill.style.transition = 'none';
+        fill.style.height = G.fan + '%';
+        void fill.offsetWidth;
+        fill.style.transition = '';
+        icon.classList.remove('pulse');
+        glow(.65 + Math.min(1, G.fan / 100) * .85);
+      }, 720);
+    }, 550);
+    return;
+  }
   fill.style.height = G.fan + '%';
   fill.classList.toggle('full', G.fan >= 100);
+  glow(.65 + Math.min(1, G.fan / 100) * .85);
 }
 
-/* Stoppen gaat via een bevestiging: één per-ongeluk-tik mag geen show kosten. */
-function askQuit() { sndClick(); $('quit-modal').classList.add('open'); }
+/* Stoppen: een X sluit/onderbreekt de show. Is er nog geen voortgang (net
+   gestart, nog geen vraag beantwoord of gemist), dan stopt hij meteen --
+   er valt dan niets te bevestigen. Pas zodra er iets te verliezen is, vraagt
+   hij het na, zodat een per-ongeluk-tik geen show kost. */
+function askQuit() {
+  sndClick();
+  if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
+  $('quit-modal').classList.add('open');
+}
 function closeQuitModal() { sndClick(); $('quit-modal').classList.remove('open'); }
 function quitGame() {
   $('quit-modal').classList.remove('open');
@@ -2764,11 +2830,12 @@ function submitAnswer(val, btnEl) {
       G.fan -= 100; encore = true;             // overschot blijft staan voor een mogelijke tweede encore
       p.diamonds += 5; G.earned += 5; p.encores++;
     }
-    updateFan();
     save();
     $('game-diamonds').textContent = p.diamonds;
-    // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
-    flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), encore || q.gold ? 3 : 2);
+    // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer;
+    // de encore-bonus vliegt apart vanaf de meter zelf (zie updateFan)
+    flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), q.gold ? 3 : 2);
+    updateFan(encore);
     if (btnEl) btnEl.classList.add('good');
     if (G.mode === 'typ') $('question-text').textContent = `${q.text} = ${q.ans}`;
     if (encore) { sndWin(); confetti(24); showPraise('🎆 ENCORE! +5 💎 bonus!'); }
