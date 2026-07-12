@@ -176,6 +176,11 @@
     border: 1.5px solid var(--glass-white-22); border-radius: var(--radius-2xl);
     padding: 11px 10px 16px; transition: transform .18s, box-shadow .18s;
     box-shadow: 0 10px 26px var(--glass-black-32);
+    /* expliciete kolom i.p.v. losse blok/inline-flow: zonder dit vallen de
+       (beide inline-flex) ster-chip en Speel-knop op brede (desktop) kaarten
+       op dezelfde regel en verspringt Speel! per ongeluk náást/bóven de sterren
+       i.p.v. eronder -- op smalle (mobiele) kaarten viel dat toevallig niet op. */
+    display: flex; flex-direction: column; align-items: center;
   }
   .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px var(--glass-black-40); }
   .profile-card:active { transform: translateY(-2px) scale(1.01); }
@@ -194,11 +199,20 @@
   }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
-  /* zelfde plek als voorheen, maar nu de vertrouwde .btn.small.ghost-taal die de
-     rest van de app ook gebruikt voor kleine icoon-knoppen (bv. de ⬅ terugknoppen),
-     i.p.v. een losse, nergens anders herhaalde cirkelstijl */
-  #btn-gear.on { background: rgba(255,255,255,.32); }
-  /* alleen het tandwiel zélf draait — niet de hele (nu rechthoekige) knop eromheen */
+  /* rustig maar wél te vinden rond icoon-knopje: rand + glazen vulling + zachte
+     schaduw-lip, geleend van .btn.soft's taal i.p.v. het bijna onzichtbare
+     .btn.ghost. Gedeeld door de Instellingen-knop (thuisscherm) en de
+     X-stopknop (spelscherm) -- twee losse "hoekknopjes" die er nu hetzelfde
+     rustige gewicht bij hebben. */
+  .icon-btn {
+    width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--c-white); border-radius: 50%; border: 1.5px solid var(--glass-white-28);
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 var(--glass-black-28);
+  }
+  .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
+  .icon-btn.on { background: linear-gradient(180deg, var(--glass-white-30), rgba(255,255,255,.14)); }
+  /* alleen het tandwiel zélf draait — niet de hele (nu ronde) knop eromheen */
   #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
   #btn-gear.on .gear-ico { transform: rotate(35deg); }
 
@@ -421,18 +435,6 @@
      dus de negatieve marge/breedte/top hieronder wijkt af van .hub-sticky's -12px/24px-basis. */
   #screen-game { padding: 8px; justify-content: flex-start; }
   #screen-game .hub-sticky { width: calc(100% + 16px); margin: -8px -8px 10px; top: -8px; }
-  /* .btn.ghost (zie .btn-gear) is met opzet bijna onzichtbaar -- prima voor een
-     instellingen-knopje, maar hier moet je 'm ook zonder zoeken kunnen vinden.
-     Leent daarom .btn.soft's taal (rand + glazen vulling + rustige schaduw-lip),
-     alleen compact als rond icoontje i.p.v. soft's volle pil-formaat, zodat hij
-     rustig blijft en niet met de gouden actie-knoppen concurreert. */
-  #screen-game .header-left {
-    width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: var(--c-white); border-radius: 50%; border: 1.5px solid var(--glass-white-28);
-    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 var(--glass-black-28);
-  }
-  #screen-game .header-left:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
   .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; }
   .qprogress { display: flex; gap: 5px; }
@@ -452,16 +454,21 @@
   .show-panel { display: flex; flex-direction: column; align-items: center; }
   /* dichter tegen de paspop aan zodat meter + avatar als één "podium" aanvoelen
      i.p.v. twee losse widgets naast elkaar */
-  .show-inner { display: flex; align-items: flex-end; gap: 7px; }
+  .show-inner { display: flex; align-items: flex-end; gap: 8px; }
+  /* .fan-col en .show-stage delen dezelfde flex-end-basislijn (zie .show-inner),
+     dus het klapicoon zit bóven de balk gestapeld i.p.v. ernaast -- .fan-track's
+     hoogte (hieronder, per breakpoint) is daarom altijd iets kórter dan de
+     paspop-kader-hoogte, zodat icoon + balk sámen nooit boven de bovenkant van
+     het kader uitsteken en het icoon er juist mee lijkt te sluiten. */
   .fan-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   /* het klapicoon blijft altijd zichtbaar als label van de meter, maar wordt
      feller naarmate G.fan stijgt (zie updateFan) -- brightness i.p.v. opacity
      zodat het nooit helemaal "verdwijnt" bij een lege meter */
-  .fan-icon { font-size: 20px; line-height: 1; filter: brightness(.65); transition: filter .4s ease; }
+  .fan-icon { font-size: 23px; line-height: 1; filter: brightness(.65); transition: filter .4s ease; }
   .fan-icon.pulse { animation: fanIconPulse .5s ease; }
   @keyframes fanIconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
   .fan-track {
-    width: 28px; height: 171px; border-radius: var(--radius-pill); overflow: hidden;
+    width: 32px; height: 185px; border-radius: var(--radius-pill); overflow: hidden;
     background: var(--glass-black-32); border: 2px solid var(--glass-white-40);
     display: flex; align-items: flex-end;
   }
@@ -478,14 +485,11 @@
     0% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-36px); }
   }
-  /* zelfde breedte/hoogte-verhouding als de kleedkamer se .dress-stage (~1.19 : 1)
-     i.p.v. het vorige, veel smallere/hogere kader -- anders staat de paspop hier
-     verdrukt tegen de zijkanten terwijl ze in de kleedkamer juist lucht krijgt */
-  .show-stage { width: 220px; height: 186px; }
-  /* alleen de paspop zélf ~13% groter (92% -> 104% van de scène-hoogte), niet de
-     scène-doos eromheen -- houdt de gedeelde .stage .avatar-holder (kleedkamer,
-     profielkaarten) ongemoeid en blijft ruim binnen .show-stage's overflow:hidden */
-  .show-stage .avatar-holder { height: 104%; }
+  /* zelfde breedte/hoogte-verhouding als de kleedkamer se .dress-stage (~1.19 : 1),
+     ~15% groter dan de vorige maat (vooral op mobiel voelde de paspop nog te klein),
+     en de paspop zelf op dezelfde 92%-verhouding als de kleedkamer (geen eigen
+     override meer nodig -- de kaart is nu zelf groot genoeg). */
+  .show-stage { width: 253px; height: 214px; }
 
   .math-panel { display: flex; flex-direction: column; align-items: center; }
   .question-card {
@@ -531,16 +535,16 @@
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
     .game-arena { gap: 12px; }
-    .show-stage { width: 152px; height: 128px; }
-    .fan-track { height: 113px; width: 24px; }
+    .show-stage { width: 175px; height: 147px; }
+    .fan-track { height: 118px; width: 28px; }
     .question-card { font-size: clamp(38px, 12vw, 56px); padding: 14px 22px 24px; }
   }
   /* op lage schermen alles compacter: som + alle antwoorden moeten ALTIJD
      zonder scrollen in beeld staan */
   @media (max-height: 700px) {
-    .show-stage { width: 126px; height: 106px; }
-    .fan-track { height: 89px; width: 20px; }
-    .fan-icon { font-size: 16px; }
+    .show-stage { width: 145px; height: 122px; }
+    .fan-track { height: 98px; width: 23px; }
+    .fan-icon { font-size: 18px; }
     .game-arena { gap: 8px; margin-top: 2px; }
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
     .gold-banner { height: 18px; font-size: 14.5px; margin-top: 2px; }
@@ -552,8 +556,8 @@
   }
   /* ruime schermen: de show mag wat groter schitteren */
   @media (min-width: 900px) and (min-height: 760px) {
-    .show-stage { width: 262px; height: 220px; }
-    .fan-track { height: 198px; }
+    .show-stage { width: 301px; height: 253px; }
+    .fan-track { height: 224px; }
   }
 
   .praise {
@@ -1245,7 +1249,7 @@
   <div class="screen" id="screen-game">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen">✕</button>
+        <button class="btn icon-btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen">✕</button>
         <div class="header-title" id="game-lvl-label"></div>
         <div class="diamond-badge header-right">💎 <span id="game-diamonds">0</span></div>
       </div>
@@ -1382,7 +1386,7 @@
 </div>
 
 <div class="corner-btns" id="corner-btns">
-  <button class="btn small ghost" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen"><span class="gear-ico">⚙️</span></button>
+  <button class="btn icon-btn" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen"><span class="gear-ico">⚙️</span></button>
   <div class="gear-menu" id="gear-menu" role="menu">
     <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
       <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
