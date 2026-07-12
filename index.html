@@ -1217,14 +1217,20 @@
   <!-- ===== Kaart / wereldtournee (hoofdscherm) ===== -->
   <div class="screen hub" id="screen-map">
     <div class="map-sky" aria-hidden="true">
+      <!-- elk element drift't lineair van -80px naar 100vw+80px; het negatieve
+           animation-delay bepaalt waar het bij het ínladen al in die reis zit
+           (delay/duration = hoe ver "over" het scherm). Die fracties zijn hier
+           bewust over ~0.06 .. 0.90 gespreid (i.p.v. toevallig gekozen getallen
+           die tot een clustertje links + een leeg gat rechts leidden) zodat de
+           lucht meteen bij het openen al over de hele breedte gevuld oogt. -->
       <div class="map-sky-inner">
-        <span style="top:8%;font-size:26px;animation-duration:88s;animation-delay:-30s;opacity:.22">☁️</span>
-        <span style="top:24%;font-size:34px;animation-duration:70s;animation-delay:-15s;opacity:.3">☁️</span>
-        <span style="top:40%;font-size:22px;animation-duration:100s;animation-delay:-70s;opacity:.18">☁️</span>
-        <span style="top:58%;font-size:30px;animation-duration:80s;animation-delay:-45s;opacity:.26">☁️</span>
-        <span style="top:80%;font-size:36px;animation-duration:65s;animation-delay:-8s;opacity:.32">☁️</span>
-        <span style="top:33%;font-size:24px;animation-duration:58s;animation-delay:-12s;opacity:.3">✈️</span>
-        <span class="rev" style="top:68%;font-size:20px;animation-duration:72s;animation-delay:-40s;opacity:.2">✈️</span>
+        <span style="top:8%;font-size:26px;animation-duration:88s;animation-delay:-16s;opacity:.22">☁️</span>
+        <span style="top:24%;font-size:34px;animation-duration:70s;animation-delay:-20s;opacity:.3">☁️</span>
+        <span style="top:40%;font-size:22px;animation-duration:100s;animation-delay:-39s;opacity:.18">☁️</span>
+        <span style="top:58%;font-size:30px;animation-duration:80s;animation-delay:-39s;opacity:.26">☁️</span>
+        <span style="top:80%;font-size:36px;animation-duration:65s;animation-delay:-38s;opacity:.32">☁️</span>
+        <span style="top:33%;font-size:24px;animation-duration:58s;animation-delay:-40s;opacity:.3">✈️</span>
+        <span class="rev" style="top:68%;font-size:20px;animation-duration:72s;animation-delay:-15s;opacity:.2">✈️</span>
       </div>
     </div>
     <div class="hub-sticky">
