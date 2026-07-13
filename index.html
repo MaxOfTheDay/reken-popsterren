@@ -1177,22 +1177,26 @@
   /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card.
      Gelijke flex-breedte (i.p.v. wrap) zodat de rij altijd op één regel staat,
      hoe je ook telt (meestal 4 stukjes, regenboogster heeft er 5). */
-  .look-pieces { flex: 1; display: flex; align-items: stretch; margin-top: 8px; }
-  .look-piece { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; text-align: center; border-radius: var(--radius-sm); padding: 4px 2px; transition: transform .07s, background .12s; }
+  .look-pieces { flex: 1; display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .look-piece {
+    flex: 1 1 0; min-width: 0; height: 72px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer; text-align: center;
+    border-radius: var(--radius-sm); padding: 3px 2px; transition: transform .07s, background .12s;
+  }
   .look-piece:active { transform: scale(.94); }
-  /* vaste icoon-zone: elk stukje staat zo op dezelfde basislijn, ongeacht of
-     het een svg-tekening, emoji of kleurbolletje is. */
-  .look-piece .item-thumb { height: 40px; width: 100%; display: flex; align-items: center; justify-content: center; margin: 0 0 4px; }
-  .look-piece .item-thumb svg { height: 30px; width: auto; }
+  /* vaste, compacte icoon-zone: elk stukje staat zo op dezelfde basislijn, strak
+     om het icoon heen, ongeacht of het een svg-tekening, emoji of kleurbolletje is. */
+  .look-piece .item-thumb { height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; margin: 0 0 3px; }
+  .look-piece .item-thumb svg { height: 24px; width: auto; }
   /* icoon-gewicht in balans: kleine/smalle vormen (schoenen, micro, bril e.d.
      via emoji) iets groter, van nature grote vormen (jurk) juist iets kleiner --
      anders oogt de rij ongelijk terwijl de stukjes zelf gelijk belangrijk zijn. */
-  .look-piece[data-cat="dress"] .item-thumb svg { height: 26px; }
-  .look-piece[data-cat="shoes"] .item-thumb svg { height: 38px; }
-  .look-piece[data-cat="mic"] .item-thumb svg { height: 36px; }
-  .look-piece .item-thumb .thumb-emo { font-size: 26px; line-height: 1; }
-  .look-piece .item-swatch { width: 28px; height: 28px; margin: 0 0 4px; border-width: 1.5px; }
-  .look-piece .item-swatch.stage-swatch { font-size: 15px; }
+  .look-piece[data-cat="dress"] .item-thumb svg { height: 21px; }
+  .look-piece[data-cat="shoes"] .item-thumb svg { height: 29px; }
+  .look-piece[data-cat="mic"] .item-thumb svg { height: 27px; }
+  .look-piece .item-thumb .thumb-emo { font-size: 22px; line-height: 1; }
+  .look-piece .item-swatch { width: 22px; height: 22px; margin: 0 0 3px; border-width: 1.5px; }
+  .look-piece .item-swatch.stage-swatch { font-size: 13px; }
   .look-piece .lp-name {
     font-size: 10px; font-weight: 700; line-height: 1.15; color: var(--muted-lavender-text);
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
