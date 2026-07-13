@@ -3682,15 +3682,33 @@ function renderLookGoals(grid, p) {
       + `<div class="look-pieces">${pieceCells}</div>`;
     grid.appendChild(card);
   });
-  // vanuit de kast gefocust geopend: scroll ernaartoe en laat 'm even oplichten
+  // vanuit de kast gefocust geopend: scroll ernaartoe en laat 'm even oplichten.
+  // Dubbele rAF (i.p.v. één) zodat het scherm ('screen-dress' krijgt hier pas
+  // net .active/display:flex) écht een volledige layout+paint heeft gehad
+  // vóórdat we de positie opmeten -- anders kan de meting op een trager
+  // toestel nog van vóór het zichtbaar worden dateren.
   if (focusLook) {
-    const target = grid.querySelector(`.look-goal[data-look="${focusLook}"]`);
+    const lookId = focusLook;
     focusLook = null;
-    if (target) requestAnimationFrame(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const target = grid.querySelector(`.look-goal[data-look="${lookId}"]`);
+      if (!target) return;
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
       target.classList.add('flash');
       setTimeout(() => target.classList.remove('flash'), 1400);
-    });
+      // vangnet: blijkt de kaart na de verwachte scrollduur (bv. onderbroken
+      // animatie) toch niet volledig in beeld -- inclusief niet verstopt onder
+      // de vaste kop -- dan springt hij alsnog direct (zonder animatie) goed.
+      setTimeout(() => {
+        const r = target.getBoundingClientRect();
+        const screen = $('screen-dress');
+        const sr = screen.getBoundingClientRect();
+        const hub = screen.querySelector('.hub-sticky');
+        const topLimit = hub ? Math.max(sr.top, hub.getBoundingClientRect().bottom) : sr.top;
+        const fullyVisible = r.top >= topLimit && r.bottom <= sr.bottom;
+        if (!fullyVisible) target.scrollIntoView({ block: 'center', behavior: 'auto' });
+      }, 500);
+    }));
   }
 }
 
