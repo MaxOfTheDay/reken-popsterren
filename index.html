@@ -395,13 +395,11 @@
     flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
     width: 100%; min-height: 0; z-index: 1;
   }
-  /* compacte, enkele regel onder de kop: sterren + welke tournee (set van 12
-     steden) + waar daarbinnen, alles in één oogopslag */
-  .tour-line { font-size: 13.5px; font-weight: 600; opacity: .92; text-align: center; margin-top: 3px; text-shadow: 0 1px 0 var(--glass-black-18); }
-  /* carrièrerang: het altijd-zichtbare lange-termijndoel. Rangnaam + een dunne
-     voortgangsbalk naar de volgende rang, plus hoeveel sterren er nog nodig zijn. */
-  .career-strip { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 6px auto 0; }
-  .rank-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 800; color: var(--gold-light); white-space: nowrap; text-shadow: 0 1px 0 var(--glass-black-18); }
+  /* carrièrerang: het altijd-zichtbare lange-termijndoel. De status zelf
+     (bv. "Straatartiest") is de titel van de kop (.header-title, zie
+     renderCareerStrip) -- hier alleen nog de dunne voortgangsbalk naar de
+     volgende status, plus hoeveel sterren er nog nodig zijn. */
+  .career-strip { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 4px auto 0; }
   .rank-bar { flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--glass-black-32); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
   .rank-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
@@ -1384,7 +1382,6 @@
         <div class="header-title" id="map-tournee-label"></div>
         <div class="diamond-badge header-right">💎 <span id="map-diamonds">0</span></div>
       </div>
-      <div class="tour-line" id="tour-line"></div>
       <div class="career-strip" id="career-strip"></div>
     </div>
     <div class="map-flex">
@@ -2278,7 +2275,7 @@ function renderProfiles() {
       `<div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
         <div class="pname">${p.name}</div>
         <div class="chip-badge">⭐ ${totalStarCount(p)}</div>
-        <div class="speel-pill">🎤 Speel!</div>`;
+        <div class="speel-pill">Speel!</div>`;
     applyStage(card.querySelector('.stage'), p);
     card.onclick = () => { sndClick(); selectProfile(key); };
     row.appendChild(card);
@@ -2366,8 +2363,9 @@ function updateParallax(map) {
   const sky = document.querySelector('#screen-map .map-sky-inner');
   if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
 }
-// De carrièrerang-strip onder de kop: rangnaam + balk naar de volgende rang.
-// Altijd zichtbaar op de kaart, zodat er ook bij een volle kast nog een doel is.
+// De ster-status is de titel van de kaart-kop geworden (i.p.v. "Tournee X");
+// de balk eronder toont de voortgang naar de volgende status. Altijd zichtbaar,
+// zodat er ook bij een volle kast nog een doel is.
 function renderCareerStrip(p) {
   const total = totalStarCount(p);
   const r = starRank(total);
@@ -2375,9 +2373,9 @@ function renderCareerStrip(p) {
   const span = r.nextMin - r.curMin;
   const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
   const togo = Math.max(0, r.nextMin - total);
+  $('map-tournee-label').textContent = `${r.emoji} ${r.name}`;
   $('career-strip').innerHTML =
-    `<span class="rank-badge">${r.emoji} ${r.name}</span>`
-    + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`
+    `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`
     + `<span class="rank-next">nog ${togo} ⭐</span>`;
 }
 function goMap() {
@@ -2385,11 +2383,7 @@ function goMap() {
   $('map-name').textContent = p.name;
   $('map-diamonds').textContent = p.diamonds;
   $('map-portrait').innerHTML = avatarSVG(p, 80);
-  const posInRound = ((p.level - 1) % CITIES.length) + 1;
-  const round = cityFor(p.level).ronde;
-  $('map-tournee-label').textContent = `🎤 Tournee ${round}`;
-  $('tour-line').textContent = `⭐ ${totalStarCount(p)} · Stad ${posInRound}/${CITIES.length}`;
-  renderCareerStrip(p);
+  renderCareerStrip(p);   // zet ook de titel (ster-status) in de kop
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
@@ -2526,7 +2520,7 @@ function renderTourMap(travelFrom) {
       // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
       // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      const speel = l === curLvl ? '<div class="tour-speel speel-pill">🎤 Speel!</div>' : '';
+      const speel = l === curLvl ? '<div class="tour-speel speel-pill">Speel!</div>' : '';
       // gespeelde stad: sterren als gewone regel onder de naam -- geen aparte
       // badge/positionering meer nodig. Nog niet gespeeld (curLvl) toont niets.
       const sterren = l === curLvl ? '' :
