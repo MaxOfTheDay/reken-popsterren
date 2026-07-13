@@ -398,6 +398,14 @@
   /* compacte, enkele regel onder de kop: sterren + welke tournee (set van 12
      steden) + waar daarbinnen, alles in één oogopslag */
   .tour-line { font-size: 13.5px; font-weight: 600; opacity: .92; text-align: center; margin-top: 3px; text-shadow: 0 1px 0 var(--glass-black-18); }
+  /* carrièrerang: het altijd-zichtbare lange-termijndoel. Rangnaam + een dunne
+     voortgangsbalk naar de volgende rang, plus hoeveel sterren er nog nodig zijn. */
+  .career-strip { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 6px auto 0; }
+  .rank-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 800; color: var(--gold-light); white-space: nowrap; text-shadow: 0 1px 0 var(--glass-black-18); }
+  .rank-bar { flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--glass-black-32); overflow: hidden; }
+  .rank-fill { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
+  .rank-next { font-size: 11px; font-weight: 600; color: var(--c-white); opacity: .8; white-space: nowrap; }
+  @media (max-width: 380px) { .rank-next { display: none; } }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform (zie updateParallax). Ooit zat de transform op
@@ -1022,6 +1030,8 @@
   .earn-chip.dia { background: rgba(41,182,246,.34); }
   .earn-chip.star { background: rgba(255,215,64,.26); }
   .earn-chip.fan { background: rgba(255,64,129,.28); }
+  /* nieuwe carrièrerang: dé mijlpaal van de show -- gouden pil die eruit springt */
+  .earn-chip.rank { background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 2px 10px rgba(255,179,0,.4); }
   /* eigen, opvallend blokje i.p.v. een tekstregel tussen de andere zinnen — zelfde
      gouden puls als een "klaar om te openen"-trofee in de kast (via .gold-pill),
      zodat dit al vooruitwijst naar wat je zo meteen ziet. Zelf ook klikbaar
@@ -1150,6 +1160,33 @@
   .item-status.on { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); box-shadow: 0 1px 5px rgba(255,179,0,.35); }
   .item-status.preview { color: var(--blue-text); background: rgba(56,189,248,.16); box-shadow: 0 0 0 1px var(--blue-ring); }
   .item-status.new { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-flash), var(--gold-marigold)); animation: readyPulse 1.4s ease-in-out 2; }
+
+  /* ---- Looks-modus: complete outfits als spaardoel, dwars door de categorieën
+     heen. Hergebruikt de .theme-list-taal van de trofeeënkast, maar hier zijn de
+     stukjes aantikbaar: tik een ontbrekend stuk en je springt naar dat item in
+     zijn categorie om het te kopen/aan te doen. */
+  .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 12px; }
+  .looks-intro { font-size: 13.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 2px 6px 4px; }
+  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 13px 15px 14px; text-align: left; }
+  .look-goal.ready { border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.09); }
+  .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.28); }
+  .look-goal-head { display: flex; align-items: center; gap: 10px; }
+  .look-goal-head .lemoji { font-size: 28px; line-height: 1; }
+  .look-goal-head .lname { font-size: 16px; font-weight: 800; }
+  .look-goal-head .lcount { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
+  .look-goal.ready .lcount { color: var(--blue-text); background: rgba(56,189,248,.16); }
+  .look-goal.done .lcount { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); }
+  .look-goal .theme-list { margin-top: 11px; }
+  .look-goal .theme-list li { cursor: pointer; border-radius: var(--radius-sm); padding: 3px 4px; transition: background .12s; }
+  .look-goal .theme-list li.miss { color: var(--gold-warm); }
+  .look-goal .theme-list li:hover { background: var(--glass-white-10); }
+  .look-goal-cta { margin-top: 12px; font-size: 13px; font-weight: 700; text-align: center; }
+  .look-goal-cta.buy { color: var(--gold-warm); }
+  .look-goal-cta.compleet { color: var(--gold-light); }
+  button.look-goal-cta { width: 100%; font-family: inherit; cursor: pointer; border: none; padding: 9px 12px; border-radius: var(--radius-pill);
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 3px 10px rgba(255,179,0,.35); }
+  button.look-goal-cta:active { transform: scale(.97); }
+  .shop-mode { margin-top: 12px; max-width: 300px; }
   /* bezit/aan staat op het kaartje via rustige kaartkleur: grijs = hebben, goud = aan. */
   .item-card.owned { border-color: rgba(180,184,196,.64); background: rgba(180,184,196,.10); }
   /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
@@ -1347,6 +1384,7 @@
         <div class="diamond-badge header-right">💎 <span id="map-diamonds">0</span></div>
       </div>
       <div class="tour-line" id="tour-line"></div>
+      <div class="career-strip" id="career-strip"></div>
     </div>
     <div class="map-flex">
       <div class="tour-map-wrap">
@@ -1468,7 +1506,8 @@
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
-      <div class="shop-tabs-wrap">
+      <div class="segmented shop-mode" id="shop-mode"></div>
+      <div class="shop-tabs-wrap" id="shop-tabs-wrap">
         <div class="shop-tabs" id="shop-tabs"></div>
       </div>
     </div>
@@ -1592,12 +1631,15 @@ const ITEMS = [
   { id: 'mic_roze',   cat: 'mic', name: 'Roze glitter', price: 90, color: '#ff80ab' },
   { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', price: 100, color: 'RAINBOW' },
   // Instrumenten
+  { id: 'instr_tamboerijn', cat: 'instrument', name: 'Tamboerijn', price: 28, emoji: '🪘' },
   { id: 'instr_gitaar',  cat: 'instrument', name: 'Gitaar',    price: 40, emoji: '🎸' },
   { id: 'instr_piano',   cat: 'instrument', name: 'Keyboard',  price: 45, emoji: '🎹' },
   { id: 'instr_drums',   cat: 'instrument', name: 'Drumstel',  price: 55, emoji: '🥁' },
   { id: 'instr_viool',   cat: 'instrument', name: 'Viool',     price: 60, emoji: '🎻' },
+  { id: 'instr_accordeon', cat: 'instrument', name: 'Accordeon', price: 65, emoji: '🪗' },
   { id: 'instr_sax',     cat: 'instrument', name: 'Saxofoon',  price: 70, emoji: '🎷' },
   { id: 'instr_trompet', cat: 'instrument', name: 'Trompet',   price: 80, emoji: '🎺' },
+  { id: 'instr_dj',      cat: 'instrument', name: 'DJ-set',    price: 105, emoji: '🎛️' },
   // Extra's
   { id: 'acc_strik',    cat: 'acc', name: 'Strik',    price: 25, emoji: '🎀' },
   { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
@@ -1611,7 +1653,9 @@ const ITEMS = [
   { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
   { id: 'acc_bloemkrans',cat: 'acc', name: 'Bloemenkrans',  price: 55, emoji: '🌼', spot: 'top' },
   { id: 'acc_tovenaarshoed', cat: 'acc', name: 'Tovenaarshoed', price: 85, emoji: '🧙' },
+  { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 120, emoji: '💎', spot: 'top' },
   // Huisdieren
+  { id: 'pet_poes',   cat: 'pet', name: 'Poesje',        price: 22,  emoji: '🐈' },
   { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
   { id: 'pet_hond',   cat: 'pet', name: 'Danshondje',    price: 50,  emoji: '🐶' },
   { id: 'pet_kat',    cat: 'pet', name: 'Zangpoesje',    price: 50,  emoji: '🐱' },
@@ -1627,9 +1671,11 @@ const ITEMS = [
   { id: 'pet_flamingo',cat:'pet', name: 'Flamingo',      price: 95,  emoji: '🦩' },
   { id: 'pet_leeuw',  cat: 'pet', name: 'Leeuwenwelp',   price: 100, emoji: '🦁' },
   { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
-  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 160, emoji: '🐉' },
+  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 180, emoji: '🐉' },
+  { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 200, emoji: '🦚' },
   // Podium
   { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
+  { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'] },
   { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
   { id: 'stage_kasteel',  cat: 'stage', name: 'Prinsessenkasteel',price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
   { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
@@ -1639,6 +1685,7 @@ const ITEMS = [
   { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
   { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
   { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'] },
+  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vulkaan',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
 // Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
@@ -1700,6 +1747,7 @@ const TROPHIES = [
   // 🧮 Rekenkracht — goed rekenen en gouden vragen (stats.correct telt elk goed antwoord)
   { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',      desc: '25 sommen goed',           has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
   { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: '100 sommen goed',          has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums250',  emoji: '💥', name: 'Rekenknaller',    desc: '250 sommen goed',          has: p => p.stats.correct >= 250, progress: p => trophyProgress(p.stats.correct, 250, 'sommen goed') },
   { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: '500 sommen goed',          has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
   { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: '1000 sommen goed',         has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
   { id: 'gold5',      emoji: '🌟', name: 'Goudzoeker',      desc: '5 gouden vragen',    has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
@@ -1711,6 +1759,8 @@ const TROPHIES = [
   { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: '15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
   { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: '30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
+  { id: 'toegift',    emoji: '🎉', name: 'Toegift!',        desc: 'Je eerste toegift',    has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'toegift gehaald') },
+  { id: 'toegift25',  emoji: '🎆', name: 'Toegiftkoning',   desc: '25 toegiften',         has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'toegiften gehaald') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
   { id: 'rich',       emoji: '💰', name: 'Diamantenster',   desc: '100 diamanten',            has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
   { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: '250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
@@ -1745,6 +1795,12 @@ const TROPHIES = [
     has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
   { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
     has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
+  { id: 'diamantster', emoji: '💎', name: 'Diamantster', desc: 'Draag de hele diamantlook',
+    has: p => comboOn(p, DIAMANTSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, DIAMANTSTER_SET), 4, 'stukken tegelijk aan') },
+  { id: 'festivaldj', emoji: '🎛️', name: 'Festival-DJ', desc: 'Draag de hele DJ-look',
+    has: p => comboOn(p, FESTIVALDJ_SET) === 4, progress: p => trophyProgress(comboOn(p, FESTIVALDJ_SET), 4, 'stukken tegelijk aan') },
+  { id: 'vuurshow', emoji: '🌋', name: 'Vuurshow', desc: 'Draag de hele vuurlook',
+    has: p => comboOn(p, VUURSHOW_SET) === 4, progress: p => trophyProgress(comboOn(p, VUURSHOW_SET), 4, 'stukken tegelijk aan') },
   // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
   // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -1752,11 +1808,11 @@ const TROPHIES = [
 // De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
 const TROPHY_SHELVES = [
   { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
-  { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
-  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour'] },
+  { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
   { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
-  { name: '✨ Thema-looks',          note: 'Heb je alles? Trek de hele look aan!', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster'] },
+  { name: '✨ Thema-looks',          note: 'Heb je alles? Trek de hele look aan!', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
@@ -1771,12 +1827,18 @@ const WINTER_SET = { stage: 'stage_winter', hair: 'hair_wit', pet: 'pet_pinguin'
 const JUNGLE_SET = { stage: 'stage_jungle', pet: 'pet_leeuw', dress: 'dress_groen', acc: 'acc_bloemkrans' };
 const ZEE_SET = { dress: 'dress_zeemeermin', stage: 'stage_onderwater', pet: 'pet_dolfijn', hair: 'hair_turkoois' };
 const REGENBOOG_SET = { hair: 'hair_regenboog', dress: 'dress_regenboog', shoes: 'shoes_regenboog', mic: 'mic_regenboog', stage: 'stage_regenboog' };
+// nieuwe looks: hergebruiken bestaande stukken + de nieuwe premium-items, kris-kras
+// over de categorieën heen zodat een look najagen kind door de hele kast trekt.
+const DIAMANTSTER_SET = { acc: 'acc_diadeem', hair: 'hair_zilver', dress: 'dress_disco', stage: 'stage_winter' };
+const FESTIVALDJ_SET = { instrument: 'instr_dj', acc: 'acc_koptel', mic: 'mic_roze', stage: 'stage_disco' };
+const VUURSHOW_SET = { stage: 'stage_vulkaan', pet: 'pet_draak', dress: 'dress_rood', mic: 'mic_zwart' };
 function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.equipped[vak] === id).length; }
 // Welke trofee is een thema-look, en uit welke stukken bestaat die look.
 const THEME_SETS = {
   magicus: MAGICUS_SET, thuismatch: OHELLE_SET, rockster: ROCKSTER_SET,
   discodiva: DISCO_SET, prinses: PRINSES_SET, ruimteheld: RUIMTE_SET,
-  winter: WINTER_SET, jungle: JUNGLE_SET, zeemeermin: ZEE_SET, regenboogster: REGENBOOG_SET
+  winter: WINTER_SET, jungle: JUNGLE_SET, zeemeermin: ZEE_SET, regenboogster: REGENBOOG_SET,
+  diamantster: DIAMANTSTER_SET, festivaldj: FESTIVALDJ_SET, vuurshow: VUURSHOW_SET
 };
 // De kleedkamer laat de categorie het werk doen (tabblad "Jurken" + een kleur-
 // bolletje maakt "Roze" al duidelijk genoeg), maar in de look-checklist hangt
@@ -1792,7 +1854,9 @@ const THEME_ITEM_LABEL = {
   hair_wit: 'Wit haar', hair_turkoois: 'Turquoise haar', hair_regenboog: 'Regenboog haar',
   mic_zilver: 'Zilveren micro', mic_roze: 'Roze glittermicro', mic_regenboog: 'Regenboogmicro',
   stage_disco: 'Discopodium', stage_jungle: 'Junglepodium',
-  stage_ruimte: 'Ruimteshow', stage_onderwater: 'Onderwatershow'
+  stage_ruimte: 'Ruimteshow', stage_onderwater: 'Onderwatershow',
+  dress_rood: 'Rode jurk', stage_winter: 'Winterpodium', stage_vulkaan: 'Vulkaanshow',
+  acc_diadeem: 'Diamanten diadeem', acc_koptel: 'Hoofdtelefoon', instr_dj: 'DJ-set', pet_draak: 'Draakje'
 };
 // Korte, duidelijke naam van een stuk (zonder emoji — rustiger in de checklist).
 function pieceLabel(id) {
@@ -1808,6 +1872,62 @@ function perfectCities(p) {
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
 function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
 function boughtCount(p) { return Math.max(0, p.owned.length - 5); }   // 5 = de gratis startspullen
+
+/* ================= Sterrencarrière ================= */
+// Eén doorlopende carrièreladder op basis van álle verdiende sterren (over alle
+// tournees heen). Elke show geeft sterren, dus de rang-balk beweegt altíjd —
+// hét lange-termijndoel dat nooit "op" is. Elke rang omhoog geeft een diamant-
+// bonus, zodat het lange sparen óók de kleedkamer blijft voeden. Hergebruikt het
+// bestaande sterren-systeem volledig: geen nieuwe munt, verzameling of scherm.
+const RANK_TIERS = [
+  { min: 0,   name: 'Straatartiest', emoji: '🎤', bonus: 0 },
+  { min: 12,  name: 'Lokale ster',   emoji: '⭐', bonus: 10 },
+  { min: 30,  name: 'Clubster',      emoji: '🎶', bonus: 15 },
+  { min: 60,  name: 'Stadsster',     emoji: '🏙️', bonus: 20 },
+  { min: 100, name: 'Radioster',     emoji: '📻', bonus: 30 },
+  { min: 150, name: 'Toursensatie',  emoji: '✈️', bonus: 40 },
+  { min: 220, name: 'Platinaster',   emoji: '💿', bonus: 50 },
+  { min: 300, name: 'Wereldlegende', emoji: '👑', bonus: 60 },
+];
+const RANK_STEP = 100;   // na Wereldlegende: elke +100 sterren een nieuwe ⭐-tier
+// Rang-beschrijving voor een bepaald sterrentotaal, inclusief de open-einde
+// "Wereldlegende ⭐×N"-tiers voorbij de laatste vaste rang. idx is doorlopend
+// (0,1,2,…) zodat we een rang-stijging betrouwbaar kunnen herkennen.
+function starRank(total) {
+  let i = 0;
+  for (let k = 0; k < RANK_TIERS.length; k++) if (total >= RANK_TIERS[k].min) i = k;
+  const base = RANK_TIERS[i];
+  const last = RANK_TIERS.length - 1;
+  if (i < last) {
+    const nxt = RANK_TIERS[i + 1];
+    return { idx: i, name: base.name, emoji: base.emoji, curMin: base.min, nextMin: nxt.min, nextName: nxt.name };
+  }
+  // open einde: Wereldlegende ⭐2, ⭐3, …
+  const over = Math.floor((total - base.min) / RANK_STEP);
+  const curMin = base.min + over * RANK_STEP;
+  const stars = over + 1;
+  return {
+    idx: last + over, emoji: base.emoji,
+    name: over === 0 ? base.name : `${base.name} ⭐${stars}`,
+    curMin, nextMin: curMin + RANK_STEP, nextName: `${base.name} ⭐${stars + 1}`,
+  };
+}
+function rankBonusFor(idx) { return RANK_TIERS[Math.min(idx, RANK_TIERS.length - 1)].bonus; }
+// Na het verdienen van sterren: is de speler een rang gestegen? Zo ja, keer de
+// bonus(sen) uit (één keer — p.rankSeen onthoudt de hoogst bereikte rang) en
+// geef terug wat er gehaald is voor een feestje op het eindscherm.
+function checkRankUp(p) {
+  const r = starRank(totalStarCount(p));
+  if (p.rankSeen == null) p.rankSeen = r.idx;
+  if (r.idx > p.rankSeen) {
+    let bonus = 0;
+    for (let k = p.rankSeen + 1; k <= r.idx; k++) bonus += rankBonusFor(k);
+    p.rankSeen = r.idx;
+    p.diamonds += bonus;
+    return { rank: r, bonus };
+  }
+  return null;
+}
 function trophyProgress(value, target, label) {
   const now = Math.max(0, Math.min(value, target));
   return { now, target, label, pct: Math.round((now / target) * 100) };
@@ -1840,6 +1960,7 @@ function defaultProfile(name, dress) {
     equipped: { hair: 'hair_blond', dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
+    rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
     weak: {},   // zwakke sommen: "7 × 8" -> { ans, op, w } om gericht te herhalen
     stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
@@ -1854,6 +1975,9 @@ function migrate(p) {
   if (!p.readyTrophies) p.readyTrophies = [];
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  // bestaande spelers beginnen op hun huidige rang (geen bonus met terugwerkende
+  // kracht voor sterren die ze al hadden); nieuwe rangen daarna betalen wél uit
+  if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
@@ -2228,6 +2352,20 @@ function updateParallax(map) {
   const sky = document.querySelector('#screen-map .map-sky-inner');
   if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
 }
+// De carrièrerang-strip onder de kop: rangnaam + balk naar de volgende rang.
+// Altijd zichtbaar op de kaart, zodat er ook bij een volle kast nog een doel is.
+function renderCareerStrip(p) {
+  const total = totalStarCount(p);
+  const r = starRank(total);
+  const into = total - r.curMin;
+  const span = r.nextMin - r.curMin;
+  const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
+  const togo = Math.max(0, r.nextMin - total);
+  $('career-strip').innerHTML =
+    `<span class="rank-badge">${r.emoji} ${r.name}</span>`
+    + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`
+    + `<span class="rank-next">nog ${togo} ⭐</span>`;
+}
 function goMap() {
   const p = P();
   $('map-name').textContent = p.name;
@@ -2237,6 +2375,7 @@ function goMap() {
   const round = cityFor(p.level).ronde;
   $('map-tournee-label').textContent = `🎤 Tournee ${round}`;
   $('tour-line').textContent = `⭐ ${totalStarCount(p)} · Stad ${posInRound}/${CITIES.length}`;
+  renderCareerStrip(p);
   const travel = pendingTravel;
   pendingTravel = null;
   renderTourMap(travel ? travel.from : 0);
@@ -3201,6 +3340,8 @@ function endLevel(success) {
       p.level++;
       pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
     }
+    // carrièrerang: net genoeg sterren voor een hogere rang? -> bonus (zie checkRankUp)
+    const rankUp = checkRankUp(p);
     const trofees = checkTrophies(p);
     save();
     $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
@@ -3215,6 +3356,7 @@ function endLevel(success) {
       `<span class="earn-chip star">⭐ +${bonus} sterrenbonus</span>`
     ];
     if (fanBonus > 0) earnChips.push(`<span class="earn-chip fan">👏 +${fanBonus} publiek</span>`);
+    if (rankUp) earnChips.push(`<span class="earn-chip rank">${rankUp.rank.emoji} ${rankUp.rank.name}! +${rankUp.bonus} 💎</span>`);
     $('end-earn').innerHTML = earnChips.join('');
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(); };
@@ -3373,20 +3515,44 @@ function itemThumb(it) {
 let shopCat = 'dress';
 let shopSelectedId = null;
 let shopJustBoughtId = null;
+let shopView = 'items';   // 'items' = kleren per categorie · 'looks' = complete outfits als spaardoel
 function openKleedkamer() {
-  shopCat = 'dress'; shopSelectedId = null;
+  shopCat = 'dress'; shopSelectedId = null; shopView = 'items';
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
 }
+// vanuit de Looks-modus naar een concreet stuk springen om het te kopen/aan te doen
+function shopGoToItem(cat, id) {
+  sndClick();
+  shopView = 'items'; shopCat = cat; shopSelectedId = id;
+  renderShop();
+  $('screen-dress').scrollTop = 0;
+}
 function renderShop() {
   const p = P();
-  const selected = shopSelectedId ? item(shopSelectedId) : null;
+  const looksMode = shopView === 'looks';
+  const selected = (!looksMode && shopSelectedId) ? item(shopSelectedId) : null;
   const preview = selected ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
   $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
   applyStage($('shop-stage'), preview);
   renderDressBar(selected, p);
+  // modus-schakelaar: kleren (per categorie) ↔ looks (complete outfits sparen)
+  const mode = $('shop-mode');
+  mode.innerHTML = '';
+  [['items', '👗 Kleren'], ['looks', '✨ Looks']].forEach(([v, label]) => {
+    const b = document.createElement('button');
+    b.className = v === shopView ? 'on' : '';
+    b.textContent = label;
+    b.onclick = () => { sndClick(); shopView = v; shopSelectedId = null; renderShop(); $('screen-dress').scrollTop = 0; };
+    mode.appendChild(b);
+  });
+  $('shop-tabs-wrap').style.display = looksMode ? 'none' : '';
+  const grid = $('item-grid');
+  grid.classList.toggle('looks-view', looksMode);
+  grid.innerHTML = '';
+  if (looksMode) { renderLookGoals(grid, p); return; }
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
   // alle 8 categorieën staan altijd in beeld (1 rij of een vaste 4x2-grid,
@@ -3398,8 +3564,6 @@ function renderShop() {
     b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; renderShop(); };
     tabs.appendChild(b);
   });
-  const grid = $('item-grid');
-  grid.innerHTML = '';
   // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
   ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => a.price - b.price).forEach(it => {
     const owned = p.owned.includes(it.id);
@@ -3424,6 +3588,43 @@ function renderShop() {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
       shopJustBoughtId = null; shopSelectedId = it.id; renderShop();
     };
+    grid.appendChild(card);
+  });
+}
+// Looks-modus: elke thema-look als spaardoel, met per stuk de staat (ontbreekt /
+// in bezit / nu aan) en een tik-om-te-kopen sprong naar het ontbrekende stuk.
+// Zo trekt het najagen van één look het kind dwars door de categorieën heen.
+function renderLookGoals(grid, p) {
+  grid.innerHTML = `<div class="looks-intro">✨ Verzamel alle stukken van een look en draag ze samen voor een trofee!</div>`;
+  // volgorde: nog te verzamelen eerst (meest voltooid bovenaan), afgeronde onderaan
+  const looks = TROPHIES.filter(t => THEME_SETS[t.id]).map(t => {
+    const pieces = Object.entries(THEME_SETS[t.id]);
+    const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
+    const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
+    return { t, pieces, ownedN, wornN, total: pieces.length };
+  });
+  looks.sort((a, b) => {
+    const ad = a.wornN === a.total, bd = b.wornN === b.total;
+    if (ad !== bd) return ad ? 1 : -1;               // compleet-aan naar onderen
+    return (b.ownedN / b.total) - (a.ownedN / a.total); // dichtst bij af bovenaan
+  });
+  looks.forEach(({ t, pieces, ownedN, wornN, total }) => {
+    const done = wornN === total;
+    const ready = !done && ownedN === total;
+    const cls = done ? ' done' : (ready ? ' ready' : '');
+    const list = pieces.map(([cat, id]) => {
+      const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
+      return `<li class="${st}" onclick="shopGoToItem('${cat}','${id}')"><span class="pc"></span>${pieceLabel(id)}</li>`;
+    }).join('');
+    let cta;
+    if (done) cta = `<div class="look-goal-cta compleet">✨ Helemaal compleet aan!</div>`;
+    else if (ready) cta = `<button class="look-goal-cta" onclick="wearLook('${t.id}')">👗 Trek alles aan</button>`;
+    else cta = `<div class="look-goal-cta buy">Nog ${total - ownedN} stuk${total - ownedN === 1 ? '' : 'jes'} te koop — tik een stuk aan</div>`;
+    const card = document.createElement('div');
+    card.className = 'look-goal' + cls;
+    card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
+      + `<span class="lname">${t.name}</span><span class="lcount">${ownedN}/${total} in bezit</span></div>`
+      + `<ul class="theme-list">${list}</ul>${cta}`;
     grid.appendChild(card);
   });
 }
