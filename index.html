@@ -3575,7 +3575,13 @@ function shopGoToItem(cat, id) {
   sndClick();
   shopView = 'items'; shopCat = cat; shopSelectedId = id;
   renderShop();
-  $('screen-dress').scrollTop = 0;
+  // scroll het gekozen item zelf in beeld (i.p.v. gewoon naar boven) -- bij
+  // een categorie met veel spulletjes (bv. dieren) staat het anders alsnog
+  // buiten beeld, precies het stukje waar je net vanuit Looks voor kwam
+  requestAnimationFrame(() => {
+    const card = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
+    if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
 }
 // een stuk in de looks-lijst aantikken: heb je 't al → meteen aandoen; anders → kopen
 function lookPieceTap(cat, id) {
@@ -3624,6 +3630,7 @@ function renderShop() {
     const equipped = p.equipped[it.cat] === it.id;
     const card = document.createElement('div');
     const selected = shopSelectedId === it.id;
+    card.dataset.item = it.id;
     card.className = 'item-card'
       + (equipped ? ' equipped' : (owned ? ' owned' : ''))
       + (selected ? ' selected' : '')
