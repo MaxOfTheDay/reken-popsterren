@@ -400,9 +400,9 @@
      renderCareerStrip); titel + teller + balk vormen samen één groepje --
      de teller (klein, ondergeschikt aan de titel) staat er vlak boven de
      balk, gecentreerd, als één doorlopend getal (geen "nog X" ernaast meer). */
-  .career-strip { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; max-width: 260px; margin: 2px auto 0; }
-  .rank-counter { font-size: 12px; font-weight: 700; color: var(--c-white); opacity: .8; letter-spacing: .01em; }
-  .rank-bar { width: 100%; height: 7px; border-radius: var(--radius-pill); background: var(--glass-black-32); overflow: hidden; }
+  .career-strip { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; }
+  .rank-counter { font-size: 13px; font-weight: 700; color: var(--c-white); opacity: .85; letter-spacing: .01em; }
+  .rank-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
   .rank-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
@@ -834,9 +834,9 @@
 
   /* ---- Trofeeën ---- */
   /* kast-voortgang in de plakkende kop: hoeveel van de kast is gevuld */
-  .kast-progress { width: min(100%, 340px); margin-top: 3px; }
-  .kast-progress-text { font-size: 13.5px; font-weight: 600; opacity: .92; text-align: center; margin-bottom: 4px; }
-  .kast-bar { height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: var(--glass-black-35); border: 1px solid var(--glass-white-28); }
+  .kast-progress { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; }
+  .kast-progress-text { font-size: 13px; font-weight: 700; opacity: .85; text-align: center; }
+  .kast-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); overflow: hidden; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); }
   .kast-bar-fill { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-accent), var(--pink-accent)); transition: width .6s ease; }
   /* de kast heeft planken: kleine themakopjes met een teller per plank */
   #trophy-shelves { width: 100%; max-width: 680px; }
