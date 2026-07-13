@@ -1157,20 +1157,18 @@
      een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
   .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
   .looks-intro { font-size: 12.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
-  /* kaart houdt altijd dezelfde vorm/structuur aan -- geen "slim"/ingeklapte
-     variant meer zodra een look compleet aan is: alleen het telknopje in de
-     kop verandert (van "3/4" naar een vinkje) en de stukjes-rand kleurt goud
-     (alles staat aan). Positie in de lijst verandert nooit (zie renderLookGoals). */
-  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 12px 14px 13px; text-align: left; }
+  /* kaart houdt altijd dezelfde vorm/structuur aan, ongeacht status -- positie
+     in de lijst verandert nooit (zie renderLookGoals). De hele kaart is zelf
+     de "trek aan wat ik heb"-actie (geen apart knopje/teller meer nodig: de
+     stukjes-rand toont de voortgang al goud-op-goud zodra alles aan staat). */
+  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 12px 14px 13px; text-align: left; cursor: pointer; transition: transform .07s; }
+  .look-goal:active { transform: scale(.98); }
   .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); }
   .look-goal.flash { animation: lookFlash 1.4s ease; }
   @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
   .look-goal-head { display: flex; align-items: center; gap: 10px; }
   .look-goal-head .lemoji { font-size: 24px; line-height: 1; }
   .look-goal-head .lname { font-size: 15px; font-weight: 800; }
-  .look-goal-head .lcount { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
-  /* "aan"/behaald krijgt dezelfde goud-taal als een geëquipeerd stukje -- geen blauw */
-  .look-goal-head .lcount.earned { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); }
   /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card */
   .look-pieces { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
   .look-piece { width: 58px; cursor: pointer; text-align: center; border-radius: var(--radius-sm); padding: 4px 2px 5px; transition: transform .07s, background .12s; }
@@ -1189,10 +1187,6 @@
   .look-piece.have .lp-name { color: var(--muted-text-3); }
   .look-piece.on { background: rgba(255,214,90,.16); box-shadow: 0 0 0 1.5px var(--gold-accent); }
   .look-piece.on .lp-name { color: var(--gold-light); }
-  .look-goal-cta { margin-top: 11px; }
-  button.look-goal-cta { width: 100%; font-family: inherit; font-size: 13px; cursor: pointer; border: none; padding: 9px 12px; border-radius: var(--radius-pill);
-    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 3px 10px rgba(255,179,0,.35); }
-  button.look-goal-cta:active { transform: scale(.97); }
   .shop-mode { margin-top: 12px; max-width: 300px; }
   /* bezit/aan staat op het kaartje via rustige kaartkleur: grijs = hebben, goud = aan. */
   .item-card.owned { border-color: rgba(180,184,196,.64); background: rgba(180,184,196,.10); }
@@ -2725,17 +2719,23 @@ function normalCardHTML(t, p, status) {
 // telt -- exact de voorwaarde om de trofee te behalen -- dus normalCardHTML
 // hierboven geeft voor thema-looks vanzelf de juiste "Nog X stukken tegelijk
 // aan"-voortgang, in precies dezelfde kaartstructuur als elke andere trofee.
-// Trekt in één klik alle stukken (die je al bezit) van een look aan. Wordt vanuit
-// de kleedkamer-looks aangeroepen en blijft daar: de kaart wordt meteen 'compleet
-// aan'. Een complete look kan een trofee klaarleggen, dus check dat ook hier.
-function wearLook(id) {
+// Zet alle stukken van een look aan die je al bezit (ontbrekende stukken
+// blijven gewoon weg -- geen foutmelding, gewoon zoveel mogelijk van de look).
+// Pure data-actie zonder geluid/hertekenen: de aanroepers (hieronder en vanuit
+// de trofeeënkast) hebben elk hun eigen render/navigatie-moment nodig.
+function equipOwnedPieces(id) {
   const set = THEME_SETS[id];
   if (!set) return;
   const p = P();
   Object.entries(set).forEach(([cat, itemId]) => { if (p.owned.includes(itemId)) p.equipped[cat] = itemId; });
-  const trofees = checkTrophies(p);
+  const trofees = checkTrophies(p);   // een complete look kan een trofee klaarleggen
   noticeReady(trofees);
   save();
+}
+// Tik op een hele look-kaart in de kleedkamer: trek meteen alles aan wat je
+// al hebt van die look.
+function wearLook(id) {
+  equipOwnedPieces(id);
   sndClick();
   renderShop();
 }
@@ -3555,9 +3555,11 @@ function openKleedkamer() {
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
 }
-// vanuit de trofeeënkast: open de kleedkamer in Looks-modus, gefocust op één look
+// vanuit de trofeeënkast: open de kleedkamer in Looks-modus, gefocust op één
+// look -- trekt meteen aan wat je er al van bezit en scrollt er duidelijk naartoe
 function openLookInKleedkamer(id) {
   shopCat = 'dress'; shopSelectedId = null; shopView = 'looks'; focusLook = id;
+  equipOwnedPieces(id);
   show('screen-dress');
   renderShop();   // renderLookGoals scrollt naar + belicht de gefocuste look
 }
@@ -3647,33 +3649,30 @@ function renderShop() {
 // in bezit / nu aan) en een tik-om-te-kopen sprong naar het ontbrekende stuk.
 // Zo trekt het najagen van één look het kind dwars door de categorieën heen.
 function renderLookGoals(grid, p) {
-  grid.innerHTML = `<div class="looks-intro">✨ Tik een stukje om te kopen of aan te doen</div>`;
+  grid.innerHTML = `<div class="looks-intro">✨ Tik een look om alles aan te doen, of een stukje om te kopen</div>`;
   // Vaste volgorde (zelfde TROPHIES-definitievolgorde als de trofeeënkast) --
   // kaarten wisselen NOOIT van plek als hun status verandert, ook niet zodra
-  // een look compleet aan is. Alleen de kop en de stukjes-rand veranderen dan.
+  // een look compleet aan is. Alleen de stukjes-rand verandert dan.
   TROPHIES.filter(t => THEME_SETS[t.id]).forEach(t => {
     const pieces = orderedPieces(THEME_SETS[t.id]);
     const total = pieces.length;
-    const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
     const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
     const done = wornN === total;
-    const ready = !done && ownedN === total;
     const card = document.createElement('div');
     card.dataset.look = t.id;
     card.className = 'look-goal' + (done ? ' done' : '');
+    // tik ergens op de kaart (buiten een los stukje): trek alles aan wat je bezit
+    card.onclick = () => wearLook(t.id);
     // elk stukje = mini-kaartje, zelfde miniatuur + rand-taal als de gewone
-    // kleren-kaarten (itemThumb hergebruikt) -- geen tekstregel meer nodig
+    // kleren-kaarten (itemThumb hergebruikt); event.stopPropagation voorkomt
+    // dat een tik op één stukje ook meteen de hele-look-aandoen-actie triggert
     const pieceCells = pieces.map(([cat, id]) => {
       const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
-      return `<div class="look-piece ${st}" onclick="lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
+      return `<div class="look-piece ${st}" onclick="event.stopPropagation();lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
     }).join('');
-    const countPill = done ? `<span class="lcount earned">✓ aan</span>` : `<span class="lcount">${ownedN}/${total}</span>`;
-    const cta = ready
-      ? `<button class="look-goal-cta" onclick="wearLook('${t.id}')">👗 Trek alles aan</button>`
-      : '';
     card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
-      + `<span class="lname">${t.name}</span>${countPill}</div>`
-      + `<div class="look-pieces">${pieceCells}</div>${cta}`;
+      + `<span class="lname">${t.name}</span></div>`
+      + `<div class="look-pieces">${pieceCells}</div>`;
     grid.appendChild(card);
   });
   // vanuit de kast gefocust geopend: scroll ernaartoe en laat 'm even oplichten
