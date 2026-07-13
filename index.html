@@ -2252,11 +2252,16 @@ function show(id) {
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
   if (navId) updateTroDot();
 }
+// Kaart is altijd "thuis" (goMap() start zelf al altijd bij de huidige stad,
+// nooit een onthouden positie). Kleedkamer/Trofeeën onthouden juist wél waar
+// je was: nogmaals tikken op het tabblad waar je al op stond geeft een verse
+// start; vanuit een ánder tabblad hervat je gewoon waar je gebleven was.
 function navGo(t) {
   sndClick();
+  const wasActive = $('nav-' + t).classList.contains('active');
   if (t === 'map') goMap();
-  else if (t === 'dress') openKleedkamer();
-  else openTrophies();
+  else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
+  else (wasActive ? openTrophies : resumeTrophies)();
 }
 
 function goProfiles() {
@@ -2593,10 +2598,20 @@ function runTravel(t) {
 }
 
 /* ================= Trofeeën-scherm ================= */
+// Verse start (o.a. nogmaals op het al-actieve Trofeeën-tabblad tikken):
+// altijd terug naar boven.
 function openTrophies() {
   renderShelves();
   show('screen-trophies');
   $('screen-trophies').scrollTop = 0;
+}
+// Terug naar de trofeeënkast via de vaste navigatie (kwam van een ánder
+// tabblad): hervat gewoon waar je gebleven was -- scrollpositie blijft staan,
+// want die reset de browser niet vanzelf bij display:none/flex (zie ook de
+// scroll-reset hierboven, die juist bewust wél altijd terug naar boven gaat).
+function resumeTrophies() {
+  renderShelves();
+  show('screen-trophies');
 }
 // De status van een trofee, in prioriteitsvolgorde:
 // ready (open trofee) > done (behaald) > locked > almost (bijna) > busy (bezig) > fresh (niet gestart).
@@ -3544,11 +3559,24 @@ let shopSelectedId = null;
 let shopJustBoughtId = null;
 let shopView = 'items';   // 'items' = kleren per categorie · 'looks' = complete outfits als spaardoel
 let focusLook = null;     // look-id om naartoe te scrollen + even te laten oplichten (vanuit de kast)
+// Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
+// altijd terug naar de standaardcategorie, geen selectie, geen Looks-modus.
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null; shopView = 'items'; focusLook = null;
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
+}
+// Terug naar de kleedkamer via de vaste navigatie (kwam van een ánder
+// tabblad): hervat waar je gebleven was -- categorie, subview (Kleren/Looks),
+// selectie en scrollpositie blijven allemaal gewoon staan (het zijn simpele
+// variabelen die niets anders al aanraakte). Een gerichte sprong hierheen
+// (bv. vanuit een trofee, zie openLookInKleedkamer/openKleedkamerCat) heeft
+// die variabelen intussen al naar zijn eigen doel gezet -- dát wordt dus
+// vanzelf de nieuwe "waar je gebleven was"-stand, zonder extra code.
+function resumeKleedkamer() {
+  show('screen-dress');
+  renderShop();
 }
 // vanuit de trofeeënkast: open de kleedkamer in Looks-modus, gefocust op één
 // look -- trekt meteen aan wat je er al van bezit en scrollt er duidelijk naartoe
