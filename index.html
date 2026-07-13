@@ -1155,28 +1155,49 @@
      een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
   .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
   .looks-intro { font-size: 12.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
-  /* kaart houdt altijd dezelfde vorm/structuur aan, ongeacht status -- positie
-     in de lijst verandert nooit (zie renderLookGoals). De hele kaart is zelf
-     de "trek aan wat ik heb"-actie (geen apart knopje/teller meer nodig: de
-     stukjes-rand toont de voortgang al goud-op-goud zodra alles aan staat). */
-  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 12px 14px 13px; text-align: left; cursor: pointer; transition: transform .07s; }
+  /* kaart houdt altijd dezelfde vorm/structuur/hoogte aan, ongeacht status of
+     hoeveel stukjes een look heeft -- positie in de lijst verandert nooit (zie
+     renderLookGoals). De hele kaart is zelf de "trek aan wat ik heb"-actie
+     (geen apart knopje/teller meer nodig: de stukjes-rand toont de voortgang
+     al goud-op-goud zodra alles aan staat), dus de kop blijft kaal: alleen
+     icoon + naam, geen teller of voortgangsbalk. */
+  .look-goal {
+    height: 136px; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14);
+    border-radius: var(--radius-md); padding: 10px 12px; text-align: left; cursor: pointer;
+    transition: transform .07s;
+  }
   .look-goal:active { transform: scale(.98); }
   .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); }
   .look-goal.flash { animation: lookFlash 1.4s ease; }
   @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
-  .look-goal-head { display: flex; align-items: center; gap: 10px; }
-  .look-goal-head .lemoji { font-size: 24px; line-height: 1; }
-  .look-goal-head .lname { font-size: 15px; font-weight: 800; }
-  /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card */
-  .look-pieces { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
-  .look-piece { width: 58px; cursor: pointer; text-align: center; border-radius: var(--radius-sm); padding: 4px 2px 5px; transition: transform .07s, background .12s; }
+  .look-goal-head { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+  .look-goal-head .lemoji { font-size: 22px; line-height: 1; }
+  .look-goal-head .lname { font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card.
+     Gelijke flex-breedte (i.p.v. wrap) zodat de rij altijd op één regel staat,
+     hoe je ook telt (meestal 4 stukjes, regenboogster heeft er 5). */
+  .look-pieces { flex: 1; display: flex; align-items: stretch; margin-top: 8px; }
+  .look-piece { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; text-align: center; border-radius: var(--radius-sm); padding: 4px 2px; transition: transform .07s, background .12s; }
   .look-piece:active { transform: scale(.94); }
-  .look-piece .item-thumb { height: 34px; margin: 0 auto 3px; }
-  .look-piece .item-thumb svg { height: 34px; }
-  .look-piece .item-thumb .thumb-emo { font-size: 22px; line-height: 34px; }
-  .look-piece .item-swatch { width: 30px; height: 30px; margin: 0 auto 3px; border-width: 1.5px; }
-  .look-piece .item-swatch.stage-swatch { font-size: 16px; }
-  .look-piece .lp-name { font-size: 10px; font-weight: 700; line-height: 1.15; color: var(--muted-lavender-text); overflow-wrap: break-word; }
+  /* vaste icoon-zone: elk stukje staat zo op dezelfde basislijn, ongeacht of
+     het een svg-tekening, emoji of kleurbolletje is. */
+  .look-piece .item-thumb { height: 40px; width: 100%; display: flex; align-items: center; justify-content: center; margin: 0 0 4px; }
+  .look-piece .item-thumb svg { height: 30px; width: auto; }
+  /* icoon-gewicht in balans: kleine/smalle vormen (schoenen, micro, bril e.d.
+     via emoji) iets groter, van nature grote vormen (jurk) juist iets kleiner --
+     anders oogt de rij ongelijk terwijl de stukjes zelf gelijk belangrijk zijn. */
+  .look-piece[data-cat="dress"] .item-thumb svg { height: 26px; }
+  .look-piece[data-cat="shoes"] .item-thumb svg { height: 38px; }
+  .look-piece[data-cat="mic"] .item-thumb svg { height: 36px; }
+  .look-piece .item-thumb .thumb-emo { font-size: 26px; line-height: 1; }
+  .look-piece .item-swatch { width: 28px; height: 28px; margin: 0 0 4px; border-width: 1.5px; }
+  .look-piece .item-swatch.stage-swatch { font-size: 15px; }
+  .look-piece .lp-name {
+    font-size: 10px; font-weight: 700; line-height: 1.15; color: var(--muted-lavender-text);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; word-break: break-word;
+  }
   /* precies dezelfde staten als .item-card: ontbreekt = dof/grijswaarden,
      bezit = zachtgrijs, nu aan = goud + gloed */
   .look-piece.miss { opacity: .45; }
@@ -3703,7 +3724,7 @@ function renderLookGoals(grid, p) {
     // dat een tik op één stukje ook meteen de hele-look-aandoen-actie triggert
     const pieceCells = pieces.map(([cat, id]) => {
       const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
-      return `<div class="look-piece ${st}" onclick="event.stopPropagation();lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
+      return `<div class="look-piece ${st}" data-cat="${cat}" onclick="event.stopPropagation();lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
     }).join('');
     card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
       + `<span class="lname">${t.name}</span></div>`
