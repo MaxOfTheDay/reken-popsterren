@@ -870,9 +870,12 @@
   /* NIET GESTART: normale paarse kaart, icoon licht gedimd, lege dunne balk */
   .trophy-card.fresh .temoji { opacity: .78; }
   /* BEZIG: normale kaart, icoon vol, dunne balk met duidelijke vulling (geen glow).
-     Dunne, gedempte blauwe rand — rustiger dan bijna/open, maar wél meteen
-     te onderscheiden van 'niet gestart' zonder de tekst te moeten lezen. */
-  .trophy-card.busy { border-color: rgba(90,190,245,.55); }
+     Neutrale, iets lichtere rand dan 'niet gestart' -- meteen te onderscheiden
+     zonder de tekst te moeten lezen. Bewust GEEN blauw: blauw betekent overal
+     elders in de app "geselecteerd/aan het bekijken" (kleedkamer), dus een
+     blauwe rand hier zou een tweede, verwarrende betekenis aan diezelfde
+     kleur geven. */
+  .trophy-card.busy { border-color: rgba(255,255,255,.42); }
   /* BIJNA BEHAALD: sterke balkvulling + subtiele gouden glow (glow via inline style) */
   .trophy-card.almost .trophy-progress-fill { background: linear-gradient(90deg, var(--gold-warm), var(--gold-deep)); }
   /* LOCKED: donkerder, icoon sterk gedimd, klein slotje (voorlopig sluimerend) */
@@ -896,15 +899,18 @@
   }
   /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
   .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
-  /* tekstkleur volgt de balk: blauw = bezig (default), goud = bijna, neutraal = niet gestart/locked */
-  .trophy-progress-text { font-size: 13px; font-weight: 700; color: var(--blue-text); min-height: 17px; line-height: 1.15; }
+  /* tekstkleur volgt de balk: neutraal wit-lavendel = bezig (default), goud = bijna,
+     gedempt = niet gestart/locked. Geel/goud blijft dus uitsluitend "nu actief/aan"
+     betekenen (zie kleedkamer); voortgang die nog niet bijna klaar is, is neutraal. */
+  .trophy-progress-text { font-size: 13px; font-weight: 700; color: var(--lavender-text); min-height: 17px; line-height: 1.15; }
   .trophy-progress-text.sub { color: var(--muted-lavender-text); font-weight: 600; opacity: .75; }
   .trophy-card.fresh .trophy-progress-text { color: var(--muted-lavender-text); opacity: .82; }
   .trophy-card.almost .trophy-progress-text { color: var(--gold-warm); }
   /* dunne progressbalk onderaan de kaart */
   .trophy-progress { height: 7px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid var(--glass-white-18); }
-  /* BLAUW = bezig/actief (zelfde taal als 'nu aan' bij thema-looks en de diamant) */
-  .trophy-progress-fill { height: 100%; border-radius: var(--radius-pill); transition: width .5s ease; background: linear-gradient(90deg, var(--blue-fill-top), var(--blue-fill-bottom)); }
+  /* neutrale wit-lavendel vulling = bezig/actief; alleen "bijna" en "nu aan"
+     (kleedkamer) krijgen goud -- blauw is hier bewust weg (zie .trophy-card.busy). */
+  .trophy-progress-fill { height: 100%; border-radius: var(--radius-pill); transition: width .5s ease; background: linear-gradient(90deg, rgba(230,214,255,.55), rgba(255,255,255,.8)); }
   /* korte uitleg onder een categoriekop (bv. bij thema-looks) */
   .shelf-note { font-size: 12px; font-weight: 600; color: var(--lavender-text); opacity: .82; margin: -3px 2px 9px; }
   /* ===== KLAAR: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat) ===== */
@@ -1151,21 +1157,20 @@
      een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
   .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
   .looks-intro { font-size: 12.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
+  /* kaart houdt altijd dezelfde vorm/structuur aan -- geen "slim"/ingeklapte
+     variant meer zodra een look compleet aan is: alleen het telknopje in de
+     kop verandert (van "3/4" naar een vinkje) en de stukjes-rand kleurt goud
+     (alles staat aan). Positie in de lijst verandert nooit (zie renderLookGoals). */
   .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 12px 14px 13px; text-align: left; }
-  .look-goal.ready { border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.09); }
   .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); }
-  /* compleet-aan: één slanke regel i.p.v. een volle kaart met stukjes */
-  .look-goal.slim { display: flex; align-items: center; gap: 9px; padding: 9px 14px; }
-  .look-goal.slim .lemoji { font-size: 20px; }
-  .look-goal.slim .lname { font-size: 14px; font-weight: 700; }
-  .look-done-tag { margin-left: auto; font-size: 11.5px; font-weight: 800; color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
   .look-goal.flash { animation: lookFlash 1.4s ease; }
   @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
   .look-goal-head { display: flex; align-items: center; gap: 10px; }
   .look-goal-head .lemoji { font-size: 24px; line-height: 1; }
   .look-goal-head .lname { font-size: 15px; font-weight: 800; }
   .look-goal-head .lcount { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
-  .look-goal.ready .lcount { color: var(--blue-text); background: rgba(56,189,248,.16); }
+  /* "aan"/behaald krijgt dezelfde goud-taal als een geëquipeerd stukje -- geen blauw */
+  .look-goal-head .lcount.earned { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); }
   /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card */
   .look-pieces { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
   .look-piece { width: 58px; cursor: pointer; text-align: center; border-radius: var(--radius-sm); padding: 4px 2px 5px; transition: transform .07s, background .12s; }
@@ -2677,19 +2682,23 @@ function readyCardHTML(t) {
 }
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
-  const isTheme = !!THEME_SETS[t.id];
   const card = document.createElement('div');
-  // volle breedte: enkel 'Kast vol!' en een klare thema-look (het cadeau om te openen)
-  const wide = (t.id === 'kastvol' || (isTheme && status === 'ready')) ? 'wide ' : '';
+  // volle breedte: alleen 'Kast vol!', en dat altijd (in élke status hetzelfde
+  // formaat) -- geen enkele kaart mag van formaat wisselen zodra de status
+  // verandert (zie ook: thema-looks blijven nu net als elke andere trofee
+  // hun gewone, vaste kaartformaat, ook zodra ze klaarliggen om te openen).
+  const wide = (t.id === 'kastvol') ? 'wide ' : '';
   card.className = `trophy-card ${wide}` + status;
   // bijna behaald: subtiele gouden glow die iets sterker wordt richting 100%
-  if (status === 'almost' && !isTheme && t.progress) {
+  // (t.progress() rekent voor thema-looks al automatisch met hoeveel stukken
+  // er ECHT tegelijk aan staan, via comboOn -- dezelfde bron als de trofee-
+  // voorwaarde zelf, dus dit klopt hier vanzelf mee)
+  if (status === 'almost' && t.progress) {
     const pct = Math.min(100, t.progress(p).pct);
     const a = Math.max(.25, .25 + (pct - 80) / 20 * .3);
     card.style.boxShadow = `0 0 12px rgba(255,213,79,${a.toFixed(2)})`;
   }
-  card.innerHTML = status === 'ready' ? readyCardHTML(t)
-    : isTheme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status);
+  card.innerHTML = status === 'ready' ? readyCardHTML(t) : normalCardHTML(t, p, status);
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
@@ -2711,22 +2720,11 @@ function normalCardHTML(t, p, status) {
   }
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
-// Thema-look in de kast = compacte tegel: icoon + naam + hoeveel stukken je al
-// verzameld hebt. Álle details (welke stukken, wat je aanhebt, kopen/aandoen)
-// staan nu in de kleedkamer; een tik hierop brengt je daar meteen naartoe.
-function themeCardHTML(t, p, status) {
-  const pieces = Object.entries(THEME_SETS[t.id]);
-  const total = pieces.length;
-  const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
-  const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div>`;
-  if (status === 'done') {
-    return '<span class="trophy-won">🏆</span>' + top
-      + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Bekijk in kleedkamer</div></div>';
-  }
-  const pct = Math.round((ownedN / total) * 100);
-  return top + `<div class="trophy-bottom"><div class="trophy-progress-text">${ownedN}/${total} verzameld</div>`
-    + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${pct}%"></div></div></div>`;
-}
+// Thema-looks krijgen GEEN eigen kaart-renderer meer: elke thema-trofee heeft
+// zelf al een progress() die comboOn (= hoeveel stukken NU tegelijk aan staan)
+// telt -- exact de voorwaarde om de trofee te behalen -- dus normalCardHTML
+// hierboven geeft voor thema-looks vanzelf de juiste "Nog X stukken tegelijk
+// aan"-voortgang, in precies dezelfde kaartstructuur als elke andere trofee.
 // Trekt in één klik alle stukken (die je al bezit) van een look aan. Wordt vanuit
 // de kleedkamer-looks aangeroepen en blijft daar: de kaart wordt meteen 'compleet
 // aan'. Een complete look kan een trofee klaarleggen, dus check dat ook hier.
@@ -3650,45 +3648,31 @@ function renderShop() {
 // Zo trekt het najagen van één look het kind dwars door de categorieën heen.
 function renderLookGoals(grid, p) {
   grid.innerHTML = `<div class="looks-intro">✨ Tik een stukje om te kopen of aan te doen</div>`;
-  const looks = TROPHIES.filter(t => THEME_SETS[t.id]).map(t => {
+  // Vaste volgorde (zelfde TROPHIES-definitievolgorde als de trofeeënkast) --
+  // kaarten wisselen NOOIT van plek als hun status verandert, ook niet zodra
+  // een look compleet aan is. Alleen de kop en de stukjes-rand veranderen dan.
+  TROPHIES.filter(t => THEME_SETS[t.id]).forEach(t => {
     const pieces = orderedPieces(THEME_SETS[t.id]);
+    const total = pieces.length;
     const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
     const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
-    return { t, pieces, ownedN, wornN, total: pieces.length };
-  });
-  // vaste volgorde (zelfde als de trofeeënkast) -- alleen compleet-aan looks
-  // verhuizen naar onderen; verder NIET herschikken op voortgang, anders
-  // springen kaarten telkens van plek zodra je een stukje koopt/aandoet.
-  looks.sort((a, b) => {
-    const ad = a.wornN === a.total, bd = b.wornN === b.total;
-    if (ad !== bd) return ad ? 1 : -1;
-    return 0;   // stabiele sort: houdt de TROPHIES-volgorde aan
-  });
-  looks.forEach(({ t, pieces, ownedN, wornN, total }) => {
     const done = wornN === total;
+    const ready = !done && ownedN === total;
     const card = document.createElement('div');
     card.dataset.look = t.id;
-    // compleet-aan: één slanke regel i.p.v. een volle kaart -- houdt de lijst licht
-    if (done) {
-      card.className = 'look-goal done slim';
-      card.innerHTML = `<span class="lemoji">${t.emoji}</span><span class="lname">${t.name}</span>`
-        + `<span class="look-done-tag">✓ compleet aan</span>`;
-      grid.appendChild(card);
-      return;
-    }
-    const ready = ownedN === total;
-    card.className = 'look-goal' + (ready ? ' ready' : '');
+    card.className = 'look-goal' + (done ? ' done' : '');
     // elk stukje = mini-kaartje, zelfde miniatuur + rand-taal als de gewone
     // kleren-kaarten (itemThumb hergebruikt) -- geen tekstregel meer nodig
     const pieceCells = pieces.map(([cat, id]) => {
       const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
       return `<div class="look-piece ${st}" onclick="lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
     }).join('');
+    const countPill = done ? `<span class="lcount earned">✓ aan</span>` : `<span class="lcount">${ownedN}/${total}</span>`;
     const cta = ready
       ? `<button class="look-goal-cta" onclick="wearLook('${t.id}')">👗 Trek alles aan</button>`
       : '';
     card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
-      + `<span class="lname">${t.name}</span><span class="lcount">${ownedN}/${total}</span></div>`
+      + `<span class="lname">${t.name}</span>${countPill}</div>`
       + `<div class="look-pieces">${pieceCells}</div>${cta}`;
     grid.appendChild(card);
   });
