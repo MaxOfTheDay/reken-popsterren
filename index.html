@@ -108,6 +108,13 @@
     user-select: none;
   }
   #app { height: 100%; display: flex; flex-direction: column; }
+  /* app-breed toetsenbord-focusringetje -- stond eerder alleen lokaal in het
+     instellingenscherm; hier geldt hij overal, incl. het instellingen-tandwiel-
+     menu (echt role="menu"/menuitem, dus ook echt met toetsenbord te bedienen) */
+  button:focus-visible, a:focus-visible, input:focus-visible,
+  [role="menuitem"]:focus-visible, [role="menuitemcheckbox"]:focus-visible {
+    outline: 3px solid var(--gold-warm); outline-offset: 2px;
+  }
 
   /* schermen scrollen nooit zijwaarts: horizontaal scrollen gebeurt alleen
      ín de reisroute en de tabbladen zelf */
@@ -791,8 +798,13 @@
   .trophy-card {
     position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
     border-radius: var(--radius-card-sm); padding: 12px 8px 11px; text-align: center; cursor: pointer;
-    display: flex; flex-direction: column; align-items: stretch;
+    display: flex; flex-direction: column; align-items: stretch; transition: filter .12s;
   }
+  /* filter i.p.v. background: werkt hetzelfde bovenop élke kaartstaat (locked,
+     done, ready's gouden verloop, ...) zonder de per-staat achtergrondkleur te
+     hoeven overschrijven -- zelfde soort hover-teruggave als .item-card in de
+     kleedkamer, die hiervoor nog helemaal ontbrak */
+  .trophy-card:hover { filter: brightness(1.08); }
   .trophy-card:active { transform: scale(.97); }
   .trophy-card .temoji { font-size: 36px; line-height: 1; height: 40px; }
   .trophy-card .tname { font-size: 15px; font-weight: bold; margin-top: 4px; line-height: 1.12; }
@@ -876,10 +888,25 @@
   .theme-list li.on { color: var(--blue-text); font-weight: 700; }
   .theme-list li.on .pc { background: var(--blue-fill-top); border-color: var(--blue-fill-top); box-shadow: 0 0 0 2px rgba(56,189,248,.16); }
   .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: var(--purple-ink); }
+  /* gedeelde, opvallende gouden call-to-action-pil (bannerformaat) -- .end-trophy-banner
+     en .look-hint.action waren twee bijna-identieke kopieën van dezelfde stijl.
+     .look-action (hieronder) blijft bewust apart: dat is een compacte kop-actie
+     op een heel andere schaal, geen "kom mij aantikken"-bannertje. */
+  .gold-pill {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border: none; border-radius: var(--radius-pill);
+    padding: 10px 18px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
+    animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
+  }
+  .gold-pill:active { transform: scale(.96); }
   /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
   .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: var(--gold-warm); }
-  .look-hint.action { display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; padding: 8px 16px; border-radius: var(--radius-pill); color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); box-shadow: 0 3px 10px rgba(255,179,0,.35); animation: readyPulse 1.4s ease-in-out infinite; }
-  .look-hint.action:active { transform: scale(.96); }
+  /* expliciete color/font-size i.p.v. op .gold-pill vs. .look-hint's
+     brontekst-volgorde vertrouwen (beide zijn maar 1 klasse specifiek, dus
+     "wie wint" zou toevallig kunnen worden) -- dit maakt de kleinere,
+     donker-op-goud pil-variant hier gegarandeerd, niet toevallig */
+  .look-hint.action { gap: 6px; padding: 8px 16px; font-size: 12.5px; box-shadow: 0 3px 10px rgba(255,179,0,.35); color: var(--ink-on-gold); }
   /* actie op een behaalde look: kort label, in de kop op de plek van de Aan-teller */
   .look-action {
     margin-left: auto; flex: 0 0 auto; border: 0; cursor: pointer;
@@ -931,6 +958,13 @@
     background: var(--glass-white-14); border: 3px solid var(--glass-white-40);
     border-radius: 28px; padding: 24px 30px; text-align: center; max-width: 460px; margin: auto 0;
   }
+  /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
+     paspop-scènes (.dress-stage, .show-stage) nu met eigen smalle-scherm-maat,
+     zodat 'm ook op een laag/liggend toestel nooit afgesneden wordt */
+  .end-stage { width: 180px; height: 200px; margin: 6px auto 2px; }
+  @media (max-height: 700px) { .end-stage { width: 140px; height: 156px; } }
+  .end-text { font-size: 19px; }
+  .dance-subline { margin-top: 6px; font-size: 17px; }
   .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
@@ -943,22 +977,13 @@
   .earn-chip.star { background: rgba(255,215,64,.26); }
   .earn-chip.fan { background: rgba(255,64,129,.28); }
   /* eigen, opvallend blokje i.p.v. een tekstregel tussen de andere zinnen — zelfde
-     gouden puls als een "klaar om te openen"-trofee in de kast, zodat dit al
-     vooruitwijst naar wat je zo meteen ziet. Zelf ook klikbaar (net als die
-     trofeekaartjes): een gouden pulserende pil roept nu eenmaal om aangetikt
-     te worden, dus de knop eronder alleen was niet genoeg. */
-  .end-trophy-banner {
-    /* inline-flex (niet flex): flex nog altijd voor het eigen emoji+tekst-gedrag,
-       maar block-level flex rekt vanzelf uit tot de volle kaartbreedte i.p.v. een
-       pil op maat van zijn eigen inhoud -- inline-flex laat .result-card's
-       text-align:center 'm juist wél als vanzelf centreren. */
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
-    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border: none; border-radius: var(--radius-pill);
-    padding: 10px 18px; margin: 0 0 14px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
-    animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
-  }
-  .end-trophy-banner:active { transform: scale(.96); }
+     gouden puls als een "klaar om te openen"-trofee in de kast (via .gold-pill),
+     zodat dit al vooruitwijst naar wat je zo meteen ziet. Zelf ook klikbaar
+     (net als die trofeekaartjes): een gouden pulserende pil roept nu eenmaal
+     om aangetikt te worden, dus de knop eronder alleen was niet genoeg.
+     .result-card's text-align:center centreert 'm vanzelf, dankzij .gold-pill's
+     eigen inline-flex (i.p.v. block-level flex, dat zou juist uitrekken). */
+  .end-trophy-banner { margin: 0 0 14px; }
   .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* ---- Kleedkamer ----
@@ -1099,11 +1124,11 @@
 
   /* ---- Instellingen (ouder-dashboard) ---- */
   .settings-sheet { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
-  .settings-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .settings-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; opacity: .82; }
-  .settings-h1 { font-size: 30px; font-weight: 700; line-height: 1.05; text-shadow: 0 2px 0 var(--glass-black-18); }
 
-  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--glass-black-26); }
+  /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← terug ·
+     Instellingen · (opgeslagen-bevestiging), met de profielkiezer en de
+     Voortgang|Instellen-navigatie er direct onder, ook altijd in beeld */
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--glass-black-26); width: 100%; }
   .segmented button {
     flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
     border: none; background: transparent; border-radius: var(--radius-sm); padding: 10px 8px;
@@ -1111,8 +1136,18 @@
     transition: background .15s, color .15s, box-shadow .15s;
   }
   .segmented button .who { font-size: 19px; }
-  .segmented button.on { background: var(--c-white); color: var(--purple-mid); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
-  .segmented.tabs button.on { background: linear-gradient(180deg, var(--c-white), var(--lavender-wash-2)); }
+  /* geel = actieve navigatie/focus (zelfde taal als .tab-btn.active in de
+     kleedkamer en .nav-item.active in de vaste navigatie), i.p.v. het vorige
+     losse wit -- paars blijft gereserveerd voor gewone (niet-navigatie) keuzes */
+  .segmented button.on { background: var(--gold-deep); color: var(--purple-shadow); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+  /* korte, subtiele bevestiging na elke automatische opslag -- verschijnt even
+     in de anders lege rechterkop-cel, geen aparte "Opslaan"-knop nodig */
+  .saved-pill {
+    font-size: 12.5px; font-weight: 700; color: var(--green-deep); background: var(--green-badge-bg);
+    border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap;
+    opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; pointer-events: none;
+  }
+  .saved-pill.show { opacity: 1; transform: translateY(0); }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: 0 10px 26px rgba(30,0,50,.24); }
@@ -1120,6 +1155,15 @@
   .set-card-head .ico { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
   .set-card-head h2 { font-size: 18px; font-weight: 700; color: var(--purple-mid); }
   .set-card-head .sub { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin-top: 1px; }
+  /* "Wat oefenen" en "Hoe spelen" zijn de kern van dit scherm -- een paarse
+     (structuur-kleur) icoonvulling + iets steviger kop zet ze visueel voorop
+     t.o.v. de secundaire kaarten (Profiel, Gegevens beheren) eronder */
+  .set-card.primary { border: 1.5px solid var(--purple-light); }
+  .set-card.primary .set-card-head .ico { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); color: var(--c-white); border-color: transparent; }
+  .set-card.primary .set-card-head h2 { font-size: 19.5px; }
+  /* wissen blijft een aparte, duidelijk gemarkeerde stap binnen de kaart
+     "Gegevens beheren" i.p.v. een losse sectie los van de back-up-knoppen */
+  .set-card .danger-zone { margin-top: 14px; }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
@@ -1157,7 +1201,6 @@
   }
   .settings-sheet input[type=text]:focus-visible { outline: none; border-color: var(--purple-light); background: var(--c-white); }
   .data-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-  .settings-sheet :focus-visible { outline: 3px solid var(--gold-warm); outline-offset: 2px; }
 
   .danger-zone {
     background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--radius-lg); padding: 15px 18px;
@@ -1183,7 +1226,7 @@
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-pale); color: var(--practice-text); border-radius: var(--radius-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
   .stats-empty { font-size: 13.5px; color: var(--green-deep); font-weight: 600; margin-top: 6px; }
-  @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } .settings-h1 { font-size: 25px; } }
+  @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
 
   /* ---- Modal (oudervraag) ---- */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -1192,6 +1235,10 @@
     background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-lg); padding: 24px 28px; text-align: center; max-width: 340px;
   }
   .modal h3 { color: var(--purple-deep); margin-bottom: 10px; }
+  /* zelfde twee blokjes stonden tweemaal identiek als losse inline style op
+     de bevestigingsmodals (stoppen / algemene bevestiging) -- nu één plek */
+  .modal-body { font-size: 15px; color: var(--paper-ink-muted); margin-bottom: 14px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .modal input {
     font-family: inherit; font-size: 26px; text-align: center; width: 110px;
     border: 3px solid var(--purple-light); border-radius: var(--radius-sm); padding: 6px; margin: 10px 0;
@@ -1298,8 +1345,8 @@
   <div class="modal-bg" id="quit-modal" onclick="if(event.target===this)closeQuitModal()">
     <div class="modal">
       <h3>🎭 Show stoppen?</h3>
-      <div style="font-size:15px;color:var(--paper-ink-muted);margin-bottom:14px">Dan stopt dit optreden en ga je terug naar de kaart.</div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <div class="modal-body">Dan stopt dit optreden en ga je terug naar de kaart.</div>
+      <div class="modal-actions">
         <button class="btn" onclick="closeQuitModal()">🎤 Doorspelen</button>
         <button class="btn gray" onclick="quitGame()">Stoppen</button>
       </div>
@@ -1311,8 +1358,8 @@
   <div class="modal-bg" id="confirm-modal" onclick="if(event.target===this)closeConfirmModal()">
     <div class="modal">
       <h3 id="confirm-title"></h3>
-      <div style="font-size:15px;color:var(--paper-ink-muted);margin-bottom:14px" id="confirm-body"></div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap" id="confirm-actions"></div>
+      <div class="modal-body" id="confirm-body"></div>
+      <div class="modal-actions" id="confirm-actions"></div>
     </div>
   </div>
 
@@ -1334,15 +1381,22 @@
 
   <!-- ===== Level einde ===== -->
   <div class="screen" id="screen-end">
+    <div class="hub-sticky">
+      <div class="screen-header">
+        <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar kaart" title="Terug naar kaart">✕</button>
+        <div class="header-title">🎤 Optreden</div>
+        <div class="header-right"></div>
+      </div>
+    </div>
     <div class="result-card">
       <h1 class="title" id="end-title"></h1>
-      <div class="stage tappable" id="end-stage" style="width:180px;height:200px;margin:6px auto 2px;" onclick="tapDance('end-avatar')">
+      <div class="stage tappable end-stage" id="end-stage" onclick="tapDance('end-avatar')">
         <div class="avatar-holder idle" id="end-avatar"></div>
       </div>
       <div class="result-stars" id="end-stars"></div>
-      <div id="end-text" style="font-size:19px"></div>
+      <div class="end-text" id="end-text"></div>
       <div class="earn-line" id="end-earn"></div>
-      <button class="end-trophy-banner" id="end-trophy" style="display:none"></button>
+      <button class="end-trophy-banner gold-pill" id="end-trophy" style="display:none"></button>
       <div class="end-actions">
         <button class="btn big" id="btn-end-next"></button>
         <button class="btn soft" id="btn-end-alt"></button>
@@ -1373,16 +1427,16 @@
 
   <!-- ===== Instellingen (ouders) ===== -->
   <div class="screen" id="screen-settings">
-    <div class="settings-sheet">
-      <div class="settings-top">
-        <div>
-          <div class="settings-eyebrow">Voor ouders</div>
-          <div class="settings-h1">Instellingen</div>
-        </div>
-        <button class="btn green" onclick="closeSettings()">✓ Klaar</button>
+    <div class="hub-sticky">
+      <div class="screen-header">
+        <button class="btn icon-btn header-left" onclick="closeSettings()" aria-label="Terug" title="Terug">←</button>
+        <div class="header-title">⚙️ Instellingen</div>
+        <div class="header-right"><span class="saved-pill" id="settings-saved">✓ Opgeslagen</span></div>
       </div>
       <div class="segmented" id="settings-profiles"></div>
       <div class="segmented tabs" id="settings-subtabs"></div>
+    </div>
+    <div class="settings-sheet">
       <div id="settings-body"></div>
     </div>
   </div>
@@ -1833,6 +1887,7 @@ function renderGearMenu() {
     if (!item || !st) return;
     st.textContent = on ? 'Aan' : 'Uit';
     st.classList.toggle('off', !on);
+    item.setAttribute('aria-checked', on ? 'true' : 'false');
     item.querySelector('.gi-ico').textContent = on ? icoOn : icoOff;
   };
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
@@ -2474,7 +2529,7 @@ function themeCardHTML(t, p, status) {
   }).join('');
   // afsluiting: alles-in-bezit krijgt een duidelijke CTA; behaalde looks hebben de knop in de kop.
   const foot = !done && ownedN === total && wornN < total
-    ? `<button class="look-hint action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>`
+    ? `<button class="look-hint action gold-pill" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>`
     : '';
   return won + head + `<ul class="theme-list">${list}</ul>` + foot;
 }
@@ -3086,7 +3141,7 @@ function endLevel(success) {
     const juich = stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
-    $('end-text').innerHTML = `${juich}<div style="margin-top:6px;font-size:17px">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`;
+    $('end-text').innerHTML = `${juich}<div class="dance-subline">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`;
     const earnChips = [
       `<span class="earn-chip dia">💎 +${G.earned} verdiend</span>`,
       `<span class="earn-chip star">⭐ +${bonus} sterrenbonus</span>`
@@ -3515,7 +3570,7 @@ function oefeningPanelHtml(p, s) {
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   return `<div class="settings-panel">
-    <div class="set-card">
+    <div class="set-card primary">
       <div class="set-card-head"><div class="ico">🎓</div><div><h2>Wat oefenen</h2><div class="sub">Kies de bewerkingen en het bereik</div></div></div>
       <div class="set-field"><span class="lbl">Bewerkingen</span>
         <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
@@ -3524,7 +3579,7 @@ function oefeningPanelHtml(p, s) {
       <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
         <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>
     </div>
-    <div class="set-card">
+    <div class="set-card primary">
       <div class="set-card-head"><div class="ico">🎮</div><div><h2>Hoe spelen</h2><div class="sub">De manier van antwoorden en de lengte</div></div></div>
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="set-mode">
@@ -3541,17 +3596,17 @@ function oefeningPanelHtml(p, s) {
         <div class="name-edit-wrap"><input type="text" id="set-name" value="${p.name}" maxlength="12"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
     </div>
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">💾</div><div><h2>Back-up</h2><div class="sub">Bewaar of verplaats alle profielen</div></div></div>
+      <div class="set-card-head"><div class="ico">🗂️</div><div><h2>Gegevens beheren</h2><div class="sub">Back-up, overzetten of opnieuw beginnen</div></div></div>
       <div class="data-btns">
-        <button class="btn small purple" id="set-export">💾 Opslaan als bestand</button>
-        <button class="btn small purple" id="set-import">📂 Laden uit bestand</button>
+        <button class="btn small purple" id="set-export">💾 Back-up maken</button>
+        <button class="btn small purple" id="set-import">📂 Back-up terugzetten</button>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
       <div class="note" style="margin-top:9px">Bewaart diamanten, trofeeën en spulletjes veilig, of zet ze over naar een ander toestel.</div>
-    </div>
-    <div class="danger-zone">
-      <div><div class="t">⚠️ Voortgang van ${p.name} wissen</div><div class="d">Verwijdert alle diamanten, sterren en spulletjes. Kan niet ongedaan gemaakt worden.</div></div>
-      <button class="danger-btn" id="set-reset">Wissen</button>
+      <div class="danger-zone">
+        <div><div class="t">⚠️ Voortgang wissen</div><div class="d">Verwijdert alle diamanten, sterren en spulletjes van ${p.name}. Kan niet ongedaan gemaakt worden.</div></div>
+        <button class="danger-btn" id="set-reset">Wissen</button>
+      </div>
     </div>
   </div>`;
 }
@@ -3564,6 +3619,17 @@ function blockedMinOne(el) {
   showToast('Kies er minstens 1 👆');
   setTimeout(hideToast, 1500);
 }
+// gewone instellingen slaan meteen op -- geen aparte "Opslaan"-knop nodig,
+// alleen een kort, subtiel pilletje in de kop dat het bevestigt
+let savedPillTimer = null;
+function saveAndFlash() {
+  save();
+  const el = $('settings-saved');
+  if (!el) return;
+  el.classList.add('show');
+  clearTimeout(savedPillTimer);
+  savedPillTimer = setTimeout(() => el.classList.remove('show'), 1400);
+}
 function renderSettings() {
   // profielkiezer (segmented)
   const profiles = $('settings-profiles');
@@ -3575,11 +3641,11 @@ function renderSettings() {
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
     profiles.appendChild(b);
   }
-  // tabbladen: Voortgang (lezen) / Oefening (instellen)
+  // tabbladen: Voortgang (lezen) / Instellen (aanpassen)
   const subtabs = $('settings-subtabs');
   subtabs.innerHTML =
     `<button class="${setTab === 'voortgang' ? 'on' : ''}" data-t="voortgang">📊 Voortgang</button>
-     <button class="${setTab === 'oefening' ? 'on' : ''}" data-t="oefening">⚙️ Oefening</button>`;
+     <button class="${setTab === 'oefening' ? 'on' : ''}" data-t="oefening">⚙️ Instellen</button>`;
   subtabs.querySelectorAll('button').forEach(b => b.onclick = () => { sndClick(); setTab = b.dataset.t; renderSettings(); });
 
   const p = db.profiles[setKey];
@@ -3588,28 +3654,28 @@ function renderSettings() {
   if (setTab === 'voortgang') { body.innerHTML = statsPanelHtml(p); return; }
 
   body.innerHTML = oefeningPanelHtml(p, s);
-  $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; save(); };
+  $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; saveAndFlash(); };
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
   // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
   // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
   $('set-ops').querySelectorAll('.chip').forEach(c => c.onclick = () => {
     const v = c.dataset.v;
     if (s.ops.includes(v)) {
-      if (s.ops.length > 1) { s.ops = s.ops.filter(o => o !== v); save(); renderSettings(); }
+      if (s.ops.length > 1) { s.ops = s.ops.filter(o => o !== v); saveAndFlash(); renderSettings(); }
       else blockedMinOne(c);
-    } else { s.ops.push(v); save(); renderSettings(); }
+    } else { s.ops.push(v); saveAndFlash(); renderSettings(); }
   });
   $('set-tables').querySelectorAll('.chip').forEach(c => c.onclick = () => {
     const v = parseInt(c.dataset.v, 10);
     if (s.tables.includes(v)) {
-      if (s.tables.length > 1) { s.tables = s.tables.filter(t => t !== v); save(); renderSettings(); }
+      if (s.tables.length > 1) { s.tables = s.tables.filter(t => t !== v); saveAndFlash(); renderSettings(); }
       else blockedMinOne(c);
-    } else { s.tables.push(v); save(); renderSettings(); }
+    } else { s.tables.push(v); saveAndFlash(); renderSettings(); }
   });
   // enkelkeuze-chips
-  $('set-max').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.max = parseInt(c.dataset.v, 10); save(); renderSettings(); });
-  $('set-mode').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.mode = c.dataset.v; save(); renderSettings(); });
-  $('set-perlevel').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.perLevel = parseInt(c.dataset.v, 10); save(); renderSettings(); });
+  $('set-max').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.max = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
+  $('set-mode').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.mode = c.dataset.v; saveAndFlash(); renderSettings(); });
+  $('set-perlevel').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.perLevel = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
   $('set-reset').onclick = () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
@@ -3647,25 +3713,36 @@ function exportData() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Een eerder opgeslagen back-upbestand inlezen en terugzetten.
+// Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
+// ALLE huidige profielen, dus (net als bij wissen) eerst een bevestiging --
+// pas ná "ja" wordt de huidige voortgang echt vervangen.
 function importData(file) {
   const reader = new FileReader();
   reader.onload = () => {
+    let data;
     try {
-      const data = JSON.parse(reader.result);
+      data = JSON.parse(reader.result);
       if (!data || typeof data !== 'object' || !data.profiles || !data.profiles.p1 || !data.profiles.p2) {
         throw new Error('ongeldig back-upbestand');
       }
-      db = data;
-      if (typeof db.sound !== 'boolean') db.sound = true;
-      if (typeof db.haptics !== 'boolean') db.haptics = true;
-      Object.values(db.profiles).forEach(migrate);
-      save();
-      showNotice('🎉 Gelukt!', 'Back-up geladen!');
-      renderSettings();
     } catch (e) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
+      return;
     }
+    showConfirm(
+      '📂 Back-up terugzetten?',
+      'Dit vervangt de huidige diamanten, sterren en spulletjes van beide profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
+      'Ja, terugzetten',
+      () => {
+        db = data;
+        if (typeof db.sound !== 'boolean') db.sound = true;
+        if (typeof db.haptics !== 'boolean') db.haptics = true;
+        Object.values(db.profiles).forEach(migrate);
+        save();
+        showNotice('🎉 Gelukt!', 'Back-up geladen!');
+        renderSettings();
+      }
+    );
   };
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
