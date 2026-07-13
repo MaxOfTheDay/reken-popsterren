@@ -397,14 +397,14 @@
   }
   /* carrièrerang: het altijd-zichtbare lange-termijndoel. De status zelf
      (bv. "Straatartiest") is de titel van de kop (.header-title, zie
-     renderCareerStrip) -- hier alleen nog de dunne voortgangsbalk naar de
-     volgende status, plus hoeveel sterren er nog nodig zijn. */
-  .career-strip { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 4px auto 0; }
-  .rank-bar { flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--glass-black-32); overflow: hidden; }
+     renderCareerStrip); titel + teller + balk vormen samen één groepje --
+     de teller (klein, ondergeschikt aan de titel) staat er vlak boven de
+     balk, gecentreerd, als één doorlopend getal (geen "nog X" ernaast meer). */
+  .career-strip { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; max-width: 260px; margin: 2px auto 0; }
+  .rank-counter { font-size: 12px; font-weight: 700; color: var(--c-white); opacity: .8; letter-spacing: .01em; }
+  .rank-bar { width: 100%; height: 7px; border-radius: var(--radius-pill); background: var(--glass-black-32); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
   .rank-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
-  .rank-next { font-size: 11px; font-weight: 600; color: var(--c-white); opacity: .8; white-space: nowrap; }
-  @media (max-width: 380px) { .rank-next { display: none; } }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform (zie updateParallax). Ooit zat de transform op
@@ -2372,11 +2372,12 @@ function renderCareerStrip(p) {
   const into = total - r.curMin;
   const span = r.nextMin - r.curMin;
   const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
-  const togo = Math.max(0, r.nextMin - total);
   $('map-tournee-label').textContent = `${r.emoji} ${r.name}`;
+  // echte teller (bv. "96/100 ⭐") i.p.v. een "nog X"-restlabel -- geen dubbele
+  // voortgangsinformatie naast de balk, en meteen duidelijk wat "vol" betekent
   $('career-strip').innerHTML =
-    `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`
-    + `<span class="rank-next">nog ${togo} ⭐</span>`;
+    `<span class="rank-counter">${total}/${r.nextMin} ⭐</span>`
+    + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
 }
 function goMap() {
   const p = P();
