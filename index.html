@@ -917,20 +917,6 @@
   .ready-big { font-size: 16px; font-weight: 900; line-height: 1.08; }
   .ready-name { font-size: 13px; font-weight: 700; opacity: .82; line-height: 1.12; }
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 4px 13px rgba(255,170,0,.45); } 50% { transform: scale(1.03); box-shadow: 0 6px 22px rgba(255,170,0,.75); } }
-  /* ---- Look-stukkenlijst: gedeeld door de kleedkamer-looks. Elk stuk heeft 3
-     staten: niet in kast (leeg/dim) / in kast (grijs vinkje) / nu aan (blauw) ---- */
-  .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
-  .theme-list li { font-size: 13px; line-height: 1.25; display: flex; align-items: center; gap: 8px; }
-  .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--glass-white-30); box-sizing: border-box; position: relative; }
-  /* 3 per-stuk-staten: niet in kleerkast (leeg/dim), in kleerkast (grijs vinkje), nu aan (blauw actief). */
-  .theme-list li.miss { color: rgba(255,255,255,.42); }
-  .theme-list li.miss .pc { border-color: rgba(255,255,255,.24); background: transparent; }
-  .theme-list li.have { color: rgba(255,255,255,.74); }
-  .theme-list li.have .pc { background: rgba(180,184,196,.62); border-color: rgba(180,184,196,.72); }
-  .theme-list li.have .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-weight: 900; color: rgba(255,255,255,.94); }
-  .theme-list li.on { color: var(--blue-text); font-weight: 700; }
-  .theme-list li.on .pc { background: var(--blue-fill-top); border-color: var(--blue-fill-top); box-shadow: 0 0 0 2px rgba(56,189,248,.16); }
-  .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: var(--purple-ink); }
   /* gedeelde, opvallende gouden call-to-action-pil (bannerformaat), o.a. de
      'nieuwe trofee klaar'-banner op het eindscherm (.end-trophy-banner) */
   .gold-pill {
@@ -1159,15 +1145,16 @@
   .item-status.new { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-flash), var(--gold-marigold)); animation: readyPulse 1.4s ease-in-out 2; }
 
   /* ---- Looks-modus: complete outfits als spaardoel, dwars door de categorieën
-     heen. Hergebruikt de .theme-list-taal van de trofeeënkast, maar hier zijn de
-     stukjes aantikbaar: tik een ontbrekend stuk en je springt naar dat item in
-     zijn categorie om het te kopen/aan te doen. */
+     heen. Elk stukje is een mini-versie van de gewone kleren-kaart (zelfde
+     miniatuur + dezelfde rand-taal: geen rand/dof = ontbreekt, grijs = bezit,
+     goud+gloed = nu aan) i.p.v. een tekstregel -- zo oogt de looks-pagina als
+     een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
   .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
-  .looks-intro { font-size: 13px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
-  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 11px 14px 12px; text-align: left; }
+  .looks-intro { font-size: 12.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
+  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 12px 14px 13px; text-align: left; }
   .look-goal.ready { border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.09); }
   .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); }
-  /* compleet-aan: één slanke regel i.p.v. een volle kaart met stukkenlijst */
+  /* compleet-aan: één slanke regel i.p.v. een volle kaart met stukjes */
   .look-goal.slim { display: flex; align-items: center; gap: 9px; padding: 9px 14px; }
   .look-goal.slim .lemoji { font-size: 20px; }
   .look-goal.slim .lname { font-size: 14px; font-weight: 700; }
@@ -1175,18 +1162,30 @@
   .look-goal.flash { animation: lookFlash 1.4s ease; }
   @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
   .look-goal-head { display: flex; align-items: center; gap: 10px; }
-  .look-goal-head .lemoji { font-size: 26px; line-height: 1; }
-  .look-goal-head .lname { font-size: 15.5px; font-weight: 800; }
+  .look-goal-head .lemoji { font-size: 24px; line-height: 1; }
+  .look-goal-head .lname { font-size: 15px; font-weight: 800; }
   .look-goal-head .lcount { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
   .look-goal.ready .lcount { color: var(--blue-text); background: rgba(56,189,248,.16); }
-  .look-goal .theme-list { margin-top: 9px; gap: 4px 10px; }
-  .look-goal .theme-list li { font-size: 12.5px; cursor: pointer; border-radius: var(--radius-sm); padding: 3px 4px; transition: background .12s; }
-  .look-goal .theme-list li.miss { color: var(--gold-warm); }
-  .look-goal .theme-list li.have { cursor: pointer; }
-  .look-goal .theme-list li:hover { background: var(--glass-white-10); }
-  .look-goal-cta { margin-top: 10px; font-size: 12.5px; font-weight: 700; text-align: center; }
-  .look-goal-cta.buy { color: var(--gold-warm); }
-  button.look-goal-cta { width: 100%; font-family: inherit; cursor: pointer; border: none; padding: 9px 12px; border-radius: var(--radius-pill);
+  /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card */
+  .look-pieces { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+  .look-piece { width: 58px; cursor: pointer; text-align: center; border-radius: var(--radius-sm); padding: 4px 2px 5px; transition: transform .07s, background .12s; }
+  .look-piece:active { transform: scale(.94); }
+  .look-piece .item-thumb { height: 34px; margin: 0 auto 3px; }
+  .look-piece .item-thumb svg { height: 34px; }
+  .look-piece .item-thumb .thumb-emo { font-size: 22px; line-height: 34px; }
+  .look-piece .item-swatch { width: 30px; height: 30px; margin: 0 auto 3px; border-width: 1.5px; }
+  .look-piece .item-swatch.stage-swatch { font-size: 16px; }
+  .look-piece .lp-name { font-size: 10px; font-weight: 700; line-height: 1.15; color: var(--muted-lavender-text); overflow-wrap: break-word; }
+  /* precies dezelfde staten als .item-card: ontbreekt = dof/grijswaarden,
+     bezit = zachtgrijs, nu aan = goud + gloed */
+  .look-piece.miss { opacity: .45; }
+  .look-piece.miss .item-thumb, .look-piece.miss .item-swatch { filter: grayscale(1); }
+  .look-piece.have { background: rgba(180,184,196,.16); }
+  .look-piece.have .lp-name { color: var(--muted-text-3); }
+  .look-piece.on { background: rgba(255,214,90,.16); box-shadow: 0 0 0 1.5px var(--gold-accent); }
+  .look-piece.on .lp-name { color: var(--gold-light); }
+  .look-goal-cta { margin-top: 11px; }
+  button.look-goal-cta { width: 100%; font-family: inherit; font-size: 13px; cursor: pointer; border: none; padding: 9px 12px; border-radius: var(--radius-pill);
     background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 3px 10px rgba(255,179,0,.35); }
   button.look-goal-cta:active { transform: scale(.97); }
   .shop-mode { margin-top: 12px; max-width: 300px; }
@@ -3650,18 +3649,20 @@ function renderShop() {
 // in bezit / nu aan) en een tik-om-te-kopen sprong naar het ontbrekende stuk.
 // Zo trekt het najagen van één look het kind dwars door de categorieën heen.
 function renderLookGoals(grid, p) {
-  grid.innerHTML = `<div class="looks-intro">✨ Spaar een look bij elkaar en draag alles samen</div>`;
-  // volgorde: nog te verzamelen eerst (dichtst bij af bovenaan), compleet-aan onderaan
+  grid.innerHTML = `<div class="looks-intro">✨ Tik een stukje om te kopen of aan te doen</div>`;
   const looks = TROPHIES.filter(t => THEME_SETS[t.id]).map(t => {
     const pieces = orderedPieces(THEME_SETS[t.id]);
     const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
     const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
     return { t, pieces, ownedN, wornN, total: pieces.length };
   });
+  // vaste volgorde (zelfde als de trofeeënkast) -- alleen compleet-aan looks
+  // verhuizen naar onderen; verder NIET herschikken op voortgang, anders
+  // springen kaarten telkens van plek zodra je een stukje koopt/aandoet.
   looks.sort((a, b) => {
     const ad = a.wornN === a.total, bd = b.wornN === b.total;
-    if (ad !== bd) return ad ? 1 : -1;               // compleet-aan naar onderen
-    return (b.ownedN / b.total) - (a.ownedN / a.total); // dichtst bij af bovenaan
+    if (ad !== bd) return ad ? 1 : -1;
+    return 0;   // stabiele sort: houdt de TROPHIES-volgorde aan
   });
   looks.forEach(({ t, pieces, ownedN, wornN, total }) => {
     const done = wornN === total;
@@ -3677,16 +3678,18 @@ function renderLookGoals(grid, p) {
     }
     const ready = ownedN === total;
     card.className = 'look-goal' + (ready ? ' ready' : '');
-    const list = pieces.map(([cat, id]) => {
+    // elk stukje = mini-kaartje, zelfde miniatuur + rand-taal als de gewone
+    // kleren-kaarten (itemThumb hergebruikt) -- geen tekstregel meer nodig
+    const pieceCells = pieces.map(([cat, id]) => {
       const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
-      return `<li class="${st}" onclick="lookPieceTap('${cat}','${id}')"><span class="pc"></span>${pieceLabel(id)}</li>`;
+      return `<div class="look-piece ${st}" onclick="lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
     }).join('');
     const cta = ready
       ? `<button class="look-goal-cta" onclick="wearLook('${t.id}')">👗 Trek alles aan</button>`
-      : `<div class="look-goal-cta buy">Nog ${total - ownedN} te koop — tik een stuk</div>`;
+      : '';
     card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
       + `<span class="lname">${t.name}</span><span class="lcount">${ownedN}/${total}</span></div>`
-      + `<ul class="theme-list">${list}</ul>${cta}`;
+      + `<div class="look-pieces">${pieceCells}</div>${cta}`;
     grid.appendChild(card);
   });
   // vanuit de kast gefocust geopend: scroll ernaartoe en laat 'm even oplichten
