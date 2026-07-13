@@ -3561,6 +3561,11 @@ function openLookInKleedkamer(id) {
   shopCat = 'dress'; shopSelectedId = null; shopView = 'looks'; focusLook = id;
   equipOwnedPieces(id);
   show('screen-dress');
+  // 'screen-dress' onthoudt zijn scrollpositie van de vórige keer (de browser
+  // reset dat niet vanzelf bij display:none/flex) -- begin daarom altijd weer
+  // bovenaan, anders staat de kaart de tweede keer soms al toevallig zowat in
+  // beeld en scrollt hij niet meer merkbaar, wat aanvoelt alsof er niets gebeurt.
+  $('screen-dress').scrollTop = 0;
   renderShop();   // renderLookGoals scrollt naar + belicht de gefocuste look
 }
 // vanuit een kleedkamercollectie-trofee: open die categorie meteen in de kleedkamer
