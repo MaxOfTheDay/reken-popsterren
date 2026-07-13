@@ -1199,7 +1199,7 @@
   .dress-bar .db-info { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; text-align: left; white-space: nowrap; overflow: hidden; }
   .dress-bar .db-name { font-size: 16.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: 13.5px; opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dress-bar .db-sub.warn { color: var(--gold-warm); opacity: 1; }
+  .dress-bar .db-highlight { color: var(--gold-warm); font-weight: 700; }
   .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
@@ -1581,53 +1581,53 @@ function shuffle(arr) {
 /* ================= Items ================= */
 const ITEMS = [
   // Haar
-  { id: 'hair_blond',    cat: 'hair', name: 'Blond',     price: 0,   color: '#f7d774' },
-  { id: 'hair_bruin',    cat: 'hair', name: 'Bruin',     price: 15,  color: '#8d5a2b' },
-  { id: 'hair_zwart',    cat: 'hair', name: 'Zwart',     price: 15,  color: '#3a3a3a' },
-  { id: 'hair_rood',     cat: 'hair', name: 'Rood',      price: 25,  color: '#d84315' },
-  { id: 'hair_roze',     cat: 'hair', name: 'Roze',      price: 40,  color: '#f06292' },
-  { id: 'hair_blauw',    cat: 'hair', name: 'Blauw',     price: 46,  color: '#42a5f5' },
-  { id: 'hair_paars',    cat: 'hair', name: 'Paars',     price: 52,  color: '#ab47bc' },
-  { id: 'hair_groen',    cat: 'hair', name: 'Groen',     price: 45,  color: '#66bb6a' },
-  { id: 'hair_wit',      cat: 'hair', name: 'Wit',       price: 20,  color: '#f5f5f5' },
-  { id: 'hair_turkoois', cat: 'hair', name: 'Turquoise', price: 40,  color: '#26c6da' },
-  { id: 'hair_zilver',   cat: 'hair', name: 'Zilvergrijs', price: 60, color: '#cfd8dc' },
-  { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog', price: 90,  color: 'RAINBOW' },
+  { id: 'hair_blond',    cat: 'hair', name: 'Blond',     full: 'Blond kapsel',     price: 0,   color: '#f7d774' },
+  { id: 'hair_bruin',    cat: 'hair', name: 'Bruin',     full: 'Bruin kapsel',     price: 15,  color: '#8d5a2b' },
+  { id: 'hair_zwart',    cat: 'hair', name: 'Zwart',     full: 'Zwart kapsel',     price: 15,  color: '#3a3a3a' },
+  { id: 'hair_rood',     cat: 'hair', name: 'Rood',      full: 'Rood kapsel',      price: 25,  color: '#d84315' },
+  { id: 'hair_roze',     cat: 'hair', name: 'Roze',      full: 'Roze kapsel',      price: 40,  color: '#f06292' },
+  { id: 'hair_blauw',    cat: 'hair', name: 'Blauw',     full: 'Blauw kapsel',     price: 46,  color: '#42a5f5' },
+  { id: 'hair_paars',    cat: 'hair', name: 'Paars',     full: 'Paars kapsel',     price: 52,  color: '#ab47bc' },
+  { id: 'hair_groen',    cat: 'hair', name: 'Groen',     full: 'Groen kapsel',     price: 45,  color: '#66bb6a' },
+  { id: 'hair_wit',      cat: 'hair', name: 'Wit',       full: 'Wit kapsel',       price: 20,  color: '#f5f5f5' },
+  { id: 'hair_turkoois', cat: 'hair', name: 'Turquoise', full: 'Turquoise kapsel', price: 40,  color: '#26c6da' },
+  { id: 'hair_zilver',   cat: 'hair', name: 'Zilvergrijs', full: 'Zilvergrijs kapsel', price: 60, color: '#cfd8dc' },
+  { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog', full: 'Regenboogkapsel',  price: 90,  color: 'RAINBOW' },
   // Jurken
-  { id: 'dress_roze',    cat: 'dress', name: 'Roze',      price: 0,   color: '#ec407a' },
-  { id: 'dress_paars',   cat: 'dress', name: 'Paars',    price: 0,   color: '#7e57c2' },
-  { id: 'dress_geel',    cat: 'dress', name: 'Geel',      price: 15,  color: '#fdd835' },
-  { id: 'dress_blauw',   cat: 'dress', name: 'Blauw',    price: 18,  color: '#29b6f6' },
-  { id: 'dress_groen',   cat: 'dress', name: 'Groen',    price: 24,  color: '#66bb6a' },
-  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje',    price: 32,  color: '#fb8c00' },
-  { id: 'dress_rood',    cat: 'dress', name: 'Rood',      price: 42,  color: '#ef5350' },
-  { id: 'dress_sterren', cat: 'dress', name: 'Sterren',    price: 60,  color: '#5c6bc0', pattern: 'stars' },
-  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjes',    price: 70,  color: '#f06292', pattern: 'hearts' },
-  { id: 'dress_disco',   cat: 'dress', name: 'Disco',      price: 80,  color: '#b0bec5', pattern: 'disco' },
-  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    price: 65,  color: '#fafafa', pattern: 'ohl' },
-  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', price: 85, color: '#26a69a', pattern: 'scales' },
+  { id: 'dress_roze',    cat: 'dress', name: 'Roze',      full: 'Roze jurk',      price: 0,   color: '#ec407a' },
+  { id: 'dress_paars',   cat: 'dress', name: 'Paars',    full: 'Paarse jurk',    price: 0,   color: '#7e57c2' },
+  { id: 'dress_geel',    cat: 'dress', name: 'Geel',      full: 'Gele jurk',      price: 15,  color: '#fdd835' },
+  { id: 'dress_blauw',   cat: 'dress', name: 'Blauw',    full: 'Blauwe jurk',    price: 18,  color: '#29b6f6' },
+  { id: 'dress_groen',   cat: 'dress', name: 'Groen',    full: 'Groene jurk',    price: 24,  color: '#66bb6a' },
+  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje',    full: 'Oranje jurk',    price: 32,  color: '#fb8c00' },
+  { id: 'dress_rood',    cat: 'dress', name: 'Rood',      full: 'Rode jurk',      price: 42,  color: '#ef5350' },
+  { id: 'dress_sterren', cat: 'dress', name: 'Sterren',    full: 'Sterrenjurk',   price: 60,  color: '#5c6bc0', pattern: 'stars' },
+  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjes',    full: 'Hartjesjurk',   price: 70,  color: '#f06292', pattern: 'hearts' },
+  { id: 'dress_disco',   cat: 'dress', name: 'Disco',      full: 'Discojurk',     price: 80,  color: '#b0bec5', pattern: 'disco' },
+  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    full: 'Voetbaljurk',   price: 65,  color: '#fafafa', pattern: 'ohl' },
+  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', full: 'Zeemeerminjurk', price: 85, color: '#26a69a', pattern: 'scales' },
   { id: 'dress_tover',   cat: 'dress', name: 'Toverjurk',      price: 95,  color: '#4527a0', pattern: 'magic' },
-  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  price: 110, color: 'RAINBOW' },
+  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogjurk', price: 110, color: 'RAINBOW' },
   // Schoenen (kleuren de vaste schoenen van de paspop)
-  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze',   price: 0,  color: '#e91e63' },
-  { id: 'shoes_rood',  cat: 'shoes', name: 'Rood',   price: 10, color: '#e53935' },
-  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauw', price: 15, color: '#1e88e5' },
-  { id: 'shoes_geel',  cat: 'shoes', name: 'Geel',   price: 18, color: '#fdd835' },
-  { id: 'shoes_paars', cat: 'shoes', name: 'Paars', price: 24, color: '#8e24aa' },
-  { id: 'shoes_groen', cat: 'shoes', name: 'Groen', price: 32, color: '#43a047' },
+  { id: 'shoes_roze',  cat: 'shoes', name: 'Roze',   full: 'Roze schoenen',   price: 0,  color: '#e91e63' },
+  { id: 'shoes_rood',  cat: 'shoes', name: 'Rood',   full: 'Rode schoenen',   price: 10, color: '#e53935' },
+  { id: 'shoes_blauw', cat: 'shoes', name: 'Blauw', full: 'Blauwe schoenen', price: 15, color: '#1e88e5' },
+  { id: 'shoes_geel',  cat: 'shoes', name: 'Geel',   full: 'Gele schoenen',   price: 18, color: '#fdd835' },
+  { id: 'shoes_paars', cat: 'shoes', name: 'Paars', full: 'Paarse schoenen', price: 24, color: '#8e24aa' },
+  { id: 'shoes_groen', cat: 'shoes', name: 'Groen', full: 'Groene schoenen', price: 32, color: '#43a047' },
   { id: 'shoes_zwart', cat: 'shoes', name: 'Stoere laarsjes',   price: 42, color: '#37474f' },
-  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitter', price: 55, color: '#ffd54f' },
-  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog', price: 80, color: 'RAINBOW' },
+  { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitter', full: 'Gouden glitterschoenen', price: 55, color: '#ffd54f' },
+  { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog', full: 'Regenboogschoenen', price: 80, color: 'RAINBOW' },
   // Microfoons
-  { id: 'mic_zilver', cat: 'mic', name: 'Zilver', price: 30, color: '#cfd8dc' },
-  { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   price: 35, color: '#42a5f5' },
-  { id: 'mic_groen',  cat: 'mic', name: 'Groen',   price: 40, color: '#66bb6a' },
-  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',         price: 45, emoji: '🍺' },
-  { id: 'mic_zwart',  cat: 'mic', name: 'Rock', price: 55, color: '#37474f' },
-  { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf',   price: 70, emoji: '🪄' },
-  { id: 'mic_goud',   cat: 'mic', name: 'Goud',   price: 60, color: '#ffd54f' },
-  { id: 'mic_roze',   cat: 'mic', name: 'Roze glitter', price: 90, color: '#ff80ab' },
-  { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', price: 100, color: 'RAINBOW' },
+  { id: 'mic_zilver', cat: 'mic', name: 'Zilver', full: 'Zilveren microfoon', price: 30, color: '#cfd8dc' },
+  { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
+  { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
+  { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjemicrofoon',       price: 45, emoji: '🍺' },
+  { id: 'mic_zwart',  cat: 'mic', name: 'Rock', full: 'Rockmicrofoon', price: 55, color: '#37474f' },
+  { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
+  { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
+  { id: 'mic_roze',   cat: 'mic', name: 'Roze glitter', full: 'Roze glittermicrofoon', price: 90, color: '#ff80ab' },
+  { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', full: 'Regenboogmicrofoon', price: 100, color: 'RAINBOW' },
   // Instrumenten
   { id: 'instr_tamboerijn', cat: 'instrument', name: 'Tamboerijn', price: 28, emoji: '🪘' },
   { id: 'instr_gitaar',  cat: 'instrument', name: 'Gitaar',    price: 40, emoji: '🎸' },
@@ -1690,8 +1690,8 @@ const item = id => ITEMS.find(i => i.id === id);
 const CATS = [
   { id: 'dress', name: '👗 Jurken' },
   { id: 'shoes', name: '👟 Schoenen' },
-  { id: 'hair',  name: '💇 Haar' },
-  { id: 'mic',   name: '🎤 Micro' },
+  { id: 'hair',  name: '💇 Kapsels' },
+  { id: 'mic',   name: '🎤 Microfoons' },
   { id: 'instrument', name: '🎸 Muziek' },
   { id: 'acc',   name: '🎀 Accessoires' },
   { id: 'pet',   name: '🐾 Dieren' },
@@ -3629,7 +3629,7 @@ function renderShop() {
   // modus-schakelaar: kleren (per categorie) ↔ looks (complete outfits sparen)
   const mode = $('shop-mode');
   mode.innerHTML = '';
-  [['items', '👗 Kleren'], ['looks', '✨ Looks']].forEach(([v, label]) => {
+  [['items', 'Spullen'], ['looks', 'Looks']].forEach(([v, label]) => {
     const b = document.createElement('button');
     b.className = v === shopView ? 'on' : '';
     b.textContent = label;
@@ -3772,7 +3772,7 @@ function surpriseOutfit() {
 // diamanten geen dood spoor maar een concreet doel: "Nog X 💎" + meteen spelen.
 function renderDressBar(it, p) {
   const bar = $('dress-bar');
-  const naam = (it2) => `${it2.emoji ? it2.emoji + ' ' : ''}${it2.name}`;
+  const naam = (it2) => `${it2.emoji ? it2.emoji + ' ' : ''}${it2.full || it2.name}`;
   if (!it) {
     // niets gekozen: geen hint nodig, de kaartjes nodigen zelf al uit tot tikken
     bar.innerHTML = '';
@@ -3787,14 +3787,13 @@ function renderDressBar(it, p) {
     if (tekort > 0) {
       bar.innerHTML = `
         <div class="db-info"><span class="db-name">${naam(it)}</span>
-          <span class="db-sub warn">· Nog ${tekort} 💎 nodig</span></div>
-        <button class="btn small" id="db-earn">🎤 Speel</button>`;
+          <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎 nodig</span></div>
+        <button class="btn small" id="db-earn">Speel</button>`;
       $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
     } else {
       bar.innerHTML = `
-        <div class="db-info"><span class="db-name">${naam(it)}</span>
-          <span class="db-sub">· ${it.price} 💎</span></div>
-        <button class="btn small" id="db-buy">🛍️ Koop</button>`;
+        <div class="db-info"><span class="db-name">${naam(it)}</span></div>
+        <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
       $('db-buy').onclick = () => confirmShopBuy(it.id);
     }
     return;
@@ -3803,7 +3802,7 @@ function renderDressBar(it, p) {
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
         <span class="db-sub">· Van jou</span></div>
-      <button class="btn small" id="db-wear">✨ Aandoen</button>`;
+      <button class="btn small" id="db-wear">Doe aan</button>`;
     $('db-wear').onclick = () => equipShopItem(it.id);
     return;
   }
