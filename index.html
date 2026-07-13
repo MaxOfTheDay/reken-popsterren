@@ -916,20 +916,8 @@
   .ready-big { font-size: 16px; font-weight: 900; line-height: 1.08; }
   .ready-name { font-size: 13px; font-weight: 700; opacity: .82; line-height: 1.12; }
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 4px 13px rgba(255,170,0,.45); } 50% { transform: scale(1.03); box-shadow: 0 6px 22px rgba(255,170,0,.75); } }
-  /* ---- Thema-looks: brede outfit-challenge-kaarten met een strakke checklist ---- */
-  .trophy-card.theme { grid-column: 1 / -1; text-align: left; padding: 14px 14px; background: rgba(255,255,255,.06); border-color: var(--glass-white-16); box-shadow: none; }
-  .trophy-card.theme.busy, .trophy-card.theme.almost { border-color: rgba(90,190,245,.55); }
-  .trophy-card.theme.done { background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); opacity: .92; }
-  .theme-top { display: flex; align-items: center; gap: 10px; }
-  .theme-emoji { font-size: 36px; line-height: 1; }
-  .trophy-card.theme.fresh .theme-emoji { filter: grayscale(1); opacity: .4; }
-  .trophy-card.theme .tname { margin-top: 0; font-size: 15px; opacity: 1; }
-  .trophy-card.theme.fresh .tname { opacity: .6; }
-  /* Eén rustige Aan-teller rechtsboven: 0 blijft inactief, voortgang kleurt blauw. */
-  .theme-count { margin-left: auto; font-size: 12px; font-weight: 800; }
-  .theme-count span { color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 9px; white-space: nowrap; opacity: .72; }
-  .theme-count .worn.some { color: var(--blue-text); background: rgba(56,189,248,.15); box-shadow: 0 0 0 1px var(--blue-ring); opacity: 1; }
-  .theme-count .worn.full { color: var(--blue-text); background: rgba(56,189,248,.18); box-shadow: 0 0 0 1px rgba(143,214,255,.24); opacity: 1; }
+  /* ---- Look-stukkenlijst: gedeeld door de kleedkamer-looks. Elk stuk heeft 3
+     staten: niet in kast (leeg/dim) / in kast (grijs vinkje) / nu aan (blauw) ---- */
   .theme-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 12px; }
   .theme-list li { font-size: 13px; line-height: 1.25; display: flex; align-items: center; gap: 8px; }
   .theme-list .pc { flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--glass-white-30); box-sizing: border-box; position: relative; }
@@ -942,10 +930,8 @@
   .theme-list li.on { color: var(--blue-text); font-weight: 700; }
   .theme-list li.on .pc { background: var(--blue-fill-top); border-color: var(--blue-fill-top); box-shadow: 0 0 0 2px rgba(56,189,248,.16); }
   .theme-list li.on .pc::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: var(--purple-ink); }
-  /* gedeelde, opvallende gouden call-to-action-pil (bannerformaat) -- .end-trophy-banner
-     en .look-hint.action waren twee bijna-identieke kopieën van dezelfde stijl.
-     .look-action (hieronder) blijft bewust apart: dat is een compacte kop-actie
-     op een heel andere schaal, geen "kom mij aantikken"-bannertje. */
+  /* gedeelde, opvallende gouden call-to-action-pil (bannerformaat), o.a. de
+     'nieuwe trofee klaar'-banner op het eindscherm (.end-trophy-banner) */
   .gold-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
@@ -954,20 +940,6 @@
     animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
   }
   .gold-pill:active { transform: scale(.96); }
-  /* laatste-stap-duwtje: alles in bezit, nog samen aandoen */
-  .look-hint { margin-top: 10px; font-size: 12.5px; font-weight: 800; color: var(--gold-warm); }
-  /* expliciete color/font-size i.p.v. op .gold-pill vs. .look-hint's
-     brontekst-volgorde vertrouwen (beide zijn maar 1 klasse specifiek, dus
-     "wie wint" zou toevallig kunnen worden) -- dit maakt de kleinere,
-     donker-op-goud pil-variant hier gegarandeerd, niet toevallig */
-  .look-hint.action { gap: 6px; padding: 8px 16px; font-size: 12.5px; box-shadow: 0 3px 10px rgba(255,179,0,.35); color: var(--ink-on-gold); }
-  /* actie op een behaalde look: kort label, in de kop op de plek van de Aan-teller */
-  .look-action {
-    margin-left: auto; flex: 0 0 auto; border: 0; cursor: pointer;
-    padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11.5px; font-weight: 800; color: var(--ink-on-gold);
-    background: linear-gradient(180deg, rgba(255,224,130,.95), rgba(255,179,0,.92)); box-shadow: 0 2px 5px var(--glass-black-20);
-  }
-  .look-action:active { transform: scale(.96); }
   /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
@@ -1165,24 +1137,30 @@
      heen. Hergebruikt de .theme-list-taal van de trofeeënkast, maar hier zijn de
      stukjes aantikbaar: tik een ontbrekend stuk en je springt naar dat item in
      zijn categorie om het te kopen/aan te doen. */
-  .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 12px; }
-  .looks-intro { font-size: 13.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 2px 6px 4px; }
-  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 13px 15px 14px; text-align: left; }
+  .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
+  .looks-intro { font-size: 13px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
+  .look-goal { background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14); border-radius: var(--radius-md); padding: 11px 14px 12px; text-align: left; }
   .look-goal.ready { border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.09); }
-  .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.28); }
+  .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); }
+  /* compleet-aan: één slanke regel i.p.v. een volle kaart met stukkenlijst */
+  .look-goal.slim { display: flex; align-items: center; gap: 9px; padding: 9px 14px; }
+  .look-goal.slim .lemoji { font-size: 20px; }
+  .look-goal.slim .lname { font-size: 14px; font-weight: 700; }
+  .look-done-tag { margin-left: auto; font-size: 11.5px; font-weight: 800; color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
+  .look-goal.flash { animation: lookFlash 1.4s ease; }
+  @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
   .look-goal-head { display: flex; align-items: center; gap: 10px; }
-  .look-goal-head .lemoji { font-size: 28px; line-height: 1; }
-  .look-goal-head .lname { font-size: 16px; font-weight: 800; }
+  .look-goal-head .lemoji { font-size: 26px; line-height: 1; }
+  .look-goal-head .lname { font-size: 15.5px; font-weight: 800; }
   .look-goal-head .lcount { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--muted-lavender-text); background: var(--glass-black-24); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; }
   .look-goal.ready .lcount { color: var(--blue-text); background: rgba(56,189,248,.16); }
-  .look-goal.done .lcount { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); }
-  .look-goal .theme-list { margin-top: 11px; }
-  .look-goal .theme-list li { cursor: pointer; border-radius: var(--radius-sm); padding: 3px 4px; transition: background .12s; }
+  .look-goal .theme-list { margin-top: 9px; gap: 4px 10px; }
+  .look-goal .theme-list li { font-size: 12.5px; cursor: pointer; border-radius: var(--radius-sm); padding: 3px 4px; transition: background .12s; }
   .look-goal .theme-list li.miss { color: var(--gold-warm); }
+  .look-goal .theme-list li.have { cursor: pointer; }
   .look-goal .theme-list li:hover { background: var(--glass-white-10); }
-  .look-goal-cta { margin-top: 12px; font-size: 13px; font-weight: 700; text-align: center; }
+  .look-goal-cta { margin-top: 10px; font-size: 12.5px; font-weight: 700; text-align: center; }
   .look-goal-cta.buy { color: var(--gold-warm); }
-  .look-goal-cta.compleet { color: var(--gold-light); }
   button.look-goal-cta { width: 100%; font-family: inherit; cursor: pointer; border: none; padding: 9px 12px; border-radius: var(--radius-pill);
     background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 3px 10px rgba(255,179,0,.35); }
   button.look-goal-cta:active { transform: scale(.97); }
@@ -1759,8 +1737,8 @@ const TROPHIES = [
   { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: '15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
   { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: '30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
-  { id: 'toegift',    emoji: '🎉', name: 'Toegift!',        desc: 'Je eerste toegift',    has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'toegift gehaald') },
-  { id: 'toegift25',  emoji: '🎆', name: 'Toegiftkoning',   desc: '25 toegiften',         has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'toegiften gehaald') },
+  { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
+  { id: 'toegift25',  emoji: '🎆', name: 'Extra-showkoning', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
   { id: 'rich',       emoji: '💰', name: 'Diamantenster',   desc: '100 diamanten',            has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
   { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: '250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
@@ -1833,6 +1811,13 @@ const DIAMANTSTER_SET = { acc: 'acc_diadeem', hair: 'hair_zilver', dress: 'dress
 const FESTIVALDJ_SET = { instrument: 'instr_dj', acc: 'acc_koptel', mic: 'mic_roze', stage: 'stage_disco' };
 const VUURSHOW_SET = { stage: 'stage_vulkaan', pet: 'pet_draak', dress: 'dress_rood', mic: 'mic_zwart' };
 function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.equipped[vak] === id).length; }
+// Vaste categorie-volgorde voor de stukken van een look (zelfde volgorde als de
+// kleedkamer-tabbladen), zodat elke look zijn stukken in dezelfde volgorde toont
+// i.p.v. de toevallige typvolgorde van elke set-definitie.
+const SLOT_ORDER = ['dress', 'shoes', 'hair', 'mic', 'instrument', 'acc', 'pet', 'stage'];
+function orderedPieces(set) {
+  return Object.entries(set).sort((a, b) => SLOT_ORDER.indexOf(a[0]) - SLOT_ORDER.indexOf(b[0]));
+}
 // Welke trofee is een thema-look, en uit welke stukken bestaat die look.
 const THEME_SETS = {
   magicus: MAGICUS_SET, thuismatch: OHELLE_SET, rockster: ROCKSTER_SET,
@@ -2642,7 +2627,8 @@ const TROPHY_UNIT_SINGULAR = {
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
   'spulletjes': 'spulletje', 'jurken': 'jurk', 'schoenen': 'schoen',
   'haarkleuren': 'haarkleur', 'instrumenten': 'instrument', 'podia': 'podium',
-  'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee'
+  'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee',
+  'extra shows': 'extra show'
 };
 // Maakt van een voortgangslabel ("steden bereikt") een kaal zelfstandig
 // naamwoord ("steden") voor de "Nog X ..."-tekst; enkelvoud bij precies 1.
@@ -2662,19 +2648,18 @@ function readyCardHTML(t) {
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
   const isTheme = !!THEME_SETS[t.id];
-  const theme = isTheme && status !== 'ready';   // klare thema-look = gouden open-kaart
   const card = document.createElement('div');
-  // volle breedte: 'Kast vol!' en thema-looks (ook wanneer die klaarstaan om te openen)
+  // volle breedte: enkel 'Kast vol!' en een klare thema-look (het cadeau om te openen)
   const wide = (t.id === 'kastvol' || (isTheme && status === 'ready')) ? 'wide ' : '';
-  card.className = `trophy-card ${theme ? 'theme ' : ''}${wide}` + status;
+  card.className = `trophy-card ${wide}` + status;
   // bijna behaald: subtiele gouden glow die iets sterker wordt richting 100%
-  if (status === 'almost' && !theme && t.progress) {
+  if (status === 'almost' && !isTheme && t.progress) {
     const pct = Math.min(100, t.progress(p).pct);
     const a = Math.max(.25, .25 + (pct - 80) / 20 * .3);
     card.style.boxShadow = `0 0 12px rgba(255,213,79,${a.toFixed(2)})`;
   }
   card.innerHTML = status === 'ready' ? readyCardHTML(t)
-    : theme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status);
+    : isTheme ? themeCardHTML(t, p, status) : normalCardHTML(t, p, status);
   card.onclick = () => tapTrophy(t, card);
   return card;
 }
@@ -2696,56 +2681,43 @@ function normalCardHTML(t, p, status) {
   }
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
-// Thema-look = verzamel-de-set: elk stuk heeft 3 visuele staten (niet in kast /
-// in kast / nu aan). De 🏆 op kaartniveau blijft de enige status voor ooit behaalde looks.
+// Thema-look in de kast = compacte tegel: icoon + naam + hoeveel stukken je al
+// verzameld hebt. Álle details (welke stukken, wat je aanhebt, kopen/aandoen)
+// staan nu in de kleedkamer; een tik hierop brengt je daar meteen naartoe.
 function themeCardHTML(t, p, status) {
-  const set = THEME_SETS[t.id];
-  const pieces = Object.entries(set);
+  const pieces = Object.entries(THEME_SETS[t.id]);
   const total = pieces.length;
-  const done = status === 'done';
   const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
-  const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
-  const wornCls = wornN === 0 ? '' : wornN === total ? ' full' : ' some';
-  const head = `<div class="theme-top"><span class="theme-emoji">${t.emoji}</span>`
-    + `<div class="tname">${t.name}</div>`
-    + (done
-      ? `<button class="look-action" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Doe aan</button>`
-      : `<div class="theme-count"><span class="worn${wornCls}">Aan: ${wornN}/${total}</span></div>`) + '</div>';
-  const won = done ? '<span class="trophy-won">🏆</span>' : '';
-  const list = pieces.map(([cat, id]) => {
-    const cls = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
-    return `<li class="${cls}"><span class="pc"></span>${pieceLabel(id)}</li>`;
-  }).join('');
-  // afsluiting: alles-in-bezit krijgt een duidelijke CTA; behaalde looks hebben de knop in de kop.
-  const foot = !done && ownedN === total && wornN < total
-    ? `<button class="look-hint action gold-pill" onclick="event.stopPropagation();wearLook('${t.id}')">👗 Trek alles aan</button>`
-    : '';
-  return won + head + `<ul class="theme-list">${list}</ul>` + foot;
+  const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div>`;
+  if (status === 'done') {
+    return '<span class="trophy-won">🏆</span>' + top
+      + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Bekijk in kleedkamer</div></div>';
+  }
+  const pct = Math.round((ownedN / total) * 100);
+  return top + `<div class="trophy-bottom"><div class="trophy-progress-text">${ownedN}/${total} verzameld</div>`
+    + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${pct}%"></div></div></div>`;
 }
-// Trekt in één klik alle stukken van een look aan en toont ze in de kleedkamer.
+// Trekt in één klik alle stukken (die je al bezit) van een look aan. Wordt vanuit
+// de kleedkamer-looks aangeroepen en blijft daar: de kaart wordt meteen 'compleet
+// aan'. Een complete look kan een trofee klaarleggen, dus check dat ook hier.
 function wearLook(id) {
   const set = THEME_SETS[id];
   if (!set) return;
   const p = P();
   Object.entries(set).forEach(([cat, itemId]) => { if (p.owned.includes(itemId)) p.equipped[cat] = itemId; });
+  const trofees = checkTrophies(p);
+  noticeReady(trofees);
   save();
   sndClick();
-  openKleedkamer();
+  renderShop();
 }
-// tikken mag: klaar opent; een thema-look gaat naar de kleedkamer (behaald =
-// meteen aandoen & bekijken); een gewone behaalde glinstert; anders "Nog X".
+// tikken mag: klaar opent de trofee; een thema-look brengt je naar de kleedkamer
+// (waar alle stukken/knoppen staan); een gewone behaalde glinstert; anders "Nog X".
 function tapTrophy(t, card) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  if (THEME_SETS[t.id]) {
-    sndClick();
-    const pieces = Object.entries(THEME_SETS[t.id]);
-    const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
-    if (st === 'done' || ownedN === pieces.length) wearLook(t.id);
-    else openKleedkamer();
-    return;
-  }
+  if (THEME_SETS[t.id]) { sndClick(); openLookInKleedkamer(t.id); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
   if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
   if (!t.progress) return;
@@ -3123,7 +3095,7 @@ function submitAnswer(val, btnEl) {
     updateFan(encore);
     if (btnEl) btnEl.classList.add('good');
     if (G.mode === 'typ') $('question-text').textContent = `${q.text} = ${q.ans}`;
-    if (encore) { sndWin(); confetti(24); showPraise('🎆 ENCORE!', '💎 +5 bonus'); }
+    if (encore) { sndWin(); confetti(24); showPraise('🎆 EXTRA SHOW!', '💎 +5 bonus'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
     else if (!firstTry) { sndGood(); showPraise('Goed zo, je had het!', '💎 +' + gain); }
@@ -3516,18 +3488,31 @@ let shopCat = 'dress';
 let shopSelectedId = null;
 let shopJustBoughtId = null;
 let shopView = 'items';   // 'items' = kleren per categorie · 'looks' = complete outfits als spaardoel
+let focusLook = null;     // look-id om naartoe te scrollen + even te laten oplichten (vanuit de kast)
 function openKleedkamer() {
-  shopCat = 'dress'; shopSelectedId = null; shopView = 'items';
+  shopCat = 'dress'; shopSelectedId = null; shopView = 'items'; focusLook = null;
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
 }
-// vanuit de Looks-modus naar een concreet stuk springen om het te kopen/aan te doen
+// vanuit de trofeeënkast: open de kleedkamer in Looks-modus, gefocust op één look
+function openLookInKleedkamer(id) {
+  shopCat = 'dress'; shopSelectedId = null; shopView = 'looks'; focusLook = id;
+  show('screen-dress');
+  renderShop();   // renderLookGoals scrollt naar + belicht de gefocuste look
+}
+// vanuit de Looks-modus naar een concreet stuk springen om het te kopen
 function shopGoToItem(cat, id) {
   sndClick();
   shopView = 'items'; shopCat = cat; shopSelectedId = id;
   renderShop();
   $('screen-dress').scrollTop = 0;
+}
+// een stuk in de looks-lijst aantikken: heb je 't al → meteen aandoen; anders → kopen
+function lookPieceTap(cat, id) {
+  const p = P();
+  if (p.owned.includes(id)) equipShopItem(id);   // in bezit → aandoen (checkt trofeeën, hertekent)
+  else shopGoToItem(cat, id);                     // ontbreekt → naar de winkel
 }
 function renderShop() {
   const p = P();
@@ -3595,10 +3580,10 @@ function renderShop() {
 // in bezit / nu aan) en een tik-om-te-kopen sprong naar het ontbrekende stuk.
 // Zo trekt het najagen van één look het kind dwars door de categorieën heen.
 function renderLookGoals(grid, p) {
-  grid.innerHTML = `<div class="looks-intro">✨ Verzamel alle stukken van een look en draag ze samen voor een trofee!</div>`;
-  // volgorde: nog te verzamelen eerst (meest voltooid bovenaan), afgeronde onderaan
+  grid.innerHTML = `<div class="looks-intro">✨ Spaar een look bij elkaar en draag alles samen</div>`;
+  // volgorde: nog te verzamelen eerst (dichtst bij af bovenaan), compleet-aan onderaan
   const looks = TROPHIES.filter(t => THEME_SETS[t.id]).map(t => {
-    const pieces = Object.entries(THEME_SETS[t.id]);
+    const pieces = orderedPieces(THEME_SETS[t.id]);
     const ownedN = pieces.filter(([cat, id]) => p.owned.includes(id)).length;
     const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
     return { t, pieces, ownedN, wornN, total: pieces.length };
@@ -3610,23 +3595,40 @@ function renderLookGoals(grid, p) {
   });
   looks.forEach(({ t, pieces, ownedN, wornN, total }) => {
     const done = wornN === total;
-    const ready = !done && ownedN === total;
-    const cls = done ? ' done' : (ready ? ' ready' : '');
+    const card = document.createElement('div');
+    card.dataset.look = t.id;
+    // compleet-aan: één slanke regel i.p.v. een volle kaart -- houdt de lijst licht
+    if (done) {
+      card.className = 'look-goal done slim';
+      card.innerHTML = `<span class="lemoji">${t.emoji}</span><span class="lname">${t.name}</span>`
+        + `<span class="look-done-tag">✓ compleet aan</span>`;
+      grid.appendChild(card);
+      return;
+    }
+    const ready = ownedN === total;
+    card.className = 'look-goal' + (ready ? ' ready' : '');
     const list = pieces.map(([cat, id]) => {
       const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
-      return `<li class="${st}" onclick="shopGoToItem('${cat}','${id}')"><span class="pc"></span>${pieceLabel(id)}</li>`;
+      return `<li class="${st}" onclick="lookPieceTap('${cat}','${id}')"><span class="pc"></span>${pieceLabel(id)}</li>`;
     }).join('');
-    let cta;
-    if (done) cta = `<div class="look-goal-cta compleet">✨ Helemaal compleet aan!</div>`;
-    else if (ready) cta = `<button class="look-goal-cta" onclick="wearLook('${t.id}')">👗 Trek alles aan</button>`;
-    else cta = `<div class="look-goal-cta buy">Nog ${total - ownedN} stuk${total - ownedN === 1 ? '' : 'jes'} te koop — tik een stuk aan</div>`;
-    const card = document.createElement('div');
-    card.className = 'look-goal' + cls;
+    const cta = ready
+      ? `<button class="look-goal-cta" onclick="wearLook('${t.id}')">👗 Trek alles aan</button>`
+      : `<div class="look-goal-cta buy">Nog ${total - ownedN} te koop — tik een stuk</div>`;
     card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
-      + `<span class="lname">${t.name}</span><span class="lcount">${ownedN}/${total} in bezit</span></div>`
+      + `<span class="lname">${t.name}</span><span class="lcount">${ownedN}/${total}</span></div>`
       + `<ul class="theme-list">${list}</ul>${cta}`;
     grid.appendChild(card);
   });
+  // vanuit de kast gefocust geopend: scroll ernaartoe en laat 'm even oplichten
+  if (focusLook) {
+    const target = grid.querySelector(`.look-goal[data-look="${focusLook}"]`);
+    focusLook = null;
+    if (target) requestAnimationFrame(() => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      target.classList.add('flash');
+      setTimeout(() => target.classList.remove('flash'), 1400);
+    });
+  }
 }
 
 function previewProfile(p, it) {
