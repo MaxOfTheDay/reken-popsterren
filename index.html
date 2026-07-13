@@ -1128,7 +1128,11 @@
   /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← terug ·
      Instellingen · (opgeslagen-bevestiging), met de profielkiezer en de
      Voortgang|Instellen-navigatie er direct onder, ook altijd in beeld */
-  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--glass-black-26); width: 100%; }
+  /* max-width: zonder dit rekt de balk op brede (desktop) schermen uit tot de
+     volle breedte van .hub-sticky -- dan wordt de geselecteerde knop een groot
+     leeg goud blok en zweeft de tekst van de andere knop eenzaam ver weg aan
+     de andere kant. Blijft op smalle schermen gewoon 100% breed. */
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--glass-black-26); width: 100%; max-width: 460px; }
   .segmented button {
     flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
     border: none; background: transparent; border-radius: var(--radius-sm); padding: 10px 8px;
@@ -1384,13 +1388,13 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar kaart" title="Terug naar kaart">✕</button>
-        <div class="header-title">🎤 Optreden</div>
-        <div class="header-right"></div>
+        <div class="header-title" id="end-lvl-label"></div>
+        <div class="diamond-badge header-right">💎 <span id="end-diamonds">0</span></div>
       </div>
     </div>
     <div class="result-card">
       <h1 class="title" id="end-title"></h1>
-      <div class="stage tappable end-stage" id="end-stage" onclick="tapDance('end-avatar')">
+      <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
         <div class="avatar-holder idle" id="end-avatar"></div>
       </div>
       <div class="result-stars" id="end-stars"></div>
@@ -3116,6 +3120,10 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   const dances = G.dances;
+  // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
+  // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
+  const city = cityFor(lvl);
+  $('end-lvl-label').textContent = `${city.flag} ${city.name}`;
   // Overgebleven fanmeter telt altijd mee: +1 💎 per volle 25% publieksenthousiasme,
   // zodat inspanning ook loont als de encore (100%) net niet gehaald is.
   const fanBonus = Math.floor(G.fan / 25);
@@ -3134,7 +3142,6 @@ function endLevel(success) {
     }
     const trofees = checkTrophies(p);
     save();
-    const city = cityFor(lvl);
     $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
@@ -3180,6 +3187,7 @@ function endLevel(success) {
     $('btn-end-alt').textContent = '🗺️ Kaart';
     $('btn-end-alt').onclick = () => { sndClick(); goMap(); };
   }
+  $('end-diamonds').textContent = p.diamonds;
   G = null;
   show('screen-end');
 }
