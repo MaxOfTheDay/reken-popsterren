@@ -403,7 +403,8 @@
   .career-strip { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 6px auto 0; }
   .rank-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 800; color: var(--gold-light); white-space: nowrap; text-shadow: 0 1px 0 var(--glass-black-18); }
   .rank-bar { flex: 1; height: 7px; border-radius: var(--radius-pill); background: var(--glass-black-32); overflow: hidden; }
-  .rank-fill { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
+  /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
+  .rank-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
   .rank-next { font-size: 11px; font-weight: 600; color: var(--c-white); opacity: .8; white-space: nowrap; }
   @media (max-width: 380px) { .rank-next { display: none; } }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
@@ -957,10 +958,34 @@
   .tp-joepie { font-size: 15px; font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+
+  /* ---- Ster-status omhoog: dé grote mijlpaal. Het nieuwe rang-icoon knalt naar
+     voren met een uitbarsting van datzelfde icoon eromheen. ---- */
+  .rankup-overlay {
+    position: fixed; inset: 0; z-index: 95; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: radial-gradient(circle at 50% 44%, rgba(74,20,140,.5), rgba(20,4,40,.66)); animation: popFade .3s ease;
+  }
+  .rankup-overlay.closing { animation: popFade .3s ease reverse forwards; }
+  .rankup-core { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+  .rankup-sparks { position: absolute; left: 50%; top: 50px; width: 0; height: 0; }
+  .rankup-spark { position: absolute; left: 0; top: 0; font-size: 30px; opacity: 0; animation: rankSpark 1s ease-out both; }
+  .rankup-badge { font-size: 94px; line-height: 1; filter: drop-shadow(0 6px 16px rgba(0,0,0,.55)); animation: rankBadgePop .7s cubic-bezier(.2,1.5,.4,1) both; }
+  .rankup-label { font-size: 14px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: 0 2px 8px rgba(0,0,0,.5); animation: rankTextRise .5s ease .28s both; }
+  .rankup-name { font-size: clamp(26px, 8vw, 34px); font-weight: 900; color: var(--c-white); text-shadow: 0 0 16px var(--gold-flame), 0 3px 0 rgba(0,0,0,.35); animation: rankTextRise .5s ease .4s both; }
+  @keyframes rankBadgePop { 0% { transform: scale(0) rotate(-45deg); } 60% { transform: scale(1.2) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+  @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes rankSpark {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+    22% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.05); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready { animation: none; }
     .trophy-pop { animation: none; }
     .end-trophy-banner { animation: none; }
+    .rankup-badge, .rankup-label, .rankup-name { animation: none; }
+    .rankup-spark { display: none; }
   }
   /* geel/goud stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt —
      zelfde kleurtaal als de rest van de trofee-elementen (banner, kast-balk, ready-kaart) */
@@ -1824,6 +1849,12 @@ const THEME_SETS = {
   discodiva: DISCO_SET, prinses: PRINSES_SET, ruimteheld: RUIMTE_SET,
   winter: WINTER_SET, jungle: JUNGLE_SET, zeemeermin: ZEE_SET, regenboogster: REGENBOOG_SET,
   diamantster: DIAMANTSTER_SET, festivaldj: FESTIVALDJ_SET, vuurshow: VUURSHOW_SET
+};
+// Kleedkamercollectie-trofeeën → naar welke categorie ze in de kleedkamer horen,
+// zodat een tik op zo'n trofee die collectie meteen opent om verder te sparen.
+const COLLECTION_CAT = {
+  modekoningin: 'dress', schoenenkast: 'shoes', haarstylist: 'hair',
+  orkest: 'instrument', podiumbouwer: 'stage', dierenkoning: 'pet'
 };
 // De kleedkamer laat de categorie het werk doen (tabblad "Jurken" + een kleur-
 // bolletje maakt "Roze" al duidelijk genoeg), maar in de look-checklist hangt
@@ -2718,6 +2749,7 @@ function tapTrophy(t, card) {
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
   if (THEME_SETS[t.id]) { sndClick(); openLookInKleedkamer(t.id); return; }
+  if (COLLECTION_CAT[t.id]) { sndClick(); openKleedkamerCat(COLLECTION_CAT[t.id]); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
   if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
   if (!t.progress) return;
@@ -2754,6 +2786,34 @@ function celebrateTrophy(t) {
   document.body.appendChild(ov);
   const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
   ov.onclick = close;
+}
+// Ster-status omhoog: het nieuwe rang-icoon knalt naar voren met een uitbarsting
+// van datzelfde icoon eromheen. Tik of ~2,2s = weg. Aangeroepen vanaf endLevel.
+function rankUpCelebrate(rank) {
+  sndWin();
+  buzz([0, 50, 80, 50, 100]);
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let sparks = '';
+  if (!reduce) {
+    const N = 16;
+    for (let i = 0; i < N; i++) {
+      const ang = (360 / N) * i + rnd(-8, 8);
+      const dist = rnd(95, 170);
+      const dx = Math.round(Math.cos(ang * Math.PI / 180) * dist);
+      const dy = Math.round(Math.sin(ang * Math.PI / 180) * dist);
+      sparks += `<span class="rankup-spark" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${rnd(0, 12) / 100}s">${rank.emoji}</span>`;
+    }
+  }
+  const ov = document.createElement('div');
+  ov.className = 'rankup-overlay';
+  ov.innerHTML = `<div class="rankup-core"><div class="rankup-sparks">${sparks}</div>`
+    + `<div class="rankup-badge">${rank.emoji}</div>`
+    + `<div class="rankup-label">Nieuwe ster-status!</div>`
+    + `<div class="rankup-name">${rank.name}</div></div>`;
+  document.body.appendChild(ov);
+  const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
+  ov.onclick = close;
+  setTimeout(close, 2200);
 }
 // tijdens het spelen: geen groot feest, wél een vriendelijke hint naar de kast
 function noticeReady(trofees) {
@@ -3292,6 +3352,7 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   const dances = G.dances;
+  let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
   // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const city = cityFor(lvl);
@@ -3313,7 +3374,7 @@ function endLevel(success) {
       pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
     }
     // carrièrerang: net genoeg sterren voor een hogere rang? -> bonus (zie checkRankUp)
-    const rankUp = checkRankUp(p);
+    rankUp = checkRankUp(p);
     const trofees = checkTrophies(p);
     save();
     $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
@@ -3365,6 +3426,8 @@ function endLevel(success) {
   $('end-diamonds').textContent = p.diamonds;
   G = null;
   show('screen-end');
+  // ster-status omhoog krijgt na het eindscherm zijn eigen groot moment
+  if (rankUp) setTimeout(() => rankUpCelebrate(rankUp.rank), 650);
 }
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
 // hoger klankje; een gemiste ster verschijnt stil en dof. Dé ceremonie van het
@@ -3500,6 +3563,13 @@ function openLookInKleedkamer(id) {
   shopCat = 'dress'; shopSelectedId = null; shopView = 'looks'; focusLook = id;
   show('screen-dress');
   renderShop();   // renderLookGoals scrollt naar + belicht de gefocuste look
+}
+// vanuit een kleedkamercollectie-trofee: open die categorie meteen in de kleedkamer
+function openKleedkamerCat(cat) {
+  shopCat = cat; shopSelectedId = null; shopView = 'items'; focusLook = null;
+  show('screen-dress');
+  renderShop();
+  $('screen-dress').scrollTop = 0;
 }
 // vanuit de Looks-modus naar een concreet stuk springen om het te kopen
 function shopGoToItem(cat, id) {
