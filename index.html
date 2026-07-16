@@ -198,6 +198,9 @@
   /* alleen het totaal aantal sterren -- geen stad/tournee-details nodig om te
      kiezen wie er gaat spelen; hergebruikt de kleine pil (zie .chip-badge) */
   .profile-card .chip-badge { margin: 6px 0 2px; }
+  /* klein label onder de naam voor een telmodus-ster (Clara) -- alleen ter info
+     voor de ouder, kindvriendelijk en niet-storend */
+  .profile-card .pmode { font-size: 12.5px; font-weight: 600; color: var(--gold-light); margin-top: 2px; opacity: .95; }
   /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
   @media (max-width: 380px) {
     .profile-row { gap: 10px; }
@@ -546,6 +549,51 @@
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
 
+  /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
+  /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon)
+     met een 🔊-knop om de gesproken opdracht te herhalen. */
+  .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 40px; }
+  .cq-groupwrap { display: flex; align-items: center; justify-content: center; }
+  .cgroup { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; max-width: 260px; line-height: 1; }
+  /* tot 3 objecten op een rij: netjes groepeerbaar in beeld (subitiseren) */
+  .cgroup.n4, .cgroup.n5, .cgroup.n6 { max-width: 168px; }
+  .cg-obj { font-size: 34px; }
+  .cgroup.big .cg-obj { font-size: 46px; }
+  .cg-dot { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, var(--purple-input-top) 70%, var(--purple-input-bottom)); box-shadow: inset 0 -2px 3px rgba(0,0,0,.25); }
+  .cgroup.big .cg-dot { width: 34px; height: 34px; }
+  .cgroup.mini { gap: 2px 3px; max-width: 74px; margin-top: 4px; }
+  .cgroup.mini .cg-dot { width: 9px; height: 9px; background: rgba(255,255,255,.9); box-shadow: none; }
+  .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 800; color: var(--purple-shadow); }
+  .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
+  @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+  .count-replay {
+    position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 22px; color: var(--c-white); background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom));
+    box-shadow: 0 3px 0 var(--purple-input-shadow); display: flex; align-items: center; justify-content: center;
+  }
+  .count-replay:active { transform: translateY(calc(-50% + 2px)); box-shadow: 0 1px 0 var(--purple-input-shadow); }
+  /* meetellen: elk object popt op maat op */
+  .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
+  .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
+  @keyframes cpop { 0% { transform: scale(.5); opacity: .3; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
+
+  .count-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
+  .count-tiles.two { grid-template-columns: 1fr 1fr; }
+  .count-tile {
+    font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
+    min-height: 78px; padding: 12px 8px; border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform .07s, box-shadow .07s;
+  }
+  .count-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
+  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow); }
+  .count-tile .cg-obj { font-size: 27px; }
+  .count-tile .cg-dot { width: 20px; height: 20px; }
+  .count-tile .ct-num { font-size: 40px; font-weight: 800; line-height: 1; }
+
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
     .game-arena { gap: 12px; }
@@ -567,6 +615,11 @@
     .num-btn { padding: 9px 0; font-size: 23px; }
     .numpad { gap: 8px; }
     .qprogress { margin-top: 5px; }
+    .count-tile { min-height: 62px; padding: 8px 6px; }
+    .count-tiles { gap: 9px; }
+    .cgroup.big .cg-obj { font-size: 38px; }
+    .count-tile .cg-obj { font-size: 23px; }
+    .count-q { min-height: 66px; }
   }
   /* ruime schermen: de show mag wat groter schitteren */
   @media (min-width: 900px) and (min-height: 760px) {
@@ -830,6 +883,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .speel-pill, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
+    .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
+    .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
   }
 
   /* ---- Trofeeën ---- */
@@ -1289,6 +1344,10 @@
      narrow screens gave an unbalanced 3-then-1 instead. max-content columns
      keep each chip its own width -- no stretching to fill the grid cell. */
   #set-ops { display: grid; grid-template-columns: repeat(2, max-content); }
+  /* telmodus: fase-chips (1..6) en een klein legendablokje eronder */
+  .stage-chips .chip { min-width: 38px; padding: 7px 12px; }
+  .stage-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 2px 2px; font-size: 12.5px; opacity: .8; }
+  .stage-legend b { color: var(--purple-mid); }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--radius-pill); padding: 7px 15px;
@@ -1986,15 +2045,34 @@ function checkTrophies(p) {
 
 /* ================= Opslag ================= */
 const LS_KEY = 'rekenPopsterren_v1';
-function defaultProfile(name, dress) {
+// Clara start in de lees-vrije telmodus, met een kortere ronde (5 vragen) die
+// bij kleuters beter past. Andere sterren starten gewoon in de rekenmodus.
+const CLARA_OPTS = { track: 'count', stage: 1, stageMax: 6, repr: 'objects', numerals: true, perLevel: 5 };
+function defaultProfile(name, dress, opts) {
+  opts = opts || {};
+  // Extra gratis startjurk (bv. Clara's gele jurk) zodat elke ster er anders uitziet,
+  // zonder de winkelprijs van dat item te veranderen.
+  const owned = ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'];
+  if (dress && !owned.includes(dress)) owned.push(dress);
   return {
     name: name,
     diamonds: 30,
     level: 1,
     stars: {},
-    owned: ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'],
+    owned: owned,
     equipped: { hair: 'hair_blond', dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
-    settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8, missNum: true, chain3: true },
+    // ---- Instellingen ----
+    // track: 'math' = de gewone rekenshow · 'count' = de lees-vrije telmodus voor
+    // kleuters (gesproken opdrachten, hoeveelheden i.p.v. cijfers). De telmodus
+    // heeft eigen velden (stage-bereik, weergave, cijfers-aan/uit, kortere ronde).
+    settings: {
+      ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: opts.perLevel || 8, missNum: true, chain3: true,
+      track: opts.track || 'math',
+      stage: opts.stage || 1,          // laagste (start)fase in de telmodus
+      stageMax: opts.stageMax || 6,    // hoogste toegestane fase (6 = met cijfers)
+      repr: opts.repr || 'objects',    // antwoordweergave: 'objects' of 'dots'
+      numerals: opts.numerals !== false // fase 6 (cijfers naast hoeveelheid) toestaan
+    },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
@@ -2003,6 +2081,9 @@ function defaultProfile(name, dress) {
     opTrack: {},                                    // op -> { n, acc, paused, unlockRound }
     missRamp: { rung: 1, hot: 0 },                  // zoek-het-getal: 1 of 2 per optreden
     chainTrack: { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 },  // drie getallen
+    // telmodus: welke fase het kind nú speelt (klimt mee met de beheersing, binnen
+    // het door de ouder toegestane bereik) + een lopende nauwkeurigheid voor die klim
+    countTrack: { stage: opts.stage || 1, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
   };
 }
@@ -2033,6 +2114,13 @@ function migrate(p) {
   if (!p.opTrack) p.opTrack = {};
   if (!p.missRamp) p.missRamp = { rung: 1, hot: 0 };
   if (!p.chainTrack) p.chainTrack = { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 };
+  // telmodus (lees-vrij): standaard uit (track 'math') voor bestaande profielen
+  if (p.settings.track == null) p.settings.track = 'math';
+  if (p.settings.stage == null) p.settings.stage = 1;
+  if (p.settings.stageMax == null) p.settings.stageMax = 6;
+  if (p.settings.repr == null) p.settings.repr = 'objects';
+  if (p.settings.numerals == null) p.settings.numerals = true;
+  if (!p.countTrack) p.countTrack = { stage: p.settings.stage, seen: 0, acc: 0.5 };
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
   // schoenen-categorie: bestaande profielen krijgen de gratis roze schoenen aan
@@ -2051,9 +2139,21 @@ let db;
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) { db = JSON.parse(raw); if (typeof db.haptics !== 'boolean') db.haptics = true; Object.values(db.profiles).forEach(migrate); return; }
+    if (raw) {
+      db = JSON.parse(raw);
+      if (typeof db.haptics !== 'boolean') db.haptics = true;
+      Object.values(db.profiles).forEach(migrate);
+      // Bestaande saves (Marie + Anna) krijgen Clara er als telmodus-ster bij.
+      if (!db.profiles.p3) { db.profiles.p3 = defaultProfile('Clara', 'dress_geel', CLARA_OPTS); save(); }
+      return;
+    }
   } catch (e) { /* verse start */ }
-  db = { sound: true, haptics: true, profiles: { p1: defaultProfile('Marie', 'dress_roze'), p2: defaultProfile('Anna', 'dress_paars') } };
+  // Verse start: volgorde Clara (telmodus), Anna, Marie.
+  db = { sound: true, haptics: true, profiles: {
+    p1: defaultProfile('Clara', 'dress_geel', CLARA_OPTS),
+    p2: defaultProfile('Anna', 'dress_paars'),
+    p3: defaultProfile('Marie', 'dress_roze')
+  } };
   save();
 }
 function save() { localStorage.setItem(LS_KEY, JSON.stringify(db)); }
@@ -2098,7 +2198,46 @@ function sndTap() { buzz(12); const n = pick([784, 880, 988, 1047, 1175]); beep(
 function toggleSound() {
   db.sound = !db.sound; save();
   renderGearMenu();
+  if (!db.sound) cancelSpeech();
   if (db.sound) sndClick();
+}
+
+/* ================= Gesproken opdrachten (telmodus) =================
+   Kleuters kunnen nog niet lezen, dus in de telmodus wordt élke opdracht
+   hardop voorgelezen met de ingebouwde spraak van het toestel (SpeechSynthesis,
+   nl-NL). Niet elk toestel heeft een Nederlandse stem -- daarom is spraak nooit
+   de énige drager: de vraag staat altijd óók volledig in beeld (objecten/stippen),
+   en een 🔊-knop leest de opdracht op verzoek opnieuw voor. Ontbreekt een stem,
+   dan blijft alles gewoon speelbaar, enkel zonder stemgeluid. */
+const NUM_NL = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
+function numWord(n) { return NUM_NL[n] != null ? NUM_NL[n] : String(n); }
+let _voices = [];
+function refreshVoices() { try { _voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { _voices = []; } }
+function nlVoice() {
+  if (!_voices.length) refreshVoices();
+  return _voices.find(v => /^nl(\b|[-_])/i.test(v.lang)) || null;
+}
+function hasSpeech() { return 'speechSynthesis' in window; }
+function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} }
+// Leest een zin voor. Volgt bewust de geluid-aan/uit-knop (stil = ook geen stem).
+function speak(text, opts) {
+  opts = opts || {};
+  if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = nlVoice();
+    if (v) u.voice = v;
+    u.lang = 'nl-NL';
+    u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
+    u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
+    if (opts.onEnd) u.onend = opts.onEnd;
+    speechSynthesis.speak(u);
+  } catch (e) { if (opts.onEnd) opts.onEnd(); }
+}
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  refreshVoices();
+  speechSynthesis.onvoiceschanged = refreshVoices;
 }
 function toggleHaptics() {
   db.haptics = !db.haptics; save();
@@ -2314,13 +2453,17 @@ function goProfiles() {
 function renderProfiles() {
   const row = $('profile-row');
   row.innerHTML = '';
-  for (const key of ['p1', 'p2']) {
+  for (const key of Object.keys(db.profiles)) {
     const p = db.profiles[key];
     const card = document.createElement('button');
     card.className = 'profile-card';
+    // telmodus-sterren krijgen een klein 🧸-label zodat een ouder in één oogopslag
+    // ziet welke ster in de lees-vrije modus staat
+    const tag = p.settings && p.settings.track === 'count' ? '<div class="pmode">🧸 Tellen</div>' : '';
     card.innerHTML =
       `<div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
         <div class="pname">${p.name}</div>
+        ${tag}
         <div class="chip-badge">⭐ ${totalStarCount(p)}</div>
         <div class="speel-pill">Speel!</div>`;
     applyStage(card.querySelector('.stage'), p);
@@ -2961,6 +3104,208 @@ function makeChoices(ans) {
   return shuffle([...set]);
 }
 
+/* ================= Telmodus: lees-vrije vragen (fase 1–6) =================
+   Voor kleuters die nog geen cijfers of woorden lezen. Elke vraag is visueel
+   volledig (hoeveelheden als objecten/stippen) én wordt hardop voorgelezen.
+   Het antwoord is altijd een getal (de hoeveelheid), zodat submitAnswer exact
+   hetzelfde werkt als bij de rekenshow -- en dus alle beloningen, diamanten,
+   sterren en trofeeën ongewijzigd blijven meetellen.
+
+   Fases:  1 hoeveelheid 1–3 · 2 hoeveelheid 1–5 (+ meetellen) · 3 meer/minder ·
+           4 evenveel · 5 gesproken getal → hoeveelheid · 6 cijfer bij hoeveelheid */
+const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', '🦋', '🍓', '🐟', '🌼', '🐞'];
+function countStageInfo(stage) {
+  switch (stage) {
+    case 1: return { max: 3, types: ['count'] };
+    case 2: return { max: 5, types: ['count', 'along'] };
+    case 3: return { max: 5, types: ['compare'] };
+    case 4: return { max: 5, types: ['match'] };
+    case 5: return { max: 5, types: ['listen'] };
+    case 6: return { max: 5, types: ['numeral'] };
+    default: return { max: 3, types: ['count'] };
+  }
+}
+// Hoogste toegestane fase: cijfers-uit (fase 6) → begrensd op 5.
+function countMaxStage(s) { return s.numerals ? Math.min(6, s.stageMax || 6) : Math.min(5, s.stageMax || 6); }
+// De fase die het kind nú speelt: de live-stand uit countTrack, geklemd binnen het
+// door de ouder toegestane bereik [stage .. stageMax].
+function countLiveStage(p) {
+  const s = p.settings;
+  const hi = countMaxStage(s);                 // harde bovengrens (cijfers-uit → 5)
+  const lo = Math.min(Math.max(1, s.stage || 1), hi);
+  const st = (p.countTrack && p.countTrack.stage) || lo;
+  return Math.min(hi, Math.max(lo, st));
+}
+// Een paar getallen dicht bij het antwoord, binnen [lo..hi], voor de keuzeknoppen.
+function nearNums(ans, count, lo, hi) {
+  const set = new Set([ans]);
+  const cand = shuffle([ans - 1, ans + 1, ans - 2, ans + 2, ans + 3, ans - 3]);
+  for (const c of cand) { if (set.size >= count) break; if (c >= lo && c <= hi && !set.has(c)) set.add(c); }
+  let g = lo;
+  while (set.size < count && g <= hi) { if (!set.has(g)) set.add(g); g++; }
+  return shuffle([...set]);
+}
+// HTML voor een hoeveelheid: objecten (emoji) of stippen (dobbelsteen-achtig).
+function groupHTML(n, emoji, repr, extraCls) {
+  const cls = 'cgroup' + (repr === 'dots' ? ' dots' : '') + ' n' + n + (extraCls ? ' ' + extraCls : '');
+  let inner = '';
+  for (let i = 0; i < n; i++) {
+    inner += repr === 'dots'
+      ? '<span class="cg-dot"></span>'
+      : `<span class="cg-obj">${emoji}</span>`;
+  }
+  return `<span class="${cls}" aria-hidden="true">${inner}</span>`;
+}
+// Bouwt één telmodus-vraag. Alle types leveren een genormaliseerd object met
+// numeriek antwoord (q.ans) en keuzeknoppen (q.choices), plus de voor te lezen tekst.
+function genCount(p) {
+  const s = p.settings;
+  const stage = countLiveStage(p);
+  const info = countStageInfo(stage);
+  let type = pick(info.types);
+  const max = info.max;
+  const emoji = pick(COUNT_OBJECTS);
+  const repr = s.repr || 'objects';
+  const nCh = Math.min(stage === 1 ? 3 : 4, max);   // aantal keuzeknoppen
+  const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, gold: false };
+
+  if (type === 'count' || type === 'along') {
+    const n = rnd(1, max);
+    q.ans = n; q.n = n; q.along = (type === 'along');
+    q.card = { kind: 'group', n, emoji };
+    q.choices = nearNums(n, nCh, 1, max).map(v => ({ v, kind: 'group', n: v, emoji, repr }));
+    q.prompt = q.along ? 'Tel mee! Hoeveel zie je?' : 'Hoeveel zie je?';
+  } else if (type === 'compare') {
+    let a = rnd(1, max), b = rnd(1, max);
+    while (b === a) b = rnd(1, max);
+    const wantMore = Math.random() < 0.5;
+    q.ans = wantMore ? Math.max(a, b) : Math.min(a, b);
+    q.compare = wantMore ? 'more' : 'less';
+    q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
+    q.choices = shuffle([{ v: a, kind: 'group', n: a, emoji, repr }, { v: b, kind: 'group', n: b, emoji, repr }]);
+    q.prompt = wantMore ? 'Tik op de groep met de meeste.' : 'Tik op de groep met de minste.';
+  } else if (type === 'match') {
+    const t = rnd(1, max);
+    q.ans = t; q.card = { kind: 'group', n: t, emoji };
+    q.choices = nearNums(t, nCh, 1, max).map(v => ({ v, kind: 'group', n: v, emoji, repr }));
+    q.prompt = 'Welke groep heeft er evenveel?';
+  } else if (type === 'listen') {
+    const n = rnd(1, max);
+    q.ans = n; q.card = { kind: 'listen' };
+    q.choices = nearNums(n, nCh, 1, max).map(v => ({ v, kind: 'group', n: v, emoji, repr }));
+    q.prompt = 'Tik op ' + numWord(n) + '.';
+  } else { // numeral
+    const n = rnd(1, max);
+    q.ans = n; q.card = { kind: 'group', n, emoji };
+    q.choices = nearNums(n, nCh, 1, max).map(v => ({ v, kind: 'numeral', n: v }));
+    q.prompt = 'Welk cijfer hoort erbij?';
+  }
+  return q;
+}
+// De vraagkaart bovenin: toont de hoeveelheid/opdracht en spreekt haar uit.
+function drawCountQuestion(q) {
+  const card = $('question-text');
+  const replay = '<button class="count-replay" type="button" aria-label="Nog eens voorlezen" onclick="replayPrompt()">🔊</button>';
+  let body = '';
+  if (q.card.kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, 'objects', 'big')}</div>`;
+  else if (q.card.kind === 'label') body = `<div class="cq-label">${q.card.text}</div>`;
+  else if (q.card.kind === 'listen') body = `<div class="cq-listen">👂</div>`;
+  card.innerHTML = `<div class="count-q">${body}${replay}</div>`;
+  // meetellen: objecten poppen één voor één op terwijl er hardop geteld wordt
+  if (q.along && q.card.kind === 'group') {
+    const objs = card.querySelectorAll('.cg-obj');
+    objs.forEach(o => o.classList.add('pre'));
+    countAlong(objs, q.card.n, q.prompt);
+  } else {
+    speak(q.prompt);
+  }
+}
+// Zet de antwoordknoppen (hoeveelheden of cijfers) neer.
+function renderCountAnswers(q, area) {
+  const tiles = q.choices.map(c => {
+    let inner;
+    if (c.kind === 'numeral') inner = `<span class="ct-num">${c.v}</span>${groupHTML(c.v, '•', 'dots', 'mini')}`;
+    else inner = groupHTML(c.n, c.emoji, c.repr);
+    return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
+  }).join('');
+  const cls = 'count-tiles' + (q.choices.length <= 2 ? ' two' : '');
+  area.innerHTML = `<div class="${cls}">${tiles}</div>`;
+  area.querySelectorAll('.count-tile').forEach(b => {
+    b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
+  });
+}
+// Meetellen: elk object popt op maat op; de getallen worden achter elkaar gezegd.
+function countAlong(objs, n, lead) {
+  let i = 0;
+  speak(lead);
+  const step = () => {
+    if (!G || !G.count || i >= n) return;
+    const o = objs[i];
+    if (o) { o.classList.remove('pre'); o.classList.add('pop'); }
+    speak(numWord(i + 1), { rate: 0.9 });
+    i++;
+    if (i < n) setTimeout(step, 620);
+  };
+  setTimeout(step, 650);
+}
+let _lastPrompt = '';
+function replayPrompt() {
+  sndClick();
+  const q = G && G.qs && G.qs[G.idx];
+  if (!q) return;
+  if (q.along && q.card && q.card.kind === 'group') {
+    const objs = $('question-text').querySelectorAll('.cg-obj');
+    objs.forEach(o => { o.classList.remove('pop'); o.classList.add('pre'); });
+    countAlong(objs, q.card.n, q.prompt);
+  } else {
+    speak(q.prompt);
+  }
+}
+// Nauwkeurigheid van de telmodus (voor de fase-klim); losse EMA per profiel.
+function updateCountAcc(p, correct, firstTry) {
+  const ct = p.countTrack;
+  ct.seen = (ct.seen || 0) + 1;
+  const target = correct ? (firstTry ? 1 : 0.85) : 0;
+  ct.acc = (ct.acc == null ? 0.5 : ct.acc) * 0.8 + target * 0.2;
+}
+// Na een optreden: de fase mee laten klimmen (of, bij worstelen, zakken) binnen
+// het door de ouder toegestane bereik. Zo heeft het kind altijd een haalbare
+// volgende stap zonder ooit "vast" te zitten. Klimt pas na genoeg vlotte antwoorden.
+function advanceCountStage(p, success) {
+  const s = p.settings;
+  const lo = Math.max(1, s.stage || 1);
+  const hi = Math.max(lo, countMaxStage(s));
+  const ct = p.countTrack;
+  let st = Math.min(hi, Math.max(lo, ct.stage || lo));
+  if (success && ct.acc >= 0.85 && (ct.seen || 0) >= 8 && st < hi) {
+    st++; ct.seen = 0; ct.acc = 0.6;   // frisse start op de nieuwe, iets moeilijkere fase
+  } else if ((!success || ct.acc < 0.5) && st > lo) {
+    st--; ct.acc = 0.55;               // even terugzakken naar wat wél lukt
+  }
+  ct.stage = st;
+}
+// Lees-vrije "bijna!" bij een eerste misser: geen tekst, wel een vriendelijke stem.
+function countMissSpeak(q, val) {
+  if (q.compare) { speak('Bijna! Kijk goed welke groep ' + (q.compare === 'more' ? 'de meeste' : 'de minste') + ' heeft.'); return; }
+  if (typeof val === 'number' && q.ctype !== 'numeral') {
+    if (val > q.ans) speak('Bijna! Dat waren er te veel. Probeer een kleinere groep.');
+    else speak('Bijna! Dat waren er te weinig. Probeer een grotere groep.');
+    return;
+  }
+  speak('Bijna! Probeer nog eens.');
+}
+// De juiste hoeveelheid hardop meetellen bij een definitieve misser -- zo ziet én
+// hoort het kind wat het antwoord was, zonder één woord tekst.
+function countReveal(q) {
+  const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
+  if (tile) {
+    tile.classList.add('good');
+    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .ct-num');
+    if (q.ctype === 'numeral') speak('Dit is de ' + numWord(q.ans) + '.');
+    else { let i = 0; const c = () => { if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
+  }
+}
+
 /* ---- Zwakke sommen: gericht herhalen wat een kind moeilijk vindt ----
    Alleen klassieke 2-getal-sommen komen in de herhaalpoel; zoek-het-getal- en
    drie-getallen-vragen worden per optreden ingeroosterd (zie planSpecials) en
@@ -3157,15 +3502,17 @@ function startLevel(lvl) {
   const s = p.settings;
   // Vragen worden nu per stuk gebouwd (zodat zwakke sommen kunnen terugkomen); vooraf enkel
   // de gouden-vraag-index kiezen: hoogstens één per optreden, ± elke 2 shows, nooit de eerste.
+  const count = s.track === 'count';
   const goldIdx = (s.perLevel > 1 && Math.random() < 0.5) ? rnd(1, s.perLevel - 1) : -1;
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
-  const plan = planSpecials(p, s, s.perLevel, cityFor(lvl).ronde, goldIdx);
+  // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
+  const plan = count ? [] : planSpecials(p, s, s.perLevel, cityFor(lvl).ronde, goldIdx);
   // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
   // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0,
-        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false };
+  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0,
+        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
   const city = cityFor(lvl);
   $('game-lvl-label').textContent = `${city.flag} ${city.name}`;
   $('game-diamonds').textContent = p.diamonds;
@@ -3257,16 +3604,19 @@ function renderQuestion() {
   const p = P();
   const s = p.settings;
   if (!G.qs[G.idx]) {
-    const plan = G.plan[G.idx];
     let built;
-    if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
-    else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
-    else built = buildQuestion(p, G.lvl);
+    if (G.count) { built = genCount(p); }             // telmodus: elke vraag lees-vrij
+    else {
+      const plan = G.plan[G.idx];
+      if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
+      else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
+      else built = buildQuestion(p, G.lvl);
+    }
     if (G.idx === G.goldIdx) built.gold = true;
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
-  G.mode = s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode;
+  G.mode = G.count ? 'count' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
   G.retried = false;
@@ -3282,6 +3632,11 @@ function renderQuestion() {
   drawQuestion();
   // antwoorden
   const area = $('answer-area');
+  if (G.count) {
+    renderCountAnswers(q, area);
+    startSpot();
+    return;
+  }
   if (G.mode === 'kies') {
     const choices = makeChoices(q.ans);
     area.innerHTML = '<div class="choices">' +
@@ -3304,10 +3659,11 @@ function renderQuestion() {
 }
 function drawQuestion() {
   const q = G.qs[G.idx];
-  const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
-  $('question-text').textContent = q.tmpl.replace('@', shown);
   $('question-card').classList.toggle('golden', !!q.gold);
   $('gold-banner').textContent = q.gold ? '🌟 GOUDEN VRAAG — 3× diamanten! 🌟' : '';
+  if (G.count) { drawCountQuestion(q); return; }
+  const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
+  $('question-text').textContent = q.tmpl.replace('@', shown);
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -3354,6 +3710,7 @@ function submitAnswer(val, btnEl) {
     // per-bewerking-beheersing (voor klaarheid extra uitdagingen) + drie-getallen-tempo
     if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry);
     else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
+    else if (q.count) updateCountAcc(p, true, firstTry);
     p.stats.correct++;
     if (firstTry) decWeak(p, q);                 // enkel een directe treffer telt als "beheerst"
     let gain = 2;
@@ -3391,6 +3748,7 @@ function submitAnswer(val, btnEl) {
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
     else if (!firstTry) { sndGood(); showPraise('Goed zo, je had het!', '💎 +' + gain); }
     else { sndGood(); showPraise(pick(PRAISE), '💎 +' + gain); }
+    if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
     const trofees = checkTrophies(p);
     if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
     dance('game-avatar-inner');
@@ -3417,7 +3775,8 @@ function submitAnswer(val, btnEl) {
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
-    showToast(hintFor(q, val));
+    if (G.count) { countMissSpeak(q, val); showToast('🤔'); }   // lees-vrij: gesproken hint, geen tekst
+    else showToast(hintFor(q, val));
     return;                                        // G.lock blijft false → kind mag opnieuw antwoorden
   }
   // tweede misser: hartje kwijt, antwoord tonen en door
@@ -3427,9 +3786,16 @@ function submitAnswer(val, btnEl) {
   // definitief fout telt mee in de per-bewerking-beheersing / drie-getallen-tempo
   if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);
+  else if (q.count) updateCountAcc(p, false, false);
   save();
   if (btnEl) btnEl.classList.add('bad');
   // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
+  if (G.count) {
+    countReveal(q);                               // juiste hoeveelheid hardop meetellen, geen tekst
+    loseHeart();
+    showToast('👉', nextStep);
+    return;
+  }
   if (G.mode === 'kies') {
     const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
     if (cb) cb.classList.add('good');
@@ -3590,6 +3956,7 @@ function endLevel(success) {
   const lvl = G.lvl;
   const dances = G.dances;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
+  if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
   let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
   // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
@@ -4148,17 +4515,30 @@ function statsPanelHtml(p) {
   const answered = p.stats.correct + p.stats.wrong;
   const acc = answered ? Math.round(100 * p.stats.correct / answered) : 0;
   const skill = Math.round(p.perf * 100);
-  const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8).map(e => e[0]);
-  const practice = weak.length
-    ? `<div class="practice-hint">🎯 Sommen die nu nog lastig zijn — hier oefent het spel extra op:</div>
-       <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
-    : `<div class="stats-empty">Geen moeilijke sommen op dit moment — goed bezig! 🎉</div>`;
+  const isCount = p.settings.track === 'count';
+  const madeCap = isCount ? 'vragen gemaakt' : 'sommen gemaakt';
+  let practice;
+  if (isCount) {
+    // lees-vrije modus: geen zwakke-sommenlijst, maar in mensentaal wat het kind al kan
+    const st = countLiveStage(p);
+    const done = COUNT_STAGE_LABELS.slice(1, st).map(l => `<span class="practice-chip">${l} ✓</span>`).join('');
+    const help = st <= 2 ? 'In deze fases speelt je kind het fijnst met een volwassene erbij.' : 'Je kind kan deze fase meestal alleen spelen.';
+    practice = `<div class="practice-hint">🧸 Telmodus — nu bezig met <b>fase ${st}: ${COUNT_STAGE_LABELS[st] || ''}</b></div>
+       <div class="practice-chips">${done || '<span class="stats-empty">Net begonnen — veel plezier! 🎉</span>'}</div>
+       <div class="note" style="margin-top:8px">${help}</div>`;
+  } else {
+    const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8).map(e => e[0]);
+    practice = weak.length
+      ? `<div class="practice-hint">🎯 Sommen die nu nog lastig zijn — hier oefent het spel extra op:</div>
+         <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
+      : `<div class="stats-empty">Geen moeilijke sommen op dit moment — goed bezig! 🎉</div>`;
+  }
   return `<div class="settings-panel"><div class="set-card">
     <div class="set-card-head"><div class="ico">📊</div>
       <div><h2>Voortgang van ${p.name}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
     <div class="stat-grid">
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
-      <div class="stat-tile" style="--tint:var(--stat-violet)"><div class="num">${answered}</div><div class="cap">sommen gemaakt</div></div>
+      <div class="stat-tile" style="--tint:var(--stat-violet)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
       <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
       <div class="stat-tile" style="--tint:var(--gold-deep)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
       <div class="stat-tile" style="--tint:var(--pink-accent)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
@@ -4177,10 +4557,42 @@ function statsPanelHtml(p) {
 function chip(v, label, on) {
   return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
 }
+const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers'];
 function oefeningPanelHtml(p, s) {
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
-  return `<div class="settings-panel">
+  const isCount = s.track === 'count';
+  // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus
+  const modeCard = `
+    <div class="set-card primary">
+      <div class="set-card-head"><div class="ico">🧸</div><div><h2>Modus</h2><div class="sub">Hoe deze ster speelt</div></div></div>
+      <div class="set-field"><span class="lbl">Manier van spelen</span>
+        <div class="chip-row" id="set-track">
+          ${chip('math', '🎤 Rekenen', !isCount)}
+          ${chip('count', '🧸 Leren tellen', isCount)}
+        </div>
+        <div class="note" style="margin-top:7px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
+    </div>`;
+  // de kaarten die per modus verschillen
+  const cap = countMaxStage(s);   // cijfers-uit → alleen fase 1–5 aanbieden
+  const stageNums = [];
+  for (let v = 1; v <= cap; v++) stageNums.push(v);
+  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${id}">${stageNums.map(v => chip(v, v, Math.min(sel, cap) === v)).join('')}</div>`;
+  const legend = `<div class="stage-legend">${stageNums.map(v => `<span><b>${v}</b> ${COUNT_STAGE_LABELS[v]}</span>`).join('')}</div>`;
+  const countCard = `
+    <div class="set-card primary">
+      <div class="set-card-head"><div class="ico">🔢</div><div><h2>Tellen</h2><div class="sub">Fases, weergave en lengte</div></div></div>
+      <div class="set-field"><span class="lbl">Startfase <span class="note">(vanaf hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
+      <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', Math.min(s.stageMax, cap))}</div>
+      ${legend}
+      <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6: cijfer naast de hoeveelheid)</span></span>
+        <div class="chip-row" id="set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
+      <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
+        <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', s.repr !== 'dots')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}</div></div>
+      <div class="set-field"><span class="lbl">Vragen per optreden</span>
+        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
+    </div>`;
+  const mathCards = `
     <div class="set-card primary">
       <div class="set-card-head"><div class="ico">🎓</div><div><h2>Wat oefenen</h2><div class="sub">Kies de bewerkingen en het bereik</div></div></div>
       <div class="set-field"><span class="lbl">Bewerkingen</span>
@@ -4205,7 +4617,10 @@ function oefeningPanelHtml(p, s) {
           ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
           ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
         </div></div>
-    </div>
+    </div>`;
+  return `<div class="settings-panel">
+    ${modeCard}
+    ${isCount ? countCard : mathCards}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">Naam van deze ster</div></div></div>
       <div class="set-field"><label class="lbl" for="set-name">Naam</label>
@@ -4250,7 +4665,7 @@ function renderSettings() {
   // profielkiezer (segmented)
   const profiles = $('settings-profiles');
   profiles.innerHTML = '';
-  for (const key of ['p1', 'p2']) {
+  for (const key of Object.keys(db.profiles)) {
     const b = document.createElement('button');
     if (key === setKey) b.className = 'on';
     b.innerHTML = `<span class="who">🌟</span> ${db.profiles[key].name}`;
@@ -4271,17 +4686,20 @@ function renderSettings() {
 
   body.innerHTML = oefeningPanelHtml(p, s);
   $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; saveAndFlash(); };
+  const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
+  // modus: wisselen tussen de rekenshow en de lees-vrije telmodus
+  bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
   // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
   // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
-  $('set-ops').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  bind('set-ops', c => {
     const v = c.dataset.v;
     if (s.ops.includes(v)) {
       if (s.ops.length > 1) { s.ops = s.ops.filter(o => o !== v); saveAndFlash(); renderSettings(); }
       else blockedMinOne(c);
     } else { s.ops.push(v); saveAndFlash(); renderSettings(); }
   });
-  $('set-tables').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  bind('set-tables', c => {
     const v = parseInt(c.dataset.v, 10);
     if (s.tables.includes(v)) {
       if (s.tables.length > 1) { s.tables = s.tables.filter(t => t !== v); saveAndFlash(); renderSettings(); }
@@ -4289,23 +4707,53 @@ function renderSettings() {
     } else { s.tables.push(v); saveAndFlash(); renderSettings(); }
   });
   // enkelkeuze-chips
-  $('set-max').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.max = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
-  $('set-mode').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.mode = c.dataset.v; saveAndFlash(); renderSettings(); });
-  $('set-perlevel').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.perLevel = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
+  bind('set-max', c => { s.max = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
+  bind('set-mode', c => { s.mode = c.dataset.v; saveAndFlash(); renderSettings(); });
+  bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
   // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
-  $('set-extra').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  bind('set-extra', c => {
     const k = c.dataset.v;
     s[k] = (s[k] === false);   // was aan (≠ false) → uit; was uit → aan
     saveAndFlash(); renderSettings();
   });
+  // telmodus-instellingen
+  bind('set-stage', c => {
+    const v = parseInt(c.dataset.v, 10);
+    s.stage = v;
+    if (s.stageMax < v) s.stageMax = v;                 // plafond mag niet onder de start
+    if (!p.countTrack) p.countTrack = { stage: v, seen: 0, acc: 0.5 };
+    p.countTrack.stage = Math.min(Math.max(p.countTrack.stage, v), countMaxStage(s)); // live-stand binnen bereik
+    saveAndFlash(); renderSettings();
+  });
+  bind('set-stagemax', c => {
+    const v = parseInt(c.dataset.v, 10);
+    s.stageMax = v;
+    if (s.stage > v) s.stage = v;                       // start mag niet boven het plafond
+    if (p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, countMaxStage(s));
+    saveAndFlash(); renderSettings();
+  });
+  bind('set-numerals', c => {
+    s.numerals = (c.dataset.v === 'on');
+    const cap = countMaxStage(s);                       // cijfers-uit → plafond 5
+    if (s.stageMax > cap) s.stageMax = cap;
+    if (s.stage > cap) s.stage = cap;
+    if (p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, cap);
+    saveAndFlash(); renderSettings();
+  });
+  bind('set-repr', c => { s.repr = c.dataset.v; saveAndFlash(); renderSettings(); });
   $('set-reset').onclick = () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
       `Alle voortgang, diamanten en spulletjes van ${p.name} wissen? Dit kan niet ongedaan gemaakt worden.`,
       'Ja, wissen',
       () => {
-        const dress = setKey === 'p1' ? 'dress_roze' : 'dress_paars';
-        db.profiles[setKey] = defaultProfile(p.name, dress);
+        // behoud de identiteit van deze ster: haar startjurk én of ze in de
+        // telmodus staat (een reset wist voortgang, niet wie ze is)
+        const dress = p.equipped.dress || 'dress_roze';
+        const opts = p.settings.track === 'count'
+          ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel }
+          : {};
+        db.profiles[setKey] = defaultProfile(p.name, dress, opts);
         save(); renderSettings();
         showToast('✅ Voortgang gewist.');
         setTimeout(hideToast, 1800);
@@ -4373,6 +4821,9 @@ function importData(file) {
 /* ================= Start ================= */
 load();
 renderProfiles();
+// Test-only inkijk in de lopende show (alleen met ?debug in de URL) -- helpt bij
+// geautomatiseerd testen; in het gewone spel niet aanwezig.
+if (location.search.indexOf('debug') !== -1) window.__game = () => G;
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
 }
