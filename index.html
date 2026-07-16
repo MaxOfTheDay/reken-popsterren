@@ -4581,8 +4581,8 @@ function oefeningPanelHtml(p, s) {
       <div class="set-card-head"><div class="ico">🧸</div><div><h2>Modus</h2><div class="sub">Hoe deze ster speelt</div></div></div>
       <div class="set-field"><span class="lbl">Manier van spelen</span>
         <div class="chip-row" id="set-track">
-          ${chip('math', '🎤 Rekenen', !isCount)}
           ${chip('count', '🧸 Leren tellen', isCount)}
+          ${chip('math', '🎤 Rekenen', !isCount)}
         </div>
         <div class="note" style="margin-top:7px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
     </div>`;
