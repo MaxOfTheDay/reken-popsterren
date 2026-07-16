@@ -198,9 +198,6 @@
   /* alleen het totaal aantal sterren -- geen stad/tournee-details nodig om te
      kiezen wie er gaat spelen; hergebruikt de kleine pil (zie .chip-badge) */
   .profile-card .chip-badge { margin: 6px 0 2px; }
-  /* klein label onder de naam voor een telmodus-ster (Clara) -- alleen ter info
-     voor de ouder, kindvriendelijk en niet-storend */
-  .profile-card .pmode { font-size: 12.5px; font-weight: 600; color: var(--gold-light); margin-top: 2px; opacity: .95; }
   /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
   @media (max-width: 380px) {
     .profile-row { gap: 10px; }
@@ -2136,6 +2133,23 @@ function updatePerf(p, correct, fast) {
   p.perf = Math.max(0, Math.min(1, p.perf * 0.8 + target * 0.2));
 }
 let db;
+// Vaste weergavevolgorde van de sterren: Clara, Anna, Marie. Losgekoppeld van de
+// opslagsleutel (p1/p2/p3) zodat ook bestaande saves -- waar Clara er als laatste
+// bij kwam -- haar toch vooraan tonen. Wordt één keer per profiel vastgelegd
+// (op naam), daarna bewaard. Onbekende (hernoemde) namen komen erachter.
+const PROFILE_ORDER = { 'Clara': 0, 'Anna': 1, 'Marie': 2 };
+function assignProfileOrder() {
+  Object.values(db.profiles).forEach(p => {
+    if (p.order == null) p.order = (PROFILE_ORDER[p.name] != null ? PROFILE_ORDER[p.name] : 90);
+  });
+}
+// Sleutels in weergavevolgorde (order oplopend; gelijkspel op sleutel).
+function profileKeys() {
+  return Object.keys(db.profiles).sort((a, b) => {
+    const d = (db.profiles[a].order == null ? 90 : db.profiles[a].order) - (db.profiles[b].order == null ? 90 : db.profiles[b].order);
+    return d !== 0 ? d : (a < b ? -1 : 1);
+  });
+}
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -2144,7 +2158,9 @@ function load() {
       if (typeof db.haptics !== 'boolean') db.haptics = true;
       Object.values(db.profiles).forEach(migrate);
       // Bestaande saves (Marie + Anna) krijgen Clara er als telmodus-ster bij.
-      if (!db.profiles.p3) { db.profiles.p3 = defaultProfile('Clara', 'dress_geel', CLARA_OPTS); save(); }
+      if (!db.profiles.p3) db.profiles.p3 = defaultProfile('Clara', 'dress_geel', CLARA_OPTS);
+      assignProfileOrder();   // Clara, Anna, Marie -- ongeacht de opslagsleutel
+      save();
       return;
     }
   } catch (e) { /* verse start */ }
@@ -2154,6 +2170,7 @@ function load() {
     p2: defaultProfile('Anna', 'dress_paars'),
     p3: defaultProfile('Marie', 'dress_roze')
   } };
+  assignProfileOrder();
   save();
 }
 function save() { localStorage.setItem(LS_KEY, JSON.stringify(db)); }
@@ -2453,17 +2470,13 @@ function goProfiles() {
 function renderProfiles() {
   const row = $('profile-row');
   row.innerHTML = '';
-  for (const key of Object.keys(db.profiles)) {
+  for (const key of profileKeys()) {
     const p = db.profiles[key];
     const card = document.createElement('button');
     card.className = 'profile-card';
-    // telmodus-sterren krijgen een klein 🧸-label zodat een ouder in één oogopslag
-    // ziet welke ster in de lees-vrije modus staat
-    const tag = p.settings && p.settings.track === 'count' ? '<div class="pmode">🧸 Tellen</div>' : '';
     card.innerHTML =
       `<div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
         <div class="pname">${p.name}</div>
-        ${tag}
         <div class="chip-badge">⭐ ${totalStarCount(p)}</div>
         <div class="speel-pill">Speel!</div>`;
     applyStage(card.querySelector('.stage'), p);
@@ -4665,7 +4678,7 @@ function renderSettings() {
   // profielkiezer (segmented)
   const profiles = $('settings-profiles');
   profiles.innerHTML = '';
-  for (const key of Object.keys(db.profiles)) {
+  for (const key of profileKeys()) {
     const b = document.createElement('button');
     if (key === setKey) b.className = 'on';
     b.innerHTML = `<span class="who">🌟</span> ${db.profiles[key].name}`;
@@ -4753,7 +4766,9 @@ function renderSettings() {
         const opts = p.settings.track === 'count'
           ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel }
           : {};
+        const order = p.order;
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
+        db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
         save(); renderSettings();
         showToast('✅ Voortgang gewist.');
         setTimeout(hideToast, 1800);
