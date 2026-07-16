@@ -1994,11 +1994,15 @@ function defaultProfile(name, dress) {
     stars: {},
     owned: ['hair_blond', 'dress_roze', 'dress_paars', 'shoes_roze', 'stage_disco'],
     equipped: { hair: 'hair_blond', dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
-    settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 },
+    settings: { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8, missNum: true, chain3: true },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
-    weak: {},   // zwakke sommen: "7 × 8" -> { ans, op, w } om gericht te herhalen
+    weak: {},   // zwakke sommen: "7 × 8 = @" -> { ans, op, w } om gericht te herhalen
+    // per-bewerking-beheersing (klaarheid extra uitdagingen) + frequentie-trappen
+    opTrack: {},                                    // op -> { n, acc, paused, unlockRound }
+    missRamp: { rung: 1, hot: 0 },                  // zoek-het-getal: 1 of 2 per optreden
+    chainTrack: { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 },  // drie getallen
     stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
   };
 }
@@ -2016,6 +2020,19 @@ function migrate(p) {
   if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
+  // oude zwakke-sleutels ("3 + 4") naar het nieuwe sjabloonformaat ("3 + 4 = @")
+  else {
+    const nw = {};
+    for (const [k, e] of Object.entries(p.weak)) nw[k.includes('@') ? k : `${k} = @`] = e;
+    p.weak = nw;
+  }
+  // extra uitdagingen: standaard aan (verschijnen toch pas na voldoende beheersing)
+  if (!p.settings) p.settings = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8 };
+  if (p.settings.missNum == null) p.settings.missNum = true;
+  if (p.settings.chain3 == null) p.settings.chain3 = true;
+  if (!p.opTrack) p.opTrack = {};
+  if (!p.missRamp) p.missRamp = { rung: 1, hot: 0 };
+  if (!p.chainTrack) p.chainTrack = { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 };
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
   // schoenen-categorie: bestaande profielen krijgen de gratis roze schoenen aan
@@ -2861,37 +2878,77 @@ function updateTroDot() {
   $('nav-tro').classList.toggle('has-new', (p.readyTrophies || []).length > 0);
 }
 
-/* ================= Vragen maken ================= */
-function genQuestion(s, lvl, perf) {
-  const ops = s.ops.length ? s.ops : ['+'];
-  const op = pick(ops);
+/* ================= Vragen maken =================
+   Een vraag is een sjabloon (`tmpl`) met één blanco plek `@` waar het gezochte
+   getal hoort, plus dat getal (`ans`), de bewerking (`op`) en de soort (`kind`):
+     - classic:  "3 + 4 = @"   -> ans 7   (het antwoord staat rechts, zoals altijd)
+     - missing:  "3 + @ = 7"   -> ans 4   (tweede getal ontbreekt)
+     - chain:    "3 + 4 + 2 = @" -> ans 9 (drie getallen, alleen optellen)
+   Omdat het gezochte getal altijd één getal is, blijven meerkeuze, typen, hints,
+   zwakke-sommen en álle beloningen ongewijzigd werken. */
+
+// Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
+// Alles komt uit de bestaande moeilijkheidslogica (level + vaardigheid).
+function genTriple(s, lvl, perf, op) {
   // Moeilijkheid = basis per level + bijsturing op vaardigheid (perf 0..1 → ±0.25).
   // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
   const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
   const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
   const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
-  let a, b, ans, text;
+  let a, b, c, sym;
   if (op === '+') {
     a = rnd(1, effMax - 1);
     b = rnd(1, effMax - a);
-    ans = a + b; text = `${a} + ${b}`;
+    c = a + b; sym = '+';
   } else if (op === '-') {
     a = rnd(2, effMax);
     b = rnd(1, a - 1);
-    ans = a - b; text = `${a} − ${b}`;
+    c = a - b; sym = '−';
   } else if (op === 'x') {
     b = pick(tables);
     const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
     a = rnd(1, Math.max(1, Math.round(maxA * t)));
-    ans = a * b; text = `${a} × ${b}`;
+    c = a * b; sym = '×';
   } else { // ':'
     b = pick(tables);
     const maxQ = Math.max(1, Math.min(10, Math.floor(s.max / b)));
     const q = rnd(1, Math.max(1, Math.round(maxQ * t)));
-    a = q * b; ans = q; text = `${a} : ${b}`;
+    a = q * b; c = q; sym = ':';
   }
-  return { text, ans };
+  return { a, b, c, sym, op, t, effMax };
+}
+// Klassieke som: het antwoord staat rechts (zoals de app altijd deed).
+function genQuestion(s, lvl, perf) {
+  const ops = s.ops.length ? s.ops : ['+'];
+  const op = pick(ops);
+  const { a, b, c, sym } = genTriple(s, lvl, perf, op);
+  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic' };
+}
+// Zoek-het-getal: het tweede getal ontbreekt ("3 + ? = 7"). Alleen + − × (delen
+// blijft voorlopig buiten beeld). 0/1 als antwoord mag, maar niet te vaak.
+function genMissing(s, lvl, perf, op) {
+  let tr, tries = 0;
+  do { tr = genTriple(s, lvl, perf, op); tries++; }
+  while (tries < 4 && (tr.b === 0 || tr.b === 1) && Math.random() < 0.7);
+  const { a, b, c, sym } = tr;
+  return { tmpl: `${a} ${sym} @ = ${c}`, ans: b, op, kind: 'missing' };
+}
+// Drie getallen, alleen optellen ("3 + 4 + 2 = ?"). De som blijft binnen de
+// ingestelde bovengrens; elke term is bescheiden (≈ hooguit de helft), zodat het
+// hoofdrekenen behapbaar blijft. 0-termen mogen, maar niet te vaak.
+function genChain(s, lvl, perf) {
+  const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
+  const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
+  const effMax = Math.max(10, Math.round(s.max * t));
+  const cap = Math.max(1, Math.floor(effMax / 2));
+  let a, b, c, sum, tries = 0;
+  do {
+    a = rnd(1, cap); b = rnd(1, cap); c = rnd(1, cap);
+    sum = a + b + c; tries++;
+  } while (tries < 8 && (sum > effMax || sum < 3 || ((a === 0 || b === 0 || c === 0) && Math.random() < 0.7)));
+  if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
+  return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
 }
 function makeChoices(ans) {
   const set = new Set([ans]);
@@ -2904,25 +2961,25 @@ function makeChoices(ans) {
   return shuffle([...set]);
 }
 
-/* ---- Zwakke sommen: gericht herhalen wat een kind moeilijk vindt ---- */
-function opOf(q) {
-  if (q.text.includes('+')) return '+';
-  if (q.text.includes('−')) return '-';
-  if (q.text.includes('×')) return 'x';
-  return ':';
-}
+/* ---- Zwakke sommen: gericht herhalen wat een kind moeilijk vindt ----
+   Alleen klassieke 2-getal-sommen komen in de herhaalpoel; zoek-het-getal- en
+   drie-getallen-vragen worden per optreden ingeroosterd (zie planSpecials) en
+   niet los teruggespeeld. Sleutel = het sjabloon, zodat de vraag exact
+   gereconstrueerd kan worden. */
 // Een gemiste som zwaarder wegen (+2, tot 6); een goed beantwoorde lichter (−1, weg bij 0).
 function incWeak(p, q) {
-  const e = p.weak[q.text] || { ans: q.ans, op: opOf(q), w: 0 };
+  if (q.kind !== 'classic') return;
+  const e = p.weak[q.tmpl] || { ans: q.ans, op: q.op, w: 0 };
   e.w = Math.min(6, e.w + 2);
-  e.ans = q.ans; e.op = opOf(q);
-  p.weak[q.text] = e;
+  e.ans = q.ans; e.op = q.op;
+  p.weak[q.tmpl] = e;
 }
 function decWeak(p, q) {
-  const e = p.weak[q.text];
+  if (q.kind !== 'classic') return;
+  const e = p.weak[q.tmpl];
   if (!e) return;
   e.w -= 1;
-  if (e.w <= 0) delete p.weak[q.text];
+  if (e.w <= 0) delete p.weak[q.tmpl];
 }
 // Kies een zwakke som om te herhalen (alleen als de bewerking nog aanstaat); zwaardere vaker.
 function pickWeak(p, s) {
@@ -2932,7 +2989,7 @@ function pickWeak(p, s) {
   const pool = [];
   keys.forEach(k => { for (let i = 0; i < p.weak[k].w; i++) pool.push(k); });
   const k = pick(pool.length ? pool : keys);
-  return { text: k, ans: p.weak[k].ans };
+  return { tmpl: k, ans: p.weak[k].ans, op: p.weak[k].op, kind: 'classic' };
 }
 // Bouwt de volgende vraag: ~35% kans op een zwakke herhaling, anders een verse (adaptieve) som.
 function buildQuestion(p, lvl) {
@@ -2941,6 +2998,137 @@ function buildQuestion(p, lvl) {
     if (wq) return wq;
   }
   return genQuestion(p.settings, lvl, p.perf);
+}
+
+/* ================= Extra uitdagingen: klaarheid, tempo, inroostering =================
+   Twee losse dimensies, elk met een eigen aan/uit-knop voor de ouder:
+     • missNum  — zoek-het-getal (2e getal ontbreekt), + − ×
+     • chain3   — drie getallen optellen
+   Beide komen geleidelijk: pas als het kind de gewone som goed beheerst, en
+   nooit twee nieuwe concepten tegelijk. */
+
+// Per-bewerking-tracker (lui aangemaakt): recente nauwkeurigheid (EMA), aantal
+// pogingen en of het (met hysterese) op pauze staat.
+function ot(p, op) {
+  let t = p.opTrack[op];
+  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockRound: null }; p.opTrack[op] = t; }
+  return t;
+}
+// Een zware zwakke som (w≥4) voor deze bewerking = het kind worstelt er nog mee.
+function heavyWeak(p, op) {
+  return Object.values(p.weak).some(e => e.op === op && e.w >= 4);
+}
+// Beheerst = genoeg pogingen (steekproef/consistentie) + hoge nauwkeurigheid +
+// geen hardnekkig gemiste som. 0.85 is dezelfde lat die updatePerf al "goed" noemt.
+function opMastered(p, op) {
+  const t = p.opTrack[op];
+  return !!t && t.n >= 20 && t.acc >= 0.85 && !heavyWeak(p, op);
+}
+// Klaar voor zoek-het-getal bij deze bewerking: vanaf ronde 3, beheerst, niet op pauze.
+function opReady(p, op, round) {
+  const t = p.opTrack[op];
+  if (!t || round < 3 || t.paused) return false;
+  return opMastered(p, op);
+}
+// Klaar voor drie-getallen (alleen optellen): vanaf ronde 4, tel-beheersing, en pas
+// nadat zoek-het-getal voor + is losgekomen (≥2 rondes geleden) — nooit twee nieuwe
+// dingen tegelijk. Werkt met de tel-beheersing, ook als de ouder missNum uit heeft.
+function chainReady(p, s, round) {
+  const ct = p.chainTrack;
+  if (round < 4 || ct.paused) return false;
+  if (!opMastered(p, '+')) return false;
+  const plus = p.opTrack['+'];
+  if (!plus || plus.unlockRound == null || round - plus.unlockRound < 2) return false;
+  return true;
+}
+// Zet de "sinds-ronde"-stempel zodra een bewerking beheerst is (voor de chain-gate).
+function refreshReadiness(p, round) {
+  ['+', '-', 'x', ':'].forEach(op => {
+    const t = ot(p, op);
+    if (round >= 3 && opMastered(p, op) && t.unlockRound == null) t.unlockRound = round;
+  });
+}
+// Werkt de per-bewerking-nauwkeurigheid bij ná de definitieve afronding van een
+// klassieke som (niet bij een tussentijdse herkansing). Pauze met hysterese:
+// onder 0.70 pauzeren, pas boven 0.85 weer vrijgeven.
+function updateOpAcc(p, op, correct, firstTry) {
+  const t = ot(p, op);
+  t.n++;
+  const target = correct ? (firstTry ? 1 : 0.85) : 0;
+  t.acc = t.acc * 0.8 + target * 0.2;
+  if (t.acc < 0.70) t.paused = true;
+  else if (t.acc >= 0.85) t.paused = false;
+}
+// Nauwkeurigheid van de drie-getallen-vragen zelf (voor hun eigen pauze).
+function updateChainAcc(p, correct, firstTry) {
+  const ct = p.chainTrack;
+  ct.seen = (ct.seen || 0) + 1;
+  const target = correct ? (firstTry ? 1 : 0.85) : 0;
+  ct.acc = ct.acc * 0.8 + target * 0.2;
+  if (ct.seen >= 5) {
+    if (ct.acc < 0.70) ct.paused = true;
+    else if (ct.acc >= 0.85) ct.paused = false;
+  }
+}
+// Na een optreden: frequentie-trap bijstellen. Schone ronde (geen misser op de
+// speciale vragen) → teller op; na 3 schone rondes trap 2. Een misser → terug
+// naar trap 1. Trap 2 (2 per ronde) geldt alleen bij ≥8 vragen per optreden.
+function applyRampUpdates(p, g) {
+  if (g.missShown > 0) {
+    if (!g.missDirty) { p.missRamp.hot++; if (p.missRamp.hot >= 3) p.missRamp.rung = 2; }
+    else { p.missRamp.hot = 0; p.missRamp.rung = 1; }
+  }
+  if (g.chainShown > 0) {
+    if (!g.chainDirty) { p.chainTrack.hot++; if (p.chainTrack.hot >= 3) p.chainTrack.rung = 2; }
+    else { p.chainTrack.hot = 0; p.chainTrack.rung = 1; }
+  }
+}
+// Kiest `count` plekken in [1, total-1] die niet in `avoid` staan en niet
+// aan elkaar grenzen (nooit de eerste vraag, nooit twee speciale op een rij).
+function pickSlots(total, count, avoid) {
+  const used = new Set(avoid);
+  const res = [];
+  let guard = 0;
+  while (res.length < count && guard++ < 200) {
+    const i = rnd(1, total - 1);
+    if (used.has(i) || res.some(j => Math.abs(j - i) <= 1)) continue;
+    res.push(i); used.add(i);
+  }
+  return res;
+}
+// Roostert de speciale vragen van dit optreden in: hoeveel, welk type, welke plek.
+// Zolang drie-getallen nog in de introductiefase zit (trap < 2) mag er hoogstens
+// één speciale vraag per ronde zijn — óf zoek-het-getal, óf drie-getallen, nooit beide.
+function planSpecials(p, s, total, round, goldIdx) {
+  refreshReadiness(p, round);
+  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, round));
+  const missAvail = missOps.length > 0;
+  const chainAvail = !!s.chain3 && chainReady(p, s, round);
+  const twoOk = s.perLevel >= 8;   // 2 speciale vragen alleen bij lange optredens (≥8)
+  const both = missAvail && chainAvail;
+  let types = [];
+  if (chainAvail && p.chainTrack.rung < 2) {
+    // introductiefase drie-getallen: hoogstens één speciale, chain krijgt voorrang
+    types = [(missAvail && Math.random() < 0.4) ? 'miss' : 'chain'];
+  } else if (both) {
+    // beide beschikbaar en gesetteld: precies één van elk (nooit meer dan 2 per ronde)
+    types = ['miss', 'chain'];
+  } else {
+    // maar één dimensie actief: die mag op trap 2 twee per ronde geven (bij ≥8 vragen)
+    const type = missAvail ? 'miss' : 'chain';
+    const ramp = missAvail ? p.missRamp.rung : p.chainTrack.rung;
+    types = ramp >= 2 && twoOk ? [type, type] : [type];
+  }
+  // hoeveel speciale plekken passen er (niet de eerste, niet naast elkaar/de gouden)?
+  const fit = Math.max(0, Math.floor((total - 1) / 2));
+  const cap = Math.min(fit, twoOk ? 2 : 1);
+  if (types.length > cap) types = types.slice(0, cap);
+  const slots = pickSlots(total, types.length, goldIdx >= 0 ? [goldIdx] : []);
+  const plan = {};
+  slots.forEach((idx, i) => {
+    plan[idx] = { type: types[i], op: types[i] === 'miss' ? pick(missOps) : '+' };
+  });
+  return plan;
 }
 // Vriendelijke richtinghint bij een fout antwoord (helpt zonder het antwoord te verklappen).
 function hintFor(q, val) {
@@ -2970,10 +3158,14 @@ function startLevel(lvl) {
   // Vragen worden nu per stuk gebouwd (zodat zwakke sommen kunnen terugkomen); vooraf enkel
   // de gouden-vraag-index kiezen: hoogstens één per optreden, ± elke 2 shows, nooit de eerste.
   const goldIdx = (s.perLevel > 1 && Math.random() < 0.5) ? rnd(1, s.perLevel - 1) : -1;
+  // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
+  // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
+  const plan = planSpecials(p, s, s.perLevel, cityFor(lvl).ronde, goldIdx);
   // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
   // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0 };
+  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0,
+        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false };
   const city = cityFor(lvl);
   $('game-lvl-label').textContent = `${city.flag} ${city.name}`;
   $('game-diamonds').textContent = p.diamonds;
@@ -3065,7 +3257,11 @@ function renderQuestion() {
   const p = P();
   const s = p.settings;
   if (!G.qs[G.idx]) {
-    const built = buildQuestion(p, G.lvl);
+    const plan = G.plan[G.idx];
+    let built;
+    if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
+    else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
+    else built = buildQuestion(p, G.lvl);
     if (G.idx === G.goldIdx) built.gold = true;
     G.qs[G.idx] = built;
   }
@@ -3109,7 +3305,7 @@ function renderQuestion() {
 function drawQuestion() {
   const q = G.qs[G.idx];
   const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
-  $('question-text').textContent = `${q.text} = ${shown}`;
+  $('question-text').textContent = q.tmpl.replace('@', shown);
   $('question-card').classList.toggle('golden', !!q.gold);
   $('gold-banner').textContent = q.gold ? '🌟 GOUDEN VRAAG — 3× diamanten! 🌟' : '';
 }
@@ -3155,6 +3351,9 @@ function submitAnswer(val, btnEl) {
     hideToast();   // een hint van een vorige misser mag het "Goed zo!"-moment niet overschaduwen
     const firstTry = !G.retried;                 // in één keer goed?
     updatePerf(p, true, firstTry && G.spot > 0);
+    // per-bewerking-beheersing (voor klaarheid extra uitdagingen) + drie-getallen-tempo
+    if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry);
+    else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
     p.stats.correct++;
     if (firstTry) decWeak(p, q);                 // enkel een directe treffer telt als "beheerst"
     let gain = 2;
@@ -3186,7 +3385,7 @@ function submitAnswer(val, btnEl) {
     flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), q.gold ? 3 : 2);
     updateFan(encore);
     if (btnEl) btnEl.classList.add('good');
-    if (G.mode === 'typ') $('question-text').textContent = `${q.text} = ${q.ans}`;
+    if (G.mode === 'typ') $('question-text').textContent = q.tmpl.replace('@', q.ans);
     if (encore) { sndWin(); confetti(24); showPraise('🎆 EXTRA SHOW!', '💎 +5 bonus'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
@@ -3207,6 +3406,9 @@ function submitAnswer(val, btnEl) {
   slipNote();
   $('question-card').classList.add('wobble');
   setTimeout(() => $('question-card').classList.remove('wobble'), 700);
+  // een misser op een speciale vraag maakt de ronde "niet schoon" → frequentie omlaag
+  if (q.kind === 'missing') G.missDirty = true;
+  else if (q.kind === 'chain') G.chainDirty = true;
   if (!G.retried) {
     // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
     G.retried = true;
@@ -3222,6 +3424,9 @@ function submitAnswer(val, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
+  // definitief fout telt mee in de per-bewerking-beheersing / drie-getallen-tempo
+  if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
+  else if (q.kind === 'chain') updateChainAcc(p, false, false);
   save();
   if (btnEl) btnEl.classList.add('bad');
   // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
@@ -3230,7 +3435,7 @@ function submitAnswer(val, btnEl) {
     if (cb) cb.classList.add('good');
   }
   loseHeart();
-  showToast(`${q.text} = ${q.ans}`, nextStep, 'tik om verder te gaan 👉');
+  showToast(q.tmpl.replace('@', q.ans), nextStep, 'tik om verder te gaan 👉');
 }
 // het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 function loseHeart() {
@@ -3384,6 +3589,7 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   const dances = G.dances;
+  applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
   // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
@@ -3994,6 +4200,11 @@ function oefeningPanelHtml(p, s) {
         </div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Extra uitdaging <span class="note">(verschijnt geleidelijk, pas als de gewone sommen goed gaan)</span></span>
+        <div class="chip-row" id="set-extra">
+          ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
+          ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
+        </div></div>
     </div>
     <div class="set-card">
       <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">Naam van deze ster</div></div></div>
@@ -4081,6 +4292,12 @@ function renderSettings() {
   $('set-max').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.max = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
   $('set-mode').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.mode = c.dataset.v; saveAndFlash(); renderSettings(); });
   $('set-perlevel').querySelectorAll('.chip').forEach(c => c.onclick = () => { s.perLevel = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
+  // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
+  $('set-extra').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const k = c.dataset.v;
+    s[k] = (s[k] === false);   // was aan (≠ false) → uit; was uit → aan
+    saveAndFlash(); renderSettings();
+  });
   $('set-reset').onclick = () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
