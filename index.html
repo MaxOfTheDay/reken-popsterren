@@ -574,9 +574,34 @@
   .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
   .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
   @keyframes cpop { 0% { transform: scale(.5); opacity: .3; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
+  .cg-obj.fade-out, .cg-dot.fade-out { animation: cfade .5s ease forwards; }
+  @keyframes cfade { to { opacity: .12; transform: scale(.5); } }
+
+  /* Tienraam: 2 rijen van 5 vakjes — 6–10 in één oogopslag herkenbaar (subitiseren) */
+  .cframe { display: inline-grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .tf-cell { width: 28px; height: 28px; border-radius: 6px; border: 2px solid rgba(74,20,140,.22); display: flex; align-items: center; justify-content: center; }
+  .tf-cell.on { border-color: rgba(74,20,140,.38); background: rgba(142,36,170,.08); }
+  .tf-cell.hidden { background: rgba(74,20,140,.14); font-size: 15px; }
+  .cframe.big .tf-cell { width: 34px; height: 34px; }
+  .cframe .cg-obj { font-size: 20px; }
+  .cframe.big .cg-obj { font-size: 24px; }
+  .cframe .cg-dot { width: 16px; height: 16px; }
+  .count-tile .cframe { transform: scale(.72); margin: -6px; }
+  /* Grote-cijferkaart (cijfer → hoeveelheid) */
+  .cq-bignum { font-size: clamp(52px, 15vw, 84px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
+  /* Één-meer/minder-badge naast de groep */
+  .cq-delta { font-size: 30px; font-weight: 800; margin-left: 6px; }
+  .cq-delta.add { color: var(--green-deep); }
+  .cq-delta.rem { color: var(--red-500); }
+  /* Twee groepjes samen */
+  .cq-combine { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .cq-plus { font-size: 34px; font-weight: 800; color: var(--purple-shadow); }
+  /* Vervaagde cijfersteun (fase 6, hogere rung) */
+  .cgroup.mini.faint { opacity: .35; }
 
   .count-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
   .count-tiles.two { grid-template-columns: 1fr 1fr; }
+  .count-tiles.three { grid-template-columns: repeat(3, 1fr); }
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
     min-height: 78px; padding: 12px 8px; border-radius: var(--radius-lg);
@@ -614,9 +639,12 @@
     .qprogress { margin-top: 5px; }
     .count-tile { min-height: 62px; padding: 8px 6px; }
     .count-tiles { gap: 9px; }
+    .count-tiles.three { gap: 7px; }
     .cgroup.big .cg-obj { font-size: 38px; }
     .count-tile .cg-obj { font-size: 23px; }
     .count-q { min-height: 66px; }
+    .cframe.big .tf-cell { width: 29px; height: 29px; }
+    .cq-bignum { font-size: clamp(44px, 13vw, 68px); }
   }
   /* ruime schermen: de show mag wat groter schitteren */
   @media (min-width: 900px) and (min-height: 760px) {
@@ -882,6 +910,7 @@
     .map-sky span, .speel-pill, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
+    .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }
   }
 
   /* ---- Trofeeën ---- */
@@ -2044,7 +2073,8 @@ function checkTrophies(p) {
 const LS_KEY = 'rekenPopsterren_v1';
 // Clara start in de lees-vrije telmodus, met een kortere ronde (5 vragen) die
 // bij kleuters beter past. Andere sterren starten gewoon in de rekenmodus.
-const CLARA_OPTS = { track: 'count', stage: 1, stageMax: 6, repr: 'objects', numerals: true, perLevel: 5 };
+const COUNT_STAGE_MAX = 8;   // 8 fases: tellen → vergelijken → cijfers → één meer/minder → samen/splitsen
+const CLARA_OPTS = { track: 'count', stage: 1, stageMax: COUNT_STAGE_MAX, repr: 'objects', numerals: true, perLevel: 5, qmax: 10 };
 function defaultProfile(name, dress, opts) {
   opts = opts || {};
   // Extra gratis startjurk (bv. Clara's gele jurk) zodat elke ster er anders uitziet,
@@ -2065,10 +2095,11 @@ function defaultProfile(name, dress, opts) {
     settings: {
       ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: opts.perLevel || 8, missNum: true, chain3: true,
       track: opts.track || 'math',
-      stage: opts.stage || 1,          // laagste (start)fase in de telmodus
-      stageMax: opts.stageMax || 6,    // hoogste toegestane fase (6 = met cijfers)
-      repr: opts.repr || 'objects',    // antwoordweergave: 'objects' of 'dots'
-      numerals: opts.numerals !== false // fase 6 (cijfers naast hoeveelheid) toestaan
+      stage: opts.stage || 1,                       // laagste (start)fase in de telmodus
+      stageMax: opts.stageMax || COUNT_STAGE_MAX,   // hoogste toegestane fase
+      repr: opts.repr || 'objects',                 // antwoordweergave: 'objects' of 'dots'
+      numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
+      qmax: opts.qmax || 10                          // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
@@ -2080,7 +2111,9 @@ function defaultProfile(name, dress, opts) {
     chainTrack: { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 },  // drie getallen
     // telmodus: welke fase het kind nú speelt (klimt mee met de beheersing, binnen
     // het door de ouder toegestane bereik) + een lopende nauwkeurigheid voor die klim
-    countTrack: { stage: opts.stage || 1, seen: 0, acc: 0.5 },
+    // rung = moeilijkheidstrap bínnen de fase (past bereik, afleiders, cijfersteun aan);
+    // streak = juiste-op-rij in de show (stuurt de rung omhoog), reset bij een misser
+    countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
   };
 }
@@ -2114,10 +2147,15 @@ function migrate(p) {
   // telmodus (lees-vrij): standaard uit (track 'math') voor bestaande profielen
   if (p.settings.track == null) p.settings.track = 'math';
   if (p.settings.stage == null) p.settings.stage = 1;
-  if (p.settings.stageMax == null) p.settings.stageMax = 6;
+  if (p.settings.stageMax == null) p.settings.stageMax = COUNT_STAGE_MAX;
+  // bestaande telprofielen mochten tot fase 6; til hun plafond op naar de nieuwe fases
+  if (p.settings.stageMax === 6 && p.settings.track === 'count') p.settings.stageMax = COUNT_STAGE_MAX;
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
-  if (!p.countTrack) p.countTrack = { stage: p.settings.stage, seen: 0, acc: 0.5 };
+  if (p.settings.qmax == null) p.settings.qmax = 10;
+  if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+  if (p.countTrack.rung == null) p.countTrack.rung = 0;
+  if (p.countTrack.streak == null) p.countTrack.streak = 0;
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
   // schoenen-categorie: bestaande profielen krijgen de gratis roze schoenen aan
@@ -3127,47 +3165,87 @@ function makeChoices(ans) {
    Fases:  1 hoeveelheid 1–3 · 2 hoeveelheid 1–5 (+ meetellen) · 3 meer/minder ·
            4 evenveel · 5 gesproken getal → hoeveelheid · 6 cijfer bij hoeveelheid */
 const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', '🦋', '🍓', '🐟', '🌼', '🐞'];
+/* ---- Fasetabel (8 fases) ----
+   Per fase: welke oefeningtypes, het hoeveelheidsbereik (baseMax bij de laagste
+   rung → topMax bij de hoogste), het aantal rungs (moeilijkheidstrappen bínnen de
+   fase) en het aantal keuzeknoppen. */
 function countStageInfo(stage) {
   switch (stage) {
-    case 1: return { max: 3, types: ['count'] };
-    case 2: return { max: 5, types: ['count', 'along'] };
-    case 3: return { max: 5, types: ['compare'] };
-    case 4: return { max: 5, types: ['match'] };
-    case 5: return { max: 5, types: ['listen'] };
-    case 6: return { max: 5, types: ['numeral'] };
-    default: return { max: 3, types: ['count'] };
+    case 1: return { types: ['count'],              baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
+    case 2: return { types: ['count', 'along'],     baseMax: 5, topMax: 6,  rungs: 3, tiles: 4 };
+    case 3: return { types: ['compare'],            baseMax: 5, topMax: 8,  rungs: 3, tiles: 3 };
+    case 4: return { types: ['match'],              baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
+    case 5: return { types: ['listen'],             baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
+    case 6: return { types: ['numeral', 'numquant'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
+    case 7: return { types: ['onemore', 'oneless'], baseMax: 3, topMax: 9,  rungs: 3, tiles: 4 };
+    case 8: return { types: ['combine', 'split'],   baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
+    default: return { types: ['count'], baseMax: 3, topMax: 3, rungs: 2, tiles: 3 };
   }
 }
-// Hoogste toegestane fase: cijfers-uit (fase 6) → begrensd op 5.
-function countMaxStage(s) { return s.numerals ? Math.min(6, s.stageMax || 6) : Math.min(5, s.stageMax || 6); }
+function countTopRung(stage) { return countStageInfo(stage).rungs - 1; }
+// Hoogste toegestane fase: zonder cijfers stopt het bij fase 5 (fases 6–8 gebruiken cijfers/redeneren).
+function countMaxStage(s) { return s.numerals ? Math.min(COUNT_STAGE_MAX, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX); }
 // De fase die het kind nú speelt: de live-stand uit countTrack, geklemd binnen het
 // door de ouder toegestane bereik [stage .. stageMax].
 function countLiveStage(p) {
   const s = p.settings;
-  const hi = countMaxStage(s);                 // harde bovengrens (cijfers-uit → 5)
+  const hi = countMaxStage(s);
   const lo = Math.min(Math.max(1, s.stage || 1), hi);
   const st = (p.countTrack && p.countTrack.stage) || lo;
   return Math.min(hi, Math.max(lo, st));
 }
-// Een paar getallen dicht bij het antwoord, binnen [lo..hi], voor de keuzeknoppen.
-function nearNums(ans, count, lo, hi) {
+// Moeilijkheid bínnen de fase, op basis van de rung + de ouder-bovengrens (qmax).
+// Hogere rung = groter bereik, afleiders dichterbij, minder cijfersteun, tienraam.
+function countDifficulty(p, stage) {
+  const s = p.settings;
+  const info = countStageInfo(stage);
+  const top = info.rungs - 1;
+  const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
+  const frac = top ? rung / top : 0;
+  const cap = Math.min(s.qmax || 10, 10);
+  const effMax = Math.max(info.baseMax, Math.min(cap, Math.round(info.baseMax + (info.topMax - info.baseMax) * frac)));
+  const delta = rung >= top ? 1 : (rung >= 1 ? 2 : 3);           // afleider-nabijheid (±)
+  const support = rung === 0 ? 'full' : (rung === 1 ? 'faint' : 'none'); // cijfersteun (stippen vervagen)
+  const structured = effMax > 5;                                  // >5 → tienraam (subitiseren zonder tellen)
+  return { rung, top, effMax, delta, support, tiles: info.tiles, structured };
+}
+// Afleiders dicht bij het antwoord (binnen ±delta eerst), aangevuld binnen [lo..hi].
+function countDistractors(ans, count, lo, hi, delta) {
   const set = new Set([ans]);
-  const cand = shuffle([ans - 1, ans + 1, ans - 2, ans + 2, ans + 3, ans - 3]);
-  for (const c of cand) { if (set.size >= count) break; if (c >= lo && c <= hi && !set.has(c)) set.add(c); }
+  const offs = [];
+  for (let d = 1; d <= Math.max(delta, 4); d++) offs.push(-d, d);
+  const cand = shuffle(offs).map(o => ans + o).filter(v => v >= lo && v <= hi);
+  const near = cand.filter(v => Math.abs(v - ans) <= delta);
+  const far = cand.filter(v => Math.abs(v - ans) > delta);
+  for (const v of [...near, ...far]) { if (set.size >= count) break; set.add(v); }
   let g = lo;
-  while (set.size < count && g <= hi) { if (!set.has(g)) set.add(g); g++; }
+  while (set.size < count && g <= hi) { set.add(g); g++; }
   return shuffle([...set]);
 }
-// HTML voor een hoeveelheid: objecten (emoji) of stippen (dobbelsteen-achtig).
-function groupHTML(n, emoji, repr, extraCls) {
+function dotOrObj(repr, emoji) { return repr === 'dots' ? '<span class="cg-dot"></span>' : `<span class="cg-obj">${emoji}</span>`; }
+// HTML voor een hoeveelheid: los groepje (≤5) of een tienraam (structured, 6–10).
+function groupHTML(n, emoji, repr, extraCls, frame) {
+  if (frame) return frameHTML(n, emoji, repr, extraCls);
   const cls = 'cgroup' + (repr === 'dots' ? ' dots' : '') + ' n' + n + (extraCls ? ' ' + extraCls : '');
   let inner = '';
-  for (let i = 0; i < n; i++) {
-    inner += repr === 'dots'
-      ? '<span class="cg-dot"></span>'
-      : `<span class="cg-obj">${emoji}</span>`;
-  }
+  for (let i = 0; i < n; i++) inner += dotOrObj(repr, emoji);
   return `<span class="${cls}" aria-hidden="true">${inner}</span>`;
+}
+// Tienraam: 2 rijen van 5, de eerste n vakjes gevuld — hoeveelheden 6–10 in één oogopslag.
+function frameHTML(n, emoji, repr, extraCls) {
+  let cells = '';
+  for (let i = 0; i < 10; i++) cells += `<span class="tf-cell${i < n ? ' on' : ''}">${i < n ? dotOrObj(repr, emoji) : ''}</span>`;
+  return `<span class="cframe ${extraCls || ''}" aria-hidden="true">${cells}</span>`;
+}
+// Splitsen: rij van 'total' vakjes, 'shown' zichtbaar, de rest achter een gordijn (❓).
+function splitHTML(total, shown, emoji, repr) {
+  let cells = '';
+  for (let i = 0; i < total; i++) {
+    cells += i < shown
+      ? `<span class="tf-cell on">${dotOrObj(repr, emoji)}</span>`
+      : `<span class="tf-cell hidden">❓</span>`;
+  }
+  return `<span class="cframe split" aria-hidden="true">${cells}</span>`;
 }
 // Bouwt één telmodus-vraag. Alle types leveren een genormaliseerd object met
 // numeriek antwoord (q.ans) en keuzeknoppen (q.choices), plus de voor te lezen tekst.
@@ -3175,43 +3253,82 @@ function genCount(p) {
   const s = p.settings;
   const stage = countLiveStage(p);
   const info = countStageInfo(stage);
-  let type = pick(info.types);
-  const max = info.max;
+  const d = countDifficulty(p, stage);
+  const type = pick(info.types);
   const emoji = pick(COUNT_OBJECTS);
   const repr = s.repr || 'objects';
-  const nCh = Math.min(stage === 1 ? 3 : 4, max);   // aantal keuzeknoppen
-  const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, gold: false };
+  const frame = d.structured;
+  const max = d.effMax;
+  const nCh = Math.min(d.tiles, Math.max(2, max));
+  const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, frame, support: d.support, gold: false };
+  const qgroup = v => ({ v, kind: 'group', n: v, emoji, repr, frame });
 
   if (type === 'count' || type === 'along') {
     const n = rnd(1, max);
-    q.ans = n; q.n = n; q.along = (type === 'along');
-    q.card = { kind: 'group', n, emoji };
-    q.choices = nearNums(n, nCh, 1, max).map(v => ({ v, kind: 'group', n: v, emoji, repr }));
+    q.ans = n; q.along = (type === 'along');
+    q.card = { kind: 'group', n, emoji, frame, repr };
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(qgroup);
     q.prompt = q.along ? 'Tel mee! Hoeveel zie je?' : 'Hoeveel zie je?';
   } else if (type === 'compare') {
-    let a = rnd(1, max), b = rnd(1, max);
-    while (b === a) b = rnd(1, max);
     const wantMore = Math.random() < 0.5;
-    q.ans = wantMore ? Math.max(a, b) : Math.min(a, b);
+    const k = d.rung >= 1 ? 3 : 2;                 // hogere rung → 3 groepen (minder gok-kans)
+    let vals;
+    if (k === 2) {
+      const gap = d.rung >= d.top ? 1 : rnd(2, Math.min(4, max - 1));
+      const a = rnd(1, max - gap); vals = [a, a + gap];
+    } else {
+      const set = new Set(); while (set.size < 3) set.add(rnd(1, max)); vals = [...set];
+    }
+    q.ans = wantMore ? Math.max(...vals) : Math.min(...vals);
     q.compare = wantMore ? 'more' : 'less';
     q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
-    q.choices = shuffle([{ v: a, kind: 'group', n: a, emoji, repr }, { v: b, kind: 'group', n: b, emoji, repr }]);
+    q.choices = shuffle(vals.map(qgroup));
     q.prompt = wantMore ? 'Tik op de groep met de meeste.' : 'Tik op de groep met de minste.';
   } else if (type === 'match') {
     const t = rnd(1, max);
-    q.ans = t; q.card = { kind: 'group', n: t, emoji };
-    q.choices = nearNums(t, nCh, 1, max).map(v => ({ v, kind: 'group', n: v, emoji, repr }));
+    // hogere rung: verschillende weergave links (kaart) en rechts (knoppen) — evenveel, andere vorm
+    const cross = d.rung >= 1;
+    const tileRepr = cross ? (repr === 'dots' ? 'objects' : 'dots') : repr;
+    q.ans = t;
+    q.card = { kind: 'group', n: t, emoji, frame, repr };
+    q.choices = countDistractors(t, nCh, 1, max, d.delta).map(v => ({ v, kind: 'group', n: v, emoji, repr: tileRepr, frame }));
     q.prompt = 'Welke groep heeft er evenveel?';
   } else if (type === 'listen') {
     const n = rnd(1, max);
     q.ans = n; q.card = { kind: 'listen' };
-    q.choices = nearNums(n, nCh, 1, max).map(v => ({ v, kind: 'group', n: v, emoji, repr }));
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(qgroup);
     q.prompt = 'Tik op ' + numWord(n) + '.';
-  } else { // numeral
+  } else if (type === 'numeral') {                 // hoeveelheid → cijfer (stippen vervagen per rung)
     const n = rnd(1, max);
-    q.ans = n; q.card = { kind: 'group', n, emoji };
-    q.choices = nearNums(n, nCh, 1, max).map(v => ({ v, kind: 'numeral', n: v }));
+    q.ans = n; q.card = { kind: 'group', n, emoji, frame, repr };
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(v => ({ v, kind: 'numeral', n: v, support: d.support }));
     q.prompt = 'Welk cijfer hoort erbij?';
+  } else if (type === 'numquant') {                // cijfer → hoeveelheid (omgekeerd)
+    const n = rnd(1, max);
+    q.ans = n; q.card = { kind: 'bignum', n };
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(qgroup);
+    q.prompt = 'Welke groep hoort bij dit cijfer?';
+  } else if (type === 'onemore' || type === 'oneless') {
+    const dir = type === 'onemore' ? 1 : -1;
+    const base = dir > 0 ? rnd(1, max - 1) : rnd(2, max);
+    q.ans = base + dir;
+    q.card = { kind: 'delta', base, dir, emoji, frame, repr };
+    q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
+    q.prompt = dir > 0 ? 'Er komt er één bij. Hoeveel zijn het er nu?' : 'Er gaat er één weg. Hoeveel zijn het er nu?';
+  } else if (type === 'combine') {                 // twee groepjes samen
+    const a = rnd(1, Math.max(1, max - 1));
+    const b = rnd(1, Math.max(1, max - a));
+    q.ans = a + b;
+    q.card = { kind: 'combine', a, b, emoji, frame, repr };
+    q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
+    q.prompt = 'Hoeveel zijn het er samen?';
+  } else {                                          // split: hoeveel zitten er verstopt
+    const total = rnd(3, max);
+    const shown = rnd(1, total - 1);
+    q.ans = total - shown;
+    q.card = { kind: 'split', total, shown, emoji, repr };
+    q.choices = countDistractors(q.ans, nCh, 1, Math.max(q.ans + 2, max), d.delta).map(qgroup);
+    q.prompt = 'Hoeveel zitten er verstopt achter het gordijn?';
   }
   return q;
 }
@@ -3219,29 +3336,62 @@ function genCount(p) {
 function drawCountQuestion(q) {
   const card = $('question-text');
   const replay = '<button class="count-replay" type="button" aria-label="Nog eens voorlezen" onclick="replayPrompt()">🔊</button>';
+  const cardRepr = q.card.repr || 'objects';
+  const kind = q.card.kind;
   let body = '';
-  if (q.card.kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, 'objects', 'big')}</div>`;
-  else if (q.card.kind === 'label') body = `<div class="cq-label">${q.card.text}</div>`;
-  else if (q.card.kind === 'listen') body = `<div class="cq-listen">👂</div>`;
+  if (kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, cardRepr, 'big', q.card.frame)}</div>`;
+  else if (kind === 'label') body = `<div class="cq-label">${q.card.text}</div>`;
+  else if (kind === 'listen') body = `<div class="cq-listen">👂</div>`;
+  else if (kind === 'bignum') body = `<div class="cq-bignum">${q.card.n}</div>`;
+  else if (kind === 'delta') body = `<div class="cq-groupwrap">${groupHTML(q.card.base, q.card.emoji, cardRepr, 'big', q.card.frame)}<span class="cq-delta ${q.card.dir > 0 ? 'add' : 'rem'}">${q.card.dir > 0 ? '＋1' : '－1'}</span></div>`;
+  else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame)}</div>`;
+  else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   card.innerHTML = `<div class="count-q">${body}${replay}</div>`;
   // meetellen: objecten poppen één voor één op terwijl er hardop geteld wordt
-  if (q.along && q.card.kind === 'group') {
-    const objs = card.querySelectorAll('.cg-obj');
+  if (q.along && kind === 'group') {
+    const objs = card.querySelectorAll('.cg-obj, .cg-dot');
     objs.forEach(o => o.classList.add('pre'));
     countAlong(objs, q.card.n, q.prompt);
-  } else {
-    speak(q.prompt);
+    return;
   }
+  // één-meer/minder met volledige steun: het resultaat bouwt zich zichtbaar op
+  if (kind === 'delta' && q.support === 'full') { animateDelta(card, q); return; }
+  speak(q.prompt);
+}
+// Toon één object erbij (pop) of eraf (fade) zodat het kind het resultaat kan tellen.
+function animateDelta(card, q) {
+  const g = card.querySelector('.cgroup, .cframe');
+  setTimeout(() => {
+    if (!G || !G.count) return;
+    if (q.card.dir > 0) {
+      const extra = document.createElement('span');
+      extra.className = 'cg-obj pop';
+      extra.textContent = q.card.repr === 'dots' ? '' : q.card.emoji;
+      if (q.card.repr === 'dots') { extra.className = 'cg-dot pop'; }
+      if (g) g.appendChild(extra);
+    } else {
+      const marks = card.querySelectorAll('.cg-obj, .cg-dot');
+      const last = marks[marks.length - 1];
+      if (last) last.classList.add('fade-out');
+    }
+    speak(q.prompt);
+  }, 450);
 }
 // Zet de antwoordknoppen (hoeveelheden of cijfers) neer.
 function renderCountAnswers(q, area) {
   const tiles = q.choices.map(c => {
     let inner;
-    if (c.kind === 'numeral') inner = `<span class="ct-num">${c.v}</span>${groupHTML(c.v, '•', 'dots', 'mini')}`;
-    else inner = groupHTML(c.n, c.emoji, c.repr);
+    if (c.kind === 'numeral') {
+      const sup = c.support || 'full';
+      const dots = sup === 'none' ? '' : groupHTML(c.v, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''));
+      inner = `<span class="ct-num">${c.v}</span>${dots}`;
+    } else {
+      inner = groupHTML(c.n, c.emoji, c.repr, '', c.frame);
+    }
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
-  const cls = 'count-tiles' + (q.choices.length <= 2 ? ' two' : '');
+  const n = q.choices.length;
+  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '');
   area.innerHTML = `<div class="${cls}">${tiles}</div>`;
   area.querySelectorAll('.count-tile').forEach(b => {
     b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
@@ -3261,45 +3411,58 @@ function countAlong(objs, n, lead) {
   };
   setTimeout(step, 650);
 }
-let _lastPrompt = '';
 function replayPrompt() {
   sndClick();
   const q = G && G.qs && G.qs[G.idx];
   if (!q) return;
   if (q.along && q.card && q.card.kind === 'group') {
-    const objs = $('question-text').querySelectorAll('.cg-obj');
+    const objs = $('question-text').querySelectorAll('.cg-obj, .cg-dot');
     objs.forEach(o => { o.classList.remove('pop'); o.classList.add('pre'); });
     countAlong(objs, q.card.n, q.prompt);
   } else {
     speak(q.prompt);
   }
 }
-// Nauwkeurigheid van de telmodus (voor de fase-klim); losse EMA per profiel.
+// Nauwkeurigheid van de telmodus (voor de fase-klim) + de rung bínnen de fase:
+// 3× in-één-keer-goed op rij → rung omhoog; een misser → rung omlaag.
 function updateCountAcc(p, correct, firstTry) {
   const ct = p.countTrack;
   ct.seen = (ct.seen || 0) + 1;
   const target = correct ? (firstTry ? 1 : 0.85) : 0;
   ct.acc = (ct.acc == null ? 0.5 : ct.acc) * 0.8 + target * 0.2;
+  const top = countTopRung(countLiveStage(p));
+  if (correct && firstTry) {
+    ct.streak = (ct.streak || 0) + 1;
+    if (ct.streak >= 3 && (ct.rung || 0) < top) { ct.rung = (ct.rung || 0) + 1; ct.streak = 0; }
+  } else {
+    ct.streak = 0;
+    if (!correct && (ct.rung || 0) > 0) ct.rung = (ct.rung || 0) - 1;
+  }
 }
-// Na een optreden: de fase mee laten klimmen (of, bij worstelen, zakken) binnen
-// het door de ouder toegestane bereik. Zo heeft het kind altijd een haalbare
-// volgende stap zonder ooit "vast" te zitten. Klimt pas na genoeg vlotte antwoorden.
+// Na een optreden: de fase mee laten klimmen (pas op de hoogste rung) of, bij
+// worstelen, zakken — altijd binnen het door de ouder toegestane bereik.
 function advanceCountStage(p, success) {
   const s = p.settings;
   const lo = Math.max(1, s.stage || 1);
   const hi = Math.max(lo, countMaxStage(s));
   const ct = p.countTrack;
   let st = Math.min(hi, Math.max(lo, ct.stage || lo));
-  if (success && ct.acc >= 0.85 && (ct.seen || 0) >= 8 && st < hi) {
-    st++; ct.seen = 0; ct.acc = 0.6;   // frisse start op de nieuwe, iets moeilijkere fase
+  const top = countTopRung(st);
+  if (success && ct.acc >= 0.85 && (ct.seen || 0) >= 8 && (ct.rung || 0) >= top && st < hi) {
+    st++; ct.rung = 0; ct.streak = 0; ct.seen = 0; ct.acc = 0.6;   // frisse start op de nieuwe fase
   } else if ((!success || ct.acc < 0.5) && st > lo) {
-    st--; ct.acc = 0.55;               // even terugzakken naar wat wél lukt
+    st--; ct.rung = countTopRung(st); ct.streak = 0; ct.acc = 0.55; ct.seen = 0;  // terug naar wat wél lukt
   }
   ct.stage = st;
 }
 // Lees-vrije "bijna!" bij een eerste misser: geen tekst, wel een vriendelijke stem.
 function countMissSpeak(q, val) {
   if (q.compare) { speak('Bijna! Kijk goed welke groep ' + (q.compare === 'more' ? 'de meeste' : 'de minste') + ' heeft.'); return; }
+  if (q.ctype === 'onemore') { speak('Bijna! Eén erbij is één meer. Tel nog eens.'); return; }
+  if (q.ctype === 'oneless') { speak('Bijna! Eén eraf is één minder. Tel nog eens.'); return; }
+  if (q.ctype === 'combine') { speak('Bijna! Tel de twee groepjes samen.'); return; }
+  if (q.ctype === 'split') { speak('Bijna! Hoeveel horen er nog bij?'); return; }
+  if (q.ctype === 'match' || q.ctype === 'numquant') { speak('Bijna! Zoek de groep met evenveel.'); return; }
   if (typeof val === 'number' && q.ctype !== 'numeral') {
     if (val > q.ans) speak('Bijna! Dat waren er te veel. Probeer een kleinere groep.');
     else speak('Bijna! Dat waren er te weinig. Probeer een grotere groep.');
@@ -3313,7 +3476,7 @@ function countReveal(q) {
   const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
   if (tile) {
     tile.classList.add('good');
-    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .ct-num');
+    const objs = tile.querySelectorAll('.cg-obj, .cg-dot');
     if (q.ctype === 'numeral') speak('Dit is de ' + numWord(q.ans) + '.');
     else { let i = 0; const c = () => { if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
   }
@@ -4570,7 +4733,7 @@ function statsPanelHtml(p) {
 function chip(v, label, on) {
   return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
 }
-const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers'];
+const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen'];
 function oefeningPanelHtml(p, s) {
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
@@ -4598,8 +4761,10 @@ function oefeningPanelHtml(p, s) {
       <div class="set-field"><span class="lbl">Startfase <span class="note">(vanaf hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
       <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', Math.min(s.stageMax, cap))}</div>
       ${legend}
-      <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6: cijfer naast de hoeveelheid)</span></span>
+      <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6+: cijfers, minder stippensteun, redeneren)</span></span>
         <div class="chip-row" id="set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
+      <div class="set-field"><span class="lbl">Hoogste hoeveelheid <span class="note">(hoe ver de aantallen mogen groeien)</span></span>
+        <div class="chip-row" id="set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
       <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
         <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', s.repr !== 'dots')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}</div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
@@ -4753,6 +4918,7 @@ function renderSettings() {
     if (p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, cap);
     saveAndFlash(); renderSettings();
   });
+  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
   bind('set-repr', c => { s.repr = c.dataset.v; saveAndFlash(); renderSettings(); });
   $('set-reset').onclick = () => {
     showConfirm(
@@ -4764,7 +4930,7 @@ function renderSettings() {
         // telmodus staat (een reset wist voortgang, niet wie ze is)
         const dress = p.equipped.dress || 'dress_roze';
         const opts = p.settings.track === 'count'
-          ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel }
+          ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel, qmax: p.settings.qmax }
           : {};
         const order = p.order;
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
