@@ -616,6 +616,51 @@
   .count-tile .cg-dot { width: 20px; height: 20px; }
   .count-tile .ct-num { font-size: 40px; font-weight: 800; line-height: 1; }
 
+  /* ---- Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ---- */
+  .mem-fab {
+    position: fixed; right: 16px; bottom: 84px; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    font-family: inherit; font-size: 26px; font-weight: 700; color: var(--ink-on-gold);
+    border: none; cursor: pointer; padding: 12px 14px 9px; border-radius: 20px;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    box-shadow: 0 6px 0 var(--gold-cta-shadow), 0 10px 20px var(--glass-black-32);
+  }
+  .mem-fab span { font-size: 13px; font-weight: 800; }
+  .mem-fab:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--gold-cta-shadow), 0 6px 12px var(--glass-black-32); }
+  .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
+  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 10px; width: min(92vw, 460px); }
+  .mem-card {
+    position: relative; aspect-ratio: 3 / 4; border: none; background: none; cursor: pointer; padding: 0;
+    perspective: 600px;
+  }
+  .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .35s; }
+  .mem-card.open .mem-inner, .mem-card.done .mem-inner { transform: rotateY(180deg); }
+  .mem-back, .mem-face {
+    position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    box-shadow: 0 4px 0 rgba(0,0,0,.18);
+  }
+  .mem-back {
+    font-size: clamp(26px, 8vw, 40px);
+    background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
+    border: 2px solid rgba(255,255,255,.35);
+  }
+  .mem-face {
+    transform: rotateY(180deg); background: linear-gradient(180deg, var(--c-white), var(--lavender-wash));
+    border: 2px solid rgba(255,255,255,.7); padding: 6px;
+  }
+  .mem-card.done .mem-face { background: linear-gradient(180deg, var(--green-badge-bg), #c8eccf); border-color: var(--green-deep); animation: cpop .4s ease; }
+  .mem-face .cg-obj { font-size: clamp(15px, 4.6vw, 22px); }
+  .mem-face .cg-dot { width: 13px; height: 13px; }
+  .mem-face .ct-num { font-size: clamp(30px, 9vw, 46px); font-weight: 800; color: var(--purple-shadow); }
+  .mem-face .cframe { transform: scale(.6); }
+  .mem-face .cgroup { gap: 3px 4px; max-width: 92%; }
+  .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
+  .mem-done-card { background: linear-gradient(180deg, var(--c-white), var(--lavender-wash)); border-radius: var(--radius-2xl); padding: 22px 26px; text-align: center; box-shadow: 0 14px 30px var(--glass-black-40); }
+  .mem-done-title { font-size: 54px; line-height: 1; }
+  .mem-done-earn { margin: 12px auto 4px; }
+  .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
     .game-arena { gap: 12px; }
@@ -911,6 +956,8 @@
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
     .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }
+    .mem-inner { transition: none; }
+    .mem-card.done .mem-face { animation: none; }
   }
 
   /* ---- Trofeeën ---- */
@@ -1497,6 +1544,32 @@
     <div class="map-flex">
       <div class="tour-map-wrap">
         <div class="tour-map hscroll-fade" id="tour-map"></div>
+      </div>
+    </div>
+    <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
+    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎴<span>Memory</span></button>
+  </div>
+
+  <!-- ===== Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ===== -->
+  <div class="screen" id="screen-memory">
+    <div class="hub-sticky">
+      <div class="screen-header">
+        <button class="btn icon-btn header-left" onclick="exitMemory()" aria-label="Terug naar de kaart" title="Terug naar de kaart">✕</button>
+        <div class="header-title">🎴 Memory</div>
+        <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
+      </div>
+    </div>
+    <div class="mem-arena">
+      <div class="mem-grid" id="mem-grid"></div>
+    </div>
+    <div class="mem-done" id="mem-done" style="display:none">
+      <div class="mem-done-card">
+        <div class="mem-done-title">🎉</div>
+        <div class="mem-done-earn earn-chip dia" id="mem-done-earn"></div>
+        <div class="mem-done-btns">
+          <button class="btn" onclick="startMemory()">🎴 Nog een keer</button>
+          <button class="btn gray" onclick="exitMemory()">🗺️ Kaart</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2099,7 +2172,8 @@ function defaultProfile(name, dress, opts) {
       stageMax: opts.stageMax || COUNT_STAGE_MAX,   // hoogste toegestane fase
       repr: opts.repr || 'objects',                 // antwoordweergave: 'objects' of 'dots'
       numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
-      qmax: opts.qmax || 10                          // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
+      qmax: opts.qmax || 10,                         // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
+      memory: opts.memory !== false                 // memory-spelletje op de kaart (standaard aan)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
@@ -2153,6 +2227,7 @@ function migrate(p) {
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
   if (p.settings.qmax == null) p.settings.qmax = 10;
+  if (p.settings.memory == null) p.settings.memory = true;
   if (!p.countTrack) p.countTrack = { stage: p.settings.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 };
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;
@@ -2625,6 +2700,8 @@ function goMap() {
   $('map-name').textContent = p.name;
   $('map-diamonds').textContent = p.diamonds;
   $('map-portrait').innerHTML = avatarSVG(p, 80);
+  // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
+  $('mem-fab').style.display = (p.settings.track === 'count' && p.settings.memory !== false) ? 'flex' : 'none';
   renderCareerStrip(p);   // zet ook de titel (ster-status) in de kop
   const travel = pendingTravel;
   pendingTravel = null;
@@ -3480,6 +3557,113 @@ function countReveal(q) {
     if (q.ctype === 'numeral') speak('Dit is de ' + numWord(q.ans) + '.');
     else { let i = 0; const c = () => { if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
   }
+}
+
+/* ================= Memory-spel (lees-vrij) =================
+   Clara's favoriete spelvorm, ingezet als reken-oefening: draai twee kaartjes
+   om en vind de PAREN met evenveel — dezelfde hoeveelheid in een andere vorm
+   (voorwerpen ↔ stippen ↔ tienraam ↔ cijfer). Traint subitiseren, het koppelen
+   van weergaven én het geheugen. Gesproken + visueel, dus lees-vrij. Beloningen
+   lopen via dezelfde diamant-pijplijn (kleedkamer, trofeeën blijven meetellen). */
+let M = null;
+// Eén kaartje omzetten in beeld: voorwerpen, stippen, tienraam of cijfer.
+function memFaceHTML(c) {
+  if (c.repr === 'numeral') return `<span class="ct-num">${c.v}</span>`;
+  if (c.repr === 'frame') return frameHTML(c.v, c.emoji, 'objects');
+  if (c.repr === 'dots') return groupHTML(c.v, '', 'dots');
+  return groupHTML(c.v, c.emoji, 'objects');
+}
+// Bouwt het kaartspel: P paren (elk een unieke hoeveelheid) in twee verschillende
+// weergaven. Aantal paren en bereik groeien mee met de fase/rung.
+function buildMemoryDeck(p) {
+  const stage = countLiveStage(p);
+  const d = countDifficulty(p, stage);
+  const max = Math.max(3, d.effMax);
+  let pairs = 3 + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);   // 3..5
+  pairs = Math.min(pairs, max);                                    // niet meer paren dan er hoeveelheden zijn
+  const numOK = p.settings.numerals !== false && stage >= 6;
+  const vals = shuffle(Array.from({ length: max }, (_, i) => i + 1)).slice(0, pairs);
+  const cards = [];
+  vals.forEach(v => {
+    const emoji = pick(COUNT_OBJECTS);
+    let reprs = ['objects', 'dots'];
+    if (v > 5) reprs.push('frame');
+    if (numOK) reprs.push('numeral');
+    reprs = shuffle(reprs);
+    const r2 = reprs[1] || (reprs[0] === 'objects' ? 'dots' : 'objects');
+    cards.push({ v, repr: reprs[0], emoji }, { v, repr: r2, emoji });
+  });
+  return { cards: shuffle(cards), pairs };
+}
+function startMemory() {
+  sndClick();
+  const p = P();
+  const { cards, pairs } = buildMemoryDeck(p);
+  M = { cards, pairs, flipped: [], matched: 0, lock: false, earned: 0 };
+  $('mem-done').style.display = 'none';
+  $('mem-diamonds').textContent = p.diamonds;
+  const grid = $('mem-grid');
+  grid.style.setProperty('--cols', pairs);   // 2 rijen: kolommen = aantal paren
+  grid.innerHTML = cards.map((c, i) =>
+    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎴</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
+  ).join('');
+  grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
+  show('screen-memory');
+  speak('Zoek de twee kaartjes met evenveel.');
+}
+function exitMemory() { sndClick(); hideToast(); M = null; goMap(); }
+function flipCard(i, btn) {
+  if (!M || M.lock) return;
+  if (btn.classList.contains('open') || btn.classList.contains('done')) return;
+  const c = M.cards[i];
+  btn.classList.add('open');
+  sndClick();
+  speak(numWord(c.v));
+  M.flipped.push({ c, btn });
+  if (M.flipped.length < 2) return;
+  M.lock = true;
+  const [a, b] = M.flipped;
+  if (a.c.v === b.c.v) {
+    setTimeout(() => {
+      a.btn.classList.add('done'); b.btn.classList.add('done');
+      a.btn.classList.remove('open'); b.btn.classList.remove('open');
+      onMemMatch(b.btn);
+      M.flipped = []; M.lock = false;
+    }, 450);
+  } else {
+    setTimeout(() => {
+      a.btn.classList.remove('open'); b.btn.classList.remove('open');
+      M.flipped = []; M.lock = false;
+    }, 950);
+  }
+}
+function onMemMatch(fromBtn) {
+  const p = P();
+  M.matched++;
+  const gain = 2;
+  p.diamonds += gain; M.earned += gain;
+  save();
+  $('mem-diamonds').textContent = p.diamonds;
+  sndCoin();
+  flyDiamonds(fromBtn, $('mem-diamonds'), 2);
+  sparkle(fromBtn, ['⭐', '✨', '💛']);
+  const trofees = checkTrophies(p);
+  if (trofees.length) updateTroDot();
+  if (M.matched >= M.pairs) setTimeout(finishMemory, 650);
+  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
+}
+function finishMemory() {
+  const p = P();
+  const bonus = 3;
+  p.diamonds += bonus; M.earned += bonus;
+  save();
+  $('mem-diamonds').textContent = p.diamonds;
+  sndWin();
+  confetti(28);
+  flyDiamonds($('mem-grid'), $('mem-diamonds'), 3);
+  speak('Wauw! Je hebt ze allemaal gevonden!');
+  $('mem-done-earn').textContent = '💎 +' + M.earned;
+  $('mem-done').style.display = 'flex';
 }
 
 /* ---- Zwakke sommen: gericht herhalen wat een kind moeilijk vindt ----
@@ -4767,6 +4951,8 @@ function oefeningPanelHtml(p, s) {
         <div class="chip-row" id="set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
       <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
         <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', s.repr !== 'dots')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}</div></div>
+      <div class="set-field"><span class="lbl">🎴 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
+        <div class="chip-row" id="set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
     </div>`;
@@ -4918,6 +5104,7 @@ function renderSettings() {
     saveAndFlash(); renderSettings();
   });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
+  bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); saveAndFlash(); renderSettings(); });
   bind('set-repr', c => { s.repr = c.dataset.v; saveAndFlash(); renderSettings(); });
   $('set-reset').onclick = () => {
     showConfirm(
@@ -4929,7 +5116,7 @@ function renderSettings() {
         // telmodus staat (een reset wist voortgang, niet wie ze is)
         const dress = p.equipped.dress || 'dress_roze';
         const opts = p.settings.track === 'count'
-          ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel, qmax: p.settings.qmax }
+          ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel, qmax: p.settings.qmax, memory: p.settings.memory }
           : {};
         const order = p.order;
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
