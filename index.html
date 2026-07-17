@@ -4911,11 +4911,10 @@ function renderSettings() {
     saveAndFlash(); renderSettings();
   });
   bind('set-numerals', c => {
+    // Alleen de vlag omzetten -- de bovengrens (cijfers-uit → fase 5) wordt niet-
+    // destructief afgedwongen via countMaxStage (chip-weergave + countLiveStage),
+    // zodat het weer aanzetten de fase-instelling volledig terugbrengt.
     s.numerals = (c.dataset.v === 'on');
-    const cap = countMaxStage(s);                       // cijfers-uit → plafond 5
-    if (s.stageMax > cap) s.stageMax = cap;
-    if (s.stage > cap) s.stage = cap;
-    if (p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, cap);
     saveAndFlash(); renderSettings();
   });
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
