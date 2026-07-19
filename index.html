@@ -1282,7 +1282,6 @@
      goud+gloed = nu aan) i.p.v. een tekstregel -- zo oogt de looks-pagina als
      een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
   .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
-  .looks-intro { font-size: 12.5px; font-weight: 600; color: var(--muted-lavender-text); text-align: center; padding: 0 6px 2px; }
   /* kaart houdt altijd dezelfde vorm/structuur/hoogte aan, ongeacht status of
      hoeveel stukjes een look heeft -- positie in de lijst verandert nooit (zie
      renderLookGoals). De hele kaart is zelf de "trek aan wat ik heb"-actie
@@ -1296,7 +1295,6 @@
     transition: transform .07s;
   }
   .look-goal:active { transform: scale(.98); }
-  .look-goal.done { border-color: var(--gold-accent); background: rgba(255,214,90,.10); }
   .look-goal.flash { animation: lookFlash 1.4s ease; }
   @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
   .look-goal-head { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
@@ -1993,7 +1991,7 @@ const TROPHY_SHELVES = [
   { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
   { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
-  { name: '✨ Thema-looks',          note: 'Heb je alles? Trek de hele look aan!', ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
+  { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
 function playedCount(p) { return Object.keys(p.stars).length; }
@@ -4654,18 +4652,15 @@ function renderShop() {
 // in bezit / nu aan) en een tik-om-te-kopen sprong naar het ontbrekende stuk.
 // Zo trekt het najagen van één look het kind dwars door de categorieën heen.
 function renderLookGoals(grid, p) {
-  grid.innerHTML = `<div class="looks-intro">✨ Tik een look om alles aan te doen, of een stukje om te kopen</div>`;
+  grid.innerHTML = '';
   // Vaste volgorde (zelfde TROPHIES-definitievolgorde als de trofeeënkast) --
-  // kaarten wisselen NOOIT van plek als hun status verandert, ook niet zodra
-  // een look compleet aan is. Alleen de stukjes-rand verandert dan.
+  // kaarten wisselen NOOIT van plek als hun status verandert. Alleen de
+  // stukjes-rand (per stuk: aan/in bezit/ontbreekt) verandert.
   TROPHIES.filter(t => THEME_SETS[t.id]).forEach(t => {
     const pieces = orderedPieces(THEME_SETS[t.id]);
-    const total = pieces.length;
-    const wornN = pieces.filter(([cat, id]) => p.equipped[cat] === id).length;
-    const done = wornN === total;
     const card = document.createElement('div');
     card.dataset.look = t.id;
-    card.className = 'look-goal' + (done ? ' done' : '');
+    card.className = 'look-goal';
     // tik ergens op de kaart (buiten een los stukje): trek alles aan wat je bezit
     card.onclick = () => wearLook(t.id);
     // elk stukje = mini-kaartje, zelfde miniatuur + rand-taal als de gewone
