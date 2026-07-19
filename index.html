@@ -2263,6 +2263,13 @@ function profileKeys() {
     return d !== 0 ? d : (a < b ? -1 : 1);
   });
 }
+// Zorgt dat een geladen/geïmporteerde db de verwachte sterren + volgorde heeft:
+// Clara komt erbij als ze ontbreekt (bv. een oude back-up met alleen Marie + Anna),
+// en elke ster krijgt zijn vaste plek in de rij. Gedeeld door load() én importData().
+function normalizeProfiles() {
+  if (!db.profiles.p3) db.profiles.p3 = defaultProfile('Clara', 'dress_geel', CLARA_OPTS);
+  assignProfileOrder();
+}
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -2270,9 +2277,7 @@ function load() {
       db = JSON.parse(raw);
       if (typeof db.haptics !== 'boolean') db.haptics = true;
       Object.values(db.profiles).forEach(migrate);
-      // Bestaande saves (Marie + Anna) krijgen Clara er als telmodus-ster bij.
-      if (!db.profiles.p3) db.profiles.p3 = defaultProfile('Clara', 'dress_geel', CLARA_OPTS);
-      assignProfileOrder();   // Clara, Anna, Marie -- ongeacht de opslagsleutel
+      normalizeProfiles();   // Clara erbij (indien nodig) + Clara, Anna, Marie-volgorde
       save();
       return;
     }
@@ -5055,7 +5060,7 @@ function renderSettings() {
   $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; saveAndFlash(); };
   const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
   // modus: wisselen tussen de rekenshow en de lees-vrije telmodus
-  bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
+  bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
   // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
   // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
@@ -5088,7 +5093,7 @@ function renderSettings() {
     const v = parseInt(c.dataset.v, 10);
     s.stage = v;
     if (s.stageMax < v) s.stageMax = v;                 // plafond mag niet onder de start
-    if (!p.countTrack) p.countTrack = { stage: v, seen: 0, acc: 0.5 };
+    if (!p.countTrack) p.countTrack = { stage: v, rung: 0, streak: 0, seen: 0, acc: 0.5 };
     p.countTrack.stage = Math.min(Math.max(p.countTrack.stage, v), countMaxStage(s)); // live-stand binnen bereik
     saveAndFlash(); renderSettings();
   });
@@ -5171,13 +5176,15 @@ function importData(file) {
     }
     showConfirm(
       '📂 Back-up terugzetten?',
-      'Dit vervangt de huidige diamanten, sterren en spulletjes van beide profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
+      'Dit vervangt de huidige diamanten, sterren en spulletjes van alle profielen door de inhoud van dit back-upbestand. Dit kan niet ongedaan gemaakt worden.',
       'Ja, terugzetten',
       () => {
         db = data;
         if (typeof db.sound !== 'boolean') db.sound = true;
         if (typeof db.haptics !== 'boolean') db.haptics = true;
         Object.values(db.profiles).forEach(migrate);
+        normalizeProfiles();   // oude 2-profiel-back-up krijgt Clara terug + juiste volgorde
+        setKey = profileKeys()[0];   // selectie kan naar een verdwenen sleutel wijzen
         save();
         showNotice('🎉 Gelukt!', 'Back-up geladen!');
         renderSettings();
