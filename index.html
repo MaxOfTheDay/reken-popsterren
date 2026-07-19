@@ -2065,7 +2065,7 @@ function perfectCities(p) {
 }
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
 function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
-function boughtCount(p) { return Math.max(0, p.owned.length - 5); }   // 5 = de gratis startspullen
+function boughtCount(p) { return Math.max(0, p.owned.length - (p.freebies || 5)); }   // gratis startspullen tellen niet als "gekocht"
 
 /* ================= Sterrencarrière ================= */
 // Eén doorlopende carrièreladder op basis van álle verdiende sterren (over alle
@@ -2160,6 +2160,7 @@ function defaultProfile(name, dress, opts) {
     level: 1,
     stars: {},
     owned: owned,
+    freebies: owned.length,   // aantal gratis startspullen (5, of 6 met bonusjurk) — basis voor "gekocht"
     equipped: { hair: 'hair_blond', dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     // ---- Instellingen ----
     // track: 'math' = de gewone rekenshow · 'count' = de lees-vrije telmodus voor
@@ -2232,6 +2233,9 @@ function migrate(p) {
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
+  // gratis startspullen: 5 basis, +1 als deze ster de gratis bonusjurk (dress_geel,
+  // bv. Clara) heeft — zodat "spulletjes gekocht" niet 1 te hoog begint
+  if (p.freebies == null) p.freebies = 5 + (p.owned && p.owned.includes('dress_geel') ? 1 : 0);
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
   // schoenen-categorie: bestaande profielen krijgen de gratis roze schoenen aan
   if (!('shoes' in p.equipped)) {
