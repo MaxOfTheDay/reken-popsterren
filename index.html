@@ -4527,10 +4527,13 @@ let shopSelectedId = null;
 let shopJustBoughtId = null;
 let shopView = 'items';   // 'items' = kleren per categorie · 'looks' = complete outfits als spaardoel
 let focusLook = null;     // look-id om naartoe te scrollen + even te laten oplichten (vanuit de kast)
+let looksScroll = 0;      // onthouden scrollpositie in de Looks-lijst, om ernaar terug te keren na een uitstapje naar de winkel
+// Onthoud waar je in de Looks-lijst stond (voor je naar een los stuk sprong).
+function rememberLooksScroll() { if (shopView === 'looks') looksScroll = $('screen-dress').scrollTop; }
 // Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
 // altijd terug naar de standaardcategorie, geen selectie, geen Looks-modus.
 function openKleedkamer() {
-  shopCat = 'dress'; shopSelectedId = null; shopView = 'items'; focusLook = null;
+  shopCat = 'dress'; shopSelectedId = null; shopView = 'items'; focusLook = null; looksScroll = 0;
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
@@ -4569,6 +4572,7 @@ function openKleedkamerCat(cat) {
 // vanuit de Looks-modus naar een concreet stuk springen om het te kopen
 function shopGoToItem(cat, id) {
   sndClick();
+  rememberLooksScroll();   // onthoud de plek in de Looks-lijst om er straks naar terug te keren
   shopView = 'items'; shopCat = cat; shopSelectedId = id;
   renderShop();
   // scroll het gekozen item zelf in beeld (i.p.v. gewoon naar boven) -- bij
@@ -4601,7 +4605,15 @@ function renderShop() {
     const b = document.createElement('button');
     b.className = v === shopView ? 'on' : '';
     b.textContent = label;
-    b.onclick = () => { sndClick(); shopView = v; shopSelectedId = null; renderShop(); $('screen-dress').scrollTop = 0; };
+    b.onclick = () => {
+      sndClick();
+      rememberLooksScroll();                 // verlaat je Looks? bewaar de plek
+      shopView = v; shopSelectedId = null; renderShop();
+      // terug naar Looks: herstel de vorige plek; naar Spullen: gewoon bovenaan
+      const y = v === 'looks' ? looksScroll : 0;
+      $('screen-dress').scrollTop = y;
+      requestAnimationFrame(() => { $('screen-dress').scrollTop = y; });   // vangnet na de (her)opbouw
+    };
     mode.appendChild(b);
   });
   $('shop-tabs-wrap').style.display = looksMode ? 'none' : '';
