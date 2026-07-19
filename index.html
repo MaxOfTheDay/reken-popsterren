@@ -1957,31 +1957,31 @@ const TROPHIES = [
   // ✨ Thema-looks — speciale combinaties: alle stukken tegelijk aan = trofee.
   // De kaartjes staan zichtbaar in de kast als spaardoel, met voortgang per stuk.
   { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Draag de hele tovenaarslook',
-    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOn(p, MAGICUS_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOwned(p, MAGICUS_SET), 4, 'stukken verzameld') },
   { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Draag de hele voetballook',
-    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOn(p, OHELLE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOwned(p, OHELLE_SET), 4, 'stukken verzameld') },
   { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Draag de hele rocklook',
-    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, ROCKSTER_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, ROCKSTER_SET), 4, 'stukken verzameld') },
   { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Maak de volledige discolook',
-    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOn(p, DISCO_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOwned(p, DISCO_SET), 4, 'stukken verzameld') },
   { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Draag de hele prinsessenlook',
-    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOn(p, PRINSES_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOwned(p, PRINSES_SET), 4, 'stukken verzameld') },
   { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Draag de hele ruimtelook',
-    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOn(p, RUIMTE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOwned(p, RUIMTE_SET), 4, 'stukken verzameld') },
   { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Draag de hele winterlook',
-    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOn(p, WINTER_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, WINTER_SET), 4, 'stukken verzameld') },
   { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Draag de hele junglelook',
-    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOn(p, JUNGLE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOwned(p, JUNGLE_SET), 4, 'stukken verzameld') },
   { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
-    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOn(p, ZEE_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOwned(p, ZEE_SET), 4, 'stukken verzameld') },
   { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
-    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOn(p, REGENBOOG_SET), 5, 'stukken tegelijk aan') },
+    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOwned(p, REGENBOOG_SET), 5, 'stukken verzameld') },
   { id: 'diamantster', emoji: '💎', name: 'Diamantster', desc: 'Draag de hele diamantlook',
-    has: p => comboOn(p, DIAMANTSTER_SET) === 4, progress: p => trophyProgress(comboOn(p, DIAMANTSTER_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, DIAMANTSTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, DIAMANTSTER_SET), 4, 'stukken verzameld') },
   { id: 'festivaldj', emoji: '🎛️', name: 'Festival-DJ', desc: 'Draag de hele DJ-look',
-    has: p => comboOn(p, FESTIVALDJ_SET) === 4, progress: p => trophyProgress(comboOn(p, FESTIVALDJ_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, FESTIVALDJ_SET) === 4, progress: p => trophyProgress(comboOwned(p, FESTIVALDJ_SET), 4, 'stukken verzameld') },
   { id: 'vuurshow', emoji: '🌋', name: 'Vuurshow', desc: 'Draag de hele vuurlook',
-    has: p => comboOn(p, VUURSHOW_SET) === 4, progress: p => trophyProgress(comboOn(p, VUURSHOW_SET), 4, 'stukken tegelijk aan') },
+    has: p => comboOn(p, VUURSHOW_SET) === 4, progress: p => trophyProgress(comboOwned(p, VUURSHOW_SET), 4, 'stukken verzameld') },
   // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
   // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
   { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
@@ -2014,6 +2014,9 @@ const DIAMANTSTER_SET = { acc: 'acc_diadeem', hair: 'hair_zilver', dress: 'dress
 const FESTIVALDJ_SET = { instrument: 'instr_dj', acc: 'acc_koptel', mic: 'mic_roze', stage: 'stage_disco' };
 const VUURSHOW_SET = { stage: 'stage_vulkaan', pet: 'pet_draak', dress: 'dress_rood', mic: 'mic_zwart' };
 function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.equipped[vak] === id).length; }
+// Hoeveel stukken van een look het kind al bézit (los van of ze aan staan) — de
+// voortgang op de look-trofee toont dit, zodat ze niet terugvalt bij het omkleden.
+function comboOwned(p, set) { return Object.values(set).filter(id => p.owned.includes(id)).length; }
 // Vaste categorie-volgorde voor de stukken van een look (zelfde volgorde als de
 // kleedkamer-tabbladen), zodat elke look zijn stukken in dezelfde volgorde toont
 // i.p.v. de toevallige typvolgorde van elke set-definitie.
