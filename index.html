@@ -4934,16 +4934,19 @@ function oefeningPanelHtml(p, s) {
         <div class="note" style="margin-top:7px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
     </div>`;
   // de kaarten die per modus verschillen
-  const cap = countMaxStage(s);   // cijfers-uit → alleen fase 1–5 aanbieden
+  // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
+  // (1–8, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
+  // kun je een eerder verlaagde bovengrens nooit meer omhoog zetten.
+  const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
   const stageNums = [];
-  for (let v = 1; v <= cap; v++) stageNums.push(v);
-  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${id}">${stageNums.map(v => chip(v, v, Math.min(sel, cap) === v)).join('')}</div>`;
+  for (let v = 1; v <= availMax; v++) stageNums.push(v);
+  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${id}">${stageNums.map(v => chip(v, v, Math.min(sel, availMax) === v)).join('')}</div>`;
   const legend = `<div class="stage-legend">${stageNums.map(v => `<span><b>${v}</b> ${COUNT_STAGE_LABELS[v]}</span>`).join('')}</div>`;
   const countCard = `
     <div class="set-card primary">
       <div class="set-card-head"><div class="ico">🔢</div><div><h2>Tellen</h2><div class="sub">Fases, weergave en lengte</div></div></div>
       <div class="set-field"><span class="lbl">Startfase <span class="note">(vanaf hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
-      <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', Math.min(s.stageMax, cap))}</div>
+      <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', s.stageMax)}</div>
       ${legend}
       <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6+: cijfers, minder stippensteun, redeneren)</span></span>
         <div class="chip-row" id="set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
