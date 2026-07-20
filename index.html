@@ -549,7 +549,7 @@
   /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
   /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon)
      met een 🔊-knop om de gesproken opdracht te herhalen. */
-  .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 40px; }
+  .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 30px; }
   .cq-groupwrap { display: flex; align-items: center; justify-content: center; }
   .cgroup { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; max-width: 260px; line-height: 1; }
   /* tot 3 objecten op een rij: netjes groepeerbaar in beeld (subitiseren) */
@@ -564,12 +564,14 @@
   .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
   @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
   .count-replay {
-    position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
-    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
-    font-size: 22px; color: var(--c-white); background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom));
-    box-shadow: 0 3px 0 var(--purple-input-shadow); display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 50%; right: 2px; transform: translateY(-50%);
+    width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 13px; color: var(--purple-shadow); background: transparent;
+    opacity: .45; display: flex; align-items: center; justify-content: center;
+    transition: opacity .15s ease;
   }
-  .count-replay:active { transform: translateY(calc(-50% + 2px)); box-shadow: 0 1px 0 var(--purple-input-shadow); }
+  .count-replay:hover { opacity: .8; }
+  .count-replay:active { opacity: 1; transform: translateY(calc(-50% + 1px)); }
   /* meetellen: elk object popt op maat op */
   .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
   .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
