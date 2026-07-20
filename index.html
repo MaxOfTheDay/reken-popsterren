@@ -3365,6 +3365,18 @@ function countDistractors(ans, count, lo, hi, delta) {
   return shuffle([...set]);
 }
 function dotOrObj(repr, emoji) { return repr === 'dots' ? '<span class="cg-dot"></span>' : `<span class="cg-obj">${emoji}</span>`; }
+// Voorwerp voor plek i. 'emoji' mag één teken zijn (hele groep gelijk) of een lijst
+// (gevarieerde voorwerpjes) — dan krijgt elke plek er willekeurig één uit, vast per vraag.
+function emojiAt(e, i) { return Array.isArray(e) ? (e[i % e.length] || e[0]) : e; }
+// Per vraag een klein 'thema' van 2–3 voorwerpsoorten; elke plek krijgt er
+// willekeurig een uit. Zo oogt een groep gevarieerd maar samenhangend, en blijft de
+// weergave stabiel bij hertekenen (de lijst wordt één keer per vraag gemaakt).
+function iconBag(n) {
+  const palette = shuffle(COUNT_OBJECTS.slice()).slice(0, rnd(2, 3));
+  const bag = [];
+  for (let i = 0; i < Math.max(1, n); i++) bag.push(pick(palette));
+  return bag;
+}
 // Gestructureerd stippenraam: vijfraam (cap 5) of tienraam (cap 10). Vaste plekken,
 // vaste volgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar, zodat
 // een hoeveelheid aan haar vórm herkenbaar is i.p.v. elke stip te hertellen. Zo zie
@@ -3395,13 +3407,13 @@ function groupHTML(n, emoji, repr, extraCls, frame, cap) {
   if (frame) return frameHTML(n, emoji, repr, extraCls);
   const cls = 'cgroup n' + n + (extraCls ? ' ' + extraCls : '');
   let inner = '';
-  for (let i = 0; i < n; i++) inner += `<span class="cg-obj">${emoji}</span>`;
+  for (let i = 0; i < n; i++) inner += `<span class="cg-obj">${emojiAt(emoji, i)}</span>`;
   return `<span class="${cls}" aria-hidden="true">${inner}</span>`;
 }
 // Tienraam: 2 rijen van 5, de eerste n vakjes gevuld — hoeveelheden 6–10 in één oogopslag.
 function frameHTML(n, emoji, repr, extraCls) {
   let cells = '';
-  for (let i = 0; i < 10; i++) cells += `<span class="tf-cell${i < n ? ' on' : ''}">${i < n ? dotOrObj(repr, emoji) : ''}</span>`;
+  for (let i = 0; i < 10; i++) cells += `<span class="tf-cell${i < n ? ' on' : ''}">${i < n ? dotOrObj(repr, emojiAt(emoji, i)) : ''}</span>`;
   return `<span class="cframe ${extraCls || ''}" aria-hidden="true">${cells}</span>`;
 }
 // Splitsen: rij van 'total' vakjes, 'shown' zichtbaar, de rest achter een gordijn (❓).
@@ -3409,7 +3421,7 @@ function splitHTML(total, shown, emoji, repr) {
   let cells = '';
   for (let i = 0; i < total; i++) {
     cells += i < shown
-      ? `<span class="tf-cell on">${dotOrObj(repr, emoji)}</span>`
+      ? `<span class="tf-cell on">${dotOrObj(repr, emojiAt(emoji, i))}</span>`
       : `<span class="tf-cell hidden">❓</span>`;
   }
   return `<span class="cframe split" aria-hidden="true">${cells}</span>`;
@@ -3448,10 +3460,13 @@ function genCount(p) {
   const info = countStageInfo(stage);
   const d = countDifficulty(p, stage);
   const type = pick(info.types);
-  const emoji = pick(COUNT_OBJECTS);
-  const repr = s.repr || 'objects';
   const frame = d.structured;
   const max = d.effMax;
+  // 'mix' → per vraag willekeurig voorwerpen óf stippen (hele groep gelijk, zodat het
+  // raam heel blijft). Zo leert Clara dat "5 sterren" en "5 stippen" hetzelfde getal zijn.
+  const baseRepr = s.repr || 'objects';
+  const repr = baseRepr === 'mix' ? (Math.random() < 0.5 ? 'dots' : 'objects') : baseRepr;
+  const emoji = iconBag(max);   // gevarieerde voorwerpjes, vast per vraag
   // Raamgrootte per vraag vast (vijfraam ≤5, anders tienraam), zodat álle
   // hoeveelheden in één vraag hetzelfde raam gebruiken (consistent, subitiseerbaar).
   const cap = max <= 5 ? 5 : 10;
@@ -3602,7 +3617,7 @@ function animateDelta(card, q) {
     } else if (q.card.dir > 0) {
       const extra = document.createElement('span');
       extra.className = q.card.repr === 'dots' ? 'cg-dot pop' : 'cg-obj pop';
-      extra.textContent = q.card.repr === 'dots' ? '' : q.card.emoji;
+      extra.textContent = q.card.repr === 'dots' ? '' : emojiAt(q.card.emoji, q.card.base);
       if (g) g.appendChild(extra);
     } else {
       const marks = card.querySelectorAll('.cg-obj, .cg-dot');
@@ -5124,8 +5139,8 @@ function oefeningPanelHtml(p, s) {
         <div class="chip-row" id="set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
       <div class="set-field"><span class="lbl">Hoogste hoeveelheid <span class="note">(hoe ver de aantallen mogen groeien)</span></span>
         <div class="chip-row" id="set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
-        <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', s.repr !== 'dots')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}</div></div>
+      <div class="set-field"><span class="lbl">Antwoorden tonen als <span class="note">(mix: wisselt per vraag, met gevarieerde voorwerpjes)</span></span>
+        <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', (s.repr || 'objects') === 'objects')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}${chip('mix', '🎲 Mix', s.repr === 'mix')}</div></div>
       <div class="set-field"><span class="lbl">🎴 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
         <div class="chip-row" id="set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
