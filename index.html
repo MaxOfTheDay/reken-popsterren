@@ -599,13 +599,15 @@
   /* Vervaagde cijfersteun (fase 6, hogere rung) */
   .cgroup.mini.faint { opacity: .35; }
   /* Gesteunde sommen (fases 9–11): de vergelijking a ＋/➖ b ＝ ? */
-  .sum-eq { display: flex; align-items: center; justify-content: center; gap: 6px 8px; flex-wrap: wrap; max-width: 100%; }
-  .sum-op { font-size: clamp(24px, 6vw, 34px); font-weight: 800; color: var(--purple-shadow); }
+  .sum-eq { display: flex; align-items: center; justify-content: center; gap: 4px 8px; flex-wrap: wrap; max-width: 100%; }
+  .sum-op { font-size: clamp(26px, 6.5vw, 36px); font-weight: 800; color: var(--purple-shadow); }
   .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 800; color: var(--purple-input-bottom); }
   .sum-operand { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
   .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
-  .sum-eq .cgroup { max-width: 128px; }
+  .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
+  /* de cijfer-stippen (fase 10/11) clusteren compact ónder het cijfer, i.p.v. een brede rij */
+  .sum-operand .cgroup.mini { max-width: 42px; gap: 3px; margin-top: 3px; }
   /* wegstrepen bij aftrekken: doorgestreept + gedimd */
   .cgroup.crossed .cg-obj, .cgroup.crossed .cg-dot { opacity: .4; text-decoration: line-through; position: relative; }
   .cgroup.crossed .cg-dot { filter: grayscale(1); }
@@ -3357,15 +3359,17 @@ function splitHTML(total, shown, emoji, repr) {
 //  'written' = cijfers met stippen die per rung vervagen (full→faint→none)
 function sumEqHTML(card) {
   const { style, op, a, b, c, emoji, repr, support } = card;
-  const eq = inner => `<div class="sum-eq">${inner}<span class="sum-op">＝</span><span class="sum-eq-q">❓</span></div>`;
+  // schone wiskundetekens (geen emoji): '➖' toonde als een zwart blokje
+  const opSym = op === '-' ? '−' : '+';
+  const eq = inner => `<div class="sum-eq">${inner}<span class="sum-op">=</span><span class="sum-eq-q">?</span></div>`;
   if (style === 'sym') {
     if (op === '-') {
       // wegstrepen: de c die overblijven normaal, de b weggehaalde doorgestreept
       const kept = groupHTML(c, emoji, repr, 'big');
       const gone = groupHTML(b, emoji, repr, 'big crossed');
-      return eq(`${kept}<span class="sum-op">➖</span>${gone}`);
+      return eq(`${kept}<span class="sum-op">−</span>${gone}`);
     }
-    return eq(`${groupHTML(a, emoji, repr, 'big')}<span class="sum-op">＋</span>${groupHTML(b, emoji, repr, 'big')}`);
+    return eq(`${groupHTML(a, emoji, repr, 'big')}<span class="sum-op">+</span>${groupHTML(b, emoji, repr, 'big')}`);
   }
   // cijfer-stijlen (dots / written): elk getal = cijfer met (vervagende) stippen eronder
   const sup = style === 'dots' ? 'full' : (support || 'full');
@@ -3373,7 +3377,7 @@ function sumEqHTML(card) {
     const dots = sup === 'none' ? '' : groupHTML(n, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''));
     return `<span class="sum-operand"><span class="sum-num">${n}</span>${dots}</span>`;
   };
-  return eq(`${operand(a)}<span class="sum-op">${op === '-' ? '➖' : '＋'}</span>${operand(b)}`);
+  return eq(`${operand(a)}<span class="sum-op">${opSym}</span>${operand(b)}`);
 }
 // Bouwt één telmodus-vraag. Alle types leveren een genormaliseerd object met
 // numeriek antwoord (q.ans) en keuzeknoppen (q.choices), plus de voor te lezen tekst.
