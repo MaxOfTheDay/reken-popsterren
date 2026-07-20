@@ -586,7 +586,13 @@
   .cframe .cg-obj { font-size: 20px; }
   .cframe.big .cg-obj { font-size: 24px; }
   .cframe .cg-dot { width: 16px; height: 16px; }
-  .count-tile .cframe { transform: scale(.72); margin: -6px; }
+  /* tienraam in een antwoordknop: écht kleinere vakjes (geen transform-schaal —
+     die verkleint alleen visueel, niet de layout, waardoor 3 tegels op smalle
+     schermen buiten beeld liepen) */
+  .count-tile .cframe { gap: 2px; }
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; border-width: 1.5px; border-radius: 4px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; }
   /* Grote-cijferkaart (cijfer → hoeveelheid) */
   .cq-bignum { font-size: clamp(52px, 15vw, 84px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
   /* Één-meer/minder-badge naast de groep */
