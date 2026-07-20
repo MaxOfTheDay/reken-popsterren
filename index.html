@@ -593,6 +593,27 @@
   .count-tile .cframe .tf-cell { width: 15px; height: 15px; border-width: 1.5px; border-radius: 4px; }
   .count-tile .cframe .cg-obj { font-size: 11px; }
   .count-tile .cframe .cg-dot { width: 8px; height: 8px; }
+
+  /* ---- Stippenraam (leer-aid): vijf-/tienraam met VASTE plekken ----
+     Vaste vulvolgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar,
+     de rijen staan iets uit elkaar (5-anker), zodat je "5 en nog wat" en "hoeveel
+     nog tot 10" in één oogopslag ziet, zonder elke stip te hertellen. */
+  .dframe { display: inline-grid; grid-template-columns: repeat(5, auto); column-gap: 5px; row-gap: 8px; }
+  .df-cell { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid rgba(74,20,140,.16); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .df-cell.on { border-color: rgba(74,20,140,.30); }
+  .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); }
+  .dframe.big .df-cell { width: 27px; height: 27px; }
+  .dframe.faint .df-dot { opacity: .34; }
+  /* kleine steunstipjes ónder een cijfer (antwoordknoppen + som-operanden) */
+  .dframe.mini { column-gap: 2px; row-gap: 2px; }
+  .dframe.mini .df-cell { width: 10px; height: 10px; border-radius: 3px; border-width: 1px; }
+  /* op paarse knoppen: witte stippen + lichtere randjes (i.p.v. donker op wit) */
+  .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
+  .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
+  .count-tile .df-dot { background: rgba(255,255,255,.95); }
+  .df-dot.pre { opacity: .22; transform: scale(.6); }
+  .df-dot.pop { animation: cpop .4s ease; }
+  .df-dot.fade-out { animation: cfade .5s ease forwards; }
   /* Grote-cijferkaart (cijfer → hoeveelheid) */
   .cq-bignum { font-size: clamp(52px, 15vw, 84px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
   /* Één-meer/minder-badge naast de groep */
@@ -610,12 +631,14 @@
   .sum-eq { display: flex; align-items: baseline; justify-content: center; gap: 4px 10px; flex-wrap: wrap; max-width: 100%; }
   .sum-op { font-size: clamp(26px, 6.5vw, 36px); font-weight: 800; color: var(--purple-shadow); }
   .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 800; color: var(--purple-input-bottom); align-self: baseline; }
-  .sum-operand { position: relative; display: inline-block; padding-bottom: 22px; }
+  /* elke operand krijgt genoeg breedte om zijn eigen stippenraam eronder te dragen,
+     zodat de raampjes van 7 en 3 elkaar niet overlappen */
+  .sum-operand { position: relative; display: inline-block; min-width: 62px; padding-bottom: 30px; }
   .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
   /* de cijfer-stippen (fase 10/11) staan als net rijtje ónder het cijfer, gecentreerd */
-  .sum-operand .cgroup.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, -20px); max-width: 58px; gap: 3px 4px; }
+  .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, -30px); }
   /* wegstrepen bij aftrekken: doorgestreept + gedimd */
   .cgroup.crossed .cg-obj, .cgroup.crossed .cg-dot { opacity: .4; text-decoration: line-through; position: relative; }
   .cgroup.crossed .cg-dot { filter: grayscale(1); }
@@ -979,6 +1002,9 @@
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
     .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }
+    .df-dot.pre { opacity: 1; transform: none; }
+    .df-dot.pop { animation: none; }
+    .df-dot.fade-out { animation: none; opacity: .12; }
     .mem-inner { transition: none; }
     .mem-card.done .mem-face { animation: none; }
   }
@@ -3337,12 +3363,37 @@ function countDistractors(ans, count, lo, hi, delta) {
   return shuffle([...set]);
 }
 function dotOrObj(repr, emoji) { return repr === 'dots' ? '<span class="cg-dot"></span>' : `<span class="cg-obj">${emoji}</span>`; }
-// HTML voor een hoeveelheid: los groepje (≤5) of een tienraam (structured, 6–10).
-function groupHTML(n, emoji, repr, extraCls, frame) {
+// Gestructureerd stippenraam: vijfraam (cap 5) of tienraam (cap 10). Vaste plekken,
+// vaste volgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar, zodat
+// een hoeveelheid aan haar vórm herkenbaar is i.p.v. elke stip te hertellen. Zo zie
+// je "5 en nog wat" en "hoeveel nog tot 10" meteen. support: 'full' gevuld · 'faint'
+// gedimd · 'none' niets.
+function dotFrameHTML(n, cap, extraCls, support) {
+  support = support || 'full';
+  if (support === 'none') return '';
+  cap = cap === 5 ? 5 : 10;
+  // Als n groter is dan het raam (bijv. 11 in een tienraam), groeit het raam
+  // naar het volgende vijftal (max 20) zodat 11 zichtbaar verschilt van 10.
+  const total = n > cap ? Math.min(20, Math.ceil(n / 5) * 5) : cap;
+  let cells = '';
+  for (let i = 0; i < total; i++) {
+    const on = i < n;
+    cells += `<span class="df-cell${on ? ' on' : ''}">${on ? '<span class="df-dot"></span>' : ''}</span>`;
+  }
+  return `<span class="dframe ${cap === 5 ? 'five' : 'ten'}${extraCls ? ' ' + extraCls : ''}${support === 'faint' ? ' faint' : ''}" aria-hidden="true">${cells}</span>`;
+}
+// HTML voor een hoeveelheid. Stippen → altijd een gestructureerd raam (dotFrameHTML).
+// Voorwerpen (emoji) → speels los groepje (≤5) of een tienraam (frame, 6–10).
+function groupHTML(n, emoji, repr, extraCls, frame, cap) {
+  if (repr === 'dots') {
+    const ex = (extraCls || '');
+    const sup = ex.includes('faint') ? 'faint' : 'full';
+    return dotFrameHTML(n, cap || (n <= 5 ? 5 : 10), ex.replace('faint', '').trim(), sup);
+  }
   if (frame) return frameHTML(n, emoji, repr, extraCls);
-  const cls = 'cgroup' + (repr === 'dots' ? ' dots' : '') + ' n' + n + (extraCls ? ' ' + extraCls : '');
+  const cls = 'cgroup n' + n + (extraCls ? ' ' + extraCls : '');
   let inner = '';
-  for (let i = 0; i < n; i++) inner += dotOrObj(repr, emoji);
+  for (let i = 0; i < n; i++) inner += `<span class="cg-obj">${emoji}</span>`;
   return `<span class="${cls}" aria-hidden="true">${inner}</span>`;
 }
 // Tienraam: 2 rijen van 5, de eerste n vakjes gevuld — hoeveelheden 6–10 in één oogopslag.
@@ -3366,23 +3417,23 @@ function splitHTML(total, shown, emoji, repr) {
 //  'dots'    = cijfers met stippen eronder (altijd)
 //  'written' = cijfers met stippen die per rung vervagen (full→faint→none)
 function sumEqHTML(card) {
-  const { style, op, a, b, c, emoji, repr, support } = card;
+  const { style, op, a, b, c, emoji, repr, support, cap } = card;
   // schone wiskundetekens (geen emoji): '➖' toonde als een zwart blokje
   const opSym = op === '-' ? '−' : '+';
   const eq = inner => `<div class="sum-eq">${inner}<span class="sum-op">=</span><span class="sum-eq-q">?</span></div>`;
   if (style === 'sym') {
     if (op === '-') {
       // wegstrepen: de c die overblijven normaal, de b weggehaalde doorgestreept
-      const kept = groupHTML(c, emoji, repr, 'big');
-      const gone = groupHTML(b, emoji, repr, 'big crossed');
+      const kept = groupHTML(c, emoji, repr, 'big', false, cap);
+      const gone = groupHTML(b, emoji, repr, 'big crossed', false, cap);
       return eq(`${kept}<span class="sum-op">−</span>${gone}`);
     }
-    return eq(`${groupHTML(a, emoji, repr, 'big')}<span class="sum-op">+</span>${groupHTML(b, emoji, repr, 'big')}`);
+    return eq(`${groupHTML(a, emoji, repr, 'big', false, cap)}<span class="sum-op">+</span>${groupHTML(b, emoji, repr, 'big', false, cap)}`);
   }
   // cijfer-stijlen (dots / written): elk getal = cijfer met (vervagende) stippen eronder
   const sup = style === 'dots' ? 'full' : (support || 'full');
   const operand = n => {
-    const dots = sup === 'none' ? '' : groupHTML(n, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''));
+    const dots = sup === 'none' ? '' : groupHTML(n, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''), false, cap);
     return `<span class="sum-operand"><span class="sum-num">${n}</span>${dots}</span>`;
   };
   return eq(`${operand(a)}<span class="sum-op">${opSym}</span>${operand(b)}`);
@@ -3399,9 +3450,12 @@ function genCount(p) {
   const repr = s.repr || 'objects';
   const frame = d.structured;
   const max = d.effMax;
+  // Raamgrootte per vraag vast (vijfraam ≤5, anders tienraam), zodat álle
+  // hoeveelheden in één vraag hetzelfde raam gebruiken (consistent, subitiseerbaar).
+  const cap = max <= 5 ? 5 : 10;
   const nCh = Math.min(d.tiles, Math.max(2, max));
-  const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, frame, support: d.support, gold: false };
-  const qgroup = v => ({ v, kind: 'group', n: v, emoji, repr, frame });
+  const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, frame, cap, support: d.support, gold: false };
+  const qgroup = v => ({ v, kind: 'group', n: v, emoji, repr, frame, cap });
 
   if (type === 'count' || type === 'along') {
     const n = rnd(1, max);
@@ -3493,6 +3547,9 @@ function genCount(p) {
     q.choices = countDistractors(q.ans, nCh, 1, Math.max(q.ans + 2, max), d.delta).map(qgroup);
     q.prompt = 'Hoeveel zitten er verstopt achter het gordijn?';
   }
+  // raamgrootte overal beschikbaar maken (kaart + alle keuzeknoppen)
+  if (q.card) q.card.cap = cap;
+  if (q.choices) q.choices.forEach(c => { if (c.cap == null) c.cap = cap; });
   return q;
 }
 // De vraagkaart bovenin: toont de hoeveelheid/opdracht en spreekt haar uit.
@@ -3502,18 +3559,19 @@ function drawCountQuestion(q) {
   const cardRepr = q.card.repr || 'objects';
   const kind = q.card.kind;
   let body = '';
-  if (kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, cardRepr, 'big', q.card.frame)}</div>`;
+  const cap = q.card.cap;
+  if (kind === 'group') body = `<div class="cq-groupwrap">${groupHTML(q.card.n, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
   else if (kind === 'label') body = `<div class="cq-label">${q.card.text}</div>`;
   else if (kind === 'listen') body = `<div class="cq-listen">👂</div>`;
   else if (kind === 'bignum') body = `<div class="cq-bignum">${q.card.n}</div>`;
-  else if (kind === 'delta') body = `<div class="cq-groupwrap">${groupHTML(q.card.base, q.card.emoji, cardRepr, 'big', q.card.frame)}<span class="cq-delta ${q.card.dir > 0 ? 'add' : 'rem'}">${q.card.dir > 0 ? '＋1' : '－1'}</span></div>`;
-  else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame)}</div>`;
+  else if (kind === 'delta') body = `<div class="cq-groupwrap">${groupHTML(q.card.base, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-delta ${q.card.dir > 0 ? 'add' : 'rem'}">${q.card.dir > 0 ? '＋1' : '－1'}</span></div>`;
+  else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
   card.innerHTML = `<div class="count-q">${body}${replay}</div>`;
   // meetellen: objecten poppen één voor één op terwijl er hardop geteld wordt
   if (q.along && kind === 'group') {
-    const objs = card.querySelectorAll('.cg-obj, .cg-dot');
+    const objs = card.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     objs.forEach(o => o.classList.add('pre'));
     countAlong(objs, q.card.n, q.prompt);
     return;
@@ -3524,14 +3582,25 @@ function drawCountQuestion(q) {
 }
 // Toon één object erbij (pop) of eraf (fade) zodat het kind het resultaat kan tellen.
 function animateDelta(card, q) {
+  const dframe = card.querySelector('.dframe');
   const g = card.querySelector('.cgroup, .cframe');
   setTimeout(() => {
     if (!G || !G.count) return;
-    if (q.card.dir > 0) {
+    if (dframe) {
+      // stippenraam: vul een leeg vakje (erbij) of leeg het laatste (eraf)
+      const cells = [...dframe.querySelectorAll('.df-cell')];
+      if (q.card.dir > 0) {
+        const empty = cells.find(c => !c.classList.contains('on'));
+        if (empty) { empty.classList.add('on'); empty.innerHTML = '<span class="df-dot pop"></span>'; }
+      } else {
+        const on = cells.filter(c => c.classList.contains('on')).pop();
+        const dot = on && on.querySelector('.df-dot');
+        if (dot) dot.classList.add('fade-out');
+      }
+    } else if (q.card.dir > 0) {
       const extra = document.createElement('span');
-      extra.className = 'cg-obj pop';
+      extra.className = q.card.repr === 'dots' ? 'cg-dot pop' : 'cg-obj pop';
       extra.textContent = q.card.repr === 'dots' ? '' : q.card.emoji;
-      if (q.card.repr === 'dots') { extra.className = 'cg-dot pop'; }
       if (g) g.appendChild(extra);
     } else {
       const marks = card.querySelectorAll('.cg-obj, .cg-dot');
@@ -3547,10 +3616,10 @@ function renderCountAnswers(q, area) {
     let inner;
     if (c.kind === 'numeral') {
       const sup = c.support || 'full';
-      const dots = sup === 'none' ? '' : groupHTML(c.v, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''));
+      const dots = sup === 'none' ? '' : groupHTML(c.v, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''), false, c.cap);
       inner = `<span class="ct-num">${c.v}</span>${dots}`;
     } else {
-      inner = groupHTML(c.n, c.emoji, c.repr, '', c.frame);
+      inner = groupHTML(c.n, c.emoji, c.repr, '', c.frame, c.cap);
     }
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
@@ -3644,7 +3713,7 @@ function countReveal(q) {
   const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
   if (tile) {
     tile.classList.add('good');
-    const objs = tile.querySelectorAll('.cg-obj, .cg-dot');
+    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
     if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
     else { let i = 0; const c = () => { if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
