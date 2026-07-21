@@ -400,8 +400,44 @@
      renderCareerStrip); titel + teller + balk vormen samen één groepje --
      de teller (klein, ondergeschikt aan de titel) staat er vlak boven de
      balk, gecentreerd, als één doorlopend getal (geen "nog X" ernaast meer). */
-  .career-strip { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; }
+  .career-strip { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; cursor: pointer; }
+  .career-strip:active { transform: scale(.98); }
   .rank-counter { font-size: 13px; font-weight: 700; color: var(--c-white); opacity: .85; letter-spacing: .01em; }
+  .rank-tap { font-weight: 800; color: var(--gold-light); opacity: .95; margin-left: 3px; }
+  .rank-counter.big { font-size: 16px; opacity: 1; margin-top: 2px; }
+
+  /* ---- Carrière-ladder (ster-status) ---- */
+  .career-overlay {
+    position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center;
+    background: rgba(20,4,40,.55); animation: popFade .25s ease; cursor: pointer; padding: 16px;
+  }
+  .career-overlay.closing { animation: popFade .25s ease reverse forwards; }
+  .career-panel {
+    position: relative; width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; cursor: default; text-align: center;
+    padding: 20px 18px 16px; border-radius: var(--radius-xl); border: 3px solid var(--gold-accent);
+    background: linear-gradient(180deg, var(--purple-deep), var(--purple-shadow)); box-shadow: 0 10px 40px var(--glass-black-50);
+    animation: popIn .4s cubic-bezier(.2,1.3,.4,1);
+  }
+  .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--glass-white-13); color: var(--c-white); font-size: 16px; font-weight: 800; }
+  .career-title { font-size: 15px; font-weight: 800; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
+  .career-now { font-size: 25px; font-weight: 900; color: var(--c-white); margin: 4px 0 2px; }
+  .rank-bar.wide { max-width: 300px; margin: 6px auto 0; }
+  .career-next { font-size: 14px; font-weight: 700; color: var(--pink-light); margin: 8px 0 12px; }
+  .career-list { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+  .career-row {
+    display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 12px;
+    background: var(--glass-white-10); border: 1px solid var(--glass-white-10); opacity: .55;
+  }
+  .career-row.reached { opacity: 1; }
+  .career-row.current { opacity: 1; border-color: var(--gold-accent); background: rgba(255,214,90,.12); box-shadow: 0 0 12px rgba(255,170,0,.35); }
+  .career-row.future { opacity: .7; font-style: italic; }
+  .cr-mark { width: 16px; font-weight: 900; color: var(--gold-light); flex: none; text-align: center; }
+  .cr-emoji { font-size: 22px; flex: none; }
+  .cr-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 15px; }
+  .cr-req { font-size: 13px; font-weight: 700; color: var(--lavender-text); flex: none; }
+  .cr-bonus { font-size: 12.5px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: 6px; }
+  @media (prefers-reduced-motion: reduce) { .career-overlay, .career-panel { animation: none; } }
   .rank-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
   .rank-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
@@ -1295,6 +1331,7 @@
   .earn-chip.fan { background: rgba(255,64,129,.28); }
   /* nieuwe carrièrerang: dé mijlpaal van de show -- gouden pil die eruit springt */
   .earn-chip.rank { background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 2px 10px rgba(255,179,0,.4); }
+  .earn-chip.nextrank { background: rgba(255,215,64,.18); border: 1px dashed rgba(255,215,64,.5); }
   /* eigen, opvallend blokje i.p.v. een tekstregel tussen de andere zinnen — zelfde
      gouden puls als een "klaar om te openen"-trofee in de kast (via .gold-pill),
      zodat dit al vooruitwijst naar wat je zo meteen ziet. Zelf ook klikbaar
@@ -1685,7 +1722,7 @@
         <div class="header-title" id="map-tournee-label"></div>
         <div class="diamond-badge header-right">💎 <span id="map-diamonds">0</span></div>
       </div>
-      <div class="career-strip" id="career-strip"></div>
+      <div class="career-strip" id="career-strip" role="button" tabindex="0" onclick="openCareer()" aria-label="Bekijk je ster-status"></div>
     </div>
     <div class="map-flex">
       <div class="tour-map-wrap">
@@ -2085,6 +2122,7 @@ const TROPHIES = [
   { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: '10 perfecte shows',    has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
   { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: '15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
   { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: '30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
+  { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster-status', desc: 'Ster-status Stadsster (60 ⭐)', has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
   { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
   { id: 'toegift25',  emoji: '🎆', name: 'Extra-showkoning', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
@@ -2136,7 +2174,7 @@ const TROPHIES = [
 const TROPHY_SHELVES = [
   { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
   { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
-  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'perfecttour', 'toegift', 'toegift25'] },
+  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'perfecttour', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
   { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
   { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
@@ -2850,8 +2888,52 @@ function renderCareerStrip(p) {
   // echte teller (bv. "96/100 ⭐") i.p.v. een "nog X"-restlabel -- geen dubbele
   // voortgangsinformatie naast de balk, en meteen duidelijk wat "vol" betekent
   $('career-strip').innerHTML =
-    `<span class="rank-counter">${total}/${r.nextMin} ⭐</span>`
+    `<span class="rank-counter">${total}/${r.nextMin} ⭐ <span class="rank-tap">status ›</span></span>`
     + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
+}
+// De hele carrière-ladder in beeld: behaalde, huidige en komende ster-statussen,
+// met hun sterrendrempel en diamant-bonus. Tik buiten = dicht. Hergebruikt
+// RANK_TIERS/starRank volledig, dus geen nieuwe data.
+function openCareer() {
+  sndClick();
+  const p = P();
+  const total = totalStarCount(p);
+  const cur = starRank(total);
+  const curBase = Math.min(cur.idx, RANK_TIERS.length - 1);   // welke vaste tier is 'nu'
+  const into = total - cur.curMin, span = cur.nextMin - cur.curMin;
+  const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
+  const remain = cur.nextMin - total;
+  let rows = '';
+  RANK_TIERS.forEach((t, i) => {
+    const reached = total >= t.min;
+    const isCur = i === curBase;
+    const mark = isCur ? '➤' : (reached ? '✓' : '');
+    const bonus = t.bonus > 0 ? `<span class="cr-bonus">+${t.bonus} 💎</span>` : '';
+    rows += `<div class="career-row${reached ? ' reached' : ''}${isCur ? ' current' : ''}">`
+      + `<span class="cr-mark">${mark}</span><span class="cr-emoji">${t.emoji}</span>`
+      + `<span class="cr-name">${t.name}</span><span class="cr-req">${t.min} ⭐</span>${bonus}</div>`;
+  });
+  // open einde: de Wereldlegende ⭐N-reeks voorbij de laatste vaste rang
+  rows += `<div class="career-row future"><span class="cr-mark"></span><span class="cr-emoji">⭐</span>`
+    + `<span class="cr-name">…en verder</span><span class="cr-req">elke +${RANK_STEP} ⭐</span></div>`;
+  const nextLine = remain > 0
+    ? `🎯 nog ${remain} ⭐ tot ${cur.nextName}`
+    : 'Hoogste status bereikt — geweldig! 🌟';
+  const ov = document.createElement('div');
+  ov.className = 'career-overlay';
+  ov.innerHTML = `<div class="career-panel">`
+    + `<button class="career-close" type="button" aria-label="Sluiten">✕</button>`
+    + `<div class="career-title">Jouw ster-status</div>`
+    + `<div class="career-now">${cur.emoji} ${cur.name}</div>`
+    + `<div class="rank-counter big">${total}/${cur.nextMin} ⭐</div>`
+    + `<div class="rank-bar wide"><span class="rank-fill" style="width:${pct}%"></span></div>`
+    + `<div class="career-next">${nextLine}</div>`
+    + `<div class="career-list">${rows}</div></div>`;
+  document.body.appendChild(ov);
+  const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 250); };
+  ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) close(); };
+  // huidige rij netjes in beeld
+  requestAnimationFrame(() => { const c = ov.querySelector('.career-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
 }
 function goMap() {
   const p = P();
@@ -4274,6 +4356,9 @@ function renderQuestion() {
       else built = buildQuestion(p, G.lvl);
     }
     if (G.idx === G.goldIdx) built.gold = true;
+    // telmodus: kondig de gouden vraag hoorbaar aan (lees-vrij) -- de prompt wordt
+    // toch alleen uitgesproken, niet getoond, dus dit dubbelt niets in beeld
+    if (built.gold && G.count && built.prompt) built.prompt = 'Gouden vraag! Deze telt drie keer. ' + built.prompt;
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
@@ -4321,7 +4406,9 @@ function renderQuestion() {
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
-  $('gold-banner').textContent = q.gold ? '🌟 GOUDEN VRAAG — 3× diamanten! 🌟' : '';
+  // telmodus is lees-vrij: geen tekstbanner maar een emoji-signaal (de gesproken
+  // "Gouden vraag!"-aankondiging zit in de vraag-prompt, zie renderQuestion)
+  $('gold-banner').textContent = q.gold ? (G.count ? '🌟 3× 💎 🌟' : '🌟 GOUDEN VRAAG — 3× diamanten! 🌟') : '';
   if (G.count) { drawCountQuestion(q); return; }
   const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
   $('question-text').textContent = q.tmpl.replace('@', shown);
@@ -4634,8 +4721,16 @@ function endLevel(success) {
   $('end-avatar').innerHTML = avatarSVG(p, 150);
   applyStage($('end-stage'), p);
   if (success) {
-    // Sterren op basis van álle missers (ook herkansingen): foutloos = 3 sterren.
-    const stars = G.misses === 0 ? 3 : G.misses === 1 ? 2 : 1;
+    // Sterren: rekenmodus telt missers hard (foutloos = 3). Telmodus (kleuters) is
+    // milder en kijkt naar hoeveel er over de héle ronde in één keer goed ging,
+    // zodat één verbeterde hapering een sterke ronde niet meteen degradeert.
+    let stars;
+    if (G.count) {
+      const ratio = G.total > 0 ? (G.total - G.misses) / G.total : 1;
+      stars = ratio >= 0.85 ? 3 : ratio >= 0.55 ? 2 : 1;
+    } else {
+      stars = G.misses === 0 ? 3 : G.misses === 1 ? 2 : 1;
+    }
     const bonus = stars * 5;
     p.diamonds += bonus;
     p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
@@ -4660,6 +4755,13 @@ function endLevel(success) {
     ];
     if (fanBonus > 0) earnChips.push(`<span class="earn-chip fan">👏 +${fanBonus} publiek</span>`);
     if (rankUp) earnChips.push(`<span class="earn-chip rank">${rankUp.rank.emoji} ${rankUp.rank.name}! +${rankUp.bonus} 💎</span>`);
+    else {
+      // geen rang-sprong deze show: laat wél zien hoe de sterren richting de
+      // volgende ster-status tellen (verbindt sterren zichtbaar met de rang-ladder)
+      const r = starRank(totalStarCount(p));
+      const remain = r.nextMin - totalStarCount(p);
+      if (remain > 0) earnChips.push(`<span class="earn-chip nextrank">🎯 nog ${remain} ⭐ tot ${r.nextName}</span>`);
+    }
     $('end-earn').innerHTML = earnChips.join('');
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(); };
