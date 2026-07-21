@@ -670,16 +670,9 @@
     box-shadow: 0 0 0 3px var(--green-top); opacity: 0; animation: goodRing .55s ease-out forwards;
   }
   @keyframes goodRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.14); } }
-  .choice-btn.good::after, .count-tile.good::after {
-    content: '✓'; position: absolute; top: 3px; right: 8px; font-size: 17px; font-weight: 900; color: #fff;
-    text-shadow: 0 1px 2px rgba(0,0,0,.35); opacity: 0; pointer-events: none;
-    animation: goodCheck .45s cubic-bezier(.2,1.6,.4,1) .1s forwards;
-  }
-  @keyframes goodCheck { 0% { opacity: 0; transform: scale(0) rotate(-25deg); } 60% { opacity: 1; transform: scale(1.3) rotate(6deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
   @media (prefers-reduced-motion: reduce) {
     .choice-btn.good, .count-tile.good { animation: none; }
     .choice-btn.good::before, .count-tile.good::before { display: none; }
-    .choice-btn.good::after, .count-tile.good::after { animation: none; opacity: 1; }
   }
 
   /* ---- Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ---- */
