@@ -425,11 +425,12 @@
      de huidige rung uitgeklapt met balk, de volgende als goud doel, de rest gedempt.
      Alleen bij 'nu' en 'volgende' staan getallen -- de rest blijft rustig. */
   .career-list { display: flex; flex-direction: column; gap: 5px; text-align: left; margin-top: 6px; }
-  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 11px; background: var(--glass-white-10); }
+  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 11px; border: 1px solid transparent; background: var(--glass-white-10); }
   .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; }
   .lr-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 14.5px; }
-  .ladder-row.past { opacity: .5; }
-  .lr-check { color: var(--green-top); font-weight: 900; flex: none; }
+  /* Behaald = dezelfde subtiele goud-taal als een behaalde trofee (.trophy-card.done):
+     zachte goudtint + goudrandje, geen icoon. Toekomst blijft juist kil/vaag. */
+  .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
   .ladder-row.future { opacity: .36; }
   .ladder-row.goal { border: 2px solid var(--gold-accent); background: rgba(255,214,90,.13); box-shadow: 0 0 12px rgba(255,170,0,.28); }
   .lr-remain { font-size: 12.5px; font-weight: 800; color: var(--pink-light); flex: none; }
@@ -2923,7 +2924,7 @@ function openCareer() {
   let rows = '';
   RANK_TIERS.forEach((t, i) => {
     if (i < curBase) {
-      rows += `<div class="ladder-row past"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span><span class="lr-check">✓</span></div>`;
+      rows += `<div class="ladder-row past"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span></div>`;
     } else if (i === curBase) {
       rows += `<div class="ladder-row current"><div class="lr-top"><span class="lr-emoji">${cur.emoji}</span>`
         + `<span class="lr-name">${cur.name}</span><span class="lr-now">NU</span></div>`
