@@ -2562,6 +2562,10 @@ function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.canc
 // Leest een zin voor. Volgt bewust de geluid-aan/uit-knop (stil = ook geen stem).
 function speak(text, opts) {
   opts = opts || {};
+  // Voice hoort bij de lees-vrije telmodus; in de rekenmodus geen enkele gesproken
+  // uitvoer (ook niet op gedeelde plekken als het trofee-feestje of de ster-status).
+  const cp = cur ? P() : null;
+  if (cp && cp.settings && cp.settings.track !== 'count') { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
     speechSynthesis.cancel();
