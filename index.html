@@ -432,20 +432,22 @@
      zachte goudtint + goudrandje, geen icoon. Toekomst blijft juist kil/vaag. */
   .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
   .ladder-row.future { opacity: .36; }
-  .ladder-row.goal { border: 2px solid var(--gold-accent); background: rgba(255,214,90,.13); box-shadow: 0 0 12px rgba(255,170,0,.28); }
-  .lr-remain { font-size: 12.5px; font-weight: 800; color: var(--pink-light); flex: none; }
-  .lr-bonus { font-size: 12.5px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: 8px; }
-  .ladder-row.current { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
-    background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border: 1px solid rgba(255,214,90,.38); }
+  /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
+     De balk vult richting déze tier (de /100 is zijn drempel), dus hij hoort hier. */
+  .ladder-row.goal { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
+    border: 2px solid var(--gold-accent); background: rgba(255,214,90,.13); box-shadow: 0 0 12px rgba(255,170,0,.28); }
   .lr-top { display: flex; align-items: center; gap: 10px; }
-  .ladder-row.current .lr-emoji { font-size: 30px; width: 34px; }
-  .ladder-row.current .lr-name { font-size: 18px; }
-  .lr-now { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
-    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); padding: 3px 9px; border-radius: 999px; }
+  .ladder-row.goal .lr-emoji { font-size: 27px; width: 32px; }
+  .ladder-row.goal .lr-name { font-size: 16px; }
+  .lr-bonus { font-size: 12.5px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: auto; }
   .lr-progress { display: flex; align-items: center; gap: 8px; }
   .lr-bar { flex: 1; height: 11px; border-radius: 999px; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   .lr-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); }
-  .lr-count { font-size: 12.5px; font-weight: 800; color: var(--c-white); flex: none; }
+  .lr-count { font-size: 12px; font-weight: 800; color: var(--c-white); flex: none; }
+  /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
+  .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: rgba(255,214,90,.38); }
+  .lr-now { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); padding: 3px 9px; border-radius: 999px; }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .career-panel { animation: none; } }
   .rank-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
@@ -2918,18 +2920,21 @@ function openCareer() {
   const remain = cur.nextMin - total;
   // Eén doorlopende ladder van laag naar hoog. De huidige rung (curBase) toont de
   // eigen naam/emoji uit starRank (klopt ook voor de open-einde Wereldlegende ⭐N).
-  const goalRow = (emoji, name) => `<div class="ladder-row goal"><span class="lr-emoji">${emoji}</span>`
-    + `<span class="lr-name">${name}</span><span class="lr-remain">nog ${remain} ⭐</span>`
-    + (rankBonusFor(cur.idx + 1) > 0 ? `<span class="lr-bonus">+${rankBonusFor(cur.idx + 1)} 💎</span>` : '') + `</div>`;
+  // De doel-rij (volgende status) draagt de balk: naam + beloning boven, voortgang
+  // eronder. De balk vult van je huidige tier naar déze drempel (de /nextMin).
+  const goalRow = (emoji, name) => `<div class="ladder-row goal">`
+    + `<div class="lr-top"><span class="lr-emoji">${emoji}</span><span class="lr-name">${name}</span>`
+    + (rankBonusFor(cur.idx + 1) > 0 ? `<span class="lr-bonus">+${rankBonusFor(cur.idx + 1)} 💎</span>` : '') + `</div>`
+    + `<div class="lr-progress"><span class="lr-bar"><span style="width:${pct}%"></span></span>`
+    + `<span class="lr-count">${total}/${cur.nextMin} ⭐ · nog ${remain}</span></div></div>`;
   let rows = '';
   RANK_TIERS.forEach((t, i) => {
     if (i < curBase) {
       rows += `<div class="ladder-row past"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span></div>`;
     } else if (i === curBase) {
-      rows += `<div class="ladder-row current"><div class="lr-top"><span class="lr-emoji">${cur.emoji}</span>`
-        + `<span class="lr-name">${cur.name}</span><span class="lr-now">NU</span></div>`
-        + `<div class="lr-progress"><span class="lr-bar"><span style="width:${pct}%"></span></span>`
-        + `<span class="lr-count">${total}/${cur.nextMin} ⭐</span></div></div>`;
+      // huidige status: slanke 'je bent hier'-markering (zonder balk)
+      rows += `<div class="ladder-row current"><span class="lr-emoji">${cur.emoji}</span>`
+        + `<span class="lr-name">${cur.name}</span><span class="lr-now">NU</span></div>`;
     } else if (i === cur.idx + 1) {
       rows += goalRow(t.emoji, t.name);   // de volgende vaste rang = het doel
     } else {
