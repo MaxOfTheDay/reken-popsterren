@@ -2120,9 +2120,12 @@ const TROPHIES = [
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: '1 perfecte show',    has: p => perfectCount(p) >= 1, progress: p => trophyProgress(perfectCount(p), 1, 'perfecte show') },
   { id: 'perfect3',   emoji: '💿', name: 'Gouden plaat',    desc: '3 perfecte shows',     has: p => perfectCount(p) >= 3, progress: p => trophyProgress(perfectCount(p), 3, 'perfecte shows') },
   { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: '10 perfecte shows',    has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
-  { id: 'stars15',    emoji: '🌠', name: 'Sterrenregen',    desc: '15 sterren',            has: p => totalStarCount(p) >= 15, progress: p => trophyProgress(totalStarCount(p), 15, 'sterren verzameld') },
-  { id: 'stars30',    emoji: '✨', name: 'Superster',       desc: '30 sterren',            has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
-  { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster-status', desc: 'Ster-status Stadsster (60 ⭐)', has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
+  // Ster-status-mijlpalen: dezelfde emoji's/namen als de rang-ladder, zodat de
+  // kast en de ladder één verhaal vertellen. Drempels liggen op de rang-grenzen
+  // (12/30/60 ⭐) en nooit hóger dan voorheen -> bestaande claims blijven geldig.
+  { id: 'stars15',    emoji: '⭐', name: 'Lokale ster',    desc: 'Ster-status: 12 ⭐',       has: p => totalStarCount(p) >= 12, progress: p => trophyProgress(totalStarCount(p), 12, 'sterren verzameld') },
+  { id: 'stars30',    emoji: '🎶', name: 'Clubster',       desc: 'Ster-status: 30 ⭐',       has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
+  { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster',      desc: 'Ster-status: 60 ⭐',       has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
   { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
   { id: 'toegift25',  emoji: '🎆', name: 'Extra-showkoning', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
