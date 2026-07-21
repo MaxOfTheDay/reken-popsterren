@@ -1149,9 +1149,80 @@
     100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.05); }
   }
 
+  /* ===== Trofee-feestje, versie "dopamine" =====
+     Vier momenten: (1) de klare kaart lokt met glans + wiebel, (2) de tik geeft
+     een ripple, (3) het openen is een schatkist die openknalt met stralen,
+     schokgolf en een confetti-kanon, (4) de behaalde kaart glimt kort na. */
+
+  /* (1) Klare trofee: een glans-veeg glijdt over de kaart + het cadeau wiebelt */
+  .trophy-card.ready { overflow: hidden; }
+  .trophy-card.ready::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-18deg);
+    animation: shineSweep 2.6s ease-in-out infinite;
+  }
+  @keyframes shineSweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+  .trophy-card.ready .temoji { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+  @keyframes giftWiggle {
+    0%, 58%, 100% { transform: rotate(0) translateY(0); }
+    66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
+    82% { transform: rotate(-5deg) translateY(-2px); } 90% { transform: rotate(3deg); }
+  }
+
+  /* (2) Tik-ripple: een lichtkringetje dat vanaf de vingerplek uitdijt */
+  .tap-ripple {
+    position: fixed; z-index: 93; pointer-events: none; width: 14px; height: 14px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,236,150,.85), rgba(255,236,150,0) 70%);
+    transform: translate(-50%, -50%) scale(0); animation: tapRipple .5s ease-out forwards;
+  }
+  @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
+
+  /* (3) Openen: schatkist-moment met stralen, schokgolf en emoji-inslag */
+  .tp-stage { position: relative; width: 150px; height: 118px; margin: 6px auto 2px; display: flex; align-items: center; justify-content: center; }
+  .tp-chest { position: absolute; z-index: 2; font-size: 74px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
+  @keyframes chestShake { 0%,100% { transform: rotate(-5deg) translateY(0); } 25% { transform: rotate(5deg) translateY(-2px); } 50% { transform: rotate(-4deg); } 75% { transform: rotate(4deg) translateY(-2px); } }
+  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(255,215,64,.85)); opacity: 0; transform: scale(.2); }
+  .tp-rays {
+    position: absolute; width: 210px; height: 210px; z-index: 1; opacity: 0; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(255,236,150,.5) 0deg 9deg, transparent 9deg 21deg);
+    -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
+  }
+  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(255,236,150,.9); z-index: 1; opacity: 0; }
+  .trophy-pop .tp-name, .trophy-pop .tp-joepie { opacity: 0; }
+  .trophy-pop.burst .tp-chest { animation: chestBurst .4s ease forwards; }
+  @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
+  .trophy-pop.burst .tp-emoji { animation: emojiReveal .55s cubic-bezier(.2,1.5,.4,1) .12s forwards; }
+  @keyframes emojiReveal { 0% { opacity: 0; transform: scale(.2) rotate(-12deg); } 60% { opacity: 1; transform: scale(1.18) rotate(5deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+  .trophy-pop.burst .tp-rays { animation: raysIn 2.6s linear .12s forwards; }
+  @keyframes raysIn { 0% { opacity: 0; transform: rotate(0) scale(.4); } 16% { opacity: .8; } 100% { opacity: .5; transform: rotate(150deg) scale(1); } }
+  .trophy-pop.burst .tp-ring { animation: ringOut .55s ease-out .12s forwards; }
+  @keyframes ringOut { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3.4); } }
+  .trophy-pop.burst .tp-name { animation: rankTextRise .45s ease .25s both; }
+  .trophy-pop.burst .tp-joepie { animation: rankTextRise .45s ease .38s both; }
+
+  /* Confetti-kanon: stukjes vliegen vanuit één punt naar buiten (met lichte zwaartekracht) */
+  .burst-bit { position: fixed; z-index: 92; pointer-events: none; font-size: 24px; will-change: transform, opacity; animation: burstOut .95s cubic-bezier(.15,.6,.3,1) forwards; }
+  @keyframes burstOut {
+    0% { transform: translate(-50%,-50%) scale(.3); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; }
+  }
+
+  /* (4) Net behaald: een eenmalige gouden shimmer over de kaart */
+  .trophy-card.just-claimed { overflow: hidden; }
+  .trophy-card.just-claimed::after {
+    content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: linear-gradient(105deg, transparent 32%, rgba(255,236,150,.7) 50%, transparent 68%);
+    transform: translateX(-100%); animation: claimShimmer .9s ease-out forwards;
+  }
+  @keyframes claimShimmer { to { transform: translateX(100%); } }
+
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready { animation: none; }
+    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.just-claimed::after { animation: none; }
     .trophy-pop { animation: none; }
+    .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
+    .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
     .end-trophy-banner { animation: none; }
     .rankup-badge, .rankup-label, .rankup-name { animation: none; }
     .rankup-spark { display: none; }
@@ -3002,6 +3073,7 @@ function trophyStatus(p, t) {
 }
 // (Her)tekent de hele kast. Losgemaakt van openTrophies zodat "Open trofee"
 // meteen kan hertekenen zónder de scrollpositie te verliezen.
+let justClaimed = null;   // id van de zojuist geopende trofee (voor de shimmer, één render lang)
 function renderShelves() {
   const p = P();
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
@@ -3031,6 +3103,7 @@ function renderShelves() {
     panel.appendChild(grid);
     wrap.appendChild(panel);
   });
+  justClaimed = null;   // shimmer geldt maar voor deze ene render
   save();
   updateTroDot();
 }
@@ -3076,8 +3149,9 @@ function trophyCard(t, p) {
     const a = Math.max(.25, .25 + (pct - 80) / 20 * .3);
     card.style.boxShadow = `0 0 12px rgba(255,213,79,${a.toFixed(2)})`;
   }
+  if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = status === 'ready' ? readyCardHTML(t) : normalCardHTML(t, p, status);
-  card.onclick = () => tapTrophy(t, card);
+  card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
 function normalCardHTML(t, p, status) {
@@ -3125,7 +3199,8 @@ function wearLook(id) {
 }
 // tikken mag: klaar opent de trofee; een thema-look brengt je naar de kleedkamer
 // (waar alle stukken/knoppen staan); een gewone behaalde glinstert; anders "Nog X".
-function tapTrophy(t, card) {
+function tapTrophy(t, card, e) {
+  if (e) tapRipple(e.clientX, e.clientY);   // tactiel: kringetje vanaf de vinger
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
@@ -3149,6 +3224,7 @@ function openTrophy(id) {
   checkTrophies(p);   // claimen kan de eindtrofee 'Kast vol!' klaarleggen
   save();
   celebrateTrophy(t);
+  justClaimed = id;   // net-behaalde kaart krijgt eenmalig een gouden shimmer
   renderShelves();    // kaart wordt 'Behaald!', scrollpositie blijft
 }
 // Klein beloningsmoment: pop-up + confetti, blijft in beeld tot er ergens
@@ -3156,17 +3232,39 @@ function openTrophy(id) {
 // beslaat het hele scherm (position:fixed; inset:0), dus "ergens tikken"
 // werkt overal, niet alleen op het kaartje zelf.
 function celebrateTrophy(t) {
-  sndWin();
-  buzz([0, 40, 60, 40, 80]);
-  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) confetti(26);
+  const reduce = motionOff();
+  sndClick();          // 'optil'-tik op het moment van openen
+  buzz(20);
   const ov = document.createElement('div');
   ov.className = 'trophy-pop-overlay';
-  ov.innerHTML = '<div class="trophy-pop"><div class="tp-head">🎁 Nieuwe trofee!</div>'
-    + `<div class="tp-emoji">${t.emoji}</div><div class="tp-name">${t.name}</div>`
+  ov.innerHTML = '<div class="trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
+    + '<div class="tp-stage">'
+    +   '<div class="tp-rays" aria-hidden="true"></div>'
+    +   '<div class="tp-ring" aria-hidden="true"></div>'
+    +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
+    +   `<div class="tp-emoji">${t.emoji}</div>`
+    + '</div>'
+    + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>';
   document.body.appendChild(ov);
+  const pop = ov.querySelector('.trophy-pop');
+  // De uitbarsting: kist knalt open, emoji slaat in, confetti-kanon + feestgeluid.
+  const burst = () => {
+    if (!ov.isConnected || pop.classList.contains('burst')) return;
+    pop.classList.add('burst');
+    sndWin();
+    buzz([0, 40, 60, 40, 90]);
+    if (!reduce) {
+      const r = pop.getBoundingClientRect();
+      confettiBurst(r.left + r.width / 2, r.top + r.height * 0.42, 30, t.emoji);
+    }
+    speak('Joepie! Je hebt de trofee ' + t.name + '!');
+  };
+  if (reduce) burst();
+  else setTimeout(burst, 480);   // eerst even spanning: de kist schudt
   const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
-  ov.onclick = close;
+  // Ongeduldig? Eerste tik opent meteen; daarna sluit een tik het feestje.
+  ov.onclick = () => { if (!pop.classList.contains('burst')) burst(); else close(); };
 }
 // Ster-status omhoog: het nieuwe rang-icoon knalt naar voren met een uitbarsting
 // van datzelfde icoon eromheen. Tik of ~2,2s = weg. Aangeroepen vanaf endLevel.
@@ -4602,6 +4700,40 @@ function confetti(n) {
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
     document.body.appendChild(d);
     setTimeout(() => d.remove(), 4500);
+  }
+}
+// Reduced-motion? Dan geen sier-animaties.
+function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
+// Lichtkringetje vanaf een tikpunt (x,y in viewport-coördinaten).
+function tapRipple(x, y) {
+  if (motionOff() || x == null) return;
+  const r = document.createElement('div');
+  r.className = 'tap-ripple';
+  r.style.left = x + 'px'; r.style.top = y + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 520);
+}
+// Confetti-kanon: stukjes spuiten vanuit (cx,cy) naar buiten, met wat zwaartekracht.
+// 'hero' = een emoji (bijv. het trofee-icoon) die er tussendoor meevliegt.
+function confettiBurst(cx, cy, n, hero) {
+  if (motionOff()) return;
+  const emo = ['🎉', '🎊', '⭐', '💖', '✨', '💎', '🌟'];
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('div');
+    b.className = 'burst-bit';
+    b.textContent = (hero && i % 4 === 0) ? hero : pick(emo);
+    const ang = rnd(0, 359) * Math.PI / 180;
+    const dist = rnd(60, 190);
+    const dx = Math.round(Math.cos(ang) * dist);
+    const dy = Math.round(Math.sin(ang) * dist) + rnd(20, 70);   // lichte val naar beneden
+    b.style.left = cx + 'px'; b.style.top = cy + 'px';
+    b.style.setProperty('--dx', dx + 'px');
+    b.style.setProperty('--dy', dy + 'px');
+    b.style.setProperty('--rot', rnd(-220, 220) + 'deg');
+    if (i % 5 === 0) b.style.fontSize = '32px';                  // een paar grote 'hero'-stukken
+    b.style.animationDelay = (rnd(0, 6) / 100) + 's';
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 1050);
   }
 }
 
