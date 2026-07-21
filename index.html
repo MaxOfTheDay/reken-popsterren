@@ -560,6 +560,14 @@
     font-size: clamp(42px, 8.5vw, 62px); font-weight: 700; min-width: min(88vw, 400px);
     box-shadow: 0 10px 24px var(--glass-black-32); border: 3px solid rgba(255,255,255,.7);
   }
+  /* Het onbekende getal -- het antwoord ("3 + 4 = ▢") of het ontbrekende getal
+     ("3 + ▢ = 7") -- als een duidelijk in-te-vullen vakje. Meteen zichtbaar wát
+     er gevraagd wordt, en visueel gelijk voor beide vraagsoorten. */
+  .q-blank {
+    display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: 14px; line-height: 1.02;
+    border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
+  }
+  .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
   /* de spotlight-bonus leeft ín de somkaart: een gouden randje dat langzaam dooft —
      geen aparte tijdbalk-rij die als "haast je!" leest */
   .spot-rail {
@@ -4435,10 +4443,11 @@ function drawQuestion() {
   $('question-card').classList.toggle('golden', !!q.gold);
   // telmodus is lees-vrij: geen tekstbanner maar een emoji-signaal (de gesproken
   // "Gouden vraag!"-aankondiging zit in de vraag-prompt, zie renderQuestion)
-  $('gold-banner').textContent = q.gold ? (G.count ? '🌟 3× 💎 🌟' : '🌟 GOUDEN VRAAG — 3× diamanten! 🌟') : '';
+  // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de rekenmodus).
+  $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
   if (G.count) { drawCountQuestion(q); return; }
-  const shown = G.mode === 'typ' ? (G.input === '' ? '_' : G.input) : '?';
-  $('question-text').textContent = q.tmpl.replace('@', shown);
+  const shown = G.mode === 'typ' ? G.input : '?';
+  $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -4521,7 +4530,7 @@ function submitAnswer(val, btnEl) {
     flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), q.gold ? 3 : 2);
     updateFan(encore);
     if (btnEl) btnEl.classList.add('good');
-    if (G.mode === 'typ') $('question-text').textContent = q.tmpl.replace('@', q.ans);
+    if (G.mode === 'typ') $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank done">${q.ans}</span>`);
     if (encore) { sndWin(); confetti(24); showPraise('🎆 EXTRA SHOW!', '💎 +5 bonus'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
