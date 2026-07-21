@@ -421,22 +421,24 @@
   .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
     background: var(--glass-white-13); color: var(--c-white); font-size: 16px; font-weight: 800; }
   .career-title { font-size: 15px; font-weight: 800; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
-  .career-now { font-size: 25px; font-weight: 900; color: var(--c-white); margin: 4px 0 2px; }
-  .rank-bar.wide { max-width: 300px; margin: 6px auto 0; }
-  .career-next { font-size: 14px; font-weight: 700; color: var(--pink-light); margin: 8px 0 12px; }
-  .career-list { display: flex; flex-direction: column; gap: 6px; text-align: left; }
-  .career-row {
-    display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 12px;
-    background: var(--glass-white-10); border: 1px solid var(--glass-white-10); opacity: .55;
-  }
-  .career-row.reached { opacity: 1; }
-  .career-row.current { opacity: 1; border-color: var(--gold-accent); background: rgba(255,214,90,.12); box-shadow: 0 0 12px rgba(255,170,0,.35); }
-  .career-row.future { opacity: .7; font-style: italic; }
-  .cr-mark { width: 16px; font-weight: 900; color: var(--gold-light); flex: none; text-align: center; }
-  .cr-emoji { font-size: 22px; flex: none; }
-  .cr-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 15px; }
-  .cr-req { font-size: 13px; font-weight: 700; color: var(--lavender-text); flex: none; }
-  .cr-bonus { font-size: 12.5px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: 6px; }
+  /* Held: de huidige status groot in beeld -- dé blik "welke ster ben ik?" */
+  .career-hero { font-size: 66px; line-height: 1; margin: 6px 0 0; filter: drop-shadow(0 3px 10px rgba(0,0,0,.4)); }
+  .career-now { font-size: 24px; font-weight: 900; color: var(--c-white); margin: 2px 0; }
+  .rank-bar.wide { max-width: 300px; margin: 8px auto 0; height: 12px; }
+  /* Eén doelkaart: alleen de vólgende status, met het enige beloningsgetal dat er nu toe doet */
+  .career-goal { margin: 15px 0 4px; padding: 12px 14px; border-radius: 14px; text-align: left;
+    border: 2px solid var(--gold-accent); background: rgba(255,214,90,.12); box-shadow: 0 0 14px rgba(255,170,0,.3); }
+  .cg-label { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 5px; }
+  .cg-row { display: flex; align-items: center; gap: 10px; }
+  .cg-emoji { font-size: 30px; flex: none; }
+  .cg-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 16px; }
+  .cg-remain { font-size: 13px; font-weight: 800; color: var(--pink-light); flex: none; }
+  .cg-bonus { font-size: 13px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: 8px; }
+  /* Behaald = klein emoji-lintje; Daarna = gedimde vooruitblik -- geen rijen meer */
+  .career-strip-row { display: flex; align-items: center; gap: 9px; text-align: left; margin-top: 12px; }
+  .csr-label { font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted-lavender-text); width: 58px; flex: none; }
+  .csr-badges { font-size: 22px; letter-spacing: 3px; }
+  .career-strip-row.future .csr-badges { opacity: .4; filter: grayscale(.4); }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .career-panel { animation: none; } }
   .rank-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
@@ -2902,41 +2904,39 @@ function openCareer() {
   const p = P();
   const total = totalStarCount(p);
   const cur = starRank(total);
-  const curBase = Math.min(cur.idx, RANK_TIERS.length - 1);   // welke vaste tier is 'nu'
+  const curBase = Math.min(cur.idx, RANK_TIERS.length - 1);
   const into = total - cur.curMin, span = cur.nextMin - cur.curMin;
   const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
   const remain = cur.nextMin - total;
-  let rows = '';
-  RANK_TIERS.forEach((t, i) => {
-    const reached = total >= t.min;
-    const isCur = i === curBase;
-    const mark = isCur ? '➤' : (reached ? '✓' : '');
-    const bonus = t.bonus > 0 ? `<span class="cr-bonus">+${t.bonus} 💎</span>` : '';
-    rows += `<div class="career-row${reached ? ' reached' : ''}${isCur ? ' current' : ''}">`
-      + `<span class="cr-mark">${mark}</span><span class="cr-emoji">${t.emoji}</span>`
-      + `<span class="cr-name">${t.name}</span><span class="cr-req">${t.min} ⭐</span>${bonus}</div>`;
-  });
-  // open einde: de Wereldlegende ⭐N-reeks voorbij de laatste vaste rang
-  rows += `<div class="career-row future"><span class="cr-mark"></span><span class="cr-emoji">⭐</span>`
-    + `<span class="cr-name">…en verder</span><span class="cr-req">elke +${RANK_STEP} ⭐</span></div>`;
-  const nextLine = remain > 0
-    ? `🎯 nog ${remain} ⭐ tot ${cur.nextName}`
-    : 'Hoogste status bereikt — geweldig! 🌟';
+  // volgende tier (voorbij de laatste vaste rang blijft het de Wereldlegende-emoji)
+  const nextTier = RANK_TIERS[Math.min(cur.idx + 1, RANK_TIERS.length - 1)];
+  const nextBonus = rankBonusFor(cur.idx + 1);
+  // Behaald = de tiers die je al voorbij bent (huidige is de held, dus niet erbij);
+  // Daarna = de tiers ná de volgende (gedimde vooruitblik).
+  const behaald = RANK_TIERS.filter((t, i) => i < curBase).map(t => t.emoji).join(' ');
+  const daarna = RANK_TIERS.filter((t, i) => i > cur.idx + 1).map(t => t.emoji).join(' ');
+  const goalCard = `<div class="career-goal"><div class="cg-label">Volgende status</div>`
+    + `<div class="cg-row"><span class="cg-emoji">${nextTier.emoji}</span>`
+    + `<span class="cg-name">${cur.nextName}</span>`
+    + `<span class="cg-remain">nog ${remain} ⭐</span>`
+    + (nextBonus > 0 ? `<span class="cg-bonus">+${nextBonus} 💎</span>` : '') + `</div></div>`;
+  const trail = behaald ? `<div class="career-strip-row"><span class="csr-label">Behaald</span><span class="csr-badges">${behaald}</span></div>` : '';
+  const future = daarna ? `<div class="career-strip-row future"><span class="csr-label">Daarna</span><span class="csr-badges">${daarna} …</span></div>` : '';
   const ov = document.createElement('div');
   ov.className = 'career-overlay';
   ov.innerHTML = `<div class="career-panel">`
     + `<button class="career-close" type="button" aria-label="Sluiten">✕</button>`
     + `<div class="career-title">Jouw ster-status</div>`
-    + `<div class="career-now">${cur.emoji} ${cur.name}</div>`
+    + `<div class="career-hero">${cur.emoji}</div>`
+    + `<div class="career-now">${cur.name}</div>`
     + `<div class="rank-counter big">${total}/${cur.nextMin} ⭐</div>`
     + `<div class="rank-bar wide"><span class="rank-fill" style="width:${pct}%"></span></div>`
-    + `<div class="career-next">${nextLine}</div>`
-    + `<div class="career-list">${rows}</div></div>`;
+    + goalCard + trail + future + `</div>`;
   document.body.appendChild(ov);
   const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 250); };
   ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) close(); };
-  // huidige rij netjes in beeld
-  requestAnimationFrame(() => { const c = ov.querySelector('.career-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
+  // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
+  speak(`Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
 }
 function goMap() {
   const p = P();
