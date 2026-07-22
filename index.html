@@ -744,7 +744,7 @@
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
   .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 10px; width: min(92vw, 460px); }
   .mem-card {
-    position: relative; aspect-ratio: 3 / 4; border: none; background: none; cursor: pointer; padding: 0;
+    position: relative; aspect-ratio: 1 / 1; border: none; background: none; cursor: pointer; padding: 0;
     perspective: 600px;
   }
   .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .35s; }
@@ -776,10 +776,10 @@
   .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); }
   .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-weight: 800; color: var(--purple-shadow); }
   .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
-  .mem-face .cframe { gap: 2px; }
-  .mem-face .cframe .tf-cell { width: 11px; height: 11px; border-width: 1.5px; border-radius: 4px; font-size: 8px; }
-  .mem-face .dframe { column-gap: 2px; row-gap: 3px; }
-  .mem-face .dframe .df-cell { width: 9px; height: 9px; border-width: 1px; border-radius: 3px; }
+  .mem-face .cframe { gap: 2.5px; }
+  .mem-face .cframe .tf-cell { width: 12px; height: 12px; border-width: 1.5px; border-radius: 4px; font-size: 9px; }
+  .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
+  .mem-face .dframe .df-cell { width: 10px; height: 10px; border-width: 1px; border-radius: 3px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
   .mem-done-card { background: linear-gradient(180deg, var(--c-white), var(--lavender-wash)); border-radius: var(--radius-2xl); padding: 22px 26px; text-align: center; box-shadow: 0 14px 30px var(--glass-black-40); }
   .mem-done-title { font-size: 54px; line-height: 1; }
