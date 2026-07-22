@@ -770,11 +770,16 @@
   .mem-card.snap { animation: memSnap .42s cubic-bezier(.2,1.4,.4,1); }
   @keyframes memSnap { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) { .mem-card.wrong, .mem-card.snap { animation: none; } }
-  .mem-face .cg-obj { font-size: clamp(15px, 4.6vw, 22px); }
-  .mem-face .cg-dot { width: 13px; height: 13px; }
-  .mem-face .ct-num { font-size: clamp(30px, 9vw, 46px); font-weight: 800; color: var(--purple-shadow); }
-  .mem-face .cframe { transform: scale(.6); }
-  .mem-face .cgroup { gap: 3px 4px; max-width: 92%; }
+  /* Memory-kaartjes zijn klein: elke weergave krijgt een eigen compacte maat die
+     écht binnen de kaart past (geen transform:scale -- dan blijft de layout-box
+     te groot en wordt de inhoud afgekapt). */
+  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); }
+  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-weight: 800; color: var(--purple-shadow); }
+  .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
+  .mem-face .cframe { gap: 2px; }
+  .mem-face .cframe .tf-cell { width: 11px; height: 11px; border-width: 1.5px; border-radius: 4px; font-size: 8px; }
+  .mem-face .dframe { column-gap: 2px; row-gap: 3px; }
+  .mem-face .dframe .df-cell { width: 9px; height: 9px; border-width: 1px; border-radius: 3px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
   .mem-done-card { background: linear-gradient(180deg, var(--c-white), var(--lavender-wash)); border-radius: var(--radius-2xl); padding: 22px 26px; text-align: center; box-shadow: 0 14px 30px var(--glass-black-40); }
   .mem-done-title { font-size: 54px; line-height: 1; }
@@ -4017,7 +4022,7 @@ function startMemory() {
   $('mem-done').style.display = 'none';
   $('mem-diamonds').textContent = p.diamonds;
   const grid = $('mem-grid');
-  grid.style.setProperty('--cols', pairs);   // 2 rijen: kolommen = aantal paren
+  grid.style.setProperty('--cols', Math.min(pairs, 4));   // op mobiel max 4 kolommen: kaartjes blijven groot genoeg
   grid.innerHTML = cards.map((c, i) =>
     `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎴</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
