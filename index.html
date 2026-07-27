@@ -2596,6 +2596,23 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
   refreshVoices();
   speechSynthesis.onvoiceschanged = refreshVoices;
 }
+
+/* ---- Scherm wakker houden zolang de app open is (Wake Lock API) ----
+   Kinderen denken soms lang na zonder het scherm aan te raken; dan mag het
+   niet dimmen of vergrendelen. De lock wordt automatisch vrijgegeven als het
+   tabblad naar de achtergrond gaat, dus we vragen 'm opnieuw aan zodra de app
+   weer zichtbaar is. Niet-ondersteunende browsers negeren dit stil. */
+let wakeLock = null;
+async function keepAwake() {
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { wakeLock = null; }   // niet ondersteund of geweigerd -> gewoon doorgaan
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('pointerdown', keepAwake, { passive: true });   // fallback: browsers die een gebruikersgebaar eisen
+keepAwake();
 function toggleHaptics() {
   db.haptics = !db.haptics; save();
   renderGearMenu();
