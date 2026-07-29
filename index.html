@@ -699,6 +699,10 @@
   /* wegstrepen bij aftrekken: doorgestreept + gedimd */
   .cgroup.crossed .cg-obj, .cgroup.crossed .cg-dot { opacity: .4; text-decoration: line-through; position: relative; }
   .cgroup.crossed .cg-dot { filter: grayscale(1); }
+  /* per-stuk wegstrepen binnen één startgroep (aftrekken: 5 dingen, laatste 3 weg) */
+  .cg-obj.xed { opacity: .45; text-decoration: line-through; text-decoration-thickness: 2px; }
+  .df-dot.xed { opacity: .5; filter: grayscale(1); position: relative; }
+  .df-dot.xed::after { content: ''; position: absolute; left: -30%; right: -30%; top: calc(50% - 1.25px); height: 2.5px; background: var(--purple-shadow); transform: rotate(-15deg); border-radius: 2px; }
 
   .count-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
   .count-tiles.two { grid-template-columns: 1fr 1fr; }
@@ -3640,7 +3644,7 @@ function dotOrObj(repr, emoji) { return repr === 'dots' ? '<span class="cg-dot">
 // een hoeveelheid aan haar vórm herkenbaar is i.p.v. elke stip te hertellen. Zo zie
 // je "5 en nog wat" en "hoeveel nog tot 10" meteen. support: 'full' gevuld · 'faint'
 // gedimd · 'none' niets.
-function dotFrameHTML(n, cap, extraCls, support) {
+function dotFrameHTML(n, cap, extraCls, support, crossFrom) {
   support = support || 'full';
   if (support === 'none') return '';
   cap = cap === 5 ? 5 : 10;
@@ -3650,9 +3654,22 @@ function dotFrameHTML(n, cap, extraCls, support) {
   let cells = '';
   for (let i = 0; i < total; i++) {
     const on = i < n;
-    cells += `<span class="df-cell${on ? ' on' : ''}">${on ? '<span class="df-dot"></span>' : ''}</span>`;
+    // crossFrom (optioneel): de gevulde stippen vanaf die index worden doorgestreept
+    // -- gebruikt bij aftrekken ("wegstrepen") zodat de startgroep zichtbaar blijft.
+    const xed = crossFrom != null && on && i >= crossFrom;
+    cells += `<span class="df-cell${on ? ' on' : ''}">${on ? `<span class="df-dot${xed ? ' xed' : ''}"></span>` : ''}</span>`;
   }
   return `<span class="dframe ${cap === 5 ? 'five' : 'ten'}${extraCls ? ' ' + extraCls : ''}${support === 'faint' ? ' faint' : ''}" aria-hidden="true">${cells}</span>`;
+}
+// Aftrek-visualisatie (wegstrepen): één groep van 'a', waarvan de laatste 'b' zijn
+// doorgestreept -- zo klopt "5 - 3" ook in beeld (5 dingen, 3 weg -> 2 over), i.p.v.
+// twee losse groepjes met een minteken ertussen.
+function takeAwayHTML(a, b, emoji, repr, cap) {
+  const c = a - b;
+  if (repr === 'dots') return dotFrameHTML(a, cap || (a <= 5 ? 5 : 10), 'big', 'full', c);
+  let inner = '';
+  for (let i = 0; i < a; i++) inner += `<span class="cg-obj${i >= c ? ' xed' : ''}">${emoji}</span>`;
+  return `<span class="cgroup n${a} big" aria-hidden="true">${inner}</span>`;
 }
 // HTML voor een hoeveelheid. Stippen → altijd een gestructureerd raam (dotFrameHTML).
 // Voorwerpen (emoji) → speels los groepje (≤5) of een tienraam (frame, 6–10).
@@ -3695,10 +3712,10 @@ function sumEqHTML(card) {
   const eq = inner => `<div class="sum-eq">${inner}<span class="sum-op">=</span><span class="sum-eq-q">?</span></div>`;
   if (style === 'sym') {
     if (op === '-') {
-      // wegstrepen: de c die overblijven normaal, de b weggehaalde doorgestreept
-      const kept = groupHTML(c, emoji, repr, 'big', false, cap);
-      const gone = groupHTML(b, emoji, repr, 'big crossed', false, cap);
-      return eq(`${kept}<span class="sum-op">−</span>${gone}`);
+      // wegstrepen: één startgroep van 'a', de laatste 'b' doorgestreept -> 'c' blijft
+      // over. (Vroeger stonden hier de c-overblijvers náást de b-weggehaalde met een
+      // minteken ertussen, wat als "c − b" las en de startgroep 'a' verborg.)
+      return eq(takeAwayHTML(a, b, emoji, repr, cap));
     }
     return eq(`${groupHTML(a, emoji, repr, 'big', false, cap)}<span class="sum-op">+</span>${groupHTML(b, emoji, repr, 'big', false, cap)}`);
   }
