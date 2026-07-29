@@ -2566,7 +2566,9 @@ function toggleSound() {
    de énige drager: de vraag staat altijd óók volledig in beeld (objecten/stippen),
    en een 🔊-knop leest de opdracht op verzoek opnieuw voor. Ontbreekt een stem,
    dan blijft alles gewoon speelbaar, enkel zonder stemgeluid. */
-const NUM_NL = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
+// 'één' met accenten: anders leest de stem het als het lidwoord "een" ("'n") i.p.v.
+// het telwoord. Bij tellen, luisteren en sommen moet het echt "één" klinken.
+const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
 function numWord(n) { return NUM_NL[n] != null ? NUM_NL[n] : String(n); }
 let _voices = [];
 function refreshVoices() { try { _voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { _voices = []; } }
@@ -3844,8 +3846,14 @@ function genCount(p) {
   if (q.choices) q.choices.forEach(c => { if (c.cap == null) c.cap = cap; });
   return q;
 }
+// Elke getekende telvraag krijgt een eigen volgnummer. Vertraagde acties (meetellen,
+// één-erbij/eraf) checken dit: hoort de timer bij een oudere vraag, dan stopt hij.
+// Zonder dit telde de stem van de vórige vraag door over de nieuwe ("vier, vijf...")
+// als het kind snel antwoordde.
+let countDrawId = 0;
 // De vraagkaart bovenin: toont de hoeveelheid/opdracht en spreekt haar uit.
 function drawCountQuestion(q) {
+  const myDraw = ++countDrawId;
   const card = $('question-text');
   const replay = '<button class="count-replay" type="button" aria-label="Nog eens voorlezen" onclick="replayPrompt()">🔊</button>';
   const cardRepr = q.card.repr || 'objects';
@@ -3865,19 +3873,20 @@ function drawCountQuestion(q) {
   if (q.along && kind === 'group') {
     const objs = card.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     objs.forEach(o => o.classList.add('pre'));
-    countAlong(objs, q.card.n, q.prompt);
+    countAlong(objs, q.card.n, q.prompt, myDraw);
     return;
   }
   // één-meer/minder met volledige steun: het resultaat bouwt zich zichtbaar op
-  if (kind === 'delta' && q.support === 'full') { animateDelta(card, q); return; }
+  if (kind === 'delta' && q.support === 'full') { animateDelta(card, q, myDraw); return; }
   speak(q.prompt);
 }
 // Toon één object erbij (pop) of eraf (fade) zodat het kind het resultaat kan tellen.
-function animateDelta(card, q) {
+function animateDelta(card, q, drawId) {
   const dframe = card.querySelector('.dframe');
   const g = card.querySelector('.cgroup, .cframe');
   setTimeout(() => {
     if (!G || !G.count) return;
+    if (drawId != null && drawId !== countDrawId) return;   // vraag is intussen gewisseld
     if (dframe) {
       // stippenraam: vul een leeg vakje (erbij) of leeg het laatste (eraf)
       const cells = [...dframe.querySelectorAll('.df-cell')];
@@ -3923,11 +3932,13 @@ function renderCountAnswers(q, area) {
   });
 }
 // Meetellen: elk object popt op maat op; de getallen worden achter elkaar gezegd.
-function countAlong(objs, n, lead) {
+function countAlong(objs, n, lead, drawId) {
   let i = 0;
   speak(lead);
   const step = () => {
     if (!G || !G.count || i >= n) return;
+    if (drawId != null && drawId !== countDrawId) return;   // er staat alweer een nieuwe vraag
+
     const o = objs[i];
     if (o) { o.classList.remove('pre'); o.classList.add('pop'); }
     speak(numWord(i + 1), { rate: 0.9 });
@@ -3941,9 +3952,10 @@ function replayPrompt() {
   const q = G && G.qs && G.qs[G.idx];
   if (!q) return;
   if (q.along && q.card && q.card.kind === 'group') {
-    const objs = $('question-text').querySelectorAll('.cg-obj, .cg-dot');
+    // ook .df-dot: in een stippenraam zitten de stippen daarin (niet in .cg-dot)
+    const objs = $('question-text').querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     objs.forEach(o => { o.classList.remove('pop'); o.classList.add('pre'); });
-    countAlong(objs, q.card.n, q.prompt);
+    countAlong(objs, q.card.n, q.prompt, countDrawId);
   } else {
     speak(q.prompt);
   }
