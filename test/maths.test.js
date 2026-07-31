@@ -156,7 +156,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
       p.settings.perLevel = 8;
       return p;
     };
-    const drill = (p, op, n, correct) => { for (let i = 0; i < n; i++) updateOpAcc(p, op, correct, correct); };
+    // vlot antwoordend kind (vlotheid zelf wordt apart getest, zie deel 4b)
+    const drill = (p, op, n, correct) => { for (let i = 0; i < n; i++) updateOpAcc(p, op, correct, correct, true); };
 
     // -- beheersing: pas na genoeg pogingen én hoge nauwkeurigheid
     let p = fresh();
@@ -283,6 +284,73 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   check(flow.livesKeptOnFirstMiss === true, 'eerste misser kost nog geen hartje', String(flow.livesKeptOnFirstMiss));
   check(flow.goldBanner === '🌟 3× 💎 🌟', 'gouden vraag toont het lees-vrije signaal', flow.goldBanner);
   check(flow.goldGain >= 6, 'gouden vraag levert drie keer zoveel op', String(flow.goldGain));
+
+  /* ========== 4b · Vlotheid: accuraat is niet genoeg voor moeilijkere stof ========== */
+  const fluency = await page.evaluate(() => {
+    const out = {};
+    const fresh = () => {
+      const p = JSON.parse(JSON.stringify(defaultProfile('Test', 'dress_roze')));
+      p.settings.ops = ['+', '-']; p.settings.max = 20;
+      return p;
+    };
+    // n goede antwoorden, met of zonder vlotheid
+    const drill = (p, op, n, fast) => { for (let i = 0; i < n; i++) updateOpAcc(p, op, true, true, fast); };
+
+    // -- vlot kind: stroomt gewoon door
+    let p = fresh();
+    drill(p, '+', 25, true);
+    out.fastMastered = opMastered(p, '+');
+    out.fastValue = Math.round(ot(p, '+').fast * 100);
+
+    // -- accuraat maar traag: even goed, maar (nog) niet door de poort
+    p = fresh();
+    drill(p, '+', 25, false);
+    out.slowAcc = Math.round(ot(p, '+').acc * 100);        // even hoog als het vlotte kind
+    out.slowMastered = opMastered(p, '+');                 // verwacht false
+    out.slowFast = Math.round(ot(p, '+').fast * 100);
+
+    // -- maar nooit permanent geblokkeerd: geduld-overrule
+    drill(p, '+', PATIENCE_N, false);
+    out.slowEventually = opMastered(p, '+');               // verwacht true
+    out.patienceN = PATIENCE_N;
+
+    // -- traag kind dat vlotter wordt, komt er ook zonder geduld-overrule
+    p = fresh();
+    drill(p, '+', 22, false);
+    const beforeFast = ot(p, '+').fast;
+    drill(p, '+', 12, true);
+    out.improves = ot(p, '+').fast > beforeFast && opMastered(p, '+') && ot(p, '+').n < PATIENCE_N;
+
+    // -- vlotheid meet alleen directe treffers (een fout antwoord zegt niets over tempo)
+    p = fresh();
+    drill(p, '+', 20, true);
+    const f0 = ot(p, '+').fast;
+    updateOpAcc(p, '+', false, false, false);
+    out.wrongDoesNotTouchFluency = ot(p, '+').fast === f0;
+
+    // -- typen mag niet als traag gelden: ruimere drempel
+    out.typGetsMoreTime = FAST_SPOT_TYP < FAST_SPOT_KIES;
+    out.kiesFast = fastEnough('kies', FAST_SPOT_KIES);
+    out.kiesSlow = !fastEnough('kies', FAST_SPOT_KIES - 1);
+    out.typStillFast = fastEnough('typ', FAST_SPOT_KIES - 1);   // zelfde tempo, typend = nog vlot
+
+    // -- bestaande spelers zonder 'fast' beginnen neutraal, niet geblokkeerd
+    p = fresh();
+    p.opTrack['+'] = { n: 30, acc: 0.95, paused: false, unlockRound: null };  // oude vorm
+    out.legacyNeutral = ot(p, '+').fast === 0.5;
+    return out;
+  });
+  check(fluency.fastMastered === true, 'een vlot kind stroomt gewoon door', String(fluency.fastMastered));
+  check(fluency.slowAcc >= 85, 'traag kind is even accuraat', `${fluency.slowAcc}%`);
+  check(fluency.slowMastered === false, 'accuraat maar traag geeft nog geen moeilijkere stof', String(fluency.slowMastered));
+  check(fluency.slowFast < 55, 'vlotheid zakt bij steeds uitrekenen', `${fluency.slowFast}%`);
+  check(fluency.slowEventually === true, 'geduld-overrule: traag kind wordt nooit permanent geblokkeerd', String(fluency.slowEventually));
+  check(fluency.improves === true, 'vlotter worden opent de poort ook zonder geduld-overrule', String(fluency.improves));
+  check(fluency.wrongDoesNotTouchFluency === true, 'een fout antwoord telt niet mee voor vlotheid', String(fluency.wrongDoesNotTouchFluency));
+  check(fluency.typGetsMoreTime === true, 'typen krijgt meer tijd dan kiezen', String(fluency.typGetsMoreTime));
+  check(fluency.kiesFast && fluency.kiesSlow, 'de vlotheidsdrempel bij kiezen werkt', `${fluency.kiesFast}/${fluency.kiesSlow}`);
+  check(fluency.typStillFast === true, 'typend kind wordt niet als traag bestempeld', String(fluency.typStillFast));
+  check(fluency.legacyNeutral === true, 'bestaande spelers beginnen neutraal', String(fluency.legacyNeutral));
 
   /* ================= 5 · Onderhoud (blijft geleerde stof zitten?) ================= */
   const retention = await page.evaluate(() => {

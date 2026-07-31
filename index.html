@@ -4291,9 +4291,23 @@ function buildQuestion(p, lvl) {
 // pogingen en of het (met hysterese) op pauze staat.
 function ot(p, op) {
   let t = p.opTrack[op];
-  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockRound: null }; p.opTrack[op] = t; }
+  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockRound: null, fast: 0.5 }; p.opTrack[op] = t; }
+  if (t.fast == null) t.fast = 0.5;   // bestaande spelers: neutraal beginnen
   return t;
 }
+/* ---- Vlotheid: kán het kind het, of zít het erin? -----------------------
+   Twee kinderen antwoorden allebei "12" op 7 + 5: de één haalt het op, de
+   ander telt het uit op zijn vingers. Voor de accuratesse is dat gelijk, maar
+   voor wat erna komt niet: zoek-het-getal en drie-getallen vragen hoofdruimte
+   die er niet is zolang het optellen zelf nog aandacht kost. Daarom telt naast
+   'acc' (klopt het) ook 'fast' (gaat het vanzelf) mee vóór een moeilijkere
+   vraagsoort vrijkomt. Alleen gemeten bij goed-in-één-keer, want snelheid bij
+   een fout antwoord zegt niets. */
+const FAST_SPOT_KIES = 50;   // spotlight loopt in 12s leeg -> 50 = binnen ~6s
+const FAST_SPOT_TYP = 25;    // typen kost meer tikken -> ~9s
+const FLUENT_MIN = 0.55;     // ruwweg: meer dan de helft van de goede antwoorden komt vlot
+const PATIENCE_N = 60;       // geduld-overrule: nooit permanent blokkeren
+function fastEnough(mode, spot) { return spot >= (mode === 'typ' ? FAST_SPOT_TYP : FAST_SPOT_KIES); }
 // Een zware zwakke som (w≥4) voor deze bewerking = het kind worstelt er nog mee.
 function heavyWeak(p, op) {
   return Object.values(p.weak).some(e => e.op === op && e.w >= 4);
@@ -4302,7 +4316,11 @@ function heavyWeak(p, op) {
 // geen hardnekkig gemiste som. 0.85 is dezelfde lat die updatePerf al "goed" noemt.
 function opMastered(p, op) {
   const t = p.opTrack[op];
-  return !!t && t.n >= 20 && t.acc >= 0.85 && !heavyWeak(p, op);
+  if (!t || t.n < 20 || t.acc < 0.85 || heavyWeak(p, op)) return false;
+  // Accuraat is niet genoeg: het moet ook een beetje vlot gaan. Een zorgvuldig
+  // maar traag kind wordt daardoor vertraagd, nooit geblokkeerd -- na ruim
+  // voldoende pogingen gaat de poort alsnog open.
+  return (t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN || t.n >= PATIENCE_N;
 }
 // Klaar voor zoek-het-getal bij deze bewerking: vanaf ronde 3, beheerst, niet op pauze.
 function opReady(p, op, round) {
@@ -4331,11 +4349,14 @@ function refreshReadiness(p, round) {
 // Werkt de per-bewerking-nauwkeurigheid bij ná de definitieve afronding van een
 // klassieke som (niet bij een tussentijdse herkansing). Pauze met hysterese:
 // onder 0.70 pauzeren, pas boven 0.85 weer vrijgeven.
-function updateOpAcc(p, op, correct, firstTry) {
+function updateOpAcc(p, op, correct, firstTry, fast) {
   const t = ot(p, op);
   t.n++;
   const target = correct ? (firstTry ? 1 : 0.85) : 0;
   t.acc = t.acc * 0.8 + target * 0.2;
+  // vlotheid alleen meten bij een directe treffer, en rustiger middelen dan de
+  // accuratesse: even opkijken of napraten mag geen vlotheidsdip veroorzaken
+  if (correct && firstTry) t.fast = t.fast * 0.85 + (fast ? 1 : 0) * 0.15;
   if (t.acc < 0.70) t.paused = true;
   else if (t.acc >= 0.85) t.paused = false;
 }
@@ -4653,7 +4674,8 @@ function submitAnswer(val, btnEl) {
     const firstTry = !G.retried;                 // in één keer goed?
     updatePerf(p, true, firstTry && G.spot > 0);
     // per-bewerking-beheersing (voor klaarheid extra uitdagingen) + drie-getallen-tempo
-    if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry);
+    // G.spot staat nog op de stand van het moment van antwoorden (stopSpot laat 'm staan)
+    if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
     else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
     else if (q.count) updateCountAcc(p, true, firstTry);
     p.stats.correct++;
@@ -5522,6 +5544,22 @@ function closeSettings() {
 }
 // Tabblad "Voortgang" — alleen-lezen ouderrapport: kerncijfers, niveau-inschatting
 // en de concrete sommen waar het spel nu extra op oefent.
+// Vlotheid: hoe vaak komt een goed antwoord er zó uit, i.p.v. uitgerekend te
+// worden? Pas tonen als er genoeg gespeeld is, anders zegt het niets. Alleen
+// voor de rekenmodus (de telmodus heeft haar eigen fase-opbouw).
+function fluencyHtml(p) {
+  if (p.settings.track === 'count') return '';
+  const ops = (p.settings.ops || []).filter(o => p.opTrack[o] && p.opTrack[o].n >= 10);
+  if (!ops.length) return '';
+  const avg = ops.reduce((a, o) => a + (p.opTrack[o].fast == null ? 0.5 : p.opTrack[o].fast), 0) / ops.length;
+  const pct = Math.round(avg * 100);
+  const hint = avg >= FLUENT_MIN
+    ? 'Veel sommen komen er vlot uit — een goed teken om iets moeilijkers te proberen.'
+    : 'De sommen kloppen, maar worden nog vaak uitgerekend. Het spel wacht daarom nog even met moeilijkere vraagsoorten.';
+  return `<div class="stat-line"><span class="k">Vlotheid <span class="note">(uit het hoofd)</span></span><span class="v">${pct}%</span></div>
+    <div class="stat-bar"><div style="width:${pct}%"></div></div>
+    <div class="note" style="margin-top:6px">${hint}</div>`;
+}
 function statsPanelHtml(p) {
   const shows = playedCount(p);
   const stars = totalStarCount(p);
@@ -5564,6 +5602,7 @@ function statsPanelHtml(p) {
     </div>
     <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
     <div class="stat-bar"><div style="width:${skill}%"></div></div>
+    ${fluencyHtml(p)}
     ${practice}
   </div></div>`;
 }
