@@ -1960,6 +1960,34 @@
 
 <script>
 "use strict";
+/* =====================================================================
+   INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
+   Regelnummers staan er bewust niet bij: die verouderen meteen.
+
+     Helpers ............ mini-hulpjes ($, rnd, pick, shuffle)
+     Items .............. kleerkast-inhoud (data)
+     Wereldtournee ...... steden + level→stad (data)
+     Trofeeën ........... trofee-definities + planken (data)
+     Sterrencarrière .... rang-ladder op sterren (RANK_TIERS, starRank)
+     Opslag ............. db, load/save, migratie, profielen
+     Trilfeedback ....... haptics
+     Geluid ............. klikjes, fanfares (WebAudio)
+     Gesproken opdrachten  nl-NL stem — ALLEEN telmodus (zie speak())
+     Avatar (SVG) ....... de pop tekenen
+     Schermen ........... navigatie, kaart, kop/voet
+     Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
+     Vragen maken ....... rekenmodus: genTriple/genQuestion/genMissing/genChain
+     Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
+     Memory-spel ........ los kaartspel (lees-vrij)
+     Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
+     Spel ............... de show: renderQuestion, submitAnswer, endLevel
+     Kleedkamer ......... winkel, passen, looks
+     Instellingen ....... ouderscherm: voortgang + oefening
+     Start .............. opstarten, service worker
+
+   Tests: test/counting.test.js (telmodus) en test/maths.test.js
+   (rekenmodus + adaptieve motor). Draaien met `npm test`.
+   ===================================================================== */
 /* ================= Helpers ================= */
 const $ = id => document.getElementById(id);
 const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -2513,7 +2541,26 @@ function load() {
   assignProfileOrder();
   save();
 }
-function save() { localStorage.setItem(LS_KEY, JSON.stringify(db)); }
+// Bewaren mag nooit het spel breken. localStorage kan gooien (privémodus, volle
+// opslag, opslag uitgeschakeld); save() wordt middenin submitAnswer aangeroepen,
+// dus een exception hier zou de rest van de beurt afbreken en het spel laten
+// vastlopen op de vraag. Daarom: stil opvangen, één keer vriendelijk melden, en
+// gewoon doorspelen (de voortgang van deze sessie blijft in het geheugen staan).
+let saveFailed = false;
+function save() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(db));
+    saveFailed = false;
+  } catch (e) {
+    if (!saveFailed) {
+      saveFailed = true;
+      try {
+        showToast('⚠️ Voortgang kan niet bewaard worden', null, 'Je kan gewoon verder spelen.');
+        setTimeout(hideToast, 3000);
+      } catch (e2) { /* UI nog niet klaar: stil doorgaan */ }
+    }
+  }
+}
 
 let cur = null;                 // huidige profielsleutel: 'p1' | 'p2'
 const P = () => db.profiles[cur];

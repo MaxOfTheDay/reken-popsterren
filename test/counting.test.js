@@ -8,16 +8,14 @@
  * 2 stippen" automatisch af.
  *
  * Draaien:
- *   npm i playwright-core           (of: NODE_PATH=/pad/naar/node_modules)
- *   node test/counting.test.js
+ *   npm install
+ *   npm run test:tellen        (of: npm test voor alle suites)
  *
- * Optioneel: CHROME=/pad/naar/chrome om een eigen browser te gebruiken.
+ * Optioneel: SAMPLES=100 voor een grotere steekproef, CHROME=/pad/naar/chrome
+ * om een eigen browser te gebruiken.
  */
-const { chromium } = require('playwright-core');
-const path = require('path');
+const { launch, APP_URL } = require('./browser');
 
-const EXE = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
-const PAGE = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?debug';
 const SAMPLES = Number(process.env.SAMPLES || 40);   // vragen per fase/rung-combinatie
 
 const fails = [];
@@ -29,13 +27,13 @@ function check(ok, label, detail) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: EXE });
+  const browser = await launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 800 } });
   const pageErrors = [];
   page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
 
-  await page.goto(PAGE);
+  await page.goto(APP_URL);
   await page.waitForTimeout(400);
 
   // Spraak opvangen i.p.v. uitspreken, zodat we kunnen controleren wát er klinkt.
