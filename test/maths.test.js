@@ -284,6 +284,83 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   check(flow.goldBanner === '🌟 3× 💎 🌟', 'gouden vraag toont het lees-vrije signaal', flow.goldBanner);
   check(flow.goldGain >= 6, 'gouden vraag levert drie keer zoveel op', String(flow.goldGain));
 
+  /* ================= 5 · Onderhoud (blijft geleerde stof zitten?) ================= */
+  const retention = await page.evaluate(() => {
+    const out = {};
+    const fresh = () => {
+      const p = JSON.parse(JSON.stringify(defaultProfile('Test', 'dress_roze')));
+      p.settings.ops = ['+', '-']; p.settings.max = 20;
+      return p;
+    };
+    const q = { kind: 'classic', tmpl: '9 + 6 = @', ans: 15, op: '+' };
+
+    // -- een geoefende som verdwijnt niet, maar gaat in onderhoud
+    let p = fresh();
+    incWeak(p, q);                       // w = 2
+    decWeak(p, q); decWeak(p, q);        // w = 0 -> geleerd
+    // defensief lezen: bij een kapotte implementatie moet dit falen, niet crashen
+    const L = () => (p.learned && p.learned[q.tmpl]) || null;
+    out.goneFromWeak = p.weak[q.tmpl] === undefined;
+    out.inLearned = !!L();
+    out.firstInterval = L() ? L().iv : 0;
+
+    // -- hij komt pas terug als hij aan de beurt is, niet meteen
+    out.notDueYet = pickRefresh(p, p.settings) === null;
+    p.stats.correct = L() ? L().due : 0;         // klok vooruit
+    const due = pickRefresh(p, p.settings);
+    out.dueReturns = !!due && due.tmpl === q.tmpl;
+    out.markedAsRefresh = !!due && due.refresh === true;
+    out.keepsAnswer = !!due && due.ans === 15;
+
+    // -- goed onthouden: het duurt daarna langer voor hij terugkomt
+    const ivBefore = L() ? L().iv : 0;
+    bumpLearned(p, q);
+    out.intervalGrew = !!L() && L().iv > ivBefore;
+    out.notDueAfterBump = pickRefresh(p, p.settings) === null;
+
+    // -- toch fout: terug naar de zwakke sommen
+    demoteLearned(p, q); incWeak(p, q);
+    out.demoted = p.learned[q.tmpl] === undefined && !!p.weak[q.tmpl];
+
+    // -- respecteert de ouderinstellingen (bewerking uit / grens verlaagd)
+    p = fresh();
+    p.learned['7 × 8 = @'] = { ans: 56, op: 'x', iv: 18, due: 0 };
+    p.learned['30 + 40 = @'] = { ans: 70, op: '+', iv: 18, due: 0 };
+    p.stats.correct = 999;
+    out.skipsDisabledOp = pickRefresh(p, p.settings) === null || pickRefresh(p, p.settings).op !== 'x';
+    out.skipsAboveMax = (() => { const r = pickRefresh(p, p.settings); return !r || r.ans <= p.settings.max; })();
+
+    // -- de lijst blijft begrensd
+    p = fresh();
+    for (let i = 0; i < LEARN_MAX + 40; i++) toLearned(p, `s${i}`, { ans: 1, op: '+' });
+    out.capped = Object.keys(p.learned).length <= LEARN_MAX;
+
+    // -- onderhoud komt ook echt langs in het spel
+    p = fresh();
+    p.stats.correct = 999;
+    for (let i = 1; i <= 9; i++) p.learned[`${i} + ${i} = @`] = { ans: i * 2, op: '+', iv: 18, due: 0 };
+    let seen = 0;
+    for (let i = 0; i < 400; i++) if (buildQuestion(p, 3).refresh) seen++;
+    out.appearsInPlay = seen > 0;
+    out.notTooOften = seen < 400 * 0.35;   // blijft een bijrol naast verse sommen
+    return out;
+  });
+  check(retention.goneFromWeak === true, 'geoefende som verlaat de zwakke lijst', String(retention.goneFromWeak));
+  check(retention.inLearned === true, 'geoefende som wordt niet vergeten maar onderhouden', String(retention.inLearned));
+  check(retention.firstInterval > 0, 'onderhoud start met een echt interval', String(retention.firstInterval));
+  check(retention.notDueYet === true, 'een net geleerde som komt niet meteen terug', String(retention.notDueYet));
+  check(retention.dueReturns === true, 'een som die lang niet langskwam komt terug', String(retention.dueReturns));
+  check(retention.markedAsRefresh === true, 'onderhoudsvraag is herkenbaar voor het spel', String(retention.markedAsRefresh));
+  check(retention.keepsAnswer === true, 'onderhoudsvraag houdt het juiste antwoord', String(retention.keepsAnswer));
+  check(retention.intervalGrew === true, 'goed onthouden verlengt het interval', String(retention.intervalGrew));
+  check(retention.notDueAfterBump === true, 'na een goede beurt komt de som niet direct opnieuw', String(retention.notDueAfterBump));
+  check(retention.demoted === true, 'weer fout = terug naar de zwakke sommen', String(retention.demoted));
+  check(retention.skipsDisabledOp === true, 'onderhoud slaat uitgezette bewerkingen over', String(retention.skipsDisabledOp));
+  check(retention.skipsAboveMax === true, 'onderhoud blijft binnen de ingestelde grens', String(retention.skipsAboveMax));
+  check(retention.capped === true, 'de onderhoudslijst blijft begrensd', String(retention.capped));
+  check(retention.appearsInPlay === true, 'onderhoudsvragen komen tijdens het spelen langs', String(retention.appearsInPlay));
+  check(retention.notTooOften === true, 'onderhoud blijft een bijrol naast verse sommen', String(retention.notTooOften));
+
   /* ---- opslag mag stukgaan zonder het spel te breken (privémodus, volle opslag) ---- */
   const storage = await page.evaluate(async () => {
     const out = {};
