@@ -2426,6 +2426,7 @@ function defaultProfile(name, dress, opts) {
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
     weak: {},   // zwakke sommen: "7 × 8 = @" -> { ans, op, w } om gericht te herhalen
+    learned: {},// geoefende sommen in onderhoud: "7 × 8 = @" -> { ans, op, iv, due }
     // per-bewerking-beheersing (klaarheid extra uitdagingen) + frequentie-trappen
     opTrack: {},                                    // op -> { n, acc, paused, unlockRound }
     missRamp: { rung: 1, hot: 0 },                  // zoek-het-getal: 1 of 2 per optreden
@@ -2452,6 +2453,9 @@ function migrate(p) {
   if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
+  // bestaande spelers beginnen met een lege onderhoudslijst; die vult zich vanzelf
+  // zodra ze weer sommen goed maken (geen terugwerkende kracht)
+  if (!p.learned) p.learned = {};
   // oude zwakke-sleutels ("3 + 4") naar het nieuwe sjabloonformaat ("3 + 4 = @")
   else {
     const nw = {};
@@ -4200,7 +4204,57 @@ function decWeak(p, q) {
   const e = p.weak[q.tmpl];
   if (!e) return;
   e.w -= 1;
-  if (e.w <= 0) delete p.weak[q.tmpl];
+  // Geoefend! Niet zomaar vergeten: de som gaat in onderhoud (zie hieronder),
+  // zodat we later controleren of het blijft zitten.
+  if (e.w <= 0) { toLearned(p, q.tmpl, e); delete p.weak[q.tmpl]; }
+}
+
+/* ---- Onderhoud: blijft het ook zitten? ----------------------------------
+   Een som die goed gaat verdween vroeger uit beeld; daarna kwam hij alleen nog
+   per toeval langs. Beheersing kan dan stilletjes wegzakken. Daarom houden we
+   geleerde sommen bij met een groeiend interval: komt hij terug en gaat hij
+   goed, dan duurt het dubbel zo lang voor hij weer langskomt; gaat hij fout,
+   dan is het weer een zwakke som. Voor het kind is het gewoon een som.
+   De "klok" is het aantal vragen dat dit kind al beantwoord heeft. */
+const LEARN_IV0 = 18;      // eerste onderhoudsinterval (in vragen)
+const LEARN_IV_MAX = 200;  // verder dan dit hoeft niet
+const LEARN_MAX = 120;     // pool begrensd houden
+function qClock(p) { return (p.stats.correct || 0) + (p.stats.wrong || 0); }
+function toLearned(p, tmpl, e) {
+  if (!p.learned) p.learned = {};
+  p.learned[tmpl] = { ans: e.ans, op: e.op, iv: LEARN_IV0, due: qClock(p) + LEARN_IV0 };
+  const keys = Object.keys(p.learned);
+  if (keys.length > LEARN_MAX) {
+    // de best beheerste (grootste interval) mogen als eerste uit de lijst
+    keys.sort((a, b) => (p.learned[b].iv - p.learned[a].iv) || (p.learned[b].due - p.learned[a].due));
+    keys.slice(0, keys.length - LEARN_MAX).forEach(k => delete p.learned[k]);
+  }
+}
+// Goed onthouden: het duurt nu langer voor deze som terugkomt.
+function bumpLearned(p, q) {
+  const e = p.learned && p.learned[q.tmpl];
+  if (!e) return;
+  e.iv = Math.min(LEARN_IV_MAX, Math.round(e.iv * 2));
+  e.due = qClock(p) + e.iv;
+}
+// Toch weer misgegaan: uit onderhoud, terug naar de zwakke sommen (incWeak doet dat).
+function demoteLearned(p, q) { if (p.learned) delete p.learned[q.tmpl]; }
+// Een som die aan onderhoud toe is: het langst over tijd gaat voor. Alleen
+// bewerkingen die nu aanstaan, en niets boven de ingestelde bovengrens.
+function pickRefresh(p, s) {
+  if (!p.learned) return null;
+  const ops = s.ops.length ? s.ops : ['+'];
+  const now = qClock(p);
+  let best = null, bestOver = -1;
+  for (const k of Object.keys(p.learned)) {
+    const e = p.learned[k];
+    if (!ops.includes(e.op) || e.ans > s.max) continue;
+    const over = now - e.due;
+    if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
+  }
+  if (!best) return null;
+  const e = p.learned[best];
+  return { tmpl: best, ans: e.ans, op: e.op, kind: 'classic', refresh: true };
 }
 // Kies een zwakke som om te herhalen (alleen als de bewerking nog aanstaat); zwaardere vaker.
 function pickWeak(p, s) {
@@ -4217,6 +4271,11 @@ function buildQuestion(p, lvl) {
   if (Math.random() < 0.35) {
     const wq = pickWeak(p, p.settings);
     if (wq) return wq;
+  }
+  // onderhoud: af en toe een som die al geleerd is maar lang niet langskwam
+  if (Math.random() < 0.12) {
+    const rq = pickRefresh(p, p.settings);
+    if (rq) return rq;
   }
   return genQuestion(p.settings, lvl, p.perf);
 }
@@ -4598,7 +4657,9 @@ function submitAnswer(val, btnEl) {
     else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
     else if (q.count) updateCountAcc(p, true, firstTry);
     p.stats.correct++;
-    if (firstTry) decWeak(p, q);                 // enkel een directe treffer telt als "beheerst"
+    // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
+    // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
+    if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
     let gain = 2;
     if (firstTry && G.spot > 0) gain += 1;       // spotlight-bonus enkel bij directe treffer
     G.streak++;
@@ -4645,6 +4706,7 @@ function submitAnswer(val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
   incWeak(p, q);                                  // deze som vaker laten terugkomen
+  demoteLearned(p, q);                            // stond hij in onderhoud? dan is hij weer zwak
   G.streak = 0;
   sndWrong();
   slipNote();
@@ -5484,6 +5546,10 @@ function statsPanelHtml(p) {
       ? `<div class="practice-hint">🎯 Sommen die nu nog lastig zijn — hier oefent het spel extra op:</div>
          <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
       : `<div class="stats-empty">Geen moeilijke sommen op dit moment — goed bezig! 🎉</div>`;
+    // onderhoud zichtbaar maken: geleerde sommen komen later nog eens terug,
+    // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
+    const nLearned = Object.keys(p.learned || {}).length;
+    if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${nLearned === 1 ? 'som komt' : 'sommen komen'} later nog eens terug, om te controleren of het blijft zitten.</div>`;
   }
   return `<div class="settings-panel"><div class="set-card">
     <div class="set-card-head"><div class="ico">📊</div>
