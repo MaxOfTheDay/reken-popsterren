@@ -1,6 +1,11 @@
 // Service worker: maakt het spel offline speelbaar na het eerste bezoek.
 const CACHE = 'rekenpop-v27';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+// Het lettertype staat hier bewust bij: het hoort bij het uiterlijk van het
+// spel en moet dus ook zonder internet meteen kloppen.
+const ASSETS = [
+  './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
+  './fonts/fredoka-latin.woff2', './fonts/fredoka-latin-ext.woff2'
+];
 
 // Hoeveel tijd een start (navigatie) op het netwerk mag wachten voordat we het
 // spel uit de cache serveren. Alleen als er al iets in de cache staat -- op een
