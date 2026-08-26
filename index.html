@@ -1847,7 +1847,7 @@
   <div class="screen hub" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
-        <div class="header-left"></div>
+        <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
         <div class="header-title">🏆 Trofeeënkast</div>
         <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
       </div>
@@ -1888,7 +1888,7 @@
   <div class="screen hub" id="screen-dress">
     <div class="hub-sticky">
       <div class="screen-header">
-        <div class="header-left"></div>
+        <button class="btn icon-btn header-left" onclick="dressBack()" aria-label="Terug" title="Terug">←</button>
         <div class="header-title">👗 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
@@ -2701,11 +2701,13 @@ function toggleGearMenu(e) {
   g.classList.toggle('on', open);
   g.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (open) sndClick();
+  syncBackGuard();
 }
 function closeGearMenu() {
   const m = $('gear-menu'), g = $('btn-gear');
   if (m) m.classList.remove('open');
   if (g) { g.classList.remove('on'); g.setAttribute('aria-expanded', 'false'); }
+  syncBackGuard();
 }
 // klik buiten het menu (maar niet op het tandwiel/menu zelf) sluit het
 document.addEventListener('click', e => {
@@ -2863,6 +2865,7 @@ function show(id) {
   ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
   if (navId) updateTroDot();
+  syncBackGuard();   // elk schermwissel loopt door hier heen -- zie "Terug-navigatie" onderaan
 }
 // Kaart is altijd "thuis" (goMap() start zelf al altijd bij de huidige stad,
 // nooit een onthouden positie). Kleedkamer/Trofeeën onthouden juist wél waar
@@ -3044,6 +3047,7 @@ function openCareer() {
     + `<div class="career-list">${rows}</div></div>`;
   document.body.appendChild(ov);
   const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 250); };
+  ov._close = close;   // laat Android-terug dezelfde sluiting hergebruiken (zie backTarget)
   ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) close(); };
   requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
   // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
@@ -3492,6 +3496,7 @@ function celebrateTrophy(t) {
   if (reduce) burst();
   else setTimeout(burst, 480);   // eerst even spanning: de kist schudt
   const close = () => { if (!ov.isConnected) return; if (ov._spark) clearInterval(ov._spark); ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
+  ov._close = close;   // laat Android-terug dezelfde sluiting hergebruiken (ruimt ook ov._spark op)
   // Ongeduldig? Eerste tik opent meteen; daarna sluit een tik het feestje.
   ov.onclick = () => { if (!pop.classList.contains('burst')) burst(); else close(); };
 }
@@ -3520,6 +3525,7 @@ function rankUpCelebrate(rank) {
     + `<div class="rankup-name">${rank.name}</div></div>`;
   document.body.appendChild(ov);
   const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
+  ov._close = close;   // laat Android-terug dezelfde sluiting hergebruiken (zie backTarget)
   ov.onclick = close;
   setTimeout(close, 2200);
 }
@@ -4184,6 +4190,7 @@ function finishMemory() {
   speak('Wauw! Je hebt ze allemaal gevonden!');
   $('mem-done-earn').textContent = '💎 +' + M.earned;
   $('mem-done').style.display = 'flex';
+  syncBackGuard();
 }
 
 /* ---- Zwakke sommen: gericht herhalen wat een kind moeilijk vindt ----
@@ -4523,8 +4530,9 @@ function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
   $('quit-modal').classList.add('open');
+  syncBackGuard();
 }
-function closeQuitModal() { sndClick(); $('quit-modal').classList.remove('open'); }
+function closeQuitModal() { sndClick(); $('quit-modal').classList.remove('open'); syncBackGuard(); }
 function quitGame() {
   $('quit-modal').classList.remove('open');
   stopSpot();
@@ -4537,7 +4545,7 @@ function quitGame() {
    systeem-confirm()/alert() die verder nergens in de app voorkomen en er (vooral
    rond het definitief wissen van voortgang) als een foutmelding uitzien i.p.v.
    een vraag van de app zelf. */
-function closeConfirmModal() { $('confirm-modal').classList.remove('open'); }
+function closeConfirmModal() { $('confirm-modal').classList.remove('open'); syncBackGuard(); }
 function showConfirm(title, body, confirmLabel, onConfirm) {
   $('confirm-title').textContent = title;
   $('confirm-body').textContent = body;
@@ -4547,6 +4555,7 @@ function showConfirm(title, body, confirmLabel, onConfirm) {
   $('confirm-no').onclick = closeConfirmModal;
   $('confirm-yes').onclick = () => { closeConfirmModal(); onConfirm(); };
   $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 function showNotice(title, body) {
   $('confirm-title').textContent = title;
@@ -4554,6 +4563,7 @@ function showNotice(title, body) {
   $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok">Oké</button>`;
   $('confirm-ok').onclick = closeConfirmModal;
   $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 
 function renderQuestion() {
@@ -5185,12 +5195,15 @@ let shopJustBoughtId = null;
 let shopView = 'items';   // 'items' = kleren per categorie · 'looks' = complete outfits als spaardoel
 let focusLook = null;     // look-id om naartoe te scrollen + even te laten oplichten (vanuit de kast)
 let looksScroll = 0;      // onthouden scrollpositie in de Looks-lijst, om ernaar terug te keren na een uitstapje naar de winkel
+let shopBackToLooks = false;   // stond je in Looks vóór de sprong naar dit ene stuk? dan gaat terug-navigatie daar weer naartoe
+let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-kaart kwam -- terug-navigatie gaat dan naar de kast i.p.v. de kaart
 // Onthoud waar je in de Looks-lijst stond (voor je naar een los stuk sprong).
 function rememberLooksScroll() { if (shopView === 'looks') looksScroll = $('screen-dress').scrollTop; }
 // Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
 // altijd terug naar de standaardcategorie, geen selectie, geen Looks-modus.
 function openKleedkamer() {
   shopCat = 'dress'; shopSelectedId = null; shopView = 'items'; focusLook = null; looksScroll = 0;
+  shopBackToLooks = false; dressReturnTo = null;
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
@@ -5210,6 +5223,7 @@ function resumeKleedkamer() {
 // look -- trekt meteen aan wat je er al van bezit en scrollt er duidelijk naartoe
 function openLookInKleedkamer(id) {
   shopCat = 'dress'; shopSelectedId = null; shopView = 'looks'; focusLook = id;
+  shopBackToLooks = false; dressReturnTo = 'trophies';
   equipOwnedPieces(id);
   show('screen-dress');
   // 'screen-dress' onthoudt zijn scrollpositie van de vórige keer (de browser
@@ -5222,6 +5236,7 @@ function openLookInKleedkamer(id) {
 // vanuit een kleedkamercollectie-trofee: open die categorie meteen in de kleedkamer
 function openKleedkamerCat(cat) {
   shopCat = cat; shopSelectedId = null; shopView = 'items'; focusLook = null;
+  shopBackToLooks = false; dressReturnTo = 'trophies';
   show('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
@@ -5231,6 +5246,7 @@ function shopGoToItem(cat, id) {
   sndClick();
   rememberLooksScroll();   // onthoud de plek in de Looks-lijst om er straks naar terug te keren
   shopView = 'items'; shopCat = cat; shopSelectedId = id;
+  shopBackToLooks = true;   // terug-navigatie (Android-terug of Escape) keert hierdoor terug naar Looks
   renderShop();
   // scroll het gekozen item zelf in beeld (i.p.v. gewoon naar boven) -- bij
   // een categorie met veel spulletjes (bv. dieren) staat het anders alsnog
@@ -5265,7 +5281,7 @@ function renderShop() {
     b.onclick = () => {
       sndClick();
       rememberLooksScroll();                 // verlaat je Looks? bewaar de plek
-      shopView = v; shopSelectedId = null; renderShop();
+      shopView = v; shopSelectedId = null; shopBackToLooks = false; renderShop();
       // terug naar Looks: herstel de vorige plek; naar Spullen: gewoon bovenaan
       const y = v === 'looks' ? looksScroll : 0;
       $('screen-dress').scrollTop = y;
@@ -5286,7 +5302,7 @@ function renderShop() {
     const b = document.createElement('button');
     b.className = 'tab-btn' + (c.id === shopCat ? ' active' : '');
     b.innerHTML = `<span class="tab-label">${c.name}</span>`;
-    b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; renderShop(); };
+    b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; shopBackToLooks = false; renderShop(); };
     tabs.appendChild(b);
   });
   // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
@@ -5887,9 +5903,92 @@ function importData(file) {
   reader.readAsText(file);
 }
 
+/* ================= Terug-navigatie (Android back / browser back) =================
+   Er is maar één URL, dus normaal ook maar één history-entry: zonder deze laag
+   zou de systeem-terugknop de app altijd meteen verlaten, ook middenin een show
+   of met een overlay open. Schermen zelf in de history coderen kan niet zomaar:
+   de spel-toestand (G/M) leeft alleen in het geheugen en wordt bij afsluiten op
+   null gezet, dus een teruggehaald "spel"-scherm zou een kapotte staat tonen.
+   In plaats daarvan is history hier puur een signaal: één wachtpost-entry, enkel
+   aanwezig zolang terug ook echt iets betekent. Wát die druk betekent, wordt bij
+   elke druk opnieuw afgelezen uit de bestaande app-status -- dezelfde variabelen
+   die de zichtbare ✕/←-knoppen ook gebruiken, dus geen aparte "stack" die uit de
+   pas kan lopen met wat er werkelijk op het scherm staat. */
+
+// Kleedkamer-teruggids: zelfde bestemming voor het zichtbare kopje als voor Android-terug.
+function dressBack() { (dressReturnTo === 'trophies' ? openTrophies : goMap)(); }
+
+function backTarget() {
+  // 1) een open modal/overlay/menu sluiten -- de onderliggende schermstatus blijft ongemoeid.
+  //    (":not(.closing)" want de drie hieronder faden al enkele honderden ms uit; een druk
+  //    tijdens die overgang moet niet nogmaals "sluiten", maar meteen de vólgende laag raken.)
+  const modal = document.querySelector('.modal-bg.open');
+  if (modal) return modal.id === 'quit-modal' ? closeQuitModal : closeConfirmModal;
+  const rankup = document.querySelector('.rankup-overlay:not(.closing)');
+  if (rankup) return rankup._close;
+  const career = document.querySelector('.career-overlay:not(.closing)');
+  if (career) return career._close;
+  const pop = document.querySelector('.trophy-pop-overlay:not(.closing)');
+  if (pop) return pop._close;
+  if ($('gear-menu').classList.contains('open')) return closeGearMenu;
+  if ($('mem-done').style.display === 'flex') return exitMemory;
+  // 2) één stap terug binnen hetzelfde scherm -- het enige echt geneste geval:
+  //    een los stuk vanuit Looks openen keert terug naar diezelfde Looks-lijst.
+  if ($('screen-dress').classList.contains('active') && shopBackToLooks) {
+    return () => {
+      shopBackToLooks = false; shopView = 'looks'; shopSelectedId = null; renderShop();
+      requestAnimationFrame(() => { $('screen-dress').scrollTop = looksScroll; });
+    };
+  }
+  // 3) het huidige scherm verlaten naar zijn eigen ouder -- exact dezelfde bestemming
+  //    als de zichtbare ✕/←/tab-knop op dat scherm (nooit twee betekenissen van "terug").
+  if ($('screen-game').classList.contains('active')) return askQuit;
+  if ($('screen-end').classList.contains('active')) return goMap;
+  if ($('screen-memory').classList.contains('active')) return exitMemory;
+  if ($('screen-settings').classList.contains('active')) return closeSettings;
+  if ($('screen-dress').classList.contains('active')) return dressBack;
+  if ($('screen-trophies').classList.contains('active')) return goMap;
+  if ($('screen-map').classList.contains('active')) return goProfiles;
+  return null;   // screen-profile, niets open: dit ís de bodem -- browser/PWA handelt terug zelf verder af
+}
+
+let backGuardArmed = false, syncingBackGuard = false, backSyncQueued = false;
+// Zorgt dat er precies dan een "wachtpost"-entry op de history staat als backTarget()
+// iets teruggeeft. Eén tussenstap (bv. openSettings() dat eerst closeGearMenu() aanroept
+// en pas dáárna show() naar het echte scherm) kan tussentijds heel even "niks" laten
+// lijken; history.back() is bovendien async terwijl pushState synchroon is, dus een
+// directe her-bewapening zou daarmee kunnen botsen. Daarom pas ná de huidige batch
+// synchrone DOM-wijzigingen checken (via microtask): alle syncBackGuard()-aanroepen
+// in dezelfde beurt smelten zo samen tot één beslissing op de uiteindelijke status.
+// Microtasks legen zich altijd vóór de vólgende popstate-taak, dus twee snelle
+// druk-op-druk-keren kunnen elkaar hierdoor nooit inhalen.
+function syncBackGuard() {
+  if (backSyncQueued) return;
+  backSyncQueued = true;
+  queueMicrotask(() => {
+    backSyncQueued = false;
+    const want = !!backTarget();
+    if (want === backGuardArmed) return;
+    if (want) { history.pushState({ rpGuard: 1 }, ''); backGuardArmed = true; }
+    else { syncingBackGuard = true; history.back(); }
+  });
+}
+window.addEventListener('popstate', () => {
+  backGuardArmed = false;                                       // onze entry is net verbruikt
+  if (syncingBackGuard) { syncingBackGuard = false; return; }    // wíj stuurden dit terug, niet de speler
+  const act = backTarget();
+  if (act) { act(); syncBackGuard(); }
+});
+// Na terugkeer uit de bfcache (bv. via Recents) kan de wachtpost-entry intussen
+// alweer weg zijn -- lees de status dan opnieuw af i.p.v. hem zomaar aan te nemen.
+window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state && history.state.rpGuard); syncBackGuard(); });
+// Escape is dezelfde intentie als terug, ook zonder touchscherm.
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act) act(); } });
+
 /* ================= Start ================= */
 load();
 renderProfiles();
+syncBackGuard();
 // Test-only inkijk in de lopende show (alleen met ?debug in de URL) -- helpt bij
 // geautomatiseerd testen; in het gewone spel niet aanwezig.
 if (location.search.indexOf('debug') !== -1) window.__game = () => G;
