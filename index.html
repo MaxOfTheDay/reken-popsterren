@@ -3,15 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>🎤 Reken Popsterren</title>
+<title>🎤 Reken-Popsterren</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#7b2ff7">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Fredoka staat in deze repo (fonts/), niet bij Google. Reden: het spel moet
+     offline werken, en juist bij het allereerste bezoek stuurt de browser de
+     lettertype-verzoeken al weg voordat de service worker het roer overneemt --
+     dan staat het lettertype dus niet in de cache. Meestal ving de HTTP-cache
+     van de browser dat nog op, maar "meestal" is voor een kinderspel zonder
+     internet niet genoeg. Meteen ook een verzoek minder naar buiten bij de start.
+     Het is een variabel lettertype voor alle diktes (400-700), gesplitst in
+     dezelfde stukken als Google gebruikt: latin voor alles wat het spel zelf
+     toont, latin-ext voor namen die een ouder intypt (maxlength 12) met tekens
+     als l-streep of s-cedille -- zonder dat stuk zou zo'n naam middenin van
+     lettertype wisselen. Licentie: SIL OFL 1.1, zie fonts/OFL.txt. */
+  @font-face {
+    font-family: 'Fredoka';
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url(fonts/fredoka-latin-ext.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Fredoka';
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url(fonts/fredoka-latin.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
   :root {
     /* ---- Backdrop / brand gradient ---- */
     --bg-1: #3d0a58; --bg-2: #7b2ff7; --bg-3: #f107a3;
@@ -96,8 +122,20 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
+  /* dvh volgt de zichtbaar beschikbare hoogte in een browsertab: 100% rekent
+     tegen de grootste viewport, dus daar viel de onderste strook achter de
+     adresbalk. In de geinstalleerde app is er geen adresbalk en is dit precies
+     gelijk aan 100%. Browsers zonder dvh houden gewoon de regel hierboven aan.
+     Veilig hier omdat de body niet scrollt (overflow: hidden): de adresbalk
+     schuift dus nooit weg tijdens het spelen en de hoogte springt niet. */
+  html { height: 100dvh; }
   body {
     font-family: "Fredoka", "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
+    /* Houdt "trek omlaag om te verversen" tegen in een browsertab: middenin een
+       som per ongeluk de pagina herladen is vervelend. In de geinstalleerde app
+       bestaat dat gebaar niet; daar verandert deze regel niets. Stopt meteen ook
+       het doorschieten van de reisroute/tabbladen naar de pagina eronder. */
+    overscroll-behavior: none;
     background:
       radial-gradient(circle at 18% 12%, var(--bg-glow-pink), transparent 45%),
       radial-gradient(circle at 82% 88%, var(--bg-glow-blue), transparent 48%),
@@ -1717,7 +1755,7 @@
         <span style="top:84%;font-size:26px;animation-duration:88s;animation-delay:-42s;opacity:.22">☁️</span>
       </div>
     </div>
-    <h1 class="title">🎤 Reken Popsterren 🎶</h1>
+    <h1 class="title">🎤 Reken-Popsterren 🎶</h1>
     <div class="subtitle">Wie gaat er vandaag schitteren op het podium?</div>
     <div class="profile-row" id="profile-row"></div>
   </div>
@@ -2583,6 +2621,12 @@ function beep(freq, dur, delay, type, vol) {
   if (!db.sound) return;
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    // Is de app een tijd weggeweest (dichtgeklapt, telefoon op slot), dan kan de
+    // browser de audiocontext onderbroken hebben. Chrome hervat meestal vanzelf
+    // zodra de app weer in beeld is, maar niet altijd -- en dan blijft het spel
+    // stil zonder dat je ziet waarom. beep() draait altijd na een tik van het
+    // kind, dus dit is een geldig moment om te hervatten.
+    if (actx.state === 'suspended') { const r = actx.resume(); if (r && r.catch) r.catch(() => {}); }
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = type || 'sine';
     o.frequency.value = freq;
