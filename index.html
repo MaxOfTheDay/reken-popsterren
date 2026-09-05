@@ -434,12 +434,14 @@
   }
   .map-id-btn:hover { transform: scale(1.02); }
   .map-id-btn:active { transform: scale(.96); }
-  .map-portrait {
+  /* gedeeld rond portretkader: kaartkop (.map-portrait) en de kindkiezer in het
+     ouderdeel (.who-portrait, zie daar) tonen allebei hetzelfde echte avatartje */
+  .map-portrait, .who-portrait {
     position: relative; width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
     background: var(--glass-black-30); border: 2px solid rgba(255,255,255,.65);
     box-shadow: var(--e-1);
   }
-  .map-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
+  .map-portrait svg, .who-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
   .map-name {
     font-size: 19px; font-weight: 700; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1750,6 +1752,33 @@
      volle breedte van .hub-sticky -- dan wordt de geselecteerde knop een groot
      leeg goud blok en zweeft de tekst van de andere knop eenzaam ver weg aan
      de andere kant. Blijft op smalle schermen gewoon 100% breed. */
+  /* ==== Ouderdeel: twee navigatieniveaus, en ze moeten er ánders uitzien ====
+     Hiervoor waren het twee identieke .segmented-sporen, pal op elkaar: niets
+     vertelde dat het ene "wiens gegevens" kiest en het andere "wat daarover".
+     Niveau 1 (wie) is nu een open, scrollende rij portretten -- geen spoor
+     eromheen, want juist dat spoor laat iets als tabbladen lezen. Niveau 2 (wat)
+     houdt het omsloten spoor. Zelfde max-width, dus ze lijnen links uit. */
+  .who-row {
+    display: flex; gap: 6px; padding: 2px 4px; width: 100%; max-width: 460px;
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .who-row::-webkit-scrollbar { display: none; }
+  /* hergebruikt .tab-btn uit de kleedkamer; alleen het portret is nieuw */
+  .who-btn { padding-left: 5px; gap: 8px; min-height: 48px; }
+  .who-portrait { width: 38px; height: 38px; }
+  .who-portrait svg { top: -5px; width: 65px; }
+  /* Bewust NIET het blauw van .tab-btn.active: blauw betekent in deze app
+     "actieve navigatie", en een ster kiezen is geen navigatie maar het bepalen
+     van de context (wiens gegevens). Paars is de kleur van gewone keuzes, net
+     als bij .chip.on. Zo verschillen de twee niveaus in vorm en in kleur. */
+  .who-btn.active {
+    background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
+    color: var(--c-white);
+    box-shadow: 0 3px 10px rgba(var(--purple-mid-rgb), .38);
+  }
+  .who-btn.active .who-portrait { border-color: var(--c-white); }
+  #settings-subtabs { margin-top: 8px; }
+
   .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--glass-black-26); width: 100%; max-width: 460px; }
   .segmented button {
     flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
@@ -1757,7 +1786,14 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     transition: background .15s, color .15s, box-shadow .15s;
   }
-  .segmented button .who { font-size: 19px; }
+  /* drie labels moeten in het spoor passen zonder af te breken; de maatregel
+     hieronder is het vangnet voor grote systeemletters (gemeten past het op
+     320px ook zonder) */
+  .segmented button { min-width: 0; white-space: nowrap; }
+  @media (max-width: 360px) {
+    .segmented { gap: 3px; padding: 3px; }
+    .segmented button { font-size: 14.5px; padding: 10px 4px; }
+  }
   /* blauw = actieve navigatie/keuze (zelfde taal als .tab-btn.active in de
      kleedkamer en .nav-item.active in de vaste navigatie) -- paars blijft
      gereserveerd voor gewone (niet-navigatie) keuzes, goud voor spelen/verdiend */
@@ -1770,6 +1806,16 @@
     opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; pointer-events: none;
   }
   .saved-pill.show { opacity: 1; transform: translateY(0); }
+  /* De opslagbevestiging reserveert ~100px in de rechtercel, en omdat de
+     zijkolommen 1fr delen kneep dat de titel in het midden dood ("Voor ou..."
+     op 320px). Uit de stroom halen loste dat op maar liet de flits over de
+     titel heen lopen; op smalle schermen krimpt ze daarom tot alleen het vinkje
+     -- kort genoeg om de titel te laten passen, en de betekenis (opgeslagen)
+     zit toch al in het vinkje. */
+  @media (max-width: 400px) {
+    .saved-pill .sp-word { display: none; }
+    .saved-pill { padding: 5px 8px; font-size: 14px; }
+  }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
@@ -1783,14 +1829,32 @@
   .set-card.primary { border: 1.5px solid var(--purple-light); }
   .set-card.primary .set-card-head .ico { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); color: var(--c-white); border-color: transparent; }
   .set-card.primary .set-card-head h2 { font-size: 19.5px; }
-  /* wissen blijft een aparte, duidelijk gemarkeerde stap binnen de kaart
-     "Gegevens beheren" i.p.v. een losse sectie los van de back-up-knoppen */
-  .set-card .danger-zone { margin-top: 14px; }
+  /* Wissen zat als permanent zichtbaar rood vlak onderaan het instellingenscherm,
+     altijd in beeld naast gewone instellingen. Nu zit het achter een rustige
+     openklapper: het rode vlak bestáát pas als een ouder er zelf om vraagt.
+     <details> i.p.v. eigen JS -- toetsenbord en schermlezer krijgen we gratis. */
+  .danger-reveal { margin-top: 12px; }
+  .danger-reveal > summary {
+    list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    min-height: 44px; box-sizing: border-box; padding: 9px 15px;
+    font-size: 13.5px; font-weight: 700; color: var(--paper-ink-muted);
+    border: 1.5px solid var(--paper-border); border-radius: var(--r-pill);
+  }
+  .danger-reveal > summary::-webkit-details-marker { display: none; }
+  .danger-reveal > summary::after { content: '▾'; opacity: .7; }
+  .danger-reveal[open] > summary { color: var(--danger-title); border-color: var(--danger-border); }
+  .danger-reveal[open] > summary::after { content: '▴'; }
+  .danger-reveal .danger-zone { margin-top: 10px; }
+  /* streepje tussen de kindkaarten en het app-brede blok eronder: het staat op de
+     paarse schermachtergrond, niet op een witte kaart, vandaar de witte tekst */
+  .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
+    color: var(--c-white); opacity: .8; font-size: 12.5px; font-weight: 700; }
+  .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: var(--glass-white-22); }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
   .set-field .lbl { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
-  .set-field .note { font-size: 12px; color: var(--paper-ink-muted); font-weight: 500; }
+  .set-card .note, .set-field .note { font-size: 12px; color: var(--paper-ink-muted); font-weight: 500; }
   /* "Tafels van" only matters once Maal/Delen is on -- dimmed (not disabled: still
      tappable, so a parent can pre-select tables before turning the operation on) */
   .set-field.inactive { opacity: .5; }
@@ -2090,11 +2154,11 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeSettings()" aria-label="Terug" title="Terug">←</button>
-        <div class="header-title">⚙️ Instellingen</div>
-        <div class="header-right"><span class="saved-pill" id="settings-saved">✓ Opgeslagen</span></div>
+        <div class="header-title">👨‍👩‍👧 Voor ouders</div>
+        <div class="header-right"><span class="saved-pill" id="settings-saved">✓<span class="sp-word"> Opgeslagen</span></span></div>
       </div>
-      <div class="segmented" id="settings-profiles"></div>
-      <div class="segmented tabs" id="settings-subtabs"></div>
+      <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
+      <div class="segmented" id="settings-subtabs" role="tablist"></div>
     </div>
     <div class="settings-sheet">
       <div id="settings-body"></div>
@@ -2593,8 +2657,18 @@ function defaultProfile(name, dress, opts) {
     // track: 'math' = de gewone rekenshow · 'count' = de lees-vrije telmodus voor
     // kleuters (gesproken opdrachten, hoeveelheden i.p.v. cijfers). De telmodus
     // heeft eigen velden (stage-bereik, weergave, cijfers-aan/uit, kortere ronde).
+    // opts mag élke instelling meegeven: dat is wat een wis-actie moet kunnen
+    // bewaren (zie set-reset). De fallbacks zijn exact de oude vaste waarden.
+    // .slice() op de lijstjes: anders deelt het verse profiel zijn array met het
+    // profiel dat we net weggooien, en werken ze elkaar later bij.
     settings: {
-      ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: opts.perLevel || 8, missNum: true, chain3: true,
+      ops: opts.ops ? opts.ops.slice() : ['+', '-'],
+      max: opts.max || 20,
+      tables: opts.tables ? opts.tables.slice() : [2, 5, 10],
+      mode: opts.mode || 'kies',
+      perLevel: opts.perLevel || 8,
+      missNum: opts.missNum !== false,
+      chain3: opts.chain3 !== false,
       track: opts.track || 'math',
       stage: opts.stage || 1,                       // laagste (start)fase in de telmodus
       stageMax: opts.stageMax || COUNT_STAGE_MAX,   // hoogste toegestane fase
@@ -5891,13 +5965,16 @@ function unequipShopItem(id) {
 
 /* ================= Instellingen ================= */
 let setKey = 'p1';
-let setTab = 'voortgang';   // 'voortgang' (alleen lezen) | 'oefening' (instellen)
+// 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (profiel + data).
+// Bewust niet 'instellen': dat botst met de app-instellingen onder het tandwiel.
+let setTab = 'voortgang';
 function openSettings() {
   closeGearMenu();
   setKey = cur || 'p1';
   setTab = 'voortgang';
   renderSettings();
   show('screen-settings');
+  settingsToTop();
 }
 function closeSettings() {
   save();
@@ -5940,7 +6017,10 @@ function statsPanelHtml(p) {
        <div class="practice-chips">${done || '<span class="stats-empty">Net begonnen — veel plezier! 🎉</span>'}</div>
        <div class="note" style="margin-top:8px">${help}</div>`;
   } else {
-    const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8).map(e => e[0]);
+    // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek.
+    // Die plaatshouder is intern; een ouder hoort gewoon de som te zien.
+    const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
+      .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
     practice = weak.length
       ? `<div class="practice-hint">🎯 Sommen die nu nog lastig zijn — hier oefent het spel extra op:</div>
          <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
@@ -5976,14 +6056,14 @@ function chip(v, label, on) {
   return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
 }
 const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som'];
-function oefeningPanelHtml(p, s) {
+function oefenenPanelHtml(p, s) {
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   const isCount = s.track === 'count';
   // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus
   const modeCard = `
     <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🧸</div><div><h2>Modus</h2><div class="sub">Hoe deze ster speelt</div></div></div>
+      <div class="set-card-head"><div class="ico">🧸</div><div><h2>Modus</h2><div class="sub">Hoe ${p.name} speelt</div></div></div>
       <div class="set-field"><span class="lbl">Manier van spelen</span>
         <div class="chip-row" id="set-track">
           ${chip('count', '🧸 Leren tellen', isCount)}
@@ -6043,26 +6123,47 @@ function oefeningPanelHtml(p, s) {
           ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
         </div></div>
     </div>`;
+  return `<div class="settings-panel">${modeCard}${isCount ? countCard : mathCards}</div>`;
+}
+
+/* ---- Beheer: alles wat géén oefeninstelling is ----
+   Twee soorten dingen, en het verschil moet te zien zijn:
+     - kindgebonden : naam, en opnieuw beginnen (raakt alleen deze ster)
+     - app-breed    : back-up (exportData schrijft de héle db weg -- alle sterren
+                      plus geluid/trillen -- en importData vervángt die helemaal)
+   De back-up stond hiervoor ín de kindcontext, met een tekst die niet zei over
+   wie hij ging, terwijl "wissen" er vlak onder wél "van Anna" zei: precies de
+   verkeerde kant op. Daarom staat back-up nu ná een streepje "Voor alle sterren",
+   buiten de kindkaarten. */
+function beheerPanelHtml(p) {
   return `<div class="settings-panel">
-    ${modeCard}
-    ${isCount ? countCard : mathCards}
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">Naam van deze ster</div></div></div>
+      <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">De naam van deze ster</div></div></div>
       <div class="set-field"><label class="lbl" for="set-name">Naam</label>
         <div class="name-edit-wrap"><input type="text" id="set-name" value="${p.name}" maxlength="12"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
     </div>
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">🗂️</div><div><h2>Gegevens beheren</h2><div class="sub">Back-up, overzetten of opnieuw beginnen</div></div></div>
+      <div class="set-card-head"><div class="ico">🧹</div><div><h2>Opnieuw beginnen</h2><div class="sub">Alleen voor ${p.name}</div></div></div>
+      <div class="note">De instellingen hierboven (modus, bereik, fases) blijven gewoon staan — alleen de voortgang verdwijnt.</div>
+      <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
+           zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
+      <details class="danger-reveal" id="set-danger">
+        <summary>Voortgang wissen…</summary>
+        <div class="danger-zone">
+          <div><div class="t">⚠️ Voortgang wissen</div><div class="d">Verwijdert alle diamanten, sterren en spulletjes van ${p.name}. Kan niet ongedaan gemaakt worden.</div></div>
+          <button class="danger-btn" id="set-reset">Wissen</button>
+        </div>
+      </details>
+    </div>
+    <div class="sheet-rule"><span>Voor alle sterren</span></div>
+    <div class="set-card">
+      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Geldt voor alle sterren, niet alleen ${p.name}</div></div></div>
       <div class="data-btns">
         <button class="btn small purple" id="set-export">💾 Back-up maken</button>
         <button class="btn small purple" id="set-import">📂 Back-up terugzetten</button>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
-      <div class="note" style="margin-top:9px">Bewaart diamanten, trofeeën en spulletjes veilig, of zet ze over naar een ander toestel.</div>
-      <div class="danger-zone">
-        <div><div class="t">⚠️ Voortgang wissen</div><div class="d">Verwijdert alle diamanten, sterren en spulletjes van ${p.name}. Kan niet ongedaan gemaakt worden.</div></div>
-        <button class="danger-btn" id="set-reset">Wissen</button>
-      </div>
+      <div class="note">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel. Terugzetten vervangt wat er nu op dit toestel staat.</div>
     </div>
   </div>`;
 }
@@ -6077,6 +6178,15 @@ function blockedMinOne(el) {
 }
 // gewone instellingen slaan meteen op -- geen aparte "Opslaan"-knop nodig,
 // alleen een kort, subtiel pilletje in de kop dat het bevestigt
+// Bij een wissel van onderdeel bovenaan beginnen: van een lang paneel naar een
+// kort paneel landde je anders halverwege. Twee keer, want de nieuwe inhoud staat
+// er pas na de hertekening.
+function settingsToTop() {
+  const el = $('screen-settings');
+  if (!el) return;
+  el.scrollTop = 0;
+  requestAnimationFrame(() => { el.scrollTop = 0; });
+}
 let savedPillTimer = null;
 function saveAndFlash() {
   save();
@@ -6086,32 +6196,89 @@ function saveAndFlash() {
   clearTimeout(savedPillTimer);
   savedPillTimer = setTimeout(() => el.classList.remove('show'), 1400);
 }
-function renderSettings() {
-  // profielkiezer (segmented)
-  const profiles = $('settings-profiles');
-  profiles.innerHTML = '';
-  for (const key of profileKeys()) {
-    const b = document.createElement('button');
-    if (key === setKey) b.className = 'on';
-    b.innerHTML = `<span class="who">🌟</span> ${db.profiles[key].name}`;
-    b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
-    profiles.appendChild(b);
-  }
-  // tabbladen: Voortgang (lezen) / Instellen (aanpassen)
-  const subtabs = $('settings-subtabs');
-  subtabs.innerHTML =
-    `<button class="${setTab === 'voortgang' ? 'on' : ''}" data-t="voortgang">📊 Voortgang</button>
-     <button class="${setTab === 'oefening' ? 'on' : ''}" data-t="oefening">⚙️ Instellen</button>`;
-  subtabs.querySelectorAll('button').forEach(b => b.onclick = () => { sndClick(); setTab = b.dataset.t; renderSettings(); });
+// De drie onderdelen van het ouderdeel. Waarde = staat, label = wat er staat.
+const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
+// Alleen naar boven springen als het ónderdeel wisselt, niet bij elke chip-tik.
+let lastWhoRendered = null;
 
+/* Niveau 1 -- wíé: open rij portretten, geen omsloten spoor. Dit is dezelfde
+   scrollende pil-rij als de kleedkamer (.tab-btn + hscroll-fade + updateFades),
+   met het echte avatar-portret erin i.p.v. voor elk kind hetzelfde sterretje.
+   Niveau 2 (het onderdeel) blijft een .segmented-spoor; twee vormen, twee
+   betekenissen -- hiervoor stonden er twee identieke sporen op elkaar. */
+function renderWhoRow() {
+  const row = $('settings-profiles');
+  const keep = row.scrollLeft;          // niet terugspringen bij elke hertekening
+  row.innerHTML = '';
+  let active = null;
+  for (const key of profileKeys()) {
+    const pr = db.profiles[key];
+    const on = key === setKey;
+    const b = document.createElement('button');
+    b.className = 'tab-btn who-btn' + (on ? ' active' : '');
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.innerHTML = `<span class="who-portrait" aria-hidden="true">${avatarSVG(pr, 65)}</span>`
+      + `<span class="tab-label">${pr.name}</span>`;
+    b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
+    row.appendChild(b);
+    if (on) active = b;
+  }
+  row.onscroll = () => updateFades(row);
+  row.scrollLeft = keep;
+  updateFades(row);
+  // alleen bij een échte wissel het gekozen kind in beeld trekken
+  if (active && lastWhoRendered !== setKey) requestAnimationFrame(() => {
+    if (!active.isConnected) return;
+    active.scrollIntoView({ block: 'nearest', inline: 'center' });
+    updateFades(row);
+  });
+  lastWhoRendered = setKey;
+}
+
+/* Niveau 2 -- wát: Voortgang | Oefenen | Beheer. Bewust zonder emoji: drie
+   labels mét icoon passen niet in het 460px-spoor op een 320px-telefoon (~333px
+   nodig, 288px beschikbaar), en zonder is het bovendien rustiger. De iconen
+   blijven wél op de kaartkoppen staan, waar ze iets betekenen. */
+function renderSectionTabs() {
+  const t = $('settings-subtabs');
+  t.innerHTML = SET_TABS.map(([v, label]) =>
+    `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
+  t.querySelectorAll('button').forEach(b => b.onclick = () => {
+    if (b.dataset.t === setTab) return;
+    sndClick(); setTab = b.dataset.t; renderSettings(); settingsToTop();
+  });
+}
+
+function renderSettings() {
+  renderWhoRow();
+  renderSectionTabs();
   const p = db.profiles[setKey];
   const s = p.settings;
-  const body = $('settings-body');
-  if (setTab === 'voortgang') { body.innerHTML = statsPanelHtml(p); return; }
+  $('settings-body').innerHTML =
+      setTab === 'oefenen' ? oefenenPanelHtml(p, s)
+    : setTab === 'beheer'  ? beheerPanelHtml(p)
+    :                        statsPanelHtml(p);
+  bindSettings(p, s);
+}
 
-  body.innerHTML = oefeningPanelHtml(p, s);
-  $('set-name').oninput = e => { p.name = e.target.value.trim() || p.name; saveAndFlash(); };
+/* Elk onderdeel toont maar een déél van de bedieningen, dus alles wordt alleen
+   gebonden als het er ook echt staat. Vijf regels deden dat hiervoor niet
+   ($('set-name') e.d. zonder controle) -- die wierpen meteen een TypeError zodra
+   een paneel ze niet bevat, waarna de rest van de bindingen stilletjes wegviel. */
+function bindSettings(p, s) {
   const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
+  const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
+  on('set-name', 'oninput', e => {
+    p.name = e.target.value.trim() || p.name;
+    saveAndFlash();
+    // de naam staat ook in de kiezer hierboven: die meteen laten meelopen, zonder
+    // hertekenen (dat zou de focus uit het invulveld halen)
+    const lbl = $('settings-profiles').querySelector('.active .tab-label');
+    if (lbl) lbl.textContent = p.name;
+  });
+  // het rode vlak openklappen mag ook hoorbaar zijn, net als elke andere tik
+  const dg = $('set-danger');
+  if (dg) dg.ontoggle = () => { if (dg.open) sndClick(); };
   // modus: wisselen tussen de rekenshow en de lees-vrije telmodus
   bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
@@ -6167,18 +6334,19 @@ function renderSettings() {
   bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); saveAndFlash(); renderSettings(); });
   bind('set-repr', c => { s.repr = c.dataset.v; saveAndFlash(); renderSettings(); });
-  $('set-reset').onclick = () => {
+  on('set-reset', 'onclick', () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
       `Alle voortgang, diamanten en spulletjes van ${p.name} wissen? Dit kan niet ongedaan gemaakt worden.`,
       'Ja, wissen',
       () => {
-        // behoud de identiteit van deze ster: haar startjurk én of ze in de
-        // telmodus staat (een reset wist voortgang, niet wie ze is)
+        // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
+        // startjurk, haar plek in de rij én álle instellingen gaan mee. Dat gold
+        // eerder alleen voor de telmodus -- in de rekenmodus vielen bewerkingen,
+        // bereik, tafels, antwoordmethode en de extra uitdagingen stilletjes terug
+        // op de standaardwaarden, terwijl de waarschuwing dat niet zei.
         const dress = p.equipped.dress || 'dress_roze';
-        const opts = p.settings.track === 'count'
-          ? { track: 'count', stage: p.settings.stage, stageMax: p.settings.stageMax, repr: p.settings.repr, numerals: p.settings.numerals, perLevel: p.settings.perLevel, qmax: p.settings.qmax, memory: p.settings.memory }
-          : {};
+        const opts = { ...p.settings };
         const order = p.order;
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
         db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
@@ -6187,13 +6355,13 @@ function renderSettings() {
         setTimeout(hideToast, 1800);
       }
     );
-  };
-  $('set-export').onclick = exportData;
-  $('set-import').onclick = () => $('set-import-file').click();
-  $('set-import-file').onchange = e => {
+  });
+  on('set-export', 'onclick', exportData);
+  on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
+  on('set-import-file', 'onchange', e => {
     if (e.target.files[0]) importData(e.target.files[0]);
     e.target.value = '';   // zelfde bestand opnieuw kunnen kiezen
-  };
+  });
 }
 
 // Alle profielen + instellingen als JSON-bestand downloaden.
@@ -6202,7 +6370,9 @@ function exportData() {
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0, 10);
+  // tot op de seconde: met alleen een datum overschreef een tweede back-up op
+  // dezelfde dag de eerste in de downloadmap
+  const stamp = new Date().toISOString().slice(0, 19).replace('T', '-').replace(/:/g, '');
   a.href = url;
   a.download = `reken-popsterren-backup-${stamp}.json`;
   document.body.appendChild(a);
