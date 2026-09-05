@@ -195,14 +195,43 @@
   .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
   .profile-card .deco { font-size: 18px; }
   .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 var(--glass-black-25); }
-  /* alleen het totaal aantal sterren -- geen stad/tournee-details nodig om te
-     kiezen wie er gaat spelen; hergebruikt de kleine pil (zie .chip-badge) */
-  .profile-card .chip-badge { margin: 6px 0 2px; }
+  /* De kaart ís de knop -- er stond eerder ook nog een volle Speel!-knop ín elke
+     kaart: drie identieke gouden hoofdknoppen naast elkaar (dus geen hoofdknop),
+     en op 390-430px breed was die pil bréder dan zijn eigen kaart. Nu twee kleine
+     merkjes op de rand van het podiumkader:
+       .city-mark (linksboven, neutraal donker) -- wáár ze op tournee is, met
+         hetzelfde stadsicoon als op de reiskaart. Vervangt de oude "⭐ 0"-pil:
+         een verse ster zag daar haar nul naast de 17 van haar zus staan.
+       .play-mark (rechtsonder, goud)           -- "hier kun je op tikken".
+     Bewust merkjes en geen pil onder de naam: de kaarten zijn op een telefoon
+     92-126px breed, en een pil met "🌷 Amsterdam" erin (±118px) past daar bij
+     geen enkele stad in -- die zou precies dezelfde overloop maken als de
+     Speel!-knop die hier net weg is. Een merkje kost geen kaartbreedte. */
+  .pstage-wrap { position: relative; width: 100%; }
+  .city-mark, .play-mark {
+    position: absolute; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; box-shadow: 0 2px 6px var(--glass-black-35);
+  }
+  /* zelfde donkere badge-taal als het slotje op een trofeekaart: neutrale info */
+  .city-mark {
+    left: -5px; top: -5px; font-size: 15px;
+    background: rgba(30,15,55,.95); border: 2px solid var(--glass-white-40);
+  }
+  /* goud = spelen (zelfde belofte als de Speel!-knop op de kaart), maar klein:
+     een merkje dat zegt "tikbaar", geen knop die om aandacht vraagt */
+  .play-mark {
+    right: -5px; bottom: -5px; font-size: 13px; padding-left: 2px; color: var(--purple-shadow);
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    border: 2px solid rgba(255,255,255,.75);
+  }
+  .profile-card:active .play-mark { filter: brightness(.85); }
   /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
   @media (max-width: 380px) {
     .profile-row { gap: 10px; }
     .profile-card .pname { font-size: 18px; }
-    .profile-card .speel-pill { font-size: 15px; padding: 8px 15px; }
+    .city-mark, .play-mark { width: 26px; height: 26px; }
+    .city-mark { font-size: 13px; }
+    .play-mark { font-size: 11px; }
   }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
@@ -211,9 +240,11 @@
      .btn.ghost. Gedeeld door de Instellingen-knop (thuisscherm) en de
      X-stopknop (spelscherm) -- twee losse "hoekknopjes" die er nu hetzelfde
      rustige gewicht bij hebben. */
+  /* 44px: de minimale comfortabele tikmaat voor een kinderhand -- gold ook voor
+     het ✕ 'show stoppen' (de enige onomkeerbare tik in het spel) en het tandwiel */
   .icon-btn {
-    width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: var(--c-white); border-radius: 50%; border: 1.5px solid var(--glass-white-28);
+    width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--c-white); border-radius: 50%; border: 1.5px solid var(--glass-white-28);
     background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
     box-shadow: 0 3px 0 var(--glass-black-28);
   }
@@ -225,7 +256,7 @@
 
   /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
   .gear-menu {
-    position: absolute; top: 54px; right: 0; min-width: 216px;
+    position: absolute; top: 62px; right: 0; min-width: 216px;
     background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-md); padding: 6px;
     box-shadow: 0 14px 34px rgba(30,0,50,.42); display: none; flex-direction: column;
     transform-origin: top right;
@@ -403,6 +434,8 @@
   .career-strip { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; cursor: pointer; }
   .career-strip:active { transform: scale(.98); }
   .rank-counter { font-size: 13px; font-weight: 700; color: var(--c-white); opacity: .85; letter-spacing: .01em; }
+  /* de ster-status zelf is de kop van dit strookje, de teller de bijzin ernaast */
+  .rank-name { font-weight: 800; opacity: 1; }
   .rank-tap { font-weight: 800; color: var(--gold-light); opacity: .95; margin-left: 3px; }
   .rank-counter.big { font-size: 16px; opacity: 1; margin-top: 2px; }
 
@@ -485,7 +518,10 @@
   }
   .nav-item .nav-ico { font-size: 25px; line-height: 1.1; }
   .nav-item:active { transform: scale(.94); }
-  .nav-item.active { opacity: 1; background: rgba(255,193,7,.26); box-shadow: inset 0 0 0 2px rgba(255,213,79,.55); }
+  /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
+     de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
+     .speel-pill, .item-card.equipped): navigatie is geen beloning. */
+  .nav-item.active { opacity: 1; background: rgba(56,189,248,.20); box-shadow: inset 0 0 0 2px rgba(143,214,255,.55); }
   /* schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter verdwijnt */
   .screen.hub { padding-bottom: 100px; }
 
@@ -604,7 +640,10 @@
   /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
   /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon)
      met een 🔊-knop om de gesproken opdracht te herhalen. */
-  .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 30px; }
+  /* de 🔊-knop stond hier vroeger ín (absoluut, rechts); nu staat hij als echte
+     knop ónder de kaart (zie .replay-btn), dus de kaart hoeft er geen 30px
+     zijruimte meer voor vrij te houden en de som/groep krijgt die breedte terug */
+  .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 14px; }
   .cq-groupwrap { display: flex; align-items: center; justify-content: center; }
   .cgroup { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; max-width: 260px; line-height: 1; }
   /* tot 3 objecten op een rij: netjes groepeerbaar in beeld (subitiseren) */
@@ -618,15 +657,21 @@
   .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 800; color: var(--purple-shadow); }
   .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
   @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
-  .count-replay {
-    position: absolute; top: 50%; right: 2px; transform: translateY(-50%);
-    width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer;
-    font-size: 13px; color: var(--purple-shadow); background: transparent;
-    opacity: .45; display: flex; align-items: center; justify-content: center;
-    transition: opacity .15s ease;
+  /* In de telmodus is de gesproken opdracht de héle vraag. "Nog eens voorlezen"
+     was daarom precies het verkeerde element om weg te moffelen (26px, 45%
+     doorzichtig, tegen de rand van de kaart). Nu een echte knop van 48px, vol
+     zichtbaar, direct onder de somkaart: na de antwoordtegels de belangrijkste
+     tik op het scherm. Gouden randje = "dit hoort bij de vraag"; verder de
+     rustige glas-vulling van .btn.soft, zodat hij niet met de tegels concurreert. */
+  .replay-btn {
+    width: 48px; height: 48px; padding: 0; margin: 4px auto 2px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    font-family: inherit; font-size: 22px; line-height: 1; color: var(--c-white);
+    border-radius: 50%; border: 2px solid var(--gold-accent);
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 var(--glass-black-28);
   }
-  .count-replay:hover { opacity: .8; }
-  .count-replay:active { opacity: 1; transform: translateY(calc(-50% + 1px)); }
+  .replay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
   /* meetellen: elk object popt op maat op */
   .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
   .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
@@ -738,13 +783,15 @@
   .mem-fab {
     position: fixed; right: 16px; bottom: 84px; z-index: 30;
     display: flex; flex-direction: column; align-items: center; gap: 1px;
-    font-family: inherit; font-size: 26px; font-weight: 700; color: var(--ink-on-gold);
-    border: none; cursor: pointer; padding: 12px 14px 9px; border-radius: 20px;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: 0 6px 0 var(--gold-cta-shadow), 0 10px 20px var(--glass-black-32);
+    font-family: inherit; font-size: 26px; font-weight: 700; color: var(--c-white);
+    cursor: pointer; padding: 11px 14px 8px; border-radius: 20px;
+    border: 1.5px solid var(--glass-white-28);
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 3px 0 var(--glass-black-28), 0 8px 18px var(--glass-black-32);
   }
   .mem-fab span { font-size: 13px; font-weight: 800; }
-  .mem-fab:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--gold-cta-shadow), 0 6px 12px var(--glass-black-32); }
+  .mem-fab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28), 0 5px 12px var(--glass-black-32); }
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
   .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 10px; width: min(92vw, 460px); }
   .mem-card {
@@ -806,6 +853,7 @@
     .game-arena { gap: 8px; margin-top: 2px; }
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
     .gold-banner { height: 18px; font-size: 14.5px; margin-top: 2px; }
+    .replay-btn { width: 40px; height: 40px; font-size: 19px; margin: 2px auto 0; }
     .choice-btn { padding: 12px 8px; font-size: 27px; }
     .choices { gap: 10px; }
     .num-btn { padding: 9px 0; font-size: 23px; }
@@ -1018,11 +1066,10 @@
      zonder dit oogt ze net zo goed los zwevend erboven */
   .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
     width: 34px; height: 9px; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
-  /* .speel-pill: het gedeelde "Speel!"-knop-uiterlijk -- zelfde maat,
-     verloop, schaduw en paarse tekst op de kaart én bij profielkeuze. Puls +
-     gloed geïnspireerd op .trophy-card.ready (de "open trofee"-knop) i.p.v.
-     de stillere brightness-only playGlow -- dit is de belangrijkste tik op
-     elk van die schermen, mag zich ook zo aanvoelen. */
+  /* .speel-pill: dé hoofdknop van het spel, en (sinds de profielkaarten hun
+     eigen kopie kwijt zijn) de enige plek waar hij staat. Puls + gloed
+     geïnspireerd op .trophy-card.ready i.p.v. de stillere brightness-only
+     playGlow -- dit is de belangrijkste tik van de app, mag zich ook zo voelen. */
   .speel-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
@@ -1042,17 +1089,10 @@
     0%, 100% { transform: translateX(-50%) scale(1); }
     50% { transform: translateX(-50%) scale(1.09); }
   }
-  /* profielkeuze: zelfde puls, maar zonder de translateX-truc -- deze knop
-     staat gewoon in de normale flow, niet absoluut gepositioneerd */
-  .profile-card .speel-pill { margin-top: 12px; animation: speelPulseFlow 1.2s ease-in-out infinite; }
-  @keyframes speelPulseFlow {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.09); }
-  }
   /* tikfeedback via filter i.p.v. transform -- de puls-animatie hierboven
      bezet transform al elk frame, dus een :active transform zou meteen weer
      overschreven worden (zelfde patroon als bij .tour-stop.next .dot) */
-  .tour-stop:active .tour-speel, .profile-card:active .speel-pill { filter: brightness(.85); }
+  .tour-stop:active .tour-speel { filter: brightness(.85); }
   .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
     border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
   /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
@@ -1345,7 +1385,6 @@
   .end-stage { width: 180px; height: 200px; margin: 6px auto 2px; }
   @media (max-height: 700px) { .end-stage { width: 140px; height: 156px; } }
   .end-text { font-size: 19px; }
-  .dance-subline { margin-top: 6px; font-size: 17px; }
   .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
@@ -1432,7 +1471,7 @@
      smalste telefoons) netjes afkapt met "…" i.p.v. hard te knippen */
   .tab-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .tab-btn:active { transform: scale(.95); }
-  .tab-btn.active { background: var(--gold-deep); color: var(--purple-shadow); }
+  .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
   .item-card {
     position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
@@ -1586,10 +1625,10 @@
     transition: background .15s, color .15s, box-shadow .15s;
   }
   .segmented button .who { font-size: 19px; }
-  /* geel = actieve navigatie/focus (zelfde taal als .tab-btn.active in de
-     kleedkamer en .nav-item.active in de vaste navigatie), i.p.v. het vorige
-     losse wit -- paars blijft gereserveerd voor gewone (niet-navigatie) keuzes */
-  .segmented button.on { background: var(--gold-deep); color: var(--purple-shadow); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+  /* blauw = actieve navigatie/keuze (zelfde taal als .tab-btn.active in de
+     kleedkamer en .nav-item.active in de vaste navigatie) -- paars blijft
+     gereserveerd voor gewone (niet-navigatie) keuzes, goud voor spelen/verdiend */
+  .segmented button.on { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
   /* korte, subtiele bevestiging na elke automatische opslag -- verschijnt even
      in de anders lege rechterkop-cel, geen aparte "Opslaan"-knop nodig */
   .saved-pill {
@@ -1765,7 +1804,7 @@
   <div class="screen" id="screen-memory">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="exitMemory()" aria-label="Terug naar de kaart" title="Terug naar de kaart">✕</button>
+        <button class="btn icon-btn header-left" onclick="exitMemory()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
         <div class="header-title">🎴 Memory</div>
         <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
       </div>
@@ -1816,6 +1855,9 @@
           <div class="spot-rail" aria-hidden="true"><div class="spotlight-bar" id="spotlight-bar"></div></div>
         </div>
         <div class="gold-banner" id="gold-banner"></div>
+        <!-- alleen in de telmodus: herhaal de gesproken opdracht (zie drawQuestion) -->
+        <button class="replay-btn" id="btn-replay" type="button" onclick="replayPrompt()"
+                aria-label="Nog eens voorlezen" title="Nog eens voorlezen" style="display:none">🔊</button>
         <div id="answer-area"></div>
       </div>
     </div>
@@ -1863,7 +1905,7 @@
   <div class="screen" id="screen-end">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar kaart" title="Terug naar kaart">✕</button>
+        <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar kaart" title="Terug naar kaart">←</button>
         <div class="header-title" id="end-lvl-label"></div>
         <div class="diamond-badge header-right">💎 <span id="end-diamonds">0</span></div>
       </div>
@@ -2891,11 +2933,18 @@ function renderProfiles() {
     const p = db.profiles[key];
     const card = document.createElement('button');
     card.className = 'profile-card';
+    // Waar ze nu op tournee is (stadsicoon), i.p.v. haar sterrentotaal: de kaart
+    // vertelt wie je bent, niet hoe je scoort t.o.v. je zus. Beide merkjes zijn
+    // decoratie voor een schermlezer -- de aria-label hieronder zegt het in woorden.
+    const stad = cityFor(p.level);
     card.innerHTML =
-      `<div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
-        <div class="pname">${p.name}</div>
-        <div class="chip-badge">⭐ ${totalStarCount(p)}</div>
-        <div class="speel-pill">Speel!</div>`;
+      `<div class="pstage-wrap">
+          <div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
+          <span class="city-mark" aria-hidden="true" title="${stad.name}">${stad.flag}</span>
+          <span class="play-mark" aria-hidden="true">▶</span>
+        </div>
+        <div class="pname">${p.name}</div>`;
+    card.setAttribute('aria-label', `Speel met ${p.name} — nu in ${stad.name}`);
     applyStage(card.querySelector('.stage'), p);
     card.onclick = () => { sndClick(); selectProfile(key); };
     row.appendChild(card);
@@ -2992,11 +3041,16 @@ function renderCareerStrip(p) {
   const into = total - r.curMin;
   const span = r.nextMin - r.curMin;
   const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
-  $('map-tournee-label').textContent = `${r.emoji} ${r.name}`;
-  // echte teller (bv. "96/100 ⭐") i.p.v. een "nog X"-restlabel -- geen dubbele
-  // voortgangsinformatie naast de balk, en meteen duidelijk wat "vol" betekent
+  // De schermkop zegt overal wáár je bent (Kleedkamer, Trofeeënkast, New York);
+  // op de kaart stond daar de rang. Nu ook hier de plek -- de tournee -- en de
+  // rangnaam verhuist naar de strip eronder, bij zijn eigen teller en balk.
+  const ronde = cityFor(p.level).ronde;
+  $('map-tournee-label').textContent = `🎤 Tournee ${ronde}`;
+  // rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk:
+  // één plek waar staat welke status je hebt en hoe ver je naar de volgende bent
   $('career-strip').innerHTML =
-    `<span class="rank-counter">${total}/${r.nextMin} ⭐ <span class="rank-tap">status ›</span></span>`
+    `<span class="rank-counter"><span class="rank-name">${r.emoji} ${r.name}</span>`
+    + ` · ${total}/${r.nextMin} ⭐ <span class="rank-tap">›</span></span>`
     + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
 }
 // De hele carrière-ladder in beeld: behaalde, huidige en komende ster-statussen,
@@ -3020,9 +3074,16 @@ function openCareer() {
     + `<div class="lr-top"><span class="lr-emoji">${emoji}</span><span class="lr-name">${name}</span>`
     + (rankBonusFor(cur.idx + 1) > 0 ? `<span class="lr-bonus">+${rankBonusFor(cur.idx + 1)} 💎</span>` : '') + `</div>`
     + `<div class="lr-progress"><span class="lr-bar"><span style="width:${pct}%"></span></span>`
-    + `<span class="lr-count">${total}/${cur.nextMin} ⭐ · nog ${remain}</span></div></div>`;
+    + `<span class="lr-count">${total}/${cur.nextMin} ⭐</span></div></div>`;
+  // Alleen het stuk ladder waar je iets aan hebt: de vorige status, waar je nu
+  // staat, je volgende doel en twee daarboven. De hele lijst (acht rangen, waarvan
+  // de bovenste op 36% doorzichtigheid) was voor een kind vooral onleesbare ruis --
+  // "Platinaster" zegt niets als je nog op 17 sterren staat. De "…en verder"-rij
+  // hieronder maakt zichtbaar dat het daarna nog doorgaat.
+  const vanaf = curBase - 1, tot = cur.idx + 3;
   let rows = '';
   RANK_TIERS.forEach((t, i) => {
+    if (i < vanaf || i > tot) return;
     if (i < curBase) {
       rows += `<div class="ladder-row past"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span></div>`;
     } else if (i === curBase) {
@@ -3912,7 +3973,6 @@ let countDrawId = 0;
 function drawCountQuestion(q) {
   const myDraw = ++countDrawId;
   const card = $('question-text');
-  const replay = '<button class="count-replay" type="button" aria-label="Nog eens voorlezen" onclick="replayPrompt()">🔊</button>';
   const cardRepr = q.card.repr || 'objects';
   const kind = q.card.kind;
   let body = '';
@@ -3925,7 +3985,7 @@ function drawCountQuestion(q) {
   else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
-  card.innerHTML = `<div class="count-q">${body}${replay}</div>`;
+  card.innerHTML = `<div class="count-q">${body}</div>`;
   // meetellen: objecten poppen één voor één op terwijl er hardop geteld wordt
   if (q.along && kind === 'group') {
     const objs = card.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
@@ -4474,7 +4534,7 @@ function startLevel(lvl) {
   // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
   // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, dances: 0, moveIdx: 0,
+  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0,
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
   const city = cityFor(lvl);
   $('game-lvl-label').textContent = `${city.flag} ${city.name}`;
@@ -4633,6 +4693,9 @@ function drawQuestion() {
   // "Gouden vraag!"-aankondiging zit in de vraag-prompt, zie renderQuestion)
   // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de rekenmodus).
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
+  // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
+  // staat de som gewoon te lezen en wordt er niets uitgesproken)
+  $('btn-replay').style.display = G.count ? 'flex' : 'none';
   if (G.count) { drawCountQuestion(q); return; }
   const shown = G.mode === 'typ' ? G.input : '?';
   $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
@@ -4819,7 +4882,7 @@ function dance(elId) {
   const el = $(elId);
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
-  if (G) { G.moveIdx++; G.dances++; }   // pasjes tellen door voor het eindscherm
+  if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
   el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
   void el.offsetWidth;
   el.classList.add('dancing', move.cls);
@@ -4934,7 +4997,6 @@ function endLevel(success) {
   stopSpot();
   const p = P();
   const lvl = G.lvl;
-  const dances = G.dances;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
   let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
@@ -4976,7 +5038,7 @@ function endLevel(success) {
     const juich = stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
-    $('end-text').innerHTML = `${juich}<div class="dance-subline">💃 Je deed <b>${dances}</b> danspasjes in deze show!</div>`;
+    $('end-text').textContent = juich;
     const earnChips = [
       `<span class="earn-chip dia">💎 +${G.earned} verdiend</span>`,
       `<span class="earn-chip star">⭐ +${bonus} sterrenbonus</span>`
