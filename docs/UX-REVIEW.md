@@ -1,5 +1,18 @@
 # Reken Popsterren — UI/UX review
 
+> **Status:** phase 1 and phase 2 of the plan in section G are implemented.
+> Where the implementation deviates from what is written below, the reason is
+> recorded in the commit that made the change:
+> * the profile card carries the city as an **icon badge on the stage frame**, not
+>   a chip under the name — a `🌷 Amsterdam` pill (~118px) does not fit a card that
+>   is 92–126px wide on a phone;
+> * the radius scale landed on **10 / 16 / 24 / pill** rather than the illustrative
+>   8 / 14 / 22, to sit on the app's existing centre of gravity instead of
+>   restyling it;
+> * the dressing-room header came down to **277px** (from 407), not the 260 the
+>   plan named — the last 17px would have had to come out of the avatar, which is
+>   the thing that screen exists to show.
+
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
 wide and at 1024×768, across every screen, in both tracks (rekenmodus and telmodus).

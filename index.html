@@ -20,13 +20,17 @@
     /* ---- Neutrals ---- */
     --c-white: #fff; --c-ink: #333;
 
-    /* ---- Gold: primary CTA gradient (play/main button) ---- */
+    /* ---- Gold. Er waren er veertien; elk kwam ooit binnen voor één component
+       en bleef staan, waardoor "goud" als kleur niets meer betekende. Nu zes,
+       met elk een eigen rol:
+         cta-top/bottom/shadow -- de hoofdknop (spelen), inclusief zijn schaduwlip
+         accent                -- "verdiend / dit staat aan" (randen, badges, balken)
+         light                 -- goud als tékst op donker (leesbaar)
+         ink-on-gold(-card)    -- tekst óp goud
+       Alles wat hier weg is, is naar de dichtstbijzijnde van deze zes gegaan. ---- */
     --gold-cta-top: #ffc23d; --gold-cta-bottom: #ff8f00; --gold-cta-shadow: #b36200;
-    /* ---- Gold: accent / reward tones (distinct roles, not merged) ---- */
-    --gold-accent: #ffd740; --gold-warm: #ffd54f; --gold-deep: #ffb300; --gold-light: #ffe082;
-    --gold-cream: #fff9c4; --gold-bright: #ffee58; --gold-flame: #ff6f00;
-    --gold-pale: #ffd9a0; --gold-flash: #fff176; --gold-ready-border: #fff3c4;
-    --gold-marigold: #ffca28; --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
+    --gold-accent: #ffd740; --gold-light: #ffe082;
+    --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
 
     /* ---- Purple: brand / secondary actions ---- */
     --purple-light: #ab47bc; --purple-mid: #8e24aa; --purple-mid-rgb: 142,36,170; --purple-shadow: #4a148c;
@@ -86,9 +90,26 @@
     --glass-white-20: rgba(255,255,255,.2); --glass-white-16: rgba(255,255,255,.16); --glass-white-35: rgba(255,255,255,.35);
     --glass-white-18: rgba(255,255,255,.18); --glass-white-14: rgba(255,255,255,.14);
 
-    /* ---- Border radii ---- */
-    --radius-pill: 999px; --radius-md: 16px; --radius-sm: 12px; --radius-lg: 20px;
-    --radius-button: 18px; --radius-2xl: 26px; --radius-xl: 24px; --radius-card-sm: 14px;
+    /* ---- Hoekrondingen: één schaal van drie maten + de pil.
+       Hiervoor stonden er acht tokens én dertien losse waarden in het blad --
+       zeventien verschillende rondingen in één app, wat de belangrijkste reden
+       was dat losse componenten niet als één familie aanvoelden. De maten zijn
+       bewust gekozen rond het zwaartepunt van wat er al stond (12-16 / 18-20 /
+       24-28), zodat dit een opschoning is en geen restyling.
+         sm  -- chips, kleine knopjes, raamvakjes
+         md  -- kaarten, tegels, knoppen
+         lg  -- panelen, vellen, de vraagkaart
+         pill -- alles wat een pil is ---- */
+    --r-sm: 10px; --r-md: 16px; --r-lg: 24px; --r-pill: 999px;
+
+    /* ---- Diepte: drie hoogtes, meer niet. (De schaduw-"lip" onder een knop is
+       iets anders -- dat is de knopvorm zelf, zie --btn-lip.)
+         e-1 -- badge / portretje dat net van zijn ondergrond loskomt
+         e-2 -- kaart, paneel, plakkende kop
+         e-3 -- overlay die bovenop het scherm ligt ---- */
+    --e-1: 0 2px 7px var(--glass-black-35);
+    --e-2: 0 10px 26px var(--glass-black-35);
+    --e-3: 0 14px 34px var(--glass-black-50);
 
     /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ---- */
     --btn-lip: 5px; --btn-lip-sm: 4px;
@@ -113,7 +134,7 @@
      menu (echt role="menu"/menuitem, dus ook echt met toetsenbord te bedienen) */
   button:focus-visible, a:focus-visible, input:focus-visible,
   [role="menuitem"]:focus-visible, [role="menuitemcheckbox"]:focus-visible {
-    outline: 3px solid var(--gold-warm); outline-offset: 2px;
+    outline: 3px solid var(--gold-accent); outline-offset: 2px;
   }
 
   /* schermen scrollen nooit zijwaarts: horizontaal scrollen gebeurt alleen
@@ -133,7 +154,7 @@
   .btn {
     font-family: inherit; font-size: 20px; font-weight: 600; color: var(--purple-shadow);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    border: none; border-radius: var(--radius-button); padding: 14px 26px; cursor: pointer;
+    border: none; border-radius: var(--r-md); padding: 14px 26px; cursor: pointer;
     box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 14px var(--glass-black-30);
     transition: transform .08s, box-shadow .08s;
   }
@@ -149,11 +170,11 @@
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
   .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
-  .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--radius-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
+  .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
-    font-size: 17px; padding: 12px 18px; border-radius: var(--radius-md); color: var(--c-white);
+    font-size: 17px; padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
     border: 1.5px solid var(--glass-white-28);
     background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
     box-shadow: 0 3px 0 var(--glass-black-28);
@@ -179,17 +200,17 @@
   .profile-card {
     position: relative; flex: 1 1 0; min-width: 0; max-width: 250px;
     cursor: pointer; text-align: center; font-family: inherit; color: var(--c-white);
-    background: linear-gradient(180deg, rgba(142,36,170,.24), rgba(74,20,140,.22));
-    border: 1.5px solid var(--glass-white-22); border-radius: var(--radius-2xl);
+    background: rgba(103,29,155,.23);
+    border: 1.5px solid var(--glass-white-22); border-radius: var(--r-lg);
     padding: 11px 10px 16px; transition: transform .18s, box-shadow .18s;
-    box-shadow: 0 10px 26px var(--glass-black-32);
+    box-shadow: var(--e-2);
     /* expliciete kolom i.p.v. losse blok/inline-flow: zonder dit vallen de
        (beide inline-flex) ster-chip en Speel-knop op brede (desktop) kaarten
        op dezelfde regel en verspringt Speel! per ongeluk náást/bóven de sterren
        i.p.v. eronder -- op smalle (mobiele) kaarten viel dat toevallig niet op. */
     display: flex; flex-direction: column; align-items: center;
   }
-  .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 16px 34px var(--glass-black-40); }
+  .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: var(--e-3); }
   .profile-card:active { transform: translateY(-2px) scale(1.01); }
   /* het podium schaalt mee met de kaartbreedte; de scène blijft schoon (geen zwevende teller) */
   .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
@@ -210,7 +231,7 @@
   .pstage-wrap { position: relative; width: 100%; }
   .city-mark, .play-mark {
     position: absolute; width: 30px; height: 30px; border-radius: 50%;
-    display: grid; place-items: center; box-shadow: 0 2px 6px var(--glass-black-35);
+    display: grid; place-items: center; box-shadow: var(--e-1);
   }
   /* zelfde donkere badge-taal als het slotje op een trofeekaart: neutrale info */
   .city-mark {
@@ -257,8 +278,8 @@
   /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
   .gear-menu {
     position: absolute; top: 62px; right: 0; min-width: 216px;
-    background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-md); padding: 6px;
-    box-shadow: 0 14px 34px rgba(30,0,50,.42); display: none; flex-direction: column;
+    background: var(--c-white); color: var(--c-ink); border-radius: var(--r-md); padding: 6px;
+    box-shadow: var(--e-3); display: none; flex-direction: column;
     transform-origin: top right;
   }
   .gear-menu.open { display: flex; animation: gearPop .16s ease; }
@@ -266,14 +287,14 @@
   .gear-item {
     font-family: inherit; font-size: 16px; font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
-    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 11px;
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--r-sm);
   }
   .gear-item:hover { background: var(--paper-tint); }
   .gear-item:active { transform: scale(.98); }
   .gear-item .gi-ico { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
   .gear-item .gi-label { flex: 1; }
   .gear-item .gi-state {
-    font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: var(--radius-pill);
+    font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: var(--r-pill);
     background: var(--green-badge-bg); color: var(--green-deep);
   }
   .gear-item .gi-state.off { background: var(--paper-muted-bg); color: var(--paper-muted-text); }
@@ -283,8 +304,8 @@
 
   /* ---- Podium / avatar ---- */
   .stage {
-    position: relative; border-radius: var(--radius-xl); overflow: hidden; flex-shrink: 0;
-    border: 4px solid rgba(255,255,255,.5); box-shadow: 0 10px 24px var(--glass-black-35);
+    position: relative; border-radius: var(--r-lg); overflow: hidden; flex-shrink: 0;
+    border: 4px solid rgba(255,255,255,.5); box-shadow: var(--e-2);
     display: flex; align-items: flex-end; justify-content: center;
   }
   /* verfijnde randbehandeling, gedeeld door elke plek waar de avatar het
@@ -295,7 +316,7 @@
      voorbehouden aan geselecteerd/primaire acties. */
   .stage-frame {
     border-width: 2px; border-color: var(--glass-white-35);
-    box-shadow: 0 10px 24px var(--glass-black-35), 0 0 20px rgba(123,47,247,.28);
+    box-shadow: var(--e-2), 0 0 20px rgba(123,47,247,.28);
   }
   /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
   .stage .avatar-holder { height: 92%; }
@@ -379,7 +400,7 @@
   .screen-header .header-right { justify-self: end; }
   /* één teller-pil, in twee maten: groot (schermkoppen) en klein (kaart-topbalk, spelbalk) */
   .diamond-badge, .chip-badge {
-    background: var(--glass-black-32); border-radius: var(--radius-pill); font-weight: bold;
+    background: var(--glass-black-32); border-radius: var(--r-pill); font-weight: bold;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   }
   .diamond-badge { padding: 8px 18px; font-size: 22px; }
@@ -393,7 +414,7 @@
      12px) -- vandaar de losse -10px/top:-10px hieronder i.p.v. de standaard
      -12px die .hub-sticky's basisregel gebruikt. */
   #screen-map { position: relative; padding: 10px 0 100px; }
-  #screen-map .hub-sticky { width: 100%; margin: -10px 0 12px; top: -10px; }
+  #screen-map .hub-sticky { width: 100%; margin: -10px 0 4px; top: -10px; }
   /* avatar + naam = de link terug naar spelerskeuze i.p.v. naar de kleedkamer
      (die zit al in de vaste ondernavigatie); zit in de .header-left cel van
      .screen-header, zodat "🎤 Tournee X" gewoon als .header-title mee-centreert
@@ -414,7 +435,7 @@
   .map-portrait {
     position: relative; width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
     background: var(--glass-black-30); border: 2px solid rgba(255,255,255,.65);
-    box-shadow: 0 2px 7px var(--glass-black-35);
+    box-shadow: var(--e-1);
   }
   .map-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
   .map-name {
@@ -447,8 +468,8 @@
   .career-overlay.closing { animation: popFade .25s ease reverse forwards; }
   .career-panel {
     position: relative; width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; cursor: default; text-align: center;
-    padding: 20px 18px 16px; border-radius: var(--radius-xl); border: 3px solid var(--gold-accent);
-    background: linear-gradient(180deg, var(--purple-deep), var(--purple-shadow)); box-shadow: 0 10px 40px var(--glass-black-50);
+    padding: 20px 18px 16px; border-radius: var(--r-lg); border: 3px solid var(--gold-accent);
+    background: var(--purple-deep); box-shadow: var(--e-3);
     animation: popIn .4s cubic-bezier(.2,1.3,.4,1);
   }
   .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
@@ -458,7 +479,7 @@
      de huidige rung uitgeklapt met balk, de volgende als goud doel, de rest gedempt.
      Alleen bij 'nu' en 'volgende' staan getallen -- de rest blijft rustig. */
   .career-list { display: flex; flex-direction: column; gap: 5px; text-align: left; margin-top: 6px; }
-  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 11px; border: 1px solid transparent; background: var(--glass-white-10); }
+  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: var(--glass-white-10); }
   .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; }
   .lr-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 14.5px; }
   /* Behaald = dezelfde subtiele goud-taal als een behaalde trofee (.trophy-card.done):
@@ -474,17 +495,17 @@
   .ladder-row.goal .lr-name { font-size: 16px; }
   .lr-bonus { font-size: 12.5px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: auto; }
   .lr-progress { display: flex; align-items: center; gap: 8px; }
-  .lr-bar { flex: 1; height: 11px; border-radius: 999px; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
-  .lr-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); }
+  .lr-bar { flex: 1; height: 11px; border-radius: var(--r-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
+  .lr-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); }
   .lr-count { font-size: 12px; font-weight: 800; color: var(--c-white); flex: none; }
   /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
   .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: rgba(255,214,90,.38); }
   .lr-now { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
-    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); padding: 3px 9px; border-radius: 999px; }
+    background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .career-panel { animation: none; } }
-  .rank-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
+  .rank-bar { width: 100%; height: 9px; border-radius: var(--r-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
-  .rank-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .5s ease; }
+  .rank-fill { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .5s ease; }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform (zie updateParallax). Ooit zat de transform op
@@ -506,14 +527,14 @@
 
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
-    display: none; gap: 5px; padding: 7px; border-radius: var(--radius-2xl); width: min(94vw, 430px);
+    display: none; gap: 5px; padding: 7px; border-radius: var(--r-lg); width: min(94vw, 430px);
     background: rgba(30, 4, 52, .78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid var(--glass-white-22); box-shadow: 0 10px 26px var(--glass-black-40);
+    border: 1.5px solid var(--glass-white-22); box-shadow: var(--e-2);
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
     font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .75;
-    background: transparent; border: none; border-radius: 19px; padding: 7px 4px 6px; cursor: pointer;
+    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px 6px; cursor: pointer;
     transition: transform .1s, background .15s, opacity .15s;
   }
   .nav-item .nav-ico { font-size: 25px; line-height: 1.1; }
@@ -532,55 +553,63 @@
      dus de negatieve marge/breedte/top hieronder wijkt af van .hub-sticky's -12px/24px-basis. */
   #screen-game { padding: 8px; justify-content: flex-start; }
   #screen-game .hub-sticky { width: calc(100% + 16px); margin: -8px -8px 10px; top: -8px; }
-  .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  /* Levens en voortgang stonden hier als één rij van elf bijna gelijke rondjes:
+     drie hartjes plus acht stippen, twee betekenissen in dezelfde vorm. Nu twee
+     vormen: hartjes links (hoeveel fouten mag ik nog), één balk in vakjes rechts
+     (hoe ver ben ik). Die balk (.segbar) is gedeeld met het memory-spel. */
+  .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
   .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; }
-  .qprogress { display: flex; gap: 5px; }
-  .qdot { width: 13px; height: 13px; border-radius: 50%; background: var(--glass-white-30); }
-  .qdot.done { background: var(--gold-accent); box-shadow: 0 0 6px var(--gold-accent); }
-  .qdot.now { background: var(--c-white); transform: scale(1.25); }
+  .segbar { display: flex; gap: 3px; width: min(48vw, 190px); }
+  .segbar > span {
+    flex: 1; height: 9px; border-radius: var(--r-pill);
+    background: var(--glass-white-30); transition: background .25s ease;
+  }
+  /* goud = gehaald (zelfde betekenis als overal elders), wit = waar je nu bent */
+  .segbar > span.done { background: var(--gold-accent); }
+  .segbar > span.now { background: var(--c-white); box-shadow: 0 0 6px rgba(255,255,255,.55); }
   @media (max-width: 430px) {
     .notes-left { font-size: 17px; letter-spacing: 0; }
+    .segbar { width: min(44vw, 150px); }
   }
 
-  /* arena: linkerpaneel = de show (avatar + fanmeter), rechts = het rekenen (focus);
-     space-evenly verdeelt de resthoogte gelijkmatig i.p.v. één groot gat bovenaan */
+  /* Arena: de show (avatar + publieksmeter) en het rekenen. Stond op
+     align-content:space-evenly, wat op een telefoon drie gaten van ~100px maakte
+     (kop→paspop, paspop→som, antwoorden→onderrand: samen ~340px van 844). Nu
+     één groep met een vast ritme, gecentreerd in wat er over is. */
   .game-arena {
-    display: flex; gap: 22px; align-items: center; align-content: space-evenly; justify-content: center;
-    width: 100%; max-width: 860px; margin-top: 6px; flex-wrap: wrap; flex: 1 1 auto;
+    display: flex; gap: 16px; align-items: center; align-content: center; justify-content: center;
+    width: 100%; max-width: 860px; margin-top: 4px; flex-wrap: wrap; flex: 1 1 auto;
   }
-  .show-panel { display: flex; flex-direction: column; align-items: center; }
-  /* dichter tegen de paspop aan zodat meter + avatar als één "podium" aanvoelen
-     i.p.v. twee losse widgets naast elkaar */
-  .show-inner { display: flex; align-items: flex-end; gap: 8px; }
-  /* .fan-col en .show-stage delen dezelfde flex-end-basislijn (zie .show-inner),
-     dus het klapicoon zit bóven de balk gestapeld i.p.v. ernaast -- .fan-track's
-     hoogte (hieronder, per breakpoint) is daarom altijd iets kórter dan de
-     paspop-kader-hoogte, zodat icoon + balk sámen nooit boven de bovenkant van
-     het kader uitsteken en het icoon er juist mee lijkt te sluiten. */
-  .fan-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .show-panel { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  /* De publieksmeter zat als losse verticale buis náást de paspop: een leeg
+     kokertje met een gedimd 👏 erboven, dat aan het begin van een show 0% is en
+     nergens bij lijkt te horen. Nu een balk langs de onderrand van het podium,
+     precies even breed als het kader -- hij hoort bij de show, en de 👏 staat
+     aan het einde ervan als label. */
+  .fan-row { display: flex; align-items: center; gap: 7px; width: 100%; }
   /* het klapicoon blijft altijd zichtbaar als label van de meter, maar wordt
      feller naarmate G.fan stijgt (zie updateFan) -- brightness i.p.v. opacity
      zodat het nooit helemaal "verdwijnt" bij een lege meter */
-  .fan-icon { font-size: 23px; line-height: 1; filter: brightness(.65); transition: filter .4s ease; }
+  .fan-icon { font-size: 20px; line-height: 1; flex: none; filter: brightness(.65); transition: filter .4s ease; }
   .fan-icon.pulse { animation: fanIconPulse .5s ease; }
   @keyframes fanIconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
   .fan-track {
-    width: 32px; height: 185px; border-radius: var(--radius-pill); overflow: hidden;
+    flex: 1; min-width: 0; height: 12px; border-radius: var(--r-pill); overflow: hidden;
     background: var(--glass-black-32); border: 2px solid var(--glass-white-40);
-    display: flex; align-items: flex-end;
+    display: flex; align-items: stretch;
   }
   .fan-fill {
-    width: 100%; height: 0%; border-radius: var(--radius-pill);
-    background: linear-gradient(0deg, var(--pink-accent), var(--pink-hot), var(--pink-deep)); transition: height .5s ease;
+    height: 100%; width: 0%; border-radius: var(--r-pill);
+    background: var(--pink-hot); transition: width .5s ease;
   }
   .fan-fill.full { animation: fanPulse .5s ease infinite alternate; }
   @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.45); } }
-  /* encore: de meter "lost op" naar boven i.p.v. gewoon leeg te lopen, zodat het
-     als een omgezette beloning voelt i.p.v. verloren voortgang (zie updateFan) */
+  /* encore: de meter "lost op" i.p.v. gewoon leeg te lopen, zodat het als een
+     omgezette beloning voelt i.p.v. verloren voortgang (zie updateFan) */
   .fan-fill.encore-clear { animation: fanEncoreClear .7s ease forwards; }
   @keyframes fanEncoreClear {
-    0% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-36px); }
+    0% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(26px); }
   }
   /* zelfde breedte/hoogte-verhouding als de kleedkamer se .dress-stage (~1.19 : 1),
      ~15% groter dan de vorige maat (vooral op mobiel voelde de paspop nog te klein),
@@ -591,16 +620,16 @@
   .math-panel { display: flex; flex-direction: column; align-items: center; }
   .question-card {
     position: relative; overflow: hidden;
-    background: linear-gradient(180deg, var(--c-white), var(--lavender-wash)); color: var(--purple-shadow); border-radius: var(--radius-2xl);
+    background: var(--c-white); color: var(--purple-shadow); border-radius: var(--r-lg);
     padding: 18px 32px 26px; margin: 0 0 8px; text-align: center;
     font-size: clamp(42px, 8.5vw, 62px); font-weight: 700; min-width: min(88vw, 400px);
-    box-shadow: 0 10px 24px var(--glass-black-32); border: 3px solid rgba(255,255,255,.7);
+    box-shadow: var(--e-2); border: 3px solid rgba(255,255,255,.7);
   }
   /* Het onbekende getal -- het antwoord ("3 + 4 = ▢") of het ontbrekende getal
      ("3 + ▢ = 7") -- als een duidelijk in-te-vullen vakje. Meteen zichtbaar wát
      er gevraagd wordt, en visueel gelijk voor beide vraagsoorten. */
   .q-blank {
-    display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: 14px; line-height: 1.02;
+    display: inline-block; min-width: .72em; padding: 0 .12em; border-radius: var(--r-sm); line-height: 1.02;
     border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
   }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
@@ -608,9 +637,9 @@
      geen aparte tijdbalk-rij die als "haast je!" leest */
   .spot-rail {
     position: absolute; left: 16px; right: 16px; bottom: 9px; height: 7px;
-    border-radius: var(--radius-pill); background: rgba(74, 20, 140, .10);
+    border-radius: var(--r-pill); background: rgba(74, 20, 140, .10);
   }
-  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep)); transition: width .1s linear; }
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .1s linear; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
@@ -618,7 +647,7 @@
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: min(88vw, 400px); margin-top: 4px; }
   .choice-btn {
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
-    padding: 18px 8px; border-radius: var(--radius-lg);
+    padding: 18px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
     transition: transform .07s, box-shadow .07s;
   }
@@ -629,7 +658,7 @@
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
-    padding: 13px 0; border-radius: var(--radius-md);
+    padding: 13px 0; border-radius: var(--r-md);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
   }
   .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
@@ -681,7 +710,7 @@
 
   /* Tienraam: 2 rijen van 5 vakjes — 6–10 in één oogopslag herkenbaar (subitiseren) */
   .cframe { display: inline-grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-  .tf-cell { width: 28px; height: 28px; border-radius: 6px; border: 2px solid rgba(74,20,140,.22); display: flex; align-items: center; justify-content: center; }
+  .tf-cell { width: 28px; height: 28px; border-radius: var(--r-sm); border: 2px solid rgba(74,20,140,.22); display: flex; align-items: center; justify-content: center; }
   .tf-cell.on { border-color: rgba(74,20,140,.38); background: rgba(142,36,170,.08); }
   .tf-cell.hidden { background: rgba(74,20,140,.14); font-size: 15px; }
   .cframe.big .tf-cell { width: 34px; height: 34px; }
@@ -692,6 +721,9 @@
      die verkleint alleen visueel, niet de layout, waardoor 3 tegels op smalle
      schermen buiten beeld liepen) */
   .count-tile .cframe { gap: 2px; }
+  /* de mini-raampjes houden hun eigen kleine ronding: dat is de tekening van het
+     reken-hulpmiddel, niet de UI-schaal -- --r-sm op een vakje van 10-15px maakt
+     er een rondje van */
   .count-tile .cframe .tf-cell { width: 15px; height: 15px; border-width: 1.5px; border-radius: 4px; }
   .count-tile .cframe .cg-obj { font-size: 11px; }
   .count-tile .cframe .cg-dot { width: 8px; height: 8px; }
@@ -701,7 +733,7 @@
      de rijen staan iets uit elkaar (5-anker), zodat je "5 en nog wat" en "hoeveel
      nog tot 10" in één oogopslag ziet, zonder elke stip te hertellen. */
   .dframe { display: inline-grid; grid-template-columns: repeat(5, auto); column-gap: 5px; row-gap: 8px; }
-  .df-cell { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid rgba(74,20,140,.16); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .df-cell { width: 22px; height: 22px; border-radius: var(--r-sm); border: 1.5px solid rgba(74,20,140,.16); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
   .df-cell.on { border-color: rgba(74,20,140,.30); }
   .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); }
   .dframe.big .df-cell { width: 27px; height: 27px; }
@@ -754,7 +786,7 @@
   .count-tiles.three { grid-template-columns: repeat(3, 1fr); }
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
-    min-height: 78px; padding: 12px 8px; border-radius: var(--radius-lg);
+    min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform .07s, box-shadow .07s;
@@ -784,7 +816,7 @@
     position: fixed; right: 16px; bottom: 84px; z-index: 30;
     display: flex; flex-direction: column; align-items: center; gap: 1px;
     font-family: inherit; font-size: 26px; font-weight: 700; color: var(--c-white);
-    cursor: pointer; padding: 11px 14px 8px; border-radius: 20px;
+    cursor: pointer; padding: 11px 14px 8px; border-radius: var(--r-md);
     border: 1.5px solid var(--glass-white-28);
     background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -801,7 +833,7 @@
   .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .35s; }
   .mem-card.open .mem-inner, .mem-card.done .mem-inner { transform: rotateY(180deg); }
   .mem-back, .mem-face {
-    position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden;
+    position: absolute; inset: 0; border-radius: var(--r-md); backface-visibility: hidden;
     display: flex; align-items: center; justify-content: center; overflow: hidden;
     box-shadow: 0 4px 0 rgba(0,0,0,.18);
   }
@@ -811,10 +843,10 @@
     border: 2px solid rgba(255,255,255,.35);
   }
   .mem-face {
-    transform: rotateY(180deg); background: linear-gradient(180deg, var(--c-white), var(--lavender-wash));
+    transform: rotateY(180deg); background: var(--c-white);
     border: 2px solid rgba(255,255,255,.7); padding: 6px;
   }
-  .mem-card.done .mem-face { background: linear-gradient(180deg, var(--green-badge-bg), #c8eccf); border-color: var(--green-deep); animation: cpop .4s ease; }
+  .mem-card.done .mem-face { background: var(--green-badge-bg); border-color: var(--green-deep); animation: cpop .4s ease; }
   /* mis: de twee kaarten schudden kort voor ze dichtklappen; match: ze 'klikken samen' */
   .mem-card.wrong { animation: memShake .4s ease; }
   @keyframes memShake { 0%,100% { transform: translateX(0); } 22% { transform: translateX(-5px); } 48% { transform: translateX(5px); } 74% { transform: translateX(-3px); } }
@@ -832,25 +864,24 @@
   .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
   .mem-face .dframe .df-cell { width: 10px; height: 10px; border-width: 1px; border-radius: 3px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
-  .mem-done-card { background: linear-gradient(180deg, var(--c-white), var(--lavender-wash)); border-radius: var(--radius-2xl); padding: 22px 26px; text-align: center; box-shadow: 0 14px 30px var(--glass-black-40); }
+  .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
   .mem-done-title { font-size: 54px; line-height: 1; }
   .mem-done-earn { margin: 12px auto 4px; }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
   @media (max-width: 720px) {
-    .game-arena { gap: 12px; }
+    .game-arena { gap: 10px; }
     .show-stage { width: 175px; height: 147px; }
-    .fan-track { height: 118px; width: 28px; }
     .question-card { font-size: clamp(38px, 12vw, 56px); padding: 14px 22px 24px; }
   }
   /* op lage schermen alles compacter: som + alle antwoorden moeten ALTIJD
      zonder scrollen in beeld staan */
   @media (max-height: 700px) {
     .show-stage { width: 145px; height: 122px; }
-    .fan-track { height: 98px; width: 23px; }
-    .fan-icon { font-size: 18px; }
-    .game-arena { gap: 8px; margin-top: 2px; }
+    .fan-track { height: 9px; }
+    .fan-icon { font-size: 16px; }
+    .game-arena { gap: 6px; margin-top: 2px; }
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
     .gold-banner { height: 18px; font-size: 14.5px; margin-top: 2px; }
     .replay-btn { width: 40px; height: 40px; font-size: 19px; margin: 2px auto 0; }
@@ -858,7 +889,6 @@
     .choices { gap: 10px; }
     .num-btn { padding: 9px 0; font-size: 23px; }
     .numpad { gap: 8px; }
-    .qprogress { margin-top: 5px; }
     .count-tile { min-height: 62px; padding: 8px 6px; }
     .count-tiles { gap: 9px; }
     .count-tiles.three { gap: 7px; }
@@ -870,10 +900,15 @@
     .sum-num { font-size: clamp(26px, 7vw, 38px); }
     .sum-eq .cgroup.big .cg-obj { font-size: clamp(19px, 5vw, 26px); }
   }
-  /* ruime schermen: de show mag wat groter schitteren */
+  /* Ruimte over? Dan groeit de sóm, niet de paspop. De paspop is decor; de
+     vraagkaart is waar het kind naar moet kijken -- en die was op een telefoon
+     (99px hoog) juist kleiner dan het decor ernaast (147px). */
+  @media (min-height: 780px) {
+    .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
+  }
   @media (min-width: 900px) and (min-height: 760px) {
-    .show-stage { width: 301px; height: 253px; }
-    .fan-track { height: 224px; }
+    .show-stage { width: 240px; height: 202px; }
+    .question-card { font-size: clamp(50px, 6vw, 68px); }
   }
 
   /* feedback-kaarten (praise/toast): kregen vroeger een vaste viewport-%
@@ -886,9 +921,9 @@
     position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.7);
     z-index: 60; opacity: 0; pointer-events: none;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
-    background: linear-gradient(180deg, rgba(43,7,71,.95), rgba(74,20,140,.9));
-    border: 1.5px solid rgba(255,224,130,.5); border-radius: 20px; padding: 12px 22px 14px;
-    box-shadow: 0 10px 28px var(--glass-black-40), 0 0 22px rgba(255,193,7,.25);
+    background: rgba(48,10,80,.94);
+    border: 1.5px solid rgba(255,224,130,.5); border-radius: var(--r-md); padding: 12px 22px 14px;
+    box-shadow: var(--e-2), 0 0 22px rgba(255,193,7,.25);
     max-width: min(84vw, 320px);
   }
   /* gedockte kaart is compacter dan de losse variant (kleiner pilletje,
@@ -899,8 +934,8 @@
   }
   .praise.docked .earn-chip { font-size: 14px; padding: 5px 12px; }
   .praise-headline {
-    font-size: clamp(19px, 5.4vw, 25px); font-weight: 800; color: var(--gold-bright);
-    text-shadow: 0 0 12px var(--gold-flame), 0 2px 0 var(--glass-black-40);
+    font-size: clamp(19px, 5.4vw, 25px); font-weight: 800; color: var(--gold-light);
+    text-shadow: 0 0 12px var(--gold-cta-bottom), 0 2px 0 var(--glass-black-40);
     text-align: center; text-wrap: balance; line-height: 1.15;
   }
   .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
@@ -921,9 +956,9 @@
     position: fixed; left: 50%; top: 12%; transform: translateX(-50%) translateY(-8px);
     z-index: 60; display: none; opacity: 0;
     flex-direction: column; align-items: center; gap: 2px; text-align: center;
-    background: linear-gradient(180deg, rgba(43,7,71,.96), rgba(43,7,71,.88));
-    border: 1.5px solid var(--glass-white-16); border-radius: 18px; padding: 11px 20px 12px;
-    box-shadow: 0 8px 22px var(--glass-black-35);
+    background: rgba(43,7,71,.94);
+    border: 1.5px solid var(--glass-white-16); border-radius: var(--r-md); padding: 11px 20px 12px;
+    box-shadow: var(--e-2);
     max-width: min(88vw, 360px);
     pointer-events: none;
   }
@@ -976,12 +1011,12 @@
 
   /* ---- Gouden vraag ---- */
   .question-card.golden {
-    background: linear-gradient(135deg, var(--gold-cream), var(--gold-warm), var(--gold-marigold));
+    background: var(--gold-accent);
     color: var(--ink-on-gold-card); box-shadow: 0 0 26px rgba(255,193,7,.9), 0 8px 20px var(--glass-black-30);
     animation: goldGlow 1s ease-in-out infinite alternate;
   }
   @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px var(--glass-black-30); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px var(--glass-black-30); } }
-  .gold-banner { font-size: 18px; font-weight: bold; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-flame); margin-top: 6px; height: 22px; }
+  .gold-banner { font-size: 18px; font-weight: bold; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-cta-bottom); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: de horizontale reisroute is het hart van het hoofdscherm ---- */
   .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 760px;
@@ -1073,7 +1108,7 @@
   .speel-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--radius-pill); padding: 13px 26px;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--r-pill); padding: 13px 26px;
     box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35);
   }
   /* dé speelknop van het spel: zit vast aan de huidige halte. translateX(-50%)
@@ -1103,15 +1138,17 @@
     .tour-hero { width: 82px; }
     .speel-pill { font-size: 18px; padding: 11px 22px; }
   }
-  /* hoge schermen: de kaart mag juist groter schitteren — grotere haltes,
-     ster en speelknop claimen de ruimte die anders leeg blijft */
-  @media (min-height: 800px) {
-    .tour-track { padding: 178px 30px 128px; }
-    .tour-stop { width: 124px; }
-    .tour-stop .dot { width: 84px; height: 84px; font-size: 40px; }
+  /* Hoge schermen: de route claimt de leegte in plaats van als smalle strook in
+     het midden te zweven. Gemeten op 390x844 stond er 121px lucht boven en 127px
+     onder de route; grotere haltes, ster en speelknop halen dat terug. De drempel
+     staat op 760 (was 800) zodat ook de wat kortere telefoons meedoen. */
+  @media (min-height: 760px) {
+    .tour-track { padding: 196px 30px 146px; }
+    .tour-stop { width: 128px; }
+    .tour-stop .dot { width: 90px; height: 90px; font-size: 43px; }
     .tour-stop .cname { font-size: 16px; }
     .tour-stop .cstars { font-size: 13px; }
-    .tour-hero { width: 118px; bottom: calc(100% - 14px); }
+    .tour-hero { width: 126px; bottom: calc(100% - 14px); }
     .speel-pill { font-size: 22px; padding: 15px 30px; }
   }
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
@@ -1138,21 +1175,21 @@
   /* kast-voortgang in de plakkende kop: hoeveel van de kast is gevuld */
   .kast-progress { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; }
   .kast-progress-text { font-size: 13px; font-weight: 700; opacity: .85; text-align: center; }
-  .kast-bar { width: 100%; height: 9px; border-radius: var(--radius-pill); overflow: hidden; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); }
-  .kast-bar-fill { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-accent), var(--pink-accent)); transition: width .6s ease; }
+  .kast-bar { width: 100%; height: 9px; border-radius: var(--r-pill); overflow: hidden; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); }
+  .kast-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .6s ease; }
   /* de kast heeft planken: kleine themakopjes met een teller per plank */
   #trophy-shelves { width: 100%; max-width: 680px; }
   /* elke categorie zit in een eigen paneel: duidelijke visuele groepering */
-  .shelf { background: var(--glass-black-18); border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius-button); padding: 6px 12px 13px; margin: 14px 0; }
+  .shelf { background: var(--glass-black-18); border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: 6px 12px 13px; margin: 14px 0; }
   .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 var(--glass-black-25); border-bottom: 1px solid var(--glass-white-13); padding-bottom: 7px; }
   .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 800; }
-  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 3px 11px; white-space: nowrap; }
+  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--r-pill); padding: 3px 11px; white-space: nowrap; }
   /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
   .shelf-title .shelf-count.full { color: var(--gold-light); background: rgba(255,206,77,.25); opacity: 1; }
   .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
   .trophy-card {
     position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
-    border-radius: var(--radius-card-sm); padding: 12px 8px 11px; text-align: center; cursor: pointer;
+    border-radius: var(--r-md); padding: 12px 8px 11px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch; transition: filter .12s;
   }
   /* filter i.p.v. background: werkt hetzelfde bovenop élke kaartstaat (locked,
@@ -1177,7 +1214,7 @@
      kleur geven. */
   .trophy-card.busy { border-color: rgba(255,255,255,.42); }
   /* BIJNA BEHAALD: sterke balkvulling + subtiele gouden glow (glow via inline style) */
-  .trophy-card.almost .trophy-progress-fill { background: linear-gradient(90deg, var(--gold-warm), var(--gold-deep)); }
+  .trophy-card.almost .trophy-progress-fill { background: var(--gold-accent); }
   /* LOCKED: donkerder, icoon sterk gedimd, klein slotje (voorlopig sluimerend) */
   .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); }
   .trophy-card.locked .temoji { filter: grayscale(1); opacity: .5; }
@@ -1187,7 +1224,7 @@
     position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
     display: grid; place-items: center; font-size: 13px; z-index: 3;
     background: rgba(30,15,55,.95); border: 2px solid var(--glass-white-40);
-    box-shadow: 0 2px 6px var(--glass-black-35);
+    box-shadow: var(--e-1);
   }
   /* BEHAALD: rustig, verzameld. Zacht goud, volle-kleur icoon, klein sterretje.
      Zakt licht naar de achtergrond zodat de actieve doelen opvallen. */
@@ -1205,30 +1242,39 @@
   .trophy-progress-text { font-size: 13px; font-weight: 700; color: var(--lavender-text); min-height: 17px; line-height: 1.15; }
   .trophy-progress-text.sub { color: var(--muted-lavender-text); font-weight: 600; opacity: .75; }
   .trophy-card.fresh .trophy-progress-text { color: var(--muted-lavender-text); opacity: .82; }
-  .trophy-card.almost .trophy-progress-text { color: var(--gold-warm); }
+  .trophy-card.almost .trophy-progress-text { color: var(--gold-accent); }
   /* dunne progressbalk onderaan de kaart */
-  .trophy-progress { height: 7px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid var(--glass-white-18); }
+  .trophy-progress { height: 7px; border-radius: var(--r-pill); overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid var(--glass-white-18); }
   /* neutrale wit-lavendel vulling = bezig/actief; alleen "bijna" en "nu aan"
      (kleedkamer) krijgen goud -- blauw is hier bewust weg (zie .trophy-card.busy). */
-  .trophy-progress-fill { height: 100%; border-radius: var(--radius-pill); transition: width .5s ease; background: linear-gradient(90deg, rgba(230,214,255,.55), rgba(255,255,255,.8)); }
+  .trophy-progress-fill { height: 100%; border-radius: var(--r-pill); transition: width .5s ease; background: rgba(255,255,255,.75); }
   /* korte uitleg onder een categoriekop (bv. bij thema-looks) */
   .shelf-note { font-size: 12px; font-weight: 600; color: var(--lavender-text); opacity: .82; margin: -3px 2px 9px; }
-  /* ===== KLAAR: dit kaartje wordt zélf de 'Open trofee'-knop (zelfde formaat) ===== */
+  /* ===== KLAAR OM TE OPENEN =====
+     Was: een volledig ander kaartje -- gouden vlak, 🎁 in plaats van het eigen
+     icoon, en "Open trofee!" als kop met de échte naam als klein bijschrift.
+     Vijf klaarliggende trofeeën naast elkaar zagen er daardoor uit als vijf
+     keer hetzelfde ding. Nu gewoon de normale kaart (eigen icoon, eigen naam,
+     eigen beschrijving) met een gouden rand, en "🎁 Open!" in het onderste
+     vakje waar anders de voortgangsbalk staat. ===== */
   .trophy-card.ready {
-    justify-content: center; gap: 3px; color: var(--ink-on-gold); border: 3px solid var(--gold-ready-border);
-    background: linear-gradient(135deg, var(--gold-light), var(--gold-deep));
-    box-shadow: 0 4px 15px rgba(255,170,0,.5); animation: readyPulse 1.4s ease-in-out infinite;
+    border-color: var(--gold-accent); background: rgba(255,214,90,.14);
+    box-shadow: 0 0 14px rgba(255,170,0,.4);
   }
-  .trophy-card.ready .temoji { filter: drop-shadow(0 1px 2px var(--glass-black-20)); }
-  .ready-big { font-size: 16px; font-weight: 900; line-height: 1.08; }
-  .ready-name { font-size: 13px; font-weight: 700; opacity: .82; line-height: 1.12; }
+  .ready-open {
+    display: block; text-align: center; color: var(--ink-on-gold); background: var(--gold-accent);
+    font-size: 13.5px; font-weight: 900; letter-spacing: .01em;
+    border-radius: var(--r-pill); padding: 5px 8px;
+    animation: readyPulse 1.4s ease-in-out infinite;
+  }
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 4px 13px rgba(255,170,0,.45); } 50% { transform: scale(1.03); box-shadow: 0 6px 22px rgba(255,170,0,.75); } }
-  /* gedeelde, opvallende gouden call-to-action-pil (bannerformaat), o.a. de
-     'nieuwe trofee klaar'-banner op het eindscherm (.end-trophy-banner) */
+  /* dé gouden mijlpaal-pil: één component voor "rang omhoog" en "trofee klaar",
+     op het eindscherm (.end-milestone) en in de trofeeënkast. Hoogstens één
+     tegelijk in beeld. */
   .gold-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
-    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); border: none; border-radius: var(--radius-pill);
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border: none; border-radius: var(--r-pill);
     padding: 10px 18px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
     animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
   }
@@ -1240,9 +1286,9 @@
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
   .trophy-pop {
-    text-align: center; padding: 22px 30px; border-radius: var(--radius-xl);
-    background: linear-gradient(180deg, var(--purple-deep), var(--purple-shadow)); border: 3px solid var(--gold-accent);
-    box-shadow: 0 10px 40px var(--glass-black-50); animation: popIn .45s cubic-bezier(.2,1.3,.4,1);
+    text-align: center; padding: 22px 30px; border-radius: var(--r-lg);
+    background: var(--purple-deep); border: 3px solid var(--gold-accent);
+    box-shadow: var(--e-3); animation: popIn .45s cubic-bezier(.2,1.3,.4,1);
   }
   .tp-head { font-size: 16px; font-weight: 800; color: var(--gold-light); }
   .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(255,215,64,.8)); }
@@ -1263,7 +1309,7 @@
   .rankup-spark { position: absolute; left: 0; top: 0; font-size: 30px; opacity: 0; animation: rankSpark 1s ease-out both; }
   .rankup-badge { font-size: 94px; line-height: 1; filter: drop-shadow(0 6px 16px rgba(0,0,0,.55)); animation: rankBadgePop .7s cubic-bezier(.2,1.5,.4,1) both; }
   .rankup-label { font-size: 14px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: 0 2px 8px rgba(0,0,0,.5); animation: rankTextRise .5s ease .28s both; }
-  .rankup-name { font-size: clamp(26px, 8vw, 34px); font-weight: 900; color: var(--c-white); text-shadow: 0 0 16px var(--gold-flame), 0 3px 0 rgba(0,0,0,.35); animation: rankTextRise .5s ease .4s both; }
+  .rankup-name { font-size: clamp(26px, 8vw, 34px); font-weight: 900; color: var(--c-white); text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); animation: rankTextRise .5s ease .4s both; }
   @keyframes rankBadgePop { 0% { transform: scale(0) rotate(-45deg); } 60% { transform: scale(1.2) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
   @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @keyframes rankSpark {
@@ -1348,12 +1394,11 @@
   @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready { animation: none; }
+    .trophy-card.ready, .ready-open { animation: none; }
     .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.just-claimed::after { animation: none; }
     .trophy-pop { animation: none; }
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
-    .end-trophy-banner { animation: none; }
     .rankup-badge, .rankup-label, .rankup-name { animation: none; }
     .rankup-spark { display: none; }
   }
@@ -1362,7 +1407,7 @@
   .nav-item { position: relative; }
   .nav-item .nav-dot {
     position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
-    border-radius: 50%; background: var(--gold-marigold); border: 2px solid var(--c-white); display: none;
+    border-radius: 50%; background: var(--gold-accent); border: 2px solid var(--c-white); display: none;
     box-shadow: 0 1px 4px var(--glass-black-40);
   }
   .nav-item.has-new .nav-dot { display: block; }
@@ -1377,113 +1422,146 @@
   /* verticaal gecentreerd via veilige auto-marges (knipt nooit af bij overloop) */
   .result-card {
     background: var(--glass-white-14); border: 3px solid var(--glass-white-40);
-    border-radius: 28px; padding: 24px 30px; text-align: center; max-width: 460px; margin: auto 0;
+    border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
+    width: 100%; max-width: 420px; margin: auto 0;
   }
+  /* de titel is hier de kop van een kaart, niet van een scherm: kleiner dan de
+     .title elders, zodat de sterren eronder de blikvanger blijven */
+  .result-card .title { font-size: clamp(22px, 6vw, 30px); margin: 2px 0 0; }
   /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
      paspop-scènes (.dress-stage, .show-stage) nu met eigen smalle-scherm-maat,
      zodat 'm ook op een laag/liggend toestel nooit afgesneden wordt */
-  .end-stage { width: 180px; height: 200px; margin: 6px auto 2px; }
-  @media (max-height: 700px) { .end-stage { width: 140px; height: 156px; } }
-  .end-text { font-size: 19px; }
-  .result-stars { font-size: 56px; letter-spacing: 6px; margin: 10px 0; }
+  .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
+  .end-text { font-size: 18px; }
+  .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
+  /* korte schermen: het eindscherm moet ook op een 320x568 in één beeld passen --
+     het is een vier-seconden-moment, daar hoort geen scrollen bij */
+  @media (max-height: 740px) {
+    .result-card { padding: 11px 16px 10px; }
+    .result-card .title { font-size: clamp(19px, 5.4vw, 24px); }
+    .end-stage { width: 104px; height: 116px; }
+    .result-stars { font-size: 36px; letter-spacing: 2px; margin: 3px 0 0; }
+    .end-text { font-size: 15px; }
+    .earn-line { gap: 6px; margin: 7px 0 8px; }
+    .earn-chip { font-size: 14px; padding: 7px 4px; }
+    .end-milestone { min-height: 30px; margin-bottom: 8px; }
+    .milestone-hint { font-size: 13px; padding: 6px 12px; }
+    .end-actions { gap: 7px; }
+    .end-actions .btn.big { font-size: 20px; padding: 11px 18px; }
+    .end-actions .btn.soft { font-size: 15px; padding: 9px 16px; }
+    .gold-pill { font-size: 15px; padding: 8px 14px; }
+  }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
   .result-stars .dim { opacity: .25; filter: grayscale(1); }
-  /* opbrengst als badges — zelfde taal als de teller-pillen elders in de app */
-  .earn-line { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0 18px; }
-  .earn-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 16px; font-weight: bold; line-height: 1;
-    background: var(--glass-black-30); border-radius: var(--radius-pill); padding: 8px 14px; }
+  /* Opbrengst: altijd dezelfde drie vakjes, altijd in dezelfde volgorde en
+     dezelfde breedte -- 💎 verdiend · ⭐ sterren · 👏 publiek. Het was een rij
+     losse pillen die op een telefoon in 1/2/1 afbrak, met wisselend aantal
+     chips, plús een rangpil en een trofeebanner erbij: zes gouden/gekleurde
+     dingen onder elkaar op precies het scherm dat één ding moet vieren.
+     Een nul tonen mag: dat maakt de fanmeter zichtbaar dat hij ergens toe leidt. */
+  .earn-line { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 12px; }
+  .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 16px; font-weight: bold; line-height: 1;
+    background: var(--glass-black-30); border-radius: var(--r-pill); padding: 9px 6px; }
   .earn-chip.dia { background: rgba(41,182,246,.34); }
   .earn-chip.star { background: rgba(255,215,64,.26); }
   .earn-chip.fan { background: rgba(255,64,129,.28); }
-  /* nieuwe carrièrerang: dé mijlpaal van de show -- gouden pil die eruit springt */
-  .earn-chip.rank { background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); color: var(--ink-on-gold); box-shadow: 0 2px 10px rgba(255,179,0,.4); }
-  .earn-chip.nextrank { background: rgba(255,215,64,.18); border: 1px dashed rgba(255,215,64,.5); }
-  /* eigen, opvallend blokje i.p.v. een tekstregel tussen de andere zinnen — zelfde
-     gouden puls als een "klaar om te openen"-trofee in de kast (via .gold-pill),
-     zodat dit al vooruitwijst naar wat je zo meteen ziet. Zelf ook klikbaar
-     (net als die trofeekaartjes): een gouden pulserende pil roept nu eenmaal
-     om aangetikt te worden, dus de knop eronder alleen was niet genoeg.
-     .result-card's text-align:center centreert 'm vanzelf, dankzij .gold-pill's
-     eigen inline-flex (i.p.v. block-level flex, dat zou juist uitrekken). */
-  .end-trophy-banner { margin: 0 0 14px; }
-  .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  /* Mijlpaal: precies één regel, en hoogstens één ding. Volgorde van belang:
+     nieuwe ster-status > nieuwe trofee > hoe ver nog tot de volgende status.
+     De eerste twee zijn een beloning (gouden pil, tikbaar); de derde is een
+     vooruitblik en blijft daarom bewust stil (gestippeld, niet pulserend). */
+  .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .milestone-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700;
+    color: var(--gold-light); background: rgba(255,215,64,.14); border: 1px dashed rgba(255,215,64,.45);
+    border-radius: var(--r-pill); padding: 8px 15px; }
+  .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .end-actions .btn { width: 100%; max-width: 320px; }
+  .end-actions .btn.big { font-size: 23px; padding: 15px 20px; }
 
   /* ---- Kleedkamer ----
      Opbouw: vaste kop (titel + 💎 + paspop + tabbladen) blijft plakken bovenaan,
      het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
      zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
   #screen-dress { padding-bottom: 190px; }
+  /* De vaste kop besloeg 0-407px van een 844px scherm: titel, paspop, de
+     Spullen/Looks-schakelaar én acht categorieën in twee rijen -- bijna de helft
+     van het scherm vóór het eerste kledingstuk. Nu staan de schakelaar en de
+     dobbelsteen naast de paspop (die ruimte was er toch) en zijn de categorieën
+     één scrollende rij met alleen iconen. */
+  .dress-top { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; max-width: 460px; }
+  .dress-side { display: flex; flex-direction: column; align-items: stretch; gap: 9px; min-width: 0; flex: 1 1 120px; max-width: 150px; }
+  .dress-side .segmented { flex-direction: column; gap: 4px; width: 100%; max-width: none; }
+  .dress-side .segmented button { padding: 8px; font-size: 15px; }
+  /* klein en rechts uitgelijnd: "verras me" is een leuk extraatje, geen derde
+     hoofdknop naast Spullen/Looks */
+  .dress-side .shuffle-btn { align-self: flex-end; width: 44px; height: 44px; border-radius: 50%; }
   .hub-sticky {
     position: sticky; top: -12px; z-index: 5;
     display: flex; flex-direction: column; align-items: center;
-    width: calc(100% + 24px); margin: -12px 0 12px; padding: 12px 12px 13px;
-    background: linear-gradient(180deg, rgba(43,7,71,.96), rgba(43,7,71,.82));
+    width: calc(100% + 24px); margin: -12px 0 12px; padding: 12px 12px 10px;
+    background: rgba(43,7,71,.92);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border-bottom: 2px solid var(--glass-white-14);
-    border-radius: 0 0 26px 26px;
-    box-shadow: 0 10px 24px rgba(20,0,40,.3);
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
+    box-shadow: var(--e-2);
   }
   .hub-sticky .screen-header { margin-bottom: 4px; }
   /* de rand-/gloedbehandeling zit nu in de gedeelde .stage-frame (zie .stage
      hierboven) -- hier alleen nog de eigen afmeting van de kleedkamer-scène */
-  .dress-stage { width: 200px; height: 168px; }
+  .dress-stage { width: 178px; height: 150px; }
   .dress-stage .deco { font-size: 20px; }
-  @media (max-height: 700px) { .dress-stage { width: 170px; height: 132px; } }
-  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit.
-     Zit los van .dress-stage (buiten de overflow:hidden), dus overlapt de
-     afgeronde hoek fysiek -- de extra buitenste ring in dezelfde lavendel-
-     tint als de tegenwoordig dunnere kadervulling laat 'm daar als bewust
-     "badge op de rand" ogen i.p.v. een rand die er zomaar stopt. */
+  @media (max-height: 700px) { .dress-stage { width: 150px; height: 126px; } }
+  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit. Zat als
+     zwevend rondje met drie ringen eromheen half over de hoek van het podium;
+     staat nu gewoon onder de Spullen/Looks-schakelaar, met één rand. */
   .stage-wrap { position: relative; }
   .shuffle-btn {
-    position: absolute; right: -16px; bottom: -4px; width: 46px; height: 46px;
-    border-radius: 50%; border: 2px solid rgba(255,255,255,.75); cursor: pointer;
+    border-radius: var(--r-sm); border: 1.5px solid rgba(255,255,255,.5); cursor: pointer;
     font-size: 22px; line-height: 1; font-family: inherit;
     background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
-    box-shadow: 0 var(--btn-lip-sm) 0 var(--purple-shadow), 0 6px 12px var(--glass-black-35), 0 0 0 3px var(--glass-white-18);
+    box-shadow: 0 var(--btn-lip-sm) 0 var(--purple-shadow);
     transition: transform .15s;
   }
-  .shuffle-btn:hover { transform: rotate(20deg) scale(1.06); }
-  .shuffle-btn:active { transform: rotate(180deg) scale(.92); box-shadow: 0 1px 0 var(--purple-shadow); }
-  /* alle 8 categorieën blijven altijd zichtbaar (geen scroll-carrousel meer) --
-     container query i.p.v. een viewport-breakpoint: kijkt naar hoeveel ruimte
-     .shop-tabs zelf heeft (via .shop-tabs-wrap), niet naar het schermformaat.
-     Onder de drempel: vaste 4x2-grid (8 categorieën, geen scroll nodig).
-     Erboven: 1 rij van 8, allemaal even breed. */
-  .shop-tabs-wrap { width: 100%; max-width: 960px; margin-top: 10px; container-type: inline-size; }
-  .shop-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 2px 4px; }
-  /* 855px = de gemeten breedte die alle 8 knoppen nodig hebben op hun eigen,
-     ongekrompen (content-based) breedte -- pas daarboven schakelt het naar 1
-     rij, anders zou "Schoenen" (de breedste) worden afgeknot */
-  @container (min-width: 855px) {
-    .shop-tabs { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .shuffle-btn:hover { transform: scale(1.04); }
+  .shuffle-btn:active { transform: scale(.95); box-shadow: none; }
+  /* Eén scrollende rij met alleen iconen -- alleen de categorie die aanstaat zet
+     er zijn woord bij. Het was een vaste 4x2-grid waarin de helft van de labels
+     werd afgekapt ("Schoe…", "Microf…", "Acces…"): een emoji plus een half woord
+     is slechter dan één van de twee. Twee rijen worden zo één rij, en het woord
+     staat er nog steeds -- alleen bij de categorie waar je nú in kijkt. */
+  .shop-tabs-wrap { width: 100%; max-width: 960px; margin-top: 7px; }
+  .shop-tabs {
+    display: flex; gap: 6px; padding: 2px 4px; overflow-x: auto;
+    scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
   }
+  .shop-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
-    font-family: inherit; font-size: 14px; font-weight: bold; border: none; cursor: pointer;
-    letter-spacing: -.3px; padding: 10px 2px; border-radius: var(--radius-pill); color: var(--c-white); background: var(--glass-white-18);
+    font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
+    padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: var(--glass-white-18);
     transition: transform .07s, background .12s;
-    display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; min-width: 46px; flex: none;
   }
-  /* text-overflow:ellipsis werkt niet betrouwbaar rechtstreeks op een flex-
-     container (.tab-btn hierboven) -- de labeltekst zit daarom in een eigen
-     inline kindje met min-width:0, zodat een te lang tabblad-label (bv. op de
-     smalste telefoons) netjes afkapt met "…" i.p.v. hard te knippen */
-  .tab-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .tab-btn .tab-ico { font-size: 21px; line-height: 1; }
+  .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
   .item-card {
     position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
-    border-radius: var(--radius-md); padding: 10px; text-align: center; cursor: pointer;
+    border-radius: var(--r-md); padding: 10px; text-align: center; cursor: pointer;
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
   .item-card:hover { background: var(--glass-white-22); }
   .item-card:active { transform: scale(.97); }
-  /* kaart-staten volgen de prijzenkast: blauw = actief/preview, goud = aan/beloning */
-  .item-card.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); box-shadow: 0 0 0 3px rgba(56,189,248,.22); transform: scale(1.025); }
+  /* Kaart-staten: blauw = "hier kijk je naar", goud = "dit staat aan". De blauwe
+     variant had ook nog een 3px ring én een schaalsprong; dat was een vierde
+     signaal in een raster dat er al drie heeft, terwijl de paspop erboven de
+     preview al veel duidelijker laat zien. Alleen de rand blijft. */
+  .item-card.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); }
   .item-card.equipped { border-color: var(--gold-accent); background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.48); }
-  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 0 3px rgba(56,189,248,.20), 0 0 14px rgba(255,215,64,.55); }
+  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 12px rgba(255,215,64,.48); }
   /* .owned and .selected are two plain (non-combined) classes with identical
      specificity, both setting background/border-color -- .owned happened to
      be declared later in the file, so it silently won that tie and previewing
@@ -1517,16 +1595,15 @@
   .item-name { font-size: 14px; font-weight: bold; overflow-wrap: break-word; hyphens: auto; }
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--radius-pill);
+    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
     font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap;
     background: var(--glass-black-24); color: var(--muted-text-2);
   }
   .item-status.price { color: var(--gold-light); background: rgba(255,179,0,.16); }
-  .item-status.need { color: var(--gold-warm); background: var(--glass-black-30); opacity: .88; }
+  .item-status.need { color: var(--gold-accent); background: var(--glass-black-30); opacity: .88; }
   .item-status.owned { color: var(--muted-text-3); background: rgba(180,184,196,.25); }
-  .item-status.on { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-light), var(--gold-deep)); box-shadow: 0 1px 5px rgba(255,179,0,.35); }
-  .item-status.preview { color: var(--blue-text); background: rgba(56,189,248,.16); box-shadow: 0 0 0 1px var(--blue-ring); }
-  .item-status.new { color: var(--ink-on-gold); background: linear-gradient(180deg, var(--gold-flash), var(--gold-marigold)); animation: readyPulse 1.4s ease-in-out 2; }
+  .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
+  .item-status.new { color: var(--ink-on-gold); background: var(--gold-accent); animation: readyPulse 1.4s ease-in-out 2; }
 
   /* ---- Looks-modus: complete outfits als spaardoel, dwars door de categorieën
      heen. Elk stukje is een mini-versie van de gewone kleren-kaart (zelfde
@@ -1543,7 +1620,7 @@
   .look-goal {
     height: 136px; display: flex; flex-direction: column; overflow: hidden;
     background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14);
-    border-radius: var(--radius-md); padding: 10px 12px; text-align: left; cursor: pointer;
+    border-radius: var(--r-md); padding: 10px 12px; text-align: left; cursor: pointer;
     transition: transform .07s;
   }
   .look-goal:active { transform: scale(.98); }
@@ -1559,7 +1636,7 @@
   .look-piece {
     flex: 1 1 0; min-width: 0; height: 72px; display: flex; flex-direction: column;
     align-items: center; justify-content: center; cursor: pointer; text-align: center;
-    border-radius: var(--radius-sm); padding: 3px 2px; transition: transform .07s, background .12s;
+    border-radius: var(--r-sm); padding: 3px 2px; transition: transform .07s, background .12s;
   }
   .look-piece:active { transform: scale(.94); }
   /* vaste, compacte icoon-zone: elk stukje staat zo op dezelfde basislijn, strak
@@ -1588,7 +1665,7 @@
   .look-piece.have .lp-name { color: var(--muted-text-3); }
   .look-piece.on { background: rgba(255,214,90,.16); box-shadow: 0 0 0 1.5px var(--gold-accent); }
   .look-piece.on .lp-name { color: var(--gold-light); }
-  .shop-mode { margin-top: 12px; max-width: 300px; }
+
   /* bezit/aan staat op het kaartje via rustige kaartkleur: grijs = hebben, goud = aan. */
   .item-card.owned { border-color: rgba(180,184,196,.64); background: rgba(180,184,196,.10); }
   /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
@@ -1596,13 +1673,13 @@
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 39;
     display: none; align-items: center; gap: 10px; width: min(94vw, 430px); min-height: 52px;
     background: rgba(30, 4, 52, .86); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid var(--glass-white-22); border-radius: var(--radius-lg);
-    padding: 10px 14px; box-shadow: 0 10px 26px var(--glass-black-40);
+    border: 1.5px solid var(--glass-white-22); border-radius: var(--r-lg);
+    padding: 10px 14px; box-shadow: var(--e-2);
   }
   .dress-bar .db-info { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; text-align: left; white-space: nowrap; overflow: hidden; }
   .dress-bar .db-name { font-size: 16.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: 13.5px; opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dress-bar .db-highlight { color: var(--gold-warm); font-weight: 700; }
+  .dress-bar .db-highlight { color: var(--gold-accent); font-weight: 700; }
   .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
@@ -1617,10 +1694,10 @@
      volle breedte van .hub-sticky -- dan wordt de geselecteerde knop een groot
      leeg goud blok en zweeft de tekst van de andere knop eenzaam ver weg aan
      de andere kant. Blijft op smalle schermen gewoon 100% breed. */
-  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--glass-black-26); width: 100%; max-width: 460px; }
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--glass-black-26); width: 100%; max-width: 460px; }
   .segmented button {
     flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
-    border: none; background: transparent; border-radius: var(--radius-sm); padding: 10px 8px;
+    border: none; background: transparent; border-radius: var(--r-sm); padding: 10px 8px;
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     transition: background .15s, color .15s, box-shadow .15s;
   }
@@ -1633,15 +1710,15 @@
      in de anders lege rechterkop-cel, geen aparte "Opslaan"-knop nodig */
   .saved-pill {
     font-size: 12.5px; font-weight: 700; color: var(--green-deep); background: var(--green-badge-bg);
-    border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap;
+    border-radius: var(--r-pill); padding: 5px 12px; white-space: nowrap;
     opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; pointer-events: none;
   }
   .saved-pill.show { opacity: 1; transform: translateY(0); }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
-  .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: 0 10px 26px rgba(30,0,50,.24); }
+  .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .set-card-head .ico { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
+  .set-card-head .ico { width: 34px; height: 34px; border-radius: var(--r-sm); flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
   .set-card-head h2 { font-size: 18px; font-weight: 700; color: var(--purple-mid); }
   .set-card-head .sub { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin-top: 1px; }
   /* "Wat oefenen" en "Hoe spelen" zijn de kern van dit scherm -- een paarse
@@ -1673,7 +1750,7 @@
   .stage-legend b { color: var(--purple-mid); }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
-    border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--radius-pill); padding: 7px 15px;
+    border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
     transition: transform .07s, background .12s, border-color .12s, color .12s;
   }
   .chip:hover { border-color: var(--purple-light); }
@@ -1690,34 +1767,34 @@
   }
   .settings-sheet input[type=text] {
     font-family: inherit; font-size: 17px; font-weight: 600; color: var(--paper-ink);
-    border: 2px solid var(--paper-border); border-radius: var(--radius-sm); padding: 9px 34px 9px 13px; width: 100%; background: var(--paper-tint);
+    border: 2px solid var(--paper-border); border-radius: var(--r-sm); padding: 9px 34px 9px 13px; width: 100%; background: var(--paper-tint);
   }
   .settings-sheet input[type=text]:focus-visible { outline: none; border-color: var(--purple-light); background: var(--c-white); }
   .data-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 
   .danger-zone {
-    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--radius-lg); padding: 15px 18px;
+    background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-lg); padding: 15px 18px;
     display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   }
   .danger-zone .t { font-size: 14.5px; font-weight: 700; color: var(--danger-title); }
   .danger-zone .d { font-size: 12.5px; color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
-  .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
+  .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
   /* ---- Ouder-statistiek (tegels + meter) ---- */
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-  .stat-tile { position: relative; background: var(--paper-tint); border: 1px solid var(--paper-border); border-radius: var(--radius-card-sm); padding: 12px 8px 10px; text-align: center; overflow: hidden; }
+  .stat-tile { position: relative; background: var(--paper-tint); border: 1px solid var(--paper-border); border-radius: var(--r-md); padding: 12px 8px 10px; text-align: center; overflow: hidden; }
   .stat-tile::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--tint, var(--purple-light)); }
   .stat-tile .num { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1; }
   .stat-tile .cap { font-size: 11.5px; color: var(--paper-ink-muted); margin-top: 5px; font-weight: 500; line-height: 1.2; }
   .stat-line { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 2px 7px; }
   .stat-line .k { font-size: 14px; font-weight: 600; color: var(--paper-ink); }
   .stat-line .v { font-size: 16px; font-weight: 700; color: var(--purple-mid); }
-  .stat-bar { height: 13px; background: var(--lavender-wash-3); border-radius: var(--radius-pill); overflow: hidden; }
-  .stat-bar > div { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--purple-light), var(--pink-accent)); }
+  .stat-bar { height: 13px; background: var(--lavender-wash-3); border-radius: var(--r-pill); overflow: hidden; }
+  .stat-bar > div { height: 100%; border-radius: var(--r-pill); background: var(--purple-light); }
   .practice-hint { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin: 14px 2px 8px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-pale); color: var(--practice-text); border-radius: var(--radius-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
+  .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
   .stats-empty { font-size: 13.5px; color: var(--green-deep); font-weight: 600; margin-top: 6px; }
   @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
 
@@ -1725,7 +1802,7 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
   .modal-bg.open { display: flex; }
   .modal {
-    background: var(--c-white); color: var(--c-ink); border-radius: var(--radius-lg); padding: 24px 28px; text-align: center; max-width: 340px;
+    background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 24px 28px; text-align: center; max-width: 340px;
   }
   .modal h3 { color: var(--purple-deep); margin-bottom: 10px; }
   /* zelfde twee blokjes stonden tweemaal identiek als losse inline style op
@@ -1734,7 +1811,7 @@
   .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .modal input {
     font-family: inherit; font-size: 26px; text-align: center; width: 110px;
-    border: 3px solid var(--purple-light); border-radius: var(--radius-sm); padding: 6px; margin: 10px 0;
+    border: 3px solid var(--purple-light); border-radius: var(--r-sm); padding: 6px; margin: 10px 0;
   }
 
   .confetti-bit { position: fixed; top: -40px; font-size: 26px; z-index: 90; pointer-events: none; animation: fall linear forwards; }
@@ -1797,7 +1874,7 @@
       </div>
     </div>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
-    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎴<span>Memory</span></button>
+    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span></button>
   </div>
 
   <!-- ===== Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ===== -->
@@ -1805,8 +1882,12 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="exitMemory()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
-        <div class="header-title">🎴 Memory</div>
+        <div class="header-title">🎤 Memory</div>
         <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
+      </div>
+      <!-- zelfde balk als in de show: hier is elk vakje een gevonden paar -->
+      <div class="game-progress-row">
+        <div class="segbar" id="mem-progress" role="progressbar" aria-label="Gevonden paren"></div>
       </div>
     </div>
     <div class="mem-arena">
@@ -1817,7 +1898,7 @@
         <div class="mem-done-title">🎉</div>
         <div class="mem-done-earn earn-chip dia" id="mem-done-earn"></div>
         <div class="mem-done-btns">
-          <button class="btn" onclick="startMemory()">🎴 Nog een keer</button>
+          <button class="btn" onclick="startMemory()">🎤 Nog een keer</button>
           <button class="btn gray" onclick="exitMemory()">🗺️ Kaart</button>
         </div>
       </div>
@@ -1834,19 +1915,19 @@
       </div>
       <div class="game-progress-row">
         <span class="notes-left" id="notes-left"></span>
-        <div class="qprogress" id="qprogress"></div>
+        <div class="segbar" id="qprogress" role="progressbar" aria-label="Voortgang in de show"></div>
       </div>
     </div>
     <div class="game-arena">
       <div class="show-panel">
-        <div class="show-inner">
-          <div class="fan-col" id="fan-col">
-            <div class="fan-icon" id="fan-icon">👏</div>
-            <div class="fan-track"><div class="fan-fill" id="fanmeter-fill"></div></div>
-          </div>
-          <div class="stage stage-frame show-stage" id="show-stage">
-            <div class="avatar-holder idle" id="game-avatar-inner"></div>
-          </div>
+        <div class="stage stage-frame show-stage" id="show-stage">
+          <div class="avatar-holder idle" id="game-avatar-inner"></div>
+        </div>
+        <!-- de publieksmeter hoort bij het podium, dus hij zit eraan vast:
+             een balk langs de onderrand i.p.v. een losse buis ernaast -->
+        <div class="fan-row" id="fan-col">
+          <div class="fan-track"><div class="fan-fill" id="fanmeter-fill"></div></div>
+          <div class="fan-icon" id="fan-icon">👏</div>
         </div>
       </div>
       <div class="math-panel">
@@ -1918,7 +1999,7 @@
       <div class="result-stars" id="end-stars"></div>
       <div class="end-text" id="end-text"></div>
       <div class="earn-line" id="end-earn"></div>
-      <button class="end-trophy-banner gold-pill" id="end-trophy" style="display:none"></button>
+      <div class="end-milestone" id="end-milestone"></div>
       <div class="end-actions">
         <button class="btn big" id="btn-end-next"></button>
         <button class="btn soft" id="btn-end-alt"></button>
@@ -1934,15 +2015,19 @@
         <div class="header-title">👗 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
-      <div class="stage-wrap">
-        <div class="stage tappable stage-frame dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
-          <div class="avatar-holder idle" id="shop-avatar"></div>
+      <div class="dress-top">
+        <div class="stage-wrap">
+          <div class="stage tappable stage-frame dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
+            <div class="avatar-holder idle" id="shop-avatar"></div>
+          </div>
         </div>
-        <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
+        <div class="dress-side">
+          <div class="segmented shop-mode" id="shop-mode"></div>
+          <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
+        </div>
       </div>
-      <div class="segmented shop-mode" id="shop-mode"></div>
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
-        <div class="shop-tabs" id="shop-tabs"></div>
+        <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
       </div>
     </div>
     <div class="item-grid" id="item-grid"></div>
@@ -2151,15 +2236,17 @@ const ITEMS = [
 ];
 const item = id => ITEMS.find(i => i.id === id);
 // Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
+// Icoon en woord staan los: de categorierij toont alleen het icoon, behalve bij
+// de categorie die aanstaat -- die zet er zijn woord bij (zie renderShop).
 const CATS = [
-  { id: 'dress', name: '👗 Jurken' },
-  { id: 'shoes', name: '👟 Schoenen' },
-  { id: 'hair',  name: '💇 Kapsels' },
-  { id: 'mic',   name: '🎤 Microfoons' },
-  { id: 'instrument', name: '🎸 Muziek' },
-  { id: 'acc',   name: '🎀 Accessoires' },
-  { id: 'pet',   name: '🐾 Dieren' },
-  { id: 'stage', name: '🎪 Podium' },
+  { id: 'dress', ico: '👗', name: 'Jurken' },
+  { id: 'shoes', ico: '👟', name: 'Schoenen' },
+  { id: 'hair',  ico: '💇', name: 'Kapsels' },
+  { id: 'mic',   ico: '🎤', name: 'Microfoons' },
+  { id: 'instrument', ico: '🎸', name: 'Muziek' },
+  { id: 'acc',   ico: '🎀', name: 'Accessoires' },
+  { id: 'pet',   ico: '🐾', name: 'Dieren' },
+  { id: 'stage', ico: '🎪', name: 'Podium' },
 ];
 function catCount(p, cat) { return p.owned.filter(id => { const it = item(id); return it && it.cat === cat; }).length; }
 const INSTR_TOTAL = ITEMS.filter(i => i.cat === 'instrument').length;
@@ -3250,7 +3337,7 @@ function renderTourMap(travelFrom) {
       // alle op-slot haltes krijgen dezelfde rustige "uitgeschakeld"-grijstint --
       // een per-halte verval (donkerder of lichter per stap) trok net te veel
       // aandacht naar iets dat toch nog niet te doen is
-      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>`;
+      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>${starRowHTML(0)}`;
     } else {
       b.classList.add(l === curLvl ? 'next' : 'done');
       // de eigen ster staat vol in beeld, boven op haar huidige/vorige halte --
@@ -3259,10 +3346,12 @@ function renderTourMap(travelFrom) {
       // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
       const speel = l === curLvl ? '<div class="tour-speel speel-pill">Speel!</div>' : '';
-      // gespeelde stad: sterren als gewone regel onder de naam -- geen aparte
-      // badge/positionering meer nodig. Nog niet gespeeld (curLvl) toont niets.
-      const sterren = l === curLvl ? '' :
-        `<div class="cstars">${'⭐'.repeat(st)}${st < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - st)}</span>` : ''}</div>`;
+      // Iedere halte krijgt dezelfde sterrenregel -- ook een halte die nog niet
+      // gespeeld is (dan drie doffe sterren) en een halte op slot. Eerder stond
+      // die regel alleen onder gespeelde steden, waardoor de stadsnamen op drie
+      // verschillende hoogtes uitkwamen (de weg golft al) en de Speel!-bel tegen
+      // het label van de buurstad aan liep. Nu is elke tegel even hoog.
+      const sterren = starRowHTML(st);
       // stadsicoon blijft altijd zichtbaar in de tegel, ook op de huidige
       // halte -- de eigen ster staat er los bovenop (.tour-hero, voeten net
       // op de bovenrand), zonder het icoon te bedekken
@@ -3276,6 +3365,12 @@ function renderTourMap(travelFrom) {
   setupTourMap(map);
 }
 // Zet een halte netjes in het midden van het venster (extraPx verschuift het middelpunt).
+// Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
+function starRowHTML(n) {
+  const got = Math.max(0, Math.min(3, n));
+  return `<div class="cstars">${'⭐'.repeat(got)}`
+    + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '') + `</div>`;
+}
 function centerStop(map, el, extraPx, smooth) {
   const mr = map.getBoundingClientRect(), er = el.getBoundingClientRect();
   const left = map.scrollLeft + (er.left - mr.left) - (map.clientWidth - el.offsetWidth) / 2 + (extraPx || 0);
@@ -3413,10 +3508,12 @@ function unitText(label, remaining) {
   return noun;
 }
 // Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop (cadeau-icoon).
+// Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
+// gouden rand en "🎁 Open!" in het onderste vakje -- zelfde vorm, zelfde plek voor
+// de naam, zodat vijf klaarliggende trofeeën vijf verschillende dingen blijven.
 function readyCardHTML(t) {
-  return '<div class="temoji">🎁</div>'
-    + '<div class="ready-big">Open trofee!</div>'
-    + `<div class="ready-name">${t.name}</div>`;
+  return `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`
+    + '<div class="trophy-bottom"><span class="ready-open">🎁 Open!</span></div>';
 }
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
@@ -4187,9 +4284,10 @@ function startMemory() {
   const grid = $('mem-grid');
   grid.style.setProperty('--cols', Math.min(pairs, 4));   // op mobiel max 4 kolommen: kaartjes blijven groot genoeg
   grid.innerHTML = cards.map((c, i) =>
-    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎴</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
+    `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎤</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
   grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
+  renderSegBar($('mem-progress'), pairs, 0, false);
   show('screen-memory');
   speak('Zoek de twee kaartjes met evenveel.');
 }
@@ -4226,6 +4324,7 @@ function flipCard(i, btn) {
 function onMemMatch(fromBtn) {
   const p = P();
   M.matched++;
+  renderSegBar($('mem-progress'), M.pairs, M.matched, false);
   const gain = 2;
   p.diamonds += gain; M.earned += gain;
   save();
@@ -4555,7 +4654,7 @@ function updateFan(encore) {
   const icon = $('fan-icon');
   const glow = b => icon.style.filter = `brightness(${b.toFixed(2)})`;
   if (encore) {
-    fill.style.height = '100%';
+    fill.style.width = '100%';
     fill.classList.add('full');
     glow(1.5);
     icon.classList.remove('pulse');
@@ -4568,7 +4667,7 @@ function updateFan(encore) {
       setTimeout(() => {
         fill.classList.remove('encore-clear');
         fill.style.transition = 'none';
-        fill.style.height = G.fan + '%';
+        fill.style.width = G.fan + '%';
         void fill.offsetWidth;
         fill.style.transition = '';
         icon.classList.remove('pulse');
@@ -4577,7 +4676,7 @@ function updateFan(encore) {
     }, 550);
     return;
   }
-  fill.style.height = G.fan + '%';
+  fill.style.width = G.fan + '%';
   fill.classList.toggle('full', G.fan >= 100);
   glow(.65 + Math.min(1, G.fan / 100) * .85);
 }
@@ -4650,13 +4749,7 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
   // voortgang
-  const prog = $('qprogress');
-  prog.innerHTML = '';
-  for (let i = 0; i < G.total; i++) {
-    const d = document.createElement('div');
-    d.className = 'qdot' + (i < G.idx ? ' done' : i === G.idx ? ' now' : '');
-    prog.appendChild(d);
-  }
+  renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
   // antwoorden
@@ -4685,6 +4778,21 @@ function renderQuestion() {
     });
   }
   startSpot();
+}
+// Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
+// show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
+function renderSegBar(el, total, done, hasNow) {
+  if (!el) return;
+  el.innerHTML = '';
+  el.setAttribute('aria-valuenow', done);
+  el.setAttribute('aria-valuemax', total);
+  const now = hasNow === false ? -1 : done;
+  for (let i = 0; i < total; i++) {
+    const seg = document.createElement('span');
+    if (i < done) seg.className = 'done';
+    else if (i === now) seg.className = 'now';
+    el.appendChild(seg);
+  }
 }
 function drawQuestion() {
   const q = G.qs[G.idx];
@@ -5039,34 +5147,30 @@ function endLevel(success) {
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
     $('end-text').textContent = juich;
-    const earnChips = [
-      `<span class="earn-chip dia">💎 +${G.earned} verdiend</span>`,
-      `<span class="earn-chip star">⭐ +${bonus} sterrenbonus</span>`
-    ];
-    if (fanBonus > 0) earnChips.push(`<span class="earn-chip fan">👏 +${fanBonus} publiek</span>`);
-    if (rankUp) earnChips.push(`<span class="earn-chip rank">${rankUp.rank.emoji} ${rankUp.rank.name}! +${rankUp.bonus} 💎</span>`);
-    else {
-      // geen rang-sprong deze show: laat wél zien hoe de sterren richting de
-      // volgende ster-status tellen (verbindt sterren zichtbaar met de rang-ladder)
+    // Altijd deze drie, altijd in deze volgorde, altijd even breed -- ook als er
+    // 0 publieksbonus is (dat maakt juist zichtbaar waar de fanmeter toe leidt).
+    $('end-earn').innerHTML =
+        `<span class="earn-chip dia">💎 +${G.earned}</span>`
+      + `<span class="earn-chip star">⭐ +${bonus}</span>`
+      + `<span class="earn-chip fan">👏 +${fanBonus}</span>`;
+    // Eén mijlpaal, in volgorde van belang. Alleen de eerste twee zijn een beloning
+    // (gouden pil, tikbaar); "nog X tot ..." is een vooruitblik en blijft stil.
+    const mile = $('end-milestone');
+    mile.innerHTML = '';
+    if (rankUp) {
+      mile.innerHTML = `<button class="gold-pill" type="button">${rankUp.rank.emoji} ${rankUp.rank.name}! +${rankUp.bonus} 💎</button>`;
+      mile.firstChild.onclick = () => { sndClick(); openCareer(); };
+    } else if (trofees.length) {
+      const label = trofees.length === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${trofees.length} nieuwe trofeeën klaar!`;
+      mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
+      mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
+    } else {
       const r = starRank(totalStarCount(p));
       const remain = r.nextMin - totalStarCount(p);
-      if (remain > 0) earnChips.push(`<span class="earn-chip nextrank">🎯 nog ${remain} ⭐ tot ${r.nextName}</span>`);
+      if (remain > 0) mile.innerHTML = `<span class="milestone-hint">🎯 nog ${remain} ⭐ tot ${r.nextName}</span>`;
     }
-    $('end-earn').innerHTML = earnChips.join('');
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(); };
-    const trophyBanner = $('end-trophy');
-    if (trofees.length) {
-      // eigen blokje i.p.v. een tekstregel — het blokje zelf brengt je er al naartoe,
-      // dus de knop eronder hoeft daar niet ook nog voor te veranderen: die blijft
-      // gewoon altijd de kleedkamer-snelkoppeling
-      trophyBanner.style.display = 'inline-flex';
-      trophyBanner.textContent = trofees.length === 1 ? '🎁 Nieuwe trofee klaar in je kast!' : `🎁 ${trofees.length} nieuwe trofeeën klaar in je kast!`;
-      trophyBanner.onclick = () => { sndClick(); openTrophies(); };
-    } else {
-      trophyBanner.style.display = 'none';
-      trophyBanner.onclick = null;
-    }
     $('btn-end-alt').textContent = '👗 Kleedkamer';
     $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
     sndWin();
@@ -5076,10 +5180,14 @@ function endLevel(success) {
     save();
     $('end-title').textContent = '🎭 Bijna!';
     $('end-stars').textContent = '💪';
-    $('end-text').textContent = 'Drie valse noten... maar oefening baart kunst! Probeer nog eens, je kan het!';
-    $('end-trophy').style.display = 'none';
-    const kept = G.earned + fanBonus;
-    $('end-earn').innerHTML = kept > 0 ? `<span class="earn-chip dia">💎 +${kept} gehouden</span>` : '';
+    $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
+    $('end-milestone').innerHTML = '';
+    // zelfde drie vakjes als bij een geslaagde show, zodat het scherm niet
+    // ineens een andere vorm heeft: alleen wat je verdiend hebt, staat erin
+    $('end-earn').innerHTML =
+        `<span class="earn-chip dia">💎 +${G.earned}</span>`
+      + `<span class="earn-chip star">⭐ +0</span>`
+      + `<span class="earn-chip fan">👏 +${fanBonus}</span>`;
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
@@ -5358,14 +5466,26 @@ function renderShop() {
   if (looksMode) { renderLookGoals(grid, p); return; }
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
-  // alle 8 categorieën staan altijd in beeld (1 rij of een vaste 4x2-grid,
-  // zie .shop-tabs @container hieronder) -- geen scroll-gedoe meer nodig
+  // Eén rij: alleen iconen, plus het woord bij de categorie die aanstaat. Het
+  // aria-label houdt de naam altijd beschikbaar voor een schermlezer.
+  let activeTab = null;
   CATS.forEach(c => {
+    const on = c.id === shopCat;
     const b = document.createElement('button');
-    b.className = 'tab-btn' + (c.id === shopCat ? ' active' : '');
-    b.innerHTML = `<span class="tab-label">${c.name}</span>`;
+    b.className = 'tab-btn' + (on ? ' active' : '');
+    b.setAttribute('aria-label', c.name);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.innerHTML = `<span class="tab-ico">${c.ico}</span>` + (on ? `<span class="tab-label">${c.name}</span>` : '');
     b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; shopBackToLooks = false; renderShop(); };
     tabs.appendChild(b);
+    if (on) activeTab = b;
+  });
+  // de actieve categorie altijd in beeld trekken (de rij scrollt nu horizontaal)
+  tabs.onscroll = () => updateFades(tabs);
+  if (activeTab) requestAnimationFrame(() => {
+    if (!activeTab.isConnected) return;
+    activeTab.scrollIntoView({ block: 'nearest', inline: 'center' });
+    updateFades(tabs);
   });
   // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
   ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => a.price - b.price).forEach(it => {
@@ -5674,7 +5794,7 @@ function statsPanelHtml(p) {
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
       <div class="stat-tile" style="--tint:var(--stat-violet)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
       <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
-      <div class="stat-tile" style="--tint:var(--gold-deep)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
+      <div class="stat-tile" style="--tint:var(--gold-cta-bottom)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
       <div class="stat-tile" style="--tint:var(--pink-accent)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
       <div class="stat-tile" style="--tint:var(--gold-cta-bottom)"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
     </div>
@@ -5729,7 +5849,7 @@ function oefeningPanelHtml(p, s) {
         <div class="chip-row" id="set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
       <div class="set-field"><span class="lbl">Antwoorden tonen als <span class="note">(mix: voorwerpen óf stippen, wisselt per vraag)</span></span>
         <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', (s.repr || 'objects') === 'objects')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}${chip('mix', '🎲 Mix', s.repr === 'mix')}</div></div>
-      <div class="set-field"><span class="lbl">🎴 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
+      <div class="set-field"><span class="lbl">🎤 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
         <div class="chip-row" id="set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
