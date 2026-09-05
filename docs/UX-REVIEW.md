@@ -1,6 +1,6 @@
 # Reken Popsterren — UI/UX review
 
-> **Status:** phase 1 and phase 2 of the plan in section G are implemented.
+> **Status:** all three phases of the plan in section G are implemented.
 > Where the implementation deviates from what is written below, the reason is
 > recorded in the commit that made the change:
 > * the profile card carries the city as an **icon badge on the stage frame**, not
@@ -11,7 +11,19 @@
 >   restyling it;
 > * the dressing-room header came down to **277px** (from 407), not the 260 the
 >   plan named — the last 17px would have had to come out of the avatar, which is
->   the thing that screen exists to show.
+>   the thing that screen exists to show;
+> * phase 3's "wordless task glyph" for counting mode turned out to be needed on
+>   exactly one of the fourteen question types. Thirteen already show the task in
+>   the picture; the one that does not (`listen`) is unanswerable without sound,
+>   so the fix was to stop generating it when there is no speech, rather than to
+>   add a glyph to thirteen cards that do not need one;
+> * "star cost on locked stops" was dropped: cities unlock by finishing the
+>   previous one, so there is no star cost to display. Inventing one would have
+>   changed the mechanics the review asks to preserve;
+> * D11 ("one illustration language") is **half done**. All 95 items now share one
+>   thumbnail zone, baseline and shadow, so the grid reads as one system. The
+>   remaining half — drawing the 21 accessory and instrument items that are still
+>   emoji — is real illustration work and has not been attempted.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
