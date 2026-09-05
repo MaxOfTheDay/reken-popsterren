@@ -76,9 +76,11 @@
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
     --practice-bg: #fff3e0; --practice-text: #b3560d;
-    /* stat-tile accent tints (Voortgang tab): distinct from the reused brand
-       colors below, kept as their own tokens rather than inline literals */
-    --stat-violet: #7e57c2; --stat-green: #2e9e4f;
+    /* Voortgang-tab: twee betekenissen, twee kleuren. Er stonden zes tegels in
+       zes kleuren zonder dat de kleur iets zei -- decoratie op juist het scherm
+       dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
+       goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
+    --stat-green: #2e9e4f;
 
     /* ---- Glass / overlay surfaces (exact-duplicate alpha values only; true one-offs stay inline) ---- */
     --glass-black-30: rgba(0,0,0,.3); --glass-black-35: rgba(0,0,0,.35); --glass-black-40: rgba(0,0,0,.4);
@@ -466,12 +468,16 @@
     background: rgba(20,4,40,.55); animation: popFade .25s ease; cursor: pointer; padding: 16px;
   }
   .career-overlay.closing { animation: popFade .25s ease reverse forwards; }
-  .career-panel {
-    position: relative; width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; cursor: default; text-align: center;
+  /* Gedeelde schil voor élk feest-/statuspaneel (ster-status, trofee-onthulling).
+     Er waren hiervoor twee losse, bijna identieke regels; alleen de breedte
+     verschilt nog, en dat zet de gebruiker zelf via een modifier. */
+  .pop-panel {
+    position: relative; cursor: default; text-align: center;
     padding: 20px 18px 16px; border-radius: var(--r-lg); border: 3px solid var(--gold-accent);
     background: var(--purple-deep); box-shadow: var(--e-3);
     animation: popIn .4s cubic-bezier(.2,1.3,.4,1);
   }
+  .career-panel { width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; }
   .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
     background: var(--glass-white-13); color: var(--c-white); font-size: 16px; font-weight: 800; }
   .career-title { font-size: 15px; font-weight: 800; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
@@ -502,7 +508,7 @@
   .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: rgba(255,214,90,.38); }
   .lr-now { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
     background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
-  @media (prefers-reduced-motion: reduce) { .career-overlay, .career-panel { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .career-overlay, .pop-panel { animation: none; } }
   .rank-bar { width: 100%; height: 9px; border-radius: var(--r-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
   .rank-fill { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .5s ease; }
@@ -513,6 +519,35 @@
      ontstaat er een onzichtbare strook aan de kant van het scherm waar
      nooit meer een wolk kan verschijnen (zelfde reden dat .tour-map-wrap
      hieronder ook een eigen, niet-transformerende omhulling heeft). */
+  /* Lage skyline in de onderste band: het is dezelfde kale gradient als voorheen,
+     maar nu met een horizon erin, zodat de route ergens boven lijkt te liggen in
+     plaats van in het niets te zweven. Twee lagen daken (ver + dichtbij) in de
+     achtergrondkleur zelf, dus zonder extra DOM en zonder een tik te vangen. */
+  .map-ground {
+    /* stopt boven de vaste navigatie (die zit op bottom:10px en is ~72px hoog),
+       zodat de skyline in de zichtbare lege band staat en niet erachter */
+    position: absolute; left: 0; right: 0; bottom: 76px; height: 168px; pointer-events: none; z-index: 0;
+    /* Drie lagen met elk een andere periode en hoogte: daardoor valt de herhaling
+       niet op en leest het als daken op verschillende afstand, niet als een rijtje
+       gelijke blokken. Alleen kleurvlakken -- geen extra elementen, geen tikdoel. */
+    background:
+      /* dichtbij: breed en hoog */
+      repeating-linear-gradient(90deg,
+        rgba(38,5,66,.52) 0 30px, transparent 30px 38px, rgba(38,5,66,.52) 38px 78px, transparent 78px 88px,
+        rgba(38,5,66,.52) 88px 112px, transparent 112px 126px),
+      /* halverwege: een torenrij met een eigen periode, net iets lager */
+      repeating-linear-gradient(90deg,
+        rgba(45,8,78,.46) 0 14px, transparent 14px 41px, rgba(45,8,78,.46) 41px 63px, transparent 63px 97px),
+      /* ver weg: smal, laag en zacht -- diepte aan de horizon */
+      repeating-linear-gradient(90deg,
+        rgba(56,12,92,.40) 0 20px, transparent 20px 33px, rgba(56,12,92,.40) 33px 56px, transparent 56px 66px);
+    background-size: 126px 74px, 97px 96px, 66px 46px;
+    background-position: 0 100%, 53px 100%, 24px 100%;
+    background-repeat: repeat-x, repeat-x, repeat-x;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 55%, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 55%, #000 100%);
+  }
+  @media (max-height: 700px) { .map-ground { height: 118px; bottom: 74px; } }
   .map-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .map-sky-inner { position: absolute; inset: 0; }
   .map-sky-inner > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
@@ -823,12 +858,20 @@
     box-shadow: 0 3px 0 var(--glass-black-28), 0 8px 18px var(--glass-black-32);
   }
   .mem-fab span { font-size: 13px; font-weight: 800; }
+  /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning */
+  .mem-fab .mem-pay { font-size: 11.5px; font-weight: 700; opacity: .9; letter-spacing: .01em; }
   .mem-fab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28), 0 5px 12px var(--glass-black-32); }
+  /* de kaartjes stonden klein in het midden met ~430px lucht eromheen; ze mogen
+     de ruimte gewoon gebruiken -- het is een spel dat je op afstand van tafel speelt */
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
-  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 10px; width: min(92vw, 460px); }
+  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(96vw, 620px); }
   .mem-card {
     position: relative; aspect-ratio: 1 / 1; border: none; background: none; cursor: pointer; padding: 0;
     perspective: 600px;
+    /* de inhoud schaalt mee met de kaart zelf (cqw hieronder), niet met het scherm:
+       memFitCols kiest per situatie een ander aantal kolommen, dus een vw-maat zou
+       bij 2 kolommen veel te groot en bij 4 veel te klein uitvallen */
+    container-type: inline-size;
   }
   .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .35s; }
   .mem-card.open .mem-inner, .mem-card.done .mem-inner { transform: rotateY(180deg); }
@@ -838,7 +881,7 @@
     box-shadow: 0 4px 0 rgba(0,0,0,.18);
   }
   .mem-back {
-    font-size: clamp(26px, 8vw, 40px);
+    font-size: clamp(26px, 8vw, 40px); font-size: 34cqw;
     background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
     border: 2px solid rgba(255,255,255,.35);
   }
@@ -856,13 +899,16 @@
   /* Memory-kaartjes zijn klein: elke weergave krijgt een eigen compacte maat die
      écht binnen de kaart past (geen transform:scale -- dan blijft de layout-box
      te groot en wordt de inhoud afgekapt). */
-  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); }
-  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-weight: 800; color: var(--purple-shadow); }
+  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 13cqw; }
+  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 30cqw; font-weight: 800; color: var(--purple-shadow); }
   .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
   .mem-face .cframe { gap: 2.5px; }
-  .mem-face .cframe .tf-cell { width: 12px; height: 12px; border-width: 1.5px; border-radius: 4px; font-size: 9px; }
+  .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 12cqw; height: 12cqw; border-width: 1.5px; border-radius: 4px; }
+  /* een voorwerp ín een raamvakje moet in dat vakje passen -- losse groepjes
+     (.cgroup, hierboven) mogen juist groter */
+  .mem-face .cframe .cg-obj { font-size: 8cqw; }
   .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
-  .mem-face .dframe .df-cell { width: 10px; height: 10px; border-width: 1px; border-radius: 3px; }
+  .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 10cqw; height: 10cqw; border-width: 1px; border-radius: 3px; }
   .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
   .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
   .mem-done-title { font-size: 54px; line-height: 1; }
@@ -1105,6 +1151,11 @@
      eigen kopie kwijt zijn) de enige plek waar hij staat. Puls + gloed
      geïnspireerd op .trophy-card.ready i.p.v. de stillere brightness-only
      playGlow -- dit is de belangrijkste tik van de app, mag zich ook zo voelen. */
+  /* de sterren-pips in de bel: klein en onder de tekst, zodat "Speel!" het woord
+     blijft en de sterren de bijzin */
+  .speel-pill { flex-direction: column; gap: 1px; }
+  .speel-stars { font-size: 11px; letter-spacing: -1px; line-height: 1; }
+  .speel-stars .star-miss { opacity: .45; filter: grayscale(1); }
   .speel-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
@@ -1285,11 +1336,7 @@
     background: rgba(20,4,40,.45); animation: popFade .25s ease; cursor: pointer;
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
-  .trophy-pop {
-    text-align: center; padding: 22px 30px; border-radius: var(--r-lg);
-    background: var(--purple-deep); border: 3px solid var(--gold-accent);
-    box-shadow: var(--e-3); animation: popIn .45s cubic-bezier(.2,1.3,.4,1);
-  }
+  .trophy-pop { padding: 22px 30px; }
   .tp-head { font-size: 16px; font-weight: 800; color: var(--gold-light); }
   .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(255,215,64,.8)); }
   .tp-name { font-size: 20px; font-weight: 800; color: var(--c-white); }
@@ -1396,7 +1443,7 @@
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready, .ready-open { animation: none; }
     .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.just-claimed::after { animation: none; }
-    .trophy-pop { animation: none; }
+
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
     .rankup-badge, .rankup-label, .rankup-name { animation: none; }
@@ -1585,13 +1632,23 @@
   .item-card.selected.equipped:hover { background: rgba(255,214,90,.18); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
-  .item-swatch { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,.6); font-size: 30px; line-height: 44px; }
-  /* podium-bol met een herkennende emoji erin */
-  .item-swatch.stage-swatch { display: grid; place-items: center; font-size: 24px; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
-  /* getekend item (jurk/haar/schoen/micro) i.p.v. een kleurbolletje */
-  .item-thumb { height: 52px; display: flex; align-items: flex-end; justify-content: center; margin: 0 auto 6px; }
+  /* Eén miniatuur-zone voor álle spullen. Er waren er drie: een getekende jurk
+     zweefde vrij op een basislijn, een emoji hing eronder zonder schaduw, en een
+     podium was een wit omrand bolletje van 46px. Dezelfde soort dingen zagen er
+     dus per categorie anders uit. Nu staat alles in hetzelfde vak van 52px, op
+     dezelfde optische hoogte en met dezelfde slagschaduw; wat verschilt is nog
+     alleen waar de tekening vandaan komt (getekend of emoji). */
+  .item-thumb { height: 52px; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; }
   .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
-  .item-thumb .thumb-emo { font-size: 34px; line-height: 52px; }
+  .item-thumb .thumb-emo { font-size: 34px; line-height: 1; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
+  /* een podium is een plek, geen voorwerp: zijn kleur ís het item, dus een klein
+     decorvlak met het herkenningsicoon erop -- in hetzelfde vak, zelfde schaduw */
+  .item-thumb .thumb-stage {
+    width: 46px; height: 40px; border-radius: var(--r-sm); display: grid; place-items: center;
+    font-size: 22px; border: 1.5px solid rgba(255,255,255,.5);
+    filter: drop-shadow(0 2px 3px var(--glass-black-30)); text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  }
+  .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
   .item-name { font-size: 14px; font-weight: bold; overflow-wrap: break-word; hyphens: auto; }
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
@@ -1650,8 +1707,8 @@
   .look-piece[data-cat="shoes"] .item-thumb svg { height: 29px; }
   .look-piece[data-cat="mic"] .item-thumb svg { height: 27px; }
   .look-piece .item-thumb .thumb-emo { font-size: 22px; line-height: 1; }
-  .look-piece .item-swatch { width: 22px; height: 22px; margin: 0 0 3px; border-width: 1.5px; }
-  .look-piece .item-swatch.stage-swatch { font-size: 13px; }
+  .look-piece .item-thumb .thumb-stage { width: 24px; height: 21px; font-size: 12px; border-width: 1px; border-radius: 5px; }
+  .look-piece .item-thumb .thumb-swatch { width: 22px; height: 22px; border-width: 1px; }
   .look-piece .lp-name {
     font-size: 10px; font-weight: 700; line-height: 1.15; color: var(--muted-lavender-text);
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
@@ -1660,7 +1717,7 @@
   /* precies dezelfde staten als .item-card: ontbreekt = dof/grijswaarden,
      bezit = zachtgrijs, nu aan = goud + gloed */
   .look-piece.miss { opacity: .45; }
-  .look-piece.miss .item-thumb, .look-piece.miss .item-swatch { filter: grayscale(1); }
+  .look-piece.miss .item-thumb { filter: grayscale(1); }
   .look-piece.have { background: rgba(180,184,196,.16); }
   .look-piece.have .lp-name { color: var(--muted-text-3); }
   .look-piece.on { background: rgba(255,214,90,.16); box-shadow: 0 0 0 1.5px var(--gold-accent); }
@@ -1840,6 +1897,7 @@
 
   <!-- ===== Kaart / wereldtournee (hoofdscherm) ===== -->
   <div class="screen hub" id="screen-map">
+    <div class="map-ground" aria-hidden="true"></div>
     <div class="map-sky" aria-hidden="true">
       <!-- elk element drift't lineair van -80px naar 100vw+80px; het negatieve
            animation-delay bepaalt waar het bij het ínladen al in die reis zit
@@ -1874,7 +1932,7 @@
       </div>
     </div>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
-    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span></button>
+    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 <span id="mem-fab-pay">0</span></span></button>
   </div>
 
   <!-- ===== Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ===== -->
@@ -3189,7 +3247,7 @@ function openCareer() {
   else rows += `<div class="ladder-row future"><span class="lr-emoji">⭐</span><span class="lr-name">…en verder</span></div>`;
   const ov = document.createElement('div');
   ov.className = 'career-overlay';
-  ov.innerHTML = `<div class="career-panel">`
+  ov.innerHTML = `<div class="pop-panel career-panel">`
     + `<button class="career-close" type="button" aria-label="Sluiten">✕</button>`
     + `<div class="career-title">Jouw ster-status</div>`
     + `<div class="career-list">${rows}</div></div>`;
@@ -3207,7 +3265,9 @@ function goMap() {
   $('map-diamonds').textContent = p.diamonds;
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
-  $('mem-fab').style.display = (p.settings.track === 'count' && p.settings.memory !== false) ? 'flex' : 'none';
+  const memOn = p.settings.track === 'count' && p.settings.memory !== false;
+  $('mem-fab').style.display = memOn ? 'flex' : 'none';
+  if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   renderCareerStrip(p);   // zet ook de titel (ster-status) in de kop
   const travel = pendingTravel;
   pendingTravel = null;
@@ -3250,6 +3310,8 @@ function updateRoad(map) {
   const fadeGrad = track.querySelector('#roadFadeGrad');
   const stops = [...track.querySelectorAll('.tour-stop')];
   if (!svg || !stops.length) return;
+  // een eventuele reis-animatie (zie growRoad) laat een dash-masker achter
+  fg.style.strokeDasharray = ''; fg.style.strokeDashoffset = '';
   svg.setAttribute('width', track.scrollWidth);
   svg.setAttribute('height', track.scrollHeight);
   const trackRect = track.getBoundingClientRect();
@@ -3281,6 +3343,38 @@ function updateRoad(map) {
 }
 // Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
 // de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
+// Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas
+// ná aankomst in één klap door te schieten: de weg wordt zichtbaar afgelegd.
+// Werkt via een dash-masker over het volledige pad tot de nieuwe stad -- eerst
+// afgedekt tot de oude halte, dan in dezelfde tijd als de huppel opengeschoven.
+function growRoad(map, fromLvl, toLvl, duration, delay) {
+  const track = map.querySelector('.tour-track');
+  const svg = track && track.querySelector('.tour-road-svg');
+  const fg = track && track.querySelector('.tour-road-fg');
+  if (!track || !svg || !fg || !fg.animate || !fg.getTotalLength) return null;
+  const stops = [...track.querySelectorAll('.tour-stop')];
+  const idx = lvl => stops.findIndex(st => Number(st.dataset.lvl) === lvl);
+  const fromIdx = idx(fromLvl), toIdx = idx(toLvl);
+  if (fromIdx < 0 || toIdx < 0) return null;
+  const trackRect = track.getBoundingClientRect();
+  const pts = stops.map(st => {
+    const r = st.querySelector('.dot').getBoundingClientRect();
+    return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
+  });
+  fg.setAttribute('d', smoothPath(pts.slice(0, toIdx + 1)));
+  const total = fg.getTotalLength();
+  // lengte tot de oude halte: even hetzelfde pad opmeten, ingekort
+  const probe = fg.cloneNode();
+  probe.setAttribute('d', fromIdx > 0 ? smoothPath(pts.slice(0, fromIdx + 1)) : '');
+  svg.appendChild(probe);
+  const covered = fromIdx > 0 ? probe.getTotalLength() : 0;
+  probe.remove();
+  fg.style.strokeDasharray = total;
+  fg.style.strokeDashoffset = total - covered;
+  return fg.animate(
+    [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
+    { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
+}
 function renderTourMap(travelFrom) {
   const p = P();
   const curLvl = travelFrom ? 0 : p.level;
@@ -3345,7 +3439,11 @@ function renderTourMap(travelFrom) {
       // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
       // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      const speel = l === curLvl ? '<div class="tour-speel speel-pill">Speel!</div>' : '';
+      // De bel zegt niet alleen "speel", maar ook wat hier nog te halen valt: de
+      // sterren die je in déze stad nog niet hebt staan er dof bij. Zo is van de
+      // kaart af te lezen of een stad opnieuw spelen nog iets oplevert.
+      const speel = l === curLvl
+        ? `<div class="tour-speel speel-pill">Speel!<span class="speel-stars">${starPipsHTML(st)}</span></div>` : '';
       // Iedere halte krijgt dezelfde sterrenregel -- ook een halte die nog niet
       // gespeeld is (dan drie doffe sterren) en een halte op slot. Eerder stond
       // die regel alleen onder gespeelde steden, waardoor de stadsnamen op drie
@@ -3365,6 +3463,11 @@ function renderTourMap(travelFrom) {
   setupTourMap(map);
 }
 // Zet een halte netjes in het midden van het venster (extraPx verschuift het middelpunt).
+// Sterren als kleine pips (zonder eigen regel), voor ín de Speel!-bel.
+function starPipsHTML(n) {
+  const got = Math.max(0, Math.min(3, n));
+  return '⭐'.repeat(got) + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '');
+}
 // Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
 function starRowHTML(n) {
   const got = Math.max(0, Math.min(3, n));
@@ -3418,6 +3521,7 @@ function runTravel(t) {
   }
   buzz([0, 25, 90, 25, 90, 25]);
   const anim = hero.animate(frames, { duration: 1500, delay: 400, fill: 'forwards' });
+  growRoad(map, t.from, t.to, 1500, 400);   // het goud loopt met haar mee
   // glinsterspoor achter de huppelende ster
   const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
   setTimeout(() => clearInterval(trail), 1950);
@@ -3621,7 +3725,7 @@ function celebrateTrophy(t) {
   buzz(20);
   const ov = document.createElement('div');
   ov.className = 'trophy-pop-overlay';
-  ov.innerHTML = '<div class="trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
+  ov.innerHTML = '<div class="pop-panel trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
     + '<div class="tp-stage">'
     +   '<div class="tp-rays" aria-hidden="true"></div>'
     +   '<div class="tp-ring" aria-hidden="true"></div>'
@@ -3695,6 +3799,9 @@ function noticeReady(trofees) {
   setTimeout(hideToast, 1900);
 }
 // rood stipje op het Trofeeën-tabblad zolang er trofeeën klaarliggen om te openen
+// De memory-knop belooft nu wat hij oplevert (2 per paar + 3 als de hele set uit
+// is). Stond er niet op: een gouden knop zonder aangekondigde beloning.
+function memPayout(p) { return buildMemoryDeck(p).pairs * MEM_PAIR_GAIN + MEM_DONE_BONUS; }
 function updateTroDot() {
   if (!cur) return;
   const p = P();
@@ -3804,6 +3911,9 @@ function countStageInfo(stage) {
     case 2: return { types: ['count', 'along'],     baseMax: 5, topMax: 6,  rungs: 3, tiles: 4 };
     case 3: return { types: ['compare'],            baseMax: 5, topMax: 8,  rungs: 3, tiles: 3 };
     case 4: return { types: ['match'],              baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
+    // fase 5 is de luisterfase; zonder geluid valt hij terug op 'match' (zelfde
+    // bereik, zelfde soort keuze, maar de opgave staat wél in beeld) -- zie
+    // countStageTypes hieronder
     case 5: return { types: ['listen'],             baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     case 6: return { types: ['numeral', 'numquant'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     case 7: return { types: ['onemore', 'oneless'], baseMax: 3, topMax: 9,  rungs: 3, tiles: 4 };
@@ -3816,6 +3926,17 @@ function countStageInfo(stage) {
   }
 }
 function countTopRung(stage) { return countStageInfo(stage).rungs - 1; }
+// Kan de app nú praten? (geluid aan én een browser die spraak ondersteunt)
+function canSpeak() { return !!db.sound && hasSpeech(); }
+// De vraagsoorten die op dit moment écht speelbaar zijn. Een luistervraag toont
+// alleen een oor: zonder stem is er niets om op af te gaan. Dan liever een
+// zichtbare opgave uit dezelfde fase-familie dan een gokvraag.
+function countStageTypes(stage) {
+  const types = countStageInfo(stage).types;
+  if (canSpeak()) return types;
+  const speelbaar = types.filter(t => t !== 'listen');
+  return speelbaar.length ? speelbaar : ['match'];
+}
 // Hoogste toegestane fase: zonder cijfers stopt het bij fase 5 (fases 6–8 gebruiken cijfers/redeneren).
 function countMaxStage(s) { return s.numerals ? Math.min(COUNT_STAGE_MAX, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX); }
 // De fase die het kind nú speelt: de live-stand uit countTrack, geklemd binnen het
@@ -3956,7 +4077,7 @@ function genCount(p) {
   const stage = countLiveStage(p);
   const info = countStageInfo(stage);
   const d = countDifficulty(p, stage);
-  const type = pick(info.types);
+  const type = pick(countStageTypes(stage));
   const frame = d.structured;
   const max = d.effMax;
   // 'mix' → per vraag willekeurig voorwerpen óf stippen (hele groep gelijk, zodat het
@@ -4256,6 +4377,9 @@ function countReveal(q) {
    lopen via dezelfde diamant-pijplijn (kleedkamer, trofeeën blijven meetellen). */
 let M = null;
 // Eén kaartje omzetten in beeld: voorwerpen, stippen, tienraam of cijfer.
+// wat een memory-potje oplevert -- gedeeld door het spel zelf en door de belofte
+// op de knop op de kaart (zie memPayout)
+const MEM_PAIR_GAIN = 2, MEM_DONE_BONUS = 3;
 function memFaceHTML(c) {
   if (c.repr === 'numeral') return `<span class="ct-num">${c.v}</span>`;
   if (c.repr === 'frame') return frameHTML(c.v, c.emoji, 'objects');
@@ -4292,14 +4416,52 @@ function startMemory() {
   $('mem-done').style.display = 'none';
   $('mem-diamonds').textContent = p.diamonds;
   const grid = $('mem-grid');
-  grid.style.setProperty('--cols', Math.min(pairs, 4));   // op mobiel max 4 kolommen: kaartjes blijven groot genoeg
+  grid.style.setProperty('--cols', Math.min(pairs, 4));   // voorlopige waarde; memFitCols meet zo de echte
   grid.innerHTML = cards.map((c, i) =>
     `<button class="mem-card" data-i="${i}"><span class="mem-inner"><span class="mem-back">🎤</span><span class="mem-face">${memFaceHTML(c)}</span></span></button>`
   ).join('');
   grid.querySelectorAll('.mem-card').forEach(b => b.onclick = () => flipCard(parseInt(b.dataset.i, 10), b));
   renderSegBar($('mem-progress'), pairs, 0, false);
   show('screen-memory');
+  // pas ná show() heeft de arena een maat: kies dan het aantal kolommen dat de
+  // kaartjes zo groot mogelijk maakt binnen die ruimte
+  requestAnimationFrame(() => memFitCols(grid, cards.length));
   speak('Zoek de twee kaartjes met evenveel.');
+}
+// Zoveel mogelijk kaart per kaartje: probeer elk aantal kolommen en houd het
+// aantal dat het grootste vierkantje oplevert binnen de beschikbare arena. Het
+// aantal kolommen stond vast op min(paren, 4), waardoor de kaartjes op een
+// staande telefoon klein bleven terwijl er ruime hoogte over was.
+function memFitCols(grid, n) {
+  const screen = $('screen-memory');
+  if (!screen) return;
+  // Meet de ruimte die er ís (scherm min de plakkende kop), niet de arena: die
+  // groeit mee met het raster dat we hier juist aan het bepalen zijn, dus daarop
+  // meten voedt zichzelf -- twee kolommen maken de arena hoger, waarna twee
+  // kolommen nóg ruimer lijken te passen, en het raster liep van het scherm af.
+  const sticky = screen.querySelector('.hub-sticky');
+  const gap = parseFloat(getComputedStyle(grid).gap) || 12;
+  // eerst de vorige inzet loslaten: anders meten we de breedte die we zelf de
+  // vorige keer hebben opgelegd, en krimpt het raster elke ronde verder
+  grid.style.width = '';
+  const w = grid.getBoundingClientRect().width;
+  // 56px marge: de arena en het scherm hebben zelf ook nog padding
+  const h = screen.clientHeight - (sticky ? sticky.getBoundingClientRect().height : 0) - 56;
+  if (!w || h <= 0) return;
+  const fits = [];
+  for (let c = 2; c <= n; c++) {
+    const rows = Math.ceil(n / c);
+    fits.push({ cols: c, rows, size: Math.min((w - gap * (c - 1)) / c, (h - gap * (rows - 1)) / rows) });
+  }
+  const biggest = fits.reduce((a, f) => f.size > a.size ? f : a, fits[0]);
+  // Bij bijna gelijke kaartgrootte liever meer kolommen: dat vult de breedte en
+  // geeft een vierkanter blok dan een smalle kolom met veel lucht ernaast.
+  const best = fits.filter(f => f.size >= biggest.size * 0.92).pop();
+  grid.style.setProperty('--cols', best.cols);
+  // De breedte moet mee: het raster is anders altijd zo breed als de ruimte, en
+  // dan groeit het (vierkante) kaartje door de onderkant heen zodra de hóógte de
+  // krappe kant is. Nu is de kaart precies zo groot als beide maten toelaten.
+  grid.style.width = Math.floor(best.cols * best.size + gap * (best.cols - 1)) + 'px';
 }
 function exitMemory() { sndClick(); hideToast(); M = null; goMap(); }
 function flipCard(i, btn) {
@@ -4335,7 +4497,7 @@ function onMemMatch(fromBtn) {
   const p = P();
   M.matched++;
   renderSegBar($('mem-progress'), M.pairs, M.matched, false);
-  const gain = 2;
+  const gain = MEM_PAIR_GAIN;
   p.diamonds += gain; M.earned += gain;
   save();
   $('mem-diamonds').textContent = p.diamonds;
@@ -4349,7 +4511,7 @@ function onMemMatch(fromBtn) {
 }
 function finishMemory() {
   const p = P();
-  const bonus = 3;
+  const bonus = MEM_DONE_BONUS;
   p.diamonds += bonus; M.earned += bonus;
   save();
   $('mem-diamonds').textContent = p.diamonds;
@@ -5358,15 +5520,17 @@ function wizardHatThumb() {
     <path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
     <text x="90" y="38" font-size="13" fill="#ffd54f">★</text><text x="98" y="23" font-size="10" fill="#ffd54f">★</text></svg>`;
 }
+// Elk miniatuur komt uit hetzelfde vak (.item-thumb); alleen de inhoud verschilt.
 function itemThumb(it) {
-  if (it.id === 'acc_tovenaarshoed') return `<div class="item-thumb">${wizardHatThumb()}</div>`;
-  if (it.emoji) return `<div class="item-thumb"><span class="thumb-emo">${it.emoji}</span></div>`;
-  if (it.cat === 'dress') return `<div class="item-thumb">${dressThumb(it)}</div>`;
-  if (it.cat === 'hair')  return `<div class="item-thumb">${hairThumb(it)}</div>`;
-  if (it.cat === 'shoes') return `<div class="item-thumb">${shoesThumb(it)}</div>`;
-  if (it.cat === 'mic')   return `<div class="item-thumb">${micThumb(it)}</div>`;
-  if (it.bg) return `<div class="item-swatch stage-swatch" style="background:${it.bg}">${(it.deco && it.deco[0]) || ''}</div>`;
-  return `<div class="item-swatch" style="background:${it.color}"></div>`;
+  const zone = inner => `<div class="item-thumb">${inner}</div>`;
+  if (it.id === 'acc_tovenaarshoed') return zone(wizardHatThumb());
+  if (it.emoji) return zone(`<span class="thumb-emo">${it.emoji}</span>`);
+  if (it.cat === 'dress') return zone(dressThumb(it));
+  if (it.cat === 'hair')  return zone(hairThumb(it));
+  if (it.cat === 'shoes') return zone(shoesThumb(it));
+  if (it.cat === 'mic')   return zone(micThumb(it));
+  if (it.bg) return zone(`<span class="thumb-stage" style="background:${it.bg}">${(it.deco && it.deco[0]) || ''}</span>`);
+  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
 }
 
 let shopCat = 'dress';
@@ -5802,11 +5966,11 @@ function statsPanelHtml(p) {
       <div><h2>Voortgang van ${p.name}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
     <div class="stat-grid">
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
-      <div class="stat-tile" style="--tint:var(--stat-violet)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
       <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
-      <div class="stat-tile" style="--tint:var(--gold-cta-bottom)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
-      <div class="stat-tile" style="--tint:var(--pink-accent)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
-      <div class="stat-tile" style="--tint:var(--gold-cta-bottom)"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
     </div>
     <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
     <div class="stat-bar"><div style="width:${skill}%"></div></div>
