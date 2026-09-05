@@ -519,35 +519,32 @@
      ontstaat er een onzichtbare strook aan de kant van het scherm waar
      nooit meer een wolk kan verschijnen (zelfde reden dat .tour-map-wrap
      hieronder ook een eigen, niet-transformerende omhulling heeft). */
-  /* Lage skyline in de onderste band: het is dezelfde kale gradient als voorheen,
-     maar nu met een horizon erin, zodat de route ergens boven lijkt te liggen in
-     plaats van in het niets te zweven. Twee lagen daken (ver + dichtbij) in de
-     achtergrondkleur zelf, dus zonder extra DOM en zonder een tik te vangen. */
+  /* Voetlicht onder de reisroute.
+     Hier stond eerst een skyline van herhalende rechthoeken. Die tilde bij één
+     schermbreedte nog wel, maar op een breed scherm herhaalde het motief zeven
+     keer en las het als een staafdiagram -- en een rij kantoorblokken zegt ook
+     niets over een popsterrentournee. Nu licht de onderrand op alsof de route
+     over een verlicht podium loopt: alleen zachte verlopen, geen enkele
+     herhalende vorm, dus het kán niet tegelen of mechanisch ogen. */
   .map-ground {
-    /* stopt boven de vaste navigatie (die zit op bottom:10px en is ~72px hoog),
-       zodat de skyline in de zichtbare lege band staat en niet erachter */
-    position: absolute; left: 0; right: 0; bottom: 76px; height: 168px; pointer-events: none; z-index: 0;
-    /* Drie lagen met elk een andere periode en hoogte: daardoor valt de herhaling
-       niet op en leest het als daken op verschillende afstand, niet als een rijtje
-       gelijke blokken. Alleen kleurvlakken -- geen extra elementen, geen tikdoel. */
+    position: absolute; left: 0; right: 0; bottom: 0; height: 300px; pointer-events: none; z-index: 0;
     background:
-      /* dichtbij: breed en hoog */
-      repeating-linear-gradient(90deg,
-        rgba(38,5,66,.52) 0 30px, transparent 30px 38px, rgba(38,5,66,.52) 38px 78px, transparent 78px 88px,
-        rgba(38,5,66,.52) 88px 112px, transparent 112px 126px),
-      /* halverwege: een torenrij met een eigen periode, net iets lager */
-      repeating-linear-gradient(90deg,
-        rgba(45,8,78,.46) 0 14px, transparent 14px 41px, rgba(45,8,78,.46) 41px 63px, transparent 63px 97px),
-      /* ver weg: smal, laag en zacht -- diepte aan de horizon */
-      repeating-linear-gradient(90deg,
-        rgba(56,12,92,.40) 0 20px, transparent 20px 33px, rgba(56,12,92,.40) 33px 56px, transparent 56px 66px);
-    background-size: 126px 74px, 97px 96px, 66px 46px;
-    background-position: 0 100%, 53px 100%, 24px 100%;
-    background-repeat: repeat-x, repeat-x, repeat-x;
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 55%, #000 100%);
-    mask-image: linear-gradient(180deg, transparent 0, #000 55%, #000 100%);
+      /* het licht zelf: warm, breed, van de onderrand omhoog uitwaaierend */
+      radial-gradient(118% 72% at 50% 114%, rgba(255,216,128,.40), rgba(255,150,26,.16) 38%, transparent 68%),
+      /* twee zachte nevelbanken, versprongen, zodat de horizon niet één rechte lijn is */
+      radial-gradient(58% 40% at 20% 96%, rgba(255,255,255,.07), transparent 72%),
+      radial-gradient(50% 34% at 78% 101%, rgba(255,255,255,.055), transparent 72%),
+      /* vignet: pas doordat de hoeken dimmen wórdt het midden licht. Zonder dit
+         verdwijnt een warme gloed in de toch al felroze onderkant van de app. */
+      radial-gradient(115% 86% at 50% 104%, transparent 34%, rgba(30,4,54,.40) 100%),
+      /* de vloer: het beeld zakt naar onderen toe weg in het donker */
+      linear-gradient(180deg, transparent 0, rgba(42,6,72,.16) 64%, rgba(32,4,56,.30) 100%);
+    /* de laag zelf dooft naar boven uit: zonder dit tekent het vignet een harde
+       horizontale rand dwars over het scherm waar het element begint */
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 52%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 52%);
   }
-  @media (max-height: 700px) { .map-ground { height: 118px; bottom: 74px; } }
+  @media (max-height: 700px) { .map-ground { height: 210px; } }
   .map-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .map-sky-inner { position: absolute; inset: 0; }
   .map-sky-inner > span { position: absolute; left: 0; opacity: .28; animation: drift linear infinite; }
@@ -1151,11 +1148,6 @@
      eigen kopie kwijt zijn) de enige plek waar hij staat. Puls + gloed
      geïnspireerd op .trophy-card.ready i.p.v. de stillere brightness-only
      playGlow -- dit is de belangrijkste tik van de app, mag zich ook zo voelen. */
-  /* de sterren-pips in de bel: klein en onder de tekst, zodat "Speel!" het woord
-     blijft en de sterren de bijzin */
-  .speel-pill { flex-direction: column; gap: 1px; }
-  .speel-stars { font-size: 11px; letter-spacing: -1px; line-height: 1; }
-  .speel-stars .star-miss { opacity: .45; filter: grayscale(1); }
   .speel-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
@@ -1531,18 +1523,15 @@
      het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
      zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
   #screen-dress { padding-bottom: 190px; }
-  /* De vaste kop besloeg 0-407px van een 844px scherm: titel, paspop, de
-     Spullen/Looks-schakelaar én acht categorieën in twee rijen -- bijna de helft
-     van het scherm vóór het eerste kledingstuk. Nu staan de schakelaar en de
-     dobbelsteen naast de paspop (die ruimte was er toch) en zijn de categorieën
-     één scrollende rij met alleen iconen. */
-  .dress-top { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; max-width: 460px; }
-  .dress-side { display: flex; flex-direction: column; align-items: stretch; gap: 9px; min-width: 0; flex: 1 1 120px; max-width: 150px; }
-  .dress-side .segmented { flex-direction: column; gap: 4px; width: 100%; max-width: none; }
-  .dress-side .segmented button { padding: 8px; font-size: 15px; }
-  /* klein en rechts uitgelijnd: "verras me" is een leuk extraatje, geen derde
-     hoofdknop naast Spullen/Looks */
-  .dress-side .shuffle-btn { align-self: flex-end; width: 44px; height: 44px; border-radius: 50%; }
+  /* De kop was ooit 0-407px van een 844px scherm: titel, paspop, een
+     Spullen/Looks-schakelaar én acht categorieën in twee rijen. De schakelaar
+     stond daarna naast de paspop, met de dobbelsteen eronder -- een blok van
+     342px dat midden in een band van 459px zweefde, met de categorierij eronder
+     wél over de volle breedte. Twee uitlijningen boven elkaar, plus een knop
+     (verras me) die bij geen van beide groepen hoorde: dat las als scheef.
+     Nu is er één keuzerij: "Looks" is gewoon de eerste categorie. Vanuit het
+     kind gezien is "laat me outfits zien" dezelfde vraag als "laat me jurken
+     zien" -- twee aparte bedieningen voor één vraag was de eigenlijke fout. */
   .hub-sticky {
     position: sticky; top: -12px; z-index: 5;
     display: flex; flex-direction: column; align-items: center;
@@ -1556,22 +1545,24 @@
   .hub-sticky .screen-header { margin-bottom: 4px; }
   /* de rand-/gloedbehandeling zit nu in de gedeelde .stage-frame (zie .stage
      hierboven) -- hier alleen nog de eigen afmeting van de kleedkamer-scène */
-  .dress-stage { width: 178px; height: 150px; }
+  .dress-stage { width: 208px; height: 175px; }
   .dress-stage .deco { font-size: 20px; }
-  @media (max-height: 700px) { .dress-stage { width: 150px; height: 126px; } }
-  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit. Zat als
-     zwevend rondje met drie ringen eromheen half over de hoek van het podium;
-     staat nu gewoon onder de Spullen/Looks-schakelaar, met één rand. */
-  .stage-wrap { position: relative; }
+  @media (max-height: 700px) { .dress-stage { width: 160px; height: 134px; } }
+  /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit. Hoort bij
+     háár, dus staat hij als merkje op de rand van het podiumkader -- precies het
+     patroon dat de spelerskeuze al gebruikt voor het ▶-merkje (.play-mark). Eén
+     rand, geen extra ringen: dát was de klacht, niet de plek. */
+  .stage-wrap { position: relative; display: flex; justify-content: center; }
   .shuffle-btn {
-    border-radius: var(--r-sm); border: 1.5px solid rgba(255,255,255,.5); cursor: pointer;
-    font-size: 22px; line-height: 1; font-family: inherit;
+    position: absolute; right: -6px; bottom: -6px; width: 42px; height: 42px;
+    border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+    font-size: 20px; line-height: 1; font-family: inherit;
+    border: 2px solid rgba(255,255,255,.75); box-shadow: var(--e-1);
     background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
-    box-shadow: 0 var(--btn-lip-sm) 0 var(--purple-shadow);
     transition: transform .15s;
   }
-  .shuffle-btn:hover { transform: scale(1.04); }
-  .shuffle-btn:active { transform: scale(.95); box-shadow: none; }
+  .shuffle-btn:hover { transform: scale(1.06); }
+  .shuffle-btn:active { transform: scale(.94); filter: brightness(.88); }
   /* Eén scrollende rij met alleen iconen -- alleen de categorie die aanstaat zet
      er zijn woord bij. Het was een vaste 4x2-grid waarin de helft van de labels
      werd afgekapt ("Schoe…", "Microf…", "Acces…"): een emoji plus een half woord
@@ -1592,6 +1583,14 @@
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; }
   .tab-label { white-space: nowrap; }
+  /* Looks staat vooraan en houdt altijd zijn woord: het is geen kledingsoort maar
+     een andere manier van kijken, dus het mag zich van de acht categorieën
+     onderscheiden. Het streepje erna maakt die scheiding zichtbaar. */
+  .tab-btn.looks { margin-right: 9px; position: relative; }
+  .tab-btn.looks::after {
+    content: ''; position: absolute; right: -6px; top: 20%; bottom: 20%;
+    width: 1.5px; border-radius: 1px; background: var(--glass-white-22);
+  }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
@@ -2073,16 +2072,11 @@
         <div class="header-title">👗 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
-      <div class="dress-top">
-        <div class="stage-wrap">
-          <div class="stage tappable stage-frame dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
-            <div class="avatar-holder idle" id="shop-avatar"></div>
-          </div>
+      <div class="stage-wrap">
+        <div class="stage tappable stage-frame dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
+          <div class="avatar-holder idle" id="shop-avatar"></div>
         </div>
-        <div class="dress-side">
-          <div class="segmented shop-mode" id="shop-mode"></div>
-          <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
-        </div>
+        <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
         <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
@@ -3439,11 +3433,7 @@ function renderTourMap(travelFrom) {
       // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
       // staat ze nog op de halte waar ze vandaan komt (heroLvl)
       const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      // De bel zegt niet alleen "speel", maar ook wat hier nog te halen valt: de
-      // sterren die je in déze stad nog niet hebt staan er dof bij. Zo is van de
-      // kaart af te lezen of een stad opnieuw spelen nog iets oplevert.
-      const speel = l === curLvl
-        ? `<div class="tour-speel speel-pill">Speel!<span class="speel-stars">${starPipsHTML(st)}</span></div>` : '';
+      const speel = l === curLvl ? '<div class="tour-speel speel-pill">Speel!</div>' : '';
       // Iedere halte krijgt dezelfde sterrenregel -- ook een halte die nog niet
       // gespeeld is (dan drie doffe sterren) en een halte op slot. Eerder stond
       // die regel alleen onder gespeelde steden, waardoor de stadsnamen op drie
@@ -3463,11 +3453,6 @@ function renderTourMap(travelFrom) {
   setupTourMap(map);
 }
 // Zet een halte netjes in het midden van het venster (extraPx verschuift het middelpunt).
-// Sterren als kleine pips (zonder eigen regel), voor ín de Speel!-bel.
-function starPipsHTML(n) {
-  const got = Math.max(0, Math.min(3, n));
-  return '⭐'.repeat(got) + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '');
-}
 // Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
 function starRowHTML(n) {
   const got = Math.max(0, Math.min(3, n));
@@ -5615,52 +5600,56 @@ function renderShop() {
   $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
   applyStage($('shop-stage'), preview);
   renderDressBar(selected, p);
-  // modus-schakelaar: kleren (per categorie) ↔ looks (complete outfits sparen)
-  const mode = $('shop-mode');
-  mode.innerHTML = '';
-  [['items', 'Spullen'], ['looks', 'Looks']].forEach(([v, label]) => {
-    const b = document.createElement('button');
-    b.className = v === shopView ? 'on' : '';
-    b.textContent = label;
-    b.onclick = () => {
-      sndClick();
-      rememberLooksScroll();                 // verlaat je Looks? bewaar de plek
-      shopView = v; shopSelectedId = null; shopBackToLooks = false; renderShop();
-      // terug naar Looks: herstel de vorige plek; naar Spullen: gewoon bovenaan
-      const y = v === 'looks' ? looksScroll : 0;
-      $('screen-dress').scrollTop = y;
-      requestAnimationFrame(() => { $('screen-dress').scrollTop = y; });   // vangnet na de (her)opbouw
-    };
-    mode.appendChild(b);
-  });
-  $('shop-tabs-wrap').style.display = looksMode ? 'none' : '';
   const grid = $('item-grid');
   grid.classList.toggle('looks-view', looksMode);
   grid.innerHTML = '';
-  if (looksMode) { renderLookGoals(grid, p); return; }
+  // Eén keuzerij voor álles wat je kunt bekijken: eerst Looks (complete outfits),
+  // daarna de acht kledingsoorten. Er stond hier eerder een aparte
+  // Spullen/Looks-schakelaar bóven deze rij; twee bedieningen voor één vraag.
+  // De rij blijft nu ook in Looks-modus staan, dus van een look terug naar
+  // "Schoenen" is één tik in plaats van twee.
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
-  // Eén rij: alleen iconen, plus het woord bij de categorie die aanstaat. Het
-  // aria-label houdt de naam altijd beschikbaar voor een schermlezer.
   let activeTab = null;
-  CATS.forEach(c => {
-    const on = c.id === shopCat;
+  // Alleen iconen, plus het woord bij wat aanstaat -- behalve Looks, dat houdt
+  // zijn woord altijd (het is geen kledingsoort). aria-label houdt de naam voor
+  // een schermlezer altijd beschikbaar.
+  const chip = (opts) => {
     const b = document.createElement('button');
-    b.className = 'tab-btn' + (on ? ' active' : '');
-    b.setAttribute('aria-label', c.name);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.innerHTML = `<span class="tab-ico">${c.ico}</span>` + (on ? `<span class="tab-label">${c.name}</span>` : '');
-    b.onclick = () => { sndClick(); shopCat = c.id; shopSelectedId = null; shopBackToLooks = false; renderShop(); };
+    b.className = 'tab-btn' + (opts.on ? ' active' : '') + (opts.extra ? ' ' + opts.extra : '');
+    b.setAttribute('aria-label', opts.name);
+    b.setAttribute('aria-pressed', opts.on ? 'true' : 'false');
+    b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
+      + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
+    b.onclick = opts.go;
     tabs.appendChild(b);
-    if (on) activeTab = b;
-  });
-  // de actieve categorie altijd in beeld trekken (de rij scrollt nu horizontaal)
+    if (opts.on) activeTab = b;
+    return b;
+  };
+  chip({ ico: '✨', name: 'Looks', on: looksMode, keepLabel: true, extra: 'looks', go: () => {
+    sndClick();
+    if (looksMode) return;
+    shopView = 'looks'; shopSelectedId = null; shopBackToLooks = false; renderShop();
+    // terug in Looks: op de plek waar je gebleven was
+    $('screen-dress').scrollTop = looksScroll;
+    requestAnimationFrame(() => { $('screen-dress').scrollTop = looksScroll; });
+  } });
+  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: !looksMode && c.id === shopCat, go: () => {
+    sndClick();
+    rememberLooksScroll();               // verlaat je Looks? bewaar de plek
+    const wasLooks = shopView === 'looks';
+    shopView = 'items'; shopCat = c.id; shopSelectedId = null; shopBackToLooks = false; renderShop();
+    if (wasLooks) {                      // vanuit Looks: bovenaan bij de spullen beginnen
+      $('screen-dress').scrollTop = 0;
+      requestAnimationFrame(() => { $('screen-dress').scrollTop = 0; });
+    }
+  } }));
+  // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
   tabs.onscroll = () => updateFades(tabs);
   if (activeTab) requestAnimationFrame(() => {
-    if (!activeTab.isConnected) return;
-    activeTab.scrollIntoView({ block: 'nearest', inline: 'center' });
-    updateFades(tabs);
+    if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'center' }); updateFades(tabs); }
   });
+  if (looksMode) { renderLookGoals(grid, p); return; }
   // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
   ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => a.price - b.price).forEach(it => {
     const owned = p.owned.includes(it.id);
