@@ -3903,9 +3903,14 @@ function groupHTML(n, emoji, repr, extraCls, frame, cap) {
   return `<span class="${cls}" aria-hidden="true">${inner}</span>`;
 }
 // Tienraam: 2 rijen van 5, de eerste n vakjes gevuld — hoeveelheden 6–10 in één oogopslag.
+// Het aantal vakjes stond hard op 10, dus een hoeveelheid daarboven werd stil
+// afgekapt: n=11 tekende er 10, zonder dat iets dat merkte. Nu groeit het raam per
+// rij van vijf mee (net als dotFrameHTML), zodat de tekening altijd het getal
+// vertelt dat erbij hoort -- ook als er ooit weer iets buiten bereik binnenkomt.
 function frameHTML(n, emoji, repr, extraCls) {
+  const total = Math.max(10, Math.min(20, Math.ceil(n / 5) * 5));
   let cells = '';
-  for (let i = 0; i < 10; i++) cells += `<span class="tf-cell${i < n ? ' on' : ''}">${i < n ? dotOrObj(repr, emoji) : ''}</span>`;
+  for (let i = 0; i < total; i++) cells += `<span class="tf-cell${i < n ? ' on' : ''}">${i < n ? dotOrObj(repr, emoji) : ''}</span>`;
   return `<span class="cframe ${extraCls || ''}" aria-hidden="true">${cells}</span>`;
 }
 // Splitsen: rij van 'total' vakjes, 'shown' zichtbaar, de rest achter een gordijn (❓).
@@ -4053,7 +4058,12 @@ function genCount(p) {
     const shown = rnd(1, total - 1);
     q.ans = total - shown;
     q.card = { kind: 'split', total, shown, emoji, repr };
-    q.choices = countDistractors(q.ans, nCh, 1, Math.max(q.ans + 2, max), d.delta).map(qgroup);
+    // bovengrens = max, net als bij élke andere vraagsoort hierboven. Stond hier
+    // op Math.max(q.ans + 2, max): omdat q.ans tot max-1 kan lopen, kon dat een
+    // afleider van max+1 opleveren -- dus 11 terwijl het raam op 10 staat. De knop
+    // toonde dan 10 dingen met "11" als waarde. Er is ruimte zat zonder die marge:
+    // fase 8 heeft max >= 5, dus minstens 5 kandidaten voor hoogstens 4 knoppen.
+    q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
     q.prompt = 'Hoeveel zitten er verstopt achter het gordijn?';
   }
   // raamgrootte overal beschikbaar maken (kaart + alle keuzeknoppen)
