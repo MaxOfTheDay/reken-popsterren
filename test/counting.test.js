@@ -213,6 +213,37 @@ function check(ok, label, detail) {
       `hoorde nog: ${JSON.stringify(bleed.after)}`);
   }
 
+  /* ---- afleiders blijven binnen het bereik van de vraag ----
+     De rendering-controle hierboven trekt per fase/rung één willekeurige vraag,
+     dus een afleider die net buiten bereik valt kwam maar in ongeveer één op de
+     zes runs bovendrijven (fase 8 "split" gaf soms 11 terwijl het raam op 10
+     staat -- de knop tekende er dan 10). Dit is dezelfde eis, maar uitputtend:
+     duizenden vragen per fase, puur op de getallen, zonder te renderen. Zo faalt
+     hij altijd als hij faalt, en niet af en toe. */
+  const range = await page.evaluate(() => {
+    const bad = [];
+    const p = P();
+    p.settings.repr = 'objects';
+    for (let stage = 1; stage <= 11; stage++) {
+      const top = countTopRung(stage);
+      for (let rung = 0; rung <= top; rung++) {
+        p.countTrack = { stage, rung, streak: 0, seen: 0, acc: 0.6 };
+        const max = countDifficulty(p, stage).effMax;
+        for (let i = 0; i < 300; i++) {
+          const q = genCount(p);
+          for (const c of q.choices) {
+            const v = c.v;
+            if (v < 0 || v > max) bad.push(`fase ${stage} rung ${rung} (${q.ctype}): knop ${v} valt buiten 0..${max}`);
+          }
+          if (q.ans > max) bad.push(`fase ${stage} rung ${rung} (${q.ctype}): antwoord ${q.ans} > max ${max}`);
+        }
+      }
+    }
+    return bad;
+  });
+  check(range.length === 0, 'elke antwoordknop blijft binnen het bereik van zijn fase',
+    range.slice(0, 3).join(' | ') + (range.length > 3 ? ` (+${range.length - 3} meer)` : ''));
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();
