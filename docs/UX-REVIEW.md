@@ -24,6 +24,12 @@
 >   thumbnail zone, baseline and shadow, so the grid reads as one system. The
 >   remaining half — drawing the 21 accessory and instrument items that are still
 >   emoji — is real illustration work and has not been attempted.
+>
+> **Later change, outside this review:** the settings screen has since been
+> reworked into a parent area (`👨‍👩‍👧 Voor ouders`) with an identity row for
+> choosing a child and three sections — `Voortgang | Oefenen | Beheer`. The
+> screen-by-screen notes on "Instellingen" in section C therefore describe the
+> screen as it was reviewed, not as it is now.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
