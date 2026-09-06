@@ -20,14 +20,12 @@
     /* ---- Neutrals ---- */
     --c-white: #fff; --c-ink: #333;
 
-    /* ---- Gold. Er waren er veertien; elk kwam ooit binnen voor één component
-       en bleef staan, waardoor "goud" als kleur niets meer betekende. Nu zes,
-       met elk een eigen rol:
+    /* ---- Gold. Precies zes, elk met één eigen rol -- een zevende erbij maakt
+       "goud" als kleur weer betekenisloos:
          cta-top/bottom/shadow -- de hoofdknop (spelen), inclusief zijn schaduwlip
          accent                -- "verdiend / dit staat aan" (randen, badges, balken)
          light                 -- goud als tékst op donker (leesbaar)
-         ink-on-gold(-card)    -- tekst óp goud
-       Alles wat hier weg is, is naar de dichtstbijzijnde van deze zes gegaan. ---- */
+         ink-on-gold(-card)    -- tekst óp goud ---- */
     --gold-cta-top: #ffc23d; --gold-cta-bottom: #ff8f00; --gold-cta-shadow: #b36200;
     --gold-accent: #ffd740; --gold-light: #ffe082;
     --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
@@ -76,10 +74,9 @@
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
     --practice-bg: #fff3e0; --practice-text: #b3560d;
-    /* Voortgang-tab: twee betekenissen, twee kleuren. Er stonden zes tegels in
-       zes kleuren zonder dat de kleur iets zei -- decoratie op juist het scherm
-       dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
-       goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
+    /* Voortgang-tab: twee betekenissen, twee kleuren -- paars = hoeveel er gedaan
+       is, groen = hoe goed het ging. Kleur zonder betekenis is decoratie op juist
+       het strakste scherm, dus hiernaast staan alleen de --purple-* tokens. */
     --stat-green: #2e9e4f;
 
     /* ---- Glass / overlay surfaces (exact-duplicate alpha values only; true one-offs stay inline) ---- */
@@ -131,9 +128,8 @@
     user-select: none;
   }
   #app { height: 100%; display: flex; flex-direction: column; }
-  /* app-breed toetsenbord-focusringetje -- stond eerder alleen lokaal in het
-     instellingenscherm; hier geldt hij overal, incl. het instellingen-tandwiel-
-     menu (echt role="menu"/menuitem, dus ook echt met toetsenbord te bedienen) */
+  /* app-breed toetsenbord-focusringetje, incl. het tandwiel-menu (echt
+     role="menu"/menuitem, dus ook echt met toetsenbord te bedienen) */
   button:focus-visible, a:focus-visible, input:focus-visible,
   [role="menuitem"]:focus-visible, [role="menuitemcheckbox"]:focus-visible {
     outline: 3px solid var(--gold-accent); outline-offset: 2px;
@@ -224,18 +220,14 @@
   .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
   .profile-card .deco { font-size: 18px; }
   .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 var(--glass-black-25); }
-  /* De kaart ís de knop -- er stond eerder ook nog een volle Speel!-knop ín elke
-     kaart: drie identieke gouden hoofdknoppen naast elkaar (dus geen hoofdknop),
-     en op 390-430px breed was die pil bréder dan zijn eigen kaart. Nu twee kleine
-     merkjes op de rand van het podiumkader:
+  /* De kaart ís de knop; twee kleine merkjes op de rand van het podiumkader:
        .city-mark (linksboven, neutraal donker) -- wáár ze op tournee is, met
-         hetzelfde stadsicoon als op de reiskaart. Vervangt de oude "⭐ 0"-pil:
+         hetzelfde stadsicoon als op de reiskaart. Bewust niet haar sterrentotaal:
          een verse ster zag daar haar nul naast de 17 van haar zus staan.
        .play-mark (rechtsonder, goud)           -- "hier kun je op tikken".
-     Bewust merkjes en geen pil onder de naam: de kaarten zijn op een telefoon
-     92-126px breed, en een pil met "🌷 Amsterdam" erin (±118px) past daar bij
-     geen enkele stad in -- die zou precies dezelfde overloop maken als de
-     Speel!-knop die hier net weg is. Een merkje kost geen kaartbreedte. */
+     Merkjes en geen pil: de kaarten zijn op een telefoon 92-126px breed, dus een
+     pil met "🌷 Amsterdam" erin (±118px) loopt bij elke stad over zijn eigen
+     kaart heen. Een merkje kost geen kaartbreedte. */
   .pstage-wrap { position: relative; width: 100%; }
   .city-mark, .play-mark {
     position: absolute; width: 30px; height: 30px; border-radius: 50%;
@@ -740,11 +732,9 @@
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
 
   /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
-  /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon)
-     met een 🔊-knop om de gesproken opdracht te herhalen. */
-  /* de 🔊-knop stond hier vroeger ín (absoluut, rechts); nu staat hij als echte
-     knop ónder de kaart (zie .replay-btn), dus de kaart hoeft er geen 30px
-     zijruimte meer voor vrij te houden en de som/groep krijgt die breedte terug */
+  /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon).
+     De 🔊-knop om de gesproken opdracht te herhalen staat ónder de kaart (zie
+     .replay-btn), dus de kaart houdt geen zijruimte voor hem vrij. */
   .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 14px; }
   .cq-groupwrap { display: flex; align-items: center; justify-content: center; }
   .cgroup { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; max-width: 260px; line-height: 1; }
@@ -995,12 +985,11 @@
     .question-card { font-size: clamp(50px, 6vw, 68px); }
   }
 
-  /* feedback-kaarten (praise/toast): kregen vroeger een vaste viewport-%
-     positie, wat ze op elk formaat over de paspop/avatar heen liet vallen
-     zodra de tekst iets langer was. Tijdens het spel ("docked", zie JS)
-     hangen ze nu vlak onder de vaste kop, altijd vrij van de paspop; op de
-     andere schermen (kaart, kleedkamer, trofeeën, winkel, instellingen)
-     blijft de bestaande losse positie -- daar was geen overlap-probleem. */
+  /* feedback-kaarten (praise/toast): tijdens het spel ("docked", zie JS) hangen
+     ze vlak onder de vaste kop, altijd vrij van de paspop -- een vaste viewport-%
+     positie viel bij langere tekst op elk formaat over de avatar heen. Op de
+     andere schermen (kaart, kleedkamer, trofeeën, winkel, instellingen) is er
+     geen paspop in de weg en blijft de losse positie staan. */
   .praise {
     position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.7);
     z-index: 60; opacity: 0; pointer-events: none;
@@ -1154,8 +1143,7 @@
   .tour-stop:active .dot { transform: scale(.92); }
   .tour-stop.locked { cursor: default; }
   /* een grayscale(1) filter over de paarse basiskleur oogde bijna zwart --
-     gewoon de bestaande "uitgeschakeld/nog niet beschikbaar"-grijstint
-     hergebruiken (dezelfde tokens als vroeger de knop-variant .btn.gray) */
+     gewoon de bestaande "uitgeschakeld/nog niet beschikbaar"-grijstint hergebruiken */
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); }
   .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); }
   /* pulseBtn animeert zelf al transform (scale) -- een :active transform
@@ -1508,9 +1496,8 @@
   /* de titel is hier de kop van een kaart, niet van een scherm: kleiner dan de
      .title elders, zodat de sterren eronder de blikvanger blijven */
   .result-card .title { font-size: clamp(22px, 6vw, 30px); margin: 2px 0 0; }
-  /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
-     paspop-scènes (.dress-stage, .show-stage) nu met eigen smalle-scherm-maat,
-     zodat 'm ook op een laag/liggend toestel nooit afgesneden wordt */
+  /* net als de andere paspop-scènes (.dress-stage, .show-stage) een eigen
+     smalle-scherm-maat, zodat 'm op een laag/liggend toestel nooit afgesneden wordt */
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
   .end-text { font-size: 18px; }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
@@ -1672,12 +1659,9 @@
   .item-card.selected.equipped:hover { background: rgba(255,214,90,.18); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
-  /* Eén miniatuur-zone voor álle spullen. Er waren er drie: een getekende jurk
-     zweefde vrij op een basislijn, een emoji hing eronder zonder schaduw, en een
-     podium was een wit omrand bolletje van 46px. Dezelfde soort dingen zagen er
-     dus per categorie anders uit. Nu staat alles in hetzelfde vak van 52px, op
-     dezelfde optische hoogte en met dezelfde slagschaduw; wat verschilt is nog
-     alleen waar de tekening vandaan komt (getekend of emoji). */
+  /* Eén miniatuur-zone voor álle spullen: alles in hetzelfde vak van 52px, op
+     dezelfde optische hoogte en met dezelfde slagschaduw. Het enige verschil dat
+     mag doorwerken is waar de tekening vandaan komt (getekend of emoji). */
   .item-thumb { height: 52px; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; }
   .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
   .item-thumb .thumb-emo { font-size: 34px; line-height: 1; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
@@ -2489,10 +2473,9 @@ function cityFor(lvl) {
 }
 
 /* ================= Trofeeën ================= */
-// De zichtbare namen en beschrijvingen zijn kort en kindvriendelijk gehouden.
-// Interne id's, has()- en progress()-logica blijven ongewijzigd zodat bestaande
-// save-data en progressie intact blijven (uitzondering: bewust verhoogde
-// shop-drempels bij 'shopper' en 'collector', afgesproken in de refactor).
+// De zichtbare namen en beschrijvingen zijn kort en kindvriendelijk; de interne
+// id's en de has()/progress()-logica horen ongewijzigd te blijven, want bestaande
+// save-data hangt eraan (een verhoogde drempel maakt een geclaimde trofee ongeldig).
 const TROPHIES = [
   // 🎤 Tournee — voortgang in shows, steden en reizen
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Eerste show',           has: p => playedCount(p) >= 1, progress: p => trophyProgress(playedCount(p), 1, 'show gespeeld') },
@@ -2927,10 +2910,10 @@ function load() {
     // om naar te kijken.
     try { if (raw) localStorage.setItem(LS_KEY + '.broken', raw); } catch (e2) { /* vol of dicht */ }
   }
-  // Verse start: nog geen sterren. Elke familie maakt haar eigen -- vroeger stonden
-  // hier Clara, Anna en Marie, en die kreeg iedereen die de app opende cadeau.
-  // Bewust geen save(): er valt nog niets te bewaren, en zo blijft een eventueel
-  // onleesbaar bestand staan tot iemand er echt overheen schrijft.
+  // Verse start: nog geen sterren, elke familie maakt haar eigen (geen vooraf
+  // gevulde profielen meer). Bewust geen save(): er valt nog niets te bewaren, en
+  // zo blijft een eventueel onleesbaar bestand staan tot iemand er echt
+  // overheen schrijft.
   db = { sound: true, haptics: true, schemaV: SCHEMA_V, profiles: {} };
 }
 // Bewaren mag nooit het spel breken. localStorage kan gooien (privémodus, volle
@@ -4234,10 +4217,9 @@ function groupHTML(n, emoji, repr, extraCls, frame, cap) {
   return `<span class="${cls}" aria-hidden="true">${inner}</span>`;
 }
 // Tienraam: 2 rijen van 5, de eerste n vakjes gevuld — hoeveelheden 6–10 in één oogopslag.
-// Het aantal vakjes stond hard op 10, dus een hoeveelheid daarboven werd stil
-// afgekapt: n=11 tekende er 10, zonder dat iets dat merkte. Nu groeit het raam per
-// rij van vijf mee (net als dotFrameHTML), zodat de tekening altijd het getal
-// vertelt dat erbij hoort -- ook als er ooit weer iets buiten bereik binnenkomt.
+// Het raam groeit per rij van vijf mee met n (net als dotFrameHTML): bij een vast
+// raam van 10 wordt een hoeveelheid daarboven stil afgekapt (n=11 tekent er 10),
+// en dan liegt de tekening over het getal zonder dat iets dat merkt.
 function frameHTML(n, emoji, repr, extraCls) {
   const total = Math.max(10, Math.min(20, Math.ceil(n / 5) * 5));
   let cells = '';
@@ -4389,10 +4371,9 @@ function genCount(p) {
     const shown = rnd(1, total - 1);
     q.ans = total - shown;
     q.card = { kind: 'split', total, shown, emoji, repr };
-    // bovengrens = max, net als bij élke andere vraagsoort hierboven. Stond hier
-    // op Math.max(q.ans + 2, max): omdat q.ans tot max-1 kan lopen, kon dat een
-    // afleider van max+1 opleveren -- dus 11 terwijl het raam op 10 staat. De knop
-    // toonde dan 10 dingen met "11" als waarde. Er is ruimte zat zonder die marge:
+    // Bovengrens = max, net als bij élke andere vraagsoort hierboven. Nooit ophogen
+    // (bv. tot q.ans + 2): q.ans loopt tot max-1, dus dat geeft afleiders bóven het
+    // raam -- een knop met 10 dingen erop en "11" als waarde. Ruimte is er zat:
     // fase 8 heeft max >= 5, dus minstens 5 kandidaten voor hoogstens 4 knoppen.
     q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
     q.prompt = 'Hoeveel zitten er verstopt achter het gordijn?';
@@ -4639,9 +4620,8 @@ function startMemory() {
   speak('Zoek de twee kaartjes met evenveel.');
 }
 // Zoveel mogelijk kaart per kaartje: probeer elk aantal kolommen en houd het
-// aantal dat het grootste vierkantje oplevert binnen de beschikbare arena. Het
-// aantal kolommen stond vast op min(paren, 4), waardoor de kaartjes op een
-// staande telefoon klein bleven terwijl er ruime hoogte over was.
+// aantal dat het grootste vierkantje oplevert binnen de beschikbare arena. Een
+// vast aantal kolommen laat op een staande telefoon veel hoogte onbenut.
 function memFitCols(grid, n) {
   const screen = $('screen-memory');
   if (!screen) return;
@@ -5130,11 +5110,9 @@ function renderQuestion() {
   G.input = '';
   G.lock = false;
   G.retried = false;
-  // voortgang
   renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
-  // antwoorden
   const area = $('answer-area');
   if (G.count) {
     renderCountAnswers(q, area);
@@ -5179,9 +5157,8 @@ function renderSegBar(el, total, done, hasNow) {
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
-  // telmodus is lees-vrij: geen tekstbanner maar een emoji-signaal (de gesproken
-  // "Gouden vraag!"-aankondiging zit in de vraag-prompt, zie renderQuestion)
-  // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de rekenmodus).
+  // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de
+  // rekenmodus); de gesproken aankondiging zit in de vraag-prompt, zie renderQuestion.
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
   // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
   // staat de som gewoon te lezen en wordt er niets uitgesproken)
@@ -5829,10 +5806,8 @@ function renderShop() {
   grid.classList.toggle('looks-view', looksMode);
   grid.innerHTML = '';
   // Eén keuzerij voor álles wat je kunt bekijken: eerst Looks (complete outfits),
-  // daarna de acht kledingsoorten. Er stond hier eerder een aparte
-  // Spullen/Looks-schakelaar bóven deze rij; twee bedieningen voor één vraag.
-  // De rij blijft nu ook in Looks-modus staan, dus van een look terug naar
-  // "Schoenen" is één tik in plaats van twee.
+  // daarna de acht kledingsoorten -- één bediening voor één vraag. De rij blijft
+  // ook in Looks-modus staan, dus van een look terug naar "Schoenen" is één tik.
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
   let activeTab = null;
@@ -6583,8 +6558,8 @@ function bindSettings(p, s) {
   // modus: wisselen tussen de rekenshow en de lees-vrije telmodus
   bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
-  // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
-  // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
+  // iets geoefend worden). Dat blokkeren is bewust hoorbaar/zichtbaar (schud +
+  // tekstje): stil negeren van een tik voelt als een kapotte knop.
   bind('set-ops', c => {
     const v = c.dataset.v;
     if (s.ops.includes(v)) {
@@ -6642,10 +6617,9 @@ function bindSettings(p, s) {
       'Ja, wissen',
       () => {
         // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
-        // startjurk, haar plek in de rij én álle instellingen gaan mee. Dat gold
-        // eerder alleen voor de telmodus -- in de rekenmodus vielen bewerkingen,
-        // bereik, tafels, antwoordmethode en de extra uitdagingen stilletjes terug
-        // op de standaardwaarden, terwijl de waarschuwing dat niet zei.
+        // startjurk, haar plek in de rij én álle instellingen (bewerkingen, bereik,
+        // tafels, antwoordmethode, extra uitdagingen) gaan mee. De waarschuwing
+        // belooft niet meer dan dat, dus mag hier ook niet meer verdwijnen.
         const dress = p.startDress || p.equipped.dress || 'dress_roze';
         // settings kent geen haar, dus zonder dit werd een bruinharige ster blond
         const opts = { ...p.settings, hair: p.startHair || 'hair_blond' };
@@ -6712,12 +6686,11 @@ function importData(file) {
     let data;
     try {
       data = JSON.parse(reader.result);
-      // Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
-      // een familie kan één ster hebben, of vijf, of er net eentje verwijderd
-      // hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
-      // namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
-      // niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
-      // data.sound is dan het merkteken dat dit een bestand van óns is.
+      // Keuren op de vórm van elk profiel, nooit op sleutelnamen: een familie kan
+      // één ster hebben, of vijf, of er net eentje verwijderd hebben. Meteen streng
+      // genoeg dat migrate() er verderop niet op stukloopt. Een lege back-up
+      // (familie wiste iedereen) mag ook; data.sound is dan het merkteken dat dit
+      // een bestand van óns is.
       const profs = data && typeof data === 'object' ? data.profiles : null;
       const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
         && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
@@ -6736,8 +6709,8 @@ function importData(file) {
       'Ja, terugzetten',
       () => {
         // Eerst in een lokale kopie bijwerken en pas daarna de echte db vervangen:
-        // migrate() kan op een beschadigd profiel gooien, en dat gebeurde hiervoor
-        // ná "db = data" -- dan was de app dood terwijl de opslag nog goed was.
+        // migrate() kan op een beschadigd profiel gooien, en gooien ná "db = data"
+        // laat de app dood achter terwijl de opslag nog goed is.
         const next = data;
         if (typeof next.sound !== 'boolean') next.sound = true;
         if (typeof next.haptics !== 'boolean') next.haptics = true;
