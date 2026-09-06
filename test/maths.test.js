@@ -46,14 +46,19 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   await page.goto(APP_URL);
   await page.waitForTimeout(400);
 
-  // Rekenprofiel (Anna) kiezen en een optreden starten, zodat G bestaat.
+  // Zelf een rekenprofiel maken en kiezen, zodat G bestaat. Een verse installatie
+  // heeft geen sterren meer; selectProfile i.p.v. een kaartpositie maakt de test
+  // bovendien onafhankelijk van de weergavevolgorde.
   await page.evaluate(() => {
-    const p = db.profiles.p2;
+    db.profiles.t1 = defaultProfile('Rekenster', 'dress_paars', {});
+    db.profiles.t1.order = 0;
+    const p = db.profiles.t1;
     p.settings.track = 'math';
     p.settings.mode = 'kies';
     save();
+    renderProfiles();
+    selectProfile('t1');
   });
-  await page.click('.profile-card:nth-child(2)');
   await page.waitForTimeout(200);
   await page.click('.tour-stop.next');
   await page.waitForTimeout(400);

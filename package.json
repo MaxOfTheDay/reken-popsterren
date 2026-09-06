@@ -4,9 +4,10 @@
   "private": true,
   "description": "Reken-Popsterren — rekenspel voor kinderen (single-file PWA). Deze package.json is alleen voor de tests; de app zelf heeft geen build-stap en laadt niets uit node_modules.",
   "scripts": {
-    "test": "node test/counting.test.js && node test/maths.test.js",
+    "test": "node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js",
     "test:tellen": "node test/counting.test.js",
-    "test:rekenen": "node test/maths.test.js"
+    "test:rekenen": "node test/maths.test.js",
+    "test:sterren": "node test/profiles.test.js"
   },
   "devDependencies": {
     "playwright": "^1.55.0"
