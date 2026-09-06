@@ -6510,11 +6510,19 @@ function renderWhoRow() {
   row.onscroll = () => updateFades(row);
   row.scrollLeft = keep;
   updateFades(row);
-  // alleen bij een échte wissel het gekozen kind in beeld trekken
+  // alleen bij een échte wissel het gekozen kind in beeld trekken, en alleen als
+  // dat portret niet al volledig in beeld staat -- anders schuift de rij ook
+  // opzij voor een tik op een ster die al zichtbaar was (bv. de derde van vier),
+  // wat als een onverwachte sprong voelt in plaats van als een keuze.
   if (active && lastWhoRendered !== setKey) requestAnimationFrame(() => {
     if (!active.isConnected) return;
-    active.scrollIntoView({ block: 'nearest', inline: 'center' });
-    updateFades(row);
+    const rowBox = row.getBoundingClientRect();
+    const btnBox = active.getBoundingClientRect();
+    const alreadyVisible = btnBox.left >= rowBox.left && btnBox.right <= rowBox.right;
+    if (!alreadyVisible) {
+      active.scrollIntoView({ block: 'nearest', inline: 'center' });
+      updateFades(row);
+    }
   });
   lastWhoRendered = setKey;
 }
