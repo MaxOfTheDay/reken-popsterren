@@ -1624,17 +1624,23 @@
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; }
   .tab-label { white-space: nowrap; }
-  /* Looks staat vooraan en houdt altijd zijn woord: het is geen kledingsoort maar
-     een andere manier van kijken, dus het mag zich van de acht categorieën
-     onderscheiden. Het streepje erna maakt die scheiding zichtbaar. */
-  .tab-btn.looks { margin-right: 9px; position: relative; }
-  .tab-btn.looks::after {
+  /* Looks en Jij staan vooraan en houden altijd hun woord: het zijn geen
+     kledingsoorten maar andere manieren van kijken, dus ze mogen zich van de acht
+     categorieën onderscheiden. Het streepje na de laatste maakt die scheiding
+     zichtbaar. */
+  .tab-btn.tab-sep { margin-right: 9px; position: relative; }
+  .tab-btn.tab-sep::after {
     content: ''; position: absolute; right: -6px; top: 20%; bottom: 20%;
     width: 1.5px; border-radius: 1px; background: var(--glass-white-22);
   }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
   .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
+  /* "Jij" toont hele poppetjes i.p.v. één kledingstuk, dus daar mag het
+     miniatuur-vak hoger: op 52px is een pop een vlekje. */
+  .item-grid.base-view { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); max-width: 420px; }
+  .item-card.base-card .item-thumb { height: 128px; }
+  .item-card.base-card .item-thumb svg { height: 128px; }
   .item-card {
     position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
     border-radius: var(--r-md); padding: 10px; text-align: center; cursor: pointer;
@@ -1744,6 +1750,9 @@
      via emoji) iets groter, van nature grote vormen (jurk) juist iets kleiner --
      anders oogt de rij ongelijk terwijl de stukjes zelf gelijk belangrijk zijn. */
   .look-piece[data-cat="dress"] .item-thumb svg { height: 21px; }
+  /* shirt-met-broek is smaller dan een jurk: op 21px zou het stukje kleiner
+     ogen dan de emoji ernaast, terwijl het even belangrijk is */
+  .look-piece[data-cat="dress"] .item-thumb.smal svg { height: 26px; }
   .look-piece[data-cat="shoes"] .item-thumb svg { height: 29px; }
   .look-piece[data-cat="mic"] .item-thumb svg { height: 27px; }
   .look-piece .item-thumb .thumb-emo { font-size: 22px; line-height: 1; }
@@ -2225,7 +2234,7 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="dressBack()" aria-label="Terug" title="Terug">←</button>
-        <div class="header-title">👗 Kleedkamer</div>
+        <div class="header-title">👕 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
       <div class="stage-wrap">
@@ -2282,7 +2291,7 @@
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën -->
 <div class="main-nav" id="main-nav">
   <button class="nav-item" id="nav-map" onclick="navGo('map')"><span class="nav-ico">🗺️</span>Kaart</button>
-  <button class="nav-item" id="nav-dress" onclick="navGo('dress')"><span class="nav-ico">👗</span>Kleedkamer</button>
+  <button class="nav-item" id="nav-dress" onclick="navGo('dress')"><span class="nav-ico">👕</span>Kleedkamer</button>
   <button class="nav-item" id="nav-tro" onclick="navGo('tro')"><span class="nav-ico">🏆</span>Trofeeën<span class="nav-dot"></span></button>
 </div>
 
@@ -2326,7 +2335,7 @@
      Trilfeedback ....... haptics
      Geluid ............. klikjes, fanfares (WebAudio)
      Gesproken opdrachten  nl-NL stem — ALLEEN telmodus (zie speak())
-     Avatar (SVG) ....... de pop tekenen
+     Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
      Schermen ........... navigatie, kaart, kop/voet
      Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
      Vragen maken ....... rekenmodus: genTriple/genQuestion/genMissing/genChain
@@ -2368,21 +2377,22 @@ const ITEMS = [
   { id: 'hair_turkoois', cat: 'hair', name: 'Turquoise', full: 'Turquoise kapsel', price: 40,  color: '#26c6da' },
   { id: 'hair_zilver',   cat: 'hair', name: 'Zilvergrijs', full: 'Zilvergrijs kapsel', price: 60, color: '#cfd8dc' },
   { id: 'hair_regenboog',cat: 'hair', name: 'Regenboog', full: 'Regenboogkapsel',  price: 90,  color: 'RAINBOW' },
-  // Jurken
-  { id: 'dress_roze',    cat: 'dress', name: 'Roze',      full: 'Roze jurk',      price: 0,   color: '#ec407a' },
-  { id: 'dress_paars',   cat: 'dress', name: 'Paars',    full: 'Paarse jurk',    price: 0,   color: '#7e57c2' },
-  { id: 'dress_geel',    cat: 'dress', name: 'Geel',      full: 'Gele jurk',      price: 15,  color: '#fdd835' },
-  { id: 'dress_blauw',   cat: 'dress', name: 'Blauw',    full: 'Blauwe jurk',    price: 18,  color: '#29b6f6' },
-  { id: 'dress_groen',   cat: 'dress', name: 'Groen',    full: 'Groene jurk',    price: 24,  color: '#66bb6a' },
-  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje',    full: 'Oranje jurk',    price: 32,  color: '#fb8c00' },
-  { id: 'dress_rood',    cat: 'dress', name: 'Rood',      full: 'Rode jurk',      price: 42,  color: '#ef5350' },
-  { id: 'dress_sterren', cat: 'dress', name: 'Sterren',    full: 'Sterrenjurk',   price: 60,  color: '#5c6bc0', pattern: 'stars' },
-  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjes',    full: 'Hartjesjurk',   price: 70,  color: '#f06292', pattern: 'hearts' },
-  { id: 'dress_disco',   cat: 'dress', name: 'Disco',      full: 'Discojurk',     price: 80,  color: '#b0bec5', pattern: 'disco' },
-  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    full: 'Voetbaljurk',   price: 65,  color: '#fafafa', pattern: 'ohl' },
-  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', full: 'Zeemeerminjurk', price: 85, color: '#26a69a', pattern: 'scales' },
-  { id: 'dress_tover',   cat: 'dress', name: 'Toverjurk',      price: 95,  color: '#4527a0', pattern: 'magic' },
-  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogjurk', price: 110, color: 'RAINBOW' },
+  // Kleren -- kleur en patroon; de basisfiguur bepaalt of het een jurk of een
+  // shirt met broek wordt (zie BASES bij de avatar)
+  { id: 'dress_roze',    cat: 'dress', name: 'Roze',      full: 'Roze outfit',    price: 0,   color: '#ec407a' },
+  { id: 'dress_paars',   cat: 'dress', name: 'Paars',    full: 'Paarse outfit',  price: 0,   color: '#7e57c2' },
+  { id: 'dress_geel',    cat: 'dress', name: 'Geel',      full: 'Gele outfit',    price: 15,  color: '#fdd835' },
+  { id: 'dress_blauw',   cat: 'dress', name: 'Blauw',    full: 'Blauwe outfit',  price: 18,  color: '#29b6f6' },
+  { id: 'dress_groen',   cat: 'dress', name: 'Groen',    full: 'Groene outfit',  price: 24,  color: '#66bb6a' },
+  { id: 'dress_oranje',  cat: 'dress', name: 'Oranje',    full: 'Oranje outfit',  price: 32,  color: '#fb8c00' },
+  { id: 'dress_rood',    cat: 'dress', name: 'Rood',      full: 'Rode outfit',    price: 42,  color: '#ef5350' },
+  { id: 'dress_sterren', cat: 'dress', name: 'Sterren',    full: 'Sterrenoutfit', price: 60,  color: '#5c6bc0', pattern: 'stars' },
+  { id: 'dress_hartjes', cat: 'dress', name: 'Hartjes',    full: 'Hartjesoutfit', price: 70,  color: '#f06292', pattern: 'hearts' },
+  { id: 'dress_disco',   cat: 'dress', name: 'Disco',      full: 'Disco-outfit',  price: 80,  color: '#b0bec5', pattern: 'disco' },
+  { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    full: 'Voetbaloutfit', price: 65,  color: '#fafafa', pattern: 'ohl' },
+  { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', full: 'Zeemeerminoutfit', price: 85, color: '#26a69a', pattern: 'scales' },
+  { id: 'dress_tover',   cat: 'dress', name: 'Tover', full: 'Toveroutfit', price: 95,  color: '#4527a0', pattern: 'magic' },
+  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogoutfit', price: 110, color: 'RAINBOW' },
   // Schoenen (kleuren de vaste schoenen van de paspop)
   { id: 'shoes_roze',  cat: 'shoes', name: 'Roze',   full: 'Roze schoenen',   price: 0,  color: '#e91e63' },
   { id: 'shoes_rood',  cat: 'shoes', name: 'Rood',   full: 'Rode schoenen',   price: 10, color: '#e53935' },
@@ -2450,7 +2460,7 @@ const ITEMS = [
   { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
   { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'] },
   { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
-  { id: 'stage_kasteel',  cat: 'stage', name: 'Prinsessenkasteel',price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
+  { id: 'stage_kasteel',  cat: 'stage', name: 'Sprookjeskasteel', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
   { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
   { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
   { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'] },
@@ -2472,11 +2482,11 @@ const itemOr = (id, fallbackId) => item(id) || item(fallbackId);
 // en rendert <b> als echte opmaak.
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-// Jurken eerst: het is een kleedkamer, de jurk is het sterartikel.
+// Kleren eerst: het is een kleedkamer, de outfit is het sterartikel.
 // Icoon en woord staan los: de categorierij toont alleen het icoon, behalve bij
 // de categorie die aanstaat -- die zet er zijn woord bij (zie renderShop).
 const CATS = [
-  { id: 'dress', ico: '👗', name: 'Jurken' },
+  { id: 'dress', ico: '👕', name: 'Kleren' },
   { id: 'shoes', ico: '👟', name: 'Schoenen' },
   { id: 'hair',  ico: '💇', name: 'Kapsels' },
   { id: 'mic',   ico: '🎤', name: 'Microfoons' },
@@ -2550,19 +2560,19 @@ const TROPHIES = [
   { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster',      desc: 'Ster-status: 60 ⭐',       has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
   { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
   { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
-  { id: 'toegift25',  emoji: '🎆', name: 'Extra-showkoning', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
+  { id: 'toegift25',  emoji: '🎆', name: 'Extra-showster', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
   { id: 'rich',       emoji: '💰', name: 'Diamantenster',   desc: '100 diamanten',            has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
-  { id: 'diamond250', emoji: '💎', name: 'Diamanten diva',  desc: '250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
+  { id: 'diamond250', emoji: '💎', name: 'Diamantenster',  desc: '250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
   { id: 'shopper',    emoji: '🛍️', name: 'Shopster',        desc: '10 spulletjes',             has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
   { id: 'collector',  emoji: '🎁', name: 'Koopgek', desc: '25 spulletjes',         has: p => boughtCount(p) >= 25, progress: p => trophyProgress(boughtCount(p), 25, 'spulletjes gekocht') },
-  // 👗 Kleedkamercollecties — volledige item-sets verzamelen
-  { id: 'modekoningin', emoji: '👗', name: 'Modekoningin',  desc: 'Alle jurken',           has: p => catCount(p, 'dress') >= DRESS_TOTAL, progress: p => trophyProgress(catCount(p, 'dress'), DRESS_TOTAL, 'jurken') },
+  // 👕 Kleedkamercollecties — volledige item-sets verzamelen
+  { id: 'modekoningin', emoji: '👕', name: 'Modester',      desc: 'Alle kleren',           has: p => catCount(p, 'dress') >= DRESS_TOTAL, progress: p => trophyProgress(catCount(p, 'dress'), DRESS_TOTAL, 'outfits') },
   { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Alle schoenen',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoenen') },
   { id: 'haarstylist',  emoji: '💇', name: 'Haarstylist',   desc: 'Alle haarkleuren',      has: p => catCount(p, 'hair') >= HAIR_TOTAL, progress: p => trophyProgress(catCount(p, 'hair'), HAIR_TOTAL, 'haarkleuren') },
   { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
   { id: 'podiumbouwer', emoji: '🎪', name: 'Podiumbouwer',  desc: 'Alle podia',            has: p => catCount(p, 'stage') >= STAGE_TOTAL, progress: p => trophyProgress(catCount(p, 'stage'), STAGE_TOTAL, 'podia') },
-  { id: 'dierenkoning', emoji: '🐘', name: 'Dierenkoning',   desc: 'Alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
+  { id: 'dierenkoning', emoji: '🐘', name: 'Dierenvriend',   desc: 'Alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
   // ✨ Thema-looks — speciale combinaties: alle stukken tegelijk aan = trofee.
   // De kaartjes staan zichtbaar in de kast als spaardoel, met voortgang per stuk.
   { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Draag de hele tovenaarslook',
@@ -2571,17 +2581,17 @@ const TROPHIES = [
     has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOwned(p, OHELLE_SET), 4, 'stukken verzameld') },
   { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Draag de hele rocklook',
     has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, ROCKSTER_SET), 4, 'stukken verzameld') },
-  { id: 'discodiva', emoji: '🪩', name: 'Discodiva', desc: 'Maak de volledige discolook',
+  { id: 'discodiva', emoji: '🪩', name: 'Discoster', desc: 'Maak de volledige discolook',
     has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOwned(p, DISCO_SET), 4, 'stukken verzameld') },
-  { id: 'prinses', emoji: '👸', name: 'Sprookjesprinses', desc: 'Draag de hele prinsessenlook',
+  { id: 'prinses', emoji: '🏰', name: 'Sprookjesster', desc: 'Draag de hele sprookjeslook',
     has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOwned(p, PRINSES_SET), 4, 'stukken verzameld') },
   { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Draag de hele ruimtelook',
     has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOwned(p, RUIMTE_SET), 4, 'stukken verzameld') },
-  { id: 'winter', emoji: '❄️', name: 'Winterprinses', desc: 'Draag de hele winterlook',
+  { id: 'winter', emoji: '❄️', name: 'Winterster', desc: 'Draag de hele winterlook',
     has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, WINTER_SET), 4, 'stukken verzameld') },
-  { id: 'jungle', emoji: '🌴', name: 'Junglekoningin', desc: 'Draag de hele junglelook',
+  { id: 'jungle', emoji: '🌴', name: 'Junglester', desc: 'Draag de hele junglelook',
     has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOwned(p, JUNGLE_SET), 4, 'stukken verzameld') },
-  { id: 'zeemeermin', emoji: '🧜‍♀️', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
+  { id: 'zeemeermin', emoji: '🧜', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
     has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOwned(p, ZEE_SET), 4, 'stukken verzameld') },
   { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
     has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOwned(p, REGENBOOG_SET), 5, 'stukken verzameld') },
@@ -2601,7 +2611,7 @@ const TROPHY_SHELVES = [
   { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
   { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'perfecttour', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
-  { name: '👗 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
+  { name: '👕 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
   { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
@@ -2646,7 +2656,7 @@ const COLLECTION_CAT = {
   modekoningin: 'dress', schoenenkast: 'shoes', haarstylist: 'hair',
   orkest: 'instrument', podiumbouwer: 'stage', dierenkoning: 'pet'
 };
-// De kleedkamer laat de categorie het werk doen (tabblad "Jurken" + een kleur-
+// De kleedkamer laat de categorie het werk doen (tabblad "Kleren" + een kleur-
 // bolletje maakt "Roze" al duidelijk genoeg), maar in de look-checklist hangt
 // zo'n stuk los van zijn tabblad -- daar staat elk stuk maar als kaal
 // tekstregeltje, zonder icoon of categorie erbij. Vandaar deze langere,
@@ -2654,14 +2664,14 @@ const COLLECTION_CAT = {
 const THEME_ITEM_LABEL = {
   shoes_goud: 'Gouden schoenen', mic_zwart: 'Rockmicro',
   pet_eekhoorn: 'Eekhoorn', hair_zilver: 'Zilver haar',
-  dress_groen: 'Groene jurk', dress_sterren: 'Sterrenjurk', dress_hartjes: 'Hartjesjurk',
-  dress_disco: 'Discojurk', dress_voetbal: 'Voetbaljurk', dress_zeemeermin: 'Zeemeerminjurk',
-  dress_regenboog: 'Regenboogjurk', shoes_regenboog: 'Regenboog schoenen',
+  dress_groen: 'Groene outfit', dress_sterren: 'Sterrenoutfit', dress_hartjes: 'Hartjesoutfit',
+  dress_disco: 'Disco-outfit', dress_voetbal: 'Voetbaloutfit', dress_zeemeermin: 'Zeemeerminoutfit',
+  dress_regenboog: 'Regenboogoutfit', shoes_regenboog: 'Regenboog schoenen',
   hair_wit: 'Wit haar', hair_turkoois: 'Turquoise haar', hair_regenboog: 'Regenboog haar',
   mic_zilver: 'Zilveren micro', mic_roze: 'Roze glittermicro', mic_regenboog: 'Regenboogmicro',
   stage_disco: 'Discopodium', stage_jungle: 'Junglepodium',
   stage_ruimte: 'Ruimteshow', stage_onderwater: 'Onderwatershow',
-  dress_rood: 'Rode jurk', stage_winter: 'Winterpodium', stage_vulkaan: 'Vulkaanshow',
+  dress_rood: 'Rode outfit', stage_winter: 'Winterpodium', stage_vulkaan: 'Vulkaanshow',
   acc_diadeem: 'Diamanten diadeem', acc_koptel: 'Hoofdtelefoon', instr_dj: 'DJ-set', pet_draak: 'Draakje'
 };
 // Korte, duidelijke naam van een stuk (zonder emoji — rustiger in de checklist).
@@ -2770,7 +2780,7 @@ const START_DRESS = ['dress_roze', 'dress_paars', 'dress_geel', 'dress_blauw', '
 const MAX_PROFILES = 6;
 function defaultProfile(name, dress, opts) {
   opts = opts || {};
-  // Gratis starthaar en -jurk zodat elke ster er meteen anders uitziet, zonder de
+  // Gratis starthaar en -kleren zodat elke ster er meteen anders uitziet, zonder de
   // winkelprijs van die items te veranderen. freebies telt ze mee, dus
   // "spulletjes gekocht" begint gewoon op 0.
   const hair = opts.hair || 'hair_blond';
@@ -2779,11 +2789,15 @@ function defaultProfile(name, dress, opts) {
   if (hair && !owned.includes(hair)) owned.push(hair);
   return {
     name: name,
+    // Welke basisfiguur getekend wordt (zie BASES). Gaat via opts en niet als
+    // extra positie-argument: defaultProfile(name, kleren, opts) is de vorm waar
+    // de drie testsuites op staan.
+    base: BASES[opts.base] ? opts.base : DEFAULT_BASE,
     diamonds: 30,
     level: 1,
     stars: {},
     owned: owned,
-    freebies: owned.length,   // aantal gratis startspullen (5, of 6 met bonusjurk) — basis voor "gekocht"
+    freebies: owned.length,   // aantal gratis startspullen (5, of 6 met bonusoutfit) — basis voor "gekocht"
     equipped: { hair: hair, dress: dress, shoes: 'shoes_roze', mic: null, instrument: null, acc: null, pet: null, stage: 'stage_disco' },
     // Wie ze is, los van wat ze nu toevallig draagt -- zodat "opnieuw beginnen"
     // haar teruggeeft zoals ze gemaakt is en niet als een blonde vreemde.
@@ -2875,9 +2889,12 @@ function migrate(p) {
   if (p.countTrack.rung == null) p.countTrack.rung = 0;
   if (p.countTrack.streak == null) p.countTrack.streak = 0;
   if (!p.stats) p.stats = { correct: 0, wrong: 0 };
-  // gratis startspullen: 5 basis, +1 als deze ster de gratis bonusjurk (dress_geel,
+  // gratis startspullen: 5 basis, +1 als deze ster de gratis bonusoutfit (dress_geel,
   // bv. Clara) heeft — zodat "spulletjes gekocht" niet 1 te hoog begint
   if (p.freebies == null) p.freebies = 5 + (p.owned && p.owned.includes('dress_geel') ? 1 : 0);
+  // basisfiguur: elke ster van vóór de jongens-basis is een meisje en blijft er
+  // precies zo uitzien -- de meisjes-basis tekent exact dezelfde vormen als toen
+  if (!BASES[p.base]) p.base = DEFAULT_BASE;
   if (!('instrument' in p.equipped)) p.equipped.instrument = null;
   // schoenen-categorie: bestaande profielen krijgen de gratis roze schoenen aan
   if (!('shoes' in p.equipped)) {
@@ -3135,18 +3152,150 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Avatar (SVG) ================= */
+// De pop is één tekening met twee lagen: vaste onderdelen (hoofd, hals, armen,
+// schoenen, vastgehouden spullen) en een BASIS die zegt hoe haar, romp en benen
+// eruitzien. Spullen blijven wat ze altijd waren -- een kleur en hooguit een
+// patroon, meer niet -- dus dezelfde 'dress_disco' wordt op de ene basis een
+// discojurk en op de andere een discoshirt met broek. Daardoor werkt de héle
+// kast, élke thema-look en élke trofee meteen voor beide basissen, zonder één
+// extra item, zonder filteren en zonder tweede winkel.
+//
+// Alle ankerpunten liggen vast en zijn voor iedere basis gelijk: schouders op
+// y=103, hals 94-112, armen vanaf (84|116, 112), broekspijp-hart op x=86 en 114,
+// schoenen op (86|114, 234). Zo hoeft de rest van de tekening (accessoires,
+// micro, instrument, huisdier, schoenen) niets van de basis te weten.
+const SKIN = '#ffdcb8';
+const DEFAULT_BASE = 'meisje';
+// De basis van een profiel, met vangnet: een save van vóór deze versie (of een
+// met de hand bewerkt bestand) heeft het veld niet en blijft gewoon het meisje.
+function baseOf(p) { return (p && BASES[p.base]) ? p.base : DEFAULT_BASE; }
+// De basis van de ster die nu speelt. Draait óók vóór er een ster gekozen is
+// (renderProfiles bij het opstarten), dus cur is hier vaak null.
+function curBase() { return baseOf(db && db.profiles ? db.profiles[cur] : null); }
+
+/* ---- Basis "meisje": staartjes, jurk, blote benen onder de zoom ---- */
+function hairBackStaartjes(hc) {
+  return `<circle cx="100" cy="62" r="37" fill="${hc}"/>`
+    + `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+}
+function hairFrontStaartjes(hc) {
+  return `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
+}
+// benen: vóór de jurk getekend -- de zoom dekt het bovenstuk vanzelf af
+function legsBloot() {
+  return `<line x1="90" y1="192" x2="88" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
+    + `<line x1="110" y1="192" x2="112" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`;
+}
+// jurk -- zachte ronde schoudertjes i.p.v. scherpe hoeken
+function torsoJurk(dc) {
+  return `<path d="M86 103 Q78 105 82 110 L66 196 Q100 210 134 196 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${dc}"/>`;
+}
+
+/* ---- Basis "jongen": kort haar, shirt met korte mouwen, lange broek ----
+   De broek hoort bij de benen-laag (de broek ís de benen), het shirt bij de romp.
+   Dezelfde kleur voor allebei: het is één kledingstuk uit de kast, geen twee. */
+function hairBackKort(hc) {
+  // Een koepel over de bovenkant van het hoofd, niet de volle bol van de
+  // staartjes-basis: 10 px haar bovenop, langs de slaap nog maar een streepje, en
+  // niets meer onder de wang. Een cirkel gaf hier een rand rondom het hele
+  // gezicht -- dat leest als een bob, niet als kort haar.
+  return `<path d="M64 84 Q64 30 100 30 Q136 30 136 84 Z" fill="${hc}"/>`;
+}
+function hairFrontKort(hc) {
+  // scheiding opzij: hoog boven het ene oog, over het voorhoofd naar het andere
+  return `<path d="M68 66 A32 32 0 0 1 132 66 Q120 50 96 54 Q78 57 68 66 Z" fill="${hc}"/>`;
+}
+function legsBroek(dc) {
+  // eerst de blote onderbenen, dán de pijpen eroverheen: zo eindigt de stof
+  // netjes op de kuit i.p.v. dat een ronde beenkop erdoorheen prikt
+  return `<line x1="86" y1="212" x2="88" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
+    + `<line x1="114" y1="212" x2="112" y2="228" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
+    + `<path d="M79 150 L80 214 Q86 218 92 214 L100 172 L108 214 Q114 218 120 214 L121 150 Z" fill="${dc}"/>`;
+}
+function torsoShirt(dc, mic) {
+  // Schouders exact als bij de jurk (zelfde Q-bochtjes), maar recht naar
+  // beneden tot de heup i.p.v. uitlopend. De mouwtjes komen ná de romp, want de
+  // armen zijn al getekend -- zo steekt de arm uit het shirt en niet ernaast.
+  // De opgeheven micro-arm krijgt vanzelfsprekend zijn eigen mouw.
+  const mouw = d => `<path d="${d}" stroke="${dc}" stroke-width="12" fill="none" stroke-linecap="round"/>`;
+  return `<path d="M86 103 Q78 105 82 110 L79 162 Q100 168 121 162 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${dc}"/>`
+    + mouw('M84 111 Q76 119 73 127')
+    + mouw(mic ? 'M116 111 Q126 105 132 98' : 'M116 111 Q124 119 127 127')
+    + `<path d="M92 105 L100 114 L108 105" stroke="rgba(255,255,255,.45)" stroke-width="2.5" fill="none" stroke-linejoin="round"/>`
+    + `<path d="M79 162 Q100 168 121 162" stroke="rgba(0,0,0,.2)" stroke-width="2" fill="none"/>`;
+}
+
+/* ---- Patronen ----
+   Zes patronen, per basis één keer uitgetekend: de coördinaten hangen aan de
+   vorm van het kledingstuk, niet aan het item. Een patroon erbij betekent dus
+   één regel in élke tabel -- daarom staan ze naast elkaar. */
+const PAT_JURK = {
+  stars: `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text>
+          <text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`,
+  disco: `<circle cx="90" cy="140" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity="0.8"/>
+          <circle cx="85" cy="175" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity="0.8"/>`,
+  hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text>
+          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`,
+  // gouden sterren + maantje: de toverjurk
+  magic: `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text>
+          <text x="80" y="188" font-size="11" fill="#ffd54f">★</text>
+          <path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`,
+  // zeemeermin-schubben: rijen lichte koepeltjes
+  scales: `<g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5">
+      <path d="M82 152 a7 7 0 0 1 14 0 M96 152 a7 7 0 0 1 14 0"/>
+      <path d="M80 168 a7 7 0 0 1 14 0 M94 168 a7 7 0 0 1 14 0 M108 168 a7 7 0 0 1 14 0"/>
+      <path d="M84 184 a7 7 0 0 1 14 0 M98 184 a7 7 0 0 1 14 0"/></g>`,
+  // clubkleuren van Leuven: groen-rode banen op wit met een zwarte zoom
+  ohl: `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/>
+          <path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/>
+          <path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`,
+};
+// Zelfde zes patronen, verdeeld over shirt (y 110-162) en broek (y 172-214).
+const PAT_SHIRT = {
+  stars: `<text x="87" y="132" font-size="13" fill="#fff176">★</text><text x="104" y="150" font-size="11" fill="#fff176">★</text>
+          <text x="84" y="194" font-size="11" fill="#fff176">★</text><text x="105" y="204" font-size="13" fill="#fff176">★</text>`,
+  disco: `<circle cx="90" cy="126" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="142" r="4" fill="#80deea" opacity="0.8"/>
+          <circle cx="87" cy="190" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="200" r="4" fill="#fff59d" opacity="0.8"/>`,
+  hearts: `<text x="85" y="132" font-size="12" fill="#fff">♥</text><text x="104" y="150" font-size="10" fill="#ffcdd2">♥</text>
+          <text x="84" y="194" font-size="10" fill="#ffcdd2">♥</text><text x="105" y="204" font-size="12" fill="#fff">♥</text>`,
+  magic: `<text x="85" y="134" font-size="13" fill="#ffd54f">★</text><text x="86" y="196" font-size="11" fill="#ffd54f">★</text>
+          <text x="107" y="206" font-size="10" fill="#ffd54f">★</text>
+          <path d="M106 124 a8 8 0 1 0 5 13 a10 10 0 1 1 -5 -13 Z" fill="#ffe082"/>`,
+  scales: `<g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5">
+      <path d="M84 126 a7 7 0 0 1 14 0 M98 126 a7 7 0 0 1 14 0"/>
+      <path d="M84 140 a7 7 0 0 1 14 0 M98 140 a7 7 0 0 1 14 0"/>
+      <path d="M84 154 a7 7 0 0 1 14 0 M98 154 a7 7 0 0 1 14 0"/>
+      <path d="M84 190 a7 7 0 0 1 14 0 M98 190 a7 7 0 0 1 14 0"/></g>`,
+  ohl: `<path d="M87 106 L84 162 L92 163 L95 107 Z" fill="#2e7d32"/>
+          <path d="M113 106 L116 162 L108 163 L105 107 Z" fill="#c62828"/>
+          <path d="M79 155 Q100 161 121 155 L121 162 Q100 168 79 162 Z" fill="#1b1b1b"/>`,
+};
+
+// Een basis erbij? Eén regel hier en één patronentabel hierboven -- de rest van
+// de app (winkel, looks, trofeeën, opslag) hoeft er niets van te weten.
+const BASES = {
+  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  pat: PAT_JURK },
+  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, pat: PAT_SHIRT },
+};
+// Voor de keuzekaartjes: vaste volgorde, met het woord erbij voor de ouder en
+// de tekening zelf voor het kind dat nog niet leest.
+const BASE_CHOICES = [
+  { id: 'meisje', emoji: '👧', name: 'Meisje' },
+  { id: 'jongen', emoji: '👦', name: 'Jongen' },
+];
+
 let svgUid = 0;
 // bigProps: in de kleedkamer krijgen huisdier en instrument een groter formaat,
 // zodat het spulletje dat je aan het passen bent ook echt te zien is.
 function avatarSVG(p, width, bigProps) {
   const eq = p.equipped;
+  const B = BASES[baseOf(p)];
   const hair = itemOr(eq.hair, 'hair_blond'), dress = itemOr(eq.dress, 'dress_roze');
   const mic = eq.mic ? item(eq.mic) : null;
   const acc = eq.acc ? item(eq.acc) : null;
   const pet = eq.pet ? item(eq.pet) : null;
   const instr = eq.instrument ? item(eq.instrument) : null;
   const uid = ++svgUid;
-  const skin = '#ffdcb8';
   const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
   const dc = dress.color === 'RAINBOW' ? `url(#rb${uid})` : dress.color;
 
@@ -3159,12 +3308,11 @@ function avatarSVG(p, width, bigProps) {
                          : `<text x="18" y="240" font-size="34">${pet.emoji}</text>`;
   if (instr) s += bigProps ? `<text x="112" y="248" font-size="52">${instr.emoji}</text>`
                            : `<text x="120" y="246" font-size="42">${instr.emoji}</text>`;
-  // haar achter + staartjes
-  s += `<circle cx="100" cy="62" r="37" fill="${hc}"/>`;
-  s += `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+  // haar achter het hoofd (staartjes, of de rand van een kort kapsel)
+  s += B.hairBack(hc);
   // hoofd
-  s += `<circle cx="100" cy="72" r="32" fill="${skin}"/>`;
-  s += `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
+  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
+  s += B.hairFront(hc);
   s += `<circle cx="88" cy="72" r="3.6" fill="#333"/><circle cx="112" cy="72" r="3.6" fill="#333"/>`;
   s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
   s += `<path d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
@@ -3183,61 +3331,30 @@ function avatarSVG(p, width, bigProps) {
     if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
   }
   // nek: klein bruggetje tussen kin en kraag -- voorkomt een donker gaatje
-  // tussen hoofd en jurk, met toch nog een vleugje hals zichtbaar
-  s += `<rect x="90" y="94" width="20" height="18" rx="8" fill="${skin}"/>`;
-  // armen: vóór de jurk getekend (i.p.v. erna), zodat de schouders van de
-  // jurk er straks overheen vallen -- ziet er zo aan het lichaam vast uit
+  // tussen hoofd en kleren, met toch nog een vleugje hals zichtbaar
+  s += `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`;
+  // armen: vóór de kleren getekend (i.p.v. erna), zodat de schouders van het
+  // kledingstuk er straks overheen vallen -- ziet er zo aan het lichaam vast uit
   // i.p.v. los bovenop geplakt. In rust zijn beide armen elkaars exacte
-  // spiegelbeeld in hoek en lengte, hand komt ~halverwege de jurk uit; met
-  // een mic/toverstaf wijkt de rechter vanzelfsprekend af (opgeheven naar
+  // spiegelbeeld in hoek en lengte, hand komt ~halverwege het kledingstuk uit;
+  // met een mic/toverstaf wijkt de rechter vanzelfsprekend af (opgeheven naar
   // het gezicht). De bijbehorende decoratie (mic-kop, sterpunt, ...) komt
-  // pas ná de jurk (zie verderop) zodat die zelf nooit erdoor verdwijnt.
-  s += `<path d="M84 112 Q68 132 64 157" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  // pas ná de kleren (zie verderop) zodat die zelf nooit erdoor verdwijnt.
+  s += `<path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
   s += mic
-    ? `<path d="M116 112 Q134 98 145 80" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`
-    : `<path d="M116 112 Q132 132 136 157" stroke="${skin}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
-  // benen: ook vóór de jurk -- de zoom dekt het bovenstuk vanzelf af
-  s += `<line x1="90" y1="192" x2="88" y2="228" stroke="${skin}" stroke-width="9" stroke-linecap="round"/>`;
-  s += `<line x1="110" y1="192" x2="112" y2="228" stroke="${skin}" stroke-width="9" stroke-linecap="round"/>`;
-  // jurk -- zachte ronde schoudertjes i.p.v. scherpe hoeken
-  s += `<path d="M86 103 Q78 105 82 110 L66 196 Q100 210 134 196 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${dc}"/>`;
-  if (dress.pattern === 'stars') {
-    s += `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text>
-          <text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`;
-  }
-  if (dress.pattern === 'disco') {
-    s += `<circle cx="90" cy="140" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity="0.8"/>
-          <circle cx="85" cy="175" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity="0.8"/>`;
-  }
-  if (dress.pattern === 'hearts') {
-    s += `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text>
-          <text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`;
-  }
-  if (dress.pattern === 'magic') {
-    // gouden sterren + maantje: de toverjurk
-    s += `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text>
-          <text x="80" y="188" font-size="11" fill="#ffd54f">★</text>
-          <path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`;
-  }
-  if (dress.pattern === 'scales') {
-    // zeemeermin-schubben: rijen lichte koepeltjes
-    s += `<g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5">
-      <path d="M82 152 a7 7 0 0 1 14 0 M96 152 a7 7 0 0 1 14 0"/>
-      <path d="M80 168 a7 7 0 0 1 14 0 M94 168 a7 7 0 0 1 14 0 M108 168 a7 7 0 0 1 14 0"/>
-      <path d="M84 184 a7 7 0 0 1 14 0 M98 184 a7 7 0 0 1 14 0"/></g>`;
-  }
-  if (dress.pattern === 'ohl') {
-    // clubkleuren van Leuven: groen-rode banen op wit met een zwarte zoom
-    s += `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/>
-          <path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/>
-          <path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`;
-  }
+    ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
+    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  // benen: blote benen onder een zoom, of de broekspijpen zelf
+  s += B.legs(dc);
+  // romp: jurk of shirt, in de kleur (en het patroon) van hetzelfde ene item
+  s += B.torso(dc, mic);
+  if (dress.pattern && B.pat[dress.pattern]) s += B.pat[dress.pattern];
   // schoenen (schoenkleur is een eigen categorie in de kleedkamer)
   const shoe = eq.shoes ? item(eq.shoes) : null;
   const sc = shoe ? (shoe.color === 'RAINBOW' ? `url(#rb${uid})` : shoe.color) : '#e91e63';
   s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
-  // vastgehouden voorwerp: pas ná de jurk getekend (en na de arm zelf,
-  // hierboven), zodat de decoratie nooit onder de jurk of schouder verdwijnt
+  // vastgehouden voorwerp: pas ná de kleren getekend (en na de arm zelf,
+  // hierboven), zodat de decoratie nooit onder een schouder verdwijnt
   if (mic) {
     if (mic.id === 'mic_pintje') {
       // proost! een pintje in de opgeheven hand
@@ -3838,7 +3955,7 @@ function renderShelves() {
 const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'steden': 'stad', 'sommen': 'som', 'sterren': 'ster',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
-  'spulletjes': 'spulletje', 'jurken': 'jurk', 'schoenen': 'schoen',
+  'spulletjes': 'spulletje', 'outfits': 'outfit', 'schoenen': 'schoen',
   'haarkleuren': 'haarkleur', 'instrumenten': 'instrument', 'podia': 'podium',
   'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee',
   'extra shows': 'extra show'
@@ -5020,7 +5137,7 @@ function hintFor(q, val) {
 }
 
 /* ================= Spel ================= */
-const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 💃', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
+const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 🎊', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
 // Danspasjes: elk juist antwoord voegt een pasje toe aan de show van de avatar
 const MOVES = [
   { cls: 'move-jump',   label: '🦘 Sprong!' },
@@ -5584,7 +5701,7 @@ function endLevel(success) {
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(); };
-    $('btn-end-alt').textContent = '👗 Kleedkamer';
+    $('btn-end-alt').textContent = '👕 Kleedkamer';
     $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
     sndWin();
     confetti(40);
@@ -5706,30 +5823,62 @@ function confettiBurst(cx, cy, n, hero) {
    de bol. De vormen komen uit dezelfde tekencode als de paspop. ---- */
 let thumbUid = 0;
 const RB_STOPS = '<stop offset="0" stop-color="#ff5f6d"/><stop offset=".3" stop-color="#ffc371"/><stop offset=".6" stop-color="#8bd450"/><stop offset="1" stop-color="#47c9ff"/>';
-function dressThumb(it) {
+// De miniaturen tekenen wat dít kind straks aan heeft: op de jongens-basis
+// hangt er een shirt met broek in het rek en geen jurk. Zelfde item, zelfde
+// prijs, zelfde trofee -- alleen de vorm volgt de basis, net als bij de pop.
+const OUTFIT_THUMBS = {
+  meisje: {
+    view: '62 104 76 108', cls: '',
+    shape: dc => `<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`,
+    pat: {
+      stars: `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text><text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`,
+      hearts: `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text><text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`,
+      magic: `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text><text x="80" y="188" font-size="11" fill="#ffd54f">★</text><path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`,
+      disco: `<circle cx="90" cy="140" r="4" fill="#fff" opacity=".8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity=".8"/><circle cx="85" cy="175" r="4" fill="#f48fb1" opacity=".8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity=".8"/>`,
+      ohl: `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/><path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/><path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`,
+      scales: `<g fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5"><path d="M82 152 a7 7 0 0 1 14 0 M96 152 a7 7 0 0 1 14 0"/><path d="M80 168 a7 7 0 0 1 14 0 M94 168 a7 7 0 0 1 14 0 M108 168 a7 7 0 0 1 14 0"/><path d="M84 184 a7 7 0 0 1 14 0 M98 184 a7 7 0 0 1 14 0"/></g>`,
+    },
+  },
+  jongen: {
+    // Mouwtjes en een smallere broek: zonder die T-vorm zijn shirt en broek even
+    // breed en wordt het één lange koker die niets zegt. Vak-verhouding blijft
+    // dicht bij die van de jurk, zodat een shirt in het rek niet ineens veel
+    // smaller oogt dan een jurk ernaast.
+    view: '64 98 72 126', cls: 'smal',
+    shape: dc => `<path d="M82 156 L83 214 Q88 218 94 214 L100 176 L106 214 Q112 218 117 214 L118 156 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`
+      + `<path d="M86 104 L72 116 L78 127 L82 122 L82 161 L118 161 L118 122 L122 127 L128 116 L114 104 Q100 112 86 104 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`,
+    pat: {
+      stars: `<text x="87" y="130" font-size="13" fill="#fff176">★</text><text x="103" y="150" font-size="11" fill="#fff176">★</text><text x="85" y="196" font-size="11" fill="#fff176">★</text><text x="104" y="206" font-size="13" fill="#fff176">★</text>`,
+      hearts: `<text x="86" y="130" font-size="12" fill="#fff">♥</text><text x="103" y="150" font-size="10" fill="#ffcdd2">♥</text><text x="86" y="196" font-size="10" fill="#ffcdd2">♥</text><text x="104" y="206" font-size="12" fill="#fff">♥</text>`,
+      magic: `<text x="86" y="132" font-size="13" fill="#ffd54f">★</text><text x="87" y="198" font-size="11" fill="#ffd54f">★</text><text x="106" y="208" font-size="10" fill="#ffd54f">★</text><path d="M107 124 a8 8 0 1 0 5 13 a10 10 0 1 1 -5 -13 Z" fill="#ffe082"/>`,
+      disco: `<circle cx="91" cy="126" r="4" fill="#fff" opacity=".8"/><circle cx="109" cy="142" r="4" fill="#80deea" opacity=".8"/><circle cx="89" cy="192" r="4" fill="#f48fb1" opacity=".8"/><circle cx="111" cy="202" r="4" fill="#fff59d" opacity=".8"/>`,
+      ohl: `<path d="M88 108 L85 161 L93 161 L95 109 Z" fill="#2e7d32"/><path d="M112 108 L115 161 L107 161 L105 109 Z" fill="#c62828"/><path d="M82 154 L118 154 L118 161 L82 161 Z" fill="#1b1b1b"/>`,
+      scales: `<g fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5"><path d="M85 128 a7 7 0 0 1 14 0 M99 128 a7 7 0 0 1 14 0"/><path d="M85 142 a7 7 0 0 1 14 0 M99 142 a7 7 0 0 1 14 0"/><path d="M85 156 a7 7 0 0 1 14 0 M99 156 a7 7 0 0 1 14 0"/><path d="M86 192 a7 7 0 0 1 14 0 M100 192 a7 7 0 0 1 14 0"/></g>`,
+    },
+  },
+};
+function dressThumb(it, base) {
   const uid = ++thumbUid;
+  const t = OUTFIT_THUMBS[base] || OUTFIT_THUMBS[DEFAULT_BASE];
   const rainbow = it.color === 'RAINBOW';
   const dc = rainbow ? `url(#dt${uid})` : it.color;
   const defs = rainbow ? `<defs><linearGradient id="dt${uid}" x1="0" y1="0" x2="1" y2="1">${RB_STOPS}</linearGradient></defs>` : '';
-  let inner = '';
-  if (it.pattern === 'stars') inner = `<text x="86" y="145" font-size="14" fill="#fff176">★</text><text x="108" y="165" font-size="12" fill="#fff176">★</text><text x="78" y="185" font-size="12" fill="#fff176">★</text><text x="112" y="192" font-size="14" fill="#fff176">★</text>`;
-  if (it.pattern === 'hearts') inner = `<text x="84" y="146" font-size="13" fill="#fff">♥</text><text x="106" y="164" font-size="11" fill="#ffcdd2">♥</text><text x="79" y="184" font-size="11" fill="#ffcdd2">♥</text><text x="110" y="190" font-size="13" fill="#fff">♥</text>`;
-  if (it.pattern === 'magic') inner = `<text x="85" y="148" font-size="15" fill="#ffd54f">★</text><text x="108" y="172" font-size="11" fill="#ffd54f">★</text><text x="80" y="188" font-size="11" fill="#ffd54f">★</text><path d="M112 138 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`;
-  if (it.pattern === 'disco') inner = `<circle cx="90" cy="140" r="4" fill="#fff" opacity=".8"/><circle cx="110" cy="155" r="4" fill="#80deea" opacity=".8"/><circle cx="85" cy="175" r="4" fill="#f48fb1" opacity=".8"/><circle cx="113" cy="182" r="4" fill="#fff59d" opacity=".8"/>`;
-  if (it.pattern === 'ohl') inner = `<path d="M86 110 L76 192 L86 195 L94 111 Z" fill="#2e7d32"/><path d="M114 110 L124 192 L114 195 L106 111 Z" fill="#c62828"/><path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`;
-  if (it.pattern === 'scales') inner = `<g fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5"><path d="M82 152 a7 7 0 0 1 14 0 M96 152 a7 7 0 0 1 14 0"/><path d="M80 168 a7 7 0 0 1 14 0 M94 168 a7 7 0 0 1 14 0 M108 168 a7 7 0 0 1 14 0"/><path d="M84 184 a7 7 0 0 1 14 0 M98 184 a7 7 0 0 1 14 0"/></g>`;
-  return `<svg viewBox="62 104 76 108" xmlns="http://www.w3.org/2000/svg">${defs}<path d="M84 106 L66 196 Q100 209 134 196 L116 106 Q100 113 84 106 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>${inner}</svg>`;
+  const inner = (it.pattern && t.pat[it.pattern]) || '';
+  return `<svg viewBox="${t.view}" xmlns="http://www.w3.org/2000/svg">${defs}${t.shape(dc)}${inner}</svg>`;
 }
-function hairThumb(it) {
+const HAIR_THUMBS = {
+  meisje: { view: '38 22 124 88', draw: hc => hairBackStaartjes(hc) + `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>` + hairFrontStaartjes(hc) },
+  // krapper uitgesneden dan bij de staartjes: kort haar bedekt minder, dus zonder
+  // strakkere uitsnede zou de kleur -- het enige wat je hier koopt -- verzuipen
+  jongen: { view: '60 26 80 68',  draw: hc => hairBackKort(hc)      + `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>` + hairFrontKort(hc) },
+};
+function hairThumb(it, base) {
   const uid = ++thumbUid;
+  const t = HAIR_THUMBS[base] || HAIR_THUMBS[DEFAULT_BASE];
   const rainbow = it.color === 'RAINBOW';
   const hc = rainbow ? `url(#ht${uid})` : it.color;
   const defs = rainbow ? `<defs><linearGradient id="ht${uid}" x1="0" y1="0" x2="1" y2="1">${RB_STOPS}</linearGradient></defs>` : '';
-  return `<svg viewBox="38 22 124 88" xmlns="http://www.w3.org/2000/svg">${defs}
-    <circle cx="100" cy="62" r="37" fill="${hc}"/>
-    <circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>
-    <circle cx="100" cy="72" r="32" fill="#ffdcb8"/>
-    <path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/></svg>`;
+  return `<svg viewBox="${t.view}" xmlns="http://www.w3.org/2000/svg">${defs}${t.draw(hc)}</svg>`;
 }
 function shoesThumb(it) {
   const uid = ++thumbUid;
@@ -5762,12 +5911,13 @@ function wizardHatThumb() {
     <text x="90" y="38" font-size="13" fill="#ffd54f">★</text><text x="98" y="23" font-size="10" fill="#ffd54f">★</text></svg>`;
 }
 // Elk miniatuur komt uit hetzelfde vak (.item-thumb); alleen de inhoud verschilt.
-function itemThumb(it) {
-  const zone = inner => `<div class="item-thumb">${inner}</div>`;
+function itemThumb(it, base) {
+  base = base || curBase();
+  const zone = (inner, extra) => `<div class="item-thumb${extra ? ' ' + extra : ''}">${inner}</div>`;
   if (it.id === 'acc_tovenaarshoed') return zone(wizardHatThumb());
   if (it.emoji) return zone(`<span class="thumb-emo">${it.emoji}</span>`);
-  if (it.cat === 'dress') return zone(dressThumb(it));
-  if (it.cat === 'hair')  return zone(hairThumb(it));
+  if (it.cat === 'dress') return zone(dressThumb(it, base), (OUTFIT_THUMBS[base] || OUTFIT_THUMBS[DEFAULT_BASE]).cls);
+  if (it.cat === 'hair')  return zone(hairThumb(it, base));
   if (it.cat === 'shoes') return zone(shoesThumb(it));
   if (it.cat === 'mic')   return zone(micThumb(it));
   if (it.bg) return zone(`<span class="thumb-stage" style="background:${it.bg}">${(it.deco && it.deco[0]) || ''}</span>`);
@@ -5850,7 +6000,8 @@ function lookPieceTap(cat, id) {
 function renderShop() {
   const p = P();
   const looksMode = shopView === 'looks';
-  const selected = (!looksMode && shopSelectedId) ? item(shopSelectedId) : null;
+  const baseMode = shopView === 'basis';
+  const selected = (shopView === 'items' && shopSelectedId) ? item(shopSelectedId) : null;
   const preview = selected ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
   $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
@@ -5858,6 +6009,7 @@ function renderShop() {
   renderDressBar(selected, p);
   const grid = $('item-grid');
   grid.classList.toggle('looks-view', looksMode);
+  grid.classList.toggle('base-view', baseMode);
   grid.innerHTML = '';
   // Eén keuzerij voor álles wat je kunt bekijken: eerst Looks (complete outfits),
   // daarna de acht kledingsoorten. Er stond hier eerder een aparte
@@ -5882,7 +6034,7 @@ function renderShop() {
     if (opts.on) activeTab = b;
     return b;
   };
-  chip({ ico: '✨', name: 'Looks', on: looksMode, keepLabel: true, extra: 'looks', go: () => {
+  chip({ ico: '✨', name: 'Looks', on: looksMode, keepLabel: true, go: () => {
     sndClick();
     if (looksMode) return;
     shopView = 'looks'; shopSelectedId = null; shopBackToLooks = false; renderShop();
@@ -5890,12 +6042,22 @@ function renderShop() {
     $('screen-dress').scrollTop = looksScroll;
     requestAnimationFrame(() => { $('screen-dress').scrollTop = looksScroll; });
   } });
-  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: !looksMode && c.id === shopCat, go: () => {
+  // "Jij" is net als Looks geen kledingsoort: het houdt zijn woord en staat vóór
+  // het streepje dat de acht categorieën afscheidt.
+  chip({ ico: '🙂', name: 'Jij', on: baseMode, keepLabel: true, extra: 'tab-sep', go: () => {
+    sndClick();
+    if (baseMode) return;
+    rememberLooksScroll();
+    shopView = 'basis'; shopSelectedId = null; shopBackToLooks = false; renderShop();
+    $('screen-dress').scrollTop = 0;
+    requestAnimationFrame(() => { $('screen-dress').scrollTop = 0; });
+  } });
+  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: shopView === 'items' && c.id === shopCat, go: () => {
     sndClick();
     rememberLooksScroll();               // verlaat je Looks? bewaar de plek
-    const wasLooks = shopView === 'looks';
+    const wasLooks = shopView !== 'items';
     shopView = 'items'; shopCat = c.id; shopSelectedId = null; shopBackToLooks = false; renderShop();
-    if (wasLooks) {                      // vanuit Looks: bovenaan bij de spullen beginnen
+    if (wasLooks) {                      // vanuit Looks of Jij: bovenaan bij de spullen beginnen
       $('screen-dress').scrollTop = 0;
       requestAnimationFrame(() => { $('screen-dress').scrollTop = 0; });
     }
@@ -5905,6 +6067,7 @@ function renderShop() {
   if (activeTab) requestAnimationFrame(() => {
     if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'center' }); updateFades(tabs); }
   });
+  if (baseMode) { renderBaseChoice(grid, p); return; }
   if (looksMode) { renderLookGoals(grid, p); return; }
   // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
   ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => a.price - b.price).forEach(it => {
@@ -5930,6 +6093,29 @@ function renderShop() {
       sndClick();
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
       shopJustBoughtId = null; shopSelectedId = it.id; renderShop();
+    };
+    grid.appendChild(card);
+  });
+}
+// "Jij"-modus: wie je bent, met je eigen outfit al aan. Wisselen kost niets --
+// spullen, looks en trofeeën blijven precies zoals ze waren, want een item is
+// een kleur met een patroon en de basis bepaalt alleen de vorm. Vandaar ook geen
+// waarschuwing vooraf: er valt niets te verliezen.
+function renderBaseChoice(grid, p) {
+  BASE_CHOICES.forEach(b => {
+    const on = baseOf(p) === b.id;
+    const card = document.createElement('div');
+    card.className = 'item-card base-card' + (on ? ' equipped' : '');
+    card.dataset.base = b.id;
+    card.innerHTML = `<div class="item-thumb">${avatarSVG({ ...p, base: b.id }, 128)}</div>`
+      + `<div class="item-name">${b.emoji} ${b.name}</div>`
+      + `<div class="item-status ${on ? 'on' : 'owned'}">${on ? 'Aan' : 'Kies'}</div>`;
+    card.onclick = () => {
+      sndClick();
+      if (baseOf(p) !== b.id) { p.base = b.id; save(); }
+      renderShop();
+      tapDance('shop-avatar');
+      buzz(20);
     };
     grid.appendChild(card);
   });
@@ -5997,9 +6183,9 @@ function previewProfile(p, it) {
   return preview;
 }
 
-// 🎲 Verras me: een willekeurige outfit uit wat ze al bezit, met een vreugdedansje.
+// 🎲 Verras me: een willekeurige outfit uit wat de ster al bezit, met een vreugdedansje.
 // Optionele spullen (micro, instrument, extra, dier) blijven soms bewust weg,
-// anders staat ze altijd vol behangen.
+// anders hangt de ster altijd vol.
 function surpriseOutfit() {
   const p = P();
   const optioneel = ['mic', 'instrument', 'acc', 'pet'];
@@ -6162,7 +6348,11 @@ function openNewStar(from) {
   // echte standaarden niet uit elkaar kunnen lopen: wie de openklapper dicht
   // laat, krijgt exact wat de app anders stilletjes had gekozen.
   newStar = {
-    name: '', hair: 'hair_blond', dress: 'dress_roze',
+    // base bewust leeg: wie je bent is de eerste vraag van het formulier en de
+    // enige zonder voorkeuze. Zou hier 'meisje' staan, dan zou een ouder die
+    // doorklikt nooit merken dat er iets te kiezen valt -- precies de aanname
+    // waar deze versie vanaf wil.
+    name: '', base: null, hair: 'hair_blond', dress: 'dress_roze',
     settings: defaultProfile('', 'dress_roze').settings,
     open: false          // de openklapper begint dicht, elke keer opnieuw
   };
@@ -6186,9 +6376,9 @@ function swatchChips(group, ids, sel) {
 function renderNewStar() {
   const n = newStar;
   const s = n.settings;
-  // een echt profiel als voorbeeld: precies wat ze straks wordt, geen namaak
-  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair });
-  const ok = !!n.name.trim();
+  // een echt profiel als voorbeeld: precies wat de ster straks wordt, geen namaak
+  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base });
+  const ok = !!n.name.trim() && !!n.base;
   // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
   // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
   // bij élke tik naar boven (n.open doet hetzelfde voor de openklapper zelf).
@@ -6197,11 +6387,14 @@ function renderNewStar() {
   $('newstar-body').innerHTML = `<div class="settings-panel">
     <div class="set-card">
       <div class="newstar-preview"><div class="stage stage-frame" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
+      <div class="set-field"><label class="lbl">Wie ben je?</label>
+        <div class="chip-row" id="newstar-base">${BASE_CHOICES.map(b =>
+          `<button class="chip${b.id === n.base ? ' on' : ''}" data-v="${b.id}">${b.emoji} ${b.name}</button>`).join('')}</div></div>
       <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
-        <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet ze?" autocomplete="off"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
+        <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
       <div class="set-field"><label class="lbl">Haar</label>
         <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
-      <div class="set-field"><label class="lbl">Jurk</label>
+      <div class="set-field"><label class="lbl">Kleren</label>
         <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
       <div class="set-field"><label class="lbl">Manier van spelen</label>
         <div class="chip-row" id="newstar-track">
@@ -6231,6 +6424,7 @@ function renderNewStar() {
   // uit het ouderdeel, en een gelijknamige const hier zou die in dit hele bereik
   // afdekken (ReferenceError, nog vóór de eerste regel van de sjabloon).
   const bindChips = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
+  bindChips('newstar-base',  v => newStar.base = v);
   bindChips('newstar-hair',  v => newStar.hair = v);
   bindChips('newstar-dress', v => newStar.dress = v);
   bindChips('newstar-track', v => {
@@ -6243,7 +6437,7 @@ function renderNewStar() {
   // dezelfde velden als in het ouderdeel; er is alleen nog niets om op te slaan
   bindOefenChips(s, null, 'ns-', id => {
     if (id === 'set-perlevel') newStar.perLevelSet = true;
-    sndClick();                 // net als de haar-, jurk- en modus-chips hierboven
+    sndClick();                 // net als de basis-, haar-, kleren- en modus-chips hierboven
     renderNewStar();
   });
   const dt = $('newstar-oefen');
@@ -6254,7 +6448,7 @@ function renderNewStar() {
   nm.oninput = e => {
     newStar.name = e.target.value;
     const go = $('newstar-go');
-    if (go) go.disabled = !e.target.value.trim();
+    if (go) go.disabled = !e.target.value.trim() || !newStar.base;
   };
   $('newstar-go').onclick = createStar;
   if (scr) { scr.scrollTop = keep; requestAnimationFrame(() => { scr.scrollTop = keep; }); }
@@ -6263,7 +6457,7 @@ function createStar() {
   // pas hier valideren, niet tijdens het typen: een veld dat zichzelf corrigeert
   // terwijl je bezig bent is niet te gebruiken (zie de opmerking bij set-name)
   const name = newStar.name.trim().replace(/\s+/g, ' ').slice(0, 12);
-  if (!name) return;
+  if (!name || !newStar.base) return;
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al', null, 'Twee sterren met dezelfde naam zijn niet uit elkaar te houden.');
@@ -6276,14 +6470,14 @@ function createStar() {
   const order = nextOrder();
   // defaultProfile neemt élke instelling aan (zie de opmerking daar), dus het
   // concept gaat er in één keer in -- aangeraakt of niet.
-  db.profiles[key] = defaultProfile(name, newStar.dress, { ...newStar.settings, hair: newStar.hair });
+  db.profiles[key] = defaultProfile(name, newStar.dress, { ...newStar.settings, hair: newStar.hair, base: newStar.base });
   db.profiles[key].order = order;   // expliciet: assignProfileOrder gaat op naam
   save();
   const wasFirst = Object.keys(db.profiles).length === 1;
   newStar = null;
   if (newStarReturn === 'settings') { setKey = key; setTab = 'beheer'; renderSettings(); show('screen-settings'); settingsToTop(); }
   else goProfiles();
-  showToast(`🌟 ${esc(name)} staat op het podium!`, null, wasFirst ? 'Tik op haar kaart om te beginnen.' : null);
+  showToast(`🌟 ${esc(name)} staat op het podium!`, null, wasFirst ? 'Tik op de kaart om te beginnen.' : null);
   setTimeout(hideToast, 2400);
 }
 
@@ -6534,7 +6728,7 @@ function beheerPanelHtml(p) {
       <details class="danger-reveal" id="set-danger-del">
         <summary>Deze ster verwijderen…</summary>
         <div class="danger-zone">
-          <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div><div class="d">Haalt deze ster helemaal weg, met al haar diamanten, sterren en spulletjes. Kan niet ongedaan gemaakt worden.</div></div>
+          <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div><div class="d">Haalt deze ster helemaal weg, met alle diamanten, sterren en spulletjes. Kan niet ongedaan gemaakt worden.</div></div>
           <button class="danger-btn" id="set-delete">Verwijderen</button>
         </div>
       </details>
@@ -6766,13 +6960,14 @@ function bindSettings(p, s) {
       'Ja, wissen',
       () => {
         // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
-        // startjurk, haar plek in de rij én álle instellingen gaan mee. Dat gold
+        // startoutfit, plek in de rij én álle instellingen gaan mee. Dat gold
         // eerder alleen voor de telmodus -- in de rekenmodus vielen bewerkingen,
         // bereik, tafels, antwoordmethode en de extra uitdagingen stilletjes terug
         // op de standaardwaarden, terwijl de waarschuwing dat niet zei.
         const dress = p.startDress || p.equipped.dress || 'dress_roze';
-        // settings kent geen haar, dus zonder dit werd een bruinharige ster blond
-        const opts = { ...p.settings, hair: p.startHair || 'hair_blond' };
+        // settings kent geen haar en geen basisfiguur, dus zonder dit werd een
+        // bruinharige ster blond en een jongen een meisje
+        const opts = { ...p.settings, hair: p.startHair || 'hair_blond', base: p.base };
         const order = p.order;
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
         db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
@@ -6786,7 +6981,7 @@ function bindSettings(p, s) {
   on('set-delete', 'onclick', () => {
     showConfirm(
       '⚠️ Ster verwijderen?',
-      `${p.name} helemaal verwijderen, met al haar voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
+      `${p.name} helemaal verwijderen, met alle voortgang, diamanten en spulletjes? Dit kan niet ongedaan gemaakt worden.`,
       'Ja, verwijderen',
       () => {
         const naam = p.name;
