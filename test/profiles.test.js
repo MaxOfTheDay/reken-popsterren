@@ -38,13 +38,22 @@ function check(ok, label, detail) {
     return { ctx, page };
   }
 
-  // Het formulier invullen en verzenden.
-  async function makeStar(page, { name, hair, dress, track } = {}) {
+  // Het formulier invullen en verzenden. `settings` is optioneel: een kaartje
+  // {'set-max': '100'} klapt de oefening-openklapper open en tikt die chips aan.
+  async function makeStar(page, { name, hair, dress, track, settings } = {}) {
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
     if (hair)  await page.click(`#newstar-hair  .chip[data-v="${hair}"]`);
     if (dress) await page.click(`#newstar-dress .chip[data-v="${dress}"]`);
     if (track) await page.click(`#newstar-track .chip[data-v="${track}"]`);
+    if (settings) {
+      await page.click('#newstar-oefen summary');
+      await page.waitForTimeout(120);
+      for (const [id, v] of Object.entries(settings)) {
+        await page.click(`#ns-${id} .chip[data-v="${v}"]`);
+        await page.waitForTimeout(120);
+      }
+    }
     await page.fill('#newstar-name', name);
     await page.click('#newstar-go');
     await page.waitForTimeout(250);
@@ -319,6 +328,142 @@ function check(ok, label, detail) {
     check(r.hair === 'hair_bruin', 'opnieuw beginnen geeft haar eigen haar terug, niet blond', r.hair);
     check(r.dress === 'dress_groen', 'opnieuw beginnen geeft haar eigen jurk terug', r.dress);
     check(r.diamonds === 30 && r.name === 'Bruin', 'de voortgang gaat wél weg, de naam blijft', JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* ===== 10 · De oefening-openklapper op het maakformulier =====
+     Het formulier vroeg alleen naam/haar/jurk/modus; al het andere viel
+     stilletjes op de standaard. Nu staat de hele Oefenen-set eronder, dicht,
+     met een regel die zegt wát er nu ingesteld staat. Dat mag de snelle weg
+     (openklapper niet aanraken) op geen enkele manier veranderen. */
+
+  // 10a · dicht bij het openen, en de samenvatting zegt iets
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    const r = await page.evaluate(() => ({
+      open: document.getElementById('newstar-oefen').hasAttribute('open'),
+      val: document.querySelector('#newstar-oefen .sr-val').textContent,
+    }));
+    check(r.open === false, 'de openklapper begint dicht', `open=${r.open}`);
+    check(r.val === '➕ ➖ · tot 20 · kiezen uit 4 · 8 vragen', 'de dichte openklapper vertelt de standaard', r.val);
+    await ctx.close();
+  }
+
+  // 10b · de snelle weg levert exact hetzelfde profiel als hiervoor
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Reken' });
+    await makeStar(page, { name: 'Tel', track: 'count' });
+    const r = await page.evaluate(() => {
+      const byName = n => Object.values(db.profiles).find(p => p.name === n).settings;
+      return { math: byName('Reken'), count: byName('Tel') };
+    });
+    const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
+      missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 11, repr: 'objects',
+      numerals: true, qmax: 10, memory: true };
+    const countWant = { ...mathWant, track: 'count', perLevel: 5 };
+    check(JSON.stringify(r.math) === JSON.stringify(mathWant),
+      'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
+    check(JSON.stringify(r.count) === JSON.stringify(countWant),
+      'zonder de openklapper aan te raken blijft de telster ongewijzigd', JSON.stringify(r.count));
+    await ctx.close();
+  }
+
+  // 10c · wat een ouder vooraf instelt, komt ook echt in het profiel
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Maal', settings: { 'set-ops': 'x', 'set-max': '100' } });
+    const s = await page.evaluate(() => Object.values(db.profiles)[0].settings);
+    check(s.ops.includes('x'), 'een vooraf gekozen bewerking landt in het profiel', JSON.stringify(s.ops));
+    check(s.max === 100, 'een vooraf gekozen bereik landt in het profiel', `max=${s.max}`);
+    await ctx.close();
+  }
+
+  // 10d · het paneel overleeft zijn eigen hertekening (elke tik bouwt het opnieuw op)
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.click('#newstar-oefen summary');
+    await page.waitForTimeout(120);
+    await page.click('#ns-set-max .chip[data-v="100"]');
+    await page.waitForTimeout(150);
+    const r = await page.evaluate(() => ({
+      open: document.getElementById('newstar-oefen').hasAttribute('open'),
+      val: document.querySelector('#newstar-oefen .sr-val').textContent,
+    }));
+    check(r.open === true, 'de openklapper blijft open na een tik erin', `open=${r.open}`);
+    check(/tot 100/.test(r.val), 'de samenvatting loopt mee met de keuze', r.val);
+    await ctx.close();
+  }
+
+  // 10e · van modus wisselen wisselt ook de velden eronder
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.click('#newstar-oefen summary');
+    await page.waitForTimeout(120);
+    await page.click('#newstar-track .chip[data-v="count"]');
+    await page.waitForTimeout(150);
+    const velden = await page.evaluate(() => ({
+      stage: !!document.getElementById('ns-set-stage'),
+      ops: !!document.getElementById('ns-set-ops'),
+      val: document.querySelector('#newstar-oefen .sr-val').textContent,
+    }));
+    check(velden.stage && !velden.ops, 'de telmodus toont fases in plaats van bewerkingen', JSON.stringify(velden));
+    check(/^fase 1–11/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
+    await page.click('#ns-set-stage .chip[data-v="3"]');
+    await page.waitForTimeout(150);
+    await page.fill('#newstar-name', 'Fase');
+    await page.click('#newstar-go');
+    await page.waitForTimeout(250);
+    const p = await page.evaluate(() => Object.values(db.profiles)[0]);
+    check(p.settings.stage === 3, 'een vooraf gekozen startfase landt in de instellingen', `stage=${p.settings.stage}`);
+    check(p.countTrack.stage === 3, 'de live-stand begint op diezelfde fase', `countTrack=${p.countTrack.stage}`);
+    await ctx.close();
+  }
+
+  // 10f · de twee schermen staan tegelijk in de DOM: hun velden mogen elkaar niet raken
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Zus' });
+    const r = await page.evaluate(async () => {
+      const k = Object.keys(db.profiles)[0];
+      openSettings(); setKey = k; setTab = 'oefenen'; renderSettings();
+      await new Promise(r => setTimeout(r, 150));
+      openNewStar('settings');
+      await new Promise(r => setTimeout(r, 150));
+      document.querySelector('#newstar-oefen summary').click();
+      await new Promise(r => setTimeout(r, 150));
+      document.querySelector('#ns-set-max .chip[data-v="100"]').click();
+      await new Promise(r => setTimeout(r, 150));
+      return { zus: db.profiles[k].settings.max, concept: newStar.settings.max };
+    });
+    check(r.zus === 20, 'een tik op het maakformulier laat de bestaande ster met rust', `max=${r.zus}`);
+    check(r.concept === 100, 'diezelfde tik komt wél in het concept terecht', `max=${r.concept}`);
+    await ctx.close();
+  }
+
+  // 10g · "kies er minstens 1" geldt ook hier
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.click('#newstar-oefen summary');
+    await page.waitForTimeout(120);
+    await page.click('#ns-set-ops .chip[data-v="+"]');
+    await page.waitForTimeout(150);
+    await page.click('#ns-set-ops .chip[data-v="-"]');
+    await page.waitForTimeout(150);
+    const r = await page.evaluate(() => ({
+      ops: newStar.settings.ops.slice(),
+      shake: !!document.querySelector('#ns-set-ops .chip.shake'),
+    }));
+    check(r.ops.length === 1 && r.ops[0] === '-', 'de laatste bewerking kan niet uit', JSON.stringify(r.ops));
+    check(r.shake, 'de geweigerde tik schudt', `shake=${r.shake}`);
     await ctx.close();
   }
 

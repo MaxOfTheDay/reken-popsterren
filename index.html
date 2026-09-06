@@ -1884,6 +1884,34 @@
   .danger-reveal[open] > summary { color: var(--danger-title); border-color: var(--danger-border); }
   .danger-reveal[open] > summary::after { content: '▴'; }
   .danger-reveal .danger-zone { margin-top: 10px; }
+  /* Dezelfde openklapper, maar voor een gewone keuze i.p.v. een gevaarlijke: de
+     oefeninstellingen bij het maken van een ster. Vandaar de papierkleuren i.p.v.
+     het rood, en een volle breedte met twee regels i.p.v. een pil -- de tweede
+     regel toont wát er nu ingesteld staat, zodat een ouder die hem nooit opent
+     tóch ziet waar haar kind mee begint. */
+  .set-reveal { margin-top: 15px; }
+  .set-reveal > summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    min-height: 44px; box-sizing: border-box; padding: 10px 14px;
+    border: 1.5px solid var(--paper-border); border-radius: var(--r-md);
+  }
+  .set-reveal > summary::-webkit-details-marker { display: none; }
+  .set-reveal > summary::after { content: '▾'; margin-left: auto; opacity: .7; flex: none; }
+  .set-reveal[open] > summary { border-color: var(--purple-light); }
+  .set-reveal[open] > summary::after { content: '▴'; }
+  /* hetzelfde tegeltje als op een kaartkop, zodat het als één familie leest */
+  .sr-ico {
+    width: 34px; height: 34px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center;
+    font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border);
+  }
+  .sr-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .sr-title { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
+  .sr-val { font-size: 12px; font-weight: 500; color: var(--paper-ink-muted); }
+  .set-reveal-body { margin-top: 12px; }
+  /* twee groepen (Wat oefenen / Hoe spelen) zonder er twee kaarten ín een kaart
+     van te maken: een streepje en een kleinere kop doen hier hetzelfde werk */
+  .reveal-group + .reveal-group { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--paper-border); }
+  .rg-title { font-size: 14px; font-weight: 700; color: var(--purple-mid); margin-bottom: 10px; }
   /* streepje tussen de kindkaarten en het app-brede blok eronder: het staat op de
      paarse schermachtergrond, niet op een witte kaart, vandaar de witte tekst */
   .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
@@ -1901,8 +1929,10 @@
   /* Bewerkingen (+ - x :) as a fixed 2x2 grid: +/- (optellen/aftrekken) and x/:
      (vermenigvuldigen/delen) are natural pairs, and the natural flex-wrap on
      narrow screens gave an unbalanced 3-then-1 instead. max-content columns
-     keep each chip its own width -- no stretching to fill the grid cell. */
-  #set-ops { display: grid; grid-template-columns: repeat(2, max-content); }
+     keep each chip its own width -- no stretching to fill the grid cell.
+     Een klasse en geen #set-ops: het maakformulier toont dezelfde rij met een
+     eigen id-voorvoegsel, en een id-regel zou daar stilletjes niet meer pakken. */
+  .ops-grid { display: grid; grid-template-columns: repeat(2, max-content); }
   /* telmodus: fase-chips (1..6) en een klein legendablokje eronder */
   .stage-chips .chip { min-width: 38px; padding: 7px 12px; }
   .stage-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 2px 2px; font-size: 12.5px; opacity: .8; }
@@ -2730,6 +2760,7 @@ const LS_KEY = 'rekenPopsterren_v1';
 // kleuters beter past. Dit is wat een ster krijgt die bij het maken "Leren tellen"
 // kiest; anders start ze gewoon in de rekenmodus.
 const COUNT_STAGE_MAX = 11;  // 11 fases: tellen → vergelijken → cijfers → redeneren → gesteunde sommen (tekens → cijfers+stippen → geschreven)
+const DEFAULT_PERLEVEL = 8;  // vragen per optreden in de rekenmodus (de telmodus heeft er 5, zie COUNT_OPTS)
 const COUNT_OPTS = { track: 'count', stage: 1, stageMax: COUNT_STAGE_MAX, repr: 'objects', numerals: true, perLevel: 5, qmax: 10 };
 // Wie je bent kies je bij het maken; wat je wordt koop je in de kleedkamer.
 // Vandaar alleen de gewone kleuren hier -- de fantasiekleuren en de patronen
@@ -2772,7 +2803,7 @@ function defaultProfile(name, dress, opts) {
       max: opts.max || 20,
       tables: opts.tables ? opts.tables.slice() : [2, 5, 10],
       mode: opts.mode || 'kies',
-      perLevel: opts.perLevel || 8,
+      perLevel: opts.perLevel || DEFAULT_PERLEVEL,
       missNum: opts.missNum !== false,
       chain3: opts.chain3 !== false,
       track: opts.track || 'math',
@@ -6127,7 +6158,14 @@ function openNewStar(from) {
   closeGearMenu();
   sndClick();
   newStarReturn = from || 'profile';
-  newStar = { name: '', hair: 'hair_blond', dress: 'dress_roze', track: 'math' };
+  // De oefeninstellingen komen uit defaultProfile zelf, zodat het concept en de
+  // echte standaarden niet uit elkaar kunnen lopen: wie de openklapper dicht
+  // laat, krijgt exact wat de app anders stilletjes had gekozen.
+  newStar = {
+    name: '', hair: 'hair_blond', dress: 'dress_roze',
+    settings: defaultProfile('', 'dress_roze').settings,
+    open: false          // de openklapper begint dicht, elke keer opnieuw
+  };
   renderNewStar();
   show('screen-newstar');
   const el = $('screen-newstar');
@@ -6147,9 +6185,15 @@ function swatchChips(group, ids, sel) {
 }
 function renderNewStar() {
   const n = newStar;
+  const s = n.settings;
   // een echt profiel als voorbeeld: precies wat ze straks wordt, geen namaak
   const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair });
   const ok = !!n.name.trim();
+  // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
+  // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
+  // bij élke tik naar boven (n.open doet hetzelfde voor de openklapper zelf).
+  const scr = $('screen-newstar');
+  const keep = scr ? scr.scrollTop : 0;
   $('newstar-body').innerHTML = `<div class="settings-panel">
     <div class="set-card">
       <div class="newstar-preview"><div class="stage stage-frame" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
@@ -6161,20 +6205,49 @@ function renderNewStar() {
         <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
       <div class="set-field"><label class="lbl">Manier van spelen</label>
         <div class="chip-row" id="newstar-track">
-          <button class="chip${n.track === 'count' ? ' on' : ''}" data-v="count">🧸 Leren tellen</button>
-          <button class="chip${n.track === 'math' ? ' on' : ''}" data-v="math">🎤 Rekenen</button>
+          <button class="chip${s.track === 'count' ? ' on' : ''}" data-v="count">🧸 Leren tellen</button>
+          <button class="chip${s.track === 'math' ? ' on' : ''}" data-v="math">🎤 Rekenen</button>
         </div>
-        <div class="note">${n.track === 'count'
-          ? 'Voor wie nog niet leest: gesproken opdrachten, tellen met plaatjes. Later om te zetten.'
-          : 'De gewone rekenshow met cijfers en sommen. Later om te zetten.'}</div></div>
+        <div class="note">${s.track === 'count'
+          ? 'Voor wie nog niet leest: gesproken opdrachten, tellen met plaatjes.'
+          : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
+      <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+        <summary>
+          <span class="sr-ico" aria-hidden="true">⚙️</span>
+          <span class="sr-text"><span class="sr-title">Oefening</span>
+            <span class="sr-val">${oefenSamenvatting(s)}</span></span>
+        </summary>
+        <div class="set-reveal-body">
+          ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">
+            <div class="rg-title">${g.ico} ${g.title}</div>${g.html}</div>`).join('')}
+          <div class="note" style="margin-top:14px">Dit kan later altijd nog, bij 👨‍👩‍👧 Voor ouders → Oefenen.</div>
+        </div>
+      </details>
       <button class="btn purple newstar-go" id="newstar-go"${ok ? '' : ' disabled'}>🌟 Klaar!</button>
     </div>
   </div>`;
   applyStage($('newstar-stage'), preview);
-  const chip = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
-  chip('newstar-hair',  v => newStar.hair = v);
-  chip('newstar-dress', v => newStar.dress = v);
-  chip('newstar-track', v => newStar.track = v);
+  // bindChips en niet chip: de sjabloon hierboven gebruikt de globale chip(v, label, on)
+  // uit het ouderdeel, en een gelijknamige const hier zou die in dit hele bereik
+  // afdekken (ReferenceError, nog vóór de eerste regel van de sjabloon).
+  const bindChips = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { sndClick(); fn(c.dataset.v); renderNewStar(); }); };
+  bindChips('newstar-hair',  v => newStar.hair = v);
+  bindChips('newstar-dress', v => newStar.dress = v);
+  bindChips('newstar-track', v => {
+    s.track = v;
+    // De standaardlengte verschilt per modus (kleuters krijgen een kortere ronde).
+    // Alleen bijstellen zolang een ouder er zelf niet aan gezeten heeft -- anders
+    // zet even-de-andere-modus-bekijken haar keuze stilletjes terug.
+    if (!newStar.perLevelSet) s.perLevel = (v === 'count' ? COUNT_OPTS.perLevel : DEFAULT_PERLEVEL);
+  });
+  // dezelfde velden als in het ouderdeel; er is alleen nog niets om op te slaan
+  bindOefenChips(s, null, 'ns-', id => {
+    if (id === 'set-perlevel') newStar.perLevelSet = true;
+    sndClick();                 // net als de haar-, jurk- en modus-chips hierboven
+    renderNewStar();
+  });
+  const dt = $('newstar-oefen');
+  if (dt) dt.ontoggle = () => { newStar.open = dt.open; if (dt.open) sndClick(); };
   // alleen de waarde bijhouden, niet hertekenen: hertekenen midden in het typen
   // zou het veld (en de cursor) opnieuw opbouwen
   const nm = $('newstar-name');
@@ -6184,6 +6257,7 @@ function renderNewStar() {
     if (go) go.disabled = !e.target.value.trim();
   };
   $('newstar-go').onclick = createStar;
+  if (scr) { scr.scrollTop = keep; requestAnimationFrame(() => { scr.scrollTop = keep; }); }
 }
 function createStar() {
   // pas hier valideren, niet tijdens het typen: een veld dat zichzelf corrigeert
@@ -6200,8 +6274,9 @@ function createStar() {
   // vóór het toevoegen uitrekenen: anders telt de nieuwe ster (nog zonder order)
   // zichzelf mee als de 90-bak en begint iedereen op 91
   const order = nextOrder();
-  db.profiles[key] = defaultProfile(name, newStar.dress,
-    newStar.track === 'count' ? { ...COUNT_OPTS, hair: newStar.hair } : { hair: newStar.hair });
+  // defaultProfile neemt élke instelling aan (zie de opmerking daar), dus het
+  // concept gaat er in één keer in -- aangeraakt of niet.
+  db.profiles[key] = defaultProfile(name, newStar.dress, { ...newStar.settings, hair: newStar.hair });
   db.profiles[key].order = order;   // expliciet: assignProfileOrder gaat op naam
   save();
   const wasFirst = Object.keys(db.profiles).length === 1;
@@ -6308,9 +6383,85 @@ function chip(v, label, on) {
   return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
 }
 const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som'];
-function oefenenPanelHtml(p, s) {
+/* De oefenvelden zelf, los van de omlijsting eromheen. Het ouderdeel zet ze in
+   .set-card primary met een icoonkop; het maakformulier zet ze plat in een
+   openklapper. Eén bron, twee omlijstingen -- anders staan dezelfde zeven
+   keuzes straks op twee plekken en lopen ze uit elkaar.
+
+   pfx houdt de twee kopieën uit elkaar. #screen-settings staat vóór
+   #screen-newstar in de DOM en schermen worden verborgen, niet weggehaald, dus
+   zonder voorvoegsel vindt getElementById in bindOefenChips stilletjes de
+   verkeerde kopie. Het ouderdeel houdt pfx = '' (alle bestaande selectors en
+   tests blijven kloppen), het maakformulier gebruikt 'ns-'. */
+function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, html }]
+  pfx = pfx || '';
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
+  // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
+  // (1–8, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
+  // kun je een eerder verlaagde bovengrens nooit meer omhoog zetten.
+  const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
+  const stageNums = [];
+  for (let v = 1; v <= availMax; v++) stageNums.push(v);
+  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${pfx}${id}">${stageNums.map(v => chip(v, v, Math.min(sel, availMax) === v)).join('')}</div>`;
+  const legend = `<div class="stage-legend">${stageNums.map(v => `<span><b>${v}</b> ${COUNT_STAGE_LABELS[v]}</span>`).join('')}</div>`;
+  if (s.track === 'count') return [{
+    ico: '🔢', title: 'Tellen', sub: 'Fases, weergave en lengte', html: `
+      <div class="set-field"><span class="lbl">Startfase <span class="note">(vanaf hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
+      <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', s.stageMax)}</div>
+      ${legend}
+      <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6+: cijfers, minder stippensteun, redeneren)</span></span>
+        <div class="chip-row" id="${pfx}set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
+      <div class="set-field"><span class="lbl">Hoogste hoeveelheid <span class="note">(hoe ver de aantallen mogen groeien)</span></span>
+        <div class="chip-row" id="${pfx}set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Antwoorden tonen als <span class="note">(mix: voorwerpen óf stippen, wisselt per vraag)</span></span>
+        <div class="chip-row" id="${pfx}set-repr">${chip('objects', '🧸 Voorwerpen', (s.repr || 'objects') === 'objects')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}${chip('mix', '🎲 Mix', s.repr === 'mix')}</div></div>
+      <div class="set-field"><span class="lbl">🎤 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
+        <div class="chip-row" id="${pfx}set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
+      <div class="set-field"><span class="lbl">Vragen per optreden</span>
+        <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>`
+  }];
+  return [{
+    ico: '🎓', title: 'Wat oefenen', sub: 'Kies de bewerkingen en het bereik', html: `
+      <div class="set-field"><span class="lbl">Bewerkingen</span>
+        <div class="chip-row ops-grid" id="${pfx}set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Getallen tot</span>
+        <div class="chip-row" id="${pfx}set-max">${[10, 20, 50, 100].map(v => chip(v, v, s.max === v)).join('')}</div></div>
+      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
+        <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
+  }, {
+    ico: '🎮', title: 'Hoe spelen', sub: 'De manier van antwoorden en de lengte', html: `
+      <div class="set-field"><span class="lbl">Antwoorden</span>
+        <div class="chip-row" id="${pfx}set-mode">
+          ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
+          ${chip('typ', 'Zelf typen', s.mode === 'typ')}
+          ${chip('mix', 'Afwisselen', s.mode === 'mix')}
+        </div></div>
+      <div class="set-field"><span class="lbl">Vragen per optreden</span>
+        <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Extra uitdaging <span class="note">(verschijnt geleidelijk, pas als de gewone sommen goed gaan)</span></span>
+        <div class="chip-row" id="${pfx}set-extra">
+          ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
+          ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
+        </div></div>`
+  }];
+}
+/* Wat er in de dichte openklapper te lezen staat: een ouder die hem nooit opent
+   ziet zo tóch waar haar kind mee begint. */
+function oefenSamenvatting(s) {
+  if (s.track === 'count') {
+    const top = countMaxStage(s);   // klemt al op stageMax én op de cijfers-uit-grens
+    return `fase ${s.stage}${top > s.stage ? '–' + top : ''}`
+         + ` · hoeveelheden tot ${s.qmax || 10} · ${s.perLevel} vragen`;
+  }
+  const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
+  const modes = { kies: 'kiezen uit 4', typ: 'zelf typen', mix: 'afwisselend' };
+  const tafels = (s.ops.includes('x') || s.ops.includes(':'))
+    ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
+  return `${s.ops.map(o => glyph[o] || o).join(' ')} · tot ${s.max}${tafels}`
+       + ` · ${modes[s.mode] || s.mode} · ${s.perLevel} vragen`;
+}
+function oefenenPanelHtml(p, s) {
   const isCount = s.track === 'count';
   // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus
   const modeCard = `
@@ -6324,58 +6475,12 @@ function oefenenPanelHtml(p, s) {
         <div class="note" style="margin-top:7px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
     </div>`;
   // de kaarten die per modus verschillen
-  // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
-  // (1–8, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
-  // kun je een eerder verlaagde bovengrens nooit meer omhoog zetten.
-  const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
-  const stageNums = [];
-  for (let v = 1; v <= availMax; v++) stageNums.push(v);
-  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${id}">${stageNums.map(v => chip(v, v, Math.min(sel, availMax) === v)).join('')}</div>`;
-  const legend = `<div class="stage-legend">${stageNums.map(v => `<span><b>${v}</b> ${COUNT_STAGE_LABELS[v]}</span>`).join('')}</div>`;
-  const countCard = `
+  const cards = oefenGroups(s, '').map(g => `
     <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🔢</div><div><h2>Tellen</h2><div class="sub">Fases, weergave en lengte</div></div></div>
-      <div class="set-field"><span class="lbl">Startfase <span class="note">(vanaf hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
-      <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', s.stageMax)}</div>
-      ${legend}
-      <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6+: cijfers, minder stippensteun, redeneren)</span></span>
-        <div class="chip-row" id="set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
-      <div class="set-field"><span class="lbl">Hoogste hoeveelheid <span class="note">(hoe ver de aantallen mogen groeien)</span></span>
-        <div class="chip-row" id="set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Antwoorden tonen als <span class="note">(mix: voorwerpen óf stippen, wisselt per vraag)</span></span>
-        <div class="chip-row" id="set-repr">${chip('objects', '🧸 Voorwerpen', (s.repr || 'objects') === 'objects')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}${chip('mix', '🎲 Mix', s.repr === 'mix')}</div></div>
-      <div class="set-field"><span class="lbl">🎤 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
-        <div class="chip-row" id="set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
-      <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
-    </div>`;
-  const mathCards = `
-    <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🎓</div><div><h2>Wat oefenen</h2><div class="sub">Kies de bewerkingen en het bereik</div></div></div>
-      <div class="set-field"><span class="lbl">Bewerkingen</span>
-        <div class="chip-row" id="set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Getallen tot</span>
-        <div class="chip-row" id="set-max">${[10, 20, 50, 100].map(v => chip(v, v, s.max === v)).join('')}</div></div>
-      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
-        <div class="chip-row" id="set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>
-    </div>
-    <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🎮</div><div><h2>Hoe spelen</h2><div class="sub">De manier van antwoorden en de lengte</div></div></div>
-      <div class="set-field"><span class="lbl">Antwoorden</span>
-        <div class="chip-row" id="set-mode">
-          ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
-          ${chip('typ', 'Zelf typen', s.mode === 'typ')}
-          ${chip('mix', 'Afwisselen', s.mode === 'mix')}
-        </div></div>
-      <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Extra uitdaging <span class="note">(verschijnt geleidelijk, pas als de gewone sommen goed gaan)</span></span>
-        <div class="chip-row" id="set-extra">
-          ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
-          ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
-        </div></div>
-    </div>`;
-  return `<div class="settings-panel">${modeCard}${isCount ? countCard : mathCards}</div>`;
+      <div class="set-card-head"><div class="ico">${g.ico}</div><div><h2>${g.title}</h2><div class="sub">${g.sub}</div></div></div>
+      ${g.html}
+    </div>`).join('');
+  return `<div class="settings-panel">${modeCard}${cards}</div>`;
 }
 
 /* ---- Beheer: alles wat géén oefeninstelling is ----
@@ -6564,6 +6669,72 @@ function renderSettings() {
    gebonden als het er ook echt staat. Vijf regels deden dat hiervoor niet
    ($('set-name') e.d. zonder controle) -- die wierpen meteen een TypeError zodra
    een paneel ze niet bevat, waarna de rest van de bindingen stilletjes wegviel. */
+/* De bediening bij oefenGroups, gedeeld door het ouderdeel en het maakformulier.
+
+   p mag null zijn: bij het maken bestáát er nog geen ster om countTrack op bij
+   te stellen (defaultProfile leidt die straks zelf af uit opts.stage).
+   done(id) is wat er ná een geslaagde wijziging moet gebeuren -- opslaan +
+   hertekenen in het ouderdeel, alleen hertekenen op het maakformulier -- en
+   krijgt de groep mee, zodat de aanroeper kan zien wát er veranderde.
+   Een handler die de wijziging wéigert geeft false terug; dan volgt er geen
+   done() (de "kies er minstens 1"-schud sloeg het opslaan hiervoor ook over). */
+function bindOefenChips(s, p, pfx, done) {
+  const bind = (id, fn) => {
+    const el = $((pfx || '') + id);
+    if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { if (fn(c) !== false) done(id); });
+  };
+  // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
+  // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
+  // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
+  bind('set-ops', c => {
+    const v = c.dataset.v;
+    if (s.ops.includes(v)) {
+      if (s.ops.length > 1) s.ops = s.ops.filter(o => o !== v);
+      else return blockedMinOne(c), false;
+    } else s.ops.push(v);
+  });
+  bind('set-tables', c => {
+    const v = parseInt(c.dataset.v, 10);
+    if (s.tables.includes(v)) {
+      if (s.tables.length > 1) s.tables = s.tables.filter(t => t !== v);
+      else return blockedMinOne(c), false;
+    } else s.tables.push(v);
+  });
+  // enkelkeuze-chips
+  bind('set-max', c => { s.max = parseInt(c.dataset.v, 10); });
+  bind('set-mode', c => { s.mode = c.dataset.v; });
+  bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
+  // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
+  bind('set-extra', c => {
+    const k = c.dataset.v;
+    s[k] = (s[k] === false);   // was aan (≠ false) → uit; was uit → aan
+  });
+  // telmodus-instellingen
+  bind('set-stage', c => {
+    const v = parseInt(c.dataset.v, 10);
+    s.stage = v;
+    if (s.stageMax < v) s.stageMax = v;                 // plafond mag niet onder de start
+    if (p) {
+      if (!p.countTrack) p.countTrack = { stage: v, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+      p.countTrack.stage = Math.min(Math.max(p.countTrack.stage, v), countMaxStage(s)); // live-stand binnen bereik
+    }
+  });
+  bind('set-stagemax', c => {
+    const v = parseInt(c.dataset.v, 10);
+    s.stageMax = v;
+    if (s.stage > v) s.stage = v;                       // start mag niet boven het plafond
+    if (p && p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, countMaxStage(s));
+  });
+  bind('set-numerals', c => {
+    // Alleen de vlag omzetten -- de bovengrens (cijfers-uit → fase 5) wordt niet-
+    // destructief afgedwongen via countMaxStage (chip-weergave + countLiveStage),
+    // zodat het weer aanzetten de fase-instelling volledig terugbrengt.
+    s.numerals = (c.dataset.v === 'on');
+  });
+  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); });
+  bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
+  bind('set-repr', c => { s.repr = c.dataset.v; });
+}
 function bindSettings(p, s) {
   const bind = (id, fn) => { const el = $(id); if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => fn(c)); };
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
@@ -6580,61 +6751,14 @@ function bindSettings(p, s) {
   document.querySelectorAll('#settings-body .danger-reveal').forEach(dg => {
     dg.ontoggle = () => { if (dg.open) sndClick(); };
   });
-  // modus: wisselen tussen de rekenshow en de lees-vrije telmodus
+  // modus: wisselen tussen de rekenshow en de lees-vrije telmodus. Blijft hier:
+  // de moduskaart hoort bij het ouderdeel (het maakformulier heeft zijn eigen
+  // #newstar-track vlak boven de openklapper).
   bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
-  // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
-  // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
-  // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
-  bind('set-ops', c => {
-    const v = c.dataset.v;
-    if (s.ops.includes(v)) {
-      if (s.ops.length > 1) { s.ops = s.ops.filter(o => o !== v); saveAndFlash(); renderSettings(); }
-      else blockedMinOne(c);
-    } else { s.ops.push(v); saveAndFlash(); renderSettings(); }
-  });
-  bind('set-tables', c => {
-    const v = parseInt(c.dataset.v, 10);
-    if (s.tables.includes(v)) {
-      if (s.tables.length > 1) { s.tables = s.tables.filter(t => t !== v); saveAndFlash(); renderSettings(); }
-      else blockedMinOne(c);
-    } else { s.tables.push(v); saveAndFlash(); renderSettings(); }
-  });
-  // enkelkeuze-chips
-  bind('set-max', c => { s.max = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
-  bind('set-mode', c => { s.mode = c.dataset.v; saveAndFlash(); renderSettings(); });
-  bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
-  // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
-  bind('set-extra', c => {
-    const k = c.dataset.v;
-    s[k] = (s[k] === false);   // was aan (≠ false) → uit; was uit → aan
-    saveAndFlash(); renderSettings();
-  });
-  // telmodus-instellingen
-  bind('set-stage', c => {
-    const v = parseInt(c.dataset.v, 10);
-    s.stage = v;
-    if (s.stageMax < v) s.stageMax = v;                 // plafond mag niet onder de start
-    if (!p.countTrack) p.countTrack = { stage: v, rung: 0, streak: 0, seen: 0, acc: 0.5 };
-    p.countTrack.stage = Math.min(Math.max(p.countTrack.stage, v), countMaxStage(s)); // live-stand binnen bereik
-    saveAndFlash(); renderSettings();
-  });
-  bind('set-stagemax', c => {
-    const v = parseInt(c.dataset.v, 10);
-    s.stageMax = v;
-    if (s.stage > v) s.stage = v;                       // start mag niet boven het plafond
-    if (p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, countMaxStage(s));
-    saveAndFlash(); renderSettings();
-  });
-  bind('set-numerals', c => {
-    // Alleen de vlag omzetten -- de bovengrens (cijfers-uit → fase 5) wordt niet-
-    // destructief afgedwongen via countMaxStage (chip-weergave + countLiveStage),
-    // zodat het weer aanzetten de fase-instelling volledig terugbrengt.
-    s.numerals = (c.dataset.v === 'on');
-    saveAndFlash(); renderSettings();
-  });
-  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); saveAndFlash(); renderSettings(); });
-  bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); saveAndFlash(); renderSettings(); });
-  bind('set-repr', c => { s.repr = c.dataset.v; saveAndFlash(); renderSettings(); });
+  // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
+  // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
+  // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
+  bindOefenChips(s, p, '', () => { saveAndFlash(); renderSettings(); });
   on('set-reset', 'onclick', () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
