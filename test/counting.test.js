@@ -44,15 +44,21 @@ function check(ok, label, detail) {
     db.sound = true;
   });
 
-  // Telprofiel selecteren en het spel starten (zodat G bestaat).
+  // Zelf een telprofiel maken en kiezen (zodat G bestaat). Een verse installatie
+  // heeft geen sterren meer, dus de test zet er zelf een neer -- en kiest hem via
+  // selectProfile i.p.v. via de zoveelste kaart, zodat de test niet meer afhangt
+  // van de volgorde waarin de kaarten staan.
   await page.evaluate(() => {
-    const p = db.profiles.p1;
+    db.profiles.t1 = defaultProfile('Telster', 'dress_roze', { ...COUNT_OPTS, hair: 'hair_blond' });
+    db.profiles.t1.order = 0;
+    const p = db.profiles.t1;
     p.settings.track = 'count';
     p.settings.numerals = true;
     p.settings.stage = 1; p.settings.stageMax = 11; p.settings.qmax = 10;
     save();
+    renderProfiles();
+    selectProfile('t1');
   });
-  await page.click('.profile-card:nth-child(1)');
   await page.waitForTimeout(200);
   await page.click('.tour-stop.next');
   await page.waitForTimeout(400);
