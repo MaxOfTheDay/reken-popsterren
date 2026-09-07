@@ -3214,14 +3214,15 @@ function hairFrontKort(hc) {
   return `<path d="M68 68 Q68 32 100 32 Q132 32 128 56 Q118 44 96 50 Q76 55 68 68 Z" fill="${hc}"/>`;
 }
 function legsBroek(dc) {
-  // Eerst de blote enkels, dán de pijpen eroverheen: zo eindigt de stof netjes
-  // vlak boven de schoen i.p.v. dat een ronde beenkop erdoorheen prikt. De
-  // pijpen zijn bewust breed (18 px, hart op x=86 en 114, precies boven de
-  // schoenen): twee dunne kokers maakten van de ster een stokfiguurtje naast
-  // de jurk, die veel meer vlak vult.
-  return `<line x1="86" y1="210" x2="87" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
-    + `<line x1="114" y1="210" x2="113" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
-    + `<path d="M78 156 L77 218 Q86 223 95 218 L100 188 L105 218 Q114 223 123 218 L122 156 Z" fill="${dc}"/>`;
+  // Eerst de blote onderbenen, dán de pijpen eroverheen: zo eindigt de stof
+  // netjes op de kuit i.p.v. dat een ronde beenkop erdoorheen prikt. De pijpen
+  // zijn bewust breed (18 px, hart op x=86 en 114, precies boven de schoenen):
+  // twee dunne kokers maakten van de ster een stokfiguurtje naast de jurk, die
+  // veel meer vlak vult. De zoom ligt net onder de knie -- tot op de schoen las
+  // het als een lange broek en werd het onderlijf één blok kleur.
+  return `<line x1="86" y1="200" x2="87" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
+    + `<line x1="114" y1="200" x2="113" y2="229" stroke="${SKIN}" stroke-width="9" stroke-linecap="round"/>`
+    + `<path d="M78 156 L77 208 Q86 213 95 208 L100 188 L105 208 Q114 213 123 208 L122 156 Z" fill="${dc}"/>`;
 }
 function torsoShirt(dc, mic) {
   // Schouders exact als bij de jurk (zelfde Q-bochtjes), daarna licht uitlopend
@@ -3270,26 +3271,26 @@ const PAT_JURK = {
           <path d="M67 190 Q100 205 133 190 L134 196 Q100 209 66 196 Z" fill="#1b1b1b"/>`,
 };
 // Zelfde zes patronen, nu verdeeld over het shirtvlak (x 78-122, y 112-162) en
-// de twee broekspijpen (links x 77-98, rechts x 102-123, y 192-216). Een merkje
+// de twee broekspijpen (links x 77-98, rechts x 102-123, y 188-208). Een merkje
 // dat over de splitsing tussen de pijpen valt breekt zichtbaar doormidden --
 // vandaar per pijp één, niet één over het midden.
 const PAT_SHIRT = {
   stars: `<text x="86" y="132" font-size="14" fill="#fff176">★</text><text x="104" y="152" font-size="12" fill="#fff176">★</text>
-          <text x="82" y="204" font-size="12" fill="#fff176">★</text><text x="106" y="212" font-size="13" fill="#fff176">★</text>`,
+          <text x="82" y="200" font-size="11" fill="#fff176">★</text><text x="106" y="204" font-size="12" fill="#fff176">★</text>`,
   disco: `<circle cx="89" cy="128" r="4" fill="#fff" opacity="0.8"/><circle cx="110" cy="145" r="4" fill="#80deea" opacity="0.8"/>
-          <circle cx="86" cy="202" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="210" r="4" fill="#fff59d" opacity="0.8"/>`,
+          <circle cx="86" cy="196" r="4" fill="#f48fb1" opacity="0.8"/><circle cx="113" cy="200" r="4" fill="#fff59d" opacity="0.8"/>`,
   hearts: `<text x="87" y="132" font-size="13" fill="#fff">♥</text><text x="105" y="152" font-size="11" fill="#ffcdd2">♥</text>
-          <text x="83" y="204" font-size="11" fill="#ffcdd2">♥</text><text x="107" y="212" font-size="13" fill="#fff">♥</text>`,
+          <text x="83" y="200" font-size="10" fill="#ffcdd2">♥</text><text x="107" y="204" font-size="11" fill="#fff">♥</text>`,
   // gouden sterren + maantje: het toveroutfit
-  magic: `<text x="84" y="140" font-size="15" fill="#ffd54f">★</text><text x="84" y="206" font-size="11" fill="#ffd54f">★</text>
-          <text x="107" y="213" font-size="10" fill="#ffd54f">★</text>
+  magic: `<text x="84" y="140" font-size="15" fill="#ffd54f">★</text><text x="84" y="201" font-size="10" fill="#ffd54f">★</text>
+          <text x="107" y="205" font-size="9" fill="#ffd54f">★</text>
           <path d="M106 120 a9 9 0 1 0 6 15 a11 11 0 1 1 -6 -15 Z" fill="#ffe082"/>`,
   // zeemeermin-schubben: rijen lichte koepeltjes
   scales: `<g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5">
       <path d="M86 126 a7 7 0 0 1 14 0 M100 126 a7 7 0 0 1 14 0"/>
       <path d="M86 141 a7 7 0 0 1 14 0 M100 141 a7 7 0 0 1 14 0"/>
       <path d="M86 156 a7 7 0 0 1 14 0 M100 156 a7 7 0 0 1 14 0"/>
-      <path d="M82 200 a7 7 0 0 1 14 0 M104 200 a7 7 0 0 1 14 0"/></g>`,
+      <path d="M82 199 a7 7 0 0 1 14 0 M104 199 a7 7 0 0 1 14 0"/></g>`,
   // clubkleuren van Leuven: groen-rode banen op wit met een zwarte zoom
   ohl: `<path d="M88 106 L84 165 L92 165 L95 107 Z" fill="#2e7d32"/>
           <path d="M112 106 L116 165 L108 165 L105 107 Z" fill="#c62828"/>
@@ -5871,8 +5872,8 @@ const OUTFIT_THUMBS = {
     // shirt en broek even breed en wordt het één lange pijp die niets zegt.
     // Vak-verhouding blijft dicht bij die van de jurk, zodat een shirt in het rek
     // niet ineens veel smaller oogt dan een jurk ernaast.
-    view: '62 98 76 128', cls: 'smal',
-    shape: dc => `<path d="M82 158 L79 218 Q87 223 95 218 L100 188 L105 218 Q113 223 121 218 L118 158 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`
+    view: '62 98 76 120', cls: 'smal',
+    shape: dc => `<path d="M82 158 L79 208 Q87 213 95 208 L100 188 L105 208 Q113 213 121 208 L118 158 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`
       + `<path d="M86 104 L70 118 L77 131 L83 124 L78 166 L122 166 L117 124 L123 131 L130 118 L114 104 Q100 112 86 104 Z" fill="${dc}" stroke="rgba(0,0,0,.2)" stroke-width="1.5"/>`,
     // De kledingstukken staan hier op dezelfde plek als op de pop, dus dezelfde
     // patronentabel past precies -- en dan kán het miniatuur ook niet meer uit de
