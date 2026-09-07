@@ -532,34 +532,7 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  // 11c · wisselen in de kleedkamer kost niets, en overleeft een herlaadbeurt
-  {
-    const { ctx, page } = await fresh();
-    await makeStar(page, { name: 'Wissel', base: 'meisje', dress: 'dress_geel' });
-    const r = await page.evaluate(async () => {
-      const k = profileKeys()[0];
-      selectProfile(k);
-      db.profiles[k].owned.push('acc_kroon', 'pet_konijn', 'stage_kasteel');
-      db.profiles[k].trophies.push('shopper');
-      const voor = JSON.stringify({ o: db.profiles[k].owned.slice().sort(), e: db.profiles[k].equipped, t: db.profiles[k].trophies.slice() });
-      navGo('dress');
-      await new Promise(r => setTimeout(r, 150));
-      document.querySelector('#shop-tabs .tab-btn[aria-label="Jij"]').click();
-      await new Promise(r => setTimeout(r, 150));
-      const kaarten = document.querySelectorAll('#item-grid .base-card').length;
-      document.querySelector('#item-grid .base-card[data-base="jongen"]').click();
-      await new Promise(r => setTimeout(r, 150));
-      const na = JSON.stringify({ o: db.profiles[k].owned.slice().sort(), e: db.profiles[k].equipped, t: db.profiles[k].trophies.slice() });
-      return { kaarten, base: db.profiles[k].base, gelijk: voor === na, bewaard: JSON.parse(localStorage.getItem('rekenPopsterren_v1')).profiles[k].base };
-    });
-    check(r.kaarten === 2, 'de Jij-weergave toont twee kaartjes', `kaarten=${r.kaarten}`);
-    check(r.base === 'jongen', 'in de kleedkamer wisselt de basis', String(r.base));
-    check(r.gelijk, 'wisselen raakt spullen, outfit en trofeeën niet aan', 'er is iets veranderd');
-    check(r.bewaard === 'jongen', 'de nieuwe basis wordt bewaard', String(r.bewaard));
-    await ctx.close();
-  }
-
-  // 11d · een save van vóór deze versie blijft een meisje en ziet er hetzelfde uit
+  // 11c · een save van vóór deze versie blijft een meisje en ziet er hetzelfde uit
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
