@@ -40,9 +40,12 @@ function check(ok, label, detail) {
 
   // Het formulier invullen en verzenden. `settings` is optioneel: een kaartje
   // {'set-max': '100'} klapt de oefening-openklapper open en tikt die chips aan.
-  async function makeStar(page, { name, hair, dress, track, settings } = {}) {
+  async function makeStar(page, { name, base, hair, dress, track, settings } = {}) {
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
+    // "Wie ben je?" heeft géén voorkeuze en is verplicht: zonder deze tik blijft
+    // de Klaar-knop uit en zou elke zaak hieronder stilletjes op niets uitlopen.
+    await page.click(`#newstar-base .chip[data-v="${base || 'meisje'}"]`);
     if (hair)  await page.click(`#newstar-hair  .chip[data-v="${hair}"]`);
     if (dress) await page.click(`#newstar-dress .chip[data-v="${dress}"]`);
     if (track) await page.click(`#newstar-track .chip[data-v="${track}"]`);
@@ -89,7 +92,7 @@ function check(ok, label, detail) {
       openSettings(); setTab = 'beheer'; renderSettings();
       return {
         key: k, n: Object.keys(db.profiles).length,
-        name: p.name, hair: p.equipped.hair, dress: p.equipped.dress,
+        name: p.name, base: p.base, hair: p.equipped.hair, dress: p.equipped.dress,
         startHair: p.startHair, startDress: p.startDress,
         order: p.order, track: p.settings.track, perLevel: p.settings.perLevel,
         stageMax: p.settings.stageMax,
@@ -105,7 +108,8 @@ function check(ok, label, detail) {
     check(r.cardText === 'A"<b>x', 'de kaart toont de naam letterlijk', String(r.cardText));
     check(!r.boldInCard, 'html in een naam wordt geen echte opmaak', 'er staat een <b> in de kaart');
     check(r.fieldValue === 'A"<b>x', 'het naamveld geeft de hele naam terug', r.fieldValue);
-    check(r.hair === 'hair_bruin' && r.dress === 'dress_blauw', 'gekozen haar en jurk worden gedragen', `${r.hair}/${r.dress}`);
+    check(r.hair === 'hair_bruin' && r.dress === 'dress_blauw', 'gekozen haar en kleren worden gedragen', `${r.hair}/${r.dress}`);
+    check(r.base === 'meisje', 'de gekozen basisfiguur wordt bewaard', String(r.base));
     check(r.startHair === 'hair_bruin' && r.startDress === 'dress_blauw', 'de startlook wordt vastgelegd', `${r.startHair}/${r.startDress}`);
     check(r.order === 0, 'de eerste ster staat vooraan', `order=${r.order}`);
     check(r.track === 'count' && r.perLevel === 5 && r.stageMax === 11, 'telmodus krijgt de hele telvoorinstelling', JSON.stringify(r));
@@ -140,6 +144,7 @@ function check(ok, label, detail) {
     await makeStar(page, { name: 'Emma' });
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
+    await page.click('#newstar-base .chip[data-v="meisje"]');
     await page.fill('#newstar-name', 'emma');
     await page.click('#newstar-go');
     await page.waitForTimeout(200);
@@ -312,7 +317,7 @@ function check(ok, label, detail) {
   /* ================= 10 · Opnieuw beginnen houdt de identiteit ================= */
   {
     const { ctx, page } = await fresh();
-    await makeStar(page, { name: 'Bruin', hair: 'hair_bruin', dress: 'dress_groen' });
+    await makeStar(page, { name: 'Bruin', base: 'jongen', hair: 'hair_bruin', dress: 'dress_groen' });
     const r = await page.evaluate(async () => {
       const k = profileKeys()[0];
       db.profiles[k].diamonds = 999;
@@ -323,16 +328,17 @@ function check(ok, label, detail) {
       document.getElementById('confirm-yes').click();
       await new Promise(r => setTimeout(r, 200));
       const p = db.profiles[k];
-      return { hair: p.equipped.hair, dress: p.equipped.dress, diamonds: p.diamonds, name: p.name };
+      return { hair: p.equipped.hair, dress: p.equipped.dress, diamonds: p.diamonds, name: p.name, base: p.base };
     });
-    check(r.hair === 'hair_bruin', 'opnieuw beginnen geeft haar eigen haar terug, niet blond', r.hair);
-    check(r.dress === 'dress_groen', 'opnieuw beginnen geeft haar eigen jurk terug', r.dress);
+    check(r.hair === 'hair_bruin', 'opnieuw beginnen geeft het eigen haar terug, niet blond', r.hair);
+    check(r.dress === 'dress_groen', 'opnieuw beginnen geeft de eigen kleren terug', r.dress);
+    check(r.base === 'jongen', 'opnieuw beginnen houdt de basisfiguur vast', String(r.base));
     check(r.diamonds === 30 && r.name === 'Bruin', 'de voortgang gaat wél weg, de naam blijft', JSON.stringify(r));
     await ctx.close();
   }
 
   /* ===== 10 · De oefening-openklapper op het maakformulier =====
-     Het formulier vroeg alleen naam/haar/jurk/modus; al het andere viel
+     Het formulier vroeg alleen naam/haar/kleren/modus; al het andere viel
      stilletjes op de standaard. Nu staat de hele Oefenen-set eronder, dicht,
      met een regel die zegt wát er nu ingesteld staat. Dat mag de snelle weg
      (openklapper niet aanraken) op geen enkele manier veranderen. */
@@ -417,6 +423,7 @@ function check(ok, label, detail) {
     check(/^fase 1–11/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
     await page.click('#ns-set-stage .chip[data-v="3"]');
     await page.waitForTimeout(150);
+    await page.click('#newstar-base .chip[data-v="jongen"]');
     await page.fill('#newstar-name', 'Fase');
     await page.click('#newstar-go');
     await page.waitForTimeout(250);
@@ -464,6 +471,113 @@ function check(ok, label, detail) {
     }));
     check(r.ops.length === 1 && r.ops[0] === '-', 'de laatste bewerking kan niet uit', JSON.stringify(r.ops));
     check(r.shake, 'de geweigerde tik schudt', `shake=${r.shake}`);
+    await ctx.close();
+  }
+
+  /* ================= 11 · Meisje of jongen =====================================
+     Eén veld op het formulier en één veld in het profiel; de rest van de app
+     (kast, looks, trofeeën) hoort er niets van te merken. Dat is precies wat
+     hier bewaakt wordt: dezelfde spullen, een andere tekening. */
+
+  // 11a · zonder keuze geen ster
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.fill('#newstar-name', 'Zonder');
+    const r = await page.evaluate(() => ({
+      disabled: document.getElementById('newstar-go').disabled,
+      chips: document.querySelectorAll('#newstar-base .chip').length,
+      gekozen: document.querySelectorAll('#newstar-base .chip.on').length,
+    }));
+    check(r.chips === 2, 'het formulier biedt twee basisfiguren', `chips=${r.chips}`);
+    check(r.gekozen === 0, 'geen enkele basis staat voorgekozen', `aan=${r.gekozen}`);
+    check(r.disabled, 'met een naam maar zonder basis blijft Klaar uit', `disabled=${r.disabled}`);
+    await ctx.close();
+  }
+
+  // 11b · een jongen wordt anders getekend, met exact dezelfde spullen
+  {
+    const { ctx, page } = await fresh();
+    // het formulier biedt alleen de START_DRESS-kleuren aan; het patroonstuk komt
+    // er hier achteraf bij, want juist een patroon moet op beide basissen kloppen
+    await makeStar(page, { name: 'Jules', base: 'jongen', hair: 'hair_zwart', dress: 'dress_blauw' });
+    const r = await page.evaluate(() => {
+      const p = db.profiles[profileKeys()[0]];
+      p.equipped.dress = 'dress_disco';
+      // avatarSVG stempelt per aanroep een uniek verloop-id (rb1, rb2, ...);
+      // zonder dat weg te halen verschilt élke twee tekeningen en zegt de
+      // vergelijking niets over de vorm
+      const kaal = t => t.replace(/rb\d+/g, 'rb');
+      const meisje = kaal(avatarSVG({ ...p, base: 'meisje' }, 132));
+      const jongen = kaal(avatarSVG(p, 132));
+      return {
+        base: p.base,
+        anders: meisje !== jongen,
+        // de vaste ankerpunten mogen niet meebewegen: schoenen, hals en armen
+        // zijn gedeelde tekencode en horen bij élke basis op dezelfde plek
+        ankersGelijk: ['<ellipse cx="86" cy="234"', '<rect x="90" y="94"', 'M84 112 Q68 132 64 157']
+          .every(a => meisje.includes(a) && jongen.includes(a)),
+        // en de kast blijft de kast: zelfde spullen, zelfde id's
+        owned: p.owned.slice().sort().join(','),
+        dress: p.equipped.dress,
+        thumbAnders: itemThumb(item('dress_disco'), 'meisje') !== itemThumb(item('dress_disco'), 'jongen'),
+      };
+    });
+    check(r.base === 'jongen', 'de gekozen jongen wordt bewaard', String(r.base));
+    check(r.anders, 'een jongen ziet er anders uit dan een meisje', 'zelfde tekening');
+    check(r.ankersGelijk, 'schoenen, hals en armen staan bij beide basissen op hun plek', 'anker verschoven');
+    check(r.dress === 'dress_disco', 'een jongen draagt gewoon hetzelfde item', String(r.dress));
+    check(r.thumbAnders, 'het miniatuur in de winkel volgt de basis', 'zelfde miniatuur');
+    await ctx.close();
+  }
+
+  // 11c · wisselen in de kleedkamer kost niets, en overleeft een herlaadbeurt
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Wissel', base: 'meisje', dress: 'dress_geel' });
+    const r = await page.evaluate(async () => {
+      const k = profileKeys()[0];
+      selectProfile(k);
+      db.profiles[k].owned.push('acc_kroon', 'pet_konijn', 'stage_kasteel');
+      db.profiles[k].trophies.push('shopper');
+      const voor = JSON.stringify({ o: db.profiles[k].owned.slice().sort(), e: db.profiles[k].equipped, t: db.profiles[k].trophies.slice() });
+      navGo('dress');
+      await new Promise(r => setTimeout(r, 150));
+      document.querySelector('#shop-tabs .tab-btn[aria-label="Jij"]').click();
+      await new Promise(r => setTimeout(r, 150));
+      const kaarten = document.querySelectorAll('#item-grid .base-card').length;
+      document.querySelector('#item-grid .base-card[data-base="jongen"]').click();
+      await new Promise(r => setTimeout(r, 150));
+      const na = JSON.stringify({ o: db.profiles[k].owned.slice().sort(), e: db.profiles[k].equipped, t: db.profiles[k].trophies.slice() });
+      return { kaarten, base: db.profiles[k].base, gelijk: voor === na, bewaard: JSON.parse(localStorage.getItem('rekenPopsterren_v1')).profiles[k].base };
+    });
+    check(r.kaarten === 2, 'de Jij-weergave toont twee kaartjes', `kaarten=${r.kaarten}`);
+    check(r.base === 'jongen', 'in de kleedkamer wisselt de basis', String(r.base));
+    check(r.gelijk, 'wisselen raakt spullen, outfit en trofeeën niet aan', 'er is iets veranderd');
+    check(r.bewaard === 'jongen', 'de nieuwe basis wordt bewaard', String(r.bewaard));
+    await ctx.close();
+  }
+
+  // 11d · een save van vóór deze versie blijft een meisje en ziet er hetzelfde uit
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const p = defaultProfile('Oud', 'dress_roze', { hair: 'hair_bruin' });
+      delete p.base;                       // precies hoe een oude save eruitziet
+      localStorage.setItem('rekenPopsterren_v1', JSON.stringify({
+        sound: true, haptics: true, schemaV: 2, profiles: { p1: p }
+      }));
+    });
+    await page.reload();
+    await page.waitForTimeout(250);
+    const r = await page.evaluate(() => {
+      const p = db.profiles.p1;
+      const kaal = t => t.replace(/rb\d+/g, 'rb');   // zie 11b: uniek verloop-id per aanroep
+      return { base: p.base, zelfde: kaal(avatarSVG(p, 132)) === kaal(avatarSVG({ ...p, base: 'meisje' }, 132)) };
+    });
+    check(r.base === 'meisje', 'een save zonder basis wordt een meisje', String(r.base));
+    check(r.zelfde, 'en wordt precies zo getekend als voorheen', 'de tekening veranderde');
     await ctx.close();
   }
 
