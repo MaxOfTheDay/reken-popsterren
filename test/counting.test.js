@@ -96,6 +96,13 @@ function check(ok, label, detail) {
             const tiles = [...document.querySelectorAll('.count-tile')].map(t => ({
               v: Number(t.dataset.v), ...tally(t),
             }));
+            // Passen de antwoordknoppen (en hun raampjes) binnen de rij? Een raam
+            // dat van zichzelf breder is dan zijn kolom duwde de rij vroeger het
+            // scherm uit: de derde knop stond dan half buiten beeld.
+            const wrap = document.querySelector('.count-tiles');
+            const spill = [...document.querySelectorAll('.count-tile')].some(t =>
+              [...t.querySelectorAll('.cgroup, .cframe, .dframe, .ct-num')].some(
+                el => el.getBoundingClientRect().width > t.clientWidth + 1));
             out.push({
               ctype: q.ctype, ans: q.ans, prompt: q.prompt, repr: q.repr, cap: q.cap,
               support: q.support, along: !!q.along, compare: q.compare || null,
@@ -105,6 +112,8 @@ function check(ok, label, detail) {
               tiles,
               spoken: window.__spoken.slice(),
               overflow: card.scrollWidth > card.clientWidth + 1,
+              tileOverflow: wrap.scrollWidth > wrap.clientWidth + 1,
+              tileSpill: spill,
             });
           }
           return out;
@@ -181,6 +190,8 @@ function check(ok, label, detail) {
           }
 
           check(!r.overflow, 'vraagkaart loopt niet over de rand', where);
+          check(!r.tileOverflow, 'antwoordknoppen blijven binnen het scherm', where);
+          check(!r.tileSpill, 'de tekening past binnen zijn antwoordknop', where);
         }
       }
     }
