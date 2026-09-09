@@ -792,14 +792,17 @@
   .cframe .cg-dot { width: 16px; height: 16px; }
   /* tienraam in een antwoordknop: écht kleinere vakjes (geen transform-schaal —
      die verkleint alleen visueel, niet de layout, waardoor 3 tegels op smalle
-     schermen buiten beeld liepen) */
-  .count-tile .cframe { gap: 2px; }
+     schermen buiten beeld liepen). De maten schalen mee met de tegel (cqw, zie
+     .count-tile): bij 3 of 4 tegels naast elkaar is één tegel maar een derde of
+     een kwart van de rij breed. De px-waarde ervoor is de bovengrens én de
+     terugval voor browsers zonder containerquery's. */
+  .count-tile .cframe { gap: 2px; gap: min(2px, 2cqw); }
   /* de mini-raampjes houden hun eigen kleine ronding: dat is de tekening van het
      reken-hulpmiddel, niet de UI-schaal -- --r-sm op een vakje van 10-15px maakt
      er een rondje van */
-  .count-tile .cframe .tf-cell { width: 15px; height: 15px; border-width: 1.5px; border-radius: 4px; }
-  .count-tile .cframe .cg-obj { font-size: 11px; }
-  .count-tile .cframe .cg-dot { width: 8px; height: 8px; }
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(15px, 17cqw); height: min(15px, 17cqw); border-width: 1.5px; border-radius: 4px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(11px, 12cqw); }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(8px, 9cqw); height: min(8px, 9cqw); }
 
   /* ---- Stippenraam (leer-aid): vijf-/tienraam met VASTE plekken ----
      Vaste vulvolgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar,
@@ -814,6 +817,16 @@
   /* kleine steunstipjes ónder een cijfer (antwoordknoppen + som-operanden) */
   .dframe.mini { column-gap: 2px; row-gap: 2px; }
   .dframe.mini .df-cell { width: 10px; height: 10px; border-radius: 3px; border-width: 1px; }
+  /* Stippenraam in een antwoordknop: net als het tienraam hierboven kleiner, en
+     meeschalend met de tegel. Zonder deze regel hield het raam zijn volle vakjes
+     van 22px: vijf naast elkaar (130px) is breder dan een tegel als er 3 of 4
+     naast elkaar staan, en dan liep de hele rij tegels buiten beeld -- de derde
+     tegel was op een telefoon half weg. De steunstipjes onder een cijfer
+     (.dframe.mini) houden hun eigen maat. */
+  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(4px, 2cqw); row-gap: min(7px, 6cqw); }
+  /* ronding in procenten i.p.v. --r-sm: het vakje is nu geen vaste 22px meer, en
+     een vaste 10px ronding maakt van een geslonken vakje een rondje */
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(20px, 18cqw); height: min(20px, 18cqw); border-radius: 45%; }
   /* op paarse knoppen: witte stippen + lichtere randjes (i.p.v. donker op wit) */
   .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
   .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
@@ -854,15 +867,22 @@
   .df-dot.xed { opacity: .5; filter: grayscale(1); position: relative; }
   .df-dot.xed::after { content: ''; position: absolute; left: -30%; right: -30%; top: calc(50% - 1.25px); height: 2.5px; background: var(--purple-shadow); transform: rotate(-15deg); border-radius: 2px; }
 
-  .count-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
-  .count-tiles.two { grid-template-columns: 1fr 1fr; }
-  .count-tiles.three { grid-template-columns: repeat(3, 1fr); }
+  /* minmax(0, 1fr) i.p.v. 1fr: een kolom mag nooit breder worden dan haar deel
+     van de rij, ook niet als de inhoud (een raampje) van zichzelf breder is --
+     anders groeit de rij tegels buiten het scherm. */
+  .count-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
+  .count-tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .count-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
     min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform .07s, box-shadow .07s;
+    /* de tegel is de maatstok voor alles wat erin staat (cqw hierboven): hoeveel
+       tegels er naast elkaar staan verschilt per vraag (2, 3 of 4), dus een
+       vw-maat zou bij 2 tegels te klein en bij 4 te groot uitvallen */
+    container-type: inline-size;
   }
   .count-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
   .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
