@@ -14,7 +14,7 @@
  * Optioneel: SAMPLES=100 voor een grotere steekproef, CHROME=/pad/naar/chrome
  * om een eigen browser te gebruiken.
  */
-const { launch, APP_URL } = require('./browser');
+const { launch, cacheFonts, APP_URL } = require('./browser');
 
 const SAMPLES = Number(process.env.SAMPLES || 40);   // vragen per fase/rung-combinatie
 
@@ -29,6 +29,7 @@ function check(ok, label, detail) {
 (async () => {
   const browser = await launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 800 } });
+  await cacheFonts(page);
   const pageErrors = [];
   page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });

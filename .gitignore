@@ -1,3 +1,6 @@
 # Alleen voor de tests; de app zelf laadt hier niets uit.
 node_modules/
 package-lock.json
+
+# Werkbeelden van test/shots.js -- vergelijkingsmateriaal, geen bronbestanden.
+shots/

@@ -13,9 +13,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* ---- Backdrop / brand gradient ---- */
-    --bg-1: #3d0a58; --bg-2: #7b2ff7; --bg-3: #f107a3;
-    --bg-glow-pink: rgba(255,120,220,.35); --bg-glow-blue: rgba(80,200,255,.28);
+    /* ---- Backdrop / brand gradient ----
+       --bg-3 was #f107a3: fel magenta, onderaan élk scherm. Dat zette de heetste
+       kleur van de app precies onder de duimen van het kind, en het maakte het
+       voetlicht van de reiskaart (.map-ground) onzichtbaar -- een warme gloed
+       heeft niets om tegen op te lichten als de ondergrond zelf al gloeit.
+
+       Nu loopt het verloop van nachtlucht (1) via violet (2) naar een warme
+       band (3) en eindigt het in een donkere vloer (4): elk scherm heeft
+       daarmee een horizon in plaats van alleen kleur. --bg-glow-warm is het
+       licht dat er net achter staat; magenta gaat terug naar de rol waar hij
+       wél werkt, een gloed in de lucht (--bg-glow-pink). ---- */
+    --bg-1: #33084c;   /* nachtlucht, bovenaan  */
+    --bg-2: #7b2ff7;   /* violet, het midden    */
+    --bg-3: #6d2a80;   /* waar het licht van onderen begint */
+    --bg-4: #3a0f48;   /* de vloer, het donkerst */
+    --bg-glow-pink: rgba(255,120,220,.30); --bg-glow-blue: rgba(80,200,255,.24);
+    --bg-glow-warm: rgba(255,164,60,.58);
 
     /* ---- Neutrals ---- */
     --c-white: #fff; --c-ink: #333;
@@ -121,16 +135,40 @@
   html, body { height: 100%; }
   body {
     font-family: "Fredoka", "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
+    /* Eén lichtrichting voor de hele app: warm van onderen, koel in de lucht.
+       De koele gloed stond hiervoor rechtsonder en vocht daar met het voetlicht;
+       hij hoort bij de verte, en de verte is boven. */
     background:
+      radial-gradient(150% 40% at 50% 99%, var(--bg-glow-warm), transparent 68%),
       radial-gradient(circle at 18% 12%, var(--bg-glow-pink), transparent 45%),
-      radial-gradient(circle at 82% 88%, var(--bg-glow-blue), transparent 48%),
-      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+      radial-gradient(circle at 86% 18%, var(--bg-glow-blue), transparent 46%),
+      linear-gradient(168deg, var(--bg-1) 0%, var(--bg-2) 42%, var(--bg-3) 76%, var(--bg-4) 100%);
     background-attachment: fixed;
     color: var(--c-white);
     overflow: hidden;
     user-select: none;
   }
-  #app { height: 100%; display: flex; flex-direction: column; }
+  /* Drie lagen boven elkaar, en de volgorde is de hele truc:
+       .grain          -- filmkorrel over het verloop (z 0, eerst in de DOM)
+       #confetti-layer -- vallende confetti      (z 0, daarna in de DOM)
+       #app            -- het spel zelf          (z 1, dus altijd bovenop)
+     Confetti viel hiervoor rechtstreeks in <body> op z-index 90 en dus vóór het
+     eindscherm langs: veertig emoji over de juichtekst heen, precies op het
+     moment dat die gelezen moet worden. Nu valt ze er altijd achter -- ook
+     tijdens een show, waar ze anders over de som heen viel. */
+  #app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+  .grain, #confetti-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  #confetti-layer { overflow: hidden; }
+  /* Korrel als ingebakken SVG-ruis i.p.v. een apart plaatje: de app heeft geen
+     bouwstap en laadt niets van buiten, dus een bestand erbij zou ook een
+     regel in sw.js en een extra aanvraag betekenen -- voor tweehonderd bytes
+     die het bandjes-effect op de grote verlopen wegnemen. stitchTiles zorgt dat
+     het naadloos herhaalt. */
+  .grain {
+    opacity: .09;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
   /* app-breed toetsenbord-focusringetje -- stond eerder alleen lokaal in het
      instellingenscherm; hier geldt hij overal, incl. het instellingen-tandwiel-
      menu (echt role="menu"/menuitem, dus ook echt met toetsenbord te bedienen) */
@@ -142,7 +180,15 @@
   /* schermen scrollen nooit zijwaarts: horizontaal scrollen gebeurt alleen
      ín de reisroute en de tabbladen zelf */
   .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden; }
-  .screen.active { display: flex; }
+  /* Schermwissels waren een harde knip. Tussen twee vlakke verlopen valt dat
+     niet op; zodra er straks getekende achtergronden staan wel. Een animatie
+     (geen transition): het element komt uit display:none, en daar loopt geen
+     transition op. Opnieuw hetzelfde scherm tonen herstart hem niet -- show()
+     haalt .active weg en zet hem in dezelfde taak terug -- dus nogmaals op
+     hetzelfde tabblad tikken geeft geen flits. */
+  .screen.active { display: flex; animation: screenIn .18s ease both; }
+  @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
 
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
@@ -370,9 +416,13 @@
       radial-gradient(circle 70px at 55% 8%, rgba(255,120,220,.30), transparent 70%);
     animation: lights 3.5s ease-in-out infinite alternate;
   }
+  /* Ademen, niet verkleuren. Hier draaide de tint in 3,5 seconden 120 graden
+     rond: op een vlak verloop viel dat weg als "disco", maar het is licht dat
+     van kleur verschiet, en zodra er een getekend podium achter staat vecht dat
+     met de geschilderde belichting. De lichtvlekken zelf blijven staan. */
   @keyframes lights {
-    from { filter: hue-rotate(0deg); opacity: .8; }
-    to   { filter: hue-rotate(120deg); opacity: 1; }
+    from { opacity: .74; }
+    to   { opacity: 1; }
   }
   .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px var(--glass-black-30); }
   .stage.tappable { cursor: pointer; }
@@ -1163,9 +1213,12 @@
      geen drop-shadow-lip. Een halte is een plek op een kaart, geen knop --
      de "tik me in" actie zit al in de losse Speel!-knop hieronder.
      Alle tegels zelfde maat, ongeacht staat -- alleen kleur/opaciteit
-     vertelt het verhaal. "Gedaan" en "nu speelbaar" delen bewust dezelfde
-     goud-tint (beide zijn gewoon tikbaar); alleen de huidige halte krijgt
-     er een puls + gloed + de Speel-knop bovenop. Op slot = ontkleurd. */
+     vertelt het verhaal. "Gedaan" en "nu speelbaar" deelden hier bewust
+     dezelfde volle goud-tint, omdat je op allebei kunt tikken. Maar op een
+     route van zes haltes zijn er dan vijf even luide gouden schijven en één
+     die net iets pulseert, en "waar speel ik nu" moet je erbij zoeken. Nu:
+     vol goud = hier spelen, gouden randje = al gedaan (dezelfde
+     "verzameld"-taal als .trophy-card.done). Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
      de reisweg erdoorheen. */
   .tour-stop .dot { position: relative; width: 70px; height: 70px; margin: 0 auto; border-radius: 50%;
@@ -1177,7 +1230,8 @@
      gewoon de bestaande "uitgeschakeld/nog niet beschikbaar"-grijstint
      hergebruiken (dezelfde tokens als vroeger de knop-variant .btn.gray) */
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); }
-  .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); }
+  .tour-stop.next .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); }
+  .tour-stop.done .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, rgba(255,214,90,.18), rgba(255,214,90,.06)), var(--purple-shadow); }
   /* pulseBtn animeert zelf al transform (scale) -- een :active transform
      zou dat gewoon overschrijven zolang de animatie loopt, dus tikfeedback
      op "next" gaat via filter (dat de animatie niet aanraakt) i.p.v. transform.
@@ -1520,8 +1574,14 @@
 
   /* ---- Level einde ---- */
   /* verticaal gecentreerd via veilige auto-marges (knipt nooit af bij overloop) */
+  /* Wit glas op 14% was net genoeg om op een vlak verloop te bestaan, maar het
+     is geen oppervlak: de gouden pil, de drie vakjes en de juichtekst zweefden
+     er meer bovenop dan erin. Nu een echt donker paneel in dezelfde taal als de
+     plakkende kop -- dat leest ook straks nog, als er licht achter staat. */
   .result-card {
-    background: var(--glass-white-14); border: 3px solid var(--glass-white-40);
+    background: rgba(32,8,54,.80);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid var(--glass-white-22); box-shadow: var(--e-2);
     border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
     width: 100%; max-width: 420px; margin: auto 0;
   }
@@ -1597,7 +1657,9 @@
     position: sticky; top: -12px; z-index: 5;
     display: flex; flex-direction: column; align-items: center;
     width: calc(100% + 24px); margin: -12px -12px 12px; padding: 12px 12px 10px;
-    background: rgba(43,7,71,.92);
+    /* was .92 -- dat is in de praktijk ondoorzichtig, en straks een balk dwars
+       door de tekening heen. Op .82 schuift de inhoud er zichtbaar onderdoor. */
+    background: rgba(43,7,71,.82);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border-bottom: 2px solid var(--glass-white-14);
     border-radius: 0 0 var(--r-lg) var(--r-lg);
@@ -2043,13 +2105,16 @@
     border: 3px solid var(--purple-light); border-radius: var(--r-sm); padding: 6px; margin: 10px 0;
   }
 
-  .confetti-bit { position: fixed; top: -40px; font-size: 26px; z-index: 90; pointer-events: none; animation: fall linear forwards; }
+  /* geen eigen z-index meer: #confetti-layer bepaalt waar de hele laag zit */
+  .confetti-bit { position: fixed; top: -40px; font-size: 26px; pointer-events: none; animation: fall linear forwards; }
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); }
   }
 </style>
 </head>
 <body>
+<div class="grain" aria-hidden="true"></div>
+<div id="confetti-layer" aria-hidden="true"></div>
 <div id="app">
 
   <!-- ===== Profielkeuze ===== -->
@@ -5825,7 +5890,7 @@ function confetti(n) {
     d.style.left = rnd(0, 96) + 'vw';
     d.style.animationDuration = (rnd(18, 34) / 10) + 's';
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
-    document.body.appendChild(d);
+    $('confetti-layer').appendChild(d);
     setTimeout(() => d.remove(), 4500);
   }
 }
@@ -7174,9 +7239,62 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act 
 load();
 renderProfiles();
 syncBackGuard();
-// Test-only inkijk in de lopende show (alleen met ?debug in de URL) -- helpt bij
-// geautomatiseerd testen; in het gewone spel niet aanwezig.
-if (location.search.indexOf('debug') !== -1) window.__game = () => G;
+/* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
+   Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
+   lopende show mee, en wie aan het uiterlijk werkt moet élk scherm kunnen zien
+   zonder eerst een half uur te spelen. In het gewone spel bestaat dit blok niet.
+
+   ?debug            -- zet de schakelaars aan
+   &demo             -- vult twee voorbeeldsterren (Lotte: rekenen, stad 6 ·
+                        Sem: tellen, stad 2). ALLEEN in het geheugen: er wordt
+                        niets opgeslagen, dus een echte familie-opslag op
+                        hetzelfde toestel blijft ongemoeid.
+   &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
+   &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
+   &screen=<naam>    -- spring meteen naar map | dress | tro | game | end       */
+if (location.search.indexOf('debug') !== -1) {
+  const dbg = new URLSearchParams(location.search);
+  window.__game = () => G;
+  window.__db = () => db;
+  if (dbg.has('demo')) {
+    // Geen save(): dit is een kijk-opstelling, geen opslag. Bij herladen wordt
+    // ze gewoon opnieuw uit de URL opgebouwd.
+    db.sound = false; db.haptics = false;
+    const a = defaultProfile('Lotte', 'dress_roze', { hair: 'hair_blond' });
+    a.order = 0; a.level = 6; a.diamonds = 240;
+    a.stars = { 1: 3, 2: 3, 3: 2, 4: 3, 5: 2 };
+    ['hair_regenboog', 'dress_disco', 'shoes_goud', 'mic_roze', 'stage_kasteel',
+     'acc_kroon', 'pet_eenhoorn', 'instr_gitaar', 'stage_ruimte', 'stage_vulkaan',
+     'dress_sterren', 'shoes_zwart', 'mic_goud'].forEach(id => a.owned.push(id));
+    a.equipped = { hair: 'hair_regenboog', dress: 'dress_disco', shoes: 'shoes_goud',
+      mic: 'mic_roze', stage: 'stage_kasteel', acc: 'acc_kroon',
+      pet: 'pet_eenhoorn', instrument: 'instr_gitaar' };
+    a.trophies = ['first', 'rookie3', 'city5', 'sums25', 'perfect1'];
+    a.readyTrophies = ['perfect3'];
+    a.goldHits = 7; a.encores = 3; a.rankSeen = 2;
+    a.stats = { correct: 180, wrong: 22 };
+    const c = defaultProfile('Sem', 'dress_blauw',
+      { hair: 'hair_bruin', base: 'jongen', track: 'count', stage: 3 });
+    c.order = 1; c.level = 2; c.diamonds = 35; c.stars = { 1: 2 };
+    c.owned.push('mic_zilver'); c.equipped.mic = 'mic_zilver';
+    c.trophies = ['first']; c.stats = { correct: 12, wrong: 4 };
+    db.profiles = { p1: a, p2: c };
+    renderProfiles();
+  }
+  const star = dbg.get('star');
+  if (star && db.profiles[star]) {
+    cur = star;
+    const forced = dbg.get('stage');
+    if (forced && item(forced)) {
+      if (!P().owned.includes(forced)) P().owned.push(forced);
+      P().equipped.stage = forced;
+    }
+    const go = { map: goMap, dress: openKleedkamer, tro: openTrophies,
+                 game: () => startLevel(P().level),
+                 end: () => { startLevel(P().level); endLevel(true); } };
+    (go[dbg.get('screen')] || goMap)();
+  }
+}
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
 }

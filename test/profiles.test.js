@@ -11,7 +11,7 @@
  * Draaien:
  *   npm run test:sterren        (of: npm test voor alle suites)
  */
-const { launch, APP_URL } = require('./browser');
+const { launch, cacheFonts, APP_URL } = require('./browser');
 
 const fails = [];
 const counts = {};
@@ -28,6 +28,7 @@ function check(ok, label, detail) {
   // Elke zaak begint met een schone opslag; anders lekt de vorige erin.
   async function fresh() {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(ctx);
     const page = await ctx.newPage();
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
     page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
