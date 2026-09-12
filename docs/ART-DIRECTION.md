@@ -720,7 +720,7 @@ static warm/cool pools, so CSS lighting and painted lighting agree on one direct
 three emoji at fixed screen corners (line 3426). They are the most obviously
 pasted-on element in the app and will look worst against paint.
 
-### 9.2 Resolve podium vs. venue — decide this first
+### 9.2 Podium vs. venue — **decided: two layers**
 
 The app sells **12 `stage` items** ("where you perform"). Section 5 proposes **3
 rank-driven venues** ("where you perform"). Two systems claiming the same thing is how a
@@ -732,11 +732,65 @@ game contradicts itself, and no amount of good art fixes it afterwards.
 | (b) Venue only in pre-show and finale | Safer, but the show screen — where the child spends most of their time — keeps its gradient rectangle. |
 | (c) Drop rank venues; promote the 12 podiums to full venues | Progression art becomes purchase-gated rather than rank-gated, and the eight-tier rank ladder stays invisible. |
 
-Under **(a)**, `applyStage()` splits in two: `applyStageCard()` — unchanged — for the
-three portrait frames, and a new riser treatment for the show and end screens that places
-the podium's colour as a **platform under the avatar's feet** and its props **at the
-avatar's feet** rather than at the screen corners. This also changes what the 12 venue
-thumbnails in Phase 3 should depict: a riser and its props, not a room.
+**Decision: option (a).** Venue is the room; podium is the riser and props in front.
+
+#### What that costs, which is more than it first looks
+
+Checking the data before writing any code turns up a problem with the naive reading of
+(a). **Every one of the 12 podiums' `bg` values is a backdrop, not a surface colour** —
+and three of them encode a literal horizon:
+
+| Item | `bg` | Reads as |
+|---|---|---|
+| `stage_strand` | `linear-gradient(#4fc3f7 62%, #ffe082 62%)` | **sky above, sand below** |
+| `stage_stadion` | `linear-gradient(#263238 34%, #43a047 34%)` | **stands above, pitch below** |
+| `stage_arena` | `radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)` | **spotlight above, ground below** |
+| the other nine | sky / space / water gradients | a backdrop |
+
+So "the podium's colour becomes the platform" destroys them: the beach's sky-and-sand
+split collapses into a meaningless two-tone disc.
+
+**The fix is additive, not a replacement.** `bg` stays exactly as it is and keeps serving
+the three **portrait** frames — a framed picture of your star *should* have a backdrop,
+which is why those uses were right all along. The two **venue** screens get a new field:
+
+```js
+// riser: [bovenvlak, rand] -- het vlak waar ze op staat, met zijn eigen dikte.
+// Hergebruikt de schaduw-lip die elke knop in de app al heeft (--btn-lip).
+{ id: 'stage_strand', …, bg: '…', riser: ['#ffe082', '#c9a227'], deco: ['🌴','🌞','🐚'] }
+```
+
+No item is lost, no purchase is devalued, and the migration is twelve new values rather
+than a rewrite. The `deco` emoji get *better* under this reading, not worse: three corner
+stickers on a card are the weakest element in the app, but 🌴 🌞 🐚 placed around a
+sand-coloured riser read as a set dressed for a beach show.
+
+#### Proposed riser values
+
+| Item | Top | Edge | Surface it reads as |
+|---|---|---|---|
+| `stage_disco` | `#7b3fa8` | `#3d1a56` | lit dance floor |
+| `stage_slaapkamer` | `#c9a5e8` | `#7a5aa0` | bedroom rug |
+| `stage_strand` | `#ffe082` | `#c9a227` | sand |
+| `stage_kasteel` | `#e6c9f0` | `#9a6fb0` | pale stone |
+| `stage_ruimte` | `#3a2a7a` | `#1a1040` | dark platform |
+| `stage_jungle` | `#4c8c3f` | `#24521c` | mossy ground |
+| `stage_stadion` | `#43a047` | `#256428` | pitch |
+| `stage_winter` | `#e9f6ff` | `#9cc4dc` | packed snow |
+| `stage_onderwater` | `#26c6da` | `#0e7d8c` | seabed |
+| `stage_regenboog` | `RAINBOW` | `#8a5bb0` | reuses the existing rainbow-gradient idiom |
+| `stage_arena` | `#8d6e4f` | `#4e3a26` | arena floor |
+| `stage_vulkaan` | `#5a2318` | `#2a0f0a` | dark rock |
+
+#### Knock-on effects to carry into the other sections
+
+1. **Phase 2 scope grows** by the 12 `riser` values and an `applyRiser()` beside
+   `applyStage()`. Still one release, slightly larger.
+2. **The venue art must stay neutral underfoot.** Any of twelve riser colours has to sit
+   on that stage floor without clashing — a green pitch on warm wood is fine, a green
+   pitch on a saturated floor is not. Briefs 1 and 2 gain this constraint.
+3. **Phase 3b's venue thumbnails change subject**: they depict *a riser and its props*,
+   not a room. That is also a much easier thumbnail to draw at 512 px than a room is.
 
 ### 9.3 Audit gold before the horizon is amber
 
@@ -901,7 +955,7 @@ cabinet looks worse than a fully emoji one.
 | | Sub-phase | Completes |
 |---|---|---|
 | **3a** | 12 city landmarks (SVG sprite) | The map is fully consistent |
-| **3b** | 12 venue thumbnails + 13 look posters | The dressing room is fully consistent |
+| **3b** | 12 riser thumbnails + 13 look posters | The dressing room is fully consistent (per §9.2 a podium thumbnail shows *a riser and its props*, not a room) |
 | **3c** | 45 trophy icons + 8 rank badges | The cabinet and the rank ladder are fully consistent |
 | **3d** | 39 pet / instrument / accessory props | Everything the avatar can hold is fully consistent |
 
@@ -1021,6 +1075,7 @@ comic line art, sketch texture; busy repeating detail; daylight or blue sky.
 | **Transparent background** | **No** |
 | **Consistency reference** | This is the **canonical asset**. Generate it first; every later asset is matched to it. |
 | **Things to avoid** | Seat rows (reads as stripes at 175 px), spotlight cones crossing centre, any faces, curtain tassels or fringe detail, gold objects (gold is the CTA's), text on any screen or banner, warm light in the bottom third |
+| **Floor constraint** | Per §9.2, the child stands on a **purchased riser** in one of twelve colours — sand, pitch green, snow white, volcanic rock. The stage floor must therefore stay a **neutral warm mid-tone**: no strong hue, no pattern, no inlay, nothing a green or white platform would clash with. |
 
 **Prompt:**
 
@@ -1062,6 +1117,7 @@ Mood: an intimate room that is full but hushed, the moment before the first note
 | **Transparent background** | No |
 | **Consistency reference** | `venue-theater.webp`. Generate these **after** it and match its value range, key angle and grain. |
 | **Things to avoid** | Changing the camera height or horizon between tiers · stage lighting that gets *cooler* as it scales up · stadium floodlights pointing at camera · any structure in the bottom 55 % |
+| **Floor constraint** | Same as Brief 1: neutral warm mid-tone underfoot, in all three tiers, so any of the twelve riser colours sits on it cleanly. |
 
 **Prompt — club (tier 1):**
 
