@@ -816,6 +816,45 @@ nothing can look partial — there is no art to be missing. And it answers the r
 open question (is the new ground right?) before a single image is generated. Best
 risk-to-reward ratio in the plan, and it ships on its own.
 
+#### What actually shipped, and where it differs from the list above
+
+Phase 0 is implemented. Four deliberate deviations, and one new finding:
+
+1. **The scrim tokens and the `.scene` class moved to Phase 1.** Nothing in Phase 0 uses
+   them, and three unused custom properties plus an unused rule is dead code. They arrive
+   with the layer that needs them.
+2. **`sw.js`'s `assets/` cache-first branch also moved to Phase 1** — it is unreachable
+   until `assets/` exists. `CACHE` was bumped to `rekenpop-v28` per the repo's convention.
+   **This is now the first line of the Phase 1 checklist**, because it is exactly the step
+   that gets forgotten.
+3. **The grain is inline SVG (`feTurbulence`), not a PNG tile.** For a single-file app with
+   no build step this is strictly better: ~200 bytes in the stylesheet, no file, no
+   service-worker entry, no request — and it keeps Phase 0 genuinely asset-free.
+   `stitchTiles='stitch'` makes it repeat seamlessly.
+4. **The gold audit was scoped to the tour map.** Splitting `.tour-stop.done` from
+   `.tour-stop.next` is the change that improves the app *today*: a route of six stops had
+   five equally loud gold discs and one that pulsed slightly, so "where do I play now" had
+   to be hunted for. Now solid gold means *play here* and a gold ring means *already done*
+   — the same "collected" language `.trophy-card.done` already uses. The other gold
+   overloads (the spotlight bar as a timer, the cabinet bar, the rank fill) are deferred
+   until there is amber art to judge them against; changing them now would be guessing.
+
+**New finding — the end screen has two sources of obstruction, not one.** The audit
+blamed `confetti(40)`; that is real and is fixed. But `renderEndStars` also fires a
+26-piece `confettiBurst` anchored to the star row. That one is a deliberate ~1 s ceremony
+emanating from the stars *on* the card, so it must stay on top and was left alone. Only
+the 4.5-second rain of forty emoji moved behind.
+
+**The fix is structural rather than a z-index tweak.** A `#confetti-layer` now sits
+between the grain and `#app`, and `#app` carries `z-index: 1`. Confetti can no longer land
+in front of anything, on any screen — including during a show, where it used to fall over
+the sum card on a golden question and on an encore.
+
+**The ground took one tuning round.** The first attempt simply removed the magenta, which
+left the bottom of every screen flatter and duller than before — calmer, but worse. The
+shipped version is a four-stop gradient (night sky → violet → warm band → dark floor) with
+a warm radial glow at `50% 99%`, so every screen has a horizon instead of just a colour.
+
 ### Phase 1 — One world · **2 images, 4 screens**
 
 **`map-horizon.webp` + `map-sky.webp` · complexity: Low · impact: High**
@@ -894,20 +933,28 @@ Pages is configured as "deploy from a branch" in repository settings — verify 
 invisible to the public.
 
 **The actual hazard is the service worker caching stale assets.** It is already handled
-for the common case: registration is guarded by `location.protocol !== 'file:'` (line
-7180).
+for the common case: registration is guarded by `location.protocol !== 'file:'`.
+
+**One measured surprise worth knowing about.** The Google Fonts `<link>` sits in the
+`<head>` before the `<script>`, and a stylesheet blocks the scripts that follow it — so it
+blocks `DOMContentLoaded` too. Measured here, **every `page.goto()` cost 12.6 seconds**,
+and `profiles.test.js` opens a fresh context per case. `test/browser.js` now caches that
+response at module level and replays it, so all four harnesses pay it once: the full
+`npm test` went from stalling past ten minutes to about fifty seconds.
 
 1. **Iterate over `file://`.** No service worker registers, relative `assets/…` URLs
    resolve normally, and it is exactly what `test/browser.js` already does.
 2. **Use `python3 -m http.server 8000` only** when testing offline behaviour or PWA
    install — and when you do, enable DevTools → Application → Service Workers →
    *Update on reload* and *Bypass for network*.
-3. **Build a contact sheet, not a screenshot.** Art is judged by comparison. A
-   `test/shots.js` + `npm run shots` that captures every screen at 390×844, 320×568 and
-   1024×768 into a gitignored `shots/` folder makes before/after diffing possible.
-4. **Add debug switches** extending the existing `?debug` convention (line 7179):
-   `?debug&venue=stadium&rank=6&stage=vulkaan`. Roughly 15 lines, and without them you
-   are grinding 60 ⭐ to look at venue tier 3.
+3. **Build a contact sheet, not a screenshot.** Art is judged by comparison.
+   **Implemented:** `npm run shots -- <label>` captures 26 screens across 390×844,
+   320×568 and 1024×768 into `shots/<label>/`, which is gitignored. Run it before and
+   after a change and diff the two folders.
+4. **Add debug switches.** **Implemented**, extending the existing `?debug` convention:
+   `?debug&demo&star=p1&stage=stage_vulkaan&screen=end`. `demo` fills two example stars
+   **in memory only** — it never calls `save()`, so a real family's data on the same
+   device is untouched. `venue` and `rank` hook in at Phase 2.
 5. **Generate into a scratch directory outside the repo; commit only the chosen file.**
    Expect 5–10 discarded versions per asset — committing them all puts ~1 MB of dead
    images in history permanently.

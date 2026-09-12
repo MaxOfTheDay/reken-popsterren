@@ -7,7 +7,8 @@
     "test": "node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js",
     "test:tellen": "node test/counting.test.js",
     "test:rekenen": "node test/maths.test.js",
-    "test:sterren": "node test/profiles.test.js"
+    "test:sterren": "node test/profiles.test.js",
+    "shots": "node test/shots.js"
   },
   "devDependencies": {
     "playwright": "^1.55.0"

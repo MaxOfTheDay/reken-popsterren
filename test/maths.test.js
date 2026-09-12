@@ -16,7 +16,7 @@
  *   npm install
  *   npm run test:rekenen       (of: npm test voor alle suites)
  */
-const { launch, APP_URL } = require('./browser');
+const { launch, cacheFonts, APP_URL } = require('./browser');
 
 const SAMPLES = Number(process.env.SAMPLES || 60);
 
@@ -39,6 +39,7 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
 (async () => {
   const browser = await launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 800 } });
+  await cacheFonts(page);
   const pageErrors = [];
   page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
