@@ -26,7 +26,8 @@ phone it is running on.**
 
 The single highest-value intervention is not "add pictures". It is: **give every screen
 a floor, a horizon and a light source, and make the venue grow as the child's rank
-grows.** Five asset families do that. Everything else can wait.
+grows.** Five asset families do that — and the first release should contain **no art at
+all** (§10, Phase 0). Everything else can wait.
 
 ---
 
@@ -679,63 +680,245 @@ weakest reward moment in the app into its strongest.
 
 ---
 
-## 9. Phased implementation plan
+## 9. Companion redesigns the art forces
 
-### Phase 1 — Maximum visual improvement
+New art does not land on a neutral app. Five existing decisions stop working the moment
+a painted surface appears behind them. These are not polish — they are prerequisites,
+and three of them must be **decided before a single image is generated.**
 
-**5 asset families · 20 files · ~330 KB · complexity: Low–Medium · impact: Very High**
+### 9.1 Split `.stage` — it is doing two unrelated jobs
 
-| Family | Files | What | Why now |
-|---|---|---|---|
-| **F1 Venue set** | 3 × WebP (1200×700) | club / theater / stadium | Turns "show" into a place; makes the rank ladder visible |
-| **F2 Tour world** | 2 × WebP (1600×600 + 1600×900) | horizon band + cloud sky | The hub is the emptiest screen in the app |
-| **F3 Crowd layer** | 1 × PNG alpha (1600×400) | silhouettes + phone lights | Binds to `updateFan()`; gives maths consequence |
-| **F4 Finale** | 1 × WebP (1080×1920) | celebration backdrop | Fixes the weakest reward moment |
-| **F5 City set** | 1 × SVG sprite (12 symbols) | landmark silhouettes | Kills the cross-platform emoji problem where it hurts most |
-| *(rider)* | `grain.png` 4 KB + `card-back` inline SVG | banding fix + memory back | Trivial, ship with the rest |
+`.stage` (line 347) is used five times, and those five uses are two different components
+wearing one class:
 
-**Implementation complexity:** `applyScene()` (~12 lines), `VENUES` table (~8 lines),
-one `.scene` CSS rule, three `:root` scrim tokens, `CITIES.art` field, `sw.js` `ASSETS`
-+ cache-first branch, `.confetti-bit` z-index. **No refactor. No new screen.**
+| Use | Line | What it actually is |
+|---|---|---|
+| Profile card | 3485 | **Portrait** — a framed photo of your star |
+| Dressing room | 2255 | **Portrait** — a framed preview of what you're trying on |
+| New-star preview | 6398 | **Portrait** — a framed preview of who you're making |
+| Show screen | 2159 | **Venue** — the place you are performing |
+| End screen | 2232 | **Venue** — the place you just performed |
 
-**Expected impact:** the three screens a child sees most — map, show, end — go from
-"floating UI on a gradient" to "a game". This is the phase that decides whether the app
-reads as premium.
+Today the distinction does not matter, because both are a gradient rectangle. It matters
+enormously once a painted theatre sits behind the show screen: a 175×147 white-bordered
+box in the middle of a venue reads as **a child standing inside a picture frame inside a
+theatre**.
 
-### Phase 2 — Build the visual world
+**The split:** the three portraits keep `border: 4px solid rgba(255,255,255,.5)` and
+`overflow: hidden` — the frame is correct there. The show and end stages **dissolve**:
+no border, no clipping, the avatar simply standing on the scene with a contact shadow.
+That shadow already exists and already works — `.tour-hero::after` (line 1206) does
+exactly this on the map, and can be lifted verbatim.
 
-**~30 files · complexity: Medium · impact: High**
+**Kill the hue-rotate.** `.stage::after` animates three radial light pools through
+`hue-rotate(0deg → 120deg)` on a 3.5 s loop (`@keyframes lights`, line 373). That is
+decorative CSS lighting, and over a backdrop lit warm-from-below it becomes a cyan pool
+sliding across a warm room every 3.5 seconds. Drop the hue-rotation everywhere and keep
+static warm/cool pools, so CSS lighting and painted lighting agree on one direction.
 
-- **12 venue item vignettes** (512²) — so the most expensive purchases look worth buying
-- **13 look posters** (768×1024) — so the save-toward goal has a picture
-- **Dressing-room scene** (1 WebP) — mirror bulbs + rail at the header edge
-- **Pre-show venue card** — new 1.2 s beat in `startLevel`, composed from F1 + F5
-- **Profile-select curtain band** (1 WebP)
-- **8 rank badges** (SVG) — replace the 94 px platform emoji in `rankUpCelebrate`
+**Drop the `.deco` corner stickers** on the dissolved stages. `applyStage()` appends
+three emoji at fixed screen corners (line 3426). They are the most obviously
+pasted-on element in the app and will look worst against paint.
 
-**Why:** Phase 1 makes the *journey* look designed; Phase 2 makes the *economy* look
-designed. Every one of these sits on a screen where the child is deciding what to spend
-diamonds on, and right now those decisions are made against emoji.
+### 9.2 Resolve podium vs. venue — decide this first
 
-### Phase 3 — Polish
+The app sells **12 `stage` items** ("where you perform"). Section 5 proposes **3
+rank-driven venues** ("where you perform"). Two systems claiming the same thing is how a
+game contradicts itself, and no amount of good art fixes it afterwards.
 
-**~90 small files · complexity: Medium-High (volume, not difficulty) · impact: Medium**
+| Option | Result |
+|---|---|
+| **(a) Two layers — recommended** | **Venue = the room** (rank-driven, painted, behind). **Podium = the riser and props you stand on** (bought, in front). Both stay true; the 150 💎 purchase becomes *more* visible, not less. |
+| (b) Venue only in pre-show and finale | Safer, but the show screen — where the child spends most of their time — keeps its gradient rectangle. |
+| (c) Drop rank venues; promote the 12 podiums to full venues | Progression art becomes purchase-gated rather than rank-gated, and the eight-tier rank ladder stays invisible. |
 
-- **45 trophy icons** (SVG set) — the biggest single set; do it as one commissioned set
-  or not at all. Half a set is worse than none.
-- **39 pet / instrument / accessory props** (SVG) — closes the UX review's open "D11"
-- **Travel wipe** (boarding pass / stamp)
-- **Screen transitions** — there are none today; a 180 ms cross-fade in `show()` costs
-  nothing and is the cheapest "premium" signal available
-- **6 confetti shapes** (SVG) — replace the 7 platform emoji, keep the physics
-- **Per-city sky tints** — one hue-rotate value per city, not new art
-- **Trophy shelf lip**
+Under **(a)**, `applyStage()` splits in two: `applyStageCard()` — unchanged — for the
+three portrait frames, and a new riser treatment for the show and end screens that places
+the podium's colour as a **platform under the avatar's feet** and its props **at the
+avatar's feet** rather than at the screen corners. This also changes what the 12 venue
+thumbnails in Phase 3 should depict: a riser and its props, not a room.
+
+### 9.3 Audit gold before the horizon is amber
+
+The existing UX review found gold carrying eleven meanings. On a flat purple field that is
+survivable. On an **amber-lit horizon it is not**: the gold road (`.tour-road-fg`, line
+1155) and the gold "done"/"next" medallions (line 1180) will sink into the light they are
+supposed to stand out from.
+
+Expect to demote the road and completed stops off gold, and to keep gold for the things
+that must never be missed: the `Speel!` pill, `.item-card.equipped`, `.gold-pill`.
+**Do this in Phase 0, before any art exists** — it is much easier to judge "does gold
+still mean one thing" against a flat ground than against a painting.
+
+### 9.4 Re-tune every glass surface
+
+Three surfaces are tuned for a flat gradient and break over paint:
+
+| Surface | Today | Problem over art |
+|---|---|---|
+| `.hub-sticky` (line 1596) | `rgba(43,7,71,.92)` + blur | At 92 % it is effectively opaque — a slab cutting the painting in half. Drop to ~.80 with a gradient-to-transparent bottom edge. |
+| `.result-card` (line 1523) | `rgba(255,255,255,.14)` | 14 % white glass over a bright amber centre is **unreadable**. Needs to become a real surface — dark, ~.55–.70, or solid. |
+| `.main-nav` (line 601) · `.dress-bar` (line 1792) | `rgba(30,4,52,.78–.86)` | Workable, but check both against the finale and venue art specifically. |
+
+### 9.5 Ground the avatar — CSS only, no redraw
+
+A flat vector doll standing on a painted, lit stage reads as pasted on. It needs a contact
+shadow and a warm rim consistent with the key light — both CSS:
+
+```css
+.avatar-holder.on-scene { filter: drop-shadow(0 0 7px rgba(255,180,61,.32)); }
+```
+
+plus the `.tour-hero::after` contact ellipse. **The avatar itself needs no changes** — it
+is parametric across 95 items and must stay that way.
+
+### 9.6 Transitions stop being optional
+
+`show()` (line 3440) toggles `display`. Cutting between two flat gradients is invisible;
+cutting between two painted scenes is jarring. A 180 ms cross-fade moves from "polish" to
+"required" the moment Phase 2 lands.
 
 ---
 
-## 10. Image-generation briefs
+## 10. Phased implementation plan
 
-## 10.1 Reken Popsterren Master Art Style Prompt
+> **Phase by completed rule, not by asset count.** An earlier draft of this plan cut the
+> phases by how many files each contained, which lands the app at "three screens rich,
+> five bare" — visibly half-finished. Each phase below instead ends on an **invariant a
+> child could not see violated.**
+
+| | Phase | Invariant it completes | New images |
+|---|---|---|---|
+| **0** | One ground | *Every* screen sits on the same, calmer ground | **0** |
+| **1** | One world | Every hub screen shares one horizon and one sky | **2** |
+| **2** | One performance | The whole show moment is one place | **5** |
+| **3** | One vocabulary | Each domain is internally consistent, domain by domain | by domain |
+| **4** | Ambient polish | — | small |
+
+### Phase 0 — One ground · **no art at all**
+
+**0 images · complexity: Low · impact: Medium, and uniform**
+
+Everything in §9 that does not depend on an image, plus the global ground change:
+
+- Demote `--bg-3` magenta; let backgrounds resolve into a warm amber-aubergine horizon
+- Add the three scrim tokens and the `.scene` class (unused for now)
+- Global grain tile (4 KB) to kill the existing 8-bit banding
+- Re-tune `.hub-sticky`, `.result-card`, `.main-nav`, `.dress-bar` (§9.4)
+- Fix `.confetti-bit`'s z-index so the end-screen headline is readable (line 2046)
+- Drop the `hue-rotate` from `@keyframes lights` (§9.1)
+- 180 ms cross-fade in `show()` (§9.6)
+- The gold audit (§9.3)
+- `sw.js`: `assets/` cache-first branch, `CACHE` → `v28`
+
+**Why this phase exists:** the whole app gets calmer and more deliberate *at once*, so
+nothing can look partial — there is no art to be missing. And it answers the riskiest
+open question (is the new ground right?) before a single image is generated. Best
+risk-to-reward ratio in the plan, and it ships on its own.
+
+### Phase 1 — One world · **2 images, 4 screens**
+
+**`map-horizon.webp` + `map-sky.webp` · complexity: Low · impact: High**
+
+The rule is **"hub screen ⇒ horizon"**, and the same two files serve all four:
+
+| Screen | Treatment |
+|---|---|
+| <span>Kaart</span> | Full — the road sits *on* the ground plane |
+| Profielkeuze | Bottom band only, behind the cards |
+| Kleedkamer | Behind the sticky header, heavily scrimmed |
+| Trofeeënkast | Faint, top edge only |
+
+Also: delete the ☁️/✈️ spans (markup 2057, 2079) and the `.map-ground` gradient stack
+(line 570). Two files, four screens changing together, and no screen in the group is left
+out — so there is nothing to read as half-done.
+
+### Phase 2 — One performance · **5 images, shipped together**
+
+**Venue ×3 + crowd + finale · complexity: Medium · impact: Very High**
+
+**These five ship as one release and must not be split.** Shipping the venue without the
+finale produces exactly the seam this phasing exists to avoid: the child performs in a
+theatre and is then handed a result card floating in a void. The show, the crowd response
+and the finale are one moment in the game loop.
+
+This phase also forces, and therefore includes:
+
+- The `.stage` split (§9.1) — show and end dissolve their frames
+- The podium-vs-venue resolution (§9.2) — **decided before generation, not after**
+- Avatar grounding (§9.5)
+- `VENUES` table + `venueFor(p)` beside `RANK_TIERS` (line 2712)
+- `--fan` wired into `updateFan()` (line 5230)
+
+Optional in the same release, nearly free once the assets exist: the pre-show venue card.
+
+### Phase 3 — One vocabulary · **by domain, never by count**
+
+**complexity: Medium · impact: High, cumulative**
+
+Each sub-phase completes one domain and leaves **no mixed set**. A half-converted trophy
+cabinet looks worse than a fully emoji one.
+
+| | Sub-phase | Completes |
+|---|---|---|
+| **3a** | 12 city landmarks (SVG sprite) | The map is fully consistent |
+| **3b** | 12 venue thumbnails + 13 look posters | The dressing room is fully consistent |
+| **3c** | 45 trophy icons + 8 rank badges | The cabinet and the rank ladder are fully consistent |
+| **3d** | 39 pet / instrument / accessory props | Everything the avatar can hold is fully consistent |
+
+Ship in that order: 3a is the cheapest and highest-visibility; 3c is the largest and
+should only start when there is appetite to finish it in one go.
+
+### Phase 4 — Ambient polish
+
+Travel wipe (boarding pass), memory card back if not already shipped as a Phase 0 rider,
+6 confetti shapes, per-city sky tints (one `hue-rotate` value each, not new art), trophy
+shelf lip.
+
+### The two seams that should never be filled
+
+Not every screen getting art is the *point*, not an omission. Two surfaces must stay
+visibly plainer, and should read as deliberate:
+
+- **The question card** and everything inside it — the one place a child reads a number.
+- **The parent area and new-star form** — a different audience, deliberately calm, and
+  already the best-designed part of the app.
+
+---
+
+## 11. Iterating safely on a branch
+
+**Publishing is already not a risk.** There is no `.github/workflows` and no `CNAME`, so
+Pages is configured as "deploy from a branch" in repository settings — verify once under
+**Settings → Pages** that it serves `main` / root, and then any `claude/…` branch is
+invisible to the public.
+
+**The actual hazard is the service worker caching stale assets.** It is already handled
+for the common case: registration is guarded by `location.protocol !== 'file:'` (line
+7180).
+
+1. **Iterate over `file://`.** No service worker registers, relative `assets/…` URLs
+   resolve normally, and it is exactly what `test/browser.js` already does.
+2. **Use `python3 -m http.server 8000` only** when testing offline behaviour or PWA
+   install — and when you do, enable DevTools → Application → Service Workers →
+   *Update on reload* and *Bypass for network*.
+3. **Build a contact sheet, not a screenshot.** Art is judged by comparison. A
+   `test/shots.js` + `npm run shots` that captures every screen at 390×844, 320×568 and
+   1024×768 into a gitignored `shots/` folder makes before/after diffing possible.
+4. **Add debug switches** extending the existing `?debug` convention (line 7179):
+   `?debug&venue=stadium&rank=6&stage=vulkaan`. Roughly 15 lines, and without them you
+   are grinding 60 ⭐ to look at venue tier 3.
+5. **Generate into a scratch directory outside the repo; commit only the chosen file.**
+   Expect 5–10 discarded versions per asset — committing them all puts ~1 MB of dead
+   images in history permanently.
+6. **For feedback from actual children without publishing:** `http.server` plus the LAN
+   IP on the same wifi. Never push to `main` to test.
+
+---
+
+## 12. Image-generation briefs
+
+## 12.1 Reken Popsterren Master Art Style Prompt
 
 > **Paste this block at the start of every Reken Popsterren image prompt.** Do not edit
 > it per asset — put asset differences in the section that follows it. Keeping this
@@ -1067,7 +1250,7 @@ around the cells.
 
 ---
 
-## 11. Recommendation
+## 13. Recommendation
 
 ### Recommended direction
 
@@ -1088,34 +1271,46 @@ tour theme" and "a game about becoming a pop star".
 The second thing I would insist on is **restraint about emoji.** There are 152 of them.
 Replacing them one at a time, in ad-hoc batches, is how an app ends up with *four*
 illustration languages instead of two. Replace them **in complete sets or not at all**:
-the 12 cities (Phase 1), the 12 venues and 8 ranks (Phase 2), the 45 trophies and 39
-props (Phase 3). A half-converted trophy cabinet looks worse than a fully emoji one.
+the 12 cities, then the 12 venues and 13 looks, then the 45 trophies and 8 ranks, then
+the 39 props — one domain per release (§10, Phase 3). A half-converted trophy cabinet
+looks worse than a fully emoji one.
 
-### Do first — the first three assets to generate
+### Do first — and the first thing is not an asset
 
-1. **`venue-theater.webp`** — the canonical asset. Generate it, drop it behind
-   `.game-arena` with `--scrim-focus` on top, and look at the show screen at 390×844 and
-   320×568. **Everything else in this plan is matched to this one image.** If the style
-   is wrong, it is wrong here first and cheapest.
-2. **`map-horizon.webp`** — the biggest perceived-quality jump per unit of work, on the
-   screen every session starts and ends on. It also proves the "anchor the floor, crop
-   the sky" positioning rule across phone and tablet aspect ratios.
+**Phase 0 is the first move: ship the global ground change with no art at all.** It makes
+the whole app calmer at once (so nothing can look partial), it forces the gold audit while
+gold is still easy to judge, and it answers the riskiest question — is the new ground
+right? — before any generation budget is spent. It also depends on one decision that
+cannot be deferred: **podium vs. venue** (§9.2), because it changes what the Phase 2 and
+Phase 3b assets depict.
+
+Then the first three images, in this order:
+
+1. **`map-horizon.webp`** (with its sky) — the biggest perceived-quality jump per unit of
+   work, on the screen every session starts and ends on. It proves the "anchor the floor,
+   crop the sky" positioning rule across phone and tablet, and it completes a whole phase
+   on its own: four hub screens, one rule, nothing left out.
+2. **`venue-theater.webp`** — the canonical asset. **Everything else in this plan is
+   matched to this one image**, so if the style is wrong it is wrong here first and
+   cheapest. Integrate it *together with* the `.stage` split (§9.1), or you are judging a
+   painted theatre with a picture frame in the middle of it.
 3. **`crowd-lights.png`** — proves the *dynamic* half of the system: one asset bound to
-   `updateFan()`, which already runs on every answer. If this feels good, the venue tiers
-   are worth building; if it does not, stop at two backgrounds and re-plan.
+   `updateFan()`, which already runs on every answer. If this feels good, the remaining
+   venue tiers and the finale are worth building; if it does not, stop and re-plan.
 
-Generate these three, integrate them, look at the app, **then** commit to the remaining
-seventeen Phase 1 files.
+Then finish Phase 2 as one release — the venue tiers and the finale together, never the
+venue alone.
 
 ### Do later
 
-- **Venue item vignettes and look posters** (Phase 2) — high value, but they only pay off
-  once the venue art exists to make the purchases meaningful.
+- **Venue item vignettes and look posters** (Phase 3b) — high value, but they only pay
+  off once the venue art exists to make the purchases meaningful, and the podium-vs-venue
+  decision (§9.2) settles what a venue thumbnail should even depict.
 - **The 45-trophy set** — genuinely valuable and genuinely a project. Do it when there is
   appetite for one commissioned set, not as a trickle.
-- **Pre-show venue card** — lovely, and nearly free *after* Briefs 1–2 and 6 exist.
-- **Screen transitions** — 180 ms cross-fade in `show()` (line 3440). Costs nothing, reads
-  as premium, but is invisible until the screens themselves are worth fading between.
+- **Pre-show venue card** — lovely, and nearly free *after* Briefs 1–2 and 6 exist; it
+  can ride along with Phase 2 rather than waiting.
+- **Pet, instrument and accessory props** — see below; last, and as one set.
 - **The 39 pet/instrument/accessory props** — the UX review's open "D11" item. Worth
   doing, worth doing last.
 
@@ -1135,34 +1330,55 @@ seventeen Phase 1 files.
 
 ### Implementation sequence
 
-1. **Prepare the ground (no art yet).** Add the three scrim tokens to `:root` (line 15),
-   add the `.scene` rule, add `applyScene()` next to `applyStage()` (line 3423), create
-   `assets/`, add the `assets/` cache-first branch to `sw.js`, bump `CACHE` to `v28`. Fix
-   `.confetti-bit`'s z-index (line 2046) so it falls behind `.result-card`. **Ship this —
-   it is an improvement on its own and it de-risks everything after it.**
-2. **Generate `venue-theater.webp`** using the Master Art Style Prompt + Brief 1.
-3. **Review it against the contract** before integrating: safe zone empty? bottom 55 %
-   low contrast? no text, no faces, no gold objects? survives a 55 % scrim?
-4. **Integrate it** behind `.game-arena` and **validate in the real app** at 390×844,
-   320×568 and 1024×768 — and specifically check that `@media (max-height: 700px)`
-   shrinks the *art*, not the sum.
-5. **Decide.** If the show screen now feels like a show, the style is locked. If not,
-   regenerate from step 2 — one asset in, not nine.
-6. **Generate `map-horizon.webp` + `map-sky.webp`** (Brief 3), matched to the locked
-   style. Integrate, delete the `☁️`/`✈️` emoji spans from `#screen-map` (markup 2079)
-   and the `.map-ground` gradient stack (line 570). Validate at all three viewports plus
-   a horizontal scroll of the tour.
-7. **Generate `crowd-lights.png`** (Brief 4). Wire `--fan` in `updateFan()` (line 5230).
-   Validate by playing a full 8-question show and watching the crowd fill.
-8. **Generate the two venue siblings** (Brief 2), matched to `venue-theater.webp`. Add
-   the `VENUES` table beside `RANK_TIERS` (line 2712) and `venueFor(p)`. Validate by
-   forcing each rank tier in the console.
-9. **Generate `cities.svg`** (Brief 6) as one sheet, trace to twelve symbols, add
-   `CITIES[].art` (line 2525) keeping `flag` as fallback. Validate every medallion at
-   58 px, 70 px and 90 px, and the 30 px `.city-mark` on profile cards.
-10. **Generate `finale.webp`** (Brief 5). Validate that the headline, three stars, three
-    earn chips, the milestone pill and both buttons all read over it — this screen has the
-    most stacked UI of any in the app.
-11. **Measure.** Total added bytes ≤ 400 KB; first paint on the map unchanged; every
-    asset in `sw.js` `ASSETS`; app still fully playable offline after one visit; all three
-    viewports clean. **Then** open Phase 2.
+Grouped by the phases in §10, so every stopping point is a coherent app.
+
+**Phase 0 — ship before generating anything.**
+
+1. **Decide podium vs. venue** (§9.2). This changes what Phase 2 and 3b depict, so it
+   cannot be decided after the art exists. Recommended: two layers.
+2. **Do the no-art work** — magenta demotion, scrim tokens + `.scene`, grain tile, glass
+   re-tune, confetti z-index, drop the `hue-rotate`, cross-fade in `show()`, the gold
+   audit, `sw.js` cache-first + `CACHE` → `v28`.
+3. **Set up the loop** (§11) — `test/shots.js`, the `?debug&venue=…&rank=…` switches, and
+   a scratch directory outside the repo for discarded generations.
+4. **Ship Phase 0 and look at it.** The whole app should read calmer and more deliberate,
+   uniformly, with no art anywhere. If the new ground is wrong, you have spent no
+   generation budget finding out.
+
+**Phase 1 — two files, four screens.**
+
+5. **Generate `map-horizon.webp` + `map-sky.webp`** (Brief 3). Review against the
+   contract *before* integrating: safe zone empty? survives a 55 % scrim? nothing within
+   12 % of the left/right edges?
+6. **Apply to all four hub screens at once**, delete the ☁️/✈️ spans and the
+   `.map-ground` stack, and validate at 390×844, 320×568 and 1024×768 plus a horizontal
+   scroll of the tour. **Ship.** The rule "hub screen ⇒ horizon" is now complete.
+
+**Phase 2 — five files, one release.**
+
+7. **Generate `venue-theater.webp`** (Brief 1) — the canonical asset. If the style is
+   wrong, it is wrong here first and cheapest. Integrate behind `.game-arena` **together
+   with the `.stage` split** (§9.1), and check that the low-height media query shrinks the
+   *art*, not the sum.
+8. **Decide.** If the show screen now feels like a show, the style is locked. If not,
+   regenerate from step 7 — one asset in, not five.
+9. **Generate the remaining four** — `venue-club`, `venue-stadium` (Brief 2),
+   `crowd-lights.png` (Brief 4), `finale.webp` (Brief 5) — all matched to the locked
+   theatre. Wire `VENUES` / `venueFor(p)` and `--fan` in `updateFan()`.
+10. **Validate the whole moment end to end**: play a full eight-question show at each rank
+    tier (forced via the debug switches), watch the crowd fill, and check that the
+    headline, three stars, three earn chips, milestone pill and both buttons all read over
+    the finale. **Ship all five together** — never the venue without the finale.
+
+**Phase 3 — one domain at a time.**
+
+11. **Generate `cities.svg`** (Brief 6) as one sheet, trace to twelve symbols, add
+    `CITIES[].art` with `flag` as fallback. Validate every medallion at 58, 70 and 90 px
+    and the 30 px mark on profile cards. Ship — the map is now internally consistent.
+12. **Then 3b, 3c, 3d** in that order, each shipped only when its domain is complete.
+
+**Throughout.**
+
+13. **Measure.** Added bytes ≤ 400 KB through Phase 2 · first paint on the map unchanged ·
+    every asset listed in `sw.js` · still fully playable offline after one visit · all
+    three viewports clean.
