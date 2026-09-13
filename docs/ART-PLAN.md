@@ -98,6 +98,13 @@ objects. No people other than featureless crowd silhouettes.
 aubergine for the theatre, midnight blue for the stadium. The rest stays word for word,
 and that repetition is what holds the set together.
 
+Two prompt prefixes exist and they are not rivals. The three blocks above are the short
+one, written for a chat-style OpenAI request, and it is the one to use day to day. The
+long `MASTER ART STYLE` block in `ART-DIRECTION.md` §12.1 says the same thing with the
+edge cases spelled out; reach for it only when a generation keeps drifting and you need
+to argue with it in more words. Both were updated together — if you ever find them
+disagreeing, §12.1 is canonical.
+
 ### Next two prompts, ready to use
 
 **`map-horizon`** — size `1536x1024`
@@ -139,6 +146,13 @@ No sky colour, no gradient, no ground, no text, no logos.
 
 The black background is deliberate: it composites with `mix-blend-mode: screen`, so
 black disappears and no cut-out step is needed.
+
+### The prompts after these
+
+Club, stadium, finale and the city set are written out in full in `ART-DIRECTION.md`
+§12, Briefs 2, 5 and 6 — kept in one place rather than copied here, because the last
+time prompts lived in two places they drifted apart without anyone noticing. Club and
+stadium already carry their own room hue and their own top-third beams.
 
 ---
 

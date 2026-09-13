@@ -1,5 +1,5 @@
 # Reken Popsterren — Visual Asset & Art Direction Audit
-## Art Direction **V2**
+## Art Direction **V2**, amended by **V3** (§3.15)
 
 > **Scope:** an audit and an executable plan. **No application code is changed by this
 > document.** Every line number below points at `index.html` as of
@@ -380,8 +380,14 @@ And one specific consequence worth stating as a number, because it is easy to ge
 > **The environment behind gameplay must read darker than the answer tiles.** Those tiles
 > are mid-violet (`#8e5fd6` → `#5e35b1`). A venue floor painted in `--bg-2` violet
 > (`#7b2ff7`) sits at almost the same value, and four answer tiles would sink into it.
-> Behind the gameplay area, keep the environment in the **`--bg-1` / `--bg-4` deep
-> aubergine register** (`#33084c`–`#3a0f48`), not the violet one.
+> Behind the gameplay area, keep the environment **as dark as the `--bg-1` / `--bg-4`
+> register** (`#33084c`–`#3a0f48`).
+>
+> **V3 amendment (§3.15):** this is a *value* rule, not a hue rule. It originally read
+> "keep it in the deep aubergine register, not the violet one", which quietly locked
+> every scene to one colour and cost the venue tiers their distinctness. Midnight blue
+> or ember red at the same luminance satisfies it exactly as well as aubergine does.
+> Vary the hue freely; do not vary the value.
 
 Ordinary gameplay artwork should stay calmer and darker than the white maths surfaces,
 the gold reward elements, the cyan selection state, and the avatar's own clothing. The
@@ -397,9 +403,15 @@ it is what will make images generated weeks apart look related. But the target i
 pools · restrained cool accents · simple bloom around actual emitters · a lighting
 direction a child could point at.
 
-**Avoid:** complex volumetric lighting · huge cinematic beams · reflections everywhere ·
-glossy speculars · photographic lens effects · excessive bloom · any light effect
-crossing an important UI area.
+**Avoid:** complex volumetric lighting · god-rays · reflections everywhere · glossy
+speculars · photographic lens effects · excessive bloom · any light effect crossing an
+important UI area.
+
+**V3 amendment (§3.15):** "huge cinematic beams" used to head that list, which also
+ruled out the two or three soft beams V3 now asks for in the top third. The distinction
+is simulation, not presence: a flat stylised beam-shape high in the frame is wanted; a
+volumetric god-ray is not. The last clause above still governs — no beam reaches down
+into the play area.
 
 > Lighting exists to make simple shapes feel magical. It does not exist to make the
 > environment feel real.
@@ -503,6 +515,45 @@ The blend to aim for is roughly:
 > theatrical lighting and atmosphere.**
 
 Reversing that ratio produces exactly the cinematic concept art V2 exists to avoid.
+
+### 3.15 Art Direction V3 — the amendments
+
+V2 set the shape discipline, and that part has held: every image generated against it
+has been simple enough to survive a thumbnail. What it got wrong was **mood**, in three
+related ways. V3 changes only these three things. Everything else in §3 stands.
+
+| V2 said | V3 says | Why |
+|---|---|---|
+| "Deep aubergine and violet environments" as a fixed palette | **The light is the constant; the room's hue is the variable.** Club violet, theatre aubergine, stadium midnight blue | A fixed hue makes club, theatre and stadium the same room at three sizes, so arriving at the stadium — the payoff of the whole rank ladder — reads as nothing happening. What unifies a set of stage pictures is the key light, not the wall colour, and the key light is already fixed. It also sat badly beside the twelve bright podiums the game sells (`stage_strand` sky-blue, `stage_winter` near-white, `stage_regenboog` a rainbow): a child shops in one world and plays in another. |
+| "Keep it calm and on the dark side" | **Bright and alive along the top; deep and quiet along the bottom** | "Calm" is a legibility constraint on the *lower half*, where the sum and the four answer tiles sit. V2 applied it to the whole frame, which paid for legibility twice and spent the mood doing it. The top half is reserved for nothing, so energy there is free. |
+| "Calm, magical, premium" | **The second before the music starts** | "Premium" is a word for a parent reading a store listing. The audience is six. The target is anticipation, not serenity. |
+
+And one structural fault, separate from the three: **V2's style spec was almost entirely
+prohibitions** — no outlines, no photoreal, no 3D, no text, no faces, no gold, no
+ornament. A generator given only prohibitions returns something competent and inert. V3
+adds one positive instruction (two or three soft beams and a little drifting sparkle,
+top third only) and a third acceptance question that tests for *appeal* rather than for
+failure.
+
+**What V3 amends elsewhere in this document:**
+
+- **§3.7** — the "keep it in the deep aubergine register, not the violet one" constraint
+  is restated as a **value** rule. Any hue at that luminance passes.
+- **§3.8** — "huge cinematic beams" is narrowed to **god-rays**. Flat stylised beam
+  shapes high in the frame are wanted; the no-light-across-UI clause still governs.
+- **§12.1** — the master prompt gains a `LIGHT GRADIENT` block, a per-scene hue in
+  `COLOUR`, and narrowed wording on the two prohibitions that forbade beams and sparkle
+  outright.
+- **§12.3** — a third acceptance question: *would a six-year-old want to be in there?*
+  Merely tasteful is a fail.
+- **Brief 2** — club and stadium prompts carry their own room hue.
+
+`venue-theater.webp`, generated under V2, **passes V3 unchanged** — a theatre is warm
+aubergine either way. No rework.
+
+**Deferred, not adopted:** rank 0 is called `Straatartiest`. The first venue could be a
+street corner at dusk rather than a club — one lamp, small, humble — which would make
+the climb land harder. It costs a fourth venue image. Decide after the first three ship.
 
 ---
 
@@ -1261,6 +1312,13 @@ response at module level and replays it, so all four harnesses pay it once: the 
 > large simple shapes* — under a paragraph of rendering vocabulary that read to a
 > generator as "make detailed concept art". Shape discipline now comes first, rendering
 > second, and the prohibitions are grouped rather than listed flat.
+>
+> **V3 note (§3.15):** three amendments. The room's hue is now a per-scene variable
+> rather than a fixed aubergine; the constant is the *light*. A `LIGHT GRADIENT` block
+> was added, because bright-top/dark-bottom is what buys the legibility the old flat
+> "keep it calm and dark" was paying for with mood. And two prohibitions were narrowed:
+> the ban on beams meant god-rays, and the ban on sparkle meant scattered ornament —
+> as written, both also forbade the thing V3 asks for.
 
 ```
 REKEN POPSTERREN — MASTER ART STYLE
@@ -1274,15 +1332,23 @@ painted theatre flats. Aggressive simplification: a handful of big shapes instea
 of many small ones. It must still read at the size of a phone thumbnail.
 
 THEN LIGHT. Enrich those flat shapes with soft painted gradients and stylised
-theatrical lighting: one clear low warm amber key, deep violet and aubergine
-ambient shadow, a few selective warm pools like venue practical lights, and one
+theatrical lighting: one clear low warm amber key, deep ambient shadow in the
+room's own hue, a few selective warm pools like venue practical lights, and one
 restrained cool accent far away. Simple soft bloom around actual light sources
-only. Light makes the simple shapes feel magical; it does not make them real.
+only. High in the frame, two or three soft flat beams may cross the air and a
+little fine sparkle may drift in it. Light makes the simple shapes feel magical;
+it does not make them real.
 
-COLOUR. Deep aubergine and violet environments, kept calm and on the dark side.
-Warm amber appears as light, never as gold-coloured objects. Magenta only as a
-faint glow in the air, never as a field. Leave the loudest saturation to the
-game's own interface.
+LIGHT GRADIENT. Brightest and most alive across the top of the frame, sinking
+into deep, smooth, almost empty shadow across the bottom. The lower half of every
+image is quiet. This is how a lit stage actually looks, and it is not optional.
+
+COLOUR. Deep, saturated environments on the dark side. The room's hue changes
+from scene to scene — deep violet, warm aubergine, midnight blue, ember red —
+but always at the same deep value, so every scene stays darker than the
+interface that sits on top of it. Warm amber appears as light, never as
+gold-coloured objects. Magenta only as a faint glow in the air, never as a
+field. Leave the loudest saturation to the game's own interface.
 
 DEPTH. A small number of clearly separated layers — usually a distance, a
 midground and a foreground — only as many as the scene actually needs. Calm
@@ -1296,16 +1362,17 @@ NOT: realistic architecture, ornate mouldings, individual seat rows, tiny
 windows, realistic foliage, intricate props, material realism, high-frequency
 texture or any detail that only pays off when zoomed in.
 NOT: photorealism, 3D rendering, pseudo-3D, glossy plastic, specular highlights,
-lens flare, heavy bloom, volumetric light beams, cinematic concept-art
-complexity.
+lens flare, heavy bloom, volumetric god-rays, cinematic concept-art complexity.
+(The soft flat beams high in the frame are stylised shapes, not simulated light.)
 NOT: flat generic vector clip-art, preschool corporate-flat illustration, heavy
 black outlines, comic line art, sketch texture.
 NOT: text, letters, numbers, signage, logos, watermarks, UI elements, buttons,
 frames or borders.
 NOT: human faces, hands or identifiable people, or any generated protagonist
 character.
-NOT: decorative stars, sparkles, microphones or music notes scattered as
-ornament.
+NOT: decorative stars, microphones or music notes scattered as ornament across
+the frame. (Fine sparkle drifting high in the air is lighting and is wanted;
+ornament strewn over the whole image is not.)
 ```
 
 ---
@@ -1409,12 +1476,19 @@ the *style*.
 - Does it reinforce the pop-star / touring / performance fantasy, or could it belong to
   any charming children's game?
 - Is theatrical light enriching the shapes, rather than being an effect for its own sake?
+- **Would a six-year-old want to be in there?** *(V3, §3.15.)* Every other question on
+  this page detects failure. This one detects appeal, and nothing else does. Merely
+  tasteful is a fail.
 
 **Deference to the game**
 
 - Is the UI still visually stronger than the environment?
 - Are gold, cyan and white still owned by gameplay and rewards, not by the artwork?
 - Behind gameplay, is the environment darker than the mid-violet answer tiles?
+  *(A value test, not a hue test — §3.15.)*
+- Is the top of the frame livelier than the bottom? *(V3: bright top, quiet bottom.)*
+- Does it sit in the same world as its sibling venues without being the same colour
+  as them?
 - Would the asset still work under its intended CSS scrim?
 
 **The diagnostic**
@@ -1496,7 +1570,7 @@ balcony arc, the curtains and the crowd mass alone should still read as a theatr
 | **Aspect ratio / Resolution** | 12:7 · 1200×700 (`@2400`) |
 | **Transparent background** | No |
 | **Consistency reference** | `venue-theater.webp`. Generate these **after** it and match its value range, key angle and grain. |
-| **Things to avoid** | Changing the camera height between tiers · stage lighting that gets *cooler* as it scales up · floodlights pointing at camera · any structure in the bottom 55 % · **adding detail to convey scale** · realistic stadium architecture, girders, gantries or seat rows |
+| **Things to avoid** | Changing the camera height between tiers · stage lighting that gets *cooler* as it scales up (the **key** stays warm amber in every tier; only the room's ambient hue varies — §3.15) · floodlights pointing at camera · any structure in the bottom 55 % · **adding detail to convey scale** · realistic stadium architecture, girders, gantries or seat rows |
 | **Floor constraint** | Same as Brief 1: neutral warm mid-tone underfoot, in all three tiers, so any of the twelve riser colours sits on it cleanly. |
 
 **Prompt — club (tier 1):**
@@ -1506,23 +1580,29 @@ balcony arc, the curtains and the crowd mass alone should still read as a theatr
 
 Subject: a simplified illustrated small music club, built from a few large rounded
 shapes, seen straight on from the front of a low stage looking out into the room.
+This room is deep violet.
 
 Build it from these shapes and nothing else: one narrow stage floor whose upstage half
-catches a broad warm amber pool and whose front edge falls away into deep aubergine
+catches a broad warm amber pool and whose front edge falls away into deep violet
 shadow toward the bottom of the frame, so that the bottom of the image is the darkest
 part of the whole picture; one close, low, softly rounded back wall a short
-distance behind the audience; one small crowd rendered as a single flat deep-aubergine
+distance behind the audience; one small crowd rendered as a single flat deep-violet
 silhouette mass of rounded shoulders and smooth featureless oval heads standing close
 together; two small warm glowing practical lamps; and one low ceiling shape crossing the
 top edge as a soft dark band. No other objects at all. The room feels small because the
 shapes are close and the ceiling is low, not because anything has been furnished.
 
+Under that ceiling band only, in the top third of the frame: two soft flat beams of
+warm light crossing the air, and a little fine sparkle drifting in it. Nothing of this
+reaches below the middle of the image.
+
 Composition requirement: the entire lower 55% of the image must stay almost empty,
 smooth, dark and very low contrast — an unbroken calm field with no shapes, edges or
 highlights. Keep the top-centre area quiet as well.
 
-Mood: small, warm, close, the first gig. Match the value range, key-light angle and
-grain of the theatre image exactly.
+Mood: small, warm, close, the first gig. Match the theatre image's value range,
+key-light angle and grain exactly. The hue is the one thing that differs: this room is
+violet where the theatre is aubergine, at the same depth of value.
 ```
 
 **Prompt — stadium (tier 3):**
@@ -1531,17 +1611,21 @@ grain of the theatre image exactly.
 [MASTER ART STYLE]
 
 Subject: a simplified illustrated stadium, built from a few enormous rounded shapes,
-seen straight on from the front of the stage looking out into the bowl.
+seen straight on from the front of the stage looking out into the bowl. This room is
+midnight blue.
 
 Build it from these shapes and nothing else: one broad stage floor whose upstage half
-catches a wide warm amber pool and whose front edge falls away into deep aubergine
+catches a wide warm amber pool and whose front edge falls away into deep midnight-blue
 shadow toward the bottom of the frame, so that the bottom of the image is the darkest
 part of the whole picture; one single enormous smooth curved bowl rising beyond
-it in deep aubergine, far away and soft, with no tiers, girders or seat detail drawn
+it in deep midnight blue, far away and soft, with no tiers, girders or seat detail drawn
 into it; one simplified band of distant crowd reading as a soft sea of tiny warm points
-along that curve; two or three large simple light shapes; and an open dusk sky above the
-rim in aubergine and violet with one cool cyan note near the horizon. No other objects
-at all.
+along that curve; two or three large simple light shapes; and an open night sky above the
+rim in midnight blue with one cool cyan note near the horizon. No other objects at all.
+
+High above the rim, in the top third of the frame: three soft flat beams of warm light
+sweeping up into that sky, and a little fine sparkle drifting in the air. Nothing of
+this reaches below the middle of the image.
 
 The stadium must feel vast purely because its shapes are enormous and simple — do not
 add extra detail, structure or objects to convey scale.
@@ -1550,8 +1634,10 @@ Composition requirement: the entire lower 55% of the image must stay almost empt
 smooth, dark and very low contrast — an unbroken calm field with no shapes, edges or
 highlights. Keep the top-centre area quiet as well.
 
-Mood: enormous, awestruck, but still warm and calm rather than harsh. Match the value
-range, key-light angle and grain of the theatre image exactly.
+Mood: enormous, awestruck, but still warm and calm rather than harsh. Match the theatre
+image's value range, key-light angle and grain exactly. The hue is the one thing that
+differs: this room is midnight blue where the theatre is aubergine, at the same depth of
+value.
 ```
 
 ---
