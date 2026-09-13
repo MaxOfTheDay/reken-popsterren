@@ -60,6 +60,11 @@ Only these. Everything else in the app stays CSS or emoji for now.
 
 Budget: **≤ 120 KB per image**, ≤ 400 KB for 2+3 together.
 
+`map-horizon` does **not** need to be tileable — it never scrolls, so it has one framing
+to get right. `map-sky` does move (6 % parallax against the map's 822 px of scroll on a
+phone), and the CSS gives it 16 % of slack to drift into; measured, so it needs no extra
+width from you beyond the sizes above. Details in `ART-DIRECTION.md` Brief 3.
+
 ---
 
 ## 3. Generating with an OpenAI model
@@ -226,6 +231,10 @@ one self-contained file holding the entire game plus a drop zone, and it works o
 - **Size buttons** — Telefoon 390×844, Klein 320×568, Tablet 768×1024, Venster. The game
   is a phone game first; judging it at desktop width judges a size almost no child uses,
   and the cramped size is where a sum stops being readable over the art.
+- **⇄ Scrollen** sweeps the map sideways and the screen down, then returns. The map
+  scrolls 822 px on a phone and the sky parallaxes with it; standing still you see none
+  of that, and that is where the faults are — a cloud plate pulling its edge into view,
+  or a piece of art that only emerges from under the city medallions once you scroll.
 
 **Which screens actually get art:** `venue-…` covers the show screen, `finale` the end
 screen, and `map-horizon` all four hub screens at once — map, star picker, dressing room

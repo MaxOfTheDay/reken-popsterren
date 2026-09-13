@@ -103,7 +103,14 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
        Alleen op de schermen die al een .map-sky-inner hébben (kaart en
        sterkeuze). De kleedkamer en de trofeeën hebben die laag niet; die
        erbij maken is werk in index.html, geen werk van de proefopstelling. */
+    /* right:-16% geeft de parallax speling. updateParallax schuift deze laag
+       -scrollLeft * 0.06 naar links; op een telefoon van 390 is de kaart 822
+       breed te scrollen, dus 49px. Zonder speling loopt de rechterrand van de
+       wolkenplaat 49px (13% van het scherm) naar binnen en is daar geen lucht
+       meer. .map-sky eromheen heeft overflow:hidden, dus het overschot wordt
+       netjes afgesneden. */
     out.push(`#screen-map .map-sky-inner,#screen-profile .map-sky-inner{
+  right:-16%;
   background-image:url("${urls.sky}");background-size:cover;background-position:50% 0;
   mix-blend-mode:screen}
 #screen-map .map-sky-inner > span,#screen-profile .map-sky-inner > span{display:none!important}`);
