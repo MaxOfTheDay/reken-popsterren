@@ -9,7 +9,8 @@
     "test:rekenen": "node test/maths.test.js",
     "test:sterren": "node test/profiles.test.js",
     "shots": "node test/shots.js",
-    "try": "node test/try.js"
+    "try": "node test/try.js",
+    "preview": "node test/preview.js"
   },
   "devDependencies": {
     "playwright": "^1.55.0"
