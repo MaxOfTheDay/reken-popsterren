@@ -13,17 +13,34 @@ in a light pool, no panel behind her).
 **Simple structure, rich light.** Build each scene from 5–8 big rounded shapes, then let
 the lighting carry the richness. Detail belongs in the light, not in the objects.
 
-- **Room:** deep violet / aubergine. **Light:** warm amber, low, from the stage.
-- **Crowd:** flat silhouettes, rounded heads, no faces, no detail.
-- **Soft painted gradients**, no outlines, no photoreal, no 3D, no visible texture.
-- **Lower 45–55 % of the frame stays calm and dark** — the sum and answer tiles go there.
-- **Never any text, letters, numbers, signage or logos.**
-- Gold and cyan belong to the UI. Artwork may contain amber *light*, never gold *objects*.
+**Constant** — this is what makes the set a set:
 
-Two checks before accepting anything:
+- **The light.** Warm amber, low, coming from the stage toward the viewer.
+- **The gradient of energy.** Bright and alive along the top, deep and quiet along the
+  bottom. That is simply how a lit stage looks, and it hands us the legibility for free.
+- **Soft painted gradients.** No outlines, no photoreal, no 3D, no visible texture.
+- **Crowd:** flat silhouettes, rounded heads, no faces, no detail.
+- **Never any text**, letters, numbers, signage or logos.
+- Gold and cyan belong to the UI. Artwork may carry amber *light*, never gold *objects*.
+
+**Variable** — this is what keeps a dozen scenes from looking like one room:
+
+- **The room's hue.** Club deep violet, theatre warm aubergine, stadium midnight blue.
+  Same lighting logic, different room. Locking every image to one aubergine would make
+  arriving at the stadium feel like nothing happened — and would sit oddly beside the
+  twelve bright podiums the game already sells (Strandfeest, Winterwonderland,
+  Regenboogland).
+
+The feeling to aim for is **the second before the music starts**. Not calm, not noisy:
+something is about to happen. Put that in the top third, where nothing competes with it
+— two or three soft beams crossing the air, a little drifting sparkle. It costs no
+legibility, because everything below is reserved anyway.
+
+Three checks before accepting anything:
 
 1. **At 180 px wide, is it still good?** If it falls apart, it is too detailed.
 2. **Is the bottom half quiet enough to read a sum on?**
+3. **Would a six-year-old want to be in there?** Merely tasteful is a fail.
 
 ---
 
@@ -64,16 +81,22 @@ Same three blocks every time, so the set stays consistent:
 
 ```
 STYLE — Children's game illustration, simple 2D shapes with soft painted gradients.
-Big rounded forms, few of them. Deep violet and aubergine room, warm amber stage
-light, soft glow around the lights. Calm, magical, premium. Clearly illustrated,
-not photorealistic, not 3D, no outlines.
+Big rounded forms, few of them. A <ROOM HUE> room lit by warm amber stage light from
+below, soft glow around the lights. Bright and alive along the top of the frame, deep
+and quiet along the bottom. The excited moment just before the music starts. Clearly
+illustrated, not photorealistic, not 3D, no outlines.
 
-SCENE — <the 5–8 shapes, named in order, and nothing else>
+SCENE — <the 5–8 shapes, named in order, and nothing else>. Then, in the upper
+third only: <two or three soft light beams, a little drifting sparkle>.
 
 RULES — Keep the lower half of the image dark, smooth and almost empty. No text,
 no letters, no numbers, no signage, no logos, no watermarks. No faces. No gold
 objects. No people other than featureless crowd silhouettes.
 ```
+
+`<ROOM HUE>` is the one thing that changes per image — deep violet for the club, warm
+aubergine for the theatre, midnight blue for the stadium. The rest stays word for word,
+and that repetition is what holds the set together.
 
 ### Next two prompts, ready to use
 
@@ -81,20 +104,22 @@ objects. No people other than featureless crowd silhouettes.
 
 ```
 STYLE — Children's game illustration, simple 2D shapes with soft painted gradients.
-Big rounded forms, few of them. Deep violet and aubergine, warm amber light, soft
-glow. Calm, magical, premium. Clearly illustrated, not photorealistic, not 3D, no
-outlines.
+Big rounded forms, few of them. Deep violet air over warm amber light, soft glow.
+Bright and alive along the top of the frame, deep and quiet along the bottom. The
+excited moment just before the music starts. Clearly illustrated, not photorealistic,
+not 3D, no outlines.
 
-SCENE — A wide, calm, almost empty dusk landscape. Two or three broad rounded hills
-in deep aubergine, layered one behind the other across the frame, each a single
-smooth shape with no texture on it. A broad warm amber glow lies along the whole
-horizon line, as if a huge stage were lit just beyond the hills. Above it, deep
-violet air. Nothing else at all — no buildings, no roads, no trees, no sun or moon,
-nothing standing on the ground.
+SCENE — A wide, almost empty dusk landscape. Two or three broad rounded hills in
+deep aubergine, layered one behind the other across the frame, each a single smooth
+shape with no texture on it. A broad warm amber glow lies along the whole horizon
+line, as if a huge stage were lit just beyond the hills, and it lifts up into the
+violet air above. High in that air, a scatter of tiny soft drifting sparkles. Nothing
+else at all — no buildings, no roads, no trees, no sun or moon, nothing standing on
+the ground.
 
 RULES — Keep the lower half dark, smooth and almost empty, and keep the middle of
-the image plain. The upper half is flat empty violet. No text, no letters, no
-signage, no logos. No people. No gold objects.
+the image plain. No text, no letters, no signage, no logos. No people. No gold
+objects.
 ```
 
 **`map-sky`** — size `1536x1024`
@@ -135,6 +160,11 @@ Venue is chosen by rank, not by purchase:
 
 The podium stays a purchase; you see it on four screens out of five, just not underneath
 the sums. No data changes, no renames.
+
+Worth considering later, not now: rank 0 is called **Straatartiest**, so the first venue
+could be a street corner at dusk rather than a club — small, humble, one lamp. It would
+make the climb to the stadium land harder. Costs one more image; decide after the first
+three are in.
 
 ---
 
