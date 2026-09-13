@@ -169,8 +169,18 @@ RULES — The background is flat pure black (#000000) everywhere the clouds are 
 No sky colour, no gradient, no ground, no text, no logos.
 ```
 
-The black background is deliberate: it composites with `mix-blend-mode: screen`, so
-black disappears and no cut-out step is needed.
+The black background is deliberate, but not because of a blend trick — it is simply the
+easiest thing to ask a generator for. **The proefstudio converts that black into an alpha
+channel on import** (darker pixel → more transparent), so what you save is an ordinary
+transparent WebP.
+
+The original plan was `mix-blend-mode: screen`, which would have made black vanish for
+free. It does not work here: `#app` carries `position: relative; z-index: 1`
+(`index.html:159`, added in Phase 0 so it sits above the grain and confetti layers) and
+that creates a stacking context. The body gradient is painted **outside** it, so there is
+nothing inside `#app` for the sky to blend with and the black stayed black — a black bar
+across the top of the map. Baking the alpha at import removes the dependency on stacking
+contexts altogether.
 
 ### The prompts after these
 

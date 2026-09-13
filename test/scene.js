@@ -22,18 +22,23 @@ function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].to
 const SLOTS = {
   venue:   { match: /(^venue[-_]|theat|club|stadion|stadium|zaal)/i, screen: 'game',
              label: 'Zaal',       waar: 'achter de show',
+             lever: [1200, 700], anker: 'midden', canoniek: 'venue-theater.webp',
              hint: 'venue-theater.webp, venue-club.webp, venue-stadium.webp' },
   horizon: { match: /^map[-_]?horizon|^kaart[-_]?horizon/i,          screen: 'map',
-             label: 'Landschap',  waar: 'kaart en sterkeuze',
+             label: 'Landschap',  waar: 'de kaart',
+             lever: [1536, 576], anker: 'onder', canoniek: 'map-horizon.webp',
              hint: 'map-horizon.webp' },
   sky:     { match: /^map[-_]?sky|^kaart[-_]?lucht/i,                screen: 'map',
-             label: 'Wolken',     waar: 'kaart en sterkeuze',
+             label: 'Wolken',     waar: 'de kaart',
+             lever: [1536, 864], anker: 'midden', canoniek: 'map-sky.webp',
              hint: 'map-sky.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
              hint: 'landing.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
              label: 'Slotscherm', waar: 'na de show',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'finale.webp',
              hint: 'finale.webp' },
 };
 
@@ -120,11 +125,16 @@ function css(urls, opts) {
     out.push(`${HUBS.join(',')}{position:relative}
 ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
   background-image:${veil}url("${urls.horizon}");
-  background-size:${scrim ? 'cover,' : ''}auto 46%;
+  /* auto 32% en niet 46%: de hoogte bepaalt de maat, want de grond is een band
+     onderaan. Op 46% werd een bron van 1536x576 uitgerekt tot 1035 px breed op
+     een scherm van 390 -- 2,7x vergroot, dus je keek naar een uitsnede in plaats
+     van naar de tekening. 32% geeft 270 px hoog, ongeveer de hoogte die
+     .map-ground altijd had, en het schaalt netjes mee op een tablet. */
+  background-size:${scrim ? 'cover,' : ''}auto 32%;
   background-position:${scrim ? '50% 100%,' : ''}calc(50% - var(--horizon-x,0px)) 100%;
   background-repeat:${scrim ? 'no-repeat,' : ''}repeat-x;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 46%,#000 70%);
-  mask-image:linear-gradient(to bottom,transparent 46%,#000 70%)}
+  -webkit-mask-image:linear-gradient(to bottom,transparent 60%,#000 80%);
+  mask-image:linear-gradient(to bottom,transparent 60%,#000 80%)}
 #screen-map .map-ground{display:none!important}`);
   }
 
@@ -141,14 +151,27 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
        met 16% speling, maar dat is een getal dat op de huidige kaartlengte is
        afgestemd en bij een langere kaart gewoon weer stukgaat.
        Nu herhaalt de plaat en schuift de achtergrond in plaats van het element.
-       Dan is er geen rand om tegenaan te lopen, hoe ver je ook schuift. */
+       Dan is er geen rand om tegenaan te lopen, hoe ver je ook schuift.
+
+       GEEN mix-blend-mode meer. Dat was het plan -- zwart verdwijnt met screen,
+       dus uitknippen hoeft niet -- maar het werkt hier niet: #app heeft
+       position:relative met z-index:1 (index.html regel 159, uit fase 0, om
+       boven de korrel- en confettilaag te staan) en dat maakt een eigen
+       stapelcontext. De verlooplaag van body staat daarbuiten, dus er is
+       binnen #app niets om mee te mengen en het zwart blijft gewoon zwart --
+       een zwarte balk bovenaan de kaart.
+       De proefstudio bakt het zwart daarom bij het inlezen om naar
+       doorzichtigheid. Wat je bewaart is een gewone WebP met alfa, en er is
+       geen enkele afhankelijkheid van stapelcontexten meer. */
     out.push(`#screen-map .map-sky-inner{
   transform:none!important;
   background-image:url("${urls.sky}");
-  background-size:auto 100%;
+  /* auto 34%: een lucht hoort bovenin, niet over het hele scherm. Op 100% werd
+     een bron van 1536x864 op een telefoon 1500 px breed -- 3,8x vergroot, en je
+     zag 26% van de plaat als drie enorme banden dwars over de kaart. */
+  background-size:auto 34%;
   background-position:calc(50% - var(--sky-x,0px)) 0;
-  background-repeat:repeat-x;
-  mix-blend-mode:screen}
+  background-repeat:repeat-x}
 #screen-map .map-sky-inner > span{display:none!important}`);
   }
 
