@@ -925,7 +925,7 @@ wearing one class:
 | Dressing room | 2255 | **Portrait** — a framed preview of what you're trying on |
 | New-star preview | 6398 | **Portrait** — a framed preview of who you're making |
 | Show screen | 2159 | **Venue** — the place you are performing |
-| End screen | 2232 | **Venue** — the place you just performed |
+| End screen | 2232 | **Portrait** — a result card, a photo of your star after the show *(revised: see §9.2 — this one keeps its frame)* |
 
 Today the distinction does not matter, because both are a gradient rectangle. It matters
 enormously once a painted theatre sits behind the show screen: a 175×147 white-bordered
@@ -969,153 +969,41 @@ game contradicts itself, and no amount of good art fixes it afterwards.
 | (b) Venue only in pre-show and finale | Safer, but the show screen — where the child spends most of their time — keeps its gradient rectangle. |
 | (c) Drop rank venues; promote the 12 podiums to full venues | Progression art becomes purchase-gated rather than rank-gated, and the eight-tier rank ladder stays invisible. |
 
-**Decision: two layers.** Venue is the room; the podium is the thing she brings into it.
+**Decision: the venue owns the show screen; the podium owns the framed moments.**
 
-**Refined after seeing it running.** The first version of this decision said the podium
-becomes *a riser under her feet*. Rendering all three treatments against the real theatre
-(`shots/podium-opties/`) showed that is the weakest of them, and there is a much better
-answer hiding in the data.
+Six treatments were rendered against the real theatre (`shots/podium-opties/`). Five fail,
+each for a concrete and separate reason, and the reasons are worth keeping because they
+rule out whole families of future ideas.
 
-#### The podium is a stage flat she takes on tour
+| | Treatment | Why it fails |
+|---|---|---|
+| B | A panel or arch behind her | **Two independent clashes.** *Shape:* every venue in the plan is built on one big curve — the theatre's balcony arc, the club's low rounded ceiling, the stadium's bowl — so a second arc competes with all three by design. *Value:* measured, **8 of the 12 podiums are brighter than the answer tiles** (Winterwonderland 86 %, Strandfeest 78 %, Regenboogland 76 % against the tiles' 36 %). Most would be the brightest large mass on the screen, breaking §3.7's own rule. |
+| C | A riser under her feet | Identity lost — "Sprookjeskasteel" becomes an anonymous lilac plank. |
+| D | Props at her feet | Five objects in one zone: the pet and instrument are already drawn there. |
+| G | Props at the upper corners | They float. The dressing room's card is what anchors them; remove it and there is nothing to be at the corner *of*. |
+| I | The podium as coloured stage light | **Invisible.** Rendered at the two extremes — Winter (86 %, icy) and Vulkaan (34 %, lava) — the screens are near-identical. The venue is already lit; a tint on top does not register. This is the **third** failure of "tint the scene", after the floor pool and the light washes. Treat that family as closed. |
 
-In touring, the act brings its own set and stands it on the house stage. That is exactly
-the relationship we need — and it is the relationship the existing data already describes.
+#### What survives: the podium leaves the gameplay screen
 
-| Treatment | What it looked like |
-|---|---|
-| **A — frame dissolves entirely** | The 90 💎 purchase simply disappears from the show. Worse, the flat SVG avatar half-vanishes into the painted crowd behind her. |
-| **B — the podium becomes a stage flat** | ✅ The purchase is plainly visible, the venue is plainly visible, and the flat gives the avatar a clean field to read against. |
-| **C — the podium becomes a riser** | A pale slab that reads as *a step*. "Sprookjeskasteel" becomes an anonymous lilac platform; the identity is gone. |
-| **D — the podium becomes props at her feet** | Rejected on three counts — see below. The instinct behind it is sound, and the fix belongs inside B. |
+The show screen is the one place where a purchased backdrop cannot win — it is the only
+screen with a venue behind, maths in front, and no room between. Everywhere else it works
+already.
 
-#### Why "just add props to the avatar" fails, and what it teaches
+| Screen | Podium | Why |
+|---|---|---|
+| **Show** | **Gone.** `.show-stage` dissolves completely — no frame, no background, no props. | The venue owns it. §10's "empty space is allowed" applies literally here. |
+| **End screen** | **Keeps its frame, background and props — unchanged.** | **This revises §9.1.** The end screen is a *result card*: a portrait of your star after the show, like a photo pinned to the celebration. A frame is correct on a portrait, which is exactly why the other three portrait uses were always right. Only the show screen was ever the problem. |
+| Dressing room · profile card · new star | Unchanged | Already correct. |
+| Pre-show card *(Phase 2, optional)* | **Full-bleed backdrop** | The arrival beat has no maths and no UI over it — the one moment a purchased backdrop can be shown at full size with nothing competing. |
 
-It is the natural next idea: drop the panel entirely and let the podium be its three
-objects, placed around her. Rendered (`shots/podium-opties/D-alleen-spullen.png`,
-`F-licht-en-spullen.png`), it loses on three counts:
+So the podium is visible on **four screens out of five**, including the reward moment, and
+absent only from the one screen where it cannot coexist with the art. The child sees what
+they bought when they choose their star, when they dress her, when they arrive, and when
+they take their bow.
 
-1. ~~**It does not solve the legibility problem.**~~ **Overstated — corrected.** Rendering
-   the props at the *upper corners* instead (`G1-hoeken-geen-vlak.png`) shows the avatar
-   reads perfectly well against the painted crowd on her own: she is a light figure with a
-   warm CSS rim, against a darker crowd band. "She sinks into the crowd" was too strong a
-   claim about treatment A. Legibility is **not** an argument for the flat.
-2. **Emoji on a painting read as stickers.** On today's flat gradient the three `deco`
-   emoji get away with it. Against a lit, painted venue they are exactly the V2 failure
-   mode — a 👑 at 26 px beside a rendered theatre looks pasted on.
-3. **Her feet are already occupied** — *if* the props go at her feet. `avatarSVG` draws the pet at `x=18, y=240` and the
-   instrument at `x=120, y=246` in a 200×250 viewBox — *both at her feet, flanking her*.
-   Add three podium props and there are **five objects piled into one small zone**. This
-   is a durable constraint: **the area around the avatar's feet is spoken for**, and no
-   future "set dressing" idea may put things there.
-
-A tinted light pool on the floor (derived for free: the brightest colour in each podium's
-gradient is already its stage-light colour — sand `#ffe082` for the beach, pitch `#43a047`
-for the stadium, lava `#ff6f00` for the volcano) was tested alongside. **It is invisible**:
-the venue is already lit, so a tint in the same place does not register. Worth remembering
-before anyone proposes it again.
-
-#### G — the props at the upper corners, no panel at all
-
-The natural refinement: keep the `deco` emoji exactly where the dressing room puts them —
-upper-left and upper-right — and drop the background entirely. This **does** fix the feet
-collision, and it leaves the painted venue completely unobstructed, which is a real gain.
-
-Rendered (`G1-hoeken-geen-vlak.png`, `G2-hoeken-met-gloed.png`), it fails on one thing
-only, but decisively: **the emoji float.** The castle hangs in mid-air over the auditorium;
-the crown comes to rest among the audience, reading as though it is sitting on someone's
-head. A soft glow (G2) does not rescue it.
-
-The reason is instructive. In the dressing room those same emoji work **because the card
-anchors them** — they are at the corners of a visible object. Remove the object and there
-is nothing for them to be at the corners *of*. Anchoring is exactly the job the flat does.
-
-#### H — no podium on the show screen at all
-
-The strongest version of the same instinct: drop the podium from the show screen entirely —
-no panel, no props — and let the venue own it alone. It is the cleanest option, it honours
-"empty space is allowed", and the purchase stays visible in the dressing room, the profile
-card, the new-star preview, and the end screen if that keeps its framed-portrait treatment.
-
-**The cost is semantic, and it is not small.** The twelve items stop meaning *where you
-perform* and start meaning *how your star is presented* — a wardrobe backdrop rather than a
-stage. The category is called **Podium** and its trophy is **Podiumbouwer**; both would be
-lying. Choosing H means renaming the category and the trophy, which touches save-visible
-strings.
-
-**But the instinct is right about one thing**, and it is worth acting on: B's panel, as
-first drawn, has rounded corners and an inset white stroke, so it reads a little like a UI
-card — the picture-frame problem in a new costume. The fix is inside B, not instead of it:
-square the bottom corners, drop the inset stroke, and give it a contact shadow where it
-meets the stage, so it reads as **a physical flat standing on the floor** rather than a
-panel floating over it.
-
-**Why B is also the cheap answer.** §9.2 originally treated the twelve `bg` values as a
-*problem* — they are backdrops, not surface colours, and three of them encode a literal
-horizon. As a riser fill that is a defect requiring twelve new values. **As a stage flat
-it is exactly right**: a flat *is* a painted backdrop, so `stage_strand`'s sky-over-sand
-split reads as a beach flat rather than as a meaningless two-tone disc.
-
-> **No new data. No migration. `bg` and `deco` are used exactly as they already are.**
-> The twelve proposed `riser` values in the table below are **no longer needed** — kept
-> only as a record of the path not taken.
-
-**And it fixes a legibility problem rather than creating one.** In treatment A the avatar
-competes with the painted crowd directly behind her. The flat restores the contrast she
-needs, without a CSS hack.
-
-#### What it takes
-
-`applyStage()` is **unchanged**, and so are the three portrait frames — a framed picture
-of your star should have a backdrop, which is why those uses were always right. Only the
-two venue screens change, and only in CSS:
-
-```css
-/* .show-stage / .end-stage stop being a picture frame and become a stage flat.
-   applyStage() still sets the background inline, so everything here is inset
-   shadows — they layer over whatever gradient the child bought. */
-#show-stage {
-  border: none;                      /* the white frame goes */
-  overflow: visible;                 /* she stands in front of it, not inside it */
-  width: 186px; height: 142px;       /* smaller than today's 253×214 */
-  border-radius: 92px 92px 2px 2px;  /* an arch, not a card — see below */
-  box-shadow:
-    inset 0  -9px 0      rgba(0,0,0,.24),   /* the batten it stands on */
-    inset 0 -46px 38px -30px rgba(0,0,0,.55),/* light falls off toward the floor */
-    inset 0   3px 0      rgba(255,255,255,.20), /* top edge catches the house light */
-    0 10px 18px rgba(0,0,0,.42);            /* cast shadow */
-}
-#show-stage::after { display: none; }        /* the animated light pools go (§9.1) */
-#show-stage::before {                        /* contact shadow where it meets the stage */
-  content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
-  width: 212px; height: 20px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(ellipse, rgba(0,0,0,.60), transparent 72%); filter: blur(4px);
-}
-#show-stage .avatar-holder { height: 136%; } /* she overflows above the arch */
-/* the three props follow the arch instead of a rectangle's corners */
-#show-stage .deco:nth-of-type(1) { top: 30%; left: 13%; }
-#show-stage .deco:nth-of-type(2) { top: 25%; right: 12%; }
-#show-stage .deco:nth-of-type(3) { bottom: 9px; right: 10%; }
-```
-
-**Why an arch and not a rectangle.** Squaring the base, dropping the inset stroke and
-adding a contact shadow fixed most of the card-iness, but a plain rounded rectangle still
-read as a panel. An arched top settles it: it stops looking like UI entirely, and **the
-avatar's head breaks the arch line**, which is what sells "standing in front of" rather
-than "contained within". Rendered at all three viewports
-(`shots/podium-opties/B4-boog-definitief*`); at 320×568 the sum and all four tiles stay in
-frame with headroom to spare, and the existing `@media (max-height: 700px)` rule will
-shrink the art further — the art losing height rather than the maths, exactly as §4.3
-requires.
-
-The three `deco` emoji stay where `applyStage` already puts them — inside the flat, which
-is a better home than the screen corners they occupy today. They remain emoji until Phase
-3b replaces them.
-
-#### Still open, and now visible
-
-- **The crowd meter** (§9.1) floats loose once the frame changes shape. Same release.
-- **The flat's own art** is Phase 3b: twelve painted flats replacing twelve CSS gradients,
-  drawn as *stage flats with props*, which is a far easier 512 px thumbnail than a room.
+**Cost:** none in data, none in migration, and — unlike the earlier H sketch — **no rename**.
+"Podium" still means the set she performs on; it is simply seen at the start and the end
+rather than underneath the sums. Only one screen changes, and the change is a deletion.
 
 #### Knock-on effects to carry into the other sections
 
