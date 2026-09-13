@@ -208,6 +208,35 @@ Later, in whole sets only: dressing-room scene, look posters, trophy icons, prop
 
 ## 6. Trying an asset out
 
+### What you need on your machine
+
+**Node.js, and a terminal. That is the whole list** — no VS Code, no editor at all, no
+`npm install`.
+
+```
+git clone https://github.com/MaxOfTheDay/reken-popsterren
+cd reken-popsterren
+git checkout claude/reken-popsterren-asset-audit-k9xtsv
+node test/preview.js
+```
+
+Then open the address it prints. `npm run preview` does exactly the same thing; `npm` is
+just spelling `node test/preview.js` differently.
+
+The preview server uses only Node's own built-in modules, so it runs against a bare Node
+install with no dependencies fetched at all — verified by running it in a folder holding
+nothing but `index.html` and the two scripts. `npm install` buys you exactly one thing:
+`npm run try`, which drives a headless browser through Playwright (a few hundred MB). If
+you only ever want to look at the app, you never need it.
+
+Dropping images in `incoming/` is a normal folder operation — Finder, Explorer, drag and
+drop. Nothing needs to be "imported".
+
+An editor is worth having only when you want to read or change code. If you already like
+VS Code, its built-in terminal saves you a window; that is the entire benefit here.
+
+### The mechanism
+
 You generate somewhere else, then drop the file here. Nothing to configure, nothing to
 import, and nothing lands in the app until you decide it should.
 
