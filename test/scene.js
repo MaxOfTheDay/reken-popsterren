@@ -30,6 +30,9 @@ const SLOTS = {
              hint: 'finale.webp' },
 };
 
+// De vier schermen die samen "de wereld" zijn (plan, stap 2).
+const HUBS = ['#screen-map', '#screen-profile', '#screen-dress', '#screen-trophies'];
+
 const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg',
                '.jpeg': 'image/jpeg', '.avif': 'image/avif', '.gif': 'image/gif' };
 
@@ -83,8 +86,12 @@ function css(urls, opts) {
   }
 
   if (urls.horizon) {
-    out.push(`#screen-map{position:relative}
-#screen-map::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    /* Alle vier de hubschermen, niet alleen de kaart: stap 2 van het plan zet
+       de wereld onder de kaart, de sterkeuze, de kleedkamer én de trofeeën.
+       Alleen de kaart doen laat je een halve conversie beoordelen -- precies
+       het "sommige schermen wel, sommige niet" waar het plan voor waarschuwt. */
+    out.push(`${HUBS.join(',')}{position:relative}
+${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
   background-image:${veil}url("${urls.horizon}");background-size:cover,cover;background-position:50% 100%,50% 100%}
 #screen-map .map-ground{display:none!important}`);
   }
@@ -92,11 +99,14 @@ function css(urls, opts) {
   if (urls.sky) {
     /* Zwarte achtergrond + screen: zwart verdwijnt, dus de wolken hoeven niet
        uitgeknipt te worden. De emoji-wolken eronder gaan uit, anders drijven er
-       twee luchten door elkaar. */
-    out.push(`#screen-map .map-sky-inner{
+       twee luchten door elkaar.
+       Alleen op de schermen die al een .map-sky-inner hébben (kaart en
+       sterkeuze). De kleedkamer en de trofeeën hebben die laag niet; die
+       erbij maken is werk in index.html, geen werk van de proefopstelling. */
+    out.push(`#screen-map .map-sky-inner,#screen-profile .map-sky-inner{
   background-image:url("${urls.sky}");background-size:cover;background-position:50% 0;
   mix-blend-mode:screen}
-#screen-map .map-sky-inner > span{display:none!important}`);
+#screen-map .map-sky-inner > span,#screen-profile .map-sky-inner > span{display:none!important}`);
   }
 
   if (urls.finale) {

@@ -223,6 +223,16 @@ one self-contained file holding the entire game plus a drop zone, and it works o
   (off = what the scrim is doing for you).
 - Buttons jump between map, show, end, dressing room and trophies without reloading, so
   your dropped image stays put.
+- **Size buttons** — Telefoon 390×844, Klein 320×568, Tablet 768×1024, Venster. The game
+  is a phone game first; judging it at desktop width judges a size almost no child uses,
+  and the cramped size is where a sum stops being readable over the art.
+
+**Which screens actually get art:** `venue-…` covers the show screen, `finale` the end
+screen, and `map-horizon` all four hub screens at once — map, star picker, dressing room
+and trophies — because that is what step 2 ships, and previewing only the map would let
+you approve a half-converted app. `map-sky` covers the two screens that have a sky layer
+(map and star picker); giving one to the dressing room and trophies is markup work in
+`index.html`, not preview work.
 - Drop a different image on the same slot to swap it. Nothing is saved, nothing is
   uploaded, and `index.html` is never touched.
 
