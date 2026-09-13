@@ -234,7 +234,7 @@
 </section>
 
 <section id="assets">
-  <div class="sec-head"><h2>The eight assets</h2><p>In generation order. The theatre is the reference every later one is matched to. If you only ever add two images to this game, make them the theatre and the landing screen.</p></div>
+  <div class="sec-head"><h2>The assets</h2><p>In generation order. The theatre is the reference every later one is matched to. If you only ever add two images to this game, make them the theatre and the landing screen. Card 04 is there to be skipped &mdash; it explains why.</p></div>
   <div id="cards"></div>
 </section>
 
@@ -420,9 +420,9 @@ both sides, so the join cannot be seen.`,
     checks: 'It <b>must tile</b> left-to-right &mdash; it now drifts 148&nbsp;px across a full map scroll and repeats. This costs nothing extra: the safe-zone rule already keeps the outer 12% empty, and empty edges are what makes a repeat invisible.'
   },
   {
-    n: 4, file: 'map-sky.webp', status: 'over', label: 'style override',
+    n: 4, file: 'map-sky.webp', status: 'later', label: 'dropped — read this first',
     size: '1536×1024', crop: '1536×864', deliver: '1536×864', hue: 'black ground',
-    where: 'The drifting cloud layer on the tour map, replacing the cloud emoji. Ask for a solid black background — far easier for a generator than real transparency — and the proefstudio turns that black into transparency when you drop the file in. What you save is an ordinary WebP with an alpha channel.',
+    where: '<b>Do not generate this one.</b> Rendered side by side, the map with and without a cloud layer is indistinguishable — and when the clouds are made strong enough to see, they read as brown smudges on the violet rather than as sky. A soft warm haze rising off the horizon, done in CSS, does more for the upper half and costs no image at all. The card stays here because the drop tool still accepts one if you want to try; the evidence says it will not repay the effort.',
     master: `STYLE — A children's game illustration. Soft painted gradients, simple rounded
 shapes, no outlines, not photorealistic, not 3D.
 
@@ -447,7 +447,7 @@ a completely flat, even black field with no sky colour, no gradient, no vignette
 ground. Distant, weightless, barely there.`,
     dont: `DO NOT INCLUDE — No text, letters, numbers, signage or logos. No ground, horizon or
 landscape. No stars, birds, sun or moon. No people. No gold objects. No frame or border.`,
-    checks: 'The black must be <b>really black</b>. It becomes the transparency, so a near-black background turns into a grey film over the whole map instead of disappearing. It also <b>tiles</b>, so no cloud may touch the left or right edge.'
+    checks: 'If you try one anyway: the clouds must be <b>lighter than the violet sky</b>, or alpha compositing darkens them into stains. The original spec said "dusty violet", which is darker than the sky — that was written for a screen blend that turned out not to work.'
   },
   {
     n: 5, file: 'venue-club.webp', status: 'later', label: 'make with 5',

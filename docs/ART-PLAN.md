@@ -53,7 +53,7 @@ Only these. Everything else in the app stays CSS or emoji for now.
 | 1 | `venue-theater` | 1536×1024 | 1536×896 | 1200×700 WebP | ✅ done |
 | 2 | `landing` | 1024×1536 | — | 1024×1536 WebP | **next** |
 | 3 | `map-horizon` | 1536×1024 | bottom 1536×576 | 1536×576 WebP | after 2 |
-| 4 | `map-sky` | 1536×1024 | 1536×864 | 1536×864 WebP | with 3 |
+| ~~4~~ | ~~`map-sky`~~ | — | — | — | **dropped, see below** |
 | 5 | `venue-club` | 1536×1024 | 1536×896 | 1200×700 WebP | with 6 |
 | 6 | `venue-stadium` | 1536×1024 | 1536×896 | 1200×700 WebP | with 5 |
 | 7 | `finale` | 1024×1536 | — | 1024×1536 WebP | with 5+6 |
@@ -73,7 +73,19 @@ softness and buys nothing.
 
 Budget: **≤ 120 KB per image**, ≤ 400 KB for 2+3 together.
 
-**Both map images must tile left-to-right.** They now drift with the map as it scrolls —
+**`map-sky` is dropped.** Rendered side by side, the map with and without a cloud layer
+is indistinguishable. Made strong enough to see, the clouds read as brown smudges on the
+violet instead of as sky — because alpha compositing *darkens*, while the original spec
+("dusty violet") was written for a screen blend that turned out not to work at all. It
+was also the most fragile asset in the set: black background, alpha baking, parallax
+slack, tiling. Most machinery, least return.
+
+What the upper half actually wanted was **light, not objects** — the style doc's own rule.
+`scene.js` now paints a soft warm haze rising off the horizon into the violet: one
+gradient, no image, and it does visibly more than the cloud plate did. The seven drifting
+`☁️`/`✈️` emoji stay where they are and keep providing the motion for free.
+
+**The horizon must tile left-to-right.** They now drift with the map as it scrolls —
 the horizon at 18 %, the sky at 6 % — and repeat, so there is no edge to run out of at
 any scroll distance. This asks nothing extra of you: the safe-zone rule already keeps the
 outer 12 % of each image empty, and empty edges are exactly what makes a repeat

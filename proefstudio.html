@@ -7562,17 +7562,25 @@ function css(urls, opts) {
        het "sommige schermen wel, sommige niet" waar het plan voor waarschuwt. */
     out.push(`${HUBS.join(',')}{position:relative}
 ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
-  background-image:${veil}url("${urls.horizon}");
+  /* Een warme nevel die vanaf de horizonlijn de violette lucht in trekt. Dit is
+     wat de bovenhelft nodig heeft: licht, geen voorwerpen -- precies de regel
+     uit het stijldocument. Kost geen beeld, alleen een verloop, en doet
+     zichtbaar meer dan de wolkenplaat deed. */
+  background-image:${veil}radial-gradient(120% 52% at 50% 78%, rgba(255,164,60,.30), rgba(255,120,200,.10) 45%, transparent 72%),url("${urls.horizon}");
   /* auto 32% en niet 46%: de hoogte bepaalt de maat, want de grond is een band
      onderaan. Op 46% werd een bron van 1536x576 uitgerekt tot 1035 px breed op
      een scherm van 390 -- 2,7x vergroot, dus je keek naar een uitsnede in plaats
      van naar de tekening. 32% geeft 270 px hoog, ongeveer de hoogte die
      .map-ground altijd had, en het schaalt netjes mee op een tablet. */
-  background-size:${scrim ? 'cover,' : ''}auto 32%;
-  background-position:${scrim ? '50% 100%,' : ''}calc(50% - var(--horizon-x,0px)) 100%;
-  background-repeat:${scrim ? 'no-repeat,' : ''}repeat-x;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 60%,#000 80%);
-  mask-image:linear-gradient(to bottom,transparent 60%,#000 80%)}
+  background-size:${scrim ? 'cover,' : ''}cover,auto 32%;
+  background-position:${scrim ? '50% 100%,' : ''}50% 100%,calc(50% - var(--horizon-x,0px)) 100%;
+  background-repeat:${scrim ? 'no-repeat,' : ''}no-repeat,repeat-x;
+  /* Lange, zachte overgang. De tekening begint op 68% (32% hoog, onderaan
+     verankerd) en een korte vervaging liet daar de bovenrand van de plaat zien
+     als een kaarsrechte streep dwars over de kaart. Nu loopt het masker van 52%
+     tot 92%, dus de rand zit middenin de vervaging en is niet meer te zien. */
+  -webkit-mask-image:linear-gradient(to bottom,transparent 52%,rgba(0,0,0,.55) 72%,#000 92%);
+  mask-image:linear-gradient(to bottom,transparent 52%,rgba(0,0,0,.55) 72%,#000 92%)}
 #screen-map .map-ground{display:none!important}`);
   }
 
