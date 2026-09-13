@@ -1066,6 +1066,46 @@ rather than underneath the sums. Only one screen changes, and the change is a de
 3. **Phase 3b's venue thumbnails change subject**: they depict *a riser and its props*,
    not a room. That is also a much easier thumbnail to draw at 512 px than a room is.
 
+### 9.2b Podium as a riser — rendered, and it reverses an earlier rejection
+
+**The real problem was never "where does the podium go".** Every other shop category
+decorates the *doll*: hair, dress, shoes, mic, instrument, accessory, pet. The podium is
+the only one that decorates the *world*. So when the venue takes the world, the category
+loses its job — that, and not screen placement, is what needs solving.
+
+**Answer: the podium becomes the riser she stands on.** An object inside the venue, not a
+backdrop behind it. Built in CSS from the item's existing `bg` gradient, so there is no
+new asset, no new data and no rename — `applyStage` stops painting a 253×214 box and
+paints a 132×26 slab instead.
+
+Rendered against `venue-theater.webp` at 390 px, four themes:
+
+| | Result |
+|---|---|
+| No riser | She floats. The pet and the guitar that `avatarSVG` already draws at her feet stand on nothing. |
+| Disco (`#1a0533`, the free starter) | **Invisible.** The slab dissolves into the dark venue floor. |
+| Winterwonderland (`#e1f5fe`, the brightest in the shop) | Reads cleanly, grounds her, no competition with the answer tiles. |
+| Vulkaan | Reads well, sits naturally in the amber pool. |
+
+**This reverses §9.2's measurement-based rejection.** That pass measured 8 of 12 podiums
+brighter than the mid-violet answer tiles and concluded the podium could not appear behind
+gameplay. True — *of a full-screen field*. At 132×26 px a bright podium is a focal point,
+not a competing surface, and the brightest item in the shop turned out to be the best of
+the four. The failure runs the other way: **dark podiums vanish.** Fixed with a warm rim
+(`0 0 0 2px rgba(255,214,90,.55)` plus a soft amber glow), after which all four read as
+one object in different materials.
+
+**A free win:** the pet and instrument `avatarSVG` already draws at `y≈240–246` now stand
+*on* the riser. §8's earlier "props at her feet collide" objection was about *adding*
+props; the riser instead gives the existing ones a floor.
+
+**The `deco` emoji stay off the show screen.** Three platform emoji in the corners of the
+busiest screen in the app is clutter, and the riser's colour already carries the theme.
+They keep their job in the shop tile and the dressing room, where they identify what you
+are buying.
+
+---
+
 ### 9.3 Audit gold before the horizon is amber
 
 The existing UX review found gold carrying eleven meanings. On a flat purple field that is
