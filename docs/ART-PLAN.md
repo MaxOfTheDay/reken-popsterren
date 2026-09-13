@@ -205,9 +205,16 @@ Each step ships on its own and leaves the app coherent.
 
 1. **Plumbing, no art.** Create `assets/bg/`. Add a `.scene` background layer + the dark
    scrim as CSS tokens. In `sw.js`: serve `assets/` cache-first and bump `CACHE`.
-2. **Map.** Drop in `map-horizon` + `map-sky`. Apply to the four hub screens (map, profile
-   picker, dressing room, trophies). Delete the ☁️/✈️ emoji spans and the `.map-ground`
-   gradient stack. Check all three viewports. **Ship.**
+2. **Map.** Drop in `map-horizon` + `map-sky`. Apply to the **map and the star picker**
+   only. Delete the ☁️/✈️ emoji spans and the `.map-ground` gradient stack. Check all
+   three viewports. **Ship.**
+
+   *Not* the dressing room or the trophy cabinet, though an earlier version of this line
+   said all four hub screens. Two reasons, both visible the moment you try it: those two
+   are **rooms** — a wardrobe and a display cabinet — so a landscape behind them reads as
+   a mistake; and their shop tiles and trophy cards are **translucent**, drawn against a
+   flat gradient, so artwork shows straight through the cards. Anything behind those
+   screens needs opaque cards first (§9.4) and its own backstage asset second.
 3. **Show screen.** Add the venue layer behind `#screen-game`. Dissolve `.show-stage`
    (border, background, `::after` lights, `.deco` all off). Add a soft light pool under
    the avatar for grounding. Move the crowd meter into the sticky header — it is sized to
@@ -301,7 +308,7 @@ incoming/            <- drop generated images here (gitignored)
 | Name it | Lands on |
 |---|---|
 | `venue-theater.webp`, `venue-club.webp`, `venue-stadium.webp` | the show screen, behind gameplay |
-| `map-horizon.webp` | the tour map ground |
+| `map-horizon.webp` | the tour map and the star picker |
 | `map-sky.webp` | the map's sky layer, blended with `screen` |
 | `finale.webp` | the end screen |
 

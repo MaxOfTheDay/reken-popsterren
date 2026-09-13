@@ -45,7 +45,13 @@ const OVERLAY = `
     font-weight:800;border:0;border-radius:8px;padding:7px 13px;cursor:pointer;font-size:13px}
   #ps ul{list-style:none;margin:0 0 7px;padding:0}
   #ps li{display:flex;align-items:center;gap:5px;margin-bottom:3px}
-  #ps li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:135px}
+  #ps li > span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px}
+  #ps .blader{display:flex;align-items:center;gap:1px;flex:none}
+  #ps .blader button{background:none;border:1px solid rgba(255,255,255,.22);color:#f1e9f7;
+    border-radius:4px;cursor:pointer;font-size:9px;line-height:1;padding:3px 4px}
+  #ps .blader button:hover{border-color:#ffb43d;color:#ffb43d}
+  #ps .blader b{font:500 10.5px "IBM Plex Mono",monospace;color:#ffb43d;padding:0 3px;
+    min-width:24px;text-align:center}
   #ps select{background:#2a1140;color:#f1e9f7;border:1px solid rgba(255,255,255,.25);
     border-radius:4px;font:11px system-ui;padding:1px 3px}
   #ps .weg{background:none;border:0;color:#ffb4b4;cursor:pointer;font-size:14px;line-height:1;padding:0 3px}
@@ -80,6 +86,10 @@ const OVERLAY = `
       <p>Of kies een bestand. Heet het <b>venue-…</b>, <b>map-horizon</b>, <b>map-sky</b>
          of <b>finale</b>, dan komt het vanzelf op de goede plek; anders kies je die
          er zo bij. Er wordt niets bewaard en niets verstuurd.</p>
+      <p>Meerdere tegelijk mag: sleep je hele oogst erin. Beelden voor verschillende
+         plekken staan naast elkaar, en meerdere voor dezelfde plek worden kandidaten
+         waar je met &#9664;&#9654; doorheen bladert &mdash; zo vergelijk je drie
+         generaties op hetzelfde scherm.</p>
       <p>Daarna krimpt dit tot een hoekje rechtsonder, zodat je het scherm kunt
          beoordelen. Ga er met de muis overheen en het klapt weer open.</p>
       <button class="knop" id="ps-kies">Kies een bestand…</button>
@@ -122,7 +132,19 @@ ${sceneSrc}
     return;
   }
 
-  var urls = {}, namen = {};
+  /* Per plek een stápel kandidaten, niet één beeld. Je maakt er volgens het
+     pakket drie of vier per asset en kiest er één; dan moet je ze naast elkaar
+     kunnen leggen. Eerder verving de tweede de eerste en was vergelijken
+     onmogelijk. */
+  var plekken = {};   // { venue: { lijst: [{naam, uri}], i: 0 }, ... }
+  function huidig() {
+    var u = {};
+    Object.keys(plekken).forEach(function (k) {
+      var st = plekken[k];
+      if (st.lijst.length) u[k] = st.lijst[st.i].uri;
+    });
+    return u;
+  }
   var ps = document.getElementById('ps');
   var lijst = document.getElementById('ps-lijst');
   var invoer = document.getElementById('ps-invoer');
@@ -133,6 +155,7 @@ ${sceneSrc}
   var wasLeeg = true;
 
   function teken() {
+    var urls = huidig();
     var leeg = Object.keys(urls).length === 0;
     /* Uitgeklapt bedekt het hoekje precies de antwoordtegels, en daar moet je
        juist naar kunnen kijken. Dus na het eerste beeld klapt het dicht.
@@ -155,11 +178,32 @@ ${sceneSrc}
     stKaal.disabled = !(art && !veil);
 
     lijst.textContent = '';
-    Object.keys(urls).forEach(function (slot) {
+    Object.keys(plekken).forEach(function (slot) {
+      var st = plekken[slot];
+      if (!st.lijst.length) return;
       var li = document.createElement('li');
+
       var naam = document.createElement('span');
-      naam.textContent = namen[slot];
-      naam.title = namen[slot];
+      naam.textContent = st.lijst[st.i].naam;
+      naam.title = st.lijst[st.i].naam;
+      li.appendChild(naam);
+
+      // bladeren door de kandidaten voor déze plek
+      if (st.lijst.length > 1) {
+        var blader = document.createElement('span');
+        blader.className = 'blader';
+        var vorige = document.createElement('button');
+        vorige.textContent = '◀'; vorige.title = 'vorige kandidaat';
+        var teller = document.createElement('b');
+        teller.textContent = (st.i + 1) + '/' + st.lijst.length;
+        var volgende = document.createElement('button');
+        volgende.textContent = '▶'; volgende.title = 'volgende kandidaat';
+        vorige.onclick = function () { st.i = (st.i - 1 + st.lijst.length) % st.lijst.length; teken(); };
+        volgende.onclick = function () { st.i = (st.i + 1) % st.lijst.length; teken(); };
+        blader.appendChild(vorige); blader.appendChild(teller); blader.appendChild(volgende);
+        li.appendChild(blader);
+      }
+
       var kies = document.createElement('select');
       Object.keys(SLOTS).forEach(function (k) {
         var o = document.createElement('option');
@@ -167,15 +211,27 @@ ${sceneSrc}
         kies.appendChild(o);
       });
       kies.onchange = function () {
-        var nieuw = kies.value, u = urls[slot], n = namen[slot];
-        delete urls[slot]; delete namen[slot];
-        urls[nieuw] = u; namen[nieuw] = n;
+        var nieuw = kies.value;
+        var mee = st.lijst.splice(st.i, 1)[0];
+        if (!st.lijst.length) delete plekken[slot];
+        else st.i = Math.min(st.i, st.lijst.length - 1);
+        plekken[nieuw] = plekken[nieuw] || { lijst: [], i: 0 };
+        plekken[nieuw].lijst.push(mee);
+        plekken[nieuw].i = plekken[nieuw].lijst.length - 1;
         teken();
       };
+      li.appendChild(kies);
+
       var weg = document.createElement('button');
-      weg.className = 'weg'; weg.textContent = '×'; weg.title = 'weghalen';
-      weg.onclick = function () { delete urls[slot]; delete namen[slot]; teken(); };
-      li.appendChild(naam); li.appendChild(kies); li.appendChild(weg);
+      weg.className = 'weg'; weg.textContent = '×';
+      weg.title = st.lijst.length > 1 ? 'deze kandidaat weghalen' : 'weghalen';
+      weg.onclick = function () {
+        st.lijst.splice(st.i, 1);
+        if (!st.lijst.length) delete plekken[slot];
+        else st.i = Math.min(st.i, st.lijst.length - 1);
+        teken();
+      };
+      li.appendChild(weg);
       lijst.appendChild(li);
     });
   }
@@ -187,8 +243,9 @@ ${sceneSrc}
       r.onload = function () {
         // onbekende naam? dan venue, en je zet 'm zelf recht met het keuzelijstje
         var slot = classify(f.name) || 'venue';
-        urls[slot] = r.result;
-        namen[slot] = f.name;
+        plekken[slot] = plekken[slot] || { lijst: [], i: 0 };
+        plekken[slot].lijst.push({ naam: f.name, uri: r.result });
+        plekken[slot].i = plekken[slot].lijst.length - 1;   // de nieuwste tonen
         teken();
       };
       r.readAsDataURL(f);
