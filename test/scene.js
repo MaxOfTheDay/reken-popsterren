@@ -30,8 +30,20 @@ const SLOTS = {
              hint: 'finale.webp' },
 };
 
-// De vier schermen die samen "de wereld" zijn (plan, stap 2).
-const HUBS = ['#screen-map', '#screen-profile', '#screen-dress', '#screen-trophies'];
+/* Waar de wereld achter staat: de kaart en de sterkeuze.
+   Eerder stonden de kleedkamer en de trofeeenkast hier ook bij, omdat het plan
+   "de vier hubschermen" zei. Dat was mijn eigen formulering, niet iets wat ooit
+   bekeken was, en het pakt slecht uit:
+   - De kaart en de sterkeuze gaan over reizen en kiezen; een landschap hoort
+     daar. De kleedkamer en de trofeeenkast zijn kámers -- een kast en een
+     garderobe -- en daar een horizon achter zetten klopt niet.
+   - Belangrijker: de winkeltegels en de trofeekaarten zijn doorschijnend. Ze
+     zijn ontworpen tegen een egale verloopachtergrond, dus met een tekening
+     erachter zie je het publiek en de coulissen dwars dóór de kaartjes heen.
+   Wie daar ooit iets achter wil zetten, moet eerst die vlakken dekkend maken
+   (zie ART-DIRECTION §9.4) en dan een eigen achtergrond maken: een kleedkamer
+   is een kleedkamer, geen uitzicht. */
+const HUBS = ['#screen-map', '#screen-profile'];
 
 /* Parallax: hoe hard elke laag meeschuift met de kaart.
    De weg met de stadspenningen schuift 100% mee. Wat verder weg ligt hoort
@@ -103,7 +115,9 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
   background-image:${veil}url("${urls.horizon}");
   background-size:${scrim ? 'cover,' : ''}auto 46%;
   background-position:${scrim ? '50% 100%,' : ''}calc(50% - var(--horizon-x,0px)) 100%;
-  background-repeat:${scrim ? 'no-repeat,' : ''}repeat-x}
+  background-repeat:${scrim ? 'no-repeat,' : ''}repeat-x;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 46%,#000 70%);
+  mask-image:linear-gradient(to bottom,transparent 46%,#000 70%)}
 #screen-map .map-ground{display:none!important}`);
   }
 
