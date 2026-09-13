@@ -986,6 +986,37 @@ the relationship we need — and it is the relationship the existing data alread
 | **A — frame dissolves entirely** | The 90 💎 purchase simply disappears from the show. Worse, the flat SVG avatar half-vanishes into the painted crowd behind her. |
 | **B — the podium becomes a stage flat** | ✅ The purchase is plainly visible, the venue is plainly visible, and the flat gives the avatar a clean field to read against. |
 | **C — the podium becomes a riser** | A pale slab that reads as *a step*. "Sprookjeskasteel" becomes an anonymous lilac platform; the identity is gone. |
+| **D — the podium becomes props at her feet** | Rejected on three counts — see below. The instinct behind it is sound, and the fix belongs inside B. |
+
+#### Why "just add props to the avatar" fails, and what it teaches
+
+It is the natural next idea: drop the panel entirely and let the podium be its three
+objects, placed around her. Rendered (`shots/podium-opties/D-alleen-spullen.png`,
+`F-licht-en-spullen.png`), it loses on three counts:
+
+1. **It does not solve the legibility problem.** A was rejected partly because a flat SVG
+   avatar sinks into a painted crowd. Props do nothing about that; she is still lost.
+2. **Emoji on a painting read as stickers.** On today's flat gradient the three `deco`
+   emoji get away with it. Against a lit, painted venue they are exactly the V2 failure
+   mode — a 👑 at 26 px beside a rendered theatre looks pasted on.
+3. **Her feet are already occupied.** `avatarSVG` draws the pet at `x=18, y=240` and the
+   instrument at `x=120, y=246` in a 200×250 viewBox — *both at her feet, flanking her*.
+   Add three podium props and there are **five objects piled into one small zone**. This
+   is a durable constraint: **the area around the avatar's feet is spoken for**, and no
+   future "set dressing" idea may put things there.
+
+A tinted light pool on the floor (derived for free: the brightest colour in each podium's
+gradient is already its stage-light colour — sand `#ffe082` for the beach, pitch `#43a047`
+for the stadium, lava `#ff6f00` for the volcano) was tested alongside. **It is invisible**:
+the venue is already lit, so a tint in the same place does not register. Worth remembering
+before anyone proposes it again.
+
+**But the instinct is right about one thing**, and it is worth acting on: B's panel, as
+first drawn, has rounded corners and an inset white stroke, so it reads a little like a UI
+card — the picture-frame problem in a new costume. The fix is inside B, not instead of it:
+square the bottom corners, drop the inset stroke, and give it a contact shadow where it
+meets the stage, so it reads as **a physical flat standing on the floor** rather than a
+panel floating over it.
 
 **Why B is also the cheap answer.** §9.2 originally treated the twelve `bg` values as a
 *problem* — they are backdrops, not surface colours, and three of them encode a literal
