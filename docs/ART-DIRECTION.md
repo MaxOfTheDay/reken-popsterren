@@ -1233,14 +1233,22 @@ response at module level and replays it, so all four harnesses pay it once: the 
    **Implemented:** `npm run shots -- <label>` captures 26 screens across 390×844,
    320×568 and 1024×768 into `shots/<label>/`, which is gitignored. Run it before and
    after a change and diff the two folders.
-4. **Add debug switches.** **Implemented**, extending the existing `?debug` convention:
+4. **Judge candidate art in situ, never standalone.** **Implemented:**
+   `npm run try -- path/to/venue-theater.webp` drops a candidate behind the *real* show
+   screen at 390×844, 320×568 and 1024×768, with the Phase 2 `.stage` dissolve applied so
+   you are not judging a painted theatre with a picture frame in the middle of it. It also
+   renders the safe-zone overlay, the **180 px thumbnail diagnostic** and a desaturated
+   flattening test, and warns if the file is over the 120 KB budget. Nothing is written to
+   `index.html` or `assets/` — the image is injected at load time, so a rejected
+   generation leaves no trace. Add `--scene=map` for the horizon.
+5. **Add debug switches.** **Implemented**, extending the existing `?debug` convention:
    `?debug&demo&star=p1&stage=stage_vulkaan&screen=end`. `demo` fills two example stars
    **in memory only** — it never calls `save()`, so a real family's data on the same
    device is untouched. `venue` and `rank` hook in at Phase 2.
-5. **Generate into a scratch directory outside the repo; commit only the chosen file.**
+6. **Generate into a scratch directory outside the repo; commit only the chosen file.**
    Expect 5–10 discarded versions per asset — committing them all puts ~1 MB of dead
    images in history permanently.
-6. **For feedback from actual children without publishing:** `http.server` plus the LAN
+7. **For feedback from actual children without publishing:** `http.server` plus the LAN
    IP on the same wifi. Never push to `main` to test.
 
 ---
@@ -1837,15 +1845,24 @@ Grouped by the phases in §10, so every stopping point is a coherent app.
    uniformly, with no art anywhere. If the new ground is wrong, you have spent no
    generation budget finding out.
 
-**Cut the style key — generated first, shipped later.**
+**Cut the style key — a gate, not a phase.**
 
+> **This is not part of Phase 0 and not part of Phase 1.** Phase 0 is shipped and contains
+> no art. The next thing that *ships* is Phase 1: the map horizon and sky. The theatre is
+> generated before that only to lock the style, and it **integrates nothing, commits
+> nothing to `assets/`, and releases nothing.** It is judged with `npm run try`, which
+> injects it at runtime, and then set aside until Phase 2.
+>
 > **Generation order and ship order are not the same thing**, and conflating them is a
 > trap. Phase 1 ships first, but the **theatre is the canonical asset** (Brief 1): every
 > other image is colour-, light- and grain-matched to it. Generate the horizon first and
 > the horizon silently becomes the style key — then the theatre, which has far tighter
 > constraints, has to match a picture that was never tested against them.
 
-5. **Generate `venue-theater.webp`** (Brief 1) **as a style test, not for shipping.** It
+5. **Generate `venue-theater.webp`** (Brief 1) **as a style test, not for shipping.**
+   Judge it with `npm run try -- <file>` (§11), which renders it behind the real show
+   screen, with the Phase 2 `.stage` dissolve applied, at all three viewports — plus the
+   safe-zone overlay, the 180 px thumbnail test and the flattening test. It
    is the hardest composition in the set — a safe zone at the top *and* the bottom, a
    crowd, cropped curtains, and a floor neutral enough for twelve riser colours. If the
    master style prompt is wrong, it is most visible here, on one image, before anything
