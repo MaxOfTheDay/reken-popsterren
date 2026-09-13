@@ -54,6 +54,22 @@ const OVERLAY = `
   #ps nav button{background:none;color:#8fd6ff;border:1px solid rgba(143,214,255,.32);
     border-radius:4px;padding:2px 7px;cursor:pointer;font:11px system-ui}
   #ps .sleep{outline:3px dashed #ffb43d;outline-offset:-10px}
+  #ps .maten{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;
+    border-top:1px solid rgba(255,255,255,.14);padding-top:7px}
+  #ps .maten button{background:none;color:#ffd740;border:1px solid rgba(255,215,64,.3);
+    border-radius:4px;padding:2px 7px;cursor:pointer;font:11px system-ui}
+  #ps .maten button.aan{background:rgba(255,215,64,.22);border-color:#ffd740}
+
+  /* Het toestelkader. De truc zit in de transform: een element met een
+     transform wordt het ankerpunt voor position:fixed eronder, dus de app-lagen
+     die fixed staan (.grain, #confetti-layer, de kleefkoppen) blijven binnen
+     het kader in plaats van naar het venster te ontsnappen. Zonder dat zou een
+     "telefoon" een kader zijn met de helft van de app eromheen. */
+  body.ps-kader{background:#0a0410!important;display:grid;place-items:center;
+    min-height:100vh;margin:0;overflow:auto}
+  body.ps-kader #ps-kader{transform:translateZ(0);overflow:hidden;position:relative;
+    box-shadow:0 10px 50px rgba(0,0,0,.6);border-radius:14px;flex:none}
+  body:not(.ps-kader) #ps-kader{display:contents}
 </style>
 
 <div id="ps" class="leeg">
@@ -72,6 +88,12 @@ const OVERLAY = `
       <ul id="ps-lijst"></ul>
       <label><input type="checkbox" id="ps-art" checked> kunstwerk aan <i>(uit = ervoor/erna)</i></label>
       <label><input type="checkbox" id="ps-veil" checked> donkere sluier</label>
+      <div class="maten">
+        <button data-maat="390x844">Telefoon</button>
+        <button data-maat="320x568">Klein</button>
+        <button data-maat="768x1024">Tablet</button>
+        <button data-maat="vol" class="aan">Venster</button>
+      </div>
       <nav>
         <button data-ga="map">Kaart</button><button data-ga="game">Show</button>
         <button data-ga="end">Einde</button><button data-ga="dress">Kleedkamer</button>
@@ -195,6 +217,50 @@ ${sceneSrc}
         else if (w === 'end') { startLevel(P().level); endLevel(true); }
       } catch (e) { console.warn('scherm wisselen mislukt:', e); }
     };
+  });
+
+  /* ---- toestelmaten ----
+     De app is in de eerste plaats een telefoonspel. Op een breed scherm
+     beoordeel je 'm op een maat die bijna geen kind gebruikt, en juist de
+     krappe maat laat zien of de som nog leesbaar is over de tekening heen. */
+  var kader = document.createElement('div');
+  kader.id = 'ps-kader';
+  (function () {
+    // #app en de vaste lagen erbij in: anders blijven die achter het kader hangen
+    var mee = [document.getElementById('app')]
+      .concat([].slice.call(document.querySelectorAll('body > .grain, body > #confetti-layer')))
+      .filter(Boolean);
+    if (!mee.length) return;
+    mee[0].parentNode.insertBefore(kader, mee[0]);
+    mee.forEach(function (el) { kader.appendChild(el); });
+  })();
+
+  // De achtergrond van body hoort bij de app; binnen een kader moet hij mee
+  // naar binnen, anders staat de verloopachtergrond buiten het "toestel".
+  var bodyAchtergrond = null;
+  function zetMaat(maat) {
+    if (bodyAchtergrond === null) {
+      var cs = getComputedStyle(document.body);
+      bodyAchtergrond = cs.backgroundImage + ' ' + cs.backgroundColor;
+      kader.style.background = cs.background;
+    }
+    if (maat === 'vol') {
+      document.body.classList.remove('ps-kader');
+      kader.style.width = kader.style.height = '';
+    } else {
+      var wh = maat.split('x');
+      document.body.classList.add('ps-kader');
+      kader.style.width = wh[0] + 'px';
+      kader.style.height = wh[1] + 'px';
+    }
+    document.querySelectorAll('#ps .maten button').forEach(function (b) {
+      b.classList.toggle('aan', b.dataset.maat === maat);
+    });
+    // De app rekent bij het formaat opnieuw uit waar dingen staan
+    window.dispatchEvent(new Event('resize'));
+  }
+  document.querySelectorAll('#ps .maten button').forEach(function (b) {
+    b.onclick = function () { zetMaat(b.dataset.maat); };
   });
 
   document.getElementById('ps-vast').style.opacity = .45;
