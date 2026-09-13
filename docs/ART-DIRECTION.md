@@ -1711,7 +1711,7 @@ graphic — this band is a stage for other things to stand on, not a scene in it
 [MASTER ART STYLE]
 
 Subject: three soft, wide, very low-contrast cloud bands floating at different heights
-on a fully transparent background. Nothing else in the frame. The clouds are simple,
+on a solid black background. Nothing else in the frame. The clouds are simple,
 rounded, slightly flattened masses in dusty violet with a faint warm amber edge along
 their undersides, as if lit from far below. Very soft edges, no definition, no
 billowing detail.

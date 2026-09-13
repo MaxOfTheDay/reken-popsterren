@@ -1,0 +1,571 @@
+<title>Popsterren Beeldpakket</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  /* Palette lifted from the game's own :root — aubergine ground, amber light,
+     one cool cyan note. Gold and cyan stay reserved for actions here too. */
+  :root {
+    --ground:#f7f3fa; --surface:#ffffff; --sunk:#f0e9f5;
+    --rule:#ddd0e8; --rule-soft:#eae0f1;
+    --ink:#2a0f3f; --muted:#6b5580; --faint:#8d78a3;
+    --amber:#a35d00; --amber-bg:#fdf1dc; --amber-line:#e8c98a;
+    --cyan:#0b6a92; --cyan-bg:#e2f2fa;
+    --done:#2f6b3a; --done-bg:#e4f2e6;
+    --code-bg:#1d0a2f; --code-ink:#efe6f7; --code-faint:#9d87b4;
+    --shadow:0 1px 2px rgba(42,15,63,.06), 0 8px 24px rgba(42,15,63,.07);
+  }
+  :root:not([data-theme="light"]) { color-scheme: dark; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#120520; --surface:#1d0b30; --sunk:#170727;
+      --rule:#3a1a54; --rule-soft:#2a1140;
+      --ink:#f2ebf8; --muted:#a08bb8; --faint:#8571a0;
+      --amber:#ffc23d; --amber-bg:#3a2408; --amber-line:#6d4a12;
+      --cyan:#7cc9ec; --cyan-bg:#0d2c3d;
+      --done:#8ed69c; --done-bg:#152d1b;
+      --code-bg:#0c0316; --code-ink:#efe6f7; --code-faint:#9d87b4;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:#120520; --surface:#1d0b30; --sunk:#170727;
+    --rule:#3a1a54; --rule-soft:#2a1140;
+    --ink:#f2ebf8; --muted:#a08bb8; --faint:#8571a0;
+    --amber:#ffc23d; --amber-bg:#3a2408; --amber-line:#6d4a12;
+    --cyan:#7cc9ec; --cyan-bg:#0d2c3d;
+    --done:#8ed69c; --done-bg:#152d1b;
+    --code-bg:#0c0316; --code-ink:#efe6f7; --code-faint:#9d87b4;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); margin: 0;
+    font: 400 16px/1.62 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 0 72px; }
+
+  h1, h2, h3 { font-family: "Bricolage Grotesque", "IBM Plex Sans", sans-serif; text-wrap: balance; margin: 0; }
+  h1 { font-weight: 800; font-size: clamp(30px, 6vw, 46px); line-height: 1.05; letter-spacing: -.022em; }
+  h2 { font-weight: 700; font-size: clamp(21px, 3.4vw, 27px); letter-spacing: -.015em; }
+  h3 { font-weight: 700; font-size: 17px; letter-spacing: -.005em; }
+  p { margin: 0; }
+  a { color: var(--cyan); }
+
+  .eyebrow {
+    font: 500 11.5px/1 "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--faint);
+  }
+
+  /* ---- header ---- */
+  header { padding-block: 56px 34px; display: flex; flex-direction: column; gap: 16px; }
+  .lede { font-size: 18.5px; color: var(--muted); max-width: 60ch; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ---- the three steps: a real sequence, so it is numbered ---- */
+  .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin-top: 8px; }
+  .flow > div { background: var(--surface); padding: 15px 17px; display: flex; flex-direction: column; gap: 5px; }
+  .flow b { font: 500 11.5px/1 "IBM Plex Mono", monospace; color: var(--amber); letter-spacing: .1em; }
+  .flow h3 { font-size: 15.5px; }
+  .flow p { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  @media (max-width: 700px) { .flow { grid-template-columns: 1fr; } }
+
+  /* ---- generic section ---- */
+  section { margin-top: 46px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--rule); }
+  .sec-head p { font-size: 14px; color: var(--muted); }
+
+  /* ---- spec table ---- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 540px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  thead th { font: 500 11.5px/1.4 "IBM Plex Mono", monospace; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--faint); background: var(--sunk); border-bottom: 1px solid var(--rule); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code, th code { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---- style rules, two columns: what is fixed vs what varies ---- */
+  .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 700px) { .rules { grid-template-columns: 1fr; } }
+  .rulebox { border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; background: var(--surface); }
+  .rulebox.vary { border-color: var(--amber-line); background: var(--amber-bg); }
+  .rulebox h3 { margin-bottom: 4px; }
+  .rulebox .why { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .rulebox ul { margin: 0; padding-left: 17px; font-size: 14.5px; }
+  .rulebox li { margin-bottom: 5px; }
+  .rulebox li:last-child { margin-bottom: 0; }
+
+  .hues { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .hue { display: flex; align-items: center; gap: 7px; font: 500 12.5px "IBM Plex Mono", monospace;
+    border: 1px solid var(--rule); border-radius: 999px; padding: 3px 11px 3px 4px; background: var(--surface); }
+  .dot { width: 15px; height: 15px; border-radius: 50%; flex: none; }
+
+  /* ---- asset cards ---- */
+  .asset { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 22px; }
+  .asset-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 15px 20px; border-bottom: 1px solid var(--rule); background: var(--sunk); }
+  .step { font: 700 13px/1 "IBM Plex Mono", monospace; color: var(--faint);
+    border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; flex: none; }
+  .asset-head .name { font: 500 16px "IBM Plex Mono", monospace; color: var(--ink); flex: 1; min-width: 190px; }
+  .chip { font: 500 11.5px/1 "IBM Plex Mono", monospace; letter-spacing: .05em;
+    border-radius: 999px; padding: 5px 10px; border: 1px solid transparent; white-space: nowrap; }
+  .chip.done { color: var(--done); background: var(--done-bg); border-color: var(--done); }
+  .chip.next { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-line); }
+  .chip.later { color: var(--faint); border-color: var(--rule); }
+  .chip.over { color: var(--cyan); background: var(--cyan-bg); border-color: var(--cyan); }
+
+  .asset-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 13px 20px; }
+  .fact { display: flex; flex-direction: column; gap: 2px; }
+  .fact .k { font: 500 10.5px/1.3 "IBM Plex Mono", monospace; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); }
+  .fact .v { font-size: 14px; }
+  .fact .v code { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+
+  .where { font-size: 14px; color: var(--muted); border-left: 3px solid var(--rule); padding-left: 12px; }
+
+  /* ---- prompt block ---- */
+  .prompt { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  .prompt-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 10px 8px 14px; background: var(--sunk); border-bottom: 1px solid var(--rule); }
+  .prompt-bar span { font: 500 11.5px/1 "IBM Plex Mono", monospace; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--faint); }
+  .copy { font: 600 13px "IBM Plex Sans", sans-serif; cursor: pointer;
+    background: var(--amber); color: #2a0f3f; border: 0; border-radius: 7px; padding: 7px 15px; }
+  .copy:hover { filter: brightness(1.07); }
+  .copy:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  .copy.ok { background: var(--done); color: #fff; }
+  pre { margin: 0; background: var(--code-bg); color: var(--code-ink); padding: 16px 18px;
+    overflow-x: auto; font: 400 12.9px/1.62 "IBM Plex Mono", ui-monospace, monospace;
+    white-space: pre-wrap; word-break: break-word; max-height: 340px; overflow-y: auto; }
+  .prompt pre { -webkit-mask-image: linear-gradient(#000 calc(100% - 42px), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 42px), transparent); }
+  .prompt.open pre { max-height: none; -webkit-mask-image: none; mask-image: none; }
+  .more { display: block; width: 100%; text-align: center; cursor: pointer; border: 0;
+    border-top: 1px solid var(--rule); background: var(--sunk); color: var(--muted);
+    font: 500 12.5px "IBM Plex Sans", sans-serif; padding: 7px; }
+  .more:hover { color: var(--ink); }
+
+  .checks { font-size: 13.5px; color: var(--muted); }
+  .checks b { color: var(--ink); font-weight: 600; }
+
+  footer { margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13.5px; color: var(--faint); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Reken Popsterren &middot; asset generation</p>
+  <h1>Beeldpakket</h1>
+  <p class="lede">Everything needed to generate the seven artwork assets and get them into
+  the game. Each prompt below is <strong>complete on its own</strong> &mdash; style, scene and
+  exclusions in one block &mdash; so one copy is one paste, with nothing to assemble first.</p>
+  <div class="flow">
+    <div><b>STAP 1</b><h3>Generate</h3><p>Copy a prompt, paste it into the image generator, set the size shown on the card. Make three or four, pick one.</p></div>
+    <div><b>STAP 2</b><h3>Crop &amp; name</h3><p>Crop, resize, save as WebP under 120&nbsp;KB. The filename is what routes it &mdash; get it exactly right.</p></div>
+    <div><b>STAP 3</b><h3>Judge in the game</h3><p>Drag it onto <code>proefstudio.html</code>. Check it at phone size, with the scrim on, while scrolling. Then keep or regenerate.</p></div>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head"><h2>Fixed technical spec</h2><p>Same for every asset unless a card says otherwise.</p></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Item</th><th>Value</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td>Model</td><td><code>gpt-image-1</code></td><td>Follows long, specific prose well. It has no negative-prompt field, so exclusions are written into the prompt as prose &mdash; already done below.</td></tr>
+      <tr><td>Sizes available</td><td class="num"><code>1024&times;1024</code> &middot; <code>1536&times;1024</code> &middot; <code>1024&times;1536</code></td><td>There is no aspect-ratio setting. You pick a size; each card names which one. Asking for a ratio in the prose does not work.</td></tr>
+      <tr><td>Attempts</td><td class="num">3&ndash;4 per asset</td><td>Cheaper than arguing with one bad generation. Pick, then move on.</td></tr>
+      <tr><td>Final format</td><td><code>.webp</code>, quality 78&ndash;85</td><td>Roughly a third of a PNG at the same look. The game is a PWA that families load on phone data.</td></tr>
+      <tr><td>Budget</td><td class="num">&le; 120 KB each</td><td>Hard limit. <code>map-horizon</code> + <code>map-sky</code> together stay under 400 KB, since both load on the same screen.</td></tr>
+      <tr><td>Never upscale</td><td>&mdash;</td><td>Deliver at or below what the generator returned. Enlarging to hit a number adds bytes and softness and buys nothing.</td></tr>
+      <tr><td>Destination</td><td><code>assets/bg/</code></td><td>Only once a file passes the checks. Rejected attempts stay out of the repo.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>The style, in one screen</h2><p>Already written into every prompt. This is here so you can judge against it.</p></div>
+  <div class="rules">
+    <div class="rulebox">
+      <h3>Constant</h3>
+      <p class="why">This is what makes seven separate generations look like one game.</p>
+      <ul>
+        <li><b>The light</b> &mdash; warm amber, low, coming from the stage toward the viewer.</li>
+        <li><b>Bright at the top, deep and quiet at the bottom.</b> That is how a lit stage looks, and it hands us the legibility for free.</li>
+        <li>Five to eight big rounded shapes. Detail lives in the light, not the objects.</li>
+        <li>Crowds are flat silhouettes &mdash; rounded heads, no faces.</li>
+        <li>Never any text, letters, numbers, signage or logos.</li>
+        <li>Amber appears as <i>light</i>, never as gold <i>objects</i>. Gold and cyan belong to the buttons.</li>
+      </ul>
+    </div>
+    <div class="rulebox vary">
+      <h3>Variable</h3>
+      <p class="why">Only one thing changes between scenes: the colour of the room. Lock everything else.</p>
+      <p style="font-size:14.5px">A single palette for all three venues would make arriving at the stadium &mdash; the payoff of the whole rank ladder &mdash; feel like nothing happened. It would also sit oddly beside the twelve bright podiums the game already sells.</p>
+      <div class="hues">
+        <span class="hue"><span class="dot" style="background:#3b1152"></span>club &mdash; deep violet</span>
+        <span class="hue"><span class="dot" style="background:#42123f"></span>theatre &mdash; aubergine</span>
+        <span class="hue"><span class="dot" style="background:#101a3d"></span>stadium &mdash; midnight blue</span>
+      </div>
+      <p style="font-size:13.5px;margin-top:11px;color:var(--muted)">Same depth of value in all three &mdash; the room must stay darker than the answer tiles. It is a brightness rule, not a colour rule.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Filenames</h2><p>The drop tool routes by name. A wrong name lands on the wrong screen.</p></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Save it as</th><th>Appears on</th></tr></thead>
+    <tbody>
+      <tr><td><code>venue-theater.webp</code> &middot; <code>venue-club.webp</code> &middot; <code>venue-stadium.webp</code></td><td>the show screen, behind the sums</td></tr>
+      <tr><td><code>map-horizon.webp</code></td><td>map, star picker, dressing room and trophies &mdash; all four at once</td></tr>
+      <tr><td><code>map-sky.webp</code></td><td>map and star picker (the two screens with a sky layer)</td></tr>
+      <tr><td><code>finale.webp</code></td><td>the end-of-show screen</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="assets">
+  <div class="sec-head"><h2>The seven assets</h2><p>In generation order. The theatre is the reference every later one is matched to.</p></div>
+  <div id="cards"></div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>After generating</h2><p>Crop, shrink, convert &mdash; then judge it where it will actually live.</p></div>
+  <div class="rules">
+    <div class="rulebox">
+      <h3>Without a terminal</h3>
+      <p class="why">The straightforward route.</p>
+      <ul>
+        <li>Crop and resize to the card's <b>Deliver</b> size in any image editor, or in <a href="https://squoosh.app">squoosh.app</a>, which does both in the browser.</li>
+        <li>In Squoosh choose <b>WebP</b>, set quality to about 80, and watch the file-size readout until it is under 120&nbsp;KB.</li>
+        <li>Rename to exactly the filename on the card.</li>
+      </ul>
+    </div>
+    <div class="rulebox">
+      <h3>With a terminal</h3>
+      <p class="why">Same result, one line.</p>
+      <pre style="max-height:none;font-size:12.2px;border-radius:7px">cwebp -q 80 -resize 1200 700 \
+  in.png -o venue-club.webp</pre>
+      <p style="font-size:13.5px;margin-top:10px;color:var(--muted)">Then check the size: anything over 120&nbsp;KB, drop the quality to 72 and try again before touching the dimensions.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Accept or regenerate</h2><p>Run all five in <code>proefstudio.html</code>. Any one failing means generate again, not fix in CSS.</p></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th>How</th><th>Fails when</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sum stays readable</b></td><td>Size&nbsp;&rarr;&nbsp;<b>Telefoon</b>, then <b>Klein</b>. Look at the four answer tiles.</td><td>The tiles stop reading as buttons, or the bottom of the art competes with them.</td></tr>
+      <tr><td><b>Survives the thumbnail</b></td><td>Shrink the image to about 180&nbsp;px wide.</td><td>It falls apart or turns to mush. Too much detail &mdash; the fix is fewer, bigger shapes.</td></tr>
+      <tr><td><b>Reads flattened</b></td><td>Desaturate and crank the contrast.</td><td>The main shapes no longer say <i>theatre</i> / <i>club</i> / <i>stadium</i>.</td></tr>
+      <tr><td><b>Holds while scrolling</b></td><td><b>&#8644; Scrollen</b>, on the map.</td><td>An edge slides into view, or art only emerges from under the city medallions once you scroll.</td></tr>
+      <tr><td><b>A six-year-old would want to be there</b></td><td>Look at it.</td><td>It is merely tasteful. Every other check finds faults; only this one finds appeal.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>
+  <p>Prompts here are the copyable form of Briefs 1&ndash;6 in <code>docs/ART-DIRECTION.md</code>&nbsp;&sect;12, which stays canonical if the two ever disagree. Working plan and workflow: <code>docs/ART-PLAN.md</code>.</p>
+</footer>
+</div>
+
+<script>
+/* The style preamble is written once and pushed into every prompt, so the blocks
+   below cannot drift apart the way two hand-maintained copies would. */
+const MASTER = `STYLE — A children's game illustration for a young child. Clearly an
+illustration, never a render and never a photo.
+
+SHAPE FIRST — Build the whole scene from a few large, chunky, rounded forms with
+generous curves. Simple stage-set construction, like painted theatre flats. A
+handful of big shapes instead of many small ones. It must still read clearly at the
+size of a phone thumbnail.
+
+THEN LIGHT — Enrich those flat shapes with soft painted gradients and stylised
+theatrical lighting: one clear low warm amber key, deep ambient shadow in the room's
+own hue, a few selective warm pools like venue practical lights, one restrained cool
+accent far away, and simple soft bloom around actual light sources only. High in the
+frame, two or three soft flat beams may cross the air and a little fine sparkle may
+drift in it. Light makes the simple shapes feel magical; it does not make them real.
+
+LIGHT GRADIENT — Brightest and most alive across the top of the frame, sinking into
+deep, smooth, almost empty shadow across the bottom. The lower half of the image is
+quiet. This is how a lit stage actually looks, and it is not optional.
+
+COLOUR — A deep, saturated environment on the dark side, in the room hue named under
+SCENE. Warm amber appears as light, never as gold-coloured objects. Magenta only as a
+faint glow in the air, never as a field.
+
+MOOD — The excited second before the music starts. Not calm, not noisy: something is
+about to happen.`;
+
+const DONT = `DO NOT INCLUDE — No text, letters, numbers, signage, logos, watermarks, UI
+elements, buttons, frames or borders. No human faces, hands or identifiable people. No
+photorealism, 3D rendering, pseudo-3D, glossy plastic, specular highlights, lens flare,
+heavy bloom or volumetric god-rays. No flat generic vector clip-art, preschool
+corporate-flat illustration, heavy black outlines, comic line art or sketch texture. No
+realistic architecture, ornate mouldings, individual seat rows, tiny windows, realistic
+foliage, intricate props, material realism, high-frequency texture, or any detail that
+only pays off when zoomed in. No decorative stars, microphones or music notes scattered
+as ornament across the frame — fine sparkle drifting high in the air is lighting and is
+wanted, strewn ornament is not.`;
+
+const ASSETS = [
+  {
+    n: 1, file: 'venue-theater.webp', status: 'done', label: 'already made',
+    size: '1536×1024', crop: '1536×896', deliver: '1200×700', hue: 'warm aubergine',
+    where: 'The show screen, for a star at rank 3–5. This is the canonical asset — it was generated first and every other scene is matched to its value range, key-light angle and grain.',
+    scene: `SCENE — A simplified illustrated theatre, seen straight on from the front of the
+stage looking out into the room. This room is warm aubergine.
+
+Build it from these shapes and nothing else: one wide empty stage floor whose upstage
+half catches a broad warm amber pool where the performer stands, and whose front edge
+falls away into deep aubergine shadow toward the bottom of the frame, so that the
+bottom of the image is the darkest part of the whole picture; one calm audience
+rendered as a single flat deep-aubergine silhouette mass of rounded shoulders and
+smooth featureless oval heads, with a light scatter of small warm glowing points among
+them; one broad balcony arc crossing the upper third as a single soft unornamented
+curve; two heavy curtain masses in deep muted crimson — low saturation, darker in value
+than the crowd — as broad sweeping shapes cropped by the extreme left and right edges;
+and two or three simple soft warm glowing light shapes. No other objects at all. The
+back wall is one plain smooth surface: no arches, no architectural detail, and the
+lights are glowing shapes rather than lanterns with parts.
+
+COMPOSITION — The entire lower 55% of the image must stay almost empty, smooth, dark
+and very low contrast: an unbroken calm field with no shapes, edges or highlights. Keep
+the top-centre area quiet as well, where the header sits. Put all visual interest in the
+middle band and at the left and right edges.
+
+If the whole image were flattened into silhouettes, the balcony arc, the curtains and
+the crowd mass alone should still read as a theatre.`,
+    checks: 'The stage floor must stay a <b>neutral warm mid-tone</b> — the child stands on a bought riser that can be sand, pitch green or snow white, and a strongly coloured floor would clash with it.'
+  },
+  {
+    n: 2, file: 'map-horizon.webp', status: 'next', label: 'make this first',
+    size: '1536×1024', crop: 'bottom 1536×576', deliver: '1536×576', hue: 'violet dusk',
+    where: 'Behind all four hub screens at once — the tour map, the star picker, the dressing room and the trophies. It replaces the flat gradient at the bottom of the map today.',
+    scene: `SCENE — A wide, almost empty dusk landscape. This scene is deep violet.
+
+Two or three broad rounded hills in deep aubergine, layered one behind the other across
+the frame, each a single smooth shape with no texture on it. A broad warm amber glow
+lies along the whole horizon line, as if a huge stage were lit just beyond the hills,
+and it lifts up into the violet air above. High in that air, a scatter of tiny soft
+drifting sparkles. Nothing else at all — no buildings, no roads, no trees, no sun or
+moon, and nothing standing on the ground.
+
+COMPOSITION — Keep the lower half dark, smooth and almost empty, and keep the middle of
+the image plain: the road, the city markers and the child's avatar all sit there and
+must stay dominant over the artwork. Nothing meaningful within 12% of the left or right
+edge, which get masked off. The horizon line sits about two thirds of the way down.`,
+    checks: 'It does <b>not</b> need to tile. Measured on the real build: the horizon never moves when the map scrolls, so it has exactly one framing to get right.'
+  },
+  {
+    n: 3, file: 'map-sky.webp', status: 'over', label: 'style override',
+    size: '1536×1024', crop: '1536×864', deliver: '1536×864', hue: 'black ground',
+    where: 'The drifting sky layer on the map and the star picker, replacing the cloud emoji. It is composited with a screen blend, so pure black becomes invisible and no cut-out step is needed.',
+    master: `STYLE — A children's game illustration. Soft painted gradients, simple rounded
+shapes, no outlines, not photorealistic, not 3D.
+
+This asset ignores the usual lighting, depth and composition rules. It is a thin
+overlay, not a scene.`,
+    scene: `SCENE — Three soft, wide, very low-contrast cloud bands floating at different heights
+on a solid black background. Nothing else in the frame at all.
+
+The clouds are simple, rounded, slightly flattened masses in dusty violet with a faint
+warm amber edge along their undersides, as if lit from far below. Very soft edges, no
+definition, no billowing detail.
+
+COMPOSITION — Keep the bands widely separated with large empty gaps between them, and
+keep the centre of the frame almost clear.
+
+CRITICAL — The background is pure solid black (#000000) everywhere the clouds are not:
+a completely flat, even black field with no sky colour, no gradient, no vignette and no
+ground. Distant, weightless, barely there.`,
+    dont: `DO NOT INCLUDE — No text, letters, numbers, signage or logos. No ground, horizon or
+landscape. No stars, birds, sun or moon. No people. No gold objects. No frame or border.`,
+    checks: 'Check the black is <b>really black</b> before converting — a near-black background turns into a grey haze over the whole map once it is screen-blended.'
+  },
+  {
+    n: 4, file: 'venue-club.webp', status: 'later', label: 'make with 5',
+    size: '1536×1024', crop: '1536×896', deliver: '1200×700', hue: 'deep violet',
+    where: 'The show screen for a star at rank 0–2 — the first gig. Generate it together with the stadium so the three tiers can be compared side by side.',
+    scene: `SCENE — A simplified illustrated small music club, seen straight on from the front of
+a low stage looking out into the room. This room is deep violet.
+
+Build it from these shapes and nothing else: one narrow stage floor whose upstage half
+catches a broad warm amber pool and whose front edge falls away into deep violet shadow
+toward the bottom of the frame, so that the bottom of the image is the darkest part of
+the whole picture; one close, low, softly rounded back wall a short distance behind the
+audience; one small crowd rendered as a single flat deep-violet silhouette mass of
+rounded shoulders and smooth featureless oval heads standing close together; two small
+warm glowing practical lamps; and one low ceiling shape crossing the top edge as a soft
+dark band. No other objects at all. The room feels small because the shapes are close
+and the ceiling is low, not because anything has been furnished.
+
+Under that ceiling band only, in the top third of the frame: two soft flat beams of warm
+light crossing the air, and a little fine sparkle drifting in it. Nothing of this
+reaches below the middle of the image.
+
+COMPOSITION — The entire lower 55% of the image must stay almost empty, smooth, dark and
+very low contrast. Keep the top-centre area quiet as well.
+
+Small, warm, close, the first gig. Match the theatre image's value range, key-light
+angle and grain exactly. The hue is the one thing that differs: this room is violet
+where the theatre is aubergine, at the same depth of value.`,
+    checks: 'Same <b>neutral warm mid-tone floor</b> as the theatre. The camera height must not change between the three tiers — scale comes from the size of the shapes, never from added detail.'
+  },
+  {
+    n: 5, file: 'venue-stadium.webp', status: 'later', label: 'make with 4',
+    size: '1536×1024', crop: '1536×896', deliver: '1200×700', hue: 'midnight blue',
+    where: 'The show screen for a star at rank 6 and up. This is the top of the ladder, so it has to feel like arriving somewhere.',
+    scene: `SCENE — A simplified illustrated stadium, built from a few enormous rounded shapes,
+seen straight on from the front of the stage looking out into the bowl. This room is
+midnight blue.
+
+Build it from these shapes and nothing else: one broad stage floor whose upstage half
+catches a wide warm amber pool and whose front edge falls away into deep midnight-blue
+shadow toward the bottom of the frame, so that the bottom of the image is the darkest
+part of the whole picture; one single enormous smooth curved bowl rising beyond it in
+deep midnight blue, far away and soft, with no tiers, girders or seat detail drawn into
+it; one simplified band of distant crowd reading as a soft sea of tiny warm points along
+that curve; two or three large simple light shapes; and an open night sky above the rim
+in midnight blue with one cool cyan note near the horizon. No other objects at all.
+
+High above the rim, in the top third of the frame: three soft flat beams of warm light
+sweeping up into that sky, and a little fine sparkle drifting in the air. Nothing of
+this reaches below the middle of the image.
+
+The stadium must feel vast purely because its shapes are enormous and simple — do not
+add extra detail, structure or objects to convey scale.
+
+COMPOSITION — The entire lower 55% of the image must stay almost empty, smooth, dark and
+very low contrast. Keep the top-centre area quiet as well.
+
+Enormous and awestruck, but still warm and calm rather than harsh. Match the theatre
+image's value range, key-light angle and grain exactly. The hue is the one thing that
+differs: this room is midnight blue where the theatre is aubergine, at the same depth of
+value.`,
+    checks: 'The <b>key light stays warm amber</b> in all three tiers — only the room\'s ambient hue goes cool. No floodlights pointed at the camera, no realistic girders or seat rows.'
+  },
+  {
+    n: 6, file: 'finale.webp', status: 'later', label: 'make with 4 + 5',
+    size: '1024×1536', crop: 'none', deliver: '1024×1536', hue: 'amber celebration',
+    where: 'Behind the end-of-show screen, which is portrait. The licensed exception: this one may be brighter and richer than every other scene, because it is the moment of celebration.',
+    scene: `SCENE — A theatre stage at the end of a show, lit up and celebrating, seen straight on
+from the wings.
+
+A broad warm amber pool of light fills the centre of the frame and glows outward, fading
+to violet at the edges and deep aubergine in the corners. Two soft spotlight cones angle
+inward from the upper left and upper right corners but stop well short of the middle.
+Confetti flakes and thin streamer ribbons drift through the upper third and down along
+the far left and far right edges, in violet, cool cyan and warm white. Along the very
+bottom edge, a low backlit silhouette band of a crowd — rounded featureless heads only.
+
+COMPOSITION — The central 60% of the width by 55% of the height must be a smooth, empty,
+glowing field with no shapes, no confetti, no beams and no edges in it at all —
+completely plain. Put every element in the upper third, along the lower edge, and in the
+left and right margins.
+
+Warm triumph: joyful and grand, brighter and richer than the other scenes, but achieved
+entirely through light and colour, with the same few large simple shapes as everything
+else.`,
+    checks: 'The headline, the stars, the diamond pill and two buttons all sit in that empty centre. If anything lands there, the screen stops reading.'
+  },
+  {
+    n: 7, file: 'cities.svg', status: 'over', label: 'style override · later',
+    size: '1024×1536', crop: 'sheet', deliver: 'traced to one SVG', hue: 'flat black',
+    where: 'Twelve city markers on the tour map, replacing the food emoji (🧇 Brussels, 🥐 Paris, 🌷 Amsterdam…). Generate all twelve in one sheet so their weights match by construction, then trace to SVG.',
+    master: `STYLE — A clean flat reference sheet of silhouettes. This asset ignores the lighting,
+depth, grain and palette rules entirely: it is flat silhouettes, not a painting.`,
+    scene: `SCENE — Twelve city landmark silhouettes arranged in a 3-by-4 grid on a plain white
+background. Each silhouette is solid black, completely flat, with no interior detail, no
+windows, no texture, no shading, no gradient and no outline. Each is drawn as a
+straight-on flat elevation with no perspective, centred in its own square cell with even
+margins.
+
+The twelve, in order: a row of stepped canal-house gables; a cluster of connected
+spheres on thin struts; a tall tapering lattice tower; a large ferris wheel; a slim
+tower with a sphere near its top; a curved tier of stone arches; a wide triumphal
+gateway arch; three tapering skyscrapers of different heights; a small abstract
+cross-shaped figure standing on a rounded peak; two pyramids of different sizes; a
+tiered pagoda tower; a fan of overlapping curved shells.
+
+CRITICAL — All twelve must have the same visual weight and the same apparent mass. No
+silhouette may look noticeably thinner, lighter, denser or heavier than the others. Keep
+every shape chunky and readable when shrunk to thumbnail size; nothing thin, spindly or
+wiry.`,
+    dont: `DO NOT INCLUDE — No text, labels, numbers or borders around the cells. No perspective,
+no ground lines, no people, no vehicles. No national flags or colours. Do not mix
+detailed and simple landmarks in one set.`,
+    checks: 'Nothing may be thinner than about <b>6% of its cell</b> at the narrowest point, or it will vanish at map size. These sit at 26–34&nbsp;px on a phone.'
+  }
+];
+
+const STATUS_MARK = { done: '✓', next: '→', later: '', over: '' };
+
+function buildPrompt(a) {
+  return [a.master || MASTER, a.scene, a.dont || DONT].join('\n\n');
+}
+
+const cards = document.getElementById('cards');
+ASSETS.forEach(a => {
+  const text = buildPrompt(a);
+  const el = document.createElement('article');
+  el.className = 'asset';
+  el.innerHTML = `
+    <div class="asset-head">
+      <span class="step">${String(a.n).padStart(2, '0')}</span>
+      <span class="name">${a.file}</span>
+      <span class="chip ${a.status}">${(STATUS_MARK[a.status] + ' ' + a.label).trim()}</span>
+    </div>
+    <div class="asset-body">
+      <p class="where">${a.where}</p>
+      <div class="facts">
+        <div class="fact"><span class="k">Request size</span><span class="v num"><code>${a.size}</code></span></div>
+        <div class="fact"><span class="k">Crop to</span><span class="v num"><code>${a.crop}</code></span></div>
+        <div class="fact"><span class="k">Deliver</span><span class="v num"><code>${a.deliver}</code></span></div>
+        <div class="fact"><span class="k">Room hue</span><span class="v">${a.hue}</span></div>
+      </div>
+      <div class="prompt">
+        <div class="prompt-bar">
+          <span>complete prompt — paste as is</span>
+          <button class="copy" type="button">Copy prompt</button>
+        </div>
+        <pre></pre>
+        <button class="more" type="button">Show the whole prompt</button>
+      </div>
+      <p class="checks"><b>Watch for:</b> ${a.checks}</p>
+    </div>`;
+  el.querySelector('pre').textContent = text;
+
+  const btn = el.querySelector('.copy');
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const t = document.createElement('textarea');
+      t.value = text; document.body.appendChild(t); t.select();
+      document.execCommand('copy'); t.remove();
+    }
+    btn.textContent = 'Copied';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy prompt'; btn.classList.remove('ok'); }, 1600);
+  });
+
+  const box = el.querySelector('.prompt');
+  const more = el.querySelector('.more');
+  more.addEventListener('click', () => {
+    box.classList.toggle('open');
+    more.textContent = box.classList.contains('open') ? 'Collapse' : 'Show the whole prompt';
+  });
+
+  cards.appendChild(el);
+});
+</script>

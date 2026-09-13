@@ -48,15 +48,20 @@ Three checks before accepting anything:
 
 Only these. Everything else in the app stays CSS or emoji for now.
 
-| # | Asset | Size to request | Delivered as | When |
-|---|---|---|---|---|
-| 1 | `venue-theater` | 1536×1024 | 1200×700 WebP | ✅ done |
-| 2 | `map-horizon` | 1536×1024 | 1600×600 WebP | **next** |
-| 3 | `map-sky` | 1536×1024 | 1600×900 WebP | next |
-| 4 | `venue-club` | 1536×1024 | 1200×700 WebP | with 5 |
-| 5 | `venue-stadium` | 1536×1024 | 1200×700 WebP | with 4 |
-| 6 | `finale` | 1024×1536 | 1080×1920 WebP | with 4+5 |
-| 7 | `cities` ×12 | 1024×1536 sheet | traced to one SVG | later |
+| # | Asset | Request | Crop to | Deliver | When |
+|---|---|---|---|---|---|
+| 1 | `venue-theater` | 1536×1024 | 1536×896 | 1200×700 WebP | ✅ done |
+| 2 | `map-horizon` | 1536×1024 | bottom 1536×576 | 1536×576 WebP | **next** |
+| 3 | `map-sky` | 1536×1024 | 1536×864 | 1536×864 WebP | next |
+| 4 | `venue-club` | 1536×1024 | 1536×896 | 1200×700 WebP | with 5 |
+| 5 | `venue-stadium` | 1536×1024 | 1536×896 | 1200×700 WebP | with 4 |
+| 6 | `finale` | 1024×1536 | — | 1024×1536 WebP | with 4+5 |
+| 7 | `cities` ×12 | 1024×1536 sheet | — | traced to one SVG | later |
+
+Delivery sizes were corrected so that **nothing is ever upscaled**: the earlier table
+asked for a 1600×600 horizon and a 1080×1920 finale, both larger than anything
+`gpt-image-1` returns. Enlarging a generated image to meet a spec adds bytes and
+softness and buys nothing.
 
 Budget: **≤ 120 KB per image**, ≤ 400 KB for 2+3 together.
 
@@ -68,6 +73,12 @@ width from you beyond the sizes above. Details in `ART-DIRECTION.md` Brief 3.
 ---
 
 ## 3. Generating with an OpenAI model
+
+> **Copy the prompts from `docs/beeldpakket.html`** (published at
+> <https://claude.ai/code/artifact/b57f5563-20c9-4f4a-809d-198593ecef53>). Every asset
+> there carries one self-contained prompt — style, scene and exclusions in a single
+> block with a copy button — plus its sizes and the checks to run afterwards. The prose
+> below explains *why* the prompts are shaped that way; you do not need it to use them.
 
 Practical differences from other tools:
 
