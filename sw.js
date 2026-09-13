@@ -1,6 +1,7 @@
 // Service worker: maakt het spel offline speelbaar na het eerste bezoek.
-const CACHE = 'rekenpop-v28';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE = 'rekenpop-v29';
+const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
+                './assets/bg/landing.webp'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -14,9 +15,24 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Netwerk eerst (zodat updates binnenkomen), val terug op cache als er geen internet is.
+/* Achtergrondtekeningen komen uit de cache en pas daarna van het net. Ze
+   veranderen alleen als CACHE omhoog gaat, en het zijn de grootste bestanden
+   van de app -- netwerk-eerst zou ze bij elk bezoek opnieuw ophalen over de
+   telefoondata van een gezin. De rest blijft netwerk-eerst, zodat een nieuwe
+   versie van het spel gewoon binnenkomt. */
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).pathname.includes('/assets/')) {
+    e.respondWith(
+      caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request)
+        .then(resp => {
+          const copy = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+          return resp;
+        }))
+    );
+    return;
+  }
   e.respondWith(
     fetch(e.request)
       .then(resp => {
