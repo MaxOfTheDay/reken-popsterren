@@ -1099,10 +1099,40 @@ one object in different materials.
 *on* the riser. §8's earlier "props at her feet collide" objection was about *adding*
 props; the riser instead gives the existing ones a floor.
 
-**The `deco` emoji stay off the show screen.** Three platform emoji in the corners of the
+**The `deco` emoji stay off the show screen — and there is a hard reason, not a taste
+one.** The riser is 132 px wide and the pet already stands on its left, the instrument on
+its right; `avatarSVG` draws both at `y≈240–246`. The only remaining spot is dead centre,
+behind her body. Rendering Vulkaan and Jungle side by side also shows the riser's colour
+carries the theme unmistakably on its own. So an emoji here is not an addition, it is a
+trade: drop the pet or the instrument from the show screen to make room. Not worth it.
+They keep their job in the shop tile and the dressing room, where you need to recognise
+what you are buying.
+
+**Superseded note.** Three platform emoji in the corners of the
 busiest screen in the app is clutter, and the riser's colour already carries the theme.
 They keep their job in the shop tile and the dressing room, where they identify what you
 are buying.
+
+---
+
+### 9.2c The landing screen already has a backdrop — and a free upgrade
+
+`#screen-profile` shares `map-horizon` + `map-sky` with the map, so the first screen of
+the game is already covered, and it reads well: the art fades in under the star cards,
+which are opaque enough to sit on it.
+
+**A better option at zero asset cost:** put the **venue** behind it instead, blurred and
+dimmed (`blur(3px) brightness(.72)`). The screen asks *"wie gaat er vandaag schitteren op
+het podium?"* — so showing the stage waiting answers its own question, and it reuses an
+image the set already contains. Rendered three ways, the dimmed venue is the best of the
+three; the undimmed venue is too strong, its crowd silhouettes competing with the cards.
+
+**One trap, found by rendering it.** A backdrop on this screen can swallow the title. The
+horizon version survives because `scene.js` masks the top of the layer away
+(`linear-gradient(transparent 46%, #000 70%)`), so nothing is painted where "Reken
+Popsterren" sits. A quick test without that mask painted the `::before` straight over the
+title and the microphone. Any venue-on-landing variant needs the same mask, or the
+`::before` behind its own stacking context.
 
 ---
 
