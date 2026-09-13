@@ -1057,6 +1057,79 @@ comic line art, sketch texture; busy repeating detail; daylight or blue sky.
 
 ---
 
+## 12.2 How to run these prompts
+
+**A brief is not a prompt.** Each brief carries specs for three different channels, and
+sending them all as prose is how you get a letterboxed rectangle drawn *inside* a square
+image, or a painted checkerboard where the transparency was meant to be.
+
+| Channel | Which specs | Why |
+|---|---|---|
+| **Prose** (the copyable block) | composition, subject, lighting, colour, safe zone, what to avoid | The only things a diffusion model acts on. Note the safe zones **are** already in the prose — "the entire lower 55%", "the central 60% width by 55% height" — because modern models do respond to those. |
+| **Parameters** (the tool's own controls) | aspect ratio, output size, seed, model version | Prose aspect ratios are unreliable and often actively harmful. Use the switch. |
+| **Post-production** (after generation) | final crop, downscale, alpha, WebP encode, filename, byte budget | Nothing a generator does. |
+
+### Aspect ratio — and a correction to the briefs
+
+**Most generators cap at about 16:9.** An 8:3 band or a 4:1 strip is not directly
+generatable in Midjourney, DALL·E, Ideogram or Firefly. The ratios in the briefs are
+therefore **delivery specs, not generation specs**:
+
+> Generate at the widest ratio the tool offers, then **crop to the delivery ratio, keeping
+> the bottom.** For every asset here the content lives in the lower half and the top is
+> faded or masked away, so cropping the top costs nothing.
+
+| Tool | How to set it | Practical widest |
+|---|---|---|
+| Midjourney | `--ar 16:9` appended to the prompt | 16:9 (wider allowed, quality drops) |
+| Stable Diffusion / ComfyUI / A1111 | width × height fields, multiples of 64 | `1536×576` gets 8:3 natively |
+| DALL·E 3 / ChatGPT images | fixed sizes only | `1792×1024`, then crop |
+| Ideogram / Flux / Firefly | aspect selector | 16:9 |
+
+| Asset | Delivery ratio | Generate at | Then |
+|---|---|---|---|
+| `venue-*` | 12:7 | 16:9 | crop sides evenly |
+| `map-horizon` | 8:3 | 16:9 | crop the **top** away |
+| `map-sky` | 16:9 | 16:9 | — |
+| `crowd-lights` | 4:1 | 16:9 | crop the **top** away |
+| `finale` | 9:16 | 9:16 | — |
+
+### Transparency — two of the three Phase 1 assets don't need it
+
+Telling a diffusion model "transparent background" usually produces **a painted
+checkerboard**; almost none emit a real alpha channel. This app already has better idioms
+for two of the three cases, so the prompts above were corrected to match:
+
+| Asset | Approach | Why |
+|---|---|---|
+| **`map-horizon`** | **No alpha.** Generate fully opaque with a plain violet upper half; fade it with CSS `mask-image`. | The repo already does exactly this — `.map-ground` (line 635) and `.hscroll-fade` (line 1183). Matching an existing idiom beats inventing a pipeline. |
+| **`map-sky`** | **No alpha.** Generate the clouds on **pure black**, composite with `mix-blend-mode: screen`. | Under `screen`, black renders as nothing. The clouds are light on dark, so this is exact — no cutout, no alpha channel, smaller file. |
+| **`crowd-lights`** | **Real alpha needed** — generate on flat magenta and key it out. | The silhouette is *dark* and must occlude the venue behind it, so `screen` would erase it. Splitting in two also works: a dark silhouette with alpha, plus the lights on black via `screen`. |
+
+### Post-production, in order
+
+1. **Crop** to the delivery ratio, keeping the bottom.
+2. **Downscale** to the delivery width — `map-horizon` 1600, `venue-*` 1200, `finale` 1080.
+   Never upscale; if the generation is smaller than the target, regenerate.
+3. **Check the safe zone** against the list below, *before* encoding.
+4. **Encode** — `cwebp -q 72 in.png -o out.webp`, or squoosh.app. Painterly gradients
+   compress very well; expect 60–90 KB.
+5. **Check the budget** — ≤ 120 KB per background, ≤ 400 KB for all of Phase 1.
+6. **Name and place it** — `assets/bg/map-horizon.webp`, per §7.2.
+
+### Acceptance check — reject and regenerate if any of these fail
+
+- Is the safe zone actually empty? (lower 55 % for bands, central 60 × 55 % for `finale`)
+- Does it survive a 55 % dark scrim and still read?
+- Any text, letters, numerals or signage? Any faces or hands?
+- Any **gold objects**? (amber *light* is fine; gold belongs to the CTA)
+- Is the horizon at ~62 %, level, and matching the rest of the set?
+- For venues: is the floor a **neutral warm mid-tone**, per §9.2's riser constraint?
+- Anything important within 12 % of the left or right edge?
+- Does the value range sit in the middle — no pure black, no pure white?
+
+---
+
 ### Brief 1 — `venue-theater.webp` (the style-defining asset)
 
 | Field | Value |
@@ -1194,10 +1267,12 @@ a broad warm amber glow lying along the entire horizon line as though an enormou
 were lit just beyond it. Above the horizon, deep violet air. No buildings, no
 structures, no roads, no paths, no trees, no sun or moon.
 
-Composition requirement: all content in the lower 55% of the frame. The upper 45% fades
-smoothly to fully transparent. The horizontal centre of the image must stay completely
-plain and featureless. Keep the far left and far right edges non-committal so the image
-can be scrolled and masked. The band must repeat seamlessly left to right.
+Composition requirement: all content in the lower 55% of the frame. The upper 45% is an
+empty, smooth, even field of deep violet with nothing in it at all -- no clouds, no
+shapes, no detail -- so it can be faded out cleanly afterwards. The horizontal centre of
+the image must stay completely plain and featureless. Keep the far left and far right
+edges non-committal so the image can be scrolled and masked. The band must repeat
+seamlessly left to right.
 
 Mood: the quiet, warm, open world a tour travels across.
 ```
@@ -1214,8 +1289,9 @@ their undersides, as if lit from far below. Very soft edges, no definition, no
 billowing detail.
 
 Composition requirement: keep the bands widely separated with large empty gaps between
-them, and keep the centre of the frame almost clear. Fully transparent background — no
-sky colour, no gradient, no ground.
+them, and keep the centre of the frame almost clear. The background is pure solid black
+(#000000) everywhere the clouds are not — a completely flat, even black field, with no
+sky colour, no gradient, no vignette and no ground.
 
 Mood: distant, weightless, barely there.
 ```
@@ -1253,8 +1329,10 @@ colour, with no faces, no hair, no arms and no internal detail at all. Rising ou
 this band into the upper half, a soft irregular scatter of small warm amber points of
 light with gentle bloom, densest just above the heads and thinning out toward the top.
 
-Composition requirement: fully transparent background, no sky, no ground, no frame.
-Keep the upper third sparse. Scatter the lights irregularly — never in rows, a grid or
+Composition requirement: the background is a completely flat, even field of pure
+saturated magenta (#FF00FF) everywhere the crowd and the lights are not, so it can be
+keyed out afterwards. No sky, no ground, no frame, no vignette. Keep the upper third
+sparse. Scatter the lights irregularly — never in rows, a grid or
 an even pattern. The silhouette band itself must stay completely unlit and flat.
 
 Mood: a warm room quietly lighting up.
