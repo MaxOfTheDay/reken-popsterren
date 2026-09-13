@@ -7418,6 +7418,14 @@ const SLOTS = {
 // De vier schermen die samen "de wereld" zijn (plan, stap 2).
 const HUBS = ['#screen-map', '#screen-profile', '#screen-dress', '#screen-trophies'];
 
+/* Parallax: hoe hard elke laag meeschuift met de kaart.
+   De weg met de stadspenningen schuift 100% mee. Wat verder weg ligt hoort
+   lángzamer te gaan, niet sneller -- vandaar grond boven lucht. In de app doet
+   updateParallax op dit moment alleen de lucht (0.06) en staat de grond stil,
+   dus de verste laag beweegt het meest. Dat trekken we hier recht.
+   Beide lagen herhalen horizontaal, dus hoe ver je ook schuift: nooit een rand. */
+const PARALLAX = { horizon: 0.18, sky: 0.06 };
+
 const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg',
                '.jpeg': 'image/jpeg', '.avif': 'image/avif', '.gif': 'image/gif' };
 
@@ -7461,7 +7469,7 @@ function css(urls, opts) {
        staan. Dan beoordeel je de tekening door een verkeerd raam. */
     out.push(`#screen-game{position:relative}
 #screen-game::before{content:'';position:absolute;inset:0;z-index:-1;
-  background-image:${veil}url("${urls.venue}");background-size:cover,cover;background-position:50% 30%,50% 30%}
+  background-image:${veil}url("${urls.venue}");background-size:${scrim ? 'cover,' : ''}cover;background-position:${scrim ? '50% 30%,' : ''}50% 30%}
 /* §9.1: op het spelscherm lost het kader op -- anders beoordeel je een
    geschilderde zaal met een fotolijstje in het midden. */
 #show-stage{border:none!important;box-shadow:none!important;background:transparent!important;overflow:visible!important}
@@ -7477,7 +7485,10 @@ function css(urls, opts) {
        het "sommige schermen wel, sommige niet" waar het plan voor waarschuwt. */
     out.push(`${HUBS.join(',')}{position:relative}
 ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
-  background-image:${veil}url("${urls.horizon}");background-size:cover,cover;background-position:50% 100%,50% 100%}
+  background-image:${veil}url("${urls.horizon}");
+  background-size:${scrim ? 'cover,' : ''}auto 46%;
+  background-position:${scrim ? '50% 100%,' : ''}calc(50% - var(--horizon-x,0px)) 100%;
+  background-repeat:${scrim ? 'no-repeat,' : ''}repeat-x}
 #screen-map .map-ground{display:none!important}`);
   }
 
@@ -7488,15 +7499,19 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
        Alleen op de schermen die al een .map-sky-inner hébben (kaart en
        sterkeuze). De kleedkamer en de trofeeën hebben die laag niet; die
        erbij maken is werk in index.html, geen werk van de proefopstelling. */
-    /* right:-16% geeft de parallax speling. updateParallax schuift deze laag
-       -scrollLeft * 0.06 naar links; op een telefoon van 390 is de kaart 822
-       breed te scrollen, dus 49px. Zonder speling loopt de rechterrand van de
-       wolkenplaat 49px (13% van het scherm) naar binnen en is daar geen lucht
-       meer. .map-sky eromheen heeft overflow:hidden, dus het overschot wordt
-       netjes afgesneden. */
+    /* De app schuift deze laag met een transform. Dat verplaatst het élement,
+       dus de rechterrand van de plaat komt in beeld en daar is dan geen lucht
+       meer -- op een telefoon 49px, 13% van het scherm. Eerder is dat opgelost
+       met 16% speling, maar dat is een getal dat op de huidige kaartlengte is
+       afgestemd en bij een langere kaart gewoon weer stukgaat.
+       Nu herhaalt de plaat en schuift de achtergrond in plaats van het element.
+       Dan is er geen rand om tegenaan te lopen, hoe ver je ook schuift. */
     out.push(`#screen-map .map-sky-inner,#screen-profile .map-sky-inner{
-  right:-16%;
-  background-image:url("${urls.sky}");background-size:cover;background-position:50% 0;
+  transform:none!important;
+  background-image:url("${urls.sky}");
+  background-size:auto 100%;
+  background-position:calc(50% - var(--sky-x,0px)) 0;
+  background-repeat:repeat-x;
   mix-blend-mode:screen}
 #screen-map .map-sky-inner > span,#screen-profile .map-sky-inner > span{display:none!important}`);
   }
@@ -7504,7 +7519,7 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
   if (urls.finale) {
     out.push(`#screen-end{position:relative}
 #screen-end::before{content:'';position:absolute;inset:0;z-index:-1;
-  background-image:${veil}url("${urls.finale}");background-size:cover,cover;background-position:50% 40%,50% 40%}`);
+  background-image:${veil}url("${urls.finale}");background-size:${scrim ? 'cover,' : ''}cover;background-position:${scrim ? '50% 40%,' : ''}50% 40%}`);
   }
 
   return out.join('\n');
@@ -7512,7 +7527,31 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
 
 /* Node krijgt zijn exports; in de browser bestaat 'module' niet en wordt dit
    overgeslagen -- dan staan de functies gewoon in de omringende scope. */
-if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, classify, css, isImage, mimeFor, namesHint };
+if (typeof module !== 'undefined') /* Aandrijving voor de parallax, als tekst zodat proefstudio.html en
+   test/preview.js precies dezelfde code inspuiten. In de app zelf is dit straks
+   een paar regels in updateParallax: CSS-variabelen zetten in plaats van een
+   transform op de luchtlaag. */
+function parallaxJs() {
+  return `(function () {
+    var lagen = ${JSON.stringify(HUBS)};
+    function volg() {
+      var tm = document.getElementById('tour-map');
+      if (!tm) return;
+      var x = tm.scrollLeft;
+      lagen.forEach(function (sel) {
+        var el = document.querySelector(sel);
+        if (!el) return;
+        el.style.setProperty('--horizon-x', (x * ${PARALLAX.horizon}).toFixed(1) + 'px');
+        el.style.setProperty('--sky-x', (x * ${PARALLAX.sky}).toFixed(1) + 'px');
+      });
+    }
+    // scroll bubbelt niet, dus meeluisteren in de capture-fase
+    document.addEventListener('scroll', volg, true);
+    volg();
+  })();`;
+}
+
+if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, classify, css, isImage, mimeFor, namesHint, parallaxJs };
 
 
 /* ---- de proefstudio zelf ---- */
@@ -7718,5 +7757,24 @@ if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, classify, cs
   document.getElementById('ps-vast').style.opacity = .45;
   teken();
 })();
+
+/* Parallax: de grond en de lucht schuiven met de kaart mee, allebei herhalend. */
+(function () {
+    var lagen = ["#screen-map","#screen-profile","#screen-dress","#screen-trophies"];
+    function volg() {
+      var tm = document.getElementById('tour-map');
+      if (!tm) return;
+      var x = tm.scrollLeft;
+      lagen.forEach(function (sel) {
+        var el = document.querySelector(sel);
+        if (!el) return;
+        el.style.setProperty('--horizon-x', (x * 0.18).toFixed(1) + 'px');
+        el.style.setProperty('--sky-x', (x * 0.06).toFixed(1) + 'px');
+      });
+    }
+    // scroll bubbelt niet, dus meeluisteren in de capture-fase
+    document.addEventListener('scroll', volg, true);
+    volg();
+  })();
 </script></body>
 </html>

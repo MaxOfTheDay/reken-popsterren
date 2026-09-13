@@ -1649,7 +1649,7 @@ value.
 | **Asset name** | `assets/bg/map-horizon.webp`, `assets/bg/map-sky.webp` |
 | **Purpose** | Give the tour map a world. Replace the invisible `.map-ground` gradient stack (line 570) and the seven drifting `☁️`/`✈️` emoji in `.map-sky` (line 589) |
 | **Where used** | `#screen-map` — horizon anchored to `background-position: 50% 100%`; sky on the existing `.map-sky-inner`, which already receives a `translateX` parallax from `updateParallax` (line 3591) |
-| **Composition** | **Horizon:** two or three broad rolling landform shapes layered like **painted stage flats**, with a warm glow along the whole horizon line as if a stage were lit just beyond it. **Not** tileable — see the note below. Art occupies the **bottom 55 %**; the top is a plain field that fades away in CSS. **Sky:** three soft, widely separated cloud bands, nothing else. |
+| **Composition** | **Horizon:** two or three broad rolling landform shapes layered like **painted stage flats**, with a warm glow along the whole horizon line as if a stage were lit just beyond it. **Horizontally tileable** — see the note below. Art occupies the **bottom 55 %**; the top is a plain field that fades away in CSS. **Sky:** three soft, widely separated cloud bands, nothing else. |
 | **Visual description** | Warm and inviting, and deliberately almost empty. The landforms are **broad rounded masses with the layered simplicity of stage flats**, not a landscape painting — no texture, no vegetation, no silhouetted trees. The ground is the *stage the tour walks across*. No buildings, no roads, no landmarks; the 12 city medallions supply the places, and the road, medallions and avatar must stay dominant over the art. The horizon glow is the same amber as the venue key, so map and show read as lit by one light. |
 | **Required safe UI area** | Nothing meaningful in the **central 60 % × 45 %** (the road, medallions, avatar and `Speel!` pill live there). Nothing within **12 % of the left or right edge** — the map scrolls horizontally and those edges get masked by `.hscroll-fade` (line 1133). |
 | **Perspective** | Eye level, flat-on, horizon at 62 % |
@@ -1657,25 +1657,35 @@ value.
 | **Colour direction** | `#3D0A58` ground, `#7B2FF7` air, `#FFC23D`/`#FF8F00` horizon glow, one `#38BDF8` band high in the sky |
 | **Aspect ratio** | Horizon **8:3** · Sky **16:9** |
 
-> **Measured correction — tiling and parallax.** The brief used to require a
-> horizontally tileable horizon. Nothing tiles it. `.map-ground` sits on `#screen-map`,
-> which does not scroll; only `.tour-map` inside it scrolls, and `updateParallax` moves
-> the sky alone (`translateX(-scrollLeft * 0.06)`). Measured on the shipped build: at
-> 390 px the map scrolls 822 px and the horizon's `background-position` is identical at
-> both ends. So the horizon has exactly one framing to look right in — easier, not
-> harder — and the tiling requirement only cost effort. Dropped.
+> **Tiling and parallax — and a correction to a correction.** An earlier pass dropped the
+> tiling requirement, on the measurement that `.map-ground` sits on `#screen-map`, which
+> does not scroll, so the horizon never moves. That measurement was right and the
+> conclusion was wrong: it described the *shipped* screen, and Phase 1 step 2 exists
+> precisely to replace that screen. Letting the current implementation define the spec
+> for its own replacement is circular. The requirement is back.
 >
-> The **sky** does move, and it needs slack for it: 6 % of 822 px is a 49 px drift, so a
-> `cover`-sized plate pulls its right edge 13 % of the screen inward and leaves that
-> strip cloudless. `scene.js` now widens the layer (`right: -16%`); `.map-sky` has
-> `overflow: hidden`, so the surplus is clipped. Verified at full scroll: the plate still
-> overhangs by 13 px, so no gap.
+> **Both layers now tile and both move.** `.tour-map` scrolls 822 px on a 390 px phone.
+> The road and the city medallions travel with it at 100 %; the horizon now drifts at
+> **18 %** (148 px) and the sky at **6 %** (49 px), so the nearer layer moves faster than
+> the farther one. Previously the ground was pinned at 0 % while the sky drifted, which
+> is parallax the wrong way round.
 >
-> One oddity left alone deliberately: the sky drifts 6 % while the ground is pinned at
-> 0 %, so the *farther* layer moves more than the nearer one — inverted parallax. Giving
-> the ground a truer 15 % would need 123 px of slack (32 % of a phone screen), i.e. a
-> much wider asset, for a drift most people will never consciously read. Not worth it.
-> If it ever looks wrong on the real asset, that is the knob.
+> Tiling is what makes this free. The alternative — a wide plate with enough slack to
+> drift into — was tried (`right: -16%` on the sky) and works, but the number is tuned to
+> today's map length and silently breaks if the map ever gets longer. `repeat-x` has no
+> edge to run out of, at any scroll distance and any viewport.
+>
+> **It costs the generator nothing extra**, because the tiling requirement and the
+> safe-zone requirement are the same requirement. Brief 3 already demands nothing
+> meaningful within 12 % of either edge, since `.hscroll-fade` masks those strips. Edges
+> that are empty are exactly the edges that repeat invisibly — the asset does not need
+> true seamlessness, only quiet sides.
+>
+> **What Phase 1 step 2 must change in `index.html`:** `updateParallax` currently sets
+> `transform: translateX(...)` on `.map-sky-inner`. Moving the *element* is what exposed
+> its edge in the first place. It should set the CSS custom properties `--horizon-x` and
+> `--sky-x` on the hub screens instead, and let `background-position` do the work.
+> `test/scene.js` carries the working version.
 | **Output resolution** | Horizon 1600×600 (`@3200`) · Sky 1600×900 |
 | **Transparent background** | Horizon: **No** (top fades to transparent — export PNG-alpha or WebP-alpha). Sky: **Yes** |
 | **Consistency reference** | `venue-theater.webp` — same amber, same violet, same grain |

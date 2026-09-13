@@ -314,11 +314,16 @@ ${sceneSrc}
   document.getElementById('ps-vast').style.opacity = .45;
   teken();
 })();
+
+/* Parallax: de grond en de lucht schuiven met de kaart mee, allebei herhalend. */
+${'${SCENE_PARALLAX}'}
 </script>`;
+
+const OVERLAY2 = OVERLAY.replace('${SCENE_PARALLAX}', require('./scene.js').parallaxJs());
 
 const html = app
   .replace('</head>', '<style id="ps-scene-vol"></style><style id="ps-scene-kaal"></style></head>')
-  .replace('</body>', OVERLAY + '</body>');
+  .replace('</body>', OVERLAY2 + '</body>');
 
 fs.writeFileSync(OUT, html);
 const kb = Math.round(Buffer.byteLength(html) / 1024);
