@@ -65,10 +65,11 @@ softness and buys nothing.
 
 Budget: **≤ 120 KB per image**, ≤ 400 KB for 2+3 together.
 
-`map-horizon` does **not** need to be tileable — it never scrolls, so it has one framing
-to get right. `map-sky` does move (6 % parallax against the map's 822 px of scroll on a
-phone), and the CSS gives it 16 % of slack to drift into; measured, so it needs no extra
-width from you beyond the sizes above. Details in `ART-DIRECTION.md` Brief 3.
+**Both map images must tile left-to-right.** They now drift with the map as it scrolls —
+the horizon at 18 %, the sky at 6 % — and repeat, so there is no edge to run out of at
+any scroll distance. This asks nothing extra of you: the safe-zone rule already keeps the
+outer 12 % of each image empty, and empty edges are exactly what makes a repeat
+invisible. Details in `ART-DIRECTION.md` Brief 3.
 
 ---
 

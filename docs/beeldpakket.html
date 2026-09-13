@@ -271,6 +271,7 @@
       <tr><td>The crowd has faces</td><td>Replace every face with a smooth featureless oval. The crowd is one flat silhouette mass of rounded heads and shoulders, with no features at all.</td></tr>
       <tr><td>Gold-looking objects appeared</td><td>Remove all gold and brass objects. Warm amber may only appear as light and glow, never as a gold-coloured thing.</td></tr>
       <tr><td><code>map-sky</code>: the black is not black</td><td>Make the background pure solid black, hex #000000, everywhere the clouds are not &mdash; a completely flat even black field, no gradient, no vignette, no dark blue.</td></tr>
+      <tr><td>The seam shows when it repeats</td><td>Keep the scene exactly as it is, but make the far left and far right edges of the image plain and empty, with nothing touching either edge, and end on the same tone and the same ground height on both sides.</td></tr>
       <tr><td>The room is the wrong colour</td><td>Keep the composition exactly as it is and change only the colour of the room to <i>[deep violet / warm aubergine / midnight blue]</i>, at the same darkness.</td></tr>
     </tbody>
   </table></div>
@@ -381,8 +382,13 @@ moon, and nothing standing on the ground.
 COMPOSITION — Keep the lower half dark, smooth and almost empty, and keep the middle of
 the image plain: the road, the city markers and the child's avatar all sit there and
 must stay dominant over the artwork. Nothing meaningful within 12% of the left or right
-edge, which get masked off. The horizon line sits about two thirds of the way down.`,
-    checks: 'It does <b>not</b> need to tile. Measured on the real build: the horizon never moves when the map scrolls, so it has exactly one framing to get right.'
+edge, which get masked off. The horizon line sits about two thirds of the way down.
+
+TILING — This image is repeated end to end, so its left and right edges must meet.
+Keep both outer edges plain and featureless: no hill crest, no glow and no shape may
+touch either edge, and the ground must end at the same height and the same flat tone on
+both sides, so the join cannot be seen.`,
+    checks: 'It <b>must tile</b> left-to-right &mdash; it now drifts 148&nbsp;px across a full map scroll and repeats. This costs nothing extra: the safe-zone rule already keeps the outer 12% empty, and empty edges are what makes a repeat invisible.'
   },
   {
     n: 3, file: 'map-sky.webp', status: 'over', label: 'style override',
@@ -403,12 +409,16 @@ definition, no billowing detail.
 COMPOSITION — Keep the bands widely separated with large empty gaps between them, and
 keep the centre of the frame almost clear.
 
+TILING — This image is repeated end to end, so its left and right edges must meet. Keep
+the far left and far right of the frame completely empty black, with no cloud touching
+either edge, so the join cannot be seen.
+
 CRITICAL — The background is pure solid black (#000000) everywhere the clouds are not:
 a completely flat, even black field with no sky colour, no gradient, no vignette and no
 ground. Distant, weightless, barely there.`,
     dont: `DO NOT INCLUDE — No text, letters, numbers, signage or logos. No ground, horizon or
 landscape. No stars, birds, sun or moon. No people. No gold objects. No frame or border.`,
-    checks: 'Check the black is <b>really black</b> before converting — a near-black background turns into a grey haze over the whole map once it is screen-blended.'
+    checks: 'Check the black is <b>really black</b> before converting &mdash; a near-black background turns into a grey haze over the whole map once it is screen-blended. It also <b>tiles</b>, so no cloud may touch the left or right edge.'
   },
   {
     n: 4, file: 'venue-club.webp', status: 'later', label: 'make with 5',
