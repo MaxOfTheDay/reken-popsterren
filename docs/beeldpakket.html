@@ -422,7 +422,7 @@ both sides, so the join cannot be seen.`,
   {
     n: 4, file: 'map-sky.webp', status: 'over', label: 'style override',
     size: '1536×1024', crop: '1536×864', deliver: '1536×864', hue: 'black ground',
-    where: 'The drifting sky layer on the map and the star picker, replacing the cloud emoji. It is composited with a screen blend, so pure black becomes invisible and no cut-out step is needed.',
+    where: 'The drifting cloud layer on the tour map, replacing the cloud emoji. Ask for a solid black background — far easier for a generator than real transparency — and the proefstudio turns that black into transparency when you drop the file in. What you save is an ordinary WebP with an alpha channel.',
     master: `STYLE — A children's game illustration. Soft painted gradients, simple rounded
 shapes, no outlines, not photorealistic, not 3D.
 
@@ -447,7 +447,7 @@ a completely flat, even black field with no sky colour, no gradient, no vignette
 ground. Distant, weightless, barely there.`,
     dont: `DO NOT INCLUDE — No text, letters, numbers, signage or logos. No ground, horizon or
 landscape. No stars, birds, sun or moon. No people. No gold objects. No frame or border.`,
-    checks: 'Check the black is <b>really black</b> before converting &mdash; a near-black background turns into a grey haze over the whole map once it is screen-blended. It also <b>tiles</b>, so no cloud may touch the left or right edge.'
+    checks: 'The black must be <b>really black</b>. It becomes the transparency, so a near-black background turns into a grey film over the whole map instead of disappearing. It also <b>tiles</b>, so no cloud may touch the left or right edge.'
   },
   {
     n: 5, file: 'venue-club.webp', status: 'later', label: 'make with 5',

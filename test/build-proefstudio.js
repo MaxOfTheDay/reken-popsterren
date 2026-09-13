@@ -63,6 +63,8 @@ const OVERLAY = `
   #ps .vak:hover .beeld{border-color:#ffb43d}
   #ps .vak.sleepover .beeld{border-color:#8fd6ff;background:rgba(56,189,248,.22)}
   #ps .beeld img{width:100%;height:100%;object-fit:cover;display:block}
+  /* wolken zijn doorzichtig; op een donkere duim zie je er niets van */
+  #ps .vak[data-slot="sky"] .beeld{background:linear-gradient(#4b1a63,#7b2ff7)}
   #ps .beeld .plus{font-size:17px;color:rgba(255,255,255,.4);line-height:1}
   #ps .vak b{font:600 9px/1.2 system-ui;letter-spacing:.01em;color:#d9cce6;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
@@ -92,6 +94,14 @@ const OVERLAY = `
   #ps .knoppen button.aan{background:rgba(255,215,64,.2);border-color:#ffd740;color:#ffd740}
   #ps label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
     margin-top:6px;font-size:12px}
+  #ps label i{color:#8571a0;font-size:11px}
+  #ps .maat{position:absolute;left:2px;bottom:2px;font:600 8.5px/1 system-ui;
+    background:rgba(10,4,18,.82);color:#d9cce6;border-radius:3px;padding:2px 4px}
+  #ps .maat.over{background:#8a2f2f;color:#ffd9d9}
+  #ps .bewaar{width:100%;margin-top:9px;background:linear-gradient(#ffc23d,#ff8f00);
+    color:#3a0f56;font:700 12px system-ui;border:0;border-radius:7px;padding:7px;cursor:pointer}
+  #ps .bewaar:disabled{opacity:.45;cursor:default}
+  #ps .bewaar:hover:not(:disabled){filter:brightness(1.07)}
 
   /* Sleep je een bestand ergens anders op de pagina, dan licht de hele lade op. */
   #ps.sleepaan{border-color:#8fd6ff;box-shadow:0 0 0 3px rgba(56,189,248,.25),0 10px 40px rgba(0,0,0,.55)}
@@ -116,10 +126,12 @@ const OVERLAY = `
   <div class="body">
     <div class="lade" id="ps-lade"></div>
     <p class="uitleg" id="ps-uitleg"></p>
+    <button class="bewaar" id="ps-bewaar" disabled>Bewaar als WebP</button>
 
     <div class="streep"></div>
     <div class="kopje">Scherm</div>
     <div class="knoppen">
+      <button data-ga="start">Startscherm</button>
       <button data-ga="map">Kaart</button><button data-ga="game">Show</button>
       <button data-ga="end">Einde</button><button data-ga="dress">Kleedkamer</button>
       <button data-ga="tro">Trofee&euml;n</button>
@@ -135,8 +147,15 @@ const OVERLAY = `
       <button data-maat="vol" class="aan">Venster</button>
     </div>
 
-    <label><input type="checkbox" id="ps-art" checked> kunstwerk aan <i style="color:#8571a0">(uit = ervoor/erna)</i></label>
-    <label><input type="checkbox" id="ps-veil" checked> donkere sluier</label>
+    <div class="streep"></div>
+    <div class="kopje">Vergelijken</div>
+    <label title="Uit = het scherm zoals het zonder jouw beeld was. Zo zie je in een oogwenk wat het beeld toevoegt.">
+      <input type="checkbox" id="ps-art" checked> kunstwerk aan <i>ervoor/erna</i></label>
+    <label title="De donkere waas die in de app permanent over elke achtergrond ligt, zodat de som en de antwoordtegels leesbaar blijven. Uit = zien wat die waas voor je doet. Let op: aan is hoe het er in het echt uitziet.">
+      <input type="checkbox" id="ps-veil" checked> donkere waas <i>leesbaarheid</i></label>
+    <p class="uitleg">De <b>waas</b> hoort bij de app, niet bij deze proefopstelling:
+      er ligt altijd een donkere sluier over de achtergrond zodat de som leesbaar blijft.
+      Zet 'm uit om te zien wat hij voor je doet.</p>
   </div>
 </div>
 <input type="file" id="ps-invoer" accept="image/*" multiple hidden>
@@ -165,7 +184,8 @@ ${sceneSrc}
 
   // Per plek een stapel kandidaten. Je maakt er drie of vier per beeld en kiest
   // er één, dus naast elkaar kunnen leggen is de hele bedoeling.
-  var plekken = {};                       // { venue: { lijst: [{naam, uri}], i: 0 } }
+  var plekken = {};                       // { venue: { lijst: [{naam, uri, bytes}], i: 0 } }
+  var laatste = null;                     // laatst aangeraakte vakje, voor de bewaarknop
   var sleutels = Object.keys(SLOTS);      // venue, horizon, sky, finale
   sleutels.forEach(function (k) { plekken[k] = { lijst: [], i: 0 }; });
 
@@ -232,6 +252,14 @@ ${sceneSrc}
           teken();
         };
         beeld.appendChild(weg);
+        var kb = Math.round((st.lijst[st.i].bytes || 0) / 1024);
+        var maat = document.createElement('span');
+        maat.className = 'maat' + (kb > 120 ? ' over' : '');
+        maat.textContent = kb + ' KB';
+        maat.title = kb > 120
+          ? 'Boven het budget van 120 KB. Dat geeft niet voor een bronbestand -- druk op "Bewaar als WebP" en het wordt vanzelf klein.'
+          : 'Past binnen het budget van 120 KB.';
+        beeld.appendChild(maat);
       } else {
         var plus = document.createElement('span');
         plus.className = 'plus'; plus.textContent = '+';
@@ -246,8 +274,10 @@ ${sceneSrc}
       // Klik: leeg vakje opent de bestandskiezer en onthoudt wáár het heen moet.
       // Gevuld vakje met meerdere kandidaten stapt door naar de volgende.
       vak.onclick = function () {
+        laatste = sleutel;
         if (!st.lijst.length) { doel = sleutel; invoer.click(); return; }
-        if (st.lijst.length > 1) { st.i = (st.i + 1) % st.lijst.length; teken(); }
+        if (st.lijst.length > 1) st.i = (st.i + 1) % st.lijst.length;
+        teken();
       };
 
       // Slepen op een vakje wint altijd van de bestandsnaam: zo kun je een
@@ -268,6 +298,110 @@ ${sceneSrc}
       : 'Meer van hetzelfde? Sleep ze op hetzelfde vakje; <b>klik</b> om te wisselen.';
 
     opmaak();
+    zetBewaarKnop();
+  }
+
+  /* ---- zwart omzetten naar doorzichtig ----
+     De wolkenplaat wordt met een zwarte achtergrond gemaakt, want dat is voor
+     een beeldmaker veel makkelijker dan echte doorzichtigheid. In de app kan
+     dat zwart niet met een screen-menging weg (zie test/scene.js), dus bakken
+     we het hier om: hoe donkerder een beeldpunt, hoe doorzichtiger. Wat je
+     daarna bewaart is een gewone WebP met alfa. */
+  function zwartWegbakken(uri) {
+    return new Promise(function (klaar) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        var d;
+        try { d = ctx.getImageData(0, 0, c.width, c.height); }
+        catch (e) { return klaar(uri); }      // mag niet lezen: laat maar
+        var v = d.data;
+        for (var i = 0; i < v.length; i += 4) {
+          // alfa = de helderste kanaalwaarde, dus zwart wordt volledig doorzichtig
+          var a = Math.max(v[i], v[i + 1], v[i + 2]);
+          v[i + 3] = Math.min(255, Math.round(a * 1.15));
+        }
+        ctx.putImageData(d, 0, 0);
+        klaar(c.toDataURL('image/png'));
+      };
+      img.onerror = function () { klaar(uri); };
+      img.src = uri;
+    });
+  }
+
+  /* ---- opslaan als WebP ----
+     Beeldmakers leveren PNG's van een paar megabyte. Prima als bron, niet om
+     mee te leveren: het spel is een app die gezinnen op telefoondata laden.
+     Gemeten op hetzelfde beeld van 1024x1536 -- PNG 1075 KB, WebP q0.9 67 KB,
+     q0.8 41 KB. De browser kan dit zelf, dus er hoeft geen apart gereedschap
+     aan te pas. Uitsnijden op de leveringsverhouding, verkleinen naar de
+     leveringsmaat, en met de kwaliteit zakken tot het onder de 120 KB zit. */
+  function snijEnSchaal(img, sleutel) {
+    var lever = SLOTS[sleutel].lever, bw = lever[0], bh = lever[1];
+    var c = document.createElement('canvas');
+    c.width = bw; c.height = bh;
+    var ctx = c.getContext('2d');
+    // vullen zoals CSS cover: schalen op de langste kant, de rest valt weg
+    var schaal = Math.max(bw / img.width, bh / img.height);
+    var w = img.width * schaal, h = img.height * schaal;
+    var x = (bw - w) / 2;
+    // de horizon wordt onderaan verankerd, want daar zit zijn tekening
+    var y = SLOTS[sleutel].anker === 'onder' ? (bh - h) : (bh - h) / 2;
+    ctx.drawImage(img, x, y, w, h);
+    return c;
+  }
+
+  function welkVakje() {
+    if (laatste && plekken[laatste].lijst.length) return laatste;
+    for (var i = 0; i < sleutels.length; i++) {
+      if (plekken[sleutels[i]].lijst.length) return sleutels[i];
+    }
+    return null;
+  }
+
+  function bewaar() {
+    var sleutel = welkVakje();
+    if (!sleutel) return;
+    var st = plekken[sleutel], kandidaat = st.lijst[st.i];
+    var knop = document.getElementById('ps-bewaar');
+    knop.disabled = true; knop.textContent = 'Bezig\u2026';
+
+    var img = new Image();
+    img.onload = function () {
+      var c = snijEnSchaal(img, sleutel);
+      var data = null;
+      var trappen = [0.9, 0.85, 0.8, 0.75, 0.7, 0.65];
+      for (var i = 0; i < trappen.length; i++) {
+        data = c.toDataURL('image/webp', trappen[i]);
+        if (data.length * 3 / 4 <= 120 * 1024) break;
+      }
+      var kb = Math.round(data.length * 3 / 4 / 1024);
+      // naam: die van jou als hij al klopt, anders de officiële
+      var basis = kandidaat.naam.replace(/\.[^.]+$/, '');
+      var naam = (classify(kandidaat.naam) === sleutel) ? basis + '.webp' : SLOTS[sleutel].canoniek;
+      var a = document.createElement('a');
+      a.href = data; a.download = naam;
+      document.body.appendChild(a); a.click(); a.remove();
+      knop.disabled = false;
+      knop.textContent = naam + ' \u00b7 ' + kb + ' KB';
+      setTimeout(zetBewaarKnop, 4000);
+    };
+    img.onerror = function () { knop.disabled = false; knop.textContent = 'Omzetten mislukt'; };
+    img.src = kandidaat.uri;
+  }
+
+  function zetBewaarKnop() {
+    var knop = document.getElementById('ps-bewaar');
+    var sleutel = welkVakje();
+    knop.disabled = !sleutel;
+    knop.textContent = sleutel ? 'Bewaar ' + SLOTS[sleutel].label.toLowerCase() + ' als WebP'
+                               : 'Bewaar als WebP';
+    knop.title = sleutel
+      ? 'Snijdt uit op ' + SLOTS[sleutel].lever.join('\u00d7') + ', zet om naar WebP en zakt met de kwaliteit tot het onder de 120 KB blijft.'
+      : 'Eerst een beeld toevoegen.';
   }
 
   // ---- bestanden aannemen ----
@@ -279,10 +413,15 @@ ${sceneSrc}
       var r = new FileReader();
       r.onload = function () {
         var sleutel = plek || classify(f.name) || 'venue';
+        laatste = sleutel;
         var st = plekken[sleutel];
-        st.lijst.push({ naam: f.name, uri: r.result });
-        st.i = st.lijst.length - 1;          // het nieuwste meteen tonen
-        teken();
+        // alleen de wolken worden omgebakken; de rest gaat ongemoeid door
+        var voor = sleutel === 'sky' ? zwartWegbakken(r.result) : Promise.resolve(r.result);
+        voor.then(function (uri) {
+          st.lijst.push({ naam: f.name, uri: uri, bytes: f.size });
+          st.i = st.lijst.length - 1;        // het nieuwste meteen tonen
+          teken();
+        });
       };
       r.readAsDataURL(f);
     });
@@ -298,6 +437,7 @@ ${sceneSrc}
   document.addEventListener('drop', function (ev) { neem(ev.dataTransfer.files); });
 
   invoer.onchange = function () { neem(invoer.files); invoer.value = ''; };
+  document.getElementById('ps-bewaar').onclick = bewaar;
   document.getElementById('ps-art').onchange = opmaak;
   document.getElementById('ps-veil').onchange = opmaak;
   document.getElementById('ps-vouw').onclick = function () {
@@ -341,7 +481,8 @@ ${sceneSrc}
       var w = b.dataset.ga;
       if (w === 'veeg') return veeg();
       try {
-        if (w === 'map') goMap();
+        if (w === 'start') { cur = null; goProfiles(); }
+        else if (w === 'map') goMap();
         else if (w === 'dress') openKleedkamer();
         else if (w === 'tro') openTrophies();
         else if (w === 'game') startLevel(P().level);
