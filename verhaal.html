@@ -60,6 +60,29 @@
   figcaption { margin-top: 8px; font-size: 12.5px; color: #d9cce6; display: flex;
     align-items: baseline; gap: 7px; }
   figcaption b { color: #8571a0; font: 600 10.5px system-ui; }
+  /* ---- de lade ----
+     Sleep een beeld hierin en het verschijnt in alle zes de schermen tegelijk.
+     Dat kan omdat elk scherm een iframe is en de app in ?debug-stand luistert
+     naar een postMessage met opmaak; over file:// mag dat wél, terwijl in de
+     iframe grijpen dat niet mag. */
+  .lade { max-width: 1500px; margin: 0 auto 16px; display: flex; gap: 10px;
+    align-items: center; flex-wrap: wrap; padding: 10px 12px;
+    border: 1px solid rgba(255,180,61,.3); border-radius: 10px;
+    background: rgba(255,255,255,.03); }
+  .lade.sleepaan { border-color: #8fd6ff; background: rgba(56,189,248,.12); }
+  .vak { display: flex; flex-direction: column; gap: 4px; align-items: center;
+    background: none; border: 0; padding: 0; cursor: pointer; color: inherit; font: inherit; }
+  .vak .beeld { width: 62px; aspect-ratio: 3/2; border-radius: 5px; overflow: hidden;
+    border: 1.5px dashed rgba(255,255,255,.26); background: rgba(255,255,255,.05);
+    display: grid; place-items: center; position: relative; }
+  .vak.vol .beeld { border-style: solid; border-color: rgba(255,180,61,.75); }
+  .vak:hover .beeld { border-color: #ffb43d; }
+  .vak img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vak .plus { color: rgba(255,255,255,.4); font-size: 15px; }
+  .vak span { font-size: 10px; color: #a08bb8; }
+  .vak.vol span { color: #ffb43d; }
+  .lade .tip { font-size: 12px; color: #8571a0; flex: 1; min-width: 200px; }
+
   .let { max-width: 1500px; margin: 18px auto 0; font-size: 12.5px; color: #8571a0; }
 </style>
 </head>
@@ -79,15 +102,23 @@
   </div>
 </header>
 
+<div class="lade" id="lade"></div>
+
 <div class="rij" id="rij"></div>
 
-<p class="let"><b>Een nieuwe achtergrond uitproberen op álle schermen tegelijk:</b> haal het
-bestand uit de proefstudio met <em>Bewaar als WebP</em> — die geeft het meteen de juiste naam —
-en zet het in <code>assets/bg/</code> naast <code>index.html</code>. Daarna hier op ↻ drukken.
-Je ziet het dan door het hele verhaal heen, zonder iets vast te leggen. Bevalt het niet, dan
-zet je het oude bestand terug.<br><br>
-Dit toont dus altijd de bestanden zoals ze nú in <code>assets/bg/</code> staan.</p>
+<p class="let"><b>Even proberen:</b> sleep het beeld in de lade hierboven. Het gaat nergens
+heen — het staat alleen in het geheugen van deze pagina, en na verversen is het weg. De
+bestandsnaam bepaalt in welk vakje het valt; klopt dat niet, sleep het dan op het juiste vakje.
+<br><br>
+<b>Houden:</b> haal het bestand uit <code>proefstudio.html</code> met <em>Bewaar als WebP</em> —
+die snijdt het op maat en geeft het de juiste naam — en zet het in <code>assets/bg/</code> naast
+<code>index.html</code>. Vanaf dan staat het er ook zonder de lade in, en kan het mee de app in.
+<br><br>
+Deze pagina heeft <code>index.html</code>, <code>assets/bg/</code> en <code>test/scene.js</code>
+naast zich nodig; hij toont de app zelf, geen plaatjes ervan.</p>
 
+<!-- dezelfde bron als npm run try, npm run preview en de proefstudio -->
+<script src="test/scene.js"></script>
 <script>
   // De volgorde is het verhaal: kiezen, reizen, optreden, gevierd worden, en
   // daarna de twee kasten waar je je beloning uitgeeft en bewaart.
@@ -110,6 +141,7 @@ Dit toont dus altijd de bestanden zoals ze nú in <code>assets/bg/</code> staan.
       const f = document.createElement('iframe');
       f.src = 'index.html' + s.q + '&t=' + Date.now();
       f.loading = 'eager';
+      f.onload = () => setTimeout(stuur, 60);   // verse frames de huidige keuze geven
       venster.appendChild(f);
       const cap = document.createElement('figcaption');
       const b = document.createElement('b'); b.textContent = s.b;
@@ -144,8 +176,81 @@ Dit toont dus altijd de bestanden zoals ze nú in <code>assets/bg/</code> staan.
     k.onclick = () => { bij *= (k.dataset.schaal === '+' ? 1.18 : 1 / 1.18); zetMaat(huidigeMaat); };
   });
   addEventListener('resize', () => zetMaat(huidigeMaat));
+  /* ---- kandidaten uitproberen over het hele verhaal ----
+     De beelden blijven in het geheugen van deze pagina; er wordt niets
+     opgeslagen en niets in assets/bg/ gezet. Bevalt het, dan bewaar je het
+     bestand alsnog met de proefstudio en zet je het er zelf in. */
+  const gekozen = {};                    // { venue: dataURI, ... }
+  const lade = document.getElementById('lade');
+
+  function stuur() {
+    const regels = css(gekozen, { scrim: true });
+    for (const f of document.querySelectorAll('#rij iframe')) {
+      try { f.contentWindow.postMessage({ type: 'popsterren-scene', css: regels }, '*'); }
+      catch (e) { /* frame nog niet klaar; onload stuurt opnieuw */ }
+    }
+  }
+
+  function tekenLade() {
+    lade.textContent = '';
+    for (const sleutel of Object.keys(SLOTS)) {
+      const info = SLOTS[sleutel], heeft = !!gekozen[sleutel];
+      const vak = document.createElement('button');
+      vak.className = 'vak' + (heeft ? ' vol' : '');
+      vak.title = heeft ? 'klik om weg te halen' : info.label + ' — ' + info.waar + '. Sleep hier een beeld.';
+      const beeld = document.createElement('span');
+      beeld.className = 'beeld';
+      if (heeft) { const i = document.createElement('img'); i.src = gekozen[sleutel]; beeld.appendChild(i); }
+      else { const pl = document.createElement('span'); pl.className = 'plus'; pl.textContent = '+'; beeld.appendChild(pl); }
+      const nm = document.createElement('span'); nm.textContent = info.label;
+      vak.append(beeld, nm);
+      vak.onclick = () => {
+        if (heeft) { delete gekozen[sleutel]; tekenLade(); stuur(); }
+        else { doel = sleutel; kiezer.click(); }
+      };
+      vak.addEventListener('dragover', e => { e.preventDefault(); lade.classList.add('sleepaan'); });
+      vak.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); neem(e.dataTransfer.files, sleutel); });
+      lade.appendChild(vak);
+    }
+    const tip = document.createElement('p');
+    tip.className = 'tip';
+    tip.textContent = Object.keys(gekozen).length
+      ? 'Staat in alle zes de schermen. Klik een vakje om het weer weg te halen.'
+      : 'Sleep hier een gegenereerd beeld — je ziet het meteen door het hele verhaal heen. Niets wordt opgeslagen.';
+    lade.appendChild(tip);
+  }
+
+  let doel = null;
+  const kiezer = document.createElement('input');
+  kiezer.type = 'file'; kiezer.accept = 'image/*'; kiezer.hidden = true;
+  document.body.appendChild(kiezer);
+  kiezer.onchange = () => { neem(kiezer.files); kiezer.value = ''; };
+
+  function neem(files, forceer) {
+    const plek = forceer || doel; doel = null;
+    for (const f of files) {
+      if (!/^image\//.test(f.type) && !isImage(f.name)) continue;
+      const r = new FileReader();
+      r.onload = () => {
+        const sleutel = plek || classify(f.name) || 'venue';
+        gekozen[sleutel] = r.result;
+        tekenLade(); stuur();
+      };
+      r.readAsDataURL(f);
+    }
+  }
+
+  for (const ev of ['dragenter', 'dragover']) {
+    document.addEventListener(ev, e => { e.preventDefault(); lade.classList.add('sleepaan'); });
+  }
+  for (const ev of ['dragleave', 'drop']) {
+    document.addEventListener(ev, e => { e.preventDefault(); lade.classList.remove('sleepaan'); });
+  }
+  document.addEventListener('drop', e => neem(e.dataTransfer.files));
+
   document.getElementById('ververs').onclick = bouw;
   zetMaat('390x844');
+  tekenLade();
   bouw();
 </script>
 </body>

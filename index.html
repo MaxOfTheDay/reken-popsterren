@@ -7310,6 +7310,17 @@ if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
   window.__game = () => G;
   window.__db = () => db;
+
+  /* Het proefbord (verhaal.html) toont dit scherm in een lijstje en stuurt hier
+     een opmaakregel naartoe, zodat één gesleepte achtergrond in álle schermen
+     tegelijk te zien is. Alleen met ?debug, en er wordt uitsluitend CSS in een
+     <style> gezet -- geen code, geen gegevens, niets dat wordt opgeslagen. */
+  addEventListener('message', e => {
+    if (!e.data || e.data.type !== 'popsterren-scene') return;
+    let el = document.getElementById('proef-scene');
+    if (!el) { el = document.createElement('style'); el.id = 'proef-scene'; document.head.appendChild(el); }
+    el.textContent = String(e.data.css || '');
+  });
   if (dbg.has('demo')) {
     // Geen save(): dit is een kijk-opstelling, geen opslag. Bij herladen wordt
     // ze gewoon opnieuw uit de URL opgebouwd.
