@@ -1039,17 +1039,42 @@ of your star should have a backdrop, which is why those uses were always right. 
 two venue screens change, and only in CSS:
 
 ```css
-/* .show-stage / .end-stage stop being a picture frame and become a stage flat */
+/* .show-stage / .end-stage stop being a picture frame and become a stage flat.
+   applyStage() still sets the background inline, so everything here is inset
+   shadows — they layer over whatever gradient the child bought. */
 #show-stage {
-  border: none;                       /* the white frame goes */
-  overflow: visible;                  /* she stands in front of it, not inside it */
-  width: 188px; height: 140px;        /* smaller than today's 253×214 */
-  border-radius: 22px 22px 8px 8px;   /* a flat standing on the floor */
-  box-shadow: 0 16px 28px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.13);
+  border: none;                      /* the white frame goes */
+  overflow: visible;                 /* she stands in front of it, not inside it */
+  width: 186px; height: 142px;       /* smaller than today's 253×214 */
+  border-radius: 92px 92px 2px 2px;  /* an arch, not a card — see below */
+  box-shadow:
+    inset 0  -9px 0      rgba(0,0,0,.24),   /* the batten it stands on */
+    inset 0 -46px 38px -30px rgba(0,0,0,.55),/* light falls off toward the floor */
+    inset 0   3px 0      rgba(255,255,255,.20), /* top edge catches the house light */
+    0 10px 18px rgba(0,0,0,.42);            /* cast shadow */
 }
-#show-stage::after { display: none; } /* the animated light pools go (§9.1) */
-#show-stage .avatar-holder { height: 132%; }   /* she overflows above the flat */
+#show-stage::after { display: none; }        /* the animated light pools go (§9.1) */
+#show-stage::before {                        /* contact shadow where it meets the stage */
+  content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+  width: 212px; height: 20px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(0,0,0,.60), transparent 72%); filter: blur(4px);
+}
+#show-stage .avatar-holder { height: 136%; } /* she overflows above the arch */
+/* the three props follow the arch instead of a rectangle's corners */
+#show-stage .deco:nth-of-type(1) { top: 30%; left: 13%; }
+#show-stage .deco:nth-of-type(2) { top: 25%; right: 12%; }
+#show-stage .deco:nth-of-type(3) { bottom: 9px; right: 10%; }
 ```
+
+**Why an arch and not a rectangle.** Squaring the base, dropping the inset stroke and
+adding a contact shadow fixed most of the card-iness, but a plain rounded rectangle still
+read as a panel. An arched top settles it: it stops looking like UI entirely, and **the
+avatar's head breaks the arch line**, which is what sells "standing in front of" rather
+than "contained within". Rendered at all three viewports
+(`shots/podium-opties/B4-boog-definitief*`); at 320×568 the sum and all four tiles stay in
+frame with headroom to spare, and the existing `@media (max-height: 700px)` rule will
+shrink the art further — the art losing height rather than the maths, exactly as §4.3
+requires.
 
 The three `deco` emoji stay where `applyStage` already puts them — inside the flat, which
 is a better home than the screen corners they occupy today. They remain emoji until Phase
