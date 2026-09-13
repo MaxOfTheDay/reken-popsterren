@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reken Popsterren — verhaal</title>
+<!--
+  Alle schermen naast elkaar, in de volgorde waarin een kind ze ziet.
+
+  Waarom dit geen los ontwerpbord is: elk vakje hieronder is de échte app in een
+  iframe, met de échte bestanden uit assets/bg/. Er valt dus niets te
+  synchroniseren en het kan nooit verouderen. Een bord met losse plaatjes loopt
+  binnen een week achter op de werkelijkheid; dit niet.
+
+  Openen kan overal: dubbelklikken op je computer, of op de gepubliceerde site
+  op /verhaal.html -- ook op je telefoon.
+-->
+<style>
+  /* .45 als standaard: zes telefoons van 390 breed passen dan naast elkaar op
+     een gewoon laptopscherm. Het hele punt is alles tegelijk zien -- een rij die
+     je moet rondscrollen laat je juist twee schermen vergelijken in plaats van
+     zes. */
+  :root { --kader: 390px; --hoog: 844px; --schaal: .45; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 22px 20px 40px;
+    background: #0e0418; color: #f1e9f7;
+    font: 14px/1.5 system-ui, -apple-system, sans-serif;
+  }
+  header { max-width: 1500px; margin: 0 auto 20px; display: flex;
+    align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  h1 { font-size: 19px; margin: 0; color: #ffb43d; letter-spacing: .01em; }
+  header p { margin: 0; color: #a08bb8; font-size: 13px; flex: 1; min-width: 260px; }
+  .knoppen { display: flex; gap: 6px; }
+  button {
+    background: none; border: 1px solid rgba(255,255,255,.22); color: #d9cce6;
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; font: 13px system-ui;
+  }
+  button:hover { border-color: #8fd6ff; color: #8fd6ff; }
+  button.aan { background: rgba(255,215,64,.2); border-color: #ffd740; color: #ffd740; }
+
+  .rij { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+    max-width: 1500px; margin: 0 auto; }
+  figure { margin: 0; flex: none; }
+  /* Het iframe staat op ware grootte en wordt daarna verkleind. Zo krijgt de app
+     een echte telefoonbreedte te zien -- schalen ná de opmaak, niet ervoor,
+     anders klapt hij om naar de tabletindeling. */
+  .venster {
+    width: calc(var(--kader) * var(--schaal));
+    height: calc(var(--hoog) * var(--schaal));
+    border-radius: 12px; overflow: hidden; position: relative;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+    border: 1px solid rgba(255,255,255,.12); background: #1a0b2b;
+  }
+  iframe {
+    width: var(--kader); height: var(--hoog); border: 0;
+    transform: scale(var(--schaal)); transform-origin: top left;
+  }
+  figcaption { margin-top: 8px; font-size: 12.5px; color: #d9cce6; display: flex;
+    align-items: baseline; gap: 7px; }
+  figcaption b { color: #8571a0; font: 600 10.5px system-ui; }
+  .let { max-width: 1500px; margin: 18px auto 0; font-size: 12.5px; color: #8571a0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Het verhaal</h1>
+  <p>De échte app, zes keer, in de volgorde waarin een kind hem ziet. Leest het als één wereld?</p>
+  <div class="knoppen">
+    <button data-schaal=".45" class="aan">alles</button>
+    <button data-schaal=".62">groter</button>
+    <button data-schaal=".85">groot</button>
+    <button id="ververs" title="haalt alle schermen opnieuw op">↻ ververs</button>
+  </div>
+</header>
+
+<div class="rij" id="rij"></div>
+
+<p class="let">Dit toont de bestanden zoals ze nu in <code>assets/bg/</code> staan. Een beeld dat je
+nog aan het proberen bent zie je hier dus niet — daarvoor is <code>proefstudio.html</code>.</p>
+
+<script>
+  // De volgorde is het verhaal: kiezen, reizen, optreden, gevierd worden, en
+  // daarna de twee kasten waar je je beloning uitgeeft en bewaart.
+  const SCHERMEN = [
+    { q: '?debug&demo',                         n: 'Start',      b: 'wie speelt' },
+    { q: '?debug&demo&star=p1&screen=map',      n: 'Kaart',      b: 'waar nu' },
+    { q: '?debug&demo&star=p1&screen=game',     n: 'Show',       b: 'optreden' },
+    { q: '?debug&demo&star=p1&screen=end',      n: 'Einde',      b: 'applaus' },
+    { q: '?debug&demo&star=p1&screen=dress',    n: 'Kleedkamer', b: 'uitgeven' },
+    { q: '?debug&demo&star=p1&screen=tro',      n: 'Trofeeën',  b: 'bewaren' },
+  ];
+
+  const rij = document.getElementById('rij');
+  function bouw() {
+    rij.textContent = '';
+    for (const s of SCHERMEN) {
+      const fig = document.createElement('figure');
+      const venster = document.createElement('div');
+      venster.className = 'venster';
+      const f = document.createElement('iframe');
+      f.src = 'index.html' + s.q + '&t=' + Date.now();
+      f.loading = 'eager';
+      venster.appendChild(f);
+      const cap = document.createElement('figcaption');
+      const b = document.createElement('b'); b.textContent = s.b;
+      cap.append(s.n + ' · ', b);
+      fig.append(venster, cap);
+      rij.appendChild(fig);
+    }
+  }
+
+  document.querySelectorAll('[data-schaal]').forEach(k => {
+    k.onclick = () => {
+      document.documentElement.style.setProperty('--schaal', k.dataset.schaal);
+      document.querySelectorAll('[data-schaal]').forEach(x => x.classList.toggle('aan', x === k));
+    };
+  });
+  document.getElementById('ververs').onclick = bouw;
+  bouw();
+</script>
+</body>
+</html>
