@@ -9,8 +9,13 @@
  * uitproberen niets in te stellen en niets te onthouden -- je sleept het
  * bestand in incoming/ en het staat op de goede plek. Houd je je niet aan de
  * namen, dan zegt het gereedschap welke namen het wél kent.
+ *
+ * Dit bestand gebruikt met opzet geen enkele Node-module: proefstudio.html
+ * spuit het letterlijk in de pagina in, zodat de opmaak daar niet apart
+ * nagebouwd hoeft te worden. Twee kopieën lopen uiteen; deze ene niet.
  */
-const path = require('path');
+function basename(f) { return String(f).split(/[\\/]/).pop(); }
+function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].toLowerCase() : ''; }
 
 // sleutel -> hoe herken je 'm, op welk scherm hoort hij, en hoe heet dat in het
 // debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
@@ -28,12 +33,12 @@ const SLOTS = {
 const MIME = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg',
                '.jpeg': 'image/jpeg', '.avif': 'image/avif', '.gif': 'image/gif' };
 
-function isImage(file) { return Object.prototype.hasOwnProperty.call(MIME, path.extname(file).toLowerCase()); }
-function mimeFor(file) { return MIME[path.extname(file).toLowerCase()] || 'application/octet-stream'; }
+function isImage(file) { return Object.prototype.hasOwnProperty.call(MIME, extname(file)); }
+function mimeFor(file) { return MIME[extname(file)] || 'application/octet-stream'; }
 
 // Welke plek hoort bij deze bestandsnaam? null = onbekende naam.
 function classify(file) {
-  const base = path.basename(file);
+  const base = basename(file);
   for (const key of Object.keys(SLOTS)) if (SLOTS[key].match.test(base)) return key;
   return null;
 }
@@ -103,4 +108,6 @@ function css(urls, opts) {
   return out.join('\n');
 }
 
-module.exports = { SLOTS, SCRIM, classify, css, isImage, mimeFor, namesHint };
+/* Node krijgt zijn exports; in de browser bestaat 'module' niet en wordt dit
+   overgeslagen -- dan staan de functies gewoon in de omringende scope. */
+if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, classify, css, isImage, mimeFor, namesHint };

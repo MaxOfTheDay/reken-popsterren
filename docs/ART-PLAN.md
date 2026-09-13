@@ -208,7 +208,28 @@ Later, in whole sets only: dressing-room scene, look posters, trophy icons, prop
 
 ## 6. Trying an asset out
 
-### What you need on your machine
+### The easy way: `proefstudio.html`
+
+Download **`proefstudio.html`** from the repo, double-click it, drag your generated image
+onto it. That is the whole workflow. No terminal, no Node, no install, no clone — it is
+one self-contained file holding the entire game plus a drop zone, and it works offline.
+
+- The filename routes it automatically (`venue-…`, `map-horizon`, `map-sky`, `finale`).
+  A file called `image (3).png` lands on the venue slot and you correct it with the
+  dropdown — generators rarely name their output helpfully.
+- After the drop it shrinks to a chip in the corner so you can actually judge the screen.
+  Hover to expand; 📌 pins it open.
+- Two switches: **kunstwerk aan** (off = instant before/after) and **donkere sluier**
+  (off = what the scrim is doing for you).
+- Buttons jump between map, show, end, dressing room and trophies without reloading, so
+  your dropped image stays put.
+- Drop a different image on the same slot to swap it. Nothing is saved, nothing is
+  uploaded, and `index.html` is never touched.
+
+It is generated from the real `index.html` by `npm run studio`, so regenerate it after
+the app changes or you will be judging art against a stale build.
+
+### If you want the terminal version instead
 
 **Node.js, and a terminal. That is the whole list** — no VS Code, no editor at all, no
 `npm install`.

@@ -10,7 +10,8 @@
     "test:sterren": "node test/profiles.test.js",
     "shots": "node test/shots.js",
     "try": "node test/try.js",
-    "preview": "node test/preview.js"
+    "preview": "node test/preview.js",
+    "studio": "node test/build-proefstudio.js"
   },
   "devDependencies": {
     "playwright": "^1.55.0"
