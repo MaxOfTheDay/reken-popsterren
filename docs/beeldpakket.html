@@ -164,8 +164,9 @@
   <p class="eyebrow">Reken Popsterren &middot; asset generation</p>
   <h1>Beeldpakket</h1>
   <p class="lede">Everything needed to generate the seven artwork assets and get them into
-  the game. Each prompt below is <strong>complete on its own</strong> &mdash; style, scene and
-  exclusions in one block &mdash; so one copy is one paste, with nothing to assemble first.</p>
+  the game. Each prompt below is <strong>complete on its own</strong> &mdash; format, style, scene and
+  exclusions in one block &mdash; so one copy is one paste, with nothing to assemble first and
+  no size to remember to set.</p>
   <div class="flow">
     <div><b>STAP 1</b><h3>Generate</h3><p>Copy a prompt, paste it into the image generator, set the size shown on the card. Make three or four, pick one.</p></div>
     <div><b>STAP 2</b><h3>Crop &amp; name</h3><p>Crop, resize, save as WebP under 120&nbsp;KB. The filename is what routes it &mdash; get it exactly right.</p></div>
@@ -256,6 +257,23 @@
       <p style="font-size:13.5px;margin-top:10px;color:var(--muted)">Then check the size: anything over 120&nbsp;KB, drop the quality to 72 and try again before touching the dimensions.</p>
     </div>
   </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>When it comes back nearly right</h2><p>Send one of these as a follow-up rather than starting over. Regenerate from scratch only if two of them in a row do not land it.</p></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What you got</th><th>Say this</th></tr></thead>
+    <tbody>
+      <tr><td>A square image</td><td>Regenerate this as a wide landscape image, 1536 by 1024 pixels. Same scene, same colours, nothing else changed.</td></tr>
+      <tr><td>Letters, a sign or a logo crept in</td><td>Remove every letter, word, number, sign and logo from the image. Any surface that had writing on it becomes plain and smooth.</td></tr>
+      <tr><td>Too fussy &mdash; dies at thumbnail size</td><td>Simplify it hard. Use half as many shapes, each one bigger and rounder, and put the richness into the lighting instead of into objects. It must still read clearly at the size of a phone thumbnail.</td></tr>
+      <tr><td>The bottom is busy or bright</td><td>Make the lower half of the image much darker, smoother and emptier &mdash; an unbroken calm field with no shapes, edges or highlights. Keep everything interesting in the top half.</td></tr>
+      <tr><td>The crowd has faces</td><td>Replace every face with a smooth featureless oval. The crowd is one flat silhouette mass of rounded heads and shoulders, with no features at all.</td></tr>
+      <tr><td>Gold-looking objects appeared</td><td>Remove all gold and brass objects. Warm amber may only appear as light and glow, never as a gold-coloured thing.</td></tr>
+      <tr><td><code>map-sky</code>: the black is not black</td><td>Make the background pure solid black, hex #000000, everywhere the clouds are not &mdash; a completely flat even black field, no gradient, no vignette, no dark blue.</td></tr>
+      <tr><td>The room is the wrong colour</td><td>Keep the composition exactly as it is and change only the colour of the room to <i>[deep violet / warm aubergine / midnight blue]</i>, at the same darkness.</td></tr>
+    </tbody>
+  </table></div>
 </section>
 
 <section>
@@ -456,7 +474,7 @@ value.`,
   },
   {
     n: 6, file: 'finale.webp', status: 'later', label: 'make with 4 + 5',
-    size: '1024×1536', crop: 'none', deliver: '1024×1536', hue: 'amber celebration',
+    size: '1024×1536', crop: 'none', deliver: '1024×1536', hue: 'amber celebration', shape: 'port',
     where: 'Behind the end-of-show screen, which is portrait. The licensed exception: this one may be brighter and richer than every other scene, because it is the moment of celebration.',
     scene: `SCENE — A theatre stage at the end of a show, lit up and celebrating, seen straight on
 from the wings.
@@ -480,7 +498,7 @@ else.`,
   },
   {
     n: 7, file: 'cities.svg', status: 'over', label: 'style override · later',
-    size: '1024×1536', crop: 'sheet', deliver: 'traced to one SVG', hue: 'flat black',
+    size: '1024×1536', crop: 'sheet', deliver: 'traced to one SVG', hue: 'flat black', shape: 'port',
     where: 'Twelve city markers on the tour map, replacing the food emoji (🧇 Brussels, 🥐 Paris, 🌷 Amsterdam…). Generate all twelve in one sheet so their weights match by construction, then trace to SVG.',
     master: `STYLE — A clean flat reference sheet of silhouettes. This asset ignores the lighting,
 depth, grain and palette rules entirely: it is flat silhouettes, not a painting.`,
@@ -510,8 +528,21 @@ detailed and simple landmarks in one set.`,
 
 const STATUS_MARK = { done: '✓', next: '→', later: '', over: '' };
 
+const FORMAT = {
+  land: `FORMAT — One wide landscape image, 1536 x 1024 pixels (3:2). Fill the entire
+frame edge to edge, with no border, no margin, no vignette and no framing device of any
+kind. Do not return a square image.`,
+  port: `FORMAT — One tall portrait image, 1024 x 1536 pixels (2:3). Fill the entire
+frame edge to edge, with no border, no margin, no vignette and no framing device of any
+kind. Do not return a square image.`
+};
+
+/* Het formaat staat bewust in de prompt zelf en niet alleen op de kaart. Via de API
+   is het een parameter, maar wie de prompt in een chatvenster plakt krijgt anders een
+   vierkant beeld terug -- en een vierkante zaal die naar 12:7 bijgesneden moet worden
+   verliest precies de randen waar de coulissen staan. */
 function buildPrompt(a) {
-  return [a.master || MASTER, a.scene, a.dont || DONT].join('\n\n');
+  return [FORMAT[a.shape || 'land'], a.master || MASTER, a.scene, a.dont || DONT].join('\n\n');
 }
 
 const cards = document.getElementById('cards');
