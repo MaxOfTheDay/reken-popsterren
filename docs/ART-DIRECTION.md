@@ -948,6 +948,15 @@ static warm/cool pools, so CSS lighting and painted lighting agree on one direct
 three emoji at fixed screen corners (line 3426). They are the most obviously
 pasted-on element in the app and will look worst against paint.
 
+**And re-home the crowd meter.** This one only became visible once a real venue was put
+behind the screen with `npm run try`: `.fan-row` (line 669) is sized to the stage frame
+and reads as *attached* to it. Dissolve the frame and the meter becomes a detached dark
+capsule with a 👏 floating beside it, in the middle of a painted theatre. It needs a new
+home in the same release — the most natural being the sticky header, beside the hearts
+and the question progress, where the other two "how am I doing" readouts already live.
+Note this also makes the meter available to the finale, where `G.fan` is what the 👏
+reward chip is counting.
+
 ### 9.2 Podium vs. venue — **decided: two layers**
 
 The app sells **12 `stage` items** ("where you perform"). Section 5 proposes **3

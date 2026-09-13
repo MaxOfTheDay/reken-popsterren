@@ -66,8 +66,11 @@ function sceneCss(withScrim) {
       background-image:${layers};background-size:cover,cover;background-position:50% 100%,50% 100%;}
       #screen-map .map-ground{display:none}`;
   }
-  return `.game-arena{position:relative}
-    .game-arena::before{content:'';position:absolute;inset:-8px -12px;z-index:-1;
+  /* Op het scherm zelf en niet op .game-arena: die heeft max-width:860px, dus op
+     een tablet bleef er links en rechts een strook van de gewone verloopachtergrond
+     staan. Dan beoordeel je de tekening door een verkeerd raam. */
+  return `#screen-game{position:relative}
+    #screen-game::before{content:'';position:absolute;inset:0;z-index:-1;
       background-image:${layers};background-size:cover,cover;background-position:50% 30%,50% 30%;}
     /* paragraaf 9.1: op het spelscherm lost het kader op */
     #show-stage{border:none!important;box-shadow:none!important;background:transparent!important;overflow:visible!important}
