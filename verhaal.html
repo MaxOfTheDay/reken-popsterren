@@ -38,6 +38,7 @@
   }
   button:hover { border-color: #8fd6ff; color: #8fd6ff; }
   button.aan { background: rgba(255,215,64,.2); border-color: #ffd740; color: #ffd740; }
+  .scheiding { width: 1px; background: rgba(255,255,255,.18); margin: 2px 3px; }
 
   .rij { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
     max-width: 1500px; margin: 0 auto; }
@@ -68,17 +69,24 @@
   <h1>Het verhaal</h1>
   <p>De échte app, zes keer, in de volgorde waarin een kind hem ziet. Leest het als één wereld?</p>
   <div class="knoppen">
-    <button data-schaal=".45" class="aan">alles</button>
-    <button data-schaal=".62">groter</button>
-    <button data-schaal=".85">groot</button>
-    <button id="ververs" title="haalt alle schermen opnieuw op">↻ ververs</button>
+    <button data-maat="390x844" class="aan">telefoon</button>
+    <button data-maat="320x568">klein</button>
+    <button data-maat="768x1024">tablet</button>
+    <span class="scheiding"></span>
+    <button data-schaal="-" title="kleiner">&minus;</button>
+    <button data-schaal="+" title="groter">+</button>
+    <button id="ververs" title="haalt alle schermen opnieuw op">↻</button>
   </div>
 </header>
 
 <div class="rij" id="rij"></div>
 
-<p class="let">Dit toont de bestanden zoals ze nu in <code>assets/bg/</code> staan. Een beeld dat je
-nog aan het proberen bent zie je hier dus niet — daarvoor is <code>proefstudio.html</code>.</p>
+<p class="let"><b>Een nieuwe achtergrond uitproberen op álle schermen tegelijk:</b> haal het
+bestand uit de proefstudio met <em>Bewaar als WebP</em> — die geeft het meteen de juiste naam —
+en zet het in <code>assets/bg/</code> naast <code>index.html</code>. Daarna hier op ↻ drukken.
+Je ziet het dan door het hele verhaal heen, zonder iets vast te leggen. Bevalt het niet, dan
+zet je het oude bestand terug.<br><br>
+Dit toont dus altijd de bestanden zoals ze nú in <code>assets/bg/</code> staan.</p>
 
 <script>
   // De volgorde is het verhaal: kiezen, reizen, optreden, gevierd worden, en
@@ -111,13 +119,33 @@ nog aan het proberen bent zie je hier dus niet — daarvoor is <code>proefstudio
     }
   }
 
-  document.querySelectorAll('[data-schaal]').forEach(k => {
-    k.onclick = () => {
-      document.documentElement.style.setProperty('--schaal', k.dataset.schaal);
-      document.querySelectorAll('[data-schaal]').forEach(x => x.classList.toggle('aan', x === k));
-    };
+  /* De schaal wordt uit de maat berekend, niet los gekozen: zes schermen moeten
+     samen op een gewoon laptopscherm passen, en een tablet is bijna twee keer zo
+     breed als een telefoon. Handmatig bijstellen kan met - en +. */
+  let bij = 1;
+  function zetMaat(maat) {
+    const [w, h] = maat.split('x').map(Number);
+    const perRij = 6, marge = 120, gaten = 16 * (perRij - 1);
+    const ruimte = Math.min(window.innerWidth, 1500) - marge - gaten;
+    const past = Math.min(0.85, (ruimte / perRij) / w);
+    const st = document.documentElement.style;
+    st.setProperty('--kader', w + 'px');
+    st.setProperty('--hoog', h + 'px');
+    st.setProperty('--schaal', Math.max(0.18, past * bij).toFixed(3));
+    document.querySelectorAll('[data-maat]').forEach(x =>
+      x.classList.toggle('aan', x.dataset.maat === maat));
+    huidigeMaat = maat;
+  }
+  let huidigeMaat = '390x844';
+  document.querySelectorAll('[data-maat]').forEach(k => {
+    k.onclick = () => { bij = 1; zetMaat(k.dataset.maat); };
   });
+  document.querySelectorAll('[data-schaal]').forEach(k => {
+    k.onclick = () => { bij *= (k.dataset.schaal === '+' ? 1.18 : 1 / 1.18); zetMaat(huidigeMaat); };
+  });
+  addEventListener('resize', () => zetMaat(huidigeMaat));
   document.getElementById('ververs').onclick = bouw;
+  zetMaat('390x844');
   bouw();
 </script>
 </body>
