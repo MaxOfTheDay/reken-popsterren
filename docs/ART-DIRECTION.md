@@ -1050,9 +1050,9 @@ over the image.
 Mood: magical, calm, premium, joyful. Not chaotic, not candy-coloured, not cartoon-loud.
 
 ABSOLUTELY NOT: text, letters, numbers, signs, logos, watermarks, signatures; UI
-elements, buttons, frames, borders, device mockups; human faces, hands or identifiable
+elements, buttons, frames, borders, device mockups; human faces, hands, identifiable
 people; photorealism, photography, 3D render, plastic speculars; heavy black outlines,
-comic line art, sketch texture; busy repeating detail; daylight or blue sky.
+comic line art, sketch texture; busy repeating detail, daylight, blue sky.
 ```
 
 ---
