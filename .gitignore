@@ -4,3 +4,7 @@ package-lock.json
 
 # Werkbeelden van test/shots.js -- vergelijkingsmateriaal, geen bronbestanden.
 shots/
+
+# Neerzetmap voor kandidaat-beelden (npm run try / npm run preview).
+# Werkmateriaal van buiten: wat goedgekeurd wordt verhuist naar assets/.
+incoming/

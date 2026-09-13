@@ -206,12 +206,62 @@ Later, in whole sets only: dressing-room scene, look posters, trophy icons, prop
 
 ---
 
-## 6. Tools
+## 6. Trying an asset out
+
+You generate somewhere else, then drop the file here. Nothing to configure, nothing to
+import, and nothing lands in the app until you decide it should.
 
 ```
-npm run shots -- <label>    # all screens, three viewports, into shots/<label>/
-npm run try -- <image>      # a candidate behind the real screen + the 180px test
-npm test                    # 34 / 74 / 78 checks
+incoming/            <- drop generated images here (gitignored)
+```
+
+**The filename decides where it goes.** Name it and the tools place it:
+
+| Name it | Lands on |
+|---|---|
+| `venue-theater.webp`, `venue-club.webp`, `venue-stadium.webp` | the show screen, behind gameplay |
+| `map-horizon.webp` | the tour map ground |
+| `map-sky.webp` | the map's sky layer, blended with `screen` |
+| `finale.webp` | the end screen |
+
+Then pick one of two ways to look at it:
+
+```
+npm run preview     the real app in your browser, with the candidate behind it
+npm run try         screenshots of every affected screen, three sizes, plus checks
+```
+
+**`npm run preview`** opens `http://localhost:8099`. It is the actual game — click
+through it, play a round, buy a podium. A small **kandidaat** chip in the corner expands
+into two switches: *kunstwerk aan* (off = instant before/after) and *donkere sluier* (off
+= what the scrim is doing for you). Drop a new file in `incoming/` and refresh; no
+restart. The service worker is deliberately disabled here, or you would be looking at a
+cached copy of your previous attempt and concluding the new one changed nothing.
+
+**`npm run try`** is the batch version for judging rather than playing. It writes
+`shots/try/index.html` — open that one file and you get every affected screen at 390,
+320 and 1024, each with and without the scrim, side by side. Plus a `keuring-*.png` per
+image carrying the three checks from §1: the zone overlay (bottom 55 % must stay quiet,
+top third may live), the 180 px thumbnail test, and a desaturated flattening test.
+
+Judge on those, not on the image at full size on its own. An image that looks superb in
+a viewer and dies under a scrim behind a sum card is the single most common failure, and
+it is invisible until you put it where it will actually live.
+
+Approved files move to `assets/bg/`; that is the step that makes them part of the app.
+Everything in `incoming/` and `shots/` is ignored by git, so a rejected generation leaves
+no trace.
+
+---
+
+## 7. Other tools
+
+```
+npm run shots -- <label>    every screen, three viewports, into shots/<label>/
+npm test                    34 / 74 / 78 checks
 ```
 
 Debug switches: `?debug&demo&star=p1&stage=stage_vulkaan&screen=game`
+
+`demo` seeds two example stars in memory only — it never calls `save()`, so a real
+family's data on the same device is untouched.
