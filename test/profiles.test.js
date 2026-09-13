@@ -115,7 +115,9 @@ function check(ok, label, detail) {
     check(r.order === 0, 'de eerste ster staat vooraan', `order=${r.order}`);
     check(r.track === 'count' && r.perLevel === 5 && r.stageMax === 11, 'telmodus krijgt de hele telvoorinstelling', JSON.stringify(r));
     check(r.bought === 0, 'gratis startspullen tellen niet als gekocht', `bought=${r.bought}`);
-    check(/schitteren/.test(r.sub), 'met een ster erbij komt de gewone ondertitel terug', r.sub);
+    // Zodra er een ster staat spreekt het scherm voor zich en verdwijnt de
+    // ondertitel; het welkom hoort alleen bij een leeg scherm.
+    check(r.sub === '', 'met een ster erbij verdwijnt de ondertitel', JSON.stringify(r.sub));
     await ctx.close();
   }
 

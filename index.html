@@ -31,6 +31,10 @@
     --bg-glow-pink: rgba(255,120,220,.30); --bg-glow-blue: rgba(80,200,255,.24);
     --bg-glow-warm: rgba(255,164,60,.58);
 
+  /* Achtergrondtekeningen (assets/bg/). De sluier ligt er altijd overheen zodat
+     tekst en kaarten leesbaar blijven; zie docs/ART-PLAN.md. */
+  --scene-scrim: radial-gradient(120% 70% at 50% 62%, rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%);
+
     /* ---- Neutrals ---- */
     --c-white: #fff; --c-ink: #333;
 
@@ -238,6 +242,37 @@
      center zou op lage/liggende schermen de bovenkant onbereikbaar knippen) */
   #screen-profile { position: relative; padding-bottom: 30px; }
   #screen-profile .title { margin-top: auto; padding: 0 54px; font-size: clamp(23px, 6vw, 40px); }
+
+  /* ===== Startscherm: de tekening =====
+     De inhoud van dit scherm staat in het mídden (gemeten: op 390x844 tussen 25%
+     en 73%) en boven- en onderaan is het leeg. Het masker houdt daarom de
+     middenband rustig in plaats van de bovenkant, precies andersom dan bij een
+     landschap. De zwevende wolk-emoji gaan uit: de tekening heeft haar eigen
+     sterren en noten, en twee soorten versiering over elkaar is rommel. */
+  /* isolation + z-index:-1 -- een absoluut geplaatste ::before met z-index:0
+     schildert óver gewone tekst heen, ook al staat die er in de opmaak vóór.
+     De titel kwam daardoor achter de sluier terecht en zag grijs. Met een eigen
+     stapelcontext op het scherm blijft -1 netjes binnen dit scherm: boven de
+     schermachtergrond, onder alle inhoud. */
+  #screen-profile { position: relative; isolation: isolate; }
+  #screen-profile::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: var(--scene-scrim), url("assets/bg/landing.webp");
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+  #screen-profile .map-sky span { display: none; }
+
+  /* De titel moet van de tekening áf komen, niet erin wegzakken: helder wit,
+     een warme gloed die bij het goud in de tekening hoort, en een donkere schaduw
+     eronder voor de plekken waar de achtergrond juist licht is. */
+  #screen-profile .title {
+    color: #fff;
+    text-shadow: 0 2px 0 rgba(24,6,44,.45), 0 4px 18px rgba(24,6,44,.6),
+                 0 0 26px rgba(255,194,61,.5);
+  }
   .profile-row {
     display: flex; gap: 14px; justify-content: center; align-items: stretch;
     width: 100%; max-width: 560px; margin: 16px 0 0; z-index: 1;
@@ -2127,8 +2162,8 @@
         <span style="top:84%;font-size:26px;animation-duration:88s;animation-delay:-42s;opacity:.22">☁️</span>
       </div>
     </div>
-    <h1 class="title">🎤 Reken Popsterren 🎶</h1>
-    <div class="subtitle" id="profile-subtitle">Wie gaat er vandaag schitteren op het podium?</div>
+    <h1 class="title">Reken Popsterren</h1>
+    <div class="subtitle" id="profile-subtitle"></div>
     <div class="profile-row" id="profile-row"></div>
     <!-- bewust géén kaart in de rij: een "+" is geen ster, en als kaart zou hij
          de sterren smaller maken (op 320px al de kritieke maat). Rustig gewicht,
@@ -3564,8 +3599,14 @@ function renderProfiles() {
   row.classList.toggle('many-6', n >= 5);
   // Verse installatie: het keuzescherm ís het welkom. Geen apart onthaalscherm --
   // dezelfde knop en hetzelfde formulier als later, alleen luider gezegd.
+  /* Met sterren op het scherm spreekt het voor zich: de kaarten zijn de vraag.
+     Zonder sterren is deze regel het hele welkom -- dan moet hij er wél staan,
+     anders opent een verse installatie op een titel en een knop en verder niets. */
   const sub = $('profile-subtitle');
-  if (sub) sub.textContent = n ? 'Wie gaat er vandaag schitteren op het podium?' : 'Welkom! Maak je eerste popster.';
+  if (sub) {
+    sub.textContent = n ? '' : 'Welkom! Maak je eerste popster.';
+    sub.style.display = n ? 'none' : '';
+  }
   const add = $('btn-newstar');
   if (add) {
     add.style.display = n >= MAX_PROFILES ? 'none' : '';
