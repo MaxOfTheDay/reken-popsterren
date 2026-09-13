@@ -1290,9 +1290,15 @@
   .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--r-pill); padding: 3px 11px; white-space: nowrap; }
   /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
   .shelf-title .shelf-count.full { color: var(--gold-light); background: rgba(255,206,77,.25); opacity: 1; }
-  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
+  /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: de meeste
+     plankjes hebben een oneven aantal trofeeën, en CSS Grid geeft elke rij
+     dezelfde kolomposities -- de laatste, onvolledige rij bleef daardoor links
+     hangen i.p.v. te centreren. flex-wrap + justify-content:center centreert
+     elke rij apart, ook de laatste. */
+  .trophy-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; width: 100%; align-items: stretch; }
   .trophy-card {
-    position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
+    position: relative; flex: 1 1 124px; max-width: 190px;
+    background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
     border-radius: var(--r-md); padding: 12px 8px 11px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch; transition: filter .12s;
   }
@@ -1306,7 +1312,7 @@
   .trophy-card .tname { font-size: 15px; font-weight: bold; margin-top: 4px; line-height: 1.12; }
   .trophy-card .tdesc { font-size: 12.5px; opacity: .85; margin-top: 2px; line-height: 1.15; }
   /* 'Kast vol!' (eindtrofee) over de volle breedte */
-  .trophy-card.wide { grid-column: 1 / -1; }
+  .trophy-card.wide { flex-basis: 100%; max-width: 100%; }
   /* ===== staten ===== */
   /* NIET GESTART: normale paarse kaart, icoon licht gedimd, lege dunne balk */
   .trophy-card.fresh .temoji { opacity: .78; }
