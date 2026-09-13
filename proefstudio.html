@@ -7301,50 +7301,80 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 </script>
 
 <style>
-  #ps{position:fixed;z-index:99999;font:12px/1.5 system-ui,sans-serif;color:#f1e9f7}
-  /* leeg: groot vlak in het midden. gevuld: klein hoekje rechtsonder. */
-  #ps.leeg{inset:0;display:grid;place-items:center;background:rgba(8,3,14,.86)}
-  #ps.vol{right:10px;bottom:10px}
-  #ps .kaart{background:rgba(13,6,22,.95);border:1px solid rgba(255,180,61,.45);
-    border-radius:12px;padding:16px 18px;max-width:330px}
-  #ps.vol .kaart{padding:8px 10px;border-radius:8px}
-  #ps h6{margin:0 0 6px;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:#ffb43d;cursor:pointer}
-  #ps h6::after{content:' ▾';opacity:.55}
-  #ps.dicht h6::after{content:' ▸'}
-  #ps.dicht .kaart{padding:3px 9px;background:rgba(13,6,22,.62);border-color:rgba(255,180,61,.25)}
-  #ps.dicht .kaart > :not(h6){display:none}
-  #ps .groot{font-size:15px;font-weight:700;margin:0 0 6px;color:#fff}
-  #ps p{margin:0 0 10px;color:#a793bc}
-  #ps .knop{display:inline-block;background:linear-gradient(#ffc23d,#ff8f00);color:#3a0f56;
-    font-weight:800;border:0;border-radius:8px;padding:7px 13px;cursor:pointer;font-size:13px}
-  #ps ul{list-style:none;margin:0 0 7px;padding:0}
-  #ps li{display:flex;align-items:center;gap:5px;margin-bottom:3px}
-  #ps li > span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px}
-  #ps .blader{display:flex;align-items:center;gap:1px;flex:none}
-  #ps .blader button{background:none;border:1px solid rgba(255,255,255,.22);color:#f1e9f7;
-    border-radius:4px;cursor:pointer;font-size:9px;line-height:1;padding:3px 4px}
-  #ps .blader button:hover{border-color:#ffb43d;color:#ffb43d}
-  #ps .blader b{font:500 10.5px "IBM Plex Mono",monospace;color:#ffb43d;padding:0 3px;
-    min-width:24px;text-align:center}
-  #ps select{background:#2a1140;color:#f1e9f7;border:1px solid rgba(255,255,255,.25);
-    border-radius:4px;font:11px system-ui;padding:1px 3px}
-  #ps .weg{background:none;border:0;color:#ffb4b4;cursor:pointer;font-size:14px;line-height:1;padding:0 3px}
-  #ps label{display:block;cursor:pointer;user-select:none}
-  #ps nav{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
-  #ps nav button{background:none;color:#8fd6ff;border:1px solid rgba(143,214,255,.32);
-    border-radius:4px;padding:2px 7px;cursor:pointer;font:11px system-ui}
-  #ps .sleep{outline:3px dashed #ffb43d;outline-offset:-10px}
-  #ps .maten{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;
-    border-top:1px solid rgba(255,255,255,.14);padding-top:7px}
-  #ps .maten button{background:none;color:#ffd740;border:1px solid rgba(255,215,64,.3);
-    border-radius:4px;padding:2px 7px;cursor:pointer;font:11px system-ui}
-  #ps .maten button.aan{background:rgba(255,215,64,.22);border-color:#ffd740}
+  /* ---- de lade ----
+     Altijd zichtbaar, want het gaat om bééldjes: je moet kunnen zien wat je
+     hebt zonder ergens overheen te gaan. Vier vakjes, één per plek in het
+     spel. Leeg vakje = gestippeld, en het is zelf een sleepdoel, zodat je
+     meteen ziet wat er nog kán. */
+  #ps{position:fixed;right:12px;bottom:12px;z-index:99999;width:262px;
+    font:12px/1.45 system-ui,-apple-system,sans-serif;color:#f1e9f7;
+    background:rgba(16,7,27,.95);border:1px solid rgba(255,180,61,.4);
+    border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.55);overflow:hidden}
+  #ps.klein{width:auto}
+  #ps.klein .body{display:none}
 
-  /* Het toestelkader. De truc zit in de transform: een element met een
-     transform wordt het ankerpunt voor position:fixed eronder, dus de app-lagen
-     die fixed staan (.grain, #confetti-layer, de kleefkoppen) blijven binnen
-     het kader in plaats van naar het venster te ontsnappen. Zonder dat zou een
-     "telefoon" een kader zijn met de helft van de app eromheen. */
+  #ps .kop{display:flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;
+    background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.09)}
+  #ps.klein .kop{border-bottom:0}
+  #ps .kop b{flex:1;font:600 10.5px/1 system-ui;letter-spacing:.13em;
+    text-transform:uppercase;color:#ffb43d}
+  #ps .kop button{background:none;border:0;color:#a793bc;cursor:pointer;
+    font-size:15px;line-height:1;padding:2px 5px;border-radius:5px}
+  #ps .kop button:hover{color:#fff;background:rgba(255,255,255,.1)}
+
+  #ps .body{padding:10px 12px 12px}
+
+  /* vier vakjes naast elkaar */
+  #ps .lade{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  /* min-width:0 -- zonder dit mag een rasterkolom door zijn inhoud uitzetten,
+     en liep "Landschap" het vakje van "Wolken" in. */
+  #ps .vak{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;
+    background:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;text-align:center}
+  #ps .beeld{position:relative;aspect-ratio:3/2;border-radius:6px;overflow:hidden;
+    border:1.5px dashed rgba(255,255,255,.26);background:rgba(255,255,255,.04);
+    display:grid;place-items:center}
+  #ps .vak.vol .beeld{border-style:solid;border-color:rgba(255,180,61,.75)}
+  #ps .vak:hover .beeld{border-color:#ffb43d}
+  #ps .vak.sleepover .beeld{border-color:#8fd6ff;background:rgba(56,189,248,.22)}
+  #ps .beeld img{width:100%;height:100%;object-fit:cover;display:block}
+  #ps .beeld .plus{font-size:17px;color:rgba(255,255,255,.4);line-height:1}
+  #ps .vak b{font:600 9px/1.2 system-ui;letter-spacing:.01em;color:#d9cce6;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  #ps .vak.vol b{color:#ffb43d}
+
+  /* meerdere kandidaten: stipjes onder het plaatje, klik = volgende */
+  #ps .stippen{position:absolute;left:0;right:0;bottom:3px;display:flex;
+    justify-content:center;gap:3px;pointer-events:none}
+  #ps .stippen i{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.45)}
+  #ps .stippen i.aan{background:#ffb43d;transform:scale(1.35)}
+  #ps .weg{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;
+    border:0;background:rgba(10,4,18,.8);color:#ffb4b4;cursor:pointer;font-size:11px;
+    line-height:1;padding:0;display:none}
+  #ps .vak.vol:hover .weg{display:block}
+  #ps .weg:hover{background:#d32f2f;color:#fff}
+
+  #ps .uitleg{margin:9px 0 0;font-size:11px;color:#a793bc;line-height:1.45}
+  #ps .uitleg b{color:#d9cce6;font-weight:600}
+
+  #ps .streep{height:1px;background:rgba(255,255,255,.1);margin:11px -12px 10px}
+  #ps .kopje{font:600 9.5px/1 system-ui;letter-spacing:.12em;text-transform:uppercase;
+    color:#8571a0;margin-bottom:6px}
+  #ps .knoppen{display:flex;flex-wrap:wrap;gap:4px}
+  #ps .knoppen button{background:none;border:1px solid rgba(255,255,255,.2);
+    color:#d9cce6;border-radius:5px;padding:3px 8px;cursor:pointer;font:12px system-ui}
+  #ps .knoppen button:hover{border-color:#8fd6ff;color:#8fd6ff}
+  #ps .knoppen button.aan{background:rgba(255,215,64,.2);border-color:#ffd740;color:#ffd740}
+  #ps label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
+    margin-top:6px;font-size:12px}
+
+  /* Sleep je een bestand ergens anders op de pagina, dan licht de hele lade op. */
+  #ps.sleepaan{border-color:#8fd6ff;box-shadow:0 0 0 3px rgba(56,189,248,.25),0 10px 40px rgba(0,0,0,.55)}
+
+  /* ---- toestelkader ----
+     De truc zit in de transform: een element met een transform wordt het
+     ankerpunt voor position:fixed eronder, dus de app-lagen die fixed staan
+     (.grain, de confettilaag, de kleefkoppen) blijven binnen het kader in
+     plaats van naar het venster te ontsnappen. */
   body.ps-kader{background:#0a0410!important;display:grid;place-items:center;
     min-height:100vh;margin:0;overflow:auto}
   body.ps-kader #ps-kader{transform:translateZ(0);overflow:hidden;position:relative;
@@ -7352,41 +7382,35 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   body:not(.ps-kader) #ps-kader{display:contents}
 </style>
 
-<div id="ps" class="leeg">
-  <div class="kaart">
-    <h6>studio</h6>
-    <div id="ps-leeg">
-      <p class="groot">Sleep je gegenereerde beeld hierheen</p>
-      <p>Of kies een bestand. Heet het <b>venue-…</b>, <b>map-horizon</b>, <b>map-sky</b>
-         of <b>finale</b>, dan komt het vanzelf op de goede plek; anders kies je die
-         er zo bij. Er wordt niets bewaard en niets verstuurd.</p>
-      <p>Meerdere tegelijk mag: sleep je hele oogst erin. Beelden voor verschillende
-         plekken staan naast elkaar, en meerdere voor dezelfde plek worden kandidaten
-         waar je met &#9664;&#9654; doorheen bladert &mdash; zo vergelijk je drie
-         generaties op hetzelfde scherm.</p>
-      <p>Daarna krimpt dit tot een hoekje rechtsonder, zodat je het scherm kunt
-         beoordelen. Ga er met de muis overheen en het klapt weer open.</p>
-      <button class="knop" id="ps-kies">Kies een bestand…</button>
+<div id="ps">
+  <div class="kop">
+    <b>Proefstudio</b>
+    <button id="ps-vouw" title="inklappen">&#8211;</button>
+  </div>
+  <div class="body">
+    <div class="lade" id="ps-lade"></div>
+    <p class="uitleg" id="ps-uitleg"></p>
+
+    <div class="streep"></div>
+    <div class="kopje">Scherm</div>
+    <div class="knoppen">
+      <button data-ga="map">Kaart</button><button data-ga="game">Show</button>
+      <button data-ga="end">Einde</button><button data-ga="dress">Kleedkamer</button>
+      <button data-ga="tro">Trofee&euml;n</button>
+      <button data-ga="veeg">&#8644; Scrollen</button>
     </div>
-    <div id="ps-vol" hidden>
-      <ul id="ps-lijst"></ul>
-      <label><input type="checkbox" id="ps-art" checked> kunstwerk aan <i>(uit = ervoor/erna)</i></label>
-      <label><input type="checkbox" id="ps-veil" checked> donkere sluier</label>
-      <div class="maten">
-        <button data-maat="390x844">Telefoon</button>
-        <button data-maat="320x568">Klein</button>
-        <button data-maat="768x1024">Tablet</button>
-        <button data-maat="vol" class="aan">Venster</button>
-      </div>
-      <nav>
-        <button data-ga="map">Kaart</button><button data-ga="game">Show</button>
-        <button data-ga="end">Einde</button><button data-ga="dress">Kleedkamer</button>
-        <button data-ga="tro">Trofee&euml;n</button>
-        <button data-ga="veeg">⇄ Scrollen</button>
-        <button data-ga="meer">+ nog een beeld</button>
-        <button data-ga="vast" id="ps-vast" title="vastzetten zodat het hoekje open blijft">📌</button>
-      </nav>
+
+    <div class="streep"></div>
+    <div class="kopje">Maat</div>
+    <div class="knoppen">
+      <button data-maat="390x844">Telefoon</button>
+      <button data-maat="320x568">Klein</button>
+      <button data-maat="768x1024">Tablet</button>
+      <button data-maat="vol" class="aan">Venster</button>
     </div>
+
+    <label><input type="checkbox" id="ps-art" checked> kunstwerk aan <i style="color:#8571a0">(uit = ervoor/erna)</i></label>
+    <label><input type="checkbox" id="ps-veil" checked> donkere sluier</label>
   </div>
 </div>
 <input type="file" id="ps-invoer" accept="image/*" multiple hidden>
@@ -7416,12 +7440,16 @@ function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].to
 // debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
 const SLOTS = {
   venue:   { match: /(^venue[-_]|theat|club|stadion|stadium|zaal)/i, screen: 'game',
+             label: 'Zaal',       waar: 'achter de show',
              hint: 'venue-theater.webp, venue-club.webp, venue-stadium.webp' },
   horizon: { match: /^map[-_]?horizon|^kaart[-_]?horizon/i,          screen: 'map',
+             label: 'Landschap',  waar: 'kaart en sterkeuze',
              hint: 'map-horizon.webp' },
   sky:     { match: /^map[-_]?sky|^kaart[-_]?lucht/i,                screen: 'map',
+             label: 'Wolken',     waar: 'kaart en sterkeuze',
              hint: 'map-sky.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
+             label: 'Slotscherm', waar: 'na de show',
              hint: 'finale.webp' },
 };
 
@@ -7578,182 +7606,171 @@ function parallaxJs() {
 if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, classify, css, isImage, mimeFor, namesHint, parallaxJs };
 
 
-/* ---- de proefstudio zelf ---- */
+/* ---- de proefstudio ---- */
 (function () {
   // De app zet zijn kijk-schakelaars aan op grond van de URL, en bij een
   // aangeklikt bestand is die leeg. Eén keer omleiden, vóórdat er iets
   // gesleept is -- daarna nooit meer herladen, want het gesleepte beeld staat
-  // alleen in het geheugen en zou bij een herlading verdwijnen.
+  // alleen in het geheugen.
   if (location.search.indexOf('debug') === -1) {
     location.replace(location.pathname + '?debug&demo&star=p1');
     return;
   }
 
-  /* Per plek een stápel kandidaten, niet één beeld. Je maakt er volgens het
-     pakket drie of vier per asset en kiest er één; dan moet je ze naast elkaar
-     kunnen leggen. Eerder verving de tweede de eerste en was vergelijken
-     onmogelijk. */
-  var plekken = {};   // { venue: { lijst: [{naam, uri}], i: 0 }, ... }
+  var ps = document.getElementById('ps');
+  var lade = document.getElementById('ps-lade');
+  var uitleg = document.getElementById('ps-uitleg');
+  var invoer = document.getElementById('ps-invoer');
+  var stVol = document.getElementById('ps-scene-vol');
+  var stKaal = document.getElementById('ps-scene-kaal');
+
+  // Per plek een stapel kandidaten. Je maakt er drie of vier per beeld en kiest
+  // er één, dus naast elkaar kunnen leggen is de hele bedoeling.
+  var plekken = {};                       // { venue: { lijst: [{naam, uri}], i: 0 } }
+  var sleutels = Object.keys(SLOTS);      // venue, horizon, sky, finale
+  sleutels.forEach(function (k) { plekken[k] = { lijst: [], i: 0 }; });
+
   function huidig() {
     var u = {};
-    Object.keys(plekken).forEach(function (k) {
+    sleutels.forEach(function (k) {
       var st = plekken[k];
       if (st.lijst.length) u[k] = st.lijst[st.i].uri;
     });
     return u;
   }
-  var ps = document.getElementById('ps');
-  var lijst = document.getElementById('ps-lijst');
-  var invoer = document.getElementById('ps-invoer');
-  var stVol = document.getElementById('ps-scene-vol');
-  var stKaal = document.getElementById('ps-scene-kaal');
 
-  var vast = false;
-  var wasLeeg = true;
-
-  function teken() {
+  function opmaak() {
     var urls = huidig();
-    var leeg = Object.keys(urls).length === 0;
-    /* Uitgeklapt bedekt het hoekje precies de antwoordtegels, en daar moet je
-       juist naar kunnen kijken. Dus na het eerste beeld klapt het dicht.
-       Daarna niet meer: teken() draait ook bij het omzetten van een plek of het
-       aanvinken van een schakelaar, en toen klapte het paneel dicht terwijl de
-       muis erop stond -- er volgt dan geen nieuwe mouseenter, dus het ging pas
-       weer open als je er eerst vanaf ging. */
-    var dicht = leeg ? false
-      : (wasLeeg ? !vast : ps.classList.contains('dicht'));
-    ps.className = leeg ? 'leeg' : ('vol' + (dicht ? ' dicht' : ''));
-    wasLeeg = leeg;
-    document.getElementById('ps-leeg').hidden = !leeg;
-    document.getElementById('ps-vol').hidden = leeg;
-
     stVol.textContent = css(urls, { scrim: true });
     stKaal.textContent = css(urls, { scrim: false });
     var art = document.getElementById('ps-art').checked;
     var veil = document.getElementById('ps-veil').checked;
     stVol.disabled = !(art && veil);
     stKaal.disabled = !(art && !veil);
-
-    lijst.textContent = '';
-    Object.keys(plekken).forEach(function (slot) {
-      var st = plekken[slot];
-      if (!st.lijst.length) return;
-      var li = document.createElement('li');
-
-      var naam = document.createElement('span');
-      naam.textContent = st.lijst[st.i].naam;
-      naam.title = st.lijst[st.i].naam;
-      li.appendChild(naam);
-
-      // bladeren door de kandidaten voor déze plek
-      if (st.lijst.length > 1) {
-        var blader = document.createElement('span');
-        blader.className = 'blader';
-        var vorige = document.createElement('button');
-        vorige.textContent = '◀'; vorige.title = 'vorige kandidaat';
-        var teller = document.createElement('b');
-        teller.textContent = (st.i + 1) + '/' + st.lijst.length;
-        var volgende = document.createElement('button');
-        volgende.textContent = '▶'; volgende.title = 'volgende kandidaat';
-        vorige.onclick = function () { st.i = (st.i - 1 + st.lijst.length) % st.lijst.length; teken(); };
-        volgende.onclick = function () { st.i = (st.i + 1) % st.lijst.length; teken(); };
-        blader.appendChild(vorige); blader.appendChild(teller); blader.appendChild(volgende);
-        li.appendChild(blader);
-      }
-
-      var kies = document.createElement('select');
-      Object.keys(SLOTS).forEach(function (k) {
-        var o = document.createElement('option');
-        o.value = k; o.textContent = k; o.selected = k === slot;
-        kies.appendChild(o);
-      });
-      kies.onchange = function () {
-        var nieuw = kies.value;
-        var mee = st.lijst.splice(st.i, 1)[0];
-        if (!st.lijst.length) delete plekken[slot];
-        else st.i = Math.min(st.i, st.lijst.length - 1);
-        plekken[nieuw] = plekken[nieuw] || { lijst: [], i: 0 };
-        plekken[nieuw].lijst.push(mee);
-        plekken[nieuw].i = plekken[nieuw].lijst.length - 1;
-        teken();
-      };
-      li.appendChild(kies);
-
-      var weg = document.createElement('button');
-      weg.className = 'weg'; weg.textContent = '×';
-      weg.title = st.lijst.length > 1 ? 'deze kandidaat weghalen' : 'weghalen';
-      weg.onclick = function () {
-        st.lijst.splice(st.i, 1);
-        if (!st.lijst.length) delete plekken[slot];
-        else st.i = Math.min(st.i, st.lijst.length - 1);
-        teken();
-      };
-      li.appendChild(weg);
-      lijst.appendChild(li);
-    });
   }
 
-  function neem(files) {
+  function teken() {
+    lade.textContent = '';
+    var totaal = 0;
+
+    sleutels.forEach(function (sleutel) {
+      var st = plekken[sleutel];
+      var info = SLOTS[sleutel];
+      totaal += st.lijst.length;
+
+      var vak = document.createElement('button');
+      vak.className = 'vak' + (st.lijst.length ? ' vol' : '');
+      vak.dataset.slot = sleutel;
+      vak.title = st.lijst.length
+        ? st.lijst[st.i].naam + ' — ' + info.waar +
+          (st.lijst.length > 1 ? ' — klik voor de volgende van ' + st.lijst.length : '')
+        : info.label + ' — ' + info.waar + '. Sleep hier een beeld naartoe.';
+
+      var beeld = document.createElement('span');
+      beeld.className = 'beeld';
+      if (st.lijst.length) {
+        var img = document.createElement('img');
+        img.src = st.lijst[st.i].uri;
+        img.alt = st.lijst[st.i].naam;
+        beeld.appendChild(img);
+        if (st.lijst.length > 1) {
+          var stippen = document.createElement('span');
+          stippen.className = 'stippen';
+          st.lijst.forEach(function (_, n) {
+            var i = document.createElement('i');
+            if (n === st.i) i.className = 'aan';
+            stippen.appendChild(i);
+          });
+          beeld.appendChild(stippen);
+        }
+        var weg = document.createElement('button');
+        weg.className = 'weg'; weg.textContent = '\u00d7';
+        weg.title = 'dit beeld weghalen';
+        weg.onclick = function (e) {
+          e.stopPropagation();
+          st.lijst.splice(st.i, 1);
+          st.i = Math.min(st.i, Math.max(0, st.lijst.length - 1));
+          teken();
+        };
+        beeld.appendChild(weg);
+      } else {
+        var plus = document.createElement('span');
+        plus.className = 'plus'; plus.textContent = '+';
+        beeld.appendChild(plus);
+      }
+
+      var naam = document.createElement('b');
+      naam.textContent = info.label;
+
+      vak.appendChild(beeld); vak.appendChild(naam);
+
+      // Klik: leeg vakje opent de bestandskiezer en onthoudt wáár het heen moet.
+      // Gevuld vakje met meerdere kandidaten stapt door naar de volgende.
+      vak.onclick = function () {
+        if (!st.lijst.length) { doel = sleutel; invoer.click(); return; }
+        if (st.lijst.length > 1) { st.i = (st.i + 1) % st.lijst.length; teken(); }
+      };
+
+      // Slepen op een vakje wint altijd van de bestandsnaam: zo kun je een
+      // "image (3).png" gewoon op de goede plek laten vallen.
+      vak.addEventListener('dragover', function (e) { e.preventDefault(); vak.classList.add('sleepover'); });
+      vak.addEventListener('dragleave', function () { vak.classList.remove('sleepover'); });
+      vak.addEventListener('drop', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        vak.classList.remove('sleepover');
+        neem(e.dataTransfer.files, sleutel);
+      });
+
+      lade.appendChild(vak);
+    });
+
+    uitleg.innerHTML = totaal === 0
+      ? 'Sleep je gegenereerde beelden hierheen \u2014 op een vakje, of gewoon ergens op de pagina. Niets wordt bewaard of verstuurd.'
+      : 'Meer van hetzelfde? Sleep ze op hetzelfde vakje; <b>klik</b> om te wisselen.';
+
+    opmaak();
+  }
+
+  // ---- bestanden aannemen ----
+  var doel = null;      // gezet als er op een bepaald vakje gemikt wordt
+  function neem(files, forceer) {
+    var plek = forceer || doel; doel = null;
     Array.prototype.forEach.call(files, function (f) {
       if (!/^image\//.test(f.type) && !isImage(f.name)) return;
       var r = new FileReader();
       r.onload = function () {
-        // onbekende naam? dan venue, en je zet 'm zelf recht met het keuzelijstje
-        var slot = classify(f.name) || 'venue';
-        plekken[slot] = plekken[slot] || { lijst: [], i: 0 };
-        plekken[slot].lijst.push({ naam: f.name, uri: r.result });
-        plekken[slot].i = plekken[slot].lijst.length - 1;   // de nieuwste tonen
+        var sleutel = plek || classify(f.name) || 'venue';
+        var st = plekken[sleutel];
+        st.lijst.push({ naam: f.name, uri: r.result });
+        st.i = st.lijst.length - 1;          // het nieuwste meteen tonen
         teken();
       };
       r.readAsDataURL(f);
     });
   }
 
+  // Slepen op de rest van de pagina mag ook; dan beslist de bestandsnaam.
   ['dragenter', 'dragover'].forEach(function (e) {
-    document.addEventListener(e, function (ev) { ev.preventDefault(); ps.classList.add('sleep'); });
+    document.addEventListener(e, function (ev) { ev.preventDefault(); ps.classList.add('sleepaan'); });
   });
   ['dragleave', 'drop'].forEach(function (e) {
-    document.addEventListener(e, function (ev) { ev.preventDefault(); ps.classList.remove('sleep'); });
+    document.addEventListener(e, function (ev) { ev.preventDefault(); ps.classList.remove('sleepaan'); });
   });
   document.addEventListener('drop', function (ev) { neem(ev.dataTransfer.files); });
 
-  document.getElementById('ps-kies').onclick = function () { invoer.click(); };
   invoer.onchange = function () { neem(invoer.files); invoer.value = ''; };
-  document.getElementById('ps-art').onchange = teken;
-  document.getElementById('ps-veil').onchange = teken;
-  document.querySelector('#ps h6').onclick = function () { ps.classList.toggle('dicht'); };
-  ps.addEventListener('mouseenter', function () { if (!ps.classList.contains('leeg')) ps.classList.remove('dicht'); });
-  ps.addEventListener('mouseleave', function () { if (!vast && !ps.classList.contains('leeg')) ps.classList.add('dicht'); });
-
-  // Schermen wisselen zonder te herladen: de app-functies staan in dezelfde
-  // scope. Herladen zou het gesleepte beeld kwijtraken.
-  document.querySelectorAll('#ps nav button').forEach(function (b) {
-    b.onclick = function () {
-      var w = b.dataset.ga;
-      if (w === 'meer') return invoer.click();
-      if (w === 'vast') { vast = !vast; b.style.opacity = vast ? 1 : .45; return; }
-      if (w === 'veeg') return veeg();
-      try {
-        if (w === 'map') goMap();
-        else if (w === 'dress') openKleedkamer();
-        else if (w === 'tro') openTrophies();
-        else if (w === 'game') startLevel(P().level);
-        else if (w === 'end') { startLevel(P().level); endLevel(true); }
-      } catch (e) { console.warn('scherm wisselen mislukt:', e); }
-    };
-  });
+  document.getElementById('ps-art').onchange = opmaak;
+  document.getElementById('ps-veil').onchange = opmaak;
+  document.getElementById('ps-vouw').onclick = function () {
+    var dicht = ps.classList.toggle('klein');
+    this.textContent = dicht ? '+' : '\u2013';
+    this.title = dicht ? 'uitklappen' : 'inklappen';
+  };
 
   /* ---- scrollen naspelen ----
-     De kaart schuift horizontaal (.tour-map is overflow-x:auto) en de lucht
-     krijgt daarbij parallax van updateParallax: -scrollLeft * 0.06. Stilstaand
-     zie je daar niets van, en juist daar zitten de fouten -- een rand van de
-     wolkenplaat die naar binnen loopt, of een stuk tekening dat pas onder de
-     stadspenningen vandaan komt als je doorschuift. Schermen zelf scrollen
-     verticaal (overflow-y:auto), wat op de krappe maat uitmaakt.
-     Deze knop veegt beide assen heen en terug, zodat je het ziet in plaats van
-     het te moeten bedenken. */
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-
+     De kaart schuift horizontaal en de lagen krijgen daarbij parallax.
+     Stilstaand zie je daar niets van, en juist daar zitten de fouten. */
+  function wacht(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   async function veegAs(el, as, duur) {
     var max = as === 'x' ? el.scrollWidth - el.clientWidth : el.scrollHeight - el.clientHeight;
     if (max < 8) return;
@@ -7761,14 +7778,12 @@ if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, cl
     for (;;) {
       var t = (performance.now() - t0) / duur;
       if (t >= 1) break;
-      // heen en terug, met een zachte in- en uitloop
-      var f = (1 - Math.cos(t * 2 * Math.PI)) / 2;
+      var f = (1 - Math.cos(t * 2 * Math.PI)) / 2;    // heen en terug, zacht
       if (as === 'x') el.scrollLeft = max * f; else el.scrollTop = max * f;
-      await sleep(16);
+      await wacht(16);
     }
     if (as === 'x') el.scrollLeft = 0; else el.scrollTop = 0;
   }
-
   var veegBezig = false;
   async function veeg() {
     if (veegBezig) return;
@@ -7781,14 +7796,27 @@ if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, cl
     } finally { veegBezig = false; }
   }
 
+  // ---- schermen wisselen, zonder te herladen ----
+  document.querySelectorAll('#ps .knoppen button[data-ga]').forEach(function (b) {
+    b.onclick = function () {
+      var w = b.dataset.ga;
+      if (w === 'veeg') return veeg();
+      try {
+        if (w === 'map') goMap();
+        else if (w === 'dress') openKleedkamer();
+        else if (w === 'tro') openTrophies();
+        else if (w === 'game') startLevel(P().level);
+        else if (w === 'end') { startLevel(P().level); endLevel(true); }
+      } catch (e) { console.warn('scherm wisselen mislukt:', e); }
+    };
+  });
+
   /* ---- toestelmaten ----
      De app is in de eerste plaats een telefoonspel. Op een breed scherm
-     beoordeel je 'm op een maat die bijna geen kind gebruikt, en juist de
-     krappe maat laat zien of de som nog leesbaar is over de tekening heen. */
+     beoordeel je 'm op een maat die bijna geen kind gebruikt. */
   var kader = document.createElement('div');
   kader.id = 'ps-kader';
   (function () {
-    // #app en de vaste lagen erbij in: anders blijven die achter het kader hangen
     var mee = [document.getElementById('app')]
       .concat([].slice.call(document.querySelectorAll('body > .grain, body > #confetti-layer')))
       .filter(Boolean);
@@ -7797,15 +7825,9 @@ if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, cl
     mee.forEach(function (el) { kader.appendChild(el); });
   })();
 
-  // De achtergrond van body hoort bij de app; binnen een kader moet hij mee
-  // naar binnen, anders staat de verloopachtergrond buiten het "toestel".
-  var bodyAchtergrond = null;
+  var bodyGedaan = false;
   function zetMaat(maat) {
-    if (bodyAchtergrond === null) {
-      var cs = getComputedStyle(document.body);
-      bodyAchtergrond = cs.backgroundImage + ' ' + cs.backgroundColor;
-      kader.style.background = cs.background;
-    }
+    if (!bodyGedaan) { kader.style.background = getComputedStyle(document.body).background; bodyGedaan = true; }
     if (maat === 'vol') {
       document.body.classList.remove('ps-kader');
       kader.style.width = kader.style.height = '';
@@ -7815,17 +7837,15 @@ if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, cl
       kader.style.width = wh[0] + 'px';
       kader.style.height = wh[1] + 'px';
     }
-    document.querySelectorAll('#ps .maten button').forEach(function (b) {
+    document.querySelectorAll('#ps .knoppen button[data-maat]').forEach(function (b) {
       b.classList.toggle('aan', b.dataset.maat === maat);
     });
-    // De app rekent bij het formaat opnieuw uit waar dingen staan
     window.dispatchEvent(new Event('resize'));
   }
-  document.querySelectorAll('#ps .maten button').forEach(function (b) {
+  document.querySelectorAll('#ps .knoppen button[data-maat]').forEach(function (b) {
     b.onclick = function () { zetMaat(b.dataset.maat); };
   });
 
-  document.getElementById('ps-vast').style.opacity = .45;
   teken();
 })();
 

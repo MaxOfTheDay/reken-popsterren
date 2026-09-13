@@ -21,12 +21,16 @@ function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].to
 // debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
 const SLOTS = {
   venue:   { match: /(^venue[-_]|theat|club|stadion|stadium|zaal)/i, screen: 'game',
+             label: 'Zaal',       waar: 'achter de show',
              hint: 'venue-theater.webp, venue-club.webp, venue-stadium.webp' },
   horizon: { match: /^map[-_]?horizon|^kaart[-_]?horizon/i,          screen: 'map',
+             label: 'Landschap',  waar: 'kaart en sterkeuze',
              hint: 'map-horizon.webp' },
   sky:     { match: /^map[-_]?sky|^kaart[-_]?lucht/i,                screen: 'map',
+             label: 'Wolken',     waar: 'kaart en sterkeuze',
              hint: 'map-sky.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
+             label: 'Slotscherm', waar: 'na de show',
              hint: 'finale.webp' },
 };
 
