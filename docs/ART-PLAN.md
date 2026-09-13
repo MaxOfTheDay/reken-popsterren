@@ -51,12 +51,20 @@ Only these. Everything else in the app stays CSS or emoji for now.
 | # | Asset | Request | Crop to | Deliver | When |
 |---|---|---|---|---|---|
 | 1 | `venue-theater` | 1536×1024 | 1536×896 | 1200×700 WebP | ✅ done |
-| 2 | `map-horizon` | 1536×1024 | bottom 1536×576 | 1536×576 WebP | **next** |
-| 3 | `map-sky` | 1536×1024 | 1536×864 | 1536×864 WebP | next |
-| 4 | `venue-club` | 1536×1024 | 1536×896 | 1200×700 WebP | with 5 |
-| 5 | `venue-stadium` | 1536×1024 | 1536×896 | 1200×700 WebP | with 4 |
-| 6 | `finale` | 1024×1536 | — | 1024×1536 WebP | with 4+5 |
-| 7 | `cities` ×12 | 1024×1536 sheet | — | traced to one SVG | later |
+| 2 | `landing` | 1024×1536 | — | 1024×1536 WebP | **next** |
+| 3 | `map-horizon` | 1536×1024 | bottom 1536×576 | 1536×576 WebP | after 2 |
+| 4 | `map-sky` | 1536×1024 | 1536×864 | 1536×864 WebP | with 3 |
+| 5 | `venue-club` | 1536×1024 | 1536×896 | 1200×700 WebP | with 6 |
+| 6 | `venue-stadium` | 1536×1024 | 1536×896 | 1200×700 WebP | with 5 |
+| 7 | `finale` | 1024×1536 | — | 1024×1536 WebP | with 5+6 |
+| 8 | `cities` ×12 | 1024×1536 sheet | — | traced to one SVG | later |
+
+**Why the landing screen jumped the queue.** It is the most-seen screen in the game and
+the one with the most empty room: measured at 390×844, its title, question, cards and
+button occupy 25–73%, leaving the top and bottom quarters completely free. The horizon
+was going to cover it, but the horizon puts its art in the **bottom 55%** — the opposite
+layout — so it would have painted through the cards and left the free top quarter empty.
+If only two images are ever added to this game, they should be the theatre and this one.
 
 Delivery sizes were corrected so that **nothing is ever upscaled**: the earlier table
 asked for a 1600×600 horizon and a 1080×1920 finale, both larger than anything
@@ -308,7 +316,8 @@ incoming/            <- drop generated images here (gitignored)
 | Name it | Lands on |
 |---|---|
 | `venue-theater.webp`, `venue-club.webp`, `venue-stadium.webp` | the show screen, behind gameplay |
-| `map-horizon.webp` | the tour map and the star picker |
+| `landing.webp` | the first screen — who is performing today |
+| `map-horizon.webp` | the tour map |
 | `map-sky.webp` | the map's sky layer, blended with `screen` |
 | `finale.webp` | the end screen |
 

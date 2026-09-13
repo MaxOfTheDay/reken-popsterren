@@ -7448,6 +7448,9 @@ const SLOTS = {
   sky:     { match: /^map[-_]?sky|^kaart[-_]?lucht/i,                screen: 'map',
              label: 'Wolken',     waar: 'kaart en sterkeuze',
              hint: 'map-sky.webp' },
+  landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
+             label: 'Startscherm', waar: 'wie speelt er vandaag',
+             hint: 'landing.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
              label: 'Slotscherm', waar: 'na de show',
              hint: 'finale.webp' },
@@ -7466,7 +7469,7 @@ const SLOTS = {
    Wie daar ooit iets achter wil zetten, moet eerst die vlakken dekkend maken
    (zie ART-DIRECTION §9.4) en dan een eigen achtergrond maken: een kleedkamer
    is een kleedkamer, geen uitzicht. */
-const HUBS = ['#screen-map', '#screen-profile'];
+const HUBS = ['#screen-map'];
 
 /* Parallax: hoe hard elke laag meeschuift met de kaart.
    De weg met de stadspenningen schuift 100% mee. Wat verder weg ligt hoort
@@ -7558,14 +7561,29 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
        afgestemd en bij een langere kaart gewoon weer stukgaat.
        Nu herhaalt de plaat en schuift de achtergrond in plaats van het element.
        Dan is er geen rand om tegenaan te lopen, hoe ver je ook schuift. */
-    out.push(`#screen-map .map-sky-inner,#screen-profile .map-sky-inner{
+    out.push(`#screen-map .map-sky-inner{
   transform:none!important;
   background-image:url("${urls.sky}");
   background-size:auto 100%;
   background-position:calc(50% - var(--sky-x,0px)) 0;
   background-repeat:repeat-x;
   mix-blend-mode:screen}
-#screen-map .map-sky-inner > span,#screen-profile .map-sky-inner > span{display:none!important}`);
+#screen-map .map-sky-inner > span{display:none!important}`);
+  }
+
+  if (urls.landing) {
+    /* Het startscherm heeft zijn inhoud in het mídden (gemeten: op 390x844 staat
+       alles tussen 25% en 73%) en is juist boven- en onderaan leeg. Precies
+       omgekeerd aan de horizon, die zijn tekening in de onderste 55% heeft. Het
+       masker houdt daarom de middenband vrij in plaats van de bovenkant. */
+    out.push(`#screen-profile{position:relative}
+#screen-profile::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:${veil}url("${urls.landing}");
+  background-size:${scrim ? 'cover,' : ''}cover;
+  background-position:${scrim ? '50% 50%,' : ''}50% 50%;
+  -webkit-mask-image:linear-gradient(to bottom,#000 18%,rgba(0,0,0,.32) 34%,rgba(0,0,0,.32) 70%,#000 86%);
+  mask-image:linear-gradient(to bottom,#000 18%,rgba(0,0,0,.32) 34%,rgba(0,0,0,.32) 70%,#000 86%)}
+#screen-profile .map-sky span{display:none!important}`);
   }
 
   if (urls.finale) {
@@ -7851,7 +7869,7 @@ if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, cl
 
 /* Parallax: de grond en de lucht schuiven met de kaart mee, allebei herhalend. */
 (function () {
-    var lagen = ["#screen-map","#screen-profile"];
+    var lagen = ["#screen-map"];
     function volg() {
       var tm = document.getElementById('tour-map');
       if (!tm) return;
