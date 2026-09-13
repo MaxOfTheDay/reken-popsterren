@@ -1465,22 +1465,20 @@ right? — before any generation budget is spent. It also depends on one decisio
 cannot be deferred: **podium vs. venue** (§9.2), because it changes what the Phase 2 and
 Phase 3b assets depict.
 
-Then the first three images, in this order:
+Then the images — and note that **the first one generated is not the first one shipped**:
 
-1. **`map-horizon.webp`** (with its sky) — the biggest perceived-quality jump per unit of
-   work, on the screen every session starts and ends on. It proves the "anchor the floor,
-   crop the sky" positioning rule across phone and tablet, and it completes a whole phase
-   on its own: four hub screens, one rule, nothing left out.
-2. **`venue-theater.webp`** — the canonical asset. **Everything else in this plan is
-   matched to this one image**, so if the style is wrong it is wrong here first and
-   cheapest. Integrate it *together with* the `.stage` split (§9.1), or you are judging a
-   painted theatre with a picture frame in the middle of it.
-3. **`crowd-lights.png`** — proves the *dynamic* half of the system: one asset bound to
-   `updateFan()`, which already runs on every answer. If this feels good, the remaining
-   venue tiers and the finale are worth building; if it does not, stop and re-plan.
+1. **Generate `venue-theater.webp` first, as the style key.** Everything else is matched
+   to it, and it has the tightest constraints in the set, so it is where a wrong master
+   prompt shows up cheapest. Judge it standalone; do not integrate it yet.
+2. **Generate `map-horizon.webp` + `map-sky.webp` second, and ship them first.** Two
+   files, four hub screens, one rule complete — the biggest perceived-quality jump per
+   unit of work, on the screen every session starts and ends on.
+3. **Then `crowd-lights.png`**, which proves the *dynamic* half: one asset bound to
+   `updateFan()`, already running on every answer. If that feels good, the remaining venue
+   tiers and the finale are worth building; if not, stop and re-plan.
 
-Then finish Phase 2 as one release — the venue tiers and the finale together, never the
-venue alone.
+Then finish Phase 2 as one release — theatre, club, stadium, crowd and finale together,
+never the venue without the finale.
 
 ### Do later
 
@@ -1526,26 +1524,41 @@ Grouped by the phases in §10, so every stopping point is a coherent app.
    uniformly, with no art anywhere. If the new ground is wrong, you have spent no
    generation budget finding out.
 
+**Cut the style key — generated first, shipped later.**
+
+> **Generation order and ship order are not the same thing**, and conflating them is a
+> trap. Phase 1 ships first, but the **theatre is the canonical asset** (Brief 1): every
+> other image is colour-, light- and grain-matched to it. Generate the horizon first and
+> the horizon silently becomes the style key — then the theatre, which has far tighter
+> constraints, has to match a picture that was never tested against them.
+
+5. **Generate `venue-theater.webp`** (Brief 1) **as a style test, not for shipping.** It
+   is the hardest composition in the set — a safe zone at the top *and* the bottom, a
+   crowd, cropped curtains, and a floor neutral enough for twelve riser colours. If the
+   master style prompt is wrong, it is most visible here, on one image, before anything
+   is integrated. Judge it on its own against the acceptance list in §12.2; iterate the
+   **master prompt** — not just this brief — until it is right. Keep the winner; it is
+   Phase 2's asset. Do **not** integrate it yet.
+
 **Phase 1 — two files, four screens.**
 
-5. **Generate `map-horizon.webp` + `map-sky.webp`** (Brief 3). Review against the
-   contract *before* integrating: safe zone empty? survives a 55 % scrim? nothing within
-   12 % of the left/right edges?
-6. **Apply to all four hub screens at once**, delete the ☁️/✈️ spans and the
+6. **Generate `map-horizon.webp` + `map-sky.webp`** (Brief 3), matched to the locked
+   theatre. Review against the contract *before* integrating: safe zone empty? survives a
+   55 % scrim? nothing within 12 % of the left/right edges?
+7. **Apply to all four hub screens at once**, delete the ☁️/✈️ spans and the
    `.map-ground` stack, and validate at 390×844, 320×568 and 1024×768 plus a horizontal
    scroll of the tour. **Ship.** The rule "hub screen ⇒ horizon" is now complete.
 
 **Phase 2 — five files, one release.**
 
-7. **Generate `venue-theater.webp`** (Brief 1) — the canonical asset. If the style is
-   wrong, it is wrong here first and cheapest. Integrate behind `.game-arena` **together
-   with the `.stage` split** (§9.1), and check that the low-height media query shrinks the
-   *art*, not the sum.
-8. **Decide.** If the show screen now feels like a show, the style is locked. If not,
-   regenerate from step 7 — one asset in, not five.
+8. **Integrate the theatre from step 5** behind `.game-arena`, **together with the
+   `.stage` split** (§9.1) and the riser treatment (§9.2) — a dissolved frame with no
+   venue behind it is worse than today, so these land in one go. Check that the
+   low-height media query shrinks the *art*, not the sum.
 9. **Generate the remaining four** — `venue-club`, `venue-stadium` (Brief 2),
-   `crowd-lights.png` (Brief 4), `finale.webp` (Brief 5) — all matched to the locked
-   theatre. Wire `VENUES` / `venueFor(p)` and `--fan` in `updateFan()`.
+   `crowd-lights.png` (Brief 4), `finale.webp` (Brief 5) — all matched to the theatre.
+   Add the 12 `riser` values, wire `VENUES` / `venueFor(p)`, and `--fan` in
+   `updateFan()`.
 10. **Validate the whole moment end to end**: play a full eight-question show at each rank
     tier (forced via the debug switches), watch the crowd fill, and check that the
     headline, three stars, three earn chips, milestone pill and both buttons all read over
