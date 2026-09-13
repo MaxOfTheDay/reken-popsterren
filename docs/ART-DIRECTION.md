@@ -1649,13 +1649,33 @@ value.
 | **Asset name** | `assets/bg/map-horizon.webp`, `assets/bg/map-sky.webp` |
 | **Purpose** | Give the tour map a world. Replace the invisible `.map-ground` gradient stack (line 570) and the seven drifting `☁️`/`✈️` emoji in `.map-sky` (line 589) |
 | **Where used** | `#screen-map` — horizon anchored to `background-position: 50% 100%`; sky on the existing `.map-sky-inner`, which already receives a `translateX` parallax from `updateParallax` (line 3591) |
-| **Composition** | **Horizon:** two or three broad rolling landform shapes layered like **painted stage flats**, with a warm glow along the whole horizon line as if a stage were lit just beyond it. Horizontally tileable. Art occupies the **bottom 55 %**; the top is a plain field that fades away in CSS. **Sky:** three soft, widely separated cloud bands, nothing else. |
+| **Composition** | **Horizon:** two or three broad rolling landform shapes layered like **painted stage flats**, with a warm glow along the whole horizon line as if a stage were lit just beyond it. **Not** tileable — see the note below. Art occupies the **bottom 55 %**; the top is a plain field that fades away in CSS. **Sky:** three soft, widely separated cloud bands, nothing else. |
 | **Visual description** | Warm and inviting, and deliberately almost empty. The landforms are **broad rounded masses with the layered simplicity of stage flats**, not a landscape painting — no texture, no vegetation, no silhouetted trees. The ground is the *stage the tour walks across*. No buildings, no roads, no landmarks; the 12 city medallions supply the places, and the road, medallions and avatar must stay dominant over the art. The horizon glow is the same amber as the venue key, so map and show read as lit by one light. |
 | **Required safe UI area** | Nothing meaningful in the **central 60 % × 45 %** (the road, medallions, avatar and `Speel!` pill live there). Nothing within **12 % of the left or right edge** — the map scrolls horizontally and those edges get masked by `.hscroll-fade` (line 1133). |
 | **Perspective** | Eye level, flat-on, horizon at 62 % |
 | **Lighting** | Broad warm amber glow rising from the horizon into violet air; darkest at the very bottom edge |
 | **Colour direction** | `#3D0A58` ground, `#7B2FF7` air, `#FFC23D`/`#FF8F00` horizon glow, one `#38BDF8` band high in the sky |
 | **Aspect ratio** | Horizon **8:3** · Sky **16:9** |
+
+> **Measured correction — tiling and parallax.** The brief used to require a
+> horizontally tileable horizon. Nothing tiles it. `.map-ground` sits on `#screen-map`,
+> which does not scroll; only `.tour-map` inside it scrolls, and `updateParallax` moves
+> the sky alone (`translateX(-scrollLeft * 0.06)`). Measured on the shipped build: at
+> 390 px the map scrolls 822 px and the horizon's `background-position` is identical at
+> both ends. So the horizon has exactly one framing to look right in — easier, not
+> harder — and the tiling requirement only cost effort. Dropped.
+>
+> The **sky** does move, and it needs slack for it: 6 % of 822 px is a 49 px drift, so a
+> `cover`-sized plate pulls its right edge 13 % of the screen inward and leaves that
+> strip cloudless. `scene.js` now widens the layer (`right: -16%`); `.map-sky` has
+> `overflow: hidden`, so the surplus is clipped. Verified at full scroll: the plate still
+> overhangs by 13 px, so no gap.
+>
+> One oddity left alone deliberately: the sky drifts 6 % while the ground is pinned at
+> 0 %, so the *farther* layer moves more than the nearer one — inverted parallax. Giving
+> the ground a truer 15 % would need 123 px of slack (32 % of a phone screen), i.e. a
+> much wider asset, for a drift most people will never consciously read. Not worth it.
+> If it ever looks wrong on the real asset, that is the knob.
 | **Output resolution** | Horizon 1600×600 (`@3200`) · Sky 1600×900 |
 | **Transparent background** | Horizon: **No** (top fades to transparent — export PNG-alpha or WebP-alpha). Sky: **Yes** |
 | **Consistency reference** | `venue-theater.webp` — same amber, same violet, same grain |

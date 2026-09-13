@@ -98,6 +98,7 @@ const OVERLAY = `
         <button data-ga="map">Kaart</button><button data-ga="game">Show</button>
         <button data-ga="end">Einde</button><button data-ga="dress">Kleedkamer</button>
         <button data-ga="tro">Trofee&euml;n</button>
+        <button data-ga="veeg">⇄ Scrollen</button>
         <button data-ga="meer">+ nog een beeld</button>
         <button data-ga="vast" id="ps-vast" title="vastzetten zodat het hoekje open blijft">📌</button>
       </nav>
@@ -129,12 +130,20 @@ ${sceneSrc}
   var stKaal = document.getElementById('ps-scene-kaal');
 
   var vast = false;
+  var wasLeeg = true;
 
   function teken() {
     var leeg = Object.keys(urls).length === 0;
-    // Uitgeklapt bedekt het hoekje precies de antwoordtegels, en daar moet je
-    // juist naar kunnen kijken. Dus: dicht, tenzij de muis erover gaat.
-    ps.className = leeg ? 'leeg' : (vast ? 'vol' : 'vol dicht');
+    /* Uitgeklapt bedekt het hoekje precies de antwoordtegels, en daar moet je
+       juist naar kunnen kijken. Dus na het eerste beeld klapt het dicht.
+       Daarna niet meer: teken() draait ook bij het omzetten van een plek of het
+       aanvinken van een schakelaar, en toen klapte het paneel dicht terwijl de
+       muis erop stond -- er volgt dan geen nieuwe mouseenter, dus het ging pas
+       weer open als je er eerst vanaf ging. */
+    var dicht = leeg ? false
+      : (wasLeeg ? !vast : ps.classList.contains('dicht'));
+    ps.className = leeg ? 'leeg' : ('vol' + (dicht ? ' dicht' : ''));
+    wasLeeg = leeg;
     document.getElementById('ps-leeg').hidden = !leeg;
     document.getElementById('ps-vol').hidden = leeg;
 
@@ -209,6 +218,7 @@ ${sceneSrc}
       var w = b.dataset.ga;
       if (w === 'meer') return invoer.click();
       if (w === 'vast') { vast = !vast; b.style.opacity = vast ? 1 : .45; return; }
+      if (w === 'veeg') return veeg();
       try {
         if (w === 'map') goMap();
         else if (w === 'dress') openKleedkamer();
@@ -218,6 +228,44 @@ ${sceneSrc}
       } catch (e) { console.warn('scherm wisselen mislukt:', e); }
     };
   });
+
+  /* ---- scrollen naspelen ----
+     De kaart schuift horizontaal (.tour-map is overflow-x:auto) en de lucht
+     krijgt daarbij parallax van updateParallax: -scrollLeft * 0.06. Stilstaand
+     zie je daar niets van, en juist daar zitten de fouten -- een rand van de
+     wolkenplaat die naar binnen loopt, of een stuk tekening dat pas onder de
+     stadspenningen vandaan komt als je doorschuift. Schermen zelf scrollen
+     verticaal (overflow-y:auto), wat op de krappe maat uitmaakt.
+     Deze knop veegt beide assen heen en terug, zodat je het ziet in plaats van
+     het te moeten bedenken. */
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  async function veegAs(el, as, duur) {
+    var max = as === 'x' ? el.scrollWidth - el.clientWidth : el.scrollHeight - el.clientHeight;
+    if (max < 8) return;
+    var t0 = performance.now();
+    for (;;) {
+      var t = (performance.now() - t0) / duur;
+      if (t >= 1) break;
+      // heen en terug, met een zachte in- en uitloop
+      var f = (1 - Math.cos(t * 2 * Math.PI)) / 2;
+      if (as === 'x') el.scrollLeft = max * f; else el.scrollTop = max * f;
+      await sleep(16);
+    }
+    if (as === 'x') el.scrollLeft = 0; else el.scrollTop = 0;
+  }
+
+  var veegBezig = false;
+  async function veeg() {
+    if (veegBezig) return;
+    veegBezig = true;
+    try {
+      var scherm = document.querySelector('.screen.active');
+      var kaart = scherm && scherm.querySelector('.tour-map');
+      if (kaart) await veegAs(kaart, 'x', 3600);
+      if (scherm) await veegAs(scherm, 'y', 2400);
+    } finally { veegBezig = false; }
+  }
 
   /* ---- toestelmaten ----
      De app is in de eerste plaats een telefoonspel. Op een breed scherm
