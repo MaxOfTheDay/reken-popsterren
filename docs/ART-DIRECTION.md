@@ -994,12 +994,15 @@ It is the natural next idea: drop the panel entirely and let the podium be its t
 objects, placed around her. Rendered (`shots/podium-opties/D-alleen-spullen.png`,
 `F-licht-en-spullen.png`), it loses on three counts:
 
-1. **It does not solve the legibility problem.** A was rejected partly because a flat SVG
-   avatar sinks into a painted crowd. Props do nothing about that; she is still lost.
+1. ~~**It does not solve the legibility problem.**~~ **Overstated — corrected.** Rendering
+   the props at the *upper corners* instead (`G1-hoeken-geen-vlak.png`) shows the avatar
+   reads perfectly well against the painted crowd on her own: she is a light figure with a
+   warm CSS rim, against a darker crowd band. "She sinks into the crowd" was too strong a
+   claim about treatment A. Legibility is **not** an argument for the flat.
 2. **Emoji on a painting read as stickers.** On today's flat gradient the three `deco`
    emoji get away with it. Against a lit, painted venue they are exactly the V2 failure
    mode — a 👑 at 26 px beside a rendered theatre looks pasted on.
-3. **Her feet are already occupied.** `avatarSVG` draws the pet at `x=18, y=240` and the
+3. **Her feet are already occupied** — *if* the props go at her feet. `avatarSVG` draws the pet at `x=18, y=240` and the
    instrument at `x=120, y=246` in a 200×250 viewBox — *both at her feet, flanking her*.
    Add three podium props and there are **five objects piled into one small zone**. This
    is a durable constraint: **the area around the avatar's feet is spoken for**, and no
@@ -1010,6 +1013,34 @@ gradient is already its stage-light colour — sand `#ffe082` for the beach, pit
 for the stadium, lava `#ff6f00` for the volcano) was tested alongside. **It is invisible**:
 the venue is already lit, so a tint in the same place does not register. Worth remembering
 before anyone proposes it again.
+
+#### G — the props at the upper corners, no panel at all
+
+The natural refinement: keep the `deco` emoji exactly where the dressing room puts them —
+upper-left and upper-right — and drop the background entirely. This **does** fix the feet
+collision, and it leaves the painted venue completely unobstructed, which is a real gain.
+
+Rendered (`G1-hoeken-geen-vlak.png`, `G2-hoeken-met-gloed.png`), it fails on one thing
+only, but decisively: **the emoji float.** The castle hangs in mid-air over the auditorium;
+the crown comes to rest among the audience, reading as though it is sitting on someone's
+head. A soft glow (G2) does not rescue it.
+
+The reason is instructive. In the dressing room those same emoji work **because the card
+anchors them** — they are at the corners of a visible object. Remove the object and there
+is nothing for them to be at the corners *of*. Anchoring is exactly the job the flat does.
+
+#### H — no podium on the show screen at all
+
+The strongest version of the same instinct: drop the podium from the show screen entirely —
+no panel, no props — and let the venue own it alone. It is the cleanest option, it honours
+"empty space is allowed", and the purchase stays visible in the dressing room, the profile
+card, the new-star preview, and the end screen if that keeps its framed-portrait treatment.
+
+**The cost is semantic, and it is not small.** The twelve items stop meaning *where you
+perform* and start meaning *how your star is presented* — a wardrobe backdrop rather than a
+stage. The category is called **Podium** and its trophy is **Podiumbouwer**; both would be
+lying. Choosing H means renaming the category and the trophy, which touches save-visible
+strings.
 
 **But the instinct is right about one thing**, and it is worth acting on: B's panel, as
 first drawn, has rounded corners and an inset white stroke, so it reads a little like a UI
