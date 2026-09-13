@@ -969,55 +969,66 @@ game contradicts itself, and no amount of good art fixes it afterwards.
 | (b) Venue only in pre-show and finale | Safer, but the show screen — where the child spends most of their time — keeps its gradient rectangle. |
 | (c) Drop rank venues; promote the 12 podiums to full venues | Progression art becomes purchase-gated rather than rank-gated, and the eight-tier rank ladder stays invisible. |
 
-**Decision: option (a).** Venue is the room; podium is the riser and props in front.
+**Decision: two layers.** Venue is the room; the podium is the thing she brings into it.
 
-#### What that costs, which is more than it first looks
+**Refined after seeing it running.** The first version of this decision said the podium
+becomes *a riser under her feet*. Rendering all three treatments against the real theatre
+(`shots/podium-opties/`) showed that is the weakest of them, and there is a much better
+answer hiding in the data.
 
-Checking the data before writing any code turns up a problem with the naive reading of
-(a). **Every one of the 12 podiums' `bg` values is a backdrop, not a surface colour** —
-and three of them encode a literal horizon:
+#### The podium is a stage flat she takes on tour
 
-| Item | `bg` | Reads as |
-|---|---|---|
-| `stage_strand` | `linear-gradient(#4fc3f7 62%, #ffe082 62%)` | **sky above, sand below** |
-| `stage_stadion` | `linear-gradient(#263238 34%, #43a047 34%)` | **stands above, pitch below** |
-| `stage_arena` | `radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)` | **spotlight above, ground below** |
-| the other nine | sky / space / water gradients | a backdrop |
+In touring, the act brings its own set and stands it on the house stage. That is exactly
+the relationship we need — and it is the relationship the existing data already describes.
 
-So "the podium's colour becomes the platform" destroys them: the beach's sky-and-sand
-split collapses into a meaningless two-tone disc.
+| Treatment | What it looked like |
+|---|---|
+| **A — frame dissolves entirely** | The 90 💎 purchase simply disappears from the show. Worse, the flat SVG avatar half-vanishes into the painted crowd behind her. |
+| **B — the podium becomes a stage flat** | ✅ The purchase is plainly visible, the venue is plainly visible, and the flat gives the avatar a clean field to read against. |
+| **C — the podium becomes a riser** | A pale slab that reads as *a step*. "Sprookjeskasteel" becomes an anonymous lilac platform; the identity is gone. |
 
-**The fix is additive, not a replacement.** `bg` stays exactly as it is and keeps serving
-the three **portrait** frames — a framed picture of your star *should* have a backdrop,
-which is why those uses were right all along. The two **venue** screens get a new field:
+**Why B is also the cheap answer.** §9.2 originally treated the twelve `bg` values as a
+*problem* — they are backdrops, not surface colours, and three of them encode a literal
+horizon. As a riser fill that is a defect requiring twelve new values. **As a stage flat
+it is exactly right**: a flat *is* a painted backdrop, so `stage_strand`'s sky-over-sand
+split reads as a beach flat rather than as a meaningless two-tone disc.
 
-```js
-// riser: [bovenvlak, rand] -- het vlak waar ze op staat, met zijn eigen dikte.
-// Hergebruikt de schaduw-lip die elke knop in de app al heeft (--btn-lip).
-{ id: 'stage_strand', …, bg: '…', riser: ['#ffe082', '#c9a227'], deco: ['🌴','🌞','🐚'] }
+> **No new data. No migration. `bg` and `deco` are used exactly as they already are.**
+> The twelve proposed `riser` values in the table below are **no longer needed** — kept
+> only as a record of the path not taken.
+
+**And it fixes a legibility problem rather than creating one.** In treatment A the avatar
+competes with the painted crowd directly behind her. The flat restores the contrast she
+needs, without a CSS hack.
+
+#### What it takes
+
+`applyStage()` is **unchanged**, and so are the three portrait frames — a framed picture
+of your star should have a backdrop, which is why those uses were always right. Only the
+two venue screens change, and only in CSS:
+
+```css
+/* .show-stage / .end-stage stop being a picture frame and become a stage flat */
+#show-stage {
+  border: none;                       /* the white frame goes */
+  overflow: visible;                  /* she stands in front of it, not inside it */
+  width: 188px; height: 140px;        /* smaller than today's 253×214 */
+  border-radius: 22px 22px 8px 8px;   /* a flat standing on the floor */
+  box-shadow: 0 16px 28px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.13);
+}
+#show-stage::after { display: none; } /* the animated light pools go (§9.1) */
+#show-stage .avatar-holder { height: 132%; }   /* she overflows above the flat */
 ```
 
-No item is lost, no purchase is devalued, and the migration is twelve new values rather
-than a rewrite. The `deco` emoji get *better* under this reading, not worse: three corner
-stickers on a card are the weakest element in the app, but 🌴 🌞 🐚 placed around a
-sand-coloured riser read as a set dressed for a beach show.
+The three `deco` emoji stay where `applyStage` already puts them — inside the flat, which
+is a better home than the screen corners they occupy today. They remain emoji until Phase
+3b replaces them.
 
-#### Proposed riser values
+#### Still open, and now visible
 
-| Item | Top | Edge | Surface it reads as |
-|---|---|---|---|
-| `stage_disco` | `#7b3fa8` | `#3d1a56` | lit dance floor |
-| `stage_slaapkamer` | `#c9a5e8` | `#7a5aa0` | bedroom rug |
-| `stage_strand` | `#ffe082` | `#c9a227` | sand |
-| `stage_kasteel` | `#e6c9f0` | `#9a6fb0` | pale stone |
-| `stage_ruimte` | `#3a2a7a` | `#1a1040` | dark platform |
-| `stage_jungle` | `#4c8c3f` | `#24521c` | mossy ground |
-| `stage_stadion` | `#43a047` | `#256428` | pitch |
-| `stage_winter` | `#e9f6ff` | `#9cc4dc` | packed snow |
-| `stage_onderwater` | `#26c6da` | `#0e7d8c` | seabed |
-| `stage_regenboog` | `RAINBOW` | `#8a5bb0` | reuses the existing rainbow-gradient idiom |
-| `stage_arena` | `#8d6e4f` | `#4e3a26` | arena floor |
-| `stage_vulkaan` | `#5a2318` | `#2a0f0a` | dark rock |
+- **The crowd meter** (§9.1) floats loose once the frame changes shape. Same release.
+- **The flat's own art** is Phase 3b: twelve painted flats replacing twelve CSS gradients,
+  drawn as *stage flats with props*, which is a far easier 512 px thumbnail than a room.
 
 #### Knock-on effects to carry into the other sections
 
