@@ -1,4 +1,5 @@
 # Reken Popsterren — Visual Asset & Art Direction Audit
+## Art Direction **V2**
 
 > **Scope:** an audit and an executable plan. **No application code is changed by this
 > document.** Every line number below points at `index.html` as of
@@ -28,6 +29,15 @@ The single highest-value intervention is not "add pictures". It is: **give every
 a floor, a horizon and a light source, and make the venue grow as the child's rank
 grows.** Five asset families do that — and the first release should contain **no art at
 all** (§10, Phase 0). Everything else can wait.
+
+**On V2.** The findings above are V1's and stand. What changed is the *style* those
+assets are drawn in. V1 aimed at "modern animated-film background painting" — an idiom
+built for a cinema screen, asked to work at 390 px beside a flat SVG paper doll. **V2
+aims instead at a premium stylised 2D pop-star world: large rounded toy-like forms,
+simple stage-set construction, soft painted gradients and theatrical blue-hour light.**
+§3 states the direction in full and §3.1 lists exactly what changed and why; the master
+prompt (§12.1), the production briefs (§12) and the consistency rules (§6.1) have all
+been brought into line. Everything else in this document is unchanged.
 
 ---
 
@@ -183,112 +193,316 @@ These are as important as the list above.
 
 ---
 
-## 3. Art direction
+## 3. Art Direction V2
 
-### 3.1 The concept
+> **This section replaces V1's art direction in full.** Everything else in this document —
+> the screen findings, the opportunity map, the progression concept, the background
+> strategy, the technical pipeline, the podium/venue decision, the phasing — stands, and
+> is unchanged except where V2 materially alters it. Those places are named in §3.1.
 
-> **"Toy theatre at blue hour."**
+### 3.1 What changed from V1, and why
+
+V1's framing was **"modern animated-film background painting."** That was the wrong
+target, and Phase 0 plus a closer read of the code make the reasons concrete.
+
+| V1 said | V2 says | Why |
+|---|---|---|
+| "Modern animated-film background painting" | **A premium stylised 2D pop-star world** | The V1 phrasing invites environment concept art: rendered, atmospheric, detail-rich. That is a 1920 px idiom being asked to work at 390 px, next to a flat SVG paper doll. It would have produced beautiful images that made the app look *worse*. |
+| "Exactly three depth planes" | Prefer few, clearly separated layers — usually two or three — **but only as many as the asset needs** | A global law inherited from cinematic composition. A cloud band needs one layer; forcing three adds clutter to the one asset that must stay empty. |
+| "Horizon at 62 % ± 3 %", "35–50 mm equivalent", "blurred 10–16 px" | **Asset-specific composition guidance**, not universal style law | These numbers describe a camera. There is no camera. What actually has to hold is: clear depth, no confusing perspective, stable eye level where it matters, and a protected UI-safe region. |
+| "Fine even film grain, 2–3 %, on backgrounds only" — a requirement | **Subtle soft texture only where it prevents banding** | Phase 0 shipped a **global CSS grain layer** (`.grain`, `feTurbulence` at `opacity: .09`). Baked grain now lands *on top of* that one. Two grains is worse than either. |
+| Palette quoted `--bg-3: #f107a3` and recommended demoting magenta | Palette re-read from the shipped code; **magenta is already demoted** | Phase 0 rewrote the backdrop into four stops with a warm low glow. V1's colour section describes an app that no longer exists. |
+| Motifs listed as things that may *appear* (spotlights, tickets, stamps) | The **world is built out of stagecraft**; motifs are rarely props | "Stars mean currency, so don't draw stars" was right but insufficient. The failure mode is a generic magical purple world with microphones scattered in it. |
+| Style described mostly in terms of rendering | **Shape language comes first**; rendering enriches it afterwards | This is the single biggest practical change, and §3.3 is the new discipline. |
+
+Everything else V1 established — backgrounds are the highest-value category, the question
+card stays free of artwork, the parent area stays restrained, no generated avatar, venue
+progression makes rank visible, podium and venue are separate layers, domains convert in
+whole sets, CSS owns the scrims, phases complete rules rather than file counts — **is
+unaffected and remains in force.**
+
+### 3.2 The direction
+
+> **A premium stylised 2D pop-star world.**
 >
-> A warm, hand-painted little world where the sun has just gone down, the house lights
-> are up, and everything is lit from the stage. Premium and cinematic in its *lighting*
-> and *restraint*, childlike in its *shapes*. Closer to a modern animated short's
-> background department than to educational clip-art or a candy-coloured mobile
-> free-to-play game.
+> Large rounded toy-like forms, simple stage-set construction, soft painted gradients,
+> theatrical blue-hour lighting and controlled atmospheric depth.
 
-The existing palette — aubergine `#3d0a58` → violet `#7b2ff7` → magenta `#f107a3`, gold
-for reward, cyan for selection — is **already a committed night-concert palette and
-should be kept.** The error is not the colours. The error is that the palette is applied
-as *wallpaper*: one flat full-screen gradient behind everything, so nothing has a floor,
-nothing has a horizon, and every element floats. **The direction is to convert that
-gradient from wallpaper into air.**
+Two mantras to settle arguments:
 
-### 3.2 Ten principles
+> **"Simple like a children's game, lit like a stage."**
+>
+> **"Make it feel like a pop-star world, not merely a beautiful kids world."**
 
-1. **Every screen has a floor.** Nothing floats in colour. Even "atmospheric" screens get
-   a horizon line or a ground plane in the bottom third.
-2. **The light always comes from the stage.** Warm amber from low and behind; violet in
-   shadow. This one rule alone makes independently generated assets look related.
-3. **Soft-toy geometry.** Chunky, rounded, generous. No sharp corners, no spikes, no
-   thin lines. It rhymes with the avatar's round head and the `--r-sm/md/lg` scale.
-4. **Shapes, not outlines.** Solid forms, one soft gradient, one soft shadow. No line
-   art, no cel-shading, no hatching.
-5. **The child is the only character.** Generated art contains **no people** except
-   anonymous crowd silhouettes — round heads, no faces, no hands. The SVG avatar stays
-   the sole protagonist.
-6. **Art lives at the edges.** The centre of every screen belongs to numbers and
-   buttons. Compose outward.
-7. **Places, not props.** A city is 3–5 silhouette shapes and a light, not a landmark
-   photograph and not a snack.
-8. **Sparkle is earned.** Confetti, stars and bloom appear at reward moments only. Never
-   ambient. (Today ✨ is wallpaper on four screens.)
-9. **Every asset must survive a 55 % dark scrim** and still read. If it only works at
-   full brightness, it is the wrong asset.
-10. **No text, ever, in artwork.** Not a letter, not a numeral, not a sign, not a logo.
+The first arbitrates detail disputes: when in doubt, take detail out and put light in.
+The second arbitrates theme disputes: when an image could belong to any charming
+children's game, it has failed, however pretty it is.
 
-### 3.3 Illustration style specification
+It should feel **designed for children first and cinematic second** — playful,
+immediately understandable, premium without being adult, clearly illustrated rather than
+pseudo-3D, magical without sliding into generic fantasy, simple enough to hold at phone
+size, and visibly of the same world as the existing SVG avatar and UI.
 
-| Axis | Specification |
+### 3.3 Shape language — graphic before painterly
+
+**Design the silhouettes first. Render second.** An environment must work as a small
+number of large shapes before any gradient is applied to it.
+
+**Prefer:** broad rounded masses · generous curves · chunky stable geometry · playful
+proportions · simple stage-set construction · strong readability at thumbnail size · a
+few large ideas rather than many small ones.
+
+**Avoid:** realistic architecture · ornate mouldings · rows of individual seats · tiny
+windows · realistic trees and foliage · intricate props · material realism · any detail
+that only pays off when zoomed in.
+
+**The flattening test.** If the scene were reduced to flat silhouettes with all colour
+and light removed, it should still read unmistakably as *club*, *theatre*, *stadium*,
+*world map*, *backstage* or *finale*. If it wouldn't, no amount of lighting will save it
+— the composition is wrong, not the rendering.
+
+This is also why V1's theatre brief was risky. "A theatre interior" invites a generator
+to draw a theatre: mouldings, seat rows, chandeliers, gilt. What we want is **a theatre
+built from about six shapes.**
+
+### 3.4 2D versus painterly — where the line sits
+
+**Target: graphic 2D shapes plus soft painted gradients.**
+
+| Not this | Nor this |
 |---|---|
-| **Realism** | Stylised 2D, painterly-clean. Roughly: animated-feature *background painting*. Not vector clip-art, not flat "Corporate Memphis", not 3D render, not photoreal. |
-| **Shape language** | Chunky and rounded. Minimum radius on any silhouette corner ≈ 4 % of its own width. Wide, stable bases; nothing top-heavy. |
-| **Texture** | Fine even film grain, 2–3 % luminance, on **backgrounds only**. Never on props, characters or UI-adjacent art. Grain exists to kill 8-bit gradient banding, which is visible today on `body`. |
-| **Lighting** | One low warm key (amber `#FFC23D` → `#FF8F00`) from behind/below the subject. Violet ambient fill. Rim light on foreground props. Soft bloom around emitters only. **No lens flare. No god-rays crossing the frame centre.** |
-| **Depth** | Exactly three planes. Far: blurred 10–16 px, ≤ 25 % contrast. Mid: sharp, the subject. Near: blurred 4–8 px, cropped by the frame edge. |
-| **Perspective** | Eye level, straight on, ~35–50 mm equivalent. Horizon at **62 %** frame height. No tilt, no bird's-eye, no worm's-eye. |
-| **Detailing** | Falls off hard with distance. Near plane: ≤ 3 details. Mid: ≤ 6. Far: silhouette only. |
-| **Characters** | None generated. Crowds = flat violet silhouettes, ellipse heads, no features. |
-| **Environments** | Theatrical rather than literal. Suggest the place with mass and light; do not document it. |
+| Flat generic vector clip-art | Photorealism |
+| Preschool "Corporate Memphis" | Glossy 3D / Pixar-style rendering |
+| Realistic concept art | Heavily textured digital painting |
 
-### 3.4 Colour system
+The image must **visibly be an illustration**. Painterliness earns its place only by
+supplying soft value transitions, atmosphere, light, subtle depth, and just enough
+texture to keep gradients from looking sterile. It must not supply surface detail.
 
-**Verdict: keep the identity, simplify the bottom, and change what the gradient is *for*.**
+A practical way to hold the line: *paint the light, not the objects.* The objects are
+flat shapes; the light moving across them is what gets painted.
 
-| Role | Token(s) | Keep / change |
+### 3.5 Age and tone
+
+Aim at **primary-school children, not toddlers.** Friendly, joyful, rounded,
+imaginative, colourful, emotionally warm — but **not** kawaii, babyish, candy-coloured,
+smothered in cute motifs, or visually noisy.
+
+The target is a **playful-premium middle ground**: a child should find it inviting and a
+parent should find it well made. The parent-facing screens in this app already hit that
+register; the child-facing world should match it in care while being far warmer.
+
+### 3.6 Pop-star identity — the world is made of stagecraft
+
+V1's real risk was ending up as *a generic magical purple world*. The correction is not
+to scatter more microphones and music notes around. It is to let the world's own
+construction come from touring and performance.
+
+**Derive the visual language from:** concert stages · touring · backstage · stage flats ·
+curtains · footlights · venue practical lights · crowd silhouettes · tickets, stamps and
+travel · dressing-room mirrors · risers · show lighting · visible growth in venue scale.
+
+**Do not** decorate everything with microphones, music notes, stars and sparkles.
+
+In practice this means things like:
+
+- the map's hills carry the broad layered simplicity of **painted stage flats**, not of
+  landscape painting;
+- warm environmental lights read as **venue practicals**, not as sunsets;
+- curtains and clouds share the same broad sweeping curve vocabulary;
+- transitions borrow from **tickets, stamps and tour travel**;
+- venue scale visibly grows club → theatre → stadium;
+- the finale earns richer light, more crowd energy and confetti, because it was earned.
+
+**"Toy theatre" stays useful as a shape-language metaphor.** It must not become the
+literal subject of every screen.
+
+### 3.7 Colour system — read from the shipped code
+
+V1's colour section quoted tokens that Phase 0 has since replaced. These are the current
+values in `index.html`'s `:root`.
+
+#### 1 · Environmental shadow and ground — artwork's darkest register
+
+| Token | Value | Role |
 |---|---|---|
-| Dominant dark | `--bg-1 #3d0a58` | **Keep.** This is the brand. |
-| Dominant mid | `--bg-2 #7b2ff7` | **Keep.** |
-| Bottom of gradient | `--bg-3 #f107a3` (magenta) | **Change — this is the one colour decision I would revisit.** Magenta at the *bottom* of every screen puts the hottest, highest-value colour under the child's thumbs, and it is exactly why `.map-ground`'s warm footlight (line 570) disappears. Demote magenta to a **glow accent** (`--bg-glow-pink` already exists) and let backgrounds resolve downward into a **warm amber-to-aubergine horizon**. This costs one gradient stop and recovers the entire footlight idea. |
-| Reward / CTA | `--gold-cta-top #ffc23d`, `--gold-cta-bottom #ff8f00`, `--gold-accent #ffd740` | **Keep, and protect.** Artwork may contain *amber light*; artwork must not contain *gold objects*. Gold stays the CTA's alone. |
-| Selection | `--blue-fill-top #38bdf8` | **Keep.** Artwork uses a desaturated teal-cyan only as a far-distance sky note. |
-| Reading surfaces | `--c-white`, `--paper-tint #faf6ff` | **Keep and never put art behind them.** |
+| `--bg-1` | `#33084c` | night sky, top of frame |
+| `--bg-4` | `#3a0f48` | the floor — the darkest thing on screen |
 
-**The governing rule:**
+#### 2 · Environmental air and atmosphere
 
-> **Artwork supplies *value*. UI supplies *saturation*.**
-> Backgrounds live in the **15–45 % lightness** band at **≤ 45 % saturation**. The
-> saturated gold CTA, cyan selection and white question card then pop off them
-> automatically, with no per-screen tuning.
-
-The current UX review's finding that "gold means eleven different things" is real, and
-art makes it worse unless this rule is enforced from asset one.
-
-### 3.5 Lighting language
-
-**Stage light at blue hour**, everywhere, no exceptions:
-
-- **Key:** low, warm, from behind/below the horizon or from an off-frame stage rig.
-- **Fill:** violet ambient, never neutral grey.
-- **Rim:** a thin warm edge on anything in the near plane.
-- **Bloom:** soft, small radius, around actual light sources only.
-- **Beams:** at most one *pair* of spotlight cones per image, angled inward from the top
-  corners, never crossing the centre 40 % of the frame.
-- **Time of day:** always dusk. No daylight scenes, even for "travel". A daytime asset
-  in this set would be instantly, obviously foreign.
-
-### 3.6 Motifs, each with a job
-
-Motifs earn their place by *meaning something*, not by decorating.
-
-| Motif | Assigned job | Where it may appear |
+| Token | Value | Role |
 |---|---|---|
-| **Spotlight cones** | "A show is happening" | Show backdrop, pre-show card, finale |
-| **Crowd silhouettes + phone lights** | "People came" — scales with `G.fan` and rank | Show backdrop, finale |
-| **Confetti + streamers** | "You won" | End screen, trophy pop, rank-up only |
-| **Travel stamps / boarding pass / ticket stub** | "You moved on" | Travel wipe, memory card back, pre-show card |
-| **Stars ⭐** | *Currency.* | Never decorative in artwork. The UI owns this shape. |
-| **Soft cloud bands** | "Air / distance" | Map sky, profile sky |
-| **Warm horizon glow** | "There is a world out there" | Every environment |
-| **Retired: free-floating ✨ sparkles** | — | Currently wallpaper on 4 screens. Stop. |
+| `--bg-2` | `#7b2ff7` | violet air, the middle of the gradient |
+| `--bg-3` | `#6d2a80` | the warm band where light from below begins |
+| `--bg-glow-pink` | `rgba(255,120,220,.30)` | magenta, **demoted to a glow in the sky** |
+| `--bg-glow-blue` | `rgba(80,200,255,.24)` | the single cool note, high and distant |
+
+#### 3 · Warm light permitted in artwork
+
+| Token | Value | Role |
+|---|---|---|
+| `--bg-glow-warm` | `rgba(255,164,60,.58)` | the low warm key — the light the whole world is lit by |
+
+**Amber appears as light, not as objects.** Warm pools, glows and practicals: yes.
+Gold-coloured *things* in the environment: no.
+
+#### 4 · High saturation owned by UI, not by artwork
+
+| Purpose | Tokens |
+|---|---|
+| Maths surface | `--c-white #fff` — the question card |
+| Answer tiles | `--purple-input-top #8e5fd6` → `--purple-input-bottom #5e35b1` |
+| Correct / wrong | `--green-top #457f48` · `--red-answer-600 #d32f2f` |
+| Crowd meter, cabinet bars | `--pink-hot #ff4081`, `--pink-accent #ff80ab` |
+| Parent surfaces | `--paper-tint #faf6ff` on `--paper-ink #3a0f56` |
+
+#### 5 · Reserved for reward, selection and CTA — never in artwork
+
+| Meaning | Tokens |
+|---|---|
+| Play / earned | `--gold-cta-top #ffc23d` → `--gold-cta-bottom #ff8f00`, `--gold-accent #ffd740` |
+| Selected / active | `--blue-fill-top #38bdf8`, `--blue-text #8fd6ff` |
+
+#### 6 · Demoted as large background fields
+
+**Magenta.** Phase 0 removed `#f107a3` from the bottom of every screen. It may still
+contribute atmosphere through `--bg-glow-pink`, but it must not dominate a background
+again.
+
+#### The governing rule, and a hard constraint the code imposes
+
+> **Artwork supplies value and atmosphere. UI supplies the strongest saturation and
+> contrast.**
+
+And one specific consequence worth stating as a number, because it is easy to get wrong:
+
+> **The environment behind gameplay must read darker than the answer tiles.** Those tiles
+> are mid-violet (`#8e5fd6` → `#5e35b1`). A venue floor painted in `--bg-2` violet
+> (`#7b2ff7`) sits at almost the same value, and four answer tiles would sink into it.
+> Behind the gameplay area, keep the environment in the **`--bg-1` / `--bg-4` deep
+> aubergine register** (`#33084c`–`#3a0f48`), not the violet one.
+
+Ordinary gameplay artwork should stay calmer and darker than the white maths surfaces,
+the gold reward elements, the cyan selection state, and the avatar's own clothing. The
+finale is the licensed exception (§3.13).
+
+### 3.8 Lighting — stylised theatrical, not simulated
+
+Theatrical lighting remains the strongest consistency mechanism in the whole system:
+it is what will make images generated weeks apart look related. But the target is
+**stylised** theatrical light, not physically simulated cinematic light.
+
+**Prefer:** one clear low warm key · violet/aubergine ambient shadow · selective warm
+pools · restrained cool accents · simple bloom around actual emitters · a lighting
+direction a child could point at.
+
+**Avoid:** complex volumetric lighting · huge cinematic beams · reflections everywhere ·
+glossy speculars · photographic lens effects · excessive bloom · any light effect
+crossing an important UI area.
+
+> Lighting exists to make simple shapes feel magical. It does not exist to make the
+> environment feel real.
+
+### 3.9 Depth and camera — guidance, not law
+
+The global requirements are only these: **clear depth · stable eye-level composition
+where appropriate · no confusing perspective · mobile readability · strong UI-safe
+regions.**
+
+Prefer a small number of clearly separated layers — commonly foreground, midground and
+distance — but **use only as many as the asset needs.** Per-asset specifics (where the
+horizon sits, how soft the far plane is) belong in that asset's brief, and the briefs in
+§12 now carry them.
+
+### 3.10 Texture
+
+**Do not require film grain.** Phase 0 ships a global CSS grain layer over the whole app,
+so baked-in grain compounds with it.
+
+Use **subtle soft texture only where it prevents sterile gradients or visible banding**,
+and never let it become brush noise, paper texture, sketch grain, gritty film, or visible
+noise sitting over a UI-safe area.
+
+### 3.11 Motifs, revised
+
+| Motif | Job | Where |
+|---|---|---|
+| **Stage-flat layering** | The construction logic of the whole world | Map hills, venue walls, backstage |
+| **Warm practicals** | "This place is lit for a show" | Every venue; the map horizon |
+| **Crowd silhouettes** | "People came" — scales with `G.fan` and rank | Show, finale |
+| **Curtain and cloud curves** | One shared curve vocabulary across sky and stage | Map, venues, profile |
+| **Tickets, stamps, travel** | "You moved on" | Travel wipe, pre-show, memory card back |
+| **Confetti** | "You won" — earned, never ambient | Finale, trophy pop, rank-up |
+| **Stars ⭐** | **Currency.** Never decorative in artwork. | UI only |
+| **Microphones, music notes, sparkles** | **Retired as scenery.** | Nowhere in generated art |
+
+### 3.12 Visual dials
+
+Not measurements — a way to settle "is this too much?" quickly.
+
+| Dial | Target | Reads as |
+|---|---|---|
+| Shape simplification | **8 / 10** | Few large forms; aggressive reduction |
+| Painterliness | **4 / 10** | Soft gradients, not painted surfaces |
+| Cinematic lighting | **6 / 10** | Theatrical and directed, not simulated |
+| Saturation (ordinary screens) | **5 / 10** | Rich but calm; UI stays louder |
+| Saturation (reward moments) | **8 / 10** | The finale may shout |
+| Detail density | **3 / 10** | Sparse on purpose |
+| Cute factor | **5 / 10** | Warm, not kawaii |
+| Realism | **2 / 10** | Clearly illustrated |
+
+If an asset is being argued over, name the dial it is failing. Most rejections will be
+*detail density too high* and *realism too high*.
+
+### 3.13 What Art Direction V2 looks like in practice
+
+**World map.** Broad rolling rounded landforms with the layered simplicity of painted
+stage flats. A simple atmospheric sky. Very few environmental objects — near zero. The
+road, the city medallions and the avatar stay dominant; the art is the stage they stand
+on. Inviting to explore, with no generic fantasy clutter.
+
+**Small club.** Cosy. A low rounded ceiling and a close back wall. One simple crowd mass.
+Perhaps two warm practical lights. Very few architectural elements. The intimate scale is
+communicated by **silhouette**, not by furnishing.
+
+**Theatre.** Simplified to roughly **five to eight major shapes**: one broad balcony arc,
+cropped curtain masses, a crowd mass, the stage floor, and a couple of simple lighting
+shapes. Recognisable as a theatre with no realistic ornamentation whatsoever.
+
+**Stadium.** The same vocabulary at a different scale: one enormous curved bowl, a
+simplified distant crowd, large-scale lights, open sky above the rim. **Scale comes from
+geometry, not from added detail** — the stadium should have no more shapes than the club,
+only bigger ones.
+
+**Finale.** The same style, licensed to become brighter and richer. Saturation and light
+go up because celebration is earned. Confetti and crowd lights stay edge-weighted; the
+centre stays readable for the results UI.
+
+**Dressing room and other content-heavy screens.** Almost no environmental illustration —
+perhaps one backstage, mirror or curtain motif at an edge. The item grid remains primary.
+
+**City, trophy and prop assets.** Chunky graphic silhouettes with controlled optical
+weight, few internal details, consistent construction across the set, readable at tiny
+sizes.
+
+### 3.14 Reading a reference image
+
+No reference image has been supplied to this document, so nothing here was derived from
+one. When one is used, read it for **shape language only**:
+
+**Take:** chunky rounded forms · simple silhouette construction · child-friendliness ·
+clear depth · playful proportions · immediate readability.
+
+**Do not take:** sunset intensity · a bright yellow focal centre · stars · extreme
+magenta saturation · dense decorative clouds.
+
+The blend to aim for is roughly:
+
+> **70 % playful chunky illustrated kids-game shape language · 30 % sophisticated
+> theatrical lighting and atmosphere.**
+
+Reversing that ratio produces exactly the cinematic concept art V2 exists to avoid.
 
 ---
 
@@ -442,22 +656,30 @@ These are the rules that make independently generated assets belong to one game.
 
 ### 6.1 Hard specifications
 
+**V2 note:** V1 stated camera and depth rules as universal law — exactly three planes, a
+horizon at 62 % ± 3 %, a 35–50 mm equivalent, specific blur radii. Those described a
+camera that does not exist and made the one asset that must stay empty (the cloud sky)
+fail its own style guide. Composition specifics now live in each brief. What remains
+global is what actually keeps a set coherent.
+
 | Requirement | Rule |
 |---|---|
-| **Aspect ratios** | Full-screen scene **9:16**. Edge band **8:3**. Venue band **12:7**. Square tile **1:1**. Look poster **3:4**. Icon **1:1**. No other ratios. |
-| **Camera** | Eye level, straight on, zero tilt, ~35–50 mm. Horizon at **62 %** ± 3 %. |
-| **Visual density** | Far plane ≤ 5 distinguishable shapes. Mid ≤ 3. Near ≤ 2. Total ≤ 10. |
+| **Aspect ratios** | Full-screen scene **9:16**. Edge band **8:3**. Venue band **12:7**. Square tile **1:1**. Look poster **3:4**. Icon **1:1**. No other ratios. See §12.2 — these are *delivery* ratios, not generation ratios. |
+| **Shape count** | An environment should resolve to **roughly 5–8 major shapes**. If you cannot list them, there are too many. |
+| **Depth** | A small number of clearly separated layers — usually two or three, **only as many as the asset needs**. Never ambiguous. |
+| **Camera** | Stable and eye level where the asset calls for it; no confusing perspective; never isometric; never two-point. Exact framing is per-brief. |
+| **Visual density** | Sparse on purpose. Detail density dial: **3/10**. Nothing that only pays off when zoomed in. |
 | **Safe zone** | Central 60 % × 45 % (or bottom 55 % for edge bands): no shape edges, local contrast ≤ 8 %, lightness 20–35 %. |
-| **Lighting** | Single low warm key + violet ambient + optional single beam pair. Always dusk. |
-| **Palette** | `#3D0A58` / `#7B2FF7` for shadow and air; `#FFC23D` / `#FF8F00` for light; one distant `#38BDF8` note; magenta as glow only. |
-| **Texture** | 2–3 % film grain, backgrounds only. |
-| **Character proportions** | Crowd silhouettes: head ≈ ⅕ of body height, ellipse, no features, no limbs below the shoulder line. |
-| **Line / shading** | No outlines. Soft airbrushed gradients. No cel bands, no hatching, no halftone. |
-| **Environment perspective** | One-point or flat-on. Never two-point. Never isometric. |
-| **Saturation** | Backgrounds ≤ 45 % S. Foreground props ≤ 70 % S. |
-| **Contrast** | Brightest-to-darkest region within the safe zone ≤ 6:1. Whole-image ≤ 14:1. |
+| **Lighting** | One low warm key, violet ambient, selective warm pools, restrained cool accent, bloom on emitters only. Always dusk. No beams crossing the frame centre. |
+| **Palette** | `#33084c` / `#3a0f48` for shadow and floor; `#7b2ff7` / `#6d2a80` for air; warm amber as *light only*; one distant `#38bdf8` note; magenta as glow, never a field. |
+| **Texture** | Only where it prevents banding. **No baked film grain** — the app ships a global CSS grain layer. |
+| **Character proportions** | No generated characters. Crowd silhouettes only: head ≈ ⅕ of body height, ellipse, no features, no limbs below the shoulder line. |
+| **Line / shading** | No outlines, no cel bands, no hatching, no halftone. Soft airbrushed gradients over flat shapes. |
+| **Saturation** | Backgrounds ≤ 45 % S; foreground props ≤ 70 % S; the finale may exceed both. |
+| **Contrast** | Brightest-to-darkest within the safe zone ≤ 6:1. Whole-image ≤ 14:1. |
 | **Cropping** | Compose so a **3:4 centre crop** (tablet) and a **9:16 crop** (phone) both work. Nothing important within **12 %** of the left or right edge. |
-| **Edge treatment** | Bottom edge may be dark and solid. Top edge fades. Left/right edges non-committal. No frames, no borders, no rounded corners baked in. |
+| **Edge treatment** | Bottom edge may be dark and solid. Top edge fades. Left/right non-committal. No frames, borders or baked rounded corners. |
+| **The thumbnail test** | Every asset must survive being viewed at **150–200 px wide**. If it falls apart there, it is too detailed. |
 
 ### 6.2 Never appears unless explicitly requested
 
@@ -475,6 +697,12 @@ These are the rules that make independently generated assets belong to one game.
 - Watermarks, signatures, borders
 - Daylight, midday sun, blue sky
 - A second art style in the same set
+- **Realistic architecture, ornate mouldings, individual seat rows, tiny windows,
+  realistic foliage, intricate props** — V2's additions; these are the specific failure
+  modes of asking a generator for a "theatre" or a "landscape"
+- **Decorative stars, sparkles, microphones or music notes scattered as ornament** — the
+  world is built out of stagecraft, not decorated with it
+- **Baked film grain** — the app ships a global CSS grain layer
 
 ---
 
@@ -1021,38 +1249,60 @@ response at module level and replays it, so all four harnesses pay it once: the 
 
 ## 12.1 Reken Popsterren Master Art Style Prompt
 
-> **Paste this block at the start of every Reken Popsterren image prompt.** Do not edit
-> it per asset — put asset differences in the section that follows it. Keeping this
-> prefix byte-identical across prompts is what makes independently generated images look
-> like one game.
+> **Paste this block at the start of every Reken Popsterren image prompt**, byte-identical
+> every time. Keeping the prefix stable across prompts is what makes independently
+> generated images look like one game.
+>
+> **V2 note:** this prompt was rewritten from scratch against Art Direction V2. It is
+> shorter and more hierarchical than V1's, which buried the important instruction — *few
+> large simple shapes* — under a paragraph of rendering vocabulary that read to a
+> generator as "make detailed concept art". Shape discipline now comes first, rendering
+> second, and the prohibitions are grouped rather than listed flat.
 
 ```
 REKEN POPSTERREN — MASTER ART STYLE
 
-Children's game illustration in the style of modern animated-film background painting.
-Stylised 2D and painterly but clean: soft airbrushed gradients over simple chunky
-shapes. No outlines, no line art, no cel-shading, no hatching. Rounded, generous,
-toy-like geometry — nothing sharp, spiky or top-heavy. Exactly three depth planes: a
-blurred far plane, a sharp mid plane, and a softly blurred near plane cropped by the
-frame edge. Camera at eye level, straight on, no tilt, 35mm feel, horizon roughly 62%
-down the frame.
+A premium stylised 2D illustration for a children's pop-star game. Clearly an
+illustration, never a render.
 
-Lighting is warm stage light at blue hour: a single low amber-gold key from behind and
-below the subject, deep violet ambient shadow, soft bloom around light sources only. No
-lens flare and no light beams crossing the centre of the frame.
+SHAPE FIRST. Build the whole scene from a few large, chunky, rounded forms with
+generous curves and playful proportions. Simple stage-set construction, like
+painted theatre flats. Aggressive simplification: a handful of big shapes instead
+of many small ones. It must still read at the size of a phone thumbnail.
 
-Palette: deep aubergine #3D0A58 and violet #7B2FF7 for shadow and air; warm amber
-#FFC23D and #FF8F00 for light; one cool cyan #38BDF8 note in the far distance; magenta
-only as a faint glow, never a field. Keep the whole image in the middle value range —
-no pure black, no pure white, low saturation in the background. Fine even film grain
-over the image.
+THEN LIGHT. Enrich those flat shapes with soft painted gradients and stylised
+theatrical lighting: one clear low warm amber key, deep violet and aubergine
+ambient shadow, a few selective warm pools like venue practical lights, and one
+restrained cool accent far away. Simple soft bloom around actual light sources
+only. Light makes the simple shapes feel magical; it does not make them real.
 
-Mood: magical, calm, premium, joyful. Not chaotic, not candy-coloured, not cartoon-loud.
+COLOUR. Deep aubergine and violet environments, kept calm and on the dark side.
+Warm amber appears as light, never as gold-coloured objects. Magenta only as a
+faint glow in the air, never as a field. Leave the loudest saturation to the
+game's own interface.
 
-ABSOLUTELY NOT: text, letters, numbers, signs, logos, watermarks, signatures; UI
-elements, buttons, frames, borders, device mockups; human faces, hands, identifiable
-people; photorealism, photography, 3D render, plastic speculars; heavy black outlines,
-comic line art, sketch texture; busy repeating detail, daylight, blue sky.
+DEPTH. A small number of clearly separated layers — usually a distance, a
+midground and a foreground — only as many as the scene actually needs. Calm
+atmospheric depth, no confusing perspective.
+
+WORLD. A pop-star touring world built out of stagecraft: stages, curtains,
+footlights, risers, crowd silhouettes, venue lights, travel. Warm, magical and
+playful for a primary-school child — not babyish, not candy-coloured, not kawaii.
+
+NOT: realistic architecture, ornate mouldings, individual seat rows, tiny
+windows, realistic foliage, intricate props, material realism, high-frequency
+texture or any detail that only pays off when zoomed in.
+NOT: photorealism, 3D rendering, pseudo-3D, glossy plastic, specular highlights,
+lens flare, heavy bloom, volumetric light beams, cinematic concept-art
+complexity.
+NOT: flat generic vector clip-art, preschool corporate-flat illustration, heavy
+black outlines, comic line art, sketch texture.
+NOT: text, letters, numbers, signage, logos, watermarks, UI elements, buttons,
+frames or borders.
+NOT: human faces, hands or identifiable people, or any generated protagonist
+character.
+NOT: decorative stars, sparkles, microphones or music notes scattered as
+ornament.
 ```
 
 ---
@@ -1123,10 +1373,56 @@ for two of the three cases, so the prompts above were corrected to match:
 - Does it survive a 55 % dark scrim and still read?
 - Any text, letters, numerals or signage? Any faces or hands?
 - Any **gold objects**? (amber *light* is fine; gold belongs to the CTA)
-- Is the horizon at ~62 %, level, and matching the rest of the set?
+- Is the horizon where this asset's brief says it should be, level, and matching the set?
 - For venues: is the floor a **neutral warm mid-tone**, per §9.2's riser constraint?
 - Anything important within 12 % of the left or right edge?
 - Does the value range sit in the middle — no pure black, no pure white?
+
+---
+
+## 12.3 Final style acceptance checklist
+
+Run this against every generated asset before it is integrated. It supersedes nothing in
+§12.2 — that list covers the *contract* (safe zones, budgets, formats); this one covers
+the *style*.
+
+**Read and simplicity**
+
+- Does it read instantly at phone size?
+- Could the composition still work as a few flat silhouettes with all colour removed?
+- Is there unnecessary detail? What could be deleted without loss?
+- Is empty space being respected, or has the frame been filled because it could be?
+
+**Style**
+
+- Is it clearly *illustrated* rather than *rendered*?
+- Are the shapes chunky, rounded and simple?
+- Does it match the existing SVG avatar's flat, round, toy-like construction?
+- Does it belong to the same world as the rest of the set?
+
+**Tone and identity**
+
+- Does it feel right for a primary-school child without feeling preschool?
+- Does it reinforce the pop-star / touring / performance fantasy, or could it belong to
+  any charming children's game?
+- Is theatrical light enriching the shapes, rather than being an effect for its own sake?
+
+**Deference to the game**
+
+- Is the UI still visually stronger than the environment?
+- Are gold, cyan and white still owned by gameplay and rewards, not by the artwork?
+- Behind gameplay, is the environment darker than the mid-violet answer tiles?
+- Would the asset still work under its intended CSS scrim?
+
+**The diagnostic**
+
+> **If the image becomes substantially less successful when viewed at 150–200 px wide, it
+> is probably too detailed for this game.**
+
+Shrink it before approving it. Most V1-era rejections will fail exactly here: an image
+that is gorgeous at full size and mush at thumbnail is an image built for the wrong
+medium.
+
 
 ---
 
@@ -1137,17 +1433,17 @@ for two of the three cases, so the prompts above were corrected to match:
 | **Asset name** | `assets/bg/venue-theater.webp` |
 | **Purpose** | Make the show screen an actual venue, and make the middle rank tier feel like a step up from a club |
 | **Where used** | `#screen-game` `.game-arena` (markup 2157) as `--scene-img`, recipe **B**; served by `venueFor(p)` when `starRank().idx` is 3–5 |
-| **Composition** | Wide, symmetrical, straight on. A proscenium theatre seen from just behind the performer's position. Stage floor across the bottom third, catching warm light. A shallow balcony arc in the upper third. Two curtain masses cropped at the left and right edges. Crowd silhouettes fill the middle band, heads only, no faces. Light rig suggested along the top edge as soft warm shapes, not fixtures. |
-| **Visual description** | Dusk-lit, intimate, slightly grand. The room reads as *full* but calm. Warm amber pool on the stage floor fading to violet at the walls; the crowd is a single flat violet silhouette mass with a scattering of tiny warm points among it. The balcony rail is one soft arc, no detail. Depth: curtains near (blurred), crowd + balcony mid (sharp), back wall far (blurred). |
+| **Composition** | **Six shapes, and you should be able to name them:** (1) the stage floor across the bottom third, (2) one broad balcony arc in the upper third, (3) one crowd silhouette mass in the middle band, (4) two cropped curtain masses at the left and right edges, (5) a soft back wall, (6) two or three warm practical lights. Wide, symmetrical, straight on, seen from just behind the performer's position. |
+| **Visual description** | A theatre built out of **large rounded stage-set shapes**, not an architectural interior. The balcony is one generous unornamented arc. The curtains are two broad sweeping masses, cropped by the frame. The crowd is a single flat aubergine silhouette of rounded shoulders and featureless oval heads, with a light scatter of small warm points among it. A warm amber pool sits on the stage floor and falls away into violet at the walls. **Flattening test:** with all colour removed, the arc + curtains + crowd mass must still say *theatre*. |
 | **Required safe UI area** | **Bottom 55 % of the frame must be near-empty and low contrast** — the sum card, spotlight bar and four answer tiles sit there. Also keep the **top-centre 60 % × 20 %** quiet: the sticky header and progress bar overlap it. |
-| **Perspective** | Eye level, one-point, dead centre, horizon at 62 % |
+| **Perspective** | Eye level, straight on, dead centre. Two layers is enough: curtains near, everything else beyond. |
 | **Lighting** | Warm amber key from the stage front-bottom, violet ambient, soft top bloom from the rig, no beams crossing the centre |
 | **Colour direction** | `#3D0A58` walls and crowd, `#7B2FF7` ambient, `#FFC23D`→`#FF8F00` stage pool, a single `#38BDF8` cool note high on the back wall |
 | **Aspect ratio** | 12:7 |
 | **Output resolution** | 1200×700 (ship `@2400` as 2400×1400) |
 | **Transparent background** | **No** |
 | **Consistency reference** | This is the **canonical asset**. Generate it first; every later asset is matched to it. |
-| **Things to avoid** | Seat rows (reads as stripes at 175 px), spotlight cones crossing centre, any faces, curtain tassels or fringe detail, gold objects (gold is the CTA's), text on any screen or banner, warm light in the bottom third |
+| **Things to avoid** | **Individual seat rows** (stripes at 175 px, and pure V1-era detail) · realistic mouldings, cornices or gilt · chandeliers · curtain tassels or fringe · spotlight cones crossing centre · any faces · gold objects (gold is the CTA's) · text on any surface · warm light in the bottom third · anything that only pays off when zoomed in |
 | **Floor constraint** | Per §9.2, the child stands on a **purchased riser** in one of twelve colours — sand, pitch green, snow white, volcanic rock. The stage floor must therefore stay a **neutral warm mid-tone**: no strong hue, no pattern, no inlay, nothing a green or white platform would clash with. |
 
 **Prompt:**
@@ -1155,15 +1451,16 @@ for two of the three cases, so the prompts above were corrected to match:
 ```
 [MASTER ART STYLE]
 
-Subject: the interior of a small warm theatre at blue hour, seen straight on from the
-front of the stage looking out into the room. A wide empty wooden stage floor runs
-across the bottom third, lit by a broad warm amber pool. Behind and above it, a calm
-audience rendered only as a single flat deep-violet silhouette mass of rounded
-shoulders and featureless oval heads, with a light scattering of tiny warm glowing
-points among them. A shallow balcony arc crosses the upper third as one soft
-unornamented shape. Heavy stage curtains hang in the extreme left and right edges,
-close to camera and softly out of focus. Along the very top edge, the suggestion of a
-lighting rig as soft warm glowing shapes rather than visible fixtures.
+Subject: a simplified illustrated theatre, built from a few large rounded stage-set
+shapes, seen straight on from the front of the stage looking out into the room.
+
+Build it from these shapes and nothing else: one wide empty stage floor across the
+bottom third under a broad warm amber pool; one calm audience rendered as a single flat
+deep-aubergine silhouette mass of rounded shoulders and smooth featureless oval heads,
+with a light scatter of small warm glowing points among them; one broad balcony arc
+crossing the upper third as a single soft unornamented curve; two heavy curtain masses
+as broad sweeping shapes cropped by the extreme left and right edges; and two or three
+soft warm glowing practical lights. No other objects at all.
 
 Composition requirement: the entire lower 55% of the image must stay almost empty,
 smooth, dark and very low contrast — an unbroken calm field with no shapes, edges or
@@ -1171,6 +1468,8 @@ highlights. Keep the top-centre area quiet as well. Put all visual interest in t
 middle band and at the left and right edges.
 
 Mood: an intimate room that is full but hushed, the moment before the first note.
+Keep it graphic and simple: if the whole image were flattened into silhouettes, the
+balcony arc, the curtains and the crowd mass alone should still read as a theatre.
 ```
 
 ---
@@ -1182,14 +1481,14 @@ Mood: an intimate room that is full but hushed, the moment before the first note
 | **Asset name** | `assets/bg/venue-club.webp`, `assets/bg/venue-stadium.webp` |
 | **Purpose** | Make rank progression physically visible: the room gets bigger as the child's star rank climbs |
 | **Where used** | Same slot as Brief 1, selected by `venueFor(p)` at `starRank().idx` 0–2 and 6+ |
-| **Composition** | Identical camera, identical horizon, identical safe zone to Brief 1. **Only the room changes.** Club: low ceiling, close back wall, ~20 silhouettes, two warm practical lamps. Stadium: vast dark bowl, distant tiers, a sea of small warm points, open dusk sky above the rim. |
-| **Visual description** | The three must read as *the same world at three scales*. Same warm pool on the same stage floor; what changes is how far away the back wall is and how many points of light there are. |
+| **Composition** | Identical camera and safe zone to Brief 1, and **the same shape vocabulary at a different scale.** Club: a low rounded ceiling shape, a close back wall, one small crowd mass, two warm practicals. Stadium: one enormous curved bowl, one simplified distant crowd band, a few large-scale light shapes, open sky above the rim. |
+| **Visual description** | The three must read as *the same world at three scales*. **Scale comes from geometry, not from added detail** — the stadium must contain no more shapes than the club, only bigger ones. Same warm pool on the same stage floor; what changes is how far the back wall sits and how many points of light there are. |
 | **Required safe UI area** | Identical to Brief 1: bottom 55 % near-empty; top-centre 60 % × 20 % quiet |
 | **Perspective / Lighting / Colour** | Identical to Brief 1 in every respect |
 | **Aspect ratio / Resolution** | 12:7 · 1200×700 (`@2400`) |
 | **Transparent background** | No |
 | **Consistency reference** | `venue-theater.webp`. Generate these **after** it and match its value range, key angle and grain. |
-| **Things to avoid** | Changing the camera height or horizon between tiers · stage lighting that gets *cooler* as it scales up · stadium floodlights pointing at camera · any structure in the bottom 55 % |
+| **Things to avoid** | Changing the camera height between tiers · stage lighting that gets *cooler* as it scales up · floodlights pointing at camera · any structure in the bottom 55 % · **adding detail to convey scale** · realistic stadium architecture, girders, gantries or seat rows |
 | **Floor constraint** | Same as Brief 1: neutral warm mid-tone underfoot, in all three tiers, so any of the twelve riser colours sits on it cleanly. |
 
 **Prompt — club (tier 1):**
@@ -1197,13 +1496,16 @@ Mood: an intimate room that is full but hushed, the moment before the first note
 ```
 [MASTER ART STYLE]
 
-Subject: the inside of a small warm basement music club at blue hour, seen straight on
-from the front of a low stage looking out into the room. A narrow wooden stage floor
-across the bottom third under a broad warm amber pool. A close, low back wall of soft
-dark brick only a short distance behind the audience. About twenty people rendered as a
-single flat deep-violet silhouette mass of rounded shoulders and featureless oval
-heads, standing close together. Two small warm practical lamps glow on the side walls.
-A low ceiling crosses the top edge as a soft dark band.
+Subject: a simplified illustrated small music club, built from a few large rounded
+shapes, seen straight on from the front of a low stage looking out into the room.
+
+Build it from these shapes and nothing else: one narrow stage floor across the bottom
+third under a broad warm amber pool; one close, low, softly rounded back wall a short
+distance behind the audience; one small crowd rendered as a single flat deep-aubergine
+silhouette mass of rounded shoulders and smooth featureless oval heads standing close
+together; two small warm glowing practical lamps; and one low ceiling shape crossing the
+top edge as a soft dark band. No other objects at all. The room feels small because the
+shapes are close and the ceiling is low, not because anything has been furnished.
 
 Composition requirement: the entire lower 55% of the image must stay almost empty,
 smooth, dark and very low contrast — an unbroken calm field with no shapes, edges or
@@ -1218,14 +1520,19 @@ grain of the theatre image exactly.
 ```
 [MASTER ART STYLE]
 
-Subject: a vast open-air stadium at blue hour, seen straight on from the front of the
-stage looking out into the bowl. A broad stage floor across the bottom third under a
-wide warm amber pool. Beyond it the ground falls away into an enormous dark violet bowl
-of tiered seating, far away and softly out of focus, filled edge to edge with a sea of
-thousands of tiny warm points of light. Above the rim of the bowl, an open dusk sky in
-deep aubergine and violet with one cool cyan note near the horizon. Huge blank dark
-display panels flank the upper left and right edges, completely empty with no images or
-text on them.
+Subject: a simplified illustrated stadium, built from a few enormous rounded shapes,
+seen straight on from the front of the stage looking out into the bowl.
+
+Build it from these shapes and nothing else: one broad stage floor across the bottom
+third under a wide warm amber pool; one single enormous smooth curved bowl rising beyond
+it in deep aubergine, far away and soft, with no tiers, girders or seat detail drawn
+into it; one simplified band of distant crowd reading as a soft sea of tiny warm points
+along that curve; two or three large simple light shapes; and an open dusk sky above the
+rim in aubergine and violet with one cool cyan note near the horizon. No other objects
+at all.
+
+The stadium must feel vast purely because its shapes are enormous and simple — do not
+add extra detail, structure or objects to convey scale.
 
 Composition requirement: the entire lower 55% of the image must stay almost empty,
 smooth, dark and very low contrast — an unbroken calm field with no shapes, edges or
@@ -1244,8 +1551,8 @@ range, key-light angle and grain of the theatre image exactly.
 | **Asset name** | `assets/bg/map-horizon.webp`, `assets/bg/map-sky.webp` |
 | **Purpose** | Give the tour map a world. Replace the invisible `.map-ground` gradient stack (line 570) and the seven drifting `☁️`/`✈️` emoji in `.map-sky` (line 589) |
 | **Where used** | `#screen-map` — horizon anchored to `background-position: 50% 100%`; sky on the existing `.map-sky-inner`, which already receives a `translateX` parallax from `updateParallax` (line 3591) |
-| **Composition** | **Horizon:** a continuous, horizontally tileable dusk landscape band — soft rolling ground, distant hills, a warm glow along the whole horizon line as if a stage were just over it. Art occupies the **bottom 55 %**; the top fades to nothing. **Sky:** three soft, widely separated cloud bands on transparency, nothing else. |
-| **Visual description** | Warm and inviting, not scenic. The ground is a *stage* the road walks across, not a countryside. No buildings, no roads, no landmarks — the 12 city medallions supply the places. The horizon glow is the same amber as the venue key light, so the map and the show feel lit by the same sun. |
+| **Composition** | **Horizon:** two or three broad rolling landform shapes layered like **painted stage flats**, with a warm glow along the whole horizon line as if a stage were lit just beyond it. Horizontally tileable. Art occupies the **bottom 55 %**; the top is a plain field that fades away in CSS. **Sky:** three soft, widely separated cloud bands, nothing else. |
+| **Visual description** | Warm and inviting, and deliberately almost empty. The landforms are **broad rounded masses with the layered simplicity of stage flats**, not a landscape painting — no texture, no vegetation, no silhouetted trees. The ground is the *stage the tour walks across*. No buildings, no roads, no landmarks; the 12 city medallions supply the places, and the road, medallions and avatar must stay dominant over the art. The horizon glow is the same amber as the venue key, so map and show read as lit by one light. |
 | **Required safe UI area** | Nothing meaningful in the **central 60 % × 45 %** (the road, medallions, avatar and `Speel!` pill live there). Nothing within **12 % of the left or right edge** — the map scrolls horizontally and those edges get masked by `.hscroll-fade` (line 1133). |
 | **Perspective** | Eye level, flat-on, horizon at 62 % |
 | **Lighting** | Broad warm amber glow rising from the horizon into violet air; darkest at the very bottom edge |
@@ -1254,18 +1561,20 @@ range, key-light angle and grain of the theatre image exactly.
 | **Output resolution** | Horizon 1600×600 (`@3200`) · Sky 1600×900 |
 | **Transparent background** | Horizon: **No** (top fades to transparent — export PNG-alpha or WebP-alpha). Sky: **Yes** |
 | **Consistency reference** | `venue-theater.webp` — same amber, same violet, same grain |
-| **Things to avoid** | Buildings, city skylines, roads, paths, trees with detail, a visible sun or moon disc, anything that tiles visibly, anything in the horizontal centre |
+| **Things to avoid** | Buildings, city skylines, roads, paths, **trees or foliage of any kind**, a visible sun or moon disc, surface texture on the landforms, generic fantasy clutter, anything that tiles visibly, anything in the horizontal centre |
 
 **Prompt — horizon:**
 
 ```
 [MASTER ART STYLE]
 
-Subject: a wide, calm, empty dusk landscape band — soft rolling ground in deep
-aubergine running left to right across the frame, with low distant hills behind it, and
-a broad warm amber glow lying along the entire horizon line as though an enormous stage
-were lit just beyond it. Above the horizon, deep violet air. No buildings, no
-structures, no roads, no paths, no trees, no sun or moon.
+Subject: a wide, calm, almost empty dusk landscape band, built like painted theatre
+stage flats — two or three broad rounded landform shapes in deep aubergine, layered one
+behind another across the frame, each a single smooth simple mass with no texture and no
+detail on it. A broad warm amber glow lies along the entire horizon line as though an
+enormous stage were lit just beyond it. Above the horizon, deep violet air. No
+buildings, no structures, no roads, no paths, no trees, no foliage, no sun or moon, and
+nothing standing on the ground.
 
 Composition requirement: all content in the lower 55% of the frame. The upper 45% is an
 empty, smooth, even field of deep violet with nothing in it at all -- no clouds, no
@@ -1274,7 +1583,8 @@ the image must stay completely plain and featureless. Keep the far left and far 
 edges non-committal so the image can be scrolled and masked. The band must repeat
 seamlessly left to right.
 
-Mood: the quiet, warm, open world a tour travels across.
+Mood: the quiet, warm, open world a tour travels across. Keep it extremely simple and
+graphic — this band is a stage for other things to stand on, not a scene in itself.
 ```
 
 **Prompt — sky:**
@@ -1306,7 +1616,7 @@ Mood: distant, weightless, barely there.
 | **Purpose** | Make every correct answer visibly change the world. Bound to `G.fan` in `updateFan()` (line 5230), which already fires on every submitted answer |
 | **Where used** | A layer above the venue backdrop on `#screen-game`; its `opacity` and a small `translateY` are driven from `--fan` |
 | **Composition** | A wide, shallow horizontal strip. Lower half: a flat silhouette band of rounded heads and shoulders at slightly varied heights. Upper half: a scatter of small warm glowing points rising out of the crowd, densest at the bottom, thinning upward. Fully transparent everywhere else. |
-| **Visual description** | The lights read as held-up phones or lighters without being either. Warm, soft, bloomed. The silhouette band is a single flat colour, no internal detail. |
+| **Visual description** | **One shape and one scatter, nothing else.** The silhouette band is a single flat colour with no internal detail at all — rounded shoulders and smooth oval heads, the same construction as the crowd inside the venue art. The lights read as held-up phones or lighters without being drawn as either: warm, soft, bloomed points. |
 | **Required safe UI area** | Its own top 30 % must be sparse — at low `--fan` only the crowd band shows, and the strip sits behind the sticky header |
 | **Perspective** | Flat-on, no perspective, no vanishing point |
 | **Lighting** | Self-lit points only; the silhouette receives no light |
@@ -1347,8 +1657,8 @@ Mood: a warm room quietly lighting up.
 | **Asset name** | `assets/bg/finale.webp` |
 | **Purpose** | Give the loop's payoff a stage. Today `#screen-end` is a translucent glass card in a void, with 40 emoji falling in front of the headline |
 | **Where used** | Full-bleed behind `#screen-end`, recipe **A**, under `.result-card` (line 1523) with `--scrim-focus` on top |
-| **Composition** | The stage seen from the wings, three-quarters filled with light. A wide warm pool centre-low. Two soft spotlight cones angled inward from the upper corners, **stopping well short of the centre**. Confetti and streamer shapes drifting in the upper third and along the left and right edges. Crowd silhouettes as a low band at the very bottom edge, backlit. |
-| **Visual description** | Triumphant and warm rather than loud. The centre of the frame is the brightest *value* but the emptiest *content* — a glowing, detail-free field the result card sits on. |
+| **Composition** | The same theatre shapes as Brief 1, lit up. A wide warm pool centre-low. Two soft light shapes angled inward from the upper corners, **stopping well short of the centre**. Confetti and streamer shapes drifting in the upper third and along the left and right edges. One crowd silhouette band at the very bottom edge, backlit. |
+| **Visual description** | **The one asset licensed to raise saturation and light** — celebration is earned, so the finale may exceed the calm register every other screen holds to (§3.12: reward saturation 8/10). Same simple rounded shape vocabulary as the venues; what changes is the light, not the detail. The centre of the frame is the brightest *value* but the emptiest *content* — a glowing, detail-free field the result card sits on. |
 | **Required safe UI area** | **Central 60 % × 55 %** must be a smooth glowing field with no shapes: the result card, three stars, three earn chips, the milestone pill and two buttons all stack there |
 | **Perspective** | Eye level, straight on, horizon at 62 % |
 | **Lighting** | Strong warm key from the stage, bloom, violet edges; brightest in the centre, darkest at the corners |
@@ -1378,7 +1688,9 @@ smooth, empty, glowing field with no shapes, no confetti, no beams and no edges 
 at all — completely plain. Put every element in the upper third, the lower edge, and
 the left and right margins.
 
-Mood: warm triumph. Joyful and grand, but calm and premium rather than loud.
+Mood: warm triumph. Joyful and grand, and brighter and richer than the other scenes
+because this is the moment of celebration — but achieved entirely through light and
+colour, with the same few large simple shapes as everything else.
 ```
 
 ---
@@ -1390,7 +1702,7 @@ Mood: warm triumph. Joyful and grand, but calm and premium rather than loud.
 | **Asset name** | `assets/city/cities.svg` — one file, twelve `<symbol id="…">` |
 | **Purpose** | Replace the food emoji (`CITIES`, line 2525) so a city is a *place*, and so the map renders identically on every OS |
 | **Where used** | `.tour-stop .dot` (line 1171, 70 px / 90 px / 58 px across breakpoints), `.city-mark` on profile cards (line 240, 30 px), and later the pre-show card and travel stamp |
-| **Composition** | Each symbol: one centred landmark silhouette in a 100×100 viewBox, optically balanced so all twelve carry the **same visual weight** — this is the specific failure of the current emoji (🌷 vs 🗽). Flat, single-colour, no interior detail. |
+| **Composition** | Each symbol: one centred landmark silhouette in a 100×100 viewBox, optically balanced so all twelve carry the **same visual weight** — this is the specific failure of the current emoji (🌷 vs 🗽). Flat, single-colour, no interior detail. **Chunky above all:** these render at 30–90 px, so every form must be broad and stable — never thin, spindly or wiry. |
 | **Visual description** | Amsterdam = canal house gable row · Brussels = Atomium spheres · Paris = tower · London = wheel · Berlin = TV tower · Rome = arched aqueduct/colosseum arc · Madrid = arched gateway · New York = three tapering towers · Rio = hilltop figure as an abstract cross-form on a peak · Cairo = pyramid pair · Tokyo = tiered tower · Sydney = shell arcs. |
 | **Required safe UI area** | 8 % padding inside the viewBox on all sides; the medallion crops to a circle |
 | **Perspective** | Flat-on elevation, no perspective |
@@ -1436,7 +1748,8 @@ around the cells.
 ### Recommended direction
 
 **Keep the palette. Stop using it as wallpaper. Give every screen a floor, a horizon and
-a light source — and make the venue grow with the child's star rank.**
+a light source — and make the venue grow with the child's star rank. Draw all of it as a
+premium stylised 2D pop-star world: few large rounded shapes, lit like a stage.**
 
 Reken Popsterren does not need to look different. It needs to look *lit*. Its identity —
 aubergine to violet, gold for reward, a round-headed SVG paper doll — is already
