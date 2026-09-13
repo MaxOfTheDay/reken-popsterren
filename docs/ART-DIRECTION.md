@@ -1462,13 +1462,18 @@ medium.
 Subject: a simplified illustrated theatre, built from a few large rounded stage-set
 shapes, seen straight on from the front of the stage looking out into the room.
 
-Build it from these shapes and nothing else: one wide empty stage floor across the
-bottom third under a broad warm amber pool; one calm audience rendered as a single flat
+Build it from these shapes and nothing else: one wide empty stage floor whose upstage
+half catches a broad warm amber pool where the performer stands, and whose front
+edge falls away into deep aubergine shadow toward the bottom of the frame, so that
+the bottom of the image is the darkest part of the whole picture; one calm audience rendered as a single flat
 deep-aubergine silhouette mass of rounded shoulders and smooth featureless oval heads,
 with a light scatter of small warm glowing points among them; one broad balcony arc
-crossing the upper third as a single soft unornamented curve; two heavy curtain masses
-as broad sweeping shapes cropped by the extreme left and right edges; and two or three
-soft warm glowing practical lights. No other objects at all.
+crossing the upper third as a single soft unornamented curve; two heavy curtain masses in deep muted
+crimson — low saturation, darker in value than the crowd — as broad sweeping shapes
+cropped by the extreme left and right edges; and two or three simple
+soft warm glowing light shapes. No other objects at all. The back wall is one plain
+smooth surface: no arches, no architectural detail, and the lights are glowing shapes
+rather than lanterns with parts.
 
 Composition requirement: the entire lower 55% of the image must stay almost empty,
 smooth, dark and very low contrast — an unbroken calm field with no shapes, edges or
@@ -1507,8 +1512,10 @@ balcony arc, the curtains and the crowd mass alone should still read as a theatr
 Subject: a simplified illustrated small music club, built from a few large rounded
 shapes, seen straight on from the front of a low stage looking out into the room.
 
-Build it from these shapes and nothing else: one narrow stage floor across the bottom
-third under a broad warm amber pool; one close, low, softly rounded back wall a short
+Build it from these shapes and nothing else: one narrow stage floor whose upstage half
+catches a broad warm amber pool and whose front edge falls away into deep aubergine
+shadow toward the bottom of the frame, so that the bottom of the image is the darkest
+part of the whole picture; one close, low, softly rounded back wall a short
 distance behind the audience; one small crowd rendered as a single flat deep-aubergine
 silhouette mass of rounded shoulders and smooth featureless oval heads standing close
 together; two small warm glowing practical lamps; and one low ceiling shape crossing the
@@ -1531,8 +1538,10 @@ grain of the theatre image exactly.
 Subject: a simplified illustrated stadium, built from a few enormous rounded shapes,
 seen straight on from the front of the stage looking out into the bowl.
 
-Build it from these shapes and nothing else: one broad stage floor across the bottom
-third under a wide warm amber pool; one single enormous smooth curved bowl rising beyond
+Build it from these shapes and nothing else: one broad stage floor whose upstage half
+catches a wide warm amber pool and whose front edge falls away into deep aubergine
+shadow toward the bottom of the frame, so that the bottom of the image is the darkest
+part of the whole picture; one single enormous smooth curved bowl rising beyond
 it in deep aubergine, far away and soft, with no tiers, girders or seat detail drawn
 into it; one simplified band of distant crowd reading as a soft sea of tiny warm points
 along that curve; two or three large simple light shapes; and an open dusk sky above the
