@@ -35,16 +35,25 @@ const SLOTS = {
   world:   { match: /[-_]map\.[a-z0-9]+$|^(world|wereld)[-_]/i,      screen: 'map',
              label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
              lever: [1080, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
+             pad: 'assets/world/{wereld}-map.webp', perWereld: true,
              hint: '<wereld>-map.webp, bv. ijs-map.webp of vuur-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
              lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
+             pad: 'assets/bg/landing.webp',
              hint: 'landing.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
              label: 'Slotscherm', waar: 'na de show',
              lever: [1024, 1536], anker: 'midden', canoniek: 'finale.webp',
              hint: 'finale.webp' },
 };
+
+const SCHERMEN = [
+  { id: 'profile', label: 'Wie speelt er' },
+  { id: 'map',     label: 'Kaart' },
+  { id: 'game',    label: 'Show' },
+  { id: 'end',     label: 'Einde' },
+];
 
 /* Waar de wereld achter staat: de kaart en de sterkeuze.
    Eerder stonden de kleedkamer en de trofeeenkast hier ook bij, omdat het plan
@@ -259,4 +268,4 @@ function parallaxJs() {
   })();`;
 }
 
-if (typeof module !== 'undefined') module.exports = { SLOTS, SCRIM, PARALLAX, classify, css, isImage, mimeFor, namesHint, parallaxJs };
+if (typeof module !== 'undefined') module.exports = { SLOTS, SCHERMEN, SCRIM, PARALLAX, classify, css, isImage, mimeFor, namesHint, parallaxJs };

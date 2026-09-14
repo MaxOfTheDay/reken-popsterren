@@ -7579,8 +7579,38 @@ if (location.search.indexOf('debug') !== -1) {
                  end: () => { startLevel(P().level); endLevel(true); } };
     (go[dbg.get('screen')] || goMap)();
   }
+  if (dbg.get('fit')) fitVenster(dbg.get('fit'));
   if (dbg.has('mapedit') && cur) startMapEdit();
 }
+/* Een voorbeeldvenster op ware toestelmaat. window.open zet de BUITENmaat, en een
+   browser mag daar een minimum op leggen -- dan kijk je naar een venster dat breder
+   is dan de telefoon die je wilde zien, en dus naar de verkeerde opmaak. Hier
+   corrigeert het venster zichzelf met het verschil tussen buiten en binnen, en zegt
+   een balkje onderaan wat de binnenmaat écht geworden is. */
+function fitVenster(spec) {
+  const w = Number(spec.split('x')[0]), h = Number(spec.split('x')[1]);
+  if (!w || !h) return;
+  const meld = () => {
+    const klopt = innerWidth === w && innerHeight === h;
+    let el = document.getElementById('fit-badge');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'fit-badge';
+      el.style.cssText = 'position:fixed;left:50%;bottom:6px;transform:translateX(-50%);'
+        + 'z-index:99999;padding:3px 9px;border-radius:99px;pointer-events:none;'
+        + 'font:600 11px ui-monospace,monospace;';
+      document.body.appendChild(el);
+    }
+    el.style.background = klopt ? 'rgba(20,80,45,.85)' : 'rgba(120,30,20,.9)';
+    el.style.color = klopt ? '#b6ffd6' : '#ffd0c4';
+    el.textContent = klopt ? innerWidth + ' x ' + innerHeight
+      : 'gevraagd ' + w + 'x' + h + ' — werkelijk ' + innerWidth + 'x' + innerHeight;
+  };
+  try { resizeTo(w + (outerWidth - innerWidth), h + (outerHeight - innerHeight)); } catch (_) {}
+  setTimeout(meld, 120);
+  addEventListener('resize', () => setTimeout(meld, 60));
+}
+
 /* ---- Wereldstudio (?debug&mapedit) ------------------------------------------
    Werelden maken en bijwerken óp de echte kaart, op ware grootte.
 
@@ -7619,10 +7649,17 @@ function startMapEdit() {
        telefoon-verhoudingen, dus full-bleed is precies wat een kind straks ziet. */
     body.mapedit #tour-map { overflow: hidden; align-items: center; padding: 0; }
     body.mapedit .world-frame { min-width: 100%; min-height: 100%; width: auto; }
-    body.mapedit .hub-sticky { max-width: min(430px, 60vw); margin-left: 24px; }
+    /* .screen centreert zijn kinderen (align-items: center), dus de kop bleef midden
+       op het brede scherm hangen terwijl de kaart een kolom links werd: twee dingen
+       die bij elkaar horen, los van elkaar. Marges helpen daar niet tegen -- de
+       uitlijning van het flexvak wel. #screen-map heeft zelf geen schermrand (de
+       kaart loopt tot de rand), dus de marge is precies de 24px van de kaart. */
+    body.mapedit #screen-map .hub-sticky { align-self: flex-start;
+      width: min(430px, 60vw); max-width: none; margin-left: 24px; margin-right: 0; }
     @media (max-width: 820px) {
       body.mapedit #tour-map { left: 0; width: 100%; box-shadow: none; }
-      body.mapedit .hub-sticky { max-width: none; margin-left: 0; }
+      body.mapedit #screen-map .hub-sticky { align-self: stretch;
+        width: 100%; margin-left: 0; }
     }
     body.mapedit .tour-stop { cursor: grab; }
     body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
@@ -7643,7 +7680,36 @@ function startMapEdit() {
       border-bottom: 1px solid rgba(255,255,255,.14); }
     #studio .st-top b { flex: 1; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
     #studio.dicht .st-top b, #studio.dicht .st-top .st-chip { display: none; }
+    #studio .st-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+      padding: 6px 8px 0; border-bottom: 1px solid rgba(255,255,255,.14); }
+    #studio .st-tabs button { border: 0; background: none; border-radius: 7px 7px 0 0;
+      padding: 7px 2px; font-size: 11.5px; color: #b79ae0; border-bottom: 2px solid transparent; }
+    #studio .st-tabs button.on { color: #fff; background: rgba(255,255,255,.08);
+      border-bottom-color: #7dffb4; font-weight: 600; }
     #studio .st-body { flex: 1; overflow: auto; padding: 4px 12px 12px; }
+    #studio .st-body > section[hidden] { display: none; }
+    /* beelden per scherm: één regel per plek waar een tekening kan staan */
+    #studio .st-scherm { margin: 12px 0 0; }
+    #studio .st-scherm > h6 { margin: 0 0 5px; }
+    #studio .st-slot { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px;
+      align-items: center; padding: 7px 9px; margin-bottom: 4px; border-radius: 8px;
+      background: rgba(255,255,255,.05); border: 1px solid transparent;
+      transition: background .12s, border-color .12s; }
+    #studio .st-slot.over { background: rgba(120,255,180,.14); border-color: rgba(120,255,180,.8); }
+    #studio .st-slot.kan { opacity: .72; }
+    #studio .st-slot b { font-size: 12.5px; }
+    #studio .st-slot small { grid-column: 1 / -1; color: #9c86bd; font-size: 11px;
+      font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+    #studio .st-slot .st-dot { width: 8px; height: 8px; border-radius: 50%; }
+    #studio .st-slot .st-dot.er { background: #7dffb4; }
+    #studio .st-slot .st-dot.weg { background: rgba(255,255,255,.22); }
+    #studio .st-set { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+    #studio .st-set label { display: flex; align-items: center; gap: 7px; padding: 5px 8px;
+      border-radius: 7px; background: rgba(255,255,255,.05); cursor: pointer; }
+    #studio .st-set input { width: auto; margin: 0; }
+    #studio .st-set span { flex: 1; }
+    #studio .st-set em { color: #9c86bd; font-style: normal; font-size: 11px;
+      font-family: ui-monospace, monospace; }
     #studio h6 { margin: 14px 0 6px; font-size: 10.5px; letter-spacing: .12em;
       text-transform: uppercase; color: #b79ae0; }
     #studio .st-chip { font-size: 10.5px; padding: 2px 7px; border-radius: 99px;
@@ -7673,15 +7739,13 @@ function startMapEdit() {
     #studio .st-w .st-dot.vuil { background: #ffc43d; }
     #studio .st-w .st-dot.nieuw { background: #7dffb4; }
     #studio .st-hint { color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
-    #studio .st-uit { margin-top: 8px; font: 11.5px/1.5 ui-monospace, monospace; color: #b6ffd6;
-      min-height: 15px; white-space: pre-wrap; max-height: 30vh; overflow: auto; }
+    /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
+       terwijl je al ergens anders kijkt. */
+    #studio .st-uit { flex: none; padding: 7px 12px 9px; font: 11.5px/1.5 ui-monospace, monospace;
+      color: #b6ffd6; white-space: pre-wrap; max-height: 30vh; overflow: auto;
+      border-top: 1px solid rgba(255,255,255,.14); }
+    #studio .st-uit:empty { display: none; }
     #studio .st-hint code { background: rgba(255,255,255,.1); border-radius: 4px; padding: 0 4px; }
-    #studio .st-drop { display: flex; flex-direction: column; align-items: center; gap: 2px;
-      padding: 16px 10px; border: 1.5px dashed rgba(255,255,255,.28); border-radius: 9px;
-      text-align: center; color: #b79ae0; font-size: 12px; transition: background .12s, border-color .12s; }
-    #studio .st-drop b { color: #f2ecfa; font-size: 12.5px; }
-    #studio .st-drop u { cursor: pointer; text-underline-offset: 2px; }
-    #studio .st-drop.over { background: rgba(120,255,180,.14); border-color: rgba(120,255,180,.8); }
     #me-dump { position: fixed; inset: 8% 360px auto 6%; z-index: 61; display: none;
       max-height: 70vh; padding: 12px; border-radius: 10px; background: #140426; color: #d8ffe8;
       border: 1px solid rgba(255,255,255,.3); font: 12px/1.45 ui-monospace, monospace;
@@ -7709,95 +7773,134 @@ function startMapEdit() {
       <span class="st-chip" id="st-status">—</span>
       <button id="st-fold" title="In-/uitklappen">⇥</button>
     </div>
+    <div class="st-tabs">
+      <button class="on" data-tab="werelden">Werelden</button>
+      <button data-tab="beelden">Beelden</button>
+      <button data-tab="voorbeeld">Voorbeeld</button>
+      <button data-tab="spel">Publiceren</button>
+    </div>
     <div class="st-body">
-      <h6>Werelden</h6>
-      <div class="st-list" id="st-list"></div>
-      <div class="st-btns" style="margin-top:6px">
-        <button id="st-new">＋ wereld</button>
-        <button id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
-      </div>
 
-      <h6>Deze wereld</h6>
-      <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
-      <div class="st-row"><label>naam</label><input id="mf-name"></div>
-      <div class="st-row"><label>badge</label><input id="mf-bemoji" maxlength="4"></div>
-      <div class="st-row"><label>badgenaam</label><input id="mf-bname"></div>
-      <div class="st-row"><label>tekening</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
-      <div class="st-kleur">
-        <div>lucht<input id="mf-sky" type="color"></div>
-        <div>diepte<input id="mf-deep" type="color"></div>
-        <div>accent<input id="mf-accent" type="color"></div>
-        <div>gloed<input id="mf-glow" type="color"></div>
-      </div>
-      <p class="st-hint">levels: <b id="mf-levels"></b> — vast. Dit wijzigen hernummert elk level erna,
-        en dan verhuizen de sterren van een kind naar een andere wereld.</p>
+      <section data-tab="werelden">
+        <h6>Welke wereld</h6>
+        <div class="st-list" id="st-list"></div>
+        <div class="st-btns" style="margin-top:6px">
+          <button id="st-new">＋ wereld</button>
+          <button id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
+        </div>
 
-      <h6>Kaart &amp; weg</h6>
-      <div class="st-btns">
-        <label class="st-btnlike"><button type="button" id="st-pick">📷 tekening</button></label>
+        <h6>Gegevens</h6>
+        <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
+        <div class="st-row"><label>naam</label><input id="mf-name"></div>
+        <div class="st-row"><label>badge</label><input id="mf-bemoji" maxlength="4"></div>
+        <div class="st-row"><label>badgenaam</label><input id="mf-bname"></div>
+        <div class="st-row"><label>tekening</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
+        <div class="st-kleur">
+          <div>lucht<input id="mf-sky" type="color"></div>
+          <div>diepte<input id="mf-deep" type="color"></div>
+          <div>accent<input id="mf-accent" type="color"></div>
+          <div>gloed<input id="mf-glow" type="color"></div>
+        </div>
+        <p class="st-hint">levels: <b id="mf-levels"></b> — vast. Dit wijzigen hernummert elk level erna,
+          en dan verhuizen de sterren van een kind naar een andere wereld.</p>
+
+        <h6>Haltes &amp; weg</h6>
+        <div class="st-btns">
+          <button id="st-grid">▦ raster</button>
+          <button id="st-curve" class="on">∿ stuurpunten</button>
+          <button id="st-renodes">↺ haltes</button>
+          <button id="st-recurve">↺ weg</button>
+        </div>
+        <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
+          om de weg langs de tekening te leiden. Eén ruitje per stuk weg. De tekening zelf
+          zet je bij <b>Beelden</b>.</p>
+
+        <h6>Blok uitwisselen</h6>
+        <div class="st-btns">
+          <button id="st-copy">Kopieer</button>
+          <button id="st-paste">Plak</button>
+        </div>
+        <p class="st-hint">Het hele WORLDS-blok als tekst — handig om het hierheen te
+          plakken vanuit een gesprek met Claude, of andersom.</p>
+      </section>
+
+      <section data-tab="beelden" hidden>
+        <p class="st-hint" style="margin-top:10px">Per scherm: welke tekening daar hoort, hoe groot
+          hij moet zijn en waar hij landt. Sleep een beeld op een regel, of tik erop om een
+          bestand te kiezen. Elke bronmaat mag — hij wordt bijgesneden als cover en
+          omgezet naar webp.</p>
+        <div class="st-row" style="margin-top:8px"><label>kwaliteit</label><select id="st-kwal">
+          <option value="0.9">0.90 — ruim</option>
+          <option value="0.82" selected>0.82 — normaal</option>
+          <option value="0.72">0.72 — zuinig</option>
+        </select></div>
+        <div id="st-schermen"></div>
         <input type="file" accept="image/*" hidden id="me-file">
-        <button id="st-grid">▦ raster</button>
-        <button id="st-curve" class="on">∿ stuurpunten</button>
-      </div>
-      <div class="st-btns" style="margin-top:6px">
-        <button id="st-renodes">↺ haltes</button>
-        <button id="st-recurve">↺ weg</button>
-      </div>
-      <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
-        om de weg langs de tekening te leiden. Eén ruitje per stuk weg.</p>
+      </section>
 
-      <h6>Beelden</h6>
-      <div class="st-row"><label>doel</label><select id="st-doel"></select></div>
-      <div class="st-row"><label>kwaliteit</label><select id="st-kwal">
-        <option value="0.9">0.90 — ruim</option>
-        <option value="0.82" selected>0.82 — normaal</option>
-        <option value="0.72">0.72 — zuinig</option>
-      </select></div>
-      <div class="st-drop" id="st-drop">
-        <b>sleep een beeld hierheen</b>
-        <span>of <u id="st-pick">kies een bestand</u></span>
-      </div>
-      <input type="file" accept="image/*" hidden id="me-file">
-      <p class="st-hint" id="st-doelhint"></p>
+      <section data-tab="voorbeeld" hidden>
+        <h6>Welk spelscherm</h6>
+        <div class="st-row"><label>scherm</label><select id="st-vscherm">
+          <option value="map">Kaart</option>
+          <option value="game">Show</option>
+          <option value="end">Einde</option>
+          <option value="profile">Wie speelt er</option>
+        </select></div>
 
-      <h6>Voorbeeld</h6>
-      <div class="st-btns">
-        <button data-prev="390x844">staand</button>
-        <button data-prev="320x568">klein</button>
-        <button data-prev="844x390">liggend</button>
-        <button data-prev="768x1024">tablet</button>
-        <button data-prev="390x844|844x390">naast elkaar</button>
-      </div>
-      <p class="st-hint">Opent het echte spel op die maat, mét je concept. Staand vult de
-        tekening het scherm; liggend en op lage schermen wordt het een kolom die scrolt —
-        een staande tekening past daar nu eenmaal niet full-bleed in.</p>
+        <h6>Op welke toestelmaten</h6>
+        <div class="st-set" id="st-maten"></div>
+        <div class="st-btns">
+          <button class="prim" id="st-openset">⬚ Open set</button>
+          <button id="st-geenmaat">geen</button>
+        </div>
+        <p class="st-hint">Opent het échte spel op die maten, naast elkaar, mét je concept.
+          Onderin elk venster staat de binnenmaat die het werkelijk kreeg: een browser mag
+          een venster breder maken dan gevraagd, en dan kijk je naar de verkeerde opmaak.
+          Staand vult de tekening het scherm; liggend en op lage schermen wordt het een
+          kolom die scrolt — een staande tekening past daar nu eenmaal niet full-bleed in.</p>
+      </section>
 
-      <h6>Naar het spel</h6>
-      <div class="st-btns">
-        <button class="prim" id="st-push">⇪ Zet in het spel</button>
-        <button id="st-pull" title="Concept weggooien en terug naar index.html">⟲ Ophalen</button>
-      </div>
-      <div class="st-btns" style="margin-top:6px">
-        <button id="st-copy">Kopieer</button>
-        <button id="st-paste">Plak</button>
-      </div>
-      <div class="st-row" style="margin-top:8px"><label>bericht</label>
-        <input id="st-msg" placeholder="feat: IJswereld krijgt zijn kaart"></div>
-      <div class="st-btns">
-        <button id="st-commit">✓ testen, vastleggen &amp; pushen</button>
-        <button id="st-publish">🚀 publiceer naar main</button>
-      </div>
-      <p class="st-hint">Vastleggen gaat naar de wérkbranch. Publiceren voegt die samen
-        met main en dát is wat op de telefoon komt — in twee stappen, en alleen als
-        <code>npm test</code> slaagt.</p>
-      <div class="st-uit" id="st-out"></div>
-    </div>`;
+      <section data-tab="spel" hidden>
+        <h6>Werelden vastleggen</h6>
+        <div class="st-btns">
+          <button class="prim" id="st-push">⇪ Zet in het spel</button>
+          <button id="st-pull" title="Concept weggooien en terug naar index.html">⟲ Ophalen</button>
+        </div>
+        <p class="st-hint">Schrijft je concept in index.html. Beelden staan er al zodra je ze
+          bij <b>Beelden</b> hebt neergezet.</p>
+
+        <h6>Vastleggen &amp; publiceren</h6>
+        <div class="st-row"><label>bericht</label>
+          <input id="st-msg" placeholder="feat: IJswereld krijgt zijn kaart"></div>
+        <div class="st-btns">
+          <button id="st-commit">✓ testen, vastleggen &amp; pushen</button>
+          <button id="st-publish">🚀 publiceer naar main</button>
+        </div>
+        <p class="st-hint">Vastleggen gaat naar de wérkbranch. Publiceren voegt die samen
+          met main en dát is wat op de telefoon komt — in twee stappen, en alleen als
+          <code>npm test</code> slaagt.</p>
+      </section>
+
+    </div>
+    <div class="st-uit" id="st-out"></div>`;
   document.body.appendChild(panel);
   const dump = document.createElement('pre');
   dump.id = 'me-dump';
   dump.onclick = () => { dump.style.display = 'none'; };
   document.body.appendChild(dump);
   document.documentElement.style.setProperty('--studio-w', '330px');
+
+  /* Vier tabbladen in plaats van één lange kolom. Werelden, beelden, kijken en
+     vastleggen zijn vier verschillende bezigheden; door elkaar in één lijst moest
+     je elke keer zoeken waar je was. */
+  panel.querySelectorAll('.st-tabs button').forEach(b => {
+    b.onclick = () => {
+      panel.querySelectorAll('.st-tabs button').forEach(o => o.classList.toggle('on', o === b));
+      panel.querySelectorAll('.st-body > section').forEach(sec => {
+        sec.hidden = sec.dataset.tab !== b.dataset.tab;
+      });
+    };
+  });
 
   const shown = () => worldForIndex(viewWorldIdx);
   const setOut = t => { F('st-out').textContent = t || ''; };
@@ -7874,11 +7977,13 @@ function startMapEdit() {
     if (!w.curve || w.curve.length !== shown().levels - 1) w.curve = worldCurve(shown());
     return w.curve;
   }
+  function leesNodes() { return shown().world.nodes || worldNodes(shown()); }
+  function leesCurve() { return shown().world.curve || worldCurve(shown()); }
   function redrawRoad() {
     const frame = map.querySelector('.world-frame');
     if (!frame) return;
-    const pts = ownNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
-    const c = shown().world.curve;
+    const pts = leesNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+    const c = leesCurve();
     const bg = frame.querySelector('.tour-road-bg'), fg = frame.querySelector('.tour-road-fg');
     if (bg) bg.setAttribute('d', roadD(pts, pts.length, c));
     if (fg) fg.setAttribute('d', roadD(pts, Math.min(pts.length, P().level - shown().first + 1), c));
@@ -7889,7 +7994,7 @@ function startMapEdit() {
     if (gridOn) ['me-grid', 'me-safe'].forEach(c => {
       const d = document.createElement('div'); d.className = c; frame.appendChild(d);
     });
-    ownCurve().forEach((c, i) => {
+    leesCurve().forEach((c, i) => {
       const h = document.createElement('div');
       h.className = 'me-ctrl';
       h.dataset.ctrl = i;
@@ -7909,7 +8014,7 @@ function startMapEdit() {
     renderTourMap(0);
     refreshList();
     fillSheet();
-    if (typeof toonDoel === 'function') toonDoel();
+    if (typeof tekenSchermen === 'function') tekenSchermen();
     if (msg !== undefined) setOut(msg);
   }
   function goWorld(i) {
@@ -7932,22 +8037,87 @@ function startMapEdit() {
   F('st-renodes').onclick = () => { delete shown().world.nodes; commit('haltes terug naar de slinger'); };
   F('st-recurve').onclick = () => { delete shown().world.curve; commit('weg terug naar de vanzelf-bocht'); };
   /* ---------------------------------------------------------------- beelden
+     Per scherm zie je welke tekening daar hoort, hoe groot hij moet zijn en waar
+     hij landt. Die tabel komt uit test/scene.js en wordt door de server in de
+     pagina gezet -- één lijst, niet twee die uit elkaar lopen. Zonder server
+     (bijvoorbeeld rechtstreeks vanaf schijf) valt hij terug op het minimum.
+
      Omzetten naar webp gebeurt hier, in een canvas. Scheelt een beeldbibliotheek
      in het project, en het beeld is toch al geladen. Meteen op de juiste maat: de
      bron mag dus elk formaat hebben, als de verhouding maar ongeveer klopt.
      Bijsnijden gaat als cover -- vullen en de rest weg, nooit vervormen. */
-  const ASSET_DOELEN = [
-    { id: 'map', label: 'Wereldkaart', w: 1080, h: 2160, pad: w => 'assets/world/' + w.id + '-map.webp' },
-    { id: 'landing', label: 'Startscherm', w: 1024, h: 1536, pad: () => 'assets/bg/landing.webp' },
+  const SLOTS = window.__SLOTS || {
+    world:   { screen: 'map', label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
+               lever: [1080, 2160], pad: 'assets/world/{wereld}-map.webp', perWereld: true },
+    landing: { screen: 'profile', label: 'Startscherm', waar: 'wie speelt er vandaag',
+               lever: [1024, 1536], pad: 'assets/bg/landing.webp' },
+  };
+  const SCHERMEN = window.__SCHERMEN || [
+    { id: 'profile', label: 'Wie speelt er' }, { id: 'map', label: 'Kaart' },
+    { id: 'game', label: 'Show' }, { id: 'end', label: 'Einde' },
   ];
-  ASSET_DOELEN.forEach(d => F('st-doel').appendChild(new Option(d.label, d.id)));
-  function huidigDoel() { return ASSET_DOELEN.filter(d => d.id === F('st-doel').value)[0]; }
-  function toonDoel() {
-    const d = huidigDoel();
-    F('st-doelhint').textContent = d.w + ' x ' + d.h + ' → ' + d.pad(shown().world)
-      + '. Elke bronmaat mag; hij wordt bijgesneden als cover en omgezet naar webp.';
+  const OP_SCHIJF = window.__ASSETS || {};
+
+  function slotPad(key) {
+    const d = SLOTS[key];
+    return d && d.pad ? d.pad.replace('{wereld}', shown().world.id) : '';
   }
-  F('st-doel').onchange = toonDoel;
+  /* Vier van de zes plekken uit scene.js leest het spel nog niet: die zijn voorstel
+     en leven alleen in incoming/. Dat hoort de studio te zéggen in plaats van een
+     knop aan te bieden die niets doet. */
+  function tekenSchermen() {
+    const vak = F('st-schermen');
+    if (!vak) return;
+    vak.innerHTML = '';
+    SCHERMEN.forEach(sc => {
+      const keys = Object.keys(SLOTS).filter(k => SLOTS[k].screen === sc.id);
+      if (!keys.length) return;
+      const groep = document.createElement('div');
+      groep.className = 'st-scherm';
+      groep.innerHTML = '<h6>' + esc(sc.label) + '</h6>';
+      keys.forEach(k => {
+        const d = SLOTS[k], pad = slotPad(k), kan = !pad;
+        const kb = OP_SCHIJF[pad];
+        const rij = document.createElement('div');
+        rij.className = 'st-slot' + (kan ? ' kan' : '');
+        rij.dataset.slot = k;
+        rij.title = kan ? 'nog niet in het spel — alleen via incoming/'
+          : 'sleep een beeld hierheen, of tik om te kiezen';
+        rij.innerHTML = '<b>' + esc(d.label) + '</b>'
+          + '<span class="st-dot ' + (kan ? '' : kb ? 'er' : 'weg') + '"></span>'
+          + '<small>' + d.lever[0] + ' × ' + d.lever[1] + ' — '
+          + (kan ? 'nog niet in het spel; leg hem in incoming/ als ' + esc(d.canoniek || k)
+             : esc(pad) + (kb ? '  · ' + kb + ' kB' : '  · ontbreekt nog')) + '</small>';
+        if (!kan) {
+          rij.onclick = () => { bezigSlot = k; F('me-file').click(); };
+          ['dragenter', 'dragover'].forEach(n => rij.addEventListener(n, e => {
+            e.preventDefault(); rij.classList.add('over');
+          }));
+          ['dragleave', 'dragend'].forEach(n => rij.addEventListener(n, () => rij.classList.remove('over')));
+          rij.addEventListener('drop', e => {
+            e.preventDefault();
+            rij.classList.remove('over');
+            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (!f) return setOut('daar zat geen bestand bij');
+            if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
+            verwerkBeeld(f, k);
+          });
+        }
+        groep.appendChild(rij);
+      });
+      vak.appendChild(groep);
+    });
+  }
+  let bezigSlot = 'world';
+  F('me-file').onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (f) verwerkBeeld(f, bezigSlot);
+  };
+  // een beeld dat per ongeluk naast een regel valt mag de pagina niet vervangen
+  ['dragover', 'drop'].forEach(n => addEventListener(n, e => {
+    if (!e.target.closest || !e.target.closest('.st-slot')) e.preventDefault();
+  }));
 
   function laadBeeld(src) {
     return new Promise((ok, fout) => {
@@ -7969,46 +8139,23 @@ function startMapEdit() {
     if (!blob) throw new Error('omzetten naar webp lukte niet');
     return { blob, bron: img.naturalWidth + 'x' + img.naturalHeight };
   }
-  F('st-pick').onclick = () => F('me-file').click();
-  F('me-file').onchange = e => {
-    const f = e.target.files && e.target.files[0];
-    e.target.value = '';
-    if (f) verwerkBeeld(f);
-  };
-  // slepen is voor beelden nu eenmaal prettiger dan een bestandsvenster; allebei
-  // komen ze hier uit
-  const zone = F('st-drop');
-  ['dragenter', 'dragover'].forEach(n => zone.addEventListener(n, e => {
-    e.preventDefault(); zone.classList.add('over');
-  }));
-  ['dragleave', 'dragend'].forEach(n => zone.addEventListener(n, () => zone.classList.remove('over')));
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('over');
-    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (!f) return setOut('daar zat geen bestand bij');
-    if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
-    verwerkBeeld(f);
-  });
-  // een beeld dat per ongeluk naast het vlak valt mag de pagina niet vervangen
-  ['dragover', 'drop'].forEach(n => addEventListener(n, e => {
-    if (!e.target.closest || !e.target.closest('.st-drop')) e.preventDefault();
-  }));
-
-  async function verwerkBeeld(f) {
-    const d = huidigDoel(), w = shown().world, pad = d.pad(w);
+  async function verwerkBeeld(f, key) {
+    const d = SLOTS[key], pad = slotPad(key), w = shown().world;
+    if (!pad) { setOut(d.label + ' staat nog niet in het spel'); return; }
     const url = URL.createObjectURL(f);
     setOut('omzetten…');
     try {
-      const { blob, bron } = await naarWebp(url, d.w, d.h, Number(F('st-kwal').value));
+      const { blob, bron } = await naarWebp(url, d.lever[0], d.lever[1], Number(F('st-kwal').value));
       const r = await fetch('/asset?to=' + encodeURIComponent(pad), { method: 'POST', body: blob });
       const txt = await r.text();
       if (!r.ok) { setOut('mislukt: ' + txt); return; }
-      if (d.id === 'map') { w.art = pad; commit(''); }
+      OP_SCHIJF[pad] = Math.round(blob.size / 1024);
+      if (key === 'world') { w.art = pad; }
+      commit('');
       setOut(f.name + '  ' + bron + ' → ' + txt);
     } catch (err) {
       // geen server: laat 'm dan tenminste tijdelijk zien
-      if (d.id === 'map') { w.art = url; commit(''); }
+      if (key === 'world') { w.art = url; commit(''); }
       setOut(String(err.message) + ' — vastzetten kan alleen via npm run preview');
       return;
     }
@@ -8051,25 +8198,51 @@ function startMapEdit() {
      lage schermen kijkt naar het vénster, dus alleen een echt venster laat zien
      wat er werkelijk gebeurt -- en een iframe vecht bovendien met de servicewerker
      en met het lettertype dat het laden ophoudt. Het concept komt vanzelf mee: het
-     staat in localStorage en het venster draait ?debug. */
-  function toonVoorbeeld(spec) {
+     staat in localStorage en het venster draait ?debug.
+
+     Vinkjes in plaats van vaste knoppen: je wilt een set naast elkaar kunnen zetten
+     (staand én liggend, telefoon én tablet) en niet elk venster los openen. */
+  const MATEN = [
+    { id: '390x844',  naam: 'telefoon staand', aan: true },
+    { id: '844x390',  naam: 'telefoon liggend' },
+    { id: '320x568',  naam: 'kleine telefoon' },
+    { id: '768x1024', naam: 'tablet staand' },
+    { id: '1024x768', naam: 'tablet liggend' },
+  ];
+  const matenVak = F('st-maten');
+  MATEN.forEach(m => {
+    const l = document.createElement('label');
+    l.innerHTML = '<input type="checkbox" data-maat="' + m.id + '"' + (m.aan ? ' checked' : '') + '>'
+      + '<span>' + m.naam + '</span><em>' + m.id.replace('x', '×') + '</em>';
+    matenVak.appendChild(l);
+  });
+  const gekozenMaten = () =>
+    [...matenVak.querySelectorAll('input:checked')].map(i => i.dataset.maat);
+  F('st-geenmaat').onclick = () =>
+    matenVak.querySelectorAll('input').forEach(i => { i.checked = false; });
+
+  function toonVoorbeeld(maten) {
+    if (!maten.length) { setOut('vink eerst een maat aan'); return; }
     saveWorldDraft();
-    const maten = spec.split('|');
+    const scherm = F('st-vscherm').value;
     let x = 60;
     maten.forEach(m => {
       const w = Number(m.split('x')[0]), h = Number(m.split('x')[1]);
-      const url = location.pathname + '?debug&demo&star=p1&screen=map';
+      /* fit= zegt het venster wélke binnenmaat het hoort te hebben. Nodig omdat
+         width/height van window.open de BUITENmaat zetten -- en een browser mag
+         daar bovendien een minimum op leggen (op Windows ~500px breed). Dan krijg
+         je stiekem een breder venster, valt de kaart in de kolomstand en zie je
+         gekleurde randen die op een telefoon niet bestaan. Het venster corrigeert
+         zichzelf en zegt eronder wat het écht is. */
+      const url = location.pathname + '?debug&demo&star=p1&screen=' + scherm + '&fit=' + w + 'x' + h;
       const win = open(url, 'wsvoorbeeld' + w + 'x' + h,
         `popup=1,width=${w},height=${h},left=${x},top=80`);
       if (!win) { setOut('het venster werd geblokkeerd — sta pop-ups toe'); return; }
-      try { win.resizeTo(w, h + (win.outerHeight - win.innerHeight)); } catch (_) {}
-      x += w + 20;
+      x += Math.min(w, 520) + 20;
     });
-    setOut('voorbeeld geopend — ververs het venster na een wijziging');
+    setOut(maten.length + ' venster(s) geopend — ververs ze na een wijziging');
   }
-  panel.querySelectorAll('[data-prev]').forEach(b => {
-    b.onclick = () => toonVoorbeeld(b.dataset.prev);
-  });
+  F('st-openset').onclick = () => toonVoorbeeld(gekozenMaten());
 
   F('st-commit').onclick = () => {
     const bericht = F('st-msg').value.trim();
