@@ -7748,10 +7748,22 @@ function startMapEdit() {
       <div class="st-btns" style="margin-top:6px">
         <button id="st-renodes">↺ haltes</button>
         <button id="st-recurve">↺ weg</button>
-        <button id="st-keep" title="De kandidaat uit incoming/ vastzetten in assets/world/">⤓ tekening vastzetten</button>
       </div>
       <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
         om de weg langs de tekening te leiden. Eén ruitje per stuk weg.</p>
+
+      <h6>Beelden</h6>
+      <div class="st-row"><label>doel</label><select id="st-doel"></select></div>
+      <div class="st-row"><label>kwaliteit</label><select id="st-kwal">
+        <option value="0.9">0.90 — ruim</option>
+        <option value="0.82" selected>0.82 — normaal</option>
+        <option value="0.72">0.72 — zuinig</option>
+      </select></div>
+      <div class="st-btns">
+        <button class="prim" id="st-pick">⤓ kies beeld &amp; zet vast</button>
+      </div>
+      <input type="file" accept="image/*" hidden id="me-file">
+      <p class="st-hint" id="st-doelhint"></p>
 
       <h6>Voorbeeld</h6>
       <div class="st-btns">
@@ -7893,6 +7905,7 @@ function startMapEdit() {
     renderTourMap(0);
     refreshList();
     fillSheet();
+    if (typeof toonDoel === 'function') toonDoel();
     if (msg !== undefined) setOut(msg);
   }
   function goWorld(i) {
@@ -7914,29 +7927,66 @@ function startMapEdit() {
   };
   F('st-renodes').onclick = () => { delete shown().world.nodes; commit('haltes terug naar de slinger'); };
   F('st-recurve').onclick = () => { delete shown().world.curve; commit('weg terug naar de vanzelf-bocht'); };
+  /* ---------------------------------------------------------------- beelden
+     Omzetten naar webp gebeurt hier, in een canvas. Scheelt een beeldbibliotheek
+     in het project, en het beeld is toch al geladen. Meteen op de juiste maat: de
+     bron mag dus elk formaat hebben, als de verhouding maar ongeveer klopt.
+     Bijsnijden gaat als cover -- vullen en de rest weg, nooit vervormen. */
+  const ASSET_DOELEN = [
+    { id: 'map', label: 'Wereldkaart', w: 1080, h: 2160, pad: w => 'assets/world/' + w.id + '-map.webp' },
+    { id: 'landing', label: 'Startscherm', w: 1024, h: 1536, pad: () => 'assets/bg/landing.webp' },
+  ];
+  ASSET_DOELEN.forEach(d => F('st-doel').appendChild(new Option(d.label, d.id)));
+  function huidigDoel() { return ASSET_DOELEN.filter(d => d.id === F('st-doel').value)[0]; }
+  function toonDoel() {
+    const d = huidigDoel();
+    F('st-doelhint').textContent = d.w + ' x ' + d.h + ' → ' + d.pad(shown().world)
+      + '. Elke bronmaat mag; hij wordt bijgesneden als cover en omgezet naar webp.';
+  }
+  F('st-doel').onchange = toonDoel;
+
+  function laadBeeld(src) {
+    return new Promise((ok, fout) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = () => fout(new Error('kan dit beeld niet lezen'));
+      i.src = src;
+    });
+  }
+  async function naarWebp(src, bw, bh, kwal) {
+    const img = await laadBeeld(src);
+    const c = document.createElement('canvas');
+    c.width = bw; c.height = bh;
+    const g = c.getContext('2d');
+    const sch = Math.max(bw / img.naturalWidth, bh / img.naturalHeight);
+    const w = img.naturalWidth * sch, h = img.naturalHeight * sch;
+    g.drawImage(img, (bw - w) / 2, (bh - h) / 2, w, h);
+    const blob = await new Promise(r => c.toBlob(r, 'image/webp', kwal));
+    if (!blob) throw new Error('omzetten naar webp lukte niet');
+    return { blob, bron: img.naturalWidth + 'x' + img.naturalHeight };
+  }
   F('st-pick').onclick = () => F('me-file').click();
-  F('me-file').onchange = e => {
+  F('me-file').onchange = async e => {
     const f = e.target.files && e.target.files[0];
+    e.target.value = '';
     if (!f) return;
-    // blob: leeft alleen in dit tabblad; voor iets blijvends hoort er een pad in 'tekening'
-    shown().world.art = URL.createObjectURL(f);
-    commit(f.name + ' — tijdelijk, vul een pad in');
-  };
-  /* Van kandidaat naar echt bestand. incoming/ is een proefmap (staat in
-     .gitignore); assets/world/ is wat meegaat in de app. Deze knop doet die ene
-     kopie en vult meteen het pad in, zodat de wereld hem daarna gewoon laadt. */
-  F('st-keep').onclick = () => {
-    const w = shown().world;
-    const bron = prompt('Welk bestand uit incoming/?', w.id + '-map.webp');
-    if (!bron) return;
-    const doel = w.id + '-map' + (bron.match(/\.[a-z0-9]+$/i) || ['.webp'])[0];
-    fetch('/asset', { method: 'POST', body: JSON.stringify({ from: bron, to: doel }) })
-      .then(r => r.text().then(txt => {
-        if (!r.ok) return setOut('mislukt: ' + txt);
-        w.art = 'assets/world/' + doel;
-        commit('vastgezet: ' + txt + ' — vergeet CACHE in sw.js niet');
-      }))
-      .catch(() => setOut('alleen via npm run preview'));
+    const d = huidigDoel(), w = shown().world, pad = d.pad(w);
+    const url = URL.createObjectURL(f);
+    setOut('omzetten…');
+    try {
+      const { blob, bron } = await naarWebp(url, d.w, d.h, Number(F('st-kwal').value));
+      const r = await fetch('/asset?to=' + encodeURIComponent(pad), { method: 'POST', body: blob });
+      const txt = await r.text();
+      if (!r.ok) { setOut('mislukt: ' + txt); return; }
+      if (d.id === 'map') { w.art = pad; commit(''); }
+      setOut(bron + ' → ' + txt);
+    } catch (err) {
+      // geen server (file://): laat 'm dan tenminste tijdelijk zien
+      if (d.id === 'map') { w.art = url; commit(''); }
+      setOut(String(err.message) + ' — alleen via npm run preview kan vastzetten');
+      return;
+    }
+    URL.revokeObjectURL(url);
   };
   F('st-new').onclick = () => {
     const n = WORLDS.length + 1;
