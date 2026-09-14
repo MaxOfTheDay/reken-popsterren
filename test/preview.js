@@ -18,6 +18,7 @@
  */
 const fs = require('fs');
 const http = require('http');
+const { execFile } = require('child_process');
 const path = require('path');
 const scene = require('./scene.js');
 
@@ -199,8 +200,61 @@ function writeAsset(req, res, to) {
   });
 }
 
+/* Vastleggen vanuit de studio: eerst de testen, dan pas committen en pushen.
+   Bewust naar de wérkbranch en nooit naar main -- main is wat er op de telefoon
+   van een kind draait, en dat hoort een bewuste stap te blijven, met een diff die
+   je gezien hebt. Falen de testen, dan gebeurt er niets en krijg je de uitvoer. */
+function git(args) {
+  return new Promise((ok, fout) => {
+    execFile('git', args, { cwd: ROOT, maxBuffer: 4e6 }, (e, uit, err) =>
+      e ? fout(new Error((err || uit || e.message).trim())) : ok(String(uit).trim()));
+  });
+}
+function runTests() {
+  return new Promise((ok, fout) => {
+    execFile('npm', ['test'], { cwd: ROOT, maxBuffer: 2e7, timeout: 6e5 }, (e, uit, err) =>
+      e ? fout(new Error('de testen falen — er is niets vastgelegd\n\n'
+        + String(uit || err).split('\n').slice(-25).join('\n'))) : ok(String(uit)));
+  });
+}
+async function commitAll(bericht, res) {
+  const zeg = (code, tekst) => {
+    res.writeHead(code, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end(tekst);
+  };
+  try {
+    if (!bericht || bericht.length < 8) return zeg(400, 'geef een bericht van minstens 8 tekens');
+    const tak = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (tak === 'main' || tak === 'master') {
+      return zeg(400, 'je staat op ' + tak + '. De studio legt alleen op een werkbranch vast — '
+        + 'naar main gaat met de hand, na een diff.');
+    }
+    const vuil = await git(['status', '--porcelain']);
+    if (!vuil) return zeg(400, 'er is niets gewijzigd');
+    console.log('  wereldstudio: testen draaien vóór het vastleggen…');
+    await runTests();
+    await git(['add', '-A']);
+    await git(['commit', '-m', bericht]);
+    await git(['push', '-u', 'origin', tak]);
+    const sha = await git(['rev-parse', '--short', 'HEAD']);
+    console.log('  wereldstudio: ' + sha + ' op ' + tak + ' gepusht');
+    zeg(200, 'vastgelegd en gepusht: ' + sha + ' op ' + tak
+      + '\n\nNaar main gaat met de hand:\n'
+      + '  git checkout main && git pull && git merge ' + tak + ' && npm test && git push');
+  } catch (e) {
+    zeg(500, String(e.message));
+  }
+}
+
 http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
+
+  if (req.method === 'POST' && url === '/commit') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 4000) req.destroy(); });
+    req.on('end', () => commitAll(body.trim(), res));
+    return;
+  }
 
   if (req.method === 'POST' && url === '/asset') {
     const q = new URLSearchParams((req.url.split('?')[1] || ''));
