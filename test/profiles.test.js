@@ -347,6 +347,53 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= 7d · Wereldbadges =================
+   * Eén badge per wereld, en het is gewoon een trofee -- geen tweede badgesysteem.
+   * Wat hier vast moet liggen: dat de plank meegroeit met WORLDS, dat een wereld
+   * uitspelen de badge kláárlegt (het kind opent hem zelf), en dat de ster-stand
+   * alleen aangaat bij drie sterren op élke show -- één badge, twee standen.     */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const q = defaultProfile('Roos', 'dress_roze');
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: true, haptics: true, schemaV: 3, profiles: { p1: q } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => {
+      const plank = TROPHY_SHELVES.filter(sh => sh.name.indexOf('Werelden') >= 0)[0];
+      const q = P();
+      // wereld 1 uit, maar met twee sterren per show
+      for (let l = 1; l <= 8; l++) q.stars[l] = 2;
+      q.level = 9;
+      const klaar = checkTrophies(q).map(t => t.id);
+      const badge = TROPHIES.filter(t => t.id === 'wereld-' + WORLDS[0].id)[0];
+      const tweeSterren = badge.ster(q);
+      for (let l = 1; l <= 8; l++) q.stars[l] = 3;
+      return {
+        plankNaam: plank.name,
+        perWereld: plank.ids.length === WORLDS.length,
+        ids: plank.ids.join(','),
+        allemaalInTabel: plank.ids.every(id => TROPHIES.some(t => t.id === id)),
+        klaargelegd: klaar.indexOf('wereld-' + WORLDS[0].id) >= 0,
+        tweeSterren,
+        drieSterren: badge.ster(q),
+        tweedeNogNiet: TROPHIES.filter(t => t.id === 'wereld-' + WORLDS[1].id)[0].has(q),
+      };
+    });
+    check(r.perWereld, 'er is precies één wereldbadge per wereld', r.ids);
+    check(r.allemaalInTabel, 'elke wereldbadge staat ook in de trofeetabel', r.ids);
+    check(r.klaargelegd, 'een wereld uitspelen legt zijn badge klaar', r.ids);
+    check(r.tweeSterren === false && r.drieSterren === true,
+      'de ster-stand gaat pas aan bij drie sterren op elke show',
+      'twee: ' + r.tweeSterren + ' drie: ' + r.drieSterren);
+    check(r.tweedeNogNiet === false, 'de badge van de volgende wereld blijft dicht', String(r.tweedeNogNiet));
+    await ctx.close();
+  }
+
   /* ================= 8 · Oude opslag: precies één keer ophalen ================= */
   {
     const { ctx, page } = await fresh();
