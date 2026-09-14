@@ -559,31 +559,34 @@
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 0; }
   #screen-map .screen-header { margin-bottom: 0; }
-  /* de eigen pil van elk groepje: klein, rond, met waas -- genoeg om tekst te
-     dragen, te weinig om als balk te lezen */
-  #screen-map .map-id-btn, #screen-map .world-pick {
-    padding: 5px 13px 5px 5px; border-radius: var(--r-pill);
-    background: rgba(28,6,52,.42); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
-    box-shadow: 0 2px 10px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.1);
-    text-shadow: 0 1px 3px rgba(10,2,24,.75);
+  /* Drie dingen, drie gewichten. Het portretje draagt géén pil: het is al een
+     rondje met een rand, en een rondje in een pil is een rondje in een rondje.
+     De naam eronder is weg -- wie er speelt zie je aan haar gezicht, en zij is de
+     enige die op dit toestel speelt. De wereldnaam en de diamanten houden wel een
+     pil, want die dragen tekst die over elke tekening leesbaar moet blijven. */
+  #screen-map .map-id-btn {
+    padding: 4px;   /* onzichtbaar, maar maakt het raakvlak 48px */
+    background: none; backdrop-filter: none; box-shadow: none;
   }
-  /* Drie pillen naast elkaar op 390px is krap: op volle grootte at de wereldnaam
-     de ruimte van "Lotte" op, tot er "L…" overbleef. Op de kaart mogen ze een maat
-     kleiner -- de tekening eronder draagt het scherm, niet de tekst. */
-  #screen-map .world-pick { padding: 5px 12px; font-size: 19px; }
-  #screen-map .map-name { font-size: 16px; }
-  #screen-map .map-portrait { width: 34px; height: 34px; }
+  #screen-map .map-portrait {
+    width: 40px; height: 40px; border: 2px solid rgba(255,255,255,.75);
+    box-shadow: 0 2px 9px rgba(10,2,24,.55), 0 0 0 3px rgba(28,6,52,.3);
+  }
+  #screen-map .world-pick {
+    padding: 5px 12px; border-radius: var(--r-pill);
+    background: rgba(28,6,52,.34); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+    box-shadow: 0 2px 10px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.09);
+    /* een strakke donkere kern plus een zacht waasje: dat draagt witte letters op
+       een lichte lucht zonder dat de pil zelf zwaarder hoeft te worden */
+    text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 9px rgba(10,2,24,.65);
+  }
+  /* Op de kaart een maat kleiner dan op de andere schermen: de tekening eronder
+     draagt het scherm, niet de tekst. */
+  #screen-map .world-pick { font-size: 19px; }
   #screen-map .diamond-badge { font-size: 18px; padding: 6px 13px; }
-  /* de linkerkolom moet de naam nog net kwijt kunnen; hij kwam 2px tekort */
-  #screen-map .screen-header { grid-template-columns: minmax(120px, 1fr) auto minmax(92px, 1fr); }
-  /* onder de 360px passen drie pillen niet meer naast elkaar. Dan valt de naam weg
-     en niet de wereld: het portretje zegt al wie er speelt, en op wélke kaart je
-     staat weet je verder nergens aan af. */
-  @media (max-width: 359px) {
-    #screen-map .map-name { display: none; }
-    #screen-map .map-id-btn { padding-right: 5px; }
-    #screen-map .screen-header { grid-template-columns: auto auto auto; }
-  }
+  /* Gelijke buitenkolommen, zodat de wereldnaam écht in het midden staat. 84px is
+     wat de diamantpil nodig heeft; het portretje past daar ruim in. */
+  #screen-map .screen-header { grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr); }
   /* Op een laag scherm is de navigatiebalk een veel grotere hap van het beeld
      (82 van 568 = 14%) dan de 16% die de veilige zone onderaan overhoudt. Een beetje
      ruimte onder de kaart maakt dat de onderste halte er onderuit te schuiven is;
@@ -592,24 +595,21 @@
     .tour-map { padding-bottom: 48px; }
   }
   #screen-map .diamond-badge {
-    background: rgba(28,6,52,.42); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
-    box-shadow: 0 2px 10px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.1);
-    text-shadow: 0 1px 3px rgba(10,2,24,.75);
+    background: rgba(28,6,52,.34); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+    box-shadow: 0 2px 10px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.09);
+    /* een strakke donkere kern plus een zacht waasje: dat draagt witte letters op
+       een lichte lucht zonder dat de pil zelf zwaarder hoeft te worden */
+    text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 9px rgba(10,2,24,.65);
   }
-  /* avatar + naam = de link terug naar spelerskeuze i.p.v. naar de kleedkamer
-     (die zit al in de vaste ondernavigatie); zit in de .header-left cel van
-     .screen-header, zodat "🎤 Tournee X" gewoon als .header-title mee-centreert
-     zoals bij de andere schermen, ongeacht hoe breed avatar+naam vs. de
-     diamant-pil rechts zijn. .header-left staat elders altijd leeg, dus
-     justify-self:start (krimpt de cel naar zijn inhoud) was daar nooit een
-     probleem -- met een lange naam erin duwde dat 'm dwars door de
-     gecentreerde titel heen.
+  /* Het portretje is de link terug naar de spelerskeuze (de kleedkamer zit al in
+     de ondernavigatie). Er stond haar naam naast; die is weg. Wie er speelt zie je
+     aan haar gezicht, zij is de enige die op dit toestel speelt, en het scheelde de
+     zwaarste van de drie koptekens -- de tekening mag het scherm dragen.
 
-     Stretch loste dat op, maar sinds de kop doorzichtig is draagt de knop zijn
-     eigen pil: een uitgerekte cel werd dan een halflege pil van 261px. Nu krimpt
-     hij weer naar zijn inhoud, met een max-width die 'm binnen de kolom houdt --
-     een lange naam kapt daarbinnen af en raakt de gecentreerde titel niet. */
-  #screen-map .header-left { justify-self: start; max-width: 100%; min-width: 0; }
+     Krimpt naar zijn inhoud in plaats van de kolom te vullen: met de naam erin was
+     stretch nodig zodat een lange naam de gecentreerde titel niet wegduwde, maar
+     een rondje in een uitgerekte cel is gewoon een rondje links. */
+  #screen-map .header-left { justify-self: start; }
   .map-id-btn {
     display: flex; align-items: center; gap: 9px; min-width: 0;
     border: none; background: none; padding: 0; cursor: pointer; font-family: inherit;
@@ -625,11 +625,6 @@
     box-shadow: var(--e-1);
   }
   .map-portrait svg, .who-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
-  .map-name {
-    font-size: 19px; font-weight: 700; min-width: 0;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    text-shadow: 0 2px 0 var(--glass-black-20);
-  }
   /* carrièrerang: het altijd-zichtbare lange-termijndoel. De status zelf
      (bv. "Straatartiest") is de titel van de kop (.header-title, zie
      renderCareerStrip); titel + teller + balk vormen samen één groepje --
@@ -1529,7 +1524,6 @@
 
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
-    .map-name { font-size: 17px; }
     .chip-badge { font-size: 14px; padding: 5px 10px; }
     #screen-map .diamond-badge { font-size: 17px; padding: 6px 13px; }
     .map-portrait { width: 38px; height: 38px; }
@@ -2430,7 +2424,6 @@
       <div class="screen-header">
         <button class="map-id-btn header-left" onclick="goProfiles()" aria-label="Wie speelt er" title="Wie speelt er">
           <span class="map-portrait" id="map-portrait"></span>
-          <span class="map-name" id="map-name"></span>
         </button>
         <button class="header-title world-pick" id="map-tournee-label" onclick="openWorlds()"
           aria-label="Kies een wereld" title="Kies een wereld"></button>
@@ -4275,7 +4268,6 @@ function openCareer() {
 }
 function goMap() {
   const p = P();
-  $('map-name').textContent = p.name;
   $('map-diamonds').textContent = p.diamonds;
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
