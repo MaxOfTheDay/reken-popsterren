@@ -133,6 +133,27 @@
 
     /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ---- */
     --btn-lip: 5px; --btn-lip-sm: 4px;
+
+    /* ---- Vaste ondernavigatie ----
+       Aan één plek te draaien, want de juiste waarde hangt af van hoe de
+       wereldtekeningen eruit gaan zien. De rangorde die we willen: de kop zweeft
+       (het lichtst), de inhoud draagt het scherm, de navigatie is duidelijk
+       herkenbaar maar zachter dan vroeger.
+         --nav-bg      hoeveel vlak: hoger = steviger, lager = meer wereld erdoorheen
+         --nav-blur    hoe onscherp wat erachter staat
+         --nav-ring    het randje; houdt de balk los van de inhoud zonder een lijn
+         --nav-sel     het blauw van het gekozen tabblad
+         --nav-sel-ring  het randje daaromheen -- draai dit op voor meer nadruk  */
+    /* .52 en niet .44: over de kaart was lichter mooier, maar in de kleedkamer
+       schemerden de winkeltegels er doorheen tot vlak achter de labels. Dit is
+       de waarde die op alle drie de schermen nog scheiding geeft. */
+    --nav-bg: rgba(28, 6, 52, .52);
+    --nav-blur: 20px;
+    --nav-ring: rgba(255, 255, 255, .15);
+    --nav-shadow: 0 8px 26px rgba(8, 1, 20, .34);
+    --nav-sel: rgba(56, 189, 248, .26);
+    --nav-sel-ring: rgba(143, 214, 255, .5);
+    --nav-ink: 0 1px 2px rgba(10, 2, 24, .9), 0 0 8px rgba(10, 2, 24, .55);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -743,16 +764,31 @@
     to { transform: translateX(-80px) scaleX(-1); }
   }
 
+  /* Één balk voor alle drie de schermen (Kaart, Kleedkamer, Trofeeënkast): hij staat
+     vast onderin en wisselt niet mee, dus alleen het gekozen tabblad verandert.
+
+     Was 78% dekkend met een rand van 1,5px en een zware slagschaduw -- op een vlak
+     verloop viel dat niet op, maar over een geschilderde wereld las het als een
+     plank die erop lag. Nu glas: minder vlak, meer waas, en het randje zit in de
+     box-shadow (inset) in plaats van in een border, zodat het geen pixel breedte
+     kost. Alle waarden staan als variabelen bovenaan. */
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
-    display: none; gap: 5px; padding: 7px; border-radius: var(--r-lg); width: min(94vw, 430px);
-    background: rgba(30, 4, 52, .78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid var(--glass-white-22); box-shadow: var(--e-2);
+    display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: min(94vw, 430px);
+    background: var(--nav-bg);
+    backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
+    -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
+    border: 0; box-shadow: var(--nav-shadow), inset 0 0 0 1px var(--nav-ring);
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .75;
-    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px 6px; cursor: pointer;
+    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .82;
+    /* dezelfde donkere kern-plus-waas als de koppillen: draagt de letters ook als
+       er een lichte lucht achter het glas staat */
+    text-shadow: var(--nav-ink);
+    /* 6/5 in plaats van 7/6: de balk wordt er 5px lager van (71 -> 66) zonder dat
+       het raakvlak onder de 44px komt -- een knop blijft 55px hoog. */
+    background: transparent; border: none; border-radius: var(--r-md); padding: 6px 4px 5px; cursor: pointer;
     transition: transform .1s, background .15s, opacity .15s;
   }
   .nav-item .nav-ico { font-size: 25px; line-height: 1.1; }
@@ -760,7 +796,7 @@
   /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
      .tour-stop.next, .item-card.equipped): navigatie is geen beloning. */
-  .nav-item.active { opacity: 1; background: rgba(56,189,248,.20); box-shadow: inset 0 0 0 2px rgba(143,214,255,.55); }
+  .nav-item.active { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
   /* schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter verdwijnt */
   .screen.hub { padding-bottom: 100px; }
 
@@ -1452,8 +1488,27 @@
   /* een grayscale(1) filter over de paarse basiskleur oogde bijna zwart --
      gewoon de bestaande "uitgeschakeld/nog niet beschikbaar"-grijstint
      hergebruiken (dezelfde tokens als vroeger de knop-variant .btn.gray) */
-  .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); }
-  .tour-stop.next .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); }
+  /* Op slot = nog niet aan de beurt, en dus rustiger: minder dekkend, een zachtere
+     schaduw en een kleiner slotje. Niet grijzer of vager -- het moet een halte
+     blijven die je herkent, alleen niet een die om aandacht vraagt. */
+  .tour-stop.locked { opacity: .72; }
+  .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom));
+    border-color: rgba(255,255,255,.2); box-shadow: 0 0.6cqw 1.1cqw rgba(12,2,26,.3); }
+  .tour-stop.locked .cstars { opacity: .7; }
+  .tour-stop.locked .stop-lock { font-size: 3.8cqw; opacity: .9; }
+  /* Hier speel je. Het brandpunt van de kaart, maar rustig: een warme gloed die
+     langzaam ademt en een haartje schaal. Geen springende animatie -- een kind
+     moet er náár kijken, niet van schrikken. */
+  .tour-stop.next .dot { border-color: var(--gold-accent);
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    transform: scale(1.06);
+    box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 3.4cqw rgba(255,196,61,.5);
+    animation: stopBreathe 2.8s ease-in-out infinite; }
+  @keyframes stopBreathe {
+    0%, 100% { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 3.4cqw rgba(255,196,61,.45); }
+    50%      { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 5.6cqw rgba(255,196,61,.75); }
+  }
+  .tour-stop.next:active .dot { transform: scale(.98); }
   .tour-stop.done .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, rgba(255,214,90,.18), rgba(255,214,90,.06)), var(--purple-shadow); }
   /* pulseBtn animeert zelf al transform (scale) -- een :active transform
      zou dat gewoon overschrijven zolang de animatie loopt, dus tikfeedback
@@ -1482,7 +1537,9 @@
     animation: shineSweep 4.5s ease-in-out infinite var(--shine-delay, 0s);
   }
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.85); }
-  .tour-stop.next .dot { box-shadow: 0 0 0 1.3cqw rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
+  /* De gloed en de ademhaling van de huidige halte staan hierboven (stopBreathe).
+     Hier stond pulseBtn: een sprongetje van 9% elke 1,2s. Dat trok de aandacht wel,
+     maar het bewoog ook constant in je ooghoek terwijl je de kaart bekijkt. */
   .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 7px; }
   .tour-stop.next .cname { color: var(--gold-light); }
   .tour-stop.locked .cname { opacity: .6; }
@@ -1491,7 +1548,10 @@
   /* De sterrenrij is het zwakste element op een getekende kaart: gedimde grijze
      emoji op een lichte lucht verdwijnen gewoon. Een zachte donkere schaduw eronder
      kost niets en houdt ze leesbaar op elke ondergrond. */
-  .tour-stop .cstars { font-size: 3.6cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.6cqw;
+  /* Dichter op de halte en een tikje kleiner (3,3 i.p.v. 3,6cqw): de sterren horen
+     bíj het rondje te lezen, niet als een eigen regeltje eronder. De halte blijft
+     het hoofdding, de sterren zijn het bijschrift. */
+  .tour-stop .cstars { font-size: 3.3cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.15cqw;
     filter: drop-shadow(0 0.25cqw 0.5cqw rgba(12,2,26,.6)); }
   .tour-stop .cstars .star-miss { opacity: .5; filter: grayscale(1) brightness(.75); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
@@ -7927,6 +7987,12 @@ function fitVenster(spec) {
 function startMapEdit() {
   const map = $('tour-map');
   const F = id => document.getElementById(id);
+  /* Hoeveel er onderaan werkelijk wordt afgedekt: de navigatiebalk plus alles wat
+     eronder zit (de 10px marge, en op een toestel met een thuisbalk ook
+     env(safe-area-inset-bottom) -- dat zit al in de positie van de balk verwerkt).
+     Méten en niet narekenen, en wél vóór de studio de balk verbergt. */
+  const navRect = $('main-nav').getBoundingClientRect();
+  const ONDER_PX = navRect.height ? (innerHeight - navRect.top) + 8 : 100;
   document.body.classList.add('mapedit');
 
   /* De voorvertoningsserver zet rechtsonder zijn eigen paneeltje neer met links
@@ -8088,6 +8154,10 @@ function startMapEdit() {
     /* De uitleg stond overal in de weg zodra je de studio één keer gebruikt hebt.
        Nu staat hij achter de ?-knop bovenin: één tik en alles komt terug. */
     #studio .st-hint { display: none; color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
+    #studio .st-waarschuwing { margin: 10px 0 0; padding: 7px 9px; border-radius: 8px;
+      font-size: 11.5px; font-weight: 600; color: #ffd0c4;
+      background: rgba(170,40,30,.3); border: 1px solid rgba(255,120,120,.45); }
+    #studio .st-waarschuwing[hidden] { display: none; }
     #studio.uitleg .st-hint { display: block; }
     #studio .st-top button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
     /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
@@ -8111,6 +8181,17 @@ function startMapEdit() {
        Zie docs/WORLD-ART-BRIEF.md. */
     .me-safe { position: absolute; left: 16%; right: 16%; top: 21%; bottom: 16%; z-index: 2;
       pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }
+    /* De strook die de navigatiebalk straks afdekt, opgemeten aan de échte balk plus
+       env(safe-area-inset-bottom) van het toestel. Niet hetzelfde als de onderrand
+       van de veilige zone: die is een vaste 16%, dit is wat er op dít toestel
+       werkelijk onder zit. Op een lage telefoon is dat meer. */
+    .me-onder { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+      pointer-events: none; background: repeating-linear-gradient(135deg,
+        rgba(255,86,86,.16) 0 10px, rgba(255,86,86,.05) 10px 20px);
+      border-top: 2px dashed rgba(255,120,120,.9); }
+    .me-onder span { position: absolute; left: 6px; top: 4px; font: 700 10px/1 system-ui, sans-serif;
+      color: #ffc9c9; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+    .tour-stop.te-laag .dot { outline: 2px solid #ff6b6b; outline-offset: 2px; }
     @media (max-width: 820px) {
       #studio { top: auto; left: 0; width: auto; max-height: 56vh; border-left: 0;
         border-top: 1px solid rgba(255,255,255,.18); }
@@ -8174,6 +8255,8 @@ function startMapEdit() {
           in liggende stand.</p>
         <p class="st-hint">levels: <b id="mf-levels"></b> — vast. Dit wijzigen hernummert elk level erna,
           en dan verhuizen de sterren van een kind naar een andere wereld.</p>
+
+        <p class="st-waarschuwing" id="st-onder" hidden></p>
 
         <h6>Haltes &amp; weg</h6>
         <div class="st-btns">
@@ -8414,7 +8497,10 @@ function startMapEdit() {
     /* De veilige zone staat standaard aan: dat is de één regel die je nodig hebt
        terwijl je haltes neerzet. Het raster van 10% is er los bij, voor wie een
        tekening wil uitmeten. */
-    if (zoneOn) { const d = document.createElement('div'); d.className = 'me-safe'; frame.appendChild(d); }
+    if (zoneOn) {
+      const d = document.createElement('div'); d.className = 'me-safe'; frame.appendChild(d);
+      toonOnderrand(frame);
+    }
     if (gridOn) { const d = document.createElement('div'); d.className = 'me-grid'; frame.appendChild(d); }
     leesCurve().forEach((c, i) => {
       const h = document.createElement('div');
@@ -8426,6 +8512,36 @@ function startMapEdit() {
       frame.appendChild(h);
     });
   }
+  /* De strook die de navigatiebalk afdekt, en een waarschuwing per halte die erin
+     valt. Bewust alleen kijken en zeggen: de haltes staan met de hand neergezet, en
+     een editor die ze stiekem verschuift is een editor die je niet meer vertrouwt. */
+  function toonOnderrand(frame) {
+    const fr = frame.getBoundingClientRect();
+    const mr = map.getBoundingClientRect();
+    if (!fr.height || !mr.height) return;
+    const sch = Number(getComputedStyle(R).getPropertyValue('--doos-s')) || 1;
+    const lijn = mr.bottom - ONDER_PX * sch;          // in schermcoördinaten
+    const top = (lijn - fr.top) / fr.height * 100;
+    if (top >= 100 || top <= 0) return;
+    const d = document.createElement('div');
+    d.className = 'me-onder';
+    d.style.top = top.toFixed(2) + '%';
+    d.innerHTML = '<span>navigatiebalk — ' + Math.round(ONDER_PX) + 'px</span>';
+    frame.appendChild(d);
+    const laag = [];
+    frame.querySelectorAll('.tour-stop').forEach(st => {
+      const r = st.getBoundingClientRect();
+      st.classList.toggle('te-laag', r.bottom > lijn);
+      if (r.bottom > lijn) laag.push(st.dataset.lvl);
+    });
+    const chip = F('st-onder');
+    if (chip) {
+      chip.hidden = !laag.length;
+      chip.textContent = laag.length
+        ? '⚠ halte ' + laag.join(', ') + ' valt achter de navigatiebalk' : '';
+    }
+  }
+
   const baseRender = renderTourMap;
   renderTourMap = function () { baseRender.apply(null, arguments); decorate(); };
 
