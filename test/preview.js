@@ -290,8 +290,11 @@ http.createServer(function (req, res) {
 }).listen(PORT, function () {
   fs.mkdirSync(DROP, { recursive: true });
   const state = dropped();
-  console.log('\n  Voorvertoning:  http://localhost:' + PORT + '/?debug&demo&star=p1&screen=game');
-  console.log('  Zet je beelden in:  incoming/   (en ververs de pagina)\n');
+  const basis = 'http://localhost:' + PORT + '/?debug&demo&star=p1';
+  console.log('\n  Wereldstudio:   ' + basis + '&screen=map&mapedit');
+  console.log('  Gewoon kijken:  ' + basis + '&screen=game\n');
+  console.log('  In de studio: sleep een beeld op het Beelden-vak, sleep de haltes en de');
+  console.log('  groene ruitjes, en druk op "Zet in het spel".\n');
   if (state.found.length) state.found.forEach(f => console.log('  gevonden: ' + f.slot + ' <- ' + f.file));
   else console.log('  incoming/ is nog leeg. Herkende namen:\n' + scene.namesHint());
   console.log('');
