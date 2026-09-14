@@ -7434,7 +7434,10 @@ syncBackGuard();
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
    &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
-   &screen=<naam>    -- spring meteen naar map | dress | tro | game | end       */
+   &screen=<naam>    -- spring meteen naar map | dress | tro | game | end
+   &mapedit          -- wereldstudio: haltes verslepen over de kaart, een
+                        kandidaat-tekening laden en de punten kopieren naar
+                        WORLDS (zie startMapEdit hieronder)                    */
 if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
   window.__game = () => G;
@@ -7477,7 +7480,174 @@ if (location.search.indexOf('debug') !== -1) {
                  end: () => { startLevel(P().level); endLevel(true); } };
     (go[dbg.get('screen')] || goMap)();
   }
+  if (dbg.has('mapedit') && cur) startMapEdit();
 }
+/* ---- Wereldstudio (?debug&mapedit) ------------------------------------------
+   Haltes verslepen over de échte kaart, op ware grootte, met de tekening eronder.
+   Bestaat omdat de haltes op de richels van een tekening moeten landen, en dat is
+   het enige in een wereldpakket dat je niet met de hand kunt uitrekenen -- de rest
+   is vijf kleuren en een naam intypen.
+
+   Bewust géén opslag, geen bestand schrijven, geen eigen scherm: je sleept, je
+   drukt op Kopieer, en je plakt het resultaat in WORLDS. Dit hele blok staat
+   binnen de ?debug-schakelaar en bestaat dus niet in het gewone spel.
+
+   Een kandidaat-tekening laden kan hier rechtstreeks (📷), of -- handiger als je
+   er meer achter elkaar beoordeelt -- via incoming/ + `npm run preview`; zie de
+   slot 'world' in test/scene.js.                                              */
+function startMapEdit() {
+  const map = $('tour-map');
+  document.body.classList.add('mapedit');
+
+  const st = document.createElement('style');
+  st.textContent = `
+    body.mapedit .main-nav, body.mapedit .mem-fab { display: none !important; }
+    body.mapedit .tour-hero { display: none; }
+    body.mapedit .tour-stop { cursor: grab; }
+    body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
+    #mapedit-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      padding: 8px 10px; background: rgba(10,2,20,.94); color: #fff;
+      font: 600 12px/1.15 system-ui, sans-serif; }
+    #mapedit-bar button, #mapedit-bar label, #mapedit-bar select {
+      font: inherit; color: #fff; background: rgba(255,255,255,.13);
+      border: 1px solid rgba(255,255,255,.3); border-radius: 8px;
+      padding: 6px 9px; cursor: pointer; }
+    #mapedit-bar button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
+    #me-out { margin-left: auto; font-weight: 400; opacity: .9;
+      font-family: ui-monospace, monospace; white-space: nowrap; }
+    #me-dump { position: fixed; inset: 10% 6% auto; z-index: 61; display: none;
+      max-height: 60vh; padding: 12px; border-radius: 10px;
+      background: #140426; color: #d8ffe8; border: 1px solid rgba(255,255,255,.3);
+      font: 12px/1.45 ui-monospace, monospace; white-space: pre; overflow: auto; }
+    /* raster in procenten van hét kader, dus precies het stelsel waarin je typt */
+    .me-grid { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.20) 0 1px, transparent 1px 10%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.20) 0 1px, transparent 1px 10%); }
+    /* de veilige zone: hierbuiten knipt cover een halte weg op smalle of korte
+       schermen, en liggen kop en navigatie eroverheen */
+    .me-safe { position: absolute; left: 6%; right: 6%; top: 14%; bottom: 14%;
+      z-index: 2; pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }`;
+  document.head.appendChild(st);
+
+  const bar = document.createElement('div');
+  bar.id = 'mapedit-bar';
+  bar.innerHTML = `<select id="me-world" title="Welke wereld"></select>
+    <label title="Kandidaat-tekening laden (blijft alleen in dit tabblad)">📷<input type="file" accept="image/*" hidden id="me-file"></label>
+    <button id="me-grid" title="Raster + veilige zone">▦</button>
+    <button id="me-copy">Kopieer punten</button>
+    <button id="me-reset" title="Terug naar de reserve-slinger">↺</button>
+    <span id="me-out">sleep een halte</span>`;
+  document.body.appendChild(bar);
+  const dump = document.createElement('pre');
+  dump.id = 'me-dump';
+  dump.onclick = () => { dump.style.display = 'none'; };
+  document.body.appendChild(dump);
+
+  const sel = $('me-world');
+  WORLDS.forEach((w, i) => sel.appendChild(new Option(`${w.icon} ${w.name}`, i)));
+  const shown = () => worldForIndex(viewWorldIdx);
+  const setOut = t => { $('me-out').textContent = t; };
+
+  // Eigen haltelijst, zodat er iets te verslepen ís: een wereld zonder `nodes`
+  // draait op de gedeelde reserve-slinger, en die mag je niet muteren.
+  function ownNodes() {
+    const w = shown().world;
+    if (!w.nodes || w.nodes.length !== shown().levels) {
+      w.nodes = worldNodes(shown()).map(n => ({ x: n.x, y: n.y }));
+    }
+    return w.nodes;
+  }
+  function redrawRoad() {
+    const frame = map.querySelector('.world-frame');
+    if (!frame) return;
+    const pts = ownNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+    const bg = frame.querySelector('.tour-road-bg');
+    const fg = frame.querySelector('.tour-road-fg');
+    if (bg) bg.setAttribute('d', roadD(pts, pts.length));
+    if (fg) fg.setAttribute('d', roadD(pts, Math.min(pts.length, P().level - shown().first + 1)));
+  }
+  let gridOn = false;
+  function decorate() {
+    const frame = map.querySelector('.world-frame');
+    if (!frame || !gridOn) return;
+    ['me-grid', 'me-safe'].forEach(c => {
+      const d = document.createElement('div'); d.className = c; frame.appendChild(d);
+    });
+  }
+  // elke hertekening opnieuw versieren -- renderTourMap bouwt het kader opnieuw op
+  const baseRender = renderTourMap;
+  renderTourMap = function () { baseRender.apply(null, arguments); decorate(); };
+
+  function goWorld(i) {
+    viewWorldIdx = i;
+    // een geloofwaardige tussenstand: een paar gespeeld, hier sta je, rest op slot
+    P().level = worldForIndex(i).first + 3;
+    renderCareerStrip(P());
+    renderTourMap(0);
+  }
+  sel.onchange = () => goWorld(+sel.value);
+  $('me-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); renderTourMap(0); };
+  $('me-reset').onclick = () => { delete shown().world.nodes; renderTourMap(0); setOut('reserve-slinger terug'); };
+  $('me-file').onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    shown().world.art = URL.createObjectURL(f);
+    renderTourMap(0);
+    setOut(f.name);
+  };
+  $('me-copy').onclick = () => {
+    const txt = 'nodes: [\n'
+      + ownNodes().map(n => `  { x: ${n.x.toFixed(1)}, y: ${n.y.toFixed(1)} },`).join('\n')
+      + '\n],';
+    dump.textContent = txt + '\n\n(tik om te sluiten)';
+    dump.style.display = 'block';
+    try { navigator.clipboard.writeText(txt); setOut('gekopieerd'); }
+    catch (_) { setOut('zie het venster'); }
+    console.log(txt);
+  };
+
+  // ---- verslepen. Capture-fase, zodat de tik niet als "start dit optreden" telt.
+  let drag = null;
+  map.addEventListener('pointerdown', e => {
+    const stop = e.target.closest && e.target.closest('.tour-stop');
+    const frame = map.querySelector('.world-frame');
+    if (!stop || !frame) return;
+    drag = { stop, frame, i: Number(stop.dataset.lvl) - shown().first };
+    ownNodes();
+    stop.classList.add('dragging');
+    try { stop.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  map.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const r = drag.frame.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100));
+    const y = Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100));
+    const n = ownNodes()[drag.i];
+    if (!n) return;
+    n.x = x; n.y = y;
+    drag.stop.style.left = x + '%';
+    drag.stop.style.top = y + '%';
+    redrawRoad();
+    setOut(`#${drag.i + 1}   x ${x.toFixed(1)}   y ${y.toFixed(1)}`);
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  const endDrag = () => {
+    if (!drag) return;
+    drag.stop.classList.remove('dragging');
+    map.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); },
+      { capture: true, once: true });
+    drag = null;
+  };
+  map.addEventListener('pointerup', endDrag, true);
+  map.addEventListener('pointercancel', endDrag, true);
+
+  sel.value = String(Math.min(worldFor(P().level).index, WORLDS.length - 1));
+  goWorld(+sel.value);
+}
+
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
 }
