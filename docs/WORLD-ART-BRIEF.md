@@ -63,14 +63,14 @@ cropped, centred, and bumps the service-worker cache.
 
 ## 2. The safe zone
 
-The drawing runs **edge to edge, unbroken**. There is no header panel: the top of the
-screen carries three small floating pills — the player's portrait on the left, the world
-name in the middle, the diamonds on the right — each with its own translucent backdrop.
-Everything between and behind them is your illustration.
+The drawing runs **edge to edge, unbroken**. There is no header panel. The top of the
+screen carries three light things — the player's round portrait on the left (bare, no
+container), the world name in the middle and the diamonds on the right (two translucent
+pills). Everything between and behind them is your illustration.
 
 | | occupies | as % of the screen | in art px |
 |---|---|---|---|
-| the three top pills | top 51 px, ~⅓ of the width | 6% | 155 |
+| the three top elements | top 52 px, ~⅓ of the width | 6% | 158 |
 | bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px, full width, opaque | 9.7% | 210 |
 
 A third thing is not chrome but takes room: **the star (the player's avatar) stands above
@@ -141,9 +141,11 @@ behind it:
   white at 42%. On a bright world set it to something dark; that field exists precisely
   because white roads vanish on lava and ice.
 - **The star**, a flat vector doll in bright colours.
-- **Three small pills at the top** — portrait, world name, diamonds. They float over the
-  drawing rather than sitting on a panel, so whatever is behind them still shows; keep
-  anything you want *read* (a sign, a landmark) out from under them.
+- **Three light things at the top** — a bare round portrait, and two translucent pills for
+  the world name and the diamonds. They float over the drawing rather than sitting on a
+  panel, so whatever is behind them still shows; keep anything you want *read* (a sign, a
+  landmark) out from under them. The pill text carries its own dark halo, so a bright sky
+  behind it is fine.
 
 The practical rule: **keep the corridor the route runs through mid-to-dark, and save the
 bright values for the edges.** A fire world can be blazing along the sides as long as the
