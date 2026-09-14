@@ -122,8 +122,40 @@ function page(state) {
              .replace('</body>', panel(state) + para + '</body>');
 }
 
+/* De wereldstudio (?debug&mapedit) schrijft haar WORLDS-blok hierheen, en deze
+   server zet het in index.html tussen de twee markeringen. Dat is met opzet het
+   enige schrijfpad: alleen lokaal, alleen zolang `npm run preview` draait, en
+   alleen dát ene blok -- de rest van het bestand wordt niet aangeraakt. Zonder
+   deze server valt de studio terug op Kopieer-en-plak. */
+const MARK_A = '/* WERELDEN-BEGIN';
+const MARK_B = '/* WERELDEN-EINDE */';
+function writeWorlds(body, res) {
+  try {
+    const file = path.join(ROOT, 'index.html');
+    const src = fs.readFileSync(file, 'utf8');
+    const a = src.indexOf(MARK_A), b = src.indexOf(MARK_B);
+    if (a < 0 || b < 0 || b < a) throw new Error('markeringen WERELDEN-BEGIN/EINDE niet gevonden');
+    const head = src.slice(a, src.indexOf('*/', a) + 2);   // de toelichting blijft staan
+    if (!/^const WORLDS = \[[\s\S]*\];$/.test(body.trim())) throw new Error('dit is geen WORLDS-blok');
+    fs.writeFileSync(file, src.slice(0, a) + head + '\n' + body.trim() + '\n' + src.slice(b));
+    console.log('  wereldstudio: WORLDS bijgewerkt in index.html');
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('ok');
+  } catch (e) {
+    res.writeHead(500, { 'content-type': 'text/plain' });
+    res.end(String(e.message));
+  }
+}
+
 http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
+
+  if (req.method === 'POST' && url === '/werelden') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 200000) req.destroy(); });
+    req.on('end', () => writeWorlds(body, res));
+    return;
+  }
 
   if (url === '/' || url === '/index.html') {
     const body = page(dropped());
