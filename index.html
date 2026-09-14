@@ -2705,9 +2705,73 @@ const CITIES = [
 ];
 function cityFor(lvl) {
   const c = CITIES[(lvl - 1) % CITIES.length];
-  const ronde = Math.floor((lvl - 1) / CITIES.length) + 1;
-  return { name: c.name, flag: c.flag, ronde };
+  return { name: c.name, flag: c.flag };
 }
+
+/* ================= Werelden =================
+   Een wereld is een stuk van de tournee: een vast aantal levels met een eigen
+   sfeer. Meer niet -- de mechaniek (sterren, ontgrendelen, moeilijkheid) is in
+   élke wereld gelijk en staat hier dus níét in. Zie docs/PROGRESSION-REVIEW.md.
+
+   p.level verandert hierdoor niet van betekenis: het blijft "de hoeveelste show",
+   1..oneindig. Een wereld is puur een hergroepering van dat ene getal, dus er is
+   geen migratie en geen enkele opgeslagen ster verhuist.
+
+   LET OP -- de vololgorde en de lengtes liggen vast zodra een wereld eenmaal
+   gespeeld is. Een wereld ertussen schuiven of korter maken hernummert alle
+   levels erna, en dan verhuizen de sterren van een kind naar een andere wereld.
+   Achteraan bijplakken mag altijd. */
+const WORLDS = [
+  { id: 'ijs',       name: 'IJswereld',       icon: '❄️', levels: 8 },
+  { id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8 },
+  { id: 'jungle',    name: 'Junglewereld',    icon: '🌴', levels: 8 },
+  { id: 'muziek',    name: 'Muziekwereld',    icon: '🎵', levels: 8 },
+  { id: 'vuur',      name: 'Vuurwereld',      icon: '🔥', levels: 8 },
+  { id: 'ruimte',    name: 'Ruimtewereld',    icon: '🚀', levels: 8 },
+];
+// Voorbij de laatste geschreven wereld loopt de tournee gewoon door in stukken
+// van dezelfde lengte. Zo is het spel nooit "uit" en kan er later een echte
+// wereld achteraan zonder dat er iets hernummerd wordt.
+const ENDLESS_WORLD = { id: 'tournee', name: 'Sterrentournee', icon: '✨', levels: 8 };
+// Eerste level van elke wereld (1-gebaseerd), één keer uitgerekend.
+const WORLD_START = (() => { let n = 1; return WORLDS.map(w => { const s = n; n += w.levels; return s; }); })();
+const WORLD_LAST = WORLD_START[WORLD_START.length - 1] + WORLDS[WORLDS.length - 1].levels - 1;
+// In welke wereld valt dit level? Geeft nooit undefined terug -- voorbij de
+// geschreven werelden komt er een genummerde Sterrentournee uit.
+function worldFor(lvl) {
+  lvl = Math.max(1, Math.floor(lvl) || 1);
+  if (lvl > WORLD_LAST) {
+    const ronde = Math.floor((lvl - WORLD_LAST - 1) / ENDLESS_WORLD.levels) + 1;
+    const first = WORLD_LAST + 1 + (ronde - 1) * ENDLESS_WORLD.levels;
+    const w = ronde === 1 ? ENDLESS_WORLD : Object.assign({}, ENDLESS_WORLD, { name: `${ENDLESS_WORLD.name} ${ronde}` });
+    return { world: w, index: WORLDS.length + ronde - 1, first, nr: lvl - first + 1, levels: w.levels, endless: true };
+  }
+  let i = 0;
+  for (let k = 0; k < WORLDS.length; k++) if (lvl >= WORLD_START[k]) i = k;
+  return { world: WORLDS[i], index: i, first: WORLD_START[i], nr: lvl - WORLD_START[i] + 1, levels: WORLDS[i].levels, endless: false };
+}
+// Sterren binnen één wereld: het enige totaal dat een kind ook echt vól kan
+// krijgen (in tegenstelling tot het aflopende sterrentotaal over alles heen).
+function worldStars(p, w) {
+  let got = 0;
+  for (let l = w.first; l < w.first + w.levels; l++) got += (p.stars[l] || 0);
+  return { got, max: w.levels * 3 };
+}
+// Is elke show van deze wereld een keer gespeeld? (Basis voor de wereldbadge.)
+function worldDone(p, w) {
+  for (let l = w.first; l < w.first + w.levels; l++) if (!p.stars[l]) return false;
+  return true;
+}
+
+/* De pedagogische klok. Dit was `ronde` in cityFor en stuurt wannéér de extra
+   uitdagingen mogen verschijnen: zoek-het-getal vanaf ronde 3, drie-getallen
+   vanaf ronde 4 (zie opReady/chainReady). BEWUST losgekoppeld van de wereld-
+   indeling: een ronde is 12 optredens en een wereld is er 8, dus die twee door
+   elkaar halen zou allebei die uitdagingen ineens acht shows te vroeg laten
+   beginnen -- een stille verandering in wanneer een zesjarige voor het eerst
+   "3 + ▢ = 7" ziet. Verander dit getal alleen met opzet. */
+const ROUND_LEN = 12;
+function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
 
 /* ================= Trofeeën ================= */
 // De zichtbare namen en beschrijvingen zijn kort en kindvriendelijk gehouden.
@@ -3777,8 +3841,8 @@ function renderCareerStrip(p) {
   // De schermkop zegt overal wáár je bent (Kleedkamer, Trofeeënkast, New York);
   // op de kaart stond daar de rang. Nu ook hier de plek -- de tournee -- en de
   // rangnaam verhuist naar de strip eronder, bij zijn eigen teller en balk.
-  const ronde = cityFor(p.level).ronde;
-  $('map-tournee-label').textContent = `🎤 Tournee ${ronde}`;
+  const w = worldFor(p.level);
+  $('map-tournee-label').textContent = `${w.world.icon} ${w.world.name}`;
   // rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk:
   // één plek waar staat welke status je hebt en hoe ver je naar de volgende bent
   $('career-strip').innerHTML =
@@ -5391,7 +5455,7 @@ function startLevel(lvl) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, cityFor(lvl).ronde, goldIdx);
+  const plan = count ? [] : planSpecials(p, s, s.perLevel, tourRound(lvl), goldIdx);
   // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
   // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
   const fanStep = 100 / Math.max(5, s.perLevel - 1);

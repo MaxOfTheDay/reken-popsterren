@@ -252,6 +252,37 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= 7b · Werelden: indeling, staart en de ronde-klok =================
+   * Een wereld is puur een hergroepering van p.level. Twee dingen moeten hier
+   * vastliggen: dat de grenzen kloppen en nooit undefined opleveren, en -- het
+   * belangrijkste -- dat tourRound() NIET met de wereldindeling meebeweegt.
+   * Die klok bepaalt wanneer zoek-het-getal (ronde 3) en drie-getallen (ronde 4)
+   * mogen verschijnen; een wereld van 8 i.p.v. een ronde van 12 zou ze acht
+   * shows te vroeg laten beginnen. */
+  {
+    const { ctx, page } = await fresh();
+    const r = await page.evaluate(() => {
+      const naam = l => { const w = worldFor(l); return w.world.name + ' ' + w.nr + '/' + w.levels; };
+      return {
+        grenzen: [1, 8, 9, 16, 17, 48].map(naam),
+        staart: [49, 57, 100].map(naam),
+        altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
+        rondes: [1, 12, 13, 24, 25, 36, 37].map(tourRound),
+        eersteLevels: WORLDS.map((w, i) => WORLD_START[i]),
+      };
+    });
+    check(r.grenzen.join(' | ') === 'IJswereld 1/8 | IJswereld 8/8 | Regenboogwereld 1/8 | Regenboogwereld 8/8 | Junglewereld 1/8 | Ruimtewereld 8/8',
+      'de wereldgrenzen liggen op de achtvouden', r.grenzen.join(' | '));
+    check(/^Sterrentournee 1\/8/.test(r.staart[0]) && /^Sterrentournee 2 1\/8/.test(r.staart[1]),
+      'voorbij de laatste wereld loopt de tournee door', r.staart.join(' | '));
+    check(r.altijdIets, 'een raar level geeft nooit undefined terug', JSON.stringify(r.staart));
+    check(r.rondes.join(',') === '1,1,2,2,3,3,4',
+      'de ronde-klok blijft op twaalf staan, niet op acht', r.rondes.join(','));
+    check(r.eersteLevels.join(',') === '1,9,17,25,33,41',
+      'elke wereld begint waar de vorige ophoudt', r.eersteLevels.join(','));
+    await ctx.close();
+  }
+
   /* ================= 8 · Oude opslag: precies één keer ophalen ================= */
   {
     const { ctx, page } = await fresh();
