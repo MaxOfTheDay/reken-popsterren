@@ -7748,9 +7748,22 @@ function startMapEdit() {
       <div class="st-btns" style="margin-top:6px">
         <button id="st-renodes">↺ haltes</button>
         <button id="st-recurve">↺ weg</button>
+        <button id="st-keep" title="De kandidaat uit incoming/ vastzetten in assets/world/">⤓ tekening vastzetten</button>
       </div>
       <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
         om de weg langs de tekening te leiden. Eén ruitje per stuk weg.</p>
+
+      <h6>Voorbeeld</h6>
+      <div class="st-btns">
+        <button data-prev="390x844">staand</button>
+        <button data-prev="320x568">klein</button>
+        <button data-prev="844x390">liggend</button>
+        <button data-prev="768x1024">tablet</button>
+        <button data-prev="390x844|844x390">naast elkaar</button>
+      </div>
+      <p class="st-hint">Opent het echte spel op die maat, mét je concept. Staand vult de
+        tekening het scherm; liggend en op lage schermen wordt het een kolom die scrolt —
+        een staande tekening past daar nu eenmaal niet full-bleed in.</p>
 
       <h6>Naar het spel</h6>
       <div class="st-btns">
@@ -7909,6 +7922,22 @@ function startMapEdit() {
     shown().world.art = URL.createObjectURL(f);
     commit(f.name + ' — tijdelijk, vul een pad in');
   };
+  /* Van kandidaat naar echt bestand. incoming/ is een proefmap (staat in
+     .gitignore); assets/world/ is wat meegaat in de app. Deze knop doet die ene
+     kopie en vult meteen het pad in, zodat de wereld hem daarna gewoon laadt. */
+  F('st-keep').onclick = () => {
+    const w = shown().world;
+    const bron = prompt('Welk bestand uit incoming/?', w.id + '-map.webp');
+    if (!bron) return;
+    const doel = w.id + '-map' + (bron.match(/\.[a-z0-9]+$/i) || ['.webp'])[0];
+    fetch('/asset', { method: 'POST', body: JSON.stringify({ from: bron, to: doel }) })
+      .then(r => r.text().then(txt => {
+        if (!r.ok) return setOut('mislukt: ' + txt);
+        w.art = 'assets/world/' + doel;
+        commit('vastgezet: ' + txt + ' — vergeet CACHE in sw.js niet');
+      }))
+      .catch(() => setOut('alleen via npm run preview'));
+  };
   F('st-new').onclick = () => {
     const n = WORLDS.length + 1;
     WORLDS.push({ id: 'wereld' + n, name: 'Wereld ' + n, icon: '✨', levels: 8 });
@@ -7941,6 +7970,31 @@ function startMapEdit() {
       }))
       .catch(() => setOut('alleen via npm run preview — gebruik anders Kopieer'));
   };
+  /* ------------------------------------------------------------- voorbeeld
+     Een écht venster op die maat, niet een iframe. De noodstand voor liggend en
+     lage schermen kijkt naar het vénster, dus alleen een echt venster laat zien
+     wat er werkelijk gebeurt -- en een iframe vecht bovendien met de servicewerker
+     en met het lettertype dat het laden ophoudt. Het concept komt vanzelf mee: het
+     staat in localStorage en het venster draait ?debug. */
+  function toonVoorbeeld(spec) {
+    saveWorldDraft();
+    const maten = spec.split('|');
+    let x = 60;
+    maten.forEach(m => {
+      const w = Number(m.split('x')[0]), h = Number(m.split('x')[1]);
+      const url = location.pathname + '?debug&demo&star=p1&screen=map';
+      const win = open(url, 'wsvoorbeeld' + w + 'x' + h,
+        `popup=1,width=${w},height=${h},left=${x},top=80`);
+      if (!win) { setOut('het venster werd geblokkeerd — sta pop-ups toe'); return; }
+      try { win.resizeTo(w, h + (win.outerHeight - win.innerHeight)); } catch (_) {}
+      x += w + 20;
+    });
+    setOut('voorbeeld geopend — ververs het venster na een wijziging');
+  }
+  panel.querySelectorAll('[data-prev]').forEach(b => {
+    b.onclick = () => toonVoorbeeld(b.dataset.prev);
+  });
+
   F('st-copy').onclick = () => {
     const txt = worldsSource();
     dump.textContent = txt + '\n\n(tik om te sluiten)';

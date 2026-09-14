@@ -150,8 +150,42 @@ function writeWorlds(body, res) {
   }
 }
 
+/* Een kandidaat uit incoming/ vastzetten in assets/. Dat was het laatste stukje
+   handwerk in de lus: de studio kon de wereld wel wegschrijven, maar de tekening
+   moest je zelf kopieren. Alleen bestandsnamen, alleen van incoming/ naar assets/,
+   en niets buiten die twee mappen -- daarbuiten weigert hij. */
+function keepAsset(body, res) {
+  try {
+    const wens = JSON.parse(body || '{}');
+    const bron = path.basename(String(wens.from || ''));
+    const doel = path.basename(String(wens.to || ''));
+    if (!bron || !doel) throw new Error('van/naar ontbreekt');
+    if (!scene.isImage(bron) || !scene.isImage(doel)) throw new Error('geen afbeelding');
+    const van = path.join(DROP, bron);
+    if (!fs.existsSync(van)) throw new Error('niet gevonden in incoming/: ' + bron);
+    const map = path.join(ROOT, 'assets', 'world');
+    fs.mkdirSync(map, { recursive: true });
+    const naar = path.join(map, doel);
+    fs.copyFileSync(van, naar);
+    const kb = Math.round(fs.statSync(naar).size / 1024);
+    console.log('  wereldstudio: assets/world/' + doel + ' (' + kb + ' kB)');
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('assets/world/' + doel + ' — ' + kb + ' kB');
+  } catch (e) {
+    res.writeHead(500, { 'content-type': 'text/plain' });
+    res.end(String(e.message));
+  }
+}
+
 http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
+
+  if (req.method === 'POST' && url === '/asset') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 4000) req.destroy(); });
+    req.on('end', () => keepAsset(body, res));
+    return;
+  }
 
   if (req.method === 'POST' && url === '/werelden') {
     let body = '';
