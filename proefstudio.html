@@ -7687,7 +7687,9 @@ function startMapEdit() {
     #studio .st-w .st-dot.vuil { background: #ffc43d; }
     #studio .st-w .st-dot.nieuw { background: #7dffb4; }
     #studio .st-hint { color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
-    #studio .st-uit { margin-top: 8px; font: 11.5px ui-monospace, monospace; color: #b6ffd6; min-height: 15px; }
+    #studio .st-uit { margin-top: 8px; font: 11.5px/1.5 ui-monospace, monospace; color: #b6ffd6;
+      min-height: 15px; white-space: pre-wrap; max-height: 30vh; overflow: auto; }
+    #studio .st-hint code { background: rgba(255,255,255,.1); border-radius: 4px; padding: 0 4px; }
     #me-dump { position: fixed; inset: 8% 360px auto 6%; z-index: 61; display: none;
       max-height: 70vh; padding: 12px; border-radius: 10px; background: #140426; color: #d8ffe8;
       border: 1px solid rgba(255,255,255,.3); font: 12px/1.45 ui-monospace, monospace;
@@ -7786,6 +7788,14 @@ function startMapEdit() {
         <button id="st-copy">Kopieer</button>
         <button id="st-paste">Plak</button>
       </div>
+      <div class="st-row" style="margin-top:8px"><label>bericht</label>
+        <input id="st-msg" placeholder="feat: IJswereld krijgt zijn kaart"></div>
+      <div class="st-btns">
+        <button id="st-commit">✓ testen, vastleggen &amp; pushen</button>
+      </div>
+      <p class="st-hint">Gaat naar de wérkbranch, nooit naar main — en alleen als
+        <code>npm test</code> slaagt. Main blijft met de hand, want dat is wat er op
+        de telefoon draait.</p>
       <div class="st-uit" id="st-out"></div>
     </div>`;
   document.body.appendChild(panel);
@@ -8045,6 +8055,20 @@ function startMapEdit() {
     b.onclick = () => toonVoorbeeld(b.dataset.prev);
   });
 
+  F('st-commit').onclick = () => {
+    const bericht = F('st-msg').value.trim();
+    if (bericht.length < 8) { setOut('geef eerst een bericht'); F('st-msg').focus(); return; }
+    const knop = F('st-commit');
+    knop.disabled = true;
+    setOut('testen draaien… dit duurt een minuut of twee');
+    fetch('/commit', { method: 'POST', body: bericht })
+      .then(r => r.text().then(t => {
+        setOut(t);
+        if (r.ok) F('st-msg').value = '';
+      }))
+      .catch(() => setOut('alleen via npm run preview'))
+      .then(() => { knop.disabled = false; });
+  };
   F('st-copy').onclick = () => {
     const txt = worldsSource();
     dump.textContent = txt + '\n\n(tik om te sluiten)';
