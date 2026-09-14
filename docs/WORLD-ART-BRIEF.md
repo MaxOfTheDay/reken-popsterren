@@ -33,8 +33,15 @@ cropped.
 |---|---|---|
 | 390 × 844 (iPhone 14) | 475 × 844 | 17.9% horizontally, 8.9% per side |
 | 412 × 915 (Pixel) | 515 × 915 | 20% horizontally, 10% per side |
-| 320 × 568 (small) | 320 × 569 | nothing horizontally; scrolls 1px |
+| 320 × 568 (small) | 320 × 569 | nothing horizontally; scrolls 49px |
 | 768 × 1024 (tablet) | 768 × 1365 | nothing horizontally; scrolls 341px |
+| 1003 × 761 (browser) | 1003 × 1783 | nothing horizontally; scrolls 1022px |
+| 1440 × 900 (wide) | 415 × 737 centred | the stage — see below |
+
+Landscape and browser windows fill the screen the same way and scroll vertically, for as
+long as the drawing still looks good: at 1215 px wide there is at least one art pixel per
+screen pixel. Past that the app stops stretching it and presents a centred portrait stage
+instead, with the same drawing blurred and darkened in the margins.
 
 At 390 × 844 the art is displayed at **2.56 art px per CSS px**, so 1215 px of art is about
 1170 device px on a 3× phone — no upscale worth naming. Generate at **1215 × 2160 or
@@ -56,16 +63,24 @@ cropped, centred, and bumps the service-worker cache.
 
 ## 2. The safe zone
 
-Two pieces of app chrome lie **on top** of the drawing, opaque:
+The drawing runs **edge to edge, unbroken**. There is no header panel: the top of the
+screen carries three small floating pills — the player's portrait on the left, the world
+name in the middle, the diamonds on the right — each with its own translucent backdrop.
+Everything between and behind them is your illustration.
 
-| | height | as % of the screen | in art px |
+| | occupies | as % of the screen | in art px |
 |---|---|---|---|
-| top bar (avatar · world name · diamonds) | 66 px | 7.8% | 169 |
-| bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px | 9.7% | 210 |
+| the three top pills | top 51 px, ~⅓ of the width | 6% | 155 |
+| bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px, full width, opaque | 9.7% | 210 |
 
 A third thing is not chrome but takes room: **the star (the player's avatar) stands above
 her current stop**, 170 × 213 art px, so a stop near the top needs clear sky above it or
-her head goes behind the bar.
+her head reaches the pills.
+
+Measured on 390 × 844: the top stop clears the pills by 97 px and the star standing on it
+by 34 px. The zone below is therefore conservative — it was set when the header was still
+an opaque band. It stays as it is: a stable contract across six drawings is worth more
+than reclaiming 4% of height.
 
 That gives the contract:
 
@@ -126,6 +141,9 @@ behind it:
   white at 42%. On a bright world set it to something dark; that field exists precisely
   because white roads vanish on lava and ice.
 - **The star**, a flat vector doll in bright colours.
+- **Three small pills at the top** — portrait, world name, diamonds. They float over the
+  drawing rather than sitting on a panel, so whatever is behind them still shows; keep
+  anything you want *read* (a sign, a landmark) out from under them.
 
 The practical rule: **keep the corridor the route runs through mid-to-dark, and save the
 bright values for the edges.** A fire world can be blazing along the sides as long as the
