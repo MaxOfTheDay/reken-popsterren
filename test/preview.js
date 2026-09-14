@@ -45,6 +45,28 @@ function dropped() {
 const SCREENS = [['map', 'Kaart'], ['game', 'Show'], ['end', 'Einde'],
                  ['dress', 'Kleedkamer'], ['tro', 'Trofeeën']];
 
+/* Wat de wereldstudio moet weten om "werk de beelden bij voor scherm x" te kunnen
+   tonen: welk beeld bij welk scherm hoort, hoe groot het moet, waar het landt en
+   welke er al liggen. Eerder stond die tabel twee keer -- hier en in index.html --
+   en dan loopt er een uit elkaar. Nu komt hij uit test/scene.js, en de studio valt
+   alleen op haar eigen minimale lijstje terug als ze zonder deze server draait. */
+function assetsOpSchijf(dir, uit) {
+  const vol = path.join(ROOT, dir);
+  if (!fs.existsSync(vol)) return uit;
+  for (const naam of fs.readdirSync(vol)) {
+    const f = path.join(vol, naam);
+    if (fs.statSync(f).isDirectory()) assetsOpSchijf(path.join(dir, naam), uit);
+    else uit[path.join(dir, naam).split(path.sep).join('/')] = Math.round(fs.statSync(f).size / 1024);
+  }
+  return uit;
+}
+function studioData() {
+  return '<script>window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
+    v instanceof RegExp ? undefined : v)
+    + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
+    + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {})) + ';<\/script>';
+}
+
 function panel(state) {
   const rows = state.found.length
     ? state.found.map(f => '<li><b>' + f.slot + '</b> &larr; ' + f.file + '</li>').join('')
@@ -122,7 +144,7 @@ function page(state) {
     '<style id="k-scene-kaal" disabled>' + scene.css(state.urls, { scrim: false }) + '</style>';
   // de parallax-aandrijving uit test/scene.js
   const para = '<script>' + scene.parallaxJs() + '<\/script>';
-  return html.replace('</head>', styles + '</head>')
+  return html.replace('</head>', styles + studioData() + '</head>')
              .replace('</body>', panel(state) + para + '</body>');
 }
 
