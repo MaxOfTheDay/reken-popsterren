@@ -1242,7 +1242,11 @@
      tekening mee en kunnen er nooit vanaf glijden. Wat het wél betekent: aan de
      randen wordt geknipt (op een telefoon ~4-6% per kant), dus haltes horen in de
      veilige zone -- zie docs/PROGRESSION-REVIEW.md §E8. */
-  .tour-map { --art-w: 1080; --art-h: 2160; }
+  /* De maat van een wereldtekening. Staat híer als terugval voor het eerste
+     beeldje; ART_W/ART_H in de JS is de bron en zet ze bij elke tekening opnieuw.
+     Dat moet één getal zijn, want de weg-SVG gebruikt dezelfde verhouding als
+     viewBox -- liepen ze uiteen, dan viel de weg naast de haltes (zie VB_W). */
+  .tour-map { --art-w: 1215; --art-h: 2160; }
   .world-frame {
     position: relative; flex: none;
     /* min-width + min-height + aspect-ratio = cover. Gemeten tegen de variant met
@@ -1334,10 +1338,10 @@
   .world-step .ws-ico { font-size: 13px; opacity: .8; }
   /* Het ankerpunt is het midden van het róndje, niet van het hele blokje. Het
      blokje is rondje + sterrenrij, en het midden daarvan ligt ruim 9px láger --
-     de weg liep dus net onder het hart van elke halte door. 6cqw is de halve
-     hoogte van .dot (12cqw). */
+     de weg liep dus net onder het hart van elke halte door. 5,5cqw is de halve
+     hoogte van .dot (11cqw). */
   .tour-stop {
-    position: absolute; transform: translate(-50%, -6cqw);
+    position: absolute; transform: translate(-50%, -5.5cqw);
     width: 26cqw; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
     background: transparent; padding: 0; text-align: center; z-index: 1;
   }
@@ -1353,7 +1357,11 @@
      "verzameld"-taal als .trophy-card.done). Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
      de reisweg erdoorheen. */
-  .tour-stop .dot { position: relative; width: 12cqw; height: 12cqw; margin: 0 auto; border-radius: 50%;
+  /* 11cqw, niet 12: bij 9:16 is het kader 475px breed op een telefoon van 390, dus
+     12cqw gaf een rondje van 58px waar het er 52 was. 11cqw houdt de halte op die
+     52px -- ruim boven de 44px die een vinger nodig heeft -- en houdt de rij van
+     acht tussen de kop en de navigatiebalk passen. */
+  .tour-stop .dot { position: relative; width: 11cqw; height: 11cqw; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 6.4cqw; font-weight: 800; border: 0.55cqw solid var(--glass-white-30); background: var(--purple-shadow); }
   /* het slotje hangt aan de rand van de halte i.p.v. het nummer te vervangen --
@@ -1411,10 +1419,10 @@
      de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
      vorige halte. */
   /* 21cqw was 2,1x de halte: op de bovenste halte van een wereld stak haar hoofd
-     dan 19px buiten beeld (gemeten op 390x844). Op 16cqw is ze 1,6x de halte en
+     dan 19px buiten beeld (gemeten op 390x844). Op 14cqw is ze 1,3x de halte en
      past ze binnen de veilige zone -- zie docs/WORLD-ART-BRIEF.md. */
   .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2cqw); transform: translateX(-50%);
-    width: 16cqw; pointer-events: none; z-index: 2; }
+    width: 14cqw; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven */
@@ -3937,9 +3945,28 @@ function worldNodes(w) {
   const given = w.world.nodes;
   return (given && given.length === w.levels) ? given : defaultNodes(w.levels);
 }
+/* De maat van een wereldtekening, en meteen de viewBox van de weg.
+
+   Dat die twee hetzelfde móéten zijn was een stille aanname, en hij klopte niet:
+   de viewBox stond op 1080x1840 terwijl het kader 1:2 was. Een SVG schaalt zijn
+   viewBox standaard met preserveAspectRatio="xMidYMid meet" -- dus één uniforme
+   schaal, gecentreerd, met ruimte over. De weg werd daardoor in de middelste 719
+   van de 844 pixels geperst terwijl de haltes de volle hoogte gebruikten. Gemeten:
+   de weg liep er tot 42px naast op een telefoon en 77px op een tablet, het ergst
+   bij de eerste en de laatste halte en bijna nul in het midden -- precies het
+   patroon van een samengeknepen middenstuk.
+
+   (De haltes staan in procenten van het káder, de weg in viewBox-eenheden. Zolang
+   die twee stelsels dezelfde verhouding hebben vallen ze samen, en anders niet.)
+
+   9:16 en niet 1:2, omdat dat de verhouding is die beeldgeneratoren maken: anders
+   snijdt de studio bij het inlezen blind 11% van de breedte weg, en die stroken
+   zijn op een tablet -- waar de hele breedte in beeld komt -- voorgoed weg. Één
+   plek om te wijzigen; de kaart, de weg en de studio volgen vanzelf. */
+const ART_W = 1215, ART_H = 2160;
 // Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
 // tekening, zodat de weg er exact overheen valt).
-const VB_W = 1080, VB_H = 1840;
+const VB_W = ART_W, VB_H = ART_H;
 const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
 
 /* De weg slingert méér dan de haltes zelf. Een curve dóór alleen de haltes is
@@ -4223,6 +4250,8 @@ function renderTourMap(travelFrom) {
 
   const map = $('tour-map');
   map.innerHTML = '';
+  map.style.setProperty('--art-w', ART_W);
+  map.style.setProperty('--art-h', ART_H);
   const frame = document.createElement('div');
   frame.className = 'world-frame';
   applyWorldArt(frame, shown.world);
@@ -7911,10 +7940,11 @@ function startMapEdit() {
       background-image:
         repeating-linear-gradient(90deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%),
         repeating-linear-gradient(180deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%); }
-    /* De veilige zone voor haltemiddelpunten: x 8-92% (cover snijdt tot 5% per kant
-       weg op de langste telefoons), y 21-84% (kop boven, navigatiebalk onder, en
-       de ster die bóven haar halte staat). Zie docs/WORLD-ART-BRIEF.md. */
-    .me-safe { position: absolute; left: 8%; right: 8%; top: 21%; bottom: 16%; z-index: 2;
+    /* De veilige zone voor haltemiddelpunten: x 16-84% (cover snijdt op een lange
+       telefoon 10% per kant weg, plus de halve halte zelf), y 21-84% (de kop boven,
+       de navigatiebalk onder, en de ster die bóven haar halte staat).
+       Zie docs/WORLD-ART-BRIEF.md. */
+    .me-safe { position: absolute; left: 16%; right: 16%; top: 21%; bottom: 16%; z-index: 2;
       pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }
     @media (max-width: 820px) {
       #studio { top: auto; left: 0; width: auto; max-height: 56vh; border-left: 0;

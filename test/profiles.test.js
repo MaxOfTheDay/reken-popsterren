@@ -283,6 +283,70 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= 7c · De weg ligt op de haltes =================
+   * De haltes staan in procenten van het káder; de weg staat in viewBox-eenheden
+   * van een SVG. Die twee vallen alleen samen als de viewBox dezelfde verhouding
+   * heeft als de tekening -- en die aanname was ooit stil en fout: de viewBox stond
+   * op 1080x1840 terwijl het kader 1:2 was, en een SVG schaalt zijn viewBox met
+   * preserveAspectRatio="xMidYMid meet". De weg werd daardoor in het midden
+   * samengeknepen en lag tot 42px naast de haltes op een telefoon, 77px op een
+   * tablet -- het ergst bij de eerste en de laatste.
+   *
+   * Deze test meet de geéchte afbeelding (getScreenCTM), niet de padgegevens: die
+   * gingen ook in de kapotte versie keurig door de haltes heen.                  */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const p = defaultProfile('Roos', 'dress_roze');
+      p.level = 6;
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: true, haptics: true, schemaV: 3, profiles: { p1: p } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(500);
+
+    const r = await page.evaluate(() => {
+      const svg = document.querySelector('.tour-road-svg');
+      if (!svg) return { fout: 'geen weg getekend' };
+      const bg = svg.querySelector('.tour-road-bg');
+      const M = svg.getScreenCTM();
+      const L = bg.getTotalLength();
+      const weg = [];
+      for (let i = 0; i <= 1500; i++) {
+        const q = bg.getPointAtLength(L * i / 1500);
+        weg.push({ x: M.a * q.x + M.e, y: M.d * q.y + M.f });
+      }
+      let ergste = 0;
+      document.querySelectorAll('.tour-stop .dot').forEach(d => {
+        const b = d.getBoundingClientRect();
+        const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+        let best = 1e9;
+        weg.forEach(q => { const dd = Math.hypot(q.x - cx, q.y - cy); if (dd < best) best = dd; });
+        if (best > ergste) ergste = best;
+      });
+      const cs = getComputedStyle(document.getElementById('tour-map'));
+      return {
+        ergste: Math.round(ergste),
+        haltes: document.querySelectorAll('.tour-stop').length,
+        vbW: VB_W, vbH: VB_H, artW: ART_W, artH: ART_H,
+        cssW: Number(cs.getPropertyValue('--art-w')), cssH: Number(cs.getPropertyValue('--art-h')),
+      };
+    });
+    check(r.haltes === 8, 'de kaart tekent acht haltes', JSON.stringify(r));
+    check(r.ergste <= 2, 'de weg loopt door het hart van elke halte', 'ergste afwijking ' + r.ergste + 'px');
+    check(r.vbW === r.artW && r.vbH === r.artH,
+      'de viewBox van de weg heeft de maat van de tekening', r.vbW + 'x' + r.vbH + ' vs ' + r.artW + 'x' + r.artH);
+    check(r.cssW === r.artW && r.cssH === r.artH,
+      'de CSS-terugval voor de tekeningmaat loopt niet uit de pas', r.cssW + 'x' + r.cssH);
+    const scene = require('./scene.js');
+    check(scene.SLOTS.world.lever[0] === r.artW && scene.SLOTS.world.lever[1] === r.artH,
+      'de studio levert de tekening op de maat die de kaart verwacht',
+      scene.SLOTS.world.lever.join('x') + ' vs ' + r.artW + 'x' + r.artH);
+    await ctx.close();
+  }
+
   /* ================= 8 · Oude opslag: precies één keer ophalen ================= */
   {
     const { ctx, page } = await fresh();

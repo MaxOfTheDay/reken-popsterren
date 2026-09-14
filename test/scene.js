@@ -34,7 +34,7 @@ const SLOTS = {
              hint: 'map-sky.webp' },
   world:   { match: /[-_]map\.[a-z0-9]+$|^(world|wereld)[-_]/i,      screen: 'map',
              label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
-             lever: [1080, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
+             lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
              pad: 'assets/world/{wereld}-map.webp', perWereld: true,
              hint: '<wereld>-map.webp, bv. ijs-map.webp of vuur-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
