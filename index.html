@@ -622,6 +622,16 @@
      moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
   .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
   .ladder-row.future { opacity: .36; }
+  /* de wereldladder hergebruikt de rijen van de ster-status; alleen deze extra's */
+  .wr-row { width: 100%; font: inherit; cursor: pointer; text-align: left; }
+  .wr-row:disabled { cursor: default; }
+  .wr-row:not(:disabled):active { transform: scale(.98); }
+  .wr-stars { font-size: 13px; font-weight: 700; color: var(--gold-light); white-space: nowrap; }
+  .wr-rest { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: var(--r-pill);
+    background: rgba(255,214,90,.16); color: var(--gold-light); white-space: nowrap; }
+  .wr-vol { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: var(--r-pill);
+    background: rgba(120,255,180,.16); color: #b6ffd6; }
+  .wr-slot { font-size: 15px; opacity: .8; }
   /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
      De balk vult richting déze tier (de /100 is zijn drempel), dus hij hoort hier. */
   .ladder-row.goal { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
@@ -1274,23 +1284,33 @@
      doorheen lopen. */
   #screen-map:has(.world-frame:not(.no-art)) .map-sky,
   #screen-map:has(.world-frame:not(.no-art)) .map-ground { display: none; }
-  /* Echt liggend (breder dan hoog): daar past een 1:2-tekening niet full-bleed in
-     zonder dat je hem vier schermen lang moet schuiven. Dan wordt het een kolom.
+  /* Echt liggend (breder dan hoog): een staande 9:16-tekening past daar niet
+     full-bleed in. Vroeger werd het dan een kolom van 340px met het paars van de
+     app eromheen, en op een browservenster van 1003x761 is dat 669px paars naast
+     een kaart van 334 -- dat las als een fout, niet als een keuze.
 
-     De grens stond op 62/100, en dat was te streng: een venster van 762x930 --
-     gewoon een browser in staande stand -- viel er al onder en kreeg een kaart van
-     340px met paarse app-banden eromheen. Alles wat hoger is dan breed krijgt nu
-     de volle tekening; alleen echt liggend wordt een kolom.
+     Nu is het een podium: de kaart vult de hoogte die er is, met een zachte rand,
+     en dáárnaast staat dezelfde tekening nog een keer -- uitvergroot, onscherp en
+     donker. De randen zijn dan geen leegte meer maar de wereld zelf, en het geheel
+     leest als een staand scherm dat bewust in het midden staat.
 
-     En die kolom staat niet meer in het paars van de app maar in de lucht van de
-     wereld zelf: dezelfde --w-sky/--w-deep die de kaart ook zonder tekening draagt.
-     Dan leest de rand als lucht in plaats van als een kaart die te klein is
-     uitgevallen. (Op de achtergrond van het vak zélf, niet op een laagje erin: een
-     laagje zou met de inhoud mee wegscrollen, een achtergrond blijft staan.) */
+     Geen rek en geen tweede tekening: het spel ís staand, en dat mag je zien. */
   @media (min-aspect-ratio: 1/1) {
-    .tour-map { align-items: flex-start; padding: 96px 0 96px;
+    /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
+       een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
+    #screen-map { isolation: isolate; }
+    #screen-map::before { content: ''; position: absolute; inset: 0; z-index: -1;
       background: linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%); }
-    .world-frame { min-width: 0; min-height: 0; width: min(100cqw, 340px); }
+    #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
+      background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
+      filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
+    .tour-map { align-items: center; padding: var(--kop-h, 104px) 0 var(--nav-h, 96px); }
+    /* Zo groot als de hoogte toelaat, maar nooit smaller dan de 340px waarop de
+       haltes nog te raken zijn. Past de kaart dan niet, dan schuif je -- liever dan
+       een kaart van 126px breed, want daar mikt geen kind meer op. */
+    .world-frame { min-width: 0; min-height: 0;
+      width: clamp(min(340px, 100cqw), 100cqh * var(--art-w) / var(--art-h), 100cqw);
+      border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
   }
   /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt */
@@ -1308,44 +1328,48 @@
   /* De 26/34 hieronder is de terugval. Normaal zet renderTourMap er een patroon
      overheen dat per stuk weg precies past, zodat er op elke halte een streepje
      ligt -- zie roadDashArray. */
-  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  .tour-road-bg, .tour-road-fg, .tour-road-under { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  /* Een donkere onderlaag onder de hele weg: iets breder, flink doorzichtig en
+     onscherp. Daarmee blijft het goud leesbaar op een lichte lucht én op een
+     donkere rots, zonder dat de weg zelf van kleur verandert. */
+  .tour-road-under { stroke: rgba(22,6,42,.5); stroke-width: 22; filter: blur(2px); }
   .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 13; }
   .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
      glas en klein: goud is voor spelen en verdiend, en dit mag nooit met Speel!
      concurreren. */
-  /* De wereldknoppen stonden in het kader van de tekening, op 1,5cqw van de rand
-     -- dus precies onder de kop en onder de navigatiebalk. Ze waren daardoor niet
-     alleen slecht zichtbaar maar onaanraakbaar: een tik op "volgende wereld" kwam
-     uit op de koptitel, een tik op "vorige wereld" op een navigatieknop (gemeten
-     met elementFromPoint). Nu zweven ze in een eigen laag tussen kop en balk, dus
-     buiten de tekening om -- en de veilige zone van de tekening hoeft er geen
-     rekening meer mee te houden. */
-  .world-steps {
-    position: absolute; left: 0; right: 0; z-index: 4; pointer-events: none;
-    top: var(--kop-h, 104px); bottom: var(--nav-h, 96px);
-    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+  /* De wereldnaam in de kop is de ingang naar alle werelden. Twee zwevende pijlen
+     (één wereld per tik) waren daarvoor de navigatie; met zes werelden is dat vijf
+     tikken van de laatste naar de eerste, en ze lagen bovendien over de tekening.
+     De naam is toch al de plek waar je kijkt om te weten wáár je bent. */
+  .world-pick { display: inline-flex; align-items: center; gap: 6px;
+    border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+    padding: 2px 6px; border-radius: var(--r-pill); }
+  .world-pick:active { transform: scale(.96); }
+  .wp-chev { font-size: 15px; opacity: .55; }
+  /* De weg terug. Goud, want dit is de enige knop op dit scherm die je ergens
+     naartoe bréngt; en laag genoeg om niet met een halte te concurreren. */
+  .world-back {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 6;
+    bottom: var(--nav-h, 96px);
+    display: flex; align-items: center; gap: 6px; padding: 8px 16px;
+    font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1;
+    white-space: nowrap; max-width: calc(100% - 24px);
+    color: var(--ink-on-gold-card); cursor: pointer;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    border: 0; border-radius: var(--r-pill); box-shadow: 0 4px 14px rgba(0,0,0,.4);
   }
-  .world-steps:empty { display: none; }
-  .world-step {
-    pointer-events: auto; z-index: 3;
-    display: flex; align-items: center; gap: 5px; padding: 5px 12px;
-    font-family: inherit; font-size: 15px; line-height: 1; color: var(--c-white);
-    background: var(--glass-black-32); border: 1.5px solid var(--glass-white-22);
-    border-radius: var(--r-pill); cursor: pointer; backdrop-filter: blur(6px);
-  }
-  .world-step:active { transform: scale(.94); }
-  /* de knop 'volgende wereld' bovenaan, 'vorige' onderaan; zonder de ene blijft de
-     andere aan zijn eigen kant staan */
-  .world-step.next { margin-bottom: auto; }
-  .world-step.prev { margin-top: auto; }
-  .world-step .ws-ico { font-size: 13px; opacity: .8; }
+  .world-back:active { transform: translateX(-50%) scale(.95); }
   /* Het ankerpunt is het midden van het róndje, niet van het hele blokje. Het
      blokje is rondje + sterrenrij, en het midden daarvan ligt ruim 9px láger --
-     de weg liep dus net onder het hart van elke halte door. 5,5cqw is de halve
-     hoogte van .dot (11cqw). */
+     de weg liep dus net onder het hart van elke halte door. 5,15cqw is de halve
+     hoogte van .dot (10,3cqw). */
+  /* Het raakvlak van een halte: onzichtbaar, en groter dan het rondje zelf. */
+  .tour-stop::before { content: ''; position: absolute; left: 50%; top: 5.15cqw;
+    width: 12.5cqw; height: 12.5cqw; margin: -6.25cqw 0 0 -6.25cqw; border-radius: 50%; }
+  .tour-stop.locked::before { display: none; }
   .tour-stop {
-    position: absolute; transform: translate(-50%, -5.5cqw);
+    position: absolute; transform: translate(-50%, -5.15cqw);
     width: 26cqw; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
     background: transparent; padding: 0; text-align: center; z-index: 1;
   }
@@ -1361,13 +1385,18 @@
      "verzameld"-taal als .trophy-card.done). Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
      de reisweg erdoorheen. */
-  /* 11cqw, niet 12: bij 9:16 is het kader 475px breed op een telefoon van 390, dus
-     12cqw gaf een rondje van 58px waar het er 52 was. 11cqw houdt de halte op die
-     52px -- ruim boven de 44px die een vinger nodig heeft -- en houdt de rij van
-     acht tussen de kop en de navigatiebalk passen. */
-  .tour-stop .dot { position: relative; width: 11cqw; height: 11cqw; margin: 0 auto; border-radius: 50%;
+  /* 10,3cqw: 6% kleiner dan de 11cqw hiervoor, zodat de tekening meer lucht krijgt.
+     Het raakvlak blijft wél 11cqw -- .tour-stop::before hieronder legt er een
+     onzichtbare schijf overheen, dus een vinger heeft nog steeds 52px. Kleiner
+     maken zonder dat zou het mikken voor een vijfjarige moeilijker maken, en dat
+     is geen ruil die je wil. */
+  .tour-stop .dot { position: relative; width: 10.3cqw; height: 10.3cqw; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 6.4cqw; font-weight: 800; border: 0.55cqw solid var(--glass-white-30); background: var(--purple-shadow); }
+    font-size: 6cqw; font-weight: 800; border: 0.55cqw solid var(--glass-white-30); background: var(--purple-shadow); }
+  /* Een zachte schaduw onder het rondje in plaats van eromheen: net genoeg om de
+     halte op de tekening te laten rústen in plaats van erboven te zweven. Bewust
+     ingetogen -- een echte slagschaduw zou van de halte weer een knop maken. */
+  .tour-stop .dot { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.45); }
   /* het slotje hangt aan de rand van de halte i.p.v. het nummer te vervangen --
      zo blijft ook op een halte op slot te zien de hoeveelste show het is */
   .stop-lock { position: absolute; top: -0.5cqw; right: -0.5cqw; font-size: 4.6cqw; line-height: 1;
@@ -1413,8 +1442,12 @@
   .tour-stop.locked .cname { opacity: .6; }
   /* sterren als gewone tekstregel onder de naam i.p.v. een badge óp de tegel --
      geen aparte positionering/overlap meer nodig, past vanzelf altijd netjes */
-  .tour-stop .cstars { font-size: 3.6cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.6cqw; }
-  .tour-stop .cstars .star-miss { opacity: .4; filter: grayscale(1); }
+  /* De sterrenrij is het zwakste element op een getekende kaart: gedimde grijze
+     emoji op een lichte lucht verdwijnen gewoon. Een zachte donkere schaduw eronder
+     kost niets en houdt ze leesbaar op elke ondergrond. */
+  .tour-stop .cstars { font-size: 3.6cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.6cqw;
+    filter: drop-shadow(0 0.25cqw 0.5cqw rgba(12,2,26,.6)); }
+  .tour-stop .cstars .star-miss { opacity: .5; filter: grayscale(1) brightness(.75); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
      stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
      net op de bovenrand van de tegel (klein overlapje voor het "staat erop"-
@@ -1423,15 +1456,16 @@
      de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
      vorige halte. */
   /* 21cqw was 2,1x de halte: op de bovenste halte van een wereld stak haar hoofd
-     dan 19px buiten beeld (gemeten op 390x844). Op 14cqw is ze 1,3x de halte en
+     dan 19px buiten beeld (gemeten op 390x844). Op 13,1cqw is ze 1,3x de halte en
      past ze binnen de veilige zone -- zie docs/WORLD-ART-BRIEF.md. */
   .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2cqw); transform: translateX(-50%);
-    width: 14cqw; pointer-events: none; z-index: 2; }
+    width: 13.1cqw; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
-     zonder dit oogt ze net zo goed los zwevend erboven */
-  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 0.4cqw; transform: translateX(-50%);
-    width: 8cqw; height: 2cqw; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
+     zonder dit oogt ze net zo goed los zwevend erboven. Iets breder en zachter dan
+     eerst, zodat ze op een getekende ondergrond ook echt ergens op staat. */
+  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 0.2cqw; transform: translateX(-50%);
+    width: 9cqw; height: 2.4cqw; border-radius: 50%; background: rgba(12,2,26,.42); filter: blur(3px); }
   /* De Speel-knop is van de kaart verdwenen. Met acht haltes samen in beeld is de
      halte waar ze nú staat al het enige volgouden, pulserende medaillon mét de pop
      erbovenop -- een tweede gouden ding ernaast voegde niets toe, dekte de vorige
@@ -2347,15 +2381,16 @@
           <span class="map-portrait" id="map-portrait"></span>
           <span class="map-name" id="map-name"></span>
         </button>
-        <div class="header-title" id="map-tournee-label"></div>
+        <button class="header-title world-pick" id="map-tournee-label" onclick="openWorlds()"
+          aria-label="Kies een wereld" title="Kies een wereld"></button>
         <button class="diamond-badge header-right" onclick="navGo('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="map-diamonds">0</span></button>
       </div>
     </div>
     <!-- De wereld beslaat het hele scherm; de kop en de navigatie zweven erboven.
          Staat als eerste in de opmaak (en op z-index 0) zodat hij achter alles valt. -->
     <div class="tour-map" id="tour-map"></div>
-    <!-- de wereldknoppen zweven tussen kop en navigatiebalk, buiten de tekening om -->
-    <div class="world-steps" id="world-steps"></div>
+    <!-- de weg terug naar de wereld waar ze speelt; alleen zichtbaar als ze elders kijkt -->
+    <button class="world-back" id="world-back" hidden></button>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
     <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 <span id="mem-fab-pay">0</span></span></button>
   </div>
@@ -4093,7 +4128,18 @@ function updateParallax() { /* de kaart scrollt niet meer; de lucht staat stil *
 function renderMapTitle(p) {
   const cur = worldFor(p.level);
   const shown = viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx);
-  $('map-tournee-label').innerHTML = `${shown.world.icon} ${esc(shown.world.name)}`;
+  const anders = shown.index !== cur.index;
+  $('map-tournee-label').innerHTML = `${shown.world.icon} ${esc(shown.world.name)}`
+    + `<span class="wp-chev">▾</span>`;
+  /* Kijk je in een andere wereld dan waar je speelt, dan ziet de kaart er verder
+     precies normaal uit -- en dan kan een kind daar blijven hangen zonder te
+     merken dat ze weg is. Vandaar deze gouden weg terug, en alleen dán. */
+  const terug = $('world-back');
+  terug.hidden = !anders;
+  if (anders) {
+    terug.innerHTML = `⟲ Terug naar ${cur.world.icon} ${esc(cur.world.name)}`;
+    terug.onclick = () => { sndClick(); viewWorldIdx = cur.index; renderMapTitle(P()); renderTourMap(0); };
+  }
 }
 /* Rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk: één
    plek waar staat welke status je hebt en hoe ver je naar de volgende bent.
@@ -4226,17 +4272,59 @@ function applyWorldTheme(el, world) {
     else el.style.removeProperty('--w-' + k);
   });
 }
-// Een pijl onder/boven de kaart naar de vorige of volgende wereld. Rustig
-// vormgegeven: terugkeren naar een oude wereld mag nooit concurreren met Speel!.
-function worldStepBtn(dir, toIdx) {
-  const w = worldForIndex(toIdx);
-  const b = document.createElement('button');
-  b.className = 'world-step ' + dir;
-  b.innerHTML = `<span class="ws-ico">${dir === 'prev' ? '⌄' : '⌃'}</span>`
-    + `<span class="ws-name">${w.world.icon}</span>`;
-  b.setAttribute('aria-label', (dir === 'prev' ? 'Terug naar ' : 'Verder naar ') + w.world.name);
-  b.onclick = () => { sndClick(); viewWorldIdx = toIdx; renderMapTitle(P()); renderTourMap(0); };
-  return b;
+/* Alle werelden op een rij, met wat er nog te halen valt.
+
+   Terugkeren naar een eerdere wereld is níet "teruggaan in het spel": p.level blijft
+   staan en alleen de kaart kijkt ergens anders. Het enige dat je er kunt halen zijn
+   sterren die je hebt laten liggen -- opnieuw spelen kan alleen omhoog (zie de
+   Math.max bij het eindscherm). Dáárom staat er per wereld hoeveel sterren er nog
+   liggen en niet alleen de naam: dat is de reden om er heen te gaan.
+
+   Werelden voorbij waar ze zelf is staan er wel bij, gedimd en zonder teller. Een
+   kind mag zien dat het doorgaat; alleen nog niet waarheen. */
+function openWorlds() {
+  sndClick();
+  const p = P();
+  const cur = worldFor(p.level);
+  const tot = Math.max(WORLDS.length, cur.index + 1);
+  let rows = '';
+  for (let i = 0; i < tot; i++) {
+    const w = worldForIndex(i);
+    const open = i <= cur.index;
+    const ws = worldStars(p, w);
+    const rest = ws.max - ws.got;
+    const hier = i === cur.index;
+    rows += `<button class="ladder-row wr-row ${open ? (hier ? 'current' : 'past') : 'future'}"`
+      + (open ? ` data-w="${i}"` : ' disabled') + `>`
+      + `<span class="lr-emoji">${w.world.icon}</span>`
+      + `<span class="lr-name">${esc(w.world.name)}</span>`
+      + (open
+        ? `<span class="wr-stars">${ws.got}/${ws.max} \u2b50</span>`
+          + (hier ? `<span class="lr-now">NU</span>`
+             : rest > 0 ? `<span class="wr-rest">nog ${rest}</span>` : `<span class="wr-vol">vol</span>`)
+        : `<span class="wr-slot">\ud83d\udd12</span>`)
+      + `</button>`;
+  }
+  const ov = document.createElement('div');
+  ov.className = 'career-overlay';
+  ov.innerHTML = `<div class="pop-panel career-panel">`
+    + `<button class="career-close" type="button" aria-label="Sluiten">\u2715</button>`
+    + `<div class="career-title">Waar wil je heen?</div>`
+    + `<div class="career-list">${rows}</div></div>`;
+  document.body.appendChild(ov);
+  const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 250); };
+  ov._close = close;
+  ov.onclick = e => {
+    if (e.target === ov || e.target.classList.contains('career-close')) return close();
+    const rij = e.target.closest && e.target.closest('[data-w]');
+    if (!rij) return;
+    sndClick();
+    viewWorldIdx = Number(rij.dataset.w);
+    renderMapTitle(P());
+    renderTourMap(0);
+    close();
+  };
+  requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
 }
 /* Bouwt de kaart van één wereld. travelFrom > 0 = de tussenstand vlak vóór de
    reis-animatie: de ster staat dan nog op de vorige halte en de nieuwe halte zit
@@ -4260,8 +4348,12 @@ function renderTourMap(travelFrom) {
   frame.className = 'world-frame';
   applyWorldArt(frame, shown.world);
   applyWorldTheme(frame, shown.world);
-  // ook op het vak eromheen: in liggende stand is dat de lucht naast de kolom
+  // ook op het vak eromheen: in liggende stand staat daar de wereld nog een keer,
+  // onscherp en donker, in plaats van het paars van de app
   applyWorldTheme(map, shown.world);
+  const scherm = $('screen-map');
+  applyWorldTheme(scherm, shown.world);
+  scherm.style.setProperty('--art', shown.world.art ? `url("${shown.world.art}")` : 'none');
 
   // De weg: één vloeiende curve door álle haltes, met het afgelegde stuk in goud
   // eroverheen. Getekend uit dezelfde percentages als de haltes, in de viewBox van
@@ -4273,16 +4365,23 @@ function renderTourMap(travelFrom) {
   svg.setAttribute('aria-hidden', 'true');
   const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
   const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
-  const bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
+  // drie lagen: een donkere onderlaag voor de leesbaarheid, het hele pad dof, en
+  // het afgelegde stuk in goud daar bovenop
+  const unPath = mkPath('tour-road-under'), bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
   const curve = shown.world.curve;
-  bgPath.setAttribute('d', roadD(pts, pts.length, curve));
+  const heleWeg = roadD(pts, pts.length, curve);
+  unPath.setAttribute('d', heleWeg);
+  bgPath.setAttribute('d', heleWeg);
   const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
   fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
+  svg.appendChild(unPath);
   svg.appendChild(bgPath);
   svg.appendChild(fgPath);
   frame.appendChild(svg);
   // pas mét de SVG in de opmaak kun je een pad opmeten, dus het streeppatroon hier
-  bgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, pts.length);
+  const heelPatroon = roadDashArray(svg, pts, curve, pts.length);
+  unPath.style.strokeDasharray = heelPatroon;
+  bgPath.style.strokeDasharray = heelPatroon;
   fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
 
   nodes.forEach((n, i) => {
@@ -4316,13 +4415,6 @@ function renderTourMap(travelFrom) {
   // als ze zelf al gekomen is -- nooit verder
   map.appendChild(frame);
 
-  /* De wereldknoppen buiten de kaart, in hun eigen laag tussen kop en balk. In het
-     kader stonden ze onder de kop en onder de navigatie -- zichtbaar noch
-     aanraakbaar -- en ze schuiven bovendien mee als de kaart scrolt. */
-  const steps = $('world-steps');
-  steps.innerHTML = '';
-  if (shown.index < cur.index) steps.appendChild(worldStepBtn('next', shown.index + 1));
-  if (shown.index > 0) steps.appendChild(worldStepBtn('prev', shown.index - 1));
   meetChroom();
 
   // Past de kaart niet in de vensterverhouding, dan schuift hij: zet de halte waar
@@ -4349,7 +4441,7 @@ function meetChroom() {
   if (nav) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
-addEventListener('resize', () => { if ($('world-steps')) meetChroom(); });
+addEventListener('resize', () => { if ($('screen-map')) meetChroom(); });
 // Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
 function starRowHTML(n) {
   const got = Math.max(0, Math.min(3, n));
@@ -8263,10 +8355,13 @@ function startMapEdit() {
     const pts = leesNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
     const c = leesCurve();
     const bg = frame.querySelector('.tour-road-bg'), fg = frame.querySelector('.tour-road-fg');
+    const un = frame.querySelector('.tour-road-under');
     const svg = frame.querySelector('.tour-road-svg');
     const tot = Math.min(pts.length, P().level - shown().first + 1);
     if (bg) { bg.setAttribute('d', roadD(pts, pts.length, c));
       bg.style.strokeDasharray = roadDashArray(svg, pts, c, pts.length); }
+    if (un) { un.setAttribute('d', roadD(pts, pts.length, c));
+      un.style.strokeDasharray = bg ? bg.style.strokeDasharray : ''; }
     if (fg) { fg.setAttribute('d', roadD(pts, tot, c));
       fg.style.strokeDasharray = roadDashArray(svg, pts, c, tot); }
   }
