@@ -7799,10 +7799,11 @@ function startMapEdit() {
         <input id="st-msg" placeholder="feat: IJswereld krijgt zijn kaart"></div>
       <div class="st-btns">
         <button id="st-commit">✓ testen, vastleggen &amp; pushen</button>
+        <button id="st-publish">🚀 publiceer naar main</button>
       </div>
-      <p class="st-hint">Gaat naar de wérkbranch, nooit naar main — en alleen als
-        <code>npm test</code> slaagt. Main blijft met de hand, want dat is wat er op
-        de telefoon draait.</p>
+      <p class="st-hint">Vastleggen gaat naar de wérkbranch. Publiceren voegt die samen
+        met main en dát is wat op de telefoon komt — in twee stappen, en alleen als
+        <code>npm test</code> slaagt.</p>
       <div class="st-uit" id="st-out"></div>
     </div>`;
   document.body.appendChild(panel);
@@ -8098,6 +8099,33 @@ function startMapEdit() {
       .catch(() => setOut('alleen via npm run preview'))
       .then(() => { knop.disabled = false; });
   };
+  /* Publiceren in twee stappen: eerst kijken wát er zou landen, dan pas doen. */
+  let publishKlaar = false;
+  F('st-publish').onclick = () => {
+    const knop = F('st-publish');
+    const fase = publishKlaar ? 'go' : 'kijk';
+    knop.disabled = true;
+    setOut(fase === 'go' ? 'testen draaien, daarna samenvoegen…' : 'kijken wat er zou landen…');
+    fetch('/publish', { method: 'POST', body: fase })
+      .then(r => r.text().then(txt => {
+        if (!r.ok) { setOut(txt); publishKlaar = false; knop.textContent = '🚀 publiceer naar main'; return; }
+        if (fase === 'go') {
+          setOut(txt);
+          publishKlaar = false;
+          knop.textContent = '🚀 publiceer naar main';
+          knop.classList.remove('prim');
+          return;
+        }
+        const m = /^KLAAR:(\d+)\n([\s\S]*)$/.exec(txt);
+        setOut(m ? m[2] : txt);
+        publishKlaar = true;
+        knop.textContent = '🚀 bevestig — ' + (m ? m[1] : '?') + ' naar main';
+        knop.classList.add('prim');
+      }))
+      .catch(() => setOut('alleen via npm run preview'))
+      .then(() => { knop.disabled = false; });
+  };
+
   F('st-copy').onclick = () => {
     const txt = worldsSource();
     dump.textContent = txt + '\n\n(tik om te sluiten)';
