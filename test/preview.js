@@ -52,8 +52,11 @@ function panel(state) {
     ? '<p class="warn">Onbekende naam, overgeslagen: ' + state.unknown.join(', ') +
       '<br>Gebruik: ' + Object.keys(scene.SLOTS).map(k => scene.SLOTS[k].hint.split(',')[0].trim()).join(' &middot; ') + '</p>'
     : '';
+  /* &mapedit blijft staan als je nu in de wereldstudio zit: zonder dat viel je er
+     met een tik op een schermlink uit, zonder weg terug. */
   const links = SCREENS.map(s =>
-    '<a href="?debug&demo&star=p1&screen=' + s[0] + '">' + s[1] + '</a>').join('');
+    '<a data-scherm href="?debug&demo&star=p1&screen=' + s[0] + '">' + s[1] + '</a>').join('')
+    + '<a href="?debug&demo&star=p1&screen=map&mapedit">Studio</a>';
   return `
 <style>
  #kandidaat{position:fixed;right:8px;bottom:8px;z-index:99999;max-width:270px;

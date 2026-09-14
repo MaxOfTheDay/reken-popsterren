@@ -2767,6 +2767,73 @@ function rebuildWorldStarts() {
   WORLD_LAST = n - 1;
 }
 rebuildWorldStarts();
+
+/* ---- Wereldconcept: bewaren, uitwisselen, wegschrijven -----------------------
+   Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen. Het
+   gewone spel draait dus altijd op wat er in WORLDS staat -- een half afgemaakte
+   wereld kan nooit bij een kind terechtkomen.
+
+   Van concept naar spel gaan kan op twee manieren:
+     Bewaar    schrijft het blok tussen WERELDEN-BEGIN/EINDE in index.html op
+               schijf. Werkt alleen via `npm run preview` (die server luistert
+               ernaar); daarna gewoon npm test, committen en pushen.
+     Kopieer   geeft hetzelfde blok als tekst, om zelf te plakken. Werkt overal,
+               ook op een telefoon en over file://.                            */
+const WORLD_DRAFT_KEY = 'rekenPopsterren_wereldconcept';
+/* Wat er ín het spel staat, zoals het uit index.html kwam -- vastgelegd vóór een
+   concept eroverheen gaat. Daarmee kan de studio laten zien wat er nog niet
+   doorgevoerd is, en een wereld terugdraaien naar de versie die kinderen spelen. */
+const WORLDS_SHIPPED = JSON.parse(JSON.stringify(WORLDS));
+function sameWorld(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+function applyWorldDraft(list) {
+  WORLDS.length = 0;
+  list.forEach(w => WORLDS.push(w));
+  rebuildWorldStarts();
+}
+function loadWorldDraft() {
+  try {
+    const raw = localStorage.getItem(WORLD_DRAFT_KEY);
+    if (!raw) return false;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || !list.length) return false;
+    if (!list.every(w => w && w.id && w.name && w.levels > 0)) return false;
+    applyWorldDraft(list);
+    return true;
+  } catch (e) { return false; }
+}
+function saveWorldDraft() {
+  try { localStorage.setItem(WORLD_DRAFT_KEY, JSON.stringify(WORLDS)); return true; }
+  catch (e) { return false; }
+}
+// De broncode van het blok, precies zoals het in index.html hoort te staan.
+function worldsSource() {
+  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+  const body = WORLDS.map(w => {
+    const L = ['  {'];
+    L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
+    if (w.art) L.push(`    art: ${q(w.art)},`);
+    if (w.badge && (w.badge.emoji || w.badge.name)) {
+      L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
+    }
+    if (w.theme && Object.keys(w.theme).length) {
+      L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
+    }
+    if (w.nodes && w.nodes.length) {
+      L.push('    nodes: [');
+      w.nodes.forEach(n => L.push(`      { x: ${(+n.x).toFixed(1)}, y: ${(+n.y).toFixed(1)} },`));
+      L.push('    ],');
+    }
+    if (w.curve && w.curve.length) {
+      L.push('    curve: [');
+      w.curve.forEach(c => L.push(`      { x: ${(+c.x).toFixed(1)}, y: ${(+c.y).toFixed(1)} },`));
+      L.push('    ],');
+    }
+    L.push('  },');
+    return L.join('\n');
+  }).join('\n');
+  return 'const WORLDS = [\n' + body + '\n];';
+}
 // In welke wereld valt dit level? Geeft nooit undefined terug -- voorbij de
 // geschreven werelden komt er een genummerde Sterrentournee uit.
 function worldFor(lvl) {
@@ -3849,27 +3916,50 @@ const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
    waar ze staan -- ook als ze straks met de hand op de richels van een tekening
    gezet zijn -- maar de weg ertussen bolt. */
 const ROAD_BOW = 0.17;
-function roadPoints(pts) {
+// Waar het stuurpunt van stuk i vanzelf komt te liggen: loodrecht op dat stuk,
+// om en om naar links en rechts, en binnen het kader geklemd.
+function defaultControl(a, b, i) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const s = (i % 2 ? 1 : -1) * ROAD_BOW * len;
+  return {
+    x: Math.max(VB_W * .05, Math.min(VB_W * .95, (a.x + b.x) / 2 + (-dy / len) * s)),
+    y: Math.max(VB_H * .03, Math.min(VB_H * .97, (a.y + b.y) / 2 + (dx / len) * s)),
+  };
+}
+/* De punten waar de weg doorheen loopt: halte, stuurpunt, halte, stuurpunt, ...
+   `curve` is de eigen stuurpuntenlijst van een wereld (percentages, net als de
+   haltes) en heeft er één minder dan er haltes zijn. Ontbreekt hij, dan wordt
+   elk stuurpunt berekend -- zo werkt een wereld zonder dat er iets ingesteld is,
+   en kun je in de studio alsnog elk stuk apart om een rots heen buigen. */
+function roadPoints(pts, curve) {
   if (pts.length < 2) return pts;
   const out = [pts[0]];
   for (let i = 0; i < pts.length - 1; i++) {
-    const a = pts[i], b = pts[i + 1];
-    const dx = b.x - a.x, dy = b.y - a.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const s = (i % 2 ? 1 : -1) * ROAD_BOW * len;
-    // binnen het kader houden: een bocht mag nooit de rand uit lopen
-    out.push({
-      x: Math.max(VB_W * .05, Math.min(VB_W * .95, (a.x + b.x) / 2 + (-dy / len) * s)),
-      y: Math.max(VB_H * .03, Math.min(VB_H * .97, (a.y + b.y) / 2 + (dx / len) * s)),
-    });
-    out.push(b);
+    const c = curve && curve[i]
+      ? { x: vbx(curve[i].x), y: vby(curve[i].y) }
+      : defaultControl(pts[i], pts[i + 1], i);
+    out.push(c);
+    out.push(pts[i + 1]);
   }
   return out;
 }
 // De d van de weg tot en met de zoveelste halte (gebruikt voor zowel het hele
 // pad als het afgelegde gouden stuk, zodat die twee gegarandeerd samenvallen).
-function roadD(pts, count) {
-  return count >= 2 ? smoothPath(roadPoints(pts.slice(0, count))) : '';
+function roadD(pts, count, curve) {
+  return count >= 2 ? smoothPath(roadPoints(pts.slice(0, count), curve)) : '';
+}
+// De stuurpunten van een wereld in percentages -- berekend waar ze niet gezet zijn.
+function worldCurve(w) {
+  const pts = worldNodes(w).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const own = w.world.curve || [];
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const c = own[i] ? { x: own[i].x, y: own[i].y }
+      : (d => ({ x: d.x / VB_W * 100, y: d.y / VB_H * 100 }))(defaultControl(pts[i], pts[i + 1], i));
+    out.push(c);
+  }
+  return out;
 }
 
 function updateParallax() { /* de kaart scrollt niet meer; de lucht staat stil */ }
@@ -4064,9 +4154,10 @@ function renderTourMap(travelFrom) {
   const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
   const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
   const bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
-  bgPath.setAttribute('d', roadD(pts, pts.length));
+  const curve = shown.world.curve;
+  bgPath.setAttribute('d', roadD(pts, pts.length, curve));
   const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
-  fgPath.setAttribute('d', roadD(pts, lastOpen + 1));
+  fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
   svg.appendChild(bgPath);
   svg.appendChild(fgPath);
   frame.appendChild(svg);
@@ -4130,11 +4221,11 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
   const pts = worldNodes(shown).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
   const fromIdx = fromLvl - shown.first, toIdx = toLvl - shown.first;
   if (fromIdx < 0 || toIdx <= 0 || toIdx >= pts.length) return null;
-  fg.setAttribute('d', roadD(pts, toIdx + 1));
+  fg.setAttribute('d', roadD(pts, toIdx + 1, shown.world.curve));
   const total = fg.getTotalLength();
   // lengte tot de oude halte: even hetzelfde pad opmeten, ingekort
   const probe = fg.cloneNode();
-  probe.setAttribute('d', roadD(pts, fromIdx + 1));
+  probe.setAttribute('d', roadD(pts, fromIdx + 1, shown.world.curve));
   svg.appendChild(probe);
   const covered = fromIdx > 0 ? probe.getTotalLength() : 0;
   probe.remove();
@@ -7504,204 +7595,214 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (dbg.has('mapedit') && cur) startMapEdit();
 }
-/* ---- Wereldconcept: bewaren, uitwisselen, wegschrijven -----------------------
-   Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen. Het
-   gewone spel draait dus altijd op wat er in WORLDS staat -- een half afgemaakte
-   wereld kan nooit bij een kind terechtkomen.
-
-   Van concept naar spel gaan kan op twee manieren:
-     Bewaar    schrijft het blok tussen WERELDEN-BEGIN/EINDE in index.html op
-               schijf. Werkt alleen via `npm run preview` (die server luistert
-               ernaar); daarna gewoon npm test, committen en pushen.
-     Kopieer   geeft hetzelfde blok als tekst, om zelf te plakken. Werkt overal,
-               ook op een telefoon en over file://.                            */
-const WORLD_DRAFT_KEY = 'rekenPopsterren_wereldconcept';
-
-function applyWorldDraft(list) {
-  WORLDS.length = 0;
-  list.forEach(w => WORLDS.push(w));
-  rebuildWorldStarts();
-}
-function loadWorldDraft() {
-  try {
-    const raw = localStorage.getItem(WORLD_DRAFT_KEY);
-    if (!raw) return false;
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list) || !list.length) return false;
-    if (!list.every(w => w && w.id && w.name && w.levels > 0)) return false;
-    applyWorldDraft(list);
-    return true;
-  } catch (e) { return false; }
-}
-function saveWorldDraft() {
-  try { localStorage.setItem(WORLD_DRAFT_KEY, JSON.stringify(WORLDS)); return true; }
-  catch (e) { return false; }
-}
-// De broncode van het blok, precies zoals het in index.html hoort te staan.
-function worldsSource() {
-  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
-  const body = WORLDS.map(w => {
-    const L = ['  {'];
-    L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
-    if (w.art) L.push(`    art: ${q(w.art)},`);
-    if (w.badge && (w.badge.emoji || w.badge.name)) {
-      L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
-    }
-    if (w.theme && Object.keys(w.theme).length) {
-      L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
-    }
-    if (w.nodes && w.nodes.length) {
-      L.push('    nodes: [');
-      w.nodes.forEach(n => L.push(`      { x: ${(+n.x).toFixed(1)}, y: ${(+n.y).toFixed(1)} },`));
-      L.push('    ],');
-    }
-    L.push('  },');
-    return L.join('\n');
-  }).join('\n');
-  return 'const WORLDS = [\n' + body + '\n];';
-}
-
 /* ---- Wereldstudio (?debug&mapedit) ------------------------------------------
-   Haltes verslepen over de échte kaart, op ware grootte, met de tekening eronder.
-   Bestaat omdat de haltes op de richels van een tekening moeten landen, en dat is
-   het enige in een wereldpakket dat je niet met de hand kunt uitrekenen -- de rest
-   is vijf kleuren en een naam intypen.
+   Werelden maken en bijwerken óp de echte kaart, op ware grootte.
 
-   Bewust géén opslag, geen bestand schrijven, geen eigen scherm: je sleept, je
-   drukt op Kopieer, en je plakt het resultaat in WORLDS. Dit hele blok staat
-   binnen de ?debug-schakelaar en bestaat dus niet in het gewone spel.
+   Drie dingen die je in de code niet fatsoenlijk kunt doen:
+     - haltes op de richels van een tekening zetten (percentages schatten lukt niet)
+     - de weg dáár langs laten lopen: elk stuk heeft een eigen stuurpunt, dus je
+       kunt om een rots heen buigen in plaats van eroverheen
+     - zien wat er nog níét in het spel staat, en het er in één tik in zetten
 
-   Een kandidaat-tekening laden kan hier rechtstreeks (📷), of -- handiger als je
-   er meer achter elkaar beoordeelt -- via incoming/ + `npm run preview`; zie de
-   slot 'world' in test/scene.js.                                              */
+   Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen: het
+   gewone spel draait altijd op WORLDS uit index.html, dus een half afgemaakte
+   wereld kan nooit bij een kind terechtkomen.                                  */
 function startMapEdit() {
   const map = $('tour-map');
+  const F = id => document.getElementById(id);
   document.body.classList.add('mapedit');
+
+  /* De voorvertoningsserver zet rechtsonder zijn eigen paneeltje neer met links
+     naar de schermen. Die links dragen ?debug&demo&star=p1&screen=... en dus géén
+     &mapedit -- één tik erop en de studio was weg zonder weg terug. */
+  document.querySelectorAll('#kandidaat nav a').forEach(a => {
+    if (a.getAttribute('href').indexOf('mapedit') < 0) a.href = a.getAttribute('href') + '&mapedit';
+  });
 
   const st = document.createElement('style');
   st.textContent = `
-    body.mapedit .main-nav, body.mapedit .mem-fab { display: none !important; }
-    body.mapedit .tour-hero { display: none; }
+    body.mapedit .main-nav, body.mapedit .mem-fab, body.mapedit .tour-hero { display: none !important; }
+    /* In de studio krijgt de kaart telefoon-verhoudingen. Op een breed scherm zou
+       hij anders in de kolom-noodstand vallen, en dan zet je haltes neer op een
+       vorm die geen enkel kind ooit ziet. */
+    body.mapedit #screen-map { padding-right: var(--studio-w, 0px); }
+    body.mapedit #tour-map { left: 24px; right: auto; width: min(430px, 60vw);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 10px 40px rgba(0,0,0,.45); }
+    /* De kolom-noodstand kijkt naar het vénster, niet naar dit vak -- op een breed
+       bureaublad zou hij dus altijd aanslaan. Hier staat hij uit: het vak heeft al
+       telefoon-verhoudingen, dus full-bleed is precies wat een kind straks ziet. */
+    body.mapedit #tour-map { overflow: hidden; align-items: center; padding: 0; }
+    body.mapedit .world-frame { min-width: 100%; min-height: 100%; width: auto; }
+    body.mapedit .hub-sticky { max-width: min(430px, 60vw); margin-left: 24px; }
+    @media (max-width: 820px) {
+      body.mapedit #tour-map { left: 0; width: 100%; box-shadow: none; }
+      body.mapedit .hub-sticky { max-width: none; margin-left: 0; }
+    }
     body.mapedit .tour-stop { cursor: grab; }
     body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
-    #mapedit-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
-      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-      padding: 8px 10px; background: rgba(10,2,20,.94); color: #fff;
-      font: 600 12px/1.15 system-ui, sans-serif; }
-    #mapedit-bar button, #mapedit-bar label, #mapedit-bar select {
-      font: inherit; color: #fff; background: rgba(255,255,255,.13);
-      border: 1px solid rgba(255,255,255,.3); border-radius: 8px;
-      padding: 6px 9px; cursor: pointer; }
-    #mapedit-bar button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
-    #me-out { margin-left: auto; font-weight: 400; opacity: .9;
-      font-family: ui-monospace, monospace; white-space: nowrap; }
-    #me-dump { position: fixed; inset: 10% 6% auto; z-index: 61; display: none;
-      max-height: 60vh; padding: 12px; border-radius: 10px;
-      background: #140426; color: #d8ffe8; border: 1px solid rgba(255,255,255,.3);
-      font: 12px/1.45 ui-monospace, monospace; white-space: pre; overflow: auto; }
-    /* raster in procenten van hét kader, dus precies het stelsel waarin je typt */
+    /* stuurpunt van één stuk weg: klein, ruitvormig, duidelijk iets ánders dan een halte */
+    .me-ctrl { position: absolute; width: 7cqw; height: 7cqw; margin: -3.5cqw 0 0 -3.5cqw;
+      z-index: 4; cursor: grab; border-radius: 3px; transform: rotate(45deg);
+      background: rgba(120,255,180,.35); border: 0.5cqw solid rgba(120,255,180,.95); }
+    .me-ctrl:active { cursor: grabbing; background: rgba(120,255,180,.7); }
+    body.mapedit.nocurve .me-ctrl { display: none; }
+
+    #studio { position: fixed; top: 0; right: 0; bottom: 0; width: 330px; z-index: 60;
+      display: flex; flex-direction: column; overflow: hidden;
+      background: #140a22; color: #f2ecfa; border-left: 1px solid rgba(255,255,255,.18);
+      font: 400 13px/1.35 system-ui, sans-serif; }
+    #studio.dicht { width: 44px; }
+    #studio.dicht > *:not(.st-top) { display: none; }
+    #studio .st-top { display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.14); }
+    #studio .st-top b { flex: 1; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+    #studio.dicht .st-top b, #studio.dicht .st-top .st-chip { display: none; }
+    #studio .st-body { flex: 1; overflow: auto; padding: 4px 12px 12px; }
+    #studio h6 { margin: 14px 0 6px; font-size: 10.5px; letter-spacing: .12em;
+      text-transform: uppercase; color: #b79ae0; }
+    #studio .st-chip { font-size: 10.5px; padding: 2px 7px; border-radius: 99px;
+      background: rgba(255,255,255,.12); white-space: nowrap; }
+    #studio .st-chip.vuil { background: rgba(255,196,61,.22); color: #ffd98a; }
+    #studio .st-chip.schoon { background: rgba(120,255,180,.18); color: #b6ffd6; }
+    #studio button, #studio input, #studio select {
+      font: inherit; color: #fff; background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.22); border-radius: 7px; padding: 6px 9px; }
+    #studio button { cursor: pointer; }
+    #studio button:hover { background: rgba(255,255,255,.18); }
+    #studio button.prim { background: rgba(120,255,180,.2); border-color: rgba(120,255,180,.55); font-weight: 600; }
+    #studio button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
+    #studio .st-row { display: grid; grid-template-columns: 74px 1fr; gap: 6px; align-items: center; margin-bottom: 6px; }
+    #studio .st-row label { color: #b79ae0; font-size: 12px; }
+    #studio .st-row input { width: 100%; min-width: 0; }
+    #studio .st-kleur { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    #studio .st-kleur div { text-align: center; font-size: 10.5px; color: #b79ae0; }
+    #studio .st-kleur input { width: 100%; height: 28px; padding: 2px; }
+    #studio .st-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    #studio .st-list { display: flex; flex-direction: column; gap: 3px; }
+    #studio .st-w { display: flex; align-items: center; gap: 7px; padding: 6px 8px; cursor: pointer;
+      border-radius: 7px; border: 1px solid transparent; background: rgba(255,255,255,.05); text-align: left; }
+    #studio .st-w.sel { border-color: rgba(120,255,180,.6); background: rgba(120,255,180,.12); }
+    #studio .st-w .st-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #studio .st-w .st-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.2); }
+    #studio .st-w .st-dot.vuil { background: #ffc43d; }
+    #studio .st-w .st-dot.nieuw { background: #7dffb4; }
+    #studio .st-hint { color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
+    #studio .st-uit { margin-top: 8px; font: 11.5px ui-monospace, monospace; color: #b6ffd6; min-height: 15px; }
+    #me-dump { position: fixed; inset: 8% 360px auto 6%; z-index: 61; display: none;
+      max-height: 70vh; padding: 12px; border-radius: 10px; background: #140426; color: #d8ffe8;
+      border: 1px solid rgba(255,255,255,.3); font: 12px/1.45 ui-monospace, monospace;
+      white-space: pre; overflow: auto; }
     .me-grid { position: absolute; inset: 0; z-index: 2; pointer-events: none;
       background-image:
-        repeating-linear-gradient(90deg, rgba(255,255,255,.20) 0 1px, transparent 1px 10%),
-        repeating-linear-gradient(180deg, rgba(255,255,255,.20) 0 1px, transparent 1px 10%); }
-    /* de veilige zone: hierbuiten knipt cover een halte weg op smalle of korte
-       schermen, en liggen kop en navigatie eroverheen */
-    .me-safe { position: absolute; left: 6%; right: 6%; top: 14%; bottom: 14%;
-      z-index: 2; pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }
-    #me-sheet { position: fixed; left: 0; right: 0; bottom: 42px; z-index: 59; display: none;
-      grid-template-columns: auto 1fr auto 1fr; gap: 6px 8px; align-items: center;
-      padding: 10px; background: rgba(10,2,20,.96); color: #fff;
-      font: 400 12px/1.2 system-ui, sans-serif; border-top: 1px solid rgba(255,255,255,.2); }
-    #me-sheet.open { display: grid; }
-    #me-sheet label { opacity: .7; text-align: right; }
-    #me-sheet input { width: 100%; min-width: 0; font: inherit; color: #fff; padding: 5px 7px;
-      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); border-radius: 6px; }
-    #me-sheet input[type=color] { padding: 2px; height: 26px; }
-    #me-sheet .me-wide { grid-column: 2 / -1; }
-    #me-sheet .me-note { grid-column: 1 / -1; opacity: .6; font-size: 11px; }`;
+        repeating-linear-gradient(90deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%); }
+    .me-safe { position: absolute; left: 6%; right: 6%; top: 14%; bottom: 14%; z-index: 2;
+      pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }
+    @media (max-width: 820px) {
+      #studio { top: auto; left: 0; width: auto; max-height: 56vh; border-left: 0;
+        border-top: 1px solid rgba(255,255,255,.18); }
+      #studio.dicht { width: auto; max-height: 44px; }
+      body.mapedit #screen-map { padding-right: 0; }
+      #me-dump { inset: 6% 6% auto; }
+    }`;
   document.head.appendChild(st);
 
-  const bar = document.createElement('div');
-  bar.id = 'mapedit-bar';
-  bar.innerHTML = `<select id="me-world" title="Welke wereld"></select>
-    <button id="me-edit" title="Wereldgegevens">✎</button>
-    <label title="Kandidaat-tekening laden (blijft alleen in dit tabblad)">📷<input type="file" accept="image/*" hidden id="me-file"></label>
-    <button id="me-grid" title="Raster + veilige zone">▦</button>
-    <button id="me-new" title="Wereld erbij (achteraan)">＋</button>
-    <button id="me-save" title="Schrijf WORLDS naar index.html (alleen via npm run preview)">Bewaar</button>
-    <button id="me-copy" title="Het hele WORLDS-blok als tekst">Kopieer</button>
-    <button id="me-paste" title="Een blok terugzetten">Plak</button>
-    <button id="me-reset" title="Haltes terug naar de reserve-slinger">↺</button>
-    <span id="me-out">sleep een halte</span>`;
-  document.body.appendChild(bar);
+  const panel = document.createElement('div');
+  panel.id = 'studio';
+  panel.innerHTML = `
+    <div class="st-top">
+      <b>Wereldstudio</b>
+      <span class="st-chip" id="st-status">—</span>
+      <button id="st-fold" title="In-/uitklappen">⇥</button>
+    </div>
+    <div class="st-body">
+      <h6>Werelden</h6>
+      <div class="st-list" id="st-list"></div>
+      <div class="st-btns" style="margin-top:6px">
+        <button id="st-new">＋ wereld</button>
+        <button id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
+      </div>
 
-  /* Het definitie-blad. Alles wat een wereld is behalve de haltes: hoe hij heet,
-     welke kleuren hij meebrengt, welke tekening en welke badge. Levels staat er
-     bewust grijs bij -- dat aantal veranderen hernummert alle levels erna, en dan
-     verhuizen de sterren van een kind naar een andere wereld. */
-  const sheet = document.createElement('div');
-  sheet.id = 'me-sheet';
-  sheet.innerHTML = `
-    <label>icoon</label><input id="mf-icon" maxlength="4">
-    <label>naam</label><input id="mf-name">
-    <label>badge</label><input id="mf-bemoji" maxlength="4">
-    <label>badgenaam</label><input id="mf-bname">
-    <label>tekening</label><input id="mf-art" class="me-wide" placeholder="assets/world/ijs-map.webp">
-    <label>lucht</label><input id="mf-sky" type="color">
-    <label>diepte</label><input id="mf-deep" type="color">
-    <label>accent</label><input id="mf-accent" type="color">
-    <label>gloed</label><input id="mf-glow" type="color">
-    <div class="me-note">levels: <b id="mf-levels"></b> — vastgezet. Dit aantal wijzigen hernummert elk level erna, en dan verhuizen de sterren van een kind naar een andere wereld.</div>`;
-  document.body.appendChild(sheet);
+      <h6>Deze wereld</h6>
+      <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
+      <div class="st-row"><label>naam</label><input id="mf-name"></div>
+      <div class="st-row"><label>badge</label><input id="mf-bemoji" maxlength="4"></div>
+      <div class="st-row"><label>badgenaam</label><input id="mf-bname"></div>
+      <div class="st-row"><label>tekening</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
+      <div class="st-kleur">
+        <div>lucht<input id="mf-sky" type="color"></div>
+        <div>diepte<input id="mf-deep" type="color"></div>
+        <div>accent<input id="mf-accent" type="color"></div>
+        <div>gloed<input id="mf-glow" type="color"></div>
+      </div>
+      <p class="st-hint">levels: <b id="mf-levels"></b> — vast. Dit wijzigen hernummert elk level erna,
+        en dan verhuizen de sterren van een kind naar een andere wereld.</p>
+
+      <h6>Kaart &amp; weg</h6>
+      <div class="st-btns">
+        <label class="st-btnlike"><button type="button" id="st-pick">📷 tekening</button></label>
+        <input type="file" accept="image/*" hidden id="me-file">
+        <button id="st-grid">▦ raster</button>
+        <button id="st-curve" class="on">∿ stuurpunten</button>
+      </div>
+      <div class="st-btns" style="margin-top:6px">
+        <button id="st-renodes">↺ haltes</button>
+        <button id="st-recurve">↺ weg</button>
+      </div>
+      <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
+        om de weg langs de tekening te leiden. Eén ruitje per stuk weg.</p>
+
+      <h6>Naar het spel</h6>
+      <div class="st-btns">
+        <button class="prim" id="st-push">⇪ Zet in het spel</button>
+        <button id="st-pull" title="Concept weggooien en terug naar index.html">⟲ Ophalen</button>
+      </div>
+      <div class="st-btns" style="margin-top:6px">
+        <button id="st-copy">Kopieer</button>
+        <button id="st-paste">Plak</button>
+      </div>
+      <div class="st-uit" id="st-out"></div>
+    </div>`;
+  document.body.appendChild(panel);
   const dump = document.createElement('pre');
   dump.id = 'me-dump';
   dump.onclick = () => { dump.style.display = 'none'; };
   document.body.appendChild(dump);
+  document.documentElement.style.setProperty('--studio-w', '330px');
 
-  const sel = $('me-world');
-  WORLDS.forEach((w, i) => sel.appendChild(new Option(`${w.icon} ${w.name}`, i)));
   const shown = () => worldForIndex(viewWorldIdx);
-  const setOut = t => { $('me-out').textContent = t; };
+  const setOut = t => { F('st-out').textContent = t || ''; };
+  let gridOn = false, curveOn = true;
 
-  // Eigen haltelijst, zodat er iets te verslepen ís: een wereld zonder `nodes`
-  // draait op de gedeelde reserve-slinger, en die mag je niet muteren.
-  function ownNodes() {
-    const w = shown().world;
-    if (!w.nodes || w.nodes.length !== shown().levels) {
-      w.nodes = worldNodes(shown()).map(n => ({ x: n.x, y: n.y }));
-    }
-    return w.nodes;
+  // ---------------------------------------------------------------- status
+  function shippedFor(id) { return WORLDS_SHIPPED.filter(w => w.id === id)[0]; }
+  function worldState(w) {
+    const ship = shippedFor(w.id);
+    if (!ship) return 'nieuw';
+    return sameWorld(ship, w) ? 'gelijk' : 'vuil';
   }
-  function redrawRoad() {
-    const frame = map.querySelector('.world-frame');
-    if (!frame) return;
-    const pts = ownNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
-    const bg = frame.querySelector('.tour-road-bg');
-    const fg = frame.querySelector('.tour-road-fg');
-    if (bg) bg.setAttribute('d', roadD(pts, pts.length));
-    if (fg) fg.setAttribute('d', roadD(pts, Math.min(pts.length, P().level - shown().first + 1)));
+  function refreshStatus() {
+    const vuil = WORLDS.filter(w => worldState(w) !== 'gelijk').length;
+    const chip = F('st-status');
+    chip.textContent = vuil ? vuil + ' niet doorgevoerd' : 'gelijk aan het spel';
+    chip.className = 'st-chip ' + (vuil ? 'vuil' : 'schoon');
   }
-  let gridOn = false;
-  function decorate() {
-    const frame = map.querySelector('.world-frame');
-    if (!frame || !gridOn) return;
-    ['me-grid', 'me-safe'].forEach(c => {
-      const d = document.createElement('div'); d.className = c; frame.appendChild(d);
+  function refreshList() {
+    const list = F('st-list');
+    list.innerHTML = '';
+    WORLDS.forEach((w, i) => {
+      const b = document.createElement('button');
+      b.className = 'st-w' + (i === viewWorldIdx ? ' sel' : '');
+      const state = worldState(w);
+      b.innerHTML = `<span>${w.icon || '·'}</span><span class="st-nm">${esc(w.name)}</span>`
+        + `<span class="st-dot ${state === 'gelijk' ? '' : state}" title="${state}"></span>`;
+      b.onclick = () => goWorld(i);
+      list.appendChild(b);
     });
+    refreshStatus();
   }
-  // elke hertekening opnieuw versieren -- renderTourMap bouwt het kader opnieuw op
-  const baseRender = renderTourMap;
-  renderTourMap = function () { baseRender.apply(null, arguments); decorate(); };
 
-  function goWorld(i) {
-    viewWorldIdx = i;
-    // een geloofwaardige tussenstand: een paar gespeeld, hier sta je, rest op slot
-    P().level = worldForIndex(i).first + 3;
-    renderCareerStrip(P());
-    renderTourMap(0);
-  }
-  // ---- definitie-blad: velden <-> wereld, en elke wijziging meteen in beeld
-  const F = id => document.getElementById(id);
+  // ---------------------------------------------------------------- velden
   const HEX = { sky: '#3d1a63', deep: '#2a0c47', accent: '#8be9ff', glow: '#ffd880' };
   function fillSheet() {
     const w = shown().world;
@@ -7711,9 +7812,7 @@ function startMapEdit() {
     F('mf-bname').value = (w.badge && w.badge.name) || '';
     F('mf-art').value = (w.art && w.art.indexOf('blob:') !== 0) ? w.art : '';
     F('mf-levels').textContent = w.levels;
-    Object.keys(HEX).forEach(k => {
-      F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k];
-    });
+    Object.keys(HEX).forEach(k => { F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k]; });
   }
   function readSheet() {
     const w = shown().world;
@@ -7729,60 +7828,120 @@ function startMapEdit() {
       if (v && v.toLowerCase() !== HEX[k]) w.theme[k] = v;
     });
     if (!Object.keys(w.theme).length) delete w.theme;
+    commit('');
+  }
+  panel.querySelectorAll('.st-row input, .st-kleur input').forEach(i => { i.onchange = readSheet; });
+
+  // ---------------------------------------------------------------- tekenen
+  function ownNodes() {
+    const w = shown().world;
+    if (!w.nodes || w.nodes.length !== shown().levels) {
+      w.nodes = worldNodes(shown()).map(n => ({ x: n.x, y: n.y }));
+    }
+    return w.nodes;
+  }
+  function ownCurve() {
+    const w = shown().world;
+    if (!w.curve || w.curve.length !== shown().levels - 1) w.curve = worldCurve(shown());
+    return w.curve;
+  }
+  function redrawRoad() {
+    const frame = map.querySelector('.world-frame');
+    if (!frame) return;
+    const pts = ownNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+    const c = shown().world.curve;
+    const bg = frame.querySelector('.tour-road-bg'), fg = frame.querySelector('.tour-road-fg');
+    if (bg) bg.setAttribute('d', roadD(pts, pts.length, c));
+    if (fg) fg.setAttribute('d', roadD(pts, Math.min(pts.length, P().level - shown().first + 1), c));
+  }
+  function decorate() {
+    const frame = map.querySelector('.world-frame');
+    if (!frame) return;
+    if (gridOn) ['me-grid', 'me-safe'].forEach(c => {
+      const d = document.createElement('div'); d.className = c; frame.appendChild(d);
+    });
+    ownCurve().forEach((c, i) => {
+      const h = document.createElement('div');
+      h.className = 'me-ctrl';
+      h.dataset.ctrl = i;
+      h.style.left = c.x + '%';
+      h.style.top = c.y + '%';
+      h.title = 'weg tussen halte ' + (i + 1) + ' en ' + (i + 2);
+      frame.appendChild(h);
+    });
+  }
+  const baseRender = renderTourMap;
+  renderTourMap = function () { baseRender.apply(null, arguments); decorate(); };
+
+  // elke wijziging: bewaren, opnieuw tekenen, lijst en status bijwerken
+  function commit(msg) {
     saveWorldDraft();
     renderCareerStrip(P());
     renderTourMap(0);
+    refreshList();
     fillSheet();
+    if (msg !== undefined) setOut(msg);
   }
-  sheet.querySelectorAll('input').forEach(i => { i.onchange = readSheet; });
-  F('me-edit').onclick = e => { sheet.classList.toggle('open'); e.target.classList.toggle('on', sheet.classList.contains('open')); };
+  function goWorld(i) {
+    viewWorldIdx = i;
+    P().level = worldForIndex(i).first + 3;   // geloofwaardige tussenstand
+    commit('');
+  }
 
-  F('me-new').onclick = () => {
+  // ---------------------------------------------------------------- knoppen
+  F('st-fold').onclick = () => {
+    panel.classList.toggle('dicht');
+    document.documentElement.style.setProperty('--studio-w', panel.classList.contains('dicht') ? '44px' : '330px');
+  };
+  F('st-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); commit(); };
+  F('st-curve').onclick = e => {
+    curveOn = !curveOn;
+    document.body.classList.toggle('nocurve', !curveOn);
+    e.target.classList.toggle('on', curveOn);
+  };
+  F('st-renodes').onclick = () => { delete shown().world.nodes; commit('haltes terug naar de slinger'); };
+  F('st-recurve').onclick = () => { delete shown().world.curve; commit('weg terug naar de vanzelf-bocht'); };
+  F('st-pick').onclick = () => F('me-file').click();
+  F('me-file').onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    // blob: leeft alleen in dit tabblad; voor iets blijvends hoort er een pad in 'tekening'
+    shown().world.art = URL.createObjectURL(f);
+    commit(f.name + ' — tijdelijk, vul een pad in');
+  };
+  F('st-new').onclick = () => {
     const n = WORLDS.length + 1;
     WORLDS.push({ id: 'wereld' + n, name: 'Wereld ' + n, icon: '✨', levels: 8 });
     rebuildWorldStarts();
-    saveWorldDraft();
-    sel.innerHTML = '';
-    WORLDS.forEach((w, i) => sel.appendChild(new Option(`${w.icon} ${w.name}`, i)));
-    sel.value = String(WORLDS.length - 1);
     goWorld(WORLDS.length - 1);
     setOut('wereld ' + n + ' erbij');
   };
-  F('me-save').onclick = () => {
+  F('st-revert').onclick = () => {
+    const ship = shippedFor(shown().world.id);
+    if (!ship) { setOut('deze wereld staat nog niet in het spel'); return; }
+    WORLDS[viewWorldIdx] = JSON.parse(JSON.stringify(ship));
+    rebuildWorldStarts();
+    commit('teruggezet naar het spel');
+  };
+  F('st-pull').onclick = () => {
+    localStorage.removeItem(WORLD_DRAFT_KEY);
+    applyWorldDraft(JSON.parse(JSON.stringify(WORLDS_SHIPPED)));
+    viewWorldIdx = Math.min(viewWorldIdx, WORLDS.length - 1);
+    commit('concept weg — dit is wat er in het spel staat');
+  };
+  F('st-push').onclick = () => {
     saveWorldDraft();
     fetch('/werelden', { method: 'POST', body: worldsSource() })
-      .then(r => r.text().then(t => setOut(r.ok ? 'in index.html geschreven' : 'mislukt: ' + t)))
-      .catch(() => setOut('Bewaar werkt alleen via npm run preview — gebruik Kopieer'));
+      .then(r => r.text().then(t => {
+        if (!r.ok) return setOut('mislukt: ' + t);
+        WORLDS_SHIPPED.length = 0;
+        JSON.parse(JSON.stringify(WORLDS)).forEach(w => WORLDS_SHIPPED.push(w));
+        refreshList();
+        setOut('in index.html gezet — nu npm test, committen, pushen');
+      }))
+      .catch(() => setOut('alleen via npm run preview — gebruik anders Kopieer'));
   };
-  F('me-paste').onclick = () => {
-    const txt = prompt('Plak hier een WORLDS-blok of de JSON-lijst:');
-    if (!txt) return;
-    try {
-      const m = /\[[\s\S]*\]/.exec(txt);
-      if (!m) throw new Error('geen lijst gevonden');
-      const list = (new Function('return (' + m[0] + ')'))();
-      if (!Array.isArray(list) || !list.every(w => w && w.id && w.levels > 0)) throw new Error('geen geldige werelden');
-      applyWorldDraft(list);
-      saveWorldDraft();
-      sel.innerHTML = '';
-      WORLDS.forEach((w, i) => sel.appendChild(new Option(`${w.icon} ${w.name}`, i)));
-      sel.value = '0'; goWorld(0); fillSheet();
-      setOut(list.length + ' werelden ingelezen');
-    } catch (e) { setOut('niet gelukt: ' + e.message); }
-  };
-  sel.onchange = () => { goWorld(+sel.value); fillSheet(); };
-  $('me-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); renderTourMap(0); };
-  $('me-reset').onclick = () => { delete shown().world.nodes; saveWorldDraft(); renderTourMap(0); setOut('reserve-slinger terug'); };
-  $('me-file').onchange = e => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    // blob: leeft alleen in dit tabblad -- het concept bewaart hem dus niet. Voor
-    // iets wat een herlaad overleeft hoort er een pad in het veld 'tekening'.
-    shown().world.art = URL.createObjectURL(f);
-    renderTourMap(0);
-    setOut(f.name + ' (tijdelijk — vul een pad in voor blijvend)');
-  };
-  $('me-copy').onclick = () => {
+  F('st-copy').onclick = () => {
     const txt = worldsSource();
     dump.textContent = txt + '\n\n(tik om te sluiten)';
     dump.style.display = 'block';
@@ -7790,17 +7949,34 @@ function startMapEdit() {
     catch (_) { setOut('zie het venster'); }
     console.log(txt);
   };
+  F('st-paste').onclick = () => {
+    const txt = prompt('Plak een WORLDS-blok of de JSON-lijst:');
+    if (!txt) return;
+    try {
+      const m = /\[[\s\S]*\]/.exec(txt);
+      if (!m) throw new Error('geen lijst gevonden');
+      const list = (new Function('return (' + m[0] + ')'))();
+      if (!Array.isArray(list) || !list.every(w => w && w.id && w.levels > 0)) throw new Error('geen geldige werelden');
+      applyWorldDraft(list);
+      viewWorldIdx = 0;
+      goWorld(0);
+      setOut(list.length + ' werelden ingelezen');
+    } catch (e) { setOut('niet gelukt: ' + e.message); }
+  };
 
-  // ---- verslepen. Capture-fase, zodat de tik niet als "start dit optreden" telt.
+  // ---------------------------------------------------------------- slepen
   let drag = null;
   map.addEventListener('pointerdown', e => {
-    const stop = e.target.closest && e.target.closest('.tour-stop');
     const frame = map.querySelector('.world-frame');
-    if (!stop || !frame) return;
-    drag = { stop, frame, i: Number(stop.dataset.lvl) - shown().first };
-    ownNodes();
-    stop.classList.add('dragging');
-    try { stop.setPointerCapture(e.pointerId); } catch (_) {}
+    if (!frame || !e.target.closest) return;
+    const ctrl = e.target.closest('.me-ctrl');
+    const stop = ctrl ? null : e.target.closest('.tour-stop');
+    if (!ctrl && !stop) return;
+    drag = ctrl
+      ? { el: ctrl, frame, list: ownCurve(), i: Number(ctrl.dataset.ctrl), wat: 'weg' }
+      : { el: stop, frame, list: ownNodes(), i: Number(stop.dataset.lvl) - shown().first, wat: 'halte' };
+    drag.el.classList.add('dragging');
+    try { drag.el.setPointerCapture(e.pointerId); } catch (_) {}
     e.preventDefault(); e.stopPropagation();
   }, true);
   map.addEventListener('pointermove', e => {
@@ -7808,29 +7984,29 @@ function startMapEdit() {
     const r = drag.frame.getBoundingClientRect();
     const x = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100));
     const y = Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100));
-    const n = ownNodes()[drag.i];
-    if (!n) return;
-    n.x = x; n.y = y;
-    saveWorldDraft();
-    drag.stop.style.left = x + '%';
-    drag.stop.style.top = y + '%';
+    const p = drag.list[drag.i];
+    if (!p) return;
+    p.x = x; p.y = y;
+    drag.el.style.left = x + '%';
+    drag.el.style.top = y + '%';
     redrawRoad();
-    setOut(`#${drag.i + 1}   x ${x.toFixed(1)}   y ${y.toFixed(1)}`);
+    setOut(`${drag.wat} ${drag.i + 1}   x ${x.toFixed(1)}   y ${y.toFixed(1)}`);
     e.preventDefault(); e.stopPropagation();
   }, true);
   const endDrag = () => {
     if (!drag) return;
-    drag.stop.classList.remove('dragging');
+    drag.el.classList.remove('dragging');
     map.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); },
       { capture: true, once: true });
     drag = null;
+    saveWorldDraft();
+    refreshList();
   };
   map.addEventListener('pointerup', endDrag, true);
   map.addEventListener('pointercancel', endDrag, true);
 
-  sel.value = String(Math.min(worldFor(P().level).index, WORLDS.length - 1));
-  goWorld(+sel.value);
-  fillSheet();
+  viewWorldIdx = Math.min(worldFor(P().level).index, WORLDS.length - 1);
+  goWorld(viewWorldIdx);
 }
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
