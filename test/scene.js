@@ -10,9 +10,9 @@
  * bestand in incoming/ en het staat op de goede plek. Houd je je niet aan de
  * namen, dan zegt het gereedschap welke namen het wél kent.
  *
- * Dit bestand gebruikt met opzet geen enkele Node-module: proefstudio.html
- * spuit het letterlijk in de pagina in, zodat de opmaak daar niet apart
- * nagebouwd hoeft te worden. Twee kopieën lopen uiteen; deze ene niet.
+ * Dit bestand gebruikt met opzet geen enkele Node-module: de opmaak wordt zowel
+ * in Node gebruikt (npm run try, npm run preview) als letterlijk in de pagina
+ * gespoten. Twee kopieën lopen uiteen; deze ene niet.
  */
 function basename(f) { return String(f).split(/[\\/]/).pop(); }
 function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].toLowerCase() : ''; }
@@ -194,8 +194,8 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
        stapelcontext. De verlooplaag van body staat daarbuiten, dus er is
        binnen #app niets om mee te mengen en het zwart blijft gewoon zwart --
        een zwarte balk bovenaan de kaart.
-       De proefstudio bakt het zwart daarom bij het inlezen om naar
-       doorzichtigheid. Wat je bewaart is een gewone WebP met alfa, en er is
+       Een kandidaat met zwart eromheen moet bij het inlezen dus omgezet worden
+       naar doorzichtigheid. Wat je bewaart is een gewone WebP met alfa, en er is
        geen enkele afhankelijkheid van stapelcontexten meer. */
     out.push(`#screen-map .map-sky-inner{
   transform:none!important;
@@ -235,8 +235,8 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
 
 /* Node krijgt zijn exports; in de browser bestaat 'module' niet en wordt dit
    overgeslagen -- dan staan de functies gewoon in de omringende scope. */
-if (typeof module !== 'undefined') /* Aandrijving voor de parallax, als tekst zodat proefstudio.html en
-   test/preview.js precies dezelfde code inspuiten. In de app zelf is dit straks
+if (typeof module !== 'undefined') /* Aandrijving voor de parallax, als tekst zodat elk gereedschap precies
+   dezelfde code inspuit. In de app zelf is dit straks
    een paar regels in updateParallax: CSS-variabelen zetten in plaats van een
    transform op de luchtlaag. */
 function parallaxJs() {

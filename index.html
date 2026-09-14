@@ -7690,6 +7690,12 @@ function startMapEdit() {
     #studio .st-uit { margin-top: 8px; font: 11.5px/1.5 ui-monospace, monospace; color: #b6ffd6;
       min-height: 15px; white-space: pre-wrap; max-height: 30vh; overflow: auto; }
     #studio .st-hint code { background: rgba(255,255,255,.1); border-radius: 4px; padding: 0 4px; }
+    #studio .st-drop { display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 16px 10px; border: 1.5px dashed rgba(255,255,255,.28); border-radius: 9px;
+      text-align: center; color: #b79ae0; font-size: 12px; transition: background .12s, border-color .12s; }
+    #studio .st-drop b { color: #f2ecfa; font-size: 12.5px; }
+    #studio .st-drop u { cursor: pointer; text-underline-offset: 2px; }
+    #studio .st-drop.over { background: rgba(120,255,180,.14); border-color: rgba(120,255,180,.8); }
     #me-dump { position: fixed; inset: 8% 360px auto 6%; z-index: 61; display: none;
       max-height: 70vh; padding: 12px; border-radius: 10px; background: #140426; color: #d8ffe8;
       border: 1px solid rgba(255,255,255,.3); font: 12px/1.45 ui-monospace, monospace;
@@ -7761,8 +7767,9 @@ function startMapEdit() {
         <option value="0.82" selected>0.82 — normaal</option>
         <option value="0.72">0.72 — zuinig</option>
       </select></div>
-      <div class="st-btns">
-        <button class="prim" id="st-pick">⤓ kies beeld &amp; zet vast</button>
+      <div class="st-drop" id="st-drop">
+        <b>sleep een beeld hierheen</b>
+        <span>of <u id="st-pick">kies een bestand</u></span>
       </div>
       <input type="file" accept="image/*" hidden id="me-file">
       <p class="st-hint" id="st-doelhint"></p>
@@ -7976,10 +7983,32 @@ function startMapEdit() {
     return { blob, bron: img.naturalWidth + 'x' + img.naturalHeight };
   }
   F('st-pick').onclick = () => F('me-file').click();
-  F('me-file').onchange = async e => {
+  F('me-file').onchange = e => {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
-    if (!f) return;
+    if (f) verwerkBeeld(f);
+  };
+  // slepen is voor beelden nu eenmaal prettiger dan een bestandsvenster; allebei
+  // komen ze hier uit
+  const zone = F('st-drop');
+  ['dragenter', 'dragover'].forEach(n => zone.addEventListener(n, e => {
+    e.preventDefault(); zone.classList.add('over');
+  }));
+  ['dragleave', 'dragend'].forEach(n => zone.addEventListener(n, () => zone.classList.remove('over')));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('over');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return setOut('daar zat geen bestand bij');
+    if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
+    verwerkBeeld(f);
+  });
+  // een beeld dat per ongeluk naast het vlak valt mag de pagina niet vervangen
+  ['dragover', 'drop'].forEach(n => addEventListener(n, e => {
+    if (!e.target.closest || !e.target.closest('.st-drop')) e.preventDefault();
+  }));
+
+  async function verwerkBeeld(f) {
     const d = huidigDoel(), w = shown().world, pad = d.pad(w);
     const url = URL.createObjectURL(f);
     setOut('omzetten…');
@@ -7989,15 +8018,15 @@ function startMapEdit() {
       const txt = await r.text();
       if (!r.ok) { setOut('mislukt: ' + txt); return; }
       if (d.id === 'map') { w.art = pad; commit(''); }
-      setOut(bron + ' → ' + txt);
+      setOut(f.name + '  ' + bron + ' → ' + txt);
     } catch (err) {
-      // geen server (file://): laat 'm dan tenminste tijdelijk zien
+      // geen server: laat 'm dan tenminste tijdelijk zien
       if (d.id === 'map') { w.art = url; commit(''); }
-      setOut(String(err.message) + ' — alleen via npm run preview kan vastzetten');
+      setOut(String(err.message) + ' — vastzetten kan alleen via npm run preview');
       return;
     }
     URL.revokeObjectURL(url);
-  };
+  }
   F('st-new').onclick = () => {
     const n = WORLDS.length + 1;
     WORLDS.push({ id: 'wereld' + n, name: 'Wereld ' + n, icon: '✨', levels: 8 });

@@ -182,7 +182,7 @@ No sky colour, no gradient, no ground, no text, no logos.
 ```
 
 The black background is deliberate, but not because of a blend trick — it is simply the
-easiest thing to ask a generator for. **The proefstudio converts that black into an alpha
+easiest thing to ask a generator for. **The tooling converts that black into an alpha
 channel on import** (darker pixel → more transparent), so what you save is an ordinary
 transparent WebP.
 
@@ -262,40 +262,40 @@ Later, in whole sets only: dressing-room scene, look posters, trophy icons, prop
 
 ## 6. Trying an asset out
 
-### The easy way: `proefstudio.html`
+### The easy way: the studio
 
-Download **`proefstudio.html`** from the repo, double-click it, drag your generated image
-onto it. That is the whole workflow. No terminal, no Node, no install, no clone — it is
-one self-contained file holding the entire game plus a drop zone, and it works offline.
+```bash
+npm run preview
+```
 
-- The filename routes it automatically (`venue-…`, `map-horizon`, `map-sky`, `finale`).
-  A file called `image (3).png` lands on the venue slot and you correct it with the
-  dropdown — generators rarely name their output helpfully.
-- After the drop it shrinks to a chip in the corner so you can actually judge the screen.
-  Hover to expand; 📌 pins it open.
-- Two switches: **kunstwerk aan** (off = instant before/after) and **donkere sluier**
-  (off = what the scrim is doing for you).
-- Buttons jump between map, show, end, dressing room and trophies without reloading, so
-  your dropped image stays put.
-- **Size buttons** — Telefoon 390×844, Klein 320×568, Tablet 768×1024, Venster. The game
-  is a phone game first; judging it at desktop width judges a size almost no child uses,
-  and the cramped size is where a sum stops being readable over the art.
-- **⇄ Scrollen** sweeps the map sideways and the screen down, then returns. The map
-  scrolls 822 px on a phone and the sky parallaxes with it; standing still you see none
-  of that, and that is where the faults are — a cloud plate pulling its edge into view,
-  or a piece of art that only emerges from under the city medallions once you scroll.
+Then open `http://localhost:8099/?debug&demo&star=p1&screen=map&mapedit` and **drag your
+generated image onto the Beelden panel**. That is the whole workflow — it converts the
+image to WebP at the right size, writes it into `assets/`, and bumps the service-worker
+cache so devices that visited before actually see the new picture.
 
-**Which screens actually get art:** `venue-…` covers the show screen, `finale` the end
-screen, and `map-horizon` all four hub screens at once — map, star picker, dressing room
-and trophies — because that is what step 2 ships, and previewing only the map would let
-you approve a half-converted app. `map-sky` covers the two screens that have a sky layer
-(map and star picker); giving one to the dressing room and trophies is markup work in
-`index.html`, not preview work.
-- Drop a different image on the same slot to swap it. Nothing is saved, nothing is
-  uploaded, and `index.html` is never touched.
+- **Any source size works.** The image is cover-cropped to the target and resized, so a
+  generator's 1024×1024 or 900×600 is fine as long as the composition survives a crop.
+  Never distorted.
+- **Two targets today** — the world map (1080×2160) and the home screen (1024×1536).
+  Pick one in the dropdown. More appear as the app grows something that renders them.
+- **Quality** is a dropdown; the panel reports the resulting kB so you can keep an eye on
+  the budget (§7.3 of ART-DIRECTION: ≤ 120 kB per background).
+- **Voorbeeld** opens the real game in a true window at `staand · klein · liggend ·
+  tablet`, or two side by side. A real window, not a scaled box: the landscape fallback
+  keys off the viewport, so only a real one tells the truth.
+- Nothing reaches a child until you press **⇪ Zet in het spel** and then commit. A draft
+  lives in `localStorage` and is only read with `?debug`.
 
-It is generated from the real `index.html` by `npm run studio`, so regenerate it after
-the app changes or you will be judging art against a stale build.
+Dropping an image straight onto the panel replaces the older `incoming/` + filename-routing
+flow for these two slots. `incoming/` still works for the slots the studio does not cover
+yet — see `npm run try` below.
+
+> **Superseded.** There used to be a second tool, `proefstudio.html`: a generated copy of
+> the whole app with its own drop zone, for use without Node or a terminal. It has been
+> retired. Every reason it existed is now covered elsewhere — you need a clone to work on
+> the art anyway, the preview server never writes to `index.html` unless you ask it to, and
+> a 500 kB copy of the app committed to the repo went stale the moment the app changed.
+> One studio, one place to fix things.
 
 ### If you want the terminal version instead
 
