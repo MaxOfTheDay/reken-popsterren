@@ -1293,6 +1293,9 @@
      dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
      en niet als een muur. */
   .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  /* De 26/34 hieronder is de terugval. Normaal zet renderTourMap er een patroon
+     overheen dat per stuk weg precies past, zodat er op elke halte een streepje
+     ligt -- zie roadDashArray. */
   .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
   .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 13; }
   .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
@@ -3936,10 +3939,68 @@ function roadPoints(pts, curve) {
   }
   return out;
 }
+/* De weg als één reeks bezier-stukken plus het gereedschap om er een deel van te
+   nemen. smoothPath kijkt naar de buurpunten, dus een korter pad ópnieuw berekenen
+   gaf een ander laatste stuk: het gouden (afgelegde) stuk lag dan net níet op het
+   grijze. Nu is het gouden pad letterlijk een voorvoegsel van dezelfde d.
+
+   Elk stuk weg tussen twee haltes is precies twee C-opdrachten: halte → stuurpunt
+   → halte. */
+function roadParts(pts, curve) {
+  const d = count => count >= 2 ? smoothPath(roadPoints(pts.slice(0, count), curve)) : '';
+  const heel = d(pts.length);
+  const m = /^M[^C]*/.exec(heel);
+  return { start: m ? m[0] : '', cs: heel.match(/C[^C]*/g) || [] };
+}
 // De d van de weg tot en met de zoveelste halte (gebruikt voor zowel het hele
 // pad als het afgelegde gouden stuk, zodat die twee gegarandeerd samenvallen).
 function roadD(pts, count, curve) {
-  return count >= 2 ? smoothPath(roadPoints(pts.slice(0, count), curve)) : '';
+  if (count < 2) return '';
+  const parts = roadParts(pts, curve);
+  return parts.start + parts.cs.slice(0, (count - 1) * 2).join('');
+}
+
+/* Een streeppatroon dat précies op de weg past.
+
+   De weg is gestippeld, en wáár een streepje viel was tot nu toe toeval: 26 aan,
+   34 uit, vanaf het begin doorgeteld. Bij sommige haltes hield de stippellijn
+   daardoor tot 11px vóór de rand van de halte op. Het pad liep er wel degelijk
+   doorheen -- gemeten 0,2 viewBox-eenheid van het middelpunt -- maar omdat de
+   halte de weg over een straal van 67 eenheden afdekt, zag je hem niet aankomen.
+   Dat las als "de weg raakt de halte niet", en per halte anders.
+
+   Nu krijgt elk stuk weg zijn eigen patroon: n gaten en n+1 streepjes die samen
+   exact de lengte van dat stuk zijn. Dus altijd een streepje óp beide haltes,
+   op elk toestel en bij elke bocht die je in de studio trekt. */
+const DASH_ON = 26, DASH_OFF = 34;
+function roadDashArray(svg, pts, curve, count) {
+  if (count < 2) return '';
+  const parts = roadParts(pts, curve);
+  const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  svg.appendChild(probe);
+  const tot = [0];
+  for (let k = 2; k <= count; k++) {
+    probe.setAttribute('d', parts.start + parts.cs.slice(0, (k - 1) * 2).join(''));
+    tot.push(probe.getTotalLength());
+  }
+  probe.remove();
+  const uit = [];
+  const r = DASH_OFF / DASH_ON;
+  for (let i = 0; i + 1 < count; i++) {
+    const len = tot[i + 1] - tot[i];
+    if (!(len > 0)) continue;
+    const n = Math.max(1, Math.round((len - DASH_ON) / (DASH_ON + DASH_OFF)));
+    const streep = len / (n + 1 + r * n), gat = streep * r;
+    for (let j = 0; j <= n; j++) {
+      // het eerste streepje van een stuk sluit aan op het laatste van het vorige:
+      // samen één streepje dwars óver de halte, die het toch afdekt
+      if (j === 0 && uit.length) uit[uit.length - 1] += streep;
+      else uit.push(streep);
+      if (j < n) uit.push(gat);
+    }
+  }
+  uit.push(0);   // even aantal, anders herhaalt SVG de lijst dubbel
+  return uit.map(v => v.toFixed(1)).join(' ');
 }
 // De stuurpunten van een wereld in percentages -- berekend waar ze niet gezet zijn.
 function worldCurve(w) {
@@ -4155,6 +4216,9 @@ function renderTourMap(travelFrom) {
   svg.appendChild(bgPath);
   svg.appendChild(fgPath);
   frame.appendChild(svg);
+  // pas mét de SVG in de opmaak kun je een pad opmeten, dus het streeppatroon hier
+  bgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, pts.length);
+  fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
 
   nodes.forEach((n, i) => {
     const lvl = shown.first + i;
@@ -8071,8 +8135,12 @@ function startMapEdit() {
     const pts = leesNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
     const c = leesCurve();
     const bg = frame.querySelector('.tour-road-bg'), fg = frame.querySelector('.tour-road-fg');
-    if (bg) bg.setAttribute('d', roadD(pts, pts.length, c));
-    if (fg) fg.setAttribute('d', roadD(pts, Math.min(pts.length, P().level - shown().first + 1), c));
+    const svg = frame.querySelector('.tour-road-svg');
+    const tot = Math.min(pts.length, P().level - shown().first + 1);
+    if (bg) { bg.setAttribute('d', roadD(pts, pts.length, c));
+      bg.style.strokeDasharray = roadDashArray(svg, pts, c, pts.length); }
+    if (fg) { fg.setAttribute('d', roadD(pts, tot, c));
+      fg.style.strokeDasharray = roadDashArray(svg, pts, c, tot); }
   }
   function decorate() {
     const frame = map.querySelector('.world-frame');
