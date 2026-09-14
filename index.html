@@ -574,10 +574,6 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: 0 2px 0 var(--glass-black-20);
   }
-  .map-flex {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-    width: 100%; min-height: 0; z-index: 1;
-  }
   /* carrièrerang: het altijd-zichtbare lange-termijndoel. De status zelf
      (bv. "Straatartiest") is de titel van de kop (.header-title, zie
      renderCareerStrip); titel + teller + balk vormen samen één groepje --
@@ -647,8 +643,7 @@
      parallax-transform (zie updateParallax). Ooit zat de transform op
      .map-sky zelf -- dan verschuift de knip-grens mee met de parallax, en
      ontstaat er een onzichtbare strook aan de kant van het scherm waar
-     nooit meer een wolk kan verschijnen (zelfde reden dat .tour-map-wrap
-     hieronder ook een eigen, niet-transformerende omhulling heeft). */
+     nooit meer een wolk kan verschijnen). */
   /* Voetlicht onder de reisroute.
      Hier stond eerst een skyline van herhalende rechthoeken. Die tilde bij één
      schermbreedte nog wel, maar op een breed scherm herhaalde het motief zeven
@@ -1223,26 +1218,41 @@
      toestel precies op de haltes en op de tekening -- het klopt per constructie,
      niet per afstelling, en draaien of resizen vraagt geen herberekening. */
   .tour-map {
-    position: relative; container-type: size;
-    display: flex; align-items: center; justify-content: center;
-    width: 100%; flex: 1 1 auto; min-height: 0; overflow: hidden;
+    position: absolute; inset: 0; z-index: 0; container-type: size;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
   }
+  /* COVER, niet contain: de tekening vult het hele scherm, zoals in de mockup.
+     Daarvoor staat hier max() waar bij contain min() zou staan -- het kader wordt
+     dus juist groter dan het scherm en wat eroverheen steekt wordt weggeknipt.
+
+     Cruciaal: de haltes zitten ín ditzelfde kader. Ze schuiven dus exact met de
+     tekening mee en kunnen er nooit vanaf glijden. Wat het wél betekent: aan de
+     randen wordt geknipt (op een telefoon ~4-6% per kant), dus haltes horen in de
+     veilige zone -- zie docs/PROGRESSION-REVIEW.md §E8. */
+  .tour-map { --art-w: 1080; --art-h: 2160; }
   .world-frame {
-    position: relative;
-    width: min(100cqw, 100cqh * 1080 / 1840);
-    aspect-ratio: 1080 / 1840;
+    position: relative; flex: none;
+    /* min-width + min-height + aspect-ratio = cover. Gemeten tegen de variant met
+       max(100cqw, 100cqh * ...): die liet op 390x844 een gat van 64px onderaan.
+       container-type staat er voor de cqw-eenheden van de haltes, niet voor de maat. */
+    min-width: 100%; min-height: 100%;
+    aspect-ratio: var(--art-w) / var(--art-h);
     container-type: size;
     background-size: cover; background-position: 50% 50%;
-    border-radius: var(--r-lg);
   }
   /* Nog geen tekening? Dan draagt de wereld zichzelf met zijn eigen kleuren, zodat
      een wereld speelbaar is vóórdat hij getekend is (en een ontbrekend bestand
      nooit een leeg vlak oplevert). */
   .world-frame.no-art {
     background-image:
-      radial-gradient(120% 55% at 50% 104%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
       linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
   }
+  /* Heeft een wereld een eigen tekening, dan brengt die zijn eigen lucht en grond
+     mee: de gedeelde wolkjes en het voetlicht van de app zouden er dan dwars
+     doorheen lopen. */
+  #screen-map:has(.world-frame:not(.no-art)) .map-sky,
+  #screen-map:has(.world-frame:not(.no-art)) .map-ground { display: none; }
   /* Liggend, of gewoon een heel lage vensterhoogte: een stáánde kaart past daar
      niet in. Contain knijpt hem dan tot een postzegel (gemeten: 107x183 op een
      telefoon in liggende stand -- acht haltes in 183px). Daar wint leesbaarheid
@@ -1253,10 +1263,11 @@
      De grens staat op 620 en niet op 560, zodat ook een kleine staande telefoon
      (320x568) meedoet: contain gaf daar een kaart van 214px breed met tegels van
      28px, scrollen geeft 320px breed met tegels van 42px. */
-  @media (max-height: 620px) {
-    .tour-map { overflow-y: auto; align-items: flex-start; scrollbar-width: none; }
+  @media (max-height: 620px), (min-aspect-ratio: 62/100) {
+    .tour-map { overflow-y: auto; align-items: flex-start; scrollbar-width: none;
+      padding: 96px 0 96px; }
     .tour-map::-webkit-scrollbar { display: none; }
-    .world-frame { width: min(100cqw, 320px); }
+    .world-frame { min-width: 0; min-height: 0; width: min(100cqw, 340px); }
   }
   /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt */
@@ -1274,7 +1285,6 @@
   .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
   .tour-road-bg { stroke: rgba(255,255,255,.42); stroke-width: 13; }
   .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
-  .tour-map-wrap { position: relative; display: flex; width: 100%; flex: 1 1 auto; min-height: 0; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
      glas en klein: goud is voor spelen en verdiend, en dit mag nooit met Speel!
      concurreren. */
@@ -2284,11 +2294,9 @@
       </div>
       <div class="career-strip" id="career-strip" role="button" tabindex="0" onclick="openCareer()" aria-label="Bekijk je ster-status"></div>
     </div>
-    <div class="map-flex">
-      <div class="tour-map-wrap">
-        <div class="tour-map" id="tour-map"></div>
-      </div>
-    </div>
+    <!-- De wereld beslaat het hele scherm; de kop en de navigatie zweven erboven.
+         Staat als eerste in de opmaak (en op z-index 0) zodat hij achter alles valt. -->
+    <div class="tour-map" id="tour-map"></div>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
     <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 <span id="mem-fab-pay">0</span></span></button>
   </div>
@@ -3809,7 +3817,7 @@ function defaultNodes(n) {
     // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
     // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
     // ruimte tussen de haltes komt van de verticale spreiding hieronder.
-    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 27, y: 91 - t * 83 });
+    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 86 - t * 72 });
   }
   return out;
 }
