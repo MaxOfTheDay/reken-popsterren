@@ -150,41 +150,61 @@ function writeWorlds(body, res) {
   }
 }
 
-/* Een kandidaat uit incoming/ vastzetten in assets/. Dat was het laatste stukje
-   handwerk in de lus: de studio kon de wereld wel wegschrijven, maar de tekening
-   moest je zelf kopieren. Alleen bestandsnamen, alleen van incoming/ naar assets/,
-   en niets buiten die twee mappen -- daarbuiten weigert hij. */
-function keepAsset(body, res) {
-  try {
-    const wens = JSON.parse(body || '{}');
-    const bron = path.basename(String(wens.from || ''));
-    const doel = path.basename(String(wens.to || ''));
-    if (!bron || !doel) throw new Error('van/naar ontbreekt');
-    if (!scene.isImage(bron) || !scene.isImage(doel)) throw new Error('geen afbeelding');
-    const van = path.join(DROP, bron);
-    if (!fs.existsSync(van)) throw new Error('niet gevonden in incoming/: ' + bron);
-    const map = path.join(ROOT, 'assets', 'world');
-    fs.mkdirSync(map, { recursive: true });
-    const naar = path.join(map, doel);
-    fs.copyFileSync(van, naar);
-    const kb = Math.round(fs.statSync(naar).size / 1024);
-    console.log('  wereldstudio: assets/world/' + doel + ' (' + kb + ' kB)');
-    res.writeHead(200, { 'content-type': 'text/plain' });
-    res.end('assets/world/' + doel + ' — ' + kb + ' kB');
-  } catch (e) {
-    res.writeHead(500, { 'content-type': 'text/plain' });
-    res.end(String(e.message));
+/* De studio zet een tekening om naar webp (in de browser, met een canvas) en
+   stuurt de bytes hierheen. Deze server schrijft ze weg -- alleen naar een pad dat
+   hieronder staat, nergens anders. Zo hoeft er geen beeldbibliotheek in het project,
+   en gebeurt het omzetten waar het beeld toch al geladen is.
+
+   En hij hoogt meteen CACHE in sw.js op. Dat was de stap die je altijd vergeet: de
+   servicewerker serveert alles onder /assets/ eerst uit de cache, dus een vervangen
+   beeld met dezelfde naam blijft anders op elk toestel dat er al was het oude tonen. */
+const ASSET_OK = [
+  /^assets\/world\/[a-z0-9-]+-map\.webp$/,
+  /^assets\/bg\/landing\.webp$/,
+];
+function bumpCache() {
+  const f = path.join(ROOT, 'sw.js');
+  const src = fs.readFileSync(f, 'utf8');
+  const m = /const CACHE = '([a-z-]+)(\d+)';/.exec(src);
+  if (!m) return null;
+  const volgend = m[1] + (Number(m[2]) + 1);
+  fs.writeFileSync(f, src.replace(m[0], "const CACHE = '" + volgend + "';"));
+  return volgend;
+}
+function writeAsset(req, res, to) {
+  if (!ASSET_OK.some(re => re.test(to))) {
+    res.writeHead(400, { 'content-type': 'text/plain' });
+    return res.end('dit pad mag niet: ' + to);
   }
+  const brokken = [];
+  let n = 0;
+  req.on('data', c => { brokken.push(c); n += c.length; if (n > 8e6) req.destroy(); });
+  req.on('end', () => {
+    try {
+      const buf = Buffer.concat(brokken);
+      if (!buf.length) throw new Error('leeg bestand');
+      const doel = path.join(ROOT, to);
+      const zelfde = fs.existsSync(doel) && Buffer.compare(fs.readFileSync(doel), buf) === 0;
+      fs.mkdirSync(path.dirname(doel), { recursive: true });
+      fs.writeFileSync(doel, buf);
+      const kb = Math.round(buf.length / 1024);
+      const cache = zelfde ? null : bumpCache();
+      console.log('  wereldstudio: ' + to + ' (' + kb + ' kB)' + (cache ? ' · sw CACHE -> ' + cache : ''));
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end(to + ' — ' + kb + ' kB' + (cache ? ' · sw ' + cache : ' · ongewijzigd'));
+    } catch (e) {
+      res.writeHead(500, { 'content-type': 'text/plain' });
+      res.end(String(e.message));
+    }
+  });
 }
 
 http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
 
   if (req.method === 'POST' && url === '/asset') {
-    let body = '';
-    req.on('data', c => { body += c; if (body.length > 4000) req.destroy(); });
-    req.on('end', () => keepAsset(body, res));
-    return;
+    const q = new URLSearchParams((req.url.split('?')[1] || ''));
+    return writeAsset(req, res, decodeURIComponent(q.get('to') || ''));
   }
 
   if (req.method === 'POST' && url === '/werelden') {

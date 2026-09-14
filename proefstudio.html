@@ -522,6 +522,9 @@
     font-size: 24px; font-weight: 700; text-align: center; white-space: nowrap;
     text-shadow: 0 2px 0 var(--glass-black-18);
   }
+  /* op de kaart draagt de kop twee dingen: wélke wereld, en waar je daarin bent */
+  .world-sub { display: block; font-size: 13px; font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
+  .world-stars { margin-left: 2px; }
   .screen-header .header-left { justify-self: start; }
   .screen-header .header-right { justify-self: end; }
   /* één teller-pil, in twee maten: groot (schermkoppen) en klein (kaart-topbalk, spelbalk) */
@@ -571,10 +574,6 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: 0 2px 0 var(--glass-black-20);
   }
-  .map-flex {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-    width: 100%; min-height: 0; z-index: 1;
-  }
   /* carrièrerang: het altijd-zichtbare lange-termijndoel. De status zelf
      (bv. "Straatartiest") is de titel van de kop (.header-title, zie
      renderCareerStrip); titel + teller + balk vormen samen één groepje --
@@ -614,8 +613,9 @@
   .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: var(--glass-white-10); }
   .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; }
   .lr-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 14.5px; }
-  /* Behaald = dezelfde subtiele goud-taal als een behaalde trofee (.trophy-card.done):
-     zachte goudtint + goudrandje, geen icoon. Toekomst blijft juist kil/vaag. */
+  /* Behaald = goud, maar bewust een slag zachter dan .trophy-card.done: een trofee
+     is een prijs die blijft staan, een gepasseerde rang is voorgeschiedenis -- hier
+     moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
   .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
   .ladder-row.future { opacity: .36; }
   /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
@@ -643,8 +643,7 @@
      parallax-transform (zie updateParallax). Ooit zat de transform op
      .map-sky zelf -- dan verschuift de knip-grens mee met de parallax, en
      ontstaat er een onzichtbare strook aan de kant van het scherm waar
-     nooit meer een wolk kan verschijnen (zelfde reden dat .tour-map-wrap
-     hieronder ook een eigen, niet-transformerende omhulling heeft). */
+     nooit meer een wolk kan verschijnen). */
   /* Voetlicht onder de reisroute.
      Hier stond eerst een skyline van herhalende rechthoeken. Die tilde bij één
      schermbreedte nog wel, maar op een breed scherm herhaalde het motief zeven
@@ -699,7 +698,7 @@
   .nav-item:active { transform: scale(.94); }
   /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
-     .speel-pill, .item-card.equipped): navigatie is geen beloning. */
+     .tour-stop.next, .item-card.equipped): navigatie is geen beloning. */
   .nav-item.active { opacity: 1; background: rgba(56,189,248,.20); box-shadow: inset 0 0 0 2px rgba(143,214,255,.55); }
   /* schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter verdwijnt */
   .screen.hub { padding-bottom: 100px; }
@@ -1207,13 +1206,70 @@
   @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px var(--glass-black-30); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px var(--glass-black-30); } }
   .gold-banner { font-size: 18px; font-weight: bold; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-cta-bottom); margin-top: 6px; height: 22px; }
 
-  /* ---- Wereldtournee: de horizontale reisroute is het hart van het hoofdscherm ---- */
-  .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 760px;
-    -webkit-overflow-scrolling: touch; cursor: grab;
-    scrollbar-width: none; -ms-overflow-style: none; }
-  .tour-map::-webkit-scrollbar { display: none; }
-  .tour-map.dragging, .tour-map.dragging * { cursor: grabbing; }
-  /* zachte fade-randen op horizontale scrollers (reisroute, tabbladen):
+  /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
+     Er valt niets te scrollen. Het kader (.world-frame) heeft de beeldverhouding
+     van de wereldtekening en wordt met container-query-eenheden precies ingepast
+     in de ruimte die er is -- de CSS-versie van object-fit:contain, zonder een
+     regel JavaScript. Wat overblijft aan de zijkanten is geen leegte maar de
+     lucht van de wereld zelf (zie .tour-map).
+
+     Alles bínnen het kader staat op percentages: de tekening, de weg (een SVG met
+     exact dezelfde viewBox-verhouding) en de haltes. Daarom valt de weg op élk
+     toestel precies op de haltes en op de tekening -- het klopt per constructie,
+     niet per afstelling, en draaien of resizen vraagt geen herberekening. */
+  .tour-map {
+    position: absolute; inset: 0; z-index: 0; container-type: size;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  /* COVER, niet contain: de tekening vult het hele scherm, zoals in de mockup.
+     Daarvoor staat hier max() waar bij contain min() zou staan -- het kader wordt
+     dus juist groter dan het scherm en wat eroverheen steekt wordt weggeknipt.
+
+     Cruciaal: de haltes zitten ín ditzelfde kader. Ze schuiven dus exact met de
+     tekening mee en kunnen er nooit vanaf glijden. Wat het wél betekent: aan de
+     randen wordt geknipt (op een telefoon ~4-6% per kant), dus haltes horen in de
+     veilige zone -- zie docs/PROGRESSION-REVIEW.md §E8. */
+  .tour-map { --art-w: 1080; --art-h: 2160; }
+  .world-frame {
+    position: relative; flex: none;
+    /* min-width + min-height + aspect-ratio = cover. Gemeten tegen de variant met
+       max(100cqw, 100cqh * ...): die liet op 390x844 een gat van 64px onderaan.
+       container-type staat er voor de cqw-eenheden van de haltes, niet voor de maat. */
+    min-width: 100%; min-height: 100%;
+    aspect-ratio: var(--art-w) / var(--art-h);
+    container-type: size;
+    background-size: cover; background-position: 50% 50%;
+  }
+  /* Nog geen tekening? Dan draagt de wereld zichzelf met zijn eigen kleuren, zodat
+     een wereld speelbaar is vóórdat hij getekend is (en een ontbrekend bestand
+     nooit een leeg vlak oplevert). */
+  .world-frame.no-art {
+    background-image:
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
+      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
+  }
+  /* Heeft een wereld een eigen tekening, dan brengt die zijn eigen lucht en grond
+     mee: de gedeelde wolkjes en het voetlicht van de app zouden er dan dwars
+     doorheen lopen. */
+  #screen-map:has(.world-frame:not(.no-art)) .map-sky,
+  #screen-map:has(.world-frame:not(.no-art)) .map-ground { display: none; }
+  /* Liggend, of gewoon een heel lage vensterhoogte: een stáánde kaart past daar
+     niet in. Contain knijpt hem dan tot een postzegel (gemeten: 107x183 op een
+     telefoon in liggende stand -- acht haltes in 183px). Daar wint leesbaarheid
+     van "alles in één beeld": de kaart krijgt een bruikbare kolombreedte en
+     scrollt verticaal, met de huidige halte in beeld. Staand -- de stand waar dit
+     spel voor gemaakt is -- blijft het één scherm zonder scrollen.
+
+     De grens staat op 620 en niet op 560, zodat ook een kleine staande telefoon
+     (320x568) meedoet: contain gaf daar een kaart van 214px breed met tegels van
+     28px, scrollen geeft 320px breed met tegels van 42px. */
+  @media (max-height: 620px), (min-aspect-ratio: 62/100) {
+    .tour-map { overflow-y: auto; align-items: flex-start; scrollbar-width: none;
+      padding: 96px 0 96px; }
+    .tour-map::-webkit-scrollbar { display: none; }
+    .world-frame { min-width: 0; min-height: 0; width: min(100cqw, 340px); }
+  }
+  /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt */
   .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
@@ -1221,29 +1277,33 @@
     mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
   .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
-  /* ruimte boven de haltes voor de avatar, eronder voor de Speel-knop, plus wat
-     extra lucht boven/onder voor de golvende weg (haltes zwaaien op/neer).
-     De onderkant heeft ook nog 10px extra bovenop de knop zelf: .tour-map's
-     overflow-x:auto dwingt overflow-y ook naar auto (CSS-spec-gedrag, niet
-     bewust gekozen), dus alles voorbij deze padding wordt geknipt -- zonder
-     die 10px viel de zachte slagschaduw van de Speel-knop er net buiten bij
-     haltes die door de golvende route wat lager uitkomen. */
-  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 154px 26px 114px; }
-  /* de reisweg is één rechte, volle lijn dóór het midden van elke halte
-     (punten gezet door updateRoad/renderTourMap), gewoon dóór de tegels heen
-     -- die zijn ondoorzichtig, dus dekt vanzelf af. Twee lagen: het hele pad
-     dof ("nog te ontdekken"), het afgelegde stuk daar bovenop vol goud
-     ("al gehaald"), zelfde taal als de gelijknamige tegel-staten. */
-  .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .tour-road-bg, .tour-road-fg, .tour-road-fade { fill: none; stroke-linecap: round; }
-  .tour-road-bg { stroke: var(--glass-white-35); stroke-width: 6; }
-  .tour-road-fg { stroke: var(--gold-accent); stroke-width: 6; }
-  /* alleen de allerlaatste staart van de weg (ná de laatst getoonde halte)
-     dooft uit -- de rest van het pad blijft gewoon even dof-vast */
-  .tour-road-fade { stroke: url(#roadFadeGrad); stroke-width: 6; }
-  .tour-map-wrap { position: relative; width: 100%; max-width: 760px; }
-  .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
-    background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
+  /* De weg: twee lagen over de volle tekening. Het hele pad dof ("nog te
+     ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --
+     dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
+     en niet als een muur. */
+  .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 13; }
+  .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
+  /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
+     glas en klein: goud is voor spelen en verdiend, en dit mag nooit met Speel!
+     concurreren. */
+  .world-step {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 3;
+    display: flex; align-items: center; gap: 5px; padding: 5px 12px;
+    font-family: inherit; font-size: 15px; line-height: 1; color: var(--c-white);
+    background: var(--glass-black-32); border: 1.5px solid var(--glass-white-22);
+    border-radius: var(--r-pill); cursor: pointer; backdrop-filter: blur(6px);
+  }
+  .world-step:active { transform: translateX(-50%) scale(.94); }
+  .world-step.prev { bottom: 1.5cqw; }
+  .world-step.next { top: 1.5cqw; }
+  .world-step .ws-ico { font-size: 13px; opacity: .8; }
+  .tour-stop {
+    position: absolute; transform: translate(-50%, -50%);
+    width: 26cqw; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
+    background: transparent; padding: 0; text-align: center; z-index: 1;
+  }
   /* Minimale medaillon-stijl i.p.v. een 3D-knop: plat rondje, dunne rand,
      geen drop-shadow-lip. Een halte is een plek op een kaart, geen knop --
      de "tik me in" actie zit al in de losse Speel!-knop hieronder.
@@ -1256,9 +1316,13 @@
      "verzameld"-taal als .trophy-card.done). Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
      de reisweg erdoorheen. */
-  .tour-stop .dot { position: relative; width: 70px; height: 70px; margin: 0 auto; border-radius: 50%;
+  .tour-stop .dot { position: relative; width: 12cqw; height: 12cqw; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 33px; border: 2px solid var(--glass-white-30); background: var(--purple-shadow); }
+    font-size: 6.4cqw; font-weight: 800; border: 0.55cqw solid var(--glass-white-30); background: var(--purple-shadow); }
+  /* het slotje hangt aan de rand van de halte i.p.v. het nummer te vervangen --
+     zo blijft ook op een halte op slot te zien de hoeveelste show het is */
+  .stop-lock { position: absolute; top: -0.5cqw; right: -0.5cqw; font-size: 4.6cqw; line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
   .tour-stop:active .dot { transform: scale(.92); }
   .tour-stop.locked { cursor: default; }
   /* een grayscale(1) filter over de paarse basiskleur oogde bijna zwart --
@@ -1271,14 +1335,36 @@
      zou dat gewoon overschrijven zolang de animatie loopt, dus tikfeedback
      op "next" gaat via filter (dat de animatie niet aanraakt) i.p.v. transform.
      Zelfde aanpak voor "done" erbij, voor identieke tikrespons in beide staten. */
+  /* Een halte op drie sterren is áf: warm goud, met af en toe een glans die
+     eroverheen glijdt -- dezelfde veeg als een klare trofee (shineSweep), alleen
+     trager en zachter. Bewust géén schaalpuls: .next (waar je nú speelt) moet het
+     luidste ding op de kaart blijven. Dit is het hele "ooh, die kan ik ook nog
+     perfect maken"-duwtje: geen rood, geen uitroepteken, alleen verschil.
+     Alleen op .done, zodat het nooit kan botsen met het goud van .next. */
+  /* Een gouden lijst, geen gouden vulling: een volle warme tint over het paars
+     wordt modderig bruin én slikt het stadsicoon op. De ring + de gloed eromheen
+     dragen dus het signaal, en de vulling krijgt alleen een lichte warme waas.
+     box-sizing is border-box, dus de dikkere rand verschuift niets. */
+  .tour-stop.done.perfect .dot {
+    overflow: hidden;
+    border-width: 1.1cqw;
+    background: linear-gradient(180deg, rgba(255,214,90,.22), rgba(255,193,61,.06)), var(--purple-shadow);
+    box-shadow: 0 0 0 1.1cqw rgba(255,213,79,.20), 0 0 5cqw rgba(255,205,80,.55);
+  }
+  .tour-stop.done.perfect .dot::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.45), transparent);
+    transform: skewX(-18deg);
+    animation: shineSweep 4.5s ease-in-out infinite var(--shine-delay, 0s);
+  }
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.85); }
-  .tour-stop.next .dot { box-shadow: 0 0 0 5px rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
+  .tour-stop.next .dot { box-shadow: 0 0 0 1.3cqw rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 7px; }
   .tour-stop.next .cname { color: var(--gold-light); }
   .tour-stop.locked .cname { opacity: .6; }
   /* sterren als gewone tekstregel onder de naam i.p.v. een badge óp de tegel --
      geen aparte positionering/overlap meer nodig, past vanzelf altijd netjes */
-  .tour-stop .cstars { font-size: 11.5px; letter-spacing: -1px; opacity: .92; margin-top: 1px; }
+  .tour-stop .cstars { font-size: 3.6cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.6cqw; }
   .tour-stop .cstars .star-miss { opacity: .4; filter: grayscale(1); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
      stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
@@ -1287,63 +1373,23 @@
      gecentreerde stadsicoon onder haar voeten bedekken. Zelfde element voor
      de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
      vorige halte. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 11px); transform: translateX(-50%);
-    width: 92px; pointer-events: none; z-index: 2; }
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2cqw); transform: translateX(-50%);
+    width: 21cqw; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven */
-  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
-    width: 34px; height: 9px; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
-  /* .speel-pill: dé hoofdknop van het spel, en (sinds de profielkaarten hun
-     eigen kopie kwijt zijn) de enige plek waar hij staat. Puls + gloed
-     geïnspireerd op .trophy-card.ready i.p.v. de stillere brightness-only
-     playGlow -- dit is de belangrijkste tik van de app, mag zich ook zo voelen. */
-  .speel-pill {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--r-pill); padding: 13px 26px;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35);
-  }
-  /* dé speelknop van het spel: zit vast aan de huidige halte. translateX(-50%)
-     zit ín de eigen keyframes gebakken (i.p.v. los op het element), anders
-     overschrijft de animatie 'm elk frame en springt de knop uit het midden. */
-  .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%; animation: speelPulse 1.2s ease-in-out infinite; }
-  /* zelfde duur/easing/schaal als pulseBtn (de gouden "next"-tegel) zodat
-     beide echt gelijk lopen i.p.v. losjes uit de pas -- alleen translateX(-50%)
-     zit erbij gebakken (zie hierboven), de rest is bewust identiek. Geen
-     box-shadow-animatie meer erbovenop: dat maakte 'm ook nog eens "voller"
-     ogend dan de tegel, terwijl ze juist hetzelfde moment moeten voelen. */
-  @keyframes speelPulse {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.09); }
-  }
-  /* tikfeedback via filter i.p.v. transform -- de puls-animatie hierboven
-     bezet transform al elk frame, dus een :active transform zou meteen weer
-     overschreven worden (zelfde patroon als bij .tour-stop.next .dot) */
-  .tour-stop:active .tour-speel { filter: brightness(.85); }
-  .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
-    border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
-  /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
-  @media (max-height: 700px) {
-    .tour-track { padding: 124px 22px 100px; }
-    .tour-stop { width: 96px; }
-    .tour-stop .dot { width: 58px; height: 58px; font-size: 27px; }
-    .tour-hero { width: 82px; }
-    .speel-pill { font-size: 18px; padding: 11px 22px; }
-  }
+  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 0.4cqw; transform: translateX(-50%);
+    width: 8cqw; height: 2cqw; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
+  /* De Speel-knop is van de kaart verdwenen. Met acht haltes samen in beeld is de
+     halte waar ze nú staat al het enige volgouden, pulserende medaillon mét de pop
+     erbovenop -- een tweede gouden ding ernaast voegde niets toe, dekte de vorige
+     halte af en ving zelfs de tikken die daarvoor bedoeld waren. De tegel is de
+     knop. (Zie docs/PROGRESSION-REVIEW.md: "één duidelijke volgende actie".) */
   /* Hoge schermen: de route claimt de leegte in plaats van als smalle strook in
      het midden te zweven. Gemeten op 390x844 stond er 121px lucht boven en 127px
      onder de route; grotere haltes, ster en speelknop halen dat terug. De drempel
      staat op 760 (was 800) zodat ook de wat kortere telefoons meedoen. */
-  @media (min-height: 760px) {
-    .tour-track { padding: 196px 30px 146px; }
-    .tour-stop { width: 128px; }
-    .tour-stop .dot { width: 90px; height: 90px; font-size: 43px; }
-    .tour-stop .cname { font-size: 16px; }
-    .tour-stop .cstars { font-size: 13px; }
-    .tour-hero { width: 126px; bottom: calc(100% - 14px); }
-    .speel-pill { font-size: 22px; padding: 15px 30px; }
-  }
+
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
     .map-name { font-size: 17px; }
@@ -1353,7 +1399,9 @@
     .map-portrait svg { top: -5px; width: 65px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .map-sky span, .speel-pill, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
+    .map-sky span, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
+    /* het goud van een perfecte halte blijft staan; alleen de veeg verdwijnt */
+    .tour-stop.done.perfect .dot::after { animation: none; opacity: 0; }
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
     .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }
@@ -1379,9 +1427,23 @@
   .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--r-pill); padding: 3px 11px; white-space: nowrap; }
   /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
   .shelf-title .shelf-count.full { color: var(--gold-light); background: rgba(255,206,77,.25); opacity: 1; }
-  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 9px; width: 100%; align-items: stretch; }
+  /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: de meeste
+     plankjes hebben een oneven aantal trofeeën, en CSS Grid geeft elke rij
+     dezelfde kolomposities -- de laatste, onvolledige rij bleef daardoor links
+     hangen i.p.v. te centreren. flex-wrap + justify-content:center centreert
+     elke rij apart, ook de laatste. */
+  .trophy-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; width: 100%; align-items: stretch; }
+  /* Vaste kolombreedte (flex-grow: 0) i.p.v. meegroeien. Met 'flex: 1 1 124px'
+     verdeelden de kaarten in een vólle rij de hele breedte onder elkaar, maar een
+     laatste, alleenstaande kaart had niemand om mee te delen en liep door tot zijn
+     max-width -- die kaart werd dus zichtbaar bréder dan de kaarten erboven, precies
+     op de plek waar hij al als enige gecentreerd stond. Een kaart mag nergens in de
+     app van formaat wisselen, dus nu telt elke plank een vast aantal even brede
+     kolommen en centreert justify-content de rij als geheel: de laatste kaart staat
+     nog steeds midden onder de rij erboven, maar heeft nu dezelfde maat. */
   .trophy-card {
-    position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
+    position: relative; flex: 0 1 calc(50% - 4.5px); max-width: 190px;
+    background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
     border-radius: var(--r-md); padding: 12px 8px 11px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch; transition: filter .12s;
   }
@@ -1394,8 +1456,13 @@
   .trophy-card .temoji { font-size: 36px; line-height: 1; height: 40px; }
   .trophy-card .tname { font-size: 15px; font-weight: bold; margin-top: 4px; line-height: 1.12; }
   .trophy-card .tdesc { font-size: 12.5px; opacity: .85; margin-top: 2px; line-height: 1.15; }
+  /* drie kolommen zodra de plank het comfortabel trekt, vier op tabletbreedte --
+     dezelfde kolomtelling die de oude 'auto-fill, minmax(124px, 1fr)' vanzelf koos,
+     nu alleen expliciet, zodat álle kaarten op een plank even breed blijven. */
+  @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6px); } }
+  @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 6.75px); } }
   /* 'Kast vol!' (eindtrofee) over de volle breedte */
-  .trophy-card.wide { grid-column: 1 / -1; }
+  .trophy-card.wide { flex-basis: 100%; max-width: 100%; }
   /* ===== staten ===== */
   /* NIET GESTART: normale paarse kaart, icoon licht gedimd, lege dunne balk */
   .trophy-card.fresh .temoji { opacity: .78; }
@@ -1419,13 +1486,30 @@
     background: rgba(30,15,55,.95); border: 2px solid var(--glass-white-40);
     box-shadow: var(--e-1);
   }
-  /* BEHAALD: rustig, verzameld. Zacht goud, volle-kleur icoon, klein sterretje.
-     Zakt licht naar de achtergrond zodat de actieve doelen opvallen. */
-  .trophy-card.done { background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); opacity: .9; }
-  .trophy-card.done .temoji { filter: none; }
-  .trophy-won {
-    position: absolute; top: -8px; right: -6px; font-size: 20px; z-index: 3;
-    filter: drop-shadow(0 1px 2px var(--glass-black-50));
+  /* BEHAALD: ingevuld, niet uitgedoofd.
+     Was: de zwakste kaart van de plank -- lichtere rand en mindere vulling dan een
+     kaart waar je nog aan bezig bent, plus 10% extra transparantie eroverheen. Een
+     behaalde trofee zag er daardoor onaffer uit dan een onbegonnen trofee. Het enige
+     echte "gewonnen"-signaal was een los 🏆-badge dat buiten de kaartrand hing --
+     dubbelop bij trofeeën die zélf een beker als icoon hebben (Platina plaat), en
+     overbodig op een scherm dat al 🏆 Trofeeënkast heet.
+     Nu de volle 'verdiend'-taal die de rest van de app al spreekt (afgelopen stad op
+     de kaart, aangetrokken stuk in de kleedkamer): gouden rand + zachte goudvulling,
+     naam in goud. Vlak, zonder gloed en zonder beweging -- gloed en puls blijven
+     exclusief van 'klaar om te openen', zodat goud-in-rust = verdiend en
+     goud-dat-beweegt = doe hier iets. */
+  .trophy-card.done { background: rgba(255,214,90,.10); border-color: var(--gold-accent); }
+  .trophy-card.done .tname { color: var(--gold-light); }
+  /* Het onderste vakje is de statusregel van élke kaart: voortgang + balk, 'Nog niet
+     vrij', of '🎁 Open!'. Alleen 'behaald' liet het leeg -- die kaarten hielden een
+     gat onderin terwijl de buren in dezelfde rij tot onderaan gevuld waren, en juist
+     dat maakte de planken rommelig. Nu staat hier de stempel, op dezelfde regel als
+     alle andere statussen. Omlijnd en stil tegenover de vólle, pulserende gouden pil
+     van 'Open!': dezelfde vorm, andere toon -- af versus te doen. */
+  .trophy-done-pill {
+    display: block; text-align: center; border-radius: var(--r-pill);
+    font-size: 13px; font-weight: 900; letter-spacing: .01em; padding: 4px 8px;
+    color: var(--gold-light); background: rgba(0,0,0,.22); border: 1px solid rgba(255,214,90,.55);
   }
   /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
   .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
@@ -1572,8 +1656,8 @@
   }
 
   /* (4) Net behaald: een eenmalige gouden shimmer over de kaart. Blijft binnen de
-     kaart (inset:0 + verschuivende gradient) zodat het uitstekende 🏆-badge niet
-     wordt afgesneden; z-index onder het badge (dat z-index 3 heeft). */
+     kaart (inset:0 + verschuivende gradient); z-index 2 houdt 'm onder een eventueel
+     hoekbadge (het slotje staat op z-index 3). */
   .trophy-card.just-claimed::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(255,236,150,.7) 50%, transparent 62%);
@@ -1751,9 +1835,15 @@
   }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
-  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; width: 100%; max-width: 680px; }
+  /* flex i.p.v. grid: bij een oneven aantal spulletjes bleef het laatste kaartje
+     in een CSS-grid altijd in de eerste kolom hangen (grid deelt élke rij
+     dezelfde kolomposities toe), dus links uitgelijnd met een lege plek ernaast
+     in plaats van gecentreerd. flex-wrap + justify-content:center centreert
+     élke rij apart, vol of niet -- ook de laatste, hoe je ook telt. */
+  .item-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 680px; }
   .item-card {
-    position: relative; background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
+    position: relative; flex: 1 1 130px; max-width: 190px;
+    background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
     border-radius: var(--r-md); padding: 10px; text-align: center; cursor: pointer;
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
@@ -1824,7 +1914,7 @@
      miniatuur + dezelfde rand-taal: geen rand/dof = ontbreekt, grijs = bezit,
      goud+gloed = nu aan) i.p.v. een tekstregel -- zo oogt de looks-pagina als
      een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
-  .item-grid.looks-view { grid-template-columns: 1fr; max-width: 560px; gap: 10px; }
+  .item-grid.looks-view { flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; max-width: 560px; gap: 10px; }
   /* kaart houdt altijd dezelfde vorm/structuur/hoogte aan, ongeacht status of
      hoeveel stukjes een look heeft -- positie in de lijst verandert nooit (zie
      renderLookGoals). De hele kaart is zelf de "trek aan wat ik heb"-actie
@@ -2204,11 +2294,9 @@
       </div>
       <div class="career-strip" id="career-strip" role="button" tabindex="0" onclick="openCareer()" aria-label="Bekijk je ster-status"></div>
     </div>
-    <div class="map-flex">
-      <div class="tour-map-wrap">
-        <div class="tour-map hscroll-fade" id="tour-map"></div>
-      </div>
-    </div>
+    <!-- De wereld beslaat het hele scherm; de kop en de navigatie zweven erboven.
+         Staat als eerste in de opmaak (en op z-index 0) zodat hij achter alles valt. -->
+    <div class="tour-map" id="tour-map"></div>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
     <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 <span id="mem-fab-pay">0</span></span></button>
   </div>
@@ -2638,9 +2726,150 @@ const CITIES = [
 ];
 function cityFor(lvl) {
   const c = CITIES[(lvl - 1) % CITIES.length];
-  const ronde = Math.floor((lvl - 1) / CITIES.length) + 1;
-  return { name: c.name, flag: c.flag, ronde };
+  return { name: c.name, flag: c.flag };
 }
+
+/* ================= Werelden =================
+   Een wereld is een stuk van de tournee: een vast aantal levels met een eigen
+   sfeer. Meer niet -- de mechaniek (sterren, ontgrendelen, moeilijkheid) is in
+   élke wereld gelijk en staat hier dus níét in. Zie docs/PROGRESSION-REVIEW.md.
+
+   p.level verandert hierdoor niet van betekenis: het blijft "de hoeveelste show",
+   1..oneindig. Een wereld is puur een hergroepering van dat ene getal, dus er is
+   geen migratie en geen enkele opgeslagen ster verhuist.
+
+   LET OP -- de vololgorde en de lengtes liggen vast zodra een wereld eenmaal
+   gespeeld is. Een wereld ertussen schuiven of korter maken hernummert alle
+   levels erna, en dan verhuizen de sterren van een kind naar een andere wereld.
+   Achteraan bijplakken mag altijd. */
+/* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
+   door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
+   Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan. */
+const WORLDS = [
+  { id: 'ijs',       name: 'IJswereld',       icon: '❄️', levels: 8 },
+  { id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8 },
+  { id: 'jungle',    name: 'Junglewereld',    icon: '🌴', levels: 8 },
+  { id: 'muziek',    name: 'Muziekwereld',    icon: '🎵', levels: 8 },
+  { id: 'vuur',      name: 'Vuurwereld',      icon: '🔥', levels: 8 },
+  { id: 'ruimte',    name: 'Ruimtewereld',    icon: '🚀', levels: 8 },
+];
+/* WERELDEN-EINDE */
+// Voorbij de laatste geschreven wereld loopt de tournee gewoon door in stukken
+// van dezelfde lengte. Zo is het spel nooit "uit" en kan er later een echte
+// wereld achteraan zonder dat er iets hernummerd wordt.
+const ENDLESS_WORLD = { id: 'tournee', name: 'Sterrentournee', icon: '✨', levels: 8 };
+// Eerste level van elke wereld (1-gebaseerd). Afgeleid van WORLDS en opnieuw te
+// berekenen, omdat de wereldstudio er een wereld bij kan zetten.
+let WORLD_START = [], WORLD_LAST = 0;
+function rebuildWorldStarts() {
+  let n = 1;
+  WORLD_START = WORLDS.map(w => { const s = n; n += w.levels; return s; });
+  WORLD_LAST = n - 1;
+}
+rebuildWorldStarts();
+
+/* ---- Wereldconcept: bewaren, uitwisselen, wegschrijven -----------------------
+   Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen. Het
+   gewone spel draait dus altijd op wat er in WORLDS staat -- een half afgemaakte
+   wereld kan nooit bij een kind terechtkomen.
+
+   Van concept naar spel gaan kan op twee manieren:
+     Bewaar    schrijft het blok tussen WERELDEN-BEGIN/EINDE in index.html op
+               schijf. Werkt alleen via `npm run preview` (die server luistert
+               ernaar); daarna gewoon npm test, committen en pushen.
+     Kopieer   geeft hetzelfde blok als tekst, om zelf te plakken. Werkt overal,
+               ook op een telefoon en over file://.                            */
+const WORLD_DRAFT_KEY = 'rekenPopsterren_wereldconcept';
+/* Wat er ín het spel staat, zoals het uit index.html kwam -- vastgelegd vóór een
+   concept eroverheen gaat. Daarmee kan de studio laten zien wat er nog niet
+   doorgevoerd is, en een wereld terugdraaien naar de versie die kinderen spelen. */
+const WORLDS_SHIPPED = JSON.parse(JSON.stringify(WORLDS));
+function sameWorld(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+function applyWorldDraft(list) {
+  WORLDS.length = 0;
+  list.forEach(w => WORLDS.push(w));
+  rebuildWorldStarts();
+}
+function loadWorldDraft() {
+  try {
+    const raw = localStorage.getItem(WORLD_DRAFT_KEY);
+    if (!raw) return false;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || !list.length) return false;
+    if (!list.every(w => w && w.id && w.name && w.levels > 0)) return false;
+    applyWorldDraft(list);
+    return true;
+  } catch (e) { return false; }
+}
+function saveWorldDraft() {
+  try { localStorage.setItem(WORLD_DRAFT_KEY, JSON.stringify(WORLDS)); return true; }
+  catch (e) { return false; }
+}
+// De broncode van het blok, precies zoals het in index.html hoort te staan.
+function worldsSource() {
+  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+  const body = WORLDS.map(w => {
+    const L = ['  {'];
+    L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
+    if (w.art) L.push(`    art: ${q(w.art)},`);
+    if (w.badge && (w.badge.emoji || w.badge.name)) {
+      L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
+    }
+    if (w.theme && Object.keys(w.theme).length) {
+      L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
+    }
+    if (w.nodes && w.nodes.length) {
+      L.push('    nodes: [');
+      w.nodes.forEach(n => L.push(`      { x: ${(+n.x).toFixed(1)}, y: ${(+n.y).toFixed(1)} },`));
+      L.push('    ],');
+    }
+    if (w.curve && w.curve.length) {
+      L.push('    curve: [');
+      w.curve.forEach(c => L.push(`      { x: ${(+c.x).toFixed(1)}, y: ${(+c.y).toFixed(1)} },`));
+      L.push('    ],');
+    }
+    L.push('  },');
+    return L.join('\n');
+  }).join('\n');
+  return 'const WORLDS = [\n' + body + '\n];';
+}
+// In welke wereld valt dit level? Geeft nooit undefined terug -- voorbij de
+// geschreven werelden komt er een genummerde Sterrentournee uit.
+function worldFor(lvl) {
+  lvl = Math.max(1, Math.floor(lvl) || 1);
+  if (lvl > WORLD_LAST) {
+    const ronde = Math.floor((lvl - WORLD_LAST - 1) / ENDLESS_WORLD.levels) + 1;
+    const first = WORLD_LAST + 1 + (ronde - 1) * ENDLESS_WORLD.levels;
+    const w = ronde === 1 ? ENDLESS_WORLD : Object.assign({}, ENDLESS_WORLD, { name: `${ENDLESS_WORLD.name} ${ronde}` });
+    return { world: w, index: WORLDS.length + ronde - 1, first, nr: lvl - first + 1, levels: w.levels, endless: true };
+  }
+  let i = 0;
+  for (let k = 0; k < WORLDS.length; k++) if (lvl >= WORLD_START[k]) i = k;
+  return { world: WORLDS[i], index: i, first: WORLD_START[i], nr: lvl - WORLD_START[i] + 1, levels: WORLDS[i].levels, endless: false };
+}
+// Sterren binnen één wereld: het enige totaal dat een kind ook echt vól kan
+// krijgen (in tegenstelling tot het aflopende sterrentotaal over alles heen).
+function worldStars(p, w) {
+  let got = 0;
+  for (let l = w.first; l < w.first + w.levels; l++) got += (p.stars[l] || 0);
+  return { got, max: w.levels * 3 };
+}
+// Is elke show van deze wereld een keer gespeeld? (Basis voor de wereldbadge.)
+function worldDone(p, w) {
+  for (let l = w.first; l < w.first + w.levels; l++) if (!p.stars[l]) return false;
+  return true;
+}
+
+/* De pedagogische klok. Dit was `ronde` in cityFor en stuurt wannéér de extra
+   uitdagingen mogen verschijnen: zoek-het-getal vanaf ronde 3, drie-getallen
+   vanaf ronde 4 (zie opReady/chainReady). BEWUST losgekoppeld van de wereld-
+   indeling: een ronde is 12 optredens en een wereld is er 8, dus die twee door
+   elkaar halen zou allebei die uitdagingen ineens acht shows te vroeg laten
+   beginnen -- een stille verandering in wanneer een zesjarige voor het eerst
+   "3 + ▢ = 7" ziet. Verander dit getal alleen met opzet. */
+const ROUND_LEN = 12;
+function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
 
 /* ================= Trofeeën ================= */
 // De zichtbare namen en beschrijvingen zijn kort en kindvriendelijk gehouden.
@@ -3637,67 +3866,104 @@ function updateFades(el) {
   el.classList.toggle('can-left', el.scrollLeft > 2);
   el.classList.toggle('can-right', el.scrollLeft < max - 2);
 }
-// Bindt (eenmalig) de scroll-fade en muis-klik-&-sleep om horizontaal te scrollen.
-// Touch/pen scrollt al native; alleen de muis krijgt sleep-gedrag.
-function setupTourMap(map) {
-  if (map.dataset.tourBound) return;
-  map.dataset.tourBound = '1';
-  map.addEventListener('scroll', () => { updateFades(map); updateParallax(map); }, { passive: true });
-  let down = false, startX = 0, startScroll = 0, moved = false;
-  map.addEventListener('pointerdown', e => {
-    if (e.pointerType !== 'mouse' || e.button !== 0) return;
-    down = true; moved = false; startX = e.clientX; startScroll = map.scrollLeft;
-  });
-  map.addEventListener('pointermove', e => {
-    if (!down) return;
-    const dx = e.clientX - startX;
-    if (!moved && Math.abs(dx) > 4) {
-      moved = true;
-      // pas vastpakken zodra er écht gesleept wordt: capture bij pointerdown zou
-      // de klik naar de kaart zelf omleiden, waardoor haltes niet aanklikbaar zijn
-      try { map.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-    if (moved) { map.scrollLeft = startScroll - dx; map.classList.add('dragging'); e.preventDefault(); }
-  });
-  const end = () => { if (down) { down = false; map.classList.remove('dragging'); } };
-  map.addEventListener('pointerup', () => {
-    if (moved) {
-      // een klik ná het slepen niet als "start dit optreden" laten tellen
-      const swallow = ev => { ev.stopPropagation(); ev.preventDefault(); map.removeEventListener('click', swallow, true); };
-      map.addEventListener('click', swallow, true);
-      setTimeout(() => map.removeEventListener('click', swallow, true), 150);
-    }
-    end();
-  });
-  map.addEventListener('pointercancel', end);
-  map.addEventListener('pointerleave', end);
-}
-
 /* De kaart is het hoofdscherm: de eigen ster staat óp de route bij haar volgende
    show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
-   zichtbaar door naar de nieuwe stad (zie runTravel). */
+   zichtbaar door naar de volgende halte (zie runTravel). */
 let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
 
-// Hoeveel elke halte boven/onder de basislijn zwaait: kleiner op lage schermen
-// (minder verticale ruimte), groter op hoge schermen, net als de rest van de kaart.
-function waveAmplitude() {
-  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 14;
-  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 30;
-  return 22;
+/* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
+   scrollen. Alle haltes staan op percentages binnen één kader met een vaste
+   beeldverhouding (zie .world-frame). Dáárom klopt de weg op elk toestel met de
+   achtergrondtekening: de weg wordt getekend uit dezelfde percentages als de
+   haltes, en kader, tekening, weg en haltes schalen samen mee. Er wordt niets
+   opgemeten, dus er is ook geen herberekening nodig bij draaien of resizen. */
+
+// Welke wereld staat er in beeld? Normaal die van p.level, maar met de pijltjes
+// onder/boven de kaart kun je terug naar een eerdere wereld om daar haltes te
+// verbeteren. Wordt gereset zodra de kaart opnieuw geopend wordt.
+let viewWorldIdx = null;
+
+// Reservekaart: een wereld zonder eigen haltelijst krijgt een slingerend pad van
+// onder naar boven. Zo is een wereld al speelbaar vóórdat zijn tekening klaar is.
+function defaultNodes(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const t = n > 1 ? i / (n - 1) : 0;
+    // Eén doorlopende S: naar rechts, terug naar links, en weer terug. Een snellere
+    // slinger (elke halte de andere kant op) ligt wiskundig netter uit elkaar, maar
+    // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
+    // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
+    // ruimte tussen de haltes komt van de verticale spreiding hieronder.
+    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 86 - t * 72 });
+  }
+  return out;
 }
-// Een zachte S-vormige golf: elke volgende halte zwaait een beetje verder de
-// andere kant op, zodat de route als geheel kronkelt in plaats van recht loopt.
-function waveY(i, amp) { return Math.round(Math.sin(i * 0.9) * amp); }
-// Breedte van een halte en de zijmarge van de route: volgt dezelfde drie
-// schermgroottes als de CSS-breakpoints (zie .tour-stop / .tour-track).
-// Schuift de achtergrondlucht mee bij het scrollen door de route, trager dan
-// de haltes zelf — het klassieke parallax-dieptetrucje. De transform hoort op
-// de binnenste laag (zie .map-sky-inner hierboven), niet op .map-sky zelf,
-// anders schuift de knip-grens mee met de parallax.
-function updateParallax(map) {
-  const sky = document.querySelector('#screen-map .map-sky-inner');
-  if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
+// De haltes van een wereld, als percentages binnen het kader (0..100).
+function worldNodes(w) {
+  const given = w.world.nodes;
+  return (given && given.length === w.levels) ? given : defaultNodes(w.levels);
 }
+// Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
+// tekening, zodat de weg er exact overheen valt).
+const VB_W = 1080, VB_H = 1840;
+const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
+
+/* De weg slingert méér dan de haltes zelf. Een curve dóór alleen de haltes is
+   namelijk zo recht als de haltes toevallig liggen -- en drie haltes op een rij
+   liggen al snel bijna op één lijn, waardoor de weg als een liniaal leest.
+   Daarom krijgt elk stuk tussen twee haltes een stuurpunt dat loodrecht op dat
+   stuk naar buiten ligt, om en om naar links en rechts. De haltes blijven exact
+   waar ze staan -- ook als ze straks met de hand op de richels van een tekening
+   gezet zijn -- maar de weg ertussen bolt. */
+const ROAD_BOW = 0.17;
+// Waar het stuurpunt van stuk i vanzelf komt te liggen: loodrecht op dat stuk,
+// om en om naar links en rechts, en binnen het kader geklemd.
+function defaultControl(a, b, i) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const s = (i % 2 ? 1 : -1) * ROAD_BOW * len;
+  return {
+    x: Math.max(VB_W * .05, Math.min(VB_W * .95, (a.x + b.x) / 2 + (-dy / len) * s)),
+    y: Math.max(VB_H * .03, Math.min(VB_H * .97, (a.y + b.y) / 2 + (dx / len) * s)),
+  };
+}
+/* De punten waar de weg doorheen loopt: halte, stuurpunt, halte, stuurpunt, ...
+   `curve` is de eigen stuurpuntenlijst van een wereld (percentages, net als de
+   haltes) en heeft er één minder dan er haltes zijn. Ontbreekt hij, dan wordt
+   elk stuurpunt berekend -- zo werkt een wereld zonder dat er iets ingesteld is,
+   en kun je in de studio alsnog elk stuk apart om een rots heen buigen. */
+function roadPoints(pts, curve) {
+  if (pts.length < 2) return pts;
+  const out = [pts[0]];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const c = curve && curve[i]
+      ? { x: vbx(curve[i].x), y: vby(curve[i].y) }
+      : defaultControl(pts[i], pts[i + 1], i);
+    out.push(c);
+    out.push(pts[i + 1]);
+  }
+  return out;
+}
+// De d van de weg tot en met de zoveelste halte (gebruikt voor zowel het hele
+// pad als het afgelegde gouden stuk, zodat die twee gegarandeerd samenvallen).
+function roadD(pts, count, curve) {
+  return count >= 2 ? smoothPath(roadPoints(pts.slice(0, count), curve)) : '';
+}
+// De stuurpunten van een wereld in percentages -- berekend waar ze niet gezet zijn.
+function worldCurve(w) {
+  const pts = worldNodes(w).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const own = w.world.curve || [];
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const c = own[i] ? { x: own[i].x, y: own[i].y }
+      : (d => ({ x: d.x / VB_W * 100, y: d.y / VB_H * 100 }))(defaultControl(pts[i], pts[i + 1], i));
+    out.push(c);
+  }
+  return out;
+}
+
+function updateParallax() { /* de kaart scrollt niet meer; de lucht staat stil */ }
+
 // De ster-status is de titel van de kaart-kop geworden (i.p.v. "Tournee X");
 // de balk eronder toont de voortgang naar de volgende status. Altijd zichtbaar,
 // zodat er ook bij een volle kast nog een doel is.
@@ -3708,16 +3974,30 @@ function renderCareerStrip(p) {
   const span = r.nextMin - r.curMin;
   const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
   // De schermkop zegt overal wáár je bent (Kleedkamer, Trofeeënkast, New York);
-  // op de kaart stond daar de rang. Nu ook hier de plek -- de tournee -- en de
-  // rangnaam verhuist naar de strip eronder, bij zijn eigen teller en balk.
-  const ronde = cityFor(p.level).ronde;
-  $('map-tournee-label').textContent = `🎤 Tournee ${ronde}`;
+  // op de kaart stond daar de rang. Nu de wereld waar ze in speelt, met eronder
+  // hoeveelste show van die wereld -- de twee dingen die zeggen waar ze is.
+  const cur = worldFor(p.level);
+  const shown = viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx);
+  const ws = worldStars(p, shown);
+  // "Level 4 / 8" hoort alleen bij de wereld waar ze nú staat. Kijkt ze even in een
+  // eerdere wereld, dan staat er enkel hoeveel sterren daar te halen zijn -- anders
+  // zou er "Level 8 / 8" staan op een plek waar ze helemaal niet is.
+  $('map-tournee-label').innerHTML = `${shown.world.icon} ${esc(shown.world.name)}`
+    + `<span class="world-sub">`
+    + (shown.index === cur.index ? `Level ${cur.nr} / ${cur.levels} · ` : '')
+    + `⭐ ${ws.got}/${ws.max}</span>`;
   // rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk:
   // één plek waar staat welke status je hebt en hoe ver je naar de volgende bent
   $('career-strip').innerHTML =
     `<span class="rank-counter"><span class="rank-name">${r.emoji} ${r.name}</span>`
     + ` · ${total}/${r.nextMin} ⭐ <span class="rank-tap">›</span></span>`
     + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
+}
+// Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
+// nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
+function worldForIndex(idx) {
+  if (idx < WORLDS.length) return worldFor(WORLD_START[idx]);
+  return worldFor(WORLD_LAST + 1 + (idx - WORLDS.length) * ENDLESS_WORLD.levels);
 }
 // De hele carrière-ladder in beeld: behaalde, huidige en komende ster-statussen,
 // met hun sterrendrempel en diamant-bonus. Tik buiten = dicht. Hergebruikt
@@ -3789,21 +4069,15 @@ function goMap() {
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
-  renderCareerStrip(p);   // zet ook de titel (ster-status) in de kop
   const travel = pendingTravel;
   pendingTravel = null;
+  // thuiskomen is altijd in de wereld waar ze nú speelt -- een uitstapje naar een
+  // eerdere wereld duurt precies zolang je er blijft
+  viewWorldIdx = worldFor(travel ? travel.from : p.level).index;
+  renderCareerStrip(p);   // zet ook de wereldnaam in de kop
   renderTourMap(travel ? travel.from : 0);
   show('screen-map');
-  const map = $('tour-map');
-  requestAnimationFrame(() => {
-    const focus = map.querySelector(`.tour-stop[data-lvl="${travel ? travel.from : p.level}"]`);
-    // vlak vóór de reis iets naar rechts centreren, zodat de nieuwe stad ook al in beeld staat
-    if (focus) centerStop(map, focus, travel ? Math.round(focus.offsetWidth / 2) : 0, false);
-    updateFades(map);
-    updateRoad(map);
-    updateParallax(map);
-    if (travel) runTravel(travel);
-  });
+  if (travel) requestAnimationFrame(() => runTravel(travel));
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
 // zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
@@ -3819,74 +4093,139 @@ function smoothPath(ps) {
   }
   return d;
 }
-// Tekent de golvende reisweg als vloeiend SVG-pad dóór het midden van elke halte:
-// het afgelegde deel licht warm op (tot de halte waar de ster nu staat), de rest blijft dof.
-function updateRoad(map) {
-  const track = map.querySelector('.tour-track');
-  if (!track) return;
-  const svg = track.querySelector('.tour-road-svg');
-  const bg = track.querySelector('.tour-road-bg');
-  const fg = track.querySelector('.tour-road-fg');
-  const fade = track.querySelector('.tour-road-fade');
-  const fadeGrad = track.querySelector('#roadFadeGrad');
-  const stops = [...track.querySelectorAll('.tour-stop')];
-  if (!svg || !stops.length) return;
-  // een eventuele reis-animatie (zie growRoad) laat een dash-masker achter
-  fg.style.strokeDasharray = ''; fg.style.strokeDashoffset = '';
-  svg.setAttribute('width', track.scrollWidth);
-  svg.setAttribute('height', track.scrollHeight);
-  const trackRect = track.getBoundingClientRect();
-  const pts = stops.map(st => {
-    const r = st.querySelector('.dot').getBoundingClientRect();
-    return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
-  });
-  // één vloeiende curve dóór alle haltes -- de tegels hebben een ondoorzichtige
-  // vulling (zie .tour-stop .dot) en dekken het pad vanzelf volledig af
-  bg.setAttribute('d', smoothPath(pts));
-  const hero = track.querySelector('.tour-hero');
-  const target = track.querySelector('.tour-stop.next') || (hero && hero.closest('.tour-stop'));
-  const targetIdx = target ? stops.indexOf(target) : -1;
-  fg.setAttribute('d', targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '');
-  // een korte staart ná de laatst getoonde halte die uitdooft -- begint nog
-  // vanaf die halte zelf (dus eerst nog onder de ondoorzichtige tegel) en
-  // vervaagt daarna naar niets: een hint dat de tournee verder doorloopt
-  const n = pts.length;
-  if (fade && n >= 2) {
-    const dx = pts[n - 1].x - pts[n - 2].x, dy = pts[n - 1].y - pts[n - 2].y;
-    const len = Math.hypot(dx, dy) || 1;
-    const ex = pts[n - 1].x + (dx / len) * 90, ey = pts[n - 1].y + (dy / len) * 90;
-    fade.setAttribute('d', `M${pts[n - 1].x.toFixed(1)},${pts[n - 1].y.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}`);
-    if (fadeGrad) {
-      fadeGrad.setAttribute('x1', pts[n - 1].x); fadeGrad.setAttribute('y1', pts[n - 1].y);
-      fadeGrad.setAttribute('x2', ex); fadeGrad.setAttribute('y2', ey);
-    }
-  } else if (fade) fade.setAttribute('d', '');
+// De tekening van een wereld. Is er nog geen, dan doet de reservekaart het werk
+// met de kleuren van de wereld zelf -- een wereld is dus speelbaar vóór hij
+// getekend is, en een ontbrekend bestand levert nooit een leeg vlak op.
+function applyWorldArt(el, world) {
+  el.style.backgroundImage = world.art ? `url("${world.art}")` : '';
+  el.classList.toggle('no-art', !world.art);
 }
-// Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
-// de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
-// Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas
-// ná aankomst in één klap door te schieten: de weg wordt zichtbaar afgelegd.
-// Werkt via een dash-masker over het volledige pad tot de nieuwe stad -- eerst
-// afgedekt tot de oude halte, dan in dezelfde tijd als de huppel opengeschoven.
-function growRoad(map, fromLvl, toLvl, duration, delay) {
-  const track = map.querySelector('.tour-track');
-  const svg = track && track.querySelector('.tour-road-svg');
-  const fg = track && track.querySelector('.tour-road-fg');
-  if (!track || !svg || !fg || !fg.animate || !fg.getTotalLength) return null;
-  const stops = [...track.querySelectorAll('.tour-stop')];
-  const idx = lvl => stops.findIndex(st => Number(st.dataset.lvl) === lvl);
-  const fromIdx = idx(fromLvl), toIdx = idx(toLvl);
-  if (fromIdx < 0 || toIdx < 0) return null;
-  const trackRect = track.getBoundingClientRect();
-  const pts = stops.map(st => {
-    const r = st.querySelector('.dot').getBoundingClientRect();
-    return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
+/* De sfeer van een wereld als CSS-variabelen, één keer op het kader gezet. Elk
+   onderdeel leest daarna var(--w-...) en weet dus niet in wélke wereld het staat
+   -- dat is precies wat voorkomt dat er ooit ergens if (wereld === 'ijs') komt. */
+function applyWorldTheme(el, world) {
+  const t = world.theme || {};
+  ['sky', 'deep', 'accent', 'glow', 'road'].forEach(k => {
+    if (t[k]) el.style.setProperty('--w-' + k, t[k]);
+    else el.style.removeProperty('--w-' + k);
   });
-  fg.setAttribute('d', smoothPath(pts.slice(0, toIdx + 1)));
+}
+// Een pijl onder/boven de kaart naar de vorige of volgende wereld. Rustig
+// vormgegeven: terugkeren naar een oude wereld mag nooit concurreren met Speel!.
+function worldStepBtn(dir, toIdx) {
+  const w = worldForIndex(toIdx);
+  const b = document.createElement('button');
+  b.className = 'world-step ' + dir;
+  b.innerHTML = `<span class="ws-ico">${dir === 'prev' ? '⌄' : '⌃'}</span>`
+    + `<span class="ws-name">${w.world.icon}</span>`;
+  b.setAttribute('aria-label', (dir === 'prev' ? 'Terug naar ' : 'Verder naar ') + w.world.name);
+  b.onclick = () => { sndClick(); viewWorldIdx = toIdx; renderCareerStrip(P()); renderTourMap(0); };
+  return b;
+}
+/* Bouwt de kaart van één wereld. travelFrom > 0 = de tussenstand vlak vóór de
+   reis-animatie: de ster staat dan nog op de vorige halte en de nieuwe halte zit
+   nog op slot. Alles staat op percentages binnen het kader, dus er wordt niets
+   opgemeten -- draaien of resizen vraagt geen enkele herberekening. */
+function renderTourMap(travelFrom) {
+  const p = P();
+  const cur = worldFor(p.level);
+  if (viewWorldIdx == null) viewWorldIdx = cur.index;
+  const shown = worldForIndex(viewWorldIdx);
+  const nodes = worldNodes(shown);
+  const travelling = !!travelFrom;
+  const playable = travelling ? travelFrom : p.level;   // t/m dit level is alles open
+  const heroLvl = travelFrom || p.level;
+
+  const map = $('tour-map');
+  map.innerHTML = '';
+  const frame = document.createElement('div');
+  frame.className = 'world-frame';
+  applyWorldArt(frame, shown.world);
+  applyWorldTheme(frame, shown.world);
+
+  // De weg: één vloeiende curve door álle haltes, met het afgelegde stuk in goud
+  // eroverheen. Getekend uit dezelfde percentages als de haltes, in de viewBox van
+  // de tekening -- daarom valt hij op elk scherm precies op de haltes.
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'tour-road-svg');
+  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  svg.setAttribute('aria-hidden', 'true');
+  const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
+  const bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
+  const curve = shown.world.curve;
+  bgPath.setAttribute('d', roadD(pts, pts.length, curve));
+  const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
+  fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
+  svg.appendChild(bgPath);
+  svg.appendChild(fgPath);
+  frame.appendChild(svg);
+
+  nodes.forEach((n, i) => {
+    const lvl = shown.first + i;
+    const open = lvl <= playable;
+    const st = p.stars[lvl] || 0;
+    const b = document.createElement('button');
+    // tijdens de reis-tussenstand is er even geen "hier spelen"-halte
+    b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === playable) ? 'next' : 'done');
+    b.dataset.lvl = lvl;
+    b.style.left = n.x + '%';
+    b.style.top = n.y + '%';
+    // drie sterren = deze halte is áf (zie .tour-stop.perfect); elke halte een
+    // eigen startmoment, anders glinsteren ze in koor
+    if (open && st === 3) {
+      b.classList.add('perfect');
+      b.style.setProperty('--shine-delay', (i % 4) * 1.1 + 's');
+    }
+    const hero = lvl === heroLvl
+      ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
+
+    const lock = open ? '' : '<span class="stop-lock" aria-hidden="true">🔒</span>';
+    b.innerHTML = `${hero}<div class="dot">${lock}${i + 1}</div>${starRowHTML(st)}`;
+    b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
+      + (open ? ` — ${st} van 3 sterren` : ' — nog op slot'));
+    if (open) b.onclick = () => { sndClick(); startLevel(lvl); };
+    frame.appendChild(b);
+  });
+
+  // naar een eerdere wereld terug (om daar te verbeteren), of vooruit tot zo ver
+  // als ze zelf al gekomen is -- nooit verder
+  if (shown.index > 0) frame.appendChild(worldStepBtn('prev', shown.index - 1));
+  if (shown.index < cur.index) frame.appendChild(worldStepBtn('next', shown.index + 1));
+
+  map.appendChild(frame);
+  // Alleen in de scrollende noodstand (zie de max-height-regel in de CSS): zet de
+  // halte waar ze nu staat in beeld. Staand is er niets te scrollen en doet dit niets.
+  requestAnimationFrame(() => {
+    const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+    if (here && map.scrollHeight > map.clientHeight + 4) {
+      map.scrollTop = Math.max(0, here.offsetTop - map.clientHeight / 2);
+    }
+  });
+}
+// Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
+function starRowHTML(n) {
+  const got = Math.max(0, Math.min(3, n));
+  return `<div class="cstars">${'⭐'.repeat(got)}`
+    + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '') + `</div>`;
+}
+// Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
+// aankomst in één klap door te schieten. Werkt via een dash-masker over het pad
+// tot de nieuwe halte: eerst afgedekt tot de oude, dan opengeschoven.
+function growRoad(map, fromLvl, toLvl, duration, delay) {
+  const svg = map.querySelector('.tour-road-svg');
+  const fg = svg && svg.querySelector('.tour-road-fg');
+  if (!svg || !fg || !fg.animate || !fg.getTotalLength) return null;
+  const shown = worldForIndex(viewWorldIdx);
+  const pts = worldNodes(shown).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const fromIdx = fromLvl - shown.first, toIdx = toLvl - shown.first;
+  if (fromIdx < 0 || toIdx <= 0 || toIdx >= pts.length) return null;
+  fg.setAttribute('d', roadD(pts, toIdx + 1, shown.world.curve));
   const total = fg.getTotalLength();
   // lengte tot de oude halte: even hetzelfde pad opmeten, ingekort
   const probe = fg.cloneNode();
-  probe.setAttribute('d', fromIdx > 0 ? smoothPath(pts.slice(0, fromIdx + 1)) : '');
+  probe.setAttribute('d', roadD(pts, fromIdx + 1, shown.world.curve));
   svg.appendChild(probe);
   const covered = fromIdx > 0 ? probe.getTotalLength() : 0;
   probe.remove();
@@ -3896,150 +4235,51 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
     [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
     { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
 }
-function renderTourMap(travelFrom) {
-  const p = P();
-  const curLvl = travelFrom ? 0 : p.level;
-  const heroLvl = travelFrom || p.level;
-  const map = $('tour-map');
-  map.innerHTML = '';
-  const track = document.createElement('div');
-  track.className = 'tour-track';
-  // toont alleen de huidige halte + 3 op-slot haltes erna -- verder dan dat
-  // hoeft niet zichtbaar/scrollbaar te zijn
-  const maxShow = heroLvl + 3;
-  const amp = waveAmplitude();
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const roadSvg = document.createElementNS(svgNS, 'svg');
-  roadSvg.setAttribute('class', 'tour-road-svg');
-  roadSvg.setAttribute('aria-hidden', 'true');
-  const defs = document.createElementNS(svgNS, 'defs');
-  // dooft de allerlaatste stukje weg uit -- alleen die staart, niet de hele
-  // (verder overal even dof-vaste) weg. x1/y1/x2/y2 worden in updateRoad gezet.
-  const fadeGrad = document.createElementNS(svgNS, 'linearGradient');
-  fadeGrad.setAttribute('id', 'roadFadeGrad');
-  fadeGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
-  const fadeStop1 = document.createElementNS(svgNS, 'stop');
-  fadeStop1.setAttribute('offset', '0%'); fadeStop1.setAttribute('stop-color', 'rgba(255,255,255,.35)');
-  const fadeStop2 = document.createElementNS(svgNS, 'stop');
-  fadeStop2.setAttribute('offset', '100%'); fadeStop2.setAttribute('stop-color', 'rgba(255,255,255,0)');
-  fadeGrad.appendChild(fadeStop1); fadeGrad.appendChild(fadeStop2);
-  defs.appendChild(fadeGrad);
-  const bgPath = document.createElementNS(svgNS, 'path');
-  bgPath.setAttribute('class', 'tour-road-bg');
-  const fadePath = document.createElementNS(svgNS, 'path');
-  fadePath.setAttribute('class', 'tour-road-fade');
-  const fgPath = document.createElementNS(svgNS, 'path');
-  fgPath.setAttribute('class', 'tour-road-fg');
-  roadSvg.appendChild(defs);
-  roadSvg.appendChild(bgPath);
-  roadSvg.appendChild(fadePath);
-  roadSvg.appendChild(fgPath);
-  track.appendChild(roadSvg);
-  for (let l = 1; l <= maxShow; l++) {
-    const city = cityFor(l);
-    const b = document.createElement('button');
-    b.className = 'tour-stop';
-    b.dataset.lvl = l;
-    // elke halte zwaait een beetje op/neer t.o.v. de vorige — dat maakt van de weg
-    // een zachte S-curve i.p.v. een rechte lijn op elkaar gestapeld (zie waveY)
-    const wy = waveY(l - 1, amp);
-    b.style.transform = `translateY(${wy}px)`;
-    b.dataset.waveY = wy;
-    const st = p.stars[l] || 0;
-    const open = travelFrom ? l <= travelFrom : l <= p.level;
-    if (!open) {
-      b.classList.add('locked');
-      // alle op-slot haltes krijgen dezelfde rustige "uitgeschakeld"-grijstint --
-      // een per-halte verval (donkerder of lichter per stap) trok net te veel
-      // aandacht naar iets dat toch nog niet te doen is
-      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>${starRowHTML(0)}`;
-    } else {
-      b.classList.add(l === curLvl ? 'next' : 'done');
-      // de eigen ster staat vol in beeld, boven op haar huidige/vorige halte --
-      // bij een gewone weergave is dat de speelbare halte (curLvl); tijdens de
-      // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
-      // staat ze nog op de halte waar ze vandaan komt (heroLvl)
-      const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      const speel = l === curLvl ? '<div class="tour-speel speel-pill">Speel!</div>' : '';
-      // Iedere halte krijgt dezelfde sterrenregel -- ook een halte die nog niet
-      // gespeeld is (dan drie doffe sterren) en een halte op slot. Eerder stond
-      // die regel alleen onder gespeelde steden, waardoor de stadsnamen op drie
-      // verschillende hoogtes uitkwamen (de weg golft al) en de Speel!-bel tegen
-      // het label van de buurstad aan liep. Nu is elke tegel even hoog.
-      const sterren = starRowHTML(st);
-      // stadsicoon blijft altijd zichtbaar in de tegel, ook op de huidige
-      // halte -- de eigen ster staat er los bovenop (.tour-hero, voeten net
-      // op de bovenrand), zonder het icoon te bedekken
-      const dotContent = city.flag;
-      b.innerHTML = `${hero}<div class="dot">${dotContent}</div><div class="cname">${city.name}</div>${sterren}${speel}`;
-      b.onclick = () => { sndClick(); startLevel(l); };
-    }
-    track.appendChild(b);
-  }
-  map.appendChild(track);
-  setupTourMap(map);
-}
-// Zet een halte netjes in het midden van het venster (extraPx verschuift het middelpunt).
-// Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
-function starRowHTML(n) {
-  const got = Math.max(0, Math.min(3, n));
-  return `<div class="cstars">${'⭐'.repeat(got)}`
-    + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '') + `</div>`;
-}
-function centerStop(map, el, extraPx, smooth) {
-  const mr = map.getBoundingClientRect(), er = el.getBoundingClientRect();
-  const left = map.scrollLeft + (er.left - mr.left) - (map.clientWidth - el.offsetWidth) / 2 + (extraPx || 0);
-  if (smooth && map.scrollTo) map.scrollTo({ left, behavior: 'smooth' });
-  else map.scrollLeft = left;
-}
-// De beloning na een level-up: de ster huppelt over de route naar de nieuwe stad,
-// die daar zichtbaar openspringt (slotje weg, goud aan, Speel-knop eronder).
+/* De beloning na een level-up: de ster huppelt over de route naar de volgende
+   halte, die daar zichtbaar openspringt. Loopt de sprong over een wereldgrens,
+   dan is er niets om naartoe te huppelen -- dan wisselt de kaart van wereld en
+   krijgt de aankomst een eigen titelkaartje. */
 function runTravel(t) {
+  const p = P();
+  const fromW = worldFor(t.from), toW = worldFor(t.to);
+  const crossing = fromW.index !== toW.index;
   const map = $('tour-map');
   const from = map.querySelector(`.tour-stop[data-lvl="${t.from}"]`);
   const to = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
   const hero = from && from.querySelector('.tour-hero');
+  const still = motionOff();
   const finish = () => {
+    viewWorldIdx = toW.index;
+    renderCareerStrip(p);
     renderTourMap(0);
-    requestAnimationFrame(() => {
-      const el = map.querySelector(`.tour-stop[data-lvl="${P().level}"]`);
-      if (el) centerStop(map, el, 0, true);
-      updateFades(map);
-      updateRoad(map);   // de reisweg licht nu op tot aan de nieuwe stad
-      updateParallax(map);
-      const dot = el && el.querySelector('.dot');
-      if (dot && dot.animate) dot.animate(
-        [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
-        { duration: 450, easing: 'ease-out' });
-    });
-    const city = cityFor(t.to);
+    const el = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
+    const dot = el && el.querySelector('.dot');
+    if (dot && dot.animate && !still) dot.animate(
+      [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
+      { duration: 450, easing: 'ease-out' });
     sndCoin();
-    confetti(14);
-    showPraise(`${city.flag} Welkom in ${city.name}!`);
+    confetti(crossing ? 26 : 14);
+    showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
   };
-  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
+  if (crossing || !from || !to || !hero || !hero.animate || still) { finish(); return; }
   const dx = to.offsetLeft - from.offsetLeft;
-  // de golfhoogte van vertrek- en aankomsthalte verschilt (S-curve): de huppel volgt die kromming mee
-  const dy = parseFloat(to.dataset.waveY || 0) - parseFloat(from.dataset.waveY || 0);
+  const dy = to.offsetTop - from.offsetTop;
   // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
   const frames = [];
   for (let i = 0; i <= 6; i++) {
     frames.push({
-      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -34 : 0)}px)`,
+      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -30 : 0)}px)`,
       offset: i / 6,
       easing: i % 2 ? 'ease-in' : 'ease-out'
     });
   }
   buzz([0, 25, 90, 25, 90, 25]);
-  const anim = hero.animate(frames, { duration: 1500, delay: 400, fill: 'forwards' });
-  growRoad(map, t.from, t.to, 1500, 400);   // het goud loopt met haar mee
-  // glinsterspoor achter de huppelende ster
+  const anim = hero.animate(frames, { duration: 1400, delay: 400, fill: 'forwards' });
+  growRoad(map, t.from, t.to, 1400, 400);   // het goud loopt met haar mee
   const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
-  setTimeout(() => clearInterval(trail), 1950);
+  setTimeout(() => clearInterval(trail), 1850);
   anim.onfinish = finish;
 }
-
 /* ================= Trofeeën-scherm ================= */
 // Verse start (o.a. nogmaals op het al-actieve Trofeeën-tabblad tikken):
 // altijd terug naar boven.
@@ -4156,7 +4396,10 @@ function trophyCard(t, p) {
 }
 function normalCardHTML(t, p, status) {
   const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
-  if (status === 'done') return '<span class="trophy-won">🏆</span>' + top;
+  // Behaald: geen los hoekbadge meer, maar de stempel in het statusvakje onderaan --
+  // zelfde plek als de voortgangsbalk, dus behaalde kaarten vullen hun rij net zo ver
+  // als de kaarten ernaast.
+  if (status === 'done') return top + '<div class="trophy-bottom"><span class="trophy-done-pill">✓ Behaald</span></div>';
   if (status === 'locked') {
     return '<span class="trophy-lock">🔒</span>' + top
       + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Nog niet vrij</div></div>';
@@ -5264,12 +5507,13 @@ function planSpecials(p, s, total, round, goldIdx) {
   } else if (both) {
     // beide beschikbaar en gesetteld: precies één van elk (nooit meer dan 2 per ronde)
     types = ['miss', 'chain'];
-  } else {
+  } else if (missAvail || chainAvail) {
     // maar één dimensie actief: die mag op trap 2 twee per ronde geven (bij ≥8 vragen)
     const type = missAvail ? 'miss' : 'chain';
     const ramp = missAvail ? p.missRamp.rung : p.chainTrack.rung;
     types = ramp >= 2 && twoOk ? [type, type] : [type];
   }
+  // (geen van beide beschikbaar: types blijft leeg -- géén speciale vraag)
   // hoeveel speciale plekken passen er (niet de eerste, niet naast elkaar/de gouden)?
   const fit = Math.max(0, Math.floor((total - 1) / 2));
   const cap = Math.min(fit, twoOk ? 2 : 1);
@@ -5313,7 +5557,7 @@ function startLevel(lvl) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, cityFor(lvl).ronde, goldIdx);
+  const plan = count ? [] : planSpecials(p, s, s.perLevel, tourRound(lvl), goldIdx);
   // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
   // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
@@ -5815,7 +6059,13 @@ function endLevel(success) {
     }
     const bonus = stars * 5;
     p.diamonds += bonus;
-    p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
+    // Wat stond er vóór deze show? Alleen dan kan dit een verbetering zijn: een
+    // eerste keer is geen "beter dan vorige keer". Ging het mínder goed, dan
+    // blijft het oude resultaat gewoon staan (Math.max) én zegt het eindscherm
+    // daar niets over -- terugkomen mag nooit iets kunnen kosten.
+    const vorige = p.stars[lvl] || 0;
+    const beter = vorige > 0 && stars > vorige;
+    p.stars[lvl] = Math.max(vorige, stars);
     if (lvl === p.level) {
       p.level++;
       pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
@@ -5827,7 +6077,11 @@ function endLevel(success) {
     $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
-    const juich = stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
+    // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
+    // de gouden haltes op de kaart (.tour-stop.perfect) naartoe lokken.
+    const juich = beter
+      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren! 🤩' : 'Beter dan de vorige keer! ⭐')
+      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
     $('end-text').textContent = juich;
@@ -7292,9 +7546,13 @@ syncBackGuard();
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
    &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
-   &screen=<naam>    -- spring meteen naar map | dress | tro | game | end       */
+   &screen=<naam>    -- spring meteen naar map | dress | tro | game | end
+   &mapedit          -- wereldstudio: haltes verslepen over de kaart, een
+                        kandidaat-tekening laden en de punten kopieren naar
+                        WORLDS (zie startMapEdit hieronder)                    */
 if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
+  if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
   window.__db = () => db;
   if (dbg.has('demo')) {
@@ -7335,7 +7593,526 @@ if (location.search.indexOf('debug') !== -1) {
                  end: () => { startLevel(P().level); endLevel(true); } };
     (go[dbg.get('screen')] || goMap)();
   }
+  if (dbg.has('mapedit') && cur) startMapEdit();
 }
+/* ---- Wereldstudio (?debug&mapedit) ------------------------------------------
+   Werelden maken en bijwerken óp de echte kaart, op ware grootte.
+
+   Drie dingen die je in de code niet fatsoenlijk kunt doen:
+     - haltes op de richels van een tekening zetten (percentages schatten lukt niet)
+     - de weg dáár langs laten lopen: elk stuk heeft een eigen stuurpunt, dus je
+       kunt om een rots heen buigen in plaats van eroverheen
+     - zien wat er nog níét in het spel staat, en het er in één tik in zetten
+
+   Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen: het
+   gewone spel draait altijd op WORLDS uit index.html, dus een half afgemaakte
+   wereld kan nooit bij een kind terechtkomen.                                  */
+function startMapEdit() {
+  const map = $('tour-map');
+  const F = id => document.getElementById(id);
+  document.body.classList.add('mapedit');
+
+  /* De voorvertoningsserver zet rechtsonder zijn eigen paneeltje neer met links
+     naar de schermen. Die links dragen ?debug&demo&star=p1&screen=... en dus géén
+     &mapedit -- één tik erop en de studio was weg zonder weg terug. */
+  document.querySelectorAll('#kandidaat nav a').forEach(a => {
+    if (a.getAttribute('href').indexOf('mapedit') < 0) a.href = a.getAttribute('href') + '&mapedit';
+  });
+
+  const st = document.createElement('style');
+  st.textContent = `
+    body.mapedit .main-nav, body.mapedit .mem-fab, body.mapedit .tour-hero { display: none !important; }
+    /* In de studio krijgt de kaart telefoon-verhoudingen. Op een breed scherm zou
+       hij anders in de kolom-noodstand vallen, en dan zet je haltes neer op een
+       vorm die geen enkel kind ooit ziet. */
+    body.mapedit #screen-map { padding-right: var(--studio-w, 0px); }
+    body.mapedit #tour-map { left: 24px; right: auto; width: min(430px, 60vw);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 10px 40px rgba(0,0,0,.45); }
+    /* De kolom-noodstand kijkt naar het vénster, niet naar dit vak -- op een breed
+       bureaublad zou hij dus altijd aanslaan. Hier staat hij uit: het vak heeft al
+       telefoon-verhoudingen, dus full-bleed is precies wat een kind straks ziet. */
+    body.mapedit #tour-map { overflow: hidden; align-items: center; padding: 0; }
+    body.mapedit .world-frame { min-width: 100%; min-height: 100%; width: auto; }
+    body.mapedit .hub-sticky { max-width: min(430px, 60vw); margin-left: 24px; }
+    @media (max-width: 820px) {
+      body.mapedit #tour-map { left: 0; width: 100%; box-shadow: none; }
+      body.mapedit .hub-sticky { max-width: none; margin-left: 0; }
+    }
+    body.mapedit .tour-stop { cursor: grab; }
+    body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
+    /* stuurpunt van één stuk weg: klein, ruitvormig, duidelijk iets ánders dan een halte */
+    .me-ctrl { position: absolute; width: 7cqw; height: 7cqw; margin: -3.5cqw 0 0 -3.5cqw;
+      z-index: 4; cursor: grab; border-radius: 3px; transform: rotate(45deg);
+      background: rgba(120,255,180,.35); border: 0.5cqw solid rgba(120,255,180,.95); }
+    .me-ctrl:active { cursor: grabbing; background: rgba(120,255,180,.7); }
+    body.mapedit.nocurve .me-ctrl { display: none; }
+
+    #studio { position: fixed; top: 0; right: 0; bottom: 0; width: 330px; z-index: 60;
+      display: flex; flex-direction: column; overflow: hidden;
+      background: #140a22; color: #f2ecfa; border-left: 1px solid rgba(255,255,255,.18);
+      font: 400 13px/1.35 system-ui, sans-serif; }
+    #studio.dicht { width: 44px; }
+    #studio.dicht > *:not(.st-top) { display: none; }
+    #studio .st-top { display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.14); }
+    #studio .st-top b { flex: 1; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+    #studio.dicht .st-top b, #studio.dicht .st-top .st-chip { display: none; }
+    #studio .st-body { flex: 1; overflow: auto; padding: 4px 12px 12px; }
+    #studio h6 { margin: 14px 0 6px; font-size: 10.5px; letter-spacing: .12em;
+      text-transform: uppercase; color: #b79ae0; }
+    #studio .st-chip { font-size: 10.5px; padding: 2px 7px; border-radius: 99px;
+      background: rgba(255,255,255,.12); white-space: nowrap; }
+    #studio .st-chip.vuil { background: rgba(255,196,61,.22); color: #ffd98a; }
+    #studio .st-chip.schoon { background: rgba(120,255,180,.18); color: #b6ffd6; }
+    #studio button, #studio input, #studio select {
+      font: inherit; color: #fff; background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.22); border-radius: 7px; padding: 6px 9px; }
+    #studio button { cursor: pointer; }
+    #studio button:hover { background: rgba(255,255,255,.18); }
+    #studio button.prim { background: rgba(120,255,180,.2); border-color: rgba(120,255,180,.55); font-weight: 600; }
+    #studio button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
+    #studio .st-row { display: grid; grid-template-columns: 74px 1fr; gap: 6px; align-items: center; margin-bottom: 6px; }
+    #studio .st-row label { color: #b79ae0; font-size: 12px; }
+    #studio .st-row input { width: 100%; min-width: 0; }
+    #studio .st-kleur { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    #studio .st-kleur div { text-align: center; font-size: 10.5px; color: #b79ae0; }
+    #studio .st-kleur input { width: 100%; height: 28px; padding: 2px; }
+    #studio .st-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    #studio .st-list { display: flex; flex-direction: column; gap: 3px; }
+    #studio .st-w { display: flex; align-items: center; gap: 7px; padding: 6px 8px; cursor: pointer;
+      border-radius: 7px; border: 1px solid transparent; background: rgba(255,255,255,.05); text-align: left; }
+    #studio .st-w.sel { border-color: rgba(120,255,180,.6); background: rgba(120,255,180,.12); }
+    #studio .st-w .st-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #studio .st-w .st-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.2); }
+    #studio .st-w .st-dot.vuil { background: #ffc43d; }
+    #studio .st-w .st-dot.nieuw { background: #7dffb4; }
+    #studio .st-hint { color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
+    #studio .st-uit { margin-top: 8px; font: 11.5px ui-monospace, monospace; color: #b6ffd6; min-height: 15px; }
+    #me-dump { position: fixed; inset: 8% 360px auto 6%; z-index: 61; display: none;
+      max-height: 70vh; padding: 12px; border-radius: 10px; background: #140426; color: #d8ffe8;
+      border: 1px solid rgba(255,255,255,.3); font: 12px/1.45 ui-monospace, monospace;
+      white-space: pre; overflow: auto; }
+    .me-grid { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%); }
+    .me-safe { position: absolute; left: 6%; right: 6%; top: 14%; bottom: 14%; z-index: 2;
+      pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }
+    @media (max-width: 820px) {
+      #studio { top: auto; left: 0; width: auto; max-height: 56vh; border-left: 0;
+        border-top: 1px solid rgba(255,255,255,.18); }
+      #studio.dicht { width: auto; max-height: 44px; }
+      body.mapedit #screen-map { padding-right: 0; }
+      #me-dump { inset: 6% 6% auto; }
+    }`;
+  document.head.appendChild(st);
+
+  const panel = document.createElement('div');
+  panel.id = 'studio';
+  panel.innerHTML = `
+    <div class="st-top">
+      <b>Wereldstudio</b>
+      <span class="st-chip" id="st-status">—</span>
+      <button id="st-fold" title="In-/uitklappen">⇥</button>
+    </div>
+    <div class="st-body">
+      <h6>Werelden</h6>
+      <div class="st-list" id="st-list"></div>
+      <div class="st-btns" style="margin-top:6px">
+        <button id="st-new">＋ wereld</button>
+        <button id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
+      </div>
+
+      <h6>Deze wereld</h6>
+      <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
+      <div class="st-row"><label>naam</label><input id="mf-name"></div>
+      <div class="st-row"><label>badge</label><input id="mf-bemoji" maxlength="4"></div>
+      <div class="st-row"><label>badgenaam</label><input id="mf-bname"></div>
+      <div class="st-row"><label>tekening</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
+      <div class="st-kleur">
+        <div>lucht<input id="mf-sky" type="color"></div>
+        <div>diepte<input id="mf-deep" type="color"></div>
+        <div>accent<input id="mf-accent" type="color"></div>
+        <div>gloed<input id="mf-glow" type="color"></div>
+      </div>
+      <p class="st-hint">levels: <b id="mf-levels"></b> — vast. Dit wijzigen hernummert elk level erna,
+        en dan verhuizen de sterren van een kind naar een andere wereld.</p>
+
+      <h6>Kaart &amp; weg</h6>
+      <div class="st-btns">
+        <label class="st-btnlike"><button type="button" id="st-pick">📷 tekening</button></label>
+        <input type="file" accept="image/*" hidden id="me-file">
+        <button id="st-grid">▦ raster</button>
+        <button id="st-curve" class="on">∿ stuurpunten</button>
+      </div>
+      <div class="st-btns" style="margin-top:6px">
+        <button id="st-renodes">↺ haltes</button>
+        <button id="st-recurve">↺ weg</button>
+      </div>
+      <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
+        om de weg langs de tekening te leiden. Eén ruitje per stuk weg.</p>
+
+      <h6>Beelden</h6>
+      <div class="st-row"><label>doel</label><select id="st-doel"></select></div>
+      <div class="st-row"><label>kwaliteit</label><select id="st-kwal">
+        <option value="0.9">0.90 — ruim</option>
+        <option value="0.82" selected>0.82 — normaal</option>
+        <option value="0.72">0.72 — zuinig</option>
+      </select></div>
+      <div class="st-btns">
+        <button class="prim" id="st-pick">⤓ kies beeld &amp; zet vast</button>
+      </div>
+      <input type="file" accept="image/*" hidden id="me-file">
+      <p class="st-hint" id="st-doelhint"></p>
+
+      <h6>Voorbeeld</h6>
+      <div class="st-btns">
+        <button data-prev="390x844">staand</button>
+        <button data-prev="320x568">klein</button>
+        <button data-prev="844x390">liggend</button>
+        <button data-prev="768x1024">tablet</button>
+        <button data-prev="390x844|844x390">naast elkaar</button>
+      </div>
+      <p class="st-hint">Opent het echte spel op die maat, mét je concept. Staand vult de
+        tekening het scherm; liggend en op lage schermen wordt het een kolom die scrolt —
+        een staande tekening past daar nu eenmaal niet full-bleed in.</p>
+
+      <h6>Naar het spel</h6>
+      <div class="st-btns">
+        <button class="prim" id="st-push">⇪ Zet in het spel</button>
+        <button id="st-pull" title="Concept weggooien en terug naar index.html">⟲ Ophalen</button>
+      </div>
+      <div class="st-btns" style="margin-top:6px">
+        <button id="st-copy">Kopieer</button>
+        <button id="st-paste">Plak</button>
+      </div>
+      <div class="st-uit" id="st-out"></div>
+    </div>`;
+  document.body.appendChild(panel);
+  const dump = document.createElement('pre');
+  dump.id = 'me-dump';
+  dump.onclick = () => { dump.style.display = 'none'; };
+  document.body.appendChild(dump);
+  document.documentElement.style.setProperty('--studio-w', '330px');
+
+  const shown = () => worldForIndex(viewWorldIdx);
+  const setOut = t => { F('st-out').textContent = t || ''; };
+  let gridOn = false, curveOn = true;
+
+  // ---------------------------------------------------------------- status
+  function shippedFor(id) { return WORLDS_SHIPPED.filter(w => w.id === id)[0]; }
+  function worldState(w) {
+    const ship = shippedFor(w.id);
+    if (!ship) return 'nieuw';
+    return sameWorld(ship, w) ? 'gelijk' : 'vuil';
+  }
+  function refreshStatus() {
+    const vuil = WORLDS.filter(w => worldState(w) !== 'gelijk').length;
+    const chip = F('st-status');
+    chip.textContent = vuil ? vuil + ' niet doorgevoerd' : 'gelijk aan het spel';
+    chip.className = 'st-chip ' + (vuil ? 'vuil' : 'schoon');
+  }
+  function refreshList() {
+    const list = F('st-list');
+    list.innerHTML = '';
+    WORLDS.forEach((w, i) => {
+      const b = document.createElement('button');
+      b.className = 'st-w' + (i === viewWorldIdx ? ' sel' : '');
+      const state = worldState(w);
+      b.innerHTML = `<span>${w.icon || '·'}</span><span class="st-nm">${esc(w.name)}</span>`
+        + `<span class="st-dot ${state === 'gelijk' ? '' : state}" title="${state}"></span>`;
+      b.onclick = () => goWorld(i);
+      list.appendChild(b);
+    });
+    refreshStatus();
+  }
+
+  // ---------------------------------------------------------------- velden
+  const HEX = { sky: '#3d1a63', deep: '#2a0c47', accent: '#8be9ff', glow: '#ffd880' };
+  function fillSheet() {
+    const w = shown().world;
+    F('mf-icon').value = w.icon || '';
+    F('mf-name').value = w.name || '';
+    F('mf-bemoji').value = (w.badge && w.badge.emoji) || '';
+    F('mf-bname').value = (w.badge && w.badge.name) || '';
+    F('mf-art').value = (w.art && w.art.indexOf('blob:') !== 0) ? w.art : '';
+    F('mf-levels').textContent = w.levels;
+    Object.keys(HEX).forEach(k => { F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k]; });
+  }
+  function readSheet() {
+    const w = shown().world;
+    w.icon = F('mf-icon').value.trim() || w.icon;
+    w.name = F('mf-name').value.trim() || w.name;
+    const be = F('mf-bemoji').value.trim(), bn = F('mf-bname').value.trim();
+    if (be || bn) w.badge = { emoji: be, name: bn }; else delete w.badge;
+    const art = F('mf-art').value.trim();
+    if (art) w.art = art; else if (w.art && w.art.indexOf('blob:') !== 0) delete w.art;
+    w.theme = {};
+    Object.keys(HEX).forEach(k => {
+      const v = F('mf-' + k).value;
+      if (v && v.toLowerCase() !== HEX[k]) w.theme[k] = v;
+    });
+    if (!Object.keys(w.theme).length) delete w.theme;
+    commit('');
+  }
+  panel.querySelectorAll('.st-row input, .st-kleur input').forEach(i => { i.onchange = readSheet; });
+
+  // ---------------------------------------------------------------- tekenen
+  function ownNodes() {
+    const w = shown().world;
+    if (!w.nodes || w.nodes.length !== shown().levels) {
+      w.nodes = worldNodes(shown()).map(n => ({ x: n.x, y: n.y }));
+    }
+    return w.nodes;
+  }
+  function ownCurve() {
+    const w = shown().world;
+    if (!w.curve || w.curve.length !== shown().levels - 1) w.curve = worldCurve(shown());
+    return w.curve;
+  }
+  function redrawRoad() {
+    const frame = map.querySelector('.world-frame');
+    if (!frame) return;
+    const pts = ownNodes().map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+    const c = shown().world.curve;
+    const bg = frame.querySelector('.tour-road-bg'), fg = frame.querySelector('.tour-road-fg');
+    if (bg) bg.setAttribute('d', roadD(pts, pts.length, c));
+    if (fg) fg.setAttribute('d', roadD(pts, Math.min(pts.length, P().level - shown().first + 1), c));
+  }
+  function decorate() {
+    const frame = map.querySelector('.world-frame');
+    if (!frame) return;
+    if (gridOn) ['me-grid', 'me-safe'].forEach(c => {
+      const d = document.createElement('div'); d.className = c; frame.appendChild(d);
+    });
+    ownCurve().forEach((c, i) => {
+      const h = document.createElement('div');
+      h.className = 'me-ctrl';
+      h.dataset.ctrl = i;
+      h.style.left = c.x + '%';
+      h.style.top = c.y + '%';
+      h.title = 'weg tussen halte ' + (i + 1) + ' en ' + (i + 2);
+      frame.appendChild(h);
+    });
+  }
+  const baseRender = renderTourMap;
+  renderTourMap = function () { baseRender.apply(null, arguments); decorate(); };
+
+  // elke wijziging: bewaren, opnieuw tekenen, lijst en status bijwerken
+  function commit(msg) {
+    saveWorldDraft();
+    renderCareerStrip(P());
+    renderTourMap(0);
+    refreshList();
+    fillSheet();
+    if (typeof toonDoel === 'function') toonDoel();
+    if (msg !== undefined) setOut(msg);
+  }
+  function goWorld(i) {
+    viewWorldIdx = i;
+    P().level = worldForIndex(i).first + 3;   // geloofwaardige tussenstand
+    commit('');
+  }
+
+  // ---------------------------------------------------------------- knoppen
+  F('st-fold').onclick = () => {
+    panel.classList.toggle('dicht');
+    document.documentElement.style.setProperty('--studio-w', panel.classList.contains('dicht') ? '44px' : '330px');
+  };
+  F('st-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); commit(); };
+  F('st-curve').onclick = e => {
+    curveOn = !curveOn;
+    document.body.classList.toggle('nocurve', !curveOn);
+    e.target.classList.toggle('on', curveOn);
+  };
+  F('st-renodes').onclick = () => { delete shown().world.nodes; commit('haltes terug naar de slinger'); };
+  F('st-recurve').onclick = () => { delete shown().world.curve; commit('weg terug naar de vanzelf-bocht'); };
+  /* ---------------------------------------------------------------- beelden
+     Omzetten naar webp gebeurt hier, in een canvas. Scheelt een beeldbibliotheek
+     in het project, en het beeld is toch al geladen. Meteen op de juiste maat: de
+     bron mag dus elk formaat hebben, als de verhouding maar ongeveer klopt.
+     Bijsnijden gaat als cover -- vullen en de rest weg, nooit vervormen. */
+  const ASSET_DOELEN = [
+    { id: 'map', label: 'Wereldkaart', w: 1080, h: 2160, pad: w => 'assets/world/' + w.id + '-map.webp' },
+    { id: 'landing', label: 'Startscherm', w: 1024, h: 1536, pad: () => 'assets/bg/landing.webp' },
+  ];
+  ASSET_DOELEN.forEach(d => F('st-doel').appendChild(new Option(d.label, d.id)));
+  function huidigDoel() { return ASSET_DOELEN.filter(d => d.id === F('st-doel').value)[0]; }
+  function toonDoel() {
+    const d = huidigDoel();
+    F('st-doelhint').textContent = d.w + ' x ' + d.h + ' → ' + d.pad(shown().world)
+      + '. Elke bronmaat mag; hij wordt bijgesneden als cover en omgezet naar webp.';
+  }
+  F('st-doel').onchange = toonDoel;
+
+  function laadBeeld(src) {
+    return new Promise((ok, fout) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = () => fout(new Error('kan dit beeld niet lezen'));
+      i.src = src;
+    });
+  }
+  async function naarWebp(src, bw, bh, kwal) {
+    const img = await laadBeeld(src);
+    const c = document.createElement('canvas');
+    c.width = bw; c.height = bh;
+    const g = c.getContext('2d');
+    const sch = Math.max(bw / img.naturalWidth, bh / img.naturalHeight);
+    const w = img.naturalWidth * sch, h = img.naturalHeight * sch;
+    g.drawImage(img, (bw - w) / 2, (bh - h) / 2, w, h);
+    const blob = await new Promise(r => c.toBlob(r, 'image/webp', kwal));
+    if (!blob) throw new Error('omzetten naar webp lukte niet');
+    return { blob, bron: img.naturalWidth + 'x' + img.naturalHeight };
+  }
+  F('st-pick').onclick = () => F('me-file').click();
+  F('me-file').onchange = async e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const d = huidigDoel(), w = shown().world, pad = d.pad(w);
+    const url = URL.createObjectURL(f);
+    setOut('omzetten…');
+    try {
+      const { blob, bron } = await naarWebp(url, d.w, d.h, Number(F('st-kwal').value));
+      const r = await fetch('/asset?to=' + encodeURIComponent(pad), { method: 'POST', body: blob });
+      const txt = await r.text();
+      if (!r.ok) { setOut('mislukt: ' + txt); return; }
+      if (d.id === 'map') { w.art = pad; commit(''); }
+      setOut(bron + ' → ' + txt);
+    } catch (err) {
+      // geen server (file://): laat 'm dan tenminste tijdelijk zien
+      if (d.id === 'map') { w.art = url; commit(''); }
+      setOut(String(err.message) + ' — alleen via npm run preview kan vastzetten');
+      return;
+    }
+    URL.revokeObjectURL(url);
+  };
+  F('st-new').onclick = () => {
+    const n = WORLDS.length + 1;
+    WORLDS.push({ id: 'wereld' + n, name: 'Wereld ' + n, icon: '✨', levels: 8 });
+    rebuildWorldStarts();
+    goWorld(WORLDS.length - 1);
+    setOut('wereld ' + n + ' erbij');
+  };
+  F('st-revert').onclick = () => {
+    const ship = shippedFor(shown().world.id);
+    if (!ship) { setOut('deze wereld staat nog niet in het spel'); return; }
+    WORLDS[viewWorldIdx] = JSON.parse(JSON.stringify(ship));
+    rebuildWorldStarts();
+    commit('teruggezet naar het spel');
+  };
+  F('st-pull').onclick = () => {
+    localStorage.removeItem(WORLD_DRAFT_KEY);
+    applyWorldDraft(JSON.parse(JSON.stringify(WORLDS_SHIPPED)));
+    viewWorldIdx = Math.min(viewWorldIdx, WORLDS.length - 1);
+    commit('concept weg — dit is wat er in het spel staat');
+  };
+  F('st-push').onclick = () => {
+    saveWorldDraft();
+    fetch('/werelden', { method: 'POST', body: worldsSource() })
+      .then(r => r.text().then(t => {
+        if (!r.ok) return setOut('mislukt: ' + t);
+        WORLDS_SHIPPED.length = 0;
+        JSON.parse(JSON.stringify(WORLDS)).forEach(w => WORLDS_SHIPPED.push(w));
+        refreshList();
+        setOut('in index.html gezet — nu npm test, committen, pushen');
+      }))
+      .catch(() => setOut('alleen via npm run preview — gebruik anders Kopieer'));
+  };
+  /* ------------------------------------------------------------- voorbeeld
+     Een écht venster op die maat, niet een iframe. De noodstand voor liggend en
+     lage schermen kijkt naar het vénster, dus alleen een echt venster laat zien
+     wat er werkelijk gebeurt -- en een iframe vecht bovendien met de servicewerker
+     en met het lettertype dat het laden ophoudt. Het concept komt vanzelf mee: het
+     staat in localStorage en het venster draait ?debug. */
+  function toonVoorbeeld(spec) {
+    saveWorldDraft();
+    const maten = spec.split('|');
+    let x = 60;
+    maten.forEach(m => {
+      const w = Number(m.split('x')[0]), h = Number(m.split('x')[1]);
+      const url = location.pathname + '?debug&demo&star=p1&screen=map';
+      const win = open(url, 'wsvoorbeeld' + w + 'x' + h,
+        `popup=1,width=${w},height=${h},left=${x},top=80`);
+      if (!win) { setOut('het venster werd geblokkeerd — sta pop-ups toe'); return; }
+      try { win.resizeTo(w, h + (win.outerHeight - win.innerHeight)); } catch (_) {}
+      x += w + 20;
+    });
+    setOut('voorbeeld geopend — ververs het venster na een wijziging');
+  }
+  panel.querySelectorAll('[data-prev]').forEach(b => {
+    b.onclick = () => toonVoorbeeld(b.dataset.prev);
+  });
+
+  F('st-copy').onclick = () => {
+    const txt = worldsSource();
+    dump.textContent = txt + '\n\n(tik om te sluiten)';
+    dump.style.display = 'block';
+    try { navigator.clipboard.writeText(txt); setOut('gekopieerd'); }
+    catch (_) { setOut('zie het venster'); }
+    console.log(txt);
+  };
+  F('st-paste').onclick = () => {
+    const txt = prompt('Plak een WORLDS-blok of de JSON-lijst:');
+    if (!txt) return;
+    try {
+      const m = /\[[\s\S]*\]/.exec(txt);
+      if (!m) throw new Error('geen lijst gevonden');
+      const list = (new Function('return (' + m[0] + ')'))();
+      if (!Array.isArray(list) || !list.every(w => w && w.id && w.levels > 0)) throw new Error('geen geldige werelden');
+      applyWorldDraft(list);
+      viewWorldIdx = 0;
+      goWorld(0);
+      setOut(list.length + ' werelden ingelezen');
+    } catch (e) { setOut('niet gelukt: ' + e.message); }
+  };
+
+  // ---------------------------------------------------------------- slepen
+  let drag = null;
+  map.addEventListener('pointerdown', e => {
+    const frame = map.querySelector('.world-frame');
+    if (!frame || !e.target.closest) return;
+    const ctrl = e.target.closest('.me-ctrl');
+    const stop = ctrl ? null : e.target.closest('.tour-stop');
+    if (!ctrl && !stop) return;
+    drag = ctrl
+      ? { el: ctrl, frame, list: ownCurve(), i: Number(ctrl.dataset.ctrl), wat: 'weg' }
+      : { el: stop, frame, list: ownNodes(), i: Number(stop.dataset.lvl) - shown().first, wat: 'halte' };
+    drag.el.classList.add('dragging');
+    try { drag.el.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  map.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const r = drag.frame.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100));
+    const y = Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100));
+    const p = drag.list[drag.i];
+    if (!p) return;
+    p.x = x; p.y = y;
+    drag.el.style.left = x + '%';
+    drag.el.style.top = y + '%';
+    redrawRoad();
+    setOut(`${drag.wat} ${drag.i + 1}   x ${x.toFixed(1)}   y ${y.toFixed(1)}`);
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  const endDrag = () => {
+    if (!drag) return;
+    drag.el.classList.remove('dragging');
+    map.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); },
+      { capture: true, once: true });
+    drag = null;
+    saveWorldDraft();
+    refreshList();
+  };
+  map.addEventListener('pointerup', endDrag, true);
+  map.addEventListener('pointercancel', endDrag, true);
+
+  viewWorldIdx = Math.min(worldFor(P().level).index, WORLDS.length - 1);
+  goWorld(viewWorldIdx);
+}
+
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
 }
@@ -7511,6 +8288,10 @@ const SLOTS = {
              label: 'Wolken',     waar: 'de kaart',
              lever: [1536, 864], anker: 'midden', canoniek: 'map-sky.webp',
              hint: 'map-sky.webp' },
+  world:   { match: /[-_]map\.[a-z0-9]+$|^(world|wereld)[-_]/i,      screen: 'map',
+             label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
+             lever: [1080, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
+             hint: '<wereld>-map.webp, bv. ijs-map.webp of vuur-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
              lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
@@ -7568,6 +8349,14 @@ function namesHint() {
    schakelaartje om te zien wát hij doet. */
 const SCRIM = 'radial-gradient(120% 70% at 50% 66%, rgba(20,4,40,.74), rgba(20,4,40,.30) 58%, transparent 82%)';
 
+/* De kaart krijgt een ándere waas dan de somschermen. Daar moet het mídden
+   donker zijn zodat de som leesbaar blijft; hier staat in het midden juist de
+   route, en donker maken is precies wat je niet wilt. Wat de kaart wél nodig
+   heeft is leesbare tekst bovenaan (de kop) en onderaan (de navigatie) -- dus
+   een band boven en onder, en het midden open. */
+const MAP_SCRIM = 'linear-gradient(180deg, rgba(20,4,40,.58) 0, rgba(20,4,40,0) 17%, '
+  + 'rgba(20,4,40,0) 83%, rgba(20,4,40,.48) 100%)';
+
 /*
  * Opmaak voor een set afbeeldingen.
  *   urls   { venue, horizon, sky, finale } -- elke waarde een URL of data-URI
@@ -7594,6 +8383,20 @@ function css(urls, opts) {
 #show-stage::after{display:none!important}
 #show-stage .deco{display:none!important}
 #game-avatar-inner{filter:drop-shadow(0 0 7px rgba(255,180,61,.32))}`);
+  }
+
+  if (urls.world) {
+    /* De wereldkaart vult .world-frame van rand tot rand. De klasse no-art staat
+       erop zolang de wereld in WORLDS geen eigen `art` heeft -- wat bij een
+       kandidaat uit incoming/ altijd zo is -- dus die moet hier ook overschreven
+       worden. De gedeelde wolkjes en het voetlicht gaan uit: een wereldtekening
+       brengt zijn eigen lucht en grond mee. */
+    const veilMap = scrim ? MAP_SCRIM + ',' : '';
+    out.push(`.world-frame,.world-frame.no-art{
+  background-image:${veilMap}url("${urls.world}")!important;
+  background-size:${scrim ? '100% 100%,' : ''}cover!important;
+  background-position:${scrim ? '50% 50%,' : ''}50% 50%!important}
+#screen-map .map-sky,#screen-map .map-ground{display:none!important}`);
   }
 
   if (urls.horizon) {
