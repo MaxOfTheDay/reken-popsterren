@@ -705,6 +705,12 @@
      moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
   .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
   .ladder-row.future { opacity: .36; }
+  /* Wereldbadge met alle drie de sterren: dezelfde kaart, een gouden ster-rand erbij.
+     Bewust géén tweede kaart -- één ding, twee standen. */
+  .trophy-card.ster { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,196,61,.45); }
+  .trophy-card.ster .temoji::after { content: '⭐'; position: absolute; right: -2px; bottom: -2px;
+    font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  .trophy-card.ster .temoji { position: relative; }
   /* de wereldladder hergebruikt de rijen van de ster-status; alleen deze extra's */
   .wr-row { width: 100%; font: inherit; cursor: pointer; text-align: left; }
   .wr-row:disabled { cursor: default; }
@@ -1421,6 +1427,8 @@
      ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --
      dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
      en niet als een muur. */
+  .fly-badge { position: fixed; z-index: 90; font-size: 40px; pointer-events: none;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
   .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
   /* De 26/34 hieronder is de terugval. Normaal zet renderTourMap er een patroon
      overheen dat per stuk weg precies past, zodat er op elke halte een streepje
@@ -2984,6 +2992,7 @@ function applyWorldDraft(list) {
   WORLDS.length = 0;
   list.forEach(w => WORLDS.push(w));
   rebuildWorldStarts();
+  if (typeof rebuildWorldBadges === 'function') rebuildWorldBadges();
 }
 function loadWorldDraft() {
   try {
@@ -3053,6 +3062,48 @@ function worldStars(p, w) {
 function worldDone(p, w) {
   for (let l = w.first; l < w.first + w.levels; l++) if (!p.stars[l]) return false;
   return true;
+}
+// En met drie sterren op élke show? Dat is de ster-rand op dezelfde badge.
+function worldPerfect(p, w) {
+  for (let l = w.first; l < w.first + w.levels; l++) if ((p.stars[l] || 0) < 3) return false;
+  return true;
+}
+/* De wereldbadges. Eén per wereld, en het is gewoon een trofee: de kast heeft al
+   een claim-ceremonie, een glinstering, een "klaar"-stand, een stip in de navigatie
+   en een haakje op het eindscherm. Een eigen badgesysteem ernaast zou dat allemaal
+   nog een keer bouwen.
+
+   Eén badge met twéé standen, niet twee badges: behaald = de wereld uitgespeeld,
+   en een ster-rand op diezelfde kaart = overal drie sterren. Twee losse badges per
+   wereld zouden de plank verdubbelen en een kleuter twee begrippen laten onthouden
+   waar er één genoeg is.
+
+   Opnieuw opbouwen kan, want de studio mag werelden toevoegen of hernoemen. Behaalde
+   badges staan in p.trophies op id, dus hernoemen van een wéreld raakt een al
+   behaalde badge niet -- alleen een gewijzigd wereld-id maakt een nieuwe badge. */
+const WERELD_BADGE = 'wereld-';
+function rebuildWorldBadges() {
+  for (let i = TROPHIES.length - 1; i >= 0; i--) {
+    if (TROPHIES[i].id.indexOf(WERELD_BADGE) === 0) TROPHIES.splice(i, 1);
+  }
+  const ids = [];
+  WORLDS.forEach((w, i) => {
+    const id = WERELD_BADGE + w.id;
+    ids.push(id);
+    TROPHIES.push({
+      id, emoji: w.icon || '🌍', name: w.name, desc: 'Deze wereld uit',
+      has: q => worldDone(q, worldForIndex(i)),
+      ster: q => worldPerfect(q, worldForIndex(i)),
+      progress: q => {
+        const wl = worldForIndex(i);
+        let n = 0;
+        for (let l = wl.first; l < wl.first + wl.levels; l++) if (q.stars[l]) n++;
+        return trophyProgress(n, wl.levels, 'shows gespeeld');
+      },
+    });
+  });
+  const plank = TROPHY_SHELVES.filter(sh => sh.name.indexOf('Werelden') >= 0)[0];
+  if (plank) plank.ids = ids;
 }
 
 /* De pedagogische klok. Dit was `ronde` in cityFor en stuurt wannéér de extra
@@ -3148,6 +3199,10 @@ const TROPHIES = [
 // De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
 const TROPHY_SHELVES = [
   { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
+  /* Per wereld één badge. De lijst wordt gevuld door rebuildWorldBadges() -- de
+     werelden staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen
+     zou meteen uit de pas lopen. */
+  { name: '🌍 Werelden',            ids: [] },
   { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
   { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'perfecttour', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
@@ -3155,6 +3210,7 @@ const TROPHY_SHELVES = [
   { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
+rebuildWorldBadges();   // de wereldbadges erbij, nu de tabel en de planken er staan
 function playedCount(p) { return Object.keys(p.stars).length; }
 // de speciale outfit-combo's: welk stuk hoort in welk kledingvak
 const MAGICUS_SET = { acc: 'acc_tovenaarshoed', dress: 'dress_tover', mic: 'mic_toverstaf', pet: 'pet_uil' };
@@ -4591,6 +4647,58 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
     [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
     { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
 }
+/* De wereldwissel: de afgelopen wereld schuift omhoog het beeld uit en de nieuwe
+   komt van onderen op. Dezelfde richting als de route zelf -- de paden klimmen, de
+   ster verlaat het beeld bovenaan en komt onderaan op halte 1 weer binnen. Acht
+   losse schermen lezen daardoor als één lange klim, en er is geen enkel extra
+   plaatje voor nodig.
+
+   Vlak daarvoor stijgt de badge van de afgemaakte wereld van de kaart naar de
+   trofeeënkast in de navigatie. Dat is flyDiamonds met een andere lading: dezelfde
+   beweging, dus dezelfde taal als "je hebt iets verdiend". De beloning landt op de
+   káárt, waar de reis gebeurde, en niet pas op een volgend scherm. */
+function runWorldChange(fromW, toW, finish, still) {
+  const map = $('tour-map');
+  const frame = map.querySelector('.world-frame');
+  const naarKast = $('nav-tro');
+  const badge = fromW.world.icon || '🌍';
+  if (!frame || !frame.animate || still) { flyBadge(map, naarKast, badge); finish(); return; }
+
+  flyBadge(map, naarKast, badge);
+  const uit = frame.animate(
+    [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-100%)', opacity: .6 }],
+    { duration: 620, delay: 520, easing: 'cubic-bezier(.6,0,.75,0)', fill: 'forwards' });
+  uit.onfinish = () => {
+    finish();                                   // de nieuwe wereld staat er nu
+    const nieuw = map.querySelector('.world-frame');
+    if (nieuw && nieuw.animate) nieuw.animate(
+      [{ transform: 'translateY(100%)', opacity: .6 }, { transform: 'translateY(0)', opacity: 1 }],
+      { duration: 620, easing: 'cubic-bezier(.25,1,.5,1)' });
+  };
+}
+/* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
+   midden van de kaart, met een boogje. */
+function flyBadge(vanEl, naarEl, teken) {
+  if (!vanEl || !naarEl || !vanEl.animate) return;
+  const f = vanEl.getBoundingClientRect(), t = naarEl.getBoundingClientRect();
+  const d = document.createElement('div');
+  d.className = 'fly-badge';
+  d.textContent = teken;
+  d.style.left = (f.left + f.width / 2) + 'px';
+  d.style.top = (f.top + f.height / 2) + 'px';
+  document.body.appendChild(d);
+  const dx = t.left + t.width / 2 - (f.left + f.width / 2);
+  const dy = t.top + t.height / 2 - (f.top + f.height / 2);
+  const a = d.animate([
+    { transform: 'translate(-50%,-50%) scale(.3)', opacity: 0 },
+    { transform: 'translate(-50%,-50%) scale(1.5)', opacity: 1, offset: .25 },
+    { transform: `translate(calc(-50% + ${dx * .5}px), calc(-50% + ${dy * .5 - 60}px)) scale(1.2)`, opacity: 1, offset: .65 },
+    { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 0 },
+  ], { duration: 1100, easing: 'ease-in-out' });
+  a.onfinish = () => d.remove();
+  setTimeout(() => { sndCoin(); }, 900);
+}
+
 /* De beloning na een level-up: de ster huppelt over de route naar de volgende
    halte, die daar zichtbaar openspringt. Loopt de sprong over een wereldgrens,
    dan is er niets om naartoe te huppelen -- dan wisselt de kaart van wereld en
@@ -4617,7 +4725,8 @@ function runTravel(t) {
     confetti(crossing ? 26 : 14);
     showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
   };
-  if (crossing || !from || !to || !hero || !hero.animate || still) { finish(); return; }
+  if (crossing) { runWorldChange(fromW, toW, finish, still); return; }
+  if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
   const dx = to.offsetLeft - from.offsetLeft;
   const dy = to.offsetTop - from.offsetTop;
   // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
@@ -4747,6 +4856,8 @@ function trophyCard(t, p) {
     card.style.boxShadow = `0 0 12px rgba(255,213,79,${a.toFixed(2)})`;
   }
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
+  // dezelfde badge, tweede stand: overal drie sterren gehaald
+  if (status === 'done' && t.ster && t.ster(p)) card.classList.add('ster');
   card.innerHTML = status === 'ready' ? readyCardHTML(t) : normalCardHTML(t, p, status);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
