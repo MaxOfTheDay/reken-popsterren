@@ -173,18 +173,19 @@ This is my main disagreement with §2. Three reasons, two of them specific to th
 - **A long corridor of padlocks is demotivating**, not exciting, at five. It reads as "look
   how much you can't do."
 
-Instead: **the map shows the current world's nodes plus one gateway node** — the entrance
-to the next world, rendered in the *next* world's colours, sitting at the end of the path
-where the road currently fades out. You get the "worlds fade into one another" feeling you
-described, at exactly one boundary at a time, which is the only boundary the child can act
-on. Swiping past the gateway can walk into the next/previous world later; it is not needed
-for v1.
+Instead: **one world, one screen.** The "worlds fade into one another" feeling you
+described is worth keeping, but it belongs to the *transition* between worlds rather than
+to a single long map — see §E7, which gets you the continuity at a fraction of the cost.
 
-This preserves `renderTourMap`'s current shape almost exactly (a bounded list of nodes and
-a road through them) and gives a natural place to swap the background theme.
+It also answers §8 for free: the final authored world simply ends without a next one to
+slide into, and says so.
 
-It also answers §8 for free: the final authored world simply ends with a "more coming"
-node instead of a gateway.
+> **Superseded in part.** An earlier draft of this section also argued for keeping the map
+> *horizontal and scrolling*. A mockup of a painted vertical map changed that conclusion —
+> once the path is part of the artwork, node positions are percentages of an image rather
+> than rects measured at runtime, and the fragility objection disappears. §E1 carries the
+> revised reasoning. The argument against a *continuous all-worlds* map, above, still
+> stands.
 
 **4. Do not build a world-selection screen.**
 
@@ -216,7 +217,9 @@ prizes become pointless) or the world theme is invisible on the screen where the
 spends most of their time.
 
 Resolution, and `docs/ART-DIRECTION.md` §9.1–9.2 argues for the same split on independent
-grounds: **the world owns the venue, the child owns the podium.**
+grounds: **the world owns the venue, the child owns the podium.** §G2 works out how, and
+the answer turns out to cost no new art at all: the podium item's existing gradient moves
+from filling the whole frame to filling a plinth she stands on.
 
 - *Venue* (world): the room — back wall, crowd, lights, air, colour temperature.
 - *Podium* (purchase): the platform she stands on and its decorations.
@@ -254,18 +257,19 @@ Concrete, single pass through the loop. Dutch strings are the ones the child see
 Her card's corner mark becomes the *world* icon (❄️) instead of the city food emoji — one
 line in `renderProfiles`.
 
-**Seeing the map.** The screen opens already centred on her node. The sky, ground glow and
-road colour are the world's: Ice World is cold blue with a pale horizon. The header reads
+**Seeing the map.** The whole world is on screen at once — no scrolling, ever. A painted
+icy landscape with a path climbing it, six medallions along the path, and a stage with a
+crowd at the summit. The header reads
 
 ```
         ❄️ IJSWERELD
-          Level 4 / 6
+     Level 4 / 6    ⭐ 11 / 18
 ```
 
-with her avatar left and a tappable 💎 right. No rank bar, no star total. She sees roughly
-three and a half nodes: the two she has finished behind her (one glowing gold because it
-is perfect, one duller with two stars), her own avatar standing on node 4 with a pulsing
-gold medallion and the **Speel!** bubble, and node 5 half-visible ahead under a padlock.
+with her avatar left and a tappable 💎 right. No rank bar, no global star total. Below her
+on the path: three finished nodes, one of them glowing gold because it is perfect. Her own
+avatar stands on node 4 under a pulsing gold medallion with the **Speel!** bubble. Above
+her: two padlocked nodes and the summit stage she is climbing toward.
 
 **Selecting a level.** She taps her own node, or any earlier one. Nothing new — this is
 `startLevel(l)` as it works today.
@@ -279,20 +283,20 @@ shrink to a thin rim; the crowd is the meter.
 in the app. One addition: if this replay *improved* her result, the line under the stars
 says so warmly (`Beter dan vorige keer! ⭐⭐⭐`) instead of the generic praise.
 
-**Returning to the map.** Her avatar hops to node 5, the road's gold grows with her — the
-existing `runTravel` + `growRoad`, untouched. If she just made node 4 perfect, node 4 is
-now visibly gold and sparkling behind her, and the small world counter near the world name
-ticks: `⭐ 11 / 18`.
+**Returning to the map.** Her avatar climbs to node 5 and the path's gold grows with her —
+the existing `runTravel` + `growRoad`, following a curve painted into the artwork. If she
+just made node 4 perfect, node 4 is now visibly gold and sparkling below her, and the world
+counter ticks: `⭐ 14 / 18`.
 
-**Completing a world.** Finishing the last level of Ice World plays the ordinary end
-screen, then one extra beat: the map opens, her avatar walks to the **gateway node** at the
-end of the path, the ice fades into the next world's colours across the boundary, and the
-Ice badge flies into the trophy cabinet (reusing the existing claim ceremony). The
-milestone pill on the end screen already exists to carry this.
+**Completing a world.** Finishing the last level plays the ordinary end screen, then the
+five beats of §E7: she climbs the final stretch to the summit stage, the Ice badge rises
+off it and flies to the 🏆 in the nav, and then the whole icy map slides up and out of the
+top while Rainbow World rises in from the bottom.
 
-**Entering the next world.** The map is now Rainbow World, node 1 is the pulsing gold
-"Speel!", and behind her the gateway back into Ice World remains — tappable, so perfecting
-old levels is always one swipe away.
+**Entering the next world.** Rainbow World settles, node 1 pulses gold with **Speel!**, her
+avatar stands on it, and `🌈 REGENBOOGWERELD` fades across the screen and away. A quiet
+chevron below node 1 takes her back down to Ice World whenever she wants to perfect an old
+level.
 
 If she never perfects anything, nothing above nags her. The only pressure is that some
 nodes shine and others do not.
@@ -306,7 +310,7 @@ Map  (home)
  ├── header: [avatar] ── WORLD NAME / Level x / y ── [💎]
  │      avatar  → profile sheet: switch star · sound · haptics · Voor ouders
  │      💎      → Kleedkamer (shop)
- ├── track: world nodes + gateway
+ ├── map: this world's 6-8 nodes, all on one screen
  └── bottom nav: 🗺️ Kaart · 👕 Kleedkamer · 🏆 Trofeeën
                                               └── shelves, incl. 🌍 Werelden (badges)
 Show (level)
@@ -320,9 +324,12 @@ Show (level)
 | **Profile** | behind the avatar tap on the map | switch star, and the settings that currently float in the corner ⚙️ |
 | **Settings** | inside the profile sheet → "Voor ouders" | removes `#corner-btns` entirely; also *adds* access during play, which does not exist today |
 | **Shop** | Kleedkamer, bottom nav **and** the 💎 chip | 💎 is a button on map / end / trophies, inert during a show |
+| **Looks** | one card at the top of the Kleedkamer grid, for *this world's* look only | the full thirteen live in the cabinet — see §G3 |
+| **Podium** | a purchased plinth she stands on, inside the world's venue | §G2 — the world owns the room, she owns the platform |
 | **Diamonds** | header right slot, all screens | during a show it is earning feedback (`flyDiamonds` lands there), not navigation — so visible, not tappable |
 | **Stars** | on the nodes, and on the end screen | never as a global counter in the header; the world counter (`⭐ 11/18`) is the only aggregate a child sees |
 | **Badges** | trophy cabinet, `🌍 Werelden` shelf | one per world, two visual states (earned / all-perfect) |
+| **Collections** | the cabinet, and only the cabinet | trophies, world badges and looks share one home, visited by choice |
 | **Rank** | end screen milestone + profile sheet | keeps paying diamonds; stops occupying the home screen |
 
 Net effect on the map's top band: seven pieces of information become three.
@@ -331,100 +338,193 @@ Net effect on the map's top band: seven pieces of information become three.
 
 ## E. World-map UX
 
-### E1. Direction: stay horizontal
+### E1. Direction: vertical, painted, one screen per world
 
-§3 asks whether the path should scroll vertically. **No**, and not only from inertia:
+An earlier draft of this review argued for keeping the map horizontal and scrolling. **A
+mockup settled it the other way, and the mockup is right.** What changed the calculus is
+not taste, it is one structural fact:
 
-1. Horizontal is the only axis that makes **landscape a free win**. The same flex row that
-   shows 3–4 nodes in portrait shows 6–8 in landscape — "more of the journey", exactly what
-   you asked for, with no second layout.
-2. Vertical fights the sticky header and the fixed bottom nav for the same axis.
-3. `centerStop`, `updateParallax`, `runTravel`, `growRoad`, `waveY` and the road SVG are all
-   built horizontally. Changing axis is ~200 lines rewritten for zero child-visible gain.
-4. Candy Crush is vertical because it is portrait-only with hundreds of levels on one map.
-   Neither condition holds here.
+> When the path is part of the painting, node positions become percentages of an image
+> instead of rects measured from the DOM at runtime.
 
-### E2. Responsive behaviour
+The fragility I warned about was a variable-length flex track whose road is re-measured on
+every open. Normalised coordinates on a fixed image are the opposite of that: they are
+stable under any resize, any DPI, any font setting, and they need no measurement pass at
+all. The objection does not survive the change in technique.
 
-One DOM, one layout, three breakpoints that already exist (`max-height:700`,
-`min-height:760`, `max-width:390` adjust node size and track padding). Add nothing
-structural. `waveAmplitude()` already shrinks the meander on short viewports — that is the
-landscape-phone case, already handled.
+And a map that does not scroll is a better answer to the age group than any scroller:
 
-Visible context, by device:
+- The child never scrolls to find themselves. Position, next action and destination are
+  all in the first frame, permanently.
+- There is one obvious thing to tap, and it is always visible.
+- The composition can carry meaning. In the mockup the last node is a **stage with a
+  crowd at the summit** — the world's destination is literally the show. That is the
+  app's own identity doing the work the progression system needs, which no abstract
+  node-on-a-line can do.
+
+What survives from the earlier reasoning, unchanged: **no continuous all-worlds map.** One
+world per screen, and the mockup agrees.
+
+### E2. How many levels actually fit
+
+The mockup shows ten. On a phone that is too many, and the arithmetic is not close.
+
+On a 390 × 844 phone, minus the header (~96 px) and the bottom nav (~84 px), the map area
+is roughly **664 px**:
+
+| Levels | Band per node | Node diameter | Verdict |
+|---|---|---|---|
+| 6 | 110 px | 56 px | comfortable, room for stars and breathing space |
+| 8 | 83 px | 46 px | fine — at the limit |
+| 10 | 66 px | 40 px | under the 44 px tap minimum; numbers and stars get small |
+
+**Eight is the ceiling, six is comfortable.** This is the same answer §B2 reached on pacing
+grounds — a short first world so the badge arrives inside the first sessions. Two
+independent lines of reasoning landing on the same number is worth trusting.
+
+### E3. Sizing: fit the art, extend with tokens
+
+The mockup is 1024 × 1536 (1 : 1.5). That is wider, relative to its height, than the space
+it has to live in — a phone's *map area* is 390 × 664, or **1 : 1.70**.
+
+**Author map art at ≈ 1 : 1.7 — 1080 × 1840** and it fills a phone edge to edge.
+
+Then one sizing rule, everywhere:
+
+> `contain`, centred, with the remaining gutters painted from the world's
+> `--w-sky` / `--w-ground` tokens.
+
+| Device | Result |
+|---|---|
+| Phone portrait | art nearly full-bleed, small gutters top and bottom |
+| Tall phone | slightly larger gutters, art still fills the width |
+| Tablet | art centred, generous themed gutters at the sides |
+| Landscape phone | art a centred column, wide themed gutters — still one screen, still no scrolling |
+
+The gutters cost nothing, because the tokens that fill them already exist for every world.
+
+**Why not `cover`.** It is more immersive and it never shows a gutter, but it crops — about
+10 % off the sides of a phone (tolerable) and about **31 % off the top and bottom of a
+tablet**, which eats the first and last nodes. Surviving that needs a safe-zone convention
+plus a max-crop clamp, which is more machinery than the gutters are worth. Use `contain`;
+revisit only if the gutters actually look bad in practice.
+
+### E4. Wireframe
 
 ```
-portrait phone   ┆ ●──●──★──○ ┆         ~3.5 nodes, current centred
-landscape phone  ┆ ●──●──●──★──○──○ ┆    ~6 nodes, most of a world
-tablet           ┆ whole world + gateway ┆
+┌──────────────────────────────┐
+│ ‹   🔥 VUURWERELD      💎 12 │  back · world · diamonds · avatar
+│        Level 7 / 8    ⭐18/24 │
+├──────────────────────────────┤
+│ ░░ a hint of the next world ░│  ← token gradient, ~6% of the height
+│               ╭────╮         │
+│          ╭────┤  8 │ 🎪      │  the summit: a stage with a crowd
+│          │    ╰────╯ ☆☆☆     │
+│      ╭───┴╮                  │
+│      │  7 │  ← current       │
+│      ╰────╯  Speel!  ☆☆☆     │
+│   ╭────╮      🧍 her avatar  │
+│   │  6 │ ★★☆                 │
+│   ╰────╯                     │
+│          ╭────╮              │
+│          │  5 │ ★★★  ← glows │
+│          ╰────╯    (mastered)│
+│   ╭────╮                     │
+│   │  4 │ ★★★ ← glows         │
+│   ╰────╯                     │
+│            ⋮                 │
+│      ╭────╮                  │
+│      │  1 │ ★★☆              │
+│      ╰────╯                  │
+│      ⌄  terug naar IJswereld │  quiet chevron, never a CTA
+├──────────────────────────────┤
+│   🗺️ Kaart  👕 Kleedkamer 🏆 │
+└──────────────────────────────┘
 ```
 
-Auto-centre the current node on open (already done) and after a travel (already done). Do
-**not** auto-centre on every re-render — if a child has deliberately scrolled back to an
-old level, snapping them forward is hostile.
+The path climbs. That direction matters — see E7.
 
-### E3. Wireframe
+### E5. Node states
 
-```
-┌──────────────────────────────────────────┐
-│ (o) Lotte      ❄️ IJSWERELD        💎 240│   ← tappable avatar / tappable 💎
-│                 Level 4 / 6              │
-├──────────────────────────────────────────┤
-│                                    ⭐11/18│   ← small world counter, right-aligned
-│                                          │
-│        ╭───────╮                         │
-│        │  ▲    │  ← her avatar           │
-│   ●────●───────●╌╌╌╌○╌╌╌╌◇               │
-│  ⭐⭐⭐  ⭐⭐☆   Speel!  🔒    ▒▒          │
-│  glow                            ↑       │
-│                         gateway: next world's
-│                         colours, road and sky
-│                         start bleeding across
-│                                          │
-│   ░░░░░ world ground glow ░░░░░░░░░░░░   │
-├──────────────────────────────────────────┤
-│     🗺️ Kaart   👕 Kleedkamer  🏆 Trofeeën │
-└──────────────────────────────────────────┘
-```
+Five states. Positions come from the world pack; everything else is shared CSS.
 
-### E4. Node states
+| State | Treatment |
+|---|---|
+| Locked | grey medallion, 🔒, dim label, three dim stars |
+| Current | gold medallion, pulse ring, the avatar standing on it, **Speel!** |
+| Done, 1–2 ★ | purple medallion with a gold rim, earned stars bright, missing stars dim |
+| **Mastered, 3 ★** | medallion becomes warm gold with a slow sparkle — one CSS class |
+| **Summit** | the last node, drawn into the artwork as a stage; same states, bigger |
 
-Five states, four of which already have CSS:
+Note there is no gateway *node* any more. The one-screen model replaces it with a
+transition (E7) and a token gradient at the top edge of the map.
 
-| State | Treatment | Exists? |
-|---|---|---|
-| Locked | grey medallion, 🔒, dim label, three dim stars | yes |
-| Current | gold medallion, pulse ring, avatar standing on it, **Speel!** bubble | yes |
-| Done, 1–2 ★ | purple medallion with a gold rim, earned stars bright, missing stars dim | yes |
-| **Mastered, 3 ★** | medallion becomes warm gold, a slow sparkle every few seconds, star row fully lit | **new — one CSS class** |
-| **Gateway** | diamond/arch shape in the *next* world's accent colour, its icon showing | **new** |
+### E6. The replay invitation (§5)
 
-### E5. The replay invitation (§5)
+Unchanged by the switch to one screen, and slightly strengthened by it: because the whole
+world is visible at once, the child sees **all** the dull nodes next to all the glowing
+ones, in one glance, without scrolling. Set-completion pressure with no failure language
+anywhere.
 
-The strongest pull is not on the node, it is on the **set**. Three glowing nodes next to
-two dull ones creates a "make them match" itch with no failure language anywhere. Support
-it with exactly three things:
+1. The mastered glow.
+2. A small world counter `⭐ 18 / 24` beside the level count — an aggregate the child can
+   actually finish, unlike a global total.
+3. At 24/24 the whole path glows gold once and the world badge gains its ⭐ ring.
 
-1. The mastered glow above.
-2. The small world counter `⭐ 11 / 18` near the world name — an aggregate the child *can*
-   complete, unlike a global total which never ends.
-3. When a world reaches 18/18, the whole road glows gold once and the world badge gains its
-   ⭐ ring. That is the "small world-level reward" §5 asks about, and it costs one class and
-   one condition.
+Explicitly not: red, "!", counts of what is missing, notifications, or any second call to
+action competing with **Speel!**
 
-Explicitly not: red, "!", counters of what is missing, notifications, a "perfect it!"
-call to action, or any second CTA competing with **Speel!**.
+### E7. World transitions
 
-One warm touch worth having: on a replay that improves the result, say so on the end
-screen. On a replay that does *not* improve it, say nothing about it at all — the old
-result stands silently (`Math.max` already does this).
+The one-screen model gives up the "path bleeds into the next world" idea — there is no
+scroll to walk into. Replace it with a better trade:
 
-### E6. World transitions
+> **Take the continuity from the transition, not from the map.**
 
-At the boundary, three tokens cross-fade over roughly one node's width: sky colour, ground
-glow colour, road colour. Because all three are CSS custom properties on the map root (see
-F), the transition is a gradient between two token sets, not a bespoke animation per pair
-of worlds. N worlds, one transition implementation.
+Five beats. Only one is new code.
+
+1. **The summit show.** The last level plays normally and ends on the existing end screen.
+2. **Back to the map, still in this world.** The avatar walks the final path segment to
+   the summit node; its stars fill. This is `runTravel` + `growRoad`, now following a
+   curve baked into the art instead of a measured one.
+3. **The badge.** It rises off the summit stage and flies to the 🏆 nav icon.
+   `flyDiamonds(fromEl, toEl, n)` already performs exactly this motion — same function,
+   different payload. The world's payoff lands *on the map*, where the journey happened.
+4. **The world change — the only new animation.** The finished world slides up and out of
+   the top; the next world slides in from the bottom. Roughly twenty lines of
+   `element.animate()`, gated on `prefers-reduced-motion`.
+
+   Preferred over a camera pull-back or cross-fade for three reasons: it reuses the
+   direction the art already establishes (paths climb); the avatar exits at the top and
+   re-enters at the bottom on node 1, so the motion is continuous in one direction and
+   eight separate screens read as **one long climb**; and it needs no per-world transition
+   assets at all — which lets "optional transition assets" be struck from the pack spec.
+5. **Arrival.** The new world settles, node 1 pulses gold with **Speel!**, the avatar
+   stands on it, and a short title card (`❄️ IJSWERELD`) fades over and out — `showPraise`
+   already does this.
+
+Two supporting details:
+
+- **The whisper of what is next.** Rather than painting a hint of ice into the top of the
+  fire artwork — which would couple world *N*'s art to world *N+1*'s identity and break
+  pack independence — overlay a gradient across the top ~6 % of the map using the *next*
+  world's `--w-sky`. Same effect, about three lines, zero art coupling.
+- **Going back.** A quiet chevron below node 1 runs the same transition downward, and
+  tapping a world badge in the cabinet jumps straight there. Discoverable, never a CTA:
+  it must not compete with **Speel!**
+
+### E8. What the artwork has to guarantee
+
+Because the path is now painted, the art carries a contract:
+
+- **A flat, readable landing place under every node.** A medallion on a busy diagonal is
+  unreadable at 46 px.
+- **A safe zone.** Keep every node inside the middle ~86 % of the image, so a future switch
+  to `cover`, or an unusual aspect ratio, never clips one.
+- **The summit reads as a venue.** It is the world's destination and the app's identity.
+- **Contrast under the nodes.** The map must not fight the gold "current" medallion or the
+  **Speel!** bubble; this is the same readability contract `docs/ART-DIRECTION.md` §4.3
+  already imposes on the question card.
 
 ---
 
@@ -557,35 +657,258 @@ integration for an hour's work, and it is the same code path once art arrives.
 
 ### F7. Asset-pack specification (§13)
 
-Per world, in priority order. **Only the first row is required**; a world with nothing but
-tokens must look finished, because the app is offline-first, image-budgeted, and you want
-config-first worlds.
+The vertical painted map (§E) changes this section's most important rule. An earlier draft
+said a world must be presentable from theme tokens alone, with art as pure enhancement.
+**That is no longer true for the map**: the path, the ledges and the summit venue *are* the
+artwork. No painting, no world.
+
+That is an acceptable trade for how much the painted map gives back, but it has to be
+planned for, because it makes world packs art-blocked rather than config-only.
+
+Per world, in priority order:
 
 | # | Item | Form | Required | Notes |
 |---|---|---|---|---|
-| 1 | theme tokens (5 colours) | JS/CSS vars | **yes** | the whole world can ship on these alone |
-| 2 | node icons | emoji, or one SVG sprite | **yes** | emoji is fine and renders everywhere |
-| 3 | badge | emoji (later: SVG symbol) | **yes** | shown at ~44 px in the cabinet |
-| 4 | venue backdrop | raster `.webp`, ≤ 120 KB, 1× + 2× | no | the biggest single upgrade |
-| 5 | crowd layer | raster `.png` with alpha, blurred, 1× only | no | driven by `--fan` |
-| 6 | map horizon | raster `.webp` | no | falls back to the existing gradient ground |
-| 7 | decorative motifs | procedural / CSS | no | never a per-world code path |
+| 1 | theme tokens (5 colours) | JS/CSS vars | **yes** | drive gutters, transitions, crowd tint, node rims |
+| 2 | **map artwork** | raster `.webp`, ≈ 1080 × 1840 | **yes** | carries the path, the ledges and the summit |
+| 3 | **node coordinates** | 6–8 `{x, y}` percentage pairs | **yes** | authored against the artwork (F8) |
+| 4 | badge | emoji, later an SVG symbol | **yes** | shown at ~44 px in the cabinet |
+| 5 | venue backdrop | raster `.webp` | no | falls back to a tinted house venue |
+| 6 | crowd layer | raster `.png`, alpha, blurred | no | driven by `--fan` |
+| 7 | world look | 3 existing item ids | no | see §G3 — no new art at all |
+| ~~8~~ | ~~transition assets~~ | — | **never** | the slide in §E7 needs none |
 
-Rules: raster only for atmosphere (venue, crowd, horizon). CSS gradients for anything that
-must stay crisp at every size. SVG only for symbols reused at several sizes (badges,
-node icons if they graduate from emoji). Never generate unique art for a node, a star, or
-a UI chrome element.
+**The budget problem, and the fix.** Eight worlds × (map + venue) is sixteen paintings. At
+150–250 KB each that is roughly 2 MB, against `docs/ART-DIRECTION.md`'s 400 KB phase budget
+and 120 KB per-image cap. Two mitigations, both nearly free:
 
-Naming and budget follow `docs/ART-DIRECTION.md` §7.2–7.3 — do not invent a second
-convention. Add `assets/world/<id>-<part>.webp`.
+- **Precache only world 1.** `sw.js`'s `ASSETS` array is the precache list, but its fetch
+  handler already serves anything under `/assets/` cache-first and *writes misses into the
+  cache*. So later worlds cache themselves on first visit and are offline from then on.
+  This is a one-line change to an array, and the mechanism already ships.
+- **Ship one generic fallback map.** A neutral path over neutral terrain that any
+  un-painted world borrows and recolours from its tokens. A new world can then ship as
+  configuration and receive its painting later — which is what keeps §8's "adding a world
+  is cheap" honest now that art is mandatory.
+
+Raster only for atmosphere (map, venue, crowd). CSS gradients for anything that must stay
+crisp at any size. SVG only for symbols reused at several sizes. Never generate unique art
+for a node, a star or a piece of UI chrome. Naming and DPI follow `ART-DIRECTION.md`
+§7.2–7.3 — do not invent a second convention. Add `assets/world/<id>-<part>.webp`.
 
 **A "Create a Pirate World pack" request then means exactly:** an id, a Dutch name, a level
-count, 5 theme colours, N node emoji, a badge emoji + name, and optionally three images at
-the named paths. Nothing else.
+count (6–8), five theme colours, a badge emoji and name, three item ids for its world look,
+one map painting at 1080 × 1840 honouring §E8, its node coordinates, and optionally a venue
+and crowd layer.
+
+### F8. Authoring: a calibrator, not an editor
+
+Of everything in a pack, exactly one thing is hard to author by hand: **node coordinates
+that land on the ledges the painting provides.** Everything else is typing five hex values
+and a name.
+
+So: **do not build a world-pack editor.** Dragging nodes, persisting JSON, previewing
+venues and picking colours is a real piece of software — plausibly more code than the world
+system itself — for a task performed maybe eight times, at ten minutes each.
+
+Build a calibrator instead, inside the `?debug` switchboard that already exists at the
+bottom of `index.html` (it already does `&demo`, `&star=`, `&stage=`, `&screen=`):
+
+```
+?debug&mapedit   →  percentage grid over the map artwork
+                    drag the nodes
+                    prints a paste-ready coordinate array to the console
+```
+
+You paste the array into `WORLDS`. No persistence, no file I/O, no UI chrome, no build
+step — roughly 80 lines, inside a block that ships to nobody. The repository already has
+this pattern: `proefstudio.html`, generated by `test/build-proefstudio.js`, is a dev-only
+harness for trying out art. The map calibrator belongs in that family.
+
+Two things deliberately left out:
+
+- **The venue background.** It has no coordinates — it is a full-bleed image behind the
+  podium. There is nothing to calibrate.
+- **Colours.** Five hex values, iterated faster in the file than through a picker.
+
+And do not build it for the first world. Eyeballing eight percentages by hand is genuinely
+faster than writing the tool. Build it when starting world 2, at the moment you notice you
+are doing it a second time.
 
 ---
 
-## G. Edge cases
+## G. Looks, podiums and the collection budget
+
+### G1. The real problem: seven collections, about to become eight
+
+Before fixing either looks or podiums, name what is actually wrong. A child in this app is
+currently invited to collect:
+
+| # | Collection | Where it is shown |
+|---|---|---|
+| 1 | stars per level | map nodes, end screen |
+| 2 | a global star total | the career strip, on the home screen |
+| 3 | diamonds | every header |
+| 4 | ~95 items | Kleedkamer |
+| 5 | 13 looks | Kleedkamer, first tab |
+| 6 | ~40 trophies | cabinet, plus a nav dot |
+| 7 | 8 career ranks | career strip and overlay |
+
+Worlds and world badges would make **eight**. The feeling that looks are "a bit too
+present" is a correct reading of a real problem, but looks are a symptom rather than the
+disease: nothing has ever been demoted, so every system that was ever added is still
+shouting at the same volume.
+
+The fix is a hierarchy, not a deletion. Nothing below is removed from the app; things are
+moved out of the places where a child is trying to decide what to do next.
+
+| Tier | What | Visible where |
+|---|---|---|
+| **Primary** | worlds and levels — the journey | the map, always |
+| **Secondary** | stars per level, and the world's `⭐ n/m` | the map nodes and the world counter |
+| **Currency** | diamonds — one, spent in one place | header chip, tappable to the shop |
+| **Rewards** | items she wears | Kleedkamer |
+| **Collections** | trophies, world badges, looks | the cabinet, visited by choice |
+| **Retired from the surface** | career rank, the looks tab | rank keeps paying diamonds silently; looks move (G3) |
+
+Three things are ever visible during play: where I am, how well I did, what I can spend.
+
+### G2. Podiums: keep the data, change where it paints
+
+**The collision.** `applyStage(el, p)` paints the *entire* stage frame from
+`p.equipped.stage` — `el.style.background = item.bg`, plus three emoji in the corners. If
+the world now supplies a painted venue, the podium item has nothing left to paint. It is
+the sharpest conflict in the whole plan, because the stage category holds the most
+expensive items in the shop (up to 150 💎) and appears in eight of the thirteen look sets.
+
+**The fix is a one-line semantic change, not new art.** The item already carries exactly
+the two things a platform needs: a gradient (`bg`) and three props (`deco`). Move them:
+
+| | Today | Proposed |
+|---|---|---|
+| `item.bg` | fills the whole stage frame | fills a **plinth** at the bottom of the frame |
+| `item.deco` | three emoji stuck in the frame corners | props standing on and beside the plinth |
+| the room behind | the same gradient | the **world's venue** |
+
+```js
+// applyStage wordt applyPodium: dezelfde data, een andere plek.
+// De wereld schildert de zaal (applyVenue); het gekochte podium is
+// de verhoging waar ze óp staat.
+function applyPodium(el, p) {
+  const st = itemOr(p.equipped.stage, 'stage_disco');
+  el.style.setProperty('--podium-fill', st.bg);
+  // st.deco: rekwisieten op/naast de verhoging i.p.v. hoekstickers
+}
+```
+
+Zero new assets, no migration, no refunds, and the result is *better* for the child: her
+150 💎 volcano podium becomes an object she visibly stands on — a dark slab with a molten
+rim — instead of wallpaper behind her. An owned object reads as a possession in a way a
+background never does.
+
+Two details worth getting right:
+
+- **Make the plinth generous.** This changes the appearance of something she paid for. A
+  real lit plinth at roughly 18–22 % of the frame height reads as an upgrade; a thin strip
+  reads as a downgrade.
+- **`.stage` appears on four screens** — the show, the end screen, the Kleedkamer and the
+  profile card. The show and end screen get the current world's venue. The **Kleedkamer
+  should also use the current world's venue** — she is backstage at this world's show,
+  which is free, coherent, and makes the world visible where she spends her diamonds. The
+  profile card, which has no world context on screen, can keep a neutral house venue.
+
+Unaffected: the `podiumbouwer` trophy and `COLLECTION_CAT.podiumbouwer` count *owned* stage
+items and keep working untouched.
+
+### G3. Looks: stop running them as a parallel collection
+
+**What a look actually is.** Not an item — a *named bundle* of items that already exist in
+the shop (`THEME_SETS`, thirteen of them), serving two real jobs: a savings goal, and a
+discovery aid that drags the child across categories she would otherwise never open. Both
+jobs are good. The **presentation** is the problem: `renderShop` puts the ✨ Looks chip
+first in the tab strip, ahead of all eight clothing categories, and the view behind it is a
+thirteen-card grid — a second collection screen competing with the cabinet, which already
+has a `✨ Thema-looks` shelf holding the same thirteen.
+
+**The opportunity nobody has spent yet.** Worlds and looks are already the same vocabulary:
+
+| Look that exists today | World it obviously belongs to |
+|---|---|
+| Winter | Ice World |
+| Vuurshow | Fire World |
+| Jungle | Jungle World |
+| Ruimteheld | Space World |
+| Regenboogster | Rainbow World |
+| Prinses | Castle World |
+
+Six of the thirteen map onto plausible worlds with no new content at all.
+
+**The proposal: a look is what you wear *to* a world.**
+
+- Each world names **one** look. It is surfaced only while you are in that world.
+- In the Kleedkamer the ✨ Looks tab disappears. In its place, one card at the top of the
+  item grid: `Deze wereld: 🔥 Vuurshow · 2 / 3`, with its pieces. Tapping a missing piece
+  jumps to it — `openLookInKleedkamer` and `lookPieceTap` already do this.
+- The full thirteen live in the **cabinet**, where collections belong, on the shelf they
+  already have.
+- Looks with no world — Rockster, Magicus, FestivalDJ, Discodiva, Thuismatch, Diamantster —
+  stay cabinet-only. Do not force a one-to-one mapping; six world looks and seven free ones
+  is fine.
+- **Drop the `stage` piece from world looks.** The look should be about *her*; the world is
+  about the room. It also shortens a world look to three pieces, which suits a nudge rather
+  than a grind.
+- **The reward for wearing it is cosmetic plus one acknowledgement**, never a mechanical
+  advantage: a warmer crowd, some sparkle, and a single line the first time
+  (`Je past precies bij deze wereld! 🔥`). A child who prefers her own outfit must never be
+  playing at a disadvantage.
+
+This is the demotion you asked for and it costs nothing: one chip removed, one card added,
+and looks stop being a rival collection and become an expression of where you are.
+
+**Critical implementation note.** Define world looks as a **separate, shorter list** that
+references the same item ids. Do **not** mutate `THEME_SETS` — `comboOn` / `comboOwned`
+drive thirteen trophies, so editing those sets would silently move save-visible progress
+for existing players.
+
+### G4. What the Kleedkamer looks like afterwards
+
+```
+before                          after
+┌──────────────────────────┐    ┌──────────────────────────┐
+│ [avatar on podium]       │    │ [avatar on podium,       │
+│                          │    │  in this world's venue]  │
+│ ✨Looks 👕 👟 💇 🎤 🎸 …  │    │ 👕 👟 💇 🎤 🎸 🎀 🐾 🎪  │
+│  ▲ first, a 13-card grid │    │                          │
+│                          │    │ ┌──────────────────────┐ │
+│ [item grid]              │    │ │ Deze wereld: 🔥      │ │
+│                          │    │ │ Vuurshow    2 / 3    │ │
+│                          │    │ └──────────────────────┘ │
+│                          │    │ [item grid]              │
+└──────────────────────────┘    └──────────────────────────┘
+```
+
+And the cabinet gains one shelf while keeping the one it has:
+
+```
+🌍 Werelden        ← new: one badge per world
+✨ Thema-looks     ← unchanged: all 13
+🎤 Tournee · 🧮 Rekenkracht · ⭐ Shows & sterren · …
+```
+
+### G5. If you would rather cut than demote
+
+Removing looks entirely is defensible but I would not: they are the only thing giving
+ninety-five items a reason to be bought *in combination*, and without them the Kleedkamer
+is a flat catalogue with no goals. The machinery is also built, tested and working.
+
+If you do want to cut, the cheap version is: **delete the shop tab, keep the cabinet
+shelf, touch no data.** That removes the presence you object to, keeps thirteen collection
+goals for the child who wants them, and is a handful of lines in `renderShop`. The
+world-look card from G3 can be added later, or never.
+
+---
+
+## H. Edge cases
 
 **Replaying old levels.** Already correct. Verify only that the map re-renders node state
 after returning (it does: `goMap()` re-renders).
@@ -599,8 +922,8 @@ congratulate it. Cheap and it is the entire emotional payoff of §5.
 **Reaching the end of authored worlds.** `worldFor(lvl)` must never return `undefined`.
 Recommended: a final **"Sterrentournee"** pseudo-world, entered after the last authored
 world — neutral/celebratory theme, keeps counting levels, keeps paying stars, diamonds,
-rank-ups and trophies exactly as before, and its gateway node reads `✨ Binnenkort meer
-werelden!` rather than a padlock. This is the simplest option that satisfies your
+rank-ups and trophies exactly as before, and its summit reads `✨ Binnenkort meer
+werelden!` rather than sliding into a next world. This is the simplest option that satisfies your
 constraint: it is not a live-service system, it is a `filter/pop`-style fallback in one
 function, and it makes appending a real world later a pure data change. Avoid a repeatable
 challenge mode, rotating levels, or a mastery meta-layer — each is a new mechanic to test
@@ -646,6 +969,24 @@ a themed, more prominent map will make much more visible. Fix it with one deboun
 listener calling `updateRoad` + `updateParallax` + re-centre — this should land early,
 ideally in the same iteration that touches the map.
 
+**Aspect ratios the artwork was not drawn for.** The `contain` + themed-gutter rule (§E3)
+means a node can never be cropped, on any screen, which is the whole reason to prefer it
+over `cover`. What *can* happen is large gutters — a landscape phone shows the map as a
+centred column. Verify a world still reads as that world when roughly half of what is on
+screen is gutter rather than painting; if it does not, the theme tokens are wrong, not the
+layout.
+
+**A world whose artwork is not finished.** Art is now mandatory for the map (§F7), so a
+world can be configured before it can be played. The generic fallback map exists for
+exactly this: a new world ships as configuration, borrows the fallback, recolours it from
+its tokens, and receives its painting later. Never let `WORLDS` contain an entry whose map
+resolves to nothing.
+
+**Node coordinates against the wrong painting.** Coordinates are percentages tied to one
+image. Replacing a world's artwork without re-running the calibrator (§F8) silently moves
+every node off its ledge. Treat map art and coordinates as one versioned unit; they change
+together or not at all.
+
 **Very small screens (320×568).** Node width is already stepped down at `max-width:390`.
 The new header must not regress this: "IJSWERELD" over "Level 4 / 6" is two short lines and
 fits; a single line with both would not. Keep world names short — that is a content rule
@@ -661,7 +1002,7 @@ persist a world id into a profile.
 
 ---
 
-## H. Incremental rollout plan
+## I. Incremental rollout plan
 
 Nine iterations, each independently shippable and independently abandonable. This reorders
 your suggested sequence for one reason: **§4 and §5 need no world system at all**, so they
@@ -696,29 +1037,31 @@ should ship first and teach you whether children replay before you commit to wor
 - **Validate:** all three suites must pass untouched — that is the whole point of this
   iteration. Plus a manual check that a save at level 27 still starts at level 27.
 
-### Iteration 2 — Map becomes world-scoped
+### Iteration 2 — Map becomes world-scoped and stops scrolling
 
-- **Goal:** one world per map screen, with a gateway.
-- **Player sees:** the track holds only this world's nodes plus a gateway node at the end;
+- **Goal:** one world per screen, all of it visible at once.
+- **Player sees:** the map holds only this world's 6–8 nodes, all on screen, no scrolling;
   `Level 4 / 6` under the world name; the world star counter.
-- **Under the hood:** `renderTourMap` bounds its loop by the world instead of `p.level+3`;
-  a gateway node type; **the orientation/resize fix lands here.**
-- **Risk:** the road and travel animation assume a contiguous node list — travel across a
-  world boundary is now a special case. Handle it as "the travel animation ends at the
-  gateway, then the map re-renders into the next world", which is also the celebration beat
-  from C.
-- **Deliberately unchanged:** themes (still the current purple), stars, badges, header
-  chrome beyond the title.
-- **Validate:** shots at 320/390/tablet, portrait and landscape; rotate mid-map.
+- **Under the hood:** `renderTourMap` bounds its loop by the world; nodes move from a flex
+  track to absolute percentage positions over a fixed-aspect map box; the measured-rect road
+  is replaced by a path that is either painted (once art exists) or drawn from the same
+  coordinates. **The missing resize/orientation handling stops mattering here** — that is a
+  real benefit of dropping runtime measurement, not an afterthought.
+- **Risk:** this is the iteration that touches the most existing map code at once. Keep the
+  purple gradient background and use a placeholder path until iteration 3 brings artwork —
+  do not change geometry and art in the same step.
+- **Deliberately unchanged:** themes, stars, badges, header chrome beyond the title.
+- **Validate:** shots at 320/390/tablet, portrait and landscape; confirm every node is
+  visible and tappable at 320 px and in landscape.
 
-### Iteration 3 — One prototype world, tokens only
+### Iteration 3 — One prototype world, with its painting
 
-- **Goal:** prove a world *feels* like a place, with no new art.
-- **Player sees:** Ice World's map is cold blue — sky, ground glow, road, node rims — and
-  fades into the next world's colours across the gateway.
+- **Goal:** prove a world *feels* like a place.
+- **Player sees:** Ice World's map is a painted icy climb with a stage at the summit; the
+  gutters, node rims and the hint at the top edge are all its colours.
 - **Under the hood:** `theme` tokens + `applyWorldTheme`; every map component switched to
-  `var(--w-*)`; the venue/podium split introduced on the show screen with CSS gradients
-  only.
+  `var(--w-*)`; the first map painting at 1080 × 1840 with hand-placed coordinates; the
+  venue/podium split introduced on the show screen with CSS gradients only.
 - **Risk:** contrast. The app has an explicit readability contract
   (`docs/ART-DIRECTION.md` §4.3) — a pale world must not eat the white question card or
   the gold CTA. Treat `--w-*` as *background* tokens only; never let a world recolour a
@@ -731,7 +1074,8 @@ should ship first and teach you whether children replay before you commit to wor
 
 - **Goal:** the boundary becomes an event.
 - **Player sees:** finishing the last level gives the existing gold milestone pill, the
-  walk to the gateway, the world fading into the next, and a badge in the cabinet.
+  climb to the summit stage, the badge flying to the cabinet, and the slide into the
+  next world.
 - **Under the hood:** badges generated from `WORLDS` into `TROPHIES` + a `🌍 Werelden`
   shelf; silent retroactive award for existing saves; the ⭐ ring for an all-perfect world.
 - **Risk:** double celebration — the end screen, the badge ceremony and the travel
@@ -755,32 +1099,54 @@ should ship first and teach you whether children replay before you commit to wor
 - **Deliberately unchanged:** the `.screen-header` grid itself, and the bottom nav.
 - **Validate:** `profiles.test.js` touches the settings route heavily — run it first.
 
-### Iteration 6 — Themed venue and crowd applause
+### Iteration 6 — Themed venue, the podium as a plinth, and crowd applause
 
-- **Goal:** the world reaches the screen where the child spends most of their time.
-- **Player sees:** an icy room behind her podium; the crowd lighting up as she answers.
-- **Under the hood:** `applyVenue` alongside `applyStage`; one `.crowd` layer driven by
-  `--fan` from the existing `updateFan()`; first real per-world images.
-- **Risk:** budget and offline. Cap at ≤ 120 KB per image; add to `sw.js` `ASSETS`; **bump
-  `CACHE`.**
-- **Deliberately unchanged:** the fan mechanic, the encore, the diamond payouts, the
-  purchased podium.
-- **Validate:** measure total payload; test offline after a hard reload; confirm the
-  purchased stage is still visibly the child's.
+- **Goal:** the world reaches the screen where the child spends most of their time, without
+  taking anything away from her.
+- **Player sees:** an icy room behind her; her bought podium is now a lit plinth she stands
+  *on*; the crowd lights up as she answers.
+- **Under the hood:** `applyVenue` for the world and `applyPodium` (was `applyStage`) for
+  the purchase — the item's `bg` moves from the frame to the plinth and its `deco` become
+  props (§G2); one `.crowd` layer driven by `--fan` from the existing `updateFan()`; the
+  Kleedkamer adopts the current world's venue.
+- **Risk:** this visibly changes something the child paid up to 150 💎 for. Make the plinth
+  generous (18–22 % of the frame height, lit rim). Also budget and offline: precache world 1
+  only, let the rest cache on first visit, and **bump `CACHE` in `sw.js`.**
+- **Deliberately unchanged:** the fan mechanic, the encore, the diamond payouts, every item
+  the child owns, and the `podiumbouwer` trophy.
+- **Validate:** measure total payload; test offline after a hard reload; put the volcano
+  podium in three different worlds and confirm it still reads as hers.
 
-### Iteration 7 — World-pack spec, and worlds 2–3 as pure configuration
+### Iteration 7 — Demote looks, and give each world one
+
+- **Goal:** take the Kleedkamer from two competing collections to one shop and one goal.
+- **Player sees:** the ✨ Looks tab is gone; a single card at the top of the grid reads
+  `Deze wereld: 🔥 Vuurshow · 2 / 3`; the full thirteen are still in the cabinet.
+- **Under the hood:** remove the Looks chip from `renderShop`'s tab strip; a world-look card
+  above the item grid reusing `openLookInKleedkamer` / `lookPieceTap`; a **separate**
+  world-look list referencing existing item ids.
+- **Risk:** mutating `THEME_SETS` would silently move save-visible trophy progress for
+  thirteen trophies. Do not touch it — define world looks alongside it.
+- **Deliberately unchanged:** every item, every price, the `✨ Thema-looks` shelf and all
+  thirteen look trophies.
+- **Validate:** a profile mid-way through several looks must show identical trophy progress
+  before and after.
+
+### Iteration 8 — World-pack spec, the calibrator, and worlds 2–3
 
 - **Goal:** prove the pipeline by using it.
 - **Player sees:** Rainbow World and Jungle World.
-- **Under the hood:** ideally **zero new functions.** If a new world needs code, the
-  architecture failed and this is where you find out cheaply.
+- **Under the hood:** ideally **zero new functions**, plus the `?debug&mapedit` calibrator
+  (§F8) — which is worth building now, at the moment you are placing coordinates for the
+  second time. If a new world needs code, the architecture failed and this is where you find
+  out cheaply.
 - **Risk:** discovering a world needs a code path. Budget for one round of generalisation.
 - **Validate:** the diff for world 3 should be data + assets only.
 
-### Iteration 8 — The endless tail
+### Iteration 9 — The endless tail
 
 - **Goal:** the app never reads as "finished".
-- **Player sees:** after the last world, a gateway that says more is coming, and a
+- **Player sees:** after the last world, a summit that says more is coming, and a
   continuing Sterrentournee.
 - **Under the hood:** the `worldFor` fallback; a neutral theme; no new mechanics.
 - **Validate:** seed a profile past the last authored level and confirm nothing throws,
@@ -788,7 +1154,7 @@ should ship first and teach you whether children replay before you commit to wor
 
 ---
 
-## I. First recommended experiment
+## J. First recommended experiment
 
 **Build Iteration 0 and a hard-scoped version of Iteration 3, together, as one throwaway
 prototype on a branch — and show it to a child.**
@@ -796,9 +1162,11 @@ prototype on a branch — and show it to a child.**
 Concretely:
 
 - Take levels 1–6 exactly as they are. Call them **IJswereld**. Hardcode it; no `WORLDS`
-  table, no prefix sums, no migration, no gateway logic beyond a static node at the end.
-- Theme the map from five CSS variables: sky, ground glow, road, node rim, accent. No
-  images at all.
+  table, no prefix sums, no migration, no transition — one world is enough to answer the
+  question.
+- One painted map at 1080 × 1840 with six hand-placed coordinates, `contain`-fitted with
+  themed gutters. This is the one thing worth paying for up front: the painting *is* the
+  hypothesis, and a token-only prototype cannot test it.
 - Header: `❄️ IJSWERELD` / `Level 4 / 6`. Delete the career strip for the duration of the
   test.
 - Give 3-star nodes the gold glow; add the `⭐ n / 18` world counter.
@@ -813,7 +1181,7 @@ architecture answers that, and every iteration after 2 is expensive if the answe
 
 1. Can she say where she is, without reading? (Colour and icon, not the word "IJswereld".)
 2. Does she point at the dull nodes, unprompted?
-3. At the gateway, does she ask what is next — or does she not notice it?
+3. At the summit, does she ask what is next — or does she not notice it?
 4. Does the cold palette make the question card or the **Speel!** button harder to find?
 
 If 1 and 3 land, build the real thing in the order above. If only 2 lands, mastery is your
@@ -822,5 +1190,6 @@ back. If none land, the map is not the problem, and the money is better spent on
 and the crowd (Iteration 6), which is the only change on this list that touches the screen
 where the child actually spends their time.
 
-The prototype is a branch, a few hundred lines of CSS and two small render changes. It
-should cost a day, and it can be thrown away without leaving anything behind.
+The prototype is a branch, one piece of art, a few hundred lines of CSS and two small
+render changes. It should cost a day plus one painting, and it can be thrown away without
+leaving anything behind.
