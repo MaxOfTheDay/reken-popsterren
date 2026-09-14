@@ -246,8 +246,67 @@ async function commitAll(bericht, res) {
   }
 }
 
+/* Publiceren: de werkbranch naar main en pushen -- dát is wat er op de telefoon
+   van een kind terechtkomt, want Pages serveert main.
+
+   Twee stappen met opzet. De eerste klik kijkt alleen: welke commits zouden er
+   landen, staat main gelijk met de verte, gaat het schoon samen. Pas de tweede
+   klik voert het uit. Zo is publiceren nooit één verdwaalde tik, en zie je eerst
+   wát je publiceert -- het stuk "diff gezien" dat anders wegvalt.
+
+   De testen draaien vóór het samenvoegen. Falen ze, dan blijft main zoals hij was. */
+async function publish(fase, res) {
+  const zeg = (code, tekst) => {
+    res.writeHead(code, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end(tekst);
+  };
+  let tak = null;
+  try {
+    tak = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (tak === 'main' || tak === 'master') return zeg(400, 'je staat al op ' + tak);
+    if (await git(['status', '--porcelain'])) {
+      return zeg(400, 'er staan nog wijzigingen open — leg die eerst vast');
+    }
+    await git(['fetch', 'origin', 'main']);
+    const nieuw = await git(['log', '--oneline', 'origin/main..' + tak]);
+    if (!nieuw) return zeg(400, 'main heeft dit al — er valt niets te publiceren');
+
+    if (fase !== 'go') {
+      const n = nieuw.split('\n').length;
+      return zeg(200, 'KLAAR:' + n + '\n' + nieuw
+        + '\n\nDit gaat naar main en staat daarna op de telefoon.');
+    }
+
+    console.log('  wereldstudio: testen draaien vóór het publiceren…');
+    await runTests();
+    await git(['checkout', 'main']);
+    try {
+      await git(['pull', '--ff-only', 'origin', 'main']);
+      await git(['merge', '--no-edit', tak]);
+      await git(['push', 'origin', 'main']);
+    } finally {
+      await git(['checkout', tak]);   // altijd terug, ook als er iets misging
+    }
+    const sha = await git(['rev-parse', '--short', 'origin/main']);
+    console.log('  wereldstudio: main staat op ' + sha + ' — Pages werkt zichzelf bij');
+    zeg(200, 'gepubliceerd: main op ' + sha
+      + '\n\nPages is over een minuut of twee bij:\n'
+      + '  https://maxoftheday.github.io/reken-popsterren/');
+  } catch (e) {
+    if (tak) { try { await git(['checkout', tak]); } catch (_) {} }
+    zeg(500, String(e.message));
+  }
+}
+
 http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
+
+  if (req.method === 'POST' && url === '/publish') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 200) req.destroy(); });
+    req.on('end', () => publish(body.trim(), res));
+    return;
+  }
 
   if (req.method === 'POST' && url === '/commit') {
     let body = '';
