@@ -120,7 +120,7 @@ function page(state) {
   const styles =
     '<style id="k-scene-vol">' + scene.css(state.urls, { scrim: true }) + '</style>' +
     '<style id="k-scene-kaal" disabled>' + scene.css(state.urls, { scrim: false }) + '</style>';
-  // dezelfde parallax-aandrijving als in proefstudio.html, uit test/scene.js
+  // de parallax-aandrijving uit test/scene.js
   const para = '<script>' + scene.parallaxJs() + '<\/script>';
   return html.replace('</head>', styles + '</head>')
              .replace('</body>', panel(state) + para + '</body>');
