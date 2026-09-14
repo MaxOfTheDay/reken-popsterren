@@ -1223,9 +1223,13 @@
      niet per afstelling, en draaien of resizen vraagt geen herberekening. */
   .tour-map {
     position: absolute; inset: 0; z-index: 0; container-type: size;
-    /* safe center, niet center: staat het kader hóger dan het vak, dan zou gewoon
-       center de bovenkant buiten het scrollbereik duwen en was halte 8 onbereikbaar. */
-    display: flex; align-items: safe center; justify-content: safe center;
+    /* Verticaal safe center: staat het kader hóger dan het vak, dan zou gewoon center
+       de bovenkant buiten het scrollbereik duwen en was halte 8 onbereikbaar.
+       Horizontaal júist gewoon center: daar valt niets te scrollen (overflow-x is
+       hidden), en "safe" viel bij overloop terug op links uitlijnen -- dan werd de
+       hele rechterkant van de tekening weggeknipt in plaats van een beetje aan
+       beide kanten. */
+    display: flex; align-items: safe center; justify-content: center;
     /* Horizontaal wordt geknipt -- dat is de cover-snede. Verticaal mag je schuiven:
        een staande tekening past niet in elke vensterverhouding, en schuiven is beter
        dan de tekening kleiner maken. Kleiner maken laat de app-achtergrond als
@@ -7839,11 +7843,16 @@ function startMapEdit() {
     }
     body.mapedit .tour-stop { cursor: grab; }
     body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
-    /* stuurpunt van één stuk weg: klein, ruitvormig, duidelijk iets ánders dan een halte */
-    .me-ctrl { position: absolute; width: 7cqw; height: 7cqw; margin: -3.5cqw 0 0 -3.5cqw;
-      z-index: 4; cursor: grab; border-radius: 3px; transform: rotate(45deg);
-      background: rgba(120,255,180,.35); border: 0.5cqw solid rgba(120,255,180,.95); }
-    .me-ctrl:active { cursor: grabbing; background: rgba(120,255,180,.7); }
+    /* Stuurpunt van één stuk weg: klein, ruitvormig, duidelijk iets ánders dan een
+       halte. Ze liggen óp de weg, dus gevuld braken ze hem visueel af -- het leek
+       alsof de weg de haltes niet netjes raakte. Nu hol, en pas vol als je erbij
+       bent. */
+    .me-ctrl { position: absolute; width: 5cqw; height: 5cqw; margin: -2.5cqw 0 0 -2.5cqw;
+      z-index: 4; cursor: grab; border-radius: 2px; transform: rotate(45deg);
+      background: transparent; border: 0.45cqw solid rgba(120,255,180,.75);
+      transition: background .1s, border-color .1s; }
+    .me-ctrl:hover { background: rgba(120,255,180,.45); border-color: rgba(120,255,180,1); }
+    .me-ctrl:active, .me-ctrl.dragging { cursor: grabbing; background: rgba(120,255,180,.8); }
     body.mapedit.nocurve .me-ctrl { display: none; }
 
     #studio { position: fixed; top: 0; right: 0; bottom: 0; width: 330px; z-index: 60;
@@ -7886,6 +7895,23 @@ function startMapEdit() {
     #studio .st-slot .st-dot { width: 8px; height: 8px; border-radius: 50%; }
     #studio .st-slot .st-dot.er { background: #7dffb4; }
     #studio .st-slot .st-dot.weg { background: rgba(255,255,255,.22); }
+    /* De tekening van de wereld: het grootste vlak van het hele paneel, want het
+       is het eerste wat een wereld nodig heeft. Sleep erop of tik erop. */
+    #studio .st-art { display: grid; grid-template-columns: 54px 1fr; gap: 10px;
+      align-items: center; padding: 10px; border-radius: 10px; cursor: pointer;
+      border: 1.5px dashed rgba(255,255,255,.28); background: rgba(255,255,255,.05);
+      transition: background .12s, border-color .12s; }
+    #studio .st-art:hover { background: rgba(255,255,255,.09); }
+    #studio .st-art.over { background: rgba(120,255,180,.14); border-color: rgba(120,255,180,.85); }
+    #studio .st-art.er { border-style: solid; border-color: rgba(120,255,180,.45); }
+    #studio .st-art .vb { width: 54px; aspect-ratio: 9 / 16; border-radius: 6px;
+      background: rgba(0,0,0,.35) 50% 50% / cover no-repeat;
+      border: 1px solid rgba(255,255,255,.18); display: grid; place-items: center;
+      font-size: 17px; color: #7a63a0; }
+    #studio .st-art b { display: block; font-size: 12.5px; }
+    #studio .st-art small { display: block; color: #9c86bd; font-size: 11px; margin-top: 2px;
+      font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+    #studio .st-art button { padding: 2px 8px; font-size: 11px; border-radius: 6px; margin-left: 4px; }
     #studio .st-set { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
     #studio .st-set label { display: flex; align-items: center; gap: 7px; padding: 5px 8px;
       border-radius: 7px; background: rgba(255,255,255,.05); cursor: pointer; }
@@ -7924,7 +7950,11 @@ function startMapEdit() {
     #studio .st-w .st-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.2); }
     #studio .st-w .st-dot.vuil { background: #ffc43d; }
     #studio .st-w .st-dot.nieuw { background: #7dffb4; }
-    #studio .st-hint { color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
+    /* De uitleg stond overal in de weg zodra je de studio één keer gebruikt hebt.
+       Nu staat hij achter de ?-knop bovenin: één tik en alles komt terug. */
+    #studio .st-hint { display: none; color: #9c86bd; font-size: 11.5px; margin: 6px 0 0; }
+    #studio.uitleg .st-hint { display: block; }
+    #studio .st-top button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
     /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
        terwijl je al ergens anders kijkt. */
     #studio .st-uit { flex: none; padding: 7px 12px 9px; font: 11.5px/1.5 ui-monospace, monospace;
@@ -7961,6 +7991,7 @@ function startMapEdit() {
     <div class="st-top">
       <b>Wereldstudio</b>
       <span class="st-chip" id="st-status">—</span>
+      <button id="st-uitleg" title="Uitleg aan/uit">?</button>
       <button id="st-fold" title="In-/uitklappen">⇥</button>
     </div>
     <div class="st-toestel">
@@ -7984,10 +8015,18 @@ function startMapEdit() {
           <button id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
         </div>
 
+        <h6>Tekening</h6>
+        <div class="st-art" id="st-art">
+          <span class="vb" id="st-art-vb">＋</span>
+          <span><b id="st-art-st">nog geen tekening</b><small id="st-art-pad"></small></span>
+        </div>
+        <p class="st-hint">Sleep een beeld hierheen of tik erop. Elke bronmaat mag: hij wordt
+          bijgesneden als cover, omgezet naar webp en op de goede plek gezet.</p>
+
         <h6>Gegevens</h6>
         <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
         <div class="st-row"><label>naam</label><input id="mf-name"></div>
-        <div class="st-row"><label>tekening</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
+        <div class="st-row"><label>bestand</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
         <div class="st-kleur">
           <div>weg<input id="mf-road" type="color" title="de gestippelde weg tussen de haltes"></div>
           <div>lucht<input id="mf-sky" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
@@ -8003,6 +8042,7 @@ function startMapEdit() {
 
         <h6>Haltes &amp; weg</h6>
         <div class="st-btns">
+          <button id="st-zone" class="on">⬚ veilige zone</button>
           <button id="st-grid">▦ raster</button>
           <button id="st-curve" class="on">∿ stuurpunten</button>
           <button id="st-renodes">↺ haltes</button>
@@ -8022,10 +8062,9 @@ function startMapEdit() {
       </section>
 
       <section data-tab="beelden" hidden>
-        <p class="st-hint" style="margin-top:10px">Per scherm: welke tekening daar hoort, hoe groot
-          hij moet zijn en waar hij landt. Sleep een beeld op een regel, of tik erop om een
-          bestand te kiezen. Elke bronmaat mag — hij wordt bijgesneden als cover en
-          omgezet naar webp.</p>
+        <p class="st-hint" style="margin-top:10px">De beelden die <b>niet</b> bij één wereld horen.
+          De wereldkaart staat bij <b>Werelden</b>, want die hoort bij de wereld die je aan het
+          maken bent. Show en Einde worden later ook per wereld; dan verhuizen ze mee.</p>
         <div class="st-row" style="margin-top:8px"><label>kwaliteit</label><select id="st-kwal">
           <option value="0.9">0.90 — ruim</option>
           <option value="0.82" selected>0.82 — normaal</option>
@@ -8147,7 +8186,7 @@ function startMapEdit() {
 
   const shown = () => worldForIndex(viewWorldIdx);
   const setOut = t => { F('st-out').textContent = t || ''; };
-  let gridOn = false, curveOn = true;
+  let gridOn = false, curveOn = true, zoneOn = true;
 
   // ---------------------------------------------------------------- status
   function shippedFor(id) { return WORLDS_SHIPPED.filter(w => w.id === id)[0]; }
@@ -8234,9 +8273,11 @@ function startMapEdit() {
   function decorate() {
     const frame = map.querySelector('.world-frame');
     if (!frame) return;
-    if (gridOn) ['me-grid', 'me-safe'].forEach(c => {
-      const d = document.createElement('div'); d.className = c; frame.appendChild(d);
-    });
+    /* De veilige zone staat standaard aan: dat is de één regel die je nodig hebt
+       terwijl je haltes neerzet. Het raster van 10% is er los bij, voor wie een
+       tekening wil uitmeten. */
+    if (zoneOn) { const d = document.createElement('div'); d.className = 'me-safe'; frame.appendChild(d); }
+    if (gridOn) { const d = document.createElement('div'); d.className = 'me-grid'; frame.appendChild(d); }
     leesCurve().forEach((c, i) => {
       const h = document.createElement('div');
       h.className = 'me-ctrl';
@@ -8267,11 +8308,16 @@ function startMapEdit() {
   }
 
   // ---------------------------------------------------------------- knoppen
+  F('st-uitleg').onclick = e => {
+    panel.classList.toggle('uitleg');
+    e.target.classList.toggle('on', panel.classList.contains('uitleg'));
+  };
   F('st-fold').onclick = () => {
     panel.classList.toggle('dicht');
     document.documentElement.style.setProperty('--studio-w', panel.classList.contains('dicht') ? '44px' : '330px');
     zetToestel(toestelKiezer.value);
   };
+  F('st-zone').onclick = e => { zoneOn = !zoneOn; e.target.classList.toggle('on', zoneOn); commit(); };
   F('st-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); commit(); };
   F('st-curve').onclick = e => {
     curveOn = !curveOn;
@@ -8310,11 +8356,12 @@ function startMapEdit() {
      en leven alleen in incoming/. Dat hoort de studio te zéggen in plaats van een
      knop aan te bieden die niets doet. */
   function tekenSchermen() {
+    tekenWereldbeeld();
     const vak = F('st-schermen');
     if (!vak) return;
     vak.innerHTML = '';
     SCHERMEN.forEach(sc => {
-      const keys = Object.keys(SLOTS).filter(k => SLOTS[k].screen === sc.id);
+      const keys = Object.keys(SLOTS).filter(k => SLOTS[k].screen === sc.id && !SLOTS[k].perWereld);
       if (!keys.length) return;
       const groep = document.createElement('div');
       groep.className = 'st-scherm';
@@ -8352,6 +8399,53 @@ function startMapEdit() {
       vak.appendChild(groep);
     });
   }
+  /* Het tekeningvak van de wereld die je nu bewerkt. Zelfde weg naar binnen als een
+     regel in Beelden, maar groot, met een voorbeeldje en op de plek waar je toch al
+     bezig bent met die wereld. */
+  function tekenWereldbeeld() {
+    const vak = F('st-art');
+    if (!vak) return;
+    const w = shown().world, pad = slotPad('world'), kb = OP_SCHIJF[pad];
+    const tijdelijk = w.art && w.art.indexOf('blob:') === 0;
+    /* Drie toestanden, en ze zijn echt verschillend. De middelste komt voor nadat je
+       "Ophalen" hebt gedaan: het bestand staat er nog, maar de wereld wijst er niet
+       meer naar. Zonder dat onderscheid staat er "nog geen tekening" naast een
+       bestandsmaat, en dat klopt allebei niet. */
+    const staat = (w.art && (kb || tijdelijk)) ? 'klaar' : kb ? 'los' : 'leeg';
+    vak.classList.toggle('er', staat === 'klaar');
+    const toon = w.art || (kb ? pad : '');
+    F('st-art-vb').style.backgroundImage = toon ? `url("${toon}?v=${kb || 0}")` : '';
+    F('st-art-vb').textContent = toon ? '' : '＋';
+    F('st-art-vb').style.opacity = staat === 'los' ? '.45' : '1';
+    F('st-art-st').innerHTML = staat === 'klaar' ? 'tekening staat klaar'
+      : staat === 'los' ? 'bestand staat er, maar deze wereld gebruikt het niet '
+        + '<button id="st-art-koppel">gebruiken</button>'
+      : w.art ? 'bestand ontbreekt nog' : 'nog geen tekening';
+    F('st-art-pad').textContent = pad + (kb ? '  · ' + kb + ' kB' : '')
+      + '  · ' + SLOTS.world.lever[0] + '×' + SLOTS.world.lever[1];
+    const kop = F('st-art-koppel');
+    if (kop) kop.onclick = e => {
+      e.stopPropagation();
+      shown().world.art = pad;
+      commit('tekening gekoppeld');
+    };
+  }
+  {
+    const vak = F('st-art');
+    vak.onclick = () => { bezigSlot = 'world'; F('me-file').click(); };
+    ['dragenter', 'dragover'].forEach(n => vak.addEventListener(n, e => {
+      e.preventDefault(); vak.classList.add('over');
+    }));
+    ['dragleave', 'dragend'].forEach(n => vak.addEventListener(n, () => vak.classList.remove('over')));
+    vak.addEventListener('drop', e => {
+      e.preventDefault();
+      vak.classList.remove('over');
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!f) return setOut('daar zat geen bestand bij');
+      if (!/^image\//.test(f.type)) return setOut('dat is geen afbeelding: ' + f.name);
+      verwerkBeeld(f, 'world');
+    });
+  }
   let bezigSlot = 'world';
   F('me-file').onchange = e => {
     const f = e.target.files && e.target.files[0];
@@ -8360,7 +8454,7 @@ function startMapEdit() {
   };
   // een beeld dat per ongeluk naast een regel valt mag de pagina niet vervangen
   ['dragover', 'drop'].forEach(n => addEventListener(n, e => {
-    if (!e.target.closest || !e.target.closest('.st-slot')) e.preventDefault();
+    if (!e.target.closest || !e.target.closest('.st-slot, .st-art')) e.preventDefault();
   }));
 
   function laadBeeld(src) {
