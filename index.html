@@ -703,7 +703,7 @@
   .nav-item:active { transform: scale(.94); }
   /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
-     .speel-pill, .item-card.equipped): navigatie is geen beloning. */
+     .tour-stop.next, .item-card.equipped): navigatie is geen beloning. */
   .nav-item.active { opacity: 1; background: rgba(56,189,248,.20); box-shadow: inset 0 0 0 2px rgba(143,214,255,.55); }
   /* schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter verdwijnt */
   .screen.hub { padding-bottom: 100px; }
@@ -1306,7 +1306,7 @@
      "verzameld"-taal als .trophy-card.done). Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
      de reisweg erdoorheen. */
-  .tour-stop .dot { position: relative; width: 13cqw; height: 13cqw; margin: 0 auto; border-radius: 50%;
+  .tour-stop .dot { position: relative; width: 12cqw; height: 12cqw; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 6.4cqw; font-weight: 800; border: 0.55cqw solid var(--glass-white-30); background: var(--purple-shadow); }
   /* het slotje hangt aan de rand van de halte i.p.v. het nummer te vervangen --
@@ -1370,50 +1370,11 @@
      zonder dit oogt ze net zo goed los zwevend erboven */
   .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 0.4cqw; transform: translateX(-50%);
     width: 8cqw; height: 2cqw; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
-  /* .speel-pill: dé hoofdknop van het spel, en (sinds de profielkaarten hun
-     eigen kopie kwijt zijn) de enige plek waar hij staat. Puls + gloed
-     geïnspireerd op .trophy-card.ready i.p.v. de stillere brightness-only
-     playGlow -- dit is de belangrijkste tik van de app, mag zich ook zo voelen. */
-  .speel-pill {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    font-size: 20px; font-weight: 700; color: var(--purple-shadow); letter-spacing: .3px; white-space: nowrap;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border-radius: var(--r-pill); padding: 13px 26px;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 9px 18px var(--glass-black-35);
-  }
-  /* dé speelknop van het spel: zit vast aan de huidige halte. translateX(-50%)
-     zit ín de eigen keyframes gebakken (i.p.v. los op het element), anders
-     overschrijft de animatie 'm elk frame en springt de knop uit het midden. */
-  .tour-speel { position: absolute; top: 50%; z-index: 3; white-space: nowrap;
-    animation: speelPulseSide 1.2s ease-in-out infinite; }
-  .tour-speel.right { left: calc(100% - 1cqw); }
-  .tour-speel.left { right: calc(100% - 1cqw); }
-  /* translateY(-50%) zit ín de keyframes (net als de -50% van de oude variant),
-     anders overschrijft de animatie de centrering elk frame */
-  @keyframes speelPulseSide {
-    0%, 100% { transform: translateY(-50%) scale(1); }
-    50% { transform: translateY(-50%) scale(1.08); }
-  }
-  /* zelfde duur/easing/schaal als pulseBtn (de gouden "next"-tegel) zodat
-     beide echt gelijk lopen i.p.v. losjes uit de pas -- alleen translateX(-50%)
-     zit erbij gebakken (zie hierboven), de rest is bewust identiek. Geen
-     box-shadow-animatie meer erbovenop: dat maakte 'm ook nog eens "voller"
-     ogend dan de tegel, terwijl ze juist hetzelfde moment moeten voelen. */
-  @keyframes speelPulse {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.09); }
-  }
-  /* tikfeedback via filter i.p.v. transform -- de puls-animatie hierboven
-     bezet transform al elk frame, dus een :active transform zou meteen weer
-     overschreven worden (zelfde patroon als bij .tour-stop.next .dot) */
-  .tour-stop:active .tour-speel { filter: brightness(.85); }
-  .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
-    border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
-  /* Op de wereldkaart schaalt de Speel-knop mee met het kader: op een scherm met
-     acht haltes is hij een knop tússen haltes, niet het enige ding in een lege
-     strook. Te groot en hij dekt de buurhalte af -- precies wat er gebeurde. */
-  .tour-speel.speel-pill { font-size: 5.6cqw; padding: 2.6cqw 5cqw; gap: 1.6cqw;
-    box-shadow: 0 0.8cqw 0 var(--gold-cta-shadow), 0 2cqw 4cqw var(--glass-black-35); }
-  .tour-speel::before { display: none; }
+  /* De Speel-knop is van de kaart verdwenen. Met acht haltes samen in beeld is de
+     halte waar ze nú staat al het enige volgouden, pulserende medaillon mét de pop
+     erbovenop -- een tweede gouden ding ernaast voegde niets toe, dekte de vorige
+     halte af en ving zelfs de tikken die daarvoor bedoeld waren. De tegel is de
+     knop. (Zie docs/PROGRESSION-REVIEW.md: "één duidelijke volgende actie".) */
   /* Hoge schermen: de route claimt de leegte in plaats van als smalle strook in
      het midden te zweven. Gemeten op 390x844 stond er 121px lucht boven en 127px
      onder de route; grotere haltes, ster en speelknop halen dat terug. De drempel
@@ -1428,7 +1389,7 @@
     .map-portrait svg { top: -5px; width: 65px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .map-sky span, .speel-pill, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
+    .map-sky span, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
     /* het goud van een perfecte halte blijft staan; alleen de veeg verdwijnt */
     .tour-stop.done.perfect .dot::after { animation: none; opacity: 0; }
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
@@ -3843,7 +3804,12 @@ function defaultNodes(n) {
   const out = [];
   for (let i = 0; i < n; i++) {
     const t = n > 1 ? i / (n - 1) : 0;
-    out.push({ x: 50 + Math.sin(i * 1.6) * 26, y: 87 - t * 74 });
+    // Eén doorlopende S: naar rechts, terug naar links, en weer terug. Een snellere
+    // slinger (elke halte de andere kant op) ligt wiskundig netter uit elkaar, maar
+    // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
+    // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
+    // ruimte tussen de haltes komt van de verticale spreiding hieronder.
+    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 27, y: 91 - t * 83 });
   }
   return out;
 }
@@ -3856,6 +3822,37 @@ function worldNodes(w) {
 // tekening, zodat de weg er exact overheen valt).
 const VB_W = 1080, VB_H = 1840;
 const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
+
+/* De weg slingert méér dan de haltes zelf. Een curve dóór alleen de haltes is
+   namelijk zo recht als de haltes toevallig liggen -- en drie haltes op een rij
+   liggen al snel bijna op één lijn, waardoor de weg als een liniaal leest.
+   Daarom krijgt elk stuk tussen twee haltes een stuurpunt dat loodrecht op dat
+   stuk naar buiten ligt, om en om naar links en rechts. De haltes blijven exact
+   waar ze staan -- ook als ze straks met de hand op de richels van een tekening
+   gezet zijn -- maar de weg ertussen bolt. */
+const ROAD_BOW = 0.17;
+function roadPoints(pts) {
+  if (pts.length < 2) return pts;
+  const out = [pts[0]];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const s = (i % 2 ? 1 : -1) * ROAD_BOW * len;
+    // binnen het kader houden: een bocht mag nooit de rand uit lopen
+    out.push({
+      x: Math.max(VB_W * .05, Math.min(VB_W * .95, (a.x + b.x) / 2 + (-dy / len) * s)),
+      y: Math.max(VB_H * .03, Math.min(VB_H * .97, (a.y + b.y) / 2 + (dx / len) * s)),
+    });
+    out.push(b);
+  }
+  return out;
+}
+// De d van de weg tot en met de zoveelste halte (gebruikt voor zowel het hele
+// pad als het afgelegde gouden stuk, zodat die twee gegarandeerd samenvallen).
+function roadD(pts, count) {
+  return count >= 2 ? smoothPath(roadPoints(pts.slice(0, count))) : '';
+}
 
 function updateParallax() { /* de kaart scrollt niet meer; de lucht staat stil */ }
 
@@ -4038,9 +4035,9 @@ function renderTourMap(travelFrom) {
   const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
   const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
   const bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
-  bgPath.setAttribute('d', smoothPath(pts));
+  bgPath.setAttribute('d', roadD(pts, pts.length));
   const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
-  fgPath.setAttribute('d', lastOpen > 0 ? smoothPath(pts.slice(0, lastOpen + 1)) : '');
+  fgPath.setAttribute('d', roadD(pts, lastOpen + 1));
   svg.appendChild(bgPath);
   svg.appendChild(fgPath);
   frame.appendChild(svg);
@@ -4063,14 +4060,9 @@ function renderTourMap(travelFrom) {
     }
     const hero = lvl === heroLvl
       ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-    // De Speel-knop staat naast de halte, aan de kant waar plek is. Onder de halte
-    // (waar hij vandaan komt) dekte hij de vórige halte af -- en omdat de knop ín
-    // deze tegel zit, ving hij dan ook de tikken die voor die vorige halte bedoeld
-    // waren: je kon een level niet meer opnieuw spelen.
-    const speel = (!travelling && lvl === playable)
-      ? `<div class="tour-speel speel-pill ${n.x < 50 ? 'right' : 'left'}">Speel!</div>` : '';
+
     const lock = open ? '' : '<span class="stop-lock" aria-hidden="true">🔒</span>';
-    b.innerHTML = `${hero}<div class="dot">${lock}${i + 1}</div>${starRowHTML(st)}${speel}`;
+    b.innerHTML = `${hero}<div class="dot">${lock}${i + 1}</div>${starRowHTML(st)}`;
     b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
       + (open ? ` — ${st} van 3 sterren` : ' — nog op slot'));
     if (open) b.onclick = () => { sndClick(); startLevel(lvl); };
@@ -4109,11 +4101,11 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
   const pts = worldNodes(shown).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
   const fromIdx = fromLvl - shown.first, toIdx = toLvl - shown.first;
   if (fromIdx < 0 || toIdx <= 0 || toIdx >= pts.length) return null;
-  fg.setAttribute('d', smoothPath(pts.slice(0, toIdx + 1)));
+  fg.setAttribute('d', roadD(pts, toIdx + 1));
   const total = fg.getTotalLength();
   // lengte tot de oude halte: even hetzelfde pad opmeten, ingekort
   const probe = fg.cloneNode();
-  probe.setAttribute('d', fromIdx > 0 ? smoothPath(pts.slice(0, fromIdx + 1)) : '');
+  probe.setAttribute('d', roadD(pts, fromIdx + 1));
   svg.appendChild(probe);
   const covered = fromIdx > 0 ? probe.getTotalLength() : 0;
   probe.remove();
