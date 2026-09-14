@@ -1272,6 +1272,28 @@
      zou dat gewoon overschrijven zolang de animatie loopt, dus tikfeedback
      op "next" gaat via filter (dat de animatie niet aanraakt) i.p.v. transform.
      Zelfde aanpak voor "done" erbij, voor identieke tikrespons in beide staten. */
+  /* Een halte op drie sterren is áf: warm goud, met af en toe een glans die
+     eroverheen glijdt -- dezelfde veeg als een klare trofee (shineSweep), alleen
+     trager en zachter. Bewust géén schaalpuls: .next (waar je nú speelt) moet het
+     luidste ding op de kaart blijven. Dit is het hele "ooh, die kan ik ook nog
+     perfect maken"-duwtje: geen rood, geen uitroepteken, alleen verschil.
+     Alleen op .done, zodat het nooit kan botsen met het goud van .next. */
+  /* Een gouden lijst, geen gouden vulling: een volle warme tint over het paars
+     wordt modderig bruin én slikt het stadsicoon op. De ring + de gloed eromheen
+     dragen dus het signaal, en de vulling krijgt alleen een lichte warme waas.
+     box-sizing is border-box, dus de dikkere rand verschuift niets. */
+  .tour-stop.done.perfect .dot {
+    overflow: hidden;
+    border-width: 4px;
+    background: linear-gradient(180deg, rgba(255,214,90,.22), rgba(255,193,61,.06)), var(--purple-shadow);
+    box-shadow: 0 0 0 4px rgba(255,213,79,.20), 0 0 20px rgba(255,205,80,.55);
+  }
+  .tour-stop.done.perfect .dot::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.45), transparent);
+    transform: skewX(-18deg);
+    animation: shineSweep 4.5s ease-in-out infinite var(--shine-delay, 0s);
+  }
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.85); }
   .tour-stop.next .dot { box-shadow: 0 0 0 5px rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 7px; }
@@ -1355,6 +1377,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .speel-pill, .tour-stop.next .dot, .avatar-holder.idle { animation: none; }
+    /* het goud van een perfecte halte blijft staan; alleen de veeg verdwijnt */
+    .tour-stop.done.perfect .dot::after { animation: none; opacity: 0; }
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
     .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }
@@ -3998,6 +4022,13 @@ function renderTourMap(travelFrom) {
       b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>${starRowHTML(0)}`;
     } else {
       b.classList.add(l === curLvl ? 'next' : 'done');
+      // Drie sterren = deze halte is áf (zie .tour-stop.perfect). De glans-veeg
+      // krijgt per halte een eigen startmoment, anders flitsen alle perfecte
+      // haltes in koor -- dat leest als een waarschuwing i.p.v. als glinstering.
+      if (st === 3) {
+        b.classList.add('perfect');
+        b.style.setProperty('--shine-delay', (l % 4) * 1.1 + 's');
+      }
       // de eigen ster staat vol in beeld, boven op haar huidige/vorige halte --
       // bij een gewone weergave is dat de speelbare halte (curLvl); tijdens de
       // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
@@ -5862,7 +5893,13 @@ function endLevel(success) {
     }
     const bonus = stars * 5;
     p.diamonds += bonus;
-    p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
+    // Wat stond er vóór deze show? Alleen dan kan dit een verbetering zijn: een
+    // eerste keer is geen "beter dan vorige keer". Ging het mínder goed, dan
+    // blijft het oude resultaat gewoon staan (Math.max) én zegt het eindscherm
+    // daar niets over -- terugkomen mag nooit iets kunnen kosten.
+    const vorige = p.stars[lvl] || 0;
+    const beter = vorige > 0 && stars > vorige;
+    p.stars[lvl] = Math.max(vorige, stars);
     if (lvl === p.level) {
       p.level++;
       pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
@@ -5874,7 +5911,11 @@ function endLevel(success) {
     $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
-    const juich = stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
+    // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
+    // de gouden haltes op de kaart (.tour-stop.perfect) naartoe lokken.
+    const juich = beter
+      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren! 🤩' : 'Beter dan de vorige keer! ⭐')
+      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
     $('end-text').textContent = juich;
