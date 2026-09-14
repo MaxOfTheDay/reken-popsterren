@@ -154,6 +154,16 @@
     --nav-sel: rgba(56, 189, 248, .26);
     --nav-sel-ring: rgba(143, 214, 255, .5);
     --nav-ink: 0 1px 2px rgba(10, 2, 24, .9), 0 0 8px rgba(10, 2, 24, .55);
+
+    /* ---- Zwevende kop op de kaart ----
+       Eén materiaal voor alle drie de zones, zodat ze als één systeem lezen en niet
+       als drie losse bellen: dezelfde vulling, hetzelfde randje, dezelfde schaduw.
+       Het portretje draagt er geen pil van maar wél dezelfde ring eromheen. */
+    --hud-bg: rgba(28, 6, 52, .3);
+    --hud-ring: rgba(255, 255, 255, .08);
+    --hud-shadow: 0 2px 8px rgba(10, 2, 24, .22);
+    --hud-ink: 0 1px 2px rgba(10, 2, 24, .95), 0 0 9px rgba(10, 2, 24, .6);
+    --hud-h: 34px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -589,25 +599,36 @@
     padding: 4px;   /* onzichtbaar, maar maakt het raakvlak 48px */
     background: none; backdrop-filter: none; box-shadow: none;
   }
+  /* Het portretje krijgt een ring van hetzelfde materiaal als de pillen -- geen pil
+     eromheen, maar wel dezelfde stof. Daarmee horen de drie zones bij elkaar zonder
+     dat links een blok tekst terugkomt. Iets groter (42px) zodat het gewicht van de
+     linkerzone klopt tegen de twee pillen. */
   #screen-map .map-portrait {
-    width: 40px; height: 40px; border: 2px solid rgba(255,255,255,.75);
-    box-shadow: 0 2px 9px rgba(10,2,24,.55), 0 0 0 3px rgba(28,6,52,.3);
+    width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.78);
+    box-shadow: 0 2px 8px rgba(10,2,24,.45), 0 0 0 4px var(--hud-bg);
   }
-  #screen-map .world-pick {
-    padding: 5px 12px; border-radius: var(--r-pill);
-    background: rgba(28,6,52,.34); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
-    box-shadow: 0 2px 10px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.09);
-    /* een strakke donkere kern plus een zacht waasje: dat draagt witte letters op
-       een lichte lucht zonder dat de pil zelf zwaarder hoeft te worden */
-    text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 9px rgba(10,2,24,.65);
+  /* de twee pillen zijn letterlijk dezelfde regel: zelfde hoogte, zelfde vulling,
+     zelfde randje, zelfde schaduw -- alleen de inhoud verschilt */
+  #screen-map .world-pick, #screen-map .diamond-badge {
+    height: var(--hud-h); padding: 0 11px; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
   }
   /* Op de kaart een maat kleiner dan op de andere schermen: de tekening eronder
-     draagt het scherm, niet de tekst. */
-  #screen-map .world-pick { font-size: 19px; }
-  #screen-map .diamond-badge { font-size: 18px; padding: 6px 13px; }
-  /* Gelijke buitenkolommen, zodat de wereldnaam écht in het midden staat. 84px is
-     wat de diamantpil nodig heeft; het portretje past daar ruim in. */
-  #screen-map .screen-header { grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr); }
+     draagt het scherm, niet de tekst. De wereldpil stond op 19px en woog daarmee
+     duidelijk zwaarder dan de twee ernaast; 17,5 tegen 17 zet ze op gelijke voet. */
+  #screen-map .world-pick { font-size: 17.5px; gap: 5px; }
+  #screen-map .wp-chev { font-size: 13px; }
+  #screen-map .diamond-badge { font-size: 17px; gap: 5px; }
+  /* Gelijke buitenkolommen, zodat de wereldnaam écht in het midden staat, en overal
+     dezelfde tussenruimte. 80px is wat de diamantpil nodig heeft. */
+  #screen-map .screen-header { grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
+    gap: 10px; align-items: center; }
+  /* 10 links, 14 rechts: het portretje draagt zelf 4px onzichtbare padding voor
+     zijn raakvlak, dus met gelijke waarden stond het optisch 4px verder naar
+     binnen dan de diamantpil. Zo liggen de zichtbare randen op dezelfde lijn. */
+  #screen-map .hub-sticky { padding-left: 10px; padding-right: 14px; }
   /* Op een laag scherm is de navigatiebalk een veel grotere hap van het beeld
      (82 van 568 = 14%) dan de 16% die de veilige zone onderaan overhoudt. Een beetje
      ruimte onder de kaart maakt dat de onderste halte er onderuit te schuiven is;
@@ -615,13 +636,7 @@
   @media (max-height: 620px) {
     .tour-map { padding-bottom: 48px; }
   }
-  #screen-map .diamond-badge {
-    background: rgba(28,6,52,.34); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
-    box-shadow: 0 2px 10px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.09);
-    /* een strakke donkere kern plus een zacht waasje: dat draagt witte letters op
-       een lichte lucht zonder dat de pil zelf zwaarder hoeft te worden */
-    text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 9px rgba(10,2,24,.65);
-  }
+
   /* Het portretje is de link terug naar de spelerskeuze (de kleedkamer zit al in
      de ondernavigatie). Er stond haar naam naast; die is weg. Wie er speelt zie je
      aan haar gezicht, zij is de enige die op dit toestel speelt, en het scheelde de
@@ -8004,7 +8019,7 @@ function startMapEdit() {
 
   const st = document.createElement('style');
   st.textContent = `
-    body.mapedit .main-nav, body.mapedit .mem-fab, body.mapedit .tour-hero { display: none !important; }
+    body.mapedit .mem-fab, body.mapedit .tour-hero { display: none !important; }
     /* Het kandidaat-vak van de voorvertoningsserver (incoming/ + schermlinks) doet
        in de studio niets meer: beelden gaan via het Beelden-tabblad en schermen via
        Voorbeeld. Buiten de studio blijft het gewoon staan. */
@@ -8016,11 +8031,30 @@ function startMapEdit() {
     /* Een toestelmaat in de studio: het vak krijgt de échte pixelmaat van dat
        toestel en wordt daarna alleen visueel verkleind. De container-queries in de
        kaart rekenen met de onverkleinde maat, dus wat je ziet klopt met het toestel
-       -- ook als je monitor geen 844 pixels hoog is. */
-    body.mapedit #tour-map { left: 24px; right: auto;
+       -- ook als je monitor geen 844 pixels hoog is.
+
+       De doos staat in het midden van de ruimte die het paneel overlaat (--doos-x),
+       niet meer tegen de linkerrand geplakt. */
+    body.mapedit #tour-map { left: var(--doos-x, 24px); right: auto;
       width: var(--doos-w, min(430px, 60vw)); height: var(--doos-h, 100%);
       transform: scale(var(--doos-s, 1)); transform-origin: top left;
       box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 10px 40px rgba(0,0,0,.45); }
+    /* De kop hoort óp het toestel te liggen, niet erboven te zweven: in het spel
+       ligt hij over de tekening heen. Dus dezelfde plek, dezelfde breedte en
+       dezelfde schaal als de doos. */
+    body.mapedit #screen-map .hub-sticky { position: absolute; z-index: 7;
+      left: var(--doos-x, 24px); top: 0; width: var(--doos-w, 430px);
+      transform: scale(var(--doos-s, 1)); transform-origin: top left;
+      align-self: auto; margin: 0; }
+    /* En de navigatiebalk ook: in het spel staat hij onderaan hét scherm, hier
+       onderaan de doos. */
+    body.mapedit .main-nav { display: flex !important;
+      position: absolute; left: var(--doos-x, 24px); bottom: auto; z-index: 7;
+      top: calc(var(--doos-h, 100%) * var(--doos-s, 1) - 77px * var(--doos-s, 1));
+      width: calc(var(--doos-w, 430px) - 24px); margin-left: calc(12px * var(--doos-s, 1));
+      transform: scale(var(--doos-s, 1)); transform-origin: top left; pointer-events: none; }
+    body.mapedit.geen-kop #screen-map .hub-sticky,
+    body.mapedit.geen-balk .main-nav { display: none !important; }
     /* De kolom-noodstand kijkt naar het vénster, niet naar dit vak -- op een breed
        bureaublad zou hij dus altijd aanslaan. Hier staat hij uit: het vak heeft al
        telefoon-verhoudingen, dus full-bleed is precies wat een kind straks ziet. */
@@ -8029,18 +8063,10 @@ function startMapEdit() {
     body.mapedit.liggend #tour-map { overflow-y: auto; align-items: flex-start; padding: 96px 0;
       background: linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%); }
     body.mapedit.liggend .world-frame { min-width: 0; min-height: 0; width: min(100cqw, 340px); }
-    /* .screen centreert zijn kinderen (align-items: center), dus de kop bleef midden
-       op het brede scherm hangen terwijl de kaart een kolom links werd: twee dingen
-       die bij elkaar horen, los van elkaar. Marges helpen daar niet tegen -- de
-       uitlijning van het flexvak wel. #screen-map heeft zelf geen schermrand (de
-       kaart loopt tot de rand), dus de marge is precies de 24px van de kaart. */
-    body.mapedit #screen-map .hub-sticky { align-self: flex-start;
-      width: var(--kop-w, min(430px, 60vw)); max-width: none;
-      margin-left: 24px; margin-right: 0; }
+    /* De kop ligt nu absoluut op de doos (zie de regel hierboven), dus hij hoeft niet
+       meer uit het flexvak van .screen te worden losgewrikt. */
     @media (max-width: 820px) {
       body.mapedit #tour-map { left: 0; width: 100%; box-shadow: none; }
-      body.mapedit #screen-map .hub-sticky { align-self: stretch;
-        width: 100%; margin-left: 0; }
     }
     body.mapedit .tour-stop { cursor: grab; }
     body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
@@ -8070,6 +8096,7 @@ function startMapEdit() {
       padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,.14); }
     #studio .st-toestel label { color: #b79ae0; font-size: 12px; }
     #studio .st-toestel select { flex: 1; min-width: 0; }
+    #studio .st-toestel button { padding: 5px 8px; line-height: 1; }
     #studio .st-toestel em { font-style: normal; font-size: 11px; color: #9c86bd;
       font-family: ui-monospace, monospace; white-space: nowrap; }
     #studio.dicht .st-toestel { display: none; }
@@ -8213,6 +8240,8 @@ function startMapEdit() {
     <div class="st-toestel">
       <label for="st-toestel">toestel</label>
       <select id="st-toestel"></select>
+      <button id="st-kop" class="on" title="Bovenbalk aan/uit">▀</button>
+      <button id="st-balk" class="on" title="Navigatiebalk aan/uit">▄</button>
       <em id="st-toestelmaat"></em>
     </div>
     <div class="st-tabs">
@@ -8237,11 +8266,16 @@ function startMapEdit() {
           <span><b id="st-art-st">nog geen tekening</b><small id="st-art-pad"></small></span>
         </div>
         <p class="st-hint">Sleep een beeld hierheen of tik erop. Elke bronmaat mag: hij wordt
-          bijgesneden als cover, omgezet naar webp en op de goede plek gezet.</p>
+          bijgesneden als cover, omgezet naar webp en op de goede plek gezet. Een nieuwe
+          erop slepen <b>overschrijft</b> de vorige — er is één tekening per wereld.<br>
+          De bestandsnaam maak je niet zelf: hij volgt uit het <b>id</b> van de wereld
+          (<code>assets/world/&lt;id&gt;-map.webp</code>). Verander je het id, dan verandert
+          het pad mee en moet je de tekening opnieuw neerzetten.</p>
 
         <h6>Gegevens</h6>
         <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
         <div class="st-row"><label>naam</label><input id="mf-name"></div>
+        <div class="st-row"><label>id</label><input id="mf-id" placeholder="ijs"></div>
         <div class="st-row"><label>bestand</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
         <div class="st-kleur">
           <div>weg<input id="mf-road" type="color" title="de gestippelde weg tussen de haltes"></div>
@@ -8347,9 +8381,10 @@ function startMapEdit() {
   /* De toestelmaten. Eén lijst voor twee dingen: het vak hiernaast (meteen, terwijl
      je tekent) en de voorbeeldvensters (een echte browser, om het te geloven). */
   const MATEN = [
-    { id: '390x844',  naam: 'telefoon staand', aan: true },
-    { id: '844x390',  naam: 'telefoon liggend' },
+    { id: '390x844',  naam: 'iPhone staand', aan: true },
+    { id: '412x920',  naam: 'Pixel 10' },
     { id: '320x568',  naam: 'kleine telefoon' },
+    { id: '844x390',  naam: 'telefoon liggend' },
     { id: '768x1024', naam: 'tablet staand' },
     { id: '1024x768', naam: 'tablet liggend' },
   ];
@@ -8364,25 +8399,39 @@ function startMapEdit() {
   function zetToestel(id) {
     const st = R.style;
     if (!id) {
-      ['--doos-w', '--doos-h', '--doos-s', '--kop-w'].forEach(k => st.removeProperty(k));
+      ['--doos-w', '--doos-h', '--doos-s', '--kop-w', '--doos-x'].forEach(k => st.removeProperty(k));
       document.body.classList.remove('liggend');
       F('st-toestelmaat').textContent = 'vult de hoogte';
       renderTourMap(0);
       return;
     }
     const { w, h } = maatVan(id);
-    const vrijH = innerHeight - 150;                      // kop + wat lucht eronder
-    const vrijW = innerWidth - 48 - (panel.classList.contains('dicht') ? 44 : 330);
+    const paneel = panel.classList.contains('dicht') ? 44 : 330;
+    const vrijH = innerHeight - 40;
+    const vrijW = innerWidth - 48 - paneel;
     const sch = Math.min(1, vrijH / h, vrijW / w);
     st.setProperty('--doos-w', w + 'px');
     st.setProperty('--doos-h', h + 'px');
     st.setProperty('--doos-s', String(sch));
     st.setProperty('--kop-w', Math.round(w * sch) + 'px');
+    // in het midden van de ruimte die het paneel overlaat
+    st.setProperty('--doos-x', Math.max(12, Math.round((innerWidth - paneel - w * sch) / 2)) + 'px');
     document.body.classList.toggle('liggend', w >= h);
     F('st-toestelmaat').textContent = sch < .999
       ? w + '×' + h + ' · ' + Math.round(sch * 100) + '%' : w + '×' + h;
     renderTourMap(0);
   }
+  /* Kop en balk aan/uit: allebei dekken ze een stuk van de tekening af, dus je wil
+     kunnen wisselen tussen "wat een kind ziet" en "wat ik teken". */
+  F('st-kop').onclick = e => {
+    document.body.classList.toggle('geen-kop');
+    e.target.classList.toggle('on', !document.body.classList.contains('geen-kop'));
+  };
+  F('st-balk').onclick = e => {
+    document.body.classList.toggle('geen-balk');
+    e.target.classList.toggle('on', !document.body.classList.contains('geen-balk'));
+  };
+
   const toestelKiezer = F('st-toestel');
   toestelKiezer.appendChild(new Option('vrij — vult de hoogte', ''));
   MATEN.forEach(m => toestelKiezer.appendChild(new Option(m.naam + '  ' + m.id.replace('x', '×'), m.id)));
@@ -8440,6 +8489,7 @@ function startMapEdit() {
     const w = shown().world;
     F('mf-icon').value = w.icon || '';
     F('mf-name').value = w.name || '';
+    F('mf-id').value = w.id || '';
     F('mf-art').value = (w.art && w.art.indexOf('blob:') !== 0) ? w.art : '';
     F('mf-levels').textContent = w.levels;
     Object.keys(HEX).forEach(k => { F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k]; });
@@ -8448,6 +8498,15 @@ function startMapEdit() {
     const w = shown().world;
     w.icon = F('mf-icon').value.trim() || w.icon;
     w.name = F('mf-name').value.trim() || w.name;
+    /* Het id bepaalt de bestandsnaam van de tekening, dus alleen kleine letters,
+       cijfers en streepjes -- dat is ook wat de server als pad accepteert. */
+    const nid = F('mf-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (nid && nid !== w.id) {
+      const oud = w.art;
+      w.id = nid;
+      if (oud && oud === 'assets/world/' + shown().world.id + '-map.webp') delete w.art;
+      setOut('id gewijzigd — de tekening hoort nu bij ' + slotPad('world'));
+    }
     const art = F('mf-art').value.trim();
     if (art) w.art = art; else if (w.art && w.art.indexOf('blob:') !== 0) delete w.art;
     w.theme = {};
@@ -8615,7 +8674,11 @@ function startMapEdit() {
     if (!vak) return;
     vak.innerHTML = '';
     SCHERMEN.forEach(sc => {
-      const keys = Object.keys(SLOTS).filter(k => SLOTS[k].screen === sc.id && !SLOTS[k].perWereld);
+      // alleen plekken die het spel écht leest: de vier voorstellen uit scene.js
+      // (zaal, landschap, wolken, slotscherm) hebben nog geen doelpad, en een rij
+      // die niets doet is een rij die je elke keer opnieuw moet wegdenken
+      const keys = Object.keys(SLOTS).filter(k =>
+        SLOTS[k].screen === sc.id && !SLOTS[k].perWereld && SLOTS[k].pad);
       if (!keys.length) return;
       const groep = document.createElement('div');
       groep.className = 'st-scherm';
@@ -8671,10 +8734,11 @@ function startMapEdit() {
     F('st-art-vb').style.backgroundImage = toon ? `url("${toon}?v=${kb || 0}")` : '';
     F('st-art-vb').textContent = toon ? '' : '＋';
     F('st-art-vb').style.opacity = staat === 'los' ? '.45' : '1';
-    F('st-art-st').innerHTML = staat === 'klaar' ? 'tekening staat klaar'
+    F('st-art-st').innerHTML = staat === 'klaar'
+        ? 'tekening staat klaar — <b>sleep een nieuwe erop om te vervangen</b>'
       : staat === 'los' ? 'bestand staat er, maar deze wereld gebruikt het niet '
         + '<button id="st-art-koppel">gebruiken</button>'
-      : w.art ? 'bestand ontbreekt nog' : 'nog geen tekening';
+      : w.art ? 'bestand ontbreekt nog' : 'nog geen tekening — sleep er een hierheen';
     F('st-art-pad').textContent = pad + (kb ? '  · ' + kb + ' kB' : '')
       + '  · ' + SLOTS.world.lever[0] + '×' + SLOTS.world.lever[1];
     const kop = F('st-art-koppel');
