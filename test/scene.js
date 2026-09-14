@@ -32,6 +32,10 @@ const SLOTS = {
              label: 'Wolken',     waar: 'de kaart',
              lever: [1536, 864], anker: 'midden', canoniek: 'map-sky.webp',
              hint: 'map-sky.webp' },
+  world:   { match: /[-_]map\.[a-z0-9]+$|^(world|wereld)[-_]/i,      screen: 'map',
+             label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
+             lever: [1080, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
+             hint: '<wereld>-map.webp, bv. ijs-map.webp of vuur-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
              lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
@@ -89,6 +93,14 @@ function namesHint() {
    schakelaartje om te zien wát hij doet. */
 const SCRIM = 'radial-gradient(120% 70% at 50% 66%, rgba(20,4,40,.74), rgba(20,4,40,.30) 58%, transparent 82%)';
 
+/* De kaart krijgt een ándere waas dan de somschermen. Daar moet het mídden
+   donker zijn zodat de som leesbaar blijft; hier staat in het midden juist de
+   route, en donker maken is precies wat je niet wilt. Wat de kaart wél nodig
+   heeft is leesbare tekst bovenaan (de kop) en onderaan (de navigatie) -- dus
+   een band boven en onder, en het midden open. */
+const MAP_SCRIM = 'linear-gradient(180deg, rgba(20,4,40,.58) 0, rgba(20,4,40,0) 17%, '
+  + 'rgba(20,4,40,0) 83%, rgba(20,4,40,.48) 100%)';
+
 /*
  * Opmaak voor een set afbeeldingen.
  *   urls   { venue, horizon, sky, finale } -- elke waarde een URL of data-URI
@@ -115,6 +127,20 @@ function css(urls, opts) {
 #show-stage::after{display:none!important}
 #show-stage .deco{display:none!important}
 #game-avatar-inner{filter:drop-shadow(0 0 7px rgba(255,180,61,.32))}`);
+  }
+
+  if (urls.world) {
+    /* De wereldkaart vult .world-frame van rand tot rand. De klasse no-art staat
+       erop zolang de wereld in WORLDS geen eigen `art` heeft -- wat bij een
+       kandidaat uit incoming/ altijd zo is -- dus die moet hier ook overschreven
+       worden. De gedeelde wolkjes en het voetlicht gaan uit: een wereldtekening
+       brengt zijn eigen lucht en grond mee. */
+    const veilMap = scrim ? MAP_SCRIM + ',' : '';
+    out.push(`.world-frame,.world-frame.no-art{
+  background-image:${veilMap}url("${urls.world}")!important;
+  background-size:${scrim ? '100% 100%,' : ''}cover!important;
+  background-position:${scrim ? '50% 50%,' : ''}50% 50%!important}
+#screen-map .map-sky,#screen-map .map-ground{display:none!important}`);
   }
 
   if (urls.horizon) {
