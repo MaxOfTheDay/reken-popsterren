@@ -522,6 +522,9 @@
     font-size: 24px; font-weight: 700; text-align: center; white-space: nowrap;
     text-shadow: 0 2px 0 var(--glass-black-18);
   }
+  /* op de kaart draagt de kop twee dingen: wélke wereld, en waar je daarin bent */
+  .world-sub { display: block; font-size: 13px; font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
+  .world-stars { margin-left: 2px; }
   .screen-header .header-left { justify-self: start; }
   .screen-header .header-right { justify-self: end; }
   /* één teller-pil, in twee maten: groot (schermkoppen) en klein (kaart-topbalk, spelbalk) */
@@ -1208,13 +1211,54 @@
   @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px var(--glass-black-30); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px var(--glass-black-30); } }
   .gold-banner { font-size: 18px; font-weight: bold; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-cta-bottom); margin-top: 6px; height: 22px; }
 
-  /* ---- Wereldtournee: de horizontale reisroute is het hart van het hoofdscherm ---- */
-  .tour-map { position: relative; overflow-x: auto; width: 100%; max-width: 760px;
-    -webkit-overflow-scrolling: touch; cursor: grab;
-    scrollbar-width: none; -ms-overflow-style: none; }
-  .tour-map::-webkit-scrollbar { display: none; }
-  .tour-map.dragging, .tour-map.dragging * { cursor: grabbing; }
-  /* zachte fade-randen op horizontale scrollers (reisroute, tabbladen):
+  /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
+     Er valt niets te scrollen. Het kader (.world-frame) heeft de beeldverhouding
+     van de wereldtekening en wordt met container-query-eenheden precies ingepast
+     in de ruimte die er is -- de CSS-versie van object-fit:contain, zonder een
+     regel JavaScript. Wat overblijft aan de zijkanten is geen leegte maar de
+     lucht van de wereld zelf (zie .tour-map).
+
+     Alles bínnen het kader staat op percentages: de tekening, de weg (een SVG met
+     exact dezelfde viewBox-verhouding) en de haltes. Daarom valt de weg op élk
+     toestel precies op de haltes en op de tekening -- het klopt per constructie,
+     niet per afstelling, en draaien of resizen vraagt geen herberekening. */
+  .tour-map {
+    position: relative; container-type: size;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; flex: 1 1 auto; min-height: 0; overflow: hidden;
+  }
+  .world-frame {
+    position: relative;
+    width: min(100cqw, 100cqh * 1080 / 1840);
+    aspect-ratio: 1080 / 1840;
+    container-type: size;
+    background-size: cover; background-position: 50% 50%;
+    border-radius: var(--r-lg);
+  }
+  /* Nog geen tekening? Dan draagt de wereld zichzelf met zijn eigen kleuren, zodat
+     een wereld speelbaar is vóórdat hij getekend is (en een ontbrekend bestand
+     nooit een leeg vlak oplevert). */
+  .world-frame.no-art {
+    background-image:
+      radial-gradient(120% 55% at 50% 104%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
+      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
+  }
+  /* Liggend, of gewoon een heel lage vensterhoogte: een stáánde kaart past daar
+     niet in. Contain knijpt hem dan tot een postzegel (gemeten: 107x183 op een
+     telefoon in liggende stand -- acht haltes in 183px). Daar wint leesbaarheid
+     van "alles in één beeld": de kaart krijgt een bruikbare kolombreedte en
+     scrollt verticaal, met de huidige halte in beeld. Staand -- de stand waar dit
+     spel voor gemaakt is -- blijft het één scherm zonder scrollen.
+
+     De grens staat op 620 en niet op 560, zodat ook een kleine staande telefoon
+     (320x568) meedoet: contain gaf daar een kaart van 214px breed met tegels van
+     28px, scrollen geeft 320px breed met tegels van 42px. */
+  @media (max-height: 620px) {
+    .tour-map { overflow-y: auto; align-items: flex-start; scrollbar-width: none; }
+    .tour-map::-webkit-scrollbar { display: none; }
+    .world-frame { width: min(100cqw, 320px); }
+  }
+  /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt */
   .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
@@ -1222,29 +1266,34 @@
     mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
   .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
-  /* ruimte boven de haltes voor de avatar, eronder voor de Speel-knop, plus wat
-     extra lucht boven/onder voor de golvende weg (haltes zwaaien op/neer).
-     De onderkant heeft ook nog 10px extra bovenop de knop zelf: .tour-map's
-     overflow-x:auto dwingt overflow-y ook naar auto (CSS-spec-gedrag, niet
-     bewust gekozen), dus alles voorbij deze padding wordt geknipt -- zonder
-     die 10px viel de zachte slagschaduw van de Speel-knop er net buiten bij
-     haltes die door de golvende route wat lager uitkomen. */
-  .tour-track { display: flex; align-items: flex-start; width: max-content; position: relative; padding: 154px 26px 114px; }
-  /* de reisweg is één rechte, volle lijn dóór het midden van elke halte
-     (punten gezet door updateRoad/renderTourMap), gewoon dóór de tegels heen
-     -- die zijn ondoorzichtig, dus dekt vanzelf af. Twee lagen: het hele pad
-     dof ("nog te ontdekken"), het afgelegde stuk daar bovenop vol goud
-     ("al gehaald"), zelfde taal als de gelijknamige tegel-staten. */
-  .tour-road-svg { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .tour-road-bg, .tour-road-fg, .tour-road-fade { fill: none; stroke-linecap: round; }
-  .tour-road-bg { stroke: var(--glass-white-35); stroke-width: 6; }
-  .tour-road-fg { stroke: var(--gold-accent); stroke-width: 6; }
-  /* alleen de allerlaatste staart van de weg (ná de laatst getoonde halte)
-     dooft uit -- de rest van het pad blijft gewoon even dof-vast */
-  .tour-road-fade { stroke: url(#roadFadeGrad); stroke-width: 6; }
-  .tour-map-wrap { position: relative; width: 100%; max-width: 760px; }
-  .tour-stop { width: 108px; flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
-    background: transparent; padding: 0; text-align: center; position: relative; z-index: 1; }
+  /* De weg: twee lagen over de volle tekening. Het hele pad dof ("nog te
+     ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --
+     dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
+     en niet als een muur. */
+  .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  .tour-road-bg { stroke: rgba(255,255,255,.42); stroke-width: 13; }
+  .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
+  .tour-map-wrap { position: relative; display: flex; width: 100%; flex: 1 1 auto; min-height: 0; }
+  /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
+     glas en klein: goud is voor spelen en verdiend, en dit mag nooit met Speel!
+     concurreren. */
+  .world-step {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 3;
+    display: flex; align-items: center; gap: 5px; padding: 5px 12px;
+    font-family: inherit; font-size: 15px; line-height: 1; color: var(--c-white);
+    background: var(--glass-black-32); border: 1.5px solid var(--glass-white-22);
+    border-radius: var(--r-pill); cursor: pointer; backdrop-filter: blur(6px);
+  }
+  .world-step:active { transform: translateX(-50%) scale(.94); }
+  .world-step.prev { bottom: 1.5cqw; }
+  .world-step.next { top: 1.5cqw; }
+  .world-step .ws-ico { font-size: 13px; opacity: .8; }
+  .tour-stop {
+    position: absolute; transform: translate(-50%, -50%);
+    width: 26cqw; border: none; cursor: pointer; font-family: inherit; color: var(--c-white);
+    background: transparent; padding: 0; text-align: center; z-index: 1;
+  }
   /* Minimale medaillon-stijl i.p.v. een 3D-knop: plat rondje, dunne rand,
      geen drop-shadow-lip. Een halte is een plek op een kaart, geen knop --
      de "tik me in" actie zit al in de losse Speel!-knop hieronder.
@@ -1257,9 +1306,13 @@
      "verzameld"-taal als .trophy-card.done). Op slot = ontkleurd. */
   /* Volledig ondoorzichtige vulling (geen glass-tint meer) -- anders schijnt
      de reisweg erdoorheen. */
-  .tour-stop .dot { position: relative; width: 70px; height: 70px; margin: 0 auto; border-radius: 50%;
+  .tour-stop .dot { position: relative; width: 13cqw; height: 13cqw; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 33px; border: 2px solid var(--glass-white-30); background: var(--purple-shadow); }
+    font-size: 6.4cqw; font-weight: 800; border: 0.55cqw solid var(--glass-white-30); background: var(--purple-shadow); }
+  /* het slotje hangt aan de rand van de halte i.p.v. het nummer te vervangen --
+     zo blijft ook op een halte op slot te zien de hoeveelste show het is */
+  .stop-lock { position: absolute; top: -0.5cqw; right: -0.5cqw; font-size: 4.6cqw; line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
   .tour-stop:active .dot { transform: scale(.92); }
   .tour-stop.locked { cursor: default; }
   /* een grayscale(1) filter over de paarse basiskleur oogde bijna zwart --
@@ -1284,9 +1337,9 @@
      box-sizing is border-box, dus de dikkere rand verschuift niets. */
   .tour-stop.done.perfect .dot {
     overflow: hidden;
-    border-width: 4px;
+    border-width: 1.1cqw;
     background: linear-gradient(180deg, rgba(255,214,90,.22), rgba(255,193,61,.06)), var(--purple-shadow);
-    box-shadow: 0 0 0 4px rgba(255,213,79,.20), 0 0 20px rgba(255,205,80,.55);
+    box-shadow: 0 0 0 1.1cqw rgba(255,213,79,.20), 0 0 5cqw rgba(255,205,80,.55);
   }
   .tour-stop.done.perfect .dot::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; pointer-events: none;
@@ -1295,13 +1348,13 @@
     animation: shineSweep 4.5s ease-in-out infinite var(--shine-delay, 0s);
   }
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.85); }
-  .tour-stop.next .dot { box-shadow: 0 0 0 5px rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
+  .tour-stop.next .dot { box-shadow: 0 0 0 1.3cqw rgba(255,213,79,.22); animation: pulseBtn 1.2s ease-in-out infinite; }
   .tour-stop .cname { font-size: 14px; font-weight: bold; margin-top: 7px; }
   .tour-stop.next .cname { color: var(--gold-light); }
   .tour-stop.locked .cname { opacity: .6; }
   /* sterren als gewone tekstregel onder de naam i.p.v. een badge óp de tegel --
      geen aparte positionering/overlap meer nodig, past vanzelf altijd netjes */
-  .tour-stop .cstars { font-size: 11.5px; letter-spacing: -1px; opacity: .92; margin-top: 1px; }
+  .tour-stop .cstars { font-size: 3.6cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.6cqw; }
   .tour-stop .cstars .star-miss { opacity: .4; filter: grayscale(1); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
      stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
@@ -1310,13 +1363,13 @@
      gecentreerde stadsicoon onder haar voeten bedekken. Zelfde element voor
      de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
      vorige halte. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 11px); transform: translateX(-50%);
-    width: 92px; pointer-events: none; z-index: 2; }
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2cqw); transform: translateX(-50%);
+    width: 21cqw; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven */
-  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
-    width: 34px; height: 9px; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
+  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 0.4cqw; transform: translateX(-50%);
+    width: 8cqw; height: 2cqw; border-radius: 50%; background: var(--glass-black-40); filter: blur(2px); }
   /* .speel-pill: dé hoofdknop van het spel, en (sinds de profielkaarten hun
      eigen kopie kwijt zijn) de enige plek waar hij staat. Puls + gloed
      geïnspireerd op .trophy-card.ready i.p.v. de stillere brightness-only
@@ -1330,7 +1383,16 @@
   /* dé speelknop van het spel: zit vast aan de huidige halte. translateX(-50%)
      zit ín de eigen keyframes gebakken (i.p.v. los op het element), anders
      overschrijft de animatie 'm elk frame en springt de knop uit het midden. */
-  .tour-speel { position: absolute; top: calc(100% + 15px); left: 50%; animation: speelPulse 1.2s ease-in-out infinite; }
+  .tour-speel { position: absolute; top: 50%; z-index: 3; white-space: nowrap;
+    animation: speelPulseSide 1.2s ease-in-out infinite; }
+  .tour-speel.right { left: calc(100% - 1cqw); }
+  .tour-speel.left { right: calc(100% - 1cqw); }
+  /* translateY(-50%) zit ín de keyframes (net als de -50% van de oude variant),
+     anders overschrijft de animatie de centrering elk frame */
+  @keyframes speelPulseSide {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.08); }
+  }
   /* zelfde duur/easing/schaal als pulseBtn (de gouden "next"-tegel) zodat
      beide echt gelijk lopen i.p.v. losjes uit de pas -- alleen translateX(-50%)
      zit erbij gebakken (zie hierboven), de rest is bewust identiek. Geen
@@ -1346,27 +1408,17 @@
   .tour-stop:active .tour-speel { filter: brightness(.85); }
   .tour-speel::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
     border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 9px solid var(--gold-cta-top); }
-  /* compacter op lage schermen, zodat route + knop samen in beeld blijven */
-  @media (max-height: 700px) {
-    .tour-track { padding: 124px 22px 100px; }
-    .tour-stop { width: 96px; }
-    .tour-stop .dot { width: 58px; height: 58px; font-size: 27px; }
-    .tour-hero { width: 82px; }
-    .speel-pill { font-size: 18px; padding: 11px 22px; }
-  }
+  /* Op de wereldkaart schaalt de Speel-knop mee met het kader: op een scherm met
+     acht haltes is hij een knop tússen haltes, niet het enige ding in een lege
+     strook. Te groot en hij dekt de buurhalte af -- precies wat er gebeurde. */
+  .tour-speel.speel-pill { font-size: 5.6cqw; padding: 2.6cqw 5cqw; gap: 1.6cqw;
+    box-shadow: 0 0.8cqw 0 var(--gold-cta-shadow), 0 2cqw 4cqw var(--glass-black-35); }
+  .tour-speel::before { display: none; }
   /* Hoge schermen: de route claimt de leegte in plaats van als smalle strook in
      het midden te zweven. Gemeten op 390x844 stond er 121px lucht boven en 127px
      onder de route; grotere haltes, ster en speelknop halen dat terug. De drempel
      staat op 760 (was 800) zodat ook de wat kortere telefoons meedoen. */
-  @media (min-height: 760px) {
-    .tour-track { padding: 196px 30px 146px; }
-    .tour-stop { width: 128px; }
-    .tour-stop .dot { width: 90px; height: 90px; font-size: 43px; }
-    .tour-stop .cname { font-size: 16px; }
-    .tour-stop .cstars { font-size: 13px; }
-    .tour-hero { width: 126px; bottom: calc(100% - 14px); }
-    .speel-pill { font-size: 22px; padding: 15px 30px; }
-  }
+
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
     .map-name { font-size: 17px; }
@@ -2273,7 +2325,7 @@
     </div>
     <div class="map-flex">
       <div class="tour-map-wrap">
-        <div class="tour-map hscroll-fade" id="tour-map"></div>
+        <div class="tour-map" id="tour-map"></div>
       </div>
     </div>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
@@ -3768,67 +3820,45 @@ function updateFades(el) {
   el.classList.toggle('can-left', el.scrollLeft > 2);
   el.classList.toggle('can-right', el.scrollLeft < max - 2);
 }
-// Bindt (eenmalig) de scroll-fade en muis-klik-&-sleep om horizontaal te scrollen.
-// Touch/pen scrollt al native; alleen de muis krijgt sleep-gedrag.
-function setupTourMap(map) {
-  if (map.dataset.tourBound) return;
-  map.dataset.tourBound = '1';
-  map.addEventListener('scroll', () => { updateFades(map); updateParallax(map); }, { passive: true });
-  let down = false, startX = 0, startScroll = 0, moved = false;
-  map.addEventListener('pointerdown', e => {
-    if (e.pointerType !== 'mouse' || e.button !== 0) return;
-    down = true; moved = false; startX = e.clientX; startScroll = map.scrollLeft;
-  });
-  map.addEventListener('pointermove', e => {
-    if (!down) return;
-    const dx = e.clientX - startX;
-    if (!moved && Math.abs(dx) > 4) {
-      moved = true;
-      // pas vastpakken zodra er écht gesleept wordt: capture bij pointerdown zou
-      // de klik naar de kaart zelf omleiden, waardoor haltes niet aanklikbaar zijn
-      try { map.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-    if (moved) { map.scrollLeft = startScroll - dx; map.classList.add('dragging'); e.preventDefault(); }
-  });
-  const end = () => { if (down) { down = false; map.classList.remove('dragging'); } };
-  map.addEventListener('pointerup', () => {
-    if (moved) {
-      // een klik ná het slepen niet als "start dit optreden" laten tellen
-      const swallow = ev => { ev.stopPropagation(); ev.preventDefault(); map.removeEventListener('click', swallow, true); };
-      map.addEventListener('click', swallow, true);
-      setTimeout(() => map.removeEventListener('click', swallow, true), 150);
-    }
-    end();
-  });
-  map.addEventListener('pointercancel', end);
-  map.addEventListener('pointerleave', end);
-}
-
 /* De kaart is het hoofdscherm: de eigen ster staat óp de route bij haar volgende
    show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
-   zichtbaar door naar de nieuwe stad (zie runTravel). */
+   zichtbaar door naar de volgende halte (zie runTravel). */
 let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
 
-// Hoeveel elke halte boven/onder de basislijn zwaait: kleiner op lage schermen
-// (minder verticale ruimte), groter op hoge schermen, net als de rest van de kaart.
-function waveAmplitude() {
-  if (window.matchMedia && matchMedia('(max-height: 700px)').matches) return 14;
-  if (window.matchMedia && matchMedia('(min-height: 800px)').matches) return 30;
-  return 22;
+/* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
+   scrollen. Alle haltes staan op percentages binnen één kader met een vaste
+   beeldverhouding (zie .world-frame). Dáárom klopt de weg op elk toestel met de
+   achtergrondtekening: de weg wordt getekend uit dezelfde percentages als de
+   haltes, en kader, tekening, weg en haltes schalen samen mee. Er wordt niets
+   opgemeten, dus er is ook geen herberekening nodig bij draaien of resizen. */
+
+// Welke wereld staat er in beeld? Normaal die van p.level, maar met de pijltjes
+// onder/boven de kaart kun je terug naar een eerdere wereld om daar haltes te
+// verbeteren. Wordt gereset zodra de kaart opnieuw geopend wordt.
+let viewWorldIdx = null;
+
+// Reservekaart: een wereld zonder eigen haltelijst krijgt een slingerend pad van
+// onder naar boven. Zo is een wereld al speelbaar vóórdat zijn tekening klaar is.
+function defaultNodes(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const t = n > 1 ? i / (n - 1) : 0;
+    out.push({ x: 50 + Math.sin(i * 1.6) * 26, y: 87 - t * 74 });
+  }
+  return out;
 }
-// Een zachte S-vormige golf: elke volgende halte zwaait een beetje verder de
-// andere kant op, zodat de route als geheel kronkelt in plaats van recht loopt.
-function waveY(i, amp) { return Math.round(Math.sin(i * 0.9) * amp); }
-// Breedte van een halte en de zijmarge van de route: volgt dezelfde drie
-// schermgroottes als de CSS-breakpoints (zie .tour-stop / .tour-track).
-// Schuift de achtergrondlucht mee bij het scrollen door de route, trager dan
-// de haltes zelf — het klassieke parallax-dieptetrucje. De transform hoort op
-// de binnenste laag (zie .map-sky-inner hierboven), niet op .map-sky zelf,
-// anders schuift de knip-grens mee met de parallax.
-function updateParallax(map) {
-  const sky = document.querySelector('#screen-map .map-sky-inner');
-  if (sky) sky.style.transform = `translateX(${-map.scrollLeft * 0.06}px)`;
+// De haltes van een wereld, als percentages binnen het kader (0..100).
+function worldNodes(w) {
+  const given = w.world.nodes;
+  return (given && given.length === w.levels) ? given : defaultNodes(w.levels);
 }
+// Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
+// tekening, zodat de weg er exact overheen valt).
+const VB_W = 1080, VB_H = 1840;
+const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
+
+function updateParallax() { /* de kaart scrollt niet meer; de lucht staat stil */ }
+
 // De ster-status is de titel van de kaart-kop geworden (i.p.v. "Tournee X");
 // de balk eronder toont de voortgang naar de volgende status. Altijd zichtbaar,
 // zodat er ook bij een volle kast nog een doel is.
@@ -3839,16 +3869,30 @@ function renderCareerStrip(p) {
   const span = r.nextMin - r.curMin;
   const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
   // De schermkop zegt overal wáár je bent (Kleedkamer, Trofeeënkast, New York);
-  // op de kaart stond daar de rang. Nu ook hier de plek -- de tournee -- en de
-  // rangnaam verhuist naar de strip eronder, bij zijn eigen teller en balk.
-  const w = worldFor(p.level);
-  $('map-tournee-label').textContent = `${w.world.icon} ${w.world.name}`;
+  // op de kaart stond daar de rang. Nu de wereld waar ze in speelt, met eronder
+  // hoeveelste show van die wereld -- de twee dingen die zeggen waar ze is.
+  const cur = worldFor(p.level);
+  const shown = viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx);
+  const ws = worldStars(p, shown);
+  // "Level 4 / 8" hoort alleen bij de wereld waar ze nú staat. Kijkt ze even in een
+  // eerdere wereld, dan staat er enkel hoeveel sterren daar te halen zijn -- anders
+  // zou er "Level 8 / 8" staan op een plek waar ze helemaal niet is.
+  $('map-tournee-label').innerHTML = `${shown.world.icon} ${esc(shown.world.name)}`
+    + `<span class="world-sub">`
+    + (shown.index === cur.index ? `Level ${cur.nr} / ${cur.levels} · ` : '')
+    + `⭐ ${ws.got}/${ws.max}</span>`;
   // rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk:
   // één plek waar staat welke status je hebt en hoe ver je naar de volgende bent
   $('career-strip').innerHTML =
     `<span class="rank-counter"><span class="rank-name">${r.emoji} ${r.name}</span>`
     + ` · ${total}/${r.nextMin} ⭐ <span class="rank-tap">›</span></span>`
     + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
+}
+// Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
+// nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
+function worldForIndex(idx) {
+  if (idx < WORLDS.length) return worldFor(WORLD_START[idx]);
+  return worldFor(WORLD_LAST + 1 + (idx - WORLDS.length) * ENDLESS_WORLD.levels);
 }
 // De hele carrière-ladder in beeld: behaalde, huidige en komende ster-statussen,
 // met hun sterrendrempel en diamant-bonus. Tik buiten = dicht. Hergebruikt
@@ -3920,21 +3964,15 @@ function goMap() {
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
-  renderCareerStrip(p);   // zet ook de titel (ster-status) in de kop
   const travel = pendingTravel;
   pendingTravel = null;
+  // thuiskomen is altijd in de wereld waar ze nú speelt -- een uitstapje naar een
+  // eerdere wereld duurt precies zolang je er blijft
+  viewWorldIdx = worldFor(travel ? travel.from : p.level).index;
+  renderCareerStrip(p);   // zet ook de wereldnaam in de kop
   renderTourMap(travel ? travel.from : 0);
   show('screen-map');
-  const map = $('tour-map');
-  requestAnimationFrame(() => {
-    const focus = map.querySelector(`.tour-stop[data-lvl="${travel ? travel.from : p.level}"]`);
-    // vlak vóór de reis iets naar rechts centreren, zodat de nieuwe stad ook al in beeld staat
-    if (focus) centerStop(map, focus, travel ? Math.round(focus.offsetWidth / 2) : 0, false);
-    updateFades(map);
-    updateRoad(map);
-    updateParallax(map);
-    if (travel) runTravel(travel);
-  });
+  if (travel) requestAnimationFrame(() => runTravel(travel));
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
 // zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
@@ -3950,69 +3988,127 @@ function smoothPath(ps) {
   }
   return d;
 }
-// Tekent de golvende reisweg als vloeiend SVG-pad dóór het midden van elke halte:
-// het afgelegde deel licht warm op (tot de halte waar de ster nu staat), de rest blijft dof.
-function updateRoad(map) {
-  const track = map.querySelector('.tour-track');
-  if (!track) return;
-  const svg = track.querySelector('.tour-road-svg');
-  const bg = track.querySelector('.tour-road-bg');
-  const fg = track.querySelector('.tour-road-fg');
-  const fade = track.querySelector('.tour-road-fade');
-  const fadeGrad = track.querySelector('#roadFadeGrad');
-  const stops = [...track.querySelectorAll('.tour-stop')];
-  if (!svg || !stops.length) return;
-  // een eventuele reis-animatie (zie growRoad) laat een dash-masker achter
-  fg.style.strokeDasharray = ''; fg.style.strokeDashoffset = '';
-  svg.setAttribute('width', track.scrollWidth);
-  svg.setAttribute('height', track.scrollHeight);
-  const trackRect = track.getBoundingClientRect();
-  const pts = stops.map(st => {
-    const r = st.querySelector('.dot').getBoundingClientRect();
-    return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
-  });
-  // één vloeiende curve dóór alle haltes -- de tegels hebben een ondoorzichtige
-  // vulling (zie .tour-stop .dot) en dekken het pad vanzelf volledig af
-  bg.setAttribute('d', smoothPath(pts));
-  const hero = track.querySelector('.tour-hero');
-  const target = track.querySelector('.tour-stop.next') || (hero && hero.closest('.tour-stop'));
-  const targetIdx = target ? stops.indexOf(target) : -1;
-  fg.setAttribute('d', targetIdx > 0 ? smoothPath(pts.slice(0, targetIdx + 1)) : '');
-  // een korte staart ná de laatst getoonde halte die uitdooft -- begint nog
-  // vanaf die halte zelf (dus eerst nog onder de ondoorzichtige tegel) en
-  // vervaagt daarna naar niets: een hint dat de tournee verder doorloopt
-  const n = pts.length;
-  if (fade && n >= 2) {
-    const dx = pts[n - 1].x - pts[n - 2].x, dy = pts[n - 1].y - pts[n - 2].y;
-    const len = Math.hypot(dx, dy) || 1;
-    const ex = pts[n - 1].x + (dx / len) * 90, ey = pts[n - 1].y + (dy / len) * 90;
-    fade.setAttribute('d', `M${pts[n - 1].x.toFixed(1)},${pts[n - 1].y.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}`);
-    if (fadeGrad) {
-      fadeGrad.setAttribute('x1', pts[n - 1].x); fadeGrad.setAttribute('y1', pts[n - 1].y);
-      fadeGrad.setAttribute('x2', ex); fadeGrad.setAttribute('y2', ey);
-    }
-  } else if (fade) fade.setAttribute('d', '');
+// De tekening van een wereld. Is er nog geen, dan doet de reservekaart het werk
+// met de kleuren van de wereld zelf -- een wereld is dus speelbaar vóór hij
+// getekend is, en een ontbrekend bestand levert nooit een leeg vlak op.
+function applyWorldArt(el, world) {
+  el.style.backgroundImage = world.art ? `url("${world.art}")` : '';
+  el.classList.toggle('no-art', !world.art);
 }
-// Bouwt de reisroute. travelFrom > 0 = de tussenstand vlak vóór de reis-animatie:
-// de ster staat dan nog op de vorige halte en de nieuwe stad zit nog op slot.
-// Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas
-// ná aankomst in één klap door te schieten: de weg wordt zichtbaar afgelegd.
-// Werkt via een dash-masker over het volledige pad tot de nieuwe stad -- eerst
-// afgedekt tot de oude halte, dan in dezelfde tijd als de huppel opengeschoven.
-function growRoad(map, fromLvl, toLvl, duration, delay) {
-  const track = map.querySelector('.tour-track');
-  const svg = track && track.querySelector('.tour-road-svg');
-  const fg = track && track.querySelector('.tour-road-fg');
-  if (!track || !svg || !fg || !fg.animate || !fg.getTotalLength) return null;
-  const stops = [...track.querySelectorAll('.tour-stop')];
-  const idx = lvl => stops.findIndex(st => Number(st.dataset.lvl) === lvl);
-  const fromIdx = idx(fromLvl), toIdx = idx(toLvl);
-  if (fromIdx < 0 || toIdx < 0) return null;
-  const trackRect = track.getBoundingClientRect();
-  const pts = stops.map(st => {
-    const r = st.querySelector('.dot').getBoundingClientRect();
-    return { x: r.left + r.width / 2 - trackRect.left, y: r.top + r.height / 2 - trackRect.top };
+// Een pijl onder/boven de kaart naar de vorige of volgende wereld. Rustig
+// vormgegeven: terugkeren naar een oude wereld mag nooit concurreren met Speel!.
+function worldStepBtn(dir, toIdx) {
+  const w = worldForIndex(toIdx);
+  const b = document.createElement('button');
+  b.className = 'world-step ' + dir;
+  b.innerHTML = `<span class="ws-ico">${dir === 'prev' ? '⌄' : '⌃'}</span>`
+    + `<span class="ws-name">${w.world.icon}</span>`;
+  b.setAttribute('aria-label', (dir === 'prev' ? 'Terug naar ' : 'Verder naar ') + w.world.name);
+  b.onclick = () => { sndClick(); viewWorldIdx = toIdx; renderCareerStrip(P()); renderTourMap(0); };
+  return b;
+}
+/* Bouwt de kaart van één wereld. travelFrom > 0 = de tussenstand vlak vóór de
+   reis-animatie: de ster staat dan nog op de vorige halte en de nieuwe halte zit
+   nog op slot. Alles staat op percentages binnen het kader, dus er wordt niets
+   opgemeten -- draaien of resizen vraagt geen enkele herberekening. */
+function renderTourMap(travelFrom) {
+  const p = P();
+  const cur = worldFor(p.level);
+  if (viewWorldIdx == null) viewWorldIdx = cur.index;
+  const shown = worldForIndex(viewWorldIdx);
+  const nodes = worldNodes(shown);
+  const travelling = !!travelFrom;
+  const playable = travelling ? travelFrom : p.level;   // t/m dit level is alles open
+  const heroLvl = travelFrom || p.level;
+
+  const map = $('tour-map');
+  map.innerHTML = '';
+  const frame = document.createElement('div');
+  frame.className = 'world-frame';
+  applyWorldArt(frame, shown.world);
+
+  // De weg: één vloeiende curve door álle haltes, met het afgelegde stuk in goud
+  // eroverheen. Getekend uit dezelfde percentages als de haltes, in de viewBox van
+  // de tekening -- daarom valt hij op elk scherm precies op de haltes.
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'tour-road-svg');
+  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  svg.setAttribute('aria-hidden', 'true');
+  const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
+  const bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
+  bgPath.setAttribute('d', smoothPath(pts));
+  const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
+  fgPath.setAttribute('d', lastOpen > 0 ? smoothPath(pts.slice(0, lastOpen + 1)) : '');
+  svg.appendChild(bgPath);
+  svg.appendChild(fgPath);
+  frame.appendChild(svg);
+
+  nodes.forEach((n, i) => {
+    const lvl = shown.first + i;
+    const open = lvl <= playable;
+    const st = p.stars[lvl] || 0;
+    const b = document.createElement('button');
+    // tijdens de reis-tussenstand is er even geen "hier spelen"-halte
+    b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === playable) ? 'next' : 'done');
+    b.dataset.lvl = lvl;
+    b.style.left = n.x + '%';
+    b.style.top = n.y + '%';
+    // drie sterren = deze halte is áf (zie .tour-stop.perfect); elke halte een
+    // eigen startmoment, anders glinsteren ze in koor
+    if (open && st === 3) {
+      b.classList.add('perfect');
+      b.style.setProperty('--shine-delay', (i % 4) * 1.1 + 's');
+    }
+    const hero = lvl === heroLvl
+      ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
+    // De Speel-knop staat naast de halte, aan de kant waar plek is. Onder de halte
+    // (waar hij vandaan komt) dekte hij de vórige halte af -- en omdat de knop ín
+    // deze tegel zit, ving hij dan ook de tikken die voor die vorige halte bedoeld
+    // waren: je kon een level niet meer opnieuw spelen.
+    const speel = (!travelling && lvl === playable)
+      ? `<div class="tour-speel speel-pill ${n.x < 50 ? 'right' : 'left'}">Speel!</div>` : '';
+    const lock = open ? '' : '<span class="stop-lock" aria-hidden="true">🔒</span>';
+    b.innerHTML = `${hero}<div class="dot">${lock}${i + 1}</div>${starRowHTML(st)}${speel}`;
+    b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
+      + (open ? ` — ${st} van 3 sterren` : ' — nog op slot'));
+    if (open) b.onclick = () => { sndClick(); startLevel(lvl); };
+    frame.appendChild(b);
   });
+
+  // naar een eerdere wereld terug (om daar te verbeteren), of vooruit tot zo ver
+  // als ze zelf al gekomen is -- nooit verder
+  if (shown.index > 0) frame.appendChild(worldStepBtn('prev', shown.index - 1));
+  if (shown.index < cur.index) frame.appendChild(worldStepBtn('next', shown.index + 1));
+
+  map.appendChild(frame);
+  // Alleen in de scrollende noodstand (zie de max-height-regel in de CSS): zet de
+  // halte waar ze nu staat in beeld. Staand is er niets te scrollen en doet dit niets.
+  requestAnimationFrame(() => {
+    const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+    if (here && map.scrollHeight > map.clientHeight + 4) {
+      map.scrollTop = Math.max(0, here.offsetTop - map.clientHeight / 2);
+    }
+  });
+}
+// Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
+function starRowHTML(n) {
+  const got = Math.max(0, Math.min(3, n));
+  return `<div class="cstars">${'⭐'.repeat(got)}`
+    + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '') + `</div>`;
+}
+// Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
+// aankomst in één klap door te schieten. Werkt via een dash-masker over het pad
+// tot de nieuwe halte: eerst afgedekt tot de oude, dan opengeschoven.
+function growRoad(map, fromLvl, toLvl, duration, delay) {
+  const svg = map.querySelector('.tour-road-svg');
+  const fg = svg && svg.querySelector('.tour-road-fg');
+  if (!svg || !fg || !fg.animate || !fg.getTotalLength) return null;
+  const shown = worldForIndex(viewWorldIdx);
+  const pts = worldNodes(shown).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const fromIdx = fromLvl - shown.first, toIdx = toLvl - shown.first;
+  if (fromIdx < 0 || toIdx <= 0 || toIdx >= pts.length) return null;
   fg.setAttribute('d', smoothPath(pts.slice(0, toIdx + 1)));
   const total = fg.getTotalLength();
   // lengte tot de oude halte: even hetzelfde pad opmeten, ingekort
@@ -4027,157 +4123,51 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
     [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
     { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
 }
-function renderTourMap(travelFrom) {
-  const p = P();
-  const curLvl = travelFrom ? 0 : p.level;
-  const heroLvl = travelFrom || p.level;
-  const map = $('tour-map');
-  map.innerHTML = '';
-  const track = document.createElement('div');
-  track.className = 'tour-track';
-  // toont alleen de huidige halte + 3 op-slot haltes erna -- verder dan dat
-  // hoeft niet zichtbaar/scrollbaar te zijn
-  const maxShow = heroLvl + 3;
-  const amp = waveAmplitude();
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const roadSvg = document.createElementNS(svgNS, 'svg');
-  roadSvg.setAttribute('class', 'tour-road-svg');
-  roadSvg.setAttribute('aria-hidden', 'true');
-  const defs = document.createElementNS(svgNS, 'defs');
-  // dooft de allerlaatste stukje weg uit -- alleen die staart, niet de hele
-  // (verder overal even dof-vaste) weg. x1/y1/x2/y2 worden in updateRoad gezet.
-  const fadeGrad = document.createElementNS(svgNS, 'linearGradient');
-  fadeGrad.setAttribute('id', 'roadFadeGrad');
-  fadeGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
-  const fadeStop1 = document.createElementNS(svgNS, 'stop');
-  fadeStop1.setAttribute('offset', '0%'); fadeStop1.setAttribute('stop-color', 'rgba(255,255,255,.35)');
-  const fadeStop2 = document.createElementNS(svgNS, 'stop');
-  fadeStop2.setAttribute('offset', '100%'); fadeStop2.setAttribute('stop-color', 'rgba(255,255,255,0)');
-  fadeGrad.appendChild(fadeStop1); fadeGrad.appendChild(fadeStop2);
-  defs.appendChild(fadeGrad);
-  const bgPath = document.createElementNS(svgNS, 'path');
-  bgPath.setAttribute('class', 'tour-road-bg');
-  const fadePath = document.createElementNS(svgNS, 'path');
-  fadePath.setAttribute('class', 'tour-road-fade');
-  const fgPath = document.createElementNS(svgNS, 'path');
-  fgPath.setAttribute('class', 'tour-road-fg');
-  roadSvg.appendChild(defs);
-  roadSvg.appendChild(bgPath);
-  roadSvg.appendChild(fadePath);
-  roadSvg.appendChild(fgPath);
-  track.appendChild(roadSvg);
-  for (let l = 1; l <= maxShow; l++) {
-    const city = cityFor(l);
-    const b = document.createElement('button');
-    b.className = 'tour-stop';
-    b.dataset.lvl = l;
-    // elke halte zwaait een beetje op/neer t.o.v. de vorige — dat maakt van de weg
-    // een zachte S-curve i.p.v. een rechte lijn op elkaar gestapeld (zie waveY)
-    const wy = waveY(l - 1, amp);
-    b.style.transform = `translateY(${wy}px)`;
-    b.dataset.waveY = wy;
-    const st = p.stars[l] || 0;
-    const open = travelFrom ? l <= travelFrom : l <= p.level;
-    if (!open) {
-      b.classList.add('locked');
-      // alle op-slot haltes krijgen dezelfde rustige "uitgeschakeld"-grijstint --
-      // een per-halte verval (donkerder of lichter per stap) trok net te veel
-      // aandacht naar iets dat toch nog niet te doen is
-      b.innerHTML = `<div class="dot">🔒</div><div class="cname">${city.name}</div>${starRowHTML(0)}`;
-    } else {
-      b.classList.add(l === curLvl ? 'next' : 'done');
-      // Drie sterren = deze halte is áf (zie .tour-stop.perfect). De glans-veeg
-      // krijgt per halte een eigen startmoment, anders flitsen alle perfecte
-      // haltes in koor -- dat leest als een waarschuwing i.p.v. als glinstering.
-      if (st === 3) {
-        b.classList.add('perfect');
-        b.style.setProperty('--shine-delay', (l % 4) * 1.1 + 's');
-      }
-      // de eigen ster staat vol in beeld, boven op haar huidige/vorige halte --
-      // bij een gewone weergave is dat de speelbare halte (curLvl); tijdens de
-      // korte tussenstand vlak vóór het reizen (travelFrom) is curLvl 0 en
-      // staat ze nog op de halte waar ze vandaan komt (heroLvl)
-      const hero = l === heroLvl ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
-      const speel = l === curLvl ? '<div class="tour-speel speel-pill">Speel!</div>' : '';
-      // Iedere halte krijgt dezelfde sterrenregel -- ook een halte die nog niet
-      // gespeeld is (dan drie doffe sterren) en een halte op slot. Eerder stond
-      // die regel alleen onder gespeelde steden, waardoor de stadsnamen op drie
-      // verschillende hoogtes uitkwamen (de weg golft al) en de Speel!-bel tegen
-      // het label van de buurstad aan liep. Nu is elke tegel even hoog.
-      const sterren = starRowHTML(st);
-      // stadsicoon blijft altijd zichtbaar in de tegel, ook op de huidige
-      // halte -- de eigen ster staat er los bovenop (.tour-hero, voeten net
-      // op de bovenrand), zonder het icoon te bedekken
-      const dotContent = city.flag;
-      b.innerHTML = `${hero}<div class="dot">${dotContent}</div><div class="cname">${city.name}</div>${sterren}${speel}`;
-      b.onclick = () => { sndClick(); startLevel(l); };
-    }
-    track.appendChild(b);
-  }
-  map.appendChild(track);
-  setupTourMap(map);
-}
-// Zet een halte netjes in het midden van het venster (extraPx verschuift het middelpunt).
-// Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
-function starRowHTML(n) {
-  const got = Math.max(0, Math.min(3, n));
-  return `<div class="cstars">${'⭐'.repeat(got)}`
-    + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '') + `</div>`;
-}
-function centerStop(map, el, extraPx, smooth) {
-  const mr = map.getBoundingClientRect(), er = el.getBoundingClientRect();
-  const left = map.scrollLeft + (er.left - mr.left) - (map.clientWidth - el.offsetWidth) / 2 + (extraPx || 0);
-  if (smooth && map.scrollTo) map.scrollTo({ left, behavior: 'smooth' });
-  else map.scrollLeft = left;
-}
-// De beloning na een level-up: de ster huppelt over de route naar de nieuwe stad,
-// die daar zichtbaar openspringt (slotje weg, goud aan, Speel-knop eronder).
+/* De beloning na een level-up: de ster huppelt over de route naar de volgende
+   halte, die daar zichtbaar openspringt. Loopt de sprong over een wereldgrens,
+   dan is er niets om naartoe te huppelen -- dan wisselt de kaart van wereld en
+   krijgt de aankomst een eigen titelkaartje. */
 function runTravel(t) {
+  const p = P();
+  const fromW = worldFor(t.from), toW = worldFor(t.to);
+  const crossing = fromW.index !== toW.index;
   const map = $('tour-map');
   const from = map.querySelector(`.tour-stop[data-lvl="${t.from}"]`);
   const to = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
   const hero = from && from.querySelector('.tour-hero');
+  const still = motionOff();
   const finish = () => {
+    viewWorldIdx = toW.index;
+    renderCareerStrip(p);
     renderTourMap(0);
-    requestAnimationFrame(() => {
-      const el = map.querySelector(`.tour-stop[data-lvl="${P().level}"]`);
-      if (el) centerStop(map, el, 0, true);
-      updateFades(map);
-      updateRoad(map);   // de reisweg licht nu op tot aan de nieuwe stad
-      updateParallax(map);
-      const dot = el && el.querySelector('.dot');
-      if (dot && dot.animate) dot.animate(
-        [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
-        { duration: 450, easing: 'ease-out' });
-    });
-    const city = cityFor(t.to);
+    const el = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
+    const dot = el && el.querySelector('.dot');
+    if (dot && dot.animate && !still) dot.animate(
+      [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
+      { duration: 450, easing: 'ease-out' });
     sndCoin();
-    confetti(14);
-    showPraise(`${city.flag} Welkom in ${city.name}!`);
+    confetti(crossing ? 26 : 14);
+    showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
   };
-  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
+  if (crossing || !from || !to || !hero || !hero.animate || still) { finish(); return; }
   const dx = to.offsetLeft - from.offsetLeft;
-  // de golfhoogte van vertrek- en aankomsthalte verschilt (S-curve): de huppel volgt die kromming mee
-  const dy = parseFloat(to.dataset.waveY || 0) - parseFloat(from.dataset.waveY || 0);
+  const dy = to.offsetTop - from.offsetTop;
   // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
   const frames = [];
   for (let i = 0; i <= 6; i++) {
     frames.push({
-      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -34 : 0)}px)`,
+      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -30 : 0)}px)`,
       offset: i / 6,
       easing: i % 2 ? 'ease-in' : 'ease-out'
     });
   }
   buzz([0, 25, 90, 25, 90, 25]);
-  const anim = hero.animate(frames, { duration: 1500, delay: 400, fill: 'forwards' });
-  growRoad(map, t.from, t.to, 1500, 400);   // het goud loopt met haar mee
-  // glinsterspoor achter de huppelende ster
+  const anim = hero.animate(frames, { duration: 1400, delay: 400, fill: 'forwards' });
+  growRoad(map, t.from, t.to, 1400, 400);   // het goud loopt met haar mee
   const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
-  setTimeout(() => clearInterval(trail), 1950);
+  setTimeout(() => clearInterval(trail), 1850);
   anim.onfinish = finish;
 }
-
 /* ================= Trofeeën-scherm ================= */
 // Verse start (o.a. nogmaals op het al-actieve Trofeeën-tabblad tikken):
 // altijd terug naar boven.
