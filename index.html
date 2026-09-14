@@ -2707,28 +2707,6 @@ const SHOES_TOTAL = ITEMS.filter(i => i.cat === 'shoes').length;
 const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
 const STAGE_TOTAL = ITEMS.filter(i => i.cat === 'stage').length;
 
-/* ================= Wereldtournee ================= */
-// Speelse stad-emoji i.p.v. landvlaggen: renderen op elk toestel (ook Windows) en
-// zijn herkenbaarder voor jonge kinderen.
-const CITIES = [
-  { name: 'Brussel',   flag: '🧇' },
-  { name: 'Parijs',    flag: '🥐' },
-  { name: 'Amsterdam', flag: '🌷' },
-  { name: 'Londen',    flag: '🎡' },
-  { name: 'Berlijn',   flag: '🥨' },
-  { name: 'Rome',      flag: '🍕' },
-  { name: 'Madrid',    flag: '🥘' },
-  { name: 'New York',  flag: '🗽' },
-  { name: 'Rio',       flag: '🏖️' },
-  { name: 'Kaïro',     flag: '🐫' },
-  { name: 'Tokio',     flag: '🗼' },
-  { name: 'Sydney',    flag: '🐨' },
-];
-function cityFor(lvl) {
-  const c = CITIES[(lvl - 1) % CITIES.length];
-  return { name: c.name, flag: c.flag };
-}
-
 /* ================= Werelden =================
    Een wereld is een stuk van de tournee: een vast aantal levels met een eigen
    sfeer. Meer niet -- de mechaniek (sterren, ontgrendelen, moeilijkheid) is in
@@ -2877,12 +2855,15 @@ function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
 // save-data en progressie intact blijven (uitzondering: bewust verhoogde
 // shop-drempels bij 'shopper' en 'collector', afgesproken in de refactor).
 const TROPHIES = [
-  // 🎤 Tournee — voortgang in shows, steden en reizen
+  // 🎤 Tournee — voortgang in shows en werelden
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Eerste show',           has: p => playedCount(p) >= 1, progress: p => trophyProgress(playedCount(p), 1, 'show gespeeld') },
   { id: 'rookie3',    emoji: '🎤', name: 'Podiumstarter',   desc: '3 shows',                  has: p => playedCount(p) >= 3, progress: p => trophyProgress(playedCount(p), 3, 'shows gespeeld') },
-  { id: 'city5',      emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Stad 5',                  has: p => p.level >= 5, progress: p => trophyProgress(p.level, 5, 'steden bereikt') },
-  { id: 'city10',     emoji: '✈️', name: 'Wereldster',      desc: 'Stad 10',                 has: p => p.level >= 10, progress: p => trophyProgress(p.level, 10, 'steden bereikt') },
-  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle 12 steden',          has: p => p.level > CITIES.length, progress: p => trophyProgress(Math.min(p.level - 1, CITIES.length), CITIES.length, 'steden bezocht') },
+  { id: 'city5',      emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Show 5',                  has: p => p.level >= 5, progress: p => trophyProgress(p.level, 5, 'shows bereikt') },
+  { id: 'city10',     emoji: '✈️', name: 'Wereldster',      desc: 'Show 10',                 has: p => p.level >= 10, progress: p => trophyProgress(p.level, 10, 'shows bereikt') },
+  // Was "alle 12 steden". Nu: élke geschreven wereld uitgespeeld -- de grote reis,
+  // en geen dubbeling met de badge die straks per wereld komt. De id blijft, dus wie
+  // 'm al had houdt 'm (behaalde trofeeën staan in p.trophies).
+  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uit',       has: p => p.level > WORLD_LAST, progress: p => trophyProgress(Math.min(p.level - 1, WORLD_LAST), WORLD_LAST, 'shows gespeeld') },
   // 🧮 Rekenkracht — goed rekenen en gouden vragen (stats.correct telt elk goed antwoord)
   { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',      desc: '25 sommen goed',           has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
   { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: '100 sommen goed',          has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
@@ -2901,7 +2882,7 @@ const TROPHIES = [
   { id: 'stars15',    emoji: '⭐', name: 'Lokale ster',    desc: 'Ster-status: 12 ⭐',       has: p => totalStarCount(p) >= 12, progress: p => trophyProgress(totalStarCount(p), 12, 'sterren verzameld') },
   { id: 'stars30',    emoji: '🎶', name: 'Clubster',       desc: 'Ster-status: 30 ⭐',       has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
   { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster',      desc: 'Ster-status: 60 ⭐',       has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
-  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte tournee', desc: '3 sterren in elke stad', has: p => perfectCities(p) >= CITIES.length, progress: p => trophyProgress(perfectCities(p), CITIES.length, 'steden perfect') },
+  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte wereld', desc: '3 sterren in je eerste wereld', has: p => perfectInFirstWorld(p) >= WORLDS[0].levels, progress: p => trophyProgress(perfectInFirstWorld(p), WORLDS[0].levels, 'shows perfect') },
   { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
   { id: 'toegift25',  emoji: '🎆', name: 'Extra-showster', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
@@ -3022,10 +3003,10 @@ function pieceLabel(id) {
   const it = item(id);
   return THEME_ITEM_LABEL[id] || (it && it.name) || id;
 }
-// hoeveel van de 12 steden staan op drie sterren? (ronde 2 telt niet dubbel)
-function perfectCities(p) {
+// hoeveel shows van de eerste wereld staan op drie sterren?
+function perfectInFirstWorld(p) {
   let n = 0;
-  for (let l = 1; l <= CITIES.length; l++) if (p.stars[l] === 3) n++;
+  for (let l = 1; l <= WORLDS[0].levels; l++) if (p.stars[l] === 3) n++;
   return n;
 }
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
@@ -3805,18 +3786,18 @@ function renderProfiles() {
     const p = db.profiles[key];
     const card = document.createElement('button');
     card.className = 'profile-card';
-    // Waar ze nu op tournee is (stadsicoon), i.p.v. haar sterrentotaal: de kaart
-    // vertelt wie je bent, niet hoe je scoort t.o.v. je zus. Beide merkjes zijn
-    // decoratie voor een schermlezer -- de aria-label hieronder zegt het in woorden.
-    const stad = cityFor(p.level);
+    // In welke wereld ze nu speelt, i.p.v. haar sterrentotaal: de kaart vertelt wie
+    // je bent, niet hoe je scoort t.o.v. je zus. Beide merkjes zijn decoratie voor
+    // een schermlezer -- de aria-label hieronder zegt het in woorden.
+    const wereld = worldFor(p.level).world;
     card.innerHTML =
       `<div class="pstage-wrap">
           <div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
-          <span class="city-mark" aria-hidden="true" title="${stad.name}">${stad.flag}</span>
+          <span class="city-mark" aria-hidden="true" title="${esc(wereld.name)}">${wereld.icon}</span>
           <span class="play-mark" aria-hidden="true">▶</span>
         </div>
         <div class="pname">${esc(p.name)}</div>`;
-    card.setAttribute('aria-label', `Speel met ${p.name} — nu in ${stad.name}`);
+    card.setAttribute('aria-label', `Speel met ${p.name} — nu in ${wereld.name}`);
     applyStage(card.querySelector('.stage'), p);
     card.onclick = () => { sndClick(); selectProfile(key); };
     row.appendChild(card);
@@ -5563,8 +5544,12 @@ function startLevel(lvl) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0,
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
-  const city = cityFor(lvl);
-  $('game-lvl-label').textContent = `${city.flag} ${city.name}`;
+  // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
+  // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
+  // en heette het optreden daarna "Rome".
+  const wl = worldFor(lvl);
+  $('game-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
+    + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
   applyStage($('show-stage'), p);
@@ -6038,8 +6023,9 @@ function endLevel(success) {
   let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
   // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
-  const city = cityFor(lvl);
-  $('end-lvl-label').textContent = `${city.flag} ${city.name}`;
+  const wl = worldFor(lvl);
+  $('end-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
+    + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   // Overgebleven fanmeter telt altijd mee: +1 💎 per volle 25% publieksenthousiasme,
   // zodat inspanning ook loont als de encore (100%) net niet gehaald is.
   const fanBonus = Math.floor(G.fan / 25);
@@ -6074,7 +6060,7 @@ function endLevel(success) {
     rankUp = checkRankUp(p);
     const trofees = checkTrophies(p);
     save();
-    $('end-title').textContent = `🎉 ${city.name} was geweldig!`;
+    $('end-title').textContent = `🎉 Show ${wl.nr} was geweldig!`;
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
     // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
