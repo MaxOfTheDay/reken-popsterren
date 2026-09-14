@@ -1283,7 +1283,7 @@
      en niet als een muur. */
   .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
   .tour-road-bg, .tour-road-fg { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
-  .tour-road-bg { stroke: rgba(255,255,255,.42); stroke-width: 13; }
+  .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 13; }
   .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
      glas en klein: goud is voor spelen en verdiend, en dit mag nooit met Speel!
@@ -2742,6 +2742,9 @@ function cityFor(lvl) {
    gespeeld is. Een wereld ertussen schuiven of korter maken hernummert alle
    levels erna, en dan verhuizen de sterren van een kind naar een andere wereld.
    Achteraan bijplakken mag altijd. */
+/* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
+   door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
+   Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan. */
 const WORLDS = [
   { id: 'ijs',       name: 'IJswereld',       icon: '❄️', levels: 8 },
   { id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8 },
@@ -2750,13 +2753,20 @@ const WORLDS = [
   { id: 'vuur',      name: 'Vuurwereld',      icon: '🔥', levels: 8 },
   { id: 'ruimte',    name: 'Ruimtewereld',    icon: '🚀', levels: 8 },
 ];
+/* WERELDEN-EINDE */
 // Voorbij de laatste geschreven wereld loopt de tournee gewoon door in stukken
 // van dezelfde lengte. Zo is het spel nooit "uit" en kan er later een echte
 // wereld achteraan zonder dat er iets hernummerd wordt.
 const ENDLESS_WORLD = { id: 'tournee', name: 'Sterrentournee', icon: '✨', levels: 8 };
-// Eerste level van elke wereld (1-gebaseerd), één keer uitgerekend.
-const WORLD_START = (() => { let n = 1; return WORLDS.map(w => { const s = n; n += w.levels; return s; }); })();
-const WORLD_LAST = WORLD_START[WORLD_START.length - 1] + WORLDS[WORLDS.length - 1].levels - 1;
+// Eerste level van elke wereld (1-gebaseerd). Afgeleid van WORLDS en opnieuw te
+// berekenen, omdat de wereldstudio er een wereld bij kan zetten.
+let WORLD_START = [], WORLD_LAST = 0;
+function rebuildWorldStarts() {
+  let n = 1;
+  WORLD_START = WORLDS.map(w => { const s = n; n += w.levels; return s; });
+  WORLD_LAST = n - 1;
+}
+rebuildWorldStarts();
 // In welke wereld valt dit level? Geeft nooit undefined terug -- voorbij de
 // geschreven werelden komt er een genummerde Sterrentournee uit.
 function worldFor(lvl) {
@@ -4000,6 +4010,16 @@ function applyWorldArt(el, world) {
   el.style.backgroundImage = world.art ? `url("${world.art}")` : '';
   el.classList.toggle('no-art', !world.art);
 }
+/* De sfeer van een wereld als CSS-variabelen, één keer op het kader gezet. Elk
+   onderdeel leest daarna var(--w-...) en weet dus niet in wélke wereld het staat
+   -- dat is precies wat voorkomt dat er ooit ergens if (wereld === 'ijs') komt. */
+function applyWorldTheme(el, world) {
+  const t = world.theme || {};
+  ['sky', 'deep', 'accent', 'glow', 'road'].forEach(k => {
+    if (t[k]) el.style.setProperty('--w-' + k, t[k]);
+    else el.style.removeProperty('--w-' + k);
+  });
+}
 // Een pijl onder/boven de kaart naar de vorige of volgende wereld. Rustig
 // vormgegeven: terugkeren naar een oude wereld mag nooit concurreren met Speel!.
 function worldStepBtn(dir, toIdx) {
@@ -4031,6 +4051,7 @@ function renderTourMap(travelFrom) {
   const frame = document.createElement('div');
   frame.className = 'world-frame';
   applyWorldArt(frame, shown.world);
+  applyWorldTheme(frame, shown.world);
 
   // De weg: één vloeiende curve door álle haltes, met het afgelegde stuk in goud
   // eroverheen. Getekend uit dezelfde percentages als de haltes, in de viewBox van
@@ -7440,6 +7461,7 @@ syncBackGuard();
                         WORLDS (zie startMapEdit hieronder)                    */
 if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
+  if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
   window.__db = () => db;
   if (dbg.has('demo')) {
@@ -7482,6 +7504,63 @@ if (location.search.indexOf('debug') !== -1) {
   }
   if (dbg.has('mapedit') && cur) startMapEdit();
 }
+/* ---- Wereldconcept: bewaren, uitwisselen, wegschrijven -----------------------
+   Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen. Het
+   gewone spel draait dus altijd op wat er in WORLDS staat -- een half afgemaakte
+   wereld kan nooit bij een kind terechtkomen.
+
+   Van concept naar spel gaan kan op twee manieren:
+     Bewaar    schrijft het blok tussen WERELDEN-BEGIN/EINDE in index.html op
+               schijf. Werkt alleen via `npm run preview` (die server luistert
+               ernaar); daarna gewoon npm test, committen en pushen.
+     Kopieer   geeft hetzelfde blok als tekst, om zelf te plakken. Werkt overal,
+               ook op een telefoon en over file://.                            */
+const WORLD_DRAFT_KEY = 'rekenPopsterren_wereldconcept';
+
+function applyWorldDraft(list) {
+  WORLDS.length = 0;
+  list.forEach(w => WORLDS.push(w));
+  rebuildWorldStarts();
+}
+function loadWorldDraft() {
+  try {
+    const raw = localStorage.getItem(WORLD_DRAFT_KEY);
+    if (!raw) return false;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || !list.length) return false;
+    if (!list.every(w => w && w.id && w.name && w.levels > 0)) return false;
+    applyWorldDraft(list);
+    return true;
+  } catch (e) { return false; }
+}
+function saveWorldDraft() {
+  try { localStorage.setItem(WORLD_DRAFT_KEY, JSON.stringify(WORLDS)); return true; }
+  catch (e) { return false; }
+}
+// De broncode van het blok, precies zoals het in index.html hoort te staan.
+function worldsSource() {
+  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+  const body = WORLDS.map(w => {
+    const L = ['  {'];
+    L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
+    if (w.art) L.push(`    art: ${q(w.art)},`);
+    if (w.badge && (w.badge.emoji || w.badge.name)) {
+      L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
+    }
+    if (w.theme && Object.keys(w.theme).length) {
+      L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
+    }
+    if (w.nodes && w.nodes.length) {
+      L.push('    nodes: [');
+      w.nodes.forEach(n => L.push(`      { x: ${(+n.x).toFixed(1)}, y: ${(+n.y).toFixed(1)} },`));
+      L.push('    ],');
+    }
+    L.push('  },');
+    return L.join('\n');
+  }).join('\n');
+  return 'const WORLDS = [\n' + body + '\n];';
+}
+
 /* ---- Wereldstudio (?debug&mapedit) ------------------------------------------
    Haltes verslepen over de échte kaart, op ware grootte, met de tekening eronder.
    Bestaat omdat de haltes op de richels van een tekening moeten landen, en dat is
@@ -7528,18 +7607,52 @@ function startMapEdit() {
     /* de veilige zone: hierbuiten knipt cover een halte weg op smalle of korte
        schermen, en liggen kop en navigatie eroverheen */
     .me-safe { position: absolute; left: 6%; right: 6%; top: 14%; bottom: 14%;
-      z-index: 2; pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }`;
+      z-index: 2; pointer-events: none; border: 1px dashed rgba(120,255,180,.8); border-radius: 8px; }
+    #me-sheet { position: fixed; left: 0; right: 0; bottom: 42px; z-index: 59; display: none;
+      grid-template-columns: auto 1fr auto 1fr; gap: 6px 8px; align-items: center;
+      padding: 10px; background: rgba(10,2,20,.96); color: #fff;
+      font: 400 12px/1.2 system-ui, sans-serif; border-top: 1px solid rgba(255,255,255,.2); }
+    #me-sheet.open { display: grid; }
+    #me-sheet label { opacity: .7; text-align: right; }
+    #me-sheet input { width: 100%; min-width: 0; font: inherit; color: #fff; padding: 5px 7px;
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); border-radius: 6px; }
+    #me-sheet input[type=color] { padding: 2px; height: 26px; }
+    #me-sheet .me-wide { grid-column: 2 / -1; }
+    #me-sheet .me-note { grid-column: 1 / -1; opacity: .6; font-size: 11px; }`;
   document.head.appendChild(st);
 
   const bar = document.createElement('div');
   bar.id = 'mapedit-bar';
   bar.innerHTML = `<select id="me-world" title="Welke wereld"></select>
+    <button id="me-edit" title="Wereldgegevens">✎</button>
     <label title="Kandidaat-tekening laden (blijft alleen in dit tabblad)">📷<input type="file" accept="image/*" hidden id="me-file"></label>
     <button id="me-grid" title="Raster + veilige zone">▦</button>
-    <button id="me-copy">Kopieer punten</button>
-    <button id="me-reset" title="Terug naar de reserve-slinger">↺</button>
+    <button id="me-new" title="Wereld erbij (achteraan)">＋</button>
+    <button id="me-save" title="Schrijf WORLDS naar index.html (alleen via npm run preview)">Bewaar</button>
+    <button id="me-copy" title="Het hele WORLDS-blok als tekst">Kopieer</button>
+    <button id="me-paste" title="Een blok terugzetten">Plak</button>
+    <button id="me-reset" title="Haltes terug naar de reserve-slinger">↺</button>
     <span id="me-out">sleep een halte</span>`;
   document.body.appendChild(bar);
+
+  /* Het definitie-blad. Alles wat een wereld is behalve de haltes: hoe hij heet,
+     welke kleuren hij meebrengt, welke tekening en welke badge. Levels staat er
+     bewust grijs bij -- dat aantal veranderen hernummert alle levels erna, en dan
+     verhuizen de sterren van een kind naar een andere wereld. */
+  const sheet = document.createElement('div');
+  sheet.id = 'me-sheet';
+  sheet.innerHTML = `
+    <label>icoon</label><input id="mf-icon" maxlength="4">
+    <label>naam</label><input id="mf-name">
+    <label>badge</label><input id="mf-bemoji" maxlength="4">
+    <label>badgenaam</label><input id="mf-bname">
+    <label>tekening</label><input id="mf-art" class="me-wide" placeholder="assets/world/ijs-map.webp">
+    <label>lucht</label><input id="mf-sky" type="color">
+    <label>diepte</label><input id="mf-deep" type="color">
+    <label>accent</label><input id="mf-accent" type="color">
+    <label>gloed</label><input id="mf-glow" type="color">
+    <div class="me-note">levels: <b id="mf-levels"></b> — vastgezet. Dit aantal wijzigen hernummert elk level erna, en dan verhuizen de sterren van een kind naar een andere wereld.</div>`;
+  document.body.appendChild(sheet);
   const dump = document.createElement('pre');
   dump.id = 'me-dump';
   dump.onclick = () => { dump.style.display = 'none'; };
@@ -7587,20 +7700,90 @@ function startMapEdit() {
     renderCareerStrip(P());
     renderTourMap(0);
   }
-  sel.onchange = () => goWorld(+sel.value);
+  // ---- definitie-blad: velden <-> wereld, en elke wijziging meteen in beeld
+  const F = id => document.getElementById(id);
+  const HEX = { sky: '#3d1a63', deep: '#2a0c47', accent: '#8be9ff', glow: '#ffd880' };
+  function fillSheet() {
+    const w = shown().world;
+    F('mf-icon').value = w.icon || '';
+    F('mf-name').value = w.name || '';
+    F('mf-bemoji').value = (w.badge && w.badge.emoji) || '';
+    F('mf-bname').value = (w.badge && w.badge.name) || '';
+    F('mf-art').value = (w.art && w.art.indexOf('blob:') !== 0) ? w.art : '';
+    F('mf-levels').textContent = w.levels;
+    Object.keys(HEX).forEach(k => {
+      F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k];
+    });
+  }
+  function readSheet() {
+    const w = shown().world;
+    w.icon = F('mf-icon').value.trim() || w.icon;
+    w.name = F('mf-name').value.trim() || w.name;
+    const be = F('mf-bemoji').value.trim(), bn = F('mf-bname').value.trim();
+    if (be || bn) w.badge = { emoji: be, name: bn }; else delete w.badge;
+    const art = F('mf-art').value.trim();
+    if (art) w.art = art; else if (w.art && w.art.indexOf('blob:') !== 0) delete w.art;
+    w.theme = {};
+    Object.keys(HEX).forEach(k => {
+      const v = F('mf-' + k).value;
+      if (v && v.toLowerCase() !== HEX[k]) w.theme[k] = v;
+    });
+    if (!Object.keys(w.theme).length) delete w.theme;
+    saveWorldDraft();
+    renderCareerStrip(P());
+    renderTourMap(0);
+    fillSheet();
+  }
+  sheet.querySelectorAll('input').forEach(i => { i.onchange = readSheet; });
+  F('me-edit').onclick = e => { sheet.classList.toggle('open'); e.target.classList.toggle('on', sheet.classList.contains('open')); };
+
+  F('me-new').onclick = () => {
+    const n = WORLDS.length + 1;
+    WORLDS.push({ id: 'wereld' + n, name: 'Wereld ' + n, icon: '✨', levels: 8 });
+    rebuildWorldStarts();
+    saveWorldDraft();
+    sel.innerHTML = '';
+    WORLDS.forEach((w, i) => sel.appendChild(new Option(`${w.icon} ${w.name}`, i)));
+    sel.value = String(WORLDS.length - 1);
+    goWorld(WORLDS.length - 1);
+    setOut('wereld ' + n + ' erbij');
+  };
+  F('me-save').onclick = () => {
+    saveWorldDraft();
+    fetch('/werelden', { method: 'POST', body: worldsSource() })
+      .then(r => r.text().then(t => setOut(r.ok ? 'in index.html geschreven' : 'mislukt: ' + t)))
+      .catch(() => setOut('Bewaar werkt alleen via npm run preview — gebruik Kopieer'));
+  };
+  F('me-paste').onclick = () => {
+    const txt = prompt('Plak hier een WORLDS-blok of de JSON-lijst:');
+    if (!txt) return;
+    try {
+      const m = /\[[\s\S]*\]/.exec(txt);
+      if (!m) throw new Error('geen lijst gevonden');
+      const list = (new Function('return (' + m[0] + ')'))();
+      if (!Array.isArray(list) || !list.every(w => w && w.id && w.levels > 0)) throw new Error('geen geldige werelden');
+      applyWorldDraft(list);
+      saveWorldDraft();
+      sel.innerHTML = '';
+      WORLDS.forEach((w, i) => sel.appendChild(new Option(`${w.icon} ${w.name}`, i)));
+      sel.value = '0'; goWorld(0); fillSheet();
+      setOut(list.length + ' werelden ingelezen');
+    } catch (e) { setOut('niet gelukt: ' + e.message); }
+  };
+  sel.onchange = () => { goWorld(+sel.value); fillSheet(); };
   $('me-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); renderTourMap(0); };
-  $('me-reset').onclick = () => { delete shown().world.nodes; renderTourMap(0); setOut('reserve-slinger terug'); };
+  $('me-reset').onclick = () => { delete shown().world.nodes; saveWorldDraft(); renderTourMap(0); setOut('reserve-slinger terug'); };
   $('me-file').onchange = e => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
+    // blob: leeft alleen in dit tabblad -- het concept bewaart hem dus niet. Voor
+    // iets wat een herlaad overleeft hoort er een pad in het veld 'tekening'.
     shown().world.art = URL.createObjectURL(f);
     renderTourMap(0);
-    setOut(f.name);
+    setOut(f.name + ' (tijdelijk — vul een pad in voor blijvend)');
   };
   $('me-copy').onclick = () => {
-    const txt = 'nodes: [\n'
-      + ownNodes().map(n => `  { x: ${n.x.toFixed(1)}, y: ${n.y.toFixed(1)} },`).join('\n')
-      + '\n],';
+    const txt = worldsSource();
     dump.textContent = txt + '\n\n(tik om te sluiten)';
     dump.style.display = 'block';
     try { navigator.clipboard.writeText(txt); setOut('gekopieerd'); }
@@ -7628,6 +7811,7 @@ function startMapEdit() {
     const n = ownNodes()[drag.i];
     if (!n) return;
     n.x = x; n.y = y;
+    saveWorldDraft();
     drag.stop.style.left = x + '%';
     drag.stop.style.top = y + '%';
     redrawRoad();
@@ -7646,6 +7830,7 @@ function startMapEdit() {
 
   sel.value = String(Math.min(worldFor(P().level).index, WORLDS.length - 1));
   goWorld(+sel.value);
+  fillSheet();
 }
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
