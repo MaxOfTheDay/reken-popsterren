@@ -20,7 +20,21 @@ const fs = require('fs');
 const http = require('http');
 const { execFile } = require('child_process');
 const path = require('path');
+const os = require('os');
 const scene = require('./scene.js');
+
+/* Het adres waarop een telefoon op hetzelfde wifi hierbij kan. De server luisterde
+   altijd al op alle netwerkadressen -- je wist het adres alleen niet, en dus keek je
+   alles na in een browser op je bureaublad terwijl het om een telefoonscherm gaat. */
+function lanAdres() {
+  const net = os.networkInterfaces();
+  for (const naam of Object.keys(net)) {
+    for (const a of net[naam] || []) {
+      if (a.family === 'IPv4' && !a.internal) return a.address;
+    }
+  }
+  return null;
+}
 
 const ROOT = path.resolve(__dirname, '..');
 const DROP = path.join(ROOT, 'incoming');
@@ -61,7 +75,9 @@ function assetsOpSchijf(dir, uit) {
   return uit;
 }
 function studioData() {
-  return '<script>window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
+  const lan = lanAdres();
+  return '<script>window.__LAN=' + JSON.stringify(lan ? lan + ':' + PORT : null) + ';'
+    + 'window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
     v instanceof RegExp ? undefined : v)
     + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
     + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {})) + ';<\/script>';
@@ -376,6 +392,17 @@ http.createServer(function (req, res) {
     return;
   }
 
+  /* Kort pad om op een telefoon in te tikken: 192.168.x.x:8099/t is te doen, de
+     volledige studio-URL met vier queryparameters niet. */
+  if (url === '/t' || url === '/telefoon') {
+    res.writeHead(302, { location: '/?debug&demo&star=p1&screen=map' });
+    return res.end();
+  }
+  if (url === '/ts' || url === '/studio') {
+    res.writeHead(302, { location: '/?debug&demo&star=p1&screen=map&mapedit' });
+    return res.end();
+  }
+
   if (url === '/' || url === '/index.html') {
     const body = page(dropped());
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
@@ -399,8 +426,14 @@ http.createServer(function (req, res) {
   fs.mkdirSync(DROP, { recursive: true });
   const state = dropped();
   const basis = 'http://localhost:' + PORT + '/?debug&demo&star=p1';
+  const lan = lanAdres();
   console.log('\n  Wereldstudio:   ' + basis + '&screen=map&mapedit');
   console.log('  Gewoon kijken:  ' + basis + '&screen=game\n');
+  if (lan) {
+    console.log('  Op je telefoon (zelfde wifi), tik dit in:');
+    console.log('    ' + lan + ':' + PORT + '/t     de kaart');
+    console.log('    ' + lan + ':' + PORT + '/ts    de studio\n');
+  }
   console.log('  In de studio: sleep een beeld op het Beelden-vak, sleep de haltes en de');
   console.log('  groene ruitjes, en druk op "Zet in het spel".\n');
   if (state.found.length) state.found.forEach(f => console.log('  gevonden: ' + f.slot + ' <- ' + f.file));
