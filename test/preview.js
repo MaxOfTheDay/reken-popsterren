@@ -279,27 +279,59 @@ function git(args) {
       e ? fout(new Error((err || uit || e.message).trim())) : ok(String(uit).trim()));
   });
 }
-/* npm heet op Windows npm.cmd, en dat is een batchbestand. execFile start een
-   programma rechtstreeks via CreateProcess en dát kan geen .cmd uitvoeren: op
-   Windows viel deze poort dus altijd om met "spawn npm ENOENT", nog voordat er
-   één controle gedraaid was. git ging goed omdat git.exe een echt programma is.
+/* Deze poort draaide de testen via `npm test`, en op Windows kon dat niet werken.
+   npm heet daar npm.cmd, een batchbestand, en daar zaten twéé muren achter elkaar:
 
-   Geen shell: true erbij, want dan gaan de argumenten door een shell heen. Alleen
-   de juiste naam kiezen is genoeg en heeft dat probleem niet. */
-const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-function runTests() {
+     1. execFile start een programma rechtstreeks via CreateProcess, en dat kan
+        geen .cmd uitvoeren -> "spawn npm ENOENT".
+     2. Noem je het dan npm.cmd, dan weigert Node het sinds de oplossing voor
+        CVE-2024-27980 juist helemaal zonder shell -> "spawn EINVAL".
+
+   De uitweg is niet `shell: true`. Node geeft de argumenten dan ongequote aan de
+   shell door, dus alles met een spatie of een leesteken erin gaat stuk -- en op
+   Windows woont een clone al snel in C:\Users\Voor Naam\..., met een spatie.
+
+   Dus geen npm en geen shell: dezelfde node die deze server draait
+   (process.execPath) krijgt elk testbestand rechtstreeks. Geen .cmd, geen
+   PATH, geen shell, geen aanhalingstekens, en op elk platform hetzelfde pad.
+
+   De lijst komt uit test/*.test.js en niet uit package.json: dat scheelt het
+   uit elkaar parseren van een `a && b && c`-regel, het levert precies dezelfde
+   drie bestanden op, en een nieuw testbestand doet vanzelf mee. `npm test`
+   blijft daarnaast gewoon werken -- dit is alleen hoe de studio ze aanroept. */
+function testBestanden() {
+  return fs.readdirSync(path.join(ROOT, 'test'))
+    .filter(n => n.endsWith('.test.js')).sort()
+    .map(n => path.join(ROOT, 'test', n));
+}
+function eenTest(bestand) {
   return new Promise((ok, fout) => {
-    execFile(NPM, ['test'], { cwd: ROOT, maxBuffer: 2e7, timeout: 6e5 }, (e, uit, err) => {
-      if (!e) return ok(String(uit));
-      /* e.message als terugval, net als in git() hierboven. Zonder die terugval gaf
-         precies de storing die híer zat (ENOENT: geen uitvoer, alleen een foutcode)
-         een melding van één regel zonder enige reden erbij -- en dan zoek je de fout
-         in je eigen werelden in plaats van in deze poort. */
-      const uitleg = String(uit || err).trim() || String(e.message).trim();
-      fout(new Error('de testen falen — er is niets vastgelegd\n\n'
-        + uitleg.split('\n').slice(-25).join('\n')));
-    });
+    execFile(process.execPath, [bestand], { cwd: ROOT, maxBuffer: 2e7, timeout: 6e5 },
+      (e, uit, err) => {
+        if (!e) return ok(String(uit));
+        /* e.message als terugval, net als in git() hierboven. Zonder die terugval
+           gaf precies de storing die híer zat (geen uitvoer, alleen een foutcode)
+           een melding van één regel zonder enige reden erbij -- en dan zoek je de
+           fout in je eigen werelden in plaats van in deze poort. */
+        const uitleg = String(uit || err).trim() || String(e.message).trim();
+        fout(new Error(path.basename(bestand) + '\n\n' + uitleg));
+      });
   });
+}
+/* Eén voor één en stoppen bij de eerste die valt -- net wat `&&` in package.json
+   doet, zodat je de eerste echte fout ziet en niet de ruis erna. */
+async function runTests() {
+  const bestanden = testBestanden();
+  if (!bestanden.length) throw new Error('geen testbestanden gevonden in test/');
+  let alles = '';
+  for (const b of bestanden) {
+    try { alles += await eenTest(b); }
+    catch (e) {
+      throw new Error('de testen falen — er is niets vastgelegd\n\n'
+        + String(e.message).split('\n').slice(-25).join('\n'));
+    }
+  }
+  return alles;
 }
 async function commitAll(bericht, res) {
   const zeg = (code, tekst) => {
