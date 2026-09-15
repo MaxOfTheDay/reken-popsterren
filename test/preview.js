@@ -96,6 +96,15 @@ function panel(state) {
   const links = SCREENS.map(s =>
     '<a data-scherm href="?debug&demo&star=p1&screen=' + s[0] + '">' + s[1] + '</a>').join('')
     + '<a href="?debug&demo&star=p1&screen=map&mapedit">Studio</a>';
+  /* Wat het lipje zegt als het dichtgeklapt is. Dat was altijd "kandidaat", of er
+     nu wel of niet iets uit incoming/ over de app heen lag -- en juist dát is de
+     vraag die je hebt als je je afvraagt waarom je wereld er anders uitziet dan
+     WORLDS zegt. Nu is het stil als er niets ligt en noemt het de slots als er wel
+     iets ligt. */
+  const actief = state.found.length > 0;
+  const lipje = actief
+    ? 'toont: ' + [...new Set(state.found.map(f => f.slot))].join(', ')
+    : 'geen kandidaat';
   return `
 <style>
  #kandidaat{position:fixed;right:8px;bottom:8px;z-index:99999;max-width:270px;
@@ -110,14 +119,19 @@ function panel(state) {
  #kandidaat nav a{color:#8fd6ff;text-decoration:none;border:1px solid rgba(143,214,255,.3);
    border-radius:4px;padding:1px 5px}
  #kandidaat.dicht{padding:3px 8px;border-color:rgba(255,180,61,.25);background:rgba(13,6,22,.6)}
+ /* ligt er niets, dan hoort dit lipje niets te vragen van je aandacht */
+ #kandidaat.stil{border-color:rgba(255,255,255,.12)}
+ #kandidaat.stil h6{color:#8b7ba0}
+ /* ligt er wél iets, dan verandert het wat je ziet en mag het opvallen */
+ #kandidaat.actief.dicht{border-color:rgba(255,180,61,.7);box-shadow:0 0 0 1px rgba(255,180,61,.25)}
  #kandidaat.dicht > :not(h6){display:none}
  #kandidaat.dicht h6{margin:0}
  #kandidaat h6{cursor:pointer}
  #kandidaat h6::after{content:' ▾';opacity:.6}
  #kandidaat.dicht h6::after{content:' ▸'}
 </style>
-<div id="kandidaat" class="dicht">
-  <h6 title="klik om uit te klappen">kandidaat</h6>
+<div id="kandidaat" class="dicht ${actief ? 'actief' : 'stil'}">
+  <h6 title="klik om uit te klappen">${lipje}</h6>
   ${warn}
   <ul>${rows}</ul>
   <label><input type="checkbox" id="k-art" checked> kunstwerk aan <i>(uit = ervoor/erna)</i></label>

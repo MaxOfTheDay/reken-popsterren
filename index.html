@@ -167,6 +167,13 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  /* De browser verbergt [hidden] met display:none uit zijn eigen stijlblad, en dat
+     is de zwakste regel die er is: élke eigen regel met een display wint ervan. Dat
+     ging hier ook mis -- .world-back stond op display:flex, kreeg netjes hidden
+     mee vanuit de JS en bleef alsnog als leeg oranje pilletje in beeld staan. In de
+     studio was dezelfde bug al vier keer apart dichtgeplamuurd; dit is die vier keer
+     in één regel, en meteen voor alles wat er later bijkomt. */
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body {
     font-family: "Fredoka", "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
@@ -1426,10 +1433,25 @@
     #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
       background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
       filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
-    .tour-map { align-items: center; padding: var(--kop-h, 104px) 0 var(--nav-h, 96px); }
+    /* Het podium is zo groot als de hóógte toelaat, en niet kleiner.
+       Hier stond padding: var(--kop-h) 0 var(--nav-h) -- het podium werd dus vrij
+       gehouden van de kop en de balk. Dat is precies andersom dan op een telefoon,
+       waar die twee juist óver de kaart zweven: daar is de doorzichtige kop voor
+       bedacht en daar gaat de veilige zone van uit. Het kostte 14 tot 17% van het
+       podium (443 in plaats van 519 breed op 1780x950) zonder dat er iets mee
+       gewonnen werd. Nu alleen nog een randje lucht, zodat de ronde hoek en de
+       schaduw niet tegen de vensterrand aan liggen -- anders leest het niet meer
+       als een toestel op een achtergrond. */
+    .tour-map { align-items: center; padding: 14px 0; }
     .world-frame { min-width: 0; min-height: 0;
       width: clamp(min(340px, 100cqw), 100cqh * var(--art-w) / var(--art-h), 100cqw);
       border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
+    /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
+       stond het portretje links en de diamanten rechts ergens in de onscherpe
+       rand, terwijl de navigatiebalk eronder wél op podiumbreedte staat -- dan
+       lijken de twee balken bij twee verschillende schermen te horen. Dezelfde
+       maat als .main-nav, zodat ze samen één toestel vormen. */
+    #screen-map .hub-sticky { width: min(94vw, 430px); margin-left: auto; margin-right: auto; }
   }
   /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt */
@@ -4691,6 +4713,9 @@ function renderTourMap(travelFrom) {
       const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
       map.scrollTop = Math.max(0, y - map.clientHeight / 2);
     }
+    // nu pas: goMap() roept show() ná deze render aan, dus hier staat de
+    // navigatiebalk er wél en levert meetChroom een echte maat op
+    meetChroom();
     kopOpzij();
   });
   // schuift de kaart, dan schuift zij onder de plakkende kop door
@@ -4714,12 +4739,23 @@ function kopOpzij() {
   const k = kop.getBoundingClientRect(), s = ster.getBoundingClientRect();
   scherm.classList.toggle('ster-bij-kop', s.top < k.bottom && s.bottom > k.top);
 }
+/* Alleen meten wat er ook echt stáát. De navigatiebalk is display:none tot show()
+   het scherm aanzet, en goMap() tekent de kaart vóór die show() -- dus bij de eerste
+   opbouw was offsetHeight 0 en de onderrand 0, en kwam --nav-h uit op vensterhoogte
+   + 12. Op een telefoon viel dat niet op (daar gebruikt .tour-map die maat niet),
+   maar op een breed scherm is de padding-bottom van .tour-map er wél op gebouwd:
+   die 962px duwde de contentbox naar nul hoogte, 100cqh werd nul, en het kader viel
+   terug op zijn ondergrens van 340px -- half buiten beeld. Eén keer het venster
+   verslepen zette het recht, en dát maakte het zo'n lastig verhaal.
+
+   Een 0 betekent hier "nog niet opgebouwd", niet "nul hoog": dan liever niets
+   schrijven en de CSS zijn eigen terugval laten gebruiken. */
 function meetChroom() {
   const scherm = $('screen-map');
   const kop = scherm.querySelector('.hub-sticky');
   const nav = $('main-nav');
-  if (kop) scherm.style.setProperty('--kop-h', (kop.offsetHeight + 12) + 'px');
-  if (nav) scherm.style.setProperty('--nav-h',
+  if (kop && kop.offsetHeight) scherm.style.setProperty('--kop-h', (kop.offsetHeight + 12) + 'px');
+  if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
 addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij(); } });
@@ -8339,7 +8375,6 @@ function startMapEdit() {
     #studio .st-tabs button.on { color: #fff; background: rgba(255,255,255,.08);
       border-bottom-color: #7dffb4; font-weight: 600; }
     #studio .st-body { flex: 1; overflow: auto; padding: 4px 12px 12px; }
-    #studio .st-body > section[hidden] { display: none; }
     /* beelden per scherm: één regel per plek waar een tekening kan staan */
     #studio .st-scherm { margin: 12px 0 0; }
     #studio .st-scherm > h6 { margin: 0 0 5px; }
@@ -8416,9 +8451,7 @@ function startMapEdit() {
     #studio .st-waarschuwing { margin: 10px 0 0; padding: 7px 9px; border-radius: 8px;
       font-size: 11.5px; font-weight: 600; color: #ffd0c4;
       background: rgba(170,40,30,.3); border: 1px solid rgba(255,120,120,.45); }
-    #studio .st-waarschuwing[hidden] { display: none; }
     #studio .st-xy { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-    #studio .st-xy[hidden] { display: none; }
     #studio .st-xy b { font-size: 12px; color: #b6ffd6; min-width: 62px; }
     #studio .st-xy label { display: flex; align-items: center; gap: 4px;
       font-size: 12px; color: #b79ae0; }
@@ -8426,7 +8459,6 @@ function startMapEdit() {
     #studio .st-check { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px;
       font-size: 11.5px; line-height: 1.5; color: #e6dbf5;
       background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); }
-    #studio .st-check[hidden] { display: none; }
     #studio .st-lan { padding: 9px 10px; border-radius: 8px; background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.14); }
     #studio .st-lan b { display: block; font: 700 15px/1.4 ui-monospace, monospace; color: #b6ffd6;
