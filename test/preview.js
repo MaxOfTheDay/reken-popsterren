@@ -194,6 +194,23 @@ function bumpCache() {
   fs.writeFileSync(f, src.replace(m[0], "const CACHE = '" + volgend + "';"));
   return volgend;
 }
+function renameAsset(res, van, naar) {
+  const zeg = (code, tekst) => { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(tekst); };
+  if (!ASSET_OK.some(re => re.test(van)) || !ASSET_OK.some(re => re.test(naar))) {
+    return zeg(400, 'dit pad mag niet: ' + van + ' -> ' + naar);
+  }
+  const a = path.join(ROOT, van), b = path.join(ROOT, naar);
+  if (!fs.existsSync(a)) return zeg(404, 'niets te hernoemen: ' + van + ' bestaat niet');
+  if (fs.existsSync(b)) return zeg(409, naar + ' bestaat al -- eerst zelf opruimen');
+  try {
+    fs.mkdirSync(path.dirname(b), { recursive: true });
+    fs.renameSync(a, b);
+    const cache = bumpCache();
+    console.log('  wereldstudio: ' + van + ' -> ' + naar + (cache ? ' \u00b7 sw CACHE -> ' + cache : ''));
+    zeg(200, van.split('/').pop() + ' \u2192 ' + naar.split('/').pop() + (cache ? ' \u00b7 sw ' + cache : ''));
+  } catch (e) { zeg(500, String(e.message)); }
+}
+
 function writeAsset(req, res, to) {
   if (!ASSET_OK.some(re => re.test(to))) {
     res.writeHead(400, { 'content-type': 'text/plain' });
@@ -340,6 +357,16 @@ http.createServer(function (req, res) {
   if (req.method === 'POST' && url === '/asset') {
     const q = new URLSearchParams((req.url.split('?')[1] || ''));
     return writeAsset(req, res, decodeURIComponent(q.get('to') || ''));
+  }
+
+  /* Een wereld hernoemen. Het id bepaalt de bestandsnaam, dus een hernoeming zonder
+     dit laat de tekening als wees achter en de wereld zonder beeld -- en dan moet je
+     'm opnieuw genereren voor niets. Beide paden gaan door dezelfde allowlist als een
+     gewone upload, dus er valt hier niets te verzinnen dat een schrijfactie elders
+     mogelijk maakt. */
+  if (req.method === 'POST' && url === '/hernoem') {
+    const q = new URLSearchParams((req.url.split('?')[1] || ''));
+    return renameAsset(res, decodeURIComponent(q.get('van') || ''), decodeURIComponent(q.get('naar') || ''));
   }
 
   if (req.method === 'POST' && url === '/werelden') {
