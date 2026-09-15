@@ -360,3 +360,63 @@ gradient; a bright drawing can swallow it. That is the field §7's checklist is 
 
 - Whether 1215 × 2160 is the right storage size for your generator, or whether it caps
   lower (see §1). One constant either way.
+
+## 11. The venue — a second drawing per world (phase 3.1, Music only)
+
+A world map is the place you *choose*. A venue is the place you *are* once you tapped a
+stop. Phase 3.1 builds that second view for exactly one world — Muziekwereld — as the
+reference the other five will copy later. Nothing here is rolled out yet.
+
+### What the app does today
+
+`WORLDS[0]` carries one extra key:
+
+```js
+venue: { art: null, zoom: 230, focus: '50% 22%', blur: 9 },
+```
+
+`art: null` means **fall back to the world map drawing itself** (`venueArt()` in
+`index.html`). That is not a placeholder standing in for a missing file — it is the
+cheapest correct answer available right now:
+
+* it is the same hand, the same palette and the same light as the map the child just
+  left, so the two screens read as one world;
+* the file is already decoded and already in the service-worker cache, because the map
+  showed it two hundred milliseconds ago. **The venue costs zero extra bytes and zero
+  extra requests.**
+
+`zoom` / `focus` / `blur` then turn a map into a room: zoom in far enough that you are
+*inside* the drawing rather than looking down at it, aim at the part that reads as a
+stage, and blur until the shapes are light and colour instead of detail. The maths has to
+stay the sharpest thing on screen; see §4.3 of `ART-DIRECTION.md` for the readability
+contract this obeys.
+
+A world **without** a `venue` key gets none of this and renders exactly as before.
+
+### If you want to draw a dedicated Music venue
+
+Then, and only then, these numbers matter:
+
+| | |
+|---|---|
+| path | `assets/bg/venue-muziek.webp` |
+| format | WebP, quality ~0.82 |
+| size | **1215 × 2160** (portrait 9:16, same as a world map — one constant, `ART_W`/`ART_H`) |
+| budget | ~125 kB |
+| settings to use | `venue: { art: 'assets/bg/venue-muziek.webp', zoom: 100, focus: '50% 50%', blur: 0 }` |
+
+What the drawing has to hold:
+
+* **The top ~45 % is the room.** Back wall, light rig, crowd silhouettes, whatever says
+  "a show happens here". This is the only part a child really sees.
+* **The bottom ~55 % must be quiet.** Local contrast ≤ 8 %, no shape edges, value held
+  low. The sum card and the answer buttons sit there and nothing may compete with them.
+  The app lays its own floor gradient over this band, but it cannot rescue busy art.
+* **Do not draw the stage the star stands on, the spotlight, or the footlight.** The app
+  draws all three in CSS (`.venue-bundel`, `.venue-vloer`, `.venue-licht`), anchored to
+  the avatar so they follow her on every screen size. A painted stage would sit at the
+  wrong height the moment the layout changes.
+* **Do not draw a performer.** The child's own star is the performer.
+
+Adding the file is a one-line change to `WORLDS[0].venue` plus one entry in `sw.js`'s
+`ASSETS` and a bumped `CACHE` — same procedure as §7 for a map drawing.
