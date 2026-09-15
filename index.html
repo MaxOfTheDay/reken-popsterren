@@ -8311,6 +8311,14 @@ function startMapEdit() {
     #studio .st-xy label { display: flex; align-items: center; gap: 4px;
       font-size: 12px; color: #b79ae0; }
     #studio .st-xy input { width: 62px; }
+    #studio .st-check { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px;
+      font-size: 11.5px; line-height: 1.5; color: #e6dbf5;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); }
+    #studio .st-check[hidden] { display: none; }
+    #studio .st-check.schoon { color: #b6ffd6; background: rgba(40,120,70,.2);
+      border-color: rgba(120,255,180,.4); }
+    #studio .ct-fout { color: #ffb4b4; font-weight: 700; }
+    #studio .ct-let { color: #ffd98a; font-weight: 700; }
     #studio.uitleg .st-hint { display: block; }
     #studio .st-top button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
     /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
@@ -8333,8 +8341,10 @@ function startMapEdit() {
        de navigatiebalk onder, en de ster die bóven haar halte staat).
        Zie docs/WORLD-ART-BRIEF.md. */
     /* Zelfde probleem als bij de stuurpunten: een dunne groene stippellijn verdwijnt
-       op een lichte lucht. Een donkere lijn er strak omheen maakt hem overal zichtbaar. */
-    .me-safe { position: absolute; left: 16%; right: 16%; top: 21%; bottom: 16%; z-index: 2;
+       op een lichte lucht. Een donkere lijn er strak omheen maakt hem overal zichtbaar.
+       De maten komen uit ZONE in de JS, zodat de lijn en de controle nooit uiteen
+       kunnen lopen -- die lijn en dat lijstje moeten hetzelfde zeggen. */
+    .me-safe { position: absolute; z-index: 2;
       pointer-events: none; border: 1.5px dashed rgba(120,255,180,.95); border-radius: 8px;
       box-shadow: 0 0 0 1px rgba(8,2,20,.6), inset 0 0 0 1px rgba(8,2,20,.6); }
     /* De strook die de navigatiebalk straks afdekt, opgemeten aan de échte balk plus
@@ -8501,6 +8511,13 @@ function startMapEdit() {
       </section>
 
       <section data-tab="spel" hidden>
+        <h6>Controle</h6>
+        <div class="st-btns"><button id="st-check-knop">✓ kijk alle werelden na</button></div>
+        <p class="st-hint">Ontbrekende tekeningen, haltes buiten de zone, dubbele id's en
+          lijsten van de verkeerde lengte — in <b>alle</b> werelden, niet alleen die op je
+          scherm. Blokkeert niets; loopt ook vanzelf bij "Zet in het spel".</p>
+        <div class="st-check" id="st-check" hidden></div>
+
         <h6>Werelden vastleggen</h6>
         <div class="st-btns">
           <button class="prim" id="st-push">⇪ Zet in het spel</button>
@@ -8742,7 +8759,13 @@ function startMapEdit() {
        terwijl je haltes neerzet. Het raster van 10% is er los bij, voor wie een
        tekening wil uitmeten. */
     if (zoneOn) {
-      const d = document.createElement('div'); d.className = 'me-safe'; frame.appendChild(d);
+      const d = document.createElement('div');
+      d.className = 'me-safe';
+      d.style.left = ZONE.x0 + '%';
+      d.style.right = (100 - ZONE.x1) + '%';
+      d.style.top = ZONE.y0 + '%';
+      d.style.bottom = (100 - ZONE.y1) + '%';
+      frame.appendChild(d);
       toonOnderrand(frame);
     }
     if (gridOn) { const d = document.createElement('div'); d.className = 'me-grid'; frame.appendChild(d); }
@@ -9065,6 +9088,7 @@ function startMapEdit() {
     commit('concept weg — dit is wat er in het spel staat');
   };
   F('st-push').onclick = () => {
+    toonControle(controleer(), true);   // stil bij enkel 'let op', luid bij een fout
     saveWorldDraft();
     fetch('/werelden', { method: 'POST', body: worldsSource() })
       .then(r => r.text().then(t => {
@@ -9076,6 +9100,76 @@ function startMapEdit() {
       }))
       .catch(() => setOut('alleen via npm run preview — gebruik anders Kopieer'));
   };
+  /* ------------------------------------------------------- controle vooraf
+     Kijkt álle werelden na, niet alleen die op je scherm. De rode rand op de kaart
+     werkt per wereld; schuif je in wereld 3 een halte mis en ga je door naar wereld
+     5, dan ziet niemand het meer. En een wereld die naar een ontbrekend bestand
+     wijst valt stil terug op de kleurversie -- dat merk je anders pas op een
+     telefoon.
+
+     Blokkeert niets. Halverwege een wereld wíl je kunnen vastleggen; de controle
+     zegt alleen wat er staat. */
+  function controleer() {
+    const punten = [];
+    const fout = (w, t) => punten.push({ ernst: 'fout', w, t });
+    const let_op = (w, t) => punten.push({ ernst: 'let op', w, t });
+    const gezien = {};
+    WORLDS.forEach((w, i) => {
+      const wl = worldForIndex(i);
+      const naam = (w.icon || '') + ' ' + (w.name || w.id);
+      const pad = 'assets/world/' + w.id + '-map.webp';
+
+      if (!/^[a-z0-9-]+$/.test(w.id || '')) fout(naam, 'het id "' + w.id + '" mag alleen kleine letters, cijfers en streepjes bevatten');
+      if (gezien[w.id]) fout(naam, 'het id "' + w.id + '" komt twee keer voor');
+      gezien[w.id] = true;
+
+      if (!w.art) let_op(naam, 'nog geen tekening — speelt op de kleuren van de wereld');
+      else if (w.art.indexOf('blob:') === 0) let_op(naam, 'de tekening staat alleen in dit tabblad, nog niet op schijf');
+      else if (!OP_SCHIJF[w.art]) fout(naam, 'wijst naar ' + w.art + ', maar dat bestand staat er niet');
+      else if (w.art !== pad) let_op(naam, 'gebruikt ' + w.art + ' terwijl het id ' + pad + ' zegt');
+
+      if (w.nodes && w.nodes.length !== wl.levels) fout(naam, w.nodes.length + ' haltes voor ' + wl.levels + ' levels — valt terug op de standaardslinger');
+      if (w.curve && w.curve.length !== wl.levels - 1) fout(naam, w.curve.length + ' stuurpunten voor ' + (wl.levels - 1) + ' stukken weg');
+
+      const buiten = [];
+      (w.nodes || worldNodes(wl)).forEach((n, k) => {
+        const r = [];
+        if (n.x < ZONE.x0) r.push('links'); if (n.x > ZONE.x1) r.push('rechts');
+        if (n.y < ZONE.y0) r.push('boven'); if (n.y > ZONE.y1) r.push('onder');
+        if (r.length) buiten.push((k + 1) + ' (' + r.join('+') + ')');
+      });
+      if (buiten.length) fout(naam, 'buiten de veilige zone: halte ' + buiten.join(', '));
+    });
+    return punten;
+  }
+  function toonControle(punten, stil) {
+    const vak = F('st-check');
+    if (!vak) return;
+    if (!punten.length) {
+      vak.className = 'st-check schoon';
+      vak.hidden = false;
+      vak.innerHTML = '✓ ' + WORLDS.length + ' werelden nagekeken, niets aan de hand';
+      return;
+    }
+    if (stil && !punten.some(x => x.ernst === 'fout')) { vak.hidden = true; return; }
+    vak.className = 'st-check';
+    vak.hidden = false;
+    /* Fouten eerst, opmerkingen daarna -- door elkaar op wereldvolgorde verdronk het
+       ene in het andere. En "nog geen tekening" bij drie of meer werelden is in het
+       begin gewoon de stand van zaken, dus dat wordt een regel in plaats van zes. */
+    const zonder = punten.filter(x => /nog geen tekening/.test(x.t));
+    let lijst = punten;
+    if (zonder.length > 2) {
+      lijst = punten.filter(x => !/nog geen tekening/.test(x.t));
+      lijst.push({ ernst: 'let op', w: zonder.length + ' werelden', t: 'hebben nog geen tekening' });
+    }
+    lijst = lijst.slice().sort((a, c) => (a.ernst === 'fout' ? 0 : 1) - (c.ernst === 'fout' ? 0 : 1));
+    vak.innerHTML = lijst.map(x =>
+      '<span class="' + (x.ernst === 'fout' ? 'ct-fout' : 'ct-let') + '">'
+      + (x.ernst === 'fout' ? '⚠' : '·') + ' ' + esc(x.w) + '</span> ' + esc(x.t)).join('<br>');
+  }
+  F('st-check-knop').onclick = () => toonControle(controleer(), false);
+
   /* ------------------------------------------------------------- voorbeeld
      Een écht venster op die maat, niet een iframe. De noodstand voor liggend en
      lage schermen kijkt naar het vénster, dus alleen een echt venster laat zien
@@ -9189,6 +9283,10 @@ function startMapEdit() {
      invoervelden, en de pijltjes verschuiven 'm. 0,2% per tik, 1% met Shift -- dat is
      op een tekening van 2160 hoog ruim 4 respectievelijk 21 pixels. */
   const STAP = 0.2;
+  /* De veilige zone voor haltemiddelpunten, in procenten van de tekening. Eén plek:
+     de stippellijn op de kaart én de controle vooraf lezen hem hier.
+     Zie docs/WORLD-ART-BRIEF.md §2 voor waar deze getallen vandaan komen. */
+  const ZONE = { x0: 16, x1: 84, y0: 21, y1: 84 };
   function kies(nieuw) {
     sel = nieuw;
     markeerSelectie();
