@@ -8130,7 +8130,11 @@ function startMapEdit() {
 
   const st = document.createElement('style');
   st.textContent = `
+    /* De ster staat in de studio uit -- ze dekt precies de richel af waar je een halte
+       op probeert te zetten. Met "ster overal" komt ze terug, op élke halte, doorzichtig:
+       dan zie je in één blik of ze overal past en of er overal lucht boven is. */
     body.mapedit .mem-fab, body.mapedit .tour-hero { display: none !important; }
+    body.mapedit.sterren .tour-hero { display: block !important; }
     /* Het kandidaat-vak van de voorvertoningsserver (incoming/ + schermlinks) doet
        in de studio niets meer: beelden gaan via het Beelden-tabblad en schermen via
        Voorbeeld. Buiten de studio blijft het gewoon staan. */
@@ -8179,6 +8183,7 @@ function startMapEdit() {
     @media (max-width: 820px) {
       body.mapedit #tour-map { left: 0; width: 100%; box-shadow: none; }
     }
+    .me-spook { opacity: .4; filter: saturate(.5); }
     body.mapedit .tour-stop { cursor: grab; }
     body.mapedit .tour-stop.dragging { cursor: grabbing; z-index: 9; }
     /* Stuurpunt van één stuk weg: klein, ruitvormig, duidelijk iets ánders dan een
@@ -8315,10 +8320,16 @@ function startMapEdit() {
       font-size: 11.5px; line-height: 1.5; color: #e6dbf5;
       background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); }
     #studio .st-check[hidden] { display: none; }
+    #studio .st-lan { padding: 9px 10px; border-radius: 8px; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14); }
+    #studio .st-lan b { display: block; font: 700 15px/1.4 ui-monospace, monospace; color: #b6ffd6;
+      user-select: all; }
+    #studio .st-lan span { color: #9c86bd; font-size: 11px; }
     #studio .st-check.schoon { color: #b6ffd6; background: rgba(40,120,70,.2);
       border-color: rgba(120,255,180,.4); }
     #studio .ct-fout { color: #ffb4b4; font-weight: 700; }
     #studio .ct-let { color: #ffd98a; font-weight: 700; }
+    #studio .ct-goed { color: #b6ffd6; font-weight: 700; }
     #studio.uitleg .st-hint { display: block; }
     #studio .st-top button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
     /* De uitvoer staat buiten de tabbladen: wat er misging moet je kunnen lezen
@@ -8449,6 +8460,7 @@ function startMapEdit() {
           <button id="st-zone" class="on">⬚ veilige zone</button>
           <button id="st-grid">▦ raster</button>
           <button id="st-curve" class="on">∿ stuurpunten</button>
+          <button id="st-sterren">👧 ster overal</button>
         </div>
         <div class="st-btns" style="margin-top:6px">
           <button id="st-undo" title="Ctrl+Z">↶ terug</button>
@@ -8460,6 +8472,17 @@ function startMapEdit() {
           <label>x<input id="st-x" type="number" step="0.1" min="0" max="100"></label>
           <label>y<input id="st-y" type="number" step="0.1" min="0" max="100"></label>
         </div>
+        <div class="st-btns" style="margin-top:6px">
+          <button id="st-contrast-knop">🔍 meet het contrast</button>
+        </div>
+        <div class="st-check" id="st-contrast" hidden></div>
+        <p class="st-hint">Meet de helderheid van de tekening precies waar de haltes en de
+          weg komen, en zet dat af tegen de kleuren die eroverheen gaan. Een halte redt zich
+          met haar vulling óf met haar lichte ring — één van de twee werkt bijna altijd, dus de
+          béste van de
+          slechtste telt. De weg is het gevoeligst — die is dun, doorzichtig en jij
+          kiest zijn kleur.</p>
+
         <p class="st-hint">Tik een halte of ruitje aan en verschuif 'm met de pijltjes
           (Shift = vijf keer zo grof), of tik de getallen in. Ctrl+Z neemt terug.</p>
         <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
@@ -8496,6 +8519,12 @@ function startMapEdit() {
           <option value="end">Einde</option>
           <option value="profile">Wie speelt er</option>
         </select></div>
+
+        <h6>Op je eigen telefoon</h6>
+        <div class="st-lan" id="st-lan"></div>
+        <p class="st-hint">Zelfde wifi, tik het adres in. Alles wat we hier meten is een
+          browser op een bureaublad; de echte toets is het scherm waar het om gaat —
+          met de echte thuisbalk, en het echte contrast in een zonnige kamer.</p>
 
         <h6>Op welke toestelmaten</h6>
         <div class="st-set" id="st-maten"></div>
@@ -8601,6 +8630,18 @@ function startMapEdit() {
     e.target.classList.toggle('on', !document.body.classList.contains('geen-balk'));
   };
 
+  /* Het adres voor een telefoon op hetzelfde wifi. De server geeft 'm door; zonder
+     server (rechtstreeks vanaf schijf) is er niets te tonen. */
+  {
+    const vak = F('st-lan');
+    if (window.__LAN) {
+      vak.innerHTML = '<b>' + esc(window.__LAN) + '/t</b>'
+        + '<span>de kaart · &nbsp;<b>' + esc(window.__LAN) + '/ts</b> de studio</span>';
+    } else {
+      vak.innerHTML = '<span>alleen via <code>npm run preview</code></span>';
+    }
+  }
+
   const toestelKiezer = F('st-toestel');
   toestelKiezer.appendChild(new Option('vrij — vult de hoogte', ''));
   MATEN.forEach(m => toestelKiezer.appendChild(new Option(m.naam + '  ' + m.id.replace('x', '×'), m.id)));
@@ -8626,7 +8667,7 @@ function startMapEdit() {
      schermpixel geen tekenpixel meer, en een richel raak je niet met de muis alleen. */
   let sel = null;
   const setOut = t => { F('st-out').textContent = t || ''; };
-  let gridOn = false, curveOn = true, zoneOn = true;
+  let gridOn = false, curveOn = true, zoneOn = true, sterrenOn = false;
 
   // ---------------------------------------------------------------- status
   function shippedFor(id) { return WORLDS_SHIPPED.filter(w => w.id === id)[0]; }
@@ -8797,6 +8838,18 @@ function startMapEdit() {
       toonOnderrand(frame);
     }
     if (gridOn) { const d = document.createElement('div'); d.className = 'me-grid'; frame.appendChild(d); }
+    /* De ster staat in het spel op één halte. Met deze knop op allemaal, doorzichtig:
+       zo zie je in één blik of ze overal past -- of ze nergens met haar hoofd in een
+       rots staat en of er overal lucht boven de richel is. */
+    if (sterrenOn) {
+      const bron = frame.querySelector('.tour-hero');
+      if (bron) frame.querySelectorAll('.tour-stop').forEach(st => {
+        if (st.querySelector('.tour-hero')) return;
+        const k = bron.cloneNode(true);
+        k.classList.add('me-spook');
+        st.appendChild(k);
+      });
+    }
     leesCurve().forEach((c, i) => {
       const h = document.createElement('div');
       h.className = 'me-ctrl';
@@ -8910,6 +8963,12 @@ function startMapEdit() {
 
   F('st-zone').onclick = e => { zoneOn = !zoneOn; e.target.classList.toggle('on', zoneOn); commit(); };
   F('st-grid').onclick = e => { gridOn = !gridOn; e.target.classList.toggle('on', gridOn); commit(); };
+  F('st-sterren').onclick = e => {
+    sterrenOn = !sterrenOn;
+    document.body.classList.toggle('sterren', sterrenOn);
+    e.target.classList.toggle('on', sterrenOn);
+    commit();
+  };
   F('st-curve').onclick = e => {
     curveOn = !curveOn;
     document.body.classList.toggle('nocurve', !curveOn);
@@ -9128,6 +9187,165 @@ function startMapEdit() {
       }))
       .catch(() => setOut('alleen via npm run preview — gebruik anders Kopieer'));
   };
+  /* ------------------------------------------------------------ contrast
+     De regel die bepaalt of een tekening wérkt stond tot nu toe als advies in de
+     briefing: houd de corridor waar de route loopt mid-tot-donker. Dat is een
+     oordeel, en je moet het zes keer vellen. De studio heeft de tekening in handen
+     en weet waar elke halte staat, dus hij kan het gewoon méten.
+
+     Wat er gemeten wordt: de gemiddelde helderheid van de tekening in precies het
+     schijfje waar het rondje komt, en langs de weg. Daar tegenover de kleur van wat
+     er óverheen komt. Een halte gaat door drie standen (op slot grijs, gedaan paars,
+     nu goud) en moet in alle drie te zien blijven, dus de slechtste telt.
+
+     De verhouding is de gebruikelijke (L1+0,05)/(L2+0,05); onder de 2,0 valt iets
+     weg, tussen 2 en 3 is het krap. Een doorzichtige wegkleur wordt eerst over de
+     tekening gemengd, want dat is wat je werkelijk ziet. */
+  const HERKEN = document.createElement('canvas').getContext('2d');
+  function naarRgb(kleur) {
+    HERKEN.clearRect(0, 0, 1, 1);
+    HERKEN.fillStyle = '#000';
+    HERKEN.fillStyle = kleur;
+    const v = HERKEN.fillStyle;
+    if (v.charAt(0) === '#') {
+      const h = v.length === 4
+        ? v.slice(1).split('').map(c => parseInt(c + c, 16))
+        : [1, 3, 5].map(i => parseInt(v.substr(i, 2), 16));
+      return { r: h[0], g: h[1], b: h[2], a: 1 };
+    }
+    const m = v.match(/[\d.]+/g) || [0, 0, 0];
+    return { r: +m[0], g: +m[1], b: +m[2], a: m[3] === undefined ? 1 : +m[3] };
+  }
+  function lum(c) {
+    const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+    return .2126 * f(c.r) + .7152 * f(c.g) + .0722 * f(c.b);
+  }
+  function meng(voor, achter) {
+    const a = voor.a;
+    return { r: voor.r * a + achter.r * (1 - a), g: voor.g * a + achter.g * (1 - a),
+             b: voor.b * a + achter.b * (1 - a), a: 1 };
+  }
+  function verhouding(a, b) {
+    const l1 = Math.max(a, b), l2 = Math.min(a, b);
+    return (l1 + .05) / (l2 + .05);
+  }
+  // gemiddelde kleur van een schijfje in de tekening, in procenten van de tekening
+  function schijf(data, br, ho, x, y, straal) {
+    const cx = x / 100 * br, cy = y / 100 * ho, r = straal / 100 * br;
+    let R = 0, G = 0, B = 0, n = 0;
+    for (let dy = -r; dy <= r; dy += 1.5) {
+      for (let dx = -r; dx <= r; dx += 1.5) {
+        if (dx * dx + dy * dy > r * r) continue;
+        const px = Math.round(cx + dx), py = Math.round(cy + dy);
+        if (px < 0 || py < 0 || px >= br || py >= ho) continue;
+        const i = (py * br + px) * 4;
+        R += data[i]; G += data[i + 1]; B += data[i + 2]; n++;
+      }
+    }
+    return n ? { r: R / n, g: G / n, b: B / n, a: 1 } : null;
+  }
+  async function meetContrast() {
+    const w = shown().world;
+    if (!w.art) return { fout: 'deze wereld heeft nog geen tekening om te meten' };
+    const img = await laadBeeld(w.art + '?m=' + Date.now());
+    const br = 304, ho = Math.round(br * ART_H / ART_W);
+    const c = document.createElement('canvas');
+    c.width = br; c.height = ho;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, br, ho);
+    const data = g.getImageData(0, 0, br, ho).data;
+
+    const frame = map.querySelector('.world-frame');
+    const dotStraal = 5.15;   // halve .dot, in procenten van de kaderbreedte
+    const kleur = naam => {
+      const v = getComputedStyle(frame).getPropertyValue(naam).trim();
+      return naarRgb(v || '#fff');
+    };
+    const goud = kleur('--gold-cta-bottom'), paars = kleur('--purple-shadow');
+    const grijs = kleur('--gray-bottom');
+    const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
+
+    /* Wát meten we eigenlijk? Mijn eerste versie zette de vulling van het rondje
+       tegen de tekening af, en die vlagde elke tekening af -- terecht op papier,
+       onzin in de praktijk. Een halte is een dekkende schijf met een lichte ring
+       én een schaduw: op een lichte ondergrond draagt de donkere vulling hem, op
+       een donkere de lichte ring. Eén van de twee werkt altijd, en daarom houdt
+       die halte zich overal staande. Alleen als ze allebei zwak zijn -- een
+       middentoon rond de 35 -- wordt het krap.
+
+       Wat wél stil kan mislukken, en wat je bovendien zélf instelt, is de weg: een
+       dunne doorzichtige lijn in een kleur per wereld.
+
+       De sterrenrij heb ik gemeten en er weer uit gehaald. Die vlagde op élke
+       ondergrond af, en terecht: gedimde grijze sterretjes zíjn stil, dat is de
+       bedoeling -- ze zeggen "hier valt nog iets te halen" en horen niet te
+       concurreren met de halte. Een meter die bij elke tekening iets roept, leer je
+       negeren, en dan is hij minder waard dan geen meter. */
+    const uit = { haltes: [], weg: [], fout: null };
+    const ring = naarRgb(getComputedStyle(frame).getPropertyValue('--glass-white-30').trim() || 'rgba(255,255,255,.3)');
+
+    leesNodes().forEach((n, i) => {
+      const bg = schijf(data, br, ho, n.x, n.y, dotStraal);
+      if (!bg) return;
+      const L = lum(bg);
+      // de vulling óf de ring mag het dragen -- de beste van de twee telt
+      const vulling = Math.max(verhouding(L, lum(paars)), verhouding(L, lum(goud)), verhouding(L, lum(grijs)));
+      const opRing = ring.a < 1 ? meng(ring, bg) : ring;
+      const beste = Math.max(vulling, verhouding(L, lum(opRing)));
+      uit.haltes.push({ nr: i + 1, licht: Math.round(L * 100), v: beste });
+    });
+    // de weg: halverwege elk stuk, waar het stuurpunt hem heen trekt
+    leesCurve().forEach((pt, i) => {
+      const bg = schijf(data, br, ho, pt.x, pt.y, 2.5);
+      if (!bg) return;
+      const opDeWeg = wegKleur.a < 1 ? meng(wegKleur, bg) : wegKleur;
+      uit.weg.push({ nr: (i + 1) + '–' + (i + 2), licht: Math.round(lum(bg) * 100),
+                     v: verhouding(lum(bg), lum(opDeWeg)) });
+    });
+    return uit;
+  }
+  function toonContrast(m) {
+    const vak = F('st-contrast');
+    vak.hidden = false;
+    if (m.fout) { vak.className = 'st-check'; vak.textContent = m.fout; return; }
+    /* Drempels verschillen per ding, want ze falen anders. Een halte heeft de beste
+       van vulling en ring, en die zakt alleen in een smalle middentoonband; de weg en
+       de sterretjes zijn dún en doorzichtig en hebben meer nodig. */
+    const zwak = { halte: 1.8, weg: 2.5 };
+    const merk = (v, g) => v < g ? 'ct-fout' : v < g * 1.3 ? 'ct-let' : 'ct-goed';
+    const teken = (v, g) => v < g ? '⚠' : v < g * 1.3 ? '·' : '✓';
+    const regel = (naam, o, g) => '<span class="' + merk(o.v, g) + '">' + teken(o.v, g) + ' ' + naam
+      + '</span> licht ' + o.licht + ' · contrast ' + o.v.toFixed(1);
+
+    const slechtH = m.haltes.filter(o => o.v < zwak.halte * 1.3);
+    const slechtW = m.weg.filter(o => o.v < zwak.weg * 1.3);
+    if (!slechtH.length && !slechtW.length) {
+      vak.className = 'st-check schoon';
+      const alles = m.haltes.concat(m.weg);
+      vak.innerHTML = '✓ alles blijft te zien — laagste contrast '
+        + Math.min.apply(null, alles.map(o => o.v)).toFixed(1);
+      return;
+    }
+    vak.className = 'st-check';
+    const stukken = [];
+    if (slechtH.length) stukken.push(slechtH.map(o => regel('halte ' + o.nr, o, zwak.halte)).join('<br>'));
+    if (slechtW.length) {
+      stukken.push(slechtW.map(o => regel('weg ' + o.nr, o, zwak.weg)).join('<br>'));
+      // het advies volgt uit de stukken die fálen, niet uit het eerste stuk
+      const gem = slechtW.reduce((n, o) => n + o.licht, 0) / slechtW.length;
+      stukken.push('<span class="ct-let">·</span> zet <b>weg</b> '
+        + (gem > 45 ? 'donkerder' : 'lichter') + ' voor deze wereld');
+    }
+    vak.innerHTML = stukken.join('<br>');
+  }
+  F('st-contrast-knop').onclick = async () => {
+    F('st-contrast').hidden = false;
+    F('st-contrast').className = 'st-check';
+    F('st-contrast').textContent = 'meten\u2026';
+    try { toonContrast(await meetContrast()); }
+    catch (e) { F('st-contrast').textContent = 'meten lukte niet: ' + e.message; }
+  };
+
   /* ------------------------------------------------------- controle vooraf
      Kijkt álle werelden na, niet alleen die op je scherm. De rode rand op de kaart
      werkt per wereld; schuif je in wereld 3 een halte mis en ga je door naar wereld
