@@ -1411,20 +1411,36 @@
      doorheen lopen. */
   #screen-map:has(.world-frame:not(.no-art)) .map-sky,
   #screen-map:has(.world-frame:not(.no-art)) .map-ground { display: none; }
-  /* Liggend vult de kaart gewoon het scherm en schuif je verticaal -- precies zoals
-     staand, alleen is er meer te schuiven. Dat was eerder een kolom van 340px met
-     banden ernaast, omdat schuiven als een noodgreep gold; maar een volle tekening
-     met een beetje schuiven leest beter dan een postzegel in het midden.
+  /* Staat het venster rechtop, dan vult de kaart het gewoon en schuif je verticaal
+     -- net als op een telefoon, alleen is er meer te schuiven. Ligt het venster op
+     zijn kant, dan wordt het een podium: de kaart zo groot als de hóógte toelaat,
+     met een zachte rand, en ernaast dezelfde tekening nog een keer -- uitvergroot,
+     onscherp en donker, zodat de randen de wereld zelf zijn en geen leegte.
 
-     Tot waar? Tot de tekening er nog góéd uitziet. Hij is 1215 pixels breed, dus
-     bij een venster tot 1215 CSS-pixels blijft er minstens één tekenpixel per
-     schermpixel over en is er niets te zien. Daarboven zou hij uitgerekt worden, en
-     dán pas wordt het een podium: de kaart zo groot als de hoogte toelaat, met een
-     zachte rand, en ernaast dezelfde tekening nog een keer -- uitvergroot, onscherp
-     en donker, zodat de randen de wereld zelf zijn en geen leegte.
+     De grens was eerder "liggend én breder dan 1215px" (= ART_W, het punt waarop de
+     tekening uitgerekt zou worden). Dat klonk logisch en was het niet: het podium is
+     in béide gevallen kleiner dan de tekening, dus er werd sowieso nooit iets
+     uitgerekt -- die 1215 koos alleen wáár de omslag lag, niet óf de kwaliteit
+     bewaard bleef. En ertussen zat een band waar het stil misging: een liggend
+     venster smaller dan 1216 stond in telefoonstand op een breed scherm. Opgemeten
+     hoeveel van de kaart je daar zag: 1000x900 51%, 1215x950 44%, en een liggende
+     tablet op 1024x768 maar 42% -- de rest moest je eronderuit schuiven.
 
-     (1215 = ART_W. Wordt de tekening ooit groter, dan mag deze grens mee.) */
-  @media (min-aspect-ratio: 1/1) and (min-width: 1216px) {
+     Nu op de verhouding alleen. Dat is ook de enige grens die je als mens vóélt:
+     het moment dat een venster breder wordt dan hoog. 1216 was een getal over
+     bestandsafmetingen dat niemand ervaart.
+
+     De omslag zelf blijft een sprong, en dat is niet op te lossen: "vul het scherm
+     en schuif" en "laat alles in één keer zien" zijn twee verschillende manieren om
+     hetzelfde te tonen, en daartussen bestaat geen geleidelijke weg.
+
+     min-height staat er omdat een podium alleen iets oplevert als het er ook in
+     past. Het kader kan niet smaller dan 340px (anders wordt een halte kleiner dan
+     een vingertop), en 340 breed is 604 hoog. Op een telefoon in liggende stand --
+     844x390 -- past dat niet: dan schuift het podium alsnog, zie je 65% van de
+     kaart en vallen haltes 1, 2, 7 en 8 achter de kop of de balk. Daar is
+     volledig-vullen gewoon beter. Opgemeten grens: vanaf 600px hoog past het. */
+  @media (min-aspect-ratio: 1/1) and (min-height: 600px) {
     /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
        een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
     #screen-map { isolation: isolate; }
