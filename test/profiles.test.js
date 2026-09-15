@@ -402,6 +402,18 @@ function check(ok, label, detail) {
         const scherm = document.getElementById('screen-map');
         const meet = async y => {
           stop.style.top = y + '%';
+          /* Schuif de halte in beeld zoals renderTourMap dat na élke opbouw doet.
+             Zonder dit meet je een tablet met scrollTop 0 terwijl het kader daar
+             1365px hoog is in een venster van 1024: de bovenrand ligt dan buiten
+             beeld en haar kruin lijkt eraf te vallen, terwijl de app er in
+             werkelijkheid naartoe geschoven heeft. Op een toestel waar niets
+             schuift doet deze regel niets -- en dát is precies het geval waarin de
+             controle hieronder iets moet garanderen. */
+          const map = document.getElementById('tour-map');
+          const f = document.querySelector('.world-frame').getBoundingClientRect();
+          if (map.scrollHeight > map.clientHeight + 4) {
+            map.scrollTop = Math.max(0, stop.getBoundingClientRect().top - f.top - map.clientHeight / 2);
+          }
           kopOpzij();
           await new Promise(res => setTimeout(res, 400));   // de dim-overgang uitlopen
           const kop = document.querySelector('#screen-map .screen-header').getBoundingClientRect();
@@ -428,6 +440,46 @@ function check(ok, label, detail) {
         JSON.stringify(r.boven));
       check(!r.kopvrij.dimt, 'op ZONE.y0kop (' + r.y0kop + '%) dimt de kop niet meer — ' + naam,
         JSON.stringify(r.kopvrij));
+      await c.close();
+    }
+  }
+
+  /* ========== 7e · Raakvlakken overlappen niet ==========
+   * Het onzichtbare raakvlak rond een halte is groter dan het medaillon zelf, en dat
+   * is met opzet: op de kleinste telefoon is het medaillon maar 33px. Maar het mag
+   * niet zó groot worden dat twee raakvlakken elkaar raken -- dan tikt een kind de
+   * verkeerde halte aan, en dat merk je niet aan iets dat kapot gaat.
+   *
+   * De bovengrens is de afstand tussen de twee dichtstbijzijnde haltes, en die komt
+   * uit de standaardslinger. Verandert die slinger (of de maat van het raakvlak),
+   * dan valt deze test om in plaats van dat een vijfjarige het ontdekt.            */
+  {
+    for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone 14', 390, 844],
+                                ['tablet staand', 768, 1024]]) {
+      const c = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(c);
+      const page = await c.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await page.goto(APP_URL + '&demo&star=p1&screen=map');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        const mid = [...document.querySelectorAll('.tour-stop .dot')].map(d => {
+          const b = d.getBoundingClientRect();
+          return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+        });
+        let kleinste = Infinity;
+        for (let i = 0; i < mid.length; i++) for (let j = i + 1; j < mid.length; j++) {
+          kleinste = Math.min(kleinste, Math.hypot(mid[i].x - mid[j].x, mid[i].y - mid[j].y));
+        }
+        // de maat van het raakvlak staat in cqw van het kader (zie .tour-stop::before)
+        const frame = document.querySelector('.world-frame').getBoundingClientRect();
+        const raak = 0.135 * frame.width;
+        return { kleinste: Math.round(kleinste), raak: Math.round(raak) };
+      });
+      check(r.raak < r.kleinste, 'raakvlakken van twee haltes overlappen niet — ' + naam,
+        'raakvlak ' + r.raak + 'px, dichtste haltes ' + r.kleinste + 'px uit elkaar');
+      check(r.raak >= 40, 'het raakvlak blijft groot genoeg voor een kindervinger — ' + naam,
+        r.raak + 'px');
       await c.close();
     }
   }

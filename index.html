@@ -1526,9 +1526,16 @@
      blokje is rondje + sterrenrij, en het midden daarvan ligt ruim 9px láger --
      de weg liep dus net onder het hart van elke halte door. 5,15cqw is de halve
      hoogte van .dot (10,3cqw). */
-  /* Het raakvlak van een halte: onzichtbaar, en groter dan het rondje zelf. */
+  /* Het raakvlak van een halte: onzichtbaar, en groter dan het rondje zelf.
+     13,5cqw i.p.v. 12,5. De sterrenrij eronder is tweederde geworden, dus er is
+     ruimte vrijgekomen -- en op de kleinste telefoon (320px, kader 320 breed) was
+     12,5cqw maar 40px, onder wat je een vijfjarige wil aandoen. Nu 43px daar en
+     64px op een gewone telefoon.
+     Groter kan niet zomaar: twee haltes liggen op hun krapste 78px uit elkaar
+     (gemeten op 390x844), dus vanaf 16,5cqw gaan de raakvlakken overlappen en tikt
+     een kind de verkeerde aan. Test 7e bewaakt dat. */
   .tour-stop::before { content: ''; position: absolute; left: 50%; top: 5.15cqw;
-    width: 12.5cqw; height: 12.5cqw; margin: -6.25cqw 0 0 -6.25cqw; border-radius: 50%; }
+    width: 13.5cqw; height: 13.5cqw; margin: -6.75cqw 0 0 -6.75cqw; border-radius: 50%; }
   .tour-stop.locked::before { display: none; }
   .tour-stop {
     position: absolute; transform: translate(-50%, -5.15cqw);
@@ -1574,7 +1581,6 @@
   .tour-stop.locked { opacity: .72; }
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom));
     border-color: rgba(255,255,255,.2); box-shadow: 0 0.6cqw 1.1cqw rgba(12,2,26,.3); }
-  .tour-stop.locked .cstars { opacity: .62; }
   .tour-stop.locked .stop-lock { font-size: 3.8cqw; opacity: .9; }
   /* Hier speel je. Het brandpunt van de kaart, maar rustig: een warme gloed die
      langzaam ademt en een haartje schaal. Geen springende animatie -- een kind
@@ -1634,18 +1640,14 @@
   /* De sterrenrij is het zwakste element op een getekende kaart: gedimde grijze
      emoji op een lichte lucht verdwijnen gewoon. Een zachte donkere schaduw eronder
      kost niets en houdt ze leesbaar op elke ondergrond. */
-  /* Kleiner (3,0 i.p.v. 3,3cqw) en strakker op elkaar, zodat het als één groepje
-     onder de halte leest in plaats van als drie losse tekens. De donkere schaduw
-     blijft -- die houdt ze leesbaar op elke ondergrond.
-
-     Niet-behaalde sterren waren donkergrijs op halve dekking. Dat is stil bedoeld
-     maar leest als vuil: drie grijze vlekken die net zoveel aandacht vragen als de
-     gouden. Nu een spookster -- bijna wit en veel doorzichtiger. Hij zegt nog steeds
-     "hier valt iets te halen" en verder niets. */
-  .tour-stop .cstars { font-size: 3cqw; letter-spacing: -0.55cqw; opacity: .95;
-    margin-top: 0.1cqw; text-align: center;
-    filter: drop-shadow(0 0.22cqw 0.45cqw rgba(12,2,26,.55)); }
-  .tour-stop .cstars .star-miss { opacity: .28; filter: grayscale(1) brightness(2.4); }
+  /* De sterren horen bíj het rondje en zijn geen eigen regeltje eronder. Op 2cqw
+     (tweederde van de 3cqw hiervoor) en strak tegen de onderrand lezen ze als het
+     onderschrift van het medaillon in plaats van als een tweede element. Het nummer
+     blijft daarmee het zwaarste ding in het blokje, wat het ook hoort te zijn.
+     De donkere schaduw blijft -- die houdt goud leesbaar op elke ondergrond. */
+  .tour-stop .cstars { font-size: 2cqw; letter-spacing: -0.37cqw; opacity: .95;
+    margin-top: 0.15cqw; text-align: center; line-height: 1;
+    filter: drop-shadow(0 0.18cqw 0.36cqw rgba(12,2,26,.6)); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
      stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
      net op de bovenrand van de tegel (klein overlapje voor het "staat erop"-
@@ -1653,17 +1655,36 @@
      gecentreerde stadsicoon onder haar voeten bedekken. Zelfde element voor
      de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
      vorige halte. */
-  /* 21cqw was 2,1x de halte: op de bovenste halte van een wereld stak haar hoofd
-     dan 19px buiten beeld (gemeten op 390x844). Op 13,1cqw is ze 1,3x de halte en
-     past ze binnen de veilige zone -- zie docs/WORLD-ART-BRIEF.md. */
+  /* "Hier sta ik" moet je in minder dan een seconde zien, en zij is dat signaal --
+     niet de halte eronder. Op 16,4cqw is ze een kwart groter dan de 13,1 hiervoor
+     en 1,6x de halte. (Ooit stond ze op 21cqw; toen stak haar hoofd 19px buiten
+     beeld op de bovenste halte. Deze maat is nagemeten tegen de veilige zone --
+     zie docs/WORLD-ART-BRIEF.md en test 7c-bis.)
+
+     Geen omhulsel: ze is een vrijstaand poppetje op de tekening, en een rondje
+     eromheen zou er weer een pictogram van maken. Wat ze wél nodig heeft is
+     scheiding van een drukke ondergrond, en dat doen twee zachte dingen -- een
+     warme lichtgloed achter haar silhouet en een contactschaduw bij haar voeten. */
   .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2cqw); transform: translateX(-50%);
-    width: 13.1cqw; pointer-events: none; z-index: 2; }
-  .tour-hero svg { width: 100%; height: auto; display: block; }
+    width: 16.4cqw; pointer-events: none; z-index: 2; }
+  .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
+  /* De gloed: crème, ruim, en zonder rand -- hij mag nergens als vorm te zien zijn.
+     Hij ligt achter haar (z-index 0 tegen de svg op 1), zodat hij haar kleuren niet
+     wast. */
+  .tour-hero::before { content: ""; position: absolute; z-index: 0;
+    left: 50%; bottom: 1cqw; transform: translateX(-50%);
+    width: 20cqw; height: 20cqw; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,245,214,.42), rgba(255,240,200,.14) 55%, transparent 72%); }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
-     zonder dit oogt ze net zo goed los zwevend erboven. Iets breder en zachter dan
-     eerst, zodat ze op een getekende ondergrond ook echt ergens op staat. */
-  .tour-hero::after { content: ""; position: absolute; left: 50%; bottom: 0.2cqw; transform: translateX(-50%);
-    width: 9cqw; height: 2.4cqw; border-radius: 50%; background: rgba(12,2,26,.42); filter: blur(3px); }
+     zonder dit oogt ze net zo goed los zwevend erboven. */
+  .tour-hero::after { content: ""; position: absolute; z-index: 0;
+    left: 50%; bottom: 0.2cqw; transform: translateX(-50%);
+    width: 10.5cqw; height: 2.7cqw; border-radius: 50%; background: rgba(12,2,26,.42); filter: blur(3px); }
+  /* De halte waar zij staat gaat als geheel boven de andere haltes liggen. Zonder
+     dit kan haar hoofd achter het medaillon van de halte erbóven verdwijnen: de
+     haltes staan in volgorde in de DOM, dus een latere halte tekent over een
+     eerdere heen. Zij hoort bovenop, altijd. */
+  .tour-stop:has(.tour-hero) { z-index: 3; }
   /* De Speel-knop is van de kaart verdwenen. Met acht haltes samen in beeld is de
      halte waar ze nú staat al het enige volgouden, pulserende medaillon mét de pop
      erbovenop -- een tweede gouden ding ernaast voegde niets toe, dekte de vorige
@@ -4249,11 +4270,11 @@ function defaultNodes(n) {
     // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
     // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
     // ruimte tussen de haltes komt van de verticale spreiding hieronder.
-    // y van 82% tot 23%: ruim binnen de veilige zone (zie ZONE). Die loopt sinds de
-    // kop opzij stapt door tot 14%, maar de standaardslinger blijft bewust op 23:
-    // dit is de opmaak van een wereld die nog géén tekening heeft, en daar is niets
-    // te winnen met een halte die de bovenbalk laat dimmen.
-    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 82 - t * 59 });
+    // y van 82% tot 25%: ruim binnen de veilige zone (zie ZONE). Die loopt sinds de
+    // kop opzij stapt door tot 14%, maar de standaardslinger blijft bewust op
+    // ZONE.y0kop: dit is de opmaak van een wereld die nog géén tekening heeft, en
+    // daar is niets te winnen met een halte die de bovenbalk laat dimmen.
+    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 82 - t * 57 });
   }
   return out;
 }
@@ -4303,9 +4324,13 @@ const ART_W = 1215, ART_H = 2160;
 
    y0kop is geen grens maar een streep: boven die lijn dimt de bovenbalk op minstens
    één toestel. Alleen de studio en de tekenbrief gebruiken 'm -- de dimming zelf
-   wordt gemeten, niet uit dit getal afgeleid.
+   wordt gemeten, niet uit dit getal afgeleid. Hij stond op 23 toen de ster 13,1cqw
+   was; op 16,4cqw reikt ze 13,30% boven haar halte in plaats van 10,98%, en samen
+   met de 10,90% kop van een kleine telefoon komt de streep op 24,2 -- naar buiten
+   afgerond 25. y0 zelf beweegt niet mee: die wordt niet door haar bepaald maar
+   doordat de stip vrij van de pillen moet blijven (13,97%).
    Naar binnen afgerond. Zie docs/WORLD-ART-BRIEF.md §2. */
-const ZONE = { x0: 19, x1: 81, y0: 14, y1: 82, y0kop: 23 };
+const ZONE = { x0: 19, x1: 81, y0: 14, y1: 82, y0kop: 25 };
 // Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
 // tekening, zodat de weg er exact overheen valt).
 const VB_W = ART_W, VB_H = ART_H;
@@ -4775,11 +4800,17 @@ function meetChroom() {
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
 addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij(); } });
-// Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
+/* Alleen wat er verdiend is. Er stonden altijd drie sterren onder elke halte --
+   de niet-behaalde als bleke spookster. Bedoeld als "hier valt nog iets te halen",
+   maar op acht haltes naast elkaar zijn dat al snel twintig bleke tekens die geen
+   van alle iets zeggen, en ze verdubbelen de hoogte van elk blokje.
+
+   Niets tonen zegt hetzelfde: geen sterren onder een halte betekent dat je ze daar
+   nog niet gehaald hebt. En een halte op slot of een halte waar je nog moet spelen
+   heeft er per definitie geen, dus daar valt niets weg. */
 function starRowHTML(n) {
   const got = Math.max(0, Math.min(3, n));
-  return `<div class="cstars">${'⭐'.repeat(got)}`
-    + (got < 3 ? `<span class="star-miss">${'⭐'.repeat(3 - got)}</span>` : '') + `</div>`;
+  return got ? `<div class="cstars">${'⭐'.repeat(got)}</div>` : '';
 }
 // Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
 // aankomst in één klap door te schieten. Werkt via een dash-masker over het pad
