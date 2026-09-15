@@ -1437,7 +1437,10 @@
   /* Een donkere onderlaag onder de hele weg: iets breder, flink doorzichtig en
      onscherp. Daarmee blijft het goud leesbaar op een lichte lucht én op een
      donkere rots, zonder dat de weg zelf van kleur verandert. */
-  .tour-road-under { stroke: rgba(22,6,42,.5); stroke-width: 22; filter: blur(2px); }
+  /* Iets smaller en zachter dan eerst (22/50% -> 18/42%): hij hoeft de weg alleen te
+     dragen, niet te verdubbelen. Weghalen is geen optie -- op een lichte lucht is hij
+     het enige dat het goud nog vasthoudt. */
+  .tour-road-under { stroke: rgba(22,6,42,.42); stroke-width: 18; filter: blur(2px); }
   .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 13; }
   .tour-road-fg { stroke: var(--gold-accent); stroke-width: 13; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
@@ -1517,7 +1520,7 @@
   .tour-stop.locked { opacity: .72; }
   .tour-stop.locked .dot { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom));
     border-color: rgba(255,255,255,.2); box-shadow: 0 0.6cqw 1.1cqw rgba(12,2,26,.3); }
-  .tour-stop.locked .cstars { opacity: .7; }
+  .tour-stop.locked .cstars { opacity: .62; }
   .tour-stop.locked .stop-lock { font-size: 3.8cqw; opacity: .9; }
   /* Hier speel je. Het brandpunt van de kaart, maar rustig: een warme gloed die
      langzaam ademt en een haartje schaal. Geen springende animatie -- een kind
@@ -1525,11 +1528,13 @@
   .tour-stop.next .dot { border-color: var(--gold-accent);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     transform: scale(1.06);
-    box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 3.4cqw rgba(255,196,61,.5);
+    box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 3.2cqw rgba(255,196,61,.5);
     animation: stopBreathe 2.8s ease-in-out infinite; }
+  /* De huidige halte blijft het brandpunt: haar gloed is nu ook absoluut de sterkste,
+     want die van de afgemaakte haltes is een derde zachter geworden. */
   @keyframes stopBreathe {
-    0%, 100% { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 3.4cqw rgba(255,196,61,.45); }
-    50%      { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 5.6cqw rgba(255,196,61,.75); }
+    0%, 100% { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 3.2cqw rgba(255,196,61,.45); }
+    50%      { box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.5), 0 0 5.2cqw rgba(255,196,61,.72); }
   }
   .tour-stop.next:active .dot { transform: scale(.98); }
   .tour-stop.done .dot { border-color: var(--gold-accent); background: linear-gradient(180deg, rgba(255,214,90,.18), rgba(255,214,90,.06)), var(--purple-shadow); }
@@ -1551,7 +1556,11 @@
     overflow: hidden;
     border-width: 1.1cqw;
     background: linear-gradient(180deg, rgba(255,214,90,.22), rgba(255,193,61,.06)), var(--purple-shadow);
-    box-shadow: 0 0 0 1.1cqw rgba(255,213,79,.20), 0 0 5cqw rgba(255,205,80,.55);
+    /* De gloed eromheen was 5cqw op 55%; dat legde een tweede, veel grotere schijf
+       over de tekening dan de halte zelf is. Op 3,3cqw / 38% (ongeveer een derde
+       minder) houdt hij nog genoeg af tegen een drukke ondergrond zonder dat hij met
+       de huidige halte concurreert. */
+    box-shadow: 0 0 0 0.8cqw rgba(255,213,79,.16), 0 0 3.3cqw rgba(255,205,80,.38);
   }
   .tour-stop.done.perfect .dot::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; pointer-events: none;
@@ -1571,12 +1580,18 @@
   /* De sterrenrij is het zwakste element op een getekende kaart: gedimde grijze
      emoji op een lichte lucht verdwijnen gewoon. Een zachte donkere schaduw eronder
      kost niets en houdt ze leesbaar op elke ondergrond. */
-  /* Dichter op de halte en een tikje kleiner (3,3 i.p.v. 3,6cqw): de sterren horen
-     bíj het rondje te lezen, niet als een eigen regeltje eronder. De halte blijft
-     het hoofdding, de sterren zijn het bijschrift. */
-  .tour-stop .cstars { font-size: 3.3cqw; letter-spacing: -0.4cqw; opacity: .92; margin-top: 0.15cqw;
-    filter: drop-shadow(0 0.25cqw 0.5cqw rgba(12,2,26,.6)); }
-  .tour-stop .cstars .star-miss { opacity: .5; filter: grayscale(1) brightness(.75); }
+  /* Kleiner (3,0 i.p.v. 3,3cqw) en strakker op elkaar, zodat het als één groepje
+     onder de halte leest in plaats van als drie losse tekens. De donkere schaduw
+     blijft -- die houdt ze leesbaar op elke ondergrond.
+
+     Niet-behaalde sterren waren donkergrijs op halve dekking. Dat is stil bedoeld
+     maar leest als vuil: drie grijze vlekken die net zoveel aandacht vragen als de
+     gouden. Nu een spookster -- bijna wit en veel doorzichtiger. Hij zegt nog steeds
+     "hier valt iets te halen" en verder niets. */
+  .tour-stop .cstars { font-size: 3cqw; letter-spacing: -0.55cqw; opacity: .95;
+    margin-top: 0.1cqw; text-align: center;
+    filter: drop-shadow(0 0.22cqw 0.45cqw rgba(12,2,26,.55)); }
+  .tour-stop .cstars .star-miss { opacity: .28; filter: grayscale(1) brightness(2.4); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
      stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
      net op de bovenrand van de tegel (klein overlapje voor het "staat erop"-
@@ -8389,6 +8404,7 @@ function startMapEdit() {
       top: -15px; padding: 1px 5px; border-radius: 4px;
       font: 700 10px/1.3 system-ui, sans-serif; color: #ffd6d6; background: rgba(90,12,12,.85); }
     .tour-stop.te-laag .dot { outline: 2px solid #ff6b6b; outline-offset: 2px; }
+    .tour-stop.botst .cstars { outline: 1.5px dashed rgba(255,190,90,.9); outline-offset: 1px; border-radius: 4px; }
     @media (max-width: 820px) {
       #studio { top: auto; left: 0; width: auto; max-height: 56vh; border-left: 0;
         border-top: 1px solid rgba(255,255,255,.18); }
@@ -8917,10 +8933,42 @@ function startMapEdit() {
       st.classList.toggle('te-laag', redenen.length > 0);
       if (redenen.length) uit.push(st.dataset.lvl - shown().first + 1 + ' (' + redenen.join('+') + ')');
     });
+    /* Botsen de sterrengroepjes met elkaar of met een ander rondje? Het ritme is
+       krapper dan een haltblokje hoog is (182 tegen 194 tekenpixels), dus de slinger
+       naar links en rechts moet het werk doen -- en met de hand neergezette haltes
+       kunnen dat per ongeluk opgeven. Alleen kijken en zeggen: er wordt niets
+       verschoven, want de haltes zet jíj neer. */
+    const botst = [];
+    const stops = [...frame.querySelectorAll('.tour-stop')];
+    stops.forEach((a, i) => {
+      const sa = a.querySelector('.cstars');
+      if (!sa) return;
+      const ra = sa.getBoundingClientRect();
+      // de sterrenrij is breed maar grotendeels leeg; alleen de middelste helft telt
+      const kern = { l: ra.left + ra.width * .25, r: ra.right - ra.width * .25, t: ra.top, b: ra.bottom };
+      stops.forEach((c, j) => {
+        if (j <= i) return;
+        const dot = c.querySelector('.dot').getBoundingClientRect();
+        const sc = c.querySelector('.cstars');
+        const rc = sc ? sc.getBoundingClientRect() : null;
+        const kernC = rc ? { l: rc.left + rc.width * .25, r: rc.right - rc.width * .25, t: rc.top, b: rc.bottom } : null;
+        const raakt = (p1, p2) => p1.l < p2.r && p1.r > p2.l && p1.t < p2.b && p1.b > p2.t;
+        if (raakt(kern, { l: dot.left, r: dot.right, t: dot.top, b: dot.bottom })
+            || (kernC && raakt(kern, kernC))) {
+          botst.push((i + 1) + '\u2194' + (j + 1));
+        }
+      });
+    });
+    stops.forEach((st, i) => st.classList.toggle('botst',
+      botst.some(x => x.split('\u2194').indexOf(String(i + 1)) >= 0)));
+
     const chip = F('st-onder');
     if (chip) {
-      chip.hidden = !uit.length;
-      chip.textContent = uit.length ? '⚠ buiten de veilige zone: halte ' + uit.join(', ') : '';
+      const regels = [];
+      if (uit.length) regels.push('\u26a0 buiten de veilige zone: halte ' + uit.join(', '));
+      if (botst.length) regels.push('\u00b7 sterren lopen in elkaar of over een halte: ' + botst.join(', '));
+      chip.hidden = !regels.length;
+      chip.innerHTML = regels.join('<br>');
     }
   }
 
