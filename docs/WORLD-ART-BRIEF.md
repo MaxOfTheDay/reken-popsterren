@@ -74,33 +74,51 @@ pills). Everything between and behind them is your illustration.
 | bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px, full width, translucent | 9.7% | 210 |
 
 A third thing is not chrome but takes room: **the star (the player's avatar) stands above
-her current stop**, 170 × 213 art px, so a stop near the top needs clear sky above it or
-her head reaches the pills.
+her current stop**, 170 × 213 art px. She is the reason the top of the zone used to sit so
+low — see "her band" below.
 
-Re-measured across eight devices after the header became transparent and the star got
-smaller. Each edge is set by a different phone, and never by the design target:
+Measured across eight devices. Each edge is set by a different phone, and never by the
+design target:
 
 | edge | limit | set by | why |
 |---|---|---|---|
 | x | **18.5%** per side | 21:9 (412 × 961) | crops the most off the sides |
-| y top | **22.6%** | small phone (320 × 568) | the 52 px of pills is a bigger bite of a short screen |
+| y top | **13.97%** | small phone (320 × 568) | the header is a fixed 62 px, which is a bigger bite of a short screen; the top of the medallion has to clear it |
 | y bottom | **82.3%** | iPhone SE (375 × 667) | an 82 px bar on a 667 px screen — and that map does not scroll, so nothing can be pulled out from under it |
 
 Rounded inwards, that gives the contract:
 
-> **Stop centres live inside x 19–81%, y 23–82%.**
-> In art pixels: **x 231 … 984, y 497 … 1771.**
+> **Stop centres live inside x 19–81%, y 14–82%.**
+> In art pixels: **x 231 … 984, y 302 … 1771.**
 
-This is 2–3% tighter on every edge than the previous contract, which had been set on the
-design target alone while the header was still an opaque band. A stop placed on the old
-line was clipped on two of the eight devices — including by the default layout itself.
-The default now spans x 24–76%, y 23–82% and clears on all eight.
+### Her band: y 14–23%
+
+The top used to be 23%, and that was never the header — it was her. She stands *above* her
+stop and is nearly 11% of the map tall, and unlike the header that 11% is the same bite on
+every device (the header is only 6.5–10.9%). She was two thirds of the top margin.
+
+So she is now allowed in front of the pills instead: **when she stands close enough to
+touch the header, the header dims to 18%** and she is visible straight through it. It comes
+back the moment she moves on. The three top elements stay exactly where they are and stay
+tappable while dimmed — the ladder and the dressing room are reachable from the top stop
+like anywhere else.
+
+What is left is the requirement that the *medallion* stays clear of the header, because a
+pill on top of it would steal the tap. That is the 14%.
+
+Practically: **a stop between y 14% and 23% is fine.** It is where the finale of a world
+belongs. The only consequence is that the world name and the diamond count go quiet while
+she is standing there. The studio draws that band in gold, labelled *hier dimt de
+bovenbalk*; the green box is the hard edge, the gold band is a note.
 
 The dashed green box in the world studio (`?debug&mapedit` → **raster**) is exactly this
 rectangle — draw against that, not against these numbers.
 
 Everything outside the box is still seen (it is the world, not padding) — it just must not
 carry anything the player has to *reach*.
+
+The default sling (for a world with no drawing yet) still stops at y 23%: there is nothing
+to gain by making an undrawn world dim its own header.
 
 ---
 
@@ -155,7 +173,7 @@ behind it:
   the world name and the diamonds. They float over the drawing rather than sitting on a
   panel, so whatever is behind them still shows; keep anything you want *read* (a sign, a
   landmark) out from under them. The pill text carries its own dark halo, so a bright sky
-  behind it is fine.
+  behind it is fine. They fade to 18% whenever the star stands against them (§2).
 
 The practical rule: **keep the corridor the route runs through mid-to-dark, and save the
 bright values for the edges.** A fire world can be blazing along the sides as long as the
@@ -185,7 +203,7 @@ And two things that are deliberately **not** in the art:
 - [ ] The world has an identity that survives at thumbnail size (ice, jungle, fire…).
 - [ ] It reads bottom-to-top: the player climbs.
 - [ ] Eight landings, ~182 art px apart, at least 175 px across, inside x 231–984 /
-      y 497–1771.
+      y 302–1771. The top one may sit in her band (y 302–497) — see §2.
 - [ ] Quiet sky above each landing (215 px).
 - [ ] The corridor is mid-to-dark; bright values live at the edges.
 - [ ] Nothing that must be *seen* in the top 169 px or the bottom 210 px.
@@ -223,14 +241,15 @@ document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
 
 // art px per CSS px
 const f = document.querySelector('.world-frame').getBoundingClientRect();
-1080 / f.width;
+1215 / f.width;   // ART_W
 ```
 
 Re-run these after any change to the top bar, the bottom nav, the medallion size, the
 star's size, or the art aspect — those five are the only things that move the safe zone.
-If one changes, update §2 and §3 here *and* `.me-safe` in `startMapEdit()`, which draws the
-box in the studio; they are two copies of the same contract and drifting apart would be
-worse than having no document.
+If one changes, update §2 and §3 here; the studio box and the pre-publish check both read
+`ZONE` in `index.html`, so those two follow by themselves. Section **7c-bis** of
+`test/profiles.test.js` re-measures the top edge on five devices and fails if the number
+in `ZONE` stops matching what the browser does.
 
 ### The bug this section exists for
 

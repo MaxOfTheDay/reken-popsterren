@@ -590,6 +590,22 @@
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 0; }
   #screen-map .screen-header { margin-bottom: 0; }
+  /* Staat de ster op een halte zó hoog dat ze tegen de kop aan komt, dan stapt de
+     kop opzij. Zij is op dat moment het onderwerp -- de wereldnaam en het aantal
+     diamanten zijn dat niet, en ze weet allebei al.
+
+     Dimmen en niet wegschuiven, en ook niet haar ervóór zetten: de drie koptekens
+     blijven staan waar ze stonden en blijven aanraakbaar (opacity raakt het
+     raakvlak niet), dus de ladder en de kleedkamer zijn ook vanaf de bovenste halte
+     gewoon te bereiken. Op .18 is de pil nog een vindbare vorm en is zij er dwars
+     doorheen te zien.
+
+     Het scheelt 9 procentpunt bovenaan de veilige zone; zie ZONE. */
+  #screen-map .screen-header { transition: opacity .3s ease; }
+  #screen-map.ster-bij-kop .screen-header { opacity: .18; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-map .screen-header { transition: none; }
+  }
   /* Drie dingen, drie gewichten. Het portretje draagt géén pil: het is al een
      rondje met een rand, en een rondje in een pil is een rondje in een rondje.
      De naam eronder is weg -- wie er speelt zie je aan haar gezicht, en zij is de
@@ -4162,10 +4178,10 @@ function defaultNodes(n) {
     // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
     // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
     // ruimte tussen de haltes komt van de verticale spreiding hieronder.
-    // y van 82% tot 23%: de veilige zone, opgemeten over acht toestellen (zie ZONE
-    // in de studio). Boven 23% steekt het hoofd van de ster achter de koppillen op
-    // een kleine telefoon; onder 82% valt de sterrenrij achter de navigatiebalk op
-    // een kort scherm dat niet schuift.
+    // y van 82% tot 23%: ruim binnen de veilige zone (zie ZONE). Die loopt sinds de
+    // kop opzij stapt door tot 14%, maar de standaardslinger blijft bewust op 23:
+    // dit is de opmaak van een wereld die nog géén tekening heeft, en daar is niets
+    // te winnen met een halte die de bovenbalk laat dimmen.
     out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 82 - t * 59 });
   }
   return out;
@@ -4196,19 +4212,29 @@ function worldNodes(w) {
 const ART_W = 1215, ART_H = 2160;
 
 /* De veilige zone voor haltemiddelpunten, in procenten van de tekening. Eén plek:
-   de standaardslinger hieronder, de stippellijn in de studio en de controle vooraf
+   de standaardslinger hierboven, de stippellijn in de studio en de controle vooraf
    lezen 'm alle drie hier.
 
-   Opnieuw gemeten over acht toestellen nadat de kop doorzichtig werd en de ster
-   kleiner. Elke rand wordt door een ánder toestel bepaald, en nooit door het
-   ontwerpdoel:
+   Opgemeten over acht toestellen. Elke rand wordt door een ánder toestel bepaald,
+   en nooit door het ontwerpdoel:
      x 18,5   een 21:9-telefoon (412x961) snijdt het meest van de zijkanten
-     y 22,6   een kleine telefoon (320x568): de 52px koppillen zijn daar een
-              grotere hap van het scherm
+     y 13,97  een kleine telefoon (320x568): daar is de vaste 62px kop de grootste
+              hap van het scherm, en de bovenste stiprand moet er net onderuit
      y 82,3   een iPhone SE (375x667): een vaste balk van 82px op een kort scherm,
               en die kaart schuift niet, dus er valt niets onderuit te halen
+
+   y0 stond lang op 23. Dat was niet de stip maar de ster: zij staat bóven haar
+   halte en is bijna 11% van het kader hoog, dus haar kruin raakte de pillen. Die
+   11% is een vaste hap op élk toestel -- de kop zelf is maar 6,5 tot 10,9% -- en
+   was daarmee twee derde van de bovenmarge. Ze mag nu gewoon vóór de pillen komen:
+   die stappen opzij zodra ze er tegenaan staat (zie kopOpzij). Wat overblijft is
+   de eis dat de stip zelf aanraakbaar blijft, en dat is 14%.
+
+   y0kop is geen grens maar een streep: boven die lijn dimt de bovenbalk op minstens
+   één toestel. Alleen de studio en de tekenbrief gebruiken 'm -- de dimming zelf
+   wordt gemeten, niet uit dit getal afgeleid.
    Naar binnen afgerond. Zie docs/WORLD-ART-BRIEF.md §2. */
-const ZONE = { x0: 19, x1: 81, y0: 23, y1: 82 };
+const ZONE = { x0: 19, x1: 81, y0: 14, y1: 82, y0kop: 23 };
 // Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
 // tekening, zodat de weg er exact overheen valt).
 const VB_W = ART_W, VB_H = ART_H;
@@ -4632,12 +4658,29 @@ function renderTourMap(travelFrom) {
       const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
       map.scrollTop = Math.max(0, y - map.clientHeight / 2);
     }
+    kopOpzij();
   });
+  // schuift de kaart, dan schuift zij onder de plakkende kop door
+  map.onscroll = kopOpzij;
 }
 /* Hoe hoog de kop en de navigatiebalk werkelijk zijn. De wereldknoppen gaan daar
    tussenin staan, en die maten hangen af van het lettertype, de veilige zones van
    het toestel en de toestelmaat die in de studio gekozen is -- dus opmeten in
    plaats van vastzetten. */
+/* Komt de ster tegen de bovenbalk aan te staan? Opmeten en niet uitrekenen: waar
+   zij staat hangt af van de halte, van de toestelmaat én van hoe ver de kaart
+   geschoven is (op een tablet schuift hij, en de kop plakt aan de vensterrand).
+   Alleen verticaal vergelijken -- dat dimt ook als ze net naast een pil staat, maar
+   het is voorspelbaar, en een halve pil naast haar hoofd leest slechter dan geen. */
+function kopOpzij() {
+  const scherm = $('screen-map');
+  if (!scherm) return;
+  const kop = scherm.querySelector('.screen-header');
+  const ster = scherm.querySelector('.tour-hero');
+  if (!kop || !ster) { scherm.classList.remove('ster-bij-kop'); return; }
+  const k = kop.getBoundingClientRect(), s = ster.getBoundingClientRect();
+  scherm.classList.toggle('ster-bij-kop', s.top < k.bottom && s.bottom > k.top);
+}
 function meetChroom() {
   const scherm = $('screen-map');
   const kop = scherm.querySelector('.hub-sticky');
@@ -4646,7 +4689,7 @@ function meetChroom() {
   if (nav) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
-addEventListener('resize', () => { if ($('screen-map')) meetChroom(); });
+addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij(); } });
 // Dezelfde sterrenregel voor élke halte: behaalde sterren vol, de rest dof.
 function starRowHTML(n) {
   const got = Math.max(0, Math.min(3, n));
@@ -8378,10 +8421,8 @@ function startMapEdit() {
       background-image:
         repeating-linear-gradient(90deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%),
         repeating-linear-gradient(180deg, rgba(255,255,255,.2) 0 1px, transparent 1px 10%); }
-    /* De veilige zone voor haltemiddelpunten: x 16-84% (cover snijdt op een lange
-       telefoon 10% per kant weg, plus de halve halte zelf), y 21-84% (de kop boven,
-       de navigatiebalk onder, en de ster die bóven haar halte staat).
-       Zie docs/WORLD-ART-BRIEF.md. */
+    /* De veilige zone voor haltemiddelpunten. De maten staan in ZONE in de JS; wat
+       ze betekenen staat daar ook. Zie docs/WORLD-ART-BRIEF.md §2. */
     /* Zelfde probleem als bij de stuurpunten: een dunne groene stippellijn verdwijnt
        op een lichte lucht. Een donkere lijn er strak omheen maakt hem overal zichtbaar.
        De maten komen uit ZONE in de JS, zodat de lijn en de controle nooit uiteen
@@ -8402,6 +8443,20 @@ function startMapEdit() {
       border-left: 1px dashed rgba(255,255,255,.35); border-right: 1px dashed rgba(255,255,255,.35); }
     .me-snee span { position: absolute; top: 12%; left: 4px; font: 600 9px/1.4 system-ui, sans-serif;
       color: rgba(255,255,255,.55); background: rgba(12,2,26,.45); padding: 2px 4px; border-radius: 3px; }
+    /* De bovenste strook van de veilige zone (ZONE.y0 tot y0kop): een halte mag daar
+       staan, maar de bovenbalk dimt dan zolang de ster er staat. Een streep en geen
+       verbod -- en dus zacht goud in plaats van groen of rood. */
+    /* Loopt exact zo breed als de groene doos: het is de bovenste strook dáárvan, en
+       niet een aparte band over de hele tekening. */
+    .me-kopband { position: absolute; z-index: 2; pointer-events: none;
+      border-bottom: 1.5px dashed rgba(255,205,110,.8);
+      background: repeating-linear-gradient(135deg,
+        rgba(255,205,110,.10) 0 9px, rgba(255,205,110,.03) 9px 18px); }
+    /* het label bovenin de strook: onderaan dekte het de bovenste halte af, die
+       per definitie op de onderrand van deze strook uitkomt */
+    .me-kopband span { position: absolute; left: 50%; transform: translateX(-50%);
+      top: 3px; padding: 1px 5px; border-radius: 4px;
+      font: 700 10px/1.3 system-ui, sans-serif; color: #2a1a00; background: rgba(255,205,110,.85); }
     .me-onder { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
       pointer-events: none; background: repeating-linear-gradient(135deg,
         rgba(255,86,86,.16) 0 10px, rgba(255,86,86,.05) 10px 20px);
@@ -8883,6 +8938,15 @@ function startMapEdit() {
       sn.style.right = '11.9%';
       sn.innerHTML = '<span>zichtbaar op elk toestel</span>';
       frame.appendChild(sn);
+      /* de strook waar een halte mag staan maar de bovenbalk voor de ster opzij gaat */
+      const kb = document.createElement('div');
+      kb.className = 'me-kopband';
+      kb.style.left = ZONE.x0 + '%';
+      kb.style.right = (100 - ZONE.x1) + '%';
+      kb.style.top = ZONE.y0 + '%';
+      kb.style.height = (ZONE.y0kop - ZONE.y0) + '%';
+      kb.innerHTML = '<span>hier dimt de bovenbalk</span>';
+      frame.appendChild(kb);
       toonOnderrand(frame);
     }
     if (gridOn) { const d = document.createElement('div'); d.className = 'me-grid'; frame.appendChild(d); }
