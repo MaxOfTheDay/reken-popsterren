@@ -38,10 +38,17 @@ cropped.
 | 1003 × 761 (browser) | 1003 × 1783 | nothing horizontally; scrolls 1022px |
 | 1440 × 900 (wide) | 415 × 737 centred | the stage — see below |
 
-Landscape and browser windows fill the screen the same way and scroll vertically, for as
-long as the drawing still looks good: at 1215 px wide there is at least one art pixel per
-screen pixel. Past that the app stops stretching it and presents a centred portrait stage
-instead, with the same drawing blurred and darkened in the margins.
+A window that is **taller than wide** fills the screen the same way and scrolls vertically.
+A window that is **wider than tall** (and at least 600 px high) becomes a centred portrait
+stage instead: the map as large as the height allows, with the same drawing blurred and
+darkened in the margins.
+
+The switch used to need `width ≥ 1216px` as well, on a quality argument that did not hold —
+the stage is smaller than the art either way, so nothing was ever upscaled. What it did
+create was a band of landscape windows below 1216 px stuck in phone mode on a wide screen,
+showing 42–51% of the map (a landscape tablet at 1024 × 768 showed 42%). The 600 px floor
+is there because the frame cannot go below 340 px wide, which is 604 px tall: a phone held
+sideways cannot fit that, so it keeps filling the screen.
 
 At 390 × 844 the art is displayed at **2.56 art px per CSS px**, so 1215 px of art is about
 1170 device px on a 3× phone — no upscale worth naming. Generate at **1215 × 2160 or
