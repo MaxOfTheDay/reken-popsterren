@@ -8393,6 +8393,15 @@ function startMapEdit() {
        env(safe-area-inset-bottom) van het toestel. Niet hetzelfde als de onderrand
        van de veilige zone: die is een vaste 16%, dit is wat er op dít toestel
        werkelijk onder zit. Op een lage telefoon is dat meer. */
+    /* Waar de langste telefoon (21:9) de zijkanten afsnijdt. Zonder deze lijnen leest
+       de veilige zone als een kooi -- alsof alles erbuiten verloren is. Dat is niet zo:
+       tussen deze lijn en de groene doos is de tekening op elk toestel gewoon te zien,
+       er mag alleen geen halte staan. Verder naar buiten valt weg op een lange
+       telefoon, en dáár hoort dus niets te staan wat gelézen moet worden. */
+    .me-snee { position: absolute; top: 0; bottom: 0; z-index: 2; pointer-events: none;
+      border-left: 1px dashed rgba(255,255,255,.35); border-right: 1px dashed rgba(255,255,255,.35); }
+    .me-snee span { position: absolute; top: 12%; left: 4px; font: 600 9px/1.4 system-ui, sans-serif;
+      color: rgba(255,255,255,.55); background: rgba(12,2,26,.45); padding: 2px 4px; border-radius: 3px; }
     .me-onder { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
       pointer-events: none; background: repeating-linear-gradient(135deg,
         rgba(255,86,86,.16) 0 10px, rgba(255,86,86,.05) 10px 20px);
@@ -8867,6 +8876,13 @@ function startMapEdit() {
       d.style.top = ZONE.y0 + '%';
       d.style.bottom = (100 - ZONE.y1) + '%';
       frame.appendChild(d);
+      /* de snede van de langste telefoon: 11,9% per kant (gemeten op 412x961) */
+      const sn = document.createElement('div');
+      sn.className = 'me-snee';
+      sn.style.left = '11.9%';
+      sn.style.right = '11.9%';
+      sn.innerHTML = '<span>zichtbaar op elk toestel</span>';
+      frame.appendChild(sn);
       toonOnderrand(frame);
     }
     if (gridOn) { const d = document.createElement('div'); d.className = 'me-grid'; frame.appendChild(d); }
