@@ -4147,10 +4147,11 @@ function defaultNodes(n) {
     // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
     // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
     // ruimte tussen de haltes komt van de verticale spreiding hieronder.
-    // y van 84% tot 21%: de veilige zone, opgemeten op 390x844. Boven 21% steekt
-    // het hoofd van de ster (die bóven haar halte staat) achter de kop; onder 84%
-    // valt de sterrenrij van de halte achter de navigatiebalk.
-    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 84 - t * 63 });
+    // y van 82% tot 23%: de veilige zone, opgemeten over acht toestellen (zie ZONE
+    // in de studio). Boven 23% steekt het hoofd van de ster achter de koppillen op
+    // een kleine telefoon; onder 82% valt de sterrenrij achter de navigatiebalk op
+    // een kort scherm dat niet schuift.
+    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 82 - t * 59 });
   }
   return out;
 }
@@ -4178,6 +4179,21 @@ function worldNodes(w) {
    zijn op een tablet -- waar de hele breedte in beeld komt -- voorgoed weg. Één
    plek om te wijzigen; de kaart, de weg en de studio volgen vanzelf. */
 const ART_W = 1215, ART_H = 2160;
+
+/* De veilige zone voor haltemiddelpunten, in procenten van de tekening. Eén plek:
+   de standaardslinger hieronder, de stippellijn in de studio en de controle vooraf
+   lezen 'm alle drie hier.
+
+   Opnieuw gemeten over acht toestellen nadat de kop doorzichtig werd en de ster
+   kleiner. Elke rand wordt door een ánder toestel bepaald, en nooit door het
+   ontwerpdoel:
+     x 18,5   een 21:9-telefoon (412x961) snijdt het meest van de zijkanten
+     y 22,6   een kleine telefoon (320x568): de 52px koppillen zijn daar een
+              grotere hap van het scherm
+     y 82,3   een iPhone SE (375x667): een vaste balk van 82px op een kort scherm,
+              en die kaart schuift niet, dus er valt niets onderuit te halen
+   Naar binnen afgerond. Zie docs/WORLD-ART-BRIEF.md §2. */
+const ZONE = { x0: 19, x1: 81, y0: 23, y1: 82 };
 // Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
 // tekening, zodat de weg er exact overheen valt).
 const VB_W = ART_W, VB_H = ART_H;
@@ -9567,10 +9583,6 @@ function startMapEdit() {
      invoervelden, en de pijltjes verschuiven 'm. 0,2% per tik, 1% met Shift -- dat is
      op een tekening van 2160 hoog ruim 4 respectievelijk 21 pixels. */
   const STAP = 0.2;
-  /* De veilige zone voor haltemiddelpunten, in procenten van de tekening. Eén plek:
-     de stippellijn op de kaart én de controle vooraf lezen hem hier.
-     Zie docs/WORLD-ART-BRIEF.md §2 voor waar deze getallen vandaan komen. */
-  const ZONE = { x0: 16, x1: 84, y0: 21, y1: 84 };
   function kies(nieuw) {
     sel = nieuw;
     markeerSelectie();
