@@ -1242,15 +1242,30 @@
                   kolom stapt en het binnenkomende scherm meteen zijn volle maat
                   krijgt -- anders zouden er even twee schermen naast elkaar in
                   dezelfde flexkolom staan en springt de opmaak.
-     .komt-op     het scherm dat aankomt. Zet de eigen fade van .screen.active uit,
-                  want die zou met de groei-animatie vechten. */
+     .komt-op     het scherm dat aankomt. Doet niets anders dan de eigen fade van
+                  .screen.active uitzetten, want die zou met de animatie vechten.
+     .komt-boven  ... en ligt bovenop het vertrekkende scherm. Alleen nodig bij
+                  kaart -> zaal, waar de zaal eroverheen komt; op de terugweg
+                  hoort de kaart er juist ónder.
+
+     De z-waarden zijn klein en gelden alleen tussen de schermen onderling: #app
+     is zelf een stapelcontext (position:relative, z-index 1), dus geen enkel
+     scherm kan ooit boven .main-nav uitkomen. Die balk staat búiten de schermen
+     en wordt daarom apart meegenomen -- zie navMee.
+
+     Waarom show() .komt-op weghaalt en de animatie zelf niet: 'animation: none'
+     weghalen terwijl het scherm in beeld staat zet screenIn alsnog aan, en dan
+     fade't het scherm voor de tweede keer in. Dat was een zichtbare knipper aan
+     het eind van élke overgang -- gemeten: opacity viel op 330ms terug naar 0 en
+     klom er opnieuw uit. */
   /* Eén id per scherm i.p.v. !important: #screen-map/#screen-game/#screen-end
      zetten zelf al een position, en een klasse verliest daar altijd van. */
   #screen-map.wegvallend, #screen-game.wegvallend, #screen-end.wegvallend {
     display: flex; position: fixed; inset: 0; z-index: 2; pointer-events: none;
   }
-  #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op {
-    position: relative; z-index: 3; animation: none;
+  #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op { animation: none; }
+  #screen-map.komt-boven, #screen-game.komt-boven, #screen-end.komt-boven {
+    position: relative; z-index: 3;
   }
   @media (prefers-reduced-motion: reduce) {
     .venue-aan .question-card.vers { animation: none; }
@@ -4714,7 +4729,11 @@ function applyStage(el, p) {
 /* ================= Schermen ================= */
 const NAV_FOR_SCREEN = { 'screen-map': 'nav-map', 'screen-dress': 'nav-dress', 'screen-trophies': 'nav-tro' };
 function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  // De overgangsklassen horen bij één wissel en niet bij een scherm. Ze gaan er
+  // hier af en niet aan het eind van de animatie: zie .komt-op in het stijlblad --
+  // 'animation: none' weghalen terwijl een scherm in beeld staat laat screenIn
+  // alsnog aanslaan, en dat is een knipper.
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op', 'komt-boven'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
@@ -5235,11 +5254,32 @@ function openCareer() {
    toestand die kan blijven hangen als er iets misgaat -- valt de animatie weg,
    dan staat het spel er gewoon meteen. */
 const MOTION = {
-  tik: 70, snel: 220, nav: 320, reis: 380,          // dezelfde ladder als --t-* in :root
+  tik: 70, snel: 220,                               // dezelfde twee als --t-* in :root
+  /* Een schermwissel is géén overvloeier. Hier stond hij dat wel te zijn: het
+     vertrekkende scherm deed er 470ms over en het aankomende begon al na 80ms,
+     dus bijna vier tienden van een seconde stonden er twee halfdoorzichtige
+     schermen over elkaar. Dat leest niet als een overgang maar als haperende
+     software -- alsof het vorige scherm niet goed weg is.
+
+     Nu netjes na elkaar: eerst weg, dan pas aan.
+
+       weg    140  het vertrekkende scherm; klaar vóór er iets anders begint
+       komNa  110  wanneer het aankomende scherm losgaat -- 30ms vóór het vorige
+                   op nul staat, en dat is met opzet: precies aan elkaar plakken
+                   laat een paar beeldjes kale app-achtergrond zien, en dát ziet
+                   er weer uit als een flits. Op 30ms zijn ze allebei nog vrijwel
+                   onzichtbaar, dus er is geen moment waarop je twee schermen
+                   tegelijk kúnt lezen.
+       kom    190  het aankomende scherm
+
+     Samen 300ms van tik tot rust. */
+  weg: 140, komNa: 110, kom: 190,
   uit: 'cubic-bezier(.2,.8,.3,1)',                  // komt aan: snel los, zacht neerzetten
   in: 'cubic-bezier(.5,0,.75,0)',                   // vertrekt: zacht los, snel weg
   plop: 'cubic-bezier(.2,1.3,.4,1)',                // de enige overshoot: "ja, deze"
 };
+// hoe lang de hele wissel duurt, van de tik tot alles stilstaat
+MOTION.totaal = MOTION.komNa + MOTION.kom;
 
 /* Eén overgang tegelijk. Een kind tikt drie keer op dezelfde halte; dat hoort
    één keer de zaal in te gaan. De vlag gaat altijd weer uit -- eindigOvergang
@@ -5265,24 +5305,84 @@ function oorsprongPct(el, punt) {
   return ((punt.x - r.left) / r.width * 100).toFixed(1) + '% '
        + ((punt.y - r.top) / r.height * 100).toFixed(1) + '%';
 }
-/* Het scherm dat vertrekt: het wijkt terug en laat los. Vast gepositioneerd (zie
-   .wegvallend), zodat het uit de kolom stapt en het binnenkomende scherm meteen
-   zijn volle maat krijgt in plaats van er even naast te staan. */
-function schermWeg(el, dur) {
+/* Het scherm dat vertrekt -- één functie voor beide richtingen:
+
+     naarBinnen   je gaat een level ín. De kaart duikt naar het aangetikte punt
+                  toe (7% groter) en laat los.
+     anders       je komt er weer úit. Het scherm zakt een stukje weg (4% kleiner,
+                  10px omlaag).
+
+   Twee kanten van dezelfde beweging, dus één functie en één set getallen.
+
+   Het hele scherm beweegt, niet alleen de tekening erin. Dat was de eigenlijke
+   fout: de wereldtekening verdween netjes, maar de kop met de wereldnaam en de
+   diamanten bleef volledig ondoorzichtig staan terwijl de zaal er al doorheen
+   opkwam. Een scherm vertrekt in zijn geheel of niet.
+
+   Vast gepositioneerd (zie .wegvallend), zodat het uit de kolom stapt en het
+   binnenkomende scherm meteen zijn volle maat krijgt in plaats van er even naast
+   te staan -- en boven de vaste navigatiebalk, zodat die er niet doorheen prikt
+   terwijl dit scherm nog in beeld is. */
+function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
+  el.getAnimations().forEach(a => a.cancel());   // een tweede tik stapelt geen tweede animatie
   el.classList.add('wegvallend');
-  const op = () => { el.classList.remove('wegvallend'); el.getAnimations().forEach(a => a.cancel()); };
+  // draaipunt: de aangetikte halte, zodat de beweging om díe plek gaat en niet om
+  // het midden van het scherm. Dat is het enige wat de continuïteit draagt.
+  if (punt) el.style.transformOrigin = oorsprongPct(el, punt);
+  const op = () => {
+    el.classList.remove('wegvallend');           // meteen uit de opmaak: scheelt een volle laag
+    el.style.transformOrigin = '';
+    el.getAnimations().forEach(a => a.cancel());
+  };
   const a = el.animate(
-    [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.88)', opacity: 0 }],
-    { duration: dur, easing: MOTION.in, fill: 'forwards' });
+    [{ transform: 'none', opacity: 1 },
+     { transform: naarBinnen ? 'scale(1.07)' : 'scale(.96) translateY(10px)', opacity: 0 }],
+    { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
   a.onfinish = op;
-  setTimeout(op, dur + 260);
+  setTimeout(op, MOTION.weg + 260);              // vangnet
+}
+/* De vaste navigatiebalk staat buíten de schermen, dus hij doet niet vanzelf mee
+   met een wissel: hij knipt aan of uit op het moment dat show() hem zet. Tijdens
+   een overgang is dat precies het ene element dat verraadt dat er twee schermen
+   tegelijk staan -- een volledig ondoorzichtige balk over een scherm dat nog aan
+   het verschijnen is. Hij krijgt dus dezelfde fade als het scherm waar hij bij
+   hoort. */
+function navMee(naarBinnen) {
+  const nav = $('main-nav');
+  if (!nav || !nav.animate || motionOff()) return;
+  nav.getAnimations().forEach(a => a.cancel());
+  if (!naarBinnen) {
+    // De kaart komt op en neemt zijn balk mee. fill:'backwards' houdt hem op nul
+    // zolang de vorige nog wegvalt, dus hij verschijnt niet alvast over een zaal.
+    if (nav.style.display === 'none') return;
+    nav.animate([{ opacity: 0 }, { opacity: 1 }],
+      { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+    return;
+  }
+  /* Andersom: show() heeft de balk al uitgezet omdat er in een show geen
+     navigatie hoort. Maar de kaart is dan nog 140ms bezig met vertrekken, en een
+     kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij komt
+     dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem wilde. */
+  const terug = nav.style.display;
+  nav.style.display = 'flex';
+  const op = () => { nav.style.display = terug; nav.getAnimations().forEach(a => a.cancel()); };
+  const a = nav.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
+  a.onfinish = op;
+  setTimeout(op, MOTION.weg + 260);
 }
 /* Kaart -> zaal. "Ik koos deze plek, en nu ga ik er naar binnen."
      1  de halte drukt in en geeft een lichtkringetje terug (meteen, geen wachten)
-     2  de kaart duikt naar díe plek toe en laat los
-     3  de zaal groeit uit datzelfde punt op
-   Alles op transform en opacity; er wordt nergens iets opnieuw ingedeeld. */
+     2  de kaart duikt een klein stukje naar díe plek toe en is weg  (140ms)
+     3  pas dán komt de zaal uit datzelfde punt op                   (110-300ms)
+   Eén ding tegelijk: op geen enkel moment staan er twee leesbare schermen over
+   elkaar. Alles op transform en opacity; er wordt nergens iets opnieuw ingedeeld.
+
+   De beweging is expres klein -- 7% inzoomen, 6% uitzoomen. Wat de continuïteit
+   draagt is niet hóéveel er beweegt maar wáárvandaan: beide animaties draaien om
+   het punt dat het kind aantikte (zie oorsprongPct), dus de zaal komt uit die
+   plek en niet uit het midden van het scherm. */
 function enterLevel(lvl, stopEl) {
   if (overgangBezig) return;               // tweede tik doet niets extra's
   sndClick();
@@ -5293,14 +5393,12 @@ function enterLevel(lvl, stopEl) {
     return;
   }
   overgangBezig = true;
-  const frame = kaart.querySelector('.world-frame');
   /* Het vangnet staat er vóór er iets gebeurt. Zou startLevel struikelen, dan
      wordt de opruimer nog steeds afgeroepen -- anders bleef overgangBezig op true
-     staan en deed geen enkele halte ooit nog iets. */
-  const klaar = eindigOvergang(null, MOTION.reis + 80, () => {
-    kaart.classList.remove('wegvallend');
-    if (frame) { frame.style.transformOrigin = ''; frame.getAnimations().forEach(a => a.cancel()); }
-    spel.classList.remove('komt-op');
+     staan en deed geen enkele halte ooit nog iets. De kaart ruimt zichzelf op,
+     zie schermWeg; hier gaat het alleen over het scherm dat aankomt. */
+  const klaar = eindigOvergang(null, MOTION.totaal, () => {
+    spel.classList.remove('komt-boven');   // .komt-op blijft tot de volgende show()
     spel.style.transformOrigin = '';
     spel.style.pointerEvents = '';
   });
@@ -5312,37 +5410,49 @@ function enterLevel(lvl, stopEl) {
     [{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(1.05)' }],
     { duration: 240, easing: MOTION.plop, fill: 'forwards' });
 
-  kaart.classList.add('wegvallend');       // 2
-  if (frame && frame.animate) {
-    frame.style.transformOrigin = oorsprongPct(frame, punt);
-    frame.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.5)', opacity: 0 }],
-      { duration: MOTION.reis + 90, easing: MOTION.in, fill: 'forwards' });
-  }
+  schermWeg(kaart, true, punt);            // 2 -- de hele kaart, om het aangetikte punt
 
-  startLevel(lvl);                         // 3 -- het spel staat er nú al
-  spel.classList.add('komt-op');
+  /* 3 -- het spel staat er nú al, ook al zie je het nog niet.
+     startLevel doet zijn volle werk in dezelfde beurt als de tik; de animatie
+     loopt daar overheen. fill:'backwards' houdt het scherm op opacity 0 zolang de
+     vertraging loopt, dus "later beginnen" kost geen enkele keten van timers --
+     het is één animatie die gewoon later aan is. Valt de animatie weg, dan staat
+     het spel er meteen. */
+  startLevel(lvl);
+  spel.classList.add('komt-op', 'komt-boven');
+  navMee(true);                            // de balk van de kaart gaat mét de kaart weg
   spel.style.transformOrigin = oorsprongPct(spel, punt);
   spel.style.pointerEvents = 'none';       // niet op een bewegend doel kunnen tikken
   const groei = spel.animate(
-    [{ transform: 'scale(.34)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
-    { duration: MOTION.reis, delay: 80, easing: MOTION.uit, fill: 'backwards' });
+    [{ transform: 'scale(.94) translateY(10px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+    { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
   groei.onfinish = klaar;
 }
-/* Zaal -> kaart: precies de omgekeerde zin. De kaart komt terug ingezoomd op de
-   halte waar de show speelde en zakt daar vandaan naar zijn gewone maat, zodat je
-   terugkomt op de plek waar je wegging en niet ergens op een kaart.
+/* Zaal -> kaart: precies de omgekeerde zin. De kaart komt licht ingezoomd op de
+   halte waar de show speelde binnen en zakt daar vandaan naar zijn gewone maat,
+   zodat je terugkomt op de plek waar je wegging en niet ergens op een kaart.
+
+   Dit beweegt het hele scherm en niet alleen de tekening. Dat was de fout die de
+   overlap het duidelijkst maakte: de tekening kwam netjes op, maar de kop met de
+   wereldnaam en de diamanten stond er vanaf het eerste beeldje volledig
+   ondoorzichtig overheen -- terwijl de zaal nog in beeld was. Kop, tekening en
+   haltes horen bij elkaar; ze komen samen op of niet.
+
    Aangeroepen vanuit de rAF van renderTourMap: dan staan de haltes er en zijn ze
    op te meten. */
 function kaartTerugZoom(map, lvl) {
-  const frame = map.querySelector('.world-frame');
+  const scherm = $('screen-map');
   const doel = map.querySelector('.tour-stop[data-lvl="' + lvl + '"]');
-  if (!frame || !doel || !frame.animate || motionOff()) return;
+  if (!scherm || !doel || !scherm.animate || motionOff()) return;
   const d = doel.getBoundingClientRect();
-  frame.style.transformOrigin = oorsprongPct(frame, { x: d.left + d.width / 2, y: d.top + d.height / 2 });
-  const a = frame.animate(
-    [{ transform: 'scale(1.45)', opacity: .3 }, { transform: 'scale(1)', opacity: 1 }],
-    { duration: MOTION.reis + 90, easing: MOTION.uit });
-  a.onfinish = () => { frame.style.transformOrigin = ''; };
+  scherm.classList.add('komt-op');          // géén komt-boven: de zaal hoort hier bovenop
+  scherm.style.transformOrigin = oorsprongPct(scherm, { x: d.left + d.width / 2, y: d.top + d.height / 2 });
+  const a = scherm.animate(
+    [{ transform: 'scale(1.06)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+    { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+  const op = () => { scherm.style.transformOrigin = ''; };
+  a.onfinish = op;
+  setTimeout(op, MOTION.totaal + 260);     // vangnet, net als bij elke andere overgang
 }
 /* De halte waar de laatste show speelde. Twee losse dingen, bewust:
      naShowLvl   onthouden, zodat élke uitgang van het eindscherm (de knop, de ←,
@@ -5373,7 +5483,11 @@ function goMap(vanLvl) {
   show('screen-map');
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
-  if (kaartFocus && vorige && vorige !== $('screen-map')) schermWeg(vorige, MOTION.nav);
+  /* De balk wordt hier meegenomen en niet in kaartTerugZoom: die draait pas in de
+     rAF van renderTourMap, één beeldje later, en show() heeft de balk dan al een
+     keer volledig zichtbaar over de nog vertrekkende zaal getekend. Eén beeldje,
+     maar wel precies het beeld dat deze hele wijziging moet wegnemen. */
+  if (kaartFocus && vorige && vorige !== $('screen-map')) { schermWeg(vorige, false); navMee(false); }
   if (travel) requestAnimationFrame(() => runTravel(travel));
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
