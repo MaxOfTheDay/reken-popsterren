@@ -223,6 +223,28 @@
        navigatiebalk liggen vast: ZONE (de veilige zone van de wereldtekeningen)
        is eruit gemeten. Zie docs/WORLD-ART-BRIEF.md §8. */
     --balk-w: min(94vw, 430px);
+
+    /* ---- Bewegingstaal: vier snelheden, en niets ertussen ------------------
+       Beweging is hier geen versiering maar een zin: ze zegt wat er net gebeurde
+       en waar je naartoe gaat. Hoe groter de betekenis, hoe langer hij mag duren
+       -- en omgekeerd: een knop die 300ms nadenkt vóélt kapot.
+
+         tik    70ms   een knop die indrukt. Moet ónder de reactietijd blijven.
+         snel  220ms   goed / fout: het antwoord op wat het kind net deed.
+         nav   320ms   een gewone schermwissel.
+         reis  380ms   kaart <-> zaal. De enige beweging die ruimte uitlegt en
+                       daarom de enige die je mag zien duren.
+
+       Hier staan alleen de twee die de CSS zelf gebruikt. De andere twee horen bij
+       schermwissels, en die worden in JS geanimeerd (transform/opacity op een heel
+       scherm, met een opruimer) -- ze staan daarom in MOTION, boven goMap, samen
+       met de curves die die animaties gebruiken. Eén ladder, twee plekken, en de
+       hele ladder staat in beide commentaren zodat niemand er één uit het oog
+       verliest.
+
+       --ease-uit is alles wat áánkomt: snel los, zacht neerzetten. */
+    --t-tik: 70ms; --t-snel: 220ms;
+    --ease-uit: cubic-bezier(.2,.8,.3,1);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -1017,7 +1039,9 @@
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 18px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
-    transition: transform .07s, box-shadow .07s;
+    /* de snelste trede van de bewegingstaal: een antwoordknop moet indrukken
+       vóórdat een kind zich afvraagt of de tik aankwam */
+    transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
   .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
   .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
@@ -1033,6 +1057,218 @@
   .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
+
+  /* ================= De zaal (fase 3.1, nu alleen de Muziekwereld) ===========
+     Een show speelt in een plek, niet op een verloop. Deze laag maakt van het
+     spelscherm de binnenkant van de wereld die het kind net op de kaart aantikte.
+
+     De volgorde van onder naar boven is de hele afspraak, en ze loopt precies
+     omgekeerd aan hoe belangrijk iets is:
+
+       .venue-art     de wereld, onscherp en gedempt -- kleur en licht, geen vormen
+       .venue-bundel  de lichtbundel die op de ster valt
+       .venue-licht   het zaallicht, het vignet en -- het belangrijkste -- de
+                      donkere vloer waar de som op staat
+       .game-arena    de ster, de som, de antwoorden
+       .hub-sticky    de kop (zweeft, net als op de kaart)
+
+     Regel waar alles aan opgehangen is: alles onder ~52% van het scherm blijft
+     een rustig donker vlak. Dáár staat het rekenwerk, en het rekenwerk is het
+     scherpste, lichtste en grootste ding op dit scherm. De zaal mag alles erboven
+     hebben. Zie docs/ART-DIRECTION.md §4.3.
+
+     Een wereld zonder `venue` krijgt hier niets van: .venue staat op display:none
+     en élke regel hieronder hangt aan .venue-aan. Dat is geen toeval maar de
+     afspraak van deze fase -- één wereld doet het voor, de rest blijft staan. */
+  #screen-game, #screen-end { position: relative; }
+  .venue { display: none; position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .venue-aan .venue { display: block; }
+  /* Boven de zaal uit. .hub-sticky draagt zijn eigen z-index (5), dus alleen de
+     arena en de eindkaart hebben hier iets te zeggen. */
+  .venue-aan .game-arena, .venue-aan .result-card { position: relative; z-index: 1; }
+  /* De wereldtekening zelf, onscherp. De negatieve inset vangt de rand op die de
+     blur anders naar binnen trekt; de mask laat het beeld naar de vloer toe
+     wegvallen zodat er nooit getekende drukte achter een getal staat. */
+  .venue-art {
+    position: absolute; inset: -7%;
+    background-image: var(--venue-art, none);
+    /* Zoom op de breedte en niet 'cover', want cover perst de héle wereldkaart in
+       het scherm en dan kijk je naar een landschap in plaats van naar een zaal.
+       Op de breedte, omdat de tekening staand is: dan dekt hij altijd, ook als het
+       venster breder wordt dan hoog. --venue-focus kiest daarbinnen het stuk. */
+    background-size: var(--venue-zoom, 190%) auto;
+    background-position: var(--venue-focus, 50% 10%);
+    background-repeat: no-repeat;
+    background-color: var(--w-deep, #170a35);
+    filter: blur(var(--venue-blur, 12px)) brightness(.6) saturate(1.08);
+    -webkit-mask-image: linear-gradient(180deg, #000 0, #000 30%, rgba(0,0,0,.42) 56%, transparent 78%);
+    mask-image: linear-gradient(180deg, #000 0, #000 30%, rgba(0,0,0,.42) 56%, transparent 78%);
+  }
+  /* Zaallicht + vloer. Vier verlopen, één element: warm van boven (het is een
+     show), de wereldkleur in de hoeken (het is een zaal), en daaronder de vloer
+     die het onderste deel van het scherm terugbrengt naar rustig donker. */
+  .venue-licht {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(112% 40% at 50% 2%, rgba(255,222,150,.30), transparent 64%),
+      radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(18,3,40,.60) 100%),
+      linear-gradient(180deg, transparent 26%, rgba(22,4,44,.46) 46%,
+                      rgba(20,4,40,.80) 62%, rgba(18,3,38,.90) 100%);
+  }
+  /* Het voetlicht op de rand van het podium: een lijn licht, dwars over de vloer. */
+  .venue-licht::after {
+    content: ''; position: absolute; left: -10%; right: -10%; top: 44%; height: 26%;
+    background: radial-gradient(60% 100% at 50% 100%, rgba(255,206,128,.34), transparent 72%);
+    opacity: .6; transition: opacity var(--t-snel) ease;
+  }
+  /* De warme golf die bij een goed antwoord door de zaal trekt. Staat bewust als
+     eigen laag op opacity 0 klaar en wordt niet uit het beeld zelf gehaald: de
+     helderheid van .venue-art opdraaien zou een filter-overgang zijn, en dan
+     wordt die hele onscherpe tekening bij élk goed antwoord opnieuw berekend.
+     Twee lagen die alleen van opacity veranderen kosten de samensteller niets. */
+  .venue-licht::before {
+    content: ''; position: absolute; inset: 0; opacity: 0;
+    transition: opacity var(--t-snel) ease;
+    background:
+      radial-gradient(90% 44% at 50% 4%, rgba(255,226,158,.34), transparent 66%),
+      radial-gradient(70% 34% at 50% 52%, rgba(255,198,120,.22), transparent 74%);
+  }
+  /* Goed antwoord: de zaal licht één tel op -- zie submitAnswer/zaalJuicht, dat de
+     klasse 380ms zet. Meer dan dit doet de zaal niet; de knop, de diamanten en de
+     dans van de ster zeggen de rest. */
+  .venue.juist .venue-licht::after { opacity: 1; }
+  .venue.juist .venue-licht::before { opacity: 1; }
+
+  /* ---- De ster op het podium ----
+     Buiten een zaal is .show-panel precies wat het was: een kader met de paspop
+     erin. Ín een zaal valt dat kader weg -- een omlijst vakje is een etalage, en
+     zij staat niet in een etalage maar op een podium. Wat ervoor in de plaats
+     komt: een bundel van boven en een richel onder haar voeten. */
+  .show-panel { position: relative; }
+  .venue-bundel, .venue-vloer { display: none; pointer-events: none; }
+  .venue-aan .venue-bundel, .venue-aan .venue-vloer { display: block; position: absolute; z-index: 0; }
+  /* De bundel valt van boven het scherm op haar. Loopt bewust boven het paneel
+     uit: overloop naar bóven maakt een scrollvak nooit scrollbaar (alleen naar
+     onderen), dus dit kost geen schuifbalk en geen extra hoogte. */
+  .venue-aan .venue-bundel {
+    left: 50%; bottom: 8%; width: 210%; height: 260%; transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(255,238,196,.42) 0%, rgba(255,208,132,.15) 54%, rgba(255,196,120,0) 86%);
+    -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+    clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+    filter: blur(13px);
+  }
+  /* De richel waar ze op staat: een ellips onder haar voeten met een warme lip
+     aan de voorkant. Dit is wat "zij staat ergens" van "zij zweeft" onderscheidt. */
+  .venue-aan .venue-vloer {
+    left: 50%; bottom: -5%; width: 132%; height: 30%; transform: translateX(-50%);
+    border-radius: 50%;
+    background:
+      radial-gradient(52% 46% at 50% 14%, rgba(255,232,176,.70), rgba(255,190,104,.22) 56%, transparent 76%),
+      radial-gradient(58% 64% at 50% 52%, rgba(52,16,92,.82), rgba(22,4,44,.34) 72%, transparent 88%);
+    box-shadow: 0 0 40px rgba(255,196,116,.30), inset 0 2px 0 rgba(255,228,168,.35);
+  }
+  /* Op het eindscherm staat het podium ín een kaart. Het paneel moet dus precies
+     zo breed zijn als de paspop, anders loopt de richel als een streep dwars over
+     de hele kaart. De ruimte erboven is voor de slotchoreografie: die springt tot
+     38px omhoog, en zonder kader is dat nu zichtbaar in plaats van weggeknipt. */
+  .venue-aan .end-panel { width: 150px; margin: 24px auto 0; }
+  .venue-aan .end-stage { margin: 0; }
+  /* de kop van de kaart blijft bovenop, ook als ze op haar hoogste sprong zit */
+  .venue-aan .result-card .title { position: relative; z-index: 2; }
+  @media (max-height: 740px) {
+    .venue-aan .end-panel { width: 104px; margin-top: 12px; }
+  }
+  /* Het kader zelf gaat weg, de maat blijft: alles eromheen (de arena, de
+     smalle-schermregels) rekent op deze afmeting. */
+  .venue-aan .show-stage, .venue-aan .end-stage {
+    background: none !important; border: 0; box-shadow: none; overflow: visible;
+    position: relative; z-index: 1;
+  }
+  /* de gekleurde lichtvlekken van het oude kader, en zijn drie hoek-emoji:
+     het geschilderde licht van de zaal doet dit werk nu */
+  .venue-aan .show-stage::after, .venue-aan .end-stage::after { display: none; }
+  .venue-aan .show-stage .deco, .venue-aan .end-stage .deco { display: none; }
+  /* zonder kader mag ze groter -- ze is nu zelf het onderwerp en niet de inhoud
+     van een vakje. Een zachte schaduw onder haar houdt haar op de richel. */
+  .venue-aan .show-stage .avatar-holder, .venue-aan .end-stage .avatar-holder {
+    height: 104%; filter: drop-shadow(0 6px 10px rgba(14,2,30,.55));
+  }
+
+  /* ---- De kop van een show ----
+     Op de kaart zweeft de kop: geen balk, drie kleine pillen, de tekening loopt
+     er ongebroken onderdoor. In de zaal hoort dat net zo, en om precies dezelfde
+     reden -- elke pixel dekkende balk is een pixel zaal die een kind niet ziet.
+     Dezelfde stof (--hud-*), dus dit is letterlijk dezelfde kop, één scherm
+     verder. */
+  .venue-aan .hub-sticky {
+    background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 2px;
+  }
+  .venue-aan .screen-header .header-title { text-shadow: var(--hud-ink); }
+  .venue-aan .screen-header .icon-btn,
+  .venue-aan .screen-header .diamond-badge {
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
+  }
+  /* De diamantenteller is hier een teller en geen knop: hij is het doel waar de
+     verdiende diamanten naartoe vliegen. Een maat kleiner dan op de rustpunten,
+     zodat hij niet met de som concurreert. */
+  .venue-aan .screen-header .diamond-badge { font-size: 17px; padding: 6px 13px; }
+  /* Hartjes en showvoortgang: samen één pilletje van dezelfde stof, zodat ze als
+     één ding lezen ("hoe sta ik ervoor") in plaats van als twee meters. */
+  .venue-aan .game-progress-row {
+    padding: 5px 14px 6px; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+  }
+  /* de showvoortgang is hier de hoofdzaak, de hartjes de bijzin */
+  .venue-aan .notes-left { font-size: 15px; opacity: .92; }
+  .venue-aan .segbar > span { height: 8px; }
+
+  /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
+     zodat hij op de vloer staat en er niet op geplakt is. */
+  .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(255,198,120,.18); }
+  /* Elke nieuwe vraag komt binnen in plaats van te verspringen. Heel kort (140ms):
+     dit is geen overgang maar een aankondiging. */
+  .venue-aan .question-card.vers { animation: vraagIn .14s var(--ease-uit) both; }
+  @keyframes vraagIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+  /* ---- Kaart <-> zaal ----
+     Twee klassen, en verder niets. Beide zetten alleen transform en opacity, dus
+     er wordt nooit iets opnieuw ingedeeld.
+
+     .wegvallend  het scherm dat vertrekt. Vast gepositioneerd, zodat het uit de
+                  kolom stapt en het binnenkomende scherm meteen zijn volle maat
+                  krijgt -- anders zouden er even twee schermen naast elkaar in
+                  dezelfde flexkolom staan en springt de opmaak.
+     .komt-op     het scherm dat aankomt. Zet de eigen fade van .screen.active uit,
+                  want die zou met de groei-animatie vechten. */
+  /* Eén id per scherm i.p.v. !important: #screen-map/#screen-game/#screen-end
+     zetten zelf al een position, en een klasse verliest daar altijd van. */
+  #screen-map.wegvallend, #screen-game.wegvallend, #screen-end.wegvallend {
+    display: flex; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  }
+  #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op {
+    position: relative; z-index: 3; animation: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .venue-aan .question-card.vers { animation: none; }
+    .venue-licht::after, .venue-licht::before { transition: none; }
+  }
+  /* Krap scherm: de zaal verliest hoogte, het rekenwerk niet. De bundel en de
+     richel krimpen mee met de paspop; de vloer begint hoger zodat er onder de
+     som nog evenveel rustig vlak overblijft. */
+  @media (max-height: 700px) {
+    .venue-licht { background:
+      radial-gradient(112% 34% at 50% 0%, rgba(255,222,150,.26), transparent 62%),
+      radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(18,3,40,.60) 100%),
+      linear-gradient(180deg, transparent 18%, rgba(22,4,44,.50) 40%,
+                      rgba(20,4,40,.82) 58%, rgba(18,3,38,.90) 100%); }
+    .venue-licht::after { top: 38%; }
+    .venue-art { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 22%, rgba(0,0,0,.4) 46%, transparent 68%);
+      mask-image: linear-gradient(180deg, #000 0, #000 22%, rgba(0,0,0,.4) 46%, transparent 68%); }
+  }
 
   /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
   /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon)
@@ -1403,14 +1639,17 @@
     0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
     40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); }
   }
-  /* zachte "foute noot" animatie */
-  .wobble { animation: wobble .7s ease; }
+  /* Zachte "foute noot": een korte kanteling, geen schud. Duurde .7s en dat is
+     lang genoeg om als straf te lezen; op .42s is het een hoofdschudden en is de
+     som daarna meteen weer gewoon leesbaar. */
+  .wobble { animation: wobble .42s ease; }
   @keyframes wobble {
     0%,100% { transform: rotate(0) scale(1); }
-    20% { transform: rotate(-3deg) scale(.98); }
-    45% { transform: rotate(2.5deg) scale(.99); }
-    70% { transform: rotate(-1.5deg); }
+    25% { transform: rotate(-2.4deg) scale(.985); }
+    60% { transform: rotate(2deg) scale(.995); }
+    85% { transform: rotate(-1deg); }
   }
+  @media (prefers-reduced-motion: reduce) { .wobble { animation: none; } }
   .slip-note {
     position: fixed; left: 50%; top: 34%; transform: translateX(-50%);
     font-size: 52px; z-index: 60; pointer-events: none; opacity: 0;
@@ -2839,6 +3078,12 @@
 
   <!-- ===== Spel ===== -->
   <div class="screen" id="screen-game">
+    <!-- De zaal. Ligt achter alles (z 0) en vangt geen tikken. Staat er alleen
+         iets in als de wereld een `venue` heeft -- zie applyVenue. -->
+    <div class="venue" id="game-venue" aria-hidden="true">
+      <div class="venue-art"></div>
+      <div class="venue-licht"></div>
+    </div>
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen">✕</button>
@@ -2851,7 +3096,12 @@
       </div>
     </div>
     <div class="game-arena">
+      <!-- De bundel en het podium horen bij de ster, niet bij het scherm: ze staan
+           dus in dezelfde doos als zij en schuiven met elke indeling mee. Buiten een
+           zaalwereld staan ze op display:none en is dit exact het oude paneel. -->
       <div class="show-panel">
+        <div class="venue-bundel" aria-hidden="true"></div>
+        <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage stage-frame show-stage" id="show-stage">
           <div class="avatar-holder idle" id="game-avatar-inner"></div>
         </div>
@@ -2913,17 +3163,27 @@
 
   <!-- ===== Level einde ===== -->
   <div class="screen" id="screen-end">
+    <!-- dezelfde zaal als tijdens de show: het applaus valt in de zaal waar je
+         net stond, niet op een los tussenscherm -->
+    <div class="venue" id="end-venue" aria-hidden="true">
+      <div class="venue-art"></div>
+      <div class="venue-licht"></div>
+    </div>
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar kaart" title="Terug naar kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="goMapNaShow()" aria-label="Terug naar kaart" title="Terug naar kaart">←</button>
         <div class="header-title" id="end-lvl-label"></div>
         <div class="diamond-badge header-right">💎 <span id="end-diamonds">0</span></div>
       </div>
     </div>
     <div class="result-card">
       <h1 class="title" id="end-title"></h1>
-      <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
-        <div class="avatar-holder idle" id="end-avatar"></div>
+      <div class="show-panel end-panel">
+        <div class="venue-bundel" aria-hidden="true"></div>
+        <div class="venue-vloer" aria-hidden="true"></div>
+        <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
+          <div class="avatar-holder idle" id="end-avatar"></div>
+        </div>
       </div>
       <div class="result-stars" id="end-stars"></div>
       <div class="end-text" id="end-text"></div>
@@ -3270,6 +3530,14 @@ const WORLDS = [
   {
     id: 'muziek', name: 'Muziekwereld', icon: '🎵', levels: 8,
     art: 'assets/world/muziek-map.webp',
+    /* De zaal waar de show speelt (fase 3.1). Eén wereld heeft er nu een: de rest
+       ziet er precies zo uit als hiervoor. Zie venueArt() voor de drie velden.
+       art staat op null, dus valt hij terug op de wereldtekening zelf -- dezelfde
+       lucht, dezelfde kleuren, dezelfde hand. Dat is geen noodoplossing maar
+       precies de bedoeling: het kind stapt ín de plek die het net aantikte, en het
+       bestand staat al in de cache omdat de kaart het net getoond heeft.
+       Komt er ooit een eigen zaaltekening, dan is dit de enige regel die wijzigt. */
+    venue: { art: null, zoom: 230, focus: '50% 22%', blur: 9 },
     theme: { road: '#9a86bd', sky: '#3a1f6e', deep: '#170a35', glow: '#7a2f63' },
     nodes: [
       { x: 23.4, y: 79.3 },
@@ -3473,6 +3741,14 @@ function worldsSource() {
     const L = ['  {'];
     L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
     if (w.art) L.push(`    art: ${q(w.art)},`);
+    // de zaal van deze wereld (fase 3.1) -- mag ontbreken; art mag null zijn
+    if (w.venue) {
+      const v = w.venue;
+      L.push('    venue: { art: ' + (v.art ? q(v.art) : 'null')
+        + (v.zoom != null ? `, zoom: ${+v.zoom}` : '')
+        + (v.focus ? `, focus: ${q(v.focus)}` : '')
+        + (v.blur != null ? `, blur: ${+v.blur}` : '') + ' },');
+    }
     if (w.badge && (w.badge.emoji || w.badge.name)) {
       L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
     }
@@ -4039,7 +4315,13 @@ function beep(freq, dur, delay, type, vol) {
 }
 const sndClick = () => { buzz(8); beep(700, 0.06, 0, 'triangle', 0.1); };
 function sndGood() { buzz(30); beep(523, 0.14); beep(659, 0.14, 0.11); beep(784, 0.22, 0.22); }
-function sndWrong() { buzz([0, 55, 45, 55]); beep(200, 0.35, 0, 'sawtooth', 0.1); }
+/* "Niet die" en niet "fout!". Hier stond een zaagtand van 200 Hz, een derde
+   seconde lang: dat is het geluid van een spelshow-buzzer, en dat is precies wat
+   een misser in een rekenspel voor vijfjarigen níet hoort te zijn. Nu twee zachte
+   dalende driehoeknoten -- in de Muziekwereld leest dat vanzelf als een noot die
+   naast zat, en het is korter, zachter en een halve toon minder scherp. Het
+   trillen is meegegaan van vier stoten naar één korte. */
+function sndWrong() { buzz(35); beep(392, 0.15, 0, 'triangle', 0.09); beep(311, 0.22, 0.12, 'triangle', 0.08); }
 function sndCoin() { buzz(15); beep(988, 0.08, 0, 'square', 0.08); beep(1319, 0.18, 0.08, 'square', 0.08); }
 function sndWin() {
   buzz([0, 45, 60, 45, 60, 90]);
@@ -4931,8 +5213,152 @@ function openCareer() {
   // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
   speak(`Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
 }
-function goMap() {
+/* ================= Bewegingstaal: kaart <-> zaal (fase 3.1) =================
+   MOTION is de JS-kant van de bewegingsladder die boven in :root staat. Dezelfde
+   vier snelheden, en ze staan op twee plekken omdat een CSS-overgang en een
+   WAAPI-animatie nu eenmaal niet uit dezelfde bron kunnen lezen:
+
+     tik 70 . snel 220 . nav 320 . reis 380
+
+   De CSS draagt de twee korte (--t-tik, --t-snel, want dat zijn daar echte
+   overgangen); hier staan alle vier plus de curves. Verschuift er een, dan
+   verschuift hij op beide plekken.
+
+   Wat een overgang hier moet doen, en verder niets: uitleggen dat de zaal de plek
+   ís die je net aantikte. Geen titelkaartje, geen laadscherm, geen keten van
+   timers die op elkaar wachten. Vandaar de opzet hieronder:
+
+     het spel begint vóór de animatie, niet erna.
+
+   startLevel() doet zijn volle werk in dezelfde beurt als de tik; de animatie
+   loopt daar overheen. Er is dus geen moment waarop het scherm leeg is en geen
+   toestand die kan blijven hangen als er iets misgaat -- valt de animatie weg,
+   dan staat het spel er gewoon meteen. */
+const MOTION = {
+  tik: 70, snel: 220, nav: 320, reis: 380,          // dezelfde ladder als --t-* in :root
+  uit: 'cubic-bezier(.2,.8,.3,1)',                  // komt aan: snel los, zacht neerzetten
+  in: 'cubic-bezier(.5,0,.75,0)',                   // vertrekt: zacht los, snel weg
+  plop: 'cubic-bezier(.2,1.3,.4,1)',                // de enige overshoot: "ja, deze"
+};
+
+/* Eén overgang tegelijk. Een kind tikt drie keer op dezelfde halte; dat hoort
+   één keer de zaal in te gaan. De vlag gaat altijd weer uit -- eindigOvergang
+   hangt niet alleen aan animation.onfinish (die kan uitblijven als het scherm
+   tussentijds weggaat) maar ook aan een vangnet-timer. */
+let overgangBezig = false;
+function eindigOvergang(anim, dur, opruimen) {
+  let gedaan = false;
+  const klaar = () => {
+    if (gedaan) return;
+    gedaan = true;
+    overgangBezig = false;
+    try { opruimen(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
+  };
+  if (anim) anim.onfinish = klaar;
+  setTimeout(klaar, dur + 260);
+  return klaar;
+}
+// Transform-origin als percentage van een element, uit een punt in venstercoördinaten.
+function oorsprongPct(el, punt) {
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return '50% 50%';
+  return ((punt.x - r.left) / r.width * 100).toFixed(1) + '% '
+       + ((punt.y - r.top) / r.height * 100).toFixed(1) + '%';
+}
+/* Het scherm dat vertrekt: het wijkt terug en laat los. Vast gepositioneerd (zie
+   .wegvallend), zodat het uit de kolom stapt en het binnenkomende scherm meteen
+   zijn volle maat krijgt in plaats van er even naast te staan. */
+function schermWeg(el, dur) {
+  if (!el || !el.animate || motionOff()) return;
+  el.classList.add('wegvallend');
+  const op = () => { el.classList.remove('wegvallend'); el.getAnimations().forEach(a => a.cancel()); };
+  const a = el.animate(
+    [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.88)', opacity: 0 }],
+    { duration: dur, easing: MOTION.in, fill: 'forwards' });
+  a.onfinish = op;
+  setTimeout(op, dur + 260);
+}
+/* Kaart -> zaal. "Ik koos deze plek, en nu ga ik er naar binnen."
+     1  de halte drukt in en geeft een lichtkringetje terug (meteen, geen wachten)
+     2  de kaart duikt naar díe plek toe en laat los
+     3  de zaal groeit uit datzelfde punt op
+   Alles op transform en opacity; er wordt nergens iets opnieuw ingedeeld. */
+function enterLevel(lvl, stopEl) {
+  if (overgangBezig) return;               // tweede tik doet niets extra's
+  sndClick();
+  const kaart = $('screen-map'), spel = $('screen-game');
+  const rect = (stopEl && stopEl.getBoundingClientRect) ? stopEl.getBoundingClientRect() : null;
+  if (motionOff() || !rect || !rect.width || !spel.animate || !kaart.classList.contains('active')) {
+    startLevel(lvl);
+    return;
+  }
+  overgangBezig = true;
+  const frame = kaart.querySelector('.world-frame');
+  /* Het vangnet staat er vóór er iets gebeurt. Zou startLevel struikelen, dan
+     wordt de opruimer nog steeds afgeroepen -- anders bleef overgangBezig op true
+     staan en deed geen enkele halte ooit nog iets. */
+  const klaar = eindigOvergang(null, MOTION.reis + 80, () => {
+    kaart.classList.remove('wegvallend');
+    if (frame) { frame.style.transformOrigin = ''; frame.getAnimations().forEach(a => a.cancel()); }
+    spel.classList.remove('komt-op');
+    spel.style.transformOrigin = '';
+    spel.style.pointerEvents = '';
+  });
+  const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  tapRipple(punt.x, punt.y);               // 1 -- dezelfde tikreactie als elders in de app
+  // en de halte zelf zegt "ja, deze": één korte plop, vóór de kaart begint te duiken
+  const dot = stopEl.querySelector('.dot');
+  if (dot && dot.animate) dot.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(1.05)' }],
+    { duration: 240, easing: MOTION.plop, fill: 'forwards' });
+
+  kaart.classList.add('wegvallend');       // 2
+  if (frame && frame.animate) {
+    frame.style.transformOrigin = oorsprongPct(frame, punt);
+    frame.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.5)', opacity: 0 }],
+      { duration: MOTION.reis + 90, easing: MOTION.in, fill: 'forwards' });
+  }
+
+  startLevel(lvl);                         // 3 -- het spel staat er nú al
+  spel.classList.add('komt-op');
+  spel.style.transformOrigin = oorsprongPct(spel, punt);
+  spel.style.pointerEvents = 'none';       // niet op een bewegend doel kunnen tikken
+  const groei = spel.animate(
+    [{ transform: 'scale(.34)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
+    { duration: MOTION.reis, delay: 80, easing: MOTION.uit, fill: 'backwards' });
+  groei.onfinish = klaar;
+}
+/* Zaal -> kaart: precies de omgekeerde zin. De kaart komt terug ingezoomd op de
+   halte waar de show speelde en zakt daar vandaan naar zijn gewone maat, zodat je
+   terugkomt op de plek waar je wegging en niet ergens op een kaart.
+   Aangeroepen vanuit de rAF van renderTourMap: dan staan de haltes er en zijn ze
+   op te meten. */
+function kaartTerugZoom(map, lvl) {
+  const frame = map.querySelector('.world-frame');
+  const doel = map.querySelector('.tour-stop[data-lvl="' + lvl + '"]');
+  if (!frame || !doel || !frame.animate || motionOff()) return;
+  const d = doel.getBoundingClientRect();
+  frame.style.transformOrigin = oorsprongPct(frame, { x: d.left + d.width / 2, y: d.top + d.height / 2 });
+  const a = frame.animate(
+    [{ transform: 'scale(1.45)', opacity: .3 }, { transform: 'scale(1)', opacity: 1 }],
+    { duration: MOTION.reis + 90, easing: MOTION.uit });
+  a.onfinish = () => { frame.style.transformOrigin = ''; };
+}
+/* De halte waar de laatste show speelde. Twee losse dingen, bewust:
+     naShowLvl   onthouden, zodat élke uitgang van het eindscherm (de knop, de ←,
+                 de terugknop van het toestel) op dezelfde plek uitkomt
+     kaartFocus  een eenmalige opdracht aan de eerstvolgende kaart-opbouw. Wordt
+                 door renderTourMap meteen geleegd, zodat een latere kaart via de
+                 navigatiebalk gewoon normaal opengaat. */
+let naShowLvl = null, kaartFocus = null;
+function goMapNaShow() { sndClick(); goMap(naShowLvl); }
+
+function goMap(vanLvl) {
   const p = P();
+  // Alleen een échte halte laat de kaart terugzoomen. goMap komt ook langs als
+  // gewone functieverwijzing (terugknop, tabbladen) en krijgt dan van alles mee.
+  kaartFocus = (typeof vanLvl === 'number' && vanLvl > 0) ? vanLvl : null;
+  const vorige = document.querySelector('.screen.active');
   $('map-diamonds').textContent = p.diamonds;
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
@@ -4945,6 +5371,9 @@ function goMap() {
   // eerdere wereld duurt precies zolang je er blijft
   showWorld(worldFor(travel ? travel.from : p.level).index, travel ? travel.from : 0);
   show('screen-map');
+  // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
+  // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
+  if (kaartFocus && vorige && vorige !== $('screen-map')) schermWeg(vorige, MOTION.nav);
   if (travel) requestAnimationFrame(() => runTravel(travel));
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
@@ -4977,6 +5406,55 @@ function applyWorldTheme(el, world) {
     if (t[k]) el.style.setProperty('--w-' + k, t[k]);
     else el.style.removeProperty('--w-' + k);
   });
+}
+/* ---- De zaal: dezelfde wereld, van binnenuit (fase 3.1) --------------------
+   Een wereld die een `venue` heeft, speelt zijn shows in een getekende zaal in
+   plaats van op het vlakke app-verloop. Precies één wereld heeft er nu een
+   (Muziek); alle andere krijgen letterlijk hetzelfde scherm als hiervoor, omdat
+   venueFor() dan null teruggeeft en de klasse .venue-aan er nooit op komt.
+
+   Drie velden, en niet meer:
+     art    het bestand. null = val terug op de wereldtekening zelf. Dat is de
+            stand van nu: de kaart heeft die tekening net getoond, dus hij staat
+            in het geheugen én in de service-worker-cache -- de zaal kost geen
+            enkele extra aanvraag en geen enkele byte.
+     zoom   hoe ver je erop inzoomt, als percentage van de schermbreedte. 100 zou
+            de hele tekening in beeld persen -- dan kijk je naar een landschap, niet
+            naar een zaal. Hoog genoeg en je staat er middenin.
+     focus  wélk stuk je dan ziet (background-position). Bij de Muziekwereld is dat
+            de bovenkant van de kaart: daar staat de sterboog met de speakers en de
+            fonteinen, en dat is precies een podium.
+     blur   hoeveel onscherpte eroverheen. Dit is het verschil tussen "een tweede
+            kaart" en "de zaal achter je": de vormen worden licht en kleur, en de
+            som ervóór blijft het scherpste ding op het scherm.
+
+   Wordt hier ooit een echte zaaltekening ingehangen, dan hoort zoom op ~100,
+   focus op '50% 50%' en blur op 0-4 -- verder verandert er niets. */
+function venueFor(world) { return (world && world.venue) ? world.venue : null; }
+function venueArt(world) {
+  const v = venueFor(world);
+  if (!v) return '';
+  return v.art || world.art || '';
+}
+/* Zet de zaal op een scherm. Eén injectiepunt voor álle zaaldecor -- de
+   spelscherm-kop, het podium onder de ster en het eindscherm lezen daarna alleen
+   nog var(--venue-*) en weten dus niet in wélke wereld ze staan.
+   Geeft terug of er een zaal staat, zodat de aanroeper de klasse kan zetten. */
+function applyVenue(el, world) {
+  const v = venueFor(world);
+  const src = venueArt(world);
+  el.classList.toggle('venue-aan', !!(v && src));
+  applyWorldTheme(el, world);   // ook zonder zaal: nooit de kleuren van de vórige wereld
+  if (!v || !src) {
+    ['--venue-art', '--venue-focus', '--venue-zoom', '--venue-blur']
+      .forEach(k => el.style.removeProperty(k));
+    return false;
+  }
+  el.style.setProperty('--venue-art', `url("${src}")`);
+  el.style.setProperty('--venue-focus', v.focus || '50% 10%');
+  el.style.setProperty('--venue-zoom', (v.zoom == null ? 190 : v.zoom) + '%');
+  el.style.setProperty('--venue-blur', (v.blur == null ? 12 : v.blur) + 'px');
+  return true;
 }
 /* Alle werelden op een rij, met wat er nog te halen valt.
 
@@ -5113,7 +5591,10 @@ function renderTourMap(travelFrom) {
       + `${starRowHTML(st, gespeeld)}</div>`;
     b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
       + (open ? ` — ${st} van 3 sterren` : ' — nog op slot'));
-    if (open) b.onclick = () => { sndClick(); startLevel(lvl); };
+    // Tikken op een halte is niet "start een level" maar "ga die plek binnen":
+    // enterLevel doet het klikje, de halte-reactie en de overgang, en roept
+    // startLevel meteen zelf aan. Zie de bewegingstaal boven goMap.
+    if (open) b.onclick = () => enterLevel(lvl, b);
     frame.appendChild(b);
   });
 
@@ -5137,6 +5618,9 @@ function renderTourMap(travelFrom) {
     // navigatiebalk er wél en levert meetChroom een echte maat op
     meetChroom();
     kopOpzij();
+    // Terug uit een show: de kaart komt ingezoomd op die halte binnen en zakt
+    // daar vandaan terug. Eénmalig -- de opdracht wordt hier verbruikt.
+    if (kaartFocus) { const l = kaartFocus; kaartFocus = null; kaartTerugZoom(map, l); }
   });
   // schuift de kaart, dan schuift zij onder de plakkende kop door
   map.onscroll = kopOpzij;
@@ -6588,7 +7072,11 @@ function startLevel(lvl) {
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
+  // De zaal van deze wereld. Heeft de wereld er geen, dan geeft applyVenue false
+  // terug, blijft .venue-aan eraf en is dit scherm letterlijk wat het was: het
+  // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
+  applyVenue($('screen-game'), wl.world);
   show('screen-game');
   renderQuestion();
 }
@@ -6607,8 +7095,10 @@ function quitGame() {
   $('quit-modal').classList.remove('open');
   stopSpot();
   hideToast();
+  // ook een afgebroken show brengt je terug op de plek waar je hem begon
+  const lvl = G ? G.lvl : null;
   G = null;
-  goMap();
+  goMap(lvl);
 }
 
 /* Generieke mededeling/bevestiging in de eigen stijl van de app -- vervangt de
@@ -6663,6 +7153,13 @@ function renderQuestion() {
   renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
+  // Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
+  // opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
+  // antwoord dat er net was -- geen overgang, een aankondiging.
+  const kaart = $('question-card');
+  kaart.classList.remove('vers');
+  void kaart.offsetWidth;
+  kaart.classList.add('vers');
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
@@ -6812,7 +7309,12 @@ function submitAnswer(val, btnEl) {
     const trofees = checkTrophies(p);
     if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
     dance('game-avatar-inner');
-    setTimeout(nextStep, encore || q.gold ? 1400 : 1100);
+    zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
+    // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
+    // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
+    // wachten. Een gouden vraag en een extra show mogen wél even duren; die zijn
+    // bedoeld om op te vallen.
+    setTimeout(nextStep, encore || q.gold ? 1400 : 950);
     return;
   }
   // ---- fout ---- (zachte, vriendelijke animatie)
@@ -6823,8 +7325,11 @@ function submitAnswer(val, btnEl) {
   G.streak = 0;
   sndWrong();
   slipNote();
+  // "Niet die -- probeer nog eens", en klaar. 420ms i.p.v. 700: een misser mag
+  // duidelijk zijn maar hoort niet ook nog te dúren. De rode tegel blijft staan
+  // (die zegt wélke), de kaart schudt kort en is dan weer gewoon de som.
   $('question-card').classList.add('wobble');
-  setTimeout(() => $('question-card').classList.remove('wobble'), 700);
+  setTimeout(() => $('question-card').classList.remove('wobble'), 420);
   // een misser op een speciale vraag maakt de ronde "niet schoon" → frequentie omlaag
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
@@ -6865,6 +7370,19 @@ function submitAnswer(val, btnEl) {
   showToast(q.tmpl.replace('@', q.ans), nextStep, 'tik om verder te gaan 👉');
 }
 // het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
+/* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
+   erachter wordt een tel helderder. Eén klasse, twee opacity-overgangen in de CSS
+   -- geen tweede confetti, geen extra geluid, niets dat over de antwoordknop en de
+   dansende ster heen komt. Buiten een zaalwereld staat er geen .venue en doet dit
+   vanzelf niets. */
+let zaalTimer = null;
+function zaalJuicht() {
+  const z = $('game-venue');
+  if (!z || motionOff()) return;
+  z.classList.add('juist');
+  clearTimeout(zaalTimer);                        // snel achter elkaar goed: één gloed, geen stapel
+  zaalTimer = setTimeout(() => z.classList.remove('juist'), 380);
+}
 function loseHeart() {
   const el = $('notes-left');
   const left = Math.max(0, 3 - G.errors);
@@ -7032,6 +7550,9 @@ function endLevel(success) {
   const verdiend = G.earned + fanBonus;
   $('end-avatar').innerHTML = avatarSVG(p, 150);
   applyStage($('end-stage'), p);
+  // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
+  applyVenue($('screen-end'), wl.world);
+  naShowLvl = lvl;   // élke uitgang van dit scherm komt straks op déze halte uit
   if (success) {
     // Sterren: rekenmodus telt missers hard (foutloos = 3). Telmodus (kleuters) is
     // milder en kijkt naar hoeveel er over de héle ronde in één keer goed ging,
@@ -7092,7 +7613,7 @@ function endLevel(success) {
       if (remain > 0) mile.innerHTML = `<span class="milestone-hint">🎯 nog ${remain} ⭐ tot ${r.nextName}</span>`;
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
-    $('btn-end-next').onclick = () => { sndClick(); goMap(); };
+    $('btn-end-next').onclick = () => { sndClick(); goMap(lvl); };
     $('btn-end-alt').textContent = '👕 Kleedkamer';
     $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
     sndWin();
@@ -7112,7 +7633,7 @@ function endLevel(success) {
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
-    $('btn-end-alt').onclick = () => { sndClick(); goMap(); };
+    $('btn-end-alt').onclick = () => { sndClick(); goMap(lvl); };
   }
   $('end-diamonds').textContent = p.diamonds;
   G = null;
@@ -7147,7 +7668,7 @@ function renderEndStars(n) {
       } else {
         s.animate([{ opacity: 0 }, { opacity: .25 }], { duration: 400, easing: 'ease-out' });
       }
-    }, 650 + i * 400);
+    }, 420 + i * 300);
   }
   // Foutloos (3 sterren): een confetti-kanon vanuit de sterren zodra ze staan.
   if (n === 3 && !still) {
@@ -7155,7 +7676,7 @@ function renderEndStars(n) {
       const r = wrap.getBoundingClientRect();
       confettiBurst(r.left + r.width / 2, r.top + r.height / 2, 26, '⭐');
       if (wrap.animate) wrap.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
-    }, 1550);
+    }, 1160);
   }
 }
 
@@ -8333,7 +8854,7 @@ function backTarget() {
   // 2) het huidige scherm verlaten naar zijn eigen ouder -- exact dezelfde bestemming
   //    als de zichtbare ✕/←/tab-knop op dat scherm (nooit twee betekenissen van "terug").
   if ($('screen-game').classList.contains('active')) return askQuit;
-  if ($('screen-end').classList.contains('active')) return goMap;
+  if ($('screen-end').classList.contains('active')) return goMapNaShow;
   if ($('screen-memory').classList.contains('active')) return exitMemory;
   if ($('screen-settings').classList.contains('active')) return closeSettings;
   if ($('screen-newstar').classList.contains('active')) return closeNewStar;
