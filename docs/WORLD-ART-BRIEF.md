@@ -261,6 +261,14 @@ If one changes, update §2 and §3 here; the studio box and the pre-publish chec
 `test/profiles.test.js` re-measures the top edge on five devices and fails if the number
 in `ZONE` stops matching what the browser does.
 
+**Where the two chrome numbers live.** The map's header height is set by `--rand` and
+`--kop-gap` on `#screen-map` (10 px and 4 px, deliberately not the 12 px every other
+screen uses), and the nav's width by `--balk-w` in `:root`. Those are the knobs §2's
+top and bottom edges were measured against, so treat them as frozen while a world is
+being painted. Everything else in the layout skeleton — the per-screen `--kolom` that
+makes each header exactly as wide as its own content — is **width only** and cannot move
+the safe zone.
+
 ### The bug this section exists for
 
 The road is an SVG with a `viewBox`; the stops are positioned in **percentages of the

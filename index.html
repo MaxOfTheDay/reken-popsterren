@@ -164,6 +164,36 @@
     --hud-shadow: 0 2px 8px rgba(10, 2, 24, .22);
     --hud-ink: 0 1px 2px rgba(10, 2, 24, .95), 0 0 9px rgba(10, 2, 24, .6);
     --hud-h: 34px;
+
+    /* ---- Het skelet: twee breedtes, en niets ertussen ----
+       Hiervoor koos elk scherm zijn eigen maat en kwam de kop op géén van die
+       maten uit. Opgemeten: kop 700, winkeltabs 960, spelarena 860, kast en
+       winkelraster 680, instellingen 640, memory 620, eindkaart 420, en de
+       balken onderaan 430. Op een telefoon valt dat niet op -- daar wordt alles
+       100% -- maar op een tablet of bureaublad stond de donkere kopbalk 700 breed
+       boven een kolom van 680, met een balk van 430 eronder: drie randen op drie
+       plekken, alsof de drie bij verschillende schermen hoorden.
+
+         --balk-w   de zwevende balken ONDERaan: .main-nav en .dress-bar. Voor
+                    duimen gemaakt, dus bewust telefoonbreed en niet meegroeiend.
+                    Ook de kop van de kaart in liggende stand, zodat kaart + kop
+                    + balk daar samen één toestel vormen.
+         --kolom    de inhoudskolom van ÉÉN scherm. Elk scherm zet zijn eigen
+                    waarde (zie .screen hieronder) en zowel de kop als de inhoud
+                    lezen hem -- daarmee is "de kop is net zo breed als wat
+                    eronder staat" geen afspraak meer die je per scherm kunt
+                    vergeten, maar iets dat niet ánders kan.
+
+       Waarom niet één breedte voor alles: een balk die je met je duim bedient wil
+       telefoonbreed blijven, ook op een tablet, terwijl een raster met kaartjes
+       juist wél breder mag worden (op 680 staan er vier op een rij, op 430 nog
+       maar twee). Dat zijn twee verschillende dingen en die krijgen dus twee
+       maten -- maar niet zeven.
+
+       LET OP -- dit zijn alleen bréedtes. De hoogtes van de kop en de
+       navigatiebalk liggen vast: ZONE (de veilige zone van de wereldtekeningen)
+       is eruit gemeten. Zie docs/WORLD-ART-BRIEF.md §8. */
+    --balk-w: min(94vw, 430px);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -221,7 +251,43 @@
 
   /* schermen scrollen nooit zijwaarts: horizontaal scrollen gebeurt alleen
      ín de reisroute en de tabbladen zelf */
-  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden; }
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden;
+    /* --rand moet gelijk zijn aan de padding hierboven: de plakkende kop bloedt
+       er met een negatieve marge precies overheen, zodat hij tot de schermrand
+       doorloopt terwijl de inhoud eronder netjes binnen de rand blijft. Stond
+       drie keer met de hand uitgerekend (12 op de hubs, 8 in het spel, 10 op de
+       kaart); nu één keer, per scherm. */
+    --rand: 12px;
+    /* Hoeveel lucht er onder de kop zit voordat de inhoud begint. */
+    --kop-gap: 12px;
+    /* De inhoudskolom van dit scherm -- zie het skelet in :root. Elk scherm dat
+       iets anders wil, zet hem hieronder om; de kop volgt automatisch. */
+    --kolom: 680px;
+  }
+  /* Eén waarde per scherm, op één plek. Dit is de hele afspraak: wat hier staat
+     is óók de breedte van de kop van dat scherm.
+       kaart       100% -- de kop hoort bij de wereldtekening en die is
+                   volledig aflopend; in liggende stand knijpt de kaart zichzelf
+                   naar --balk-w en de kop gaat automatisch mee (zie onder).
+       spel        860 -- de arena, waar show en rekenen op een breed scherm
+                   naast elkaar staan.
+       eindscherm  420 -- de resultaatkaart. Smal, want het is één kaart.
+       instellingen/nieuwe ster  640 -- het instellingenvel.
+       memory      620 -- het kaartenraster.
+       profiel     560 -- de rij sterrenkaarten (dit scherm heeft geen kop).
+
+     De kaart wijkt daarnaast op twee hóógtes af (--rand 10 i.p.v. 12, --kop-gap
+     4 i.p.v. 12) en die blijven staan zoals ze staan: ZONE is uit de onderrand
+     van déze kop gemeten, dus er 2px aan draaien verschuift de veilige zone van
+     élke wereldtekening. Ze staan hier alleen niet meer als losse regel in de
+     kop-stijl, maar als dezelfde twee variabelen als elk ander scherm.
+     Zie docs/WORLD-ART-BRIEF.md §8. */
+  #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
+  #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
+  #screen-end { --kolom: 420px; }
+  #screen-settings, #screen-newstar { --kolom: 640px; }
+  #screen-memory { --kolom: 620px; }
+  #screen-profile { --kolom: 560px; }
   /* Schermwissels waren een harde knip. Tussen twee vlakke verlopen valt dat
      niet op; zodra er straks getekende achtergronden staan wel. Een animatie
      (geen transition): het element komt uit display:none, en daar loopt geen
@@ -313,7 +379,7 @@
   }
   .profile-row {
     display: flex; gap: 14px; justify-content: center; align-items: stretch;
-    width: 100%; max-width: 560px; margin: 16px 0 0; z-index: 1;
+    width: 100%; max-width: var(--kolom); margin: 16px 0 0; z-index: 1;
   }
   /* Het blok titel + sterren + knop hoort bij elkaar en staat samen in het midden.
      De auto-marge stond hiervoor op .profile-row zelf, dus alles eronder werd naar
@@ -552,9 +618,13 @@
   }
 
   /* ---- Home ---- */
+  /* De kop is nooit breder dan de inhoud waar hij bij hoort. Hier stond een
+     eigen max-width van 700px -- een achtste maat, die op geen enkel scherm
+     samenviel met de kolom eronder. Nu leest hij --kolom van het scherm, dus
+     "de kop lijnt uit met de inhoud" kan niet meer per scherm scheef lopen. */
   .screen-header {
     display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
-    align-items: center; gap: 12px; width: 100%; max-width: 700px; margin-bottom: 8px;
+    align-items: center; gap: 12px; width: 100%; max-width: var(--kolom, 680px); margin-bottom: 8px;
   }
   .screen-header .header-title {
     font-size: 24px; font-weight: 700; text-align: center; white-space: nowrap;
@@ -580,10 +650,10 @@
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
   /* ---- Kaart (hoofdscherm): topbalk, wolkjes en vaste navigatie onderaan ---- */
-  /* #screen-map heeft (net als de andere hub-schermen) 12px padding, behalve
-     links/rechts (0, de route mag edge-to-edge scrollen) en boven (10px i.p.v.
-     12px) -- vandaar de losse -10px/top:-10px hieronder i.p.v. de standaard
-     -12px die .hub-sticky's basisregel gebruikt. */
+  /* De kaart heeft 10px padding boven (niet 12) en 0 links/rechts: de route mag
+     edge-to-edge scrollen. Die 10 staat als --rand hierboven, zodat de kop hem
+     leest; horizontaal valt er niets te overbloeden en zet de kop-regel hieronder
+     zijn zijmarges daarom terug op 0. */
   #screen-map { position: relative; padding: 10px 0 100px; }
   /* Op de kaart heeft de kop géén eigen vlak: de tekening loopt er ongebroken
      onderdoor. Elke pixel balk is een pixel wereld die een kind niet ziet, en een
@@ -593,7 +663,7 @@
      De leesbaarheid komt nu van de drie groepjes zelf: elk draagt zijn eigen kleine
      pil met een beetje waas erachter. Dat is samen zo'n derde van de breedte in
      plaats van alles. */
-  #screen-map .hub-sticky { width: 100%; margin: -10px 0 4px; top: -10px;
+  #screen-map .hub-sticky { width: 100%; margin-left: 0; margin-right: 0;
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 0; }
   #screen-map .screen-header { margin-bottom: 0; }
@@ -818,7 +888,7 @@
      kost. Alle waarden staan als variabelen bovenaan. */
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
-    display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: min(94vw, 430px);
+    display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: var(--balk-w);
     background: var(--nav-bg);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
@@ -847,10 +917,11 @@
   /* ---- Spel ----
      Zelfde donkerpaarse .hub-sticky-kop als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·
      stad · 💎 op de eerste regel, hartjes + vraag-voortgang samen gecentreerd op de tweede.
-     #screen-game heeft (anders dan de andere hub-schermen) overal gelijke 8px padding,
-     dus de negatieve marge/breedte/top hieronder wijkt af van .hub-sticky's -12px/24px-basis. */
+     #screen-game heeft (anders dan de andere hub-schermen) overal gelijke 8px padding.
+     Dat stond hier vroeger nog een keer als een eigen kop-regel met -8px/16px/10px erin
+     uitgerekend; nu zet het scherm alleen --rand en --kop-gap om (zie .screen) en volgt
+     de kop daaruit. */
   #screen-game { padding: 8px; justify-content: flex-start; }
-  #screen-game .hub-sticky { width: calc(100% + 16px); margin: -8px -8px 10px; top: -8px; }
   /* Levens en voortgang stonden hier als één rij van elf bijna gelijke rondjes:
      drie hartjes plus acht stippen, twee betekenissen in dezelfde vorm. Nu twee
      vormen: hartjes links (hoeveel fouten mag ik nog), één balk in vakjes rechts
@@ -876,7 +947,7 @@
      één groep met een vast ritme, gecentreerd in wat er over is. */
   .game-arena {
     display: flex; gap: 16px; align-items: center; align-content: center; justify-content: center;
-    width: 100%; max-width: 860px; margin-top: 4px; flex-wrap: wrap; flex: 1 1 auto;
+    width: 100%; max-width: var(--kolom); margin-top: 4px; flex-wrap: wrap; flex: 1 1 auto;
   }
   .show-panel { display: flex; flex-direction: column; align-items: center; gap: 7px; }
   /* De publieksmeter zat als losse verticale buis náást de paspop: een leeg
@@ -1147,7 +1218,7 @@
   /* de kaartjes stonden klein in het midden met ~430px lucht eromheen; ze mogen
      de ruimte gewoon gebruiken -- het is een spel dat je op afstand van tafel speelt */
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
-  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(96vw, 620px); }
+  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(96vw, var(--kolom)); }
   .mem-card {
     position: relative; aspect-ratio: 1 / 1; border: none; background: none; cursor: pointer; padding: 0;
     perspective: 600px;
@@ -1467,7 +1538,7 @@
        rand, terwijl de navigatiebalk eronder wél op podiumbreedte staat -- dan
        lijken de twee balken bij twee verschillende schermen te horen. Dezelfde
        maat als .main-nav, zodat ze samen één toestel vormen. */
-    #screen-map .hub-sticky { width: min(94vw, 430px); margin-left: auto; margin-right: auto; }
+    #screen-map .hub-sticky { width: var(--balk-w); margin-left: auto; margin-right: auto; }
   }
   /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt */
@@ -1740,7 +1811,7 @@
   .kast-bar { width: 100%; height: 9px; border-radius: var(--r-pill); overflow: hidden; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); }
   .kast-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .6s ease; }
   /* de kast heeft planken: kleine themakopjes met een teller per plank */
-  #trophy-shelves { width: 100%; max-width: 680px; }
+  #trophy-shelves { width: 100%; max-width: var(--kolom); }
   /* elke categorie zit in een eigen paneel: duidelijke visuele groepering */
   .shelf { background: var(--glass-black-18); border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: 6px 12px 13px; margin: 14px 0; }
   .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 var(--glass-black-25); border-bottom: 1px solid var(--glass-white-13); padding-bottom: 7px; }
@@ -2023,7 +2094,7 @@
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border: 1.5px solid var(--glass-white-22); box-shadow: var(--e-2);
     border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
-    width: 100%; max-width: 420px; margin: auto 0;
+    width: 100%; max-width: var(--kolom); margin: auto 0;
   }
   /* de titel is hier de kop van een kaart, niet van een scherm: kleiner dan de
      .title elders, zodat de sterren eronder de blikvanger blijven */
@@ -2093,10 +2164,18 @@
      Nu is er één keuzerij: "Looks" is gewoon de eerste categorie. Vanuit het
      kind gezien is "laat me outfits zien" dezelfde vraag als "laat me jurken
      zien" -- twee aparte bedieningen voor één vraag was de eigenlijke fout. */
+  /* De balk bloedt tot de schermrand door met een negatieve marge ter grootte van
+     de schermpadding. Die drie waarden (top, breedte, marge) stonden per scherm
+     met de hand uitgerekend: 12 hier, 8 in het spel (dat scherm heeft 8px
+     padding), 10 op de kaart. Eén verkeerd bijgewerkt getal en de balk laat een
+     streepje achtergrond langs de rand staan. Nu volgt alles uit --rand, en zet
+     een scherm dat één waarde om (zie .screen). */
   .hub-sticky {
-    position: sticky; top: -12px; z-index: 5;
+    position: sticky; top: calc(var(--rand, 12px) * -1); z-index: 5;
     display: flex; flex-direction: column; align-items: center;
-    width: calc(100% + 24px); margin: -12px -12px 12px; padding: 12px 12px 10px;
+    width: calc(100% + var(--rand, 12px) * 2);
+    margin: calc(var(--rand, 12px) * -1) calc(var(--rand, 12px) * -1) var(--kop-gap, 12px);
+    padding: 12px 12px 10px;
     /* was .92 -- dat is in de praktijk ondoorzichtig, en straks een balk dwars
        door de tekening heen. Op .82 schuift de inhoud er zichtbaar onderdoor. */
     background: rgba(43,7,71,.82);
@@ -2131,7 +2210,7 @@
      werd afgekapt ("Schoe…", "Microf…", "Acces…"): een emoji plus een half woord
      is slechter dan één van de twee. Twee rijen worden zo één rij, en het woord
      staat er nog steeds -- alleen bij de categorie waar je nú in kijkt. */
-  .shop-tabs-wrap { width: 100%; max-width: 960px; margin-top: 7px; }
+  .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 7px; }
   .shop-tabs {
     display: flex; gap: 6px; padding: 2px 4px; overflow-x: auto;
     scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
@@ -2161,7 +2240,7 @@
      dezelfde kolomposities toe), dus links uitgelijnd met een lege plek ernaast
      in plaats van gecentreerd. flex-wrap + justify-content:center centreert
      élke rij apart, vol of niet -- ook de laatste, hoe je ook telt. */
-  .item-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 680px; }
+  .item-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: var(--kolom); }
   .item-card {
     position: relative; flex: 1 1 130px; max-width: 190px;
     background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
@@ -2299,7 +2378,7 @@
   /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
   .dress-bar {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 39;
-    display: none; align-items: center; gap: 10px; width: min(94vw, 430px); min-height: 52px;
+    display: none; align-items: center; gap: 10px; width: var(--balk-w); min-height: 52px;
     background: rgba(30, 4, 52, .86); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border: 1.5px solid var(--glass-white-22); border-radius: var(--r-lg);
     padding: 10px 14px; box-shadow: var(--e-2);
@@ -2313,7 +2392,7 @@
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
 
   /* ---- Instellingen (ouder-dashboard) ---- */
-  .settings-sheet { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
+  .settings-sheet { width: 100%; max-width: var(--kolom); display: flex; flex-direction: column; gap: 14px; }
 
   /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← terug ·
      Instellingen · (opgeslagen-bevestiging), met de profielkiezer en de
