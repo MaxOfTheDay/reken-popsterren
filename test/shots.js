@@ -45,14 +45,14 @@ const SCREENS = [
   // niets over hoe het scherm eruitziet als je het leest.
   { key: '05-einde',        wide: true,  wacht: 3200, go: () => { selectProfile('p1'); startLevel(6); G.stars = 3; endLevel(true); } },
   { key: '06-kleedkamer',   wide: true,  go: () => { selectProfile('p1'); openKleedkamer(); } },
-  { key: '07-podia',        wide: false, go: () => { selectProfile('p1'); openKleedkamer(); openKleedkamerCat('stage'); } },
-  { key: '08-looks',        wide: false, go: () => { selectProfile('p1'); openKleedkamer(); shopView = 'looks'; renderShop(); } },
-  { key: '09-trofeeen',     wide: true,  go: () => { selectProfile('p1'); openTrophies(); } },
-  { key: '10-ouderdeel',    wide: false, go: () => { selectProfile('p1'); openSettings(); } },
-  { key: '11-nieuwe-ster',  wide: false, go: () => { cur = null; goProfiles(); openNewStar('profile'); } },
-  { key: '12-kaart-tellen', wide: false, go: () => selectProfile('p2') },
-  { key: '13-show-tellen',  wide: false, go: () => { selectProfile('p2'); startLevel(2); } },
-  { key: '14-memory',       wide: false, go: () => { selectProfile('p2'); startMemory(); } },
+  // 07-podia en 08-looks zijn vervallen: de podium-categorie en de Looks-lijst
+  // bestaan niet meer in de kleedkamer (fase 1 — vereenvoudiging).
+  { key: '07-trofeeen',     wide: true,  go: () => { selectProfile('p1'); openTrophies(); } },
+  { key: '08-ouderdeel',    wide: false, go: () => { selectProfile('p1'); openSettings(); } },
+  { key: '09-nieuwe-ster',  wide: false, go: () => { cur = null; goProfiles(); openNewStar('profile'); } },
+  { key: '10-kaart-tellen', wide: false, go: () => selectProfile('p2') },
+  { key: '11-show-tellen',  wide: false, go: () => { selectProfile('p2'); startLevel(2); } },
+  { key: '12-memory',       wide: false, go: () => { selectProfile('p2'); startMemory(); } },
 ];
 
 // Elk scherm krijgt een verse pagina: de app kent geen "sluit alles"-functie, en
