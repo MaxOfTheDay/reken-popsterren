@@ -279,11 +279,26 @@ function git(args) {
       e ? fout(new Error((err || uit || e.message).trim())) : ok(String(uit).trim()));
   });
 }
+/* npm heet op Windows npm.cmd, en dat is een batchbestand. execFile start een
+   programma rechtstreeks via CreateProcess en dát kan geen .cmd uitvoeren: op
+   Windows viel deze poort dus altijd om met "spawn npm ENOENT", nog voordat er
+   één controle gedraaid was. git ging goed omdat git.exe een echt programma is.
+
+   Geen shell: true erbij, want dan gaan de argumenten door een shell heen. Alleen
+   de juiste naam kiezen is genoeg en heeft dat probleem niet. */
+const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 function runTests() {
   return new Promise((ok, fout) => {
-    execFile('npm', ['test'], { cwd: ROOT, maxBuffer: 2e7, timeout: 6e5 }, (e, uit, err) =>
-      e ? fout(new Error('de testen falen — er is niets vastgelegd\n\n'
-        + String(uit || err).split('\n').slice(-25).join('\n'))) : ok(String(uit)));
+    execFile(NPM, ['test'], { cwd: ROOT, maxBuffer: 2e7, timeout: 6e5 }, (e, uit, err) => {
+      if (!e) return ok(String(uit));
+      /* e.message als terugval, net als in git() hierboven. Zonder die terugval gaf
+         precies de storing die híer zat (ENOENT: geen uitvoer, alleen een foutcode)
+         een melding van één regel zonder enige reden erbij -- en dan zoek je de fout
+         in je eigen werelden in plaats van in deze poort. */
+      const uitleg = String(uit || err).trim() || String(e.message).trim();
+      fout(new Error('de testen falen — er is niets vastgelegd\n\n'
+        + uitleg.split('\n').slice(-25).join('\n')));
+    });
   });
 }
 async function commitAll(bericht, res) {
