@@ -98,6 +98,22 @@ Rounded inwards, that gives the contract:
 > **Stop centres live inside x 19–81%, y 14–82%.**
 > In art pixels: **x 231 … 984, y 302 … 1771.**
 
+### One soft spot at the bottom centre
+
+The bottom edge was measured against the **navigation bar**. Two small controls float
+*above* that bar and were never part of the sum: the memory button (bottom right, only on a
+counting star) and the "⟲ back to your own world" pill (bottom centre, only while you are
+looking at a world other than the one you play in). Both now sit flush against the nav and
+have been slimmed down, but on a short screen (iPhone SE, 375 × 667) the band left between
+y 82% and the bar is only about 14 px — less than either control is tall.
+
+So: **y 82% holds for the tap target and the medallion, but a stop parked at the very
+bottom centre can have its star tab clipped by the back pill on a short phone.** Keep the
+last stop of a world's bottom row a little above y 80%, or off the centre line, and there
+is nothing to think about. The default sling does exactly that (it now runs y 80 → 25
+rather than 82 → 25). Section 7f of the test suite measures both controls against every
+world and fails if either one covers a medallion's heart or a star tab.
+
 ### Her band: y 14–25%
 
 The top used to be 23%, and that was never the header — it was her. She stands *above* her
@@ -125,7 +141,9 @@ Everything outside the box is still seen (it is the world, not padding) — it j
 carry anything the player has to *reach*.
 
 The default sling (for a world with no drawing yet) still stops at y 25%: there is nothing
-to gain by making an undrawn world dim its own header.
+to gain by making an undrawn world dim its own header. Its vertical step (55% over seven
+gaps = 13.97 cqw) is the tightest spacing in the game, and therefore the ceiling on how
+tall a tap target may be — see §3.
 
 ---
 
@@ -136,17 +154,31 @@ Eight stops per world, evenly spread down the safe zone:
 | | CSS px @ 390 | art px |
 |---|---|---|
 | stop medallion (the numbered circle) | 49 | **125** |
-| medallion + its earned stars | 59 | 151 |
-| invisible tap area around a stop | 64 | 164 |
-| vertical rhythm between stops | 69 | **176** |
+| medallion + its star tab | 60 | 153 |
+| invisible tap area around a stop | 68 × 63 | **175 × 162** |
+| vertical rhythm between stops | 66 | **170** |
 | the star standing on a stop | 78 × 97 | **199 × 249** |
 
-A stop's own block (151 art px) now fits inside the rhythm (176), so consecutive stops no
-longer overlap vertically — the stars shrank to two thirds and unearned ones are gone
-entirely. The route still has to swing left and right, but for a different reason: the
-**tap** area is 164 art px wide, wider than the rhythm, so two stops directly above one
-another would have overlapping targets. The closest pair in the default layout is 71 CSS px
-apart against a 64 px target; section 7e of the test suite fails if that margin goes.
+A stop's own block (153 art px) fits inside the rhythm (170), so consecutive stops do not
+overlap vertically. The route still has to swing left and right, but for a different
+reason: the **tap** area is 175 art px wide, wider than the rhythm, so two stops directly
+above one another would have overlapping targets.
+
+The tap area is the number to watch, and it is no longer a circle. A stop is a `<button>`,
+and a button takes taps across its whole box — the old 64 px disc sat entirely inside that
+box and did nothing, so neighbouring stops really overlapped by a wide margin and the DOM
+order decided who won. The button now takes no taps at all; a single rectangle does, sized
+to cover the medallion *and* the star tab beneath it, because the tab belongs to the same
+stop and has to open the same show.
+
+That rectangle can only be as big as the tightest pair of stops allows. Two targets overlap
+as soon as |dx| < width **and** |dy| < height, and the tightest pair anywhere — over all six
+written worlds and the default sling — is the sling itself: dx 4.03 cqw, dy 13.97 cqw. So
+the height (13.3 cqw) is what sits against the wall, with 0.67 cqw to spare; the width
+(14.4 cqw) runs up against snoep 6–7 (dx 14.50 cqw). **Do not place two stops closer than
+about 14.5 cqw apart in either axis.** Section 7e of the test suite measures the real
+targets with `elementFromPoint` — not these numbers — and fails if two of them touch or if
+either side drops below 40 px on the smallest phone.
 
 So, concretely:
 
@@ -172,12 +204,17 @@ behind it:
 
 - **Stop medallions** — dark purple fill, white numeral, 0.55cqw light ring. Locked ones
   are grey. The current one is solid gold.
-- **Earned stars** under each medallion, gold, small and tucked tight against it. A stop
-  you have not finished shows *no* stars at all rather than empty placeholders, so on a
-  fresh world the map carries nothing but numbers.
+- **A star tab** under each *played* medallion: a dark plum pill, tucked behind the bottom
+  of the circle, holding three star slots — gold for earned, pale and outlined for not.
+  Always three, so 1/3, 2/3 and 3/3 are three silhouettes instead of something to count.
+  A stop you have not played yet (locked, or the one you are on) shows no tab at all, so a
+  fresh world still carries nothing but numbers. The tab brings its own dark backing, so it
+  does not need help from the drawing.
 - **The dashed road** — one colour per world (`weg` in the studio, `--w-road`), default
-  white at 42%. On a bright world set it to something dark; that field exists precisely
-  because white roads vanish on lava and ice.
+  white at 42%, with a dark plum under-stroke beneath the whole route (3 units peeking out
+  each side). That under-stroke is what keeps the gold readable on sand, on a waterfall and
+  on a bright sky, so `weg` no longer has to carry legibility on its own — pick it for the
+  *mood* of the world and let the under-stroke do the work.
 - **The star**, a flat vector doll in bright colours.
 - **Three light things at the top** — a bare round portrait, and two translucent pills for
   the world name and the diamonds. They float over the drawing rather than sitting on a
@@ -212,8 +249,9 @@ And two things that are deliberately **not** in the art:
 
 - [ ] The world has an identity that survives at thumbnail size (ice, jungle, fire…).
 - [ ] It reads bottom-to-top: the player climbs.
-- [ ] Eight landings, ~176 art px apart, at least 175 px across, inside x 231–984 /
-      y 302–1771. The top one may sit in her band (y 302–540) — see §2.
+- [ ] Eight landings, ~170 art px apart, at least 175 px across, inside x 231–984 /
+      y 302–1771. The top one may sit in her band (y 302–540) — see §2; keep the bottom
+      one off the centre line or above y 1730 — see §2, "one soft spot".
 - [ ] Quiet sky above each landing (250 px).
 - [ ] The corridor is mid-to-dark; bright values live at the edges.
 - [ ] Nothing that must be *seen* in the top 169 px or the bottom 210 px.

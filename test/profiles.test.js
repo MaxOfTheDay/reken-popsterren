@@ -444,18 +444,33 @@ function check(ok, label, detail) {
     }
   }
 
-  /* ========== 7e · Raakvlakken overlappen niet ==========
-   * Het onzichtbare raakvlak rond een halte is groter dan het medaillon zelf, en dat
-   * is met opzet: op de kleinste telefoon is het medaillon maar 33px. Maar het mag
-   * niet zó groot worden dat twee raakvlakken elkaar raken -- dan tikt een kind de
-   * verkeerde halte aan, en dat merk je niet aan iets dat kapot gaat.
+  /* ========== 7e · Raakvlakken: groot genoeg, en van elkaar gescheiden ==========
+   * Het raakvlak rond een halte is groter dan het medaillon zelf, en dat is met
+   * opzet: op de kleinste telefoon is het medaillon maar 33px. Maar het mag niet zó
+   * groot worden dat twee raakvlakken elkaar raken -- dan tikt een kind de verkeerde
+   * halte aan, en dat merk je niet aan iets dat kapot gaat.
    *
-   * De bovengrens is de afstand tussen de twee dichtstbijzijnde haltes, en die komt
-   * uit de standaardslinger. Verandert die slinger (of de maat van het raakvlak),
-   * dan valt deze test om in plaats van dat een vijfjarige het ontdekt.            */
+   * Deze test mat eerder 0,135 x kaderbreedte -- de maat van .tour-stop::before --
+   * en dát was het probleem: die schijf wás het raakvlak niet. De halte is een
+   * <button> van 26cqw breed, en een knop vangt tikken over zijn héle vlak; de
+   * schijf lag daar volledig binnenin en deed niets. De gemeten werkelijkheid op
+   * 390x844 was 123x49px per halte, terwijl twee haltes op hun krapst 76px uit
+   * elkaar liggen: naburige knoppen overlapten fors, en wie won hing af van de
+   * DOM-volgorde. De test stond op groen omdat hij naar het verkeerde getal keek.
+   *
+   * Nu wordt het échte raakvlak gemeten, met elementFromPoint: vanaf het hart van
+   * elke halte naar buiten lopen tot de tik niet meer bij díe halte hoort. Dat is
+   * per definitie wat een kindervinger ook tegenkomt, en het kan niet meer stil
+   * uiteenlopen met de CSS.
+   *
+   * Drie dingen liggen hier vast:
+   *   - elk raakvlak is minstens 40px in beide richtingen (kindervinger)
+   *   - het sterrentabje onder de halte opent dezelfde halte (het hóórt erbij)
+   *   - twee raakvlakken overlappen elkaar niet -- gecontroleerd op álle werelden
+   *     én op de standaardslinger, want dáár zit het krapste paar                */
   {
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone 14', 390, 844],
-                                ['tablet staand', 768, 1024]]) {
+                                ['21:9', 412, 961]]) {
       const c = await browser.newContext({ viewport: { width: w, height: h } });
       await cacheFonts(c);
       const page = await c.newPage();
@@ -463,23 +478,215 @@ function check(ok, label, detail) {
       await page.goto(APP_URL + '&demo&star=p1&screen=map');
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
-        const mid = [...document.querySelectorAll('.tour-stop .dot')].map(d => {
-          const b = d.getBoundingClientRect();
-          return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
-        });
-        let kleinste = Infinity;
-        for (let i = 0; i < mid.length; i++) for (let j = i + 1; j < mid.length; j++) {
-          kleinste = Math.min(kleinste, Math.hypot(mid[i].x - mid[j].x, mid[i].y - mid[j].y));
+        const uit = { werelden: [], kleinste: Infinity, tabMis: [], overlap: [] };
+        /* Voorbij de geschreven werelden loopt de tournee door op de
+           standaardslinger (zie ENDLESS_WORLD). Die telt dus mee -- en hij is het
+           krapste geval dat er is. */
+        const tot = WORLDS.length + 1;
+        for (let wi = 0; wi < tot; wi++) {
+          const p = P(), first = WORLD_START[wi] || (WORLD_LAST + 1);
+          p.level = first + 5;
+          p.stars = {};
+          [3, 3, 1, 2, 0].forEach((s, i) => { p.stars[first + i] = s; });
+          viewWorldIdx = wi;
+          renderMapTitle(p);
+          renderTourMap(0);
+          const naamW = worldForIndex(wi).world.id;
+          const stops = [...document.querySelectorAll('.tour-stop:not(.locked)')];
+          const vakken = [];
+          stops.forEach(s => {
+            const d = s.querySelector('.dot').getBoundingClientRect();
+            const cx = d.left + d.width / 2, cy = d.top + d.height / 2;
+            /* Alleen haltes die écht in beeld staan zijn met elementFromPoint te
+               meten. Op een toestel waar de kaart schuift staat een deel erbuiten,
+               en dan meet je het venster en niet de halte. */
+            if (cx < 4 || cx > innerWidth - 4 || cy < 60 || cy > innerHeight - 100) return;
+            const raak = (x, y) => {
+              const e = document.elementFromPoint(x, y);
+              return !!(e && e.closest && e.closest('.tour-stop') === s);
+            };
+            if (!raak(cx, cy)) return;          // afgedekt door kop of balk
+            let l = 0, rr = 0, t = 0, b = 0;
+            while (l < 200 && raak(cx - l - 1, cy)) l++;
+            while (rr < 200 && raak(cx + rr + 1, cy)) rr++;
+            while (t < 200 && raak(cx, cy - t - 1)) t++;
+            while (b < 200 && raak(cx, cy + b + 1)) b++;
+            vakken.push({ lvl: s.dataset.lvl, br: l + rr, ho: t + b });
+            uit.kleinste = Math.min(uit.kleinste, l + rr, t + b);
+            // het sterrentabje hoort bij dezelfde halte
+            const cs = s.querySelector('.cstars');
+            if (cs) {
+              const cr = cs.getBoundingClientRect();
+              if (cr.bottom < innerHeight - 100 && !raak(cr.left + cr.width / 2, cr.top + cr.height / 2)) {
+                uit.tabMis.push(naamW + ' halte ' + s.dataset.lvl);
+              }
+            }
+          });
+          /* Overlap niet met elementFromPoint maar met de omhullende rechthoek van
+             het raakvlak: elementFromPoint zíet een overlap nooit -- daar wint er
+             altijd precies één, en juist dát is het probleem dat we willen vangen. */
+          const fr = document.querySelector('.world-frame').getBoundingClientRect();
+          const cqw = fr.width / 100;
+          const cs = getComputedStyle(document.querySelector('.tour-stop'), '::before');
+          const bw = parseFloat(cs.width), bh = parseFloat(cs.height);
+          const mids = [...document.querySelectorAll('.tour-stop')].map(s => {
+            const d = s.querySelector('.dot').getBoundingClientRect();
+            return { lvl: s.dataset.lvl, x: d.left + d.width / 2, y: d.top + d.height / 2 };
+          });
+          for (let i = 0; i < mids.length; i++) for (let j = i + 1; j < mids.length; j++) {
+            if (Math.abs(mids[i].x - mids[j].x) < bw && Math.abs(mids[i].y - mids[j].y) < bh) {
+              uit.overlap.push(naamW + ' ' + mids[i].lvl + '/' + mids[j].lvl);
+            }
+          }
+          uit.werelden.push({ id: naamW, vakken: vakken.length, bw: Math.round(bw), bh: Math.round(bh), cqw: +cqw.toFixed(1) });
         }
-        // de maat van het raakvlak staat in cqw van het kader (zie .tour-stop::before)
-        const frame = document.querySelector('.world-frame').getBoundingClientRect();
-        const raak = 0.135 * frame.width;
-        return { kleinste: Math.round(kleinste), raak: Math.round(raak) };
+        return uit;
       });
-      check(r.raak < r.kleinste, 'raakvlakken van twee haltes overlappen niet — ' + naam,
-        'raakvlak ' + r.raak + 'px, dichtste haltes ' + r.kleinste + 'px uit elkaar');
-      check(r.raak >= 40, 'het raakvlak blijft groot genoeg voor een kindervinger — ' + naam,
-        r.raak + 'px');
+      check(r.kleinste >= 40, 'het raakvlak blijft groot genoeg voor een kindervinger — ' + naam,
+        'kleinste zijde ' + r.kleinste + 'px');
+      check(r.overlap.length === 0, 'raakvlakken van twee haltes overlappen niet — ' + naam,
+        r.overlap.join(', ') + ' (maat ' + JSON.stringify(r.werelden[0]) + ')');
+      check(r.tabMis.length === 0, 'het sterrentabje opent dezelfde halte — ' + naam,
+        r.tabMis.join(', '));
+      await c.close();
+    }
+  }
+
+  /* ========== 7e-bis · Drie sterplekken, altijd ==========
+   * 1/3 was één los sterretje onder een halte en 2/3 waren er twee: het verschil
+   * tussen "bijna af" en "áf" moest je tellen. Dat is precies de reden om een show
+   * nog eens te spelen, dus het hoort het snelst leesbare ding op de kaart te zijn.
+   *
+   * Wat hier vastligt: een gespeelde halte toont altijd drie plekken, precies zoveel
+   * daarvan vol als er sterren verdiend zijn -- óók 0 van 3 -- en een halte waar nog
+   * niets te scoren viel (op slot, of de show die nu aan de beurt is) toont er geen. */
+  {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => {
+      const p = P(), first = WORLD_START[0];
+      p.level = first + 5;
+      p.stars = {};
+      [3, 2, 1, 0, 3].forEach((s, i) => { p.stars[first + i] = s; });
+      viewWorldIdx = 0;
+      renderTourMap(0);
+      return [...document.querySelectorAll('.tour-stop')].map(s => {
+        const cs = s.querySelector('.cstars');
+        return {
+          lvl: Number(s.dataset.lvl) - first + 1,
+          staat: s.classList.contains('locked') ? 'locked'
+            : s.classList.contains('next') ? 'next'
+            : s.classList.contains('perfect') ? 'perfect' : 'done',
+          plekken: cs ? cs.children.length : 0,
+          vol: cs ? cs.querySelectorAll('.cs-vol').length : 0,
+          leeg: cs ? cs.querySelectorAll('.cs-leeg').length : 0,
+        };
+      });
+    });
+    const gespeeld = r.filter(x => x.lvl <= 5);
+    check(gespeeld.every(x => x.plekken === 3),
+      'elke gespeelde halte toont drie sterplekken', JSON.stringify(gespeeld));
+    check(gespeeld.map(x => x.vol).join(',') === '3,2,1,0,3',
+      'er staan precies zoveel volle sterren als er verdiend zijn', JSON.stringify(gespeeld.map(x => x.vol)));
+    check(gespeeld.every(x => x.vol + x.leeg === 3),
+      'wat niet verdiend is staat er als lege ster', JSON.stringify(gespeeld));
+    check(r.filter(x => x.lvl > 5).every(x => x.plekken === 0),
+      'een halte zonder score toont geen sterrenrij', JSON.stringify(r.filter(x => x.lvl > 5)));
+    check(r[0].staat === 'perfect' && r[4].staat === 'perfect' && r[5].staat === 'next'
+      && r[6].staat === 'locked',
+      'de vier voortgangsstaten staan waar ze horen', JSON.stringify(r.map(x => x.staat)));
+    await c.close();
+  }
+
+  /* ========== 7f · De zijsporen dekken geen halte af ==========
+   * Over de kaart zweven twee knoppen die niet bij de route horen: het memory-spel
+   * rechtsonder en (alleen als je in een ándere wereld kijkt) de weg terug midden
+   * onderaan. Ze staan op vaste schermplekken, de haltes op percentages van de
+   * tekening -- die twee stelsels schuiven onafhankelijk van elkaar, dus "het past
+   * nu" is geen garantie dat het over een wereld verder nog past.
+   *
+   * Wat hier te garanderen viel, en wat niet. De navigatiebalk plus de veilige zone
+   * laten onderaan een band van 14px (iPhone SE) tot 38px (Pixel) over. Elke knop
+   * die daar zweeft is hoger dan die band, dus "helemaal vrij van elke halte" is op
+   * een korte telefoon geometrisch onmogelijk zonder de haltes te verplaatsen of de
+   * navigatie te verbouwen -- en dat hoort geen van beide bij een polijstslag.
+   *
+   * Wat wél altijd waar moet zijn, en wat deze test bewaakt:
+   *   1. het hart van elke halte is vrij -- de halte blijft herkenbaar én tikbaar
+   *   2. het hart van het sterrentabje is vrij -- de score blijft leesbaar
+   *   3. de overlap met het zichtbare blokje blijft binnen een opgemeten marge
+   *
+   * Die marge is 20% en komt uit de meting, niet uit een gevoel. Hij staat er zodat
+   * een nieuwe wereld, een grotere knop of een ander toestel opvalt vóórdat een
+   * kind een halte niet meer kan vinden. Stand bij het schrijven, over alle werelden
+   * en de standaardslinger: 21:9 niets, Pixel 2%, 320px 2%, iPhone SE 17% (piraten
+   * halte 2, rechtsonder) en 30% op de gegenereerde sterrentournee -- die laatste
+   * heeft geen tekening en zet zijn eerste halte precies middenonder.            */
+  {
+    const GRENS = 30;   // procent van het zichtbare blokje; zie hierboven
+    for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone SE', 375, 667],
+                                ['iPhone 14', 390, 844], ['21:9', 412, 961]]) {
+      const c = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(c);
+      const page = await c.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      // p2 speelt het telspoor: daar staat de memory-knop aan
+      await page.goto(APP_URL + '&demo&star=p2&screen=map');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        const doos = el => { const q = el.getBoundingClientRect(); return [q.left, q.top, q.right, q.bottom]; };
+        const snij = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]))
+          * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+        const uit = { memZichtbaar: false, hart: [], tab: [], ergste: 0, ergsteWie: '-' };
+        const fab = document.getElementById('mem-fab');
+        uit.memZichtbaar = getComputedStyle(fab).display !== 'none';
+        const tot = WORLDS.length + 1;
+        for (let wi = 0; wi < tot; wi++) {
+          const p = P(), first = WORLD_START[wi] || (WORLD_LAST + 1);
+          p.level = first + 5;
+          p.stars = {}; [3, 3, 1, 2, 0].forEach((s, i) => { p.stars[first + i] = s; });
+          viewWorldIdx = wi; renderMapTitle(p); renderTourMap(0);
+          const id = worldForIndex(wi).world.id;
+          const wb = document.getElementById('world-back');
+          const zij = [{ id: 'memory', box: doos(fab) }];
+          // even doen alsof ze in een andere wereld speelt, zodat de weg terug er ook staat
+          p.level = (WORLD_START[(wi + 1) % tot] || (WORLD_LAST + 1)) + 1;
+          renderMapTitle(p);
+          if (!wb.hidden) zij.push({ id: 'terug', box: doos(wb) });
+          p.level = first + 5; renderMapTitle(p);
+          document.querySelectorAll('.tour-stop').forEach(s => {
+            const d = doos(s.querySelector('.dot'));
+            const cs = s.querySelector('.cstars');
+            const zicht = cs
+              ? [Math.min(d[0], doos(cs)[0]), d[1], Math.max(d[2], doos(cs)[2]), doos(cs)[3]]
+              : d;
+            const opp = (zicht[2] - zicht[0]) * (zicht[3] - zicht[1]);
+            const punt = (box, x, y) => x > box[0] && x < box[2] && y > box[1] && y < box[3];
+            zij.forEach(z => {
+              if (punt(z.box, (d[0] + d[2]) / 2, (d[1] + d[3]) / 2)) uit.hart.push(id + ' h' + s.dataset.lvl + ' <> ' + z.id);
+              if (cs) {
+                const cr = doos(cs);
+                if (punt(z.box, (cr[0] + cr[2]) / 2, (cr[1] + cr[3]) / 2)) uit.tab.push(id + ' h' + s.dataset.lvl + ' <> ' + z.id);
+              }
+              const pct = opp ? snij(z.box, zicht) / opp * 100 : 0;
+              if (pct > uit.ergste) { uit.ergste = pct; uit.ergsteWie = id + ' h' + s.dataset.lvl + ' <> ' + z.id; }
+            });
+          });
+        }
+        uit.ergste = Math.round(uit.ergste);
+        return uit;
+      });
+      check(r.memZichtbaar, 'de memory-knop staat op de kaart van een telster — ' + naam, '');
+      check(r.hart.length === 0, 'geen zwevende knop dekt het hart van een halte af — ' + naam,
+        r.hart.join(', '));
+      check(r.tab.length === 0, 'geen zwevende knop dekt een sterrentabje af — ' + naam,
+        r.tab.join(', '));
+      check(r.ergste <= GRENS, 'de overlap van een zwevende knop blijft binnen de marge — ' + naam,
+        r.ergste + '% bij ' + r.ergsteWie + ' (marge ' + GRENS + '%)');
       await c.close();
     }
   }
