@@ -274,10 +274,33 @@ this has to go through `getScreenCTM()`, not `getPointAtLength()` alone. Section
 
 ---
 
-## 9. Still open
+## 9. The six worlds
 
-- The six world names and their order. The ids in `WORLDS` (`ijs`, `regenboog`, `jungle`,
-  `muziek`, `vuur`, `ruimte`) are placeholders and appear in filenames
-  (`assets/world/<id>-map.webp`), so settling them before the first drawing saves a rename.
+Settled. The order is the order a player climbs them:
+
+| # | name | id | file | icon | the look, until it is drawn |
+|---|---|---|---|---|---|
+| 1 | Muziekwereld | `muziek` | `assets/world/muziek-map.webp` | 🎵 | violet, hot-pink footlight |
+| 2 | Snoepwereld | `snoep` | `assets/world/snoep-map.webp` | 🍭 | raspberry, mint path |
+| 3 | Junglewereld | `jungle` | `assets/world/jungle-map.webp` | 🌴 | canopy green, pale leaf path |
+| 4 | Piratenwereld | `piraten` | `assets/world/piraten-map.webp` | 🏴‍☠️ | night sea, rope-sand path |
+| 5 | IJswereld | `ijs` | `assets/world/ijs-map.webp` | ❄️ | cold blue, pale ice path |
+| 6 | Toverwereld | `tover` | `assets/world/tover-map.webp` | 🪄 | near-black midnight, lilac path |
+
+Each world carries four colours in `WORLDS` (`theme: { sky, deep, glow, road }`). Until a
+drawing exists **those colours are the world** — without them all six fall back to the same
+purple and "another world" is a word rather than a place.
+
+They are **six-digit hex, never rgba**: the studio edits them with `<input type="color">`,
+which only understands `#rrggbb`. An rgba value comes back from that field as `#000000` and
+gets written over on the first edit. The CSS defaults *are* translucent (road 42%, glow
+34%), so the values stored per world are what those defaults look like once composited over
+the background — which is why `road` is a muted tint rather than white.
+
+**Re-check `road` when each drawing lands.** The stored colour is tuned against the flat
+gradient; a bright drawing can swallow it. That is the field §7's checklist is about.
+
+## 10. Still open
+
 - Whether 1215 × 2160 is the right storage size for your generator, or whether it caps
   lower (see §1). One constant either way.
