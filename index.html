@@ -1616,11 +1616,28 @@
     overflow: hidden;
     border-width: 1.1cqw;
     background: linear-gradient(180deg, rgba(255,214,90,.22), rgba(255,193,61,.06)), var(--purple-shadow);
-    /* De gloed eromheen was 5cqw op 55%; dat legde een tweede, veel grotere schijf
-       over de tekening dan de halte zelf is. Op 3,3cqw / 38% (ongeveer een derde
-       minder) houdt hij nog genoeg af tegen een drukke ondergrond zonder dat hij met
-       de huidige halte concurreert. */
-    box-shadow: 0 0 0 0.8cqw rgba(255,213,79,.16), 0 0 3.3cqw rgba(255,205,80,.38);
+    /* Geen zachte gloed meer eromheen. Die was 3,3cqw op 38%, en de huidige halte
+       heeft er een van 3,2cqw op 50% -- bijna dezelfde straal en bijna dezelfde
+       warmte. Op een kaart met vijf afgemaakte haltes stonden er dus vijf warme
+       wolkjes naast het ene wolkje dat "hier speel je nu" betekent, en dan moet je
+       gaan kíjken welke pulseert.
+
+       Eén ding, één betekenis: een zachte gloed eromheen is nu uitsluitend de
+       huidige halte. Drie sterren draagt zijn eigen signaal van dichtbij -- een
+       dikkere gouden rand, een warmere vulling, een strakke gouden ring en de glans
+       die er af en toe overheen glijdt. Dat is genoeg voor "deze is áf", en het
+       vecht van een meter afstand niet meer met "hier ben je".
+
+       Ook de strakke gouden ring eromheen is weg. Goud op 22% over paars wordt geen
+       ring maar een bruine waas -- van dichtbij een vlek, van een afstand vuil. De
+       rand van de halte is al dubbel zo dik als bij een gewone afgemaakte halte
+       (1,1 tegen 0,55cqw); dát is het verschil, en het is scherp in plaats van
+       wazig.
+
+       Wat overblijft is de contactschaduw. Die stond in .tour-stop .dot en werd door
+       deze regel volledig overschreven, dus een halte op drie sterren zweefde als
+       enige boven de tekening in plaats van erop te rusten. */
+    box-shadow: 0 0.9cqw 1.6cqw rgba(12,2,26,.45);
   }
   .tour-stop.done.perfect .dot::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; pointer-events: none;
