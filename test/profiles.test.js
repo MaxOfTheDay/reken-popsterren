@@ -357,6 +357,72 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ========== 7c-bis · De bovenrand van de veilige zone klopt per toestel ==========
+   * ZONE.y0 ging van 23 naar 14 omdat de bovenbalk opzij stapt zodra de ster ertegen
+   * aan staat. Daarmee hangt die 14 aan drie dingen die los van elkaar kunnen
+   * schuiven: de hoogte van de kop (vaste px, dus op een kort scherm een grotere hap),
+   * de maat van de stip, en de lengte van de ster. Verandert er één, dan klopt het
+   * getal stil niet meer -- en dat merk je pas aan een halte die je niet kunt
+   * aanraken.
+   *
+   * Wat hier gemeten wordt, op een halte die exact op ZONE.y0 staat:
+   *   - de stip valt helemaal onder de kop (anders pakt de kop de tik af)
+   *   - haar kruin blijft op het scherm
+   *   - de kop dimt daar wél, en op ZONE.y0kop niet meer
+   *   - de wereldpil blijft aanraakbaar terwijl de kop gedimd is (dat is de hele
+   *     reden dat er gedimd wordt en niet weggeschoven -- de ladder moet bereikbaar
+   *     blijven vanaf de bovenste halte)                                         */
+  {
+    const toestellen = [
+      ['kleine telefoon', 320, 568],   // zet de grens: vaste kop op het kortste scherm
+      ['iPhone SE', 375, 667],
+      ['iPhone 14', 390, 844],
+      ['21:9', 412, 961],
+      ['tablet staand', 768, 1024],
+    ];
+    for (const [naam, w, h] of toestellen) {
+      const c = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(c);
+      const page = await c.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await page.goto(APP_URL + '&demo&star=p1&screen=map');
+      await page.waitForTimeout(400);
+
+      const r = await page.evaluate(async () => {
+        const stop = document.querySelector('.tour-hero').closest('.tour-stop');
+        const scherm = document.getElementById('screen-map');
+        const meet = async y => {
+          stop.style.top = y + '%';
+          kopOpzij();
+          await new Promise(res => setTimeout(res, 400));   // de dim-overgang uitlopen
+          const kop = document.querySelector('#screen-map .screen-header').getBoundingClientRect();
+          const hero = document.querySelector('.tour-hero').getBoundingClientRect();
+          const dot = stop.querySelector('.dot').getBoundingClientRect();
+          const pr = document.querySelector('#screen-map .world-pick').getBoundingClientRect();
+          const raak = document.elementFromPoint(pr.left + pr.width / 2, pr.top + pr.height / 2);
+          return {
+            dimt: scherm.classList.contains('ster-bij-kop'),
+            stipMarge: Math.round(dot.top - kop.bottom),
+            kruinMarge: Math.round(hero.top),
+            pilRaakbaar: !!(raak && raak.closest('.world-pick')),
+          };
+        };
+        return { boven: await meet(ZONE.y0), kopvrij: await meet(ZONE.y0kop), y0: ZONE.y0, y0kop: ZONE.y0kop };
+      });
+
+      check(r.boven.stipMarge >= 0, 'op ZONE.y0 valt de stip onder de kop — ' + naam,
+        r.boven.stipMarge + 'px (negatief = de kop pakt de tik af)');
+      check(r.boven.kruinMarge >= 0, 'op ZONE.y0 blijft haar kruin op het scherm — ' + naam,
+        r.boven.kruinMarge + 'px');
+      check(r.boven.dimt, 'op ZONE.y0 stapt de kop opzij — ' + naam, JSON.stringify(r.boven));
+      check(r.boven.pilRaakbaar, 'de wereldpil blijft aanraakbaar met een gedimde kop — ' + naam,
+        JSON.stringify(r.boven));
+      check(!r.kopvrij.dimt, 'op ZONE.y0kop (' + r.y0kop + '%) dimt de kop niet meer — ' + naam,
+        JSON.stringify(r.kopvrij));
+      await c.close();
+    }
+  }
+
   /* ================= 7d · Wereldbadges =================
    * Eén badge per wereld, en het is gewoon een trofee -- geen tweede badgesysteem.
    * Wat hier vast moet liggen: dat de plank meegroeit met WORLDS, dat een wereld
