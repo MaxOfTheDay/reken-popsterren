@@ -2977,14 +2977,47 @@ const STAGE_TOTAL = ITEMS.filter(i => i.cat === 'stage').length;
    Achteraan bijplakken mag altijd. */
 /* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
    door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
-   Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan. */
+   Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan.
+
+   Over de vier kleuren per wereld: zolang er geen tekening is, ís dit de wereld.
+   Zonder deze regels vallen alle zes terug op dezelfde standaardpaars en verschilt
+   er niets dan de naam in de pil -- dan is "een andere wereld" een woord en geen
+   plek.
+
+   Ze staan in hex en niet in rgba, en dat is geen smaak: de studio bewerkt ze met
+   <input type="color">, en dat veld kent alleen #rrggbb. Een rgba-waarde komt daar
+   terug als #000000 en wordt bij de eerste de beste wijziging stilletjes weggeschreven.
+   De standaarden in de CSS zijn wél doorzichtig (weg op 42%, gloed op 34%), dus deze
+   waarden zijn uitgerekend zoals die standaarden erúitzien nadat ze over de
+   achtergrond zijn gelegd -- vandaar dat 'weg' een gedempte tint is en geen wit.
+
+   lucht/diepte = het verloop van boven naar beneden, gloed = de veeg onderaan,
+   weg = de nog niet afgelegde stippellijn (de afgelegde is altijd goud). */
 const WORLDS = [
-  { id: 'ijs',       name: 'IJswereld',       icon: '❄️', levels: 8 },
-  { id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8 },
-  { id: 'jungle',    name: 'Junglewereld',    icon: '🌴', levels: 8 },
-  { id: 'muziek',    name: 'Muziekwereld',    icon: '🎵', levels: 8 },
-  { id: 'vuur',      name: 'Vuurwereld',      icon: '🔥', levels: 8 },
-  { id: 'ruimte',    name: 'Ruimtewereld',    icon: '🚀', levels: 8 },
+  {
+    id: 'muziek', name: 'Muziekwereld', icon: '🎵', levels: 8,
+    theme: { sky: '#3a1f6e', deep: '#170a35', glow: '#7a2f63', road: '#9a86bd' },
+  },
+  {
+    id: 'snoep', name: 'Snoepwereld', icon: '🍭', levels: 8,
+    theme: { sky: '#a03566', deep: '#40122a', glow: '#c05b7a', road: '#9fd8c3' },
+  },
+  {
+    id: 'jungle', name: 'Junglewereld', icon: '🌴', levels: 8,
+    theme: { sky: '#235640', deep: '#0c2a1d', glow: '#4a6b33', road: '#a8bf93' },
+  },
+  {
+    id: 'piraten', name: 'Piratenwereld', icon: '🏴‍☠️', levels: 8,
+    theme: { sky: '#13415c', deep: '#05141f', glow: '#2a5f72', road: '#c9a878' },
+  },
+  {
+    id: 'ijs', name: 'IJswereld', icon: '❄️', levels: 8,
+    theme: { sky: '#34709c', deep: '#102c4a', glow: '#4b93a8', road: '#bcdcee' },
+  },
+  {
+    id: 'tover', name: 'Toverwereld', icon: '🪄', levels: 8,
+    theme: { sky: '#1b1040', deep: '#05020f', glow: '#3d2a7a', road: '#9f96d6' },
+  },
 ];
 /* WERELDEN-EINDE */
 // Voorbij de laatste geschreven wereld loopt de tournee gewoon door in stukken

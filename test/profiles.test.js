@@ -265,14 +265,23 @@ function check(ok, label, detail) {
       const naam = l => { const w = worldFor(l); return w.world.name + ' ' + w.nr + '/' + w.levels; };
       return {
         grenzen: [1, 8, 9, 16, 17, 48].map(naam),
+        /* Wat hier vastligt is de rekensom, niet wélke werelden er staan: de namen
+           en de volgorde zijn van jou en mogen wijzigen zonder dat er een test
+           omvalt. Daarom komt de verwachting uit WORLDS zelf, langs een ánder
+           pad dan worldFor() -- die twee moeten hetzelfde zeggen. */
+        grenzenVerwacht: [1, 8, 9, 16, 17, 48].map(l => {
+          const w = WORLDS[Math.floor((l - 1) / 8)];
+          return w.name + ' ' + ((l - 1) % 8 + 1) + '/8';
+        }),
         staart: [49, 57, 100].map(naam),
         altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
         rondes: [1, 12, 13, 24, 25, 36, 37].map(tourRound),
         eersteLevels: WORLDS.map((w, i) => WORLD_START[i]),
       };
     });
-    check(r.grenzen.join(' | ') === 'IJswereld 1/8 | IJswereld 8/8 | Regenboogwereld 1/8 | Regenboogwereld 8/8 | Junglewereld 1/8 | Ruimtewereld 8/8',
-      'de wereldgrenzen liggen op de achtvouden', r.grenzen.join(' | '));
+    check(r.grenzen.join(' | ') === r.grenzenVerwacht.join(' | '),
+      'de wereldgrenzen liggen op de achtvouden',
+      r.grenzen.join(' | ') + '  !=  ' + r.grenzenVerwacht.join(' | '));
     check(/^Sterrentournee 1\/8/.test(r.staart[0]) && /^Sterrentournee 2 1\/8/.test(r.staart[1]),
       'voorbij de laatste wereld loopt de tournee door', r.staart.join(' | '));
     check(r.altijdIets, 'een raar level geeft nooit undefined terug', JSON.stringify(r.staart));
