@@ -36,7 +36,7 @@ const SLOTS = {
              label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
              lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
              pad: 'assets/world/{wereld}-map.webp', perWereld: true,
-             hint: '<wereld>-map.webp, bv. ijs-map.webp of vuur-map.webp' },
+             hint: '<wereld>-map.webp, bv. muziek-map.webp of snoep-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
              lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
