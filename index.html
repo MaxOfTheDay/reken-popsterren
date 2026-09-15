@@ -111,7 +111,7 @@
     --blue-fill-top: #38bdf8; --blue-fill-bottom: #6ad3ff; --blue-text: #8fd6ff;
     --blue-ring: rgba(143,214,255,.2);
 
-    /* ---- Pink accents (fan meter / kast bar / stat bar / trophy pop) ---- */
+    /* ---- Pink accents (kast bar / stat bar / trophy pop) ---- */
     --pink-accent: #ff80ab; --pink-hot: #ff4081; --pink-deep: #f50057; --pink-light: #ffd6f4;
 
     /* ---- "Paper" theme: parent-facing screens (settings / modal / gear-menu) ---- */
@@ -970,7 +970,7 @@
     .segbar { width: min(44vw, 150px); }
   }
 
-  /* Arena: de show (avatar + publieksmeter) en het rekenen. Stond op
+  /* Arena: de show (avatar) en het rekenen. Stond op
      align-content:space-evenly, wat op een telefoon drie gaten van ~100px maakte
      (kop→paspop, paspop→som, antwoorden→onderrand: samen ~340px van 844). Nu
      één groep met een vast ritme, gecentreerd in wat er over is. */
@@ -979,36 +979,6 @@
     width: 100%; max-width: var(--kolom); margin-top: 4px; flex-wrap: wrap; flex: 1 1 auto;
   }
   .show-panel { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-  /* De publieksmeter zat als losse verticale buis náást de paspop: een leeg
-     kokertje met een gedimd 👏 erboven, dat aan het begin van een show 0% is en
-     nergens bij lijkt te horen. Nu een balk langs de onderrand van het podium,
-     precies even breed als het kader -- hij hoort bij de show, en de 👏 staat
-     aan het einde ervan als label. */
-  .fan-row { display: flex; align-items: center; gap: 7px; width: 100%; }
-  /* het klapicoon blijft altijd zichtbaar als label van de meter, maar wordt
-     feller naarmate G.fan stijgt (zie updateFan) -- brightness i.p.v. opacity
-     zodat het nooit helemaal "verdwijnt" bij een lege meter */
-  .fan-icon { font-size: 20px; line-height: 1; flex: none; filter: brightness(.65); transition: filter .4s ease; }
-  .fan-icon.pulse { animation: fanIconPulse .5s ease; }
-  @keyframes fanIconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
-  .fan-track {
-    flex: 1; min-width: 0; height: 12px; border-radius: var(--r-pill); overflow: hidden;
-    background: var(--glass-black-32); border: 2px solid var(--glass-white-40);
-    display: flex; align-items: stretch;
-  }
-  .fan-fill {
-    height: 100%; width: 0%; border-radius: var(--r-pill);
-    background: var(--pink-hot); transition: width .5s ease;
-  }
-  .fan-fill.full { animation: fanPulse .5s ease infinite alternate; }
-  @keyframes fanPulse { from { filter: brightness(1); } to { filter: brightness(1.45); } }
-  /* encore: de meter "lost op" i.p.v. gewoon leeg te lopen, zodat het als een
-     omgezette beloning voelt i.p.v. verloren voortgang (zie updateFan) */
-  .fan-fill.encore-clear { animation: fanEncoreClear .7s ease forwards; }
-  @keyframes fanEncoreClear {
-    0% { opacity: 1; transform: translateX(0); }
-    100% { opacity: 0; transform: translateX(26px); }
-  }
   /* zelfde breedte/hoogte-verhouding als de kleedkamer se .dress-stage (~1.19 : 1),
      ~15% groter dan de vorige maat (vooral op mobiel voelde de paspop nog te klein),
      en de paspop zelf op dezelfde 92%-verhouding als de kleedkamer (geen eigen
@@ -1324,8 +1294,6 @@
      zonder scrollen in beeld staan */
   @media (max-height: 700px) {
     .show-stage { width: 145px; height: 122px; }
-    .fan-track { height: 9px; }
-    .fan-icon { font-size: 16px; }
     .game-arena { gap: 6px; margin-top: 2px; }
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
     .gold-banner { height: 18px; font-size: 14.5px; margin-top: 2px; }
@@ -2124,7 +2092,7 @@
   /* neutrale wit-lavendel vulling = bezig/actief; alleen "bijna" en "nu aan"
      (kleedkamer) krijgen goud -- blauw is hier bewust weg (zie .trophy-card.busy). */
   .trophy-progress-fill { height: 100%; border-radius: var(--r-pill); transition: width .5s ease; background: rgba(255,255,255,.75); }
-  /* korte uitleg onder een categoriekop (bv. bij thema-looks) */
+  /* korte uitleg onder een categoriekop */
   .shelf-note { font-size: 12px; font-weight: 600; color: var(--lavender-text); opacity: .82; margin: -3px 2px 9px; }
   /* ===== KLAAR OM TE OPENEN =====
      Was: een volledig ander kaartje -- gouden vlak, 🎁 in plaats van het eigen
@@ -2332,19 +2300,18 @@
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
   .result-stars .dim { opacity: .25; filter: grayscale(1); }
-  /* Opbrengst: altijd dezelfde drie vakjes, altijd in dezelfde volgorde en
-     dezelfde breedte -- 💎 verdiend · ⭐ sterren · 👏 publiek. Het was een rij
-     losse pillen die op een telefoon in 1/2/1 afbrak, met wisselend aantal
-     chips, plús een rangpil en een trofeebanner erbij: zes gouden/gekleurde
-     dingen onder elkaar op precies het scherm dat één ding moet vieren.
-     Een nul tonen mag: dat maakt de fanmeter zichtbaar dat hij ergens toe leidt. */
-  .earn-line { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 12px; }
+  /* Opbrengst: altijd dezelfde twee vakjes, altijd in dezelfde volgorde en
+     dezelfde breedte -- 💎 verdiend · ⭐ sterren. Het was een rij losse pillen
+     die op een telefoon in 1/2/1 afbrak, met wisselend aantal chips, plús een
+     rangpil en een trofeebanner erbij: zes gouden/gekleurde dingen onder elkaar
+     op precies het scherm dat één ding moet vieren. Een nul tonen mag.
+     (Het derde vakje was 👏 publiek, bij de publieksmeter; die is vervallen.) */
+  .earn-line { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: 16px; font-weight: bold; line-height: 1;
     background: var(--glass-black-30); border-radius: var(--r-pill); padding: 9px 6px; }
   .earn-chip.dia { background: rgba(41,182,246,.34); }
   .earn-chip.star { background: rgba(255,215,64,.26); }
-  .earn-chip.fan { background: rgba(255,64,129,.28); }
   /* Mijlpaal: precies één regel, en hoogstens één ding. Volgorde van belang:
      nieuwe ster-status > nieuwe trofee > hoe ver nog tot de volgende status.
      De eerste twee zijn een beloning (gouden pil, tikbaar); de derde is een
@@ -2368,9 +2335,8 @@
      342px dat midden in een band van 459px zweefde, met de categorierij eronder
      wél over de volle breedte. Twee uitlijningen boven elkaar, plus een knop
      (verras me) die bij geen van beide groepen hoorde: dat las als scheef.
-     Nu is er één keuzerij: "Looks" is gewoon de eerste categorie. Vanuit het
-     kind gezien is "laat me outfits zien" dezelfde vraag als "laat me jurken
-     zien" -- twee aparte bedieningen voor één vraag was de eigenlijke fout. */
+     Nu is er één keuzerij met alleen de kledingsoorten: twee aparte
+     bedieningen voor één vraag was de eigenlijke fout. */
   /* De balk bloedt tot de schermrand door met een negatieve marge ter grootte van
      de schermpadding. Die drie waarden (top, breedte, marge) stonden per scherm
      met de hand uitgerekend: 12 hier, 8 in het spel (dat scherm heeft 8px
@@ -2432,14 +2398,6 @@
   }
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; }
   .tab-label { white-space: nowrap; }
-  /* Looks staat vooraan en houdt altijd zijn woord: het is geen kledingsoort maar
-     een andere manier van kijken, dus het mag zich van de acht categorieën
-     onderscheiden. Het streepje erna maakt die scheiding zichtbaar. */
-  .tab-btn.looks { margin-right: 9px; position: relative; }
-  .tab-btn.looks::after {
-    content: ''; position: absolute; right: -6px; top: 20%; bottom: 20%;
-    width: 1.5px; border-radius: 1px; background: var(--glass-white-22);
-  }
   .tab-btn:active { transform: scale(.95); }
   .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
   /* flex i.p.v. grid: bij een oneven aantal spulletjes bleef het laatste kaartje
@@ -2515,70 +2473,6 @@
   .item-status.owned { color: var(--muted-text-3); background: rgba(180,184,196,.25); }
   .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
   .item-status.new { color: var(--ink-on-gold); background: var(--gold-accent); animation: readyPulse 1.4s ease-in-out 2; }
-
-  /* ---- Looks-modus: complete outfits als spaardoel, dwars door de categorieën
-     heen. Elk stukje is een mini-versie van de gewone kleren-kaart (zelfde
-     miniatuur + dezelfde rand-taal: geen rand/dof = ontbreekt, grijs = bezit,
-     goud+gloed = nu aan) i.p.v. een tekstregel -- zo oogt de looks-pagina als
-     een natuurlijke uitbreiding van de Kleren-pagina, niet als iets aparts. */
-  .item-grid.looks-view { flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; max-width: 560px; gap: 10px; }
-  /* kaart houdt altijd dezelfde vorm/structuur/hoogte aan, ongeacht status of
-     hoeveel stukjes een look heeft -- positie in de lijst verandert nooit (zie
-     renderLookGoals). De hele kaart is zelf de "trek aan wat ik heb"-actie
-     (geen apart knopje/teller meer nodig: de stukjes-rand toont de voortgang
-     al goud-op-goud zodra alles aan staat), dus de kop blijft kaal: alleen
-     icoon + naam, geen teller of voortgangsbalk. */
-  .look-goal {
-    height: 136px; display: flex; flex-direction: column; overflow: hidden;
-    background: var(--glass-white-10); border: 1.5px solid var(--glass-white-14);
-    border-radius: var(--r-md); padding: 10px 12px; text-align: left; cursor: pointer;
-    transition: transform .07s;
-  }
-  .look-goal:active { transform: scale(.98); }
-  .look-goal.flash { animation: lookFlash 1.4s ease; }
-  @keyframes lookFlash { 0%, 100% { box-shadow: none; } 25%, 60% { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,214,90,.55); } }
-  .look-goal-head { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
-  .look-goal-head .lemoji { font-size: 22px; line-height: 1; }
-  .look-goal-head .lname { font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* stukjes-rij: mini-kaartjes, dezelfde miniaturen + rand-kleurtaal als .item-card.
-     Gelijke flex-breedte (i.p.v. wrap) zodat de rij altijd op één regel staat,
-     hoe je ook telt (meestal 4 stukjes, regenboogster heeft er 5). */
-  .look-pieces { flex: 1; display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-  .look-piece {
-    flex: 1 1 0; min-width: 0; height: 72px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; cursor: pointer; text-align: center;
-    border-radius: var(--r-sm); padding: 3px 2px; transition: transform .07s, background .12s;
-  }
-  .look-piece:active { transform: scale(.94); }
-  /* vaste, compacte icoon-zone: elk stukje staat zo op dezelfde basislijn, strak
-     om het icoon heen, ongeacht of het een svg-tekening, emoji of kleurbolletje is. */
-  .look-piece .item-thumb { height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; margin: 0 0 3px; }
-  .look-piece .item-thumb svg { height: 24px; width: auto; }
-  /* icoon-gewicht in balans: kleine/smalle vormen (schoenen, micro, bril e.d.
-     via emoji) iets groter, van nature grote vormen (jurk) juist iets kleiner --
-     anders oogt de rij ongelijk terwijl de stukjes zelf gelijk belangrijk zijn. */
-  .look-piece[data-cat="dress"] .item-thumb svg { height: 21px; }
-  /* shirt-met-broek is smaller dan een jurk: op 21px zou het stukje kleiner
-     ogen dan de emoji ernaast, terwijl het even belangrijk is */
-  .look-piece[data-cat="dress"] .item-thumb.smal svg { height: 26px; }
-  .look-piece[data-cat="shoes"] .item-thumb svg { height: 29px; }
-  .look-piece[data-cat="mic"] .item-thumb svg { height: 27px; }
-  .look-piece .item-thumb .thumb-emo { font-size: 22px; line-height: 1; }
-  .look-piece .item-thumb .thumb-stage { width: 24px; height: 21px; font-size: 12px; border-width: 1px; border-radius: 5px; }
-  .look-piece .item-thumb .thumb-swatch { width: 22px; height: 22px; border-width: 1px; }
-  .look-piece .lp-name {
-    font-size: 10px; font-weight: 700; line-height: 1.15; color: var(--muted-lavender-text);
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; word-break: break-word;
-  }
-  /* precies dezelfde staten als .item-card: ontbreekt = dof/grijswaarden,
-     bezit = zachtgrijs, nu aan = goud + gloed */
-  .look-piece.miss { opacity: .45; }
-  .look-piece.miss .item-thumb { filter: grayscale(1); }
-  .look-piece.have { background: rgba(180,184,196,.16); }
-  .look-piece.have .lp-name { color: var(--muted-text-3); }
-  .look-piece.on { background: rgba(255,214,90,.16); box-shadow: 0 0 0 1.5px var(--gold-accent); }
-  .look-piece.on .lp-name { color: var(--gold-light); }
 
   /* bezit/aan staat op het kaartje via rustige kaartkleur: grijs = hebben, goud = aan. */
   .item-card.owned { border-color: rgba(180,184,196,.64); background: rgba(180,184,196,.10); }
@@ -2961,12 +2855,6 @@
         <div class="stage stage-frame show-stage" id="show-stage">
           <div class="avatar-holder idle" id="game-avatar-inner"></div>
         </div>
-        <!-- de publieksmeter hoort bij het podium, dus hij zit eraan vast:
-             een balk langs de onderrand i.p.v. een losse buis ernaast -->
-        <div class="fan-row" id="fan-col">
-          <div class="fan-track"><div class="fan-fill" id="fanmeter-fill"></div></div>
-          <div class="fan-icon" id="fan-icon">👏</div>
-        </div>
       </div>
       <div class="math-panel">
         <div class="question-card" id="question-card">
@@ -3162,7 +3050,7 @@
      Memory-spel ........ los kaartspel (lees-vrij)
      Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
      Spel ............... de show: renderQuestion, submitAnswer, endLevel
-     Kleedkamer ......... winkel, passen, looks
+     Kleedkamer ......... winkel, passen, aankleden
      Instellingen ....... ouderscherm: voortgang + oefening
      Start .............. opstarten, service worker
 
@@ -3312,7 +3200,10 @@ const CATS = [
   { id: 'instrument', ico: '🎸', name: 'Muziek' },
   { id: 'acc',   ico: '🎀', name: 'Accessoires' },
   { id: 'pet',   ico: '🐾', name: 'Dieren' },
-  { id: 'stage', ico: '🎪', name: 'Podium' },
+  // FASE 1: 'stage' (Podium) staat hier bewust NIET meer bij -- podia zijn geen
+  // koopbare categorie meer. De items zelf blijven in ITEMS staan: ze zijn nog
+  // altijd het decor achter de paspop (zie applyStage), en wie er al een had
+  // houdt hem gewoon. Alleen de winkel-ingang is dicht.
 ];
 function catCount(p, cat) { return p.owned.filter(id => { const it = item(id); return it && it.cat === cat; }).length; }
 const INSTR_TOTAL = ITEMS.filter(i => i.cat === 'instrument').length;
@@ -3740,7 +3631,9 @@ const TROPHIES = [
     has: p => comboOn(p, VUURSHOW_SET) === 4, progress: p => trophyProgress(comboOwned(p, VUURSHOW_SET), 4, 'stukken verzameld') },
   // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
   // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
-  { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Alle andere trofeeën', has: p => p.trophies.filter(id => id !== 'kastvol').length >= TROPHIES.length - 1, progress: p => trophyProgress(p.trophies.filter(id => id !== 'kastvol').length, TROPHIES.length - 1, 'trofeeën verzameld') },
+  // Telt over de zichtbare kast (zie activeTrophies): een trofee die met pensioen is
+  // hoort niet meer bij "alle andere", anders zou deze nooit meer te halen zijn.
+  { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Alle andere trofeeën', has: p => earnedActiveCount(p) >= activeTrophies().length - 1, progress: p => trophyProgress(earnedActiveCount(p), activeTrophies().length - 1, 'trofeeën verzameld') },
 ];
 // De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
 const TROPHY_SHELVES = [
@@ -3752,10 +3645,30 @@ const TROPHY_SHELVES = [
   { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
   { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'perfecttour', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
-  { name: '👕 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'podiumbouwer', 'dierenkoning'] },
-  { name: '✨ Thema-looks',          ids: ['magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld', 'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'] },
+  { name: '👕 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
+/* FASE 1 — trofeeën met pensioen.
+   Looks en podia zijn uit het zichtbare spel gehaald, dus de trofeeën die
+   daar helemáál over gingen (de dertien thema-looks en "Podiumbouwer": alle
+   podia kopen kan niet meer) horen niet meer in de kast. Ze staan bewust nog
+   wél in TROPHIES:
+   - wie ze al behaald had, houdt ze in p.trophies (geen migratie, geen verlies);
+   - de definities zijn de enige plek waar die sets als spelregel beschreven staan.
+   Wat ze niet meer doen: in de kast verschijnen, meetellen in de teller, nieuw
+   toegekend of klaargelegd worden. Eén set eruit halen volstaat om ze terug te
+   brengen. */
+const RETIRED_TROPHIES = new Set([
+  'podiumbouwer',
+  'magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld',
+  'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'
+]);
+function isRetiredTrophy(id) { return RETIRED_TROPHIES.has(id); }
+// De zichtbare kast: alles behalve de gepensioneerde. Bewust een functie en geen
+// vaste lijst -- rebuildWorldBadges() verandert TROPHIES nog nadat dit bestand is
+// ingelezen (en de wereldstudio kan dat later nog eens doen).
+function activeTrophies() { return TROPHIES.filter(t => !isRetiredTrophy(t.id)); }
+function earnedActiveCount(p) { return p.trophies.filter(id => id !== 'kastvol' && !isRetiredTrophy(id)).length; }
 rebuildWorldBadges();   // de wereldbadges erbij, nu de tabel en de planken er staan
 function playedCount(p) { return Object.keys(p.stars).length; }
 // de speciale outfit-combo's: welk stuk hoort in welk kledingvak
@@ -3778,14 +3691,10 @@ function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.eq
 // Hoeveel stukken van een look het kind al bézit (los van of ze aan staan) — de
 // voortgang op de look-trofee toont dit, zodat ze niet terugvalt bij het omkleden.
 function comboOwned(p, set) { return Object.values(set).filter(id => p.owned.includes(id)).length; }
-// Vaste categorie-volgorde voor de stukken van een look (zelfde volgorde als de
-// kleedkamer-tabbladen), zodat elke look zijn stukken in dezelfde volgorde toont
-// i.p.v. de toevallige typvolgorde van elke set-definitie.
-const SLOT_ORDER = ['dress', 'shoes', 'hair', 'mic', 'instrument', 'acc', 'pet', 'stage'];
-function orderedPieces(set) {
-  return Object.entries(set).sort((a, b) => SLOT_ORDER.indexOf(a[0]) - SLOT_ORDER.indexOf(b[0]));
-}
 // Welke trofee is een thema-look, en uit welke stukken bestaat die look.
+// FASE 1: de Looks-lijst en de bijbehorende trofeeën zijn uit het zicht gehaald
+// (zie RETIRED_TROPHIES). Deze tabel blijft staan als de definitie van die sets --
+// weggooien levert niets op en maakt terugdraaien alleen maar duurder.
 const THEME_SETS = {
   magicus: MAGICUS_SET, thuismatch: OHELLE_SET, rockster: ROCKSTER_SET,
   discodiva: DISCO_SET, prinses: PRINSES_SET, ruimteheld: RUIMTE_SET,
@@ -3796,31 +3705,8 @@ const THEME_SETS = {
 // zodat een tik op zo'n trofee die collectie meteen opent om verder te sparen.
 const COLLECTION_CAT = {
   modekoningin: 'dress', schoenenkast: 'shoes', haarstylist: 'hair',
-  orkest: 'instrument', podiumbouwer: 'stage', dierenkoning: 'pet'
+  orkest: 'instrument', dierenkoning: 'pet'
 };
-// De kleedkamer laat de categorie het werk doen (tabblad "Kleren" + een kleur-
-// bolletje maakt "Roze" al duidelijk genoeg), maar in de look-checklist hangt
-// zo'n stuk los van zijn tabblad -- daar staat elk stuk maar als kaal
-// tekstregeltje, zonder icoon of categorie erbij. Vandaar deze langere,
-// duidelijkere labels specifiek voor die plek (zie pieceLabel).
-const THEME_ITEM_LABEL = {
-  shoes_goud: 'Gouden schoenen', mic_zwart: 'Rockmicro',
-  pet_eekhoorn: 'Eekhoorn', hair_zilver: 'Zilver haar',
-  dress_groen: 'Groene outfit', dress_sterren: 'Sterrenoutfit', dress_hartjes: 'Hartjesoutfit',
-  dress_disco: 'Disco-outfit', dress_voetbal: 'Voetbaloutfit', dress_zeemeermin: 'Zeemeerminoutfit',
-  dress_regenboog: 'Regenboogoutfit', shoes_regenboog: 'Regenboog schoenen',
-  hair_wit: 'Wit haar', hair_turkoois: 'Turquoise haar', hair_regenboog: 'Regenboog haar',
-  mic_zilver: 'Zilveren micro', mic_roze: 'Roze glittermicro', mic_regenboog: 'Regenboogmicro',
-  stage_disco: 'Discopodium', stage_jungle: 'Junglepodium',
-  stage_ruimte: 'Ruimteshow', stage_onderwater: 'Onderwatershow',
-  dress_rood: 'Rode outfit', stage_winter: 'Winterpodium', stage_vulkaan: 'Vulkaanshow',
-  acc_diadeem: 'Diamanten diadeem', acc_koptel: 'Hoofdtelefoon', instr_dj: 'DJ-set', pet_draak: 'Draakje'
-};
-// Korte, duidelijke naam van een stuk (zonder emoji — rustiger in de checklist).
-function pieceLabel(id) {
-  const it = item(id);
-  return THEME_ITEM_LABEL[id] || (it && it.name) || id;
-}
 // hoeveel shows van de eerste wereld staan op drie sterren?
 function perfectInFirstWorld(p) {
   let n = 0;
@@ -3898,6 +3784,7 @@ function checkTrophies(p) {
   if (!p.readyTrophies) p.readyTrophies = [];
   const nieuw = [];
   for (const t of TROPHIES) {
+    if (isRetiredTrophy(t.id)) continue;   // uit het zicht = ook niet meer klaarleggen
     if (!p.trophies.includes(t.id) && !p.readyTrophies.includes(t.id) && t.has(p)) {
       p.readyTrophies.push(t.id);
       nieuw.push(t);
@@ -3994,6 +3881,12 @@ function migrate(p) {
   // readyTrophies begint leeg; alleen echt nog-niet-geclaimde-maar-gehaalde trofeeën
   // komen daarna 'klaar' te liggen — geen plotse muur van "Klaar!" voor oude saves.
   if (!p.readyTrophies) p.readyTrophies = [];
+  // FASE 1: lag er nog een trofee klaar die intussen met pensioen is (thema-look of
+  // Podiumbouwer)? Die kaart staat niet meer in de kast, dus openen kan niet meer --
+  // en zonder dit zou het rode stipje op het Trofeeën-tabblad eeuwig blijven staan.
+  // Alleen uit het 'klaar'-lijstje; wat al behaald is (p.trophies) blijft onaangeroerd,
+  // en komt een trofee ooit terug, dan legt checkTrophies hem gewoon opnieuw klaar.
+  p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
   // bestaande spelers beginnen op hun huidige rang (geen bonus met terugwerkende
@@ -4446,7 +4339,7 @@ const PAT_SHIRT = {
 };
 
 // Een basis erbij? Eén regel hier en één patronentabel hierboven -- de rest van
-// de app (winkel, looks, trofeeën, opslag) hoeft er niets van te weten.
+// de app (winkel, kleedkamer, trofeeën, opslag) hoeft er niets van te weten.
 const BASES = {
   meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  pat: PAT_JURK },
   jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, pat: PAT_SHIRT },
@@ -5431,27 +5324,31 @@ let justClaimed = null;   // id van de zojuist geopende trofee (voor de shimmer,
 function renderShelves() {
   const p = P();
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
-  const earned = p.trophies.length;
+  // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
+  const totaal = activeTrophies().length;
+  const earned = p.trophies.filter(id => !isRetiredTrophy(id)).length;
   $('trophy-diamonds').textContent = p.diamonds;
   renderCareerStrip(p);
-  $('trophy-count').textContent = `${earned} van ${TROPHIES.length} verzameld`;
-  $('trophy-bar').style.width = Math.round(100 * earned / TROPHIES.length) + '%';
+  $('trophy-count').textContent = `${earned} van ${totaal} verzameld`;
+  $('trophy-bar').style.width = Math.round(100 * earned / totaal) + '%';
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
-    const got = shelf.ids.filter(id => p.trophies.includes(id)).length;
+    const ids = shelf.ids.filter(id => !isRetiredTrophy(id));
+    if (!ids.length) return;   // een plank die helemaal met pensioen is, staat er niet
+    const got = ids.filter(id => p.trophies.includes(id)).length;
     const panel = document.createElement('div');
     panel.className = 'shelf';
     const head = document.createElement('div');
     head.className = 'shelf-title';
-    const shelfFull = got === shelf.ids.length ? ' full' : '';
+    const shelfFull = got === ids.length ? ' full' : '';
     head.innerHTML = `<div class="shelf-head-row"><span>${shelf.name}</span>`
-      + `<span class="shelf-count${shelfFull}">${got} van ${shelf.ids.length}</span></div>`
+      + `<span class="shelf-count${shelfFull}">${got} van ${ids.length}</span></div>`
       + (shelf.note ? `<div class="shelf-note">${shelf.note}</div>` : '');
     panel.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid';
-    shelf.ids.forEach(id => {
+    ids.forEach(id => {
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
     });
@@ -5467,7 +5364,7 @@ const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'steden': 'stad', 'sommen': 'som', 'sterren': 'ster',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
   'spulletjes': 'spulletje', 'outfits': 'outfit', 'schoenen': 'schoen',
-  'haarkleuren': 'haarkleur', 'instrumenten': 'instrument', 'podia': 'podium',
+  'haarkleuren': 'haarkleur', 'instrumenten': 'instrument',
   'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee',
   'extra shows': 'extra show'
 };
@@ -5493,14 +5390,10 @@ function trophyCard(t, p) {
   const card = document.createElement('div');
   // volle breedte: alleen 'Kast vol!', en dat altijd (in élke status hetzelfde
   // formaat) -- geen enkele kaart mag van formaat wisselen zodra de status
-  // verandert (zie ook: thema-looks blijven nu net als elke andere trofee
-  // hun gewone, vaste kaartformaat, ook zodra ze klaarliggen om te openen).
+  // verandert.
   const wide = (t.id === 'kastvol') ? 'wide ' : '';
   card.className = `trophy-card ${wide}` + status;
   // bijna behaald: subtiele gouden glow die iets sterker wordt richting 100%
-  // (t.progress() rekent voor thema-looks al automatisch met hoeveel stukken
-  // er ECHT tegelijk aan staan, via comboOn -- dezelfde bron als de trofee-
-  // voorwaarde zelf, dus dit klopt hier vanzelf mee)
   if (status === 'almost' && t.progress) {
     const pct = Math.min(100, t.progress(p).pct);
     const a = Math.max(.25, .25 + (pct - 80) / 20 * .3);
@@ -5534,39 +5427,13 @@ function normalCardHTML(t, p, status) {
   }
   return top + `<div class="trophy-bottom">${bottom}</div>`;
 }
-// Thema-looks krijgen GEEN eigen kaart-renderer meer: elke thema-trofee heeft
-// zelf al een progress() die comboOn (= hoeveel stukken NU tegelijk aan staan)
-// telt -- exact de voorwaarde om de trofee te behalen -- dus normalCardHTML
-// hierboven geeft voor thema-looks vanzelf de juiste "Nog X stukken tegelijk
-// aan"-voortgang, in precies dezelfde kaartstructuur als elke andere trofee.
-// Zet alle stukken van een look aan die je al bezit (ontbrekende stukken
-// blijven gewoon weg -- geen foutmelding, gewoon zoveel mogelijk van de look).
-// Pure data-actie zonder geluid/hertekenen: de aanroepers (hieronder en vanuit
-// de trofeeënkast) hebben elk hun eigen render/navigatie-moment nodig.
-function equipOwnedPieces(id) {
-  const set = THEME_SETS[id];
-  if (!set) return;
-  const p = P();
-  Object.entries(set).forEach(([cat, itemId]) => { if (p.owned.includes(itemId)) p.equipped[cat] = itemId; });
-  const trofees = checkTrophies(p);   // een complete look kan een trofee klaarleggen
-  noticeReady(trofees);
-  save();
-}
-// Tik op een hele look-kaart in de kleedkamer: trek meteen alles aan wat je
-// al hebt van die look.
-function wearLook(id) {
-  equipOwnedPieces(id);
-  sndClick();
-  renderShop();
-}
-// tikken mag: klaar opent de trofee; een thema-look brengt je naar de kleedkamer
-// (waar alle stukken/knoppen staan); een gewone behaalde glinstert; anders "Nog X".
+// tikken mag: klaar opent de trofee; een collectie brengt je naar die categorie in
+// de kleedkamer; een gewone behaalde glinstert; anders "Nog X".
 function tapTrophy(t, card, e) {
   if (e) tapRipple(e.clientX, e.clientY);   // tactiel: kringetje vanaf de vinger
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  if (THEME_SETS[t.id]) { sndClick(); openLookInKleedkamer(t.id); return; }
   if (COLLECTION_CAT[t.id]) { sndClick(); openKleedkamerCat(COLLECTION_CAT[t.id]); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
   if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
@@ -6677,8 +6544,10 @@ function startLevel(lvl) {
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
   const plan = count ? [] : planSpecials(p, s, s.perLevel, tourRound(lvl), goldIdx);
-  // Basisstap voor de fanmeter; de kwaliteit van elk antwoord versnelt het vullen (zie submitAnswer),
-  // en wat aan het eind overblijft levert nog een publieksbonus op (zie endLevel).
+  // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
+  // (zie submitAnswer/endLevel): hij bepaalt nog altijd de extra show en de restbonus,
+  // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
+  // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0,
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
@@ -6691,47 +6560,9 @@ function startLevel(lvl) {
   $('game-diamonds').textContent = p.diamonds;
   $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
   applyStage($('show-stage'), p);
-  updateFan();
   show('screen-game');
   renderQuestion();
 }
-/* fill+icoon in sync houden met G.fan; icoon wordt feller naarmate de meter vult.
-   Bij een encore (meter net vol geklapt) blijft de balk eerst even vol pulseren,
-   de bonus-diamanten vliegen vanaf de meter zelf naar de teller, en pas dáárna
-   lost de balk omhoog op en herstart hij leeg -- voelt zo als een omgezette
-   beloning i.p.v. voortgang die zomaar wegvalt. */
-function updateFan(encore) {
-  const fill = $('fanmeter-fill');
-  const icon = $('fan-icon');
-  const glow = b => icon.style.filter = `brightness(${b.toFixed(2)})`;
-  if (encore) {
-    fill.style.width = '100%';
-    fill.classList.add('full');
-    glow(1.5);
-    icon.classList.remove('pulse');
-    void icon.offsetWidth;
-    icon.classList.add('pulse');
-    flyDiamonds($('fan-col'), $('game-diamonds'), 3);
-    setTimeout(() => {
-      fill.classList.remove('full');
-      fill.classList.add('encore-clear');
-      setTimeout(() => {
-        fill.classList.remove('encore-clear');
-        fill.style.transition = 'none';
-        fill.style.width = G.fan + '%';
-        void fill.offsetWidth;
-        fill.style.transition = '';
-        icon.classList.remove('pulse');
-        glow(.65 + Math.min(1, G.fan / 100) * .85);
-      }, 720);
-    }, 550);
-    return;
-  }
-  fill.style.width = G.fan + '%';
-  fill.classList.toggle('full', G.fan >= 100);
-  glow(.65 + Math.min(1, G.fan / 100) * .85);
-}
-
 /* Stoppen: een X sluit/onderbreekt de show. Is er nog geen voortgang (net
    gestart, nog geen vraag beantwoord of gemist), dan stopt hij meteen --
    er valt dan niets te bevestigen. Pas zodra er iets te verliezen is, vraagt
@@ -6922,7 +6753,8 @@ function submitAnswer(val, btnEl) {
     if (q.gold) { gain *= 3; p.goldHits++; }     // gouden vraag: 3× zoveel
     G.earned += gain;
     p.diamonds += gain;
-    // Fanmeter vult over de show; hoe béter je speelt, hoe sneller. Vol = encore (climax).
+    // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
+    // je speelt, hoe sneller hij volloopt. Vol = een extra show, met bonusdiamanten.
     let fanMul = 1;
     if (!firstTry) fanMul = 0.5;               // een herkansing laat het publiek maar half zo hard juichen
     else {
@@ -6938,10 +6770,8 @@ function submitAnswer(val, btnEl) {
     }
     save();
     $('game-diamonds').textContent = p.diamonds;
-    // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer;
-    // de encore-bonus vliegt apart vanaf de meter zelf (zie updateFan)
+    // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
     flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), q.gold ? 3 : 2);
-    updateFan(encore);
     if (btnEl) btnEl.classList.add('good');
     if (G.mode === 'typ') $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank done">${q.ans}</span>`);
     if (encore) { sndWin(); confetti(24); showPraise('🎆 EXTRA SHOW!', '💎 +5 bonus'); }
@@ -7164,10 +6994,13 @@ function endLevel(success) {
   const wl = worldFor(lvl);
   $('end-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
-  // Overgebleven fanmeter telt altijd mee: +1 💎 per volle 25% publieksenthousiasme,
-  // zodat inspanning ook loont als de encore (100%) net niet gehaald is.
+  // Wat er van de stille publieksteller overblijft telt altijd mee: +1 💎 per volle
+  // 25%, zodat inspanning ook loont als de extra show (100%) net niet gehaald is.
+  // Sinds fase 1 heeft die bonus geen eigen vakje meer op het eindscherm -- hij zit
+  // gewoon in de 💎 die je deze show verdiend hebt (zie verdiend hieronder).
   const fanBonus = Math.floor(G.fan / 25);
   if (fanBonus > 0) p.diamonds += fanBonus;
+  const verdiend = G.earned + fanBonus;
   $('end-avatar').innerHTML = avatarSVG(p, 150);
   applyStage($('end-stage'), p);
   if (success) {
@@ -7209,12 +7042,10 @@ function endLevel(success) {
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
     $('end-text').textContent = juich;
-    // Altijd deze drie, altijd in deze volgorde, altijd even breed -- ook als er
-    // 0 publieksbonus is (dat maakt juist zichtbaar waar de fanmeter toe leidt).
+    // Altijd deze twee, altijd in deze volgorde, altijd even breed.
     $('end-earn').innerHTML =
-        `<span class="earn-chip dia">💎 +${G.earned}</span>`
-      + `<span class="earn-chip star">⭐ +${bonus}</span>`
-      + `<span class="earn-chip fan">👏 +${fanBonus}</span>`;
+        `<span class="earn-chip dia">💎 +${verdiend}</span>`
+      + `<span class="earn-chip star">⭐ +${bonus}</span>`;
     // Eén mijlpaal, in volgorde van belang. Alleen de eerste twee zijn een beloning
     // (gouden pil, tikbaar); "nog X tot ..." is een vooruitblik en blijft stil.
     const mile = $('end-milestone');
@@ -7244,12 +7075,11 @@ function endLevel(success) {
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
     $('end-milestone').innerHTML = '';
-    // zelfde drie vakjes als bij een geslaagde show, zodat het scherm niet
+    // zelfde twee vakjes als bij een geslaagde show, zodat het scherm niet
     // ineens een andere vorm heeft: alleen wat je verdiend hebt, staat erin
     $('end-earn').innerHTML =
-        `<span class="earn-chip dia">💎 +${G.earned}</span>`
-      + `<span class="earn-chip star">⭐ +0</span>`
-      + `<span class="earn-chip fan">👏 +${fanBonus}</span>`;
+        `<span class="earn-chip dia">💎 +${verdiend}</span>`
+      + `<span class="earn-chip star">⭐ +0</span>`;
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
@@ -7456,99 +7286,53 @@ function itemThumb(it, base) {
 let shopCat = 'dress';
 let shopSelectedId = null;
 let shopJustBoughtId = null;
-let shopView = 'items';   // 'items' = kleren per categorie · 'looks' = complete outfits als spaardoel
-let focusLook = null;     // look-id om naartoe te scrollen + even te laten oplichten (vanuit de kast)
-let looksScroll = 0;      // onthouden scrollpositie in de Looks-lijst, om ernaar terug te keren na een uitstapje naar de winkel
-let shopBackToLooks = false;   // stond je in Looks vóór de sprong naar dit ene stuk? dan gaat terug-navigatie daar weer naartoe
 let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-kaart kwam -- terug-navigatie gaat dan naar de kast i.p.v. de kaart
-// Onthoud waar je in de Looks-lijst stond (voor je naar een los stuk sprong).
-function rememberLooksScroll() { if (shopView === 'looks') looksScroll = $('screen-dress').scrollTop; }
+// FASE 1: de Looks-lijst (complete thema-outfits als spaardoel) is uit de kleedkamer
+// gehaald. Wat overblijft is één vraag: kies een soort, kies een stuk, doe het aan.
+// De thema-sets zelf (THEME_SETS) blijven als data staan -- zie daar.
 // Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
-// altijd terug naar de standaardcategorie, geen selectie, geen Looks-modus.
+// altijd terug naar de standaardcategorie, zonder selectie.
 function openKleedkamer() {
-  shopCat = 'dress'; shopSelectedId = null; shopView = 'items'; focusLook = null; looksScroll = 0;
-  shopBackToLooks = false; dressReturnTo = null;
+  shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
 }
 // Terug naar de kleedkamer via de vaste navigatie (kwam van een ánder
-// tabblad): hervat waar je gebleven was -- categorie, subview (Kleren/Looks),
-// selectie en scrollpositie blijven allemaal gewoon staan (het zijn simpele
-// variabelen die niets anders al aanraakte). Een gerichte sprong hierheen
-// (bv. vanuit een trofee, zie openLookInKleedkamer/openKleedkamerCat) heeft
-// die variabelen intussen al naar zijn eigen doel gezet -- dát wordt dus
-// vanzelf de nieuwe "waar je gebleven was"-stand, zonder extra code.
+// tabblad): hervat waar je gebleven was -- categorie, selectie en scrollpositie
+// blijven allemaal gewoon staan (het zijn simpele variabelen die niets anders al
+// aanraakte). Een gerichte sprong hierheen (bv. vanuit een collectie-trofee, zie
+// openKleedkamerCat) heeft die variabelen intussen al naar zijn eigen doel gezet
+// -- dát wordt dus vanzelf de nieuwe "waar je gebleven was"-stand.
 function resumeKleedkamer() {
   show('screen-dress');
   renderShop();
 }
-// vanuit de trofeeënkast: open de kleedkamer in Looks-modus, gefocust op één
-// look -- trekt meteen aan wat je er al van bezit en scrollt er duidelijk naartoe
-function openLookInKleedkamer(id) {
-  shopCat = 'dress'; shopSelectedId = null; shopView = 'looks'; focusLook = id;
-  shopBackToLooks = false; dressReturnTo = 'trophies';
-  equipOwnedPieces(id);
-  show('screen-dress');
-  // 'screen-dress' onthoudt zijn scrollpositie van de vórige keer (de browser
-  // reset dat niet vanzelf bij display:none/flex) -- begin daarom altijd weer
-  // bovenaan, anders staat de kaart de tweede keer soms al toevallig zowat in
-  // beeld en scrollt hij niet meer merkbaar, wat aanvoelt alsof er niets gebeurt.
-  $('screen-dress').scrollTop = 0;
-  renderShop();   // renderLookGoals scrollt naar + belicht de gefocuste look
-}
 // vanuit een kleedkamercollectie-trofee: open die categorie meteen in de kleedkamer
 function openKleedkamerCat(cat) {
-  shopCat = cat; shopSelectedId = null; shopView = 'items'; focusLook = null;
-  shopBackToLooks = false; dressReturnTo = 'trophies';
+  shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   show('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
-}
-// vanuit de Looks-modus naar een concreet stuk springen om het te kopen
-function shopGoToItem(cat, id) {
-  sndClick();
-  rememberLooksScroll();   // onthoud de plek in de Looks-lijst om er straks naar terug te keren
-  shopView = 'items'; shopCat = cat; shopSelectedId = id;
-  shopBackToLooks = true;   // terug-navigatie (Android-terug of Escape) keert hierdoor terug naar Looks
-  renderShop();
-  // scroll het gekozen item zelf in beeld (i.p.v. gewoon naar boven) -- bij
-  // een categorie met veel spulletjes (bv. dieren) staat het anders alsnog
-  // buiten beeld, precies het stukje waar je net vanuit Looks voor kwam
-  requestAnimationFrame(() => {
-    const card = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
-    if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  });
-}
-// een stuk in de looks-lijst aantikken: heb je 't al → meteen aandoen; anders → kopen
-function lookPieceTap(cat, id) {
-  const p = P();
-  if (p.owned.includes(id)) equipShopItem(id);   // in bezit → aandoen (checkt trofeeën, hertekent)
-  else shopGoToItem(cat, id);                     // ontbreekt → naar de winkel
 }
 function renderShop() {
   const p = P();
-  const looksMode = shopView === 'looks';
-  const selected = (!looksMode && shopSelectedId) ? item(shopSelectedId) : null;
+  const selected = shopSelectedId ? item(shopSelectedId) : null;
   const preview = selected ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
   $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
   applyStage($('shop-stage'), preview);
   renderDressBar(selected, p);
   const grid = $('item-grid');
-  grid.classList.toggle('looks-view', looksMode);
   grid.innerHTML = '';
-  // Eén keuzerij voor álles wat je kunt bekijken: eerst Looks (complete outfits),
-  // daarna de acht kledingsoorten. Er stond hier eerder een aparte
-  // Spullen/Looks-schakelaar bóven deze rij; twee bedieningen voor één vraag.
-  // De rij blijft nu ook in Looks-modus staan, dus van een look terug naar
-  // "Schoenen" is één tik in plaats van twee.
+  // Eén keuzerij: de kledingsoorten. Er stond hier eerder eerst een
+  // Spullen/Looks-schakelaar bóven deze rij en daarna "Looks" als eerste chip
+  // in de rij zelf; sinds fase 1 is de lijst met thema-looks er helemaal uit.
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
   let activeTab = null;
-  // Alleen iconen, plus het woord bij wat aanstaat -- behalve Looks, dat houdt
-  // zijn woord altijd (het is geen kledingsoort). aria-label houdt de naam voor
-  // een schermlezer altijd beschikbaar.
+  // Alleen iconen, plus het woord bij wat aanstaat. aria-label houdt de naam
+  // voor een schermlezer altijd beschikbaar.
   const chip = (opts) => {
     const b = document.createElement('button');
     b.className = 'tab-btn' + (opts.on ? ' active' : '') + (opts.extra ? ' ' + opts.extra : '');
@@ -7561,30 +7345,15 @@ function renderShop() {
     if (opts.on) activeTab = b;
     return b;
   };
-  chip({ ico: '✨', name: 'Looks', on: looksMode, keepLabel: true, extra: 'looks', go: () => {
+  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
     sndClick();
-    if (looksMode) return;
-    shopView = 'looks'; shopSelectedId = null; shopBackToLooks = false; renderShop();
-    // terug in Looks: op de plek waar je gebleven was
-    $('screen-dress').scrollTop = looksScroll;
-    requestAnimationFrame(() => { $('screen-dress').scrollTop = looksScroll; });
-  } });
-  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: !looksMode && c.id === shopCat, go: () => {
-    sndClick();
-    rememberLooksScroll();               // verlaat je Looks? bewaar de plek
-    const wasLooks = shopView === 'looks';
-    shopView = 'items'; shopCat = c.id; shopSelectedId = null; shopBackToLooks = false; renderShop();
-    if (wasLooks) {                      // vanuit Looks: bovenaan bij de spullen beginnen
-      $('screen-dress').scrollTop = 0;
-      requestAnimationFrame(() => { $('screen-dress').scrollTop = 0; });
-    }
+    shopCat = c.id; shopSelectedId = null; renderShop();
   } }));
   // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
   tabs.onscroll = () => updateFades(tabs);
   if (activeTab) requestAnimationFrame(() => {
     if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'center' }); updateFades(tabs); }
   });
-  if (looksMode) { renderLookGoals(grid, p); return; }
   // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
   ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => a.price - b.price).forEach(it => {
     const owned = p.owned.includes(it.id);
@@ -7613,63 +7382,6 @@ function renderShop() {
     grid.appendChild(card);
   });
 }
-// Looks-modus: elke thema-look als spaardoel, met per stuk de staat (ontbreekt /
-// in bezit / nu aan) en een tik-om-te-kopen sprong naar het ontbrekende stuk.
-// Zo trekt het najagen van één look het kind dwars door de categorieën heen.
-function renderLookGoals(grid, p) {
-  grid.innerHTML = '';
-  // Vaste volgorde (zelfde TROPHIES-definitievolgorde als de trofeeënkast) --
-  // kaarten wisselen NOOIT van plek als hun status verandert. Alleen de
-  // stukjes-rand (per stuk: aan/in bezit/ontbreekt) verandert.
-  TROPHIES.filter(t => THEME_SETS[t.id]).forEach(t => {
-    const pieces = orderedPieces(THEME_SETS[t.id]);
-    const card = document.createElement('div');
-    card.dataset.look = t.id;
-    card.className = 'look-goal';
-    // tik ergens op de kaart (buiten een los stukje): trek alles aan wat je bezit
-    card.onclick = () => wearLook(t.id);
-    // elk stukje = mini-kaartje, zelfde miniatuur + rand-taal als de gewone
-    // kleren-kaarten (itemThumb hergebruikt); event.stopPropagation voorkomt
-    // dat een tik op één stukje ook meteen de hele-look-aandoen-actie triggert
-    const pieceCells = pieces.map(([cat, id]) => {
-      const st = p.equipped[cat] === id ? 'on' : (p.owned.includes(id) ? 'have' : 'miss');
-      return `<div class="look-piece ${st}" data-cat="${cat}" onclick="event.stopPropagation();lookPieceTap('${cat}','${id}')">${itemThumb(item(id))}<div class="lp-name">${pieceLabel(id)}</div></div>`;
-    }).join('');
-    card.innerHTML = `<div class="look-goal-head"><span class="lemoji">${t.emoji}</span>`
-      + `<span class="lname">${t.name}</span></div>`
-      + `<div class="look-pieces">${pieceCells}</div>`;
-    grid.appendChild(card);
-  });
-  // vanuit de kast gefocust geopend: scroll ernaartoe en laat 'm even oplichten.
-  // Dubbele rAF (i.p.v. één) zodat het scherm ('screen-dress' krijgt hier pas
-  // net .active/display:flex) écht een volledige layout+paint heeft gehad
-  // vóórdat we de positie opmeten -- anders kan de meting op een trager
-  // toestel nog van vóór het zichtbaar worden dateren.
-  if (focusLook) {
-    const lookId = focusLook;
-    focusLook = null;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const target = grid.querySelector(`.look-goal[data-look="${lookId}"]`);
-      if (!target) return;
-      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      target.classList.add('flash');
-      setTimeout(() => target.classList.remove('flash'), 1400);
-      // vangnet: blijkt de kaart na de verwachte scrollduur (bv. onderbroken
-      // animatie) toch niet volledig in beeld -- inclusief niet verstopt onder
-      // de vaste kop -- dan springt hij alsnog direct (zonder animatie) goed.
-      setTimeout(() => {
-        const r = target.getBoundingClientRect();
-        const screen = $('screen-dress');
-        const sr = screen.getBoundingClientRect();
-        const hub = screen.querySelector('.hub-sticky');
-        const topLimit = hub ? Math.max(sr.top, hub.getBoundingClientRect().bottom) : sr.top;
-        const fullyVisible = r.top >= topLimit && r.bottom <= sr.bottom;
-        if (!fullyVisible) target.scrollIntoView({ block: 'center', behavior: 'auto' });
-      }, 500);
-    }));
-  }
-}
-
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
   preview.equipped[it.cat] = it.id;
@@ -8600,15 +8312,7 @@ function backTarget() {
   if (pop) return pop._close;
   if ($('gear-menu').classList.contains('open')) return closeGearMenu;
   if ($('mem-done').style.display === 'flex') return exitMemory;
-  // 2) één stap terug binnen hetzelfde scherm -- het enige echt geneste geval:
-  //    een los stuk vanuit Looks openen keert terug naar diezelfde Looks-lijst.
-  if ($('screen-dress').classList.contains('active') && shopBackToLooks) {
-    return () => {
-      shopBackToLooks = false; shopView = 'looks'; shopSelectedId = null; renderShop();
-      requestAnimationFrame(() => { $('screen-dress').scrollTop = looksScroll; });
-    };
-  }
-  // 3) het huidige scherm verlaten naar zijn eigen ouder -- exact dezelfde bestemming
+  // 2) het huidige scherm verlaten naar zijn eigen ouder -- exact dezelfde bestemming
   //    als de zichtbare ✕/←/tab-knop op dat scherm (nooit twee betekenissen van "terug").
   if ($('screen-game').classList.contains('active')) return askQuit;
   if ($('screen-end').classList.contains('active')) return goMap;
