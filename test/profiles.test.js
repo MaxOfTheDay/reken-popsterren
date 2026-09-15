@@ -738,6 +738,135 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= 7g · Fase 2: de fundering =================
+   * Drie dingen die fase 2 heeft neergezet en die fase 3 (thema-schermen,
+   * overgangen, wereldbeloningen) er kapot op kan maken zonder het te merken:
+   *
+   *   worldProgress()  de één plek die p.stars per wereld optelt. Elk scherm en
+   *                    elke trofee leest hieruit; twee kopieën die uit elkaar lopen
+   *                    is precies wat dit moet voorkomen.
+   *   showWorld()      kop en kaart kijken samen naar dezelfde wereld. Waren vier
+   *                    losse regels, en één vergeten regel laat de pil iets anders
+   *                    noemen dan wat eronder staat.
+   *   openOverlay()    elke zwevende laag draagt .rp-overlay en een _close, en
+   *                    terug sluit de bóvenste. Vergeten = de Android-terugknop
+   *                    springt door de laag heen naar het vorige scherm.
+   *
+   * En als vierde: een gepensioneerde trofee (Looks/Podiumbouwer) die nog in een
+   * bestaande save staat mag niets breken -- de definities zijn weg, de id's niet. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const q = defaultProfile('Fien', 'dress_roze');
+      // een save van vóór fase 1: twee trofeeën die niet meer bestaan, één die nog wel
+      q.trophies = ['first', 'rockster', 'podiumbouwer'];
+      q.readyTrophies = ['discodiva'];
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: true, haptics: true, schemaV: 3, profiles: { p1: q } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(400);
+
+    const r = await page.evaluate(() => {
+      const q = P();
+      const uit = {};
+
+      // -- gepensioneerde trofeeën: bewaard, maar onzichtbaar --
+      uit.behaaldBewaard = q.trophies.indexOf('rockster') >= 0 && q.trophies.indexOf('podiumbouwer') >= 0;
+      uit.klaarOpgeruimd = q.readyTrophies.indexOf('discodiva') < 0;
+      uit.geenDefinitie = !TROPHIES.some(t => t.id === 'rockster' || t.id === 'podiumbouwer');
+      uit.nietGeteld = earnedActiveCount(q) === 1;   // alleen 'first' telt mee
+      uit.nietOpEenPlank = !TROPHY_SHELVES.some(sh => sh.ids.some(id => id === 'rockster' || id === 'podiumbouwer'));
+
+      // -- worldProgress: één bron voor wat een wereld waard is --
+      const w1 = worldForIndex(0);
+      q.stars = {};
+      for (let l = w1.first; l < w1.first + w1.levels; l++) q.stars[l] = 3;
+      q.stars[w1.first + 1] = 1;                     // één show op één ster
+      const v = worldProgress(q, w1);
+      uit.pgGespeeld = v.gespeeld === w1.levels;
+      uit.pgPerfect = v.perfect === w1.levels - 1;
+      uit.pgSterren = v.sterren === (w1.levels - 1) * 3 + 1;
+      uit.pgMax = v.max === w1.levels * 3;
+      uit.pgUit = v.uit === true && v.vol === false;
+      // dezelfde vraag via de badge en via de oude sterrenteller: één antwoord
+      const badge = TROPHIES.filter(t => t.id === 'wereld-' + WORLDS[0].id)[0];
+      uit.badgeVolgt = badge.has(q) === v.uit && badge.ster(q) === v.vol;
+      uit.tellerVolgt = worldStars(q, w1).got === v.sterren;
+      q.stars[w1.first + 1] = 3;
+      uit.pgVol = worldProgress(q, w1).vol === true;
+
+      // -- showWorld: kop en kaart wijzen naar dezelfde wereld --
+      q.level = 1;
+      const laatste = WORLDS.length - 1;
+      showWorld(laatste);
+      uit.idx = viewWorldIdx === laatste;
+      uit.kop = document.getElementById('map-tournee-label').textContent
+        .indexOf(WORLDS[laatste].name) >= 0;
+      uit.haltes = document.querySelectorAll('.tour-stop').length === WORLDS[laatste].levels;
+      uit.eersteHalte = Number(document.querySelector('.tour-stop').dataset.lvl) === WORLD_START[laatste];
+      // en terug naar de eigen wereld via de gouden pil onderaan
+      document.getElementById('world-back').onclick();
+      uit.terug = viewWorldIdx === 0
+        && document.getElementById('map-tournee-label').textContent.indexOf(WORLDS[0].name) >= 0;
+      return uit;
+    });
+
+    check(r.behaaldBewaard, 'een behaalde Looks/Podium-trofee blijft in de save staan', JSON.stringify(r));
+    check(r.klaarOpgeruimd, 'een gepensioneerde trofee blijft niet als "klaar" liggen', JSON.stringify(r));
+    check(r.geenDefinitie, 'de gepensioneerde definities zijn uit de tabel', JSON.stringify(r));
+    check(r.nietGeteld, 'een gepensioneerde trofee telt niet mee in de kastteller', JSON.stringify(r));
+    check(r.nietOpEenPlank, 'geen enkele plank verwijst nog naar een gepensioneerde trofee', JSON.stringify(r));
+    check(r.pgGespeeld && r.pgPerfect && r.pgSterren && r.pgMax && r.pgUit,
+      'worldProgress telt gespeeld, perfect en sterren per wereld', JSON.stringify(r));
+    check(r.badgeVolgt && r.tellerVolgt,
+      'de wereldbadge en de sterrenteller lezen dezelfde bron', JSON.stringify(r));
+    check(r.pgVol, 'drie sterren op elke show maakt de wereld vol', JSON.stringify(r));
+    check(r.idx && r.kop && r.haltes && r.eersteHalte,
+      'showWorld zet kop én kaart op dezelfde wereld', JSON.stringify(r));
+    check(r.terug, 'de weg terug brengt kop en kaart samen terug', JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* ========== 7h · Terug sluit de bóvenste zwevende laag ========== */
+  {
+    const { ctx, page } = await fresh();
+    await page.goto(APP_URL + '&demo&star=p1&screen=tro');
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const uit = {};
+      openCareer();                                   // laag 1
+      await wacht(120);
+      uit.eenLaag = document.querySelectorAll('.rp-overlay').length === 1;
+      uit.heeftClose = typeof document.querySelector('.rp-overlay')._close === 'function';
+      celebrateTrophy({ emoji: '\ud83c\udfc6', name: 'Test' });   // laag 2, er bovenop
+      await wacht(120);
+      uit.tweeLagen = document.querySelectorAll('.rp-overlay').length === 2;
+      // terug hoort de bóvenste (de trofee) te pakken, niet de onderste
+      uit.bovensteEerst = backTarget() === document.querySelector('.trophy-pop-overlay')._close;
+      backTarget()();
+      await wacht(450);
+      uit.trofeeWeg = !document.querySelector('.trophy-pop-overlay');
+      uit.ladderNog = !!document.querySelector('.career-overlay');
+      uit.danDeLadder = backTarget() === document.querySelector('.career-overlay')._close;
+      backTarget()();
+      await wacht(400);
+      uit.allesWeg = document.querySelectorAll('.rp-overlay').length === 0;
+      uit.daarnaScherm = backTarget() === goMap;      // de kast zelf is nu aan de beurt
+      return uit;
+    });
+    check(r.eenLaag && r.heeftClose, 'openOverlay hangt één laag op met een eigen sluiting', JSON.stringify(r));
+    check(r.tweeLagen, 'twee lagen kunnen over elkaar staan', JSON.stringify(r));
+    check(r.bovensteEerst && r.trofeeWeg && r.ladderNog,
+      'terug sluit eerst de bovenste laag', JSON.stringify(r));
+    check(r.danDeLadder && r.allesWeg, 'daarna pas de laag eronder', JSON.stringify(r));
+    check(r.daarnaScherm, 'en pas als alles dicht is telt het scherm zelf mee', JSON.stringify(r));
+    await ctx.close();
+  }
+
   /* ================= 8 · Oude opslag: precies één keer ophalen ================= */
   {
     const { ctx, page } = await fresh();

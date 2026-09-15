@@ -865,7 +865,7 @@
   .rank-fill { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .5s ease; }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
-     parallax-transform (zie updateParallax). Ooit zat de transform op
+     parallax-transform. Ooit zat de transform op
      .map-sky zelf -- dan verschuift de knip-grens mee met de parallax, en
      ontstaat er een onzichtbare strook aan de kant van het scherm waar
      nooit meer een wolk kan verschijnen). */
@@ -3213,7 +3213,6 @@ function petCount(p) { return catCount(p, 'pet'); }
 const DRESS_TOTAL = ITEMS.filter(i => i.cat === 'dress').length;
 const SHOES_TOTAL = ITEMS.filter(i => i.cat === 'shoes').length;
 const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
-const STAGE_TOTAL = ITEMS.filter(i => i.cat === 'stage').length;
 
 /* ================= Werelden =================
    Een wereld is een stuk van de tournee: een vast aantal levels met een eigen
@@ -3227,7 +3226,28 @@ const STAGE_TOTAL = ITEMS.filter(i => i.cat === 'stage').length;
    LET OP -- de vololgorde en de lengtes liggen vast zodra een wereld eenmaal
    gespeeld is. Een wereld ertussen schuiven of korter maken hernummert alle
    levels erna, en dan verhuizen de sterren van een kind naar een andere wereld.
-   Achteraan bijplakken mag altijd. */
+   Achteraan bijplakken mag altijd.
+
+   ---- Een wereld erbij ----------------------------------------------------
+   Eén regel in de lijst hieronder, en verder niets. Alles wat de app over een
+   wereld weet leest ze hiervandaan:
+
+     WORLD_START/WORLD_LAST  rebuildWorldStarts() rekent de levelnummers opnieuw uit
+     de kaart                worldFor() / worldForIndex() vinden de wereld bij een level
+     de tekening             art  (ontbreekt die: de reservekaart met de kleuren hieronder)
+     de sfeer                theme -> CSS-variabelen (applyWorldTheme), nooit een if per wereld
+     de route                nodes/curve (ontbreken die: defaultNodes() slingert er een)
+     de wereldbadge          rebuildWorldBadges() zet er een trofee bij, op id
+     de werelden-kiezer      openWorlds() loopt gewoon de lijst af
+
+   Zoek dus niet naar een tweede plek -- die is er niet, en als je er ooit een
+   nodig lijkt te hebben, hoort het veld hier en niet daar.
+
+   Velden die er nog NIET zijn omdat de app ze nog niet nodig heeft: zaal-
+   tekening, wereldbeloning, wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen
+   loopt nu impliciet via p.level (een halte is speelbaar t/m p.level, en werelden
+   staan op een rij), en dat is precies genoeg. Komen die dingen er, dan komen ze
+   hier als veld bij -- niet als uitzondering ergens in een scherm. */
 /* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
    door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
    Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan.
@@ -3488,22 +3508,41 @@ function worldFor(lvl) {
   for (let k = 0; k < WORLDS.length; k++) if (lvl >= WORLD_START[k]) i = k;
   return { world: WORLDS[i], index: i, first: WORLD_START[i], nr: lvl - WORLD_START[i] + 1, levels: WORLDS[i].levels, endless: false };
 }
+/* Hoe ver staat dit kind in deze wereld? Één plek die p.stars per wereld optelt,
+   en de enige plek die dat mag. Alles wat een scherm of een trofee over een wereld
+   wil weten komt hieruit -- daarvóór liep dezelfde lus vier keer los door het
+   bestand (sterrenteller, badge-heeft, badge-ster, badge-voortgang) en telde elke
+   kopie net iets anders.
+
+   p.stars is en blijft de opslag; dit is puur afgeleid en wordt nooit bewaard.
+   endLevel schrijft er alleen bij een gesláágde show in, en dan minstens één ster,
+   dus "gespeeld" is hier "er staat minstens één ster". Een 0 kan alleen uit een met
+   de hand bewerkte back-up komen en telt bewust niet mee -- precies zoals de oude
+   worldDone() dat deed.
+
+   { levels, gespeeld, perfect, sterren, max, uit, vol }
+     gespeeld  hoeveel shows van deze wereld al een keer gedaan zijn
+     perfect   hoeveel daarvan op drie sterren staan
+     sterren   / max   de sterrenteller van deze wereld
+     uit       elke show gespeeld        (de wereldbadge)
+     vol       elke show op drie sterren (de ster-rand op diezelfde badge) */
+function worldProgress(p, w) {
+  let gespeeld = 0, perfect = 0, sterren = 0;
+  for (let l = w.first; l < w.first + w.levels; l++) {
+    const st = p.stars[l];
+    if (!st) continue;
+    gespeeld++;
+    sterren += st;
+    if (st >= 3) perfect++;
+  }
+  return { levels: w.levels, gespeeld, perfect, sterren, max: w.levels * 3,
+           uit: gespeeld >= w.levels, vol: perfect >= w.levels };
+}
 // Sterren binnen één wereld: het enige totaal dat een kind ook echt vól kan
 // krijgen (in tegenstelling tot het aflopende sterrentotaal over alles heen).
 function worldStars(p, w) {
-  let got = 0;
-  for (let l = w.first; l < w.first + w.levels; l++) got += (p.stars[l] || 0);
-  return { got, max: w.levels * 3 };
-}
-// Is elke show van deze wereld een keer gespeeld? (Basis voor de wereldbadge.)
-function worldDone(p, w) {
-  for (let l = w.first; l < w.first + w.levels; l++) if (!p.stars[l]) return false;
-  return true;
-}
-// En met drie sterren op élke show? Dat is de ster-rand op dezelfde badge.
-function worldPerfect(p, w) {
-  for (let l = w.first; l < w.first + w.levels; l++) if ((p.stars[l] || 0) < 3) return false;
-  return true;
+  const v = worldProgress(p, w);
+  return { got: v.sterren, max: v.max };
 }
 /* De wereldbadges. Eén per wereld, en het is gewoon een trofee: de kast heeft al
    een claim-ceremonie, een glinstering, een "klaar"-stand, een stip in de navigatie
@@ -3529,13 +3568,11 @@ function rebuildWorldBadges() {
     ids.push(id);
     TROPHIES.push({
       id, emoji: w.icon || '🌍', name: w.name, desc: 'Deze wereld uit',
-      has: q => worldDone(q, worldForIndex(i)),
-      ster: q => worldPerfect(q, worldForIndex(i)),
+      has: q => worldProgress(q, worldForIndex(i)).uit,
+      ster: q => worldProgress(q, worldForIndex(i)).vol,
       progress: q => {
-        const wl = worldForIndex(i);
-        let n = 0;
-        for (let l = wl.first; l < wl.first + wl.levels; l++) if (q.stars[l]) n++;
-        return trophyProgress(n, wl.levels, 'shows gespeeld');
+        const v = worldProgress(q, worldForIndex(i));
+        return trophyProgress(v.gespeeld, v.levels, 'shows gespeeld');
       },
     });
   });
@@ -3586,7 +3623,7 @@ const TROPHIES = [
   { id: 'stars15',    emoji: '⭐', name: 'Lokale ster',    desc: 'Ster-status: 12 ⭐',       has: p => totalStarCount(p) >= 12, progress: p => trophyProgress(totalStarCount(p), 12, 'sterren verzameld') },
   { id: 'stars30',    emoji: '🎶', name: 'Clubster',       desc: 'Ster-status: 30 ⭐',       has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
   { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster',      desc: 'Ster-status: 60 ⭐',       has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
-  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte wereld', desc: '3 sterren in je eerste wereld', has: p => perfectInFirstWorld(p) >= WORLDS[0].levels, progress: p => trophyProgress(perfectInFirstWorld(p), WORLDS[0].levels, 'shows perfect') },
+  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte wereld', desc: '3 sterren in je eerste wereld', has: p => worldProgress(p, worldForIndex(0)).vol, progress: p => { const v = worldProgress(p, worldForIndex(0)); return trophyProgress(v.perfect, v.levels, 'shows perfect'); } },
   { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
   { id: 'toegift25',  emoji: '🎆', name: 'Extra-showster', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
@@ -3599,36 +3636,7 @@ const TROPHIES = [
   { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Alle schoenen',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoenen') },
   { id: 'haarstylist',  emoji: '💇', name: 'Haarstylist',   desc: 'Alle haarkleuren',      has: p => catCount(p, 'hair') >= HAIR_TOTAL, progress: p => trophyProgress(catCount(p, 'hair'), HAIR_TOTAL, 'haarkleuren') },
   { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
-  { id: 'podiumbouwer', emoji: '🎪', name: 'Podiumbouwer',  desc: 'Alle podia',            has: p => catCount(p, 'stage') >= STAGE_TOTAL, progress: p => trophyProgress(catCount(p, 'stage'), STAGE_TOTAL, 'podia') },
   { id: 'dierenkoning', emoji: '🐘', name: 'Dierenvriend',   desc: 'Alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
-  // ✨ Thema-looks — speciale combinaties: alle stukken tegelijk aan = trofee.
-  // De kaartjes staan zichtbaar in de kast als spaardoel, met voortgang per stuk.
-  { id: 'magicus', emoji: '🧙', name: 'Maximus Magicus', desc: 'Draag de hele tovenaarslook',
-    has: p => comboOn(p, MAGICUS_SET) === 4, progress: p => trophyProgress(comboOwned(p, MAGICUS_SET), 4, 'stukken verzameld') },
-  { id: 'thuismatch', emoji: '⚽', name: 'OH-elle!', desc: 'Draag de hele voetballook',
-    has: p => comboOn(p, OHELLE_SET) === 4, progress: p => trophyProgress(comboOwned(p, OHELLE_SET), 4, 'stukken verzameld') },
-  { id: 'rockster', emoji: '🎸', name: 'Rockster', desc: 'Draag de hele rocklook',
-    has: p => comboOn(p, ROCKSTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, ROCKSTER_SET), 4, 'stukken verzameld') },
-  { id: 'discodiva', emoji: '🪩', name: 'Discoster', desc: 'Maak de volledige discolook',
-    has: p => comboOn(p, DISCO_SET) === 4, progress: p => trophyProgress(comboOwned(p, DISCO_SET), 4, 'stukken verzameld') },
-  { id: 'prinses', emoji: '🏰', name: 'Sprookjesster', desc: 'Draag de hele sprookjeslook',
-    has: p => comboOn(p, PRINSES_SET) === 4, progress: p => trophyProgress(comboOwned(p, PRINSES_SET), 4, 'stukken verzameld') },
-  { id: 'ruimteheld', emoji: '🚀', name: 'Ruimteheld', desc: 'Draag de hele ruimtelook',
-    has: p => comboOn(p, RUIMTE_SET) === 4, progress: p => trophyProgress(comboOwned(p, RUIMTE_SET), 4, 'stukken verzameld') },
-  { id: 'winter', emoji: '❄️', name: 'Winterster', desc: 'Draag de hele winterlook',
-    has: p => comboOn(p, WINTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, WINTER_SET), 4, 'stukken verzameld') },
-  { id: 'jungle', emoji: '🌴', name: 'Junglester', desc: 'Draag de hele junglelook',
-    has: p => comboOn(p, JUNGLE_SET) === 4, progress: p => trophyProgress(comboOwned(p, JUNGLE_SET), 4, 'stukken verzameld') },
-  { id: 'zeemeermin', emoji: '🧜', name: 'Zeemeermin', desc: 'Draag de hele zeemeerminlook',
-    has: p => comboOn(p, ZEE_SET) === 4, progress: p => trophyProgress(comboOwned(p, ZEE_SET), 4, 'stukken verzameld') },
-  { id: 'regenboogster', emoji: '🌈', name: 'Regenboogster', desc: 'Draag de hele regenbooglook',
-    has: p => comboOn(p, REGENBOOG_SET) === 5, progress: p => trophyProgress(comboOwned(p, REGENBOOG_SET), 5, 'stukken verzameld') },
-  { id: 'diamantster', emoji: '💎', name: 'Diamantster', desc: 'Draag de hele diamantlook',
-    has: p => comboOn(p, DIAMANTSTER_SET) === 4, progress: p => trophyProgress(comboOwned(p, DIAMANTSTER_SET), 4, 'stukken verzameld') },
-  { id: 'festivaldj', emoji: '🎛️', name: 'Festival-DJ', desc: 'Draag de hele DJ-look',
-    has: p => comboOn(p, FESTIVALDJ_SET) === 4, progress: p => trophyProgress(comboOwned(p, FESTIVALDJ_SET), 4, 'stukken verzameld') },
-  { id: 'vuurshow', emoji: '🌋', name: 'Vuurshow', desc: 'Draag de hele vuurlook',
-    has: p => comboOn(p, VUURSHOW_SET) === 4, progress: p => trophyProgress(comboOwned(p, VUURSHOW_SET), 4, 'stukken verzameld') },
   // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
   // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
   // Telt over de zichtbare kast (zie activeTrophies): een trofee die met pensioen is
@@ -3648,16 +3656,17 @@ const TROPHY_SHELVES = [
   { name: '👕 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
 ];
-/* FASE 1 — trofeeën met pensioen.
-   Looks en podia zijn uit het zichtbare spel gehaald, dus de trofeeën die
-   daar helemáál over gingen (de dertien thema-looks en "Podiumbouwer": alle
-   podia kopen kan niet meer) horen niet meer in de kast. Ze staan bewust nog
-   wél in TROPHIES:
-   - wie ze al behaald had, houdt ze in p.trophies (geen migratie, geen verlies);
-   - de definities zijn de enige plek waar die sets als spelregel beschreven staan.
-   Wat ze niet meer doen: in de kast verschijnen, meetellen in de teller, nieuw
-   toegekend of klaargelegd worden. Eén set eruit halen volstaat om ze terug te
-   brengen. */
+/* FASE 1/2 — trofeeën met pensioen.
+   Looks en podia zijn uit het zichtbare spel gehaald. Fase 1 liet hun definities
+   nog in TROPHIES staan; fase 2 heeft die weggehaald, want ze konden niet meer
+   behaald worden en niemand las ze nog. Wat hier overblijft is precies wat er
+   nóg toe doet: de id's zelf.
+
+   Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies
+   staan. Die lijst blijft onaangeroerd (geen migratie, geen verlies); deze set
+   zorgt alleen dat zo'n id niet meetelt in de kastteller en niet als "klaar"
+   blijft liggen. Zolang er saves in omloop zijn, blijft deze lijst dus staan --
+   ook al staat er geen enkele trofee meer tegenover. */
 const RETIRED_TROPHIES = new Set([
   'podiumbouwer',
   'magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld',
@@ -3671,48 +3680,12 @@ function activeTrophies() { return TROPHIES.filter(t => !isRetiredTrophy(t.id));
 function earnedActiveCount(p) { return p.trophies.filter(id => id !== 'kastvol' && !isRetiredTrophy(id)).length; }
 rebuildWorldBadges();   // de wereldbadges erbij, nu de tabel en de planken er staan
 function playedCount(p) { return Object.keys(p.stars).length; }
-// de speciale outfit-combo's: welk stuk hoort in welk kledingvak
-const MAGICUS_SET = { acc: 'acc_tovenaarshoed', dress: 'dress_tover', mic: 'mic_toverstaf', pet: 'pet_uil' };
-const OHELLE_SET = { dress: 'dress_voetbal', mic: 'mic_pintje', pet: 'pet_eekhoorn', stage: 'stage_stadion' };
-const ROCKSTER_SET = { mic: 'mic_zwart', shoes: 'shoes_zwart', instrument: 'instr_gitaar', acc: 'acc_bril' };
-const DISCO_SET = { dress: 'dress_disco', shoes: 'shoes_goud', mic: 'mic_roze', stage: 'stage_disco' };
-const PRINSES_SET = { stage: 'stage_kasteel', acc: 'acc_kroon', dress: 'dress_hartjes', pet: 'pet_konijn' };
-const RUIMTE_SET = { stage: 'stage_ruimte', dress: 'dress_sterren', acc: 'acc_ster', hair: 'hair_zilver' };
-const WINTER_SET = { stage: 'stage_winter', hair: 'hair_wit', pet: 'pet_pinguin', mic: 'mic_zilver' };
-const JUNGLE_SET = { stage: 'stage_jungle', pet: 'pet_leeuw', dress: 'dress_groen', acc: 'acc_bloemkrans' };
-const ZEE_SET = { dress: 'dress_zeemeermin', stage: 'stage_onderwater', pet: 'pet_dolfijn', hair: 'hair_turkoois' };
-const REGENBOOG_SET = { hair: 'hair_regenboog', dress: 'dress_regenboog', shoes: 'shoes_regenboog', mic: 'mic_regenboog', stage: 'stage_regenboog' };
-// nieuwe looks: hergebruiken bestaande stukken + de nieuwe premium-items, kris-kras
-// over de categorieën heen zodat een look najagen kind door de hele kast trekt.
-const DIAMANTSTER_SET = { acc: 'acc_diadeem', hair: 'hair_zilver', dress: 'dress_disco', stage: 'stage_winter' };
-const FESTIVALDJ_SET = { instrument: 'instr_dj', acc: 'acc_koptel', mic: 'mic_roze', stage: 'stage_disco' };
-const VUURSHOW_SET = { stage: 'stage_vulkaan', pet: 'pet_draak', dress: 'dress_rood', mic: 'mic_zwart' };
-function comboOn(p, set) { return Object.entries(set).filter(([vak, id]) => p.equipped[vak] === id).length; }
-// Hoeveel stukken van een look het kind al bézit (los van of ze aan staan) — de
-// voortgang op de look-trofee toont dit, zodat ze niet terugvalt bij het omkleden.
-function comboOwned(p, set) { return Object.values(set).filter(id => p.owned.includes(id)).length; }
-// Welke trofee is een thema-look, en uit welke stukken bestaat die look.
-// FASE 1: de Looks-lijst en de bijbehorende trofeeën zijn uit het zicht gehaald
-// (zie RETIRED_TROPHIES). Deze tabel blijft staan als de definitie van die sets --
-// weggooien levert niets op en maakt terugdraaien alleen maar duurder.
-const THEME_SETS = {
-  magicus: MAGICUS_SET, thuismatch: OHELLE_SET, rockster: ROCKSTER_SET,
-  discodiva: DISCO_SET, prinses: PRINSES_SET, ruimteheld: RUIMTE_SET,
-  winter: WINTER_SET, jungle: JUNGLE_SET, zeemeermin: ZEE_SET, regenboogster: REGENBOOG_SET,
-  diamantster: DIAMANTSTER_SET, festivaldj: FESTIVALDJ_SET, vuurshow: VUURSHOW_SET
-};
 // Kleedkamercollectie-trofeeën → naar welke categorie ze in de kleedkamer horen,
 // zodat een tik op zo'n trofee die collectie meteen opent om verder te sparen.
 const COLLECTION_CAT = {
   modekoningin: 'dress', schoenenkast: 'shoes', haarstylist: 'hair',
   orkest: 'instrument', dierenkoning: 'pet'
 };
-// hoeveel shows van de eerste wereld staan op drie sterren?
-function perfectInFirstWorld(p) {
-  let n = 0;
-  for (let l = 1; l <= WORLDS[0].levels; l++) if (p.stars[l] === 3) n++;
-  return n;
-}
 function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
 function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
 function boughtCount(p) { return Math.max(0, p.owned.length - (p.freebies || 5)); }   // gratis startspullen tellen niet als "gekocht"
@@ -4779,8 +4752,58 @@ function worldCurve(w) {
   return out;
 }
 
-function updateParallax() { /* de kaart scrollt niet meer; de lucht staat stil */ }
+/* Één plek die de kaart naar een wereld laat kijken.
 
+   Dit stond vier keer los in het bestand als hetzelfde drietal: viewWorldIdx zetten,
+   renderMapTitle() en renderTourMap(). Dat drietal móét bij elkaar blijven -- de kop
+   en de kaart lezen allebei viewWorldIdx, dus één vergeten regel laat de pil een
+   andere wereld noemen dan er onder staat. Vandaar één functie, en niet vier keer
+   dezelfde drie regels.
+
+   Dit is ook waar toekomstig overgangswerk (kaart → wereld, wereld → wereld) thuis
+   hoort: elke wereldwissel loopt hier langs. De functies zelf blijven bestaan --
+   runTravel gebruikt renderTourMap nog apart voor de tussenstand vóór de animatie,
+   en de wereldstudio hangt zich aan renderTourMap op.
+
+   travelFrom > 0 = de tussenstand vlak vóór de reis-animatie (zie renderTourMap). */
+function showWorld(idx, travelFrom) {
+  viewWorldIdx = Math.max(0, idx | 0);
+  renderMapTitle(P());
+  renderTourMap(travelFrom || 0);
+  preloadNextWorldArt();
+}
+/* Wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk). Ze
+   worden opgehaald op het moment dat de kaart ze in beeld zet -- en bij een
+   wereldwissel is dat precies het moment waarop de nieuwe wereld al van onderen het
+   scherm in schuift. Dan kijkt een kind een halve seconde naar een leeg kader.
+
+   Dus: zodra ze op de laatste twee shows van haar wereld staat, gaat de volgende
+   tekening alvast op de achtergrond binnen. Niet eerder -- een wereld verder is
+   drie kwartier spelen, en dit is een telefoon van een gezin. Niet twee vooruit,
+   niet alles tegelijk: één bestand, op het moment dat het bijna nodig is.
+
+   GEHAALD onthoudt wat er al een keer aangevraagd is, zodat het opnieuw tekenen van
+   de kaart (dat gebeurt bij elke halte, elke wereldwissel, elke terugkeer) niet
+   telkens een nieuwe aanvraag opzet. De browsercache en de service worker doen de
+   rest; dit voorkomt alleen het onnodige verkeer ernáártoe. */
+const ART_GEHAALD = new Set();
+function preloadArt(src) {
+  if (!src || ART_GEHAALD.has(src)) return;
+  ART_GEHAALD.add(src);
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = src;
+}
+function preloadNextWorldArt() {
+  if (!cur) return;
+  const p = P();
+  const hier = worldFor(p.level);
+  // alleen als de kaart ook echt naar de wereld kijkt waar ze speelt
+  if (viewWorldIdx !== hier.index) return;
+  if (hier.nr < hier.levels - 1) return;        // nog niet op de laatste twee shows
+  const volgende = worldForIndex(hier.index + 1);
+  if (volgende && volgende.world) preloadArt(volgende.world.art);
+}
 /* De kop van de kaart draagt nog één ding: in wélke wereld je kijkt. Waar je
    daarin bent staat op de kaart zelf -- genummerde haltes, de gouden huidige
    halte, de ster die erop staat -- en dat leest een kind van vijf wèl. */
@@ -4800,7 +4823,7 @@ function renderMapTitle(p) {
        precies waar de onderste haltes staan. De ⟲ zégt al "terug"; de twee woorden
        ervoor kostten de helft van de breedte en voegden er niets aan toe. */
     terug.innerHTML = `⟲ ${cur.world.icon} ${esc(cur.world.name)}`;
-    terug.onclick = () => { sndClick(); viewWorldIdx = cur.index; renderMapTitle(P()); renderTourMap(0); };
+    terug.onclick = () => { sndClick(); showWorld(cur.index); };
   }
 }
 /* Rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk: één
@@ -4822,6 +4845,35 @@ function renderCareerStrip(p) {
 function worldForIndex(idx) {
   if (idx < WORLDS.length) return worldFor(WORLD_START[idx]);
   return worldFor(WORLD_LAST + 1 + (idx - WORLDS.length) * ENDLESS_WORLD.levels);
+}
+/* ================= Zwevende lagen (overlays) =================
+   Vier plekken bouwden hetzelfde op: een <div> over het scherm, wat HTML erin,
+   aan de body hangen, en een close() die 'closing' zet en na de uitfade opruimt.
+   Elke kopie moest bovendien zelf onthouden om die close() als ov._close te
+   parkeren -- anders doet de Android-terugknop er niets mee (zie backTarget).
+   Dat vergeten is niet zichtbaar tot iemand met een echte telefoon op terug drukt.
+
+   Eén functie dus, met de klassenaam als argument: de CSS per laag blijft
+   ongewijzigd, ze krijgen er alleen '.rp-overlay' bij als gemeenschappelijk
+   handvat. backTarget() hoeft daardoor niet langer elke klasse apart te kennen,
+   en een nieuwe laag (fase 3: wereld af, beloning) werkt meteen mee.
+
+   opts.fade  hoelang de uitfade in de CSS duurt (ms, standaard 250)
+   opts.onClose  eenmalige opruiming vóór de uitfade (timers e.d.)         */
+function openOverlay(cls, html, opts) {
+  opts = opts || {};
+  const ov = document.createElement('div');
+  ov.className = 'rp-overlay ' + cls;
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov._close = () => {
+    if (!ov.isConnected) return;
+    if (opts.onClose) opts.onClose(ov);
+    ov.classList.add('closing');
+    setTimeout(() => ov.remove(), opts.fade || 250);
+  };
+  syncBackGuard();   // de laag is nu het bovenste ding dat 'terug' moet sluiten
+  return ov;
 }
 // De hele carrière-ladder in beeld: behaalde, huidige en komende ster-statussen,
 // met hun sterrendrempel en diamant-bonus. Tik buiten = dicht. Hergebruikt
@@ -4870,16 +4922,11 @@ function openCareer() {
   // dan is díé het doel; anders sluit een gedimde "…en verder"-rij de ladder af.
   if (cur.idx >= last) rows += goalRow('⭐', cur.nextName);
   else rows += `<div class="ladder-row future"><span class="lr-emoji">⭐</span><span class="lr-name">…en verder</span></div>`;
-  const ov = document.createElement('div');
-  ov.className = 'career-overlay';
-  ov.innerHTML = `<div class="pop-panel career-panel">`
+  const ov = openOverlay('career-overlay', `<div class="pop-panel career-panel">`
     + `<button class="career-close" type="button" aria-label="Sluiten">✕</button>`
     + `<div class="career-title">Jouw ster-status</div>`
-    + `<div class="career-list">${rows}</div></div>`;
-  document.body.appendChild(ov);
-  const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 250); };
-  ov._close = close;   // laat Android-terug dezelfde sluiting hergebruiken (zie backTarget)
-  ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) close(); };
+    + `<div class="career-list">${rows}</div></div>`);
+  ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) ov._close(); };
   requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
   // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
   speak(`Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
@@ -4896,9 +4943,7 @@ function goMap() {
   pendingTravel = null;
   // thuiskomen is altijd in de wereld waar ze nú speelt -- een uitstapje naar een
   // eerdere wereld duurt precies zolang je er blijft
-  viewWorldIdx = worldFor(travel ? travel.from : p.level).index;
-  renderMapTitle(p);
-  renderTourMap(travel ? travel.from : 0);
+  showWorld(worldFor(travel ? travel.from : p.level).index, travel ? travel.from : 0);
   show('screen-map');
   if (travel) requestAnimationFrame(() => runTravel(travel));
 }
@@ -4966,24 +5011,17 @@ function openWorlds() {
         : `<span class="wr-slot">\ud83d\udd12</span>`)
       + `</button>`;
   }
-  const ov = document.createElement('div');
-  ov.className = 'career-overlay';
-  ov.innerHTML = `<div class="pop-panel career-panel">`
+  const ov = openOverlay('career-overlay', `<div class="pop-panel career-panel">`
     + `<button class="career-close" type="button" aria-label="Sluiten">\u2715</button>`
     + `<div class="career-title">Waar wil je heen?</div>`
-    + `<div class="career-list">${rows}</div></div>`;
-  document.body.appendChild(ov);
-  const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 250); };
-  ov._close = close;
+    + `<div class="career-list">${rows}</div></div>`);
   ov.onclick = e => {
-    if (e.target === ov || e.target.classList.contains('career-close')) return close();
+    if (e.target === ov || e.target.classList.contains('career-close')) return ov._close();
     const rij = e.target.closest && e.target.closest('[data-w]');
     if (!rij) return;
     sndClick();
-    viewWorldIdx = Number(rij.dataset.w);
-    renderMapTitle(P());
-    renderTourMap(0);
-    close();
+    showWorld(Number(rij.dataset.w));
+    ov._close();
   };
   requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
 }
@@ -5257,9 +5295,7 @@ function runTravel(t) {
   const hero = from && from.querySelector('.tour-hero');
   const still = motionOff();
   const finish = () => {
-    viewWorldIdx = toW.index;
-    renderMapTitle(p);
-    renderTourMap(0);
+    showWorld(toW.index);
     const el = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
     const dot = el && el.querySelector('.dot');
     if (dot && dot.animate && !still) dot.animate(
@@ -5464,9 +5500,8 @@ function celebrateTrophy(t) {
   const reduce = motionOff();
   sndClick();          // 'optil'-tik op het moment van openen
   buzz(20);
-  const ov = document.createElement('div');
-  ov.className = 'trophy-pop-overlay';
-  ov.innerHTML = '<div class="pop-panel trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
+  const ov = openOverlay('trophy-pop-overlay',
+    '<div class="pop-panel trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
     + '<div class="tp-stage">'
     +   '<div class="tp-rays" aria-hidden="true"></div>'
     +   '<div class="tp-ring" aria-hidden="true"></div>'
@@ -5474,8 +5509,9 @@ function celebrateTrophy(t) {
     +   `<div class="tp-emoji">${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
-    + '<div class="tp-joepie">Joepie!</div></div>';
-  document.body.appendChild(ov);
+    + '<div class="tp-joepie">Joepie!</div></div>',
+    // het sprankelen loopt door zolang de trofee open staat -- stoppen bij het sluiten
+    { fade: 300, onClose: o => { if (o._spark) clearInterval(o._spark); } });
   const pop = ov.querySelector('.trophy-pop');
   // De uitbarsting: kist knalt open, emoji slaat in, confetti-kanon + feestgeluid.
   const burst = () => {
@@ -5498,10 +5534,8 @@ function celebrateTrophy(t) {
   };
   if (reduce) burst();
   else setTimeout(burst, 480);   // eerst even spanning: de kist schudt
-  const close = () => { if (!ov.isConnected) return; if (ov._spark) clearInterval(ov._spark); ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
-  ov._close = close;   // laat Android-terug dezelfde sluiting hergebruiken (ruimt ook ov._spark op)
   // Ongeduldig? Eerste tik opent meteen; daarna sluit een tik het feestje.
-  ov.onclick = () => { if (!pop.classList.contains('burst')) burst(); else close(); };
+  ov.onclick = () => { if (!pop.classList.contains('burst')) burst(); else ov._close(); };
 }
 // Ster-status omhoog: het nieuwe rang-icoon knalt naar voren met een uitbarsting
 // van datzelfde icoon eromheen. Tik of ~2,2s = weg. Aangeroepen vanaf endLevel.
@@ -5520,17 +5554,12 @@ function rankUpCelebrate(rank) {
       sparks += `<span class="rankup-spark" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${rnd(0, 12) / 100}s">${rank.emoji}</span>`;
     }
   }
-  const ov = document.createElement('div');
-  ov.className = 'rankup-overlay';
-  ov.innerHTML = `<div class="rankup-core"><div class="rankup-sparks">${sparks}</div>`
+  const ov = openOverlay('rankup-overlay', `<div class="rankup-core"><div class="rankup-sparks">${sparks}</div>`
     + `<div class="rankup-badge">${rank.emoji}</div>`
     + `<div class="rankup-label">Nieuwe ster-status!</div>`
-    + `<div class="rankup-name">${rank.name}</div></div>`;
-  document.body.appendChild(ov);
-  const close = () => { if (!ov.isConnected) return; ov.classList.add('closing'); setTimeout(() => ov.remove(), 300); };
-  ov._close = close;   // laat Android-terug dezelfde sluiting hergebruiken (zie backTarget)
-  ov.onclick = close;
-  setTimeout(close, 2200);
+    + `<div class="rankup-name">${rank.name}</div></div>`, { fade: 300 });
+  ov.onclick = ov._close;
+  setTimeout(ov._close, 2200);
 }
 // tijdens het spelen: geen groot feest, wél een vriendelijke hint naar de kast
 function noticeReady(trofees) {
@@ -7289,7 +7318,6 @@ let shopJustBoughtId = null;
 let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-kaart kwam -- terug-navigatie gaat dan naar de kast i.p.v. de kaart
 // FASE 1: de Looks-lijst (complete thema-outfits als spaardoel) is uit de kleedkamer
 // gehaald. Wat overblijft is één vraag: kies een soort, kies een stuk, doe het aan.
-// De thema-sets zelf (THEME_SETS) blijven als data staan -- zie daar.
 // Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
 // altijd terug naar de standaardcategorie, zonder selectie.
 function openKleedkamer() {
@@ -7525,16 +7553,6 @@ function equipShopItem(id) {
   renderShop();
 }
 
-function unequipShopItem(id) {
-  const it = item(id);
-  const p = P();
-  if (['mic', 'instrument', 'acc', 'pet'].includes(it.cat) && p.equipped[it.cat] === it.id) {
-    p.equipped[it.cat] = null;
-    sndClick();
-    save();
-    renderShop();
-  }
-}
 
 /* ================= Instellingen ================= */
 /* ================= Nieuwe ster ================= */
@@ -8304,12 +8322,12 @@ function backTarget() {
   //    tijdens die overgang moet niet nogmaals "sluiten", maar meteen de vólgende laag raken.)
   const modal = document.querySelector('.modal-bg.open');
   if (modal) return modal.id === 'quit-modal' ? closeQuitModal : closeConfirmModal;
-  const rankup = document.querySelector('.rankup-overlay:not(.closing)');
-  if (rankup) return rankup._close;
-  const career = document.querySelector('.career-overlay:not(.closing)');
-  if (career) return career._close;
-  const pop = document.querySelector('.trophy-pop-overlay:not(.closing)');
-  if (pop) return pop._close;
+  //    Alle zwevende lagen dragen '.rp-overlay' (zie openOverlay), dus één vraag
+  //    volstaat. De láátste in de DOM is de bovenste op het scherm -- en dat is de
+  //    laag die 'terug' hoort te sluiten. Hiervoor stond er een vaste volgorde
+  //    (rang → ladder → trofee) die niets met de stapeling te maken had.
+  const lagen = document.querySelectorAll('.rp-overlay:not(.closing)');
+  if (lagen.length) return lagen[lagen.length - 1]._close;
   if ($('gear-menu').classList.contains('open')) return closeGearMenu;
   if ($('mem-done').style.display === 'flex') return exitMemory;
   // 2) het huidige scherm verlaten naar zijn eigen ouder -- exact dezelfde bestemming
@@ -9335,8 +9353,7 @@ function startMapEdit() {
   // elke wijziging: bewaren, opnieuw tekenen, lijst en status bijwerken
   function commit(msg) {
     saveWorldDraft();
-    renderMapTitle(P());
-    renderTourMap(0);
+    showWorld(viewWorldIdx);
     refreshList();
     fillSheet();
     if (typeof tekenSchermen === 'function') tekenSchermen();
