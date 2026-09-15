@@ -8671,17 +8671,45 @@ function startMapEdit() {
     const w = shown().world;
     w.icon = F('mf-icon').value.trim() || w.icon;
     w.name = F('mf-name').value.trim() || w.name;
-    /* Het id bepaalt de bestandsnaam van de tekening, dus alleen kleine letters,
-       cijfers en streepjes -- dat is ook wat de server als pad accepteert. */
-    const nid = F('mf-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (nid && nid !== w.id) {
-      const oud = w.art;
-      w.id = nid;
-      if (oud && oud === 'assets/world/' + shown().world.id + '-map.webp') delete w.art;
-      setOut('id gewijzigd — de tekening hoort nu bij ' + slotPad('world'));
-    }
+    /* Het id is de identiteit van een wereld: de bestandsnaam van de tekening komt
+       eruit, en de wereldbadge in de trofeeënkast heet 'wereld-<id>'. Het is dus geen
+       cosmetische wijziging -- de náám veranderen is dat wel, en dat is bijna altijd
+       wat je bedoelt.
+
+       Hernoem je toch, dan verhuist de tekening mee. Zonder dat bleef het bestand als
+       wees op schijf staan en stond de wereld zonder beeld, en dan zou je 'm opnieuw
+       moeten genereren voor niets. Alleen de letters die ook in een pad mogen. */
+    /* Het bestandsveld vóór het id, want het id-blok hieronder mag het laatste woord
+       hebben: het veld draagt bij een hernoeming nog de óúde naam, en zette de zojuist
+       verhuisde tekening anders weer terug op een pad dat niet meer bestaat. */
     const art = F('mf-art').value.trim();
     if (art) w.art = art; else if (w.art && w.art.indexOf('blob:') !== 0) delete w.art;
+
+    const nid = F('mf-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (nid && nid !== w.id) {
+      const oudId = w.id, oudPad = w.art;
+      w.id = nid;
+      const nieuwPad = slotPad('world');
+      const kanon = 'assets/world/' + oudId + '-map.webp';
+      if (oudPad === kanon && OP_SCHIJF[kanon]) {
+        w.art = nieuwPad;
+        OP_SCHIJF[nieuwPad] = OP_SCHIJF[kanon];
+        delete OP_SCHIJF[kanon];
+        fetch('/hernoem?van=' + encodeURIComponent(kanon) + '&naar=' + encodeURIComponent(nieuwPad),
+          { method: 'POST' })
+          .then(r => r.text().then(t => setOut(r.ok
+            ? 'wereld heet nu ' + nid + ' · ' + t
+            : 'het id is gewijzigd, maar de tekening niet: ' + t)))
+          .catch(() => setOut('het id is gewijzigd; de tekening verhuist alleen via npm run preview'));
+      } else {
+        setOut('wereld heet nu ' + nid + ' — de tekening hoort bij ' + nieuwPad);
+      }
+      if (P().trophies.indexOf(WERELD_BADGE + oudId) >= 0) {
+        setOut('let op: de badge van deze wereld stond op ' + WERELD_BADGE + oudId
+          + ' en heet nu ' + WERELD_BADGE + nid + ' — een al behaalde badge raak je daarmee kwijt');
+      }
+      rebuildWorldBadges();
+    }
     w.theme = {};
     Object.keys(HEX).forEach(k => {
       const v = F('mf-' + k).value;
@@ -9139,6 +9167,44 @@ function startMapEdit() {
         if (r.length) buiten.push((k + 1) + ' (' + r.join('+') + ')');
       });
       if (buiten.length) fout(naam, 'buiten de veilige zone: halte ' + buiten.join(', '));
+
+      if (OP_SCHIJF[pad] && w.art && w.art !== pad) let_op(naam, pad + ' ligt er ook nog — opruimen of gebruiken');
+      const kb = OP_SCHIJF[w.art];
+      if (kb && kb > 200) let_op(naam, 'de tekening is ' + kb + ' kB; de begroting is ~125 — zes zware werelden maken de app traag op mobiele data');
+    });
+
+    /* Twee dingen die over de lijst als géheel gaan, en die stil verkeerd aflopen:
+       een wereld die van plaats wisselt of verdwijnt hernummert elk level erna, en
+       de sterren van een kind hangen aan levelnummers. Wie al speelt verhuist dan
+       naar een andere wereld zonder dat er iets kapot lijkt. */
+    /* Wat hernummert wel en wat niet? De levels lopen door de lijst heen, dus alleen
+       de vólgorde en het aántal doen ertoe. Een wereld op plek 3 hernoemen verandert
+       niets aan welk level waar valt; een wereld ertussen schuiven of verplaatsen
+       verschuift alles erna, en de sterren van een kind hangen aan levelnummers.
+       Daarom op positie vergelijken en niet op verzameling -- anders leest een
+       hernoeming als een verwijdering. */
+    const nuL = WORLDS.map(w => w.id), wasL = WORLDS_SHIPPED.map(w => w.id);
+    if (nuL.length !== wasL.length) {
+      // achteraan een wereld erbij hernummert niets; ertussen of eruit wel
+      const achteraan = nuL.length > wasL.length && nuL.slice(0, wasL.length).join(',') === wasL.join(',');
+      (achteraan ? let_op : fout)('de wereldlijst',
+        'stond op ' + wasL.length + ' werelden en nu op ' + nuL.length
+        + (achteraan ? ' — er komt er één achteraan, dat hernummert niets'
+           : ' — elk level na de wijziging schuift op, en de sterren van een kind hangen aan levelnummers'));
+    } else {
+      const zelfdeSet = nuL.slice().sort().join(',') === wasL.slice().sort().join(',');
+      if (zelfdeSet && wasL.some((id, i) => nuL[i] !== id))
+        fout('de wereldlijst', 'de volgorde is veranderd — elk level schuift mee, en de sterren van een kind hangen aan levelnummers');
+      else {
+        const hernoemd = wasL.map((id, i) => id !== nuL[i] ? id + ' → ' + nuL[i] : null).filter(Boolean);
+        if (hernoemd.length) let_op('de wereldlijst', 'hernoemd: ' + hernoemd.join(', ')
+          + ' — de levels blijven waar ze zijn; alleen een al behaalde wereldbadge heet anders');
+      }
+    }
+    WORLDS.forEach((w, i) => {
+      const ship = WORLDS_SHIPPED[i];
+      if (ship && ship.levels !== w.levels)
+        fout((w.icon || '') + ' ' + w.name, 'stond op ' + ship.levels + ' levels en nu op ' + w.levels + ' — alles daarna hernummert');
     });
     return punten;
   }
