@@ -331,11 +331,21 @@ function check(ok, label, detail) {
         ergste: Math.round(ergste),
         haltes: document.querySelectorAll('.tour-stop').length,
         vbW: VB_W, vbH: VB_H, artW: ART_W, artH: ART_H,
+        /* De zone is opgemeten over acht toestellen (zie ZONE). De standaardslinger
+           hoort er per definitie in te passen -- toen de kop doorzichtig werd en de
+           ster kleiner, verschoven de randen en viel hij er stil buiten. */
+        ...(() => {
+          const n = defaultNodes(8);
+          const uit = n.map((q, i) => (q.x < ZONE.x0 || q.x > ZONE.x1 || q.y < ZONE.y0 || q.y > ZONE.y1)
+            ? (i + 1) + ':' + q.x.toFixed(1) + ',' + q.y.toFixed(1) : null).filter(Boolean);
+          return { zoneOk: uit.length === 0, zoneUit: uit.join(' ') || 'x ' + ZONE.x0 + '-' + ZONE.x1 + ' y ' + ZONE.y0 + '-' + ZONE.y1 };
+        })(),
         cssW: Number(cs.getPropertyValue('--art-w')), cssH: Number(cs.getPropertyValue('--art-h')),
       };
     });
     check(r.haltes === 8, 'de kaart tekent acht haltes', JSON.stringify(r));
     check(r.ergste <= 2, 'de weg loopt door het hart van elke halte', 'ergste afwijking ' + r.ergste + 'px');
+    check(r.zoneOk, 'de standaardslinger blijft binnen de veilige zone', r.zoneUit);
     check(r.vbW === r.artW && r.vbH === r.artH,
       'de viewBox van de weg heeft de maat van de tekening', r.vbW + 'x' + r.vbH + ' vs ' + r.artW + 'x' + r.artH);
     check(r.cssW === r.artW && r.cssH === r.artH,

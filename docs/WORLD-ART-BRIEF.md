@@ -71,25 +71,30 @@ pills). Everything between and behind them is your illustration.
 | | occupies | as % of the screen | in art px |
 |---|---|---|---|
 | the three top elements | top 52 px, ~⅓ of the width | 6% | 158 |
-| bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px, full width, opaque | 9.7% | 210 |
+| bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px, full width, translucent | 9.7% | 210 |
 
 A third thing is not chrome but takes room: **the star (the player's avatar) stands above
 her current stop**, 170 × 213 art px, so a stop near the top needs clear sky above it or
 her head reaches the pills.
 
-Measured on 390 × 844: the top stop clears the pills by 97 px and the star standing on it
-by 34 px. The zone below is therefore conservative — it was set when the header was still
-an opaque band. It stays as it is: a stable contract across six drawings is worth more
-than reclaiming 4% of height.
+Re-measured across eight devices after the header became transparent and the star got
+smaller. Each edge is set by a different phone, and never by the design target:
 
-That gives the contract:
+| edge | limit | set by | why |
+|---|---|---|---|
+| x | **18.5%** per side | 21:9 (412 × 961) | crops the most off the sides |
+| y top | **22.6%** | small phone (320 × 568) | the 52 px of pills is a bigger bite of a short screen |
+| y bottom | **82.3%** | iPhone SE (375 × 667) | an 82 px bar on a 667 px screen — and that map does not scroll, so nothing can be pulled out from under it |
 
-> **Stop centres live inside x 16–84%, y 21–84%.**
-> In art pixels: **x 194 … 1021, y 454 … 1814.**
+Rounded inwards, that gives the contract:
 
-Horizontally that is the 10%-per-side crop on a long phone plus the medallion's own radius
-(5.5%). A 21:9 phone crops 12% per side, so a stop at the very edge of the box loses a
-sliver there; the default layout keeps stops between 24% and 76%, well inside.
+> **Stop centres live inside x 19–81%, y 23–82%.**
+> In art pixels: **x 231 … 984, y 497 … 1771.**
+
+This is 2–3% tighter on every edge than the previous contract, which had been set on the
+design target alone while the header was still an opaque band. A stop placed on the old
+line was clipped on two of the eight devices — including by the default layout itself.
+The default now spans x 24–76%, y 23–82% and clears on all eight.
 
 The dashed green box in the world studio (`?debug&mapedit` → **raster**) is exactly this
 rectangle — draw against that, not against these numbers.
@@ -107,8 +112,13 @@ Eight stops per world, evenly spread down the safe zone:
 |---|---|---|
 | stop medallion (the numbered circle) | 53 | **134** |
 | medallion + its three stars | 76 | 194 |
-| vertical rhythm between stops | 76 | **194** |
+| vertical rhythm between stops | 71 | **182** |
 | the star standing on a stop | 66 × 83 | **170 × 213** |
+
+The rhythm is now slightly tighter than a stop's own block (182 against 194 art px), so
+consecutive stops overlap by a sliver vertically. The left-right swing separates them —
+measured centre-to-centre distances are 78–131 CSS px — but it is why the route has to
+swing rather than run straight down.
 
 So, concretely:
 
@@ -174,8 +184,8 @@ And two things that are deliberately **not** in the art:
 
 - [ ] The world has an identity that survives at thumbnail size (ice, jungle, fire…).
 - [ ] It reads bottom-to-top: the player climbs.
-- [ ] Eight landings, ~194 art px apart, at least 175 px across, inside x 194–1021 /
-      y 454–1814.
+- [ ] Eight landings, ~182 art px apart, at least 175 px across, inside x 231–984 /
+      y 497–1771.
 - [ ] Quiet sky above each landing (215 px).
 - [ ] The corridor is mid-to-dark; bright values live at the edges.
 - [ ] Nothing that must be *seen* in the top 169 px or the bottom 210 px.
