@@ -81,7 +81,7 @@ pills). Everything between and behind them is your illustration.
 | bottom nav (Kaart / Kleedkamer / Trofeeën) | 82 px, full width, translucent | 9.7% | 210 |
 
 A third thing is not chrome but takes room: **the star (the player's avatar) stands above
-her current stop**, 170 × 213 art px. She is the reason the top of the zone used to sit so
+her current stop**, 199 × 249 art px. She is the reason the top of the zone used to sit so
 low — see "her band" below.
 
 Measured across eight devices. Each edge is set by a different phone, and never by the
@@ -98,11 +98,11 @@ Rounded inwards, that gives the contract:
 > **Stop centres live inside x 19–81%, y 14–82%.**
 > In art pixels: **x 231 … 984, y 302 … 1771.**
 
-### Her band: y 14–23%
+### Her band: y 14–25%
 
 The top used to be 23%, and that was never the header — it was her. She stands *above* her
-stop and is nearly 11% of the map tall, and unlike the header that 11% is the same bite on
-every device (the header is only 6.5–10.9%). She was two thirds of the top margin.
+stop and is 13.3% of the map tall, and unlike the header that 13.3% is the same bite on
+every device (the header is only 6.5–10.9%). She was most of the top margin.
 
 So she is now allowed in front of the pills instead: **when she stands close enough to
 touch the header, the header dims to 18%** and she is visible straight through it. It comes
@@ -113,7 +113,7 @@ like anywhere else.
 What is left is the requirement that the *medallion* stays clear of the header, because a
 pill on top of it would steal the tap. That is the 14%.
 
-Practically: **a stop between y 14% and 23% is fine.** It is where the finale of a world
+Practically: **a stop between y 14% and 25% is fine.** It is where the finale of a world
 belongs. The only consequence is that the world name and the diamond count go quiet while
 she is standing there. The studio draws that band in gold, labelled *hier dimt de
 bovenbalk*; the green box is the hard edge, the gold band is a note.
@@ -124,7 +124,7 @@ rectangle — draw against that, not against these numbers.
 Everything outside the box is still seen (it is the world, not padding) — it just must not
 carry anything the player has to *reach*.
 
-The default sling (for a world with no drawing yet) still stops at y 23%: there is nothing
+The default sling (for a world with no drawing yet) still stops at y 25%: there is nothing
 to gain by making an undrawn world dim its own header.
 
 ---
@@ -135,21 +135,24 @@ Eight stops per world, evenly spread down the safe zone:
 
 | | CSS px @ 390 | art px |
 |---|---|---|
-| stop medallion (the numbered circle) | 53 | **134** |
-| medallion + its three stars | 76 | 194 |
-| vertical rhythm between stops | 71 | **182** |
-| the star standing on a stop | 66 × 83 | **170 × 213** |
+| stop medallion (the numbered circle) | 49 | **125** |
+| medallion + its earned stars | 59 | 151 |
+| invisible tap area around a stop | 64 | 164 |
+| vertical rhythm between stops | 69 | **176** |
+| the star standing on a stop | 78 × 97 | **199 × 249** |
 
-The rhythm is now slightly tighter than a stop's own block (182 against 194 art px), so
-consecutive stops overlap by a sliver vertically. The left-right swing separates them —
-measured centre-to-centre distances are 78–131 CSS px — but it is why the route has to
-swing rather than run straight down.
+A stop's own block (151 art px) now fits inside the rhythm (176), so consecutive stops no
+longer overlap vertically — the stars shrank to two thirds and unearned ones are gone
+entirely. The route still has to swing left and right, but for a different reason: the
+**tap** area is 164 art px wide, wider than the rhythm, so two stops directly above one
+another would have overlapping targets. The closest pair in the default layout is 71 CSS px
+apart against a 64 px target; section 7e of the test suite fails if that margin goes.
 
 So, concretely:
 
 1. A **landing** at each stop — a ledge, a plateau, a clearing — of at least **175 art px**
    across, so the medallion sits *on* something instead of floating over a waterfall.
-2. About **215 art px of quiet above each landing**, where she stands. Don't put a detail
+2. About **250 art px of quiet above each landing**, where she stands. Don't put a detail
    there you'd miss.
 3. A **route** connecting the landings that reads bottom-left to top-right and back: a
    path, stepping stones, a bridge. The app draws its own dashed road over it, so the
@@ -169,9 +172,9 @@ behind it:
 
 - **Stop medallions** — dark purple fill, white numeral, 0.55cqw light ring. Locked ones
   are grey. The current one is solid gold.
-- **Three stars** under each medallion — gold when earned, translucent grey when not. The
-  grey ones are the weakest element on the screen; on a busy, bright background they turn
-  to mush.
+- **Earned stars** under each medallion, gold, small and tucked tight against it. A stop
+  you have not finished shows *no* stars at all rather than empty placeholders, so on a
+  fresh world the map carries nothing but numbers.
 - **The dashed road** — one colour per world (`weg` in the studio, `--w-road`), default
   white at 42%. On a bright world set it to something dark; that field exists precisely
   because white roads vanish on lava and ice.
@@ -209,9 +212,9 @@ And two things that are deliberately **not** in the art:
 
 - [ ] The world has an identity that survives at thumbnail size (ice, jungle, fire…).
 - [ ] It reads bottom-to-top: the player climbs.
-- [ ] Eight landings, ~182 art px apart, at least 175 px across, inside x 231–984 /
-      y 302–1771. The top one may sit in her band (y 302–497) — see §2.
-- [ ] Quiet sky above each landing (215 px).
+- [ ] Eight landings, ~176 art px apart, at least 175 px across, inside x 231–984 /
+      y 302–1771. The top one may sit in her band (y 302–540) — see §2.
+- [ ] Quiet sky above each landing (250 px).
 - [ ] The corridor is mid-to-dark; bright values live at the edges.
 - [ ] Nothing that must be *seen* in the top 169 px or the bottom 210 px.
 
