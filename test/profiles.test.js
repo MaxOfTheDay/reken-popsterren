@@ -42,6 +42,13 @@ function check(ok, label, detail) {
   // Het formulier invullen en verzenden. `settings` is optioneel: een kaartje
   // {'set-max': '100'} klapt de oefening-openklapper open en tikt die chips aan.
   async function makeStar(page, { name, base, hair, dress, track, settings } = {}) {
+    // Een ster maken start meteen háár avontuur (zie createStar), dus voor de
+    // volgende ster moet er eerst teruggekeerd worden naar de sterrenkeuze --
+    // precies wat een ouder met de "wie speelt er"-knop op de kaart doet.
+    await page.evaluate(() => {
+      if (!document.getElementById('screen-profile').classList.contains('active')) goProfiles();
+    });
+    await page.waitForTimeout(120);
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
     // "Wie ben je?" heeft géén voorkeuze en is verplicht: zonder deze tik blijft
@@ -68,7 +75,7 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     const r = await page.evaluate(() => ({
       n: Object.keys(db.profiles).length,
-      cards: document.querySelectorAll('.profile-card').length,
+      cards: document.querySelectorAll('.ster-tegel').length,
       sub: document.getElementById('profile-subtitle').textContent,
       addLabel: document.getElementById('btn-newstar').textContent,
       hintShown: getComputedStyle(document.getElementById('restore-hint')).display !== 'none',
@@ -87,9 +94,19 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'A"<b>x', hair: 'hair_bruin', dress: 'dress_blauw', track: 'count' });
+    /* Een ster maken ÍS beginnen. Wie net haar pop gekozen heeft hoort niet terug
+       te komen op een keuzescherm om zichzelf daar nog een keer aan te wijzen. */
+    const na = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id,
+      ster: cur, wereld: document.getElementById('map-tournee-label').textContent,
+    }));
+    check(na.scherm === 'screen-map' && na.ster === 'p1',
+      'een verse ster staat meteen op haar eigen kaart', JSON.stringify(na));
+    check(/Muziekwereld/.test(na.wereld), 'en dat is de eerste wereld van de tournee', na.wereld);
     const r = await page.evaluate(() => {
       const k = Object.keys(db.profiles)[0];
       const p = db.profiles[k];
+      goProfiles();   // terug naar de keuze: daar staat de tegel die we hieronder nakijken
       openSettings(); setTab = 'beheer'; renderSettings();
       return {
         key: k, n: Object.keys(db.profiles).length,
@@ -98,16 +115,16 @@ function check(ok, label, detail) {
         order: p.order, track: p.settings.track, perLevel: p.settings.perLevel,
         stageMax: p.settings.stageMax,
         bought: p.owned.length - p.freebies,
-        cardText: document.querySelector('.pname') ? document.querySelector('.pname').textContent : null,
-        boldInCard: !!document.querySelector('.pname b'),
+        cardText: document.querySelector('.st-naam') ? document.querySelector('.st-naam').textContent : null,
+        boldInCard: !!document.querySelector('.st-naam b'),
         fieldValue: document.getElementById('set-name').value,
         sub: document.getElementById('profile-subtitle').textContent,
       };
     });
     check(r.n === 1 && r.key === 'p1', 'eerste ster krijgt sleutel p1', `${r.key} n=${r.n}`);
     check(r.name === 'A"<b>x', 'de naam wordt letterlijk bewaard', r.name);
-    check(r.cardText === 'A"<b>x', 'de kaart toont de naam letterlijk', String(r.cardText));
-    check(!r.boldInCard, 'html in een naam wordt geen echte opmaak', 'er staat een <b> in de kaart');
+    check(r.cardText === 'A"<b>x', 'de tegel toont de naam letterlijk', String(r.cardText));
+    check(!r.boldInCard, 'html in een naam wordt geen echte opmaak', 'er staat een <b> in de tegel');
     check(r.fieldValue === 'A"<b>x', 'het naamveld geeft de hele naam terug', r.fieldValue);
     check(r.hair === 'hair_bruin' && r.dress === 'dress_blauw', 'gekozen haar en kleren worden gedragen', `${r.hair}/${r.dress}`);
     check(r.base === 'meisje', 'de gekozen basisfiguur wordt bewaard', String(r.base));
@@ -153,11 +170,13 @@ function check(ok, label, detail) {
       return {
         n: Object.keys(db.profiles).length, naam: k ? db.profiles[k].name : null,
         opScherm: document.getElementById('screen-newstar').classList.contains('active'),
-        keuze: document.getElementById('screen-profile').classList.contains('active'),
+        kaart: document.getElementById('screen-map').classList.contains('active'),
+        ster: k ? cur : null,
       };
     });
     check(r.n === 1 && r.naam === 'Fien', 'Enter op een af formulier maakt de ster', JSON.stringify(r));
-    check(!r.opScherm && r.keuze, 'en brengt haar naar de sterrenkeuze, net als de knop', JSON.stringify(r));
+    check(!r.opScherm && r.kaart && r.ster === 'p1',
+      'en brengt haar meteen haar avontuur in, net als de knop', JSON.stringify(r));
     // een regeleinde hoort nergens in een naam terecht te komen
     check(!/\n|\r/.test(r.naam || ''), 'en zet geen regeleinde in de naam', JSON.stringify(r.naam));
     await ctx.close();
@@ -167,19 +186,106 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     for (let i = 1; i <= 6; i++) await makeStar(page, { name: 'Ster' + i });
+    // de zesde staat na het maken op haar eigen kaart; het raster staat hiernaast
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(150);
     let r = await page.evaluate(() => ({
       keys: profileKeys(), orders: profileKeys().map(k => db.profiles[k].order),
       addHidden: getComputedStyle(document.getElementById('btn-newstar')).display === 'none',
-      cards: document.querySelectorAll('.profile-card').length,
-      rowClass: document.querySelector('.profile-row').className,
+      cards: document.querySelectorAll('.ster-tegel').length,
+      kolommen: getComputedStyle(document.getElementById('profile-row')).gridTemplateColumns.split(' ').length,
     }));
     check(r.keys.join(',') === 'p1,p2,p3,p4,p5,p6', 'sleutels lopen netjes op', r.keys.join(','));
     check(r.orders.join(',') === '0,1,2,3,4,5', 'volgorde loopt netjes op', r.orders.join(','));
     check(r.addHidden, 'bij zes sterren verdwijnt de knop', 'knop staat er nog');
-    check(/many/.test(r.rowClass) && /many-6/.test(r.rowClass), 'zes kaarten gaan in het raster', r.rowClass);
+    check(r.cards === 6 && r.kolommen === 3, 'zes tegels staan in drie kolommen', JSON.stringify(r));
     // een zevende mag ook niet via de code zelf
-    r = await page.evaluate(() => { openNewStar('profile'); return document.querySelector('.screen.active').id; });
+    r = await page.evaluate(() => { goProfiles(); openNewStar('profile'); return document.querySelector('.screen.active').id; });
     check(r === 'screen-profile', 'het maakscherm opent niet meer boven het maximum', r);
+    await ctx.close();
+  }
+
+  /* ================= 3b · Driemaal tikken is één keer spelen =================
+   * Een kind van vijf tikt niet één keer. Zonder grendel is dat twee keer
+   * navigeren over elkaar heen, en in het slechtste geval de kaart van de ene
+   * ster met de voortgang van de andere -- precies het soort fout dat pas opvalt
+   * als een kind zegt "dit is mijn wereld niet".                               */
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Roos' });
+    await makeStar(page, { name: 'Tijn' });
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(150);
+    // drie tikken in dezelfde taak: twee op de eigen tegel, één op die van de buur
+    await page.evaluate(() => {
+      const t = document.querySelectorAll('.ster-tegel');
+      t[0].click(); t[0].click(); t[1].click();
+    });
+    await page.waitForTimeout(700);
+    const r = await page.evaluate(() => ({
+      ster: cur, scherm: document.querySelector('.screen.active').id,
+      actief: document.querySelectorAll('.screen.active').length,
+      naam: cur ? db.profiles[cur].name : null,
+    }));
+    check(r.ster === 'p1' && r.naam === 'Roos' && r.scherm === 'screen-map' && r.actief === 1,
+      'snel achter elkaar tikken opent één kaart, van de eerst aangetikte ster', JSON.stringify(r));
+    // en na terugkeren mag er gewoon weer gekozen worden
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(150);
+    await page.evaluate(() => document.querySelectorAll('.ster-tegel')[1].click());
+    await page.waitForTimeout(500);
+    const r2 = await page.evaluate(() => ({ ster: cur, scherm: document.querySelector('.screen.active').id }));
+    check(r2.ster === 'p2' && r2.scherm === 'screen-map',
+      'en daarna kan de andere ster gewoon gekozen worden', JSON.stringify(r2));
+    await ctx.close();
+  }
+
+  /* ================= 3c · De tegel belooft wat de tik doet =================
+   * De landing verzint geen voortgang: ze laat continueWorld() zien, dezelfde
+   * grens waar goMap() zonder argument heen gaat. Positie (p.level) en
+   * voltooiing zijn sinds fase 4A twee dingen, en de tegel hoort de tweede te
+   * tonen.                                                                     */
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Fenna' });
+    let r = await page.evaluate(() => {
+      const p = db.profiles.p1;
+      // wereld 1 helemaal uit, en in wereld 2 twee van de acht shows gedaan
+      for (let l = WORLD_START[0]; l < WORLD_START[0] + WORLDS[0].levels; l++) p.stars[l] = 3;
+      p.stars[WORLD_START[1]] = 2; p.stars[WORLD_START[1] + 1] = 1;
+      p.level = WORLD_START[1] + 2;
+      save(); goProfiles();
+      const t = document.querySelector('.ster-tegel');
+      return { grens: continueWorld(p), ico: t.querySelector('.st-ico').textContent,
+               wereldIco: WORLDS[1].icon, breed: t.querySelector('.st-baan i').style.width,
+               label: t.getAttribute('aria-label'), wereldNaam: WORLDS[1].name };
+    });
+    check(r.grens === 1 && r.ico === r.wereldIco, 'de tegel toont de wereld waar "verder" heen gaat', JSON.stringify(r));
+    check(r.breed === '25%', 'en hoe ver ze in díe wereld is (2 van 8)', r.breed);
+    check(r.label.indexOf('Fenna') >= 0 && r.label.indexOf(r.wereldNaam) >= 0,
+      'en een schermlezer hoort hetzelfde in woorden', r.label);
+    // en de tik komt daar ook echt uit
+    await page.evaluate(() => document.querySelector('.ster-tegel').click());
+    await page.waitForTimeout(600);
+    r = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id,
+      kop: document.getElementById('map-tournee-label').textContent,
+      wereldNaam: WORLDS[1].name,
+    }));
+    check(r.scherm === 'screen-map' && r.kop.indexOf(r.wereldNaam) >= 0,
+      'en de tik komt uit in precies die wereld', JSON.stringify(r));
+    // alles uit: de toegift-stand laat de laatste wereld zien, met een volle streep
+    r = await page.evaluate(() => {
+      const p = db.profiles.p1;
+      for (let i = 0; i < WORLD_AVAIL; i++)
+        for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) p.stars[l] = 3;
+      save(); goProfiles();
+      const t = document.querySelector('.ster-tegel');
+      return { alles: allWorldsDone(p), ico: t.querySelector('.st-ico').textContent,
+               laatste: WORLDS[WORLD_AVAIL - 1].icon, breed: t.querySelector('.st-baan i').style.width };
+    });
+    check(r.alles && r.ico === r.laatste && r.breed === '100%',
+      'is alles uit, dan staat de tegel op de toegiftwereld met een volle streep', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -187,6 +293,9 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await makeStar(page, { name: 'Emma' });
+    // Emma staat nu op haar eigen kaart; de "+" hangt aan de sterrenkeuze.
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(120);
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="meisje"]');
@@ -244,11 +353,15 @@ function check(ok, label, detail) {
     await page.waitForTimeout(250);
     let r = await page.evaluate(() => ({
       keys: profileKeys(), names: profileKeys().map(k => db.profiles[k].name),
-      setKey: setKey, cur: cur, nextKey: nextProfileKey(),
+      setKey: setKey, cur: cur, curBestaat: !cur || !!db.profiles[cur], nextKey: nextProfileKey(),
     }));
     check(asked, 'verwijderen vraagt eerst om bevestiging', 'geen venster');
     check(r.names.join(',') === 'Een,Drie', 'alleen de gekozen ster verdwijnt', r.names.join(','));
-    check(r.setKey === 'p1' && !r.cur, 'de selectie blijft niet op een verdwenen ster staan', `${r.setKey}/${r.cur}`);
+    /* cur is sinds "maken start het avontuur" gewoon de laatst gemaakte ster (p3),
+       en dat mag: de regel is dat er nooit een ster geselecteerd blijft die er niet
+       meer ís. Dat is precies wat hier bewaakt wordt. */
+    check(r.setKey === 'p1' && r.cur !== 'p2' && r.curBestaat,
+      'de selectie blijft niet op een verdwenen ster staan', `${r.setKey}/${r.cur}`);
     check(r.nextKey === 'p2', 'het gat in de sleutels wordt hergebruikt', r.nextKey);
     // en nu alles weg
     for (const k of ['p1', 'p3']) {

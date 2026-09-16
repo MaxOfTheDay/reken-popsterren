@@ -71,13 +71,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   await page.waitForTimeout(400);
 
   let r = await page.evaluate(() => ({
-    kaarten: document.querySelectorAll('.profile-card').length,
-    naam: (document.querySelector('.pname') || {}).textContent,
+    kaarten: document.querySelectorAll('.ster-tegel').length,
+    naam: (document.querySelector('.st-naam') || {}).textContent,
   }));
   check(r.kaarten === 1 && r.naam === 'Nina', 'een bestaande opslag laadt en toont zijn ster', JSON.stringify(r));
 
   /* ---- 2 · De kaart: ontgrendeling, sterren en de wereld in de kop ---- */
-  await page.click('.profile-card');
+  await page.click('.ster-tegel');
   await page.waitForTimeout(500);
   r = await page.evaluate(() => ({
     kaart: document.getElementById('screen-map').classList.contains('active'),
@@ -612,7 +612,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     const q = JSON.parse(localStorage.getItem('rekenPopsterren_v1')).profiles.p1;
     return { level: q.level, sterren: Object.keys(q.stars).length, spullen: q.owned.length,
              oudeTrofee: q.trophies.indexOf('rockster') >= 0 && q.trophies.indexOf('podiumbouwer') >= 0,
-             kaarten: document.querySelectorAll('.profile-card').length };
+             kaarten: document.querySelectorAll('.ster-tegel').length };
   });
   check(r.level === voorHerladen.level && r.sterren === voorHerladen.sterren
         && r.spullen === voorHerladen.spullen && r.kaarten === 1,
