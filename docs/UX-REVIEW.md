@@ -3,9 +3,9 @@
 > **Status:** all three phases of the plan in section G are implemented.
 > Where the implementation deviates from what is written below, the reason is
 > recorded in the commit that made the change:
-> * the profile card carries the city as an **icon badge on the stage frame**, not
+> * the profile card carried the city as an **icon badge on the stage frame**, not
 >   a chip under the name — a `🌷 Amsterdam` pill (~118px) does not fit a card that
->   is 92–126px wide on a phone;
+>   is 92–126px wide on a phone. *(Superseded: see "Phase 5A" below.)*
 > * the radius scale landed on **10 / 16 / 24 / pill** rather than the illustrative
 >   8 / 14 / 22, to sit on the app's existing centre of gravity instead of
 >   restyling it;
@@ -24,6 +24,18 @@
 >   thumbnail zone, baseline and shadow, so the grid reads as one system. The
 >   remaining half — drawing the 21 accessory and instrument items that are still
 >   emoji — is real illustration work and has not been attempted.
+>
+> **Phase 5A (landing & new star), outside this review:** the player picker was
+> rebuilt around a single tile per child. The outer translucent card, the inner
+> framed stage, the floating city badge and the gold `▶` mark are gone; each child
+> is now one rounded tile with the stage on top and a world band underneath
+> (world icon · name · a thin progress bar for the current world). The whole tile
+> is the button — there is no per-card play control any more — and the world it
+> shows is `continueWorld(p)`, i.e. exactly where the tap leads. `+ Nieuwe ster`
+> moved into the grid as a low, dashed row under the tiles, and creating a star now
+> drops the child straight into her first world instead of returning her to the
+> picker. Section C's notes on "Profielkeuze" therefore describe the screen as it
+> was reviewed, not as it is now.
 >
 > **Later change, outside this review:** the settings screen has since been
 > reworked into a parent area (`👨‍👩‍👧 Voor ouders`) with an identity row for
