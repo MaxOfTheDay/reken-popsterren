@@ -396,7 +396,16 @@
   #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
   #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
   #screen-end { --kolom: 420px; }
-  #screen-settings, #screen-newstar { --kolom: 640px; }
+  #screen-settings { --kolom: 640px; }
+  /* Smaller dan het ouderdeel, en dat is geen detail. Het maakformulier is een
+     kort lijstje pillenrijen; op 640 breed stond op een tablet een vel van een
+     halve meter met een pop van 124px eenzaam in het midden en de labels ver naar
+     links. Op 460 staat alles weer bij elkaar en is het op een tablet hetzelfde
+     formulier als op een telefoon -- daar is het toch al 100%. */
+  #screen-newstar { --kolom: 460px; }
+  /* Het naamveld mag nooit onder de plakkende Klaar-knop uitkomen als de browser
+     er bij het focussen naartoe scrolt (zie .newstar-voet). */
+  #screen-newstar { scroll-padding-bottom: 96px; }
   #screen-memory { --kolom: 620px; }
   #screen-profile { --kolom: 560px; }
   /* Schermwissels waren een harde knip. Tussen twee vlakke verlopen valt dat
@@ -449,148 +458,278 @@
   .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
-  /* ---- Profielkeuze (podium-stijl kaarten) ----
-     Twee sterren altijd náást elkaar in beeld, ook op 320px: geen scrollen om
-     jezelf te vinden. De kaart vertelt het verhaal (waar op de tournee) i.p.v.
-     een scorebord — geen kale tellers om zusjes mee te vergelijken. */
+  /* ---- Sterrenkeuze ----
+     Dit scherm stelt één vraag -- "wie speelt er?" -- en het antwoord is een tik
+     op jezelf. Het is dus geen overzicht en geen dashboard: elke tegel toont wie
+     je bent en waar je gebleven was, en verder niets. Geen kale tellers om
+     zusjes mee te vergelijken. */
   /* verticaal gecentreerd via auto-marges: veilig bij overloop (justify-content:
      center zou op lage/liggende schermen de bovenkant onbereikbaar knippen) */
   #screen-profile { position: relative; padding-bottom: 30px; }
   #screen-profile .title { margin-top: auto; padding: 0 54px; font-size: clamp(23px, 6vw, 40px); }
 
-  /* ===== Startscherm: de tekening =====
-     De inhoud van dit scherm staat in het mídden (gemeten: op 390x844 tussen 25%
-     en 73%) en boven- en onderaan is het leeg. Het masker houdt daarom de
-     middenband rustig in plaats van de bovenkant, precies andersom dan bij een
-     landschap. De zwevende wolk-emoji gaan uit: de tekening heeft haar eigen
-     sterren en noten, en twee soorten versiering over elkaar is rommel. */
+  /* ===== De schil: de vaste sfeer buiten de werelden om ======================
+     Dit is géén wereld en geen tekening, maar de rúimte waar de app in staat als
+     er even geen wereld in beeld is: blauw uur, diep aubergine, een warme gloed
+     laag in beeld, koele en warme lichtvegen langs de randen -- en middenin
+     bewust niets, want daar staat de inhoud.
+
+     Er hing hier een geschilderd startscherm, en dat kwam uit de tijd dat het
+     spel podia en prijzen had: grote gouden sterren en een noot. Die beloven
+     iets, en dit scherm belooft niets -- het vraagt alleen wie er speelt. Het was
+     bovendien één tekening voor één scherm; dit is een laag die élk scherm buiten
+     de werelden kan dragen, en ze kost geen byte en geen aanvraag.
+
+     Drie dingen, van boven naar beneden:
+       1. de fonkeling  een handvol zachte lichtpuntjes en wat bokeh, allemaal
+                        buiten de middenband -- als losse SVG-laag en niet als
+                        twintig gradient-lagen (zelfde truc als .grain)
+       2. de vegen      vier heel grote ringen die grotendeels búiten beeld
+                        liggen, zodat er alleen een boog van te zien is. Dát is
+                        wat een lichtspoor is: een cirkel die je maar half ziet.
+       3. de rust       een zachte verdonkering middenin, zodat wat daar staat
+                        zijn contrast niet zelf hoeft te verzinnen.
+     De grondkleur komt van <body> (--bg-1..4) en wordt hier niet herhaald.
+
+     Bedoeld voor hergebruik op de andere niet-wereldschermen (kleedkamer,
+     trofeeën, ouderdeel); nu staat hij op de sterrenkeuze. */
+  .app-sfeer { position: relative; isolation: isolate; }
   /* isolation + z-index:-1 -- een absoluut geplaatste ::before met z-index:0
      schildert óver gewone tekst heen, ook al staat die er in de opmaak vóór.
-     De titel kwam daardoor achter de sluier terecht en zag grijs. Met een eigen
-     stapelcontext op het scherm blijft -1 netjes binnen dit scherm: boven de
-     schermachtergrond, onder alle inhoud. */
-  #screen-profile { position: relative; isolation: isolate; }
-  #screen-profile::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background-image: var(--scene-scrim), url("assets/bg/landing.webp");
-    background-size: cover, cover;
-    background-position: 50% 50%, 50% 50%;
-    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
-    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+     Met een eigen stapelcontext op het scherm blijft -1 netjes hierbinnen: boven
+     de schermachtergrond, onder alle inhoud. */
+  /* fixed en niet absolute: dit is de lúcht waar het scherm in staat, en lucht
+     scrolt niet mee. Op een scrollend scherm (het maakformulier) zou een absolute
+     laag zich over de hele scrollhoogte uitrekken en lagen de vegen dus half
+     buiten beeld. */
+  .app-sfeer::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice'><circle cx='32.0' cy='48.0' r='1.8' fill='%23fff' opacity='0.42'/><circle cx='88.0' cy='112.0' r='1.2' fill='%23ffd79a' opacity='0.38'/><circle cx='144.0' cy='40.0' r='2.2' fill='%23fff' opacity='0.30'/><circle cx='208.0' cy='144.0' r='1.4' fill='%239fe8ff' opacity='0.34'/><circle cx='272.0' cy='72.0' r='1.9' fill='%23fff' opacity='0.40'/><circle cx='328.0' cy='160.0' r='1.3' fill='%23ffd79a' opacity='0.32'/><circle cx='368.0' cy='56.0' r='1.6' fill='%23fff' opacity='0.28'/><circle cx='60.0' cy='192.0' r='1.1' fill='%239fe8ff' opacity='0.30'/><circle cx='296.0' cy='208.0' r='1.5' fill='%23fff' opacity='0.24'/><circle cx='40.0' cy='640.0' r='1.7' fill='%23fff' opacity='0.34'/><circle cx='104.0' cy='736.0' r='1.3' fill='%23ffd79a' opacity='0.36'/><circle cx='176.0' cy='608.0' r='1.2' fill='%239fe8ff' opacity='0.26'/><circle cx='240.0' cy='760.0' r='1.9' fill='%23fff' opacity='0.32'/><circle cx='312.0' cy='656.0' r='1.4' fill='%23ffd79a' opacity='0.30'/><circle cx='360.0' cy='720.0' r='1.6' fill='%23fff' opacity='0.26'/><circle cx='136.0' cy='688.0' r='1.1' fill='%23fff' opacity='0.22'/><circle cx='272.0' cy='592.0' r='1.3' fill='%239fe8ff' opacity='0.24'/><circle cx='20.0' cy='352.0' r='1.5' fill='%23fff' opacity='0.22'/><circle cx='380.0' cy='448.0' r='1.4' fill='%23ffd79a' opacity='0.22'/><circle cx='28.0' cy='496.0' r='1.2' fill='%239fe8ff' opacity='0.20'/><circle cx='372.0' cy='304.0' r='1.6' fill='%23fff' opacity='0.20'/><circle cx='72.0' cy='80.0' r='7.0' fill='%23ffd79a' opacity='0.07'/><circle cx='344.0' cy='112.0' r='6.0' fill='%239fe8ff' opacity='0.06'/><circle cx='120.0' cy='704.0' r='7.0' fill='%23ffd79a' opacity='0.06'/><circle cx='288.0' cy='720.0' r='6.0' fill='%23fff' opacity='0.05'/></svg>"),
+      radial-gradient(64% 54% at -12% -10%, transparent 57%, rgba(255,190,104,.34) 64%, transparent 72%),
+      radial-gradient(58% 50% at 112% -4%, transparent 59%, rgba(128,226,255,.26) 66%, transparent 74%),
+      radial-gradient(74% 60% at 110% 108%, transparent 58%, rgba(255,176,96,.26) 65%, transparent 73%),
+      radial-gradient(68% 54% at -10% 110%, transparent 59%, rgba(198,146,255,.22) 66%, transparent 74%),
+      radial-gradient(80% 48% at 50% 50%, rgba(18,4,38,.5), rgba(18,4,38,.2) 58%, transparent 78%),
+      /* Het blauwe uur. De grondkleur van <body> loopt door élk scherm en is daar
+         goed zoals hij is; buiten de werelden mag hij een paar trappen dieper,
+         anders staat er violet licht waar nacht hoort te staan. Deze laag ligt
+         onderop, dus de warme gloed onderin en de vegen hierboven komen er
+         gewoon doorheen. */
+      linear-gradient(176deg, rgba(17,5,40,.62) 0%, rgba(22,7,48,.46) 34%,
+                              rgba(26,9,50,.5) 68%, rgba(18,5,38,.64) 100%);
+    background-repeat: no-repeat;
   }
-  #screen-profile .map-sky span { display: none; }
+  /* De zwevende wolk-emoji horen bij de wereldkaart, niet hier: de schil heeft
+     haar eigen fonkeling en twee soorten versiering over elkaar is rommel. */
+  .app-sfeer .map-sky span { display: none; }
 
-  /* De titel moet van de tekening áf komen, niet erin wegzakken: helder wit,
-     een warme gloed die bij het goud in de tekening hoort, en een donkere schaduw
-     eronder voor de plekken waar de achtergrond juist licht is. */
+  /* De titel staat op de schil en niet meer in een tekening, dus de gloed eronder
+     mag zachter: hij hoeft zich nergens meer van los te maken. */
   #screen-profile .title {
     color: #fff;
-    text-shadow: 0 2px 0 rgba(24,6,44,.45), 0 4px 18px rgba(24,6,44,.6),
-                 0 0 26px rgba(255,194,61,.5);
+    text-shadow: 0 2px 0 rgba(24,6,44,.4), 0 4px 16px rgba(24,6,44,.55),
+                 0 0 22px rgba(255,198,120,.3);
   }
-  .profile-row {
-    display: flex; gap: 14px; justify-content: center; align-items: stretch;
-    width: 100%; max-width: var(--kolom); margin: 16px 0 0; z-index: 1;
+  /* ---- De sterrentegel ----------------------------------------------------
+     Eén omhulsel per kind, met twee zones erin en niets ertussen:
+
+       .ster-tegel   de tegel zelf. Eén rand, één schaduw, één ronding -- dezelfde
+                     behandeling als .stage-frame, alleen nu om het geheel heen in
+                     plaats van om de pop alleen. Hiervoor waren dit twee kaders
+                     (een doorzichtige kaart mét een ingelijst podium erbinnen) en
+                     twee zwevende merkjes op de naad ertussen: vier randen om één
+                     kind te laten zien.
+       .st-podium    de pop op haar eigen podium. Het grootste deel van de tegel,
+                     want hieraan herkent een kind van vijf zichzelf -- niet aan
+                     haar naam.
+       .st-voet      de wereldband: wereldteken, naam, en als onderrand een dun
+                     streepje voortgang. Vást aan de tegel en niet als badge op de
+                     rand: "Clara is in de Snoepwereld" hoort bij Clara.
+
+     De hele tegel is de knop. Er zat een gouden ▶-merkje op elke kaart, en met
+     zes kinderen op het scherm stonden daar zes gouden knopjes die alle zes
+     hetzelfde beloofden als de tegel eronder -- een tweede aanwijzing voor iets
+     wat maar op één manier kan.
+
+     Alle maten komen uit de tegel zélf (container-query, cqw) en niet uit de
+     schermbreedte. Eén ster op een tablet en zes op een telefoon zijn daarmee
+     hetzelfde ding op twee formaten, en er hoeft per aantal niets ingesteld. */
+  .star-grid {
+    display: grid; gap: 14px; justify-content: center; align-items: center;
+    grid-template-columns: repeat(3, minmax(0, 130px));
+    width: 100%; max-width: var(--kolom); margin: 14px 0 0; z-index: 1;
   }
+  /* De kolomtelling komt uit het aantal sterren (zie renderProfiles), maar de
+     máten liggen dicht bij elkaar -- en dat is het punt. Eén kind maakte van de
+     tegel een poster van 236px en zes kinderen van dezelfde tegel een plaatje van
+     112px: hetzelfde onderdeel, maar twee keer zo groot, en dus las het als twee
+     verschillende dingen. Nu scheelt de eenzame tegel nog ongeveer een derde met
+     de krapste -- genoeg om ruimer te voelen, te weinig om iets ánders te worden.
+
+     Het zijn bovengrenzen en geen maten: op een telefoon knijpt het raster de drie
+     kolommen vanzelf naar ~112px, op een tablet lopen ze tegen deze grens aan in
+     plaats van uit te rekken tot halve schermbreedte. Daardoor is de tegel op een
+     tablet ook echt dezelfde tegel als op een telefoon. */
+  /* Nog geen enkele ster: er is dan geen raster om iets in te passen, dus de
+     uitnodiging krijgt de maat van een knop en niet die van een tegel. Zonder deze
+     regel perste de kolom van één tegel (148px) "Maak je eerste ster" over twee
+     regels. */
+  .star-grid.kol-0 { grid-template-columns: minmax(0, 232px); }
+  .star-grid.kol-1 { grid-template-columns: minmax(0, 148px); }
+  .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, 136px)); }
+  .star-grid.kol-3 { grid-template-columns: repeat(3, minmax(0, 130px)); }
+  @media (max-width: 380px) { .star-grid { gap: 10px; } }
   /* Het blok titel + sterren + knop hoort bij elkaar en staat samen in het midden.
-     De auto-marge stond hiervoor op .profile-row zelf, dus alles eronder werd naar
-     de schermrand geduwd -- op een leeg scherm belandde "Maak je eerste ster" een
+     De auto-marge stond hiervoor op de rij zelf, dus alles eronder werd naar de
+     schermrand geduwd -- op een leeg scherm belandde "Maak je eerste ster" een
      halve telefoon onder het welkom. Nu duwt deze lege staart van onderaf terug,
      tegen de auto-marge bovenaan de titel in. */
-  .profile-spacer { margin-top: auto; }
-  /* rustige, middenpaarse kaart met één subtiele rand -- de avatar (.stage-frame,
-     zie hierboven) mag de sterkste visuele structuur zijn, dus hier bewust geen
-     dikke/felle tweede rand ernaast (geen "dubbele rand"-gevoel meer). */
-  .profile-card {
-    position: relative; flex: 1 1 0; min-width: 0; max-width: 250px;
-    cursor: pointer; text-align: center; font-family: inherit; color: var(--c-white);
-    background: rgba(103,29,155,.23);
-    border: 1.5px solid var(--glass-white-22); border-radius: var(--r-lg);
-    padding: 11px 10px 16px; transition: transform .18s, box-shadow .18s;
-    box-shadow: var(--e-2);
-    /* expliciete kolom i.p.v. losse blok/inline-flow: zonder dit vallen de
-       (beide inline-flex) ster-chip en Speel-knop op brede (desktop) kaarten
-       op dezelfde regel en verspringt Speel! per ongeluk náást/bóven de sterren
-       i.p.v. eronder -- op smalle (mobiele) kaarten viel dat toevallig niet op. */
-    display: flex; flex-direction: column; align-items: center;
+  /* De staart weegt iets zwaarder dan de kop: puur optisch, want de tekening is
+     bovenaan druk (de gouden bogen) en onderaan rustig. Zonder dit hangt het blok
+     tegen die drukte aan. */
+  .profile-spacer { margin-top: auto; min-height: 6vh; }
+
+  .ster-tegel {
+    container-type: inline-size;
+    display: flex; flex-direction: column; overflow: hidden;
+    width: 100%; padding: 0; cursor: pointer; font-family: inherit;
+    color: var(--c-white); text-align: left;
+    border: 0; border-radius: var(--r-md);
+    background: rgba(var(--w-deep-rgb, 42,12,71), .6);
+    /* Precies de randbehandeling van een bestemming op de reis (.reis-plaats):
+       een lichte haarlijn die de tegel begrenst, daarbuiten een donkere keylijn
+       die hem van de tekening losmaakt. Dat werkt op elke ondergrond, en het is
+       hier dezelfde afspraak als daar -- één taal voor "dit is een plek waar je
+       heen kunt".
+
+       De gloed erachter is de kléur van de wereld waar dit kind speelt
+       (applyWorldTheme zet --w-glow-rgb op de tegel). Dat is het hele
+       "wereldaccent": geen band, geen tweede vlak, geen extra regel per wereld --
+       dezelfde schaduw in een andere kleur. */
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(16,5,34,.45),
+                0 0 20px rgba(var(--w-glow-rgb, 255,216,128), .26), var(--e-2);
+    transition: transform .14s, box-shadow .14s;
   }
-  .profile-card:hover { transform: translateY(-6px) scale(1.03); box-shadow: var(--e-3); }
-  .profile-card:active { transform: translateY(-2px) scale(1.01); }
-  /* het podium schaalt mee met de kaartbreedte; de scène blijft schoon (geen zwevende teller) */
-  .profile-card .stage { width: 100%; aspect-ratio: 10 / 11; margin: 0 auto; }
-  .profile-card .deco { font-size: 18px; }
-  .profile-card .pname { font-size: 22px; font-weight: bold; margin-top: 8px; text-shadow: 0 2px 0 var(--glass-black-25); }
-  /* De kaart ís de knop -- er stond eerder ook nog een volle Speel!-knop ín elke
-     kaart: drie identieke gouden hoofdknoppen naast elkaar (dus geen hoofdknop),
-     en op 390-430px breed was die pil bréder dan zijn eigen kaart. Nu twee kleine
-     merkjes op de rand van het podiumkader:
-       .city-mark (linksboven, neutraal donker) -- wáár ze op tournee is, met
-         hetzelfde stadsicoon als op de reiskaart. Vervangt de oude "⭐ 0"-pil:
-         een verse ster zag daar haar nul naast de 17 van haar zus staan.
-       .play-mark (rechtsonder, goud)           -- "hier kun je op tikken".
-     Bewust merkjes en geen pil onder de naam: de kaarten zijn op een telefoon
-     92-126px breed, en een pil met "🌷 Amsterdam" erin (±118px) past daar bij
-     geen enkele stad in -- die zou precies dezelfde overloop maken als de
-     Speel!-knop die hier net weg is. Een merkje kost geen kaartbreedte. */
-  .pstage-wrap { position: relative; width: 100%; }
-  .city-mark, .play-mark {
-    position: absolute; width: 30px; height: 30px; border-radius: 50%;
-    display: grid; place-items: center; box-shadow: var(--e-1);
+  .ster-tegel:hover { transform: translateY(-4px);
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(16,5,34,.45),
+                0 0 24px rgba(var(--w-glow-rgb, 255,216,128), .36), var(--e-3); }
+  .ster-tegel:active { transform: scale(.97); }
+  /* De tik zelf: even indrukken en oplichten, en dán pas het spel in (zie
+     kiesSter). Kort genoeg om antwoord te zijn en niet om een animatie te zijn. */
+  .ster-tegel.kiest {
+    transform: scale(.965);
+    box-shadow: 0 0 0 2.5px rgba(255,255,255,.62), 0 0 0 4px rgba(16,5,34,.45),
+                0 0 26px rgba(255,224,150,.5), var(--e-2);
   }
-  /* zelfde donkere badge-taal als het slotje op een trofeekaart: neutrale info */
-  .city-mark {
-    left: -5px; top: -5px; font-size: 15px;
-    background: rgba(30,15,55,.95); border: 2px solid var(--glass-white-40);
+  @media (prefers-reduced-motion: reduce) { .ster-tegel { transition: none; } }
+  /* Het podium binnen de tegel draagt geen eigen rand meer: de tegel ís het
+     kader. Verder precies hetzelfde podium als in de kleedkamer -- zelfde
+     achtergrond uit applyStage, zelfde pop, zelfde verhoudingen. */
+  .ster-tegel .st-podium {
+    width: 100%; aspect-ratio: 10 / 11; flex: none;
+    border: 0; border-radius: 0; box-shadow: none;
   }
-  /* goud = spelen (zelfde belofte als de Speel!-knop op de kaart), maar klein:
-     een merkje dat zegt "tikbaar", geen knop die om aandacht vraagt */
-  .play-mark {
-    right: -5px; bottom: -5px; font-size: 13px; padding-left: 2px; color: var(--purple-shadow);
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    border: 2px solid rgba(255,255,255,.75);
+  /* De discolichtjes ademen hier niet mee. Op één podium is dat sfeer; met zes
+     tegels naast elkaar zijn het zes vlakken die eeuwig staan te pulseren, en
+     dan beweegt het hele scherm terwijl er niets gebeurt. */
+  .ster-tegel .st-podium::after { animation: none; opacity: .85; }
+  /* De podiumversiering (kasteel, discobol, palmboom) blijft hier weg. Op één
+     groot podium is dat sfeer; op een tegel van 112-148px zijn het drie emoji die
+     over de pop heen vallen, precies op de plek waar een kind moet kunnen zien of
+     zíj het is. Het podium zélf -- de kleur waar ze op staat -- blijft staan, en
+     dat is waaraan je haar van een afstandje herkent.
+
+     Ze verdwijnen niet uit het spel: in de kleedkamer, de show en op het
+     eindscherm staat hetzelfde podium mét versiering. */
+  .ster-tegel .deco { display: none; }
+
+  .st-voet {
+    display: flex; flex-direction: column; gap: clamp(4px, 3.5cqw, 7px);
+    padding: clamp(6px, 5.5cqw, 12px) clamp(7px, 6cqw, 14px) clamp(7px, 6cqw, 14px);
+    background: linear-gradient(180deg, rgba(var(--w-deep-rgb, 42,12,71), .82), rgba(var(--w-deep-rgb, 42,12,71), .96));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
   }
-  .profile-card:active .play-mark { filter: brightness(.85); }
-  /* heel smalle toestellen: kaartinhoud een maat kleiner, allebei blijven passen */
-  @media (max-width: 380px) {
-    .profile-row { gap: 10px; }
-    .profile-card .pname { font-size: 18px; }
-    .city-mark, .play-mark { width: 26px; height: 26px; }
-    .city-mark { font-size: 13px; }
-    .play-mark { font-size: 11px; }
+  .st-rij { display: flex; align-items: center; gap: clamp(4px, 4cqw, 9px); min-width: 0; }
+  /* Hetzelfde wereldteken als op de reis en op de wereldkaart, en verder niets:
+     een kind hoeft hier alleen te zien dát ze ergens anders is dan haar zus. */
+  .st-ico { flex: none; line-height: 1; font-size: clamp(13px, 13cqw, 23px);
+            filter: drop-shadow(0 1px 3px rgba(8,2,20,.7)); }
+  .st-naam {
+    flex: 1; min-width: 0; font-weight: 800; letter-spacing: .01em; line-height: 1.15;
+    font-size: clamp(13px, 14cqw, 25px);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(6,1,16,.8);
   }
-  /* Vanaf vier sterren past één rij niet meer: met flex: 1 1 0 kromp elke kaart
-     gewoon door (gemeten op 390px: 4 -> 81px, 6 -> 49px, zonder afbreken of
-     scrollen). Een raster met een vaste kolomtelling houdt élke kaart even groot,
-     ook de eenzame laatste. Vier sterren worden 2+2 i.p.v. 3+1: even groot maar
-     niet scheef. */
-  .profile-row.many { display: grid; row-gap: 12px; justify-items: stretch; }
-  .profile-row.many .profile-card { max-width: none; }
-  .profile-row.many-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 380px; }
-  .profile-row.many-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  /* Liggend (of een heel lage viewport) passen twee rijen kaarten er niet bij.
+  /* Hoe ver in déze wereld, als streep en niet als teller. Geen getallen, geen
+     sterrentotaal, geen tweede balk: zes kinderen op één scherm horen zich niet
+     met elkaar te kunnen vergelijken, en een streep zegt "bijna klaar" zonder
+     dat er iets gelezen hoeft te worden.
+
+     Warm wit en nadrukkelijk geen goud -- goud betekent in dit spel "af" en "hier
+     speel je", en dit is geen van beide. Zelfde kleur als de rand van een
+     gespeelde halte op de wereldkaart (--halte-rand). */
+  .st-baan {
+    height: 5px; border-radius: var(--r-pill); overflow: hidden;
+    background: rgba(255,255,255,.17); box-shadow: inset 0 1px 2px rgba(8,2,20,.45);
+  }
+  .st-baan i {
+    display: block; height: 100%; border-radius: var(--r-pill);
+    background: linear-gradient(90deg, rgba(255,240,214,.72), rgba(255,240,214,.98));
+    box-shadow: 0 0 8px rgba(255,235,200,.4);
+  }
+
+  /* "+" is geen ster. Hij staat in hetzelfde raster (en dus vanzelf ná de laatste
+     tegel) maar is veel lager en heeft geen podium, geen naam en geen kleur: een
+     leeg plekje, geen kind. Gestippeld en glazen, zoals elke "hier kan nog iets
+     bij" in dit spel -- en bewust niet de taal van het tandwiel, want dit is geen
+     instelling. */
+  .add-tegel {
+    /* Een eigen rij onder de sterren, en niet het eerstvolgende lege vakje: dan
+       staat hij naast een kind alsof hij er ook een is, en bij vijf sterren vult
+       hij precies het gat waar de zesde hoort te komen. */
+    grid-column: 1 / -1; justify-self: center; max-width: 196px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; width: 100%; min-height: 60px; padding: 10px 8px;
+    font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.15;
+    color: var(--c-white); text-align: center; cursor: pointer; z-index: 1;
+    border: 1.5px dashed var(--glass-white-35); border-radius: var(--r-md);
+    background: var(--glass-white-10);
+    transition: transform .07s, background .12s;
+  }
+  .add-tegel .at-plus { font-size: 21px; line-height: 1; opacity: .9; }
+  .add-tegel:hover { background: var(--glass-white-18); }
+  .add-tegel:active { transform: scale(.96); }
+  /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
+     groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
+  /* Breder dan hoog, en breed genoeg voor "Maak je eerste ster" op één regel: een
+     uitnodiging leest als een knop, niet als een leeg vierkant. */
+  .add-tegel.leeg {
+    min-height: 116px; max-width: 232px; gap: 8px;
+    font-size: 16px; border-width: 2px;
+  }
+  .add-tegel.leeg .at-plus { font-size: 38px; }
+  /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
      De auto-marges hierboven centreren het blok en laten het dan langs de
      bovenkant weglopen zonder scrollbalk -- dus daar zetten we het centreren uit
      en mag het scherm gewoon scrollen. */
   @media (max-height: 480px) {
     #screen-profile { justify-content: flex-start; padding-top: 12px; }
     #screen-profile .title { margin-top: 0; font-size: 22px; }
-    .profile-row { margin-top: 10px; }
-    .profile-spacer { margin-top: 0; }
+    /* En smaller dan de kolom van dit scherm: liggend is de breedte er in
+       overvloed en de hóógte het probleem, dus een tegel die de volle 560 pakt
+       maakt twee rijen even hoog als anderhalf scherm. Alles binnen de tegel
+       schaalt mee (container-query), dus dit is één regel en geen tweede opmaak. */
+    .star-grid { margin-top: 10px; max-width: 430px; }
+    /* en het podium een slag lager: liggend is hoogte het enige dat telt, en met
+       10/8 passen zes tegels in twee rijen zónder te scrollen. De pop schaalt mee
+       (ze staat op 92% van de podiumhoogte), dus er wordt niets afgesneden. */
+    .ster-tegel .st-podium { aspect-ratio: 10 / 8; }
+    .profile-spacer { margin-top: 0; min-height: 0; }
   }
-  /* "+" is geen ster en geen hoofdknop: gestippelde rand, glazen vulling, rustig.
-     Op een leeg scherm is het vanzelf het enige dat er staat. */
-  .add-star {
-    display: block; margin: 16px auto 0; padding: 11px 22px; min-height: 44px;
-    font-family: inherit; font-size: 16px; font-weight: 700; color: var(--c-white);
-    border-radius: var(--r-pill); border: 1.5px dashed var(--glass-white-35);
-    background: var(--glass-white-10); cursor: pointer; z-index: 1;
-    transition: transform .07s, background .12s;
-  }
-  .add-star:hover { background: var(--glass-white-18); }
-  .add-star:active { transform: scale(.96); }
   /* alleen zichtbaar als er nog niets is: dán is een back-up terugzetten het
      andere ding dat een ouder hier kan willen */
-  .restore-hint { display: none; margin: 10px auto 0; font-size: 13px; opacity: .72; text-align: center; z-index: 1; }
+  .restore-hint { display: none; margin: 12px auto 0; font-size: 13px; opacity: .72; text-align: center; z-index: 1; }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
   /* rustig maar wél te vinden rond icoon-knopje: rand + glazen vulling + zachte
@@ -3478,15 +3617,47 @@
     box-shadow: var(--e-2);
   }
   .hub-sticky .screen-header { margin-bottom: 4px; }
+  /* ---- De kop van een hulpscherm ------------------------------------------
+     Dezelfde plakkende kop, maar dan voor een scherm dat geen spel is: nieuwe
+     ster nu, en straks net zo goed de kleedkamer, de trofeeën en het ouderdeel.
+
+     Het verschil met de spelkop is bewust klein en helemaal in gewicht: minder
+     hoog, minder vlak, een haarlijn in plaats van een balkrand, en een zachtere
+     schaduw. Een hulpscherm heeft één taak en één weg terug -- dan hoort de kop
+     niet het zwaarste ding op het scherm te zijn. Doordat de schil (.app-sfeer)
+     eronder doorloopt, hangen kop en inhoud in dezelfde ruimte in plaats van als
+     twee losse blokken op elkaar. */
+  .hub-sticky.sub {
+    padding: 6px 10px 8px;
+    /* Vierkant onderaan, en niet afgerond zoals de spelkop: een afgeronde balk
+       bóven een afgeronde witte kaart leest als twee blokken op elkaar. Recht is
+       hier een rand waar de inhoud onderdoor schuift. */
+    border-radius: 0;
+    background: rgba(30,8,56,.74);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-white-14);
+    box-shadow: 0 6px 18px rgba(10,2,24,.28);
+  }
+  .hub-sticky.sub .screen-header { margin-bottom: 0; }
+  .hub-sticky.sub .header-title { font-size: 19px; }
+  /* De terugknop houdt zijn 44px raakvlak (kinderhand), maar niet zijn lip: een
+     knop die indrukbaar lijkt trekt aandacht, en dit is de uitgang en niet de
+     bedoeling van het scherm. */
+  .hub-sticky.sub .icon-btn {
+    font-size: 17px; border-color: var(--glass-white-22);
+    background: rgba(255,255,255,.1); box-shadow: none;
+  }
+  .hub-sticky.sub .icon-btn:active { transform: scale(.94); box-shadow: none; }
   /* de rand-/gloedbehandeling zit nu in de gedeelde .stage-frame (zie .stage
      hierboven) -- hier alleen nog de eigen afmeting van de kleedkamer-scène */
   .dress-stage { width: 208px; height: 175px; }
   .dress-stage .deco { font-size: 20px; }
   @media (max-height: 700px) { .dress-stage { width: 160px; height: 134px; } }
   /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit. Hoort bij
-     háár, dus staat hij als merkje op de rand van het podiumkader -- precies het
-     patroon dat de spelerskeuze al gebruikt voor het ▶-merkje (.play-mark). Eén
-     rand, geen extra ringen: dát was de klacht, niet de plek. */
+     háár, dus staat hij als merkje op de rand van het podiumkader. Eén rand, geen
+     extra ringen: dát was de klacht, niet de plek. (Op de sterrenkeuze stond
+     hetzelfde patroon voor een ▶-merkje; dáár is het weg, want dáár beloofde het
+     hetzelfde als de tegel eronder. Hier doet het knopje iets eigens.) */
   .stage-wrap { position: relative; display: flex; justify-content: center; }
   .shuffle-btn {
     position: absolute; right: -6px; bottom: -6px; width: 42px; height: 42px;
@@ -3799,9 +3970,59 @@
   /* Het voorbeeld staat boven de keuzes: je maakt iemand, je vult geen formulier in.
      Zelfde podiumkader als op de keuzekaart, zodat het al lijkt op waar ze straks
      staat. */
-  .newstar-preview { display: flex; justify-content: center; margin: -2px 0 16px; }
-  .newstar-preview .stage { width: 148px; aspect-ratio: 10 / 11; }
-  .newstar-go { width: 100%; margin-top: 18px; font-size: 19px; }
+  /* Het voorbeeld staat vóór de keuzes -- je maakt iemand, je vult geen formulier
+     in -- maar het is niet het onderwerp. Op 148px vulde het een derde van de
+     telefoon en begonnen de échte keuzes pas onder de vouw; op 124px staat "Wie
+     ben je?" er meteen naast in beeld en is de pop nog steeds goed te zien. */
+  .newstar-preview { display: flex; justify-content: center; margin: -2px 0 13px; }
+  .newstar-preview .stage { width: 124px; aspect-ratio: 10 / 11; }
+  /* Klaar! blijft in beeld. Het formulier is één vel (basis, naam, haar, kleren,
+     manier van spelen, en een dichte openklapper met de oefening) en dat vel is op
+     een telefoon anderhalf scherm lang -- de knop die het hele scherm bestáát
+     stond dus onder de vouw, en met het toetsenbord open twee schermen laag. Een
+     plakkende voet lost dat op zonder de volgorde van het formulier aan te raken:
+     de vragen blijven in dezelfde volgorde staan, het antwoord is alleen altijd
+     bereikbaar. (Enter in het naamveld doet nog steeds hetzelfde -- zie daar.)
+
+     De negatieve marges lopen tot in de randen van de kaart, zodat het wit van de
+     voet doorloopt tot de hoeken en er niets tussen de knop en de kaartrand
+     doorheen schuift. */
+  /* ---- Het maakformulier leest als keuzes, niet als een formulier ----------
+     Vijf rijen label-plus-pillen onder elkaar, elk met een volle 2px-rand om
+     élke pil: dat gaf veertig omlijnde vakjes waar de gekozen pil het in zijn
+     eentje van moest winnen. Hier is de níet gekozen pil stiller (dunnere rand,
+     zacht vlak in plaats van wit) en blijft de gekozen pil precies zoals hij was.
+     Het verschil doet nu het werk, niet de omlijning.
+
+     Alleen binnen dit scherm: in het ouderdeel staan dezelfde pillen op een
+     scherm dat wél een instellingenformulier ís, en daar horen ze zoals ze zijn. */
+  #screen-newstar .set-field + .set-field { margin-top: 12px; }
+  #screen-newstar .set-field { gap: 6px; }
+  #screen-newstar .chip {
+    border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
+  }
+  #screen-newstar .chip:hover { border-color: var(--purple-light); background: var(--c-white); }
+  #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); }
+  #screen-newstar .set-card { padding: 14px 16px; }
+  #screen-newstar .set-reveal { margin-top: 13px; }
+  #screen-newstar input[type=text] { border-width: 1.5px; }
+
+  .newstar-voet {
+    /* bottom op -(schermrand): dán plakt de voet gelijk met de ónderkant van het
+       scherm. Op 0 zou hij de rand van het scherm vrijlaten en schoof het
+       formulier daar zichtbaar onderdoor.
+
+       Plus de veilige zone van het toestel: op een telefoon met een streepje
+       onderaan hoort de knop daar niet achter te vallen. Op alles zonder streepje
+       is env() nul en verandert er niets. */
+    position: sticky; z-index: 3;
+    bottom: calc(env(safe-area-inset-bottom, 0px) - var(--rand));
+    margin: 18px -18px -16px; padding: 12px 18px 14px;
+    background: var(--c-white); border-top: 1px solid var(--paper-border);
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
+    box-shadow: 0 -8px 14px rgba(40,10,70,.07);
+  }
+  .newstar-go { width: 100%; font-size: 19px; }
   .newstar-go:disabled { opacity: .45; cursor: default; box-shadow: none; }
   .newstar-go:disabled:active { transform: none; }
 
@@ -3875,7 +4096,7 @@
 <div id="app">
 
   <!-- ===== Profielkeuze ===== -->
-  <div class="screen active" id="screen-profile">
+  <div class="screen active app-sfeer" id="screen-profile">
     <div class="map-sky" aria-hidden="true">
       <div class="map-sky-inner">
         <span style="top:14%;font-size:28px;animation-duration:85s;animation-delay:-20s;opacity:.24">☁️</span>
@@ -3886,11 +4107,17 @@
     </div>
     <h1 class="title">Reken Popsterren</h1>
     <div class="subtitle" id="profile-subtitle"></div>
-    <div class="profile-row" id="profile-row"></div>
-    <!-- bewust géén kaart in de rij: een "+" is geen ster, en als kaart zou hij
-         de sterren smaller maken (op 320px al de kritieke maat). Rustig gewicht,
-         want de gouden ▶ op elke kaart is wat om aandacht mag vragen. -->
-    <button class="add-star" id="btn-newstar" onclick="openNewStar('profile')">➕ Nieuwe ster</button>
+    <!-- De "+" staat vást in het raster en wordt nooit weggegooid: renderProfiles
+         zet de sterrentegels ervóór en laat deze knop staan. Daardoor komt hij
+         vanzelf ná de laatste ster te staan, houdt hij zijn id (en dus zijn plek
+         in het ouderdeel en in de tests), en is er geen los blok onder het raster
+         meer dat op een eigen rij om aandacht vraagt. -->
+    <div class="star-grid" id="profile-row">
+      <button class="add-tegel" id="btn-newstar" onclick="openNewStar('profile')">
+        <span class="at-plus" aria-hidden="true">＋</span>
+        <span class="at-tekst">Nieuwe ster</span>
+      </button>
+    </div>
     <div class="restore-hint" id="restore-hint">Al een back-up? Zet hem terug via ⚙️ → Voor ouders.</div>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
@@ -4154,11 +4381,11 @@
        quit-modal is naar closeConfirmModal, dus als modal zou Android-terug dit
        formulier nooit sluiten. Bovendien vecht een invoerveld in een vast
        gecentreerde overlay met het toetsenbord; een scherm scrolt gewoon mee. -->
-  <div class="screen" id="screen-newstar">
-    <div class="hub-sticky">
+  <div class="screen app-sfeer" id="screen-newstar">
+    <div class="hub-sticky sub">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeNewStar()" aria-label="Terug" title="Terug">←</button>
-        <div class="header-title">➕ Nieuwe ster</div>
+        <div class="header-title">Nieuwe ster</div>
         <div class="header-right"></div>
       </div>
     </div>
@@ -6112,9 +6339,22 @@ const BASE_CHOICES = [
 ];
 
 let svgUid = 0;
-// bigProps: in de kleedkamer krijgen huisdier en instrument een groter formaat,
-// zodat het spulletje dat je aan het passen bent ook echt te zien is.
-function avatarSVG(p, width, bigProps) {
+/* Hoe groot het huisdier en het instrument naast de pop komen te staan. Ze staan
+   buiten haar silhouet, dus hun maat bepaalt of ze bíj haar horen of met haar
+   concurreren:
+     groot  de kleedkamer -- daar past ze ze, dus daar moet je zien wát het is
+     norm   overal waar de pop op ware grootte staat (show, eindscherm, kaart)
+     klein  de sterrenkeuze -- daar staan zes tegels van ~112px naast elkaar, en op
+            die maat werd een gitaar van 42px een tweede hoofdonderwerp naast een
+            kind van 90px. Kleiner blijft het gewoon háár gitaar. */
+const PROP_MAAT = {
+  groot: { pet: [6, 244, 46],  instr: [112, 248, 52] },
+  norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
+  klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
+};
+function avatarSVG(p, width, propMaat) {
+  // true blijft 'groot': de kleedkamer geeft nog altijd een vlaggetje mee
+  const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
   const eq = p.equipped;
   const B = BASES[baseOf(p)];
   const hair = itemOr(eq.hair, 'hair_blond'), dress = itemOr(eq.dress, 'dress_roze');
@@ -6131,10 +6371,8 @@ function avatarSVG(p, width, bigProps) {
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
     <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
-  if (pet) s += bigProps ? `<text x="6" y="244" font-size="46">${pet.emoji}</text>`
-                         : `<text x="18" y="240" font-size="34">${pet.emoji}</text>`;
-  if (instr) s += bigProps ? `<text x="112" y="248" font-size="52">${instr.emoji}</text>`
-                           : `<text x="120" y="246" font-size="42">${instr.emoji}</text>`;
+  if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
+  if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
   // haar achter het hoofd (staartjes, of de rand van een kort kapsel)
   s += B.hairBack(hc);
   // hoofd
@@ -6292,41 +6530,85 @@ function goProfiles() {
   pendingTravel = null;
   reisDoel = null;
   cur = null;
+  kiesBezig = false;   // terug op de landing mag er weer gekozen worden (zie kiesSter)
   renderProfiles();
   show('screen-profile');
 }
+/* Eén tegel per kind, en op die tegel alleen wat er nodig is om jezelf te vinden
+   en te zien waar je gebleven was.
+
+   De wereld op de tegel komt uit continueWorld() -- dezelfde grens waar de tik
+   haar straks heen brengt (selectProfile -> goMap zonder argument doet precies
+   dat). De tegel belooft daarmee wat er gebeurt, en niet waar de pop toevallig
+   staat: dat zijn sinds fase 4A twee dingen (positie is geen voltooiing), en de
+   landing hoort de tweede te laten zien. Is alles uit, dan wijst continueWorld
+   naar de toegift-wereld en is de streep vanzelf vol.
+
+   Er wordt hier niets over voortgang uitgerekend of bewaard: worldProgress telt,
+   net als overal elders, gewoon p.stars op. */
+function sterTegel(key, p) {
+  const wf = worldForIndex(continueWorld(p)) || worldFor(p.level);
+  const w = wf.world;
+  const v = worldProgress(p, wf);
+  const deel = v.levels ? Math.round(100 * v.gespeeld / v.levels) : 0;
+  const tegel = document.createElement('button');
+  tegel.className = 'ster-tegel';
+  tegel.innerHTML =
+    `<div class="stage st-podium"><div class="avatar-holder">${avatarSVG(p, 132, 'klein')}</div></div>
+     <div class="st-voet">
+       <div class="st-rij">
+         <span class="st-ico" aria-hidden="true">${w.icon}</span>
+         <span class="st-naam">${esc(p.name)}</span>
+       </div>
+       <div class="st-baan" aria-hidden="true"><i style="width:${deel}%"></i></div>
+     </div>`;
+  // De sfeer van de wereld als losse kanalen op de tegel: de gloed eromheen en de
+  // kleur van de wereldband lezen var(--w-...), net als de zaal en de reis. Geen
+  // enkele regel hoeft te weten in wélke wereld ze staat.
+  applyWorldTheme(tegel, w);
+  applyStage(tegel.querySelector('.st-podium'), p);
+  // Wereldteken en streep zijn versiering voor een schermlezer (aria-hidden); deze
+  // label zegt in woorden wat de tegel doet en waar hij heen gaat.
+  tegel.setAttribute('aria-label', `Speel met ${p.name} — verder in ${w.name}`);
+  tegel.onclick = () => kiesSter(key, tegel);
+  return tegel;
+}
+/* Een kind tikt drie keer. Zonder grendel is dat drie keer navigeren: twee
+   schermwissels over elkaar, en in het slechtste geval de kaart van het ene kind
+   met de ster van het andere erop. De grendel gaat pas weer open op de landing
+   zelf (goProfiles), want dat is de enige weg terug naar dit scherm. */
+let kiesBezig = false;
+function kiesSter(key, tegel) {
+  if (kiesBezig || !db.profiles[key]) return;
+  kiesBezig = true;
+  sndClick();
+  tegel.classList.add('kiest');
+  // Eerst antwoord geven, dán pas het spel in. Het is opzettelijk kort: dit is een
+  // reactie op een tik en geen overgang -- die zit al tussen de kaart en de zaal.
+  setTimeout(() => selectProfile(key), 150);
+}
 function renderProfiles() {
   const row = $('profile-row');
-  row.innerHTML = '';
+  // alleen de tegels verversen: de "+" hoort bij het raster en blijft staan (zie
+  // de opmerking bij de opmaak) -- innerHTML leegmaken zou hem uit de DOM halen
+  // en daarmee zijn id ongeldig maken voor alles wat hem later nog opzoekt
+  row.querySelectorAll('.ster-tegel').forEach(el => el.remove());
+  const add = $('btn-newstar');
   const keys = profileKeys();
-  for (const key of keys) {
-    const p = db.profiles[key];
-    const card = document.createElement('button');
-    card.className = 'profile-card';
-    // In welke wereld ze nu speelt, i.p.v. haar sterrentotaal: de kaart vertelt wie
-    // je bent, niet hoe je scoort t.o.v. je zus. Beide merkjes zijn decoratie voor
-    // een schermlezer -- de aria-label hieronder zegt het in woorden.
-    const wereld = worldFor(p.level).world;
-    card.innerHTML =
-      `<div class="pstage-wrap">
-          <div class="stage stage-frame"><div class="avatar-holder idle">${avatarSVG(p, 132)}</div></div>
-          <span class="city-mark" aria-hidden="true" title="${esc(wereld.name)}">${wereld.icon}</span>
-          <span class="play-mark" aria-hidden="true">▶</span>
-        </div>
-        <div class="pname">${esc(p.name)}</div>`;
-    card.setAttribute('aria-label', `Speel met ${p.name} — nu in ${wereld.name}`);
-    applyStage(card.querySelector('.stage'), p);
-    card.onclick = () => { sndClick(); selectProfile(key); };
-    row.appendChild(card);
-  }
-  // Vanaf vier past één rij niet meer; vier worden 2+2, vijf en zes 3+2 en 3+3.
+  for (const key of keys) row.insertBefore(sterTegel(key, db.profiles[key]), add);
+  /* Hoeveel kolommen. Eén ster hoeft niet in een raster te passen en drie hoeven
+     niet zo klein te zijn als zes; vier worden 2+2 i.p.v. een scheve 3+1. Boven de
+     zes (nu het maximum) blijft het bij drie en groeit het raster gewoon naar
+     beneden -- het scherm scrolt dan, in plaats van dat de tegels blijven krimpen
+     tot een kind ze niet meer raakt. */
   const n = keys.length;
-  row.classList.toggle('many', n >= 4);
-  row.classList.toggle('many-4', n === 4);
-  row.classList.toggle('many-6', n >= 5);
+  const kol = !n ? 0 : n <= 1 ? 1 : n <= 2 ? 2 : n === 4 ? 2 : 3;
+  row.classList.toggle('kol-0', kol === 0);
+  row.classList.toggle('kol-1', kol === 1);
+  row.classList.toggle('kol-2', kol === 2);
   // Verse installatie: het keuzescherm ís het welkom. Geen apart onthaalscherm --
   // dezelfde knop en hetzelfde formulier als later, alleen luider gezegd.
-  /* Met sterren op het scherm spreekt het voor zich: de kaarten zijn de vraag.
+  /* Met sterren op het scherm spreekt het voor zich: de tegels zijn de vraag.
      Zonder sterren is deze regel het hele welkom -- dan moet hij er wél staan,
      anders opent een verse installatie op een titel en een knop en verder niets. */
   const sub = $('profile-subtitle');
@@ -6334,24 +6616,27 @@ function renderProfiles() {
     sub.textContent = n ? '' : 'Welkom! Maak je eerste popster.';
     sub.style.display = n ? 'none' : '';
   }
-  const add = $('btn-newstar');
   if (add) {
     add.style.display = n >= MAX_PROFILES ? 'none' : '';
-    add.textContent = n ? '➕ Nieuwe ster' : '➕ Maak je eerste ster';
+    add.classList.toggle('leeg', !n);
+    add.querySelector('.at-tekst').textContent = n ? 'Nieuwe ster' : 'Maak je eerste ster';
+    add.setAttribute('aria-label', n ? 'Nieuwe ster maken' : 'Maak je eerste ster');
   }
   // een familie met een nieuw toestel wil hier geen kind maken maar haar back-up
   const hint = $('restore-hint');
   if (hint) hint.style.display = n ? 'none' : 'block';
   renderGearMenu();
-  // begroeting: de sterren zwaaien even naar je, daarna wiegen ze rustig verder
+  /* Begroeting: de sterren zwaaien één keer naar je en staan daarna stil. Ze
+     wiegden hiervoor onafgebroken door (.idle), alle zes tegelijk -- met zes
+     poppen is dat geen leven maar een scherm dat niet tot rust komt, en het is
+     zes keer een animatie die blijft lopen zolang de app open staat. */
   if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
     row.querySelectorAll('.avatar-holder').forEach((el, i) => {
       setTimeout(() => {
         if (!el.isConnected) return;
-        el.classList.remove('idle');
         el.classList.add('dancing', 'move-wave');
-        setTimeout(() => { el.classList.remove('dancing', 'move-wave'); el.classList.add('idle'); }, 950);
-      }, 400 + i * 300);
+        setTimeout(() => el.classList.remove('dancing', 'move-wave'), 950);
+      }, 350 + i * 130);
     });
   }
 }
@@ -11007,22 +11292,21 @@ function renderNewStar() {
       <div class="newstar-preview"><div class="stage stage-frame" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
       <div class="set-field"><label class="lbl">Wie ben je?</label>
         <div class="chip-row" id="newstar-base">${BASE_CHOICES.map(b =>
-          `<button class="chip${b.id === n.base ? ' on' : ''}" data-v="${b.id}">${b.emoji} ${b.name}</button>`).join('')}</div>
-        <div class="note">Hoort bij wie je ster is; haar en kleren kies je later opnieuw.</div></div>
+          `<button class="chip${b.id === n.base ? ' on' : ''}" data-v="${b.id}">${b.emoji} ${b.name}</button>`).join('')}</div></div>
       <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
         <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
       <div class="set-field"><label class="lbl">Haar</label>
         <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
       <div class="set-field"><label class="lbl">Kleren</label>
         <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
-      <div class="set-field"><label class="lbl">Manier van spelen</label>
+      <div class="set-field"><label class="lbl">Hoe speel je?</label>
         <div class="chip-row" id="newstar-track">
           <button class="chip${s.track === 'count' ? ' on' : ''}" data-v="count">🧸 Leren tellen</button>
           <button class="chip${s.track === 'math' ? ' on' : ''}" data-v="math">🎤 Rekenen</button>
         </div>
         <div class="note">${s.track === 'count'
-          ? 'Voor wie nog niet leest: gesproken opdrachten, tellen met plaatjes.'
-          : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
+          ? 'Nog niet lezen: tellen met plaatjes.'
+          : 'Met cijfers en sommen.'}</div></div>
       <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
         <summary>
           <span class="sr-ico" aria-hidden="true">⚙️</span>
@@ -11032,10 +11316,12 @@ function renderNewStar() {
         <div class="set-reveal-body">
           ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">
             <div class="rg-title">${g.ico} ${g.title}</div>${g.html}</div>`).join('')}
-          <div class="note" style="margin-top:14px">Dit kan later altijd nog, bij 👨‍👩‍👧 Voor ouders → Oefenen.</div>
+          <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
         </div>
       </details>
-      <button class="btn purple newstar-go" id="newstar-go"${ok ? '' : ' disabled'}>🌟 Klaar!</button>
+      <div class="newstar-voet">
+        <button class="btn purple newstar-go" id="newstar-go"${ok ? '' : ' disabled'}>🌟 Klaar!</button>
+      </div>
     </div>
   </div>`;
   applyStage($('newstar-stage'), preview);
@@ -11089,6 +11375,12 @@ function renderNewStar() {
   if (scr) { scr.scrollTop = keep; requestAnimationFrame(() => { scr.scrollTop = keep; }); }
 }
 function createStar() {
+  /* Twee keer Klaar is één ster. Enter én de knop komen hier allebei uit, en op
+     een telefoon liggen die twee tikken vlak na elkaar: zonder deze regel maakte
+     de tweede tik een tweede ster (of, sinds de naam moet kloppen, een melding
+     dat je eigen naam al bezet is). newStar wordt onderaan losgelaten, dus dit is
+     meteen ook de grendel op alles wat er daarna nog binnenkomt. */
+  if (!newStar) return;
   // pas hier valideren, niet tijdens het typen: een veld dat zichzelf corrigeert
   // terwijl je bezig bent is niet te gebruiken (zie de opmerking bij set-name)
   const name = newStar.name.trim().replace(/\s+/g, ' ').slice(0, 12);
@@ -11108,11 +11400,21 @@ function createStar() {
   db.profiles[key] = defaultProfile(name, newStar.dress, { ...newStar.settings, hair: newStar.hair, base: newStar.base });
   db.profiles[key].order = order;   // expliciet: assignProfileOrder gaat op naam
   save();
-  const wasFirst = Object.keys(db.profiles).length === 1;
   newStar = null;
+  /* Een ster maken ís beginnen. Hiervoor kwam een kind dat net haar pop had
+     gekozen terug op de sterrenkeuze, waar ze zichzelf tussen haar broers en
+     zussen moest opzoeken en nóg een keer moest tikken -- een bevestigingsscherm
+     met kaarten erop. Nu stapt ze meteen haar eerste wereld in, langs precies
+     dezelfde weg als elke andere tik op een tegel (selectProfile -> goMap, en dus
+     de grens uit continueWorld: voor een verse ster is dat wereld 1, halte 1).
+
+     Uit het ouderdeel blijft het wél een terugkeer: daar is een ster maken iets
+     wat een ouder doet terwijl er misschien een ánder kind aan het spelen is, en
+     dan is meteen wegspringen naar de kaart van de nieuwe ster juist verkeerd. */
   if (newStarReturn === 'settings') { setKey = key; setTab = 'beheer'; renderSettings(); show('screen-settings'); settingsToTop(); }
-  else goProfiles();
-  showToast(`🌟 ${esc(name)} staat op het podium!`, null, wasFirst ? 'Tik op de kaart om te beginnen.' : null);
+  else { kiesBezig = false; selectProfile(key); }
+  showToast(`🌟 ${esc(name)} staat op het podium!`, null,
+            newStarReturn === 'settings' ? null : 'Jouw eerste show begint!');
   setTimeout(hideToast, 2400);
 }
 
@@ -12841,8 +13143,6 @@ function startMapEdit() {
   const SLOTS = window.__SLOTS || {
     world:   { screen: 'map', label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
                lever: [1080, 2160], pad: 'assets/world/{wereld}-map.webp', perWereld: true },
-    landing: { screen: 'profile', label: 'Startscherm', waar: 'wie speelt er vandaag',
-               lever: [1024, 1536], pad: 'assets/bg/landing.webp' },
   };
   const SCHERMEN = window.__SCHERMEN || [
     { id: 'profile', label: 'Wie speelt er' }, { id: 'map', label: 'Kaart' },

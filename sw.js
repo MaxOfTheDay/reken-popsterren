@@ -1,7 +1,9 @@
 // Service worker: maakt het spel offline speelbaar na het eerste bezoek.
-const CACHE = 'rekenpop-v43';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
-                './assets/bg/landing.webp'];
+const CACHE = 'rekenpop-v44';
+/* Het startscherm heeft geen tekening meer maar een geschilderde CSS-schil
+   (zie .app-sfeer in index.html), dus er valt hier niets meer voor te cachen.
+   assets/bg/landing.webp staat nog op schijf voor de beeldgereedschappen. */
+const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
