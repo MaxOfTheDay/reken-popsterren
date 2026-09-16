@@ -1,0 +1,211 @@
+# Testen
+
+Het spel is één bestand (`index.html`) zonder bouwstap. De tests zijn dat ook zo
+veel mogelijk: gewone Node-scripts, geen testframework, geen configuratie. Er
+staan twee soorten naast elkaar.
+
+| soort | draait in | wat het bewijst | kosten |
+|---|---|---|---|
+| **keuring** (`inhoud`, `kern`, `saves`) | Node, zonder browser | de regels en de tabellen: voortgang, beloningen, opslag, configuratie | ± 2 seconden, geen installatie |
+| **browsertests** (de rest) | echte Chromium via Playwright | wat een kind ziet en tikt: schermen, animaties, spelverloop | enkele minuten, vereist `npm install` |
+
+## Draaien
+
+```sh
+npm run check      # alleen de snelle keuring -- geen browser, geen npm install nodig
+npm test           # alles: eerst de keuring, daarna de browsertests
+```
+
+Losse suites:
+
+```sh
+npm run test:inhoud      # kloppen de werelden, spullen en trofeeën nog?
+npm run test:kern        # voortgang, uitgespeeld, perfect, beloningen
+npm run test:saves       # bestaande saves, heropenen, meerdere kinderen
+npm run test:tellen      # ... en de bestaande browsersuites, ongewijzigd
+npm run test:rekenen
+npm run test:sterren
+npm run test:rondgang
+npm run test:voortgang
+npm run test:reis
+npm run test:beloning
+```
+
+`npm run check` heeft geen `node_modules` nodig: het draait op kaal Node. Wie
+alleen aan de voortgang, de beloningen of de opslag komt, heeft daar genoeg aan.
+Wie aan een scherm komt draait `npm test`.
+
+Elke suite stopt met afsluitcode 1 als er iets fout is en print dan per zaak hoeveel
+controles er omvielen, met de eerste fouten eronder.
+
+## Wat waar getest wordt
+
+### `test/inhoud.test.js` — de inhoudskeuring
+
+Leest de tabellen één keer in en loopt ze na. Dit is de enige suite die geen spel
+draait. Ze vangt de fouten die stil zijn: een wereld die naar een spulletje wijst
+dat niet bestaat deelt gewoon niets uit, een beloning met een prijs erbij staat
+ineens in de winkel, en een wereld met acht haltes maar `levels: 10` gooit zijn
+handgezette kaart weg en slingert er een standaardweg overheen. Geen van drieën
+geeft een foutmelding.
+
+- **werelden** — unieke, nette id's; een naam, een icoon en een geheel aantal
+  shows; `released` is weggelaten of een echte boolean; de levelnummering loopt
+  aaneengesloten door; er staat geen uitgebrachte wereld achter een dichte
+  (dan zou hij onbereikbaar zijn); evenveel haltes als shows en één stuurpunt
+  minder dan haltes; `LEGACY_TOUR_END` staat nog op 48.
+- **tekeningen** — wat een wereld bij `art` noemt staat ook echt op schijf.
+- **beloningen** — elke wereld deelt een bestaand spulletje uit, geen twee
+  werelden hetzelfde, en precies de beloningen hebben géén prijs (een prijsloos
+  winkelitem zou gratis zijn; een beloning mét prijs zou te koop staan).
+- **de zes id's in omloop** — `acc_wereld_muziek`, `_snoep`, `_jungle`,
+  `_piraten`, `_ijs`, `_tover` bestaan, hebben geen prijs, hangen aan een wereld
+  en hebben hun eigen tekening. Ze staan met naam en toenaam in de test: een id
+  hernoemen betekent dat het spulletje verdwijnt bij iedereen die het verdiend
+  had, en dat hoort een bewuste daad te zijn. `acc_tovenaarshoed` (de winkelhoed
+  uit fase 4D.2) mag niet terugkomen, want `migrate()` ruimt die id op.
+- **spullen** — unieke id's, bestaande categorieën, gehele prijzen vanaf nul, en
+  alles wat een verse ster meekrijgt bestaat en zit in de juiste categorie.
+- **trofeeën** — unieke id's, elke trofee hangt op precies één plank, elke
+  plank-id bestaat, gepensioneerde trofeeën staan niet terug in de kast, en per
+  wereld hangen er een wereldbadge en een perfecte-wereldtrofee. Elke `has()` en
+  `progress()` wordt één keer echt aangeroepen met een leeg en een volgespeeld
+  profiel -- een trofee die naar een verdwenen teller wijst valt hier om in plaats
+  van in de kast van een kind.
+- **de app zelf** — wat de service worker meeneemt staat ook op schijf (een
+  naam die niet bestaat laat `addAll()` mislukken en dan installeert de service
+  worker helemaal niet), de cache heeft een versienummer, en het manifest wijst
+  naar bestaande iconen.
+
+### `test/kern.test.js` — de voortgangsregels
+
+Fase 4A en 4D, rechtstreeks door de functies heen: `worldDone`, `frontierWorld`,
+`continueWorld`, `allWorldsDone`, `worldProgress`, `grantWorldRewards`.
+
+- verse ster, halverwege, en alles uit (de toegift: geen grens, "verder" wijst
+  naar de laatste échte wereld, en er wordt geen zevende wereld verzonnen);
+- er komt later een wereld bij -- die is leeg, wordt de nieuwe grens, en de oude
+  voortgang blijft staan; twee werelden tegelijk erbij slaat de tweede niet over;
+- terugbladeren en vooruitkijken veranderen geen voortgang;
+- **uit is uit**: voltooiing mag niet af te leiden zijn uit de positie, uit "al
+  gezien", uit de sterren van de oude staart, of uit het overspelen van de laatste
+  wereld; nul sterren is geen gespeelde show;
+- een nog niet uitgebrachte wereld bestaat niet voor een kind -- ook niet met
+  sterren erin -- en is gewoon uit zodra hij opengaat;
+- **perfect** is elke show op drie sterren, niet eerder, en een behaalde trofee
+  gaat nooit meer weg (ook niet als de teller later iets anders zegt);
+- **beloningen**: uitspelen geeft het spulletje, perfect maken de trofee, allebei
+  precies één keer -- ook na overspelen, na het vangnet, en na heropenen;
+- werelden hoeven geen acht shows te zijn (vijf en twaalf doen hetzelfde);
+- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes.
+
+### `test/saves.test.js` — bestaande bestanden
+
+Draait op de handgeschreven saves in `test/saves.js`: bestanden in de vorm die de
+app vroeger schreef, met de velden die er toen nog niet waren bewust weggelaten.
+
+- een leeg toestel, net begonnen, halverwege;
+- **het oude einde van de content**: elf shows in de oude oneindige staart gaan
+  één keer opzij naar `tourStars`, blijven meetellen, en geven hun levelnummers
+  terug;
+- **en dan een wereld erbij**: hetzelfde bestand, maar geopend in een versie waar
+  wereld 7 al ín zit -- de wereld hoort leeg te zijn en de nieuwe grens;
+- van vóór de beloningen: zes spulletjes en twee perfecte-wereldtrofeeën komen er
+  stil bij, en een tweede keer openen deelt niets dubbel uit;
+- **twee kinderen op één toestel**: niets erft over, spelen met de een laat de
+  ander byte voor byte onaangeroerd (ook na heropenen), een derde ster raakt de
+  twee bestaande niet, en allebei de profielen worden bij het openen bijgewerkt;
+- de eenmalige Clara-inhaalslag gebeurt precies één keer;
+- een onleesbaar bestand geeft een verse start én blijft bewaard onder
+  `rekenPopsterren_v1.broken` -- er wordt niet overheen geschreven;
+- **de rondreis**: openen, bewaren en opnieuw openen komt tot rust -- de tweede en
+  derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang.
+
+## Hoe de keuring werkt
+
+`test/app.js` knipt het `<script>`-blok uit `index.html` en draait het in een
+`vm`-context met een nagebootste browser eromheen. Er wordt niets nagebouwd en
+niets gekopieerd: het is dezelfde code die een kind draait, inclusief `load()`,
+`migrate()` en `save()`. Een app-instantie kost ± 25 ms, dus elke zaak krijgt een
+verse.
+
+```js
+const { laadApp, heropen } = require('./app');
+
+const app = laadApp();                        // verse opslag
+const app = laadApp({ opslag: {...} });       // met een bestaand bestand erin
+const na  = heropen(app);                     // afsluiten en morgen weer openen
+
+app.WORLDS, app.frontierWorld(p), app.grantWorldRewards(p, i)   // gewoon de functies
+app.opslag()        // de localStorage van deze sessie
+app.run('code')     // iets in de app draaien (voor let-variabelen zoals cur)
+```
+
+De nabootsing is met opzet krenterig: alleen de browser-globals in de lijst
+`BROWSER` bestaan. Gaat `index.html` morgen iets anders gebruiken, dan komt er een
+`ReferenceError` en niet stilletjes een doe-niets-object -- dan moet `test/app.js`
+bijgewerkt worden, in plaats van dat de tests iets anders meten dan ze denken.
+
+De keuring raakt bewust geen enkel scherm aan. Wat een kind ziet -- de kaart, de
+reis, de kleedkamer, het wereldfeest, de studio -- blijft het terrein van de
+browsersuites. Daardoor is er ook geen overlap: aan `index.html` verandert hier
+niets, en aan de keuring verandert niets als er een tekening of een kleur anders
+wordt.
+
+## Controleren of de tests écht iets vangen
+
+Een suite die altijd groen is, is geen vangnet. `test/app.js` leest daarom
+`RP_INDEX` uit: zet een kopie van `index.html` met één bewust gebroken regel neer
+en draai de keuring ertegen.
+
+```sh
+cp index.html /tmp/kapot.html
+# ... breek er één regel in ...
+RP_INDEX=/tmp/kapot.html npm run check      # hoort nu te falen
+```
+
+Bij het schrijven is dat met twaalf ingrepen gedaan; elke ingreep werd door
+minstens één suite opgemerkt:
+
+| ingreep | opgemerkt door |
+|---|---|
+| `worldDone` leidt voltooiing weer uit de positie af | kern, saves |
+| `frontierWorld` geeft de laatste wereld i.p.v. -1 als alles uit is | kern, saves |
+| `grantWorldRewards` deelt het spulletje elke keer opnieuw uit | kern, saves |
+| perfect al bij één show op drie sterren | kern |
+| de staartopruiming loopt mee met `WORLD_LAST` i.p.v. `LEGACY_TOUR_END` | saves |
+| `awardTrophy` kent een trofee twee keer toe | kern, saves |
+| een wereld wijst naar een beloning met een typefout | kern, saves, inhoud |
+| een beloning krijgt een prijs | inhoud |
+| `levels` en het aantal haltes lopen uit de pas | kern, saves, inhoud |
+| een uitgebrachte wereld achter een dichte | kern, saves, inhoud |
+| bij het openen wordt maar één profiel bijgewerkt | saves |
+| `P()` geeft altijd het eerste profiel | saves |
+
+## Wat er bij het schrijven opviel
+
+Twee dingen die geen fout zijn maar wel het opschrijven waard, zodat ze later niet
+per ongeluk "gerepareerd" worden:
+
+- **Een profiel zonder `equipped` of `stars` laat `migrate()` omvallen.** `load()`
+  vangt dat op zoals elk onleesbaar bestand: de tekst blijft staan onder
+  `rekenPopsterren_v1.broken` en de app begint leeg. Er gaat dus niets verloren,
+  maar de andere kinderen op hetzelfde toestel verdwijnen wél uit beeld tot iemand
+  dat bestand terugzet. Zo'n profiel heeft de app zelf nooit geschreven -- het kan
+  alleen uit een met de hand bewerkte back-up komen. Het gedrag van vandaag ligt
+  vast in `saves.test.js` zaak J; het beter opvangen (per profiel in plaats van
+  per bestand) zou een wijziging in `load()`/`migrate()` zijn en is bewust niet in
+  deze ronde gedaan.
+- **`assets/world/regenboog-map.webp` en `wereld7-map.webp` staan op schijf zonder
+  dat een wereld ernaar wijst.** Dat is met opzet -- ze wachten op een wereld. De
+  keuring controleert daarom één kant op (wat een wereld noemt moet bestaan) en
+  niet andersom.
+
+## Als er iets omvalt
+
+De uitslag noemt de zaak (`A`, `B`, ...) en daaronder de losse controles die
+omvielen, met de gemeten waarde erachter. De letters staan met omschrijving in de
+kop van elk testbestand.
+
+Een gebroken controle is een vraag, geen verbod: als een regel bewúst verandert,
+verandert de test mee -- maar dan wel als losse, zichtbare stap in dezelfde commit.
