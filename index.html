@@ -84,7 +84,18 @@
                     het om gaat.
        stop-keyline het donkere haarlijntje net buiten de rand van een halte
        stop-schaduw de zachte contactschaduw waarmee een halte op de tekening rust
-       halte-rand   de warme rand van een gespeelde halte (stiller dan vol goud)
+       halte-rand   de rand van een gespeelde halte. Warm wít en nadrukkelijk
+                    géén goud: goud op deze kaart is er voor "af" (de ring) en
+                    voor "hier speel je" (de vulling), en een gespeelde halte is
+                    geen van beide. Zolang hij hier óók goud was, waren op ware
+                    telefoongrootte een gespeelde en een perfecte halte twee
+                    gouden ringetjes die maar een haartje verschilden -- en dan
+                    moet je vergelijken in plaats van zien.
+       perfect-ring een gouden ring BUITEN de rand van een halte op drie sterren,
+                    plus perfect-gloed als heel zachte staart eromheen. Samen het
+                    teken dat "af" van "gespeeld" onderscheidt zonder het rondje
+                    zelf te verbouwen -- en bewust géén vulling, want een gouden
+                    vulling betekent op deze kaart precies één ding.
        slot-vulling de vulling van een halte die nog niet aan de beurt is: dezelfde
                     donkere pruim als de rest van de draaglaag, niet grijs. Grijs
                     leest als kapot; pruim leest als "nog donker".
@@ -103,15 +114,17 @@
     --route-goud: rgba(255,206,110,.82);
     --stop-keyline: rgba(26,7,48,.55);
     --stop-schaduw: rgba(12,2,26,.5);
-    --halte-rand: rgba(255,212,120,.66);
+    --halte-rand: rgba(255,240,214,.44);
+    --perfect-ring: rgba(255,198,88,.82);
+    --perfect-gloed: rgba(255,186,66,.24);
     --slot-vulling: rgba(34,14,60,.66);
     --slot-rand: rgba(255,255,255,.34);
-    --ster-tab: rgba(38,12,64,.62);
-    --ster-tab-rand: rgba(255,255,255,.14);
+    --ster-tab: rgba(38,12,64,.68);
+    --ster-tab-rand: rgba(255,255,255,.16);
     --ster-tab-vol: rgba(92,48,10,.72);
     --ster-tab-vol-rand: rgba(255,214,120,.5);
-    --ster-leeg: rgba(255,255,255,.34);
-    --ster-leeg-rand: rgba(20,5,40,.42);
+    --ster-leeg: rgba(255,255,255,.42);
+    --ster-leeg-rand: rgba(20,5,40,.5);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
@@ -2021,7 +2034,7 @@
      gouden stuk precies bij de huidige halte ophoudt. Dát is wat de weg over
      voortgang zegt, en dat werkte al. */
   .tour-road-under { stroke: var(--route-onder); stroke-width: 17; }
-  .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 11; opacity: .78; }
+  .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 11; opacity: .68; }
   .tour-road-fg { stroke: var(--route-goud); stroke-width: 11; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
      glas en klein: goud is voor spelen en verdiend, en dit mag nooit met de halte
@@ -2074,11 +2087,11 @@
        locked        nog niet aan de beurt -- kleiner, donkerder glas, mét een
                      slotje. Bewust niet alléén kleur: het slotje is het signaal,
                      de demping is het bijgeluid.
-       done          gespeeld -- paarse kern, wárme rand (geen vol goud), en een
-                     sterrentabje met drie plekken (hoeveel je er daarvan vol
-                     hebt, is het verhaal)
-       done.perfect  gespeeld op drie sterren -- de rand gaat naar vol goud en het
-                     sterrentabje krijgt een gouden voering
+       done          gespeeld -- paarse kern, warm wítte rand, en een sterrentabje
+                     met drie plekken (hoeveel je er daarvan vol hebt, is het
+                     verhaal). Geen goud: goud is hier voor af en voor nu.
+       done.perfect  gespeeld op drie sterren -- een gouden ring óm het paarse
+                     rondje, en een gouden voering onder het sterrentabje
        next          hier speel je nú -- als enige een volledig gouden vúlling,
                      donkere inkt als nummer, en één ademende spotlight op de
                      grond met de ster erbovenop
@@ -2092,8 +2105,9 @@
      op:
 
        op slot    donker glas, kleiner, geen rand die opvalt
-       gespeeld   warme rand op 66%
-       perfect    dezelfde rand op vol goud + gouden sterrentabje
+       gespeeld   paars rondje met een warm witte rand -- nergens goud
+       perfect    hetzelfde paarse rondje, mét een gouden RING eromheen en een
+                  gouden sterrentabje eronder
        hier       gouden VULLING -- de enige op de kaart, en daarmee per definitie
                   de luidste, ook als er zeven afgemaakte haltes omheen staan
 
@@ -2324,17 +2338,18 @@
     0%, 100% { opacity: .78; transform: scale(1); }
     50%      { opacity: 1;   transform: scale(1.07); }
   }
-  /* Gespeeld: dezelfde paarse kern als altijd, met een wárme rand op 66% in plaats
-     van vol goud. Dat ene verschil doet het meeste werk van deze fase. Op zeven
-     afgemaakte haltes stonden zeven volgouden ringen, en daartussen stond de halte
-     waar het om ging -- ook goud. Een kind moest dus zoeken in plaats van kijken.
-     Nu leest een afgemaakte halte als "hier ben ik geweest, en het ging goed"
-     zonder te concurreren met "hier ga je heen".
+  /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
+     hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
+     ware telefoongrootte niet stand: naast een perfecte halte stonden dan twee
+     gouden ringetjes die een haartje in dikte verschilden, en dat moet je
+     vergelijken in plaats van zien. Het goud is nu helemaal weg bij deze staat --
+     dan heeft de ring van een perfecte halte hem hélemaal voor zichzelf.
 
-     Dat de rand níet helemaal weg mag: hij is het enige wat een gespeelde halte
-     van een halte op slot onderscheidt zodra het sterrentabje wegvalt uit je
-     ooghoek. */
-  .tour-stop.done .dot { border-color: var(--halte-rand); background: linear-gradient(180deg, rgba(255,214,90,.16), rgba(255,214,90,.05)), var(--purple-shadow); }
+     De warm witte tint (in plaats van neutraal wit) houdt hem verwant aan het
+     goud ernaast zonder er zelf aanspraak op te maken. En dat de rand niet hélemaal
+     weg mag: hij is het enige wat een gespeelde halte van een halte op slot
+     onderscheidt zodra het sterrentabje uit je ooghoek valt. */
+  .tour-stop.done .dot { border-color: var(--halte-rand); background: var(--purple-shadow); }
   /* Een halte op drie sterren is áf. FASE 4C laat dat uit de sterren zélf komen in
      plaats van uit een eigen insigne: alle drie de plekken vol is het gegeven, en
      het tabje eronder krijgt daar een gouden voering bij (zie --ster-tab-vol).
@@ -2355,7 +2370,23 @@
      waaróm. Geen enkele beweging nodig. */
   .tour-stop.done.perfect .dot {
     border-color: var(--gold-accent);
-    background: linear-gradient(180deg, rgba(255,214,90,.24), rgba(255,193,61,.07)), var(--purple-shadow);
+    background: linear-gradient(180deg, rgba(255,214,90,.14), rgba(255,193,61,.05)), var(--purple-shadow);
+    /* De ring ligt BUITEN de rand, niet erin: --dot-key houdt zijn donkere
+       haarlijntje op 0,2cqw, daarachter komt het goud tot 0,62cqw, en daar weer
+       achter een heel zachte gloed die net voorbij de ring uitloopt. Drie lagen
+       die samen één ring lezen.
+
+       Waarom búiten en niet gewoon een dikkere rand: een dikkere rand eet het
+       paarse vlak op, en juist dat paars is wat een afgemaakte halte een
+       afgemaakte halte maakt. Een ring eromheen laat het rondje precies zoals het
+       is en legt het teken ernaast -- als een lijstje om een foto.
+
+       De vulling ging juist de andere kant op (van .24 naar .14 goudwas, bijna
+       gelijk aan een gewone gespeelde halte): het signaal hoort in de ring te
+       zitten en niet in de kern. Anders kruipt een perfecte halte langzaam naar
+       "gouden vulling" toe, en dát is de taal van de halte waar je nú speelt. */
+    box-shadow: var(--dot-key), 0 0 0 0.62cqw var(--perfect-ring),
+                var(--dot-drop), 0 0 2cqw 0.2cqw var(--perfect-gloed);
   }
   .tour-stop.done.perfect .cstars {
     background: var(--ster-tab-vol);
@@ -2427,10 +2458,17 @@
      dáár werden ze het zwaarste onderdeel van de speellaag -- precies op de twee
      werelden waar de tekening het lichtst en het mooist is.
 
-     8,8x3cqw op 62% i.p.v. 72%, met sterren van 2,25 i.p.v. 2,5cqw. De sterren
-     zelf leveren niets in aan herkenbaarheid (de drie silhouetten ***  **·  *··
-     zijn even duidelijk), het tabje neemt ~19% minder oppervlak van de tekening
-     af, en op een donkere wereld draagt 62% nog steeds.
+     9,2x3,2cqw op 68% i.p.v. 9,6x3,4 op 72%, met sterren van 2,45 i.p.v. 2,5cqw.
+     Het tabje neemt zo ~10% minder oppervlak van de tekening af terwijl de sterren
+     zelf vrijwel op maat blijven -- dat is waar de balans ging zitten. (Eén ronde
+     eerder stond het op 8,8x3 met sterren van 2,25; dat was op een echte telefoon
+     nét te klein: op 390px breed is een ster dan 10,7px, en drie van die dingen
+     naast elkaar lees je niet meer als *** maar als een streepje. Nu 11,6px.)
+
+     De lege ster ging van 30% naar 42% wit met een iets donkerder omtrek. Een lege
+     plek moet je kunnen zíen -- anders is het verschil tussen twee en drie sterren
+     alleen "er staat iets minder", en dat is precies het verschil dat een kind
+     hier wil aflezen.
 
      De onderrand blijft op 12,6cqw liggen -- dat is de onderrand van het raakvlak
      hierboven, en die twee moeten samenvallen, anders opent een tik op de sterren
@@ -2438,19 +2476,19 @@
      margin-top = 12,6 - 10,3 - hoogte. Test 7e meet het na. */
   .tour-stop .cstars {
     position: relative; z-index: 0;
-    width: 8.8cqw; height: 3cqw; margin: -0.7cqw auto 0;
-    display: flex; align-items: center; justify-content: center; gap: 0.32cqw;
+    width: 9.2cqw; height: 3.2cqw; margin: -0.9cqw auto 0;
+    display: flex; align-items: center; justify-content: center; gap: 0.38cqw;
     /* Een hele pil en niet alleen onderaan rond. Het tabje is bijna net zo breed
        als het rondje, dus op de plek waar het eronder doorschuift steekt het aan
        weerszijden uit -- met vierkante bovenhoeken zijn dat twee scherpe
        schoudertjes naast een cirkel, en dat leest als een verkeerd uitgelijnd
        blokje. Rond is hier ook gewoon de taal van de kaart: ronde haltes, ronde
        streepjes, ronde pillen in de kop. */
-    border-radius: 1.6cqw;
+    border-radius: 1.7cqw;
     background: var(--ster-tab);
     box-shadow: inset 0 0 0 0.12cqw var(--ster-tab-rand), 0 0.35cqw 0.7cqw rgba(12,2,26,.38);
   }
-  .tour-stop .cstars svg { flex: none; width: 2.25cqw; height: 2.25cqw; display: block;
+  .tour-stop .cstars svg { flex: none; width: 2.45cqw; height: 2.45cqw; display: block;
     stroke-linejoin: round; stroke-width: 1.6; }
   .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); }
   .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); }
@@ -2477,7 +2515,13 @@
      speellaag-element op de kaart, en op de IJswereld dekte ze de halte erbóven
      half af. 15,2cqw is nog altijd ruim groter dan een halte (1,5x) en laat de
      bestemming eronder het brandpunt zijn. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2cqw); transform: translateX(-50%);
+  /* Haar voeten zakken 2,6cqw in het rondje in plaats van 2. Dat klinkt als niets
+     en is het verschil tussen "zij staat erop" en "zij staat ervóór": op de Jungle-
+     en de IJswereld loopt de route schuin omhoog langs haar heen, en met een
+     ondiepe voet leest ze daar als iemand die al onderweg is naar de halte
+     erbóven. Dieper kan niet -- op ongeveer een kwart van het rondje begint het
+     nummer, en dat moet leesbaar blijven. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2.6cqw); transform: translateX(-50%);
     width: 15.2cqw; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
   /* De gloed: crème, ruim, en zonder rand -- hij mag nergens als vorm te zien zijn.
