@@ -2341,311 +2341,396 @@
           waar je heen gaat ligt hoger. Dezelfde richting als de wereldkaarten
           zelf (halte 1 onderaan) en dezelfde richting als de camera tussen twee
           werelden (zie wereldCamera) -- vooruit is overal in dit spel omhoog.
-       2  elke bestemming is een plék, geen regel in een lijst: een medaillon met
-          de tekening van die wereld erin, met zijn eigen licht eromheen.
+       2  de tekening ís de bestemming. Niet een plaatje ín een kaartje met een
+          naam eronder in een pil en een badge ernaast, maar één ding: de
+          wereldtekening, met zijn naam en zijn sterren in de onderrand ervan.
+          Alles wat daar los omheen zweeft concurreert met de tekening, en de
+          tekening is het enige op dit scherm dat een kind wíl zien.
        3  ertussen ligt één doorlopende route van stippen. Goud waar je geweest
           bent, dof waar je nog heen moet -- exact dezelfde taal als de weg op de
           wereldkaart, zodat een kind niets nieuws hoeft te leren.
 
-     ALLES IS EEN VEELVOUD VAN ÉÉN MAAT: --reis-stap, de afstand tussen twee
-     bestemmingen. De hoogte van de baan is (aantal werelden + 1,4) stappen, een
-     bestemming staat op (0,8 + nummer) stappen van onderen, en de mist bovenaan
-     is 1,7 stap hoog. Daardoor kost een zevende wereld precies één regel in
-     WORLDS en verder niets: de baan wordt één stap hoger, de route krijgt er een
-     punt bij en de rest schuift mee. Er staat nergens een coördinaat die aan zes
-     werelden vastzit.
+     DE ACHTERGROND IS ÉÉN OPPERVLAK. Hier stond een verloop dat de hemelkleur van
+     elke wereld op zijn eigen hoogte zette; op papier "elke bestemming zijn eigen
+     licht", in het echt zes gekleurde banden onder elkaar -- en dan lees je geen
+     kaart maar een stapel schermen. Nu draagt de baan één doorlopende nacht, en
+     komt de kleur van een wereld alleen uit de wereld zélf: een brede, zachte
+     gloed om zijn tekening heen (.reis-halte::before) die in zijn buren overloopt.
+     Dat schaalt ook mee: de sfeer hangt aan de bestemmingen, niet aan een lijst
+     kleurstops die bij elke nieuwe wereld opnieuw uitgerekend moet worden.
 
-     De kop is dezelfde zwevende kop als op de kaart (geen dekkende balk): dit is
-     hetzelfde soort plek, alleen verder weg. */
+     ALLES IS EEN VEELVOUD VAN ÉÉN MAAT: --reis-stap, de afstand tussen twee
+     bestemmingen, en die is op zijn beurt afgeleid van de kaartmaat (zie daar).
+     De hoogte van de baan en de plek van elke bestemming rekent renderReis daaruit
+     uit. Een zevende wereld kost dus precies één regel in WORLDS: er staat nergens
+     een coördinaat, een hoogte of een aanname die aan zes vastzit.                */
   #screen-journey {
     --kolom: 100%; --rand: 10px; --kop-gap: 6px;
-    /* De enige maat waar dit scherm op gebouwd is, en de ondergrens is geen smaak
-       maar een som. Van het hart van een bestemming naar boven: 60px medaillon
-       (de huidige is de grootste, 120), dan de ster die erop staat -- 70px hoog,
-       waarvan ze 22 over het medaillon heen zakt. Samen 108. Van het hart van de
-       bestemming daarboven naar beneden: 46px medaillon plus 8 lucht plus 24
-       naampil = 78. 108 + 78 = 186, en 204 laat daar 18px tussen.
-       Elke pixel minder is de ster die door de naam erboven heen loopt -- en dat
-       is precies het soort fout dat alleen op de kleinste telefoon te zien is.
-       Bovengrens 216: daarboven staat er op een tablet nog maar één bestemming
-       tegelijk in beeld, en dan is de reis geen reis meer. */
-    --reis-stap: clamp(204px, 27vh, 216px);
-    --reis-maat: 104px;
+    /* De kaartmaat, en daaruit alle andere maten. Meegroeiend met het scherm,
+       want de tekening is de hoofdpersoon: op een kleine telefoon mag hij niet
+       de halve breedte kwijtraken aan marge, op een tablet niet postzegelklein
+       worden. 46vw ligt tussen 147px (320) en 196px (426+). */
+    --kaart-b: clamp(150px, 46vw, 196px);
+    --kaart-h: calc(var(--kaart-b) * .67);
+    /* De stap tussen twee bestemmingen: één maal de kaarthoogte plus ruim een halve
+       kaart lucht. Álles wat dit scherm hoog maakt hangt daarmee aan één getal, en
+       dat getal hangt aan de kaartmaat -- dus op een klein scherm schuift de hele
+       reis netjes mee in plaats van ijler te worden.
+
+       1,55 is de ondergrens plus marge, en de ondergrens is een som: van het hart
+       van de huidige bestemming naar boven is het een halve (1,1x vergrote) kaart
+       plus het stuk ster dat erboven uitsteekt (70px hoog, waarvan ze 34 over de
+       kaart heen zakt), en van het hart van de bestemming daarbóven naar beneden
+       een halve kaart. Dat is ~1,05 kaart + 36px, en op elke schermmaat past dat
+       ruim binnen 1,55.
+
+       renderReis rekent de afstand per páár uit (zie REIS.maat): twee kleine
+       kaarten komen dichter bij elkaar te staan dan twee grote, zodat de lege
+       route ertussen overal evenveel van de kaart is. Hiervoor stond hier een
+       vaste stap, en dan gaapt er boven in de reis -- waar alles nog op slot en dus
+       klein is -- ineens een gat. */
+    --reis-stap: calc(var(--kaart-h) * 1.55);
     position: relative;
     padding: 10px 0 0;
-    /* De nachtlucht waar de baan bovenaan in overgaat. Staat óók op het scherm
-       zelf, want boven de baan hangt nog de strook waar de kop in staat -- die
-       hoort dezelfde lucht te zijn en geen app-paars. (Een achtergrond op een
-       scrollvak schuift niet mee, dus deze strook is alleen te zien zolang je
-       bovenaan staat -- precies waar de baan ook nacht is.) */
-    background-color: #160a2e;
+    /* De nachtlucht waar de baan in staat. Staat óók op het scherm zelf, want boven
+       de baan hangt nog de strook waar de kop in staat -- die hoort dezelfde lucht
+       te zijn en geen app-paars. (Een achtergrond op een scrollvak schuift niet mee,
+       dus die strook is alleen te zien zolang je bovenaan staat, en daar is de baan
+       ook nacht.) */
+    background-color: #120820;
     overscroll-behavior-y: contain;
     scrollbar-width: none;
   }
   #screen-journey::-webkit-scrollbar { display: none; }
   /* geen padding-bottom van .screen.hub: de baan draagt zijn eigen ruimte onder
-     de eerste bestemming (0,8 stap = ruim boven de navigatiebalk) */
+     de eerste bestemming (zie REIS.onder) */
   #screen-journey.hub { padding-bottom: 0; }
-  /* dezelfde zwevende kop als op de kaart: geen dekkende balk over de lucht */
+  /* Dezelfde zwevende kop als op de kaart: geen dekkende balk over de lucht. Wél
+     één zachte sluier eronder (::before), want hier schuift er iets ánders
+     onderdoor -- een wereldtekening. Zonder sluier botst die op de titel; met deze
+     verdwijnt hij erin. Hij loopt naar niets uit, dus hij blijft een sluier en
+     wordt nooit een balk. */
   #screen-journey .hub-sticky { width: 100%; margin-left: 0; margin-right: 0;
     padding-left: 10px; padding-right: 14px;
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 0; }
   #screen-journey .screen-header { margin-bottom: 0;
-    grid-template-columns: minmax(60px, 1fr) auto minmax(60px, 1fr); gap: 10px; }
-  /* Eén zachte sluier onder de kop. De kaart heeft die bewust níet -- daar is elke
-     pixel balk een pixel tekening die een kind niet ziet -- maar hier schuift er
-     iets ánders onderdoor: de naampil van de bovenste bestemming. Zonder sluier
-     botst die op de titel; met deze verdwijnt hij erin. Hij loopt naar niets uit,
-     dus hij blijft een sluier en wordt nooit een balk. */
+    grid-template-columns: minmax(56px, 1fr) auto minmax(56px, 1fr); gap: 10px; }
   #screen-journey .hub-sticky::before {
-    content: ''; position: absolute; left: 0; right: 0; top: -14px; height: calc(100% + 34px);
+    content: ''; position: absolute; left: 0; right: 0; top: -14px; height: calc(100% + 40px);
     z-index: -1; pointer-events: none;
-    background: linear-gradient(180deg, rgba(14,6,30,.8) 40%, rgba(14,6,30,0));
+    background: linear-gradient(180deg, rgba(14,7,30,.86) 38%, rgba(14,7,30,0));
   }
-  /* de titel draagt dezelfde pil als de wereldnaam op de kaart -- zelfde stof,
-     zelfde hoogte, zodat de twee schermen als één plek lezen */
-  #screen-journey .reis-titel, #screen-journey .diamond-badge {
-    height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill);
-    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+  /* De titel draagt géén pil. Op de kaart wél -- daar staat hij over een getekende
+     lucht en heeft hij zijn eigen ondergrond nodig -- maar hier ligt de sluier er
+     al onder, en een pil ín een sluier is een doosje in een doosje. Dat is precies
+     het gevoel dat dit scherm kwijt moest. */
+  #screen-journey .reis-titel { font-size: 18px; font-weight: 700; letter-spacing: .01em;
+    display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 12px rgba(10,2,24,.7); }
+  /* De diamantpil en de terugknop houden hun vorm (die is app-breed), maar een slag
+     rustiger dan op de kaart: hier hoeven ze niet tegen een getekende lucht op. */
+  #screen-journey .diamond-badge {
+    height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: 17px;
+    background: rgba(28,6,52,.34); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
     text-shadow: var(--hud-ink);
   }
-  #screen-journey .reis-titel { font-size: 17.5px; font-weight: 700; }
-  #screen-journey .diamond-badge { font-size: 17px; }
-  #screen-journey .icon-btn { width: 38px; height: 38px; font-size: 17px; }
+  #screen-journey .icon-btn { width: 38px; height: 38px; font-size: 17px;
+    border-color: rgba(255,255,255,.2); box-shadow: 0 2px 0 var(--glass-black-28); }
 
-  /* De baan zelf. Zijn hoogte komt uit --reis-n (het aantal werelden) en verder
-     uit niets: geen gemeten pixels, geen vaste lijst. renderReis zet daarnaast
-     de lucht als één verticaal verloop dat door alle wereldkleuren heen loopt --
-     zie reisLucht(). Eén verloop en geen collage, dus er is geen naad die zichtbaar
-     wordt zodra er een wereld bijkomt. */
+  /* ---- De baan ------------------------------------------------------------
+     Eén oppervlak, drie lagen, en geen ervan hoort op te vallen:
+       korrel      dezelfde ingebakken SVG-ruis als .grain elders in de app, hier
+                   ín de baan (de app-korrel ligt ónder #app en is hier dus niet
+                   te zien). Naadloos door stitchTiles.
+       sterrenstof een handvol puntjes op een tegel van 640px. Groot genoeg dat de
+                   herhaling in geen enkel venster tweemaal volledig in beeld komt,
+                   klein en zwak genoeg dat je er niet naar kijkt.
+       de nacht    één doorlopend verloop, warm onderaan (waar je vandaan komt) en
+                   koud bovenaan (waar het nog donker is). Geen wereldkleuren: die
+                   komen van de bestemmingen zelf.                              */
   .reis-track {
     position: relative; flex: none; width: 100%; overflow: hidden;
-    height: calc(var(--reis-stap) * (var(--reis-n, 6) + 1.4));
+    height: calc(var(--reis-stap) * var(--reis-n, 8));
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cg fill='%23fff' fill-opacity='.5'%3E%3Ccircle cx='58' cy='96' r='1.3'/%3E%3Ccircle cx='214' cy='41' r='.9'/%3E%3Ccircle cx='377' cy='138' r='1.5'/%3E%3Ccircle cx='523' cy='72' r='1'/%3E%3Ccircle cx='121' cy='247' r='1.1'/%3E%3Ccircle cx='298' cy='312' r='.8'/%3E%3Ccircle cx='449' cy='268' r='1.4'/%3E%3Ccircle cx='601' cy='349' r='1'/%3E%3Ccircle cx='37' cy='431' r='1.2'/%3E%3Ccircle cx='187' cy='519' r='.9'/%3E%3Ccircle cx='341' cy='463' r='1.3'/%3E%3Ccircle cx='492' cy='577' r='1'/%3E%3Ccircle cx='247' cy='611' r='1.1'/%3E%3Ccircle cx='565' cy='191' r='.9'/%3E%3C/g%3E%3C/svg%3E"),
+      linear-gradient(to top, #2b1338 0%, #1d0d2e 22%, #160a26 56%, #110720 100%);
+    background-size: 160px 160px, 640px 640px, 100% 100%;
+    background-repeat: repeat, repeat, no-repeat;
+    /* de korrel wrijft in de nacht in plaats van er grijs overheen te liggen; de
+       sterren blijven gewoon sterren */
+    background-blend-mode: soft-light, normal, normal;
   }
-  /* De lucht loopt over de volle breedte, de reis zelf niet. Zonder deze kolom
-     rekt de slinger op een tablet mee met het venster: dan staan twee bestemmingen
-     een halve meter uit elkaar en is de route geen wandeling meer maar een zigzag
-     over een leeg veld. Op een telefoon verandert hij niets (daar is 100% smaller
-     dan de kolom), en de achtergrond blijft altijd van rand tot rand lopen -- dus
-     er komt nergens een band app-paars naast de reis te staan. */
+  /* Het voetlicht onderaan: de reis komt ergens vandaan. Warm, breed, en zo zwak
+     dat het geen band wordt. */
+  .reis-track::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--reis-stap) * 1.1);
+    pointer-events: none;
+    background: radial-gradient(130% 100% at 50% 122%, rgba(255,164,60,.34), transparent 70%);
+  }
+  /* De lucht loopt over de volle breedte, de reis zelf niet. Zonder deze kolom rekt
+     de slinger op een tablet mee met het venster: dan staan twee bestemmingen een
+     halve meter uit elkaar en is de route geen wandeling meer maar een zigzag over
+     een leeg veld. Op een telefoon verandert hij niets. */
   .reis-pad { position: absolute; left: 0; right: 0; top: 0; bottom: 0;
     width: min(100%, 520px); margin-inline: auto; }
-  /* het voetlicht onderaan: de reis komt ergens vandaan */
-  .reis-track::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--reis-stap) * .9);
-    pointer-events: none;
-    background: radial-gradient(120% 100% at 50% 118%, var(--bg-glow-warm), transparent 70%);
-    opacity: .5;
-  }
-  /* De route. Eén SVG over de hele baan, met preserveAspectRatio="none": de
-     x-as is een percentage van de breedte en de y-as is de baan zelf, dus de
-     route slingert op elk toestel netjes tussen dezelfde bestemmingen door.
-     Het uitrekken dat dat oplevert raakt de lijndikte niet -- non-scaling-stroke
-     houdt de stippen overal even groot en even ver uit elkaar. */
+
+  /* ---- De route -----------------------------------------------------------
+     Eén SVG over de hele baan, met preserveAspectRatio="none": de x-as is een
+     percentage van de breedte en de y-as is de baan zelf. Het uitrekken dat dat
+     oplevert raakt de lijn niet -- non-scaling-stroke houdt stippen en dikte overal
+     gelijk.
+
+     Drie lagen, en de volgorde is het verhaal:
+       spoor   een héél flauwe doorlopende lijn. Zonder dit zijn het losse stippen;
+               hiermee is het een pad waar toevallig stippen op liggen.
+       heel    de stippen van de hele route, dof
+       gelopen dezelfde stippen in goud, tot waar ze nu is
+
+     De stippen zijn kleiner en dichter op elkaar dan eerst (5,4 om de 10,5 in
+     plaats van 7 om de 15). Dat is precies het verschil tussen "stip · stip · stip"
+     en "een spoor": je telt ze niet meer, je volgt ze. */
   .reis-route { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-  .reis-weg-onder, .reis-weg-bg, .reis-weg-fg {
+  .reis-spoor, .reis-weg-heel, .reis-weg-gelopen {
     fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke;
-    stroke-dasharray: .01 15;
   }
-  /* Stippen en geen doorlopende streep: een lijn is een weg, stippen zijn een
-     route -- ze zeggen "hier is iemand langsgelopen" zonder de tekeningen te
-     doorsnijden. De donkere onderlaag is dezelfde pruim als op de wereldkaart,
-     zodat elke stip ook op een lichte lucht leesbaar blijft. */
-  .reis-weg-onder { stroke: var(--route-onder); stroke-width: 13; }
-  .reis-weg-bg { stroke: rgba(255,255,255,.4); stroke-width: 7; }
-  .reis-weg-fg { stroke: var(--gold-accent); stroke-width: 7; }
+  .reis-spoor { stroke: rgba(255,255,255,.07); stroke-width: 2; }
+  .reis-weg-heel { stroke: rgba(214,226,255,.3); stroke-width: 5.4; stroke-dasharray: .01 10.5; }
+  .reis-weg-gelopen { stroke: var(--gold-accent); stroke-width: 5.4; stroke-dasharray: .01 10.5; opacity: .82; }
+  /* Het laatste stuk -- van de vorige wereld naar waar ze nu staat -- is het enige
+     stuk route dat om aandacht vraagt: dáár is ze net geweest. Vol goud en een tikje
+     dikker; de rest van het gelopen spoor blijft rustig. */
+  .reis-weg-nu { fill: none; stroke: var(--gold-accent); stroke-width: 6.2; stroke-linecap: round;
+    stroke-dasharray: .01 10.5; vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 3px rgba(255,193,7,.55)); }
 
-  /* ---- De bestemmingen -----------------------------------------------------
-     Vijf standen, en ze moeten alle vijf te herkennen zijn zonder te lezen:
+  /* ---- De bestemmingen ----------------------------------------------------
+     Eén object per wereld: de tekening, met zijn naam en zijn sterren in de
+     onderrand. Geen naampil eronder, geen losse badge ernaast. Er is precies één
+     zegelplek (rechtsonder) en die draagt hooguit één teken:
 
-       klaar    uitgespeeld -- gouden rand met een zegel. Blijft vol in kleur:
-                een afgemaakte wereld hoort niet dood te ogen, je mag er terug.
-       nu       hier ben je -- groter, warme gloed, en de ster staat erop.
-       open     wel te bezoeken, nog niet uit (komt alleen voor bij een save die
-                met de hand bewerkt is, maar de stand hoort te bestaan)
-       verder   uitgebracht, maar nog niet aan de beurt: de tekening blijft weg,
-                het silhouet van de wereld en een slotje niet. Wél verleidelijk,
-                geen kapotte knop.
-       mist     nog niet uitgebracht -- een vorm in de nevel, zonder naam. Er
-                wordt niets verzonnen en niets verklapt.
+       ✓   uitgespeeld
+       ★   uitgespeeld met álle sterren -- en dan pas krijgt de kaart zijn gouden rand
+       🔒  nog niet aan de beurt
 
-     Het ankerpunt is het midden van het medaillon (translate(-50%,50%) bovenop
-     een bottom-waarde), en niet het midden van het hele knopje: de naampil eronder
-     en de ster erboven hangen erbuiten. Daardoor loopt de route exact door het
-     hart van elke bestemming, ook als de ene een naam draagt en de andere niet. */
+     Dat is dezelfde afspraak als de wereldbadge in de trofeeënkast (één kaart,
+     twee standen) en hij houdt de kaart leesbaar: nooit meer dan één teken, nooit
+     twee dingen die om dezelfde reden goud zijn.
+
+     Het ankerpunt is het midden van de tekening (translate(-50%,50%) bovenop een
+     bottom-waarde), zodat de route precies door het hart van elke bestemming loopt. */
   .reis-halte {
     position: absolute; transform: translate(-50%, 50%);
-    width: var(--reis-maat); height: var(--reis-maat);
+    width: var(--kaart-b); height: var(--kaart-h);
     padding: 0; border: 0; background: none; font-family: inherit; color: var(--c-white);
     cursor: pointer; z-index: 2;
   }
   .reis-halte:disabled { cursor: default; }
-  /* het licht van de wereld zelf, achter de bestemming -- de enige plek waar een
-     wereldkleur op dit scherm de baas is */
+  /* De sfeer van de wereld, ver buiten zijn kaart. Dit is wat er van de oude
+     gekleurde banden over is, en het werkt beter: hij hangt aan de bestemming, dus
+     hij verhuist mee, hij loopt in zijn buren over (de gloed is breder dan de stap)
+     en hij kost geen enkele regel opnieuw uitgerekende kleurstops als er een wereld
+     bijkomt. Laag in dekking: de tekening hoort de kleur te dragen, niet de lucht. */
   .reis-halte::before {
     content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: 215%; height: 215%; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(var(--w-glow-rgb, 255,216,128), .28), transparent 72%);
+    width: 285%; height: 330%; border-radius: 50%; pointer-events: none; z-index: -1;
+    /* Op de glóédkleur en niet op de luchtkleur. Die tweede is per wereld juist de
+       donkerste tint (#235640 voor de jungle, #13415c voor de piraten): een donkere
+       kleur over een donkere nacht is geen sfeer maar niets. De gloed is de warme,
+       heldere kant van hetzelfde thema, en dát is wat er om een plek heen hangt. */
+    background: radial-gradient(closest-side,
+      rgba(var(--w-glow-rgb, 255,216,128), .34),
+      rgba(var(--w-sky-rgb, 61,26,99), .2) 50%, transparent 78%);
   }
   .reis-plaats {
-    position: absolute; inset: 0; border-radius: 32%; overflow: hidden;
+    position: absolute; inset: 0; border-radius: 18px; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
     background-color: var(--w-deep, #2a0c47);
     /* draagt zichzelf als er (nog) geen tekening is -- net als .world-frame.no-art */
-    background-image: radial-gradient(120% 60% at 50% 104%, var(--w-glow, rgba(255,216,128,.4)), transparent 66%),
+    background-image: radial-gradient(120% 70% at 50% 108%, var(--w-glow, rgba(255,216,128,.4)), transparent 66%),
                       linear-gradient(180deg, var(--w-sky, #3d1a63), var(--w-deep, #2a0c47));
-    box-shadow: 0 0 0 2px var(--stop-keyline), 0 12px 20px var(--stop-schaduw);
+    box-shadow: 0 0 0 1.5px rgba(255,255,255,.14), 0 0 0 3px rgba(18,6,36,.55),
+                0 14px 26px var(--stop-schaduw);
     transition: transform .12s;
   }
-  .reis-halte:not(:disabled):active .reis-plaats { transform: scale(.94); }
-  /* De uitsnede van de wereldtekening. Ligt als eigen laag óver het verloop, zodat
-     een wereld zonder tekening (of een bestand dat nog onderweg is) nooit een leeg
-     vlak oplevert. 50% 38%: de bovenhelft van een wereldkaart is de horizon en het
-     silhouet -- dat is wat een plek herkenbaar maakt, niet de weg onderin. */
-  .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 38%; }
-  .reis-ico { position: relative; font-size: 34px; line-height: 1;
-    filter: drop-shadow(0 2px 5px rgba(8,2,20,.7)); }
-  /* de naam hangt onder het medaillon, in dezelfde donkere glazen pil als de
-     weg-terug op de kaart -- leesbaar boven elke tekening, en klein genoeg om de
-     bestemming zelf het zwaarst te laten wegen */
-  .reis-naam {
-    position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 5px; max-width: 150px; white-space: nowrap;
-    font-size: 13px; font-weight: 800; line-height: 1; padding: 5px 10px; border-radius: var(--r-pill);
-    background: rgba(32,12,58,.72); border: 1px solid var(--glass-white-28);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    text-shadow: var(--hud-ink);
-  }
-  .reis-naam .rn-tekst { overflow: hidden; text-overflow: ellipsis; }
+  .reis-halte:not(:disabled):active .reis-plaats { transform: scale(.965); }
+  .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%; }
+  /* alleen als er nog geen tekening is: het wereldteken draagt de kaart */
+  .reis-ico { position: relative; font-size: calc(var(--kaart-h) * .34); line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(8,2,20,.75)); }
 
-  /* klaar: gouden rand en een zegel. Bewust géén sterrenrij -- dat is de taal van
-     de wereldkaart (per show), en hier gaat het over hele werelden. */
-  .reis-halte.uit .reis-plaats {
-    box-shadow: 0 0 0 2px var(--stop-keyline), inset 0 0 0 3px var(--gold-accent),
-                0 12px 20px var(--stop-schaduw);
+  /* De naam en de sterren liggen ín de tekening, op een veeg die van niets naar
+     donker loopt. Dat is één ding in plaats van drie, en het scheelt de hele
+     strook lucht die een pil eronder kostte -- de reden dat de bestemmingen nu
+     dichter op elkaar kunnen staan. */
+  .reis-label {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+    display: flex; align-items: center; gap: 6px;
+    padding: 14px 9px 7px;
+    background: linear-gradient(180deg, transparent, rgba(10,3,24,.62) 38%, rgba(10,3,24,.88));
   }
+  .rn-tekst { flex: 1; min-width: 0; text-align: left;
+    font-size: 12.5px; font-weight: 800; letter-spacing: .005em; line-height: 1.1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(6,1,16,.95); }
+  /* De sterrenteller. Het teken doet het werk, het getal is de bijzin: een kind van
+     vijf ziet "ster, en nog niet vol", een kind van acht leest 17/24. Getekend en
+     niet ⭐, om dezelfde reden als op de wereldkaart -- een emoji wordt per toestel
+     anders getekend, en naast elkaar valt dat op. */
+  .reis-sterren { flex: none; display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 800; color: var(--gold-light); white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(6,1,16,.95); }
+  .reis-sterren svg { width: 11px; height: 11px; display: block; flex: none;
+    fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.1; }
+
+  /* Het zegel: één plek, hooguit één teken. Klein gehouden en binnen de kaart, want
+     alles wat erbuiten steekt is weer een los zwevend dingetje. */
   .reis-zegel {
-    position: absolute; right: -3px; bottom: 1px; width: 26px; height: 26px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; z-index: 3;
-    font-size: 15px; font-weight: 900; color: var(--ink-on-gold);
+    position: absolute; right: 7px; top: 7px; z-index: 3;
+    width: 23px; height: 23px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900; line-height: 1; color: var(--ink-on-gold);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: 0 2px 7px rgba(10,2,26,.6);
+    box-shadow: 0 2px 6px rgba(10,2,26,.6), inset 0 0 0 1px rgba(255,255,255,.35);
   }
-  /* nu: de enige bestemming die groeit, ademt en licht geeft. Eén ding op het
-     scherm mag dat, en dit is het. */
-  .reis-halte.nu { --reis-maat: 120px; z-index: 4; }
+  .reis-zegel svg { width: 13px; height: 13px; display: block; fill: var(--ink-on-gold); }
+  /* op slot: hetzelfde plekje, maar donker -- een slot is geen prijs */
+  .reis-zegel.slot { background: rgba(20,8,38,.88); color: var(--c-white);
+    box-shadow: 0 2px 6px rgba(10,2,26,.55), inset 0 0 0 1px rgba(255,255,255,.22); font-size: 11px; }
+
+  /* ---- De vijf standen ---------------------------------------------------- */
+  /* Vol: álle sterren van die wereld. Dit is de énige kaart met een gouden rand, en
+     dat is precies waarom hij opvalt tussen twintig andere. Eén rand, één zegel, een
+     warme onderrand -- geen glinstering, geen tweede badge, geen label "PERFECT". */
+  .reis-halte.vol .reis-plaats {
+    box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
+                0 0 20px rgba(255,193,7,.3), 0 14px 26px var(--stop-schaduw);
+  }
+  .reis-halte.vol .reis-label {
+    background: linear-gradient(180deg, transparent, rgba(58,26,2,.6) 38%, rgba(48,20,2,.92));
+  }
+  .reis-halte.vol .reis-sterren { color: var(--gold-accent); }
+
+  /* Hier ben je. De enige bestemming die groter is, licht geeft en de ster draagt --
+     en de enige met beweging op dit scherm. */
+  .reis-halte.nu { --kaart-b: clamp(166px, 51vw, 216px); z-index: 4; }
   .reis-halte.nu .reis-plaats {
-    box-shadow: 0 0 0 2px var(--stop-keyline), inset 0 0 0 4px var(--gold-accent),
-                0 0 26px rgba(255,193,7,.55), 0 14px 24px var(--stop-schaduw);
-    animation: reisGloed 2.8s ease-in-out infinite alternate;
+    box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
+                0 0 26px rgba(255,193,7,.45), 0 16px 30px var(--stop-schaduw);
+    animation: reisGloed 3.4s ease-in-out infinite alternate;
   }
   @keyframes reisGloed {
-    from { box-shadow: 0 0 0 2px var(--stop-keyline), inset 0 0 0 4px var(--gold-accent),
-                       0 0 18px rgba(255,193,7,.4), 0 14px 24px var(--stop-schaduw); }
-    to   { box-shadow: 0 0 0 2px var(--stop-keyline), inset 0 0 0 4px var(--gold-accent),
-                       0 0 34px rgba(255,193,7,.75), 0 14px 24px var(--stop-schaduw); }
+    from { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
+                       0 0 16px rgba(255,193,7,.3), 0 16px 30px var(--stop-schaduw); }
+    to   { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
+                       0 0 34px rgba(255,193,7,.6), 0 16px 30px var(--stop-schaduw); }
   }
-  .reis-halte.nu .reis-naam { background: rgba(48,20,6,.78); border-color: rgba(255,215,64,.55); }
-  /* de spot op de grond eronder: dezelfde lichtbron als op de kaart onder de
-     huidige halte (.tour-stop.next::after), zodat "hier speel je" overal hetzelfde
-     licht heeft */
-  .reis-halte.nu::after {
-    content: ''; position: absolute; left: 50%; top: 92%; transform: translateX(-50%);
-    width: 190%; height: 46%; border-radius: 50%; pointer-events: none; z-index: -1;
-    background: radial-gradient(closest-side, rgba(255,214,120,.42), transparent 76%);
+  .reis-halte.nu::before { background: radial-gradient(closest-side,
+    rgba(255,196,90,.3), rgba(var(--w-sky-rgb, 61,26,99), .2) 48%, transparent 76%); }
+  .reis-halte.nu .rn-tekst { font-size: 13.5px; }
+
+  /* Nog niet aan de beurt. De tekening blíjft staan -- dat is de hele reden dat een
+     kind omhoog wil -- maar ontkleurd, donkerder en met een koele waas erover: je
+     ziet dat het er is en dat je er nog niet bent. Geen gloed, geen rand, geen
+     sterren (er valt nog niets te tellen). */
+  .reis-halte.verder { --kaart-b: clamp(132px, 40vw, 172px); }
+  .reis-halte.verder .reis-plaats {
+    box-shadow: 0 0 0 1.5px rgba(255,255,255,.08), 0 0 0 3px rgba(18,6,36,.5),
+                0 10px 20px var(--stop-schaduw);
   }
-  /* verder: uitgebracht, nog niet aan de beurt. Het silhouet van de wereld en een
-     slotje -- geen tekening, dus ook geen bestand dat opgehaald moet worden voor
-     een plek waar je nog niet mag komen. */
-  /* Kleiner dan waar ze nu is, en kleiner dan wat ze gehad heeft: wat verder weg
-     ligt, ligt ook verder weg. Dat is de goedkoopste diepte die er bestaat en het
-     scheelt dat vier gelijke vlakken boven elkaar als een stapel kaarten lezen. */
-  .reis-halte.verder { --reis-maat: 92px; }
-  .reis-halte.verder .reis-plaats, .reis-halte.mist .reis-plaats {
-    box-shadow: 0 0 0 2px var(--stop-keyline), 0 8px 16px var(--stop-schaduw);
-  }
-  /* Een sluier en geen deksel. Hier stond .42 -> .72 zwart, en dan is elke wereld
-     op slot hetzelfde donkere vlak: precies het tegenovergestelde van verleidelijk.
-     Nu blijft de kleur van de wereld eronder zichtbaar -- je ziet dát er iets is,
-     en welke kleur het heeft. */
+  .reis-halte.verder .reis-art { filter: saturate(.42) brightness(.66) contrast(.94); }
   .reis-halte.verder .reis-plaats::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(12,5,28,.18), rgba(12,5,28,.52));
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(180deg, rgba(34,30,86,.4), rgba(12,8,36,.52));
   }
-  .reis-halte.verder .reis-ico { font-size: 38px; opacity: .88; }
-  .reis-halte.verder .reis-naam { opacity: .66; font-size: 12.5px; }
-  /* Het slotje zat midden op het icoon en dekte precies af wat er te zien viel.
-     Als hoekzegel zegt het hetzelfde -- en laat het de wereld heel. Zelfde vorm en
-     plek als het gouden zegel van een afgemaakte wereld: één taal, twee berichten. */
-  .reis-slot { position: absolute; right: -3px; bottom: -3px; z-index: 3;
-    width: 25px; height: 25px; border-radius: 50%; font-size: 12px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(26,10,48,.92); border: 1px solid var(--glass-white-22);
-    box-shadow: 0 2px 6px rgba(10,2,26,.55); }
-  /* mist: hij is er wel, maar er valt nog niets over te zeggen. Geen naam, geen
-     kleur van een wereld die nog niet uit is -- alleen een vorm in de nevel. */
-  .reis-halte.mist { --reis-maat: 80px; }
+  .reis-halte.verder::before { opacity: .35; }
+  .reis-halte.verder .rn-tekst { opacity: .72; font-weight: 700; }
+  .reis-halte.verder .reis-label { padding-top: 10px; }
+
+  /* Nog niet uitgebracht. Er ís nog niets, dus er valt niets te tonen: een vorm in
+     de nevel, zonder naam en zonder kleur. Er wordt niets verzonnen en niets
+     verklapt -- ook geen tekening die opgehaald zou moeten worden. */
+  .reis-halte.mist { --kaart-b: clamp(98px, 30vw, 128px); }
   .reis-halte.mist::before { display: none; }
   .reis-halte.mist .reis-plaats {
-    opacity: .55;
-    background-image: linear-gradient(180deg, rgba(150,168,214,.34), rgba(28,18,58,.6));
+    opacity: .5;
+    background-image: linear-gradient(180deg, rgba(150,168,214,.3), rgba(28,18,58,.6));
+    box-shadow: 0 0 0 1.5px rgba(255,255,255,.07), 0 8px 18px var(--stop-schaduw);
   }
-  .reis-halte.mist .reis-ico { font-size: 30px; opacity: .6; font-weight: 800; }
+  .reis-halte.mist .reis-ico { font-size: calc(var(--kaart-h) * .4); opacity: .55; font-weight: 800; }
 
-  /* De ster op de reis. Klein gehouden: ze moet te zien zijn dat ze ergens stáát,
-     niet de bestemming afdekken. Zelfde gloed + contactschaduw als op de kaart
-     (.tour-hero), alleen in pixels -- hier is geen container om op te schalen. */
-  .reis-ster {
-    position: absolute; left: 50%; bottom: calc(100% - 22px); transform: translateX(-50%);
-    width: 56px; pointer-events: none; z-index: 3;
+  /* ---- De ster op de reis -------------------------------------------------
+     Klein gehouden: ze moet te zien zijn dat ze ergens stáát, niet de bestemming
+     afdekken. Ze zakt een stuk over de bovenrand van haar kaart heen -- dat leest
+     als "erop" in plaats van "erboven", en het scheelt precies de hoogte die de
+     bestemmingen dichter op elkaar laat staan. Dezelfde gloed en contactschaduw als
+     op de wereldkaart (.tour-hero), alleen in pixels.
+
+     --pop-kant schuift haar een tikje naar de kant waar de route verdergaat, zodat
+     ze de goede kant op lijkt te kijken; renderReis zet 'm. */
+  .reis-pop {
+    position: absolute; left: calc(50% + var(--pop-kant, 0px)); bottom: calc(100% - 34px);
+    transform: translateX(-50%); width: 56px; pointer-events: none; z-index: 3;
   }
-  .reis-ster svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
-  .reis-ster::before {
+  .reis-pop svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
+  .reis-pop::before {
     content: ''; position: absolute; z-index: 0; left: 50%; bottom: 4px; transform: translateX(-50%);
     width: 78px; height: 78px; border-radius: 50%;
     background: radial-gradient(closest-side, rgba(255,247,220,.5), rgba(255,236,186,.18) 54%, transparent 74%);
   }
-  .reis-ster::after {
+  .reis-pop::after {
     content: ''; position: absolute; z-index: 0; left: 50%; bottom: 1px; transform: translateX(-50%);
     width: 38px; height: 10px; border-radius: 50%; background: rgba(12,2,26,.45); filter: blur(3px);
   }
 
   /* ---- De mist bovenaan ----------------------------------------------------
-     Waar de reis ophoudt, houdt hij niet óp: de route loopt door en verdwijnt in
-     de wolken. Dat is de hele boodschap van dit stuk scherm, en hij staat er
-     altijd -- of er nu nog werelden boven je liggen of dat je alles gehad hebt.
-     Alleen in dat laatste geval komt er één pil bij, want dan is "er komt nog
-     meer" het enige dat er nog te zeggen valt. */
+     Waar de reis ophoudt, houdt hij niet óp: de route loopt door en verdwijnt in de
+     wolken. Dat staat er altijd -- of er nu nog werelden boven je liggen of niet.
+     Alleen als álles uit is komt er één pil bij, want dán is "er komt nog meer" het
+     enige dat er nog te zeggen valt. */
   .reis-mist {
     position: absolute; left: 0; right: 0; top: 0; z-index: 3; pointer-events: none;
-    height: calc(var(--reis-stap) * 1.7); overflow: hidden;
-    background: linear-gradient(180deg, #160a2e 10%, rgba(22,10,46,.88) 44%, rgba(22,10,46,0) 100%);
+    height: calc(var(--reis-stap) * 1.6); overflow: hidden;
+    background: linear-gradient(180deg, #110720 12%, rgba(17,7,32,.86) 46%, rgba(17,7,32,0) 100%);
   }
-  .reis-mist .map-sky-inner > span { opacity: .3; }
-  .reis-verder {
-    position: absolute; left: 50%; top: 32%; transform: translateX(-50%);
+  .reis-mist .map-sky-inner > span { opacity: .26; }
+  .reis-vervolg {
+    position: absolute; left: 50%; top: 38%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 6px; white-space: nowrap;
     font-size: 13px; font-weight: 800; letter-spacing: .02em; padding: 6px 13px; border-radius: var(--r-pill);
     color: var(--lavender-text); background: rgba(32,12,58,.6);
     border: 1px solid var(--glass-white-22); text-shadow: var(--hud-ink);
   }
 
-  /* Op 320px is er tussen de ← en de diamantpil 152px over, en daar paste
-     "🌍 De hele tournee" op 17,5px niet in: de titel liep achter de pil door. De
-     wereldbol gaat eraf (de titel zegt het al) en de letter een maat kleiner --
-     samen 140px, en dan past hij. */
+  /* ---- Terug naar waar je bent --------------------------------------------
+     Alleen als je zover weggescrold bent dat je jezelf niet meer ziet. Hij staat op
+     dezelfde plek als de memory-knop op de kaart (rechtsonder, boven de balk), draagt
+     hetzelfde donkere glas als de rest van de zwevende bediening, en verdwijnt zodra
+     je weer in de buurt bent -- dus hij staat nooit "voor het geval dat" in beeld. */
+  .reis-terug {
+    position: fixed; right: 14px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+    width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--glass-white-28);
+    display: flex; align-items: center; justify-content: center; padding: 0;
+    font-family: inherit; font-size: 19px; color: var(--c-white); cursor: pointer;
+    background: rgba(32,12,58,.8);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(0,0,0,.45);
+    opacity: 0; transform: translateY(8px) scale(.9); pointer-events: none;
+    transition: opacity .2s ease, transform .2s var(--ease-uit);
+  }
+  .reis-terug.aan { opacity: 1; transform: none; pointer-events: auto; }
+  .reis-terug:active { transform: scale(.92); }
+
   @media (max-width: 360px) {
-    #screen-journey .reis-titel { font-size: 15px; padding: 0 9px; gap: 0; }
+    #screen-journey .reis-titel { font-size: 15.5px; gap: 5px; }
     #screen-journey .reis-titel .rt-ico { display: none; }
     #screen-journey .icon-btn { width: 34px; height: 34px; font-size: 16px; }
     #screen-journey .diamond-badge { font-size: 15.5px; padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .reis-halte.nu .reis-plaats { animation: none; }
-    .reis-plaats { transition: none; }
+    .reis-plaats, .reis-terug { transition: none; }
     .reis-mist .map-sky-inner > span { animation: none; }
   }
 
@@ -3514,6 +3599,9 @@
       </div>
     </div>
     <div class="reis-track" id="reis-track"></div>
+    <!-- Alleen zichtbaar als je jezelf niet meer ziet; zie reisVolgKnop. -->
+    <button class="reis-terug" id="reis-terug" type="button" onclick="reisTerugNaarNu()"
+      aria-label="Terug naar waar je bent">↑</button>
   </div>
 
   <!-- ===== Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ===== -->
@@ -6640,137 +6728,179 @@ function applyVenue(el, world) {
    dit scherm gaat over de laag erboven (waar ben ik in het geheel).
 
    DE VOORTGANG WORDT HIER ALLEEN GETEKEND. Elke stand komt uit fase 4A --
-   worldAvailable, worldDone, continueWorld -- en er wordt hier niets bewaard,
-   niets afgeleid uit een plek op het scherm en niets vooruitgeschoven. Een
-   bestemming kiezen zet de kaart op die wereld en verder niets: p.level, de
-   sterren en de grens blijven staan waar ze stonden, net als bij de kiezer die
-   hier stond.
+   worldAvailable, worldDone, continueWorld -- en de sterrenstand uit worldProgress,
+   dezelfde teller waar de wereldbadge in de trofeeënkast op staat. Er wordt hier
+   niets bewaard, niets afgeleid uit een plek op het scherm en niets
+   vooruitgeschoven. Een bestemming kiezen zet de kaart op die wereld en verder
+   niets: p.level, de sterren en de grens blijven staan waar ze stonden.
 
-   WAT ER GEBEURT ALS ER EEN WERELD BIJKOMT: niets. De baan is (aantal werelden
-   + 1,4) stappen hoog, een bestemming staat op (0,8 + nummer) stappen van
-   onderen, en de route is een sinus die nooit ophoudt. Wereld 7 maakt de baan dus
-   één stap hoger en krijgt de volgende plek in dezelfde golf -- er staat nergens
-   een coördinaat, een hoogte of een aanname die aan zes vastzit. Zie .reis-track
-   in het stijlblad voor dezelfde maatvoering aan de andere kant.               */
+   WAT ER GEBEURT ALS ER EEN WERELD BIJKOMT: niets. De baan is een optelsom van
+   stappen, de bestemmingen hangen aan die som, de route loopt er doorheen en de
+   sfeer hangt aan de bestemmingen zelf. Wereld 7 is één regel in WORLDS; wereld
+   30 net zo. Er staat nergens een coördinaat, een hoogte of een aanname die aan
+   een aantal werelden vastzit -- reisBaan() hieronder is de enige plek waar
+   maatvoering bestaat, en die rekent puur met indexen.                        */
 const REIS = {
-  amp: 15,        // hoe ver de route van de middellijn afwijkt (% van de breedte)
-  golf: 1.05,     // hoe snel hij van kant wisselt -- één doorlopende S, geen zigzag
-  fase: 0.6,      // waar de slinger begint, zodat wereld 1 niet precies in het midden staat
-  onder: 0.8,     // stappen tussen de onderrand van de baan en de eerste bestemming
-  boven: 1.6,     // en tussen de laatste bestemming en de bovenrand: daar hangt de mist
+  amp: 11,        // hoe ver een bestemming van de middellijn staat (% van de kolom)
+  golf: 0.86,     // hoe snel dat van kant wisselt -- één trage S, geen zigzag
+  fase: 0.7,      // waar de slinger begint, zodat wereld 1 niet precies in het midden staat
+  bocht: 9,       // hoever de route tússen twee bestemmingen uitbuigt (% van de kolom)
+  rek: 0.05,      // hoeveel de afstand per wereld varieert (± deel van een stap)
+  /* Hoe groot een bestemming is, per stand -- als deel van een gewone kaart. Deze
+     getallen staan óók in het stijlblad (de clamps op .reis-halte.nu / .verder /
+     .mist zijn 51vw / 40vw / 30vw tegen 46vw voor een gewone), en dat is de enige
+     plek waar dit bestand en dat blad hetzelfde moeten weten. Ze staan hier omdat
+     de áfstand tussen twee bestemmingen ervan afhangt: twee kleine kaarten horen
+     dichter bij elkaar te staan dan twee grote, anders gaapt het bovenin de reis --
+     waar alles nog op slot en dus klein is. */
+  maat: { nu: 1.11, open: 1, verder: .87, mist: .65 },
+  /* De afstand tussen twee bestemmingen, in stappen:
+       kaart * de gemiddelde maat van die twee + weg
+     Twee gewone kaarten staan dus precies één stap uit elkaar, en alles wat kleiner
+     is schuift naar rato dichter op elkaar. */
+  kaart: 0.62, weg: 0.38,
+  onder: 0.85,    // stappen tussen de onderrand van de baan en de eerste bestemming
+  boven: 1.45,    // en tussen de laatste bestemming en de bovenrand: daar hangt de mist
   eenheid: 100,   // SVG-eenheden per stap (de y-as van de route)
-  start: 0.55,    // waar de route vandaan komt: een half stapje onder wereld 1
-  staart: 1.15,   // en hoe ver hij boven de laatste bestemming doorloopt, de wolken in
+  start: 0.6,     // waar de route vandaan komt: een half stapje onder wereld 1
+  staart: 1.0,    // en hoe ver hij boven de laatste bestemming doorloopt, de wolken in
 };
-/* Waar een bestemming op de breedte staat. Eén doorlopende sinus, en met opzet
-   geen toeval: dezelfde wereld staat altijd op dezelfde plek (ook na opnieuw
-   tekenen), de route slingert zonder ooit te knikken, en wereld 7 krijgt vanzelf
-   het volgende punt in dezelfde golf. Deze frequentie is dezelfde gedachte als
-   defaultNodes() op de wereldkaart: langzaam genoeg dat het een bocht blijft en
-   geen zigzag wordt.
+/* Waar een bestemming op de breedte staat, en waar de route ertussen uitbuigt.
+   Allebei een sinus van de index, en met opzet geen toeval: dezelfde wereld staat
+   altijd op dezelfde plek (ook na opnieuw tekenen), de route slingert zonder ooit
+   te knikken, en wereld 7 krijgt vanzelf het volgende punt in dezelfde golf.
 
-   15% is de grootste uitslag die op 320px nog past: de naampil onder een
-   bestemming is maximaal 150px breed, en die moet er aan beide kanten binnen
-   blijven -- anders schuift dit scherm zijwaarts, en dat mag nooit. */
+   De bestemmingen bewegen weinig (11%) en de route ertussen veel (9% dwars op een
+   stap die maar half zo hoog is). Dat is de verhouding die het een wandeling maakt
+   in plaats van een grafiek: de plekken liggen rustig, de wég slingert. Andersom --
+   ver uiteen liggende kaarten met een rechte lijn ertussen -- leest als een
+   organigram, en dan lopen de kaarten bovendien het scherm uit.                  */
 function reisX(i) { return 50 + REIS.amp * Math.sin(i * REIS.golf + REIS.fase); }
+/* De baan: waar elke bestemming staat, en hoe hoog het geheel wordt. Alles in
+   stappen, zodat de CSS er calc(var(--reis-stap) * n) van kan maken en de maat zelf
+   in het stijlblad blijft (waar hij van de kaartmaat afhangt en dus meeademt met
+   het scherm).
 
+   De stap varieert per wereld met een paar procent. Puur ritme: een reis waarop
+   elke afstand exact gelijk is, leest als een liniaal. De uitslag is klein genoeg
+   dat de ondergrens uit --reis-stap er nog onder blijft (zie daar).             */
+function reisBaan(standen) {
+  const maat = st => REIS.maat[st] || 1;
+  const y = [];
+  let h = REIS.onder;
+  for (let i = 0; i < standen.length; i++) {
+    if (i) {
+      // de kaarten van dit paar bepalen hoeveel ruimte ze nodig hebben, en een
+      // paar procent ritme zorgt dat de reis geen liniaal wordt
+      const paar = (maat(standen[i - 1]) + maat(standen[i])) / 2;
+      h += REIS.kaart * paar + REIS.weg + REIS.rek * Math.sin(i * 1.7 + 0.9);
+    }
+    y.push(h);
+  }
+  return { y, hoogte: h + REIS.boven };
+}
 /* De bestemmingen, in reisvolgorde (wereld 1 eerst, dus onderaan). Puur afgeleid,
-   net als alles in fase 4A -- dit is de enige plek waar de vijf standen van de
-   reis worden bepaald, en ze worden alle vijf ergens ánders vandaan gehaald:
+   net als alles in fase 4A -- dit is de enige plek waar de standen van de reis
+   worden bepaald, en ze komen allemaal ergens ánders vandaan:
 
      mist     niet uitgebracht            worldAvailable()
-     nu       hier ga je verder           continueWorld()      -- de grens, of de toegift
-     klaar    uitgespeeld                 worldDone()
-     open     te bezoeken, nog niet uit   positie op de kaart
+     nu       hier ga je verder           continueWorld()   -- de grens, of de toegift
      verder   uitgebracht, nog niet aan de beurt
+     open     te bezoeken                 positie op de kaart
+     uit      uitgespeeld                 worldProgress().uit
+     vol      álle sterren binnen         worldProgress().vol
+
+   De laatste twee zijn geen aparte stand maar een eigenschap: een bestemming kan
+   tegelijk "hier ben je" en "vol" zijn (de toegift), en dan hoort ze allebei te
+   laten zien. Vandaar losse vlaggen in plaats van één string.
 
    "Te bezoeken" is exact wat het op de kaart ook is: tot en met de wereld waar ze
    zelf staat. Verder vooruit kíjken mag, er heen reizen niet -- en dat is niet
-   deze fase die dat beslist, dat deed de kiezer die hier stond al net zo.        */
+   deze fase die dat beslist, dat deed de kiezer die hier stond al net zo.       */
 function reisPlaatsen(p) {
   const positie = worldFor(hereLevel(p)).index;
   const doel = continueWorld(p);
-  return WORLDS.map((w, i) => {
+  const ruw = WORLDS.map((w, i) => {
     const beschikbaar = worldAvailable(i);
-    const uit = beschikbaar && worldDone(p, i);
+    const v = beschikbaar ? worldProgress(p, worldForIndex(i)) : null;
     const open = beschikbaar && i <= positie;
-    const staat = !beschikbaar ? 'mist'
-      : i === doel ? 'nu'
-      : !open ? 'verder'
-      : uit ? 'klaar' : 'open';
-    return { i, world: w, staat, uit, open, x: reisX(i) };
+    const staat = !beschikbaar ? 'mist' : i === doel ? 'nu' : !open ? 'verder' : 'open';
+    return { i, world: w, staat, open,
+             uit: !!v && v.uit, vol: !!v && v.vol,
+             sterren: v ? v.sterren : 0, max: v ? v.max : 0,
+             x: reisX(i) };
   });
+  // pas als alle standen bekend zijn valt de baan uit te meten: de afstanden hangen
+  // af van hoe groot de kaarten zijn, en dat hangt af van hun stand
+  const baan = reisBaan(ruw.map(b => b.staat));
+  ruw.forEach((b, i) => { b.y = baan.y[i]; });
+  return { plaatsen: ruw, hoogte: baan.hoogte, doel };
 }
 // wat een schermlezer van een bestemming hoort -- de enige plek met tekst per stand
 function reisLabel(b, doel) {
   if (b.staat === 'mist') return 'Nog onbekend';
-  if (b.i === doel) return b.world.name + ' — hier ben je nu';
+  const sterren = b.max ? `, ${b.sterren} van ${b.max} sterren` : '';
+  if (b.i === doel) return b.world.name + ' — hier ben je nu' + sterren;
   if (!b.open) return b.world.name + ' — nog op slot';
-  return b.world.name + (b.uit ? ' — uitgespeeld, ga er nog eens heen' : ' — ga er heen');
+  return b.world.name + (b.vol ? ' — helemaal vol' : b.uit ? ' — uitgespeeld' : '')
+    + sterren + ', ga er heen';
 }
-/* De lucht van de hele baan, als één verticaal verloop. Elke wereld zet zijn eigen
-   hemelkleur op zijn eigen hoogte en zijn diepe kleur halverwege naar de volgende:
-   zo heeft elke bestemming zijn eigen licht, en ligt er tussen twee werelden een
-   donkere nacht in plaats van een gemiddelde van twee thema's (groen + blauw =
-   modder). Boven de laatste uitgebrachte wereld loopt alles naar nachtblauw -- daar
-   is nog niets, en dat hoort ook niets te zeggen.
+/* Dezelfde getekende ster als op de wereldkaart (zie STER_PAD): een emoji heeft
+   geen vaste vorm tussen toestellen, en naast elkaar valt dat op.
 
-   Eén verloop en geen collage van banden. Dat is precies wat voorkomt dat deze
-   reis er bij zeven of acht werelden uitziet als een stapel schermafdrukken: er is
-   nergens een rand, dus er kan nergens een naad ontstaan.                        */
-function reisLucht(plaatsen) {
-  const uit = plaatsen.filter(b => b.staat !== 'mist');
-  if (!uit.length) return 'linear-gradient(to top, #2a0c47, #160a2e)';
-  const totaal = plaatsen.length - 1 + REIS.onder + REIS.boven;
-  const pct = i => (REIS.onder + i) / totaal * 100;
-  const kleur = (b, k, val) => (b.world.theme && b.world.theme[k]) || val;
-  const stops = [kleur(uit[0], 'deep', '#2a0c47') + ' 0%'];
-  uit.forEach((b, k) => {
-    stops.push(kleur(b, 'sky', '#3d1a63') + ' ' + pct(b.i).toFixed(1) + '%');
-    const volgende = uit[k + 1];
-    // De nacht tussen twee werelden zit op 38% en niet halverwege: zo duurt het
-    // verlaten kort en het aankomen lang, en is de donkere band tussen twee
-    // bestemmingen een overgang in plaats van een balk.
-    if (volgende) stops.push(kleur(b, 'deep', '#2a0c47') + ' '
-      + (pct(b.i) + (pct(volgende.i) - pct(b.i)) * 0.38).toFixed(1) + '%');
-  });
-  stops.push('#160a2e 100%');
-  return 'linear-gradient(to top, ' + stops.join(', ') + ')';
+   Een functie en geen const, omdat STER_PAD verderop in het bestand staat: een
+   const leest hem dan bij het inladen en dat is te vroeg. Eén keer bouwen, daarna
+   uit de la -- hij komt per wereld twee keer langs. */
+let _reisSter = '';
+function reisSterSVG() {
+  if (!_reisSter) _reisSter = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STER_PAD}"/></svg>`;
+  return _reisSter;
 }
-/* De baan opbouwen. Alles wat hier gebeurt komt uit reisPlaatsen() en uit twee
-   getallen (het aantal werelden en de staphoogte) -- er wordt niets opgemeten, dus
-   draaien, resizen of een wereld erbij vraagt geen herberekening. */
+/* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
+   stijlblad -- er wordt niets opgemeten, dus draaien, resizen of een wereld erbij
+   vraagt geen enkele herberekening. */
 function renderReis() {
   const p = P();
   const track = $('reis-track');
-  const plaatsen = reisPlaatsen(p);
+  const { plaatsen, hoogte, doel } = reisPlaatsen(p);
   const n = plaatsen.length;
-  const doel = continueWorld(p);
   reisStopWaarnemer();
   track.innerHTML = '';
-  track.style.setProperty('--reis-n', n);
-  track.style.backgroundImage = reisLucht(plaatsen);
+  track.style.setProperty('--reis-n', hoogte.toFixed(3));
+  $('screen-journey').onscroll = reisScroll;
   $('reis-diamonds').textContent = p.diamonds;
 
-  /* De route. Eén SVG over de hele baan; de x-as is een percentage van de breedte
-     en de y-as is de baan zelf (preserveAspectRatio="none"). Het uitrekken dat dat
-     oplevert raakt de stippen niet -- non-scaling-stroke houdt ze overal even groot
-     en even ver uit elkaar, zie .reis-weg-*.
+  /* De route. Tussen elke twee bestemmingen ligt een extra stuurpunt, om en om naar
+     links en rechts uit de lijn: dát is wat een verbinding een wéggetje maakt. De
+     bestemmingen zelf blijven exact staan waar ze staan.
 
-     Twee paden over hetzelfde traject: het hele pad dof, en het gelopen stuk in
-     goud eroverheen. Dezelfde taal als de weg op de wereldkaart, en dezelfde truc:
-     het korte pad wordt uit dezelfde punten getekend als het lange (smoothPath
-     krijgt het aantal stukken mee en niet een kortere lijst), dus de gouden stippen
-     liggen exact op de doffe eronder. */
-  const totaalU = (n - 1 + REIS.onder + REIS.boven) * REIS.eenheid;
-  const y = i => totaalU - (REIS.onder + i) * REIS.eenheid;
-  const punten = [{ x: reisX(-0.5), y: y(-REIS.start) }]
-    .concat(plaatsen.map(b => ({ x: b.x, y: y(b.i) })))
-    .concat([{ x: reisX(n - 1 + REIS.staart), y: y(n - 1 + REIS.staart) }]);
+     Vier lagen over hetzelfde traject (zie .reis-weg-* in het stijlblad): een heel
+     flauw doorlopend spoor, de stippen van de hele route dof, het gelopen stuk in
+     goud, en het láátste stuk -- van de vorige wereld naar waar ze nu is -- een
+     tikje sterker. Alle vier uit dezelfde puntenlijst, met hetzelfde streeppatroon
+     vanaf hetzelfde beginpunt: de stippen vallen dus precies op elkaar. */
+  const totaalU = hoogte * REIS.eenheid;
+  const yU = y => (hoogte - y) * REIS.eenheid;
+  const punten = [{ x: reisX(-0.5), y: yU(plaatsen[0].y - REIS.start) }];
+  plaatsen.forEach((b, k) => {
+    if (k) {
+      const vorige = plaatsen[k - 1];
+      // dwars op het stuk, om en om -- en in de richting die de slinger tóch al op
+      // wil, zodat de bocht de bestemmingen volgt in plaats van ertegenin te gaan
+      const kant = (k % 2 ? 1 : -1) * REIS.bocht;
+      punten.push({ x: (vorige.x + b.x) / 2 + kant, y: yU((vorige.y + b.y) / 2) });
+    }
+    punten.push({ x: b.x, y: yU(b.y) });
+  });
+  const laatste = plaatsen[n - 1];
+  punten.push({ x: reisX(n - 1 + REIS.staart), y: yU(laatste.y + REIS.staart) });
+  // index van wereld i in die lijst: het beginpunt, dan per wereld een bocht + een bestemming
+  const stuk = i => 1 + Math.max(0, i * 2);
+
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
   svg.setAttribute('class', 'reis-route');
-  svg.setAttribute('viewBox', `0 0 100 ${totaalU}`);
+  svg.setAttribute('viewBox', `0 0 100 ${totaalU.toFixed(0)}`);
   svg.setAttribute('preserveAspectRatio', 'none');
   svg.setAttribute('aria-hidden', 'true');
   const pad = (cls, d) => {
@@ -6781,32 +6911,36 @@ function renderReis() {
     svg.appendChild(e);
   };
   const heel = smoothPath(punten);
-  pad('reis-weg-onder', heel);
-  pad('reis-weg-bg', heel);
-  pad('reis-weg-fg', smoothPath(punten, 1 + doel));   // van de grond t/m waar ze nu is
+  pad('reis-spoor', heel);
+  pad('reis-weg-heel', heel);
+  pad('reis-weg-gelopen', smoothPath(punten, stuk(doel)));
+  // het laatste stuk apart: van de vorige bestemming tot waar ze nu staat
+  if (doel > 0) pad('reis-weg-nu', smoothPath(punten.slice(stuk(doel - 1)), 2));
+
   // De lucht loopt over de volle breedte, de reis zelf in een kolom -- zie .reis-pad
   const baan = document.createElement('div');
   baan.className = 'reis-pad';
   baan.appendChild(svg);
   track.appendChild(baan);
 
-  plaatsen.forEach(b => {
+  plaatsen.forEach((b, k) => {
     const knop = document.createElement('button');
-    knop.className = 'reis-halte ' + b.staat + (b.uit ? ' uit' : '');
+    knop.className = 'reis-halte ' + b.staat + (b.uit ? ' uit' : '') + (b.vol ? ' vol' : '');
     knop.dataset.w = b.i;
     knop.style.left = b.x.toFixed(2) + '%';
-    knop.style.bottom = `calc(var(--reis-stap) * ${(REIS.onder + b.i).toFixed(2)})`;
-    // de kleuren van de wereld, als los licht om zijn bestemming heen. Een wereld
-    // die nog niet uit is geeft er geen: die heeft nog geen kleur in dit spel.
+    knop.style.bottom = `calc(var(--reis-stap) * ${b.y.toFixed(3)})`;
+    // de kleuren van de wereld, als sfeer om zijn bestemming heen. Een wereld die
+    // nog niet uit is geeft er geen: die heeft nog geen kleur in dit spel.
     if (b.staat !== 'mist') applyWorldTheme(knop, b.world);
     const plaats = document.createElement('span');
     plaats.className = 'reis-plaats';
-    /* De tekening alleen voor werelden waar ze al geweest is -- en dan nog pas als
-       de bestemming in de buurt van het venster komt (zie reisStartWaarnemer). Een
-       wereld op slot krijgt zijn silhouet: je mag zien dát er iets is, niet wát, en
-       er wordt geen bestand van 300 kB opgehaald voor een plek waar je nog niet
-       mag komen. */
-    if (b.open && b.world.art) {
+    /* De tekening hóórt erbij, ook als de wereld nog op slot zit: "ik zie de
+       piratenwereld daarboven liggen" is precies waarom een kind doorspeelt. Hij
+       staat er dan ontkleurd en gedimd bij (zie .reis-halte.verder). Alleen een
+       wereld die nog niet uitgebracht is krijgt er geen -- dat zou verklappen wat
+       er nog niet is -- en alleen wat in de buurt van het venster komt wordt
+       opgehaald (zie reisStartWaarnemer). */
+    if (b.staat !== 'mist' && b.world.art) {
       const art = document.createElement('span');
       art.className = 'reis-art';
       art.dataset.art = b.world.art;
@@ -6817,21 +6951,33 @@ function renderReis() {
       ico.textContent = b.staat === 'mist' ? '?' : (b.world.icon || '🌍');
       plaats.appendChild(ico);
     }
-    knop.appendChild(plaats);
-    if (b.staat === 'verder') {
-      knop.insertAdjacentHTML('beforeend', '<span class="reis-slot" aria-hidden="true">🔒</span>');
-    }
-    // uitgespeeld: één klein zegel, en verder niets. De sterren per show horen op
-    // de wereldkaart -- hier gaat het over hele werelden.
-    if (b.uit) knop.insertAdjacentHTML('beforeend', '<span class="reis-zegel" aria-hidden="true">✓</span>');
+    /* Naam en sterren liggen ín de tekening. Eén ding dus, in plaats van een kaartje
+       met een pil eronder en een badge ernaast -- en de sterrenteller is meteen het
+       antwoord op de vraag die de kaart tot nu toe niet beantwoordde: hoe góed heb
+       ik die wereld gedaan? Een wereld op slot krijgt geen teller: daar valt nog
+       niets te tellen. */
     if (b.staat !== 'mist') {
-      knop.insertAdjacentHTML('beforeend', `<span class="reis-naam">`
-        + (b.world.icon ? `<span aria-hidden="true">${b.world.icon}</span>` : '')
-        + `<span class="rn-tekst">${esc(b.world.name)}</span></span>`);
+      plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
+        + `<span class="rn-tekst">${esc(b.world.name)}</span>`
+        + (b.open ? `<span class="reis-sterren">${reisSterSVG()}${b.sterren}/${b.max}</span>` : '')
+        + `</span>`);
     }
+    /* Eén zegelplek, hooguit één teken: vol (ster) gaat vóór uit (vinkje), en op
+       slot heeft zijn eigen donkere variant. Nooit twee badges op één kaart. */
+    if (b.vol) plaats.insertAdjacentHTML('beforeend',
+      `<span class="reis-zegel" aria-hidden="true">${reisSterSVG()}</span>`);
+    else if (b.uit) plaats.insertAdjacentHTML('beforeend',
+      '<span class="reis-zegel" aria-hidden="true">✓</span>');
+    else if (b.staat === 'verder') plaats.insertAdjacentHTML('beforeend',
+      '<span class="reis-zegel slot" aria-hidden="true">🔒</span>');
+    knop.appendChild(plaats);
     if (b.i === doel) {
+      // een tikje naar de kant waar de route verdergaat: dan kijkt ze de reis in
+      const volgende = plaatsen[k + 1];
+      const kant = volgende ? Math.max(-12, Math.min(12, (volgende.x - b.x) * 1.2)) : 0;
+      knop.style.setProperty('--pop-kant', kant.toFixed(1) + 'px');
       knop.insertAdjacentHTML('beforeend',
-        `<div class="reis-ster"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
+        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
     if (b.open) knop.onclick = () => reisNaarWereld(b.i, knop);
@@ -6852,15 +6998,15 @@ function renderReis() {
     + `<span style="top:54%;font-size:22px;animation-duration:112s;animation-delay:-74s">☁️</span>`
     + `<span class="rev" style="top:74%;font-size:18px;animation-duration:86s;animation-delay:-30s">✨</span>`
     + `</div></div>`
-    + (allWorldsDone(p) ? `<div class="reis-verder">✨ Wordt vervolgd</div>` : '');
+    + (allWorldsDone(p) ? `<div class="reis-vervolg">✨ Wordt vervolgd</div>` : '');
   track.appendChild(mist);
 }
 /* De wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk), en
-   op dit scherm staan er in principe net zoveel als er werelden zijn. Dus: alleen
-   werelden waar dit kind al geweest is krijgen er een (die staan al in de cache --
-   de kaart heeft ze getoond en de service worker bewaart ze), en ook die pas als
-   hun bestemming in de buurt van het venster komt. In de praktijk kost dit scherm
-   daarmee geen enkele nieuwe aanvraag.
+   op dit scherm staan er net zoveel als er werelden zijn. Dus: pas ophalen als de
+   bestemming in de buurt van het venster komt. Werelden waar ze al geweest is staan
+   sowieso al in de cache (de kaart heeft ze getoond en de service worker bewaart
+   ze); een wereld die nog op slot zit kost bij het omhoog kijken één keer een
+   bestand, en dat is precies wat die verleiding waard is.
 
    Geen IntersectionObserver in deze browser? Dan gewoon alles ineens -- een oud
    toestel krijgt liever een paar plaatjes te veel dan een scherm met lege vakken. */
@@ -6891,9 +7037,9 @@ function reisStopWaarnemer() {
    zoeken. Ook niet precies in het midden -- dan ligt er evenveel achter als vóór
    haar, en deze reis gaat over wat er nog komt.
 
-   62% van de vensterhoogte zet haar net onder het midden: een stuk gereisde weg
-   eronder, zij erop, en boven haar de eerstvolgende bestemming in beeld. Verder
-   schuiven mag gewoon; dit is alleen waar het begint. */
+   60% van de vensterhoogte zet haar net onder het midden: een stuk gereisde weg
+   eronder, zij erop, en boven haar de eerstvolgende bestemming in beeld. Alleen bij
+   het openen; daarna schuift een kind zelf en wordt ze nooit teruggesleept. */
 function reisFocus() {
   const scherm = $('screen-journey');
   const track = $('reis-track');
@@ -6904,7 +7050,47 @@ function reisFocus() {
   if (!r.height) return;
   const mid = (r.top + r.height / 2) - s.top + scherm.scrollTop;
   const max = Math.max(0, scherm.scrollHeight - scherm.clientHeight);
-  scherm.scrollTop = Math.max(0, Math.min(max, mid - scherm.clientHeight * 0.62));
+  scherm.scrollTop = Math.max(0, Math.min(max, mid - scherm.clientHeight * 0.6));
+  reisVolgKnop();
+}
+/* Ben je zover weggescrold dat je jezelf niet meer ziet, dan -- en alleen dan --
+   verschijnt er rechtsonder een knopje terug. Geen vaste knop "voor het geval dat":
+   zolang ze in beeld staat is er niets terug te gaan.
+
+   Meet en tekent niets zwaars: één vergelijking van twee rechthoeken, en de klasse
+   verandert alleen als het antwoord ánders is dan het al was. Hij hangt aan de
+   scroll van het scherm, dus hij loopt achter een rAF aan. */
+let reisVolgWacht = false;
+function reisVolgKnop() {
+  const scherm = $('screen-journey'), knop = $('reis-terug');
+  if (!scherm || !knop) return;
+  const doel = $('reis-track').querySelector('.reis-halte.nu');
+  if (!doel) { knop.classList.remove('aan'); return; }
+  const r = doel.getBoundingClientRect(), s = scherm.getBoundingClientRect();
+  // ruim gerekend: pas als ze écht weg is, niet als haar rand net wegvalt
+  const weg = r.bottom < s.top + 40 || r.top > s.bottom - 40;
+  knop.classList.toggle('aan', weg);
+  // wijst de kant op waar ze staat, zodat het knopje zegt wáár je heen gaat
+  knop.textContent = r.top > s.bottom - 40 ? '↓' : '↑';
+}
+function reisScroll() {
+  if (reisVolgWacht) return;
+  reisVolgWacht = true;
+  requestAnimationFrame(() => { reisVolgWacht = false; reisVolgKnop(); });
+}
+// Zacht terug naar waar ze staat. Geen sprong: dit is de enige plek waar dit scherm
+// zelf scrollt terwijl een kind aan het kijken is, en dan hoort het te glijden.
+function reisTerugNaarNu() {
+  sndClick();
+  const scherm = $('screen-journey');
+  const doel = $('reis-track').querySelector('.reis-halte.nu');
+  if (!scherm || !doel) return;
+  const r = doel.getBoundingClientRect(), s = scherm.getBoundingClientRect();
+  const mid = (r.top + r.height / 2) - s.top + scherm.scrollTop;
+  const max = Math.max(0, scherm.scrollHeight - scherm.clientHeight);
+  const top = Math.max(0, Math.min(max, mid - scherm.clientHeight * 0.6));
+  if (scherm.scrollTo && !motionOff()) scherm.scrollTo({ top, behavior: 'smooth' });
+  else scherm.scrollTop = top;
 }
 /* De wereld waar de kaart stond toen de reis openging. De ← van dit scherm brengt
    je daar terug -- weglopen van de reis is nooit "ergens anders uitkomen". */
@@ -6953,8 +7139,8 @@ function reisSluit() {
   const idx = reisVanuit == null ? continueWorld(P()) : reisVanuit;
   reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`));
 }
-/* Een bestemming kiezen = inzoomen op die plek. De reis duikt naar het aangetikte
-   medaillon toe en laat los; de kaart van die wereld komt uit datzelfde punt op --
+/* Een bestemming kiezen = inzoomen op die plek. De reis duikt naar de aangetikte
+   tekening toe en laat los; de kaart van die wereld komt uit datzelfde punt op --
    letterlijk dezelfde beweging als een halte binnengaan op de kaart (zie
    enterLevel), één niveau hoger.
 
@@ -6983,7 +7169,7 @@ function reisNaarWereld(idx, el) {
   tapRipple(punt.x, punt.y);
   const plaats = el.querySelector('.reis-plaats');
   if (plaats && plaats.animate) plaats.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1.04)' }],
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.09)' }, { transform: 'scale(1.03)' }],
     { duration: 240, easing: MOTION.plop, fill: 'forwards' });
   schermWeg(reis, true, punt);
   goMap();                                   // de kaart staat er nú al, op reisDoel
