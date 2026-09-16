@@ -4356,31 +4356,22 @@ function artIjskroon() {
     + `<path d="M100 15 L104.5 35 L100 35 Z" fill="#e8f7ff"/>`
     + `<path d="M83.4 27 Q84 29.4 86.4 30 Q84 30.6 83.4 33 Q82.8 30.6 80.4 30 Q82.8 29.4 83.4 27 Z" fill="#ffffff"/>`;
 }
-/* 🪄 Toverhoed -- en dat is met opzet dezelfde hoed als acc_tovenaarshoed, die
-   al in de winkel stond. De Toverwereld hoefde geen nieuw hoofddeksel: er was er
-   al één die precies goed was, en twee bijna-gelijke tovenaarshoeden naast
-   elkaar zijn erger dan één die twee keer te halen is.
+/* 🪄 Tovenaarshoed -- de puntmuts met de gouden sterren. Dit is de tekening die
+   al in het spel zat voor het winkelitem acc_tovenaarshoed; dat item is weg en de
+   vorm bleef, nu als de beloning van de Toverwereld.
 
-   `tip` is het enige verschil: de winkelhoed loopt vanaf y = 0 (die stond er al
-   zo, en dat blijft zo), de beloning begint op y = 8 zodat hij even hoog reikt
-   als de andere vijf wereldbeloningen. De sterren schuiven mee: ze staan op
-   vaste breuken van de kegelhoogte in plaats van op vaste y-waarden.
-   `groot` maakt ze een maatje groter voor het miniatuur, waar ze anders
-   wegvallen. */
-function wizardHatArt(tip, groot) {
-  tip = tip || 0;
-  const h = 44 - tip;
-  const s1 = Math.round(tip + h * 0.86), s2 = Math.round(tip + h * 0.53);
-  return `<path d="M100 ${tip} L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>`
+   Één ding is er veranderd: de punt begon op y = 0 en begint nu op y = 8. Dat
+   was de hoogste van de zes en stak er dus uit; op 8 reikt hij even ver als het
+   ijskroontje en het notenkroontje ernaast. De sterren staan daarom op een breuk
+   van de kegelhoogte en niet op een vaste y -- zo blijven ze op hun plek zitten
+   als de punt ooit nog verschuift. */
+const TOVERHOED_PUNT = 8;
+function artToverhoed() {
+  const t = TOVERHOED_PUNT, h = 44 - t;
+  return `<path d="M100 ${t} L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>`
     + `<path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>`
-    + `<text x="${groot ? 90 : 92}" y="${s1}" font-size="${groot ? 13 : 12}" fill="#ffd54f">★</text>`
-    + `<text x="${groot ? 98 : 99}" y="${s2}" font-size="${groot ? 10 : 9}" fill="#ffd54f">★</text>`;
-}
-// de tovenaarshoed heeft een eigen getekende vorm op de paspop; toon díe in de
-// kleedkamer (de 🧙-emoji toont een hele tovenaar en is verwarrend)
-function wizardHatThumb(tip) {
-  tip = tip || 0;
-  return beloningThumb(`68 ${tip - 3} 64 ${57 - tip}`, wizardHatArt(tip, true));
+    + `<text x="92" y="${Math.round(t + h * 0.86)}" font-size="12" fill="#ffd54f">★</text>`
+    + `<text x="99" y="${Math.round(t + h * 0.53)}" font-size="9" fill="#ffd54f">★</text>`;
 }
 /* Het miniatuur is elke keer dezelfde tekening, alleen strak uitgesneden:
    itemThumb geeft hem 52 pixels hoogte en de viewBox doet de rest, dus krapper
@@ -4463,8 +4454,6 @@ const ITEMS = [
   { id: 'acc_feesthoed', cat: 'acc', name: 'Feesthoedje',   price: 30, emoji: '🎉', spot: 'top' },
   { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
   { id: 'acc_bloemkrans',cat: 'acc', name: 'Bloemenkrans',  price: 55, emoji: '🌼', spot: 'top' },
-  { id: 'acc_tovenaarshoed', cat: 'acc', name: 'Tovenaarshoed', price: 85, emoji: '🧙',
-    draw: () => wizardHatArt(0),  thumb: () => wizardHatThumb(0) },
   { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 120, emoji: '💎', spot: 'top' },
   /* FASE 4D.1 -- de wereldbeloningen. Eén hoofdstuk per wereld, en je krijgt het
      niet van je diamanten maar doordat je die wereld uitspeelt (zie WORLDS.beloning
@@ -4500,11 +4489,13 @@ const ITEMS = [
     draw: () => artPiratenhoed(), thumb: () => beloningThumb('57 13 86 48', artPiratenhoed()) },
   { id: 'acc_wereld_ijs',     cat: 'acc', name: 'IJskroontje',   full: 'IJskroontje',   emoji: '❄️',
     draw: () => artIjskroon(),    thumb: () => beloningThumb('72 9 56 45', artIjskroon()) },
-  /* De Toverwereld deelt de tovenaarshoed uit die hierboven al te koop staat --
-     zie wizardHatArt. Het id blijft acc_wereld_tover: wie hem al verdiend had
-     houdt hem gewoon, en ziet vanaf nu de hoed in plaats van een maantje. */
-  { id: 'acc_wereld_tover',   cat: 'acc', name: 'Toverhoed',     full: 'Toverhoed',     emoji: '🪄',
-    draw: () => wizardHatArt(8),  thumb: () => wizardHatThumb(8) },
+  /* De tovenaarshoed is er nog maar één, en dit is hem. Hij stond hier ook te
+     koop voor 85 diamanten; die tweede is weg (zie migrate), want twee
+     bijna-gelijke hoeden naast elkaar maakten de beloning goedkoop -- wie de
+     winkelhoed had, had de Toverwereld al in haar kast staan zonder hem te
+     spelen. Het id blijft acc_wereld_tover. */
+  { id: 'acc_wereld_tover',   cat: 'acc', name: 'Tovenaarshoed', full: 'Tovenaarshoed', emoji: '🪄',
+    draw: () => artToverhoed(),   thumb: () => beloningThumb('69 5 62 49', artToverhoed()) },
   // Huisdieren
   { id: 'pet_poes',   cat: 'pet', name: 'Poesje',        price: 22,  emoji: '🐈' },
   { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
@@ -5678,6 +5669,25 @@ function migrate(p) {
     p.equipped.shoes = 'shoes_roze';
     if (!p.owned.includes('shoes_roze')) p.owned.push('shoes_roze');
   }
+  /* ---- FASE 4D.2: nog maar één tovenaarshoed --------------------------------
+     Er waren er twee: acc_tovenaarshoed voor 85 diamanten in de kleedkamer, en
+     acc_wereld_tover als beloning van de Toverwereld. Sinds die laatste écht
+     getekend is zijn het dezelfde hoed, en dan is de beloning niets meer waard
+     voor wie de andere al kocht. De winkelhoed is daarom uit ITEMS gehaald.
+
+     Wat hier gebeurt is het opruimen daarna, en niet meer dan dat: een id dat
+     niet meer bestaat hoort niet in owned te blijven staan (het zou daar als
+     spookitem voor altijd meetellen bij "spulletjes gekocht"), en al helemaal
+     niet aan te staan -- avatarSVG vindt er geen item bij en tekent dan stil
+     niets, wat er voor een kind uitziet als een hoed die zomaar verdwenen is.
+     Nu gaat hij netjes af, en staat de kale kop er tenminste met reden.
+
+     Eenmalig in de praktijk maar geschreven om elke keer te mogen draaien: de
+     tweede keer vindt hij niets meer. Geen terugbetaling -- dat is een keuze,
+     geen vergetelheid. En wie een trofee haalde met dit spulletje meegeteld
+     houdt die gewoon: behaalde trofeeen worden nooit ingetrokken. */
+  if (p.owned) p.owned = p.owned.filter(id => id !== 'acc_tovenaarshoed');
+  if (p.equipped && p.equipped.acc === 'acc_tovenaarshoed') p.equipped.acc = null;
 }
 // Werkt de vaardigheidsinschatting bij na elk antwoord (exponentieel voortschrijdend gemiddelde).
 // Goed = omhoog (extra beloond bij snel binnen de spotlight), fout = omlaag.
@@ -6141,9 +6151,9 @@ function avatarSVG(p, width, bigProps) {
        regels hieronder met de hand doen voor het kroontje, de bril enzovoort --
        met dit haakje hoeft er voor een nieuw item geen regel bij.
 
-       De zes wereldbeloningen en de tovenaarshoed lopen hierlangs (fase 4D.2): hun
-       vormen staan bij ITEMS zelf, niet hier. Wie géén `draw` meebrengt tekent zijn
-       emoji via spot ('top' = op het hoofd, 'zij' = in het haar). */
+       De zes wereldbeloningen lopen hierlangs (fase 4D.2): hun vormen staan bij
+       ITEMS zelf, niet hier. Wie géén `draw` meebrengt tekent zijn emoji via spot
+       ('top' = op het hoofd, 'zij' = in het haar). */
     // (base, uid): de basis voor wie de vorm moet meebewegen, en het nummer van
     // déze tekening -- nodig om een eigen kleurverloop een id te geven dat niet
     // botst met de tien andere paspoppen die tegelijk op het scherm staan.
@@ -10653,8 +10663,8 @@ function itemThumb(it, base) {
   const zone = (inner, extra) => `<div class="item-thumb${extra ? ' ' + extra : ''}">${inner}</div>`;
   /* Een item mag zijn eigen miniatuur meebrengen -- dezelfde afspraak als acc.draw
      bij de paspop, maar dan in zijn eigen vakje (52px hoog) i.p.v. in de 200x250 van
-     de pop. De zes wereldbeloningen en de tovenaarshoed doen dat (fase 4D.2); de rest
-     tekent zijn emoji, en dat is voor een strik of een zonnebril prima.
+     de pop. De zes wereldbeloningen doen dat (fase 4D.2); de rest tekent zijn
+     emoji, en dat is voor een strik of een zonnebril prima.
 
      Let op de volgorde: thumb() gaat vóór emoji. Een item mag dus allebei hebben --
      de emoji blijft dan staan voor de plekken die geen SVG aankunnen (de naam in de

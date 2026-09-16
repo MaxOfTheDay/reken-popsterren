@@ -4,7 +4,10 @@
 > `thumb()` in `ITEMS`; the ids never changed, so anyone who had already earned one
 > simply sees the finished drawing. One concept changed along the way: Toverwereld
 > does **not** get the Maanhoedje of §4 — it hands out the wizard hat that was
-> already in the game (`acc_tovenaarshoed`), drawn from the shared `wizardHatArt()`.
+> already in the game. That hat used to *also* be on sale for 85 💎 as
+> `acc_tovenaarshoed`; the shop copy has since been deleted, because owning it made
+> the Toverwereld reward worthless. There is now exactly one wizard hat and you earn
+> it. `migrate()` drops the dead id from old saves (no refund — a deliberate call).
 > The rest of this brief is the reasoning it was built on, and still describes how
 > a seventh world adds its reward.
 
@@ -26,7 +29,7 @@ Everything a doll wears is drawn in code. `avatarSVG()` emits one inline
 |---|---|---|
 | a colour | `dress_blauw`, `hair_rood` | `color: '#29b6f6'` (or `'RAINBOW'`) |
 | a pattern over a shape | `dress_sterren` | `pattern: 'stars'`, drawn from `PAT_JURK` / `PAT_SHIRT` |
-| its own shape | `acc_kroon`, `acc_tovenaarshoed` | a hand-written SVG path |
+| its own shape | `acc_kroon`, the six world rewards | a hand-written SVG path |
 
 There is no `<image>`, no sprite sheet and no per-item PNG anywhere in the app. The only
 raster files in the repo are world maps and the landing background (`assets/world/*.webp`,
@@ -74,8 +77,9 @@ SVG markup, inserted into the doll's `viewBox="0 0 200 250"`, in the accessory l
 
 - **Coordinate space** is that viewBox — `x` 0–200 left to right, `y` 0–250 top to bottom.
 - **The head** is the circle `cx=100 cy=72 r=32`. The skull top is at `y ≈ 40`.
-- **Free room above the head:** `y` 0 → 40, full width. `acc_tovenaarshoed` uses `y=0` as
-  its tip, so the whole band is usable and nothing is clipped.
+- **Free room above the head:** `y` 0 → 40, full width. Nothing is clipped up there — the
+  wizard hat's tip used to sit at `y=0`. The six rewards deliberately stop between
+  `y = 8` and `y = 20` so they read as one set, not because they have to.
 - **Free room beside the head:** roughly `x` 40–70 and `x` 130–160 at `y` 40–70. The
   `spot: 'zij'` items sit at `(53, 54)`.
 - **Do not go below `y = 94`** — that is the neck, and the clothes are drawn after you and
@@ -101,7 +105,8 @@ Optional: without it the card shows the item's `emoji`. All six rewards define o
   viewBox, or any inline markup.
 - The six rewards use `beloningThumb(view, art)`: the *same* `art...()` function as `draw()`,
   under a tight viewBox. One drawing, three places (doll, card, reveal) — no second version
-  that can drift. `wizardHatThumb()` does the same for both wizard hats.
+  that can drift. Crop tight: the box is 52 px tall, so the viewBox decides how big the
+  thing lands in it.
 - Skip it if `draw()` already reads well small; the emoji fallback is not an embarrassment.
 
 ### What stays as it is
@@ -135,7 +140,7 @@ the wardrobe bar, not as its picture.
 | 🌴 Junglewereld | Bladerkrans | A ring of broad green leaves around the crown, one hibiscus flower off to one side. | ✅ |
 | 🏴‍☠️ Piratenwereld | Piratenhoed | A black tricorn with a gold rim and a small cream skull on the front. | ✅ |
 | ❄️ IJswereld | IJskroontje | A crown of pale blue ice shards, uneven heights, with a white glint. | ✅ |
-| 🪄 Toverwereld | Toverhoed | The wizard hat the game already had (`acc_tovenaarshoed`), seated 8 units lower so its tip lines up with the rest of the set. Shared drawing: `wizardHatArt(tip, groot)`. | ✅ |
+| 🪄 Toverwereld | Tovenaarshoed | The wizard hat the game already had, seated 8 units lower (`TOVERHOED_PUNT`) so its tip lines up with the rest of the set. The 85 💎 shop copy is gone; this is the only one. | ✅ |
 
 Each one is a *hat-shaped* thing on purpose: they then read as a set, they never collide
 with the hair, and the child's own colour choices stay visible underneath.
