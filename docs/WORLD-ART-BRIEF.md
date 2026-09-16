@@ -361,23 +361,27 @@ gradient; a bright drawing can swallow it. That is the field §7's checklist is 
 - Whether 1215 × 2160 is the right storage size for your generator, or whether it caps
   lower (see §1). One constant either way.
 
-## 11. The venue — a second drawing per world (phase 3.1, Music only)
+## 11. The venue — a second drawing per world (phase 3.3: every world)
 
 A world map is the place you *choose*. A venue is the place you *are* once you tapped a
-stop. Phase 3.1 builds that second view for exactly one world — Muziekwereld — as the
-reference the other five will copy later. Nothing here is rolled out yet.
+stop. Phase 3.1 built that second view for one world as a reference; phase 3.3 turned it
+into the way **every** world plays its shows. Same screen, same layout, same place for the
+sum — only the light changes. Nothing about this needs new art to work.
 
 ### What the app does today
 
-`WORLDS[0]` carries one extra key:
+No world has to declare anything. `VENUE_TERUGVAL` in `index.html` holds the default:
 
 ```js
-venue: { art: null, zoom: 230, focus: '50% 22%', blur: 9 },
+const VENUE_TERUGVAL = { art: null, zoom: 220, focus: '70% 14%', blur: 11, dim: .62, op: .96 };
 ```
 
-`art: null` means **fall back to the world map drawing itself** (`venueArt()` in
-`index.html`). That is not a placeholder standing in for a missing file — it is the
-cheapest correct answer available right now:
+A `venue:` key on a world overrides only the fields it names — three worlds currently set
+nothing but `dim`, because their maps are the lightest and the darkest of the six.
+
+`art: null` means **fall back to the world map drawing itself** (`venueArt()`). That is not
+a placeholder standing in for a missing file — it is the cheapest correct answer available
+right now:
 
 * it is the same hand, the same palette and the same light as the map the child just
   left, so the two screens read as one world;
@@ -385,25 +389,42 @@ cheapest correct answer available right now:
   showed it two hundred milliseconds ago. **The venue costs zero extra bytes and zero
   extra requests.**
 
-`zoom` / `focus` / `blur` then turn a map into a room: zoom in far enough that you are
-*inside* the drawing rather than looking down at it, aim at the part that reads as a
-stage, and blur until the shapes are light and colour instead of detail. The maths has to
-stay the sharpest thing on screen; see §4.3 of `ART-DIRECTION.md` for the readability
-contract this obeys.
+### Why the borrowed map never shows its edges
 
-A world **without** a `venue` key gets none of this and renders exactly as before.
+A map is a *portrait* drawing with a horizon, a coastline and buildings that stop at the
+frame. Zoom into one and ask it to fill the screen and the cut lands somewhere visible —
+on a landscape window a dead-straight coastline used to run right through the picture and
+half a tent sat against the screen edge. The drawing read as **cropped**, not as a room
+behind the performer.
 
-### If you want to draw a dedicated Music venue
+Phase 3.3 fixes that by changing what the drawing is *for* rather than which crop it uses
+(every crop has edges):
+
+1. **`.venue-sfeer`** — a seamless gradient in the world's own `theme` colours, covering
+   the whole screen. There is no image, so there is nothing to cut. Whatever happens
+   above it, the screen is closed.
+2. **`.venue-art`** — the borrowed map, blurred, at `opacity < 1`, and masked with a
+   **radial gradient that fades to nothing in every direction**. The mask is in percentages
+   of the element, so on any aspect ratio the screen edge lands in the transparent part of
+   the oval. Where the crop falls stops mattering.
+3. On landscape windows (`min-aspect-ratio: 1/1`) the same three knobs are turned further —
+   more zoom, more blur, less opacity — because a wide, short slice of a portrait drawing is
+   exactly where straight lines appear.
+
+So the venue art is **atmosphere**; the room itself (beam, floor ledge, footlight, vignette)
+is drawn in CSS and anchored to the avatar.
+
+### If you want to draw a dedicated venue for a world
 
 Then, and only then, these numbers matter:
 
 | | |
 |---|---|
-| path | `assets/bg/venue-muziek.webp` |
+| path | `assets/bg/venue-<wereld-id>.webp` (e.g. `venue-ijs.webp`) |
 | format | WebP, quality ~0.82 |
 | size | **1215 × 2160** (portrait 9:16, same as a world map — one constant, `ART_W`/`ART_H`) |
 | budget | ~125 kB |
-| settings to use | `venue: { art: 'assets/bg/venue-muziek.webp', zoom: 100, focus: '50% 50%', blur: 0 }` |
+| settings to use | `venue: { art: 'assets/bg/venue-ijs.webp', zoom: 100, focus: '50% 50%', blur: 0, dim: 1, op: 1 },` |
 
 What the drawing has to hold:
 
@@ -417,6 +438,10 @@ What the drawing has to hold:
   the avatar so they follow her on every screen size. A painted stage would sit at the
   wrong height the moment the layout changes.
 * **Do not draw a performer.** The child's own star is the performer.
+* **Bleed the edges into flat colour.** With `op: 1` and `blur: 0` the radial mask still
+  applies, so the outer band of the drawing fades into `.venue-sfeer`. Keep the world's
+  `theme.sky` / `theme.deep` hues out there and the seam stays invisible.
 
-Adding the file is a one-line change to `WORLDS[0].venue` plus one entry in `sw.js`'s
-`ASSETS` and a bumped `CACHE` — same procedure as §7 for a map drawing.
+Adding the file is a one-line change to that world's `venue` plus one entry in `sw.js`'s
+`ASSETS` and a bumped `CACHE` — same procedure as §7 for a map drawing. Worlds you have
+not drawn a venue for keep the fallback; the two can coexist indefinitely.
