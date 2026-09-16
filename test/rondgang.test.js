@@ -456,6 +456,100 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.kaart && !r.heen && !r.terug && r.actief === 1 && r.wegvallend === 0 && r.zalen === 2,
     'tien keer een show in en uit laat niets staan', JSON.stringify(r));
 
+  /* ---- 6f · Eén scherm tegelijk is leesbaar ----
+     De regel uit de bewegingstaal, als meting: op élk moment van een overgang
+     hoort er precies één dekkend scherm over het venster te liggen. Alleen het
+     scherm dat vertrekt wordt doorzichtig; het scherm dat aankomt beweegt.
+
+     Ging dat mis, dan stonden er halverwege twee halfdoorzichtige schermen over
+     de achtergrond van de app. Op de weg terug uit een show zag je dat het best:
+     het donkere paneel van het eindscherm hing als een brede donkere band dwars
+     over een verwassen wereldkaart, en verdween dan met een flits. Opgemeten op
+     120ms: eindscherm 53%, kaart 19%, en samen dekten ze niets af.
+
+     Vandaar deze twee metingen, en niet een schermafdruk: "hoe zag het eruit" is
+     werk voor de ogen, maar "er lag op geen enkel moment iets dekkends" is een
+     getal. De kaart moet daarbij van het eerste beeldje af op 1 staan -- fade't
+     die ook maar een tel mee, dan is er een beeldje zonder ondergrond. */
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    // een show spelen en op het eindscherm belanden
+    goMap(); await wacht(200);
+    startLevel(P().level); await wacht(300);
+    G.misses = 1; endLevel(true);
+    await wacht(1200);
+    const kaart = document.getElementById('screen-map');
+    const eind = document.getElementById('screen-end');
+    const op = el => +getComputedStyle(el).opacity;
+    // dekt dit scherm het hele venster af? (een rand van 0.5px is afronding)
+    const dekt = el => {
+      const b = el.getBoundingClientRect();
+      return b.left <= 0.5 && b.top <= 0.5
+        && b.right >= innerWidth - 0.5 && b.bottom >= innerHeight - 0.5;
+    };
+    const metingen = [];
+    document.getElementById('btn-end-next').click();
+    for (let i = 0; i < 30; i++) {
+      metingen.push({ kaart: op(kaart), eind: op(eind), maat: dekt(kaart) });
+      await new Promise(res => requestAnimationFrame(res));
+    }
+    return {
+      // op elk beeldje ligt er iets dekkends: de kaart eronder, of het eindscherm erover
+      dekkend: metingen.every(m => Math.max(m.kaart, m.eind) > 0.999),
+      // en de kaart is er altijd volledig -- hij beweegt, hij doft niet
+      kaartVol: metingen.every(m => m.kaart > 0.999),
+      // ondoorzichtig én zo groot als het venster: kleiner laat de randen los
+      kaartDekt: metingen.every(m => m.maat),
+      // het eindscherm is wél echt weggegaan (anders meet je een overgang die niet liep)
+      eindWeg: metingen.some(m => m.eind < 0.05),
+      laagst: Math.min(...metingen.map(m => Math.max(m.kaart, m.eind))).toFixed(3),
+    };
+  });
+  check(r.dekkend && r.eindWeg,
+    'op geen enkel beeldje van een overgang schemert de app-achtergrond erdoor', JSON.stringify(r));
+  check(r.kaartVol,
+    'de kaart komt ondoorzichtig op en beweegt alleen', JSON.stringify(r));
+  check(r.kaartDekt,
+    'en hij is op elk beeldje zo groot als het venster', JSON.stringify(r));
+
+  /* ---- 6g · ...en dat geldt óók op de weg naar binnen ----
+     Dezelfde meting, andere richting: een halte in. Hier stond het aankomende
+     scherm op scale(.94) translateY(10px) -- ondoorzichtig, maar 6% te klein, dus
+     je zag het als een kaartje midden in beeld met een rand van het vorige scherm
+     eromheen. Op de kaart viel dat het meest op aan de weg: de stippellijn stond
+     eerst kleiner en schoof daarna op zijn plek. Een aankomend scherm begint
+     daarom nooit kleiner dan 1. */
+  await page.evaluate(() => goMap());
+  await page.waitForTimeout(500);
+  r = await page.evaluate(async () => {
+    const spel = document.getElementById('screen-game');
+    const kaart = document.getElementById('screen-map');
+    const op = el => +getComputedStyle(el).opacity;
+    const dekt = el => {
+      const b = el.getBoundingClientRect();
+      return b.left <= 0.5 && b.top <= 0.5
+        && b.right >= innerWidth - 0.5 && b.bottom >= innerHeight - 0.5;
+    };
+    const metingen = [];
+    document.querySelector('.tour-stop.next').click();
+    for (let i = 0; i < 30; i++) {
+      metingen.push({ spel: op(spel), kaart: op(kaart), maat: dekt(spel) });
+      await new Promise(res => requestAnimationFrame(res));
+    }
+    quitGame();
+    return {
+      dekkend: metingen.every(m => Math.max(m.spel, m.kaart) > 0.999),
+      spelVol: metingen.every(m => m.spel > 0.999),
+      spelDekt: metingen.every(m => m.maat),
+      kaartWeg: metingen.some(m => m.kaart < 0.05),
+    };
+  });
+  await page.waitForTimeout(500);
+  check(r.dekkend && r.kaartWeg,
+    'een halte in: ook daar schemert er nooit iets doorheen', JSON.stringify(r));
+  check(r.spelVol && r.spelDekt,
+    'de zaal komt ondoorzichtig op en is nooit kleiner dan het venster', JSON.stringify(r));
+
   /* ---- 7 · Kleedkamer: kopen en aandoen ---- */
   await page.click('#nav-dress');
   await page.waitForTimeout(400);
