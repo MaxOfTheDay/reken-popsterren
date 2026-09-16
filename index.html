@@ -3226,6 +3226,59 @@
     100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.05); }
   }
 
+  /* ---- Wereldfeest (fase 4D.1): wereld uit, en/of overal drie sterren ----
+     Eén laag voor allebei. De vorm is met opzet die van een kaartje en niet die
+     van de trofee-onthulling: er wordt hier niets geopend, er wordt iets láten
+     zien. Vandaar geen kist, geen stralenkrans en geen spanning -- alleen wat je
+     nu hebt, met een confetti-kanon eromheen (dat komt uit confettiBurst, niet
+     uit de CSS).
+
+     Eén regel of twee, en de tweede is niet belangrijker dan de eerste: ze staan
+     onder elkaar in dezelfde vorm, want "je hebt een spulletje" en "je wereld is
+     perfect" zijn twee even grote dingen die toevallig samenvielen. */
+  .wereld-feest-overlay {
+    position: fixed; inset: 0; z-index: 96; display: flex; align-items: center; justify-content: center;
+    padding: 16px; cursor: pointer;
+    background: radial-gradient(circle at 50% 42%, rgba(74,20,140,.5), rgba(20,4,40,.66)); animation: popFade .3s ease;
+  }
+  /* pointer-events uit zodra hij wegfadet: die 300 ms zijn anders een laag glas
+     over de knop waar het kind net naartoe wilde */
+  .wereld-feest-overlay.closing { animation: popFade .3s ease reverse forwards; pointer-events: none; }
+  .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
+  .wf-kop { font-size: clamp(24px, 7.5vw, 30px); font-weight: 900; color: var(--c-white); line-height: 1.1;
+    text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); }
+  .wf-wereld { font-size: 15px; font-weight: 800; color: var(--gold-light); margin-top: 3px; }
+  .wf-rijen { display: flex; flex-direction: column; gap: 8px; margin: 13px 0 4px; }
+  /* Een regel is een plaatje links en twee woorden rechts -- links uitgelijnd, want
+     twee gecentreerde regels onder elkaar hebben geen gemeenschappelijke lijn en
+     lezen dan als twee losse plaatjes. */
+  .wf-rij { display: flex; align-items: center; gap: 11px; text-align: left;
+    padding: 9px 12px; border-radius: var(--r-sm);
+    background: rgba(255,214,90,.13); border: 2px solid var(--gold-accent); }
+  .wf-beeld { flex: none; width: 52px; display: flex; align-items: center; justify-content: center; }
+  /* het item leent het miniatuur uit de kleedkamer: één tekening, twee plekken */
+  .wf-beeld .item-thumb { margin: 0; }
+  .wf-trofee {
+    position: relative; display: grid; place-items: center; width: 46px; height: 46px;
+    border-radius: 50%; font-size: 26px; line-height: 1;
+    background: var(--glass-black-24); border: 2px solid var(--gold-accent);
+    box-shadow: 0 0 12px rgba(255,196,61,.45);
+  }
+  /* dezelfde ster in dezelfde hoek als op de behaalde kaart in de kast */
+  .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
+    font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .wf-tekst b { font-size: 16px; font-weight: 900; color: var(--gold-light); }
+  .wf-tekst span { font-size: 14px; font-weight: 700; color: var(--c-white); opacity: .92;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wf-verder { font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
+  .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
+  .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
+  @media (prefers-reduced-motion: reduce) {
+    .wereld-feest-overlay { animation: none; }
+    .wereld-feest .wf-rij { animation: none; }
+  }
+
   /* ===== Trofee-feestje, versie "dopamine" =====
      Vier momenten: (1) de klare kaart lokt met glans + wiebel, (2) de tik geeft
      een ripple, (3) het openen is een schatkist die openknalt met stralen,
@@ -3541,9 +3594,16 @@
   .item-status.owned { color: var(--muted-text-3); background: rgba(180,184,196,.25); }
   .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
   .item-status.new { color: var(--ink-on-gold); background: var(--gold-accent); animation: readyPulse 1.4s ease-in-out 2; }
+  /* FASE 4D.1 -- nog te verdienen bij een wereld. Bewust dezelfde rustige taal als
+     "te weinig diamanten" en niet iets prikkelends: het is een doel om naartoe te
+     spelen, geen aanbieding. Het wereld-icoon ernaast zegt bij wélke wereld. */
+  .item-status.slot { color: var(--gold-light); background: rgba(255,179,0,.13); opacity: .9; }
 
   /* bezit/aan staat op het kaartje via rustige kaartkleur: grijs = hebben, goud = aan. */
   .item-card.owned { border-color: rgba(180,184,196,.64); background: rgba(180,184,196,.10); }
+  /* en een beloning die nog niet van jou is staat een tikje op de achtergrond --
+     zichtbaar genoeg om ernaartoe te willen, stil genoeg om de kast niet te sturen */
+  .item-card.teverdienen .item-thumb { opacity: .55; }
   /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
   .dress-bar {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 39;
@@ -4257,6 +4317,31 @@ const ITEMS = [
   { id: 'acc_bloemkrans',cat: 'acc', name: 'Bloemenkrans',  price: 55, emoji: '🌼', spot: 'top' },
   { id: 'acc_tovenaarshoed', cat: 'acc', name: 'Tovenaarshoed', price: 85, emoji: '🧙' },
   { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 120, emoji: '💎', spot: 'top' },
+  /* FASE 4D.1 -- de wereldbeloningen. Eén hoofdstuk per wereld, en je krijgt het
+     niet van je diamanten maar doordat je die wereld uitspeelt (zie WORLDS.beloning
+     en beloningWereld hieronder).
+
+     Waarom hoofd-accessoires en geen outfits: de paspop is één tekening met twee
+     basissen (meisje/jongen, zie BASES), en alles wat aan het hóófd hangt is voor
+     allebei precies hetzelfde -- het hoofd staat op (100, 72) met straal 32, in
+     élke basis. Een kroontje hoeft dus maar één keer getekend te worden, werkt
+     meteen voor beide en kan nooit scheef op een jurk of een broek vallen.
+
+     Geen prijs: deze staan niet te koop. De kleedkamer leest dat aan
+     beloningItem() af en toont ze op slot tot de wereld uit is. Zet er dus géén
+     price bij -- dan zou de winkel ze alsnog verkopen.
+
+     Het emoji hieronder is de TIJDELIJKE tekening (fase 4D.1). De echte komt in
+     fase 4D.2 als een `draw`-functie op ditzelfde item: een stukje SVG in de
+     200x250-ruimte van de paspop, precies zoals acc_kroon en acc_tovenaarshoed
+     dat al doen. Het id verandert daarbij niet, dus wie het item dan al heeft
+     ziet gewoon de nieuwe tekening -- geen migratie, geen tweede item. */
+  { id: 'acc_wereld_muziek',  cat: 'acc', name: 'Notenkroontje', full: 'Notenkroontje', emoji: '🎵', spot: 'top' },
+  { id: 'acc_wereld_snoep',   cat: 'acc', name: 'Lollyhoedje',   full: 'Lollyhoedje',   emoji: '🍭', spot: 'top' },
+  { id: 'acc_wereld_jungle',  cat: 'acc', name: 'Bladerkrans',   full: 'Bladerkrans',   emoji: '🍃', spot: 'top' },
+  { id: 'acc_wereld_piraten', cat: 'acc', name: 'Piratenhoed',   full: 'Piratenhoed',   emoji: '🏴‍☠️', spot: 'top' },
+  { id: 'acc_wereld_ijs',     cat: 'acc', name: 'IJskroontje',   full: 'IJskroontje',   emoji: '❄️', spot: 'top' },
+  { id: 'acc_wereld_tover',   cat: 'acc', name: 'Maanhoedje',    full: 'Maanhoedje',    emoji: '🌙', spot: 'top' },
   // Huisdieren
   { id: 'pet_poes',   cat: 'pet', name: 'Poesje',        price: 22,  emoji: '🐈' },
   { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
@@ -4359,6 +4444,12 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
      de tournee             reisPlaatsen() rijgt hem als bestemming aan de reis
      de zaal                 venue (ontbreekt die: VENUE_TERUGVAL, en dat is de stand
                              van nu -- geen enkele wereld hoeft hem op te geven)
+     de beloning             beloning -> het id van een item uit ITEMS, dat je krijgt
+                             zodra deze wereld uit is (fase 4D.1). Weglaten mag: dan
+                             geeft die wereld geen spulletje.
+     de perfecte wereld      niets -- rebuildWorldBadges() zet er vanzelf een trofee
+                             bij, op hetzelfde id. Overal drie sterren is de enige
+                             voorwaarde en die is voor élke wereld gelijk.
 
    Zoek dus niet naar een tweede plek -- die is er niet, en als je er ooit een
    nodig lijkt te hebben, hoort het veld hier en niet daar.
@@ -4378,10 +4469,12 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
    die gespeeld mag worden.
 
    Velden die er nog NIET zijn omdat de app ze nog niet nodig heeft:
-   wereldbeloning, wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen loopt nog
-   steeds via p.level (een halte is speelbaar t/m p.level, en werelden staan op een
-   rij), en dat is precies genoeg. Komen die dingen er, dan komen ze hier als veld
-   bij -- niet als uitzondering ergens in een scherm. */
+   wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen loopt nog steeds via p.level
+   (een halte is speelbaar t/m p.level, en werelden staan op een rij), en dat is
+   precies genoeg. Komen die dingen er, dan komen ze hier als veld bij -- niet als
+   uitzondering ergens in een scherm.
+
+   (beloning stond in dat rijtje tot fase 4D.1; nu is het gewoon een veld.) */
 /* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
    door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
    Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan.
@@ -4403,6 +4496,7 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
 const WORLDS = [
   {
     id: 'muziek', name: 'Muziekwereld', icon: '🎵', levels: 8,
+    beloning: 'acc_wereld_muziek',
     art: 'assets/world/muziek-map.webp',
     theme: { road: '#9a86bd', sky: '#3a1f6e', deep: '#170a35', glow: '#7a2f63' },
     nodes: [
@@ -4427,6 +4521,7 @@ const WORLDS = [
   },
   {
     id: 'snoep', name: 'Snoepwereld', icon: '🍭', levels: 8,
+    beloning: 'acc_wereld_snoep',
     art: 'assets/world/snoep-map.webp',
     // bijna wit getekend: een tandje donkerder, anders praat de zaal mee met de som
     venue: { dim: .56 },
@@ -4453,6 +4548,7 @@ const WORLDS = [
   },
   {
     id: 'jungle', name: 'Junglewereld', icon: '🌴', levels: 8,
+    beloning: 'acc_wereld_jungle',
     art: 'assets/world/jungle-map.webp',
     theme: { sky: '#235640', deep: '#0c2a1d', glow: '#4a6b33', road: '#a8bf93' },
     nodes: [
@@ -4477,6 +4573,7 @@ const WORLDS = [
   },
   {
     id: 'piraten', name: 'Piratenwereld', icon: '🏴‍☠️', levels: 8,
+    beloning: 'acc_wereld_piraten',
     art: 'assets/world/piraten-map.webp',
     theme: { sky: '#13415c', deep: '#05141f', glow: '#2a5f72', road: '#c9a878' },
     nodes: [
@@ -4501,6 +4598,7 @@ const WORLDS = [
   },
   {
     id: 'ijs', name: 'IJswereld', icon: '❄️', levels: 8,
+    beloning: 'acc_wereld_ijs',
     art: 'assets/world/ijs-map.webp',
     // sneeuw en ijs: de lichtste tekening van alle zes
     venue: { dim: .54 },
@@ -4527,6 +4625,7 @@ const WORLDS = [
   },
   {
     id: 'tover', name: 'Toverwereld', icon: '🪄', levels: 8,
+    beloning: 'acc_wereld_tover',
     art: 'assets/world/tover-map.webp',
     // een nachttekening: die hoeft niet nóg donkerder gemaakt te worden
     venue: { dim: .82 },
@@ -4652,6 +4751,9 @@ function worldsSource() {
     // 'released: true' schrijven, dan kwam er uit de studio een blok terug dat
     // niet meer letterlijk gelijk is aan wat erin ging.
     if (w.released === false) L.push('    released: false,');
+    // Het spulletje dat deze wereld uitdeelt (fase 4D.1). De studio bewerkt het niet,
+    // maar moet het wél teruggeven -- anders schrijft "Bewaar" de beloning weg.
+    if (w.beloning) L.push(`    beloning: ${q(w.beloning)},`);
     if (w.art) L.push(`    art: ${q(w.art)},`);
     /* De zaal van deze wereld -- mag ontbreken (dan geldt VENUE_TERUGVAL), en elk
        veld erin mag apart ontbreken (dan geldt dát veld uit de terugval).
@@ -4805,6 +4907,86 @@ function markWorldSeen(p, i) {
   p.worldsSeen.push(w.id);
   save();
 }
+/* ================= Wereldbeloningen (fase 4D.1) ============================
+   Twee mijlpalen per wereld, en elk krijgt precies één ding:
+
+     wereld uit        -> het spulletje uit WORLDS.beloning (de kleedkamer)
+     perfecte wereld   -> de trofee 'perfect-<wereld>' (de kast)
+
+   "Wereld uit" en "perfect" worden hier niet opnieuw uitgerekend: ze komen uit
+   worldProgress(), dezelfde teller waar de kaart, de reis en de wereldbadge al op
+   staan. Er komt dus geen tweede waarheid bij over wat af is.
+
+   EN ER KOMT OOK GEEN VLAGGETJE BIJ dat zegt "deze beloning is al gegeven". Dat
+   staat er namelijk al: het spulletje staat in p.owned en de trofee in p.trophies.
+   Dát is het bewijs, en het is meteen het bewijs dat de kleedkamer en de kast
+   toch al gebruiken. Een los 'beloond'-lijstje ernaast kan alleen maar uit de pas
+   gaan lopen -- bijvoorbeeld als een back-up van vóór deze fase wordt teruggezet.
+
+   Daardoor is uitdelen vanzelf één keer: heeft ze het al, dan gebeurt er niets.
+   Een show overdoen, een wereld overdoen, de app opnieuw openen, een oude save --
+   allemaal hetzelfde antwoord. */
+// Het beloningsitem van een wereld, of null. Onbekend id = null: een wereld mag
+// naar een spulletje wijzen dat (nog) niet bestaat zonder de app te breken.
+function beloningItem(w) { return (w && w.beloning) ? (item(w.beloning) || null) : null; }
+// Andersom: van welke wereld komt dit spulletje? Puur afgeleid uit WORLDS, zodat er
+// geen tweede lijst is die bijgewerkt moet worden als er een wereld bijkomt.
+// Geeft de wereld terug (niet de index): de kleedkamer wil de naam en het icoon.
+function beloningWereld(itemId) { return WORLDS.filter(w => w.beloning === itemId)[0] || null; }
+// Te koop of te verdienen? Alles wat een wereld uitdeelt staat níét in de winkel.
+function isBeloning(itemId) { return !!beloningWereld(itemId); }
+// De trofee-id van de perfecte wereld. Zelfde vorm als de wereldbadge (zie
+// WERELD_BADGE): op het wereld-id, dus hernoemen raakt een behaalde trofee niet.
+const PERFECT_BADGE = 'perfect-';
+/* Een trofee rechtstreeks toekennen, zonder de omweg langs 'klaar om te openen'.
+   De gewone weg is checkTrophies -> readyTrophies -> het kind opent hem zelf in de
+   kast, en die blijft voor álle andere trofeeën gelden. De perfecte wereld is de
+   uitzondering, en met reden: die krijgt op het moment zelf zijn eigen onthulling
+   (zie wereldFeest). Zou hij daarnáást ook nog als cadeautje in de kast liggen,
+   dan is het twee keer dezelfde trofee -- één keer gevierd en één keer nog te
+   openen. Geeft terug of er nu echt iets bijgekomen is. */
+function awardTrophy(p, id) {
+  if (!p.trophies) p.trophies = [];
+  if (p.trophies.includes(id)) return false;
+  p.readyTrophies = (p.readyTrophies || []).filter(x => x !== id);
+  p.trophies.push(id);
+  return true;
+}
+/* Wat deze wereld dit kind nú nog schuldig is. Deelt uit wat er te geven valt en
+   zegt wat er bijgekomen is -- niet wat er al stond. Roep 'm gerust vaker aan:
+   de tweede keer is hij leeg.
+
+   Bewaart zelf niet. De aanroeper bepaalt wanneer er een save() volgt -- bij een
+   show is dat de save() die er toch al staat, bij het inladen die van load(). */
+function grantWorldRewards(p, i) {
+  const uit = { spul: null, perfect: null };
+  if (!worldAvailable(i)) return uit;
+  if (!p.owned) p.owned = [];   // half-kapotte back-up: liever niets uitdelen dan omvallen
+  const w = WORLDS[i];
+  const v = worldProgress(p, worldForIndex(i));
+  if (v.uit) {
+    const it = beloningItem(w);
+    if (it && !p.owned.includes(it.id)) { p.owned.push(it.id); uit.spul = it; }
+  }
+  if (v.vol) {
+    const id = PERFECT_BADGE + w.id;
+    if (awardTrophy(p, id)) uit.perfect = TROPHIES.find(t => t.id === id) || null;
+  }
+  return uit;
+}
+/* Alles wat dit kind al verdiend had voordat deze fase bestond. Draait bij het
+   inladen (zie migrate) en is met opzet stil: wie vijf werelden uit heeft hoort
+   vijf spulletjes in haar kleedkamer te vinden, en niet vijf feestjes op de rij
+   af te moeten tikken voor ze weer mag spelen.
+
+   Het is geen eenmalige migratie maar een vangnet dat elke keer draait, en dat is
+   het hele idee: er is niets te migreren omdat er niets bijgehouden wordt. Gaat er
+   ooit een feestje verloren (de app wordt tussen de show en de kaart door
+   weggeklikt), dan staat het spulletje er de volgende ochtend alsnog. */
+function grantHistoricRewards(p) {
+  for (let i = 0; i < WORLD_AVAIL; i++) grantWorldRewards(p, i);
+}
+
 /* De wereldbadges. Eén per wereld, en het is gewoon een trofee: de kast heeft al
    een claim-ceremonie, een glinstering, een "klaar"-stand, een stip in de navigatie
    en een haakje op het eindscherm. Een eigen badgesysteem ernaast zou dat allemaal
@@ -4821,9 +5003,10 @@ function markWorldSeen(p, i) {
 const WERELD_BADGE = 'wereld-';
 function rebuildWorldBadges() {
   for (let i = TROPHIES.length - 1; i >= 0; i--) {
-    if (TROPHIES[i].id.indexOf(WERELD_BADGE) === 0) TROPHIES.splice(i, 1);
+    const id = TROPHIES[i].id;
+    if (id.indexOf(WERELD_BADGE) === 0 || id.indexOf(PERFECT_BADGE) === 0) TROPHIES.splice(i, 1);
   }
-  const ids = [];
+  const ids = [], perfectIds = [];
   WORLDS.forEach((w, i) => {
     const id = WERELD_BADGE + w.id;
     ids.push(id);
@@ -4836,9 +5019,33 @@ function rebuildWorldBadges() {
         return trophyProgress(v.gespeeld, v.levels, 'shows gespeeld');
       },
     });
+    /* FASE 4D.1 -- en één per wereld voor "overal drie sterren". Hierboven staat
+       waarom dat eerst een tweede stánd op dezelfde kaart was en geen tweede kaart,
+       en dat argument gold zolang perfect alleen een randje was. Nu is het een
+       mijlpaal met een eigen moment: de wereld uitspelen levert een spulletje op,
+       hem perfect maken levert déze trofee op. Twee verschillende dingen om naartoe
+       te werken horen twee kaartjes te zijn -- op twee planken, zodat een kind niet
+       twee keer dezelfde wereldnaam naast elkaar ziet staan en moet uitzoeken welke
+       van de twee ze nu bedoelt.
+
+       De ster-rand op de wereldbadge blijft staan: die kost niets, hij is al
+       afgeleid, en hij is precies hetzelfde feit. */
+    const pid = PERFECT_BADGE + w.id;
+    perfectIds.push(pid);
+    TROPHIES.push({
+      id: pid, emoji: w.icon || '🌍', name: w.name, desc: 'Overal drie sterren',
+      has: q => worldProgress(q, worldForIndex(i)).vol,
+      ster: () => true,   // behaald = altijd de gouden rand: dát is wat perfect hier is
+      progress: q => {
+        const v = worldProgress(q, worldForIndex(i));
+        return trophyProgress(v.perfect, v.levels, 'shows perfect');
+      },
+    });
   });
-  const plank = TROPHY_SHELVES.filter(sh => sh.name.indexOf('Werelden') >= 0)[0];
+  const plank = TROPHY_SHELVES.filter(sh => sh.key === 'werelden')[0];
   if (plank) plank.ids = ids;
+  const perfectPlank = TROPHY_SHELVES.filter(sh => sh.key === 'perfect')[0];
+  if (perfectPlank) perfectPlank.ids = perfectIds;
 }
 
 /* De pedagogische klok. Dit was `ronde` in cityFor en stuurt wannéér de extra
@@ -4889,7 +5096,11 @@ const TROPHIES = [
   { id: 'stars15',    emoji: '⭐', name: 'Lokale ster',    desc: 'Ster-status: 12 ⭐',       has: p => totalStarCount(p) >= 12, progress: p => trophyProgress(totalStarCount(p), 12, 'sterren verzameld') },
   { id: 'stars30',    emoji: '🎶', name: 'Clubster',       desc: 'Ster-status: 30 ⭐',       has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
   { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster',      desc: 'Ster-status: 60 ⭐',       has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
-  { id: 'perfecttour', emoji: '🥇', name: 'Perfecte wereld', desc: '3 sterren in je eerste wereld', has: p => worldProgress(p, worldForIndex(0)).vol, progress: p => { const v = worldProgress(p, worldForIndex(0)); return trophyProgress(v.perfect, v.levels, 'shows perfect'); } },
+  /* FASE 4D.1 -- 'perfecttour' stond hier: "3 sterren in je eerste wereld", met de
+     hand vastgezet op wereld 0. Sinds deze fase heeft élke wereld zo'n trofee
+     (rebuildWorldBadges legt ze aan) en zou deze letterlijk hetzelfde zijn als
+     'perfect-muziek': twee kaarten, één prestatie. Dus met pensioen -- wie hem al
+     had houdt hem gewoon in p.trophies staan (zie RETIRED_TROPHIES). */
   { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
   { id: 'toegift25',  emoji: '🎆', name: 'Extra-showster', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
   // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
@@ -4914,10 +5125,15 @@ const TROPHY_SHELVES = [
   { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
   /* Per wereld één badge. De lijst wordt gevuld door rebuildWorldBadges() -- de
      werelden staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen
-     zou meteen uit de pas lopen. */
-  { name: '🌍 Werelden',            ids: [] },
+     zou meteen uit de pas lopen.
+
+     De `key` is waar rebuildWorldBadges() deze twee planken aan herkent. Dat ging
+     eerst op een stukje van de naam ('Werelden'), en dat brak zodra er een tweede
+     plank kwam die ook zo heet. */
+  { key: 'werelden', name: '🌍 Werelden',            ids: [] },
+  { key: 'perfect',  name: '🥇 Perfecte werelden',   ids: [] },
   { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
-  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'perfecttour', 'toegift', 'toegift25'] },
+  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'toegift', 'toegift25'] },
   { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
   { name: '👕 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning'] },
   { name: '🏆 Grote finale',         ids: ['kastvol'] },
@@ -4935,6 +5151,8 @@ const TROPHY_SHELVES = [
    ook al staat er geen enkele trofee meer tegenover. */
 const RETIRED_TROPHIES = new Set([
   'podiumbouwer',
+  // FASE 4D.1: opgegaan in de perfecte-wereld-trofee van wereld 1 ('perfect-muziek').
+  'perfecttour',
   'magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld',
   'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'
 ]);
@@ -4964,7 +5182,12 @@ function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + b, 0);
 // Hoeveel beschikbare werelden dit kind echt uitgespeeld heeft (voor de teller op
 // de Wereldtournee-trofee, en straks voor de wereldladder).
 function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if (worldDone(p, i)) n++; return n; }
-function boughtCount(p) { return Math.max(0, p.owned.length - (p.freebies || 5)); }   // gratis startspullen tellen niet als "gekocht"
+// Gratis startspullen tellen niet als "gekocht" -- en sinds fase 4D.1 de spulletjes
+// die een wereld uitdeelt ook niet: die zijn verdiend, niet gekocht, en zouden de
+// shop-trofeeën anders zes stuks cadeau doen.
+function boughtCount(p) {
+  return Math.max(0, p.owned.filter(id => !isBeloning(id)).length - (p.freebies || 5));
+}
 
 /* ================= Sterrencarrière ================= */
 // Eén doorlopende carrièreladder op basis van álle verdiende sterren (over alle
@@ -5183,6 +5406,16 @@ function migrate(p) {
     const tot = Math.min(WORLD_AVAIL - 1, worldFor(p.level).index);
     for (let i = 0; i <= tot; i++) if (WORLDS[i]) p.worldsSeen.push(WORLDS[i].id);
   }
+  /* FASE 4D.1 -- de beloningen die dit kind al verdiend had. Wie drie werelden uit
+     heeft hoort die drie spulletjes gewoon in haar kleedkamer te vinden, en wie er
+     één perfect speelde die trofee in haar kast. Stil, en zonder ook maar iets te
+     hoeven overspelen.
+
+     Geen stempel, geen versienummer, geen eenmalige lus: dit mág elke keer draaien,
+     want "al gegeven" staat in p.owned en p.trophies zelf (zie grantWorldRewards).
+     Het is daarmee tegelijk het vangnet voor een feestje dat verloren ging doordat
+     de app tussen de show en de kaart door dichtging. */
+  grantHistoricRewards(p);
   // bestaande spelers beginnen op hun huidige rang (geen bonus met terugwerkende
   // kracht voor sterren die ze al hadden); nieuwe rangen daarna betalen wél uit
   if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
@@ -5687,17 +5920,33 @@ function avatarSVG(p, width, bigProps) {
   s += `<path d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
   // accessoire op het hoofd / gezicht
   if (acc) {
-    if (acc.id === 'acc_strik') s += `<g transform="translate(100,36)"><path d="M0 0 L-17 -9 L-17 9 Z" fill="#ff4081"/><path d="M0 0 L17 -9 L17 9 Z" fill="#ff4081"/><circle r="5" fill="#c2185b"/></g>`;
-    if (acc.id === 'acc_bloem') s += `<text x="55" y="52" font-size="22">🌸</text>`;
-    if (acc.id === 'acc_bril') s += `<g><circle cx="88" cy="72" r="8.5" fill="#222"/><circle cx="112" cy="72" r="8.5" fill="#222"/><line x1="96" y1="72" x2="104" y2="72" stroke="#222" stroke-width="3"/></g>`;
-    if (acc.id === 'acc_koptel') s += `<path d="M68 58 A33 35 0 0 1 132 58" stroke="#e91e63" fill="none" stroke-width="7" stroke-linecap="round"/><circle cx="67" cy="68" r="8" fill="#ad1457"/><circle cx="133" cy="68" r="8" fill="#ad1457"/>`;
-    if (acc.id === 'acc_kroon') s += `<path d="M78 40 L84 22 L94 34 L100 18 L106 34 L116 22 L122 40 Z" fill="#ffd740" stroke="#c8a200" stroke-width="2"/><circle cx="100" cy="18" r="3" fill="#ff4081"/>`;
-    if (acc.id === 'acc_tovenaarshoed') s += `<path d="M100 0 L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>
-      <path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
-      <text x="92" y="38" font-size="12" fill="#ffd54f">★</text><text x="99" y="24" font-size="9" fill="#ffd54f">★</text>`;
-    // nieuwe extra's tekenen generiek via hun emoji: 'zij' = in het haar, 'top' = op het hoofd
-    if (acc.spot === 'zij') s += `<text x="53" y="54" font-size="24">${acc.emoji}</text>`;
-    if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
+    /* Een item mag zijn eigen tekening meebrengen: acc.draw() geeft een stukje SVG
+       terug in dezelfde 200x250-ruimte als de rest van de pop (hoofd op 100,72 met
+       straal 32; boven het hoofd is vrij vanaf y≈40 tot y=0). Dat is precies wat de
+       vier regels hieronder met de hand doen voor het kroontje, de bril enzovoort --
+       met dit haakje hoeft er voor een nieuw item geen vijfde regel bij.
+
+       FASE 4D.2 zet de echte wereldbeloningen hier neer: één `draw` op het item in
+       ITEMS, en er verandert verder niets. Zolang die er niet is tekent het emoji
+       via spot ('top' = op het hoofd, 'zij' = in het haar) -- goed genoeg om mee te
+       spelen, en dat is de bedoeling van deze fase. */
+    // (base, uid): de basis voor wie de vorm moet meebewegen, en het nummer van
+    // déze tekening -- nodig om een eigen kleurverloop een id te geven dat niet
+    // botst met de tien andere paspoppen die tegelijk op het scherm staan.
+    if (acc.draw) s += acc.draw(baseOf(p), uid);
+    else {
+      if (acc.id === 'acc_strik') s += `<g transform="translate(100,36)"><path d="M0 0 L-17 -9 L-17 9 Z" fill="#ff4081"/><path d="M0 0 L17 -9 L17 9 Z" fill="#ff4081"/><circle r="5" fill="#c2185b"/></g>`;
+      if (acc.id === 'acc_bloem') s += `<text x="55" y="52" font-size="22">🌸</text>`;
+      if (acc.id === 'acc_bril') s += `<g><circle cx="88" cy="72" r="8.5" fill="#222"/><circle cx="112" cy="72" r="8.5" fill="#222"/><line x1="96" y1="72" x2="104" y2="72" stroke="#222" stroke-width="3"/></g>`;
+      if (acc.id === 'acc_koptel') s += `<path d="M68 58 A33 35 0 0 1 132 58" stroke="#e91e63" fill="none" stroke-width="7" stroke-linecap="round"/><circle cx="67" cy="68" r="8" fill="#ad1457"/><circle cx="133" cy="68" r="8" fill="#ad1457"/>`;
+      if (acc.id === 'acc_kroon') s += `<path d="M78 40 L84 22 L94 34 L100 18 L106 34 L116 22 L122 40 Z" fill="#ffd740" stroke="#c8a200" stroke-width="2"/><circle cx="100" cy="18" r="3" fill="#ff4081"/>`;
+      if (acc.id === 'acc_tovenaarshoed') s += `<path d="M100 0 L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>
+        <path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
+        <text x="92" y="38" font-size="12" fill="#ffd54f">★</text><text x="99" y="24" font-size="9" fill="#ffd54f">★</text>`;
+      // nieuwe extra's tekenen generiek via hun emoji: 'zij' = in het haar, 'top' = op het hoofd
+      if (acc.spot === 'zij') s += `<text x="53" y="54" font-size="24">${acc.emoji}</text>`;
+      if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
+    }
   }
   // nek: klein bruggetje tussen kin en kraag -- voorkomt een donker gaatje
   // tussen hoofd en kleren, met toch nog een vleugje hals zichtbaar
@@ -8090,7 +8339,9 @@ function celebrateTrophy(t) {
 }
 // Ster-status omhoog: het nieuwe rang-icoon knalt naar voren met een uitbarsting
 // van datzelfde icoon eromheen. Tik of ~2,2s = weg. Aangeroepen vanaf endLevel.
-function rankUpCelebrate(rank) {
+// na (optioneel): wat er hierna nog aan de beurt is -- precies één keer, of je nu
+// zelf tikt of de timer hem sluit (zie endLevel).
+function rankUpCelebrate(rank, na) {
   sndWin();
   buzz([0, 50, 80, 50, 100]);
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -8109,8 +8360,90 @@ function rankUpCelebrate(rank) {
     + `<div class="rankup-badge">${rank.emoji}</div>`
     + `<div class="rankup-label">Nieuwe ster-status!</div>`
     + `<div class="rankup-name">${rank.name}</div></div>`, { fade: 300 });
-  ov.onclick = ov._close;
-  setTimeout(ov._close, 2200);
+  // De opvolger hangt aan het sluiten zelf en niet aan de timer: tikt een kind de
+  // rang weg, dan komt het volgende feestje meteen en niet pas als die timer toch
+  // nog afloopt (en dan twee keer).
+  let af = false;
+  const dicht = () => {
+    if (af) return;
+    af = true;
+    ov._close();
+    if (na) setTimeout(na, 320);   // de ene laag is weggefaded voor de volgende komt
+  };
+  ov.onclick = dicht;
+  setTimeout(dicht, 2200);
+}
+/* ================= Wereldfeest (fase 4D.1) =================================
+   Eén laag voor twee mijlpalen, en met opzet één en niet twee: de laatste show van
+   een wereld kan tegelijk de show zijn die hem perfect maakt, en dan zijn twee
+   schermen achter elkaar geen twee keer zo feestelijk maar twee keer zo lang.
+
+   Wat er staat is wat er gebeurd is, in die volgorde:
+     wereld uit   -> het spulletje dat je nu hebt
+     perfect      -> de trofee die je nu hebt
+   Allebei mogen alleen staan. Er staat nooit iets dat nog moet gebeuren, en er is
+   niets te kiezen: tikken sluit, en dan ben je terug op het eindscherm waar
+   "Verder op tournee" staat. Geen eigen navigatie dus -- de weg vooruit is de weg
+   die er al was.
+
+   Bewust klein gehouden: één pop, één uitbarsting confetti, en klaar. De
+   trofee-ceremonie van de kast (een kist die schudt en openknalt) is er voor het
+   moment dat een kind zélf een cadeautje opent; dit is een moment dat overkomt en
+   dat hoort korter te zijn. */
+function wereldFeest(f) {
+  if (!f || (!f.spul && !f.perfect)) return;
+  const reduce = motionOff();
+  const w = f.wereld;
+  // De kop zegt het grootste dat er gebeurd is. "Wereld uit!" wint van "Perfecte
+  // wereld!" als ze samenvallen -- dan staat perfect eronder als de bonusregel.
+  const kop = f.spul ? 'Wereld uit!' : 'Perfecte wereld!';
+  let rijen = '';
+  if (f.spul) {
+    rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
+      + `<div class="wf-tekst"><b>Nieuw!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
+  }
+  if (f.perfect) {
+    /* Het wereldicoon in een gouden ring met een ster erop -- precies het kaartje
+       dat er vanaf nu in de kast staat (zie .trophy-card.ster). Bewust niet het
+       kale icoon: dat is in de Muziekwereld toevallig hetzelfde plaatje als het
+       spulletje erboven, en dan lijken de twee regels één regel die dubbel staat.
+
+       Elke regel zegt wát je gekregen hebt, en de kop zegt waaróm. Staat de trofee
+       er alleen, dan zégt die kop al "Perfecte wereld!" -- dan hoort de regel
+       eronder niet nog eens hetzelfde te zeggen. */
+    const label = f.spul ? 'Perfecte wereld!' : 'Nieuwe trofee!';
+    rijen += `<div class="wf-rij"><div class="wf-beeld"><span class="wf-trofee">${w.icon || '🌍'}</span></div>`
+      + `<div class="wf-tekst"><b>${label}</b><span>Overal drie sterren</span></div></div>`;
+  }
+  const ov = openOverlay('wereld-feest-overlay',
+    `<div class="pop-panel wereld-feest">`
+    + `<div class="wf-kop">${kop}</div>`
+    + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
+    + `<div class="wf-rijen">${rijen}</div>`
+    + `<div class="wf-verder">Tik om verder te gaan</div></div>`, { fade: 300 });
+  /* Sluit zichzelf, net als de ster-status en anders dan de trofeeënkast. Dat
+     verschil is precies het verschil tussen de twee momenten: een cadeautje in de
+     kast open je zélf en blijft dus open tot jij zegt dat je klaar bent, maar dit
+     overkomt je ná de show -- en dan mag het je niet vasthouden. Eronder staat
+     "Verder op tournee", en daar wilde het kind toch al heen.
+
+     Twee regels lezen duurt langer dan één, dus de tweede regel koopt wat tijd.
+     Tikken gaat altijd vóór: wie het gezien heeft, is weg. */
+  let af = false;
+  const dicht = () => { if (af) return; af = true; ov._close(); };
+  ov.onclick = dicht;
+  setTimeout(dicht, 2400 + 700 * (f.spul && f.perfect ? 2 : 1));
+  sndWin();
+  buzz([0, 40, 60, 40, 90]);
+  if (!reduce) {
+    const panel = ov.querySelector('.wereld-feest');
+    const r = panel.getBoundingClientRect();
+    confettiBurst(r.left + r.width / 2, r.top + r.height * 0.42, 26, f.spul ? f.spul.emoji : (w.icon || '⭐'));
+  }
+  // lees-vrij: dezelfde twee zinnen die er staan, meer niet
+  speak(f.spul
+    ? `${w.name} uit! Je hebt een ${f.spul.name}.` + (f.perfect ? ' En een perfecte wereld!' : '')
+    : `Perfecte wereld! ${w.name}.`);
 }
 // tijdens het spelen: geen groot feest, wél een vriendelijke hint naar de kast
 function noticeReady(trofees) {
@@ -9623,6 +9956,7 @@ function endLevel(success) {
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
   let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
+  let feest = null;    // FASE 4D.1: wereld uit en/of perfect -- idem, één feestje voor allebei
   // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const wl = worldFor(lvl);
@@ -9659,6 +9993,13 @@ function endLevel(success) {
     // daar niets over -- terugkomen mag nooit iets kunnen kosten.
     const vorige = p.stars[lvl] || 0;
     const beter = vorige > 0 && stars > vorige;
+    /* FASE 4D.1 -- hoe deze wereld ervoor stond vóór deze sterren erbij kwamen.
+       Alleen zó is "net gebeurd" te herkennen: de beloning zelf wordt uitgedeeld op
+       wát er staat (zie grantWorldRewards), maar het féést hoort alleen bij de
+       overgang. Zonder deze twee regels zou elke herkansing in een uitgespeelde
+       wereld opnieuw willen vieren. */
+    const wasUit = worldDone(p, wl.index);
+    const wasVol = worldProgress(p, worldForIndex(wl.index)).vol;
     p.stars[lvl] = Math.max(vorige, stars);
     /* Vooruit gaat alleen de vóórste halte, en nooit voorbij het einde van wat er
        geschreven is. Die klem is fase 4A: hiervoor liep p.level door in het
@@ -9670,9 +10011,20 @@ function endLevel(success) {
       p.level++;
       pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
     }
+    /* De beloningen van déze wereld, vóór checkTrophies. De volgorde doet ertoe:
+       grantWorldRewards zet de perfecte-wereld-trofee meteen op 'behaald', zodat
+       checkTrophies hem daarna niet ook nog eens als cadeautje in de kast legt.
+       De wereldbadge ('deze wereld uit') loopt wél gewoon via de kast -- die is
+       niet veranderd. */
+    const beloond = grantWorldRewards(p, wl.index);
+    const netUit = !wasUit && worldDone(p, wl.index) ? beloningItem(wl.world) : null;
+    const netVol = !wasVol && beloond.perfect ? beloond.perfect : null;
+    if (netUit || netVol) feest = { wereld: wl.world, spul: netUit, perfect: netVol };
     // carrièrerang: net genoeg sterren voor een hogere rang? -> bonus (zie checkRankUp)
     rankUp = checkRankUp(p);
     const trofees = checkTrophies(p);
+    // Bewaren gebeurt hier, vóór er ook maar iets beweegt. Een kind dat de app
+    // wegklikt terwijl de confetti nog valt, heeft haar spulletje gewoon.
     save();
     $('end-title').textContent = `🎉 Show ${wl.nr} was geweldig!`;
     renderEndStars(stars);
@@ -9731,8 +10083,19 @@ function endLevel(success) {
   $('end-diamonds').textContent = p.diamonds;
   G = null;
   show('screen-end');
-  // ster-status omhoog krijgt na het eindscherm zijn eigen groot moment
-  if (rankUp) setTimeout(() => rankUpCelebrate(rankUp.rank), 650);
+  /* Na het eindscherm hoogstens twee grote momenten, en nooit tegelijk: eerst de
+     ster-status (die sluit zichzelf na ~2 tellen), dán het wereldfeest. In de
+     praktijk vallen ze zelden samen -- een rang komt op 12/30/60... sterren en een
+     wereld is om de acht shows -- maar als het gebeurt horen ze achter elkaar en
+     niet over elkaar.
+
+     Het wereldfeest komt ná het eindscherm en niet erin: de sterren van déze show
+     zijn eerst, en de wereld is het laagje daarboven. Daarna gaat "Verder op
+     tournee" gewoon naar de kaart, waar de reis of de nieuwe wereld wacht -- daar
+     is niets aan veranderd. */
+  const naFeest = feest ? () => wereldFeest(feest) : null;
+  if (rankUp) setTimeout(() => rankUpCelebrate(rankUp.rank, naFeest), 650);
+  else if (naFeest) setTimeout(naFeest, 650);
 }
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
 // hoger klankje; een gemiste ster verschijnt stil en dof. Dé ceremonie van het
@@ -9917,6 +10280,11 @@ function itemThumb(it, base) {
   base = base || curBase();
   const zone = (inner, extra) => `<div class="item-thumb${extra ? ' ' + extra : ''}">${inner}</div>`;
   if (it.id === 'acc_tovenaarshoed') return zone(wizardHatThumb());
+  /* Een item mag zijn eigen miniatuur meebrengen -- dezelfde afspraak als acc.draw
+     bij de paspop, maar dan in zijn eigen vakje (52px hoog) i.p.v. in de 200x250 van
+     de pop. Fase 4D.2 hangt hem aan de wereldbeloningen; tot dan tekenen die hun
+     emoji, net als elk ander accessoire. */
+  if (it.thumb) return zone(it.thumb(base));
   if (it.emoji) return zone(`<span class="thumb-emo">${it.emoji}</span>`);
   if (it.cat === 'dress') return zone(dressThumb(it, base), (OUTFIT_THUMBS[base] || OUTFIT_THUMBS[DEFAULT_BASE]).cls);
   if (it.cat === 'hair')  return zone(hairThumb(it, base));
@@ -9996,15 +10364,25 @@ function renderShop() {
   if (activeTab) requestAnimationFrame(() => {
     if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'center' }); updateFades(tabs); }
   });
-  // op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij gelijke prijs
-  ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => a.price - b.price).forEach(it => {
+  /* Op prijs oplopend tonen (gratis/goedkoop eerst, premium onderaan); stabiel bij
+     gelijke prijs. Wat een wereld uitdeelt heeft geen prijs en gaat helemaal
+     achteraan: het is geen duurder spulletje maar een ander soort spulletje, en zo
+     staan de zes bij elkaar in plaats van verspreid tussen de koopjes. */
+  // Een groot eindig getal en geen Infinity: twee beloningen onderling geven dan
+  // Infinity - Infinity = NaN, en een vergelijker die NaN teruggeeft is geen
+  // vergelijker meer. Zo blijft hun onderlinge volgorde gewoon die van ITEMS.
+  const rang = it => isBeloning(it.id) ? 1e9 : it.price;
+  ITEMS.filter(i => i.cat === shopCat).slice().sort((a, b) => rang(a) - rang(b)).forEach(it => {
     const owned = p.owned.includes(it.id);
     const equipped = p.equipped[it.cat] === it.id;
+    // De wereld die dit spulletje uitdeelt -- null voor alles wat gewoon te koop is.
+    const uitWereld = owned ? null : beloningWereld(it.id);
     const card = document.createElement('div');
     const selected = shopSelectedId === it.id;
     card.dataset.item = it.id;
     card.className = 'item-card'
       + (equipped ? ' equipped' : (owned ? ' owned' : ''))
+      + (uitWereld ? ' teverdienen' : '')
       + (selected ? ' selected' : '')
       + (shopJustBoughtId === it.id ? ' just-bought' : '');
     const swatch = itemThumb(it);
@@ -10013,6 +10391,10 @@ function renderShop() {
     if (shopJustBoughtId === it.id) statusLine = '<div class="item-status new">Nieuw!</div>';
     else if (equipped) statusLine = '<div class="item-status on">Aan</div>';
     else if (owned) statusLine = '<div class="item-status owned">Van jou</div>';
+    // Niet te koop, maar wél te halen: het icoon van de wereld zegt waar. De hele
+    // zin staat in de balk onderaan zodra je hem aantikt (zie renderDressBar) --
+    // op een kaartje van 90 pixels past geen uitleg.
+    else if (uitWereld) statusLine = `<div class="item-status slot">🔒 ${uitWereld.icon || '🌍'}</div>`;
     else if (p.diamonds < it.price) statusLine = `<div class="item-status need">💎 ${it.price}</div>`;
     else statusLine = `<div class="item-status price">💎 ${it.price}</div>`;
     card.innerHTML = swatch + `<div class="item-name">${it.name}</div>` + statusLine;
@@ -10066,6 +10448,17 @@ function renderDressBar(it, p) {
   bar.style.display = 'flex';
   const owned = p.owned.includes(it.id);
   const equipped = p.equipped[it.cat] === it.id;
+  /* FASE 4D.1 -- een spulletje dat je niet koopt maar verdient. Geen prijs, geen
+     knop: alleen waar het vandaan komt. Bewust geen "Speel"-knop zoals bij te weinig
+     diamanten -- die brengt je naar de eerstvolgende show, en dat is bijna nooit de
+     wereld die dit spulletje uitdeelt. Wat je moet doen staat er gewoon. */
+  const uitWereld = owned ? null : beloningWereld(it.id);
+  if (uitWereld) {
+    bar.innerHTML = `
+      <div class="db-info"><span class="db-name">${naam(it)}</span>
+        <span class="db-sub">· Speel ${esc(uitWereld.name)} uit</span></div>`;
+    return;
+  }
   if (!owned) {
     const tekort = it.price - p.diamonds;
     if (tekort > 0) {
@@ -10131,6 +10524,9 @@ function confirmShopBuy(id) {
   const it = item(id);
   const p = P();
   if (p.owned.includes(it.id)) return equipShopItem(id);
+  // Een wereldbeloning heeft geen prijs en is dus niet te koop. De balk biedt de
+  // knop niet eens aan; dit is het slot op de deur, niet de deur zelf.
+  if (isBeloning(it.id)) return;
   if (p.diamonds < it.price) {
     sndWrong();
     showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
