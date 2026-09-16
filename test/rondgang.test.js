@@ -125,11 +125,34 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   /* ---- 4 · Terug naar de kaart: de reis speelt af ---- */
   await page.click('#btn-end-next');
   await page.waitForTimeout(2600);
-  r = await page.evaluate(() => ({
-    kaart: document.getElementById('screen-map').classList.contains('active'),
-    nu: (document.querySelector('.tour-stop.next') || {}).dataset,
-  }));
+  r = await page.evaluate(() => {
+    const af = document.querySelector('.tour-stop.net-af');
+    return {
+      kaart: document.getElementById('screen-map').classList.contains('active'),
+      nu: (document.querySelector('.tour-stop.next') || {}).dataset,
+      /* Fase 4C: de halte die je zojuist speelde zet zijn score vast -- het
+         sterrentabje landt eronder (.net-af). Dát is het hele "terugkomst"-moment,
+         en het hoort op de zojuist gespeelde halte te staan en nergens anders. */
+      afLvl: af ? af.dataset.lvl : null,
+      afSterren: af ? af.querySelectorAll('.cs-vol').length : -1,
+      afPerfect: af ? af.classList.contains('perfect') : false,
+      afAantal: document.querySelectorAll('.tour-stop.net-af').length,
+    };
+  });
   check(r.kaart && r.nu && r.nu.lvl === '8', 'terug op de kaart staat de ster op de volgende halte', JSON.stringify(r));
+  check(r.afLvl === '7' && r.afAantal === 1,
+    'de zojuist gespeelde halte -- en alleen die -- krijgt het terugkomst-moment', JSON.stringify(r));
+  check(r.afSterren === 3 && r.afPerfect,
+    'de verdiende sterren landen erin, en drie sterren leest als perfect', JSON.stringify(r));
+  /* Eenmalig: de opdracht wordt bij het tekenen verbruikt. Zonder dat zou het
+     tabje bij élke kaartopbouw opnieuw komen inlanden -- ook als je alleen maar
+     via de balk langs de kaart loopt. */
+  r = await page.evaluate(async () => {
+    openKleedkamer(); await new Promise(res => setTimeout(res, 250));
+    goMap(); await new Promise(res => setTimeout(res, 400));
+    return document.querySelectorAll('.tour-stop.net-af').length;
+  });
+  check(r === 0, 'een latere kaart speelt dat moment niet opnieuw af', 'gevonden ' + r);
 
   /* ---- 5 · De wereldwissel ----
      De laatste show van een wereld uitspelen: de kaart schuift door naar de
