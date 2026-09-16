@@ -102,14 +102,22 @@ function check(ok, label, detail) {
   };
 
   /* ================= A · De baan =================
-     Elke geschreven wereld is een bestemming, in reisvolgorde, en de reis loopt van
-     beneden naar boven: wereld 1 staat lager op het scherm dan wereld 6. */
+     De bestemmingen staan in reisvolgorde en de reis loopt van beneden naar boven:
+     wereld 1 staat lager op het scherm dan wereld 4.
+
+     Niet élke geschreven wereld staat erop. Een verse ster staat bij wereld 1 en
+     kijkt drie bestemmingen vooruit (REIS_VOORUIT), dus er staan er vier. Wat
+     daarboven ligt zegt de mist, en die telt niet hoeveel het er zijn -- zie
+     laatsteZichtbareWereld(). */
   {
     const { ctx, page } = await fresh();
     await open(page);
-    const r = await page.evaluate(() => ({ ...__reis(), n: WORLDS.length }));
+    const r = await page.evaluate(() => ({ ...__reis(), n: WORLDS.length, vooruit: REIS_VOORUIT }));
     check(r.actief, 'A · de tournee gaat open', JSON.stringify(r.actief));
-    check(r.haltes.length === r.n, 'A · elke wereld is een bestemming', `${r.haltes.length}/${r.n}`);
+    check(r.haltes.length === 1 + r.vooruit && r.n > r.haltes.length,
+      'A · je ziet waar je bent plus een paar bestemmingen vooruit, niet alles',
+      `${r.haltes.length} van ${r.n}`);
+    check(r.vervolg, 'A · en bovenaan staat dat er nog meer ligt', '');
     check(r.haltes.every((h, i) => h.w === i), 'A · in reisvolgorde', JSON.stringify(r.haltes.map(h => h.w)));
     const omhoog = r.haltes.every((h, i) => i === 0 || h.midden < r.haltes[i - 1].midden);
     check(omhoog, 'A · en van beneden naar boven', JSON.stringify(r.haltes.map(h => h.midden)));
@@ -121,9 +129,11 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= B · De vijf standen =================
-     Een verse ster: wereld 1 is waar ze is, de rest is uitgebracht maar nog niet aan
-     de beurt, en de laatste wereld is in deze zaak nog niet uit. */
+  /* ================= B · De vier standen =================
+     Een verse ster: wereld 1 is waar ze is, de drie erboven zijn uitgebracht maar
+     nog niet aan de beurt, en alles daarbóven staat er niet -- of het nu uitgebracht
+     is (wereld 5) of niet (wereld 6). Een kind ziet dus nergens een vraagteken en
+     nergens een naam van iets waar het nog niet mag komen. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => __breng(5));     // wereld 6 nog niet uitgebracht
@@ -135,22 +145,68 @@ function check(ok, label, detail) {
       'B · en alleen daar staat de ster', JSON.stringify(r.haltes.map(h => h.ster)));
     check(r.haltes.filter(h => h.zegel).length === 0, 'B · niets uitgespeeld, dus geen zegel', '');
     const verder = r.haltes.filter(h => /verder/.test(h.klas));
-    check(verder.length === 4 && verder.every(h => h.slot && !h.aan),
+    check(verder.length === 3 && verder.every(h => h.slot && !h.aan),
       'B · wat nog niet aan de beurt is heeft een slot en doet niets', JSON.stringify(verder.map(h => h.w)));
-    const mist = r.haltes.filter(h => /mist/.test(h.klas));
-    check(mist.length === 1 && mist[0].w === 5 && !mist[0].naam && !mist[0].aan,
-      'B · een wereld die nog niet uit is heeft hier geen naam', JSON.stringify(mist));
-    check(r.tekst.indexOf('Toverwereld') < 0,
-      'B · en zijn naam staat nergens op het scherm', r.tekst.slice(0, 120));
+    check(r.haltes.every(h => h.w <= 3),
+      'B · voorbij de horizon staat er niets -- ook geen vraagteken in de mist',
+      JSON.stringify(r.haltes.map(h => h.w)));
+    check(r.tekst.indexOf('Toverwereld') < 0 && r.tekst.indexOf('IJswereld') < 0,
+      'B · en hun namen staan nergens op het scherm', r.tekst.slice(0, 120));
+    check(r.vervolg, 'B · bovenaan staat wél dat er nog meer ligt', '');
     /* De tekening van een wereld op slot blijft staan -- gedimd, maar zichtbaar:
-       "ik zie de piratenwereld daarboven" is precies waarom een kind doorspeelt.
-       Alleen een wereld die nog niet uitgebracht is krijgt er geen. */
-    check(r.haltes.filter(h => h.art).length === 5 && !mist[0].art,
-      'B · ook een wereld op slot toont zijn tekening -- de mist niet',
+       "ik zie de piratenwereld daarboven" is precies waarom een kind doorspeelt. */
+    check(r.haltes.filter(h => h.art).length === r.haltes.length,
+      'B · ook een wereld op slot toont zijn tekening',
       JSON.stringify(r.haltes.map(h => h.art)));
     check(verder.every(h => !h.teller) && nu[0].teller,
       'B · en een teller staat alleen waar er iets te tellen valt',
       JSON.stringify(r.haltes.map(h => h.teller)));
+    await ctx.close();
+  }
+
+  /* ================= B2 · De horizon schuift mee =================
+     Wat je vooruit ziet hangt aan waar je bent, niet aan hoeveel werelden er
+     geschreven zijn. Twee werelden verder betekent twee bestemmingen meer onder je
+     én de horizon twee hoger -- tot hij het einde van wat uitgebracht is raakt, en
+     dan verdwijnt ook de belofte bovenaan, want er ligt niets meer voorbij.
+
+     Dit is de zaak die ertoe doet als de tournee groeit: bij dertig werelden hoort
+     dit scherm niet dertig kaartjes te tonen. */
+  {
+    const { ctx, page } = await fresh();
+    await open(page);
+    const vers = await page.evaluate(() => __reis());
+    check(vers.haltes.length === 4 && vers.vervolg,
+      'B2 · een verse ster ziet vier bestemmingen, en dat er meer ligt',
+      JSON.stringify({ n: vers.haltes.length, meer: vers.vervolg }));
+    const twee = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      __speel(2);                                  // wereld 1 en 2 uit
+      renderReis(); await wacht(200);
+      return __reis();
+    });
+    check(twee.haltes.length === 6 && twee.haltes.filter(h => h.zegel).length === 2,
+      'B2 · twee werelden uit: twee zegels eronder, en de horizon schuift mee',
+      JSON.stringify({ n: twee.haltes.length, zegels: twee.haltes.filter(h => h.zegel).length }));
+    check(!twee.vervolg,
+      'B2 · en nu de horizon het einde raakt, belooft de mist niets meer', JSON.stringify(twee.vervolg));
+    /* Een tournee die twee keer zo lang is verandert daar niets aan: de horizon
+       hangt aan het kind, niet aan de lijst. */
+    const lang = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      for (let i = 0; i < 6; i++) {
+        WORLDS.push({ id: 'proef' + i, name: 'Proefwereld ' + i, icon: '🎪', levels: 8,
+          theme: { sky: '#2b5f8a', deep: '#0d1f33', glow: '#4f88a8', road: '#cfe3f2' } });
+      }
+      rebuildWorldStarts(); rebuildWorldBadges();
+      renderReis(); await wacht(200);
+      return { ...__reis(), n: WORLDS.length };
+    });
+    check(lang.n === 12 && lang.haltes.length === 6,
+      'B2 · twaalf werelden geschreven, nog steeds zes bestemmingen op het scherm',
+      JSON.stringify({ geschreven: lang.n, getoond: lang.haltes.length }));
+    check(lang.vervolg,
+      'B2 · en bovenaan staat weer dat er meer ligt', JSON.stringify(lang.vervolg));
     await ctx.close();
   }
 
@@ -320,15 +376,19 @@ function check(ok, label, detail) {
      gescrold hoort één knopje te krijgen om terug te komen, en zolang ze in beeld
      staat hoort dat knopje er niet te zijn. */
   {
-    // een verse ster: zij staat onderaan, dus bovenaan de baan is ze écht uit beeld
+    /* Vijf werelden uit: zij staat bovenaan een baan die ruim langer is dan het
+       venster, dus helemaal naar beneden scrollen zet haar écht uit beeld. (Een
+       verse ster ziet sinds de horizon maar vier bestemmingen, en die baan is te
+       kort om jezelf mee kwijt te raken.) */
     const { ctx, page } = await fresh();
+    await page.evaluate(() => __speel(5));
     await open(page);
     const r = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
       const sch = document.getElementById('screen-journey');
       const knop = document.getElementById('reis-terug');
       const bij = knop.classList.contains('aan');
-      sch.scrollTop = 0;                       // helemaal naar de mist bovenaan
+      sch.scrollTop = sch.scrollHeight;        // helemaal omlaag, terug naar wereld 1
       await wacht(120);
       const weg = knop.classList.contains('aan');
       const teken = knop.textContent;
@@ -340,7 +400,7 @@ function check(ok, label, detail) {
                inBeeld: r2.top > s2.top && r2.bottom < s2.bottom };
     });
     check(!r.bij, 'F2 · staat ze in beeld, dan is er geen knopje', JSON.stringify(r.bij));
-    check(r.weg && r.teken === '\u2193', 'F2 · ver weg gescrold verschijnt het, met de goede richting', JSON.stringify(r));
+    check(r.weg && r.teken === '\u2191', 'F2 · ver weg gescrold verschijnt het, met de goede richting', JSON.stringify(r));
     check(r.inBeeld && r.terug, 'F2 · en het brengt haar terug in beeld', JSON.stringify(r));
     await ctx.close();
   }
