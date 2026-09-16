@@ -3623,9 +3623,13 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
    sfeer. Meer niet -- de mechaniek (sterren, ontgrendelen, moeilijkheid) is in
    élke wereld gelijk en staat hier dus níét in. Zie docs/PROGRESSION-REVIEW.md.
 
-   p.level verandert hierdoor niet van betekenis: het blijft "de hoeveelste show",
-   1..oneindig. Een wereld is puur een hergroepering van dat ene getal, dus er is
-   geen migratie en geen enkele opgeslagen ster verhuist.
+   p.level blijft "de eerstvolgende show": 1 t/m WORLD_LAST + 1. Een wereld is puur
+   een hergroepering van dat ene getal, dus er verhuist geen enkele opgeslagen ster.
+
+   Maar p.level zegt ALLEEN waar de ster staat, en nooit wat er af is. Of een wereld
+   uitgespeeld is leest de app uit p.stars (worldDone), en wat de volgende wereld is
+   uit frontierWorld() -- niet uit een nummer. Zie de afgeleide voortgang onder
+   worldProgress().
 
    LET OP -- de vololgorde en de lengtes liggen vast zodra een wereld eenmaal
    gespeeld is. Een wereld ertussen schuiven of korter maken hernummert alle
@@ -3636,12 +3640,13 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
    Eén regel in de lijst hieronder, en verder niets. Alles wat de app over een
    wereld weet leest ze hiervandaan:
 
-     WORLD_START/WORLD_LAST  rebuildWorldStarts() rekent de levelnummers opnieuw uit
+     WORLD_START/LAST/AVAIL  rebuildWorldStarts() rekent de levelnummers opnieuw uit
      de kaart                worldFor() / worldForIndex() vinden de wereld bij een level
      de tekening             art  (ontbreekt die: de reservekaart met de kleuren hieronder)
      de sfeer                theme -> CSS-variabelen (applyWorldTheme), nooit een if per wereld
      de route                nodes/curve (ontbreken die: defaultNodes() slingert er een)
      de wereldbadge          rebuildWorldBadges() zet er een trofee bij, op id
+     de voortgang            worldDone()/frontierWorld() tellen hem vanzelf mee
      de werelden-kiezer      openWorlds() loopt gewoon de lijst af
      de zaal                 venue (ontbreekt die: VENUE_TERUGVAL, en dat is de stand
                              van nu -- geen enkele wereld hoeft hem op te geven)
@@ -3659,11 +3664,15 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
    in dezelfde laag waar nu de geleende kaart hangt, en alles eromheen (het licht,
    de vloer, de bundel, de kop) blijft precies zoals het staat.
 
+   released: false houdt een wereld uit het spel terwijl hij zíjn levelnummers al
+   wel reserveert -- zie worldReleased(). Laat het veld gewoon weg voor een wereld
+   die gespeeld mag worden.
+
    Velden die er nog NIET zijn omdat de app ze nog niet nodig heeft:
-   wereldbeloning, wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen
-   loopt nu impliciet via p.level (een halte is speelbaar t/m p.level, en werelden
-   staan op een rij), en dat is precies genoeg. Komen die dingen er, dan komen ze
-   hier als veld bij -- niet als uitzondering ergens in een scherm. */
+   wereldbeloning, wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen loopt nog
+   steeds via p.level (een halte is speelbaar t/m p.level, en werelden staan op een
+   rij), en dat is precies genoeg. Komen die dingen er, dan komen ze hier als veld
+   bij -- niet als uitzondering ergens in een scherm. */
 /* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
    door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
    Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan.
@@ -3835,19 +3844,54 @@ const WORLDS = [
   },
 ];
 /* WERELDEN-EINDE */
-// Voorbij de laatste geschreven wereld loopt de tournee gewoon door in stukken
-// van dezelfde lengte. Zo is het spel nooit "uit" en kan er later een echte
-// wereld achteraan zonder dat er iets hernummerd wordt.
-const ENDLESS_WORLD = { id: 'tournee', name: 'Sterrentournee', icon: '✨', levels: 8 };
-// Eerste level van elke wereld (1-gebaseerd). Afgeleid van WORLDS en opnieuw te
-// berekenen, omdat de wereldstudio er een wereld bij kan zetten.
-let WORLD_START = [], WORLD_LAST = 0;
+/* ---- Uitgebracht, en waar de tournee ophoudt --------------------------------
+   FASE 4A. Hiervoor stond hier een ENDLESS_WORLD: voorbij de laatste geschreven
+   wereld liep de tournee door in stukken van acht onder de naam "Sterrentournee".
+   Dat leek onschuldig -- het spel was nooit "uit" -- maar het bezétte levelnummers
+   die een échte wereld later zou opeisen. Wie in die staart speelde zette sterren
+   op level 49..56, en de dag dat wereld 7 erbij kwam stonden die sterren ineens
+   ín wereld 7: een gloednieuwe wereld die zich bij het eerste openen al uitgespeeld
+   waande. Dat is precies de bug die deze fase wegneemt.
+
+   Nu loopt de tournee tot en met de laatste uitgebrachte wereld en geen level
+   verder. Is alles uit, dan is er geen volgende halte maar een toegift: dezelfde
+   laatste wereld, opnieuw te spelen, zonder dat er ook maar iets vooruit schuift.
+   Zie de afgeleide voortgang onder worldProgress().
+
+   released: false op een wereld houdt hem uit het spel terwijl hij wél zijn
+   levelnummers reserveert -- zo kan er een wereld klaarstaan zonder dat een kind
+   erin kan komen, en zonder dat hij ooit iets hernummert. Eén veld, meer niet;
+   geen datums, geen server, geen planning. Weglaten = uitgebracht.
+
+   Alleen een aaneengesloten kop van de lijst telt als uitgebracht: staat wereld 7
+   op released:false, dan is wereld 8 óók niet beschikbaar, ook al zegt hij niets.
+   Anders zou er een gat in de tournee vallen en is "de eerste wereld die nog niet
+   uit is" geen ladder meer maar een gok. */
+function worldReleased(w) { return !!w && w.released !== false; }
+/* Eerste level van elke wereld (1-gebaseerd), over ÁLLE geschreven werelden --
+   ook de nog niet uitgebrachte. Dat is met opzet: een wereld die later opengaat
+   hoort dezelfde levelnummers te krijgen als hij vandaag al zou hebben, anders
+   verhuizen bij het uitbrengen alsnog de sterren van een kind.
+
+   WORLD_AVAIL  hoeveel werelden er nú speelbaar zijn (de aaneengesloten kop)
+   WORLD_LAST   het laatste level dat bestaat -- het einde van die laatste wereld.
+                Voorbij dit nummer is er geen show, alleen een toegift. */
+let WORLD_START = [], WORLD_LAST = 0, WORLD_AVAIL = 0;
 function rebuildWorldStarts() {
   let n = 1;
   WORLD_START = WORLDS.map(w => { const s = n; n += w.levels; return s; });
-  WORLD_LAST = n - 1;
+  WORLD_AVAIL = 0;
+  while (WORLD_AVAIL < WORLDS.length && worldReleased(WORLDS[WORLD_AVAIL])) WORLD_AVAIL++;
+  // Staat er niets uitgebracht (alleen mogelijk in de wereldstudio), dan is de
+  // eerste wereld alsnog speelbaar: een kaart zonder enkele halte is geen spel.
+  if (!WORLD_AVAIL && WORLDS.length) WORLD_AVAIL = 1;
+  WORLD_LAST = WORLD_AVAIL ? WORLD_START[WORLD_AVAIL - 1] + WORLDS[WORLD_AVAIL - 1].levels - 1 : 0;
 }
 rebuildWorldStarts();
+/* Het laatste level dat bestond op de dag dat de oneindige staart verdween (zes
+   werelden van acht). Een historisch getal: het hoort bij één eenmalige opruiming
+   in migrate() en mag daarom nooit meelopen met WORLD_LAST. Zie daar. */
+const LEGACY_TOUR_END = 48;
 
 /* ---- Wereldconcept: bewaren, uitwisselen, wegschrijven -----------------------
    Een concept leeft in localStorage en wordt ALLEEN met ?debug ingelezen. Het
@@ -3894,6 +3938,11 @@ function worldsSource() {
   const body = WORLDS.map(w => {
     const L = ['  {'];
     L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
+    // Alleen als hij er staat, en alleen als hij false is: een wereld die gewoon
+    // uitgebracht is zegt daar niets over (zie worldReleased). Zou dit altijd
+    // 'released: true' schrijven, dan kwam er uit de studio een blok terug dat
+    // niet meer letterlijk gelijk is aan wat erin ging.
+    if (w.released === false) L.push('    released: false,');
     if (w.art) L.push(`    art: ${q(w.art)},`);
     /* De zaal van deze wereld -- mag ontbreken (dan geldt VENUE_TERUGVAL), en elk
        veld erin mag apart ontbreken (dan geldt dát veld uit de terugval).
@@ -3934,19 +3983,17 @@ function worldsSource() {
   }).join('\n');
   return 'const WORLDS = [\n' + body + '\n];';
 }
-// In welke wereld valt dit level? Geeft nooit undefined terug -- voorbij de
-// geschreven werelden komt er een genummerde Sterrentournee uit.
+/* In welke wereld valt dit level? Geeft nooit undefined terug: het nummer wordt
+   geklemd op wat er bestaat. Een level voorbij WORLD_LAST bestaat niet -- dat is
+   de toegift-stand, en die speelt in de laatste uitgebrachte wereld.
+
+   Let op wat dit NIET zegt: het zegt waar een levelnummer ligt, niet of het
+   gespeeld is. Wie wil weten of een wereld uit is, vraagt dat aan worldDone(). */
 function worldFor(lvl) {
-  lvl = Math.max(1, Math.floor(lvl) || 1);
-  if (lvl > WORLD_LAST) {
-    const ronde = Math.floor((lvl - WORLD_LAST - 1) / ENDLESS_WORLD.levels) + 1;
-    const first = WORLD_LAST + 1 + (ronde - 1) * ENDLESS_WORLD.levels;
-    const w = ronde === 1 ? ENDLESS_WORLD : Object.assign({}, ENDLESS_WORLD, { name: `${ENDLESS_WORLD.name} ${ronde}` });
-    return { world: w, index: WORLDS.length + ronde - 1, first, nr: lvl - first + 1, levels: w.levels, endless: true };
-  }
+  lvl = Math.max(1, Math.min(WORLD_LAST, Math.floor(lvl) || 1));
   let i = 0;
-  for (let k = 0; k < WORLDS.length; k++) if (lvl >= WORLD_START[k]) i = k;
-  return { world: WORLDS[i], index: i, first: WORLD_START[i], nr: lvl - WORLD_START[i] + 1, levels: WORLDS[i].levels, endless: false };
+  for (let k = 0; k < WORLD_AVAIL; k++) if (lvl >= WORLD_START[k]) i = k;
+  return { world: WORLDS[i], index: i, first: WORLD_START[i], nr: lvl - WORLD_START[i] + 1, levels: WORLDS[i].levels };
 }
 /* Hoe ver staat dit kind in deze wereld? Één plek die p.stars per wereld optelt,
    en de enige plek die dat mag. Alles wat een scherm of een trofee over een wereld
@@ -3983,6 +4030,71 @@ function worldProgress(p, w) {
 function worldStars(p, w) {
   const v = worldProgress(p, w);
   return { got: v.sterren, max: v.max };
+}
+
+/* ================= De voortgang, afgeleid ==================================
+   FASE 4A. Vijf begrippen die vroeger één getal waren (p.level) en daardoor niet
+   uit elkaar te houden waren. Ze staan hier bij elkaar omdat ze elkaars buren
+   zijn, en ze bewaren geen van alle iets: alles komt uit p.stars en uit wat er
+   in WORLDS staat. Wat er wél wordt opgeslagen is p.stars, en meer niet.
+
+     worldAvailable(i)  bestaat deze wereld voor dit kind? (uitgebracht)
+     worldDone(p, i)    heeft dit kind deze wereld écht uitgespeeld?
+     frontierWorld(p)   de eerste beschikbare wereld die nog niet uit is, of -1
+     allWorldsDone(p)   alles wat er nú is, is uit -> de toegift-stand
+     continueWorld(p)   waar "verder" naartoe gaat: de grens, of anders de laatste
+
+   De regel waar deze hele fase om draait: een wereld is NOOIT uit omdat hij
+   vóór je huidige positie ligt. Hij is uit omdat elk van zijn shows gespeeld is.
+   Positie en voltooiing zijn twee dingen, en één getal kan er maar één zijn. */
+function worldAvailable(i) { return i >= 0 && i < WORLD_AVAIL; }
+// Uitgespeeld = precies wat de wereldbadge al betekende: elke show één keer
+// gedaan. Bewust niet aangescherpt naar sterren of perfectie -- dat is een
+// andere vraag (worldProgress().vol) en die verandert deze fase niet.
+function worldDone(p, i) {
+  if (!worldAvailable(i)) return false;
+  return worldProgress(p, worldForIndex(i)).uit;
+}
+// De grens van de voortgang: de eerste beschikbare wereld die nog niet uit is.
+// -1 = er is er geen meer, alles is uit (zie allWorldsDone).
+function frontierWorld(p) {
+  for (let i = 0; i < WORLD_AVAIL; i++) if (!worldDone(p, i)) return i;
+  return -1;
+}
+function allWorldsDone(p) { return frontierWorld(p) < 0; }
+/* Waar "verder" heen gaat. Is er nog een wereld te doen, dan die. Is alles uit,
+   dan de laatste uitgebrachte wereld -- niet als voortgang maar als toegift: daar
+   valt nog te verbeteren, en er schuift niets vooruit. Komt er later een wereld
+   bij, dan is die de volgende ochtend vanzelf de grens en wijst deze functie
+   erheen, zonder dat er iets gemigreerd hoeft te worden. */
+function continueWorld(p) {
+  const f = frontierWorld(p);
+  return f >= 0 ? f : Math.max(0, WORLD_AVAIL - 1);
+}
+/* De halte waar de ster staat. p.level is "de eerstvolgende show", en die loopt
+   één voorbij het einde zodra alles uit is -- dan staat ze op de laatste halte
+   die er wél is. Overal waar de kaart een ster neerzet of een halte goud maakt
+   hoort dit getal, en niet p.level zelf. */
+function hereLevel(p) { return Math.max(1, Math.min(p.level, WORLD_LAST)); }
+/* Welke werelden dit kind al een keer in beeld heeft gehad. Het enige nieuwe dat
+   er opgeslagen wórdt, en alleen omdat er geen andere manier is om één vraag te
+   beantwoorden: is deze wereld nieuw vóór je? Bij het uitspelen van een wereld
+   is dat nog uit de sprong af te leiden (zie runTravel), maar bij een wereld die
+   maanden later wordt uitgebracht is er geen sprong -- het kind stond al stil.
+
+   Op id en niet op nummer: een wereld hernoemen of er een tekening bij zetten mag
+   nooit een onthulling opnieuw laten spelen, en een wereld met een ander id is
+   een andere wereld. */
+function worldSeen(p, i) {
+  const w = WORLDS[i];
+  return !!w && (p.worldsSeen || []).indexOf(w.id) >= 0;
+}
+function markWorldSeen(p, i) {
+  const w = WORLDS[i];
+  if (!w || worldSeen(p, i)) return;
+  if (!p.worldsSeen) p.worldsSeen = [];
+  p.worldsSeen.push(w.id);
+  save();
 }
 /* De wereldbadges. Eén per wereld, en het is gewoon een trofee: de kast heeft al
    een claim-ceremonie, een glinstering, een "klaar"-stand, een stip in de navigatie
@@ -4044,7 +4156,12 @@ const TROPHIES = [
   // Was "alle 12 steden". Nu: élke geschreven wereld uitgespeeld -- de grote reis,
   // en geen dubbeling met de badge die straks per wereld komt. De id blijft, dus wie
   // 'm al had houdt 'm (behaalde trofeeën staan in p.trophies).
-  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uit',       has: p => p.level > WORLD_LAST, progress: p => trophyProgress(Math.min(p.level - 1, WORLD_LAST), WORLD_LAST, 'shows gespeeld') },
+  // FASE 4A: "uit" is niet meer "voorbij het laatste level gekomen" maar "elke
+  // wereld die er is ook echt uitgespeeld". Voor wie 'm al had verandert er niets
+  // (behaalde trofeeën staan in p.trophies); voor wie in de oude oneindige staart
+  // zat is het exact dezelfde stand. Maar komt er een wereld bij, dan gaat deze
+  // trofee weer open staan -- en dat hoort ook: de tournee is dan niet meer uit.
+  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uit',       has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
   // 🧮 Rekenkracht — goed rekenen en gouden vragen (stats.correct telt elk goed antwoord)
   { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',      desc: '25 sommen goed',           has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
   { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: '100 sommen goed',          has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
@@ -4119,15 +4236,25 @@ function isRetiredTrophy(id) { return RETIRED_TROPHIES.has(id); }
 function activeTrophies() { return TROPHIES.filter(t => !isRetiredTrophy(t.id)); }
 function earnedActiveCount(p) { return p.trophies.filter(id => id !== 'kastvol' && !isRetiredTrophy(id)).length; }
 rebuildWorldBadges();   // de wereldbadges erbij, nu de tabel en de planken er staan
-function playedCount(p) { return Object.keys(p.stars).length; }
+/* De sterren van de oude oneindige staart (zie migrate). Ze horen bij geen enkele
+   wereld meer -- hun levelnummers zijn teruggegeven aan de werelden die daar ooit
+   komen -- maar ze zijn wél verdiend, dus ze blijven meetellen in alles wat over
+   de héle carrière gaat: het sterrentotaal, de rang, de shows-trofeeën. Voor een
+   kind dat nooit zo ver kwam is dit een leeg kaartje en verandert er niets. */
+function tourStarValues(p) { return Object.values(p.tourStars || {}); }
+function allStarValues(p) { return Object.values(p.stars).concat(tourStarValues(p)); }
+function playedCount(p) { return Object.keys(p.stars).length + tourStarValues(p).length; }
 // Kleedkamercollectie-trofeeën → naar welke categorie ze in de kleedkamer horen,
 // zodat een tik op zo'n trofee die collectie meteen opent om verder te sparen.
 const COLLECTION_CAT = {
   modekoningin: 'dress', schoenenkast: 'shoes', haarstylist: 'hair',
   orkest: 'instrument', dierenkoning: 'pet'
 };
-function perfectCount(p) { return Object.values(p.stars).filter(s => s === 3).length; }
-function totalStarCount(p) { return Object.values(p.stars).reduce((a, b) => a + b, 0); }
+function perfectCount(p) { return allStarValues(p).filter(s => s === 3).length; }
+function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + b, 0); }
+// Hoeveel beschikbare werelden dit kind echt uitgespeeld heeft (voor de teller op
+// de Wereldtournee-trofee, en straks voor de wereldladder).
+function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if (worldDone(p, i)) n++; return n; }
 function boughtCount(p) { return Math.max(0, p.owned.length - (p.freebies || 5)); }   // gratis startspullen tellen niet als "gekocht"
 
 /* ================= Sterrencarrière ================= */
@@ -4271,6 +4398,10 @@ function defaultProfile(name, dress, opts) {
       memory: opts.memory !== false                 // memory-spelletje op de kaart (standaard aan)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
+    // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
+    // bewaarplek voor sterren uit de oude oneindige staart (zie migrate).
+    // worldsSeen vult zich vanzelf: de kaart zet er elke wereld in die ze opent.
+    tourStars: {}, worldsSeen: [],
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
     weak: {},   // zwakke sommen: "7 × 8 = @" -> { ans, op, w } om gericht te herhalen
@@ -4302,6 +4433,47 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  /* ---- FASE 4A: de oneindige staart opruimen -------------------------------
+     Tot en met fase 3 liep de tournee voorbij de laatste geschreven wereld gewoon
+     door: level 49 en verder heetten "Sterrentournee" en waren geen echte wereld.
+     Een kind kon daar sterren verdienen. Die sterren staan op levelnummers die
+     later door een échte wereld opgeeist worden -- en dan zou wereld 7 bij het
+     eerste openen al (deels) uitgespeeld lijken, zonder dat er ooit een show van
+     gespeeld is. Precies de bug die deze fase wegneemt.
+
+     Dus één keer, hier: die sterren gaan uit p.stars naar p.tourStars. Ze blijven
+     staan (niets wordt weggegooid) en blijven meetellen in het sterrentotaal, de
+     rang en de shows-trofeeën -- zie allStarValues. Alleen hun levelnummers zijn
+     vrij, en dat is het hele punt.
+
+     LEGACY_TOUR_END is 48 en verandert nooit meer: het is het laatste level dat
+     bestond op de dag dat de staart verdween, en dus geschiedenis. Het mag geen
+     WORLD_LAST worden -- die groeit mee met elke nieuwe wereld, en dan zou deze
+     lus bij een latere versie de échte sterren van wereld 7 alsnog opruimen.
+
+     Het bestaan van p.tourStars is meteen de stempel: is het kaartje er, dan is
+     dit profiel al langs deze regel geweest en blijft alles daarna met rust. */
+  if (p.tourStars == null) {
+    p.tourStars = {};
+    for (const k of Object.keys(p.stars)) {
+      const lvl = Number(k);
+      if (!(lvl > LEGACY_TOUR_END)) continue;
+      p.tourStars[k] = p.stars[k];
+      delete p.stars[k];
+    }
+    // ...en de positie mee: één voorbij het laatste level dat bestaat is "alles
+    // uit". Verder dan dat kon alleen de staart, en die is er niet meer.
+    if (p.level > LEGACY_TOUR_END + 1) p.level = LEGACY_TOUR_END + 1;
+  }
+  /* Welke werelden al een keer in beeld zijn geweest (zie worldSeen). Een
+     bestaand profiel heeft alles t/m de wereld waar het nu staat al gezien -- dus
+     dat zetten we hier éénmalig neer, precies zoals readyTrophies dat doet: geen
+     plotse rij onthullingen voor een save die gewoon verder wil spelen. */
+  if (!p.worldsSeen) {
+    p.worldsSeen = [];
+    const tot = Math.min(WORLD_AVAIL - 1, worldFor(p.level).index);
+    for (let i = 0; i <= tot; i++) if (WORLDS[i]) p.worldsSeen.push(WORLDS[i].id);
+  }
   // bestaande spelers beginnen op hun huidige rang (geen bonus met terugwerkende
   // kracht voor sterren die ze al hadden); nieuwe rangen daarna betalen wél uit
   if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
@@ -5251,7 +5423,10 @@ function showWorld(idx, travelFrom) {
      wereldCamera roept showWorld aan vóórdat hij zijn eigen reis aanmeldt, dus
      deze regel breekt nooit de reis af waar hij zelf bij hoort. */
   stopWereldReis();
-  viewWorldIdx = Math.max(0, idx | 0);
+  // Binnen de lijst blijven: worldForIndex geeft buiten de lijst null terug (fase
+  // 4A -- er is geen verzonnen wereld meer om op terug te vallen), en de kaart
+  // heeft altijd een wereld nodig om te tekenen.
+  viewWorldIdx = Math.max(0, Math.min(WORLDS.length - 1, idx | 0));
   renderMapTitle(P(), travelFrom || 0);
   renderTourMap(travelFrom || 0);
   preloadNextWorldArt();
@@ -5282,10 +5457,13 @@ function preloadArt(src) {
 function preloadNextWorldArt() {
   if (!cur) return;
   const p = P();
-  const hier = worldFor(p.level);
+  const hier = worldFor(hereLevel(p));
   // alleen als de kaart ook echt naar de wereld kijkt waar ze speelt
   if (viewWorldIdx !== hier.index) return;
   if (hier.nr < hier.levels - 1) return;        // nog niet op de laatste twee shows
+  // Is de volgende wereld er niet (of nog niet uitgebracht), dan valt er niets
+  // voor te laden -- dat is de toegift-stand, en die blijft in deze wereld.
+  if (!worldAvailable(hier.index + 1)) return;
   const volgende = worldForIndex(hier.index + 1);
   if (volgende && volgende.world) preloadArt(volgende.world.art);
 }
@@ -5304,7 +5482,7 @@ function preloadNextWorldArt() {
    aanvraag blijft, hoe vaak de kaart ook opnieuw opgebouwd wordt. */
 function preloadBuurwerelden() {
   if (!cur || viewWorldIdx == null) return;
-  const laatsteOpen = worldFor(P().level).index;
+  const laatsteOpen = Math.min(worldFor(hereLevel(P())).index, WORLD_AVAIL - 1);
   const hier = viewWorldIdx;
   const doe = () => [hier - 1, hier + 1].forEach(i => {
     if (i < 0 || i > laatsteOpen) return;
@@ -5507,8 +5685,10 @@ function navigeerNaarWereld(idx) {
    daarin bent staat op de kaart zelf -- genummerde haltes, de gouden huidige
    halte, de ster die erop staat -- en dat leest een kind van vijf wèl. */
 function renderMapTitle(p, opReis) {
-  const cur = worldFor(p.level);
-  const shown = viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx);
+  const cur = worldFor(hereLevel(p));
+  // || cur: buiten de lijst is er geen wereld meer (fase 4A), en de kop moet
+  // altijd iets kunnen noemen -- dan die waar de ster staat.
+  const shown = (viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx)) || cur;
   const anders = shown.index !== cur.index;
   $('map-tournee-label').innerHTML = `${shown.world.icon} ${esc(shown.world.name)}`
     + `<span class="wp-chev">▾</span>`;
@@ -5549,11 +5729,19 @@ function renderCareerStrip(p) {
     + ` · ${total}/${r.nextMin} ⭐ <span class="rank-tap">›</span></span>`
     + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
 }
-// Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
-// nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
+/* Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
+   nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
+
+   Buiten de lijst komt er null uit en geen verzonnen wereld. Dat is sinds fase 4A
+   het verschil: hiervoor rolde er voorbij de laatste wereld een Sterrentournee uit,
+   en dus kon elke aanroeper doen alsof er altijd een volgende wereld was. Nu moet
+   wie een buurwereld opvraagt zelf zien dat hij er niet is -- wat precies één
+   regel is, en wat voorkomt dat er ooit weer een nepwereld in beeld komt. */
 function worldForIndex(idx) {
-  if (idx < WORLDS.length) return worldFor(WORLD_START[idx]);
-  return worldFor(WORLD_LAST + 1 + (idx - WORLDS.length) * ENDLESS_WORLD.levels);
+  idx = Math.floor(idx);
+  if (!(idx >= 0) || idx >= WORLDS.length) return null;
+  return { world: WORLDS[idx], index: idx, first: WORLD_START[idx],
+           nr: 1, levels: WORLDS[idx].levels };
 }
 /* ================= Zwevende lagen (overlays) =================
    Vier plekken bouwden hetzelfde op: een <div> over het scherm, wat HTML erin,
@@ -5908,11 +6096,32 @@ function goMap(vanLvl) {
      wereld waar het niet geweest was, en de halte om op in te zoomen bestond daar
      niet eens -- dus ook geen terugzoom. Twee keer hetzelfde misverstand.
 
-     Niet uit een show (de tabbladbalk, de terugknop): wél thuis, in de wereld waar
-     ze nú speelt. Een uitstapje naar een eerdere wereld duurt precies zolang je
-     er blijft; weglopen van de kaart is weglopen. */
-  const terugLvl = travel ? travel.from : (uitShow ? vanLvl : p.level);
-  showWorld(worldFor(terugLvl).index, travel ? travel.from : 0);
+     Niet uit een show (de tabbladbalk, de terugknop): dan is dit "verder op
+     tournee", en dat is de grens van de voortgang -- de eerste wereld die nog
+     niet uit is, of, als alles uit is, de laatste die er is (de toegift). Een
+     uitstapje naar een eerdere wereld duurt precies zolang je er blijft;
+     weglopen van de kaart is weglopen.
+
+     In elke echte save is dat dezelfde wereld als waar de ster staat: p.level
+     loopt één voor de eerstvolgende show uit en stapt alleen op de vóórste halte
+     vooruit, dus alles ervóór is ook echt gespeeld. Het staat er toch zo, en niet
+     als worldFor(p.level): een positie is geen voltooiing, en dit is de plek waar
+     de app naar voltooiing hoort te kijken. */
+  const thuis = travel ? worldFor(travel.from).index
+    : uitShow ? worldFor(vanLvl).index : continueWorld(p);
+  /* Een wereld die er nog niet was toen dit kind voor het laatst speelde. Dan is
+     er geen sprong om de onthulling aan op te hangen (zie runTravel) -- ze stond
+     stil en de tournee is onder haar voeten langer geworden. Dus doet de kaart
+     het hier: de vorige wereld komt in beeld en de camera klimt één keer door
+     naar de nieuwe. Daarna staat hij in worldsSeen en gebeurt dit nooit meer.
+
+     Dit is ook het vangnet voor een onthulling die is blijven liggen doordat de
+     app tussen de show en de kaart door gesloten werd: pendingTravel overleeft
+     dat niet, worldsSeen wél. */
+  const onthul = (!travel && !uitShow && thuis > 0 && !worldSeen(p, thuis) && worldSeen(p, thuis - 1))
+    ? { van: thuis - 1, naar: thuis } : null;
+  markWorldSeen(p, thuis);
+  showWorld(onthul ? onthul.van : thuis, travel ? travel.from : 0);
   show('screen-map');
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
@@ -5928,6 +6137,23 @@ function goMap(vanLvl) {
     terugTimer = setTimeout(() => { terugBezig = false; }, MOTION.totaal + 60);
   }
   if (travel) requestAnimationFrame(() => runTravel(travel));
+  else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
+}
+/* De onthulling van een wereld die pas uitgebracht is. Precies dezelfde camera als
+   bij het uitspelen van een wereld (zie runWorldChange), alleen zonder de badge en
+   zonder de tel stilte ervoor -- er is hier niets afgemaakt om afscheid van te
+   nemen, er is iets bijgekomen. */
+function runWorldReveal(o) {
+  const van = worldForIndex(o.van), naar = worldForIndex(o.naar);
+  if (!van || !naar) return;
+  const plaats = () => showWorld(o.naar);
+  const vier = () => {
+    sndCoin();
+    confetti(26);
+    showPraise(`${naar.world.icon} ${naar.world.name}!`);
+  };
+  if (motionOff()) { plaats(); vier(); return; }
+  wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
 // zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
@@ -6027,7 +6253,7 @@ function venueArt(world) {
    nog var(--venue-*) en var(--w-*), en weten dus niet in wélke wereld ze staan.
 
    De klasse gaat er altijd op, ook als er geen enkele tekening is (een wereld uit
-   de wereldstudio, de Sterrentournee voorbij de laatste wereld). Dan draagt
+   de wereldstudio, of een wereld waarvan de tekening nog niet af is). Dan draagt
    .venue-sfeer de zaal in zijn eentje op de wereldkleuren, en dat is nog steeds
    een zaal -- geen tekening is niet hetzelfde als geen plek. Vandaar dat deze
    functie niets meer teruggeeft: er valt niets meer te beslissen. */
@@ -6057,12 +6283,16 @@ function openWorlds() {
   if (wereldReisBezig()) return;   // midden in een wereldwissel valt er niets te kiezen
   sndClick();
   const p = P();
-  const cur = worldFor(p.level);
-  const tot = Math.max(WORLDS.length, cur.index + 1);
+  const cur = worldFor(hereLevel(p));
+  /* Alle geschreven werelden staan in de lijst, ook de nog niet uitgebrachte: een
+     kind mag zien dat het doorgaat. Open is het pad dat ze zelf al afgelegd heeft,
+     en nooit verder dan wat er uitgebracht is (i <= cur.index houdt dat vanzelf in
+     de hand -- cur komt uit hereLevel, en dat loopt nooit voorbij WORLD_LAST). */
+  const tot = WORLDS.length;
   let rows = '';
   for (let i = 0; i < tot; i++) {
     const w = worldForIndex(i);
-    const open = i <= cur.index;
+    const open = i <= cur.index && worldAvailable(i);
     const ws = worldStars(p, w);
     const rest = ws.max - ws.got;
     const hier = i === cur.index;
@@ -6108,7 +6338,11 @@ function renderTourMap(travelFrom) {
   const nodes = worldNodes(shown);
   const travelling = !!travelFrom;
   const playable = travelling ? travelFrom : p.level;   // t/m dit level is alles open
-  const heroLvl = travelFrom || p.level;
+  /* Waar de ster staat, en welke halte goud is. Dat is niet hetzelfde als
+     'playable': in de toegift-stand (alles uit) wijst p.level één halte voorbij
+     het einde, en dan hoort ze op de laatste halte te staan die er wél is.
+     hereLevel() klemt dat; playable blijft p.level, dus alles blijft open. */
+  const heroLvl = travelling ? travelFrom : hereLevel(p);
 
   const map = $('tour-map');
   map.innerHTML = '';
@@ -6160,7 +6394,7 @@ function renderTourMap(travelFrom) {
     const st = p.stars[lvl] || 0;
     const b = document.createElement('button');
     // tijdens de reis-tussenstand is er even geen "hier spelen"-halte
-    b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === playable) ? 'next' : 'done');
+    b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === heroLvl) ? 'next' : 'done');
     b.dataset.lvl = lvl;
     b.style.left = n.x + '%';
     b.style.top = n.y + '%';
@@ -6405,7 +6639,7 @@ function runTravel(t) {
      er, dus feest), maar bij een onthulling staat de wereld er al vóórdat je hem
      ziet -- daar komt het feest pas als de camera stilstaat. Vandaar twee functies
      in plaats van één finish(). */
-  const plaats = () => { showWorld(toW.index); };
+  const plaats = () => { markWorldSeen(p, toW.index); showWorld(toW.index); };
   const vier = () => {
     const el = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
     const dot = el && el.querySelector('.dot');
@@ -6417,6 +6651,22 @@ function runTravel(t) {
     showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
   };
   const finish = () => { plaats(); vier(); };
+  /* De laatste show van de laatste uitgebrachte wereld. Er is geen volgende halte
+     om naartoe te huppelen en geen volgende wereld om te onthullen -- er is een
+     toegift: dezelfde wereld, opnieuw te spelen. Dus gaat de badge omhoog, valt
+     er confetti, en blijft de ster staan waar ze staat. Geen nepwereld, geen
+     "de volgende show wacht" terwijl er geen volgende show is.
+
+     Dit speelt precies één keer: p.level stapt maar één keer over WORLD_LAST heen
+     (zie endLevel), en een toegift daarna is geen level-up meer. */
+  if (t.to > WORLD_LAST) {
+    flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
+    showWorld(fromW.index);
+    sndCoin();
+    confetti(26);
+    showPraise('✨ Alle werelden uit!');
+    return;
+  }
   if (crossing) { runWorldChange(fromW, toW, plaats, vier, still); return; }
   if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
   const dx = to.offsetLeft - from.offsetLeft;
@@ -6514,6 +6764,7 @@ const TROPHY_UNIT_SINGULAR = {
   'spulletjes': 'spulletje', 'outfits': 'outfit', 'schoenen': 'schoen',
   'haarkleuren': 'haarkleur', 'instrumenten': 'instrument',
   'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee',
+  'werelden': 'wereld',
   'extra shows': 'extra show'
 };
 // Maakt van een voortgangslabel ("steden bereikt") een kaal zelfstandig
@@ -8221,7 +8472,13 @@ function endLevel(success) {
     const vorige = p.stars[lvl] || 0;
     const beter = vorige > 0 && stars > vorige;
     p.stars[lvl] = Math.max(vorige, stars);
-    if (lvl === p.level) {
+    /* Vooruit gaat alleen de vóórste halte, en nooit voorbij het einde van wat er
+       geschreven is. Die klem is fase 4A: hiervoor liep p.level door in het
+       oneindige en bezette het levelnummers die een latere wereld zou opeisen.
+       Nu stopt hij op WORLD_LAST + 1 -- "alles uit" -- en blijft daar tot er een
+       wereld bijkomt. Een show overdoen (lvl < p.level) schuift sowieso niets op;
+       een toegift in de laatste wereld dus ook niet. */
+    if (lvl === p.level && p.level <= WORLD_LAST) {
       p.level++;
       pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
     }
@@ -8784,7 +9041,7 @@ function renderNewStar() {
           `<button class="chip${b.id === n.base ? ' on' : ''}" data-v="${b.id}">${b.emoji} ${b.name}</button>`).join('')}</div>
         <div class="note">Hoort bij wie je ster is; haar en kleren kies je later opnieuw.</div></div>
       <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
-        <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
+        <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
       <div class="set-field"><label class="lbl">Haar</label>
         <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
       <div class="set-field"><label class="lbl">Kleren</label>
@@ -8842,6 +9099,22 @@ function renderNewStar() {
     newStar.name = e.target.value;
     const go = $('newstar-go');
     if (go) go.disabled = !e.target.value.trim() || !newStar.base;
+  };
+  /* Enter is op een telefoon de enige knop die het toetsenbord zelf aanbiedt, en
+     hij deed niets: het veld staat niet in een <form>, dus de toets viel in het
+     niets terwijl de Klaar-knop onder het opgeklapte toetsenbord verstopt zat.
+
+     Nu betekent Enter wat hij belooft: klaar met dit veld. Het toetsenbord gaat
+     weg (blur), en is het formulier af, dan is dat meteen dezelfde tik als op
+     Klaar. Is het nog niet af -- de vraag "wie ben je?" heeft geen voorkeuze --
+     dan blijft het formulier gewoon staan, nu wel zichtbaar. Er wordt niets
+     extra's gevalideerd: createStar houdt precies dezelfde regels aan. */
+  nm.onkeydown = e => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();                       // nooit een regeleinde of een dwaal-submit
+    nm.blur();
+    const go = $('newstar-go');
+    if (go && !go.disabled) createStar();
   };
   $('newstar-go').onclick = createStar;
   if (scr) { scr.scrollTop = keep; requestAnimationFrame(() => { scr.scrollTop = keep; }); }

@@ -318,7 +318,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   r = await page.evaluate(() => {
     const el = document.getElementById('screen-game');
     const uit = [];
-    for (let i = 0; i <= WORLDS.length; i++) {          // ook één voorbij: de Sterrentournee
+    // FASE 4A: één voorbij de laatste wereld bestaat niet meer -- worldForIndex
+    // geeft daar null, en dat is precies de bedoeling (geen nepwereld meer).
+    for (let i = 0; i < WORLDS.length; i++) {
       const w = worldForIndex(i);
       startLevel(w.first);
       const cs = getComputedStyle(el);
@@ -334,7 +336,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     return { werelden: WORLDS.length, rijen: uit };
   });
   await page.waitForTimeout(500);
-  check(r.rijen.length === r.werelden + 1 && r.rijen.every(w => w.aan && w.sfeer),
+  check(r.rijen.length === r.werelden && r.rijen.every(w => w.aan && w.sfeer),
     'elke wereld speelt zijn show in een zaal', JSON.stringify(r.rijen.filter(w => !w.aan || !w.sfeer)));
   check(r.rijen.every(w => /^\d+,\d+,\d+$/.test(w.deepRgb)),
     'de wereldkleur komt er ook als losse kanalen in', JSON.stringify(r.rijen.map(w => w.deepRgb)));
