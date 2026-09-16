@@ -86,6 +86,24 @@
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
+    /* ---- Dezelfde wereldkleuren, maar als losse kanalen ----------------------
+       --w-sky/--w-deep/--w-glow staan in hex, want de wereldstudio bewerkt ze met
+       <input type="color"> en dat veld kent niets anders (zie WERELDEN-BEGIN).
+       Een hex kun je alleen niet half doorzichtig maken, en de zaal bestaat juist
+       uit halfdoorzichtige lagen over elkaar.
+
+       Vandaar deze drie: dezelfde kleur, geschreven als "r,g,b", zodat de CSS er
+       rgba(var(--w-deep-rgb), .6) van kan maken. applyWorldTheme zet ze samen met
+       de hex-versie -- één bron, twee schrijfwijzen. De waarden hieronder zijn de
+       terugval en horen bij de hex-terugvallen hierboven (#3d1a63 / #2a0c47).
+
+       Waarom niet color-mix(): dat zou hetzelfde doen in één regel, maar het is
+       de jongste van de twee en deze app draait ook op oudere tablets. Een komma
+       gescheiden drietal werkt overal waar rgba() werkt, en dat is overal. */
+    --w-sky-rgb: 61,26,99;
+    --w-deep-rgb: 42,12,71;
+    --w-glow-rgb: 255,216,128;
+
     /* ---- Green: success / done. The original #66bb6a/#43a047 gradient only
        reached 2.36-3.3:1 contrast for the white text/glyphs on top of it --
        well under WCAG AA's 4.5:1. --green-top/--green-deep is a darker two-stop
@@ -1058,14 +1076,15 @@
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
   .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
 
-  /* ================= De zaal (fase 3.1, nu alleen de Muziekwereld) ===========
+  /* ================= De zaal (fase 3.3: élke wereld) =========================
      Een show speelt in een plek, niet op een verloop. Deze laag maakt van het
      spelscherm de binnenkant van de wereld die het kind net op de kaart aantikte.
 
      De volgorde van onder naar boven is de hele afspraak, en ze loopt precies
      omgekeerd aan hoe belangrijk iets is:
 
-       .venue-art     de wereld, onscherp en gedempt -- kleur en licht, geen vormen
+       .venue-sfeer   de wereldkleuren als één naadloos verloop -- de bodem
+       .venue-art     de wereld, onscherp en weggemaskerd -- licht, geen vormen
        .venue-bundel  de lichtbundel die op de ster valt
        .venue-licht   het zaallicht, het vignet en -- het belangrijkste -- de
                       donkere vloer waar de som op staat
@@ -1077,43 +1096,109 @@
      scherpste, lichtste en grootste ding op dit scherm. De zaal mag alles erboven
      hebben. Zie docs/ART-DIRECTION.md §4.3.
 
-     Een wereld zonder `venue` krijgt hier niets van: .venue staat op display:none
-     en élke regel hieronder hangt aan .venue-aan. Dat is geen toeval maar de
-     afspraak van deze fase -- één wereld doet het voor, de rest blijft staan. */
+     Geen enkele regel hieronder weet in wélke wereld hij staat: alles loopt via
+     var(--w-*) (de wereldkleuren) en var(--venue-*) (de zaalinstelling). Dat is
+     wat voorkomt dat hier ooit een `if (wereld === 'ijs')` komt te staan. */
   #screen-game, #screen-end { position: relative; }
   .venue { display: none; position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
   .venue-aan .venue { display: block; }
   /* Boven de zaal uit. .hub-sticky draagt zijn eigen z-index (5), dus alleen de
      arena en de eindkaart hebben hier iets te zeggen. */
   .venue-aan .game-arena, .venue-aan .result-card { position: relative; z-index: 1; }
-  /* De wereldtekening zelf, onscherp. De negatieve inset vangt de rand op die de
-     blur anders naar binnen trekt; de mask laat het beeld naar de vloer toe
-     wegvallen zodat er nooit getekende drukte achter een getal staat. */
+
+  /* ---- De bodem: de wereld als sfeer ----
+     Twee verlopen die het hele scherm naadloos vullen, in de kleuren van déze
+     wereld. Dit is de laag die de belofte draagt dat er nooit een rand, een naad
+     of een herhaald stuk tekening te zien is: er ís geen beeld, dus er is niets
+     om af te knippen. Wat er ook boven deze laag gebeurt, het scherm is altijd
+     dicht. Kost niets -- een verloop wordt één keer getekend en daarna niet meer.
+
+     Komt er ooit een échte zaaltekening per wereld (venue.art), dan blijft deze
+     laag gewoon staan en dekt hij precies af wat die tekening niet vult. */
+  .venue-sfeer {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
+      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 64%, var(--w-deep, #2a0c47) 100%);
+  }
+
+  /* ---- De wereldtekening, als licht en niet als landschap ----
+     Zolang er geen eigen zaaltekening is, leent de zaal de wereldkaart zelf: het
+     kind stapt ín de plek die het net aantikte, en dat bestand staat al in het
+     geheugen omdat de kaart het een tel geleden getoond heeft. Nul extra bytes.
+
+     Dat leent alleen niet vanzelf. Een kaart is een staande tekening met een
+     horizon, een kustlijn en gebouwen die aan de rand ophouden. Zoom je daarop in
+     en laat je hem het scherm vullen, dan valt de snede precies dáár: op een breed
+     venster liep er een kaarsrechte kustlijn dwars door het beeld en stond er een
+     halve tent tegen de schermrand -- de tekening lag zichtbaar afgeknipt op het
+     scherm in plaats van erachter.
+
+     De oplossing is niet een grotere zoom of een andere uitsnede (elke uitsnede
+     heeft randen), maar het omdraaien van de rol. Deze laag hoeft het scherm niet
+     te vullen: .venue-sfeer doet dat al. Ze mag dus naar alle kanten wégvallen --
+     en een rand die op nul staat is geen rand meer.
+
+     Drie dingen doen dat samen:
+       het masker een ovaal dat naar buiten toe uitdooft. Hij staat in procenten
+                  van het element, dus hij past zich aan élke vensterverhouding
+                  aan: de schermrand ligt altijd op dezelfde plek in het ovaal en
+                  is daar altijd (bijna) doorzichtig. Waar de snede zit doet er
+                  niet meer toe -- hij valt per definitie in het doorzichtige deel.
+       de blur    genoeg om vorm in kleur te veranderen. Een gebouw dat je kunt
+                  aanwijzen hoort op de kaart; hier hoort alleen zijn licht.
+       de dekking net onder de één, zodat de sfeerlaag er doorheen blijft praten
+                  en de tekening nooit als tweede achtergrond gaat lezen.
+
+     Het blijft een noodoplossing, en een goedkope: één regel in de wereld
+     (venue.art) hangt hier later een echte zaaltekening in, en dan mag zoom terug
+     naar ~100, blur naar 0-4 en de dekking naar 1. Verder verandert er niets. */
   .venue-art {
-    position: absolute; inset: -7%;
+    position: absolute; inset: -8%;
     background-image: var(--venue-art, none);
     /* Zoom op de breedte en niet 'cover', want cover perst de héle wereldkaart in
        het scherm en dan kijk je naar een landschap in plaats van naar een zaal.
-       Op de breedte, omdat de tekening staand is: dan dekt hij altijd, ook als het
-       venster breder wordt dan hoog. --venue-focus kiest daarbinnen het stuk. */
-    background-size: var(--venue-zoom, 190%) auto;
-    background-position: var(--venue-focus, 50% 10%);
+       Op de breedte, omdat de tekening staand is: dan is de uitsnede horizontaal
+       altijd hetzelfde stuk, op elk toestel. --venue-focus kiest wélk stuk. */
+    background-size: var(--venue-zoom, 220%) auto;
+    background-position: var(--venue-focus, 70% 14%);
     background-repeat: no-repeat;
-    background-color: var(--w-deep, #170a35);
-    filter: blur(var(--venue-blur, 12px)) brightness(.6) saturate(1.08);
-    -webkit-mask-image: linear-gradient(180deg, #000 0, #000 30%, rgba(0,0,0,.42) 56%, transparent 78%);
-    mask-image: linear-gradient(180deg, #000 0, #000 30%, rgba(0,0,0,.42) 56%, transparent 78%);
+    /* geen background-color: .venue-sfeer is de bodem. Stond die hier wél, dan
+       zou dit element zijn eigen vlak meebrengen en was het masker zinloos. */
+    filter: blur(var(--venue-blur, 11px)) brightness(var(--venue-dim, .62)) saturate(1.1);
+    opacity: var(--venue-op, .96);
+    -webkit-mask-image: radial-gradient(74% 86% at 50% 18%,
+      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+    mask-image: radial-gradient(74% 86% at 50% 18%,
+      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+  }
+  /* Ligt het venster op zijn kant, dan zie je van een staande tekening een brede,
+     lage strook -- en juist in zo'n strook komen kustlijnen en daken als rechte
+     lijnen door het beeld. Verder inzoomen laat minder tekening zien, meer blur
+     maakt van wat overblijft licht, en minder dekking laat de sfeerlaag winnen.
+     Drie kleine draaien aan dezelfde knoppen; geen aparte laag, geen apart beeld. */
+  @media (min-aspect-ratio: 1/1) {
+    .venue-art {
+      background-size: calc(var(--venue-zoom, 220%) * 1.75) auto;
+      filter: blur(calc(var(--venue-blur, 11px) * 2.1)) brightness(var(--venue-dim, .62)) saturate(1.1);
+      opacity: calc(var(--venue-op, .96) * .7);
+    }
   }
   /* Zaallicht + vloer. Vier verlopen, één element: warm van boven (het is een
      show), de wereldkleur in de hoeken (het is een zaal), en daaronder de vloer
-     die het onderste deel van het scherm terugbrengt naar rustig donker. */
+     die het onderste deel van het scherm terugbrengt naar rustig donker.
+
+     De donkere kleur is hier niet meer het paars van de Muziekwereld maar
+     --w-deep van de wereld waar je staat: in de IJswereld is de vloer donkerblauw,
+     in de Snoepwereld donkerrood. Dezelfde zaal, ander licht -- precies het
+     verschil dat een wereld hoort te maken. */
   .venue-licht {
     position: absolute; inset: 0;
     background:
       radial-gradient(112% 40% at 50% 2%, rgba(255,222,150,.30), transparent 64%),
-      radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(18,3,40,.60) 100%),
-      linear-gradient(180deg, transparent 26%, rgba(22,4,44,.46) 46%,
-                      rgba(20,4,40,.80) 62%, rgba(18,3,38,.90) 100%);
+      radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(var(--w-deep-rgb), .62) 100%),
+      linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
+                      rgba(var(--w-deep-rgb), .82) 62%, rgba(var(--w-deep-rgb), .93) 100%);
   }
   /* Het voetlicht op de rand van het podium: een lijn licht, dwars over de vloer. */
   .venue-licht::after {
@@ -1162,9 +1247,11 @@
   .venue-aan .venue-vloer {
     left: 50%; bottom: -5%; width: 132%; height: 30%; transform: translateX(-50%);
     border-radius: 50%;
+    /* De warme lip is zaallicht en blijft dus in élke wereld hetzelfde goud; de
+       schaduw eronder is de vloer van díe wereld en volgt --w-deep. */
     background:
       radial-gradient(52% 46% at 50% 14%, rgba(255,232,176,.70), rgba(255,190,104,.22) 56%, transparent 76%),
-      radial-gradient(58% 64% at 50% 52%, rgba(52,16,92,.82), rgba(22,4,44,.34) 72%, transparent 88%);
+      radial-gradient(58% 64% at 50% 52%, rgba(var(--w-deep-rgb), .88), rgba(var(--w-deep-rgb), .36) 72%, transparent 88%);
     box-shadow: 0 0 40px rgba(255,196,116,.30), inset 0 2px 0 rgba(255,228,168,.35);
   }
   /* Op het eindscherm staat het podium ín een kaart. Het paneel moet dus precies
@@ -1277,12 +1364,16 @@
   @media (max-height: 700px) {
     .venue-licht { background:
       radial-gradient(112% 34% at 50% 0%, rgba(255,222,150,.26), transparent 62%),
-      radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(18,3,40,.60) 100%),
-      linear-gradient(180deg, transparent 18%, rgba(22,4,44,.50) 40%,
-                      rgba(20,4,40,.82) 58%, rgba(18,3,38,.90) 100%); }
+      radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(var(--w-deep-rgb), .62) 100%),
+      linear-gradient(180deg, transparent 18%, rgba(var(--w-deep-rgb), .54) 40%,
+                      rgba(var(--w-deep-rgb), .84) 58%, rgba(var(--w-deep-rgb), .93) 100%); }
     .venue-licht::after { top: 38%; }
-    .venue-art { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 22%, rgba(0,0,0,.4) 46%, transparent 68%);
-      mask-image: linear-gradient(180deg, #000 0, #000 22%, rgba(0,0,0,.4) 46%, transparent 68%); }
+    /* minder hoogte = de vloer begint hoger, dus het ovaal moet ook hoger
+       uitdoven; verder hetzelfde masker en dezelfde redenering */
+    .venue-art { -webkit-mask-image: radial-gradient(74% 72% at 50% 12%,
+        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%);
+      mask-image: radial-gradient(74% 72% at 50% 12%,
+        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%); }
   }
 
   /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
@@ -3093,9 +3184,11 @@
 
   <!-- ===== Spel ===== -->
   <div class="screen" id="screen-game">
-    <!-- De zaal. Ligt achter alles (z 0) en vangt geen tikken. Staat er alleen
-         iets in als de wereld een `venue` heeft -- zie applyVenue. -->
+    <!-- De zaal. Ligt achter alles (z 0) en vangt geen tikken. Elke wereld heeft
+         er een: zonder eigen zaaltekening draagt .venue-sfeer hem alleen op de
+         wereldkleuren -- zie applyVenue. -->
     <div class="venue" id="game-venue" aria-hidden="true">
+      <div class="venue-sfeer"></div>
       <div class="venue-art"></div>
       <div class="venue-licht"></div>
     </div>
@@ -3112,8 +3205,7 @@
     </div>
     <div class="game-arena">
       <!-- De bundel en het podium horen bij de ster, niet bij het scherm: ze staan
-           dus in dezelfde doos als zij en schuiven met elke indeling mee. Buiten een
-           zaalwereld staan ze op display:none en is dit exact het oude paneel. -->
+           dus in dezelfde doos als zij en schuiven met elke indeling mee. -->
       <div class="show-panel">
         <div class="venue-bundel" aria-hidden="true"></div>
         <div class="venue-vloer" aria-hidden="true"></div>
@@ -3181,6 +3273,7 @@
     <!-- dezelfde zaal als tijdens de show: het applaus valt in de zaal waar je
          net stond, niet op een los tussenscherm -->
     <div class="venue" id="end-venue" aria-hidden="true">
+      <div class="venue-sfeer"></div>
       <div class="venue-art"></div>
       <div class="venue-licht"></div>
     </div>
@@ -3514,12 +3607,24 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
      de route                nodes/curve (ontbreken die: defaultNodes() slingert er een)
      de wereldbadge          rebuildWorldBadges() zet er een trofee bij, op id
      de werelden-kiezer      openWorlds() loopt gewoon de lijst af
+     de zaal                 venue (ontbreekt die: VENUE_TERUGVAL, en dat is de stand
+                             van nu -- geen enkele wereld hoeft hem op te geven)
 
    Zoek dus niet naar een tweede plek -- die is er niet, en als je er ooit een
    nodig lijkt te hebben, hoort het veld hier en niet daar.
 
-   Velden die er nog NIET zijn omdat de app ze nog niet nodig heeft: zaal-
-   tekening, wereldbeloning, wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen
+   ---- Een eigen zaaltekening voor een wereld ------------------------------
+   Er is er nog geen; de zaal leent nu de wereldkaart zelf (zie VENUE_TERUGVAL).
+   Komt die er wél, dan is dat één regel in de wereld hieronder:
+
+     venue: { art: 'assets/bg/venue-ijs.webp', zoom: 100, focus: '50% 50%', blur: 0, dim: 1, op: 1 },
+
+   Meer niet. Geen tweede pad, geen if, geen nieuw scherm: applyVenue hangt hem
+   in dezelfde laag waar nu de geleende kaart hangt, en alles eromheen (het licht,
+   de vloer, de bundel, de kop) blijft precies zoals het staat.
+
+   Velden die er nog NIET zijn omdat de app ze nog niet nodig heeft:
+   wereldbeloning, wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen
    loopt nu impliciet via p.level (een halte is speelbaar t/m p.level, en werelden
    staan op een rij), en dat is precies genoeg. Komen die dingen er, dan komen ze
    hier als veld bij -- niet als uitzondering ergens in een scherm. */
@@ -3545,14 +3650,6 @@ const WORLDS = [
   {
     id: 'muziek', name: 'Muziekwereld', icon: '🎵', levels: 8,
     art: 'assets/world/muziek-map.webp',
-    /* De zaal waar de show speelt (fase 3.1). Eén wereld heeft er nu een: de rest
-       ziet er precies zo uit als hiervoor. Zie venueArt() voor de drie velden.
-       art staat op null, dus valt hij terug op de wereldtekening zelf -- dezelfde
-       lucht, dezelfde kleuren, dezelfde hand. Dat is geen noodoplossing maar
-       precies de bedoeling: het kind stapt ín de plek die het net aantikte, en het
-       bestand staat al in de cache omdat de kaart het net getoond heeft.
-       Komt er ooit een eigen zaaltekening, dan is dit de enige regel die wijzigt. */
-    venue: { art: null, zoom: 230, focus: '50% 22%', blur: 9 },
     theme: { road: '#9a86bd', sky: '#3a1f6e', deep: '#170a35', glow: '#7a2f63' },
     nodes: [
       { x: 23.4, y: 79.3 },
@@ -3577,6 +3674,8 @@ const WORLDS = [
   {
     id: 'snoep', name: 'Snoepwereld', icon: '🍭', levels: 8,
     art: 'assets/world/snoep-map.webp',
+    // bijna wit getekend: een tandje donkerder, anders praat de zaal mee met de som
+    venue: { dim: .56 },
     theme: { sky: '#a03566', deep: '#40122a', glow: '#c05b7a', road: '#9fd8c3' },
     nodes: [
       { x: 51.6, y: 75.1 },
@@ -3649,6 +3748,8 @@ const WORLDS = [
   {
     id: 'ijs', name: 'IJswereld', icon: '❄️', levels: 8,
     art: 'assets/world/ijs-map.webp',
+    // sneeuw en ijs: de lichtste tekening van alle zes
+    venue: { dim: .54 },
     theme: { sky: '#34709c', deep: '#102c4a', glow: '#4b93a8', road: '#bcdcee' },
     nodes: [
       { x: 71.8, y: 78.7 },
@@ -3673,6 +3774,8 @@ const WORLDS = [
   {
     id: 'tover', name: 'Toverwereld', icon: '🪄', levels: 8,
     art: 'assets/world/tover-map.webp',
+    // een nachttekening: die hoeft niet nóg donkerder gemaakt te worden
+    venue: { dim: .82 },
     theme: { road: '#9f96d6', sky: '#1b1040', deep: '#05020f', glow: '#3d2a7a' },
     nodes: [
       { x: 26.3, y: 72.8 },
@@ -3756,13 +3859,23 @@ function worldsSource() {
     const L = ['  {'];
     L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
     if (w.art) L.push(`    art: ${q(w.art)},`);
-    // de zaal van deze wereld (fase 3.1) -- mag ontbreken; art mag null zijn
+    /* De zaal van deze wereld -- mag ontbreken (dan geldt VENUE_TERUGVAL), en elk
+       veld erin mag apart ontbreken (dan geldt dát veld uit de terugval).
+
+       Een ontbrekend veld wordt hier dus niet ingevuld maar overgeslagen. Dat is
+       geen zuinigheid: schreef dit "art: null" waar de wereld niets zei, dan
+       kwam er uit de studio een blok terug dat niet meer letterlijk gelijk is
+       aan wat erin ging, en meldde zij bij elke ronde een wijziging die niemand
+       gemaakt heeft. */
     if (w.venue) {
-      const v = w.venue;
-      L.push('    venue: { art: ' + (v.art ? q(v.art) : 'null')
-        + (v.zoom != null ? `, zoom: ${+v.zoom}` : '')
-        + (v.focus ? `, focus: ${q(v.focus)}` : '')
-        + (v.blur != null ? `, blur: ${+v.blur}` : '') + ' },');
+      const v = w.venue, d = [];
+      if ('art' in v) d.push('art: ' + (v.art ? q(v.art) : 'null'));
+      if (v.zoom != null) d.push(`zoom: ${+v.zoom}`);
+      if (v.focus) d.push(`focus: ${q(v.focus)}`);
+      if (v.blur != null) d.push(`blur: ${+v.blur}`);
+      if (v.dim != null) d.push(`dim: ${+v.dim}`);
+      if (v.op != null) d.push(`op: ${+v.op}`);
+      if (d.length) L.push('    venue: { ' + d.join(', ') + ' },');
     }
     if (w.badge && (w.badge.emoji || w.badge.name)) {
       L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
@@ -4728,6 +4841,22 @@ function applyStage(el, p) {
 
 /* ================= Schermen ================= */
 const NAV_FOR_SCREEN = { 'screen-map': 'nav-map', 'screen-dress': 'nav-dress', 'screen-trophies': 'nav-tro' };
+/* Staat de navigatiebalk aan, en zo ja bij welk tabblad? Afgeleid van het scherm
+   dat NU actief is, en niet van een waarde die ergens eerder opgehaald werd.
+
+   Dat verschil is geen muggenzifterij. navMee zet de balk tijdens een overgang
+   even met de hand aan, en ruimt dat 400ms later weer op. Ging het kind binnen die
+   400ms alweer een scherm verder -- een show in en meteen weer uit, wat een kind
+   van vijf moeiteloos haalt -- dan zette die opruimer de balk terug op wat hij
+   ooit ophaalde: verborgen. En dan zit er een kind op de kaart zonder enige knop.
+   Een laat opruimertje mag nooit een ouder antwoord opleggen dan het scherm dat
+   er nu staat. */
+function navVolgtScherm() {
+  const actief = document.querySelector('.screen.active');
+  const navId = actief ? NAV_FOR_SCREEN[actief.id] : null;
+  $('main-nav').style.display = navId ? 'flex' : 'none';
+  return navId || null;
+}
 function show(id) {
   // De overgangsklassen horen bij één wissel en niet bij een scherm. Ze gaan er
   // hier af en niet aan het eind van de animatie: zie .komt-op in het stijlblad --
@@ -4739,8 +4868,7 @@ function show(id) {
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   if (!onProfile) closeGearMenu();
   // de vaste navigatie hoort alleen bij de rustpunten, niet bij spel/einde/instellingen
-  const navId = NAV_FOR_SCREEN[id];
-  $('main-nav').style.display = navId ? 'flex' : 'none';
+  const navId = navVolgtScherm();
   ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
   if (navId) updateTroDot();
@@ -5232,7 +5360,7 @@ function openCareer() {
   // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
   speak(`Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
 }
-/* ================= Bewegingstaal: kaart <-> zaal (fase 3.1) =================
+/* ================= Bewegingstaal: kaart <-> zaal ===========================
    MOTION is de JS-kant van de bewegingsladder die boven in :root staat. Dezelfde
    vier snelheden, en ze staan op twee plekken omdat een CSS-overgang en een
    WAAPI-animatie nu eenmaal niet uit dezelfde bron kunnen lezen:
@@ -5364,9 +5492,8 @@ function navMee(naarBinnen) {
      navigatie hoort. Maar de kaart is dan nog 140ms bezig met vertrekken, en een
      kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij komt
      dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem wilde. */
-  const terug = nav.style.display;
   nav.style.display = 'flex';
-  const op = () => { nav.style.display = terug; nav.getAnimations().forEach(a => a.cancel()); };
+  const op = () => { nav.getAnimations().forEach(a => a.cancel()); navVolgtScherm(); };
   const a = nav.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
   a.onfinish = op;
@@ -5461,13 +5588,22 @@ function kaartTerugZoom(map, lvl) {
                  door renderTourMap meteen geleegd, zodat een latere kaart via de
                  navigatiebalk gewoon normaal opengaat. */
 let naShowLvl = null, kaartFocus = null;
+// de grendel op de terugweg (zie goMap) -- het tegenhangertje van overgangBezig
+let terugBezig = false, terugTimer = null;
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
 
 function goMap(vanLvl) {
   const p = P();
   // Alleen een échte halte laat de kaart terugzoomen. goMap komt ook langs als
   // gewone functieverwijzing (terugknop, tabbladen) en krijgt dan van alles mee.
-  kaartFocus = (typeof vanLvl === 'number' && vanLvl > 0) ? vanLvl : null;
+  const uitShow = (typeof vanLvl === 'number' && vanLvl > 0);
+  /* Twee keer tikken op "Verder op tournee" is één keer terugkomen. Alleen déze
+     weg wordt gegrendeld -- een tabbladwissel of de terugknop van het toestel
+     moet altijd door, ook midden in een overgang, anders kan een scherm blijven
+     staan waar niemand meer vanaf komt. De heenweg heeft zijn eigen grendel in
+     enterLevel. */
+  if (uitShow && terugBezig) return;
+  kaartFocus = uitShow ? vanLvl : null;
   const vorige = document.querySelector('.screen.active');
   $('map-diamonds').textContent = p.diamonds;
   $('map-portrait').innerHTML = avatarSVG(p, 80);
@@ -5477,9 +5613,21 @@ function goMap(vanLvl) {
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
   const travel = pendingTravel;
   pendingTravel = null;
-  // thuiskomen is altijd in de wereld waar ze nú speelt -- een uitstapje naar een
-  // eerdere wereld duurt precies zolang je er blijft
-  showWorld(worldFor(travel ? travel.from : p.level).index, travel ? travel.from : 0);
+  /* In wélke wereld kom je terug?
+
+     Uit een show: in de wereld van díe show. Dat is de hele belofte van deze
+     overgang -- je komt terug op de plek waar je net was, en kaartTerugZoom zoomt
+     daar ook op in. Hier stond eerder de wereld van p.level, en dat klopte zolang
+     je alleen vooruit speelde: dan zijn die twee hetzelfde. Ging een kind een
+     show overdoen in een eerdere wereld, dan kwam het uit die show terug in een
+     wereld waar het niet geweest was, en de halte om op in te zoomen bestond daar
+     niet eens -- dus ook geen terugzoom. Twee keer hetzelfde misverstand.
+
+     Niet uit een show (de tabbladbalk, de terugknop): wél thuis, in de wereld waar
+     ze nú speelt. Een uitstapje naar een eerdere wereld duurt precies zolang je
+     er blijft; weglopen van de kaart is weglopen. */
+  const terugLvl = travel ? travel.from : (uitShow ? vanLvl : p.level);
+  showWorld(worldFor(terugLvl).index, travel ? travel.from : 0);
   show('screen-map');
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
@@ -5487,7 +5635,13 @@ function goMap(vanLvl) {
      rAF van renderTourMap, één beeldje later, en show() heeft de balk dan al een
      keer volledig zichtbaar over de nog vertrekkende zaal getekend. Eén beeldje,
      maar wel precies het beeld dat deze hele wijziging moet wegnemen. */
-  if (kaartFocus && vorige && vorige !== $('screen-map')) { schermWeg(vorige, false); navMee(false); }
+  if (kaartFocus && vorige && vorige !== $('screen-map')) {
+    schermWeg(vorige, false); navMee(false);
+    // de grendel gaat vanzelf weer open, ook als er onderweg iets misgaat
+    terugBezig = true;
+    clearTimeout(terugTimer);
+    terugTimer = setTimeout(() => { terugBezig = false; }, MOTION.totaal + 60);
+  }
   if (travel) requestAnimationFrame(() => runTravel(travel));
 }
 // Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
@@ -5519,56 +5673,90 @@ function applyWorldTheme(el, world) {
   ['sky', 'deep', 'accent', 'glow', 'road'].forEach(k => {
     if (t[k]) el.style.setProperty('--w-' + k, t[k]);
     else el.style.removeProperty('--w-' + k);
+    // en dezelfde kleur nog eens als losse kanalen, zodat de zaal er lagen van
+    // kan maken die je doorheen kijkt -- zie --w-*-rgb in :root
+    const kan = t[k] ? kanalen(t[k]) : null;
+    if (kan) el.style.setProperty('--w-' + k + '-rgb', kan);
+    else el.style.removeProperty('--w-' + k + '-rgb');
   });
 }
-/* ---- De zaal: dezelfde wereld, van binnenuit (fase 3.1) --------------------
-   Een wereld die een `venue` heeft, speelt zijn shows in een getekende zaal in
-   plaats van op het vlakke app-verloop. Precies één wereld heeft er nu een
-   (Muziek); alle andere krijgen letterlijk hetzelfde scherm als hiervoor, omdat
-   venueFor() dan null teruggeeft en de klasse .venue-aan er nooit op komt.
+/* "#3a1f6e" -> "58,31,110". Geeft null bij alles wat geen hex is, en dán blijft
+   de terugval uit :root staan -- een wereld met een rare kleurwaarde valt dus
+   terug op het standaardpaars in plaats van op een kapotte rgba(). */
+function kanalen(hex) {
+  const h = String(hex).trim();
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(h);
+  if (!m) return null;
+  const v = m[1].length === 3 ? m[1].split('').map(c => c + c) : [m[1].substr(0, 2), m[1].substr(2, 2), m[1].substr(4, 2)];
+  return v.map(x => parseInt(x, 16)).join(',');
+}
+/* ---- De zaal: dezelfde wereld, van binnenuit ------------------------------
+   Elke wereld speelt zijn shows in een zaal. Niet in een eigen mini-spel en niet
+   op een eigen scherm: hetzelfde spelscherm, dezelfde indeling, dezelfde plek
+   voor de som -- alleen ander licht. Een kind dat van de Junglewereld naar de
+   IJswereld loopt hoeft niets opnieuw te leren.
 
-   Drie velden, en niet meer:
-     art    het bestand. null = val terug op de wereldtekening zelf. Dat is de
-            stand van nu: de kaart heeft die tekening net getoond, dus hij staat
+   Wat een zaal ís, zit in vijf getallen en één bestandsnaam. Geen wereld hóéft
+   ze op te geven: VENUE_TERUGVAL hieronder geldt voor iedereen, en `venue:` in
+   een wereld overschrijft alleen wat die wereld anders wil. Zo werkt een nieuwe
+   wereld (ook eentje die de wereldstudio erbij zet) meteen, zonder configuratie.
+
+     art    de zaaltekening. null = leen de wereldkaart zelf. Dat is de stand van
+            nu: de kaart heeft die tekening een tel geleden getoond, dus hij staat
             in het geheugen én in de service-worker-cache -- de zaal kost geen
-            enkele extra aanvraag en geen enkele byte.
+            enkele extra aanvraag en geen enkele byte. Hangt hier later een echte
+            zaaltekening in, dan is dát de enige regel die verandert.
      zoom   hoe ver je erop inzoomt, als percentage van de schermbreedte. 100 zou
-            de hele tekening in beeld persen -- dan kijk je naar een landschap, niet
-            naar een zaal. Hoog genoeg en je staat er middenin.
-     focus  wélk stuk je dan ziet (background-position). Bij de Muziekwereld is dat
-            de bovenkant van de kaart: daar staat de sterboog met de speakers en de
-            fonteinen, en dat is precies een podium.
+            de hele tekening in beeld persen -- dan kijk je naar een landschap,
+            niet naar een zaal.
+     focus  wélk stuk je dan ziet (background-position). Alle zes de wereldkaarten
+            hebben hun podium op ongeveer dezelfde plek: rechts van het midden,
+            bovenin. Vandaar dat één terugval voor alle zes werkt.
      blur   hoeveel onscherpte eroverheen. Dit is het verschil tussen "een tweede
-            kaart" en "de zaal achter je": de vormen worden licht en kleur, en de
-            som ervóór blijft het scherpste ding op het scherm.
+            kaart" en "de zaal achter je".
+     dim    hoe donker. De Snoep- en IJswereld zijn bijna wit getekend en zouden
+            zonder dit met de somkaart gaan concurreren; de Toverwereld is al
+            donker en mag juist iets lichter.
+     op     de dekking van de tekening. Onder de één, zodat de sfeerlaag
+            (.venue-sfeer) er doorheen blijft praten.
 
    Wordt hier ooit een echte zaaltekening ingehangen, dan hoort zoom op ~100,
-   focus op '50% 50%' en blur op 0-4 -- verder verandert er niets. */
-function venueFor(world) { return (world && world.venue) ? world.venue : null; }
+   focus op '50% 50%', blur op 0-4, dim en op op 1 -- verder verandert er niets.
+
+   Waarom dit een terugval is en geen zes kopieën: dedicated zaaltekeningen komen
+   er later. Wat hier staat moet het tot dan toe fatsoenlijk doen én in één regel
+   te vervangen zijn. Zes handmatig afgestelde uitsnedes zouden straks zes keer
+   weggegooid worden. */
+const VENUE_TERUGVAL = { art: null, zoom: 220, focus: '70% 14%', blur: 11, dim: .62, op: .96 };
+// Altijd een verse samenvoeging en nooit VENUE_TERUGVAL zelf: die is de bron voor
+// élke wereld, en één aanroeper die er per ongeluk iets in zet, zet het overal in.
+function venueFor(world) {
+  return Object.assign({}, VENUE_TERUGVAL, (world && world.venue) || null);
+}
 function venueArt(world) {
   const v = venueFor(world);
-  if (!v) return '';
-  return v.art || world.art || '';
+  return v.art || (world && world.art) || '';
 }
 /* Zet de zaal op een scherm. Eén injectiepunt voor álle zaaldecor -- de
    spelscherm-kop, het podium onder de ster en het eindscherm lezen daarna alleen
-   nog var(--venue-*) en weten dus niet in wélke wereld ze staan.
-   Geeft terug of er een zaal staat, zodat de aanroeper de klasse kan zetten. */
+   nog var(--venue-*) en var(--w-*), en weten dus niet in wélke wereld ze staan.
+
+   De klasse gaat er altijd op, ook als er geen enkele tekening is (een wereld uit
+   de wereldstudio, de Sterrentournee voorbij de laatste wereld). Dan draagt
+   .venue-sfeer de zaal in zijn eentje op de wereldkleuren, en dat is nog steeds
+   een zaal -- geen tekening is niet hetzelfde als geen plek. Vandaar dat deze
+   functie niets meer teruggeeft: er valt niets meer te beslissen. */
 function applyVenue(el, world) {
   const v = venueFor(world);
   const src = venueArt(world);
-  el.classList.toggle('venue-aan', !!(v && src));
-  applyWorldTheme(el, world);   // ook zonder zaal: nooit de kleuren van de vórige wereld
-  if (!v || !src) {
-    ['--venue-art', '--venue-focus', '--venue-zoom', '--venue-blur']
-      .forEach(k => el.style.removeProperty(k));
-    return false;
-  }
-  el.style.setProperty('--venue-art', `url("${src}")`);
-  el.style.setProperty('--venue-focus', v.focus || '50% 10%');
-  el.style.setProperty('--venue-zoom', (v.zoom == null ? 190 : v.zoom) + '%');
-  el.style.setProperty('--venue-blur', (v.blur == null ? 12 : v.blur) + 'px');
-  return true;
+  el.classList.add('venue-aan');
+  applyWorldTheme(el, world);   // nooit de kleuren van de vórige wereld
+  el.style.setProperty('--venue-art', src ? `url("${src}")` : 'none');
+  el.style.setProperty('--venue-focus', v.focus);
+  el.style.setProperty('--venue-zoom', v.zoom + '%');
+  el.style.setProperty('--venue-blur', v.blur + 'px');
+  el.style.setProperty('--venue-dim', String(v.dim));
+  el.style.setProperty('--venue-op', String(v.op));
 }
 /* Alle werelden op een rij, met wat er nog te halen valt.
 
@@ -7161,6 +7349,9 @@ const MOVES = [
 let G = null;
 
 function startLevel(lvl) {
+  // De vorige show loslaten vóór G vervangen wordt: daarna is haar spotlight-
+  // teller niet meer te vinden (die hangt aan G). Zie startSpot.
+  stopSpot();
   const p = P();
   const s = p.settings;
   // Vragen worden nu per stuk gebouwd (zodat zwakke sommen kunnen terugkomen); vooraf enkel
@@ -7346,16 +7537,29 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Enter') numpadPress('ok');
 });
 
-/* Spotlight-bonus (12 seconden): het gouden randje onderin de somkaart dooft langzaam */
+/* Spotlight-bonus (12 seconden): het gouden randje onderin de somkaart dooft langzaam.
+
+   De teller hangt aan G (de show die nu loopt), en stopSpot kan hem dus alleen
+   nog vinden zolang díe G er staat. Vervangt er iets G zonder eerst te stoppen,
+   dan is de teller niet meer te bereiken maar loopt hij wel door: elke 100ms,
+   tot het tabblad dicht gaat -- en zodra het eindscherm G op null zet, elke 100ms
+   met een fout erbij. Eén vergeten show is één teller die nooit meer ophoudt.
+
+   Vandaar dat elke tik eerst kijkt of hij nog bij de huidige show hóórt en
+   zichzelf anders opruimt. Dat is een regel die geen enkele aanroeper hoeft te
+   kennen: een teller die zijn show kwijt is, stopt uit zichzelf. startLevel zet
+   er nog een slot voor (zie daar), maar dit is het vangnet eronder. */
 function startSpot() {
   stopSpot();
   G.spot = 100;
   $('spotlight-bar').style.width = '100%';
-  G.timer = setInterval(() => {
+  const id = setInterval(() => {
+    if (!G || G.timer !== id) { clearInterval(id); return; }
     G.spot = Math.max(0, G.spot - 100 / 120);
     $('spotlight-bar').style.width = G.spot + '%';
     if (G.spot <= 0) stopSpot();
   }, 100);
+  G.timer = id;
 }
 function stopSpot() {
   if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
@@ -7487,8 +7691,12 @@ function submitAnswer(val, btnEl) {
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
    erachter wordt een tel helderder. Eén klasse, twee opacity-overgangen in de CSS
    -- geen tweede confetti, geen extra geluid, niets dat over de antwoordknop en de
-   dansende ster heen komt. Buiten een zaalwereld staat er geen .venue en doet dit
-   vanzelf niets. */
+   dansende ster heen komt.
+
+   Dat dit in élke wereld hetzelfde doet is geen bijvangst maar de bedoeling: een
+   goed antwoord hoort overal hetzelfde te voelen. De kleur van de gloed komt van
+   het zaallicht en niet van de wereld -- een wereld verandert de sfeer, niet wat
+   "goed" betekent. */
 let zaalTimer = null;
 function zaalJuicht() {
   const z = $('game-venue');
