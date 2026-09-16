@@ -223,8 +223,11 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
        alles tussen 25% en 73%) en is juist boven- en onderaan leeg. Precies
        omgekeerd aan de horizon, die zijn tekening in de onderste 55% heeft. Het
        masker houdt daarom de middenband vrij in plaats van de bovenkant. */
-    out.push(`#screen-profile{position:relative}
-#screen-profile::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    /* fixed + z-index:-1, net als de schil die het spel zelf schildert
+       (.app-sfeer): dit is dezelfde ::before, dus een kandidaat moet hem
+       overnemen en niet half over de inhoud heen komen te liggen. */
+    out.push(`#screen-profile{position:relative;isolation:isolate}
+#screen-profile::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background-image:${veil}url("${urls.landing}");
   background-size:${scrim ? 'cover,' : ''}cover;
   background-position:${scrim ? '50% 50%,' : ''}50% 50%;
