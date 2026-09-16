@@ -841,7 +841,12 @@
     position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center;
     background: rgba(20,4,40,.55); animation: popFade .25s ease; cursor: pointer; padding: 16px;
   }
-  .career-overlay.closing { animation: popFade .25s ease reverse forwards; }
+  .career-overlay.closing { animation: popFade .25s ease reverse forwards; pointer-events: none; }
+  /* Kies je in de werelden-kiezer een wereld, dan vertrekt de camera meteen. Een
+     laag die daar een kwart seconde overheen ligt te vervagen is precies wat een
+     overgang traag laat lijken -- dus gaat hij in dit ene geval kort weg, klaar
+     vóór de kaart in beweging komt. */
+  .career-overlay.closing.snel { animation-duration: .12s; }
   /* Gedeelde schil voor élk feest-/statuspaneel (ster-status, trofee-onthulling).
      Er waren hiervoor twee losse, bijna identieke regels; alleen de breedte
      verschilt nog, en dat zet de gebruiker zelf via een modifier. */
@@ -1825,6 +1830,11 @@
     min-width: 100%; min-height: 100%;
     aspect-ratio: var(--art-w) / var(--art-h);
     container-type: size;
+    /* De wereldkleur als ondergrond, ónder de tekening. Zo'n tekening is ~300 kB en
+       is bij een wereldwissel niet altijd al gedecodeerd; zonder deze regel kijk je
+       die ene tel door het kader heen naar het paars van de app, en dát leest als
+       een flits. De onderlaag is nu de wereld zelf, dus er valt niets te flitsen. */
+    background-color: var(--w-deep, #2a0c47);
     background-size: cover; background-position: 50% 50%;
   }
   /* Nog geen tekening? Dan draagt de wereld zichzelf met zijn eigen kleuren, zodat
@@ -1840,6 +1850,32 @@
      doorheen lopen. */
   #screen-map:has(.world-frame:not(.no-art)) .map-sky,
   #screen-map:has(.world-frame:not(.no-art)) .map-ground { display: none; }
+
+  /* ---- Wereld naar wereld: de camera klimt (fase 3.4) --------------------
+     De kaarten lopen van onder naar boven, en de tournee loopt van wereld 1 naar
+     wereld 6. Eén doorlopende klim dus -- en dat betekent dat de cámera omhoog
+     gaat, niet de wereld. Ga je vooruit, dan zakt de wereld waar je was ónder het
+     beeld weg en komt de volgende van bóven in beeld; terug is precies andersom.
+     (Hiervoor stond het omgekeerd: de wereld schoof omhoog weg, wat leest als een
+     camera die daalt terwijl het kind vooruit gaat.)
+
+     Twee lagen schuiven daarvoor tegelijk over hetzelfde scherm:
+       #tour-map          de nieuwe wereld, die er al staat vóórdat hij in beeld komt
+       .wereld-schaduw    een stilstaande kopie van de wereld die vertrekt
+
+     Ze reizen met dezelfde duur en dezelfde curve, precies één schermhoogte uit
+     elkaar -- ze raken elkaar dus aan en overlappen nooit. Wat je ziet is één
+     beeld dat langsschuift, geen twee schermen die over elkaar heen vervagen.
+
+     wereld-reist staat op het scherm zolang dat duurt: overflow dicht (een laag die
+     een schermhoogte naar beneden staat mag nooit een schuifbalk in de app zetten)
+     en de diepe kleur van de bestemming eronder, zodat een naad van een halve pixel
+     tussen de twee lagen de wereld zelf is en niet het paars van de app. */
+  #screen-map.wereld-reist { overflow: hidden; background-color: var(--w-deep, #2a0c47); }
+  #screen-map.wereld-reist .tour-map { will-change: transform; }
+  /* De kopie is een plaatje en verder niets: er valt niet op te tikken en niet in
+     te schuiven, en een schermlezer hoort hem niet nog een keer op te lezen. */
+  .tour-map.wereld-schaduw { pointer-events: none; }
   /* Staat het venster rechtop, dan vult de kaart het gewoon en schuif je verticaal
      -- net als op een telefoon, alleen is er meer te schuiven. Ligt het venster op
      zijn kant, dan wordt het een podium: de kaart zo groot als de hóógte toelaat,
@@ -4887,6 +4923,16 @@ function navGo(t) {
 }
 
 function goProfiles() {
+  /* Een klaarliggende reis hoort bij de ster die hem verdiend heeft. Ging het kind
+     vanaf het eindscherm terug naar de sterrenkeuze in plaats van naar de kaart,
+     dan lag die reis er nog -- en speelde hij af op de kaart van wie er daarna
+     gekozen werd. Eén wereld van iemand anders die zich opent voor jouw neus:
+     precies de ene keer dat deze onthulling niet mag spelen.
+
+     Opruimen vóór cur losgelaten wordt: de opruimer zet de kaart nog één keer recht
+     en heeft daarvoor een geldige ster nodig. */
+  stopWereldReis();
+  pendingTravel = null;
   cur = null;
   renderProfiles();
   show('screen-profile');
@@ -5196,10 +5242,20 @@ function worldCurve(w) {
 
    travelFrom > 0 = de tussenstand vlak vóór de reis-animatie (zie renderTourMap). */
 function showWorld(idx, travelFrom) {
+  /* Een directe wisseling breekt een lopende wereldreis af. Dat gebeurt als een
+     kind midden in een overgang op de navigatiebalk of de terugknop drukt: dan
+     staat er straks een kaart van wereld A met de kop van wereld B, en die twee
+     mogen het nooit oneens zijn. stopWereldReis ruimt de schaduwlaag op en zet
+     alles terug; hij is bewust leeg als er geen reis loopt.
+
+     wereldCamera roept showWorld aan vóórdat hij zijn eigen reis aanmeldt, dus
+     deze regel breekt nooit de reis af waar hij zelf bij hoort. */
+  stopWereldReis();
   viewWorldIdx = Math.max(0, idx | 0);
-  renderMapTitle(P());
+  renderMapTitle(P(), travelFrom || 0);
   renderTourMap(travelFrom || 0);
   preloadNextWorldArt();
+  preloadBuurwerelden();
 }
 /* Wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk). Ze
    worden opgehaald op het moment dat de kaart ze in beeld zet -- en bij een
@@ -5233,10 +5289,224 @@ function preloadNextWorldArt() {
   const volgende = worldForIndex(hier.index + 1);
   if (volgende && volgende.world) preloadArt(volgende.world.art);
 }
+/* Hetzelfde idee, maar dan voor rondkijken in plaats van vooruitgaan: de buren van
+   de wereld waar de kaart nú naar kijkt. Wie in de werelden-kiezer rondspringt,
+   springt bijna altijd één stap -- de vorige wereld om sterren op te halen, de
+   volgende om verder te gaan -- en dan schuift die tekening meteen het beeld in.
+
+   Twee bestanden, nooit meer, en alleen werelden die al open zijn: vooruitkijken
+   naar wat nog op slot zit levert geen kaart op om heen te reizen. De wereld die
+   straks opengaat is niet de buurman maar de beloning, en die haalt
+   preloadNextWorldArt al op tijd op.
+
+   Achter in de rij (requestIdleCallback): dit mag nooit vóór de kaart komen te
+   staan die er nu getekend wordt. ART_GEHAALD zorgt dat het per wereld bij één
+   aanvraag blijft, hoe vaak de kaart ook opnieuw opgebouwd wordt. */
+function preloadBuurwerelden() {
+  if (!cur || viewWorldIdx == null) return;
+  const laatsteOpen = worldFor(P().level).index;
+  const hier = viewWorldIdx;
+  const doe = () => [hier - 1, hier + 1].forEach(i => {
+    if (i < 0 || i > laatsteOpen) return;
+    const w = worldForIndex(i);
+    if (w && w.world) preloadArt(w.world.art);
+  });
+  if (window.requestIdleCallback) requestIdleCallback(doe, { timeout: 1200 });
+  else setTimeout(doe, 400);
+}
+
+/* ================= Wereld naar wereld: de camera klimt ====================
+   Fase 3.4. Eén bewegingsregel voor álle wereldwissels, en hij is ruimtelijk:
+
+     de kaarten klimmen van beneden naar boven, de tournee klimt van wereld 1 naar
+     wereld 6, dus de camera klimt mee.
+
+   Vooruit  = camera omhoog: de wereld waar je was zakt onder het beeld weg, de
+              volgende komt van boven binnen.
+   Terug    = camera omlaag: de wereld waar je was stijgt uit beeld, de vorige komt
+              van onderen binnen.
+
+   Let op het verschil met wat er hiervoor stond. Daar schoof de afgemaakte wereld
+   omhóóg weg bij een stap vooruit, "in dezelfde richting als de route". Dat klopt
+   voor een ster die over de weg loopt, maar niet voor het beeld: als de wereld
+   omhoog gaat, gaat de camera omlaag -- en dan voelt vooruitgaan als dalen. Eén
+   wereld verderop hoort hóger te liggen, en dat zie je alleen als het beeld van
+   boven binnenkomt.
+
+   Twee snelheden, en dat is met opzet het enige verschil tussen de twee gevallen:
+
+     snel    gewoon rondkijken tussen werelden die al open zijn. Kort, functioneel,
+             meteen weer bruikbaar -- het mag geen laadscherm worden.
+     onthul  de eerste keer dat een wereld opengaat. Iets trager, met een tel
+             stilte ervoor en een kader dat nazoomt. Geen tussenscherm, geen
+             cutscene: dezelfde beweging, alleen met meer lucht eromheen.
+
+   Beperkte beweging (prefers-reduced-motion) reist niet: dan komt de nieuwe wereld
+   in 160ms op. De wissel blijft duidelijk, er rijdt alleen niets over het scherm. */
+const WERELDREIS = {
+  snel: 340,                                    // rondkijken tussen open werelden
+  onthul: 900,                                  // de eerste keer dat een wereld opengaat
+  beat: 560,                                    // stilte na de afgemaakte wereld, vóór de klim
+  kort: 160,                                    // beperkte beweging: alleen een korte opkomst
+  uit: 'cubic-bezier(.32,.78,.24,1)',           // los en zacht neerzetten
+  traag: 'cubic-bezier(.55,0,.2,1)',            // aanzetten, reizen, neerzetten
+  na: 'cubic-bezier(.2,.8,.25,1)',              // het kader dat nazoomt bij een onthulling
+};
+
+/* De grendel. Eén reis tegelijk, en hij gaat altijd weer open: de opruimer hangt
+   niet alleen aan animation.onfinish (die kan uitblijven als het scherm tussentijds
+   wisselt) maar ook aan een vangnet-timer, en élke andere weg naar showWorld roept
+   hem ook aan. Blijft hij ooit toch hangen, dan staat er een kind op een kaart waar
+   geen enkele wereldknop nog iets doet -- dus liever drie keer opruimen dan één
+   keer niet. */
+let wereldReisOp = null;
+function wereldReisBezig() { return !!wereldReisOp; }
+function stopWereldReis() {
+  const op = wereldReisOp;
+  wereldReisOp = null;
+  if (op) { try { op(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ } }
+}
+/* Een stilstaande kopie van de wereld die vertrekt. Kopiëren en niet verplaatsen:
+   het echte kader houdt zo zijn plek in de opmaak én zijn schuifstand, dus er wordt
+   tijdens de reis niets opnieuw ingedeeld en geen enkel plaatje opnieuw geladen.
+
+   De kopie hangt direct ná #tour-map, dus hij ligt erbovenop -- maar nog steeds
+   ónder de kop, de navigatiebalk en de weg-terug-pil. Die horen bij de app en niet
+   bij de wereld, en blijven dus staan waar ze staan. */
+function maakWereldSchaduw(map) {
+  const k = map.cloneNode(true);
+  k.removeAttribute('id');
+  k.classList.add('wereld-schaduw');
+  /* De kopie draagt acht knoppen met zich mee die er allang niet meer toe doen.
+     aria-hidden houdt ze uit de schermlezer, pointer-events uit de vingers, en
+     inert uit het toetsenbord -- browsers die inert nog niet kennen negeren de
+     eigenschap gewoon, en dan doen de eerste twee nog steeds hun werk. */
+  k.setAttribute('aria-hidden', 'true');
+  k.inert = true;
+  map.parentNode.insertBefore(k, map.nextSibling);
+  k.scrollTop = map.scrollTop;        // pas ná het inhangen: daarvoor is er niets te schuiven
+  return k;
+}
+/* De kop volgt de camera. Hij staat buiten de kaart en beweegt dus niet vanzelf
+   mee; zonder dit zou de wereldnaam in één beeldje omklappen terwijl de tekening
+   nog onderweg is, en dat leest als een kop die bij de verkeerde kaart hoort.
+   Dezelfde richting, kleiner en korter: 9px is genoeg om "dit hoort bij die
+   beweging" te zeggen. */
+function kopMeeMetCamera(richting) {
+  const el = $('map-tournee-label');
+  if (!el || !el.animate || motionOff()) return;
+  el.getAnimations().forEach(a => a.cancel());
+  /* Niet naar nul: een pil die helemaal verdwijnt laat een gat in de kop achter en
+     dát leest als een haperende kop, niet als een kop die meebeweegt. .2 is genoeg
+     om "deze naam hoort bij die beweging" te zeggen. */
+  el.animate(
+    [{ transform: 'translateY(' + (richting > 0 ? -9 : 9) + 'px)', opacity: .2 },
+     { transform: 'none', opacity: 1 }],
+    { duration: MOTION.snel, delay: 40, easing: MOTION.uit, fill: 'backwards' });
+}
+/* De camera verzetten. Dit is de enige plek waar een wereld in of uit beeld rijdt.
+
+     richting  +1 = vooruit in de tournee (camera omhoog), -1 = terug
+     teken()   zet de nieuwe wereld neer. Wordt aangeroepen vóórdat er iets beweegt,
+               zodat de kaart er al staat op het moment dat hij in beeld komt -- net
+               als bij enterLevel: het scherm begint vóór de animatie, niet erna.
+     opts.duur / opts.easing / opts.zoom / opts.klaar
+
+   Valt de animatie weg (oud toestel, beperkte beweging, scherm al gewisseld), dan
+   staat de nieuwe wereld er gewoon meteen. Er is geen toestand die kan blijven
+   hangen: alles wat gezet wordt, wordt in één opruimer weer teruggezet. */
+function wereldCamera(richting, teken, opts) {
+  opts = opts || {};
+  const scherm = $('screen-map'), map = $('tour-map');
+  let gevierd = false;
+  const vier = () => {
+    if (gevierd) return;
+    gevierd = true;
+    if (opts.klaar) { try { opts.klaar(); } catch (e) { /* idem */ } }
+  };
+  stopWereldReis();
+  const kanReizen = scherm && map && map.animate && map.isConnected
+    && scherm.classList.contains('active') && map.querySelector('.world-frame') && !motionOff();
+  if (!kanReizen) {
+    teken();
+    // Beperkte beweging: geen reis, wél een duidelijke wissel. Eén korte opkomst
+    // van het kader -- er verandert zichtbaar iets, er rijdt alleen niets.
+    if (motionOff() && map && map.animate) {
+      const f = map.querySelector('.world-frame');
+      if (f && f.animate) f.animate([{ opacity: 0 }, { opacity: 1 }],
+        { duration: WERELDREIS.kort, easing: 'ease-out' });
+    }
+    vier();
+    return;
+  }
+  const duur = opts.duur || WERELDREIS.snel;
+  const easing = opts.easing || WERELDREIS.uit;
+  const schaduw = maakWereldSchaduw(map);
+  teken();                                      // de nieuwe wereld staat er nu al
+  kopMeeMetCamera(richting);
+  scherm.classList.add('wereld-reist');
+  map.style.pointerEvents = 'none';             // niet op een bewegend doel kunnen tikken
+
+  /* Eén schermhoogte uit elkaar, dezelfde duur, dezelfde curve: de twee lagen
+     raken elkaar precies aan en lopen nooit door elkaar heen. De ene pixel die de
+     vertrekkende laag tekortkomt is de naadafdekking -- exact aansluiten laat op
+     sommige schermen een haarlijn zien, een pixel overlap nooit. */
+  const weg = richting > 0 ? 'calc(100% - 1px)' : 'calc(-100% + 1px)';
+  const komt = richting > 0 ? '-100%' : '100%';
+  const aUit = schaduw.animate(
+    [{ transform: 'translateY(0)' }, { transform: 'translateY(' + weg + ')' }],
+    { duration: duur, easing: easing, fill: 'forwards' });
+  const aIn = map.animate(
+    [{ transform: 'translateY(' + komt + ')' }, { transform: 'translateY(0)' }],
+    { duration: duur, easing: easing });
+
+  /* Alleen bij een onthulling: het kader zoomt na. De nieuwe wereld komt een tikje
+     te groot binnen en zakt daarna op zijn plaats -- een camera die tot stilstand
+     komt. Dat gebeurt óp het kader en niet op de laag, dus de naad tussen de twee
+     lagen blijft precies waar hij was.
+
+     Alleen op het kader dat aankomt. De vertrekkende wereld kreeg hier eerst een
+     scale(.975) mee, "de camera trekt weg" -- maar kleiner maken laat zijn rand
+     zien, en dat is precies het ene dat op deze kaarten nooit mag (zie .world-frame:
+     cover, niet contain). De wereld die weggaat gaat gewoon weg. */
+  if (opts.zoom) {
+    const nieuw = map.querySelector('.world-frame');
+    if (nieuw && nieuw.animate) nieuw.animate(
+      [{ transform: 'scale(1.055)' }, { transform: 'none' }],
+      { duration: duur + 260, easing: WERELDREIS.na });
+  }
+
+  const deze = () => {
+    [aUit, aIn].forEach(a => { try { a.cancel(); } catch (e) {} });
+    schaduw.remove();
+    scherm.classList.remove('wereld-reist');
+    map.style.pointerEvents = '';
+    vier();
+  };
+  wereldReisOp = deze;
+  const af = () => { if (wereldReisOp === deze) stopWereldReis(); };
+  aIn.onfinish = af;
+  setTimeout(af, duur + 320);                   // vangnet, net als bij elke andere overgang
+}
+/* De enige weg van wereld naar wereld tijdens gewoon rondkijken: de werelden-kiezer
+   en de weg-terug-pil lopen hier allebei langs.
+
+   Een kind tikt drie keer; dat hoort één wereld verder te zijn. Vandaar de grendel,
+   en vandaar dat dezelfde wereld nog eens kiezen niets doet in plaats van de kaart
+   opnieuw op te bouwen. Geeft false terug als er niets gebeurd is, zodat een
+   aanroeper weet dat hij niets hoeft op te ruimen. */
+function navigeerNaarWereld(idx) {
+  if (wereldReisBezig()) return false;
+  const doel = Math.max(0, idx | 0);
+  const nu = viewWorldIdx == null ? worldFor(P().level).index : viewWorldIdx;
+  if (doel === nu) return false;
+  wereldCamera(doel > nu ? 1 : -1, () => showWorld(doel));
+  return true;
+}
 /* De kop van de kaart draagt nog één ding: in wélke wereld je kijkt. Waar je
    daarin bent staat op de kaart zelf -- genummerde haltes, de gouden huidige
    halte, de ster die erop staat -- en dat leest een kind van vijf wèl. */
-function renderMapTitle(p) {
+function renderMapTitle(p, opReis) {
   const cur = worldFor(p.level);
   const shown = viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx);
   const anders = shown.index !== cur.index;
@@ -5244,15 +5514,25 @@ function renderMapTitle(p) {
     + `<span class="wp-chev">▾</span>`;
   /* Kijk je in een andere wereld dan waar je speelt, dan ziet de kaart er verder
      precies normaal uit -- en dan kan een kind daar blijven hangen zonder te
-     merken dat ze weg is. Vandaar deze gouden weg terug, en alleen dán. */
+     merken dat ze weg is. Vandaar deze gouden weg terug, en alleen dán.
+
+     Behalve tijdens een reis (de tussenstand vóór de reisanimatie, zie
+     renderTourMap). De voortgang is dan al verzet -- p.level wijst naar de nieuwe
+     wereld terwijl de kaart de oude nog toont -- en dan biedt deze pil een weg aan
+     naar precies de wereld die het kind een tel later cadeau krijgt. Hij verklapt
+     de onthulling, én hij is een tweede knop naar dezelfde plek midden in een
+     overgang. Na aankomst tekent showWorld hem gewoon opnieuw. */
   const terug = $('world-back');
-  terug.hidden = !anders;
+  terug.hidden = !anders || !!opReis;
   if (anders) {
     /* "⟲ Terug naar 🎵 Muziekwereld" was 216px breed en stond midden onderaan --
        precies waar de onderste haltes staan. De ⟲ zégt al "terug"; de twee woorden
        ervoor kostten de helft van de breedte en voegden er niets aan toe. */
     terug.innerHTML = `⟲ ${cur.world.icon} ${esc(cur.world.name)}`;
-    terug.onclick = () => { sndClick(); showWorld(cur.index); };
+    // Terug naar de wereld waar ze speelt is vóóruit in de tournee -- die ligt per
+    // definitie hóger dan waar ze nu staat te kijken. De camera klimt dus, net als
+    // wanneer ze er via de kiezer heen gaat. Zie navigeerNaarWereld.
+    terug.onclick = () => { sndClick(); navigeerNaarWereld(cur.index); };
   }
 }
 /* Rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk: één
@@ -5611,8 +5891,13 @@ function goMap(vanLvl) {
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
-  const travel = pendingTravel;
+  /* De onthulling van een nieuwe wereld hoort bij precies één sprong: die van p.level
+     zoals hij er nú staat. Klopt dat niet meer (opslag opnieuw geladen, ster gewisseld,
+     of een reis die is blijven liggen), dan opent de kaart gewoon zonder reis -- nooit
+     met een onthulling die bij een andere stand hoort. */
+  let travel = pendingTravel;
   pendingTravel = null;
+  if (travel && travel.to !== p.level) travel = null;
   /* In wélke wereld kom je terug?
 
      Uit een show: in de wereld van díe show. Dat is de hele belofte van deze
@@ -5769,6 +6054,7 @@ function applyVenue(el, world) {
    Werelden voorbij waar ze zelf is staan er wel bij, gedimd en zonder teller. Een
    kind mag zien dat het doorgaat; alleen nog niet waarheen. */
 function openWorlds() {
+  if (wereldReisBezig()) return;   // midden in een wereldwissel valt er niets te kiezen
   sndClick();
   const p = P();
   const cur = worldFor(p.level);
@@ -5800,8 +6086,13 @@ function openWorlds() {
     const rij = e.target.closest && e.target.closest('[data-w]');
     if (!rij) return;
     sndClick();
-    showWorld(Number(rij.dataset.w));
+    /* Eerst de laag weg, dán de camera. Andersom ligt er een kwart seconde een
+       vervagend paneel over een kaart die al onderweg is, en dát is precies wat
+       een overgang traag laat lijken. '.snel' kort die uitfade in tot 120ms; de
+       laag is dus weg vóór de wereld in beweging komt. */
+    ov.classList.add('snel');
     ov._close();
+    navigeerNaarWereld(Number(rij.dataset.w));
   };
   requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
 }
@@ -6015,34 +6306,63 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
     [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
     { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
 }
-/* De wereldwissel: de afgelopen wereld schuift omhoog het beeld uit en de nieuwe
-   komt van onderen op. Dezelfde richting als de route zelf -- de paden klimmen, de
-   ster verlaat het beeld bovenaan en komt onderaan op halte 1 weer binnen. Acht
-   losse schermen lezen daardoor als één lange klim, en er is geen enkel extra
-   plaatje voor nodig.
+/* De eerste keer dat een wereld opengaat.
 
-   Vlak daarvoor stijgt de badge van de afgemaakte wereld van de kaart naar de
-   trofeeënkast in de navigatie. Dat is flyDiamonds met een andere lading: dezelfde
-   beweging, dus dezelfde taal als "je hebt iets verdiend". De beloning landt op de
-   káárt, waar de reis gebeurde, en niet pas op een volgend scherm. */
-function runWorldChange(fromW, toW, finish, still) {
+   Dezelfde beweging als gewoon rondkijken -- de camera klimt, de afgemaakte wereld
+   zakt onder het beeld weg en de nieuwe komt van boven binnen -- maar met meer lucht
+   eromheen, want dit is het moment waar de hele wereld naartoe werkte:
+
+     1  de badge van de afgemaakte wereld stijgt van de kaart naar de trofeeënkast
+     2  een halve tel stilte: de afgemaakte wereld staat er nog, en dat mag even
+     3  de camera klimt door, trager dan bij rondkijken en met meer aanzet
+     4  de nieuwe wereld zakt op zijn plek -- het kader komt een tikje te groot
+        binnen en zoomt na, zoals een camera die tot stilstand komt
+     5  confetti en de naam van de wereld (zie vier() in runTravel)
+
+   Wat het níet is: een tussenscherm, een titelkaartje of een beloningsvenster.
+   De nieuwe wereld ís de beloning, dus die hoort in beeld te komen -- niet
+   aangekondigd te worden door iets dat ervoor staat.
+
+   Eén keer per wereld, en zonder dat daar iets voor opgeslagen wordt. runTravel
+   draait alleen op een level-up, en het eindscherm zet p.level (en dus
+   pendingTravel) alleen omhoog op de vóórste halte -- zie 'if (lvl === p.level)'
+   daar. Een wereldgrens passeer je daardoor precies één keer. Verversen, de app
+   opnieuw openen, een show overdoen, later terugkomen via de kiezer: geen van alle
+   komt hier langs, want geen van alle is een level-up. Er is dus geen "al
+   gezien"-vlag nodig, en er kan er ook geen scheef komen te staan.
+
+   De badge vliegt vóór de stilte, niet erna: dezelfde beweging als flyDiamonds,
+   dus dezelfde taal als "je hebt iets verdiend". Hij landt op de káárt waar de
+   reis gebeurde, en niet pas op een volgend scherm. */
+function runWorldChange(fromW, toW, plaats, vier, still) {
   const map = $('tour-map');
-  const frame = map.querySelector('.world-frame');
-  const naarKast = $('nav-tro');
-  const badge = fromW.world.icon || '🌍';
-  if (!frame || !frame.animate || still) { flyBadge(map, naarKast, badge); finish(); return; }
+  flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
+  if (!map || !map.animate || still) { plaats(); vier(); return; }
+  /* De grendel gaat dicht vóór de stilte en niet pas als de camera vertrekt. Die
+     halve seconde is namelijk het enige gat waarin een kind nog een wereld zou
+     kunnen kiezen -- en dan reist de kaart eerst daarheen en een tel later alsnog
+     naar de wereld die net openging. De kaart zelf gaat om dezelfde reden op slot:
+     een tik tijdens de stilte hoort geen show te starten in een wereld die al
+     uitgespeeld is.
 
-  flyBadge(map, naarKast, badge);
-  const uit = frame.animate(
-    [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-100%)', opacity: .6 }],
-    { duration: 620, delay: 520, easing: 'cubic-bezier(.6,0,.75,0)', fill: 'forwards' });
-  uit.onfinish = () => {
-    finish();                                   // de nieuwe wereld staat er nu
-    const nieuw = map.querySelector('.world-frame');
-    if (nieuw && nieuw.animate) nieuw.animate(
-      [{ transform: 'translateY(100%)', opacity: .6 }, { transform: 'translateY(0)', opacity: 1 }],
-      { duration: 620, easing: 'cubic-bezier(.25,1,.5,1)' });
+     Wordt de stilte alsnog afgebroken (de navigatiebalk, de terugknop van het
+     toestel, een andere ster kiezen), dan zet de opruimer de nieuwe wereld gewoon
+     neer -- zónder confetti, want dan staat het kind allang ergens anders te
+     kijken. De voortgang en de zichtbare kaart blijven het eens. */
+  let gestart = false, timer = 0;
+  const wachten = () => {
+    clearTimeout(timer);
+    map.style.pointerEvents = '';
+    if (!gestart && cur) plaats();
   };
+  map.style.pointerEvents = 'none';
+  wereldReisOp = wachten;
+  timer = setTimeout(() => {
+    gestart = true;
+    if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
+    map.style.pointerEvents = '';
+    wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+  }, WERELDREIS.beat);
 }
 /* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
    midden van de kaart, met een boogje. */
@@ -6080,8 +6400,13 @@ function runTravel(t) {
   const to = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
   const hero = from && from.querySelector('.tour-hero');
   const still = motionOff();
-  const finish = () => {
-    showWorld(toW.index);
+  /* Twee dingen die bij een wereldwissel niet op hetzelfde moment horen: de nieuwe
+     wereld neerzetten en hem vieren. Binnen één wereld vallen ze samen (de ster is
+     er, dus feest), maar bij een onthulling staat de wereld er al vóórdat je hem
+     ziet -- daar komt het feest pas als de camera stilstaat. Vandaar twee functies
+     in plaats van één finish(). */
+  const plaats = () => { showWorld(toW.index); };
+  const vier = () => {
     const el = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
     const dot = el && el.querySelector('.dot');
     if (dot && dot.animate && !still) dot.animate(
@@ -6091,7 +6416,8 @@ function runTravel(t) {
     confetti(crossing ? 26 : 14);
     showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
   };
-  if (crossing) { runWorldChange(fromW, toW, finish, still); return; }
+  const finish = () => { plaats(); vier(); };
+  if (crossing) { runWorldChange(fromW, toW, plaats, vier, still); return; }
   if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
   const dx = to.offsetLeft - from.offsetLeft;
   const dy = to.offsetTop - from.offsetTop;
