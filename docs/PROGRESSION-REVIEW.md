@@ -965,6 +965,45 @@ worlds.
 >   `p.level` is clamped to 49. Nothing is discarded — those stars still count towards the
 >   star total, rank and the show trophies. See `test/voortgang.test.js`.
 
+> **Phase 4B — the journey, one layer above the map.**
+>
+> The world picker (a six-row list behind the world name) is gone; the same job is now a
+> screen. `#screen-journey` draws **one vertical route from the bottom to the top** with the
+> worlds hung on it as destinations, the avatar standing on the one `continueWorld(p)`
+> points at. The map is unchanged and still answers "which show do I play here"; the
+> journey answers "where am I in the whole thing".
+>
+> - **It draws state, it never owns it.** Every distinction comes from 4A:
+>   `worldAvailable` → in the mist, `continueWorld` → *here you are*, `worldDone` → a gold
+>   seal, position on the map → visitable or locked. Picking a destination sets a one-shot
+>   `reisDoel` that `goMap()` consumes; `p.level`, `p.stars` and the frontier never move.
+> - **Nothing is hard-coded to six.** The track is `(worlds + 1.4) × --reis-stap` tall, a
+>   destination sits at `(0.8 + index)` steps from the bottom, and the horizontal position
+>   is a sine (`reisX`) that never ends. A seventh world is one entry in `WORLDS`: one more
+>   destination, one step taller, no coordinates to redraw. `test/reis.test.js` case F adds
+>   a world at runtime and checks exactly that.
+> - **The sky is generated, not painted.** `reisLucht()` builds a single vertical gradient
+>   that puts each world's `theme.sky` at its own height and its `theme.deep` at 38% of the
+>   way to the next — so every destination has its own light, two themes never average into
+>   mud, and there is no seam that a new world could land on. Above the last released world
+>   it runs to night.
+> - **Unreleased worlds leak nothing.** They appear as a shape in the fog: no name, no
+>   colour, no artwork fetched. A world that is released but not yet reached keeps its name
+>   and its colours behind a light veil with a lock — a teaser, not a broken button.
+> - **The end of content is a promise, not a wall.** The route always continues past the
+>   last destination and dissolves into cloud; only when `allWorldsDone(p)` does one
+>   restrained "✨ Wordt vervolgd" appear. No invented world, no date, no dead button.
+> - **Cost.** World art is ~300 kB a file. Only worlds the child has already visited get a
+>   picture (those are in the browser and service-worker cache already), and even those are
+>   fetched by `IntersectionObserver` when their destination approaches the viewport. Locked
+>   worlds draw themselves from their own theme colours, so the screen adds no request in
+>   practice.
+> - **Optional art, later.** A small square crop per world (512 × 512 WebP, the world's
+>   horizon and silhouette, ~25 kB) would replace the `50% 38%` crop of the full map and
+>   make each destination read as a place rather than a piece of a map. Purely an upgrade:
+>   `reisPlaatsen()` would read `w.tour` and fall back to `w.art`. Nothing in the screen
+>   waits for it. It must **not** tile or repeat.
+
 **Partially completed worlds.** Nothing special: nodes carry their own star state, the
 world counter aggregates, the badge is `has()`-derived and simply returns false.
 
