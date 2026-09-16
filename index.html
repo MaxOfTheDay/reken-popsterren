@@ -6951,6 +6951,20 @@ const MOTION = {
           doorzichtigheid in het hele plaatje, en daarmee is een overgang een
           onthulling in plaats van een overvloeier.
 
+     ONDOORZICHTIG IS NIET GENOEG -- HET MOET OOK DEKKEN. Een aankomend scherm
+     begint daarom nooit kleiner dan 1: geen scale(.94), geen translateY. Dat
+     stond er wél, bij de twee overgangen die "naar binnen" gaan (een halte in,
+     een wereld kiezen op de reis), en dan dekt het scherm maar 94% van het
+     venster. Wat je die twee tienden zag was een kaart die als een kaartje
+     midden in beeld stond met een rand van het vórige scherm eromheen, en die
+     dan groeide tot hij paste. Op de kaart viel dat het meest op aan de weg: de
+     stippellijn stond eerst kleiner en schoof daarna op zijn plek.
+
+     Een aankomend scherm komt dus altijd van 1.06 naar 1: het dijt uit naar de
+     rand toe en is op elk moment groter dan het venster. Het punt waar het
+     omheen draait (zie oorsprongPct) draagt de continuïteit, niet de richting
+     van de schaal -- en dát is precies wat kaartTerugZoom altijd al deed.
+
      En de doorzichtigheid gaat vóórop weg (easing 'uit' i.p.v. 'in'). Die twee
      curven staan hieronder: 'in' houdt een scherm bijna vol in beeld om het aan
      het eind pas weg te slaan -- prima voor een beweging, precies verkeerd voor
@@ -6983,12 +6997,24 @@ function eindigOvergang(anim, dur, opruimen) {
   setTimeout(klaar, dur + 260);
   return klaar;
 }
-// Transform-origin als percentage van een element, uit een punt in venstercoördinaten.
+/* Transform-origin als percentage van een element, uit een punt in
+   venstercoördinaten. Geklemd op het element zelf (0-100%), en dat is geen
+   netheid maar precies wat de dekkingsregel bij MOTION nodig heeft:
+
+   uitvergroten om een punt binnen het element dekt altijd -- de randen gaan alle
+   vier naar buiten. Ligt het draaipunt erbuiten, dan niet: bij een oorsprong op
+   104.5% van de hoogte en scale(1.06) komt de ónderrand 2px boven de vensterrand
+   uit, en dan staat daar een streepje van het scherm eronder. Dat gebeurde echt:
+   een bestemming onderaan de reis aantikken gaf een oorsprong van 104.5%.
+
+   Klemmen kost niets aan het gevoel -- het draaipunt schuift naar de dichtstbijzijnde
+   rand, en dat is nog steeds de kant waar je vandaan kwam. */
 function oorsprongPct(el, punt) {
   const r = el.getBoundingClientRect();
   if (!r.width || !r.height) return '50% 50%';
-  return ((punt.x - r.left) / r.width * 100).toFixed(1) + '% '
-       + ((punt.y - r.top) / r.height * 100).toFixed(1) + '%';
+  const klem = v => Math.max(0, Math.min(100, v));
+  return klem((punt.x - r.left) / r.width * 100).toFixed(1) + '% '
+       + klem((punt.y - r.top) / r.height * 100).toFixed(1) + '%';
 }
 /* Het scherm dat vertrekt -- één functie voor beide richtingen:
 
@@ -7114,9 +7140,10 @@ function enterLevel(lvl, stopEl) {
   spel.style.transformOrigin = oorsprongPct(spel, punt);
   spel.style.pointerEvents = 'none';       // niet op een bewegend doel kunnen tikken
   // Alleen beweging, geen doorzichtigheid: de zaal staat er ondoorzichtig onder de
-  // kaart, en de kaart doft eroverheen weg. Zie de regel bij MOTION.
+  // kaart, en de kaart doft eroverheen weg. Zie de regel bij MOTION -- en let op de
+  // ondergrens van 1 die daar staat: kleiner beginnen laat de randen los.
   const groei = spel.animate(
-    [{ transform: 'scale(.94) translateY(10px)' }, { transform: 'none' }],
+    [{ transform: 'scale(1.06)' }, { transform: 'none' }],
     { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
   groei.onfinish = klaar;
 }
@@ -7863,6 +7890,11 @@ function openReis() {
   reisVanuit = viewWorldIdx == null ? continueWorld(P()) : viewWorldIdx;
   renderReis();
   show('screen-journey');
+  /* Meteen .komt-op, en niet pas in de rAF hieronder: in dat ene beeldje ertussen
+     zet .screen.active zijn eigen fade (screenIn) aan, en dan komt de reis toch
+     één beeldje half doorzichtig op. Zelfde reden als bij de kaart in goMap --
+     zie de regel bij MOTION. */
+  reis.classList.add('komt-op');
   reisStartWaarnemer();
   const stil = motionOff() || !reis.animate;
   if (!stil && vorige && vorige !== reis) schermWeg(vorige, false);
@@ -7927,7 +7959,7 @@ function reisNaarWereld(idx, el) {
   kaart.style.pointerEvents = 'none';        // niet op een bewegend doel kunnen tikken
   // alleen beweging -- de reis doft eroverheen weg (zie de regel bij MOTION)
   const groei = kaart.animate(
-    [{ transform: 'scale(.94) translateY(10px)' }, { transform: 'none' }],
+    [{ transform: 'scale(1.06)' }, { transform: 'none' }],
     { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
   groei.onfinish = klaar;
 }
