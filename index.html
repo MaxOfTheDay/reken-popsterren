@@ -3255,9 +3255,13 @@
   .wf-rij { display: flex; align-items: center; gap: 11px; text-align: left;
     padding: 9px 12px; border-radius: var(--r-sm);
     background: rgba(255,214,90,.13); border: 2px solid var(--gold-accent); }
-  .wf-beeld { flex: none; width: 52px; display: flex; align-items: center; justify-content: center; }
+  /* Iets breder dan het vakje in de kleedkamer (52), en dat is fase 4D.2: de
+     getekende beloningen zijn niet allemaal even breed als hoog -- de
+     bladerkrans is bijna twee keer zo breed als hij hoog is. In een raster van
+     kaartjes is daar plaats voor, in één regel naast een tekst niet. */
+  .wf-beeld { flex: none; width: 72px; display: flex; align-items: center; justify-content: center; }
   /* het item leent het miniatuur uit de kleedkamer: één tekening, twee plekken */
-  .wf-beeld .item-thumb { margin: 0; }
+  .wf-beeld .item-thumb { margin: 0; width: 72px; }
   .wf-trofee {
     position: relative; display: grid; place-items: center; width: 46px; height: 46px;
     border-radius: 50%; font-size: 26px; line-height: 1;
@@ -3572,7 +3576,11 @@
      dezelfde optische hoogte en met dezelfde slagschaduw; wat verschilt is nog
      alleen waar de tekening vandaan komt (getekend of emoji). */
   .item-thumb { height: 52px; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; }
-  .item-thumb svg { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
+  /* Hoogte vast, breedte vrij -- maar nooit breder dan het vakje zelf. Een
+     tekening die wel breder is (de bladerkrans) krimpt dan netjes mee i.p.v.
+     buiten haar kaartje te vallen: een viewBox schaalt vanzelf naar wat er
+     overblijft, en houdt daarbij zijn verhoudingen. */
+  .item-thumb svg { height: 52px; width: auto; max-width: 100%; display: block; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
   .item-thumb .thumb-emo { font-size: 34px; line-height: 1; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
   /* een podium is een plek, geen voorwerp: zijn kleur ís het item, dus een klein
      decorvlak met het herkenningsicoon erop -- in hetzelfde vak, zelfde schaduw */
@@ -4242,6 +4250,151 @@ function shuffle(arr) {
   return arr;
 }
 
+/* ================= De wereldbeloningen, getekend (fase 4D.2) ===============
+   Zes hoofdstukken uit zes werelden, en met opzet één familie. Wat ze delen:
+
+     * ze zitten allemaal op dezelfde kop -- het hoofd staat in élke basis op
+       (100, 72) met straal 32, dus de schedeltop ligt op y = 40, en alles wat
+       hier getekend wordt hoort dáár overheen te vallen en niet ernaast;
+     * ze reiken allemaal tot ergens tussen y = 8 en y = 20 en geen enkele komt
+       onder y = 59 -- ruim boven de nek (y = 94) waar de kleren beginnen;
+     * platte vlakken met één donkerder rand eromheen (~2 breed voor de omtrek,
+       ~1.3 voor de details), geen verlopen, geen filters;
+     * geen enkele verwijzing naar buiten: geen <image>, geen url(), geen
+       klassen. Dat moet ook wel -- itemThumb zet exact dezelfde vormen in een
+       vakje van 52 pixels, en een miniatuur heeft geen stylesheet bij zich.
+
+   Functies en geen kant-en-klare strings, om één reden: de hoepel, het blad en
+   de noot komen elk meer dan eens voor, en een vorm die je twee keer overtikt
+   loopt de derde keer uit elkaar. */
+
+/* De hoepel die precies over de schedel loopt: een boog met straal 34 om
+   (100, 74), waardoor zijn top op y = 40 ligt -- de schedeltop zelf. Het
+   notenkroontje en de bladerkrans hangen er allebei aan en zitten daardoor ook
+   allebei even diep op het hoofd. */
+const HOOFDBAND = 'M74 52 A34 34 0 0 1 126 52';
+// Eén hoepel = twee streken: eerst de donkere en dikkere, dan de kleur erop.
+// Zo krijgt de boog dezelfde rand als elk ander vlak, zonder een tweede pad.
+function hoofdband(kleur, rand, dik) {
+  return `<path d="${HOOFDBAND}" fill="none" stroke="${rand}" stroke-width="${dik + 3}" stroke-linecap="round"/>`
+       + `<path d="${HOOFDBAND}" fill="none" stroke="${kleur}" stroke-width="${dik}" stroke-linecap="round"/>`;
+}
+/* Een achtste noot: bolletje op de hoepel, steel omhoog, vlaggetje naar rechts.
+   Staat rechtop en kantelt niet mee met de boog -- drie schuine noten lezen als
+   omgevallen, en dit is een kroontje. De randdikte wordt door de schaal heen
+   teruggerekend, anders wordt de kleinste noot ook de dunst omrande. */
+function muziekNoot(x, y, sc) {
+  const r = (w) => (w / sc).toFixed(2);
+  return `<g transform="translate(${x},${y}) scale(${sc})" fill="#ffd740" stroke="#c8a200" stroke-width="${r(1.8)}" stroke-linejoin="round">`
+    + `<path d="M3 -1 L3 -18 Q13 -15 11.5 -6 Q10.5 -11.5 6 -12.5 L6 -1 Z"/>`
+    + `<ellipse cx="0" cy="0" rx="6" ry="4.6" transform="rotate(-18)"/></g>`;
+}
+// Eén breed blad met een nerf, met de punt naar buiten gedraaid.
+function jungleBlad(x, y, hoek, sc) {
+  const r = (w) => (w / sc).toFixed(2);
+  return `<g transform="translate(${x},${y}) rotate(${hoek}) scale(${sc})">`
+    + `<path d="M0 0 Q10 -8 20 0 Q10 8 0 0 Z" fill="#4caf50" stroke="#2e7d32" stroke-width="${r(2)}" stroke-linejoin="round"/>`
+    + `<path d="M3 0 H16" fill="none" stroke="#2e7d32" stroke-width="${r(1.3)}" stroke-linecap="round"/></g>`;
+}
+
+// 🎵 Notenkroontje -- een gouden hoepel met drie achtste noten erop, de
+// middelste het hoogst. Reikt tot y = 11.
+function artNotenkroon() {
+  /* De bolletjes staan vríj boven de hoepel en niet erop: goud op goud loopt
+     anders tot één vlek dicht, en dan is het een kroontje met drie sprieten. */
+  return hoofdband('#ffd740', '#c8a200', 5.5)
+    + muziekNoot(82, 35, 0.9) + muziekNoot(118, 35, 0.9) + muziekNoot(100, 29, 1);
+}
+// 🍭 Lollyhoedje -- een roze-witte spiraallolly naast het hoofd, stokje schuin
+// in het haar. Het enige stuk van de zes dat niet midden op de kop zit; het
+// stokje loopt naar (80, 57) en dat is net binnen de haarrand.
+function artLolly() {
+  return `<line x1="69" y1="38" x2="80" y2="57" stroke="#c9a86a" stroke-width="7" stroke-linecap="round"/>`
+    + `<line x1="69" y1="38" x2="80" y2="57" stroke="#f0e0c0" stroke-width="4" stroke-linecap="round"/>`
+    + `<circle cx="68" cy="26" r="15" fill="#fff5f8" stroke="#d81b60" stroke-width="2"/>`
+    /* De draai: halve cirkels met een steeds grotere straal, om en om links en
+       rechts van het midden. Eén doorlopend pad, dus één streek -- een spiraal
+       uit losse boogjes krijgt bij elke naad een knikje. Drie dikke windingen en
+       geen vijf dunne: op de pop is de lolly 15 punten breed, en daar lopen vijf
+       lijntjes in elkaar over tot één roze vlek. */
+    + `<path d="M71 26 A4.25 4.25 0 0 1 62.5 26 A6.75 6.75 0 0 1 76 26 A9.5 9.5 0 0 1 57 26"`
+    + ` fill="none" stroke="#f06292" stroke-width="4.2" stroke-linecap="round"/>`;
+}
+// 🌴 Bladerkrans -- vijf brede bladeren op een groene hoepel, met één hibiscus
+// links erop. De breedste van de zes, en dat hoort ook: het is een krans.
+function artBladerkrans() {
+  const bloem = (x, y) => {
+    let s = '';
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 72) * Math.PI / 180;
+      s += `<circle cx="${(x + 5 * Math.sin(a)).toFixed(1)}" cy="${(y - 5 * Math.cos(a)).toFixed(1)}" r="4.6" fill="#ff5c8a" stroke="#c2185b" stroke-width="1.5"/>`;
+    }
+    return s + `<circle cx="${x}" cy="${y}" r="3.2" fill="#ffd740" stroke="#c8a200" stroke-width="1.3"/>`;
+  };
+  return hoofdband('#43a047', '#2e7d32', 6)
+    + jungleBlad(74, 52.1, -140, 0.72) + jungleBlad(83, 44.6, -120, 0.88)
+    + jungleBlad(100, 40, -90, 1)
+    + jungleBlad(117, 44.6, -60, 0.88) + jungleBlad(126, 52.1, -40, 0.72)
+    + bloem(75, 46);
+}
+// 🏴‍☠️ Piratenhoed -- een driekante steek met gouden rand en een crèmekleurig
+// doodshoofdje. Het vlak is donker maar niet zwart: de kaartjes in de
+// kleedkamer staan zelf al op een donkere achtergrond.
+function artPiratenhoed() {
+  /* Eén gesloten omtrek, en daarin de drie dingen die een steek een steek maken:
+     twee opgeslagen punten die hóger staan dan waar de rand het hoofd raakt
+     (60,28) en (140,28), een kruin die daartussen bolt (top op y=16), en een
+     rand die in het midden doorzakt. Zonder die punten is het een pet. */
+  return `<path d="M60 28 Q66 38 78 40 Q76 20 100 16 Q124 20 122 40 Q134 38 140 28 Q142 48 126 55 Q100 62 74 55 Q58 48 60 28 Z" fill="#39404d" stroke="#ffd54f" stroke-width="2.5" stroke-linejoin="round"/>`
+    // de naad waar de omgeslagen rand ophoudt en de kruin begint
+    + `<path d="M78 41 Q100 47 122 41" fill="none" stroke="#ffd54f" stroke-width="2" stroke-linecap="round"/>`
+    + `<circle cx="100" cy="31" r="7" fill="#f5efe0"/>`
+    + `<path d="M95 36 h10 v3.4 q0 2.5 -5 2.5 q-5 0 -5 -2.5 Z" fill="#f5efe0"/>`
+    + `<circle cx="97.4" cy="30.5" r="2.1" fill="#39404d"/><circle cx="102.6" cy="30.5" r="2.1" fill="#39404d"/>`
+    + `<path d="M98.7 36.6 v4.2 M101.3 36.6 v4.2" stroke="#39404d" stroke-width="1.2" stroke-linecap="round"/>`;
+}
+// ❄️ IJskroontje -- drie ijsscherven van ongelijke hoogte. De onderrand is geen
+// rechte lijn maar buigt mee met de schedel, zodat de kroon op het hoofd staat
+// en er niet bovenop zweeft.
+function artIjskroon() {
+  return `<path d="M75 51 L82 22 L90 37 L100 12 L110 37 L118 20 L125 51 Q100 36 75 51 Z" fill="#b3e5fc" stroke="#4b9fd0" stroke-width="2" stroke-linejoin="round"/>`
+    + `<path d="M100 15 L104.5 35 L100 35 Z" fill="#e8f7ff"/>`
+    + `<path d="M83.4 27 Q84 29.4 86.4 30 Q84 30.6 83.4 33 Q82.8 30.6 80.4 30 Q82.8 29.4 83.4 27 Z" fill="#ffffff"/>`;
+}
+/* 🪄 Toverhoed -- en dat is met opzet dezelfde hoed als acc_tovenaarshoed, die
+   al in de winkel stond. De Toverwereld hoefde geen nieuw hoofddeksel: er was er
+   al één die precies goed was, en twee bijna-gelijke tovenaarshoeden naast
+   elkaar zijn erger dan één die twee keer te halen is.
+
+   `tip` is het enige verschil: de winkelhoed loopt vanaf y = 0 (die stond er al
+   zo, en dat blijft zo), de beloning begint op y = 8 zodat hij even hoog reikt
+   als de andere vijf wereldbeloningen. De sterren schuiven mee: ze staan op
+   vaste breuken van de kegelhoogte in plaats van op vaste y-waarden.
+   `groot` maakt ze een maatje groter voor het miniatuur, waar ze anders
+   wegvallen. */
+function wizardHatArt(tip, groot) {
+  tip = tip || 0;
+  const h = 44 - tip;
+  const s1 = Math.round(tip + h * 0.86), s2 = Math.round(tip + h * 0.53);
+  return `<path d="M100 ${tip} L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>`
+    + `<path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>`
+    + `<text x="${groot ? 90 : 92}" y="${s1}" font-size="${groot ? 13 : 12}" fill="#ffd54f">★</text>`
+    + `<text x="${groot ? 98 : 99}" y="${s2}" font-size="${groot ? 10 : 9}" fill="#ffd54f">★</text>`;
+}
+// de tovenaarshoed heeft een eigen getekende vorm op de paspop; toon díe in de
+// kleedkamer (de 🧙-emoji toont een hele tovenaar en is verwarrend)
+function wizardHatThumb(tip) {
+  tip = tip || 0;
+  return beloningThumb(`68 ${tip - 3} 64 ${57 - tip}`, wizardHatArt(tip, true));
+}
+/* Het miniatuur is elke keer dezelfde tekening, alleen strak uitgesneden:
+   itemThumb geeft hem 52 pixels hoogte en de viewBox doet de rest, dus krapper
+   uitsnijden is groter in beeld. Eén tekening voor de pop, de kaart én het
+   wereldfeest -- geen tweede versie die uit de pas kan gaan lopen. */
+function beloningThumb(view, art) {
+  return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${art}</svg>`;
+}
+
 /* ================= Items ================= */
 const ITEMS = [
   // Haar
@@ -4315,7 +4468,8 @@ const ITEMS = [
   { id: 'acc_feesthoed', cat: 'acc', name: 'Feesthoedje',   price: 30, emoji: '🎉', spot: 'top' },
   { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
   { id: 'acc_bloemkrans',cat: 'acc', name: 'Bloemenkrans',  price: 55, emoji: '🌼', spot: 'top' },
-  { id: 'acc_tovenaarshoed', cat: 'acc', name: 'Tovenaarshoed', price: 85, emoji: '🧙' },
+  { id: 'acc_tovenaarshoed', cat: 'acc', name: 'Tovenaarshoed', price: 85, emoji: '🧙',
+    draw: () => wizardHatArt(0),  thumb: () => wizardHatThumb(0) },
   { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 120, emoji: '💎', spot: 'top' },
   /* FASE 4D.1 -- de wereldbeloningen. Eén hoofdstuk per wereld, en je krijgt het
      niet van je diamanten maar doordat je die wereld uitspeelt (zie WORLDS.beloning
@@ -4331,17 +4485,31 @@ const ITEMS = [
      beloningItem() af en toont ze op slot tot de wereld uit is. Zet er dus géén
      price bij -- dan zou de winkel ze alsnog verkopen.
 
-     Het emoji hieronder is de TIJDELIJKE tekening (fase 4D.1). De echte komt in
-     fase 4D.2 als een `draw`-functie op ditzelfde item: een stukje SVG in de
-     200x250-ruimte van de paspop, precies zoals acc_kroon en acc_tovenaarshoed
-     dat al doen. Het id verandert daarbij niet, dus wie het item dan al heeft
-     ziet gewoon de nieuwe tekening -- geen migratie, geen tweede item. */
-  { id: 'acc_wereld_muziek',  cat: 'acc', name: 'Notenkroontje', full: 'Notenkroontje', emoji: '🎵', spot: 'top' },
-  { id: 'acc_wereld_snoep',   cat: 'acc', name: 'Lollyhoedje',   full: 'Lollyhoedje',   emoji: '🍭', spot: 'top' },
-  { id: 'acc_wereld_jungle',  cat: 'acc', name: 'Bladerkrans',   full: 'Bladerkrans',   emoji: '🍃', spot: 'top' },
-  { id: 'acc_wereld_piraten', cat: 'acc', name: 'Piratenhoed',   full: 'Piratenhoed',   emoji: '🏴‍☠️', spot: 'top' },
-  { id: 'acc_wereld_ijs',     cat: 'acc', name: 'IJskroontje',   full: 'IJskroontje',   emoji: '❄️', spot: 'top' },
-  { id: 'acc_wereld_tover',   cat: 'acc', name: 'Maanhoedje',    full: 'Maanhoedje',    emoji: '🌙', spot: 'top' },
+     FASE 4D.2 heeft de tijdelijke emoji vervangen door de echte tekening: elk
+     item brengt nu zijn eigen `draw` (op de paspop) en `thumb` (in het vakje van
+     de kleedkamer en van het wereldfeest) mee -- zie het tekenblok hierboven.
+     De ids zijn daarbij níet veranderd, en dat is het hele punt: wie zo'n
+     spulletje al verdiend had ziet vanaf nu gewoon de echte tekening. Geen
+     migratie, geen tweede item, niets opnieuw te verdienen.
+
+     Het emoji blijft er wél staan, maar niet meer als tekening: het is wat de
+     confetti bij het wereldfeest rondstrooit en wat vóór de naam in de
+     kleedkamerbalk komt -- twee plekken waar geen SVG past. */
+  { id: 'acc_wereld_muziek',  cat: 'acc', name: 'Notenkroontje', full: 'Notenkroontje', emoji: '🎵',
+    draw: () => artNotenkroon(),  thumb: () => beloningThumb('71 8 60 47', artNotenkroon()) },
+  { id: 'acc_wereld_snoep',   cat: 'acc', name: 'Lollyhoedje',   full: 'Lollyhoedje',   emoji: '🍭',
+    draw: () => artLolly(),       thumb: () => beloningThumb('50 8 36 52', artLolly()) },
+  { id: 'acc_wereld_jungle',  cat: 'acc', name: 'Bladerkrans',   full: 'Bladerkrans',   emoji: '🍃',
+    draw: () => artBladerkrans(), thumb: () => beloningThumb('58 17 84 41', artBladerkrans()) },
+  { id: 'acc_wereld_piraten', cat: 'acc', name: 'Piratenhoed',   full: 'Piratenhoed',   emoji: '🏴‍☠️',
+    draw: () => artPiratenhoed(), thumb: () => beloningThumb('57 13 86 48', artPiratenhoed()) },
+  { id: 'acc_wereld_ijs',     cat: 'acc', name: 'IJskroontje',   full: 'IJskroontje',   emoji: '❄️',
+    draw: () => artIjskroon(),    thumb: () => beloningThumb('72 9 56 45', artIjskroon()) },
+  /* De Toverwereld deelt de tovenaarshoed uit die hierboven al te koop staat --
+     zie wizardHatArt. Het id blijft acc_wereld_tover: wie hem al verdiend had
+     houdt hem gewoon, en ziet vanaf nu de hoed in plaats van een maantje. */
+  { id: 'acc_wereld_tover',   cat: 'acc', name: 'Toverhoed',     full: 'Toverhoed',     emoji: '🪄',
+    draw: () => wizardHatArt(8),  thumb: () => wizardHatThumb(8) },
   // Huisdieren
   { id: 'pet_poes',   cat: 'pet', name: 'Poesje',        price: 22,  emoji: '🐈' },
   { id: 'pet_hamster', cat: 'pet', name: 'Hamstertje',    price: 40,  emoji: '🐹' },
@@ -5923,13 +6091,12 @@ function avatarSVG(p, width, bigProps) {
     /* Een item mag zijn eigen tekening meebrengen: acc.draw() geeft een stukje SVG
        terug in dezelfde 200x250-ruimte als de rest van de pop (hoofd op 100,72 met
        straal 32; boven het hoofd is vrij vanaf y≈40 tot y=0). Dat is precies wat de
-       vier regels hieronder met de hand doen voor het kroontje, de bril enzovoort --
-       met dit haakje hoeft er voor een nieuw item geen vijfde regel bij.
+       regels hieronder met de hand doen voor het kroontje, de bril enzovoort --
+       met dit haakje hoeft er voor een nieuw item geen regel bij.
 
-       FASE 4D.2 zet de echte wereldbeloningen hier neer: één `draw` op het item in
-       ITEMS, en er verandert verder niets. Zolang die er niet is tekent het emoji
-       via spot ('top' = op het hoofd, 'zij' = in het haar) -- goed genoeg om mee te
-       spelen, en dat is de bedoeling van deze fase. */
+       De zes wereldbeloningen en de tovenaarshoed lopen hierlangs (fase 4D.2): hun
+       vormen staan bij ITEMS zelf, niet hier. Wie géén `draw` meebrengt tekent zijn
+       emoji via spot ('top' = op het hoofd, 'zij' = in het haar). */
     // (base, uid): de basis voor wie de vorm moet meebewegen, en het nummer van
     // déze tekening -- nodig om een eigen kleurverloop een id te geven dat niet
     // botst met de tien andere paspoppen die tegelijk op het scherm staan.
@@ -5940,9 +6107,6 @@ function avatarSVG(p, width, bigProps) {
       if (acc.id === 'acc_bril') s += `<g><circle cx="88" cy="72" r="8.5" fill="#222"/><circle cx="112" cy="72" r="8.5" fill="#222"/><line x1="96" y1="72" x2="104" y2="72" stroke="#222" stroke-width="3"/></g>`;
       if (acc.id === 'acc_koptel') s += `<path d="M68 58 A33 35 0 0 1 132 58" stroke="#e91e63" fill="none" stroke-width="7" stroke-linecap="round"/><circle cx="67" cy="68" r="8" fill="#ad1457"/><circle cx="133" cy="68" r="8" fill="#ad1457"/>`;
       if (acc.id === 'acc_kroon') s += `<path d="M78 40 L84 22 L94 34 L100 18 L106 34 L116 22 L122 40 Z" fill="#ffd740" stroke="#c8a200" stroke-width="2"/><circle cx="100" cy="18" r="3" fill="#ff4081"/>`;
-      if (acc.id === 'acc_tovenaarshoed') s += `<path d="M100 0 L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>
-        <path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
-        <text x="92" y="38" font-size="12" fill="#ffd54f">★</text><text x="99" y="24" font-size="9" fill="#ffd54f">★</text>`;
       // nieuwe extra's tekenen generiek via hun emoji: 'zij' = in het haar, 'top' = op het hoofd
       if (acc.spot === 'zij') s += `<text x="53" y="54" font-size="24">${acc.emoji}</text>`;
       if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
@@ -10267,23 +10431,18 @@ function micThumb(it) {
     <path d="M14 12 h20 M14 16 h20 M14 20 h20" stroke="rgba(0,0,0,.16)" stroke-width="1.3"/>
     <ellipse cx="19" cy="10" rx="4" ry="3" fill="rgba(255,255,255,.5)"/></svg>`;
 }
-// de tovenaarshoed heeft een eigen getekende vorm op de paspop; toon díe in de
-// winkel (de 🧙-emoji toont een hele tovenaar en is verwarrend)
-function wizardHatThumb() {
-  return `<svg viewBox="64 -6 72 62" xmlns="http://www.w3.org/2000/svg">
-    <path d="M100 0 L79 44 L121 44 Z" fill="#5e35b1" stroke="#311b92" stroke-width="2"/>
-    <path d="M71 44 L129 44 Q129 51 121 51 L79 51 Q71 51 71 44 Z" fill="#7e57c2" stroke="#311b92" stroke-width="1.5"/>
-    <text x="90" y="38" font-size="13" fill="#ffd54f">★</text><text x="98" y="23" font-size="10" fill="#ffd54f">★</text></svg>`;
-}
 // Elk miniatuur komt uit hetzelfde vak (.item-thumb); alleen de inhoud verschilt.
 function itemThumb(it, base) {
   base = base || curBase();
   const zone = (inner, extra) => `<div class="item-thumb${extra ? ' ' + extra : ''}">${inner}</div>`;
-  if (it.id === 'acc_tovenaarshoed') return zone(wizardHatThumb());
   /* Een item mag zijn eigen miniatuur meebrengen -- dezelfde afspraak als acc.draw
      bij de paspop, maar dan in zijn eigen vakje (52px hoog) i.p.v. in de 200x250 van
-     de pop. Fase 4D.2 hangt hem aan de wereldbeloningen; tot dan tekenen die hun
-     emoji, net als elk ander accessoire. */
+     de pop. De zes wereldbeloningen en de tovenaarshoed doen dat (fase 4D.2); de rest
+     tekent zijn emoji, en dat is voor een strik of een zonnebril prima.
+
+     Let op de volgorde: thumb() gaat vóór emoji. Een item mag dus allebei hebben --
+     de emoji blijft dan staan voor de plekken die geen SVG aankunnen (de naam in de
+     kleedkamerbalk, de confetti bij het wereldfeest). */
   if (it.thumb) return zone(it.thumb(base));
   if (it.emoji) return zone(`<span class="thumb-emo">${it.emoji}</span>`);
   if (it.cat === 'dress') return zone(dressThumb(it, base), (OUTFIT_THUMBS[base] || OUTFIT_THUMBS[DEFAULT_BASE]).cls);
