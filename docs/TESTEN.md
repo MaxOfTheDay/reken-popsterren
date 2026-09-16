@@ -6,7 +6,7 @@ staan twee soorten naast elkaar.
 
 | soort | draait in | wat het bewijst | kosten |
 |---|---|---|---|
-| **keuring** (`inhoud`, `kern`, `saves`) | Node, zonder browser | de regels en de tabellen: voortgang, beloningen, opslag, configuratie | ± 2 seconden, geen installatie |
+| **keuring** (`inhoud`, `kern`, `saves`, `kleedkamer`) | Node, zonder browser | de regels en de tabellen: voortgang, beloningen, opslag, catalogus, configuratie | ± 2 seconden, geen installatie |
 | **browsertests** (de rest) | echte Chromium via Playwright | wat een kind ziet en tikt: schermen, animaties, spelverloop | enkele minuten, vereist `npm install` |
 
 ## Draaien
@@ -22,6 +22,7 @@ Losse suites:
 npm run test:inhoud      # kloppen de werelden, spullen en trofeeën nog?
 npm run test:kern        # voortgang, uitgespeeld, perfect, beloningen
 npm run test:saves       # bestaande saves, heropenen, meerdere kinderen
+npm run test:kleedkamer  # de catalogus en de volgorde in het rek
 npm run test:tellen      # ... en de bestaande browsersuites, ongewijzigd
 npm run test:rekenen
 npm run test:sterren
@@ -121,6 +122,26 @@ app vroeger schreef, met de velden die er toen nog niet waren bewust weggelaten.
 - **de rondreis**: openen, bewaren en opnieuw openen komt tot rust -- de tweede en
   derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang.
 
+### `test/kleedkamer.test.js` — de catalogus en het rek
+
+De laag ónder wat een kind in de kleedkamer ziet: `ITEMS`, `CATS` en de volgorde
+die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
+
+- elk spulletje is óf te koop (een gewoon, niet-negatief getal) óf te verdienen
+  (helemaal geen prijs) -- nooit allebei en nooit geen van beide;
+- de zes wereldbeloningen zijn precies wat `WORLDS` uitdeelt, en een aanroep van
+  `confirmShopBuy` erop kost niets en levert niets;
+- **geen lege categorie en geen categorie met één obscuur stuk**; podia staan niet
+  meer in de winkel maar bestaan nog wel als decor;
+- **een verse ster kan in élke categorie meteen iets kiezen** met wat ze meekrijgt;
+- de volgorde in het rek is van jou → te koop (op prijs) → te verdienen, en een
+  net gekocht spulletje blijft tijdens zijn "Nieuw!"-moment staan waar het kind
+  het aantikte;
+- een verdiende wereldbeloning schuift mee naar "van jou" en staat niet meer op
+  slot achteraan;
+- een oude save met podia houdt ze (en haar diamanten), maar ziet ze nergens in
+  de winkel terug.
+
 ## Hoe de keuring werkt
 
 `test/app.js` knipt het `<script>`-blok uit `index.html` en draait het in een
@@ -176,7 +197,8 @@ minstens één suite opgemerkt:
 | de staartopruiming loopt mee met `WORLD_LAST` i.p.v. `LEGACY_TOUR_END` | saves |
 | `awardTrophy` kent een trofee twee keer toe | kern, saves |
 | een wereld wijst naar een beloning met een typefout | kern, saves, inhoud |
-| een beloning krijgt een prijs | inhoud |
+| een beloning krijgt een prijs | inhoud, kleedkamer |
+| de bezit-groep valt uit de volgorde van het rek | kleedkamer |
 | `levels` en het aantal haltes lopen uit de pas | kern, saves, inhoud |
 | een uitgebrachte wereld achter een dichte | kern, saves, inhoud |
 | bij het openen wordt maar één profiel bijgewerkt | saves |
