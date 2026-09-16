@@ -1015,9 +1015,12 @@ worlds.
 >   from `theme.glow`). Atmosphere therefore travels with the worlds and needs no
 >   recomputed stop list when one is added.
 > - **One object per world.** Image, name and mastery are a single card: the label sits in
->   a scrim inside the artwork, and there is exactly **one seal slot** (top-right) carrying
->   at most one mark — ★ perfect, ✓ completed, 🔒 locked. The separate name pill, lock
->   bubble and outside badge are gone.
+>   a scrim inside the artwork, and there is exactly **one mark** (top-right) — never two.
+>   The separate name pill, lock bubble and outside badge are gone.
+> - **Perfect is a finish, not a badge.** ✓ and 🔒 are quiet dark-glass discs (the same
+>   material as the diamond pill, so they read as state, not as reward). A perfect world
+>   carries no disc at all: a gold rim, a warm label, a gold counter and three small
+>   sparks in the corner. A filled gold disc there read as a button to tap.
 > - **Mastery is on the map.** Every reachable world shows `★ n/m` from `worldProgress()`
 >   — the same counter the world badge in the cabinet uses. A **perfect** world (`.vol`,
 >   i.e. three stars on every show) is the only card with a gold rim, a warm label and the
@@ -1039,6 +1042,15 @@ worlds.
 > - **Getting lost is recoverable.** Scroll far enough that the current destination leaves
 >   the viewport and a single round button appears (↑/↓ toward where she is); it glides
 >   back and disappears again. It is never present otherwise.
+> - **The two edges of the scroll.** The header's scrim is opaque through the header and
+>   fades out over roughly half a header below it, so a world card dissolves into the night
+>   before its name can be read behind the title — no extra padding on every world, the
+>   chrome simply layers over the map. At the bottom, `REIS.onder` gives the lowest world a
+>   full step of clearance above the floating nav and the screen carries
+>   `env(safe-area-inset-bottom)`; `test/reis.test.js` case H measures both.
+> - **The dots are two paths per state**, the second offset half a gap and thinner, so the
+>   trail alternates large/small instead of reading as a progress bar. The hairline beneath
+>   ties them into one path.
 
 **Partially completed worlds.** Nothing special: nodes carry their own star state, the
 world counter aggregates, the badge is `has()`-derived and simply returns false.

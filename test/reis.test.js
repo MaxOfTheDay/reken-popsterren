@@ -69,6 +69,7 @@ function check(ok, label, detail) {
             w: Number(b.dataset.w), klas: b.className, aan: !b.disabled,
             naam: (b.querySelector('.rn-tekst') || {}).textContent || null,
             zegel: !!b.querySelector('.reis-zegel:not(.slot)'), ster: !!b.querySelector('.reis-pop'),
+            glans: !!b.querySelector('.reis-glans'),
             slot: !!b.querySelector('.reis-zegel.slot'), art: !!b.querySelector('.reis-art'),
             teller: (b.querySelector('.reis-sterren') || {}).textContent || null,
             top: Math.round(r.top), midden: Math.round(r.top + r.height / 2),
@@ -222,12 +223,17 @@ function check(ok, label, detail) {
     check(r.vol[0] && !r.vol[1], 'C2 · de eerste wereld is vol, de tweede niet', JSON.stringify(r.vol));
     check(/\bvol\b/.test(r.haltes[0].klas) && !/\bvol\b/.test(r.haltes[1].klas),
       'C2 · en dat staat zo op de kaart', JSON.stringify(r.haltes.slice(0, 2).map(h => h.klas)));
-    check(r.haltes[0].zegel && r.haltes[1].zegel,
-      'C2 · allebei uitgespeeld, dus allebei een zegel', JSON.stringify(r.haltes.map(h => h.zegel)));
-    // nooit twee badges op één kaart: het volle zegel vervángt het vinkje
-    const zegels = await page.evaluate(() =>
-      [...document.querySelectorAll('.reis-halte')].map(el => el.querySelectorAll('.reis-zegel').length));
-    check(zegels.every(z => z <= 1), 'C2 · en nooit meer dan één zegel per bestemming', JSON.stringify(zegels));
+    /* De volle wereld draagt geen badge maar een glinstering; de uitgespeelde een
+       stil vinkje. Dat onderscheid is de hele reden dat er geen tweede gouden schijf
+       op de kaart ligt: een schijfje leest als een knop, een glans niet. */
+    check(r.haltes[0].glans && !r.haltes[0].zegel,
+      'C2 · de volle wereld glinstert en draagt geen badge', JSON.stringify(r.haltes[0]));
+    check(r.haltes[1].zegel && !r.haltes[1].glans,
+      'C2 · de uitgespeelde wereld draagt het vinkje', JSON.stringify(r.haltes[1]));
+    // nooit twee tekens op één kaart
+    const tekens = await page.evaluate(() =>
+      [...document.querySelectorAll('.reis-halte')].map(el => el.querySelectorAll('.reis-zegel, .reis-glans').length));
+    check(tekens.every(z => z <= 1), 'C2 · en nooit meer dan één teken per bestemming', JSON.stringify(tekens));
     const rand = await page.evaluate(() => [0, 1].map(i => {
       const el = document.querySelector(`.reis-halte[data-w="${i}"] .reis-plaats`);
       return getComputedStyle(el).boxShadow.indexOf('inset') >= 0;
@@ -378,6 +384,49 @@ function check(ok, label, detail) {
     });
     check(Array.isArray(botsing) && !botsing.length,
       'G · en de ster loopt door geen enkele andere bestemming heen', JSON.stringify(botsing));
+    await ctx.close();
+  }
+
+  /* ================= H · De randen van het scherm =================
+     Twee dingen die alleen aan de uiterste standen van de schuif te zien zijn, en
+     allebei het soort fout dat je pas op een echt toestel opmerkt:
+
+       boven  de kaart schuift onder de kop door, en een wereldnaam mag daar niet
+              half leesbaar achter blijven hangen
+       onder  helemaal naar beneden gescrold moet de ónderste wereld vrij van de
+              navigatiebalk staan -- anders is er een wereld die je nooit helemaal
+              ziet                                                                 */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => __speel(3));
+    await open(page);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const sch = document.getElementById('screen-journey');
+      const kop = sch.querySelector('.hub-sticky');
+      const sluier = getComputedStyle(kop, '::before');
+      const k = kop.getBoundingClientRect();
+      // de sluier moet voorbij de onderrand van de kop doorlopen én daar dekkend zijn
+      const hoog = parseFloat(sluier.height) || 0;
+      const dekt = (sluier.backgroundImage.match(/rgb\(18,\s*8,\s*32\)/g) || []).length;
+
+      sch.scrollTop = sch.scrollHeight;               // helemaal naar beneden
+      await wacht(160);
+      const kaarten = [...document.querySelectorAll('.reis-halte')];
+      const onderste = kaarten[0].getBoundingClientRect();
+      const balk = document.getElementById('main-nav').getBoundingClientRect();
+
+      sch.scrollTop = 0;                              // en helemaal naar boven
+      await wacht(160);
+      const bovenste = kaarten[kaarten.length - 1].getBoundingClientRect();
+      return { hoog, kopHoog: k.height, dekt,
+               vrij: Math.round(balk.top - onderste.bottom),
+               bovenVrij: Math.round(bovenste.top - k.bottom) };
+    });
+    check(r.hoog >= r.kopHoog + 40 && r.dekt >= 2,
+      'H · de sluier onder de kop loopt door en dekt écht', JSON.stringify(r));
+    check(r.vrij >= 8, 'H · onderaan staat de laatste wereld vrij van de balk', JSON.stringify(r.vrij));
+    check(r.bovenVrij >= 0, 'H · bovenaan staat de eerste wereld vrij van de kop', JSON.stringify(r.bovenVrij));
     await ctx.close();
   }
 
