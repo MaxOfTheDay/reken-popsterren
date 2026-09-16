@@ -569,6 +569,42 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   }), r.id);
   check(na.bezit && na.aan, 'kopen en aandoen werkt', JSON.stringify(na));
 
+  /* ---- 7b · Kiezen en aandoen mogen niets laten springen ----
+     De kleedkamer bouwt het rek sinds fase 5B niet meer bij élke tik opnieuw op:
+     kiezen en aandoen werken de kaartjes bij die er al staan. Dat is precies het
+     soort verbetering dat stilletjes weer weg kan gaan -- en als dat gebeurt,
+     schuift het kaartje onder de vinger van het kind vandaan. Deze controle kijkt
+     naar wat dat kind zou merken: staat het kaartje dat ik aantik daarna nog op
+     dezelfde plek op het scherm? */
+  r = await page.evaluate(async () => {
+    const meet = id => {
+      const k = document.querySelector(`.item-card[data-item="${id}"]`);
+      return k ? Math.round(k.getBoundingClientRect().top) : null;
+    };
+    const lijst = () => [...document.querySelectorAll('.item-card')].map(c => c.dataset.item).join();
+    // een stuk dat ze al heeft en niet aanheeft: aantikken, dan aandoen
+    const bezit = [...document.querySelectorAll('.item-card.owned')];
+    const doel = bezit.length ? bezit[bezit.length - 1].dataset.item : null;
+    if (!doel) return { doel: null };
+    const voor = { lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop };
+    document.querySelector(`.item-card[data-item="${doel}"]`).click();
+    await new Promise(res => setTimeout(res, 150));
+    const gekozen = { lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop,
+      sel: document.querySelector('.item-card.selected') && document.querySelector('.item-card.selected').dataset.item };
+    equipShopItem(doel);
+    await new Promise(res => setTimeout(res, 150));
+    const aan = { lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop,
+      goud: document.querySelector('.item-card.equipped') && document.querySelector('.item-card.equipped').dataset.item,
+      pil: document.querySelector(`.item-card[data-item="${doel}"] .item-status`).textContent.trim() };
+    return { doel, voor, gekozen, aan };
+  });
+  check(r.doel && r.gekozen.sel === r.doel && r.gekozen.lijst === r.voor.lijst
+     && r.gekozen.top === r.voor.top && r.gekozen.scroll === r.voor.scroll,
+    'een spulletje kiezen laat het rek staan waar het staat', JSON.stringify(r));
+  check(r.doel && r.aan.goud === r.doel && r.aan.lijst === r.voor.lijst
+     && r.aan.top === r.voor.top && r.aan.pil.indexOf('Aan') >= 0,
+    'en aandoen ook -- alleen het goud verhuist', JSON.stringify(r));
+
   /* ---- 8 · Trofeeënkast ---- */
   await page.click('#nav-tro');
   await page.waitForTimeout(400);
