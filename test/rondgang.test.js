@@ -169,6 +169,147 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(await page.evaluate(() => /Snoepwereld/.test(document.getElementById('map-tournee-label').textContent)),
     'de weg terug brengt kop en kaart samen terug', '');
 
+  /* ---- 6a · Wereld naar wereld: de camera klimt (fase 3.4) ----
+     De kaarten lopen van beneden naar boven en de tournee loopt van wereld 1 naar
+     wereld 6. Eén klim dus -- en dat betekent dat de cámera omhoog gaat en niet de
+     wereld. Vooruit: de nieuwe wereld komt van bóven binnen (negatieve translateY
+     die naar nul loopt) en de oude zakt naar bénéden weg. Terug precies andersom.
+
+     Dit is de enige controle in de suite die naar een getal uit een animatie kijkt,
+     en dat is met reden: de richting ís hier de functie. Draait iemand het teken
+     om, dan voelt vooruitgaan als dalen en zegt geen enkele andere test er iets
+     over. De twee lagen horen bovendien tegen elkaar aan te liggen -- zit er een
+     gat tussen, dan kijk je halverwege de reis naar de app-achtergrond. */
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    const y = el => el ? new DOMMatrix(getComputedStyle(el).transform).m42 : null;
+    const meet = async doel => {
+      navigeerNaarWereld(doel);
+      await wacht(110);                       // midden in de reis
+      const map = document.getElementById('tour-map');
+      const schaduw = document.querySelector('.tour-map.wereld-schaduw');
+      const uit = { map: y(map), schaduw: y(schaduw), hoogte: map.getBoundingClientRect().height,
+                    grendel: wereldReisBezig() };
+      await wacht(600);
+      uit.na = viewWorldIdx;
+      uit.schaduwWeg = !document.querySelector('.wereld-schaduw');
+      uit.grendelOpen = !wereldReisBezig();
+      uit.rust = y(map) === 0;
+      return uit;
+    };
+    showWorld(0);
+    await wacht(300);
+    const vooruit = await meet(1);
+    const terug = await meet(0);
+    return { vooruit, terug };
+  });
+  check(r.vooruit.map < -20 && r.vooruit.schaduw > 20 && r.vooruit.na === 1,
+    'vooruit komt de nieuwe wereld van boven en zakt de oude weg', JSON.stringify(r.vooruit));
+  check(r.terug.map > 20 && r.terug.schaduw < -20 && r.terug.na === 0,
+    'terug komt de vorige wereld van onderen en stijgt de oude uit beeld', JSON.stringify(r.terug));
+  /* De twee lagen horen elkaar precies te raken. Vooruit gaat de schaduw naar
+     beneden, dus ligt zijn bovenkant tegen de onderkant van de nieuwe kaart; terug
+     is het andersom. Een pixel overlap is de naadafdekking (exact aansluiten laat op
+     sommige schermen een haarlijn zien); een gát zou halverwege de reis de
+     app-achtergrond tussen twee werelden door laten zien. */
+  const overlap = [r.vooruit.map + r.vooruit.hoogte - r.vooruit.schaduw,
+                   r.terug.schaduw + r.terug.hoogte - r.terug.map];
+  check(overlap.every(v => v >= 0 && v < 2),
+    'de twee lagen liggen tegen elkaar aan, zonder gat', JSON.stringify(overlap));
+  check(r.vooruit.grendel && r.terug.grendel, 'tijdens de reis zit de grendel dicht',
+    JSON.stringify([r.vooruit.grendel, r.terug.grendel]));
+  check(r.vooruit.schaduwWeg && r.terug.schaduwWeg && r.vooruit.grendelOpen && r.terug.grendelOpen
+        && r.vooruit.rust && r.terug.rust,
+    'en daarna staat er niets meer overeind', JSON.stringify(r));
+
+  /* De kaart mag nooit een browser-schuifbalk opleveren: de vertrekkende laag staat
+     een schermhoogte naar beneden, en zonder de dichte overflow zou dat de hele app
+     scrollbaar maken. */
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    const sch = document.getElementById('screen-map');
+    navigeerNaarWereld(1);
+    await wacht(110);
+    const uit = { overflow: getComputedStyle(sch).overflowY, top: sch.scrollTop,
+                  body: document.body.scrollHeight <= innerHeight + 1,
+                  kopieen: document.querySelectorAll('#tour-map').length };
+    await wacht(600);
+    uit.overflowNa = getComputedStyle(sch).overflowY;
+    return uit;
+  });
+  check(r.overflow === 'hidden' && r.top === 0 && r.body && r.kopieen === 1 && r.overflowNa === 'auto',
+    'een wereldwissel zet geen browser-scroll in de app', JSON.stringify(r));
+
+  /* Snel tikken: een kind ratelt op de kiezer. Dat hoort in één wereld te eindigen,
+     en die wereld hoort te zijn wat de kop zegt -- kaart en kop mogen het nooit
+     oneens zijn. */
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    showWorld(0);
+    await wacht(300);
+    let gelukt = 0;
+    for (let i = 0; i < 8; i++) if (navigeerNaarWereld(1 - (i % 2))) gelukt++;
+    await wacht(900);
+    const shown = worldForIndex(viewWorldIdx);
+    const haltes = [...document.querySelectorAll('#tour-map .tour-stop')].map(b => Number(b.dataset.lvl));
+    return { gelukt, view: viewWorldIdx, kop: document.getElementById('map-tournee-label').textContent,
+             naam: shown.world.name, eerste: haltes[0], eersteVanWereld: shown.first,
+             schaduwen: document.querySelectorAll('.wereld-schaduw').length, grendel: wereldReisBezig() };
+  });
+  check(r.gelukt === 1 && r.schaduwen === 0 && !r.grendel,
+    'acht tikken op de werelden-kiezer zijn één wereldwissel', JSON.stringify(r));
+  check(r.eerste === r.eersteVanWereld && r.kop.includes(r.naam),
+    'de zichtbare kaart en de kop wijzen dezelfde wereld aan', JSON.stringify(r));
+
+  /* ---- 6a2 · De onthulling van een nieuwe wereld ----
+     Een wereld die voor het eerst opengaat krijgt méér dan een gewone wissel: eerst
+     een tel stilte op de afgemaakte wereld (daarin beweegt er nog niets), dan
+     dezelfde klim maar trager. Hij hangt aan pendingTravel, en die wordt alleen bij
+     een level-up gezet -- dus hij kan niet nog eens spelen als je later terugkomt.
+
+     De voortgang blijft hier expres staan waar hij stond: dit bootst precies na wat
+     het eindscherm doet bij de sprong van halte 8 naar halte 9. */
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    const voor = P().level;
+    pendingTravel = { from: voor - 1, to: voor };      // 8 -> 9: over de wereldgrens
+    goMap();
+    await wacht(200);                                   // nog in de stilte
+    /* De stilte staat óók op slot: een kind dat hier de werelden-kiezer opent zou
+       eerst ergens anders heen reizen en een tel later alsnog de nieuwe wereld
+       binnenrijden. De kiezer hoort dus niet open te gaan, en de kaart zelf hoort
+       geen tikken aan te nemen. */
+    openWorlds();
+    const stilte = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
+                     grendel: wereldReisBezig(), kiezer: !!document.querySelector('.career-overlay'),
+                     kaartDicht: document.getElementById('tour-map').style.pointerEvents === 'none' };
+    await wacht(500);                                   // de klim loopt
+    const reis = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
+                   grendel: wereldReisBezig() };
+    await wacht(1500);
+    const rust = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
+                   grendel: wereldReisBezig(), kop: document.getElementById('map-tournee-label').textContent };
+    // en nog een keer de kaart openen speelt hem níet opnieuw af
+    goMap();
+    await wacht(250);
+    const opnieuw = { schaduw: !!document.querySelector('.wereld-schaduw'), grendel: wereldReisBezig(),
+                      pending: pendingTravel, view: viewWorldIdx };
+    await wacht(400);
+    return { voor, na: P().level, stilte, reis, rust, opnieuw,
+             trager: WERELDREIS.onthul > WERELDREIS.snel };
+  });
+  check(r.stilte.view === 0 && !r.stilte.schaduw,
+    'de onthulling begint met een tel stilte op de afgemaakte wereld', JSON.stringify(r.stilte));
+  check(r.stilte.grendel && !r.stilte.kiezer && r.stilte.kaartDicht,
+    'ook die stilte staat op slot -- geen kiezer, geen tik op de kaart', JSON.stringify(r.stilte));
+  check(r.reis.view === 1 && r.reis.schaduw && r.reis.grendel && r.trager,
+    'daarna klimt de camera door, trager dan bij gewoon rondkijken', JSON.stringify(r.reis));
+  check(r.rust.view === 1 && !r.rust.schaduw && !r.rust.grendel && /Snoepwereld/.test(r.rust.kop),
+    'en hij komt tot rust in de nieuwe wereld', JSON.stringify(r.rust));
+  check(!r.opnieuw.schaduw && !r.opnieuw.grendel && r.opnieuw.pending === null,
+    'de kaart nog eens openen speelt de onthulling niet opnieuw af', JSON.stringify(r.opnieuw));
+  check(r.voor === r.na, 'en de onthulling raakt de voortgang niet aan', JSON.stringify(r));
+
   /* ---- 6b · De zaal: elke wereld heeft er een (fase 3.3) ----
      Niet "ziet het er goed uit" -- dat is werk voor de ogen en voor npm run shots.
      Wel: krijgt élke wereld hetzelfde spelscherm mét zaal, komen de wereldkleuren
