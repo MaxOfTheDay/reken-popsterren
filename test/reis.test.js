@@ -258,6 +258,41 @@ function check(ok, label, detail) {
     const terug = await page.evaluate(() => ({ ...__stand(), kaart: document.getElementById('screen-map').classList.contains('active') }));
     check(terug.kaart && terug.kijkt === 0 && terug.level === voor.level,
       'C · sluiten brengt je terug op de kaart waar je vandaan kwam', JSON.stringify(terug));
+
+    /* En hoe die kaart binnenkomt. Hij hoort vanaf zijn eerste beeldje
+       ondoorzichtig én zo groot als het venster te zijn: alleen de reis erbovenop
+       doft weg. Stond de kaart kleiner (dat was zo: scale(.94) translateY(10px)),
+       dan zag je hem als een kaartje midden in beeld met een rand van de reis
+       eromheen, en dan groeien tot hij paste -- op de wereldkaart viel dat het
+       meest op aan de weg, die eerst kleiner stond en daarna op zijn plek schoof. */
+    await page.evaluate(() => openReis());
+    await page.waitForTimeout(600);
+    const komst = await page.evaluate(async () => {
+      const kaart = document.getElementById('screen-map');
+      const reis = document.getElementById('screen-journey');
+      const op = el => +getComputedStyle(el).opacity;
+      const dekt = el => {
+        const b = el.getBoundingClientRect();
+        return b.left <= 0.5 && b.top <= 0.5
+          && b.right >= innerWidth - 0.5 && b.bottom >= innerHeight - 0.5;
+      };
+      const m = [];
+      document.querySelector('.reis-halte[data-w="1"]').click();
+      for (let i = 0; i < 30; i++) {
+        m.push({ k: op(kaart), r: op(reis), maat: dekt(kaart) });
+        await new Promise(res => requestAnimationFrame(res));
+      }
+      return {
+        dekkend: m.every(x => Math.max(x.k, x.r) > 0.999),
+        kaartVol: m.every(x => x.k > 0.999),
+        kaartDekt: m.every(x => x.maat),
+        reisWeg: m.some(x => x.r < 0.05),
+      };
+    });
+    check(komst.dekkend && komst.reisWeg,
+      'C · een bestemming kiezen laat op geen enkel beeldje iets doorschemeren', JSON.stringify(komst));
+    check(komst.kaartVol && komst.kaartDekt,
+      'C · de kaart komt ondoorzichtig op en is nooit kleiner dan het venster', JSON.stringify(komst));
     await ctx.close();
   }
 
