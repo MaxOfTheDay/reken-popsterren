@@ -151,11 +151,17 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.voorgeladen.some(s => /snoep/.test(s)),
     'de tekening van de volgende wereld was al opgehaald', JSON.stringify(r.voorgeladen));
 
-  /* ---- 6 · De werelden-kiezer: kijken zonder iets kwijt te raken ---- */
+  /* ---- 6 · De tournee: kijken zonder iets kwijt te raken (fase 4B) ----
+     De wereldnaam in de kop opent niet langer een lijstje maar de hele reis; een
+     bestemming aantikken brengt je naar díe wereldkaart. Wat er daarbij niet mag
+     gebeuren is precies wat er ook bij de kiezer niet mocht: er schuift geen
+     voortgang. */
   await page.click('#map-tournee-label');
-  await page.waitForTimeout(350);
-  await page.click('.wr-row[data-w="0"]');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(450);
+  check(await page.evaluate(() => document.getElementById('screen-journey').classList.contains('active')),
+    'de wereldnaam in de kop opent de tournee', '');
+  await page.click('.reis-halte[data-w="0"]');
+  await page.waitForTimeout(600);
   r = await page.evaluate(() => ({
     wereld: document.getElementById('map-tournee-label').textContent,
     eerste: (document.querySelector('.tour-stop') || {}).dataset,
@@ -164,6 +170,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   }));
   check(/Muziekwereld/.test(r.wereld) && r.eerste.lvl === '1' && r.terugZichtbaar && r.level === 9,
     'een eerdere wereld bekijken verandert niets aan de voortgang', JSON.stringify(r));
+  check(await page.evaluate(() => document.getElementById('screen-map').classList.contains('active')),
+    'en een bestemming kiezen brengt je op de échte wereldkaart', '');
   await page.click('#world-back');
   await page.waitForTimeout(400);
   check(await page.evaluate(() => /Snoepwereld/.test(document.getElementById('map-tournee-label').textContent)),
@@ -240,7 +248,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.overflow === 'hidden' && r.top === 0 && r.body && r.kopieen === 1 && r.overflowNa === 'auto',
     'een wereldwissel zet geen browser-scroll in de app', JSON.stringify(r));
 
-  /* Snel tikken: een kind ratelt op de kiezer. Dat hoort in één wereld te eindigen,
+  /* Snel tikken: een kind ratelt op de bestemmingen. Dat hoort in één wereld te eindigen,
      en die wereld hoort te zijn wat de kop zegt -- kaart en kop mogen het nooit
      oneens zijn. */
   r = await page.evaluate(async () => {
@@ -257,7 +265,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
              schaduwen: document.querySelectorAll('.wereld-schaduw').length, grendel: wereldReisBezig() };
   });
   check(r.gelukt === 1 && r.schaduwen === 0 && !r.grendel,
-    'acht tikken op de werelden-kiezer zijn één wereldwissel', JSON.stringify(r));
+    'acht tikken achter elkaar zijn één wereldwissel', JSON.stringify(r));
   check(r.eerste === r.eersteVanWereld && r.kop.includes(r.naam),
     'de zichtbare kaart en de kop wijzen dezelfde wereld aan', JSON.stringify(r));
 
@@ -275,13 +283,14 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     pendingTravel = { from: voor - 1, to: voor };      // 8 -> 9: over de wereldgrens
     goMap();
     await wacht(200);                                   // nog in de stilte
-    /* De stilte staat óók op slot: een kind dat hier de werelden-kiezer opent zou
-       eerst ergens anders heen reizen en een tel later alsnog de nieuwe wereld
-       binnenrijden. De kiezer hoort dus niet open te gaan, en de kaart zelf hoort
+    /* De stilte staat óók op slot: een kind dat hier de tournee opent zou eerst
+       ergens anders heen reizen en een tel later alsnog de nieuwe wereld
+       binnenrijden. De tournee hoort dus niet open te gaan, en de kaart zelf hoort
        geen tikken aan te nemen. */
-    openWorlds();
+    openReis();
     const stilte = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
-                     grendel: wereldReisBezig(), kiezer: !!document.querySelector('.career-overlay'),
+                     grendel: wereldReisBezig(),
+                     kiezer: document.getElementById('screen-journey').classList.contains('active'),
                      kaartDicht: document.getElementById('tour-map').style.pointerEvents === 'none' };
     await wacht(500);                                   // de klim loopt
     const reis = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
@@ -301,7 +310,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.stilte.view === 0 && !r.stilte.schaduw,
     'de onthulling begint met een tel stilte op de afgemaakte wereld', JSON.stringify(r.stilte));
   check(r.stilte.grendel && !r.stilte.kiezer && r.stilte.kaartDicht,
-    'ook die stilte staat op slot -- geen kiezer, geen tik op de kaart', JSON.stringify(r.stilte));
+    'ook die stilte staat op slot -- geen tournee, geen tik op de kaart', JSON.stringify(r.stilte));
   check(r.reis.view === 1 && r.reis.schaduw && r.reis.grendel && r.trager,
     'daarna klimt de camera door, trager dan bij gewoon rondkijken', JSON.stringify(r.reis));
   check(r.rust.view === 1 && !r.rust.schaduw && !r.rust.grendel && /Snoepwereld/.test(r.rust.kop),

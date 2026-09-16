@@ -38,6 +38,19 @@ const VIEWS = [
 const SCREENS = [
   { key: '01-profielkeuze', wide: true,  go: () => { cur = null; goProfiles(); } },
   { key: '02-kaart',        wide: true,  go: () => selectProfile('p1') },
+  /* De tournee (fase 4B). Zet hier zelf een halve reis neer in plaats van de
+     demoster te verbouwen: die staat op level 6 en dus nog in wereld 1, en dan
+     is er van een réis niets te zien. Alleen in het geheugen -- er wordt niets
+     opgeslagen, net als bij de rest van &demo. */
+  { key: '02b-tournee',     wide: true,  wacht: 2200, go: () => {
+      selectProfile('p1');
+      const q = P();
+      for (let i = 0; i < 2; i++)
+        for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) q.stars[l] = i ? 2 : 3;
+      for (let l = WORLD_START[2]; l < WORLD_START[2] + 4; l++) q.stars[l] = 2;
+      q.level = WORLD_START[2] + 4;
+      goMap(); openReis();
+    } },
   { key: '03-sterstatus',   wide: false, go: () => { selectProfile('p1'); openCareer(); } },
   { key: '04-show-rekenen', wide: true,  go: () => { selectProfile('p1'); startLevel(6); } },
   // het eindscherm viert eerst: de sterren ploppen op met een ster-uitbarsting
