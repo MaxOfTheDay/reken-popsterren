@@ -1360,12 +1360,17 @@
      .wegvallend  het scherm dat vertrekt. Vast gepositioneerd, zodat het uit de
                   kolom stapt en het binnenkomende scherm meteen zijn volle maat
                   krijgt -- anders zouden er even twee schermen naast elkaar in
-                  dezelfde flexkolom staan en springt de opmaak.
+                  dezelfde flexkolom staan en springt de opmaak. Het ligt altijd
+                  bovenop, want het is het enige dat doorzichtig wordt.
      .komt-op     het scherm dat aankomt. Doet niets anders dan de eigen fade van
-                  .screen.active uitzetten, want die zou met de animatie vechten.
-     .komt-boven  ... en ligt bovenop het vertrekkende scherm. Alleen nodig bij
-                  kaart -> zaal, waar de zaal eroverheen komt; op de terugweg
-                  hoort de kaart er juist ónder.
+                  .screen.active uitzetten, want die zou met de animatie vechten
+                  -- en die fade is precies wat hier niet meer hoort te gebeuren.
+
+     Hier stond ook .komt-boven: dan lag het aankomende scherm er juist bovenop.
+     Dat kan niet meer bestaan naast de regel bij MOTION ("wie bovenop ligt, doet
+     de doorzichtigheid"): een aankomend scherm is vanaf zijn eerste beeldje
+     ondoorzichtig, en iets ondoorzichtigs bovenop leggen laat niets meer te
+     onthullen over. De klasse is daarom weg, en niet alleen ongebruikt.
 
      De z-waarden zijn klein en gelden alleen tussen de schermen onderling: #app
      is zelf een stapelcontext (position:relative, z-index 1), dus geen enkel
@@ -1385,10 +1390,6 @@
   }
   #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op,
   #screen-journey.komt-op { animation: none; }
-  #screen-map.komt-boven, #screen-game.komt-boven, #screen-end.komt-boven,
-  #screen-journey.komt-boven {
-    position: relative; z-index: 3;
-  }
   @media (prefers-reduced-motion: reduce) {
     .venue-aan .question-card.vers { animation: none; }
     .venue-licht::after, .venue-licht::before { transition: none; }
@@ -2938,17 +2939,11 @@
   .reis-halte.verder .rn-tekst { opacity: .72; font-weight: 700; }
   .reis-halte.verder .reis-label { padding-top: 10px; }
 
-  /* Nog niet uitgebracht. Er ís nog niets, dus er valt niets te tonen: een vorm in
-     de nevel, zonder naam en zonder kleur. Er wordt niets verzonnen en niets
-     verklapt -- ook geen tekening die opgehaald zou moeten worden. */
-  .reis-halte.mist { --kaart-b: clamp(98px, 30vw, 128px); }
-  .reis-halte.mist::before { display: none; }
-  .reis-halte.mist .reis-plaats {
-    opacity: .5;
-    background-image: linear-gradient(180deg, rgba(150,168,214,.3), rgba(28,18,58,.6));
-    box-shadow: 0 0 0 1.5px rgba(255,255,255,.07), 0 8px 18px var(--stop-schaduw);
-  }
-  .reis-halte.mist .reis-ico { font-size: calc(var(--kaart-h) * .4); opacity: .55; font-weight: 800; }
+  /* Hier stond .reis-halte.mist: een vorm in de nevel voor een wereld die nog niet
+     uitgebracht was. Die staat er niet meer -- een wereld die er voor een kind nog
+     niet is hoort ook niet als vraagteken op zijn reis te staan, en de reis houdt
+     sowieso een paar bestemmingen voorbij "hier" op (zie laatsteZichtbareWereld).
+     Wat daarboven ligt zegt de mist, en die telt niet hoeveel het er zijn. */
 
   /* ---- De ster op de reis -------------------------------------------------
      Klein gehouden: ze moet te zien zijn dat ze ergens stáát, niet de bestemming
@@ -4441,7 +4436,11 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
      de route                nodes/curve (ontbreken die: defaultNodes() slingert er een)
      de wereldbadge          rebuildWorldBadges() zet er een trofee bij, op id
      de voortgang            worldDone()/frontierWorld() tellen hem vanzelf mee
-     de tournee             reisPlaatsen() rijgt hem als bestemming aan de reis
+     de tournee             reisPlaatsen() rijgt hem als bestemming aan de reis,
+                             zodra hij binnen de horizon valt -- zie
+                             laatsteZichtbareWereld(). Een wereld die verder weg
+                             ligt bestaat wél, maar staat nog niet op het scherm en
+                             haalt dus ook zijn tekening niet op.
      de zaal                 venue (ontbreekt die: VENUE_TERUGVAL, en dat is de stand
                              van nu -- geen enkele wereld hoeft hem op te geven)
      de beloning             beloning -> het id van een item uit ITEMS, dat je krijgt
@@ -4467,6 +4466,17 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
    released: false houdt een wereld uit het spel terwijl hij zíjn levelnummers al
    wel reserveert -- zie worldReleased(). Laat het veld gewoon weg voor een wereld
    die gespeeld mag worden.
+
+   Let op dat "geschreven", "uitgebracht" en "te zien" drie verschillende dingen
+   zijn, en dat een wereld hier staan dus niet betekent dat een kind hem ziet:
+
+     geschreven    hij staat in deze lijst
+     uitgebracht   hij mag gespeeld worden      (released, zie worldReleased)
+     te zien       hij staat op de reis         (zie laatsteZichtbareWereld)
+
+   Een wereld kan geschreven zijn en niet uitgebracht (klaar voor later), en hij
+   kan uitgebracht zijn en toch nog niet te zien (te ver vooruit). Alle drie zijn
+   afgeleid; er wordt er geen van bewaard.
 
    Velden die er nog NIET zijn omdat de app ze nog niet nodig heeft:
    wereld-outfit, ontgrendel-voorwaarde. Ontgrendelen loopt nog steeds via p.level
@@ -4882,6 +4892,43 @@ function continueWorld(p) {
   const f = frontierWorld(p);
   return f >= 0 ? f : Math.max(0, WORLD_AVAIL - 1);
 }
+/* ---- Hoe ver je vooruit kijkt ------------------------------------------------
+   Zes standen, en ze zijn alle zes iets anders. Ze staan hier bij elkaar omdat ze
+   makkelijk door elkaar te halen zijn, en omdat er precies één bij is die nieuw is:
+
+     geschreven      staat in WORLDS                       WORLDS.length
+     uitgebracht     mag gespeeld worden in deze versie    worldAvailable(i)
+     uitgespeeld     dit kind heeft elke show gedaan       worldDone(p, i)
+     hier            waar "verder" naartoe gaat            continueWorld(p)
+     te zien         mag op de reis staan                  ZIE HIERONDER
+     nog niet        geschreven maar niet uitgebracht      released: false
+
+   "Te zien" is nieuw, en het is niet hetzelfde als "uitgebracht". Achteruit zie je
+   álles: elke wereld die af is blijft staan, want daar ga je naartoe terug om
+   sterren op te halen, en die rij ís de reis die je gelopen hebt. Vooruit zie je
+   maar een paar bestemmingen.
+
+   Waarom niet gewoon alles vooruit ook: met zes werelden viel dat niet op, maar de
+   tournee groeit. Bij dertig werelden is "de reis" dan een kaart met vier plekken
+   die van jou zijn en zesentwintig sloten erboven -- dat is geen belofte meer maar
+   een inventaris, en een kind dat bij wereld drie staat heeft niets aan wereld
+   zevenentwintig. Drie bestemmingen vooruit is genoeg om te zien waar je heen
+   gaat; wat daarboven ligt zegt de mist (zie renderReis).
+
+   Het scheelt meteen ook werk: elke bestemming die er niet staat haalt zijn
+   tekening niet op. Zie de drie soorten spullen bij preloadArt.
+
+   Een wereld die nog niet uitgebracht is komt hier sowieso niet voorbij -- de
+   grens ligt op WORLD_AVAIL. Die stond er eerder wél, als vraagteken in de mist,
+   en dat is precies wat een niet-uitgebrachte wereld niet hoort te doen:
+   verklappen dat hij bestaat. */
+const REIS_VOORUIT = 3;
+function laatsteZichtbareWereld(p) {
+  return Math.min(WORLD_AVAIL - 1, continueWorld(p) + REIS_VOORUIT);
+}
+// Ligt er nog meer voorbij wat er getekend staat? Alleen over uitgebrachte
+// werelden: een wereld die nog niet uit is mag geen belofte doen.
+function meerWereldenVooruit(p) { return laatsteZichtbareWereld(p) < WORLD_AVAIL - 1; }
 /* De halte waar de ster staat. p.level is "de eerstvolgende show", en die loopt
    één voorbij het einde zodra alles uit is -- dan staat ze op de laatste halte
    die er wél is. Overal waar de kaart een ster neerzet of een halte goud maakt
@@ -6032,7 +6079,7 @@ function show(id) {
   // hier af en niet aan het eind van de animatie: zie .komt-op in het stijlblad --
   // 'animation: none' weghalen terwijl een scherm in beeld staat laat screenIn
   // alsnog aanslaan, en dat is een knipper.
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op', 'komt-boven'));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
@@ -6397,15 +6444,40 @@ function showWorld(idx, travelFrom) {
   preloadNextWorldArt();
   preloadBuurwerelden();
 }
-/* Wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk). Ze
-   worden opgehaald op het moment dat de kaart ze in beeld zet -- en bij een
-   wereldwissel is dat precies het moment waarop de nieuwe wereld al van onderen het
-   scherm in schuift. Dan kijkt een kind een halve seconde naar een leeg kader.
+/* ================= Wat er geladen wordt, en wanneer =========================
+   Drie soorten spullen, en ze horen op drie verschillende momenten binnen te
+   komen. De hele reden dat dit uit elkaar gehouden wordt: het aantal werelden
+   groeit, en alles wat "per wereld" gebeurt bij het opstarten of bij het openen
+   van een scherm groeit dan mee. Deze drie regels zorgen dat dat niet gebeurt.
 
-   Dus: zodra ze op de laatste twee shows van haar wereld staat, gaat de volgende
-   tekening alvast op de achtergrond binnen. Niet eerder -- een wereld verder is
-   drie kwartier spelen, en dit is een telefoon van een gezin. Niet twee vooruit,
-   niet alles tegelijk: één bestand, op het moment dat het bijna nodig is.
+   1  WAT EEN WERELD IS -- meteen, alles, altijd
+      Naam, icoon, volgorde, aantal levels, uitgebracht ja/nee, kleuren, de
+      haltes, de beloning. Dat staat in WORLDS en dat is gewoon tekst: honderd
+      werelden kosten daar een paar kilobyte. De app mág dus weten dat er veel
+      werelden zijn -- ze ként ze allemaal.
+
+      De regel die daarbij hoort: uit die gegevens mag nooit vanzelf een
+      tekening volgen. Vandaar dat er nergens een lus over WORLDS staat die
+      art aanraakt; alleen een wereld die in beeld is of bijna in beeld komt
+      haalt zijn bestand op.
+
+   2  WAT DE KAART LAAT ZIEN -- alleen wat er staat
+      De wereldkaart toont er één, en die haalt zijn tekening op omdat hij de
+      achtergrond ís (zie applyWorldArt). De reis toont er een handvol -- alles
+      wat af is plus een paar vooruit (zie laatsteZichtbareWereld) -- en die
+      halen hun tekening pas op als ze in de buurt van het venster komen (zie
+      reisStartWaarnemer). Een wereld die er niet staat kost niets.
+
+   3  DE ZWARE SPULLEN -- vlak vóór gebruik
+      De wereldtekeningen zelf (~300 kB per stuk, 1215x2160). Die komen binnen
+      als ze bijna nodig zijn, en dat is precies wat de twee functies hieronder
+      doen: de volgende wereld als ze op de laatste twee shows staat, en de
+      buren van de wereld waar ze nu naar kijkt. Nooit meer dan een handvol,
+      nooit alles, en nooit vóór de tekening die nú op het scherm moet.
+
+      De zaal gebruikt vooralsnog dezelfde tekening als de kaart (VENUE_TERUGVAL),
+      dus een show kost geen tweede bestand. Komt er ooit een échte zaaltekening
+      per wereld, dan hoort die hier bij te komen en nergens anders.
 
    GEHAALD onthoudt wat er al een keer aangevraagd is, zodat het opnieuw tekenen van
    de kaart (dat gebeurt bij elke halte, elke wereldwissel, elke terugkeer) niet
@@ -6419,6 +6491,22 @@ function preloadArt(src) {
   img.decoding = 'async';
   img.src = src;
 }
+/* Voorladen gebeurt ALTIJD achter in de rij. Een vooruitgehaald bestand mag nooit
+   concurreren met de tekening die er nu moet staan -- dat is precies het beeld
+   waar het kind naar kijkt. requestIdleCallback wacht tot het scherm klaar is;
+   de timeout zorgt dat het er op een druk toestel toch een keer van komt. */
+function naDeRust(doe) {
+  if (window.requestIdleCallback) requestIdleCallback(doe, { timeout: 1200 });
+  else setTimeout(doe, 400);
+}
+/* De volgende wereld, vlak voordat ze er is. Bij een wereldwissel schuift de nieuwe
+   wereld van onderen het scherm in; is zijn tekening dan nog niet binnen, dan kijkt
+   een kind een halve seconde naar een leeg kader.
+
+   Dus: zodra ze op de laatste twee shows van haar wereld staat, gaat de volgende
+   tekening alvast binnen. Niet eerder -- een wereld verder is drie kwartier spelen,
+   en dit is een telefoon van een gezin. Niet twee vooruit, niet alles tegelijk:
+   één bestand, op het moment dat het bijna nodig is. */
 function preloadNextWorldArt() {
   if (!cur) return;
   const p = P();
@@ -6430,7 +6518,7 @@ function preloadNextWorldArt() {
   // voor te laden -- dat is de toegift-stand, en die blijft in deze wereld.
   if (!worldAvailable(hier.index + 1)) return;
   const volgende = worldForIndex(hier.index + 1);
-  if (volgende && volgende.world) preloadArt(volgende.world.art);
+  if (volgende && volgende.world) naDeRust(() => preloadArt(volgende.world.art));
 }
 /* Hetzelfde idee, maar dan voor rondkijken in plaats van vooruitgaan: de buren van
    de wereld waar de kaart nú naar kijkt. Wie in de werelden-kiezer rondspringt,
@@ -6442,20 +6530,18 @@ function preloadNextWorldArt() {
    straks opengaat is niet de buurman maar de beloning, en die haalt
    preloadNextWorldArt al op tijd op.
 
-   Achter in de rij (requestIdleCallback): dit mag nooit vóór de kaart komen te
-   staan die er nu getekend wordt. ART_GEHAALD zorgt dat het per wereld bij één
-   aanvraag blijft, hoe vaak de kaart ook opnieuw opgebouwd wordt. */
+   Achter in de rij (naDeRust): dit mag nooit vóór de kaart komen te staan die er
+   nu getekend wordt. ART_GEHAALD zorgt dat het per wereld bij één aanvraag
+   blijft, hoe vaak de kaart ook opnieuw opgebouwd wordt. */
 function preloadBuurwerelden() {
   if (!cur || viewWorldIdx == null) return;
   const laatsteOpen = Math.min(worldFor(hereLevel(P())).index, WORLD_AVAIL - 1);
   const hier = viewWorldIdx;
-  const doe = () => [hier - 1, hier + 1].forEach(i => {
+  naDeRust(() => [hier - 1, hier + 1].forEach(i => {
     if (i < 0 || i > laatsteOpen) return;
     const w = worldForIndex(i);
     if (w && w.world) preloadArt(w.world.art);
-  });
-  if (window.requestIdleCallback) requestIdleCallback(doe, { timeout: 1200 });
-  else setTimeout(doe, 400);
+  }));
 }
 
 /* ================= Wereld naar wereld: de camera klimt ====================
@@ -6841,7 +6927,37 @@ const MOTION = {
                    tegelijk kúnt lezen.
        kom    190  het aankomende scherm
 
-     Samen 300ms van tik tot rust. */
+     Samen 300ms van tik tot rust.
+
+     WIE BOVENOP LIGT, DOET DE DOORZICHTIGHEID -- en dat is altijd het scherm dat
+     vertrekt. Dat stond er als bedoeling al, maar niet als regel, en daardoor
+     deden ze het allebei: het vertrekkende scherm doofde uit én het aankomende
+     kwam uit doorzichtig op. Halverwege stonden er dus twee halfdoorzichtige
+     schermen over de áchtergrond van de app, en wat je dan ziet is geen van
+     beide schermen maar een mengsel.
+
+     Op de weg terug uit een show was dat goed te zien: het donkere paneel van het
+     eindscherm hing als een brede donkere band dwars over een verwassen
+     wereldkaart, en verdween dan met een flits. Opgemeten op 120ms: eindscherm
+     nog 53% zichtbaar, kaart pas 19% -- en door de doorzichtigheid van allebei
+     scheen de roze app-achtergrond er ook nog doorheen.
+
+     Twee dingen zorgen ervoor dat dat niet meer kan:
+
+       1  het scherm dat AANKOMT beweegt alleen. Het is vanaf zijn eerste beeldje
+          volledig ondoorzichtig, dus er ligt altijd één dekkend scherm over het
+          venster en de achtergrond van de app is nooit te zien.
+       2  het scherm dat VERTREKT ligt erbovenop en doft weg. Dat is de enige
+          doorzichtigheid in het hele plaatje, en daarmee is een overgang een
+          onthulling in plaats van een overvloeier.
+
+     En de doorzichtigheid gaat vóórop weg (easing 'uit' i.p.v. 'in'). Die twee
+     curven staan hieronder: 'in' houdt een scherm bijna vol in beeld om het aan
+     het eind pas weg te slaan -- prima voor een beweging, precies verkeerd voor
+     doorzichtigheid, want dán duurt het vertrek het langst waar het het meest
+     opvalt. De beweging houdt 'in'; het wegdoven krijgt 'uit' en is op 110ms
+     (als het aankomende scherm losgaat) al op 5%. Dát is wat "eerst weg, dan pas
+     aan" hierboven altijd al bedoelde. */
   weg: 140, komNa: 110, kom: 190,
   uit: 'cubic-bezier(.2,.8,.3,1)',                  // komt aan: snel los, zacht neerzetten
   in: 'cubic-bezier(.5,0,.75,0)',                   // vertrekt: zacht los, snel weg
@@ -6904,10 +7020,17 @@ function schermWeg(el, naarBinnen, punt) {
     el.style.transformOrigin = '';
     el.getAnimations().forEach(a => a.cancel());
   };
+  /* Twee animaties op hetzelfde scherm, en dat is geen omslachtigheid maar het
+     hele punt: beweging en doorzichtigheid hebben hier tegengestelde curven
+     nodig. De beweging houdt 'in' (zacht los, snel weg -- dat is het karakter);
+     het wegdoven krijgt 'uit', zodat het scherm al vrijwel weg is op het moment
+     dat het volgende losgaat. Zie de regel bij MOTION. */
   const a = el.animate(
-    [{ transform: 'none', opacity: 1 },
-     { transform: naarBinnen ? 'scale(1.07)' : 'scale(.96) translateY(10px)', opacity: 0 }],
+    [{ transform: 'none' },
+     { transform: naarBinnen ? 'scale(1.07)' : 'scale(.96) translateY(10px)' }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
+  el.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + 260);              // vangnet
 }
@@ -6966,8 +7089,7 @@ function enterLevel(lvl, stopEl) {
      staan en deed geen enkele halte ooit nog iets. De kaart ruimt zichzelf op,
      zie schermWeg; hier gaat het alleen over het scherm dat aankomt. */
   const klaar = eindigOvergang(null, MOTION.totaal, () => {
-    spel.classList.remove('komt-boven');   // .komt-op blijft tot de volgende show()
-    spel.style.transformOrigin = '';
+    spel.style.transformOrigin = '';       // .komt-op blijft tot de volgende show()
     spel.style.pointerEvents = '';
   });
   const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
@@ -6987,12 +7109,14 @@ function enterLevel(lvl, stopEl) {
      het is één animatie die gewoon later aan is. Valt de animatie weg, dan staat
      het spel er meteen. */
   startLevel(lvl);
-  spel.classList.add('komt-op', 'komt-boven');
+  spel.classList.add('komt-op');
   navMee(true);                            // de balk van de kaart gaat mét de kaart weg
   spel.style.transformOrigin = oorsprongPct(spel, punt);
   spel.style.pointerEvents = 'none';       // niet op een bewegend doel kunnen tikken
+  // Alleen beweging, geen doorzichtigheid: de zaal staat er ondoorzichtig onder de
+  // kaart, en de kaart doft eroverheen weg. Zie de regel bij MOTION.
   const groei = spel.animate(
-    [{ transform: 'scale(.94) translateY(10px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+    [{ transform: 'scale(.94) translateY(10px)' }, { transform: 'none' }],
     { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
   groei.onfinish = klaar;
 }
@@ -7009,15 +7133,36 @@ function enterLevel(lvl, stopEl) {
    Aangeroepen vanuit de rAF van renderTourMap: dan staan de haltes er en zijn ze
    op te meten. */
 function kaartTerugZoom(map, lvl) {
-  const scherm = $('screen-map');
   const doel = map.querySelector('.tour-stop[data-lvl="' + lvl + '"]');
-  if (!scherm || !doel || !scherm.animate || motionOff()) return;
+  if (!doel) return kaartKomtOp(null);
   const d = doel.getBoundingClientRect();
-  scherm.classList.add('komt-op');          // géén komt-boven: de zaal hoort hier bovenop
-  scherm.style.transformOrigin = oorsprongPct(scherm, { x: d.left + d.width / 2, y: d.top + d.height / 2 });
+  kaartKomtOp({ x: d.left + d.width / 2, y: d.top + d.height / 2 });
+}
+/* De kaart komt op. Eén functie voor álle manieren waarop dat gebeurt, want de
+   kaart hoort er élke keer hetzelfde uit te komen:
+
+     punt   de halte waar de show speelde -- dan zoomt hij dáár vandaan terug
+     null   de tabbladbalk of de terugknop -- dan gewoon vanuit het midden, en
+            kleiner, want er is geen plek om naartoe te zoomen
+
+   Dat tweede geval had hiervoor géén eigen opkomst en viel daardoor terug op de
+   fade van .screen.active (screenIn): de hele kaart kwam uit doorzichtig op, en
+   wat je die twee tienden zag was de roze achtergrond van de app met een
+   verwassen wereld erover. Precies het "intermediate backdrop state" dat er niet
+   hoort te zijn -- en het valt op, want de kaart is het enige scherm met een
+   eigen ondoorzichtige tekening.
+
+   Nu beweegt hij alleen, en .komt-op zet screenIn uit. Vanaf het eerste beeldje
+   staat de wereld er dus gewoon. Zie verder de regel bij MOTION. */
+function kaartKomtOp(punt) {
+  const scherm = $('screen-map');
+  if (!scherm || !scherm.animate || motionOff()) return;
+  scherm.getAnimations().forEach(a => a.cancel());   // een tweede opkomst stapelt niet
+  scherm.classList.add('komt-op');
+  scherm.style.transformOrigin = punt ? oorsprongPct(scherm, punt) : '50% 50%';
   const a = scherm.animate(
-    [{ transform: 'scale(1.06)', opacity: 0 }, { transform: 'none', opacity: 1 }],
-    { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+    [{ transform: punt ? 'scale(1.06)' : 'scale(1.03)' }, { transform: 'none' }],
+    { duration: MOTION.kom, delay: punt ? MOTION.komNa : 0, easing: MOTION.uit, fill: 'backwards' });
   const op = () => { scherm.style.transformOrigin = ''; };
   a.onfinish = op;
   setTimeout(op, MOTION.totaal + 260);     // vangnet, net als bij elke andere overgang
@@ -7111,6 +7256,14 @@ function goMap(vanLvl) {
   markWorldSeen(p, thuis);
   showWorld(onthul ? onthul.van : thuis, travel ? travel.from : 0);
   show('screen-map');
+  /* .komt-op gaat er meteen hierna op, en niet pas bij de animatie. Die komt
+     namelijk uit de rAF van renderTourMap, één beeldje later, en in dat ene
+     beeldje heeft .screen.active zijn eigen fade (screenIn) al aangezet -- dan
+     stond de kaart toch één beeldje half doorzichtig met de app-achtergrond
+     erdoorheen. Eén beeldje, maar wel precies het beeldje dat deze hele regel moet
+     wegnemen. (Het moet ná show(): die haalt de klasse van álle schermen af.)
+     Zie kaartKomtOp en de regel bij MOTION. */
+  $('screen-map').classList.add('komt-op');
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
   /* De balk wordt hier meegenomen en niet in kaartTerugZoom: die draait pas in de
@@ -7123,6 +7276,16 @@ function goMap(vanLvl) {
     terugBezig = true;
     clearTimeout(terugTimer);
     terugTimer = setTimeout(() => { terugBezig = false; }, MOTION.totaal + 60);
+  } else if (gekozen == null && vorige !== $('screen-map')) {
+    /* Van de tabbladbalk of de terugknop. Er is geen halte om naartoe te zoomen en
+       geen zaal die wijkt, maar de kaart hoort er ook hier ondoorzichtig uit te
+       komen -- anders doet screenIn het, en dan kijk je twee tienden naar de
+       achtergrond van de app met een verwassen wereld erover. Zie kaartKomtOp.
+
+       Niet bij een reis: reisNaarWereld beweegt de kaart zelf, en twee opkomsten
+       over elkaar is er één te veel. (Vandaar de controle op gekozen -- dat is
+       precies de opdracht die reisNaarWereld hier neerlegt.) */
+    kaartKomtOp(null);
   }
   if (travel) requestAnimationFrame(() => runTravel(travel));
   else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
@@ -7298,13 +7461,13 @@ const REIS = {
   bocht: 9,       // hoever de route tússen twee bestemmingen uitbuigt (% van de kolom)
   rek: 0.05,      // hoeveel de afstand per wereld varieert (± deel van een stap)
   /* Hoe groot een bestemming is, per stand -- als deel van een gewone kaart. Deze
-     getallen staan óók in het stijlblad (de clamps op .reis-halte.nu / .verder /
-     .mist zijn 51vw / 40vw / 30vw tegen 46vw voor een gewone), en dat is de enige
+     getallen staan óók in het stijlblad (de clamps op .reis-halte.nu / .verder
+     zijn 51vw / 40vw tegen 46vw voor een gewone), en dat is de enige
      plek waar dit bestand en dat blad hetzelfde moeten weten. Ze staan hier omdat
      de áfstand tussen twee bestemmingen ervan afhangt: twee kleine kaarten horen
      dichter bij elkaar te staan dan twee grote, anders gaapt het bovenin de reis --
      waar alles nog op slot en dus klein is. */
-  maat: { nu: 1.11, open: 1, verder: .87, mist: .65 },
+  maat: { nu: 1.11, open: 1, verder: .87 },
   /* De afstand tussen twee bestemmingen, in stappen:
        kaart * de gemiddelde maat van die twee + weg
      Twee gewone kaarten staan dus precies één stap uit elkaar, en alles wat kleiner
@@ -7358,12 +7521,18 @@ function reisBaan(standen) {
    net als alles in fase 4A -- dit is de enige plek waar de standen van de reis
    worden bepaald, en ze komen allemaal ergens ánders vandaan:
 
-     mist     niet uitgebracht            worldAvailable()
      nu       hier ga je verder           continueWorld()   -- de grens, of de toegift
      verder   uitgebracht, nog niet aan de beurt
      open     te bezoeken                 positie op de kaart
      uit      uitgespeeld                 worldProgress().uit
      vol      álle sterren binnen         worldProgress().vol
+
+   Hoevéél bestemmingen er staan komt uit laatsteZichtbareWereld(): alles wat af
+   is plus een paar vooruit. Er stond hier ook een stand 'mist' voor een wereld die
+   nog niet uitgebracht was -- een vraagteken in de wolken. Die is weg: een wereld
+   die er voor een kind nog niet is, hoort er ook niet als vraagteken te staan. Wat
+   er voorbij de horizon ligt zegt de mist bovenaan, en die zegt het zonder te
+   tellen hoeveel het er zijn.
 
    De laatste twee zijn geen aparte stand maar een eigenschap: een bestemming kan
    tegelijk "hier ben je" en "vol" zijn (de toegift), en dan hoort ze allebei te
@@ -7375,14 +7544,18 @@ function reisBaan(standen) {
 function reisPlaatsen(p) {
   const positie = worldFor(hereLevel(p)).index;
   const doel = continueWorld(p);
-  const ruw = WORLDS.map((w, i) => {
-    const beschikbaar = worldAvailable(i);
-    const v = beschikbaar ? worldProgress(p, worldForIndex(i)) : null;
-    const open = beschikbaar && i <= positie;
-    const staat = !beschikbaar ? 'mist' : i === doel ? 'nu' : !open ? 'verder' : 'open';
+  /* Van wereld 1 tot de horizon, en altijd vanaf het begin. Dat "vanaf het begin"
+     is geen luiheid maar een afspraak waar de rest op rekent: de plek van een
+     bestemming ín deze lijst is zijn wereldnummer, en renderReis rekent daarmee
+     uit welk stuk van de route al gelopen is (zie stuk()). Zou de reis ooit ook
+     vanonderen inkorten, dan moet die som mee. */
+  const ruw = WORLDS.slice(0, laatsteZichtbareWereld(p) + 1).map((w, i) => {
+    const v = worldProgress(p, worldForIndex(i));
+    const open = i <= positie;
+    const staat = i === doel ? 'nu' : !open ? 'verder' : 'open';
     return { i, world: w, staat, open,
-             uit: !!v && v.uit, vol: !!v && v.vol,
-             sterren: v ? v.sterren : 0, max: v ? v.max : 0,
+             uit: v.uit, vol: v.vol,
+             sterren: v.sterren, max: v.max,
              x: reisX(i) };
   });
   // pas als alle standen bekend zijn valt de baan uit te meten: de afstanden hangen
@@ -7393,7 +7566,6 @@ function reisPlaatsen(p) {
 }
 // wat een schermlezer van een bestemming hoort -- de enige plek met tekst per stand
 function reisLabel(b, doel) {
-  if (b.staat === 'mist') return 'Nog onbekend';
   const sterren = b.max ? `, ${b.sterren} van ${b.max} sterren` : '';
   if (b.i === doel) return b.world.name + ' — hier ben je nu' + sterren;
   if (!b.open) return b.world.name + ' — nog op slot';
@@ -7497,7 +7669,7 @@ function renderReis() {
     knop.style.bottom = `calc(var(--reis-stap) * ${b.y.toFixed(3)})`;
     // de kleuren van de wereld, als sfeer om zijn bestemming heen. Een wereld die
     // nog niet uit is geeft er geen: die heeft nog geen kleur in dit spel.
-    if (b.staat !== 'mist') applyWorldTheme(knop, b.world);
+    applyWorldTheme(knop, b.world);
     const plaats = document.createElement('span');
     plaats.className = 'reis-plaats';
     /* De tekening hóórt erbij, ook als de wereld nog op slot zit: "ik zie de
@@ -7506,7 +7678,7 @@ function renderReis() {
        wereld die nog niet uitgebracht is krijgt er geen -- dat zou verklappen wat
        er nog niet is -- en alleen wat in de buurt van het venster komt wordt
        opgehaald (zie reisStartWaarnemer). */
-    if (b.staat !== 'mist' && b.world.art) {
+    if (b.world.art) {
       const art = document.createElement('span');
       art.className = 'reis-art';
       art.dataset.art = b.world.art;
@@ -7514,7 +7686,7 @@ function renderReis() {
     } else {
       const ico = document.createElement('span');
       ico.className = 'reis-ico';
-      ico.textContent = b.staat === 'mist' ? '?' : (b.world.icon || '🌍');
+      ico.textContent = b.world.icon || '🌍';
       plaats.appendChild(ico);
     }
     /* Naam en sterren liggen ín de tekening. Eén ding dus, in plaats van een kaartje
@@ -7522,7 +7694,7 @@ function renderReis() {
        antwoord op de vraag die de kaart tot nu toe niet beantwoordde: hoe góed heb
        ik die wereld gedaan? Een wereld op slot krijgt geen teller: daar valt nog
        niets te tellen. */
-    if (b.staat !== 'mist') {
+    {
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
         + `<span class="rn-tekst">${esc(b.world.name)}</span>`
         + (b.open ? `<span class="reis-sterren">${reisSterSVG()}${b.sterren}/${b.max}</span>` : '')
@@ -7554,17 +7726,28 @@ function renderReis() {
   /* Bovenaan houdt de reis niet óp: de route loopt door en verdwijnt in de wolken.
      Die belofte staat er altijd, of er nu nog werelden boven je liggen of niet --
      een kind hoeft niet te weten wat er nog niet is om te voelen dat het doorgaat.
-     Alleen als álles uit is komt er één pil bij, want dán is "er komt nog meer"
-     het enige dat er nog te zeggen valt. Geen verzonnen wereld, geen datum, geen
-     knop die niets doet. */
+     Geen verzonnen wereld, geen datum, geen knop die niets doet.
+
+     Er komt één pil bij, en die zegt twee verschillende dingen:
+
+       nog meer avonturen   er liggen uitgebrachte werelden voorbij de horizon.
+                            Die kán ze halen, dus dit is een doel.
+       wordt vervolgd       alles wat er ís, is uit. Dan is "er komt nog meer" het
+                            enige dat er nog eerlijk te zeggen valt.
+
+     Nooit allebei: liggen er nog werelden vooruit, dan is de tournee niet uit. En
+     een wereld die nog niet uitgebracht is telt voor geen van beide mee -- die
+     belooft niets, want hij is er nog niet. */
   const mist = document.createElement('div');
   mist.className = 'reis-mist';
+  const vervolg = meerWereldenVooruit(p) ? '✨ Nog meer avonturen'
+    : allWorldsDone(p) ? '✨ Wordt vervolgd' : '';
   mist.innerHTML = `<div class="map-sky" aria-hidden="true"><div class="map-sky-inner">`
     + `<span style="top:26%;font-size:30px;animation-duration:96s;animation-delay:-18s">☁️</span>`
     + `<span style="top:54%;font-size:22px;animation-duration:112s;animation-delay:-74s">☁️</span>`
     + `<span class="rev" style="top:74%;font-size:18px;animation-duration:86s;animation-delay:-30s">✨</span>`
     + `</div></div>`
-    + (allWorldsDone(p) ? `<div class="reis-vervolg">✨ Wordt vervolgd</div>` : '');
+    + (vervolg ? `<div class="reis-vervolg">${vervolg}</div>` : '');
   track.appendChild(mist);
 }
 /* De wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk), en
@@ -7688,12 +7871,13 @@ function openReis() {
     if (stil) return;
     const hier = reis.querySelector('.reis-halte.nu');
     const r = hier && hier.getBoundingClientRect();
-    reis.classList.add('komt-op', 'komt-boven');
+    reis.classList.add('komt-op');
     if (r && r.width) reis.style.transformOrigin =
       oorsprongPct(reis, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
-    const op = () => { reis.classList.remove('komt-boven'); reis.style.transformOrigin = ''; };
+    const op = () => { reis.style.transformOrigin = ''; };
+    // alleen beweging -- de kaart doft eroverheen weg (zie de regel bij MOTION)
     const a = reis.animate(
-      [{ transform: 'scale(1.09)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      [{ transform: 'scale(1.09)' }, { transform: 'none' }],
       { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
     a.onfinish = op;
     setTimeout(op, MOTION.totaal + 260);            // vangnet, net als bij elke andere overgang
@@ -7727,7 +7911,6 @@ function reisNaarWereld(idx, el) {
   overgangBezig = true;
   // het vangnet staat er vóór er iets gebeurt -- zie enterLevel
   const klaar = eindigOvergang(null, MOTION.totaal, () => {
-    kaart.classList.remove('komt-boven');
     kaart.style.transformOrigin = '';
     kaart.style.pointerEvents = '';
   });
@@ -7739,11 +7922,12 @@ function reisNaarWereld(idx, el) {
     { duration: 240, easing: MOTION.plop, fill: 'forwards' });
   schermWeg(reis, true, punt);
   goMap();                                   // de kaart staat er nú al, op reisDoel
-  kaart.classList.add('komt-op', 'komt-boven');
+  kaart.classList.add('komt-op');
   kaart.style.transformOrigin = oorsprongPct(kaart, punt);
   kaart.style.pointerEvents = 'none';        // niet op een bewegend doel kunnen tikken
+  // alleen beweging -- de reis doft eroverheen weg (zie de regel bij MOTION)
   const groei = kaart.animate(
-    [{ transform: 'scale(.94) translateY(10px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+    [{ transform: 'scale(.94) translateY(10px)' }, { transform: 'none' }],
     { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
   groei.onfinish = klaar;
 }
