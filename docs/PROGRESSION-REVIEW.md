@@ -965,6 +965,93 @@ worlds.
 >   `p.level` is clamped to 49. Nothing is discarded — those stars still count towards the
 >   star total, rank and the show trophies. See `test/voortgang.test.js`.
 
+> **Phase 4B — the journey, one layer above the map.**
+>
+> The world picker (a six-row list behind the world name) is gone; the same job is now a
+> screen. `#screen-journey` draws **one vertical route from the bottom to the top** with the
+> worlds hung on it as destinations, the avatar standing on the one `continueWorld(p)`
+> points at. The map is unchanged and still answers "which show do I play here"; the
+> journey answers "where am I in the whole thing".
+>
+> - **It draws state, it never owns it.** Every distinction comes from 4A:
+>   `worldAvailable` → in the mist, `continueWorld` → *here you are*, `worldDone` → a gold
+>   seal, position on the map → visitable or locked. Picking a destination sets a one-shot
+>   `reisDoel` that `goMap()` consumes; `p.level`, `p.stars` and the frontier never move.
+> - **Nothing is hard-coded to six.** The track is `(worlds + 1.4) × --reis-stap` tall, a
+>   destination sits at `(0.8 + index)` steps from the bottom, and the horizontal position
+>   is a sine (`reisX`) that never ends. A seventh world is one entry in `WORLDS`: one more
+>   destination, one step taller, no coordinates to redraw. `test/reis.test.js` case F adds
+>   a world at runtime and checks exactly that.
+> - **The sky is generated, not painted.** `reisLucht()` builds a single vertical gradient
+>   that puts each world's `theme.sky` at its own height and its `theme.deep` at 38% of the
+>   way to the next — so every destination has its own light, two themes never average into
+>   mud, and there is no seam that a new world could land on. Above the last released world
+>   it runs to night.
+> - **Unreleased worlds leak nothing.** They appear as a shape in the fog: no name, no
+>   colour, no artwork fetched. A world that is released but not yet reached keeps its name
+>   and its colours behind a light veil with a lock — a teaser, not a broken button.
+> - **The end of content is a promise, not a wall.** The route always continues past the
+>   last destination and dissolves into cloud; only when `allWorldsDone(p)` does one
+>   restrained "✨ Wordt vervolgd" appear. No invented world, no date, no dead button.
+> - **Cost.** World art is ~300 kB a file. Only worlds the child has already visited get a
+>   picture (those are in the browser and service-worker cache already), and even those are
+>   fetched by `IntersectionObserver` when their destination approaches the viewport. Locked
+>   worlds draw themselves from their own theme colours, so the screen adds no request in
+>   practice.
+> - **Optional art, later.** A landscape crop per world (~640 × 430 WebP, the world's
+>   horizon and silhouette, ~30 kB) would replace the `50% 36%` crop of the full portrait
+>   map and let each destination be composed rather than sampled. Purely an upgrade:
+>   `renderReis()` would read `w.tour` and fall back to `w.art`. Nothing waits for it. It
+>   must **not** tile or repeat.
+>
+> **Phase 4B, second pass — from "cards on a gradient" to one surface.**
+>
+> Same screen, same model; what changed is that the artwork now does the work.
+>
+> - **One background, not six bands.** The per-world gradient stops are gone. The track
+>   carries one continuous night (warm at the bottom, cold at the top) plus two seamless
+>   tiled layers (grain at 160 px, star dust at 640 px), and a world's colour reaches the
+>   map only as a wide soft halo hung on its own destination (`.reis-halte::before`, built
+>   from `theme.glow`). Atmosphere therefore travels with the worlds and needs no
+>   recomputed stop list when one is added.
+> - **One object per world.** Image, name and mastery are a single card: the label sits in
+>   a scrim inside the artwork, and there is exactly **one mark** (top-right) — never two.
+>   The separate name pill, lock bubble and outside badge are gone.
+> - **Perfect is a finish, not a badge.** ✓ and 🔒 are quiet dark-glass discs (the same
+>   material as the diamond pill, so they read as state, not as reward). A perfect world
+>   carries no disc at all: a gold rim, a warm label, a gold counter and three small
+>   sparks in the corner. A filled gold disc there read as a button to tap.
+> - **Mastery is on the map.** Every reachable world shows `★ n/m` from `worldProgress()`
+>   — the same counter the world badge in the cabinet uses. A **perfect** world (`.vol`,
+>   i.e. three stars on every show) is the only card with a gold rim, a warm label and the
+>   star seal. Locked worlds show no counter: there is nothing to count yet.
+> - **Locked worlds keep their painting**, desaturated and dimmed under a cool veil with a
+>   small lock. Only *unreleased* worlds stay a shape in the fog — that is the line
+>   between "not yet" and "does not exist".
+> - **Spacing is proportional, not fixed.** `--reis-stap` is derived from the card size
+>   (`--kaart-h * 1.55`), and the distance between two destinations is
+>   `0.62 × (their average size) + 0.38` steps ± a little rhythm. Small locked cards sit
+>   closer together, so the empty run of route between them stays the same fraction of a
+>   card everywhere. `REIS.maat` must stay in step with the `vw` clamps in the stylesheet;
+>   that is the one fact the script and the stylesheet share.
+> - **The route meanders.** Every pair of destinations gets a control point offset
+>   perpendicular to the run, alternating, so a connection bows instead of pointing. Dots
+>   are smaller and tighter (5.4 / 10.5 px), a hairline runs under them so they read as one
+>   path, and the last stretch — the one she just walked — is the only part that is
+>   emphasised.
+> - **Getting lost is recoverable.** Scroll far enough that the current destination leaves
+>   the viewport and a single round button appears (↑/↓ toward where she is); it glides
+>   back and disappears again. It is never present otherwise.
+> - **The two edges of the scroll.** The header's scrim is opaque through the header and
+>   fades out over roughly half a header below it, so a world card dissolves into the night
+>   before its name can be read behind the title — no extra padding on every world, the
+>   chrome simply layers over the map. At the bottom, `REIS.onder` gives the lowest world a
+>   full step of clearance above the floating nav and the screen carries
+>   `env(safe-area-inset-bottom)`; `test/reis.test.js` case H measures both.
+> - **The dots are two paths per state**, the second offset half a gap and thinner, so the
+>   trail alternates large/small instead of reading as a progress bar. The hairline beneath
+>   ties them into one path.
+
 **Partially completed worlds.** Nothing special: nodes carry their own star state, the
 world counter aggregates, the badge is `has()`-derived and simply returns false.
 
