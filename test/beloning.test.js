@@ -471,6 +471,64 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- J · Nog maar één tovenaarshoed (fase 4D.2) ------------------------
+     acc_tovenaarshoed stond voor 85 diamanten in de kleedkamer en is weg: hij
+     was dezelfde hoed als de beloning van de Toverwereld, en daarmee was die
+     beloning niets waard voor wie de winkelversie al had.
+
+     Getest wordt niet dat hij weg is (dat is één regel in ITEMS) maar wat er
+     gebeurt met een save waar hij écht in zat: hij hoort uit owned te
+     verdwijnen, hij hoort af te gaan, en de rest van die save hoort niemand
+     aan te raken. */
+  {
+    const { ctx, page } = await fresh(() => {
+      // een save van vóór deze versie: de winkelhoed gekocht én aan
+      const key = 'rekenPopsterren_v1';
+      const db = JSON.parse(localStorage.getItem(key) || '{"profiles":{}}');
+      db.profiles = db.profiles || {};
+      db.profiles.oud = {
+        name: 'Oudster', base: 'meisje', order: 0, level: 1, stars: {}, diamonds: 40,
+        owned: ['dress_roze', 'hair_blond', 'shoes_roze', 'acc_tovenaarshoed', 'acc_kroon'],
+        equipped: { dress: 'dress_roze', hair: 'hair_blond', shoes: 'shoes_roze', acc: 'acc_tovenaarshoed', mic: null, pet: null, instrument: null },
+        trophies: [], readyTrophies: [],
+      };
+      localStorage.setItem(key, JSON.stringify(db));
+    });
+    const r = await page.evaluate(() => {
+      selectProfile('oud');
+      const q = db.profiles.oud;
+      return {
+        bestaatNog: !!item('acc_tovenaarshoed'),
+        teKoop: ITEMS.filter(i => i.cat === 'acc' && i.price != null && /tovenaar/i.test(i.name)).length,
+        owned: q.owned,
+        acc: q.equipped.acc,
+        diamanten: q.diamonds,
+        // de pop valt er niet over en tekent gewoon geen accessoire meer
+        pop: avatarSVG(q, 100).indexOf('<svg') === 0,
+        // en er is nog precies één tovenaarshoed in het spel: de beloning
+        hoeden: ITEMS.filter(i => i.draw && i.draw('meisje', 1) === artToverhoed()).map(i => i.id),
+      };
+    });
+    check(!r.bestaatNog && r.teKoop === 0,
+      'J · de tovenaarshoed uit de winkel bestaat niet meer', JSON.stringify(r));
+    check(r.hoeden.join() === 'acc_wereld_tover',
+      'J · en er is er nog precies één: die van de Toverwereld', JSON.stringify(r.hoeden));
+    check(!r.owned.includes('acc_tovenaarshoed') && r.acc === null,
+      'J · een oude save raakt hem kwijt uit de kast én van de kop', JSON.stringify(r));
+    check(r.owned.join() === 'dress_roze,hair_blond,shoes_roze,acc_kroon' && r.diamanten === 40,
+      'J · en verder blijft die save precies zoals hij was -- ook de diamanten', JSON.stringify(r));
+    check(r.pop, 'J · en de pop tekent gewoon door, zonder accessoire', JSON.stringify(r.pop));
+    // en het opruimen overleeft een herlaadbeurt (en doet de tweede keer niets)
+    await page.reload();
+    await page.waitForTimeout(300);
+    const na = await page.evaluate(() => ({
+      owned: db.profiles.oud.owned, acc: db.profiles.oud.equipped.acc,
+    }));
+    check(!na.owned.includes('acc_tovenaarshoed') && na.acc === null,
+      'J · en na opnieuw openen blijft het opgeruimd', JSON.stringify(na));
+    await ctx.close();
+  }
+
   /* ---- Uitslag ---- */
   check(pageErrors.length === 0, 'geen fouten in de pagina', pageErrors.slice(0, 5).join(' | '));
   await browser.close();
