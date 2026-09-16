@@ -998,11 +998,47 @@ worlds.
 >   fetched by `IntersectionObserver` when their destination approaches the viewport. Locked
 >   worlds draw themselves from their own theme colours, so the screen adds no request in
 >   practice.
-> - **Optional art, later.** A small square crop per world (512 × 512 WebP, the world's
->   horizon and silhouette, ~25 kB) would replace the `50% 38%` crop of the full map and
->   make each destination read as a place rather than a piece of a map. Purely an upgrade:
->   `reisPlaatsen()` would read `w.tour` and fall back to `w.art`. Nothing in the screen
->   waits for it. It must **not** tile or repeat.
+> - **Optional art, later.** A landscape crop per world (~640 × 430 WebP, the world's
+>   horizon and silhouette, ~30 kB) would replace the `50% 36%` crop of the full portrait
+>   map and let each destination be composed rather than sampled. Purely an upgrade:
+>   `renderReis()` would read `w.tour` and fall back to `w.art`. Nothing waits for it. It
+>   must **not** tile or repeat.
+>
+> **Phase 4B, second pass — from "cards on a gradient" to one surface.**
+>
+> Same screen, same model; what changed is that the artwork now does the work.
+>
+> - **One background, not six bands.** The per-world gradient stops are gone. The track
+>   carries one continuous night (warm at the bottom, cold at the top) plus two seamless
+>   tiled layers (grain at 160 px, star dust at 640 px), and a world's colour reaches the
+>   map only as a wide soft halo hung on its own destination (`.reis-halte::before`, built
+>   from `theme.glow`). Atmosphere therefore travels with the worlds and needs no
+>   recomputed stop list when one is added.
+> - **One object per world.** Image, name and mastery are a single card: the label sits in
+>   a scrim inside the artwork, and there is exactly **one seal slot** (top-right) carrying
+>   at most one mark — ★ perfect, ✓ completed, 🔒 locked. The separate name pill, lock
+>   bubble and outside badge are gone.
+> - **Mastery is on the map.** Every reachable world shows `★ n/m` from `worldProgress()`
+>   — the same counter the world badge in the cabinet uses. A **perfect** world (`.vol`,
+>   i.e. three stars on every show) is the only card with a gold rim, a warm label and the
+>   star seal. Locked worlds show no counter: there is nothing to count yet.
+> - **Locked worlds keep their painting**, desaturated and dimmed under a cool veil with a
+>   small lock. Only *unreleased* worlds stay a shape in the fog — that is the line
+>   between "not yet" and "does not exist".
+> - **Spacing is proportional, not fixed.** `--reis-stap` is derived from the card size
+>   (`--kaart-h * 1.55`), and the distance between two destinations is
+>   `0.62 × (their average size) + 0.38` steps ± a little rhythm. Small locked cards sit
+>   closer together, so the empty run of route between them stays the same fraction of a
+>   card everywhere. `REIS.maat` must stay in step with the `vw` clamps in the stylesheet;
+>   that is the one fact the script and the stylesheet share.
+> - **The route meanders.** Every pair of destinations gets a control point offset
+>   perpendicular to the run, alternating, so a connection bows instead of pointing. Dots
+>   are smaller and tighter (5.4 / 10.5 px), a hairline runs under them so they read as one
+>   path, and the last stretch — the one she just walked — is the only part that is
+>   emphasised.
+> - **Getting lost is recoverable.** Scroll far enough that the current destination leaves
+>   the viewport and a single round button appears (↑/↓ toward where she is); it glides
+>   back and disappears again. It is never present otherwise.
 
 **Partially completed worlds.** Nothing special: nodes carry their own star state, the
 world counter aggregates, the badge is `has()`-derived and simply returns false.

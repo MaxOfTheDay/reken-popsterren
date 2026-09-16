@@ -67,9 +67,10 @@ function check(ok, label, detail) {
           const r = b.getBoundingClientRect();
           return {
             w: Number(b.dataset.w), klas: b.className, aan: !b.disabled,
-            naam: (b.querySelector('.reis-naam .rn-tekst') || {}).textContent || null,
-            zegel: !!b.querySelector('.reis-zegel'), ster: !!b.querySelector('.reis-ster'),
-            slot: !!b.querySelector('.reis-slot'), art: !!b.querySelector('.reis-art'),
+            naam: (b.querySelector('.rn-tekst') || {}).textContent || null,
+            zegel: !!b.querySelector('.reis-zegel:not(.slot)'), ster: !!b.querySelector('.reis-pop'),
+            slot: !!b.querySelector('.reis-zegel.slot'), art: !!b.querySelector('.reis-art'),
+            teller: (b.querySelector('.reis-sterren') || {}).textContent || null,
             top: Math.round(r.top), midden: Math.round(r.top + r.height / 2),
             breed: Math.round(r.width), hoog: Math.round(r.height),
           };
@@ -78,8 +79,9 @@ function check(ok, label, detail) {
         return {
           haltes, scrollTop: Math.round(sch.scrollTop), venster: sch.clientHeight,
           baan: Math.round(document.getElementById('reis-track').getBoundingClientRect().height),
-          vervolg: !!document.querySelector('.reis-verder'),
-          goud: !!document.querySelector('.reis-weg-fg'),
+          vervolg: !!document.querySelector('.reis-vervolg'),
+          goud: !!document.querySelector('.reis-weg-gelopen'),
+          terug: document.getElementById('reis-terug').classList.contains('aan'),
           actief: sch.classList.contains('active'),
         };
       };
@@ -139,8 +141,15 @@ function check(ok, label, detail) {
       'B · een wereld die nog niet uit is heeft hier geen naam', JSON.stringify(mist));
     check(r.tekst.indexOf('Toverwereld') < 0,
       'B · en zijn naam staat nergens op het scherm', r.tekst.slice(0, 120));
-    check(r.haltes.filter(h => h.art).length === 1,
-      'B · alleen de wereld waar ze geweest is haalt een tekening op', JSON.stringify(r.haltes.map(h => h.art)));
+    /* De tekening van een wereld op slot blijft staan -- gedimd, maar zichtbaar:
+       "ik zie de piratenwereld daarboven" is precies waarom een kind doorspeelt.
+       Alleen een wereld die nog niet uitgebracht is krijgt er geen. */
+    check(r.haltes.filter(h => h.art).length === 5 && !mist[0].art,
+      'B · ook een wereld op slot toont zijn tekening -- de mist niet',
+      JSON.stringify(r.haltes.map(h => h.art)));
+    check(verder.every(h => !h.teller) && nu[0].teller,
+      'B · en een teller staat alleen waar er iets te tellen valt',
+      JSON.stringify(r.haltes.map(h => h.teller)));
     await ctx.close();
   }
 
@@ -162,6 +171,15 @@ function check(ok, label, detail) {
     check(nu && nu.w === 2, 'C · de grens van fase 4A is de huidige bestemming', JSON.stringify(nu && nu.w));
     check(r.haltes.filter(h => h.zegel).map(h => h.w).join() === '0,1',
       'C · de twee uitgespeelde werelden dragen een zegel', JSON.stringify(r.haltes.map(h => h.zegel)));
+    /* De teller komt uit dezelfde bron als de wereldbadge in de kast. Hij hoort dus
+       exact te zeggen wat worldStars() zegt -- geen los getal op het scherm. */
+    const echt = await page.evaluate(() => WORLDS.map((w, i) => {
+      const v = worldStars(P(), worldForIndex(i));
+      return v.got + '/' + v.max;
+    }));
+    check(r.haltes.slice(0, 3).every(h => (h.teller || '').indexOf(echt[h.w]) >= 0),
+      'C · de sterrenteller zegt wat de voortgang zegt',
+      JSON.stringify([r.haltes.map(h => h.teller), echt]));
     check(r.haltes[0].aan && r.haltes[1].aan && r.haltes[2].aan && !r.haltes[3].aan,
       'C · alles t/m de grens is te bezoeken, daarna niet', JSON.stringify(r.haltes.map(h => h.aan)));
 
@@ -183,6 +201,40 @@ function check(ok, label, detail) {
     const terug = await page.evaluate(() => ({ ...__stand(), kaart: document.getElementById('screen-map').classList.contains('active') }));
     check(terug.kaart && terug.kijkt === 0 && terug.level === voor.level,
       'C · sluiten brengt je terug op de kaart waar je vandaan kwam', JSON.stringify(terug));
+    await ctx.close();
+  }
+
+  /* ================= C2 · Vol tegen uitgespeeld =================
+     Twee werelden uit: de eerste op alle sterren, de tweede niet. Dat verschil is
+     de hele reden dat de teller er staat, en het hoort zonder te lezen te zien te
+     zijn: één zegel per kaart, en alleen de volle wereld krijgt de gouden rand. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const q = db.profiles.p1;
+      for (let l = WORLD_START[0]; l < WORLD_START[0] + WORLDS[0].levels; l++) q.stars[l] = 3;
+      for (let l = WORLD_START[1]; l < WORLD_START[1] + WORLDS[1].levels; l++) q.stars[l] = 2;
+      q.level = WORLD_START[2];
+    });
+    await open(page);
+    const r = await page.evaluate(() => ({ ...__reis(),
+      vol: WORLDS.map((w, i) => worldAvailable(i) && worldProgress(P(), worldForIndex(i)).vol) }));
+    check(r.vol[0] && !r.vol[1], 'C2 · de eerste wereld is vol, de tweede niet', JSON.stringify(r.vol));
+    check(/\bvol\b/.test(r.haltes[0].klas) && !/\bvol\b/.test(r.haltes[1].klas),
+      'C2 · en dat staat zo op de kaart', JSON.stringify(r.haltes.slice(0, 2).map(h => h.klas)));
+    check(r.haltes[0].zegel && r.haltes[1].zegel,
+      'C2 · allebei uitgespeeld, dus allebei een zegel', JSON.stringify(r.haltes.map(h => h.zegel)));
+    // nooit twee badges op één kaart: het volle zegel vervángt het vinkje
+    const zegels = await page.evaluate(() =>
+      [...document.querySelectorAll('.reis-halte')].map(el => el.querySelectorAll('.reis-zegel').length));
+    check(zegels.every(z => z <= 1), 'C2 · en nooit meer dan één zegel per bestemming', JSON.stringify(zegels));
+    const rand = await page.evaluate(() => [0, 1].map(i => {
+      const el = document.querySelector(`.reis-halte[data-w="${i}"] .reis-plaats`);
+      return getComputedStyle(el).boxShadow.indexOf('inset') >= 0;
+    }));
+    check(rand[0] && !rand[1], 'C2 · alleen de volle wereld draagt de gouden rand', JSON.stringify(rand));
+    check((r.haltes[0].teller || '').indexOf('24/24') >= 0,
+      'C2 · en zijn teller staat vol', JSON.stringify(r.haltes[0].teller));
     await ctx.close();
   }
 
@@ -257,6 +309,36 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= F2 · Terug naar waar je bent =================
+     Wegscrollen mag -- daar is een kaart voor. Maar wie zichzelf uit beeld heeft
+     gescrold hoort één knopje te krijgen om terug te komen, en zolang ze in beeld
+     staat hoort dat knopje er niet te zijn. */
+  {
+    // een verse ster: zij staat onderaan, dus bovenaan de baan is ze écht uit beeld
+    const { ctx, page } = await fresh();
+    await open(page);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const sch = document.getElementById('screen-journey');
+      const knop = document.getElementById('reis-terug');
+      const bij = knop.classList.contains('aan');
+      sch.scrollTop = 0;                       // helemaal naar de mist bovenaan
+      await wacht(120);
+      const weg = knop.classList.contains('aan');
+      const teken = knop.textContent;
+      knop.click();
+      await wacht(900);                        // hij glijdt terug
+      const r2 = document.querySelector('.reis-halte.nu').getBoundingClientRect();
+      const s2 = sch.getBoundingClientRect();
+      return { bij, weg, teken, terug: !knop.classList.contains('aan'),
+               inBeeld: r2.top > s2.top && r2.bottom < s2.bottom };
+    });
+    check(!r.bij, 'F2 · staat ze in beeld, dan is er geen knopje', JSON.stringify(r.bij));
+    check(r.weg && r.teken === '\u2193', 'F2 · ver weg gescrold verschijnt het, met de goede richting', JSON.stringify(r));
+    check(r.inBeeld && r.terug, 'F2 · en het brengt haar terug in beeld', JSON.stringify(r));
+    await ctx.close();
+  }
+
   /* ================= G · Op een kleine telefoon =================
      De reis schuift verticaal en nóóit zijwaarts, en niets hangt half buiten beeld. */
   {
@@ -266,7 +348,7 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => {
       const sch = document.getElementById('screen-journey');
       const breedte = sch.clientWidth;
-      const uit = [...document.querySelectorAll('.reis-halte, .reis-naam')].map(el => {
+      const uit = [...document.querySelectorAll('.reis-halte')].map(el => {
         const b = el.getBoundingClientRect();
         return { links: Math.round(b.left), rechts: Math.round(b.right) };
       });
@@ -279,22 +361,23 @@ function check(ok, label, detail) {
     check(r.uit.every(b => b.links >= -1 && b.rechts <= r.breedte + 1),
       'G · en niets hangt buiten het scherm', JSON.stringify(r.uit.filter(b => b.links < -1 || b.rechts > r.breedte + 1)));
 
-    /* De ster staat óp haar bestemming en loopt daarbij een eind boven het
-       medaillon uit -- precies waar de naampil van de bestemming erbóven hangt.
-       Op de kleinste telefoon is de stap het krapst, dus als die twee elkaar ooit
-       raken, dan hier. Dat is ook waar --reis-stap zijn ondergrens vandaan haalt:
-       opgemeten en niet gekozen. */
+    /* De ster staat óp haar bestemming en steekt daarbij boven de tekening uit --
+       precies de kant op waar de volgende bestemming ligt. Op de kleinste telefoon
+       is de stap het krapst, dus als die twee elkaar ooit raken, dan hier. Dat is
+       ook waar --reis-stap zijn ondergrens vandaan komt: die is uit deze maten
+       opgeteld, niet gekozen. */
     const botsing = await page.evaluate(() => {
-      const ster = document.querySelector('.reis-ster');
-      if (!ster) return 'geen ster';
-      const s = ster.getBoundingClientRect();
-      return [...document.querySelectorAll('.reis-naam')].filter(el => {
+      const pop = document.querySelector('.reis-pop');
+      if (!pop) return 'geen ster';
+      const s = pop.getBoundingClientRect();
+      const eigen = pop.closest('.reis-halte');
+      return [...document.querySelectorAll('.reis-halte')].filter(el => el !== eigen).filter(el => {
         const n = el.getBoundingClientRect();
         return s.left < n.right && s.right > n.left && s.top < n.bottom && s.bottom > n.top;
-      }).map(el => el.textContent.trim());
+      }).map(el => (el.querySelector('.rn-tekst') || {}).textContent || '?');
     });
     check(Array.isArray(botsing) && !botsing.length,
-      'G · en de ster loopt door geen enkele wereldnaam heen', JSON.stringify(botsing));
+      'G · en de ster loopt door geen enkele andere bestemming heen', JSON.stringify(botsing));
     await ctx.close();
   }
 
