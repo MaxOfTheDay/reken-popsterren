@@ -121,6 +121,48 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= 2b · Enter in het naamveld =================
+   * Op een telefoon is Enter de enige knop die het toetsenbord zélf aanbiedt, en
+   * de Klaar-knop zit op dat moment onder datzelfde toetsenbord. Enter deed niets
+   * (het veld staat niet in een <form>), dus wie hem indrukte bleef staan waar ze
+   * stond. Nu is Enter "klaar met dit veld": toetsenbord weg, en is het formulier
+   * af, dan is dat dezelfde tik als op Klaar.
+   *
+   * Wat hier óók vastligt: Enter verzint geen ster als er nog iets ontbreekt.
+   * "Wie ben je?" heeft geen voorkeuze, en dat blijft een echte vraag.            */
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-newstar');
+    await page.waitForTimeout(150);
+    await page.fill('#newstar-name', 'Fien');
+    await page.press('#newstar-name', 'Enter');
+    await page.waitForTimeout(300);
+    let r = await page.evaluate(() => ({
+      n: Object.keys(db.profiles).length,
+      focus: document.activeElement ? document.activeElement.id : null,
+      opScherm: document.getElementById('screen-newstar').classList.contains('active'),
+    }));
+    check(r.n === 0 && r.opScherm, 'Enter maakt geen ster zonder alle antwoorden', JSON.stringify(r));
+    check(r.focus !== 'newstar-name', 'Enter laat het naamveld wel los (toetsenbord weg)', String(r.focus));
+    await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.fill('#newstar-name', 'Fien');
+    await page.press('#newstar-name', 'Enter');
+    await page.waitForTimeout(400);
+    r = await page.evaluate(() => {
+      const k = Object.keys(db.profiles)[0];
+      return {
+        n: Object.keys(db.profiles).length, naam: k ? db.profiles[k].name : null,
+        opScherm: document.getElementById('screen-newstar').classList.contains('active'),
+        keuze: document.getElementById('screen-profile').classList.contains('active'),
+      };
+    });
+    check(r.n === 1 && r.naam === 'Fien', 'Enter op een af formulier maakt de ster', JSON.stringify(r));
+    check(!r.opScherm && r.keuze, 'en brengt haar naar de sterrenkeuze, net als de knop', JSON.stringify(r));
+    // een regeleinde hoort nergens in een naam terecht te komen
+    check(!/\n|\r/.test(r.naam || ''), 'en zet geen regeleinde in de naam', JSON.stringify(r.naam));
+    await ctx.close();
+  }
+
   /* ================= 3 · Volgorde, sleutels en het maximum ================= */
   {
     const { ctx, page } = await fresh();
@@ -273,7 +315,10 @@ function check(ok, label, detail) {
           const w = WORLDS[Math.floor((l - 1) / 8)];
           return w.name + ' ' + ((l - 1) % 8 + 1) + '/8';
         }),
+        // FASE 4A: voorbij het laatste level is er geen wereld meer maar een
+        // toegift -- worldFor klemt op de laatste show van de laatste wereld.
         staart: [49, 57, 100].map(naam),
+        staartVerwacht: (() => { const w = WORLDS[WORLDS.length - 1]; return w.name + ' ' + w.levels + '/' + w.levels; })(),
         altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
         rondes: [1, 12, 13, 24, 25, 36, 37].map(tourRound),
         eersteLevels: WORLDS.map((w, i) => WORLD_START[i]),
@@ -282,8 +327,9 @@ function check(ok, label, detail) {
     check(r.grenzen.join(' | ') === r.grenzenVerwacht.join(' | '),
       'de wereldgrenzen liggen op de achtvouden',
       r.grenzen.join(' | ') + '  !=  ' + r.grenzenVerwacht.join(' | '));
-    check(/^Sterrentournee 1\/8/.test(r.staart[0]) && /^Sterrentournee 2 1\/8/.test(r.staart[1]),
-      'voorbij de laatste wereld loopt de tournee door', r.staart.join(' | '));
+    check(r.staart.every(n => n === r.staartVerwacht),
+      'voorbij de laatste wereld verzint de app geen wereld meer',
+      r.staart.join(' | ') + '  !=  ' + r.staartVerwacht);
     check(r.altijdIets, 'een raar level geeft nooit undefined terug', JSON.stringify(r.staart));
     check(r.rondes.join(',') === '1,1,2,2,3,3,4',
       'de ronde-klok blijft op twaalf staan, niet op acht', r.rondes.join(','));
@@ -479,19 +525,25 @@ function check(ok, label, detail) {
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
         const uit = { werelden: [], kleinste: Infinity, tabMis: [], overlap: [] };
-        /* Voorbij de geschreven werelden loopt de tournee door op de
-           standaardslinger (zie ENDLESS_WORLD). Die telt dus mee -- en hij is het
-           krapste geval dat er is. */
+        /* Elke geschreven wereld, plus één ronde op de standaardslinger: een
+           wereld zónder eigen haltelijst valt terug op defaultNodes(), en dát is
+           het krapste geval dat er bestaat. Vroeger leverde de oneindige staart
+           die ronde vanzelf; die is er niet meer (fase 4A), dus halen we de
+           haltes één keer weg bij de laatste wereld en zetten ze daarna terug. */
         const tot = WORLDS.length + 1;
         for (let wi = 0; wi < tot; wi++) {
-          const p = P(), first = WORLD_START[wi] || (WORLD_LAST + 1);
+          const slinger = wi >= WORLDS.length;
+          const idx = Math.min(wi, WORLDS.length - 1);
+          const bewaard = slinger ? { n: WORLDS[idx].nodes, c: WORLDS[idx].curve } : null;
+          if (slinger) { delete WORLDS[idx].nodes; delete WORLDS[idx].curve; }
+          const p = P(), first = WORLD_START[idx];
           p.level = first + 5;
           p.stars = {};
           [3, 3, 1, 2, 0].forEach((s, i) => { p.stars[first + i] = s; });
-          viewWorldIdx = wi;
+          viewWorldIdx = idx;
           renderMapTitle(p);
           renderTourMap(0);
-          const naamW = worldForIndex(wi).world.id;
+          const naamW = worldForIndex(idx).world.id + (slinger ? ' (slinger)' : '');
           const stops = [...document.querySelectorAll('.tour-stop:not(.locked)')];
           const vakken = [];
           stops.forEach(s => {
@@ -539,6 +591,7 @@ function check(ok, label, detail) {
             }
           }
           uit.werelden.push({ id: naamW, vakken: vakken.length, bw: Math.round(bw), bh: Math.round(bh), cqw: +cqw.toFixed(1) });
+          if (slinger) { WORLDS[idx].nodes = bewaard.n; WORLDS[idx].curve = bewaard.c; }
         }
         return uit;
       });
@@ -624,8 +677,8 @@ function check(ok, label, detail) {
    * een nieuwe wereld, een grotere knop of een ander toestel opvalt vóórdat een
    * kind een halte niet meer kan vinden. Stand bij het schrijven, over alle werelden
    * en de standaardslinger: 21:9 niets, Pixel 2%, 320px 2%, iPhone SE 17% (piraten
-   * halte 2, rechtsonder) en 30% op de gegenereerde sterrentournee -- die laatste
-   * heeft geen tekening en zet zijn eerste halte precies middenonder.            */
+   * halte 2, rechtsonder) en 30% op de standaardslinger -- die zet zijn eerste
+   * halte precies middenonder.            */
   {
     const GRENS = 30;   // procent van het zichtbare blokje; zie hierboven
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone SE', 375, 667],
@@ -644,17 +697,22 @@ function check(ok, label, detail) {
         const uit = { memZichtbaar: false, hart: [], tab: [], ergste: 0, ergsteWie: '-' };
         const fab = document.getElementById('mem-fab');
         uit.memZichtbaar = getComputedStyle(fab).display !== 'none';
+        // één ronde extra op de standaardslinger -- zie 7e, hetzelfde recept
         const tot = WORLDS.length + 1;
         for (let wi = 0; wi < tot; wi++) {
-          const p = P(), first = WORLD_START[wi] || (WORLD_LAST + 1);
+          const slinger = wi >= WORLDS.length;
+          const wx = Math.min(wi, WORLDS.length - 1);
+          const bewaard = slinger ? { n: WORLDS[wx].nodes, c: WORLDS[wx].curve } : null;
+          if (slinger) { delete WORLDS[wx].nodes; delete WORLDS[wx].curve; }
+          const p = P(), first = WORLD_START[wx];
           p.level = first + 5;
           p.stars = {}; [3, 3, 1, 2, 0].forEach((s, i) => { p.stars[first + i] = s; });
-          viewWorldIdx = wi; renderMapTitle(p); renderTourMap(0);
-          const id = worldForIndex(wi).world.id;
+          viewWorldIdx = wx; renderMapTitle(p); renderTourMap(0);
+          const id = worldForIndex(wx).world.id + (slinger ? '(slinger)' : '');
           const wb = document.getElementById('world-back');
           const zij = [{ id: 'memory', box: doos(fab) }];
           // even doen alsof ze in een andere wereld speelt, zodat de weg terug er ook staat
-          p.level = (WORLD_START[(wi + 1) % tot] || (WORLD_LAST + 1)) + 1;
+          p.level = WORLD_START[(wx + 1) % WORLDS.length] + 1;
           renderMapTitle(p);
           if (!wb.hidden) zij.push({ id: 'terug', box: doos(wb) });
           p.level = first + 5; renderMapTitle(p);
@@ -676,6 +734,7 @@ function check(ok, label, detail) {
               if (pct > uit.ergste) { uit.ergste = pct; uit.ergsteWie = id + ' h' + s.dataset.lvl + ' <> ' + z.id; }
             });
           });
+          if (slinger) { WORLDS[wx].nodes = bewaard.n; WORLDS[wx].curve = bewaard.c; }
         }
         uit.ergste = Math.round(uit.ergste);
         return uit;

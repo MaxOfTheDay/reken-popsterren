@@ -920,6 +920,12 @@ congratulate it. Cheap and it is the entire emotional payoff of §5.
 
 **Not improving on a replay.** Say nothing. Do not show "je vorige resultaat was beter".
 
+> **Superseded by phase 4A (see below).** The "Sterrentournee" pseudo-world was built and
+> then removed: it occupied level numbers (49+) that a real world would later claim, so the
+> stars a child earned in the tail landed *inside* the newly appended world and made it look
+> already completed. The two paragraphs that follow describe the model as it was, and are
+> kept for the reasoning; what the app does now is in the box at the end of this section.
+
 **Reaching the end of authored worlds.** `worldFor(lvl)` must never return `undefined`.
 Recommended: a final **"Sterrentournee"** pseudo-world, entered after the last authored
 world — neutral/celebratory theme, keeps counting levels, keeps paying stars, diamonds,
@@ -938,6 +944,26 @@ desired behaviour, and it is only safe because level numbers never get renumbere
 insert a world in the middle or change an existing world's `levels` count after release —
 that *would* renumber, and a child's completed levels would silently move to different
 worlds.
+
+> **Phase 4A — what the app does now.**
+>
+> - The tour is finite: `p.level` runs 1 … `WORLD_LAST + 1`, and `WORLD_LAST` is the last
+>   level of the last *released* world. There is no pseudo-world; `worldFor()` clamps.
+> - Completion is derived from `p.stars`, never from position: `worldDone(p, i)` is the
+>   existing "every show played once" rule the world badge already used.
+> - `frontierWorld(p)` is the first released world that is not done, or `-1`.
+>   `continueWorld(p)` is the frontier, or — when everything is done — the last released
+>   world, played as an **encore**: same real world, same theme and map, nothing advances.
+> - `released: false` on a world keeps it out of play while still reserving its level
+>   numbers, so releasing it later renumbers nothing. Only a contiguous head of the list
+>   counts as released.
+> - Appending a world therefore leaves an existing save untouched: the new world has no
+>   stars, so it is incomplete, so it becomes the frontier. `worldsSeen` (world ids) makes
+>   it trigger its first-time reveal once and only once.
+> - One-time migration in `migrate()`: stars on levels above `LEGACY_TOUR_END` (48, the
+>   horizon on the day the tail was removed) move from `p.stars` to `p.tourStars` and
+>   `p.level` is clamped to 49. Nothing is discarded — those stars still count towards the
+>   star total, rank and the show trophies. See `test/voortgang.test.js`.
 
 **Partially completed worlds.** Nothing special: nodes carry their own star state, the
 world counter aggregates, the badge is `has()`-derived and simply returns false.
