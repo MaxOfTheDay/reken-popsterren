@@ -37,6 +37,25 @@
 > picker. Section C's notes on "Profielkeuze" therefore describe the screen as it
 > was reviewed, not as it is now.
 >
+> **Phase 5A, polish pass.** The painted landing image (`assets/bg/landing.webp`)
+> was dropped in favour of `.app-sfeer` — a CSS-only "shell": blue-hour aubergine,
+> a warm glow low down, amber and cyan light trails drawn as mostly off-canvas
+> rings, one inline-SVG sparkle layer, and a deliberately quiet centre. It is
+> meant as the shared backdrop for every non-world screen; it currently carries
+> the player picker and the new-star form. The painted file is still on disk and
+> the image tooling (`test/scene.js`, `npm run try`) still previews a candidate
+> into the same pseudo-element, but nothing in the app requests it and it is no
+> longer precached by `sw.js`.
+>
+> Player tiles were normalised to one component at three close sizes (148 / 136 /
+> ≤130px caps) instead of 236 vs 112, so a single child no longer turns the tile
+> into a poster and a tablet no longer stretches it. Stage decoration is off on
+> tiles and carried pets/instruments draw at a third `PROP_MAAT` ("klein"), which
+> keeps the doll the focal point. The new-star form lost its explanatory copy, a
+> 16% smaller preview, tighter rhythm and quieter unselected pills, and it sits on
+> a lighter reusable utility header (`.hub-sticky.sub`) with a safe-area-aware
+> sticky CTA.
+>
 > **Later change, outside this review:** the settings screen has since been
 > reworked into a parent area (`👨‍👩‍👧 Voor ouders`) with an identity row for
 > choosing a child and three sections — `Voortgang | Oefenen | Beheer`. The
