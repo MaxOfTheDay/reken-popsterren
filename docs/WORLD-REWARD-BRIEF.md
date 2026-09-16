@@ -1,8 +1,16 @@
 # World rewards — what to make for phase 4D.2
 
+> **Status: shipped (phase 4D.2).** All six items now carry a real `draw()` and a
+> `thumb()` in `ITEMS`; the ids never changed, so anyone who had already earned one
+> simply sees the finished drawing. One concept changed along the way: Toverwereld
+> does **not** get the Maanhoedje of §4 — it hands out the wizard hat that was
+> already in the game (`acc_tovenaarshoed`), drawn from the shared `wizardHatArt()`.
+> The rest of this brief is the reasoning it was built on, and still describes how
+> a seventh world adds its reward.
+
 Phase 4D.1 shipped the mechanics: finishing a world grants one wardrobe item, and making
 every level three-star grants that world's `Perfecte werelden` trophy. Both already work,
-persist and celebrate. What is still placeholder is **how the six items look**.
+persist and celebrate. What this brief covered is **how the six items look** — done in 4D.2.
 
 This brief says exactly what "look" means here — and the first thing to know is that it is
 **not an image file**.
@@ -86,14 +94,14 @@ SVG markup, inserted into the doll's `viewBox="0 0 200 250"`, in the accessory l
 
 ### `thumb(base) → string`
 
-The picture on the wardrobe card. Optional: without it the card shows the item's `emoji`,
-which is what the six do today.
+The picture on the wardrobe card, and (via `.wf-beeld`) in the world-completion reveal.
+Optional: without it the card shows the item's `emoji`. All six rewards define one.
 
 - It lands in a **52 px tall** box (`.item-thumb`). Return an `<svg>` with its own small
   viewBox, or any inline markup.
-- `wizardHatThumb()` is the worked example — the wizard hat draws the same shape again at
-  thumbnail scale rather than shrinking the doll's version, because at 52 px the doll's
-  proportions read as a smudge.
+- The six rewards use `beloningThumb(view, art)`: the *same* `art...()` function as `draw()`,
+  under a tight viewBox. One drawing, three places (doll, card, reveal) — no second version
+  that can drift. `wizardHatThumb()` does the same for both wizard hats.
 - Skip it if `draw()` already reads well small; the emoji fallback is not an embarrassment.
 
 ### What stays as it is
@@ -116,17 +124,18 @@ sees the finished version. No migration, no second item, no lost ownership.
 
 ## 4. The six concepts
 
-Placeholder today is the emoji in the third column. Each concept is one silhouette a
-six-year-old can name at 96 px.
+Each concept is one silhouette a six-year-old can name at 96 px. All six are drawn;
+the emoji on each item stays behind as the celebration confetti and as the prefix in
+the wardrobe bar, not as its picture.
 
-| World | Item (`name`) | Concept | Now |
+| World | Item (`name`) | Concept | Done |
 |---|---|---|---|
-| 🎵 Muziekwereld | Notenkroontje | A slim headband with three gold quaver notes standing up from it, like a tiara built out of music. | 🎵 |
-| 🍭 Snoepwereld | Lollyhoedje | A striped pink-and-white swirl lolly tucked upright beside the head, stick down into the hair. | 🍭 |
-| 🌴 Junglewereld | Bladerkrans | A ring of broad green leaves around the crown, one hibiscus flower off to one side. | 🍃 |
-| 🏴‍☠️ Piratenwereld | Piratenhoed | A black tricorn with a gold rim and a small cream skull on the front. | 🏴‍☠️ |
-| ❄️ IJswereld | IJskroontje | A crown of pale blue ice shards, uneven heights, with a white glint. | ❄️ |
-| 🪄 Toverwereld | Maanhoedje | A deep violet crescent moon resting on the head like a hat, two small gold stars beside it. | 🌙 |
+| 🎵 Muziekwereld | Notenkroontje | A slim headband with three gold quaver notes standing up from it, like a tiara built out of music. | ✅ |
+| 🍭 Snoepwereld | Lollyhoedje | A striped pink-and-white swirl lolly tucked upright beside the head, stick down into the hair. | ✅ |
+| 🌴 Junglewereld | Bladerkrans | A ring of broad green leaves around the crown, one hibiscus flower off to one side. | ✅ |
+| 🏴‍☠️ Piratenwereld | Piratenhoed | A black tricorn with a gold rim and a small cream skull on the front. | ✅ |
+| ❄️ IJswereld | IJskroontje | A crown of pale blue ice shards, uneven heights, with a white glint. | ✅ |
+| 🪄 Toverwereld | Toverhoed | The wizard hat the game already had (`acc_tovenaarshoed`), seated 8 units lower so its tip lines up with the rest of the set. Shared drawing: `wizardHatArt(tip, groot)`. | ✅ |
 
 Each one is a *hat-shaped* thing on purpose: they then read as a set, they never collide
 with the hair, and the child's own colour choices stay visible underneath.
