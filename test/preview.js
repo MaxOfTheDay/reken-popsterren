@@ -74,12 +74,20 @@ function assetsOpSchijf(dir, uit) {
   }
   return uit;
 }
-function studioData() {
+function studioData(state) {
   const lan = lanAdres();
+  /* Wat er in incoming/ ligt, mét de plek waar het heen zou gaan. De studio zet het
+     naast de huidige tekening neer als "nieuw" en laat jou kiezen -- dat is de enige
+     beslissing die erbij hoort, en zonder deze lijst kon de studio niet eens zien
+     dat er iets klaarlag. */
+  const kandidaten = (state && state.found || []).map(f => ({
+    slot: f.slot, file: f.file, url: state.urls[f.slot],
+  }));
   return '<script>window.__LAN=' + JSON.stringify(lan ? lan + ':' + PORT : null) + ';'
     + 'window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
     v instanceof RegExp ? undefined : v)
     + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
+    + ';window.__INCOMING=' + JSON.stringify(kandidaten)
     + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {})) + ';<\/script>';
 }
 
@@ -174,7 +182,7 @@ function page(state) {
     '<style id="k-scene-kaal" disabled>' + scene.css(state.urls, { scrim: false }) + '</style>';
   // de parallax-aandrijving uit test/scene.js
   const para = '<script>' + scene.parallaxJs() + '<\/script>';
-  return html.replace('</head>', styles + studioData() + '</head>')
+  return html.replace('</head>', styles + studioData(state) + '</head>')
              .replace('</body>', panel(state) + para + '</body>');
 }
 
@@ -444,6 +452,23 @@ http.createServer(function (req, res) {
   if (req.method === 'POST' && url === '/hernoem') {
     const q = new URLSearchParams((req.url.split('?')[1] || ''));
     return renameAsset(res, decodeURIComponent(q.get('van') || ''), decodeURIComponent(q.get('naar') || ''));
+  }
+
+  /* Een kandidaat weggooien: het bestand uit incoming/ halen. Gebeurt als je in
+     de studio "weggooien" kiest, en ook stil zodra een kandidaat het gewórden is --
+     dan staat hij in assets/ en hoort hij niet als "nieuw" naast zichzelf te blijven
+     staan. Alleen een bestandsnaam, alleen in incoming/, en niets met een schuine
+     streep erin: er valt hier niets te verzinnen dat buiten die map wijst. */
+  if (req.method === 'POST' && url === '/incoming-weg') {
+    const q = new URLSearchParams((req.url.split('?')[1] || ''));
+    const naam = decodeURIComponent(q.get('f') || '');
+    const zeg = (code, tekst) => { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(tekst); };
+    if (!naam || /[\\/]/.test(naam) || naam === '.' || naam === '..') return zeg(400, 'geen geldige naam: ' + naam);
+    const f = path.join(DROP, naam);
+    if (!fs.existsSync(f)) return zeg(404, naam + ' ligt er niet (meer)');
+    try { fs.unlinkSync(f); console.log('  wereldstudio: incoming/' + naam + ' weg'); zeg(200, 'weg'); }
+    catch (e) { zeg(500, String(e.message)); }
+    return;
   }
 
   if (req.method === 'POST' && url === '/werelden') {

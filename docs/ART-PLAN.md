@@ -269,26 +269,31 @@ npm run preview
 ```
 
 Then open `http://localhost:8099/?debug&demo&star=p1&screen=map&mapedit` and **drag your
-generated image onto the Beelden panel**. That is the whole workflow — it converts the
-image to WebP at the right size, writes it into `assets/`, and bumps the service-worker
-cache so devices that visited before actually see the new picture.
+generated image onto the artwork box of the world you are making** (world art lives under
+**Werelden**, because it belongs to a world; everything else is under **Beelden**). That is
+the whole workflow — it converts the image to WebP at the right size, writes it into
+`assets/`, and bumps the service-worker cache so devices that visited before actually see
+the new picture.
 
 - **Any source size works.** The image is cover-cropped to the target and resized, so a
   generator's 1024×1024 or 900×600 is fine as long as the composition survives a crop.
   Never distorted.
-- **Two targets today** — the world map (1080×2160) and the home screen (1024×1536).
-  Pick one in the dropdown. More appear as the app grows something that renders them.
+- **Two targets today** — the world map (1215×2160, under **Werelden**, one per world) and
+  the home screen (1024×1536, under **Beelden**). More appear as the app grows something
+  that renders them.
 - **Quality** is a dropdown; the panel reports the resulting kB so you can keep an eye on
   the budget (§7.3 of ART-DIRECTION: ≤ 120 kB per background).
-- **Voorbeeld** opens the real game in a true window at `staand · klein · liggend ·
-  tablet`, or two side by side. A real window, not a scaled box: the landscape fallback
-  keys off the viewport, so only a real one tells the truth.
+- **⧉** (next to the device picker) opens the real game in a true window at the selected
+  size; Shift-click opens all of them side by side. A real window, not a scaled box: the
+  landscape fallback keys off the viewport, so only a real one tells the truth.
+- A file left in `incoming/` shows up in the panel as **Nieuw** beside **Huidig**, with one
+  button to accept it. Nothing generated becomes final on its own.
 - Nothing reaches a child until you press **⇪ Zet in het spel** and then commit. A draft
   lives in `localStorage` and is only read with `?debug`.
 
-Dropping an image straight onto the panel replaces the older `incoming/` + filename-routing
-flow for these two slots. `incoming/` still works for the slots the studio does not cover
-yet — see `npm run try` below.
+Dropping an image straight onto the panel is the fast path; `incoming/` still works and the
+studio now surfaces what is lying there as a candidate instead of silently overriding the
+map. For the slots the studio does not cover yet, see `npm run try` below.
 
 > **Superseded.** There used to be a second tool, `proefstudio.html`: a generated copy of
 > the whole app with its own drop zone, for use without Node or a terminal. It has been

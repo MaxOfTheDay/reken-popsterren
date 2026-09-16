@@ -134,7 +134,7 @@ belongs. The only consequence is that the world name and the diamond count go qu
 she is standing there. The studio draws that band in gold, labelled *hier dimt de
 bovenbalk*; the green box is the hard edge, the gold band is a note.
 
-The dashed green box in the world studio (`?debug&mapedit` → **raster**) is exactly this
+The dashed green box in the world studio (`?debug&mapedit` → **veilige zone**) is exactly this
 rectangle — draw against that, not against these numbers.
 
 Everything outside the box is still seen (it is the world, not padding) — it just must not
@@ -260,14 +260,24 @@ And two things that are deliberately **not** in the art:
 
 In the studio (`npm run preview` → Wereldstudio):
 
-- [ ] **Beelden** → drag the file onto *Wereldkaart*. It converts, crops and saves.
-- [ ] **Werelden** → drag the eight stops onto the landings, drag the green diamonds to
-      bend the road around obstacles.
-- [ ] Set **weg** to a colour that survives this world.
-- [ ] **Toestel** → check `telefoon staand`, `kleine telefoon` and `tablet staand`.
-      The first must fit in one screen with nothing behind the bars.
-- [ ] **Voorbeeld** → open the set in real windows and look at it once at true size.
-- [ ] **Publiceren** → *Zet in het spel*, then commit, then publish.
+- [ ] **Werelden → Tekening** → drag the file onto the artwork box. It converts, crops
+      and saves, and reports the real dimensions and aspect ratio back. If you dropped the
+      file in `incoming/` instead, it shows up there as *Nieuw* next to *Huidig* with one
+      button: **Gebruik deze**.
+- [ ] **Werelden → Haltes & weg** → drag the eight stops onto the landings, drag the green
+      diamonds to bend the road around obstacles.
+- [ ] **Kleuren** → *haal uit de tekening* proposes all four from the artwork (and picks a
+      **weg** that measurably survives the darkest stretch of this world). Override freely;
+      *↺ standaard* puts them back.
+- [ ] **Beloning** → pick the cosmetic this world hands out, and *bekijk* it on the doll.
+- [ ] **stand** (top of the panel) → walk through all five: `op slot`, `net begonnen`,
+      `halverwege`, `uit`, `perfect`. `perfect` is the one that must feel like a reward.
+- [ ] **toestel** → check `telefoon`, `kleine telefoon` and `tablet`. The first must fit in
+      one screen with nothing behind the bars.
+- [ ] **⧉** → open it in a real window at that size (Shift-click for all sizes side by
+      side). A real window, not a scaled box: the landscape fallback keys off the viewport.
+- [ ] **Publiceren** → *kijk alle werelden na*, then *Zet in het spel*, then commit, then
+      publish.
 
 ---
 
