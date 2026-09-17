@@ -14,8 +14,10 @@
  *   D  nog eens overspelen            -> niets erbij, geen feestje
  *   E  een save van vóór deze fase    -> alles stil met terugwerkende kracht
  *   F  twee sterren op één toestel    -> ieder haar eigen beloningen
- *   G  de kleedkamer                  -> te verdienen, niet te koop
+ *   G  het schattenvak                -> te verdienen, niet te koop, nog geheim
  *   H  een wereld erbij               -> één regel configuratie, verder niets
+ *   K  de onthulling                  -> één keer, met een knop om 'm aan te doen
+ *   L  het teken op de kaart          -> één fonkeling, en alleen zolang er iets ligt
  *
  * Draaien:
  *   npm run test:beloning     (of: npm test voor alle suites)
@@ -133,8 +135,8 @@ function check(ok, label, detail) {
     });
     check(r.spullen.join() === 'acc_wereld_muziek',
       'A · de laatste show maakt de wereld uit en geeft het spulletje', JSON.stringify(r));
-    check(r.feest && r.feest.kop === 'Wereld uit!' && r.feest.rijen.join() === 'Nieuw!' && r.feest.lagen === 1,
-      'A · met één feestje, en dat gaat over het spulletje', JSON.stringify(r.feest));
+    check(r.feest && r.feest.kop === 'Wereld uit!' && r.feest.rijen.join() === 'Nieuwe wereldschat!' && r.feest.lagen === 1,
+      'A · met één feestje, en dat gaat over de wereldschat', JSON.stringify(r.feest));
     check(r.perfect.length === 0 && r.perfectKlaar.length === 0,
       'A · twee sterren is geen perfecte wereld', JSON.stringify(r));
     check(r.gekocht === 0,
@@ -157,7 +159,7 @@ function check(ok, label, detail) {
       return {
         label,
         scherm: (document.querySelector('.screen.active') || {}).id,
-        lade: shopCat, gekozen: shopSelectedId,
+        lade: shopCat, schatVak: shopCat === SCHAT_CAT, gekozen: shopSelectedId,
         gekozenKaart: !!(kaart && kaart.classList.contains('selected')),
         balk: document.getElementById('dress-bar').textContent.replace(/\s+/g, ' ').trim(),
         popDraagt: avatarSVG(previewProfile(P(), item('acc_wereld_muziek')), 100)
@@ -168,8 +170,8 @@ function check(ok, label, detail) {
     // geen vaste tekst in de test: de naam komt uit ITEMS, net als op het feestje
     check(weg.label.indexOf(weg.naam) >= 0,
       'A · de tweede knop noemt het spulletje zelf', `${weg.label} (naam: ${weg.naam})`);
-    check(weg.scherm === 'screen-dress' && weg.lade === 'acc' && weg.gekozen === 'acc_wereld_muziek' && weg.gekozenKaart,
-      'A · en brengt je er rechtstreeks naartoe, met het kaartje gekozen', JSON.stringify(weg));
+    check(weg.scherm === 'screen-dress' && weg.schatVak && weg.gekozen === 'acc_wereld_muziek' && weg.gekozenKaart,
+      'A · en brengt je rechtstreeks naar het schattenvak, met het kaartje gekozen', JSON.stringify(weg));
     check(/Doe aan/.test(weg.balk) && weg.popDraagt,
       'A · de balk zegt "Doe aan" en de pop draagt het al', JSON.stringify(weg));
     // het spulletje gedraagt zich als elk ander kledingstuk
@@ -240,7 +242,7 @@ function check(ok, label, detail) {
       return { ...window.__stand(), feest: window.__feest() };
     });
     check(r.feest && r.feest.lagen === 1 && r.feest.kop === 'Wereld uit!'
-      && r.feest.rijen.join() === 'Nieuw!,Perfecte wereld!',
+      && r.feest.rijen.join() === 'Nieuwe wereldschat!,Perfecte wereld!',
       'C · uit én perfect is één feestje met twee regels', JSON.stringify(r.feest));
     check(r.spullen.join() === 'acc_wereld_muziek' && r.perfect.join() === 'perfect-muziek',
       'C · en allebei de beloningen staan er echt', JSON.stringify(r));
@@ -368,13 +370,26 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ---- G · De kleedkamer: te verdienen, niet te koop -------------------- */
+  /* ---- G · Het schattenvak: te verdienen, niet te koop, en nog geheim -----
+     FASE 6E. De beloningen lagen achteraan in de accessoirelade, op slot, tussen
+     de prijzen -- en daarmee lazen ze als winkelwaar die toevallig niet te koop
+     is. Nu hebben ze een eigen vak ("✨ Wereldschatten · 0 / 6") en is wat er te
+     zien valt precies: er ligt iets, bij die wereld, en je krijgt het door te
+     spelen. Wát het is blijft tot het feestje. */
   {
     const { ctx, page } = await fresh();
     await nieuweSter(page);
     const r = await page.evaluate(async () => {
       P().diamonds = 9999;
+      openKleedkamer();
+      await new Promise(res => setTimeout(res, 250));
+      const ingang = document.getElementById('schat-entry');
+      const accLade = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
       openKleedkamerCat('acc');
+      await new Promise(res => setTimeout(res, 150));
+      const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
+      // en dan het vak zelf open
+      ingang.click();
       await new Promise(res => setTimeout(res, 250));
       const kaart = document.querySelector('.item-card[data-item="acc_wereld_muziek"]');
       kaart.click();
@@ -383,26 +398,87 @@ function check(ok, label, detail) {
       // en zelfs als iemand de koopweg rechtstreeks aanroept
       confirmShopBuy('acc_wereld_muziek');
       return {
+        ingangTekst: ingang.textContent.replace(/\s+/g, ' ').trim(),
+        ingangZichtbaar: ingang.style.display !== 'none',
+        accLade, inAcc,
         opSlot: kaart.classList.contains('teverdienen'),
+        schatKaart: kaart.classList.contains('schat-kaart'),
         status: kaart.querySelector('.item-status').textContent.trim(),
+        // het raadsel en niet de tekening: geen SVG op het kaartje van een schat
+        // die nog niet van haar is
+        raadsel: !!kaart.querySelector('.schat-raadsel'),
+        tekening: !!kaart.querySelector('.item-thumb svg'),
+        naamOpKaart: kaart.querySelector('.item-name').textContent,
+        itemNaam: item('acc_wereld_muziek').name,
+        /* De pop verklapt hem ook niet bij een tik. Niet op de HTML vergeleken
+           (avatarSVG geeft elke pop zijn eigen id-achtervoegsel, dus die verschilt
+           altijd) maar op het enige dat telt: staat de tekening van dit spulletje
+           erin of niet. Een koopstuk hóórt daar wél in te komen -- dat is de
+           etalage -- en dat staat er als tegenproef bij. */
+        popDraagtSchat: document.getElementById('shop-avatar').innerHTML
+          .includes(item('acc_wereld_muziek').draw('meisje', 1)),
         knop: !!document.querySelector('#db-buy'),
         balk,
         heeft: P().owned.includes('acc_wereld_muziek'),
         diamanten: P().diamonds,
-        // staat wél in de kast, achteraan -- precies de beloningen, in wereldvolgorde
         beloningen: WORLDS.map(w => w.beloning).filter(id => !!item(id)),
         volgorde: [...document.querySelectorAll('.item-card')].map(c => c.dataset.item),
+        popPastKoopstuk: await (async () => {
+          openKleedkamerCat('acc');
+          await new Promise(res => setTimeout(res, 150));
+          document.querySelector('.item-card[data-item="acc_feesthoed"]').click();
+          await new Promise(res => setTimeout(res, 150));
+          return document.getElementById('shop-avatar').innerHTML.includes('🎉');
+        })(),
       };
     });
-    check(r.opSlot && r.status.indexOf('🔒') === 0,
-      'G · een nog niet verdiend spulletje staat op slot in de kleedkamer', JSON.stringify(r));
-    check(!r.knop && /Speel Muziekwereld uit/.test(r.balk),
-      'G · de balk zegt hoe je hem haalt, en biedt geen koopknop', JSON.stringify(r.balk));
+    check(r.ingangZichtbaar && /Wereldschatten/.test(r.ingangTekst) && /0 \/ 6/.test(r.ingangTekst),
+      'G · de kleedkamer heeft een schattenvak met een teller erop', JSON.stringify(r.ingangTekst));
+    check(!r.accLade.some(id => /acc_wereld_/.test(id)) && !r.inAcc.some(id => /acc_wereld_/.test(id)),
+      'G · en de gewone laden staan er niet meer vol mee', JSON.stringify(r.inAcc));
+    check(r.volgorde.join() === r.beloningen.join(),
+      'G · het vak toont precies de wereldschatten, in wereldvolgorde',
+      JSON.stringify({ vak: r.volgorde, hoort: r.beloningen }));
+    check(r.opSlot && r.schatKaart && r.status === '🔒 Speel uit',
+      'G · een nog niet verdiende schat staat op slot', JSON.stringify(r));
+    check(r.raadsel && !r.tekening && r.naamOpKaart === 'Muziekwereld' && r.naamOpKaart !== r.itemNaam,
+      'G · en verklapt zichzelf niet: een raadsel met de naam van zijn wereld', JSON.stringify(r));
+    check(!r.popDraagtSchat && r.popPastKoopstuk,
+      'G · de pop past hem niet even -- een koopstuk wél', JSON.stringify(r));
+    check(!r.knop && /Speel Muziekwereld uit/.test(r.balk) && !/💎/.test(r.balk)
+      && r.balk.indexOf(r.itemNaam) < 0,
+      'G · de balk zegt hoe je hem haalt -- geen prijs, geen koopknop, geen naam', JSON.stringify(r.balk));
     check(!r.heeft && r.diamanten === 9999,
       'G · en kopen kan ook niet langs de knop om', JSON.stringify(r));
-    check(r.volgorde.slice(-r.beloningen.length).join() === r.beloningen.join(),
-      'G · de beloningen staan bij elkaar, achteraan de categorie, in wereldvolgorde',
-      JSON.stringify({ staart: r.volgorde.slice(-r.beloningen.length), hoort: r.beloningen }));
+    /* Verdiend hoort hij gewoon bij haar spullen: in het vak volledig te zien, én
+       in zijn eigen lade, want dáár kiest een kind wat ze aandoet. */
+    const na = await page.evaluate(async () => {
+      P().owned.push('acc_wereld_muziek');
+      renderShop();
+      await new Promise(res => setTimeout(res, 150));
+      const kaart = document.querySelector('.item-card[data-item="acc_wereld_muziek"]');
+      const teller = document.getElementById('schat-entry').textContent.replace(/\s+/g, ' ').trim();
+      kaart.click();
+      await new Promise(res => setTimeout(res, 150));
+      const balk = document.getElementById('dress-bar').textContent;
+      openKleedkamerCat('acc');
+      await new Promise(res => setTimeout(res, 150));
+      const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
+      return {
+        teller, balk, inAcc,
+        tekening: !!kaart.querySelector('.item-thumb svg'),
+        raadsel: !!kaart.querySelector('.schat-raadsel'),
+        naamOpKaart: kaart.querySelector('.item-name').textContent,
+        wereldteken: !!kaart.querySelector('.item-wereld'),
+      };
+    });
+    check(/1 \/ 6/.test(na.teller), 'G · de teller loopt mee', JSON.stringify(na.teller));
+    check(na.tekening && !na.raadsel && na.naamOpKaart === 'Notenkroontje' && na.wereldteken,
+      'G · een verdiende schat laat zich zien, met het teken van zijn wereld', JSON.stringify(na));
+    check(/Doe aan/.test(na.balk) && !/💎/.test(na.balk),
+      'G · en is meteen aan te doen, nog altijd zonder prijs', JSON.stringify(na.balk));
+    check(na.inAcc.filter(id => /acc_wereld_/.test(id)).join() === 'acc_wereld_muziek',
+      'G · in haar eigen lade staat alleen de schat die ze verdiend heeft', JSON.stringify(na.inAcc));
     await ctx.close();
   }
 
@@ -434,7 +510,7 @@ function check(ok, label, detail) {
     check(r.spullen.includes('acc_wereld_test') && r.perfect.includes('perfect-testwereld'),
       'H · en deelt bij het uitspelen gewoon uit wat er geconfigureerd staat',
       JSON.stringify({ spullen: r.spullen, perfect: r.perfect }));
-    check(r.feest && r.feest.rijen.join() === 'Nieuw!,Perfecte wereld!',
+    check(r.feest && r.feest.rijen.join() === 'Nieuwe wereldschat!,Perfecte wereld!',
       'H · met hetzelfde feestje als elke andere wereld', JSON.stringify(r.feest));
     await ctx.close();
   }
@@ -485,8 +561,11 @@ function check(ok, label, detail) {
           return avatarSVG(q, 100).includes(item(id).draw(b, 1));
         }).length;
       });
-      // het miniatuur in de kleedkamer is de tekening en niet meer het emoji
-      openKleedkamerCat('acc');
+      /* Het miniatuur in de kleedkamer is de tekening en niet meer het emoji. Ze
+         moet ze wél eerst verdiend hebben: een schat die nog op slot staat toont
+         met opzet het raadsel en niet zijn tekening (fase 6E, zie zaak G). */
+      ids.forEach(id => { if (!p.owned.includes(id)) p.owned.push(id); });
+      openKleedkamerItem(ids[0]);
       uit.kaartjes = ids.filter(id => {
         const k = document.querySelector(`.item-card[data-item="${id}"] .item-thumb svg`);
         return !!k;
@@ -575,6 +654,117 @@ function check(ok, label, detail) {
     }));
     check(!na.owned.includes('acc_tovenaarshoed') && na.acc === null,
       'J · en na opnieuw openen blijft het opgeruimd', JSON.stringify(na));
+    await ctx.close();
+  }
+
+  /* ---- K · De onthulling (fase 6E) ---------------------------------------
+     Het feestje was al het moment waarop een wereldschat zich laat zien. Wat
+     erbij is gekomen is de knop eronder: aandoen, meteen, op de plek waar het
+     kind naar zit te kijken. Wat hier vastligt is dat die knop doet wat hij
+     zegt, dat hij er alleen staat als er écht iets nieuws is, en dat hij niet
+     terugkomt bij elke volgende keer dat dezelfde wereld uitgespeeld wordt. */
+  {
+    const { ctx, page } = await fresh();
+    await nieuweSter(page);
+    const r = await page.evaluate(async () => {
+      const w = worldForIndex(0);
+      for (let l = w.first; l < w.first + w.levels - 1; l++) { await window.__speel(l, 2); window.__sluitFeest(); }
+      await window.__speel(w.first + w.levels - 1, 2);
+      const ov = document.querySelector('.wereld-feest-overlay:not(.closing)');
+      const knop = ov && ov.querySelector('.wf-aan');
+      const voor = P().equipped.acc;
+      const popVoor = document.getElementById('end-avatar').innerHTML;
+      if (knop) knop.click();
+      await new Promise(res => setTimeout(res, 400));
+      return {
+        knop: !!knop,
+        voor, na: P().equipped.acc,
+        dicht: !document.querySelector('.wereld-feest-overlay:not(.closing)'),
+        /* De pop op het eindscherm is opnieuw getekend (het is niet meer dezelfde
+           opmaak) en tekent nu de schat. Niet op de innerHTML vergeleken: de
+           browser schrijft SVG die hij terugleest anders op (<path/> wordt
+           <path></path>), dus dat vergelijkt opmaakstijl en geen inhoud. */
+        popHertekend: document.getElementById('end-avatar').innerHTML !== popVoor,
+        popDraagt: avatarSVG(P(), 150).includes(item('acc_wereld_muziek').draw('meisje', 1)),
+      };
+    });
+    check(r.knop, 'K · bij een nieuwe wereldschat staat er een Aandoen-knop', JSON.stringify(r));
+    check(r.voor === null && r.na === 'acc_wereld_muziek',
+      'K · en één tik doet hem aan', JSON.stringify(r));
+    check(r.dicht && r.popHertekend && r.popDraagt,
+      'K · de laag gaat dicht en de pop op het eindscherm draagt hem al', JSON.stringify(r));
+    /* Dezelfde wereld nog eens uitspelen: geen feestje, dus ook geen knop. Een
+       kind hoort dit één keer per wereld tegen te komen en niet elke keer weg te
+       moeten tikken. */
+    const weer = await page.evaluate(async () => {
+      const w = worldForIndex(0);
+      await window.__speel(w.first + w.levels - 1, 3);
+      return { feest: !!window.__feest(), knop: !!document.querySelector('.wf-aan') };
+    });
+    check(!weer.feest && !weer.knop,
+      'K · en een tweede keer uitspelen viert niets en vraagt niets', JSON.stringify(weer));
+    /* De laag met knop houdt niemand vast: wie niets doet is hem na een paar
+       tellen vanzelf kwijt, want eronder ligt "Verder op tournee" en daar wilde
+       het kind toch al heen. */
+    const vanzelf = await page.evaluate(async () => {
+      const w = worldForIndex(1);
+      for (let l = w.first; l < w.first + w.levels - 1; l++) { await window.__speel(l, 2); window.__sluitFeest(); }
+      await window.__speel(w.first + w.levels - 1, 2);
+      const meteen = { feest: !!window.__feest(), knop: !!document.querySelector('.wf-aan') };
+      await new Promise(res => setTimeout(res, 6400));
+      return { ...meteen, weg: !window.__feest(), aan: P().equipped.acc };
+    });
+    check(vanzelf.feest && vanzelf.knop && vanzelf.weg,
+      'K · en de laag met knop sluit ook zichzelf als er niets gebeurt', JSON.stringify(vanzelf));
+    check(vanzelf.aan === 'acc_wereld_muziek',
+      'K · zonder iets aan te doen wat ze niet gekozen heeft', JSON.stringify(vanzelf.aan));
+    /* Een perfecte wereld zonder nieuwe schat viert wél, maar zonder knop -- er
+       valt niets aan te doen -- en sluit zichzelf zoals altijd. */
+    const perfect = await page.evaluate(async () => {
+      const w = worldForIndex(0);
+      const laatste = w.first + w.levels - 2;   // de show die hem perfect máákt
+      for (let l = w.first; l < laatste; l++) { await window.__speel(l, 3); window.__sluitFeest(); }
+      await window.__speel(laatste, 3);
+      const nu = { feest: window.__feest(), knop: !!document.querySelector('.wf-aan') };
+      await new Promise(res => setTimeout(res, 3400));
+      return { ...nu, dichtVanzelf: !window.__feest() };
+    });
+    check(perfect.feest && perfect.feest.rijen.join() === 'Nieuwe trofee!' && !perfect.knop && perfect.dichtVanzelf,
+      'K · een feestje zonder nieuwe schat heeft geen knop en sluit zichzelf', JSON.stringify(perfect));
+    // en wat ze aanhad blijft aan na opnieuw openen
+    await page.reload();
+    await page.waitForTimeout(300);
+    const bewaard = await page.evaluate(() => db.profiles.p1.equipped.acc);
+    check(bewaard === 'acc_wereld_muziek', 'K · en dat aandoen overleeft opnieuw openen', String(bewaard));
+    await ctx.close();
+  }
+
+  /* ---- L · Het teken op de kaart (fase 6E) --------------------------------
+     Bij de laatste halte van een wereld staat een fonkeling zolang de schat van
+     die wereld nog te halen is. Eén teken, op één halte, en weg zodra ze hem
+     heeft -- de kaart heeft in fase 6D juist zijn slotjes verloren omdat een
+     vierde signaal per halte drukte werd. */
+  {
+    const { ctx, page } = await fresh();
+    await nieuweSter(page);
+    const voor = await page.evaluate(async () => {
+      goMap(1);
+      await new Promise(res => setTimeout(res, 400));
+      const haltes = [...document.querySelectorAll('.tour-stop')];
+      return {
+        haltes: haltes.length,
+        met: haltes.map((b, i) => b.querySelector('.stop-schat') ? i : -1).filter(i => i >= 0),
+      };
+    });
+    check(voor.haltes > 0 && voor.met.join() === String(voor.haltes - 1),
+      'L · precies één fonkeling, bij de laatste halte', JSON.stringify(voor));
+    const na = await page.evaluate(async () => {
+      P().owned.push('acc_wereld_muziek');
+      goMap(1);
+      await new Promise(res => setTimeout(res, 400));
+      return [...document.querySelectorAll('.stop-schat')].length;
+    });
+    check(na === 0, 'L · en hij is weg zodra de schat van haar is', String(na));
     await ctx.close();
   }
 
