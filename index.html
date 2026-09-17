@@ -3210,8 +3210,16 @@
      ondiepe voet leest ze daar als iemand die al onderweg is naar de halte
      erbóven. Dieper kan niet -- op ongeveer een kwart van het rondje begint het
      nummer, en dat moet leesbaar blijven. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 2.6cqw); transform: translateX(-50%);
-    width: 15.2cqw; pointer-events: none; z-index: 2; }
+  /* FASE 4D -- van 15,2 naar 19,5cqw (+28%). Ze verdween tegen de dichtst
+     beschilderde werelden; groter houdt haar de duidelijkste "hier sta ik" op de
+     kaart zonder de halte zelf van haar plek te duwen. Ze zakt ook dieper in de
+     halte (van 2,6 naar 5cqw) dan haar extra lengte op zichzelf zou vragen: puur
+     evenredig meegroeien liet haar kruin op ZONE.y0 van het scherm af lopen (test
+     7c-bis, "op ZONE.y0 blijft haar kruin op het scherm") en at in op de lucht
+     naar de halte erboven. Dit is de kleinste zak die op alle vijf gemeten
+     toestellen weer ruimte overhoudt. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 5cqw); transform: translateX(-50%);
+    width: 19.5cqw; pointer-events: none; z-index: 2; }
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
   /* De gloed: crème, ruim, en zonder rand -- hij mag nergens als vorm te zien zijn.
      Hij ligt achter haar (z-index 0 tegen de svg op 1), zodat hij haar kleuren niet
@@ -3224,19 +3232,38 @@
      een lange staart naar doorzichtig -- een gloed met een zichtbare rand zou een
      medaillon om haar heen zetten, en dat is precies wat ze niet moet worden.
 
+     De rand van de gloed dooft nu in de violette avondlucht van de wereld
+     (--w-sky-rgb, dezelfde tint als de gloed van de halte zelf, zie .reis-halte.nu
+     hierboven) in plaats van in het niets: warm bij haar voeten, koel-violet aan de
+     rand -- precies de twee kleuren die de opdracht voor haar vroeg.
+
      Samen met de spotlight onder de halte (.tour-stop.next::after) vormt dit
      één lichtbron: warm, laag, en op één plek op de kaart. */
   .tour-hero::before { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 1cqw; transform: translateX(-50%);
-    width: 21.5cqw; height: 21.5cqw; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,247,220,.46), rgba(255,236,186,.16) 54%, transparent 74%); }
+    left: 50%; bottom: 1.3cqw; transform: translateX(-50%);
+    width: 27.6cqw; height: 27.6cqw; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,247,220,.46), rgba(255,214,158,.24) 46%,
+                rgba(var(--w-sky-rgb, 61,26,99), .2) 68%, transparent 82%); }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven. Iets breder en donkerder
      dan eerst, zodat ze ook op een lichte ondergrond met beide voeten op de halte
      staat in plaats van erboven te zweven. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.2cqw; transform: translateX(-50%);
-    width: 10.8cqw; height: 2.7cqw; border-radius: 50%; background: rgba(12,2,26,.46); filter: blur(3px); }
+    left: 50%; bottom: 0.26cqw; transform: translateX(-50%);
+    width: 13.85cqw; height: 3.46cqw; border-radius: 50%; background: rgba(12,2,26,.46); filter: blur(4px); }
+  /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
+     halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
+  .tour-hero .hero-vonk {
+    position: absolute; z-index: 2; top: 4%; right: -5%; width: 15%;
+    opacity: 0; animation: heroVonk 8.5s ease-in-out infinite;
+  }
+  .tour-hero .hero-vonk svg { width: 100%; height: auto; display: block; fill: #fff7dc;
+    filter: drop-shadow(0 0 4px rgba(255,225,140,.85)); }
+  @keyframes heroVonk {
+    0%, 84%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
+    89%           { opacity: 1; transform: scale(1) rotate(10deg); }
+    95%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
+  }
   /* De halte waar zij staat gaat als geheel boven de andere haltes liggen. Zonder
      dit kan haar hoofd achter het medaillon van de halte erbóven verdwijnen: de
      haltes staan in volgorde in de DOM, dus een latere halte tekent over een
@@ -3753,6 +3780,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .avatar-holder.idle { animation: none; }
+    .tour-hero .hero-vonk { display: none; }
     /* De spotlight blíjft -- hij is een kleur op de grond, geen beweging, en juist
        zonder de ademende gloed is hij wat er nog overblijft om "hier speel je"
        te zeggen. Alleen het ademen ervan gaat uit. */
@@ -9566,6 +9594,8 @@ const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
 const REIS_GLANS = `<svg viewBox="0 0 26 26" aria-hidden="true">`
   + `<path d="${VONK(16, 9, 7)}"/><path d="${VONK(7.5, 16.5, 4)}" opacity=".85"/>`
   + `<path d="${VONK(20, 19.5, 2.6)}" opacity=".7"/></svg>`;
+// hetzelfde vonkje, maar los: het heel af en toe sprankeltje naast haar op de kaart
+const TOUR_VONK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${VONK(10, 10, 7)}"/></svg>`;
 /* Een tik op een wereld die nog op slot zit. Hij brengt je nergens heen -- dat is
    de hele bedoeling van een slot -- maar hij zegt wél waaróm, en in één regel: de
    wereld waar ze nu staat is de wereld die eerst uit moet. Precies dezelfde zin als
@@ -10024,7 +10054,8 @@ function renderTourMap(travelFrom) {
     // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
     if (open && st === 3) b.classList.add('perfect');
     const hero = lvl === heroLvl
-      ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
+      ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div>`
+        + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
 
     // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
     // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar
