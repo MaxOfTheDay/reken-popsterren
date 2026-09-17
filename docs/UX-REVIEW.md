@@ -130,6 +130,107 @@
 >   black-and-white family emoji left the title: on most devices it drew as a grey
 >   block on the dark bar, the one rough edge on the screen. It stays in the gear
 >   popover, where it sits on a light tile and draws in colour.
+>
+> **Phase 5E (global visual cohesion / art direction), outside this review.** No
+> screen structure was reopened. This was a convergence pass over the seven
+> child-facing screens, and it found that most of what made the app read as
+> "several polished screens" rather than one product was *near*-sameness: values
+> that differed by two or three points with no reason behind the difference.
+>
+> * *Two screens were not in the shared shell.* `.app-sfeer` carried the player
+>   picker, the dressing room, settings and the new-star form. The **trophy
+>   cabinet** and the **memory game** sat on the bare `<body>` gradient — the most
+>   saturated violet in the app — so the two collection screens that should read
+>   as siblings (cabinet / dressing room) were the two that looked least alike.
+>   Both now carry the shell. The cabinet gets a variant of its own,
+>   `.app-sfeer.kast`: the same shape as the dressing room's vanity light but
+>   cooler and narrower, the way a display case is lit.
+> * *The shell had no horizon.* `<body>` puts a warm glow low on every screen —
+>   the app's light direction, visible on the world maps, in the venue and at the
+>   foot of the tour. The shell's blue-hour layer covered it, so the picker was
+>   the one screen in the app standing in flat violet. A broad footlight layer
+>   puts it back.
+> * *The tour was the darkest surface in the app.* `#110720` at the top of its
+>   night, against a violet picker on one side and six painted worlds on the
+>   other: the screen meant to bridge them read as the gap between them. The ramp
+>   came up two steps and a shade purpler (`#180b2c`), and the shell's two light
+>   trails now run through it, viewport-fixed, so the light stays in the room
+>   while the tour scrolls past it.
+> * *Three headers were "almost" the map's.* The tour re-implemented `--hud-*` by
+>   hand (`.34` against `.30` fill, `.07` against `.08` ring, no shadow) and its
+>   back button was 38px with a press-lip where every other round button in the
+>   app is 44px. Map, tour and venue are now one header in three states.
+> * *Gold meant four things at once.* The milestone pill on the result screen
+>   carried literally the primary-button gradient, so "3 new trophies ready" and
+>   "On with the tour" were the same object twice, and the reward pulsed harder
+>   than the button that finishes the screen. Gold now splits cleanly: the
+>   **gradient + press-lip** is the thing you press to move forward (`.btn`, and
+>   the current stop on the map), **flat `--gold-accent` with a glow** is what you
+>   earned (milestone pill, `🎁 Open!`, the worn item, a claimed trophy). The
+>   replay button in counting mode lost its gold ring for the interaction cyan —
+>   "read it to me again" is a control, not a reward.
+> * *The overlay panel was from another app.* `.pop-panel` (career ladder, trophy
+>   party, world celebration, rank-up) was solid `--purple-deep` inside a 3px
+>   solid-gold frame — the brightest surface in the app, and gold used as pure
+>   ornament. It is now the same aubergine glass as the result card
+>   (`--paneel`/`--paneel-rand`), which is also what lets the gold *inside* it
+>   register again.
+> * *Card surfaces were three near-identical recipes.* Dressing-room item `.075`
+>   fill / `.10` border / top hairline; trophy card `.07` / `.14` / no hairline;
+>   shelf a third white again. One `--vlak*` family now covers all of them.
+> * *The bottom bar only had a scrim on one screen.* `.reis-voet` existed for the
+>   tour; the cabinet and the dressing room, where item names ran straight behind
+>   the tab labels, had none. The scrim now hangs off `.main-nav` itself, so it is
+>   there on every screen the bar is, and cannot be forgotten by a fifth.
+> * *The stylesheet asked for weights the font does not have.* Fredoka is loaded
+>   at 400/500/600/700; 39 rules asked for 800, 900 or `bold` and were served 700.
+>   A trophy name (900) and a child's name (800) were therefore identical on
+>   screen but looked like a decision in the source. The ladder is now 700 / 600 /
+>   500 and nothing changed size.
+> * Smaller: answer buttons got the contact shadow `.btn` already had (they are
+>   the only buttons that stand on a floor and had nothing under them); emoji got
+>   two shared drop-shadows instead of seven; the tour destination, the landscape
+>   world frame and the player tile agreed on `--r-md` instead of 18 / 16 /
+>   `--r-md`; the two "scrolled" header plates (cabinet, parent area) became one
+>   `--kop-plaat-vol`; the dead `--scene-scrim` token was removed.
+>
+> `assets/bg/landing.webp` remains unused on disk (see the 5A polish note above).
+>
+> **Phase 5E.1 (relative weight), outside this review.** Six small corrections after
+> looking at 5E on a phone. No screen was reopened and no new colour was added; five
+> of the six are a shared token moving one step.
+>
+> * *The milestone pill still had the proportions of a button.* It had lost the
+>   primary gradient in 5E but kept 16.5px type, 10px of vertical air and the full
+>   `--goud-gloed`, so on the result screen it still read as the first of two
+>   buttons. Now 15.5px / 7px, fill at `.88`, `--goud-gloed-zacht`, and the pulse
+>   moved out of the glow into the scale (`beloningKlop`, slower). The gift icon,
+>   the copy and the 44px target are untouched.
+> * *The nav scrim darkened the artwork too early.* It ramped straight from nothing
+>   to `.5` at 56%, so on the world map the bottom band of beach and sea went dark
+>   well before the bar. The gradient now has four stops with the knee much lower:
+>   `.05` at 34%, `.44` at 70%, `.62` at the edge. Measured on the map, 84px up from
+>   the bottom went from `.36` to `.05`; 30px up it stayed within a few points. The
+>   worst case is the tour, where Snoepwereld slides under the bar in full light —
+>   `Kleedkamer` still reads there.
+> * *Neutral cards still read as a grid of boxes.* `--vlak-rand` `.12` → `.07` and
+>   `--vlak-top` `.10` → `.07`. The fill is unchanged and still does the separating.
+>   The point is not the neutral cards: it is that cyan-previewed and gold-worn now
+>   have a quieter neighbour to stand out from.
+> * *The cabinet had no ladder inside gold.* A claimed trophy sat on `--goud-rand`
+>   (`.5`) — nearly the border weight of one that is ready to open — so six claimed
+>   cards made one gold field with the tappable one lost inside it. A new
+>   `--goud-rand-zacht` (`.28`) and a softer inner wash give `claimed < openable`.
+>   Same two rungs applied to the career ladder's `past` and `current` rows.
+> * *The career ladder's goal row read as neon.* Full `--gold-accent` at 2px across
+>   the panel with its own orange glow. Now `--goud-rand` + `--goud-tint` +
+>   `--goud-gloed-zacht`. Full gold stays where it already was on that panel: the
+>   `NU` pill and the bar running toward that rank.
+> * *Left alone on purpose:* the Journey (the fixed light trails read as ambient
+>   light, not glass — no change), the counting-mode replay button (cyan, 48px /
+>   40px on short screens, verified discoverable down to 320px), and bottom
+>   clearance on the wardrobe and cabinet, which measured 24px above the action tray
+>   and 43–91px above the nav at 320 / 390 / 412 and needed no change.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
