@@ -45,12 +45,23 @@ function isArt(url) { return url.pathname.includes('/assets/'); }
    cache-eerst-voorraad de 404 van een tekening die tijdens een uitrol even niet
    bestond, en dan blijft die wereld kapot tot de cachenaam omhoog gaat. Ook
    opaque antwoorden (cross-origin, status 0) vallen af: je kunt er niet aan zien
-   of ze goed zijn. */
-function bewaar(naam, req, resp) {
+   of ze goed zijn.
+
+   Bewaard wordt op het pád, zonder het stukje achter de ?. Anders krijgt elk
+   ander vraagteken zijn eigen plek in de voorraad -- ?debug, een gedeelde link met
+   een herkomstcode -- en staat index.html er straks vijf keer in. Opzoeken gebeurt
+   toch al met ignoreSearch, dus de sleutel mag hier de korte zijn. */
+function sleutel(url) { return url.origin + url.pathname; }
+function bewaar(naam, url, resp) {
   if (!resp || !resp.ok || resp.type === 'opaque') return resp;
   const kopie = resp.clone();
-  caches.open(naam).then(c => c.put(req, kopie)).catch(() => {});
+  caches.open(naam).then(c => c.put(sleutel(url), kopie)).catch(() => {});
   return resp;
+}
+// Opzoeken in één bepaalde voorraad: caches.match() zonder naam kijkt in állemaal,
+// en dan kan een oude kopie in de verkeerde voorraad het antwoord geven.
+function uitVoorraad(naam, url) {
+  return caches.open(naam).then(c => c.match(sleutel(url))).catch(() => undefined);
 }
 
 self.addEventListener('install', e => {
@@ -81,8 +92,8 @@ self.addEventListener('fetch', e => {
      bezoek opnieuw ophalen. */
   if (isArt(url)) {
     e.respondWith(
-      caches.match(req, { ignoreSearch: true })
-        .then(hit => hit || fetch(req).then(resp => bewaar(ART_CACHE, req, resp)))
+      uitVoorraad(ART_CACHE, url)
+        .then(hit => hit || fetch(req).then(resp => bewaar(ART_CACHE, url, resp)))
     );
     return;
   }
@@ -92,14 +103,14 @@ self.addEventListener('fetch', e => {
      de vólgende start. */
   e.respondWith(
     Promise.race([
-      fetch(req).then(resp => bewaar(CACHE, req, resp)),
+      fetch(req).then(resp => bewaar(CACHE, url, resp)),
       new Promise((ja, nee) => setTimeout(
-        () => caches.match(req, { ignoreSearch: true }).then(hit => hit ? ja(hit) : nee(0)), WACHT))
-    ]).catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit
+        () => uitVoorraad(CACHE, url).then(hit => hit ? ja(hit) : nee(0)), WACHT))
+    ]).catch(() => uitVoorraad(CACHE, url).then(hit => hit
       // Alleen een schermwissel valt terug op het spel zelf. Zonder die voorwaarde
       // kreeg een mislukte aanvraag naar wat dan ook een pagina met HTML terug, en
       // dan staat er een gebroken plaatje in plaats van de terugval van het spel.
-      || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
+      || (req.mode === 'navigate' ? caches.open(CACHE).then(c => c.match('./index.html')) : Response.error())))
   );
 });
 
