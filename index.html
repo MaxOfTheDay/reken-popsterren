@@ -1021,18 +1021,6 @@
     box-shadow: var(--e-1);
   }
   .map-portrait svg, .who-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
-  /* carrièrerang: het altijd-zichtbare lange-termijndoel. De status zelf
-     (bv. "Straatartiest") is de titel van de kop (.header-title, zie
-     renderCareerStrip); titel + teller + balk vormen samen één groepje --
-     de teller (klein, ondergeschikt aan de titel) staat er vlak boven de
-     balk, gecentreerd, als één doorlopend getal (geen "nog X" ernaast meer). */
-  .career-strip { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 10px; cursor: pointer; }
-  .career-strip:active { transform: scale(.98); }
-  .rank-counter { font-size: 13px; font-weight: 700; color: var(--c-white); opacity: .85; letter-spacing: .01em; }
-  /* de ster-status zelf is de kop van dit strookje, de teller de bijzin ernaast */
-  .rank-name { font-weight: 800; opacity: 1; }
-  .rank-tap { font-weight: 800; color: var(--gold-light); opacity: .95; margin-left: 3px; }
-  .rank-counter.big { font-size: 16px; opacity: 1; margin-top: 2px; }
 
   /* ---- Carrière-ladder (ster-status) ---- */
   .career-overlay {
@@ -1065,12 +1053,6 @@
      moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
   .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
   .ladder-row.future { opacity: .36; }
-  /* Wereldbadge met alle drie de sterren: dezelfde kaart, een gouden ster-rand erbij.
-     Bewust géén tweede kaart -- één ding, twee standen. */
-  .trophy-card.ster { box-shadow: 0 0 0 2px var(--gold-accent), 0 0 16px rgba(255,196,61,.45); }
-  .trophy-card.ster .temoji::after { content: '⭐'; position: absolute; right: -2px; bottom: -2px;
-    font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
-  .trophy-card.ster .temoji { position: relative; }
   /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
      De balk vult richting déze tier (de /100 is zijn drempel), dus hij hoort hier. */
   .ladder-row.goal { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
@@ -1088,9 +1070,6 @@
   .lr-now { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
     background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .pop-panel { animation: none; } }
-  .rank-bar { width: 100%; height: 9px; border-radius: var(--r-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
-  /* display:block: als inline-<span> zouden width/height genegeerd worden en bleef de balk leeg */
-  .rank-fill { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .5s ease; }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform. Ooit zat de transform op
@@ -3198,134 +3177,204 @@
     .mem-card.done .mem-face { animation: none; }
   }
 
-  /* ---- Trofeeën ---- */
-  /* kast-voortgang in de plakkende kop: hoeveel van de kast is gevuld */
-  .kast-progress { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; max-width: 340px; margin: 2px auto 0; }
-  .kast-progress-text { font-size: 13px; font-weight: 700; opacity: .85; text-align: center; }
-  .kast-bar { width: 100%; height: 9px; border-radius: var(--r-pill); overflow: hidden; background: var(--glass-black-32); border: 1px solid var(--glass-white-14); }
-  .kast-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .6s ease; }
-  /* de kast heeft planken: kleine themakopjes met een teller per plank */
+  /* ---- Trofeeënkast (fase 5C) ----
+     Het scherm heette een kast maar zag eruit als een voortgangsrapport: een balk
+     in de kop, een balk per plank, een balk per kaartje, en bovenaan ook nog de
+     ster-statusbalk. Wat een kind zag was hoevéél er nog niet af was.
+
+     De herindeling is bijna helemaal wéghalen. Wat blijft: één rustige regel met
+     de stand, vier planken met lucht ertussen, en kaartjes met maar twee standen
+     die ertoe doen -- goud (van mij) en gedempt (nog niet). Het paars, de ronde
+     hoeken, het glas en het goud blijven precies zoals de rest van de app ze
+     gebruikt; er is geen nieuwe vormtaal bijgekomen. */
+  /* Breder dan de standaard 680: de perfecte werelden staan op tabletbreedte met
+     z'n drieën naast elkaar en hebben ruimte nodig voor hun medaillon. */
+  #screen-trophies { --kolom: 760px; }
+  /* De stand, in de kop, als zin. Geen balk: zie renderShelves. */
+  .kast-telling {
+    font-size: 13px; font-weight: 700; color: var(--lavender-text);
+    opacity: .82; text-align: center; margin-top: 2px;
+    /* zie .gescrold hieronder: hij klapt weg zodra er gescrold wordt. max-height
+       en niet display:none, anders springt de kop in plaats van te krimpen. */
+    max-height: 20px; overflow: hidden;
+    transition: max-height var(--t-snel, .22s) ease, opacity var(--t-tik, .1s) ease, margin-top var(--t-snel, .22s) ease;
+  }
+  /* ---- De plakkende kop, twee standen ----
+     Bovenaan is dit een kop met lucht: titel, saldo en de zin met de stand, op
+     dezelfde halfdoorzichtige paarse plaat als elk ander rustpunt.
+
+     Maar zodra er gescrold wordt schuiven er trofeekaarten onderdoor, en op .82
+     dekking bleven hun namen daar gewoon leesbaar staan: "Goudzoeker" dwars door
+     "Trofeeënkast" heen. Glas hoort te tonen dát er iets onder zit, niet wát.
+     Gescrold wordt de plaat daarom dichter en de waas twee keer zo sterk, en
+     tegelijk krimpt de kop: de zin met de stand klapt weg (die heb je bovenaan
+     al gelezen) en de randen worden krapper. Wat overblijft is precies wat je
+     onderweg nodig hebt -- terug, waar je bent, en je saldo.
+
+     Gescrold dekt hij vólledig, en dat is met tegenzin zo gekomen. Nagemeten op een
+     telefoon met de kast half gescrold, als het grootste licht/donker-verschil in de
+     strook naast de titel (0-255): .82 gaf 28-33, .95 nog 9-14, .97 nog 5-11. Ook op
+     .97 stonden er dus nog spookletters achter "Trofeeënkast" -- op armlengte niet te
+     zien, maar wel zodra je het scherm van dichtbij bekijkt, en dát was precies de
+     klacht. Alleen volledig dekken haalt ze helemaal weg.
+
+     Wat er wél blijft van het glas: de waas staat er nog (hij pakt wat er langs de
+     ronde onderhoeken heen kijkt), de kop bovenaan is onveranderd doorschijnend
+     (.82, zie de regel hierboven), en de plaat is geen vlakke rechthoek maar een
+     verloop -- dezelfde truc als de kleedkamerkop, die ook een laag over zijn
+     grondkleur legt. Een plakkende kop is hier geen raam maar een richel waar de
+     kast onderdoor schuift, en een richel hoort dicht te zijn.
+
+     De overgang loopt over de kop zelf en niet over een tweede laag: één element,
+     twee standen, dus er kan niets uit de pas gaan lopen. */
+  #screen-trophies .hub-sticky {
+    transition: padding var(--t-snel, .22s) ease, background var(--t-snel, .22s) ease,
+                box-shadow var(--t-snel, .22s) ease;
+  }
+  #screen-trophies.gescrold .hub-sticky {
+    padding-top: 8px; padding-bottom: 7px;
+    background: linear-gradient(180deg, #3b0b60, #220337);
+    backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow: var(--e-3);
+  }
+  #screen-trophies.gescrold .kast-telling { max-height: 0; opacity: 0; margin-top: 0; }
+  #screen-trophies.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-trophies .hub-sticky, .kast-telling { transition: none; }
+  }
   #trophy-shelves { width: 100%; max-width: var(--kolom); }
-  /* elke categorie zit in een eigen paneel: duidelijke visuele groepering */
-  .shelf { background: var(--glass-black-18); border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: 6px 12px 13px; margin: 14px 0; }
-  .shelf-title { margin: 4px 2px 9px; text-shadow: 0 1px 0 var(--glass-black-25); border-bottom: 1px solid var(--glass-white-13); padding-bottom: 7px; }
-  .shelf-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 800; }
-  .shelf-title .shelf-count { font-size: 12.5px; font-weight: 700; opacity: .95; background: var(--glass-black-30); border-radius: var(--r-pill); padding: 3px 11px; white-space: nowrap; }
-  /* hele categorie compleet: zelfde goud-signaal als een behaalde trofee */
-  .shelf-title .shelf-count.full { color: var(--gold-light); background: rgba(255,206,77,.25); opacity: 1; }
-  /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: de meeste
-     plankjes hebben een oneven aantal trofeeën, en CSS Grid geeft elke rij
-     dezelfde kolomposities -- de laatste, onvolledige rij bleef daardoor links
-     hangen i.p.v. te centreren. flex-wrap + justify-content:center centreert
-     elke rij apart, ook de laatste. */
-  .trophy-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; width: 100%; align-items: stretch; }
-  /* Vaste kolombreedte (flex-grow: 0) i.p.v. meegroeien. Met 'flex: 1 1 124px'
-     verdeelden de kaarten in een vólle rij de hele breedte onder elkaar, maar een
-     laatste, alleenstaande kaart had niemand om mee te delen en liep door tot zijn
-     max-width -- die kaart werd dus zichtbaar bréder dan de kaarten erboven, precies
-     op de plek waar hij al als enige gecentreerd stond. Een kaart mag nergens in de
-     app van formaat wisselen, dus nu telt elke plank een vast aantal even brede
-     kolommen en centreert justify-content de rij als geheel: de laatste kaart staat
-     nog steeds midden onder de rij erboven, maar heeft nu dezelfde maat. */
+  /* Een plank: een eigen vlak met lucht eromheen, zodat de vier groepen echt vier
+     groepen zijn. Ruimer dan voorheen (was 6/12/13 met 14 marge) -- dat was krap
+     omdat er acht planken op het scherm moesten; met vier mag het ademen. */
+  .shelf {
+    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.14));
+    border: 1px solid var(--glass-white-13);
+    border-radius: var(--r-lg); padding: 14px 13px 16px; margin: 16px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .shelf:last-of-type { margin-bottom: 4px; }
+  /* Plank compleet: één zacht gouden randje, en verder niets. Geen teller die
+     "5 van 5" zegt -- dat staat al op de vijf gouden kaartjes eronder. */
+  .shelf.full { border-color: rgba(255,214,90,.42); box-shadow: inset 0 1px 0 rgba(255,241,190,.16); }
+  .shelf-title { margin: 0 2px 12px; }
+  .shelf-naam { font-size: 16.5px; font-weight: 900; letter-spacing: .01em; text-shadow: 0 1px 0 var(--glass-black-25); }
+  .shelf-note { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .78; margin-top: 2px; line-height: 1.25; }
+  /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: planken hebben
+     een oneven aantal kaartjes, en CSS Grid geeft elke rij dezelfde kolomposities --
+     de laatste, onvolledige rij bleef daardoor links hangen i.p.v. te centreren. */
+  .trophy-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; align-items: stretch; }
+  /* Vaste kolombreedte (flex-grow: 0) i.p.v. meegroeien: een laatste, alleenstaande
+     kaart heeft niemand om de breedte mee te delen en zou anders zichtbaar bréder
+     worden dan de kaarten erboven -- precies op de plek waar hij al als enige
+     gecentreerd staat. Een kaart wisselt nergens in deze app van formaat. */
   .trophy-card {
-    position: relative; flex: 0 1 calc(50% - 4.5px); max-width: 190px;
-    background: var(--glass-white-13); border: 2px solid var(--glass-white-30);
-    border-radius: var(--r-md); padding: 12px 8px 11px; text-align: center; cursor: pointer;
-    display: flex; flex-direction: column; align-items: stretch; transition: filter .12s;
+    position: relative; flex: 0 1 calc(50% - 5px); max-width: 210px;
+    background: rgba(255,255,255,.07);
+    border: 2px solid var(--glass-white-14);
+    border-radius: var(--r-md); padding: 13px 9px 12px; text-align: center; cursor: pointer;
+    display: flex; flex-direction: column; align-items: stretch; gap: 1px;
+    transition: filter .12s, transform .07s;
   }
-  /* filter i.p.v. background: werkt hetzelfde bovenop élke kaartstaat (locked,
-     done, ready's gouden verloop, ...) zonder de per-staat achtergrondkleur te
-     hoeven overschrijven -- zelfde soort hover-teruggave als .item-card in de
-     kleedkamer, die hiervoor nog helemaal ontbrak */
-  .trophy-card:hover { filter: brightness(1.08); }
+  .trophy-card:hover { filter: brightness(1.1); }
   .trophy-card:active { transform: scale(.97); }
-  .trophy-card .temoji { font-size: 36px; line-height: 1; height: 40px; }
-  .trophy-card .tname { font-size: 15px; font-weight: bold; margin-top: 4px; line-height: 1.12; }
-  .trophy-card .tdesc { font-size: 12.5px; opacity: .85; margin-top: 2px; line-height: 1.15; }
-  /* drie kolommen zodra de plank het comfortabel trekt, vier op tabletbreedte --
-     dezelfde kolomtelling die de oude 'auto-fill, minmax(124px, 1fr)' vanzelf koos,
-     nu alleen expliciet, zodat álle kaarten op een plank even breed blijven. */
-  @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6px); } }
-  @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 6.75px); } }
-  /* 'Kast vol!' (eindtrofee) over de volle breedte */
-  .trophy-card.wide { flex-basis: 100%; max-width: 100%; }
-  /* ===== staten ===== */
-  /* NIET GESTART: normale paarse kaart, icoon licht gedimd, lege dunne balk */
-  .trophy-card.fresh .temoji { opacity: .78; }
-  /* BEZIG: normale kaart, icoon vol, dunne balk met duidelijke vulling (geen glow).
-     Neutrale, iets lichtere rand dan 'niet gestart' -- meteen te onderscheiden
-     zonder de tekst te moeten lezen. Bewust GEEN blauw: blauw betekent overal
-     elders in de app "geselecteerd/aan het bekijken" (kleedkamer), dus een
-     blauwe rand hier zou een tweede, verwarrende betekenis aan diezelfde
-     kleur geven. */
-  .trophy-card.busy { border-color: rgba(255,255,255,.42); }
-  /* BIJNA BEHAALD: sterke balkvulling + subtiele gouden glow (glow via inline style) */
-  .trophy-card.almost .trophy-progress-fill { background: var(--gold-accent); }
-  /* LOCKED: donkerder, icoon sterk gedimd, klein slotje (voorlopig sluimerend) */
+  .trophy-card .temoji { font-size: 38px; line-height: 1; height: 44px; display: grid; place-items: center; }
+  .trophy-card .tname { font-size: 15px; font-weight: 900; margin-top: 3px; line-height: 1.14; }
+  .trophy-card .tdesc { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .8; margin-top: 3px; line-height: 1.2; }
+  /* drie kolommen zodra de plank het comfortabel trekt, vier op tabletbreedte */
+  @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
+  @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 7.5px); } }
+  /* ===== twee standen, en één ervan is goud =====
+     NOG NIET: gedempt, maar niet kapot. Het icoon blijft in kleur (grijs maken zou
+     zeggen "hier is niets"), alleen zachter -- een kind hoort te kunnen zien wat er
+     nog te halen valt. */
+  .trophy-card.fresh .temoji, .trophy-card.busy .temoji { opacity: .55; }
+  .trophy-card.fresh .tname, .trophy-card.busy .tname { opacity: .8; }
+  /* LOCKED: donkerder, icoon sterk gedimd (voorlopig sluimerend, zie trophyStatus) */
   .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); }
-  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .5; }
-  .trophy-card.locked .tname { opacity: .6; }
-  .trophy-card.locked .tdesc { opacity: .45; }
-  .trophy-lock {
-    position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
-    display: grid; place-items: center; font-size: 13px; z-index: 3;
-    background: rgba(30,15,55,.95); border: 2px solid var(--glass-white-40);
-    box-shadow: var(--e-1);
+  .trophy-card.locked .temoji { filter: grayscale(1); opacity: .45; }
+  .trophy-card.locked .tname, .trophy-card.locked .tdesc { opacity: .5; }
+  /* BEHAALD: trots, maar stil.
+     Dit is de 'verdiend'-taal die de rest van de app al spreekt (afgelegde halte op
+     de kaart, aangetrokken stuk in de kleedkamer), met één bijstelling na het
+     kijken op een telefoon: daar staan zes, acht behaalde kaarten onder elkaar, en
+     met een rand in vól goud plus een gouden halo eromheen werd de hele kolom één
+     gouden vlak -- waarin de kaart die écht om een tik vraagt ('klaar om te
+     openen') niet meer opviel.
+
+     Dus: het licht ván binnen doet het werk (een warme veeg achter het icoon), de
+     rand is goud maar half doorzichtig, en de halo eromheen is weg. Vol goud en
+     een gloed naar buiten zijn nu exclusief van .ready -- daar is er hoogstens één
+     van in beeld, en die mag schreeuwen. De rangorde is daarmee:
+        klaar om te openen  vol goud + gloed + beweging
+        behaald             zacht goud + warm licht van binnen, volkomen stil
+        nog niet            gedempt, maar in kleur */
+  .trophy-card.done {
+    background:
+      radial-gradient(78% 60% at 50% 26%, rgba(255,214,90,.3), transparent 74%),
+      rgba(255,214,90,.07);
+    border-color: rgba(255,214,90,.52);
+    box-shadow: inset 0 1px 0 rgba(255,241,190,.22);
   }
-  /* BEHAALD: ingevuld, niet uitgedoofd.
-     Was: de zwakste kaart van de plank -- lichtere rand en mindere vulling dan een
-     kaart waar je nog aan bezig bent, plus 10% extra transparantie eroverheen. Een
-     behaalde trofee zag er daardoor onaffer uit dan een onbegonnen trofee. Het enige
-     echte "gewonnen"-signaal was een los 🏆-badge dat buiten de kaartrand hing --
-     dubbelop bij trofeeën die zélf een beker als icoon hebben (Platina plaat), en
-     overbodig op een scherm dat al 🏆 Trofeeënkast heet.
-     Nu de volle 'verdiend'-taal die de rest van de app al spreekt (afgelopen stad op
-     de kaart, aangetrokken stuk in de kleedkamer): gouden rand + zachte goudvulling,
-     naam in goud. Vlak, zonder gloed en zonder beweging -- gloed en puls blijven
-     exclusief van 'klaar om te openen', zodat goud-in-rust = verdiend en
-     goud-dat-beweegt = doe hier iets. */
-  .trophy-card.done { background: rgba(255,214,90,.10); border-color: var(--gold-accent); }
   .trophy-card.done .tname { color: var(--gold-light); }
-  /* Het onderste vakje is de statusregel van élke kaart: voortgang + balk, 'Nog niet
-     vrij', of '🎁 Open!'. Alleen 'behaald' liet het leeg -- die kaarten hielden een
-     gat onderin terwijl de buren in dezelfde rij tot onderaan gevuld waren, en juist
-     dat maakte de planken rommelig. Nu staat hier de stempel, op dezelfde regel als
-     alle andere statussen. Omlijnd en stil tegenover de vólle, pulserende gouden pil
-     van 'Open!': dezelfde vorm, andere toon -- af versus te doen. */
-  .trophy-done-pill {
-    display: block; text-align: center; border-radius: var(--r-pill);
-    font-size: 13px; font-weight: 900; letter-spacing: .01em; padding: 4px 8px;
-    color: var(--gold-light); background: rgba(0,0,0,.22); border: 1px solid rgba(255,214,90,.55);
+  .trophy-card.done .tdesc { color: var(--c-white); opacity: .8; }
+  .trophy-card.done .temoji { filter: drop-shadow(0 2px 6px rgba(0,0,0,.45)); }
+  /* De stand op een lopende kaart: alleen het getal, geen balk. "82 / 100 sommen"
+     zegt alles wat een balkje zou zeggen, en het staat er in de taal van een
+     rekenspel. De balk stond op élke kaart en maakte van de kast een lijst. */
+  .tstand { margin-top: 8px; font-size: 13px; font-weight: 800; color: var(--c-white); opacity: .78; }
+  .tstand span { font-weight: 600; opacity: .8; }
+  .tstand.sub { font-weight: 600; opacity: .55; }
+  /* ===== De perfecte werelden =====
+     De grootste prijs van het spel, en de enige kaart die eruit springt. Het
+     medaillon is dezelfde vorm als bij de onthulling na de laatste ster (zie
+     .wf-trofee): het wereldicoon in een rondje, en behaald een gouden ring met een
+     ster in de hoek. De kleur ín het rondje komt van de wereld zelf (theme.sky /
+     theme.glow, via inline --pw-sky/--pw-glow), dus een zevende wereld krijgt zijn
+     eigen medaillon zonder dat hier iets bij hoeft. */
+  .pw-grid { gap: 11px; }
+  /* Ruimer dan een gewone kaart, en sinds deze polijstronde ruimer dan hij was: er
+     stond onder elke naam nog "Overal drie sterren", zes keer. Die regel is weg
+     (zie perfectCardHTML) en de ruimte gaat naar het medaillon -- dát is waar je
+     naar kijkt, niet naar het bijschrift. */
+  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 17px 10px 16px; }
+  @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
+  @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
+  .pw-card .tname { margin-top: 9px; font-size: 15.5px; }
+  .pw-medal {
+    position: relative; width: 76px; height: 76px; margin: 2px auto 0;
+    border-radius: 50%; display: grid; place-items: center;
+    background:
+      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
+      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
+    border: 2px solid var(--glass-white-30);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  /* onderste blok (status/voortgang) zakt netjes naar de kaartbodem */
-  .trophy-bottom { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
-  /* tekstkleur volgt de balk: neutraal wit-lavendel = bezig (default), goud = bijna,
-     gedempt = niet gestart/locked. Geel/goud blijft dus uitsluitend "nu actief/aan"
-     betekenen (zie kleedkamer); voortgang die nog niet bijna klaar is, is neutraal. */
-  .trophy-progress-text { font-size: 13px; font-weight: 700; color: var(--lavender-text); min-height: 17px; line-height: 1.15; }
-  .trophy-progress-text.sub { color: var(--muted-lavender-text); font-weight: 600; opacity: .75; }
-  .trophy-card.fresh .trophy-progress-text { color: var(--muted-lavender-text); opacity: .82; }
-  .trophy-card.almost .trophy-progress-text { color: var(--gold-accent); }
-  /* dunne progressbalk onderaan de kaart */
-  .trophy-progress { height: 7px; border-radius: var(--r-pill); overflow: hidden; background: rgba(0,0,0,.34); border: 1px solid var(--glass-white-18); }
-  /* neutrale wit-lavendel vulling = bezig/actief; alleen "bijna" en "nu aan"
-     (kleedkamer) krijgen goud -- blauw is hier bewust weg (zie .trophy-card.busy). */
-  .trophy-progress-fill { height: 100%; border-radius: var(--r-pill); transition: width .5s ease; background: rgba(255,255,255,.75); }
-  /* korte uitleg onder een categoriekop */
-  .shelf-note { font-size: 12px; font-weight: 600; color: var(--lavender-text); opacity: .82; margin: -3px 2px 9px; }
+  .pw-ico { font-size: 35px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,.55)); }
+  /* Nog niet perfect: de wereldkleur blijft, een slag zachter. Geen grijs -- de
+     blauwe IJswereld hoort ook ongewonnen nog blauw te lokken. */
+  .pw-card.fresh .pw-medal, .pw-card.busy .pw-medal { opacity: .62; }
+  .pw-card.fresh .pw-ico, .pw-card.busy .pw-ico { opacity: .8; }
+  /* Behaald: gouden ring, gouden gloed, en de ster in dezelfde hoek als bij de
+     onthulling. Dít is het kaartje waar een kind acht shows lang naar toe werkt. */
+  .trophy-card.done .pw-medal {
+    border-color: var(--gold-accent);
+    box-shadow: inset 0 2px 0 rgba(255,241,190,.3), 0 0 16px rgba(255,196,61,.5);
+  }
+  .trophy-card.done .pw-medal::after {
+    content: '⭐'; position: absolute; right: -6px; bottom: -6px; font-size: 20px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+  }
   /* ===== KLAAR OM TE OPENEN =====
-     Was: een volledig ander kaartje -- gouden vlak, 🎁 in plaats van het eigen
-     icoon, en "Open trofee!" als kop met de échte naam als klein bijschrift.
-     Vijf klaarliggende trofeeën naast elkaar zagen er daardoor uit als vijf
-     keer hetzelfde ding. Nu gewoon de normale kaart (eigen icoon, eigen naam,
-     eigen beschrijving) met een gouden rand, en "🎁 Open!" in het onderste
-     vakje waar anders de voortgangsbalk staat. ===== */
+     De normale kaart (eigen icoon, eigen naam, eigen beschrijving) met een gouden
+     rand en "🎁 Open!" onderaan. Bewust niet een compleet ander kaartje: vijf
+     klaarliggende trofeeën moeten vijf verschillende dingen blijven. */
   .trophy-card.ready {
-    border-color: var(--gold-accent); background: rgba(255,214,90,.14);
-    box-shadow: 0 0 14px rgba(255,170,0,.4);
+    border-color: var(--gold-accent); background: rgba(255,214,90,.16);
+    box-shadow: 0 0 18px rgba(255,170,0,.48);
   }
   .ready-open {
-    display: block; text-align: center; color: var(--ink-on-gold); background: var(--gold-accent);
+    display: block; text-align: center; margin-top: 8px;
+    color: var(--ink-on-gold); background: var(--gold-accent);
     font-size: 13.5px; font-weight: 900; letter-spacing: .01em;
     border-radius: var(--r-pill); padding: 5px 8px;
     animation: readyPulse 1.4s ease-in-out infinite;
@@ -3416,10 +3465,15 @@
   .wf-trofee {
     position: relative; display: grid; place-items: center; width: 46px; height: 46px;
     border-radius: 50%; font-size: 26px; line-height: 1;
-    background: var(--glass-black-24); border: 2px solid var(--gold-accent);
-    box-shadow: 0 0 12px rgba(255,196,61,.45);
+    /* exact hetzelfde medaillon als .pw-medal in de kast, alleen kleiner: de
+       wereldkleuren van binnen, de gouden ring eromheen, de ster in de hoek. */
+    background:
+      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
+      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
+    border: 2px solid var(--gold-accent);
+    box-shadow: inset 0 2px 0 rgba(255,241,190,.3), 0 0 12px rgba(255,196,61,.45);
   }
-  /* dezelfde ster in dezelfde hoek als op de behaalde kaart in de kast */
+  /* dezelfde ster in dezelfde hoek als op het medaillon in de kast (.pw-medal) */
   .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
     font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -3447,7 +3501,9 @@
     animation: shineSweep 2.6s ease-in-out infinite;
   }
   @keyframes shineSweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
-  .trophy-card.ready .temoji { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+  /* ook het medaillon van een klaarliggende perfecte wereld wiebelt: de kaart ziet
+     er anders uit, maar "hier ligt iets voor je klaar" moet overal hetzelfde zeggen */
+  .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -3511,7 +3567,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready, .ready-open { animation: none; }
-    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.just-claimed::after { animation: none; }
+    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
+    .trophy-card.just-claimed::after { animation: none; }
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
@@ -3519,7 +3576,7 @@
     .rankup-spark { display: none; }
   }
   /* geel/goud stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt —
-     zelfde kleurtaal als de rest van de trofee-elementen (banner, kast-balk, ready-kaart) */
+     zelfde kleurtaal als de rest van de trofee-elementen (banner, ready-kaart) */
   .nav-item { position: relative; }
   .nav-item .nav-dot {
     position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
@@ -4564,14 +4621,14 @@
         <div class="header-title">🏆 Trofeeënkast</div>
         <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
       </div>
-      <div class="kast-progress">
-        <div class="kast-progress-text" id="trophy-count"></div>
-        <div class="kast-bar"><div class="kast-bar-fill" id="trophy-bar"></div></div>
-      </div>
+      <div class="kast-telling" id="trophy-count"></div>
     </div>
-    <!-- De sterrenladder stond op de kaart, boven de tekening. Hier hoort hij:
-         dit is het scherm waar je komt kijken hoe ver je bent. -->
-    <div class="career-strip" id="career-strip" role="button" tabindex="0" onclick="openCareer()" aria-label="Bekijk je ster-status"></div>
+    <!-- En hier houdt het op. Er stond een strookje ster-status onder de planken
+         (en daarvóór bovenaan, met balk). Weg: dit scherm gaat over prestaties, en
+         de ster-status loopt op sterren -- een tweede voortgangssysteem aan de voet
+         van de kast maakt de kast weer minder een kast. De ladder zelf blijft
+         bestaan en gaat open vanaf het eindscherm, op het moment dat er iets over
+         te zeggen valt (de rangpil in endLevel roept openCareer aan). -->
     <div id="trophy-shelves"></div>
   </div>
 
@@ -5108,7 +5165,6 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
      de tekening             art  (ontbreekt die: de reservekaart met de kleuren hieronder)
      de sfeer                theme -> CSS-variabelen (applyWorldTheme), nooit een if per wereld
      de route                nodes/curve (ontbreken die: defaultNodes() slingert er een)
-     de wereldbadge          rebuildWorldBadges() zet er een trofee bij, op id
      de voortgang            worldDone()/frontierWorld() tellen hem vanzelf mee
      de tournee             reisPlaatsen() rijgt hem als bestemming aan de reis,
                              zodra hij binnen de horizon valt -- zie
@@ -5121,8 +5177,10 @@ const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
                              zodra deze wereld uit is (fase 4D.1). Weglaten mag: dan
                              geeft die wereld geen spulletje.
      de perfecte wereld      niets -- rebuildWorldBadges() zet er vanzelf een trofee
-                             bij, op hetzelfde id. Overal drie sterren is de enige
-                             voorwaarde en die is voor élke wereld gelijk.
+                             bij, op het wereld-id. Overal drie sterren is de enige
+                             voorwaarde en die is voor élke wereld gelijk. Er komt
+                             géén tweede trofee voor "uitgespeeld": dat levert het
+                             spulletje uit `beloning` op (zie fase 5C).
 
    Zoek dus niet naar een tweede plek -- die is er niet, en als je er ooit een
    nodig lijkt te hebben, hoort het veld hier en niet daar.
@@ -5798,8 +5856,8 @@ function beloningItem(w) { return (w && w.beloning) ? (item(w.beloning) || null)
 function beloningWereld(itemId) { return WORLDS.filter(w => w.beloning === itemId)[0] || null; }
 // Te koop of te verdienen? Alles wat een wereld uitdeelt staat níét in de winkel.
 function isBeloning(itemId) { return !!beloningWereld(itemId); }
-// De trofee-id van de perfecte wereld. Zelfde vorm als de wereldbadge (zie
-// WERELD_BADGE): op het wereld-id, dus hernoemen raakt een behaalde trofee niet.
+// De trofee-id van de perfecte wereld: op het wereld-id, dus een wereld hernoemen
+// raakt een al behaalde trofee niet (alleen een gewijzigd id maakt een nieuwe).
 const PERFECT_BADGE = 'perfect-';
 /* Een trofee rechtstreeks toekennen, zonder de omweg langs 'klaar om te openen'.
    De gewone weg is checkTrophies -> readyTrophies -> het kind opent hem zelf in de
@@ -5850,53 +5908,41 @@ function grantHistoricRewards(p) {
   for (let i = 0; i < WORLD_AVAIL; i++) grantWorldRewards(p, i);
 }
 
-/* De wereldbadges. Eén per wereld, en het is gewoon een trofee: de kast heeft al
-   een claim-ceremonie, een glinstering, een "klaar"-stand, een stip in de navigatie
-   en een haakje op het eindscherm. Een eigen badgesysteem ernaast zou dat allemaal
-   nog een keer bouwen.
+/* De perfecte werelden. Eén trofee per wereld, uit WORLDS opgebouwd: "overal drie
+   sterren in deze wereld". Dit is de grootste prijs die het spel te geven heeft,
+   en sinds fase 5C de enige wereldtrofee.
 
-   Eén badge met twéé standen, niet twee badges: behaald = de wereld uitgespeeld,
-   en een ster-rand op diezelfde kaart = overal drie sterren. Twee losse badges per
-   wereld zouden de plank verdubbelen en een kleuter twee begrippen laten onthouden
-   waar er één genoeg is.
+   Er hing hier tot fase 5C een tweede kaartje per wereld: de wereldbadge
+   (wereld-<id>, "deze wereld uit"). Die is met pensioen omdat een uitgespeelde
+   wereld al een eigen beloning heeft -- een echt spulletje voor de kleedkamer,
+   uitgedeeld met een feestje (zie grantWorldRewards). Dezelfde mijlpaal twee keer
+   belonen maakt geen van beide bijzonderder, en het zette bovendien twee keer
+   dezelfde wereldnaam in de kast: een kind moest dan uitzoeken welke van de twee
+   ze nu bedoelde. Nu is er per wereld één kaartje en één vraag. WERELD_BADGE
+   blijft bestaan omdat behaalde badges nog in oude saves staan; isRetiredTrophy
+   herkent ze aan dit voorvoegsel.
 
-   Opnieuw opbouwen kan, want de studio mag werelden toevoegen of hernoemen. Behaalde
-   badges staan in p.trophies op id, dus hernoemen van een wéreld raakt een al
-   behaalde badge niet -- alleen een gewijzigd wereld-id maakt een nieuwe badge. */
+   Opnieuw opbouwen kan, want de studio mag werelden toevoegen of hernoemen.
+   Behaalde trofeeën staan in p.trophies op id, dus een wereld hernoemen raakt een
+   al behaalde trofee niet -- alleen een gewijzigd wereld-id maakt een nieuwe.
+
+   De wereld zelf gaat als `wereld` mee op de trofee. De kast tekent de perfecte
+   werelden als wereld-eigen medaillons (icoon + themakleuren, zie perfectCardHTML);
+   zonder dit veld zou die kaart het wereld-id uit de trofee-id moeten terugpellen,
+   en dan is er ineens een tweede plek die weet hoe zo'n id in elkaar zit. */
 const WERELD_BADGE = 'wereld-';
 function rebuildWorldBadges() {
   for (let i = TROPHIES.length - 1; i >= 0; i--) {
     const id = TROPHIES[i].id;
     if (id.indexOf(WERELD_BADGE) === 0 || id.indexOf(PERFECT_BADGE) === 0) TROPHIES.splice(i, 1);
   }
-  const ids = [], perfectIds = [];
+  const perfectIds = [];
   WORLDS.forEach((w, i) => {
-    const id = WERELD_BADGE + w.id;
-    ids.push(id);
-    TROPHIES.push({
-      id, emoji: w.icon || '🌍', name: w.name, desc: 'Deze wereld uit',
-      has: q => worldProgress(q, worldForIndex(i)).uit,
-      ster: q => worldProgress(q, worldForIndex(i)).vol,
-      progress: q => {
-        const v = worldProgress(q, worldForIndex(i));
-        return trophyProgress(v.gespeeld, v.levels, 'shows gespeeld');
-      },
-    });
-    /* FASE 4D.1 -- en één per wereld voor "overal drie sterren". Hierboven staat
-       waarom dat eerst een tweede stánd op dezelfde kaart was en geen tweede kaart,
-       en dat argument gold zolang perfect alleen een randje was. Nu is het een
-       mijlpaal met een eigen moment: de wereld uitspelen levert een spulletje op,
-       hem perfect maken levert déze trofee op. Twee verschillende dingen om naartoe
-       te werken horen twee kaartjes te zijn -- op twee planken, zodat een kind niet
-       twee keer dezelfde wereldnaam naast elkaar ziet staan en moet uitzoeken welke
-       van de twee ze nu bedoelt.
-
-       De ster-rand op de wereldbadge blijft staan: die kost niets, hij is al
-       afgeleid, en hij is precies hetzelfde feit. */
     const pid = PERFECT_BADGE + w.id;
     perfectIds.push(pid);
     TROPHIES.push({
       id: pid, emoji: w.icon || '🌍', name: w.name, desc: 'Overal drie sterren',
+      wereld: w, perfect: true,
       has: q => worldProgress(q, worldForIndex(i)).vol,
       ster: () => true,   // behaald = altijd de gouden rand: dát is wat perfect hier is
       progress: q => {
@@ -5905,8 +5951,6 @@ function rebuildWorldBadges() {
       },
     });
   });
-  const plank = TROPHY_SHELVES.filter(sh => sh.key === 'werelden')[0];
-  if (plank) plank.ids = ids;
   const perfectPlank = TROPHY_SHELVES.filter(sh => sh.key === 'perfect')[0];
   if (perfectPlank) perfectPlank.ids = perfectIds;
 }
@@ -5921,111 +5965,140 @@ function rebuildWorldBadges() {
 const ROUND_LEN = 12;
 function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
 
-/* ================= Trofeeën ================= */
-// De zichtbare namen en beschrijvingen zijn kort en kindvriendelijk gehouden.
-// Interne id's, has()- en progress()-logica blijven ongewijzigd zodat bestaande
-// save-data en progressie intact blijven (uitzondering: bewust verhoogde
-// shop-drempels bij 'shopper' en 'collector', afgesproken in de refactor).
+/* ================= Trofeeën =================
+   FASE 5C -- de kast is uitgedund. Er stonden 42 trofeeën op acht planken, en dat
+   was geen kast meer maar een lijst met alles wat het spel toevallig kon tellen:
+   drie shows, vijf shows, tien shows, 12/30/60 sterren, 100 diamanten, 250
+   diamanten, 10 spulletjes, 25 spulletjes, en per categorie nog een "koop ze
+   allemaal". Wie zo'n lijst opent ziet werk liggen; wie een kast opent ziet wat
+   ze gewonnen heeft.
+
+   De regel die alles hier bepaalt: een trofee mag alleen bestaan als hij iets
+   viert waar een kind trots op is. Een teller die vanzelf oploopt is dat niet.
+   Concreet weggevallen (zie RETIRED_TROPHIES):
+     - tussenstappen die niets toevoegen (3 shows, show 5, show 10, 250 sommen,
+       3 perfecte shows, 25 extra shows)
+     - de zes "wereld uitgespeeld"-badges: een uitgespeelde wereld gééft al een
+       spulletje en een feestje (zie grantWorldRewards). Twee keer dezelfde
+       mijlpaal belonen maakt geen van beide bijzonderder. Perfect blijft.
+     - de sterrentotalen 12/30/60: dat ís de ster-status-ladder (zie RANK_TIERS),
+       letterlijk dezelfde drempels met dezelfde namen. Een tweede kaartje ernaast
+       voegt geen prestatie toe, alleen een tweede plek waar hetzelfde staat.
+     - de twee diamantsaldo's: die leerden precies het verkeerde. Diamanten zijn
+       er om uit te geven in de kleedkamer; een trofee voor "niet uitgegeven"
+       straft het kind dat doet waar de munt voor is.
+     - de vijf "alle kleren/schoenen/haarkleuren/instrumenten/dieren": die
+       betekenen iets anders zodra er één item bijkomt, en ze waren in de
+       praktijk een winkellijst. Er blijft één rustige verzamelmijlpaal over.
+     - 'Kast vol!': zie RETIRED_TROPHIES.
+
+   Wat blijft heeft een van deze vier vormen: een eerste keer (die vergeet je
+   nooit), een lange rekenweg, een perfecte wereld, of één rustige mijlpaal in
+   het sterrenleven. Id's blijven ongewijzigd, dus wie een trofee al had houdt 'm.
+
+   Over voortgang: `progress` is er alleen waar het getal zélf iets zegt
+   ("82 / 100 sommen"). Trofeeën die één keer gebeuren (eerste show, eerste
+   toegift, eerste perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
+   dat is alleen de mededeling dat het nog niet gebeurd is. */
 const TROPHIES = [
-  // 🎤 Tournee — voortgang in shows en werelden
-  { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Eerste show',           has: p => playedCount(p) >= 1, progress: p => trophyProgress(playedCount(p), 1, 'show gespeeld') },
-  { id: 'rookie3',    emoji: '🎤', name: 'Podiumstarter',   desc: '3 shows',                  has: p => playedCount(p) >= 3, progress: p => trophyProgress(playedCount(p), 3, 'shows gespeeld') },
-  { id: 'city5',      emoji: '🗺️', name: 'Wereldreiziger',  desc: 'Show 5',                  has: p => p.level >= 5, progress: p => trophyProgress(p.level, 5, 'shows bereikt') },
-  { id: 'city10',     emoji: '✈️', name: 'Wereldster',      desc: 'Show 10',                 has: p => p.level >= 10, progress: p => trophyProgress(p.level, 10, 'shows bereikt') },
-  // Was "alle 12 steden". Nu: élke geschreven wereld uitgespeeld -- de grote reis,
-  // en geen dubbeling met de badge die straks per wereld komt. De id blijft, dus wie
-  // 'm al had houdt 'm (behaalde trofeeën staan in p.trophies).
-  // FASE 4A: "uit" is niet meer "voorbij het laatste level gekomen" maar "elke
-  // wereld die er is ook echt uitgespeeld". Voor wie 'm al had verandert er niets
-  // (behaalde trofeeën staan in p.trophies); voor wie in de oude oneindige staart
-  // zat is het exact dezelfde stand. Maar komt er een wereld bij, dan gaat deze
-  // trofee weer open staan -- en dat hoort ook: de tournee is dan niet meer uit.
-  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uit',       has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
-  // 🧮 Rekenkracht — goed rekenen en gouden vragen (stats.correct telt elk goed antwoord)
-  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',      desc: '25 sommen goed',           has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
-  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',     desc: '100 sommen goed',          has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums250',  emoji: '💥', name: 'Rekenknaller',    desc: '250 sommen goed',          has: p => p.stats.correct >= 250, progress: p => trophyProgress(p.stats.correct, 250, 'sommen goed') },
-  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester',    desc: '500 sommen goed',          has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende',    desc: '1000 sommen goed',         has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'gold5',      emoji: '🌟', name: 'Goudzoeker',      desc: '5 gouden vragen',    has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',     emoji: '👑', name: 'Gouden kroon',    desc: '20 gouden vragen',   has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
-  // ⭐ Shows & sterren — kwaliteit van je shows
-  { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: '1 perfecte show',    has: p => perfectCount(p) >= 1, progress: p => trophyProgress(perfectCount(p), 1, 'perfecte show') },
-  { id: 'perfect3',   emoji: '💿', name: 'Gouden plaat',    desc: '3 perfecte shows',     has: p => perfectCount(p) >= 3, progress: p => trophyProgress(perfectCount(p), 3, 'perfecte shows') },
-  { id: 'perfect10',  emoji: '🏆', name: 'Platina plaat',   desc: '10 perfecte shows',    has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
-  // Ster-status-mijlpalen: dezelfde emoji's/namen als de rang-ladder, zodat de
-  // kast en de ladder één verhaal vertellen. Drempels liggen op de rang-grenzen
-  // (12/30/60 ⭐) en nooit hóger dan voorheen -> bestaande claims blijven geldig.
-  { id: 'stars15',    emoji: '⭐', name: 'Lokale ster',    desc: 'Ster-status: 12 ⭐',       has: p => totalStarCount(p) >= 12, progress: p => trophyProgress(totalStarCount(p), 12, 'sterren verzameld') },
-  { id: 'stars30',    emoji: '🎶', name: 'Clubster',       desc: 'Ster-status: 30 ⭐',       has: p => totalStarCount(p) >= 30, progress: p => trophyProgress(totalStarCount(p), 30, 'sterren verzameld') },
-  { id: 'rankstad',   emoji: '🏙️', name: 'Stadsster',      desc: 'Ster-status: 60 ⭐',       has: p => totalStarCount(p) >= 60, progress: p => trophyProgress(totalStarCount(p), 60, 'sterren verzameld') },
-  /* FASE 4D.1 -- 'perfecttour' stond hier: "3 sterren in je eerste wereld", met de
-     hand vastgezet op wereld 0. Sinds deze fase heeft élke wereld zo'n trofee
-     (rebuildWorldBadges legt ze aan) en zou deze letterlijk hetzelfde zijn als
-     'perfect-muziek': twee kaarten, één prestatie. Dus met pensioen -- wie hem al
-     had houdt hem gewoon in p.trophies staan (zie RETIRED_TROPHIES). */
-  { id: 'toegift',    emoji: '🎉', name: 'Extra show!',      desc: 'Je eerste extra show', has: p => (p.encores || 0) >= 1, progress: p => trophyProgress(p.encores || 0, 1, 'extra shows') },
-  { id: 'toegift25',  emoji: '🎆', name: 'Extra-showster', desc: '25 extra shows',       has: p => (p.encores || 0) >= 25, progress: p => trophyProgress(p.encores || 0, 25, 'extra shows') },
-  // 💎 Diamanten & shoppen — diamanten sparen en spullen kopen
-  { id: 'rich',       emoji: '💰', name: 'Diamantenster',   desc: '100 diamanten',            has: p => p.diamonds >= 100, progress: p => trophyProgress(p.diamonds, 100, 'diamanten') },
-  { id: 'diamond250', emoji: '💎', name: 'Diamantenster',  desc: '250 diamanten',            has: p => p.diamonds >= 250, progress: p => trophyProgress(p.diamonds, 250, 'diamanten') },
-  { id: 'shopper',    emoji: '🛍️', name: 'Shopster',        desc: '10 spulletjes',             has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
-  { id: 'collector',  emoji: '🎁', name: 'Koopgek', desc: '25 spulletjes',         has: p => boughtCount(p) >= 25, progress: p => trophyProgress(boughtCount(p), 25, 'spulletjes gekocht') },
-  // 👕 Kleedkamercollecties — volledige item-sets verzamelen
-  { id: 'modekoningin', emoji: '👕', name: 'Modester',      desc: 'Alle kleren',           has: p => catCount(p, 'dress') >= DRESS_TOTAL, progress: p => trophyProgress(catCount(p, 'dress'), DRESS_TOTAL, 'outfits') },
-  { id: 'schoenenkast', emoji: '👟', name: 'Schoenenkast',  desc: 'Alle schoenen',       has: p => catCount(p, 'shoes') >= SHOES_TOTAL, progress: p => trophyProgress(catCount(p, 'shoes'), SHOES_TOTAL, 'paar schoenen') },
-  { id: 'haarstylist',  emoji: '💇', name: 'Haarstylist',   desc: 'Alle haarkleuren',      has: p => catCount(p, 'hair') >= HAIR_TOTAL, progress: p => trophyProgress(catCount(p, 'hair'), HAIR_TOTAL, 'haarkleuren') },
-  { id: 'orkest',     emoji: '🎼', name: 'Eenmansorkest',   desc: 'Alle instrumenten',     has: p => instrCount(p) >= INSTR_TOTAL, progress: p => trophyProgress(instrCount(p), INSTR_TOTAL, 'instrumenten') },
-  { id: 'dierenkoning', emoji: '🐘', name: 'Dierenvriend',   desc: 'Alle dieren',           has: p => petCount(p) >= PET_TOTAL, progress: p => trophyProgress(petCount(p), PET_TOTAL, 'dieren') },
-  // 🏆 Grote finale — moet de laatste zijn: checkTrophies kent trofeeën in
-  // volgorde toe, dus alle andere zijn dan al geteld voor deze meta-trofee.
-  // Telt over de zichtbare kast (zie activeTrophies): een trofee die met pensioen is
-  // hoort niet meer bij "alle andere", anders zou deze nooit meer te halen zijn.
-  { id: 'kastvol', emoji: '🎖️', name: 'Kast vol!', desc: 'Alle andere trofeeën', has: p => earnedActiveCount(p) >= activeTrophies().length - 1, progress: p => trophyProgress(earnedActiveCount(p), activeTrophies().length - 1, 'trofeeën verzameld') },
+  // 🎤 Avontuur — de momenten die je je herinnert
+  { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
+  { id: 'toegift',    emoji: '🎉', name: 'Extra show!',     desc: 'Je eerste extra show',  has: p => (p.encores || 0) >= 1 },
+  { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
+  /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en dat
+     blijft het. Komt er een wereld bij, dan gaat deze trofee weer open staan --
+     en dat hoort ook: de tournee is dan niet meer uit. */
+  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
+  // 🧮 Rekenkracht — de lange weg (stats.correct telt elk goed antwoord)
+  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',   desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',  desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester', desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende', desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker',   desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',   emoji: '👑', name: 'Gouden kroon', desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+  // ✨ Sterrenleven — twee rustige mijlpalen naast de rest
+  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  /* De enige koop-trofee die overblijft, en met opzet de láágste drempel van de
+     twee die er stonden (10, niet 25): een vrolijke "je hebt je eigen stijl"-tik,
+     geen winkelopdracht. Zelfde id en zelfde voorwaarde als voorheen, dus wie hem
+     al had houdt hem. boughtCount telt startspullen en wereldbeloningen niet mee.
+     `naar` is de kleedkamercategorie die een tik op dit kaartje opent: dit is de
+     enige trofee waarvoor je ergens anders in de app moet zijn, dus wijst hij de
+     weg (zie tapTrophy). */
+  { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar',  desc: '10 spulletjes gekocht',  naar: 'dress',
+    has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
+  // 🥇 Perfecte werelden — één per wereld, aangelegd door rebuildWorldBadges()
 ];
-// De kast heeft planken: verwante trofeeën staan bij elkaar, met een teller per plank.
+/* De kast heeft vier planken, en niet meer. Elke plank is één soort prestatie, zodat
+   een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen plank is die
+   bestaat omdat er nog trofeeën over waren.
+
+   De volgorde is de volgorde waarin je ze tegenkomt: eerst wat je meemaakt, dan de
+   lange rekenweg, dan de zes grote prijzen, en helemaal onderaan het sterrenleven. */
 const TROPHY_SHELVES = [
-  { name: '🎤 Tournee',             ids: ['first', 'rookie3', 'city5', 'city10', 'worldtour'] },
-  /* Per wereld één badge. De lijst wordt gevuld door rebuildWorldBadges() -- de
-     werelden staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen
-     zou meteen uit de pas lopen.
-
-     De `key` is waar rebuildWorldBadges() deze twee planken aan herkent. Dat ging
-     eerst op een stukje van de naam ('Werelden'), en dat brak zodra er een tweede
-     plank kwam die ook zo heet. */
-  { key: 'werelden', name: '🌍 Werelden',            ids: [] },
-  { key: 'perfect',  name: '🥇 Perfecte werelden',   ids: [] },
-  { name: '🧮 Rekenkracht',         ids: ['sums25', 'sums100', 'sums250', 'sums500', 'sums1000', 'gold5', 'gold20'] },
-  { name: '⭐ Shows & sterren',      ids: ['perfect1', 'perfect3', 'perfect10', 'stars15', 'stars30', 'rankstad', 'toegift', 'toegift25'] },
-  { name: '💎 Diamanten & shoppen',  ids: ['rich', 'diamond250', 'shopper', 'collector'] },
-  { name: '👕 Kleedkamercollecties', ids: ['modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning'] },
-  { name: '🏆 Grote finale',         ids: ['kastvol'] },
+  { key: 'avontuur', name: '🎤 Avontuur',          note: 'De momenten die je je blijft herinneren',
+    ids: ['first', 'toegift', 'perfect1', 'worldtour'] },
+  { key: 'rekenen',  name: '🧮 Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
+    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+  /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
+     staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen zou
+     meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
+  { key: 'perfect',  name: '🥇 Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
+    ids: [] },
+  { key: 'sterren',  name: '✨ Sterrenleven',      note: 'Voor een echte popster',
+    ids: ['perfect10', 'shopper'] },
 ];
-/* FASE 1/2 — trofeeën met pensioen.
-   Looks en podia zijn uit het zichtbare spel gehaald. Fase 1 liet hun definities
-   nog in TROPHIES staan; fase 2 heeft die weggehaald, want ze konden niet meer
-   behaald worden en niemand las ze nog. Wat hier overblijft is precies wat er
-   nóg toe doet: de id's zelf.
-
+/* Trofeeën met pensioen.
    Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies
    staan. Die lijst blijft onaangeroerd (geen migratie, geen verlies); deze set
-   zorgt alleen dat zo'n id niet meetelt in de kastteller en niet als "klaar"
-   blijft liggen. Zolang er saves in omloop zijn, blijft deze lijst dus staan --
-   ook al staat er geen enkele trofee meer tegenover. */
+   zorgt alleen dat zo'n id niet meetelt in de kastteller, niet getekend wordt en
+   niet als "klaar" blijft liggen. Zolang er saves in omloop zijn blijft deze
+   lijst staan -- ook al staat er geen enkele definitie meer tegenover.
+
+   Er is bewust géén opruimstap bij het inladen. Een id dat hier staat kost niets
+   in een save, en een save die door een oudere versie van de app is gemaakt of
+   teruggezet komt er zonder kleerscheuren doorheen. Wie een gepensioneerde trofee
+   ooit behaald heeft raakt hem dus niet kwijt; hij is alleen niet meer te zien. */
 const RETIRED_TROPHIES = new Set([
+  // fase 1/2 -- looks en podia zijn uit het spel
   'podiumbouwer',
-  // FASE 4D.1: opgegaan in de perfecte-wereld-trofee van wereld 1 ('perfect-muziek').
-  'perfecttour',
   'magicus', 'thuismatch', 'rockster', 'discodiva', 'prinses', 'ruimteheld',
-  'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow'
+  'winter', 'jungle', 'zeemeermin', 'regenboogster', 'diamantster', 'festivaldj', 'vuurshow',
+  // fase 4D.1 -- opgegaan in de perfecte-wereldtrofee van wereld 1 ('perfect-muziek')
+  'perfecttour',
+  /* fase 5C -- de grote opschoning. Per regel: waarom weg.
+     tussenstappen zonder eigen betekenis */
+  'rookie3', 'city5', 'city10', 'sums250', 'perfect3', 'toegift25',
+  // de sterrentotalen: dat is de ster-status-ladder, niet een tweede prijzenkast
+  'stars15', 'stars30', 'rankstad',
+  // diamantsaldo: beloonde het niet-uitgeven van de munt waar de kleedkamer op draait
+  'rich', 'diamond250',
+  // de lange winkelgrind; 'shopper' (10 spulletjes) blijft als enige koop-mijlpaal
+  'collector',
+  // "koop alles uit deze categorie": betekent iets anders zodra er één item bijkomt
+  'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
+  /* 'Kast vol!' -- alle andere trofeeën. Dat was geen voorwaarde maar een
+     rekensom over de kast zelf: elke trofee die erbij kwam maakte hem zwaarder,
+     elke trofee die met pensioen ging lichter, en hij moest de laatste in de
+     tabel zijn omdat checkTrophies op volgorde toekent. Een prijs waarvan de
+     prijsvraag verandert als je er een kaartje naast hangt is geen prijs.
+     De zes perfecte werelden zijn nu het einddoel, en die vraag staat vast. */
+  'kastvol',
 ]);
-function isRetiredTrophy(id) { return RETIRED_TROPHIES.has(id); }
+/* De zes "wereld uitgespeeld"-badges staan niet als losse id's hierboven: ze
+   heten wereld-<wereldid> en er kan er altijd een bijkomen (de studio schrijft
+   WORLDS). Op het voorvoegsel is daarom de enige stand die niet verloopt --
+   een zevende wereld hoeft niet aan een lijstje toegevoegd te worden om níet
+   terug te komen in de kast. */
+function isRetiredTrophy(id) { return RETIRED_TROPHIES.has(id) || String(id).indexOf(WERELD_BADGE) === 0; }
 // De zichtbare kast: alles behalve de gepensioneerde. Bewust een functie en geen
 // vaste lijst -- rebuildWorldBadges() verandert TROPHIES nog nadat dit bestand is
 // ingelezen (en de wereldstudio kan dat later nog eens doen).
 function activeTrophies() { return TROPHIES.filter(t => !isRetiredTrophy(t.id)); }
-function earnedActiveCount(p) { return p.trophies.filter(id => id !== 'kastvol' && !isRetiredTrophy(id)).length; }
-rebuildWorldBadges();   // de wereldbadges erbij, nu de tabel en de planken er staan
+// Hoeveel van de zichtbare kast dit kind al heeft. Gepensioneerde id's in p.trophies
+// tellen niet mee -- dat is precies wat "met pensioen" betekent.
+function earnedActiveCount(p) { return p.trophies.filter(id => !isRetiredTrophy(id)).length; }
+rebuildWorldBadges();   // de perfecte werelden erbij, nu de tabel en de planken er staan
 /* De sterren van de oude oneindige staart (zie migrate). Ze horen bij geen enkele
    wereld meer -- hun levelnummers zijn teruggegeven aan de werelden die daar ooit
    komen -- maar ze zijn wél verdiend, dus ze blijven meetellen in alles wat over
@@ -6034,12 +6107,6 @@ rebuildWorldBadges();   // de wereldbadges erbij, nu de tabel en de planken er s
 function tourStarValues(p) { return Object.values(p.tourStars || {}); }
 function allStarValues(p) { return Object.values(p.stars).concat(tourStarValues(p)); }
 function playedCount(p) { return Object.keys(p.stars).length + tourStarValues(p).length; }
-// Kleedkamercollectie-trofeeën → naar welke categorie ze in de kleedkamer horen,
-// zodat een tik op zo'n trofee die collectie meteen opent om verder te sparen.
-const COLLECTION_CAT = {
-  modekoningin: 'dress', schoenenkast: 'shoes', haarstylist: 'hair',
-  orkest: 'instrument', dierenkoning: 'pet'
-};
 function perfectCount(p) { return allStarValues(p).filter(s => s === 3).length; }
 function totalStarCount(p) { return allStarValues(p).reduce((a, b) => a + b, 0); }
 // Hoeveel beschikbare werelden dit kind echt uitgespeeld heeft (voor de teller op
@@ -7663,20 +7730,6 @@ function renderMapTitle(p, opReis) {
     terug.onclick = () => { sndClick(); navigeerNaarWereld(cur.index); };
   }
 }
-/* Rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk: één
-   plek waar staat welke status je hebt en hoe ver je naar de volgende bent.
-   Stond op de kaart, over de tekening heen; staat nu in de trofeeënkast. */
-function renderCareerStrip(p) {
-  const strip = $('career-strip');
-  if (!strip) return;
-  const total = totalStarCount(p);
-  const r = starRank(total);
-  const pct = Math.max(0, Math.min(100, Math.round((total - r.curMin) / (r.nextMin - r.curMin) * 100)));
-  strip.innerHTML =
-    `<span class="rank-counter"><span class="rank-name">${r.emoji} ${r.name}</span>`
-    + ` · ${total}/${r.nextMin} ⭐ <span class="rank-tap">›</span></span>`
-    + `<span class="rank-bar"><span class="rank-fill" style="width:${pct}%"></span></span>`;
-}
 /* Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
    nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
 
@@ -9236,6 +9289,25 @@ function openTrophies() {
   renderShelves();
   show('screen-trophies');
   $('screen-trophies').scrollTop = 0;
+  kastScroll();   // verse start = bovenaan = de ruime kop
+}
+/* De kop van de kast heeft twee standen (zie .gescrold in het stijlblad): ruim
+   bovenaan, krap en dekkend zodra er kaarten onderdoor schuiven. Hier wordt alleen
+   de klasse gezet; hoe de twee standen eruitzien staat in de CSS.
+
+   De drempel ligt op 4px en niet op 0: met 0 wisselt de kop bij het minste
+   duimtrilletje heen en weer, en een kop die knippert is erger dan een kop die
+   iets te lang ruim blijft. Eén rAF-vertraging ertussen, net als bij de reis
+   (zie reisScroll): scroll vuurt vaker dan er beeldjes zijn. */
+let kastScrollWacht = false;
+function kastScroll() {
+  if (kastScrollWacht) return;
+  kastScrollWacht = true;
+  requestAnimationFrame(() => {
+    kastScrollWacht = false;
+    const sc = $('screen-trophies');
+    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
+  });
 }
 // Terug naar de trofeeënkast via de vaste navigatie (kwam van een ánder
 // tabblad): hervat gewoon waar je gebleven was -- scrollpositie blijft staan,
@@ -9244,50 +9316,69 @@ function openTrophies() {
 function resumeTrophies() {
   renderShelves();
   show('screen-trophies');
+  kastScroll();   // de scrollpositie bleef staan, dus de kopstand ook
 }
-// De status van een trofee, in prioriteitsvolgorde:
-// ready (open trofee) > done (behaald) > locked > almost (bijna) > busy (bezig) > fresh (niet gestart).
-// 'locked' is voorzien voor trofeeën die nog niet vrij zijn (via een optionele
-// t.locked(p)); geen enkele trofee gebruikt dit nu, dus het blijft voorlopig sluimerend.
+/* De status van een trofee, in prioriteitsvolgorde:
+   ready (open trofee) > done (behaald) > locked > bezig > fresh (nog niets gedaan).
+   'locked' is voorzien voor trofeeën die nog niet vrij zijn (via een optionele
+   t.locked(p)); geen enkele trofee gebruikt dit nu, dus het blijft voorlopig sluimerend.
+
+   FASE 5C -- 'almost' is weg. Dat was een vierde stand met een eigen gouden gloed,
+   bedoeld om te zeggen "nog heel even". Maar goud betekent in deze app "verdiend",
+   en op een kast vol kaartjes stonden daardoor gouden randen om dingen die je nog
+   níet had. Nu is er één stand voor onderweg, en die is rustig: een getal. */
 function trophyStatus(p, t) {
   if ((p.readyTrophies || []).includes(t.id)) return 'ready';
   if (p.trophies.includes(t.id)) return 'done';
   if (t.locked && t.locked(p)) return 'locked';
   const prog = t.progress ? t.progress(p) : null;
-  if (!prog || prog.now <= 0) return 'fresh';
-  const rem = prog.target - prog.now;
-  return (prog.pct >= 80 || rem === 1) ? 'almost' : 'busy';
+  return (prog && prog.now > 0) ? 'busy' : 'fresh';
 }
 // (Her)tekent de hele kast. Losgemaakt van openTrophies zodat "Open trofee"
 // meteen kan hertekenen zónder de scrollpositie te verliezen.
 let justClaimed = null;   // id van de zojuist geopende trofee (voor de shimmer, één render lang)
+/* FASE 5C -- de kast als kast.
+   Wat er weg is en waarom, want het is vooral wéghalen:
+     - de balk in de kop ("5 van 42" + voortgangsbalk over de hele kast). Een kast
+       met een vulmeter is een takenlijst. De teller zelf blijft, klein en in
+       woorden, want een kind wil best weten hoeveel er nog te halen valt.
+     - de teller per plank ("2 van 5"). Idem, maal vier.
+     - de voortgangsbalk op élke kaart. Die stond op tientallen kaartjes tegelijk
+       en vertelde bij de meeste niets dat het getal er niet al zei. Waar het getal
+       wél iets zegt ("82 / 100 sommen") staat het er nu kaal, zonder balk.
+     - de ster-statusbalk bovenaan. De ster-status is een ánder systeem; hij staat
+       helemaal niet meer op dit scherm; hij gaat open vanaf het eindscherm.
+   Wat er overblijft per kaartje is precies twee dingen: heb ik hem, en waarvoor is
+   hij. En op de perfecte plank: welke wereld. */
 function renderShelves() {
   const p = P();
+  $('screen-trophies').onscroll = kastScroll;
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const totaal = activeTrophies().length;
-  const earned = p.trophies.filter(id => !isRetiredTrophy(id)).length;
+  const earned = earnedActiveCount(p);
   $('trophy-diamonds').textContent = p.diamonds;
-  renderCareerStrip(p);
-  $('trophy-count').textContent = `${earned} van ${totaal} verzameld`;
-  $('trophy-bar').style.width = Math.round(100 * earned / totaal) + '%';
+  /* De teller in woorden en niet als breuk-met-balk. "5 van de 18 trofeeën" leest
+     een zesjarige voor als een mededeling; "5/18" met een balk eronder leest als
+     een opdracht die nog niet af is. */
+  $('trophy-count').textContent = earned === 0
+    ? `Hier komen je ${totaal} trofeeën te staan`
+    : `Je hebt er ${earned} van de ${totaal}`;
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
     const ids = shelf.ids.filter(id => !isRetiredTrophy(id));
     if (!ids.length) return;   // een plank die helemaal met pensioen is, staat er niet
-    const got = ids.filter(id => p.trophies.includes(id)).length;
+    const vol = ids.every(id => p.trophies.includes(id));
     const panel = document.createElement('div');
-    panel.className = 'shelf';
+    panel.className = 'shelf' + (vol ? ' full' : '') + (shelf.key === 'perfect' ? ' shelf-perfect' : '');
     const head = document.createElement('div');
     head.className = 'shelf-title';
-    const shelfFull = got === ids.length ? ' full' : '';
-    head.innerHTML = `<div class="shelf-head-row"><span>${shelf.name}</span>`
-      + `<span class="shelf-count${shelfFull}">${got} van ${ids.length}</span></div>`
+    head.innerHTML = `<div class="shelf-naam">${shelf.name}</div>`
       + (shelf.note ? `<div class="shelf-note">${shelf.note}</div>` : '');
     panel.appendChild(head);
     const grid = document.createElement('div');
-    grid.className = 'trophy-grid';
+    grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
     ids.forEach(id => {
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
@@ -9318,68 +9409,80 @@ function unitText(label, remaining) {
   if (remaining === 1 && TROPHY_UNIT_SINGULAR[noun]) noun = TROPHY_UNIT_SINGULAR[noun];
   return noun;
 }
-// Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop (cadeau-icoon).
-// Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
-// gouden rand en "🎁 Open!" in het onderste vakje -- zelfde vorm, zelfde plek voor
-// de naam, zodat vijf klaarliggende trofeeën vijf verschillende dingen blijven.
-function readyCardHTML(t) {
-  return `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`
-    + '<div class="trophy-bottom"><span class="ready-open">🎁 Open!</span></div>';
+/* De stand op een kaart die nog loopt: "82 / 100 sommen". Alleen als er al iets
+   staat -- op nul is het geen stand maar een nul, en dat weet je al doordat de
+   kaart gedempt is. Geeft '' als er niets te melden valt. */
+function trophyStand(t, p, status) {
+  if (status !== 'busy' || !t.progress) return '';
+  const pr = t.progress(p);
+  return `<div class="tstand">${pr.now} / ${pr.target} <span>${unitText(pr.label, pr.target)}</span></div>`;
 }
+// Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop.
+// Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
+// gouden rand en "🎁 Open!" onderaan -- zelfde vorm, zelfde plek voor de naam,
+// zodat vijf klaarliggende trofeeën vijf verschillende dingen blijven.
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
   const card = document.createElement('div');
-  // volle breedte: alleen 'Kast vol!', en dat altijd (in élke status hetzelfde
-  // formaat) -- geen enkele kaart mag van formaat wisselen zodra de status
-  // verandert.
-  const wide = (t.id === 'kastvol') ? 'wide ' : '';
-  card.className = `trophy-card ${wide}` + status;
-  // bijna behaald: subtiele gouden glow die iets sterker wordt richting 100%
-  if (status === 'almost' && t.progress) {
-    const pct = Math.min(100, t.progress(p).pct);
-    const a = Math.max(.25, .25 + (pct - 80) / 20 * .3);
-    card.style.boxShadow = `0 0 12px rgba(255,213,79,${a.toFixed(2)})`;
-  }
+  card.className = `trophy-card ${t.perfect ? 'pw-card ' : ''}${status}`;
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
-  // dezelfde badge, tweede stand: overal drie sterren gehaald
-  if (status === 'done' && t.ster && t.ster(p)) card.classList.add('ster');
-  card.innerHTML = status === 'ready' ? readyCardHTML(t) : normalCardHTML(t, p, status);
+  card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
 function normalCardHTML(t, p, status) {
-  const top = `<div class="temoji">${t.emoji}</div><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
-  // Behaald: geen los hoekbadge meer, maar de stempel in het statusvakje onderaan --
-  // zelfde plek als de voortgangsbalk, dus behaalde kaarten vullen hun rij net zo ver
-  // als de kaarten ernaast.
-  if (status === 'done') return top + '<div class="trophy-bottom"><span class="trophy-done-pill">✓ Behaald</span></div>';
-  if (status === 'locked') {
-    return '<span class="trophy-lock">🔒</span>' + top
-      + '<div class="trophy-bottom"><div class="trophy-progress-text sub">Nog niet vrij</div></div>';
-  }
-  // niet gestart / bezig / bijna: "Nog X" + een dunne progressbalk onderaan
-  let bottom = '';
-  const prog = t.progress ? t.progress(p) : null;
-  if (prog) {
-    const rem = Math.max(0, prog.target - prog.now);
-    const w = status === 'fresh' ? 0 : Math.max(4, Math.min(100, prog.pct));
-    bottom = `<div class="trophy-progress-text">Nog ${rem} ${unitText(prog.label, rem)}</div>`
-      + `<div class="trophy-progress"><div class="trophy-progress-fill" style="width:${w}%"></div></div>`;
-  }
-  return top + `<div class="trophy-bottom">${bottom}</div>`;
+  return `<div class="temoji">${t.emoji}</div>`
+    + `<div class="tname">${t.name}</div>`
+    + `<div class="tdesc">${t.desc}</div>`
+    + (status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
+      : status === 'locked' ? '<div class="tstand sub">Nog niet vrij</div>'
+      : trophyStand(t, p, status));
 }
-// tikken mag: klaar opent de trofee; een collectie brengt je naar die categorie in
-// de kleedkamer; een gewone behaalde glinstert; anders "Nog X".
+/* De perfecte werelden. Dit is de duurste kaart van de kast en dat mag je zien:
+   het wereldicoon staat in een medaillon met de kleuren van díe wereld (theme.sky
+   en theme.glow, dezelfde twee die de wereldkaart gebruikt), en behaald komt daar
+   de gouden ring met de ster omheen.
+
+   Precies dezelfde vorm als de onthulling na de laatste ster (zie .wf-trofee): een
+   kind dat daar "Perfecte wereld!" kreeg, herkent hier hetzelfde ding terug. Zonder
+   dat zouden het twee losse prijzen zijn die toevallig hetzelfde heten.
+
+   Niet behaald is niet grijs: de wereldkleuren blijven staan, alleen gedempt. Een
+   kleuter die de IJswereld nog moet perfectioneren ziet zo toch dat er een blauwe
+   prijs op haar wacht -- dát is het lokkertje, en een grijze plaat is dat niet. */
+function perfectCardHTML(t, p, status) {
+  const w = t.wereld || {};
+  const th = w.theme || {};
+  const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
+  /* Geen 'Overal drie sterren' op het kaartje. Dat stond er zes keer onder elkaar,
+     terwijl de kop van de plank het al zegt -- en zes keer dezelfde regel maakt van
+     een prijzenkast een formulier. Wat een kaartje hier moet zeggen is welke wereld
+     het is; wat je ervoor moet doen staat één regel hoger, voor alle zes tegelijk.
+
+     Het getal ("5 / 8 perfect") komt er alleen bij als er iets te tellen valt --
+     dezelfde regel als op elke andere kaart. Op een wereld waar nog geen ster staat
+     zegt "0 / 8" niets wat het gedempte medaillon niet al zegt, en op een behaalde
+     wereld zou het 8/8 zijn, wat de gouden ring al vertelt. */
+  const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
+    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target} <span>perfect</span></div>`; })()
+    : '';
+  return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
+    + `<div class="tname">${t.name}</div>`
+    + stand;
+}
+// tikken mag: klaar opent de trofee; een behaalde glinstert; anders vertelt hij
+// in één regel wat er nog moet gebeuren.
 function tapTrophy(t, card, e) {
   if (e) tapRipple(e.clientX, e.clientY);   // tactiel: kringetje vanaf de vinger
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  if (COLLECTION_CAT[t.id]) { sndClick(); openKleedkamerCat(COLLECTION_CAT[t.id]); return; }
+  // een trofee die ergens anders verdiend wordt, wijst de weg erheen
+  if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
   if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
-  if (!t.progress) return;
   sndClick();
+  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); setTimeout(hideToast, 1700); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   showToast(rem > 0 ? `${t.emoji} Nog ${rem} ${unitText(pr.label, rem)}!` : `${t.emoji} Bijna daar!`);
   setTimeout(hideToast, 1700);
@@ -9391,7 +9494,6 @@ function openTrophy(id) {
   if (!t || p.trophies.includes(id) || !(p.readyTrophies || []).includes(id)) return;
   p.readyTrophies = p.readyTrophies.filter(x => x !== id);
   p.trophies.push(id);
-  checkTrophies(p);   // claimen kan de eindtrofee 'Kast vol!' klaarleggen
   save();
   celebrateTrophy(t);
   justClaimed = id;   // net-behaalde kaart krijgt eenmalig een gouden shimmer
@@ -9517,7 +9619,11 @@ function wereldFeest(f) {
        er alleen, dan zégt die kop al "Perfecte wereld!" -- dan hoort de regel
        eronder niet nog eens hetzelfde te zeggen. */
     const label = f.spul ? 'Perfecte wereld!' : 'Nieuwe trofee!';
-    rijen += `<div class="wf-rij"><div class="wf-beeld"><span class="wf-trofee">${w.icon || '🌍'}</span></div>`
+    // dezelfde wereldkleuren als het medaillon in de kast (.pw-medal), zodat het
+    // ding dat hier onthuld wordt hetzelfde ding is als wat er straks in de kast staat
+    const th = w.theme || {};
+    const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
+    rijen += `<div class="wf-rij"><div class="wf-beeld"><span class="wf-trofee" style="${kleur}">${w.icon || '🌍'}</span></div>`
       + `<div class="wf-tekst"><b>${label}</b><span>Overal drie sterren</span></div></div>`;
   }
   const ov = openOverlay('wereld-feest-overlay',
@@ -11411,14 +11517,14 @@ function openKleedkamer() {
 // Terug naar de kleedkamer via de vaste navigatie (kwam van een ánder
 // tabblad): hervat waar je gebleven was -- categorie, selectie en scrollpositie
 // blijven allemaal gewoon staan (het zijn simpele variabelen die niets anders al
-// aanraakte). Een gerichte sprong hierheen (bv. vanuit een collectie-trofee, zie
+// aanraakte). Een gerichte sprong hierheen (bv. vanuit de Verzamelaar-trofee, zie
 // openKleedkamerCat) heeft die variabelen intussen al naar zijn eigen doel gezet
 // -- dát wordt dus vanzelf de nieuwe "waar je gebleven was"-stand.
 function resumeKleedkamer() {
   show('screen-dress');
   renderShop();
 }
-// vanuit een kleedkamercollectie-trofee: open die categorie meteen in de kleedkamer
+// vanuit een trofee met een `naar`: open die categorie meteen in de kleedkamer
 function openKleedkamerCat(cat) {
   shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   show('screen-dress');
@@ -12013,7 +12119,7 @@ function statsPanelHtml(p) {
       <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${p.trophies.length}/${TROPHIES.length}</div><div class="cap">trofeeën</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${earnedActiveCount(p)}/${activeTrophies().length}</div><div class="cap">trofeeën</div></div>
     </div>
     <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
     <div class="stat-bar"><div style="width:${skill}%"></div></div>
@@ -12646,8 +12752,8 @@ if (location.search.indexOf('debug') !== -1) {
     a.equipped = { hair: 'hair_regenboog', dress: 'dress_disco', shoes: 'shoes_goud',
       mic: 'mic_roze', stage: 'stage_kasteel', acc: 'acc_kroon',
       pet: 'pet_eenhoorn', instrument: 'instr_gitaar' };
-    a.trophies = ['first', 'rookie3', 'city5', 'sums25', 'perfect1'];
-    a.readyTrophies = ['perfect3'];
+    a.trophies = ['first', 'sums25', 'perfect1'];
+    a.readyTrophies = ['gold5'];
     a.goldHits = 7; a.encores = 3; a.rankSeen = 2;
     a.stats = { correct: 180, wrong: 22 };
     const c = defaultProfile('Sem', 'dress_blauw',
@@ -13442,12 +13548,12 @@ function startMapEdit() {
     F('mf-art').value = (w.art && w.art.indexOf('blob:') !== 0) ? w.art : '';
     F('mf-levels').textContent = w.levels;
     /* Wat er uit de naam volgt, als bevestiging en niet als invoer: het id, het
-       pad van de tekening en de twee trofeeën die aan dat id hangen. Wie wereld
+       pad van de tekening en de trofee die aan dat id hangt. Wie wereld
        twaalf maakt hoeft daar niets over te weten -- maar hij mag het wel zien,
        want het is wat er straks in index.html komt te staan. */
     F('mf-afgeleid').textContent = 'id ' + (w.id || '—')
       + ' · ' + wereldArtPad(w.id || '—')
-      + ' · trofee ' + WERELD_BADGE + (w.id || '—') + ' + ' + PERFECT_BADGE + (w.id || '—')
+      + ' · trofee ' + PERFECT_BADGE + (w.id || '—')
       + ' · level ' + shown().first + '–' + (shown().first + w.levels - 1);
     Object.keys(HEX).forEach(k => { F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k]; });
     vulBeloning();
@@ -13547,9 +13653,9 @@ function startMapEdit() {
       } else {
         setOut('wereld heet nu ' + nid + ' — de tekening hoort bij ' + nieuwPad);
       }
-      if (P().trophies.indexOf(WERELD_BADGE + oudId) >= 0) {
-        setOut('let op: de badge van deze wereld stond op ' + WERELD_BADGE + oudId
-          + ' en heet nu ' + WERELD_BADGE + nid + ' — een al behaalde badge raak je daarmee kwijt');
+      if (P().trophies.indexOf(PERFECT_BADGE + oudId) >= 0) {
+        setOut('let op: de perfecte-wereldtrofee stond op ' + PERFECT_BADGE + oudId
+          + ' en heet nu ' + PERFECT_BADGE + nid + ' — een al behaalde trofee raak je daarmee kwijt');
       }
       rebuildWorldBadges();
     }

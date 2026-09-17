@@ -98,8 +98,8 @@ function check(ok, label, detail) {
     const regel = await page.$eval('#mf-afgeleid', e => e.textContent);
     check(/muziek/.test(regel) && /assets\/world\/muziek-map\.webp/.test(regel),
       'B · het paneel laat zien wat eruit volgt', regel);
-    check(/wereld-muziek/.test(regel) && /perfect-muziek/.test(regel),
-      'B · inclusief de twee trofeeën die aan het id hangen', regel);
+    check(/perfect-muziek/.test(regel) && !/wereld-muziek/.test(regel),
+      'B · inclusief de perfecte-wereldtrofee, en die is er maar één', regel);
     await ctx.close();
   }
 
