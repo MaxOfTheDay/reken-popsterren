@@ -1,5 +1,19 @@
 # World rewards — what to make for phase 4D.2
 
+> **Status: shipped (phase 4D.2), presented as *Wereldschatten* since phase 6E.**
+>
+> Phase 6E changed nothing about the items, the ids or the unlock rule — it changed
+> where they live. They used to sit at the tail of the Accessoires drawer, locked,
+> between the prices, which made an earned thing read as shop stock that happens not
+> to be for sale. They now have their own entry under the category strip
+> (`✨ Wereldschatten · 3 / 6`, see `renderSchatEntry`) and their own view: earned
+> ones drawn in full with their world's mark, unearned ones a question mark in that
+> world's medallion, never a price and never a preview on the doll. An earned one
+> also stays in its own drawer, because that is where a child picks what to wear.
+> The reveal after the last show gained a *Doe aan* button, and the final stop on a
+> world's map carries a small ✨ while its treasure is still out there. The data
+> model below is untouched: `WORLDS[].beloning` and `p.owned`, and nothing else.
+>
 > **Status: shipped (phase 4D.2).** All six items now carry a real `draw()` and a
 > `thumb()` in `ITEMS`; the ids never changed, so anyone who had already earned one
 > simply sees the finished drawing. One concept changed along the way: Toverwereld
