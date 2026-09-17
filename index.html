@@ -1455,9 +1455,9 @@
   }
   /* De veeg onder de balk. Hangt aan de bálk en niet aan een scherm, dus hij staat
      er op élk scherm waar de balk staat -- kaart, reis, kleedkamer, kast -- en hij
-     kan niet vergeten worden als er ooit een vijfde bijkomt. Vast aan het venster
-     en nooit een blok: hij loopt naar niets uit, zodat het onderste stukje wereld
-     er gewoon doorheen te zien blijft.
+     kan niet vergeten worden als er ooit een vijfde bijkomt. Van schermrand tot
+     schermrand en naar niets uitlopend, zodat het onderste stukje wereld er gewoon
+     doorheen te zien blijft.
 
      Waarom hij toch bovenop de inhoud ligt terwijl hij z-index -1 draagt: .main-nav
      is zelf een stapelcontext (fixed + z-index 40), dus -1 blijft daarbínnen -- net
@@ -1480,9 +1480,29 @@
      onder de balk door, en daar moet "Kleedkamer" nog steeds te lezen zijn.
 
      Vier stops en geen twee: met twee kun je "bijna niets" en "snel weg" niet
-     tegelijk zeggen zonder er een rand van te maken. */
+     tegelijk zeggen zonder er een rand van te maken.
+
+     FASE 6B -- hij stond hier als position:fixed met left:0/right:0, en dat deed
+     niet wat het zegt. .main-nav draagt zelf een transform (translateX) én een
+     backdrop-filter, en allebei maken van de balk het inhoudsblok voor álles wat
+     eronder fixed staat. "Van schermrand tot schermrand" werd daarmee "van
+     balkrand tot balkrand": een donkere rechthoek van --balk-w breed die precies
+     op de onderrand van de bálk ophield in plaats van op die van het scherm.
+     Nagemeten op 412x915: 12,4 -> 399,6 in plaats van 0 -> 412, en 775 -> 905 in
+     plaats van 785 -> 915. Op de kaart viel dat weg tegen een geschilderde wereld;
+     op de kleedkamer en de trofeeënkast, waar de egale schil doorloopt, stond er
+     een zichtbaar kader om de balk heen en hield de veeg tien pixels boven de
+     schermrand op.
+
+     Nu absolute, met de breedte van het vénster (100vw, uitgemeten vanaf het
+     midden van de balk -- en de balk staat altijd gecentreerd) en een negatieve
+     bottom die precies de zweefruimte van de balk terugneemt. Dezelfde plek als
+     bedoeld, maar zonder van fixed af te hangen in een element dat dat woord
+     afpakt. */
   .main-nav::before {
-    content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+    content: ''; position: absolute; z-index: -1; pointer-events: none;
+    left: 50%; width: 100vw; margin-left: -50vw;
+    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder));
     height: calc(var(--balk-ruimte) + 44px);
     background: linear-gradient(180deg,
       rgba(14,7,30,0) 0%,
