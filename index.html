@@ -4287,14 +4287,20 @@
      gaan lopen. */
   #screen-settings .hub-sticky {
     /* Iets krapper dan de standaard 12/10: deze kop draagt drie regels en elke
-       pixel telt er dus driemaal zo zwaar. */
-    padding-top: 10px; padding-bottom: 8px;
+       pixel telt er dus driemaal zo zwaar. FASE 5D.1 haalde er nog een paar af,
+       verdeeld over alle vier de regels in plaats van uit één ervan -- gemeten
+       171 -> 162px. Alle drie de dingen (terug + titel, wie, wat) blijven staan,
+       en de winst komt uit de lúcht: geen enkel raakvlak is er kleiner van
+       geworden. De terugknop blijft 44, de tabbladen blijven 40, en het
+       kindkaartje gaat van 46 naar 44 -- de maat die in deze app overal de
+       ondergrens is (zie .icon-btn). */
+    padding-top: 9px; padding-bottom: 7px;
     transition: padding var(--t-snel) ease, background var(--t-snel) ease, box-shadow var(--t-snel) ease;
   }
   /* "Voor ouders" hoeft geen 24px te zijn -- dit scherm heeft geen titel nodig
      die het scherm draagt, alleen een naam. */
   #screen-settings .header-title { font-size: 21px; }
-  #screen-settings .hub-sticky .screen-header { margin-bottom: 2px; }
+  #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
   #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) ease; }
   #screen-settings .hub-sticky .screen-header,
   #screen-settings .who-row, #screen-settings .who-portrait,
@@ -4368,12 +4374,12 @@
      kaarten er weer ergens anders -- drie linkerkanten in één kop. Nu leest
      álles in dit scherm dezelfde --kolom, dus er is nog maar één linkerkant. */
   .who-row {
-    display: flex; gap: 6px; padding: 2px 2px; width: 100%; max-width: var(--kolom, 640px);
+    display: flex; gap: 6px; padding: 1px 2px; width: 100%; max-width: var(--kolom, 640px);
     overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
   }
   .who-row::-webkit-scrollbar { display: none; }
   /* hergebruikt .tab-btn uit de kleedkamer; alleen het portret is nieuw */
-  .who-btn { padding-left: 5px; gap: 8px; min-height: 46px; flex: none; }
+  .who-btn { padding-left: 5px; gap: 8px; min-height: 44px; flex: none; }
   .who-portrait { width: 34px; height: 34px; }
   .who-portrait svg { top: -4px; width: 58px; }
   /* Bewust NIET het blauw van .tab-btn.active: blauw betekent in deze app
@@ -4390,7 +4396,7 @@
     box-shadow: 0 3px 10px rgba(var(--purple-mid-rgb), .38), inset 0 0 0 1.5px rgba(255,255,255,.45);
   }
   .who-btn.active .who-portrait { border-color: var(--c-white); }
-  #settings-subtabs { margin-top: 7px; }
+  #settings-subtabs { margin-top: 6px; }
 
   .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--glass-black-26); width: 100%; max-width: var(--kolom, 640px); }
   .segmented button {
@@ -4439,7 +4445,13 @@
   /* "Wat oefenen" en "Hoe spelen" zijn de kern van dit scherm -- een paarse
      (structuur-kleur) icoonvulling + iets steviger kop zet ze visueel voorop
      t.o.v. de secundaire kaarten (Profiel, Gegevens beheren) eronder */
-  .set-card.primary { border: 1.5px solid var(--purple-light); }
+  /* FASE 5D.1 -- de rand was 1,5px vol --purple-light, en met drie kaarten onder
+     elkaar plus paarse chips erin was álles op dit scherm paars omlijnd. Verzadigd
+     paars is nu voorbehouden aan wat gekozen ís (chips), aan de kop en aan het
+     icoontegeltje; de buitenrand van een kaart is een haarlijn in dezelfde
+     papierkleur als de rest van het ouderdeel. Het verschil met .secundair zit
+     daarmee waar het hoort: in de kop en de tegel, niet in een kader. */
+  .set-card.primary { border: 1.5px solid var(--paper-border); }
   .set-card.primary .set-card-head .ico { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); color: var(--c-white); border-color: transparent; }
   .set-card.primary .set-card-head h2 { font-size: 19.5px; }
   /* FASE 5D -- de tegenhanger van .primary: alles wat ná de hoofdkeuzes komt
@@ -4512,10 +4524,30 @@
   .set-field + .set-field { margin-top: 15px; }
   .set-field .lbl { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
   .set-card .note, .set-field .note { font-size: 12px; color: var(--paper-ink-muted); font-weight: 500; }
+  /* FASE 5D.1 -- de uitleg bij een instelling stond als "(zo werkt dit)" ín het
+     label, op dezelfde regel. Op een telefoon werd dat één doorlopende dichte
+     regel van vet plus haakjes die over twee of drie regels afbrak, en dan is het
+     label zelf niet meer te vinden. Nu: het label op zijn eigen regel, de uitleg
+     eronder in één kleinere, gedempte zin.
+     De negatieve marge is de tegenhanger van de 7px gap van .set-field: label en
+     uitleg horen bij elkaar (3px), de chips eronder zijn iets anders (7px). */
+  .set-field .hulp {
+    font-size: 12px; font-weight: 500; color: var(--paper-ink-muted);
+    line-height: 1.3; margin-top: -4px;
+  }
   /* "Tafels van" only matters once Maal/Delen is on -- dimmed (not disabled: still
      tappable, so a parent can pre-select tables before turning the operation on) */
   .set-field.inactive { opacity: .5; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  /* FASE 5D.1 -- drie keuzes die samen één vraag beantwoorden ("hoe tonen we de
+     antwoorden?") horen op één regel te staan. Met de natuurlijke breedte viel
+     "🎲 Mix" op een telefoon van 390 als enige op een tweede regel, en dan leest
+     hij als een losse extra optie in plaats van als de derde van drie.
+     Gelijke delen met een bodembreedte: past het niet meer (een heel smal
+     venster of grote systeemletters), dan wikkelt het gewoon weer -- liever twee
+     nette regels dan drie samengeperste kolommen. Gemeten: op 320px past het
+     nog, op 280px wikkelt het. De vorm zelf staat bij .chip.gestapeld hieronder;
+     hier is alleen de naam van de rij, want .chip-row doet de rest al. */
   /* Bewerkingen (+ - x :) as a fixed 2x2 grid: +/- (optellen/aftrekken) and x/:
      (vermenigvuldigen/delen) are natural pairs, and the natural flex-wrap on
      narrow screens gave an unbalanced 3-then-1 instead. max-content columns
@@ -4542,8 +4574,13 @@
      comfortabel voor een volwassen vinger op een instellingenscherm). */
   .stage-chips { gap: 6px; }
   .stage-chips .chip { min-width: 36px; padding: 7px 10px; font-size: 15px; }
-  .chip.bereik { background: var(--lavender-wash); border-color: var(--purple-light); }
-  .chip.bereik:hover { background: var(--lavender-wash-3); }
+  /* FASE 5D.1 -- de band was een lavendel vulling MÉT een volle paarse rand, en
+     dan zie je elf paarse ringen in plaats van één doorlopend bereik. De rand is
+     nu een fractie van dezelfde paarse kleur (.22), dus hij hoort er wel bij maar
+     concurreert niet met de twee gekozen uiteinden -- die blijven vol paars en
+     dus onmiskenbaar de eindpunten. */
+  .chip.bereik { background: var(--lavender-wash); border-color: rgba(var(--purple-mid-rgb), .22); }
+  .chip.bereik:hover { background: var(--lavender-wash-3); border-color: var(--purple-light); }
   /* .on wint van .bereik: dezelfde volle paarse vulling als elke andere gekozen
      chip in de app, ook als hij binnen het bereik valt (en dat doet hij altijd). */
   .chip.bereik.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; }
@@ -4564,14 +4601,31 @@
      Het is nog steeds .chip -- zelfde kleuren, zelfde ronding, zelfde gekozen-
      stand -- alleen groter, met het icoon boven het woord en een vinkje op de
      gekozen kant. */
-  .mode-row { gap: 9px; }
-  .mode-row .chip.groot {
-    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
-    padding: 11px 8px; border-radius: var(--r-md); font-size: 15.5px;
+  /* Icoon bóven het woord, gelijke helften. Gedeeld door de moduskeuze (de
+     zwaarste keuze van het scherm) en de weergavekeuze in de stille kaart; het
+     verschil tussen die twee zit alleen in de maat, hieronder. Het blijft
+     .chip -- zelfde kleuren, zelfde ronding, zelfde gekozen-stand.
+     min-width is de vangrail: past het niet meer (een heel smal venster of grote
+     systeemletters), dan wikkelt de rij netjes in plaats van de woorden. */
+  .chip.gestapeld {
+    flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: var(--r-md);
   }
-  .mode-row .chip.groot .mc-ico { font-size: 24px; line-height: 1.1; }
-  .mode-row .chip.groot .mc-label { font-weight: 700; }
-  .mode-row .chip.groot.on .mc-label::after { content: ' ✓'; }
+  .chip.gestapeld .mc-ico { line-height: 1.05; }
+  .chip.gestapeld .mc-label { font-weight: 700; }
+  /* FASE 5D.1 -- de moduskeuze een slag lager: opgemeten 74 -> 62px (16%). Ze
+     was zo hoog dat ze als de hoofdknop van een spel las in plaats van als de
+     bovenste keuze van een instellingenscherm. Het raakvlak blijft ruim boven de
+     44px, en het icoon, het woord, het vinkje en de twee gelijke helften blijven
+     alle vier staan. */
+  .mode-row { gap: 9px; }
+  .mode-row .chip.gestapeld { gap: 2px; padding: 7px 8px 8px; font-size: 15px; min-width: 96px; }
+  .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
+  .mode-row .chip.gestapeld.on .mc-label::after { content: ' ✓'; }
+  /* Dezelfde vorm, een maat kleiner: drie op een rij op een telefoon van 390,
+     en op 320 wikkelt hij naar 2 + 1 in plaats van de woorden af te knijpen. */
+  .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: 13.5px; min-width: 78px; }
+  .drie-op-een-rij .chip.gestapeld .mc-ico { font-size: 17px; }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
@@ -4628,7 +4682,7 @@
      id-selector hierboven hem af (hogere specificiteit) en zou de openklapper
      in het maakformulier elf identieke rondjes tonen waar het ouderdeel een
      bereik laat zien */
-  #screen-newstar .chip.bereik { background: var(--lavender-wash); border-color: var(--purple-light); }
+  #screen-newstar .chip.bereik { background: var(--lavender-wash); border-color: rgba(var(--purple-mid-rgb), .22); }
   #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); }
   #screen-newstar .set-card { padding: 14px 16px; }
   #screen-newstar .set-reveal { margin-top: 13px; }
@@ -4713,15 +4767,17 @@
   /* De niveau-inschatting staat apart, achter een streepje: het is de enige
      afgeleide waarde op dit scherm en de enige die uitleg nodig heeft. */
   .niveau-blok { margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--paper-border); }
-  .niveau-blok .stat-line { margin-top: 0; }
-  /* Waar het kind nú mee bezig is. Dit is de regel die de vraag achter de
-     inschatting beantwoordt, dus hij mag een eigen vlakje: lavendel, zoals elk
-     ander "dit is de stand"-vlakje in het ouderdeel. */
+  .niveau-kop { font-size: 14px; font-weight: 700; color: var(--paper-ink); margin: 0 2px 8px; }
+  /* Waar het kind nú mee bezig is -- sinds fase 5D.1 het onderwerp van dit blok
+     in plaats van een voetnoot onder een percentage (zie niveauHtml). Vandaar een
+     maat groter dan een notitie, en een eigen lavendel vlakje zoals elk ander
+     "dit is de stand"-vlakje in het ouderdeel. */
   .niveau-bezig {
-    margin-top: 10px; padding: 9px 12px; border-radius: var(--r-sm);
-    background: var(--lavender-wash); font-size: 13px; font-weight: 500; color: var(--paper-ink);
+    padding: 10px 13px; border-radius: var(--r-sm);
+    background: var(--lavender-wash); font-size: 14px; font-weight: 500; color: var(--paper-ink);
   }
   .niveau-bezig b { color: var(--purple-mid); font-weight: 700; }
+  .niveau-blok .note { margin-top: 8px; }
 
   /* ---- Modal (oudervraag) ---- */
   /* De padding op de achtergrond is niet cosmetisch: zonder stond een venster van
@@ -5051,7 +5107,14 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeSettings()" aria-label="Terug" title="Terug">←</button>
-        <div class="header-title">👨‍👩‍👧 Voor ouders</div>
+        <!-- FASE 5D.1 -- het gezins-emoji stond hier vóór de titel en werd door
+             de meeste toestellen zwart-wit getekend: over een donkerpaarse balk
+             een grijs blokje, het enige ruwe ding in een verder gepoetst scherm.
+             "Voor ouders" zegt het zelf, dus het icoon is eruit. In het paneel
+             onder het tandwiel blijft het staan -- daar ligt het op een licht
+             tegeltje en wordt het wél in kleur getekend, en daar is het een
+             rij-icoon naast twee andere. -->
+        <div class="header-title">Voor ouders</div>
         <div class="header-right"><span class="saved-pill" id="settings-saved">✓<span class="sp-word"> Opgeslagen</span></span></div>
       </div>
       <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
@@ -5456,6 +5519,12 @@ const itemOr = (id, fallbackId) => item(id) || item(fallbackId);
 // en rendert <b> als echte opmaak.
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* Enkelvoud of meervoud, op één plek. FASE 5D.1: het ouderdeel telt zes dingen
+   ("5 shows gespeeld", "202 sommen gemaakt", "3 perfecte shows", ...) en die
+   stonden allemaal in het meervoud -- dus las een kind dat net begonnen was
+   "1 shows gespeeld". Het is één regel en geen taalbibliotheek: Nederlands
+   gebruikt het enkelvoud alléén bij precies 1, óók bij 0 ("0 shows"). */
+const mv = (n, enkel, meer) => (n === 1 ? enkel : meer);
 // Kleren eerst: het is een kleedkamer, de outfit is het sterartikel.
 // Icoon en woord staan los: de categorierij toont alleen het icoon, behalve bij
 // de categorie die aanstaat -- die zet er zijn woord bij (zie renderShop).
@@ -12430,9 +12499,9 @@ function statsPanelHtml(p) {
   const perfect = perfectCount(p);
   const answered = p.stats.correct + p.stats.wrong;
   const acc = answered ? Math.round(100 * p.stats.correct / answered) : 0;
-  const skill = Math.round(p.perf * 100);
   const isCount = p.settings.track === 'count';
-  const madeCap = isCount ? 'vragen gemaakt' : 'sommen gemaakt';
+  const madeCap = isCount ? mv(answered, 'vraag gemaakt', 'vragen gemaakt')
+                          : mv(answered, 'som gemaakt', 'sommen gemaakt');
   let practice;
   if (isCount) {
     // lees-vrije modus: geen zwakke-sommenlijst, maar in mensentaal wat het kind al kan
@@ -12457,7 +12526,7 @@ function statsPanelHtml(p) {
     // onderhoud zichtbaar maken: geleerde sommen komen later nog eens terug,
     // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
     const nLearned = Object.keys(p.learned || {}).length;
-    if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${nLearned === 1 ? 'som komt' : 'sommen komen'} later nog eens terug, om te controleren of het blijft zitten.</div>`;
+    if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later nog eens terug, om te controleren of het blijft zitten.</div>`;
   }
   /* FASE 5D -- niet alles is even belangrijk.
      Er stonden zes tegels in één raster, alle zes even groot en even zwaar: hoe
@@ -12472,36 +12541,43 @@ function statsPanelHtml(p) {
           UX-review: de kast is de plek waar je gaat kíjken hoe het ervoor staat.)
        3. HET NIVEAU -- apart, onder een streepje, met de fase erbij (zie
           niveauHtml). */
+  /* De trofeeteller is een breuk, en die is altijd meervoud: "1/18 trofeeën"
+     spreek je uit als "1 van de 18 trofeeën". De noemer komt uit
+     activeTrophies() -- dezelfde bron als de kop van de kast, zodat er nooit
+     twee verschillende totalen in de app kunnen staan. */
   const oogst = [
-    ['⭐', stars, stars === 1 ? 'ster' : 'sterren'],
-    ['🌟', perfect, perfect === 1 ? 'perfecte show' : 'perfecte shows'],
+    ['⭐', stars, mv(stars, 'ster', 'sterren')],
+    ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
     ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
   ].map(([ico, n, label]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${label}</span>`).join('');
   return `<div class="settings-panel"><div class="set-card">
     <div class="set-card-head"><div class="ico">📊</div>
       <div><h2>Voortgang van ${esc(p.name)}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
     <div class="stat-grid">
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
+      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">${mv(shows, 'show', 'shows')} gespeeld</div></div>
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
       <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
     </div>
     <div class="oogst-rij">${oogst}</div>
-    ${niveauHtml(p, skill)}
+    ${niveauHtml(p)}
     ${fluencyHtml(p)}
     ${practice}
   </div></div>`;
 }
-/* De niveau-inschatting, met genoeg eromheen om hem te kunnen lezen.
-   Er stond alleen "Niveau-inschatting -- 50%" met een balk eronder. Dat getal komt
-   uit p.perf: een eenvoudige, meelopende maat die het spel gebruikt om de
-   moeilijkheid bij te stellen, en niets meer. Zonder uitleg leest 50% als een
-   rapportcijfer ("mijn kind zit op de helft"), en dat is het niet.
+/* De niveau-inschatting -- en waarom er geen percentage meer staat.
+   FASE 5D.1. Hier stond "Niveau-inschatting -- 50%" met een half gevulde balk
+   eronder, en daaronder een regel die uitlegde dat dit géén schoolniveau is.
+   Dat is een gevecht dat de tekst niet kan winnen: een getal van honderd met een
+   balk eronder ís een rapportcijfer, wat er ook onder staat. Een ouder las
+   "mijn kind zit op de helft", en dat betekent p.perf niet -- het is een
+   meelopende interne maat waarmee het spel de vragen makkelijker of moeilijker
+   maakt, en hij zweeft de hele tijd rond het midden omdat hij dáárop stuurt.
 
-   Wat er nu bij staat is dus geen nieuwe meting -- aan het algoritme is niets
-   veranderd -- maar twee stukjes context: wat het getal ís, en waar het kind op
-   dit moment mee bezig is (modus + fase of bereik). Die laatste regel is het
-   antwoord op de vraag die een ouder eigenlijk stelt. */
-function niveauHtml(p, skill) {
+   Dus is het getal en de balk uit het scherm. Aan p.perf zelf is niets
+   veranderd: hij stuurt de moeilijkheid precies zoals hiervoor, hij wordt alleen
+   niet meer als cijfer getoond. Wat een ouder wél wil weten stond er al onder en
+   staat nu vooraan: waar haar kind op dit moment aan werkt. */
+function niveauHtml(p) {
   const s = p.settings;
   let bezig;
   if (s.track === 'count') {
@@ -12513,10 +12589,9 @@ function niveauHtml(p, skill) {
     bezig = `🎤 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
   }
   return `<div class="niveau-blok">
-    <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
-    <div class="stat-bar"><div style="width:${skill}%"></div></div>
-    <div class="note" style="margin-top:7px">Een ruwe maat die het spel zelf bijhoudt om de vragen makkelijker of moeilijker te maken. Geen schoolniveau en geen cijfer.</div>
+    <div class="niveau-kop">Niveau-inschatting</div>
     <div class="niveau-bezig">${bezig}</div>
+    <div class="note">Het spel past de moeilijkheid automatisch aan: het schuift mee met wat goed en fout gaat.</div>
   </div>`;
 }
 
@@ -12563,6 +12638,16 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
        3. DE NAMEN DOEN MEE. De legenda eronder is een rijtje in kolommen in
           plaats van een doorlopende alinea, en wat buiten het bereik valt staat
           gedempt -- met "start" en "max" als kaartje bij de twee grenzen. */
+  /* FASE 5D.1 -- drie keuzes die samen één vraag beantwoorden, dus drie gelijke
+     helften op één regel. Met het icoon náást het woord paste "🧸 Voorwerpen"
+     daar niet in (127px nodig, 105 beschikbaar op een telefoon van 390) en
+     wikkelde het woord half onder zijn eigen emoji. Het icoon staat daarom bóven
+     het woord -- dezelfde vorm als de moduskeuze bovenaan (.chip.gestapeld),
+     een maat kleiner omdat dit een optie in de stille kaart is en niet de
+     hoofdkeuze van het scherm. */
+  const reprChip = (v, ico, label, on) => chip(v,
+    `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span>`,
+    on, 'gestapeld');
   const lo = Math.min(Math.max(1, s.stage || 1), availMax);
   const hi = Math.min(Math.max(lo, s.stageMax || availMax), availMax);
   const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${pfx}${id}">${stageNums.map(v =>
@@ -12574,18 +12659,25 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
   if (s.track === 'count') return [{
     ico: '🔢', title: 'Fases', sub: 'Waar het begint, en hoe ver het mag groeien', html: `
       <div class="fr-zin">Begint bij <b>fase ${lo}</b>${hi > lo ? ` en mag meegroeien tot <b>fase ${hi}</b>` : ' en blijft daar'}.</div>
-      <div class="set-field"><span class="lbl">Startfase <span class="note">(hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
-      <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', s.stageMax)}</div>
+      <div class="set-field"><span class="lbl">Startfase</span><span class="hulp">Hier begint het.</span>${stageChips('set-stage', s.stage)}</div>
+      <div class="set-field"><span class="lbl">Hoogste fase</span><span class="hulp">Zover mag het spel groeien.</span>${stageChips('set-stagemax', s.stageMax)}</div>
       ${legend}`
   }, {
     ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden en lengte', secundair: true, html: `
-      <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6+: cijfers, minder stippensteun, redeneren)</span></span>
+      <div class="set-field"><span class="lbl">Cijfers tonen</span>
+        <span class="hulp">Cijfers, minder stippensteun en meer redeneren vanaf fase 6.</span>
         <div class="chip-row" id="${pfx}set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
-      <div class="set-field"><span class="lbl">Hoogste hoeveelheid <span class="note">(hoe ver de aantallen mogen groeien)</span></span>
+      <div class="set-field"><span class="lbl">Hoogste hoeveelheid</span>
+        <span class="hulp">Hoe ver de aantallen mogen groeien.</span>
         <div class="chip-row" id="${pfx}set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Antwoorden tonen als <span class="note">(mix: voorwerpen óf stippen, wisselt per vraag)</span></span>
-        <div class="chip-row" id="${pfx}set-repr">${chip('objects', '🧸 Voorwerpen', (s.repr || 'objects') === 'objects')}${chip('dots', '⚫ Stippen', s.repr === 'dots')}${chip('mix', '🎲 Mix', s.repr === 'mix')}</div></div>
-      <div class="set-field"><span class="lbl">🎤 Memory-spel <span class="note">(op de kaart: zoek de gelijke hoeveelheden)</span></span>
+      <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
+        <span class="hulp">Bij Mix wisselt het per vraag.</span>
+        <div class="chip-row drie-op-een-rij" id="${pfx}set-repr">${
+          reprChip('objects', '🧸', 'Voorwerpen', (s.repr || 'objects') === 'objects')}${
+          reprChip('dots', '⚫', 'Stippen', s.repr === 'dots')}${
+          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>
+      <div class="set-field"><span class="lbl">🎤 Memory-spel</span>
+        <span class="hulp">Op de kaart: zoek de gelijke hoeveelheden.</span>
         <div class="chip-row" id="${pfx}set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>`
@@ -12596,7 +12688,8 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
         <div class="chip-row ops-grid" id="${pfx}set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
       <div class="set-field"><span class="lbl">Getallen tot</span>
         <div class="chip-row" id="${pfx}set-max">${[10, 20, 50, 100].map(v => chip(v, v, s.max === v)).join('')}</div></div>
-      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
+      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van</span>
+        <span class="hulp">${tablesRelevant ? 'Voor ✖️ en ➗.' : 'Actief zodra ✖️ of ➗ aanstaat.'}</span>
         <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
   }, {
     ico: '🎮', title: 'Meer opties', sub: 'Antwoorden, lengte en extra uitdaging', secundair: true, html: `
@@ -12608,7 +12701,8 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
         </div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Extra uitdaging <span class="note">(verschijnt geleidelijk, pas als de gewone sommen goed gaan)</span></span>
+      <div class="set-field"><span class="lbl">Extra uitdaging</span>
+        <span class="hulp">Verschijnt geleidelijk, pas als de gewone sommen goed gaan.</span>
         <div class="chip-row" id="${pfx}set-extra">
           ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
           ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
@@ -12621,14 +12715,14 @@ function oefenSamenvatting(s) {
   if (s.track === 'count') {
     const top = countMaxStage(s);   // klemt al op stageMax én op de cijfers-uit-grens
     return `fase ${s.stage}${top > s.stage ? '–' + top : ''}`
-         + ` · hoeveelheden tot ${s.qmax || 10} · ${s.perLevel} vragen`;
+         + ` · hoeveelheden tot ${s.qmax || 10} · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
   }
   const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
   const modes = { kies: 'kiezen uit 4', typ: 'zelf typen', mix: 'afwisselend' };
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
   return `${s.ops.map(o => glyph[o] || o).join(' ')} · tot ${s.max}${tafels}`
-       + ` · ${modes[s.mode] || s.mode} · ${s.perLevel} vragen`;
+       + ` · ${modes[s.mode] || s.mode} · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
 /* FASE 5D -- vier beslissingen, en ze zijn niet even groot.
    Dit is het drukste scherm van het ouderdeel, en alle drie de kaarten stonden in
@@ -12655,7 +12749,7 @@ function oefenenPanelHtml(p, s) {
   // helften naast elkaar (.mode-row) in plaats van als twee pillen in een rij --
   // en de gekozene draagt een vinkje, zodat "dit staat aan" niet alleen van de
   // vulling hoeft te komen.
-  const modeChip = (v, ico, label) => `<button class="chip groot${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
+  const modeChip = (v, ico, label) => `<button class="chip gestapeld${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
     + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
   const modeCard = `
     <div class="set-card primary">
@@ -12701,7 +12795,8 @@ function oefenenPanelHtml(p, s) {
 
    Er is geen knop verplaatst en geen bevestiging weggehaald. */
 function appWideCardsHtml(hasStars) {
-  const vol = hasStars ? ' Nog plek voor ' + (MAX_PROFILES - Object.keys(db.profiles).length) + '.' : '';
+  const plek = MAX_PROFILES - Object.keys(db.profiles).length;
+  const vol = hasStars ? ` Nog plek voor ${plek} ${mv(plek, 'ster', 'sterren')}.` : '';
   const addCard = Object.keys(db.profiles).length >= MAX_PROFILES ? '' : `
     <div class="set-card secundair">
       <div class="set-card-head"><div class="ico">➕</div><div><h2>Nieuwe ster</h2><div class="sub">Nog een kind erbij.${vol}</div></div></div>
@@ -12750,7 +12845,7 @@ function beheerPanelHtml(p) {
       <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">De naam van deze ster</div></div></div>
       <div class="set-field"><label class="lbl" for="set-name">Naam</label>
         <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
-        <div class="note">Wijzigt meteen; met Enter is het veld klaar.</div></div>
+        <div class="note">Wijzigingen worden meteen opgeslagen.</div></div>
     </div>
     <div class="set-card secundair">
       <div class="set-card-head"><div class="ico">⚠️</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor ${esc(p.name)} — en niet terug te draaien</div></div></div>

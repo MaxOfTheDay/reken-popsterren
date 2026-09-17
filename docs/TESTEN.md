@@ -161,6 +161,23 @@ vastloopt.
 - **een ster maken vanuit Beheer** — komt terug in Beheer, bij de nieuwe ster, en
   begint niet stilletjes háár spel; afbreken maakt niets.
 
+Fase 5D.1 heeft er vier zaken bij gezet:
+
+- **enkelvoud en meervoud** — één show is "1 show gespeeld" en niet "1 shows";
+  nul is meervoud (dat is Nederlands), twee weer ook, en in de telmodus heet een
+  som een vraag. Eén regel (`mv`), dus dit bewaakt de regel en niet de tekst;
+- **de trofeeteller heeft één bron** — de noemer op Voortgang, de kop van de kast
+  en `activeTrophies().length` zijn hetzelfde getal, en er staat geen tweede
+  trofeelijst naast `TROPHIES`. Zonder deze controle lopen ze stil uit elkaar
+  zodra er een wereld bijkomt (`rebuildWorldBadges` zet er dan een trofee bij);
+- **de inschatting zonder percentage** — in het niveau-blok staat geen `%` en
+  geen balk meer, wél waar het kind nú aan werkt, en `p.perf` staat nog gewoon in
+  de opslag en beweegt nog gewoon mee met goede en foute antwoorden. Beide kanten
+  liggen vast: de presentatie is veranderd, het algoritme niet;
+- **drie weergavekeuzes op één regel** — op 390, 360 en 320px drie gelijke
+  kolommen met elk woord op één regel en een raakvlak van minstens 44px; op een
+  onmogelijk smal venster (280px) wikkelt de rij in plaats van de woorden.
+
 ### `test/kleedkamer.test.js` — de catalogus en het rek
 
 De laag ónder wat een kind in de kleedkamer ziet: `ITEMS`, `CATS` en de volgorde
@@ -245,6 +262,10 @@ minstens één suite opgemerkt:
 | een oefeninstelling schrijft op `db` i.p.v. op het profiel | ouderdeel |
 | wissen neemt de oefeninstellingen mee | ouderdeel |
 | de zichtbare fase-band loopt niet van start tot plafond | ouderdeel |
+| een teller staat weer vast in het meervoud | ouderdeel |
+| de trofeenoemer komt uit een tweede lijstje | ouderdeel |
+| het percentage komt terug bij de niveau-inschatting | ouderdeel |
+| de weergavekeuzes vallen weer over twee regels | ouderdeel |
 
 ## Wat er bij het schrijven opviel
 
