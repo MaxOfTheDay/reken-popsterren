@@ -195,6 +195,42 @@
 >   `--kop-plaat-vol`; the dead `--scene-scrim` token was removed.
 >
 > `assets/bg/landing.webp` remains unused on disk (see the 5A polish note above).
+>
+> **Phase 5E.1 (relative weight), outside this review.** Six small corrections after
+> looking at 5E on a phone. No screen was reopened and no new colour was added; five
+> of the six are a shared token moving one step.
+>
+> * *The milestone pill still had the proportions of a button.* It had lost the
+>   primary gradient in 5E but kept 16.5px type, 10px of vertical air and the full
+>   `--goud-gloed`, so on the result screen it still read as the first of two
+>   buttons. Now 15.5px / 7px, fill at `.88`, `--goud-gloed-zacht`, and the pulse
+>   moved out of the glow into the scale (`beloningKlop`, slower). The gift icon,
+>   the copy and the 44px target are untouched.
+> * *The nav scrim darkened the artwork too early.* It ramped straight from nothing
+>   to `.5` at 56%, so on the world map the bottom band of beach and sea went dark
+>   well before the bar. The gradient now has four stops with the knee much lower:
+>   `.05` at 34%, `.44` at 70%, `.62` at the edge. Measured on the map, 84px up from
+>   the bottom went from `.36` to `.05`; 30px up it stayed within a few points. The
+>   worst case is the tour, where Snoepwereld slides under the bar in full light —
+>   `Kleedkamer` still reads there.
+> * *Neutral cards still read as a grid of boxes.* `--vlak-rand` `.12` → `.07` and
+>   `--vlak-top` `.10` → `.07`. The fill is unchanged and still does the separating.
+>   The point is not the neutral cards: it is that cyan-previewed and gold-worn now
+>   have a quieter neighbour to stand out from.
+> * *The cabinet had no ladder inside gold.* A claimed trophy sat on `--goud-rand`
+>   (`.5`) — nearly the border weight of one that is ready to open — so six claimed
+>   cards made one gold field with the tappable one lost inside it. A new
+>   `--goud-rand-zacht` (`.28`) and a softer inner wash give `claimed < openable`.
+>   Same two rungs applied to the career ladder's `past` and `current` rows.
+> * *The career ladder's goal row read as neon.* Full `--gold-accent` at 2px across
+>   the panel with its own orange glow. Now `--goud-rand` + `--goud-tint` +
+>   `--goud-gloed-zacht`. Full gold stays where it already was on that panel: the
+>   `NU` pill and the bar running toward that rank.
+> * *Left alone on purpose:* the Journey (the fixed light trails read as ambient
+>   light, not glass — no change), the counting-mode replay button (cyan, 48px /
+>   40px on short screens, verified discoverable down to 320px), and bottom
+>   clearance on the wardrobe and cabinet, which measured 24px above the action tray
+>   and 43–91px above the nav at 320 / 390 / 412 and needed no change.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
