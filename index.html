@@ -3323,49 +3323,67 @@
      toestellen weer ruimte overhoudt. */
   .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 5cqw); transform: translateX(-50%);
     width: 19.5cqw; pointer-events: none; z-index: 2; }
-  .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
+  /* Een zachte rand-gloed die haar écht silhouet volgt (drop-shadow reageert op de
+     alpha van de tekening, dus de holtes tussen haar armen en haar lijf blijven
+     leeg) -- dat pakt beter tegen drukke tekeningen dan de losse schijf hieronder
+     alleen, omdat hij precies om háár heen zit en niet om een cirkel eronder.
+     Twee lagen, dicht dan wijd, warm dan violet: hetzelfde tweekleurenverhaal als
+     de schijf. Statisch, geen animatie -- dat is de constante scheiding; het
+     ademen hieronder is waar de aandacht vandaan komt. */
+  .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
+    filter: drop-shadow(0 0 3px rgba(255,250,235,.6)) drop-shadow(0 0 8px rgba(255,214,158,.4))
+            drop-shadow(0 0 15px rgba(var(--w-sky-rgb, 61,26,99), .3)); }
   /* De gloed: crème, ruim, en zonder rand -- hij mag nergens als vorm te zien zijn.
      Hij ligt achter haar (z-index 0 tegen de svg op 1), zodat hij haar kleuren niet
      wast.
 
-     Van 20cqw/42% naar 23cqw/54%. De reden is de tekening: op een lichte lucht of
-     tegen een waterval had 42% crème niet genoeg body om haar silhouet los te
-     maken van wat erachter staat, en dán is ze gewoon nóg een getekend figuurtje
-     op een kaart die er al vol mee staat. Ruimer én voller, maar nog steeds met
-     een lange staart naar doorzichtig -- een gloed met een zichtbare rand zou een
-     medaillon om haar heen zetten, en dat is precies wat ze niet moet worden.
+     Van 20cqw/42% naar 23cqw/54% naar 30cqw/52%. De reden is de tekening: op een
+     lichte lucht of tegen een waterval had crème niet genoeg body om haar
+     silhouet los te maken van wat erachter staat, en dán is ze gewoon nóg een
+     getekend figuurtje op een kaart die er al vol mee staat. Ruimer én voller,
+     maar nog steeds met een lange staart naar doorzichtig -- een gloed met een
+     zichtbare rand zou een medaillon om haar heen zetten, en dat is precies wat
+     ze niet moet worden.
 
      De rand van de gloed dooft nu in de violette avondlucht van de wereld
      (--w-sky-rgb, dezelfde tint als de gloed van de halte zelf, zie .reis-halte.nu
      hierboven) in plaats van in het niets: warm bij haar voeten, koel-violet aan de
      rand -- precies de twee kleuren die de opdracht voor haar vroeg.
 
-     Samen met de spotlight onder de halte (.tour-stop.next::after) vormt dit
-     één lichtbron: warm, laag, en op één plek op de kaart. */
+     Hij ademt nu mee met de spotlight onder de halte (.tour-stop.next::after,
+     zelfde 2,8s): dat blijft "één lichtbron" -- ze pulseren als één ding, niet als
+     twee dingen die om de beurt om aandacht vragen -- maar wél een lichtbron die
+     leeft, en dát is precies wat een stilstaande gloed tegen een drukke tekening
+     mist. */
   .tour-hero::before { content: ""; position: absolute; z-index: 0;
     left: 50%; bottom: 1.3cqw; transform: translateX(-50%);
-    width: 27.6cqw; height: 27.6cqw; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,247,220,.46), rgba(255,214,158,.24) 46%,
-                rgba(var(--w-sky-rgb, 61,26,99), .2) 68%, transparent 82%); }
+    width: 30cqw; height: 30cqw; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,247,220,.52), rgba(255,214,158,.28) 46%,
+                rgba(var(--w-sky-rgb, 61,26,99), .22) 68%, transparent 82%);
+    animation: heroGloed 2.8s ease-in-out infinite; }
+  @keyframes heroGloed {
+    0%, 100% { opacity: .82; transform: translateX(-50%) scale(1); }
+    50%      { opacity: 1;   transform: translateX(-50%) scale(1.07); }
+  }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven. Iets breder en donkerder
      dan eerst, zodat ze ook op een lichte ondergrond met beide voeten op de halte
      staat in plaats van erboven te zweven. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
     left: 50%; bottom: 0.26cqw; transform: translateX(-50%);
-    width: 13.85cqw; height: 3.46cqw; border-radius: 50%; background: rgba(12,2,26,.46); filter: blur(4px); }
+    width: 15cqw; height: 3.8cqw; border-radius: 50%; background: rgba(10,1,22,.54); filter: blur(4px); }
   /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
      halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
   .tour-hero .hero-vonk {
-    position: absolute; z-index: 2; top: 4%; right: -5%; width: 15%;
-    opacity: 0; animation: heroVonk 8.5s ease-in-out infinite;
+    position: absolute; z-index: 2; top: 4%; right: -5%; width: 16%;
+    opacity: 0; animation: heroVonk 6.5s ease-in-out infinite;
   }
   .tour-hero .hero-vonk svg { width: 100%; height: auto; display: block; fill: #fff7dc;
     filter: drop-shadow(0 0 4px rgba(255,225,140,.85)); }
   @keyframes heroVonk {
-    0%, 84%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
-    89%           { opacity: 1; transform: scale(1) rotate(10deg); }
-    95%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
+    0%, 80%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
+    86%           { opacity: 1; transform: scale(1.05) rotate(10deg); }
+    93%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
   }
   /* De halte waar zij staat gaat als geheel boven de andere haltes liggen. Zonder
      dit kan haar hoofd achter het medaillon van de halte erbóven verdwijnen: de
@@ -3888,6 +3906,7 @@
        zonder de ademende gloed is hij wat er nog overblijft om "hier speel je"
        te zeggen. Alleen het ademen ervan gaat uit. */
     .tour-stop.next::after { animation: none; opacity: .9; }
+    .tour-hero::before { animation: none; opacity: .92; transform: translateX(-50%); }
     /* De indrukveer gaat uit; de tik zelf blijft voelbaar via het filter op .dot,
        dat geen beweging is. */
     .tour-stop .stop-body, .tour-stop:active .stop-body { transition: none; }
