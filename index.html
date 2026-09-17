@@ -817,12 +817,29 @@
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
   }
 
-  /* De titel staat op de schil en niet meer in een tekening, dus de gloed eronder
-     mag zachter: hij hoeft zich nergens meer van los te maken. */
+  /* ---- De sterrenkeuze krijgt haar schilderij terug -----------------------
+     De schil hierboven blijft de sfeer voor de andere niet-wereldschermen; de
+     sterrenkeuze is weer het geschilderde startscherm (assets/bg/landing.webp).
+     Een sluier houdt tekst en kaarten leesbaar, en het masker laat de rand van
+     de tekening zacht in de schil overlopen in plaats van een harde snede. */
+  #screen-profile.app-sfeer::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      radial-gradient(120% 70% at 50% 62%, rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%),
+      url("assets/bg/landing.webp");
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+
+  /* De titel staat weer op de tekening, dus de gloed eronder mag weer zwaarder:
+     wit genoeg om van een lichte lucht los te komen, met een gouden gloed die
+     bij het licht in de tekening hoort. */
   #screen-profile .title {
     color: #fff;
-    text-shadow: 0 2px 0 rgba(24,6,44,.4), 0 4px 16px rgba(24,6,44,.55),
-                 0 0 22px rgba(255,198,120,.3);
+    text-shadow: 0 2px 0 rgba(24,6,44,.45), 0 4px 18px rgba(24,6,44,.6),
+                 0 0 26px rgba(255,194,61,.5);
   }
   /* ---- De sterrentegel ----------------------------------------------------
      Eén omhulsel per kind, met twee zones erin en niets ertussen:
