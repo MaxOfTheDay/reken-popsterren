@@ -6238,9 +6238,6 @@ function worldsSource() {
       if (v.op != null) d.push(`op: ${+v.op}`);
       if (d.length) L.push('    venue: { ' + d.join(', ') + ' },');
     }
-    if (w.badge && (w.badge.emoji || w.badge.name)) {
-      L.push(`    badge: { emoji: ${q(w.badge.emoji || '')}, name: ${q(w.badge.name || '')} },`);
-    }
     if (w.theme && Object.keys(w.theme).length) {
       L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
     }
@@ -8486,6 +8483,16 @@ function openOverlay(cls, html, opts) {
     if (opts.onClose) opts.onClose(ov);
     ov.classList.add('closing');
     setTimeout(() => ov.remove(), opts.fade || 250);
+    /* Ook bij het sluiten, en niet alleen bij het openen. Openen en sluiten horen
+       hetzelfde te doen: anders blijft na het wegtikken van een laag die op de
+       bódem van de app openging (waar terug verder niets betekent) een wachtpost
+       op de history staan, en kost het één extra druk op terug voordat er iets
+       gebeurt. Vandaag opent geen enkele laag daar -- alle vier komen ze van de
+       kaart of het eindscherm -- maar dat is een eigenschap van de vier
+       aanroepers en niet van deze functie. 'closing' staat er al, en backTarget
+       slaat een sluitende laag over: de vraag wordt dus over de stand ná het
+       sluiten gesteld. */
+    syncBackGuard();
   };
   syncBackGuard();   // de laag is nu het bovenste ding dat 'terug' moet sluiten
   return ov;
