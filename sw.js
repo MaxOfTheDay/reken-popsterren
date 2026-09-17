@@ -3,7 +3,7 @@
  *
  * Twee voorraden, en het verschil ertussen is de hele opzet:
  *
- *   SCHIL (rekenpop-v45)   het spel zelf: index.html, het manifest, de iconen.
+ *   SCHIL (rekenpop-v46)   het spel zelf: index.html, het manifest, de iconen.
  *                          Netwerk-eerst, want een nieuwe versie hoort gewoon
  *                          binnen te komen -- daar hoeft deze naam niet voor
  *                          omhoog. Gaat hij wél omhoog, dan wordt de oude
@@ -26,12 +26,9 @@
  *     een cache-eerst-voorraad betekent dat die wereld voorgoed stuk is; zie
  *     bewaar().
  */
-const CACHE = 'rekenpop-v45';
+const CACHE = 'rekenpop-v46';
 const ART_CACHE = 'rekenpop-art';
 const HUIDIG = [CACHE, ART_CACHE];
-/* Het startscherm heeft geen tekening meer maar een geschilderde CSS-schil
-   (zie .app-sfeer in index.html), dus er valt hier niets meer voor te cachen.
-   assets/bg/landing.webp staat nog op schijf voor de beeldgereedschappen. */
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 /* Hoe lang de schil op het net wacht voordat hij de bewaarde versie pakt. Een
    telefoon met één streepje laat een fetch minutenlang openstaan; zonder deze
