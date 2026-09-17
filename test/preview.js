@@ -18,7 +18,7 @@
  */
 const fs = require('fs');
 const http = require('http');
-const { execFile } = require('child_process');
+const { execFile, execFileSync } = require('child_process');
 const path = require('path');
 const os = require('os');
 const scene = require('./scene.js');
@@ -74,6 +74,30 @@ function assetsOpSchijf(dir, uit) {
   }
   return uit;
 }
+/* Welke beeldbestanden wijken af van wat er in het spel staat?
+   Een tekening wordt meteen naar schijf geschreven -- dat is met opzet, zie de
+   uitleg bij /asset -- maar daarmee vielen ze buiten élke verandering die de
+   studio meldde: "Wat verandert er" keek alleen naar het WORLDS-blok. Wie de
+   startschermachtergrond verving kreeg te horen dat er niets veranderd was,
+   terwijl het bestand op schijf een ander bestand was.
+
+   Git is hier de enige eerlijke bron: hij weet wat er in het spel staat en wat er
+   nu op schijf ligt, en hij blijft het weten nadat je de pagina hebt herladen --
+   een lijstje in de pagina zou dat vergeten. Per verzoek opnieuw, net als
+   dropped(): een bestand dat je buiten de studio om terugzet hoort ook te
+   verdwijnen zonder de server te herstarten. */
+function gewijzigdeAssets() {
+  try {
+    const uit = execFileSync('git', ['status', '--porcelain', '--', 'assets'],
+      { cwd: ROOT, encoding: 'utf8', maxBuffer: 4e6 });
+    return uit.split('\n').map(r => r.trim()).filter(Boolean).map(r => {
+      // "XY pad" -- en bij een hernoeming "R  oud -> nieuw": de nieuwe naam telt
+      const pad = r.slice(2).trim().split(' -> ').pop();
+      return pad.replace(/^"|"$/g, '');
+    }).filter(f => /^assets\//.test(f));
+  } catch (e) { return []; }   // geen git (los uitgepakt): dan meldt de studio niets
+}
+
 function studioData(state) {
   const lan = lanAdres();
   /* Wat er in incoming/ ligt, mét de plek waar het heen zou gaan. De studio zet het
@@ -88,7 +112,8 @@ function studioData(state) {
     v instanceof RegExp ? undefined : v)
     + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
     + ';window.__INCOMING=' + JSON.stringify(kandidaten)
-    + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {})) + ';<\/script>';
+    + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {}))
+    + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets()) + ';<\/script>';
 }
 
 function panel(state) {

@@ -897,12 +897,33 @@ function check(ok, label, detail) {
    *   2. het hart van het sterrentabje is vrij -- de score blijft leesbaar
    *   3. de overlap met het zichtbare blokje blijft binnen een opgemeten marge
    *
-   * Die marge is 20% en komt uit de meting, niet uit een gevoel. Hij staat er zodat
-   * een nieuwe wereld, een grotere knop of een ander toestel opvalt vóórdat een
-   * kind een halte niet meer kan vinden. Stand bij het schrijven, over alle werelden
-   * en de standaardslinger: 21:9 niets, Pixel 2%, 320px 2%, iPhone SE 17% (piraten
-   * halte 2, rechtsonder) en 30% op de standaardslinger -- die zet zijn eerste
-   * halte precies middenonder.            */
+   * FASE 7A -- de kaart wordt nu per wereld op scrollTop 0 gezet, en dát is het
+   * hele verschil. Hiervoor deed deze test dat niet: de eerste opbouw bij het
+   * laden schoof de kaart op een kort scherm 49px omhoog (renderTourMap zet de
+   * halte waar je nu staat in beeld), en die 49px bleven staan terwijl de test
+   * daarna wereld na wereld opnieuw tekende. Alles werd dus gemeten in een stand
+   * die de app zelf nooit aanneemt als je erheen loopt -- en precies die 49px
+   * verborgen dat op 320x568 het memoryknopje het hárt van halte 26 afdekte.
+   * Nagelopen met elementFromPoint: een tik daarop startte het memoryspel. Nu
+   * wordt gemeten waar de kaart écht tot stilstand komt.
+   *
+   * Sindsdien is het memoryknopje op een kort scherm zijn woord kwijt (zie
+   * .mem-fab in index.html) en is de terug-pil daar een maatje kleiner. Stand na
+   * die ingreep, opgemeten over alle werelden en de standaardslinger: 21:9 0%,
+   * iPhone 14 2% (ijs halte 33 achter het memoryknopje), iPhone SE 17% (piraten
+   * halte 26, hetzelfde knopje -- dáár is het scherm hoog genoeg om niet te
+   * krimpen) en 320px 27%. Die laatste is de standaardslinger, die zijn eerste
+   * halte precies middenonder zet, pal achter de terug-pil.
+   *
+   * Die marge van 30% komt dus uit de meting, niet uit een gevoel. Hij staat er
+   * zodat een nieuwe wereld, een grotere knop of een ander toestel opvalt vóórdat
+   * een kind een halte niet meer kan vinden.
+   *
+   * Punt 1 en 2 gelden hard voor elke geschréven wereld. Voor de standaardslinger
+   * geldt alleen de marge: die zet halte 1 middenonder en de terug-pil staat daar
+   * ook -- dat is niet op te lossen zonder de haltes te verplaatsen of de navigatie
+   * te verbouwen, en het is bovendien een noodlayout die in de app alleen voorkomt
+   * bij een wereld zonder eigen haltelijst.  */
   {
     const GRENS = 30;   // procent van het zichtbare blokje; zie hierboven
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone SE', 375, 667],
@@ -921,6 +942,11 @@ function check(ok, label, detail) {
         const uit = { memZichtbaar: false, hart: [], tab: [], ergste: 0, ergsteWie: '-' };
         const fab = document.getElementById('mem-fab');
         uit.memZichtbaar = getComputedStyle(fab).display !== 'none';
+        /* Op een kort scherm raakt de knop zijn woord kwijt (zie .mem-fab) -- maar
+           nooit wat hij oplevert: dat is de belofte waarvoor het bedrag erop kwam
+           te staan. Met de verkeerde selector (span i.p.v. > span) verdwijnt het
+           getal mee en staat er "💎" zonder cijfer. */
+        uit.memBedrag = /💎\s*\d+/.test(fab.innerText.replace(/\n/g, ' '));
         // één ronde extra op de standaardslinger -- zie 7e, hetzelfde recept
         const tot = WORLDS.length + 1;
         for (let wi = 0; wi < tot; wi++) {
@@ -932,6 +958,9 @@ function check(ok, label, detail) {
           p.level = first + 5;
           p.stars = {}; [3, 3, 1, 2, 0].forEach((s, i) => { p.stars[first + i] = s; });
           viewWorldIdx = wx; renderMapTitle(p); renderTourMap(0);
+          /* Waar de kaart écht tot stilstand komt als je hierheen loopt. Zonder deze
+             regel erft elke wereld de schuifstand van de vorige opbouw; zie de kop. */
+          document.getElementById('tour-map').scrollTop = 0;
           const id = worldForIndex(wx).world.id + (slinger ? '(slinger)' : '');
           const wb = document.getElementById('world-back');
           const zij = [{ id: 'memory', box: doos(fab) }];
@@ -949,8 +978,8 @@ function check(ok, label, detail) {
             const opp = (zicht[2] - zicht[0]) * (zicht[3] - zicht[1]);
             const punt = (box, x, y) => x > box[0] && x < box[2] && y > box[1] && y < box[3];
             zij.forEach(z => {
-              if (punt(z.box, (d[0] + d[2]) / 2, (d[1] + d[3]) / 2)) uit.hart.push(id + ' h' + s.dataset.lvl + ' <> ' + z.id);
-              if (cs) {
+              if (!slinger && punt(z.box, (d[0] + d[2]) / 2, (d[1] + d[3]) / 2)) uit.hart.push(id + ' h' + s.dataset.lvl + ' <> ' + z.id);
+              if (cs && !slinger) {
                 const cr = doos(cs);
                 if (punt(z.box, (cr[0] + cr[2]) / 2, (cr[1] + cr[3]) / 2)) uit.tab.push(id + ' h' + s.dataset.lvl + ' <> ' + z.id);
               }
@@ -964,12 +993,130 @@ function check(ok, label, detail) {
         return uit;
       });
       check(r.memZichtbaar, 'de memory-knop staat op de kaart van een telster — ' + naam, '');
+      check(r.memBedrag, 'de memory-knop noemt wat hij oplevert, ook als het woord eraf valt — ' + naam, '');
       check(r.hart.length === 0, 'geen zwevende knop dekt het hart van een halte af — ' + naam,
         r.hart.join(', '));
       check(r.tab.length === 0, 'geen zwevende knop dekt een sterrentabje af — ' + naam,
         r.tab.join(', '));
       check(r.ergste <= GRENS, 'de overlap van een zwevende knop blijft binnen de marge — ' + naam,
         r.ergste + '% bij ' + r.ergsteWie + ' (marge ' + GRENS + '%)');
+      await c.close();
+    }
+  }
+
+  /* ========== 7g · De wereldtekening dekt het scherm, hoe je ook schuift ==========
+   * FASE 7A. Op een kort scherm (max-height 620) stond onder het kader 48px lege
+   * ruimte in het scrollvak. Schoof je naar beneden, dan schoof de wereld die 48px
+   * het beeld uit en stond daar de achtergrond van de app: een egale roze-paarse
+   * band onderaan, met een kaarsrechte rand waar de tekening ophield. In élke
+   * wereld dezelfde kleur eronder -- want die kleur was <body>, niet de wereld.
+   *
+   * De regel die dat voorkomt is er één en hij geldt overal: .world-frame is nooit
+   * lager dan het scrollvak, en er staat níéts onder het kader. Op élke schuifstand
+   * is dus elke pixel van het scherm wereld.
+   *
+   * Gemeten op de twee uitersten van het schuifbereik, want daartussen kan het niet
+   * misgaan: het kader is één blok dat alleen omhoog en omlaag gaat. De maten zijn
+   * die waar iets ánders gebeurt -- 320x568 is het kortste scherm (daar viel het
+   * gat), 390x844 de gewone telefoon, 768x1024 de tablet (daar schuift het kader
+   * écht) en 844x390 de telefoon op zijn kant.                                    */
+  {
+    for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone SE', 375, 553],
+                                ['iPhone 14', 390, 844], ['21:9', 412, 915],
+                                ['tablet staand', 768, 1024], ['telefoon liggend', 844, 390]]) {
+      const c = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(c);
+      const page = await c.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await page.goto(APP_URL + '&demo&star=p1&screen=map');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        const map = document.getElementById('tour-map');
+        const gaten = [];
+        for (let i = 0; i < WORLDS.length; i++) {
+          const p = P(), first = WORLD_START[i];
+          p.level = first + 5; p.stars = {};
+          [3, 3, 1, 2, 0].forEach((s, n) => { p.stars[first + n] = s; });
+          viewWorldIdx = i; renderMapTitle(p); renderTourMap(0);
+          [0, map.scrollHeight].forEach(y => {
+            map.scrollTop = y;
+            const f = document.querySelector('.world-frame').getBoundingClientRect();
+            /* In liggende stand is het kader met opzet een podium mét rand -- daar
+               ligt de onscherpe wereld eronder (#screen-map::before/::after) en is
+               "dekt het scherm" een andere vraag. Die stand slaan we hier over. */
+            if (matchMedia('(min-aspect-ratio: 1/1) and (min-height: 600px)').matches) return;
+            if (f.top > 0.5 || f.bottom < innerHeight - 0.5 || f.left > 0.5 || f.right < innerWidth - 0.5) {
+              gaten.push(WORLDS[i].id + ' bij scroll ' + map.scrollTop + ': kader '
+                + Math.round(f.top) + '-' + Math.round(f.bottom) + ' in ' + innerHeight);
+            }
+          });
+        }
+        return gaten;
+      });
+      check(r.length === 0, 'de wereldtekening dekt het scherm op elke schuifstand — ' + naam,
+        r.join(' | '));
+      await c.close();
+    }
+  }
+
+  /* ========== 7h · De wereldpil is één knop, met een kindermaat ==========
+   * De wereldnaam in de kop is de ingang naar de hele tournee. Drie dingen moeten
+   * daarvoor waar zijn, en ze waren het alledrie niet altijd:
+   *   1. de naam én het routetekentje horen bij dezelfde knop -- een icoontje dat
+   *      eruitziet als een knop en het niet is, is erger dan geen icoontje
+   *   2. het raakvlak is minstens 44px hoog; de pil zelf is 34px, dus daar hoort
+   *      een onzichtbaar vlakje omheen (FASE 7A -- .world-pick::before)
+   *   3. de twee pillen ernaast blijven aanraakbaar: dat vlakje mag niets afpakken
+   * Over alle werelden, want de naam bepaalt de breedte.                         */
+  {
+    for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone 14', 390, 844],
+                                ['21:9', 412, 915], ['tablet staand', 768, 1024]]) {
+      const c = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(c);
+      const page = await c.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await page.goto(APP_URL + '&demo&star=p1&screen=map');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        const uit = { kleinste: Infinity, ico: [], buren: [], wie: '-' };
+        const pil = document.getElementById('map-tournee-label');
+        for (let i = 0; i < WORLDS.length; i++) {
+          viewWorldIdx = i; renderMapTitle(P());
+          const d = pil.getBoundingClientRect();
+          const cx = d.left + d.width / 2, cy = d.top + d.height / 2;
+          const raak = (x, y) => {
+            const e = document.elementFromPoint(x, y);
+            return !!(e && e.closest && e.closest('#map-tournee-label'));
+          };
+          let t = 0, b = 0;
+          while (t < 120 && raak(cx, cy - t - 1)) t++;
+          while (b < 120 && raak(cx, cy + b + 1)) b++;
+          if (t + b < uit.kleinste) { uit.kleinste = t + b; uit.wie = WORLDS[i].id; }
+          // het routetekentje hoort bij dezelfde knop als de naam
+          const svg = pil.querySelector('.wp-route');
+          const sr = svg && svg.getBoundingClientRect();
+          if (!sr || !raak(sr.left + sr.width / 2, sr.top + sr.height / 2)) uit.ico.push(WORLDS[i].id);
+          // en de buren blijven van zichzelf
+          [['.map-id-btn', document.querySelector('#screen-map .map-id-btn')],
+           ['.diamond-badge', document.querySelector('#screen-map .diamond-badge')]].forEach(([nm, el]) => {
+            const q = el.getBoundingClientRect();
+            const e = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2);
+            if (!(e && e.closest && e.closest(nm))) uit.buren.push(WORLDS[i].id + ' ' + nm);
+          });
+        }
+        return uit;
+      });
+      check(r.kleinste >= 44, 'het raakvlak van de wereldpil is minstens 44px hoog — ' + naam,
+        r.kleinste + 'px bij ' + r.wie);
+      check(r.ico.length === 0, 'het routetekentje opent dezelfde tournee als de naam — ' + naam,
+        r.ico.join(', '));
+      check(r.buren.length === 0, 'de wereldpil pakt geen tik af van het portret of de diamanten — ' + naam,
+        r.buren.join(', '));
+      // en hij doet ook echt wat hij belooft
+      await page.click('#map-tournee-label');
+      await page.waitForTimeout(500);
+      const reis = await page.evaluate(() => !!document.querySelector('#screen-journey.active'));
+      check(reis, 'een tik op de wereldpil opent de tournee — ' + naam, '');
       await c.close();
     }
   }
