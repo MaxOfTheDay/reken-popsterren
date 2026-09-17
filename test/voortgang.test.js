@@ -136,15 +136,18 @@ function check(ok, label, detail) {
       'C · de ster staat op de laatste halte die bestaat', JSON.stringify(r));
     r = await page.evaluate(() => ({
       kijkt: viewWorldIdx,
+      laatsteIdx: WORLDS.length - 1,
+      laatsteNaam: WORLDS[WORLDS.length - 1].name,
+      eindLevel: WORLD_LAST,
       nu: (document.querySelector('.tour-stop.next') || {}).dataset,
       haltes: document.querySelectorAll('.tour-stop').length,
       opSlot: document.querySelectorAll('.tour-stop.locked').length,
       naam: document.getElementById('map-tournee-label').textContent,
       art: !!WORLDS[WORLDS.length - 1].art,
     }));
-    check(r.kijkt === 5 && r.opSlot === 0 && r.nu && Number(r.nu.lvl) === 48,
+    check(r.kijkt === r.laatsteIdx && r.opSlot === 0 && r.nu && Number(r.nu.lvl) === r.eindLevel,
       'C · de toegift speelt op de gewone kaart van die wereld', JSON.stringify(r));
-    check(/Toverwereld/.test(r.naam) && r.art,
+    check(r.naam.indexOf(r.laatsteNaam) >= 0 && r.art,
       'C · met zijn eigen naam en zijn eigen tekening, geen nepwereld', JSON.stringify(r));
     // de laatste show nog eens spelen: dat is een toegift en geen voortgang
     const voor = await page.evaluate(() => __stand());
@@ -291,7 +294,14 @@ function check(ok, label, detail) {
         staart: Object.keys(q.tourStars || {}).map(Number).sort((a, b) => a - b),
         sterren: totalStarCount(q), verwacht, shows: playedCount(q), perfect: perfectCount(q),
         uit: WORLDS.map((w, i) => worldDone(q, i)), grens: frontierWorld(q), allesUit: allWorldsDone(q),
+        /* Welke werelden vielen hélemaal binnen het oude einde (level <= 48)?
+           Precies díe horen uit te zijn. Een wereld die later achteraan is
+           bijgeschreven staat op de levelnummers waar de staart stond, en hoort
+           voor dit kind juist leeg te zijn -- dat is de hele fase-4A-regel. */
+        binnen: WORLDS.map((w, i) => WORLD_START[i] + w.levels - 1 <= LEGACY_TOUR_END),
         trofees: q.trophies.slice(), gezien: (q.worldsSeen || []).slice(),
+        // waar ze staat is ook waar de onthullingen tot horen te lopen
+        gezienVerwacht: worldFor(q.level).index + 1,
       };
     });
     check(r.level === 49 && r.boven.length === 0,
@@ -300,11 +310,15 @@ function check(ok, label, detail) {
       'G · ze staan wél nog bewaard', JSON.stringify(r.staart));
     check(r.sterren === r.verwacht && r.shows === 59,
       'G · en tellen onverkort mee voor de rang en de shows-trofeeën', JSON.stringify(r));
-    check(r.uit.every(x => x) && r.allesUit && r.grens === -1,
-      'G · de zes echte werelden blijven gewoon uitgespeeld', JSON.stringify(r.uit));
+    check(r.uit.join() === r.binnen.join(),
+      'G · precies de werelden van vóór het oude einde blijven uitgespeeld',
+      JSON.stringify({ uit: r.uit, verwacht: r.binnen }));
+    check(r.binnen.every(x => x) ? (r.allesUit && r.grens === -1) : (!r.allesUit && r.grens >= 0),
+      'G · en de grens staat waar hij hoort', JSON.stringify([r.allesUit, r.grens]));
     check(r.trofees.join() === 'first,rookie3,worldtour',
       'G · behaalde trofeeën blijven onaangeroerd staan', JSON.stringify(r.trofees));
-    check(r.gezien.length === 6, 'G · en alle werelden gelden als al gezien -- geen rij onthullingen', JSON.stringify(r.gezien));
+    check(r.gezien.length === r.gezienVerwacht,
+      'G · en alles t/m waar ze staat geldt als al gezien -- geen rij onthullingen', JSON.stringify(r.gezien));
     // twee keer laden mag de staart niet nóg een keer opruimen
     await page.reload();
     await page.waitForTimeout(300);
@@ -313,17 +327,20 @@ function check(ok, label, detail) {
       staart: Object.keys(db.profiles.p1.tourStars).length,
       sterren: totalStarCount(db.profiles.p1),
     }));
-    check(weer.level === 49 && weer.staart === 11 && weer.sterren === r.verwacht,
+    check(weer.level === r.level && weer.staart === 11 && weer.sterren === r.verwacht,
       'G · en een tweede keer laden verandert er niets meer aan', JSON.stringify(weer));
     // ...en als er dán een wereld bijkomt, is die leeg
     const nieuw = await page.evaluate(() => {
+      const oudLast = WORLD_LAST;
       WORLDS.push({ id: 'piraten2', name: 'Testwereld', icon: '🧪', levels: 8 });
       rebuildWorldStarts();
-      const q = db.profiles.p1;
-      return { uit: worldDone(q, 6), grens: frontierWorld(q), eerste: WORLD_START[6],
-               sterrenDaar: [49, 50, 51].map(l => q.stars[l] || 0) };
+      const q = db.profiles.p1, i = WORLDS.length - 1;
+      return { uit: worldDone(q, i), idx: i, grensIsNietDeze: frontierWorld(q) <= i,
+               eerste: WORLD_START[i], verwachtEerste: oudLast + 1,
+               sterrenDaar: [0, 1, 2].map(k => q.stars[WORLD_START[i] + k] || 0) };
     });
-    check(!nieuw.uit && nieuw.grens === 6 && nieuw.eerste === 49 && nieuw.sterrenDaar.join() === '0,0,0',
+    check(!nieuw.uit && nieuw.grensIsNietDeze && nieuw.eerste === nieuw.verwachtEerste
+       && nieuw.sterrenDaar.join() === '0,0,0',
       'G · een wereld die later op die levelnummers komt, begint leeg', JSON.stringify(nieuw));
     await ctx.close();
   }

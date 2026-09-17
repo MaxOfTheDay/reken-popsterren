@@ -157,13 +157,13 @@ const BRUG = `globalThis.__api = {
   get cur() { return cur; },
   // werelden en voortgang
   item, itemOr, worldReleased, rebuildWorldStarts, rebuildWorldBadges,
-  worldFor, worldForIndex, worldProgress, worldStars, worldAvailable, worldDone,
+  worldFor, worldForIndex, worldProgress, worldAvailable, worldDone,
   frontierWorld, allWorldsDone, continueWorld, hereLevel,
   laatsteZichtbareWereld, meerWereldenVooruit, worldSeen, markWorldSeen,
   // beloningen en trofeeen
   beloningItem, beloningWereld, isBeloning, awardTrophy,
   grantWorldRewards, grantHistoricRewards, checkTrophies,
-  activeTrophies, isRetiredTrophy, earnedActiveCount,
+  activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText,
   // tellers
   totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount, starRank,
   // opslag

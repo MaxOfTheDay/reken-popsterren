@@ -84,9 +84,18 @@ zaak('C', () => {
   check(app.totalStarCount(q) === 48 * 2 + 11 * 3, 'C · zonder dat er één ster verdwijnt', app.totalStarCount(q));
   check(app.playedCount(q) === 59, 'C · en zonder dat er één show verdwijnt', app.playedCount(q));
   check(q.level === app.LEGACY_TOUR_END + 1, 'C · de positie wordt teruggezet naar het einde van de tournee', q.level);
-  check(app.allWorldsDone(q) && app.frontierWorld(q) === -1, 'C · alles wat er is, is uit',
-    [app.allWorldsDone(q), app.frontierWorld(q)].join('/'));
-  check(app.continueWorld(q) === 5, 'C · "verder" is de toegift op de laatste wereld', app.continueWorld(q));
+  /* Het bestand heeft sterren op level 1 t/m 48. Uit is dus precies elke wereld
+     die volledig binnen dat oude einde valt -- en niets daarbuiten. Zo geschreven
+     en niet als "alle zes": komt er ooit een wereld 7 in index.html, dan hoort
+     deze save daar juist níét in uitgespeeld te lijken, en dat is dezelfde regel. */
+  const binnenOudEinde = i => app.WORLD_START[i] + app.WORLDS[i].levels - 1 <= app.LEGACY_TOUR_END;
+  const uit = app.WORLDS.map((w, i) => app.worldAvailable(i) && app.worldDone(q, i));
+  check(app.WORLDS.every((w, i) => !app.worldAvailable(i) || uit[i] === binnenOudEinde(i)),
+    'C · precies de werelden van vóór het oude einde zijn uit', JSON.stringify(uit));
+  const grens = app.frontierWorld(q);
+  check(grens === -1 || !binnenOudEinde(grens), 'C · de grens ligt nooit in oud gebied', grens);
+  check(app.continueWorld(q) === (grens >= 0 ? grens : Math.max(0, app.WORLD_AVAIL - 1)),
+    'C · "verder" is de grens, of anders de toegift op de laatste wereld', app.continueWorld(q));
   // en een tweede keer openen doet er niets meer aan
   app.save();
   const weer = heropen(app);
@@ -108,29 +117,41 @@ zaak('D', () => {
   app.WORLDS.push({ id: 'test7', name: 'Testwereld', icon: '🧪', levels: 8, beloning: 'acc_wereld_muziek' });
   app.rebuildWorldStarts();
   app.rebuildWorldBadges();
-  check(app.WORLD_START[6] === 49 && app.WORLD_LAST === 56,
-    'D · de nieuwe wereld begint op 49 -- waar de staart stond', [app.WORLD_START[6], app.WORLD_LAST].join('/'));
+  /* De wereld die de levelnummers van de oude staart erft: de eerste die hélemaal
+     voorbij LEGACY_TOUR_END begint. Vandaag is dat de testwereld hierboven; staat
+     er ooit een echte wereld 7 in index.html, dan is dat díe -- en dan gaat deze
+     zaak over hem, want het is dezelfde vraag. Alles ervóór is "oud gebied". */
+  const erft = app.WORLDS.findIndex((w, i) => app.WORLD_START[i] > app.LEGACY_TOUR_END);
+  const oud = app.WORLDS.map((w, i) => i).filter(i => i < erft);
+  check(erft >= 0 && app.WORLD_START[erft] === app.LEGACY_TOUR_END + 1,
+    'D · de eerste nieuwe wereld begint op 49 -- waar de staart stond',
+    [erft, app.WORLD_START[erft]].join('/'));
   // ...en dan pas gaat het oude bestand open
   const ruw = F.oudEindeVanDeContent()[F.LS_KEY];
   app.run('localStorage.setItem(LS_KEY, ' + JSON.stringify(ruw) + '); load();');
   const q = app.db.profiles.p1;
-  check(!app.worldDone(q, 6), 'D · de nieuwe wereld is niet uitgespeeld', app.worldDone(q, 6));
-  check(app.worldProgress(q, app.worldForIndex(6)).gespeeld === 0, 'D · er staat geen enkele show in',
-    JSON.stringify(app.worldProgress(q, app.worldForIndex(6))));
-  check(app.frontierWorld(q) === 6 && app.continueWorld(q) === 6, 'D · hij is de nieuwe grens',
+  check(!app.worldDone(q, erft), 'D · de nieuwe wereld is niet uitgespeeld', app.worldDone(q, erft));
+  check(app.worldProgress(q, app.worldForIndex(erft)).gespeeld === 0, 'D · er staat geen enkele show in',
+    JSON.stringify(app.worldProgress(q, app.worldForIndex(erft))));
+  check(app.frontierWorld(q) === erft && app.continueWorld(q) === erft, 'D · hij is de nieuwe grens',
     [app.frontierWorld(q), app.continueWorld(q)].join('/'));
-  check([0, 1, 2, 3, 4, 5].every(i => app.worldDone(q, i)), 'D · de oude zes blijven uitgespeeld',
-    JSON.stringify([0, 1, 2, 3, 4, 5].map(i => app.worldDone(q, i))));
+  check(oud.every(i => app.worldDone(q, i)), 'D · de werelden van vóór het oude einde blijven uitgespeeld',
+    JSON.stringify(oud.map(i => app.worldDone(q, i))));
   check(Object.keys(q.tourStars).length === 11 && Object.keys(q.stars).length === 48,
     'D · de staartsterren gaan opzij en bezetten geen levels van de nieuwe wereld',
     [Object.keys(q.tourStars).length, Object.keys(q.stars).length].join('/'));
   check(app.totalStarCount(q) === 48 * 2 + 11 * 3, 'D · en er gaat geen ster verloren', app.totalStarCount(q));
   check(q.level === app.LEGACY_TOUR_END + 1, 'D · de positie blijft aan het oude einde staan', q.level);
-  check(accs(q).length === 6, 'D · er komt geen zevende spulletje bij van een lege wereld', JSON.stringify(accs(q)));
+  check(accs(q).length === oud.length,
+    'D · er komt geen spulletje bij van een lege wereld', JSON.stringify(accs(q)));
   // en de wereld blijft leeg tot ze hem écht speelt
-  for (let l = 49; l <= 56; l++) q.stars[l] = 2;
-  check(app.worldDone(q, 6) && app.allWorldsDone(q), 'D · pas als ze hem speelt is hij uit',
-    [app.worldDone(q, 6), app.allWorldsDone(q)].join('/'));
+  const v = app.worldForIndex(erft);
+  for (let l = v.first; l < v.first + v.levels; l++) q.stars[l] = 2;
+  check(app.worldDone(q, erft), 'D · pas als ze hem speelt is hij uit', app.worldDone(q, erft));
+  // ...en dan is de tournee weer uit, tenzij er nóg een wereld achter stond
+  check(app.allWorldsDone(q) === (erft === app.WORLD_AVAIL - 1),
+    'D · en daarmee is de tournee weer uit, als hij de laatste was',
+    [app.allWorldsDone(q), erft, app.WORLD_AVAIL - 1].join('/'));
 });
 
 /* ================= E · Van vóór de beloningen =================

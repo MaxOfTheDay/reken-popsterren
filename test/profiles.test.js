@@ -419,18 +419,33 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => {
       const naam = l => { const w = worldFor(l); return w.world.name + ' ' + w.nr + '/' + w.levels; };
       return {
-        grenzen: [1, 8, 9, 16, 17, 48].map(naam),
+        /* De randen van de eerste twee werelden plus het laatste level dat bestaat:
+           de plekken waar een verkeerde deling zich verraadt. Uit WORLD_START
+           gehaald, niet ingetikt -- een wereld erbij of een wereld van een andere
+           lengte hoort deze zaak niet om te gooien. */
+        grenzen: (() => {
+          const w0 = WORLDS[0], w1 = WORLDS[1];
+          return [1, w0.levels, w0.levels + 1, w0.levels + w1.levels,
+                  w0.levels + w1.levels + 1, WORLD_LAST].map(naam);
+        })(),
         /* Wat hier vastligt is de rekensom, niet wélke werelden er staan: de namen
            en de volgorde zijn van jou en mogen wijzigen zonder dat er een test
            omvalt. Daarom komt de verwachting uit WORLDS zelf, langs een ánder
            pad dan worldFor() -- die twee moeten hetzelfde zeggen. */
-        grenzenVerwacht: [1, 8, 9, 16, 17, 48].map(l => {
-          const w = WORLDS[Math.floor((l - 1) / 8)];
-          return w.name + ' ' + ((l - 1) % 8 + 1) + '/8';
-        }),
+        grenzenVerwacht: (() => {
+          const w0 = WORLDS[0], w1 = WORLDS[1];
+          const uitStart = l => {
+            let i = 0;
+            for (let k = 0; k < WORLD_START.length; k++) if (l >= WORLD_START[k]) i = k;
+            const w = WORLDS[i];
+            return w.name + ' ' + (l - WORLD_START[i] + 1) + '/' + w.levels;
+          };
+          return [1, w0.levels, w0.levels + 1, w0.levels + w1.levels,
+                  w0.levels + w1.levels + 1, WORLD_LAST].map(uitStart);
+        })(),
         // FASE 4A: voorbij het laatste level is er geen wereld meer maar een
         // toegift -- worldFor klemt op de laatste show van de laatste wereld.
-        staart: [49, 57, 100].map(naam),
+        staart: [WORLD_LAST + 1, WORLD_LAST + 9, WORLD_LAST + 52].map(naam),
         staartVerwacht: (() => { const w = WORLDS[WORLDS.length - 1]; return w.name + ' ' + w.levels + '/' + w.levels; })(),
         altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
         rondes: [1, 12, 13, 24, 25, 36, 37].map(tourRound),
@@ -978,7 +993,7 @@ function check(ok, label, detail) {
       // dezelfde vraag via de perfecte-wereldtrofee en via de oude sterrenteller
       const trofee = TROPHIES.filter(t => t.id === 'perfect-' + WORLDS[0].id)[0];
       uit.badgeVolgt = trofee.has(q) === v.vol;
-      uit.tellerVolgt = worldStars(q, w1).got === v.sterren;
+      uit.tellerVolgt = worldProgress(q, w1).sterren === v.sterren;
       q.stars[w1.first + 1] = 3;
       uit.pgVol = worldProgress(q, w1).vol === true;
 
