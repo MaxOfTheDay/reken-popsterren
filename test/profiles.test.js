@@ -797,8 +797,8 @@ function check(ok, label, detail) {
    * eigenschappen die je bij de volgende kleurronde ongemerkt weer kwijtraakt.
    *
    * Gemeten en niet aangenomen: knip het rondje uit een échte schermafdruk, en kijk
-   * naar een ring binnen de vulling -- buiten het cijfer, binnen de rand, zonder de
-   * hoek waar het slotje hangt. Twee dingen moeten daar waar zijn:
+   * naar een ring binnen de vulling -- buiten het cijfer, binnen de rand. Twee
+   * dingen moeten daar waar zijn:
    *   1. binnen één halte liggen de kleuren dicht bij elkaar (alleen het flauwe
    *      verloop van boven naar beneden); er ligt dus geen tekening en geen weg in
    *   2. álle haltes op slot, in álle werelden, hebben dezelfde kleur; de vulling
@@ -855,7 +855,6 @@ function check(ok, label, detail) {
           for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
             const dx = x - cx, dy = y - cy, af = Math.hypot(dx, dy);
             if (af < binnen || af > buiten) continue;
-            if (dx > 0 && dy < 0) continue;              // daar hangt het slotje
             const i = (y * cv.width + x) * 4;
             px.push([d[i], d[i + 1], d[i + 2]]);
           }
