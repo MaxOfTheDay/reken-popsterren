@@ -31,9 +31,9 @@
     --bg-glow-pink: rgba(255,120,220,.30); --bg-glow-blue: rgba(80,200,255,.24);
     --bg-glow-warm: rgba(255,164,60,.58);
 
-  /* Achtergrondtekeningen (assets/bg/). De sluier ligt er altijd overheen zodat
-     tekst en kaarten leesbaar blijven; zie docs/ART-PLAN.md. */
-  --scene-scrim: radial-gradient(120% 70% at 50% 62%, rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%);
+    /* (--scene-scrim stond hier: een sluier voor een geschilderde schermachtergrond.
+       Die achtergronden zijn er niet meer -- de schil (.app-sfeer) doet dat werk --
+       en het token werd nergens meer gelezen. Fase 5E heeft hem weggehaald.) */
 
     /* ---- Neutrals ---- */
     --c-white: #fff; --c-ink: #333;
@@ -226,8 +226,123 @@
     --e-2: 0 10px 26px var(--glass-black-35);
     --e-3: 0 14px 34px var(--glass-black-50);
 
-    /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ---- */
+    /* ---- De vlakken: drie families, en elke kaart hoort bij precies één ----
+       FASE 5E. Er stonden drie manieren om "een kaartje op een paarse achtergrond"
+       te schrijven, en ze verschilden net genoeg om als toeval te lezen:
+       het kleedkamerkaartje op wit .075 met een rand van .10 en een haarlijn licht
+       bovenin, de trofeekaart op wit .07 met een rand van .14 en géén haarlijn, en
+       de plank eronder op weer een ander wit. Op ware grootte ziet niemand het
+       verschil tussen .07 en .075 -- maar je voelt wel dat de kast en de kleedkamer
+       niet hetzelfde materiaal zijn, en dat is precies wat fase 5E wil oplossen.
+
+       Drie families, meer niet:
+         --vlak*    het NUTSKAARTJE. Een plankje, geen doos: bijna geen rand, één
+                    haarlijn licht bovenin, en het vlak zelf doet de rest. Van de
+                    kleedkamer en de trofeeënkast -- de twee verzamelschermen, en
+                    dus de twee die als broer en zus horen te lezen.
+         --paneel*  het ZWEVENDE PANEEL. Diep aubergine glas met waas erachter: het
+                    eindscherm, de ster-status, het wereldfeest, een trofeefeestje.
+                    Alles wat bóven een scherm hangt in plaats van erop te staan.
+         --kop-plaat  de PLAKKENDE KOP van een gebruiksscherm. Dezelfde nacht als
+                    het paneel, maar een slag paarser: een richel en geen ruit.
+       Wat níet in deze lijst staat is de zwevende kop van de wereldschermen -- die
+       heeft zijn eigen, veel lichtere stof (--hud-*, zie onder). Dat verschil is
+       wél opzet: een wereldscherm draagt zijn kop, een gebruiksscherm draagt hem
+       niet. */
+    /* FASE 5E.1 -- de rand nog een trap terug (.12 -> .07) en de haarlijn mee
+       (.10 -> .07). Zeventien kaartjes met een rand van .12 onder elkaar lezen nog
+       steeds als een ráster van dozen, en dat was precies wat "een plankje, geen
+       doos" wilde voorkomen. Het vlak zelf (--vlak) blijft ongewijzigd en doet het
+       scheidingswerk; wat weggaat is alleen de omlijning.
+       De winst zit niet op de neutrale kaartjes maar op de andere: cyaan "hier kijk
+       je naar" en goud "dit staat aan" hebben nu een stillere buurman om zich van
+       te onderscheiden, en dáármee betekent hun rand ineens iets. Zelfde effect in
+       de trofeeënkast, die dezelfde token leest. */
+    --vlak: rgba(255,255,255,.075);
+    --vlak-rand: rgba(255,255,255,.07);
+    --vlak-top: inset 0 1px 0 rgba(255,255,255,.07);
+    --vlak-hover: rgba(255,255,255,.15);
+    --paneel: rgba(32,8,54,.8);
+    --paneel-rand: rgba(255,255,255,.2);
+    --paneel-waas: blur(12px) saturate(1.15);
+    --kop-plaat: rgba(43,7,71,.82);
+    /* Dezelfde kop, maar dan dicht: zodra er inhoud onderdoor schuift wordt de
+       richel ondoorzichtig (zie de noot bij #screen-trophies.gescrold). De kast en
+       het ouderdeel deden dat allebei al, met twee verlopen die 7 punten van
+       elkaar lagen (#3b0b60/#220337 tegen #34094f/#250538) -- hetzelfde ding,
+       twee keer gegokt. Eén verloop, en het sluit aan op de open stand hierboven. */
+    --kop-plaat-vol: linear-gradient(180deg, #34094f, #230637);
+
+    /* ---- Goud als tóestand, niet als kleur ---------------------------------
+       FASE 5E. "Verdiend" werd op zes plekken geschreven en met vier verschillende
+       gouden grondtonen: 255,214,90 op de trofeekaart, 255,215,64 op de mijlpaal,
+       255,179,0 op het prijspilletje en 255,170,0 in de gloed eromheen. Elk voor
+       zich prima; naast elkaar in één kolom is het vier keer bijna-hetzelfde-goud,
+       en dan betekent goud niets meer.
+
+       Nu één grondtoon -- die van --gold-accent, het goud dat de app al voor
+       "verdiend" gebruikt -- in twee trappen, en de trap ís de betekenis.
+
+       FASE 5E.1 heeft die trap afgemaakt. Na 5E stond "behaald" (een trofee die je
+       al hebt) op bijna dezelfde randsterkte als "klaar om te openen", en in een
+       kast met acht kaarten was dat weer één gouden vlak waarin het ene kaartje dat
+       om een tik vraagt niet meer opviel. Dus:
+
+         BEZONKEN -- je hebt het, het is klaar, er hoeft niets meer
+           --goud-tint-zacht + --goud-rand-zacht (+ hooguit --goud-gloed-zacht)
+           behaalde trofee, gepasseerde rang
+         LUID -- hier moet je nú naar kijken
+           vol --gold-accent als rand + --goud-tint als vulling + --goud-gloed
+           klaarliggende trofee, het kledingstuk dat aanstaat, de volgende rang
+
+       Vol --gold-accent als VULLING blijft waar het altijd al voor was: het ene
+       ding op dit scherm dat om een tik vraagt.
+
+       LET OP -- het VERLOOP (--gold-cta-top/bottom + de lip) is hier bewust géén
+       onderdeel van. Dat is de hóófdknop, en sinds fase 5E niets anders: zie §4
+       van de fase-opdracht en de noot bij .gold-pill. */
+    --goud-rgb: 255,215,64;
+    --goud-tint-zacht: rgba(255,215,64,.09);
+    --goud-tint: rgba(255,215,64,.15);
+    --goud-rand-zacht: rgba(255,215,64,.28);
+    --goud-rand: rgba(255,215,64,.5);
+    --goud-gloed-zacht: 0 0 12px rgba(255,190,60,.24);
+    --goud-gloed: 0 0 16px rgba(255,190,60,.46);
+
+    /* ---- Emoji staan ergens op ---------------------------------------------
+       FASE 5E. De app tekent met emoji, en die komen plat en zonder eigen licht
+       binnen. Waar er een contactschaduw onder stond zag dat er goed uit -- en waar
+       niet (de drie iconen in de balk onderaan, de categorierij, de trofee op zijn
+       kaart, de rangen in de ster-status) plakten ze op het glas.
+
+       Twee sterktes, en het verschil is waar de emoji óp ligt:
+         --emoji-schaduw       op een vlak van de app (kaartje, pil, balk)
+         --emoji-schaduw-diep  op een tekening -- daar moet hij het winnen van een
+                               geschilderde ondergrond die zelf al licht en donker
+                               heeft
+       Hiervoor stonden er zeven varianten (1px/2px/3px op vijf verschillende
+       zwarten) zonder dat één ervan een reden had om anders te zijn dan zijn buur. */
+    --emoji-schaduw: drop-shadow(0 2px 3px rgba(8,2,20,.45));
+    --emoji-schaduw-diep: drop-shadow(0 2px 6px rgba(8,2,20,.72));
+
+    /* ---- Cyaan: "hier kijk je / dit staat aan" -----------------------------
+       De tegenhanger van goud, en het onderscheid is de hele afspraak: goud is
+       wat je verdíend hebt, cyaan is waar je nú bent. Een tabblad, een gekozen
+       categorie, het spulletje waar je naar kijkt -- alle drie hetzelfde licht.
+       Het stond er twee keer in twee sterktes (.26/.5 in de balk, .19/.62 op het
+       kaartje); dit is er één, ertussenin. De navigatie leest ze nog steeds via
+       --nav-sel, zodat dáár aan één knop te draaien blijft. */
+    --cyaan-tint: rgba(56,189,248,.22);
+    --cyaan-rand: rgba(143,214,255,.55);
+
+    /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ----
+       --btn-diep is de zachte contactschaduw eronder. .btn droeg die al ("0 8px 14px"
+       achter elke lip), de antwoordknoppen in het spel niet -- en juist die staan op
+       de donkere vloer van een zaal, waar een knop zónder contactschaduw op het
+       scherm geplakt lijkt in plaats van in de kamer te staan. FASE 5E geeft ze
+       dezelfde, en meteen als token: lip en diepte horen bij elkaar. */
     --btn-lip: 5px; --btn-lip-sm: 4px;
+    --btn-diep: 0 8px 14px var(--glass-black-30);
 
     /* ---- De veilige zone van het toestel, en de ruimte onder de balk ----
        FASE 5D. Dit stond vijf keer met de hand uitgerekend: de balk op bottom 10
@@ -271,8 +386,12 @@
     --nav-blur: 20px;
     --nav-ring: rgba(255, 255, 255, .15);
     --nav-shadow: 0 8px 26px rgba(8, 1, 20, .34);
-    --nav-sel: rgba(56, 189, 248, .26);
-    --nav-sel-ring: rgba(143, 214, 255, .5);
+    /* FASE 5E -- het cyaan komt uit de gedeelde --cyaan-*-familie hierboven, zodat
+       de balk, de categorierij en het gekozen kaartje letterlijk dezelfde kleur
+       "hier sta je" zeggen. Er blijft hier wél een eigen token staan: aan de balk
+       draaien zonder de rest mee te nemen moet één regel blijven. */
+    --nav-sel: var(--cyaan-tint);
+    --nav-sel-ring: var(--cyaan-rand);
     --nav-ink: 0 1px 2px rgba(10, 2, 24, .9), 0 0 8px rgba(10, 2, 24, .55);
 
     /* ---- Zwevende kop op de kaart ----
@@ -347,6 +466,20 @@
      in één regel, en meteen voor alles wat er later bijkomt. */
   [hidden] { display: none !important; }
   html, body { height: 100%; }
+  /* ---- De letter: vier gewichten, en meer bestaan er niet ------------------
+     FASE 5E. De <link> hierboven haalt Fredoka op in 400, 500, 600 en 700 -- dat
+     zijn álle gewichten die deze app heeft. In het blad stonden er ook 800, 900 en
+     "bold": zevenendertig regels die om een letter vroegen die nooit geleverd werd
+     en dus als 700 op het scherm kwam. Een naam op een trofeekaart (900) en de
+     naam van het kind op de sterrenkaart (800) waren daarmee precies even zwaar --
+     alleen kon je dat in de bron niet zien, en werd elke volgende regel een gok.
+
+     Nu staat er wat er ook echt gebeurt. De ladder is daarmee:
+       700  koppen, namen, knoplabels, getallen -- alles wat draagt
+       600  bijschriften, hulptekst, de stand onder een kaart
+       500  lopende tekst in het ouderdeel
+       400  wordt niet gebruikt en is de terugval van de browser
+     Er is niets kleiner of groter geworden; de bron liegt alleen niet meer. */
   body {
     font-family: "Fredoka", "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
     /* Eén lichtrichting voor de hele app: warm van onderen, koel in de lucht.
@@ -493,7 +626,7 @@
     font-family: inherit; font-size: 20px; font-weight: 600; color: var(--purple-shadow);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     border: none; border-radius: var(--r-md); padding: 14px 26px; cursor: pointer;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), 0 8px 14px var(--glass-black-30);
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
     transition: transform .08s, box-shadow .08s;
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
@@ -501,12 +634,12 @@
   /* .purple/.green/.gray zetten hun eigen achtergrond, dus ook expliciet hun
      eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
      gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is */
-  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
   .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.green { color: var(--c-white); background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.green { color: var(--c-white); background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   .btn.green:active { box-shadow: 0 1px 0 var(--green-shadow); }
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
-  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
+  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); }
   .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
   /* .small zet alleen de MAAT (en dus de kleinere lip); de kleur van die lip
      hoort bij de kleurvariant. Dat ging hier mis: .btn.small stond ná .btn.purple
@@ -596,6 +729,14 @@
       radial-gradient(74% 60% at 110% 108%, transparent 58%, rgba(255,176,96,.26) 65%, transparent 73%),
       radial-gradient(68% 54% at -10% 110%, transparent 59%, rgba(198,146,255,.22) 66%, transparent 74%),
       radial-gradient(80% 48% at 50% 50%, rgba(18,4,38,.5), rgba(18,4,38,.2) 58%, transparent 78%),
+      /* Het voetlicht. FASE 5E: <body> zet onder élk scherm een warme gloed laag in
+         beeld -- dat is de lichtrichting van de hele app (warm van onderen, koel in
+         de lucht) en je ziet hem op de wereldkaart, in de zaal en onderaan de reis.
+         De nacht hieronder dekte hem op de schilschermen juist af, en dus stond de
+         sterrenkeuze als enige scherm van de app in vlak violet zonder horizon.
+         Deze laag zet hem terug -- boven de nacht, onder de vegen, en breed genoeg
+         dat hij een horizon is en geen band. */
+      radial-gradient(146% 28% at 50% 103%, rgba(255,170,74,.34), transparent 72%),
       /* Het blauwe uur. De grondkleur van <body> loopt door élk scherm en is daar
          goed zoals hij is; buiten de werelden mag hij een paar trappen dieper,
          anders staat er violet licht waar nacht hoort te staan. Deze laag ligt
@@ -624,6 +765,20 @@
       radial-gradient(76% 30% at 50% 4%, rgba(255,209,150,.12), transparent 72%),
       radial-gradient(58% 40% at 50% 24%, rgba(255,196,130,.07), transparent 74%),
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.22), transparent 70%);
+  }
+  /* ---- De schil, maar dan in een vitrine ----------------------------------
+     FASE 5E. Zelfde soort variant als de kleedkamer hierboven, en met opzet in
+     dezelfde vorm geschreven: één licht van boven, één schaduw langs de onderrand.
+     Het verschil zit in de temperatuur. Een kaptafel is warm en breed (daar wordt
+     een gezicht uitgelicht); een vitrine is smaller en koeler, met een vleugje
+     goud precies waar de bovenste plank staat. Daarmee zijn de kleedkamer en de
+     kast herkenbaar broer en zus zónder hetzelfde scherm te worden. */
+  .app-sfeer.kast::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(64% 26% at 50% 2%, rgba(255,214,150,.10), transparent 74%),
+      radial-gradient(46% 34% at 50% 20%, rgba(190,170,255,.06), transparent 76%),
+      radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
   }
 
   /* De titel staat op de schil en niet meer in een tekening, dus de gloed eronder
@@ -756,9 +911,9 @@
   /* Hetzelfde wereldteken als op de reis en op de wereldkaart, en verder niets:
      een kind hoeft hier alleen te zien dát ze ergens anders is dan haar zus. */
   .st-ico { flex: none; line-height: 1; font-size: clamp(13px, 13cqw, 23px);
-            filter: drop-shadow(0 1px 3px rgba(8,2,20,.7)); }
+            filter: var(--emoji-schaduw); }
   .st-naam {
-    flex: 1; min-width: 0; font-weight: 800; letter-spacing: .01em; line-height: 1.15;
+    flex: 1; min-width: 0; font-weight: 700; letter-spacing: .01em; line-height: 1.15;
     font-size: clamp(13px, 14cqw, 25px);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: 0 1px 3px rgba(6,1,16,.8);
@@ -1053,7 +1208,7 @@
   .screen-header .header-right { justify-self: end; }
   /* één teller-pil, in twee maten: groot (schermkoppen) en klein (kaart-topbalk, spelbalk) */
   .diamond-badge, .chip-badge {
-    background: var(--glass-black-32); border-radius: var(--r-pill); font-weight: bold;
+    background: var(--glass-black-32); border-radius: var(--r-pill); font-weight: 700;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   }
   .diamond-badge { padding: 8px 18px; font-size: 22px;
@@ -1180,43 +1335,64 @@
   /* Gedeelde schil voor élk feest-/statuspaneel (ster-status, trofee-onthulling).
      Er waren hiervoor twee losse, bijna identieke regels; alleen de breedte
      verschilt nog, en dat zet de gebruiker zelf via een modifier. */
+  /* FASE 5E -- hetzelfde materiaal als de eindkaart (--paneel): diep aubergine glas
+     met waas erachter. Het stond op vol --purple-deep (#7b1fa2) met een rand van 3px
+     vol goud eromheen, en dat waren twee problemen tegelijk. Het violet was het
+     lichtste, felste vlak van de hele app -- naast een wereldkaart en naast de
+     eindkaart las het als een paneel uit een andere app. En de gouden rand was goud
+     als ómlijsting: precies het gebruik waar §4 van deze fase vanaf wil, want zolang
+     een heel paneel goud omrand is, is de gouden pil erin niets bijzonders meer.
+     Het goud blijft, maar waar het iets zegt: op de rang waar je nú staat, op het
+     doel erboven, op de "NU"-pil. Wat het paneel van het scherm losmaakt is
+     voortaan hetzelfde als bij elk ander zwevend vlak: licht langs de bovenrand,
+     een fijne ring, en een diepe schaduw eronder. */
   .pop-panel {
     position: relative; cursor: default; text-align: center;
-    padding: 20px 18px 16px; border-radius: var(--r-lg); border: 3px solid var(--gold-accent);
-    background: var(--purple-deep); box-shadow: var(--e-3);
+    padding: 20px 18px 16px; border-radius: var(--r-lg);
+    border: 1.5px solid var(--paneel-rand);
+    background: var(--paneel);
+    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
+    box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.12);
     animation: popIn .4s cubic-bezier(.2,1.3,.4,1);
   }
   .career-panel { width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; }
   .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
-    background: var(--glass-white-13); color: var(--c-white); font-size: 16px; font-weight: 800; }
-  .career-title { font-size: 15px; font-weight: 800; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
+    background: var(--glass-white-13); color: var(--c-white); font-size: 16px; font-weight: 700; }
+  .career-title { font-size: 15px; font-weight: 700; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
   /* Slanke ladder: één doorlopende lijst van laag naar hoog. Verleden gedimd met ✓,
      de huidige rung uitgeklapt met balk, de volgende als goud doel, de rest gedempt.
      Alleen bij 'nu' en 'volgende' staan getallen -- de rest blijft rustig. */
   .career-list { display: flex; flex-direction: column; gap: 5px; text-align: left; margin-top: 6px; }
   .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: var(--glass-white-10); }
-  .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; }
-  .lr-name { flex: 1; font-weight: 800; color: var(--c-white); font-size: 14.5px; }
+  .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; filter: var(--emoji-schaduw); }
+  .lr-name { flex: 1; font-weight: 700; color: var(--c-white); font-size: 14.5px; }
   /* Behaald = goud, maar bewust een slag zachter dan .trophy-card.done: een trofee
      is een prijs die blijft staan, een gepasseerde rang is voorgeschiedenis -- hier
      moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
-  .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
+  .ladder-row.past { opacity: .85; background: var(--goud-tint-zacht); border-color: var(--goud-rand-zacht); }
   .ladder-row.future { opacity: .36; }
   /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
      De balk vult richting déze tier (de /100 is zijn drempel), dus hij hoort hier. */
+  /* FASE 5E.1 -- de rand stond op vol --gold-accent en was daarmee de enige lijn in
+     de app die als neon las: een felgele omtrek van 2px over de volle breedte van
+     het paneel, met een eigen oranje gloed eromheen. Hij hoort op te vallen, maar
+     in de taal van de rest -- dus dezelfde gouden rand die "hier moet je naar
+     kijken" elders ook draagt, met de gedeelde vulling en de gedeelde zachte gloed.
+     Vol goud blijft op dit paneel waar het al zat: de NU-pil, en de balk die naar
+     deze rang toe loopt. */
   .ladder-row.goal { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
-    border: 2px solid var(--gold-accent); background: rgba(255,214,90,.13); box-shadow: 0 0 12px rgba(255,170,0,.28); }
+    border: 2px solid var(--goud-rand); background: var(--goud-tint); box-shadow: var(--goud-gloed-zacht); }
   .lr-top { display: flex; align-items: center; gap: 10px; }
   .ladder-row.goal .lr-emoji { font-size: 27px; width: 32px; }
   .ladder-row.goal .lr-name { font-size: 16px; }
-  .lr-bonus { font-size: 12.5px; font-weight: 800; color: var(--gold-light); flex: none; margin-left: auto; }
+  .lr-bonus { font-size: 12.5px; font-weight: 700; color: var(--gold-light); flex: none; margin-left: auto; }
   .lr-progress { display: flex; align-items: center; gap: 8px; }
   .lr-bar { flex: 1; height: 11px; border-radius: var(--r-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
   .lr-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); }
-  .lr-count { font-size: 12px; font-weight: 800; color: var(--c-white); flex: none; }
+  .lr-count { font-size: 12px; font-weight: 700; color: var(--c-white); flex: none; }
   /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
-  .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: rgba(255,214,90,.38); }
-  .lr-now { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
+  .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: var(--goud-rand-zacht); }
+  .lr-now { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
     background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .pop-panel { animation: none; } }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
@@ -1280,6 +1456,43 @@
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     border: 0; box-shadow: var(--nav-shadow), inset 0 0 0 1px var(--nav-ring);
   }
+  /* De veeg onder de balk. Hangt aan de bálk en niet aan een scherm, dus hij staat
+     er op élk scherm waar de balk staat -- kaart, reis, kleedkamer, kast -- en hij
+     kan niet vergeten worden als er ooit een vijfde bijkomt. Vast aan het venster
+     en nooit een blok: hij loopt naar niets uit, zodat het onderste stukje wereld
+     er gewoon doorheen te zien blijft.
+
+     Waarom hij toch bovenop de inhoud ligt terwijl hij z-index -1 draagt: .main-nav
+     is zelf een stapelcontext (fixed + z-index 40), dus -1 blijft daarbínnen -- net
+     achter de balk, maar ruim vóór elk scherm.
+
+     FASE 5E.1 -- de vorm van het verloop is verzet, niet zijn hoogte. Hij liep
+     rechtlijnig van niets naar .5 op 56%, en dat betekende dat het donker al ver
+     bóven de balk begon: op de wereldkaart werd de onderste band strand en zee een
+     donkere strook vóór je bij de balk was. Dat is precies één band te veel op het
+     mooiste scherm van het spel.
+
+     Nu ligt de knik veel lager. Tot ongeveer de bovenrand van de balk gebeurt er
+     bijna niets (.05), daarná zakt hij snel weg naar .6 aan de schermrand. De
+     tekening leeft dus door tot vlak boven de balk, terwijl er ónder de labels --
+     waar het om gaat, want daar staan de witte letters -- juist méér donker zit dan
+     in de rechte versie. Nagemeten op de kaart: op 84px van de onderrand ging de
+     veeg van .36 naar .05, en op 30px van de onderrand van .58 naar .52 -- onder de
+     labels dus vrijwel hetzelfde, erboven vier keer minder. Die ondergrens is de
+     lastigste van de vier schermen: op de reis schuift de Snoepwereld in vól licht
+     onder de balk door, en daar moet "Kleedkamer" nog steeds te lezen zijn.
+
+     Vier stops en geen twee: met twee kun je "bijna niets" en "snel weg" niet
+     tegelijk zeggen zonder er een rand van te maken. */
+  .main-nav::before {
+    content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+    height: calc(var(--balk-ruimte) + 44px);
+    background: linear-gradient(180deg,
+      rgba(14,7,30,0) 0%,
+      rgba(14,7,30,.05) 34%,
+      rgba(14,7,30,.44) 70%,
+      rgba(14,7,30,.62) 100%);
+  }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
     font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .82;
@@ -1291,7 +1504,7 @@
     background: transparent; border: none; border-radius: var(--r-md); padding: 6px 4px 5px; cursor: pointer;
     transition: transform .1s, background .15s, opacity .15s;
   }
-  .nav-item .nav-ico { font-size: 25px; line-height: 1.1; }
+  .nav-item .nav-ico { font-size: 25px; line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(.94); }
   /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
@@ -1377,25 +1590,25 @@
   .choice-btn {
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 18px 8px; border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     /* de snelste trede van de bewegingstaal: een antwoordknop moet indrukken
        vóórdat een kind zich afvraagt of de tik aankwam */
     transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
   .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
-  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow); }
+  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 13px 0; border-radius: var(--r-md);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
   }
   .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
+  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
-  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow); font-size: 22px; }
+  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
 
   /* ================= De zaal (fase 3.3: élke wereld) =========================
      Een show speelt in een plek, niet op een verloop. Deze laag maakt van het
@@ -1718,7 +1931,7 @@
   .cgroup.big .cg-dot { width: 34px; height: 34px; }
   .cgroup.mini { gap: 2px 3px; max-width: 74px; margin-top: 4px; }
   .cgroup.mini .cg-dot { width: 9px; height: 9px; background: rgba(255,255,255,.9); box-shadow: none; }
-  .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 800; color: var(--purple-shadow); }
+  .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 700; color: var(--purple-shadow); }
   .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
   @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
   /* In de telmodus is de gesproken opdracht de héle vraag. "Nog eens voorlezen"
@@ -1731,8 +1944,15 @@
     width: 48px; height: 48px; padding: 0; margin: 4px auto 2px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
     font-family: inherit; font-size: 22px; line-height: 1; color: var(--c-white);
-    border-radius: 50%; border: 2px solid var(--gold-accent);
-    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
+    /* FASE 5E -- de ring was vol --gold-accent. Dat is in deze app de kleur van
+       "verdiend", en hij zat hier op een hulpknop: nog eens voorlezen. Op het
+       telscherm was daarmee het luidsprekertje het enige gouden ding in beeld,
+       luider dan de twee antwoorden eronder waar het om gaat. Cyaan is de kleur
+       van bediening (dezelfde als de gekozen tab, de gekozen categorie en het
+       kaartje waar je naar kijkt), en dat is precies wat deze knop is. Vindbaar
+       blijft hij van zijn maat -- 48px, vol dekking -- en niet van zijn kleur. */
+    border-radius: 50%; border: 2px solid var(--cyaan-rand);
+    background: linear-gradient(180deg, var(--cyaan-tint), rgba(255,255,255,.07));
     box-shadow: 0 3px 0 var(--glass-black-28);
   }
   .replay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
@@ -1797,26 +2017,26 @@
   .df-dot.pop { animation: cpop .4s ease; }
   .df-dot.fade-out { animation: cfade .5s ease forwards; }
   /* Grote-cijferkaart (cijfer → hoeveelheid) */
-  .cq-bignum { font-size: clamp(52px, 15vw, 84px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
+  .cq-bignum { font-size: clamp(52px, 15vw, 84px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
   /* Één-meer/minder-badge naast de groep */
-  .cq-delta { font-size: 30px; font-weight: 800; margin-left: 6px; }
+  .cq-delta { font-size: 30px; font-weight: 700; margin-left: 6px; }
   .cq-delta.add { color: var(--green-deep); }
   .cq-delta.rem { color: var(--red-500); }
   /* Twee groepjes samen */
   .cq-combine { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
-  .cq-plus { font-size: 34px; font-weight: 800; color: var(--purple-shadow); }
+  .cq-plus { font-size: 34px; font-weight: 700; color: var(--purple-shadow); }
   /* Vervaagde cijfersteun (fase 6, hogere rung) */
   .cgroup.mini.faint { opacity: .35; }
   /* Gesteunde sommen (fases 9–11): de vergelijking a ＋/➖ b ＝ ? */
   /* cijfers + tekens op één gemeenschappelijke onderlijn; de stippen hangen er los
      onder (absoluut), zodat ze de uitlijning van de som niet scheeftrekken */
   .sum-eq { display: flex; align-items: baseline; justify-content: center; gap: 4px 10px; flex-wrap: wrap; max-width: 100%; }
-  .sum-op { font-size: clamp(26px, 6.5vw, 36px); font-weight: 800; color: var(--purple-shadow); }
-  .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 800; color: var(--purple-input-bottom); align-self: baseline; }
+  .sum-op { font-size: clamp(26px, 6.5vw, 36px); font-weight: 700; color: var(--purple-shadow); }
+  .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 700; color: var(--purple-input-bottom); align-self: baseline; }
   /* elke operand krijgt genoeg breedte om zijn eigen stippenraam eronder te dragen,
      zodat de raampjes van 7 en 3 elkaar niet overlappen */
   .sum-operand { position: relative; display: inline-block; min-width: 62px; padding-bottom: 30px; }
-  .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 800; color: var(--purple-shadow); line-height: 1; }
+  .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
   .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
   .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
   /* de cijfer-stippen (fase 10/11) staan als net rijtje ónder het cijfer, gecentreerd */
@@ -1838,7 +2058,7 @@
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
     min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform .07s, box-shadow .07s;
     /* de tegel is de maatstok voor alles wat erin staat (cqw hierboven): hoeveel
@@ -1847,11 +2067,11 @@
     container-type: inline-size;
   }
   .count-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow); }
-  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow); }
+  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
   .count-tile .cg-obj { font-size: 27px; }
   .count-tile .cg-dot { width: 20px; height: 20px; }
-  .count-tile .ct-num { font-size: 40px; font-weight: 800; line-height: 1; }
+  .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
 
   /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
   .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s cubic-bezier(.2,1.4,.4,1); }
@@ -1893,7 +2113,7 @@
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 4px 14px var(--glass-black-32);
   }
-  .mem-fab span { font-size: 11.5px; font-weight: 800; }
+  .mem-fab span { font-size: 11.5px; font-weight: 700; }
   /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning */
   .mem-fab .mem-pay { font-size: 10.5px; font-weight: 700; opacity: .88; letter-spacing: .01em; }
   .mem-fab:active { transform: scale(.95); }
@@ -1936,7 +2156,7 @@
      écht binnen de kaart past (geen transform:scale -- dan blijft de layout-box
      te groot en wordt de inhoud afgekapt). */
   .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 13cqw; }
-  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 30cqw; font-weight: 800; color: var(--purple-shadow); }
+  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 30cqw; font-weight: 700; color: var(--purple-shadow); }
   .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
   .mem-face .cframe { gap: 2.5px; }
   .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 12cqw; height: 12cqw; border-width: 1.5px; border-radius: 4px; }
@@ -2014,7 +2234,7 @@
   }
   .praise.docked .earn-chip { font-size: 14px; padding: 5px 12px; }
   .praise-headline {
-    font-size: clamp(19px, 5.4vw, 25px); font-weight: 800; color: var(--gold-light);
+    font-size: clamp(19px, 5.4vw, 25px); font-weight: 700; color: var(--gold-light);
     text-shadow: 0 0 12px var(--gold-cta-bottom), 0 2px 0 var(--glass-black-40);
     text-align: center; text-wrap: balance; line-height: 1.15;
   }
@@ -2099,7 +2319,7 @@
     animation: goldGlow 1s ease-in-out infinite alternate;
   }
   @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px var(--glass-black-30); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px var(--glass-black-30); } }
-  .gold-banner { font-size: 18px; font-weight: bold; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-cta-bottom); margin-top: 6px; height: 22px; }
+  .gold-banner { font-size: 18px; font-weight: 700; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-cta-bottom); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
      Er valt niets te scrollen. Het kader (.world-frame) heeft de beeldverhouding
@@ -2246,7 +2466,7 @@
     .tour-map { align-items: center; padding: 14px 0; }
     .world-frame { min-width: 0; min-height: 0;
       width: clamp(min(340px, 100cqw), 100cqh * var(--art-w) / var(--art-h), 100cqw);
-      border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
+      border-radius: var(--r-md); box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
     /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
        stond het portretje links en de diamanten rechts ergens in de onscherpe
        rand, terwijl de navigatiebalk eronder wél op podiumbreedte staat -- dan
@@ -2927,7 +3147,7 @@
        te zijn en geen app-paars. (Een achtergrond op een scrollvak schuift niet mee,
        dus die strook is alleen te zien zolang je bovenaan staat, en daar is de baan
        ook nacht.) */
-    background-color: #120820;
+    background-color: #180b2c;
     overscroll-behavior-y: contain;
     scrollbar-width: none;
   }
@@ -2937,15 +3157,11 @@
      er nog bij -- die hoort niet in de baan zelf, want dan zou hij meetellen in de
      stappen waar de route op gerekend is. */
   #screen-journey.hub { padding-bottom: var(--veilig-onder); }
-  /* Een veeg onder de balk, vast aan het venster. De navigatie zweeft boven de
-     reis en hoort dat te blijven doen, maar over een lichte wereldtekening heen
-     staat ze zonder dit op zichzelf. Loopt naar niets uit en wordt nooit een blok:
-     het onderste stukje kaart blijft er gewoon doorheen te zien. */
-  .reis-voet {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none;
-    height: calc(var(--balk-ruimte) + 38px);
-    background: linear-gradient(180deg, rgba(14,7,30,0), rgba(14,7,30,.46) 62%, rgba(14,7,30,.6));
-  }
+  /* (.reis-voet stond hier: de veeg onder de navigatiebalk. FASE 5E heeft er één
+     gedeelde veeg van gemaakt die aan de bálk hangt in plaats van aan dit scherm --
+     zie .main-nav::before. De reis was het enige scherm dat er een had, terwijl de
+     kleedkamer en de kast er het hardst om vroegen: dáár schoof "Zeemeermin" recht
+     achter het woord "Kleedkamer" langs.) */
   /* Dezelfde zwevende kop als op de kaart: geen dekkende balk over de lucht. Wél
      één zachte sluier eronder (::before), want hier schuift er iets ánders
      onderdoor -- een wereldtekening. Zonder sluier botst die op de titel; met deze
@@ -2971,8 +3187,8 @@
   #screen-journey .hub-sticky::before {
     content: ''; position: absolute; left: 0; right: 0; top: -22px; height: calc(100% + 62px);
     z-index: -1; pointer-events: none;
-    background: linear-gradient(180deg, #120820 0%, #120820 54%,
-                rgba(18,8,32,.72) 74%, rgba(18,8,32,0) 100%);
+    background: linear-gradient(180deg, #180b2c 0%, #180b2c 54%,
+                rgba(24,11,44,.72) 74%, rgba(24,11,44,0) 100%);
   }
   /* De titel draagt géén pil. Op de kaart wél -- daar staat hij over een getekende
      lucht en heeft hij zijn eigen ondergrond nodig -- maar hier ligt de sluier er
@@ -2981,15 +3197,27 @@
   #screen-journey .reis-titel { font-size: 18px; font-weight: 700; letter-spacing: .01em;
     display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
     text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 12px rgba(10,2,24,.7); }
-  /* De diamantpil en de terugknop houden hun vorm (die is app-breed), maar een slag
-     rustiger dan op de kaart: hier hoeven ze niet tegen een getekende lucht op. */
+  /* FASE 5E -- letterlijk de stof van de kaart en de zaal (--hud-*). Dit stond hier
+     met de hand nagemaakt: .34 vulling tegen de .30 van --hud-bg, een ring van .07
+     tegen .08, en géén schaduw. Niemand ziet die verschillen los; samen maakten ze
+     dat de reis "bijna" de kop van de kaart had -- en bijna is precies wat als
+     slordig leest. De terugknop deed hetzelfde: 38px met een schaduwlip, terwijl
+     élke andere ronde knop in de app 44px is en in de wereldschermen dezelfde
+     zwevende stof draagt als de pillen ernaast. Nu zijn de drie wereldschermen
+     (kaart, reis, zaal) één kop in drie standen. */
   #screen-journey .diamond-badge {
     height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: 17px;
-    background: rgba(28,6,52,.34); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
-  #screen-journey .icon-btn { width: 38px; height: 38px; font-size: 17px;
-    border-color: rgba(255,255,255,.2); box-shadow: 0 2px 0 var(--glass-black-28); }
+  #screen-journey .icon-btn {
+    font-size: 17px; border: 0;
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
+  }
+  #screen-journey .icon-btn:active { transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring); }
 
   /* ---- De baan ------------------------------------------------------------
      Eén oppervlak, drie lagen, en geen ervan hoort op te vallen:
@@ -3008,12 +3236,29 @@
     background-image:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cg fill='%23fff' fill-opacity='.5'%3E%3Ccircle cx='58' cy='96' r='1.3'/%3E%3Ccircle cx='214' cy='41' r='.9'/%3E%3Ccircle cx='377' cy='138' r='1.5'/%3E%3Ccircle cx='523' cy='72' r='1'/%3E%3Ccircle cx='121' cy='247' r='1.1'/%3E%3Ccircle cx='298' cy='312' r='.8'/%3E%3Ccircle cx='449' cy='268' r='1.4'/%3E%3Ccircle cx='601' cy='349' r='1'/%3E%3Ccircle cx='37' cy='431' r='1.2'/%3E%3Ccircle cx='187' cy='519' r='.9'/%3E%3Ccircle cx='341' cy='463' r='1.3'/%3E%3Ccircle cx='492' cy='577' r='1'/%3E%3Ccircle cx='247' cy='611' r='1.1'/%3E%3Ccircle cx='565' cy='191' r='.9'/%3E%3C/g%3E%3C/svg%3E"),
-      linear-gradient(to top, #2b1338 0%, #1d0d2e 22%, #160a26 56%, #110720 100%);
-    background-size: 160px 160px, 640px 640px, 100% 100%;
-    background-repeat: repeat, repeat, no-repeat;
+      /* FASE 5E -- de lichtvegen van de schil, hier ín de baan. De sterrenkeuze, de
+         kleedkamer en de kast staan alle drie in dezelfde ruimte: een koele veeg
+         linksboven, een warme rechtsonder, allebei grotendeels búiten beeld zodat
+         er alleen een boog van te zien is. De reis had die niet en was daardoor het
+         enige scherm van de app dat in vlakke nacht stond -- tussen een violette
+         sterrenkeuze en zes geschilderde werelden in, precies de brug die het
+         minst overtuigde. Vast aan het venster (background-attachment), zodat het
+         licht blijft staan terwijl de reis eronder langs schuift: dan is het licht
+         ín de kamer en niet geverfd op de baan. */
+      radial-gradient(58% 26% at -12% 6%, transparent 57%, rgba(128,226,255,.2) 65%, transparent 73%),
+      radial-gradient(64% 30% at 112% 92%, transparent 57%, rgba(255,176,96,.22) 65%, transparent 73%),
+      /* De nacht zelf. Twee trappen lichter en een slag paarser dan hiervoor
+         (#110720 -> #180b2c onderaan de lucht): op #11 was dit het donkerste vlak
+         van de hele app, donkerder dan de schil en veel donkerder dan elke
+         wereldkaart, en dan leest de reis als een gat tussen twee lichte schermen
+         in plaats van als de nacht waarin ze allemaal staan. */
+      linear-gradient(to top, #37184a 0%, #27123c 22%, #1d0d31 56%, #180b2c 100%);
+    background-size: 160px 160px, 640px 640px, 100% 100%, 100% 100%, 100% 100%;
+    background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat;
+    background-attachment: scroll, scroll, fixed, fixed, scroll;
     /* de korrel wrijft in de nacht in plaats van er grijs overheen te liggen; de
        sterren blijven gewoon sterren */
-    background-blend-mode: soft-light, normal, normal;
+    background-blend-mode: soft-light, normal, normal, normal, normal;
   }
   /* Het voetlicht onderaan: de reis komt ergens vandaan. Warm, breed, en zo zwak
      dat het geen band wordt. */
@@ -3107,8 +3352,12 @@
       rgba(var(--w-glow-rgb, 255,216,128), .34),
       rgba(var(--w-sky-rgb, 61,26,99), .2) 50%, transparent 78%);
   }
+  /* FASE 5E -- --r-md en niet een eigen 18px. De bestemming op de reis, het venster
+     om de wereldkaart in liggende stand (.world-frame) en de sterrentegel op het
+     startscherm zijn alle drie hetzelfde ding: een tekening in een kader. Ze stonden
+     op 18, 16 en --r-md -- drie rondingen voor één vorm. */
   .reis-plaats {
-    position: absolute; inset: 0; border-radius: 18px; overflow: hidden;
+    position: absolute; inset: 0; border-radius: var(--r-md); overflow: hidden;
     display: flex; align-items: center; justify-content: center;
     background-color: var(--w-deep, #2a0c47);
     /* draagt zichzelf als er (nog) geen tekening is -- net als .world-frame.no-art */
@@ -3122,7 +3371,7 @@
   .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%; }
   /* alleen als er nog geen tekening is: het wereldteken draagt de kaart */
   .reis-ico { position: relative; font-size: calc(var(--kaart-h) * .34); line-height: 1;
-    filter: drop-shadow(0 2px 6px rgba(8,2,20,.75)); }
+    filter: var(--emoji-schaduw-diep); }
 
   /* De naam en de sterren liggen ín de tekening, op een veeg die van niets naar
      donker loopt. Dat is één ding in plaats van drie, en het scheelt de hele
@@ -3135,7 +3384,7 @@
     background: linear-gradient(180deg, transparent, rgba(10,3,24,.62) 38%, rgba(10,3,24,.88));
   }
   .rn-tekst { flex: 1; min-width: 0; text-align: left;
-    font-size: 12.5px; font-weight: 800; letter-spacing: .005em; line-height: 1.1;
+    font-size: 12.5px; font-weight: 700; letter-spacing: .005em; line-height: 1.1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: 0 1px 3px rgba(6,1,16,.95); }
   /* De sterrenteller. Het teken doet het werk, het getal is de bijzin: een kind van
@@ -3143,7 +3392,7 @@
      niet ⭐, om dezelfde reden als op de wereldkaart -- een emoji wordt per toestel
      anders getekend, en naast elkaar valt dat op. */
   .reis-sterren { flex: none; display: inline-flex; align-items: center; gap: 3px;
-    font-size: 10.5px; font-weight: 800; color: var(--gold-light); white-space: nowrap;
+    font-size: 10.5px; font-weight: 700; color: var(--gold-light); white-space: nowrap;
     text-shadow: 0 1px 3px rgba(6,1,16,.95); }
   .reis-sterren svg { width: 11px; height: 11px; display: block; flex: none;
     fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.1; }
@@ -3157,7 +3406,7 @@
     position: absolute; right: 7px; top: 7px; z-index: 3;
     width: 21px; height: 21px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11.5px; font-weight: 900; line-height: 1; color: var(--gold-light);
+    font-size: 11.5px; font-weight: 700; line-height: 1; color: var(--gold-light);
     background: rgba(18,7,34,.72);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
@@ -3272,7 +3521,7 @@
   .reis-vervolg {
     position: absolute; left: 50%; top: 38%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 6px; white-space: nowrap;
-    font-size: 13px; font-weight: 800; letter-spacing: .02em; padding: 6px 13px; border-radius: var(--r-pill);
+    font-size: 13px; font-weight: 700; letter-spacing: .02em; padding: 6px 13px; border-radius: var(--r-pill);
     color: var(--lavender-text); background: rgba(32,12,58,.6);
     border: 1px solid var(--glass-white-22); text-shadow: var(--hud-ink);
   }
@@ -3387,7 +3636,7 @@
   }
   #screen-trophies.gescrold .hub-sticky {
     padding-top: 8px; padding-bottom: 7px;
-    background: linear-gradient(180deg, #3b0b60, #220337);
+    background: var(--kop-plaat-vol);
     backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
     box-shadow: var(--e-3);
   }
@@ -3400,18 +3649,21 @@
   /* Een plank: een eigen vlak met lucht eromheen, zodat de vier groepen echt vier
      groepen zijn. Ruimer dan voorheen (was 6/12/13 met 14 marge) -- dat was krap
      omdat er acht planken op het scherm moesten; met vier mag het ademen. */
+  /* FASE 5E -- de plank is de rústigste van de drie vlakken: hij is een groep en
+     geen kaartje, dus hij ligt een halve trap onder het nutskaartje erin. Dezelfde
+     haarlijn licht bovenin als elk ander vlak in de app (--vlak-top). */
   .shelf {
-    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.14));
+    background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(0,0,0,.14));
     border: 1px solid var(--glass-white-13);
     border-radius: var(--r-lg); padding: 14px 13px 16px; margin: 16px 0 0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    box-shadow: var(--vlak-top);
   }
   .shelf:last-of-type { margin-bottom: 4px; }
   /* Plank compleet: één zacht gouden randje, en verder niets. Geen teller die
      "5 van 5" zegt -- dat staat al op de vijf gouden kaartjes eronder. */
-  .shelf.full { border-color: rgba(255,214,90,.42); box-shadow: inset 0 1px 0 rgba(255,241,190,.16); }
+  .shelf.full { border-color: var(--goud-rand); box-shadow: inset 0 1px 0 rgba(255,241,190,.16); }
   .shelf-title { margin: 0 2px 12px; }
-  .shelf-naam { font-size: 16.5px; font-weight: 900; letter-spacing: .01em; text-shadow: 0 1px 0 var(--glass-black-25); }
+  .shelf-naam { font-size: 16.5px; font-weight: 700; letter-spacing: .01em; text-shadow: 0 1px 0 var(--glass-black-25); }
   .shelf-note { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .78; margin-top: 2px; line-height: 1.25; }
   /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: planken hebben
      een oneven aantal kaartjes, en CSS Grid geeft elke rij dezelfde kolomposities --
@@ -3421,18 +3673,22 @@
      kaart heeft niemand om de breedte mee te delen en zou anders zichtbaar bréder
      worden dan de kaarten erboven -- precies op de plek waar hij al als enige
      gecentreerd staat. Een kaart wisselt nergens in deze app van formaat. */
+  /* FASE 5E -- letterlijk hetzelfde plankje als het kleedkamerkaartje (--vlak*),
+     inclusief de haarlijn licht bovenin die hier ontbrak. De kast en de kleedkamer
+     zijn de twee verzamelschermen van de app; ze horen van hetzelfde hout te zijn. */
   .trophy-card {
     position: relative; flex: 0 1 calc(50% - 5px); max-width: 210px;
-    background: rgba(255,255,255,.07);
-    border: 2px solid var(--glass-white-14);
+    background: var(--vlak);
+    border: 2px solid var(--vlak-rand);
     border-radius: var(--r-md); padding: 13px 9px 12px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch; gap: 1px;
+    box-shadow: var(--vlak-top);
     transition: filter .12s, transform .07s;
   }
   .trophy-card:hover { filter: brightness(1.1); }
   .trophy-card:active { transform: scale(.97); }
-  .trophy-card .temoji { font-size: 38px; line-height: 1; height: 44px; display: grid; place-items: center; }
-  .trophy-card .tname { font-size: 15px; font-weight: 900; margin-top: 3px; line-height: 1.14; }
+  .trophy-card .temoji { font-size: 38px; line-height: 1; height: 44px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
+  .trophy-card .tname { font-size: 15px; font-weight: 700; margin-top: 3px; line-height: 1.14; }
   .trophy-card .tdesc { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .8; margin-top: 3px; line-height: 1.2; }
   /* drie kolommen zodra de plank het comfortabel trekt, vier op tabletbreedte */
   @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
@@ -3444,7 +3700,7 @@
   .trophy-card.fresh .temoji, .trophy-card.busy .temoji { opacity: .55; }
   .trophy-card.fresh .tname, .trophy-card.busy .tname { opacity: .8; }
   /* LOCKED: donkerder, icoon sterk gedimd (voorlopig sluimerend, zie trophyStatus) */
-  .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); }
+  .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); box-shadow: none; }
   .trophy-card.locked .temoji { filter: grayscale(1); opacity: .45; }
   .trophy-card.locked .tname, .trophy-card.locked .tdesc { opacity: .5; }
   /* BEHAALD: trots, maar stil.
@@ -3462,20 +3718,26 @@
         klaar om te openen  vol goud + gloed + beweging
         behaald             zacht goud + warm licht van binnen, volkomen stil
         nog niet            gedempt, maar in kleur */
+  /* FASE 5E.1 -- bezonken. Deze kaart stond op --goud-rand (.5) met een warme veeg
+     van .28 erachter, en dat is bijna dezelfde randsterkte als .ready hieronder. In
+     een kast met acht kaarten waarvan er zes behaald zijn, is dat weer één gouden
+     vlak -- en dan moet je zóeken welke er om een tik vraagt. Een halve trap terug
+     (--goud-rand-zacht, en de veeg van .28 naar .2) laat de kaart nog steeds warm
+     en verdiend lezen, maar hij roept niet meer. De gouden naam blijft: dáár zie je
+     op leesafstand aan dat je hem hebt. */
   .trophy-card.done {
     background:
-      radial-gradient(78% 60% at 50% 26%, rgba(255,214,90,.3), transparent 74%),
-      rgba(255,214,90,.07);
-    border-color: rgba(255,214,90,.52);
-    box-shadow: inset 0 1px 0 rgba(255,241,190,.22);
+      radial-gradient(78% 60% at 50% 26%, rgba(var(--goud-rgb),.2), transparent 74%),
+      var(--goud-tint-zacht);
+    border-color: var(--goud-rand-zacht);
+    box-shadow: inset 0 1px 0 rgba(255,241,190,.16);
   }
   .trophy-card.done .tname { color: var(--gold-light); }
   .trophy-card.done .tdesc { color: var(--c-white); opacity: .8; }
-  .trophy-card.done .temoji { filter: drop-shadow(0 2px 6px rgba(0,0,0,.45)); }
   /* De stand op een lopende kaart: alleen het getal, geen balk. "82 / 100 sommen"
      zegt alles wat een balkje zou zeggen, en het staat er in de taal van een
      rekenspel. De balk stond op élke kaart en maakte van de kast een lijst. */
-  .tstand { margin-top: 8px; font-size: 13px; font-weight: 800; color: var(--c-white); opacity: .78; }
+  .tstand { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--c-white); opacity: .78; }
   .tstand span { font-weight: 600; opacity: .8; }
   .tstand.sub { font-weight: 600; opacity: .55; }
   /* ===== De perfecte werelden =====
@@ -3503,7 +3765,7 @@
     border: 2px solid var(--glass-white-30);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  .pw-ico { font-size: 35px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,.55)); }
+  .pw-ico { font-size: 35px; line-height: 1; filter: var(--emoji-schaduw); }
   /* Nog niet perfect: de wereldkleur blijft, een slag zachter. Geen grijs -- de
      blauwe IJswereld hoort ook ongewonnen nog blauw te lokken. */
   .pw-card.fresh .pw-medal, .pw-card.busy .pw-medal { opacity: .62; }
@@ -3522,28 +3784,71 @@
      De normale kaart (eigen icoon, eigen naam, eigen beschrijving) met een gouden
      rand en "🎁 Open!" onderaan. Bewust niet een compleet ander kaartje: vijf
      klaarliggende trofeeën moeten vijf verschillende dingen blijven. */
+  /* Vol goud plus de gloed: precies dezelfde twee dingen als het kledingstuk dat
+     je draagt (.item-card.equipped). Één gloedsterkte in de hele app -- was .48 op
+     een eigen oranje hier en .46 op een eigen geel daar. */
   .trophy-card.ready {
-    border-color: var(--gold-accent); background: rgba(255,214,90,.16);
-    box-shadow: 0 0 18px rgba(255,170,0,.48);
+    border-color: var(--gold-accent); background: var(--goud-tint);
+    box-shadow: var(--goud-gloed);
   }
   .ready-open {
     display: block; text-align: center; margin-top: 8px;
     color: var(--ink-on-gold); background: var(--gold-accent);
-    font-size: 13.5px; font-weight: 900; letter-spacing: .01em;
+    font-size: 13.5px; font-weight: 700; letter-spacing: .01em;
     border-radius: var(--r-pill); padding: 5px 8px;
     animation: readyPulse 1.4s ease-in-out infinite;
   }
-  @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: 0 4px 13px rgba(255,170,0,.45); } 50% { transform: scale(1.03); box-shadow: 0 6px 22px rgba(255,170,0,.75); } }
+  /* FASE 5E -- de klop zit in de gloed en niet meer in een slagschaduw die met de
+     schaduwlip van een knop te verwarren was. Van de gedeelde gouden gloed naar
+     anderhalf keer die gloed: één beweging, in de kleur die "verdiend" betekent. */
+  @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: var(--goud-gloed); } 50% { transform: scale(1.03); box-shadow: 0 0 26px rgba(255,190,60,.7); } }
   /* dé gouden mijlpaal-pil: één component voor "rang omhoog" en "trofee klaar",
      op het eindscherm (.end-milestone) en in de trofeeënkast. Hoogstens één
-     tegelijk in beeld. */
+     tegelijk in beeld.
+
+     FASE 5E -- hij droeg lettérlijk het verloop van de hoofdknop (--gold-cta-top/
+     bottom). Op het eindscherm stonden daardoor twee identieke gouden dingen onder
+     elkaar: "3 nieuwe trofeeën klaar!" en "Verder op tournee". Dezelfde kleur,
+     hetzelfde verloop, dezelfde maat -- alleen pulseerde de bovenste, en dus trok
+     juist de belóning de tik weg bij de knop die het scherm afmaakt.
+
+     Nu spreekt hij de taal van "verdiend" en niet die van "druk hier": vlak goud
+     (--gold-accent, precies het goud van een behaalde trofee en van het kledingstuk
+     dat je draagt) in plaats van een verloop, en géén schaduwlip -- een lip is wat
+     een knóp indrukbaar maakt. Hij blijft tikbaar en hij blijft pulseren; hij is
+     alleen niet langer de hoofdknop van het scherm.
+
+     FASE 5E.1 -- en daarna nog één trap terug. Het gouden verloop was weg, maar de
+     pil hield de máten van een knop: 16,5px letter, 10px lucht boven en onder, en
+     een gloed van dezelfde sterkte als het kledingstuk dat je draagt. Op een
+     telefoon stonden daardoor nog steeds twee dingen van bijna dezelfde breedte
+     onder elkaar te stralen, en las de bovenste als de eerste van twee knoppen.
+     Vier kleine dingen samen halen dat weg zonder hem stil te maken:
+
+       - 15,5px in plaats van 16,5 en 7px lucht in plaats van 10: de pil krimpt
+         zichtbaar naar meldingsformaat en wordt vanzelf smaller, want hij is
+         inline-flex en groeit met zijn inhoud mee.
+       - de vulling een tikje terug (.88 in plaats van vol): nog steeds goud, nog
+         steeds donkere inkt erop, maar niet langer het felste vlak van het scherm.
+         De hoofdknop is dat nu alleen.
+       - --goud-gloed-zacht in plaats van --goud-gloed: een halo van een derde.
+       - de klop zit alleen nog in de maat en niet meer in de gloed (beloningKlop
+         i.p.v. readyPulse). Een pulserende halo vlak boven een knop is precies wat
+         "druk hier" zegt; een zacht ademende pil zegt "kijk eens".
+
+     Het cadeautje en de tekst blijven staan zoals ze waren -- dát is waar een kind
+     aan ziet wat er gebeurd is -- en het raakvlak blijft ruim boven 44px. */
   .gold-pill {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    color: var(--ink-on-gold); font-weight: 800; font-size: 16.5px; font-family: inherit;
-    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom)); border: none; border-radius: var(--r-pill);
-    padding: 10px 18px; box-shadow: 0 4px 14px rgba(255,170,0,.45);
-    animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    color: var(--ink-on-gold); font-weight: 700; font-size: 15.5px; font-family: inherit;
+    background: rgba(var(--goud-rgb), .88); border: none; border-radius: var(--r-pill);
+    padding: 7px 16px; min-height: 34px; box-shadow: var(--goud-gloed-zacht);
+    animation: beloningKlop 2.4s ease-in-out infinite; cursor: pointer;
   }
+  /* Dezelfde ademhaling als readyPulse, maar zonder de gloed erin en trager: dit is
+     een melding die er nog staat, geen knop die om een tik vraagt. */
+  @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+  @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
   .gold-pill:active { transform: scale(.96); }
   /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
   .trophy-pop-overlay {
@@ -3552,9 +3857,9 @@
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
   .trophy-pop { padding: 22px 30px; }
-  .tp-head { font-size: 16px; font-weight: 800; color: var(--gold-light); }
+  .tp-head { font-size: 16px; font-weight: 700; color: var(--gold-light); }
   .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(255,215,64,.8)); }
-  .tp-name { font-size: 20px; font-weight: 800; color: var(--c-white); }
+  .tp-name { font-size: 20px; font-weight: 700; color: var(--c-white); }
   .tp-joepie { font-size: 15px; font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
@@ -3570,8 +3875,8 @@
   .rankup-sparks { position: absolute; left: 50%; top: 50px; width: 0; height: 0; }
   .rankup-spark { position: absolute; left: 0; top: 0; font-size: 30px; opacity: 0; animation: rankSpark 1s ease-out both; }
   .rankup-badge { font-size: 94px; line-height: 1; filter: drop-shadow(0 6px 16px rgba(0,0,0,.55)); animation: rankBadgePop .7s cubic-bezier(.2,1.5,.4,1) both; }
-  .rankup-label { font-size: 14px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: 0 2px 8px rgba(0,0,0,.5); animation: rankTextRise .5s ease .28s both; }
-  .rankup-name { font-size: clamp(26px, 8vw, 34px); font-weight: 900; color: var(--c-white); text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); animation: rankTextRise .5s ease .4s both; }
+  .rankup-label { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: 0 2px 8px rgba(0,0,0,.5); animation: rankTextRise .5s ease .28s both; }
+  .rankup-name { font-size: clamp(26px, 8vw, 34px); font-weight: 700; color: var(--c-white); text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); animation: rankTextRise .5s ease .4s both; }
   @keyframes rankBadgePop { 0% { transform: scale(0) rotate(-45deg); } 60% { transform: scale(1.2) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
   @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @keyframes rankSpark {
@@ -3599,9 +3904,9 @@
      over de knop waar het kind net naartoe wilde */
   .wereld-feest-overlay.closing { animation: popFade .3s ease reverse forwards; pointer-events: none; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
-  .wf-kop { font-size: clamp(24px, 7.5vw, 30px); font-weight: 900; color: var(--c-white); line-height: 1.1;
+  .wf-kop { font-size: clamp(24px, 7.5vw, 30px); font-weight: 700; color: var(--c-white); line-height: 1.1;
     text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); }
-  .wf-wereld { font-size: 15px; font-weight: 800; color: var(--gold-light); margin-top: 3px; }
+  .wf-wereld { font-size: 15px; font-weight: 700; color: var(--gold-light); margin-top: 3px; }
   .wf-rijen { display: flex; flex-direction: column; gap: 8px; margin: 13px 0 4px; }
   /* Een regel is een plaatje links en twee woorden rechts -- links uitgelijnd, want
      twee gecentreerde regels onder elkaar hebben geen gemeenschappelijke lijn en
@@ -3631,7 +3936,7 @@
   .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
     font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .wf-tekst b { font-size: 16px; font-weight: 900; color: var(--gold-light); }
+  .wf-tekst b { font-size: 16px; font-weight: 700; color: var(--gold-light); }
   .wf-tekst span { font-size: 14px; font-weight: 700; color: var(--c-white); opacity: .92;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wf-verder { font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
@@ -3752,9 +4057,10 @@
      er meer bovenop dan erin. Nu een echt donker paneel in dezelfde taal als de
      plakkende kop -- dat leest ook straks nog, als er licht achter staat. */
   .result-card {
-    background: rgba(32,8,54,.80);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid var(--glass-white-22); box-shadow: var(--e-2);
+    background: var(--paneel);
+    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
+    border: 1.5px solid var(--paneel-rand);
+    box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
     border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
     width: 100%; max-width: var(--kolom); margin: auto 0;
   }
@@ -3783,7 +4089,7 @@
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: 20px; padding: 11px 18px; }
     .end-actions .btn.soft { font-size: 15px; padding: 9px 16px; }
-    .gold-pill { font-size: 15px; padding: 8px 14px; }
+    .gold-pill { font-size: 14.5px; padding: 6px 13px; min-height: 30px; }
   }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
@@ -3796,17 +4102,19 @@
      (Het derde vakje was 👏 publiek, bij de publieksmeter; die is vervallen.) */
   .earn-line { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-    font-size: 16px; font-weight: bold; line-height: 1;
+    font-size: 16px; font-weight: 700; line-height: 1;
     background: var(--glass-black-30); border-radius: var(--r-pill); padding: 9px 6px; }
-  .earn-chip.dia { background: rgba(41,182,246,.34); }
-  .earn-chip.star { background: rgba(255,215,64,.26); }
+  /* De twee vakjes dragen de twee accenten van de app, elk in zijn eigen rol: het
+     blauw van de diamant (de munt) en het goud van de ster (wat je verdiende). */
+  .earn-chip.dia { background: rgba(41,182,246,.32); }
+  .earn-chip.star { background: rgba(var(--goud-rgb),.26); }
   /* Mijlpaal: precies één regel, en hoogstens één ding. Volgorde van belang:
      nieuwe ster-status > nieuwe trofee > hoe ver nog tot de volgende status.
      De eerste twee zijn een beloning (gouden pil, tikbaar); de derde is een
      vooruitblik en blijft daarom bewust stil (gestippeld, niet pulserend). */
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .milestone-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700;
-    color: var(--gold-light); background: rgba(255,215,64,.14); border: 1px dashed rgba(255,215,64,.45);
+    color: var(--gold-light); background: var(--goud-tint); border: 1px dashed var(--goud-rand);
     border-radius: var(--r-pill); padding: 8px 15px; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   .end-actions .btn { width: 100%; max-width: 320px; }
@@ -3847,7 +4155,7 @@
     padding: 12px 12px 10px;
     /* was .92 -- dat is in de praktijk ondoorzichtig, en straks een balk dwars
        door de tekening heen. Op .82 schuift de inhoud er zichtbaar onderdoor. */
-    background: rgba(43,7,71,.82);
+    background: var(--kop-plaat);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border-bottom: 2px solid var(--glass-white-14);
     border-radius: 0 0 var(--r-lg) var(--r-lg);
@@ -3864,7 +4172,7 @@
        grondkleur als elke andere plakkende kop; alleen een warme kegel erbij. */
     background:
       radial-gradient(78% 86% at 50% 0%, rgba(255,216,158,.16), transparent 70%),
-      rgba(43,7,71,.82);
+      var(--kop-plaat);
   }
   #screen-dress .hub-sticky .screen-header { margin-bottom: 3px; }
   /* ---- De kop van een hulpscherm ------------------------------------------
@@ -4051,13 +4359,13 @@
   }
   .shop-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
-    font-family: inherit; font-size: 15px; font-weight: bold; border: none; cursor: pointer;
+    font-family: inherit; font-size: 15px; font-weight: 700; border: none; cursor: pointer;
     padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: var(--glass-white-18);
     transition: transform .07s, background .12s;
     display: flex; align-items: center; justify-content: center; gap: 6px;
     min-height: 44px; min-width: 46px; flex: none;
   }
-  .tab-btn .tab-ico { font-size: 21px; line-height: 1; }
+  .tab-btn .tab-ico { font-size: 21px; line-height: 1; filter: var(--emoji-schaduw); }
   .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
   /* FASE 5B.1 -- hetzelfde cyaan als hiervoor, maar als licht in plaats van als
@@ -4093,14 +4401,16 @@
      opmaak niet verspringen) maar is in rust bijna weg; wat het kaartje van de
      achtergrond losmaakt is nu het vlak zelf plus een haarlijn licht bovenin.
      Daardoor kan goud ("dit draag je") echt het hardst spreken. */
+  /* FASE 5E -- de drie waarden hieronder zijn nu de gedeelde --vlak*-familie: exact
+     hetzelfde plankje als de trofeekaart in de kast. Zie het vlakkenblok in :root. */
   .item-card {
     position: relative; flex: 1 1 var(--kaart-min); max-width: calc(var(--kaart-min) * 1.7);
-    background: rgba(255,255,255,.075); border: 2px solid rgba(255,255,255,.1);
+    background: var(--vlak); border: 2px solid var(--vlak-rand);
     border-radius: var(--r-md); padding: 9px 6px 10px; text-align: center; cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+    box-shadow: var(--vlak-top);
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
-  .item-card:hover { background: rgba(255,255,255,.14); }
+  .item-card:hover { background: var(--vlak-hover); }
   .item-card:active { transform: scale(.97); }
   /* Kaart-staten: blauw = "hier kijk je naar", goud = "dit staat aan". De blauwe
      variant had ook nog een 3px ring én een schaalsprong; dat was een vierde
@@ -4110,12 +4420,12 @@
      een moment (het duurt tot de volgende tik); "dit draag ik" is een antwoord op
      de vraag waar het kind voor kwam. Cyaan is daarom een rand plus een tint,
      goud is een rand plus een tint plus een gloed. */
-  .item-card.selected { background: rgba(134,216,255,.19); border-color: rgba(143,214,255,.62); }
+  .item-card.selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
   .item-card.equipped {
-    border-color: var(--gold-accent); background: rgba(255,214,90,.14);
-    box-shadow: 0 0 14px rgba(255,215,64,.46), inset 0 1px 0 rgba(255,241,190,.3);
+    border-color: var(--gold-accent); background: var(--goud-tint);
+    box-shadow: var(--goud-gloed), inset 0 1px 0 rgba(255,241,190,.3);
   }
-  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 14px rgba(255,215,64,.46); }
+  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: var(--goud-gloed); }
   /* .owned and .selected are two plain (non-combined) classes with identical
      specificity, both setting background/border-color -- .owned happened to
      be declared later in the file, so it silently won that tie and previewing
@@ -4125,7 +4435,7 @@
      should just show the same full "you're looking at this" blue as any
      other selected item -- this combined selector's higher specificity wins
      outright, no reliance on rule order. */
-  .item-card.owned.selected { background: rgba(134,216,255,.19); border-color: rgba(143,214,255,.62); }
+  .item-card.owned.selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
   /* zelfde tie als hierboven, maar dan voor :hover -- .owned/.equipped/.selected
      zetten allemaal hun eigen achtergrond, met dezelfde specificiteit als de
      kale .item-card:hover regel. Die verliest dus stilzwijgend de tie (bron-
@@ -4134,9 +4444,9 @@
      Hier expliciet per staat een eigen, iets lichtere hover-tint (in de eigen
      kleur van die staat) zodat ieder kaartje evengoed op hover reageert. */
   .item-card.owned:hover { background: rgba(255,255,255,.22); }
-  .item-card.equipped:hover { background: rgba(255,214,90,.22); }
-  .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(134,216,255,.26); }
-  .item-card.selected.equipped:hover { background: rgba(255,214,90,.22); }
+  .item-card.equipped:hover { background: rgba(var(--goud-rgb),.24); }
+  .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.3); }
+  .item-card.selected.equipped:hover { background: rgba(var(--goud-rgb),.24); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
   /* Eén miniatuur-zone voor álle spullen. Er waren er drie: een getekende jurk
@@ -4150,22 +4460,22 @@
      tekening die wel breder is (de bladerkrans) krimpt dan netjes mee i.p.v.
      buiten haar kaartje te vallen: een viewBox schaalt vanzelf naar wat er
      overblijft, en houdt daarbij zijn verhoudingen. */
-  .item-thumb svg { height: 52px; width: auto; max-width: 100%; display: block; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
+  .item-thumb svg { height: 52px; width: auto; max-width: 100%; display: block; filter: var(--emoji-schaduw); }
   /* 38 en niet 34: de zes wereldbeloningen zijn getékend en vullen hun vak van 52px
      helemaal, een emoji op 34 liet er een derde leeg. Naast elkaar in dezelfde rij
      las dat als "het verdiende spulletje is groter dan het gekochte" -- en juist
      dát verschil hoort er niet te zijn (koop en beloning zijn even leuk, alleen
      anders te krijgen). Op 38 wegen ze optisch even zwaar. */
-  .item-thumb .thumb-emo { font-size: 38px; line-height: 1; filter: drop-shadow(0 2px 3px var(--glass-black-30)); }
+  .item-thumb .thumb-emo { font-size: 38px; line-height: 1; filter: var(--emoji-schaduw); }
   /* een podium is een plek, geen voorwerp: zijn kleur ís het item, dus een klein
      decorvlak met het herkenningsicoon erop -- in hetzelfde vak, zelfde schaduw */
   .item-thumb .thumb-stage {
     width: 46px; height: 40px; border-radius: var(--r-sm); display: grid; place-items: center;
     font-size: 22px; border: 1.5px solid rgba(255,255,255,.5);
-    filter: drop-shadow(0 2px 3px var(--glass-black-30)); text-shadow: 0 1px 2px rgba(0,0,0,.45);
+    filter: var(--emoji-schaduw); text-shadow: 0 1px 2px rgba(0,0,0,.45);
   }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
-  .item-name { font-size: 13.5px; font-weight: bold; overflow-wrap: break-word; hyphens: auto; }
+  .item-name { font-size: 13.5px; font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
   /* Eén pilletje per kaartje, en dus één staat. Ze kunnen niet stapelen: de JS
      kiest er precies één (zie dressCardState). Van hard naar zacht:
        new    net gekocht -- goud, pulseert twee tellen
@@ -4178,10 +4488,10 @@
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
     min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
-    font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap;
+    font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap;
     background: var(--glass-black-24); color: var(--muted-text-2);
   }
-  .item-status.price { color: var(--gold-light); background: rgba(255,179,0,.16); }
+  .item-status.price { color: var(--gold-light); background: rgba(var(--goud-rgb),.14); }
   /* "Nog niet genoeg" is een stand en geen fout: de pil verliest zijn goud (dat
      betekent hier "dit kan") en houdt verder alles -- zelfde maat, zelfde plek,
      zelfde leesbare letter. Geen rood, geen kruisje, geen slotje: het getal
@@ -4212,12 +4522,12 @@
     border-color: rgba(255,203,110,.32);
     background:
       radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.18), transparent 72%),
-      rgba(255,214,90,.05);
+      var(--goud-tint-zacht);
   }
   .item-card.teverdienen:hover {
     background:
       radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.26), transparent 72%),
-      rgba(255,214,90,.09);
+      rgba(var(--goud-rgb),.13);
   }
   .item-card.teverdienen .item-thumb { opacity: .72; }
   /* Aangetikt blijft aangetikt, ook bij een beloning: de streepjesrand houdt zijn
@@ -4225,7 +4535,7 @@
      naar". Dit staat er expliciet omdat .teverdienen ná .selected komt en anders
      stilzwijgend die gelijkspel wint -- dezelfde val als bij .owned hierboven. */
   .item-card.teverdienen.selected,
-  .item-card.teverdienen.selected:hover { border-color: rgba(143,214,255,.62); background: rgba(56,189,248,.13); }
+  .item-card.teverdienen.selected:hover { border-color: var(--cyaan-rand); background: rgba(56,189,248,.15); }
   /* Waar een spulletje vandaan komt, als het eenmaal van je is: één wereldteken in
      de hoek en verder niets. Geen "beloning"-label over de tekening heen -- zodra
      je het hebt is het gewoon een van je spullen, met een herkomst. */
@@ -4312,7 +4622,7 @@
     padding-top: 7px; padding-bottom: 7px;
     /* Dekkend gescrold, om dezelfde reden als bij de kast: op .82 bleven de
        koppen van de witte kaarten dwars door "Voor ouders" heen leesbaar. */
-    background: linear-gradient(180deg, #34094f, #250538);
+    background: var(--kop-plaat-vol);
     box-shadow: var(--e-3);
   }
   #screen-settings.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
@@ -4907,16 +5217,18 @@
       </div>
     </div>
     <div class="reis-track" id="reis-track"></div>
-    <!-- Een veeg onder de navigatiebalk: die zweeft boven de reis, en over een
-         lichte wereldtekening heen staat ze zonder dit op zichzelf. -->
-    <div class="reis-voet" aria-hidden="true"></div>
     <!-- Alleen zichtbaar als je jezelf niet meer ziet; zie reisVolgKnop. -->
     <button class="reis-terug" id="reis-terug" type="button" onclick="reisTerugNaarNu()"
       aria-label="Terug naar waar je bent">↑</button>
   </div>
 
   <!-- ===== Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ===== -->
-  <div class="screen" id="screen-memory">
+  <!-- FASE 5E -- ook het memoryspel staat in de schil. Het was het laatste scherm
+       van de app dat rechtstreeks op het kale bodyverloop stond, en dat is precies
+       het felste violet dat de app kent: naast de kaart, de kleedkamer en de kast
+       las het als een scherm uit een ander spel. Geen laag erbij die iets afdekt --
+       dezelfde regel als op de andere rustpunten. -->
+  <div class="screen app-sfeer" id="screen-memory">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="exitMemory()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
@@ -5011,7 +5323,14 @@
   </div>
 
   <!-- ===== Trofeeën ===== -->
-  <div class="screen hub gebruik" id="screen-trophies">
+  <!-- FASE 5E -- de kast staat in dezelfde schil als de kleedkamer (fonkeling,
+       lichtvegen in de hoeken, het blauwe uur) in plaats van als enige rustpunt op
+       het kale bodyverloop. Zonder hem was de kast het lichtste, liefste scherm van
+       de app terwijl de kleedkamer ernaast diep aubergine is -- twee verzamel-
+       schermen die niet op elkaar leken. .kast is de variant erop: hetzelfde licht
+       van boven als de kaptafel in de kleedkamer, maar koeler en smaller, zoals een
+       vitrine wordt uitgelicht. Zie .app-sfeer.kast in het stijlblad. -->
+  <div class="screen hub gebruik app-sfeer kast" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>

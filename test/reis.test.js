@@ -501,9 +501,16 @@ function check(ok, label, detail) {
       const kop = sch.querySelector('.hub-sticky');
       const sluier = getComputedStyle(kop, '::before');
       const k = kop.getBoundingClientRect();
-      // de sluier moet voorbij de onderrand van de kop doorlopen én daar dekkend zijn
+      // De sluier moet voorbij de onderrand van de kop doorlopen én daar dekkend zijn.
+      // "Dekkend" = twee stops in de ondoorzichtige nachtkleur, en die kleur wordt
+      // hier uit het scherm zélf gelezen in plaats van als hex in de test te staan:
+      // de nacht van de reis is een keer bijgesteld (fase 5E) en deze test viel toen
+      // om op een kleur, terwijl hij over dékking gaat. Zo blijft hij waar zeggen
+      // wat hij wil zeggen, ook als de nacht nog eens van tint verandert.
       const hoog = parseFloat(sluier.height) || 0;
-      const dekt = (sluier.backgroundImage.match(/rgb\(18,\s*8,\s*32\)/g) || []).length;
+      const nacht = getComputedStyle(sch).backgroundColor;          // rgb(r, g, b)
+      const los = nacht.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/,\s*/g, ',\\s*');
+      const dekt = (sluier.backgroundImage.match(new RegExp(los, 'g')) || []).length;
 
       sch.scrollTop = sch.scrollHeight;               // helemaal naar beneden
       await wacht(160);
