@@ -3094,7 +3094,7 @@
   .tour-stop.next { --stop-schaal: 1.06; }
   .tour-stop.next .dot { border-color: var(--gold-accent); color: var(--ink-on-gold);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: var(--dot-key), var(--dot-drop), 0 0 3.4cqw rgba(255,196,61,.5); }
+    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.6cqw rgba(255,196,61,.4); }
   /* Een zachte spotlight op de grond onder de huidige halte. Hij hoort bij de
      ster erbovenop: samen maken ze van "een gouden rondje met een poppetje
      ernaast" één ding dat zegt hier sta ik. Zonder dit leest de ster op een drukke
@@ -3102,17 +3102,23 @@
 
      Hij ligt achter het blokje (z-index -1 binnen de knop, die zelf een eigen
      stapelcontext maakt) en ademt op hetzelfde ritme als de gloed van de halte,
-     zodat het één beweging is en geen twee. */
+     zodat het één beweging is en geen twee.
+
+     FASE 4E -- iets ingetogener (was 3,4cqw/.5 op het rondje, .78-1/1-1.07 hier):
+     nu zij zelf een contrastveld draagt, hoeft het rondje niet meer zo hard te
+     roepen om nog boven de tekening uit te komen. Nog altijd solide goud, nog
+     altijd de enige die beweegt -- alleen de bloom eromheen is een tandje zachter,
+     zodat de blik eerst bij haar landt en dan pas bij de halte waar ze op staat. */
   .tour-stop.next::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255,216,140,.32), rgba(255,196,90,.12) 52%, transparent 74%);
+    background: radial-gradient(closest-side, rgba(255,216,140,.26), rgba(255,196,90,.1) 52%, transparent 74%);
     animation: stopSpot 2.8s ease-in-out infinite;
   }
   @keyframes stopSpot {
-    0%, 100% { opacity: .78; transform: scale(1); }
-    50%      { opacity: 1;   transform: scale(1.07); }
+    0%, 100% { opacity: .74; transform: scale(1); }
+    50%      { opacity: .92;   transform: scale(1.05); }
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
@@ -3320,58 +3326,68 @@
      evenredig meegroeien liet haar kruin op ZONE.y0 van het scherm af lopen (test
      7c-bis, "op ZONE.y0 blijft haar kruin op het scherm") en at in op de lucht
      naar de halte erboven. Dit is de kleinste zak die op alle vijf gemeten
-     toestellen weer ruimte overhoudt. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 5cqw); transform: translateX(-50%);
-    width: 19.5cqw; pointer-events: none; z-index: 2; }
-  /* Een zachte rand-gloed die haar écht silhouet volgt (drop-shadow reageert op de
+     toestellen weer ruimte overhoudt.
+
+     FASE 4E -- van 19,5 naar 22cqw (+13%). De maat bleek niet het probleem: op een
+     lichte lucht viel haar crèmekleurige jurk gewoon tegen een even lichte
+     tekening weg. Groter alleen had dat niet opgelost, dus deze stap is klein en
+     het echte werk zit in het contrastveld hieronder (::before) -- dat is precies
+     waarom er hier geen tweede sprong naar +28% staat. De zak ging mee omhoog naar
+     7,8cqw: bij dezelfde 5cqw liep haar kruin op ZONE.y0 alweer van het scherm af
+     (test 7c-bis) voor hij zelfs maar bij de tabletmaat was. 7,8 is opnieuw de
+     kleinste zak die op alle vijf gemeten toestellen weer ruimte overhoudt --
+     ruimte naar de halte erboven blijft dus ongeveer gelijk aan FASE 4D, niet
+     extra, want daar zit de plafond van ZONE.y0 op. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 7.8cqw); transform: translateX(-50%);
+    width: 22cqw; pointer-events: none; z-index: 2; }
+  /* Een dun randlicht dat haar écht silhouet volgt (drop-shadow reageert op de
      alpha van de tekening, dus de holtes tussen haar armen en haar lijf blijven
-     leeg) -- dat pakt beter tegen drukke tekeningen dan de losse schijf hieronder
-     alleen, omdat hij precies om háár heen zit en niet om een cirkel eronder.
-     Twee lagen, dicht dan wijd, warm dan violet: hetzelfde tweekleurenverhaal als
-     de schijf. Statisch, geen animatie -- dat is de constante scheiding; het
-     ademen hieronder is waar de aandacht vandaan komt. */
+     leeg). Bewust smal gehouden -- twee lagen, geen drie -- zodat het een rand
+     blijft en geen gloed: dat werk is verhuisd naar het contrastveld hieronder,
+     dat wél groot en zacht mag zijn. Een dikker randlicht hier begon op een
+     neonrand te lijken, en dat is precies niet de bedoeling. Statisch, geen
+     animatie: zij moet ook stilstaand meteen leesbaar zijn. */
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
-    filter: drop-shadow(0 0 3px rgba(255,250,235,.6)) drop-shadow(0 0 8px rgba(255,214,158,.4))
-            drop-shadow(0 0 15px rgba(var(--w-sky-rgb, 61,26,99), .3)); }
-  /* De gloed: crème, ruim, en zonder rand -- hij mag nergens als vorm te zien zijn.
-     Hij ligt achter haar (z-index 0 tegen de svg op 1), zodat hij haar kleuren niet
-     wast.
+    filter: drop-shadow(0 0 1.5px rgba(255,252,240,.8)) drop-shadow(0 0 5px rgba(255,225,175,.42)); }
+  /* Het contrastveld. Dit is de eigenlijke oplossing van FASE 4E: niet groter,
+     maar een plek om op te staan. Drie lagen, ruim en zacht in elkaar overlopend
+     (closest-side + percentages, geen harde cirkel):
 
-     Van 20cqw/42% naar 23cqw/54% naar 30cqw/52%. De reden is de tekening: op een
-     lichte lucht of tegen een waterval had crème niet genoeg body om haar
-     silhouet los te maken van wat erachter staat, en dán is ze gewoon nóg een
-     getekend figuurtje op een kaart die er al vol mee staat. Ruimer én voller,
-     maar nog steeds met een lange staart naar doorzichtig -- een gloed met een
-     zichtbare rand zou een medaillon om haar heen zetten, en dat is precies wat
-     ze niet moet worden.
+       warm    een kleine, heldere kern rond haar onderlijf -- room, geen goud,
+               dat is van de halte.
+       violet  een dunne middenlaag in de avondlucht van de wereld (--w-sky-rgb,
+               dezelfde tint als de gloed van de halte zelf).
+       donker  een ruime, laag-dekkende aubergine-veeg, ver voorbij haar silhouet
+               en met een lange, vervagende staart. Dít is wat haar van een lichte
+               lucht, een waterval of een bonte gevel scheidt: de tekening daarónder
+               wordt lokaal een fractie stiller in plaats van dat zij een fractie
+               feller wordt. Geen rand, geen cirkel om te zien -- hij mag alleen
+               gevoeld worden.
 
-     De rand van de gloed dooft nu in de violette avondlucht van de wereld
-     (--w-sky-rgb, dezelfde tint als de gloed van de halte zelf, zie .reis-halte.nu
-     hierboven) in plaats van in het niets: warm bij haar voeten, koel-violet aan de
-     rand -- precies de twee kleuren die de opdracht voor haar vroeg.
-
-     Hij ademt nu mee met de spotlight onder de halte (.tour-stop.next::after,
-     zelfde 2,8s): dat blijft "één lichtbron" -- ze pulseren als één ding, niet als
-     twee dingen die om de beurt om aandacht vragen -- maar wél een lichtbron die
-     leeft, en dát is precies wat een stilstaande gloed tegen een drukke tekening
-     mist. */
+     De doos is nu 42cqw (was 30): ruim groter dan haar eigen 22cqw, zodat de
+     donkere laag echt "erachter" ligt en niet nog een schijfje op haar maat is.
+     Ademt nog steeds mee met de spotlight onder de halte (.tour-stop.next::after,
+     zelfde 2,8s) -- één lichtbron, niet twee die om de beurt vragen. */
   .tour-hero::before { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 1.3cqw; transform: translateX(-50%);
-    width: 30cqw; height: 30cqw; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,247,220,.52), rgba(255,214,158,.28) 46%,
-                rgba(var(--w-sky-rgb, 61,26,99), .22) 68%, transparent 82%);
+    left: 50%; bottom: -4.7cqw; transform: translateX(-50%);
+    width: 42cqw; height: 42cqw; border-radius: 50%; pointer-events: none;
+    background:
+      radial-gradient(closest-side, rgba(255,250,232,.55), rgba(255,222,175,.26) 26%, transparent 46%),
+      radial-gradient(closest-side, rgba(var(--w-sky-rgb, 61,26,99), .22), transparent 60%),
+      radial-gradient(closest-side, rgba(18,6,36,.32) 0%, rgba(18,6,36,.17) 45%,
+                  rgba(18,6,36,.06) 72%, transparent 92%);
     animation: heroGloed 2.8s ease-in-out infinite; }
   @keyframes heroGloed {
-    0%, 100% { opacity: .82; transform: translateX(-50%) scale(1); }
-    50%      { opacity: 1;   transform: translateX(-50%) scale(1.07); }
+    0%, 100% { opacity: .85; transform: translateX(-50%) scale(1); }
+    50%      { opacity: 1;   transform: translateX(-50%) scale(1.04); }
   }
   /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
      zonder dit oogt ze net zo goed los zwevend erboven. Iets breder en donkerder
      dan eerst, zodat ze ook op een lichte ondergrond met beide voeten op de halte
-     staat in plaats van erboven te zweven. */
+     staat in plaats van erboven te zweven. Meegegroeid met haar nieuwe maat. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.26cqw; transform: translateX(-50%);
-    width: 15cqw; height: 3.8cqw; border-radius: 50%; background: rgba(10,1,22,.54); filter: blur(4px); }
+    left: 50%; bottom: 0.3cqw; transform: translateX(-50%);
+    width: 17cqw; height: 4.3cqw; border-radius: 50%; background: rgba(10,1,22,.56); filter: blur(5px); }
   /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
      halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
   .tour-hero .hero-vonk {
