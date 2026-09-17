@@ -1301,6 +1301,24 @@
      dezelfde tussenruimte. 80px is wat de diamantpil nodig heeft. */
   #screen-map .screen-header { grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
     gap: 10px; align-items: center; }
+  /* Onder de 390 past de wereldnaam niet meer tussen die twee kolommen. Opgemeten:
+     "Piratenwereld" is 177px breed en de middenkolom is (breedte - 204); op 375 is
+     dat 171, op 360 nog 156 en op 320 maar 116. Er stond geen ellips (die werkt niet
+     op een inline-flex-knop), dus het werd een harde snee: "Junglewer". En dat op
+     het hoofdscherm, waar de naam het enige woord is dat er staat.
+
+     Gelijke kolommen blijven -- de naam hoort écht in het midden. Wat kleiner wordt
+     is alles eromheen: de ondergrens van de zijkolommen, de tussenruimte, de
+     diamantpil en de naam zelf. Nagemeten op 320, 360, 375, 390, 412 en 768: geen
+     enkele wereldnaam wordt nog afgeknipt, en vanaf 390 verandert er niets. */
+  @media (max-width: 389px) {
+    #screen-map .screen-header { grid-template-columns: minmax(52px, 1fr) auto minmax(52px, 1fr); gap: 8px; }
+    /* alleen padding-inline, want de twee pillen delen hun hóógte en hun vulling
+       (zie de regel hierboven) -- dat blijft één regel, ook hier */
+    #screen-map .world-pick { font-size: 16px; gap: 4px; padding-inline: 6px; }
+    #screen-map .wp-route { width: 11px; height: 11px; }
+    #screen-map .diamond-badge { font-size: 15px; gap: 4px; padding-inline: 9px; }
+  }
   /* 10 links, 14 rechts: het portretje draagt zelf 4px onzichtbare padding voor
      zijn raakvlak, dus met gelijke waarden stond het optisch 4px verder naar
      binnen dan de diamantpil. Zo liggen de zichtbare randen op dezelfde lijn. */
@@ -3414,7 +3432,10 @@
                 0 14px 26px var(--stop-schaduw);
     transition: transform .12s;
   }
-  .reis-halte:not(:disabled):active .reis-plaats { transform: scale(.965); }
+  /* Élke bestemming drukt in, ook een die op slot zit: sinds fase 6C is dat geen
+     <button disabled> meer maar een knop die antwoordt (zie slotWereld), en dan
+     hoort hij ook te voelen alsof de tik aankwam. */
+  .reis-halte:active .reis-plaats { transform: scale(.965); }
   .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%; }
   /* alleen als er nog geen tekening is: het wereldteken draagt de kaart */
   .reis-ico { position: relative; font-size: calc(var(--kaart-h) * .34); line-height: 1;
@@ -3460,6 +3481,19 @@
   }
   /* op slot: hetzelfde plekje, hetzelfde glas, alleen een wit teken */
   .reis-zegel.slot { color: var(--c-white); font-size: 10.5px; }
+  /* Het "nee" van een wereld die nog niet aan de beurt is: het slotje schudt één
+     keer kort met zijn hoofd. Klein en gedempt -- het zit op een badge van 21
+     pixels, en de vinkjesschud van .shake (10px heen en weer) zou het van zijn
+     hoek af gooien. Bij prefers-reduced-motion blijft alleen de toast over; die
+     zegt het in woorden en dat is waar het om gaat. */
+  .reis-zegel.slot.nee { animation: slot-nee .5s ease; }
+  @keyframes slot-nee {
+    0%, 100% { transform: rotate(0) scale(1); }
+    18% { transform: rotate(-11deg) scale(1.14); }
+    44% { transform: rotate(9deg) scale(1.14); }
+    70% { transform: rotate(-5deg) scale(1.06); }
+  }
+  @media (prefers-reduced-motion: reduce) { .reis-zegel.slot.nee { animation: none; } }
   /* Vol: géén badge. Een wereld waar alles binnen is heeft al een gouden rand, een
      warme onderrand en een gouden teller -- er hoeft alleen nog een teken bij dat
      zégt "dit is bijzonder", en dat is een glinstering en geen schijfje. Drie
@@ -5080,8 +5114,27 @@
     box-shadow: 0 -8px 14px rgba(40,10,70,.07);
   }
   .newstar-go { width: 100%; font-size: 19px; }
-  .newstar-go:disabled { opacity: .45; cursor: default; box-shadow: none; }
-  .newstar-go:disabled:active { transform: none; }
+  /* Niet [disabled] maar [aria-disabled]: het ziet er hetzelfde uit, maar de tik
+     kómt binnen. Een uitgeschakelde knop krijgt in geen enkele browser een
+     click-gebeurtenis, dus "Klaar" was letterlijk de enige knop in de app waar
+     tikken niets teruggaf -- terwijl dat juist het moment is waarop een kind niet
+     weet wat er nog mist. createStar weigert nog steeds (dezelfde regel als
+     altijd) en wijst nu aan wáár het antwoord hoort. De indruk-beweging van .btn
+     blijft daarom gewoon staan: er gebéurt iets. */
+  .newstar-go[aria-disabled="true"] { opacity: .45; box-shadow: none; }
+  /* De pulse die zegt "hier moet je nog even tikken". Geen rood en geen kruisje:
+     er is niets fout gegaan, er is alleen nog niet geantwoord. Twee keer en dan
+     stil -- een veld dat blijft kloppen wordt behang. */
+  .vraagt { animation: vraagt 1.15s ease-out 2; }
+  @keyframes vraagt {
+    0%   { box-shadow: 0 0 0 0 rgba(var(--purple-mid-rgb), .55); }
+    65%  { box-shadow: 0 0 0 11px rgba(var(--purple-mid-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--purple-mid-rgb), 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    /* geen klop, maar de aanwijzing zelf mag niet verdwijnen: een stille ring */
+    .vraagt { animation: none; box-shadow: 0 0 0 3px rgba(var(--purple-mid-rgb), .5); }
+  }
 
   /* de naam is het enige tekstveld in de hele app -- zonder duidelijk signaal
      ziet het eruit als platte tekst i.p.v. iets aantikbaars, dus een potloodje
@@ -9400,6 +9453,27 @@ const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
 const REIS_GLANS = `<svg viewBox="0 0 26 26" aria-hidden="true">`
   + `<path d="${VONK(16, 9, 7)}"/><path d="${VONK(7.5, 16.5, 4)}" opacity=".85"/>`
   + `<path d="${VONK(20, 19.5, 2.6)}" opacity=".7"/></svg>`;
+/* Een tik op een wereld die nog op slot zit. Hij brengt je nergens heen -- dat is
+   de hele bedoeling van een slot -- maar hij zegt wél waaróm, en in één regel: de
+   wereld waar ze nu staat is de wereld die eerst uit moet. Precies dezelfde zin als
+   op een spulletje dat je nog moet verdienen ("Speel Muziekwereld uit").
+
+   Het slotje schudt kort mee. Dat is de tikreactie: de kaart zelf drukt al in
+   (.reis-halte:active), dus dit hoeft alleen te zeggen wélk ding hier "nee" zegt.
+   Geen venster, geen uitleg, geen aftelling. */
+function slotWereld(knop, doel) {
+  sndClick();
+  const slot = knop && knop.querySelector('.reis-zegel.slot');
+  if (slot) {
+    slot.classList.remove('nee');
+    void slot.offsetWidth;
+    slot.classList.add('nee');
+    setTimeout(() => slot.classList.remove('nee'), 800);
+  }
+  const w = WORLDS[doel];
+  showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
+  setTimeout(hideToast, 2200);
+}
 /* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
    stijlblad -- er wordt niets opgemeten, dus draaien, resizen of een wereld erbij
    vraagt geen enkele herberekening. */
@@ -9527,7 +9601,17 @@ function renderReis() {
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
     if (b.open) knop.onclick = () => reisNaarWereld(b.i, knop);
-    else knop.disabled = true;
+    else {
+      /* aria-disabled en niet disabled. Een <button disabled> krijgt geen enkele
+         gebeurtenis en ook geen :active, en dat maakte een wereld op slot het enige
+         ding in de app waar tikken helemaal niets teruggeeft -- terwijl het juist
+         het ding is waar een kind op tíkt: hij ligt daar groot en in kleur naar je
+         te lonken. Overal elders in de app antwoordt een geweigerde tik (de laatste
+         bewerking die niet uit mag, een trofee die nog niet vrij is, een spulletje
+         dat te duur is). Hier nu ook -- zie slotWereld. */
+      knop.setAttribute('aria-disabled', 'true');
+      knop.onclick = () => slotWereld(knop, doel);
+    }
     baan.appendChild(knop);
   });
 
@@ -12150,8 +12234,16 @@ function endLevel(success) {
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(lvl); };
-    $('btn-end-alt').textContent = '👕 Kleedkamer';
-    $('btn-end-alt').onclick = () => { sndClick(); openKleedkamer(); };
+    /* Net een wereldspulletje verdiend? Dan gaat de tweede knop niet naar "de
+       kleedkamer" maar naar dát spulletje. Het feestje hierboven laat het één keer
+       zien en is daarna weg; zonder deze brug moet een kind zelf bedenken in welke
+       van de zeven laden het terechtgekomen is. Eén show later is het gewoon weer
+       de kleedkamer -- dit is een wegwijzer, geen tweede knop. */
+    const nieuwSpul = feest && feest.spul;
+    $('btn-end-alt').textContent = nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
+    $('btn-end-alt').onclick = nieuwSpul
+      ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
+      : () => { sndClick(); openKleedkamer(); };
     sndWin();
     confetti(40);
     finaleDance('end-avatar', 6);   // grote slotchoreografie
@@ -12412,6 +12504,32 @@ function openKleedkamerCat(cat) {
   show('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
+}
+/* Rechtstreeks naar één spulletje: de juiste lade open én dat stuk al gekozen, dus
+   de pop draagt het meteen en de balk onderaan zegt "Doe aan".
+
+   Waarvoor: een wereldbeloning komt binnen als een plaatje met een naam op het
+   feestje ná de show, en verhuist daarna stilletjes naar de kleedkamer -- waar hij
+   in de zesde lade ligt, achter een rij die opzij geschoven moet worden. Wie hem
+   wilde zien moest dus raden waar. Dit is dat gat en verder niets: geen nieuw
+   scherm, geen nieuwe stand, alleen de twee variabelen die de kleedkamer toch al
+   heeft, op de plek gezet waar het kind heen wilde. */
+function openKleedkamerItem(id) {
+  const it = item(id);
+  if (!it) return openKleedkamer();
+  shopCat = it.cat; shopSelectedId = id; dressReturnTo = null;
+  show('screen-dress');
+  renderShop();
+  /* Hier niet bovenaan beginnen (zoals openKleedkamer en openKleedkamerCat), maar
+     bij het kaartje zelf: dit is een tik op één spulletje, en het zesde wereld-
+     spulletje staat onder de rand -- achter de balk die er "Doe aan" op zegt. De
+     pop draagt het al, dus zonder dit stond het bewijs buiten beeld. 'center' en
+     niet 'nearest': de balk onderaan ligt over het rek, en 'nearest' parkeert een
+     kaartje daar net achter. */
+  const scherm = $('screen-dress');
+  scherm.scrollTop = 0;
+  const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
+  if (kaart && kaart.scrollIntoView) kaart.scrollIntoView({ block: 'center' });
 }
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
    keer dat de kleedkamer opengaat -- en verder niet: kijken en aandoen gaan via
@@ -12824,7 +12942,7 @@ function renderNewStar() {
         </div>
       </details>
       <div class="newstar-voet">
-        <button class="btn purple newstar-go" id="newstar-go"${ok ? '' : ' disabled'}>🌟 Klaar!</button>
+        <button class="btn purple newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
       </div>
     </div>
   </div>`;
@@ -12856,8 +12974,7 @@ function renderNewStar() {
   const nm = $('newstar-name');
   nm.oninput = e => {
     newStar.name = e.target.value;
-    const go = $('newstar-go');
-    if (go) go.disabled = !e.target.value.trim() || !newStar.base;
+    merkKlaarKnop();
   };
   /* Enter is op een telefoon de enige knop die het toetsenbord zelf aanbiedt, en
      hij deed niets: het veld staat niet in een <form>, dus de toets viel in het
@@ -12872,11 +12989,52 @@ function renderNewStar() {
     if (e.key !== 'Enter' || e.isComposing) return;
     e.preventDefault();                       // nooit een regeleinde of een dwaal-submit
     nm.blur();
-    const go = $('newstar-go');
-    if (go && !go.disabled) createStar();
+    /* Onvoorwaardelijk naar createStar: die weigert zelf als er nog iets ontbreekt
+       (dezelfde regel als altijd) en wijst dan aan wát. Hiervoor stopte Enter bij
+       een uitgeschakelde knop en gebeurde er niets -- het toetsenbord ging weg en
+       daar bleef het bij. */
+    createStar();
   };
   $('newstar-go').onclick = createStar;
   if (scr) { scr.scrollTop = keep; requestAnimationFrame(() => { scr.scrollTop = keep; }); }
+}
+/* Staat de Klaar-knop op "kan"? Eén bron, gelezen door de knop zelf en door het
+   naamveld terwijl er getypt wordt. */
+function nieuweSterKlaar() { return !!(newStar && newStar.name.trim() && newStar.base); }
+function merkKlaarKnop() {
+  const go = $('newstar-go');
+  if (go) go.setAttribute('aria-disabled', nieuweSterKlaar() ? 'false' : 'true');
+}
+/* Wat er nog mist, en waar het antwoord hoort te komen. Dit is het enige dat een
+   geweigerde Klaar-tik doet: het veld dat aan de beurt is in beeld zetten, er twee
+   keer zacht omheen kloppen, en in één regel zeggen wat er gevraagd wordt.
+
+   Waarom dit er is: "Wie ben je?" heeft met opzet geen voorkeuze (zie openNewStar),
+   en dus is een net ingevuld formulier regelmatig nog niet af. De grijze knop zei
+   dát wel, maar niet wát -- en tikken erop gaf helemaal niets terug.
+
+   Bewust géén foutstijl: geen rood, geen kruisje, geen melding die blijft staan.
+   Er is niets fout gegaan; er is alleen nog niet getikt. En bewust geen focus op
+   het naamveld: na Enter is het toetsenbord net weg, en dat meteen weer opengooien
+   is precies wat het formulier onhandelbaar maakte. */
+function wijsOntbrekende() {
+  if (!newStar) return;
+  const basisMist = !newStar.base;
+  const doelen = basisMist
+    ? [...($('newstar-base') || { querySelectorAll: () => [] }).querySelectorAll('.chip')]
+    : [$('newstar-name')].filter(Boolean);
+  if (!doelen.length) return;
+  sndClick();
+  const anker = doelen[0];
+  if (anker.scrollIntoView) anker.scrollIntoView({ block: 'center', behavior: motionOff() ? 'auto' : 'smooth' });
+  doelen.forEach(el => {
+    el.classList.remove('vraagt');
+    void el.offsetWidth;                 // anders herstart de animatie niet
+    el.classList.add('vraagt');
+  });
+  setTimeout(() => doelen.forEach(el => el.classList.remove('vraagt')), 2400);
+  showToast(basisMist ? 'Kies eerst wie je bent 👆' : 'Geef je ster nog een naam 👆');
+  setTimeout(hideToast, 2200);
 }
 function createStar() {
   /* Twee keer Klaar is één ster. Enter én de knop komen hier allebei uit, en op
@@ -12888,7 +13046,7 @@ function createStar() {
   // pas hier valideren, niet tijdens het typen: een veld dat zichzelf corrigeert
   // terwijl je bezig bent is niet te gebruiken (zie de opmerking bij set-name)
   const name = newStar.name.trim().replace(/\s+/g, ' ').slice(0, 12);
-  if (!name || !newStar.base) return;
+  if (!name || !newStar.base) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al', null, 'Twee sterren met dezelfde naam zijn niet uit elkaar te houden.');
