@@ -282,9 +282,12 @@ per ongeluk "gerepareerd" worden:
   per bestand) zou een wijziging in `load()`/`migrate()` zijn en is bewust niet in
   deze ronde gedaan.
 - **`assets/world/regenboog-map.webp` en `wereld7-map.webp` staan op schijf zonder
-  dat een wereld ernaar wijst.** Dat is met opzet -- ze wachten op een wereld. De
-  keuring controleert daarom één kant op (wat een wereld noemt moet bestaan) en
-  niet andersom.
+  dat een wereld ernaar wijst.** De keuring controleert daarom één kant op (wat een
+  wereld noemt moet bestaan) en niet andersom. Let op wát er ligt: beide bestanden
+  zijn byte voor byte een kopie van `snoep-map.webp`. Het zijn plaatshouders die de
+  naam alvast bezet houden, géén tekeningen die op een wereld wachten -- een wereld
+  7 die ernaar wijst ziet er dus precies uit als de Snoepwereld. Zie
+  `docs/WORLD-ART-BRIEF.md` voor wat er echt gemaakt moet worden.
 
 ## Als er iets omvalt
 

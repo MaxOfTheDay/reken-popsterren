@@ -28,8 +28,8 @@ the lighting carry the richness. Detail belongs in the light, not in the objects
 - **The room's hue.** Club deep violet, theatre warm aubergine, stadium midnight blue.
   Same lighting logic, different room. Locking every image to one aubergine would make
   arriving at the stadium feel like nothing happened — and would sit oddly beside the
-  twelve bright podiums the game already sells (Strandfeest, Winterwonderland,
-  Regenboogland).
+  twelve bright podiums the game sold at the time (Strandfeest, Winterwonderland,
+  Regenboogland; see the note in §4 — they are no longer for sale).
 
 The feeling to aim for is **the second before the music starts**. Not calm, not noisy:
 something is about to happen. Put that in the top third, where nothing competes with it
@@ -204,6 +204,15 @@ stadium already carry their own room hue and their own top-third beams.
 ---
 
 ## 4. Podium vs venue
+
+> **Achterhaald sinds fase 1.** Podia zijn geen koopbare categorie meer: `'stage'`
+> staat niet meer in `CATS`, en de venue per wereld (`WORLDS.venue`, met
+> `VENUE_TERUGVAL` als de wereld niets zegt) heeft de rang-gestuurde zaal
+> hieronder vervangen. De `stage_*`-items staan nog in `ITEMS` omdat ze het decor
+> achter de paspop zijn en wie er een had hem houdt — maar er is geen winkel meer
+> waar je er een bij koopt. Lees de tabel hieronder dus als het plan van toen, niet
+> als wat er staat.
+
 
 | Screen | What shows |
 |---|---|
