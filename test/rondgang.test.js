@@ -699,14 +699,31 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
      De grenzen zijn vaste kleine getallen en geen som over WORLDS: "niet meer
      dan de wereld waar ze staat plus haar buurman" is de regel, en die hoort
-     hetzelfde te zijn bij zes werelden en bij twaalf. */
+     hetzelfde te zijn bij zes werelden en bij twaalf.
+
+     De aanvragen worden op twee stapels gelegd, en dat onderscheid is de hele
+     regel. Wat uit assets/world/ komt is wereldtekening en groeit mee met WORLDS
+     -- dáár gaat deze controle over. Wat daarbuiten ligt is één vast beeld per
+     scherm en groeit nergens in mee; sinds de sterrenkeuze haar schilderij
+     terugkreeg (assets/bg/landing.webp) staat daar er één van.
+
+     Eerder telde de meting álles onder assets/ als wereldtekening, en dus viel
+     hij om op dat schilderij: "het startscherm haalt geen enkele wereldtekening
+     op: [] / [landing.webp]" -- terwijl ART_GEHAALD (de app zelf) gewoon leeg
+     was. De meting zei iets anders dan zijn eigen kop. Dat is nu recht, en de
+     tweede stapel wordt niet weggegooid maar apart bewaakt: een lus over WORLDS
+     die per wereld iets uit assets/bg/ zou halen hoort hier nog steeds om te
+     vallen. */
   const verseCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await cacheFonts(verseCtx);
   const vers = await verseCtx.newPage();
-  const opgehaald = [];
+  const opgehaald = [];   // wereldtekeningen: assets/world/...
+  const anders = [];      // de vaste beelden van een scherm: assets/bg/... enz.
   vers.on('request', req => {
     const pad = new URL(req.url()).pathname;
-    if (/\/assets\/.*\.(webp|png|jpe?g|avif)$/i.test(pad)) opgehaald.push(pad.split('/').pop());
+    if (!/\.(webp|png|jpe?g|avif)$/i.test(pad)) return;
+    if (/\/assets\/world\//i.test(pad)) opgehaald.push(pad.split('/').pop());
+    else if (/\/assets\//i.test(pad)) anders.push(pad.split('/').pop());
   });
   await vers.goto(SPEL_URL);
   await vers.evaluate(() => {
@@ -716,6 +733,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     db.profiles = { p1: q }; save();
   });
   opgehaald.length = 0;
+  anders.length = 0;
   await vers.goto(SPEL_URL);
   await vers.waitForTimeout(1200);
   r = await vers.evaluate(() => ({
@@ -728,6 +746,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.gehaald.length === 0 && opgehaald.length === 0,
     'het startscherm haalt geen enkele wereldtekening op',
     JSON.stringify(r.gehaald) + ' / ' + JSON.stringify(opgehaald));
+  /* En zijn eigen beeld is er één en blijft er één: het schilderij achter de
+     sterrenkeuze hoort niet mee te groeien met het aantal werelden of kinderen. */
+  check(anders.length <= 1, 'en zijn eigen beeld is er hooguit één',
+    r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
 
   await vers.click('.ster-tegel');
   await vers.waitForTimeout(2500);
@@ -743,6 +765,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(opgehaald.length <= 3 && opgehaald.length >= 1,
     'en de browser vraagt er ook echt niet meer op dan dat',
     r.werelden + ' werelden, over de lijn: ' + JSON.stringify(opgehaald));
+  check(anders.length <= 1, 'en buiten de wereldtekeningen blijft het bij dat ene beeld',
+    r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
   /* De tekening van de wereld waar ze op staat hoort erbij te zitten -- anders is
      "hooguit drie" gehaald door er nul op te halen, en dan kijkt ze naar een kaart
      zonder wereld. */
