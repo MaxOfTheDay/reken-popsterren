@@ -103,8 +103,8 @@
                     hangt. Niet grijs (grijs leest als kapot) en niet donkerder
                     dan de rest: het is een STOFFIGE LEISTEENVIOLET -- dezelfde
                     familie als de pruim van een gespeelde halte, met ongeveer
-                    dezelfde helderheid, maar met tweederde van de verzadiging
-                    eraf. #4a148c is HSL(275, 75%, 32%); deze is HSL(258, 26%,
+                    dezelfde helderheid, maar met driekwart van de verzadiging
+                    eraf. #4a148c is HSL(275, 75%, 32%); deze is HSL(255, 23%,
                     32%). Dát verschil is waar "later" en "gehaald" uit elkaar te
                     houden zijn, ook uit je ooghoek en ook vóór je het slotje ziet:
                     het koninklijke paars is van wat je verdiend hebt, het stoffige
@@ -115,7 +115,8 @@
                     zijn ze een verloop van niets bijzonders -- precies genoeg om
                     het rondje bol te laten staan zoals alle andere haltes, en te
                     weinig om als glans op te vallen.
-       slot-rand    de zachte lavendelgrijze haarrand daarvan. Die doet hetzelfde
+       slot-rand    de zachte lavendelgrijze haarrand daarvan (.3, en dus een
+                    tint zachter dan de rand van welke andere staat ook). Die doet hetzelfde
                     werk als het donkere keylijntje, maar de andere kant op: de
                     dekkende vulling draagt zichzelf op sneeuw en suikerglazuur, en
                     op de donkere rots van de Jungle- en Toverwereld is deze
@@ -138,9 +139,9 @@
     --halte-rand: rgba(255,240,214,.44);
     --perfect-ring: rgba(255,198,88,.82);
     --perfect-gloed: rgba(255,186,66,.24);
-    --slot-vulling: #493c67;
-    --slot-vulling-top: #5a4c7b;
-    --slot-rand: rgba(222,214,255,.36);
+    --slot-vulling: #483f64;
+    --slot-vulling-top: #564c73;
+    --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
     --ster-tab-rand: rgba(255,255,255,.16);
     --ster-tab-vol: rgba(92,48,10,.76);
@@ -2907,7 +2908,7 @@
        de demping verhuist naar kleur  de dekking van .8 op de héle halte is weg.
                                        Stiller zijn doet hij nu met VERZADIGING:
                                        dezelfde helderheid als de pruim van een
-                                       gespeelde halte, maar met tweederde van de
+                                       gespeelde halte, maar met driekwart van de
                                        kleur eraf -- stoffig leisteenviolet tegen
                                        koninklijk paars. Plus 84% maat en een
                                        zachte contactschaduw. Niet met
@@ -2926,13 +2927,16 @@
      kan een gespeelde, een perfecte of de huidige halte nergens van winnen. Hij is
      alleen niet langer half weggevallen in de tekening.
 
-     Het nummer gaat juist omhóóg (.74 -> .86 wit, en het verliest de .8 die er als
+     Het nummer gaat juist omhóóg (.74 -> .82 wit, en het verliest de .8 die er als
      paginadekking overheen lag). Het is het enige wat zegt de hoeveelste show dit
      is, het staat nu op een vaste ondergrond in plaats van op wat er toevallig
      achter ligt, en het hoort het eerste te zijn wat je van een halte op slot
-     leest. Op de stoffige vulling haalt het ruim 7:1.
+     leest. Op de stoffige vulling haalt het 7:1 -- ruim leesbaar, en tegelijk net
+     een tint onder het vólle wit van een gespeelde halte. Dat laatste is geen
+     slordigheid maar dezelfde trap nog een keer: leesbaar hoeft niet even luid te
+     zijn.
 
-     Het slotje komt op .78: genoeg om tegen een minder verzadigde vulling gelezen
+     Het slotje komt op .74: genoeg om tegen een minder verzadigde vulling gelezen
      te worden, en een stap onder het nummer zodat het een bijschrift blijft en geen
      tweede insigne ernaast. Nummer boven slotje, altijd -- en het slotje bevestigt
      wat de kleur al gezegd heeft, in plaats van het in zijn eentje te moeten
@@ -2942,8 +2946,8 @@
     --dot-drop: 0 0.5cqw 1cqw rgba(12,2,26,.26); }
   .tour-stop.locked .dot {
     background: linear-gradient(180deg, var(--slot-vulling-top), var(--slot-vulling));
-    border-color: var(--slot-rand); color: rgba(255,255,255,.86); }
-  .tour-stop.locked .stop-lock { opacity: .78; }
+    border-color: var(--slot-rand); color: rgba(255,255,255,.82); }
+  .tour-stop.locked .stop-lock { opacity: .74; }
   /* Hier speel je. Het brandpunt van de kaart, maar rustig: een warme gloed die
      langzaam ademt en een haartje schaal. Geen springende animatie -- een kind
      moet er náár kijken, niet van schrikken. */
