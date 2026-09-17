@@ -61,6 +61,36 @@
 > choosing a child and three sections — `Voortgang | Oefenen | Beheer`. The
 > screen-by-screen notes on "Instellingen" in section C therefore describe the
 > screen as it was reviewed, not as it is now.
+>
+> **Phase 5D (settings, parent area, shared shell), outside this review.** Three
+> things, of which the third is the one that matters beyond the parent area:
+>
+> * *the settings popover* got attached to its gear (8px instead of 18, plus a
+>   caret), a paper surface with a purple ring and a blur instead of a plain white
+>   block, 48px rows, and toggle pills that carry a state dot (filled green = on,
+>   hollow grey = off) next to the word. `Voor ouders` gained a second line and a
+>   lavender icon tile so it reads as a door and not a third switch.
+> * *the parent area* kept its structure and lost weight. The header reads one
+>   `--kolom` for all three of its rows (it was 640 for the title and 460 for the
+>   two pickers, which on a tablet gave three different left edges), and it has a
+>   compact scrolled state like the trophy cabinet's: 171 → 139px, with the
+>   selected child and the active tab never leaving the screen. `Voortgang` went
+>   from six equal tiles to three plus one quiet line, and the level estimate now
+>   says what it is and which phase/range the child is in. `Oefenen` keeps every
+>   control but not every weight: mode / what / how-far stay purple-framed, the
+>   rest moved into a quieter "Meer opties" card, and the two phase rows became
+>   one range control (a sentence, a visible band across both rows, a legend in
+>   columns). `Beheer` separates the name from the two irreversible actions and
+>   says what *stays*, not only what goes.
+> * *the shell* got the rule that was missing. `.screen.gebruik` (dressing room,
+>   trophies, parent area, new star) narrows its sticky header to the content
+>   column once the window is wider than 740px — that existed only on the
+>   dressing room, which is why trophies and the parent area stretched their
+>   header to the window edge on a tablet while the cards underneath stayed
+>   centred. Immersive screens (map, journey, show) keep the full width on
+>   purpose. The four hand-computed bottom-bar numbers (10 / 88 / 100 / 168, of
+>   which three forgot the device's safe area) now come out of
+>   `--balk-h / --balk-rand / --balk-ruimte / --veilig-onder`.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
