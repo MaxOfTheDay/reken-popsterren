@@ -5,8 +5,9 @@
  *
  *   SCHIL (rekenpop-v45)   het spel zelf: index.html, het manifest, de iconen.
  *                          Netwerk-eerst, want een nieuwe versie hoort gewoon
- *                          binnen te komen. Gaat mee met elke uitgave: de naam
- *                          verandert, de oude wordt opgeruimd.
+ *                          binnen te komen -- daar hoeft deze naam niet voor
+ *                          omhoog. Gaat hij wél omhoog, dan wordt de oude
+ *                          voorraad bij het activeren opgeruimd.
  *
  *   TEKENINGEN (rekenpop-art)  assets/: de wereldkaarten, ~300 kB per stuk.
  *                          Cache-eerst, en de naam verandert níét bij een
