@@ -4,7 +4,7 @@
   "private": true,
   "description": "Reken-Popsterren — rekenspel voor kinderen (single-file PWA). Deze package.json is alleen voor de tests; de app zelf heeft geen build-stap en laadt niets uit node_modules.",
   "scripts": {
-    "test": "npm run check && node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js && node test/rondgang.test.js && node test/voortgang.test.js && node test/reis.test.js && node test/beloning.test.js && node test/studio.test.js",
+    "test": "npm run check && node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js && node test/ouder.test.js && node test/rondgang.test.js && node test/voortgang.test.js && node test/reis.test.js && node test/beloning.test.js && node test/studio.test.js",
     "check": "node test/inhoud.test.js && node test/kern.test.js && node test/saves.test.js && node test/kleedkamer.test.js",
     "test:inhoud": "node test/inhoud.test.js",
     "test:kern": "node test/kern.test.js",
@@ -13,6 +13,7 @@
     "test:tellen": "node test/counting.test.js",
     "test:rekenen": "node test/maths.test.js",
     "test:sterren": "node test/profiles.test.js",
+    "test:ouder": "node test/ouder.test.js",
     "test:rondgang": "node test/rondgang.test.js",
     "test:voortgang": "node test/voortgang.test.js",
     "test:reis": "node test/reis.test.js",
