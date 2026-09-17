@@ -427,6 +427,19 @@ zaak('L', () => {
     'L · leeg, zoals de wereld zelf', 'meteen behaald');
   check(badge('perfect-test7').wereld && badge('perfect-test7').wereld.id === 'test7',
     'L · en hij weet bij welke wereld hij hoort', JSON.stringify(badge('perfect-test7').wereld));
+  /* De vorm van de kast blijft kloppen mét een wereld erbij. Dit is dezelfde regel
+     die inhoud.test.js F bewaakt, maar dan ná een uitbreiding: het vaste deel staat
+     stil, alleen het aantal perfecte werelden loopt mee met WORLDS. Een groeiend
+     spel mag de kastcontrole dus nooit omduwen -- en een trofee die er ongemerkt
+     bij komt valt hier alsnog uit. */
+  const actief = app.activeTrophies();
+  const vast = actief.filter(t => !t.perfect);
+  const perfect = actief.filter(t => t.perfect);
+  check(vast.length === 12, 'L · het vaste deel van de kast groeit niet mee', vast.length);
+  check(perfect.length === app.WORLDS.length && perfect.length === 7,
+    'L · en het perfecte deel precies wel', perfect.length + '/' + app.WORLDS.length);
+  check(actief.length === vast.length + app.WORLDS.length,
+    'L · samen is dat de hele kast', actief.length);
   check(app.TROPHIES.filter(t => t.id === 'perfect-muziek').length === 1,
     'L · en de oude staan er niet dubbel bij', app.TROPHIES.filter(t => t.id === 'perfect-muziek').length);
   // de kast legt de nieuwe trofeeën niet zomaar als "klaar" neer

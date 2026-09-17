@@ -206,12 +206,32 @@ zaak('F', () => {
   // bestaan voor kinderen die ze behaald hebben -- zie RETIRED_TROPHIES).
   const pensioen = Array.from(app.RETIRED_TROPHIES).filter(id => ids.includes(id));
   check(pensioen.length === 0, 'F · geen gepensioneerde trofee terug in de kast', JSON.stringify(pensioen));
-  /* FASE 5C -- de kast is uitgedund en mag niet stilletjes weer volgroeien. Dit
-     is geen exacte telling (een wereld erbij geeft een trofee erbij), maar een
-     bovengrens: staat er ooit weer een lijst met alles wat het spel kan tellen,
-     dan valt dit om. */
+  /* FASE 5C -- de kast is uitgedund en mag niet stilletjes weer volgroeien.
+     Hier stond een bovengrens ("hoogstens 24 actieve trofeeën"), en die was fout
+     gedacht: elke wereld die erbij komt levert terecht een perfecte-wereldtrofee
+     op, dus met genoeg werelden zou een kerngezonde kast deze controle omduwen.
+     Zo'n test leert je op den duur alleen het getal op te hogen.
+
+     Dus geen totaal meer, maar de vórm van de kast:
+       - het vaste deel (alles wat niet uit WORLDS komt) blijft op VASTE_KAST;
+       - er is precies één actieve perfecte wereld per wereld in WORLDS;
+       - en samen zijn dat álle actieve trofeeën -- er hangt niets buiten die twee.
+     Een wereld erbij verandert alleen het tweede getal, en dat mag. Een trofee die
+     iemand er "even bij" zet valt hier onmiddellijk uit, hoeveel werelden er ook
+     zijn. */
+  const VASTE_KAST = 12;
   const actief = app.activeTrophies();
-  check(actief.length <= 24, 'F · de kast blijft klein genoeg om te overzien', actief.length);
+  const vast = actief.filter(t => !t.perfect);
+  const perfect = actief.filter(t => t.perfect);
+  check(vast.length === VASTE_KAST, `F · het vaste deel van de kast blijft op ${VASTE_KAST} trofeeën`,
+    vast.length + ': ' + JSON.stringify(vast.map(t => t.id)));
+  check(perfect.length === WORLDS.length, 'F · en precies één perfecte wereld per wereld',
+    perfect.length + ' bij ' + WORLDS.length + ' werelden');
+  check(actief.length === vast.length + WORLDS.length, 'F · samen is dat de hele kast, er hangt niets buiten',
+    actief.length);
+  check(perfect.every(t => t.id.indexOf(app.PERFECT_BADGE) === 0),
+    'F · en een perfecte wereld is te herkennen aan zijn id',
+    JSON.stringify(perfect.filter(t => t.id.indexOf(app.PERFECT_BADGE) !== 0).map(t => t.id)));
   check(TROPHY_SHELVES.length === 4, 'F · en er zijn vier planken', TROPHY_SHELVES.length);
   // Een plank met één kaartje is geen plank; elke plank moet er minstens twee hebben.
   TROPHY_SHELVES.forEach(sh => check(sh.ids.filter(id => !app.isRetiredTrophy(id)).length >= 2,

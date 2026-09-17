@@ -618,15 +618,36 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     kast: document.getElementById('screen-trophies').classList.contains('active'),
     kaarten: document.querySelectorAll('.trophy-card, .tro-card').length,
     teller: document.getElementById('trophy-count').textContent,
-    rang: document.getElementById('career-strip').textContent,
     // fase 5C: geen kastbalk, geen plankbalk, geen balk per kaartje
     balken: document.querySelectorAll('#screen-trophies .kast-bar, #screen-trophies .rank-bar, #screen-trophies .trophy-progress').length,
+    // en geen ster-statusstrook meer aan de voet van de kast
+    rangStrook: document.querySelectorAll('#screen-trophies .career-strip').length,
+    kopRuim: !document.getElementById('screen-trophies').classList.contains('gescrold'),
   }));
   check(r.kast && r.kaarten > 10, 'de trofeeënkast staat vol kaarten', JSON.stringify(r));
   // De kop zegt de stand in woorden ("Je hebt er 3 van de 18"), niet als balk.
   check(/\d+\s+van\s+de\s+\d+/.test(r.teller), 'de kastteller staat er', r.teller);
-  check(/ster/i.test(r.rang), 'de ster-status staat eronder', r.rang);
   check(r.balken === 0, 'en er staat geen voortgangsbalk meer op het scherm', r.balken);
+  check(r.rangStrook === 0, 'de kast eindigt bij de trofeeën, zonder ster-statusstrook', r.rangStrook);
+  check(r.kopRuim, 'bovenaan staat de ruime kop', 'kop staat meteen in de krappe stand');
+
+  /* De krappe kop: zodra er gescrold wordt klapt de zin met de stand weg en wordt
+     de plaat dekkender, zodat er geen trofeenamen meer door de kop heen lezen. */
+  const gescrold = await page.evaluate(async () => {
+    const sc = document.getElementById('screen-trophies');
+    sc.scrollTop = 260;
+    await new Promise(res => setTimeout(res, 200));
+    const zin = document.getElementById('trophy-count');
+    return {
+      klasse: sc.classList.contains('gescrold'),
+      zinWeg: zin.getBoundingClientRect().height < 2,
+      titel: !!document.querySelector('#screen-trophies .header-title'),
+      terug: !!document.querySelector('#screen-trophies .header-left'),
+    };
+  });
+  check(gescrold.klasse && gescrold.zinWeg, 'gescrold krimpt de kop en klapt de stand-zin weg',
+    JSON.stringify(gescrold));
+  check(gescrold.titel && gescrold.terug, 'maar terug en de titel blijven staan', JSON.stringify(gescrold));
 
   /* ---- 9 · Terug-navigatie (de Android-terugknop) ---- */
   await page.goBack();
