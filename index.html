@@ -96,15 +96,38 @@
                     teken dat "af" van "gespeeld" onderscheidt zonder het rondje
                     zelf te verbouwen -- en bewust géén vulling, want een gouden
                     vulling betekent op deze kaart precies één ding.
-       slot-vulling de vulling van een halte die nog niet aan de beurt is: dezelfde
-                    donkere pruim als de rest van de draaglaag, niet grijs. Grijs
-                    leest als kapot; pruim leest als "nog donker".
-       slot-rand    de lichte haarrand daarvan. Die doet hetzelfde werk als het
-                    donkere keylijntje, maar de andere kant op: de pruimen vulling
-                    draagt zichzelf op sneeuw en suikerglazuur, en op de donkere
-                    rots van de Jungle- en Toverwereld is deze lichte rand het
-                    enige dat de halte nog begrenst. Samen zijn ze het lichte/
-                    donkere paar waar de hele draaglaag op rust.
+       slot-vulling de vulling van een halte die nog niet aan de beurt is. DEKKEND,
+                    en dat is het hele punt: half doorzichtig pruim liet de
+                    tekening én de weg er dwars doorheen praten, en dan staat er
+                    geen bestemming maar een vlek waar toevallig een cijfer in
+                    hangt. Niet grijs (grijs leest als kapot) en niet donkerder
+                    dan de rest: het is een STOFFIGE LEISTEENVIOLET -- dezelfde
+                    familie als de pruim van een gespeelde halte, met ongeveer
+                    dezelfde helderheid, maar met driekwart van de verzadiging
+                    eraf. #4a148c is HSL(275, 75%, 32%); deze is HSL(255, 23%,
+                    32%). Dát verschil is waar "later" en "gehaald" uit elkaar te
+                    houden zijn, ook uit je ooghoek: het koninklijke paars is van
+                    wat je verdiend hebt, het stoffige van wat er nog ligt. Sinds
+                    het slotje weg is draagt deze kleur dat verschil alléén, samen
+                    met het ontbrekende sterrentabje en de plek op de route. Dus niet donkerder maken om hem stiller te
+                    krijgen -- dat kost alleen het cijfer.
+       slot-vulling-top
+                    de bovenkant van diezelfde vulling, een tikje lichter. Samen
+                    zijn ze een verloop van niets bijzonders -- precies genoeg om
+                    het rondje bol te laten staan zoals alle andere haltes, en te
+                    weinig om als glans op te vallen.
+       slot-rand    de zachte lavendelgrijze haarrand daarvan (.3, en dus een
+                    tint zachter dan de rand van welke andere staat ook). Die doet hetzelfde
+                    werk als het donkere keylijntje, maar de andere kant op: de
+                    dekkende vulling draagt zichzelf op sneeuw en suikerglazuur, en
+                    op de donkere rots van de Jungle- en Toverwereld is deze
+                    lichte rand het enige dat de halte nog begrenst. Samen zijn ze
+                    het lichte/donkere paar waar de hele draaglaag op rust. Geen
+                    vol wit maar een lavendeltint, zodat hij bij de stoffige
+                    vulling hoort in plaats van er als een lichtje op te liggen.
+                    Nu de vulling dekkend is, mengt deze rand met de vulling
+                    eronder en niet meer met de tekening -- hij is dus in élke
+                    wereld dezelfde kleur, en dat was hij eerder niet.
        ster-tab     het donkere tabje waar de drie sterren in liggen
        ster-tab-vol hetzelfde tabje als alle drie de sterren vol zijn -- dát is
                     waar "perfect" aan te zien is, en niet aan een eigen insigne
@@ -117,14 +140,15 @@
     --halte-rand: rgba(255,240,214,.44);
     --perfect-ring: rgba(255,198,88,.82);
     --perfect-gloed: rgba(255,186,66,.24);
-    --slot-vulling: rgba(34,14,60,.66);
-    --slot-rand: rgba(255,255,255,.34);
-    --ster-tab: rgba(38,12,64,.68);
+    --slot-vulling: #483f64;
+    --slot-vulling-top: #564c73;
+    --slot-rand: rgba(222,214,255,.3);
+    --ster-tab: rgba(38,12,64,.74);
     --ster-tab-rand: rgba(255,255,255,.16);
-    --ster-tab-vol: rgba(92,48,10,.72);
+    --ster-tab-vol: rgba(92,48,10,.76);
     --ster-tab-vol-rand: rgba(255,214,120,.5);
-    --ster-leeg: rgba(255,255,255,.42);
-    --ster-leeg-rand: rgba(20,5,40,.5);
+    --ster-leeg: rgba(255,255,255,.5);
+    --ster-leeg-rand: rgba(20,5,40,.56);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
@@ -793,12 +817,29 @@
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
   }
 
-  /* De titel staat op de schil en niet meer in een tekening, dus de gloed eronder
-     mag zachter: hij hoeft zich nergens meer van los te maken. */
+  /* ---- De sterrenkeuze krijgt haar schilderij terug -----------------------
+     De schil hierboven blijft de sfeer voor de andere niet-wereldschermen; de
+     sterrenkeuze is weer het geschilderde startscherm (assets/bg/landing.webp).
+     Een sluier houdt tekst en kaarten leesbaar, en het masker laat de rand van
+     de tekening zacht in de schil overlopen in plaats van een harde snede. */
+  #screen-profile.app-sfeer::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      radial-gradient(120% 70% at 50% 62%, rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%),
+      url("assets/bg/landing.webp");
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+
+  /* De titel staat weer op de tekening, dus de gloed eronder mag weer zwaarder:
+     wit genoeg om van een lichte lucht los te komen, met een gouden gloed die
+     bij het licht in de tekening hoort. */
   #screen-profile .title {
     color: #fff;
-    text-shadow: 0 2px 0 rgba(24,6,44,.4), 0 4px 16px rgba(24,6,44,.55),
-                 0 0 22px rgba(255,198,120,.3);
+    text-shadow: 0 2px 0 rgba(24,6,44,.45), 0 4px 18px rgba(24,6,44,.6),
+                 0 0 26px rgba(255,194,61,.5);
   }
   /* ---- De sterrentegel ----------------------------------------------------
      Eén omhulsel per kind, met twee zones erin en niets ertussen:
@@ -2740,9 +2781,13 @@
      Een halte kent precies vier voortgangsstaten, en ze betekenen in elke wereld
      hetzelfde:
 
-       locked        nog niet aan de beurt -- kleiner, donkerder glas, mét een
-                     slotje. Bewust niet alléén kleur: het slotje is het signaal,
-                     de demping is het bijgeluid.
+       locked        nog niet aan de beurt -- kleiner, een dekkend stoffig
+                     leisteenviolet vlak, en verder niets: geen slotje, geen
+                     sterrentabje, geen teken. De kleur, het ontbreken van sterren
+                     en de plek voorbij het einde van de gouden weg zeggen het met
+                     zijn drieën. Dekkend en niet doorzichtig: de tekening en de
+                     weg horen bij de rand op te houden, niet dwars door een
+                     bestemming heen te lopen.
        done          gespeeld -- paarse kern, warm wítte rand, en een sterrentabje
                      met drie plekken (hoeveel je er daarvan vol hebt, is het
                      verhaal). Geen goud: goud is hier voor af en voor nu.
@@ -2760,7 +2805,7 @@
      er meerdere van. Nu is er één ononderbroken trap, en hij loopt maar één kant
      op:
 
-       op slot    donker glas, kleiner, geen rand die opvalt
+       op slot    dekkend stoffig leisteenviolet, kleiner, geen rand die opvalt
        gespeeld   paars rondje met een warm witte rand -- nergens goud
        perfect    hetzelfde paarse rondje, mét een gouden RING eromheen en een
                   gouden sterrentabje eronder
@@ -2894,26 +2939,31 @@
      mis: een halte op drie sterren verloor zijn contactschaduw en zweefde als
      enige. */
   .tour-stop .dot { box-shadow: var(--dot-key), var(--dot-drop); }
-  /* het slotje hangt aan de rand van de halte i.p.v. het nummer te vervangen --
-     zo blijft ook op een halte op slot te zien de hoeveelste show het is.
+  /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst
+     als 🔒-emoji, daarna getekend, en steeds kleiner en stiller. Die reeks eindigt
+     hier, en niet omdat het teken niet deugde: het zegt inmiddels iets wat de
+     halte zelf al gezegd heeft. Een halte op slot is stoffig violet waar een
+     gespeelde koninklijk paars is, hij heeft geen sterrentabje, en hij staat
+     voorbij de plek waar de gouden weg ophoudt. Drie signalen, alle drie te zien
+     vóór je iets leest. Een vierde erbovenop is geen duidelijkheid meer maar
+     drukte -- op een halte van 33 pixels, op de drukste tekening van het scherm.
 
-     Getekend en geen 🔒-emoji, om dezelfde reden als bij de sterren hieronder: elk
-     toestel tekent die emoji anders (op de ene een geel hangslot met een blauwe
-     beugel, op de andere een grijs kastje), en een teken dat op drie haltes naast
-     elkaar staat is precies waar dat opvalt. Op de schermafdrukken van vóór deze
-     fase was het bovendien het felste gele ding op een halte die juist stil hoort
-     te zijn. Nu één vorm, in de kleur die de staat kiest.
+     En het verschuift de toon. Een hangslot zegt "hier mág je niet", en dat is
+     niet wat de kaart bedoelt: dit is een tournee, en wat verderop ligt is geen
+     afgesloten deur maar een plek waar ze nog naartoe gaat. Zonder slotje is de
+     silhouet van een halte overal hetzelfde ronde medaillon, en verandert alleen
+     de kleur mee met hoe ver ze is.
 
-     currentColor: het slotje erft de kleur van het nummer ernaast, dus ze dempen
-     samen en kunnen nooit uit elkaar lopen. */
-  .stop-lock { position: absolute; top: -0.4cqw; right: -0.4cqw;
-    width: 4.4cqw; height: 4.4cqw; display: block; color: inherit;
-    filter: drop-shadow(0 0.15cqw 0.3cqw rgba(10,2,24,.7)); }
+     Wat blijft: de voorleesnaam zegt nog steeds "nog op slot" (zie renderTourMap).
+     Voor wie de kaart niet ziét is er geen kleur en geen route, en dáár is het
+     woord het enige dat de staat draagt.
+
+     Wat NIET terugkomt: een ander teken op diezelfde plek. Dan is er niets
+     opgelost en staat er alleen iets anders in de weg. */
   .tour-stop.locked { cursor: default; }
-  /* Op slot = nog niet aan de beurt, en dus rustiger: minder dekkend, een zachtere
-     schaduw en een kleiner slotje. Niet grijzer of vager -- het moet een halte
-     blijven die je herkent, alleen niet een die om aandacht vraagt. Het slotje
-     draagt de betekenis, zodat het niet van kleur alleen afhangt. */
+  /* Op slot = nog niet aan de beurt, en dus rustiger: een stillere kleur en een
+     zachtere schaduw. Niet grijzer of vager -- het moet een halte blijven die je
+     herkent, alleen niet een die om aandacht vraagt. */
   /* De demping zit in de dekking en in de zachtere contactschaduw -- níet in het
      keylijntje. Dat lijntje is geen nadruk maar leesbaarheid: op de sneeuw van de
      IJswereld is een grijze halte zonder donkere begrenzing een grijze vlek, en
@@ -2933,21 +2983,70 @@
                       er nog precies doorheen.
        donker glas    dezelfde pruim als de rest van de draaglaag in plaats van
                       grijs. Grijs is de kleur van "kapot"; pruim is de kleur die
-                      op deze kaart "draagt" betekent, en hij laat de tekening
-                      erdoorheen praten.
-       leesbaarder    dekking van .72 naar .8 en een lichtere rand. Tegenintuïtief
-                      -- het wordt mínder gedempt -- maar de demping zit nu in de
-                      maat en in de kleur, en daar hoort het te zitten. Een halte
-                      op slot moet zeggen "nog niet", niet "hier is iets stuk".
+                      op deze kaart "draagt" betekent.
+       leesbaarder    een lichtere rand, en de demping in de maat en in de kleur in
+                      plaats van in nóg meer vaagheid. Een halte op slot moet
+                      zeggen "nog niet", niet "hier is iets stuk".
 
-     Het nummer gaat wél omlaag (74%): dát is het onderdeel dat niets toevoegt
-     zolang je er niet naartoe kunt. */
-  .tour-stop.locked { opacity: .8;
+     VOL IN PLAATS VAN GLAS. Het glas was de laatste rest van het oude idee, en op
+     de tekeningen van fase 5 hield het geen stand. Een halte op slot bestond uit
+     vier dingen die tegelijk om dezelfde vierkante centimeter vochten: de
+     tekening erachter (op de Snoepwereld een lolly, op de IJswereld een waterval),
+     de gestippelde weg die er dwars doorheen liep, het slotje (dat inmiddels ook
+     weg is) en het nummer. Wat
+     je dan ziet is geen bestemming maar ruis -- en "nog niet aan de beurt" ging
+     eruitzien als "nog niet af".
+
+     Nu is de vulling dekkend. Drie dingen veranderen daarmee tegelijk, en alle
+     drie in dezelfde richting:
+
+       de tekening stopt bij de rand   er valt niets meer doorheen te lezen, dus
+                                       het nummer heeft in élke wereld dezelfde
+                                       ondergrond -- op sneeuw, op suikerglazuur
+                                       en op donkere rots.
+       de weg stopt bij de rand        geen masker, geen tweede pad: de haltes
+                                       liggen al bóven de weg-SVG (z-index 1 tegen
+                                       0), dus zodra de vulling dekt houdt de weg
+                                       vanzelf op bij de ene rand en gaat aan de
+                                       andere kant verder. Dát is wat een route
+                                       hoort te doen: naar een plek toe lopen, niet
+                                       er dwars doorheen.
+       de demping verhuist naar kleur  de dekking van .8 op de héle halte is weg.
+                                       Stiller zijn doet hij nu met VERZADIGING:
+                                       dezelfde helderheid als de pruim van een
+                                       gespeelde halte, maar met driekwart van de
+                                       kleur eraf -- stoffig leisteenviolet tegen
+                                       koninklijk paars. Plus 84% maat en een
+                                       zachte contactschaduw. Niet met
+                                       doorzichtigheid, en ook niet door hem
+                                       donkerder te maken: donkerder is precies
+                                       hoe je het cijfer kwijtraakt, en donker is
+                                       op deze kaart geen staat maar een kleur die
+                                       overal in de draaglaag zit.
+
+     Het verloop van --slot-vulling-top naar --slot-vulling is bewust nauwelijks te
+     zien: het houdt het rondje bol zoals alle andere haltes, zonder dat er een
+     glans op komt te staan die om aandacht vraagt.
+
+     De trap blijft staan waar hij stond. Dekkend is niet hetzelfde als luid: er is
+     geen goud, geen ring, geen gloed en geen sterrentabje, dus een halte op slot
+     kan een gespeelde, een perfecte of de huidige halte nergens van winnen. Hij is
+     alleen niet langer half weggevallen in de tekening.
+
+     Het nummer gaat juist omhóóg (.74 -> .82 wit, en het verliest de .8 die er als
+     paginadekking overheen lag). Het is nu het énige wat er nog op een halte op
+     slot staat -- het slotje ernaast is weg (zie .tour-stop.locked hierboven) --
+     en het zegt de hoeveelste show dit is. Het staat op een vaste ondergrond in
+     plaats van op wat er toevallig achter ligt, en haalt op de stoffige vulling
+     7:1: ruim leesbaar, en tegelijk net een tint onder het vólle wit van een
+     gespeelde halte. Dat laatste is geen slordigheid maar dezelfde trap nog een
+     keer: leesbaar hoeft niet even luid te zijn. */
+  .tour-stop.locked {
     --stop-schaal: .84;
     --dot-drop: 0 0.5cqw 1cqw rgba(12,2,26,.26); }
-  .tour-stop.locked .dot { background: var(--slot-vulling);
-    border-color: var(--slot-rand); color: rgba(255,255,255,.74); }
-  .tour-stop.locked .stop-lock { opacity: .92; }
+  .tour-stop.locked .dot {
+    background: linear-gradient(180deg, var(--slot-vulling-top), var(--slot-vulling));
+    border-color: var(--slot-rand); color: rgba(255,255,255,.82); }
   /* Hier speel je. Het brandpunt van de kaart, maar rustig: een warme gloed die
      langzaam ademt en een haartje schaal. Geen springende animatie -- een kind
      moet er náár kijken, niet van schrikken. */
@@ -3114,17 +3213,25 @@
      dáár werden ze het zwaarste onderdeel van de speellaag -- precies op de twee
      werelden waar de tekening het lichtst en het mooist is.
 
-     9,2x3,2cqw op 68% i.p.v. 9,6x3,4 op 72%, met sterren van 2,45 i.p.v. 2,5cqw.
+     9,2x3,2cqw i.p.v. 9,6x3,4, met sterren van 2,45 i.p.v. 2,5cqw (de sterren staan
+     inmiddels op 2,6 -- zie hieronder).
      Het tabje neemt zo ~10% minder oppervlak van de tekening af terwijl de sterren
      zelf vrijwel op maat blijven -- dat is waar de balans ging zitten. (Eén ronde
      eerder stond het op 8,8x3 met sterren van 2,25; dat was op een echte telefoon
      nét te klein: op 390px breed is een ster dan 10,7px, en drie van die dingen
      naast elkaar lees je niet meer als *** maar als een streepje. Nu 11,6px.)
 
-     De lege ster ging van 30% naar 42% wit met een iets donkerder omtrek. Een lege
-     plek moet je kunnen zíen -- anders is het verschil tussen twee en drie sterren
-     alleen "er staat iets minder", en dat is precies het verschil dat een kind
-     hier wil aflezen.
+     De lege ster ging van 30% naar 42% wit met een iets donkerder omtrek, en staat
+     nu op 50% met een omtrek van .56. Een lege plek moet je kunnen zíen -- anders is
+     het verschil tussen twee en drie sterren alleen "er staat iets minder", en dat
+     is precies het verschil dat een kind hier wil aflezen. Vol blijft vol goud, dus
+     de afstand tussen verdiend en nog te verdienen blijft dezelfde; alleen het
+     silhouet van de lege plek is beter te vinden.
+
+     Het tabje eronder ging in dezelfde ronde van .68 naar .74 (en de gouden voering
+     van een perfecte halte van .72 naar .76). Zes honderdsten -- net genoeg om de
+     sterren op suikerglazuur en sneeuw van hun ondergrond los te houden, en ver
+     genoeg van het donkere blokje waar het eerder op stond.
 
      De onderrand blijft op 12,6cqw liggen -- dat is de onderrand van het raakvlak
      hierboven, en die twee moeten samenvallen, anders opent een tik op de sterren
@@ -3144,7 +3251,13 @@
     background: var(--ster-tab);
     box-shadow: inset 0 0 0 0.12cqw var(--ster-tab-rand), 0 0.35cqw 0.7cqw rgba(12,2,26,.38);
   }
-  .tour-stop .cstars svg { flex: none; width: 2.45cqw; height: 2.45cqw; display: block;
+  /* 2,6 i.p.v. 2,45cqw: ruim 6% groter, en niet meer dan dat. Op 390px breed gaat
+     een ster daarmee van 11,6 naar 12,3px -- net genoeg om *** ook op een armlengte
+     afstand als drie sterren te lezen in plaats van als een streepje, en te weinig
+     om met het medaillon erboven te gaan concurreren. Het tabje zelf blijft precies
+     even groot (9,2x3,2cqw): de sterren staan er ruim genoeg in, en élke pixel
+     tabje erbij is een pixel tekening eraf. */
+  .tour-stop .cstars svg { flex: none; width: 2.6cqw; height: 2.6cqw; display: block;
     stroke-linejoin: round; stroke-width: 1.6; }
   .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); }
   .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); }
@@ -9993,7 +10106,6 @@ function renderTourMap(travelFrom) {
     const hero = lvl === heroLvl
       ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div></div>` : '';
 
-    const lock = open ? '' : SLOT_SVG;
     // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
     // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar
     // al sterren liggen -- zie starRowHTML.
@@ -10005,8 +10117,11 @@ function renderTourMap(travelFrom) {
        een halte over zonder dat de voortgang opschuift, dan is gespeeld false maar
        staat er wél een score -- en juist die mag je zien bijwerken. */
     if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
-    b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${lock}${i + 1}</div>`
+    b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
       + `${sterrenRij}</div>`;
+    /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
+       schermlezer doorloopt heeft geen kleur en geen plek op de route -- daar is
+       "nog op slot" het enige wat de staat draagt, en dat is geen beeldruis. */
     b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
       + (open ? ` — ${st} van 3 sterren` : ' — nog op slot'));
     // Tikken op een halte is niet "start een level" maar "ga die plek binnen":
@@ -10091,7 +10206,7 @@ addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij
 
    Waarom niet ónder élke halte: een halte op slot en een halte waar je nog moet
    spelen hebben per definitie niets verdiend, en drie lege plekken zeggen daar
-   niets wat het slotje of de gouden halte niet al zegt. Ze zouden alleen de kaart
+   niets wat de stoffige vulling of de gouden halte niet al zegt. Ze zouden alleen de kaart
    voller maken en -- onder de huidige halte -- met de ster erbovenop concurreren.
    Vandaar: de rij hoort bij een score, en een score bestaat pas na een show.
 
@@ -10099,13 +10214,6 @@ addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij
    toestel anders getekend. Naast elkaar valt dat op. */
 const STER_PAD = 'M12 2.6l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.62'
   + 'l-5.88 3.09 1.12-6.55L2.48 9.52l6.58-.96z';
-/* Het slotje van een halte die nog niet aan de beurt is, getekend in plaats van
-   als 🔒-emoji -- zie .stop-lock in de CSS voor het waarom. currentColor, zodat
-   hij de kleur van het nummer ernaast erft en er nooit los van kan raken. */
-const SLOT_SVG = '<svg class="stop-lock" viewBox="0 0 24 24" aria-hidden="true">'
-  + '<path d="M8.5 11V8.4a3.5 3.5 0 0 1 7 0V11" fill="none" stroke="currentColor"'
-  + ' stroke-width="2.6" stroke-linecap="round"/>'
-  + '<rect x="5" y="10.4" width="14" height="9.6" rx="2.6" fill="currentColor"/></svg>';
 function starRowHTML(n, gespeeld) {
   const got = Math.max(0, Math.min(3, n | 0));
   if (!gespeeld && !got) return '';
@@ -15238,8 +15346,8 @@ function startMapEdit() {
   function zetStand(stand) {
     const q = P(), w = shown();
     for (let l = w.first; l < w.first + w.levels; l++) delete q.stars[l];
-    /* 'op slot' zet de ster vóór deze wereld: élke halte hier is dan dicht, met
-       hangslotjes en zonder pop. Dat is wat een kind ziet als het vooruitkijkt naar
+    /* 'op slot' zet de ster vóór deze wereld: élke halte hier is dan dicht --
+       stoffig violet, zonder sterren en zonder pop. Dat is wat een kind ziet als het vooruitkijkt naar
        een wereld waar het nog niet is, en het is de enige stand waarin de tekening
        helemaal onder grijze rondjes verdwijnt -- dus juist die wil je nakijken.
        Op de eerste wereld valt er niets vóór, en dan is 'vers' de laagste stand. */

@@ -783,6 +783,102 @@ function check(ok, label, detail) {
     await c.close();
   }
 
+  /* ========== 7e-ter · Een halte op slot is dicht ==========
+   * Een halte op slot was jarenlang half doorzichtig, en dat kostte precies de twee
+   * dingen waarvoor een halte op de kaart staat. De tekening praatte erdoorheen (op
+   * de Snoepwereld een lolly, op de IJswereld een waterval), en de gestippelde weg
+   * liep er dwars doorheen -- dus een route die naar een bestemming hoort te leiden
+   * liep er in plaats daarvan overheen.
+   *
+   * Dat is met opzet níet opgelost met een masker maar met een dekkende vulling: de
+   * haltes liggen al bóven de weg-SVG, dus zodra de vulling dekt houdt de weg
+   * vanzelf bij de ene rand op en gaat aan de andere kant verder. Dat is één regel
+   * CSS, en dat is precies wat deze test bewaakt -- want "dekkend" is een van die
+   * eigenschappen die je bij de volgende kleurronde ongemerkt weer kwijtraakt.
+   *
+   * Gemeten en niet aangenomen: knip het rondje uit een échte schermafdruk, en kijk
+   * naar een ring binnen de vulling -- buiten het cijfer, binnen de rand. Twee
+   * dingen moeten daar waar zijn:
+   *   1. binnen één halte liggen de kleuren dicht bij elkaar (alleen het flauwe
+   *      verloop van boven naar beneden); er ligt dus geen tekening en geen weg in
+   *   2. álle haltes op slot, in álle werelden, hebben dezelfde kleur; de vulling
+   *      hangt dus nergens meer af van wat eronder ligt
+   * Ter ijking: met de half doorzichtige vulling van hiervóór was de spreiding
+   * binnen één halte 34-65 en liepen de gemiddelden van rgb(52,45,98) tot
+   * rgb(131,101,105) uiteen. */
+  {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(400);
+    const gemeten = [];
+    const aantal = await page.evaluate(() => WORLDS.length);
+    for (let wi = 0; wi < aantal; wi++) {
+      /* renderTourMap rechtstreeks en niet via goMap(): die laatste laat de
+         wereldnaam over de kaart vallen, en zolang die vlag nog vervaagt meet je
+         hem mee. */
+      const vakken = await page.evaluate((wi) => {
+        const p = P(), first = WORLD_START[wi];
+        p.stars = {};
+        for (let i = 0; i < wi; i++)
+          for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) p.stars[l] = 3;
+        for (let k = 0; k < 4; k++) p.stars[first + k] = 2;
+        p.level = first + 4;
+        viewWorldIdx = wi;
+        renderMapTitle(p);
+        renderTourMap(0);
+        // zij staat op de huidige halte en is groter dan een halte: waar ze over een
+        // halte op slot heen valt, meet je haar en niet de vulling
+        const h = document.querySelector('.tour-hero');
+        const hr = h ? h.getBoundingClientRect() : null;
+        return [...document.querySelectorAll('.tour-stop.locked .dot')].map(d => {
+          const r = d.getBoundingClientRect();
+          return { x: r.x, y: r.y, w: r.width, h: r.height,
+            botst: !!hr && r.left < hr.right && r.right > hr.left && r.top < hr.bottom && r.bottom > hr.top };
+        }).filter(r => !r.botst && r.y > 70 && r.y + r.h < 744 && r.x > 0 && r.x + r.w < 390);
+      }, wi);
+      for (const r of vakken.slice(0, 2)) {
+        const beeld = await page.screenshot({ clip: { x: r.x, y: r.y, width: r.w, height: r.h } });
+        const m = await page.evaluate(async (src) => {
+          const img = new Image();
+          await new Promise(ok => { img.onload = ok; img.src = src; });
+          const cv = document.createElement('canvas');
+          cv.width = img.width; cv.height = img.height;
+          const g = cv.getContext('2d');
+          g.drawImage(img, 0, 0);
+          const d = g.getImageData(0, 0, cv.width, cv.height).data;
+          const cx = cv.width / 2, cy = cv.height / 2;
+          const binnen = cv.width * 0.34, buiten = cv.width * 0.44;
+          const px = [];
+          for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+            const dx = x - cx, dy = y - cy, af = Math.hypot(dx, dy);
+            if (af < binnen || af > buiten) continue;
+            const i = (y * cv.width + x) * 4;
+            px.push([d[i], d[i + 1], d[i + 2]]);
+          }
+          const gem = [0, 1, 2].map(j => px.reduce((s, q) => s + q[j], 0) / px.length);
+          const afw = px.map(q => Math.max(...[0, 1, 2].map(j => Math.abs(q[j] - gem[j])))).sort((a, b) => a - b);
+          return { gem: gem.map(v => Math.round(v)), spreiding: Math.round(afw[Math.floor(afw.length * 0.95)]) };
+        }, 'data:image/png;base64,' + beeld.toString('base64'));
+        gemeten.push({ wereld: wi + 1, ...m });
+      }
+    }
+    const vuil = gemeten.filter(x => x.spreiding > 20);
+    check(gemeten.length >= aantal, 'er viel in elke wereld een halte op slot te meten',
+      gemeten.length + ' haltes voor ' + aantal + ' werelden');
+    check(vuil.length === 0, 'er ligt geen tekening en geen weg binnen een halte op slot',
+      JSON.stringify(vuil));
+    const spreid = [0, 1, 2].map(j => {
+      const w = gemeten.map(x => x.gem[j]);
+      return Math.max(...w) - Math.min(...w);
+    });
+    check(Math.max(...spreid) <= 12, 'een halte op slot heeft in élke wereld dezelfde kleur',
+      'spreiding per kanaal ' + JSON.stringify(spreid) + ' — ' + JSON.stringify(gemeten));
+    await c.close();
+  }
+
   /* ========== 7f · De zijsporen dekken geen halte af ==========
    * Over de kaart zweven twee knoppen die niet bij de route horen: het memory-spel
    * rechtsonder en (alleen als je in een ándere wereld kijkt) de weg terug midden
