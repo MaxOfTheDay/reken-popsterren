@@ -4003,10 +4003,29 @@
   .trophy-card.ready { overflow: hidden; }
   .trophy-card.ready::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
-    background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-18deg);
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
+    transform: translateX(0) skewX(-18deg);
     animation: shineSweep 2.6s ease-in-out infinite;
   }
-  @keyframes shineSweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+  /* FASE 6B -- dezelfde veeg, maar op transform in plaats van op left.
+
+     Hij liep van left:-60% naar left:130%: 190% van de kaartbreedte, en left is
+     een opmaakwaarde, dus de browser rekende de opmaak van die kaart bij élk
+     beeldje opnieuw uit. Met vier klaarliggende trofeeën in beeld werd dat 29 keer
+     per seconde een layout op een scherm waar verder niets beweegt -- de kaart
+     doet er in dezelfde drie seconden nul. Gemeten met de processor acht keer
+     geremd: 123 ms layout per drie seconden. Geen enkel beeldje viel daardoor weg,
+     ook niet op 8x -- dit is dus geen haperingsbug maar werk dat nergens voor
+     nodig is, en het groeit mee met het aantal trofeeën dat klaarligt.
+
+     De veeg is 45% van de kaart breed, dus die 190% van de kaart is 422,2% van de
+     veeg zelf (procenten in translateX gaan over het element zelf). De skew komt
+     erachteraan en staat op dezelfde plek in de keten als eerst, dus het beeld is
+     pixel voor pixel hetzelfde -- nagemeten op zes standen van de animatie. */
+  @keyframes shineSweep {
+    0% { transform: translateX(0) skewX(-18deg); }
+    55%, 100% { transform: translateX(422.222%) skewX(-18deg); }
+  }
   /* ook het medaillon van een klaarliggende perfecte wereld wiebelt: de kaart ziet
      er anders uit, maar "hier ligt iets voor je klaar" moet overal hetzelfde zeggen */
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
