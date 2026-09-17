@@ -156,8 +156,12 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
   /* ---- 5 · De wereldwissel ----
      De laatste show van een wereld uitspelen: de kaart schuift door naar de
-     volgende wereld, de badge ligt klaar, en de tekening van die wereld is
-     onderweg al opgehaald (zie preloadNextWorldArt). */
+     volgende wereld, het spulletje van die wereld ligt in de kleedkamer, en de
+     tekening van de volgende wereld is onderweg al opgehaald (zie
+     preloadNextWorldArt).
+
+     Er lág hier ook een trofee klaar ('wereld-muziek'). Die is sinds fase 5C met
+     pensioen: uitspelen levert het spulletje op, perfect maken de trofee. */
   await speelShow(8);
   await page.click('#btn-end-next');
   await page.waitForTimeout(3500);
@@ -165,12 +169,14 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     wereld: document.getElementById('map-tournee-label').textContent,
     level: P().level,
     nu: (document.querySelector('.tour-stop.next') || {}).dataset,
-    badge: P().readyTrophies.indexOf('wereld-muziek') >= 0 || P().trophies.indexOf('wereld-muziek') >= 0,
+    spul: P().owned.indexOf('acc_wereld_muziek') >= 0,
+    geenBadge: P().readyTrophies.indexOf('wereld-muziek') < 0 && P().trophies.indexOf('wereld-muziek') < 0,
     voorgeladen: [...ART_GEHAALD],
   }));
   check(/Snoepwereld/.test(r.wereld) && r.level === 9, 'de kaart schuift door naar de volgende wereld', JSON.stringify(r));
   check(r.nu && r.nu.lvl === '9', 'de ster staat op de eerste halte daarvan', JSON.stringify(r));
-  check(r.badge, 'de badge van de afgemaakte wereld ligt klaar', JSON.stringify(r));
+  check(r.spul, 'het spulletje van de afgemaakte wereld ligt in de kleedkamer', JSON.stringify(r));
+  check(r.geenBadge, 'en er komt geen tweede beloning als trofee bij', JSON.stringify(r));
   check(r.voorgeladen.some(s => /snoep/.test(s)),
     'de tekening van de volgende wereld was al opgehaald', JSON.stringify(r.voorgeladen));
 
@@ -612,11 +618,36 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     kast: document.getElementById('screen-trophies').classList.contains('active'),
     kaarten: document.querySelectorAll('.trophy-card, .tro-card').length,
     teller: document.getElementById('trophy-count').textContent,
-    rang: document.getElementById('career-strip').textContent,
+    // fase 5C: geen kastbalk, geen plankbalk, geen balk per kaartje
+    balken: document.querySelectorAll('#screen-trophies .kast-bar, #screen-trophies .rank-bar, #screen-trophies .trophy-progress').length,
+    // en geen ster-statusstrook meer aan de voet van de kast
+    rangStrook: document.querySelectorAll('#screen-trophies .career-strip').length,
+    kopRuim: !document.getElementById('screen-trophies').classList.contains('gescrold'),
   }));
   check(r.kast && r.kaarten > 10, 'de trofeeënkast staat vol kaarten', JSON.stringify(r));
-  check(/\d+\s+van\s+\d+/.test(r.teller), 'de kastteller staat er', r.teller);
-  check(/ster/i.test(r.rang), 'de ster-statusbalk staat er', r.rang);
+  // De kop zegt de stand in woorden ("Je hebt er 3 van de 18"), niet als balk.
+  check(/\d+\s+van\s+de\s+\d+/.test(r.teller), 'de kastteller staat er', r.teller);
+  check(r.balken === 0, 'en er staat geen voortgangsbalk meer op het scherm', r.balken);
+  check(r.rangStrook === 0, 'de kast eindigt bij de trofeeën, zonder ster-statusstrook', r.rangStrook);
+  check(r.kopRuim, 'bovenaan staat de ruime kop', 'kop staat meteen in de krappe stand');
+
+  /* De krappe kop: zodra er gescrold wordt klapt de zin met de stand weg en wordt
+     de plaat dekkender, zodat er geen trofeenamen meer door de kop heen lezen. */
+  const gescrold = await page.evaluate(async () => {
+    const sc = document.getElementById('screen-trophies');
+    sc.scrollTop = 260;
+    await new Promise(res => setTimeout(res, 200));
+    const zin = document.getElementById('trophy-count');
+    return {
+      klasse: sc.classList.contains('gescrold'),
+      zinWeg: zin.getBoundingClientRect().height < 2,
+      titel: !!document.querySelector('#screen-trophies .header-title'),
+      terug: !!document.querySelector('#screen-trophies .header-left'),
+    };
+  });
+  check(gescrold.klasse && gescrold.zinWeg, 'gescrold krimpt de kop en klapt de stand-zin weg',
+    JSON.stringify(gescrold));
+  check(gescrold.titel && gescrold.terug, 'maar terug en de titel blijven staan', JSON.stringify(gescrold));
 
   /* ---- 9 · Terug-navigatie (de Android-terugknop) ---- */
   await page.goBack();

@@ -182,12 +182,6 @@ zaak('E', () => {
   check(vers.owned.every(id => !app.isBeloning(id)), 'E · en een verse ster krijgt geen beloning cadeau',
     JSON.stringify(vers.owned.filter(id => app.isBeloning(id))));
   check(app.boughtCount(vers) === 0, 'E · "spulletjes gekocht" begint op nul', app.boughtCount(vers));
-  // De collectietrofeeën wijzen naar echte categorieën en echte trofeeën.
-  Object.entries(app.COLLECTION_CAT).forEach(([trof, cat]) => {
-    check(TROPHIES.some(t => t.id === trof), `E · collectietrofee ${trof} bestaat`, trof);
-    check(CATS.some(c => c.id === cat), `E · collectietrofee ${trof} wijst naar categorie ${cat}`, cat);
-    check(ITEMS.some(i => i.cat === cat), `E · en er zijn spullen in ${cat}`, cat);
-  });
 });
 
 /* ================= F · De trofeeën ================= */
@@ -212,13 +206,45 @@ zaak('F', () => {
   // bestaan voor kinderen die ze behaald hebben -- zie RETIRED_TROPHIES).
   const pensioen = Array.from(app.RETIRED_TROPHIES).filter(id => ids.includes(id));
   check(pensioen.length === 0, 'F · geen gepensioneerde trofee terug in de kast', JSON.stringify(pensioen));
-  // Twee per wereld, op hun eigen plank.
+  /* FASE 5C -- de kast is uitgedund en mag niet stilletjes weer volgroeien.
+     Hier stond een bovengrens ("hoogstens 24 actieve trofeeën"), en die was fout
+     gedacht: elke wereld die erbij komt levert terecht een perfecte-wereldtrofee
+     op, dus met genoeg werelden zou een kerngezonde kast deze controle omduwen.
+     Zo'n test leert je op den duur alleen het getal op te hogen.
+
+     Dus geen totaal meer, maar de vórm van de kast:
+       - het vaste deel (alles wat niet uit WORLDS komt) blijft op VASTE_KAST;
+       - er is precies één actieve perfecte wereld per wereld in WORLDS;
+       - en samen zijn dat álle actieve trofeeën -- er hangt niets buiten die twee.
+     Een wereld erbij verandert alleen het tweede getal, en dat mag. Een trofee die
+     iemand er "even bij" zet valt hier onmiddellijk uit, hoeveel werelden er ook
+     zijn. */
+  const VASTE_KAST = 12;
+  const actief = app.activeTrophies();
+  const vast = actief.filter(t => !t.perfect);
+  const perfect = actief.filter(t => t.perfect);
+  check(vast.length === VASTE_KAST, `F · het vaste deel van de kast blijft op ${VASTE_KAST} trofeeën`,
+    vast.length + ': ' + JSON.stringify(vast.map(t => t.id)));
+  check(perfect.length === WORLDS.length, 'F · en precies één perfecte wereld per wereld',
+    perfect.length + ' bij ' + WORLDS.length + ' werelden');
+  check(actief.length === vast.length + WORLDS.length, 'F · samen is dat de hele kast, er hangt niets buiten',
+    actief.length);
+  check(perfect.every(t => t.id.indexOf(app.PERFECT_BADGE) === 0),
+    'F · en een perfecte wereld is te herkennen aan zijn id',
+    JSON.stringify(perfect.filter(t => t.id.indexOf(app.PERFECT_BADGE) !== 0).map(t => t.id)));
+  check(TROPHY_SHELVES.length === 4, 'F · en er zijn vier planken', TROPHY_SHELVES.length);
+  // Een plank met één kaartje is geen plank; elke plank moet er minstens twee hebben.
+  TROPHY_SHELVES.forEach(sh => check(sh.ids.filter(id => !app.isRetiredTrophy(id)).length >= 2,
+    `F · plank ${sh.key} heeft meer dan één trofee`, sh.ids.length));
+  // Eén per wereld, op de perfecte plank -- en géén wereldbadge meer.
   const plank = key => (TROPHY_SHELVES.filter(s => s.key === key)[0] || { ids: [] }).ids;
   WORLDS.forEach(w => {
-    check(ids.includes(app.WERELD_BADGE + w.id), `F · ${w.id}: er is een wereldbadge`, app.WERELD_BADGE + w.id);
     check(ids.includes(app.PERFECT_BADGE + w.id), `F · ${w.id}: er is een perfecte-wereldtrofee`, app.PERFECT_BADGE + w.id);
-    check(plank('werelden').includes(app.WERELD_BADGE + w.id), `F · ${w.id}: de badge hangt op de wereldplank`, w.id);
+    check(!ids.includes(app.WERELD_BADGE + w.id), `F · ${w.id}: en géén losse wereldbadge meer`, app.WERELD_BADGE + w.id);
+    check(app.isRetiredTrophy(app.WERELD_BADGE + w.id), `F · ${w.id}: de oude badge geldt als gepensioneerd`, w.id);
     check(plank('perfect').includes(app.PERFECT_BADGE + w.id), `F · ${w.id}: en de trofee op de perfecte plank`, w.id);
+    const t = TROPHIES.filter(x => x.id === app.PERFECT_BADGE + w.id)[0];
+    check(t && t.wereld === w, `F · ${w.id}: de trofee kent zijn eigen wereld (voor het medaillon)`, w.id);
   });
   /* En dan de lakmoesproef: elke has() en progress() een keer echt aanroepen, met
      een leeg profiel en met een volgespeeld profiel. Een trofee die naar een
@@ -246,9 +272,16 @@ zaak('F', () => {
   WORLDS.forEach((w, i) => {
     if (!app.worldAvailable(i)) return;   // een dichte wereld heeft in dit profiel geen sterren
     const badge = id => TROPHIES.filter(t => t.id === id)[0];
-    check(badge(app.WERELD_BADGE + w.id).has(vol) === true, `F · ${w.id}: de badge van een volgespeelde wereld`, 'niet behaald');
-    check(badge(app.PERFECT_BADGE + w.id).has(vol) === true, `F · ${w.id}: en de perfecte-wereldtrofee`, 'niet behaald');
+    check(badge(app.PERFECT_BADGE + w.id).has(vol) === true, `F · ${w.id}: de perfecte-wereldtrofee van een volgespeelde wereld`, 'niet behaald');
   });
+  /* Wie alles op drie sterren heeft en alles gekocht heeft, heeft de hele kast --
+     en dat is precies waar de kastteller op staat. Valt dit om, dan is er een
+     trofee bijgekomen die niemand kan halen. */
+  check(app.earnedActiveCount({ trophies: actief.map(t => t.id) }) === actief.length,
+    'F · de kastteller telt precies de actieve trofeeën', app.earnedActiveCount({ trophies: actief.map(t => t.id) }));
+  const oudeSave = { trophies: actief.map(t => t.id).concat(Array.from(app.RETIRED_TROPHIES)).concat(['wereld-muziek']) };
+  check(app.earnedActiveCount(oudeSave) === actief.length,
+    'F · en gepensioneerde id\'s uit een oude save tellen niet mee', app.earnedActiveCount(oudeSave));
 });
 
 /* ================= G · De app zelf =================

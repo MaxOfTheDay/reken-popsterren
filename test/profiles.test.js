@@ -863,11 +863,16 @@ function check(ok, label, detail) {
     }
   }
 
-  /* ================= 7d · Wereldbadges =================
-   * Eén badge per wereld, en het is gewoon een trofee -- geen tweede badgesysteem.
-   * Wat hier vast moet liggen: dat de plank meegroeit met WORLDS, dat een wereld
-   * uitspelen de badge kláárlegt (het kind opent hem zelf), en dat de ster-stand
-   * alleen aangaat bij drie sterren op élke show -- één badge, twee standen.     */
+  /* ================= 7d · Perfecte werelden =================
+   * Eén trofee per wereld, en het is gewoon een trofee -- geen tweede badgesysteem.
+   * Wat hier vast moet liggen: dat de plank meegroeit met WORLDS, dat hij pas
+   * aangaat bij drie sterren op élke show, en dat de trofee zijn eigen wereld kent
+   * (daar tekent de kast het medaillon mee).
+   *
+   * Fase 5C haalde de tweede trofee per wereld weg -- "deze wereld uit" -- omdat
+   * een uitgespeelde wereld al een spulletje oplevert. Dat is hier meteen de vraag
+   * die eronder staat: een wereld met twee sterren per show levert géén trofee op
+   * en legt er ook niets voor klaar.                                            */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -880,33 +885,40 @@ function check(ok, label, detail) {
     await page.evaluate(() => selectProfile('p1'));
     await page.waitForTimeout(400);
     const r = await page.evaluate(() => {
-      const plank = TROPHY_SHELVES.filter(sh => sh.name.indexOf('Werelden') >= 0)[0];
+      const plank = TROPHY_SHELVES.filter(sh => sh.key === 'perfect')[0];
       const q = P();
-      // wereld 1 uit, maar met twee sterren per show
+      // wereld 1 uit, maar met twee sterren per show: uit is niet perfect
       for (let l = 1; l <= 8; l++) q.stars[l] = 2;
       q.level = 9;
-      const klaar = checkTrophies(q).map(t => t.id);
-      const badge = TROPHIES.filter(t => t.id === 'wereld-' + WORLDS[0].id)[0];
-      const tweeSterren = badge.ster(q);
+      const klaarUit = checkTrophies(q).map(t => t.id);
+      const trofee = TROPHIES.filter(t => t.id === 'perfect-' + WORLDS[0].id)[0];
+      const tweeSterren = trofee.has(q);
       for (let l = 1; l <= 8; l++) q.stars[l] = 3;
+      const klaarPerfect = checkTrophies(q).map(t => t.id);
       return {
         plankNaam: plank.name,
         perWereld: plank.ids.length === WORLDS.length,
         ids: plank.ids.join(','),
         allemaalInTabel: plank.ids.every(id => TROPHIES.some(t => t.id === id)),
-        klaargelegd: klaar.indexOf('wereld-' + WORLDS[0].id) >= 0,
+        geenBadgeMeer: !TROPHIES.some(t => t.id.indexOf('wereld-') === 0),
+        geenBadgeKlaar: klaarUit.every(id => id.indexOf('wereld-') !== 0),
         tweeSterren,
-        drieSterren: badge.ster(q),
-        tweedeNogNiet: TROPHIES.filter(t => t.id === 'wereld-' + WORLDS[1].id)[0].has(q),
+        drieSterren: trofee.has(q),
+        klaargelegd: klaarPerfect.indexOf('perfect-' + WORLDS[0].id) >= 0,
+        kentZijnWereld: !!trofee.wereld && trofee.wereld.id === WORLDS[0].id,
+        tweedeNogNiet: TROPHIES.filter(t => t.id === 'perfect-' + WORLDS[1].id)[0].has(q),
       };
     });
-    check(r.perWereld, 'er is precies één wereldbadge per wereld', r.ids);
-    check(r.allemaalInTabel, 'elke wereldbadge staat ook in de trofeetabel', r.ids);
-    check(r.klaargelegd, 'een wereld uitspelen legt zijn badge klaar', r.ids);
+    check(r.perWereld, 'er is precies één perfecte-wereldtrofee per wereld', r.ids);
+    check(r.allemaalInTabel, 'elke perfecte-wereldtrofee staat ook in de trofeetabel', r.ids);
+    check(r.geenBadgeMeer, 'de losse "wereld uit"-badges staan niet meer in de kast', r.ids);
+    check(r.geenBadgeKlaar, 'een wereld uitspelen legt geen badge meer klaar', r.ids);
     check(r.tweeSterren === false && r.drieSterren === true,
-      'de ster-stand gaat pas aan bij drie sterren op elke show',
+      'de trofee gaat pas aan bij drie sterren op elke show',
       'twee: ' + r.tweeSterren + ' drie: ' + r.drieSterren);
-    check(r.tweedeNogNiet === false, 'de badge van de volgende wereld blijft dicht', String(r.tweedeNogNiet));
+    check(r.klaargelegd, 'en dan ligt hij klaar om te openen', r.ids);
+    check(r.kentZijnWereld, 'de trofee weet bij welke wereld hij hoort', r.ids);
+    check(r.tweedeNogNiet === false, 'de trofee van de volgende wereld blijft dicht', String(r.tweedeNogNiet));
     await ctx.close();
   }
 
@@ -963,9 +975,9 @@ function check(ok, label, detail) {
       uit.pgSterren = v.sterren === (w1.levels - 1) * 3 + 1;
       uit.pgMax = v.max === w1.levels * 3;
       uit.pgUit = v.uit === true && v.vol === false;
-      // dezelfde vraag via de badge en via de oude sterrenteller: één antwoord
-      const badge = TROPHIES.filter(t => t.id === 'wereld-' + WORLDS[0].id)[0];
-      uit.badgeVolgt = badge.has(q) === v.uit && badge.ster(q) === v.vol;
+      // dezelfde vraag via de perfecte-wereldtrofee en via de oude sterrenteller
+      const trofee = TROPHIES.filter(t => t.id === 'perfect-' + WORLDS[0].id)[0];
+      uit.badgeVolgt = trofee.has(q) === v.vol;
       uit.tellerVolgt = worldStars(q, w1).got === v.sterren;
       q.stars[w1.first + 1] = 3;
       uit.pgVol = worldProgress(q, w1).vol === true;
@@ -994,7 +1006,7 @@ function check(ok, label, detail) {
     check(r.pgGespeeld && r.pgPerfect && r.pgSterren && r.pgMax && r.pgUit,
       'worldProgress telt gespeeld, perfect en sterren per wereld', JSON.stringify(r));
     check(r.badgeVolgt && r.tellerVolgt,
-      'de wereldbadge en de sterrenteller lezen dezelfde bron', JSON.stringify(r));
+      'de perfecte-wereldtrofee en de sterrenteller lezen dezelfde bron', JSON.stringify(r));
     check(r.pgVol, 'drie sterren op elke show maakt de wereld vol', JSON.stringify(r));
     check(r.idx && r.kop && r.haltes && r.eersteHalte,
       'showWorld zet kop én kaart op dezelfde wereld', JSON.stringify(r));
