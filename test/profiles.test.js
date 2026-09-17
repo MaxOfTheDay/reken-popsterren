@@ -1296,20 +1296,64 @@ function check(ok, label, detail) {
      (kast, looks, trofeeën) hoort er niets van te merken. Dat is precies wat
      hier bewaakt wordt: dezelfde spullen, een andere tekening. */
 
-  // 11a · zonder keuze geen ster
+  /* 11a · zonder keuze geen ster -- maar wél een antwoord op de tik
+   *
+   * FASE 6C. De knop staat nog steeds uit (grijs, en er komt geen ster van), maar
+   * hij is geen <button disabled> meer: die krijgt in geen enkele browser een
+   * click-gebeurtenis, en dus was Klaar de enige knop in de app waar tikken
+   * letterlijk niets teruggaf -- precies op het moment dat een kind niet weet wat
+   * er nog mist. Nu zegt de tik het: het veld dat aan de beurt is gaat kloppen
+   * (.vraagt) en er staat één regel in beeld.
+   *
+   * De tik gaat hier met dispatchEvent en niet met page.click(): playwright
+   * weigert een element met aria-disabled="true" aan te klikken, en dát is precies
+   * de markering die dit gedrag draagt. */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-newstar');
     await page.waitForTimeout(150);
     await page.fill('#newstar-name', 'Zonder');
     const r = await page.evaluate(() => ({
-      disabled: document.getElementById('newstar-go').disabled,
+      aria: document.getElementById('newstar-go').getAttribute('aria-disabled'),
+      dood: document.getElementById('newstar-go').disabled,
       chips: document.querySelectorAll('#newstar-base .chip').length,
       gekozen: document.querySelectorAll('#newstar-base .chip.on').length,
     }));
     check(r.chips === 2, 'het formulier biedt twee basisfiguren', `chips=${r.chips}`);
     check(r.gekozen === 0, 'geen enkele basis staat voorgekozen', `aan=${r.gekozen}`);
-    check(r.disabled, 'met een naam maar zonder basis blijft Klaar uit', `disabled=${r.disabled}`);
+    check(r.aria === 'true', 'met een naam maar zonder basis staat Klaar uit', `aria=${r.aria}`);
+    check(!r.dood, 'maar hij is niet dood: de tik komt binnen', `disabled=${r.dood}`);
+    const na = await page.evaluate(async () => {
+      document.getElementById('newstar-go').click();
+      await new Promise(r => setTimeout(r, 120));
+      return {
+        n: Object.keys(db.profiles).length,
+        wijst: document.querySelectorAll('#newstar-base .chip.vraagt').length,
+        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+        melding: document.getElementById('toast').textContent,
+        opScherm: document.getElementById('screen-newstar').classList.contains('active'),
+      };
+    });
+    check(na.n === 0 && na.opScherm, 'een geweigerde tik maakt geen ster', JSON.stringify(na));
+    check(na.wijst === 2 && !na.naamWijst,
+      'hij wijst de basiskeuze aan, niet de naam die al klopt', JSON.stringify(na));
+    check(/wie je bent/i.test(na.melding), 'en zegt in één regel wat er gevraagd wordt', na.melding);
+    // omgekeerd: basis gekozen, naam leeg -> dan wijst hij het naamveld aan
+    await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.fill('#newstar-name', '');
+    const om = await page.evaluate(async () => {
+      document.getElementById('newstar-go').click();
+      await new Promise(r => setTimeout(r, 120));
+      return {
+        n: Object.keys(db.profiles).length,
+        naamWijst: document.getElementById('newstar-name').classList.contains('vraagt'),
+        basisWijst: document.querySelectorAll('#newstar-base .chip.vraagt').length,
+        melding: document.getElementById('toast').textContent,
+      };
+    });
+    check(om.n === 0 && om.naamWijst && om.basisWijst === 0,
+      'zonder naam wijst hij het naamveld aan', JSON.stringify(om));
+    check(/naam/i.test(om.melding), 'met een eigen regel erbij', om.melding);
     await ctx.close();
   }
 

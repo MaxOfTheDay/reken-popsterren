@@ -67,6 +67,7 @@ function check(ok, label, detail) {
           const r = b.getBoundingClientRect();
           return {
             w: Number(b.dataset.w), klas: b.className, aan: !b.disabled,
+            uit: b.getAttribute('aria-disabled') === 'true',
             naam: (b.querySelector('.rn-tekst') || {}).textContent || null,
             zegel: !!b.querySelector('.reis-zegel:not(.slot)'), ster: !!b.querySelector('.reis-pop'),
             glans: !!b.querySelector('.reis-glans'),
@@ -145,8 +146,8 @@ function check(ok, label, detail) {
       'B · en alleen daar staat de ster', JSON.stringify(r.haltes.map(h => h.ster)));
     check(r.haltes.filter(h => h.zegel).length === 0, 'B · niets uitgespeeld, dus geen zegel', '');
     const verder = r.haltes.filter(h => /verder/.test(h.klas));
-    check(verder.length === 3 && verder.every(h => h.slot && !h.aan),
-      'B · wat nog niet aan de beurt is heeft een slot en doet niets', JSON.stringify(verder.map(h => h.w)));
+    check(verder.length === 3 && verder.every(h => h.slot && h.uit),
+      'B · wat nog niet aan de beurt is heeft een slot en staat uit', JSON.stringify(verder.map(h => h.w)));
     check(r.haltes.every(h => h.w <= 3),
       'B · voorbij de horizon staat er niets -- ook geen vraagteken in de mist',
       JSON.stringify(r.haltes.map(h => h.w)));
@@ -161,6 +162,36 @@ function check(ok, label, detail) {
     check(verder.every(h => !h.teller) && nu[0].teller,
       'B · en een teller staat alleen waar er iets te tellen valt',
       JSON.stringify(r.haltes.map(h => h.teller)));
+    /* FASE 6C · een tik op een wereld op slot.
+     *
+     * Hij bracht je nergens heen en zei ook niets: <button disabled> krijgt geen
+     * click en geen :active, dus dit was het enige ding in de app waar tikken
+     * helemaal niets teruggaf -- op het scherm waar de werelden juist groot en in
+     * kleur naar je liggen te lonken. Nu antwoordt hij, zoals elke andere
+     * geweigerde tik in de app: het slotje schudt, en er staat één regel die de
+     * wereld noemt die eerst uit moet.
+     *
+     * Wat hetzelfde moet blijven: je gaat er niet heen, en de voortgang beweegt
+     * niet. Dat is wat het slot betekent. */
+    const stand = await page.evaluate(() => __stand());
+    const tik = await page.evaluate(async () => {
+      const b = [...document.querySelectorAll('.reis-halte')].find(x => /verder/.test(x.className));
+      b.click();
+      await new Promise(r => setTimeout(r, 120));
+      return {
+        scherm: (document.querySelector('.screen.active') || {}).id,
+        melding: document.getElementById('toast').textContent,
+        schudt: document.querySelectorAll('.reis-zegel.slot.nee').length,
+        stand: __stand(),
+      };
+    });
+    check(tik.scherm === 'screen-journey', 'B · een tik op slot brengt je nergens heen', tik.scherm);
+    check(tik.stand.level === stand.level && tik.stand.verder === stand.verder,
+      'B · en verzet niets aan de voortgang', JSON.stringify(tik.stand));
+    check(tik.schudt === 1, 'B · het slotje schudt één keer', `nee=${tik.schudt}`);
+    // geen naam in deze suite vastgelegd: de wereld waar ze staat komt van het scherm zelf
+    check(!!nu[0].naam && tik.melding.indexOf(nu[0].naam) >= 0 && /eerst/i.test(tik.melding),
+      'B · en de regel noemt de wereld die eerst uit moet', `${tik.melding} (nu: ${nu[0].naam})`);
     await ctx.close();
   }
 
@@ -247,8 +278,10 @@ function check(ok, label, detail) {
     check(r.haltes.slice(0, 3).every(h => (h.teller || '').indexOf(echt[h.w]) >= 0),
       'C · de sterrenteller zegt wat de voortgang zegt',
       JSON.stringify([r.haltes.map(h => h.teller), echt]));
-    check(r.haltes[0].aan && r.haltes[1].aan && r.haltes[2].aan && !r.haltes[3].aan,
-      'C · alles t/m de grens is te bezoeken, daarna niet', JSON.stringify(r.haltes.map(h => h.aan)));
+    // `uit` en niet `aan`: sinds fase 6C is een wereld op slot geen <button disabled>
+    // meer (hij antwoordt op een tik, zie zaak B), dus de markering is aria-disabled.
+    check(!r.haltes[0].uit && !r.haltes[1].uit && !r.haltes[2].uit && r.haltes[3].uit,
+      'C · alles t/m de grens is te bezoeken, daarna niet', JSON.stringify(r.haltes.map(h => h.uit)));
 
     await page.click('.reis-halte[data-w="0"]');
     await page.waitForTimeout(700);
