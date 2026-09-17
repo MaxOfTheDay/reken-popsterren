@@ -31,6 +31,7 @@ npm run test:rondgang
 npm run test:voortgang
 npm run test:reis
 npm run test:beloning
+npm run test:studio      # de wereldstudio (?debug&mapedit)
 ```
 
 `npm run check` heeft geen `node_modules` nodig: het draait op kaal Node. Wie
@@ -197,6 +198,25 @@ die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
   slot achteraan;
 - een oude save met podia houdt ze (en haar diamanten), maar ziet ze nergens in
   de winkel terug.
+
+### `test/studio.test.js` — de wereldstudio
+
+Een browsersuite over het gereedschap achter `?debug&mapedit` (zie
+`docs/UITBREIDEN.md`). Wat hier vastligt is niet hoe het paneel eruitziet maar de
+beloftes die het doet — en de belangrijkste daarvan gaat over de opslag van een
+gezin:
+
+- **een concept staat apart van het spel** — een half afgemaakte wereld leeft in
+  `localStorage` onder een eigen sleutel en wordt alleen met `?debug` ingelezen,
+  dus hij kan nooit bij een kind terechtkomen;
+- **een naam is genoeg** — het id, het pad van de tekening en de twee trofeeën
+  rollen daaruit; je hoeft niets over de binnenkant te weten;
+- **de beloning hoort bij de wereld**, en een verwijzing naar een spulletje dat
+  niet bestaat wordt gezien;
+- **slepen verandert die ene wereld** en niets anders;
+- **de standen zijn de échte standen** van het spel (`p.stars`, `p.level`), geen
+  nagemaakte studioplaatjes;
+- **de controle loopt álle werelden na** en zegt erbij waar je het oplost.
 
 ## Hoe de keuring werkt
 
