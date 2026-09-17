@@ -163,7 +163,7 @@ const BRUG = `globalThis.__api = {
   // beloningen en trofeeen
   beloningItem, beloningWereld, isBeloning, awardTrophy,
   grantWorldRewards, grantHistoricRewards, checkTrophies,
-  activeTrophies, isRetiredTrophy, earnedActiveCount,
+  activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText,
   // tellers
   totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount, starRank,
   // opslag

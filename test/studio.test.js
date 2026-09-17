@@ -87,7 +87,7 @@ function check(ok, label, detail) {
     check(afgeleid[5] === 'wereld', 'B · "Wereld" houdt zijn naam, want leeg is erger', afgeleid[5]);
     const pad = await page.evaluate(() => wereldArtPad('ijs'));
     check(pad === 'assets/world/ijs-map.webp', 'B · en het pad volgt uit het id', pad);
-    // de zes werelden in het spel hebben het id dat hun naam zou opleveren
+    // elke wereld in het spel heeft het id dat haar naam zou opleveren
     const klopt = await page.evaluate(() => WORLDS.map(w => w.id === wereldId(w.name)));
     check(klopt.every(Boolean), 'B · de bestaande werelden passen op dezelfde regel', JSON.stringify(klopt));
     // een dubbel id krijgt vanzelf een cijfer -- twee keer hetzelfde is een fout
@@ -220,7 +220,7 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await studio();
     const schoon = await page.evaluate(() => wereldControle({}).filter(x => x.ernst === 'fout').length);
-    check(schoon === 0, 'F · de zes werelden die er staan zijn in orde', String(schoon));
+    check(schoon === 0, 'F · de werelden die er staan zijn allemaal in orde', String(schoon));
     const buiten = await page.evaluate(() => {
       const bewaar = JSON.stringify(WORLDS[3].nodes);
       WORLDS[3].nodes[2] = { x: 96, y: 50 };

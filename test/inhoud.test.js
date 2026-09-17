@@ -233,6 +233,17 @@ zaak('F', () => {
     'F · en een perfecte wereld is te herkennen aan zijn id',
     JSON.stringify(perfect.filter(t => t.id.indexOf(app.PERFECT_BADGE) !== 0).map(t => t.id)));
   check(TROPHY_SHELVES.length === 4, 'F · en er zijn vier planken', TROPHY_SHELVES.length);
+  /* "Nog 1 sommen" is geen zin. unitText() zet een voortgangslabel in het
+     enkelvoud via TROPHY_UNIT_SINGULAR, en dat is een tabel die per trofee
+     bijgewerkt moet worden -- precies het soort regel dat vergeten wordt. Dus:
+     elk label dat een actieve trofee werkelijk teruggeeft moet bij één stuk iets
+     ánders opleveren dan bij twee. Geldt vanzelf ook voor een trofee die er
+     later bij komt. */
+  const meervoud = new Set();
+  actief.forEach(t => { if (t.progress) { try { meervoud.add(t.progress(app.defaultProfile('Enk', 'dress_roze')).label); } catch (e) { /* zie de lakmoesproef hieronder */ } } });
+  meervoud.forEach(label => check(app.unitText(label, 1) !== app.unitText(label, 2),
+    `F · "${label}" heeft een enkelvoud voor "Nog 1 ..."`,
+    'unitText geeft twee keer "' + app.unitText(label, 1) + '" -- vul TROPHY_UNIT_SINGULAR aan'));
   // Een plank met één kaartje is geen plank; elke plank moet er minstens twee hebben.
   TROPHY_SHELVES.forEach(sh => check(sh.ids.filter(id => !app.isRetiredTrophy(id)).length >= 2,
     `F · plank ${sh.key} heeft meer dan één trofee`, sh.ids.length));

@@ -112,14 +112,17 @@ zaak('B', () => {
 zaak('C', () => {
   const { app, p } = verseSter();
   const laatste = app.WORLDS.length - 1;
+  // De vorm van de tournee vóór er ook maar iets gespeeld is. Uitspelen mag daar
+  // niets aan veranderen -- en dat is de vraag, niet of het er zes zijn.
+  const vorm = [app.WORLDS.length, app.WORLD_AVAIL, app.WORLD_LAST].join('/');
   for (let i = 0; i < app.WORLDS.length; i++) speel(app, p, i);
   check(app.frontierWorld(p) === -1, 'C · er is geen grens meer', app.frontierWorld(p));
   check(app.allWorldsDone(p), 'C · alles wat er is, is uit', app.allWorldsDone(p));
   check(app.continueWorld(p) === laatste, 'C · "verder" wijst naar de laatste echte wereld', app.continueWorld(p));
-  check(app.WORLDS.length === 6 && app.WORLD_AVAIL === 6 && app.WORLD_LAST === 48,
+  check([app.WORLDS.length, app.WORLD_AVAIL, app.WORLD_LAST].join('/') === vorm,
     'C · er komt geen wereld bij van het uitspelen zelf',
     [app.WORLDS.length, app.WORLD_AVAIL, app.WORLD_LAST].join('/'));
-  check(app.doneWorldCount(p) === 6, 'C · de teller zegt zes', app.doneWorldCount(p));
+  check(app.doneWorldCount(p) === app.WORLD_AVAIL, 'C · de teller zegt: alles', app.doneWorldCount(p));
   // De toegift: dezelfde laatste wereld nog eens, beter. Er schuift niets vooruit.
   const voor = { grens: app.frontierWorld(p), verder: app.continueWorld(p), last: app.WORLD_LAST, n: app.WORLDS.length };
   speel(app, p, laatste, { sterren: 3 });
@@ -127,7 +130,7 @@ zaak('C', () => {
   const na = { grens: app.frontierWorld(p), verder: app.continueWorld(p), last: app.WORLD_LAST, n: app.WORLDS.length };
   check(JSON.stringify(voor) === JSON.stringify(na), 'C · een toegift schuift niets vooruit', JSON.stringify(na));
   check(app.hereLevel(p) <= app.WORLD_LAST, 'C · en de positie loopt niet voorbij het laatste level', app.hereLevel(p));
-  check(uitLijst(app, p).every(x => x), 'C · alle zes blijven uit', JSON.stringify(uitLijst(app, p)));
+  check(uitLijst(app, p).every(x => x), 'C · en ze blijven allemaal uit', JSON.stringify(uitLijst(app, p)));
 });
 
 /* ================= D · Er komt later een wereld bij =================
@@ -139,16 +142,18 @@ zaak('D', () => {
   for (let i = 0; i < app.WORLDS.length; i++) speel(app, p, i);
   const uitVoor = uitLijst(app, p);
   const sterrenVoor = app.totalStarCount(p);
+  const oudAantal = app.WORLDS.length, oudLast = app.WORLD_LAST;
   const nieuw = wereldErbij(app, 'test7');
-  check(nieuw === 6 && app.WORLD_START[6] === 49, 'D · de nieuwe wereld begint op level 49', app.WORLD_START[6]);
-  check(!app.worldDone(p, 6), 'D · de nieuwe wereld is niet vanzelf uitgespeeld', app.worldDone(p, 6));
-  check(app.worldProgress(p, app.worldForIndex(6)).gespeeld === 0, 'D · er staat geen enkele show in',
-    JSON.stringify(app.worldProgress(p, app.worldForIndex(6))));
-  check(app.frontierWorld(p) === 6 && app.continueWorld(p) === 6, 'D · en hij is de nieuwe grens', app.frontierWorld(p));
+  check(nieuw === oudAantal && app.WORLD_START[nieuw] === oudLast + 1,
+    'D · de nieuwe wereld begint op het eerste vrije level', app.WORLD_START[nieuw]);
+  check(!app.worldDone(p, nieuw), 'D · de nieuwe wereld is niet vanzelf uitgespeeld', app.worldDone(p, nieuw));
+  check(app.worldProgress(p, app.worldForIndex(nieuw)).gespeeld === 0, 'D · er staat geen enkele show in',
+    JSON.stringify(app.worldProgress(p, app.worldForIndex(nieuw))));
+  check(app.frontierWorld(p) === nieuw && app.continueWorld(p) === nieuw, 'D · en hij is de nieuwe grens', app.frontierWorld(p));
   check(!app.allWorldsDone(p), 'D · de toegift-stand is voorbij', app.allWorldsDone(p));
-  check(uitLijst(app, p).slice(0, 6).join() === uitVoor.join(), 'D · de oude zes blijven uitgespeeld', JSON.stringify(uitLijst(app, p)));
+  check(uitLijst(app, p).slice(0, oudAantal).join() === uitVoor.join(), 'D · de oude werelden blijven uitgespeeld', JSON.stringify(uitLijst(app, p)));
   check(app.totalStarCount(p) === sterrenVoor, 'D · en er gaat geen ster verloren', app.totalStarCount(p));
-  check(app.grantWorldRewards(p, 6).spul === null, 'D · en er valt nog niets te verdienen', 'wel iets gekregen');
+  check(app.grantWorldRewards(p, nieuw).spul === null, 'D · en er valt nog niets te verdienen', 'wel iets gekregen');
 });
 
 /* ================= E · Twee werelden tegelijk erbij =================
@@ -157,16 +162,17 @@ zaak('D', () => {
 zaak('E', () => {
   const { app, p } = verseSter();
   for (let i = 0; i < app.WORLDS.length; i++) speel(app, p, i);
-  wereldErbij(app, 'test7');
-  wereldErbij(app, 'test8');
-  check(app.WORLD_AVAIL === 8, 'E · er zijn er nu acht beschikbaar', app.WORLD_AVAIL);
-  check(app.frontierWorld(p) === 6, 'E · de eerste nieuwe wereld is de grens', app.frontierWorld(p));
-  check(!app.worldDone(p, 7), 'E · de tweede is niet uitgespeeld', app.worldDone(p, 7));
-  speel(app, p, 6);
-  check(app.frontierWorld(p) === 7 && app.continueWorld(p) === 7, 'E · daarna schuift de grens één op', app.frontierWorld(p));
+  const oudAantal = app.WORLDS.length;
+  const een = wereldErbij(app, 'test7');
+  const twee = wereldErbij(app, 'test8');
+  check(app.WORLD_AVAIL === oudAantal + 2, 'E · er zijn er nu twee meer beschikbaar', app.WORLD_AVAIL);
+  check(app.frontierWorld(p) === een, 'E · de eerste nieuwe wereld is de grens', app.frontierWorld(p));
+  check(!app.worldDone(p, twee), 'E · de tweede is niet uitgespeeld', app.worldDone(p, twee));
+  speel(app, p, een);
+  check(app.frontierWorld(p) === twee && app.continueWorld(p) === twee, 'E · daarna schuift de grens één op', app.frontierWorld(p));
   check(!app.allWorldsDone(p), 'E · en wordt de tweede niet overgeslagen', app.allWorldsDone(p));
-  speel(app, p, 7);
-  check(app.allWorldsDone(p) && app.continueWorld(p) === 7, 'E · pas als beide uit zijn is het weer toegift',
+  speel(app, p, twee);
+  check(app.allWorldsDone(p) && app.continueWorld(p) === twee, 'E · pas als beide uit zijn is het weer toegift',
     [app.allWorldsDone(p), app.continueWorld(p)].join('/'));
 });
 
@@ -220,11 +226,12 @@ zaak('G', () => {
   {
     const { app, p } = verseSter();
     for (let i = 0; i < app.WORLDS.length; i++) speel(app, p, i);
-    speel(app, p, 5, { sterren: 3 });     // toegift op de laatste wereld
-    speel(app, p, 5, { sterren: 3 });
-    wereldErbij(app, 'test7');
-    check(!app.worldDone(p, 6), 'G · een toegift vult geen toekomstige wereld', app.worldDone(p, 6));
-    check(Object.keys(p.stars).filter(l => Number(l) > 48).length === 0,
+    const laatste = app.WORLDS.length - 1, eindLevel = app.WORLD_LAST;
+    speel(app, p, laatste, { sterren: 3 });     // toegift op de laatste wereld
+    speel(app, p, laatste, { sterren: 3 });
+    const nieuw = wereldErbij(app, 'test7');
+    check(!app.worldDone(p, nieuw), 'G · een toegift vult geen toekomstige wereld', app.worldDone(p, nieuw));
+    check(Object.keys(p.stars).filter(l => Number(l) > eindLevel).length === 0,
       'G · en zet geen sterren op levels die nog niet bestaan', JSON.stringify(Object.keys(p.stars).slice(-3)));
   }
   // 5 · een ster van nul telt niet als gespeeld (kan alleen uit een bewerkte back-up komen)
@@ -357,25 +364,32 @@ zaak('J', () => {
   const eind = verseSter('Eind');
   for (let i = 0; i < eind.app.WORLDS.length; i++) speel(eind.app, eind.p, i, { sterren: 3 });
   eind.app.grantHistoricRewards(eind.p);
-  const spullen = eind.p.owned.filter(id => id.indexOf('acc_wereld_') === 0);
-  const trofeeen = eind.p.trophies.filter(id => id.indexOf('perfect-') === 0);
-  check(spullen.length === 6 && new Set(spullen).size === 6, 'J · alles uit geeft alle zes de spulletjes', JSON.stringify(spullen));
-  check(trofeeen.length === 6 && new Set(trofeeen).size === 6, 'J · en alle zes de perfecte-wereldtrofeeën', JSON.stringify(trofeeen));
+  /* Eén spulletje per wereld die er een uitdeelt, en één perfecte-wereldtrofee
+     per wereld. Geteld uit WORLDS en niet uit een getal: een wereld erbij (met of
+     zonder beloning) hoort deze zaak niet om te gooien. */
+  const teVerdienen = eind.app.WORLDS.filter(w => eind.app.beloningItem(w)).length;
+  const alleWerelden = eind.app.WORLDS.length;
+  const spullen = eind.p.owned.filter(id => eind.app.isBeloning(id));
+  const trofeeen = eind.p.trophies.filter(id => id.indexOf(eind.app.PERFECT_BADGE) === 0);
+  check(spullen.length === teVerdienen && new Set(spullen).size === teVerdienen,
+    'J · alles uit geeft elk spulletje dat er te verdienen valt', JSON.stringify(spullen));
+  check(trofeeen.length === alleWerelden && new Set(trofeeen).size === alleWerelden,
+    'J · en elke perfecte-wereldtrofee', JSON.stringify(trofeeen));
   eind.app.grantHistoricRewards(eind.p);
-  check(eind.p.owned.filter(id => id.indexOf('acc_wereld_') === 0).length === 6,
+  check(eind.p.owned.filter(id => eind.app.isBeloning(id)).length === teVerdienen,
     'J · een tweede ronde deelt niets dubbel uit', eind.p.owned.length);
   // wat een wereld uitdeelt telt niet mee als "gekocht"
   check(eind.app.boughtCount(eind.p) === 0, 'J · en het is niet gekocht maar verdiend', eind.app.boughtCount(eind.p));
 
   // een wereld zonder (of met een onbekend) beloningsitem deelt niets uit en valt niet om
   const los = verseSter('Los');
-  wereldErbij(los.app, 'zonder', {});
-  wereldErbij(los.app, 'onbekend', { beloning: 'acc_bestaat_niet' });
-  speel(los.app, los.p, 6); speel(los.app, los.p, 7);
-  const g6 = los.app.grantWorldRewards(los.p, 6), g7 = los.app.grantWorldRewards(los.p, 7);
-  check(g6.spul === null && g7.spul === null, 'J · een wereld zonder geldig spulletje deelt niets uit',
-    JSON.stringify([g6.spul, g7.spul]));
-  check(los.app.worldDone(los.p, 6) && los.app.worldDone(los.p, 7),
+  const zonder = wereldErbij(los.app, 'zonder', {});
+  const onbekend = wereldErbij(los.app, 'onbekend', { beloning: 'acc_bestaat_niet' });
+  speel(los.app, los.p, zonder); speel(los.app, los.p, onbekend);
+  const gz = los.app.grantWorldRewards(los.p, zonder), go = los.app.grantWorldRewards(los.p, onbekend);
+  check(gz.spul === null && go.spul === null, 'J · een wereld zonder geldig spulletje deelt niets uit',
+    JSON.stringify([gz.spul, go.spul]));
+  check(los.app.worldDone(los.p, zonder) && los.app.worldDone(los.p, onbekend),
     'J · maar telt gewoon als uitgespeeld', 'niet uit');
 });
 
@@ -384,10 +398,13 @@ zaak('J', () => {
    shows moet op precies dezelfde manier uit en perfect kunnen raken. */
 zaak('K', () => {
   const { app, p } = verseSter();
-  for (let i = 0; i < 6; i++) speel(app, p, i);
+  for (let i = 0; i < app.WORLDS.length; i++) speel(app, p, i);
+  const eindVoor = app.WORLD_LAST;
   const kort = wereldErbij(app, 'kort', { levels: 5 });
   const lang = wereldErbij(app, 'lang', { levels: 12 });
-  check(app.WORLD_START[kort] === 49 && app.WORLD_START[lang] === 54 && app.WORLD_LAST === 65,
+  check(app.WORLD_START[kort] === eindVoor + 1
+     && app.WORLD_START[lang] === eindVoor + 1 + 5
+     && app.WORLD_LAST === eindVoor + 5 + 12,
     'K · de levelnummers lopen door met de echte lengtes',
     [app.WORLD_START[kort], app.WORLD_START[lang], app.WORLD_LAST].join('/'));
   speel(app, p, kort, { shows: 4, sterren: 3 });
@@ -411,17 +428,20 @@ zaak('L', () => {
   const { app, p } = verseSter();
   const plank = key => app.TROPHY_SHELVES.filter(s => s.key === key)[0];
   check(plank('werelden') === undefined, 'L · er is geen wereldbadge-plank meer', 'nog aanwezig');
-  check(plank('perfect').ids.length === 6, 'L · zes werelden, zes perfecte-wereldtrofeeën',
-    plank('perfect').ids.length);
+  check(plank('perfect').ids.length === app.WORLDS.length,
+    'L · één perfecte-wereldtrofee per geschreven wereld',
+    plank('perfect').ids.length + ' voor ' + app.WORLDS.length + ' werelden');
   check(app.TROPHIES.every(t => t.id.indexOf('wereld-') !== 0),
     'L · en geen enkele wereldbadge in de kast',
     JSON.stringify(app.TROPHIES.filter(t => t.id.indexOf('wereld-') === 0).map(t => t.id)));
   const badge = id => app.TROPHIES.filter(t => t.id === id)[0];
+  const P0 = app.PERFECT_BADGE + app.WORLDS[0].id, P1 = app.PERFECT_BADGE + app.WORLDS[1].id;
   speel(app, p, 0, { sterren: 3 });
-  check(badge('perfect-muziek').has(p), 'L · en hij leest dezelfde teller als de rest', 'niet behaald');
-  check(!badge('perfect-snoep').has(p), 'L · alleen voor de wereld waar het over gaat', 'te veel behaald');
+  check(badge(P0).has(p), 'L · en hij leest dezelfde teller als de rest', 'niet behaald');
+  check(!badge(P1).has(p), 'L · alleen voor de wereld waar het over gaat', 'te veel behaald');
+  const voorErbij = plank('perfect').ids.length;
   wereldErbij(app, 'test7');
-  check(plank('perfect').ids.length === 7, 'L · een wereld erbij geeft een kaartje erbij',
+  check(plank('perfect').ids.length === voorErbij + 1, 'L · een wereld erbij geeft een kaartje erbij',
     plank('perfect').ids.length);
   check(!!badge('perfect-test7') && !badge('perfect-test7').has(p),
     'L · leeg, zoals de wereld zelf', 'meteen behaald');
@@ -436,12 +456,12 @@ zaak('L', () => {
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);
   check(vast.length === 12, 'L · het vaste deel van de kast groeit niet mee', vast.length);
-  check(perfect.length === app.WORLDS.length && perfect.length === 7,
+  check(perfect.length === app.WORLDS.length && perfect.length === voorErbij + 1,
     'L · en het perfecte deel precies wel', perfect.length + '/' + app.WORLDS.length);
   check(actief.length === vast.length + app.WORLDS.length,
     'L · samen is dat de hele kast', actief.length);
-  check(app.TROPHIES.filter(t => t.id === 'perfect-muziek').length === 1,
-    'L · en de oude staan er niet dubbel bij', app.TROPHIES.filter(t => t.id === 'perfect-muziek').length);
+  check(app.TROPHIES.filter(t => t.id === P0).length === 1,
+    'L · en de oude staan er niet dubbel bij', app.TROPHIES.filter(t => t.id === P0).length);
   // de kast legt de nieuwe trofeeën niet zomaar als "klaar" neer
   const klaarVoor = kopie(p.readyTrophies);
   app.checkTrophies(p);

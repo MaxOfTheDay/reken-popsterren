@@ -179,32 +179,42 @@ function check(ok, label, detail) {
     check(vers.haltes.length === 4 && vers.vervolg,
       'B2 · een verse ster ziet vier bestemmingen, en dat er meer ligt',
       JSON.stringify({ n: vers.haltes.length, meer: vers.vervolg }));
+    /* Hoeveel bestemmingen er hóren te staan: waar je bent, plus REIS_VOORUIT
+       erboven, geklemd op wat er uitgebracht is. Uitgerekend uit de gegevens en
+       niet als vast getal -- dit is precies de zaak die niet mag omvallen als de
+       tournee groeit. */
+    const zicht = () => page.evaluate(() =>
+      ({ hoort: Math.min(WORLD_AVAIL, continueWorld(P()) + REIS_VOORUIT + 1), avail: WORLD_AVAIL }));
     const twee = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
       __speel(2);                                  // wereld 1 en 2 uit
       renderReis(); await wacht(200);
       return __reis();
     });
-    check(twee.haltes.length === 6 && twee.haltes.filter(h => h.zegel).length === 2,
+    const z2 = await zicht();
+    check(twee.haltes.length === z2.hoort && twee.haltes.filter(h => h.zegel).length === 2,
       'B2 · twee werelden uit: twee zegels eronder, en de horizon schuift mee',
-      JSON.stringify({ n: twee.haltes.length, zegels: twee.haltes.filter(h => h.zegel).length }));
-    check(!twee.vervolg,
-      'B2 · en nu de horizon het einde raakt, belooft de mist niets meer', JSON.stringify(twee.vervolg));
+      JSON.stringify({ n: twee.haltes.length, hoort: z2.hoort, zegels: twee.haltes.filter(h => h.zegel).length }));
+    check(!!twee.vervolg === (z2.hoort < z2.avail),
+      'B2 · de mist belooft precies dan iets als er nog een wereld voorbij de horizon ligt',
+      JSON.stringify({ vervolg: twee.vervolg, ...z2 }));
     /* Een tournee die twee keer zo lang is verandert daar niets aan: de horizon
        hangt aan het kind, niet aan de lijst. */
     const lang = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const voor = WORLDS.length;
       for (let i = 0; i < 6; i++) {
         WORLDS.push({ id: 'proef' + i, name: 'Proefwereld ' + i, icon: '🎪', levels: 8,
           theme: { sky: '#2b5f8a', deep: '#0d1f33', glow: '#4f88a8', road: '#cfe3f2' } });
       }
       rebuildWorldStarts(); rebuildWorldBadges();
       renderReis(); await wacht(200);
-      return { ...__reis(), n: WORLDS.length };
+      return { ...__reis(), n: WORLDS.length, voor };
     });
-    check(lang.n === 12 && lang.haltes.length === 6,
-      'B2 · twaalf werelden geschreven, nog steeds zes bestemmingen op het scherm',
-      JSON.stringify({ geschreven: lang.n, getoond: lang.haltes.length }));
+    const z3 = await zicht();
+    check(lang.n === lang.voor + 6 && lang.haltes.length === z3.hoort && lang.haltes.length === twee.haltes.length,
+      'B2 · zes werelden erbij geschreven, evenveel bestemmingen op het scherm',
+      JSON.stringify({ geschreven: lang.n, getoond: lang.haltes.length, hoort: z3.hoort }));
     check(lang.vervolg,
       'B2 · en bovenaan staat weer dat er meer ligt', JSON.stringify(lang.vervolg));
     await ctx.close();
@@ -379,7 +389,7 @@ function check(ok, label, detail) {
      geen herontwerp. */
   {
     const { ctx, page } = await fresh();
-    await page.evaluate(() => __speel(6));
+    const alles = await page.evaluate(() => { __speel(WORLDS.length); return WORLDS.length; });
     await open(page);
     const voor = await page.evaluate(() => ({ ...__reis(), ...__stand() }));
     const na = await page.evaluate(async () => {
@@ -390,15 +400,15 @@ function check(ok, label, detail) {
       rebuildWorldBadges();
       renderReis();
       await wacht(120);
-      return { ...__reis(), ...__stand() };
+      return { ...__reis(), ...__stand(), idx: WORLDS.length - 1 };
     });
     check(na.haltes.length === voor.haltes.length + 1,
-      'F · een zevende wereld is een bestemming erbij', `${voor.haltes.length} -> ${na.haltes.length}`);
+      'F · een wereld erbij is een bestemming erbij', `${voor.haltes.length} -> ${na.haltes.length}`);
     check(na.baan > voor.baan, 'F · en de baan wordt hoger', `${voor.baan} -> ${na.baan}`);
-    check(na.sterren === voor.sterren && na.uit.slice(0, 6).join() === voor.uit.slice(0, 6).join(),
+    check(na.sterren === voor.sterren && na.uit.slice(0, alles).join() === voor.uit.slice(0, alles).join(),
       'F · zonder dat er één ster verhuist', JSON.stringify({ voor: voor.sterren, na: na.sterren }));
     const nu = na.haltes.filter(h => /\bnu\b/.test(h.klas));
-    check(na.grens === 6 && nu.length === 1 && nu[0].w === 6,
+    check(na.grens === na.idx && nu.length === 1 && nu[0].w === na.idx,
       'F · de nieuwe wereld is meteen de nieuwe grens', JSON.stringify({ grens: na.grens, nu: nu.map(h => h.w) }));
     // een wereld zonder tekening valt terug op zijn eigen kleuren en blijft speelbaar
     check(!nu[0].art && nu[0].naam === 'Proefwereld',
