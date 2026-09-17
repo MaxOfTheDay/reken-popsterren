@@ -11886,14 +11886,89 @@ function hideToast() {
   veil.style.display = 'none';
 }
 
+/* Wat deze show waard was, in sterren. Puur rekenwerk op de stand van G: geen
+   profiel, geen scherm, niets dat blijft staan.
+
+   Rekenmodus telt missers hard (foutloos = 3). De telmodus (kleuters) is milder
+   en kijkt naar hoeveel er over de héle ronde in één keer goed ging, zodat één
+   verbeterde hapering een sterke ronde niet meteen degradeert. */
+function showStars(g) {
+  if (!g.count) return g.misses === 0 ? 3 : g.misses === 1 ? 2 : 1;
+  const ratio = g.total > 0 ? (g.total - g.misses) / g.total : 1;
+  return ratio >= 0.85 ? 3 : ratio >= 0.55 ? 2 : 1;
+}
+/* Een geslaagde show wegschrijven. Álles wat blíjft staan gebeurt hier en
+   nergens anders: de sterren, de positie, de beloningen van de wereld, de
+   carrièrerang, de trofeeën -- en de save() die dat vastlegt.
+
+   Los van het tekenen, omdat het twee vragen zijn die elkaar niet nodig hebben.
+   "Wat verandert er aan dit kind" is nu te lezen (en te testen) zonder één
+   DOM-regel, en het eindscherm hoeft niet te weten in welke volgorde beloningen
+   worden uitgedeeld. Die volgorde luistert namelijk wél nauw, en dat is precies
+   waarom ze bij elkaar hoort te staan:
+
+     vóór de sterren   wasUit/wasVol -- alleen zo is "net gebeurd" te herkennen
+     grantWorldRewards zet de perfecte-wereldtrofee meteen op 'behaald', zodat
+                       checkTrophies hem daarna niet ook nog als cadeautje in de
+                       kast legt (dat feest heeft hij al)
+     save() als laatste een kind dat de app wegklikt terwijl de confetti valt,
+                       heeft haar spulletje gewoon
+
+   Geeft terug wat er níeuw is -- niet wat er al stond, want daar is geen
+   eindscherm voor:
+
+     { stars, beter, bonus, travel, feest, rankUp, trofees }
+       stars    de sterren van déze show (een mindere poging laat de oude staan)
+       beter    dit was een geslaagde herkansing van een eerdere show
+       bonus    de 💎 die die sterren opleveren
+       travel   { from, to } als de ster een halte opschuift, anders null
+       feest    de wereld die net uit en/of perfect werd, of null
+       rankUp   { rank, bonus } bij een nieuwe ster-status, anders null
+       trofees  de trofeeën die nét klaar zijn komen te liggen               */
+function applyShowResult(p, lvl, wl, stars) {
+  const bonus = stars * 5;
+  p.diamonds += bonus;
+  /* Wat stond er vóór deze show? Alleen dan kan dit een verbetering zijn: een
+     eerste keer is geen "beter dan vorige keer". Ging het mínder goed, dan
+     blijft het oude resultaat gewoon staan (Math.max) én zegt het eindscherm
+     daar niets over -- terugkomen mag nooit iets kunnen kosten. */
+  const vorige = p.stars[lvl] || 0;
+  const beter = vorige > 0 && stars > vorige;
+  const wasUit = worldDone(p, wl.index);
+  const wasVol = worldProgress(p, worldForIndex(wl.index)).vol;
+  p.stars[lvl] = Math.max(vorige, stars);
+  /* Vooruit gaat alleen de vóórste halte, en nooit voorbij het einde van wat er
+     geschreven is. Die klem is fase 4A: hiervoor liep p.level door in het
+     oneindige en bezette het levelnummers die een latere wereld zou opeisen.
+     Nu stopt hij op WORLD_LAST + 1 -- "alles uit" -- en blijft daar tot er een
+     wereld bijkomt. Een show overdoen (lvl < p.level) schuift sowieso niets op;
+     een toegift in de laatste wereld dus ook niet. */
+  let travel = null;
+  if (lvl === p.level && p.level <= WORLD_LAST) {
+    p.level++;
+    travel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
+  }
+  const beloond = grantWorldRewards(p, wl.index);
+  const netUit = !wasUit && worldDone(p, wl.index) ? beloningItem(wl.world) : null;
+  const netVol = !wasVol && beloond.perfect ? beloond.perfect : null;
+  const feest = (netUit || netVol) ? { wereld: wl.world, spul: netUit, perfect: netVol } : null;
+  // carrièrerang: net genoeg sterren voor een hogere rang? -> bonus (zie checkRankUp)
+  const rankUp = checkRankUp(p);
+  const trofees = checkTrophies(p);
+  save();
+  return { stars, beter, bonus, travel, feest, rankUp, trofees };
+}
+
 function endLevel(success) {
   stopSpot();
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
-  let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
-  let feest = null;    // FASE 4D.1: wereld uit en/of perfect -- idem, één feestje voor allebei
+  /* De twee dingen die pas ná het eindscherm gevierd worden (zie de staart van
+     deze functie): een nieuwe ster-status, en een wereld die net uit of perfect
+     werd. Bij een mislukte show blijven ze allebei leeg. */
+  let rankUp = null, feest = null;
   // zelfde kop als tijdens het optreden: wereld + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const wl = worldFor(lvl);
@@ -11912,57 +11987,14 @@ function endLevel(success) {
   applyVenue($('screen-end'), wl.world);
   naShowLvl = lvl;   // élke uitgang van dit scherm komt straks op déze halte uit
   if (success) {
-    // Sterren: rekenmodus telt missers hard (foutloos = 3). Telmodus (kleuters) is
-    // milder en kijkt naar hoeveel er over de héle ronde in één keer goed ging,
-    // zodat één verbeterde hapering een sterke ronde niet meteen degradeert.
-    let stars;
-    if (G.count) {
-      const ratio = G.total > 0 ? (G.total - G.misses) / G.total : 1;
-      stars = ratio >= 0.85 ? 3 : ratio >= 0.55 ? 2 : 1;
-    } else {
-      stars = G.misses === 0 ? 3 : G.misses === 1 ? 2 : 1;
-    }
-    const bonus = stars * 5;
-    p.diamonds += bonus;
-    // Wat stond er vóór deze show? Alleen dan kan dit een verbetering zijn: een
-    // eerste keer is geen "beter dan vorige keer". Ging het mínder goed, dan
-    // blijft het oude resultaat gewoon staan (Math.max) én zegt het eindscherm
-    // daar niets over -- terugkomen mag nooit iets kunnen kosten.
-    const vorige = p.stars[lvl] || 0;
-    const beter = vorige > 0 && stars > vorige;
-    /* FASE 4D.1 -- hoe deze wereld ervoor stond vóór deze sterren erbij kwamen.
-       Alleen zó is "net gebeurd" te herkennen: de beloning zelf wordt uitgedeeld op
-       wát er staat (zie grantWorldRewards), maar het féést hoort alleen bij de
-       overgang. Zonder deze twee regels zou elke herkansing in een uitgespeelde
-       wereld opnieuw willen vieren. */
-    const wasUit = worldDone(p, wl.index);
-    const wasVol = worldProgress(p, worldForIndex(wl.index)).vol;
-    p.stars[lvl] = Math.max(vorige, stars);
-    /* Vooruit gaat alleen de vóórste halte, en nooit voorbij het einde van wat er
-       geschreven is. Die klem is fase 4A: hiervoor liep p.level door in het
-       oneindige en bezette het levelnummers die een latere wereld zou opeisen.
-       Nu stopt hij op WORLD_LAST + 1 -- "alles uit" -- en blijft daar tot er een
-       wereld bijkomt. Een show overdoen (lvl < p.level) schuift sowieso niets op;
-       een toegift in de laatste wereld dus ook niet. */
-    if (lvl === p.level && p.level <= WORLD_LAST) {
-      p.level++;
-      pendingTravel = { from: lvl, to: p.level };   // de ster reist zichtbaar door op de kaart
-    }
-    /* De beloningen van déze wereld, vóór checkTrophies. De volgorde doet ertoe:
-       grantWorldRewards zet de perfecte-wereld-trofee meteen op 'behaald', zodat
-       checkTrophies hem daarna niet ook nog eens als cadeautje in de kast legt.
-       De wereldbadge ('deze wereld uit') loopt wél gewoon via de kast -- die is
-       niet veranderd. */
-    const beloond = grantWorldRewards(p, wl.index);
-    const netUit = !wasUit && worldDone(p, wl.index) ? beloningItem(wl.world) : null;
-    const netVol = !wasVol && beloond.perfect ? beloond.perfect : null;
-    if (netUit || netVol) feest = { wereld: wl.world, spul: netUit, perfect: netVol };
-    // carrièrerang: net genoeg sterren voor een hogere rang? -> bonus (zie checkRankUp)
-    rankUp = checkRankUp(p);
-    const trofees = checkTrophies(p);
-    // Bewaren gebeurt hier, vóór er ook maar iets beweegt. Een kind dat de app
-    // wegklikt terwijl de confetti nog valt, heeft haar spulletje gewoon.
-    save();
+    /* Alles wat er aan dit kind verandert, in één keer -- zie applyShowResult.
+       Wat eruit komt is materiaal voor het scherm hieronder, en niets anders:
+       vanaf hier wordt er niets meer bewaard. */
+    const r = applyShowResult(p, lvl, wl, showStars(G));
+    const { stars, beter, bonus, trofees } = r;
+    if (r.travel) pendingTravel = r.travel;   // de ster reist zichtbaar door op de kaart
+    rankUp = r.rankUp;
+    feest = r.feest;
     $('end-title').textContent = `🎉 Show ${wl.nr} was geweldig!`;
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
@@ -12002,6 +12034,8 @@ function endLevel(success) {
     confetti(40);
     finaleDance('end-avatar', 6);   // grote slotchoreografie
   } else {
+    // Mislukt: er komt geen ster bij en er schuift niets op. Alleen de 💎 van de
+    // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
     save();
     $('end-title').textContent = '🎭 Bijna!';
     $('end-stars').textContent = '💪';
