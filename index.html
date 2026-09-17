@@ -177,6 +177,12 @@
     /* ---- "Paper" theme: parent-facing screens (settings / modal / gear-menu) ---- */
     --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
     --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
+    /* Het vel zelf, zwevend boven de schil: bijna wit, maar met een zweem van de
+       paarse achtergrond erdoorheen, plus de fijne ring die er altijd omheen
+       hoort. Gebruikt door het instellingen-paneel onder het tandwiel; de vaste
+       kaarten (.set-card) blijven vol wit -- die liggen op het scherm en zweven
+       er niet boven. */
+    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
     --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
     --muted-lavender-text: #cfc6df; --muted-text-2: #d8d0e4; --muted-text-3: #e1e5ea; --lavender-text: #e6d6ff;
 
@@ -222,6 +228,31 @@
 
     /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ---- */
     --btn-lip: 5px; --btn-lip-sm: 4px;
+
+    /* ---- De veilige zone van het toestel, en de ruimte onder de balk ----
+       FASE 5D. Dit stond vijf keer met de hand uitgerekend: de balk op bottom 10
+       zonder veilige zone, de actiebalk erboven op 88, en de vrije ruimte eronder
+       op 100 (kaart en hubs) en 168 (kleedkamer). Vier van die vijf getallen
+       vergaten env(): op een toestel met een streepje onderaan schuift de balk
+       daar dan bovenop, en de onderste rij van een scherm valt eronder.
+
+       Nu volgt alles uit drie waarden, en de afspraak is:
+         --veilig-onder  de veilige zone van het toestel (0 op alles zonder
+                         streepje; zonder viewport-fit=cover kadert de browser
+                         zelf al af, dan is dit óók 0 en verandert er niets)
+         --balk-h        hoe hoog .main-nav is (een knop van 55 plus 2x6 padding)
+         --balk-rand     hoe ver de balk van de schermrand zweeft
+         --balk-ruimte   wat een scherm mét vaste navigatie onderaan vrij moet
+                         houden, veilige zone incl. Elk scherm telt daar zijn
+                         eigen lucht bij (zie .screen.hub / #screen-dress).
+
+       LET OP -- niet te verwarren met --nav-h: dat is een ándere maat, die de
+       kaart bij het openen zélf opmeet (zie meetChroom) en die de balk plús wat
+       eronder zit plús marge bevat. Vandaar --balk-* voor de vaste waarden. */
+    --veilig-onder: env(safe-area-inset-bottom, 0px);
+    --balk-h: 66px;
+    --balk-rand: 10px;
+    --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
 
     /* ---- Vaste ondernavigatie ----
        Aan één plek te draaien, want de juiste waarde hangt af van hoe de
@@ -408,6 +439,37 @@
   #screen-newstar { scroll-padding-bottom: 96px; }
   #screen-memory { --kolom: 620px; }
   #screen-profile { --kolom: 560px; }
+
+  /* ---- Twee soorten scherm, en op een tablet is dat het verschil ----------
+     FASE 5D. De klacht was: "sommige schermen staan op een tablet netjes in het
+     midden, andere lopen van rand tot rand". Dat wás ook zo, maar niet volgens
+     een regel -- het hing ervan af of iemand dat scherm ooit op een breed
+     venster had bekeken. De regel die er nu ligt:
+
+       BELEVING (kaart, reis, spel, eindscherm) -- de tekening ís het scherm.
+         Die mag de hele breedte pakken; hun kop hoort bij de wereld eronder en
+         zweeft mee. Ze zetten hun eigen --kolom (100% / 860 / 420) en hebben
+         geen gedeelde regel nodig.
+
+       GEBRUIK (kleedkamer, trofeeën, ouderdeel, nieuwe ster) -- dit is inhoud
+         om te lezen en te bedienen. Die staat gecentreerd in een kolom, en
+         DAAR HOORT DE KOP BIJ: zodra het venster breder is dan de kolom
+         krimpt de plakkende kop mee, zodat de terugknop links en de eerste
+         kaart eronder op dezelfde lijn beginnen. Op een telefoon verandert er
+         niets -- daar ís de schermrand de kolomrand.
+
+     De 740 is de smalste tablet staand (768) min wat marge: daaronder blijft
+     alles vol. Het +2x--rand is precies de overbloeding die de kop op een
+     telefoon ook heeft, zodat hij op elke maat even ver buiten de kolom steekt.
+     Dit stond eerder alleen op #screen-dress; de kast en het ouderdeel misten
+     hem en rekten daar hun kop wél uit tot de vensterrand. */
+  @media (min-width: 740px) {
+    .screen.gebruik .hub-sticky {
+      width: min(100%, calc(var(--kolom) + var(--rand) * 2));
+      margin-left: auto; margin-right: auto;
+      border-radius: 0 0 var(--r-lg) var(--r-lg);
+    }
+  }
   /* Schermwissels waren een harde knip. Tussen twee vlakke verlopen valt dat
      niet op; zodra er straks getekende achtergronden staan wel. Een animatie
      (geen transition): het element komt uit display:none, en daar loopt geen
@@ -446,7 +508,30 @@
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
   .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), 0 8px 14px var(--glass-black-30); }
   .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
+  /* .small zet alleen de MAAT (en dus de kleinere lip); de kleur van die lip
+     hoort bij de kleurvariant. Dat ging hier mis: .btn.small stond ná .btn.purple
+     in het blad en overschreef diens paarse lip met de gouden -- elke kleine
+     paarse knop in het ouderdeel (Nieuwe ster maken, Back-up maken) stond op een
+     oranje randje. Nu draagt elke variant zijn eigen kleine lip. */
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
+  .btn.small.purple { box-shadow: 0 3px 0 var(--purple-shadow); }
+  .btn.small.green  { box-shadow: 0 3px 0 var(--green-shadow); }
+  .btn.small.gray   { box-shadow: 0 3px 0 var(--gray-shadow); }
+  .btn.small:active { box-shadow: 0 1px 0 var(--gold-cta-shadow); }
+  .btn.small.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
+  .btn.small.green:active  { box-shadow: 0 1px 0 var(--green-shadow); }
+  .btn.small.gray:active   { box-shadow: 0 1px 0 var(--gray-shadow); }
+  /* De tweede knop op een wit vel. .soft is gemaakt voor het paarse scherm (een
+     lichte glazen vulling) en verdwijnt op papier; .ghost is daar helemaal
+     onzichtbaar. Dit is dezelfde taal als een niet-gekozen .chip -- witte
+     vulling, paarse letter, een fijne rand -- en dus geen nieuwe knopsoort,
+     maar wel een tweede gewicht waar er tot nu toe maar één was. */
+  .btn.small.paper {
+    color: var(--purple-mid); background: var(--c-white);
+    border: 1.5px solid var(--paper-border); box-shadow: 0 2px 0 var(--paper-border);
+  }
+  .btn.small.paper:hover { border-color: var(--purple-light); }
+  .btn.small.paper:active { transform: translateY(2px); box-shadow: none; }
   .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
@@ -768,32 +853,96 @@
   #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
   #btn-gear.on .gear-ico { transform: rotate(35deg); }
 
-  /* ---- Instellingen-menu (popover onder het tandwiel) ---- */
+  /* ---- Instellingen-menu (popover onder het tandwiel) --------------------
+     FASE 5D. Het paneel stond 18px onder de knop, zonder enige verbinding: een
+     wit blok dat uit de lucht kwam vallen en meer op een browsermelding leek dan
+     op iets van deze app. Drie dingen zijn eraan veranderd, en geen ervan maakt
+     er een scherm van:
+
+       1. HET ZIT VAST AAN HET TANDWIEL. Acht pixels lucht in plaats van
+          achttien, een puntje dat naar de knop wijst (::before, dezelfde vorm
+          als de tipbubbels in het spel), en het openklappen begint in de
+          rechterbovenhoek -- dus vlak onder de knop die het opende.
+       2. HET IS VAN DIT HUIS. Papierkleuren en de ronding van een kaart
+          (--r-lg), een fijne paarse ring eromheen in plaats van alleen een
+          schaduw, en een vleugje waas erachter -- hetzelfde glas als de
+          plakkende koppen. Geen nieuwe kleuren en geen nieuwe schaduw.
+       3. DE STANDEN ZIJN AAN TE WIJZEN. Zie .gi-state hieronder. */
   .gear-menu {
-    position: absolute; top: 62px; right: 0; min-width: 216px;
-    background: var(--c-white); color: var(--c-ink); border-radius: var(--r-md); padding: 6px;
-    box-shadow: var(--e-3); display: none; flex-direction: column;
+    position: absolute; top: 52px; right: 0; width: 252px; max-width: calc(100vw - 20px);
+    background: var(--paper-surface); color: var(--c-ink);
+    border-radius: var(--r-lg); padding: 7px;
+    backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: var(--e-3), inset 0 0 0 1.5px var(--paper-ring);
+    display: none; flex-direction: column;
     transform-origin: top right;
   }
-  .gear-menu.open { display: flex; animation: gearPop .16s ease; }
-  @keyframes gearPop { from { opacity: 0; transform: scale(.9) translateY(-6px); } to { opacity: 1; transform: none; } }
+  /* Het puntje. Staat precies onder het midden van de tandwielknop (44px breed,
+     dus 22 uit de rechterrand) en is een gedraaid vierkantje, zodat het dezelfde
+     vulling en dezelfde ring meeneemt als het paneel zelf. */
+  .gear-menu::before {
+    content: ''; position: absolute; top: -6px; right: 15px; width: 14px; height: 14px;
+    background: var(--paper-surface); border-radius: 3px;
+    box-shadow: inset 0 0 0 1.5px var(--paper-ring);
+    transform: rotate(45deg); clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+  .gear-menu.open { display: flex; animation: gearPop .16s var(--ease-uit); }
+  @keyframes gearPop { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
   .gear-item {
     font-family: inherit; font-size: 16px; font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
-    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--r-sm);
+    display: flex; align-items: center; gap: 11px; padding: 0 11px; min-height: 48px;
+    border-radius: var(--r-md); transition: background var(--t-tik) ease;
   }
   .gear-item:hover { background: var(--paper-tint); }
-  .gear-item:active { transform: scale(.98); }
-  .gear-item .gi-ico { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
-  .gear-item .gi-label { flex: 1; }
+  /* Niet krimpen maar oplichten: een rij van 48px die 2% kleiner wordt zie je
+     niet, een rij die even paars oplicht wél -- en dat is precies wat een tik op
+     een schakelaar moet bevestigen. */
+  .gear-item:active { background: var(--lavender-wash-3); }
+  .gear-item .gi-ico { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+  .gear-item .gi-label { flex: 1; min-width: 0; }
+  /* De stand, en niet alleen het woord. "Uit" in een grijs pilletje leest als
+     een label; met een stip ervoor -- groen en vol als het aanstaat, hol en grijs
+     als het uit staat -- is het een schakelaar in twee standen. De pil zelf houdt
+     dezelfde maat, zodat de rij niet verspringt bij het omzetten. */
   .gear-item .gi-state {
-    font-size: 13px; font-weight: 700; padding: 3px 11px; border-radius: var(--r-pill);
+    font-size: 13px; font-weight: 700; padding: 5px 12px 5px 9px; border-radius: var(--r-pill);
+    display: inline-flex; align-items: center; gap: 6px;
     background: var(--green-badge-bg); color: var(--green-deep);
+    box-shadow: inset 0 0 0 1px rgba(46,125,50,.22);
   }
-  .gear-item .gi-state.off { background: var(--paper-muted-bg); color: var(--paper-muted-text); }
-  .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; }
-  .gear-item.parents { color: var(--purple-mid); }
-  .gear-sep { height: 1px; background: var(--paper-border); margin: 5px 8px; }
+  .gear-item .gi-state::before {
+    content: ''; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--green-deep); box-shadow: 0 0 0 2px rgba(46,125,50,.16);
+  }
+  .gear-item .gi-state.off {
+    background: var(--paper-muted-bg); color: var(--paper-muted-text);
+    box-shadow: inset 0 0 0 1px var(--paper-border);
+  }
+  .gear-item .gi-state.off::before {
+    background: transparent; box-shadow: inset 0 0 0 2px var(--paper-muted-text);
+  }
+  /* De weg naar buiten. Een tweede regel eronder ("Voortgang, oefenen, beheer")
+     zegt dat hier een gróter deel achter zit; de paarse tegel met het icoon en de
+     chevron zeggen dat het een deur is en geen schakelaar. Het staat onder een
+     streepje, dus het is duidelijk níet een van de twee schakelaars -- maar het
+     is wel het enige gekleurde ding in het paneel, en dus vindbaar voor een
+     ouder die er bewust naar zoekt. */
+  .gear-item.parents { color: var(--purple-mid); align-items: center; padding: 9px 11px; }
+  /* Een lichte tegel en geen paars vlak: het gezins-emoji is zelf donker en
+     verdween op een paarse vulling tot een vlek. Dit is hetzelfde tegeltje als op
+     elke kaartkop in het ouderdeel (.set-card-head .ico), dus de rij belooft
+     precies waar ze heen gaat. */
+  .gear-item.parents .gi-ico {
+    width: 34px; height: 34px; border-radius: var(--r-sm); font-size: 17px;
+    display: grid; place-items: center;
+    background: var(--lavender-wash); box-shadow: inset 0 0 0 1.5px var(--purple-light);
+  }
+  .gear-item.parents .gi-sub {
+    display: block; font-size: 11.5px; font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
+  }
+  .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
+  .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
 
   /* ---- Podium / avatar ---- */
   .stage {
@@ -921,7 +1070,7 @@
      edge-to-edge scrollen. Die 10 staat als --rand hierboven, zodat de kop hem
      leest; horizontaal valt er niets te overbloeden en zet de kop-regel hieronder
      zijn zijmarges daarom terug op 0. */
-  #screen-map { position: relative; padding: 10px 0 100px; }
+  #screen-map { position: relative; padding: 10px 0 calc(var(--balk-ruimte) + 14px); }
   /* Op de kaart heeft de kop géén eigen vlak: de tekening loopt er ongebroken
      onderdoor. Elke pixel balk is een pixel wereld die een kind niet ziet, en een
      dekkende band dwars over een geschilderde lucht is het duidelijkste teken dat
@@ -1123,7 +1272,8 @@
      box-shadow (inset) in plaats van in een border, zodat het geen pixel breedte
      kost. Alle waarden staan als variabelen bovenaan. */
   .main-nav {
-    position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 40;
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(var(--balk-rand) + var(--veilig-onder)); z-index: 40;
     display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: var(--balk-w);
     background: var(--nav-bg);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
@@ -1147,8 +1297,12 @@
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
      .tour-stop.next, .item-card.equipped): navigatie is geen beloning. */
   .nav-item.active { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
-  /* schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter verdwijnt */
-  .screen.hub { padding-bottom: 100px; }
+  /* Schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter
+     verdwijnt: de balk zelf (--balk-ruimte, veilige zone incl.) plus 14px lucht,
+     zodat het laatste element er écht onderuit te scrollen is en niet net
+     tegen de balk aan blijft plakken. Was 100px plat -- hetzelfde getal op een
+     toestel zonder streepje, maar nu klopt het ook mét. */
+  .screen.hub { padding-bottom: calc(var(--balk-ruimte) + 14px); }
 
   /* ---- Spel ----
      Zelfde donkerpaarse .hub-sticky-kop als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·
@@ -2782,14 +2936,14 @@
      eerste bestemming (zie REIS.onder). Alleen de veilige zone van het toestel komt
      er nog bij -- die hoort niet in de baan zelf, want dan zou hij meetellen in de
      stappen waar de route op gerekend is. */
-  #screen-journey.hub { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #screen-journey.hub { padding-bottom: var(--veilig-onder); }
   /* Een veeg onder de balk, vast aan het venster. De navigatie zweeft boven de
      reis en hoort dat te blijven doen, maar over een lichte wereldtekening heen
      staat ze zonder dit op zichzelf. Loopt naar niets uit en wordt nooit een blok:
      het onderste stukje kaart blijft er gewoon doorheen te zien. */
   .reis-voet {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none;
-    height: calc(124px + env(safe-area-inset-bottom, 0px));
+    height: calc(var(--balk-ruimte) + 38px);
     background: linear-gradient(180deg, rgba(14,7,30,0), rgba(14,7,30,.46) 62%, rgba(14,7,30,.6));
   }
   /* Dezelfde zwevende kop als op de kaart: geen dekkende balk over de lucht. Wél
@@ -3129,7 +3283,7 @@
      hetzelfde donkere glas als de rest van de zwevende bediening, en verdwijnt zodra
      je weer in de buurt bent -- dus hij staat nooit "voor het geval dat" in beeld. */
   .reis-terug {
-    position: fixed; right: 14px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+    position: fixed; right: 14px; bottom: calc(var(--balk-ruimte) + 10px); z-index: 30;
     width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--glass-white-28);
     display: flex; align-items: center; justify-content: center; padding: 0;
     font-family: inherit; font-size: 19px; color: var(--c-white); cursor: pointer;
@@ -3663,28 +3817,14 @@
      het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
      zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
   /* Ruimte onder het rek voor de twee zwevende balken plus de veilige zone van
-     het toestel: de navigatiebalk staat op 10 + 68, de actiebalk erboven op 88 +
-     52 = 140, en daar hoort nog lucht boven zodat het laatste kaartje er echt
-     onderuit te scrollen is en niet net eronder blijft plakken. */
-  #screen-dress { padding-bottom: calc(168px + env(safe-area-inset-bottom, 0px)); }
-  /* FASE 5B -- de kleedkamer op een breed scherm.
-     De donkere kop bloedt op een telefoon tot de schermrand door, en dat hoort:
-     daar ís de schermrand de kolomrand. Op een tablet niet. Daar stond een band
-     van 1024 breed met een pop van 208 in het midden en een rek van 680 eronder --
-     de terugknop en de diamanten lagen dan in twee verre hoeken die met niets
-     eronder uitlijnden, terwijl de kaart en de tournee hun kop juist wél
-     terugbrengen tot de breedte van wat eronder staat (zie #screen-map
-     .hub-sticky in de liggende regel). Dit is diezelfde afspraak, nu ook hier:
-     zodra het scherm breder is dan de kolom, is de kop zo breed als de kolom.
-     De 704 is --kolom (680) plus tweemaal de schermrand, precies de overbloeding
-     die de kop op een telefoon ook heeft. */
-  @media (min-width: 740px) {
-    #screen-dress .hub-sticky {
-      width: min(100%, calc(var(--kolom) + var(--rand) * 2));
-      margin-left: auto; margin-right: auto;
-      border-radius: 0 0 var(--r-lg) var(--r-lg);
-    }
-  }
+     het toestel: de navigatiebalk (--balk-ruimte, veilige zone incl.), daarboven
+     de actiebalk (12 lucht + 52 hoog) en daarboven nog lucht, zodat het laatste
+     kaartje er echt onderuit te scrollen is en niet net eronder blijft plakken. */
+  #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 82px); }
+  /* FASE 5B -- de kleedkamer op een breed scherm: de kop krimpt daar mee met de
+     kolom. FASE 5D heeft daar één gedeelde regel van gemaakt voor álle
+     gebruiksschermen (.screen.gebruik, zie het skelet bovenaan); hier stond hij
+     als enige, en de kast en het ouderdeel misten hem. */
   /* De kop was ooit 0-407px van een 844px scherm: titel, paspop, een
      Spullen/Looks-schakelaar én acht categorieën in twee rijen. De schakelaar
      stond daarna naast de paspop, met de dobbelsteen eronder -- een blok van
@@ -4102,10 +4242,12 @@
      --nav-ring, --nav-shadow, --nav-ink, dezelfde ronding en dezelfde breedte) en
      is alleen de vulling een slag dekkender -- dit vlak draagt letters over een
      scrollend rek, dat van de navigatie staat boven een rustige onderrand.
-     De 88 is de bovenkant van de navigatiebalk (10 + 68) plus 10 lucht: ze staan
-     nu op één afstand van elkaar, niet op een los uitgerekend getal. */
+     Hij staat precies 12px boven de navigatiebalk -- geen los uitgerekend getal
+     meer, maar de balk zelf (--balk-rand + --balk-h) plus die 12, veilige zone
+     incl. Op een toestel zonder streepje is dat dezelfde 88 als hiervoor. */
   .dress-bar {
-    position: fixed; left: 50%; transform: translateX(-50%); bottom: 88px; z-index: 39;
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(var(--balk-rand) + var(--balk-h) + 12px + var(--veilig-onder)); z-index: 39;
     display: none; align-items: center; gap: 10px; width: var(--balk-w); min-height: 52px;
     background: rgba(28, 6, 52, .82);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
@@ -4126,44 +4268,134 @@
   /* ---- Instellingen (ouder-dashboard) ---- */
   .settings-sheet { width: 100%; max-width: var(--kolom); display: flex; flex-direction: column; gap: 14px; }
 
+  /* ---- De kop van het ouderdeel, twee standen -----------------------------
+     FASE 5D. Deze kop draagt drie dingen (terug + naam van het scherm, wíé, en
+     wát daarover) en dat was op een telefoon 175 van 844 pixels -- op een kleine
+     telefoon 31% van het beeld, vóór er één cijfer in zicht kwam.
+
+     Bovenaan blijft hij ruim: daar ís de kop het scherm, en een ouder die net
+     binnenkomt moet zien wat dit is. Zodra er gescrold wordt krimpt hij, precies
+     zoals de trofeeënkast dat doet (zie #screen-trophies.gescrold): minder lucht,
+     een kleinere titel, kleinere portretjes. Wat NIET wegvalt zijn de twee
+     keuzerijen zelf -- wie er gekozen is en welk onderdeel je leest zijn precies
+     de twee dingen die je onderweg nodig hebt. Dat scheelt ~40px zonder dat er
+     iets verdwijnt of van plaats wisselt: gemeten 171 -> 139px. De raakvlakken
+     blijven ruim genoeg voor een volwassen vinger -- de kindkaartjes 38, de
+     tabbladen 36 -- en bovenaan zijn ze weer 46 en 40.
+
+     Eén element, twee standen, net als bij de kast: dan kan er niets uit de pas
+     gaan lopen. */
+  #screen-settings .hub-sticky {
+    /* Iets krapper dan de standaard 12/10: deze kop draagt drie regels en elke
+       pixel telt er dus driemaal zo zwaar. */
+    padding-top: 10px; padding-bottom: 8px;
+    transition: padding var(--t-snel) ease, background var(--t-snel) ease, box-shadow var(--t-snel) ease;
+  }
+  /* "Voor ouders" hoeft geen 24px te zijn -- dit scherm heeft geen titel nodig
+     die het scherm draagt, alleen een naam. */
+  #screen-settings .header-title { font-size: 21px; }
+  #screen-settings .hub-sticky .screen-header { margin-bottom: 2px; }
+  #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) ease; }
+  #screen-settings .hub-sticky .screen-header,
+  #screen-settings .who-row, #screen-settings .who-portrait,
+  #screen-settings .header-title, #settings-subtabs {
+    transition: margin var(--t-snel) ease, font-size var(--t-snel) ease,
+                width var(--t-snel) ease, height var(--t-snel) ease;
+  }
+  #screen-settings.gescrold .hub-sticky {
+    padding-top: 7px; padding-bottom: 7px;
+    /* Dekkend gescrold, om dezelfde reden als bij de kast: op .82 bleven de
+       koppen van de witte kaarten dwars door "Voor ouders" heen leesbaar. */
+    background: linear-gradient(180deg, #34094f, #250538);
+    box-shadow: var(--e-3);
+  }
+  #screen-settings.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
+  #screen-settings.gescrold .header-title { font-size: 16.5px; }
+  /* De enige plek in de app waar een raakvlak onder de 44px komt, en met opzet:
+     dit is een ouderscherm (geen kinderhand), het is alleen de gescrolde stand
+     (bovenaan is hij weer 44), en zonder deze regel bepaalt de terugknop in zijn
+     eentje de hoogte van de bovenste regel -- dan houdt krimpen op bij 44 en
+     levert de hele gescrolde stand nog maar 16px op in plaats van 40. */
+  #screen-settings.gescrold .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
+  #screen-settings.gescrold .who-row { padding-top: 0; padding-bottom: 0; }
+  #screen-settings.gescrold .who-btn { min-height: 38px; }
+  #screen-settings.gescrold .who-portrait { width: 28px; height: 28px; }
+  #screen-settings.gescrold .who-portrait svg { top: -3px; width: 48px; }
+  #screen-settings.gescrold .who-btn .tab-label { font-size: 14px; }
+  #screen-settings.gescrold #settings-subtabs { margin-top: 5px; }
+  #screen-settings.gescrold .segmented { padding: 3px; }
+  #screen-settings.gescrold .segmented button { padding: 7px 8px; min-height: 36px; font-size: 15px; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-settings .hub-sticky, #screen-settings .hub-sticky *,
+    #settings-subtabs { transition: none; }
+  }
+  /* Een laag scherm: een telefoon in liggende stand (844x390) of een heel kleine
+     telefoon. Daar is 171px kop gewoon te veel -- bijna de helft van het beeld --
+     en de gescrolde stand helpt niet, want bovenaan is hij nog ruim. Dit is
+     daarom dezelfde krappe maatvoering, maar dan meteen: de kop begint hier al
+     compact. Dezelfde waarden als .gescrold hierboven, met opzet los
+     opgeschreven -- een klasse en een schermmaat zijn twee verschillende
+     aanleidingen voor hetzelfde resultaat, en CSS kan die niet delen zonder de
+     ene aan de andere te knopen. */
+  @media (max-height: 560px) {
+    #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
+    #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
+    #screen-settings .header-title { font-size: 17px; }
+    #screen-settings .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .who-btn { min-height: 38px; }
+    #screen-settings .who-portrait { width: 28px; height: 28px; }
+    #screen-settings .who-portrait svg { top: -3px; width: 48px; }
+    #screen-settings .who-btn .tab-label { font-size: 14px; }
+    #settings-subtabs { margin-top: 5px; }
+    #screen-settings .segmented { padding: 3px; }
+    #screen-settings .segmented button { padding: 7px 8px; min-height: 36px; font-size: 15px; }
+  }
+
   /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← terug ·
-     Instellingen · (opgeslagen-bevestiging), met de profielkiezer en de
-     Voortgang|Instellen-navigatie er direct onder, ook altijd in beeld */
-  /* max-width: zonder dit rekt de balk op brede (desktop) schermen uit tot de
-     volle breedte van .hub-sticky -- dan wordt de geselecteerde knop een groot
-     leeg goud blok en zweeft de tekst van de andere knop eenzaam ver weg aan
-     de andere kant. Blijft op smalle schermen gewoon 100% breed. */
+     Voor ouders · (opgeslagen-bevestiging), met de profielkiezer en de
+     Voortgang|Oefenen|Beheer-navigatie er direct onder, ook altijd in beeld */
   /* ==== Ouderdeel: twee navigatieniveaus, en ze moeten er ánders uitzien ====
      Hiervoor waren het twee identieke .segmented-sporen, pal op elkaar: niets
      vertelde dat het ene "wiens gegevens" kiest en het andere "wat daarover".
      Niveau 1 (wie) is nu een open, scrollende rij portretten -- geen spoor
      eromheen, want juist dat spoor laat iets als tabbladen lezen. Niveau 2 (wat)
-     houdt het omsloten spoor. Zelfde max-width, dus ze lijnen links uit. */
+     houdt het omsloten spoor.
+
+     FASE 5D -- de breedte. Beide rijen stonden op een eigen max-width van 460,
+     terwijl de titelregel erboven en de kaarten eronder op --kolom (640) staan.
+     Op een telefoon zag je dat niet (daar is alles 100%), op een tablet des te
+     meer: de terugknop stond 97px van de rand, de kindkiezer 187px, en de
+     kaarten er weer ergens anders -- drie linkerkanten in één kop. Nu leest
+     álles in dit scherm dezelfde --kolom, dus er is nog maar één linkerkant. */
   .who-row {
-    display: flex; gap: 6px; padding: 2px 4px; width: 100%; max-width: 460px;
+    display: flex; gap: 6px; padding: 2px 2px; width: 100%; max-width: var(--kolom, 640px);
     overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
   }
   .who-row::-webkit-scrollbar { display: none; }
   /* hergebruikt .tab-btn uit de kleedkamer; alleen het portret is nieuw */
-  .who-btn { padding-left: 5px; gap: 8px; min-height: 48px; }
-  .who-portrait { width: 38px; height: 38px; }
-  .who-portrait svg { top: -5px; width: 65px; }
+  .who-btn { padding-left: 5px; gap: 8px; min-height: 46px; flex: none; }
+  .who-portrait { width: 34px; height: 34px; }
+  .who-portrait svg { top: -4px; width: 58px; }
   /* Bewust NIET het blauw van .tab-btn.active: blauw betekent in deze app
      "actieve navigatie", en een ster kiezen is geen navigatie maar het bepalen
      van de context (wiens gegevens). Paars is de kleur van gewone keuzes, net
-     als bij .chip.on. Zo verschillen de twee niveaus in vorm en in kleur. */
+     als bij .chip.on. Zo verschillen de twee niveaus in vorm en in kleur.
+
+     FASE 5D -- de gekozen ster mag niet te missen zijn: naast de paarse vulling
+     staat er nu een lichte ring omheen, zodat ze ook op een tablet (waar de rij
+     veel lucht heeft) meteen uit de rij springt. */
   .who-btn.active {
     background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
     color: var(--c-white);
-    box-shadow: 0 3px 10px rgba(var(--purple-mid-rgb), .38);
+    box-shadow: 0 3px 10px rgba(var(--purple-mid-rgb), .38), inset 0 0 0 1.5px rgba(255,255,255,.45);
   }
   .who-btn.active .who-portrait { border-color: var(--c-white); }
-  #settings-subtabs { margin-top: 8px; }
+  #settings-subtabs { margin-top: 7px; }
 
-  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--glass-black-26); width: 100%; max-width: 460px; }
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--glass-black-26); width: 100%; max-width: var(--kolom, 640px); }
   .segmented button {
     flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
-    border: none; background: transparent; border-radius: var(--r-sm); padding: 10px 8px;
+    border: none; background: transparent; border-radius: var(--r-sm); padding: 9px 8px; min-height: 40px;
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     transition: background .15s, color .15s, box-shadow .15s;
   }
@@ -4210,6 +4442,14 @@
   .set-card.primary { border: 1.5px solid var(--purple-light); }
   .set-card.primary .set-card-head .ico { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); color: var(--c-white); border-color: transparent; }
   .set-card.primary .set-card-head h2 { font-size: 19.5px; }
+  /* FASE 5D -- de tegenhanger van .primary: alles wat ná de hoofdkeuzes komt
+     (weergave, lengte, extra uitdaging). Niets verborgen, alleen stiller: geen
+     paarse omlijsting, een gedempte kop en iets minder lucht. Zo is de rangorde
+     op het drukste scherm van het ouderdeel te zien in plaats van te raden. */
+  .set-card.secundair { padding: 14px 18px; }
+  .set-card.secundair .set-card-head { margin-bottom: 10px; }
+  .set-card.secundair .set-card-head h2 { font-size: 16px; color: var(--paper-ink); }
+  .set-card.secundair .set-card-head .ico { font-size: 16px; width: 30px; height: 30px; }
   /* Wissen zat als permanent zichtbaar rood vlak onderaan het instellingenscherm,
      altijd in beeld naast gewone instellingen. Nu zit het achter een rustige
      openklapper: het rode vlak bestáát pas als een ouder er zelf om vraagt.
@@ -4226,6 +4466,14 @@
   .danger-reveal[open] > summary { color: var(--danger-title); border-color: var(--danger-border); }
   .danger-reveal[open] > summary::after { content: '▴'; }
   .danger-reveal .danger-zone { margin-top: 10px; }
+  /* twee openklappers onder elkaar (wissen, verwijderen): lucht ertussen, zodat
+     het twee losse vragen blijven en geen lijstje om achteloos door te tikken */
+  .danger-reveal + .danger-reveal { margin-top: 10px; }
+  .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
+  /* de tweede, vervangende actie in de back-upkaart: een streepje erboven, zodat
+     "maken" en "terugzetten" niet als twee knoppen van hetzelfde soort lezen */
+  .data-los { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--paper-border); }
+  .data-los .note { margin-top: 8px; }
   /* Dezelfde openklapper, maar voor een gewone keuze i.p.v. een gevaarlijke: de
      oefeninstellingen bij het maken van een ster. Vandaar de papierkleuren i.p.v.
      het rood, en een volle breedte met twee regels i.p.v. een pil -- de tweede
@@ -4275,10 +4523,55 @@
      Een klasse en geen #set-ops: het maakformulier toont dezelfde rij met een
      eigen id-voorvoegsel, en een id-regel zou daar stilletjes niet meer pakken. */
   .ops-grid { display: grid; grid-template-columns: repeat(2, max-content); }
-  /* telmodus: fase-chips (1..6) en een klein legendablokje eronder */
-  .stage-chips .chip { min-width: 38px; padding: 7px 12px; }
-  .stage-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 2px 2px; font-size: 12.5px; opacity: .8; }
-  .stage-legend b { color: var(--purple-mid); }
+  /* ---- Telmodus: de fasekiezer ---------------------------------------------
+     FASE 5D. Zie oefenGroups voor het waarom; dit is de vorm.
+       .fr-zin      de zin bovenaan, die zegt wat de twee rijen samen betekenen
+       .chip.bereik een fase die binnen [start .. hoogste] valt: licht gevuld,
+                    zodat beide rijen dezelfde band tekenen. De gekozen fase
+                    blijft gewoon .chip.on (vol paars) -- .bereik is de zachtere
+                    laag eronder en mag die dus nooit overschrijven.
+       .stage-legend  de namen, in kolommen i.p.v. als alinea, met wat buiten
+                    het bereik valt gedempt. */
+  .fr-zin {
+    background: var(--lavender-wash); border-radius: var(--r-sm); padding: 9px 12px; margin-bottom: 13px;
+    font-size: 13.5px; font-weight: 500; color: var(--paper-ink);
+  }
+  .fr-zin b { color: var(--purple-mid); font-weight: 700; }
+  /* Krapper dan de gewone chip: elf stuks moeten op een telefoon in twee rijen
+     passen zonder dat de nummers hun raakvlak kwijtraken (38px hoog blijft
+     comfortabel voor een volwassen vinger op een instellingenscherm). */
+  .stage-chips { gap: 6px; }
+  .stage-chips .chip { min-width: 36px; padding: 7px 10px; font-size: 15px; }
+  .chip.bereik { background: var(--lavender-wash); border-color: var(--purple-light); }
+  .chip.bereik:hover { background: var(--lavender-wash-3); }
+  /* .on wint van .bereik: dezelfde volle paarse vulling als elke andere gekozen
+     chip in de app, ook als hij binnen het bereik valt (en dat doet hij altijd). */
+  .chip.bereik.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; }
+  .stage-legend {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 3px 14px; margin: 13px 2px 2px; font-size: 12.5px; color: var(--paper-ink-muted);
+  }
+  .stage-legend span { display: flex; align-items: baseline; gap: 5px; line-height: 1.35; }
+  .stage-legend b { color: var(--purple-mid); font-weight: 700; min-width: 15px; }
+  .stage-legend span.uit { opacity: .42; }
+  .stage-legend .sl-tag {
+    font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    background: var(--purple-mid); color: var(--c-white); border-radius: var(--r-pill); padding: 1px 6px; margin-left: 4px;
+  }
+  /* ---- De moduskeuze: twee helften, niet twee pillen --------------------
+     Dit is de zwaarste keuze van het scherm (ze verandert alles eronder), dus
+     krijgt ze de volle breedte in plaats van twee pillen die links samendrommen.
+     Het is nog steeds .chip -- zelfde kleuren, zelfde ronding, zelfde gekozen-
+     stand -- alleen groter, met het icoon boven het woord en een vinkje op de
+     gekozen kant. */
+  .mode-row { gap: 9px; }
+  .mode-row .chip.groot {
+    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 11px 8px; border-radius: var(--r-md); font-size: 15.5px;
+  }
+  .mode-row .chip.groot .mc-ico { font-size: 24px; line-height: 1.1; }
+  .mode-row .chip.groot .mc-label { font-weight: 700; }
+  .mode-row .chip.groot.on .mc-label::after { content: ' ✓'; }
   .chip {
     font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
@@ -4331,6 +4624,11 @@
     border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
   }
   #screen-newstar .chip:hover { border-color: var(--purple-light); background: var(--c-white); }
+  /* de fase-band uit het ouderdeel werkt ook hier; zonder deze regel dekt de
+     id-selector hierboven hem af (hogere specificiteit) en zou de openklapper
+     in het maakformulier elf identieke rondjes tonen waar het ouderdeel een
+     bereik laat zien */
+  #screen-newstar .chip.bereik { background: var(--lavender-wash); border-color: var(--purple-light); }
   #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); }
   #screen-newstar .set-card { padding: 14px 16px; }
   #screen-newstar .set-reveal { margin-top: 13px; }
@@ -4380,6 +4678,11 @@
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
   /* ---- Ouder-statistiek (tegels + meter) ---- */
+  /* FASE 5D -- drie tegels in plaats van zes, dus ook op een telefoon drie
+     kolommen: het raster klapte hiervoor onder 480px naar twee, wat met zes
+     tegels klopte maar met drie een eenzame derde op een eigen rij zou geven.
+     De maat is nagemeten op de krapste stand (320px: 88px per tegel, "goed
+     beantwoord" op twee regels) -- vandaar het kleinere getal daaronder. */
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
   .stat-tile { position: relative; background: var(--paper-tint); border: 1px solid var(--paper-border); border-radius: var(--r-md); padding: 12px 8px 10px; text-align: center; overflow: hidden; }
   .stat-tile::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--tint, var(--purple-light)); }
@@ -4394,19 +4697,57 @@
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
   .stats-empty { font-size: 13.5px; color: var(--green-deep); font-weight: 600; margin-top: 6px; }
-  @media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 360px) {
+    .stat-tile { padding: 10px 5px 9px; }
+    .stat-tile .num { font-size: 22px; }
+    .stat-tile .cap { font-size: 11px; }
+  }
+  /* De oogst: sterren, perfecte shows en trofeeën. Bewust géén tegels -- ze zijn
+     van het kind en staan groot in de kast en op de kaart; hier hoeven ze alleen
+     te bestaan. Eén rustige regel die op een smal scherm netjes afbreekt. */
+  .oogst-rij {
+    display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 11px 2px 0;
+    font-size: 13px; font-weight: 500; color: var(--paper-ink-muted);
+  }
+  .oogst-item b { font-weight: 700; color: var(--paper-ink); }
+  /* De niveau-inschatting staat apart, achter een streepje: het is de enige
+     afgeleide waarde op dit scherm en de enige die uitleg nodig heeft. */
+  .niveau-blok { margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--paper-border); }
+  .niveau-blok .stat-line { margin-top: 0; }
+  /* Waar het kind nú mee bezig is. Dit is de regel die de vraag achter de
+     inschatting beantwoordt, dus hij mag een eigen vlakje: lavendel, zoals elk
+     ander "dit is de stand"-vlakje in het ouderdeel. */
+  .niveau-bezig {
+    margin-top: 10px; padding: 9px 12px; border-radius: var(--r-sm);
+    background: var(--lavender-wash); font-size: 13px; font-weight: 500; color: var(--paper-ink);
+  }
+  .niveau-bezig b { color: var(--purple-mid); font-weight: 700; }
 
   /* ---- Modal (oudervraag) ---- */
-  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+  /* De padding op de achtergrond is niet cosmetisch: zonder stond een venster van
+     340px op een telefoon van 320 met zijn randen buiten beeld -- en dat is
+     precies het venster waarin "Ja, wissen" staat. Nu past het altijd, met een
+     rand eromheen, en een lange tekst (wat er weggaat én wat er blijft) maakt het
+     venster hoogstens scrollend in plaats van afgesneden. */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
   .modal-bg.open { display: flex; }
   .modal {
-    background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 24px 28px; text-align: center; max-width: 340px;
+    background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 24px 28px; text-align: center;
+    width: 100%; max-width: 340px; max-height: calc(100vh - 32px); overflow-y: auto;
   }
   .modal h3 { color: var(--purple-deep); margin-bottom: 10px; }
   /* zelfde twee blokjes stonden tweemaal identiek als losse inline style op
      de bevestigingsmodals (stoppen / algemene bevestiging) -- nu één plek */
   .modal-body { font-size: 15px; color: var(--paper-ink-muted); margin-bottom: 14px; }
   .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  /* Op een smalle telefoon wikkelden de twee knoppen tóch, en dan stonden er een
+     brede gouden en een smalle rode onder elkaar -- wat leest als één knop met een
+     losse strook eronder. Onder elkaar én even breed: "Nee, terug" bovenaan (de
+     veilige kant hoort de makkelijkste te zijn) en de onomkeerbare eronder. */
+  @media (max-width: 400px) {
+    .modal-actions { flex-direction: column; }
+    .modal-actions > * { width: 100%; }
+  }
   .modal input {
     font-family: inherit; font-size: 26px; text-align: center; width: 110px;
     border: 3px solid var(--purple-light); border-radius: var(--r-sm); padding: 6px; margin: 10px 0;
@@ -4614,7 +4955,7 @@
   </div>
 
   <!-- ===== Trofeeën ===== -->
-  <div class="screen hub" id="screen-trophies">
+  <div class="screen hub gebruik" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
@@ -4676,7 +5017,7 @@
        plaatje, geen nieuwe laag: precies dezelfde regel als daar.
        .kleedkamer is de variant erop: dezelfde schil, met het licht van een
        kaptafel erbij. Zie .app-sfeer.kleedkamer in het stijlblad. -->
-  <div class="screen hub app-sfeer kleedkamer" id="screen-dress">
+  <div class="screen hub gebruik app-sfeer kleedkamer" id="screen-dress">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="dressBack()" aria-label="Terug" title="Terug">←</button>
@@ -4706,7 +5047,7 @@
   </div>
 
   <!-- ===== Instellingen (ouders) ===== -->
-  <div class="screen" id="screen-settings">
+  <div class="screen gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeSettings()" aria-label="Terug" title="Terug">←</button>
@@ -4726,7 +5067,7 @@
        quit-modal is naar closeConfirmModal, dus als modal zou Android-terug dit
        formulier nooit sluiten. Bovendien vecht een invoerveld in een vast
        gecentreerde overlay met het toetsenbord; een scherm scrolt gewoon mee. -->
-  <div class="screen app-sfeer" id="screen-newstar">
+  <div class="screen gebruik app-sfeer" id="screen-newstar">
     <div class="hub-sticky sub">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="closeNewStar()" aria-label="Terug" title="Terug">←</button>
@@ -4761,7 +5102,9 @@
     </button>
     <div class="gear-sep"></div>
     <button class="gear-item parents" onclick="openSettings()" role="menuitem">
-      <span class="gi-ico">👨‍👩‍👧</span><span class="gi-label">Voor ouders</span><span class="gi-chev">›</span>
+      <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span>
+      <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
+      <span class="gi-chev" aria-hidden="true">›</span>
     </button>
   </div>
 </div>
@@ -12054,6 +12397,9 @@ function openSettings() {
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   show('screen-settings');
+  // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
+  // dus er kan er nooit meer dan één staan -- zelfde patroon als de kast)
+  $('screen-settings').onscroll = ouderScroll;
   settingsToTop();
 }
 function closeSettings() {
@@ -12090,10 +12436,13 @@ function statsPanelHtml(p) {
   let practice;
   if (isCount) {
     // lees-vrije modus: geen zwakke-sommenlijst, maar in mensentaal wat het kind al kan
+    // Wélke fase het kind nu speelt staat al in niveauHtml hierboven; hier gaat
+    // het over wat er áchter haar ligt. Stond er twee keer, en dan leest de
+    // tweede als een fout.
     const st = countLiveStage(p);
     const done = COUNT_STAGE_LABELS.slice(1, st).map(l => `<span class="practice-chip">${l} ✓</span>`).join('');
     const help = st <= 2 ? 'In deze fases speelt je kind het fijnst met een volwassene erbij.' : 'Je kind kan deze fase meestal alleen spelen.';
-    practice = `<div class="practice-hint">🧸 Telmodus — nu bezig met <b>fase ${st}: ${COUNT_STAGE_LABELS[st] || ''}</b></div>
+    practice = `<div class="practice-hint">🧸 Fases die ${esc(p.name)} al gehad heeft:</div>
        <div class="practice-chips">${done || '<span class="stats-empty">Net begonnen — veel plezier! 🎉</span>'}</div>
        <div class="note" style="margin-top:8px">${help}</div>`;
   } else {
@@ -12110,6 +12459,24 @@ function statsPanelHtml(p) {
     const nLearned = Object.keys(p.learned || {}).length;
     if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${nLearned === 1 ? 'som komt' : 'sommen komen'} later nog eens terug, om te controleren of het blijft zitten.</div>`;
   }
+  /* FASE 5D -- niet alles is even belangrijk.
+     Er stonden zes tegels in één raster, alle zes even groot en even zwaar: hoe
+     vaak er gespeeld is stond naast hoeveel trofeeën er in de kast hangen, alsof
+     een ouder die twee even vaak nodig heeft. De rangorde die er nu ligt:
+
+       1. ACTIVITEIT EN RESULTAAT -- drie tegels: hoe vaak, hoeveel vragen, en
+          hoeveel daarvan goed. Dit is waar een ouder voor komt.
+       2. DE OOGST -- sterren, perfecte shows en trofeeën in één rustige regel.
+          Ze zijn niet onbelangrijk, maar ze zijn van het kind: in de kast en op
+          de kaart staan ze groot, hier hoeven ze alleen te bestaan. (Zie ook de
+          UX-review: de kast is de plek waar je gaat kíjken hoe het ervoor staat.)
+       3. HET NIVEAU -- apart, onder een streepje, met de fase erbij (zie
+          niveauHtml). */
+  const oogst = [
+    ['⭐', stars, stars === 1 ? 'ster' : 'sterren'],
+    ['🌟', perfect, perfect === 1 ? 'perfecte show' : 'perfecte shows'],
+    ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
+  ].map(([ico, n, label]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${label}</span>`).join('');
   return `<div class="settings-panel"><div class="set-card">
     <div class="set-card-head"><div class="ico">📊</div>
       <div><h2>Voortgang van ${esc(p.name)}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
@@ -12117,23 +12484,48 @@ function statsPanelHtml(p) {
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">shows gespeeld</div></div>
       <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
       <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${stars}</div><div class="cap">sterren</div></div>
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${perfect}</div><div class="cap">perfecte shows</div></div>
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${earnedActiveCount(p)}/${activeTrophies().length}</div><div class="cap">trofeeën</div></div>
     </div>
-    <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
-    <div class="stat-bar"><div style="width:${skill}%"></div></div>
+    <div class="oogst-rij">${oogst}</div>
+    ${niveauHtml(p, skill)}
     ${fluencyHtml(p)}
     ${practice}
   </div></div>`;
+}
+/* De niveau-inschatting, met genoeg eromheen om hem te kunnen lezen.
+   Er stond alleen "Niveau-inschatting -- 50%" met een balk eronder. Dat getal komt
+   uit p.perf: een eenvoudige, meelopende maat die het spel gebruikt om de
+   moeilijkheid bij te stellen, en niets meer. Zonder uitleg leest 50% als een
+   rapportcijfer ("mijn kind zit op de helft"), en dat is het niet.
+
+   Wat er nu bij staat is dus geen nieuwe meting -- aan het algoritme is niets
+   veranderd -- maar twee stukjes context: wat het getal ís, en waar het kind op
+   dit moment mee bezig is (modus + fase of bereik). Die laatste regel is het
+   antwoord op de vraag die een ouder eigenlijk stelt. */
+function niveauHtml(p, skill) {
+  const s = p.settings;
+  let bezig;
+  if (s.track === 'count') {
+    const st = countLiveStage(p);
+    const top = countMaxStage(s);
+    bezig = `🧸 Leren tellen — <b>fase ${st}${top > st ? ' van ' + top : ''}</b>: ${COUNT_STAGE_LABELS[st] || ''}`;
+  } else {
+    const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
+    bezig = `🎤 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
+  }
+  return `<div class="niveau-blok">
+    <div class="stat-line"><span class="k">Niveau-inschatting</span><span class="v">${skill}%</span></div>
+    <div class="stat-bar"><div style="width:${skill}%"></div></div>
+    <div class="note" style="margin-top:7px">Een ruwe maat die het spel zelf bijhoudt om de vragen makkelijker of moeilijker te maken. Geen schoolniveau en geen cijfer.</div>
+    <div class="niveau-bezig">${bezig}</div>
+  </div>`;
 }
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
 // Meerkeuze- en enkelkeuze-chips zien er bewust hetzelfde uit (alleen kleur
 // wisselt) -- dit is een laagdrempelig, direct-manipulatie schermpje: één tik
 // laat meteen zien of een groep er meerdere naast elkaar toestaat of niet.
-function chip(v, label, on) {
-  return `<button class="chip ${on ? 'on' : ''}" data-v="${v}">${label}</button>`;
+function chip(v, label, on, extra) {
+  return `<button class="chip ${on ? 'on' : ''}${extra ? ' ' + extra : ''}" data-v="${v}">${label}</button>`;
 }
 const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som'];
 /* De oefenvelden zelf, los van de omlijsting eromheen. Het ouderdeel zet ze in
@@ -12146,23 +12538,47 @@ const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder',
    zonder voorvoegsel vindt getElementById in bindOefenChips stilletjes de
    verkeerde kopie. Het ouderdeel houdt pfx = '' (alle bestaande selectors en
    tests blijven kloppen), het maakformulier gebruikt 'ns-'. */
-function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, html }]
+function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, html }]
   pfx = pfx || '';
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
-  // (1–8, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
+  // (1–11, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
   // kun je een eerder verlaagde bovengrens nooit meer omhoog zetten.
   const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
   const stageNums = [];
   for (let v = 1; v <= availMax; v++) stageNums.push(v);
-  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${pfx}${id}">${stageNums.map(v => chip(v, v, Math.min(sel, availMax) === v)).join('')}</div>`;
-  const legend = `<div class="stage-legend">${stageNums.map(v => `<span><b>${v}</b> ${COUNT_STAGE_LABELS[v]}</span>`).join('')}</div>`;
+  /* FASE 5D -- de fasekiezer las als tweeëntwintig losse knopjes.
+     Twee rijen van elf gelijke rondjes onder elkaar, elk met een eigen rand: wat
+     een ouder zag was een cijferslot, niet "begin hier, groei tot daar". Er is
+     geen bediening weggehaald (de tik op elk nummer doet precies wat hij deed),
+     maar er zijn drie dingen bijgekomen:
+
+       1. EEN ZIN BOVENAAN. "Begint bij fase 3 en mag groeien tot fase 11" zegt
+          in woorden wat de twee rijen samen betekenen.
+       2. HET BEREIK IS TE ZIEN. De fases binnen [start .. hoogste] staan in
+          beide rijen licht gevuld (.bereik), dus de twee rijen tekenen dezelfde
+          band en je ziet in één blik hoe breed die is. De gekozen fase blijft
+          vol paars, precies zoals elke andere gekozen chip in de app.
+       3. DE NAMEN DOEN MEE. De legenda eronder is een rijtje in kolommen in
+          plaats van een doorlopende alinea, en wat buiten het bereik valt staat
+          gedempt -- met "start" en "max" als kaartje bij de twee grenzen. */
+  const lo = Math.min(Math.max(1, s.stage || 1), availMax);
+  const hi = Math.min(Math.max(lo, s.stageMax || availMax), availMax);
+  const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${pfx}${id}">${stageNums.map(v =>
+    chip(v, v, Math.min(sel, availMax) === v, (v >= lo && v <= hi) ? 'bereik' : '')).join('')}</div>`;
+  const legend = `<div class="stage-legend">${stageNums.map(v => {
+    const tag = v === lo ? '<i class="sl-tag">start</i>' : (v === hi && hi > lo ? '<i class="sl-tag">max</i>' : '');
+    return `<span class="${v >= lo && v <= hi ? '' : 'uit'}"><b>${v}</b> ${COUNT_STAGE_LABELS[v]}${tag}</span>`;
+  }).join('')}</div>`;
   if (s.track === 'count') return [{
-    ico: '🔢', title: 'Tellen', sub: 'Fases, weergave en lengte', html: `
-      <div class="set-field"><span class="lbl">Startfase <span class="note">(vanaf hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
+    ico: '🔢', title: 'Fases', sub: 'Waar het begint, en hoe ver het mag groeien', html: `
+      <div class="fr-zin">Begint bij <b>fase ${lo}</b>${hi > lo ? ` en mag meegroeien tot <b>fase ${hi}</b>` : ' en blijft daar'}.</div>
+      <div class="set-field"><span class="lbl">Startfase <span class="note">(hier begint het)</span></span>${stageChips('set-stage', s.stage)}</div>
       <div class="set-field"><span class="lbl">Hoogste fase <span class="note">(zover mag het spel groeien)</span></span>${stageChips('set-stagemax', s.stageMax)}</div>
-      ${legend}
+      ${legend}`
+  }, {
+    ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden en lengte', secundair: true, html: `
       <div class="set-field"><span class="lbl">Cijfers tonen <span class="note">(fase 6+: cijfers, minder stippensteun, redeneren)</span></span>
         <div class="chip-row" id="${pfx}set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
       <div class="set-field"><span class="lbl">Hoogste hoeveelheid <span class="note">(hoe ver de aantallen mogen groeien)</span></span>
@@ -12183,7 +12599,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, html }]
       <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van <span class="note">${tablesRelevant ? '(voor ✖️ en ➗)' : '(actief zodra ✖️ of ➗ aanstaat)'}</span></span>
         <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
   }, {
-    ico: '🎮', title: 'Hoe spelen', sub: 'De manier van antwoorden en de lengte', html: `
+    ico: '🎮', title: 'Meer opties', sub: 'Antwoorden, lengte en extra uitdaging', secundair: true, html: `
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="${pfx}set-mode">
           ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
@@ -12214,22 +12630,46 @@ function oefenSamenvatting(s) {
   return `${s.ops.map(o => glyph[o] || o).join(' ')} · tot ${s.max}${tafels}`
        + ` · ${modes[s.mode] || s.mode} · ${s.perLevel} vragen`;
 }
+/* FASE 5D -- vier beslissingen, en ze zijn niet even groot.
+   Dit is het drukste scherm van het ouderdeel, en alle drie de kaarten stonden in
+   dezelfde .primary-omlijsting: modus, wat oefenen en hoe spelen vroegen even hard
+   om aandacht. De volgorde die een ouder nodig heeft is:
+
+     1. MODUS             -- leren tellen of rekenen. Verandert alles eronder.
+     2. WAT / VANAF WAAR  -- de bewerkingen en het bereik, of de startfase.
+     3. HOE VER           -- de hoogste fase (alleen in de telmodus).
+     4. DE REST           -- weergave, lengte, extra uitdaging.
+
+   1 t/m 3 houden de paarse omlijsting; 4 staat in een rustige kaart met een grijs
+   tegeltje ("Meer opties"). Niets is weggestopt -- de velden staan er allemaal nog,
+   zichtbaar, in dezelfde volgorde. Alleen het gewicht verschilt nu.
+
+   Waarom geen openklapper: het zijn er drie tot vijf, ze passen ruim, en een
+   ouder die de antwoordmethode wil omzetten hoort daar niet eerst naar te moeten
+   zoeken. Een stillere kaart doet hier hetzelfde werk als wegklappen, zonder
+   iets te verbergen. */
 function oefenenPanelHtml(p, s) {
   const isCount = s.track === 'count';
-  // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus
+  // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus.
+  // De twee keuzes zijn de zwaarste van dit scherm, dus staan ze als twee volle
+  // helften naast elkaar (.mode-row) in plaats van als twee pillen in een rij --
+  // en de gekozene draagt een vinkje, zodat "dit staat aan" niet alleen van de
+  // vulling hoeft te komen.
+  const modeChip = (v, ico, label) => `<button class="chip groot${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
+    + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
   const modeCard = `
     <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🧸</div><div><h2>Modus</h2><div class="sub">Hoe ${esc(p.name)} speelt</div></div></div>
+      <div class="set-card-head"><div class="ico">${isCount ? '🧸' : '🎤'}</div><div><h2>Modus</h2><div class="sub">Hoe ${esc(p.name)} speelt</div></div></div>
       <div class="set-field"><span class="lbl">Manier van spelen</span>
-        <div class="chip-row" id="set-track">
-          ${chip('count', '🧸 Leren tellen', isCount)}
-          ${chip('math', '🎤 Rekenen', !isCount)}
+        <div class="chip-row mode-row" id="set-track">
+          ${modeChip('count', '🧸', 'Leren tellen')}
+          ${modeChip('math', '🎤', 'Rekenen')}
         </div>
-        <div class="note" style="margin-top:7px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
+        <div class="note" style="margin-top:8px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
     </div>`;
   // de kaarten die per modus verschillen
   const cards = oefenGroups(s, '').map(g => `
-    <div class="set-card primary">
+    <div class="set-card${g.secundair ? ' secundair' : ' primary'}">
       <div class="set-card-head"><div class="ico">${g.ico}</div><div><h2>${g.title}</h2><div class="sub">${g.sub}</div></div></div>
       ${g.html}
     </div>`).join('');
@@ -12248,22 +12688,37 @@ function oefenenPanelHtml(p, s) {
    het óók bestaat als er nog geen enkele ster is. Dat is niet theoretisch: een
    familie met een nieuwe telefoon heeft nul sterren en wil juist dán bij
    "Back-up terugzetten". */
+/* FASE 5D -- hiërarchie in de knoppen.
+   Vier knoppen in dit blok stonden alle vier als dezelfde volle paarse knop:
+   "Nieuwe ster maken", "Back-up maken" en "Back-up terugzetten" vroegen even hard
+   om een tik, terwijl de derde de enige is die iets kán overschrijven. Nu:
+
+     vol paars  -- de knop die iets maakt en niets kan kwijtmaken (back-up maken;
+                   dat is bovendien wat je hier het vaakst komt doen)
+     .paper     -- de knoppen die ergens anders heen gaan of iets vervángen
+                   (nieuwe ster; terugzetten). De bevestiging erachter is
+                   ongewijzigd -- dit is de vindbaarheid, niet de beveiliging.
+
+   Er is geen knop verplaatst en geen bevestiging weggehaald. */
 function appWideCardsHtml(hasStars) {
   const vol = hasStars ? ' Nog plek voor ' + (MAX_PROFILES - Object.keys(db.profiles).length) + '.' : '';
   const addCard = Object.keys(db.profiles).length >= MAX_PROFILES ? '' : `
-    <div class="set-card">
+    <div class="set-card secundair">
       <div class="set-card-head"><div class="ico">➕</div><div><h2>Nieuwe ster</h2><div class="sub">Nog een kind erbij.${vol}</div></div></div>
-      <button class="btn small purple" id="set-newstar">➕ Nieuwe ster maken</button>
+      <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
     </div>`;
   return `${addCard}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Geldt voor alle sterren en voor de app zelf</div></div></div>
+      <div class="note" style="margin-bottom:11px">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel.</div>
       <div class="data-btns">
         <button class="btn small purple" id="set-export">💾 Back-up maken</button>
-        <button class="btn small purple" id="set-import">📂 Back-up terugzetten</button>
+      </div>
+      <div class="data-los">
+        <button class="btn small paper" id="set-import">📂 Back-up terugzetten…</button>
+        <div class="note">Vervángt alles wat er nu op dit toestel staat, van álle sterren. Er wordt eerst gevraagd of je het zeker weet.</div>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
-      <div class="note">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel. Terugzetten vervangt wat er nu op dit toestel staat.</div>
     </div>`;
 }
 // Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen. Alleen wat
@@ -12276,32 +12731,48 @@ function beheerEmptyHtml() {
     ${appWideCardsHtml(false)}
   </div>`;
 }
+/* FASE 5D -- de twee onomkeerbare dingen staan onderaan, en ze zeggen ook wat
+   er blíjft.
+   De opbouw is dezelfde als hiervoor (naam bovenaan, opnieuw beginnen eronder,
+   verwijderen achter een openklapper) -- wat eraan veranderd is:
+     * "Opnieuw beginnen" en "Verwijderen" staan nu samen in één stille kaart
+       onder een eigen kopje, in plaats van dat verwijderen in de naamkaart zat.
+       Een ouder die haar dochters naam wil verbeteren hoort niet in dezelfde
+       kaart een wisknop tegen te komen.
+     * Beide openklappers zeggen expliciet wat er BLIJFT, niet alleen wat er
+       weggaat -- dat is bij "opnieuw beginnen" precies het verschil met
+       verwijderen, en dat verschil stond alleen in een losse notitie.
+   De bevestigingsvensters erachter zijn ongewijzigd (drie tikken: openklappen,
+   knop, ja). */
 function beheerPanelHtml(p) {
   return `<div class="settings-panel">
     <div class="set-card">
       <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">De naam van deze ster</div></div></div>
       <div class="set-field"><label class="lbl" for="set-name">Naam</label>
-        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
-      <!-- verwijderen hoort bij "wie deze ster is", niet bij "opnieuw beginnen":
-           het ene haalt haar wég, het andere laat haar juist blijven -->
-      <details class="danger-reveal" id="set-danger-del">
-        <summary>Deze ster verwijderen…</summary>
-        <div class="danger-zone">
-          <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div><div class="d">Haalt deze ster helemaal weg, met alle diamanten, sterren en spulletjes. Kan niet ongedaan gemaakt worden.</div></div>
-          <button class="danger-btn" id="set-delete">Verwijderen</button>
-        </div>
-      </details>
+        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
+        <div class="note">Wijzigt meteen; met Enter is het veld klaar.</div></div>
     </div>
-    <div class="set-card">
-      <div class="set-card-head"><div class="ico">🧹</div><div><h2>Opnieuw beginnen</h2><div class="sub">Alleen voor ${esc(p.name)}</div></div></div>
-      <div class="note">De instellingen hierboven (modus, bereik, fases) blijven gewoon staan — alleen de voortgang verdwijnt.</div>
+    <div class="set-card secundair">
+      <div class="set-card-head"><div class="ico">⚠️</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor ${esc(p.name)} — en niet terug te draaien</div></div></div>
       <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
            zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
       <details class="danger-reveal" id="set-danger">
         <summary>Voortgang wissen…</summary>
         <div class="danger-zone">
-          <div><div class="t">⚠️ Voortgang wissen</div><div class="d">Verwijdert alle diamanten, sterren en spulletjes van ${esc(p.name)}. Kan niet ongedaan gemaakt worden.</div></div>
+          <div><div class="t">⚠️ Voortgang van ${esc(p.name)} wissen</div>
+            <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
+              <b>Blijft:</b> ${esc(p.name)} zelf, haar naam, haar startoutfit en alle oefeninstellingen.</div></div>
           <button class="danger-btn" id="set-reset">Wissen</button>
+        </div>
+      </details>
+      <!-- verwijderen hoort bij "wie deze ster is", niet bij "opnieuw beginnen":
+           het ene haalt haar wég, het andere laat haar juist blijven -->
+      <details class="danger-reveal" id="set-danger-del">
+        <summary>Deze ster verwijderen…</summary>
+        <div class="danger-zone">
+          <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div>
+            <div class="d">Haalt ${esc(p.name)} helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
+          <button class="danger-btn" id="set-delete">Verwijderen</button>
         </div>
       </details>
     </div>
@@ -12328,6 +12799,22 @@ function settingsToTop() {
   if (!el) return;
   el.scrollTop = 0;
   requestAnimationFrame(() => { el.scrollTop = 0; });
+  ouderScroll();          // bovenaan = de ruime kop
+}
+/* De kop van het ouderdeel heeft twee standen (zie #screen-settings.gescrold in
+   het stijlblad): ruim bovenaan, krap zodra er kaarten onderdoor schuiven. Dit is
+   letterlijk dezelfde afspraak als in de trofeeënkast (kastScroll), met dezelfde
+   drempel van 4px -- op 0 wisselt hij bij het minste duimtrilletje heen en weer --
+   en dezelfde rAF-rem, want scroll vuurt vaker dan er beeldjes zijn. */
+let ouderScrollWacht = false;
+function ouderScroll() {
+  if (ouderScrollWacht) return;
+  ouderScrollWacht = true;
+  requestAnimationFrame(() => {
+    ouderScrollWacht = false;
+    const sc = $('screen-settings');
+    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
+  });
 }
 let savedPillTimer = null;
 function saveAndFlash() {
@@ -12499,6 +12986,16 @@ function bindSettings(p, s) {
     const lbl = $('settings-profiles').querySelector('.active .tab-label');
     if (lbl) lbl.textContent = p.name;
   });
+  /* Enter betekent "klaar met dit veld", net als op het maakformulier (zie daar):
+     het toetsenbord gaat weg en de kaarten eronder zijn weer te zien. Er wordt
+     niets verzonden -- de naam is al opgeslagen bij elke aanslag -- dus dit is
+     alleen de uitgang die een telefoontoetsenbord zelf aanbiedt en die hier
+     eerder in het niets viel. */
+  on('set-name', 'onkeydown', e => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    e.target.blur();
+  });
   // het rode vlak openklappen mag ook hoorbaar zijn, net als elke andere tik
   // (er zijn er twee: voortgang wissen en de ster verwijderen)
   document.querySelectorAll('#settings-body .danger-reveal').forEach(dg => {
@@ -12515,7 +13012,9 @@ function bindSettings(p, s) {
   on('set-reset', 'onclick', () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
-      `Alle voortgang, diamanten en spulletjes van ${p.name} wissen? Dit kan niet ongedaan gemaakt worden.`,
+      `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
+      + ` Haar naam, haar startoutfit en alle oefeninstellingen blijven staan.`
+      + ` Dit kan niet ongedaan gemaakt worden.`,
       'Ja, wissen',
       () => {
         // Wissen raakt de voortgang, niet wie ze is en niet hoe ze oefent: haar
