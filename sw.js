@@ -3,7 +3,7 @@
  *
  * Twee voorraden, en het verschil ertussen is de hele opzet:
  *
- *   SCHIL (rekenpop-v45)   het spel zelf: index.html, het manifest, de iconen.
+ *   SCHIL (rekenpop-v46)   het spel zelf: index.html, het manifest, de iconen.
  *                          Netwerk-eerst, want een nieuwe versie hoort gewoon
  *                          binnen te komen -- daar hoeft deze naam niet voor
  *                          omhoog. Gaat hij wél omhoog, dan wordt de oude
@@ -26,7 +26,7 @@
  *     een cache-eerst-voorraad betekent dat die wereld voorgoed stuk is; zie
  *     bewaar().
  */
-const CACHE = 'rekenpop-v45';
+const CACHE = 'rekenpop-v46';
 const ART_CACHE = 'rekenpop-art';
 const HUIDIG = [CACHE, ART_CACHE];
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
