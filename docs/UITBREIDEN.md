@@ -62,6 +62,13 @@ Wat **vanzelf** meekomt, zonder dat je er iets voor doet:
 | de zaal | `venue`, of anders `VENUE_TERUGVAL` (de kaart zelf) |
 | de perfecte-wereldtrofee | `rebuildWorldBadges()` maakt `perfect-<id>` aan en hangt hem op de plank |
 | de tests | elke zaak die over werelden gaat telt uit `WORLDS`, niet uit een getal |
+| het laden | de tekening komt binnen als die wereld in beeld komt of bijna in beeld is — het opstarten wordt er geen byte zwaarder van |
+| de cache | de service worker kent geen werelden; de nieuwe tekening komt erin bij het eerste bezoek en er hoeft geen versienummer omhoog |
+
+Wat er over het laden te weten valt staat in `docs/LADEN.md`; de korte versie is
+dat je er niets voor hoeft te doen. Wél: vervang je een bestáánde tekening onder
+dezelfde naam, dan moet `ART_CACHE` in `sw.js` omhoog, anders blijven spelers de
+oude zien.
 
 **Achteraan bijplakken mag altijd. Ertussen schuiven of korter maken niet.**
 Levels lopen dóór de werelden heen, dus een wereld op plek 3 inkorten

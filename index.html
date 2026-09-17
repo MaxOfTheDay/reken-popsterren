@@ -612,6 +612,21 @@
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
+  /* FASE 6B -- het éérste scherm komt niet op, het staat er.
+
+     screenIn begint bij opacity 0, en hij begint zodra de opmaak van #screen-profile
+     doorgerekend is -- dus tijdens het inlezen van de pagina, ruim voordat het
+     scriptblok onderaan aan de beurt is. Het eerste beeldje dat een kind te zien kreeg
+     was daardoor niet het startscherm maar de kále verloopachtergrond van <body>,
+     met alleen het tandwiel erop: 180 ms (gemeten op een snelle machine met het
+     bestand ernaast; op een telefoon meer) een leeg paars vlak dat bovendien
+     lichter is dan het startscherm zelf, want de schil (.app-sfeer) legt daar juist
+     een donkere avond overheen. Een fade die iets binnenhaalt dat er al hoort te
+     staan is geen overgang maar een flits.
+
+     body.start staat in de opmaak en gaat er in show() af, bij de eerste échte
+     schermwissel. Alles wat daarna komt fadet gewoon; alleen de eerste aanblik niet. */
+  body.start .screen.active { animation: none; }
 
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
@@ -1455,9 +1470,9 @@
   }
   /* De veeg onder de balk. Hangt aan de bálk en niet aan een scherm, dus hij staat
      er op élk scherm waar de balk staat -- kaart, reis, kleedkamer, kast -- en hij
-     kan niet vergeten worden als er ooit een vijfde bijkomt. Vast aan het venster
-     en nooit een blok: hij loopt naar niets uit, zodat het onderste stukje wereld
-     er gewoon doorheen te zien blijft.
+     kan niet vergeten worden als er ooit een vijfde bijkomt. Van schermrand tot
+     schermrand en naar niets uitlopend, zodat het onderste stukje wereld er gewoon
+     doorheen te zien blijft.
 
      Waarom hij toch bovenop de inhoud ligt terwijl hij z-index -1 draagt: .main-nav
      is zelf een stapelcontext (fixed + z-index 40), dus -1 blijft daarbínnen -- net
@@ -1480,9 +1495,29 @@
      onder de balk door, en daar moet "Kleedkamer" nog steeds te lezen zijn.
 
      Vier stops en geen twee: met twee kun je "bijna niets" en "snel weg" niet
-     tegelijk zeggen zonder er een rand van te maken. */
+     tegelijk zeggen zonder er een rand van te maken.
+
+     FASE 6B -- hij stond hier als position:fixed met left:0/right:0, en dat deed
+     niet wat het zegt. .main-nav draagt zelf een transform (translateX) én een
+     backdrop-filter, en allebei maken van de balk het inhoudsblok voor álles wat
+     eronder fixed staat. "Van schermrand tot schermrand" werd daarmee "van
+     balkrand tot balkrand": een donkere rechthoek van --balk-w breed die precies
+     op de onderrand van de bálk ophield in plaats van op die van het scherm.
+     Nagemeten op 412x915: 12,4 -> 399,6 in plaats van 0 -> 412, en 775 -> 905 in
+     plaats van 785 -> 915. Op de kaart viel dat weg tegen een geschilderde wereld;
+     op de kleedkamer en de trofeeënkast, waar de egale schil doorloopt, stond er
+     een zichtbaar kader om de balk heen en hield de veeg tien pixels boven de
+     schermrand op.
+
+     Nu absolute, met de breedte van het vénster (100vw, uitgemeten vanaf het
+     midden van de balk -- en de balk staat altijd gecentreerd) en een negatieve
+     bottom die precies de zweefruimte van de balk terugneemt. Dezelfde plek als
+     bedoeld, maar zonder van fixed af te hangen in een element dat dat woord
+     afpakt. */
   .main-nav::before {
-    content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+    content: ''; position: absolute; z-index: -1; pointer-events: none;
+    left: 50%; width: 100vw; margin-left: -50vw;
+    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder));
     height: calc(var(--balk-ruimte) + 44px);
     background: linear-gradient(180deg,
       rgba(14,7,30,0) 0%,
@@ -2372,12 +2407,29 @@
        een flits. De onderlaag is nu de wereld zelf, dus er valt niets te flitsen. */
     background-color: var(--w-deep, #2a0c47);
     background-size: cover; background-position: 50% 50%;
-  }
-  /* Nog geen tekening? Dan draagt de wereld zichzelf met zijn eigen kleuren, zodat
-     een wereld speelbaar is vóórdat hij getekend is (en een ontbrekend bestand
-     nooit een leeg vlak oplevert). */
-  .world-frame.no-art {
-    background-image:
+    /* FASE 6B -- de tekening is de bóvenste van drie lagen, en de twee eronder
+       zijn de wereld op zijn eigen kleuren.
+
+       Waarom gelaagd en niet "eerst het verloop, daarna de tekening erin zetten":
+       een laag die nog niet te tekenen is, tekent gewoon niet, en dan staat de laag
+       eronder er. Er valt dus niets te timen -- geen onload, geen decode(), geen
+       moment waarop je het mag omzetten. Dat is precies waar de fout zat: met
+       alleen background-color eronder was die onderlaag --w-deep, en dat is in de
+       Muziekwereld #170a35. Zo goed als zwart. Van de sterkeuze naar de kaart stond
+       er daardoor 71 ms een bijna zwart scherm met de haltes erop, en dan sprong het
+       beeld in één keer naar de wereld: dát is de zwarte flits bij het kiezen van
+       een ster, en tegelijk de donkere band bij het opengaan van een wereldkaart --
+       één fout, twee meldingen. Op een telefoon over mobiel net duurt dat geen 71 ms.
+
+       Het is ook wat .reis-plaats op de reis al deed (de tekening ligt daar in een
+       eigen laagje boven het verloop), dus het is hier geen nieuw idee maar
+       hetzelfde idee op de tweede plek.
+
+       --w-art is 'none' als er geen tekening is; dan blijven de twee verlooplagen
+       over en draagt de wereld zichzelf -- een wereld is speelbaar vóórdat hij
+       getekend is, en een ontbrekend bestand levert nooit een leeg vlak op. */
+    --w-art: none;
+    background-image: var(--w-art),
       radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
       linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
   }
@@ -3951,10 +4003,29 @@
   .trophy-card.ready { overflow: hidden; }
   .trophy-card.ready::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
-    background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-18deg);
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
+    transform: translateX(0) skewX(-18deg);
     animation: shineSweep 2.6s ease-in-out infinite;
   }
-  @keyframes shineSweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+  /* FASE 6B -- dezelfde veeg, maar op transform in plaats van op left.
+
+     Hij liep van left:-60% naar left:130%: 190% van de kaartbreedte, en left is
+     een opmaakwaarde, dus de browser rekende de opmaak van die kaart bij élk
+     beeldje opnieuw uit. Met vier klaarliggende trofeeën in beeld werd dat 29 keer
+     per seconde een layout op een scherm waar verder niets beweegt -- de kaart
+     doet er in dezelfde drie seconden nul. Gemeten met de processor acht keer
+     geremd: 123 ms layout per drie seconden. Geen enkel beeldje viel daardoor weg,
+     ook niet op 8x -- dit is dus geen haperingsbug maar werk dat nergens voor
+     nodig is, en het groeit mee met het aantal trofeeën dat klaarligt.
+
+     De veeg is 45% van de kaart breed, dus die 190% van de kaart is 422,2% van de
+     veeg zelf (procenten in translateX gaan over het element zelf). De skew komt
+     erachteraan en staat op dezelfde plek in de keten als eerst, dus het beeld is
+     pixel voor pixel hetzelfde -- nagemeten op zes standen van de animatie. */
+  @keyframes shineSweep {
+    0% { transform: translateX(0) skewX(-18deg); }
+    55%, 100% { transform: translateX(422.222%) skewX(-18deg); }
+  }
   /* ook het medaillon van een klaarliggende perfecte wereld wiebelt: de kaart ziet
      er anders uit, maar "hier ligt iets voor je klaar" moet overal hetzelfde zeggen */
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
@@ -5121,7 +5192,7 @@
   }
 </style>
 </head>
-<body>
+<body class="start">
 <div class="grain" aria-hidden="true"></div>
 <div id="confetti-layer" aria-hidden="true"></div>
 <div id="app">
@@ -7212,7 +7283,19 @@ function load() {
 // vastlopen op de vraag. Daarom: stil opvangen, één keer vriendelijk melden, en
 // gewoon doorspelen (de voortgang van deze sessie blijft in het geheugen staan).
 let saveFailed = false;
+/* Kijkopstelling (?debug&demo) schrijft niets weg. Dat stond al als belofte bij
+   de schakelaars onderaan -- "ALLEEN in het geheugen, een echte familie-opslag op
+   hetzelfde toestel blijft ongemoeid" -- maar het stond nergens als regel. En het
+   kostte niet veel: één keer de kaart openen roept markWorldSeen aan, die
+   save() doet, en dan staan Lotte en Sem in de opslag van een echt gezin. De
+   voorbeeldlinks op de voorbeeldpagina gaan allemaal langs de kaart.
+
+   Alleen deze ene regel, en niet een tweede opslagpad: wat de app verder doet moet
+   precies hetzelfde blijven, anders test de kijkopstelling iets anders dan er
+   draait. */
+let demoStand = false;
 function save() {
+  if (demoStand) return;
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(db));
     saveFailed = false;
@@ -7702,6 +7785,9 @@ function show(id) {
   // hier af en niet aan het eind van de animatie: zie .komt-op in het stijlblad --
   // 'animation: none' weghalen terwijl een scherm in beeld staat laat screenIn
   // alsnog aanslaan, en dat is een knipper.
+  // De eerste aanblik staat er zonder fade (zie body.start); vanaf de eerste
+  // schermwissel fadet alles weer zoals het hoort.
+  document.body.classList.remove('start');
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -7782,6 +7868,17 @@ function sterTegel(key, p) {
   // label zegt in woorden wat de tegel doet en waar hij heen gaat.
   tegel.setAttribute('aria-label', `Speel met ${p.name} — verder in ${w.name}`);
   tegel.onclick = () => kiesSter(key, tegel);
+  /* Een vinger op een tegel is een wereld die zo in beeld komt. Hier gaat die ene
+     tekening alvast de leiding in -- niet bij het opbouwen van dit scherm, want
+     dan zou het startscherm van een gezin met zes sterren zes wereldkaarten
+     tegelijk ophalen, en dat is precies wat een startscherm niet hoort te doen.
+
+     Wat het oplevert: pointerdown ligt vóór de tik, de tegel geeft daarna nog 150
+     ms antwoord (zie kiesSter) en de schermwissel duurt ook nog iets. Dat is het
+     voorsprongetje waarmee de kaart in het gewone geval al met tekening opengaat
+     in plaats van met de wachtstand van applyWorldArt. Duurt het langer, dan
+     draagt de wereld zichzelf zolang -- dus dit is winst, geen voorwaarde. */
+  tegel.onpointerdown = () => preloadArt(w.art);
   return tegel;
 }
 /* Een kind tikt drie keer. Zonder grendel is dat drie keer navigeren: twee
@@ -8152,13 +8249,20 @@ function showWorld(idx, travelFrom) {
    GEHAALD onthoudt wat er al een keer aangevraagd is, zodat het opnieuw tekenen van
    de kaart (dat gebeurt bij elke halte, elke wereldwissel, elke terugkeer) niet
    telkens een nieuwe aanvraag opzet. De browsercache en de service worker doen de
-   rest; dit voorkomt alleen het onnodige verkeer ernáártoe. */
+   rest; dit voorkomt alleen het onnodige verkeer ernáártoe.
+
+   FASE 6B -- een aanvraag die mislukt wordt weer vergeten. Hij stond hier voor
+   altijd in: één wereldkaart die niet binnenkwam omdat het net net wegviel, en die
+   wereld vroeg er deze sessie nooit meer om -- ook niet toen het net terug was.
+   "Aangevraagd" hoort te betekenen "hij komt eraan", niet "we hebben het ooit
+   geprobeerd". */
 const ART_GEHAALD = new Set();
 function preloadArt(src) {
   if (!src || ART_GEHAALD.has(src)) return;
   ART_GEHAALD.add(src);
   const img = new Image();
   img.decoding = 'async';
+  img.onerror = () => ART_GEHAALD.delete(src);
   img.src = src;
 }
 /* Voorladen gebeurt ALTIJD achter in de rij. Een vooruitgehaald bestand mag nooit
@@ -9021,11 +9125,22 @@ function smoothPath(ps, stukken) {
   }
   return d;
 }
-// De tekening van een wereld. Is er nog geen, dan doet de reservekaart het werk
-// met de kleuren van de wereld zelf -- een wereld is dus speelbaar vóór hij
-// getekend is, en een ontbrekend bestand levert nooit een leeg vlak op.
+/* De tekening van een wereld. Is er nog geen, dan doet de reservekaart het werk
+   met de kleuren van de wereld zelf -- een wereld is dus speelbaar vóór hij
+   getekend is, en een ontbrekend bestand levert nooit een leeg vlak op.
+
+   Twee regels, en allebei zetten ze alleen iets neer; het wachten op het bestand
+   staat in de opmaak en niet hier (zie de lagen bij .world-frame). Dat is met
+   opzet: een tekening die nog onderweg is, is geen toestand die de JS hoort bij te
+   houden -- er ligt gewoon een laag onder die het zolang overneemt.
+
+   .no-art blijft wél een klasse, want het is een ándere zin dan "nog niet binnen":
+   het zegt dat deze wereld géén tekening heeft, en daar hangt aan vast dat de
+   gedeelde wolkjes en het voetlicht van de app wél mogen meedoen (zie de
+   :has()-regel eronder). Een wereld die zijn tekening nog staat af te wachten
+   krijgt die er dus niet één tel bij om ze meteen weer kwijt te raken. */
 function applyWorldArt(el, world) {
-  el.style.backgroundImage = world.art ? `url("${world.art}")` : '';
+  el.style.setProperty('--w-art', world.art ? `url("${world.art}")` : 'none');
   el.classList.toggle('no-art', !world.art);
 }
 /* De sfeer van een wereld als CSS-variabelen, één keer op het kader gezet. Elk
@@ -13690,7 +13805,10 @@ if (location.search.indexOf('debug') !== -1) {
   window.__db = () => db;
   if (dbg.has('demo')) {
     // Geen save(): dit is een kijk-opstelling, geen opslag. Bij herladen wordt
-    // ze gewoon opnieuw uit de URL opgebouwd.
+    // ze gewoon opnieuw uit de URL opgebouwd. De grendel zit in save() zelf --
+    // hier alleen "niets meer wegschrijven" zeggen was niet genoeg, want elke
+    // kaart die opengaat schrijft via markWorldSeen vanzelf weg.
+    demoStand = true;
     db.sound = false; db.haptics = false;
     const a = defaultProfile('Lotte', 'dress_roze', { hair: 'hair_blond' });
     a.order = 0; a.level = 6; a.diamonds = 240;
@@ -15863,6 +15981,25 @@ function startMapEdit() {
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js');
+  /* Welke tekeningen er vandaag bestaan weet alleen dit bestand -- sw.js kent
+     geen werelden en hoort ze ook niet te kennen. Deze lijst laat hem opruimen wat
+     er niet meer bij hoort (een wereld die weg is, een tekening die hernoemd is),
+     zodat de voorraad meegroeit met de werelden die er zíjn en niet met alle
+     werelden die er ooit geweest zijn.
+
+     Achter in de rij, en pas als er een service worker aan het roer staat: dit is
+     opruimwerk, en opruimwerk komt ná het scherm. Zie het bericht-blok in sw.js. */
+  naDeRust(() => {
+    const sw = navigator.serviceWorker.controller;
+    if (!sw) return;
+    const art = [];
+    WORLDS.forEach(w => {
+      [w.art, w.venue && w.venue.art].forEach(a => {
+        if (a && a.indexOf('blob:') !== 0 && !art.includes(a)) art.push(a);
+      });
+    });
+    if (art.length) sw.postMessage({ art: art });
+  });
 }
 </script>
 </body>
