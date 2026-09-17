@@ -25,6 +25,7 @@
  *   J  beloningen                       -> één keer, en blijvend
  *   K  wereldlengtes                    -> een wereld hoeft geen acht shows te zijn
  *   L  de trofeeplanken                 -> groeien mee met de werelden
+ *   M  trofeeën met pensioen           -> uit de kast, maar niet uit de save
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -402,35 +403,70 @@ zaak('K', () => {
 });
 
 /* ================= L · De trofeeplanken =================
-   Per wereld hangt er een wereldbadge en een perfecte-wereldtrofee, en die worden
-   uit WORLDS opgebouwd. Komt er een wereld bij, dan hangen ze er de volgende keer
-   gewoon bij -- zonder dat er ook maar iets in de lijst hoeft. */
+   Per wereld hangt er één perfecte-wereldtrofee, uit WORLDS opgebouwd. Komt er een
+   wereld bij, dan hangt hij er de volgende keer gewoon bij -- zonder dat er ook maar
+   iets in een lijst hoeft. De "wereld uitgespeeld"-badge is sinds fase 5C met
+   pensioen: die mijlpaal levert een spulletje op en geen tweede trofee. */
 zaak('L', () => {
   const { app, p } = verseSter();
   const plank = key => app.TROPHY_SHELVES.filter(s => s.key === key)[0];
-  check(plank('werelden').ids.length === 6 && plank('perfect').ids.length === 6,
-    'L · zes werelden, zes badges en zes perfect-trofeeën',
-    [plank('werelden').ids.length, plank('perfect').ids.length].join('/'));
+  check(plank('werelden') === undefined, 'L · er is geen wereldbadge-plank meer', 'nog aanwezig');
+  check(plank('perfect').ids.length === 6, 'L · zes werelden, zes perfecte-wereldtrofeeën',
+    plank('perfect').ids.length);
+  check(app.TROPHIES.every(t => t.id.indexOf('wereld-') !== 0),
+    'L · en geen enkele wereldbadge in de kast',
+    JSON.stringify(app.TROPHIES.filter(t => t.id.indexOf('wereld-') === 0).map(t => t.id)));
   const badge = id => app.TROPHIES.filter(t => t.id === id)[0];
   speel(app, p, 0, { sterren: 3 });
-  check(badge('wereld-muziek').has(p) && badge('perfect-muziek').has(p),
-    'L · en ze lezen dezelfde teller als de rest', 'niet behaald');
-  check(!badge('wereld-snoep').has(p) && !badge('perfect-snoep').has(p),
-    'L · alleen voor de wereld waar het over gaat', 'te veel behaald');
+  check(badge('perfect-muziek').has(p), 'L · en hij leest dezelfde teller als de rest', 'niet behaald');
+  check(!badge('perfect-snoep').has(p), 'L · alleen voor de wereld waar het over gaat', 'te veel behaald');
   wereldErbij(app, 'test7');
-  check(plank('werelden').ids.length === 7 && plank('perfect').ids.length === 7,
-    'L · een wereld erbij geeft twee kaartjes erbij',
-    [plank('werelden').ids.length, plank('perfect').ids.length].join('/'));
-  check(!!badge('wereld-test7') && !badge('wereld-test7').has(p),
+  check(plank('perfect').ids.length === 7, 'L · een wereld erbij geeft een kaartje erbij',
+    plank('perfect').ids.length);
+  check(!!badge('perfect-test7') && !badge('perfect-test7').has(p),
     'L · leeg, zoals de wereld zelf', 'meteen behaald');
-  check(app.TROPHIES.filter(t => t.id === 'wereld-muziek').length === 1,
-    'L · en de oude staan er niet dubbel bij', app.TROPHIES.filter(t => t.id === 'wereld-muziek').length);
+  check(badge('perfect-test7').wereld && badge('perfect-test7').wereld.id === 'test7',
+    'L · en hij weet bij welke wereld hij hoort', JSON.stringify(badge('perfect-test7').wereld));
+  check(app.TROPHIES.filter(t => t.id === 'perfect-muziek').length === 1,
+    'L · en de oude staan er niet dubbel bij', app.TROPHIES.filter(t => t.id === 'perfect-muziek').length);
   // de kast legt de nieuwe trofeeën niet zomaar als "klaar" neer
   const klaarVoor = kopie(p.readyTrophies);
   app.checkTrophies(p);
-  check(!p.readyTrophies.includes('wereld-test7'), 'L · een lege wereld ligt niet klaar om te openen',
+  check(!p.readyTrophies.includes('perfect-test7'), 'L · een lege wereld ligt niet klaar om te openen',
     JSON.stringify(p.readyTrophies));
   check(klaarVoor.length <= p.readyTrophies.length, 'L · checkTrophies haalt niets weg', JSON.stringify(p.readyTrophies));
+});
+
+/* ================= M · Trofeeën met pensioen =================
+   Fase 5C haalde 24 trofeeën uit de kast. Wie ze ooit behaald heeft, houdt ze in
+   p.trophies staan -- er wordt niets opgeruimd, niets gemigreerd en niets
+   afgepakt. Ze doen alleen niet meer mee: niet in de kast, niet in de teller, en
+   ze komen ook niet opnieuw als cadeautje klaar te liggen. */
+zaak('M', () => {
+  const { app, p } = verseSter();
+  const weg = ['rookie3', 'city5', 'city10', 'sums250', 'perfect3', 'toegift25',
+               'stars15', 'stars30', 'rankstad', 'rich', 'diamond250', 'collector',
+               'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
+               'kastvol', 'wereld-muziek'];
+  weg.forEach(id => {
+    check(app.isRetiredTrophy(id), `M · ${id} is met pensioen`, id);
+    check(!app.TROPHIES.some(t => t.id === id), `M · ${id} staat niet meer in de kast`, id);
+    check(!app.activeTrophies().some(t => t.id === id), `M · ${id} telt niet mee`, id);
+  });
+  // Een save van vóór fase 5C: alle oude id's erin, en een paar die nog gelden.
+  p.trophies = weg.concat(['first', 'perfect-muziek']);
+  p.readyTrophies = [];
+  check(app.earnedActiveCount(p) === 2, 'M · een oude save telt alleen zijn actieve trofeeën',
+    app.earnedActiveCount(p));
+  const nieuw = app.checkTrophies(p);
+  check(nieuw.every(t => !app.isRetiredTrophy(t.id)), 'M · en er komt geen gepensioneerde trofee terug',
+    JSON.stringify(nieuw.map(t => t.id)));
+  check(weg.every(id => p.trophies.includes(id)), 'M · de oude id\'s blijven gewoon in de save staan',
+    JSON.stringify(weg.filter(id => !p.trophies.includes(id))));
+  // Een wereld erbij mag geen wereldbadge opleveren, ook niet na een herbouw.
+  wereldErbij(app, 'test8');
+  check(app.isRetiredTrophy('wereld-test8'), 'M · ook de badge van een níeuwe wereld is met pensioen', 'test8');
+  check(!app.TROPHIES.some(t => t.id === 'wereld-test8'), 'M · en hij wordt niet aangelegd', 'test8');
 });
 
 klaar();

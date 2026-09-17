@@ -33,9 +33,13 @@ shows, geen herkansingen, geen moeilijkheid, geen trofeeën en geen wereldbeloni
 | memory (telmodus) | 2 💎 per paar + 3 💎 | ja | `onMemMatch` |
 | verse ster | 30 💎 | eenmalig | `defaultProfile` |
 
-Trofeeën geven **geen** diamanten. De twee spaar-trofeeën (`rich` 100 💎,
-`diamond250` 250 💎) kijken naar het saldo, maar blijven "klaar" liggen zodra de
-grens één keer gehaald is — sparen wordt dus niet gestraft door uit te geven.
+Trofeeën geven **geen** diamanten, en er is er sinds fase 5C ook geen enkele meer
+die naar je saldo kijkt. De twee spaar-trofeeën (`rich` 100 💎, `diamond250` 250 💎)
+zijn met pensioen: ze beloonden precies het tegenovergestelde van waar deze munt
+voor is. Diamanten zijn er om uit te geven in de kleedkamer; een prijs voor een
+hoog saldo leert een kind dat sparen beter is dan kiezen. Er blijft één koop-trofee
+over (`shopper`, 10 gekochte spulletjes), en die kijkt naar wat je hébt, niet naar
+wat je over hebt.
 
 ## 2. Wat één show opbrengt
 
@@ -89,8 +93,12 @@ zaak B legt dat vast, zodat de tab niet stilletjes terug kan komen.
   ≈ **2500 💎**, oftewel iets meer dan de helft van de catalogus.
 
 Dat is de cadans die we willen: spelen → sparen → kiezen → meteen zien. Eén show is
-één keuze; alles hebben is een lange reis die ook na de laatste wereld doorloopt (de
-verzamel-trofeeën — alle kleren, alle dieren — zijn de ankers daarvoor).
+één keuze; alles hebben is een lange reis die ook na de laatste wereld doorloopt.
+
+De "koop alles uit deze categorie"-trofeeën (alle kleren, alle dieren) waren daar
+tot fase 5C het anker voor, en zijn nu met pensioen: ze veranderden van betekenis
+zodra er één spulletje bijkwam, en ze maakten van de kleedkamer een afvinklijst.
+Wat de kleedkamer trekt is de kleedkamer zelf — kiezen en meteen zien.
 
 ## 5. Wat er níét veranderd is, en waarom
 
