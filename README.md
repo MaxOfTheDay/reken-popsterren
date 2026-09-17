@@ -61,6 +61,7 @@ staan er bewust niet bij, want die verouderen meteen.
 |---|---|
 | een wereld, spulletje of trofee wilt toevoegen | `docs/UITBREIDEN.md` |
 | tests wilt draaien of begrijpen | `docs/TESTEN.md` |
+| aan het laden, de cache of het bijwerken komt | `docs/LADEN.md` |
 | een wereldtekening laat maken | `docs/WORLD-ART-BRIEF.md` |
 | aan de prijzen of de economie komt | `docs/DIAMANTEN.md` |
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
@@ -68,5 +69,5 @@ staan er bewust niet bij, want die verouderen meteen.
 
 De documenten in `docs/` zijn grotendeels *plandocumenten uit een bepaalde
 fase*: ze leggen uit waarom er iets is besloten, niet wat er vandaag staat.
-Waar plan en code uit elkaar lopen wint de code. `UITBREIDEN.md` en
-`TESTEN.md` zijn de twee die wél bijgehouden worden als handleiding.
+Waar plan en code uit elkaar lopen wint de code. `UITBREIDEN.md`, `TESTEN.md` en
+`LADEN.md` zijn de drie die wél bijgehouden worden als handleiding.
