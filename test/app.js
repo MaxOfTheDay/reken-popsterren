@@ -43,14 +43,28 @@ const INDEX = process.env.RP_INDEX
   ? path.resolve(process.env.RP_INDEX)
   : path.resolve(__dirname, '..', 'index.html');
 
-// Het <script>-blok. Er is er precies één in index.html, onderaan het bestand.
-// Komt er ooit een tweede bij, dan pakt dit alles ertussenin en valt het laden
-// meteen om op een syntaxfout -- luidruchtig, zoals het hoort.
+/* Het <script>-blok. Er is er precies één in index.html, onderaan het bestand.
+   Dit knipt van de eerste <" + "script> tot de laatste afsluiting.
+
+   Dat het er één is, wordt hier nagekeken en niet aangenomen. Het viel eerder
+   stil om: er kwam een opmerking in het stijlblad te staan waar het woord
+   letterlijk in voorkwam, en toen begon het knipsel honderden regels te vroeg.
+   Wat je dan krijgt is een syntaxfout op een regel Nederlandse tekst, in élke
+   node-suite tegelijk, en niets dat naar de oorzaak wijst. Nu staat de oorzaak
+   in de melding. (De keuring kijkt er ook naar -- zie zaak H in inhoud.test.js --
+   maar die komt pas aan de beurt nádat dit bestand de app heeft ingeladen.) */
 function appScript() {
   const html = fs.readFileSync(INDEX, 'utf8');
+  const open = html.split('<script>').length - 1;
+  const dicht = html.split('</' + 'script>').length - 1;
+  if (open !== 1 || dicht !== 1) {
+    throw new Error(`${INDEX} hoort precies één scriptblok te hebben, maar het woord staat er `
+      + `${open}x als opening en ${dicht}x als afsluiting in -- ook in commentaar telt het mee. `
+      + `Zoek de tweede en schrijf hem anders (bijvoorbeeld "scriptblok").`);
+  }
   const begin = html.indexOf('<script>');
-  const eind = html.lastIndexOf('</script>');
-  if (begin < 0 || eind < 0) throw new Error('geen <script>-blok gevonden in index.html');
+  const eind = html.lastIndexOf('</' + 'script>');
+  if (begin < 0 || eind < 0) throw new Error('geen scriptblok gevonden in ' + INDEX);
   return html.slice(begin + '<script>'.length, eind);
 }
 

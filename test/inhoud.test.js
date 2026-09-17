@@ -19,6 +19,9 @@
  *   E  spullen           -- id's, categorieën, prijzen, en wat een verse ster krijgt
  *   F  trofeeën          -- id's, planken, en de twee per wereld
  *   G  de app zelf       -- wat de service worker meeneemt, staat er ook
+ *   H  het ene bestand    -- de vorm waar de rest op staat: commentaar dat
+ *                           dichtgaat, één scriptblok, en tekeningen van een
+ *                           verstandig formaat
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -312,9 +315,88 @@ zaak('G', () => {
   });
   const cache = sw.match(/const CACHE = '([^']+)'/);
   check(!!cache && /-v\d+$/.test(cache[1]), 'G · en de cache heeft een versienummer', cache && cache[1]);
+  /* FASE 6B -- geen enkele wereldtekening in de vooraf-lijst. Die lijst wordt bij
+     het installeren in één keer opgehaald; staat er een wereld in, dan betaalt élk
+     kind bij élke uitgave voor élke wereld, ook de werelden waar het nooit komt.
+     En het is precies het soort regel dat er per ongeluk bij komt als er een
+     wereld wordt toegevoegd. */
+  check(!lijst.some(p => p.includes('/assets/')),
+    'G · en er staat geen wereldtekening in de vooraf-lijst', lijst.filter(p => p.includes('/assets/')).join(', '));
+  /* En de service worker weet niet wélke werelden er zijn. Zodra daar een id of
+     een pad in staat is er een tweede plek die bij elke nieuwe wereld bijgewerkt
+     moet worden -- en die wordt vergeten. */
+  const noemtWereld = WORLDS.map(w => w.id).filter(id => new RegExp("['\"/]" + id + "[-'\"./]").test(sw));
+  check(!noemtWereld.length, 'G · en hij noemt geen enkele wereld bij naam', noemtWereld.join(', '));
+  /* Elke voorraad die hij aanmaakt moet ook op de bewaarlijst staan. Staat hij er
+     niet bij, dan gooit activate() hem bij elke nieuwe versie meteen weer weg --
+     stil, en je merkt het alleen aan verkeer dat je niet ziet. */
+  const namen = [...sw.matchAll(/^const ([A-Z_]*CACHE) = '([^']+)'/gm)].map(m => m[1]);
+  const houd = (sw.match(/const HUIDIG = \[([^\]]*)\]/) || [, ''])[1];
+  namen.forEach(n => check(houd.includes(n), `G · ${n} staat op de bewaarlijst van activate`, houd.trim()));
+  check(namen.length >= 2, 'G · en er zijn er minstens twee (schil en tekeningen)', namen.join(', '));
   // Het manifest wijst naar bestaande iconen.
   const man = JSON.parse(fs.readFileSync(path.join(WORTEL, 'manifest.json'), 'utf8'));
   man.icons.forEach(ic => check(fs.existsSync(path.join(WORTEL, ic.src)), `G · icoon ${ic.src} bestaat`, ic.src));
+});
+
+/* ================= H · Het ene bestand =================
+   index.html is het spel, het stijlblad en de code in één. Dat is met opzet, maar
+   het betekent ook dat één verkeerd teken drie dingen tegelijk kan slopen zónder
+   dat er ergens een foutmelding komt. Deze drie zijn in fase 6B allemaal een keer
+   echt misgegaan bij het schrijven van die fase zelf. */
+zaak('H', () => {
+  // Dezelfde regel als in app.js: met RP_INDEX kijkt de keuring naar een ander
+  // bestand, en deze zaak hoort dan naar dát bestand te kijken en niet naar het
+  // spel ernaast (zie docs/TESTEN.md over het nameten van de keuring zelf).
+  const bron = process.env.RP_INDEX ? path.resolve(process.env.RP_INDEX) : path.join(WORTEL, 'index.html');
+  const html = fs.readFileSync(bron, 'utf8');
+
+  /* 1. Commentaar dat dichtgaat.
+     Een /* ... *\/ waarin per ongeluk een tweede *\/ staat sluit hálverwege af.
+     De rest van die uitleg wordt dan CSS, en de browser gooit alles weg tot hij
+     weer iets herkent -- inclusief de regel die eronder stond. Geen console, geen
+     melding, alleen een regel die er wel staat en niets doet. */
+  const stijl = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+  let i = 0, open = false, scheef = null, regel = 1;
+  while (i < stijl.length && !scheef) {
+    if (stijl[i] === '\n') regel++;
+    if (!open && stijl.startsWith('/*', i)) { open = true; i += 2; continue; }
+    if (!open && stijl.startsWith('*/', i)) { scheef = 'losse */ op regel ' + regel; break; }
+    if (open && stijl.startsWith('*/', i)) { open = false; i += 2; continue; }
+    if (open && stijl.startsWith('/*', i)) { scheef = '/* binnen commentaar op regel ' + regel; break; }
+    i++;
+  }
+  check(!scheef && !open, 'H · het commentaar in het stijlblad gaat overal weer dicht',
+    scheef || 'een /* gaat nooit meer dicht');
+
+  /* 2. Eén scriptblok.
+     test/app.js knipt de code eruit met indexOf('<script>') en lastIndexOf. Staat
+     dat woord ergens anders -- ook in een opmerking -- dan knipt hij op de
+     verkeerde plek en vallen álle node-suites om met een syntaxfout die niets met
+     het spel te maken heeft. */
+  const tel = (naald) => html.split(naald).length - 1;
+  check(tel('<script>') === 1, 'H · er is precies één <' + 'script>', tel('<script>'));
+  check(tel('</' + 'script>') === 1, 'H · en precies één afsluiting', tel('</' + 'script>'));
+
+  /* 3. Tekeningen van een verstandig formaat.
+     Geen begroting (die staat bij B, per wereld) maar een vangrail: een bestand
+     dat per ongeluk tien keer zo groot wordt, en twee tekeningen die byte voor
+     byte hetzelfde zijn. Dat laatste is in fase 6A twee keer gevonden -- kopieën
+     van de Snoepwereld die als een eigen wereld in de lijst stonden. */
+  const crypto = require('crypto');
+  const map = path.join(WORTEL, 'assets', 'world');
+  const bestanden = fs.existsSync(map) ? fs.readdirSync(map).filter(f => /\.(webp|png|jpe?g|avif)$/i.test(f)) : [];
+  check(bestanden.length > 0, 'H · er liggen wereldtekeningen', bestanden.length);
+  const hashes = {};
+  bestanden.forEach(f => {
+    const buf = fs.readFileSync(path.join(map, f));
+    const kb = Math.round(buf.length / 1024);
+    check(kb < 700, `H · ${f} is niet buitensporig groot`, kb + ' kB');
+    check(kb > 20, `H · ${f} is geen lege plaatshouder`, kb + ' kB');
+    const h = crypto.createHash('sha1').update(buf).digest('hex');
+    check(!hashes[h], `H · ${f} is niet dezelfde tekening als een andere`, hashes[h] || '');
+    hashes[h] = f;
+  });
 });
 
 klaar();

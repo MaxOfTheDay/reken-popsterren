@@ -687,6 +687,69 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     JSON.stringify(r) + ' <-> ' + JSON.stringify(voorHerladen));
   check(r.oudeTrofee, 'een gepensioneerde trofee blijft ongemoeid in de opslag staan', JSON.stringify(r));
 
+  /* ---- 12 · Wat er bij het opstarten NIET geladen wordt (fase 6B) ----
+     De regel: het aantal werelden groeit, en het opstarten mag daar niet in
+     meegroeien. Eén lus over WORLDS die art aanraakt is genoeg om dat te breken,
+     en je merkt het aan niets -- behalve aan de telefoondata van een gezin.
+
+     Daarom een verse sessie, en twee metingen langs twee kanten: wat de app
+     dénkt te hebben aangevraagd (ART_GEHAALD) en wat er écht over de lijn is
+     gegaan (de aanvragen van de browser). Die tweede is de belangrijkste: een
+     <img> die ergens in de opmaak sluipt staat niet in ART_GEHAALD.
+
+     De grenzen zijn vaste kleine getallen en geen som over WORLDS: "niet meer
+     dan de wereld waar ze staat plus haar buurman" is de regel, en die hoort
+     hetzelfde te zijn bij zes werelden en bij twaalf. */
+  const verseCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await cacheFonts(verseCtx);
+  const vers = await verseCtx.newPage();
+  const opgehaald = [];
+  vers.on('request', req => {
+    const pad = new URL(req.url()).pathname;
+    if (/\/assets\/.*\.(webp|png|jpe?g|avif)$/i.test(pad)) opgehaald.push(pad.split('/').pop());
+  });
+  await vers.goto(SPEL_URL);
+  await vers.evaluate(() => {
+    localStorage.clear();
+    const q = defaultProfile('Iris', 'dress_blauw');
+    q.order = 0; q.level = 27; for (let i = 1; i < 27; i++) q.stars[i] = 3;
+    db.profiles = { p1: q }; save();
+  });
+  opgehaald.length = 0;
+  await vers.goto(SPEL_URL);
+  await vers.waitForTimeout(1200);
+  r = await vers.evaluate(() => ({
+    scherm: (document.querySelector('.screen.active') || {}).id,
+    werelden: WORLDS.length,
+    gehaald: [...ART_GEHAALD],
+  }));
+  check(r.scherm === 'screen-profile' && r.werelden >= 2,
+    'de verse sessie staat op de sterrenkeuze', JSON.stringify(r));
+  check(r.gehaald.length === 0 && opgehaald.length === 0,
+    'het startscherm haalt geen enkele wereldtekening op',
+    JSON.stringify(r.gehaald) + ' / ' + JSON.stringify(opgehaald));
+
+  await vers.click('.ster-tegel');
+  await vers.waitForTimeout(2500);
+  r = await vers.evaluate(() => ({
+    scherm: (document.querySelector('.screen.active') || {}).id,
+    werelden: WORLDS.length,
+    gehaald: [...ART_GEHAALD],
+  }));
+  check(r.scherm === 'screen-map', 'en één tik brengt haar op de kaart', JSON.stringify(r));
+  check(r.gehaald.length <= 3,
+    'de kaart haalt de wereld waar ze staat op, plus hooguit haar buren',
+    r.werelden + ' werelden, opgehaald: ' + JSON.stringify(r.gehaald));
+  check(opgehaald.length <= 3 && opgehaald.length >= 1,
+    'en de browser vraagt er ook echt niet meer op dan dat',
+    r.werelden + ' werelden, over de lijn: ' + JSON.stringify(opgehaald));
+  /* De tekening van de wereld waar ze op staat hoort erbij te zitten -- anders is
+     "hooguit drie" gehaald door er nul op te halen, en dan kijkt ze naar een kaart
+     zonder wereld. */
+  check(r.gehaald.some(a => /piraten/.test(a)),
+    'en de wereld die ze op het scherm heeft zit erbij', JSON.stringify(r.gehaald));
+  await verseCtx.close();
+
   await browser.close();
 
   /* ================= Uitslag ================= */
