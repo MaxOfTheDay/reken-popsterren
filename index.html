@@ -612,6 +612,21 @@
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
+  /* FASE 6B -- het éérste scherm komt niet op, het staat er.
+
+     screenIn begint bij opacity 0, en hij begint zodra de opmaak van #screen-profile
+     doorgerekend is -- dus tijdens het inlezen van de pagina, ruim voordat het
+     scriptblok onderaan aan de beurt is. Het eerste beeldje dat een kind te zien kreeg
+     was daardoor niet het startscherm maar de kále verloopachtergrond van <body>,
+     met alleen het tandwiel erop: 180 ms (gemeten op een snelle machine met het
+     bestand ernaast; op een telefoon meer) een leeg paars vlak dat bovendien
+     lichter is dan het startscherm zelf, want de schil (.app-sfeer) legt daar juist
+     een donkere avond overheen. Een fade die iets binnenhaalt dat er al hoort te
+     staan is geen overgang maar een flits.
+
+     body.start staat in de opmaak en gaat er in show() af, bij de eerste échte
+     schermwissel. Alles wat daarna komt fadet gewoon; alleen de eerste aanblik niet. */
+  body.start .screen.active { animation: none; }
 
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
@@ -5158,7 +5173,7 @@
   }
 </style>
 </head>
-<body>
+<body class="start">
 <div class="grain" aria-hidden="true"></div>
 <div id="confetti-layer" aria-hidden="true"></div>
 <div id="app">
@@ -7739,6 +7754,9 @@ function show(id) {
   // hier af en niet aan het eind van de animatie: zie .komt-op in het stijlblad --
   // 'animation: none' weghalen terwijl een scherm in beeld staat laat screenIn
   // alsnog aanslaan, en dat is een knipper.
+  // De eerste aanblik staat er zonder fade (zie body.start); vanaf de eerste
+  // schermwissel fadet alles weer zoals het hoort.
+  document.body.classList.remove('start');
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
