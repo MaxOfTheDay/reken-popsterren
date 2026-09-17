@@ -91,6 +91,45 @@
 >   purpose. The four hand-computed bottom-bar numbers (10 / 88 / 100 / 168, of
 >   which three forgot the device's safe area) now come out of
 >   `--balk-h / --balk-rand / --balk-ruimte / --veilig-onder`.
+>
+> **Phase 5D.1 (final parent-area polish), outside this review.** The structure
+> of 5D stands; what changed is weight, copy and two correctness details.
+>
+> * *the percentage is gone from `Niveau-inschatting`.* `p.perf` was shown as
+>   "50%" with a half-filled bar and a line underneath explaining it is not a
+>   school grade — an argument the copy cannot win, because a number out of a
+>   hundred with a bar under it *is* a grade. What a parent actually wants was
+>   already there, one line lower, and is now the subject of the block: what the
+>   child is working on right now (`🧸 Leren tellen — fase 3 van 11: Meer /
+>   minder`). `p.perf` itself is untouched and still steers difficulty; it is
+>   simply no longer displayed as a figure. `Vlotheid` keeps its percentage and
+>   bar on purpose — that is a measured behaviour ("how often does a correct
+>   answer come straight out"), it carries its own reading, and it is the signal
+>   the game uses to decide when to offer harder question types.
+> * *counters became singular where they should be* (`1 show gespeeld`), through
+>   one `mv()` helper rather than seven ternaries.
+> * *the trophy denominator was checked, not changed*: `18` is
+>   `activeTrophies().length` — the same source the cabinet header reads, and the
+>   result of the 5C cleanup (42 → 18). It grows on its own when a world is
+>   added, because `rebuildWorldBadges()` adds that world's perfect-world trophy
+>   to the table. A test now pins the two readouts to that one source.
+> * *saturated purple was rationed.* It sat on every outer card edge as well as
+>   on every selected chip, so nothing stood out. Card edges are now a hairline
+>   in paper lavender; the in-range phase band lost its full purple outline for a
+>   fraction of the same colour, which lets the two solid endpoints read as the
+>   endpoints; purple stays for what is selected, for headings and for the icon
+>   tiles. The mode cards came down 74 → 62px, so they read as the top control of
+>   a settings screen rather than a game's primary CTA.
+> * *dense labels split in two.* "Cijfers tonen (fase 6+: cijfers, minder
+>   stippensteun, redeneren)" was one bold-plus-parentheses line that wrapped
+>   three times on a phone; it is now a label with a smaller muted sentence under
+>   it (`.hulp`). "Voorwerpen / Stippen / Mix" became three equal columns with the
+>   icon above the word — measured to fit on one line down to 320px, and to wrap
+>   rather than squeeze below that.
+> * *the header lost 11px* (171 → 160) spread over all four of its rows, and the
+>   black-and-white family emoji left the title: on most devices it drew as a grey
+>   block on the dark bar, the one rough edge on the screen. It stays in the gear
+>   popover, where it sits on a light tile and draws in colour.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px

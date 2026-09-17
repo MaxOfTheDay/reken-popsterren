@@ -21,6 +21,10 @@
  *   H  een kapotte back-up verandert niets
  *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld
  *   J  vanuit Beheer een ster maken komt terug in Beheer, bij de nieuwe ster
+ *   K  enkelvoud/meervoud: "1 show gespeeld", "2 shows gespeeld", "0 shows"
+ *   L  de trofeeteller heeft één bron, en de kast noemt hetzelfde getal
+ *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
+ *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
  *
  * Draaien:
  *   npm run test:ouder          (of: npm test voor alle suites)
@@ -483,7 +487,12 @@ function check(ok, label, detail) {
       };
     });
     check(!ruim.gescrold && krap.gescrold, 'scrollen zet de kop in zijn krappe stand', JSON.stringify([ruim, krap]));
-    check(krap.h < ruim.h - 20, 'en dat scheelt echt hoogte', `${ruim.h} -> ${krap.h}`);
+    /* Gemeten op 390x844: 160 -> 139px. De drempel staat op 18 en niet op 20:
+       fase 5D.1 haalde elf pixels uit de rúime stand (zie #screen-settings
+       .hub-sticky), dus het verschil tussen de twee standen wordt kleiner terwijl
+       de kop als geheel juist beter werd. Waar deze test voor staat is dat er
+       écht een tweede, krappere stand is -- niet dat die precies 21px scheelt. */
+    check(krap.h <= ruim.h - 18, 'en dat scheelt echt hoogte', `${ruim.h} -> ${krap.h}`);
     check(krap.wieInBeeld && /Anna/.test(krap.wieNaam), 'welk kind gekozen is blijft in beeld', JSON.stringify(krap));
     check(krap.watInBeeld && /Oefenen/.test(krap.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(krap));
     check(krap.terug, 'en de weg terug blijft er', 'terugknop weg');
@@ -532,6 +541,195 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, n: Object.keys(db.profiles).length }));
     check(r.scherm === 'screen-settings' && r.n === 3,
       'en afbreken brengt je terug zonder een ster te maken', JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* ================= K · Eén of meer ================= */
+  /* FASE 5D.1. Alle tellers op Voortgang stonden in het meervoud, dus las een
+     kind dat net één show had gespeeld "1 shows gespeeld". Wat hier vastligt is
+     niet de tekst maar de regel: enkelvoud alléén bij precies 1 -- óók bij 0
+     ("0 shows"), want dat is Nederlands. */
+  {
+    const { ctx, page } = await fresh();
+    const kaarten = async () => page.evaluate(() => ({
+      tegels: [...document.querySelectorAll('.stat-tile .cap')].map(e => e.textContent.trim()),
+      oogst: [...document.querySelectorAll('.oogst-item')].map(e => e.textContent.trim()),
+    }));
+    // niets gespeeld: nul is meervoud
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    let r = await kaarten();
+    check(r.tegels[0] === 'shows gespeeld' && r.tegels[1] === 'sommen gemaakt',
+      'nul is meervoud (0 shows, 0 sommen)', JSON.stringify(r.tegels));
+    check(/0 sterren/.test(r.oogst[0]) && /0 perfecte shows/.test(r.oogst[1]),
+      'en dat geldt ook voor de oogstregel', JSON.stringify(r.oogst));
+    // precies één van alles
+    await page.evaluate(() => {
+      const p = db.profiles.p1;
+      p.stars[1] = 1;                       // één show, één ster, geen perfecte
+      p.stats.correct = 1; p.stats.wrong = 0;
+      save();
+    });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    r = await kaarten();
+    check(r.tegels[0] === 'show gespeeld', 'één show is enkelvoud', JSON.stringify(r.tegels));
+    check(r.tegels[1] === 'som gemaakt', 'één som is enkelvoud', JSON.stringify(r.tegels));
+    check(/\b1 ster\b/.test(r.oogst[0]), 'één ster is enkelvoud', JSON.stringify(r.oogst));
+    // en in de telmodus heet een som een vraag
+    await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    r = await kaarten();
+    check(r.tegels[1] === 'vraag gemaakt', 'in de telmodus is het één vraag', JSON.stringify(r.tegels));
+    // twee: alles weer meervoud
+    await page.evaluate(() => {
+      const p = db.profiles.p1;
+      p.stars[1] = 3; p.stars[2] = 3;       // twee shows, zes sterren, twee perfect
+      p.stats.correct = 2;
+      db.profiles.p1.settings.track = 'math';
+      save();
+    });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    r = await kaarten();
+    check(r.tegels[0] === 'shows gespeeld' && r.tegels[1] === 'sommen gemaakt',
+      'twee is weer meervoud', JSON.stringify(r.tegels));
+    check(/6 sterren/.test(r.oogst[0]) && /2 perfecte shows/.test(r.oogst[1]),
+      'ook in de oogstregel', JSON.stringify(r.oogst));
+    await ctx.close();
+  }
+
+  /* ================= L · De trofeeteller heeft één bron ================= */
+  /* De noemer op Voortgang ("3/18 trofeeën") en de kop van de kast ("je hebt er
+     3 van de 18") moeten hetzelfde getal zijn, en dat getal hoort uit
+     activeTrophies() te komen -- niet uit een tweede lijstje. Zet iemand er een
+     trofee bij (of komt er een wereld bij, wat rebuildWorldBadges doet), dan
+     lopen ze zonder deze controle stil uit elkaar. */
+  {
+    const { ctx, page } = await fresh();
+    const r = await page.evaluate(() => {
+      const p = db.profiles.p1;
+      p.trophies.push('first', 'sums25');
+      save();
+      openSettings(); setKey = 'p1'; setTab = 'voortgang'; renderSettings();
+      const oogst = [...document.querySelectorAll('.oogst-item')].map(e => e.textContent.trim());
+      cur = 'p1';        // de kast leest P(), en die heeft een gekozen ster nodig
+      openTrophies();
+      return {
+        teller: oogst[2],
+        bron: `${earnedActiveCount(p)}/${activeTrophies().length}`,
+        kast: document.getElementById('trophy-count').textContent,
+        actief: activeTrophies().length,
+        tabel: TROPHIES.length,
+      };
+    });
+    check(/2\/18/.test(r.teller), 'de teller toont het verdiende aantal en het totaal', r.teller);
+    check(r.teller.indexOf(r.bron) >= 0, 'en die komen rechtstreeks uit activeTrophies()', `${r.teller} vs ${r.bron}`);
+    check(r.kast.indexOf('2') >= 0 && r.kast.indexOf(String(r.actief)) >= 0,
+      'de kast noemt exact dezelfde twee getallen', r.kast);
+    check(r.actief === r.tabel, 'er staat geen tweede trofeelijst naast de tabel',
+      `actief=${r.actief} tabel=${r.tabel}`);
+    await ctx.close();
+  }
+
+  /* ================= M · Geen percentage bij de inschatting ================= */
+  /* FASE 5D.1. Hier stond p.perf als "50%" met een half gevulde balk eronder, en
+     dat las als een rapportcijfer -- geen uitleg eronder kon daar tegenop. Het
+     getal is uit het scherm; p.perf zelf stuurt de moeilijkheid ongewijzigd.
+     Deze zaak bewaakt beide kanten: geen percentage in het blok, en p.perf nog
+     wél in de opslag en nog wél in beweging. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => { db.profiles.p1.perf = 0.5; save(); });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    let r = await page.evaluate(() => {
+      const blok = document.querySelector('.niveau-blok');
+      return {
+        tekst: blok.textContent,
+        balken: blok.querySelectorAll('.stat-bar').length,
+        bezig: blok.querySelector('.niveau-bezig').textContent.trim(),
+        perf: db.profiles.p1.perf,
+      };
+    });
+    check(!/%/.test(r.tekst), 'het niveau-blok noemt geen percentage', r.tekst.slice(0, 80));
+    check(r.balken === 0, 'en heeft geen voortgangsbalk', 'balken=' + r.balken);
+    check(/automatisch aan/.test(r.tekst), 'maar zegt wél dat het spel zelf bijstelt', r.tekst.slice(0, 80));
+    check(/Rekenen/.test(r.bezig) && /tot 20/.test(r.bezig),
+      'en zet vooraan waar het kind nu aan werkt', r.bezig);
+    check(r.perf === 0.5, 'p.perf staat nog gewoon in de opslag', String(r.perf));
+    // telmodus: dan is de fase de bezig-regel
+    await page.evaluate(() => {
+      db.profiles.p1.settings.track = 'count';
+      db.profiles.p1.settings.stage = 3; db.profiles.p1.settings.stageMax = 11;
+      db.profiles.p1.countTrack = { stage: 4, rung: 0, streak: 0, seen: 0, acc: 0.5 };
+      save();
+    });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => ({
+      bezig: document.querySelector('.niveau-bezig').textContent.trim(),
+      tekst: document.querySelector('.niveau-blok').textContent,
+    }));
+    check(/fase 4 van 11/.test(r.bezig) && /Evenveel/.test(r.bezig),
+      'in de telmodus staat de fase waar het kind nú speelt er', r.bezig);
+    check(!/%/.test(r.tekst), 'ook in de telmodus geen percentage', r.tekst.slice(0, 80));
+    // en de moeilijkheid draait nog: perf beweegt mee met goede antwoorden
+    const na = await page.evaluate(() => {
+      const p = db.profiles.p1;
+      const voor = p.perf;
+      for (let i = 0; i < 12; i++) updatePerf(p, true, true);
+      const omhoog = p.perf;
+      for (let i = 0; i < 12; i++) updatePerf(p, false, false);
+      return { voor, omhoog, omlaag: p.perf };
+    });
+    check(na.omhoog > na.voor && na.omlaag < na.omhoog,
+      'en p.perf loopt nog gewoon mee met wat goed en fout gaat', JSON.stringify(na));
+    await ctx.close();
+  }
+
+  /* ================= N · Drie weergavekeuzes op één regel ================= */
+  /* "Voorwerpen / Stippen / Mix" beantwoorden samen één vraag, dus horen ze op
+     één regel. Met het icoon naast het woord paste dat niet (127px nodig, 105
+     beschikbaar) en viel Mix als enige op een tweede regel. Wat hier vastligt:
+     op de telefoonmaten drie gelijke kolommen met elk label op één regel, en op
+     iets onmogelijk smals wikkelt het netjes in plaats van de woorden te
+     knijpen. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
+    const meet = () => page.evaluate(() => {
+      const chips = [...document.querySelectorAll('#set-repr .chip')];
+      const tops = new Set(chips.map(c => Math.round(c.getBoundingClientRect().top)));
+      const regelhoogte = chips[0].querySelector('.mc-label').getBoundingClientRect().height;
+      return {
+        n: chips.length, regels: tops.size,
+        breedtes: chips.map(c => Math.round(c.getBoundingClientRect().width)),
+        hoogte: Math.round(chips[0].getBoundingClientRect().height),
+        labelsEenRegel: chips.every(c => c.querySelector('.mc-label').getBoundingClientRect().height <= regelhoogte + 1),
+        iconen: chips.every(c => !!c.querySelector('.mc-ico')),
+        gekozen: document.querySelectorAll('#set-repr .chip.on').length,
+      };
+    });
+    for (const w of [390, 360, 320]) {
+      await page.setViewportSize({ width: w, height: 844 });
+      await open(page, 'p1', 'oefenen');
+      await page.waitForTimeout(350);
+      const r = await meet();
+      check(r.n === 3 && r.regels === 1, `op ${w}px staan de drie keuzes op één regel`, JSON.stringify(r));
+      check(new Set(r.breedtes).size === 1, `en ze zijn even breed op ${w}px`, JSON.stringify(r.breedtes));
+      check(r.labelsEenRegel, `zonder dat een woord afbreekt op ${w}px`, JSON.stringify(r));
+      check(r.hoogte >= 44, `en het raakvlak blijft comfortabel op ${w}px`, 'hoogte=' + r.hoogte);
+      check(r.iconen && r.gekozen === 1, `icoon en gekozen stand blijven op ${w}px`, JSON.stringify(r));
+    }
+    // onmogelijk smal: liever wikkelen dan knijpen
+    await page.setViewportSize({ width: 280, height: 653 });
+    await open(page, 'p1', 'oefenen');
+    await page.waitForTimeout(350);
+    const smal = await meet();
+    check(smal.regels === 2 && smal.labelsEenRegel,
+      'op een onmogelijk smal venster wikkelt de rij i.p.v. de woorden', JSON.stringify(smal));
     await ctx.close();
   }
 
