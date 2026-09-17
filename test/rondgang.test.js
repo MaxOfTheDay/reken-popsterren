@@ -699,14 +699,31 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
      De grenzen zijn vaste kleine getallen en geen som over WORLDS: "niet meer
      dan de wereld waar ze staat plus haar buurman" is de regel, en die hoort
-     hetzelfde te zijn bij zes werelden en bij twaalf. */
+     hetzelfde te zijn bij zes werelden en bij twaalf.
+
+     De aanvragen worden op twee stapels gelegd, en dat onderscheid is de hele
+     regel. Wat uit assets/world/ komt is wereldtekening en groeit mee met WORLDS
+     -- dáár gaat deze controle over. Wat daarbuiten ligt is één vast beeld per
+     scherm en groeit nergens in mee; sinds de sterrenkeuze haar schilderij
+     terugkreeg (assets/bg/landing.webp) staat daar er één van.
+
+     Eerder telde de meting álles onder assets/ als wereldtekening, en dus viel
+     hij om op dat schilderij: "het startscherm haalt geen enkele wereldtekening
+     op: [] / [landing.webp]" -- terwijl ART_GEHAALD (de app zelf) gewoon leeg
+     was. De meting zei iets anders dan zijn eigen kop. Dat is nu recht, en de
+     tweede stapel wordt niet weggegooid maar apart bewaakt: een lus over WORLDS
+     die per wereld iets uit assets/bg/ zou halen hoort hier nog steeds om te
+     vallen. */
   const verseCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await cacheFonts(verseCtx);
   const vers = await verseCtx.newPage();
-  const opgehaald = [];
+  const opgehaald = [];   // wereldtekeningen: assets/world/...
+  const anders = [];      // de vaste beelden van een scherm: assets/bg/... enz.
   vers.on('request', req => {
     const pad = new URL(req.url()).pathname;
-    if (/\/assets\/.*\.(webp|png|jpe?g|avif)$/i.test(pad)) opgehaald.push(pad.split('/').pop());
+    if (!/\.(webp|png|jpe?g|avif)$/i.test(pad)) return;
+    if (/\/assets\/world\//i.test(pad)) opgehaald.push(pad.split('/').pop());
+    else if (/\/assets\//i.test(pad)) anders.push(pad.split('/').pop());
   });
   await vers.goto(SPEL_URL);
   await vers.evaluate(() => {
@@ -716,6 +733,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     db.profiles = { p1: q }; save();
   });
   opgehaald.length = 0;
+  anders.length = 0;
   await vers.goto(SPEL_URL);
   await vers.waitForTimeout(1200);
   r = await vers.evaluate(() => ({
@@ -728,6 +746,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.gehaald.length === 0 && opgehaald.length === 0,
     'het startscherm haalt geen enkele wereldtekening op',
     JSON.stringify(r.gehaald) + ' / ' + JSON.stringify(opgehaald));
+  /* En zijn eigen beeld is er één en blijft er één: het schilderij achter de
+     sterrenkeuze hoort niet mee te groeien met het aantal werelden of kinderen. */
+  check(anders.length <= 1, 'en zijn eigen beeld is er hooguit één',
+    r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
 
   await vers.click('.ster-tegel');
   await vers.waitForTimeout(2500);
@@ -743,6 +765,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(opgehaald.length <= 3 && opgehaald.length >= 1,
     'en de browser vraagt er ook echt niet meer op dan dat',
     r.werelden + ' werelden, over de lijn: ' + JSON.stringify(opgehaald));
+  check(anders.length <= 1, 'en buiten de wereldtekeningen blijft het bij dat ene beeld',
+    r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
   /* De tekening van de wereld waar ze op staat hoort erbij te zitten -- anders is
      "hooguit drie" gehaald door er nul op te halen, en dan kijkt ze naar een kaart
      zonder wereld. */
@@ -789,6 +813,80 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     check(af.length === 0, 'geen wereldnaam wordt in de kop afgeknipt', maat.join('x') + ': ' + af.join(', '));
   }
   await kopCtx.close();
+
+  /* ================= De zaal is één ruimte =================
+   * FASE 7A. In de zaal lagen vier lagen over elkaar, en één ervan hield midden op
+   * het scherm op precies waar hij het felst was: het voetlicht (.venue-licht::after)
+   * had zijn ovaal met het middelpunt op zijn eigen ónderrand staan. Wat je zag was
+   * geen uitdovende gloed maar een kaarsrechte streep dwars over het scherm, op 70%
+   * hoogte (64% op een kort scherm). In élke wereld, op élke schermmaat -- opgemeten
+   * over zes werelden en vier maten, altijd op dezelfde breuk van de hoogte.
+   *
+   * Wat hier vastligt is de regel eronder, niet het getal: een laag die níét tot de
+   * onderrand van de zaal doorloopt, mag geen verloop hebben dat op zijn eigen rand
+   * gecentreerd staat. Een verloop dooft uit naar zijn buitenkant; staat het
+   * middelpunt op de rand van het doosje, dan wordt de hélft ervan afgeknipt en is
+   * die knip een lijn. Dat geldt voor elke laag die er later bij komt, en het is te
+   * meten zonder naar pixels te kijken.
+   *
+   * En de laag eronder: .venue dekt het spelscherm, en het spelscherm dekt het
+   * venster -- anders komt de achtergrond van de app onder de zaal vandaan. */
+  {
+    for (const [w, h] of [[320, 568], [390, 844], [412, 915], [768, 1024]]) {
+      const zaalCtx = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(zaalCtx);
+      const zp = await zaalCtx.newPage();
+      zp.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await zp.goto(APP_URL + '&demo&star=p1');
+      await zp.waitForFunction(() => typeof selectProfile === 'function');
+      const r = await zp.evaluate(async () => {
+        const uit = { dekking: [], randlagen: [] };
+        const getal = t => parseFloat(t) || 0;
+        for (let i = 0; i < WORLDS.length; i++) {
+          const q = P();
+          q.stars = {}; for (let l = 1; l < WORLD_START[i]; l++) q.stars[l] = 3;
+          q.level = WORLD_START[i];
+          startLevel(WORLD_START[i]);
+          await new Promise(res => setTimeout(res, 60));
+          const scherm = document.getElementById('screen-game');
+          const zaal = scherm.querySelector('.venue');
+          const s = scherm.getBoundingClientRect(), z = zaal.getBoundingClientRect();
+          if (s.top > 0.5 || s.bottom < innerHeight - 0.5 || z.top > s.top + 0.5 || z.bottom < s.bottom - 0.5) {
+            uit.dekking.push(WORLDS[i].id + ' scherm ' + Math.round(s.top) + '-' + Math.round(s.bottom)
+              + ' zaal ' + Math.round(z.top) + '-' + Math.round(z.bottom) + ' venster ' + innerHeight);
+          }
+          /* Elke laag in de zaal, inclusief de twee pseudo-elementen. Voor een
+             pseudo-element komt de doos uit de stijl (top/height t.o.v. .venue-licht,
+             dat zelf inset:0 heeft en dus de hele zaal is). */
+          const licht = zaal.querySelector('.venue-licht');
+          const lagen = [
+            ['.venue-sfeer', getComputedStyle(zaal.querySelector('.venue-sfeer')), z.height, 0],
+            ['.venue-art', getComputedStyle(zaal.querySelector('.venue-art')), z.height, 0],
+            ['.venue-licht', getComputedStyle(licht), z.height, 0],
+            ['.venue-licht::before', getComputedStyle(licht, '::before'), null, null],
+            ['.venue-licht::after', getComputedStyle(licht, '::after'), null, null],
+          ];
+          lagen.forEach(([naam, cs]) => {
+            const top = getal(cs.top), hoog = getal(cs.height);
+            const raaktOnder = top + hoog >= z.height - 1;
+            if (raaktOnder) return;                    // loopt door tot onderaan: geen rand
+            // "radial-gradient(60% 50% at 50% 50%, ...)" -- de verticale positie
+            (cs.backgroundImage.match(/at\s+[\d.]+%\s+[\d.]+%/g) || []).forEach(m => {
+              const y = parseFloat(m.split(/\s+/)[2]);
+              if (y <= 0.5 || y >= 99.5) uit.randlagen.push(WORLDS[i].id + ' ' + naam + ' ' + m);
+            });
+          });
+        }
+        return uit;
+      });
+      check(r.dekking.length === 0, 'de zaal dekt het hele spelscherm — ' + w + 'x' + h,
+        r.dekking.join(' | '));
+      check(r.randlagen.length === 0,
+        'geen zaallaag houdt op waar zijn verloop het felst is — ' + w + 'x' + h,
+        r.randlagen.join(' | '));
+      await zaalCtx.close();
+    }
+  }
 
   await browser.close();
 
