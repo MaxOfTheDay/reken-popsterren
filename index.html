@@ -1021,25 +1021,6 @@
     box-shadow: var(--e-1);
   }
   .map-portrait svg, .who-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
-  /* FASE 5C -- de ster-status onderaan de trofeeënkast, als één rustige regel.
-     Hij stond bovenaan met een eigen voortgangsbalk, direct onder de kastbalk;
-     twee balken boven elkaar voordat er één trofee in beeld kwam. Het is bovendien
-     een ánder systeem (sterren, niet prestaties), dus het hoort niet in de kop van
-     dit scherm te staan. De ladder met de balk zit achter de tik (openCareer). */
-  .career-strip {
-    display: flex; align-items: center; gap: 11px; cursor: pointer;
-    width: 100%; max-width: var(--kolom); margin: 14px 0 2px;
-    padding: 11px 14px; border-radius: var(--r-md);
-    background: rgba(255,255,255,.07); border: 1px solid var(--glass-white-13);
-    text-align: left;
-  }
-  .career-strip:hover { background: rgba(255,255,255,.11); }
-  .career-strip:active { transform: scale(.99); }
-  .cs-ico { font-size: 22px; line-height: 1; flex: none; }
-  .cs-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
-  .cs-tekst b { font-size: 14.5px; font-weight: 900; color: var(--c-white); }
-  .cs-tekst span { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .8; }
-  .cs-pijl { font-size: 20px; font-weight: 800; color: var(--gold-light); opacity: .9; flex: none; }
 
   /* ---- Carrière-ladder (ster-status) ---- */
   .career-overlay {
@@ -3213,6 +3194,53 @@
   .kast-telling {
     font-size: 13px; font-weight: 700; color: var(--lavender-text);
     opacity: .82; text-align: center; margin-top: 2px;
+    /* zie .gescrold hieronder: hij klapt weg zodra er gescrold wordt. max-height
+       en niet display:none, anders springt de kop in plaats van te krimpen. */
+    max-height: 20px; overflow: hidden;
+    transition: max-height var(--t-snel, .22s) ease, opacity var(--t-tik, .1s) ease, margin-top var(--t-snel, .22s) ease;
+  }
+  /* ---- De plakkende kop, twee standen ----
+     Bovenaan is dit een kop met lucht: titel, saldo en de zin met de stand, op
+     dezelfde halfdoorzichtige paarse plaat als elk ander rustpunt.
+
+     Maar zodra er gescrold wordt schuiven er trofeekaarten onderdoor, en op .82
+     dekking bleven hun namen daar gewoon leesbaar staan: "Goudzoeker" dwars door
+     "Trofeeënkast" heen. Glas hoort te tonen dát er iets onder zit, niet wát.
+     Gescrold wordt de plaat daarom dichter en de waas twee keer zo sterk, en
+     tegelijk krimpt de kop: de zin met de stand klapt weg (die heb je bovenaan
+     al gelezen) en de randen worden krapper. Wat overblijft is precies wat je
+     onderweg nodig hebt -- terug, waar je bent, en je saldo.
+
+     Gescrold dekt hij vólledig, en dat is met tegenzin zo gekomen. Nagemeten op een
+     telefoon met de kast half gescrold, als het grootste licht/donker-verschil in de
+     strook naast de titel (0-255): .82 gaf 28-33, .95 nog 9-14, .97 nog 5-11. Ook op
+     .97 stonden er dus nog spookletters achter "Trofeeënkast" -- op armlengte niet te
+     zien, maar wel zodra je het scherm van dichtbij bekijkt, en dát was precies de
+     klacht. Alleen volledig dekken haalt ze helemaal weg.
+
+     Wat er wél blijft van het glas: de waas staat er nog (hij pakt wat er langs de
+     ronde onderhoeken heen kijkt), de kop bovenaan is onveranderd doorschijnend
+     (.82, zie de regel hierboven), en de plaat is geen vlakke rechthoek maar een
+     verloop -- dezelfde truc als de kleedkamerkop, die ook een laag over zijn
+     grondkleur legt. Een plakkende kop is hier geen raam maar een richel waar de
+     kast onderdoor schuift, en een richel hoort dicht te zijn.
+
+     De overgang loopt over de kop zelf en niet over een tweede laag: één element,
+     twee standen, dus er kan niets uit de pas gaan lopen. */
+  #screen-trophies .hub-sticky {
+    transition: padding var(--t-snel, .22s) ease, background var(--t-snel, .22s) ease,
+                box-shadow var(--t-snel, .22s) ease;
+  }
+  #screen-trophies.gescrold .hub-sticky {
+    padding-top: 8px; padding-bottom: 7px;
+    background: linear-gradient(180deg, #3b0b60, #220337);
+    backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow: var(--e-3);
+  }
+  #screen-trophies.gescrold .kast-telling { max-height: 0; opacity: 0; margin-top: 0; }
+  #screen-trophies.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-trophies .hub-sticky, .kast-telling { transition: none; }
   }
   #trophy-shelves { width: 100%; max-width: var(--kolom); }
   /* Een plank: een eigen vlak met lucht eromheen, zodat de vier groepen echt vier
@@ -3265,17 +3293,27 @@
   .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); }
   .trophy-card.locked .temoji { filter: grayscale(1); opacity: .45; }
   .trophy-card.locked .tname, .trophy-card.locked .tdesc { opacity: .5; }
-  /* BEHAALD: de volle 'verdiend'-taal die de rest van de app al spreekt (afgelegde
-     halte op de kaart, aangetrokken stuk in de kleedkamer): gouden rand, warme
-     vulling, naam in goud, en een zacht lichtje áchter het icoon zodat de kaart
-     van binnenuit gloeit in plaats van een kader te hebben. Stil, zonder beweging
-     -- gloed die beweegt blijft van 'klaar om te openen'. */
+  /* BEHAALD: trots, maar stil.
+     Dit is de 'verdiend'-taal die de rest van de app al spreekt (afgelegde halte op
+     de kaart, aangetrokken stuk in de kleedkamer), met één bijstelling na het
+     kijken op een telefoon: daar staan zes, acht behaalde kaarten onder elkaar, en
+     met een rand in vól goud plus een gouden halo eromheen werd de hele kolom één
+     gouden vlak -- waarin de kaart die écht om een tik vraagt ('klaar om te
+     openen') niet meer opviel.
+
+     Dus: het licht ván binnen doet het werk (een warme veeg achter het icoon), de
+     rand is goud maar half doorzichtig, en de halo eromheen is weg. Vol goud en
+     een gloed naar buiten zijn nu exclusief van .ready -- daar is er hoogstens één
+     van in beeld, en die mag schreeuwen. De rangorde is daarmee:
+        klaar om te openen  vol goud + gloed + beweging
+        behaald             zacht goud + warm licht van binnen, volkomen stil
+        nog niet            gedempt, maar in kleur */
   .trophy-card.done {
     background:
-      radial-gradient(76% 58% at 50% 26%, rgba(255,214,90,.26), transparent 72%),
-      rgba(255,214,90,.10);
-    border-color: var(--gold-accent);
-    box-shadow: 0 2px 14px rgba(255,170,0,.20), inset 0 1px 0 rgba(255,241,190,.22);
+      radial-gradient(78% 60% at 50% 26%, rgba(255,214,90,.3), transparent 74%),
+      rgba(255,214,90,.07);
+    border-color: rgba(255,214,90,.52);
+    box-shadow: inset 0 1px 0 rgba(255,241,190,.22);
   }
   .trophy-card.done .tname { color: var(--gold-light); }
   .trophy-card.done .tdesc { color: var(--c-white); opacity: .8; }
@@ -3294,11 +3332,16 @@
      theme.glow, via inline --pw-sky/--pw-glow), dus een zevende wereld krijgt zijn
      eigen medaillon zonder dat hier iets bij hoeft. */
   .pw-grid { gap: 11px; }
-  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 15px 10px 14px; }
+  /* Ruimer dan een gewone kaart, en sinds deze polijstronde ruimer dan hij was: er
+     stond onder elke naam nog "Overal drie sterren", zes keer. Die regel is weg
+     (zie perfectCardHTML) en de ruimte gaat naar het medaillon -- dát is waar je
+     naar kijkt, niet naar het bijschrift. */
+  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 17px 10px 16px; }
   @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
   @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
+  .pw-card .tname { margin-top: 9px; font-size: 15.5px; }
   .pw-medal {
-    position: relative; width: 66px; height: 66px; margin: 2px auto 4px;
+    position: relative; width: 76px; height: 76px; margin: 2px auto 0;
     border-radius: 50%; display: grid; place-items: center;
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
@@ -3306,7 +3349,7 @@
     border: 2px solid var(--glass-white-30);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  .pw-ico { font-size: 31px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,.55)); }
+  .pw-ico { font-size: 35px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,.55)); }
   /* Nog niet perfect: de wereldkleur blijft, een slag zachter. Geen grijs -- de
      blauwe IJswereld hoort ook ongewonnen nog blauw te lokken. */
   .pw-card.fresh .pw-medal, .pw-card.busy .pw-medal { opacity: .62; }
@@ -3318,7 +3361,7 @@
     box-shadow: inset 0 2px 0 rgba(255,241,190,.3), 0 0 16px rgba(255,196,61,.5);
   }
   .trophy-card.done .pw-medal::after {
-    content: '⭐'; position: absolute; right: -5px; bottom: -5px; font-size: 18px;
+    content: '⭐'; position: absolute; right: -6px; bottom: -6px; font-size: 20px;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
   }
   /* ===== KLAAR OM TE OPENEN =====
@@ -3327,7 +3370,7 @@
      klaarliggende trofeeën moeten vijf verschillende dingen blijven. */
   .trophy-card.ready {
     border-color: var(--gold-accent); background: rgba(255,214,90,.16);
-    box-shadow: 0 0 14px rgba(255,170,0,.4);
+    box-shadow: 0 0 18px rgba(255,170,0,.48);
   }
   .ready-open {
     display: block; text-align: center; margin-top: 8px;
@@ -4580,14 +4623,13 @@
       </div>
       <div class="kast-telling" id="trophy-count"></div>
     </div>
+    <!-- En hier houdt het op. Er stond een strookje ster-status onder de planken
+         (en daarvóór bovenaan, met balk). Weg: dit scherm gaat over prestaties, en
+         de ster-status loopt op sterren -- een tweede voortgangssysteem aan de voet
+         van de kast maakt de kast weer minder een kast. De ladder zelf blijft
+         bestaan en gaat open vanaf het eindscherm, op het moment dat er iets over
+         te zeggen valt (de rangpil in endLevel roept openCareer aan). -->
     <div id="trophy-shelves"></div>
-    <!-- De ster-status is een ánder systeem dan de kast: hij loopt door op sterren
-         en niet op prestaties. Hij stond bovenaan dit scherm, met een eigen balk,
-         vlak boven de kastbalk en boven de plankbalken -- vier voortgangen boven
-         elkaar voordat er één trofee in beeld kwam. Hier staat hij, onderaan, als
-         één regel zonder balk: wie ernaar komt kijken scrolt er vanzelf langs, en
-         de ladder zelf (met balk en al) staat achter de tik. -->
-    <div class="career-strip" id="career-strip" role="button" tabindex="0" onclick="openCareer()" aria-label="Bekijk je ster-status"></div>
   </div>
 
   <!-- ===== Level einde ===== -->
@@ -7688,24 +7730,6 @@ function renderMapTitle(p, opReis) {
     terug.onclick = () => { sndClick(); navigeerNaarWereld(cur.index); };
   }
 }
-/* Rang + teller (bv. "⭐ Lokale ster · 96/100 ⭐") op één regel boven de balk: één
-   plek waar staat welke status je hebt en hoe ver je naar de volgende bent.
-   Stond op de kaart, over de tekening heen; staat nu in de trofeeënkast. */
-function renderCareerStrip(p) {
-  const strip = $('career-strip');
-  if (!strip) return;
-  const total = totalStarCount(p);
-  const r = starRank(total);
-  /* Eén regel, geen balk. De balk stond hier dubbel: de ladder áchter deze regel
-     heeft er zelf al een (zie .lr-bar), en dat is de plek waar je ernaar komt
-     kijken. Wat hier moet staan is alleen: wat ben ik nu, en hoeveel sterren tot
-     de volgende -- de rest zit één tik verderop. */
-  strip.innerHTML =
-    `<span class="cs-ico">${r.emoji}</span>`
-    + `<span class="cs-tekst"><b>${r.name}</b>`
-    + `<span>Nog ${Math.max(0, r.nextMin - total)} ⭐ tot ${esc(r.nextName)}</span></span>`
-    + `<span class="cs-pijl">›</span>`;
-}
 /* Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
    nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
 
@@ -9265,6 +9289,25 @@ function openTrophies() {
   renderShelves();
   show('screen-trophies');
   $('screen-trophies').scrollTop = 0;
+  kastScroll();   // verse start = bovenaan = de ruime kop
+}
+/* De kop van de kast heeft twee standen (zie .gescrold in het stijlblad): ruim
+   bovenaan, krap en dekkend zodra er kaarten onderdoor schuiven. Hier wordt alleen
+   de klasse gezet; hoe de twee standen eruitzien staat in de CSS.
+
+   De drempel ligt op 4px en niet op 0: met 0 wisselt de kop bij het minste
+   duimtrilletje heen en weer, en een kop die knippert is erger dan een kop die
+   iets te lang ruim blijft. Eén rAF-vertraging ertussen, net als bij de reis
+   (zie reisScroll): scroll vuurt vaker dan er beeldjes zijn. */
+let kastScrollWacht = false;
+function kastScroll() {
+  if (kastScrollWacht) return;
+  kastScrollWacht = true;
+  requestAnimationFrame(() => {
+    kastScrollWacht = false;
+    const sc = $('screen-trophies');
+    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
+  });
 }
 // Terug naar de trofeeënkast via de vaste navigatie (kwam van een ánder
 // tabblad): hervat gewoon waar je gebleven was -- scrollpositie blijft staan,
@@ -9273,6 +9316,7 @@ function openTrophies() {
 function resumeTrophies() {
   renderShelves();
   show('screen-trophies');
+  kastScroll();   // de scrollpositie bleef staan, dus de kopstand ook
 }
 /* De status van een trofee, in prioriteitsvolgorde:
    ready (open trofee) > done (behaald) > locked > bezig > fresh (nog niets gedaan).
@@ -9303,11 +9347,12 @@ let justClaimed = null;   // id van de zojuist geopende trofee (voor de shimmer,
        en vertelde bij de meeste niets dat het getal er niet al zei. Waar het getal
        wél iets zegt ("82 / 100 sommen") staat het er nu kaal, zonder balk.
      - de ster-statusbalk bovenaan. De ster-status is een ánder systeem; hij staat
-       nu als één rustige regel onderaan het scherm (zie renderCareerStrip).
+       helemaal niet meer op dit scherm; hij gaat open vanaf het eindscherm.
    Wat er overblijft per kaartje is precies twee dingen: heb ik hem, en waarvoor is
    hij. En op de perfecte plank: welke wereld. */
 function renderShelves() {
   const p = P();
+  $('screen-trophies').onscroll = kastScroll;
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const totaal = activeTrophies().length;
@@ -9341,7 +9386,6 @@ function renderShelves() {
     panel.appendChild(grid);
     wrap.appendChild(panel);
   });
-  renderCareerStrip(p);
   justClaimed = null;   // shimmer geldt maar voor deze ene render
   save();
   updateTroDot();
@@ -9410,15 +9454,20 @@ function perfectCardHTML(t, p, status) {
   const w = t.wereld || {};
   const th = w.theme || {};
   const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
-  /* "0 / 8 perfect" op een wereld waar nog geen enkele ster staat zegt niets wat de
-     gedempte kaart niet al zegt. Dezelfde regel als op elke andere kaart: het getal
-     komt pas als er iets te tellen valt. */
+  /* Geen 'Overal drie sterren' op het kaartje. Dat stond er zes keer onder elkaar,
+     terwijl de kop van de plank het al zegt -- en zes keer dezelfde regel maakt van
+     een prijzenkast een formulier. Wat een kaartje hier moet zeggen is welke wereld
+     het is; wat je ervoor moet doen staat één regel hoger, voor alle zes tegelijk.
+
+     Het getal ("5 / 8 perfect") komt er alleen bij als er iets te tellen valt --
+     dezelfde regel als op elke andere kaart. Op een wereld waar nog geen ster staat
+     zegt "0 / 8" niets wat het gedempte medaillon niet al zegt, en op een behaalde
+     wereld zou het 8/8 zijn, wat de gouden ring al vertelt. */
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
     : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target} <span>perfect</span></div>`; })()
     : '';
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
-    + `<div class="tdesc">${t.desc}</div>`
     + stand;
 }
 // tikken mag: klaar opent de trofee; een behaalde glinstert; anders vertelt hij
