@@ -281,10 +281,15 @@ per ongeluk "gerepareerd" worden:
   vast in `saves.test.js` zaak J; het beter opvangen (per profiel in plaats van
   per bestand) zou een wijziging in `load()`/`migrate()` zijn en is bewust niet in
   deze ronde gedaan.
-- **`assets/world/regenboog-map.webp` en `wereld7-map.webp` staan op schijf zonder
-  dat een wereld ernaar wijst.** Dat is met opzet -- ze wachten op een wereld. De
-  keuring controleert daarom één kant op (wat een wereld noemt moet bestaan) en
-  niet andersom.
+- **De tekeningcontrole kijkt maar één kant op:** wat een wereld bij `art` noemt
+  moet op schijf staan, niet andersom. Een los bestand in `assets/world/` dat bij
+  geen enkele wereld hoort valt dus nergens uit. Er lagen er twee
+  (`regenboog-map.webp` en `wereld7-map.webp`); ze zijn in fase 6A weggehaald,
+  want het waren byte voor byte kopieën van `snoep-map.webp` -- plaatshouders die
+  een naam bezet hielden, geen tekeningen die op een wereld wachtten. Leg een
+  volgende kandidaat neer in `incoming/` (zie `npm run preview`) in plaats van in
+  `assets/`, dan kan hij ook niet stilletjes blijven liggen. Wat een echte
+  wereldtekening moet zijn staat in `docs/WORLD-ART-BRIEF.md`.
 
 ## Als er iets omvalt
 

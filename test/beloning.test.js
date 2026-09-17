@@ -348,8 +348,9 @@ function check(ok, label, detail) {
         balk,
         heeft: P().owned.includes('acc_wereld_muziek'),
         diamanten: P().diamonds,
-        // staat wél in de kast, achteraan
-        volgorde: [...document.querySelectorAll('.item-card')].map(c => c.dataset.item).slice(-6),
+        // staat wél in de kast, achteraan -- precies de beloningen, in wereldvolgorde
+        beloningen: WORLDS.map(w => w.beloning).filter(id => !!item(id)),
+        volgorde: [...document.querySelectorAll('.item-card')].map(c => c.dataset.item),
       };
     });
     check(r.opSlot && r.status.indexOf('🔒') === 0,
@@ -358,8 +359,9 @@ function check(ok, label, detail) {
       'G · de balk zegt hoe je hem haalt, en biedt geen koopknop', JSON.stringify(r.balk));
     check(!r.heeft && r.diamanten === 9999,
       'G · en kopen kan ook niet langs de knop om', JSON.stringify(r));
-    check(r.volgorde.join() === 'acc_wereld_muziek,acc_wereld_snoep,acc_wereld_jungle,acc_wereld_piraten,acc_wereld_ijs,acc_wereld_tover',
-      'G · de zes beloningen staan bij elkaar, achteraan de categorie', JSON.stringify(r.volgorde));
+    check(r.volgorde.slice(-r.beloningen.length).join() === r.beloningen.join(),
+      'G · de beloningen staan bij elkaar, achteraan de categorie, in wereldvolgorde',
+      JSON.stringify({ staart: r.volgorde.slice(-r.beloningen.length), hoort: r.beloningen }));
     await ctx.close();
   }
 
@@ -371,12 +373,13 @@ function check(ok, label, detail) {
     await nieuweSter(page);
     const r = await page.evaluate(async () => {
       ITEMS.push({ id: 'acc_wereld_test', cat: 'acc', name: 'Testhoedje', emoji: '🧪', spot: 'top' });
+      const bestaand = WORLDS.length;
       WORLDS.push({ id: 'testwereld', name: 'Testwereld', icon: '🧪', levels: 2, beloning: 'acc_wereld_test' });
       rebuildWorldStarts();
       rebuildWorldBadges();
-      const w = worldForIndex(6);
-      // de zes bestaande werelden even wegspelen zodat de nieuwe bereikbaar is
-      for (let i = 0; i < 6; i++) {
+      const w = worldForIndex(bestaand);
+      // alle bestaande werelden even wegspelen zodat de nieuwe bereikbaar is
+      for (let i = 0; i < bestaand; i++) {
         const v = worldForIndex(i);
         for (let l = v.first; l < v.first + v.levels; l++) P().stars[l] = 2;
       }
@@ -388,14 +391,15 @@ function check(ok, label, detail) {
     });
     check(r.trofee, 'H · een nieuwe wereld krijgt vanzelf zijn perfecte-wereldtrofee', JSON.stringify(r.trofee));
     check(r.spullen.includes('acc_wereld_test') && r.perfect.includes('perfect-testwereld'),
-      'H · en deelt bij het uitspelen gewoon uit wat er geconfigureerd staat', JSON.stringify(r));
+      'H · en deelt bij het uitspelen gewoon uit wat er geconfigureerd staat',
+      JSON.stringify({ spullen: r.spullen, perfect: r.perfect }));
     check(r.feest && r.feest.rijen.join() === 'Nieuw!,Perfecte wereld!',
       'H · met hetzelfde feestje als elke andere wereld', JSON.stringify(r.feest));
     await ctx.close();
   }
 
   /* ---- I · De tekeningen (fase 4D.2) ------------------------------------
-     Zes beloningen, zes echte tekeningen. Wat hier vastligt is niet hoe ze
+     Eén echte tekening per beloning. Wat hier vastligt is niet hoe ze
      erútzien -- dat is smaak en dat mag veranderen -- maar de afspraken die de
      rest van de app erop maakt: er is een tekening, hij staat in het vakje van
      de kleedkamer, hij is voor beide basissen hetzelfde, hij blijft boven de
@@ -404,7 +408,9 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await nieuweSter(page);
     const r = await page.evaluate(() => {
-      const ids = WORLDS.map(w => w.beloning);
+      // Elke wereld die een spulletje uitdeelt, en alleen die: een wereld zonder
+      // beloning werkt (zie grantWorldRewards) en hoort deze zaak niet om te gooien.
+      const ids = WORLDS.map(w => w.beloning).filter(id => !!id);
       const uit = { ids, mist: [], geenSvg: [], metPrijs: [], basisVerschil: [], teLaag: [], extern: [], maten: {} };
       const p = P();
       ids.forEach(id => {
@@ -430,7 +436,7 @@ function check(ok, label, detail) {
         uit.maten[id] = [b.x, b.y, b.width, b.height].map(n => Math.round(n * 10) / 10);
         if (b.y + b.height > 94 || b.y < -2) uit.teLaag.push(id);
       });
-      // en ze komen alle zes ook echt op de pop terecht, op allebei de basissen
+      // en ze komen ook echt allemaal op de pop terecht, op allebei de basissen
       uit.opDePop = ['meisje', 'jongen'].map(b => {
         const q = { ...p, base: b, equipped: { ...p.equipped } };
         return ids.filter(id => {
@@ -446,28 +452,30 @@ function check(ok, label, detail) {
       }).length;
       return uit;
     });
-    check(r.ids.length === 6 && r.mist.length === 0,
-      'I · alle zes de wereldbeloningen hebben een eigen tekening en miniatuur', JSON.stringify(r.mist));
+    check(r.ids.length > 0 && r.mist.length === 0,
+      'I · elke wereldbeloning heeft een eigen tekening en miniatuur',
+      JSON.stringify({ n: r.ids.length, mist: r.mist }));
     check(r.geenSvg.length === 0 && r.extern.length === 0,
       'I · en dat is inline SVG zonder verwijzing naar buiten', JSON.stringify([r.geenSvg, r.extern]));
     check(r.basisVerschil.length === 0,
       'I · één tekening voor beide basissen', JSON.stringify(r.basisVerschil));
     check(r.teLaag.length === 0,
-      'I · en geen van de zes zakt onder de nek (y = 94), waar de kleren beginnen', JSON.stringify(r.maten));
-    /* Eén familie, en dat is hier een maat en geen mening: geen van de zes mag
-       twee keer zo hoog of twee keer zo breed zijn als een ander, anders staat
-       er één spulletje de andere vijf te overschreeuwen. */
+      'I · en geen enkele zakt onder de nek (y = 94), waar de kleren beginnen', JSON.stringify(r.maten));
+    /* Eén familie, en dat is hier een maat en geen mening: geen enkele beloning
+       mag twee keer zo hoog of twee keer zo breed zijn als een andere, anders
+       staat er één spulletje de rest te overschreeuwen. */
     const h = r.ids.map(id => r.maten[id] && r.maten[id][3]).filter(n => n);
     const br = r.ids.map(id => r.maten[id] && r.maten[id][2]).filter(n => n);
-    check(h.length === 6 && Math.max(...h) / Math.min(...h) < 2
-       && br.length === 6 && Math.max(...br) / Math.min(...br) < 3,
+    check(h.length === r.ids.length && Math.max(...h) / Math.min(...h) < 2
+       && br.length === r.ids.length && Math.max(...br) / Math.min(...br) < 3,
       'I · en ze zijn onderling in verhouding: één set, geen uitschieter', JSON.stringify(r.maten));
     check(r.metPrijs.length === 0,
       'I · nog steeds geen prijs: het blijven beloningen en geen koopwaar', JSON.stringify(r.metPrijs));
-    check(r.opDePop.join() === '6,6',
-      'I · en ze staan alle zes op allebei de paspoppen', JSON.stringify(r.opDePop));
-    check(r.kaartjes === 6,
-      'I · de kleedkamer toont de tekening op de kaartjes, niet het emoji', JSON.stringify(r.kaartjes));
+    check(r.opDePop.join() === [r.ids.length, r.ids.length].join(),
+      'I · en ze staan allemaal op allebei de paspoppen', JSON.stringify(r.opDePop));
+    check(r.kaartjes === r.ids.length,
+      'I · de kleedkamer toont de tekening op de kaartjes, niet het emoji',
+      JSON.stringify({ kaartjes: r.kaartjes, hoort: r.ids.length }));
     await ctx.close();
   }
 
