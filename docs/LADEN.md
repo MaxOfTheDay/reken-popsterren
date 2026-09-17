@@ -49,7 +49,7 @@ vóórdat hij getekend is.
 
 | voorraad | wat erin zit | strategie | naam |
 |---|---|---|---|
-| schil | `index.html`, manifest, iconen | netwerk-eerst, met een grens van 4 s | `rekenpop-v45` — **omhoog bij elke uitgave** |
+| schil | `index.html`, manifest, iconen | netwerk-eerst, met een grens van 4 s | `rekenpop-v45` — hoeft **niet** omhoog bij een gewone uitgave (zie hieronder) |
 | tekeningen | alles onder `assets/` | cache-eerst | `rekenpop-art` — **blijft staan** |
 
 Waarom gescheiden: een tekstwijziging in het spel hoort geen twee megabyte
