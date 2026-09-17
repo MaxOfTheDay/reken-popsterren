@@ -2859,6 +2859,27 @@
      mis: een halte op drie sterren verloor zijn contactschaduw en zweefde als
      enige. */
   .tour-stop .dot { box-shadow: var(--dot-key), var(--dot-drop); }
+  /* Het schatteken bij de laatste halte (fase 6E). Er staat hieronder met zoveel
+     woorden dat het slotje van de kaart af is omdat een vierde signaal op een
+     halte van 33 pixels drukte wordt -- dus dit is er met opzet één, op één halte
+     van de acht, en alleen zolang de wereldschat nog te halen is. Geen animatie
+     (de kaart heeft er al genoeg die iets betekenen), geen kleurvlak, geen tweede
+     staat op de halte: een fonkeling naast het eindpunt van de route, meer niet.
+     Zodra ze hem heeft is hij weg -- zie renderMap. */
+  .tour-stop .stop-schat {
+    position: absolute; z-index: 2; left: 50%; top: -1.6cqw; margin-left: 3.2cqw;
+    width: 5.6cqw; height: 5.6cqw; border-radius: 50%;
+    display: grid; place-items: center; font-size: 3.1cqw; line-height: 1;
+    pointer-events: none;
+    /* Op zijn eigen donkere schijfje, met dezelfde gouden rand als een halte die
+       aan de beurt is. Een kale emoji verdween: de kaart is de drukste tekening
+       van het scherm en boven de Muziekwereld staat toevallig een verlicht
+       podium -- daar is elke lichte fonkeling gewoon meer licht. Het schijfje is
+       hetzelfde materiaal als het sterrentabje eronder (--ster-tab), dus het is
+       geen nieuw ding op de kaart maar hetzelfde ding, kleiner. */
+    background: var(--ster-tab);
+    box-shadow: inset 0 0 0 0.35cqw rgba(255,196,61,.75), 0 0.35cqw 0.7cqw rgba(12,2,26,.45);
+  }
   /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst
      als 🔒-emoji, daarna getekend, en steeds kleiner en stiller. Die reeks eindigt
      hier, en niet omdat het teken niet deugde: het zegt inmiddels iets wat de
@@ -4451,6 +4472,7 @@
     #screen-dress .screen-header { margin-bottom: 2px; }
     #screen-dress .header-title { font-size: 21px; }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
+    #screen-dress .schat-entry { margin-top: 4px; min-height: 36px; padding: 4px 12px; }
   }
   /* Een telefoon in liggende stand (844x390) is de krapste stand die dit scherm
      kent: na de kop en de navigatiebalk blijft er ~100px over, en dat is minder
@@ -4465,6 +4487,8 @@
     #screen-dress .item-thumb svg { height: 40px; }
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
+    #screen-dress .schat-raadsel { width: 40px; height: 40px; font-size: 21px; }
+    #screen-dress .schat-entry { margin-top: 4px; min-height: 34px; padding: 3px 12px; font-size: 13.5px; }
   }
   /* Smalle telefoon: de naam van het scherm past niet meer tussen twee even brede
      zijkolommen van elk 108px, en werd afgekapt tot "Kleedka…". De drie cellen
@@ -4728,9 +4752,10 @@
      zegt in elke app die een kind ooit ziet hetzelfde: hier hoort iets te staan en
      het is er niet (een lege plek, een kapot kaartje). Precies het tegenovergestelde
      van wat bedoeld was. Nu is het een gesloten kaartje met warm licht erin -- iets
-     goudens achter glas, dat je nog niet kunt pakken. Het slotje en het wereldteken
-     in het pilletje zeggen de rest; de tekening staat een tikje terug zodat het
-     verschil met "van jou" ook zonder lezen te zien is. */
+     goudens achter glas, dat je nog niet kunt pakken. Sinds fase 6E staat zo'n
+     kaartje alleen nog in het schattenvak, en wat erin staat is niet het spulletje
+     maar het raadsel (.schat-raadsel): de tekening hoeft dus niet meer gedempt te
+     worden om zich van "van jou" te onderscheiden -- er stáát geen tekening. */
   .item-card.teverdienen {
     border-color: rgba(255,203,110,.32);
     background:
@@ -4742,7 +4767,6 @@
       radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.26), transparent 72%),
       rgba(var(--goud-rgb),.13);
   }
-  .item-card.teverdienen .item-thumb { opacity: .72; }
   /* Aangetikt blijft aangetikt, ook bij een beloning: de streepjesrand houdt zijn
      vorm ("hier hoort nog iets te komen") maar krijgt het blauw van "hier kijk je
      naar". Dit staat er expliciet omdat .teverdienen ná .selected komt en anders
@@ -4757,6 +4781,71 @@
     padding: 3px 5px; border-radius: var(--r-pill); background: var(--glass-black-30);
     box-shadow: inset 0 0 0 1px rgba(255,214,90,.34);
   }
+
+  /* ===== Wereldschatten (fase 6E) =====
+     Eén regel onder de categorierij, en één vak erachter. Wat het moet doen is
+     klein: laten zien dát er zoiets bestaat, laten zien hoever je bent, en er in
+     één tik heen. Wat het níet moet doen is een tweede winkel worden -- dus geen
+     eigen kop, geen eigen scherm, geen eigen navigatielaag. Het rek eronder is
+     letterlijk hetzelfde rek (.item-grid met .item-card), alleen met andere
+     kaartjes erin. */
+  .schat-entry {
+    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: calc(100% - 24px); max-width: calc(var(--kolom) - 24px); margin: 6px auto 0;
+    min-height: 40px; padding: 6px 14px; cursor: pointer;
+    border: 1.5px solid rgba(255,203,110,.34); border-radius: var(--r-pill);
+    font-size: 14.5px; font-weight: 700; color: var(--gold-light);
+    background:
+      radial-gradient(72% 130% at 50% 0%, rgba(255,196,94,.16), transparent 74%),
+      var(--glass-black-24);
+    transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
+  }
+  .schat-entry:active { transform: scale(.98); }
+  .schat-entry .se-ico { font-size: 17px; line-height: 1; filter: var(--emoji-schaduw); }
+  .schat-entry .se-naam { white-space: nowrap; }
+  /* De teller is het antwoord op "hoever ben ik": wit en iets zwaarder dan het
+     woord ervoor, want dát getal is wat een kind twee keer per week komt kijken. */
+  .schat-entry .se-telling { color: var(--c-white); opacity: .9; font-weight: 700; white-space: nowrap; }
+  .schat-entry .se-telling b { color: var(--gold-accent); }
+  /* Open: hetzelfde "hier sta je" als de actieve categorieknop, maar dan in goud --
+     want dit vak gaat over wat je verdient en niet over wat je koopt. */
+  .schat-entry.open {
+    border-color: var(--gold-accent); color: var(--c-white);
+    background: var(--goud-tint);
+    box-shadow: var(--goud-gloed);
+  }
+  /* Een schat die nog niet van jou is: het medaillon van zijn wereld met een
+     vraagteken erin. Dezelfde vorm en dezelfde wereldkleuren als de perfecte-
+     wereldkaart in de kast (.pw-medal), zodat "dit hoort bij die wereld" er zonder
+     één woord op staat -- en zodat een zevende wereld zijn raadsel meekrijgt uit
+     zijn eigen theme, zonder dat hier iets bij hoeft. */
+  .schat-raadsel {
+    width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 26px; font-weight: 700; line-height: 1;
+    color: rgba(255,238,190,.86); text-shadow: 0 1px 3px rgba(0,0,0,.5);
+    background:
+      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
+      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
+    border: 2px solid rgba(255,214,90,.42);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.16), 0 3px 10px rgba(0,0,0,.3);
+  }
+  /* Verdiend. Hetzelfde plankje als elk ander kaartje, met een warme ondergrond
+     eronder: genoeg om te zien dat dit er een van de verzameling is, te weinig om
+     met "dit draag je nu" (goud, vol) te gaan wedijveren. */
+  .item-card.schat-kaart.owned {
+    border-color: rgba(255,214,90,.42);
+    background:
+      radial-gradient(74% 56% at 50% 22%, rgba(255,196,94,.14), transparent 72%),
+      rgba(255,255,255,.16);
+  }
+  /* De Aandoen-knop op het wereldfeest: de enige knop op die laag, dus hij mag de
+     gouden zijn -- maar niet groter dan de regel erboven waar hij bij hoort. */
+  .wereld-feest .wf-aan {
+    margin-top: 11px; padding: 9px 20px; font-size: 16px;
+    background: var(--gold-accent); color: var(--ink-on-gold); border: 0;
+    box-shadow: var(--goud-gloed);
+  }
+  .wereld-feest .wf-aan + .wf-verder { margin-top: 7px; }
   /* De actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie.
      FASE 5B.1 -- hij hoort bij die navigatie en was van ander materiaal gemaakt:
      dekkender, minder waas, een échte rand in plaats van een ring, een andere
@@ -5649,6 +5738,11 @@
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
         <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
       </div>
+      <!-- De wereldschatten (fase 6E): één regel onder de categorierij, en met
+           opzet geen achtste knop ín die rij. Wat je met spelen verdient is iets
+           anders dan wat je met diamanten koopt, en dat verschil hoort te zien te
+           zijn vóór je ergens op tikt. renderSchatEntry() vult hem. -->
+      <button class="schat-entry" id="schat-entry" type="button" onclick="toggleSchatten()"></button>
     </div>
     <div class="item-grid" id="item-grid"></div>
   </div>
@@ -6092,6 +6186,13 @@ const CATS = [
   // altijd het decor achter de paspop (zie applyStage), en wie er al een had
   // houdt hem gewoon. Alleen de winkel-ingang is dicht.
 ];
+/* De wereldschatten staan er met opzet NIET bij. Ze zijn geen achtste lade maar
+   een eigen vakje onder de rij (zie renderSchatEntry): een lade die alleen maar
+   dingen op slot bevat is een lade waar een kind één keer in kijkt, en tussen
+   zeven iconen die allemaal "kleren" betekenen valt een schatkist niet op.
+   Dit id is dus een stand van de kleedkamer (shopCat), geen categorie -- niets
+   dat over CATS loopt hoeft hem te kennen. */
+const SCHAT_CAT = 'schat';
 /* Hier stonden acht tellers per categorie (catCount/instrCount/petCount en de vijf
    *_TOTAL-constanten). Ze bedienden de "koop alles uit deze categorie"-trofeeën,
    en die zijn in fase 5C met pensioen gegaan (zie RETIRED_TROPHIES). Sindsdien
@@ -6807,6 +6908,38 @@ function beloningItem(w) { return (w && w.beloning) ? (item(w.beloning) || null)
 function beloningWereld(itemId) { return WORLDS.filter(w => w.beloning === itemId)[0] || null; }
 // Te koop of te verdienen? Alles wat een wereld uitdeelt staat níét in de winkel.
 function isBeloning(itemId) { return !!beloningWereld(itemId); }
+/* ---- De wereldschatten: dezelfde beloningen, als één verzameling -----------
+   FASE 6E. Ze lagen tot nu toe tussen de accessoires: achteraan de lade, op slot,
+   met een prijsloos pilletje ertussen de prijzen. Daardoor waren ze precies dat
+   wat ze niet zijn -- winkelwaar die toevallig niet te koop is. De kleedkamer
+   heeft er nu een eigen vakje voor ("✨ Wereldschatten · 3/6", zie renderShop) en
+   dit is wat dat vakje leest.
+
+   Er komt geen tweede waarheid bij. Wélke er zijn staat in WORLDS.beloning en
+   welke je hebt in p.owned -- allebei stonden ze er al, en allebei blijven ze
+   waar ze staan. Dit zet ze alleen op een rijtje.
+
+   Alleen uitgebrachte werelden (worldAvailable, dezelfde grens als waar
+   grantWorldRewards op uitdeelt): een wereld die wel geschreven maar nog niet
+   uitgebracht is, hoort niet als raadsel op de plank te liggen -- en zou het
+   totaal laten oplopen naar een getal dat vandaag niemand vol kan maken. Een
+   wereld zonder beloning, of met een beloning die naar een onbekend item wijst,
+   valt er vanzelf uit: dan is er niets te tonen.
+
+   De volgorde is die van de tournee en niet die van bezit. Dit is een verzameling
+   en geen rek: plek 1 is de eerste wereld, vandaag en over drie werelden nog. */
+function wereldSchatten() {
+  return WORLDS
+    .map((w, i) => ({ wereld: w, index: i, item: beloningItem(w) }))
+    .filter(s => s.item && worldAvailable(s.index));
+}
+// Het getal achter de ✨: hoeveel er verdiend zijn van hoeveel er te verdienen
+// zijn. Afgeleid, elke keer opnieuw -- er wordt niets van geteld bewaard.
+function schatStand(p) {
+  const alles = wereldSchatten();
+  const heeft = alles.filter(s => (p.owned || []).includes(s.item.id)).length;
+  return { heeft, totaal: alles.length };
+}
 // De trofee-id van de perfecte wereld: op het wereld-id, dus een wereld hernoemen
 // raakt een al behaalde trofee niet (alleen een gewijzigd id maakt een nieuwe).
 const PERFECT_BADGE = 'perfect-';
@@ -10037,13 +10170,24 @@ function renderTourMap(travelFrom) {
        een halte over zonder dat de voortgang opschuift, dan is gespeeld false maar
        staat er wél een score -- en juist die mag je zien bijwerken. */
     if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
+    /* Het schatteken bij de laatste halte (fase 6E). Alleen daar, alleen zolang
+       de schat van deze wereld nog niet van haar is, en bewust niets meer dan een
+       ✨: wát er ligt hoort ze op het feestje te horen en niet hier van de kaart
+       af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
+       loopt -- dat is de bedoeling ("daar ligt iets") en niet een tweede
+       statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft. */
+    const laatste = i === nodes.length - 1;
+    const schat = laatste ? beloningItem(shown.world) : null;
+    const schatTeken = (schat && !p.owned.includes(schat.id))
+      ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
     b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
-      + `${sterrenRij}</div>`;
+      + `${schatTeken}${sterrenRij}</div>`;
     /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
        schermlezer doorloopt heeft geen kleur en geen plek op de route -- daar is
        "nog op slot" het enige wat de staat draagt, en dat is geen beeldruis. */
     b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
-      + (open ? ` — ${st} van 3 sterren` : ' — nog op slot'));
+      + (open ? ` — ${st} van 3 sterren` : ' — nog op slot')
+      + (schatTeken ? ' — hier ligt een wereldschat' : ''));
     // Tikken op een halte is niet "start een level" maar "ga die plek binnen":
     // enterLevel doet het klikje, de halte-reactie en de overgang, en roept
     // startLevel meteen zelf aan. Zie de bewegingstaal boven goMap.
@@ -10689,8 +10833,12 @@ function wereldFeest(f) {
   const kop = f.spul ? 'Wereld uit!' : 'Perfecte wereld!';
   let rijen = '';
   if (f.spul) {
+    /* "Nieuwe wereldschat!" en niet "Nieuw!" (fase 6E). Het woord dat hier valt is
+       hetzelfde woord als op het vak in de kleedkamer, en dat is het hele punt:
+       dit is het moment waarop een kind leert wat een wereldschat ís, en over vijf
+       minuten moet ze het ding kunnen terugvinden onder diezelfde naam. */
     rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
-      + `<div class="wf-tekst"><b>Nieuw!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
+      + `<div class="wf-tekst"><b>Nieuwe wereldschat!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
   }
   if (f.perfect) {
     /* Het wereldicoon in een gouden ring met een ster erop -- precies het kaartje
@@ -10709,24 +10857,48 @@ function wereldFeest(f) {
     rijen += `<div class="wf-rij"><div class="wf-beeld"><span class="wf-trofee" style="${kleur}">${w.icon || '🌍'}</span></div>`
       + `<div class="wf-tekst"><b>${label}</b><span>Overal drie sterren</span></div></div>`;
   }
+  /* Eén knop, en alleen als er echt iets nieuws te dragen is: aandoen. Het ding
+     staat op het scherm, het is van haar, en de enige gedachte die een kind op dat
+     moment heeft is "die wil ik op". Zonder deze knop is het antwoord daarop: dit
+     wegtikken, het eindscherm lezen, de tweede knop vinden, de kleedkamer in. */
+  // "Doe aan" en niet "Aandoen": dat is woord voor woord de knop in de kleedkamer
+  // (zie renderDressBar). Eén zin voor één handeling, waar hij ook staat.
+  const aanKnop = f.spul ? `<button class="btn wf-aan" type="button">Doe aan</button>` : '';
   const ov = openOverlay('wereld-feest-overlay',
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
     + `<div class="wf-rijen">${rijen}</div>`
+    + aanKnop
     + `<div class="wf-verder">Tik om verder te gaan</div></div>`, { fade: 300 });
-  /* Sluit zichzelf, net als de ster-status en anders dan de trofeeënkast. Dat
+  let af = false;
+  const dicht = () => { if (af) return; af = true; ov._close(); };
+  ov.onclick = dicht;
+  /* Hij sluit zichzelf, net als de ster-status en anders dan de trofeeënkast. Dat
      verschil is precies het verschil tussen de twee momenten: een cadeautje in de
      kast open je zélf en blijft dus open tot jij zegt dat je klaar bent, maar dit
      overkomt je ná de show -- en dan mag het je niet vasthouden. Eronder staat
      "Verder op tournee", en daar wilde het kind toch al heen.
 
-     Twee regels lezen duurt langer dan één, dus de tweede regel koopt wat tijd.
-     Tikken gaat altijd vóór: wie het gezien heeft, is weg. */
-  let af = false;
-  const dicht = () => { if (af) return; af = true; ov._close(); };
-  ov.onclick = dicht;
-  setTimeout(dicht, 2400 + 700 * (f.spul && f.perfect ? 2 : 1));
+     Staat de Aandoen-knop er, dan krijgt hij ruimer de tijd: een knop die onder
+     je vinger vandaan verdwijnt is erger dan geen knop, en een zesjarige moet de
+     regel eerst nog lezen. Zes tellen is lang genoeg om te kijken, te begrijpen
+     en te tikken -- en kort genoeg om geen scherm te zijn dat wacht. Wie eerder
+     klaar is tikt ernaast en is weg; wie de knop mist vindt hem terug op het
+     eindscherm eronder ("👕 Pas je ..."), dus er gaat niets verloren. */
+  setTimeout(dicht, f.spul ? 6000 : 3100);
+  const aan = ov.querySelector('.wf-aan');
+  if (aan) aan.onclick = (e) => {
+    e.stopPropagation();   // anders sluit de tik óók de laag via ov.onclick hierboven
+    sndClick();
+    const q = P();
+    q.equipped[f.spul.cat] = f.spul.id;
+    noticeReady(checkTrophies(q));   // een outfit-combo kan een geheime trofee zijn
+    save();
+    const pop = $('end-avatar');
+    if (pop) { pop.innerHTML = avatarSVG(q, 150); dance('end-avatar'); }
+    dicht();
+  };
   sndWin();
   buzz([0, 40, 60, 40, 90]);
   if (!reduce) {
@@ -10736,7 +10908,7 @@ function wereldFeest(f) {
   }
   // lees-vrij: dezelfde twee zinnen die er staan, meer niet
   speak(f.spul
-    ? `${w.name} uit! Je hebt een ${f.spul.name}.` + (f.perfect ? ' En een perfecte wereld!' : '')
+    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (f.perfect ? ' En een perfecte wereld!' : '')
     : `Perfecte wereld! ${w.name}.`);
 }
 // tijdens het spelen: geen groot feest, wél een vriendelijke hint naar de kast
@@ -12634,7 +12806,7 @@ let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-k
 // Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
 // altijd terug naar de standaardcategorie, zonder selectie.
 function openKleedkamer() {
-  shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
+  shopCat = 'dress'; schatTerugCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   show('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
@@ -12651,7 +12823,7 @@ function resumeKleedkamer() {
 }
 // vanuit een trofee met een `naar`: open die categorie meteen in de kleedkamer
 function openKleedkamerCat(cat) {
-  shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
+  shopCat = cat; schatTerugCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   show('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
@@ -12668,7 +12840,13 @@ function openKleedkamerCat(cat) {
 function openKleedkamerItem(id) {
   const it = item(id);
   if (!it) return openKleedkamer();
-  shopCat = it.cat; shopSelectedId = id; dressReturnTo = null;
+  /* Een wereldschat woont in het schattenvak en niet in zijn categorie: dáár is
+     hij net onthuld, dáár staan zijn broertjes, en dáár blijft hij te vinden. Zijn
+     categorie is de lade waar je 'm ook aan kunt doen -- die onthouden we als de
+     plek om naar terug te vallen als het vak weer dichtgaat. */
+  const schat = isBeloning(it.id);
+  if (schat) schatTerugCat = it.cat;
+  shopCat = schat ? SCHAT_CAT : it.cat; shopSelectedId = id; dressReturnTo = null;
   show('screen-dress');
   renderShop();
   /* Hier niet bovenaan beginnen (zoals openKleedkamer en openKleedkamerCat), maar
@@ -12727,20 +12905,31 @@ function renderShop() {
        landt de knop dan met lucht ernaast in plaats van tegen de rand. */
     if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' }); updateFades(tabs); }
   });
+  renderSchatEntry(p);
+  const schatVak = shopCat === SCHAT_CAT;
   shopItems(p).forEach(it => {
     const card = document.createElement('div');
     card.dataset.item = it.id;
-    /* Waar het vandaan komt, alleen bij wat je al hebt: bij een nog te verdienen
-       beloning staat het wereldteken al ín het pilletje (achter het slotje), en
-       twee keer hetzelfde teken op één kaartje van 115 pixels is ruis. */
-    const w = p.owned.includes(it.id) ? beloningWereld(it.id) : null;
+    /* Waar het vandaan komt. In het gewone rek alleen bij wat je al hebt -- daar
+       staat een nog te verdienen beloning sinds fase 6E sowieso niet meer tussen.
+       In het schattenvak staat het teken er altijd: dát is wat er te weten valt
+       over een schat die je nog niet hebt (bij wélke wereld hij hoort), en het is
+       precies genoeg om er nieuwsgierig naar te zijn. */
+    const heeft = p.owned.includes(it.id);
+    const w = (schatVak || heeft) ? beloningWereld(it.id) : null;
     /* De klasse staat er meteen op en het pilletje blijft leeg: paintShop()
        hieronder vult de stand van élk kaartje in en is daarmee de enige plek waar
        dat gebeurt -- maar hij zoekt ze op met .item-card, dus zonder deze regel
        vindt hij er nul. */
-    card.className = 'item-card';
+    card.className = 'item-card' + (schatVak ? ' schat-kaart' : '');
+    /* Een schat die nog niet van jou is laat zichzelf niet zien: geen tekening en
+       geen naam, maar het raadsel -- een medaillon in de kleuren van zijn wereld
+       met een vraagteken erin, en de wereldnaam eronder. Zo staat er wél iets
+       ("in de Muziekwereld ligt iets voor je") en tóch niet wát. */
+    const beeld = (schatVak && !heeft) ? schatRaadselHTML(w) : itemThumb(it);
+    const naam = (schatVak && !heeft) ? esc(w ? w.name : 'Wereldschat') : it.name;
     card.innerHTML = (w ? `<span class="item-wereld" aria-hidden="true">${w.icon || '🌍'}</span>` : '')
-      + itemThumb(it) + `<div class="item-name">${it.name}</div><div class="item-status"></div>`;
+      + beeld + `<div class="item-name">${naam}</div><div class="item-status"></div>`;
     card.onclick = () => {
       sndClick();
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
@@ -12756,29 +12945,83 @@ function renderShop() {
   });
   paintShop();
 }
-/* De spulletjes van de open categorie, in de volgorde waarin ze in het rek komen.
-   Drie groepen, en die volgorde is het hele antwoord op "wat heb ik, en wat kan
-   ik kiezen?":
+/* Wat er in het rek staat, en in welke volgorde.
 
-     0  van jou      -- je eigen kast, meteen bovenaan en meteen aan te doen
-     1  te koop      -- op prijs oplopend, dus goedkoop eerst
-     2  te verdienen -- de wereldbeloningen, bij elkaar en achteraan
+   Twee standen, want de kleedkamer heeft er twee. Het schattenvak (SCHAT_CAT) is
+   de verzameling: élke wereldschat, in de volgorde van de tournee, of je hem nu
+   hebt of niet. Bezit verandert daar niets aan de plek -- plek 1 is de eerste
+   wereld, vandaag en over drie werelden nog. Dat is wat een verzameling van een
+   rek onderscheidt.
 
-   Binnen een groep blijft het op prijs oplopend en stabiel bij gelijke prijs, net
-   als hiervoor. Een beloning heeft geen prijs en krijgt een groot eindig getal --
-   geen Infinity, want twee beloningen onderling geven dan Infinity - Infinity =
-   NaN, en een vergelijker die NaN teruggeeft is geen vergelijker meer. Zo blijft
-   hun onderlinge volgorde gewoon die van ITEMS.
+   Een gewone categorie is wél een rek, met twee groepen:
+
+     0  van jou   -- je eigen kast, meteen bovenaan en meteen aan te doen
+     1  te koop   -- op prijs oplopend, dus goedkoop eerst
+
+   Er was een derde ("te verdienen", de wereldbeloningen achteraan op slot). Die is
+   in fase 6E uit de laden gehaald: een slotje tussen de prijzen maakte van een
+   beloning stille winkelwaar die toevallig niet te koop is, en het was precies de
+   plek waar een kind hem nooit vond. Wat je nog niet verdiend hebt staat nu in het
+   schattenvak; wat je wél verdiend hebt blijft gewoon bij je eigen spullen staan,
+   want dáár kies je wat je aandoet. Een beloning heeft geen prijs en krijgt binnen
+   die groep een groot eindig getal -- geen Infinity, want twee ervan geven dan
+   Infinity - Infinity = NaN, en een vergelijker die NaN teruggeeft is geen
+   vergelijker meer. Zo sluiten je verdiende schatten je eigen rij af, op de
+   volgorde van ITEMS.
 
    Het spulletje dat nét gekocht is telt hier even nog als "te koop": zo blijft het
    tijdens zijn "Nieuw!"-moment staan waar het kind het aantikte, en verhuist het
    pas naar de bezit-groep als dat moment voorbij is (zie confirmShopBuy). */
 function shopItems(p) {
-  const rang = it => isBeloning(it.id) ? 1e9 : it.price;
-  const groep = it => (p.owned.includes(it.id) && it.id !== shopJustBoughtId) ? 0
-    : (isBeloning(it.id) ? 2 : 1);
-  return ITEMS.filter(i => i.cat === shopCat).slice()
+  if (shopCat === SCHAT_CAT) return wereldSchatten().map(s => s.item);
+  const rang = it => (typeof it.price === 'number' ? it.price : 1e9);
+  const groep = it => (p.owned.includes(it.id) && it.id !== shopJustBoughtId) ? 0 : 1;
+  return ITEMS.filter(i => i.cat === shopCat && (!isBeloning(i.id) || p.owned.includes(i.id))).slice()
     .sort((a, b) => (groep(a) - groep(b)) || (rang(a) - rang(b)));
+}
+/* Het vakje onder de categorierij: "✨ Wereldschatten · 3 / 6". Eén regel, en
+   daarmee het hele verhaal -- er is zoiets als een wereldschat, er zijn er zes, en
+   je hebt er drie. Meer uitleg krijgt een kind van vijf hier niet, en meer heeft
+   ze ook niet nodig: wat erachter zit legt het vak zelf uit zodra ze erop tikt.
+
+   Staat er geen enkele schat te halen (een spel zonder beloningen -- mogelijk in
+   de wereldstudio), dan is het vak er niet. Een teller die "0 / 0" zegt is geen
+   uitnodiging. */
+function renderSchatEntry(p) {
+  const knop = $('schat-entry');
+  if (!knop) return;
+  const st = schatStand(p);
+  const open = shopCat === SCHAT_CAT;
+  knop.style.display = st.totaal ? 'flex' : 'none';
+  if (!st.totaal) return;
+  knop.classList.toggle('open', open);
+  knop.setAttribute('aria-pressed', open ? 'true' : 'false');
+  knop.setAttribute('aria-label', `Wereldschatten, ${st.heeft} van ${st.totaal} verdiend`);
+  knop.innerHTML = `<span class="se-ico" aria-hidden="true">✨</span>`
+    + `<span class="se-naam">Wereldschatten</span>`
+    + `<span class="se-telling"><b>${st.heeft}</b> / ${st.totaal}</span>`;
+}
+// Het vak open- of dichtdoen. Dicht = terug naar de lade waar je vandaan kwam;
+// daarom onthoudt hij die (en niet: altijd terug naar 'Kleren', want dan verlies
+// je de rij waar je net doorheen aan het bladeren was).
+let schatTerugCat = 'dress';
+function toggleSchatten() {
+  sndClick();
+  if (shopCat === SCHAT_CAT) shopCat = schatTerugCat;
+  else { schatTerugCat = shopCat; shopCat = SCHAT_CAT; }
+  shopSelectedId = null;
+  renderShop();
+  $('screen-dress').scrollTop = 0;
+}
+/* Een schat die nog niet van jou is. Geen tekening (dat is de verrassing) en geen
+   slotje over een gewoon kaartje heen (dat leest als "winkelwaar die op is"), maar
+   het medaillon van zijn eigen wereld met een vraagteken erin -- dezelfde vorm en
+   dezelfde wereldkleuren als de perfecte-wereldkaart in de kast (.pw-medal), zodat
+   "dit hoort bij die wereld" er zonder één woord op staat. */
+function schatRaadselHTML(w) {
+  const th = (w && w.theme) || {};
+  const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
+  return `<div class="item-thumb"><span class="schat-raadsel" style="${kleur}" aria-hidden="true">?</span></div>`;
 }
 /* Eén kaartje, één stand. Zet de klassen van het kaartje en de inhoud van zijn
    pilletje -- zonder het kaartje opnieuw op te bouwen, zodat aandoen en kiezen
@@ -12790,7 +13033,11 @@ function dressCardState(card, it, p) {
   // De wereld die dit spulletje uitdeelt -- null voor alles wat gewoon te koop is.
   const uitWereld = owned ? null : beloningWereld(it.id);
   const nieuw = shopJustBoughtId === it.id;
+  // schat-kaart hoort bij het kaartje en niet bij zijn stand: renderShop zet hem
+  // erop, dus hij moet deze herbouw van className overleven.
+  const schat = card.classList.contains('schat-kaart');
   card.className = 'item-card'
+    + (schat ? ' schat-kaart' : '')
     + (equipped ? ' equipped' : (owned ? ' owned' : ''))
     + (uitWereld ? ' teverdienen' : '')
     + (shopSelectedId === it.id ? ' selected' : '')
@@ -12800,10 +13047,12 @@ function dressCardState(card, it, p) {
   if (nieuw)          { st.className = 'item-status new';   st.textContent = 'Nieuw!'; }
   else if (equipped)  { st.className = 'item-status on';    st.textContent = '✓ Aan'; }
   else if (owned)     { st.className = 'item-status owned'; st.textContent = 'Van jou'; }
-  // Niet te koop, maar wél te halen: het icoon van de wereld zegt waar. De hele
-  // zin staat in de balk onderaan zodra je hem aantikt (zie renderDressBar) --
-  // op een kaartje van 115 pixels past geen uitleg.
-  else if (uitWereld) { st.className = 'item-status slot';  st.textContent = `🔒 ${uitWereld.icon || '🌍'}`; }
+  /* Nog te verdienen. Sinds fase 6E staat zo'n kaartje alleen nog in het
+     schattenvak, en daar draagt het al de naam van zijn wereld en het wereldteken
+     in de hoek -- het pilletje hoeft dus alleen nog te zeggen wat je moet doen.
+     Bewust dezelfde rustige taal als "te weinig diamanten": het is een doel om
+     naartoe te spelen, geen aanbieding. Geen prijs, nooit: er is er geen. */
+  else if (uitWereld) { st.className = 'item-status slot';  st.textContent = '🔒 Speel uit'; }
   else if (p.diamonds < it.price) { st.className = 'item-status need';  st.textContent = `💎 ${it.price}`; }
   else                { st.className = 'item-status price'; st.textContent = `💎 ${it.price}`; }
 }
@@ -12814,7 +13063,13 @@ function dressCardState(card, it, p) {
 function paintShop() {
   const p = P();
   const selected = shopSelectedId ? item(shopSelectedId) : null;
-  const preview = selected ? previewProfile(p, selected) : p;
+  /* Passen mag, maar een schat die nog niet van jou is past niemand. Bij een
+     koopstuk is de pop de etalage ("zo zou je eruitzien voor 45 💎") en dat hoort
+     zo te blijven; bij een wereldschat is juist het níet weten de beloning, en
+     één tik zou daar het hele raadsel uit halen. De pop blijft dus staan zoals ze
+     staat, en het kaartje blijft het medaillon met het vraagteken. */
+  const geheim = selected && isBeloning(selected.id) && !p.owned.includes(selected.id);
+  const preview = (selected && !geheim) ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
   /* Alleen de pop. Hier stond applyStage(): dat zette het podium dat dit kind
      ooit kocht áchter haar, met drie emoji in de hoeken. Podia zijn sinds fase 1
@@ -12880,8 +13135,11 @@ function renderDressBar(it, p) {
      wereld die dit spulletje uitdeelt. Wat je moet doen staat er gewoon. */
   const uitWereld = owned ? null : beloningWereld(it.id);
   if (uitWereld) {
+    /* En zonder de naam van het spulletje, want die verklapt het (fase 6E). Het
+       kaartje zegt bij wélke wereld hij hoort en de balk zegt wat je ervoor doet;
+       wát het is blijft tot het feestje na de laatste show. */
     bar.innerHTML = `
-      <div class="db-info"><span class="db-name">${naam(it)}</span>
+      <div class="db-info"><span class="db-name">🎁 Geheime wereldschat</span>
         <span class="db-sub">· Speel ${esc(uitWereld.name)} uit</span></div>`;
     return;
   }
