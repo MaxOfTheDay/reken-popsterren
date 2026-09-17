@@ -750,6 +750,46 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'en de wereld die ze op het scherm heeft zit erbij', JSON.stringify(r.gehaald));
   await verseCtx.close();
 
+  /* ---- 13 · De wereldnaam in de kop past op elke telefoon (fase 6C) ----
+     De naam is het enige woord op het hoofdscherm, en hij werd afgeknipt: de
+     middenkolom van de kop is (schermbreedte - 204) breed en "Piratenwereld" is
+     177, dus op 375 viel er 6 pixel af, op 360 twintig en op 320 zestig. Zonder
+     ellips (die werkt niet op een inline-flex-knop) werd dat een harde snee:
+     "Junglewer".
+
+     Vandaar deze meting, over élke wereld en over de maten die er echt zijn --
+     geen vastgelegde getallen, want een nieuwe wereld met een langere naam hoort
+     hier om te vallen en niet op een tablet van iemand anders. */
+  const kopCtx = await browser.newContext();
+  await cacheFonts(kopCtx);
+  const kop = await kopCtx.newPage();
+  for (const maat of [[320, 568], [360, 800], [375, 812], [390, 844], [412, 915], [768, 1024]]) {
+    await kop.setViewportSize({ width: maat[0], height: maat[1] });
+    await kop.goto(SPEL_URL);
+    await kop.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Langenaam', 'dress_blauw');
+      q.order = 0; q.diamonds = 1234;
+      db.profiles = { p1: q }; save();
+    });
+    const af = await kop.evaluate(async () => {
+      cur = 'p1';
+      const kwijt = [];
+      for (let i = 0; i < WORLDS.length; i++) {
+        const q = P();
+        q.stars = {}; for (let l = 1; l < WORLD_START[i]; l++) q.stars[l] = 3;
+        q.level = WORLD_START[i];
+        viewWorldIdx = null; goMap();
+        await new Promise(r => setTimeout(r, 80));
+        const el = document.getElementById('map-tournee-label');
+        if (el.scrollWidth > el.clientWidth + 1) kwijt.push(`${WORLDS[i].name} (${el.scrollWidth}>${el.clientWidth})`);
+      }
+      return kwijt;
+    });
+    check(af.length === 0, 'geen wereldnaam wordt in de kop afgeknipt', maat.join('x') + ': ' + af.join(', '));
+  }
+  await kopCtx.close();
+
   await browser.close();
 
   /* ================= Uitslag ================= */

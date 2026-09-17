@@ -139,6 +139,39 @@ function check(ok, label, detail) {
       'A · twee sterren is geen perfecte wereld', JSON.stringify(r));
     check(r.gekocht === 0,
       'A · en een verdiend spulletje telt niet als gekocht', JSON.stringify(r));
+    /* FASE 6C · van het feestje naar het spulletje.
+     *
+     * Het feestje laat de tekening en de naam één keer zien en sluit zichzelf.
+     * Daarna ligt het spulletje in de kleedkamer -- in de zesde lade, achter een
+     * rij die opzij geschoven moet worden. Wie hem wilde zien moest raden waar.
+     * Daarom wijst de tweede knop van het eindscherm ná zo'n show naar dát
+     * spulletje: de juiste lade open, het stuk gekozen, en de pop draagt het al.
+     * Eén show later is het gewoon weer "Kleedkamer" -- zie zaak D. */
+    const weg = await page.evaluate(async () => {
+      window.__sluitFeest();
+      const alt = document.getElementById('btn-end-alt');
+      const label = alt.textContent;
+      alt.click();
+      await new Promise(r => setTimeout(r, 200));
+      const kaart = document.querySelector('.item-card[data-item="acc_wereld_muziek"]');
+      return {
+        label,
+        scherm: (document.querySelector('.screen.active') || {}).id,
+        lade: shopCat, gekozen: shopSelectedId,
+        gekozenKaart: !!(kaart && kaart.classList.contains('selected')),
+        balk: document.getElementById('dress-bar').textContent.replace(/\s+/g, ' ').trim(),
+        popDraagt: avatarSVG(previewProfile(P(), item('acc_wereld_muziek')), 100)
+          .includes(item('acc_wereld_muziek').draw('meisje', 1)),
+        naam: item('acc_wereld_muziek').name,
+      };
+    });
+    // geen vaste tekst in de test: de naam komt uit ITEMS, net als op het feestje
+    check(weg.label.indexOf(weg.naam) >= 0,
+      'A · de tweede knop noemt het spulletje zelf', `${weg.label} (naam: ${weg.naam})`);
+    check(weg.scherm === 'screen-dress' && weg.lade === 'acc' && weg.gekozen === 'acc_wereld_muziek' && weg.gekozenKaart,
+      'A · en brengt je er rechtstreeks naartoe, met het kaartje gekozen', JSON.stringify(weg));
+    check(/Doe aan/.test(weg.balk) && weg.popDraagt,
+      'A · de balk zegt "Doe aan" en de pop draagt het al', JSON.stringify(weg));
     // het spulletje gedraagt zich als elk ander kledingstuk
     const aan = await page.evaluate(() => {
       window.__sluitFeest();
@@ -257,6 +290,14 @@ function check(ok, label, detail) {
       'D · en levert geen tweede exemplaar van het spulletje op', JSON.stringify({ voor: voor.owned, na: r.owned }));
     check(r.perfect.join() === voor.perfect.join() && r.perfect.length === 1,
       'D · en ook geen tweede trofee', JSON.stringify(r.perfect));
+    // FASE 6C: de wegwijzer naar het nieuwe spulletje hoort ook weg te zijn. Hij
+    // hangt aan hetzelfde feestje, dus zonder feestje is het gewoon "Kleedkamer".
+    const alt = await page.evaluate(() => ({
+      label: document.getElementById('btn-end-alt').textContent,
+      naam: item('acc_wereld_muziek').name,
+    }));
+    check(alt.label.indexOf('Kleedkamer') >= 0 && alt.label.indexOf(alt.naam) < 0,
+      'D · en de tweede knop is weer gewoon de kleedkamer', JSON.stringify(alt));
     await ctx.close();
   }
 
