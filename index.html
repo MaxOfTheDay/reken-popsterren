@@ -631,13 +631,13 @@
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
   .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
-  /* .purple/.green/.gray zetten hun eigen achtergrond, dus ook expliciet hun
+  /* .purple/.gray zetten hun eigen achtergrond, dus ook expliciet hun
      eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
-     gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is */
+     gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is.
+     (Er was ook een .green; geen enkele knop droeg hem nog. De groene
+     kleurtrap --green-* zelf is wél in gebruik: goede antwoorden.) */
   .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
   .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.green { color: var(--c-white); background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
-  .btn.green:active { box-shadow: 0 1px 0 var(--green-shadow); }
   /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
   .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); }
   .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
@@ -648,24 +648,21 @@
      oranje randje. Nu draagt elke variant zijn eigen kleine lip. */
   .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
   .btn.small.purple { box-shadow: 0 3px 0 var(--purple-shadow); }
-  .btn.small.green  { box-shadow: 0 3px 0 var(--green-shadow); }
   .btn.small.gray   { box-shadow: 0 3px 0 var(--gray-shadow); }
   .btn.small:active { box-shadow: 0 1px 0 var(--gold-cta-shadow); }
   .btn.small.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.small.green:active  { box-shadow: 0 1px 0 var(--green-shadow); }
   .btn.small.gray:active   { box-shadow: 0 1px 0 var(--gray-shadow); }
   /* De tweede knop op een wit vel. .soft is gemaakt voor het paarse scherm (een
-     lichte glazen vulling) en verdwijnt op papier; .ghost is daar helemaal
-     onzichtbaar. Dit is dezelfde taal als een niet-gekozen .chip -- witte
-     vulling, paarse letter, een fijne rand -- en dus geen nieuwe knopsoort,
-     maar wel een tweede gewicht waar er tot nu toe maar één was. */
+     lichte glazen vulling) en verdwijnt op papier. Dit is dezelfde taal als een
+     niet-gekozen .chip -- witte vulling, paarse letter, een fijne rand -- en dus
+     geen nieuwe knopsoort, maar wel een tweede gewicht waar er tot nu toe maar
+     één was. */
   .btn.small.paper {
     color: var(--purple-mid); background: var(--c-white);
     border: 1.5px solid var(--paper-border); box-shadow: 0 2px 0 var(--paper-border);
   }
   .btn.small.paper:hover { border-color: var(--purple-light); }
   .btn.small.paper:active { transform: translateY(2px); box-shadow: none; }
-  .btn.ghost { background: rgba(255,255,255,.15); box-shadow: none; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
     font-size: 17px; padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
@@ -835,7 +832,8 @@
   .star-grid.kol-0 { grid-template-columns: minmax(0, 232px); }
   .star-grid.kol-1 { grid-template-columns: minmax(0, 148px); }
   .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, 136px)); }
-  .star-grid.kol-3 { grid-template-columns: repeat(3, minmax(0, 130px)); }
+  /* Drie kolommen staan al in .star-grid hierboven: renderProfiles zet daarom
+     alleen kol-0/1/2 en laat drie of meer sterren op de basisregel vallen. */
   @media (max-width: 380px) { .star-grid { gap: 10px; } }
   /* Het blok titel + sterren + knop hoort bij elkaar en staat samen in het midden.
      De auto-marge stond hiervoor op de rij zelf, dus alles eronder werd naar de
@@ -1203,21 +1201,20 @@
   }
   /* op de kaart draagt de kop twee dingen: wélke wereld, en waar je daarin bent */
   .world-sub { display: block; font-size: 13px; font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
-  .world-stars { margin-left: 2px; }
   .screen-header .header-left { justify-self: start; }
   .screen-header .header-right { justify-self: end; }
-  /* één teller-pil, in twee maten: groot (schermkoppen) en klein (kaart-topbalk, spelbalk) */
-  .diamond-badge, .chip-badge {
+  /* De teller-pil. Er stonden er drie maten naast elkaar (.chip-badge en
+     .diamond-badge.compact); geen van beide werd nog ergens gezet, en één
+     💎-pil in één maat is ook precies wat de kop op elk scherm nodig heeft. */
+  .diamond-badge {
     background: var(--glass-black-32); border-radius: var(--r-pill); font-weight: 700;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-  }
-  .diamond-badge { padding: 8px 18px; font-size: 22px;
+    padding: 8px 18px; font-size: 22px;
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
-    border: 0; color: inherit; font-family: inherit; }
+    border: 0; color: inherit; font-family: inherit;
+  }
   button.diamond-badge { cursor: pointer; }
   button.diamond-badge:active { transform: scale(.95); }
-  .diamond-badge.compact { font-size: 18px; padding: 6px 14px; }
-  .chip-badge { padding: 6px 13px; font-size: 16px; gap: 5px; }
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
   /* ---- Kaart (hoofdscherm): topbalk, wolkjes en vaste navigatie onderaan ---- */
@@ -1519,7 +1516,7 @@
 
   /* ---- Spel ----
      Zelfde donkerpaarse .hub-sticky-kop als Kaart/Kleedkamer/Trofeeënkast: ✕ stoppen ·
-     stad · 💎 op de eerste regel, hartjes + vraag-voortgang samen gecentreerd op de tweede.
+     wereld · 💎 op de eerste regel, hartjes + vraag-voortgang samen gecentreerd op de tweede.
      #screen-game heeft (anders dan de andere hub-schermen) overal gelijke 8px padding.
      Dat stond hier vroeger nog een keer als een eigen kop-regel met -8px/16px/10px erin
      uitgerekend; nu zet het scherm alleen --rand en --kop-gap om (zie .screen) en volgt
@@ -2041,10 +2038,9 @@
   .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
   /* de cijfer-stippen (fase 10/11) staan als net rijtje ónder het cijfer, gecentreerd */
   .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, -30px); }
-  /* wegstrepen bij aftrekken: doorgestreept + gedimd */
-  .cgroup.crossed .cg-obj, .cgroup.crossed .cg-dot { opacity: .4; text-decoration: line-through; position: relative; }
-  .cgroup.crossed .cg-dot { filter: grayscale(1); }
-  /* per-stuk wegstrepen binnen één startgroep (aftrekken: 5 dingen, laatste 3 weg) */
+  /* Wegstrepen bij aftrekken gebeurt per stuk binnen één startgroep (5 dingen,
+     laatste 3 weg). Er stond hier ook een .cgroup.crossed dat een hele groep
+     doorstreepte; die klasse werd nergens meer gezet. */
   .cg-obj.xed { opacity: .45; text-decoration: line-through; text-decoration-thickness: 2px; }
   .df-dot.xed { opacity: .5; filter: grayscale(1); position: relative; }
   .df-dot.xed::after { content: ''; position: absolute; left: -30%; right: -30%; top: calc(50% - 1.25px); height: 2.5px; background: var(--purple-shadow); transform: rotate(-15deg); border-radius: 2px; }
@@ -3003,10 +2999,10 @@
   .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); }
   .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
-     stadsicoon blijft gewoon zichtbaar in de tegel eronder. Voeten landen
+     shownummer blijft gewoon zichtbaar in de tegel eronder. Voeten landen
      net op de bovenrand van de tegel (klein overlapje voor het "staat erop"-
      gevoel + contactschaduw), niet halverwege: dieper zakken zou het
-     gecentreerde stadsicoon onder haar voeten bedekken. Zelfde element voor
+     gecentreerde shownummer onder haar voeten bedekken. Zelfde element voor
      de reisanimatie (zie runTravel): tijdens het huppelen staat ze op de
      vorige halte. */
   /* "Hier sta ik" moet je in minder dan een seconde zien, en zij is dat signaal --
@@ -3075,7 +3071,6 @@
 
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
-    .chip-badge { font-size: 14px; padding: 5px 10px; }
     #screen-map .diamond-badge { font-size: 17px; padding: 6px 13px; }
     .map-portrait { width: 38px; height: 38px; }
     .map-portrait svg { top: -5px; width: 65px; }
@@ -5508,7 +5503,7 @@
 
      Helpers ............ mini-hulpjes ($, rnd, pick, shuffle)
      Items .............. kleerkast-inhoud (data)
-     Wereldtournee ...... steden + level→stad (data)
+     Werelden ........... WORLDS + level→wereld + afgeleide voortgang (data)
      Trofeeën ........... trofee-definities + planken (data)
      Sterrencarrière .... rang-ladder op sterren (RANK_TIERS, starRank)
      Opslag ............. db, load/save, migratie, profielen
@@ -5860,14 +5855,11 @@ const CATS = [
   // altijd het decor achter de paspop (zie applyStage), en wie er al een had
   // houdt hem gewoon. Alleen de winkel-ingang is dicht.
 ];
-function catCount(p, cat) { return p.owned.filter(id => { const it = item(id); return it && it.cat === cat; }).length; }
-const INSTR_TOTAL = ITEMS.filter(i => i.cat === 'instrument').length;
-function instrCount(p) { return catCount(p, 'instrument'); }
-const PET_TOTAL = ITEMS.filter(i => i.cat === 'pet').length;
-function petCount(p) { return catCount(p, 'pet'); }
-const DRESS_TOTAL = ITEMS.filter(i => i.cat === 'dress').length;
-const SHOES_TOTAL = ITEMS.filter(i => i.cat === 'shoes').length;
-const HAIR_TOTAL = ITEMS.filter(i => i.cat === 'hair').length;
+/* Hier stonden acht tellers per categorie (catCount/instrCount/petCount en de vijf
+   *_TOTAL-constanten). Ze bedienden de "koop alles uit deze categorie"-trofeeën,
+   en die zijn in fase 5C met pensioen gegaan (zie RETIRED_TROPHIES). Sindsdien
+   riep niets ze nog aan. Komt er ooit weer een vraag over één categorie, dan is
+   dat één filter op p.owned en geen tabel die bijgehouden moet worden. */
 
 /* ================= Werelden =================
    Een wereld is een stuk van de tournee: een vast aantal levels met een eigen
@@ -6450,12 +6442,6 @@ function worldProgress(p, w) {
   }
   return { levels: w.levels, gespeeld, perfect, sterren, max: w.levels * 3,
            uit: gespeeld >= w.levels, vol: perfect >= w.levels };
-}
-// Sterren binnen één wereld: het enige totaal dat een kind ook echt vól kan
-// krijgen (in tegenstelling tot het aflopende sterrentotaal over alles heen).
-function worldStars(p, w) {
-  const v = worldProgress(p, w);
-  return { got: v.sterren, max: v.max };
 }
 
 /* ================= De voortgang, afgeleid ==================================
@@ -7733,7 +7719,7 @@ function show(id) {
   if (navId) updateTroDot();
   syncBackGuard();   // elk schermwissel loopt door hier heen -- zie "Terug-navigatie" onderaan
 }
-// Kaart is altijd "thuis" (goMap() start zelf al altijd bij de huidige stad,
+// Kaart is altijd "thuis" (goMap() start zelf al altijd bij de huidige wereld,
 // nooit een onthouden positie). Kleedkamer/Trofeeën onthouden juist wél waar
 // je was: nogmaals tikken op het tabblad waar je al op stond geeft een verse
 // start; vanuit een ánder tabblad hervat je gewoon waar je gebleven was.
@@ -10121,18 +10107,27 @@ function renderShelves() {
   save();
   updateTroDot();
 }
-// Enkelvoud voor "Nog 1 ..."; alleen waar het meervoud lelijk zou staan.
+/* Enkelvoud voor "Nog 1 ..."; alleen waar het meervoud lelijk zou staan.
+
+   Precies één regel per label dat een actieve trofee werkelijk teruggeeft uit
+   progress() -- niet meer. Er stonden er twaalf die nergens meer vandaan kwamen
+   ('steden' uit het stedenmodel, 'outfits'/'schoenen'/'haarkleuren'/'dieren' van
+   de koop-alles-trofeeën, 'diamanten' van de saldotrofeeën; zie
+   RETIRED_TROPHIES). Een tabel met dode sleutels leest als een lijst van wat er
+   bestaat, en dat was het niet meer.
+
+   Komt er een trofee met een nieuw label bij, dan hoort hier één regel bij --
+   inhoud.test.js zaak F valt om als dat vergeten wordt. */
 const TROPHY_UNIT_SINGULAR = {
-  'shows': 'show', 'steden': 'stad', 'sommen': 'som', 'sterren': 'ster',
+  'shows': 'show', 'sommen': 'som',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
-  'spulletjes': 'spulletje', 'outfits': 'outfit', 'schoenen': 'schoen',
-  'haarkleuren': 'haarkleur', 'instrumenten': 'instrument',
-  'dieren': 'dier', 'diamanten': 'diamant', 'stukken': 'stuk', 'trofeeën': 'trofee',
-  'werelden': 'wereld',
-  'extra shows': 'extra show'
+  'spulletjes': 'spulletje',
+  // 'uit' is geen telwoord-achtervoegsel maar hoort bij het label ("werelden uit"),
+  // dus unitText() knipt het er niet af en staat de hele zin hier.
+  'werelden uit': 'wereld uit'
 };
-// Maakt van een voortgangslabel ("steden bereikt") een kaal zelfstandig
-// naamwoord ("steden") voor de "Nog X ..."-tekst; enkelvoud bij precies 1.
+// Maakt van een voortgangslabel ("sommen goed") een kaal zelfstandig
+// naamwoord ("sommen") voor de "Nog X ..."-tekst; enkelvoud bij precies 1.
 function unitText(label, remaining) {
   let noun = label
     .replace(/^paar /, '')
@@ -11899,7 +11894,7 @@ function endLevel(success) {
   if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
   let rankUp = null;   // gevuld als de ster-status stijgt; viert zichzelf na het eindscherm
   let feest = null;    // FASE 4D.1: wereld uit en/of perfect -- idem, één feestje voor allebei
-  // zelfde kop als tijdens het optreden: stad + 💎-teller, zodat dit scherm
+  // zelfde kop als tijdens het optreden: wereld + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const wl = worldFor(lvl);
   $('end-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
@@ -13636,8 +13631,8 @@ syncBackGuard();
    zonder eerst een half uur te spelen. In het gewone spel bestaat dit blok niet.
 
    ?debug            -- zet de schakelaars aan
-   &demo             -- vult twee voorbeeldsterren (Lotte: rekenen, stad 6 ·
-                        Sem: tellen, stad 2). ALLEEN in het geheugen: er wordt
+   &demo             -- vult twee voorbeeldsterren (Lotte: rekenen, show 6 ·
+                        Sem: tellen, show 2). ALLEEN in het geheugen: er wordt
                         niets opgeslagen, dus een echte familie-opslag op
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt

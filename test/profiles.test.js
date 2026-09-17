@@ -978,7 +978,7 @@ function check(ok, label, detail) {
       // dezelfde vraag via de perfecte-wereldtrofee en via de oude sterrenteller
       const trofee = TROPHIES.filter(t => t.id === 'perfect-' + WORLDS[0].id)[0];
       uit.badgeVolgt = trofee.has(q) === v.vol;
-      uit.tellerVolgt = worldStars(q, w1).got === v.sterren;
+      uit.tellerVolgt = worldProgress(q, w1).sterren === v.sterren;
       q.stars[w1.first + 1] = 3;
       uit.pgVol = worldProgress(q, w1).vol === true;
 
