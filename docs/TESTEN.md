@@ -26,6 +26,7 @@ npm run test:kleedkamer  # de catalogus en de volgorde in het rek
 npm run test:tellen      # ... en de bestaande browsersuites, ongewijzigd
 npm run test:rekenen
 npm run test:sterren
+npm run test:ouder       # het ouderdeel: instellingen, wissen, back-up
 npm run test:rondgang
 npm run test:voortgang
 npm run test:reis
@@ -122,6 +123,61 @@ app vroeger schreef, met de velden die er toen nog niet waren bewust weggelaten.
 - **de rondreis**: openen, bewaren en opnieuw openen komt tot rust -- de tweede en
   derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang.
 
+### `test/ouder.test.js` — het ouderdeel
+
+Een browsersuite (fase 5D). `profiles.test.js` gaat over sterren *maken* en
+*verwijderen*; deze gaat over alles wat er daarna in `👨‍👩‍👧 Voor ouders` gebeurt.
+Het risico zit hier niet in het rekenen maar in de eigendom van gegevens: één
+instelling die per ongeluk op `db` in plaats van op het profiel schrijft, of een
+reset die de oefeninstellingen meesleept, merkt een ouder pas als haar kind
+vastloopt.
+
+- **geluid en trillen** — de twee schakelaars onder het tandwiel zetten `db.sound`
+  en `db.haptics` om, zeggen in woorden én in `aria-checked` welke stand dat is,
+  staan los van elkaar, en overleven een herstart;
+- **oefeninstellingen zijn van één kind** — instellen bij Anna laat Bas byte voor
+  byte staan, het paneel toont bij een wissel de waarden van het gekozen kind, van
+  modus wisselen schakelt alleen dát kind om, en na heropenen klopt het nog;
+- **de kiezer wisselt de context, niet de plek** — een ander kind kiezen laat je op
+  hetzelfde onderdeel staan en andersom;
+- **startfase en hoogste fase** — een start boven het plafond duwt het plafond mee
+  omhoog, een plafond onder de start trekt de start mee omlaag, de zichtbare band
+  (`.chip.bereik`) loopt in béide rijen precies van start tot plafond, en cijfers
+  uitzetten beperkt het aanbod tot vijf fases zonder de gekozen bovengrens weg te
+  gooien;
+- **wissen** — de knop bestaat pas als de openklapper open is, vraagt dan nog een
+  keer, noemt het kind bij naam, zegt wat er *blijft*, doet niets bij "nee", en
+  laat na "ja" de naam, de plek in de rij én alle oefeninstellingen staan;
+- **verwijderen** — zelfde grendel, en de vraag noemt de ster die verdwijnt;
+- **back-up** — wat eruit komt bevat alle sterren plus de app-brede schakelaars;
+  terugzetten vraagt eerst, verandert tot dat moment niets, en zet daarna precies
+  de sterren, diamanten en instellingen uit het bestand terug. Tweemaal hetzelfde
+  bestand geeft tweemaal hetzelfde resultaat;
+- **een kapotte back-up** — onleesbaar, half, of leeg: een melding, en de opslag
+  blijft onaangeraakt;
+- **de plakkende kop** — krimpt bij scrollen en wordt bovenaan weer ruim, maar
+  welk kind gekozen is, welk onderdeel je leest en de weg terug blijven alle drie
+  in beeld;
+- **een ster maken vanuit Beheer** — komt terug in Beheer, bij de nieuwe ster, en
+  begint niet stilletjes háár spel; afbreken maakt niets.
+
+Fase 5D.1 heeft er vier zaken bij gezet:
+
+- **enkelvoud en meervoud** — één show is "1 show gespeeld" en niet "1 shows";
+  nul is meervoud (dat is Nederlands), twee weer ook, en in de telmodus heet een
+  som een vraag. Eén regel (`mv`), dus dit bewaakt de regel en niet de tekst;
+- **de trofeeteller heeft één bron** — de noemer op Voortgang, de kop van de kast
+  en `activeTrophies().length` zijn hetzelfde getal, en er staat geen tweede
+  trofeelijst naast `TROPHIES`. Zonder deze controle lopen ze stil uit elkaar
+  zodra er een wereld bijkomt (`rebuildWorldBadges` zet er dan een trofee bij);
+- **de inschatting zonder percentage** — in het niveau-blok staat geen `%` en
+  geen balk meer, wél waar het kind nú aan werkt, en `p.perf` staat nog gewoon in
+  de opslag en beweegt nog gewoon mee met goede en foute antwoorden. Beide kanten
+  liggen vast: de presentatie is veranderd, het algoritme niet;
+- **drie weergavekeuzes op één regel** — op 390, 360 en 320px drie gelijke
+  kolommen met elk woord op één regel en een raakvlak van minstens 44px; op een
+  onmogelijk smal venster (280px) wikkelt de rij in plaats van de woorden.
+
 ### `test/kleedkamer.test.js` — de catalogus en het rek
 
 De laag ónder wat een kind in de kleedkamer ziet: `ITEMS`, `CATS` en de volgorde
@@ -203,6 +259,13 @@ minstens één suite opgemerkt:
 | een uitgebrachte wereld achter een dichte | kern, saves, inhoud |
 | bij het openen wordt maar één profiel bijgewerkt | saves |
 | `P()` geeft altijd het eerste profiel | saves |
+| een oefeninstelling schrijft op `db` i.p.v. op het profiel | ouderdeel |
+| wissen neemt de oefeninstellingen mee | ouderdeel |
+| de zichtbare fase-band loopt niet van start tot plafond | ouderdeel |
+| een teller staat weer vast in het meervoud | ouderdeel |
+| de trofeenoemer komt uit een tweede lijstje | ouderdeel |
+| het percentage komt terug bij de niveau-inschatting | ouderdeel |
+| de weergavekeuzes vallen weer over twee regels | ouderdeel |
 
 ## Wat er bij het schrijven opviel
 
