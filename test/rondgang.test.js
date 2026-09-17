@@ -122,28 +122,41 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   r = await page.evaluate(() => ({ level: P().level, ster7: P().stars[7] }));
   check(r.ster7 === 3 && r.level === 8, 'foutloos = drie sterren, en een level erbij', JSON.stringify(r));
 
-  /* ---- 4 · Terug naar de kaart: de reis speelt af ---- */
+  /* ---- 4 · Terug naar de kaart: eerst de beloning, dan pas de reis ----
+     De kaart komt meteen op met de zojuist gespeelde halte in beeld, en het
+     sterrentabje landt daar meteen (.net-af) -- vóórdat er iets vertrekt. Pas
+     ná die korte beloningsbeat (zie starRevealBeat) begint het huppelen naar
+     de volgende halte. Twee momenten na elkaar, dus twee metingen: kort na de
+     tik (de beloning) en pas na de volle reis (de aankomst). */
   await page.click('#btn-end-next');
-  await page.waitForTimeout(2600);
+  await page.waitForTimeout(400);
   r = await page.evaluate(() => {
     const af = document.querySelector('.tour-stop.net-af');
     return {
       kaart: document.getElementById('screen-map').classList.contains('active'),
-      nu: (document.querySelector('.tour-stop.next') || {}).dataset,
       /* Fase 4C: de halte die je zojuist speelde zet zijn score vast -- het
-         sterrentabje landt eronder (.net-af). Dát is het hele "terugkomst"-moment,
-         en het hoort op de zojuist gespeelde halte te staan en nergens anders. */
+         sterrentabje landt eronder (.net-af). Dát is het hele beloningsmoment,
+         en het hoort op de zojuist gespeelde halte te staan en nergens anders --
+         en op dít moment, vóór de reis, niet pas bij de aankomst. */
       afLvl: af ? af.dataset.lvl : null,
       afSterren: af ? af.querySelectorAll('.cs-vol').length : -1,
       afPerfect: af ? af.classList.contains('perfect') : false,
       afAantal: document.querySelectorAll('.tour-stop.net-af').length,
     };
   });
-  check(r.kaart && r.nu && r.nu.lvl === '8', 'terug op de kaart staat de ster op de volgende halte', JSON.stringify(r));
+  check(r.kaart, 'de kaart staat er al vóór de reis begint', JSON.stringify(r));
   check(r.afLvl === '7' && r.afAantal === 1,
-    'de zojuist gespeelde halte -- en alleen die -- krijgt het terugkomst-moment', JSON.stringify(r));
+    'de zojuist gespeelde halte -- en alleen die -- krijgt het beloningsmoment vóór het vertrek', JSON.stringify(r));
   check(r.afSterren === 3 && r.afPerfect,
     'de verdiende sterren landen erin, en drie sterren leest als perfect', JSON.stringify(r));
+  await page.waitForTimeout(2600);
+  r = await page.evaluate(() => ({
+    nu: (document.querySelector('.tour-stop.next') || {}).dataset,
+    afAantal: document.querySelectorAll('.tour-stop.net-af').length,
+  }));
+  check(r.nu && r.nu.lvl === '8', 'terug op de kaart staat de ster op de volgende halte', JSON.stringify(r));
+  check(r.afAantal === 0,
+    'bij aankomst is het beloningsmoment allang voorbij, en speelt het niet opnieuw af op de nieuwe halte', JSON.stringify(r));
   /* Eenmalig: de opdracht wordt bij het tekenen verbruikt. Zonder dat zou het
      tabje bij élke kaartopbouw opnieuw komen inlanden -- ook als je alleen maar
      via de balk langs de kaart loopt. */
@@ -300,9 +313,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
   /* ---- 6a2 · De onthulling van een nieuwe wereld ----
      Een wereld die voor het eerst opengaat krijgt méér dan een gewone wissel: eerst
-     een tel stilte op de afgemaakte wereld (daarin beweegt er nog niets), dan
-     dezelfde klim maar trager. Hij hangt aan pendingTravel, en die wordt alleen bij
-     een level-up gezet -- dus hij kan niet nog eens spelen als je later terugkomt.
+     landen de sterren van de afgemaakte halte (de beloningsbeat, zie
+     starRevealBeat), dan een tel stilte op de afgemaakte wereld (daarin beweegt
+     er nog niets), dan dezelfde klim maar trager. Hij hangt aan pendingTravel, en
+     die wordt alleen bij een level-up gezet -- dus hij kan niet nog eens spelen
+     als je later terugkomt.
 
      De voortgang blijft hier expres staan waar hij stond: dit bootst precies na wat
      het eindscherm doet bij de sprong van halte 8 naar halte 9. */
@@ -321,7 +336,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
                      grendel: wereldReisBezig(),
                      kiezer: document.getElementById('screen-journey').classList.contains('active'),
                      kaartDicht: document.getElementById('tour-map').style.pointerEvents === 'none' };
-    await wacht(500);                                   // de klim loopt
+    await wacht(1600);                                  // de beloningsbeat is voorbij, de klim loopt
     const reis = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
                    grendel: wereldReisBezig() };
     await wacht(1500);

@@ -3179,13 +3179,15 @@
      mag laten zien wat er veranderd is.
 
      Eén beat, en niet meer dan dat: het tabje valt onder de halte in en de drie
-     plekken ploppen er kort achter elkaar in. Samen 0,4 seconde. Er komt geen
-     beloning bij, geen confetti (die valt al bij de volgende halte, zie
+     plekken ploppen er kort achter elkaar in. Samen ruim 0,5 seconde. Er komt
+     geen beloning bij, geen confetti (die valt pas bij de volgende halte, zie
      runTravel) en geen tweede cijfer -- alleen "dit is wat je hier gehaald hebt".
 
-     Bij een level-up valt dit precies samen met de aankomst van de ster op de
-     volgende halte: deze halte zet zijn score vast, die daar poft open. Twee
-     verschillende haltes, dus twee bewegingen die elkaar niet in de weg zitten.
+     Bij een level-up gebeurt dit juist NIET tegelijk met de aankomst op de
+     volgende halte: het is de beloning vóór het vertrek, en de aankomst moet
+     het grote moment blijven. Daarom wacht goMap met de reisanimatie tot deze
+     beat voorbij is (zie starRevealBeat) -- twee verschillende haltes, twee
+     momenten na elkaar, en geen twee feestjes tegelijk.
 
      Eenmalig: renderTourMap zet .net-af maar één keer (zie netAf daar), dus een
      latere kaart via de navigatiebalk begint gewoon stil. Puur transform en
@@ -9386,6 +9388,26 @@ let naShowLvl = null, kaartFocus = null;
 let netAf = null;
 // de grendel op de terugweg (zie goMap) -- het tegenhangertje van overgangBezig
 let terugBezig = false, terugTimer = null;
+/* Het beloningsmomentje vóór het vertrek. De landing van de sterren zélf staat
+   al in renderTourMap/de CSS (.net-af, sterLandt) -- hier komt alleen het
+   geluid bij (oplopende toontjes, één per verdiende ster) en één zachte tik
+   zodra de laatste ster ook echt geland is. cb (de reisanimatie) wacht tot
+   die hele beat voorbij is: eerst de beloning, dan pas het vertrek.
+
+   STAP en LAND zijn dezelfde getallen als de val-vertraging (.1/.185/.27s) en
+   de landingsduur (.28s) in de CSS -- verander je de één, meet dan de ander
+   na. Zonder sterren om te laten landen (kan niet: een geslaagde show geeft er
+   altijd minstens één) of zonder beweging is er niets om op te wachten, en
+   gaat cb meteen los. */
+function starRevealBeat(lvl, cb) {
+  const st = Math.max(0, Math.min(3, P().stars[lvl] || 0));
+  if (!st || motionOff()) { cb(); return; }
+  const STAP = .085, LAND = .28;
+  for (let i = 0; i < st; i++) beep(660 + i * 140, .09, .1 + i * STAP, 'sine', .05);
+  const landt = Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
+  setTimeout(() => buzz(16), landt + 40);
+  setTimeout(cb, landt + 200);   // + een kort, natuurlijk stiltetje vóór het vertrek
+}
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
 
 function goMap(vanLvl) {
@@ -10201,12 +10223,15 @@ function renderTourMap(travelFrom) {
      het einde, en dan hoort ze op de laatste halte te staan die er wél is.
      hereLevel() klemt dat; playable blijft p.level, dus alles blijft open. */
   const heroLvl = travelling ? travelFrom : hereLevel(p);
-  /* De tussenstand vlak vóór de reisanimatie toont de score van de zojuist
-     gespeelde halte nog niet (gespeeld is daar false) -- het momentje hoort dus
-     bij de kaart die er ná het huppelen staat, en niet bij deze. Daarom blijft de
-     opdracht tijdens een reis staan en wordt hij pas in de eindstand verbruikt. */
-  const netAfLvl = travelling ? 0 : netAf;
-  if (!travelling) netAf = null;
+  /* De sterren van de zojuist gespeelde halte landen hier, bij de allereerste
+     tekening van de kaart -- vóór er iets vertrekt. Dat geldt ook voor de
+     tussenstand vlak vóór een reisanimatie: juist dáár hoort het
+     beloningsmomentje (zie starRevealBeat in goMap), niet pas bij de aankomst
+     op de volgende halte. netAf wordt daarom verbruikt zodra hij gebruikt is,
+     ongeacht travelling -- de latere tekening die de aankomst laat zien, raakt
+     deze halte niet nog eens aan. */
+  const netAfLvl = netAf;
+  netAf = null;
 
   const map = $('tour-map');
   map.innerHTML = '';
@@ -10471,11 +10496,13 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
    eromheen, want dit is het moment waar de hele wereld naartoe werkte:
 
      1  de badge van de afgemaakte wereld stijgt van de kaart naar de trofeeënkast
-     2  een halve tel stilte: de afgemaakte wereld staat er nog, en dat mag even
-     3  de camera klimt door, trager dan bij rondkijken en met meer aanzet
-     4  de nieuwe wereld zakt op zijn plek -- het kader komt een tikje te groot
+     2  de sterren van de zojuist gespeelde halte landen (zie starRevealBeat) --
+        de beloning voor wat je net deed, vóórdat je ergens anders naartoe gaat
+     3  een halve tel stilte: de afgemaakte wereld staat er nog, en dat mag even
+     4  de camera klimt door, trager dan bij rondkijken en met meer aanzet
+     5  de nieuwe wereld zakt op zijn plek -- het kader komt een tikje te groot
         binnen en zoomt na, zoals een camera die tot stilstand komt
-     5  confetti en de naam van de wereld (zie vier() in runTravel)
+     6  confetti en de naam van de wereld (zie vier() in runTravel)
 
    Wat het níet is: een tussenscherm, een titelkaartje of een beloningsvenster.
    De nieuwe wereld ís de beloning, dus die hoort in beeld te komen -- niet
@@ -10492,18 +10519,18 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
    De badge vliegt vóór de stilte, niet erna: dezelfde beweging als flyDiamonds,
    dus dezelfde taal als "je hebt iets verdiend". Hij landt op de káárt waar de
    reis gebeurde, en niet pas op een volgend scherm. */
-function runWorldChange(fromW, toW, plaats, vier, still) {
+function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   const map = $('tour-map');
   flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
   if (!map || !map.animate || still) { plaats(); vier(); return; }
-  /* De grendel gaat dicht vóór de stilte en niet pas als de camera vertrekt. Die
-     halve seconde is namelijk het enige gat waarin een kind nog een wereld zou
-     kunnen kiezen -- en dan reist de kaart eerst daarheen en een tel later alsnog
-     naar de wereld die net openging. De kaart zelf gaat om dezelfde reden op slot:
-     een tik tijdens de stilte hoort geen show te starten in een wereld die al
-     uitgespeeld is.
+  /* De grendel gaat dicht vóór de beloningsbeat en de stilte, en niet pas als de
+     camera vertrekt. Dat hele stuk is namelijk het enige gat waarin een kind nog
+     een wereld zou kunnen kiezen -- en dan reist de kaart eerst daarheen en een
+     tel later alsnog naar de wereld die net openging. De kaart zelf gaat om
+     dezelfde reden op slot: een tik tijdens de beloning of de stilte hoort geen
+     show te starten in een wereld die al uitgespeeld is.
 
-     Wordt de stilte alsnog afgebroken (de navigatiebalk, de terugknop van het
+     Wordt het alsnog afgebroken (de navigatiebalk, de terugknop van het
      toestel, een andere ster kiezen), dan zet de opruimer de nieuwe wereld gewoon
      neer -- zónder confetti, want dan staat het kind allang ergens anders te
      kijken. De voortgang en de zichtbare kaart blijven het eens. */
@@ -10515,12 +10542,16 @@ function runWorldChange(fromW, toW, plaats, vier, still) {
   };
   map.style.pointerEvents = 'none';
   wereldReisOp = wachten;
-  timer = setTimeout(() => {
-    gestart = true;
-    if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
-    map.style.pointerEvents = '';
-    wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-  }, WERELDREIS.beat);
+  // eerst de sterren van de afgemaakte wereld laten landen, dan pas de klim
+  starRevealBeat(fromLvl, () => {
+    if (wereldReisOp !== wachten) return;   // ondertussen afgebroken -- wachten() heeft al opgeruimd
+    timer = setTimeout(() => {
+      gestart = true;
+      if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
+      map.style.pointerEvents = '';
+      wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+    }, WERELDREIS.beat);
+  });
 }
 /* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
    midden van de kaart, met een boogje. */
@@ -10591,25 +10622,31 @@ function runTravel(t) {
     showPraise('✨ Alle werelden uit!');
     return;
   }
-  if (crossing) { runWorldChange(fromW, toW, plaats, vier, still); return; }
+  if (crossing) { runWorldChange(t.from, fromW, toW, plaats, vier, still); return; }
   if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
-  const dx = to.offsetLeft - from.offsetLeft;
-  const dy = to.offsetTop - from.offsetTop;
-  // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
-  const frames = [];
-  for (let i = 0; i <= 6; i++) {
-    frames.push({
-      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -30 : 0)}px)`,
-      offset: i / 6,
-      easing: i % 2 ? 'ease-in' : 'ease-out'
-    });
-  }
-  buzz([0, 25, 90, 25, 90, 25]);
-  const anim = hero.animate(frames, { duration: 1400, delay: 400, fill: 'forwards' });
-  growRoad(map, t.from, t.to, 1400, 400);   // het goud loopt met haar mee
-  const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
-  setTimeout(() => clearInterval(trail), 1850);
-  anim.onfinish = finish;
+  /* Eerst de beloning, dan pas het huppelen (zie starRevealBeat): de sterren van
+     de zojuist gespeelde halte landen hier al (netAf, zie renderTourMap), en
+     pas als die beat voorbij is vertrekt ze -- anders valt de aankomst op de
+     volgende halte samen met de sterren die hier nog aan het landen zijn. */
+  starRevealBeat(t.from, () => {
+    const dx = to.offsetLeft - from.offsetLeft;
+    const dy = to.offsetTop - from.offsetTop;
+    // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
+    const frames = [];
+    for (let i = 0; i <= 6; i++) {
+      frames.push({
+        transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -30 : 0)}px)`,
+        offset: i / 6,
+        easing: i % 2 ? 'ease-in' : 'ease-out'
+      });
+    }
+    buzz([0, 25, 90, 25, 90, 25]);
+    const anim = hero.animate(frames, { duration: 1400, delay: 400, fill: 'forwards' });
+    growRoad(map, t.from, t.to, 1400, 400);   // het goud loopt met haar mee
+    const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
+    setTimeout(() => clearInterval(trail), 1850);
+    anim.onfinish = finish;
+  });
 }
 /* ================= Trofeeën-scherm ================= */
 // Verse start (o.a. nogmaals op het al-actieve Trofeeën-tabblad tikken):
