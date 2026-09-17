@@ -229,10 +229,10 @@ function check(ok, label, detail) {
     check(r.haltes.filter(h => h.zegel).map(h => h.w).join() === '0,1',
       'C · de twee uitgespeelde werelden dragen een zegel', JSON.stringify(r.haltes.map(h => h.zegel)));
     /* De teller komt uit dezelfde bron als de wereldbadge in de kast. Hij hoort dus
-       exact te zeggen wat worldStars() zegt -- geen los getal op het scherm. */
+       exact te zeggen wat worldProgress() zegt -- geen los getal op het scherm. */
     const echt = await page.evaluate(() => WORLDS.map((w, i) => {
-      const v = worldStars(P(), worldForIndex(i));
-      return v.got + '/' + v.max;
+      const v = worldProgress(P(), worldForIndex(i));
+      return v.sterren + '/' + v.max;
     }));
     check(r.haltes.slice(0, 3).every(h => (h.teller || '').indexOf(echt[h.w]) >= 0),
       'C · de sterrenteller zegt wat de voortgang zegt',
