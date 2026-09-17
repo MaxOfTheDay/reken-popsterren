@@ -93,11 +93,12 @@ Vormen die er al zijn: `color` (haar/kleren/schoenen/microfoons kleuren een
 bestaande tekening), `pattern` (een patroon op de kleren), `emoji` (het
 spulletje wórdt dat emoji), `spot: 'zij' | 'top'` voor accessoires.
 
-**Een wereldbeloning** verschilt op drie punten, en alle drie zijn ze een regel:
+**Een wereldschat** (een wereldbeloning — in de app heet hij sinds fase 6E
+*wereldschat*) verschilt op drie punten, en alle drie zijn ze een regel:
 
 1. **Geen `price`.** Dat is wat "niet te koop" betekent — `isBeloning()` leest
-   het aan `WORLDS` af en de kleedkamer zet hem op slot tot de wereld uit is.
-   Zet er wél een prijs bij en de winkel verkoopt hem gewoon.
+   het aan `WORLDS` af. Zet er wél een prijs bij en de winkel verkoopt hem
+   gewoon.
 2. **Een eigen tekening**, geen emoji: `draw()` voor op de paspop en `thumb()`
    voor het vakje in de kleedkamer.
 
@@ -118,6 +119,30 @@ spulletje wórdt dat emoji), `spot: 'zij' | 'top'` voor accessoires.
 `beloning.test.js` zaak I meet de tekening na: inline SVG zonder verwijzing
 naar buiten, dezelfde tekening op beide basissen, boven de nek, en in dezelfde
 maatfamilie als de andere beloningen.
+
+### Waar hij dan terechtkomt
+
+Nergens hoef je iets aan te zetten. Die ene regel `beloning:` is genoeg, en de
+rest volgt eruit:
+
+| | |
+|---|---|
+| het schattenvak | `wereldSchatten()` leest `WORLDS` af — hij staat er meteen in, achteraan, met het medaillon van zijn eigen `theme` als raadsel |
+| de teller | `schatStand()` telt hem mee in "✨ Wereldschatten · 3 / 6" |
+| het uitdelen | `grantWorldRewards()` deed dat al en weet niet hoeveel werelden er zijn |
+| de onthulling | `wereldFeest()` toont zijn `thumb()` en een *Aandoen*-knop |
+| de kaart | bij de laatste halte van die wereld staat een ✨ zolang hij nog te halen is |
+| de gewone laden | daar staat hij pas ín zodra hij verdiend is — een schat op slot ligt alleen in het schattenvak |
+| oude saves | wie die wereld al uit had krijgt hem stil bij het inladen (`grantHistoricRewards`) |
+
+Een wereld die nog niet uitgebracht is (`released: false`) verklapt zijn schat
+niet: het vak toont alleen wat er te halen valt, anders staat er een raadsel op
+de plank dat vandaag niemand open kan maken.
+
+**Wat je dus níét schrijft:** geen ontgrendelcode, geen `verdiend`-lijstje in
+de opslag, geen tweede kaartsoort en geen regel in de kleedkamer. Bestaat er
+ooit een wereld zonder schat, laat `beloning` dan gewoon weg — dan is er niets
+te tonen en valt hij overal vanzelf buiten.
 
 ---
 
