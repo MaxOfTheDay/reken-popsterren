@@ -10285,28 +10285,71 @@ function starRowHTML(n, gespeeld) {
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
 }
-// Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
-// aankomst in één klap door te schieten. Werkt via een dash-masker over het pad
-// tot de nieuwe halte: eerst afgedekt tot de oude, dan opengeschoven.
+/* Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
+   aankomst in één klap door te schieten.
+
+   PS-36 -- dit gebeurde eerst via één streep die als geheel groeide: fg kreeg zijn
+   hele weg-tot-nu als één dash (stroke-dasharray = total) en een dashoffset die
+   naar 0 liep. Dat verft dus een dóórlopende, effen gouden streep -- precies het
+   stippelpatroon dat de rest van de weg draagt (zie DASH_ON/DASH_OFF) verdween
+   voor de duur van de reis en klapte er bij aankomst weer op terug. Een kind ziet
+   dat als een sprong: eerst een vage stip-streep die vast staat, dan opeens een
+   vast stipje-voor-stipje pad.
+
+   Nu blijft fg zelf de hele reis lang gewoon het echte streeppatroon dragen (zie
+   roadDashArray hieronder) -- er verandert dus nooit iets aan hóe de weg getekend
+   is. Wat groeit is een onzichtbaar masker: een eigen streep, boven op hetzelfde
+   pad, die van de oude naar de nieuwe halte vult en alleen bepaalt wélk stuk van
+   de al-gestippelde fg zichtbaar is. Dat masker mag zelf best één brede, effen
+   streep zijn -- het wordt nooit getekend, het dekt alleen af. */
 function growRoad(map, fromLvl, toLvl, duration, delay) {
   const svg = map.querySelector('.tour-road-svg');
   const fg = svg && svg.querySelector('.tour-road-fg');
   if (!svg || !fg || !fg.animate || !fg.getTotalLength) return null;
   const shown = worldForIndex(viewWorldIdx);
   const pts = worldNodes(shown).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const curve = shown.world.curve;
   const fromIdx = fromLvl - shown.first, toIdx = toLvl - shown.first;
   if (fromIdx < 0 || toIdx <= 0 || toIdx >= pts.length) return null;
-  fg.setAttribute('d', roadD(pts, toIdx + 1, shown.world.curve));
+  const d = roadD(pts, toIdx + 1, curve);
+  fg.setAttribute('d', d);
+  // het echte streeppatroon voor dit stuk -- hetzelfde dat er zou staan als de
+  // reis al voorbij was, dus geen sprong bij aankomst (zie renderTourMap)
+  fg.style.strokeDasharray = roadDashArray(svg, pts, curve, toIdx + 1);
+  fg.style.strokeDashoffset = '';
   const total = fg.getTotalLength();
   // lengte tot de oude halte: even hetzelfde pad opmeten, ingekort
   const probe = fg.cloneNode();
-  probe.setAttribute('d', roadD(pts, fromIdx + 1, shown.world.curve));
+  probe.removeAttribute('mask');
+  probe.setAttribute('d', roadD(pts, fromIdx + 1, curve));
   svg.appendChild(probe);
   const covered = fromIdx > 0 ? probe.getTotalLength() : 0;
   probe.remove();
-  fg.style.strokeDasharray = total;
-  fg.style.strokeDashoffset = total - covered;
-  return fg.animate(
+
+  // Het masker: een eigen, brede streep over exact hetzelfde pad, die opengeschoven
+  // wordt zoals de oude fg dat deed. Verwijdert een eerder masker van een reis die
+  // hier is blijven hangen (zie ook stopWereldReis) -- er hoort er maar één te zijn.
+  const oud = svg.querySelector('#road-reveal');
+  if (oud) oud.remove();
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const mask = document.createElementNS(svgNS, 'mask');
+  mask.id = 'road-reveal';
+  mask.setAttribute('maskUnits', 'userSpaceOnUse');
+  mask.setAttribute('x', 0); mask.setAttribute('y', 0);
+  mask.setAttribute('width', VB_W); mask.setAttribute('height', VB_H);
+  const reveal = document.createElementNS(svgNS, 'path');
+  reveal.setAttribute('d', d);
+  reveal.setAttribute('fill', 'none');
+  reveal.setAttribute('stroke', '#fff');
+  reveal.setAttribute('stroke-width', 24);   // ruim over de 11 van .tour-road-fg heen
+  reveal.setAttribute('stroke-linecap', 'round');
+  reveal.style.strokeDasharray = total;
+  reveal.style.strokeDashoffset = total - covered;
+  mask.appendChild(reveal);
+  svg.appendChild(mask);
+  fg.setAttribute('mask', 'url(#road-reveal)');
+
+  return reveal.animate(
     [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
     { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
 }
