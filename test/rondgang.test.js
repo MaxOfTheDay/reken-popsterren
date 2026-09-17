@@ -790,6 +790,80 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   }
   await kopCtx.close();
 
+  /* ================= De zaal is één ruimte =================
+   * FASE 7A. In de zaal lagen vier lagen over elkaar, en één ervan hield midden op
+   * het scherm op precies waar hij het felst was: het voetlicht (.venue-licht::after)
+   * had zijn ovaal met het middelpunt op zijn eigen ónderrand staan. Wat je zag was
+   * geen uitdovende gloed maar een kaarsrechte streep dwars over het scherm, op 70%
+   * hoogte (64% op een kort scherm). In élke wereld, op élke schermmaat -- opgemeten
+   * over zes werelden en vier maten, altijd op dezelfde breuk van de hoogte.
+   *
+   * Wat hier vastligt is de regel eronder, niet het getal: een laag die níét tot de
+   * onderrand van de zaal doorloopt, mag geen verloop hebben dat op zijn eigen rand
+   * gecentreerd staat. Een verloop dooft uit naar zijn buitenkant; staat het
+   * middelpunt op de rand van het doosje, dan wordt de hélft ervan afgeknipt en is
+   * die knip een lijn. Dat geldt voor elke laag die er later bij komt, en het is te
+   * meten zonder naar pixels te kijken.
+   *
+   * En de laag eronder: .venue dekt het spelscherm, en het spelscherm dekt het
+   * venster -- anders komt de achtergrond van de app onder de zaal vandaan. */
+  {
+    for (const [w, h] of [[320, 568], [390, 844], [412, 915], [768, 1024]]) {
+      const zaalCtx = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(zaalCtx);
+      const zp = await zaalCtx.newPage();
+      zp.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await zp.goto(APP_URL + '&demo&star=p1');
+      await zp.waitForFunction(() => typeof selectProfile === 'function');
+      const r = await zp.evaluate(async () => {
+        const uit = { dekking: [], randlagen: [] };
+        const getal = t => parseFloat(t) || 0;
+        for (let i = 0; i < WORLDS.length; i++) {
+          const q = P();
+          q.stars = {}; for (let l = 1; l < WORLD_START[i]; l++) q.stars[l] = 3;
+          q.level = WORLD_START[i];
+          startLevel(WORLD_START[i]);
+          await new Promise(res => setTimeout(res, 60));
+          const scherm = document.getElementById('screen-game');
+          const zaal = scherm.querySelector('.venue');
+          const s = scherm.getBoundingClientRect(), z = zaal.getBoundingClientRect();
+          if (s.top > 0.5 || s.bottom < innerHeight - 0.5 || z.top > s.top + 0.5 || z.bottom < s.bottom - 0.5) {
+            uit.dekking.push(WORLDS[i].id + ' scherm ' + Math.round(s.top) + '-' + Math.round(s.bottom)
+              + ' zaal ' + Math.round(z.top) + '-' + Math.round(z.bottom) + ' venster ' + innerHeight);
+          }
+          /* Elke laag in de zaal, inclusief de twee pseudo-elementen. Voor een
+             pseudo-element komt de doos uit de stijl (top/height t.o.v. .venue-licht,
+             dat zelf inset:0 heeft en dus de hele zaal is). */
+          const licht = zaal.querySelector('.venue-licht');
+          const lagen = [
+            ['.venue-sfeer', getComputedStyle(zaal.querySelector('.venue-sfeer')), z.height, 0],
+            ['.venue-art', getComputedStyle(zaal.querySelector('.venue-art')), z.height, 0],
+            ['.venue-licht', getComputedStyle(licht), z.height, 0],
+            ['.venue-licht::before', getComputedStyle(licht, '::before'), null, null],
+            ['.venue-licht::after', getComputedStyle(licht, '::after'), null, null],
+          ];
+          lagen.forEach(([naam, cs]) => {
+            const top = getal(cs.top), hoog = getal(cs.height);
+            const raaktOnder = top + hoog >= z.height - 1;
+            if (raaktOnder) return;                    // loopt door tot onderaan: geen rand
+            // "radial-gradient(60% 50% at 50% 50%, ...)" -- de verticale positie
+            (cs.backgroundImage.match(/at\s+[\d.]+%\s+[\d.]+%/g) || []).forEach(m => {
+              const y = parseFloat(m.split(/\s+/)[2]);
+              if (y <= 0.5 || y >= 99.5) uit.randlagen.push(WORLDS[i].id + ' ' + naam + ' ' + m);
+            });
+          });
+        }
+        return uit;
+      });
+      check(r.dekking.length === 0, 'de zaal dekt het hele spelscherm — ' + w + 'x' + h,
+        r.dekking.join(' | '));
+      check(r.randlagen.length === 0,
+        'geen zaallaag houdt op waar zijn verloop het felst is — ' + w + 'x' + h,
+        r.randlagen.join(' | '));
+      await zaalCtx.close();
+    }
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */

@@ -269,6 +269,90 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- H: een beeld telt mee als verandering ------------------------------
+   * FASE 7A (PS-20). Een tekening gaat meteen naar schijf -- er is geen "nog niet
+   * bewaard" voor een beeld, en dat is met opzet. Maar daardoor viel een beeld
+   * buiten élke verandering die de studio meldde: "Wat verandert er" en het chipje
+   * bovenin keken alleen naar het WORLDS-blok, en het pad in dat blok verandert
+   * niet als je hetzelfde bestand vervángt. Wie de startschermachtergrond
+   * verwisselde kreeg dus "gelijk aan het spel" te zien terwijl er een ander
+   * bestand lag -- en dat gold net zo goed voor een wereldtekening op zijn eigen
+   * pad. Precies het soort stilte waardoor je een bestand niet vastlegt.
+   *
+   * De lijst komt van de voorbeeldserver, die het aan git vraagt (gewijzigdeAssets
+   * in test/preview.js). Hier wordt hij ingespoten zoals die server dat doet, zodat
+   * deze controle geen server nodig heeft: wat getest wordt is de bedrading in de
+   * studio, en dat is waar de bug zat.
+   *
+   * Vier standen, en de laatste is de reden dat de eerste erbij staat: niets
+   * gewijzigd moet écht stil blijven, anders is het chipje waardeloos. */
+  {
+    const gevallen = [
+      { naam: 'H · niets gewijzigd: stil', lijst: [], vuil: false, noem: [] },
+      { naam: 'H · een beeld buiten de werelden telt mee', lijst: ['assets/bg/landing.webp'],
+        vuil: true, noem: ['assets/bg/landing.webp'] },
+      { naam: 'H · een wereldtekening telt net zo goed mee', lijst: ['assets/world/ijs-map.webp'],
+        vuil: true, noem: ['assets/world/ijs-map.webp'] },
+      { naam: 'H · twee beelden worden allebei genoemd',
+        lijst: ['assets/bg/landing.webp', 'assets/world/ijs-map.webp'],
+        vuil: true, noem: ['assets/bg/landing.webp', 'assets/world/ijs-map.webp'] },
+    ];
+    for (const g of gevallen) {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      await cacheFonts(ctx);
+      const page = await ctx.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await page.addInitScript(l => { window.__GEWIJZIGD = l; }, g.lijst);
+      await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit');
+      await page.waitForSelector('#studio');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        [...document.querySelectorAll('#studio .st-tabs button')]
+          .filter(b => b.dataset.tab === 'spel')[0].click();
+        return { chip: document.getElementById('st-status').textContent,
+                 vuil: document.getElementById('st-status').className.indexOf('vuil') >= 0,
+                 diff: document.getElementById('st-diff').textContent };
+      });
+      check(r.vuil === g.vuil, g.naam, JSON.stringify(r));
+      check(g.noem.every(f => r.diff.indexOf(f) >= 0),
+        g.naam + ' — en staat in "Wat verandert er"', r.diff.slice(0, 200));
+      if (!g.vuil) {
+        check(r.diff.indexOf('gewijzigd') < 0, g.naam + ' — geen valse melding', r.diff.slice(0, 200));
+      } else {
+        check(/\d+ niet doorgevoerd/.test(r.chip), g.naam + ' — het chipje telt ze', r.chip);
+      }
+      await ctx.close();
+    }
+  }
+  /* En het bedrag klopt: een gewijzigde wereld plus een gewijzigd beeld is twee.
+     Zonder dit zou "de beelden tellen mee" ook waar zijn als de werelden niet meer
+     meetelden -- dat is één regel verschil in refreshStatus. De wereld wordt hier
+     gewijzigd via het naamveld, dus langs dezelfde weg als met de hand. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.addInitScript(() => { window.__GEWIJZIGD = ['assets/bg/landing.webp']; });
+    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit');
+    await page.waitForSelector('#studio');
+    await page.waitForTimeout(400);
+    await page.fill('#mf-name', 'Andere naam');
+    await page.dispatchEvent('#mf-name', 'change');
+    await page.waitForTimeout(300);
+    const uit = await page.evaluate(() => {
+      [...document.querySelectorAll('#studio .st-tabs button')]
+        .filter(b => b.dataset.tab === 'spel')[0].click();
+      return { chip: document.getElementById('st-status').textContent,
+               diff: document.getElementById('st-diff').textContent };
+    });
+    check(/2 niet doorgevoerd/.test(uit.chip),
+      'H · een wereld én een beeld tellen samen op', uit.chip);
+    check(uit.diff.indexOf('Andere naam') >= 0 && uit.diff.indexOf('assets/bg/landing.webp') >= 0,
+      'H · allebei staan ze in "Wat verandert er"', uit.diff.slice(0, 240));
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'geen fouten in de pagina', pageErrors.slice(0, 5).join(' | '));
 
   await browser.close();

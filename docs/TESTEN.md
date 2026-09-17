@@ -124,6 +124,25 @@ app vroeger schreef, met de velden die er toen nog niet waren bewust weggelaten.
 - **de rondreis**: openen, bewaren en opnieuw openen komt tot rust -- de tweede en
   derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang.
 
+### Waar de naadcontroles staan (fase 7A)
+
+Twee illustraties die op een andere ondergrond eindigden gaven allebei een
+zichtbare horizontale lijn. De controles erop zitten bij het onderwerp en niet bij
+elkaar:
+
+- `rondgang.test.js` — **de zaal is één ruimte**: `.venue` dekt het spelscherm en
+  het spelscherm dekt het venster, en géén laag in de zaal heeft een verloop dat op
+  zijn eigen rand gecentreerd staat. Dat laatste is de regel achter de bug: een
+  verloop dooft uit naar buiten, dus een middelpunt op de rand van het doosje
+  betekent dat de helft wordt afgeknipt — en die knip is een lijn.
+- `profiles.test.js` — **de wereldtekening dekt het scherm op elke schuifstand**:
+  `.world-frame` is nooit lager dan het scrollvak en er staat niets ónder het
+  kader, gemeten op de twee uitersten van het schuifbereik, over alle werelden en
+  zes schermmaten.
+
+Allebei meten ze dozen en stijlen, geen pixels: een nieuwe wereld of een nieuwe
+laag valt er dan om zonder dat een schermafdruk hoeft te kloppen.
+
 ### `test/ouder.test.js` — het ouderdeel
 
 Een browsersuite (fase 5D). `profiles.test.js` gaat over sterren *maken* en
@@ -216,7 +235,12 @@ gezin:
 - **slepen verandert die ene wereld** en niets anders;
 - **de standen zijn de échte standen** van het spel (`p.stars`, `p.level`), geen
   nagemaakte studioplaatjes;
-- **de controle loopt álle werelden na** en zegt erbij waar je het oplost.
+- **de controle loopt álle werelden na** en zegt erbij waar je het oplost;
+- **een beeld telt mee als verandering** (fase 7A) — een tekening gaat meteen naar
+  schijf, maar hij hoort wél in "Wat verandert er" en in het chipje bovenin te
+  staan, of het nu een wereldkaart is of het startscherm. De lijst komt van
+  `gewijzigdeAssets()` in `test/preview.js`, die het aan git vraagt; de suite spuit
+  hem in zoals die server dat doet, zodat er geen server nodig is.
 
 ## Hoe de keuring werkt
 

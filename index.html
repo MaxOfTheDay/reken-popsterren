@@ -1294,7 +1294,28 @@
   /* Op de kaart een maat kleiner dan op de andere schermen: de tekening eronder
      draagt het scherm, niet de tekst. De wereldpil stond op 19px en woog daarmee
      duidelijk zwaarder dan de twee ernaast; 17,5 tegen 17 zet ze op gelijke voet. */
-  #screen-map .world-pick { font-size: 17.5px; gap: 5px; }
+  #screen-map .world-pick { font-size: 17.5px; gap: 5px; position: relative; }
+  /* FASE 7A -- de pil is de ingang naar de hele tournee, en hij was 34px hoog: dat
+     leest goed maar het is geen kindervinger. Het portretje ernaast lost dat al zo
+     op (4px onzichtbare padding, raakvlak 48px), alleen kan dat hier niet: deze pil
+     heeft een vaste hoogte, en padding zou die opeten in plaats van hem te
+     vergroten. Dus een onzichtbaar vlakje eroverheen.
+
+     Alleen naar bóven en onder. -8px maakt het raakvlak 50px -- precies de hoogte
+     van de koprij zelf, dus hij blijft binnen de kop en pakt geen enkele tik van de
+     kaart af (de haltes staan per ZONE onder de kop). Naar de zijkanten juist niet:
+     op 320px staat de wereldnaam al bijna tegen de diamantpil aan, en daar zou een
+     vlakje tikken van die pil afpakken. De pil zelf ziet er geen pixel anders uit.
+
+     overflow: visible hoort erbij. Onder de 520px zet de gedeelde kopregel
+     .header-title op overflow: hidden met een ellips -- bedoeld voor de kóppen van
+     de andere schermen, die tekst zijn en af mogen knippen. Deze kop is een knop,
+     de wereldnaam knipt hier sowieso niet meer af (de kolommen eromheen krimpen,
+     zie de mediaregel hieronder) en die ellips werkt op een inline-flex-knop toch
+     niet. Wat hij wél deed: het vlakje wegknippen, zodat hetzelfde knopje op een
+     telefoon 33px hoog aanraakbaar was en op een tablet 49px. */
+  #screen-map .world-pick { overflow: visible; }
+  #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px 0; }
   #screen-map .wp-route { width: 13px; height: 13px; }
   #screen-map .diamond-badge { font-size: 17px; gap: 5px; }
   /* Gelijke buitenkolommen, zodat de wereldnaam écht in het midden staat, en overal
@@ -1323,13 +1344,27 @@
      zijn raakvlak, dus met gelijke waarden stond het optisch 4px verder naar
      binnen dan de diamantpil. Zo liggen de zichtbare randen op dezelfde lijn. */
   #screen-map .hub-sticky { padding-left: 10px; padding-right: 14px; }
-  /* Op een laag scherm is de navigatiebalk een veel grotere hap van het beeld
-     (82 van 568 = 14%) dan de 16% die de veilige zone onderaan overhoudt. Een beetje
-     ruimte onder de kaart maakt dat de onderste halte er onderuit te schuiven is;
-     staand op een gewone telefoon valt er niets te schuiven en doet dit niets. */
-  @media (max-height: 620px) {
-    .tour-map { padding-bottom: 48px; }
-  }
+  /* Hier stond: @media (max-height: 620px) { .tour-map { padding-bottom: 48px } }.
+     De redenering was dat de navigatiebalk op een laag scherm een grotere hap uit
+     het beeld neemt (82 van 568 = 14%) dan de veilige zone onderaan de tekening
+     overhoudt, en dat de onderste halte er dus onderuit geschoven moest kunnen
+     worden. Nagemeten klopt die aanname niet: op 320x568 -- het kortste scherm dat
+     er is -- staat de onderste halte van élke wereld al 23px bóven de balk zónder
+     te schuiven, en op elk ander laag scherm is het kader sowieso hoger dan het
+     venster en valt er al te schuiven.
+
+     Wat de regel wél deed: 48px lege ruimte in het scrollvak zetten, ónder het
+     kader. Schoof je naar beneden, dan schoof de wereld die 48px het beeld uit en
+     stond daar de achtergrond van de app -- een egale roze-paarse band onderaan,
+     met een kaarsrechte rand waar de tekening ophield. Opgemeten op 320x568: een
+     sprong van 97 (RGB-som) op y=520, in élke wereld dezelfde kleur eronder, want
+     die kleur was <body> en niet de wereld.
+
+     Dus weg ermee. De afspraak die overblijft is er één en hij geldt overal:
+     .world-frame is nooit lager dan het scrollvak (min-height: 100%) en er staat
+     niets ónder het kader, dus op élke schuifstand is elke pixel van het scherm
+     wereld. Zie de controle "de wereldtekening dekt het scherm" in
+     test/profiles.test.js. */
 
   /* Het portretje is de link terug naar de spelerskeuze (de kleedkamer zit al in
      de ondernavigatie). Er stond haar naam naast; die is weg. Wie er speelt zie je
@@ -1784,10 +1819,26 @@
       linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
                       rgba(var(--w-deep-rgb), .82) 62%, rgba(var(--w-deep-rgb), .93) 100%);
   }
-  /* Het voetlicht op de rand van het podium: een lijn licht, dwars over de vloer. */
+  /* Het voetlicht op de rand van het podium: een lijn licht, dwars over de vloer.
+
+     Het ovaal stond hiervoor met zijn mídden op de ónderrand van zijn eigen doosje
+     (at 50% 100%, height 26%). Precies daar is het licht op zijn felst -- en precies
+     daar hield het element op. Wat je dus zag was niet een uitdovende gloed maar een
+     kaarsrechte streep dwars over het scherm, op 70% hoogte (64% op een kort scherm,
+     waar de regel hieronder top naar 38% zet). Opgemeten op alle zes de werelden en
+     op 320x568, 390x844, 412x915 en 768x1024: dezelfde lijn, altijd op dezelfde
+     breuk van de hoogte -- het licht wérd afgeknipt, de tekening niet.
+
+     Hetzelfde ovaal, nu heel: het doosje is twee keer zo hoog en het middelpunt
+     staat op de halve hoogte. Middelpunt (70%), horizontale straal (60% van 120%
+     schermbreedte) en verticale straal (26% van de schermhoogte) zijn tot op de
+     pixel wat ze waren -- alleen loopt de onderste helft nu ook echt uit, in plaats
+     van tegen de rand van zijn eigen element te eindigen. De gloed dooft op 72% van
+     de straal uit, dus ruim binnen de nieuwe onderrand (96%, of 90% op een kort
+     scherm): er komt geen tweede rand voor terug. */
   .venue-licht::after {
-    content: ''; position: absolute; left: -10%; right: -10%; top: 44%; height: 26%;
-    background: radial-gradient(60% 100% at 50% 100%, rgba(255,206,128,.34), transparent 72%);
+    content: ''; position: absolute; left: -10%; right: -10%; top: 44%; height: 52%;
+    background: radial-gradient(60% 50% at 50% 50%, rgba(255,206,128,.34), transparent 72%);
     opacity: .6; transition: opacity var(--t-snel) ease;
   }
   /* De warme golf die bij een goed antwoord door de zaal trekt. Staat bewust als
@@ -2166,6 +2217,29 @@
   /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning */
   .mem-fab .mem-pay { font-size: 10.5px; font-weight: 700; opacity: .88; letter-spacing: .01em; }
   .mem-fab:active { transform: scale(.95); }
+  /* ---- Op het kortste scherm: het woord eraf --------------------------------
+     Op 320x568 is het knopje 67x70 en staat de onderste halte van de Piratenwereld
+     er pal achter: het hárt van halte 26 viel binnen het knopje, dus een tik daarop
+     startte het memoryspel in plaats van de show. Opgemeten met elementFromPoint,
+     en het gold ook vóór deze fase -- de kaart stond er alleen net vaak genoeg
+     geschoven dat controle 7f het niet zag (zie de opmerking bij die controle).
+
+     Wat eraf gaat is het woord "Memory", niet de knop: het microfoontje en wat hij
+     oplevert (💎 9) blijven staan. Daarmee wordt hij 50x56 in plaats van 67x70, en
+     schuiven zijn linker- en bovenrand voorbij het hart van élke halte in élke
+     wereld. Dezelfde ingreep als bij .saved-pill .sp-word op een smal scherm, en om
+     dezelfde reden: het plaatje zegt het al, het woord kost de ruimte.
+
+     .world-back gaat in dezelfde adem een maatje kleiner. Die pil staat middenonder
+     en dat is precies waar de standaardslinger zijn eerste halte neerzet; kleiner
+     maken brengt de overlap daar van 41% terug naar 27%, binnen de marge die
+     controle 7f bewaakt. */
+  @media (max-height: 620px) {
+    /* > span, niet span: het bedrag zit als eigen <span> ín .mem-pay, en zonder de
+       directe-kindselector verdween dát nummer mee -- dan stond er "💎" zonder
+       getal, precies de knop-zonder-beloofde-beloning die hierboven is opgelost. */
+    .mem-fab > span:not(.mem-pay) { display: none; }
+  }
   /* de kaartjes stonden klein in het midden met ~430px lucht eromheen; ze mogen
      de ruimte gewoon gebruiken -- het is een spel dat je op afstand van tafel speelt */
   .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
@@ -2655,6 +2729,12 @@
     box-shadow: 0 3px 12px rgba(0,0,0,.42);
   }
   .world-back:active { transform: translateX(-50%) scale(.95); }
+  /* Een maatje kleiner op het kortste scherm -- zie de opmerking bij .mem-fab
+     hierboven: deze pil staat middenonder, en daar zet de standaardslinger zijn
+     eerste halte neer. */
+  @media (max-height: 620px) {
+    .world-back { font-size: 12px; padding: 4px 10px; }
+  }
   /* ===== De haltes: één staatsysteem voor álle werelden =====================
 
      Een halte kent precies vier voortgangsstaten, en ze betekenen in elke wereld
@@ -14736,6 +14816,24 @@ function startMapEdit() {
   let gridOn = false, curveOn = true, zoneOn = true, sterrenOn = false;
 
   // ---------------------------------------------------------------- status
+  /* Welke beeldbestanden wijken af van wat er in het spel staat.
+
+     Een tekening gaat meteen naar schijf -- er is geen "nog niet bewaard" voor een
+     beeld, en dat is met opzet (zie verwerkBeeld). Maar daardoor viel een beeld
+     buiten élke verandering die de studio meldde: worldState en tekenDiff kijken
+     naar het WORLDS-blok, en het pad in dat blok verandert niet als je hetzelfde
+     bestand vervángt. Wie de startschermachtergrond verwisselde kreeg dus te horen
+     dat zijn concept "gelijk aan het spel" was, terwijl er een ander bestand lag --
+     en dat gold net zo goed voor een wereldtekening die op zijn eigen pad bleef.
+
+     De lijst komt van de server, die het aan git vraagt (zie gewijzigdeAssets in
+     test/preview.js). Git is hier de enige bron die het ook ná herladen nog weet,
+     en die meteen weer stil is als je een bestand terugzet. Wat de studio zelf
+     schrijft komt er in dezelfde tel bij, zodat je het ziet zonder te verversen.
+
+     Zonder de voorbeeldserver (file://) is de lijst leeg -- dan is er ook geen weg
+     om een beeld te vervangen. */
+  const GEWIJZIGD = new Set(window.__GEWIJZIGD || []);
   function shippedFor(id) { return WORLDS_SHIPPED.filter(w => w.id === id)[0]; }
   function worldState(w) {
     const ship = shippedFor(w.id);
@@ -14745,8 +14843,12 @@ function startMapEdit() {
   function refreshStatus() {
     const vuil = WORLDS.filter(w => worldState(w) !== 'gelijk').length;
     const chip = F('st-status');
-    chip.textContent = vuil ? vuil + ' niet doorgevoerd' : 'gelijk aan het spel';
-    chip.className = 'st-chip ' + (vuil ? 'vuil' : 'schoon');
+    /* Werelden én beelden: allebei staan ze straks in dezelfde commit, dus allebei
+       horen ze hier te tellen. "3 niet doorgevoerd" is één getal over één vraag --
+       hoeveel dingen wijken af van wat kinderen spelen. */
+    const totaal = vuil + GEWIJZIGD.size;
+    chip.textContent = totaal ? totaal + ' niet doorgevoerd' : 'gelijk aan het spel';
+    chip.className = 'st-chip ' + (totaal ? 'vuil' : 'schoon');
   }
   function refreshList() {
     const list = F('st-list');
@@ -14869,6 +14971,10 @@ function startMapEdit() {
         w.art = nieuwPad;
         OP_SCHIJF[nieuwPad] = OP_SCHIJF[kanon];
         delete OP_SCHIJF[kanon];
+        // een hernoemd bestand is hoe dan ook een wijziging: de oude naam
+        // verdwijnt uit het spel en de nieuwe komt erbij
+        GEWIJZIGD.delete(kanon);
+        GEWIJZIGD.add(nieuwPad);
         fetch('/hernoem?van=' + encodeURIComponent(kanon) + '&naar=' + encodeURIComponent(nieuwPad),
           { method: 'POST' })
           .then(r => r.text().then(t => setOut(r.ok
@@ -15492,6 +15598,9 @@ function startMapEdit() {
       if (!r.ok) { setOut('mislukt: ' + txt); return; }
       OP_SCHIJF[pad] = Math.round(blob.size / 1024);
       delete GEMETEN[pad];
+      // dit bestand wijkt nu af van wat er in het spel staat -- ook als het pad
+      // hetzelfde bleef, en ook als het geen wereldtekening is
+      GEWIJZIGD.add(pad);
       if (key === 'world') { w.art = pad; }
       /* Een kandidaat die het gewórden is hoort niet als "nieuw" naast zichzelf te
          blijven staan: hij staat nu in het spel. Weg uit incoming/, stil. */
@@ -15918,6 +16027,12 @@ function startMapEdit() {
     });
     const weg = WORLDS_SHIPPED.filter(o => !WORLDS.some(w => w.id === o.id));
     weg.forEach(o => regels.push('<span class="ct-fout">⚠</span> ' + esc(o.name) + ' — staat niet meer in de lijst'));
+    /* De beelden. Ze staan hier apart en niet bij de wereld die ze gebruikt: een
+       beeld hoort bij een bestand, en "Zet in het spel" schrijft alleen het
+       WORLDS-blok -- de bestanden staan er al. Wat ze gemeen hebben is de commit,
+       en dát is de vraag die dit vak beantwoordt. */
+    [...GEWIJZIGD].sort().forEach(f =>
+      regels.push('<span class="ct-let">·</span> ' + esc(f) + ' — beeld gewijzigd'));
     vak.className = 'st-check' + (regels.length ? '' : ' schoon');
     vak.innerHTML = regels.length
       ? regels.join('<br>')
@@ -15972,7 +16087,8 @@ function startMapEdit() {
     fetch('/commit', { method: 'POST', body: bericht })
       .then(r => r.text().then(t => {
         setOut(t);
-        if (r.ok) F('st-msg').value = '';
+        // vastgelegd = git is schoon: de beelden staan nu in het spel
+        if (r.ok) { F('st-msg').value = ''; GEWIJZIGD.clear(); tekenDiff(); refreshStatus(); }
       }))
       .catch(() => setOut('alleen via npm run preview'))
       .then(() => { knop.disabled = false; });
