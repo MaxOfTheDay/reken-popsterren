@@ -249,9 +249,18 @@
        heeft zijn eigen, veel lichtere stof (--hud-*, zie onder). Dat verschil is
        wél opzet: een wereldscherm draagt zijn kop, een gebruiksscherm draagt hem
        niet. */
+    /* FASE 5E.1 -- de rand nog een trap terug (.12 -> .07) en de haarlijn mee
+       (.10 -> .07). Zeventien kaartjes met een rand van .12 onder elkaar lezen nog
+       steeds als een ráster van dozen, en dat was precies wat "een plankje, geen
+       doos" wilde voorkomen. Het vlak zelf (--vlak) blijft ongewijzigd en doet het
+       scheidingswerk; wat weggaat is alleen de omlijning.
+       De winst zit niet op de neutrale kaartjes maar op de andere: cyaan "hier kijk
+       je naar" en goud "dit staat aan" hebben nu een stillere buurman om zich van
+       te onderscheiden, en dáármee betekent hun rand ineens iets. Zelfde effect in
+       de trofeeënkast, die dezelfde token leest. */
     --vlak: rgba(255,255,255,.075);
-    --vlak-rand: rgba(255,255,255,.12);
-    --vlak-top: inset 0 1px 0 rgba(255,255,255,.1);
+    --vlak-rand: rgba(255,255,255,.07);
+    --vlak-top: inset 0 1px 0 rgba(255,255,255,.07);
     --vlak-hover: rgba(255,255,255,.15);
     --paneel: rgba(32,8,54,.8);
     --paneel-rand: rgba(255,255,255,.2);
@@ -272,13 +281,22 @@
        en dan betekent goud niets meer.
 
        Nu één grondtoon -- die van --gold-accent, het goud dat de app al voor
-       "verdiend" gebruikt -- in drie sterktes, plus één gloed:
-         zacht   behaald, maar stil (een trofee die je al hebt)
-         tint    dit staat aan / dit ligt klaar (het kledingstuk dat je draagt)
-         rand    de rand die daarbij hoort als hij niet vol goud mag zijn
-         gloed   het licht eromheen. Eén sterkte, zodat "gloeit" één ding is.
-       Vol --gold-accent (rand + vulling) blijft waar het altijd al voor was: het
-       ene ding op dit scherm dat om een tik vraagt.
+       "verdiend" gebruikt -- in twee trappen, en de trap ís de betekenis.
+
+       FASE 5E.1 heeft die trap afgemaakt. Na 5E stond "behaald" (een trofee die je
+       al hebt) op bijna dezelfde randsterkte als "klaar om te openen", en in een
+       kast met acht kaarten was dat weer één gouden vlak waarin het ene kaartje dat
+       om een tik vraagt niet meer opviel. Dus:
+
+         BEZONKEN -- je hebt het, het is klaar, er hoeft niets meer
+           --goud-tint-zacht + --goud-rand-zacht (+ hooguit --goud-gloed-zacht)
+           behaalde trofee, gepasseerde rang
+         LUID -- hier moet je nú naar kijken
+           vol --gold-accent als rand + --goud-tint als vulling + --goud-gloed
+           klaarliggende trofee, het kledingstuk dat aanstaat, de volgende rang
+
+       Vol --gold-accent als VULLING blijft waar het altijd al voor was: het ene
+       ding op dit scherm dat om een tik vraagt.
 
        LET OP -- het VERLOOP (--gold-cta-top/bottom + de lip) is hier bewust géén
        onderdeel van. Dat is de hóófdknop, en sinds fase 5E niets anders: zie §4
@@ -286,7 +304,9 @@
     --goud-rgb: 255,215,64;
     --goud-tint-zacht: rgba(255,215,64,.09);
     --goud-tint: rgba(255,215,64,.15);
+    --goud-rand-zacht: rgba(255,215,64,.28);
     --goud-rand: rgba(255,215,64,.5);
+    --goud-gloed-zacht: 0 0 12px rgba(255,190,60,.24);
     --goud-gloed: 0 0 16px rgba(255,190,60,.46);
 
     /* ---- Emoji staan ergens op ---------------------------------------------
@@ -1349,12 +1369,19 @@
   /* Behaald = goud, maar bewust een slag zachter dan .trophy-card.done: een trofee
      is een prijs die blijft staan, een gepasseerde rang is voorgeschiedenis -- hier
      moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
-  .ladder-row.past { opacity: .85; background: rgba(255,214,90,.07); border-color: rgba(255,214,90,.38); }
+  .ladder-row.past { opacity: .85; background: var(--goud-tint-zacht); border-color: var(--goud-rand-zacht); }
   .ladder-row.future { opacity: .36; }
   /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
      De balk vult richting déze tier (de /100 is zijn drempel), dus hij hoort hier. */
+  /* FASE 5E.1 -- de rand stond op vol --gold-accent en was daarmee de enige lijn in
+     de app die als neon las: een felgele omtrek van 2px over de volle breedte van
+     het paneel, met een eigen oranje gloed eromheen. Hij hoort op te vallen, maar
+     in de taal van de rest -- dus dezelfde gouden rand die "hier moet je naar
+     kijken" elders ook draagt, met de gedeelde vulling en de gedeelde zachte gloed.
+     Vol goud blijft op dit paneel waar het al zat: de NU-pil, en de balk die naar
+     deze rang toe loopt. */
   .ladder-row.goal { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
-    border: 2px solid var(--gold-accent); background: rgba(255,214,90,.13); box-shadow: 0 0 12px rgba(255,170,0,.28); }
+    border: 2px solid var(--goud-rand); background: var(--goud-tint); box-shadow: var(--goud-gloed-zacht); }
   .lr-top { display: flex; align-items: center; gap: 10px; }
   .ladder-row.goal .lr-emoji { font-size: 27px; width: 32px; }
   .ladder-row.goal .lr-name { font-size: 16px; }
@@ -1364,7 +1391,7 @@
   .lr-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); }
   .lr-count { font-size: 12px; font-weight: 700; color: var(--c-white); flex: none; }
   /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
-  .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: rgba(255,214,90,.38); }
+  .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: var(--goud-rand-zacht); }
   .lr-now { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
     background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .pop-panel { animation: none; } }
@@ -1437,11 +1464,34 @@
 
      Waarom hij toch bovenop de inhoud ligt terwijl hij z-index -1 draagt: .main-nav
      is zelf een stapelcontext (fixed + z-index 40), dus -1 blijft daarbínnen -- net
-     achter de balk, maar ruim vóór elk scherm. */
+     achter de balk, maar ruim vóór elk scherm.
+
+     FASE 5E.1 -- de vorm van het verloop is verzet, niet zijn hoogte. Hij liep
+     rechtlijnig van niets naar .5 op 56%, en dat betekende dat het donker al ver
+     bóven de balk begon: op de wereldkaart werd de onderste band strand en zee een
+     donkere strook vóór je bij de balk was. Dat is precies één band te veel op het
+     mooiste scherm van het spel.
+
+     Nu ligt de knik veel lager. Tot ongeveer de bovenrand van de balk gebeurt er
+     bijna niets (.05), daarná zakt hij snel weg naar .6 aan de schermrand. De
+     tekening leeft dus door tot vlak boven de balk, terwijl er ónder de labels --
+     waar het om gaat, want daar staan de witte letters -- juist méér donker zit dan
+     in de rechte versie. Nagemeten op de kaart: op 84px van de onderrand ging de
+     veeg van .36 naar .05, en op 30px van de onderrand van .58 naar .52 -- onder de
+     labels dus vrijwel hetzelfde, erboven vier keer minder. Die ondergrens is de
+     lastigste van de vier schermen: op de reis schuift de Snoepwereld in vól licht
+     onder de balk door, en daar moet "Kleedkamer" nog steeds te lezen zijn.
+
+     Vier stops en geen twee: met twee kun je "bijna niets" en "snel weg" niet
+     tegelijk zeggen zonder er een rand van te maken. */
   .main-nav::before {
     content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
-    height: calc(var(--balk-ruimte) + 54px);
-    background: linear-gradient(180deg, rgba(14,7,30,0), rgba(14,7,30,.5) 56%, rgba(14,7,30,.66));
+    height: calc(var(--balk-ruimte) + 44px);
+    background: linear-gradient(180deg,
+      rgba(14,7,30,0) 0%,
+      rgba(14,7,30,.05) 34%,
+      rgba(14,7,30,.44) 70%,
+      rgba(14,7,30,.62) 100%);
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -3668,12 +3718,19 @@
         klaar om te openen  vol goud + gloed + beweging
         behaald             zacht goud + warm licht van binnen, volkomen stil
         nog niet            gedempt, maar in kleur */
+  /* FASE 5E.1 -- bezonken. Deze kaart stond op --goud-rand (.5) met een warme veeg
+     van .28 erachter, en dat is bijna dezelfde randsterkte als .ready hieronder. In
+     een kast met acht kaarten waarvan er zes behaald zijn, is dat weer één gouden
+     vlak -- en dan moet je zóeken welke er om een tik vraagt. Een halve trap terug
+     (--goud-rand-zacht, en de veeg van .28 naar .2) laat de kaart nog steeds warm
+     en verdiend lezen, maar hij roept niet meer. De gouden naam blijft: dáár zie je
+     op leesafstand aan dat je hem hebt. */
   .trophy-card.done {
     background:
-      radial-gradient(78% 60% at 50% 26%, rgba(var(--goud-rgb),.28), transparent 74%),
+      radial-gradient(78% 60% at 50% 26%, rgba(var(--goud-rgb),.2), transparent 74%),
       var(--goud-tint-zacht);
-    border-color: var(--goud-rand);
-    box-shadow: inset 0 1px 0 rgba(255,241,190,.22);
+    border-color: var(--goud-rand-zacht);
+    box-shadow: inset 0 1px 0 rgba(255,241,190,.16);
   }
   .trophy-card.done .tname { color: var(--gold-light); }
   .trophy-card.done .tdesc { color: var(--c-white); opacity: .8; }
@@ -3759,15 +3816,39 @@
      (--gold-accent, precies het goud van een behaalde trofee en van het kledingstuk
      dat je draagt) in plaats van een verloop, en géén schaduwlip -- een lip is wat
      een knóp indrukbaar maakt. Hij blijft tikbaar en hij blijft pulseren; hij is
-     alleen niet langer de hoofdknop van het scherm. Zelfde materiaal als .ready-open
-     op een klaarliggende trofee, wat het ook is: dezelfde belofte, andere plek. */
+     alleen niet langer de hoofdknop van het scherm.
+
+     FASE 5E.1 -- en daarna nog één trap terug. Het gouden verloop was weg, maar de
+     pil hield de máten van een knop: 16,5px letter, 10px lucht boven en onder, en
+     een gloed van dezelfde sterkte als het kledingstuk dat je draagt. Op een
+     telefoon stonden daardoor nog steeds twee dingen van bijna dezelfde breedte
+     onder elkaar te stralen, en las de bovenste als de eerste van twee knoppen.
+     Vier kleine dingen samen halen dat weg zonder hem stil te maken:
+
+       - 15,5px in plaats van 16,5 en 7px lucht in plaats van 10: de pil krimpt
+         zichtbaar naar meldingsformaat en wordt vanzelf smaller, want hij is
+         inline-flex en groeit met zijn inhoud mee.
+       - de vulling een tikje terug (.88 in plaats van vol): nog steeds goud, nog
+         steeds donkere inkt erop, maar niet langer het felste vlak van het scherm.
+         De hoofdknop is dat nu alleen.
+       - --goud-gloed-zacht in plaats van --goud-gloed: een halo van een derde.
+       - de klop zit alleen nog in de maat en niet meer in de gloed (beloningKlop
+         i.p.v. readyPulse). Een pulserende halo vlak boven een knop is precies wat
+         "druk hier" zegt; een zacht ademende pil zegt "kijk eens".
+
+     Het cadeautje en de tekst blijven staan zoals ze waren -- dát is waar een kind
+     aan ziet wat er gebeurd is -- en het raakvlak blijft ruim boven 44px. */
   .gold-pill {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    color: var(--ink-on-gold); font-weight: 700; font-size: 16.5px; font-family: inherit;
-    background: var(--gold-accent); border: none; border-radius: var(--r-pill);
-    padding: 10px 18px; box-shadow: var(--goud-gloed);
-    animation: readyPulse 1.4s ease-in-out infinite; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    color: var(--ink-on-gold); font-weight: 700; font-size: 15.5px; font-family: inherit;
+    background: rgba(var(--goud-rgb), .88); border: none; border-radius: var(--r-pill);
+    padding: 7px 16px; min-height: 34px; box-shadow: var(--goud-gloed-zacht);
+    animation: beloningKlop 2.4s ease-in-out infinite; cursor: pointer;
   }
+  /* Dezelfde ademhaling als readyPulse, maar zonder de gloed erin en trager: dit is
+     een melding die er nog staat, geen knop die om een tik vraagt. */
+  @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+  @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
   .gold-pill:active { transform: scale(.96); }
   /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
   .trophy-pop-overlay {
@@ -4008,7 +4089,7 @@
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: 20px; padding: 11px 18px; }
     .end-actions .btn.soft { font-size: 15px; padding: 9px 16px; }
-    .gold-pill { font-size: 15px; padding: 8px 14px; }
+    .gold-pill { font-size: 14.5px; padding: 6px 13px; min-height: 30px; }
   }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
