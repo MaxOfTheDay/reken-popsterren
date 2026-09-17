@@ -523,6 +523,23 @@
   /* De zwevende wolk-emoji horen bij de wereldkaart, niet hier: de schil heeft
      haar eigen fonkeling en twee soorten versiering over elkaar is rommel. */
   .app-sfeer .map-sky span { display: none; }
+  /* ---- De schil, maar dan in een kleedkamer -------------------------------
+     FASE 5B.1. De basis hierboven blijft precies wat hij is -- het is dezelfde
+     avond in hetzelfde spel. Wat erbij komt is één ding: het licht van de
+     spiegel valt de kamer in. Een brede warme kegel vanaf de bovenkant (waar de
+     kop met de spiegel staat) en een zachte violette schaduw langs de onderrand,
+     zodat het midden van het scherm -- waar de spulletjes staan -- het lichtst is
+     en de randen wegvallen.
+
+     Een variant en geen tweede schil: staat er straks een kleedkamer-eigen laag
+     bij, dan komt die hier en niet als losse regel ergens tussen de kaartjes. */
+  .app-sfeer.kleedkamer::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(76% 30% at 50% 4%, rgba(255,209,150,.12), transparent 72%),
+      radial-gradient(58% 40% at 50% 24%, rgba(255,196,130,.07), transparent 74%),
+      radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.22), transparent 70%);
+  }
 
   /* De titel staat op de schil en niet meer in een tekening, dus de gloed eronder
      mag zachter: hij hoeft zich nergens meer van los te maken. */
@@ -1190,7 +1207,7 @@
     width: 100%; max-width: var(--kolom); margin-top: 4px; flex-wrap: wrap; flex: 1 1 auto;
   }
   .show-panel { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-  /* zelfde breedte/hoogte-verhouding als de kleedkamer se .dress-stage (~1.19 : 1),
+  /* zelfde breedte/hoogte-verhouding als de spiegel in de kleedkamer (~1.19 : 1),
      ~15% groter dan de vorige maat (vooral op mobiel voelde de paspop nog te klein),
      en de paspop zelf op dezelfde 92%-verhouding als de kleedkamer (geen eigen
      override meer nodig -- de kaart is nu zelf groot genoeg). */
@@ -3534,8 +3551,9 @@
      .title elders, zodat de sterren eronder de blikvanger blijven */
   .result-card .title { font-size: clamp(22px, 6vw, 30px); margin: 2px 0 0; }
   /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
-     paspop-scènes (.dress-stage, .show-stage) nu met eigen smalle-scherm-maat,
-     zodat 'm ook op een laag/liggend toestel nooit afgesneden wordt */
+     paspop-scènes (.show-stage, en .spiegel in de kleedkamer) nu met eigen
+     smalle-scherm-maat, zodat 'm ook op een laag/liggend toestel nooit
+     afgesneden wordt */
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
   .end-text { font-size: 18px; }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
@@ -3587,7 +3605,11 @@
      Opbouw: vaste kop (titel + 💎 + paspop + tabbladen) blijft plakken bovenaan,
      het rek met spulletjes scrollt eronder door, en de actiebalk (passen/kopen)
      zit vast boven de navigatie. Zo is elke tik meteen zichtbaar op de paspop. */
-  #screen-dress { padding-bottom: 190px; }
+  /* Ruimte onder het rek voor de twee zwevende balken plus de veilige zone van
+     het toestel: de navigatiebalk staat op 10 + 68, de actiebalk erboven op 88 +
+     52 = 140, en daar hoort nog lucht boven zodat het laatste kaartje er echt
+     onderuit te scrollen is en niet net eronder blijft plakken. */
+  #screen-dress { padding-bottom: calc(168px + env(safe-area-inset-bottom, 0px)); }
   /* FASE 5B -- de kleedkamer op een breed scherm.
      De donkere kop bloedt op een telefoon tot de schermrand door, en dat hoort:
      daar ís de schermrand de kolomrand. Op een tablet niet. Daar stond een band
@@ -3635,6 +3657,19 @@
     box-shadow: var(--e-2);
   }
   .hub-sticky .screen-header { margin-bottom: 4px; }
+  /* FASE 5B.1 -- de kleedkamer heeft de meeste kop van alle rustpunten (titel,
+     spiegel én categorierij) en daarmee het minste rek. Deze vier regels halen er
+     samen ~14px af zonder dat er iets kleiner wordt dat een vinger moet raken:
+     de terugknop blijft 44px, de categorieknoppen blijven 44px. */
+  #screen-dress .hub-sticky {
+    padding-top: 9px; padding-bottom: 8px;
+    /* het licht boven de spiegel, in het vlak waar de spiegel in staat. Zelfde
+       grondkleur als elke andere plakkende kop; alleen een warme kegel erbij. */
+    background:
+      radial-gradient(78% 86% at 50% 0%, rgba(255,216,158,.16), transparent 70%),
+      rgba(43,7,71,.82);
+  }
+  #screen-dress .hub-sticky .screen-header { margin-bottom: 3px; }
   /* ---- De kop van een hulpscherm ------------------------------------------
      Dezelfde plakkende kop, maar dan voor een scherm dat geen spel is: nieuwe
      ster nu, en straks net zo goed de kleedkamer, de trofeeën en het ouderdeel.
@@ -3674,13 +3709,19 @@
      schermhóógte (anders duwt ze het rek uit beeld) en een deel van de bréedte
      (anders wordt ze op een liggende tablet een pilaar). De bovengrens houdt haar
      op een groot scherm nog steeds een pop en geen poster.
-       390x844   -> 195 hoog (was 175)  -- de breedte is hier de grens
-       834x1112  -> 236 hoog (was 175)  -- een tablet geeft de ruimte, dus neem 'm
-       1024x768  -> 192 hoog (was 175)  -- liggend telt de hoogte, niet de breedte
-       320x568   -> 136 hoog (was 134)  -- zie de lage-schermregel hieronder
-     De verhouding 1.19 : 1 is die van hiervoor (208 : 175) en staat ook in de
-     kaartcommentaar bij .world-frame; die blijft dus kloppen. */
-  #screen-dress { --pop-h: clamp(140px, min(25vh, 50vw), 236px); }
+       390x844   -> 168 hoog  -- de breedte is hier de grens
+       834x1112  -> 236 hoog  -- een tablet geeft de ruimte, dus neem 'm
+       1024x768  -> 177 hoog  -- liggend telt de hoogte, niet de breedte
+       320x568   -> 119 hoog  -- zie de lage-schermregel hieronder
+     FASE 5B.1 heeft die getallen op een telefoon een slag teruggebracht (195 ->
+     168). De kop was daar 320 van 844 pixels, en dan is het rek eronder een
+     kier. Samen met de krappere lucht in de kop hieronder scheelt dat ~12%: de
+     pop blijft het grootste ding op het scherm, maar er past een halve rij
+     spulletjes meer onder. Op een tablet verandert er niets -- daar was de
+     verhouding al goed.
+     De verhouding 1.19 : 1 is die van hiervoor (208 : 175); .show-stage in de zaal
+     leunt erop ("zelfde verhouding als de spiegel"), dus die blijft kloppen. */
+  #screen-dress { --pop-h: clamp(132px, min(23vh, 43vw), 236px); }
   /* Lage schermen (een kleine telefoon staand, elke telefoon liggend). Daar is de
      kop het probleem en niet het rek: op 320x568 stond hij op 47% van het beeld en
      bleef er anderhalve rij spulletjes over. Alles wat hier staat haalt er samen
@@ -3717,34 +3758,98 @@
     #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
     #screen-dress .diamond-badge { font-size: 18px; padding: 6px 12px; }
   }
-  .dress-stage { height: var(--pop-h); width: calc(var(--pop-h) * 1.19); }
-  /* de podiumversiering schaalt mee: op een vaste 20px valt ze op een kleine pop
-     over haar heen en op een grote pop uit elkaar */
-  .dress-stage .deco { font-size: clamp(15px, calc(var(--pop-h) * .115), 26px); }
+  /* ---- De spiegel ---------------------------------------------------------
+     Waar de kleedkamer om draait: "hoe ziet mijn ster eruit?". Het was een
+     .stage -- dezelfde bouwsteen als de zaal en het eindscherm -- en dat bracht
+     twee dingen mee die hier niets te zoeken hebben: het decor van het podium
+     dat dit kind ooit kocht (applyStage zette de achtergrond én drie emoji in de
+     hoeken) en de drie draaiende schijnwerpervlekken van .stage::after. Podia
+     zijn sinds fase 1 uit de kleedkamer; dan hoort hun versiering hier ook niet
+     meer te staan.
+
+     Wat ervoor in de plaats komt is een spiegel, en die is met drie dingen
+     gemaakt en niet met een plaatje:
+       1. de boog       -- de bovenhoeken lopen rond, de onderkant niet. Dat is
+                           de vorm van een passpiegel, en meer heeft een kind niet
+                           nodig om te zien wat dit is.
+       2. het licht     -- warm van bovenaf (de lampen boven een kaptafel) en een
+                           warme plas waar ze staat. Die plas is er niet voor de
+                           sfeer maar voor de leesbaarheid: zonder dat licht
+                           verdwijnt een donkere outfit in het violette glas.
+       3. het glas      -- één schuine glans en een donkere onderrand. Genoeg om
+                           spiegel te zijn, te weinig om met haar te concurreren.
+     Geen animatie: het enige wat hier hoort te bewegen is zij. */
+  .spiegel {
+    position: relative; flex-shrink: 0; overflow: hidden; cursor: pointer;
+    display: flex; align-items: flex-end; justify-content: center;
+    height: var(--pop-h); width: calc(var(--pop-h) * 1.19);
+    border: 2px solid rgba(255,255,255,.42);
+    border-radius: 50% 50% var(--r-lg) var(--r-lg) / 30% 30% var(--r-lg) var(--r-lg);
+    /* Van onder naar boven gelezen: het glas is lichter dan de kamer eromheen
+       (anders is een spiegel een gat), er valt licht van de lampen bovenin, er
+       staat een zachte lichtkolom achter haar zodat ook een donkere outfit leest,
+       en er ligt een warme plas op de grond waar ze staat. */
+    background:
+      radial-gradient(56% 34% at 50% 99%, rgba(255,216,168,.62), transparent 72%),
+      radial-gradient(44% 56% at 50% 58%, rgba(244,232,255,.3), transparent 70%),
+      radial-gradient(82% 44% at 50% 2%, rgba(255,238,210,.3), transparent 66%),
+      linear-gradient(168deg, #6a3eb2 0%, #4d2884 50%, #3a1d69 100%);
+    box-shadow: var(--e-2), 0 0 26px rgba(150,86,255,.34),
+                inset 0 2px 14px rgba(255,228,186,.26), inset 0 1px 0 rgba(255,255,255,.34);
+    transition: transform .14s;
+  }
+  .spiegel:active { transform: scale(.98); }
+  /* dezelfde afspraak als bij .stage: de pop schaalt mee met de hoogte van haar
+     kader, zodat ze op geen enkel scherm afgesneden kan raken */
+  .spiegel .avatar-holder { height: 92%; }
+  .spiegel .avatar-holder svg { height: 100%; width: auto; display: block; }
+  .spiegel::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(116deg, rgba(255,255,255,.18) 0 9%, rgba(255,255,255,.06) 17%, transparent 32%);
+  }
   /* 🎲 verras me: trekt een willekeurige outfit uit wat ze al bezit. Hoort bij
      háár, dus staat hij als merkje op de rand van het podiumkader. Eén rand, geen
      extra ringen: dát was de klacht, niet de plek. (Op de sterrenkeuze stond
      hetzelfde patroon voor een ▶-merkje; dáár is het weg, want dáár beloofde het
      hetzelfde als de tegel eronder. Hier doet het knopje iets eigens.) */
   .stage-wrap { position: relative; display: flex; justify-content: center; }
+  /* FASE 5B.1 -- kleiner, kalmer, en echt aan de spiegel vast. Het was een paarse
+     knop van 42px met een dikke witte ring die half over de hoek van het kader
+     hing: dezelfde ring als de spiegel zelf, dus twee even harde randen die
+     elkaar overlapten, en zwaar genoeg om als hoofdknop te lezen. Nu is het een
+     merkje van hetzelfde glas als de balken onderaan, dat tegen de onderrand van
+     de spiegel aan zit. Nog steeds 38px, dus nog steeds met een kindervinger te
+     raken, maar het zegt "ook leuk" en niet "begin hier". */
   .shuffle-btn {
-    position: absolute; right: -6px; bottom: -6px; width: 42px; height: 42px;
+    position: absolute; right: -12px; bottom: 6px; width: 38px; height: 38px;
     border-radius: 50%; display: grid; place-items: center; cursor: pointer;
-    font-size: 20px; line-height: 1; font-family: inherit;
-    border: 2px solid rgba(255,255,255,.75); box-shadow: var(--e-1);
-    background: linear-gradient(180deg, var(--purple-light), var(--purple-mid));
-    transition: transform .15s;
+    font-size: 18px; line-height: 1; font-family: inherit; border: 0;
+    background: rgba(38,12,70,.82);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
+    transition: transform .15s, box-shadow .15s;
   }
-  .shuffle-btn:hover { transform: scale(1.06); }
-  .shuffle-btn:active { transform: scale(.94); filter: brightness(.88); }
+  .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
+  .shuffle-btn:active { transform: scale(.92); }
   /* Eén scrollende rij met alleen iconen -- alleen de categorie die aanstaat zet
      er zijn woord bij. Het was een vaste 4x2-grid waarin de helft van de labels
      werd afgekapt ("Schoe…", "Microf…", "Acces…"): een emoji plus een half woord
      is slechter dan één van de twee. Twee rijen worden zo één rij, en het woord
      staat er nog steeds -- alleen bij de categorie waar je nú in kijkt. */
-  .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 7px; }
+  .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 5px; }
+  /* padding-inline 12 en niet 4: aan het begin en het eind van de rij hoort lucht
+     te staan. Zonder die lucht lag de eerste knop tegen de schermrand en las een
+     half weggeschoven knop als een fout in plaats van als "er staat hier meer".
+     scroll-padding-inline zet dezelfde lucht neer als de rij zichzélf verschuift
+     (scrollIntoView bij een categoriewissel), zodat de gekozen knop nooit tegen
+     de rand aan landt. */
   .shop-tabs {
-    display: flex; gap: 6px; padding: 2px 4px; overflow-x: auto;
+    display: flex; gap: 6px; padding: 1px 12px; overflow-x: auto;
+    /* 36 en niet 12: de rij draagt een fade-masker van 34px aan de kant waar nog
+       meer staat (zie .hscroll-fade). Met minder marge landt de gekozen knop
+       precies ónder die fade en staat juist het woord dat je net koos half
+       vervaagd -- de enige knop die volledig leesbaar hoort te zijn. */
+    scroll-padding-inline: 36px;
     scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
   }
   .shop-tabs::-webkit-scrollbar { display: none; }
@@ -3758,7 +3863,18 @@
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; }
   .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
-  .tab-btn.active { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); }
+  /* FASE 5B.1 -- hetzelfde cyaan als hiervoor, maar als licht in plaats van als
+     vlak. Het was een dekkende cyaan pil met donkere letter: samen met het woord
+     erbij werd dat het felste ding op het scherm, feller dan de pop en feller dan
+     het spulletje dat ze aanheeft -- terwijl "in welke la kijk ik" de minst
+     belangrijke van die drie is. Dit is letterlijk het materiaal van .nav-item
+     .active onderaan (doorschijnend cyaan + een ring), dus de categorierij bovenin
+     en de tabbalk onderin zeggen "hier sta je" nu op precies dezelfde manier. */
+  .tab-btn.active {
+    background: var(--nav-sel); color: var(--c-white);
+    box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
+    text-shadow: var(--nav-ink);
+  }
   /* flex i.p.v. grid: bij een oneven aantal spulletjes bleef het laatste kaartje
      in een CSS-grid altijd in de eerste kolom hangen (grid deelt élke rij
      dezelfde kolomposities toe), dus links uitgelijnd met een lege plek ernaast
@@ -3773,21 +3889,36 @@
      ineens half zo groot oogt als op een telefoon (128 tegen 115). */
   .item-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: var(--kolom); --kaart-min: 104px; }
   @media (min-width: 560px) { .item-grid { --kaart-min: 118px; } }
+  /* FASE 5B.1 -- het kaartje is een plankje en geen doos. De rand stond op 2px
+     .35 wit: bij drie kolommen zijn dat zeventien even harde omlijningen onder
+     elkaar, en dan is het raster het onderwerp in plaats van de spulletjes erin.
+     De rand blijft 2px breed (de staten hieronder kleuren hem, en dan mag de
+     opmaak niet verspringen) maar is in rust bijna weg; wat het kaartje van de
+     achtergrond losmaakt is nu het vlak zelf plus een haarlijn licht bovenin.
+     Daardoor kan goud ("dit draag je") echt het hardst spreken. */
   .item-card {
     position: relative; flex: 1 1 var(--kaart-min); max-width: calc(var(--kaart-min) * 1.7);
-    background: var(--glass-white-13); border: 2px solid var(--glass-white-35);
+    background: rgba(255,255,255,.075); border: 2px solid rgba(255,255,255,.1);
     border-radius: var(--r-md); padding: 9px 6px 10px; text-align: center; cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
-  .item-card:hover { background: var(--glass-white-22); }
+  .item-card:hover { background: rgba(255,255,255,.14); }
   .item-card:active { transform: scale(.97); }
   /* Kaart-staten: blauw = "hier kijk je naar", goud = "dit staat aan". De blauwe
      variant had ook nog een 3px ring én een schaalsprong; dat was een vierde
      signaal in een raster dat er al drie heeft, terwijl de paspop erboven de
      preview al veel duidelijker laat zien. Alleen de rand blijft. */
-  .item-card.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); }
-  .item-card.equipped { border-color: var(--gold-accent); background: rgba(255,214,90,.10); box-shadow: 0 0 12px rgba(255,215,64,.48); }
-  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 12px rgba(255,215,64,.48); }
+  /* Twee staten, en ze mogen niet even hard schreeuwen. "Hier kijk ik naar" is
+     een moment (het duurt tot de volgende tik); "dit draag ik" is een antwoord op
+     de vraag waar het kind voor kwam. Cyaan is daarom een rand plus een tint,
+     goud is een rand plus een tint plus een gloed. */
+  .item-card.selected { background: rgba(134,216,255,.19); border-color: rgba(143,214,255,.62); }
+  .item-card.equipped {
+    border-color: var(--gold-accent); background: rgba(255,214,90,.14);
+    box-shadow: 0 0 14px rgba(255,215,64,.46), inset 0 1px 0 rgba(255,241,190,.3);
+  }
+  .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: 0 0 14px rgba(255,215,64,.46); }
   /* .owned and .selected are two plain (non-combined) classes with identical
      specificity, both setting background/border-color -- .owned happened to
      be declared later in the file, so it silently won that tie and previewing
@@ -3797,7 +3928,7 @@
      should just show the same full "you're looking at this" blue as any
      other selected item -- this combined selector's higher specificity wins
      outright, no reliance on rule order. */
-  .item-card.owned.selected { background: rgba(56,189,248,.16); border-color: var(--blue-text); }
+  .item-card.owned.selected { background: rgba(134,216,255,.19); border-color: rgba(143,214,255,.62); }
   /* zelfde tie als hierboven, maar dan voor :hover -- .owned/.equipped/.selected
      zetten allemaal hun eigen achtergrond, met dezelfde specificiteit als de
      kale .item-card:hover regel. Die verliest dus stilzwijgend de tie (bron-
@@ -3805,10 +3936,10 @@
      helemaal niet op hover terwijl een niet-bezeten kaartje wél oplichtte.
      Hier expliciet per staat een eigen, iets lichtere hover-tint (in de eigen
      kleur van die staat) zodat ieder kaartje evengoed op hover reageert. */
-  .item-card.owned:hover { background: rgba(255,255,255,.25); }
-  .item-card.equipped:hover { background: rgba(255,214,90,.18); }
-  .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.24); }
-  .item-card.selected.equipped:hover { background: rgba(255,214,90,.18); }
+  .item-card.owned:hover { background: rgba(255,255,255,.22); }
+  .item-card.equipped:hover { background: rgba(255,214,90,.22); }
+  .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(134,216,255,.26); }
+  .item-card.selected.equipped:hover { background: rgba(255,214,90,.22); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
   @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
   /* Eén miniatuur-zone voor álle spullen. Er waren er drie: een getekende jurk
@@ -3872,22 +4003,32 @@
      van vijf leest hem niet. Dit was grijs ("uitgeschakeld"-taal voor precies de
      spullen die je wél mag aandoen); nu is het gewoon een tikje helderder dan een
      kaartje dat nog niet van jou is. Goud blijft voor "dit draag je nu". */
-  .item-card.owned { border-color: rgba(255,255,255,.52); background: rgba(255,255,255,.17); }
-  /* FASE 5B -- een wereldbeloning die nog niet van jou is. Een streepjesrand in
-     plaats van een dichte: hij tekent dezelfde vorm als de andere kaartjes, maar
-     zegt "hier hoort nog iets te komen". Bewust niet grijs en niet dof-uit: het
-     is het mooiste van de categorie en het mag lokken. */
+  .item-card.owned { border-color: rgba(255,255,255,.34); background: rgba(255,255,255,.16); }
+  /* Een wereldbeloning die nog niet van jou is. Dit was een streepjesrand, en die
+     zegt in elke app die een kind ooit ziet hetzelfde: hier hoort iets te staan en
+     het is er niet (een lege plek, een kapot kaartje). Precies het tegenovergestelde
+     van wat bedoeld was. Nu is het een gesloten kaartje met warm licht erin -- iets
+     goudens achter glas, dat je nog niet kunt pakken. Het slotje en het wereldteken
+     in het pilletje zeggen de rest; de tekening staat een tikje terug zodat het
+     verschil met "van jou" ook zonder lezen te zien is. */
   .item-card.teverdienen {
-    border-style: dashed; border-color: rgba(255,214,90,.45); background: rgba(255,214,90,.06);
+    border-color: rgba(255,203,110,.32);
+    background:
+      radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.18), transparent 72%),
+      rgba(255,214,90,.05);
   }
-  .item-card.teverdienen:hover { background: rgba(255,214,90,.12); }
-  .item-card.teverdienen .item-thumb { opacity: .6; }
+  .item-card.teverdienen:hover {
+    background:
+      radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.26), transparent 72%),
+      rgba(255,214,90,.09);
+  }
+  .item-card.teverdienen .item-thumb { opacity: .72; }
   /* Aangetikt blijft aangetikt, ook bij een beloning: de streepjesrand houdt zijn
      vorm ("hier hoort nog iets te komen") maar krijgt het blauw van "hier kijk je
      naar". Dit staat er expliciet omdat .teverdienen ná .selected komt en anders
      stilzwijgend die gelijkspel wint -- dezelfde val als bij .owned hierboven. */
   .item-card.teverdienen.selected,
-  .item-card.teverdienen.selected:hover { border-color: var(--blue-text); background: rgba(56,189,248,.16); }
+  .item-card.teverdienen.selected:hover { border-color: rgba(143,214,255,.62); background: rgba(56,189,248,.13); }
   /* Waar een spulletje vandaan komt, als het eenmaal van je is: één wereldteken in
      de hoek en verder niets. Geen "beloning"-label over de tekening heen -- zodra
      je het hebt is het gewoon een van je spullen, met een herkomst. */
@@ -3896,13 +4037,26 @@
     padding: 3px 5px; border-radius: var(--r-pill); background: var(--glass-black-30);
     box-shadow: inset 0 0 0 1px rgba(255,214,90,.34);
   }
-  /* actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie */
+  /* De actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie.
+     FASE 5B.1 -- hij hoort bij die navigatie en was van ander materiaal gemaakt:
+     dekkender, minder waas, een échte rand in plaats van een ring, een andere
+     schaduw. Twee zwevende balken van 8px uit elkaar die duidelijk niet uit
+     hetzelfde blad geknipt zijn. Nu deelt hij alles met .main-nav (--nav-blur,
+     --nav-ring, --nav-shadow, --nav-ink, dezelfde ronding en dezelfde breedte) en
+     is alleen de vulling een slag dekkender -- dit vlak draagt letters over een
+     scrollend rek, dat van de navigatie staat boven een rustige onderrand.
+     De 88 is de bovenkant van de navigatiebalk (10 + 68) plus 10 lucht: ze staan
+     nu op één afstand van elkaar, niet op een los uitgerekend getal. */
   .dress-bar {
-    position: fixed; left: 50%; transform: translateX(-50%); bottom: 92px; z-index: 39;
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 88px; z-index: 39;
     display: none; align-items: center; gap: 10px; width: var(--balk-w); min-height: 52px;
-    background: rgba(30, 4, 52, .86); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid var(--glass-white-22); border-radius: var(--r-lg);
-    padding: 10px 14px; box-shadow: var(--e-2);
+    background: rgba(28, 6, 52, .82);
+    backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
+    -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
+    border: 0; border-radius: var(--r-lg);
+    padding: 10px 14px;
+    box-shadow: var(--nav-shadow), inset 0 0 0 1px var(--nav-ring);
+    text-shadow: var(--nav-ink);
   }
   .dress-bar .db-info { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; text-align: left; white-space: nowrap; overflow: hidden; }
   .dress-bar .db-name { font-size: 16.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -4462,8 +4616,10 @@
        vegen in de hoeken, het blauwe uur). Stond al op de sterrenkeuze en was daar
        al bedoeld voor hergebruik hier; zonder hem stond de kleedkamer als enige
        rustpunt op het kale bodyverloop en las ze als een los scherm. Geen nieuw
-       plaatje, geen nieuwe laag: precies dezelfde regel als daar. -->
-  <div class="screen hub app-sfeer" id="screen-dress">
+       plaatje, geen nieuwe laag: precies dezelfde regel als daar.
+       .kleedkamer is de variant erop: dezelfde schil, met het licht van een
+       kaptafel erbij. Zie .app-sfeer.kleedkamer in het stijlblad. -->
+  <div class="screen hub app-sfeer kleedkamer" id="screen-dress">
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="dressBack()" aria-label="Terug" title="Terug">←</button>
@@ -4471,7 +4627,16 @@
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
       <div class="stage-wrap">
-        <div class="stage tappable stage-frame dress-stage" id="shop-stage" onclick="tapDance('shop-avatar')">
+        <!-- FASE 5B.1 -- een spiegel en geen podium. Dit was een .stage: dezelfde
+             bouwsteen als de zaal en het eindscherm, mét het decor van het
+             gekochte podium erop (applyStage) en de drie schijnwerperblobs van
+             .stage::after. Podia zijn sinds fase 1 uit de kleedkamer, dus stond
+             hier een kasteel en een discobol bij een kind dat die ooit kocht --
+             versiering van een systeem dat hier niet meer bestaat. De spiegel
+             erft daarom niets meer van .stage: hij heeft zijn eigen kader, zijn
+             eigen licht en geen decor. Het podium zelf blijft gewoon in de
+             opslag en achter haar staan in de show en op het eindscherm. -->
+        <div class="spiegel" id="shop-spiegel" onclick="tapDance('shop-avatar')">
           <div class="avatar-holder idle" id="shop-avatar"></div>
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
@@ -11232,7 +11397,6 @@ function itemThumb(it, base) {
 let shopCat = 'dress';
 let shopSelectedId = null;
 let shopJustBoughtId = null;
-let shopStageId = null;        // welk decor er nú achter de pop staat (zie paintShop)
 let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-kaart kwam -- terug-navigatie gaat dan naar de kast i.p.v. de kaart
 // FASE 1: de Looks-lijst (complete thema-outfits als spaardoel) is uit de kleedkamer
 // gehaald. Wat overblijft is één vraag: kies een soort, kies een stuk, doe het aan.
@@ -11269,7 +11433,6 @@ function openKleedkamerCat(cat) {
    onder je vinger vandaan. */
 function renderShop() {
   const p = P();
-  shopStageId = null;   // een volle opbouw zet ook het decor opnieuw (ander kind, ander podium)
   const grid = $('item-grid');
   grid.innerHTML = '';
   // Eén keuzerij: de kledingsoorten. Er stond hier eerder eerst een
@@ -11300,7 +11463,12 @@ function renderShop() {
   // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
   tabs.onscroll = () => updateFades(tabs);
   if (activeTab) requestAnimationFrame(() => {
-    if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'center' }); updateFades(tabs); }
+    /* 'nearest' en niet 'center': centreren verschoof de rij ook als de gekozen
+       knop al helemaal in beeld stond, en dan lag de eerste knop halverwege
+       afgesneden tegen de rand terwijl daar niets voor nodig was. Nu schuift de
+       rij alleen als het moet, en dankzij scroll-padding-inline (zie .shop-tabs)
+       landt de knop dan met lucht ernaast in plaats van tegen de rand. */
+    if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' }); updateFades(tabs); }
   });
   shopItems(p).forEach(it => {
     const card = document.createElement('div');
@@ -11391,13 +11559,15 @@ function paintShop() {
   const selected = shopSelectedId ? item(shopSelectedId) : null;
   const preview = selected ? previewProfile(p, selected) : p;
   $('shop-diamonds').textContent = p.diamonds;
+  /* Alleen de pop. Hier stond applyStage(): dat zette het podium dat dit kind
+     ooit kocht áchter haar, met drie emoji in de hoeken. Podia zijn sinds fase 1
+     geen kleedkamercategorie meer, dus dat was versiering van een systeem dat
+     hier niet meer bestaat -- en het beantwoordde de enige vraag van dit scherm
+     ("hoe ziet mijn ster eruit?") met iets anders. De spiegel heeft nu zijn eigen,
+     vaste licht (zie .spiegel), en het podium staat nog gewoon achter haar in de
+     show en op het eindscherm. De opslag is niet aangeraakt: p.equipped.stage
+     blijft staan zoals het stond. */
   $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
-  /* Het podium hoort niet bij wat je hier kiest (podia zijn sinds fase 1 geen
-     categorie meer), dus het verandert alleen als er een ánder kind of een ander
-     decor komt. Elke tik opnieuw drie deco-emoji weggooien en terugzetten is dan
-     werk voor niets -- en juist dit scherm doet dat werk bij élke tik. */
-  const decor = itemOr(preview.equipped.stage, 'stage_disco').id;
-  if (decor !== shopStageId) { shopStageId = decor; applyStage($('shop-stage'), preview); }
   renderDressBar(selected, p);
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
@@ -11539,7 +11709,7 @@ function confirmShopBuy(id) {
   shopJustBoughtId = it.id;
   sndCoin();
   confetti(12);
-  flyDiamonds($('shop-diamonds'), $('shop-stage'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
+  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
   const trofees = checkTrophies(p);
   save();
   noticeReady(trofees);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
