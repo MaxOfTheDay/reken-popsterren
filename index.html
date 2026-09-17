@@ -9388,11 +9388,13 @@ let naShowLvl = null, kaartFocus = null;
 let netAf = null;
 // de grendel op de terugweg (zie goMap) -- het tegenhangertje van overgangBezig
 let terugBezig = false, terugTimer = null;
-/* Het beloningsmomentje vóór het vertrek. De landing van de sterren zélf staat
-   al in renderTourMap/de CSS (.net-af, sterLandt) -- hier komt alleen het
-   geluid bij (oplopende toontjes, één per verdiende ster) en één zachte tik
-   zodra de laatste ster ook echt geland is. cb (de reisanimatie) wacht tot
-   die hele beat voorbij is: eerst de beloning, dan pas het vertrek.
+/* Het korte moment vóór het vertrek waarin de sterren van de zojuist gespeelde
+   halte landen. De beloning zélf is al gevierd op het eindscherm (geluid,
+   tikjes, confetti bij drie op drie -- zie renderEndStars); hier op de kaart
+   hoeft dat niet nog een keer. Dit is dus stil: alleen de bestaande, tikkende
+   landing uit renderTourMap/de CSS (.net-af, sterLandt), en verder niets. cb
+   (de reisanimatie) wacht tot die landing voorbij is, zodat het vertrek er
+   niet doorheen valt.
 
    STAP en LAND zijn dezelfde getallen als de val-vertraging (.1/.185/.27s) en
    de landingsduur (.28s) in de CSS -- verander je de één, meet dan de ander
@@ -9403,9 +9405,7 @@ function starRevealBeat(lvl, cb) {
   const st = Math.max(0, Math.min(3, P().stars[lvl] || 0));
   if (!st || motionOff()) { cb(); return; }
   const STAP = .085, LAND = .28;
-  for (let i = 0; i < st; i++) beep(660 + i * 140, .09, .1 + i * STAP, 'sine', .05);
   const landt = Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
-  setTimeout(() => buzz(16), landt + 40);
   setTimeout(cb, landt + 200);   // + een kort, natuurlijk stiltetje vóór het vertrek
 }
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
