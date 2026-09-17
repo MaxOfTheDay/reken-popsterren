@@ -7264,7 +7264,19 @@ function load() {
 // vastlopen op de vraag. Daarom: stil opvangen, één keer vriendelijk melden, en
 // gewoon doorspelen (de voortgang van deze sessie blijft in het geheugen staan).
 let saveFailed = false;
+/* Kijkopstelling (?debug&demo) schrijft niets weg. Dat stond al als belofte bij
+   de schakelaars onderaan -- "ALLEEN in het geheugen, een echte familie-opslag op
+   hetzelfde toestel blijft ongemoeid" -- maar het stond nergens als regel. En het
+   kostte niet veel: één keer de kaart openen roept markWorldSeen aan, die
+   save() doet, en dan staan Lotte en Sem in de opslag van een echt gezin. De
+   voorbeeldlinks op de voorbeeldpagina gaan allemaal langs de kaart.
+
+   Alleen deze ene regel, en niet een tweede opslagpad: wat de app verder doet moet
+   precies hetzelfde blijven, anders test de kijkopstelling iets anders dan er
+   draait. */
+let demoStand = false;
 function save() {
+  if (demoStand) return;
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(db));
     saveFailed = false;
@@ -13774,7 +13786,10 @@ if (location.search.indexOf('debug') !== -1) {
   window.__db = () => db;
   if (dbg.has('demo')) {
     // Geen save(): dit is een kijk-opstelling, geen opslag. Bij herladen wordt
-    // ze gewoon opnieuw uit de URL opgebouwd.
+    // ze gewoon opnieuw uit de URL opgebouwd. De grendel zit in save() zelf --
+    // hier alleen "niets meer wegschrijven" zeggen was niet genoeg, want elke
+    // kaart die opengaat schrijft via markWorldSeen vanzelf weg.
+    demoStand = true;
     db.sound = false; db.haptics = false;
     const a = defaultProfile('Lotte', 'dress_roze', { hair: 'hair_blond' });
     a.order = 0; a.level = 6; a.diamonds = 240;
