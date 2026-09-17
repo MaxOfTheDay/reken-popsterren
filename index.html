@@ -2392,12 +2392,29 @@
        een flits. De onderlaag is nu de wereld zelf, dus er valt niets te flitsen. */
     background-color: var(--w-deep, #2a0c47);
     background-size: cover; background-position: 50% 50%;
-  }
-  /* Nog geen tekening? Dan draagt de wereld zichzelf met zijn eigen kleuren, zodat
-     een wereld speelbaar is vóórdat hij getekend is (en een ontbrekend bestand
-     nooit een leeg vlak oplevert). */
-  .world-frame.no-art {
-    background-image:
+    /* FASE 6B -- de tekening is de bóvenste van drie lagen, en de twee eronder
+       zijn de wereld op zijn eigen kleuren.
+
+       Waarom gelaagd en niet "eerst het verloop, daarna de tekening erin zetten":
+       een laag die nog niet te tekenen is, tekent gewoon niet, en dan staat de laag
+       eronder er. Er valt dus niets te timen -- geen onload, geen decode(), geen
+       moment waarop je het mag omzetten. Dat is precies waar de fout zat: met
+       alleen background-color eronder was die onderlaag --w-deep, en dat is in de
+       Muziekwereld #170a35. Zo goed als zwart. Van de sterkeuze naar de kaart stond
+       er daardoor 71 ms een bijna zwart scherm met de haltes erop, en dan sprong het
+       beeld in één keer naar de wereld: dát is de zwarte flits bij het kiezen van
+       een ster, en tegelijk de donkere band bij het opengaan van een wereldkaart --
+       één fout, twee meldingen. Op een telefoon over mobiel net duurt dat geen 71 ms.
+
+       Het is ook wat .reis-plaats op de reis al deed (de tekening ligt daar in een
+       eigen laagje boven het verloop), dus het is hier geen nieuw idee maar
+       hetzelfde idee op de tweede plek.
+
+       --w-art is 'none' als er geen tekening is; dan blijven de twee verlooplagen
+       over en draagt de wereld zichzelf -- een wereld is speelbaar vóórdat hij
+       getekend is, en een ontbrekend bestand levert nooit een leeg vlak op. */
+    --w-art: none;
+    background-image: var(--w-art),
       radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
       linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
   }
@@ -7802,6 +7819,17 @@ function sterTegel(key, p) {
   // label zegt in woorden wat de tegel doet en waar hij heen gaat.
   tegel.setAttribute('aria-label', `Speel met ${p.name} — verder in ${w.name}`);
   tegel.onclick = () => kiesSter(key, tegel);
+  /* Een vinger op een tegel is een wereld die zo in beeld komt. Hier gaat die ene
+     tekening alvast de leiding in -- niet bij het opbouwen van dit scherm, want
+     dan zou het startscherm van een gezin met zes sterren zes wereldkaarten
+     tegelijk ophalen, en dat is precies wat een startscherm niet hoort te doen.
+
+     Wat het oplevert: pointerdown ligt vóór de tik, de tegel geeft daarna nog 150
+     ms antwoord (zie kiesSter) en de schermwissel duurt ook nog iets. Dat is het
+     voorsprongetje waarmee de kaart in het gewone geval al met tekening opengaat
+     in plaats van met de wachtstand van applyWorldArt. Duurt het langer, dan
+     draagt de wereld zichzelf zolang -- dus dit is winst, geen voorwaarde. */
+  tegel.onpointerdown = () => preloadArt(w.art);
   return tegel;
 }
 /* Een kind tikt drie keer. Zonder grendel is dat drie keer navigeren: twee
@@ -8172,13 +8200,20 @@ function showWorld(idx, travelFrom) {
    GEHAALD onthoudt wat er al een keer aangevraagd is, zodat het opnieuw tekenen van
    de kaart (dat gebeurt bij elke halte, elke wereldwissel, elke terugkeer) niet
    telkens een nieuwe aanvraag opzet. De browsercache en de service worker doen de
-   rest; dit voorkomt alleen het onnodige verkeer ernáártoe. */
+   rest; dit voorkomt alleen het onnodige verkeer ernáártoe.
+
+   FASE 6B -- een aanvraag die mislukt wordt weer vergeten. Hij stond hier voor
+   altijd in: één wereldkaart die niet binnenkwam omdat het net net wegviel, en die
+   wereld vroeg er deze sessie nooit meer om -- ook niet toen het net terug was.
+   "Aangevraagd" hoort te betekenen "hij komt eraan", niet "we hebben het ooit
+   geprobeerd". */
 const ART_GEHAALD = new Set();
 function preloadArt(src) {
   if (!src || ART_GEHAALD.has(src)) return;
   ART_GEHAALD.add(src);
   const img = new Image();
   img.decoding = 'async';
+  img.onerror = () => ART_GEHAALD.delete(src);
   img.src = src;
 }
 /* Voorladen gebeurt ALTIJD achter in de rij. Een vooruitgehaald bestand mag nooit
@@ -9041,11 +9076,22 @@ function smoothPath(ps, stukken) {
   }
   return d;
 }
-// De tekening van een wereld. Is er nog geen, dan doet de reservekaart het werk
-// met de kleuren van de wereld zelf -- een wereld is dus speelbaar vóór hij
-// getekend is, en een ontbrekend bestand levert nooit een leeg vlak op.
+/* De tekening van een wereld. Is er nog geen, dan doet de reservekaart het werk
+   met de kleuren van de wereld zelf -- een wereld is dus speelbaar vóór hij
+   getekend is, en een ontbrekend bestand levert nooit een leeg vlak op.
+
+   Twee regels, en allebei zetten ze alleen iets neer; het wachten op het bestand
+   staat in de opmaak en niet hier (zie de lagen bij .world-frame). Dat is met
+   opzet: een tekening die nog onderweg is, is geen toestand die de JS hoort bij te
+   houden -- er ligt gewoon een laag onder die het zolang overneemt.
+
+   .no-art blijft wél een klasse, want het is een ándere zin dan "nog niet binnen":
+   het zegt dat deze wereld géén tekening heeft, en daar hangt aan vast dat de
+   gedeelde wolkjes en het voetlicht van de app wél mogen meedoen (zie de
+   :has()-regel eronder). Een wereld die zijn tekening nog staat af te wachten
+   krijgt die er dus niet één tel bij om ze meteen weer kwijt te raken. */
 function applyWorldArt(el, world) {
-  el.style.backgroundImage = world.art ? `url("${world.art}")` : '';
+  el.style.setProperty('--w-art', world.art ? `url("${world.art}")` : 'none');
   el.classList.toggle('no-art', !world.art);
 }
 /* De sfeer van een wereld als CSS-variabelen, één keer op het kader gezet. Elk
