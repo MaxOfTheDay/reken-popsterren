@@ -52,6 +52,26 @@ const SLOTS = {
              label: 'Slotscherm', waar: 'na de show',
              lever: [1024, 1536], anker: 'midden', canoniek: 'finale.webp',
              hint: 'finale.webp' },
+  /* De kleedkamer en de trofeeenkast. Ze lenen vandaag de gedeelde schil; het pad
+     hieronder wordt pas gelezen als SCHERMKUNST in index.html hem noemt (zie
+     zetSchermkunst daar). Staand 2:3, net als het startscherm: dezelfde ::before,
+     dezelfde sluier, hetzelfde masker.
+
+     Let op waar je ze op beoordeelt. De winkeltegels en de trofeekaartjes zijn
+     licht-op-donker en doorschijnend -- een drukke of lichte tekening maakt de
+     namen erop onleesbaar. Dat is niet iets wat je aan de tekening ziet maar aan
+     het scherm eromheen, en daarom heeft de studio er een voorbeeld-in-het-echte-
+     scherm voor. */
+  dress:   { match: /^kleedkamer|^kleerkast|^dress(room)?[-_]?bg|^dressing/i, screen: 'dress',
+             label: 'Kleedkamer', waar: 'achter de kleedkamer',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'kleedkamer.webp', budget: 125,
+             pad: 'assets/bg/kleedkamer.webp', schermkunst: 'dress',
+             hint: 'kleedkamer.webp' },
+  tro:     { match: /^trofee|^trophies|^kast[-_]?bg/i,               screen: 'tro',
+             label: 'Trofeeënkast', waar: 'achter de trofeeën',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'trofeeen.webp', budget: 125,
+             pad: 'assets/bg/trofeeen.webp', schermkunst: 'tro',
+             hint: 'trofeeen.webp' },
 };
 
 const SCHERMEN = [
@@ -59,6 +79,8 @@ const SCHERMEN = [
   { id: 'map',     label: 'Kaart' },
   { id: 'game',    label: 'Show' },
   { id: 'end',     label: 'Einde' },
+  { id: 'dress',   label: 'Kleedkamer' },
+  { id: 'tro',     label: 'Trofeeënkast' },
 ];
 
 /* Waar de wereld achter staat: de kaart en de sterkeuze.
@@ -242,6 +264,25 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
 #screen-profile .map-sky span{display:none!important}`);
   }
 
+  /* De kleedkamer en de kast. Letterlijk dezelfde opmaak als de productieregel in
+     index.html (#screen-dress.kunst.app-sfeer::before) -- dat is het hele punt van
+     een kandidaat: wat je hier beoordeelt is wat je straks krijgt. Het verschil is
+     alleen wáár het beeld vandaan komt.
+
+     De klasse .kunst hoeft hier niet gezet te zijn: een kandidaat is er juist
+     vóórdat er een tekening in het spel staat. Vandaar dat deze regel op het
+     scherm zelf mikt en niet op .kunst. */
+  [['dress', '#screen-dress'], ['tro', '#screen-trophies']].forEach(([sleutel, sel]) => {
+    if (!urls[sleutel]) return;
+    out.push(`${sel}{position:relative;isolation:isolate}
+${sel}.app-sfeer::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background-image:${veil}url("${urls[sleutel]}");
+  background-size:${scrim ? 'cover,' : ''}cover;
+  background-position:${scrim ? '50% 50%,' : ''}50% 50%;
+  -webkit-mask-image:linear-gradient(to bottom,#000 16%,rgba(0,0,0,.42) 32%,rgba(0,0,0,.42) 72%,#000 88%);
+  mask-image:linear-gradient(to bottom,#000 16%,rgba(0,0,0,.42) 32%,rgba(0,0,0,.42) 72%,#000 88%)}`);
+  });
+
   if (urls.finale) {
     out.push(`#screen-end{position:relative}
 #screen-end::before{content:'';position:absolute;inset:0;z-index:-1;
@@ -277,4 +318,17 @@ function parallaxJs() {
   })();`;
 }
 
-if (typeof module !== 'undefined') module.exports = { SLOTS, SCHERMEN, SCRIM, PARALLAX, classify, css, isImage, mimeFor, namesHint, parallaxJs };
+/* css() als tekst, zodat een pagina hem letterlijk kan meenemen. Zelfde afspraak
+   als parallaxJs() hierboven, en om dezelfde reden: de Dev Studio moet een
+   kandidaat kunnen tónen op het echte scherm, en dat moet met precies dezelfde
+   opmaak gebeuren als de productieregel -- anders beoordeel je iets anders dan je
+   krijgt. Een tweede kopie in de studiopagina zou precies daar op een dag
+   vanaf gaan wijken. */
+function cssJs() {
+  return 'const SCRIM=' + JSON.stringify(SCRIM)
+    + ';const MAP_SCRIM=' + JSON.stringify(MAP_SCRIM)
+    + ';const HUBS=' + JSON.stringify(HUBS) + ';\n'
+    + css.toString();
+}
+
+if (typeof module !== 'undefined') module.exports = { SLOTS, SCHERMEN, SCRIM, PARALLAX, classify, css, cssJs, isImage, mimeFor, namesHint, parallaxJs };

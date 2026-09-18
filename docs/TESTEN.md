@@ -235,10 +235,13 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   en wat `frontierWorld()` daarvan maakt;
 - **kijken kost nooit een save** — na elke voorkeuze wordt `save()` aangeroepen en
   moet de opslag leeg blijven;
-- **de snelkoppeling start déze kloon** — het bestand dat `npm run snelkoppeling`
-  op je bureaublad zet, wordt voor alle drie de platformen nagekeken: wijst het
-  naar deze map en deze node, start het de server met `--open`, en breekt een
-  spatie in het pad niets;
+- **de snelkoppeling start déze kloon** — de bestanden die `npm run snelkoppeling`
+  op je bureaublad zet, worden voor alle drie de platformen nagekeken: wijzen ze
+  naar deze map en deze node, starten ze de server met `--open`, en breekt een
+  spatie in het pad niets. Er zijn er twee — eentje die start wat er staat en
+  eentje die eerst het nieuwste ophaalt (`--naar`) — en de suite kijkt na dat
+  `preview.js` die vlag ook werkelijk kent en hem langs `versie.wissel` laat
+  lopen, die op open werk weigert;
 - **de versieregel zegt eerlijk wat er draait**, en **een wissel weigert als er
   werk openstaat** (dat laatste alleen als je werkmap op dat moment vuil is —
   de suite checkt nooit zelf iets uit);
@@ -253,7 +256,17 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
 - **de globale beelden komen uit `scene.js` en `merk.js`** — `test/beelden.js` zet
   die twee naast elkaar, en de suite kijkt na dat elk afgeleid bestand aan zijn
   meester hangt en dat de schrijflijst eng blijft: `index.html` en `sw.js` mogen
-  nooit via `/asset` beschreven worden.
+  nooit via `/asset` beschreven worden. Die lijst wordt afgeleid uit
+  `scene.SLOTS`, dus een plek erbij kan niet meer half worden aangesloten;
+- **een schermtekening staat op één plek** — `scene.js` zegt waar hij heen gaat,
+  `SCHERMKUNST` in `index.html` zegt of de app hem gebruikt, en de kandidaat in de
+  studio wordt met dezelfde `scene.css()` getekend als de productieregel. Zo kan
+  "wat je in de studio ziet" niet uiteenlopen met "wat er op een telefoon staat";
+- **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
+  `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
+  voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
+  tekening onzichtbaar — ook na herladen, en ook in het voorbeeldje op een
+  kaartje, want zijn bereik is `/` en hij bedient dus ook de studiopagina.
 
 ### `test/studio.test.js` — de wereldstudio
 
