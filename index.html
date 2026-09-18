@@ -10063,6 +10063,13 @@ let naShowLvl = null, kaartFocus = null;
 let netAf = null;
 // de grendel op de terugweg (zie goMap) -- het tegenhangertje van overgangBezig
 let terugBezig = false, terugTimer = null;
+/* Het afrondende werk van renderTourMap (schuifstand, --kop-h/--nav-h, de
+   terugzoom) als losse functie, zodat goMap() het meteen kan uitvoeren zodra
+   het scherm zelf aan staat -- zie tourMapVoltooi hieronder en de regel bij
+   renderTourMap voor waarom dat ooit een requestAnimationFrame was en waarom
+   dat een beeldje te laat is. null zolang renderTourMap het al zelf synchroon
+   kon afronden (elke kaartwissel behalve de allereerste van een navigatie). */
+let tourMapVoltooi = null;
 /* Het korte moment vóór het vertrek waarin de sterren van de zojuist gespeelde
    halte landen. De beloning zélf is al gevierd op het eindscherm (geluid,
    tikjes, confetti bij drie op drie -- zie renderEndStars); hier op de kaart
@@ -10188,6 +10195,16 @@ function goMap(vanLvl) {
        precies de opdracht die reisNaarWereld hier neerlegt.) */
     kaartKomtOp(null);
   }
+  /* Pas hierna, en niet in een requestAnimationFrame: renderTourMap kon zijn
+     eigen afrondende werk (scrollstand, --kop-h/--nav-h, kaartTerugZoom) niet
+     synchroon doen, want toen het draaide stond het scherm nog niet .active en
+     leverde elke meting 0 op. Nu, een paar regels later in dezelfde taak, wél
+     -- en dat is nog steeds vóór de browser iets van dit beeldje verft. Moet
+     wel ná de kaartFocus-controle hierboven staan: kaartTerugZoom (via
+     tourMapVoltooi) verbruikt diezelfde kaartFocus, en die controle moet 'm
+     nog aantreffen om de terug-grendel te zetten. Zie de regel bij
+     tourMapVoltooi en bij renderTourMap. */
+  if (tourMapVoltooi) { const v = tourMapVoltooi; tourMapVoltooi = null; v(); }
   if (travel) requestAnimationFrame(() => runTravel(travel));
   else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
 }
@@ -11176,21 +11193,41 @@ function renderTourMap(travelFrom) {
   // Past de kaart niet in de vensterverhouding, dan schuift hij: zet de halte waar
   // ze nu staat in beeld. Op een staande telefoon valt er niets te schuiven en doet
   // dit niets.
-  requestAnimationFrame(() => {
+  /* Dit stond hier altijd als requestAnimationFrame, met als reden: goMap()
+     roept show() pas ná deze render aan, en zolang het scherm nog niet .active
+     is levert elke meting hier (scrollHeight, offsetHeight, getBoundingClientRect)
+     domweg 0 op -- display:none heeft geen doos om op te meten. Wachten tot het
+     ként dus.
+
+     Maar wachten met requestAnimationFrame is een beeldje wachten, en dat is
+     iets anders dan "tot show() geweest is": een rAF-callback loopt vóór de
+     eerstvolgende verf, en daarmee ná de verf van dít beeldje. Precies dat
+     beeldje toonde de kaart dus altijd al één keer ongeschaald (transform:
+     none), vlak voordat kaartTerugZoom hieronder de intreeanimatie alsnog
+     start -- scale(1.06) sprong er dan in één klap overheen, in plaats van
+     dat je 'm vanaf het eerste zichtbare beeldje al ziet inzoomen. Dát was de
+     tikje-te-grote flits waarna de kaart weer terugzakt (zie kaartKomtOp).
+
+     Is het scherm al .active (elke kaartwissel behalve de allereerste van deze
+     navigatie), dan is hier meteen wat te meten en hoeft er niet gewacht te
+     worden. Staat het nog uit, dan zet goMap() dit apart en voert het zelf uit
+     zodra het ná show() precies dezelfde taak nog loopt -- dus nog steeds vóór
+     de eerste verf, niet een beeldje erna. */
+  const voltooi = () => {
     const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
     if (here && map.scrollHeight > map.clientHeight + 4) {
       const f = map.querySelector('.world-frame');
       const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
       map.scrollTop = Math.max(0, y - map.clientHeight / 2);
     }
-    // nu pas: goMap() roept show() ná deze render aan, dus hier staat de
-    // navigatiebalk er wél en levert meetChroom een echte maat op
     meetChroom();
     kopOpzij();
     // Terug uit een show: de kaart komt ingezoomd op die halte binnen en zakt
     // daar vandaan terug. Eénmalig -- de opdracht wordt hier verbruikt.
     if (kaartFocus) { const l = kaartFocus; kaartFocus = null; kaartTerugZoom(map, l); }
-  });
+  };
+  if (scherm.classList.contains('active')) voltooi();
+  else tourMapVoltooi = voltooi;
   // schuift de kaart, dan schuift zij onder de plakkende kop door
   map.onscroll = kopOpzij;
 }
