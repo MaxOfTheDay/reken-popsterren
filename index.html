@@ -3388,8 +3388,14 @@
      wazige klont onder haar voeten en accessoires (de gitaar, het eenhoorntje).
      ~2cqw is op de meeste toestellen zo'n 8-10px, precies de marge die gevraagd
      werd zonder er een los zwevend ding van te maken. ZONE.y0 hoeft niet nóg een
-     keer mee: 18 gaf al ruim baan (zie test 7c-bis), dit paste er nog binnen. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 3cqw); transform: translateX(-50%);
+     keer mee: 18 gaf al ruim baan (zie test 7c-bis), dit paste er nog binnen.
+
+     FASE 4H -- een halve cqw terug omhoog, naar 3,5: op 3 begon ze los van de
+     halte te zwéven in plaats van erop te staan. Het "staat ÓP de tegel"-gevoel
+     moet nu vooral van de krappere, sterkere contactschaduw hieronder komen (zie
+     ::after) en niet van hoeveel ze in de halte wegzakt -- dat hoeft dus maar een
+     fractie terug, niet weer helemaal naar 5. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 3.5cqw); transform: translateX(-50%);
     width: 22cqw; pointer-events: none; z-index: 2; }
   /* Silhouet, niet sfeer. url(#tourHeroContour) (zie de verborgen <svg> boven
      #screen-map) snijdt met feMorphology een even dikke rand rond haar échte
@@ -3405,6 +3411,11 @@
      plaats van op een contour. Dunner en een fractie transparanter houdt genoeg
      contrast over -- de rand hoeft niet te bewijzen dat hij er is, alleen dat zij
      los staat van wat erachter zit.
+
+     FASE 4H -- nog een stap zachter, radius 2,2 naar 1,7 en dekking .52 naar .42.
+     De leesbaarheid komt inmiddels vooral van het silhouet zelf (de FASE 4G-
+     verzadiging/contrast) en de schaduw bij haar voeten; de rand hoeft alleen nog
+     de laatste scheiding te geven, niet de hoofdmoot te dragen.
 
      Daarbovenop nog altijd één héél klein beetje licht -- niet om te gloeien, maar
      omdat een pure donkere rand tegen een dónkere rots zelf weer wegvalt. Dat is
@@ -3432,10 +3443,15 @@
     background: radial-gradient(closest-side, rgba(18,6,36,.22), rgba(18,6,36,.08) 55%, transparent 78%); }
   /* Krappere, stérkere contactschaduw in plaats van een brede waas: minder blur,
      meer dekking, smaller. Dat "ÓP de tegel"-gevoel moet van een strakke schaduw
-     onder haar voeten komen, niet van een groot zacht veld eromheen. */
+     onder haar voeten komen, niet van een groot zacht veld eromheen.
+
+     FASE 4H -- nog krapper en nog steviger (11cqw i.p.v. 13, minder blur, iets
+     donkerder): dit duwtje moet nu in zijn eentje het "staat ÓP de halte"-gevoel
+     dragen, nu de zak zelf weer een fractie ondieper is (zie .tour-hero
+     hierboven) en de rand rondom haar zachter is geworden. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.3cqw; transform: translateX(-50%);
-    width: 13cqw; height: 3.1cqw; border-radius: 50%; background: rgba(8,1,18,.66); filter: blur(2.5px); }
+    left: 50%; bottom: 0.2cqw; transform: translateX(-50%);
+    width: 11cqw; height: 2.5cqw; border-radius: 50%; background: rgba(6,1,14,.72); filter: blur(1.8px); }
   /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
      halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
   .tour-hero .hero-vonk {
@@ -5678,8 +5694,8 @@
        anders in de app gebruikt, dus avatarSVG() zelf blijft ongemoeid. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <filter id="tourHeroContour" x="-30%" y="-30%" width="160%" height="160%">
-      <feMorphology in="SourceAlpha" operator="dilate" radius="2.2" result="dilated"/>
-      <feFlood flood-color="#3a1f48" flood-opacity="0.52" result="lijnkleur"/>
+      <feMorphology in="SourceAlpha" operator="dilate" radius="1.7" result="dilated"/>
+      <feFlood flood-color="#3a1f48" flood-opacity="0.42" result="lijnkleur"/>
       <feComposite in="lijnkleur" in2="dilated" operator="in" result="dikkerand"/>
       <feComposite in="dikkerand" in2="SourceAlpha" operator="out" result="rand"/>
       <feMerge>
