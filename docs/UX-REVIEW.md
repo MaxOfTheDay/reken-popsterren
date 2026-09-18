@@ -231,6 +231,73 @@
 >   40px on short screens, verified discoverable down to 320px), and bottom
 >   clearance on the wardrobe and cabinet, which measured 24px above the action tray
 >   and 43–91px above the nav at 320 / 390 / 412 and needed no change.
+>
+> **PS-45 (the dressing room gets a room), outside this review.** The wardrobe is
+> the first hub screen after the player picker to carry its own artwork, and this
+> pass is the one that makes the existing furniture sit inside it rather than on
+> top of it. Nothing about the information architecture moved: same header, same
+> flexible item grid, same category row, same diamond counter, same bottom nav,
+> same economy.
+>
+> * *The room.* `#screen-dress.app-sfeer::before` — the slot the `--kunst-sluier`
+>   note has described since 5E, under the veil, viewport-fixed so the rack scrolls
+>   and the room does not. It is drawn in the app (an inline SVG in
+>   `--kleed-tekening`: lamps over the mirror, a clothes rail either side of it, a
+>   warm pool on the floor). A painted plate does not go in that token: the studio's
+>   own `SCHERMKUNST` / `.kunst` rule, which landed on main in parallel, wins on
+>   specificity and covers it. The two stack — drawn room by default, painting once
+>   one is set — and neither ever points at a file that is not on disk.
+> * *The header stopped being a lid.* It shared `--kop-plaat` (aubergine at `.82`)
+>   with the cabinet and the parent area, which on a screen with artwork covered
+>   the whole top third of the room. It is now one surface with a ramp — `.18` at
+>   the title, `.72` under the category row and the treasure pill — which is §4's
+>   own rule (short bold text on art, a wash under a dense row of small ones), and
+>   the screen title took `--op-kunst-ink` the way the venue header does.
+> * *The mirror became an alcove.* A filled `#6a3eb2 → #3a1d69` capsule with a 2px
+>   white edge and a 26px purple glow is a mirror on a plain shell and a second
+>   rectangle on a room. Same size, same arch, same doll, but now translucent and a
+>   shade deeper than the wall, lit from above, with the warm pool at her feet kept
+>   (it is what makes a dark outfit read) and one contact shadow under her instead
+>   of a halo.
+> * *Three loud things went quiet, one stayed loud.* `Van jou` lost its solid white
+>   pill for the same dark chip every other card carries; the owned card's lift came
+>   down (`.34/.16 → .15/.11`); `✨ Wereldschatten` became a pill the width of its own
+>   words instead of a third full-width bar. Gold — the worn item, and the treasure
+>   box when it is open — is untouched, which is the point.
+> * *The bottom stopped being one block.* The action tray shared width, radius, ring
+>   and shadow with the nav, 10px apart. It is now 53px instead of 57, a radius
+>   smaller, a shade quieter, 14px clear of the nav — the same 136px of screen, but
+>   two things instead of one. The floor darkening that used to be a violet lift in
+>   `.app-sfeer.kleedkamer::after` now does the seating work, which is what let the
+>   tray's own fill come down.
+> * *Left alone on purpose:* the grid's column maths (`--kaart-min`, three columns
+>   on a phone), the 🎲 button, the tray's own show/hide logic, every touch target,
+>   and the shared `--vlak*` card surface — it belongs to the trophy cabinet as much
+>   as to the wardrobe, and this pass had no business making those two diverge again.
+>
+> **PS-46 (two wardrobe rules), outside this review.** Two small changes on top of
+> PS-45; nothing else about the screen moved.
+>
+> * *Wereldschatten counts up instead of filling a meter.* `3 / 6` made today's
+>   world count the denominator, so a child holding everything would drop from
+>   `6 / 6` to `6 / 7` the day a world is added — the screen telling her she had
+>   lost something. It now reads `✨ Wereldschatten · 3 verzameld`, which behaves
+>   the same at 0, 6 and 12, and there is no per-world marker to grow. The pill
+>   came down to 34px, content-width, one hairline, gold on the number only; an
+>   invisible `::after` keeps the tap target at 44px, so small here does not mean
+>   hard to hit. `schatStand().totaal` still decides whether the pill exists at
+>   all (a game with no rewards has no pill) and is otherwise not shown.
+> * *Tapping clothes you own puts them on.* Select-then-`Doe aan` was two taps in
+>   two places for something that costs nothing and is undone by one more tap.
+>   One tap now equips; tapping what is already on is deliberately nothing (never
+>   "take it off"); and the contextual tray survives only for the one decision
+>   that spends diamonds — an unowned item, its price, and an explicit `Koop`.
+>   Repeated taps on an unowned item can never buy it. A purchase equips what it
+>   bought and closes the tray. `shopSelectedId` therefore means exactly one thing
+>   now — "the item you are considering buying" — which is what removed the state
+>   where the doll wore one thing while the tray talked about another. The
+>   post-world deep link (`openKleedkamerItem`, the end screen's second button)
+>   follows the same rule: an earned treasure goes on rather than being previewed.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px
