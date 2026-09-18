@@ -30,6 +30,7 @@ npm run test:ouder       # het ouderdeel: instellingen, wissen, back-up
 npm run test:rondgang
 npm run test:voortgang
 npm run test:reis
+npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 ```
@@ -241,6 +242,32 @@ gezin:
   staan, of het nu een wereldkaart is of het startscherm. De lijst komt van
   `gewijzigdeAssets()` in `test/preview.js`, die het aan git vraagt; de suite spuit
   hem in zoals die server dat doet, zodat er geen server nodig is.
+
+### `test/vlucht.test.js` — de zoom tussen wereld en Werelden
+
+Een browsersuite over de overgang die van de wereldkaart en `Werelden` één plek
+op twee afstanden maakt: de tekening van de wereld krimpt naar het kaartje waar
+hij op `Werelden` ligt, en groeit daar vandaan weer uit. Wat hier vastligt is
+niet hoe dat voelt — dat is werk voor de ogen en voor `npm run shots` — maar wat
+eronder ligt:
+
+- **hij begint waar de wereld stáát** en eindigt waar zijn kaartje ligt: de
+  vluchtlaag wordt opgemeten tegen het echte kader van de kaart, op vier
+  schermmaten plus een liggend venster;
+- **`Werelden` staat al goed vóórdat er iets beweegt** — de schuifstand op het
+  eerste beeldje is dezelfde als die aan het eind, dus er wordt nooit eerst een
+  scherm getoond dat daarna naar zijn plek schuift;
+- **er staat nooit twee keer hetzelfde kaartje in beeld**: zolang de tekening
+  vliegt ligt het echte kaartje verborgen;
+- **de navigatiebalk en de diamantenpil verroeren zich niet** — het vaste kader
+  waar de zoom in het midden zijn richting aan ontleent;
+- **hij ruimt zichzelf altijd op**: drie keer tikken geeft één vlucht, vijf keer
+  op en neer laat geen laag achter, en de haltes zijn daarna gewoon aan te tikken;
+- **hij werkt ook vanuit een eerdere wereld** — kijk je in wereld 1 terwijl je
+  ster in wereld 4 staat, dan zoomt de kaart uit naar hét kaartje van wereld 1;
+- **wie geen beweging wil krijgt er geen** (`prefers-reduced-motion`) en komt wél
+  op precies dezelfde plek uit;
+- en **er verschuift geen enkele ster**: uitzoomen is kijken.
 
 ## Hoe de keuring werkt
 
