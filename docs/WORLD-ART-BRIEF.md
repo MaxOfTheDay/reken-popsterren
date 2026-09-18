@@ -70,6 +70,14 @@ cropped, centred, and bumps the service-worker cache.
 
 ## 2. The safe zone
 
+> **Stale since FASE 4D–4F (world-map avatar visibility work).** The star's size and how
+> deep she sinks into her stop changed twice since these numbers were measured, and
+> `ZONE.y0` moved from 14 to 18 (`y0kop` from 25 to 28) to give her room again — see the
+> comment above `const ZONE` in `index.html` for the current reasoning. The numbers below
+> (199×249 art px, the y 14–25% band, "her band" section) describe the **old** measurement
+> and need a fresh pass per §8 before they're trusted again; `ZONE` in the code and test
+> 7c-bis are the current source of truth in the meantime.
+
 The drawing runs **edge to edge, unbroken**. There is no header panel. The top of the
 screen carries three light things — the player's round portrait on the left (bare, no
 container), the world name in the middle and the diamonds on the right (two translucent
