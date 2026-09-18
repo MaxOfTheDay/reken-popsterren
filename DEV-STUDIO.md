@@ -1,7 +1,16 @@
 # Dev Studio
 
-Eén scherm om het spel in te ontwikkelen, na te kijken en te keuren: links de
-bedieningen, rechts het échte spel op telefoonmaat.
+Eén scherm, twee werkbladen, en een hoekje ernaast:
+
+| | |
+|---|---|
+| **Testomgeving** | speel en controleer de game in een gekozen toestand |
+| **Wereldstudio** | bouw en beheer de werelden |
+| *App & merk* | het beeld dat bij de héle app hoort en bij geen wereld |
+
+Links de bedieningen van het werkblad waar je in zit, rechts het échte spel op
+telefoonmaat. Bovenin staat altijd welk werkblad aan staat en welke versie er
+draait.
 
 ```
 npm run studio
@@ -82,9 +91,9 @@ wereldstudio.
 
 ## 3. Een andere tak of PR testen
 
-In **Draaiende versie**:
+In **Testomgeving → Huidige build**:
 
-1. *Haal op* — `git fetch --all --prune`. Raakt je werkmap niet aan.
+1. *Ophalen* — `git fetch --all --prune`. Raakt je werkmap niet aan.
 2. Kies in de lijst: **Main**, een **open PR** (met titel), of een **tak**.
 3. *Wissel*.
 
@@ -100,30 +109,66 @@ bezoeklimiet van GitHub.
 
 ## 4. Terug naar de laatste main
 
-Knop **Terug naar main** (of kies *Main* en *Wissel*). Dat is
+Knop **Naar main** (of kies *Main* en *Wissel*). Dat is
 `git checkout main` plus een fast-forward naar `origin/main`.
 
-Loopt je eigen tak achter, dan werkt **Werk bij** hem bij — ook alleen
+Loopt je eigen tak achter, dan werkt **Bijwerken** hem bij — ook alleen
 fast-forward. Lopen tak en verte uiteen, dan zegt de studio dat: samenvoegen is
 een keuze en hoort niet achter een knopje.
 
 ---
 
-## De rest van het scherm, in het kort
+## De twee werkbladen, in het kort
 
-| vak | waarvoor |
+### Testomgeving — "breng me naar deze stand"
+
+| onderdeel | waarvoor |
 |---|---|
-| **Werelden** | alle werelden, hun shows, kaart, zaal, beloning en wat er niet klopt. *Open wereldstudio* gaat naar het tekenpaneel (`?debug&mapedit`), *Wereld toevoegen* opent dat paneel meteen in "een wereld erbij", *Keuringen* draait de vier snelle controles. |
-| **Testbeeld** | het spel in een stand zetten zonder ernaartoe te spelen: nieuwe speler, halverwege, laatste show, perfect, op slot, alles uit, met of zonder diamanten. De stand geldt voor de wereld die je in de lijst aantikte. |
-| **Openen** | rechtstreeks naar een scherm: kaart, werelden, show, einde, kleedkamer, trofeeën, voor ouders. |
-| **Beeldkeuring** | toestelmaten (Pixel 10 voorop) en drie schakelaars: randen, raster, animaties uit. |
+| **Huidige build** | welke bron er draait (main, tak of PR), de commit, of main nieuwer is, of er hier iets openstaat, en wanneer er voor het laatst is opgehaald. *Ophalen · Bijwerken · Naar main*, en de lijst om mee te wisselen. Wat alleen git-detail is staat onder *Details*. |
+| **Testscenario** | de stand waarin je het spel wilt zien. Boven de snelkeuzes (nieuwe speler, alles uitgespeeld, geen diamanten, volle kleedkamer, trofeeënkast); eronder vijf velden waarmee je hem zelf samenstelt: speler, wereld, stand, scherm, diamanten. Ze stellen allebei dezelfde vlaggen samen — er wordt hier niets nagebouwd. |
+| **Toestel** | Pixel 10 voorop, dan de maten die elk een ándere rand van de opmaak bepalen, en *Eigen maat* als je iets anders zoekt. Daarnaast drie schakelaars: randen, raster, animaties uit. De échte toestelmaat staat altijd boven het kijkvak, met daarnaast hoe hard hij voor je ogen is opgeblazen. |
 | **Gereedschap** | herladen, opslag/cache/servicewerker van het kijkvak leegmaken, het spel zonder vlaggen, en de servicewerker aanzetten om de bijwerkstroom van de PWA na te kijken. |
+
+### Wereldstudio — "laat deze wereld zien en klopt hij"
+
+Links de wereldlijst (icoon, naam, volgorde, en een bolletje dat zegt of er iets
+aan mankeert), rechts die ene wereld in vier groepen:
+
+| groep | waarvoor |
+|---|---|
+| **Wereld** | naam, icoon, volgorde, id. *Bewerken in het kijkvak* opent de wereldstudio ín de app (`?debug&mapedit`): daar zet je haltes, buig je de weg, kies je kleuren en een beloning. |
+| **Tekening** | de wereldkaart als beeldkaartje: voorbeeld, maat, verhouding, bestandsmaat met de aanbevolen begroting ernaast, en vervangen door te slepen of te tikken. |
+| **Voortgang** | shows, wanneer de wereld opengaat, beloning, trofee, haltes — en de standen om hem in te bekijken (net begonnen, halverwege, bijna uit, perfect, op slot). Dat zijn dezelfde standen als in de Testomgeving; er is geen tweede standenmachine. |
+| **Controles** | wat er niet klopt: een ontbrekend bestand, een beloning die niet bestaat, een tekening die te zwaar is. *Keuringen draaien* doet de vier snelle controles van `npm run check`. |
+
+### App & merk
+
+Het startscherm, het spelogo, het merkteken en het app-icoon. Hetzelfde
+beeldkaartje als bij een wereldtekening, met één verschil dat er echt toe doet:
+
+* het **startscherm** is één bestand. Vervangen is het bestand vervangen, klaar.
+* een **merkbeeld** is een kéten. Er is één meester in `assets/branding/source/`
+  en daar rollen de bestanden uit die de app laadt. Vervang je er een, dan
+  vervangt de studio de méester en draait daarna `npm run merk` voor je. Lukt dat
+  niet (geen browser, dus nog geen `npm install`), dan zegt hij dat en blijft de
+  meester gewoon staan.
+
+### Vervangen, en "vastzetten"
+
+Twee verschillende dingen, en de studio houdt ze uit elkaar:
+
+* **een beeld vervangen** schrijft naar je wérkmap, en dat werkt gewoon zolang
+  `npm run studio` (of `npm run preview`) draait. Het is daarna een gewone
+  wijziging in git: je ziet hem terug als *Gewijzigd* bovenin.
+* **het `WORLDS`-blok terugschrijven** naar `index.html` — dát is de stap die
+  alléén met die server kan. Zonder server valt de wereldstudio terug op
+  Kopieer-en-plak.
 
 Alles in het kijkvak draait op `?debug&demo`, en dat **grendelt de opslag**: geen
 enkele knop hier kan de voortgang van een echt kind raken. De enige uitzondering
 is *Gewoon spel* — die draait het spel zonder vlaggen en schrijft dus wél weg,
 maar naar de opslag van `localhost`, niet naar die van een geïnstalleerde app.
-*Maak schoon* veegt die weer leeg.
+*Kijkvak leegmaken* veegt die weer leeg.
 
 Een wereld toevoegen doe je in de wereldstudio: naam geven, tekening erop,
 kleuren accepteren, haltes zetten, beloning kiezen, standen doorlopen, *Zet in

@@ -278,10 +278,16 @@ function writeWorlds(body, res) {
    En hij hoogt meteen CACHE in sw.js op. Dat was de stap die je altijd vergeet: de
    servicewerker serveert alles onder /assets/ eerst uit de cache, dus een vervangen
    beeld met dezelfde naam blijft anders op elk toestel dat er al was het oude tonen. */
-const ASSET_OK = [
-  /^assets\/world\/[a-z0-9-]+-map\.webp$/,
-  /^assets\/bg\/landing\.webp$/,
-];
+/* Wélke paden geschreven mogen worden staat in test/beelden.js, want de studio
+   moet dezelfde lijst kunnen lézen om te weten of hij een vervangknop mag tonen.
+   Eén lijst, twee lezers -- twee kopieën zouden op een dag verschillend gaan
+   denken over wat er mag, en dan biedt de studio een knop aan die de server
+   weigert.
+
+   De meesters in assets/branding/source/ staan er sinds deze ronde bij. Ze gaan
+   de app niet in; wat de app laadt zijn de afgeleiden, en die worden door
+   /api/merk opnieuw gemaakt zodra er een meester vervangen is. */
+const ASSET_OK = require('./beelden.js').SCHRIJFBAAR;
 function bumpCache() {
   const f = path.join(ROOT, 'sw.js');
   const src = fs.readFileSync(f, 'utf8');
@@ -291,9 +297,14 @@ function bumpCache() {
   fs.writeFileSync(f, src.replace(m[0], "const CACHE = '" + volgend + "';"));
   return volgend;
 }
+/* Hernoemen is er alleen voor één geval: een wereld krijgt een ander id en zijn
+   tekening moet mee. Vandaar deze engere lijst en niet ASSET_OK -- daar staan
+   sinds deze ronde ook de merkmeesters in, en die hebben met hernoemen niets te
+   maken. */
+const HERNOEM_OK = [/^assets\/world\/[a-z0-9-]+-map\.webp$/];
 function renameAsset(res, van, naar) {
   const zeg = (code, tekst) => { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(tekst); };
-  if (!ASSET_OK.some(re => re.test(van)) || !ASSET_OK.some(re => re.test(naar))) {
+  if (!HERNOEM_OK.some(re => re.test(van)) || !HERNOEM_OK.some(re => re.test(naar))) {
     return zeg(400, 'dit pad mag niet: ' + van + ' -> ' + naar);
   }
   const a = path.join(ROOT, van), b = path.join(ROOT, naar);
@@ -325,7 +336,12 @@ function writeAsset(req, res, to) {
       fs.mkdirSync(path.dirname(doel), { recursive: true });
       fs.writeFileSync(doel, buf);
       const kb = Math.round(buf.length / 1024);
-      const cache = zelfde ? null : bumpCache();
+      /* De cachenaam alleen ophogen voor een bestand dat de app werkelijk laadt.
+         Een meester in assets/branding/source/ gaat de app niet in (zie merk.js):
+         die ophogen zou elke telefoon opnieuw laten binnenhalen voor een bestand
+         dat er nooit was. De afgeleiden krijgen hun ophoging van /api/merk. */
+      const inDeApp = !/^assets\/branding\/source\//.test(to);
+      const cache = (zelfde || !inDeApp) ? null : bumpCache();
       console.log('  wereldstudio: ' + to + ' (' + kb + ' kB)' + (cache ? ' · sw CACHE -> ' + cache : ''));
       res.writeHead(200, { 'content-type': 'text/plain' });
       res.end(to + ' — ' + kb + ' kB' + (cache ? ' · sw ' + cache : ' · ongewijzigd'));
@@ -522,10 +538,43 @@ function keuring() {
     .catch(e => ({ ok: false, tekst: String(e.message).split('\n').slice(-20).join('\n') }));
 }
 
+/* De afgeleiden opnieuw maken (npm run merk). Dat is de tweede helft van "een
+   merkbeeld vervangen": de meester is dan al weggeschreven, en hieruit rollen de
+   bestanden die de app werkelijk laadt.
+
+   Draait als een los proces, met dezelfde node als deze server -- zie eenTest()
+   voor waarom er geen npm aan te pas komt. Het kost een browser (playwright), en
+   dat is precies de reden dat de studio de uitkomst moet kúnnen melden in plaats
+   van te doen alsof het altijd lukt: in een verse kloon zonder `npm install` is
+   er geen browser en blijft de meester staan zonder afgeleiden. */
+function draaiMerk() {
+  return new Promise(ok => {
+    execFile(process.execPath, [path.join(ROOT, 'test', 'merk.js')],
+      { cwd: ROOT, maxBuffer: 8e6, timeout: 3e5 }, (e, uit, err) => {
+        const tekst = String(uit || '').trim() || String(err || '').trim();
+        if (!e) {
+          const cache = bumpCache();
+          return ok({ ok: true, tekst: 'Afgeleiden bijgewerkt' + (cache ? ' · sw ' + cache : '') + '\n' + tekst });
+        }
+        const reden = /Cannot find module|playwright/i.test(String(err || uit || e.message))
+          ? 'Hiervoor is een browser nodig. Draai eerst `npm install` en probeer het opnieuw.'
+          : 'Bekijk de uitvoer hieronder.';
+        ok({ ok: false, tekst: 'De afgeleiden konden niet worden bijgewerkt.\n' + reden
+          + '\n\n' + (tekst || String(e.message)).split('\n').slice(-12).join('\n') });
+      });
+  });
+}
+
 async function api(req, res, url) {
   try {
     if (url === '/api/versie') return json(res, versie.feiten());
     if (url === '/api/bronnen') return json(res, await versie.bronnen());
+    if (url === '/api/beelden') {
+      delete require.cache[require.resolve('./beelden.js')];
+      delete require.cache[require.resolve('./werelden.js')];
+      const b = require('./beelden.js').overzicht();
+      return json(res, { assets: b.assets, schijf: b.schijf, gewijzigd: gewijzigdeAssets() });
+    }
     if (url === '/api/werelden') {
       // Bij élk verzoek opnieuw inlezen: index.html verandert onder je handen
       // (een wissel van tak, de wereldstudio die het blok terugschrijft), en een
@@ -539,6 +588,7 @@ async function api(req, res, url) {
     if (url === '/api/bijwerken') return json(res, await versie.bijwerken());
     if (url === '/api/wissel') return json(res, await versie.wissel(await lees(req)));
     if (url === '/api/keuring') return json(res, await keuring());
+    if (url === '/api/merk') return json(res, await draaiMerk());
     return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
   } catch (e) {
     json(res, { ok: false, tekst: String(e && e.message || e) }, 500);
@@ -680,6 +730,7 @@ http.createServer(function (req, res) {
   const ext = path.extname(file).toLowerCase();
   const type = ext === '.js' ? 'text/javascript' : ext === '.json' ? 'application/json'
              : ext === '.css' ? 'text/css' : ext === '.svg' ? 'image/svg+xml'
+             : ext === '.woff2' ? 'font/woff2'
              : scene.isImage(file) ? scene.mimeFor(file) : 'application/octet-stream';
   res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
   fs.createReadStream(file).pipe(res);
