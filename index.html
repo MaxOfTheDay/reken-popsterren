@@ -3094,7 +3094,7 @@
   .tour-stop.next { --stop-schaal: 1.06; }
   .tour-stop.next .dot { border-color: var(--gold-accent); color: var(--ink-on-gold);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: var(--dot-key), var(--dot-drop), 0 0 3.4cqw rgba(255,196,61,.5); }
+    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.6cqw rgba(255,196,61,.4); }
   /* Een zachte spotlight op de grond onder de huidige halte. Hij hoort bij de
      ster erbovenop: samen maken ze van "een gouden rondje met een poppetje
      ernaast" één ding dat zegt hier sta ik. Zonder dit leest de ster op een drukke
@@ -3102,17 +3102,23 @@
 
      Hij ligt achter het blokje (z-index -1 binnen de knop, die zelf een eigen
      stapelcontext maakt) en ademt op hetzelfde ritme als de gloed van de halte,
-     zodat het één beweging is en geen twee. */
+     zodat het één beweging is en geen twee.
+
+     FASE 4E -- iets ingetogener (was 3,4cqw/.5 op het rondje, .78-1/1-1.07 hier):
+     nu zij zelf een contrastveld draagt, hoeft het rondje niet meer zo hard te
+     roepen om nog boven de tekening uit te komen. Nog altijd solide goud, nog
+     altijd de enige die beweegt -- alleen de bloom eromheen is een tandje zachter,
+     zodat de blik eerst bij haar landt en dan pas bij de halte waar ze op staat. */
   .tour-stop.next::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255,216,140,.32), rgba(255,196,90,.12) 52%, transparent 74%);
+    background: radial-gradient(closest-side, rgba(255,216,140,.26), rgba(255,196,90,.1) 52%, transparent 74%);
     animation: stopSpot 2.8s ease-in-out infinite;
   }
   @keyframes stopSpot {
-    0%, 100% { opacity: .78; transform: scale(1); }
-    50%      { opacity: 1;   transform: scale(1.07); }
+    0%, 100% { opacity: .74; transform: scale(1); }
+    50%      { opacity: .92;   transform: scale(1.05); }
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
@@ -3320,52 +3326,75 @@
      evenredig meegroeien liet haar kruin op ZONE.y0 van het scherm af lopen (test
      7c-bis, "op ZONE.y0 blijft haar kruin op het scherm") en at in op de lucht
      naar de halte erboven. Dit is de kleinste zak die op alle vijf gemeten
-     toestellen weer ruimte overhoudt. */
+     toestellen weer ruimte overhoudt.
+
+     FASE 4E -- van 19,5 naar 22cqw (+13%). De maat bleek niet het probleem: op een
+     lichte lucht viel haar crèmekleurige jurk gewoon tegen een even lichte
+     tekening weg. Groter alleen had dat niet opgelost, dus deze stap bleef klein.
+
+     FASE 4F -- de gloed uit deze fase (een groot, ademend contrastveld) loste dat
+     wél op, maar voelde te wazig: ze wásemde in de tekening in plaats van zich
+     ervan los te maken. Silhouet in plaats van sfeer, dus: een dun, scherp
+     randlijntje in plaats van een brede gloed (zie svg hieronder), en het
+     contrastveld hier is nu klein en bijna stil -- geen lichtbron meer, gewoon een
+     plek om op te staan. Maat blijft 22cqw; het werk zit nu in vorm, niet in
+     licht.
+
+     De zak ging weer omhoog uit de halte: van 7,8 terug naar 5cqw. Dat kon omdat
+     ZONE.y0 mee terug is naar 18 (zie daar) -- puur de stip aanraakbaar houden gaf
+     op 14 bijna geen lucht meer voor haar kruin, en drukte haar half ín de halte
+     in plaats van erboven. */
   .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 5cqw); transform: translateX(-50%);
-    width: 19.5cqw; pointer-events: none; z-index: 2; }
-  .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
-  /* De gloed: crème, ruim, en zonder rand -- hij mag nergens als vorm te zien zijn.
-     Hij ligt achter haar (z-index 0 tegen de svg op 1), zodat hij haar kleuren niet
-     wast.
+    width: 22cqw; pointer-events: none; z-index: 2; }
+  /* Silhouet, niet sfeer. url(#tourHeroContour) (zie de verborgen <svg> boven
+     #screen-map) snijdt met feMorphology een even dikke rand rond haar échte
+     silhouet uit -- ook tussen haar armen en haar lijf door, waar een cirkel
+     eromheen niets zou uitsnijden. Eerst geprobeerd met opgestapelde
+     drop-shadows (acht lagen, geen waas), en dat woog véél te zwaar op: de lagen
+     stapelden in de hoeken tot een bijna zwarte, cartoonachtige rand. Eén
+     SVG-filter geeft overal dezelfde dunne, rustige lijndikte, in een
+     zachtviolette pruimtint (geen zwart, geen neon).
 
-     Van 20cqw/42% naar 23cqw/54%. De reden is de tekening: op een lichte lucht of
-     tegen een waterval had 42% crème niet genoeg body om haar silhouet los te
-     maken van wat erachter staat, en dán is ze gewoon nóg een getekend figuurtje
-     op een kaart die er al vol mee staat. Ruimer én voller, maar nog steeds met
-     een lange staart naar doorzichtig -- een gloed met een zichtbare rand zou een
-     medaillon om haar heen zetten, en dat is precies wat ze niet moet worden.
+     Daarbovenop nog altijd één héél klein beetje licht -- niet om te gloeien, maar
+     omdat een pure donkere rand tegen een dónkere rots zelf weer wegvalt. Dat is
+     de enige plek waar hier nog "gloed" gebeurt, en hij is nauwelijks meer dan een
+     fractie helderder randje.
 
-     De rand van de gloed dooft nu in de violette avondlucht van de wereld
-     (--w-sky-rgb, dezelfde tint als de gloed van de halte zelf, zie .reis-halte.nu
-     hierboven) in plaats van in het niets: warm bij haar voeten, koel-violet aan de
-     rand -- precies de twee kleuren die de opdracht voor haar vroeg.
+     Verzadiging en contrast een fractie omhoog: op een pastel wereldlucht kroop
+     haar jurk anders naar hetzelfde grijs als de lucht erachter. Alleen hier, op
+     de wereldkaart -- avatarSVG zelf blijft overal elders ongemoeid.
 
-     Samen met de spotlight onder de halte (.tour-stop.next::after) vormt dit
-     één lichtbron: warm, laag, en op één plek op de kaart. */
+     Statisch, geen animatie: zij moet ook stilstaand meteen leesbaar zijn. */
+  .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
+    filter: url(#tourHeroContour) drop-shadow(0 0 2px rgba(255,250,235,.32)) saturate(1.14) contrast(1.06); }
+  /* Wat de gloed hiervoor deed, doet dit nu bijna geruisloos: een kleine, lage,
+     nauwelijks-aanwezige donkere plek onder haar voeten, niet groter dan zijzelf.
+     Geen ruime aubergine-veeg meer die ver over de tekening uitwaaiert, geen
+     adembeweging -- dat begon als een lichtbron te lezen, en dat was precies het
+     te-wazige-gevoel uit de vorige fase. Wat overblijft is grond onder haar
+     voeten, geen wolk eromheen. */
   .tour-hero::before { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 1.3cqw; transform: translateX(-50%);
-    width: 27.6cqw; height: 27.6cqw; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,247,220,.46), rgba(255,214,158,.24) 46%,
-                rgba(var(--w-sky-rgb, 61,26,99), .2) 68%, transparent 82%); }
-  /* contactschaduw bij de voeten -- verkoopt het "staat ÓP de tegel" effect,
-     zonder dit oogt ze net zo goed los zwevend erboven. Iets breder en donkerder
-     dan eerst, zodat ze ook op een lichte ondergrond met beide voeten op de halte
-     staat in plaats van erboven te zweven. */
+    left: 50%; bottom: 0; transform: translateX(-50%);
+    width: 24cqw; height: 24cqw; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(18,6,36,.22), rgba(18,6,36,.08) 55%, transparent 78%); }
+  /* Krappere, stérkere contactschaduw in plaats van een brede waas: minder blur,
+     meer dekking, smaller. Dat "ÓP de tegel"-gevoel moet van een strakke schaduw
+     onder haar voeten komen, niet van een groot zacht veld eromheen. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.26cqw; transform: translateX(-50%);
-    width: 13.85cqw; height: 3.46cqw; border-radius: 50%; background: rgba(12,2,26,.46); filter: blur(4px); }
+    left: 50%; bottom: 0.3cqw; transform: translateX(-50%);
+    width: 13cqw; height: 3.1cqw; border-radius: 50%; background: rgba(8,1,18,.66); filter: blur(2.5px); }
   /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
      halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
   .tour-hero .hero-vonk {
-    position: absolute; z-index: 2; top: 4%; right: -5%; width: 15%;
-    opacity: 0; animation: heroVonk 8.5s ease-in-out infinite;
+    position: absolute; z-index: 2; top: 4%; right: -5%; width: 16%;
+    opacity: 0; animation: heroVonk 6.5s ease-in-out infinite;
   }
   .tour-hero .hero-vonk svg { width: 100%; height: auto; display: block; fill: #fff7dc;
     filter: drop-shadow(0 0 4px rgba(255,225,140,.85)); }
   @keyframes heroVonk {
-    0%, 84%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
-    89%           { opacity: 1; transform: scale(1) rotate(10deg); }
-    95%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
+    0%, 80%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
+    86%           { opacity: 1; transform: scale(1.05) rotate(10deg); }
+    93%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
   }
   /* De halte waar zij staat gaat als geheel boven de andere haltes liggen. Zonder
      dit kan haar hoofd achter het medaillon van de halte erbóven verdwijnen: de
@@ -5588,6 +5617,24 @@
     <div class="restore-hint" id="restore-hint">Al een back-up? Zet hem terug via ⚙️ → Voor ouders.</div>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
+
+  <!-- Eén gedeeld filter, alleen voor de ster op de wereldkaart (.tour-hero svg
+       gebruikt 'm via url(#tourHeroContour)). feMorphology dilate + feComposite
+       "out" snijdt precies de rand van haar silhouet uit -- overal even dik,
+       zonder de wazige opstapeling die losse drop-shadow-lagen gaven. Nergens
+       anders in de app gebruikt, dus avatarSVG() zelf blijft ongemoeid. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="tourHeroContour" x="-30%" y="-30%" width="160%" height="160%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="dilated"/>
+      <feFlood flood-color="#3a1f48" flood-opacity="0.62" result="lijnkleur"/>
+      <feComposite in="lijnkleur" in2="dilated" operator="in" result="dikkerand"/>
+      <feComposite in="dikkerand" in2="SourceAlpha" operator="out" result="rand"/>
+      <feMerge>
+        <feMergeNode in="rand"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </svg>
 
   <!-- ===== Kaart / wereldtournee (hoofdscherm) ===== -->
   <div class="screen hub" id="screen-map">
@@ -8458,18 +8505,24 @@ const ART_W = 1215, ART_H = 2160;
    halte en is bijna 11% van het kader hoog, dus haar kruin raakte de pillen. Die
    11% is een vaste hap op élk toestel -- de kop zelf is maar 6,5 tot 10,9% -- en
    was daarmee twee derde van de bovenmarge. Ze mag nu gewoon vóór de pillen komen:
-   die stappen opzij zodra ze er tegenaan staat (zie kopOpzij). Wat overblijft is
-   de eis dat de stip zelf aanraakbaar blijft, en dat is 14%.
+   die stappen opzij zodra ze er tegenaan staat (zie kopOpzij). Wat overbleef was
+   de eis dat de stip zelf aanraakbaar blijft, en dat was 14%.
+
+   FASE 4F -- terug naar 18. Puur de stip aanraakbaar houden gaf haar bijna geen
+   lucht meer boven de halte (test 7c-bis dwong de zak tot 7,8cqw om haar kruin
+   nog op het scherm te houden), en dat drukte haar half ín de halte in plaats
+   van erboven. Geen van de zes geschreven werelden komt in de buurt: hun hoogste
+   halte staat op zijn scherpst op 20,7% (Junglewereld). 18 laat dus alles wat er
+   al staat ongemoeid en geeft de zak weer ruimte om terug te zakken.
 
    y0kop is geen grens maar een streep: boven die lijn dimt de bovenbalk op minstens
    één toestel. Alleen de studio en de tekenbrief gebruiken 'm -- de dimming zelf
    wordt gemeten, niet uit dit getal afgeleid. Hij stond op 23 toen de ster 13,1cqw
-   was; op 16,4cqw reikt ze 13,30% boven haar halte in plaats van 10,98%, en samen
-   met de 10,90% kop van een kleine telefoon komt de streep op 24,2 -- naar buiten
-   afgerond 25. y0 zelf beweegt niet mee: die wordt niet door haar bepaald maar
-   doordat de stip vrij van de pillen moet blijven (13,97%).
+   was, en op 25 toen ze 16,4cqw was; FASE 4F liet haar weer dieper in de halte
+   zakken (zie hierboven) zonder haar kleiner te maken, dus reikt ze opnieuw verder
+   boven haar halte uit dan toen -- gemeten (test 7c-bis) komt de streep nu op 28.
    Naar binnen afgerond. Zie docs/WORLD-ART-BRIEF.md §2. */
-const ZONE = { x0: 19, x1: 81, y0: 14, y1: 82, y0kop: 25 };
+const ZONE = { x0: 19, x1: 81, y0: 18, y1: 82, y0kop: 28 };
 // Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
 // tekening, zodat de weg er exact overheen valt).
 const VB_W = ART_W, VB_H = ART_H;
