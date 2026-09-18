@@ -385,7 +385,7 @@ zaak('J · de servicewerker staat uit in het kijkvak', () => {
   check(a >= 0 && b >= 0 && a < b,
     'J · het uitzetten staat vóór die tak — anders blijft hij in het kijkvak staan',
     'uitzetten op ' + a + ', de tak op ' + b);
-  check(/caches\.delete\('rekenpop-art'\)/.test(bron),
+  check(/caches\.delete\('rekenpop-art-2'\)/.test(bron),
     'J · en de tekeningenvoorraad gaat weg — uitschrijven alleen is niet genoeg',
     'geen caches.delete');
 

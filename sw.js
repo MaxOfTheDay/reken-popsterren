@@ -9,7 +9,7 @@
  *                          omhoog. Gaat hij wél omhoog, dan wordt de oude
  *                          voorraad bij het activeren opgeruimd.
  *
- *   TEKENINGEN (rekenpop-art)  assets/: de wereldkaarten (~300 kB per stuk), het
+ *   TEKENINGEN (rekenpop-art-2)  assets/: de wereldkaarten (~300 kB per stuk), het
  *                          schilderij achter de sterrenkeuze, het spelogo en het
  *                          lettertype.
  *                          Cache-eerst, en de naam verandert níét bij een
@@ -29,7 +29,7 @@
  *     bewaar().
  */
 const CACHE = 'rekenpop-v46';
-const ART_CACHE = 'rekenpop-art';
+const ART_CACHE = 'rekenpop-art-2';
 const HUIDIG = [CACHE, ART_CACHE];
 const ASSETS = ['./', './index.html', './manifest.json',
                 './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
