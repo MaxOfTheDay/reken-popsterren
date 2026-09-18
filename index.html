@@ -1390,7 +1390,7 @@
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: 12.5px; }
     #screen-map .wp-here { gap: 3px; padding: 0 4px 0 7px; }
-    #screen-map .wp-cta { gap: 2px; padding: 0 6px 0 5px; }
+    #screen-map .wp-cta { gap: 2px; margin: 3px 3px 3px 1px; padding: 0 7px 0 6px; }
     #screen-map .wp-cta-ico { font-size: 17px; }
     #screen-map .wp-chev { width: 6px; height: 10px; }
     #screen-map .diamond-badge { font-size: 14px; gap: 3px; padding-inline: 6px; }
@@ -2757,7 +2757,13 @@
      Refine -- .wp-cta droeg eerst nog een woord ("Werelden"). Dat maakte de pil
      twee regels hoog op een telefoon, en een label náást een pictogram dat het
      al zegt is uitleg die niemand vroeg. Het icoon (groter, zie hieronder) en de
-     lichtblauwe waas moeten het nu alleen doen. */
+     lichtblauwe waas moeten het nu alleen doen.
+
+     Refine 2 -- de waas was een vlak dat de rand van de pil zelf volgde: leesbaar
+     als "iets anders hier", maar nog niet als een eigen ding. Nu is .wp-cta een
+     eigen klein capsuletje mét lucht eromheen (margin, geen randlijn meer) --
+     dat leest sneller als "hier zit een tweede knopje in" dan een vlak dat toch
+     aan de rest vastzit. */
   .world-pick { display: inline-flex; align-items: stretch; gap: 0;
     border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
     padding: 0; border-radius: var(--r-pill); }
@@ -2771,21 +2777,27 @@
      kleiner dan de inhoud) opzij -- zonder dat blijft .wp-here altijd zijn volle
      tekstbreedte opeisen, ook als de kolom (zie #screen-map hieronder) minder
      overheeft. */
-  .wp-here { flex: 1 1 auto; min-width: 0; gap: 5px; padding: 0 10px 0 13px; }
+  .wp-here { flex: 1 1 auto; min-width: 0; gap: 6px; padding: 0 8px 0 14px; }
   .wp-here-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .wp-cta { flex: none; }
   /* De rechterzone krijgt een lichte cyaan waas -- dezelfde familie als
      --cyaan-tint/--cyaan-rand, de kleur die elders al "hier kijk je" zegt (een
      gekozen tabblad, een categorie). Bewust géén goud: dat betekent op deze
      kaart al iets anders ("hier speel je", zie .tour-stop.next). En bewust
-     gedempt, niet vol verzadigd: het moet lezen als de actieve hoek van één pil,
-     niet als een tweede, dwingender knop. De ronding rechts volgt die van de
-     hele pil, zodat de waas er niet los bovenop lijkt te liggen. */
-  .wp-cta { gap: 3px; padding: 0 10px 0 8px; position: relative;
-    border-radius: 0 var(--r-pill) var(--r-pill) 0;
-    background: linear-gradient(180deg, var(--cyaan-tint), rgba(56,189,248,.07)); }
-  .wp-cta::before { content: ''; position: absolute; left: 0; top: 18%; bottom: 18%; width: 1px;
-    background: var(--cyaan-rand); opacity: .55; }
+     gedempt, niet vol verzadigd: het moet lezen als een eigen chipje in de pil,
+     niet als een tweede, dwingender knop.
+
+     Rondom margin i.p.v. tegen de randen van .world-pick aan: dat legt de
+     capsule los van de rand (align-items:stretch op .world-pick rekt 'm
+     daardoor automatisch tot de hoogte min die marge, en houdt 'm verticaal
+     gecentreerd) en geeft de chevron aan de rechterkant vanzelf lucht in plaats
+     van tegen de buitenrand van de pil te staan. De inset-ring geeft het beetje
+     diepte dat een vlak vlak anders niet heeft, zonder een aparte schaduw of
+     gloed erbij te zetten. */
+  .wp-cta { gap: 4px; margin: 4px 4px 4px 1px; padding: 0 10px 0 9px; position: relative;
+    border-radius: var(--r-pill);
+    background: linear-gradient(180deg, rgba(56,189,248,.3), rgba(56,189,248,.12));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
   /* ~26px: groot genoeg dat een kind de wereldbol meteen herkent, klein genoeg
      dat hij niet met de wereldnaam concurreert -- die blijft de hoofdtekst. */
   .wp-cta-ico { display: inline-block; font-size: 26px; line-height: 1; }
