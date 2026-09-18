@@ -218,7 +218,7 @@ function panel(state) {
        die deze pagina al bediende blijft dat doen tot ze herlaadt, en zijn
        tekeningenvoorraad overleeft hem sowieso. Zonder deze regel blijf je na de
        oplossing hierboven nóg een ronde naar je oude tekening kijken. */
-    if (window.caches) caches.delete('rekenpop-art').catch(function () {});
+    if (window.caches) caches.delete('rekenpop-art-2').catch(function () {});
   }
 
   /* In het kijkvak van de Dev Studio hoort het kandidaatpaneeltje niet: dat scherm
