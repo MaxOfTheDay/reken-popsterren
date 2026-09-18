@@ -797,15 +797,18 @@
      een telefoon te zien was en dat geen desktop-browser of headless-test ooit
      laat zien, want geen van beide heeft een balk die zo verdwijnt.
 
-     100svh is de kleíne viewporthoogte: hij gaat uit van élke balk die de browser
-     ooit tijdelijk kán tonen, en blijft dus exact zo groot als toen de balk er nog
-     stond. Verdwijnt de balk later, dan groeit de viewport wél, maar #app niet
-     meer mee -- er komt onderaan een randje bij dat de achtergrondkleur van body
-     draagt (zie --w-deep/de paarse basiskleur), niet een kaart die zichtbaar
-     herschaalt. Eerst 100% als terugval voor browsers zonder svh: een latere
-     regel wint bij gelijke specificiteit, dus svh overschrijft hem zodra hij
-     bestaat en verandert er niets voor wie hem niet kent. */
-  html, body { height: 100%; height: 100svh; }
+     100svh loste dit niet op: die eenheid gaat over de eigen, inklapbare werkbalk
+     van de browser (zoals Safari's adresbalk), niet over een statusbalk die het
+     besturingssysteem er in een fullscreen-PWA overheen legt en zelf weer wegneemt
+     -- Chrome op Android rekent die twee kennelijk niet hetzelfde toe, dus small
+     en large vielen hier op dezelfde, meebewegende maat samen. --vh-lock (zie het
+     scriptje vóór de INHOUD-index) is daarom de eerste die telt: een hoogte die
+     vóór alle opmaak al vastligt op wat innerHeight was tóen de statusbalk nog in
+     beeld stond, en die alleen meebeweegt met een écht andere afmeting (draaien,
+     een ander vensterformaat) -- nooit met de balk zelf die op- of dichtklapt.
+     100svh en 100% blijven staan als terugval voor het beeldje vóórdat dat
+     scriptje geweest is en voor een browser die custom properties niet kent. */
+  html, body { height: 100%; height: 100svh; height: var(--vh-lock, 100svh); }
   /* ---- De letter: vier gewichten, en meer bestaan er niet ------------------
      FASE 5E. @font-face hierboven levert Fredoka als variabele letter van 400 tot
      700 -- dat zijn álle gewichten die deze app heeft. In het blad stonden er ook 800, 900 en
@@ -1234,10 +1237,15 @@
 
      DE TEKENING ZELF staat als SVG in een token hieronder, in dezelfde vorm als
      de fonkeling van .app-sfeer: geen bestand, geen aanvraag, niets dat 404 kan
-     geven, en hij is er ook zonder netwerk. Komt de geschilderde versie binnen
-     (assets/bg/kleedkamer.webp, 1215x2160 -- zie test/scene.js), dan is dit een
-     regel: --kleed-tekening: url("assets/bg/kleedkamer.webp"). Verder verandert
-     er niets, want alles eromheen leunt op de sluier en niet op deze tekening. */
+     geven, en hij is er ook zonder netwerk.
+
+     EN DE GESCHILDERDE VERSIE GAAT HIER NIET IN. Daar is het blok hieronder voor
+     (.kunst + SCHERMKUNST, uit de studio): dat leest een pad dat de studio heeft
+     weggeschreven, en het wint van deze regel op specificiteit -- één klasse
+     meer. Die twee horen dus zo: dit is de kamer die de app zélf tekent, en
+     zodra er een echte tekening ligt legt de studio hem eroverheen. Zolang er
+     geen ligt staat er geen url() naar een bestand dat er niet is, en dat is
+     precies waarom die twee gescheiden blijven. */
   :root { --kleed-tekening: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%2357225f'/><stop offset='.28' stop-color='%233c1450'/><stop offset='.64' stop-color='%23260c36'/><stop offset='1' stop-color='%23170522'/></linearGradient><radialGradient id='lamp' cx='.5' cy='.06' r='.46'><stop offset='0' stop-color='%23ffdcae' stop-opacity='.5'/><stop offset='.5' stop-color='%23ffb367' stop-opacity='.15'/><stop offset='1' stop-color='%23ff9a4d' stop-opacity='0'/></radialGradient><radialGradient id='nis' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23f6e2ff' stop-opacity='.2'/><stop offset='.58' stop-color='%23b98cff' stop-opacity='.07'/><stop offset='1' stop-color='%23b98cff' stop-opacity='0'/></radialGradient><radialGradient id='pool' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23ffb066' stop-opacity='.24'/><stop offset='1' stop-color='%23ffb066' stop-opacity='0'/></radialGradient><linearGradient id='ka' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23b47ce4' stop-opacity='.92'/><stop offset='1' stop-color='%233d1460' stop-opacity='.8'/></linearGradient><linearGradient id='kb' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23ef9cc4' stop-opacity='.8'/><stop offset='1' stop-color='%234a1550' stop-opacity='.78'/></linearGradient><linearGradient id='kc' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%238fdcec' stop-opacity='.7'/><stop offset='1' stop-color='%232d1a5c' stop-opacity='.78'/></linearGradient><linearGradient id='vloer' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23140420' stop-opacity='0'/><stop offset='1' stop-color='%23140420' stop-opacity='.6'/></linearGradient></defs><rect width='1080' height='1920' fill='url(%23w)'/><rect width='1080' height='1920' fill='url(%23lamp)'/><ellipse cx='540' cy='420' rx='470' ry='400' fill='url(%23nis)'/><g fill='%23ffd9a8'><rect x='-20' y='92' width='400' height='9' rx='4' opacity='.2'/><rect x='700' y='92' width='400' height='9' rx='4' opacity='.2'/></g><g fill='%23ffe6bd'><circle cx='160' cy='126' r='48' opacity='.09'/><circle cx='160' cy='126' r='15' opacity='.55'/><circle cx='330' cy='126' r='48' opacity='.09'/><circle cx='330' cy='126' r='15' opacity='.55'/><circle cx='750' cy='126' r='48' opacity='.09'/><circle cx='750' cy='126' r='15' opacity='.55'/><circle cx='920' cy='126' r='48' opacity='.09'/><circle cx='920' cy='126' r='15' opacity='.55'/></g><g><rect x='20' y='196' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M84 236h64l40 214q3 40-72 40t-72-40z' fill='url(%23ka)'/><path d='M190 248h68l42 238q3 42-76 42t-76-42z' fill='url(%23kb)'/><path d='M292 230h60l38 196q3 38-68 38t-68-38z' fill='url(%23kc)'/><rect x='720' y='176' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M768 216h64l40 222q3 40-72 40t-72-40z' fill='url(%23kb)'/><path d='M874 228h68l42 202q3 42-76 42t-76-42z' fill='url(%23ka)'/><path d='M978 210h62l40 230q3 40-71 40t-71-40z' fill='url(%23kc)'/></g><g fill='%23ffe6bd' opacity='.45'><circle cx='430' cy='150' r='5'/><circle cx='648' cy='188' r='4'/><circle cx='232' cy='700' r='5'/><circle cx='852' cy='760' r='4'/><circle cx='404' cy='940' r='4'/><circle cx='700' cy='880' r='3'/></g><rect y='1100' width='1080' height='820' fill='url(%23vloer)'/><ellipse cx='540' cy='1340' rx='580' ry='240' fill='url(%23pool)'/><ellipse cx='540' cy='1560' rx='440' ry='124' fill='%23ffffff' opacity='.028'/></svg>"); }
   #screen-dress.app-sfeer::before {
     content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
@@ -1247,6 +1255,35 @@
     background-size: cover, cover;
     background-position: 50% 50%, 50% 50%;
     background-repeat: no-repeat, no-repeat;
+  }
+
+  /* ---- De kleedkamer en de kast ------------------------------------------
+     PS-45 / PS-32, en precies volgens de regel hierboven: dezelfde ::before,
+     dezelfde sluier eronder, hetzelfde masker. Eén verschil met de sterrenkeuze,
+     en dat is er met opzet: deze twee schermen hebben pas een tekening als er
+     werkelijk een ligt.
+
+     Vandaar de klasse .kunst. Het spel zet hem op het scherm zodra SCHERMKUNST
+     een pad noemt (zie zetSchermkunst), en tot die tijd gebeurt hier niets --
+     de gedeelde schil blijft staan, precies zoals de kleedkamer en de kast er
+     nu uitzien. Zonder die klasse zou een url() naar een bestand dat er nog
+     niet is de hele schillaag vervangen door niets: een 404 in de console en
+     twee schermen die platter zijn dan ze waren.
+
+     De sluier is hier geen luxe maar de voorwaarde. De winkeltegels en de
+     trofeekaartjes zijn licht-op-donker en doorschijnend; zonder sluier leest
+     niemand er nog een naam op. Dat is ook precies wat je in de Dev Studio
+     hoort na te kijken voordat je een tekening vastzet. */
+  #screen-dress.kunst.app-sfeer::before,
+  #screen-trophies.kunst.app-sfeer::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      var(--kunst-sluier),
+      var(--kunst-scherm);
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
   }
 
   /* (Hier stond een gloed onder de tekstkop, zodat "Rekensterren" van de
@@ -6789,6 +6826,31 @@
 
 <script>
 "use strict";
+/* De hoogte van dít beeldje vastleggen, vóór al het andere hieronder.
+   manifest.json zet display:fullscreen, en op Android staat de statusbalk (klok,
+   batterij) bij het opstarten nog even in beeld en vervaagt hij een fractie later
+   vanzelf weg. Dat vergroot innerHeight, en alles wat op 100% hoogte staat (zie
+   html,body in het stijlblad) groeit dan mee -- ook de wereldkaart, met zijn
+   cover-vullende .world-frame voorop: hij landt goed en springt een moment later
+   nog een tikje. Geen enkele animatie of overgang veroorzaakt dat; het is de
+   browser die een écht grotere doos doorgeeft.
+
+   100svh loste dit niet op: die eenheid gaat over de eigen, inklapbare werkbalk
+   van de browser (zoals Safari's adresbalk), niet over een statusbalk die het
+   besturingssysteem in een fullscreen-PWA erover legt en zelf weer wegneemt --
+   Chrome op Android rekent die twee kennelijk niet hetzelfde toe.
+
+   Dus hier, met de hand: --vh-lock is de hoogte van het allereerste beeldje, en
+   dat is altijd van vóórdat de balk kan zijn gaan vervagen (die vervaagt pas een
+   moment later, nooit eerder). Een latere resize wijzigt 'm alleen als ook de
+   breedte anders is -- draaien, een ander vensterformaat -- want dat is een échte
+   afmeting; een balk die op- of dichtklapt raakt nooit de breedte. */
+(function () {
+  let w = innerWidth;
+  const zet = () => document.documentElement.style.setProperty('--vh-lock', innerHeight + 'px');
+  zet();
+  addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; zet(); } });
+})();
 /* =====================================================================
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
@@ -7416,6 +7478,23 @@ const WORLDS = [
   },
 ];
 /* WERELDEN-EINDE */
+
+/* SCHERMKUNST-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
+   door de Dev Studio (zie /schermkunst in test/preview.js). Zelfde afspraak als het
+   WORLDS-blok hierboven: de toelichting blijft staan, de regel eronder niet.
+
+   Waar dit over gaat: de kleedkamer en de trofeeënkast lenen vandaag de gedeelde
+   schil. Krijgt er een een eigen tekening, dan komt het pad hier te staan -- en
+   niet in een lijstje dat alleen de studio kent. Dit is wat de app leest, dus wat
+   je in de studio ziet is wat er straks op een telefoon staat.
+
+   null betekent: geen eigen tekening, laat de schil met rust. Dat is geen
+   ontbrekend bestand maar een geldige stand, en verreweg de gewoonste. */
+const SCHERMKUNST = {
+  dress: null,
+  tro: null,
+};
+/* SCHERMKUNST-EINDE */
 /* ---- Uitgebracht, en waar de tournee ophoudt --------------------------------
    FASE 4A. Hiervoor stond hier een ENDLESS_WORLD: voorbij de laatste geschreven
    wereld liep de tournee door in stukken van acht onder de naam "Sterrentournee".
@@ -15969,8 +16048,30 @@ window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state &&
 // Escape is dezelfde intentie als terug, ook zonder touchscherm.
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act) act(); } });
 
+/* De schermtekeningen van de kleedkamer en de kast aanzetten, als er een is.
+   Eén plek, en hij leest SCHERMKUNST -- er staat nergens anders een pad.
+
+   Waarom een klasse en een variabele in plaats van een vast url() in het
+   stijlblad: zolang er geen tekening is moet er ook niets opgevraagd worden. Een
+   url() naar een bestand dat er niet is kost elk kind een mislukte aanvraag en
+   laat de gedeelde schil vervallen -- twee schermen die platter zijn dan ze
+   waren, voor een tekening die nog niet bestaat. Zie de regel bij
+   #screen-dress.kunst.app-sfeer::before. */
+function zetSchermkunst() {
+  const waar = { dress: 'screen-dress', tro: 'screen-trophies' };
+  Object.keys(waar).forEach(sleutel => {
+    const el = $(waar[sleutel]);
+    const pad = SCHERMKUNST && SCHERMKUNST[sleutel];
+    if (!el) return;
+    el.classList.toggle('kunst', !!pad);
+    if (pad) el.style.setProperty('--kunst-scherm', 'url("' + pad + '")');
+    else el.style.removeProperty('--kunst-scherm');
+  });
+}
+
 /* ================= Start ================= */
 load();
+zetSchermkunst();
 renderProfiles();
 syncBackGuard();
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
@@ -16888,11 +16989,46 @@ function startMapEdit() {
   });
 
   const shown = () => worldForIndex(viewWorldIdx);
+  /* ---- Twee soorten werk, twee soorten context ------------------------------
+     Het meeste in dit paneel gaat over één wereld, en dat werk heeft een ster
+     nodig: de kaart tekent de voortgang van wie er speelt. Maar niet alles gaat
+     over een wereld. Het startscherm, het spelogo, het merkteken en het app-icoon
+     horen bij de héle app, en die kijk je juist na op het landingsscherm -- en
+     daar is met opzet niemand aan het spelen: goProfiles() laat `cur` los.
+
+     Dat liep stuk. commit() tekende altijd de kaart opnieuw, de kaart vraagt
+     renderMapTitle(P()), en P() is dan undefined -- "Cannot read properties of
+     undefined (reading 'level')", precies terwijl je de startschermtekening aan
+     het vervangen was. Erger nog: het bestand wás al weggeschreven, en de melding
+     zei dat het alleen via npm run preview kon.
+
+     De twee regels die dat voorgoed rechtzetten:
+       - wie een wereld nodig heeft, vraagt erom (wereldNu / sterNu) en krijgt
+         null terug als die er niet is; hij verzint er geen;
+       - een globaal beeld vraagt er niet om, want het hoort bij geen wereld. */
+  const STUDIO_STER = cur;      // de ster waarmee de studio geopend is
+  /* De ster terug als het landingsscherm hem losliet. Dat is geen truc: het
+     paneel staat open, de kaart eronder hoort bij déze ster, en zonder hem kan
+     geen enkele wereldweergave kloppen. Zo blijft er nooit een halve stand
+     achter als je tussen "de hele app" en "één wereld" heen en weer loopt. */
+  function sterNu() {
+    if (!P() && STUDIO_STER && db.profiles[STUDIO_STER]) cur = STUDIO_STER;
+    return P() || null;
+  }
+  function wereldNu() { return shown(); }
   /* Wat er nu geselecteerd is: een halte of een stuurpunt. Slepen doet dit vanzelf,
      en met de pijltjes verschuif je daarna per 0,2% -- op een verkleind vak is één
      schermpixel geen tekenpixel meer, en een richel raak je niet met de muis alleen. */
   let sel = null;
   const setOut = t => { F('st-out').textContent = t || ''; };
+  /* Een storing die een mens kan lezen, en de volle waarheid in de console.
+     Wat er misging, wat er met je werk gebeurd is, en waar de details staan --
+     nooit een kale JavaScript-regel onderin het paneel. */
+  function meldFout(wat, err, raad) {
+    console.error('[wereldstudio] ' + wat, err);
+    setOut(wat + '.\n' + (raad || 'Je huidige werk blijft staan.')
+      + '\nBekijk de console voor technische details.');
+  }
   let gridOn = false, curveOn = true, zoneOn = true, sterrenOn = false;
 
   // ---------------------------------------------------------------- status
@@ -16948,7 +17084,9 @@ function startMapEdit() {
   // ---------------------------------------------------------------- velden
   const HEX = { road: '#ffffff', sky: '#3d1a63', deep: '#2a0c47', glow: '#ffd880' };
   function fillSheet() {
-    const w = shown().world;
+    const g = wereldNu();
+    if (!g) return;           // geen wereld om te tonen: de velden blijven zoals ze staan
+    const w = g.world;
     F('mf-icon').value = w.icon || '';
     F('mf-name').value = w.name || '';
     F('mf-id').value = w.id || '';
@@ -17132,7 +17270,9 @@ function startMapEdit() {
     const bg = frame.querySelector('.tour-road-bg'), fg = frame.querySelector('.tour-road-fg');
     const un = frame.querySelector('.tour-road-under');
     const svg = frame.querySelector('.tour-road-svg');
-    const tot = Math.min(pts.length, P().level - shown().first + 1);
+    const ster = sterNu(), hier = wereldNu();
+    if (!ster || !hier) return;          // geen ster, geen voortgang om te tekenen
+    const tot = Math.min(pts.length, ster.level - hier.first + 1);
     if (bg) { bg.setAttribute('d', roadD(pts, pts.length, c));
       bg.style.strokeDasharray = roadDashArray(svg, pts, c, pts.length); }
     if (un) { un.setAttribute('d', roadD(pts, pts.length, c));
@@ -17278,10 +17418,16 @@ function startMapEdit() {
   const baseRender = renderTourMap;
   renderTourMap = function () { baseRender.apply(null, arguments); decorate(); markeerSelectie(); };
 
-  // elke wijziging: bewaren, opnieuw tekenen, lijst en status bijwerken
+  /* Elke wijziging: bewaren, opnieuw tekenen, lijst en status bijwerken.
+
+     De kaart hertekenen is het enige deel dat een ster nodig heeft, en dus het
+     enige deel dat overgeslagen wordt als die er niet is. De rest van het paneel
+     -- de wereldlijst, de velden, de beelden, de diff -- gaat gewoon door: wie
+     het startscherm vervangt hoort niet met een leeg paneel achter te blijven
+     omdat er toevallig geen kaart te tekenen viel. */
   function commit(msg) {
     saveWorldDraft();
-    showWorld(viewWorldIdx);
+    if (sterNu() && wereldNu()) showWorld(viewWorldIdx);
     refreshList();
     fillSheet();
     if (typeof tekenSchermen === 'function') tekenSchermen();
@@ -17316,7 +17462,8 @@ function startMapEdit() {
      bewaart nooit (geen save()), dus een herlaadbeurt zet alles terug -- net als
      goWorld() al deed. In de studio draai je op het demo-profiel. */
   function zetStand(stand) {
-    const q = P(), w = shown();
+    const q = sterNu(), w = wereldNu();
+    if (!q || !w) { setOut('Geen wereld gekozen — kies er een in de lijst.'); return; }
     for (let l = w.first; l < w.first + w.levels; l++) delete q.stars[l];
     /* 'op slot' zet de ster vóór deze wereld: élke halte hier is dan dicht --
        stoffig violet, zonder sterren en zonder pop. Dat is wat een kind ziet als het vooruitkijkt naar
@@ -17371,9 +17518,17 @@ function startMapEdit() {
   ];
   const OP_SCHIJF = window.__ASSETS || {};
 
+  /* Waar landt dit beeld? Een wereldtekening heeft de wereld nodig om zijn pad te
+     kennen; het startscherm, het logo en het icoon niet -- die hebben één vast pad
+     en bestaan los van welke wereld je bekijkt. Dat onderscheid staat hier en
+     nergens anders: shown() vragen voor een globaal beeld was precies de aanname
+     die de studio op het landingsscherm liet omvallen. */
   function slotPad(key) {
     const d = SLOTS[key];
-    return d && d.pad ? d.pad.replace('{wereld}', shown().world.id) : '';
+    if (!d || !d.pad) return '';
+    if (!d.perWereld) return d.pad;
+    const w = wereldNu();
+    return w ? d.pad.replace('{wereld}', w.world.id) : '';
   }
   /* Vier van de zes plekken uit scene.js leest het spel nog niet: die zijn voorstel
      en leven alleen in incoming/. Dat hoort de studio te zéggen in plaats van een
@@ -17569,8 +17724,9 @@ function startMapEdit() {
   }
   function tekenWereldbeeld() {
     const vak = F('st-art');
-    if (!vak) return;
-    const w = shown().world, pad = slotPad('world'), kb = OP_SCHIJF[pad];
+    const g = wereldNu();
+    if (!vak || !g) return;
+    const w = g.world, pad = slotPad('world'), kb = OP_SCHIJF[pad];
     const tijdelijk = w.art && w.art.indexOf('blob:') === 0;
     /* Drie toestanden, en ze zijn echt verschillend. De middelste komt voor nadat je
        "Ophalen" hebt gedaan: het bestand staat er nog, maar de wereld wijst er niet
@@ -17636,9 +17792,10 @@ function startMapEdit() {
     const vak = F('st-art-nieuw');
     if (!vak) return;
     const k = kandidaatVoor('world');
-    vak.hidden = !k;
-    if (!k) return;
-    const w = shown().world, pad = slotPad('world'), kb = OP_SCHIJF[pad];
+    const g = wereldNu();
+    vak.hidden = !k || !g;
+    if (!k || !g) return;
+    const w = g.world, pad = slotPad('world'), kb = OP_SCHIJF[pad];
     const huidig = w.art || (kb ? pad : '');
     vak.innerHTML = '<div class="paar">'
       + '<figure><figcaption>Huidig</figcaption><div class="vb" style="'
@@ -17689,6 +17846,44 @@ function startMapEdit() {
     if (!e.target.closest || !e.target.closest('.st-slot, .st-art')) e.preventDefault();
   }));
 
+  /* ---- Een vervangen bestand ook wérkelijk laten zien ----------------------
+     Een wereldtekening wordt opnieuw getekend zodra de kaart hertekent, dus die
+     zag je meteen. Een globaal beeld niet: het startscherm staat in een
+     CSS-regel die allang geladen is, en een bestand op schijf vervangen
+     verandert daar niets aan. Je kreeg dus "Gewijzigd" te lezen en keek naar de
+     oude tekening -- precies de twijfel die dit gereedschap moet wegnemen.
+
+     Wat hier gebeurt: elke regel en elk element dat naar dít pad wijst krijgt er
+     een verse ?v= achter. Generiek en niet op selector, want de studio hoort niet
+     te weten wélk scherm welk beeld toont -- dat staat in het stijlblad en mag
+     daar veranderen zonder dat hier iets stukgaat. */
+  function vernieuwBeeld(pad) {
+    if (!pad) return;
+    const stempel = 'v=' + Date.now();
+    const vers = t => String(t).split(pad).join(pad + '?' + stempel);
+    const raakt = t => String(t || '').indexOf(pad) >= 0;
+    let n = 0;
+    for (const blad of Array.from(document.styleSheets)) {
+      let regels;
+      // een stijlblad van een ander domein geeft hier een uitzondering; die zijn
+      // er niet, maar een gereedschap hoort daar niet op om te vallen
+      try { regels = blad.cssRules; } catch (e) { continue; }
+      for (const r of Array.from(regels || [])) {
+        if (!r.style || !raakt(r.style.backgroundImage)) continue;
+        r.style.backgroundImage = vers(r.style.backgroundImage);
+        n++;
+      }
+    }
+    document.querySelectorAll('img').forEach(i => {
+      if (!raakt(i.getAttribute('src'))) return;
+      i.src = vers(i.getAttribute('src').split('?')[0]); n++;
+    });
+    document.querySelectorAll('[style]').forEach(e => {
+      if (!raakt(e.getAttribute('style'))) return;
+      e.setAttribute('style', vers(e.getAttribute('style'))); n++;
+    });
+    return n;
+  }
   function laadBeeld(src) {
     return new Promise((ok, fout) => {
       const i = new Image();
@@ -17711,25 +17906,80 @@ function startMapEdit() {
   }
   /* bron: een bestand uit een sleep of een bladeraar, óf de URL van een kandidaat
      uit incoming/. Dezelfde weg naar binnen voor allebei -- het verschil is waar
-     het beeld vandaan komt en niet wat ermee moet gebeuren. */
+     het beeld vandaan komt en niet wat ermee moet gebeuren.
+
+     Drie stappen, en ze kunnen elk apart mislukken. Dat lijkt omslachtig maar het
+     is precies het verschil dat eerder ontbrak: hiervoor viel álles in één catch,
+     en dan kreeg je "vastzetten kan alleen via npm run preview" te zien terwijl
+     het bestand al lang en breed op schijf stond en er iets ná het schrijven
+     misging. Een melding die de verkeerde stap aanwijst is erger dan geen melding.
+
+       1  omzetten naar webp   -- in de browser, kan aan het beeld liggen
+       2  wegschrijven         -- vraagt de server (npm run preview); zonder server
+                                  is dít de stap die "alleen via preview" verdient
+       3  het paneel bijwerken -- het bestand staat er dan al; gaat hier iets mis,
+                                  dan is de vervanging nog steeds gelukt          */
   async function verwerkBeeld(bron, key, naam) {
-    const d = SLOTS[key], pad = slotPad(key), w = shown().world;
-    if (!pad) { setOut(d.label + ' staat nog niet in het spel'); return; }
+    const d = SLOTS[key], pad = slotPad(key);
+    if (!pad) {
+      setOut(d && d.perWereld && !wereldNu()
+        ? 'Kies eerst een wereld — deze tekening hoort bij één wereld.'
+        : (d ? d.label : key) + ' staat nog niet in het spel.');
+      return;
+    }
     const eigen = typeof bron !== 'string';
     const url = eigen ? URL.createObjectURL(bron) : bron;
     const label = naam || (eigen ? bron.name : bron.split('/').pop());
-    setOut('omzetten…');
+    const opruimen = () => { if (eigen) URL.revokeObjectURL(url); };
+    setOut('Omzetten…');
+
+    // 1 -- omzetten
+    let blob, maat;
     try {
-      const { blob, bron: maat } = await naarWebp(url, d.lever[0], d.lever[1], Number(F('st-kwal').value));
+      const r = await naarWebp(url, d.lever[0], d.lever[1], Number(F('st-kwal').value));
+      blob = r.blob; maat = r.bron;
+    } catch (err) {
+      opruimen();
+      meldFout('Afbeelding kon niet worden omgezet (' + label + ')', err,
+        'De huidige versie blijft behouden.');
+      return;
+    }
+
+    // 2 -- wegschrijven. Alleen hier hoort "dit vraagt npm run preview" thuis.
+    let txt;
+    try {
       const r = await fetch('/asset?to=' + encodeURIComponent(pad), { method: 'POST', body: blob });
-      const txt = await r.text();
-      if (!r.ok) { setOut('mislukt: ' + txt); return; }
+      txt = (await r.text()).trim();
+      if (!r.ok) throw new Error(txt || ('de server gaf ' + r.status));
+    } catch (err) {
+      /* Geen server: laat 'm dan tenminste tijdelijk zien -- maar alleen een eigen
+         bestand, en alleen een wereldtekening. Een kandidaat uit incoming/ bestaat
+         sowieso alleen mét server, en de wereld naar dat pad laten wijzen zou een
+         art opleveren die na één opruimbeurt nergens meer heen wijst. */
+      const w = wereldNu();
+      const tijdelijk = key === 'world' && eigen && w;
+      if (tijdelijk) { w.world.art = url; commit(''); }
+      console.error('[wereldstudio] ' + pad + ' wegschrijven mislukt', err);
+      setOut('Afbeelding kon niet worden vastgezet op ' + pad + '.\n'
+        + (tijdelijk ? 'Je ziet hem hiernaast, maar alleen in dit venster.\n'
+                     : 'De huidige versie blijft behouden.\n')
+        + 'Wegschrijven naar de werkmap vraagt om `npm run preview`.\n'
+        + 'Bekijk de console voor technische details.');
+      return;
+    }
+
+    // 3 -- het bestand staat er. Wat hierna komt kan de vervanging niet meer
+    //      ongedaan maken, dus het mag ook niet als mislukking gemeld worden.
+    opruimen();
+    try {
       OP_SCHIJF[pad] = Math.round(blob.size / 1024);
       delete GEMETEN[pad];
       // dit bestand wijkt nu af van wat er in het spel staat -- ook als het pad
       // hetzelfde bleef, en ook als het geen wereldtekening is
       GEWIJZIGD.add(pad);
-      if (key === 'world') { w.art = pad; }
+      if (key === 'world') { const w = wereldNu(); if (w) w.world.art = pad; }
+      // en laat 'm meteen zien in plaats van pas na een herlaadbeurt
+      vernieuwBeeld(pad);
       /* Een kandidaat die het gewórden is hoort niet als "nieuw" naast zichzelf te
          blijven staan: hij staat nu in het spel. Weg uit incoming/, stil. */
       if (!eigen) {
@@ -17737,18 +17987,14 @@ function startMapEdit() {
         fetch('/incoming-weg?f=' + encodeURIComponent(label), { method: 'POST' }).catch(() => {});
       }
       commit('');
-      setOut(label + '  ' + maat + ' → ' + txt
-        + (eigen ? '' : '\nververs de pagina: de kaart toont nu nog de kandidaat uit incoming/'));
+      setOut('Gewijzigd · ' + label + '  ' + maat + ' → ' + txt
+        + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.'));
     } catch (err) {
-      /* Geen server: laat 'm dan tenminste tijdelijk zien -- maar alleen een eigen
-         bestand. Een kandidaat uit incoming/ bestaat sowieso alleen mét server, en
-         de wereld naar dat pad laten wijzen zou een art opleveren die na één
-         opruimbeurt nergens meer heen wijst. */
-      if (key === 'world' && eigen) { w.art = url; commit(''); }
-      setOut(String(err.message) + ' — vastzetten kan alleen via npm run preview');
-      return;
+      console.error('[wereldstudio] ' + pad + ' is vervangen, maar het paneel bijwerken mislukte', err);
+      setOut('Gewijzigd · ' + pad + ' staat op schijf.\n'
+        + 'Het paneel kon niet worden bijgewerkt; ververs de pagina.\n'
+        + 'Bekijk de console voor technische details.');
     }
-    if (eigen) URL.revokeObjectURL(url);
   }
   /* Een wereld erbij. Het enige wat je invult is de naam -- het id, het pad van de
      tekening en de twee trofeeën rollen daaruit (zie wereldId/wereldArtPad). Zo hoef
@@ -17768,8 +18014,10 @@ function startMapEdit() {
     setOut(naam + ' erbij — id ' + id + ', tekening hoort op ' + wereldArtPad(id));
   };
   F('st-revert').onclick = () => {
-    const ship = shippedFor(shown().world.id);
-    if (!ship) { setOut('deze wereld staat nog niet in het spel'); return; }
+    const g = wereldNu();
+    if (!g) { setOut('Geen wereld gekozen — kies er een in de lijst.'); return; }
+    const ship = shippedFor(g.world.id);
+    if (!ship) { setOut('Deze wereld staat nog niet in het spel.'); return; }
     WORLDS[viewWorldIdx] = JSON.parse(JSON.stringify(ship));
     rebuildWorldStarts();
     commit('teruggezet naar het spel');
@@ -18068,9 +18316,17 @@ function startMapEdit() {
      het canvas en weigert de pixels. Over http (npm run preview) mag het wél, en
      dat is toch al waar de studio hoort te draaien. Die uitleg hoort in de melding
      te staan; "tainted by cross-origin data" helpt niemand verder. */
-  const pixelFout = e => /tainted|cross-origin|SecurityError/i.test(String(e && e.message))
-    ? 'de tekening uitlezen kan alleen via npm run preview (over file:// geeft de browser de pixels niet vrij)'
-    : String(e && e.message || e);
+  const pixelFout = e => {
+    console.error('[wereldstudio] de pixels van de tekening uitlezen mislukte', e);
+    if (/tainted|cross-origin|SecurityError/i.test(String(e && e.message))) {
+      return 'De tekening uitlezen kan alleen via npm run preview'
+        + '\n(over file:// geeft de browser de pixels niet vrij).';
+    }
+    /* Elke andere storing: zeggen wát er misging en waar de rest staat, in plaats
+       van een kale uitzondering onderin het paneel. */
+    return 'De tekening kon niet worden uitgelezen.\nDe kleuren blijven zoals ze staan.'
+      + '\nBekijk de console voor technische details.';
+  };
   F('st-kleur-art').onclick = async () => {
     setOut('kleuren uitlezen…');
     try {

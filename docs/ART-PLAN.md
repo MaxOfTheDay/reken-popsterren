@@ -58,30 +58,31 @@ Only these. Everything else in the app stays CSS or emoji for now.
 | 6 | `venue-stadium` | 1536×1024 | 1536×896 | 1200×700 WebP | with 5 |
 | 7 | `finale` | 1024×1536 | — | 1024×1536 WebP | with 5+6 |
 | 8 | `cities` ×12 | 1024×1536 sheet | — | traced to one SVG | later |
-| 9 | `kleedkamer` | 1024×1536 | — | 1215×2160 WebP (9:16) | slot is open |
+| 9 | `kleedkamer` | 1024×1536 | — | 1024×1536 WebP | slot is open |
+| 10 | `trofeeen` | 1024×1536 | — | 1024×1536 WebP | slot is open |
 
-**The dressing room (9:16, PS-45).** The slot exists and is wired end to end — drop a
-`kleedkamer.webp` in `incoming/`, look at it with `npm run preview`, and the studio
-writes it to `assets/bg/kleedkamer.webp`. Until a painted one arrives the app **draws
-the room itself**: `--kleed-tekening` in `index.html` holds an inline SVG (lamps over
-the mirror, a clothes rail either side of it, a warm pool on the floor) in exactly the
-same place a painting would go. Swapping one for the other is a single line.
+**The dressing room and the cabinet (PS-45 / PS-32).** Both slots exist and are wired end
+to end: drop the file in `incoming/` or hand it to the Dev Studio, preview it inside the
+real screen, and `SCHERMKUNST` in `index.html` is what the app then reads. Until a path is
+set there, nothing is requested and the shared shell stays — see `test/scene.js` (`dress`,
+`tro`) and the `.kunst` rule in the stylesheet.
 
-It is delivered at the portrait target this project already has (1215×2160, the world-map
-size), and the studio gets there the way it gets there for a world map: cover-crop the
-generation, then resize. That is the one place where this plan's "never upscale" rule is
-knowingly relaxed — it is relaxed for every world map too, and for a plate that is nothing
-but soft gradients it costs bytes, not sharpness.
+**The dressing room also has a drawn room in the meantime.** `--kleed-tekening` holds an
+inline SVG — lamps over the mirror, a clothes rail either side of it, a warm pool on the
+floor — under the same veil, so the screen reads as a room today. A painted plate does not
+replace that token: the `.kunst` rule wins on specificity and simply covers it. So the two
+mechanisms stack rather than compete, and neither one ever points at a file that is not
+there.
 
-Two things this asset must respect, both measured rather than guessed:
+Two things a painted plate must respect, both measured rather than guessed:
 
-* **9:16 and not 2:3.** This screen is filled top to bottom — header, rack, two bars —
-  so there is no band where the drawing may stop. On a 390×844 phone a 9:16 plate loses
-  about 9% off each side, on a 412×915 phone about 10%; keep everything that matters
-  inside the middle 80% (the §1 safe zone already asks for 12%).
-* **The middle band is what a landscape tablet sees.** At 1024×768 the cover crop shows
-  only source rows 555–1365. Keep that band quiet wall: anything hanging into it turns
-  into unexplained blobs on a tablet.
+* **Everything that matters lives in the middle 80% of the width.** On a 390×844 phone a
+  portrait plate loses roughly 9% off each side under `cover`, on a 412×915 phone about
+  10%. The §1 safe zone already asks for 12%, so this costs nothing extra.
+* **The middle band is what a landscape tablet sees.** At 1024×768 the crop shows only the
+  middle rows. Keep that band quiet wall: anything hanging into it turns into unexplained
+  blobs on a tablet — measured on the drawn room, and the reason its clothes rails were
+  moved up.
 
 **Why the landing screen jumped the queue.** It is the most-seen screen in the game and
 the one with the most empty room: measured at 390×844, its title, question, cards and
@@ -313,9 +314,9 @@ the new picture.
 - **Any source size works.** The image is cover-cropped to the target and resized, so a
   generator's 1024×1024 or 900×600 is fine as long as the composition survives a crop.
   Never distorted.
-- **Three targets today** — the world map (1215×2160, under **Werelden**, one per world),
-  the home screen (1024×1536, under **Beelden**) and the dressing room (1215×2160, under
-  **Beelden**). More appear as the app grows something that renders them.
+- **Four targets today** — the world map (1215×2160, under **Werelden**, one per world)
+  and, under **Beelden**, the home screen, the dressing room and the trophy cabinet (all
+  1024×1536). More appear as the app grows something that renders them.
 - **Quality** is a dropdown; the panel reports the resulting kB so you can keep an eye on
   the budget (§7.3 of ART-DIRECTION: ≤ 120 kB per background).
 - **⧉** (next to the device picker) opens the real game in a true window at the selected
@@ -380,6 +381,7 @@ incoming/            <- drop generated images here (gitignored)
 | `venue-theater.webp`, `venue-club.webp`, `venue-stadium.webp` | the show screen, behind gameplay |
 | `landing.webp` | the first screen — who is performing today |
 | `kleedkamer.webp` | behind the dressing room — trying on and buying |
+| `trofeeen.webp` | behind the trophy cabinet |
 | `map-horizon.webp` | the tour map |
 | `map-sky.webp` | the map's sky layer, blended with `screen` |
 | `finale.webp` | the end screen |
