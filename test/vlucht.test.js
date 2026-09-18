@@ -468,6 +468,30 @@ const TELEFOON = { width: 390, height: 844 };
       };
       requestAnimationFrame(stap);
     });
+    /* De vliegende kopie wordt op dezelfde manier gezet als de globe die hij
+       vervangt. Dat gaat niet over de máát van zijn vakje -- dat komt sowieso van
+       het origineel -- maar over hoe de glyph daarín valt: een emoji staat op de
+       grondlijn van zijn regel, dus de regelhoogte bepaalt zijn hoogte in het vak.
+       Stond die op de kopie vast terwijl de echte globes iets anders deden, dan
+       sprong het teken op het moment van loskomen een paar pixels omhoog en bij de
+       landing weer omlaag. Opgemeten toen dat zo was: 2,1px omhoog, 2,5px omlaag. */
+    const gezet = await page.evaluate(() => new Promise(res => {
+      openReis();
+      requestAnimationFrame(() => {
+        const kopie = document.querySelector('.globe-vlucht');
+        const bron = document.querySelector('#screen-map .wp-cta-ico');
+        if (!kopie || !bron) return res(null);
+        const a = getComputedStyle(kopie), b = getComputedStyle(bron);
+        res({ kopie: [a.fontSize, a.lineHeight], bron: [b.fontSize, b.lineHeight] });
+      });
+    }));
+    check(gezet && gezet.kopie.join() === gezet.bron.join(),
+      'K · de vliegende kopie wordt gezet als de globe die hij vervangt',
+      JSON.stringify(gezet));
+    await page.waitForTimeout(900);
+    await page.evaluate(() => reisSluit());
+    await page.waitForTimeout(900);
+
     for (const [heen, hoe] of [[true, 'uitzoomen'], [false, 'inzoomen']]) {
       const rijen = await page.evaluate(tel, heen);
       const leeg = rijen.filter(g => g.length === 0).length;
