@@ -51,7 +51,8 @@ const SCHERMEN = [
       await page.evaluate(fn => { new Function(fn)(); }, '(' + ga.toString() + ')()');
       await page.waitForTimeout(1500);
       await page.addStyleTag({ content: `
-        .app-sfeer::before, #screen-profile.app-sfeer::before {
+        .app-sfeer::before, #screen-profile.app-sfeer::before,
+        #screen-dress.app-sfeer::before {
           background-image: var(--kunst-sluier), ${tekening} !important;
           background-size: cover, cover !important; }
         /* de grondkleur van de app mag niet meehelpen: dit gaat over de tekening */

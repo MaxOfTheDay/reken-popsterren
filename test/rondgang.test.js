@@ -582,17 +582,47 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     return { id: kaart && kaart.dataset.item, had: P().owned.length };
   });
   check(!!r.id, 'de kleedkamer toont spullen die nog te koop staan', JSON.stringify(r));
-  await page.evaluate(id => { confirmShopBuy(id); equipShopItem(id); }, r.id);
+  /* Eerst: tikken kóópt niet. Een tik op iets dat nog niet van haar is kiest het --
+     de pop past het en de lade onderaan zegt wat het kost -- en drie tikken doen
+     precies hetzelfde als één. Diamanten uitgeven blijft een aparte, benoemde
+     handeling; dat is de enige stap in dit scherm die niet met één tik terug te
+     draaien is. */
+  const tikken = await page.evaluate(async id => {
+    const dia = P().diamonds;
+    for (let i = 0; i < 3; i++) {
+      document.querySelector(`.item-card[data-item="${id}"]`).click();
+      await new Promise(res => setTimeout(res, 120));
+    }
+    const bar = document.getElementById('dress-bar');
+    return { dia, naDia: P().diamonds, bezit: P().owned.includes(id),
+      gekozen: shopSelectedId, knop: !!document.getElementById('db-buy'),
+      lade: bar.textContent.replace(/\s+/g, ' ').trim() };
+  }, r.id);
+  check(!tikken.bezit && tikken.naDia === tikken.dia,
+    'drie tikken op iets dat te koop staat kopen het niet', JSON.stringify(tikken));
+  check(tikken.gekozen === r.id && tikken.knop && /Koop/.test(tikken.lade),
+    'ze zetten de koop-lade neer, met de prijs erop', JSON.stringify(tikken));
+  // En kopen doet het spulletje meteen aan: dat is de beloning, niet een tweede tik.
+  await page.evaluate(() => document.getElementById('db-buy').click());
   await page.waitForTimeout(300);
   const na = await page.evaluate(id => ({
     bezit: P().owned.includes(id),
     aan: Object.values(P().equipped).includes(id),
+    lade: getComputedStyle(document.getElementById('dress-bar')).display,
   }), r.id);
-  check(na.bezit && na.aan, 'kopen en aandoen werkt', JSON.stringify(na));
+  check(na.bezit && na.aan, 'kopen doet het gekochte stuk meteen aan', JSON.stringify(na));
+  check(na.lade === 'none', 'en daarna is de koop-lade weg', JSON.stringify(na));
 
-  /* ---- 7b · Kiezen en aandoen mogen niets laten springen ----
-     De kleedkamer bouwt het rek sinds fase 5B niet meer bij élke tik opnieuw op:
-     kiezen en aandoen werken de kaartjes bij die er al staan. Dat is precies het
+  /* ---- 7b · Eén tik doet het aan, en er springt niets ----
+     Twee afspraken in één meting, want ze gaan over dezelfde tik.
+
+     DE TIK. Tikken op kleren die al van je zijn dóét ze aan -- geen tussenstand
+     waarin het stuk "gekozen" is en er onderaan een knop verschijnt om het echt
+     aan te doen. Nog eens tikken op wat aanstaat is nadrukkelijk niets: een kind
+     dat nog eens op haar jurk tikt wil hem niet kwijt.
+
+     HET SPRINGEN. De kleedkamer bouwt het rek sinds fase 5B niet bij élke tik
+     opnieuw op: aandoen werkt de kaartjes bij die er al staan. Dat is precies het
      soort verbetering dat stilletjes weer weg kan gaan -- en als dat gebeurt,
      schuift het kaartje onder de vinger van het kind vandaan. Deze controle kijkt
      naar wat dat kind zou merken: staat het kaartje dat ik aantik daarna nog op
@@ -603,28 +633,37 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       return k ? Math.round(k.getBoundingClientRect().top) : null;
     };
     const lijst = () => [...document.querySelectorAll('.item-card')].map(c => c.dataset.item).join();
-    // een stuk dat ze al heeft en niet aanheeft: aantikken, dan aandoen
+    const nu = () => ({
+      lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop,
+      goud: document.querySelector('.item-card.equipped') && document.querySelector('.item-card.equipped').dataset.item,
+      sel: document.querySelector('.item-card.selected') && document.querySelector('.item-card.selected').dataset.item,
+      lade: getComputedStyle(document.getElementById('dress-bar')).display,
+      pil: document.querySelector(`.item-card[data-item="${doel}"] .item-status`).textContent.trim(),
+      aan: P().equipped[item(doel).cat],
+    });
+    // een stuk dat ze al heeft en niet aanheeft
     const bezit = [...document.querySelectorAll('.item-card.owned')];
     const doel = bezit.length ? bezit[bezit.length - 1].dataset.item : null;
     if (!doel) return { doel: null };
-    const voor = { lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop };
+    const voor = nu();
     document.querySelector(`.item-card[data-item="${doel}"]`).click();
     await new Promise(res => setTimeout(res, 150));
-    const gekozen = { lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop,
-      sel: document.querySelector('.item-card.selected') && document.querySelector('.item-card.selected').dataset.item };
-    equipShopItem(doel);
+    const eenTik = nu();
+    // en nog eens: dat hoort niets te doen, en zeker niet uit te trekken
+    document.querySelector(`.item-card[data-item="${doel}"]`).click();
     await new Promise(res => setTimeout(res, 150));
-    const aan = { lijst: lijst(), top: meet(doel), scroll: document.getElementById('screen-dress').scrollTop,
-      goud: document.querySelector('.item-card.equipped') && document.querySelector('.item-card.equipped').dataset.item,
-      pil: document.querySelector(`.item-card[data-item="${doel}"] .item-status`).textContent.trim() };
-    return { doel, voor, gekozen, aan };
+    const nogEens = nu();
+    return { doel, voor, eenTik, nogEens };
   });
-  check(r.doel && r.gekozen.sel === r.doel && r.gekozen.lijst === r.voor.lijst
-     && r.gekozen.top === r.voor.top && r.gekozen.scroll === r.voor.scroll,
-    'een spulletje kiezen laat het rek staan waar het staat', JSON.stringify(r));
-  check(r.doel && r.aan.goud === r.doel && r.aan.lijst === r.voor.lijst
-     && r.aan.top === r.voor.top && r.aan.pil.indexOf('Aan') >= 0,
-    'en aandoen ook -- alleen het goud verhuist', JSON.stringify(r));
+  check(r.doel && r.eenTik.aan === r.doel && r.eenTik.goud === r.doel
+     && r.eenTik.pil.indexOf('Aan') >= 0 && r.eenTik.sel === null && r.eenTik.lade === 'none',
+    'één tik op een stuk dat van haar is doet het aan, zonder balk ertussen', JSON.stringify(r));
+  check(r.doel && r.eenTik.lijst === r.voor.lijst
+     && r.eenTik.top === r.voor.top && r.eenTik.scroll === r.voor.scroll,
+    'en het rek blijft staan waar het staat -- alleen het goud verhuist', JSON.stringify(r));
+  check(r.doel && r.nogEens.aan === r.doel && r.nogEens.goud === r.doel
+     && r.nogEens.top === r.voor.top && r.nogEens.lade === 'none',
+    'nog eens tikken op wat aanstaat is veilig niets', JSON.stringify(r));
 
   /* ---- 8 · Trofeeënkast ---- */
   await page.click('#nav-tro');
