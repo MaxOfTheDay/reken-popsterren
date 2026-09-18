@@ -504,9 +504,16 @@ http.createServer(function (req, res) {
   }
 
   /* Kort pad om op een telefoon in te tikken: 192.168.x.x:8099/t is te doen, de
-     volledige studio-URL met vier queryparameters niet. */
-  if (url === '/t' || url === '/telefoon') {
-    res.writeHead(302, { location: '/?debug&demo&star=p1&screen=map' });
+     volledige studio-URL met vier queryparameters niet.
+
+     /t4 opent meteen in wereld 4 (zie &wereld= bij de debugvlaggen). Dat is het
+     verschil tussen een kaart bekijken en er eerst een uur naartoe spelen -- en
+     op een telefoon is het één teken extra in plaats van een URL met vijf
+     parameters. Er wordt niets weggeschreven: die vlag grendelt de opslag. */
+  const kort = /^\/t(\d*)$/.exec(url);
+  if (kort || url === '/telefoon') {
+    const n = kort && kort[1];
+    res.writeHead(302, { location: '/?debug&demo&star=p1' + (n ? '&wereld=' + n : '') + '&screen=map' });
     return res.end();
   }
   if (url === '/ts' || url === '/studio') {
@@ -543,6 +550,7 @@ http.createServer(function (req, res) {
   if (lan) {
     console.log('  Op je telefoon (zelfde wifi), tik dit in:');
     console.log('    ' + lan + ':' + PORT + '/t     de kaart');
+    console.log('    ' + lan + ':' + PORT + '/t4    de kaart, meteen in wereld 4');
     console.log('    ' + lan + ':' + PORT + '/ts    de studio\n');
   }
   console.log('  In de studio: sleep een beeld op het Beelden-vak, sleep de haltes en de');

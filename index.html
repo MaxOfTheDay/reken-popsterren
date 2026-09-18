@@ -2612,6 +2612,75 @@
   /* De kopie is een plaatje en verder niets: er valt niet op te tikken en niet in
      te schuiven, en een schermlezer hoort hem niet nog een keer op te lezen. */
   .tour-map.wereld-schaduw { pointer-events: none; }
+
+  /* ---- Uitzoomen: de wereld en zijn kaartje zijn hetzelfde ding (PS-24) ----
+     De wereldkaart en de bestemming op Werelden tonen dezelfde tekening op twee
+     maten. Tikt een kind op de wereldpil, dan hoort het dát te zien: de wereld
+     waar ze in staat krimpt naar het kaartje waar hij op Werelden ligt -- en
+     andersom groeit datzelfde kaartje uit tot de hele wereld.
+
+     Wat er NIET gebeurt: de kaart wordt niet gekloond en niet als geheel
+     verschaald. Wat er vliegt is één tijdelijke laag met dezelfde tekening erin,
+     en verder niets -- de haltes, de weg, de ster en de Memory-knop horen bij de
+     ingezoomde wereld en verdwijnen vroeg (zie .vlucht-weg).
+
+     Twee elementen, en die verdeling is de hele truc:
+
+       .wereld-vlucht       het kíjkgat: een echt vak met overflow:hidden, dat
+                            met één transform van "de hele kaart" naar "het
+                            kaartje" schaalt. Een gewoon overflow-vak en geen
+                            clip-path, en dat is geen smaakkwestie -- zie de
+                            regel bij vluchtBeelden.
+       .wereld-vlucht-art   de tékening. Beweegt met één transform (translate +
+                            een gelíjke schaal in x en y), dus hij vervormt op
+                            geen enkel beeldje -- wat er verandert is hoe groot
+                            hij is en hoeveel je ervan ziet, precies zoals bij
+                            een camera die terugstapt.
+
+     Allebei krijgen ze dezelfde easing mee, dus het gat en de tekening lopen
+     altijd gelijk op. z-index 1: boven het scherm dat aankomt (z 0), onder het
+     scherm dat vertrekt (z 2, zie .wegvallend) en ver onder de navigatiebalk
+     (z 40) -- die blijft dus gewoon staan waar hij staat. */
+  .wereld-vlucht { position: fixed; z-index: 1; pointer-events: none;
+    overflow: hidden; transform-origin: 0 0; will-change: transform; }
+  /* Op de terugweg draait de stapeling om: dan vertrekt Werelden (z 2) en komt de
+     kaart aan, en dan hoort de tekening daar juist tússen. Zie reisNaarWereld. */
+  .wereld-vlucht.hoog { z-index: 3; }
+  #screen-map.vlucht-boven { z-index: 4; }
+  .wereld-vlucht-art {
+    position: absolute; transform-origin: 0 0; will-change: transform;
+    /* exact dezelfde drie lagen als .world-frame, op een vak dat exact de
+       verhouding van de tekening heeft -- dus 100% 100% ís hier cover */
+    background-color: var(--w-deep, #2a0c47);
+    background-size: 100% 100%; background-repeat: no-repeat;
+    background-image: var(--w-art, none),
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
+      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
+  }
+  /* De kaart tijdens een vlucht: zijn tekening ligt even in de vluchtlaag, dus
+     hier blijft alleen het plaatselijke werk over (haltes, weg, ster). Het kader
+     wordt dóórzichtig en niet onzichtbaar -- die haltes moeten er nog even
+     overheen kunnen wegdoven.
+
+     Ook de onscherpe rand in liggende stand gaat uit: die is de wereld nóg een
+     keer, en die hoort niet te blijven staan terwijl de wereld zelf wegvliegt. */
+  /* Zolang de tekening in de lucht hangt vangt de kaart geen tikken. Op de heenweg
+     doet .wegvallend dat al, op de terugweg niet -- en daar staan de haltes er een
+     tel lang onzichtbaar (ze komen pas op de landing op). Een halte die je kunt
+     aantikken zonder hem te zien is geen halte. */
+  #screen-map.vlucht-weg { pointer-events: none; }
+  #screen-map.vlucht-weg .world-frame { background-image: none; background-color: transparent;
+    box-shadow: none; }
+  #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { opacity: 0; }
+  /* Het bestemmingskaartje zolang de tekening er nog naartoe onderweg is. Zonder
+     dit staat hetzelfde kaartje twee keer in beeld: één keer op zijn plek en één
+     keer in de lucht. */
+  .reis-halte.vlucht-doel { opacity: 0; }
+  /* De globe van de wereldpil op weg naar de kop van Werelden. Eén teken, één
+     transform -- geen letter-voor-letter gedoe; de rest van de pil en de titel
+     kruisen gewoon over elkaar heen. */
+  .globe-vlucht { position: fixed; z-index: 5; pointer-events: none;
+    line-height: 1; transform-origin: 50% 50%; will-change: transform; }
   /* Staat het venster rechtop, dan vult de kaart het gewoon en schuif je verticaal
      -- net als op een telefoon, alleen is er meer te schuiven. Ligt het venster op
      zijn kant, dan wordt het een podium: de kaart zo groot als de hóógte toelaat,
@@ -2650,6 +2719,14 @@
     #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
       background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
       filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
+    /* Tijdens een vlucht ligt de wereld in de vluchtlaag en staat deze rand uit
+       (zie .vlucht-weg). Hij komt er niet terug met een knip maar in dezelfde 80ms
+       als de overvloeier -- dat is het enige stukje kaart dat op de landing niet
+       al onder de vluchtlaag klaar ligt. */
+    #screen-map::before, #screen-map::after { transition: opacity 90ms linear; }
+    @media (prefers-reduced-motion: reduce) {
+      #screen-map::before, #screen-map::after { transition: none; }
+    }
     /* Het podium is zo groot als de hóógte toelaat, en niet kleiner.
        Hier stond padding: var(--kop-h) 0 var(--nav-h) -- het podium werd dus vrij
        gehouden van de kop en de balk. Dat is precies andersom dan op een telefoon,
@@ -3581,7 +3658,14 @@
        vaste stap, en dan gaapt er boven in de reis -- waar alles nog op slot en dus
        klein is -- ineens een gat. */
     --reis-stap: calc(var(--kaart-h) * 1.55);
-    position: relative;
+    /* z-index 0 en niet auto, en dat is geen opmaak maar een stapelregel: .hub-sticky
+       draagt z-index 5, en zonder een eigen stapelcontext hier telt die 5 mee in #app
+       -- dan ligt de kop van Werelden dus bóven élk ander scherm en boven de
+       vluchtlaag (zie .wereld-vlucht). Bij het uitzoomen was dat precies te zien: de
+       sluier van deze kop lag als een donkere band over de wereld die nog aan het
+       krimpen was. Met een eigen context blijft die 5 binnen dit scherm, waar hij
+       hoort. .wegvallend zet er 2 overheen als dit scherm juist vertrekt. */
+    position: relative; z-index: 0;
     padding: 10px 0 0;
     /* De nachtlucht waar de baan in staat. Staat óók op het scherm zelf, want boven
        de baan hangt nog de strook waar de kop in staat -- die hoort dezelfde lucht
@@ -3613,7 +3697,14 @@
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 0; }
   #screen-journey .screen-header { margin-bottom: 0;
-    grid-template-columns: minmax(56px, 1fr) auto minmax(56px, 1fr); gap: 10px; }
+    grid-template-columns: minmax(56px, 1fr) auto minmax(56px, 1fr); gap: 10px;
+    /* Even hoog als de koprij van de kaart, en dat is precies zo hoog als het
+       portretje daar (50px). Dat is geen opmaakdetail: bij het uit- en inzoomen
+       wisselen deze twee koppen elkaar af, en de diamantenpil hoort daarbij stil
+       te blijven staan (zie zelfdePlek). Stond deze rij 6px lager, dan zakte die
+       pil aan het eind van élke overgang een paar pixels -- klein genoeg om niet
+       te kunnen benoemen en groot genoeg om te zien. */
+    min-height: 50px; }
   /* De sluier onder de kop, en hij is niet decoratief: hier schuift een
      wereldtekening met zijn naam erin onderdoor, en die was op .86 nog net te
      lezen achter "Werelden". Dat leest als een foutje, niet als diepte.
@@ -9449,6 +9540,351 @@ function navMee(naarBinnen) {
   a.onfinish = op;
   setTimeout(op, MOTION.weg + 260);
 }
+/* ---- De wereld en zijn kaartje: één ding op twee maten (PS-24) ------------
+   Wereldkaart en Werelden zijn niet twee schermen maar twee afstanden tot
+   dezelfde plek: ingezoomd sta je erin, uitgezoomd zie je hem liggen tussen de
+   andere. Deze vlucht is wat die zin zichtbaar maakt -- de tekening van de
+   wereld krimpt naar het kaartje waar hij op Werelden ligt, of groeit daar
+   vandaan weer uit tot het hele scherm.
+
+   Hoe het werkt staat bij .wereld-vlucht in het stijlblad. Wat hier telt:
+
+     1  er wordt NIETS gekloond. De vluchtlaag is één <div> met één <div> erin,
+        met dezelfde background-image-URL als de kaart -- die staat al in de
+        cache, dus er wordt niets opnieuw opgehaald of gedecodeerd. Heeft een
+        wereld (nog) geen tekening, dan vliegt zijn verloop mee: dezelfde drie
+        lagen als .world-frame, dus er is altijd íets om te laten krimpen.
+     2  begin- en eindmaat worden één keer opgemeten, vóór er iets beweegt.
+        Tijdens de vlucht meet niemand meer iets; er lopen alleen transform-,
+        clip-path- en opacity-animaties.
+     3  hij ruimt zichzelf altijd op. Ook als een animatie nooit klaarmeldt
+        (scherm weg, tabblad naar de achtergrond), ook als er middenin nog een
+        keer getikt wordt: elke nieuwe vlucht sluit eerst de vorige af.
+
+   Een 'vlak' is wat één kant van de vlucht nodig heeft, en niet meer:
+
+     clip    het gat waar je doorheen kijkt, in vensterpixels
+     kunst   waar de héle tekening ligt (mag ruim buiten clip vallen -- dat is
+             precies wat cover doet)
+     rond    de ronding van dat gat
+
+   Zolang beide kanten dat opleveren, weet de vlucht van geen enkel scherm iets
+   af. Daarom doet hij ook de terugweg, en zou hij een derde plek aankunnen. */
+const VLUCHT = {
+  /* 340 + 80 = 420ms van tik tot rust. De overvloeier staat er expres achter en
+     niet overheen: pas als de tekening precies op zijn bestemming ligt, dooft de
+     vluchtlaag weg op het échte kaartje eronder. Zouden die twee overlappen, dan
+     kruist er een tekening van 97% met eentje van 100% -- en dat is precies het
+     soort "bijna" dat als onscherpte leest. Nu kruisen er twee beelden die op de
+     pixel hetzelfde zijn, en wat er in die 80ms écht verschijnt is alleen wat op
+     het kaartje extra staat: de naam, de sterrenteller, het zegel. */
+  duur: 340,       // de beweging zelf -- één beweging, geen keten
+  kruis: 80,       // de overvloeier erna: vluchtlaag uit, het echte ding aan
+  /* De haltes, de weg en de ster zijn wég voordat de tekening merkbaar gekrompen
+     is, en dat moet ook: ze schuiven niet mee (dat zou acht bolletjes in een
+     kaartje van 200 pixels persen) en blijven dus op hun plek hangen. Op 90ms
+     staat de tekening op ~60% en zijn zij al op een tiende -- je ziet ze dus niet
+     los van de wereld komen, je ziet ze oplossen. */
+  detail: 90,      // haltes, weg, ster en knoppen van de ingezoomde wereld
+  reveal: 240,     // de route en de andere werelden eromheen
+  /* De vluchtbaan krijgt een eigen curve, en dat is de enige plek in de app waar
+     MOTION.uit niet volstaat. Die curve is gemaakt voor bewegingen van een paar
+     procent (een scherm dat 6% inzoomt); hij zet 58% van de weg in de eerste 60ms.
+     Over de afstand van deze vlucht -- van het hele scherm naar een kaartje van
+     een vijfde daarvan -- leest dat als een sprong met een staartje. Deze curve
+     legt in diezelfde 60ms 42% af: nog steeds meteen antwoord, maar het middenstuk
+     blijft te volgen en de landing blijft zacht. Geen overshoot: een navigatie is
+     geen beloning. */
+  baanPunten: [.33, .72, .25, 1],
+};
+VLUCHT.baan = 'cubic-bezier(' + VLUCHT.baanPunten.join(',') + ')';
+/* Dezelfde curve, maar uit te rekenen in JS. Dat is nodig omdat de vlucht uit twee
+   transforms bestaat die samen één beweging moeten zijn (zie vluchtBeelden): laat
+   je de browser ze allebei los interpoleren, dan klopt hun product er tussenin
+   niet en rekt de tekening zichtbaar uit. De waarden worden dus vooraf uitgerekend
+   en als beeldjes meegegeven -- en dan moet de curve hier bekend zijn.
+
+   Newton-Raphson op de x-component, precies zoals de browser het zelf doet. Twaalf
+   stappen is ruim: hij zit na drie al binnen een miljoenste. */
+function bezierCurve(p1x, p1y, p2x, p2y) {
+  const cx = 3 * p1x, bx = 3 * (p2x - p1x) - cx, ax = 1 - cx - bx;
+  const cy = 3 * p1y, by = 3 * (p2y - p1y) - cy, ay = 1 - cy - by;
+  const X = t => ((ax * t + bx) * t + cx) * t;
+  const dX = t => (3 * ax * t + 2 * bx) * t + cx;
+  const Y = t => ((ay * t + by) * t + cy) * t;
+  return x => {
+    let t = x;
+    for (let i = 0; i < 12; i++) {
+      const fout = X(t) - x;
+      if (Math.abs(fout) < 1e-6) break;
+      const d = dX(t);
+      if (Math.abs(d) < 1e-6) break;
+      t -= fout / d;
+    }
+    return Y(t);
+  };
+}
+const vluchtCurve = bezierCurve.apply(null, VLUCHT.baanPunten);
+// de tekening in een reis-kaartje: cover, met hetzelfde zwaartepunt als .reis-art
+const REIS_ART_Y = .36;
+
+function vlakRect(r) { return { left: r.left, top: r.top, w: r.width, h: r.height }; }
+function vlakRond(el) {
+  const v = parseFloat(getComputedStyle(el).borderTopLeftRadius);
+  return v > 0 ? v : 0;
+}
+// het gedeelde stuk van twee rechthoeken; null als ze elkaar niet raken
+function vlakSnij(a, b) {
+  const left = Math.max(a.left, b.left), top = Math.max(a.top, b.top);
+  const right = Math.min(a.right, b.right), bottom = Math.min(a.bottom, b.bottom);
+  if (right <= left || bottom <= top) return null;
+  return { left, top, w: right - left, h: bottom - top };
+}
+/* De wereldkaart zoals hij nú staat. Het kijkgat is het vak waarin de tekening te
+   zien is (rechtop het hele scherm, liggend het podium), de tekening zelf is het
+   kader -- dat steekt er met opzet buiten uit, want zo werkt cover. */
+function kaartVlak() {
+  const map = $('tour-map');
+  const kader = map && map.querySelector('.world-frame');
+  if (!kader) return null;
+  const m = map.getBoundingClientRect(), k = kader.getBoundingClientRect();
+  if (!m.width || !k.width) return null;
+  const clip = vlakSnij(m, k);
+  return clip ? { clip, kunst: vlakRect(k), rond: vlakRond(kader) } : null;
+}
+/* Eén bestemming op Werelden. De tekening ligt daar op cover met
+   background-position 50% 36% (zie .reis-art), en dat is precies wat hier
+   uitgerekend wordt -- niet opgemeten, want er staat geen element omheen dat die
+   uitsnede draagt. */
+function halteVlak(halte) {
+  const plaats = halte && halte.querySelector('.reis-plaats');
+  if (!plaats) return null;
+  const r = plaats.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  const verh = ART_W / ART_H;
+  let w = r.width, h = w / verh;
+  if (h < r.height) { h = r.height; w = h * verh; }
+  return {
+    clip: vlakRect(r),
+    kunst: { left: r.left + (r.width - w) / 2, top: r.top - (h - r.height) * REIS_ART_Y, w, h },
+    rond: vlakRond(plaats),
+  };
+}
+function mengRect(a, b, e) {
+  return { left: a.left + (b.left - a.left) * e, top: a.top + (b.top - a.top) * e,
+           w: a.w + (b.w - a.w) * e, h: a.h + (b.h - a.h) * e };
+}
+/* De beeldjes van de vlucht, vooraf uitgerekend. Twee redenen, en de eerste is een
+   fout die we op een trage telefoon gegarandeerd zouden krijgen.
+
+   1  HET GAT MOET OP DE COMPOSITOR, NET ALS DE TEKENING. Hier stond het kijkgat
+      als een clip-path-animatie, en dat leek prima: de gemeten clip-path klopte op
+      elk beeldje. Alleen rekent Chromium een transform op de compositor uit en een
+      clip-path op de hoofddraad. Zolang die twee gelijk opgaan zie je niets; hapert
+      de hoofddraad -- en die hapert, want bij het openen van Werelden worden de
+      tekeningen van de buurwerelden binnengehaald en gedecodeerd -- dan schuift de
+      tekening wél door en het gat niet. Wat je dan ziet is de hele wereldtekening,
+      staand en ongeknipt, over de kaartjes eromheen: de flits aan het eind van de
+      overgang. Nagemeten: één op de zeven overgangen op een snelle machine, en met
+      de hoofddraad 220ms met opzet dichtgezet élke keer.
+
+      Nu is het gat een gewoon vak met overflow:hidden dat zélf schaalt. Een
+      overflow-clip hangt aan de transform van dat vak, dus hij zit in dezelfde
+      boom en op dezelfde draad als de tekening erin. Ze kúnnen niet meer uit elkaar
+      lopen -- niet op een trage telefoon, niet met een hik in het netwerk.
+
+   2  MAAR DAN MOETEN DE TWEE TRANSFORMS WEL SAMEN KLOPPEN. Het vak schaalt
+      ongelijk (van een staand scherm naar een liggend kaartje), en de tekening
+      erin draait dat terug zodat zij zelf gelijkmatig krimpt. Die twee
+      vermenigvuldigen, en een browser interpoleert ze los van elkaar: halverwege
+      staat er dan (0,69 x 1,06) in plaats van (0,85 x 0,85) -- een tekening die
+      een halve tel zichtbaar uitgerekt wordt.
+
+      Vandaar dat hier niet twee eindwaarden staan maar 25 beeldjes, met de curve er
+      al in verwerkt en met 'linear' ertussen. Op elk beeldje is het product exact
+      gelijkmatig; ertussenin wijkt het minder af dan een tiende procent. Het kost
+      één lus van 25 stappen vóór de vlucht begint, en daarna niets meer.
+
+   3  EN DE RONDING MOET EEN EIGEN ANIMATIE ZIJN. border-radius kan niet op de
+      compositor, en één niet-composeerbare eigenschap in een reeks beeldjes zet
+      díe hele animatie op de hoofddraad -- ook de transform die ernaast staat.
+      Zet je de ronding dus bij de vorm in, dan heb je fout 1 terug met een andere
+      oorzaak: nagemeten, en het lekte precies zo. Twee animaties op hetzelfde vak
+      dus, met dezelfde beeldjes en dezelfde duur.
+
+      De ronding blijft daarmee het enige dat op de hoofddraad loopt, en dat mag:
+      hapert hij, dan zijn de hoeken een paar beeldjes minder rond. De tekening
+      blíjft binnen zijn vak, en dat is waar het om ging. */
+const VLUCHT_BEELDJES = 25;
+function vluchtBeelden(van, naar) {
+  const vorm = [], rand = [], binnen = [];
+  const ox = van.kunst.left - van.clip.left, oy = van.kunst.top - van.clip.top;
+  for (let i = 0; i < VLUCHT_BEELDJES; i++) {
+    const x = i / (VLUCHT_BEELDJES - 1);
+    const e = i === 0 ? 0 : i === VLUCHT_BEELDJES - 1 ? 1 : vluchtCurve(x);
+    const C = mengRect(van.clip, naar.clip, e);
+    const A = mengRect(van.kunst, naar.kunst, e);
+    const kx = C.w / van.clip.w, ky = C.h / van.clip.h;
+    const a = A.w / van.kunst.w;
+    const R = van.rond + (naar.rond - van.rond) * e;
+    vorm.push({ offset: x, easing: 'linear',
+      transform: `translate(${(C.left - van.clip.left).toFixed(2)}px, ${(C.top - van.clip.top).toFixed(2)}px)`
+               + ` scale(${kx.toFixed(6)}, ${ky.toFixed(6)})` });
+    rand.push({ offset: x, easing: 'linear',
+      borderRadius: `${(R / kx).toFixed(2)}px / ${(R / ky).toFixed(2)}px` });
+    binnen.push({ offset: x, easing: 'linear',
+      transform: `translate(${((A.left - C.left) / kx - ox).toFixed(2)}px,`
+               + ` ${((A.top - C.top) / ky - oy).toFixed(2)}px)`
+               + ` scale(${(a / kx).toFixed(6)}, ${(a / ky).toFixed(6)})` });
+  }
+  return { vorm, rand, binnen };
+}
+
+/* Staan twee dingen op allebei de schermen op dezelfde plek? Dan horen ze bij een
+   overgang niet mee te doen.
+
+   Dat is de vraag achter de diamantenpil. Die zegt op de kaart en op Werelden
+   precies hetzelfde, en op een telefoon staat hij er ook precies hetzelfde: dan is
+   wegdoven en opnieuw opbouwen pure ruis, en stilstaan het enige juiste -- het is
+   het vaste punt waar de zoom in het midden zijn richting aan ontleent. Maar een
+   liggend venster zet de twee koppen niet even breed neer, en op een héél smal
+   scherm krijgt de pil op de twee schermen een andere maat. Dán is stilstaan juist
+   de sprong, en horen ze wél over elkaar heen te kruisen.
+
+   Dus niet vastleggen wat het geval is, maar het opmeten. Eén keer, vóór er iets
+   beweegt. */
+function zelfdePlek(a, b) {
+  if (!a || !b) return false;
+  const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+  return Math.abs(ra.left - rb.left) < 2 && Math.abs(ra.top - rb.top) < 2
+      && Math.abs(ra.width - rb.width) < 2 && Math.abs(ra.height - rb.height) < 2;
+}
+
+let vluchtOp = null;   // de vlucht die nu loopt -- er is er altijd hoogstens één
+function vluchtKlaar() {
+  if (!vluchtOp) return;
+  const v = vluchtOp;
+  vluchtOp = null;
+  clearTimeout(v.timer);
+  clearTimeout(v.grendel);
+  overgangBezig = false;
+  try { v.op(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
+  if (v.laag && v.laag.parentNode) v.laag.parentNode.removeChild(v.laag);
+}
+/* De vlucht zelf. van/naar zijn twee vlakken; bron levert de kleuren en de
+   tekening (de wereld waar het om gaat). 'op' is het opruimwerk van de aanroeper
+   en loopt altijd precies één keer.
+
+   Geeft terug wanneer de overvloeier begint -- de aanroeper laat het échte
+   kaartje (of de échte kaart) op dat moment verschijnen, zodat de vluchtlaag
+   erop wegdooft in plaats van ervoor. */
+function wereldVlucht(van, naar, bron, op, hoog) {
+  vluchtKlaar();                             // vangnet: de ingangen doen dit al zelf
+  const laag = document.createElement('div');
+  laag.className = 'wereld-vlucht' + (hoog ? ' hoog' : '');
+  laag.setAttribute('aria-hidden', 'true');
+  const kunst = document.createElement('div');
+  kunst.className = 'wereld-vlucht-art';
+  applyWorldArt(kunst, bron);
+  applyWorldTheme(kunst, bron);
+  // het vak staat op de plek van het kijkgat; de tekening ligt erin, en steekt er
+  // met opzet buiten uit -- dat is wat cover doet, en het vak knipt het weg
+  laag.style.left = van.clip.left + 'px';
+  laag.style.top = van.clip.top + 'px';
+  laag.style.width = van.clip.w + 'px';
+  laag.style.height = van.clip.h + 'px';
+  laag.style.borderRadius = van.rond + 'px';
+  kunst.style.left = (van.kunst.left - van.clip.left) + 'px';
+  kunst.style.top = (van.kunst.top - van.clip.top) + 'px';
+  kunst.style.width = van.kunst.w + 'px';
+  kunst.style.height = van.kunst.h + 'px';
+  laag.appendChild(kunst);
+  $('app').appendChild(laag);
+
+  /* Twee transforms die samen één beweging zijn, plus de ronding apart -- zie
+     vluchtBeelden. De drie delen dezelfde beeldjes en dezelfde duur, dus ze lopen
+     gelijk op; ze staan alleen los omdat de ronding de andere twee anders van de
+     compositor af zou trekken. */
+  const beelden = vluchtBeelden(van, naar);
+  const tijd = { duration: VLUCHT.duur, easing: 'linear', fill: 'forwards' };
+  laag.animate(beelden.vorm, tijd);
+  laag.animate(beelden.rand, tijd);
+  kunst.animate(beelden.binnen, tijd);
+  /* De landing: pas ná de beweging dooft de tekening weg op wat er dan al staat.
+
+     Op de TEKENING en niet op het vak eromheen. Dat vak doet één ding -- knippen --
+     en alles wat zíchtbaar is (de tekening, zijn maat, zijn plek, zijn
+     doorzichtigheid) hoort bij het kind eronder. Dat is ook waarom het er twee
+     zijn, en het houdt het vak vrij van eigenschappen die zijn clip zouden kunnen
+     laten verhuizen. */
+  const eind = kunst.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: VLUCHT.kruis, delay: VLUCHT.duur, easing: 'linear', fill: 'forwards' });
+
+  /* De grendel gaat al open zodra de béweging klaar is, en niet pas na de
+     overvloeier: die laatste 80ms verschuift niets meer, en een kind dat dán alweer
+     tikt hoort gewoon antwoord te krijgen in plaats van een tik die verdwijnt.
+     Veilig, want elke ingang begint met vluchtKlaar(): een tik in dat venster
+     sluit deze vlucht eerst netjes af en begint dan pas aan de volgende. */
+  vluchtOp = { laag, op,
+    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + 260),
+    grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
+  eind.onfinish = vluchtKlaar;
+  overgangBezig = true;
+  return VLUCHT.duur;
+}
+/* Wegdoven of opkomen -- één regel, zodat elke kant van de vlucht dezelfde curve
+   en dezelfde vangnetten krijgt. Levert niets op als er niets te animeren valt. */
+function vluchtDoof(el, aan, duur, na) {
+  if (!el || !el.animate) return;
+  el.animate(aan ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }],
+    { duration: duur, delay: na || 0, easing: MOTION.uit, fill: 'both' });
+}
+function vluchtDoofAlle(lijst, aan, duur, na) {
+  lijst.forEach(el => vluchtDoof(el, aan, duur, na));
+}
+/* De globe. Op de kaart zit hij rechts in de wereldpil, op Werelden links van de
+   titel -- dichtbij, maar niet op dezelfde plek. Hij vliegt dus mee: één teken
+   dat van de ene kop naar de andere schuift terwijl de rest van allebei de
+   koppen over elkaar heen kruist. Geen morph per letter, wel genoeg om te laten
+   zien dat het dezelfde 🌍 is.
+
+   Alles eraan is optioneel: is een van de twee koppen er niet (of kent de browser
+   geen animate), dan gebeurt er gewoon niets en kruisen de koppen zonder globe. */
+function globeVlucht(vanEl, naarEl, duur) {
+  if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
+  const a = vanEl.getBoundingClientRect(), b = naarEl.getBoundingClientRect();
+  if (!a.width || !b.width) return;
+  const vlieg = document.createElement('span');
+  vlieg.className = 'globe-vlucht';
+  vlieg.setAttribute('aria-hidden', 'true');
+  vlieg.textContent = vanEl.textContent || '🌍';   // overnemen en niet overtypen
+  /* De oorspronkelijke gaat uit zolang zijn kopie vliegt. Niet omdat je hem nog
+     zou zien (de kop waar hij in staat doft toch weg), maar omdat er dan geen enkel
+     beeldje is waarop er twee globes in beeld staan -- en dat is precies wat deze
+     kleine vlucht moet voorkomen. */
+  vanEl.style.visibility = 'hidden';
+  vlieg.style.left = a.left + 'px';
+  vlieg.style.top = a.top + 'px';
+  vlieg.style.width = a.width + 'px';
+  vlieg.style.height = a.height + 'px';
+  vlieg.style.fontSize = getComputedStyle(vanEl).fontSize;
+  $('app').appendChild(vlieg);
+  const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+  const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+  const s = b.width / a.width;
+  const weg = () => {
+    vanEl.style.visibility = '';
+    if (vlieg.parentNode) vlieg.parentNode.removeChild(vlieg);
+  };
+  const an = vlieg.animate(
+    [{ transform: 'none' },
+     { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)})` }],
+    { duration: duur, easing: VLUCHT.baan, fill: 'forwards' });
+  vlieg.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: 90, delay: Math.max(0, duur - 90), easing: 'linear', fill: 'forwards' });
+  an.onfinish = weg;
+  setTimeout(weg, duur + 260);   // vangnet, net als bij elke andere overgang
+}
 /* Kaart -> zaal. "Ik koos deze plek, en nu ga ik er naar binnen."
      1  de halte drukt in en geeft een lichtkringetje terug (meteen, geen wachten)
      2  de kaart duikt een klein stukje naar díe plek toe en is weg  (140ms)
@@ -10239,12 +10675,20 @@ function reisStopWaarnemer() {
 
    60% van de vensterhoogte zet haar net onder het midden: een stuk gereisde weg
    eronder, zij erop, en boven haar de eerstvolgende bestemming in beeld. Alleen bij
-   het openen; daarna schuift een kind zelf en wordt ze nooit teruggesleept. */
-function reisFocus() {
+   het openen; daarna schuift een kind zelf en wordt ze nooit teruggesleept.
+
+   opWereld = open op déze bestemming in plaats van op die waar de ster staat. Dat
+   is precies één geval, en het is het geval waar dit scherm voor bedacht is: een
+   kind dat in een éérdere wereld staat te kijken en uitzoomt. Dan hoort het
+   kaartje van díe wereld in beeld te komen -- anders zoomt de kaart uit naar een
+   plek die buiten het venster valt (zie wereldVlucht). Zonder opWereld verandert
+   er niets: in elke andere ingang zijn die twee dezelfde wereld. */
+function reisFocus(opWereld) {
   const scherm = $('screen-journey');
   const track = $('reis-track');
   if (!scherm || !track) return;
-  const doel = track.querySelector('.reis-halte.nu') || track.querySelector('.reis-halte');
+  const doel = (opWereld != null && track.querySelector(`.reis-halte[data-w="${opWereld}"]`))
+    || track.querySelector('.reis-halte.nu') || track.querySelector('.reis-halte');
   if (!doel) return;
   const r = doel.getBoundingClientRect(), s = scherm.getBoundingClientRect();
   if (!r.height) return;
@@ -10300,18 +10744,56 @@ let reisVanuit = null;
    opent gewoon weer waar de voortgang staat. */
 let reisDoel = null;
 
-/* De reis openen = uitzoomen. De kaart valt een stukje terug (dezelfde beweging als
-   het verlaten van een zaal) en de reis komt lícht ingezoomd binnen en zakt naar
-   zijn maat -- een camera die achteruit stapt. Om het punt waar de huidige
-   bestemming komt te staan, zodat je uit je eigen wereld wegzoomt en niet uit het
-   midden van het scherm. Geen echte camera, wel dezelfde zin als overal elders in
-   de app: eerst weg, dan pas aan. */
+/* De reis openen = uitzoomen, en wel op de manier die een kind ook echt zo leest:
+   de wereld waar ze in staat krímpt naar het kaartje waar hij op Werelden ligt.
+   De camera stapt achteruit en laat zien wat er al die tijd omheen lag.
+
+   Vier dingen gebeuren tegelijk, en alle vier horen ze bij diezelfde ene zin:
+
+     1  de tekening vliegt      van het volle scherm naar zijn bestemming (400ms)
+     2  het plaatselijke werk verdwijnt vroeg -- haltes, weg, ster, Memory-knop
+        en de terugpil horen bij de ingezoomde wereld en hebben op een kaartje
+        van 200 pixels niets te zoeken. Ze zijn weg op 150ms, ruim voordat de
+        tekening klein genoeg is om ze nog te kunnen onderscheiden.
+     3  de reis eromheen komt op: de stippellijn en de andere werelden. Zacht en
+        zonder beweging -- ze vlíegen nergens heen, ze wáren er al.
+     4  de koppen kruisen over elkaar heen, met de globe als enige die verhuist.
+
+   WAT ER STIL BLIJFT STAAN, en dat is net zo belangrijk als wat er beweegt: de
+   navigatiebalk (die staat buiten de schermen en wordt niet aangeraakt -- beide
+   schermen horen bij Kaart) en de diamantenpil rechtsboven. Die tweede staat op
+   allebei de schermen op dezelfde plek met dezelfde inhoud, dus hij hoeft niet
+   weg en terug: de vertrekkende kop laat hem gewoon staan tot hij weggehaald
+   wordt, en er staat er dan al een identieke onder.
+
+   ÉÉRST DE REIS OP ZIJN PLEK, DAN PAS BEWEGEN. reisFocus() draait in de rAF
+   hieronder -- dus vóór het eerste beeldje waarop er iets te zien is -- en krijgt
+   de wereld mee waar we vandaan komen. Er wordt dus nooit eerst een reis getoond
+   die daarna naar de goede plek schuift. */
 function openReis() {
   if (wereldReisBezig() || overgangBezig) return;   // midden in een wereldwissel valt er niets te kiezen
+  /* Eerst een eventuele vorige vlucht afsluiten, en wel hiér -- vóór er één klasse
+     op een scherm gaat. De opruimer van die vlucht haalt zijn eigen klassen weer
+     weg, en zou hij later draaien (bijvoorbeeld vanuit wereldVlucht), dan veegde
+     hij de klassen weg die deze overgang er net op gezet heeft. */
+  vluchtKlaar();
   sndClick();
-  const vorige = document.querySelector('.screen.active');
+  const kaart = $('screen-map');
   const reis = $('screen-journey');
+  const vorige = document.querySelector('.screen.active');
   reisVanuit = viewWorldIdx == null ? continueWorld(P()) : viewWorldIdx;
+  const bron = worldForIndex(reisVanuit);
+  /* Opmeten vóór show(): die zet de kaart op display:none en dan valt er niets
+     meer op te meten. Alleen de kaart zelf kan de vlucht dragen -- kom je hier
+     vandaan uit een ander scherm, dan is er geen wereld om te laten krimpen. */
+  const vanaf = (vorige === kaart && bron) ? kaartVlak() : null;
+  const stil = motionOff() || !reis.animate || !kaart.animate;
+  const vlieg = !!vanaf && !stil;
+  // de kaart schuift soms (tablet); display:none zet dat terug op nul
+  const schuif = $('tour-map') ? $('tour-map').scrollTop : 0;
+  const kop = kaart.querySelector('.wp-cta-ico');
+  const kopVan = vlieg && kop ? kop : null;
+
   renderReis();
   show('screen-journey');
   /* Meteen .komt-op, en niet pas in de rAF hieronder: in dat ene beeldje ertussen
@@ -10320,23 +10802,87 @@ function openReis() {
      zie de regel bij MOTION. */
   reis.classList.add('komt-op');
   reisStartWaarnemer();
-  const stil = motionOff() || !reis.animate;
-  if (!stil && vorige && vorige !== reis) schermWeg(vorige, false);
+
+  /* Reduced motion: geen enkele verplaatsing, wel dezelfde oorzaak en hetzelfde
+     gevolg. De reis komt kort op in plaats van eruit te klappen -- opacity is
+     geen beweging, en zonder iets is een schermwissel hier een harde knip. */
+  if (!vlieg) {
+    if (!stil && vorige && vorige !== reis) schermWeg(vorige, false);
+    requestAnimationFrame(() => {
+      reisFocus(reisVanuit);
+      if (stil) { vluchtDoof(reis.querySelector('.reis-pad'), true, 140); return; }
+      const hier = reis.querySelector(`.reis-halte[data-w="${reisVanuit}"]`)
+        || reis.querySelector('.reis-halte.nu');
+      const r = hier && hier.getBoundingClientRect();
+      if (r && r.width) reis.style.transformOrigin =
+        oorsprongPct(reis, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+      const op = () => { reis.style.transformOrigin = ''; };
+      const a = reis.animate(
+        [{ transform: 'scale(1.09)' }, { transform: 'none' }],
+        { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+      a.onfinish = op;
+      setTimeout(op, MOTION.totaal + 260);          // vangnet, net als bij elke andere overgang
+    });
+    return;
+  }
+
+  /* De kaart blijft nog even staan, maar zonder zijn tekening: die ligt vanaf nu
+     in de vluchtlaag. Wat er overblijft is het plaatselijke werk, en dat doft
+     eroverheen weg. .wegvallend haalt hem uit de kolom en legt hem bovenop (zie
+     schermWeg), zodat de reis er meteen op volle maat onder staat. */
+  overgangBezig = true;
+  kaart.classList.add('wegvallend', 'vlucht-weg');
+  /* De kop van de kaart dimt als de ster ertegenaan staat (zie .ster-bij-kop).
+     Tijdens een vlucht hoort dat niet: de diamantenpil moet stil blijven staan en
+     de reis heeft er een identieke onder liggen. Hij komt vanzelf terug zodra de
+     volgende kaart zichzelf opmeet. */
+  kaart.classList.remove('ster-bij-kop');
+  if ($('tour-map')) $('tour-map').scrollTop = schuif;
+
   requestAnimationFrame(() => {
-    reisFocus();          // pas ná de opmaak: hier staat de baan er en is hij op te meten
-    if (stil) return;
-    const hier = reis.querySelector('.reis-halte.nu');
-    const r = hier && hier.getBoundingClientRect();
-    reis.classList.add('komt-op');
-    if (r && r.width) reis.style.transformOrigin =
-      oorsprongPct(reis, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
-    const op = () => { reis.style.transformOrigin = ''; };
-    // alleen beweging -- de kaart doft eroverheen weg (zie de regel bij MOTION)
-    const a = reis.animate(
-      [{ transform: 'scale(1.09)' }, { transform: 'none' }],
-      { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
-    a.onfinish = op;
-    setTimeout(op, MOTION.totaal + 260);            // vangnet, net als bij elke andere overgang
+    reisFocus(reisVanuit);        // pas ná de opmaak: hier staat de baan er en is hij op te meten
+    const doel = reis.querySelector(`.reis-halte[data-w="${reisVanuit}"]`)
+      || reis.querySelector('.reis-halte.nu');
+    const naar = halteVlak(doel);
+    // alles wat hieronder een animatie krijgt, zodat de opruimer ze allemaal kent
+    const lokaal = [$('tour-map'), $('mem-fab'), $('world-back'),
+                    kaart.querySelector('.map-id-btn'), kaart.querySelector('.world-pick')];
+    const overzicht = [reis.querySelector('.reis-pad'), reis.querySelector('.reis-mist'),
+                       reis.querySelector('.header-left'), reis.querySelector('.reis-titel'), doel];
+    // de diamanten: stilstaan waar dat kan, kruisen waar het moet -- zie zelfdePlek
+    const muntV = kaart.querySelector('.diamond-badge'), muntN = reis.querySelector('.diamond-badge');
+    const muntKruist = !zelfdePlek(muntV, muntN);
+    if (muntKruist) { lokaal.push(muntV); overzicht.push(muntN); }
+    const op = () => {
+      overgangBezig = false;
+      kaart.classList.remove('wegvallend', 'vlucht-weg');
+      if (doel) doel.classList.remove('vlucht-doel');
+      lokaal.concat(overzicht).forEach(el => {
+        if (el && el.getAnimations) el.getAnimations().forEach(a => a.cancel());
+      });
+    };
+    if (!naar) { op(); return; }                 // geen bestemming om heen te vliegen
+
+    doel.classList.add('vlucht-doel');
+    const kruis = wereldVlucht(vanaf, naar, bron.world, op);
+
+    // 2 -- alles wat alleen in de ingezoomde wereld bestaat
+    vluchtDoofAlle(lokaal.filter(x => x !== muntV), false, VLUCHT.detail);
+    if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
+    // 3 -- de reis eromheen: de route en de andere werelden waren er al
+    vluchtDoofAlle([overzicht[0], overzicht[1]], true, VLUCHT.reveal, 40);
+    /* 4 -- de koppen kruisen, en de globe verhuist van de pil naar de titel.
+       De titel komt precies op de landing van die globe binnen (en niet eerder):
+       zou hij er al staan, dan zweeft er een tweede 🌍 naast de eerste. De ← mag
+       wel eerder -- daar staat aan de overkant een portretje dat al weg is. */
+    vluchtDoof(overzicht[2], true, VLUCHT.detail, 120);
+    vluchtDoof(overzicht[3], true, VLUCHT.detail, kruis - VLUCHT.detail);
+    globeVlucht(kopVan, reis.querySelector('.rt-ico'), kruis);
+    /* En op de landing staat het échte kaartje er weer -- nog steeds achter de
+       vluchtlaag, die er daarna in 80ms op wegdooft. Geen fade erbij dus: de
+       tekening is op dat moment identiek, en wat er overvloeit is precies het
+       verschil (de naam, de sterren, het zegel, de ster op de kaart). */
+    setTimeout(() => { if (vluchtOp) doel.classList.remove('vlucht-doel'); }, kruis);
   });
 }
 // De reis sluiten is dezelfde beweging als een bestemming kiezen: inzoomen op de
@@ -10345,47 +10891,95 @@ function reisSluit() {
   const idx = reisVanuit == null ? continueWorld(P()) : reisVanuit;
   reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`));
 }
-/* Een bestemming kiezen = inzoomen op die plek. De reis duikt naar de aangetikte
-   tekening toe en laat los; de kaart van die wereld komt uit datzelfde punt op --
-   letterlijk dezelfde beweging als een halte binnengaan op de kaart (zie
-   enterLevel), één niveau hoger.
+/* Een bestemming kiezen = inzoomen op die plek -- letterlijk de vlucht van
+   openReis, achteruit afgespeeld: het kaartje groeit uit tot de hele wereld.
+
+   De stapeling draait daarbij om, en dat is het enige echte verschil. Bij het
+   uitzoomen ligt het scherm dat vertrekt bovenop (zie de regel bij MOTION); hier
+   is dat Werelden, en dáár moet de tekening juist overheen. Dus:
+
+     z 2  Werelden          de nacht eronder blijft staan tot het einde -- dat is
+                            wat er te zien is rondom de groeiende tekening. Alleen
+                            de route en de andere werelden doven weg.
+     z 3  de vluchtlaag     de tekening zelf
+     z 4  de kaart          zonder zijn tekening (die vliegt); de haltes, de weg,
+                            de ster en de kop komen er in de laatste tel overheen
+                            op, precies waar ze straks staan.
+
+   Op de landing gaat .vlucht-weg eraf: de échte tekening staat er dan op de pixel
+   hetzelfde bij, dus die wissel is onzichtbaar. Werelden mag dan weg, en de
+   vluchtlaag dooft erachter weg.
 
    Wat er NIET gebeurt: er wordt niets afgemaakt, niets vrijgespeeld en niets
    verzet. reisDoel is één opdracht aan de eerstvolgende kaart en goMap verbruikt
    hem meteen; p.level, de sterren en de grens blijven precies staan. */
 function reisNaarWereld(idx, el) {
   if (overgangBezig) return;
+  vluchtKlaar();                             // zie openReis: eerst afsluiten, dan pas klassen
   sndClick();
   const reis = $('screen-journey'), kaart = $('screen-map');
   reisStopWaarnemer();
   reisDoel = Math.max(0, Math.min(WORLDS.length - 1, idx | 0));
+  const bron = worldForIndex(reisDoel);
   const r = (el && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
-  if (motionOff() || !r || !r.width || !kaart.animate || !reis.classList.contains('active')) {
+  const stil = motionOff() || !r || !r.width || !kaart.animate || !reis.classList.contains('active');
+  const van = stil ? null : halteVlak(el);
+  if (stil || !van || !bron) {
     goMap();
+    // reduced motion: geen verplaatsing, wel een kort opkomen -- zie openReis
+    if (motionOff()) vluchtDoof($('tour-map'), true, 140);
     return;
   }
   overgangBezig = true;
-  // het vangnet staat er vóór er iets gebeurt -- zie enterLevel
-  const klaar = eindigOvergang(null, MOTION.totaal, () => {
-    kaart.style.transformOrigin = '';
-    kaart.style.pointerEvents = '';
-  });
   const punt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  tapRipple(punt.x, punt.y);
-  const plaats = el.querySelector('.reis-plaats');
-  if (plaats && plaats.animate) plaats.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.09)' }, { transform: 'scale(1.03)' }],
-    { duration: 240, easing: MOTION.plop, fill: 'forwards' });
-  schermWeg(reis, true, punt);
+  tapRipple(punt.x, punt.y);                 // de tik komt aan, meteen en zonder wachten
+  el.classList.add('vlucht-doel');           // dit kaartje ligt vanaf nu in de lucht
+  const kopVan = reis.querySelector('.rt-ico');
+  const schuif = reis.scrollTop;             // display:none zet de schuifstand terug op nul
+
   goMap();                                   // de kaart staat er nú al, op reisDoel
-  kaart.classList.add('komt-op');
-  kaart.style.transformOrigin = oorsprongPct(kaart, punt);
-  kaart.style.pointerEvents = 'none';        // niet op een bewegend doel kunnen tikken
-  // alleen beweging -- de reis doft eroverheen weg (zie de regel bij MOTION)
-  const groei = kaart.animate(
-    [{ transform: 'scale(1.06)' }, { transform: 'none' }],
-    { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
-  groei.onfinish = klaar;
+  kaart.classList.add('vlucht-weg', 'vlucht-boven');
+  reis.classList.add('wegvallend');
+  reis.scrollTop = schuif;
+
+  /* Eén beeldje later: renderTourMap heeft zijn eigen rAF dan gehad (daar wordt de
+     kaart op een tablet nog op de juiste halte geschoven), dus nu pas valt er te
+     meten waar de tekening straks ligt. */
+  requestAnimationFrame(() => {
+    const naar = kaartVlak();
+    const lokaal = [$('tour-map'), $('mem-fab'), $('world-back'),
+                    kaart.querySelector('.map-id-btn'), kaart.querySelector('.world-pick')];
+    const overzicht = [reis.querySelector('.reis-pad'), reis.querySelector('.reis-mist'),
+                       reis.querySelector('.header-left'), reis.querySelector('.reis-titel')];
+    // dezelfde afspraak als bij het uitzoomen, alleen de andere kant op
+    const muntV = reis.querySelector('.diamond-badge'), muntN = kaart.querySelector('.diamond-badge');
+    const muntKruist = !zelfdePlek(muntV, muntN);
+    if (muntKruist) { overzicht.push(muntV); lokaal.push(muntN); }
+    const op = () => {
+      overgangBezig = false;
+      kaart.classList.remove('vlucht-weg', 'vlucht-boven');
+      reis.classList.remove('wegvallend');
+      el.classList.remove('vlucht-doel');
+      lokaal.concat(overzicht).forEach(a => {
+        if (a && a.getAnimations) a.getAnimations().forEach(x => x.cancel());
+      });
+    };
+    if (!naar) { op(); kaartKomtOp(punt); return; }
+
+    const kruis = wereldVlucht(van, naar, bron.world, op, true);
+    // het plaatselijke werk komt in de laatste tel op, als de tekening er vrijwel is
+    vluchtDoofAlle(lokaal.filter(x => x !== muntN), true, VLUCHT.detail, kruis - VLUCHT.detail);
+    // en de route eromheen laat los -- hij was de omgeving, niet de bestemming
+    vluchtDoofAlle(overzicht.filter(x => x !== muntV), false, VLUCHT.detail);
+    if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
+    globeVlucht(kopVan, kaart.querySelector('.wp-cta-ico'), kruis);
+    // de landing: de echte tekening eronder, en Werelden mag weg
+    setTimeout(() => {
+      if (!vluchtOp) return;                 // al opgeruimd -- dan staat de kaart er gewoon
+      kaart.classList.remove('vlucht-weg');
+      reis.classList.remove('wegvallend');
+    }, kruis);
+  });
 }
 /* Bouwt de kaart van één wereld. travelFrom > 0 = de tussenstand vlak vóór de
    reis-animatie: de ster staat dan nog op de vorige halte en de nieuwe halte zit
@@ -14688,6 +15282,12 @@ syncBackGuard();
                         niets opgeslagen, dus een echte familie-opslag op
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
+   &wereld=<n>       -- open meteen in wereld n (1 = de eerste). Zet een
+                        samenhangende stand neer -- alles ervóór uitgespeeld --
+                        en grendelt de opslag, dus ook op een echte ster wordt
+                        er niets weggeschreven. Om een kaart of een overgang op
+                        een telefoon te bekijken zonder er eerst naartoe te
+                        spelen.
    &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
    &screen=<naam>    -- spring meteen naar map | reis | dress | tro | game | end
    &mapedit          -- wereldstudio: een wereld maken en nakijken op de echte
@@ -14730,6 +15330,34 @@ if (location.search.indexOf('debug') !== -1) {
   const star = dbg.get('star');
   if (star && db.profiles[star]) {
     cur = star;
+    /* &wereld=n -- meteen in wereld n staan.
+
+       Hij zet een samenhángende stand neer en niet alleen een getal, en dat moet
+       ook: "waar ben ik" wordt uit de sterren afgeleid en niet uit p.level (zie
+       continueWorld). Een los opgehoogd level zou de kaart gewoon weer bij de
+       grens openen -- dus gaan de werelden ervóór op vol en die erna leeg.
+       worldsSeen gaat mee, anders begroet de kaart je bij het openen eenmalig met
+       de onthulling van een nieuwe wereld (zie goMap) en kijk je naar een camera
+       die klimt in plaats van naar wat je wilde zien.
+
+       En hij grendelt de opslag: vanaf hier schrijft save() niets meer weg (zie
+       demoStand), ook niet als dit toevallig de échte ster van een echt kind is.
+       Kijken mag alles, veranderen niets -- een kijkvlag hoort nooit een save te
+       kunnen kosten. */
+    const wereld = Number(dbg.get('wereld'));
+    if (wereld >= 1) {
+      demoStand = true;
+      const n = Math.max(0, Math.min(Math.round(wereld), WORLD_AVAIL) - 1);
+      const p = P();
+      p.stars = {};
+      p.worldsSeen = [];
+      for (let i = 0; i <= n; i++) {
+        if (i < n) for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) p.stars[l] = 3;
+        p.worldsSeen.push(WORLDS[i].id);
+      }
+      p.level = WORLD_START[n];
+      viewWorldIdx = null;
+    }
     const forced = dbg.get('stage');
     if (forced && item(forced)) {
       if (!P().owned.includes(forced)) P().owned.push(forced);
