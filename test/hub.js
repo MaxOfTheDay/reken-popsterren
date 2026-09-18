@@ -802,10 +802,10 @@ function verversPad(pad) {
    "Met servicewerker"), dan is dit het enige dat een vervangen tekening wél
    zichtbaar maakt. */
 async function voorraadWeg() {
-  try { if (window.caches) await caches.delete('rekenpop-art'); } catch (e) { /* mag */ }
+  try { if (window.caches) await caches.delete('rekenpop-art-2'); } catch (e) { /* mag */ }
   try {
     const w = $('#spel').contentWindow;
-    if (w && w.caches) await w.caches.delete('rekenpop-art');
+    if (w && w.caches) await w.caches.delete('rekenpop-art-2');
   } catch (e) { /* ander domein of nog niet geladen */ }
 }
 function meetBeeld(pad, klaar) {
