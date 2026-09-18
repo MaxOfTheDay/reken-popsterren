@@ -464,6 +464,20 @@ zaak('F · de snelkoppeling', () => {
     'F · en wisselt langs versie.wissel, die op open werk weigert', 'niet langs wissel');
   check(/poortVrij/.test(prev),
     'F · en wisselt niet onder een draaiende studio vandaan', 'geen poortcontrole');
+
+  /* De vraag moet een antwoord hebben voor "laat me staan waar ik sta". Zonder dat
+     kon wie midden in zijn eigen werk op het icoontje klikte alleen nog met Ctrl-C
+     weg -- veilig, maar dat is iets wat je moet wéten, en dus geen antwoord. */
+  const bronNaam = new Function('return (' +
+    /function bronNaam\(ruw\) \{[\s\S]*?\n\}/.exec(prev)[0] + ')')();
+  check(bronNaam('') === 'main', 'F · Enter betekent de laatste main', String(bronNaam('')));
+  ['h', 'H', 'hier', 'blijf'].forEach(a =>
+    check(bronNaam(a) === null, 'F · "' + a + '" betekent blijven staan', String(bronNaam(a))));
+  check(bronNaam('156') === 'pr/156', 'F · een getal is een PR-nummer', String(bronNaam('156')));
+  check(bronNaam('Mijn-Tak') === 'Mijn-Tak',
+    'F · en een taknaam houdt zijn hoofdletters', String(bronNaam('Mijn-Tak')));
+  check(/Je staat op/.test(prev),
+    'F · en de vraag zegt waar je staat, anders is "hier" een raadsel', 'staat er niet');
 });
 
 /* Wisselen mag nooit werk weggooien. Dat is de belangrijkste belofte van de hele
