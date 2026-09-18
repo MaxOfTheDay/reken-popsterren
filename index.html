@@ -15192,6 +15192,12 @@ syncBackGuard();
                         niets opgeslagen, dus een echte familie-opslag op
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
+   &wereld=<n>       -- open meteen in wereld n (1 = de eerste). Zet een
+                        samenhangende stand neer -- alles ervóór uitgespeeld --
+                        en grendelt de opslag, dus ook op een echte ster wordt
+                        er niets weggeschreven. Om een kaart of een overgang op
+                        een telefoon te bekijken zonder er eerst naartoe te
+                        spelen.
    &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
    &screen=<naam>    -- spring meteen naar map | reis | dress | tro | game | end
    &mapedit          -- wereldstudio: een wereld maken en nakijken op de echte
@@ -15234,6 +15240,34 @@ if (location.search.indexOf('debug') !== -1) {
   const star = dbg.get('star');
   if (star && db.profiles[star]) {
     cur = star;
+    /* &wereld=n -- meteen in wereld n staan.
+
+       Hij zet een samenhángende stand neer en niet alleen een getal, en dat moet
+       ook: "waar ben ik" wordt uit de sterren afgeleid en niet uit p.level (zie
+       continueWorld). Een los opgehoogd level zou de kaart gewoon weer bij de
+       grens openen -- dus gaan de werelden ervóór op vol en die erna leeg.
+       worldsSeen gaat mee, anders begroet de kaart je bij het openen eenmalig met
+       de onthulling van een nieuwe wereld (zie goMap) en kijk je naar een camera
+       die klimt in plaats van naar wat je wilde zien.
+
+       En hij grendelt de opslag: vanaf hier schrijft save() niets meer weg (zie
+       demoStand), ook niet als dit toevallig de échte ster van een echt kind is.
+       Kijken mag alles, veranderen niets -- een kijkvlag hoort nooit een save te
+       kunnen kosten. */
+    const wereld = Number(dbg.get('wereld'));
+    if (wereld >= 1) {
+      demoStand = true;
+      const n = Math.max(0, Math.min(Math.round(wereld), WORLD_AVAIL) - 1);
+      const p = P();
+      p.stars = {};
+      p.worldsSeen = [];
+      for (let i = 0; i <= n; i++) {
+        if (i < n) for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) p.stars[l] = 3;
+        p.worldsSeen.push(WORLDS[i].id);
+      }
+      p.level = WORLD_START[n];
+      viewWorldIdx = null;
+    }
     const forced = dbg.get('stage');
     if (forced && item(forced)) {
       if (!P().owned.includes(forced)) P().owned.push(forced);
