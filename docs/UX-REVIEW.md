@@ -273,6 +273,30 @@
 >   on a phone), the 🎲 button, the tray's own show/hide logic, every touch target,
 >   and the shared `--vlak*` card surface — it belongs to the trophy cabinet as much
 >   as to the wardrobe, and this pass had no business making those two diverge again.
+>
+> **PS-46 (two wardrobe rules), outside this review.** Two small changes on top of
+> PS-45; nothing else about the screen moved.
+>
+> * *Wereldschatten counts up instead of filling a meter.* `3 / 6` made today's
+>   world count the denominator, so a child holding everything would drop from
+>   `6 / 6` to `6 / 7` the day a world is added — the screen telling her she had
+>   lost something. It now reads `✨ Wereldschatten · 3 verzameld`, which behaves
+>   the same at 0, 6 and 12, and there is no per-world marker to grow. The pill
+>   came down to 34px, content-width, one hairline, gold on the number only; an
+>   invisible `::after` keeps the tap target at 44px, so small here does not mean
+>   hard to hit. `schatStand().totaal` still decides whether the pill exists at
+>   all (a game with no rewards has no pill) and is otherwise not shown.
+> * *Tapping clothes you own puts them on.* Select-then-`Doe aan` was two taps in
+>   two places for something that costs nothing and is undone by one more tap.
+>   One tap now equips; tapping what is already on is deliberately nothing (never
+>   "take it off"); and the contextual tray survives only for the one decision
+>   that spends diamonds — an unowned item, its price, and an explicit `Koop`.
+>   Repeated taps on an unowned item can never buy it. A purchase equips what it
+>   bought and closes the tray. `shopSelectedId` therefore means exactly one thing
+>   now — "the item you are considering buying" — which is what removed the state
+>   where the doll wore one thing while the tray talked about another. The
+>   post-world deep link (`openKleedkamerItem`, the end screen's second button)
+>   follows the same rule: an earned treasure goes on rather than being previewed.
 
 Senior UI/UX + game-UX review of the app as it stands (single-file PWA, `index.html`).
 Reviewed by walking the live build in Chromium at 320 / 360 / 375 / 390 / 412 / 430 px

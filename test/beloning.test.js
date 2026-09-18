@@ -147,8 +147,11 @@ function check(ok, label, detail) {
      * Daarna ligt het spulletje in de kleedkamer -- in de zesde lade, achter een
      * rij die opzij geschoven moet worden. Wie hem wilde zien moest raden waar.
      * Daarom wijst de tweede knop van het eindscherm ná zo'n show naar dát
-     * spulletje: de juiste lade open, het stuk gekozen, en de pop draagt het al.
-     * Eén show later is het gewoon weer "Kleedkamer" -- zie zaak D. */
+     * spulletje: de juiste lade open en het stuk meteen áán. (Het was "gekozen,
+     * met een balk die 'Doe aan' zei". Sinds tikken op iets van jezelf het
+     * gewoon aandoet is die tussenstap er niet meer -- op het kaartje niet en
+     * hier dus ook niet.) Eén show later is het gewoon weer "Kleedkamer" -- zie
+     * zaak D. */
     const weg = await page.evaluate(async () => {
       window.__sluitFeest();
       const alt = document.getElementById('btn-end-alt');
@@ -160,20 +163,24 @@ function check(ok, label, detail) {
         label,
         scherm: (document.querySelector('.screen.active') || {}).id,
         lade: shopCat, schatVak: shopCat === SCHAT_CAT, gekozen: shopSelectedId,
-        gekozenKaart: !!(kaart && kaart.classList.contains('selected')),
+        aan: P().equipped.acc,
+        aanKaart: !!(kaart && kaart.classList.contains('equipped')),
         balk: document.getElementById('dress-bar').textContent.replace(/\s+/g, ' ').trim(),
-        popDraagt: avatarSVG(previewProfile(P(), item('acc_wereld_muziek')), 100)
-          .includes(item('acc_wereld_muziek').draw('meisje', 1)),
+        ladeDicht: getComputedStyle(document.getElementById('dress-bar')).display === 'none',
+        // en nu op de échte pop en niet op een voorbeeld: previewProfile zette het
+        // spulletje er zelf in, dus die zei "ja" of het nu aanstond of niet
+        popDraagt: avatarSVG(P(), 100).includes(item('acc_wereld_muziek').draw('meisje', 1)),
         naam: item('acc_wereld_muziek').name,
       };
     });
     // geen vaste tekst in de test: de naam komt uit ITEMS, net als op het feestje
     check(weg.label.indexOf(weg.naam) >= 0,
       'A · de tweede knop noemt het spulletje zelf', `${weg.label} (naam: ${weg.naam})`);
-    check(weg.scherm === 'screen-dress' && weg.schatVak && weg.gekozen === 'acc_wereld_muziek' && weg.gekozenKaart,
-      'A · en brengt je rechtstreeks naar het schattenvak, met het kaartje gekozen', JSON.stringify(weg));
-    check(/Doe aan/.test(weg.balk) && weg.popDraagt,
-      'A · de balk zegt "Doe aan" en de pop draagt het al', JSON.stringify(weg));
+    check(weg.scherm === 'screen-dress' && weg.schatVak && weg.aan === 'acc_wereld_muziek' && weg.aanKaart,
+      'A · en brengt je rechtstreeks naar het schattenvak, met het spulletje al aan', JSON.stringify(weg));
+    check(weg.popDraagt && weg.ladeDicht && weg.gekozen === null,
+      'A · de pop draagt het echt, en er staat geen balk meer die daar nog om vraagt',
+      JSON.stringify(weg));
     // het spulletje gedraagt zich als elk ander kledingstuk
     const aan = await page.evaluate(() => {
       window.__sluitFeest();
@@ -432,8 +439,12 @@ function check(ok, label, detail) {
         })(),
       };
     });
-    check(r.ingangZichtbaar && /Wereldschatten/.test(r.ingangTekst) && /0 \/ 6/.test(r.ingangTekst),
-      'G · de kleedkamer heeft een schattenvak met een teller erop', JSON.stringify(r.ingangTekst));
+    /* Een oplopend getal en geen breuk: het totaal was het aantal werelden van
+       vandaag, en dan zakt een kind met alles van "6 / 6" naar "6 / 7" zodra er een
+       wereld bij komt. De teller zegt daarom hoeveel ze er heeft en verder niets. */
+    check(r.ingangZichtbaar && /Wereldschatten/.test(r.ingangTekst)
+      && /0 verzameld/.test(r.ingangTekst) && !/\//.test(r.ingangTekst),
+      'G · de kleedkamer heeft een schattenvak met een oplopende teller erop', JSON.stringify(r.ingangTekst));
     check(!r.accLade.some(id => /acc_wereld_/.test(id)) && !r.inAcc.some(id => /acc_wereld_/.test(id)),
       'G · en de gewone laden staan er niet meer vol mee', JSON.stringify(r.inAcc));
     check(r.volgorde.join() === r.beloningen.join(),
@@ -461,22 +472,24 @@ function check(ok, label, detail) {
       kaart.click();
       await new Promise(res => setTimeout(res, 150));
       const balk = document.getElementById('dress-bar').textContent;
+      const aan = P().equipped.acc;
       openKleedkamerCat('acc');
       await new Promise(res => setTimeout(res, 150));
       const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
       return {
-        teller, balk, inAcc,
+        teller, balk, inAcc, aan,
         tekening: !!kaart.querySelector('.item-thumb svg'),
         raadsel: !!kaart.querySelector('.schat-raadsel'),
         naamOpKaart: kaart.querySelector('.item-name').textContent,
         wereldteken: !!kaart.querySelector('.item-wereld'),
       };
     });
-    check(/1 \/ 6/.test(na.teller), 'G · de teller loopt mee', JSON.stringify(na.teller));
+    check(/1 verzameld/.test(na.teller), 'G · de teller loopt mee', JSON.stringify(na.teller));
     check(na.tekening && !na.raadsel && na.naamOpKaart === 'Notenkroontje' && na.wereldteken,
       'G · een verdiende schat laat zich zien, met het teken van zijn wereld', JSON.stringify(na));
-    check(/Doe aan/.test(na.balk) && !/💎/.test(na.balk),
-      'G · en is meteen aan te doen, nog altijd zonder prijs', JSON.stringify(na.balk));
+    check(na.aan === 'acc_wereld_muziek' && na.balk === '',
+      'G · en gaat met één tik aan -- geen balk, geen prijs, geen tussenstap',
+      JSON.stringify([na.aan, na.balk]));
     check(na.inAcc.filter(id => /acc_wereld_/.test(id)).join() === 'acc_wereld_muziek',
       'G · in haar eigen lade staat alleen de schat die ze verdiend heeft', JSON.stringify(na.inAcc));
     await ctx.close();

@@ -5295,7 +5295,7 @@
     #screen-dress .screen-header { margin-bottom: 2px; }
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
-    #screen-dress .schat-entry { margin-top: 4px; min-height: 36px; padding: 4px 12px; }
+    #screen-dress .schat-entry { margin-top: 4px; min-height: 32px; padding: 3px 11px; }
   }
   /* Een telefoon in liggende stand (844x390) is de krapste stand die dit scherm
      kent: na de kop en de navigatiebalk blijft er ~100px over, en dat is minder
@@ -5311,7 +5311,7 @@
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
     #screen-dress .schat-raadsel { width: 40px; height: 40px; font-size: 21px; }
-    #screen-dress .schat-entry { margin-top: 4px; min-height: 34px; padding: 3px 12px; font-size: var(--tx-klein); }
+    #screen-dress .schat-entry { margin-top: 3px; min-height: 30px; padding: 2px 10px; }
   }
   /* Smalle telefoon: de naam van het scherm past niet meer tussen twee even brede
      zijkolommen van elk 108px, en werd afgekapt tot "Kleedka…". De drie cellen
@@ -5680,34 +5680,43 @@
 
      Nu is het een pil zo breed als zijn eigen woorden, in de rustige taal van de
      kop: donker vlak, haarlijn, wit woord. Het goud zit nog op precies één plek
-     -- de teller, want dát is wat je komt kijken -- en de open stand hieronder
+     -- het getal, want dát is wat je komt kijken -- en de open stand hieronder
      blijft onveranderd vol goud. Niets weg, alleen minder hard.
 
-     De 40px hoogte blijft staan: dit is een knop op een kinderscherm, en de
-     ondergrens van een raakvlak is geen plek om ruimte te winnen. */
+     EN HET RAAKVLAK BLIJFT GROOT. De pil is 34 hoog en dat is te klein voor een
+     kindervinger; het onzichtbare vlak eromheen (::after, buiten de opmaak om)
+     maakt er 44 van. Zo kan het ding klein zijn zonder dat het moeilijk te raken
+     wordt -- wat je ziet en wat je kunt raken hoeven niet even groot te zijn. */
   .schat-entry {
-    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 7px;
-    width: auto; max-width: calc(var(--kolom) - 24px); margin: 6px auto 0;
-    min-height: 40px; padding: 5px 15px; cursor: pointer;
-    border: 1px solid rgba(255,255,255,.14); border-radius: var(--r-pill);
-    font-size: var(--tx-klein); font-weight: 700; color: rgba(255,255,255,.84);
+    position: relative;
+    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: auto; max-width: calc(var(--kolom) - 24px); margin: 5px auto 0;
+    min-height: 34px; padding: 4px 12px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.13); border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; color: rgba(255,255,255,.86);
     background: rgba(12,3,26,.34);
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
+  /* Het raakvlak, en verder niets: geen kleur, geen rand, geen plek in de opmaak.
+     -5 boven en onder maakt van 34 een 44; de 6px lucht naar de categorierij
+     erboven valt binnen die marge en daar staat niets anders wat een tik vangt. */
+  .schat-entry::after { content: ''; position: absolute; inset: -5px -8px; border-radius: inherit; }
   .schat-entry:active { transform: scale(.98); }
   .schat-entry .se-ico { font-size: 17px; line-height: 1; filter: var(--emoji-schaduw); }
   .schat-entry .se-naam { white-space: nowrap; }
-  /* De teller is het antwoord op "hoever ben ik", en sinds PS-45 het enige goud in
-     dit vak: het woord ervoor is stil geworden, het getal niet, want dát is wat een
-     kind twee keer per week komt kijken. */
-  .schat-entry .se-telling { color: var(--gold-light); opacity: .95; font-weight: 700; white-space: nowrap; }
-  .schat-entry .se-telling b { color: var(--gold-accent); }
+  /* De teller is het antwoord op "hoeveel heb ik er", en het enige goud in dit
+     vak: het woord eromheen is stil, het getal niet -- dát is wat een kind twee
+     keer per week komt kijken. */
+  .schat-entry .se-telling { color: rgba(255,255,255,.68); font-weight: 600; white-space: nowrap; }
+  .schat-entry .se-telling b { color: var(--gold-accent); font-weight: 700; }
   /* Open: hetzelfde "hier sta je" als de actieve categorieknop, maar dan in goud --
      want dit vak gaat over wat je verdient en niet over wat je koopt. */
   .schat-entry.open {
     border-color: var(--gold-accent); color: var(--c-white);
     background: var(--goud-tint);
-    box-shadow: var(--goud-gloed);
+    /* de zachte gloed en niet de volle: op een pil van 34 hoog was 16px gloed
+       breder dan de pil zelf. Rand plus vulling zeggen "hier sta je" al. */
+    box-shadow: var(--goud-gloed-zacht);
   }
   /* Een schat die nog niet van jou is: het medaillon van zijn wereld met een
      vraagteken erin. Dezelfde vorm en dezelfde wereldkleuren als de perfecte-
@@ -14407,8 +14416,8 @@ function openKleedkamerCat(cat) {
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
-/* Rechtstreeks naar één spulletje: de juiste lade open én dat stuk al gekozen, dus
-   de pop draagt het meteen en de balk onderaan zegt "Doe aan".
+/* Rechtstreeks naar één spulletje: de juiste lade open, en het stuk meteen aan --
+   of, als het nog niet van haar is, gekozen met zijn prijs in de lade onderaan.
 
    Waarvoor: een wereldbeloning komt binnen als een plaatje met een naam op het
    feestje ná de show, en verhuist daarna stilletjes naar de kleedkamer -- waar hij
@@ -14425,15 +14434,25 @@ function openKleedkamerItem(id) {
      plek om naar terug te vallen als het vak weer dichtgaat. */
   const schat = isBeloning(it.id);
   if (schat) schatTerugCat = it.cat;
-  shopCat = schat ? SCHAT_CAT : it.cat; shopSelectedId = id; dressReturnTo = null;
+  shopCat = schat ? SCHAT_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
   show('screen-dress');
   renderShop();
+  /* Van haar? Dan doet ze het aan, en niet "even passen": dit pad wordt gelopen
+     vanaf de knop "Bekijk je <spulletje>" na een wereld, en de pop droeg het daar
+     toch al als voorbeeld. Eén stap eerder echt is precies de beloning die het
+     moment bedoelde -- en het is dezelfde afspraak als bij een tik op het kaartje.
+     Nog niet van haar (kan alleen met een geheime schat) -> gewoon gekozen. */
+  if (P().owned.includes(it.id)) {
+    if (P().equipped[it.cat] !== it.id) equipShopItem(it.id);
+  } else {
+    shopSelectedId = id;
+    paintShop();
+  }
   /* Hier niet bovenaan beginnen (zoals openKleedkamer en openKleedkamerCat), maar
      bij het kaartje zelf: dit is een tik op één spulletje, en het zesde wereld-
-     spulletje staat onder de rand -- achter de balk die er "Doe aan" op zegt. De
-     pop draagt het al, dus zonder dit stond het bewijs buiten beeld. 'center' en
-     niet 'nearest': de balk onderaan ligt over het rek, en 'nearest' parkeert een
-     kaartje daar net achter. */
+     spulletje staat onder de rand. De pop draagt het al, dus zonder dit stond het
+     bewijs buiten beeld. 'center' en niet 'nearest': de navigatiebalk ligt over
+     het rek, en 'nearest' parkeert een kaartje daar net achter. */
   const scherm = $('screen-dress');
   scherm.scrollTop = 0;
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
@@ -14509,9 +14528,29 @@ function renderShop() {
     const naam = (schatVak && !heeft) ? esc(w ? w.name : 'Wereldschat') : it.name;
     card.innerHTML = (w ? `<span class="item-wereld" aria-hidden="true">${w.icon || '🌍'}</span>` : '')
       + beeld + `<div class="item-name">${naam}</div><div class="item-status"></div>`;
+    /* Tikken op kleren die van je zijn = ze aandoen. Er zat een stap tussen --
+       eerst kiezen, dan "Doe aan" in de balk onderaan -- en die stap kostte een
+       kind van vijf een tweede tik op een andere plek van het scherm voor iets
+       waar niets aan te bevestigen valt: aandoen kost niets en is met één tik
+       terug te draaien. Kopen blijft wél twee stappen, want dát kost diamanten.
+
+       Drie gevallen, en meer zijn het er niet:
+         van jou, nog niet aan  -> meteen aan (equipShopItem doet het geluid, het
+                                   opslaan en het danspasje)
+         van jou en al aan      -> niets. Nadrukkelijk géén "dan maar uit": een
+                                   kind dat nog eens op haar jurk tikt wil hem
+                                   niet kwijt. Wel het danspasje, zodat de tik
+                                   antwoord krijgt.
+         nog niet van jou       -> kiezen: de pop past het en de lade onderaan
+                                   zegt wat het kost. */
     card.onclick = () => {
-      sndClick();
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
+      const p2 = P();
+      if (p2.owned.includes(it.id)) {
+        if (p2.equipped[it.cat] === it.id) { sndClick(); tapDance('shop-avatar'); return; }
+        return equipShopItem(it.id);
+      }
+      sndClick();
       /* Stond er een "Nieuw!"-kaartje open, dan verandert de vólgorde zodra dat
          feestje voorbij is (het spulletje verhuist naar de bezit-groep), en dus
          moet het rek dan wél opnieuw. In alle andere gevallen blijft het staan
@@ -14558,14 +14597,20 @@ function shopItems(p) {
   return ITEMS.filter(i => i.cat === shopCat && (!isBeloning(i.id) || p.owned.includes(i.id))).slice()
     .sort((a, b) => (groep(a) - groep(b)) || (rang(a) - rang(b)));
 }
-/* Het vakje onder de categorierij: "✨ Wereldschatten · 3 / 6". Eén regel, en
-   daarmee het hele verhaal -- er is zoiets als een wereldschat, er zijn er zes, en
-   je hebt er drie. Meer uitleg krijgt een kind van vijf hier niet, en meer heeft
-   ze ook niet nodig: wat erachter zit legt het vak zelf uit zodra ze erop tikt.
+/* Het vakje onder de categorierij: "✨ Wereldschatten · 3 verzameld". Eén regel,
+   en daarmee het hele verhaal -- er is zoiets als een wereldschat, en je hebt er
+   drie. Meer uitleg krijgt een kind van vijf hier niet, en meer heeft ze ook niet
+   nodig: wat erachter zit legt het vak zelf uit zodra ze erop tikt.
 
-   Staat er geen enkele schat te halen (een spel zonder beloningen -- mogelijk in
-   de wereldstudio), dan is het vak er niet. Een teller die "0 / 0" zegt is geen
-   uitnodiging. */
+   HET IS EEN VERZAMELING EN GEEN METER. Er stond "3 / 6", en die 6 was het aantal
+   werelden van vandaag. Daar komen er werelden bij, en dan zakt een kind dat alles
+   had van "6 / 6" naar "6 / 7": het scherm zegt dan dat ze iets kwijt is geraakt,
+   terwijl er juist iets bij te halen valt. Een oplopend getal kan dat niet -- het
+   werkt bij 0, bij 2, bij 6 en bij 12, en het blijft even breed.
+
+   Staat er geen enkele schat te hálen (een spel zonder beloningen -- mogelijk in
+   de wereldstudio), dan is het vak er niet: schatStand().totaal beslist over het
+   bestaan van het vak, en verder komt het nergens in beeld. */
 function renderSchatEntry(p) {
   const knop = $('schat-entry');
   if (!knop) return;
@@ -14575,10 +14620,10 @@ function renderSchatEntry(p) {
   if (!st.totaal) return;
   knop.classList.toggle('open', open);
   knop.setAttribute('aria-pressed', open ? 'true' : 'false');
-  knop.setAttribute('aria-label', `Wereldschatten, ${st.heeft} van ${st.totaal} verdiend`);
+  knop.setAttribute('aria-label', `Wereldschatten, ${st.heeft} verzameld`);
   knop.innerHTML = `<span class="se-ico" aria-hidden="true">✨</span>`
     + `<span class="se-naam">Wereldschatten</span>`
-    + `<span class="se-telling"><b>${st.heeft}</b> / ${st.totaal}</span>`;
+    + `<span class="se-telling">· <b>${st.heeft}</b> verzameld</span>`;
 }
 // Het vak open- of dichtdoen. Dicht = terug naar de lade waar je vandaan kwam;
 // daarom onthoudt hij die (en niet: altijd terug naar 'Kleren', want dan verlies
@@ -14694,8 +14739,11 @@ function surpriseOutfit() {
   buzz(20);
 }
 
-// De actiebalk onderaan: naam + status links, dé knop rechts. Bij te weinig
-// diamanten geen dood spoor maar een concreet doel: "Nog X 💎" + meteen spelen.
+/* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
+   spoor maar een concreet doel: "Nog X 💎" + meteen spelen.
+   Hij komt alleen op voor iets dat nóg niet van je is -- een aankoop is de enige
+   beslissing die dit scherm kent, en de enige die niet met één tik terug te draaien
+   valt. Alles wat al van je is antwoordt op het kaartje zelf en op de pop. */
 function renderDressBar(it, p) {
   const bar = $('dress-bar');
   const naam = (it2) => `${it2.emoji ? it2.emoji + ' ' : ''}${it2.full || it2.name}`;
@@ -14707,7 +14755,6 @@ function renderDressBar(it, p) {
   }
   bar.style.display = 'flex';
   const owned = p.owned.includes(it.id);
-  const equipped = p.equipped[it.cat] === it.id;
   /* FASE 4D.1 -- een spulletje dat je niet koopt maar verdient. Geen prijs, geen
      knop: alleen waar het vandaan komt. Bewust geen "Speel"-knop zoals bij te weinig
      diamanten -- die brengt je naar de eerstvolgende show, en dat is bijna nooit de
@@ -14722,33 +14769,24 @@ function renderDressBar(it, p) {
         <span class="db-sub">· Speel ${esc(uitWereld.name)} uit</span></div>`;
     return;
   }
-  if (!owned) {
-    const tekort = it.price - p.diamonds;
-    if (tekort > 0) {
-      bar.innerHTML = `
-        <div class="db-info"><span class="db-name">${naam(it)}</span>
-          <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
-        <button class="btn small" id="db-earn">Speel</button>`;
-      $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
-    } else {
-      bar.innerHTML = `
-        <div class="db-info"><span class="db-name">${naam(it)}</span></div>
-        <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
-      $('db-buy').onclick = () => confirmShopBuy(it.id);
-    }
-    return;
-  }
-  if (!equipped) {
+  /* Van jou? Dan is er niets te beslissen -- je hebt het al aan (één tik deed dat)
+     of het staat één tik van je af. De lade kwam hier met "Doe aan" of met "Die
+     draag je nu", en dat is precies wat het kaartje en de pop óók al zeggen: drie
+     plekken voor één mededeling, waarvan er twee onder in beeld ruimte kostten. */
+  if (owned) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  const tekort = it.price - p.diamonds;
+  if (tekort > 0) {
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
-        <span class="db-sub">· Van jou</span></div>
-      <button class="btn small" id="db-wear">Doe aan</button>`;
-    $('db-wear').onclick = () => equipShopItem(it.id);
+        <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
+      <button class="btn small" id="db-earn">Speel</button>`;
+    $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
     return;
   }
   bar.innerHTML = `
-    <div class="db-info"><span class="db-name">${naam(it)}</span>
-      <span class="db-sub">· Die draag je nu</span></div>`;
+    <div class="db-info"><span class="db-name">${naam(it)}</span></div>
+    <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
+  $('db-buy').onclick = () => confirmShopBuy(it.id);
 }
 
 // Diamant-feedback: een paar diamanten vliegen van A naar B, en de teller-pil
@@ -14799,7 +14837,11 @@ function confirmShopBuy(id) {
   p.diamonds -= it.price;
   p.owned.push(it.id);
   p.equipped[it.cat] = it.id;
-  shopSelectedId = it.id;
+  /* De lade ging over "wil je dit kopen?" en dat is beantwoord: hij verdwijnt, en
+     wat ervoor in de plaats komt is het gouden "Nieuw!" op het kaartje plus de pop
+     die het al draagt. Het kaartje wordt hieronder op zijn id opgezocht en niet
+     meer op .selected, want die klasse hoort nu alleen nog bij kiezen om te kopen. */
+  shopSelectedId = null;
   shopJustBoughtId = it.id;
   sndCoin();
   confetti(12);
@@ -14815,7 +14857,7 @@ function confirmShopBuy(id) {
     if (shopJustBoughtId !== it.id) return;
     shopJustBoughtId = null;
     renderShop();
-    const kaart = $('item-grid').querySelector('.item-card.selected');
+    const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
     if (kaart && kaart.scrollIntoView) kaart.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, 1800);
   tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
@@ -14828,7 +14870,11 @@ function equipShopItem(id) {
   const herbouw = !!shopJustBoughtId;   // zie de kaartklik: het rek herschikt na een aankoop
   p.equipped[it.cat] = it.id;
   shopJustBoughtId = null;
-  shopSelectedId = it.id;
+  /* En géén keuze meer. "Gekozen" is sinds de tik-om-aan-te-doen één ding: het
+     stuk dat je bekíjkt om te kopen. Bleef het hier staan, dan droeg de pop het
+     stuk dat aanstaat terwijl de lade onderaan over datzelfde stuk nog iets
+     anders beweerde -- twee standen voor één kledingstuk. */
+  shopSelectedId = null;
   sndClick();
   // een outfit-combo kan een (geheime) trofee zijn — check dus ook bij het aandoen
   const trofees = checkTrophies(p);
