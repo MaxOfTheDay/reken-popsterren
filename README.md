@@ -15,6 +15,8 @@ woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
+| `assets/branding/` | het merk: het spelogo en het merkteken. De meesters staan in `source/`, de app laadt de afgeleiden ernaast (`npm run merk`) |
+| `icon-*.png` | de app-iconen, ook uit `npm run merk` |
 | `test/` | de keuringen en de browsertests (zie `docs/TESTEN.md`) |
 | `docs/` | de achtergrond: waaróm iets is zoals het is |
 
@@ -26,6 +28,7 @@ npm install                    # alleen nodig voor de browsertests
 npm run check                  # de keuringen (Node, ± 2 seconden)
 npm test                       # alles, inclusief echte Chromium (minuten)
 npm run preview                # http://localhost:8099 — de app over http
+npm run merk                   # de merkbestanden opnieuw uit hun meesters
 ```
 
 `npm run preview` is ook de weg naar de **wereldstudio**: die staat op
@@ -66,6 +69,7 @@ staan er bewust niet bij, want die verouderen meteen.
 | aan de prijzen of de economie komt | `docs/DIAMANTEN.md` |
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
+| het logo of het app-icoon vervangt | `docs/MERK.md` |
 
 De documenten in `docs/` zijn grotendeels *plandocumenten uit een bepaalde
 fase*: ze leggen uit waarom er iets is besloten, niet wat er vandaag staat.

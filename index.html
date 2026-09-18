@@ -6,6 +6,10 @@
 <title>🎤 Rekensterren</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
+<!-- iOS kijkt niet in het manifest voor het icoon op het beginscherm; zonder deze
+     regel maakt Safari daar een schermafdruk van de pagina van. Zelfde bestand,
+     want het is hetzelfde icoon -- iOS schaalt het zelf naar 180. -->
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#7b2ff7">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -720,7 +724,35 @@
   /* verticaal gecentreerd via auto-marges: veilig bij overloop (justify-content:
      center zou op lage/liggende schermen de bovenkant onbereikbaar knippen) */
   #screen-profile { position: relative; padding-bottom: 30px; }
-  #screen-profile .title { margin-top: auto; padding: 0 54px; font-size: clamp(23px, 6vw, 40px); }
+  /* ---- Het spelogo --------------------------------------------------------
+     De kop van dit scherm wás tekst en is nu de tekening van de naam. Die
+     tekening brengt haar eigen behandeling mee -- rand, schaduw, gloed, sterren
+     -- dus hier komt er niets bovenop: geen paneel, geen tweede gloed, geen
+     ondertitel. Alles wat deze regels doen is de maat bepalen.
+
+     En dat gebeurt met één waarde, langs drie grenzen tegelijk:
+
+       74%    de breedte van het scherm, met een marge die ook op 320 px blijft
+              staan. Dit is de maat die het logo de hoofdrol geeft.
+       400px  op een tablet houdt het ergens op: een logo van een halve meter
+              breed is geen logo meer.
+       33vh   de hóógte, uitgedrukt in breedte -- de tekening is 3:1, dus 33vh
+              breed is 11vh hoog. Dit is de grens die op een laag of liggend
+              scherm ingrijpt, en die maakt dat er geen tweede opmaak per
+              schermmaat nodig is: hij knijpt vanzelf mee.
+
+     margin-top:auto is de auto-marge waarmee dit blok (logo + sterren + knop)
+     verticaal in het midden staat; .profile-spacer duwt van onderaf terug. Die
+     stond hiervoor op de tekstkop en hoort nu hier. */
+  .spellogo { margin: auto 0 0; padding: 0 16px; text-align: center; }
+  /* contain is een vangnet en geen opmaak: mocht een afgeleide ooit met een
+     andere verhouding terugkomen, dan wordt hij hier kleiner getekend en niet
+     uitgerekt of bijgesneden. */
+  .spellogo img {
+    display: block; margin: 0 auto;
+    width: min(74%, 400px, 33vh); height: auto;
+    object-fit: contain;
+  }
 
   /* ===== De schil: de vaste sfeer buiten de werelden om ======================
      Dit is géén wereld en geen tekening, maar de rúimte waar de app in staat als
@@ -833,14 +865,9 @@
     mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
   }
 
-  /* De titel staat weer op de tekening, dus de gloed eronder mag weer zwaarder:
-     wit genoeg om van een lichte lucht los te komen, met een gouden gloed die
-     bij het licht in de tekening hoort. */
-  #screen-profile .title {
-    color: #fff;
-    text-shadow: 0 2px 0 rgba(24,6,44,.45), 0 4px 18px rgba(24,6,44,.6),
-                 0 0 26px rgba(255,194,61,.5);
-  }
+  /* (Hier stond een gloed onder de tekstkop, zodat "Rekensterren" van de
+     lichte lucht in de tekening los kwam. Het logo is nu zelf een tekening met
+     een rand en een gloed erin -- een tweede gloed eronder is dan dubbelop.) */
   /* ---- De sterrentegel ----------------------------------------------------
      Eén omhulsel per kind, met twee zones erin en niets ertussen:
 
@@ -1026,7 +1053,7 @@
      en mag het scherm gewoon scrollen. */
   @media (max-height: 480px) {
     #screen-profile { justify-content: flex-start; padding-top: 12px; }
-    #screen-profile .title { margin-top: 0; font-size: 22px; }
+    .spellogo { margin-top: 0; }
     /* En smaller dan de kolom van dit scherm: liggend is de breedte er in
        overvloed en de hóógte het probleem, dus een tegel die de volle 560 pakt
        maakt twee rijen even hoog als anderhalf scherm. Alles binnen de tegel
@@ -5829,7 +5856,19 @@
         <span style="top:84%;font-size:26px;animation-duration:88s;animation-delay:-42s;opacity:.22">☁️</span>
       </div>
     </div>
-    <h1 class="title">Rekensterren</h1>
+    <!-- Het spelogo. Een <img> en geen achtergrond: dit is de naam van het spel,
+         dus hij hoort een kop te zijn met leesbare tekst erin (de alt) -- voor een
+         schermlezer, en als de tekening onverhoopt niet binnenkomt.
+
+         Wat de app laadt is de afgeleide uit assets/branding/, niet de meester in
+         assets/branding/source/. Zie test/merk.js: daar staat wat waarvandaan komt.
+
+         width/height staan erbij zodat de regel al ruimte heeft voordat het beeld
+         binnen is; de opmaak hieronder (.spellogo img) bepaalt de échte maat. -->
+    <h1 class="spellogo">
+      <img src="assets/branding/wordmark.webp" alt="Rekensterren"
+           width="1080" height="360" decoding="async">
+    </h1>
     <div class="subtitle" id="profile-subtitle"></div>
     <!-- De "+" staat vást in het raster en wordt nooit weggegooid: renderProfiles
          zet de sterrentegels ervóór en laat deze knop staan. Daardoor komt hij
@@ -15696,6 +15735,18 @@ function startMapEdit() {
     #studio .st-bel b { display: block; font-size: 12.5px; }
     #studio .st-bel small { display: block; color: #9c86bd; font-size: 11px; margin-top: 2px; }
     #studio .st-bel button { padding: 3px 9px; font-size: 11px; }
+    /* Het merk: één vak om naar te kíjken. Zie tekenMerk() voor waarom hier niets
+       te slepen valt. Contain en niet cover: een logo mag nooit bijgesneden
+       worden, ook niet in een duimnageltje van 52 pixels. */
+    #studio .st-merk { display: grid; grid-template-columns: 52px 1fr; gap: 9px;
+      align-items: center; margin-top: 6px; padding: 8px 9px; border-radius: 9px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); }
+    #studio .st-merk .vb { width: 52px; height: 52px; border-radius: 8px;
+      background: rgba(0,0,0,.3) 50% 50% / contain no-repeat;
+      border: 1px solid rgba(255,255,255,.18); }
+    #studio .st-merk b { display: block; font-size: 12.5px; }
+    #studio .st-merk small { display: block; color: #9c86bd; font-size: 11px; margin-top: 2px;
+      font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
     #studio #st-pop { position: fixed; z-index: 62; right: 346px; top: 14%;
       padding: 12px 14px 10px; border-radius: 12px; background: #1c0f30;
       border: 1px solid rgba(255,255,255,.28); box-shadow: 0 14px 44px rgba(0,0,0,.55);
@@ -16018,6 +16069,7 @@ function startMapEdit() {
         </select></div>
         <div id="st-schermen"></div>
         <div id="st-ongebruikt"></div>
+        <div id="st-merk"></div>
         <input type="file" accept="image/*" hidden id="me-file">
       </section>
 
@@ -16716,6 +16768,54 @@ function startMapEdit() {
       vak.appendChild(groep);
     });
     tekenOngebruikt();
+    tekenMerk();
+  }
+  /* ---- Het merk: alleen kijken --------------------------------------------
+     De naam op de telefoon, het spelogo, het merkteken en het app-icoon staan
+     hier bij elkaar, zodat je ze kunt terugvinden zonder in de mappen te zoeken.
+     Meer niet -- en dat is met opzet.
+
+     Waarom je hier niets kunt slepen, terwijl dat bij een wereldtekening juist
+     de hele truc is: een merkbeeld is geen bestand maar een kéten. Er is één
+     meester in assets/branding/source/ en daar rollen vijf afgeleiden uit, in
+     twee formaten, met een maskeerbaar icoon dat zijn eigen uitsnede heeft. Wie
+     hier één afgeleide zou overschrijven, krijgt een logo dat niet meer bij zijn
+     eigen meester hoort en vier bestanden die nog wél kloppen. De weg is dus:
+     meester vervangen, `npm run merk` draaien. Dat is één regel, en het houdt de
+     keten heel.
+
+     De lijst komt uit test/merk.js via de voorvertoningsserver (window.__MERK) --
+     dezelfde afspraak als __SLOTS uit test/scene.js. Zonder server is er geen
+     lijst en blijft dit vak gewoon leeg. */
+  const MERK = window.__MERK || [];
+  function tekenMerk() {
+    const vak = F('st-merk');
+    if (!vak || !MERK.length) return;
+    const kB = p => OP_SCHIJF[p] === undefined ? 'ontbreekt' : OP_SCHIJF[p] + ' kB';
+    const rij = d => '<div class="st-merk"><div class="vb" style="background-image:url(\''
+      + esc(d.uit[0]) + '?v=' + (OP_SCHIJF[d.uit[0]] || 0) + '\')"></div><div><b>'
+      + esc(d.merk) + '</b><small>' + d.uit.map(u => esc(u) + ' · ' + kB(u)).join('<br>')
+      + '<br>← ' + esc(d.bron) + ' · ' + kB(d.bron) + '</small></div></div>';
+    /* Per merkbeeld één vak, niet per afgeleide: drie iconen uit één tekening zijn
+       één merkbeeld met drie maten, geen drie merkbeelden. */
+    const perMerk = [];
+    MERK.forEach(d => {
+      const zelfde = perMerk.find(x => x.merk === d.merk);
+      if (zelfde) { zelfde.uit.push(d.uit); return; }
+      perMerk.push({ merk: d.merk, bron: d.bron, uit: [d.uit] });
+    });
+    vak.innerHTML = '<h6>Merk</h6>'
+      + '<div class="st-merk"><div class="vb" style="background-image:url(\'icon-192.png?v='
+      + (OP_SCHIJF['icon-192.png'] || 0) + '\')"></div><div><b id="st-merk-naam">…</b>'
+      + '<small>manifest.json · de naam onder het icoon op de telefoon</small></div></div>'
+      + perMerk.map(rij).join('')
+      + '<p class="st-hint">De meesters staan in <code>assets/branding/source/</code> en gaan de app '
+      + 'nooit in. Een nieuw merkbeeld? Vervang de meester en draai <code>npm run merk</code>; '
+      + 'dat schrijft alle afgeleiden hierboven opnieuw.</p>';
+    fetch('manifest.json').then(r => r.json()).then(m => {
+      const el = F('st-merk-naam');
+      if (el) el.textContent = m.name || '(geen naam)';
+    }).catch(() => { const el = F('st-merk-naam'); if (el) el.textContent = '(manifest niet gelezen)'; });
   }
   /* Wat er op schijf staat en door niemand gelezen wordt. Dat gebeurt vanzelf: een
      wereld wordt hernoemd, een tekening wordt vervangen door eentje met een andere

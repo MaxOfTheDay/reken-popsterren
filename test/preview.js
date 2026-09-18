@@ -22,6 +22,7 @@ const { execFile, execFileSync } = require('child_process');
 const path = require('path');
 const os = require('os');
 const scene = require('./scene.js');
+const merk = require('./merk.js');
 
 /* Het adres waarop een telefoon op hetzelfde wifi hierbij kan. De server luisterde
    altijd al op alle netwerkadressen -- je wist het adres alleen niet, en dus keek je
@@ -74,6 +75,18 @@ function assetsOpSchijf(dir, uit) {
   }
   return uit;
 }
+/* De app-iconen staan met opzet in de wortel en niet onder assets/ (zie sw.js), dus
+   de wandeling hierboven ziet ze niet. Ze horen wél in de maatlijst: het Merk-vak in
+   de studio laat zien wat er ligt en wat het weegt. Op naam en niet op een lijstje:
+   icon-*.png in de wortel is de afspraak, en test/merk.js maakt ze volgens diezelfde
+   afspraak. */
+function iconenOpSchijf(uit) {
+  for (const naam of fs.readdirSync(ROOT)) {
+    if (!/^icon-.*\.png$/.test(naam)) continue;
+    uit[naam] = Math.round(fs.statSync(path.join(ROOT, naam)).size / 1024);
+  }
+  return uit;
+}
 /* Welke beeldbestanden wijken af van wat er in het spel staat?
    Een tekening wordt meteen naar schijf geschreven -- dat is met opzet, zie de
    uitleg bij /asset -- maar daarmee vielen ze buiten élke verandering die de
@@ -112,7 +125,11 @@ function studioData(state) {
     v instanceof RegExp ? undefined : v)
     + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
     + ';window.__INCOMING=' + JSON.stringify(kandidaten)
-    + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {}))
+    + ';window.__ASSETS=' + JSON.stringify(iconenOpSchijf(assetsOpSchijf('assets', {})))
+    /* De merkbestanden: wat is de meester, wat rolt eruit. Uit test/merk.js, want
+       daar wordt het gemaakt -- dezelfde afspraak als __SLOTS uit scene.js. */
+    + ';window.__MERK=' + JSON.stringify(merk.AFGELEID.map(d => ({
+        bron: 'assets/branding/source/' + d.bron, uit: d.uit, merk: d.merk })))
     + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets()) + ';<\/script>';
 }
 
