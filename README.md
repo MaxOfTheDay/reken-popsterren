@@ -1,7 +1,7 @@
-# Reken Popsterren
+# Rekensterren
 
 Een reken- en teloefenspel voor kinderen van ongeveer 5 tot 8. Elk kind maakt
-haar eigen popster, speelt shows in een reeks werelden, en verdient daarmee
+haar eigen ster, speelt shows in een reeks werelden, en verdient daarmee
 sterren, diamanten, kleren en trofeeën.
 
 Het is één bestand — `index.html` — met de HTML, de CSS en de JavaScript erin.
@@ -38,7 +38,7 @@ naar `index.html`. Zie `docs/UITBREIDEN.md`.
 Wie iets aan het spel verandert heeft aan deze vijf genoeg om zich te
 oriënteren; de rest staat als commentaar bij de code zelf.
 
-* **Wereld** — een stuk van de tournee met een eigen tekening en sfeer.
+* **Wereld** — een stuk van de reis met een eigen tekening en sfeer.
   Alles wat de app over een wereld weet staat in `WORLDS` in `index.html`.
 * **Show (level)** — één optreden. Levels lopen dóór de werelden heen: `p.level`
   is één getal van 1 tot `WORLD_LAST + 1`.
