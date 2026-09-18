@@ -321,5 +321,133 @@ async function bijwerken() {
   }
 }
 
+/* ---- Open werk ------------------------------------------------------------
+   Een wissel weigert zolang er iets openstaat, en dat is juist. Maar tot nu toe
+   zei de studio alleen dát, en stond je met een melding zonder uitweg: geen enkele
+   knop hier kon er iets mee. Dan ga je zoeken naar de reden dat je gereedschap
+   niet werkt, terwijl het gewoon op een beslissing van jou staat te wachten.
+
+   Drie uitwegen, en ze staan bewust in deze volgorde:
+
+     opzij       git stash. Niets raakt kwijt, alles komt terug met "haal terug".
+                 Dit is het antwoord op "ik wil nu even iets anders bekijken".
+     vastleggen  op een tak, lokaal, zonder push en zonder testen. Dit is het
+                 antwoord op "dit werk wil ik houden". Nooit rechtstreeks op main:
+                 main is wat er op de telefoon van een kind draait, en daar komt
+                 niets in zonder een diff die iemand gezien heeft.
+     terugdraaien deze bestanden terug naar wat er in het spel staat. Dit is het
+                 enige dat werk wégdoet, dus het gaat in twee stappen -- net als
+                 publiceren: de eerste aanroep vertelt alleen wat er zou gebeuren.
+
+   Wat hier nog steeds niet gebeurt, en nooit gaat gebeuren: reset --hard, een
+   force, of iets wat onaangekondigd over je werk heen loopt. */
+function opengewerk() {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'dit is geen git-map' };
+  /* De volledige lijst, niet de twaalf van feiten(): wie hier iets mee doet moet
+     álles zien waar het over gaat. */
+  const regels = gitStil(['status', '--porcelain']).split('\n').filter(Boolean).map(r => ({
+    stand: r.slice(0, 2),
+    // "XY pad", en bij een hernoeming "R  oud -> nieuw": de nieuwe naam telt
+    pad: r.slice(2).trim().split(' -> ').pop().replace(/^"|"$/g, ''),
+  }));
+  return { ok: true, tak: f.tak, isMain: f.isMain || f.tak === 'master', los: f.los, regels };
+}
+
+async function opzij() {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'dit is geen git-map' };
+  if (!f.vuil) return { ok: false, tekst: 'er staat niets open om opzij te zetten' };
+  try {
+    const stempel = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    await git(['stash', 'push', '-m', 'studio ' + stempel]);
+    return { ok: true, tekst: 'Opzij gezet. Je werk staat in de stash en komt terug met '
+      + '"Haal terug" (of: git stash pop).' };
+  } catch (e) {
+    return { ok: false, tekst: 'Opzij zetten lukte niet — er is niets veranderd.\n'
+      + String(e.message).split('\n').slice(0, 4).join('\n') };
+  }
+}
+
+async function haalTerug() {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'dit is geen git-map' };
+  if (!gitStil(['stash', 'list'])) return { ok: false, tekst: 'er staat niets opzij' };
+  try {
+    const uit = await git(['stash', 'pop']);
+    return { ok: true, tekst: 'Teruggehaald.\n' + uit.split('\n').slice(0, 6).join('\n') };
+  } catch (e) {
+    /* Een pop die botst laat de stash staan -- dat is de veilige kant, en het is
+       precies wat je moet weten om verder te kunnen. */
+    return { ok: false, tekst: 'Terughalen botst met wat er nu staat. Je werk staat nog '
+      + 'veilig opzij (git stash list).\n' + String(e.message).split('\n').slice(0, 6).join('\n') };
+  }
+}
+
+/* Een naam die git accepteert, uit iets wat een mens intikt. */
+function takNaam(bericht) {
+  const kern = String(bericht || '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32);
+  return 'studio/' + (kern || 'werk') + '-' + new Date().toISOString().slice(5, 10).replace('-', '');
+}
+
+async function vastleggen(bericht) {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'dit is geen git-map' };
+  if (!f.vuil) return { ok: false, tekst: 'er is niets gewijzigd' };
+  bericht = String(bericht || '').trim();
+  if (bericht.length < 8) return { ok: false, tekst: 'Geef een bericht van minstens 8 tekens — '
+    + 'over een half jaar is dat het enige wat nog uitlegt waaróm dit veranderde.' };
+  if (f.los) return { ok: false, tekst: 'Je kijkt naar een losse kop (een PR). Vastleggen hoort '
+    + 'op een tak; zet je werk opzij en wissel eerst.' };
+  const opMain = f.tak === 'main' || f.tak === 'master';
+  const doel = opMain ? takNaam(bericht) : f.tak;
+  try {
+    /* Op main een nieuwe tak eronder schuiven. `checkout -b` neemt de open
+       wijzigingen mee, dus er gaat niets verloren en main blijft waar hij stond. */
+    if (opMain) await git(['checkout', '-b', doel]);
+    await git(['add', '-A']);
+    await git(['commit', '-m', bericht]);
+    const sha = gitStil(['rev-parse', '--short', 'HEAD']);
+    return { ok: true, tekst: 'Vastgelegd op ' + doel + ' · ' + sha
+      + (opMain ? '\nMain staat nog waar hij stond.' : '')
+      + '\nNog niet gepusht — dat doe je in de wereldstudio (Publiceren) of met de hand.' };
+  } catch (e) {
+    return { ok: false, tekst: 'Vastleggen mislukte — je werk staat er nog.\n'
+      + String(e.message).split('\n').slice(0, 6).join('\n') };
+  }
+}
+
+/* Terugdraaien. Twee stappen, en de eerste doet niets: hij zegt alleen wát er zou
+   verdwijnen. Pas met fase 'go' gebeurt het, en dan alleen voor de paden die
+   op dat moment werkelijk open staan -- een lijst uit een oud scherm kan dus
+   nooit een bestand raken dat er inmiddels anders bij staat. */
+async function terugdraaien(fase, paden) {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'dit is geen git-map' };
+  const open = opengewerk();
+  const magWeg = new Set(open.regels.filter(r => r.stand.indexOf('?') < 0).map(r => r.pad));
+  const kies = (paden && paden.length ? paden : [...magWeg]).filter(p => magWeg.has(p));
+  if (!kies.length) {
+    return { ok: false, tekst: 'Niets om terug te draaien. (Nieuwe, nog niet toegevoegde '
+      + 'bestanden raakt de studio niet aan — die gooit git checkout ook niet weg.)' };
+  }
+  if (fase !== 'go') {
+    return { ok: true, wacht: true, paden: kies,
+      tekst: 'Dit zet ' + kies.length + ' bestand' + (kies.length === 1 ? '' : 'en')
+        + ' terug naar wat er in het spel staat:\n  ' + kies.join('\n  ')
+        + '\n\nDat is niet terug te draaien. Klik nog een keer om het te doen.' };
+  }
+  try {
+    await git(['checkout', '--'].concat(kies));
+    return { ok: true, tekst: 'Teruggezet: ' + kies.length + ' bestand'
+      + (kies.length === 1 ? '' : 'en') + '.' };
+  } catch (e) {
+    return { ok: false, tekst: 'Terugdraaien mislukte — er is niets veranderd.\n'
+      + String(e.message).split('\n').slice(0, 4).join('\n') };
+  }
+}
+
 module.exports = { feiten, samenvatting, bronnen, haalOp, wissel, bijwerken,
+                   opengewerk, opzij, haalTerug, vastleggen, terugdraaien, takNaam,
                    prVoorSha, prLijst, ROOT };

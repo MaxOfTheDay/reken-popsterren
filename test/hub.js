@@ -199,6 +199,10 @@ details.tech[open] > summary::before{content:'▾ '}
   background:var(--vlak2);border:1px solid transparent;cursor:pointer}
 .kaart:hover{border-color:#42305e}
 .kaart.over{border-color:var(--goud);background:#2b1d16}
+/* Een kandidaat is nog niet opgeslagen, en dat hoort te zien te zijn zonder dat je
+   het bijschrift leest. */
+.kaart.kandidaat{border-color:var(--goud);background:#231a2c;
+  box-shadow:inset 3px 0 0 var(--goud)}
 /* contain en niet cover: de verhouding van het bestand is hier informatie --
    daar hangt af of de kaart straks een strook wegsnijdt. */
 .kaart .vb{width:76px;height:76px;border-radius:8px;background:#0a0413 center/contain no-repeat;
@@ -447,6 +451,81 @@ async function haalVersie() {
   if (f.vuil) zet('open werk', f.vuileRegels.join('\n'));
   $('#bijwerk').disabled = !f.achter || !!f.vuil || f.los;
   $('#naarmain').disabled = (f.naam === 'main' && !f.los) || !!f.vuil;
+  if ($('#v-open').hidden === !f.vuil) { /* al goed */ } else haalOpenWerk();
+}
+
+/* ---- Open werk -------------------------------------------------------------
+   Een wissel weigert zolang er iets openstaat, en dat hoort zo. Maar tot nu toe
+   stond je daarna met een melding zonder uitweg: geen enkele knop hier kon er iets
+   mee, en dan ga je zoeken naar de reden dat je gereedschap stuk is terwijl het op
+   een beslissing van jou wacht.
+
+   Drie uitwegen, in deze volgorde: opzij (niets kwijt), vastleggen (houden),
+   terugdraaien (weg). Alleen de laatste doet werk weg, en die gaat daarom in twee
+   stappen -- net als publiceren. */
+let TERUGWACHT = false;      // staat het terugdraaien op zijn tweede klik te wachten?
+async function haalOpenWerk() {
+  let o;
+  try { o = await (await fetch('/api/openwerk')).json(); }
+  catch (e) { console.error('[studio] open werk ophalen mislukt', e); return; }
+  const vak = $('#v-open');
+  const regels = (o && o.regels) || [];
+  vak.hidden = !regels.length;
+  TERUGWACHT = false;
+  if (!regels.length) return;
+  $('#otel').textContent = regels.length + ' bestand' + (regels.length === 1 ? '' : 'en');
+  $('#olijst').textContent = regels.map(r => r.pad).join('\n');
+  $('#o-vast').textContent = o.isMain ? 'Vastleggen op een nieuwe tak…' : 'Vastleggen…';
+  $('#o-weg').textContent = 'Terugdraaien…';
+}
+function openWerkKnoppen() {
+  $('#o-opzij').onclick = async () => {
+    await doeOpen('/api/opzij', '', 'Opzij zetten…');
+    $('#o-terugrij').hidden = false;
+  };
+  $('#o-haalterug').onclick = () => doeOpen('/api/haalterug', '', 'Terughalen…');
+  $('#o-vast').onclick = () => {
+    const rij = $('#o-vastrij');
+    rij.hidden = !rij.hidden;
+    if (!rij.hidden) $('#o-bericht').focus();
+  };
+  $('#o-vastdoe').onclick = async () => {
+    const b = $('#o-bericht').value.trim();
+    await doeOpen('/api/vastleggen', b, 'Vastleggen…');
+    $('#o-bericht').value = '';
+    $('#o-vastrij').hidden = true;
+  };
+  $('#o-bericht').onkeydown = e => { if (e.key === 'Enter') $('#o-vastdoe').click(); };
+  /* Twee klikken, net als publiceren. De eerste vertelt alleen wat er zou
+     verdwijnen; pas de tweede voert het uit. */
+  $('#o-weg').onclick = async () => {
+    const fase = TERUGWACHT ? 'go' : 'kijk';
+    const j = await doeOpen('/api/terugdraaien', fase, TERUGWACHT ? 'Terugdraaien…' : 'Nakijken…');
+    TERUGWACHT = !!(j && j.wacht);
+    $('#o-weg').classList.toggle('op', TERUGWACHT);
+    $('#o-weg').textContent = TERUGWACHT ? 'Ja, terugdraaien' : 'Terugdraaien…';
+  };
+}
+async function doeOpen(pad, body, bezig) {
+  meld('#omeld', '', bezig || 'Bezig…');
+  let j;
+  try {
+    const r = await fetch(pad, { method: 'POST', body: body || '' });
+    j = await r.json();
+  } catch (e) {
+    meldFout('#omeld', 'De opdracht kon niet worden uitgevoerd', e,
+      'Er is niets veranderd. Draait npm run studio nog?');
+    return null;
+  }
+  meld('#omeld', j.ok ? (j.wacht ? 'let' : 'ok') : 'fout', j.tekst);
+  if (!j.wacht) {
+    await haalVersie();
+    await haalOpenWerk();
+    await tekenBeeldenVers();
+    await haalWerelden();
+    herlaad();
+  }
+  return j;
 }
 
 async function haalBronnen() {
@@ -495,7 +574,8 @@ async function doe(pad, body, waar, bezig) {
   meld(waar, j.ok ? 'ok' : 'fout',
     j.tekst + (j.vuileRegels ? '\n\n' + j.vuileRegels.join('\n') : ''));
   await haalVersie();
-  if (j.ok) { await haalBronnen(); await haalWerelden(); await haalBeelden(); toonBlad(); }
+  await haalOpenWerk();
+  if (j.ok) { await haalBronnen(); await haalWerelden(); await tekenBeeldenVers(); toonBlad(); }
 }
 
 /* ---- werelden --------------------------------------------------------------
@@ -686,7 +766,8 @@ function wereldAsset(w) {
   const pad = w.art || d.pad.replace('{wereld}', w.id);
   return { id: 'world-' + w.id, soort: 'los', label: 'Wereldkaart',
     uitleg: 'de tekening onder de route, van rand tot rand',
-    pad, kb: w.artKb, lever: d.lever, budget: d.budget || null, schrijfbaar: true };
+    pad, kb: w.artKb, lever: d.lever, budget: d.budget || null, schrijfbaar: true,
+    scherm: 'map' };
 }
 
 /* ---- het beeldkaartje ------------------------------------------------------
@@ -694,8 +775,39 @@ function wereldAsset(w) {
    bestandsmaat met de aanbevolen begroting ernaast, de stand, en vervangen door
    te slepen of te tikken. Het is bewust hetzelfde kaartje voor een wereldkaart en
    voor het app-icoon: die twee zijn allebei "een beeld dat ergens hoort", en twee
-   verschillende kaartjes zouden alleen maar twee gewoontes opleveren. */
+   verschillende kaartjes zouden alleen maar twee gewoontes opleveren.
+
+   Kiezen is nog niet vervangen. Een gekozen bestand wordt een KANDIDAAT: je ziet
+   hem op het echte scherm staan, met zijn maat en zijn waarschuwingen erbij, en
+   pas "Gebruik deze" schrijft hem weg. Dat is dezelfde volgorde als incoming/ al
+   had -- huidig naast nieuw, en jij kiest -- alleen nu ook voor een bestand dat je
+   zelf aanwijst. */
 const GEMETEN = {};
+/* Een versiestempel per pad. Stond hier eerst de bestandsmaat in kB, en dat gaat
+   mis zodra een nieuwe tekening toevallig op dezelfde afgeronde kB uitkomt: dan is
+   de URL gelijk en kijk je naar het oude beeld. Een stempel verandert altijd. */
+const STEMPEL = {};
+function stempel(pad, kb) {
+  if (STEMPEL[pad] != null) return STEMPEL[pad];
+  return kb == null ? 0 : kb;
+}
+function verversPad(pad) {
+  if (!pad) return;
+  STEMPEL[pad] = Date.now();
+  delete GEMETEN[pad];
+}
+/* De tekeningenvoorraad van de servicewerker weg. sw.js bewaart alles onder
+   /assets/ voorraad-eerst en laat het stuk achter de ? weg bij het opzoeken, dus
+   geen enkel ?v= komt daar langs. Staat er een servicewerker (bijvoorbeeld na
+   "Met servicewerker"), dan is dit het enige dat een vervangen tekening wél
+   zichtbaar maakt. */
+async function voorraadWeg() {
+  try { if (window.caches) await caches.delete('rekenpop-art'); } catch (e) { /* mag */ }
+  try {
+    const w = $('#spel').contentWindow;
+    if (w && w.caches) await w.caches.delete('rekenpop-art');
+  } catch (e) { /* ander domein of nog niet geladen */ }
+}
 function meetBeeld(pad, klaar) {
   if (!pad) return null;
   if (GEMETEN[pad] !== undefined) return GEMETEN[pad];
@@ -703,7 +815,7 @@ function meetBeeld(pad, klaar) {
   const i = new Image();
   i.onload = () => { GEMETEN[pad] = { w: i.naturalWidth, h: i.naturalHeight }; klaar(); };
   i.onerror = () => { GEMETEN[pad] = { w: 0, h: 0 }; klaar(); };
-  i.src = '/' + pad + '?m=' + (Date.now());
+  i.src = (pad.indexOf('blob:') === 0 ? pad : '/' + pad + '?m=' + stempel(pad, Date.now()));
   return null;
 }
 function verhoudingNaam(v) {
@@ -715,13 +827,106 @@ function verhoudingNaam(v) {
 function isGewijzigd(pad) {
   return !!(BEELDEN && BEELDEN.gewijzigd && BEELDEN.gewijzigd.indexOf(pad) >= 0);
 }
+/* Wat er mis kan zijn met dit beeld, gemeten in plaats van geraden. Nooit een
+   weigering: een verhouding die een paar procent afwijkt snijdt de app gewoon bij,
+   en een zware tekening wérkt -- hij kost alleen data. Vandaar waarschuwingen en
+   geen fouten. */
+function beeldLet(a, m) {
+  const uit = [];
+  if (m && m.w && a.lever && a.lever[0] && a.lever[1]) {
+    const wil = a.lever[0] / a.lever[1], is = m.w / m.h;
+    const af = Math.abs(is - wil) / wil;
+    if (af > 0.02) {
+      uit.push('verhouding ' + verhoudingNaam(is) + ' in plaats van ' + verhoudingNaam(wil)
+        + (af > 0.15 ? ' — er valt een flinke strook weg' : ' — er valt een strook weg'));
+    }
+    if (m.w < a.lever[0] * 0.7) uit.push('maar ' + m.w + ' pixels breed; ' + a.lever[0] + ' is de maat');
+  }
+  return uit;
+}
+
+/* ---- de kandidaat ----------------------------------------------------------
+   Eén tegelijk, want je beoordeelt er ook maar één tegelijk. Hij leeft alleen in
+   dit venster: er staat niets op schijf tot je "Gebruik deze" kiest, en Annuleer
+   laat geen spoor na. */
+let KANDIDAAT = null;     // { asset, bestand, url, maat }
+
+function kandidaatCss() {
+  if (!KANDIDAAT) return '';
+  /* Dezelfde generator als de voorbeeldserver voor incoming/ gebruikt, uit
+     test/scene.js. Dus: dezelfde uitsnede, dezelfde sluier en dezelfde plek als
+     de regel die straks in het spel staat -- wat je hier beoordeelt is wat je
+     krijgt. Een eigen regeltje in deze pagina zou daar ooit vanaf gaan wijken. */
+  try { return css({ [KANDIDAAT.asset.id]: KANDIDAAT.url }, { scrim: true }); }
+  catch (e) { console.error('[studio] kandidaatopmaak maken mislukte', e); return ''; }
+}
+/* De kandidaat ín het kijkvak hangen. Zelfde weg als de beeldkeuring-overlays:
+   een stijlblad in het document van het spel, zodat er in het spel zelf geen
+   enkele regel voor nodig is. */
+function pasKandidaat() {
+  const d = $('#spel').contentDocument;
+  if (!d || !d.head) return;
+  let st = d.getElementById('studio-kandidaat');
+  if (!st) { st = d.createElement('style'); st.id = 'studio-kandidaat'; d.head.appendChild(st); }
+  st.textContent = kandidaatCss();
+}
+function kiesKandidaat(a, bestand) {
+  if (!/^image\//.test(bestand.type)) {
+    return meld('#beeldmeld', 'fout', 'Dat is geen afbeelding: ' + bestand.name);
+  }
+  if (KANDIDAAT) URL.revokeObjectURL(KANDIDAAT.url);
+  const url = URL.createObjectURL(bestand);
+  KANDIDAAT = { asset: a, bestand, url, maat: null };
+  const i = new Image();
+  i.onload = () => {
+    KANDIDAAT.maat = { w: i.naturalWidth, h: i.naturalHeight };
+    tekenBeelden();
+    meld('#beeldmeld', 'let', 'Kandidaat · ' + bestand.name + ' — nog niet opgeslagen.\n'
+      + 'Bekijk hem op het echte scherm en kies dan "Gebruik deze".');
+  };
+  i.onerror = () => {
+    console.error('[studio] kandidaat niet leesbaar', bestand.name);
+    KANDIDAAT = null;
+    meld('#beeldmeld', 'fout', 'Deze afbeelding kon niet worden gelezen.\n'
+      + 'Er is niets veranderd.\nBekijk de console voor technische details.');
+    tekenBeelden();
+  };
+  i.src = url;
+  // meteen naar het scherm waar hij hoort, zodat je hem in context ziet
+  if (a.scherm) toonScherm(a);
+  else { tekenBeelden(); pasKandidaat(); }
+}
+function laatKandidaat() {
+  if (!KANDIDAAT) return;
+  URL.revokeObjectURL(KANDIDAAT.url);
+  KANDIDAAT = null;
+  pasKandidaat();
+  tekenBeelden();
+  meld('#beeldmeld', '', '');
+}
+/* Het scherm waar dit beeld op staat, in het kijkvak. Voor de kleedkamer en de
+   kast is dát de hele vraag: niet "is deze tekening mooi" maar "kun je de namen op
+   de kaartjes er nog op lezen". */
+function toonScherm(a) {
+  const p = { star: S.test.star, wereld: S.wereld, stand: S.test.stand || 'halverwege',
+              screen: a.scherm === 'profile' ? 'profile' : a.scherm };
+  if (a.scherm === 'dress') p.diamanten = 240;      // een kleedkamer met iets te kiezen
+  if (a.scherm === 'tro') p.stand = 'alles';        // een kast met iets erin
+  if (a.scherm === 'profile') { delete p.wereld; delete p.stand; }
+  ga(bouw(p));
+}
+
 function beeldKaart(a) {
   const kaart = el('div', 'kaart');
   const doel = a.soort === 'keten' ? a.meester : a.pad;
+  const kandidaat = KANDIDAAT && KANDIDAAT.asset.id === a.id ? KANDIDAAT : null;
+  if (kandidaat) kaart.classList.add('kandidaat');
+
   const teken = () => {
     kaart.innerHTML = '';
     const vb = el('div', 'vb');
-    if (a.kb != null) vb.style.backgroundImage = 'url("/' + a.pad + '?v=' + a.kb + '")';
+    if (kandidaat) vb.style.backgroundImage = 'url("' + kandidaat.url + '")';
+    else if (a.kb != null) vb.style.backgroundImage = 'url("/' + a.pad + '?v=' + stempel(a.pad, a.kb) + '")';
     else vb.textContent = '＋';
     kaart.appendChild(vb);
 
@@ -729,30 +934,36 @@ function beeldKaart(a) {
     const naam = el('div', 'naam');
     naam.appendChild(el('b', null, a.label));
     const veranderd = isGewijzigd(doel) || (a.afgeleiden || []).some(d => isGewijzigd(d.pad));
-    naam.appendChild(el('span', 'chip ' + (a.kb == null ? 'fout' : veranderd ? 'let' : 'ok'),
-      a.kb == null ? WOORD.fout + ' · ontbreekt' : veranderd ? WOORD.gewijzigd : WOORD.opgeslagen));
+    naam.appendChild(el('span', 'chip ' + (kandidaat ? 'let' : a.kb == null ? '' : veranderd ? 'let' : 'ok'),
+      kandidaat ? 'Niet opgeslagen'
+        : a.kb == null ? 'Nog geen tekening' : veranderd ? WOORD.gewijzigd : WOORD.opgeslagen));
+    /* Op schijf staan en gebruikt worden zijn twee dingen. De kleedkamer en de
+       kast lenen de gedeelde schil tot index.html hun tekening noemt; dat verschil
+       hoort op het kaartje te staan en niet in iemands hoofd. */
+    if (a.schermkunst) {
+      naam.appendChild(el('span', 'chip ' + (a.aan ? 'ok' : ''),
+        a.aan ? 'In gebruik' : 'Niet in gebruik'));
+    }
     op.appendChild(naam);
     if (a.uitleg) op.appendChild(el('div', 'stiller', a.uitleg));
 
-    const m = meetBeeld(a.pad, teken);
+    /* Alleen meten wat er is. Een plek zonder tekening opvragen levert een 404 in
+       de console op, en juist in dít venster hoort die stil te blijven -- een
+       console vol verwachte fouten is een console die je niet meer leest. */
+    const m = kandidaat ? kandidaat.maat : (a.kb == null ? null : meetBeeld(a.pad, teken));
     const stukken = [];
     if (m && m.w) stukken.push(m.w + ' × ' + m.h + ' · ' + verhoudingNaam(m.w / m.h));
     else if (m) stukken.push('kan het bestand niet lezen');
-    else stukken.push('meten…');
-    if (a.kb != null) stukken.push(a.kb + ' kB');
+    else if (kandidaat || a.kb != null) stukken.push('meten…');
+    else stukken.push(a.lever[0] + ' × ' + (a.lever[1] || '?') + ' gevraagd');
+    if (kandidaat) stukken.push(Math.round(kandidaat.bestand.size / 1024) + ' kB bron');
+    else if (a.kb != null) stukken.push(a.kb + ' kB');
     op.appendChild(el('div', 'maat', stukken.join('  ·  ')));
 
-    const waarschuwing = [];
-    if (a.budget && a.kb && a.kb > a.budget * 1.1) {
-      waarschuwing.push(a.kb + ' kB — aanbevolen ±' + a.budget + ' kB');
-    }
-    if (m && m.w && a.lever && a.lever[0] && a.lever[1]) {
-      const wil = a.lever[0] / a.lever[1], is = m.w / m.h;
-      if (Math.abs(is - wil) / wil > 0.02) {
-        waarschuwing.push('verhouding ' + verhoudingNaam(is) + ' in plaats van ' + verhoudingNaam(wil)
-          + ' — er valt een strook weg');
-      }
-      if (m.w < a.lever[0] * 0.7) waarschuwing.push('maar ' + m.w + ' pixels breed; ' + a.lever[0] + ' is de maat');
+    const waarschuwing = beeldLet(a, m);
+    const kb = kandidaat ? null : a.kb;
+    if (a.budget && kb && kb > a.budget * 1.1) {
+      waarschuwing.unshift(kb + ' kB — aanbevolen ±' + a.budget + ' kB');
     }
     if (waarschuwing.length) {
       op.appendChild(el('div', 'let', waarschuwing.map(t => '⚠ ' + t).join('\n')));
@@ -760,25 +971,43 @@ function beeldKaart(a) {
 
     op.appendChild(el('div', 'pad', a.soort === 'keten'
       ? 'meester ' + a.meester + (a.meesterKb != null ? ' · ' + a.meesterKb + ' kB' : '')
-        + '\n→ ' + a.afgeleiden.map(d => d.pad + ' · ' + (d.kb == null ? 'ontbreekt' : d.kb + ' kB')).join('  ·  ')
+        + a.afgeleiden.map(d => '\n→ ' + d.pad + ' · ' + (d.kb == null ? 'ontbreekt' : d.kb + ' kB')).join('')
       : a.pad));
 
     const doeR = el('div', 'doe');
-    const knop = el('button', 'prim', a.kb == null ? 'Kiezen…' : 'Vervangen…');
-    knop.onclick = e => { e.stopPropagation(); kiesBestand(a); };
-    doeR.appendChild(knop);
-    if (a.scherm) {
-      const zie = el('button', 'stil', 'Bekijk in het spel');
-      zie.onclick = e => { e.stopPropagation();
-        if (a.scherm === 'map') { S.wstand = S.wstand || 'halverwege'; ga(bouw({ wereld: S.wereld, stand: S.wstand, screen: 'map' })); }
-        else ga(bouw({ screen: a.scherm })); };
-      doeR.appendChild(zie);
-    }
-    if (a.soort === 'keten') {
-      const her = el('button', 'stil', 'Afgeleiden bijwerken');
-      her.title = 'npm run merk — maakt ' + a.afgeleiden.length + ' bestand(en) opnieuw uit de meester';
-      her.onclick = e => { e.stopPropagation(); draaiMerk(); };
-      doeR.appendChild(her);
+    if (kandidaat) {
+      const ja = el('button', 'prim', 'Gebruik deze');
+      ja.onclick = e => { e.stopPropagation(); pasKandidaatToe(); };
+      doeR.appendChild(ja);
+      const nee = el('button', 'stil', 'Annuleer');
+      nee.onclick = e => { e.stopPropagation(); laatKandidaat(); };
+      doeR.appendChild(nee);
+    } else {
+      if (a.scherm) {
+        const zie = el('button', null, 'Voorbeeld');
+        zie.title = 'het echte scherm met deze tekening erachter';
+        zie.onclick = e => { e.stopPropagation(); toonScherm(a); };
+        doeR.appendChild(zie);
+      }
+      const knop = el('button', 'prim', a.kb == null ? 'Kiezen…' : 'Vervangen…');
+      knop.onclick = e => { e.stopPropagation(); kiesBestand(a); };
+      doeR.appendChild(knop);
+      /* Aan- en uitzetten zonder het bestand aan te raken. "Uit" is hier de
+         terugzetknop: de kleedkamer en de kast staan dan weer op de gedeelde
+         schil, precies zoals ze eruitzagen voordat er een tekening was. */
+      if (a.schermkunst && a.kb != null) {
+        const sch = el('button', 'stil', a.aan ? 'Zet uit' : 'Zet aan in het spel');
+        sch.title = a.aan ? 'het spel gebruikt weer de gedeelde schil; het bestand blijft staan'
+                          : 'index.html gaat deze tekening laden';
+        sch.onclick = e => { e.stopPropagation(); zetSchermkunst(a, !a.aan); };
+        doeR.appendChild(sch);
+      }
+      if (a.soort === 'keten') {
+        const her = el('button', 'stil', 'Afgeleiden bijwerken');
+        her.title = 'npm run merk — maakt ' + a.afgeleiden.length + ' bestand(en) opnieuw uit de meester';
+        her.onclick = e => { e.stopPropagation(); draaiMerk(); };
+        doeR.appendChild(her);
+      }
     }
     op.appendChild(doeR);
     kaart.appendChild(op);
@@ -796,9 +1025,7 @@ function beeldKaart(a) {
       e.preventDefault(); kaart.classList.remove('over');
       const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
       if (!f) return meld('#beeldmeld', 'fout', 'Daar zat geen bestand bij.');
-      if (!/^image\//.test(f.type)) return meld('#beeldmeld', 'fout',
-        'Dat is geen afbeelding: ' + f.name);
-      vervang(a, f);
+      kiesKandidaat(a, f);
     });
   } else {
     kaart.style.cursor = 'default';
@@ -812,7 +1039,7 @@ function kiesBestand(a) {
   $('#kiesbestand').click();
 }
 
-/* ---- vervangen -------------------------------------------------------------
+/* ---- vastzetten ------------------------------------------------------------
    Drie stappen, en ze kunnen elk apart mislukken. Dat onderscheid is het halve
    verhaal: hiervoor viel alles in één catch, en dan kreeg je "kan alleen via npm
    run preview" te zien terwijl het bestand er allang stond.
@@ -824,8 +1051,9 @@ function kiesBestand(a) {
                               dan is de vervanging nog steeds gelukt
 
    Een los beeld wordt op zijn eigen maat bijgesneden (vullen en de rest weg, nooit
-   vervormen). Een meester niet: die is de bron, en bijsnijden zou de keten
-   vervalsen -- hij wordt alleen omgezet en zo nodig teruggeschaald. */
+   vervormen) -- dezelfde cover als de app doet. Een meester niet: die is de bron,
+   en bijsnijden zou de keten vervalsen; hij wordt alleen omgezet en zo nodig
+   teruggeschaald. */
 function laadBeeld(src) {
   return new Promise((ok, fout) => {
     const i = new Image();
@@ -856,15 +1084,15 @@ async function naarWebp(src, a) {
   if (!blob) throw new Error('omzetten naar webp lukte niet');
   return { blob, maat: img.naturalWidth + '×' + img.naturalHeight };
 }
-async function vervang(a, bestand) {
+async function pasKandidaatToe() {
+  if (!KANDIDAAT) return;
+  const a = KANDIDAAT.asset, bestand = KANDIDAAT.bestand, url = KANDIDAAT.url;
   const doel = a.soort === 'keten' ? a.meester : a.pad;
-  const url = URL.createObjectURL(bestand);
   meld('#beeldmeld', '', 'Omzetten…');
 
   let blob, maat;
   try { const r = await naarWebp(url, a); blob = r.blob; maat = r.maat; }
   catch (err) {
-    URL.revokeObjectURL(url);
     meldFout('#beeldmeld', 'Afbeelding kon niet worden omgezet (' + bestand.name + ')', err,
       'De huidige versie blijft behouden.');
     return;
@@ -876,25 +1104,68 @@ async function vervang(a, bestand) {
     txt = (await r.text()).trim();
     if (!r.ok) throw new Error(txt || ('de server gaf ' + r.status));
   } catch (err) {
-    URL.revokeObjectURL(url);
     console.error('[studio] ' + doel + ' wegschrijven mislukt', err);
     meld('#beeldmeld', 'fout', 'Afbeelding kon niet worden vervangen.\n'
-      + 'De huidige versie blijft behouden.\n'
+      + 'De huidige versie blijft behouden; je kandidaat staat er nog.\n'
       + 'Wegschrijven naar de werkmap vraagt om npm run preview.\n'
       + 'Bekijk de console voor technische details.');
     return;
   }
-  URL.revokeObjectURL(url);
 
+  // vanaf hier staat het bestand er: wat hierna misgaat maakt dat niet ongedaan
+  URL.revokeObjectURL(url);
+  KANDIDAAT = null;
   meld('#beeldmeld', 'ok', WOORD.gewijzigd + ' · ' + bestand.name + ' ' + maat + ' → ' + txt);
-  if (a.soort === 'keten') await draaiMerk(true);
-  delete GEMETEN[a.pad];
-  (a.afgeleiden || []).forEach(d => delete GEMETEN[d.pad]);
-  await haalBeelden();
-  await haalWerelden();      // de maat van een wereldkaart komt uit /api/werelden
+  try {
+    verversPad(a.pad);
+    (a.afgeleiden || []).forEach(d => verversPad(d.pad));
+    await voorraadWeg();
+    if (a.soort === 'keten') await draaiMerk(true);
+    /* Een schermtekening die nog niet aanstond zet je hiermee meteen aan: je hebt
+       hem net goedgekeurd op het echte scherm, dus "nu nog een tweede knop" is een
+       stap die niets toevoegt. Uitzetten kan altijd nog. */
+    if (a.schermkunst && !a.aan) await schrijfSchermkunst(a.schermkunst, a.pad, true);
+    await tekenBeeldenVers();
+    await haalWerelden();
+    await haalVersie();
+    pasKandidaat();
+    herlaad();
+  } catch (err) {
+    console.error('[studio] ' + doel + ' is vervangen, maar bijwerken mislukte', err);
+    meld('#beeldmeld', 'let', WOORD.gewijzigd + ' · ' + doel + ' staat op schijf.\n'
+      + 'Het paneel kon niet worden bijgewerkt; ververs de pagina.\n'
+      + 'Bekijk de console voor technische details.');
+  }
+}
+
+/* Aan- of uitzetten in het spel: schrijft het SCHERMKUNST-blok in index.html.
+   Het bestand blijft staan -- uitzetten is geen weggooien. */
+async function schrijfSchermkunst(sleutel, pad, aan) {
+  const nu = {};
+  (BEELDEN ? BEELDEN.assets : []).forEach(x => {
+    if (x.schermkunst) nu[x.schermkunst] = x.aan ? x.pad : null;
+  });
+  nu[sleutel] = aan ? pad : null;
+  const r = await fetch('/schermkunst', { method: 'POST', body: JSON.stringify(nu) });
+  const txt = (await r.text()).trim();
+  if (!r.ok) throw new Error(txt || ('de server gaf ' + r.status));
+  return txt;
+}
+async function zetSchermkunst(a, aan) {
+  meld('#beeldmeld', '', aan ? 'Aanzetten…' : 'Uitzetten…');
+  try {
+    await schrijfSchermkunst(a.schermkunst, a.pad, aan);
+  } catch (err) {
+    meldFout('#beeldmeld', (aan ? 'Aanzetten' : 'Uitzetten') + ' van ' + a.label + ' mislukte', err,
+      'Er is niets veranderd. Wijzigen van index.html vraagt om npm run preview.');
+    return;
+  }
+  meld('#beeldmeld', 'ok', a.label + (aan ? ' staat nu in het spel.' : ' gebruikt weer de gedeelde schil.'));
+  await tekenBeeldenVers();
   await haalVersie();
   herlaad();
 }
+
 async function draaiMerk(stil) {
   if (!stil) meld('#beeldmeld', '', 'De afgeleiden worden opnieuw gemaakt…');
   let j;
@@ -904,11 +1175,12 @@ async function draaiMerk(stil) {
       'De meester is wel bewaard; draai npm run merk met de hand.');
     return;
   }
-  meld('#beeldmeld', j.ok ? 'ok' : 'fout', j.tekst);
+  if (!stil) meld('#beeldmeld', j.ok ? 'ok' : 'fout', j.tekst);
   (BEELDEN ? BEELDEN.assets : []).forEach(a =>
-    (a.afgeleiden || []).forEach(d => delete GEMETEN[d.pad]));
+    (a.afgeleiden || []).forEach(d => verversPad(d.pad)));
+  await voorraadWeg();
   if (stil) return;
-  await haalBeelden();
+  await tekenBeeldenVers();
   await haalVersie();
 }
 
@@ -919,6 +1191,12 @@ async function draaiMerk(stil) {
 async function haalBeelden() {
   try { BEELDEN = await (await fetch('/api/beelden')).json(); }
   catch (e) { BEELDEN = null; console.error('[studio] beelden ophalen mislukt', e); }
+  tekenBeelden();
+}
+/* Opnieuw ophalen én tekenen. Na een vervanging: de maten, de stand "in gebruik"
+   en de lijst gewijzigde bestanden komen allemaal van de server. */
+async function tekenBeeldenVers() { await haalBeelden(); }
+function tekenBeelden() {
   const vak = $('#merklijst');
   if (!vak) return;
   vak.innerHTML = '';
@@ -1074,7 +1352,7 @@ function init() {
   $('#sc-dia').onchange = e => { S.test.diamanten = e.target.value; toonBlad(); };
   $('#sc-scherm').onchange = e => { S.test.screen = e.target.value; toonBlad(); };
 
-  $('#spel').addEventListener('load', pasOverlays);
+  $('#spel').addEventListener('load', () => { pasOverlays(); pasKandidaat(); });
   addEventListener('resize', pasVak);
 
   $('#haalop').onclick = () => doe('/api/haalop', '', '#bronmeld', 'Ophalen…');
@@ -1092,7 +1370,7 @@ function init() {
   $('#kiesbestand').onchange = e => {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
-    if (f && bezigMet) vervang(bezigMet, f);
+    if (f && bezigMet) kiesKandidaat(bezigMet, f);
   };
   // een beeld dat per ongeluk naast een kaartje valt mag de pagina niet vervangen
   ['dragover', 'drop'].forEach(n => addEventListener(n, e => {
@@ -1132,9 +1410,29 @@ function init() {
       m ? 'width=' + m.w + ',height=' + m.h : '');
   };
 
+  openWerkKnoppen();
+  /* Eerst schoonmaken, dan pas beelden ophalen.
+
+     Waarom dit hier moet: het spel registreert een servicewerker met bereik '/',
+     en die bedient dus óók deze pagina. sw.js serveert alles onder /assets/
+     voorraad-eerst en negeert het stuk achter de ? -- dus een vervangen tekening
+     kwam nergens meer doorheen, ook niet in het voorbeeldje op een kaartje. De
+     voorbeeldserver zet hem sindsdien uit (zie panel() in test/preview.js), maar
+     een registratie uit een oudere sessie blijft staan tot iemand hem opruimt.
+     Dat is wat hier gebeurt, één keer per keer dat je de studio opent. */
+  (async () => {
+    try {
+      if (navigator.serviceWorker) {
+        for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+      }
+      await voorraadWeg();
+    } catch (e) { console.error('[studio] servicewerker opruimen mislukte', e); }
+    haalBeelden();
+  })();
+
   pasVak();
   toonBlad();
-  haalVersie(); haalBronnen(); haalWerelden(); haalBeelden();
+  haalVersie(); haalBronnen(); haalWerelden(); haalOpenWerk();
   setInterval(haalVersie, 30000);     // een checkout in een ander venster valt zo vanzelf op
 }
 document.addEventListener('DOMContentLoaded', init);
@@ -1192,6 +1490,26 @@ function pagina(gegevens) {
       </div>
       <div class="melding" id="bronmeld"></div>
       <details class="tech"><summary>Details</summary><dl class="kv" id="vdetail"></dl></details>
+    </section>
+
+    <section class="vak" id="v-open" hidden>
+      <h2>Open werk <span class="tel" id="otel"></span></h2>
+      <p class="stiller" style="margin:0">Zolang dit er staat weigert een wissel.
+        De studio ruimt niets op zonder dat jij het zegt.</p>
+      <div class="mono stiller" id="olijst" style="white-space:pre-wrap;max-height:120px;overflow:auto"></div>
+      <div class="rij">
+        <button class="prim" id="o-opzij" title="git stash — alles komt terug met Haal terug">Opzij zetten</button>
+        <button id="o-vast">Vastleggen…</button>
+        <button class="stil" id="o-weg" title="deze bestanden terug naar wat er in het spel staat">Terugdraaien…</button>
+      </div>
+      <div class="rij" id="o-vastrij" hidden>
+        <input type="text" id="o-bericht" placeholder="wat is er veranderd?" style="flex:1">
+        <button class="prim" id="o-vastdoe">Leg vast</button>
+      </div>
+      <div class="rij" id="o-terugrij" hidden>
+        <button class="stil" id="o-haalterug" title="git stash pop">Haal terug wat opzij staat</button>
+      </div>
+      <div class="melding" id="omeld"></div>
     </section>
 
     <section class="vak" id="v-scen">
@@ -1292,6 +1610,10 @@ function pagina(gegevens) {
 const TOESTELLEN = ${JSON.stringify(scenario.TOESTELLEN)};
 const VOORKEUZES = ${JSON.stringify(scenario.VOORKEUZES)};
 const SLOTS = ${JSON.stringify(scene.SLOTS, (k, v) => v instanceof RegExp ? undefined : v)};
+/* De opmaakgenerator uit test/scene.js, letterlijk. Hiermee tekent de studio een
+   kandidaat met exact dezelfde regel als de voorbeeldserver en als het spel --
+   zelfde uitsnede, zelfde sluier, zelfde plek. Zie cssJs() daar. */
+${scene.cssJs()}
 ${JS}
 </script>
 </body>

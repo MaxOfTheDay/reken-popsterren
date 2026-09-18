@@ -191,19 +191,21 @@ function panel(state) {
 </div>
 <script>
 (function () {
-  /* In het kijkvak van de Dev Studio hoort dit paneeltje niet: dat scherm heeft
-     zijn eigen bedieningen, en hier dekt het juist de navigatiebalk van het spel
-     af -- het stukje dat je wilde zien. In een eigen tabblad blijft het staan. */
-  if (window.top !== window.self) {
-    var eigen = document.getElementById('kandidaat');
-    if (eigen) eigen.remove();
-    /* En hier stoppen: wat hieronder staat hangt schakelaars aan knoppen die er
-       nu niet meer zijn. Zonder deze regel gaf elke laadbeurt in de studio een
-       fout in de console -- en dan zoek je die fout in het spel. */
-    return;
-  }
-  /* De servicewerker zou een oude versie van de app blijven serveren; dan kijk
-     je naar je vorige poging en denk je dat de nieuwe niets veranderd heeft.
+  /* ---- De servicewerker uit --------------------------------------------------
+     Dit stond hieronder, ná de terugkeer voor het kijkvak, en dat was een stille
+     maar dure fout.
+
+     Wat er gebeurde: in het kijkvak van de studio stopte dit script meteen, dus
+     hier werd de servicewerker níét uitgezet. Het spel registreerde hem gewoon,
+     en zijn bereik is '/' -- dus vanaf dat moment bediende hij ook de
+     studiopagina zelf. sw.js serveert alles onder /assets/ voorraad-eerst en laat
+     het stuk achter de ? weg bij het opzoeken (zie sleutel()). Een vervangen
+     tekening kwam er dus nooit meer doorheen: niet in het kijkvak, niet in het
+     voorbeeldje op de kaart, en ook niet na herladen. Je verving het startscherm,
+     de studio zei "Gewijzigd", en je keek naar de oude tekening.
+
+     Dat is precies de storing waarvoor deze server bestaat (zie de kop van dit
+     bestand). Hij hoort dus vóór élke terugkeer te staan, ook in een iframe.
 
      Met ?sw in de URL blijft hij wél staan. Dat is de enige manier om de
      bijwerkstroom van de PWA na te kijken -- een oude cache die een nieuwe build
@@ -212,6 +214,23 @@ function panel(state) {
   if (navigator.serviceWorker && !new URLSearchParams(location.search).has('sw')) {
     navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
     navigator.serviceWorker.register = function () { return Promise.reject(new Error('uit in preview')); };
+    /* En de voorraad weg. Uitschrijven alleen is niet genoeg: een servicewerker
+       die deze pagina al bediende blijft dat doen tot ze herlaadt, en zijn
+       tekeningenvoorraad overleeft hem sowieso. Zonder deze regel blijf je na de
+       oplossing hierboven nóg een ronde naar je oude tekening kijken. */
+    if (window.caches) caches.delete('rekenpop-art').catch(function () {});
+  }
+
+  /* In het kijkvak van de Dev Studio hoort het kandidaatpaneeltje niet: dat scherm
+     heeft zijn eigen bedieningen, en hier dekt het juist de navigatiebalk van het
+     spel af -- het stukje dat je wilde zien. In een eigen tabblad blijft het staan. */
+  if (window.top !== window.self) {
+    var eigen = document.getElementById('kandidaat');
+    if (eigen) eigen.remove();
+    /* En hier stoppen: wat hieronder staat hangt schakelaars aan knoppen die er
+       nu niet meer zijn. Zonder deze regel gaf elke laadbeurt in de studio een
+       fout in de console -- en dan zoek je die fout in het spel. */
+    return;
   }
   var vol = document.getElementById('k-scene-vol');
   var kaal = document.getElementById('k-scene-kaal');
@@ -268,6 +287,54 @@ function writeWorlds(body, res) {
     res.writeHead(500, { 'content-type': 'text/plain' });
     res.end(String(e.message));
   }
+}
+
+/* Hetzelfde trucje als writeWorlds, voor het blok dat zegt welke schermen een
+   eigen tekening hebben. Twee sleutels, twee paden, meer niet -- maar het hóórt in
+   index.html en niet in een lijstje dat alleen de studio kent: wat je in de studio
+   ziet moet zijn wat er op een telefoon staat.
+
+   Alleen paden die scene.js zelf als doel noemt, en alleen voor de schermen die
+   een `schermkunst`-sleutel hebben. Er valt hier dus niets in te zetten dat de app
+   daarna zou proberen te laden en niet bestaat. */
+const MARK_K_A = '/* SCHERMKUNST-BEGIN';
+const MARK_K_B = '/* SCHERMKUNST-EINDE */';
+const SCHERMKUNST_SLEUTELS = Object.keys(scene.SLOTS)
+  .filter(k => scene.SLOTS[k].schermkunst)
+  .reduce((u, k) => (u[scene.SLOTS[k].schermkunst] = scene.SLOTS[k].pad, u), {});
+function writeSchermkunst(body, res) {
+  const zeg = (code, tekst) => {
+    res.writeHead(code, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end(tekst);
+  };
+  let wens;
+  try { wens = JSON.parse(body || '{}'); } catch (e) { return zeg(400, 'geen geldige JSON'); }
+  const uit = {};
+  for (const sleutel of Object.keys(SCHERMKUNST_SLEUTELS)) {
+    const waarde = wens[sleutel];
+    if (waarde == null || waarde === '') { uit[sleutel] = null; continue; }
+    if (waarde !== SCHERMKUNST_SLEUTELS[sleutel]) {
+      return zeg(400, sleutel + ' mag alleen ' + SCHERMKUNST_SLEUTELS[sleutel] + ' zijn, niet ' + waarde);
+    }
+    if (!fs.existsSync(path.join(ROOT, waarde))) {
+      return zeg(400, waarde + ' staat niet op schijf — zet eerst de tekening neer');
+    }
+    uit[sleutel] = waarde;
+  }
+  try {
+    const file = path.join(ROOT, 'index.html');
+    const src = fs.readFileSync(file, 'utf8');
+    const a = src.indexOf(MARK_K_A), b = src.indexOf(MARK_K_B);
+    if (a < 0 || b < 0 || b < a) throw new Error('markeringen SCHERMKUNST-BEGIN/EINDE niet gevonden');
+    const head = src.slice(a, src.indexOf('*/', a) + 2);   // de toelichting blijft staan
+    const blok = 'const SCHERMKUNST = {\n'
+      + Object.keys(uit).map(k => '  ' + k + ': '
+        + (uit[k] ? JSON.stringify(uit[k]) : 'null') + ',').join('\n')
+      + '\n};';
+    fs.writeFileSync(file, src.slice(0, a) + head + '\n' + blok + '\n' + src.slice(b));
+    console.log('  studio: SCHERMKUNST bijgewerkt in index.html');
+    zeg(200, 'in index.html gezet');
+  } catch (e) { zeg(500, String(e.message)); }
 }
 
 /* De studio zet een tekening om naar webp (in de browser, met een canvas) en
@@ -568,6 +635,7 @@ function draaiMerk() {
 async function api(req, res, url) {
   try {
     if (url === '/api/versie') return json(res, versie.feiten());
+    if (url === '/api/openwerk') return json(res, versie.opengewerk());
     if (url === '/api/bronnen') return json(res, await versie.bronnen());
     if (url === '/api/beelden') {
       delete require.cache[require.resolve('./beelden.js')];
@@ -589,6 +657,13 @@ async function api(req, res, url) {
     if (url === '/api/wissel') return json(res, await versie.wissel(await lees(req)));
     if (url === '/api/keuring') return json(res, await keuring());
     if (url === '/api/merk') return json(res, await draaiMerk());
+    /* De uitwegen voor open werk. Lezen mag altijd; de vier die iets doen staan
+       in test/versie.js en gooien geen van alle iets weg zonder dat je het zelf
+       zegt -- terugdraaien gaat zelfs in twee stappen. */
+    if (url === '/api/opzij') return json(res, await versie.opzij());
+    if (url === '/api/haalterug') return json(res, await versie.haalTerug());
+    if (url === '/api/vastleggen') return json(res, await versie.vastleggen(await lees(req, 200)));
+    if (url === '/api/terugdraaien') return json(res, await versie.terugdraaien(await lees(req, 20)));
     return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
   } catch (e) {
     json(res, { ok: false, tekst: String(e && e.message || e) }, 500);
@@ -686,6 +761,13 @@ http.createServer(function (req, res) {
     if (!fs.existsSync(f)) return zeg(404, naam + ' ligt er niet (meer)');
     try { fs.unlinkSync(f); console.log('  wereldstudio: incoming/' + naam + ' weg'); zeg(200, 'weg'); }
     catch (e) { zeg(500, String(e.message)); }
+    return;
+  }
+
+  if (req.method === 'POST' && url === '/schermkunst') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 2000) req.destroy(); });
+    req.on('end', () => writeSchermkunst(body, res));
     return;
   }
 

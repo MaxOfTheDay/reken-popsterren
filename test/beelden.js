@@ -35,12 +35,26 @@ const ROOT = path.resolve(__dirname, '..');
 
 /* Welke paden mag de studio beschrijven? Dezelfde lijst waar test/preview.js zijn
    schrijfrechten op baseert -- één afspraak, twee lezers. Alles wat hier niet
-   in staat is voor de studio niet meer dan tekst op het scherm. */
-const SCHRIJFBAAR = [
-  /^assets\/world\/[a-z0-9-]+-map\.webp$/,
-  /^assets\/bg\/landing\.webp$/,
-  /^assets\/branding\/source\/(wordmark|mark|appicon)\.webp$/,
-];
+   in staat is voor de studio niet meer dan tekst op het scherm.
+
+   De lijst wordt afgeleid uit scene.SLOTS en niet met de hand bijgehouden. Dat is
+   geen netheid maar een storing die we niet meer willen: een plek toevoegen in
+   scene.js en het pad hier vergeten levert een studio op die een vervangknop toont
+   die de server vervolgens weigert -- en dan zoek je de fout in de knop.
+
+   Eng blijft eng. Alleen wat scene.js als doelpad noemt, alleen webp, en
+   {wereld} wordt één nauwe klasse en geen jokerteken; index.html, sw.js en alles
+   buiten assets/ komen er dus niet in. De merkmeesters staan er los bij: die
+   staan niet in scene.js, want ze gaan de app niet in (zie merk.js). */
+function pandNaarRegex(pad) {
+  const stuk = pad.split('{wereld}').map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp('^' + stuk.join('[a-z0-9-]+') + '$');
+}
+const SCHRIJFBAAR = Object.keys(scene.SLOTS)
+  .map(k => scene.SLOTS[k].pad)
+  .filter(pad => pad && /^assets\/[a-z0-9/{}-]+\.webp$/.test(pad))
+  .map(pandNaarRegex)
+  .concat([/^assets\/branding\/source\/(wordmark|mark|appicon)\.webp$/]);
 const magSchrijven = p => SCHRIJFBAAR.some(re => re.test(p));
 
 function kb(schijf, pad) {
@@ -53,16 +67,38 @@ function kb(schijf, pad) {
 function overzicht(opties) {
   opties = opties || {};
   const schijf = opties.schijf || merk.iconenOpSchijf(assetsOpSchijf('assets', {}));
+  /* Welke schermtekeningen staan er áán in het spel? Dat is iets anders dan "ligt
+     er een bestand": een tekening kan op schijf staan zonder dat index.html hem
+     noemt, en dan ziet een kind hem niet. De studio hoort dat verschil te tonen,
+     dus wordt het hier uit de app zelf gelezen -- niet uit een tweede lijstje. */
+  let aan = opties.schermkunst;
+  if (!aan) {
+    try {
+      delete require.cache[require.resolve('./app.js')];
+      aan = require('./app.js').laadApp().SCHERMKUNST || {};
+    } catch (e) { aan = {}; }
+  }
   const assets = [];
 
-  // 1 -- het startscherm: één tekening, één pad
-  const d = scene.SLOTS.landing;
-  assets.push({
-    id: 'landing', soort: 'los', groep: 'Achtergrond', label: d.label,
-    uitleg: 'de tekening achter "wie speelt er vandaag"',
-    pad: d.pad, kb: kb(schijf, d.pad), lever: d.lever, budget: d.budget || null,
-    schrijfbaar: magSchrijven(d.pad),
-    scherm: 'profile',
+  /* 1 -- de schermtekeningen: één bestand, één pad, één scherm.
+     Ze komen uit scene.SLOTS en niet uit een lijstje hier: wie er een plek bij
+     zet in scene.js krijgt hem vanzelf in de studio. `schermkunst` zegt of het
+     pad ook nog in index.html aangezet moet worden (de kleedkamer en de kast);
+     het startscherm staat daar al vast in het stijlblad. */
+  ['landing', 'dress', 'tro'].forEach(sleutel => {
+    const d = scene.SLOTS[sleutel];
+    if (!d || !d.pad) return;
+    assets.push({
+      id: sleutel, soort: 'los', groep: 'Schermtekeningen', label: d.label,
+      uitleg: d.waar,
+      pad: d.pad, kb: kb(schijf, d.pad), lever: d.lever, budget: d.budget || null,
+      schrijfbaar: magSchrijven(d.pad),
+      scherm: d.screen,
+      schermkunst: d.schermkunst || null,
+      // null = deze plek staat niet aan/uit te zetten (het startscherm staat vast
+      // in het stijlblad); true/false = het spel gebruikt hem wel/niet
+      aan: d.schermkunst ? !!(aan && aan[d.schermkunst]) : null,
+    });
   });
 
   // 2 -- het merk: per meester één kaart, met de bestanden die eruit rollen

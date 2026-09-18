@@ -143,15 +143,54 @@ aan mankeert), rechts die ene wereld in vier groepen:
 
 ### App & merk
 
-Het startscherm, het spelogo, het merkteken en het app-icoon. Hetzelfde
-beeldkaartje als bij een wereldtekening, met één verschil dat er echt toe doet:
+Alles wat bij de héle app hoort en bij geen wereld:
 
-* het **startscherm** is één bestand. Vervangen is het bestand vervangen, klaar.
+| | |
+|---|---|
+| **Schermtekeningen** | het startscherm, de kleedkamer, de trofeeënkast |
+| **Merk** | het spelogo, het merkteken, het app-icoon |
+
+Hetzelfde beeldkaartje als bij een wereldtekening — voorbeeld, maat, verhouding,
+bestandsmaat met de begroting ernaast — met twee verschillen die er echt toe doen:
+
+* een **schermtekening** is één bestand. Vervangen is het bestand vervangen, klaar.
 * een **merkbeeld** is een kéten. Er is één meester in `assets/branding/source/`
   en daar rollen de bestanden uit die de app laadt. Vervang je er een, dan
   vervangt de studio de méester en draait daarna `npm run merk` voor je. Lukt dat
   niet (geen browser, dus nog geen `npm install`), dan zegt hij dat en blijft de
   meester gewoon staan.
+
+### Kiezen is nog niet vervangen
+
+Een bestand kiezen maakt er een **kandidaat** van. Er gaat dan nog niets naar
+schijf:
+
+1. je kiest een bestand (slepen of tikken);
+2. de studio springt naar het échte scherm waar die tekening hoort, met de
+   kandidaat erachter — de echte kop, de echte kaartjes, de echte navigatiebalk,
+   op telefoonmaat, met dezelfde uitsnede en dezelfde sluier als in het spel;
+3. het kaartje zegt *Niet opgeslagen* en noemt de maat, de verhouding en wat er
+   aan mankeert;
+4. **Gebruik deze** zet hem vast, **Annuleer** laat geen spoor na.
+
+Waarom dat voorbeeld op het échte scherm het punt is: de winkeltegels en de
+trofeekaartjes zijn doorschijnend en licht-op-donker. Of een tekening werkt hangt
+dus niet af van de tekening maar van wat er overheen staat, en dat zie je pas als
+het er werkelijk overheen staat.
+
+### De kleedkamer en de trofeeënkast
+
+Die twee lenen de gedeelde schil totdat er een tekening ligt. Het kaartje zegt
+daarom twee dingen apart:
+
+* **Nog geen tekening / Opgeslagen / Gewijzigd** — staat het bestand er, en wijkt
+  het af van wat er in het spel staat;
+* **In gebruik / Niet in gebruik** — gebruikt het spel hem ook werkelijk.
+
+Het pad staat in `SCHERMKUNST` in `index.html`, en dát is wat de app leest — geen
+lijstje dat alleen de studio kent. *Zet uit* haalt de tekening uit het spel zonder
+het bestand weg te gooien: de kleedkamer staat dan weer op de gedeelde schil,
+precies zoals hij eruitzag.
 
 ### Vervangen, en "vastzetten"
 
@@ -163,6 +202,18 @@ Twee verschillende dingen, en de studio houdt ze uit elkaar:
 * **het `WORLDS`-blok terugschrijven** naar `index.html` — dát is de stap die
   alléén met die server kan. Zonder server valt de wereldstudio terug op
   Kopieer-en-plak.
+
+### Open werk
+
+Staat er iets open in je werkmap, dan weigert elke wissel — de studio ruimt nooit
+iets op zonder dat jij het zegt. Onder *Huidige build* staat dan wát er openstaat,
+met drie uitwegen:
+
+| | |
+|---|---|
+| **Opzij zetten** | `git stash`. Niets raakt kwijt; *Haal terug* zet het terug. |
+| **Vastleggen** | lokaal, met een bericht. Sta je op main, dan komt er eerst een tak onder — main blijft waar hij stond. Er wordt niet gepusht. |
+| **Terugdraaien** | deze bestanden terug naar wat er in het spel staat. Het enige dat werk wégdoet, dus in twee stappen: de eerste klik laat alleen zien wát er zou verdwijnen. |
 
 Alles in het kijkvak draait op `?debug&demo`, en dat **grendelt de opslag**: geen
 enkele knop hier kan de voortgang van een echt kind raken. De enige uitzondering
