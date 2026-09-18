@@ -10,7 +10,8 @@
  *                          voorraad bij het activeren opgeruimd.
  *
  *   TEKENINGEN (rekenpop-art)  assets/: de wereldkaarten (~300 kB per stuk), het
- *                          schilderij achter de sterrenkeuze en het spelogo.
+ *                          schilderij achter de sterrenkeuze, het spelogo en het
+ *                          lettertype.
  *                          Cache-eerst, en de naam verandert níét bij een
  *                          uitgave. Dat is het punt: een tekstwijziging in het
  *                          spel hoort geen twee megabyte tekeningen opnieuw over
@@ -81,10 +82,11 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   let url;
   try { url = new URL(req.url); } catch (_) { return; }
-  // Alleen wat van ons is. Het lettertype van Google gaat gewoon langs de gewone
-  // weg: de browsercache doet dat werk al, en een opaque antwoord in onze voorraad
-  // kost quotum zonder dat we er iets over kunnen zeggen. Valt het weg, dan staat
-  // de tekst in het reservelettertype -- zo is de pagina ook opgezet (display=swap).
+  // Alleen wat van ons is. Er hóórt tegenwoordig niets anders langs te komen: het
+  // lettertype staat sinds het kleur- en letterstelsel in assets/font/ en gaat dus
+  // gewoon via isArt() hieronder de tekeningen-voorraad in. Deze regel blijft staan
+  // voor wat er ooit alsnog van buiten bij zou komen -- een opaque antwoord kost
+  // quotum zonder dat we er iets over kunnen zeggen, dus dat bewaren we niet.
   if (url.origin !== self.location.origin) return;
 
   /* Tekeningen: eerst de voorraad. Ze veranderen alleen als ART_CACHE omhoog gaat,

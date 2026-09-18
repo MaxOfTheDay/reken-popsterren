@@ -63,8 +63,16 @@ Verder:
 * Bewaren gaat op het pad zonder `?…`, zodat `?debug` niet een tweede kopie maakt.
 * De terugval op `index.html` geldt alleen voor een schermwissel — een mislukte
   aanvraag naar een plaatje hoort geen pagina met HTML terug te krijgen.
-* Het lettertype van Google gaat langs de gewone weg; de browsercache doet dat
-  werk al, en offline valt de tekst netjes terug (`display=swap`).
+* Het lettertype komt uit `assets/font/` en dus uit de **tekeningen**-voorraad:
+  cache-eerst, en niet gekoppeld aan een uitgave. Het wordt één keer opgehaald en
+  daarna nooit meer. Hiervoor kwam het van `fonts.googleapis.com` — dat is er
+  bewust uit: zonder net was de allereerste start een ander lettertype (op Android
+  bestaat geen van de drie oude reserveletters), het stijlblad van Google
+  blokkeerde het scriptblok in de `<head>`, en het was het enige verzoek dat deze
+  app ooit buiten de deur deed. Zie de noot bij `@font-face` bovenaan het
+  stijlblad.
+* Er hoefde daar géén regel voor bij in `sw.js`: alles onder `/assets/` is voor de
+  servicewerker een tekening, en dat klopt hier precies.
 * Het spel stuurt na het opstarten één keer door welke tekeningen er vandaag
   bestaan; wat daar niet bij hoort gaat uit de voorraad. Zo blijft er niets van
   een verwijderde of hernoemde wereld achter.
