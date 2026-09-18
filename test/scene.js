@@ -17,8 +17,14 @@
 function basename(f) { return String(f).split(/[\\/]/).pop(); }
 function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].toLowerCase() : ''; }
 
-// sleutel -> hoe herken je 'm, op welk scherm hoort hij, en hoe heet dat in het
-// debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
+/* sleutel -> hoe herken je 'm, op welk scherm hoort hij, en hoe heet dat in het
+   debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
+
+   `budget` is de aanbevolen bestandsmaat in kB. Geen grens en geen fout -- een
+   tekening van 374 kB werkt prima, hij kost alleen de telefoondata van een gezin.
+   De studio zegt het daarom als waarschuwing en niet als storing. Hij staat hier
+   omdat de maat bij het beeld hoort en niet bij één van de twee panelen die hem
+   tonen. */
 const SLOTS = {
   venue:   { match: /(^venue[-_]|theat|club|stadion|stadium|zaal)/i, screen: 'game',
              label: 'Zaal',       waar: 'achter de show',
@@ -34,12 +40,12 @@ const SLOTS = {
              hint: 'map-sky.webp' },
   world:   { match: /[-_]map\.[a-z0-9]+$|^(world|wereld)[-_]/i,      screen: 'map',
              label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
-             lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
+             lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp', budget: 125,
              pad: 'assets/world/{wereld}-map.webp', perWereld: true,
              hint: '<wereld>-map.webp, bv. muziek-map.webp of snoep-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
-             lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp', budget: 125,
              pad: 'assets/bg/landing.webp',
              hint: 'landing.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',

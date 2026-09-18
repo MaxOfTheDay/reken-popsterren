@@ -10,6 +10,8 @@
  *   C  de regel bovenin zegt eerlijk wat er draait (tak, commit, open werk)
  *   D  het wereldoverzicht komt uit het spel zelf, niet uit een tweede lijst
  *   F  de snelkoppeling op het bureaublad start deze kloon, met deze node
+ *   G  er zijn twee werkbladen en één hoekje, en ze heten overal hetzelfde
+ *   H  de globale beelden komen uit scene.js en merk.js, niet uit een derde lijst
  *
  * De reden voor A: een knop met een vlag die index.html niet kent doet niets, en
  * dat merk je pas als je staat te kijken naar een scherm dat er anders uitziet
@@ -215,6 +217,81 @@ zaak('E · de pagina', () => {
     const b = scenario.url(scenario.vul(v, 4));
     check(a === b, 'E · de pagina bouwt dezelfde URL als scenario.js voor "' + v.label + '"', a + ' vs ' + b);
   });
+});
+
+/* ---- G: twee werkbladen, één hoekje --------------------------------------
+   De hele informatie-indeling van de studio staat of valt hiermee: wie de pagina
+   opent moet zonder lezen zien dat er twee bezigheden zijn. Dat is geen opmaak
+   maar een afspraak, en hij hoort dus vast te liggen -- inclusief de zin die bij
+   elk werkblad hoort, want een naam zonder die zin is een raadseltje.
+
+   En de woordenlijst. Acht woorden voor acht standen; wie er een negende bij
+   verzint (of "dirty" laat staan) maakt de studio moeilijker te lezen zonder het
+   te merken. */
+zaak('G · de werkbladen en de woorden', () => {
+  const p = hub.pagina({ adres: 'http://localhost:8099', lan: '192.168.1.2:8099' });
+  [['test', 'Testomgeving', 'Speel en controleer de game in een gekozen toestand'],
+   ['wereld', 'Wereldstudio', 'Bouw en beheer de werelden']].forEach(([id, naam, wat]) => {
+    check(new RegExp('data-blad="' + id + '"').test(p), 'G · werkblad "' + naam + '" bestaat', id);
+    check(p.indexOf(naam) >= 0, 'G · en het heet ' + naam, naam);
+    check(p.indexOf(wat) >= 0, 'G · met de zin die erbij hoort', wat);
+  });
+  check(p.indexOf('App &amp; merk') >= 0 || p.indexOf('App & merk') >= 0,
+    'G · en er is een hoekje voor de app zelf', 'App & merk');
+  /* Het hoekje is bewust géén derde werkblad in de kiezer: twee bezigheden en een
+     voorraadkast, niet drie applicaties. */
+  const kiezer = p.slice(p.indexOf('<nav class="kiezer">'), p.indexOf('</nav>'));
+  check((kiezer.match(/data-blad=/g) || []).length === 2,
+    'G · de kiezer draagt er twee, niet drie', kiezer.replace(/\s+/g, ' '));
+
+  ['Opgeslagen', 'Niet opgeslagen', 'Gewijzigd', 'Waarschuwing', 'Fout',
+   'Opgehaald', 'Up-to-date', 'Main is nieuwer'].forEach(w =>
+    check(p.indexOf("'" + w + "'") >= 0, 'G · het woord "' + w + '" staat in de lijst', w));
+  /* Ontwikkelaarstaal die in de knoppen niets te zoeken heeft. De techniek mag in
+     een tooltip of onder Details staan -- daar hoort ze ook. */
+  const knoppen = (p.match(/>[^<>{}]{2,40}</g) || []).join('|');
+  ['dirty', 'stale', 'detached', 'HEAD~'].forEach(w =>
+    check(knoppen.toLowerCase().indexOf(w.toLowerCase()) < 0,
+      'G · geen "' + w + '" in wat je leest', w));
+});
+
+/* ---- H: de globale beelden ----------------------------------------------
+   Het startscherm, het logo, het merkteken en het icoon staan in drie bestanden
+   beschreven (scene.js, merk.js, de wortel). De studio hoort ze te tónen zonder
+   er een vierde lijst bij te verzinnen -- dat is precies het soort kopie dat op
+   een dag iets anders zegt dan de rest. */
+zaak('H · de globale beelden', () => {
+  const beelden = require('./beelden');
+  const o = beelden.overzicht();
+  const paden = o.assets.map(a => a.pad);
+  check(paden.indexOf(scenePad()) >= 0, 'H · het startscherm komt uit scene.js', paden.join(', '));
+  function scenePad() { return require('./scene').SLOTS.landing.pad; }
+
+  const merk = require('./merk');
+  const merken = [...new Set(merk.AFGELEID.map(d => d.merk))];
+  merken.forEach(m => check(o.assets.some(a => a.label === m),
+    'H · "' + m + '" staat erbij', o.assets.map(a => a.label).join(', ')));
+  const alleUit = merk.AFGELEID.map(d => d.uit).sort();
+  const inLijst = o.assets.filter(a => a.afgeleiden)
+    .reduce((u, a) => u.concat(a.afgeleiden.map(d => d.pad)), []).sort();
+  check(alleUit.join('|') === inLijst.join('|'),
+    'H · elk afgeleid bestand hangt aan zijn meester', inLijst.join(', '));
+
+  o.assets.forEach(a => {
+    check(!!a.label && !!a.pad && !!a.groep, 'H · "' + a.id + '" is compleet', JSON.stringify(a).slice(0, 120));
+    check(a.soort !== 'keten' || (a.meester && a.afgeleiden.length),
+      'H · een keten heeft een meester én afgeleiden', a.id);
+    check(a.budget == null || a.budget > 0, 'H · de begroting is een getal in kB', String(a.budget));
+  });
+
+  /* Wat de studio mag schrijven en wat niet. Dit is de enige lijst die telt, en
+     hij hoort eng te zijn: alles erbuiten is voor de studio alleen tekst. */
+  ['assets/bg/landing.webp', 'assets/world/ijs-map.webp',
+   'assets/branding/source/appicon.webp'].forEach(f =>
+    check(beelden.magSchrijven(f), 'H · ' + f + ' mag vervangen worden', f));
+  ['index.html', 'sw.js', 'package.json', '../buiten.webp', 'assets/font/OFL.txt',
+   'assets/branding/wordmark.webp'].forEach(f =>
+    check(!beelden.magSchrijven(f), 'H · ' + f + ' mag dat niet', f));
 });
 
 // ---- F: de snelkoppeling ------------------------------------------------
