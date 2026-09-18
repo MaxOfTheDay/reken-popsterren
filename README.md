@@ -15,23 +15,29 @@ woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
-| `test/` | de keuringen en de browsertests (zie `docs/TESTEN.md`) |
+| `test/` | de keuringen, de browsertests én de Dev Studio (zie `docs/TESTEN.md`) |
+| `DEV-STUDIO.md` | starten, takken en PR's testen, werelden nakijken |
 | `docs/` | de achtergrond: waaróm iets is zoals het is |
 
 ## Draaien
 
 ```
+npm run studio                 # de Dev Studio — http://localhost:8099/studio
 open index.html                # het spel, zonder meer
 npm install                    # alleen nodig voor de browsertests
 npm run check                  # de keuringen (Node, ± 2 seconden)
 npm test                       # alles, inclusief echte Chromium (minuten)
-npm run preview                # http://localhost:8099 — de app over http
+npm run preview                # dezelfde server, zonder zelf een venster te openen
 ```
 
-`npm run preview` is ook de weg naar de **wereldstudio**: die staat op
-`?debug&mapedit`, of via de knop *Studio* rechtsonder op de voorbeeldpagina.
-Daar maak je werelden op de echte kaart en schrijf je het `WORLDS`-blok terug
-naar `index.html`. Zie `docs/UITBREIDEN.md`.
+**`npm run studio` is de gewone manier van werken.** Eén scherm met links de
+bedieningen en rechts het échte spel op telefoonmaat: welke tak of PR er draait,
+alle werelden met hun gegevens en gebreken, het spel in een stand zetten zonder
+ernaartoe te spelen, en de toestelmaten. Zie **`DEV-STUDIO.md`** — dat is kort.
+
+Daarbinnen zit de **wereldstudio** (`?debug&mapedit`, of de knop *Open
+wereldstudio*): daar maak je werelden op de echte kaart en schrijf je het
+`WORLDS`-blok terug naar `index.html`. Zie `docs/UITBREIDEN.md`.
 
 ## De vijf begrippen
 
@@ -59,6 +65,7 @@ staan er bewust niet bij, want die verouderen meteen.
 
 | als je... | lees dan |
 |---|---|
+| de studio wilt starten of een PR wilt testen | `DEV-STUDIO.md` |
 | een wereld, spulletje of trofee wilt toevoegen | `docs/UITBREIDEN.md` |
 | tests wilt draaien of begrijpen | `docs/TESTEN.md` |
 | aan het laden, de cache of het bijwerken komt | `docs/LADEN.md` |
