@@ -223,7 +223,7 @@ die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
 ### `test/hub.test.js` — de Dev Studio
 
 Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
-`DEV-STUDIO.md`. Vier beloftes:
+`DEV-STUDIO.md`. De beloftes:
 
 - **elke knop levert een URL op die het spel wérkelijk begrijpt** — de vlaggen in
   `test/scenario.js` worden nagelopen tegen de `dbg.get(...)`-lijst in
@@ -235,16 +235,38 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   en wat `frontierWorld()` daarvan maakt;
 - **kijken kost nooit een save** — na elke voorkeuze wordt `save()` aangeroepen en
   moet de opslag leeg blijven;
-- **de snelkoppeling start déze kloon** — het bestand dat `npm run snelkoppeling`
-  op je bureaublad zet, wordt voor alle drie de platformen nagekeken: wijst het
-  naar deze map en deze node, start het de server met `--open`, en breekt een
-  spatie in het pad niets;
+- **de snelkoppeling start déze kloon** — de bestanden die `npm run snelkoppeling`
+  op je bureaublad zet, worden voor alle drie de platformen nagekeken: wijzen ze
+  naar deze map en deze node, starten ze de server met `--open`, en breekt een
+  spatie in het pad niets. Er zijn er twee — eentje die start wat er staat en
+  eentje die eerst het nieuwste ophaalt (`--naar`) — en de suite kijkt na dat
+  `preview.js` die vlag ook werkelijk kent en hem langs `versie.wissel` laat
+  lopen, die op open werk weigert;
 - **de versieregel zegt eerlijk wat er draait**, en **een wissel weigert als er
   werk openstaat** (dat laatste alleen als je werkmap op dat moment vuil is —
   de suite checkt nooit zelf iets uit);
 - **het wereldoverzicht komt uit het spel zelf** — naam, id, shownummers, trofee
   en beloning komen uit `WORLDS` en `worldForIndex`, en een kapotte beloning of
-  een ontbrekende tekening wordt gezien.
+  een ontbrekende tekening wordt gezien;
+- **er zijn twee werkbladen en één hoekje** — Testomgeving en Wereldstudio staan
+  in de kiezer met de zin die erbij hoort, App & merk staat ernaast en is bewust
+  geen derde. Daarbij de woordenlijst (Opgeslagen, Gewijzigd, Waarschuwing, Fout,
+  Opgehaald, Up-to-date, Main is nieuwer…): dezelfde stand hoort overal hetzelfde
+  te heten, en ontwikkelaarstaal hoort niet op een knop;
+- **de globale beelden komen uit `scene.js` en `merk.js`** — `test/beelden.js` zet
+  die twee naast elkaar, en de suite kijkt na dat elk afgeleid bestand aan zijn
+  meester hangt en dat de schrijflijst eng blijft: `index.html` en `sw.js` mogen
+  nooit via `/asset` beschreven worden. Die lijst wordt afgeleid uit
+  `scene.SLOTS`, dus een plek erbij kan niet meer half worden aangesloten;
+- **een schermtekening staat op één plek** — `scene.js` zegt waar hij heen gaat,
+  `SCHERMKUNST` in `index.html` zegt of de app hem gebruikt, en de kandidaat in de
+  studio wordt met dezelfde `scene.css()` getekend als de productieregel. Zo kan
+  "wat je in de studio ziet" niet uiteenlopen met "wat er op een telefoon staat";
+- **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
+  `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
+  voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
+  tekening onzichtbaar — ook na herladen, en ook in het voorbeeldje op een
+  kaartje, want zijn bereik is `/` en hij bedient dus ook de studiopagina.
 
 ### `test/studio.test.js` — de wereldstudio
 
@@ -271,7 +293,14 @@ gezin:
   schijf, maar hij hoort wél in "Wat verandert er" en in het chipje bovenin te
   staan, of het nu een wereldkaart is of het startscherm. De lijst komt van
   `gewijzigdeAssets()` in `test/preview.js`, die het aan git vraagt; de suite spuit
-  hem in zoals die server dat doet, zodat er geen server nodig is.
+  hem in zoals die server dat doet, zodat er geen server nodig is;
+- **een globaal beeld heeft geen wereld nodig** — het startscherm kijk je na op
+  het landingsscherm, en daar is met opzet geen ster actief. Vroeger viel het
+  paneel daar om (`Cannot read properties of undefined (reading 'level')`) en
+  wees de melding naar de énige stap die wél gelukt was. Deze zaak loopt die weg
+  helemaal af over een wegwerpservertje dat nooit schrijft: geen uitzondering,
+  geen onterechte verwijzing naar `npm run preview`, een melding die zegt dat het
+  gelukt is, en een paneel dat daarna gewoon doorwerkt.
 
 ### `test/vlucht.test.js` — de zoom tussen wereld en Werelden
 

@@ -37,9 +37,12 @@ npm run achtergrondproef       # houdt de voorgrond het als de tekening verander
 ```
 
 **`npm run studio` is de gewone manier van werken.** Eén scherm met links de
-bedieningen en rechts het échte spel op telefoonmaat: welke tak of PR er draait,
-alle werelden met hun gegevens en gebreken, het spel in een stand zetten zonder
-ernaartoe te spelen, en de toestelmaten. Zie **`DEV-STUDIO.md`** — dat is kort.
+bedieningen en rechts het échte spel op telefoonmaat, met twee werkbladen:
+**Testomgeving** (welke tak of PR er draait, het spel in een stand zetten zonder
+ernaartoe te spelen, toestelmaten) en **Wereldstudio** (alle werelden met hun
+tekening, gegevens en gebreken). Daarnaast een hoekje **App & merk** voor het
+beeld dat bij de héle app hoort: startscherm, spelogo, merkteken, app-icoon.
+Zie **`DEV-STUDIO.md`** — dat is kort.
 
 Daarbinnen zit de **wereldstudio** (`?debug&mapedit`, of de knop *Open
 wereldstudio*): daar maak je werelden op de echte kaart en schrijf je het

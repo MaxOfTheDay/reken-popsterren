@@ -17,8 +17,14 @@
 function basename(f) { return String(f).split(/[\\/]/).pop(); }
 function extname(f) { const m = /\.[^.]+$/.exec(basename(f)); return m ? m[0].toLowerCase() : ''; }
 
-// sleutel -> hoe herken je 'm, op welk scherm hoort hij, en hoe heet dat in het
-// debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
+/* sleutel -> hoe herken je 'm, op welk scherm hoort hij, en hoe heet dat in het
+   debug-schakelaartje (?screen=) waarmee de schermafdrukken erheen springen.
+
+   `budget` is de aanbevolen bestandsmaat in kB. Geen grens en geen fout -- een
+   tekening van 374 kB werkt prima, hij kost alleen de telefoondata van een gezin.
+   De studio zegt het daarom als waarschuwing en niet als storing. Hij staat hier
+   omdat de maat bij het beeld hoort en niet bij één van de twee panelen die hem
+   tonen. */
 const SLOTS = {
   venue:   { match: /(^venue[-_]|theat|club|stadion|stadium|zaal)/i, screen: 'game',
              label: 'Zaal',       waar: 'achter de show',
@@ -34,37 +40,47 @@ const SLOTS = {
              hint: 'map-sky.webp' },
   world:   { match: /[-_]map\.[a-z0-9]+$|^(world|wereld)[-_]/i,      screen: 'map',
              label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
-             lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp',
+             lever: [1215, 2160], anker: 'midden', canoniek: 'ijs-map.webp', budget: 125,
              pad: 'assets/world/{wereld}-map.webp', perWereld: true,
              hint: '<wereld>-map.webp, bv. muziek-map.webp of snoep-map.webp' },
   landing: { match: /^landing|^start|^titel|^home/i,                 screen: 'profile',
              label: 'Startscherm', waar: 'wie speelt er vandaag',
-             lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp', budget: 125,
              pad: 'assets/bg/landing.webp',
              hint: 'landing.webp' },
-  /* De kleedkamer (PS-45). 9:16 en niet 2:3 zoals het startscherm: dit scherm is
-     van boven tot onder gevuld -- kop, rek en twee balken -- dus er is geen band
-     waar de tekening mag ophouden. Dezelfde 1215x2160 als een wereldkaart, want
-     dat is de portretmaat die dit project al kent.
-     De app tekent de kamer vandaag zelf (--kleed-tekening in index.html); komt er
-     een geschilderde versie, dan gaat die hier in en is het in de app een regel. */
-  kleed:   { match: /^kleedkamer|^dressing|^dressroom|^garderobe/i,  screen: 'dress',
-             label: 'Kleedkamer', waar: 'achter het passen en kopen',
-             lever: [1215, 2160], anker: 'midden', canoniek: 'kleedkamer.webp',
-             pad: 'assets/bg/kleedkamer.webp',
-             hint: 'kleedkamer.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
              label: 'Slotscherm', waar: 'na de show',
              lever: [1024, 1536], anker: 'midden', canoniek: 'finale.webp',
              hint: 'finale.webp' },
+  /* De kleedkamer en de trofeeenkast. Ze lenen vandaag de gedeelde schil; het pad
+     hieronder wordt pas gelezen als SCHERMKUNST in index.html hem noemt (zie
+     zetSchermkunst daar). Staand 2:3, net als het startscherm: dezelfde ::before,
+     dezelfde sluier, hetzelfde masker.
+
+     Let op waar je ze op beoordeelt. De winkeltegels en de trofeekaartjes zijn
+     licht-op-donker en doorschijnend -- een drukke of lichte tekening maakt de
+     namen erop onleesbaar. Dat is niet iets wat je aan de tekening ziet maar aan
+     het scherm eromheen, en daarom heeft de studio er een voorbeeld-in-het-echte-
+     scherm voor. */
+  dress:   { match: /^kleedkamer|^kleerkast|^dress(room)?[-_]?bg|^dressing/i, screen: 'dress',
+             label: 'Kleedkamer', waar: 'achter de kleedkamer',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'kleedkamer.webp', budget: 125,
+             pad: 'assets/bg/kleedkamer.webp', schermkunst: 'dress',
+             hint: 'kleedkamer.webp' },
+  tro:     { match: /^trofee|^trophies|^kast[-_]?bg/i,               screen: 'tro',
+             label: 'Trofeeënkast', waar: 'achter de trofeeën',
+             lever: [1024, 1536], anker: 'midden', canoniek: 'trofeeen.webp', budget: 125,
+             pad: 'assets/bg/trofeeen.webp', schermkunst: 'tro',
+             hint: 'trofeeen.webp' },
 };
 
 const SCHERMEN = [
   { id: 'profile', label: 'Wie speelt er' },
   { id: 'map',     label: 'Kaart' },
   { id: 'game',    label: 'Show' },
-  { id: 'dress',   label: 'Kleedkamer' },
   { id: 'end',     label: 'Einde' },
+  { id: 'dress',   label: 'Kleedkamer' },
+  { id: 'tro',     label: 'Trofeeënkast' },
 ];
 
 /* Waar de wereld achter staat: de kaart en de sterkeuze.
@@ -248,19 +264,24 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
 #screen-profile .map-sky span{display:none!important}`);
   }
 
-  if (urls.kleed) {
-    /* Precies de machine die de app zelf gebruikt: één token met de tekening, en
-       #screen-dress.app-sfeer::before zet hem onder --kunst-sluier. Daardoor
-       beoordeel je hier geen nagebouwde opstelling maar het echte scherm -- en
-       de schakelaar "donkere sluier" laat precies zien wat die sluier doet, want
-       zonder hem valt alleen die ene laag weg. */
-    out.push(`:root{--kleed-tekening:url("${urls.kleed}")}
-#screen-dress.app-sfeer::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-image:${scrim ? 'var(--kunst-sluier),' : ''}var(--kleed-tekening);
+  /* De kleedkamer en de kast. Letterlijk dezelfde opmaak als de productieregel in
+     index.html (#screen-dress.kunst.app-sfeer::before) -- dat is het hele punt van
+     een kandidaat: wat je hier beoordeelt is wat je straks krijgt. Het verschil is
+     alleen wáár het beeld vandaan komt.
+
+     De klasse .kunst hoeft hier niet gezet te zijn: een kandidaat is er juist
+     vóórdat er een tekening in het spel staat. Vandaar dat deze regel op het
+     scherm zelf mikt en niet op .kunst. */
+  [['dress', '#screen-dress'], ['tro', '#screen-trophies']].forEach(([sleutel, sel]) => {
+    if (!urls[sleutel]) return;
+    out.push(`${sel}{position:relative;isolation:isolate}
+${sel}.app-sfeer::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background-image:${veil}url("${urls[sleutel]}");
   background-size:${scrim ? 'cover,' : ''}cover;
   background-position:${scrim ? '50% 50%,' : ''}50% 50%;
-  background-repeat:${scrim ? 'no-repeat,' : ''}no-repeat}`);
-  }
+  -webkit-mask-image:linear-gradient(to bottom,#000 16%,rgba(0,0,0,.42) 32%,rgba(0,0,0,.42) 72%,#000 88%);
+  mask-image:linear-gradient(to bottom,#000 16%,rgba(0,0,0,.42) 32%,rgba(0,0,0,.42) 72%,#000 88%)}`);
+  });
 
   if (urls.finale) {
     out.push(`#screen-end{position:relative}
@@ -297,4 +318,17 @@ function parallaxJs() {
   })();`;
 }
 
-if (typeof module !== 'undefined') module.exports = { SLOTS, SCHERMEN, SCRIM, PARALLAX, classify, css, isImage, mimeFor, namesHint, parallaxJs };
+/* css() als tekst, zodat een pagina hem letterlijk kan meenemen. Zelfde afspraak
+   als parallaxJs() hierboven, en om dezelfde reden: de Dev Studio moet een
+   kandidaat kunnen tónen op het echte scherm, en dat moet met precies dezelfde
+   opmaak gebeuren als de productieregel -- anders beoordeel je iets anders dan je
+   krijgt. Een tweede kopie in de studiopagina zou precies daar op een dag
+   vanaf gaan wijken. */
+function cssJs() {
+  return 'const SCRIM=' + JSON.stringify(SCRIM)
+    + ';const MAP_SCRIM=' + JSON.stringify(MAP_SCRIM)
+    + ';const HUBS=' + JSON.stringify(HUBS) + ';\n'
+    + css.toString();
+}
+
+if (typeof module !== 'undefined') module.exports = { SLOTS, SCHERMEN, SCRIM, PARALLAX, classify, css, cssJs, isImage, mimeFor, namesHint, parallaxJs };

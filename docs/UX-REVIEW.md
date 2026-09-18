@@ -241,11 +241,12 @@
 >
 > * *The room.* `#screen-dress.app-sfeer::before` — the slot the `--kunst-sluier`
 >   note has described since 5E, under the veil, viewport-fixed so the rack scrolls
->   and the room does not. It is drawn in the app for now (an inline SVG in
+>   and the room does not. It is drawn in the app (an inline SVG in
 >   `--kleed-tekening`: lamps over the mirror, a clothes rail either side of it, a
->   warm pool on the floor); a painted 9:16 `assets/bg/kleedkamer.webp` replaces it
->   in one line, and `test/scene.js` already previews a candidate into that exact
->   pseudo-element.
+>   warm pool on the floor). A painted plate does not go in that token: the studio's
+>   own `SCHERMKUNST` / `.kunst` rule, which landed on main in parallel, wins on
+>   specificity and covers it. The two stack — drawn room by default, painting once
+>   one is set — and neither ever points at a file that is not on disk.
 > * *The header stopped being a lid.* It shared `--kop-plaat` (aubergine at `.82`)
 >   with the cabinet and the parent area, which on a screen with artwork covered
 >   the whole top third of the room. It is now one surface with a ramp — `.18` at

@@ -49,13 +49,13 @@ const BRON = path.join(WORTEL, 'assets', 'branding', 'source');
    0.82 -- die hebben ruis en detail om het in te verstoppen, een logo niet. */
 const AFGELEID = [
   { bron: 'wordmark.webp', uit: 'assets/branding/wordmark.webp', breed: 1080, type: 'webp', kwal: 0.92,
-    merk: 'Spelogo', wat: 'het spelogo op de sterrenkeuze' },
+    budget: 90, merk: 'Spelogo', wat: 'het spelogo op de sterrenkeuze' },
   { bron: 'mark.webp', uit: 'assets/branding/mark.webp', breed: 512, type: 'webp', kwal: 0.92,
-    merk: 'Merkteken (R-ster)', wat: 'de compacte R-ster -- ligt klaar, nog nergens in gebruik' },
+    budget: 70, merk: 'Merkteken (R-ster)', wat: 'de compacte R-ster -- ligt klaar, nog nergens in gebruik' },
   { bron: 'appicon.webp', uit: 'icon-192.png', breed: 192, type: 'png',
-    merk: 'App-icoon', wat: 'favicon, apple-touch-icon en het kleine manifest-icoon' },
+    budget: 25, merk: 'App-icoon', wat: 'favicon, apple-touch-icon en het kleine manifest-icoon' },
   { bron: 'appicon.webp', uit: 'icon-512.png', breed: 512, type: 'png',
-    merk: 'App-icoon', wat: 'het manifest-icoon (purpose any)' },
+    budget: 70, merk: 'App-icoon', wat: 'het manifest-icoon (purpose any)' },
   /* Maskeerbaar: een launcher mag hier zelf een cirkel, een vierkant of een
      squircle uit knippen, en alles buiten de middelste 80% kan wegvallen. De
      R-ster van de meester reikt tot 64% van de ingeschreven cirkel -- die zit dus
@@ -68,7 +68,7 @@ const AFGELEID = [
      weg, het paars loopt van rand tot rand, en de R-ster schuift daarmee naar 74%
      van de cirkel: nog altijd binnen de veilige 80%. */
   { bron: 'appicon.webp', uit: 'icon-maskable-512.png', breed: 512, type: 'png', inzoom: 0.065,
-    merk: 'App-icoon', wat: 'het manifest-icoon (purpose maskable)' },
+    budget: 70, merk: 'App-icoon', wat: 'het manifest-icoon (purpose maskable)' },
 ];
 
 /* ---- Een png met een palet ------------------------------------------------

@@ -191,19 +191,21 @@ function panel(state) {
 </div>
 <script>
 (function () {
-  /* In het kijkvak van de Dev Studio hoort dit paneeltje niet: dat scherm heeft
-     zijn eigen bedieningen, en hier dekt het juist de navigatiebalk van het spel
-     af -- het stukje dat je wilde zien. In een eigen tabblad blijft het staan. */
-  if (window.top !== window.self) {
-    var eigen = document.getElementById('kandidaat');
-    if (eigen) eigen.remove();
-    /* En hier stoppen: wat hieronder staat hangt schakelaars aan knoppen die er
-       nu niet meer zijn. Zonder deze regel gaf elke laadbeurt in de studio een
-       fout in de console -- en dan zoek je die fout in het spel. */
-    return;
-  }
-  /* De servicewerker zou een oude versie van de app blijven serveren; dan kijk
-     je naar je vorige poging en denk je dat de nieuwe niets veranderd heeft.
+  /* ---- De servicewerker uit --------------------------------------------------
+     Dit stond hieronder, ná de terugkeer voor het kijkvak, en dat was een stille
+     maar dure fout.
+
+     Wat er gebeurde: in het kijkvak van de studio stopte dit script meteen, dus
+     hier werd de servicewerker níét uitgezet. Het spel registreerde hem gewoon,
+     en zijn bereik is '/' -- dus vanaf dat moment bediende hij ook de
+     studiopagina zelf. sw.js serveert alles onder /assets/ voorraad-eerst en laat
+     het stuk achter de ? weg bij het opzoeken (zie sleutel()). Een vervangen
+     tekening kwam er dus nooit meer doorheen: niet in het kijkvak, niet in het
+     voorbeeldje op de kaart, en ook niet na herladen. Je verving het startscherm,
+     de studio zei "Gewijzigd", en je keek naar de oude tekening.
+
+     Dat is precies de storing waarvoor deze server bestaat (zie de kop van dit
+     bestand). Hij hoort dus vóór élke terugkeer te staan, ook in een iframe.
 
      Met ?sw in de URL blijft hij wél staan. Dat is de enige manier om de
      bijwerkstroom van de PWA na te kijken -- een oude cache die een nieuwe build
@@ -212,6 +214,23 @@ function panel(state) {
   if (navigator.serviceWorker && !new URLSearchParams(location.search).has('sw')) {
     navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
     navigator.serviceWorker.register = function () { return Promise.reject(new Error('uit in preview')); };
+    /* En de voorraad weg. Uitschrijven alleen is niet genoeg: een servicewerker
+       die deze pagina al bediende blijft dat doen tot ze herlaadt, en zijn
+       tekeningenvoorraad overleeft hem sowieso. Zonder deze regel blijf je na de
+       oplossing hierboven nóg een ronde naar je oude tekening kijken. */
+    if (window.caches) caches.delete('rekenpop-art').catch(function () {});
+  }
+
+  /* In het kijkvak van de Dev Studio hoort het kandidaatpaneeltje niet: dat scherm
+     heeft zijn eigen bedieningen, en hier dekt het juist de navigatiebalk van het
+     spel af -- het stukje dat je wilde zien. In een eigen tabblad blijft het staan. */
+  if (window.top !== window.self) {
+    var eigen = document.getElementById('kandidaat');
+    if (eigen) eigen.remove();
+    /* En hier stoppen: wat hieronder staat hangt schakelaars aan knoppen die er
+       nu niet meer zijn. Zonder deze regel gaf elke laadbeurt in de studio een
+       fout in de console -- en dan zoek je die fout in het spel. */
+    return;
   }
   var vol = document.getElementById('k-scene-vol');
   var kaal = document.getElementById('k-scene-kaal');
@@ -270,6 +289,54 @@ function writeWorlds(body, res) {
   }
 }
 
+/* Hetzelfde trucje als writeWorlds, voor het blok dat zegt welke schermen een
+   eigen tekening hebben. Twee sleutels, twee paden, meer niet -- maar het hóórt in
+   index.html en niet in een lijstje dat alleen de studio kent: wat je in de studio
+   ziet moet zijn wat er op een telefoon staat.
+
+   Alleen paden die scene.js zelf als doel noemt, en alleen voor de schermen die
+   een `schermkunst`-sleutel hebben. Er valt hier dus niets in te zetten dat de app
+   daarna zou proberen te laden en niet bestaat. */
+const MARK_K_A = '/* SCHERMKUNST-BEGIN';
+const MARK_K_B = '/* SCHERMKUNST-EINDE */';
+const SCHERMKUNST_SLEUTELS = Object.keys(scene.SLOTS)
+  .filter(k => scene.SLOTS[k].schermkunst)
+  .reduce((u, k) => (u[scene.SLOTS[k].schermkunst] = scene.SLOTS[k].pad, u), {});
+function writeSchermkunst(body, res) {
+  const zeg = (code, tekst) => {
+    res.writeHead(code, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end(tekst);
+  };
+  let wens;
+  try { wens = JSON.parse(body || '{}'); } catch (e) { return zeg(400, 'geen geldige JSON'); }
+  const uit = {};
+  for (const sleutel of Object.keys(SCHERMKUNST_SLEUTELS)) {
+    const waarde = wens[sleutel];
+    if (waarde == null || waarde === '') { uit[sleutel] = null; continue; }
+    if (waarde !== SCHERMKUNST_SLEUTELS[sleutel]) {
+      return zeg(400, sleutel + ' mag alleen ' + SCHERMKUNST_SLEUTELS[sleutel] + ' zijn, niet ' + waarde);
+    }
+    if (!fs.existsSync(path.join(ROOT, waarde))) {
+      return zeg(400, waarde + ' staat niet op schijf — zet eerst de tekening neer');
+    }
+    uit[sleutel] = waarde;
+  }
+  try {
+    const file = path.join(ROOT, 'index.html');
+    const src = fs.readFileSync(file, 'utf8');
+    const a = src.indexOf(MARK_K_A), b = src.indexOf(MARK_K_B);
+    if (a < 0 || b < 0 || b < a) throw new Error('markeringen SCHERMKUNST-BEGIN/EINDE niet gevonden');
+    const head = src.slice(a, src.indexOf('*/', a) + 2);   // de toelichting blijft staan
+    const blok = 'const SCHERMKUNST = {\n'
+      + Object.keys(uit).map(k => '  ' + k + ': '
+        + (uit[k] ? JSON.stringify(uit[k]) : 'null') + ',').join('\n')
+      + '\n};';
+    fs.writeFileSync(file, src.slice(0, a) + head + '\n' + blok + '\n' + src.slice(b));
+    console.log('  studio: SCHERMKUNST bijgewerkt in index.html');
+    zeg(200, 'in index.html gezet');
+  } catch (e) { zeg(500, String(e.message)); }
+}
+
 /* De studio zet een tekening om naar webp (in de browser, met een canvas) en
    stuurt de bytes hierheen. Deze server schrijft ze weg -- alleen naar een pad dat
    hieronder staat, nergens anders. Zo hoeft er geen beeldbibliotheek in het project,
@@ -278,11 +345,16 @@ function writeWorlds(body, res) {
    En hij hoogt meteen CACHE in sw.js op. Dat was de stap die je altijd vergeet: de
    servicewerker serveert alles onder /assets/ eerst uit de cache, dus een vervangen
    beeld met dezelfde naam blijft anders op elk toestel dat er al was het oude tonen. */
-const ASSET_OK = [
-  /^assets\/world\/[a-z0-9-]+-map\.webp$/,
-  /^assets\/bg\/landing\.webp$/,
-  /^assets\/bg\/kleedkamer\.webp$/,
-];
+/* Wélke paden geschreven mogen worden staat in test/beelden.js, want de studio
+   moet dezelfde lijst kunnen lézen om te weten of hij een vervangknop mag tonen.
+   Eén lijst, twee lezers -- twee kopieën zouden op een dag verschillend gaan
+   denken over wat er mag, en dan biedt de studio een knop aan die de server
+   weigert.
+
+   De meesters in assets/branding/source/ staan er sinds deze ronde bij. Ze gaan
+   de app niet in; wat de app laadt zijn de afgeleiden, en die worden door
+   /api/merk opnieuw gemaakt zodra er een meester vervangen is. */
+const ASSET_OK = require('./beelden.js').SCHRIJFBAAR;
 function bumpCache() {
   const f = path.join(ROOT, 'sw.js');
   const src = fs.readFileSync(f, 'utf8');
@@ -292,9 +364,14 @@ function bumpCache() {
   fs.writeFileSync(f, src.replace(m[0], "const CACHE = '" + volgend + "';"));
   return volgend;
 }
+/* Hernoemen is er alleen voor één geval: een wereld krijgt een ander id en zijn
+   tekening moet mee. Vandaar deze engere lijst en niet ASSET_OK -- daar staan
+   sinds deze ronde ook de merkmeesters in, en die hebben met hernoemen niets te
+   maken. */
+const HERNOEM_OK = [/^assets\/world\/[a-z0-9-]+-map\.webp$/];
 function renameAsset(res, van, naar) {
   const zeg = (code, tekst) => { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(tekst); };
-  if (!ASSET_OK.some(re => re.test(van)) || !ASSET_OK.some(re => re.test(naar))) {
+  if (!HERNOEM_OK.some(re => re.test(van)) || !HERNOEM_OK.some(re => re.test(naar))) {
     return zeg(400, 'dit pad mag niet: ' + van + ' -> ' + naar);
   }
   const a = path.join(ROOT, van), b = path.join(ROOT, naar);
@@ -326,7 +403,12 @@ function writeAsset(req, res, to) {
       fs.mkdirSync(path.dirname(doel), { recursive: true });
       fs.writeFileSync(doel, buf);
       const kb = Math.round(buf.length / 1024);
-      const cache = zelfde ? null : bumpCache();
+      /* De cachenaam alleen ophogen voor een bestand dat de app werkelijk laadt.
+         Een meester in assets/branding/source/ gaat de app niet in (zie merk.js):
+         die ophogen zou elke telefoon opnieuw laten binnenhalen voor een bestand
+         dat er nooit was. De afgeleiden krijgen hun ophoging van /api/merk. */
+      const inDeApp = !/^assets\/branding\/source\//.test(to);
+      const cache = (zelfde || !inDeApp) ? null : bumpCache();
       console.log('  wereldstudio: ' + to + ' (' + kb + ' kB)' + (cache ? ' · sw CACHE -> ' + cache : ''));
       res.writeHead(200, { 'content-type': 'text/plain' });
       res.end(to + ' — ' + kb + ' kB' + (cache ? ' · sw ' + cache : ' · ongewijzigd'));
@@ -523,10 +605,44 @@ function keuring() {
     .catch(e => ({ ok: false, tekst: String(e.message).split('\n').slice(-20).join('\n') }));
 }
 
+/* De afgeleiden opnieuw maken (npm run merk). Dat is de tweede helft van "een
+   merkbeeld vervangen": de meester is dan al weggeschreven, en hieruit rollen de
+   bestanden die de app werkelijk laadt.
+
+   Draait als een los proces, met dezelfde node als deze server -- zie eenTest()
+   voor waarom er geen npm aan te pas komt. Het kost een browser (playwright), en
+   dat is precies de reden dat de studio de uitkomst moet kúnnen melden in plaats
+   van te doen alsof het altijd lukt: in een verse kloon zonder `npm install` is
+   er geen browser en blijft de meester staan zonder afgeleiden. */
+function draaiMerk() {
+  return new Promise(ok => {
+    execFile(process.execPath, [path.join(ROOT, 'test', 'merk.js')],
+      { cwd: ROOT, maxBuffer: 8e6, timeout: 3e5 }, (e, uit, err) => {
+        const tekst = String(uit || '').trim() || String(err || '').trim();
+        if (!e) {
+          const cache = bumpCache();
+          return ok({ ok: true, tekst: 'Afgeleiden bijgewerkt' + (cache ? ' · sw ' + cache : '') + '\n' + tekst });
+        }
+        const reden = /Cannot find module|playwright/i.test(String(err || uit || e.message))
+          ? 'Hiervoor is een browser nodig. Draai eerst `npm install` en probeer het opnieuw.'
+          : 'Bekijk de uitvoer hieronder.';
+        ok({ ok: false, tekst: 'De afgeleiden konden niet worden bijgewerkt.\n' + reden
+          + '\n\n' + (tekst || String(e.message)).split('\n').slice(-12).join('\n') });
+      });
+  });
+}
+
 async function api(req, res, url) {
   try {
     if (url === '/api/versie') return json(res, versie.feiten());
+    if (url === '/api/openwerk') return json(res, versie.opengewerk());
     if (url === '/api/bronnen') return json(res, await versie.bronnen());
+    if (url === '/api/beelden') {
+      delete require.cache[require.resolve('./beelden.js')];
+      delete require.cache[require.resolve('./werelden.js')];
+      const b = require('./beelden.js').overzicht();
+      return json(res, { assets: b.assets, schijf: b.schijf, gewijzigd: gewijzigdeAssets() });
+    }
     if (url === '/api/werelden') {
       // Bij élk verzoek opnieuw inlezen: index.html verandert onder je handen
       // (een wissel van tak, de wereldstudio die het blok terugschrijft), en een
@@ -540,6 +656,14 @@ async function api(req, res, url) {
     if (url === '/api/bijwerken') return json(res, await versie.bijwerken());
     if (url === '/api/wissel') return json(res, await versie.wissel(await lees(req)));
     if (url === '/api/keuring') return json(res, await keuring());
+    if (url === '/api/merk') return json(res, await draaiMerk());
+    /* De uitwegen voor open werk. Lezen mag altijd; de vier die iets doen staan
+       in test/versie.js en gooien geen van alle iets weg zonder dat je het zelf
+       zegt -- terugdraaien gaat zelfs in twee stappen. */
+    if (url === '/api/opzij') return json(res, await versie.opzij());
+    if (url === '/api/haalterug') return json(res, await versie.haalTerug());
+    if (url === '/api/vastleggen') return json(res, await versie.vastleggen(await lees(req, 200)));
+    if (url === '/api/terugdraaien') return json(res, await versie.terugdraaien(await lees(req, 20)));
     return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
   } catch (e) {
     json(res, { ok: false, tekst: String(e && e.message || e) }, 500);
@@ -570,7 +694,7 @@ process.on('uncaughtException', e => {
   process.exit(1);
 });
 
-http.createServer(function (req, res) {
+const server = http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
 
   if (url.indexOf('/api/') === 0) { api(req, res, url); return; }
@@ -640,6 +764,13 @@ http.createServer(function (req, res) {
     return;
   }
 
+  if (req.method === 'POST' && url === '/schermkunst') {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 2000) req.destroy(); });
+    req.on('end', () => writeSchermkunst(body, res));
+    return;
+  }
+
   if (req.method === 'POST' && url === '/werelden') {
     let body = '';
     req.on('data', c => { body += c; if (body.length > 200000) req.destroy(); });
@@ -685,7 +816,164 @@ http.createServer(function (req, res) {
              : scene.isImage(file) ? scene.mimeFor(file) : 'application/octet-stream';
   res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
   fs.createReadStream(file).pipe(res);
-}).listen(PORT, function () {
+});
+
+/* ---- Meteen naar de nieuwste versie (--naar) -------------------------------
+   De snelkoppeling startte altijd wát er uitgecheckt stond. Dat is met opzet
+   -- een gereedschap dat stilletjes je werkmap verzet is een gereedschap dat je
+   niet meer vertrouwt -- maar het betekende ook dat "even de nieuwste main
+   bekijken" drie handelingen was, en dat je het vergat. Dan kijk je naar de
+   studio van vorige week en zoek je waarom je wijziging er niet in zit.
+
+     --naar=main       de laatste main (fetch + checkout + fast-forward)
+     --naar=156        PR #156, met een losse kop: kijken, niet doorwerken
+     --naar=pr/156     hetzelfde
+     --naar=een-tak    die tak
+     --naar=vraag      vraagt het bij het starten, met main als antwoord op Enter
+     (weglaten)        zoals altijd: start wat er uitgecheckt staat
+
+   Twee dingen die dit NIET doet, en dat blijft zo. Het gooit geen werk weg: staat
+   er iets open in de werkmap, dan weigert de wissel (zie versie.wissel) en start
+   de studio gewoon op wat er stond -- mét de melding erbij, zodat je het in het
+   vak "Open werk" kunt oplossen. En het voegt nooit samen: bijwerken gaat
+   fast-forward of niet. */
+function vraagBron(waarJeStaat) {
+  return new Promise(ok => {
+    const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
+    /* Wáár je staat hoort in de vraag te staan. Zonder dat is "blijf hier" een
+       antwoord op een vraag die je niet gesteld hebt -- je weet niet wat "hier" is
+       als je net een icoontje hebt aangeklikt. */
+    console.log('\n  Je staat op ' + waarJeStaat + '.');
+    rl.question('  Waarheen? Enter = de laatste main \u00b7 h = blijf hier '
+      + '\u00b7 of een PR-nummer: ', antwoord => {
+      rl.close();
+      ok(String(antwoord || '').trim());
+    });
+  });
+}
+/* Van wat een mens intikt naar een bron.
+
+   null betekent "blijven staan". Dat antwoord was er niet, en dat was een echte
+   fout: wie midden in zijn eigen werk op dit icoontje klikte kon alleen nog met
+   Ctrl-C ontsnappen. Ctrl-C is veilig (het ophalen en de wissel komen ná de vraag)
+   maar "druk Ctrl-C om niets stuk te maken" is geen antwoordmogelijkheid -- dat is
+   iets wat je moet wéten.
+
+   "156" is geen tak maar een PR-nummer; dat is wat een mens intikt. De rest gaat
+   als taknaam door, met zijn hoofdletters intact -- een tak heet zoals hij heet. */
+function bronNaam(ruw) {
+  const t = String(ruw == null ? '' : ruw).trim();
+  const k = t.toLowerCase();
+  if (k === 'h' || k === 'hier' || k === 'blijf') return null;
+  if (!t || k === 'main' || k === 'true') return 'main';
+  if (/^\d+$/.test(t)) return 'pr/' + t;
+  return t;
+}
+/* Een vingerafdruk van de server zelf: alles in test/ dat hij draait.
+
+   Dit is nodig omdat deze server zichzélf vervangt. Hij leest index.html en
+   test/hub.js per verzoek opnieuw (dat is met opzet), maar preview.js, scene.js,
+   merk.js en versie.js zitten al in het geheugen zodra hij draait. Wissel je naar
+   een tak waar de studio veranderd is, dan krijg je de nieuwe pagina op de oude
+   server -- en die combinatie heeft nooit bestaan. Precies de storing waarvan je
+   denkt dat je nieuwe werk stuk is.
+
+   Dus: vóór en ná de wissel meten, en bij verschil opnieuw opstarten. */
+function codeVingerafdruk() {
+  const map = path.join(ROOT, 'test');
+  try {
+    return fs.readdirSync(map).filter(n => n.endsWith('.js')).sort()
+      .map(n => n + ':' + fs.statSync(path.join(map, n)).size
+        + ':' + fs.readFileSync(path.join(map, n), 'utf8').length).join('|');
+  } catch (e) { return ''; }
+}
+/* Opnieuw opstarten met dezelfde node en dezelfde vlaggen, maar zónder --naar:
+   de wissel is al gebeurd, en nog een keer vragen zou onzin zijn. */
+function herstart() {
+  console.log('  De studio zelf is ook veranderd — opnieuw opstarten…\n');
+  const argv = process.argv.slice(1).filter(a => !/^--naar(=|$)/.test(a));
+  const kind = execFile(process.execPath, argv, { cwd: ROOT });
+  kind.stdout.pipe(process.stdout);
+  kind.stderr.pipe(process.stderr);
+  kind.on('exit', code => process.exit(code == null ? 0 : code));
+  return new Promise(() => {});      // deze beurt gaat niet verder
+}
+
+async function naarBron(ruw) {
+  if (!versie.feiten().git) {
+    console.log('\n  Dit is geen git-map, dus er valt niets te wisselen.\n');
+    return;
+  }
+  const nu = versie.feiten();
+  const ref = bronNaam(ruw === 'vraag' ? await vraagBron(nu.naam) : ruw);
+  /* Ophalen doen we ook als je blijft staan: `git fetch` raakt de werkmap niet aan
+     en het is precies wat de bronnenlijst in de studio bij houdt. Alleen wisselen
+     slaan we over. */
+  console.log('\n  Ophalen…');
+  const voor = codeVingerafdruk();
+  const opgehaald = await versie.haalOp();
+  if (!opgehaald.ok) console.log('  ophalen mislukt (' + opgehaald.tekst + ') — ik probeer het met wat er al was');
+  if (ref === null) {
+    console.log('  Opgehaald. Je blijft op ' + nu.naam + '.\n');
+    return;
+  }
+  const r = await versie.wissel(ref);
+  if (r.ok) {
+    console.log('  ' + r.tekst + '\n');
+    if (codeVingerafdruk() !== voor) await herstart();
+    return;
+  }
+  /* Geweigerd. Dat is geen storing maar een beslissing die op jou wacht, dus:
+     zeggen wát er in de weg staat, en gewoon doorstarten -- in de studio staat
+     het vak "Open werk" er met de drie uitwegen naast. */
+  console.log('\n  Niet gewisseld naar ' + ref + ':');
+  console.log('  ' + r.tekst.replace(/\n/g, '\n  '));
+  (r.vuileRegels || []).forEach(v => console.log('    ' + v));
+  /* Alleen bij open werk naar het vak wijzen dat daarover gaat. Een PR-nummer dat
+     niet bestaat is een typefout, en daar helpt "Open werk" niets aan -- een raad
+     die niet past leest als ruis. */
+  console.log(r.vuileRegels && r.vuileRegels.length
+    ? '\n  De studio start op wat er nu staat. In "Open werk" kun je het'
+      + '\n  opzij zetten, vastleggen of terugdraaien, en daarna wisselen.\n'
+    : '\n  De studio start op wat er nu staat; kies in de bronnenlijst iets anders.\n');
+}
+/* Is de poort vrij? Vóór een wissel willen we dat weten: draait er al een studio,
+   dan zou deze de werkmap onder díé server vandaan verzetten, en dan kijk je naar
+   een half verwisselde versie zonder dat iets dat zegt. */
+function poortVrij(port) {
+  return new Promise(ok => {
+    const proef = require('net').createServer();
+    proef.once('error', () => ok(false));
+    proef.once('listening', () => proef.close(() => ok(true)));
+    proef.listen(port, '127.0.0.1');
+  });
+}
+
+async function start() {
+  const naar = process.argv.map(a => /^--naar(=(.*))?$/.exec(a)).filter(Boolean)[0];
+  if (naar) {
+    /* Draait er al een studio, dan wisselen we niet: dat zou de werkmap onder díé
+       server vandaan verzetten en je naar een half verwisselde versie laten kijken.
+
+       Maar dat is geen reden om te klagen en te stoppen. Wat je bedoelde is "laat
+       me de studio zien", en die staat er al -- dus doen we wat de gewone
+       snelkoppeling ook doet: dat venster openen, met de melding erbij dat er niet
+       gewisseld is. Zo is dit icoontje in élk geval het juiste om aan te klikken. */
+    if (!(await poortVrij(PORT))) {
+      const studio = 'http://localhost:' + PORT + '/studio';
+      console.log('\n  Er draait hier al een studio — ik wissel niets en open dat venster.'
+        + '\n  Wil je wél van bron wisselen: sluit dat venster eerst (Ctrl-C).'
+        + '\n  ' + studio + '\n');
+      if (process.argv.indexOf('--open') >= 0) openBrowser(studio);
+      setTimeout(() => process.exit(0), 1500);
+      return;
+    }
+    await naarBron(naar[2] === undefined ? 'main' : naar[2]);
+  }
+  server.listen(PORT, gestart);
+}
+
+function gestart() {
   fs.mkdirSync(DROP, { recursive: true });
   const state = dropped();
   const studio = 'http://localhost:' + PORT + '/studio';
@@ -720,7 +1008,7 @@ http.createServer(function (req, res) {
   }
 
   if (process.argv.indexOf('--open') >= 0) openBrowser(studio);
-});
+}
 
 /* Het venster openen. Drie besturingssystemen, drie namen voor hetzelfde, en als
    geen van drieën bestaat is dat geen fout: de URL staat hierboven en je klikt
@@ -733,3 +1021,5 @@ function openBrowser(url) {
     if (err) console.log('  (open het venster zelf: ' + url + ')');
   });
 }
+
+start();
