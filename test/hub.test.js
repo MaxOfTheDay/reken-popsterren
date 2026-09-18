@@ -12,6 +12,10 @@
  *   F  de snelkoppeling op het bureaublad start deze kloon, met deze node
  *   G  er zijn twee werkbladen en één hoekje, en ze heten overal hetzelfde
  *   H  de globale beelden komen uit scene.js en merk.js, niet uit een derde lijst
+ *   I  een schermtekening staat op één plek: scene.js zegt waar hij heen gaat,
+ *      index.html zegt of hij aanstaat, en de kandidaat gebruikt dezelfde opmaak
+ *   J  de servicewerker staat uit in het kijkvak -- anders is een vervangen
+ *      tekening onzichtbaar, hoe vaak je ook ververst
  *
  * De reden voor A: een knop met een vlag die index.html niet kent doet niets, en
  * dat merk je pas als je staat te kijken naar een scherm dat er anders uitziet
@@ -294,6 +298,111 @@ zaak('H · de globale beelden', () => {
     check(!beelden.magSchrijven(f), 'H · ' + f + ' mag dat niet', f));
 });
 
+/* ---- I: schermtekeningen -------------------------------------------------
+   De kleedkamer en de trofeeënkast kunnen elk een eigen tekening krijgen. Wat
+   daarbij telt is niet dat er een knop is, maar dat er géén tweede waarheid
+   ontstaat: het pad staat in scene.js, de app leest het uit SCHERMKUNST in
+   index.html, en de studio schrijft precies dát blok. Zou de studio een eigen
+   lijstje bijhouden, dan zie je in de studio iets anders dan op een telefoon --
+   en dan is een voorbeeld erger dan geen voorbeeld. */
+zaak('I · de schermtekeningen', () => {
+  const scene = require('./scene');
+  const beelden = require('./beelden');
+  const app = laadApp();
+
+  ['dress', 'tro'].forEach(sleutel => {
+    const d = scene.SLOTS[sleutel];
+    check(!!d, 'I · scene.js kent de plek "' + sleutel + '"', String(!!d));
+    check(d.pad && /^assets\/bg\/[a-z]+\.webp$/.test(d.pad),
+      'I · met een pad volgens de afspraak', String(d.pad));
+    check(d.schermkunst === sleutel, 'I · en hij wijst naar zijn sleutel in SCHERMKUNST', String(d.schermkunst));
+    check(d.lever[0] / d.lever[1] === scene.SLOTS.landing.lever[0] / scene.SLOTS.landing.lever[1],
+      'I · staand, dezelfde verhouding als het startscherm', d.lever.join('×'));
+    check(beelden.magSchrijven(d.pad), 'I · de studio mag hem schrijven', d.pad);
+    // de naam van het bestand moet ook herkend worden als hij in incoming/ ligt
+    check(scene.classify(d.canoniek) === sleutel,
+      'I · en de canonieke naam wijst naar deze plek', d.canoniek + ' -> ' + scene.classify(d.canoniek));
+  });
+
+  /* De app kent het blok, en hij staat standaard uit. Dat tweede is geen detail:
+     zolang er geen tekening ligt hóórt de kleedkamer de gedeelde schil te houden,
+     en niet een url() naar een bestand dat er niet is. */
+  check(app.SCHERMKUNST && typeof app.SCHERMKUNST === 'object',
+    'I · index.html heeft een SCHERMKUNST-blok', JSON.stringify(app.SCHERMKUNST));
+  Object.keys(app.SCHERMKUNST).forEach(k =>
+    check(app.SCHERMKUNST[k] === null || /^assets\/bg\//.test(app.SCHERMKUNST[k]),
+      'I · "' + k + '" is null of een pad in assets/bg/', String(app.SCHERMKUNST[k])));
+
+  /* De markeringen waar de studio tussen schrijft, en de klasse waar het
+     stijlblad op mikt. Verdwijnt een van de twee, dan schrijft de studio in het
+     niets of laadt de app niets -- allebei stil, dus allebei hier vastgelegd. */
+  check(INDEX.indexOf('/* SCHERMKUNST-BEGIN') >= 0 && INDEX.indexOf('/* SCHERMKUNST-EINDE */') >= 0,
+    'I · de markeringen staan in index.html', 'een van de twee ontbreekt');
+  check(/#screen-dress\.kunst\.app-sfeer::before/.test(INDEX)
+    && /#screen-trophies\.kunst\.app-sfeer::before/.test(INDEX),
+    'I · en het stijlblad mikt op .kunst', 'de regel ontbreekt');
+  check(/--kunst-sluier/.test(INDEX.slice(INDEX.indexOf('#screen-dress.kunst'), INDEX.indexOf('#screen-dress.kunst') + 400)),
+    'I · met de sluier eronder — anders is geen kaartje meer leesbaar', 'geen sluier');
+
+  /* En de kandidaatopmaak is dezelfde als de productieregel. Hier zit de hele
+     belofte van "wat je ziet is wat je krijgt" in: zelfde uitsnede, zelfde
+     sluier, zelfde masker. */
+  const kand = scene.css({ dress: 'blob:test' }, { scrim: true });
+  check(/#screen-dress\.app-sfeer::before/.test(kand), 'I · de kandidaat mikt op dezelfde ::before', kand.slice(0, 80));
+  check(/background-size:cover,cover/.test(kand.replace(/\s/g, '')),
+    'I · en snijdt bij als cover, net als de app', kand.slice(0, 200));
+  check(/mask-image/.test(kand), 'I · met hetzelfde masker', 'geen masker');
+
+  // cssJs() moet in een pagina te draaien zijn; anders staat de studio met lege handen
+  const fn = new Function(scene.cssJs() + '; return css;')();
+  check(fn({ dress: 'x' }) === scene.css({ dress: 'x' }),
+    'I · cssJs levert dezelfde opmaak als css zelf', 'ze lopen uiteen');
+});
+
+/* ---- J: de servicewerker staat uit in het kijkvak ------------------------
+   De storing die hier onder ligt was stil en duur, dus hij krijgt een eigen zaak.
+
+   sw.js bewaart alles onder /assets/ voorraad-eerst en laat bij het opzoeken het
+   stuk achter de ? weg (zie sleutel()). Dat is in productie precies goed -- een
+   tekening van 300 kB hoort niet bij elke uitgave opnieuw over de telefoondata
+   van een gezin -- maar het betekent ook dat géén enkel ?v= er langs komt.
+
+   Zet je de servicewerker dus níét uit in het kijkvak, dan is een vervangen
+   tekening onzichtbaar: niet na een herlaadbeurt, niet met een nieuwe ?v=, nooit.
+   En omdat zijn bereik '/' is bedient hij dan ook de studiopagina zelf, dus zelfs
+   het voorbeeldje op het kaartje bleef het oude beeld tonen. Je verving het
+   startscherm, de studio zei "Gewijzigd", en je keek naar de vorige tekening.
+
+   Het uitzetten stond in panel() ná de terugkeer voor het kijkvak, en werd daar
+   dus overgeslagen. Vandaar deze volgordecontrole: het uitzetten hóórt vóór élke
+   return te staan. */
+zaak('J · de servicewerker staat uit in het kijkvak', () => {
+  const bron = fs.readFileSync(path.resolve(__dirname, 'preview.js'), 'utf8');
+  const a = bron.indexOf('navigator.serviceWorker.getRegistrations()');
+  const b = bron.indexOf('if (window.top !== window.self)');
+  check(a >= 0, 'J · panel() schrijft de servicewerker uit', String(a));
+  check(b >= 0, 'J · en heeft een aparte tak voor het kijkvak', String(b));
+  check(a >= 0 && b >= 0 && a < b,
+    'J · het uitzetten staat vóór die tak — anders blijft hij in het kijkvak staan',
+    'uitzetten op ' + a + ', de tak op ' + b);
+  check(/caches\.delete\('rekenpop-art'\)/.test(bron),
+    'J · en de tekeningenvoorraad gaat weg — uitschrijven alleen is niet genoeg',
+    'geen caches.delete');
+
+  /* De aanname waar dit allemaal op rust, uit sw.js zelf: de sleutel is het pad
+     zónder de query. Verandert dat ooit, dan mag deze zaak opnieuw bekeken
+     worden -- maar dan is het een bewuste wijziging en geen verrassing. */
+  const sw = fs.readFileSync(path.resolve(__dirname, '..', 'sw.js'), 'utf8');
+  check(/function sleutel\(url\) \{ return url\.origin \+ url\.pathname; \}/.test(sw),
+    'J · sw.js bewaart op het pad, zonder de query', 'sleutel() is veranderd');
+
+  /* En de studiopagina ruimt een registratie uit een oudere sessie zelf op. Zonder
+     dat blijft wie hem één keer had er last van houden, ook na deze oplossing. */
+  const pagina = hub.pagina({ adres: 'x', lan: null });
+  check(/getRegistrations\(\)/.test(pagina) && /unregister\(\)/.test(pagina),
+    'J · de studiopagina schrijft er zelf ook een uit', 'doet hij niet');
+});
+
 // ---- F: de snelkoppeling ------------------------------------------------
 zaak('F · de snelkoppeling', () => {
   /* Wat hier fout kan gaan is dom en stil: een snelkoppeling die naar een
@@ -302,6 +411,16 @@ zaak('F · de snelkoppeling', () => {
      dan weet je niet of de studio stuk is of de snelkoppeling. */
   const metSpatie = { root: '/pad met spatie/reken-popsterren', node: '/usr/local/bin node/node' };
   for (const plat of ['darwin', 'win32', 'linux']) {
+    /* Er komen er twee: eentje die start wat er staat, en eentje die eerst het
+       nieuwste ophaalt. Dat tweede is waar dit ooit op stukliep -- je startte de
+       studio van vorige week en zocht waarom je wijziging er niet in zat. */
+    const beide = snelkoppeling.maakAlle(plat);
+    check(beide.length === 2, 'F · ' + plat + ' · er zijn er twee', String(beide.length));
+    check(/\(nieuwste\)/.test(beide[1].naam), 'F · ' + plat + ' · en de tweede heet ernaar', beide[1].naam);
+    check(/--naar=vraag/.test(beide[1].inhoud),
+      'F · ' + plat + ' · die vraagt waarheen (main of een PR)', beide[1].naam);
+    check(!/--naar/.test(beide[0].inhoud),
+      'F · ' + plat + ' · en de gewone verzet je werkmap niet', beide[0].naam);
     const s = snelkoppeling.maak(plat);
     check(s.naam.indexOf('Rekensterren Studio') === 0, 'F · ' + plat + ' · heeft een leesbare naam', s.naam);
     check(s.inhoud.indexOf(snelkoppeling.ROOT) >= 0, 'F · ' + plat + ' · wijst naar déze kloon', s.naam);
@@ -329,6 +448,22 @@ zaak('F · de snelkoppeling', () => {
   check(linux.inhoud.indexOf('[Desktop Entry]') === 0, 'F · linux · begint met [Desktop Entry]',
     linux.inhoud.slice(0, 40));
   check(/\nTerminal=true/.test(linux.inhoud), 'F · linux · in een terminal, zodat Ctrl-C hem stopt', 'nee');
+  /* De vraag komt uit node en niet uit de shell: een .desktop-bestand heeft geen
+     plek voor een "lees een antwoord"-tak, en die er met sh -c in wringen is
+     precies de quoting-ellende waar de kop van snelkoppeling.js voor waarschuwt. */
+  const linuxNieuw = snelkoppeling.maakAlle('linux')[1];
+  check(/Terminal=true/.test(linuxNieuw.inhoud) && !/sh -c/.test(linuxNieuw.inhoud),
+    'F · linux · de vraag komt uit node, niet uit een shell-tak', linuxNieuw.inhoud.slice(0, 120));
+
+  /* En preview.js kent de vlag ook werkelijk. Een snelkoppeling met een vlag die
+     de server negeert is precies het soort stille storing dat deze suite hoort te
+     vangen: hij start, hij doet het niet, en niemand ziet waarom. */
+  const prev = fs.readFileSync(path.resolve(__dirname, 'preview.js'), 'utf8');
+  check(/--naar/.test(prev), 'F · preview.js kent --naar', 'de vlag ontbreekt');
+  check(/function naarBron/.test(prev) && /versie\.wissel/.test(prev),
+    'F · en wisselt langs versie.wissel, die op open werk weigert', 'niet langs wissel');
+  check(/poortVrij/.test(prev),
+    'F · en wisselt niet onder een draaiende studio vandaan', 'geen poortcontrole');
 });
 
 /* Wisselen mag nooit werk weggooien. Dat is de belangrijkste belofte van de hele
