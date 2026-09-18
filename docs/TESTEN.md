@@ -33,6 +33,7 @@ npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
+npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
 ```
 
 `npm run check` heeft geen `node_modules` nodig: het draait op kaal Node. Wie
@@ -219,6 +220,32 @@ die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
 - een oude save met podia houdt ze (en haar diamanten), maar ziet ze nergens in
   de winkel terug.
 
+### `test/hub.test.js` — de Dev Studio
+
+Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
+`DEV-STUDIO.md`. Vier beloftes:
+
+- **elke knop levert een URL op die het spel wérkelijk begrijpt** — de vlaggen in
+  `test/scenario.js` worden nagelopen tegen de `dbg.get(...)`-lijst in
+  `index.html`, de schermnamen tegen de `go`-tabel en de standen tegen
+  `zetKijkstand`. Een knop met een vlag die niemand leest doet niets, en dat merk
+  je anders pas als je naar het verkeerde scherm staat te kijken;
+- **en die URL zet het spel in de stand die op de knop staat** — vers, op slot,
+  halverwege, bijna, uit, perfect en alles, elk nagerekend op `p.stars`, `p.level`
+  en wat `frontierWorld()` daarvan maakt;
+- **kijken kost nooit een save** — na elke voorkeuze wordt `save()` aangeroepen en
+  moet de opslag leeg blijven;
+- **de snelkoppeling start déze kloon** — het bestand dat `npm run snelkoppeling`
+  op je bureaublad zet, wordt voor alle drie de platformen nagekeken: wijst het
+  naar deze map en deze node, start het de server met `--open`, en breekt een
+  spatie in het pad niets;
+- **de versieregel zegt eerlijk wat er draait**, en **een wissel weigert als er
+  werk openstaat** (dat laatste alleen als je werkmap op dat moment vuil is —
+  de suite checkt nooit zelf iets uit);
+- **het wereldoverzicht komt uit het spel zelf** — naam, id, shownummers, trofee
+  en beloning komen uit `WORLDS` en `worldForIndex`, en een kapotte beloning of
+  een ontbrekende tekening wordt gezien.
+
 ### `test/studio.test.js` — de wereldstudio
 
 Een browsersuite over het gereedschap achter `?debug&mapedit` (zie
@@ -237,6 +264,9 @@ gezin:
 - **de standen zijn de échte standen** van het spel (`p.stars`, `p.level`), geen
   nagemaakte studioplaatjes;
 - **de controle loopt álle werelden na** en zegt erbij waar je het oplost;
+- **elke knop van de Dev Studio komt ergens uit** — elke voorkeuze en elk scherm
+  uit `test/scenario.js` wordt één keer geopend in een echte browser: er moet een
+  scherm staan, de console moet stil blijven, en er mag níéts zijn opgeslagen;
 - **een beeld telt mee als verandering** (fase 7A) — een tekening gaat meteen naar
   schijf, maar hij hoort wél in "Wat verandert er" en in het chipje bovenin te
   staan, of het nu een wereldkaart is of het startscherm. De lijst komt van

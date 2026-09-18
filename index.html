@@ -15349,8 +15349,13 @@ syncBackGuard();
                         er niets weggeschreven. Om een kaart of een overgang op
                         een telefoon te bekijken zonder er eerst naartoe te
                         spelen.
+   &stand=<naam>     -- wát er in die wereld al gebeurd is. Zonder deze vlag is
+                        dat 'vers'. Zie zetKijkstand hieronder voor de zes.
+   &diamanten=<n>    -- de beurs op n zetten (koopstroom nakijken zonder sparen)
    &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
-   &screen=<naam>    -- spring meteen naar map | reis | dress | tro | game | end
+   &screen=<naam>    -- spring meteen naar profile | map | reis | dress | tro |
+                        game | end | ouder
+   &nieuw            -- samen met &mapedit: open meteen "een wereld erbij"
    &mapedit          -- wereldstudio: een wereld maken en nakijken op de echte
                         kaart -- tekening, kleuren, beloning, haltes en weg --
                         en het blok terugschrijven naar WORLDS (zie
@@ -15406,25 +15411,17 @@ if (location.search.indexOf('debug') !== -1) {
        Kijken mag alles, veranderen niets -- een kijkvlag hoort nooit een save te
        kunnen kosten. */
     const wereld = Number(dbg.get('wereld'));
-    if (wereld >= 1) {
-      demoStand = true;
-      const n = Math.max(0, Math.min(Math.round(wereld), WORLD_AVAIL) - 1);
-      const p = P();
-      p.stars = {};
-      p.worldsSeen = [];
-      for (let i = 0; i <= n; i++) {
-        if (i < n) for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) p.stars[l] = 3;
-        p.worldsSeen.push(WORLDS[i].id);
-      }
-      p.level = WORLD_START[n];
-      viewWorldIdx = null;
-    }
+    const stand = dbg.get('stand');
+    if (wereld >= 1 || stand) zetKijkstand(wereld >= 1 ? wereld : 1, stand || 'vers');
+    const munten = dbg.get('diamanten');
+    if (munten != null && munten !== '') { demoStand = true; P().diamonds = Math.max(0, Number(munten) || 0); }
     const forced = dbg.get('stage');
     if (forced && item(forced)) {
       if (!P().owned.includes(forced)) P().owned.push(forced);
       P().equipped.stage = forced;
     }
     const go = { map: goMap, dress: openKleedkamer, tro: openTrophies,
+                 profile: goProfiles, ouder: () => { goMap(); openSettings(); },
                  reis: () => { goMap(); openReis(); },
                  game: () => startLevel(P().level),
                  end: () => { startLevel(P().level); endLevel(true); } };
@@ -15433,6 +15430,88 @@ if (location.search.indexOf('debug') !== -1) {
   if (dbg.get('fit')) fitVenster(dbg.get('fit'));
   if (dbg.has('mapedit') && cur) startMapEdit();
 }
+/* ---- Kijkstanden (?debug&wereld=n&stand=...) --------------------------------
+   Een spel in een representatieve stand zetten zónder ernaartoe te spelen. Dat
+   is het halve werk bij het nakijken van een wereld: een kaart met alles op slot
+   ziet er anders uit dan diezelfde kaart met overal drie sterren, en je hoort
+   allebei te zien vóórdat een wereld naar main gaat.
+
+   Er wordt hier níéts nagebouwd. De stand is p.stars en p.level, precies de twee
+   dingen die het spel zelf opslaat; alles wat een scherm daarna toont (welke
+   wereld open is, waar de pop staat, welke badge er hangt) leidt het spel er zelf
+   uit af. Een kijkstand kan dus nooit iets tonen dat in een echt spel onmogelijk
+   is -- en dat is de enige reden dat kijken hier iets waard is.
+
+   De zes standen, allemaal ín wereld n:
+     slot        de wereld ervóór is nog niet uit, dus deze is dicht
+     vers        hier net aangekomen, halte 1 is aan de beurt
+     halverwege  drie shows gedaan, de vierde is aan de beurt
+     bijna       alles op één show na -- speel die uit voor de wereldovergang
+     uit         elke show gespeeld, twee sterren
+     perfect     elke show op drie sterren
+   En één die over de hele reis gaat:
+     alles       elke uitgebrachte wereld perfect (de toegift-stand)
+
+   Bij drie van de zes (slot, uit, perfect) ligt de grens van de voortgang niet
+   ín wereld n, en dan zou de kaart bij het openen ergens anders uitkomen -- op
+   de wereld waar het kind "hoort" te zijn. Je wilde juist wereld n zien, in die
+   stand. Daarom zetten die drie reisDoel: dezelfde weg die de Werelden-lijst
+   gebruikt als je daar een wereld aantikt. Kijken, geen voortgang -- goMap
+   verbruikt het bij het eerstvolgende openen en daarna is alles weer gewoon.
+
+   De opslag gaat op slot (demoStand): kijken mag alles, veranderen niets. Ook op
+   de échte ster van een echt kind wordt er hierna niets weggeschreven. */
+function zetKijkstand(wereld, stand) {
+  demoStand = true;
+  const p = P();
+  const laatste = WORLD_AVAIL - 1;
+  const n = Math.max(0, Math.min(Math.round(wereld) - 1, laatste));
+  p.stars = {};
+  p.worldsSeen = [];
+  const vul = (i, ster) => {
+    for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) p.stars[l] = ster;
+  };
+  /* 'alles' is geen stand ín een wereld maar een stand van de reis: alles uit,
+     overal drie sterren. Dan is er geen grens meer en speelt het spel toegift. */
+  if (stand === 'alles') {
+    for (let i = 0; i <= laatste; i++) { vul(i, 3); p.worldsSeen.push(WORLDS[i].id); }
+    p.level = WORLD_LAST + 1;
+    viewWorldIdx = null;
+    return;
+  }
+  /* Op slot: de wereld ervóór moet juist níét uit zijn, anders staat deze open.
+     In de eerste wereld valt er niets vóór; die is nooit op slot. */
+  if (stand === 'slot' && n > 0) {
+    for (let i = 0; i < n - 1; i++) vul(i, 3);
+    const vorige = n - 1;
+    for (let l = WORLD_START[vorige]; l < WORLD_START[vorige] + WORLDS[vorige].levels - 1; l++) p.stars[l] = 3;
+    p.level = WORLD_START[vorige] + WORLDS[vorige].levels - 1;
+    for (let i = 0; i <= vorige; i++) p.worldsSeen.push(WORLDS[i].id);
+    viewWorldIdx = null;
+    reisDoel = n;                           // laat wéér wereld n zien, nu op slot
+    return;
+  }
+  // Alles vóór wereld n is uit; dat is de enige samenhangende manier om hier te staan.
+  for (let i = 0; i < n; i++) vul(i, 3);
+  for (let i = 0; i <= n; i++) p.worldsSeen.push(WORLDS[i].id);
+  const eerste = WORLD_START[n], len = WORLDS[n].levels;
+  if (stand === 'perfect' || stand === 'uit') {
+    vul(n, stand === 'perfect' ? 3 : 2);
+    p.level = eerste + len;
+    reisDoel = n;                           // de grens ligt verderop; kijk hier
+  } else if (stand === 'bijna') {
+    for (let l = eerste; l < eerste + len - 1; l++) p.stars[l] = 3;
+    p.level = eerste + len - 1;
+  } else if (stand === 'halverwege') {
+    const tot = Math.min(3, len - 1);
+    for (let l = eerste; l < eerste + tot; l++) p.stars[l] = 2 + (l % 2);
+    p.level = eerste + tot;
+  } else {
+    p.level = eerste;                       // 'vers', en de terugval voor een onbekende naam
+  }
+  viewWorldIdx = null;
+}
+
 /* Een voorbeeldvenster op ware toestelmaat. window.open zet de BUITENmaat, en een
    browser mag daar een minimum op leggen -- dan kijk je naar een venster dat breder
    is dan de telefoon die je wilde zien, en dus naar de verkeerde opmaak. Hier
@@ -17598,6 +17677,13 @@ function startMapEdit() {
   viewWorldIdx = Math.min(worldFor(P().level).index, WORLDS.length - 1);
   goWorld(viewWorldIdx);
   zetToestel(toestelKiezer.value);
+
+  /* &nieuw -- meteen in "een wereld erbij". De ontwikkelstudio (npm run studio)
+     heeft een knop "Wereld toevoegen", en die hoort hier uit te komen en niet in
+     een tweede formulier: het maken van een wereld gebeurt óp de kaart, en dit
+     paneel is die plek al. Eén vlag scheelt dus een heel tweede begrip van
+     "nieuwe wereld" dat met dit paneel uit de pas zou lopen. */
+  if (new URLSearchParams(location.search).has('nieuw')) F('st-new').click();
 }
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

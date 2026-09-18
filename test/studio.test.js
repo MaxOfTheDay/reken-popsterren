@@ -18,6 +18,8 @@
  *   F  de controle kijkt álle werelden na en zegt erbij wáár je het oplost
  *   G  hij bewaart een concept apart van het spel: een half afgemaakte wereld kan
  *      nooit bij een kind terechtkomen
+ *   I  de standen en schermen waar de Dev Studio knoppen voor heeft, openen ook
+ *      echt -- en schrijven niets weg
  *
  * Draaien:
  *   npm run test:studio        (of: npm test voor alle suites)
@@ -350,6 +352,52 @@ function check(ok, label, detail) {
       'H · een wereld én een beeld tellen samen op', uit.chip);
     check(uit.diff.indexOf('Andere naam') >= 0 && uit.diff.indexOf('assets/bg/landing.webp') >= 0,
       'H · allebei staan ze in "Wat verandert er"', uit.diff.slice(0, 240));
+    await ctx.close();
+  }
+
+  /* ---- I: elke knop van de Dev Studio komt ergens uit ---------------------
+   * De studiopagina (test/hub.js) is een rij knoppen die niets anders doen dan
+   * een URL openen. test/hub.test.js kijkt na of die URL's kloppen tegen wat
+   * index.html leest, maar dat is papierwerk: het bewijst niet dat er ook echt
+   * een scherm opengaat. Dat is wat hier gebeurt -- elke voorkeuze en elk
+   * scherm één keer openen in een echte browser, en kijken of er een scherm
+   * staat, of de console stil blijft, en of er niets is opgeslagen.
+   *
+   * Dat laatste is de belangrijkste: alles hier draait op ?debug&demo en dát
+   * hoort de opslag te grendelen. Zou die grendel ooit wegvallen, dan zou een
+   * middagje standen doorklikken de voortgang van een echt kind overschrijven.
+   *
+   * Over file://, want deze URL's hebben geen server nodig. */
+  {
+    const sc = require('./scenario.js');
+    const basis = APP_URL.replace(/\?debug$/, '');
+    const gevallen = [
+      ...sc.VOORKEUZES.map(v => ({ naam: v.label, url: sc.url(sc.vul(v, 3), basis) })),
+      ...sc.SCHERMEN.map(s => ({ naam: 'scherm ' + s.id,
+        url: sc.url({ wereld: 3, stand: 'halverwege', screen: s.id }, basis) })),
+    ];
+    const ctx = await browser.newContext({ viewport: { width: 412, height: 920 } });
+    await cacheFonts(ctx);
+    for (const g of gevallen) {
+      const page = await ctx.newPage();
+      const fout = [];
+      page.on('pageerror', e => fout.push(e.message));
+      page.on('console', m => {
+        if (m.type() === 'error' && !/404|ERR_FILE_NOT_FOUND|ERR_CONNECTION_RESET/.test(m.text())) {
+          fout.push(m.text());
+        }
+      });
+      await page.goto(g.url);
+      await page.waitForTimeout(900);
+      const st = await page.evaluate(() => ({
+        scherm: (document.querySelector('.screen.active') || {}).id || null,
+        bewaard: !!localStorage.getItem('rekenPopsterren'),
+      }));
+      check(!!st.scherm && !fout.length, 'I · "' + g.naam + '" opent een scherm',
+        String(st.scherm) + ' ' + fout.slice(0, 2).join(' | '));
+      check(st.bewaard === false, 'I · "' + g.naam + '" schrijft niets weg', String(st.bewaard));
+      await page.close();
+    }
     await ctx.close();
   }
 
