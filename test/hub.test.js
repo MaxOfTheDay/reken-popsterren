@@ -9,6 +9,7 @@
  *   B  en die URL zet het spel in de stand die op de knop staat
  *   C  de regel bovenin zegt eerlijk wat er draait (tak, commit, open werk)
  *   D  het wereldoverzicht komt uit het spel zelf, niet uit een tweede lijst
+ *   F  de snelkoppeling op het bureaublad start deze kloon, met deze node
  *
  * De reden voor A: een knop met een vlag die index.html niet kent doet niets, en
  * dat merk je pas als je staat te kijken naar een scherm dat er anders uitziet
@@ -24,6 +25,7 @@ const scenario = require('./scenario');
 const versie = require('./versie');
 const werelden = require('./werelden');
 const hub = require('./hub');
+const snelkoppeling = require('./snelkoppeling');
 
 const INDEX = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
 
@@ -213,6 +215,43 @@ zaak('E · de pagina', () => {
     const b = scenario.url(scenario.vul(v, 4));
     check(a === b, 'E · de pagina bouwt dezelfde URL als scenario.js voor "' + v.label + '"', a + ' vs ' + b);
   });
+});
+
+// ---- F: de snelkoppeling ------------------------------------------------
+zaak('F · de snelkoppeling', () => {
+  /* Wat hier fout kan gaan is dom en stil: een snelkoppeling die naar een
+     andere kloon wijst, of die stukloopt omdat er een spatie in het pad staat
+     ("C:\\Users\\Voor Naam\\..."). Je merkt het pas bij het dubbelklikken, en
+     dan weet je niet of de studio stuk is of de snelkoppeling. */
+  const metSpatie = { root: '/pad met spatie/reken-popsterren', node: '/usr/local/bin node/node' };
+  for (const plat of ['darwin', 'win32', 'linux']) {
+    const s = snelkoppeling.maak(plat);
+    check(s.naam.indexOf('Rekensterren Studio') === 0, 'F · ' + plat + ' · heeft een leesbare naam', s.naam);
+    check(s.inhoud.indexOf(snelkoppeling.ROOT) >= 0, 'F · ' + plat + ' · wijst naar déze kloon', s.naam);
+    check(s.inhoud.indexOf(process.execPath) >= 0, 'F · ' + plat + ' · met de node die dit draait', s.naam);
+    check(/preview\.js/.test(s.inhoud) && /--open/.test(s.inhoud),
+      'F · ' + plat + ' · start de server en opent het venster', s.naam);
+    /* Een terugval op gewoon "node" als dat pad er ooit niet meer is. Alleen in
+       de twee scriptjes: een .desktop-bestand heeft geen tak voor "anders dit"
+       (zie de kop van test/snelkoppeling.js). */
+    if (plat !== 'linux') {
+      check(/\bnode\b/.test(s.inhoud.replace(process.execPath, '')),
+        'F · ' + plat + ' · met een terugval op gewoon "node"', s.naam);
+    }
+
+    const sp = snelkoppeling.maak(plat, metSpatie);
+    const regels = sp.inhoud.split(/\r?\n/).filter(r => r.indexOf(metSpatie.root) >= 0);
+    // elk pad met een spatie erin staat tussen aanhalingstekens -- behalve in de
+    // velden van een .desktop-bestand die geen opdrachtregel zijn (Path=, Icon=)
+    const losse = regels.filter(r => !/^(Path|Icon)=/.test(r))
+      .filter(r => !new RegExp('"[^"]*' + metSpatie.root.replace(/[/]/g, '\\/') + '[^"]*"').test(r));
+    check(losse.length === 0, 'F · ' + plat + ' · een spatie in het pad breekt niets', losse.join(' | '));
+  }
+  // en de .desktop is een geldig bureaubladbestand
+  const linux = snelkoppeling.maak('linux');
+  check(linux.inhoud.indexOf('[Desktop Entry]') === 0, 'F · linux · begint met [Desktop Entry]',
+    linux.inhoud.slice(0, 40));
+  check(/\nTerminal=true/.test(linux.inhoud), 'F · linux · in een terminal, zodat Ctrl-C hem stopt', 'nee');
 });
 
 /* Wisselen mag nooit werk weggooien. Dat is de belangrijkste belofte van de hele

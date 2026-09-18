@@ -23,6 +23,7 @@
     "shots": "node test/shots.js",
     "try": "node test/try.js",
     "studio": "node test/preview.js --open",
+    "snelkoppeling": "node test/snelkoppeling.js",
     "preview": "node test/preview.js",
     "test:hub": "node test/hub.test.js"
   },

@@ -23,6 +23,7 @@ woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
 
 ```
 npm run studio                 # de Dev Studio — http://localhost:8099/studio
+npm run snelkoppeling          # zet er een icoontje voor op je bureaublad
 open index.html                # het spel, zonder meer
 npm install                    # alleen nodig voor de browsertests
 npm run check                  # de keuringen (Node, ± 2 seconden)

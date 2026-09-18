@@ -38,6 +38,33 @@ npm run studio      de studio, en hij opent zelf een venster
 npm run preview     hetzelfde, zonder venster (handig in een tweede terminal)
 ```
 
+### Nog makkelijker: een icoontje op je bureaublad
+
+```
+npm run snelkoppeling
+```
+
+Eén keer. Daarna staat er **Rekensterren Studio** op je bureaublad: dubbelklik
+en de server start én het venster gaat open. Draait er al een studio, dan opent
+hij gewoon dat venster in plaats van te klagen.
+
+Het icoontje weet waar jóúw kloon staat en welke node je hebt, dus:
+
+* verplaats je de projectmap, of werk je node bij → `npm run snelkoppeling`
+  opnieuw, en hij klopt weer;
+* weggooien mag altijd; er gaat niets verloren.
+
+De eerste keer:
+
+* **macOS** — macOS kan zeggen dat het bestand van een onbekende maker is.
+  Rechtermuisknop → *Open*, dan nog één keer op *Open*. Daarna nooit meer.
+* **Linux** — zegt je bureaublad "niet vertrouwd", dan: rechtermuisknop →
+  *Allow launching*.
+* **Windows** — dubbelklikken is genoeg.
+
+Sluit de studio met **Ctrl-C** in het venster dat erbij opengaat, of doe dat
+venster gewoon dicht.
+
 Rechtsboven staat altijd wat er draait:
 
 ```

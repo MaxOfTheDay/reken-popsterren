@@ -542,8 +542,19 @@ async function api(req, res, url) {
 
 process.on('uncaughtException', e => {
   if (e && e.code === 'EADDRINUSE') {
+    /* Er draait er al een. Kwam je hier via de snelkoppeling op je bureaublad
+       (--open), dan is "de studio openen" precies wat je bedoelde -- dan is een
+       tweede server niet nodig en een foutmelding gewoon verkeerd. Dubbelklikken
+       terwijl hij al draait hoort het venster te openen, niet te klagen. */
+    const studio = 'http://localhost:' + PORT + '/studio';
+    if (process.argv.indexOf('--open') >= 0) {
+      console.log('\n  Er draait hier al een studio — ik open dat venster.\n  ' + studio + '\n');
+      openBrowser(studio);
+      setTimeout(() => process.exit(0), 1500);
+      return;
+    }
     console.error('\n  Poort ' + PORT + ' is al bezet — er draait waarschijnlijk al een studio.'
-      + '\n  Open http://localhost:' + PORT + '/studio, of start met een andere poort:'
+      + '\n  Open ' + studio + ', of start met een andere poort:'
       + '\n      PORT=8100 npm run studio\n');
     process.exit(1);
   }
