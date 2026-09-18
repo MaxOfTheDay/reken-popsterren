@@ -171,6 +171,11 @@ const BRUG = `globalThis.__api = {
   get cur() { return cur; },
   // werelden en voortgang
   item, itemOr, worldReleased, rebuildWorldStarts, rebuildWorldBadges,
+  // de studio: id/pad uit een naam, en de controle die zegt wat er mis is.
+  // Staan hier omdat het uitspraken over een wereld zijn en geen paneelwerk --
+  // test/werelden.js kijkt er de werelden mee na zonder een browser te openen.
+  wereldId, vrijWereldId, wereldArtPad, wereldControle, worldsSource, ZONE,
+  worldNodes, worldCurve, WORLD_DRAFT_KEY,
   worldFor, worldForIndex, worldProgress, worldAvailable, worldDone,
   frontierWorld, allWorldsDone, continueWorld, hereLevel,
   laatsteZichtbareWereld, meerWereldenVooruit, worldSeen, markWorldSeen,

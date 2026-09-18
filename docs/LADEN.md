@@ -137,11 +137,19 @@ nodig en er gaat geen voortgang verloren: de opslag van een speler staat in
 ## Zelf nameten
 
 ```
-npm run preview                     # http://localhost:8099 — de app over http
+npm run studio                      # http://localhost:8099/studio — de Dev Studio
+npm run preview                     # dezelfde server, zonder venster
 ```
 
-De service worker draait alleen over http(s), niet over `file://`. In de
-ontwikkelaarsgereedschappen van Chrome:
+De service worker draait alleen over http(s), niet over `file://`. **De
+voorbeeldserver zet hem met opzet uit**, anders zou je na elke wijziging naar een
+oude versie uit de cache zitten kijken. Wil je hem juist wél — om het bijwerken
+na te kijken — zet dan `&sw` in de URL, of gebruik in de Dev Studio de knop
+*Gereedschap → Met servicewerker*. Daarnaast staan daar *Servicewerker-stand*
+(wat er nu geregistreerd is en welke caches er zijn) en *Maak schoon* (opslag,
+cache en registratie weg, en herladen).
+
+In de ontwikkelaarsgereedschappen van Chrome:
 
 * **Application → Service Workers** — welke versie er staat, *Offline* aanvinken
   om de terugval te zien.
