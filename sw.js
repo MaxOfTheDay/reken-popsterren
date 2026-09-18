@@ -9,7 +9,8 @@
  *                          omhoog. Gaat hij wél omhoog, dan wordt de oude
  *                          voorraad bij het activeren opgeruimd.
  *
- *   TEKENINGEN (rekenpop-art)  assets/: de wereldkaarten, ~300 kB per stuk.
+ *   TEKENINGEN (rekenpop-art)  assets/: de wereldkaarten (~300 kB per stuk), het
+ *                          schilderij achter de sterrenkeuze en het spelogo.
  *                          Cache-eerst, en de naam verandert níét bij een
  *                          uitgave. Dat is het punt: een tekstwijziging in het
  *                          spel hoort geen twee megabyte tekeningen opnieuw over
@@ -29,7 +30,8 @@
 const CACHE = 'rekenpop-v46';
 const ART_CACHE = 'rekenpop-art';
 const HUIDIG = [CACHE, ART_CACHE];
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const ASSETS = ['./', './index.html', './manifest.json',
+                './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 /* Hoe lang de schil op het net wacht voordat hij de bewaarde versie pakt. Een
    telefoon met één streepje laat een fetch minutenlang openstaan; zonder deze
    grens staat een kind naar een wit scherm te kijken terwijl het hele spel al op
@@ -125,6 +127,14 @@ self.addEventListener('message', e => {
   if (!Array.isArray(lijst) || !lijst.length) return;
   const houden = new Set(lijst.map(p => new URL(p, self.location.href).pathname));
   e.waitUntil(caches.open(ART_CACHE).then(c => c.keys().then(reqs => Promise.all(
-    reqs.filter(r => !houden.has(new URL(r.url).pathname)).map(r => c.delete(r))
+    // Alleen bínnen assets/world/ opruimen. De lijst gaat over werelden -- dat is
+    // wat het spel weet en wat er kan verdwijnen. Alles daarbuiten (het schilderij
+    // achter de sterrenkeuze, het spelogo) staat niet in die lijst en zou er bij
+    // élke start uitgegooid worden: de voorraad zou dan precies de beelden weggooien
+    // die het eerste scherm nodig heeft, en offline stond daar dan niets.
+    reqs.filter(r => {
+      const pad = new URL(r.url).pathname;
+      return pad.includes('/assets/world/') && !houden.has(pad);
+    }).map(r => c.delete(r))
   ))).catch(() => {}));
 });

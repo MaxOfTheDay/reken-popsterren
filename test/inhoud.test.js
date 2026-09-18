@@ -344,7 +344,10 @@ zaak('G', () => {
   const indexBron = process.env.RP_INDEX ? path.resolve(process.env.RP_INDEX) : path.join(WORTEL, 'index.html');
   const indexHtml = fs.readFileSync(indexBron, 'utf8');
   const titel = (indexHtml.match(/<title>([^<]*)<\/title>/) || [, ''])[1];
-  const kop = (indexHtml.match(/<h1 class="title">([^<]*)<\/h1>/) || [, ''])[1];
+  /* De kop van het keuzescherm is een tekening geworden (assets/branding/), dus de
+     naam staat daar in de alt. Dát is waar deze controle over gaat: de naam die een
+     kind ziet -- en een schermlezer voorleest -- hoort dezelfde te zijn. */
+  const kop = (indexHtml.match(/<h1 class="spellogo">[\s\S]*?alt="([^"]*)"/) || [, ''])[1];
   check(titel.includes(NAAM), `G · de tabtitel noemt ${NAAM}`, titel);
   check(kop.trim() === NAAM, `G · de kop van het keuzescherm is ${NAAM}`, kop);
   check(man.name === NAAM, `G · het manifest heet ${NAAM}`, man.name);
@@ -414,6 +417,72 @@ zaak('H', () => {
     check(!hashes[h], `H · ${f} is niet dezelfde tekening als een andere`, hashes[h] || '');
     hashes[h] = f;
   });
+});
+
+/* ================= I · Het merk =================
+   Drie merkbeelden, elk met één meester in assets/branding/source/ en een stel
+   afgeleiden die de app écht laadt. De meesters zijn groot en verliesloos bedoeld;
+   ze staan in de map om een nieuwe afgeleide van te kunnen maken, niet om over de
+   telefoondata van een gezin te gaan.
+
+   Waar dat misgaat, gaat het stil mis: iemand zet het pad van een meester in de
+   opmaak omdat dat de scherpste is, en niemand ziet het -- het beeld klopt, alleen
+   het laden duurt drie keer zo lang. Vandaar deze zaak. */
+zaak('I', () => {
+  const merk = require('./merk.js');
+  const lees = f => fs.readFileSync(path.join(WORTEL, f), 'utf8');
+  const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
+    : lees('index.html');
+  const runtime = bron + lees('sw.js') + lees('manifest.json');
+
+  merk.AFGELEID.forEach(d => {
+    const meester = path.join(merk.BRON, d.bron);
+    check(fs.existsSync(meester), `I · de meester ${d.bron} ligt er`, d.bron);
+    const uit = path.join(WORTEL, d.uit);
+    check(fs.existsSync(uit), `I · en ${d.uit} is ervan gemaakt (npm run merk)`, d.uit);
+    if (!fs.existsSync(uit)) return;
+    const kb = Math.round(fs.statSync(uit).size / 1024);
+    check(kb < 250, `I · ${d.uit} blijft klein genoeg om te laden`, kb + ' kB');
+    check(kb > 3, `I · ${d.uit} is geen lege plaatshouder`, kb + ' kB');
+  });
+
+  /* Alles wat de app óphaalt: elke src=, href= en url() in index.html, plus de
+     iconen uit het manifest en de vooraf-lijst van de service worker. Op de
+     áánvraag kijken en niet op het voorkomen van de tekst, want het pad van een
+     meester mag best in een opmerking of in de studio-uitleg staan -- alleen niet
+     in een regel die hem binnenhaalt. */
+  const gevraagd = [
+    ...[...runtime.matchAll(/(?:src|href)\s*=\s*["']([^"']+)["']/g)].map(m => m[1]),
+    ...[...runtime.matchAll(/url\(\s*["']?([^"')]+)/g)].map(m => m[1]),
+    ...[...lees('sw.js').match(/const ASSETS = \[([^\]]*)\]/)[1]
+         .split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)],
+  ];
+  const meesters = gevraagd.filter(u => u.includes('branding/source'));
+  check(!meesters.length, 'I · geen enkele meester wordt door de app opgehaald', meesters.join(', '));
+
+  /* En wat de app wél ophaalt bestaat. Een spelogo dat 404't laat het startscherm
+     met een lege regel achter waar de naam van het spel hoort te staan. */
+  const genoemd = [...new Set(gevraagd.filter(u => u.startsWith('assets/branding/')))];
+  check(genoemd.length > 0, 'I · de app haalt tenminste één merkbestand op', genoemd.join(', '));
+  genoemd.forEach(f => check(fs.existsSync(path.join(WORTEL, f)),
+    `I · ${f} staat ook echt op schijf`, f));
+
+  /* Het manifest-icoon: één maskeerbaar en minstens één gewoon. Een icoon dat
+     álletwee is (purpose "any maskable") wordt op een Android-launcher bijgesneden
+     én in een browsertab ongesneden getoond -- één van die twee is dan fout. */
+  const man = JSON.parse(lees('manifest.json'));
+  const maskeer = man.icons.filter(i => (i.purpose || '').split(/\s+/).includes('maskable'));
+  const gewoon = man.icons.filter(i => (i.purpose || 'any').split(/\s+/).includes('any'));
+  check(maskeer.length === 1, 'I · het manifest heeft precies één maskeerbaar icoon',
+    maskeer.map(i => i.src).join(', '));
+  check(gewoon.length >= 1 && !gewoon.some(i => maskeer.includes(i)),
+    'I · en de gewone iconen zijn andere bestanden', gewoon.map(i => i.src).join(', '));
+  check(man.icons.some(i => i.sizes === '192x192') && man.icons.some(i => i.sizes === '512x512'),
+    'I · met 192 en 512 erbij', man.icons.map(i => i.sizes).join(', '));
+  /* Het favicon en het iOS-icoon wijzen naar een bestand dat er is. iOS kijkt niet
+     in het manifest, dus die regel is de enige die daar iets over zegt. */
+  [...bron.matchAll(/<link rel="(?:apple-touch-)?icon" href="([^"]+)"/g)].forEach(m =>
+    check(fs.existsSync(path.join(WORTEL, m[1])), `I · ${m[1]} uit de <head> bestaat`, m[1]));
 });
 
 klaar();

@@ -718,9 +718,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
      De aanvragen worden op twee stapels gelegd, en dat onderscheid is de hele
      regel. Wat uit assets/world/ komt is wereldtekening en groeit mee met WORLDS
-     -- dáár gaat deze controle over. Wat daarbuiten ligt is één vast beeld per
-     scherm en groeit nergens in mee; sinds de sterrenkeuze haar schilderij
-     terugkreeg (assets/bg/landing.webp) staat daar er één van.
+     -- dáár gaat deze controle over. Wat daarbuiten ligt is een vast beeld van een
+     scherm en groeit nergens in mee; op de sterrenkeuze zijn dat er twee: het
+     schilderij erachter (assets/bg/landing.webp) en het spelogo erop
+     (assets/branding/wordmark.webp).
 
      Eerder telde de meting álles onder assets/ als wereldtekening, en dus viel
      hij om op dat schilderij: "het startscherm haalt geen enkele wereldtekening
@@ -761,9 +762,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.gehaald.length === 0 && opgehaald.length === 0,
     'het startscherm haalt geen enkele wereldtekening op',
     JSON.stringify(r.gehaald) + ' / ' + JSON.stringify(opgehaald));
-  /* En zijn eigen beeld is er één en blijft er één: het schilderij achter de
-     sterrenkeuze hoort niet mee te groeien met het aantal werelden of kinderen. */
-  check(anders.length <= 1, 'en zijn eigen beeld is er hooguit één',
+  /* En zijn eigen beelden zijn er twee en blijven er twee: het schilderij achter de
+     sterrenkeuze en het logo erop horen niet mee te groeien met het aantal werelden
+     of kinderen. Eén logo per kind zou hier omvallen, en dat is de bedoeling. */
+  check(anders.length <= 2, 'en zijn eigen beelden zijn er hooguit twee',
     r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
 
   await vers.click('.ster-tegel');
@@ -780,7 +782,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(opgehaald.length <= 3 && opgehaald.length >= 1,
     'en de browser vraagt er ook echt niet meer op dan dat',
     r.werelden + ' werelden, over de lijn: ' + JSON.stringify(opgehaald));
-  check(anders.length <= 1, 'en buiten de wereldtekeningen blijft het bij dat ene beeld',
+  check(anders.length <= 2, 'en buiten de wereldtekeningen blijft het bij die twee beelden',
     r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
   /* De tekening van de wereld waar ze op staat hoort erbij te zitten -- anders is
      "hooguit drie" gehaald door er nul op te halen, en dan kijkt ze naar een kaart
