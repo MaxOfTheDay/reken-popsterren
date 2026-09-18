@@ -58,16 +58,29 @@ Eén keer. Daarna staan er **twee** icoontjes op je bureaublad:
 | | |
 |---|---|
 | **Rekensterren Studio** | start wat er nú uitgecheckt staat. Raakt je werkmap niet aan. |
-| **Rekensterren Studio (nieuwste)** | haalt eerst op en vraagt dan waarheen: Enter voor de laatste main, of een PR-nummer. |
+| **Rekensterren Studio (nieuwste)** | haalt eerst op en vraagt dan waarheen. |
 
 Dubbelklik en de server start én het venster gaat open. Draait er al een studio,
 dan opent de eerste gewoon dat venster in plaats van te klagen.
 
 De tweede is er omdat "even de laatste main bekijken" anders drie handelingen is
 die je vergeet — en dan kijk je naar de studio van vorige week en zoek je waarom
-je wijziging er niet in zit. Hij gooit nog steeds niets weg: staat er werk open in
-je werkmap, dan weigert de wissel met een uitleg en start de studio op wat er
-stond, zodat je het in *Open werk* kunt oplossen.
+je wijziging er niet in zit. Hij vraagt het:
+
+```
+  Je staat op claude/landing-nieuw.
+  Waarheen? Enter = de laatste main · h = blijf hier · of een PR-nummer:
+```
+
+**h** is een volwaardig antwoord: hij haalt dan wél op (dat houdt de bronnenlijst
+bij en raakt je werkmap niet aan) maar wisselt niets. Zit je midden in je eigen
+werk, dan is dat het antwoord.
+
+Hij gooit nog steeds niets weg: staat er werk open in je werkmap, dan weigert de
+wissel met een uitleg en start de studio op wat er stond, zodat je het in
+*Open werk* kunt oplossen. En draait er al een studio, dan wisselt hij niets en
+opent hij gewoon dát venster — want dan is "laat me de studio zien" wat je
+bedoelde, en die staat er al.
 
 Zelf een vaste bron in een eigen snelkoppeling? Dat is dezelfde vlag:
 
@@ -75,6 +88,7 @@ Zelf een vaste bron in een eigen snelkoppeling? Dat is dezelfde vlag:
 node test/preview.js --open --naar=main      de laatste main
 node test/preview.js --open --naar=156       PR #156 (losse kop: kijken)
 node test/preview.js --open --naar=een-tak   die tak
+node test/preview.js --open --naar=vraag     vraagt het bij het starten
 node test/preview.js --open                  zoals altijd: wat er staat
 ```
 

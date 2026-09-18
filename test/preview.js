@@ -837,19 +837,35 @@ const server = http.createServer(function (req, res) {
    de studio gewoon op wat er stond -- mét de melding erbij, zodat je het in het
    vak "Open werk" kunt oplossen. En het voegt nooit samen: bijwerken gaat
    fast-forward of niet. */
-function vraagBron() {
+function vraagBron(waarJeStaat) {
   return new Promise(ok => {
     const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
-    rl.question('\n  Welke bron? Enter = de laatste main, of een PR-nummer: ', antwoord => {
+    /* Wáár je staat hoort in de vraag te staan. Zonder dat is "blijf hier" een
+       antwoord op een vraag die je niet gesteld hebt -- je weet niet wat "hier" is
+       als je net een icoontje hebt aangeklikt. */
+    console.log('\n  Je staat op ' + waarJeStaat + '.');
+    rl.question('  Waarheen? Enter = de laatste main \u00b7 h = blijf hier '
+      + '\u00b7 of een PR-nummer: ', antwoord => {
       rl.close();
       ok(String(antwoord || '').trim());
     });
   });
 }
-/* "156" is geen tak maar een PR-nummer -- dat is wat een mens intikt. */
+/* Van wat een mens intikt naar een bron.
+
+   null betekent "blijven staan". Dat antwoord was er niet, en dat was een echte
+   fout: wie midden in zijn eigen werk op dit icoontje klikte kon alleen nog met
+   Ctrl-C ontsnappen. Ctrl-C is veilig (het ophalen en de wissel komen ná de vraag)
+   maar "druk Ctrl-C om niets stuk te maken" is geen antwoordmogelijkheid -- dat is
+   iets wat je moet wéten.
+
+   "156" is geen tak maar een PR-nummer; dat is wat een mens intikt. De rest gaat
+   als taknaam door, met zijn hoofdletters intact -- een tak heet zoals hij heet. */
 function bronNaam(ruw) {
-  const t = String(ruw || '').trim();
-  if (!t || t === 'main' || t === 'true') return 'main';
+  const t = String(ruw == null ? '' : ruw).trim();
+  const k = t.toLowerCase();
+  if (k === 'h' || k === 'hier' || k === 'blijf') return null;
+  if (!t || k === 'main' || k === 'true') return 'main';
   if (/^\d+$/.test(t)) return 'pr/' + t;
   return t;
 }
@@ -888,11 +904,19 @@ async function naarBron(ruw) {
     console.log('\n  Dit is geen git-map, dus er valt niets te wisselen.\n');
     return;
   }
-  const ref = bronNaam(ruw === 'vraag' ? await vraagBron() : ruw);
+  const nu = versie.feiten();
+  const ref = bronNaam(ruw === 'vraag' ? await vraagBron(nu.naam) : ruw);
+  /* Ophalen doen we ook als je blijft staan: `git fetch` raakt de werkmap niet aan
+     en het is precies wat de bronnenlijst in de studio bij houdt. Alleen wisselen
+     slaan we over. */
   console.log('\n  Ophalen…');
   const voor = codeVingerafdruk();
   const opgehaald = await versie.haalOp();
   if (!opgehaald.ok) console.log('  ophalen mislukt (' + opgehaald.tekst + ') — ik probeer het met wat er al was');
+  if (ref === null) {
+    console.log('  Opgehaald. Je blijft op ' + nu.naam + '.\n');
+    return;
+  }
   const r = await versie.wissel(ref);
   if (r.ok) {
     console.log('  ' + r.tekst + '\n');
@@ -928,11 +952,21 @@ function poortVrij(port) {
 async function start() {
   const naar = process.argv.map(a => /^--naar(=(.*))?$/.exec(a)).filter(Boolean)[0];
   if (naar) {
+    /* Draait er al een studio, dan wisselen we niet: dat zou de werkmap onder díé
+       server vandaan verzetten en je naar een half verwisselde versie laten kijken.
+
+       Maar dat is geen reden om te klagen en te stoppen. Wat je bedoelde is "laat
+       me de studio zien", en die staat er al -- dus doen we wat de gewone
+       snelkoppeling ook doet: dat venster openen, met de melding erbij dat er niet
+       gewisseld is. Zo is dit icoontje in élk geval het juiste om aan te klikken. */
     if (!(await poortVrij(PORT))) {
-      console.error('\n  Er draait hier al een studio op poort ' + PORT + '.'
-        + '\n  Een wissel van bron vraagt om een verse server: sluit dat venster eerst'
-        + '\n  (Ctrl-C), en probeer het opnieuw.\n');
-      process.exit(1);
+      const studio = 'http://localhost:' + PORT + '/studio';
+      console.log('\n  Er draait hier al een studio — ik wissel niets en open dat venster.'
+        + '\n  Wil je wél van bron wisselen: sluit dat venster eerst (Ctrl-C).'
+        + '\n  ' + studio + '\n');
+      if (process.argv.indexOf('--open') >= 0) openBrowser(studio);
+      setTimeout(() => process.exit(0), 1500);
+      return;
     }
     await naarBron(naar[2] === undefined ? 'main' : naar[2]);
   }
