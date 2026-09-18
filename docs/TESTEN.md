@@ -235,6 +235,10 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   en wat `frontierWorld()` daarvan maakt;
 - **kijken kost nooit een save** — na elke voorkeuze wordt `save()` aangeroepen en
   moet de opslag leeg blijven;
+- **de snelkoppeling start déze kloon** — het bestand dat `npm run snelkoppeling`
+  op je bureaublad zet, wordt voor alle drie de platformen nagekeken: wijst het
+  naar deze map en deze node, start het de server met `--open`, en breekt een
+  spatie in het pad niets;
 - **de versieregel zegt eerlijk wat er draait**, en **een wissel weigert als er
   werk openstaat** (dat laatste alleen als je werkmap op dat moment vuil is —
   de suite checkt nooit zelf iets uit);
