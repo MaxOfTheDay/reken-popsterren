@@ -2679,8 +2679,14 @@
   /* De globe van de wereldpil op weg naar de kop van Werelden. Eén teken, één
      transform -- geen letter-voor-letter gedoe; de rest van de pil en de titel
      kruisen gewoon over elkaar heen. */
+  /* Géén line-height hier. Die wordt van de globe zélf overgenomen (zie
+     globeVlucht), want een vaste waarde hier is een tweede waarheid over hoe dat
+     teken gezet wordt -- en zodra die twee uit elkaar lopen, staat de kopie een
+     paar pixels hoger dan het echte teken dat hij vervangt. Dat is precies wat er
+     gebeurde toen de globes op 1.25 gingen en dit op 1 bleef staan: een sprongetje
+     omhoog bij het loskomen en weer omlaag bij de landing. */
   .globe-vlucht { position: fixed; z-index: 5; pointer-events: none;
-    line-height: 1; transform-origin: 50% 50%; will-change: transform; }
+    transform-origin: 50% 50%; will-change: transform; }
   /* Staat het venster rechtop, dan vult de kaart het gewoon en schuif je verticaal
      -- net als op een telefoon, alleen is er meer te schuiven. Ligt het venster op
      zijn kant, dan wordt het een podium: de kaart zo groot als de hóógte toelaat,
@@ -9907,7 +9913,14 @@ function globeVlucht(vanEl, naarEl, duur) {
   vlieg.style.top = a.top + 'px';
   vlieg.style.width = a.width + 'px';
   vlieg.style.height = a.height + 'px';
-  vlieg.style.fontSize = getComputedStyle(vanEl).fontSize;
+  /* Alles wat bepaalt hóé de glyph in zijn vakje valt, wordt overgenomen en niet
+     nagemaakt: dezelfde lettergrootte én dezelfde regelhoogte. Een emoji wordt op de
+     grondlijn van zijn regel gezet, dus die regelhoogte bepaalt zijn hoogte in het
+     vak -- en de kopie moet op zijn eerste beeldje op de píxel op het teken liggen
+     dat hij vervangt, anders zie je hem wegspringen op het moment dat hij loskomt. */
+  const bronStijl = getComputedStyle(vanEl);
+  vlieg.style.fontSize = bronStijl.fontSize;
+  vlieg.style.lineHeight = bronStijl.lineHeight;
   $('app').appendChild(vlieg);
   const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
   const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
