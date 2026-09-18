@@ -223,7 +223,7 @@ die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
 ### `test/hub.test.js` — de Dev Studio
 
 Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
-`DEV-STUDIO.md`. Vier beloftes:
+`DEV-STUDIO.md`. De beloftes:
 
 - **elke knop levert een URL op die het spel wérkelijk begrijpt** — de vlaggen in
   `test/scenario.js` worden nagelopen tegen de `dbg.get(...)`-lijst in
@@ -244,7 +244,16 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   de suite checkt nooit zelf iets uit);
 - **het wereldoverzicht komt uit het spel zelf** — naam, id, shownummers, trofee
   en beloning komen uit `WORLDS` en `worldForIndex`, en een kapotte beloning of
-  een ontbrekende tekening wordt gezien.
+  een ontbrekende tekening wordt gezien;
+- **er zijn twee werkbladen en één hoekje** — Testomgeving en Wereldstudio staan
+  in de kiezer met de zin die erbij hoort, App & merk staat ernaast en is bewust
+  geen derde. Daarbij de woordenlijst (Opgeslagen, Gewijzigd, Waarschuwing, Fout,
+  Opgehaald, Up-to-date, Main is nieuwer…): dezelfde stand hoort overal hetzelfde
+  te heten, en ontwikkelaarstaal hoort niet op een knop;
+- **de globale beelden komen uit `scene.js` en `merk.js`** — `test/beelden.js` zet
+  die twee naast elkaar, en de suite kijkt na dat elk afgeleid bestand aan zijn
+  meester hangt en dat de schrijflijst eng blijft: `index.html` en `sw.js` mogen
+  nooit via `/asset` beschreven worden.
 
 ### `test/studio.test.js` — de wereldstudio
 
@@ -271,7 +280,14 @@ gezin:
   schijf, maar hij hoort wél in "Wat verandert er" en in het chipje bovenin te
   staan, of het nu een wereldkaart is of het startscherm. De lijst komt van
   `gewijzigdeAssets()` in `test/preview.js`, die het aan git vraagt; de suite spuit
-  hem in zoals die server dat doet, zodat er geen server nodig is.
+  hem in zoals die server dat doet, zodat er geen server nodig is;
+- **een globaal beeld heeft geen wereld nodig** — het startscherm kijk je na op
+  het landingsscherm, en daar is met opzet geen ster actief. Vroeger viel het
+  paneel daar om (`Cannot read properties of undefined (reading 'level')`) en
+  wees de melding naar de énige stap die wél gelukt was. Deze zaak loopt die weg
+  helemaal af over een wegwerpservertje dat nooit schrijft: geen uitzondering,
+  geen onterechte verwijzing naar `npm run preview`, een melding die zegt dat het
+  gelukt is, en een paneel dat daarna gewoon doorwerkt.
 
 ### `test/vlucht.test.js` — de zoom tussen wereld en Werelden
 
