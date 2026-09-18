@@ -5,6 +5,37 @@ níet bijgewerkt hoeft te worden. Kort gehouden met opzet: het uitgebreide
 "waarom" staat als commentaar bij de code zelf, en alles hieronder verwijst
 naar de naam die je daar moet zoeken.
 
+## Een scherm erbij, of iets aan een bestaand scherm
+
+Voor kleur en letter is er één bron, en die staat niet hier: bovenaan het
+stijlblad in `index.html` staat **DE AFSPRAAK**, een blok van honderd regels dat
+in zes paragrafen zegt welk token je pakt. Zoek op `DE AFSPRAAK`. Kort:
+
+| je zoekt | §  | pak |
+|---|---|---|
+| de hoofdknop | 2 | `--gold-cta-top/-bottom/-shadow` + `--btn-lip` |
+| goed / fout | 2 | `--green-*` / `--red-answer-*` |
+| verdiend, beheerst | 2 | de goud-trap (`--goud-tint`, `--goud-rand`, `--goud-gloed`) |
+| aan, geselecteerd | 2 | `--cyaan-tint` + `--cyaan-rand` |
+| op slot, nog niet | 2 | `--gray-*` (knop) of `--slot-*` (halte) — nooit rood |
+| een kaartje, een paneel, een kop | 3 | `--vlak*` / `--paneel*` / `--kop-plaat*` / `--hud-*` |
+| tekst op een tekening | 4 | `--op-kunst-ink`, of `--op-kunst-veeg` eronder |
+| tekst op een vlak van de app | 4 | `--op-vlak-ink` |
+| een lettermaat | 5 | `--tx-mini` … `--tx-groot` — nooit een eigen getal |
+| iets per wereld | 6 | `theme: { sky, deep, glow, road }` in `WORLDS`, en niets anders |
+
+Twee dingen staan er met opzet búiten de ladder, en dat zijn geen uitzonderingen
+maar een andere soort: de **spelletters** (de som, de antwoordknoppen) zijn per
+breekpunt afgeregeld omdat leesbaarheid daar boven netheid gaat, en de **maat van
+een teken** (een emoji, een pijltje, een ster) is geen letterrol maar een
+afmeting en staat dus als getal in de regel zelf.
+
+De keuring bewaakt dit: `test/inhoud.test.js` zaak H valt om op een halve pixel
+in een `font-size`, op een lettertype dat van buiten komt, en zodra "goud" weer
+met meer dan een handvol grondtonen geschreven wordt.
+
+---
+
 Eén regel geldt overal: **gebruikte id's zijn voor altijd.** Een wereld-id, een
 item-id en een trofee-id staan in de opslag van kinderen die er al mee gespeeld
 hebben. Hernoemen betekent kwijtraken. De naam die eróp staat mag altijd

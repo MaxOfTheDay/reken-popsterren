@@ -12,10 +12,188 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#7b2ff7">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- De letter staat naast het spel en niet bij Google; zie de noot bij @font-face
+     bovenaan het stijlblad. Er staat hier met opzet géén <link rel="preload"> bij:
+     een lettertype wordt altijd met CORS opgehaald, en zo'n preload mislukt dus op
+     een pagina die van file:// komt -- precies de manier waarop dit spel volgens de
+     README ook geopend mag worden ("open index.html"). Dat kost een console-fout en
+     een tweede aanvraag, en het levert bijna niets op: het stijlblad staat hieronder
+     ín de pagina, dus de browser kent het @font-face al voordat er één letter
+     gezet is. -->
 <style>
+  /* ==== De letter: Fredoka, en hij staat hier naast het spel ==================
+     Hiervoor kwam hij van fonts.googleapis.com. Dat werkt -- tot het moment
+     waarop deze app voor gemaakt is: een tablet in een woonkamer, zonder net.
+     Wat er dan gebeurde:
+
+       - de eerste start zonder net gaf géén Fredoka. De terugvallen waren
+         "Comic Sans MS", "Segoe UI", "Trebuchet MS" -- drie letters die op
+         Windows en macOS bestaan en op Android geen van drieën. Een kind met
+         een Android-tablet kreeg dus Roboto, en daarmee een ander spel dan het
+         spel dat op het logo staat.
+       - de <link> naar Google was een stijlblad in de <head>, en dus een
+         blokkade vóór het scriptblok eronder. Op een trage verbinding stond het
+         hele spel te wachten op een lettertype (zie ook de noot in
+         test/browser.js, waar de tests dat om dezelfde reden afvangen).
+       - en het was het enige verzoek dat deze app ooit buiten de deur deed. Een
+         rekenspel voor kinderen hoort geen derde partij te laten weten wanneer
+         er gespeeld wordt.
+
+     Nu staat het bestand onder assets/, en dat is niet toevallig: sw.js
+     behandelt álles onder /assets/ als tekening -- voorraad-eerst, in een cache
+     die niet met een uitgave meegaat. De letter wordt dus één keer opgehaald en
+     daarna nooit meer, precies zoals een wereldtekening. Er hoefde geen regel
+     bij in de servicewerker.
+
+     Eén bestand per subset, en het is een variabele letter (300-700 in één
+     bestand): 400, 500, 600 en 700 komen er alle vier uit, zonder vier
+     downloads. latin is 29 kB en draagt het hele spel; latin-ext is 4 kB en
+     wordt alleen opgehaald als er een naam wordt getypt die 'm nodig heeft --
+     dáár is unicode-range voor. De preload in de <head> geldt alleen voor
+     latin, want dat is de enige die élke start nodig heeft.
+
+     font-display: swap blijft staan: liever meteen leesbare tekst in de
+     reserveletter dan een leeg scherm. Vanaf de tweede start is er niets te
+     swappen, want dan komt hij uit de voorraad.
+
+     De letter is Fredoka (SIL Open Font License 1.1); assets/font/OFL.txt is de
+     licentie, en die hoort erbij te blijven staan. */
+  @font-face {
+    font-family: 'Fredoka';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('assets/font/fredoka-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                   U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                   U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fredoka';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('assets/font/fredoka-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                   U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                   U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
+  /* ===========================================================================
+     DE AFSPRAAK -- kleur en letter van Rekensterren, in één scherm
+     ===========================================================================
+     Hieronder staan honderd tokens met elk hun eigen verhaal. Dit stuk is de
+     inhoudsopgave ervan: het zegt welke je pakt, niet waarom hij die waarde
+     heeft. Wie een nieuw scherm bouwt heeft hier genoeg aan.
+
+     ---- DRIE LAGEN, EN ZE MOGEN ELKAAR NIET OVERSCHRIJVEN -------------------
+     1  GEDEELD  wat overal hetzelfde is: de letter, de vlakken, de knoppen, de
+                 navigatie, de koppen. Eén wereld mag hier niets aan veranderen.
+     2  BETEKENIS wat een kleur zégt: goed, fout, verdiend, aan, op slot. Ook
+                 hier heeft een wereld niets te zoeken -- "groen is goed" hoort
+                 in de IJswereld hetzelfde te zijn als in de Jungle.
+     3  WERELD   waar een wereld wél over gaat: zijn tekening, zijn lucht, zijn
+                 gloed, zijn weg. Vier kanalen (--w-sky/--w-deep/--w-glow/
+                 --w-road), gezet door applyWorldTheme, en verder niets.
+
+     ---- §1 KLEUR: waar de app van gemaakt is --------------------------------
+     Violet is de grond (--bg-1..4). Het logo staat erop met goud, ijsblauw en
+     magenta, en dat zijn precies de drie accenten die de app verder gebruikt:
+
+       GOUD     --gold-* / --goud-*   "dit heb je verdiend / dit staat aan"
+       CYAAN    --cyaan-*            "hier ben je / hier kijk je naar"
+       MAGENTA  --pink-*             feest. Versiering, nooit een stand.
+
+     Goud en cyaan zijn elkaars tegenpool en dát onderscheid is de hele taal:
+     goud is wat áchter je ligt, cyaan is waar je nú staat. Zet nooit goud op
+     iets dat alleen maar geselecteerd is, en nooit cyaan op iets dat verdiend is.
+
+     ---- §2 BETEKENIS: één kleur per begrip ----------------------------------
+       hoofdknop / spelen      --gold-cta-top/-bottom/-shadow (+ --btn-lip)
+       tweede knop             --purple-mid/--purple-light/--purple-shadow
+       antwoordknop in het spel --purple-input-*  (bewust een eigen paars: dit is
+                               de enige knop die een kind honderd keer per show
+                               indrukt, en hij hoort niet op "hoofdknop" te lijken)
+       goed / klaar            --green-top/--green-deep/--green-shadow
+       fout                    --red-answer-600/--red-answer-shadow
+       gevaar (ouderdeel)      --red-danger-500/--red-danger-shadow
+       verdiend / beheerst     --goud-* (zie de trap bij "Goud als toestand")
+       aan / geselecteerd      --cyaan-tint + --cyaan-rand (balk: --nav-sel)
+       op slot / nog niet      --gray-* voor knoppen, --slot-* voor haltes.
+                               Nooit rood: "later" is geen fout.
+       diamanten               het teken 💎 en een neutrale pil, en met opzet
+                               géén eigen kleur -- ijsblauw is al vergeven aan
+                               "hier ben je", en twee dingen in dezelfde kleur is
+                               precies wat dit stelsel probeert te voorkomen.
+
+     ---- §3 VLAKKEN: vier soorten, en een kaart hoort bij precies één --------
+       de schil        het verloop van <body>: de sfeer buiten de werelden om
+       de tekening     een wereldkaart of een schilderij: een eigen ondergrond
+       --vlak*         het nutskaartje: een plankje op een scherm (kast, kleedkamer)
+       --paneel*       het zwevende paneel: glas boven een scherm (eindkaart, feest)
+       --kop-plaat*    de plakkende kop van een gebruiksscherm
+       --hud-*         de zwevende kop van een wereldscherm (lichter dan de rest)
+       --paper-*       het ouderdeel: wit papier, rustige letters, geen feest
+     Een doorzichtig zwart of wit dat níets betekent schrijf je gewoon uit.
+
+     ---- §4 OP EEN TEKENING: wanneer mag tekst rechtstreeks op kunst? --------
+     De achtergronden van Landing, Kleedkamer en Trofeeën worden later vervangen.
+     Daarom staat hier een regel en geen afstemming op de tekening van vandaag:
+
+       a  KORTE TEKST, GROOT EN VET  -- mag rechtstreeks op de tekening, mits
+          --op-kunst-ink eronder staat. Die schaduw is zo gekozen dat hij het óók
+          wint van een lichte lucht: hij is donker en zit strak om de letter.
+          Voorbeeld: de wereldnaam in de kop, de labels in de balk onderaan.
+       b  MEER DAN TWEE WOORDEN, OF KLEINE TEKST -- er hoort een veeg onder:
+          --op-kunst-veeg, met --veeg-rgb om 'm warm of koel te zetten. Lokaal,
+          dus alleen waar de tekst staat en niet over het halve scherm.
+       c  EEN BLOK TEKST, EEN FORMULIER, EEN GETAL DAT KLOPPEN MOET -- dan geen
+          tekening eronder maar een vlak uit §3. Het ouderdeel en de vraagkaart
+          in het spel staan daarom op wit en niet op sfeer.
+     Wat hier NIET mag: een dekkend paneel of een schermbrede sluier omdat één
+     tekening toevallig te licht is. Dan is de tekening aan de beurt, niet de CSS.
+     Tekst op een vlak van de app krijgt --op-vlak-ink en verder niets.
+
+     EN ÉÉN AFSPRAAK OVER DE ONDERGROND ZELF. De gedeelde kaartjes (--vlak) zijn
+     licht-op-donker: ze hebben wit op .075 en halen hun contrast dus uit wat
+     erachter staat. Dat is met opzet -- het is wat ze glas maakt in plaats van
+     dozen -- maar het betekent wél dat een schermtekening donker moet blijven
+     waar de inhoud staat. Daar is één plek voor, en die staat vast:
+       een schermtekening gaat in `#screen-<naam>.app-sfeer::before`, als laag
+       ónder --kunst-sluier -- precies zoals de sterrenkeuze het vandaag doet.
+     Zie de noot bij --kunst-sluier. Zolang dat gebeurt kan élke tekening
+     vervangen worden zonder dat er één regel kleur of letter mee hoeft. Gebeurt
+     het níet -- een tekening als losse laag erbovenop, of in ::after -- dan zijn
+     de namen in de kleedkamer en de kast bij een lichte tekening onleesbaar, en
+     is dát het gebrek en niet de kleur van de letter.
+
+     ---- §5 DE LETTER: zeven maten, vier gewichten --------------------------
+       --tx-mini   11  een telletje, een maatje, een tabje
+       --tx-klein  13  compact label, chip, bijschrift
+       --tx-label  15  label, tweede regel, een regel in een lijst
+       --tx-body   17  lopende tekst, uitleg, het label op een knop
+       --tx-sub    20  sectiekop, de kop van een paneel
+       --tx-kop    24  de kop van een scherm
+       --tx-groot  28  de hoofdknop, een groot getal
+       --tx-feest(-kort)  de kop van een feestje (meeschalend)
+     Daarbuiten vallen met opzet twee dingen: de SPELLETTERS (de som, de
+     antwoordknoppen, de telkaarten) zijn per breekpunt afgeregeld omdat
+     leesbaarheid daar boven netheid gaat -- en de MAAT VAN EEN TEKEN (emoji,
+     pijltje, de ster op een halte) is geen letter maar een afmeting, en staat
+     daarom als getal in de regel zelf.
+     Gewichten: 700 draagt, 600 licht toe, 500 is lopende tekst in het ouderdeel.
+     Er is geen 800 of 900 -- die bestaan niet in dit lettertype.
+
+     ---- §6 WAT EEN WERELD MAG -----------------------------------------------
+     Precies vier kanalen, gezet in WORLDS.theme en nergens anders:
+       sky / deep   het verloop van de zaal en de kaart
+       glow         de warme veeg onderaan
+       road         de nog niet afgelegde route
+     applyWorldTheme zet elk kanaal ook als "r,g,b" (--w-*-rgb), zodat de CSS er
+     lagen van kan maken. Er is een vijfde kanaal voorzien (accent) dat nog geen
+     wereld gebruikt; het is er voor een decoratief accent, niet voor een stand.
+     Een wereld raakt goed/fout/verdiend/diamanten/navigatie NOOIT aan.
+     =========================================================================== */
   :root {
     /* ---- Backdrop / brand gradient ----
        --bg-3 was #f107a3: fel magenta, onderaan élk scherm. Dat zette de heetste
@@ -33,7 +211,7 @@
     --bg-3: #6d2a80;   /* waar het licht van onderen begint */
     --bg-4: #3a0f48;   /* de vloer, het donkerst */
     --bg-glow-pink: rgba(255,120,220,.30); --bg-glow-blue: rgba(80,200,255,.24);
-    --bg-glow-warm: rgba(255,164,60,.58);
+    --bg-glow-warm: rgba(var(--voetlicht-rgb),.58);
 
     /* (--scene-scrim stond hier: een sluier voor een geschilderde schermachtergrond.
        Die achtergronden zijn er niet meer -- de schil (.app-sfeer) doet dat werk --
@@ -138,41 +316,56 @@
        ster-leeg    een nog niet verdiende ster (zichtbaar, maar stil)
        ster-vol     een verdiende ster                                          */
     --route-onder: rgba(38,12,64,.78);
-    --route-goud: rgba(255,206,110,.82);
+    --route-goud: rgba(var(--warm-licht-rgb),.82);
     --stop-keyline: rgba(26,7,48,.55);
     --stop-schaduw: rgba(12,2,26,.5);
     --halte-rand: rgba(255,240,214,.44);
-    --perfect-ring: rgba(255,198,88,.82);
-    --perfect-gloed: rgba(255,186,66,.24);
+    --perfect-ring: rgba(var(--warm-licht-rgb),.82);
+    --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
     --slot-vulling: #483f64;
     --slot-vulling-top: #564c73;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
     --ster-tab-rand: rgba(255,255,255,.16);
     --ster-tab-vol: rgba(92,48,10,.76);
-    --ster-tab-vol-rand: rgba(255,214,120,.5);
+    --ster-tab-vol-rand: rgba(var(--warm-licht-rgb),.5);
     --ster-leeg: rgba(255,255,255,.5);
     --ster-leeg-rand: rgba(20,5,40,.56);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
-    /* ---- Dezelfde wereldkleuren, maar als losse kanalen ----------------------
-       --w-sky/--w-deep/--w-glow staan in hex, want de wereldstudio bewerkt ze met
-       <input type="color"> en dat veld kent niets anders (zie WERELDEN-BEGIN).
-       Een hex kun je alleen niet half doorzichtig maken, en de zaal bestaat juist
-       uit halfdoorzichtige lagen over elkaar.
+    /* ---- De vier wereldkanalen, en wat een wereld zónder kleur doet ---------
+       Zie §6 van de afspraak bovenaan: dit is álles wat een wereld mag zetten.
+       applyWorldTheme schrijft ze op het element van het wereldscherm; hieronder
+       staat wat er geldt als een wereld een kanaal overslaat.
 
-       Vandaar deze drie: dezelfde kleur, geschreven als "r,g,b", zodat de CSS er
-       rgba(var(--w-deep-rgb), .6) van kan maken. applyWorldTheme zet ze samen met
-       de hex-versie -- één bron, twee schrijfwijzen. De waarden hieronder zijn de
-       terugval en horen bij de hex-terugvallen hierboven (#3d1a63 / #2a0c47).
+       Die terugval stond tot nu toe NIET hier maar dertig keer in het blad, als
+       `var(--w-sky, #3d1a63)`. Dat is dezelfde afspraak op dertig plekken, en dan
+       is het een kwestie van tijd tot de eenendertigste hem anders schrijft --
+       #2a0c47 stond er tien keer, #3d1a63 vijf keer, en de gloed had twee
+       verschillende doorzichtigheden als terugval, afhankelijk van wélke regel je
+       toevallig las. Nu staat de terugval op één plek en leest de rest gewoon
+       var(--w-sky). LET OP: daarom moeten deze vier hier blíjven staan. Haal je
+       ze weg, dan is var(--w-sky) op een scherm zonder wereldkleur ongeldig, en
+       een ongeldige var() maakt de héle regel eromheen ongeldig -- dan valt niet
+       de kleur weg maar de achtergrond.
+
+       De hex-vorm en de "r,g,b"-vorm staan er allebei, en dat is geen dubbelop:
+       de wereldstudio bewerkt de kleuren met <input type="color"> en dat veld kent
+       alleen #rrggbb (zie WERELDEN-BEGIN), terwijl de zaal juist uit
+       halfdoorzichtige lagen over elkaar bestaat en dus rgba(var(--w-deep-rgb),.6)
+       nodig heeft. applyWorldTheme zet ze samen -- één bron, twee schrijfwijzen.
 
        Waarom niet color-mix(): dat zou hetzelfde doen in één regel, maar het is
        de jongste van de twee en deze app draait ook op oudere tablets. Een komma
        gescheiden drietal werkt overal waar rgba() werkt, en dat is overal. */
+    --w-sky: #3d1a63;
+    --w-deep: #2a0c47;
+    --w-glow: rgba(var(--warm-licht-rgb),.34);
+    --w-road: rgba(255,255,255,.42);
     --w-sky-rgb: 61,26,99;
     --w-deep-rgb: 42,12,71;
-    --w-glow-rgb: 255,216,128;
+    --w-glow-rgb: var(--warm-licht-rgb);
 
     /* ---- Green: success / done. The original #66bb6a/#43a047 gradient only
        reached 2.36-3.3:1 contrast for the white text/glyphs on top of it --
@@ -223,15 +416,18 @@
        goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
     --stat-green: #2e9e4f;
 
-    /* ---- Glass / overlay surfaces (exact-duplicate alpha values only; true one-offs stay inline) ---- */
-    --glass-black-30: rgba(0,0,0,.3); --glass-black-35: rgba(0,0,0,.35); --glass-black-40: rgba(0,0,0,.4);
-    --glass-black-18: rgba(0,0,0,.18); --glass-black-32: rgba(0,0,0,.32); --glass-black-28: rgba(0,0,0,.28);
-    --glass-black-25: rgba(0,0,0,.25); --glass-black-20: rgba(0,0,0,.2); --glass-black-26: rgba(0,0,0,.26);
-    --glass-black-50: rgba(0,0,0,.5); --glass-black-24: rgba(0,0,0,.24);
-    --glass-white-22: rgba(255,255,255,.22); --glass-white-30: rgba(255,255,255,.3); --glass-white-40: rgba(255,255,255,.4);
-    --glass-white-13: rgba(255,255,255,.13); --glass-white-10: rgba(255,255,255,.1); --glass-white-28: rgba(255,255,255,.28);
-    --glass-white-20: rgba(255,255,255,.2); --glass-white-16: rgba(255,255,255,.16); --glass-white-35: rgba(255,255,255,.35);
-    --glass-white-18: rgba(255,255,255,.18); --glass-white-14: rgba(255,255,255,.14);
+    /* (Hier stond de --glass-*-familie: eenentwintig tokens van de vorm
+       rgba(0,0,0,.35) onder de naam --glass-black-35. Ze zijn weg. Een naam die
+       zijn eigen waarde herhaalt legt niets uit -- je moet 'm nog steeds opzoeken
+       om te weten wat er staat -- en hij hield de belofte ook niet: negenenvijftig
+       regels lazen een token, negenentachtig schreven dezelfde soort waarde er
+       gewoon naast. Eén plek om aan te draaien was het dus nooit.
+
+       De regel die ervoor in de plaats komt: een doorzichtig zwart of wit dat
+       níets betekent schrijf je uit. Betekent het wél iets -- een schaduwhoogte,
+       een vlak, een sluier over een tekening -- dan hoort het bij een van de
+       families hieronder (--e-1..3, --vlak*, --paneel*, --op-kunst-*) en heeft het
+       daar een naam die zegt wat het dóét. Zie ook §3 van de afspraak bovenaan.) */
 
     /* ---- Hoekrondingen: één schaal van drie maten + de pil.
        Hiervoor stonden er acht tokens én dertien losse waarden in het blad --
@@ -250,9 +446,9 @@
          e-1 -- badge / portretje dat net van zijn ondergrond loskomt
          e-2 -- kaart, paneel, plakkende kop
          e-3 -- overlay die bovenop het scherm ligt ---- */
-    --e-1: 0 2px 7px var(--glass-black-35);
-    --e-2: 0 10px 26px var(--glass-black-35);
-    --e-3: 0 14px 34px var(--glass-black-50);
+    --e-1: 0 2px 7px rgba(0,0,0,.35);
+    --e-2: 0 10px 26px rgba(0,0,0,.35);
+    --e-3: 0 14px 34px rgba(0,0,0,.5);
 
     /* ---- De vlakken: drie families, en elke kaart hoort bij precies één ----
        FASE 5E. Er stonden drie manieren om "een kaartje op een paarse achtergrond"
@@ -329,13 +525,42 @@
        LET OP -- het VERLOOP (--gold-cta-top/bottom + de lip) is hier bewust géén
        onderdeel van. Dat is de hóófdknop, en sinds fase 5E niets anders: zie §4
        van de fase-opdracht en de noot bij .gold-pill. */
+    /* De vijf warme gronden. Hiervoor stonden er eenenveertig: het blad schreef
+       "goud" met 255,215,64 en met 255,214,90 en met 255,196,61 en met 255,193,7
+       en met achtendertig andere drietallen die er allemaal net naast zaten. Elk
+       ervan was ooit ter plekke gekozen en klopte daar; bij elkaar betekende goud
+       niets meer, want alles was een beetje goud.
+
+       Nu vijf, en de vraag die je stelt is niet "welke tint" maar "wat doet het":
+
+         --goud-rgb        HET GOUD. Vulling, rand, badge, pil: het spul zelf.
+         --goud-glans-rgb  DE GLANS eróp: de haarlijn bovenin, de veeg die
+                           overloopt, het vonkje. Licht dat van het goud af komt.
+         --goud-gloed-rgb  DE GLOED eromhéén. Amber, en warmer dan het goud zelf,
+                           want een gloed die dezelfde kleur heeft als zijn bron
+                           leest als een onscherpe rand in plaats van als licht.
+         --warm-licht-rgb  WARM LICHT IN DE RUIMTE: de gloed van een wereld, licht
+                           dat op een kaart valt, de halo om de halte waar je
+                           staat. Geen goud -- licht. Dit is ook de terugval van
+                           --w-glow, en dus wat een wereld zónder eigen gloed doet.
+         --voetlicht-rgb   HET VOETLICHT: de warme band onderaan een scherm, de
+                           hoeken van de schil. Het oranjegst van de vijf, en de
+                           enige die van onderen komt.
+
+       Ze staan als "r,g,b" en niet als kleur, want ze worden vrijwel altijd half
+       doorzichtig gebruikt -- zie de noot bij --w-sky-rgb over waarom dat een
+       komma-drietal is en geen color-mix(). */
     --goud-rgb: 255,215,64;
-    --goud-tint-zacht: rgba(255,215,64,.09);
-    --goud-tint: rgba(255,215,64,.15);
-    --goud-rand-zacht: rgba(255,215,64,.28);
-    --goud-rand: rgba(255,215,64,.5);
-    --goud-gloed-zacht: 0 0 12px rgba(255,190,60,.24);
-    --goud-gloed: 0 0 16px rgba(255,190,60,.46);
+    --goud-glans-rgb: 255,236,168;
+    --goud-gloed-rgb: 255,193,7;
+    --warm-licht-rgb: 255,216,128;
+    --voetlicht-rgb: 255,170,70;
+    --goud-tint-zacht: rgba(var(--goud-rgb),.09);
+    --goud-tint: rgba(var(--goud-rgb),.15);
+    --goud-rand-zacht: rgba(var(--goud-rgb),.28);
+    --goud-rand: rgba(var(--goud-rgb),.5);
+    --goud-gloed-zacht: 0 0 12px rgba(var(--goud-gloed-rgb),.24);
+    --goud-gloed: 0 0 16px rgba(var(--goud-gloed-rgb),.46);
 
     /* ---- Emoji staan ergens op ---------------------------------------------
        FASE 5E. De app tekent met emoji, en die komen plat en zonder eigen licht
@@ -370,7 +595,7 @@
        scherm geplakt lijkt in plaats van in de kamer te staan. FASE 5E geeft ze
        dezelfde, en meteen als token: lip en diepte horen bij elkaar. */
     --btn-lip: 5px; --btn-lip-sm: 4px;
-    --btn-diep: 0 8px 14px var(--glass-black-30);
+    --btn-diep: 0 8px 14px rgba(0,0,0,.3);
 
     /* ---- De veilige zone van het toestel, en de ruimte onder de balk ----
        FASE 5D. Dit stond vijf keer met de hand uitgerekend: de balk op bottom 10
@@ -420,7 +645,7 @@
        draaien zonder de rest mee te nemen moet één regel blijven. */
     --nav-sel: var(--cyaan-tint);
     --nav-sel-ring: var(--cyaan-rand);
-    --nav-ink: 0 1px 2px rgba(10, 2, 24, .9), 0 0 8px rgba(10, 2, 24, .55);
+    --nav-ink: var(--op-kunst-ink);
 
     /* ---- Zwevende kop op de kaart ----
        Eén materiaal voor alle drie de zones, zodat ze als één systeem lezen en niet
@@ -429,8 +654,77 @@
     --hud-bg: rgba(28, 6, 52, .3);
     --hud-ring: rgba(255, 255, 255, .08);
     --hud-shadow: 0 2px 8px rgba(10, 2, 24, .22);
-    --hud-ink: 0 1px 2px rgba(10, 2, 24, .95), 0 0 9px rgba(10, 2, 24, .6);
+    --hud-ink: var(--op-kunst-ink);
     --hud-h: 34px;
+
+    /* ---- Op een tekening: drie sterktes, en dat is de hele afspraak --------
+       Zie §4 van de afspraak bovenaan. Waarom het als tokens staat en niet per
+       scherm: de tekeningen van Landing, Kleedkamer en Trofeeën worden vervangen,
+       en dan moet er niets aan de tekst hoeven veranderen. Een schaduw die alleen
+       werkt tegen de lucht van de tekening van vandaag is een schuld, geen stijl.
+
+         --op-kunst-ink   tekst die RECHTSTREEKS op kunst staat. Twee schaduwen:
+                          een strakke donkere rand tegen een lichte ondergrond, en
+                          een wijdere zachte tegen een drukke. Samen dragen ze een
+                          witte letter op sneeuw én op nachtjungle, zonder dat er
+                          per wereld iets bijgesteld wordt.
+                          Hiervoor was dit --hud-ink én --nav-ink: twee waarden die
+                          op .05 alpha na gelijk waren -- twee keer hetzelfde ding
+                          gegokt. Beide namen blijven bestaan en lezen deze ene,
+                          zodat aan de kop of aan de balk draaien één regel blijft.
+         --op-kunst-veeg  de VEEG onder een stuk tekst dat te lang of te klein is
+                          voor a. Van niets naar donker, en alleen zo hoog als de
+                          tekst zelf. --veeg-rgb zet de kleur: standaard de nacht
+                          van de app, lokaal te vervangen (de gouden bestemming op
+                          de reis zet er een warme in).
+         --op-vlak-ink    tekst op een VLAK van de app. Eén korte donkere zet
+                          eronder, meer niet: het vlak doet het contrastwerk al en
+                          een gloed eromheen zou de letter alleen maar vertroebelen.
+       Een letter op wit papier (het ouderdeel, de vraagkaart) krijgt geen van
+       drieën. Daar is de ondergrond het antwoord. */
+    --op-kunst-ink: 0 1px 2px rgba(10,2,24,.92), 0 0 9px rgba(10,2,24,.58);
+    --veeg-rgb: 10,3,24;
+    --op-kunst-veeg: linear-gradient(180deg, transparent,
+                     rgba(var(--veeg-rgb),.62) 38%, rgba(var(--veeg-rgb),.9));
+    --op-vlak-ink: 0 2px 0 rgba(0,0,0,.2);
+    /* Goud dat gloeit: de kop van een feestje, de gouden vraag. Een gloed in de
+       kleur van de hoofdknop plus dezelfde donkere zet als hierboven -- want een
+       gouden letter mét gloed en zónder donkere rand verdwijnt in zijn eigen licht
+       zodra er iets lichts achter staat. */
+    --goud-ink: 0 0 14px var(--gold-cta-bottom), 0 2px 0 rgba(0,0,0,.38);
+
+    /* ---- De letterladder: zeven maten ---------------------------------------
+       Zie §5 van de afspraak bovenaan voor wélke maat waarvoor is.
+
+       Hiervoor stonden er vijfenzeventig verschillende maten in het blad, en de
+       ladder liep van 10 via 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15,
+       15.5, 16, 16.5 tot 17 -- vijftien sporten over zeven pixels. Op een scherm
+       is het verschil tussen 12.5 en 13 niet te zien; in de bron is het wél een
+       keuze, en dus moest iemand hem elke keer opnieuw maken. Twee bijschriften
+       naast elkaar op 12.5 en 13 lezen niet als twee niveaus maar als slordigheid.
+
+       Zeven sporten, gekozen rond het zwaartepunt van wat er al stond, precies
+       zoals de hoekrondingen dat eerder deden: dit is een opschoning en geen
+       herontwerp. Elke oude maat is naar de dichtstbijzijnde sport gegaan, en bij
+       gelijke afstand naar de GROTERE -- dit is een app voor kinderen van vijf tot
+       acht, en daar wint leesbaarheid van compactheid. Niets is meer dan 2px
+       verschoven.
+
+       De verhouding tussen de sporten is ongeveer 1,18. Groot genoeg dat twee
+       opeenvolgende maten naast elkaar als twee niveaus lezen, klein genoeg dat de
+       ladder van 11 tot 28 in zeven stappen past.
+
+       Er is geen --tx-display. De koppen die meeschalen zijn er twee, en ze staan
+       hieronder; alles wat nog groter is, is een teken (een emoji, een ster) of
+       een spelletter (de som), en dat zijn geen letterrollen maar afmetingen. */
+    --tx-mini: 11px; --tx-klein: 13px; --tx-label: 15px; --tx-body: 17px;
+    --tx-sub: 20px; --tx-kop: 24px; --tx-groot: 28px;
+    /* De kop van een feestje. Meeschalend, want hij staat midden op het scherm en
+       heeft de ruimte; --kort is dezelfde kop op een laag toestel en op de
+       eindkaart, waar de sterren eronder de blikvanger horen te blijven. Er stonden
+       er vijf met clamp-waarden die hooguit 2px van elkaar lagen. */
+    --tx-feest: clamp(24px, 7vw, 32px);
+    --tx-feest-kort: clamp(19px, 5.4vw, 25px);
 
     /* ---- Het skelet: twee breedtes, en niets ertussen ----
        Hiervoor koos elk scherm zijn eigen maat en kwam de kop op géén van die
@@ -513,8 +807,8 @@
      bestaat en verandert er niets voor wie hem niet kent. */
   html, body { height: 100%; height: 100svh; }
   /* ---- De letter: vier gewichten, en meer bestaan er niet ------------------
-     FASE 5E. De <link> hierboven haalt Fredoka op in 400, 500, 600 en 700 -- dat
-     zijn álle gewichten die deze app heeft. In het blad stonden er ook 800, 900 en
+     FASE 5E. @font-face hierboven levert Fredoka als variabele letter van 400 tot
+     700 -- dat zijn álle gewichten die deze app heeft. In het blad stonden er ook 800, 900 en
      "bold": zevenendertig regels die om een letter vroegen die nooit geleverd werd
      en dus als 700 op het scherm kwam. Een naam op een trofeekaart (900) en de
      naam van het kind op de sterrenkaart (800) waren daarmee precies even zwaar --
@@ -527,7 +821,12 @@
        400  wordt niet gebruikt en is de terugval van de browser
      Er is niets kleiner of groter geworden; de bron liegt alleen niet meer. */
   body {
-    font-family: "Fredoka", "Comic Sans MS", "Segoe UI", "Trebuchet MS", sans-serif;
+    /* De reserveletter telt alleen nog voor de allereerste verf van de allereerste
+       start -- daarna staat Fredoka in de voorraad. Daarom system-ui en niet meer
+       Comic Sans: die bestaat op Android niet, en op Windows gaf hij precies één
+       scherm lang een ándere, veel smallere letter dan de letter erna. system-ui
+       is op elk toestel de letter die het kind daar al gewend is. */
+    font-family: "Fredoka", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     /* Eén lichtrichting voor de hele app: warm van onderen, koel in de lucht.
        De koele gloed stond hiervoor rechtsonder en vocht daar met het voetlicht;
        hij hoort bij de verte, en de verte is boven. */
@@ -677,21 +976,21 @@
   h1.title {
     font-size: clamp(28px, 5.4vw, 46px);
     font-weight: 700; letter-spacing: .5px;
-    text-shadow: 0 2px 0 var(--glass-black-18), 0 4px 12px var(--glass-black-28);
+    text-shadow: var(--op-vlak-ink), 0 4px 12px rgba(0,0,0,.28);
     margin: 10px 0 4px;
     text-align: center;
   }
-  .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: 17px; font-weight: 500; }
+  .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: var(--tx-body); font-weight: 500; }
 
   .btn {
-    font-family: inherit; font-size: 20px; font-weight: 600; color: var(--purple-shadow);
+    font-family: inherit; font-size: var(--tx-sub); font-weight: 600; color: var(--purple-shadow);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     border: none; border-radius: var(--r-md); padding: 14px 26px; cursor: pointer;
     box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
     transition: transform .08s, box-shadow .08s;
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
-  .btn.big { font-size: 26px; padding: 18px 40px; white-space: nowrap; }
+  .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; }
   /* .purple/.gray zetten hun eigen achtergrond, dus ook expliciet hun
      eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
      gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is.
@@ -707,7 +1006,7 @@
      in het blad en overschreef diens paarse lip met de gouden -- elke kleine
      paarse knop in het ouderdeel (Nieuwe ster maken, Back-up maken) stond op een
      oranje randje. Nu draagt elke variant zijn eigen kleine lip. */
-  .btn.small { font-size: 16px; padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
+  .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
   .btn.small.purple { box-shadow: 0 3px 0 var(--purple-shadow); }
   .btn.small.gray   { box-shadow: 0 3px 0 var(--gray-shadow); }
   .btn.small:active { box-shadow: 0 1px 0 var(--gold-cta-shadow); }
@@ -726,12 +1025,12 @@
   .btn.small.paper:active { transform: translateY(2px); box-shadow: none; }
   /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
   .btn.soft {
-    font-size: 17px; padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
-    border: 1.5px solid var(--glass-white-28);
-    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 var(--glass-black-28);
+    font-size: var(--tx-body); padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
+    border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
   }
-  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
+  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
   /* ---- Sterrenkeuze ----
@@ -810,9 +1109,9 @@
     content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background-image:
       url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice'><circle cx='32.0' cy='48.0' r='1.8' fill='%23fff' opacity='0.42'/><circle cx='88.0' cy='112.0' r='1.2' fill='%23ffd79a' opacity='0.38'/><circle cx='144.0' cy='40.0' r='2.2' fill='%23fff' opacity='0.30'/><circle cx='208.0' cy='144.0' r='1.4' fill='%239fe8ff' opacity='0.34'/><circle cx='272.0' cy='72.0' r='1.9' fill='%23fff' opacity='0.40'/><circle cx='328.0' cy='160.0' r='1.3' fill='%23ffd79a' opacity='0.32'/><circle cx='368.0' cy='56.0' r='1.6' fill='%23fff' opacity='0.28'/><circle cx='60.0' cy='192.0' r='1.1' fill='%239fe8ff' opacity='0.30'/><circle cx='296.0' cy='208.0' r='1.5' fill='%23fff' opacity='0.24'/><circle cx='40.0' cy='640.0' r='1.7' fill='%23fff' opacity='0.34'/><circle cx='104.0' cy='736.0' r='1.3' fill='%23ffd79a' opacity='0.36'/><circle cx='176.0' cy='608.0' r='1.2' fill='%239fe8ff' opacity='0.26'/><circle cx='240.0' cy='760.0' r='1.9' fill='%23fff' opacity='0.32'/><circle cx='312.0' cy='656.0' r='1.4' fill='%23ffd79a' opacity='0.30'/><circle cx='360.0' cy='720.0' r='1.6' fill='%23fff' opacity='0.26'/><circle cx='136.0' cy='688.0' r='1.1' fill='%23fff' opacity='0.22'/><circle cx='272.0' cy='592.0' r='1.3' fill='%239fe8ff' opacity='0.24'/><circle cx='20.0' cy='352.0' r='1.5' fill='%23fff' opacity='0.22'/><circle cx='380.0' cy='448.0' r='1.4' fill='%23ffd79a' opacity='0.22'/><circle cx='28.0' cy='496.0' r='1.2' fill='%239fe8ff' opacity='0.20'/><circle cx='372.0' cy='304.0' r='1.6' fill='%23fff' opacity='0.20'/><circle cx='72.0' cy='80.0' r='7.0' fill='%23ffd79a' opacity='0.07'/><circle cx='344.0' cy='112.0' r='6.0' fill='%239fe8ff' opacity='0.06'/><circle cx='120.0' cy='704.0' r='7.0' fill='%23ffd79a' opacity='0.06'/><circle cx='288.0' cy='720.0' r='6.0' fill='%23fff' opacity='0.05'/></svg>"),
-      radial-gradient(64% 54% at -12% -10%, transparent 57%, rgba(255,190,104,.34) 64%, transparent 72%),
+      radial-gradient(64% 54% at -12% -10%, transparent 57%, rgba(var(--warm-licht-rgb),.34) 64%, transparent 72%),
       radial-gradient(58% 50% at 112% -4%, transparent 59%, rgba(128,226,255,.26) 66%, transparent 74%),
-      radial-gradient(74% 60% at 110% 108%, transparent 58%, rgba(255,176,96,.26) 65%, transparent 73%),
+      radial-gradient(74% 60% at 110% 108%, transparent 58%, rgba(var(--voetlicht-rgb),.26) 65%, transparent 73%),
       radial-gradient(68% 54% at -10% 110%, transparent 59%, rgba(198,146,255,.22) 66%, transparent 74%),
       radial-gradient(80% 48% at 50% 50%, rgba(18,4,38,.5), rgba(18,4,38,.2) 58%, transparent 78%),
       /* Het voetlicht. FASE 5E: <body> zet onder élk scherm een warme gloed laag in
@@ -822,7 +1121,7 @@
          sterrenkeuze als enige scherm van de app in vlak violet zonder horizon.
          Deze laag zet hem terug -- boven de nacht, onder de vegen, en breed genoeg
          dat hij een horizon is en geen band. */
-      radial-gradient(146% 28% at 50% 103%, rgba(255,170,74,.34), transparent 72%),
+      radial-gradient(146% 28% at 50% 103%, rgba(var(--voetlicht-rgb),.34), transparent 72%),
       /* Het blauwe uur. De grondkleur van <body> loopt door élk scherm en is daar
          goed zoals hij is; buiten de werelden mag hij een paar trappen dieper,
          anders staat er violet licht waar nacht hoort te staan. Deze laag ligt
@@ -848,8 +1147,8 @@
   .app-sfeer.kleedkamer::after {
     content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(76% 30% at 50% 4%, rgba(255,209,150,.12), transparent 72%),
-      radial-gradient(58% 40% at 50% 24%, rgba(255,196,130,.07), transparent 74%),
+      radial-gradient(76% 30% at 50% 4%, rgba(var(--warm-licht-rgb),.12), transparent 72%),
+      radial-gradient(58% 40% at 50% 24%, rgba(var(--warm-licht-rgb),.07), transparent 74%),
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.22), transparent 70%);
   }
   /* ---- De schil, maar dan in een vitrine ----------------------------------
@@ -862,20 +1161,45 @@
   .app-sfeer.kast::after {
     content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(64% 26% at 50% 2%, rgba(255,214,150,.10), transparent 74%),
+      radial-gradient(64% 26% at 50% 2%, rgba(var(--warm-licht-rgb),.10), transparent 74%),
       radial-gradient(46% 34% at 50% 20%, rgba(190,170,255,.06), transparent 76%),
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
   }
 
-  /* ---- De sterrenkeuze krijgt haar schilderij terug -----------------------
-     De schil hierboven blijft de sfeer voor de andere niet-wereldschermen; de
-     sterrenkeuze is weer het geschilderde startscherm (assets/bg/landing.webp).
-     Een sluier houdt tekst en kaarten leesbaar, en het masker laat de rand van
-     de tekening zacht in de schil overlopen in plaats van een harde snede. */
+  /* ---- Waar de tekening van een schilscherm komt --------------------------
+     Er komt een nieuwe tekening voor de sterrenkeuze, de kleedkamer en de
+     trofeeënkast (PS-45 / PS-32). Dit is de plek waar hij straks in gaat, en de
+     regel eromheen staat hier zodat niemand hem opnieuw hoeft te verzinnen.
+
+     DE REGEL: een schermtekening gaat in `#screen-<naam>.app-sfeer::before`, als
+     laag ónder --kunst-sluier, en nergens anders. Niet in ::after (dat ligt
+     erbóven en heeft geen sluier), en niet als losse laag tussen de inhoud. De
+     kleedkamer en de kast hebben vandaag géén eigen tekening -- ze lenen de
+     gedeelde schil -- dus daar komt straks een blok bij dat er net zo uitziet als
+     dat van #screen-profile hieronder.
+
+     Waarom dat uitmaakt is te meten: de gedeelde kaartjes van dit soort schermen
+     (--vlak, wit op .075) zijn LICHT-OP-DONKER. Ze krijgen hun contrast niet uit
+     zichzelf maar uit wat erachter staat. Leg er een lichte tekening achter
+     zonder sluier en de namen op de kaartjes in de kleedkamer en de kast zijn
+     wég -- niet een beetje flets, onleesbaar. Mét de sluier erover maakt het niet
+     uit wat de tekening doet, en dat is precies wat een vervangbare tekening
+     hoort te zijn.
+
+     De sluier is daarom een token en geen regel: hij hoort bij élke schermtekening
+     en niet bij dít schilderij. Hij is het donkerst in het midden -- daar staan de
+     kaartjes en de knoppen -- en laat de randen van de tekening staan, want daar
+     zit meestal de sfeer waarvoor je hem liet maken. Wie hem sterker nodig heeft
+     dan dit heeft geen sluier nodig maar een andere tekening. */
+  :root { --kunst-sluier: radial-gradient(120% 70% at 50% 62%,
+            rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%); }
+  /* De sterrenkeuze is het enige schilscherm dat vandaag een tekening heeft
+     (assets/bg/landing.webp). Het masker laat de rand van de tekening zacht in de
+     schil overlopen in plaats van een harde snede. */
   #screen-profile.app-sfeer::before {
     content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background-image:
-      radial-gradient(120% 70% at 50% 62%, rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%),
+      var(--kunst-sluier),
       url("assets/bg/landing.webp");
     background-size: cover, cover;
     background-position: 50% 50%, 50% 50%;
@@ -952,7 +1276,7 @@
     width: 100%; padding: 0; cursor: pointer; font-family: inherit;
     color: var(--c-white); text-align: left;
     border: 0; border-radius: var(--r-md);
-    background: rgba(var(--w-deep-rgb, 42,12,71), .6);
+    background: rgba(var(--w-deep-rgb), .6);
     /* Precies de randbehandeling van een bestemming op de reis (.reis-plaats):
        een lichte haarlijn die de tegel begrenst, daarbuiten een donkere keylijn
        die hem van de tekening losmaakt. Dat werkt op elke ondergrond, en het is
@@ -964,19 +1288,19 @@
        "wereldaccent": geen band, geen tweede vlak, geen extra regel per wereld --
        dezelfde schaduw in een andere kleur. */
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(16,5,34,.45),
-                0 0 20px rgba(var(--w-glow-rgb, 255,216,128), .26), var(--e-2);
+                0 0 20px rgba(var(--w-glow-rgb), .26), var(--e-2);
     transition: transform .14s, box-shadow .14s;
   }
   .ster-tegel:hover { transform: translateY(-4px);
     box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(16,5,34,.45),
-                0 0 24px rgba(var(--w-glow-rgb, 255,216,128), .36), var(--e-3); }
+                0 0 24px rgba(var(--w-glow-rgb), .36), var(--e-3); }
   .ster-tegel:active { transform: scale(.97); }
   /* De tik zelf: even indrukken en oplichten, en dán pas het spel in (zie
      kiesSter). Kort genoeg om antwoord te zijn en niet om een animatie te zijn. */
   .ster-tegel.kiest {
     transform: scale(.965);
     box-shadow: 0 0 0 2.5px rgba(255,255,255,.62), 0 0 0 4px rgba(16,5,34,.45),
-                0 0 26px rgba(255,224,150,.5), var(--e-2);
+                0 0 26px rgba(var(--goud-glans-rgb),.5), var(--e-2);
   }
   @media (prefers-reduced-motion: reduce) { .ster-tegel { transition: none; } }
   /* Het podium binnen de tegel draagt geen eigen rand meer: de tegel ís het
@@ -1003,7 +1327,7 @@
   .st-voet {
     display: flex; flex-direction: column; gap: clamp(4px, 3.5cqw, 7px);
     padding: clamp(6px, 5.5cqw, 12px) clamp(7px, 6cqw, 14px) clamp(7px, 6cqw, 14px);
-    background: linear-gradient(180deg, rgba(var(--w-deep-rgb, 42,12,71), .82), rgba(var(--w-deep-rgb, 42,12,71), .96));
+    background: linear-gradient(180deg, rgba(var(--w-deep-rgb), .82), rgba(var(--w-deep-rgb), .96));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
   }
   .st-rij { display: flex; align-items: center; gap: clamp(4px, 4cqw, 9px); min-width: 0; }
@@ -1015,7 +1339,7 @@
     flex: 1; min-width: 0; font-weight: 700; letter-spacing: .01em; line-height: 1.15;
     font-size: clamp(13px, 14cqw, 25px);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    text-shadow: 0 1px 3px rgba(6,1,16,.8);
+    text-shadow: var(--op-kunst-ink);
   }
   /* Hoe ver in déze wereld, als streep en niet als teller. Geen getallen, geen
      sterrentotaal, geen tweede balk: zes kinderen op één scherm horen zich niet
@@ -1047,14 +1371,14 @@
     grid-column: 1 / -1; justify-self: center; max-width: 196px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 2px; width: 100%; min-height: 60px; padding: 10px 8px;
-    font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.15;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; line-height: 1.15;
     color: var(--c-white); text-align: center; cursor: pointer; z-index: 1;
-    border: 1.5px dashed var(--glass-white-35); border-radius: var(--r-md);
-    background: var(--glass-white-10);
+    border: 1.5px dashed rgba(255,255,255,.35); border-radius: var(--r-md);
+    background: rgba(255,255,255,.1);
     transition: transform .07s, background .12s;
   }
   .add-tegel .at-plus { font-size: 21px; line-height: 1; opacity: .9; }
-  .add-tegel:hover { background: var(--glass-white-18); }
+  .add-tegel:hover { background: rgba(255,255,255,.18); }
   .add-tegel:active { transform: scale(.96); }
   /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
      groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
@@ -1062,7 +1386,7 @@
      uitnodiging leest als een knop, niet als een leeg vierkant. */
   .add-tegel.leeg {
     min-height: 116px; max-width: 232px; gap: 8px;
-    font-size: 16px; border-width: 2px;
+    font-size: var(--tx-body); border-width: 2px;
   }
   .add-tegel.leeg .at-plus { font-size: 38px; }
   /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
@@ -1085,7 +1409,7 @@
   }
   /* alleen zichtbaar als er nog niets is: dán is een back-up terugzetten het
      andere ding dat een ouder hier kan willen */
-  .restore-hint { display: none; margin: 12px auto 0; font-size: 13px; opacity: .72; text-align: center; z-index: 1; }
+  .restore-hint { display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1; }
 
   .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
   /* rustig maar wél te vinden rond icoon-knopje: rand + glazen vulling + zachte
@@ -1097,12 +1421,12 @@
      het ✕ 'show stoppen' (de enige onomkeerbare tik in het spel) en het tandwiel */
   .icon-btn {
     width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: var(--c-white); border-radius: 50%; border: 1.5px solid var(--glass-white-28);
-    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 var(--glass-black-28);
+    font-size: 18px; color: var(--c-white); border-radius: 50%; border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
   }
-  .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
-  .icon-btn.on { background: linear-gradient(180deg, var(--glass-white-30), rgba(255,255,255,.14)); }
+  .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .icon-btn.on { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.14)); }
   /* alleen het tandwiel zélf draait — niet de hele (nu ronde) knop eromheen */
   #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
   #btn-gear.on .gear-ico { transform: rotate(35deg); }
@@ -1143,7 +1467,7 @@
   .gear-menu.open { display: flex; animation: gearPop .16s var(--ease-uit); }
   @keyframes gearPop { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
   .gear-item {
-    font-family: inherit; font-size: 16px; font-weight: 600; color: var(--paper-ink);
+    font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
     display: flex; align-items: center; gap: 11px; padding: 0 11px; min-height: 48px;
     border-radius: var(--r-md); transition: background var(--t-tik) ease;
@@ -1160,7 +1484,7 @@
      als het uit staat -- is het een schakelaar in twee standen. De pil zelf houdt
      dezelfde maat, zodat de rij niet verspringt bij het omzetten. */
   .gear-item .gi-state {
-    font-size: 13px; font-weight: 700; padding: 5px 12px 5px 9px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; padding: 5px 12px 5px 9px; border-radius: var(--r-pill);
     display: inline-flex; align-items: center; gap: 6px;
     background: var(--green-badge-bg); color: var(--green-deep);
     box-shadow: inset 0 0 0 1px rgba(46,125,50,.22);
@@ -1193,8 +1517,9 @@
     background: var(--lavender-wash); box-shadow: inset 0 0 0 1.5px var(--purple-light);
   }
   .gear-item.parents .gi-sub {
-    display: block; font-size: 11.5px; font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
+    display: block; font-size: var(--tx-mini); font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
   }
+  /* een teken en geen letter: het pijltje staat als maat in de regel, zie §5 */
   .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
   .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
 
@@ -1207,11 +1532,11 @@
   /* verfijnde randbehandeling, gedeeld door elke plek waar de avatar het
      hoofdelement is (kleedkamer, profielkeuze): dunner en minder grijs dan de
      kale .stage hierboven, dezelfde lichte lavendel/wit-rand als een
-     item-card (var(--glass-white-35)), met een zachte paarse gloed erbij
+     item-card (rgba(255,255,255,.35)), met een zachte paarse gloed erbij
      i.p.v. alleen de kale slagschaduw. Bewust géén goud -- dat blijft
      voorbehouden aan geselecteerd/primaire acties. */
   .stage-frame {
-    border-width: 2px; border-color: var(--glass-white-35);
+    border-width: 2px; border-color: rgba(255,255,255,.35);
     box-shadow: var(--e-2), 0 0 20px rgba(123,47,247,.28);
   }
   /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
@@ -1233,7 +1558,7 @@
     from { opacity: .74; }
     to   { opacity: 1; }
   }
-  .stage .deco { position: absolute; font-size: 26px; text-shadow: 0 2px 4px var(--glass-black-30); }
+  .stage .deco { position: absolute; font-size: 26px; text-shadow: var(--op-kunst-ink); }
   .stage.tappable { cursor: pointer; }
   .stage.tappable:active { transform: scale(.98); }
   .avatar-holder { line-height: 0; }
@@ -1297,20 +1622,23 @@
     align-items: center; gap: 12px; width: 100%; max-width: var(--kolom, 680px); margin-bottom: 8px;
   }
   .screen-header .header-title {
-    font-size: 24px; font-weight: 700; text-align: center; white-space: nowrap;
-    text-shadow: 0 2px 0 var(--glass-black-18);
+    font-size: var(--tx-kop); font-weight: 700; text-align: center; white-space: nowrap;
+    text-shadow: var(--op-vlak-ink);
   }
   /* op de kaart draagt de kop twee dingen: wélke wereld, en waar je daarin bent */
-  .world-sub { display: block; font-size: 13px; font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
+  .world-sub { display: block; font-size: var(--tx-klein); font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
   .screen-header .header-left { justify-self: start; }
   .screen-header .header-right { justify-self: end; }
   /* De teller-pil. Er stonden er drie maten naast elkaar (.chip-badge en
      .diamond-badge.compact); geen van beide werd nog ergens gezet, en één
      💎-pil in één maat is ook precies wat de kop op elk scherm nodig heeft. */
   .diamond-badge {
-    background: var(--glass-black-32); border-radius: var(--r-pill); font-weight: 700;
+    background: rgba(0,0,0,.32); border-radius: var(--r-pill); font-weight: 700;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-    padding: 8px 18px; font-size: 22px;
+    /* --tx-sub en niet --tx-kop: de teller is een bijzin naast de schermnaam en
+       hoort niet even groot te zijn als de kop. Op 320px kostte elke pixel hier
+       een letter van de naam ernaast -- "Trofeeënkast" werd "Trofeeë...". */
+    padding: 8px 18px; font-size: var(--tx-sub);
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
     border: 0; color: inherit; font-family: inherit;
   }
@@ -1378,10 +1706,10 @@
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
-  #screen-map .diamond-badge { padding: 0 11px; font-size: 17px; gap: 5px; }
+  #screen-map .diamond-badge { padding: 0 11px; font-size: var(--tx-body); gap: 5px; }
   /* Op de kaart een maat kleiner dan op de andere schermen: de tekening eronder
      draagt het scherm, niet de tekst. */
-  #screen-map .world-pick { font-size: 16px; position: relative; }
+  #screen-map .world-pick { font-size: var(--tx-body); position: relative; }
   /* justify-self: center, want de middenkolom is sinds de auto-kolommen
      hierboven een minmax(0, 1fr) -- op een telefoon precies genoeg voor de pil,
      op een tablet ineens veel meer. Zonder deze regel rekt een grid-item van
@@ -1433,12 +1761,12 @@
      elders past alles gewoon voluit. */
   #screen-map .world-pick { min-width: 0; }
   @media (max-width: 389px) {
-    #screen-map .world-pick { font-size: 12.5px; }
+    #screen-map .world-pick { font-size: var(--tx-klein); }
     #screen-map .wp-here { gap: 3px; padding: 0 4px 0 7px; }
     #screen-map .wp-cta { gap: 2px; margin: 3px 3px 3px 1px; padding: 0 7px 0 6px; }
     #screen-map .wp-cta-ico { font-size: 17px; }
     #screen-map .wp-chev { width: 6px; height: 10px; }
-    #screen-map .diamond-badge { font-size: 14px; gap: 3px; padding-inline: 6px; }
+    #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
     #screen-map .hub-sticky { padding-left: 7px; padding-right: 8px; }
   }
   /* 10 links, 14 rechts: het portretje draagt zelf 4px onzichtbare padding voor
@@ -1487,7 +1815,7 @@
      ouderdeel (.who-portrait, zie daar) tonen allebei hetzelfde echte avatartje */
   .map-portrait, .who-portrait {
     position: relative; width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
-    background: var(--glass-black-30); border: 2px solid rgba(255,255,255,.65);
+    background: rgba(0,0,0,.3); border: 2px solid rgba(255,255,255,.65);
     box-shadow: var(--e-1);
   }
   .map-portrait svg, .who-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
@@ -1523,15 +1851,15 @@
   }
   .career-panel { width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; }
   .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
-    background: var(--glass-white-13); color: var(--c-white); font-size: 16px; font-weight: 700; }
-  .career-title { font-size: 15px; font-weight: 700; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
+    background: rgba(255,255,255,.13); color: var(--c-white); font-size: 16px; font-weight: 700; }
+  .career-title { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
   /* Slanke ladder: één doorlopende lijst van laag naar hoog. Verleden gedimd met ✓,
      de huidige rung uitgeklapt met balk, de volgende als goud doel, de rest gedempt.
      Alleen bij 'nu' en 'volgende' staan getallen -- de rest blijft rustig. */
   .career-list { display: flex; flex-direction: column; gap: 5px; text-align: left; margin-top: 6px; }
-  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: var(--glass-white-10); }
+  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: rgba(255,255,255,.1); }
   .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; filter: var(--emoji-schaduw); }
-  .lr-name { flex: 1; font-weight: 700; color: var(--c-white); font-size: 14.5px; }
+  .lr-name { flex: 1; font-weight: 700; color: var(--c-white); font-size: var(--tx-label); }
   /* Behaald = goud, maar bewust een slag zachter dan .trophy-card.done: een trofee
      is een prijs die blijft staan, een gepasseerde rang is voorgeschiedenis -- hier
      moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
@@ -1550,15 +1878,15 @@
     border: 2px solid var(--goud-rand); background: var(--goud-tint); box-shadow: var(--goud-gloed-zacht); }
   .lr-top { display: flex; align-items: center; gap: 10px; }
   .ladder-row.goal .lr-emoji { font-size: 27px; width: 32px; }
-  .ladder-row.goal .lr-name { font-size: 16px; }
-  .lr-bonus { font-size: 12.5px; font-weight: 700; color: var(--gold-light); flex: none; margin-left: auto; }
+  .ladder-row.goal .lr-name { font-size: var(--tx-body); }
+  .lr-bonus { font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); flex: none; margin-left: auto; }
   .lr-progress { display: flex; align-items: center; gap: 8px; }
-  .lr-bar { flex: 1; height: 11px; border-radius: var(--r-pill); background: var(--glass-black-32); border: 1px solid var(--glass-white-14); overflow: hidden; }
+  .lr-bar { flex: 1; height: 11px; border-radius: var(--r-pill); background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.14); overflow: hidden; }
   .lr-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); }
-  .lr-count { font-size: 12px; font-weight: 700; color: var(--c-white); flex: none; }
+  .lr-count { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); flex: none; }
   /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
   .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: var(--goud-rand-zacht); }
-  .lr-now { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
+  .lr-now { font-size: var(--tx-mini); font-weight: 700; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
     background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
   @media (prefers-reduced-motion: reduce) { .career-overlay, .pop-panel { animation: none; } }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
@@ -1578,7 +1906,7 @@
     position: absolute; left: 0; right: 0; bottom: 0; height: 300px; pointer-events: none; z-index: 0;
     background:
       /* het licht zelf: warm, breed, van de onderrand omhoog uitwaaierend */
-      radial-gradient(118% 72% at 50% 114%, rgba(255,216,128,.40), rgba(255,150,26,.16) 38%, transparent 68%),
+      radial-gradient(118% 72% at 50% 114%, rgba(var(--warm-licht-rgb),.40), rgba(var(--voetlicht-rgb),.16) 38%, transparent 68%),
       /* twee zachte nevelbanken, versprongen, zodat de horizon niet één rechte lijn is */
       radial-gradient(58% 40% at 20% 96%, rgba(255,255,255,.07), transparent 72%),
       radial-gradient(50% 34% at 78% 101%, rgba(255,255,255,.055), transparent 72%),
@@ -1681,7 +2009,7 @@
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .82;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .82;
     /* dezelfde donkere kern-plus-waas als de koppillen: draagt de letters ook als
        er een lichte lucht achter het glas staat */
     text-shadow: var(--nav-ink);
@@ -1716,17 +2044,17 @@
      vormen: hartjes links (hoeveel fouten mag ik nog), één balk in vakjes rechts
      (hoe ver ben ik). Die balk (.segbar) is gedeeld met het memory-spel. */
   .game-progress-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .notes-left { font-size: 19px; letter-spacing: 1px; white-space: nowrap; }
+  .notes-left { font-size: var(--tx-sub); letter-spacing: 1px; white-space: nowrap; }
   .segbar { display: flex; gap: 3px; width: min(48vw, 190px); }
   .segbar > span {
     flex: 1; height: 9px; border-radius: var(--r-pill);
-    background: var(--glass-white-30); transition: background .25s ease;
+    background: rgba(255,255,255,.3); transition: background .25s ease;
   }
   /* goud = gehaald (zelfde betekenis als overal elders), wit = waar je nu bent */
   .segbar > span.done { background: var(--gold-accent); }
   .segbar > span.now { background: var(--c-white); box-shadow: 0 0 6px rgba(255,255,255,.55); }
   @media (max-width: 430px) {
-    .notes-left { font-size: 17px; letter-spacing: 0; }
+    .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
   }
 
@@ -1839,7 +2167,7 @@
     position: absolute; inset: 0;
     background:
       radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
-      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 64%, var(--w-deep, #2a0c47) 100%);
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 64%, var(--w-deep) 100%);
   }
 
   /* ---- De wereldtekening, als licht en niet als landschap ----
@@ -1915,7 +2243,7 @@
   .venue-licht {
     position: absolute; inset: 0;
     background:
-      radial-gradient(112% 40% at 50% 2%, rgba(255,222,150,.30), transparent 64%),
+      radial-gradient(112% 40% at 50% 2%, rgba(var(--goud-glans-rgb),.30), transparent 64%),
       radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
                       rgba(var(--w-deep-rgb), .82) 62%, rgba(var(--w-deep-rgb), .93) 100%);
@@ -1939,7 +2267,7 @@
      scherm): er komt geen tweede rand voor terug. */
   .venue-licht::after {
     content: ''; position: absolute; left: -10%; right: -10%; top: 44%; height: 52%;
-    background: radial-gradient(60% 50% at 50% 50%, rgba(255,206,128,.34), transparent 72%);
+    background: radial-gradient(60% 50% at 50% 50%, rgba(var(--warm-licht-rgb),.34), transparent 72%);
     opacity: .6; transition: opacity var(--t-snel) ease;
   }
   /* De warme golf die bij een goed antwoord door de zaal trekt. Staat bewust als
@@ -1951,8 +2279,8 @@
     content: ''; position: absolute; inset: 0; opacity: 0;
     transition: opacity var(--t-snel) ease;
     background:
-      radial-gradient(90% 44% at 50% 4%, rgba(255,226,158,.34), transparent 66%),
-      radial-gradient(70% 34% at 50% 52%, rgba(255,198,120,.22), transparent 74%);
+      radial-gradient(90% 44% at 50% 4%, rgba(var(--goud-glans-rgb),.34), transparent 66%),
+      radial-gradient(70% 34% at 50% 52%, rgba(var(--warm-licht-rgb),.22), transparent 74%);
   }
   /* Goed antwoord: de zaal licht één tel op -- zie submitAnswer/zaalJuicht, dat de
      klasse 380ms zet. Meer dan dit doet de zaal niet; de knop, de diamanten en de
@@ -1973,7 +2301,7 @@
      onderen), dus dit kost geen schuifbalk en geen extra hoogte. */
   .venue-aan .venue-bundel {
     left: 50%; bottom: 8%; width: 210%; height: 260%; transform: translateX(-50%);
-    background: linear-gradient(180deg, rgba(255,238,196,.42) 0%, rgba(255,208,132,.15) 54%, rgba(255,196,120,0) 86%);
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.42) 0%, rgba(var(--warm-licht-rgb),.15) 54%, rgba(var(--warm-licht-rgb),0) 86%);
     -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     filter: blur(13px);
@@ -1986,9 +2314,9 @@
     /* De warme lip is zaallicht en blijft dus in élke wereld hetzelfde goud; de
        schaduw eronder is de vloer van díe wereld en volgt --w-deep. */
     background:
-      radial-gradient(52% 46% at 50% 14%, rgba(255,232,176,.70), rgba(255,190,104,.22) 56%, transparent 76%),
+      radial-gradient(52% 46% at 50% 14%, rgba(var(--goud-glans-rgb),.70), rgba(var(--warm-licht-rgb),.22) 56%, transparent 76%),
       radial-gradient(58% 64% at 50% 52%, rgba(var(--w-deep-rgb), .88), rgba(var(--w-deep-rgb), .36) 72%, transparent 88%);
-    box-shadow: 0 0 40px rgba(255,196,116,.30), inset 0 2px 0 rgba(255,228,168,.35);
+    box-shadow: 0 0 40px rgba(var(--warm-licht-rgb),.30), inset 0 2px 0 rgba(var(--goud-glans-rgb),.35);
   }
   /* Op het eindscherm staat het podium ín een kaart. Het paneel moet dus precies
      zo breed zijn als de paspop, anders loopt de richel als een streep dwars over
@@ -2037,7 +2365,7 @@
   /* De diamantenteller is hier een teller en geen knop: hij is het doel waar de
      verdiende diamanten naartoe vliegen. Een maat kleiner dan op de rustpunten,
      zodat hij niet met de som concurreert. */
-  .venue-aan .screen-header .diamond-badge { font-size: 17px; padding: 6px 13px; }
+  .venue-aan .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
   /* Hartjes en showvoortgang: samen één pilletje van dezelfde stof, zodat ze als
      één ding lezen ("hoe sta ik ervoor") in plaats van als twee meters. */
   .venue-aan .game-progress-row {
@@ -2046,12 +2374,12 @@
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
   }
   /* de showvoortgang is hier de hoofdzaak, de hartjes de bijzin */
-  .venue-aan .notes-left { font-size: 15px; opacity: .92; }
+  .venue-aan .notes-left { font-size: var(--tx-label); opacity: .92; }
   .venue-aan .segbar > span { height: 8px; }
 
   /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
      zodat hij op de vloer staat en er niet op geplakt is. */
-  .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(255,198,120,.18); }
+  .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
   /* Elke nieuwe vraag komt binnen in plaats van te verspringen. Heel kort (140ms):
      dit is geen overgang maar een aankondiging. */
   .venue-aan .question-card.vers { animation: vraagIn .14s var(--ease-uit) both; }
@@ -2103,7 +2431,7 @@
      som nog evenveel rustig vlak overblijft. */
   @media (max-height: 700px) {
     .venue-licht { background:
-      radial-gradient(112% 34% at 50% 0%, rgba(255,222,150,.26), transparent 62%),
+      radial-gradient(112% 34% at 50% 0%, rgba(var(--goud-glans-rgb),.26), transparent 62%),
       radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 18%, rgba(var(--w-deep-rgb), .54) 40%,
                       rgba(var(--w-deep-rgb), .84) 58%, rgba(var(--w-deep-rgb), .93) 100%); }
@@ -2155,9 +2483,9 @@
        blijft hij van zijn maat -- 48px, vol dekking -- en niet van zijn kleur. */
     border-radius: 50%; border: 2px solid var(--cyaan-rand);
     background: linear-gradient(180deg, var(--cyaan-tint), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 var(--glass-black-28);
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
   }
-  .replay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--glass-black-28); }
+  .replay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
   /* meetellen: elk object popt op maat op */
   .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
   .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
@@ -2169,7 +2497,7 @@
   .cframe { display: inline-grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
   .tf-cell { width: 28px; height: 28px; border-radius: var(--r-sm); border: 2px solid rgba(74,20,140,.22); display: flex; align-items: center; justify-content: center; }
   .tf-cell.on { border-color: rgba(74,20,140,.38); background: rgba(142,36,170,.08); }
-  .tf-cell.hidden { background: rgba(74,20,140,.14); font-size: 15px; }
+  .tf-cell.hidden { background: rgba(74,20,140,.14); font-size: var(--tx-label); }
   .cframe.big .tf-cell { width: 34px; height: 34px; }
   .cframe .cg-obj { font-size: 20px; }
   .cframe.big .cg-obj { font-size: 24px; }
@@ -2309,14 +2637,14 @@
     display: flex; flex-direction: column; align-items: center; gap: 0;
     font-family: inherit; font-size: 21px; font-weight: 700; color: var(--c-white);
     cursor: pointer; padding: 8px 11px 7px; border-radius: var(--r-md);
-    border: 1px solid var(--glass-white-20);
+    border: 1px solid rgba(255,255,255,.2);
     background: rgba(32,12,58,.6);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 4px 14px var(--glass-black-32);
+    box-shadow: 0 4px 14px rgba(0,0,0,.32);
   }
-  .mem-fab span { font-size: 11.5px; font-weight: 700; }
+  .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
   /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning */
-  .mem-fab .mem-pay { font-size: 10.5px; font-weight: 700; opacity: .88; letter-spacing: .01em; }
+  .mem-fab .mem-pay { font-size: var(--tx-mini); font-weight: 700; opacity: .88; letter-spacing: .01em; }
   .mem-fab:active { transform: scale(.95); }
   /* ---- Op het kortste scherm: het woord eraf --------------------------------
      Op 320x568 is het knopje 67x70 en staat de onderste halte van de Piratenwereld
@@ -2407,7 +2735,7 @@
     .show-stage { width: 145px; height: 122px; }
     .game-arena { gap: 6px; margin-top: 2px; }
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
-    .gold-banner { height: 18px; font-size: 14.5px; margin-top: 2px; }
+    .gold-banner { height: 18px; font-size: var(--tx-label); margin-top: 2px; }
     .replay-btn { width: 40px; height: 40px; font-size: 19px; margin: 2px auto 0; }
     .choice-btn { padding: 12px 8px; font-size: 27px; }
     .choices { gap: 10px; }
@@ -2446,8 +2774,8 @@
     z-index: 60; opacity: 0; pointer-events: none;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
     background: rgba(48,10,80,.94);
-    border: 1.5px solid rgba(255,224,130,.5); border-radius: var(--r-md); padding: 12px 22px 14px;
-    box-shadow: var(--e-2), 0 0 22px rgba(255,193,7,.25);
+    border: 1.5px solid rgba(var(--warm-licht-rgb),.5); border-radius: var(--r-md); padding: 12px 22px 14px;
+    box-shadow: var(--e-2), 0 0 22px rgba(var(--goud-gloed-rgb),.25);
     max-width: min(84vw, 320px);
   }
   /* gedockte kaart is compacter dan de losse variant (kleiner pilletje,
@@ -2456,10 +2784,10 @@
   .praise.docked {
     top: 98px; transform: translateX(-50%) scale(.7); gap: 5px; padding: 9px 18px 11px;
   }
-  .praise.docked .earn-chip { font-size: 14px; padding: 5px 12px; }
+  .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
-    font-size: clamp(19px, 5.4vw, 25px); font-weight: 700; color: var(--gold-light);
-    text-shadow: 0 0 12px var(--gold-cta-bottom), 0 2px 0 var(--glass-black-40);
+    font-size: var(--tx-feest-kort); font-weight: 700; color: var(--gold-light);
+    text-shadow: var(--goud-ink);
     text-align: center; text-wrap: balance; line-height: 1.15;
   }
   .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
@@ -2481,7 +2809,7 @@
     z-index: 60; display: none; opacity: 0;
     flex-direction: column; align-items: center; gap: 2px; text-align: center;
     background: rgba(43,7,71,.94);
-    border: 1.5px solid var(--glass-white-16); border-radius: var(--r-md); padding: 11px 20px 12px;
+    border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-md); padding: 11px 20px 12px;
     box-shadow: var(--e-2);
     max-width: min(88vw, 360px);
     pointer-events: none;
@@ -2493,16 +2821,16 @@
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
   .toast-main { font-size: clamp(16px, 4.6vw, 19px); font-weight: 700; color: var(--c-white); line-height: 1.3; text-wrap: balance; }
-  .toast-sub { font-size: 13px; font-weight: 600; color: var(--c-white); opacity: .75; margin-top: 1px; }
+  .toast-sub { font-size: var(--tx-klein); font-weight: 600; color: var(--c-white); opacity: .75; margin-top: 1px; }
   /* op lage schermen zit de paspop al vlak onder de kop (zie .show-stage
      hierboven) -- de gedockte kaart moet dan even compact zijn om de
      ruimte ertussen niet te overschrijden */
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
-    .praise.docked .praise-headline { font-size: 13px; }
-    .praise.docked .earn-chip { font-size: 10px; padding: 2px 7px; }
-    .toast.docked .toast-main { font-size: 14px; }
-    .toast.docked .toast-sub { font-size: 10px; margin-top: 0; }
+    .praise.docked .praise-headline { font-size: var(--tx-klein); }
+    .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
+    .toast.docked .toast-main { font-size: var(--tx-label); }
+    .toast.docked .toast-sub { font-size: var(--tx-mini); margin-top: 0; }
   }
   /* "tik om verder te gaan": een onzichtbare, schermvullende laag ónder de
      toast (die zelf pointer-events:none heeft, dus een tik daarop valt door
@@ -2539,11 +2867,11 @@
   /* ---- Gouden vraag ---- */
   .question-card.golden {
     background: var(--gold-accent);
-    color: var(--ink-on-gold-card); box-shadow: 0 0 26px rgba(255,193,7,.9), 0 8px 20px var(--glass-black-30);
+    color: var(--ink-on-gold-card); box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.9), 0 8px 20px rgba(0,0,0,.3);
     animation: goldGlow 1s ease-in-out infinite alternate;
   }
-  @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(255,193,7,.7), 0 8px 20px var(--glass-black-30); } to { box-shadow: 0 0 34px rgba(255,193,7,1), 0 8px 20px var(--glass-black-30); } }
-  .gold-banner { font-size: 18px; font-weight: 700; color: var(--gold-light); text-shadow: 0 0 10px var(--gold-cta-bottom); margin-top: 6px; height: 22px; }
+  @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(var(--goud-gloed-rgb),.7), 0 8px 20px rgba(0,0,0,.3); } to { box-shadow: 0 0 34px rgba(var(--goud-gloed-rgb),1), 0 8px 20px rgba(0,0,0,.3); } }
+  .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
      Er valt niets te scrollen. Het kader (.world-frame) heeft de beeldverhouding
@@ -2598,7 +2926,7 @@
        is bij een wereldwissel niet altijd al gedecodeerd; zonder deze regel kijk je
        die ene tel door het kader heen naar het paars van de app, en dát leest als
        een flits. De onderlaag is nu de wereld zelf, dus er valt niets te flitsen. */
-    background-color: var(--w-deep, #2a0c47);
+    background-color: var(--w-deep);
     background-size: cover; background-position: 50% 50%;
     /* FASE 6B -- de tekening is de bóvenste van drie lagen, en de twee eronder
        zijn de wereld op zijn eigen kleuren.
@@ -2623,8 +2951,8 @@
        getekend is, en een ontbrekend bestand levert nooit een leeg vlak op. */
     --w-art: none;
     background-image: var(--w-art),
-      radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
-      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow), transparent 66%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
   }
   /* Heeft een wereld een eigen tekening, dan brengt die zijn eigen lucht en grond
      mee: de gedeelde wolkjes en het voetlicht van de app zouden er dan dwars
@@ -2652,7 +2980,7 @@
      een schermhoogte naar beneden staat mag nooit een schuifbalk in de app zetten)
      en de diepe kleur van de bestemming eronder, zodat een naad van een halve pixel
      tussen de twee lagen de wereld zelf is en niet het paars van de app. */
-  #screen-map.wereld-reist { overflow: hidden; background-color: var(--w-deep, #2a0c47); }
+  #screen-map.wereld-reist { overflow: hidden; background-color: var(--w-deep); }
   #screen-map.wereld-reist .tour-map { will-change: transform; }
   /* De kopie is een plaatje en verder niets: er valt niet op te tikken en niet in
      te schuiven, en een schermlezer hoort hem niet nog een keer op te lezen. */
@@ -2696,11 +3024,11 @@
     position: absolute; transform-origin: 0 0; will-change: transform;
     /* exact dezelfde drie lagen als .world-frame, op een vak dat exact de
        verhouding van de tekening heeft -- dus 100% 100% ís hier cover */
-    background-color: var(--w-deep, #2a0c47);
+    background-color: var(--w-deep);
     background-size: 100% 100%; background-repeat: no-repeat;
     background-image: var(--w-art, none),
-      radial-gradient(120% 40% at 50% 103%, var(--w-glow, rgba(255,216,128,.34)), transparent 66%),
-      linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%);
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow), transparent 66%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
   }
   /* De kaart tijdens een vlucht: zijn tekening ligt even in de vluchtlaag, dus
      hier blijft alleen het plaatselijke werk over (haltes, weg, ster). Het kader
@@ -2766,7 +3094,7 @@
        een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
     #screen-map { isolation: isolate; }
     #screen-map::before { content: ''; position: absolute; inset: 0; z-index: -1;
-      background: linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%); }
+      background: linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%); }
     #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
       background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
       filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
@@ -2868,7 +3196,7 @@
      gouden stuk precies bij de huidige halte ophoudt. Dát is wat de weg over
      voortgang zegt, en dat werkte al. */
   .tour-road-under { stroke: var(--route-onder); stroke-width: 17; }
-  .tour-road-bg { stroke: var(--w-road, rgba(255,255,255,.42)); stroke-width: 11; opacity: .68; }
+  .tour-road-bg { stroke: var(--w-road); stroke-width: 11; opacity: .68; }
   .tour-road-fg { stroke: var(--route-goud); stroke-width: 11; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
      glas en klein: goud is voor spelen en verdiend, en dit mag nooit met de halte
@@ -2973,20 +3301,31 @@
        minder halte die hij afdekt. */
     bottom: calc(var(--nav-h, 96px) - 12px);
     display: flex; align-items: center; gap: 5px; padding: 6px 12px;
-    font-family: inherit; font-size: 13.5px; font-weight: 700; line-height: 1;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
     white-space: nowrap; max-width: calc(100% - 24px);
     color: var(--c-white); cursor: pointer;
     background: rgba(32,12,58,.72);
-    border: 1px solid var(--glass-white-28); border-radius: var(--r-pill);
+    border: 1px solid rgba(255,255,255,.28); border-radius: var(--r-pill);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 3px 12px rgba(0,0,0,.42);
   }
   .world-back:active { transform: translateX(-50%) scale(.95); }
   /* Een maatje kleiner op het kortste scherm -- zie de opmerking bij .mem-fab
      hierboven: deze pil staat middenonder, en daar zet de standaardslinger zijn
-     eerste halte neer. */
+     eerste halte neer.
+     Sinds de letterladder gaat dat kleiner maken via de RUIMTE en niet meer via
+     de letter: de pil stond hier op 12px en de gewone stand op 13.5px, en dat
+     zijn allebei geen sport -- ze liggen anderhalve pixel uit elkaar en dat ziet
+     niemand. Nu leest hij in beide standen --tx-klein en wordt hij hier smal
+     gemaakt met minder lucht eromheen. Dat scheelt evenveel breedte, en het
+     scheelt een kind van vijf geen leesbaarheid. Controle 7f in
+     test/profiles.test.js meet wat de pil van de onderste halte afdekt. */
   @media (max-height: 620px) {
-    .world-back { font-size: 12px; padding: 4px 10px; }
+    /* Twee pixels lager ook. Dat is dezelfde afweging als bij de bottom hierboven,
+       en hier telt hij dubbel: onder de pil zit de balk (die niets afdekt), boven
+       de pil de onderste halte (die alles afdekt). De marge staat daarmee ruimer
+       dan vóór de ladder, en niet net-aan. */
+    .world-back { padding: 3px 8px; gap: 4px; bottom: calc(var(--nav-h, 96px) - 14px); }
   }
   /* ===== De haltes: één staatsysteem voor álle werelden =====================
 
@@ -3132,7 +3471,7 @@
   .tour-stop .dot { position: relative; z-index: 1;
     width: 10.3cqw; height: 10.3cqw; margin: 0 auto; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 5.4cqw; font-weight: 700; border: 0.55cqw solid var(--glass-white-30);
+    font-size: 5.4cqw; font-weight: 700; border: 0.55cqw solid rgba(255,255,255,.3);
     background: var(--purple-shadow); }
   /* Twee dingen tillen de halte van een wíllekeurige ondergrond af, en ze zijn
      allebei bewust klein:
@@ -3170,7 +3509,7 @@
        hetzelfde materiaal als het sterrentabje eronder (--ster-tab), dus het is
        geen nieuw ding op de kaart maar hetzelfde ding, kleiner. */
     background: var(--ster-tab);
-    box-shadow: inset 0 0 0 0.35cqw rgba(255,196,61,.75), 0 0.35cqw 0.7cqw rgba(12,2,26,.45);
+    box-shadow: inset 0 0 0 0.35cqw rgba(var(--goud-rgb),.75), 0 0.35cqw 0.7cqw rgba(12,2,26,.45);
   }
   /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst
      als 🔒-emoji, daarna getekend, en steeds kleiner en stiller. Die reeks eindigt
@@ -3306,7 +3645,7 @@
   .tour-stop.next { --stop-schaal: 1.06; }
   .tour-stop.next .dot { border-color: var(--gold-accent); color: var(--ink-on-gold);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.1cqw rgba(255,196,61,.32); }
+    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.1cqw rgba(var(--goud-rgb),.32); }
   /* Een zachte spotlight op de grond onder de huidige halte. Hij hoort bij de
      ster erbovenop: samen maken ze van "een gouden rondje met een poppetje
      ernaast" één ding dat zegt hier sta ik. Zonder dit leest de ster op een drukke
@@ -3330,7 +3669,7 @@
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255,216,140,.2), rgba(255,196,90,.07) 52%, transparent 74%);
+    background: radial-gradient(closest-side, rgba(var(--warm-licht-rgb),.2), rgba(var(--warm-licht-rgb),.07) 52%, transparent 74%);
     animation: stopSpot 2.8s ease-in-out infinite;
   }
   @keyframes stopSpot {
@@ -3369,7 +3708,7 @@
      waaróm. Geen enkele beweging nodig. */
   .tour-stop.done.perfect .dot {
     border-color: var(--gold-accent);
-    background: linear-gradient(180deg, rgba(255,214,90,.14), rgba(255,193,61,.05)), var(--purple-shadow);
+    background: linear-gradient(180deg, rgba(var(--goud-rgb),.14), rgba(var(--goud-rgb),.05)), var(--purple-shadow);
     /* De ring ligt BUITEN de rand, niet erin: --dot-key houdt zijn donkere
        haarlijntje op 0,2cqw, daarachter komt het goud tot 0,62cqw, en daar weer
        achter een heel zachte gloed die net voorbij de ring uitloopt. Drie lagen
@@ -3632,7 +3971,7 @@
     opacity: 0; animation: heroVonk 6.5s ease-in-out infinite;
   }
   .tour-hero .hero-vonk svg { width: 100%; height: auto; display: block; fill: #fff7dc;
-    filter: drop-shadow(0 0 4px rgba(255,225,140,.85)); }
+    filter: drop-shadow(0 0 4px rgba(var(--warm-licht-rgb),.85)); }
   @keyframes heroVonk {
     0%, 80%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
     86%           { opacity: 1; transform: scale(1.05) rotate(10deg); }
@@ -3655,7 +3994,7 @@
 
   /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
   @media (max-width: 390px) {
-    #screen-map .diamond-badge { font-size: 17px; padding: 6px 13px; }
+    #screen-map .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
     .map-portrait { width: 38px; height: 38px; }
     .map-portrait svg { top: -5px; width: 65px; }
   }
@@ -3813,7 +4152,7 @@
      zwevende stof draagt als de pillen ernaast. Nu zijn de drie wereldschermen
      (kaart, reis, zaal) één kop in drie standen. */
   #screen-journey .diamond-badge {
-    height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: 17px;
+    height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: var(--tx-body);
     background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
@@ -3853,7 +4192,7 @@
          licht blijft staan terwijl de reis eronder langs schuift: dan is het licht
          ín de kamer en niet geverfd op de baan. */
       radial-gradient(58% 26% at -12% 6%, transparent 57%, rgba(128,226,255,.2) 65%, transparent 73%),
-      radial-gradient(64% 30% at 112% 92%, transparent 57%, rgba(255,176,96,.22) 65%, transparent 73%),
+      radial-gradient(64% 30% at 112% 92%, transparent 57%, rgba(var(--voetlicht-rgb),.22) 65%, transparent 73%),
       /* De nacht zelf. Twee trappen lichter en een slag paarser dan hiervoor
          (#110720 -> #180b2c onderaan de lucht): op #11 was dit het donkerste vlak
          van de hele app, donkerder dan de schil en veel donkerder dan elke
@@ -3872,7 +4211,7 @@
   .reis-track::after {
     content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--reis-stap) * 1.1);
     pointer-events: none;
-    background: radial-gradient(130% 100% at 50% 122%, rgba(255,164,60,.34), transparent 70%);
+    background: radial-gradient(130% 100% at 50% 122%, rgba(var(--voetlicht-rgb),.34), transparent 70%);
   }
   /* De lucht loopt over de volle breedte, de reis zelf niet. Zonder deze kolom rekt
      de slinger op een tablet mee met het venster: dan staan twee bestemmingen een
@@ -3913,7 +4252,7 @@
      stuk route dat om aandacht vraagt: dáár is ze net geweest. Vol goud en een tikje
      dikker; de rest van het gelopen spoor blijft rustig. */
   .reis-weg-nu { stroke: var(--gold-accent); stroke-width: 5.8;
-    filter: drop-shadow(0 0 3px rgba(255,193,7,.5)); }
+    filter: drop-shadow(0 0 3px rgba(var(--goud-gloed-rgb),.5)); }
   /* de tussenstippen: halverwege, en kleiner */
   .reis-weg-heel.klein, .reis-weg-gelopen.klein, .reis-weg-nu.klein {
     stroke-dashoffset: 5.5; stroke-width: 3.1;
@@ -3956,8 +4295,8 @@
        kleur over een donkere nacht is geen sfeer maar niets. De gloed is de warme,
        heldere kant van hetzelfde thema, en dát is wat er om een plek heen hangt. */
     background: radial-gradient(closest-side,
-      rgba(var(--w-glow-rgb, 255,216,128), .34),
-      rgba(var(--w-sky-rgb, 61,26,99), .2) 50%, transparent 78%);
+      rgba(var(--w-glow-rgb), .34),
+      rgba(var(--w-sky-rgb), .2) 50%, transparent 78%);
   }
   /* FASE 5E -- --r-md en niet een eigen 18px. De bestemming op de reis, het venster
      om de wereldkaart in liggende stand (.world-frame) en de sterrentegel op het
@@ -3966,10 +4305,10 @@
   .reis-plaats {
     position: absolute; inset: 0; border-radius: var(--r-md); overflow: hidden;
     display: flex; align-items: center; justify-content: center;
-    background-color: var(--w-deep, #2a0c47);
+    background-color: var(--w-deep);
     /* draagt zichzelf als er (nog) geen tekening is -- net als .world-frame.no-art */
-    background-image: radial-gradient(120% 70% at 50% 108%, var(--w-glow, rgba(255,216,128,.4)), transparent 66%),
-                      linear-gradient(180deg, var(--w-sky, #3d1a63), var(--w-deep, #2a0c47));
+    background-image: radial-gradient(120% 70% at 50% 108%, var(--w-glow), transparent 66%),
+                      linear-gradient(180deg, var(--w-sky), var(--w-deep));
     box-shadow: 0 0 0 1.5px rgba(255,255,255,.14), 0 0 0 3px rgba(18,6,36,.55),
                 0 14px 26px var(--stop-schaduw);
     transition: transform .12s;
@@ -3991,19 +4330,19 @@
     position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
     display: flex; align-items: center; gap: 6px;
     padding: 14px 9px 7px;
-    background: linear-gradient(180deg, transparent, rgba(10,3,24,.62) 38%, rgba(10,3,24,.88));
+    background: var(--op-kunst-veeg);
   }
   .rn-tekst { flex: 1; min-width: 0; text-align: left;
-    font-size: 12.5px; font-weight: 700; letter-spacing: .005em; line-height: 1.1;
+    font-size: var(--tx-klein); font-weight: 700; letter-spacing: .005em; line-height: 1.1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    text-shadow: 0 1px 3px rgba(6,1,16,.95); }
+    text-shadow: var(--op-kunst-ink); }
   /* De sterrenteller. Het teken doet het werk, het getal is de bijzin: een kind van
      vijf ziet "ster, en nog niet vol", een kind van acht leest 17/24. Getekend en
      niet ⭐, om dezelfde reden als op de wereldkaart -- een emoji wordt per toestel
      anders getekend, en naast elkaar valt dat op. */
   .reis-sterren { flex: none; display: inline-flex; align-items: center; gap: 3px;
-    font-size: 10.5px; font-weight: 700; color: var(--gold-light); white-space: nowrap;
-    text-shadow: 0 1px 3px rgba(6,1,16,.95); }
+    font-size: var(--tx-mini); font-weight: 700; color: var(--gold-light); white-space: nowrap;
+    text-shadow: var(--op-kunst-ink); }
   .reis-sterren svg { width: 11px; height: 11px; display: block; flex: none;
     fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.1; }
 
@@ -4016,13 +4355,13 @@
     position: absolute; right: 7px; top: 7px; z-index: 3;
     width: 21px; height: 21px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11.5px; font-weight: 700; line-height: 1; color: var(--gold-light);
+    font-size: var(--tx-mini); font-weight: 700; line-height: 1; color: var(--gold-light);
     background: rgba(18,7,34,.72);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
   }
   /* op slot: hetzelfde plekje, hetzelfde glas, alleen een wit teken */
-  .reis-zegel.slot { color: var(--c-white); font-size: 10.5px; }
+  .reis-zegel.slot { color: var(--c-white); font-size: var(--tx-mini); }
   /* Het "nee" van een wereld die nog niet aan de beurt is: het slotje schudt één
      keer kort met zijn hoofd. Klein en gedempt -- het zit op een badge van 21
      pixels, en de vinkjesschud van .shake (10px heen en weer) zou het van zijn
@@ -4053,10 +4392,10 @@
      warme onderrand -- geen glinstering, geen tweede badge, geen label "PERFECT". */
   .reis-halte.vol .reis-plaats {
     box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                0 0 20px rgba(255,193,7,.3), 0 14px 26px var(--stop-schaduw);
+                0 0 20px rgba(var(--goud-gloed-rgb),.3), 0 14px 26px var(--stop-schaduw);
   }
   .reis-halte.vol .reis-label {
-    background: linear-gradient(180deg, transparent, rgba(58,26,2,.6) 38%, rgba(48,20,2,.92));
+    --veeg-rgb: 54,23,2; background: var(--op-kunst-veeg);
   }
   .reis-halte.vol .reis-sterren { color: var(--gold-accent); }
 
@@ -4069,18 +4408,18 @@
      helderste ding op de kaart, en dat is de bedoeling. */
   .reis-halte.nu .reis-plaats {
     box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                0 0 20px rgba(255,193,7,.32), 0 16px 30px var(--stop-schaduw);
+                0 0 20px rgba(var(--goud-gloed-rgb),.32), 0 16px 30px var(--stop-schaduw);
     animation: reisGloed 3.4s ease-in-out infinite alternate;
   }
   @keyframes reisGloed {
     from { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                       0 0 13px rgba(255,193,7,.2), 0 16px 30px var(--stop-schaduw); }
+                       0 0 13px rgba(var(--goud-gloed-rgb),.2), 0 16px 30px var(--stop-schaduw); }
     to   { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                       0 0 26px rgba(255,193,7,.42), 0 16px 30px var(--stop-schaduw); }
+                       0 0 26px rgba(var(--goud-gloed-rgb),.42), 0 16px 30px var(--stop-schaduw); }
   }
   .reis-halte.nu::before { background: radial-gradient(closest-side,
-    rgba(255,196,90,.22), rgba(var(--w-sky-rgb, 61,26,99), .2) 48%, transparent 76%); }
-  .reis-halte.nu .rn-tekst { font-size: 13.5px; }
+    rgba(var(--warm-licht-rgb),.22), rgba(var(--w-sky-rgb), .2) 48%, transparent 76%); }
+  .reis-halte.nu .rn-tekst { font-size: var(--tx-klein); }
 
   /* Nog niet aan de beurt. De tekening blíjft staan -- dat is de hele reden dat een
      kind omhoog wil -- maar ontkleurd, donkerder en met een koele waas erover: je
@@ -4123,7 +4462,7 @@
   .reis-pop::before {
     content: ''; position: absolute; z-index: 0; left: 50%; bottom: 4px; transform: translateX(-50%);
     width: 78px; height: 78px; border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255,247,220,.44), rgba(255,236,186,.15) 54%, transparent 74%);
+    background: radial-gradient(closest-side, rgba(255,247,220,.44), rgba(var(--goud-glans-rgb),.15) 54%, transparent 74%);
   }
   .reis-pop::after {
     content: ''; position: absolute; z-index: 0; left: 50%; bottom: 1px; transform: translateX(-50%);
@@ -4144,9 +4483,9 @@
   .reis-vervolg {
     position: absolute; left: 50%; top: 38%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 6px; white-space: nowrap;
-    font-size: 13px; font-weight: 700; letter-spacing: .02em; padding: 6px 13px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; letter-spacing: .02em; padding: 6px 13px; border-radius: var(--r-pill);
     color: var(--lavender-text); background: rgba(32,12,58,.6);
-    border: 1px solid var(--glass-white-22); text-shadow: var(--hud-ink);
+    border: 1px solid rgba(255,255,255,.22); text-shadow: var(--hud-ink);
   }
 
   /* ---- Terug naar waar je bent --------------------------------------------
@@ -4156,9 +4495,9 @@
      je weer in de buurt bent -- dus hij staat nooit "voor het geval dat" in beeld. */
   .reis-terug {
     position: fixed; right: 14px; bottom: calc(var(--balk-ruimte) + 10px); z-index: 30;
-    width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--glass-white-28);
+    width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255,255,255,.28);
     display: flex; align-items: center; justify-content: center; padding: 0;
-    font-family: inherit; font-size: 19px; color: var(--c-white); cursor: pointer;
+    font-family: inherit; font-size: var(--tx-sub); color: var(--c-white); cursor: pointer;
     background: rgba(32,12,58,.8);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 4px 14px rgba(0,0,0,.45);
@@ -4175,7 +4514,7 @@
        leegmaken. Hij wordt dus alleen een maatje kleiner, net als de knoppen ernaast. */
     #screen-journey .rt-ico { font-size: 21px; }
     #screen-journey .icon-btn { width: 34px; height: 34px; font-size: 16px; }
-    #screen-journey .diamond-badge { font-size: 15.5px; padding: 0 10px; }
+    #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .reis-halte.nu .reis-plaats { animation: none; }
@@ -4222,7 +4561,7 @@
   #screen-trophies { --kolom: 760px; }
   /* De stand, in de kop, als zin. Geen balk: zie renderShelves. */
   .kast-telling {
-    font-size: 13px; font-weight: 700; color: var(--lavender-text);
+    font-size: var(--tx-klein); font-weight: 700; color: var(--lavender-text);
     opacity: .82; text-align: center; margin-top: 2px;
     /* zie .gescrold hieronder: hij klapt weg zodra er gescrold wordt. max-height
        en niet display:none, anders springt de kop in plaats van te krimpen. */
@@ -4281,17 +4620,17 @@
      haarlijn licht bovenin als elk ander vlak in de app (--vlak-top). */
   .shelf {
     background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(0,0,0,.14));
-    border: 1px solid var(--glass-white-13);
+    border: 1px solid rgba(255,255,255,.13);
     border-radius: var(--r-lg); padding: 14px 13px 16px; margin: 16px 0 0;
     box-shadow: var(--vlak-top);
   }
   .shelf:last-of-type { margin-bottom: 4px; }
   /* Plank compleet: één zacht gouden randje, en verder niets. Geen teller die
      "5 van 5" zegt -- dat staat al op de vijf gouden kaartjes eronder. */
-  .shelf.full { border-color: var(--goud-rand); box-shadow: inset 0 1px 0 rgba(255,241,190,.16); }
+  .shelf.full { border-color: var(--goud-rand); box-shadow: inset 0 1px 0 rgba(var(--goud-glans-rgb),.16); }
   .shelf-title { margin: 0 2px 12px; }
-  .shelf-naam { font-size: 16.5px; font-weight: 700; letter-spacing: .01em; text-shadow: 0 1px 0 var(--glass-black-25); }
-  .shelf-note { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .78; margin-top: 2px; line-height: 1.25; }
+  .shelf-naam { font-size: var(--tx-body); font-weight: 700; letter-spacing: .01em; text-shadow: var(--op-vlak-ink); }
+  .shelf-note { font-size: var(--tx-klein); font-weight: 600; color: var(--lavender-text); opacity: .78; margin-top: 2px; line-height: 1.25; }
   /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: planken hebben
      een oneven aantal kaartjes, en CSS Grid geeft elke rij dezelfde kolomposities --
      de laatste, onvolledige rij bleef daardoor links hangen i.p.v. te centreren. */
@@ -4315,8 +4654,8 @@
   .trophy-card:hover { filter: brightness(1.1); }
   .trophy-card:active { transform: scale(.97); }
   .trophy-card .temoji { font-size: 38px; line-height: 1; height: 44px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
-  .trophy-card .tname { font-size: 15px; font-weight: 700; margin-top: 3px; line-height: 1.14; }
-  .trophy-card .tdesc { font-size: 12.5px; font-weight: 600; color: var(--lavender-text); opacity: .8; margin-top: 3px; line-height: 1.2; }
+  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 3px; line-height: 1.14; }
+  .trophy-card .tdesc { font-size: var(--tx-klein); font-weight: 600; color: var(--lavender-text); opacity: .8; margin-top: 3px; line-height: 1.2; }
   /* drie kolommen zodra de plank het comfortabel trekt, vier op tabletbreedte */
   @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
   @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 7.5px); } }
@@ -4327,7 +4666,7 @@
   .trophy-card.fresh .temoji, .trophy-card.busy .temoji { opacity: .55; }
   .trophy-card.fresh .tname, .trophy-card.busy .tname { opacity: .8; }
   /* LOCKED: donkerder, icoon sterk gedimd (voorlopig sluimerend, zie trophyStatus) */
-  .trophy-card.locked { background: var(--glass-black-26); border-color: var(--glass-white-10); box-shadow: none; }
+  .trophy-card.locked { background: rgba(0,0,0,.26); border-color: rgba(255,255,255,.1); box-shadow: none; }
   .trophy-card.locked .temoji { filter: grayscale(1); opacity: .45; }
   .trophy-card.locked .tname, .trophy-card.locked .tdesc { opacity: .5; }
   /* BEHAALD: trots, maar stil.
@@ -4357,14 +4696,14 @@
       radial-gradient(78% 60% at 50% 26%, rgba(var(--goud-rgb),.2), transparent 74%),
       var(--goud-tint-zacht);
     border-color: var(--goud-rand-zacht);
-    box-shadow: inset 0 1px 0 rgba(255,241,190,.16);
+    box-shadow: inset 0 1px 0 rgba(var(--goud-glans-rgb),.16);
   }
   .trophy-card.done .tname { color: var(--gold-light); }
   .trophy-card.done .tdesc { color: var(--c-white); opacity: .8; }
   /* De stand op een lopende kaart: alleen het getal, geen balk. "82 / 100 sommen"
      zegt alles wat een balkje zou zeggen, en het staat er in de taal van een
      rekenspel. De balk stond op élke kaart en maakte van de kast een lijst. */
-  .tstand { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--c-white); opacity: .78; }
+  .tstand { margin-top: 8px; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .78; }
   .tstand span { font-weight: 600; opacity: .8; }
   .tstand.sub { font-weight: 600; opacity: .55; }
   /* ===== De perfecte werelden =====
@@ -4382,14 +4721,14 @@
   .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 17px 10px 16px; }
   @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
   @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  .pw-card .tname { margin-top: 9px; font-size: 15.5px; }
+  .pw-card .tname { margin-top: 9px; font-size: var(--tx-label); }
   .pw-medal {
     position: relative; width: 76px; height: 76px; margin: 2px auto 0;
     border-radius: 50%; display: grid; place-items: center;
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
       linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
-    border: 2px solid var(--glass-white-30);
+    border: 2px solid rgba(255,255,255,.3);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
   .pw-ico { font-size: 35px; line-height: 1; filter: var(--emoji-schaduw); }
@@ -4401,7 +4740,7 @@
      onthulling. Dít is het kaartje waar een kind acht shows lang naar toe werkt. */
   .trophy-card.done .pw-medal {
     border-color: var(--gold-accent);
-    box-shadow: inset 0 2px 0 rgba(255,241,190,.3), 0 0 16px rgba(255,196,61,.5);
+    box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
   }
   .trophy-card.done .pw-medal::after {
     content: '⭐'; position: absolute; right: -6px; bottom: -6px; font-size: 20px;
@@ -4421,14 +4760,14 @@
   .ready-open {
     display: block; text-align: center; margin-top: 8px;
     color: var(--ink-on-gold); background: var(--gold-accent);
-    font-size: 13.5px; font-weight: 700; letter-spacing: .01em;
+    font-size: var(--tx-klein); font-weight: 700; letter-spacing: .01em;
     border-radius: var(--r-pill); padding: 5px 8px;
     animation: readyPulse 1.4s ease-in-out infinite;
   }
   /* FASE 5E -- de klop zit in de gloed en niet meer in een slagschaduw die met de
      schaduwlip van een knop te verwarren was. Van de gedeelde gouden gloed naar
      anderhalf keer die gloed: één beweging, in de kleur die "verdiend" betekent. */
-  @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: var(--goud-gloed); } 50% { transform: scale(1.03); box-shadow: 0 0 26px rgba(255,190,60,.7); } }
+  @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: var(--goud-gloed); } 50% { transform: scale(1.03); box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.7); } }
   /* dé gouden mijlpaal-pil: één component voor "rang omhoog" en "trofee klaar",
      op het eindscherm (.end-milestone) en in de trofeeënkast. Hoogstens één
      tegelijk in beeld.
@@ -4467,7 +4806,7 @@
      aan ziet wat er gebeurd is -- en het raakvlak blijft ruim boven 44px. */
   .gold-pill {
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-    color: var(--ink-on-gold); font-weight: 700; font-size: 15.5px; font-family: inherit;
+    color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label); font-family: inherit;
     background: rgba(var(--goud-rgb), .88); border: none; border-radius: var(--r-pill);
     padding: 7px 16px; min-height: 34px; box-shadow: var(--goud-gloed-zacht);
     animation: beloningKlop 2.4s ease-in-out infinite; cursor: pointer;
@@ -4484,10 +4823,10 @@
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
   .trophy-pop { padding: 22px 30px; }
-  .tp-head { font-size: 16px; font-weight: 700; color: var(--gold-light); }
-  .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(255,215,64,.8)); }
-  .tp-name { font-size: 20px; font-weight: 700; color: var(--c-white); }
-  .tp-joepie { font-size: 15px; font-weight: 700; color: var(--pink-light); margin-top: 4px; }
+  .tp-head { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
+  .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.8)); }
+  .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
+  .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
 
@@ -4502,8 +4841,8 @@
   .rankup-sparks { position: absolute; left: 50%; top: 50px; width: 0; height: 0; }
   .rankup-spark { position: absolute; left: 0; top: 0; font-size: 30px; opacity: 0; animation: rankSpark 1s ease-out both; }
   .rankup-badge { font-size: 94px; line-height: 1; filter: drop-shadow(0 6px 16px rgba(0,0,0,.55)); animation: rankBadgePop .7s cubic-bezier(.2,1.5,.4,1) both; }
-  .rankup-label { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: 0 2px 8px rgba(0,0,0,.5); animation: rankTextRise .5s ease .28s both; }
-  .rankup-name { font-size: clamp(26px, 8vw, 34px); font-weight: 700; color: var(--c-white); text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); animation: rankTextRise .5s ease .4s both; }
+  .rankup-label { font-size: var(--tx-label); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: var(--op-kunst-ink); animation: rankTextRise .5s ease .28s both; }
+  .rankup-name { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); text-shadow: var(--goud-ink); animation: rankTextRise .5s ease .4s both; }
   @keyframes rankBadgePop { 0% { transform: scale(0) rotate(-45deg); } 60% { transform: scale(1.2) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
   @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @keyframes rankSpark {
@@ -4531,16 +4870,16 @@
      over de knop waar het kind net naartoe wilde */
   .wereld-feest-overlay.closing { animation: popFade .3s ease reverse forwards; pointer-events: none; }
   .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
-  .wf-kop { font-size: clamp(24px, 7.5vw, 30px); font-weight: 700; color: var(--c-white); line-height: 1.1;
-    text-shadow: 0 0 16px var(--gold-cta-bottom), 0 3px 0 rgba(0,0,0,.35); }
-  .wf-wereld { font-size: 15px; font-weight: 700; color: var(--gold-light); margin-top: 3px; }
+  .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
+    text-shadow: var(--goud-ink); }
+  .wf-wereld { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); margin-top: 3px; }
   .wf-rijen { display: flex; flex-direction: column; gap: 8px; margin: 13px 0 4px; }
   /* Een regel is een plaatje links en twee woorden rechts -- links uitgelijnd, want
      twee gecentreerde regels onder elkaar hebben geen gemeenschappelijke lijn en
      lezen dan als twee losse plaatjes. */
   .wf-rij { display: flex; align-items: center; gap: 11px; text-align: left;
     padding: 9px 12px; border-radius: var(--r-sm);
-    background: rgba(255,214,90,.13); border: 2px solid var(--gold-accent); }
+    background: rgba(var(--goud-rgb),.13); border: 2px solid var(--gold-accent); }
   /* Iets breder dan het vakje in de kleedkamer (52), en dat is fase 4D.2: de
      getekende beloningen zijn niet allemaal even breed als hoog -- de
      bladerkrans is bijna twee keer zo breed als hij hoog is. In een raster van
@@ -4557,16 +4896,16 @@
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
       linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
     border: 2px solid var(--gold-accent);
-    box-shadow: inset 0 2px 0 rgba(255,241,190,.3), 0 0 12px rgba(255,196,61,.45);
+    box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 12px rgba(var(--goud-rgb),.45);
   }
   /* dezelfde ster in dezelfde hoek als op het medaillon in de kast (.pw-medal) */
   .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
     font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .wf-tekst b { font-size: 16px; font-weight: 700; color: var(--gold-light); }
-  .wf-tekst span { font-size: 14px; font-weight: 700; color: var(--c-white); opacity: .92;
+  .wf-tekst b { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
+  .wf-tekst span { font-size: var(--tx-label); font-weight: 700; color: var(--c-white); opacity: .92;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .wf-verder { font-size: 12.5px; font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
+  .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
   .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
   @media (prefers-reduced-motion: reduce) {
@@ -4618,7 +4957,7 @@
   /* (2) Tik-ripple: een lichtkringetje dat vanaf de vingerplek uitdijt */
   .tap-ripple {
     position: fixed; z-index: 93; pointer-events: none; width: 14px; height: 14px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,236,150,.85), rgba(255,236,150,0) 70%);
+    background: radial-gradient(circle, rgba(var(--goud-glans-rgb),.85), rgba(var(--goud-glans-rgb),0) 70%);
     transform: translate(-50%, -50%) scale(0); animation: tapRipple .5s ease-out forwards;
   }
   @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
@@ -4627,13 +4966,13 @@
   .tp-stage { position: relative; width: 150px; height: 118px; margin: 6px auto 2px; display: flex; align-items: center; justify-content: center; }
   .tp-chest { position: absolute; z-index: 2; font-size: 74px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
   @keyframes chestShake { 0%,100% { transform: rotate(-5deg) translateY(0); } 25% { transform: rotate(5deg) translateY(-2px); } 50% { transform: rotate(-4deg); } 75% { transform: rotate(4deg) translateY(-2px); } }
-  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(255,215,64,.85)); opacity: 0; transform: scale(.2); }
+  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.85)); opacity: 0; transform: scale(.2); }
   .tp-rays {
     position: absolute; width: 210px; height: 210px; z-index: 1; opacity: 0; border-radius: 50%;
-    background: repeating-conic-gradient(from 0deg, rgba(255,236,150,.5) 0deg 9deg, transparent 9deg 21deg);
+    background: repeating-conic-gradient(from 0deg, rgba(var(--goud-glans-rgb),.5) 0deg 9deg, transparent 9deg 21deg);
     -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
   }
-  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(255,236,150,.9); z-index: 1; opacity: 0; }
+  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
   .trophy-pop .tp-name, .trophy-pop .tp-joepie { opacity: 0; }
   .trophy-pop.burst .tp-chest { animation: chestBurst .4s ease forwards; }
   @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
@@ -4664,7 +5003,7 @@
      hoekbadge (het slotje staat op z-index 3). */
   .trophy-card.just-claimed::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
-    background: linear-gradient(105deg, transparent 38%, rgba(255,236,150,.7) 50%, transparent 62%);
+    background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.7) 50%, transparent 62%);
     background-size: 250% 100%; background-position: 120% 0;
     animation: claimShimmer .9s ease-out forwards;
   }
@@ -4686,14 +5025,14 @@
   .nav-item .nav-dot {
     position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
     border-radius: 50%; background: var(--gold-accent); border: 2px solid var(--c-white); display: none;
-    box-shadow: 0 1px 4px var(--glass-black-40);
+    box-shadow: 0 1px 4px rgba(0,0,0,.4);
   }
   .nav-item.has-new .nav-dot { display: block; }
   @media (max-width: 520px) {
     /* gelijke flexibele zijkolommen: de titel blijft écht in het schermmidden,
        ook nu de linkercel leeg is (met auto|1fr|auto hing hij ~47px naar links) */
     .screen-header { grid-template-columns: 1fr auto 1fr; gap: 8px; }
-    .screen-header .header-title { font-size: 20px; overflow: hidden; text-overflow: ellipsis; }
+    .screen-header .header-title { font-size: var(--tx-sub); overflow: hidden; text-overflow: ellipsis; }
   }
 
   /* ---- Level einde ---- */
@@ -4712,30 +5051,30 @@
   }
   /* de titel is hier de kop van een kaart, niet van een scherm: kleiner dan de
      .title elders, zodat de sterren eronder de blikvanger blijven */
-  .result-card .title { font-size: clamp(22px, 6vw, 30px); margin: 2px 0 0; }
+  .result-card .title { font-size: var(--tx-feest); margin: 2px 0 0; }
   /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
      paspop-scènes (.show-stage, en .spiegel in de kleedkamer) nu met eigen
      smalle-scherm-maat, zodat 'm ook op een laag/liggend toestel nooit
      afgesneden wordt */
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
-  .end-text { font-size: 18px; }
+  .end-text { font-size: var(--tx-body); }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
   /* korte schermen: het eindscherm moet ook op een 320x568 in één beeld passen --
      het is een vier-seconden-moment, daar hoort geen scrollen bij */
   @media (max-height: 740px) {
     .result-card { padding: 11px 16px 10px; }
-    .result-card .title { font-size: clamp(19px, 5.4vw, 24px); }
+    .result-card .title { font-size: var(--tx-feest-kort); }
     .end-stage { width: 104px; height: 116px; }
     .result-stars { font-size: 36px; letter-spacing: 2px; margin: 3px 0 0; }
-    .end-text { font-size: 15px; }
+    .end-text { font-size: var(--tx-label); }
     .earn-line { gap: 6px; margin: 7px 0 8px; }
-    .earn-chip { font-size: 14px; padding: 7px 4px; }
+    .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
     .end-milestone { min-height: 30px; margin-bottom: 8px; }
-    .milestone-hint { font-size: 13px; padding: 6px 12px; }
+    .milestone-hint { font-size: var(--tx-klein); padding: 6px 12px; }
     .end-actions { gap: 7px; }
-    .end-actions .btn.big { font-size: 20px; padding: 11px 18px; }
-    .end-actions .btn.soft { font-size: 15px; padding: 9px 16px; }
-    .gold-pill { font-size: 14.5px; padding: 6px 13px; min-height: 30px; }
+    .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
+    .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
+    .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
   }
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
@@ -4748,8 +5087,8 @@
      (Het derde vakje was 👏 publiek, bij de publieksmeter; die is vervallen.) */
   .earn-line { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-    font-size: 16px; font-weight: 700; line-height: 1;
-    background: var(--glass-black-30); border-radius: var(--r-pill); padding: 9px 6px; }
+    font-size: var(--tx-body); font-weight: 700; line-height: 1;
+    background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
   /* De twee vakjes dragen de twee accenten van de app, elk in zijn eigen rol: het
      blauw van de diamant (de munt) en het goud van de ster (wat je verdiende). */
   .earn-chip.dia { background: rgba(41,182,246,.32); }
@@ -4759,12 +5098,12 @@
      De eerste twee zijn een beloning (gouden pil, tikbaar); de derde is een
      vooruitblik en blijft daarom bewust stil (gestippeld, niet pulserend). */
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
-  .milestone-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700;
+  .milestone-hint { display: inline-flex; align-items: center; gap: 6px; font-size: var(--tx-label); font-weight: 700;
     color: var(--gold-light); background: var(--goud-tint); border: 1px dashed var(--goud-rand);
     border-radius: var(--r-pill); padding: 8px 15px; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   .end-actions .btn { width: 100%; max-width: 320px; }
-  .end-actions .btn.big { font-size: 23px; padding: 15px 20px; }
+  .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
 
   /* ---- Kleedkamer ----
      Opbouw: vaste kop (titel + 💎 + paspop + tabbladen) blijft plakken bovenaan,
@@ -4803,7 +5142,7 @@
        door de tekening heen. Op .82 schuift de inhoud er zichtbaar onderdoor. */
     background: var(--kop-plaat);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border-bottom: 2px solid var(--glass-white-14);
+    border-bottom: 2px solid rgba(255,255,255,.14);
     border-radius: 0 0 var(--r-lg) var(--r-lg);
     box-shadow: var(--e-2);
   }
@@ -4817,7 +5156,7 @@
     /* het licht boven de spiegel, in het vlak waar de spiegel in staat. Zelfde
        grondkleur als elke andere plakkende kop; alleen een warme kegel erbij. */
     background:
-      radial-gradient(78% 86% at 50% 0%, rgba(255,216,158,.16), transparent 70%),
+      radial-gradient(78% 86% at 50% 0%, rgba(var(--goud-glans-rgb),.16), transparent 70%),
       var(--kop-plaat);
   }
   #screen-dress .hub-sticky .screen-header { margin-bottom: 3px; }
@@ -4839,16 +5178,25 @@
     border-radius: 0;
     background: rgba(30,8,56,.74);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--glass-white-14);
+    border-bottom: 1px solid rgba(255,255,255,.14);
     box-shadow: 0 6px 18px rgba(10,2,24,.28);
   }
   .hub-sticky.sub .screen-header { margin-bottom: 0; }
-  .hub-sticky.sub .header-title { font-size: 19px; }
+  .hub-sticky.sub .header-title { font-size: var(--tx-sub); }
+  /* Op de smalste telefoon moet de naam van het scherm er héél staan. "Trofeeënkast"
+     werd daar "Trofeeën..." -- en een kop met puntjes erachter is geen kop meer,
+     zeker niet op het scherm waar een kind naartoe gaat om iets op te zoeken. De
+     kop zakt één sport (20 -> 17), en dat is precies genoeg. Eén sport en niet
+     "net zo klein als het past": de ladder is er om deze beslissing niet elke
+     keer opnieuw te hoeven nemen. */
+  @media (max-width: 360px) {
+    .hub-sticky.sub .header-title { font-size: var(--tx-body); }
+  }
   /* De terugknop houdt zijn 44px raakvlak (kinderhand), maar niet zijn lip: een
      knop die indrukbaar lijkt trekt aandacht, en dit is de uitgang en niet de
      bedoeling van het scherm. */
   .hub-sticky.sub .icon-btn {
-    font-size: 17px; border-color: var(--glass-white-22);
+    font-size: 17px; border-color: rgba(255,255,255,.22);
     background: rgba(255,255,255,.1); box-shadow: none;
   }
   .hub-sticky.sub .icon-btn:active { transform: scale(.94); box-shadow: none; }
@@ -4882,7 +5230,7 @@
     #screen-dress { --pop-h: clamp(112px, 21vh, 146px); }
     #screen-dress .hub-sticky { padding-top: 8px; padding-bottom: 7px; }
     #screen-dress .screen-header { margin-bottom: 2px; }
-    #screen-dress .header-title { font-size: 21px; }
+    #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
     #screen-dress .schat-entry { margin-top: 4px; min-height: 36px; padding: 4px 12px; }
   }
@@ -4900,7 +5248,7 @@
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
     #screen-dress .schat-raadsel { width: 40px; height: 40px; font-size: 21px; }
-    #screen-dress .schat-entry { margin-top: 4px; min-height: 34px; padding: 3px 12px; font-size: 13.5px; }
+    #screen-dress .schat-entry { margin-top: 4px; min-height: 34px; padding: 3px 12px; font-size: var(--tx-klein); }
   }
   /* Smalle telefoon: de naam van het scherm past niet meer tussen twee even brede
      zijkolommen van elk 108px, en werd afgekapt tot "Kleedka…". De drie cellen
@@ -4910,7 +5258,7 @@
      scherm dat zijn eigen naam voluit kan zeggen. */
   @media (max-width: 380px) {
     #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-    #screen-dress .diamond-badge { font-size: 18px; padding: 6px 12px; }
+    #screen-dress .diamond-badge { font-size: var(--tx-body); padding: 6px 12px; }
   }
   /* ---- De spiegel ---------------------------------------------------------
      Waar de kleedkamer om draait: "hoe ziet mijn ster eruit?". Het was een
@@ -4944,12 +5292,12 @@
        staat een zachte lichtkolom achter haar zodat ook een donkere outfit leest,
        en er ligt een warme plas op de grond waar ze staat. */
     background:
-      radial-gradient(56% 34% at 50% 99%, rgba(255,216,168,.62), transparent 72%),
+      radial-gradient(56% 34% at 50% 99%, rgba(var(--goud-glans-rgb),.62), transparent 72%),
       radial-gradient(44% 56% at 50% 58%, rgba(244,232,255,.3), transparent 70%),
       radial-gradient(82% 44% at 50% 2%, rgba(255,238,210,.3), transparent 66%),
       linear-gradient(168deg, #6a3eb2 0%, #4d2884 50%, #3a1d69 100%);
     box-shadow: var(--e-2), 0 0 26px rgba(150,86,255,.34),
-                inset 0 2px 14px rgba(255,228,186,.26), inset 0 1px 0 rgba(255,255,255,.34);
+                inset 0 2px 14px rgba(var(--goud-glans-rgb),.26), inset 0 1px 0 rgba(255,255,255,.34);
     transition: transform .14s;
   }
   .spiegel:active { transform: scale(.98); }
@@ -5008,8 +5356,8 @@
   }
   .shop-tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
-    font-family: inherit; font-size: 15px; font-weight: 700; border: none; cursor: pointer;
-    padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: var(--glass-white-18);
+    font-family: inherit; font-size: var(--tx-label); font-weight: 700; border: none; cursor: pointer;
+    padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: rgba(255,255,255,.18);
     transition: transform .07s, background .12s;
     display: flex; align-items: center; justify-content: center; gap: 6px;
     min-height: 44px; min-width: 46px; flex: none;
@@ -5072,7 +5420,7 @@
   .item-card.selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
   .item-card.equipped {
     border-color: var(--gold-accent); background: var(--goud-tint);
-    box-shadow: var(--goud-gloed), inset 0 1px 0 rgba(255,241,190,.3);
+    box-shadow: var(--goud-gloed), inset 0 1px 0 rgba(var(--goud-glans-rgb),.3);
   }
   .item-card.selected.equipped { border-color: var(--gold-accent); box-shadow: var(--goud-gloed); }
   /* .owned and .selected are two plain (non-combined) classes with identical
@@ -5097,7 +5445,7 @@
   .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.3); }
   .item-card.selected.equipped:hover { background: rgba(var(--goud-rgb),.24); }
   .item-card.just-bought { animation: boughtPop .85s ease; }
-  @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(255,215,64,.75); } 100% { transform: scale(1); } }
+  @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(var(--goud-rgb),.75); } 100% { transform: scale(1); } }
   /* Eén miniatuur-zone voor álle spullen. Er waren er drie: een getekende jurk
      zweefde vrij op een basislijn, een emoji hing eronder zonder schaduw, en een
      podium was een wit omrand bolletje van 46px. Dezelfde soort dingen zagen er
@@ -5121,10 +5469,10 @@
   .item-thumb .thumb-stage {
     width: 46px; height: 40px; border-radius: var(--r-sm); display: grid; place-items: center;
     font-size: 22px; border: 1.5px solid rgba(255,255,255,.5);
-    filter: var(--emoji-schaduw); text-shadow: 0 1px 2px rgba(0,0,0,.45);
+    filter: var(--emoji-schaduw); text-shadow: var(--op-kunst-ink);
   }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
-  .item-name { font-size: 13.5px; font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
+  .item-name { font-size: var(--tx-klein); font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
   /* Eén pilletje per kaartje, en dus één staat. Ze kunnen niet stapelen: de JS
      kiest er precies één (zie dressCardState). Van hard naar zacht:
        new    net gekocht -- goud, pulseert twee tellen
@@ -5137,8 +5485,8 @@
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
     min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
-    font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap;
-    background: var(--glass-black-24); color: var(--muted-text-2);
+    font-size: var(--tx-klein); font-weight: 700; line-height: 1; white-space: nowrap;
+    background: rgba(0,0,0,.24); color: var(--muted-text-2);
   }
   .item-status.price { color: var(--gold-light); background: rgba(var(--goud-rgb),.14); }
   /* "Nog niet genoeg" is een stand en geen fout: de pil verliest zijn goud (dat
@@ -5146,14 +5494,14 @@
      zelfde leesbare letter. Geen rood, geen kruisje, geen slotje: het getal
      ernaast is al het hele verhaal, en de balk onderaan zegt hoeveel er nog bij
      moet zodra je erop tikt. */
-  .item-status.need { color: var(--muted-text-2); background: var(--glass-black-30); }
+  .item-status.need { color: var(--muted-text-2); background: rgba(0,0,0,.3); }
   .item-status.owned { color: var(--purple-shadow); background: rgba(255,255,255,.82); }
   .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
   .item-status.new { color: var(--ink-on-gold); background: var(--gold-accent); animation: readyPulse 1.4s ease-in-out 2; }
   /* FASE 4D.1 -- nog te verdienen bij een wereld. Bewust dezelfde rustige taal als
      "te weinig diamanten" en niet iets prikkelends: het is een doel om naartoe te
      spelen, geen aanbieding. Het wereld-icoon ernaast zegt bij wélke wereld. */
-  .item-status.slot { color: var(--gold-light); background: rgba(255,179,0,.13); opacity: .9; }
+  .item-status.slot { color: var(--gold-light); background: rgba(var(--goud-rgb),.13); opacity: .9; }
 
   /* Bezit staat óók op het kaartje zelf, want het pilletje is klein en een kind
      van vijf leest hem niet. Dit was grijs ("uitgeschakeld"-taal voor precies de
@@ -5169,14 +5517,14 @@
      maar het raadsel (.schat-raadsel): de tekening hoeft dus niet meer gedempt te
      worden om zich van "van jou" te onderscheiden -- er stáát geen tekening. */
   .item-card.teverdienen {
-    border-color: rgba(255,203,110,.32);
+    border-color: rgba(var(--warm-licht-rgb),.32);
     background:
-      radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.18), transparent 72%),
+      radial-gradient(74% 56% at 50% 26%, rgba(var(--warm-licht-rgb),.18), transparent 72%),
       var(--goud-tint-zacht);
   }
   .item-card.teverdienen:hover {
     background:
-      radial-gradient(74% 56% at 50% 26%, rgba(255,196,94,.26), transparent 72%),
+      radial-gradient(74% 56% at 50% 26%, rgba(var(--warm-licht-rgb),.26), transparent 72%),
       rgba(var(--goud-rgb),.13);
   }
   /* Aangetikt blijft aangetikt, ook bij een beloning: de streepjesrand houdt zijn
@@ -5190,8 +5538,8 @@
      je het hebt is het gewoon een van je spullen, met een herkomst. */
   .item-card .item-wereld {
     position: absolute; top: 4px; right: 4px; font-size: 12px; line-height: 1;
-    padding: 3px 5px; border-radius: var(--r-pill); background: var(--glass-black-30);
-    box-shadow: inset 0 0 0 1px rgba(255,214,90,.34);
+    padding: 3px 5px; border-radius: var(--r-pill); background: rgba(0,0,0,.3);
+    box-shadow: inset 0 0 0 1px rgba(var(--goud-rgb),.34);
   }
 
   /* ===== Wereldschatten (fase 6E) =====
@@ -5205,11 +5553,11 @@
     font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 7px;
     width: calc(100% - 24px); max-width: calc(var(--kolom) - 24px); margin: 6px auto 0;
     min-height: 40px; padding: 6px 14px; cursor: pointer;
-    border: 1.5px solid rgba(255,203,110,.34); border-radius: var(--r-pill);
-    font-size: 14.5px; font-weight: 700; color: var(--gold-light);
+    border: 1.5px solid rgba(var(--warm-licht-rgb),.34); border-radius: var(--r-pill);
+    font-size: var(--tx-label); font-weight: 700; color: var(--gold-light);
     background:
-      radial-gradient(72% 130% at 50% 0%, rgba(255,196,94,.16), transparent 74%),
-      var(--glass-black-24);
+      radial-gradient(72% 130% at 50% 0%, rgba(var(--warm-licht-rgb),.16), transparent 74%),
+      rgba(0,0,0,.24);
     transition: transform .07s, background .12s, border-color .12s, box-shadow .12s;
   }
   .schat-entry:active { transform: scale(.98); }
@@ -5234,26 +5582,26 @@
   .schat-raadsel {
     width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
     font-size: 26px; font-weight: 700; line-height: 1;
-    color: rgba(255,238,190,.86); text-shadow: 0 1px 3px rgba(0,0,0,.5);
+    color: rgba(var(--goud-glans-rgb),.86); text-shadow: var(--op-kunst-ink);
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
       linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
-    border: 2px solid rgba(255,214,90,.42);
+    border: 2px solid rgba(var(--goud-rgb),.42);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.16), 0 3px 10px rgba(0,0,0,.3);
   }
   /* Verdiend. Hetzelfde plankje als elk ander kaartje, met een warme ondergrond
      eronder: genoeg om te zien dat dit er een van de verzameling is, te weinig om
      met "dit draag je nu" (goud, vol) te gaan wedijveren. */
   .item-card.schat-kaart.owned {
-    border-color: rgba(255,214,90,.42);
+    border-color: rgba(var(--goud-rgb),.42);
     background:
-      radial-gradient(74% 56% at 50% 22%, rgba(255,196,94,.14), transparent 72%),
+      radial-gradient(74% 56% at 50% 22%, rgba(var(--warm-licht-rgb),.14), transparent 72%),
       rgba(255,255,255,.16);
   }
   /* De Aandoen-knop op het wereldfeest: de enige knop op die laag, dus hij mag de
      gouden zijn -- maar niet groter dan de regel erboven waar hij bij hoort. */
   .wereld-feest .wf-aan {
-    margin-top: 11px; padding: 9px 20px; font-size: 16px;
+    margin-top: 11px; padding: 9px 20px; font-size: var(--tx-body);
     background: var(--gold-accent); color: var(--ink-on-gold); border: 0;
     box-shadow: var(--goud-gloed);
   }
@@ -5282,8 +5630,8 @@
     text-shadow: var(--nav-ink);
   }
   .dress-bar .db-info { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; text-align: left; white-space: nowrap; overflow: hidden; }
-  .dress-bar .db-name { font-size: 16.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: 13.5px; opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dress-bar .db-name { font-size: var(--tx-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dress-bar .db-sub { flex: 0 1 auto; min-width: 0; font-size: var(--tx-klein); opacity: .92; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dress-bar .db-highlight { color: var(--gold-accent); font-weight: 700; }
   .dress-bar .btn.small { white-space: nowrap; flex-shrink: 0; }
   /* wegvliegende diamant bij een aankoop */
@@ -5323,7 +5671,7 @@
   }
   /* "Voor ouders" hoeft geen 24px te zijn -- dit scherm heeft geen titel nodig
      die het scherm draagt, alleen een naam. */
-  #screen-settings .header-title { font-size: 21px; }
+  #screen-settings .header-title { font-size: var(--tx-sub); }
   #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
   #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) ease; }
   #screen-settings .hub-sticky .screen-header,
@@ -5340,7 +5688,7 @@
     box-shadow: var(--e-3);
   }
   #screen-settings.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
-  #screen-settings.gescrold .header-title { font-size: 16.5px; }
+  #screen-settings.gescrold .header-title { font-size: var(--tx-body); }
   /* De enige plek in de app waar een raakvlak onder de 44px komt, en met opzet:
      dit is een ouderscherm (geen kinderhand), het is alleen de gescrolde stand
      (bovenaan is hij weer 44), en zonder deze regel bepaalt de terugknop in zijn
@@ -5351,10 +5699,10 @@
   #screen-settings.gescrold .who-btn { min-height: 38px; }
   #screen-settings.gescrold .who-portrait { width: 28px; height: 28px; }
   #screen-settings.gescrold .who-portrait svg { top: -3px; width: 48px; }
-  #screen-settings.gescrold .who-btn .tab-label { font-size: 14px; }
+  #screen-settings.gescrold .who-btn .tab-label { font-size: var(--tx-label); }
   #screen-settings.gescrold #settings-subtabs { margin-top: 5px; }
   #screen-settings.gescrold .segmented { padding: 3px; }
-  #screen-settings.gescrold .segmented button { padding: 7px 8px; min-height: 36px; font-size: 15px; }
+  #screen-settings.gescrold .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
   @media (prefers-reduced-motion: reduce) {
     #screen-settings .hub-sticky, #screen-settings .hub-sticky *,
     #settings-subtabs { transition: none; }
@@ -5370,15 +5718,15 @@
   @media (max-height: 560px) {
     #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
-    #screen-settings .header-title { font-size: 17px; }
+    #screen-settings .header-title { font-size: var(--tx-body); }
     #screen-settings .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
     #screen-settings .who-btn { min-height: 38px; }
     #screen-settings .who-portrait { width: 28px; height: 28px; }
     #screen-settings .who-portrait svg { top: -3px; width: 48px; }
-    #screen-settings .who-btn .tab-label { font-size: 14px; }
+    #screen-settings .who-btn .tab-label { font-size: var(--tx-label); }
     #settings-subtabs { margin-top: 5px; }
     #screen-settings .segmented { padding: 3px; }
-    #screen-settings .segmented button { padding: 7px 8px; min-height: 36px; font-size: 15px; }
+    #screen-settings .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
   }
 
   /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← terug ·
@@ -5422,9 +5770,9 @@
   .who-btn.active .who-portrait { border-color: var(--c-white); }
   #settings-subtabs { margin-top: 6px; }
 
-  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--glass-black-26); width: 100%; max-width: var(--kolom, 640px); }
+  .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); width: 100%; max-width: var(--kolom, 640px); }
   .segmented button {
-    flex: 1; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; color: var(--c-white);
+    flex: 1; font-family: inherit; font-size: var(--tx-body); font-weight: 600; cursor: pointer; color: var(--c-white);
     border: none; background: transparent; border-radius: var(--r-sm); padding: 9px 8px; min-height: 40px;
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     transition: background .15s, color .15s, box-shadow .15s;
@@ -5435,7 +5783,7 @@
   .segmented button { min-width: 0; white-space: nowrap; }
   @media (max-width: 360px) {
     .segmented { gap: 3px; padding: 3px; }
-    .segmented button { font-size: 14.5px; padding: 10px 4px; }
+    .segmented button { font-size: var(--tx-label); padding: 10px 4px; }
   }
   /* blauw = actieve navigatie/keuze (zelfde taal als .tab-btn.active in de
      kleedkamer en .nav-item.active in de vaste navigatie) -- paars blijft
@@ -5444,7 +5792,7 @@
   /* korte, subtiele bevestiging na elke automatische opslag -- verschijnt even
      in de anders lege rechterkop-cel, geen aparte "Opslaan"-knop nodig */
   .saved-pill {
-    font-size: 12.5px; font-weight: 700; color: var(--green-deep); background: var(--green-badge-bg);
+    font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); background: var(--green-badge-bg);
     border-radius: var(--r-pill); padding: 5px 12px; white-space: nowrap;
     opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; pointer-events: none;
   }
@@ -5457,15 +5805,15 @@
      zit toch al in het vinkje. */
   @media (max-width: 400px) {
     .saved-pill .sp-word { display: none; }
-    .saved-pill { padding: 5px 8px; font-size: 14px; }
+    .saved-pill { padding: 5px 8px; font-size: var(--tx-label); }
   }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .set-card-head .ico { width: 34px; height: 34px; border-radius: var(--r-sm); flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
-  .set-card-head h2 { font-size: 18px; font-weight: 700; color: var(--purple-mid); }
-  .set-card-head .sub { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin-top: 1px; }
+  .set-card-head h2 { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); }
+  .set-card-head .sub { font-size: var(--tx-klein); color: var(--paper-ink-muted); font-weight: 500; margin-top: 1px; }
   /* "Wat oefenen" en "Hoe spelen" zijn de kern van dit scherm -- een paarse
      (structuur-kleur) icoonvulling + iets steviger kop zet ze visueel voorop
      t.o.v. de secundaire kaarten (Profiel, Gegevens beheren) eronder */
@@ -5477,14 +5825,14 @@
      daarmee waar het hoort: in de kop en de tegel, niet in een kader. */
   .set-card.primary { border: 1.5px solid var(--paper-border); }
   .set-card.primary .set-card-head .ico { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); color: var(--c-white); border-color: transparent; }
-  .set-card.primary .set-card-head h2 { font-size: 19.5px; }
+  .set-card.primary .set-card-head h2 { font-size: var(--tx-sub); }
   /* FASE 5D -- de tegenhanger van .primary: alles wat ná de hoofdkeuzes komt
      (weergave, lengte, extra uitdaging). Niets verborgen, alleen stiller: geen
      paarse omlijsting, een gedempte kop en iets minder lucht. Zo is de rangorde
      op het drukste scherm van het ouderdeel te zien in plaats van te raden. */
   .set-card.secundair { padding: 14px 18px; }
   .set-card.secundair .set-card-head { margin-bottom: 10px; }
-  .set-card.secundair .set-card-head h2 { font-size: 16px; color: var(--paper-ink); }
+  .set-card.secundair .set-card-head h2 { font-size: var(--tx-body); color: var(--paper-ink); }
   .set-card.secundair .set-card-head .ico { font-size: 16px; width: 30px; height: 30px; }
   /* Wissen zat als permanent zichtbaar rood vlak onderaan het instellingenscherm,
      altijd in beeld naast gewone instellingen. Nu zit het achter een rustige
@@ -5494,7 +5842,7 @@
   .danger-reveal > summary {
     list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
     min-height: 44px; box-sizing: border-box; padding: 9px 15px;
-    font-size: 13.5px; font-weight: 700; color: var(--paper-ink-muted);
+    font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted);
     border: 1.5px solid var(--paper-border); border-radius: var(--r-pill);
   }
   .danger-reveal > summary::-webkit-details-marker { display: none; }
@@ -5531,23 +5879,23 @@
     font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border);
   }
   .sr-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .sr-title { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
-  .sr-val { font-size: 12px; font-weight: 500; color: var(--paper-ink-muted); }
+  .sr-title { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); }
+  .sr-val { font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted); }
   .set-reveal-body { margin-top: 12px; }
   /* twee groepen (Wat oefenen / Hoe spelen) zonder er twee kaarten ín een kaart
      van te maken: een streepje en een kleinere kop doen hier hetzelfde werk */
   .reveal-group + .reveal-group { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--paper-border); }
-  .rg-title { font-size: 14px; font-weight: 700; color: var(--purple-mid); margin-bottom: 10px; }
+  .rg-title { font-size: var(--tx-label); font-weight: 700; color: var(--purple-mid); margin-bottom: 10px; }
   /* streepje tussen de kindkaarten en het app-brede blok eronder: het staat op de
      paarse schermachtergrond, niet op een witte kaart, vandaar de witte tekst */
   .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
-    color: var(--c-white); opacity: .8; font-size: 12.5px; font-weight: 700; }
-  .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: var(--glass-white-22); }
+    color: var(--c-white); opacity: .8; font-size: var(--tx-klein); font-weight: 700; }
+  .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.22); }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
-  .set-field .lbl { font-size: 13px; font-weight: 700; color: var(--paper-ink); }
-  .set-card .note, .set-field .note { font-size: 12px; color: var(--paper-ink-muted); font-weight: 500; }
+  .set-field .lbl { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); }
+  .set-card .note, .set-field .note { font-size: var(--tx-klein); color: var(--paper-ink-muted); font-weight: 500; }
   /* FASE 5D.1 -- de uitleg bij een instelling stond als "(zo werkt dit)" ín het
      label, op dezelfde regel. Op een telefoon werd dat één doorlopende dichte
      regel van vet plus haakjes die over twee of drie regels afbrak, en dan is het
@@ -5556,7 +5904,7 @@
      De negatieve marge is de tegenhanger van de 7px gap van .set-field: label en
      uitleg horen bij elkaar (3px), de chips eronder zijn iets anders (7px). */
   .set-field .hulp {
-    font-size: 12px; font-weight: 500; color: var(--paper-ink-muted);
+    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
     line-height: 1.3; margin-top: -4px;
   }
   /* "Tafels van" only matters once Maal/Delen is on -- dimmed (not disabled: still
@@ -5590,14 +5938,14 @@
                     het bereik valt gedempt. */
   .fr-zin {
     background: var(--lavender-wash); border-radius: var(--r-sm); padding: 9px 12px; margin-bottom: 13px;
-    font-size: 13.5px; font-weight: 500; color: var(--paper-ink);
+    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
   }
   .fr-zin b { color: var(--purple-mid); font-weight: 700; }
   /* Krapper dan de gewone chip: elf stuks moeten op een telefoon in twee rijen
      passen zonder dat de nummers hun raakvlak kwijtraken (38px hoog blijft
      comfortabel voor een volwassen vinger op een instellingenscherm). */
   .stage-chips { gap: 6px; }
-  .stage-chips .chip { min-width: 36px; padding: 7px 10px; font-size: 15px; }
+  .stage-chips .chip { min-width: 36px; padding: 7px 10px; font-size: var(--tx-label); }
   /* FASE 5D.1 -- de band was een lavendel vulling MÉT een volle paarse rand, en
      dan zie je elf paarse ringen in plaats van één doorlopend bereik. De rand is
      nu een fractie van dezelfde paarse kleur (.22), dus hij hoort er wel bij maar
@@ -5610,13 +5958,13 @@
   .chip.bereik.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; }
   .stage-legend {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-    gap: 3px 14px; margin: 13px 2px 2px; font-size: 12.5px; color: var(--paper-ink-muted);
+    gap: 3px 14px; margin: 13px 2px 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted);
   }
   .stage-legend span { display: flex; align-items: baseline; gap: 5px; line-height: 1.35; }
   .stage-legend b { color: var(--purple-mid); font-weight: 700; min-width: 15px; }
   .stage-legend span.uit { opacity: .42; }
   .stage-legend .sl-tag {
-    font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    font-style: normal; font-size: var(--tx-mini); font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
     background: var(--purple-mid); color: var(--c-white); border-radius: var(--r-pill); padding: 1px 6px; margin-left: 4px;
   }
   /* ---- De moduskeuze: twee helften, niet twee pillen --------------------
@@ -5643,15 +5991,15 @@
      44px, en het icoon, het woord, het vinkje en de twee gelijke helften blijven
      alle vier staan. */
   .mode-row { gap: 9px; }
-  .mode-row .chip.gestapeld { gap: 2px; padding: 7px 8px 8px; font-size: 15px; min-width: 96px; }
+  .mode-row .chip.gestapeld { gap: 2px; padding: 7px 8px 8px; font-size: var(--tx-label); min-width: 96px; }
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
   .mode-row .chip.gestapeld.on .mc-label::after { content: ' ✓'; }
   /* Dezelfde vorm, een maat kleiner: drie op een rij op een telefoon van 390,
      en op 320 wikkelt hij naar 2 + 1 in plaats van de woorden af te knijpen. */
-  .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: 13.5px; min-width: 78px; }
+  .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
   .drie-op-een-rij .chip.gestapeld .mc-ico { font-size: 17px; }
   .chip {
-    font-family: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
+    font-family: inherit; font-size: var(--tx-label); font-weight: 600; cursor: pointer; text-align: center; min-width: 44px;
     border: 2px solid var(--paper-border); background: var(--c-white); color: var(--purple-mid); border-radius: var(--r-pill); padding: 7px 15px;
     transition: transform .07s, background .12s, border-color .12s, color .12s;
   }
@@ -5727,7 +6075,7 @@
     border-radius: 0 0 var(--r-lg) var(--r-lg);
     box-shadow: 0 -8px 14px rgba(40,10,70,.07);
   }
-  .newstar-go { width: 100%; font-size: 19px; }
+  .newstar-go { width: 100%; font-size: var(--tx-sub); }
   /* Niet [disabled] maar [aria-disabled]: het ziet er hetzelfde uit, maar de tik
      kómt binnen. Een uitgeschakelde knop krijgt in geen enkele browser een
      click-gebeurtenis, dus "Klaar" was letterlijk de enige knop in de app waar
@@ -5759,7 +6107,7 @@
     font-size: 15px; opacity: .5; pointer-events: none;
   }
   .settings-sheet input[type=text] {
-    font-family: inherit; font-size: 17px; font-weight: 600; color: var(--paper-ink);
+    font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
     border: 2px solid var(--paper-border); border-radius: var(--r-sm); padding: 9px 34px 9px 13px; width: 100%; background: var(--paper-tint);
   }
   .settings-sheet input[type=text]:focus-visible { outline: none; border-color: var(--purple-light); background: var(--c-white); }
@@ -5769,9 +6117,9 @@
     background: var(--danger-bg); border: 1.5px dashed var(--danger-border); border-radius: var(--r-lg); padding: 15px 18px;
     display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   }
-  .danger-zone .t { font-size: 14.5px; font-weight: 700; color: var(--danger-title); }
-  .danger-zone .d { font-size: 12.5px; color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
-  .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
+  .danger-zone .t { font-size: var(--tx-label); font-weight: 700; color: var(--danger-title); }
+  .danger-zone .d { font-size: var(--tx-klein); color: var(--danger-desc); font-weight: 500; margin-top: 2px; max-width: 42ch; }
+  .danger-btn { background: linear-gradient(180deg, var(--red-danger-500), var(--red-danger-shadow)); color: var(--c-white); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-family: inherit; font-weight: 700; font-size: var(--tx-label); cursor: pointer; box-shadow: 0 var(--btn-lip-sm) 0 var(--red-danger-shadow); white-space: nowrap; }
   .danger-btn:active { transform: translateY(3px); box-shadow: none; }
 
   /* ---- Ouder-statistiek (tegels + meter) ---- */
@@ -5783,41 +6131,41 @@
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
   .stat-tile { position: relative; background: var(--paper-tint); border: 1px solid var(--paper-border); border-radius: var(--r-md); padding: 12px 8px 10px; text-align: center; overflow: hidden; }
   .stat-tile::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--tint, var(--purple-light)); }
-  .stat-tile .num { font-size: 26px; font-weight: 700; color: var(--paper-ink); line-height: 1; }
-  .stat-tile .cap { font-size: 11.5px; color: var(--paper-ink-muted); margin-top: 5px; font-weight: 500; line-height: 1.2; }
+  .stat-tile .num { font-size: var(--tx-groot); font-weight: 700; color: var(--paper-ink); line-height: 1; }
+  .stat-tile .cap { font-size: var(--tx-mini); color: var(--paper-ink-muted); margin-top: 5px; font-weight: 500; line-height: 1.2; }
   .stat-line { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 2px 7px; }
-  .stat-line .k { font-size: 14px; font-weight: 600; color: var(--paper-ink); }
-  .stat-line .v { font-size: 16px; font-weight: 700; color: var(--purple-mid); }
+  .stat-line .k { font-size: var(--tx-label); font-weight: 600; color: var(--paper-ink); }
+  .stat-line .v { font-size: var(--tx-body); font-weight: 700; color: var(--purple-mid); }
   .stat-bar { height: 13px; background: var(--lavender-wash-3); border-radius: var(--r-pill); overflow: hidden; }
   .stat-bar > div { height: 100%; border-radius: var(--r-pill); background: var(--purple-light); }
-  .practice-hint { font-size: 12.5px; color: var(--paper-ink-muted); font-weight: 500; margin: 14px 2px 8px; }
+  .practice-hint { font-size: var(--tx-klein); color: var(--paper-ink-muted); font-weight: 500; margin: 14px 2px 8px; }
   .practice-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: 15px; }
-  .stats-empty { font-size: 13.5px; color: var(--green-deep); font-weight: 600; margin-top: 6px; }
+  .practice-chip { background: var(--practice-bg); border: 1px solid var(--gold-light); color: var(--practice-text); border-radius: var(--r-pill); padding: 6px 13px; font-weight: 700; font-size: var(--tx-label); }
+  .stats-empty { font-size: var(--tx-klein); color: var(--green-deep); font-weight: 600; margin-top: 6px; }
   @media (max-width: 360px) {
     .stat-tile { padding: 10px 5px 9px; }
-    .stat-tile .num { font-size: 22px; }
-    .stat-tile .cap { font-size: 11px; }
+    .stat-tile .num { font-size: var(--tx-kop); }
+    .stat-tile .cap { font-size: var(--tx-mini); }
   }
   /* De oogst: sterren, perfecte shows en trofeeën. Bewust géén tegels -- ze zijn
      van het kind en staan groot in de kast en op de kaart; hier hoeven ze alleen
      te bestaan. Eén rustige regel die op een smal scherm netjes afbreekt. */
   .oogst-rij {
     display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 11px 2px 0;
-    font-size: 13px; font-weight: 500; color: var(--paper-ink-muted);
+    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
   .oogst-item b { font-weight: 700; color: var(--paper-ink); }
   /* De niveau-inschatting staat apart, achter een streepje: het is de enige
      afgeleide waarde op dit scherm en de enige die uitleg nodig heeft. */
   .niveau-blok { margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--paper-border); }
-  .niveau-kop { font-size: 14px; font-weight: 700; color: var(--paper-ink); margin: 0 2px 8px; }
+  .niveau-kop { font-size: var(--tx-label); font-weight: 700; color: var(--paper-ink); margin: 0 2px 8px; }
   /* Waar het kind nú mee bezig is -- sinds fase 5D.1 het onderwerp van dit blok
      in plaats van een voetnoot onder een percentage (zie niveauHtml). Vandaar een
      maat groter dan een notitie, en een eigen lavendel vlakje zoals elk ander
      "dit is de stand"-vlakje in het ouderdeel. */
   .niveau-bezig {
     padding: 10px 13px; border-radius: var(--r-sm);
-    background: var(--lavender-wash); font-size: 14px; font-weight: 500; color: var(--paper-ink);
+    background: var(--lavender-wash); font-size: var(--tx-label); font-weight: 500; color: var(--paper-ink);
   }
   .niveau-bezig b { color: var(--purple-mid); font-weight: 700; }
   .niveau-blok .note { margin-top: 8px; }
@@ -5837,7 +6185,7 @@
   .modal h3 { color: var(--purple-deep); margin-bottom: 10px; }
   /* zelfde twee blokjes stonden tweemaal identiek als losse inline style op
      de bevestigingsmodals (stoppen / algemene bevestiging) -- nu één plek */
-  .modal-body { font-size: 15px; color: var(--paper-ink-muted); margin-bottom: 14px; }
+  .modal-body { font-size: var(--tx-label); color: var(--paper-ink-muted); margin-bottom: 14px; }
   .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   /* Op een smalle telefoon wikkelden de twee knoppen tóch, en dan stonden er een
      brede gouden en een smalle rode onder elkaar -- wat leest als één knop met een
@@ -5848,7 +6196,7 @@
     .modal-actions > * { width: 100%; }
   }
   .modal input {
-    font-family: inherit; font-size: 26px; text-align: center; width: 110px;
+    font-family: inherit; font-size: var(--tx-groot); text-align: center; width: 110px;
     border: 3px solid var(--purple-light); border-radius: var(--r-sm); padding: 6px; margin: 10px 0;
   }
 
@@ -15744,7 +16092,7 @@ function startMapEdit() {
     body.mapedit #tour-map { overflow: hidden; align-items: safe center; padding: 0; }
     body.mapedit .world-frame { min-width: 100%; min-height: 100%; width: auto; }
     body.mapedit.liggend #tour-map { overflow-y: auto; align-items: flex-start; padding: 96px 0;
-      background: linear-gradient(180deg, var(--w-sky, #3d1a63) 0%, var(--w-deep, #2a0c47) 100%); }
+      background: linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%); }
     body.mapedit.liggend .world-frame { min-width: 0; min-height: 0; width: min(100cqw, 340px); }
     /* De kop ligt nu absoluut op de doos (zie de regel hierboven), dus hij hoeft niet
        meer uit het flexvak van .screen te worden losgewrikt. */
@@ -17341,7 +17689,10 @@ function startMapEdit() {
        concurreren met de halte. Een meter die bij elke tekening iets roept, leer je
        negeren, en dan is hij minder waard dan geen meter. */
     const uit = { haltes: [], weg: [], fout: null };
-    const ring = naarRgb(getComputedStyle(frame).getPropertyValue('--glass-white-30').trim() || 'rgba(255,255,255,.3)');
+    // de witte ring om een halte (.tour-stop). Staat als waarde in het blad en niet
+    // als token -- een doorzichtig wit dat niets betekent schrijven we uit, zie de
+    // noot bij de verdwenen --glass-*-familie.
+    const ring = naarRgb('rgba(255,255,255,.3)');
 
     leesNodes().forEach((n, i) => {
       const bg = schijf(data, br, ho, n.x, n.y, dotStraal);
