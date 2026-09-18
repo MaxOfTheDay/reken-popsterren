@@ -3431,27 +3431,19 @@
      Statisch, geen animatie: zij moet ook stilstaand meteen leesbaar zijn. */
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
     filter: url(#tourHeroContour) drop-shadow(0 0 2px rgba(255,250,235,.3)) saturate(1.2) contrast(1.09); }
-  /* Wat de gloed hiervoor deed, doet dit nu bijna geruisloos: een kleine, lage,
-     nauwelijks-aanwezige donkere plek onder haar voeten, niet groter dan zijzelf.
-     Geen ruime aubergine-veeg meer die ver over de tekening uitwaaiert, geen
-     adembeweging -- dat begon als een lichtbron te lezen, en dat was precies het
-     te-wazige-gevoel uit de vorige fase. Wat overblijft is grond onder haar
-     voeten, geen wolk eromheen. */
-  .tour-hero::before { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0; transform: translateX(-50%);
-    width: 24cqw; height: 24cqw; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(18,6,36,.22), rgba(18,6,36,.08) 55%, transparent 78%); }
-  /* Krappere, stérkere contactschaduw in plaats van een brede waas: minder blur,
-     meer dekking, smaller. Dat "ÓP de tegel"-gevoel moet van een strakke schaduw
-     onder haar voeten komen, niet van een groot zacht veld eromheen.
-
-     FASE 4H -- nog krapper en nog steviger (11cqw i.p.v. 13, minder blur, iets
-     donkerder): dit duwtje moet nu in zijn eentje het "staat ÓP de halte"-gevoel
-     dragen, nu de zak zelf weer een fractie ondieper is (zie .tour-hero
-     hierboven) en de rand rondom haar zachter is geworden. */
+  /* FASE 4I -- ::before (een 24cqw brede grondgloed, breder dan zijzelf) is weg.
+     Op de ondiepe zak van FASE 4H stond hij niet meer ín de halte maar zichtbaar
+     ÓP het gouden rondje: een brede donkere waas die links en rechts van haar
+     voeten uitstulpte en van opzij op een vlek leek te lijken die vóór haar langs
+     liep. Eén ding onder haar voeten is genoeg; ::after hieronder draagt de hele
+     grondigheid nu alleen. */
+  /* De contactschaduw zelf, nog eens een stuk kleiner en zachter dan in FASE 4H:
+     smaller dan haar voeten (7cqw tegen 11), veel lichter (.4 tegen .72) en nét
+     genoeg waas om geen harde rand te tekenen. Ze mag amper opvallen -- het punt
+     is dat er iets ligt, niet wát er ligt. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.2cqw; transform: translateX(-50%);
-    width: 11cqw; height: 2.5cqw; border-radius: 50%; background: rgba(6,1,14,.72); filter: blur(1.8px); }
+    left: 50%; bottom: 0.15cqw; transform: translateX(-50%);
+    width: 7cqw; height: 1.7cqw; border-radius: 50%; background: rgba(10,2,20,.4); filter: blur(1.4px); }
   /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
      halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
   .tour-hero .hero-vonk {
