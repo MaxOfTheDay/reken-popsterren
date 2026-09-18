@@ -1,7 +1,7 @@
 {
-  "name": "Reken Popsterren",
-  "short_name": "Popsterren",
-  "description": "Reken- en teloefenspel: elk kind wordt zijn eigen popster",
+  "name": "Rekensterren",
+  "short_name": "Rekensterren",
+  "description": "Reken- en teloefenspel: elk kind wordt zijn eigen ster",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
