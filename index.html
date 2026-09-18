@@ -2626,11 +2626,11 @@
 
      Twee elementen, en die verdeling is de hele truc:
 
-       .wereld-vlucht       het kíjkgat. Ligt stil over het hele venster en wordt
-                            met clip-path van "de hele kaart" naar "het kaartje"
-                            geknepen. Omdat het zelf niet beweegt, staan de
-                            randen van dat gat gewoon in vensterpixels: geen
-                            tegenschaal, geen ovale hoeken.
+       .wereld-vlucht       het kíjkgat: een echt vak met overflow:hidden, dat
+                            met één transform van "de hele kaart" naar "het
+                            kaartje" schaalt. Een gewoon overflow-vak en geen
+                            clip-path, en dat is geen smaakkwestie -- zie de
+                            regel bij vluchtBeelden.
        .wereld-vlucht-art   de tékening. Beweegt met één transform (translate +
                             een gelíjke schaal in x en y), dus hij vervormt op
                             geen enkel beeldje -- wat er verandert is hoe groot
@@ -2641,7 +2641,8 @@
      altijd gelijk op. z-index 1: boven het scherm dat aankomt (z 0), onder het
      scherm dat vertrekt (z 2, zie .wegvallend) en ver onder de navigatiebalk
      (z 40) -- die blijft dus gewoon staan waar hij staat. */
-  .wereld-vlucht { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  .wereld-vlucht { position: fixed; z-index: 1; pointer-events: none;
+    overflow: hidden; transform-origin: 0 0; will-change: transform; }
   /* Op de terugweg draait de stapeling om: dan vertrekt Werelden (z 2) en komt de
      kaart aan, en dan hoort de tekening daar juist tússen. Zie reisNaarWereld. */
   .wereld-vlucht.hoog { z-index: 3; }
@@ -9594,8 +9595,36 @@ const VLUCHT = {
      legt in diezelfde 60ms 42% af: nog steeds meteen antwoord, maar het middenstuk
      blijft te volgen en de landing blijft zacht. Geen overshoot: een navigatie is
      geen beloning. */
-  baan: 'cubic-bezier(.33,.72,.25,1)',
+  baanPunten: [.33, .72, .25, 1],
 };
+VLUCHT.baan = 'cubic-bezier(' + VLUCHT.baanPunten.join(',') + ')';
+/* Dezelfde curve, maar uit te rekenen in JS. Dat is nodig omdat de vlucht uit twee
+   transforms bestaat die samen één beweging moeten zijn (zie vluchtBeelden): laat
+   je de browser ze allebei los interpoleren, dan klopt hun product er tussenin
+   niet en rekt de tekening zichtbaar uit. De waarden worden dus vooraf uitgerekend
+   en als beeldjes meegegeven -- en dan moet de curve hier bekend zijn.
+
+   Newton-Raphson op de x-component, precies zoals de browser het zelf doet. Twaalf
+   stappen is ruim: hij zit na drie al binnen een miljoenste. */
+function bezierCurve(p1x, p1y, p2x, p2y) {
+  const cx = 3 * p1x, bx = 3 * (p2x - p1x) - cx, ax = 1 - cx - bx;
+  const cy = 3 * p1y, by = 3 * (p2y - p1y) - cy, ay = 1 - cy - by;
+  const X = t => ((ax * t + bx) * t + cx) * t;
+  const dX = t => (3 * ax * t + 2 * bx) * t + cx;
+  const Y = t => ((ay * t + by) * t + cy) * t;
+  return x => {
+    let t = x;
+    for (let i = 0; i < 12; i++) {
+      const fout = X(t) - x;
+      if (Math.abs(fout) < 1e-6) break;
+      const d = dX(t);
+      if (Math.abs(d) < 1e-6) break;
+      t -= fout / d;
+    }
+    return Y(t);
+  };
+}
+const vluchtCurve = bezierCurve.apply(null, VLUCHT.baanPunten);
 // de tekening in een reis-kaartje: cover, met hetzelfde zwaartepunt als .reis-art
 const REIS_ART_Y = .36;
 
@@ -9641,19 +9670,74 @@ function halteVlak(halte) {
     rond: vlakRond(plaats),
   };
 }
-/* Het kijkgat als clip-path. De maten zijn insets vanaf de randen van de
-   vluchtlaag zelf, en die wordt daarvoor opgemeten in plaats van uit het venster
-   afgeleid: op een telefoon is "het venster" drie dingen tegelijk (met balk, zonder
-   balk, en wat position:fixed ervan maakt), en van die drie is alleen de laag zelf
-   het antwoord waar de browser het clippen ook echt op doet. Eén meting, vóór er
-   iets beweegt. */
-function vluchtGat(v, vak) {
-  const t = Math.max(0, v.clip.top - vak.top);
-  const l = Math.max(0, v.clip.left - vak.left);
-  const r = Math.max(0, vak.right - (v.clip.left + v.clip.w));
-  const o = Math.max(0, vak.bottom - (v.clip.top + v.clip.h));
-  return `inset(${t.toFixed(1)}px ${r.toFixed(1)}px ${o.toFixed(1)}px ${l.toFixed(1)}px`
-       + ` round ${v.rond.toFixed(1)}px)`;
+function mengRect(a, b, e) {
+  return { left: a.left + (b.left - a.left) * e, top: a.top + (b.top - a.top) * e,
+           w: a.w + (b.w - a.w) * e, h: a.h + (b.h - a.h) * e };
+}
+/* De beeldjes van de vlucht, vooraf uitgerekend. Twee redenen, en de eerste is een
+   fout die we op een trage telefoon gegarandeerd zouden krijgen.
+
+   1  HET GAT MOET OP DE COMPOSITOR, NET ALS DE TEKENING. Hier stond het kijkgat
+      als een clip-path-animatie, en dat leek prima: de gemeten clip-path klopte op
+      elk beeldje. Alleen rekent Chromium een transform op de compositor uit en een
+      clip-path op de hoofddraad. Zolang die twee gelijk opgaan zie je niets; hapert
+      de hoofddraad -- en die hapert, want bij het openen van Werelden worden de
+      tekeningen van de buurwerelden binnengehaald en gedecodeerd -- dan schuift de
+      tekening wél door en het gat niet. Wat je dan ziet is de hele wereldtekening,
+      staand en ongeknipt, over de kaartjes eromheen: de flits aan het eind van de
+      overgang. Nagemeten: één op de zeven overgangen op een snelle machine, en met
+      de hoofddraad 220ms met opzet dichtgezet élke keer.
+
+      Nu is het gat een gewoon vak met overflow:hidden dat zélf schaalt. Een
+      overflow-clip hangt aan de transform van dat vak, dus hij zit in dezelfde
+      boom en op dezelfde draad als de tekening erin. Ze kúnnen niet meer uit elkaar
+      lopen -- niet op een trage telefoon, niet met een hik in het netwerk.
+
+   2  MAAR DAN MOETEN DE TWEE TRANSFORMS WEL SAMEN KLOPPEN. Het vak schaalt
+      ongelijk (van een staand scherm naar een liggend kaartje), en de tekening
+      erin draait dat terug zodat zij zelf gelijkmatig krimpt. Die twee
+      vermenigvuldigen, en een browser interpoleert ze los van elkaar: halverwege
+      staat er dan (0,69 x 1,06) in plaats van (0,85 x 0,85) -- een tekening die
+      een halve tel zichtbaar uitgerekt wordt.
+
+      Vandaar dat hier niet twee eindwaarden staan maar 25 beeldjes, met de curve er
+      al in verwerkt en met 'linear' ertussen. Op elk beeldje is het product exact
+      gelijkmatig; ertussenin wijkt het minder af dan een tiende procent. Het kost
+      één lus van 25 stappen vóór de vlucht begint, en daarna niets meer.
+
+   3  EN DE RONDING MOET EEN EIGEN ANIMATIE ZIJN. border-radius kan niet op de
+      compositor, en één niet-composeerbare eigenschap in een reeks beeldjes zet
+      díe hele animatie op de hoofddraad -- ook de transform die ernaast staat.
+      Zet je de ronding dus bij de vorm in, dan heb je fout 1 terug met een andere
+      oorzaak: nagemeten, en het lekte precies zo. Twee animaties op hetzelfde vak
+      dus, met dezelfde beeldjes en dezelfde duur.
+
+      De ronding blijft daarmee het enige dat op de hoofddraad loopt, en dat mag:
+      hapert hij, dan zijn de hoeken een paar beeldjes minder rond. De tekening
+      blíjft binnen zijn vak, en dat is waar het om ging. */
+const VLUCHT_BEELDJES = 25;
+function vluchtBeelden(van, naar) {
+  const vorm = [], rand = [], binnen = [];
+  const ox = van.kunst.left - van.clip.left, oy = van.kunst.top - van.clip.top;
+  for (let i = 0; i < VLUCHT_BEELDJES; i++) {
+    const x = i / (VLUCHT_BEELDJES - 1);
+    const e = i === 0 ? 0 : i === VLUCHT_BEELDJES - 1 ? 1 : vluchtCurve(x);
+    const C = mengRect(van.clip, naar.clip, e);
+    const A = mengRect(van.kunst, naar.kunst, e);
+    const kx = C.w / van.clip.w, ky = C.h / van.clip.h;
+    const a = A.w / van.kunst.w;
+    const R = van.rond + (naar.rond - van.rond) * e;
+    vorm.push({ offset: x, easing: 'linear',
+      transform: `translate(${(C.left - van.clip.left).toFixed(2)}px, ${(C.top - van.clip.top).toFixed(2)}px)`
+               + ` scale(${kx.toFixed(6)}, ${ky.toFixed(6)})` });
+    rand.push({ offset: x, easing: 'linear',
+      borderRadius: `${(R / kx).toFixed(2)}px / ${(R / ky).toFixed(2)}px` });
+    binnen.push({ offset: x, easing: 'linear',
+      transform: `translate(${((A.left - C.left) / kx - ox).toFixed(2)}px,`
+               + ` ${((A.top - C.top) / ky - oy).toFixed(2)}px)`
+               + ` scale(${(a / kx).toFixed(6)}, ${(a / ky).toFixed(6)})` });
+  }
+  return { vorm, rand, binnen };
 }
 
 /* Staan twee dingen op allebei de schermen op dezelfde plek? Dan horen ze bij een
@@ -9703,31 +9787,37 @@ function wereldVlucht(van, naar, bron, op, hoog) {
   kunst.className = 'wereld-vlucht-art';
   applyWorldArt(kunst, bron);
   applyWorldTheme(kunst, bron);
-  kunst.style.left = van.kunst.left + 'px';
-  kunst.style.top = van.kunst.top + 'px';
+  // het vak staat op de plek van het kijkgat; de tekening ligt erin, en steekt er
+  // met opzet buiten uit -- dat is wat cover doet, en het vak knipt het weg
+  laag.style.left = van.clip.left + 'px';
+  laag.style.top = van.clip.top + 'px';
+  laag.style.width = van.clip.w + 'px';
+  laag.style.height = van.clip.h + 'px';
+  laag.style.borderRadius = van.rond + 'px';
+  kunst.style.left = (van.kunst.left - van.clip.left) + 'px';
+  kunst.style.top = (van.kunst.top - van.clip.top) + 'px';
   kunst.style.width = van.kunst.w + 'px';
   kunst.style.height = van.kunst.h + 'px';
   laag.appendChild(kunst);
   $('app').appendChild(laag);
 
-  // eerst plaatsen, dán opmeten en meteen dichtknijpen: allemaal in dezelfde beurt,
-  // dus er is geen beeldje waarop de laag ongeknepen in beeld staat
-  const vak = laag.getBoundingClientRect();
-  const gatVan = vluchtGat(van, vak), gatNaar = vluchtGat(naar, vak);
-  laag.style.clipPath = gatVan;
+  /* Twee transforms die samen één beweging zijn, plus de ronding apart -- zie
+     vluchtBeelden. De drie delen dezelfde beeldjes en dezelfde duur, dus ze lopen
+     gelijk op; ze staan alleen los omdat de ronding de andere twee anders van de
+     compositor af zou trekken. */
+  const beelden = vluchtBeelden(van, naar);
+  const tijd = { duration: VLUCHT.duur, easing: 'linear', fill: 'forwards' };
+  laag.animate(beelden.vorm, tijd);
+  laag.animate(beelden.rand, tijd);
+  kunst.animate(beelden.binnen, tijd);
+  /* De landing: pas ná de beweging dooft de tekening weg op wat er dan al staat.
 
-  const schaal = naar.kunst.w / van.kunst.w;
-  // dezelfde duur én dezelfde curve voor allebei: het kijkgat en de tekening lopen
-  // daardoor op elk beeldje precies gelijk op
-  laag.animate([{ clipPath: gatVan }, { clipPath: gatNaar }],
-    { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' });
-  kunst.animate(
-    [{ transform: 'none' },
-     { transform: `translate(${(naar.kunst.left - van.kunst.left).toFixed(2)}px,`
-                + ` ${(naar.kunst.top - van.kunst.top).toFixed(2)}px) scale(${schaal.toFixed(5)})` }],
-    { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' });
-  // de landing: pas ná de beweging dooft de vluchtlaag weg op wat er dan al staat
-  const eind = laag.animate([{ opacity: 1 }, { opacity: 0 }],
+     Op de TEKENING en niet op het vak eromheen. Dat vak doet één ding -- knippen --
+     en alles wat zíchtbaar is (de tekening, zijn maat, zijn plek, zijn
+     doorzichtigheid) hoort bij het kind eronder. Dat is ook waarom het er twee
+     zijn, en het houdt het vak vrij van eigenschappen die zijn clip zouden kunnen
+     laten verhuizen. */
+  const eind = kunst.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: VLUCHT.kruis, delay: VLUCHT.duur, easing: 'linear', fill: 'forwards' });
 
   /* De grendel gaat al open zodra de béweging klaar is, en niet pas na de

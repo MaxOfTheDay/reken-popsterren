@@ -342,6 +342,60 @@ const TELEFOON = { width: 390, height: 844 };
     await ctx.close();
   }
 
+  /* ================= J · De tekening blijft heel =================
+     Het kijkgat schaalt ongelijk (van een staand scherm naar een liggend kaartje)
+     en de tekening erin draait dat terug. Samen hoort daar op élk moment een
+     gelijkmatige krimp uit te komen -- doet het dat niet, dan wordt de wereld
+     onderweg zichtbaar uitgerekt.
+
+     En de vorm van dat gat moet op de compositor kunnen blijven: het knipt met
+     overflow (dat hangt aan de transform van het vak zelf) en de animatie die die
+     transform draagt mag niets ánders bevatten. Eén niet-composeerbare eigenschap
+     ertussen -- een border-radius, een clip-path -- zet de hele animatie op de
+     hoofddraad, en dan loopt het gat achter op de tekening zodra die draad even
+     hapert. Wat je dan ziet is de hele wereldtekening ongeknipt over de kaartjes
+     heen: de flits aan het eind van de overgang. Nagemeten met een opname: drie op
+     de zes overgangen met een geanimeerde clip-path, nul op de twaalf hierna. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => { __speel(3); selectProfile('p1'); });
+    await page.waitForTimeout(500);
+    const uit = await page.evaluate(() => new Promise(res => {
+      openReis();
+      requestAnimationFrame(() => {
+        const laag = document.querySelector('.wereld-vlucht');
+        if (!laag) return res(null);
+        const kunst = laag.querySelector('.wereld-vlucht-art');
+        const an = laag.getAnimations().concat(kunst.getAnimations());
+        an.forEach(a => a.pause());
+        const doel = ART_W / ART_H;
+        let ergst = 0;
+        for (let t = 0; t <= VLUCHT.duur; t += VLUCHT.duur / 20) {
+          an.forEach(a => { try { a.currentTime = t; } catch (e) {} });
+          const r = kunst.getBoundingClientRect();
+          if (r.height) ergst = Math.max(ergst, Math.abs((r.width / r.height) / doel - 1));
+        }
+        // welke eigenschappen zitten er in de animaties die een transform dragen?
+        const samen = an.map(a => Object.keys(a.effect.getKeyframes()[0] || {})
+          .filter(k => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)))
+          .filter(ks => ks.includes('transform'));
+        res({ ergst: +(ergst * 100).toFixed(3),
+              knipt: getComputedStyle(laag).overflow,
+              clip: getComputedStyle(laag).clipPath,
+              vermengd: samen.filter(ks => ks.length > 1) });
+      });
+    }));
+    check(uit && uit.ergst < 0.5, 'J · de tekening vervormt onderweg niet',
+      uit ? uit.ergst + '% afwijking' : 'geen vluchtlaag');
+    check(uit && /hidden/.test(uit.knipt), 'J · het kijkgat knipt met overflow', uit && uit.knipt);
+    check(uit && (uit.clip === 'none' || !uit.clip), 'J · en niet met een clip-path', uit && uit.clip);
+    check(uit && uit.vermengd.length === 0,
+      'J · en de transform-animaties dragen niets wat ze van de compositor haalt',
+      uit && JSON.stringify(uit.vermengd));
+    await page.waitForTimeout(700);
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'Z · geen fouten in de pagina', pageErrors.join(' | '));
   await browser.close();
   klaar();
