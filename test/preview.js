@@ -1,7 +1,13 @@
 /*
- * De échte app in je browser, met een kandidaat-achtergrond erachter.
+ * De ontwikkelserver: de échte app in je browser, plus de studio ernaast.
  *
- *   npm run preview          -> http://localhost:8099
+ *   npm run studio           -> http://localhost:8099/studio   (en hij opent zelf)
+ *   npm run preview          -> hetzelfde, zonder het venster te openen
+ *
+ * Twee pagina's, één server:
+ *   /          het spel zelf, met een kandidaat-achtergrond erachter
+ *   /studio    de ontwikkelstudio (test/hub.js): welke versie draait er, welke
+ *              werelden zijn er, in welke stand wil je ze zien
  *
  * Werkwijze: zet een gegenereerd bestand in incoming/ en ververs de pagina.
  * De naam bepaalt waar hij terechtkomt (zie test/scene.js); je hoeft niets in
@@ -23,6 +29,10 @@ const path = require('path');
 const os = require('os');
 const scene = require('./scene.js');
 const merk = require('./merk.js');
+const versie = require('./versie.js');
+// Alleen om bij het starten al om te vallen als de studiopagina stuk is; de
+// pagina zelf wordt per verzoek opnieuw ingelezen (zie de route /studio).
+require('./hub.js');
 
 /* Het adres waarop een telefoon op hetzelfde wifi hierbij kan. De server luisterde
    altijd al op alle netwerkadressen -- je wist het adres alleen niet, en dus keek je
@@ -35,6 +45,15 @@ function lanAdres() {
     }
   }
   return null;
+}
+
+/* Eén ding vóór al het andere: een node die te oud is geeft anders een
+   syntaxfout ergens diep in een bestand, en dan zoek je een fout in de studio die
+   er niet is. */
+if (Number(process.versions.node.split('.')[0]) < 16) {
+  console.error('\n  Deze studio heeft node 16 of nieuwer nodig; je draait ' + process.version
+    + '.\n  Werk node bij (https://nodejs.org) en probeer het opnieuw.\n');
+  process.exit(1);
 }
 
 const ROOT = path.resolve(__dirname, '..');
@@ -65,28 +84,10 @@ const SCREENS = [['map', 'Kaart'], ['game', 'Show'], ['end', 'Einde'],
    welke er al liggen. Eerder stond die tabel twee keer -- hier en in index.html --
    en dan loopt er een uit elkaar. Nu komt hij uit test/scene.js, en de studio valt
    alleen op haar eigen minimale lijstje terug als ze zonder deze server draait. */
-function assetsOpSchijf(dir, uit) {
-  const vol = path.join(ROOT, dir);
-  if (!fs.existsSync(vol)) return uit;
-  for (const naam of fs.readdirSync(vol)) {
-    const f = path.join(vol, naam);
-    if (fs.statSync(f).isDirectory()) assetsOpSchijf(path.join(dir, naam), uit);
-    else uit[path.join(dir, naam).split(path.sep).join('/')] = Math.round(fs.statSync(f).size / 1024);
-  }
-  return uit;
-}
-/* De app-iconen staan met opzet in de wortel en niet onder assets/ (zie sw.js), dus
-   de wandeling hierboven ziet ze niet. Ze horen wél in de maatlijst: het Merk-vak in
-   de studio laat zien wat er ligt en wat het weegt. Op naam en niet op een lijstje:
-   icon-*.png in de wortel is de afspraak, en test/merk.js maakt ze volgens diezelfde
-   afspraak. */
-function iconenOpSchijf(uit) {
-  for (const naam of fs.readdirSync(ROOT)) {
-    if (!/^icon-.*\.png$/.test(naam)) continue;
-    uit[naam] = Math.round(fs.statSync(path.join(ROOT, naam)).size / 1024);
-  }
-  return uit;
-}
+/* Staat in test/werelden.js, want de studiopagina heeft dezelfde lijst nodig om
+   "wijst naar een bestand dat er niet is" te kunnen zeggen. Eén lus, twee lezers
+   -- twee kopieën zouden op een dag verschillend gaan tellen. */
+const { assetsOpSchijf } = require('./werelden.js');
 /* Welke beeldbestanden wijken af van wat er in het spel staat?
    Een tekening wordt meteen naar schijf geschreven -- dat is met opzet, zie de
    uitleg bij /asset -- maar daarmee vielen ze buiten élke verandering die de
@@ -125,7 +126,7 @@ function studioData(state) {
     v instanceof RegExp ? undefined : v)
     + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
     + ';window.__INCOMING=' + JSON.stringify(kandidaten)
-    + ';window.__ASSETS=' + JSON.stringify(iconenOpSchijf(assetsOpSchijf('assets', {})))
+    + ';window.__ASSETS=' + JSON.stringify(merk.iconenOpSchijf(assetsOpSchijf('assets', {})))
     /* De merkbestanden: wat is de meester, wat rolt eruit. Uit test/merk.js, want
        daar wordt het gemaakt -- dezelfde afspraak als __SLOTS uit scene.js. */
     + ';window.__MERK=' + JSON.stringify(merk.AFGELEID.map(d => ({
@@ -190,9 +191,25 @@ function panel(state) {
 </div>
 <script>
 (function () {
-  // De servicewerker zou een oude versie van de app blijven serveren; dan kijk
-  // je naar je vorige poging en denk je dat de nieuwe niets veranderd heeft.
-  if (navigator.serviceWorker) {
+  /* In het kijkvak van de Dev Studio hoort dit paneeltje niet: dat scherm heeft
+     zijn eigen bedieningen, en hier dekt het juist de navigatiebalk van het spel
+     af -- het stukje dat je wilde zien. In een eigen tabblad blijft het staan. */
+  if (window.top !== window.self) {
+    var eigen = document.getElementById('kandidaat');
+    if (eigen) eigen.remove();
+    /* En hier stoppen: wat hieronder staat hangt schakelaars aan knoppen die er
+       nu niet meer zijn. Zonder deze regel gaf elke laadbeurt in de studio een
+       fout in de console -- en dan zoek je die fout in het spel. */
+    return;
+  }
+  /* De servicewerker zou een oude versie van de app blijven serveren; dan kijk
+     je naar je vorige poging en denk je dat de nieuwe niets veranderd heeft.
+
+     Met ?sw in de URL blijft hij wél staan. Dat is de enige manier om de
+     bijwerkstroom van de PWA na te kijken -- een oude cache die een nieuwe build
+     wegdrukt is precies het soort storing dat je alleen mét servicewerker ziet.
+     De studio heeft er een knop voor (Gereedschap -> Met servicewerker). */
+  if (navigator.serviceWorker && !new URLSearchParams(location.search).has('sw')) {
     navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
     navigator.serviceWorker.register = function () { return Promise.reject(new Error('uit in preview')); };
   }
@@ -464,8 +481,117 @@ async function publish(fase, res) {
   }
 }
 
+/* ---- De poorten van de studiopagina ----------------------------------------
+   Alles wat de studio weet en niet kan zien: welke tak er uitgecheckt staat,
+   welke PR's er openstaan, welke werelden erin zitten en of ze kloppen. Lezen is
+   vrij; de drie die iets doen (ophalen, wisselen, bijwerken) staan in
+   test/versie.js en weigeren allemaal als er werk openstaat.
+
+   Let op waar deze server staat: hij luistert op álle netwerkadressen, want dat
+   is wat het bekijken op een telefoon mogelijk maakt (zie lanAdres). Wie op
+   hetzelfde wifi zit kan dus ook deze poorten bereiken -- net als /commit en
+   /publish, die er al langer zijn en veel verder gaan. Het is
+   ontwikkelgereedschap voor je eigen machine en je eigen netwerk; zet hem niet
+   open op een netwerk dat je niet vertrouwt. */
+function json(res, data, code) {
+  res.writeHead(code || 200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  res.end(JSON.stringify(data));
+}
+function lees(req, max) {
+  return new Promise(ok => {
+    let b = '';
+    req.on('data', c => { b += c; if (b.length > (max || 400)) req.destroy(); });
+    req.on('end', () => ok(b.trim()));
+  });
+}
+/* De keuringen die in seconden klaar zijn -- dezelfde vier als `npm run check`.
+   De browsersuites horen hier niet bij: die duren minuten en er is al een knop
+   voor bij het vastleggen (zie commitAll). */
+const KEURINGEN = ['inhoud', 'kern', 'saves', 'kleedkamer'];
+function keuring() {
+  let uit = '';
+  return KEURINGEN.reduce((p, naam) => p.then(() => new Promise((ok, fout) => {
+    execFile(process.execPath, [path.join(ROOT, 'test', naam + '.test.js')],
+      { cwd: ROOT, maxBuffer: 2e7, timeout: 18e4 }, (e, o, err) => {
+        uit += String(o || '');
+        if (e) return fout(new Error(naam + ':\n' + (String(o || err).trim() || e.message)));
+        ok();
+      });
+  })), Promise.resolve())
+    .then(() => ({ ok: true, tekst: uit.trim().split('\n').slice(-12).join('\n') }))
+    .catch(e => ({ ok: false, tekst: String(e.message).split('\n').slice(-20).join('\n') }));
+}
+
+async function api(req, res, url) {
+  try {
+    if (url === '/api/versie') return json(res, versie.feiten());
+    if (url === '/api/bronnen') return json(res, await versie.bronnen());
+    if (url === '/api/werelden') {
+      // Bij élk verzoek opnieuw inlezen: index.html verandert onder je handen
+      // (een wissel van tak, de wereldstudio die het blok terugschrijft), en een
+      // overzicht dat dat niet ziet is erger dan geen overzicht.
+      delete require.cache[require.resolve('./werelden.js')];
+      delete require.cache[require.resolve('./app.js')];
+      return json(res, require('./werelden.js').overzicht());
+    }
+    if (req.method !== 'POST') return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
+    if (url === '/api/haalop') return json(res, await versie.haalOp());
+    if (url === '/api/bijwerken') return json(res, await versie.bijwerken());
+    if (url === '/api/wissel') return json(res, await versie.wissel(await lees(req)));
+    if (url === '/api/keuring') return json(res, await keuring());
+    return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
+  } catch (e) {
+    json(res, { ok: false, tekst: String(e && e.message || e) }, 500);
+  }
+}
+
+process.on('uncaughtException', e => {
+  if (e && e.code === 'EADDRINUSE') {
+    /* Er draait er al een. Kwam je hier via de snelkoppeling op je bureaublad
+       (--open), dan is "de studio openen" precies wat je bedoelde -- dan is een
+       tweede server niet nodig en een foutmelding gewoon verkeerd. Dubbelklikken
+       terwijl hij al draait hoort het venster te openen, niet te klagen. */
+    const studio = 'http://localhost:' + PORT + '/studio';
+    if (process.argv.indexOf('--open') >= 0) {
+      console.log('\n  Er draait hier al een studio — ik open dat venster.\n  ' + studio + '\n');
+      openBrowser(studio);
+      setTimeout(() => process.exit(0), 1500);
+      return;
+    }
+    console.error('\n  Poort ' + PORT + ' is al bezet — er draait waarschijnlijk al een studio.'
+      + '\n  Open ' + studio + ', of start met een andere poort:'
+      + '\n      PORT=8100 npm run studio\n');
+    process.exit(1);
+  }
+  // Al het andere is een echte fout: laat hem zien en stop, in plaats van hem
+  // binnen deze afhandelaar opnieuw te gooien.
+  console.error(e && e.stack || e);
+  process.exit(1);
+});
+
 http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
+
+  if (url.indexOf('/api/') === 0) { api(req, res, url); return; }
+
+  /* De ontwikkelstudio. /ts blijft naar de wereldstudio in de app wijzen: dat is
+     het korte pad dat je op een telefoon intikt, en daar heb je aan een
+     bedieningspaneel met een kijkvak niets -- de telefoon ís het kijkvak. */
+  if (url === '/studio' || url === '/dev') {
+    const lan = lanAdres();
+    /* De pagina bij élk verzoek opnieuw opbouwen, net als de werelden hierboven.
+       Wie aan de studio zélf werkt hoeft dan niet te herstarten om te zien wat
+       hij veranderd heeft -- en dat scheelt precies de ronde waarin je denkt dat
+       je wijziging niets deed. */
+    delete require.cache[require.resolve('./hub.js')];
+    delete require.cache[require.resolve('./scenario.js')];
+    const hubNu = require('./hub.js');
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+    return res.end(hubNu.pagina({
+      adres: 'http://localhost:' + PORT,
+      lan: lan ? lan + ':' + PORT + '/t  (kaart) \u00b7 /ts  (wereldstudio)' : null,
+    }));
+  }
 
   if (req.method === 'POST' && url === '/publish') {
     let body = '';
@@ -533,7 +659,7 @@ http.createServer(function (req, res) {
     res.writeHead(302, { location: '/?debug&demo&star=p1' + (n ? '&wereld=' + n : '') + '&screen=map' });
     return res.end();
   }
-  if (url === '/ts' || url === '/studio') {
+  if (url === '/ts') {
     res.writeHead(302, { location: '/?debug&demo&star=p1&screen=map&mapedit' });
     return res.end();
   }
@@ -560,19 +686,48 @@ http.createServer(function (req, res) {
 }).listen(PORT, function () {
   fs.mkdirSync(DROP, { recursive: true });
   const state = dropped();
+  const studio = 'http://localhost:' + PORT + '/studio';
   const basis = 'http://localhost:' + PORT + '/?debug&demo&star=p1';
   const lan = lanAdres();
-  console.log('\n  Wereldstudio:   ' + basis + '&screen=map&mapedit');
+  const f = versie.feiten();
+
+  console.log('\n  Dev Studio:     ' + studio);
+  console.log('  Draait nu:      ' + f.samenvatting);
+  console.log('  Wereldstudio:   ' + basis + '&screen=map&mapedit');
   console.log('  Gewoon kijken:  ' + basis + '&screen=game\n');
   if (lan) {
     console.log('  Op je telefoon (zelfde wifi), tik dit in:');
     console.log('    ' + lan + ':' + PORT + '/t     de kaart');
     console.log('    ' + lan + ':' + PORT + '/t4    de kaart, meteen in wereld 4');
-    console.log('    ' + lan + ':' + PORT + '/ts    de studio\n');
+    console.log('    ' + lan + ':' + PORT + '/ts    de wereldstudio\n');
   }
-  console.log('  In de studio: sleep een beeld op het Beelden-vak, sleep de haltes en de');
-  console.log('  groene ruitjes, en druk op "Zet in het spel".\n');
-  if (state.found.length) state.found.forEach(f => console.log('  gevonden: ' + f.slot + ' <- ' + f.file));
-  else console.log('  incoming/ is nog leeg. Herkende namen:\n' + scene.namesHint());
+  if (state.found.length) state.found.forEach(f2 => console.log('  gevonden: ' + f2.slot + ' <- ' + f2.file));
+  else console.log('  incoming/ is leeg. Herkende namen:\n' + scene.namesHint());
   console.log('');
+
+  /* Ophalen op de achtergrond. `git fetch` raakt de werkmap niet aan, dus dit kan
+     nooit werk kosten -- maar het kost wél seconden op een trage lijn, en de
+     studio hoort meteen open te gaan. Hij meldt zich als hij klaar is; de pagina
+     ziet het vanzelf (ze vraagt de versie elke halve minuut opnieuw op). */
+  if (f.git) {
+    versie.haalOp().then(r => console.log('  ' + (r.ok
+      ? 'verte opgehaald — de bronnenlijst in de studio is bij'
+      : 'ophalen mislukt (' + r.tekst + ') — de studio werkt gewoon, maar met wat er al was)')));
+  } else {
+    console.log('  Let op: dit is geen git-map, dus de studio kan niet zeggen welke versie er draait.');
+  }
+
+  if (process.argv.indexOf('--open') >= 0) openBrowser(studio);
 });
+
+/* Het venster openen. Drie besturingssystemen, drie namen voor hetzelfde, en als
+   geen van drieën bestaat is dat geen fout: de URL staat hierboven en je klikt
+   hem zelf aan. */
+function openBrowser(url) {
+  const cmd = process.platform === 'darwin' ? ['open', [url]]
+    : process.platform === 'win32' ? [process.env.COMSPEC || 'cmd', ['/c', 'start', '', url]]
+    : ['xdg-open', [url]];
+  execFile(cmd[0], cmd[1], err => {
+    if (err) console.log('  (open het venster zelf: ' + url + ')');
+  });
+}

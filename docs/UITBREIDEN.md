@@ -35,8 +35,8 @@ Er is geen tweede lijst.
    ```
 
    `nodes` (één per show) en `curve` (één minder) zet je niet met de hand: die
-   komen uit de **wereldstudio** (`npm run preview`, dan de knop *Studio*, of
-   `?debug&mapedit`). Daar sleep je de haltes op de richels van de tekening en
+   komen uit de **wereldstudio** (`npm run studio`, dan *Wereld toevoegen* of
+   *Open wereldstudio*; rechtstreeks: `?debug&mapedit`). Daar sleep je de haltes op de richels van de tekening en
    schrijft *Bewaar* het blok hierboven terug in `index.html`. Laat je ze weg,
    dan slingert `defaultNodes()` er een route doorheen — speelbaar, maar niet
    mooi.

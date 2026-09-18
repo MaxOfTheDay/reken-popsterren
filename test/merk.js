@@ -213,11 +213,23 @@ async function teken(pagina, uri, breed, type, kwal, inzoom) {
   }, { uri, breed, type, kwal, inzoom });
 }
 
+/* Wat er van de iconen op schijf ligt, en hoe zwaar. De wandeling die de studio
+   over assets/ doet (test/werelden.js) ziet ze niet: de iconen staan met opzet in
+   de wortel. Op naam en niet op een lijstje -- icon-*.png in de wortel is de
+   afspraak, en de tabel hierboven maakt ze volgens diezelfde afspraak. */
+function iconenOpSchijf(uit) {
+  for (const naam of fs.readdirSync(WORTEL)) {
+    if (!/^icon-.*\.png$/.test(naam)) continue;
+    uit[naam] = Math.round(fs.statSync(path.join(WORTEL, naam)).size / 1024);
+  }
+  return uit;
+}
+
 /* De tabel is ook van buiten te lezen: de wereldstudio toont in het Beelden-tabblad
    welke merkbestanden er vandaag zijn, en die lijst hoort niet op twee plekken te
    staan (zie test/preview.js, window.__MERK). Alleen omzetten start een browser --
    vandaar dat require('./browser.js') hieronder staat en niet bovenaan. */
-module.exports = { AFGELEID, BRON, WORTEL };
+module.exports = { AFGELEID, BRON, WORTEL, iconenOpSchijf };
 
 if (require.main !== module) return;
 
