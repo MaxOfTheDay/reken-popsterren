@@ -3128,7 +3128,7 @@
   .tour-stop.next { --stop-schaal: 1.06; }
   .tour-stop.next .dot { border-color: var(--gold-accent); color: var(--ink-on-gold);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.6cqw rgba(255,196,61,.4); }
+    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.1cqw rgba(255,196,61,.32); }
   /* Een zachte spotlight op de grond onder de huidige halte. Hij hoort bij de
      ster erbovenop: samen maken ze van "een gouden rondje met een poppetje
      ernaast" één ding dat zegt hier sta ik. Zonder dit leest de ster op een drukke
@@ -3142,17 +3142,22 @@
      nu zij zelf een contrastveld draagt, hoeft het rondje niet meer zo hard te
      roepen om nog boven de tekening uit te komen. Nog altijd solide goud, nog
      altijd de enige die beweegt -- alleen de bloom eromheen is een tandje zachter,
-     zodat de blik eerst bij haar landt en dan pas bij de halte waar ze op staat. */
+     zodat de blik eerst bij haar landt en dan pas bij de halte waar ze op staat.
+
+     FASE 4G -- nog een tandje: zij moet met een kleine marge winnen, en het
+     rondje trok met zijn oranjegele bloom nog te veel mee. Rondje blijft solide
+     goud en beweegt nog altijd als enige op de kaart -- alleen de gloed eromheen
+     is verder ingetogen. */
   .tour-stop.next::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255,216,140,.26), rgba(255,196,90,.1) 52%, transparent 74%);
+    background: radial-gradient(closest-side, rgba(255,216,140,.2), rgba(255,196,90,.07) 52%, transparent 74%);
     animation: stopSpot 2.8s ease-in-out infinite;
   }
   @keyframes stopSpot {
-    0%, 100% { opacity: .74; transform: scale(1); }
-    50%      { opacity: .92;   transform: scale(1.05); }
+    0%, 100% { opacity: .68; transform: scale(1); }
+    50%      { opacity: .84;   transform: scale(1.035); }
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
@@ -3377,8 +3382,14 @@
      De zak ging weer omhoog uit de halte: van 7,8 terug naar 5cqw. Dat kon omdat
      ZONE.y0 mee terug is naar 18 (zie daar) -- puur de stip aanraakbaar houden gaf
      op 14 bijna geen lucht meer voor haar kruin, en drukte haar half ín de halte
-     in plaats van erboven. */
-  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 5cqw); transform: translateX(-50%);
+     in plaats van erboven.
+
+     FASE 4G -- nog eens 2cqw terug, naar 3. Ze en de halte lazen bij 5 nog als één
+     wazige klont onder haar voeten en accessoires (de gitaar, het eenhoorntje).
+     ~2cqw is op de meeste toestellen zo'n 8-10px, precies de marge die gevraagd
+     werd zonder er een los zwevend ding van te maken. ZONE.y0 hoeft niet nóg een
+     keer mee: 18 gaf al ruim baan (zie test 7c-bis), dit paste er nog binnen. */
+  .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 3cqw); transform: translateX(-50%);
     width: 22cqw; pointer-events: none; z-index: 2; }
   /* Silhouet, niet sfeer. url(#tourHeroContour) (zie de verborgen <svg> boven
      #screen-map) snijdt met feMorphology een even dikke rand rond haar échte
@@ -3389,18 +3400,26 @@
      SVG-filter geeft overal dezelfde dunne, rustige lijndikte, in een
      zachtviolette pruimtint (geen zwart, geen neon).
 
+     FASE 4G -- radius 3 naar 2,2 en de dekking van #3a1f48 van .62 naar .52: op
+     een rustige wereld begon de rand zelf op een stickerrandje te lijken in
+     plaats van op een contour. Dunner en een fractie transparanter houdt genoeg
+     contrast over -- de rand hoeft niet te bewijzen dat hij er is, alleen dat zij
+     los staat van wat erachter zit.
+
      Daarbovenop nog altijd één héél klein beetje licht -- niet om te gloeien, maar
      omdat een pure donkere rand tegen een dónkere rots zelf weer wegvalt. Dat is
      de enige plek waar hier nog "gloed" gebeurt, en hij is nauwelijks meer dan een
      fractie helderder randje.
 
-     Verzadiging en contrast een fractie omhoog: op een pastel wereldlucht kroop
-     haar jurk anders naar hetzelfde grijs als de lucht erachter. Alleen hier, op
-     de wereldkaart -- avatarSVG zelf blijft overal elders ongemoeid.
+     Verzadiging en contrast een fractie omhoog (en in FASE 4G nog een fractie
+     verder): op een pastel wereldlucht kroop haar jurk anders naar hetzelfde
+     grijs als de lucht erachter, en het hoofd -- haar, gezicht, kroontje --
+     mocht zelf ook een tikje beter uit elkaar te houden zijn. Alleen hier, op de
+     wereldkaart -- avatarSVG zelf blijft overal elders ongemoeid.
 
      Statisch, geen animatie: zij moet ook stilstaand meteen leesbaar zijn. */
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
-    filter: url(#tourHeroContour) drop-shadow(0 0 2px rgba(255,250,235,.32)) saturate(1.14) contrast(1.06); }
+    filter: url(#tourHeroContour) drop-shadow(0 0 2px rgba(255,250,235,.3)) saturate(1.2) contrast(1.09); }
   /* Wat de gloed hiervoor deed, doet dit nu bijna geruisloos: een kleine, lage,
      nauwelijks-aanwezige donkere plek onder haar voeten, niet groter dan zijzelf.
      Geen ruime aubergine-veeg meer die ver over de tekening uitwaaiert, geen
@@ -5659,8 +5678,8 @@
        anders in de app gebruikt, dus avatarSVG() zelf blijft ongemoeid. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <filter id="tourHeroContour" x="-30%" y="-30%" width="160%" height="160%">
-      <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="dilated"/>
-      <feFlood flood-color="#3a1f48" flood-opacity="0.62" result="lijnkleur"/>
+      <feMorphology in="SourceAlpha" operator="dilate" radius="2.2" result="dilated"/>
+      <feFlood flood-color="#3a1f48" flood-opacity="0.52" result="lijnkleur"/>
       <feComposite in="lijnkleur" in2="dilated" operator="in" result="dikkerand"/>
       <feComposite in="dikkerand" in2="SourceAlpha" operator="out" result="rand"/>
       <feMerge>
