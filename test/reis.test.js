@@ -303,11 +303,19 @@ function check(ok, label, detail) {
       'C · sluiten brengt je terug op de kaart waar je vandaan kwam', JSON.stringify(terug));
 
     /* En hoe die kaart binnenkomt. Hij hoort vanaf zijn eerste beeldje
-       ondoorzichtig én zo groot als het venster te zijn: alleen de reis erbovenop
-       doft weg. Stond de kaart kleiner (dat was zo: scale(.94) translateY(10px)),
-       dan zag je hem als een kaartje midden in beeld met een rand van de reis
-       eromheen, en dan groeien tot hij paste -- op de wereldkaart viel dat het
-       meest op aan de weg, die eerst kleiner stond en daarna op zijn plek schoof. */
+       ondoorzichtig én zo groot als het venster te zijn: er ligt dus op geen enkel
+       beeldje iets halfdoorzichtigs over het venster. Stond de kaart kleiner (dat
+       was zo: scale(.94) translateY(10px)), dan zag je hem als een kaartje midden
+       in beeld met een rand van de reis eromheen, en dan groeien tot hij paste --
+       op de wereldkaart viel dat het meest op aan de weg, die eerst kleiner stond
+       en daarna op zijn plek schoof.
+
+       Sinds PS-24 gaat de reis niet meer wég door te vervagen: de tekening van de
+       gekozen wereld groeit eroverheen uit tot hij het venster vult, en dán pas
+       wordt de reis uit de opmaak gehaald (zie reisNaarWereld). Daarom wordt hier
+       niet meer op een opacity onder 0,05 gewacht maar op dát moment -- een scherm
+       dat zonder ooit half doorzichtig te zijn verdwijnt is precies wat deze zaak
+       altijd al wilde vastleggen. */
     await page.evaluate(() => openReis());
     await page.waitForTimeout(600);
     const komst = await page.evaluate(async () => {
@@ -321,15 +329,16 @@ function check(ok, label, detail) {
       };
       const m = [];
       document.querySelector('.reis-halte[data-w="1"]').click();
-      for (let i = 0; i < 30; i++) {
-        m.push({ k: op(kaart), r: op(reis), maat: dekt(kaart) });
+      for (let i = 0; i < 40; i++) {
+        m.push({ k: op(kaart), r: op(reis), maat: dekt(kaart),
+                 reisUit: getComputedStyle(reis).display === 'none' || op(reis) < 0.05 });
         await new Promise(res => requestAnimationFrame(res));
       }
       return {
         dekkend: m.every(x => Math.max(x.k, x.r) > 0.999),
         kaartVol: m.every(x => x.k > 0.999),
         kaartDekt: m.every(x => x.maat),
-        reisWeg: m.some(x => x.r < 0.05),
+        reisWeg: m.some(x => x.reisUit),
       };
     });
     check(komst.dekkend && komst.reisWeg,
