@@ -797,15 +797,18 @@
      een telefoon te zien was en dat geen desktop-browser of headless-test ooit
      laat zien, want geen van beide heeft een balk die zo verdwijnt.
 
-     100svh is de kleíne viewporthoogte: hij gaat uit van élke balk die de browser
-     ooit tijdelijk kán tonen, en blijft dus exact zo groot als toen de balk er nog
-     stond. Verdwijnt de balk later, dan groeit de viewport wél, maar #app niet
-     meer mee -- er komt onderaan een randje bij dat de achtergrondkleur van body
-     draagt (zie --w-deep/de paarse basiskleur), niet een kaart die zichtbaar
-     herschaalt. Eerst 100% als terugval voor browsers zonder svh: een latere
-     regel wint bij gelijke specificiteit, dus svh overschrijft hem zodra hij
-     bestaat en verandert er niets voor wie hem niet kent. */
-  html, body { height: 100%; height: 100svh; }
+     100svh loste dit niet op: die eenheid gaat over de eigen, inklapbare werkbalk
+     van de browser (zoals Safari's adresbalk), niet over een statusbalk die het
+     besturingssysteem er in een fullscreen-PWA overheen legt en zelf weer wegneemt
+     -- Chrome op Android rekent die twee kennelijk niet hetzelfde toe, dus small
+     en large vielen hier op dezelfde, meebewegende maat samen. --vh-lock (zie het
+     scriptje vóór de INHOUD-index) is daarom de eerste die telt: een hoogte die
+     vóór alle opmaak al vastligt op wat innerHeight was tóen de statusbalk nog in
+     beeld stond, en die alleen meebeweegt met een écht andere afmeting (draaien,
+     een ander vensterformaat) -- nooit met de balk zelf die op- of dichtklapt.
+     100svh en 100% blijven staan als terugval voor het beeldje vóórdat dat
+     scriptje geweest is en voor een browser die custom properties niet kent. */
+  html, body { height: 100%; height: 100svh; height: var(--vh-lock, 100svh); }
   /* ---- De letter: vier gewichten, en meer bestaan er niet ------------------
      FASE 5E. @font-face hierboven levert Fredoka als variabele letter van 400 tot
      700 -- dat zijn álle gewichten die deze app heeft. In het blad stonden er ook 800, 900 en
@@ -6656,6 +6659,31 @@
 
 <script>
 "use strict";
+/* De hoogte van dít beeldje vastleggen, vóór al het andere hieronder.
+   manifest.json zet display:fullscreen, en op Android staat de statusbalk (klok,
+   batterij) bij het opstarten nog even in beeld en vervaagt hij een fractie later
+   vanzelf weg. Dat vergroot innerHeight, en alles wat op 100% hoogte staat (zie
+   html,body in het stijlblad) groeit dan mee -- ook de wereldkaart, met zijn
+   cover-vullende .world-frame voorop: hij landt goed en springt een moment later
+   nog een tikje. Geen enkele animatie of overgang veroorzaakt dat; het is de
+   browser die een écht grotere doos doorgeeft.
+
+   100svh loste dit niet op: die eenheid gaat over de eigen, inklapbare werkbalk
+   van de browser (zoals Safari's adresbalk), niet over een statusbalk die het
+   besturingssysteem in een fullscreen-PWA erover legt en zelf weer wegneemt --
+   Chrome op Android rekent die twee kennelijk niet hetzelfde toe.
+
+   Dus hier, met de hand: --vh-lock is de hoogte van het allereerste beeldje, en
+   dat is altijd van vóórdat de balk kan zijn gaan vervagen (die vervaagt pas een
+   moment later, nooit eerder). Een latere resize wijzigt 'm alleen als ook de
+   breedte anders is -- draaien, een ander vensterformaat -- want dat is een échte
+   afmeting; een balk die op- of dichtklapt raakt nooit de breedte. */
+(function () {
+  let w = innerWidth;
+  const zet = () => document.documentElement.style.setProperty('--vh-lock', innerHeight + 'px');
+  zet();
+  addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; zet(); } });
+})();
 /* =====================================================================
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
