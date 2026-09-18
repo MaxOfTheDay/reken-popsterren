@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>🎤 Reken Popsterren</title>
+<title>🎤 Rekensterren</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#7b2ff7">
@@ -3616,7 +3616,7 @@
     grid-template-columns: minmax(56px, 1fr) auto minmax(56px, 1fr); gap: 10px; }
   /* De sluier onder de kop, en hij is niet decoratief: hier schuift een
      wereldtekening met zijn naam erin onderdoor, en die was op .86 nog net te
-     lezen achter "De hele tournee". Dat leest als een foutje, niet als diepte.
+     lezen achter "Werelden". Dat leest als een foutje, niet als diepte.
 
      Dus dekt hij nu écht: ondoorzichtig tot voorbij de onderrand van de kop, en
      daarna nog een halve kophoogte om naar niets uit te lopen. Die uitloop is wat
@@ -5705,7 +5705,7 @@
         <span style="top:84%;font-size:26px;animation-duration:88s;animation-delay:-42s;opacity:.22">☁️</span>
       </div>
     </div>
-    <h1 class="title">Reken Popsterren</h1>
+    <h1 class="title">Rekensterren</h1>
     <div class="subtitle" id="profile-subtitle"></div>
     <!-- De "+" staat vást in het raster en wordt nooit weggegooid: renderProfiles
          zet de sterrentegels ervóór en laat deze knop staan. Daardoor komt hij
@@ -5772,7 +5772,7 @@
           <span class="map-portrait" id="map-portrait"></span>
         </button>
         <button class="header-title world-pick" id="map-tournee-label" onclick="openReis()"
-          aria-label="Bekijk de hele tournee" title="Bekijk de hele tournee"></button>
+          aria-label="Bekijk alle werelden" title="Bekijk alle werelden"></button>
         <button class="diamond-badge header-right" onclick="navGo('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="map-diamonds">0</span></button>
       </div>
     </div>
@@ -5785,7 +5785,7 @@
     <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 <span id="mem-fab-pay">0</span></span></button>
   </div>
 
-  <!-- ===== De hele tournee (fase 4B) =====
+  <!-- ===== Werelden (fase 4B) =====
        Eén laag boven de wereldkaart: waar ben ik in het héle avontuur? De baan
        zelf wordt door renderReis() opgebouwd uit WORLDS en de voortgang van fase
        4A -- er staat hier met opzet geen enkele wereld met naam, zodat een wereld
@@ -5794,7 +5794,7 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="reisSluit()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
-        <div class="header-title reis-titel"><span class="rt-ico" aria-hidden="true">🌍</span> De hele tournee</div>
+        <div class="header-title reis-titel"><span class="rt-ico" aria-hidden="true">🌍</span> Werelden</div>
         <div class="diamond-badge header-right">💎 <span id="reis-diamonds">0</span></div>
       </div>
     </div>
@@ -8481,7 +8481,7 @@ function renderProfiles() {
      anders opent een verse installatie op een titel en een knop en verder niets. */
   const sub = $('profile-subtitle');
   if (sub) {
-    sub.textContent = n ? '' : 'Welkom! Maak je eerste popster.';
+    sub.textContent = n ? '' : 'Welkom! Maak je eerste ster.';
     sub.style.display = n ? 'none' : '';
   }
   if (add) {
@@ -14534,7 +14534,7 @@ function exportData() {
   // dezelfde dag de eerste in de downloadmap
   const stamp = new Date().toISOString().slice(0, 19).replace('T', '-').replace(/:/g, '');
   a.href = url;
-  a.download = `reken-popsterren-backup-${stamp}.json`;
+  a.download = `rekensterren-backup-${stamp}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();

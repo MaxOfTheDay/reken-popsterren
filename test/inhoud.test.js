@@ -337,6 +337,23 @@ zaak('G', () => {
   // Het manifest wijst naar bestaande iconen.
   const man = JSON.parse(fs.readFileSync(path.join(WORTEL, 'manifest.json'), 'utf8'));
   man.icons.forEach(ic => check(fs.existsSync(path.join(WORTEL, ic.src)), `G · icoon ${ic.src} bestaat`, ic.src));
+  /* De naam die het kind ziet staat op drie plekken: de tabtitel, de kop van het
+     keuzescherm en het manifest. Lopen die uit elkaar, dan heet de app op de
+     telefoon anders dan in het spel -- en dat merk je pas na het installeren. */
+  const NAAM = 'Rekensterren';
+  const indexBron = process.env.RP_INDEX ? path.resolve(process.env.RP_INDEX) : path.join(WORTEL, 'index.html');
+  const indexHtml = fs.readFileSync(indexBron, 'utf8');
+  const titel = (indexHtml.match(/<title>([^<]*)<\/title>/) || [, ''])[1];
+  const kop = (indexHtml.match(/<h1 class="title">([^<]*)<\/h1>/) || [, ''])[1];
+  check(titel.includes(NAAM), `G · de tabtitel noemt ${NAAM}`, titel);
+  check(kop.trim() === NAAM, `G · de kop van het keuzescherm is ${NAAM}`, kop);
+  check(man.name === NAAM, `G · het manifest heet ${NAAM}`, man.name);
+  check(man.short_name === NAAM, `G · en de korte naam ook`, man.short_name);
+  /* Een andere start_url of scope maakt voor een geïnstalleerde app een níéuwe
+     app: de oude blijft als dood icoon op het beginscherm staan. Een hernoeming
+     hoort daar nooit aan te komen. */
+  check(man.start_url === './' && man.scope === './',
+    'G · start_url en scope blijven ./ (dezelfde geïnstalleerde app)', `${man.start_url} / ${man.scope}`);
 });
 
 /* ================= H · Het ene bestand =================

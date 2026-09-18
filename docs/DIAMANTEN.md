@@ -89,7 +89,7 @@ zaak B legt dat vast, zodat de tab niet stilletjes terug kan komen.
 - Mediaanprijs ≈ 55 💎 ≈ **iets meer dan één show**.
 - De duurste spulletjes (draakje 180, pauw 200) ≈ **4 shows**.
 - Een verse ster (30 💎) kan in élke categorie meteen iets kiezen.
-- De hele tournee is 48 shows → ≈ 2250 💎 spelen + 225 💎 rangbonussen + 30 💎 start
+- Alle werelden samen zijn 48 shows → ≈ 2250 💎 spelen + 225 💎 rangbonussen + 30 💎 start
   ≈ **2500 💎**, oftewel iets meer dan de helft van de catalogus.
 
 Dat is de cadans die we willen: spelen → sparen → kiezen → meteen zien. Eén show is
