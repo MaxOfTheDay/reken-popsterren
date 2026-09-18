@@ -396,6 +396,95 @@ const TELEFOON = { width: 390, height: 844 };
     await ctx.close();
   }
 
+  /* ================= K · De globe is de draad =================
+     De kop van Werelden draagt alleen nog een globe -- geen woord, geen pil, geen
+     chevron -- en hij is niet nieuw: het is dezelfde globe die op de wereldpil
+     stond. Dat mag je dus zien: op élk beeldje van de overgang staat er precies
+     één in beeld, en op het beeldje waarop de vliegende kopie plaatsmaakt voor de
+     echte springt er niets.
+
+     Twee fouten liggen hier op de loer en allebei zijn ze eerder gemaakt: de kopie
+     laten wegdoven terwijl de echte nog verborgen is (dan knippert het teken weg
+     en terug), en de echte laten opkomen terwijl de kopie er nog vliegt (dan staan
+     er twee). Vandaar dat dit per beeldje geteld wordt en niet per eindstand. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => { __speel(3); selectProfile('p1'); });
+    await page.waitForTimeout(500);
+    const kop = await page.evaluate(() => {
+      const t = document.querySelector('#screen-journey .reis-titel');
+      const globe = t.querySelector('.rt-ico');
+      // alles behalve de globe zelf: dáár hoort niets meer te staan
+      const rest = t.textContent.replace(globe ? globe.textContent : '', '').trim();
+      return { rest, naam: t.getAttribute('aria-label'),
+               chevron: !!t.querySelector('svg'), globes: t.querySelectorAll('.rt-ico').length };
+    });
+    check(kop.rest === '' && !kop.chevron && kop.globes === 1,
+      'K · de kop van Werelden draagt alleen een globe', JSON.stringify(kop));
+    check(kop.naam === 'Werelden', 'K · maar een schermlezer hoort nog wél waar hij is', String(kop.naam));
+
+    /* En hij is rond. Een emoji tekent breder dan zijn em-vierkant; staat de
+       regelhoogte op precies 1em, dan wordt hij boven en onder afgesneden en kijk je
+       naar een platgedrukte wereldbol. Dat is niet aan een kleurwaarde te zien maar
+       wél aan het vakje: is dat lager dan het breed is, dan knijpt de regel de glyph
+       af. Allebei de globes, want het hoort dezelfde te zijn -- een ronde die
+       overvliegt naar een platte is een sprong op de landing. */
+    const maat = sel => page.evaluate(sel => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { b: +r.width.toFixed(1), h: +r.height.toFixed(1) };
+    }, sel);
+    const rondPil = await maat('#screen-map .wp-cta-ico');      // we staan op de kaart
+    await page.evaluate(() => openReis());
+    await page.waitForTimeout(800);
+    const rondReis = await maat('#screen-journey .rt-ico');
+    await page.evaluate(() => reisSluit());                     // en netjes terug
+    await page.waitForTimeout(800);
+    [['wereldpil', rondPil], ['kop van Werelden', rondReis]].forEach(([waar, m]) => {
+      check(m && m.h >= m.b - 1, `K · de globe op de ${waar} wordt niet platgedrukt`, JSON.stringify(m));
+    });
+
+    const tel = heen => new Promise(res => {
+      const zichtbaar = el => {
+        let n = el;
+        while (n && n !== document.body) {
+          const st = getComputedStyle(n);
+          if (st.visibility === 'hidden' || st.display === 'none' || +st.opacity < 0.02) return false;
+          n = n.parentElement;
+        }
+        return true;
+      };
+      const uit = []; const t0 = performance.now();
+      (heen ? openReis : reisSluit)();
+      const stap = () => {
+        const g = [...document.querySelectorAll('.wp-cta-ico, .rt-ico, .globe-vlucht')]
+          .filter(zichtbaar).map(el => {
+            const r = el.getBoundingClientRect();
+            return { w: el.className.split(' ')[0], x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          });
+        uit.push(g);
+        if (performance.now() - t0 < 620) requestAnimationFrame(stap); else res(uit);
+      };
+      requestAnimationFrame(stap);
+    });
+    for (const [heen, hoe] of [[true, 'uitzoomen'], [false, 'inzoomen']]) {
+      const rijen = await page.evaluate(tel, heen);
+      const leeg = rijen.filter(g => g.length === 0).length;
+      const dubbel = rijen.filter(g => g.length > 1).length;
+      const pad = rijen.filter(g => g.length === 1).map(g => g[0]);
+      const wissel = pad.findIndex((g, i) => i && g.w !== pad[i - 1].w);
+      const sprong = wissel > 0
+        ? Math.hypot(pad[wissel].x - pad[wissel - 1].x, pad[wissel].y - pad[wissel - 1].y) : 0;
+      check(leeg === 0 && dubbel === 0, `K · ${hoe} · precies één globe op elk beeldje`,
+        `${leeg} leeg, ${dubbel} dubbel van ${rijen.length}`);
+      check(wissel > 0 && sprong < 2, `K · ${hoe} · en de wissel naar de echte springt niet`,
+        `wissel ${wissel}, sprong ${sprong.toFixed(2)}px`);
+      await page.waitForTimeout(700);
+    }
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'Z · geen fouten in de pagina', pageErrors.join(' | '));
   await browser.close();
   klaar();
