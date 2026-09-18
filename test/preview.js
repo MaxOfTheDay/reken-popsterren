@@ -28,6 +28,7 @@ const { execFile, execFileSync } = require('child_process');
 const path = require('path');
 const os = require('os');
 const scene = require('./scene.js');
+const merk = require('./merk.js');
 const versie = require('./versie.js');
 // Alleen om bij het starten al om te vallen als de studiopagina stuk is; de
 // pagina zelf wordt per verzoek opnieuw ingelezen (zie de route /studio).
@@ -125,7 +126,11 @@ function studioData(state) {
     v instanceof RegExp ? undefined : v)
     + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
     + ';window.__INCOMING=' + JSON.stringify(kandidaten)
-    + ';window.__ASSETS=' + JSON.stringify(assetsOpSchijf('assets', {}))
+    + ';window.__ASSETS=' + JSON.stringify(merk.iconenOpSchijf(assetsOpSchijf('assets', {})))
+    /* De merkbestanden: wat is de meester, wat rolt eruit. Uit test/merk.js, want
+       daar wordt het gemaakt -- dezelfde afspraak als __SLOTS uit scene.js. */
+    + ';window.__MERK=' + JSON.stringify(merk.AFGELEID.map(d => ({
+        bron: 'assets/branding/source/' + d.bron, uit: d.uit, merk: d.merk })))
     + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets()) + ';<\/script>';
 }
 

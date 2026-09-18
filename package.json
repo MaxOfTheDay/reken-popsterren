@@ -20,6 +20,7 @@
     "test:vlucht": "node test/vlucht.test.js",
     "test:beloning": "node test/beloning.test.js",
     "test:studio": "node test/studio.test.js",
+    "merk": "node test/merk.js",
     "shots": "node test/shots.js",
     "try": "node test/try.js",
     "studio": "node test/preview.js --open",
