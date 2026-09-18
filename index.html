@@ -2877,7 +2877,14 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
   /* ~26px: groot genoeg dat een kind de wereldbol meteen herkent, klein genoeg
      dat hij niet met de wereldnaam concurreert -- die blijft de hoofdtekst. */
-  .wp-cta-ico { display: inline-block; font-size: 26px; line-height: 1; }
+  /* line-height 1.25 en niet 1: een emoji tekent breder dan zijn em-vierkant, en op
+     precies 1em wordt 🌍 boven en onder afgesneden -- een platte wereldbol. Opgemeten
+     op 17, 23, 24 en 26px: op 1 is de glyph steeds ~11% platter dan breed, op 1.25
+     is hij rond. Het kost niets aan de pil: die heeft een vaste hoogte en het icoon
+     staat er gecentreerd in, dus alleen het vakje óm de glyph groeit -- de pil, de
+     cta-capsule, de koprij en de diamantenpil staan op de pixel waar ze stonden.
+     Dezelfde reden als bij .rt-ico op Werelden; het is dezelfde globe. */
+  .wp-cta-ico { display: inline-block; font-size: 26px; line-height: 1.25; }
   /* Wit en niet cyaan: het icoon en de waas dragen de kleur van deze hoek al,
      en een piepklein pijltje in datzelfde gedempte blauw viel bij het toetsen
      bijna weg. Gewoon de tekstkleur van de pil, subtiel door de opacity. */
@@ -3722,13 +3729,27 @@
     background: linear-gradient(180deg, #180b2c 0%, #180b2c 54%,
                 rgba(24,11,44,.72) 74%, rgba(24,11,44,0) 100%);
   }
-  /* De titel draagt géén pil. Op de kaart wél -- daar staat hij over een getekende
-     lucht en heeft hij zijn eigen ondergrond nodig -- maar hier ligt de sluier er
-     al onder, en een pil ín een sluier is een doosje in een doosje. Dat is precies
-     het gevoel dat dit scherm kwijt moest. */
-  #screen-journey .reis-titel { font-size: 18px; font-weight: 700; letter-spacing: .01em;
-    display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
-    text-shadow: 0 1px 2px rgba(10,2,24,.95), 0 0 12px rgba(10,2,24,.7); }
+  /* De kop draagt géén pil, en sinds PS-25 ook geen woord meer: alleen de globe.
+
+     Géén pil, want op de kaart heeft de globe er een (daar staat hij over een
+     getekende lucht en heeft hij zijn eigen ondergrond nodig) en hier ligt de
+     sluier er al onder -- een pil ín een sluier is een doosje in een doosje. En
+     juist het wégvallen van die pil is wat de overgang vertelt: hetzelfde teken,
+     nu zonder knopkleren, want hier valt niets te tikken. Het is een plaatsteken
+     en geen bediening: geen chevron, geen waas, geen cursor, geen :active. Alleen
+     een schaduw, zodat hij over de nacht heen leesbaar blijft.
+
+     24px tegen de 23 van de wereldpil: vrijwel dezelfde maat, zodat de vlucht
+     ertussen een verplaatsing is en geen sprong. */
+  #screen-journey .reis-titel { display: inline-flex; align-items: center; justify-content: center; }
+  /* line-height 1.25 en niet 1. Een emoji is breder dan zijn em-vierkant -- op 24px
+     tekent hij ~27px -- en een regelhoogte van precies 1em snijdt hem dan boven en
+     onder af. Je ziet een platte globe, en dat is precies het soort "bijna" dat als
+     slordig leest. Opgemeten: vak 30x24 met een geschilderde glyph van 26,8x24 (plat)
+     tegen 30x30 met 26,8x26,8 (rond). De koprij blijft 50px hoog, dus er verschuift
+     hier niets van. */
+  #screen-journey .rt-ico { display: block; font-size: 24px; line-height: 1.25;
+    filter: drop-shadow(0 1px 3px rgba(10,2,24,.85)); }
   /* FASE 5E -- letterlijk de stof van de kaart en de zaal (--hud-*). Dit stond hier
      met de hand nagemaakt: .34 vulling tegen de .30 van --hud-bg, een ring van .07
      tegen .08, en géén schaduw. Niemand ziet die verschillen los; samen maakten ze
@@ -4094,8 +4115,11 @@
   .reis-terug:active { transform: scale(.92); }
 
   @media (max-width: 360px) {
-    #screen-journey .reis-titel { font-size: 15.5px; gap: 5px; }
-    #screen-journey .reis-titel .rt-ico { display: none; }
+    /* Hier stond dat de globe verdween en het woord bleef: op een krap scherm moest
+       er iets wijken, en van die twee was het woord het duidelijkst. Nu is de globe
+       het enige dat er staat -- en dan is "hem verbergen" hetzelfde als de kop
+       leegmaken. Hij wordt dus alleen een maatje kleiner, net als de knoppen ernaast. */
+    #screen-journey .rt-ico { font-size: 21px; }
     #screen-journey .icon-btn { width: 34px; height: 34px; font-size: 16px; }
     #screen-journey .diamond-badge { font-size: 15.5px; padding: 0 10px; }
   }
@@ -5885,7 +5909,16 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="reisSluit()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
-        <div class="header-title reis-titel"><span class="rt-ico" aria-hidden="true">🌍</span> Werelden</div>
+        <!-- Alleen de globe, geen woord erbij: het scherm zégt al wat het is (gestapelde
+             werelden, de route ertussen, Kaart onderaan geselecteerd) en "Werelden"
+             eroverheen is dat nog een keer. Wat overblijft is het ene teken dat óók op
+             de wereldpil staat, en dat maakt het de draad tussen de twee standen in
+             plaats van twee koppen die elkaar afwisselen.
+             De naam blijft er wél voor wie luistert: aria-label draagt hem, want een
+             schermlezer heeft die stapel kaartjes niet. -->
+        <div class="header-title reis-titel" role="heading" aria-level="1" aria-label="Werelden">
+          <span class="rt-ico" aria-hidden="true">🌍</span>
+        </div>
         <div class="diamond-badge header-right">💎 <span id="reis-diamonds">0</span></div>
       </div>
     </div>
@@ -9858,11 +9891,15 @@ function globeVlucht(vanEl, naarEl, duur) {
   vlieg.className = 'globe-vlucht';
   vlieg.setAttribute('aria-hidden', 'true');
   vlieg.textContent = vanEl.textContent || '🌍';   // overnemen en niet overtypen
-  /* De oorspronkelijke gaat uit zolang zijn kopie vliegt. Niet omdat je hem nog
-     zou zien (de kop waar hij in staat doft toch weg), maar omdat er dan geen enkel
-     beeldje is waarop er twee globes in beeld staan -- en dat is precies wat deze
-     kleine vlucht moet voorkomen. */
+  /* Allebei de echte globes gaan uit zolang de kopie vliegt -- die van waar hij
+     vandaan komt én die van waar hij heen gaat. Er is dan op geen enkel beeldje
+     meer dan één globe in beeld, en dat is precies waar deze kleine vlucht voor is:
+     het moet hetzelfde teken zijn dat verhuist, niet het ene dat wegvalt terwijl
+     het andere opkomt. Sinds de kop van Werelden alléén nog die globe draagt
+     (PS-25) is dat ook het enige wat daar nog te zien valt, dus een tweede zou
+     meteen opvallen. */
   vanEl.style.visibility = 'hidden';
+  naarEl.style.visibility = 'hidden';
   vlieg.style.left = a.left + 'px';
   vlieg.style.top = a.top + 'px';
   vlieg.style.width = a.width + 'px';
@@ -9874,14 +9911,19 @@ function globeVlucht(vanEl, naarEl, duur) {
   const s = b.width / a.width;
   const weg = () => {
     vanEl.style.visibility = '';
+    naarEl.style.visibility = '';        // de echte staat er weer; de kopie mag weg
     if (vlieg.parentNode) vlieg.parentNode.removeChild(vlieg);
   };
   const an = vlieg.animate(
     [{ transform: 'none' },
      { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)})` }],
     { duration: duur, easing: VLUCHT.baan, fill: 'forwards' });
-  vlieg.animate([{ opacity: 1 }, { opacity: 0 }],
-    { duration: 90, delay: Math.max(0, duur - 90), easing: 'linear', fill: 'forwards' });
+  /* Géén wegdoven aan het eind. Hier stond dat wel, en dat klopte zolang er aan de
+     overkant een titel in beeld kwam waar de globe deel van uitmaakte: dan kruisten
+     ze. Nu staat de bestemming te wachten op precies dezelfde plek en maat, en dan
+     is doorzichtigheid een fout -- je zou het teken zien verdwijnen en meteen weer
+     verschijnen. Het wordt dus in één beurt omgewisseld (zie weg): één beeldje, twee
+     keer hetzelfde plaatje op dezelfde plek, en dus niets te zien. */
   an.onfinish = weg;
   setTimeout(weg, duur + 260);   // vangnet, net als bij elke andere overgang
 }
@@ -10847,8 +10889,11 @@ function openReis() {
     // alles wat hieronder een animatie krijgt, zodat de opruimer ze allemaal kent
     const lokaal = [$('tour-map'), $('mem-fab'), $('world-back'),
                     kaart.querySelector('.map-id-btn'), kaart.querySelector('.world-pick')];
-    const overzicht = [reis.querySelector('.reis-pad'), reis.querySelector('.reis-mist'),
-                       reis.querySelector('.header-left'), reis.querySelector('.reis-titel'), doel];
+    const pad = reis.querySelector('.reis-pad'), mist = reis.querySelector('.reis-mist');
+    const terugKnop = reis.querySelector('.header-left');
+    /* De globe staat hier met opzet niet bij: die doet niet mee aan het opkomen van
+       Werelden, want hij kwám al mee -- zie globeVlucht. */
+    const overzicht = [pad, mist, terugKnop, doel];
     // de diamanten: stilstaan waar dat kan, kruisen waar het moet -- zie zelfdePlek
     const muntV = kaart.querySelector('.diamond-badge'), muntN = reis.querySelector('.diamond-badge');
     const muntKruist = !zelfdePlek(muntV, muntN);
@@ -10870,13 +10915,12 @@ function openReis() {
     vluchtDoofAlle(lokaal.filter(x => x !== muntV), false, VLUCHT.detail);
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
     // 3 -- de reis eromheen: de route en de andere werelden waren er al
-    vluchtDoofAlle([overzicht[0], overzicht[1]], true, VLUCHT.reveal, 40);
-    /* 4 -- de koppen kruisen, en de globe verhuist van de pil naar de titel.
-       De titel komt precies op de landing van die globe binnen (en niet eerder):
-       zou hij er al staan, dan zweeft er een tweede 🌍 naast de eerste. De ← mag
-       wel eerder -- daar staat aan de overkant een portretje dat al weg is. */
-    vluchtDoof(overzicht[2], true, VLUCHT.detail, 120);
-    vluchtDoof(overzicht[3], true, VLUCHT.detail, kruis - VLUCHT.detail);
+    vluchtDoofAlle([pad, mist], true, VLUCHT.reveal, 40);
+    /* 4 -- de kop wisselt van stand. De wereldnaam en de chevron doven met de pil
+       weg (die zit in 'lokaal'), de ← komt op, en de globe blijft: hij laat de pil
+       los en schuift naar het midden. Eén teken dat verhuist, geen kop die de
+       andere vervangt -- daarom staat de globe nergens in een fade-lijst. */
+    vluchtDoof(terugKnop, true, VLUCHT.detail, 120);
     globeVlucht(kopVan, reis.querySelector('.rt-ico'), kruis);
     /* En op de landing staat het échte kaartje er weer -- nog steeds achter de
        vluchtlaag, die er daarna in 80ms op wegdooft. Geen fade erbij dus: de
@@ -10949,8 +10993,9 @@ function reisNaarWereld(idx, el) {
     const naar = kaartVlak();
     const lokaal = [$('tour-map'), $('mem-fab'), $('world-back'),
                     kaart.querySelector('.map-id-btn'), kaart.querySelector('.world-pick')];
+    // ook hier blijft de globe erbuiten: hij vliegt terug naar de pil (globeVlucht)
     const overzicht = [reis.querySelector('.reis-pad'), reis.querySelector('.reis-mist'),
-                       reis.querySelector('.header-left'), reis.querySelector('.reis-titel')];
+                       reis.querySelector('.header-left')];
     // dezelfde afspraak als bij het uitzoomen, alleen de andere kant op
     const muntV = reis.querySelector('.diamond-badge'), muntN = kaart.querySelector('.diamond-badge');
     const muntKruist = !zelfdePlek(muntV, muntN);
