@@ -694,7 +694,7 @@ process.on('uncaughtException', e => {
   process.exit(1);
 });
 
-http.createServer(function (req, res) {
+const server = http.createServer(function (req, res) {
   const url = decodeURIComponent(req.url.split('?')[0]);
 
   if (url.indexOf('/api/') === 0) { api(req, res, url); return; }
@@ -816,7 +816,130 @@ http.createServer(function (req, res) {
              : scene.isImage(file) ? scene.mimeFor(file) : 'application/octet-stream';
   res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
   fs.createReadStream(file).pipe(res);
-}).listen(PORT, function () {
+});
+
+/* ---- Meteen naar de nieuwste versie (--naar) -------------------------------
+   De snelkoppeling startte altijd wát er uitgecheckt stond. Dat is met opzet
+   -- een gereedschap dat stilletjes je werkmap verzet is een gereedschap dat je
+   niet meer vertrouwt -- maar het betekende ook dat "even de nieuwste main
+   bekijken" drie handelingen was, en dat je het vergat. Dan kijk je naar de
+   studio van vorige week en zoek je waarom je wijziging er niet in zit.
+
+     --naar=main       de laatste main (fetch + checkout + fast-forward)
+     --naar=156        PR #156, met een losse kop: kijken, niet doorwerken
+     --naar=pr/156     hetzelfde
+     --naar=een-tak    die tak
+     --naar=vraag      vraagt het bij het starten, met main als antwoord op Enter
+     (weglaten)        zoals altijd: start wat er uitgecheckt staat
+
+   Twee dingen die dit NIET doet, en dat blijft zo. Het gooit geen werk weg: staat
+   er iets open in de werkmap, dan weigert de wissel (zie versie.wissel) en start
+   de studio gewoon op wat er stond -- mét de melding erbij, zodat je het in het
+   vak "Open werk" kunt oplossen. En het voegt nooit samen: bijwerken gaat
+   fast-forward of niet. */
+function vraagBron() {
+  return new Promise(ok => {
+    const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
+    rl.question('\n  Welke bron? Enter = de laatste main, of een PR-nummer: ', antwoord => {
+      rl.close();
+      ok(String(antwoord || '').trim());
+    });
+  });
+}
+/* "156" is geen tak maar een PR-nummer -- dat is wat een mens intikt. */
+function bronNaam(ruw) {
+  const t = String(ruw || '').trim();
+  if (!t || t === 'main' || t === 'true') return 'main';
+  if (/^\d+$/.test(t)) return 'pr/' + t;
+  return t;
+}
+/* Een vingerafdruk van de server zelf: alles in test/ dat hij draait.
+
+   Dit is nodig omdat deze server zichzélf vervangt. Hij leest index.html en
+   test/hub.js per verzoek opnieuw (dat is met opzet), maar preview.js, scene.js,
+   merk.js en versie.js zitten al in het geheugen zodra hij draait. Wissel je naar
+   een tak waar de studio veranderd is, dan krijg je de nieuwe pagina op de oude
+   server -- en die combinatie heeft nooit bestaan. Precies de storing waarvan je
+   denkt dat je nieuwe werk stuk is.
+
+   Dus: vóór en ná de wissel meten, en bij verschil opnieuw opstarten. */
+function codeVingerafdruk() {
+  const map = path.join(ROOT, 'test');
+  try {
+    return fs.readdirSync(map).filter(n => n.endsWith('.js')).sort()
+      .map(n => n + ':' + fs.statSync(path.join(map, n)).size
+        + ':' + fs.readFileSync(path.join(map, n), 'utf8').length).join('|');
+  } catch (e) { return ''; }
+}
+/* Opnieuw opstarten met dezelfde node en dezelfde vlaggen, maar zónder --naar:
+   de wissel is al gebeurd, en nog een keer vragen zou onzin zijn. */
+function herstart() {
+  console.log('  De studio zelf is ook veranderd — opnieuw opstarten…\n');
+  const argv = process.argv.slice(1).filter(a => !/^--naar(=|$)/.test(a));
+  const kind = execFile(process.execPath, argv, { cwd: ROOT });
+  kind.stdout.pipe(process.stdout);
+  kind.stderr.pipe(process.stderr);
+  kind.on('exit', code => process.exit(code == null ? 0 : code));
+  return new Promise(() => {});      // deze beurt gaat niet verder
+}
+
+async function naarBron(ruw) {
+  if (!versie.feiten().git) {
+    console.log('\n  Dit is geen git-map, dus er valt niets te wisselen.\n');
+    return;
+  }
+  const ref = bronNaam(ruw === 'vraag' ? await vraagBron() : ruw);
+  console.log('\n  Ophalen…');
+  const voor = codeVingerafdruk();
+  const opgehaald = await versie.haalOp();
+  if (!opgehaald.ok) console.log('  ophalen mislukt (' + opgehaald.tekst + ') — ik probeer het met wat er al was');
+  const r = await versie.wissel(ref);
+  if (r.ok) {
+    console.log('  ' + r.tekst + '\n');
+    if (codeVingerafdruk() !== voor) await herstart();
+    return;
+  }
+  /* Geweigerd. Dat is geen storing maar een beslissing die op jou wacht, dus:
+     zeggen wát er in de weg staat, en gewoon doorstarten -- in de studio staat
+     het vak "Open werk" er met de drie uitwegen naast. */
+  console.log('\n  Niet gewisseld naar ' + ref + ':');
+  console.log('  ' + r.tekst.replace(/\n/g, '\n  '));
+  (r.vuileRegels || []).forEach(v => console.log('    ' + v));
+  /* Alleen bij open werk naar het vak wijzen dat daarover gaat. Een PR-nummer dat
+     niet bestaat is een typefout, en daar helpt "Open werk" niets aan -- een raad
+     die niet past leest als ruis. */
+  console.log(r.vuileRegels && r.vuileRegels.length
+    ? '\n  De studio start op wat er nu staat. In "Open werk" kun je het'
+      + '\n  opzij zetten, vastleggen of terugdraaien, en daarna wisselen.\n'
+    : '\n  De studio start op wat er nu staat; kies in de bronnenlijst iets anders.\n');
+}
+/* Is de poort vrij? Vóór een wissel willen we dat weten: draait er al een studio,
+   dan zou deze de werkmap onder díé server vandaan verzetten, en dan kijk je naar
+   een half verwisselde versie zonder dat iets dat zegt. */
+function poortVrij(port) {
+  return new Promise(ok => {
+    const proef = require('net').createServer();
+    proef.once('error', () => ok(false));
+    proef.once('listening', () => proef.close(() => ok(true)));
+    proef.listen(port, '127.0.0.1');
+  });
+}
+
+async function start() {
+  const naar = process.argv.map(a => /^--naar(=(.*))?$/.exec(a)).filter(Boolean)[0];
+  if (naar) {
+    if (!(await poortVrij(PORT))) {
+      console.error('\n  Er draait hier al een studio op poort ' + PORT + '.'
+        + '\n  Een wissel van bron vraagt om een verse server: sluit dat venster eerst'
+        + '\n  (Ctrl-C), en probeer het opnieuw.\n');
+      process.exit(1);
+    }
+    await naarBron(naar[2] === undefined ? 'main' : naar[2]);
+  }
+  server.listen(PORT, gestart);
+}
+
+function gestart() {
   fs.mkdirSync(DROP, { recursive: true });
   const state = dropped();
   const studio = 'http://localhost:' + PORT + '/studio';
@@ -851,7 +974,7 @@ http.createServer(function (req, res) {
   }
 
   if (process.argv.indexOf('--open') >= 0) openBrowser(studio);
-});
+}
 
 /* Het venster openen. Drie besturingssystemen, drie namen voor hetzelfde, en als
    geen van drieën bestaat is dat geen fout: de URL staat hierboven en je klikt
@@ -864,3 +987,5 @@ function openBrowser(url) {
     if (err) console.log('  (open het venster zelf: ' + url + ')');
   });
 }
+
+start();

@@ -53,11 +53,32 @@ npm run preview     hetzelfde, zonder venster (handig in een tweede terminal)
 npm run snelkoppeling
 ```
 
-Eén keer. Daarna staat er **Rekensterren Studio** op je bureaublad: dubbelklik
-en de server start én het venster gaat open. Draait er al een studio, dan opent
-hij gewoon dat venster in plaats van te klagen.
+Eén keer. Daarna staan er **twee** icoontjes op je bureaublad:
 
-Het icoontje weet waar jóúw kloon staat en welke node je hebt, dus:
+| | |
+|---|---|
+| **Rekensterren Studio** | start wat er nú uitgecheckt staat. Raakt je werkmap niet aan. |
+| **Rekensterren Studio (nieuwste)** | haalt eerst op en vraagt dan waarheen: Enter voor de laatste main, of een PR-nummer. |
+
+Dubbelklik en de server start én het venster gaat open. Draait er al een studio,
+dan opent de eerste gewoon dat venster in plaats van te klagen.
+
+De tweede is er omdat "even de laatste main bekijken" anders drie handelingen is
+die je vergeet — en dan kijk je naar de studio van vorige week en zoek je waarom
+je wijziging er niet in zit. Hij gooit nog steeds niets weg: staat er werk open in
+je werkmap, dan weigert de wissel met een uitleg en start de studio op wat er
+stond, zodat je het in *Open werk* kunt oplossen.
+
+Zelf een vaste bron in een eigen snelkoppeling? Dat is dezelfde vlag:
+
+```
+node test/preview.js --open --naar=main      de laatste main
+node test/preview.js --open --naar=156       PR #156 (losse kop: kijken)
+node test/preview.js --open --naar=een-tak   die tak
+node test/preview.js --open                  zoals altijd: wat er staat
+```
+
+De icoontjes weten waar jóúw kloon staat en welke node je hebt, dus:
 
 * verplaats je de projectmap, of werk je node bij → `npm run snelkoppeling`
   opnieuw, en hij klopt weer;

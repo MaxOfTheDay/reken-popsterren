@@ -411,6 +411,16 @@ zaak('F · de snelkoppeling', () => {
      dan weet je niet of de studio stuk is of de snelkoppeling. */
   const metSpatie = { root: '/pad met spatie/reken-popsterren', node: '/usr/local/bin node/node' };
   for (const plat of ['darwin', 'win32', 'linux']) {
+    /* Er komen er twee: eentje die start wat er staat, en eentje die eerst het
+       nieuwste ophaalt. Dat tweede is waar dit ooit op stukliep -- je startte de
+       studio van vorige week en zocht waarom je wijziging er niet in zat. */
+    const beide = snelkoppeling.maakAlle(plat);
+    check(beide.length === 2, 'F · ' + plat + ' · er zijn er twee', String(beide.length));
+    check(/\(nieuwste\)/.test(beide[1].naam), 'F · ' + plat + ' · en de tweede heet ernaar', beide[1].naam);
+    check(/--naar=vraag/.test(beide[1].inhoud),
+      'F · ' + plat + ' · die vraagt waarheen (main of een PR)', beide[1].naam);
+    check(!/--naar/.test(beide[0].inhoud),
+      'F · ' + plat + ' · en de gewone verzet je werkmap niet', beide[0].naam);
     const s = snelkoppeling.maak(plat);
     check(s.naam.indexOf('Rekensterren Studio') === 0, 'F · ' + plat + ' · heeft een leesbare naam', s.naam);
     check(s.inhoud.indexOf(snelkoppeling.ROOT) >= 0, 'F · ' + plat + ' · wijst naar déze kloon', s.naam);
@@ -438,6 +448,22 @@ zaak('F · de snelkoppeling', () => {
   check(linux.inhoud.indexOf('[Desktop Entry]') === 0, 'F · linux · begint met [Desktop Entry]',
     linux.inhoud.slice(0, 40));
   check(/\nTerminal=true/.test(linux.inhoud), 'F · linux · in een terminal, zodat Ctrl-C hem stopt', 'nee');
+  /* De vraag komt uit node en niet uit de shell: een .desktop-bestand heeft geen
+     plek voor een "lees een antwoord"-tak, en die er met sh -c in wringen is
+     precies de quoting-ellende waar de kop van snelkoppeling.js voor waarschuwt. */
+  const linuxNieuw = snelkoppeling.maakAlle('linux')[1];
+  check(/Terminal=true/.test(linuxNieuw.inhoud) && !/sh -c/.test(linuxNieuw.inhoud),
+    'F · linux · de vraag komt uit node, niet uit een shell-tak', linuxNieuw.inhoud.slice(0, 120));
+
+  /* En preview.js kent de vlag ook werkelijk. Een snelkoppeling met een vlag die
+     de server negeert is precies het soort stille storing dat deze suite hoort te
+     vangen: hij start, hij doet het niet, en niemand ziet waarom. */
+  const prev = fs.readFileSync(path.resolve(__dirname, 'preview.js'), 'utf8');
+  check(/--naar/.test(prev), 'F · preview.js kent --naar', 'de vlag ontbreekt');
+  check(/function naarBron/.test(prev) && /versie\.wissel/.test(prev),
+    'F · en wisselt langs versie.wissel, die op open werk weigert', 'niet langs wissel');
+  check(/poortVrij/.test(prev),
+    'F · en wisselt niet onder een draaiende studio vandaan', 'geen poortcontrole');
 });
 
 /* Wisselen mag nooit werk weggooien. Dat is de belangrijkste belofte van de hele
