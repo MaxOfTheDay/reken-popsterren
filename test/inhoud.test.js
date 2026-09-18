@@ -403,6 +403,60 @@ zaak('H', () => {
      dat per ongeluk tien keer zo groot wordt, en twee tekeningen die byte voor
      byte hetzelfde zijn. Dat laatste is in fase 6A twee keer gevonden -- kopieën
      van de Snoepwereld die als een eigen wereld in de lijst stonden. */
+  /* 3b. De letterladder blijft een ladder.
+     Sinds het kleur- en letterstelsel komt élke lettermaat die woorden zet uit
+     zeven tokens (zie §5 van de afspraak bovenaan het blad). Wat dit bewaakt is
+     niet de ladder zelf maar de manier waarop hij vorige keer verdween: er stonden
+     vijfenzeventig maten in het blad, en de helft daarvan was een halve pixel --
+     12.5 naast 13, 14.5 naast 15, 16.5 naast 17. Niemand kiest zoiets bewust; het
+     ontstaat door één regel te kopiëren en er een tikje aan te draaien tot het
+     "goed" staat. Een halve pixel is op geen enkel toestel te zien, dus wie er een
+     schrijft heeft in werkelijkheid geen maat gekozen maar een maat vermeden.
+
+     De regel is daarom scherp en makkelijk te volgen: hele pixels, of een token. */
+  const LADDER = ['--tx-mini', '--tx-klein', '--tx-label', '--tx-body',
+                  '--tx-sub', '--tx-kop', '--tx-groot'];
+  LADDER.forEach(t => check(new RegExp(t + ':\\s*\\d+px').test(stijl),
+    `H · de letterladder heeft ${t}`, t));
+  const halve = [...stijl.matchAll(/font-size:\s*(\d+\.\d+px)/g)].map(m => m[1]);
+  check(!halve.length, 'H · geen enkele lettermaat is een halve pixel', halve.join(', '));
+  const uitLadder = [...stijl.matchAll(/font-size:\s*var\((--tx-[a-z-]+)\)/g)].map(m => m[1]);
+  check(uitLadder.length > 100, 'H · en de ladder wordt ook echt gelezen', uitLadder.length);
+
+  /* 3c. Goud betekent nog iets.
+     "Verdiend" stond ooit met eenenveertig verschillende gouden drietallen in het
+     blad -- allemaal net naast elkaar, en daarmee betekende goud niets meer. Nu
+     zijn er vijf warme gronden met elk een eigen rol (--goud-rgb, --goud-glans-rgb,
+     --goud-gloed-rgb, --warm-licht-rgb, --voetlicht-rgb). Deze controle laat ruimte
+     voor een handvol echte uitzonderingen en slaat aan zodra het er weer een
+     verzameling wordt. Vandaag staan er twee: twee warme bijna-witten die bij wit
+     horen en niet bij goud. De grens ligt op vijf, zodat er ruimte is voor een
+     echte uitzondering en hij aanslaat ruim voordat het er weer veertig zijn. */
+  const gouden = new Set([...stijl.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)/g)]
+    .filter(m => +m[1] >= 250 && +m[2] >= 140 && +m[2] <= 250 && +m[3] <= 210)
+    .map(m => m.slice(1, 4).join(',')));
+  check(gouden.size <= 5, 'H · goud wordt met een handvol gronden geschreven, niet met veertig',
+    gouden.size + ': ' + [...gouden].join(' / '));
+
+  /* 3d. De letter komt van de eigen schijf.
+     De app moet het doen op een tablet zonder net. Een <link> naar Google is dan
+     geen lettertype maar een gok -- en het is meteen het enige verzoek dat deze app
+     naar buiten zou doen. Zie de noot bij @font-face bovenaan het blad. */
+  const buiten = [...html.matchAll(/(?:href|src)\s*=\s*["']([^"']*fonts\.g[^"']*)["']/g)].map(m => m[1]);
+  check(!buiten.length, 'H · de app haalt geen lettertype van buiten', buiten.join(', '));
+  const gezichten = [...stijl.matchAll(/@font-face[\s\S]*?src:\s*url\('([^']+)'\)/g)].map(m => m[1]);
+  check(gezichten.length >= 1, 'H · en er is minstens één eigen @font-face', gezichten.join(', '));
+  gezichten.forEach(f => {
+    check(fs.existsSync(path.join(WORTEL, f)), `H · ${f} staat ook echt op schijf`, f);
+    if (!fs.existsSync(path.join(WORTEL, f))) return;
+    const kb = Math.round(fs.statSync(path.join(WORTEL, f)).size / 1024);
+    check(kb < 80, `H · ${f} blijft klein genoeg om mee te sturen`, kb + ' kB');
+  });
+  /* En de licentie ligt ernaast. Fredoka staat onder de SIL Open Font License, en
+     die vraagt om precies één ding: dat de tekst meereist met het bestand. */
+  check(fs.existsSync(path.join(WORTEL, 'assets', 'font', 'OFL.txt')),
+    'H · de licentie van het lettertype ligt bij het lettertype', 'assets/font/OFL.txt');
+
   const crypto = require('crypto');
   const map = path.join(WORTEL, 'assets', 'world');
   const bestanden = fs.existsSync(map) ? fs.readdirSync(map).filter(f => /\.(webp|png|jpe?g|avif)$/i.test(f)) : [];

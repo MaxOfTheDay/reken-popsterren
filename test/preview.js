@@ -680,6 +680,7 @@ http.createServer(function (req, res) {
   const ext = path.extname(file).toLowerCase();
   const type = ext === '.js' ? 'text/javascript' : ext === '.json' ? 'application/json'
              : ext === '.css' ? 'text/css' : ext === '.svg' ? 'image/svg+xml'
+             : ext === '.woff2' ? 'font/woff2'
              : scene.isImage(file) ? scene.mimeFor(file) : 'application/octet-stream';
   res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
   fs.createReadStream(file).pipe(res);

@@ -27,23 +27,20 @@ async function launch() {
 }
 
 /*
- * Het lettertype komt van fonts.googleapis.com, en die <link> staat in de <head>
- * vóór het <script>. Een stylesheet blokkeert de scripts die erna komen, dus
- * blokkeert hij ook DOMContentLoaded: op een trage verbinding kost élke
- * page.goto() daardoor tien seconden of meer. De sterren-test maakt een verse
- * context per zaak, dus dat telt hard op.
+ * VANGNET, geen noodzaak meer. De app haalt haar letter sinds het kleur- en
+ * letterstelsel uit assets/font/ en niet meer van fonts.googleapis.com: er gaat
+ * bij een gewone start geen enkel verzoek meer naar buiten, en deze route vangt
+ * dus niets meer af.
  *
- * Hier wordt het antwoord één keer opgehaald en daarna hergebruikt -- de cache
- * staat op moduleniveau, dus ook een nieuwe context betaalt de rekening niet
- * nog eens. Mislukt die eerste aanvraag (geen internet), dan onthouden we dát
- * ook en gaat de test gewoon door op de reservelettertypen: het lettertype is
- * geen onderdeel van wat er getest wordt.
+ * Hij blijft staan omdat hij de dag waarop iemand die <link> terugzet meteen
+ * onschadelijk maakt. Wat er dán weer zou gebeuren, en waarvoor dit ooit
+ * geschreven is: een stijlblad in de <head> blokkeert het scriptblok eronder en
+ * daarmee DOMContentLoaded, zodat élke page.goto() op een trage verbinding tien
+ * seconden of meer kost -- en de sterren-test maakt een verse context per zaak.
  *
  * Een mislukte aanvraag wordt bewust béántwoord met een leeg bestand en niet
  * afgebroken: route.abort() zet "Failed to load resource" in de console, en de
- * suites rekenen elke consolefout aan als een fout in de pagina. Een lege
- * stylesheet is gewoon een stylesheet zonder regels -- de app valt dan netjes
- * terug op zijn eigen lettertypen, zonder ruis in de uitslag.
+ * suites rekenen elke consolefout aan als een fout in de pagina.
  */
 const fontCache = new Map();
 const EMPTY = { status: 200, headers: { 'content-type': 'text/css' }, body: '' };
