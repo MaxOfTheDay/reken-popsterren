@@ -58,6 +58,30 @@ Only these. Everything else in the app stays CSS or emoji for now.
 | 6 | `venue-stadium` | 1536×1024 | 1536×896 | 1200×700 WebP | with 5 |
 | 7 | `finale` | 1024×1536 | — | 1024×1536 WebP | with 5+6 |
 | 8 | `cities` ×12 | 1024×1536 sheet | — | traced to one SVG | later |
+| 9 | `kleedkamer` | 1024×1536 | — | 1215×2160 WebP (9:16) | slot is open |
+
+**The dressing room (9:16, PS-45).** The slot exists and is wired end to end — drop a
+`kleedkamer.webp` in `incoming/`, look at it with `npm run preview`, and the studio
+writes it to `assets/bg/kleedkamer.webp`. Until a painted one arrives the app **draws
+the room itself**: `--kleed-tekening` in `index.html` holds an inline SVG (lamps over
+the mirror, a clothes rail either side of it, a warm pool on the floor) in exactly the
+same place a painting would go. Swapping one for the other is a single line.
+
+It is delivered at the portrait target this project already has (1215×2160, the world-map
+size), and the studio gets there the way it gets there for a world map: cover-crop the
+generation, then resize. That is the one place where this plan's "never upscale" rule is
+knowingly relaxed — it is relaxed for every world map too, and for a plate that is nothing
+but soft gradients it costs bytes, not sharpness.
+
+Two things this asset must respect, both measured rather than guessed:
+
+* **9:16 and not 2:3.** This screen is filled top to bottom — header, rack, two bars —
+  so there is no band where the drawing may stop. On a 390×844 phone a 9:16 plate loses
+  about 9% off each side, on a 412×915 phone about 10%; keep everything that matters
+  inside the middle 80% (the §1 safe zone already asks for 12%).
+* **The middle band is what a landscape tablet sees.** At 1024×768 the cover crop shows
+  only source rows 555–1365. Keep that band quiet wall: anything hanging into it turns
+  into unexplained blobs on a tablet.
 
 **Why the landing screen jumped the queue.** It is the most-seen screen in the game and
 the one with the most empty room: measured at 390×844, its title, question, cards and
@@ -265,7 +289,9 @@ Each step ships on its own and leaves the app coherent.
 6. **Cities.** Twelve landmark silhouettes as one SVG sprite; replace the food emoji.
    **Ship.**
 
-Later, in whole sets only: dressing-room scene, look posters, trophy icons, props.
+Later, in whole sets only: look posters, trophy icons, props. (The dressing-room scene
+has left this list: its slot is open and the app carries a drawn room in the meantime —
+see row 9 in §2.)
 
 ---
 
@@ -287,9 +313,9 @@ the new picture.
 - **Any source size works.** The image is cover-cropped to the target and resized, so a
   generator's 1024×1024 or 900×600 is fine as long as the composition survives a crop.
   Never distorted.
-- **Two targets today** — the world map (1215×2160, under **Werelden**, one per world) and
-  the home screen (1024×1536, under **Beelden**). More appear as the app grows something
-  that renders them.
+- **Three targets today** — the world map (1215×2160, under **Werelden**, one per world),
+  the home screen (1024×1536, under **Beelden**) and the dressing room (1215×2160, under
+  **Beelden**). More appear as the app grows something that renders them.
 - **Quality** is a dropdown; the panel reports the resulting kB so you can keep an eye on
   the budget (§7.3 of ART-DIRECTION: ≤ 120 kB per background).
 - **⧉** (next to the device picker) opens the real game in a true window at the selected
@@ -353,6 +379,7 @@ incoming/            <- drop generated images here (gitignored)
 |---|---|
 | `venue-theater.webp`, `venue-club.webp`, `venue-stadium.webp` | the show screen, behind gameplay |
 | `landing.webp` | the first screen — who is performing today |
+| `kleedkamer.webp` | behind the dressing room — trying on and buying |
 | `map-horizon.webp` | the tour map |
 | `map-sky.webp` | the map's sky layer, blended with `screen` |
 | `finale.webp` | the end screen |

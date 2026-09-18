@@ -281,6 +281,7 @@ function writeWorlds(body, res) {
 const ASSET_OK = [
   /^assets\/world\/[a-z0-9-]+-map\.webp$/,
   /^assets\/bg\/landing\.webp$/,
+  /^assets\/bg\/kleedkamer\.webp$/,
 ];
 function bumpCache() {
   const f = path.join(ROOT, 'sw.js');

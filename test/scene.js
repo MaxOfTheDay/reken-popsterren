@@ -42,6 +42,17 @@ const SLOTS = {
              lever: [1024, 1536], anker: 'midden', canoniek: 'landing.webp',
              pad: 'assets/bg/landing.webp',
              hint: 'landing.webp' },
+  /* De kleedkamer (PS-45). 9:16 en niet 2:3 zoals het startscherm: dit scherm is
+     van boven tot onder gevuld -- kop, rek en twee balken -- dus er is geen band
+     waar de tekening mag ophouden. Dezelfde 1215x2160 als een wereldkaart, want
+     dat is de portretmaat die dit project al kent.
+     De app tekent de kamer vandaag zelf (--kleed-tekening in index.html); komt er
+     een geschilderde versie, dan gaat die hier in en is het in de app een regel. */
+  kleed:   { match: /^kleedkamer|^dressing|^dressroom|^garderobe/i,  screen: 'dress',
+             label: 'Kleedkamer', waar: 'achter het passen en kopen',
+             lever: [1215, 2160], anker: 'midden', canoniek: 'kleedkamer.webp',
+             pad: 'assets/bg/kleedkamer.webp',
+             hint: 'kleedkamer.webp' },
   finale:  { match: /^finale|^einde|^end[-_]/i,                      screen: 'end',
              label: 'Slotscherm', waar: 'na de show',
              lever: [1024, 1536], anker: 'midden', canoniek: 'finale.webp',
@@ -52,6 +63,7 @@ const SCHERMEN = [
   { id: 'profile', label: 'Wie speelt er' },
   { id: 'map',     label: 'Kaart' },
   { id: 'game',    label: 'Show' },
+  { id: 'dress',   label: 'Kleedkamer' },
   { id: 'end',     label: 'Einde' },
 ];
 
@@ -234,6 +246,20 @@ ${HUBS.map(h => h + '::before').join(',')}{content:'';position:absolute;inset:0;
   -webkit-mask-image:linear-gradient(to bottom,#000 18%,rgba(0,0,0,.32) 34%,rgba(0,0,0,.32) 70%,#000 86%);
   mask-image:linear-gradient(to bottom,#000 18%,rgba(0,0,0,.32) 34%,rgba(0,0,0,.32) 70%,#000 86%)}
 #screen-profile .map-sky span{display:none!important}`);
+  }
+
+  if (urls.kleed) {
+    /* Precies de machine die de app zelf gebruikt: één token met de tekening, en
+       #screen-dress.app-sfeer::before zet hem onder --kunst-sluier. Daardoor
+       beoordeel je hier geen nagebouwde opstelling maar het echte scherm -- en
+       de schakelaar "donkere sluier" laat precies zien wat die sluier doet, want
+       zonder hem valt alleen die ene laag weg. */
+    out.push(`:root{--kleed-tekening:url("${urls.kleed}")}
+#screen-dress.app-sfeer::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:${scrim ? 'var(--kunst-sluier),' : ''}var(--kleed-tekening);
+  background-size:${scrim ? 'cover,' : ''}cover;
+  background-position:${scrim ? '50% 50%,' : ''}50% 50%;
+  background-repeat:${scrim ? 'no-repeat,' : ''}no-repeat}`);
   }
 
   if (urls.finale) {
