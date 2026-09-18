@@ -253,7 +253,17 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
 - **de globale beelden komen uit `scene.js` en `merk.js`** — `test/beelden.js` zet
   die twee naast elkaar, en de suite kijkt na dat elk afgeleid bestand aan zijn
   meester hangt en dat de schrijflijst eng blijft: `index.html` en `sw.js` mogen
-  nooit via `/asset` beschreven worden.
+  nooit via `/asset` beschreven worden. Die lijst wordt afgeleid uit
+  `scene.SLOTS`, dus een plek erbij kan niet meer half worden aangesloten;
+- **een schermtekening staat op één plek** — `scene.js` zegt waar hij heen gaat,
+  `SCHERMKUNST` in `index.html` zegt of de app hem gebruikt, en de kandidaat in de
+  studio wordt met dezelfde `scene.css()` getekend als de productieregel. Zo kan
+  "wat je in de studio ziet" niet uiteenlopen met "wat er op een telefoon staat";
+- **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
+  `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
+  voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
+  tekening onzichtbaar — ook na herladen, en ook in het voorbeeldje op een
+  kaartje, want zijn bereik is `/` en hij bedient dus ook de studiopagina.
 
 ### `test/studio.test.js` — de wereldstudio
 

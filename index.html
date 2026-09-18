@@ -1207,6 +1207,35 @@
     mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
   }
 
+  /* ---- De kleedkamer en de kast ------------------------------------------
+     PS-45 / PS-32, en precies volgens de regel hierboven: dezelfde ::before,
+     dezelfde sluier eronder, hetzelfde masker. Eén verschil met de sterrenkeuze,
+     en dat is er met opzet: deze twee schermen hebben pas een tekening als er
+     werkelijk een ligt.
+
+     Vandaar de klasse .kunst. Het spel zet hem op het scherm zodra SCHERMKUNST
+     een pad noemt (zie zetSchermkunst), en tot die tijd gebeurt hier niets --
+     de gedeelde schil blijft staan, precies zoals de kleedkamer en de kast er
+     nu uitzien. Zonder die klasse zou een url() naar een bestand dat er nog
+     niet is de hele schillaag vervangen door niets: een 404 in de console en
+     twee schermen die platter zijn dan ze waren.
+
+     De sluier is hier geen luxe maar de voorwaarde. De winkeltegels en de
+     trofeekaartjes zijn licht-op-donker en doorschijnend; zonder sluier leest
+     niemand er nog een naam op. Dat is ook precies wat je in de Dev Studio
+     hoort na te kijken voordat je een tekening vastzet. */
+  #screen-dress.kunst.app-sfeer::before,
+  #screen-trophies.kunst.app-sfeer::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      var(--kunst-sluier),
+      var(--kunst-scherm);
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+
   /* (Hier stond een gloed onder de tekstkop, zodat "Rekensterren" van de
      lichte lucht in de tekening los kwam. Het logo is nu zelf een tekening met
      een rand en een gloed erin -- een tweede gloed eronder is dan dubbelop.) */
@@ -7254,6 +7283,23 @@ const WORLDS = [
   },
 ];
 /* WERELDEN-EINDE */
+
+/* SCHERMKUNST-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
+   door de Dev Studio (zie /schermkunst in test/preview.js). Zelfde afspraak als het
+   WORLDS-blok hierboven: de toelichting blijft staan, de regel eronder niet.
+
+   Waar dit over gaat: de kleedkamer en de trofeeënkast lenen vandaag de gedeelde
+   schil. Krijgt er een een eigen tekening, dan komt het pad hier te staan -- en
+   niet in een lijstje dat alleen de studio kent. Dit is wat de app leest, dus wat
+   je in de studio ziet is wat er straks op een telefoon staat.
+
+   null betekent: geen eigen tekening, laat de schil met rust. Dat is geen
+   ontbrekend bestand maar een geldige stand, en verreweg de gewoonste. */
+const SCHERMKUNST = {
+  dress: null,
+  tro: null,
+};
+/* SCHERMKUNST-EINDE */
 /* ---- Uitgebracht, en waar de tournee ophoudt --------------------------------
    FASE 4A. Hiervoor stond hier een ENDLESS_WORLD: voorbij de laatste geschreven
    wereld liep de tournee door in stukken van acht onder de naam "Sterrentournee".
@@ -15770,8 +15816,30 @@ window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state &&
 // Escape is dezelfde intentie als terug, ook zonder touchscherm.
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act) act(); } });
 
+/* De schermtekeningen van de kleedkamer en de kast aanzetten, als er een is.
+   Eén plek, en hij leest SCHERMKUNST -- er staat nergens anders een pad.
+
+   Waarom een klasse en een variabele in plaats van een vast url() in het
+   stijlblad: zolang er geen tekening is moet er ook niets opgevraagd worden. Een
+   url() naar een bestand dat er niet is kost elk kind een mislukte aanvraag en
+   laat de gedeelde schil vervallen -- twee schermen die platter zijn dan ze
+   waren, voor een tekening die nog niet bestaat. Zie de regel bij
+   #screen-dress.kunst.app-sfeer::before. */
+function zetSchermkunst() {
+  const waar = { dress: 'screen-dress', tro: 'screen-trophies' };
+  Object.keys(waar).forEach(sleutel => {
+    const el = $(waar[sleutel]);
+    const pad = SCHERMKUNST && SCHERMKUNST[sleutel];
+    if (!el) return;
+    el.classList.toggle('kunst', !!pad);
+    if (pad) el.style.setProperty('--kunst-scherm', 'url("' + pad + '")');
+    else el.style.removeProperty('--kunst-scherm');
+  });
+}
+
 /* ================= Start ================= */
 load();
+zetSchermkunst();
 renderProfiles();
 syncBackGuard();
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
@@ -17546,6 +17614,44 @@ function startMapEdit() {
     if (!e.target.closest || !e.target.closest('.st-slot, .st-art')) e.preventDefault();
   }));
 
+  /* ---- Een vervangen bestand ook wérkelijk laten zien ----------------------
+     Een wereldtekening wordt opnieuw getekend zodra de kaart hertekent, dus die
+     zag je meteen. Een globaal beeld niet: het startscherm staat in een
+     CSS-regel die allang geladen is, en een bestand op schijf vervangen
+     verandert daar niets aan. Je kreeg dus "Gewijzigd" te lezen en keek naar de
+     oude tekening -- precies de twijfel die dit gereedschap moet wegnemen.
+
+     Wat hier gebeurt: elke regel en elk element dat naar dít pad wijst krijgt er
+     een verse ?v= achter. Generiek en niet op selector, want de studio hoort niet
+     te weten wélk scherm welk beeld toont -- dat staat in het stijlblad en mag
+     daar veranderen zonder dat hier iets stukgaat. */
+  function vernieuwBeeld(pad) {
+    if (!pad) return;
+    const stempel = 'v=' + Date.now();
+    const vers = t => String(t).split(pad).join(pad + '?' + stempel);
+    const raakt = t => String(t || '').indexOf(pad) >= 0;
+    let n = 0;
+    for (const blad of Array.from(document.styleSheets)) {
+      let regels;
+      // een stijlblad van een ander domein geeft hier een uitzondering; die zijn
+      // er niet, maar een gereedschap hoort daar niet op om te vallen
+      try { regels = blad.cssRules; } catch (e) { continue; }
+      for (const r of Array.from(regels || [])) {
+        if (!r.style || !raakt(r.style.backgroundImage)) continue;
+        r.style.backgroundImage = vers(r.style.backgroundImage);
+        n++;
+      }
+    }
+    document.querySelectorAll('img').forEach(i => {
+      if (!raakt(i.getAttribute('src'))) return;
+      i.src = vers(i.getAttribute('src').split('?')[0]); n++;
+    });
+    document.querySelectorAll('[style]').forEach(e => {
+      if (!raakt(e.getAttribute('style'))) return;
+      e.setAttribute('style', vers(e.getAttribute('style'))); n++;
+    });
+    return n;
+  }
   function laadBeeld(src) {
     return new Promise((ok, fout) => {
       const i = new Image();
@@ -17640,6 +17746,8 @@ function startMapEdit() {
       // hetzelfde bleef, en ook als het geen wereldtekening is
       GEWIJZIGD.add(pad);
       if (key === 'world') { const w = wereldNu(); if (w) w.world.art = pad; }
+      // en laat 'm meteen zien in plaats van pas na een herlaadbeurt
+      vernieuwBeeld(pad);
       /* Een kandidaat die het gewórden is hoort niet als "nieuw" naast zichzelf te
          blijven staan: hij staat nu in het spel. Weg uit incoming/, stil. */
       if (!eigen) {
