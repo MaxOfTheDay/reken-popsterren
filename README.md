@@ -15,6 +15,7 @@ woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
+| `assets/font/` | het lettertype (Fredoka) en zijn licentie. De app haalt niets van buiten |
 | `assets/branding/` | het merk: het spelogo en het merkteken. De meesters staan in `source/`, de app laadt de afgeleiden ernaast (`npm run merk`) |
 | `icon-*.png` | de app-iconen, ook uit `npm run merk` |
 | `test/` | de keuringen, de browsertests én de Dev Studio (zie `docs/TESTEN.md`) |
@@ -32,6 +33,7 @@ npm run check                  # de keuringen (Node, ± 2 seconden)
 npm test                       # alles, inclusief echte Chromium (minuten)
 npm run preview                # dezelfde server, zonder zelf een venster te openen
 npm run merk                   # de merkbestanden opnieuw uit hun meesters
+npm run achtergrondproef       # houdt de voorgrond het als de tekening verandert?
 ```
 
 **`npm run studio` is de gewone manier van werken.** Eén scherm met links de
@@ -76,6 +78,7 @@ staan er bewust niet bij, want die verouderen meteen.
 | een wereldtekening laat maken | `docs/WORLD-ART-BRIEF.md` |
 | aan de prijzen of de economie komt | `docs/DIAMANTEN.md` |
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
+| aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan het stijlblad in `index.html`, en `docs/UITBREIDEN.md` |
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
 | het logo of het app-icoon vervangt | `docs/MERK.md` |
 

@@ -22,6 +22,7 @@
     "test:studio": "node test/studio.test.js",
     "merk": "node test/merk.js",
     "shots": "node test/shots.js",
+    "achtergrondproef": "node test/achtergrondproef.js",
     "try": "node test/try.js",
     "studio": "node test/preview.js --open",
     "snelkoppeling": "node test/snelkoppeling.js",
