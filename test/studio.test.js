@@ -355,6 +355,146 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- J: een globaal beeld heeft geen wereld nodig -----------------------
+   * De regressie waar deze ronde mee begon.
+   *
+   * Het startscherm, het spelogo en het app-icoon horen bij de héle app. Je kijkt
+   * ze na op het landingsscherm -- en daar is met opzet niemand aan het spelen:
+   * goProfiles() laat `cur` los. Het paneel bleef wél open, en commit() tekende
+   * daarna altijd de kaart opnieuw. De kaart vraagt renderMapTitle(P()), P() is
+   * dan undefined, en dus stond er onderin het paneel:
+   *
+   *     Cannot read properties of undefined (reading 'level')
+   *       — vastzetten kan alleen via npm run preview
+   *
+   * Twee dingen fout in één regel. De uitzondering, en de uitleg: het bestand wás
+   * weggeschreven, en de melding wees naar de enige stap die wél gelukt was.
+   *
+   * Wat hier dus vastligt:
+   *   1  op het landingsscherm, zonder ster, valt er niets om
+   *   2  een globaal beeld vervangen lukt daar gewoon
+   *   3  en de melding zegt dat het gelukt is, niet dat het aan preview ligt
+   *
+   * Over http en niet file://, want vervangen gaat langs de server. Dit servertje
+   * schrijft niets: het serveert de map en beantwoordt POST /asset alsof het gelukt
+   * is. Een test hoort geen bestanden in de werkmap te vervangen. */
+  {
+    const http = require('http');
+    const fs = require('fs');
+    const path = require('path');
+    const scene = require('./scene.js');
+    const WORTEL = path.resolve(__dirname, '..');
+    const geschreven = [];
+
+    const server = http.createServer((req, res) => {
+      const pad = decodeURIComponent(req.url.split('?')[0]);
+      if (req.method === 'POST' && pad === '/asset') {
+        const naar = new URLSearchParams(req.url.split('?')[1] || '').get('to');
+        req.on('data', () => {});
+        req.on('end', () => {
+          geschreven.push(naar);                       // alleen onthouden, nooit schrijven
+          res.writeHead(200, { 'content-type': 'text/plain' });
+          res.end(naar + ' — 42 kB · sw testcache');
+        });
+        return;
+      }
+      if (pad === '/' || pad === '/index.html') {
+        /* Dezelfde vier vensterwaarden die test/preview.js inspuit: zonder __SLOTS
+           kent het paneel alleen de wereldtekening, en dan valt er niets globaals
+           na te kijken. */
+        const html = fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
+        const data = '<script>window.__SLOTS=' + JSON.stringify(scene.SLOTS, (k, v) =>
+            v instanceof RegExp ? undefined : v)
+          + ';window.__SCHERMEN=' + JSON.stringify(scene.SCHERMEN)
+          + ';window.__INCOMING=[];window.__ASSETS={"assets/bg/landing.webp":76};'
+          + 'window.__MERK=[];window.__GEWIJZIGD=[];<\/script>';
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+        return res.end(html.replace('</head>', data + '</head>'));
+      }
+      const veilig = path.join(WORTEL, path.normalize(pad).replace(/^(\.\.[/\\])+/, ''));
+      if (!veilig.startsWith(WORTEL) || !fs.existsSync(veilig) || fs.statSync(veilig).isDirectory()) {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        return res.end('niet gevonden');
+      }
+      /* Het type wél goed zetten: een sw.js als application/octet-stream weigert
+         de browser te registreren, en dat is een fout in dit servertje die je
+         anders in het paneel gaat zoeken. */
+      const ext = path.extname(veilig).toLowerCase();
+      res.writeHead(200, { 'content-type':
+        ext === '.js' ? 'text/javascript' : ext === '.json' ? 'application/json'
+        : ext === '.woff2' ? 'font/woff2'
+        : scene.isImage(veilig) ? scene.mimeFor(veilig) : 'application/octet-stream' });
+      fs.createReadStream(veilig).pipe(res);
+    });
+    await new Promise(ok => server.listen(0, '127.0.0.1', ok));
+    const basis = 'http://127.0.0.1:' + server.address().port;
+
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fout = [];
+    page.on('pageerror', e => fout.push('PAGEERROR ' + e.message));
+    page.on('console', m => {
+      if (m.type() === 'error' && !/404|ERR_FILE_NOT_FOUND|ERR_CONNECTION_RESET/.test(m.text())) {
+        fout.push('CONSOLE ' + m.text());
+      }
+    });
+    await page.goto(basis + '/?debug&demo&star=p1&screen=map&mapedit');
+    await page.waitForSelector('#studio');
+    await page.waitForTimeout(500);
+
+    // het Beelden-tabblad, en dan naar de landing -- precies de weg die je loopt
+    // als je de startschermtekening wilt bekijken
+    await page.evaluate(() => {
+      [...document.querySelectorAll('#studio .st-tabs button')]
+        .filter(b => b.dataset.tab === 'beelden')[0].click();
+    });
+    const erIs = await page.$('.st-slot[data-slot="landing"]');
+    check(!!erIs, 'J · het startscherm staat in Beelden', String(!!erIs));
+
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(250);
+    const zonderSter = await page.evaluate(() => ({
+      cur: cur, scherm: (document.querySelector('.screen.active') || {}).id || null,
+    }));
+    check(zonderSter.cur === null && zonderSter.scherm === 'screen-profile',
+      'J · het landingsscherm laat de ster los', JSON.stringify(zonderSter));
+    check(!fout.length, 'J · en dat valt op zichzelf niet om', fout.slice(0, 2).join(' | '));
+
+    // nu vervangen, zonder wereld- en levelcontext
+    page.on('filechooser', fc => fc.setFiles(path.join(WORTEL, 'assets', 'bg', 'landing.webp')));
+    await page.evaluate(() => document.querySelector('.st-slot[data-slot="landing"]').click());
+    await page.waitForTimeout(2500);
+    const uit = await page.evaluate(() => document.getElementById('st-out').textContent);
+
+    check(!/reading '.?level'?/.test(uit) && !/undefined/.test(uit),
+      "J · geen .level-uitzondering bij een globaal beeld", uit);
+    check(!/npm run preview/.test(uit),
+      'J · en geen onterechte verwijzing naar npm run preview', uit);
+    check(/Gewijzigd/.test(uit) && /landing\.webp/.test(uit),
+      'J · de vervanging wordt als gelukt gemeld', uit);
+    check(geschreven.indexOf('assets/bg/landing.webp') >= 0,
+      'J · en de server kreeg het juiste pad', geschreven.join(', '));
+    check(!fout.length, 'J · de console blijft stil', fout.slice(0, 3).join(' | '));
+
+    /* En andersom: het paneel is niet stuk gegaan. Terug naar een wereld moet
+       gewoon werken -- anders ruil je een uitzondering in voor een dood paneel. */
+    const terug = await page.evaluate(() => {
+      try {
+        goMap();
+        return { ok: true, titel: (document.getElementById('map-tournee-label') || {}).textContent || '',
+                 naam: (document.getElementById('mf-name') || {}).value || '' };
+      } catch (e) { return { ok: false, fout: String(e && e.message || e) }; }
+    });
+    await page.waitForTimeout(400);
+    check(terug.ok && terug.naam.length > 0, 'J · en de wereldstudio werkt daarna gewoon door',
+      JSON.stringify(terug));
+    check(!fout.length, 'J · nog steeds geen fouten', fout.slice(0, 3).join(' | '));
+
+    await ctx.close();
+    await new Promise(ok => server.close(ok));
+  }
+
   /* ---- I: elke knop van de Dev Studio komt ergens uit ---------------------
    * De studiopagina (test/hub.js) is een rij knoppen die niets anders doen dan
    * een URL openen. test/hub.test.js kijkt na of die URL's kloppen tegen wat
