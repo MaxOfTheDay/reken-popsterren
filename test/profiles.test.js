@@ -1060,10 +1060,12 @@ function check(ok, label, detail) {
   }
 
   /* ========== 7h · De wereldpil is één knop, met een kindermaat ==========
-   * De wereldnaam in de kop is de ingang naar de hele tournee. Drie dingen moeten
-   * daarvoor waar zijn, en ze waren het alledrie niet altijd:
-   *   1. de naam én het routetekentje horen bij dezelfde knop -- een icoontje dat
-   *      eruitziet als een knop en het niet is, is erger dan geen icoontje
+   * De wereldnaam in de kop is de ingang naar de hele tournee (PS-11: sinds die
+   * ronde met een eigen "Werelden"-cta-zone en chevron erachter). Drie dingen
+   * moeten daarvoor waar zijn, en ze waren het alledrie niet altijd:
+   *   1. de naam, de cta-zone én het chevrontje horen bij dezelfde knop -- een
+   *      icoontje dat eruitziet als een knop en het niet is, is erger dan geen
+   *      icoontje
    *   2. het raakvlak is minstens 44px hoog; de pil zelf is 34px, dus daar hoort
    *      een onzichtbaar vlakje omheen (FASE 7A -- .world-pick::before)
    *   3. de twee pillen ernaast blijven aanraakbaar: dat vlakje mag niets afpakken
@@ -1092,8 +1094,8 @@ function check(ok, label, detail) {
           while (t < 120 && raak(cx, cy - t - 1)) t++;
           while (b < 120 && raak(cx, cy + b + 1)) b++;
           if (t + b < uit.kleinste) { uit.kleinste = t + b; uit.wie = WORLDS[i].id; }
-          // het routetekentje hoort bij dezelfde knop als de naam
-          const svg = pil.querySelector('.wp-route');
+          // het chevrontje van de cta-zone hoort bij dezelfde knop als de naam
+          const svg = pil.querySelector('.wp-chev');
           const sr = svg && svg.getBoundingClientRect();
           if (!sr || !raak(sr.left + sr.width / 2, sr.top + sr.height / 2)) uit.ico.push(WORLDS[i].id);
           // en de buren blijven van zichzelf
@@ -1108,7 +1110,7 @@ function check(ok, label, detail) {
       });
       check(r.kleinste >= 44, 'het raakvlak van de wereldpil is minstens 44px hoog — ' + naam,
         r.kleinste + 'px bij ' + r.wie);
-      check(r.ico.length === 0, 'het routetekentje opent dezelfde tournee als de naam — ' + naam,
+      check(r.ico.length === 0, 'het chevrontje opent dezelfde tournee als de naam — ' + naam,
         r.ico.join(', '));
       check(r.buren.length === 0, 'de wereldpil pakt geen tik af van het portret of de diamanten — ' + naam,
         r.buren.join(', '));

@@ -1324,61 +1324,76 @@
     width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.78);
     box-shadow: 0 2px 8px rgba(10,2,24,.45), 0 0 0 4px var(--hud-bg);
   }
-  /* de twee pillen zijn letterlijk dezelfde regel: zelfde hoogte, zelfde vulling,
-     zelfde randje, zelfde schaduw -- alleen de inhoud verschilt */
+  /* de twee pillen delen achtergrond, randje en schaduw -- alleen de inhoud en
+     (sinds PS-11) de hoogte verschillen. De diamantpil is en blijft één regel op
+     een vaste hoogte; de wereldpil draagt nu twee zones (.wp-here/.wp-cta) en
+     die staan op een telefoon onder elkaar, dus zíjn hoogte ligt niet meer vast. */
   #screen-map .world-pick, #screen-map .diamond-badge {
-    height: var(--hud-h); padding: 0 11px; border-radius: var(--r-pill);
+    border-radius: var(--r-pill);
     background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
+  #screen-map .diamond-badge { height: var(--hud-h); padding: 0 11px; font-size: 17px; gap: 5px; }
   /* Op de kaart een maat kleiner dan op de andere schermen: de tekening eronder
      draagt het scherm, niet de tekst. De wereldpil stond op 19px en woog daarmee
-     duidelijk zwaarder dan de twee ernaast; 17,5 tegen 17 zet ze op gelijke voet. */
-  #screen-map .world-pick { font-size: 17.5px; gap: 5px; position: relative; }
+     duidelijk zwaarder dan de twee ernaast; met de cta-zone erbij is 15,5 voor
+     .wp-here (en iets kleiner nog voor .wp-cta, zie hieronder) het gewicht dat
+     naast de diamantpil klopt. */
+  #screen-map .world-pick { min-height: var(--hud-h); font-size: 15.5px; position: relative; }
+  #screen-map .wp-cta { font-size: .87em; }
   /* FASE 7A -- de pil is de ingang naar de hele tournee, en hij was 34px hoog: dat
      leest goed maar het is geen kindervinger. Het portretje ernaast lost dat al zo
      op (4px onzichtbare padding, raakvlak 48px), alleen kan dat hier niet: deze pil
-     heeft een vaste hoogte, en padding zou die opeten in plaats van hem te
+     heeft een eigen vorm, en padding zou die opeten in plaats van hem te
      vergroten. Dus een onzichtbaar vlakje eroverheen.
 
-     Alleen naar bóven en onder. -8px maakt het raakvlak 50px -- precies de hoogte
-     van de koprij zelf, dus hij blijft binnen de kop en pakt geen enkele tik van de
-     kaart af (de haltes staan per ZONE onder de kop). Naar de zijkanten juist niet:
-     op 320px staat de wereldnaam al bijna tegen de diamantpil aan, en daar zou een
-     vlakje tikken van die pil afpakken. De pil zelf ziet er geen pixel anders uit.
+     Alleen naar bóven en onder. -8px maakt het raakvlak minstens 50px -- ruim
+     binnen de koprij zelf, dus hij pakt geen enkele tik van de kaart af (de
+     haltes staan per ZONE onder de kop). Naar de zijkanten juist niet: op 320px
+     staat de pil al bijna tegen de diamantpil aan, en daar zou een vlakje tikken
+     van die pil afpakken. De pil zelf ziet er geen pixel anders uit.
 
      overflow: visible hoort erbij. Onder de 520px zet de gedeelde kopregel
      .header-title op overflow: hidden met een ellips -- bedoeld voor de kóppen van
      de andere schermen, die tekst zijn en af mogen knippen. Deze kop is een knop,
-     de wereldnaam knipt hier sowieso niet meer af (de kolommen eromheen krimpen,
-     zie de mediaregel hieronder) en die ellips werkt op een inline-flex-knop toch
-     niet. Wat hij wél deed: het vlakje wegknippen, zodat hetzelfde knopje op een
-     telefoon 33px hoog aanraakbaar was en op een tablet 49px. */
+     en die ellips werkt op een inline-flex-knop toch niet. Wat hij wél deed: het
+     vlakje wegknippen, zodat hetzelfde knopje op een telefoon aanraakbaar was en
+     op een tablet nog groter. */
   #screen-map .world-pick { overflow: visible; }
   #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px 0; }
-  #screen-map .wp-route { width: 13px; height: 13px; }
-  #screen-map .diamond-badge { font-size: 17px; gap: 5px; }
-  /* Gelijke buitenkolommen, zodat de wereldnaam écht in het midden staat, en overal
-     dezelfde tussenruimte. 80px is wat de diamantpil nodig heeft. */
-  #screen-map .screen-header { grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
-    gap: 10px; align-items: center; }
-  /* Onder de 390 past de wereldnaam niet meer tussen die twee kolommen. Opgemeten:
-     "Piratenwereld" is 177px breed en de middenkolom is (breedte - 204); op 375 is
-     dat 171, op 360 nog 156 en op 320 maar 116. Er stond geen ellips (die werkt niet
-     op een inline-flex-knop), dus het werd een harde snee: "Junglewer". En dat op
-     het hoofdscherm, waar de naam het enige woord is dat er staat.
-
-     Gelijke kolommen blijven -- de naam hoort écht in het midden. Wat kleiner wordt
-     is alles eromheen: de ondergrens van de zijkolommen, de tussenruimte, de
-     diamantpil en de naam zelf. Nagemeten op 320, 360, 375, 390, 412 en 768: geen
-     enkele wereldnaam wordt nog afgeknipt, en vanaf 390 verandert er niets. */
+  #screen-map .wp-chev { width: 6px; height: 11px; }
+  /* Gelijke buitenkolommen, zodat de pil écht in het midden staat, en overal
+     dezelfde tussenruimte. 64px is genoeg voor het portretje en de kleinste
+     diamantpil -- kleiner dan de 80px van vóór PS-11, want de pil in het midden
+     is nu zelf de kolom die het meest wil groeien. */
+  #screen-map .screen-header { grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr);
+    gap: 8px; align-items: center; }
+  /* PS-11 -- met een cta-zone erbij is de pil te breed geworden voor één rij op
+     een telefoon: "Piratenwereld" alleen was al 177px op zijn breedst, en
+     "🌍 Naar werelden ›" erbij kost zomaar 110px meer. Onder de 560px -- dus op
+     vrijwel elke telefoon in portret, óók de brede (412px) -- staan de twee
+     zones daarom onder elkaar als een compacte kop van twee regels; pas op een
+     tablet of in liggende stand staan ze nog naast elkaar. Dat is precies de
+     "2-line hierarchy" die het ontwerp toestaat: wáár je bent boven, wáár de tik
+     heen gaat eronder, allebei nog steeds in één knop. */
+  @media (max-width: 559px) {
+    #screen-map .world-pick { flex-direction: column; }
+    #screen-map .wp-here, #screen-map .wp-cta { padding: 3px 12px; }
+    #screen-map .wp-cta { border-radius: 0 0 var(--r-pill) var(--r-pill); }
+    /* het streepje ligt nu bovenaan de tweede regel in plaats van links ervan */
+    #screen-map .wp-cta::before { left: 14px; right: 14px; top: 0; bottom: auto; width: auto; height: 1px; }
+    /* "Werelden" wordt "Naar werelden": op zijn eigen regel, náást het gouden
+       icoon van de huidige wereld, is één los woord minder duidelijk een
+       richting dan een klein zinnetje. */
+    #screen-map .wp-cta-kort { display: none; }
+    #screen-map .wp-cta-lang { display: inline; }
+  }
   @media (max-width: 389px) {
     #screen-map .screen-header { grid-template-columns: minmax(52px, 1fr) auto minmax(52px, 1fr); gap: 8px; }
-    /* alleen padding-inline, want de twee pillen delen hun hóógte en hun vulling
-       (zie de regel hierboven) -- dat blijft één regel, ook hier */
-    #screen-map .world-pick { font-size: 16px; gap: 4px; padding-inline: 6px; }
-    #screen-map .wp-route { width: 11px; height: 11px; }
+    #screen-map .world-pick { font-size: 14.5px; gap: 4px; }
+    #screen-map .wp-here, #screen-map .wp-cta { padding-inline: 9px; }
+    #screen-map .wp-chev { width: 5.5px; height: 10px; }
     #screen-map .diamond-badge { font-size: 15px; gap: 4px; padding-inline: 9px; }
   }
   /* 10 links, 14 rechts: het portretje draagt zelf 4px onzichtbare padding voor
@@ -2733,12 +2748,31 @@
   /* De wereldnaam in de kop is de ingang naar alle werelden. Twee zwevende pijlen
      (één wereld per tik) waren daarvoor de navigatie; met zes werelden is dat vijf
      tikken van de laatste naar de eerste, en ze lagen bovendien over de tekening.
-     De naam is toch al de plek waar je kijkt om te weten wáár je bent. */
-  .world-pick { display: inline-flex; align-items: center; gap: 6px;
+     De naam is toch al de plek waar je kijkt om te weten wáár je bent.
+
+     PS-11 -- de pil is nu twee zones in één knop: .wp-here (waar je bent) en
+     .wp-cta (waar de tik heen gaat). Eén <button>, dus altijd precies één
+     raakvlak; de twee zones zijn opmaak, geen aparte knoppen. */
+  .world-pick { display: inline-flex; align-items: stretch; gap: 0;
     border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
-    padding: 2px 6px; border-radius: var(--r-pill); }
-  .world-pick:active { transform: scale(.96); }
-  .wp-route { display: block; width: 14px; height: 14px; flex: none; opacity: .75; }
+    padding: 0; border-radius: var(--r-pill); }
+  .world-pick:active { transform: scale(.96); filter: brightness(1.15); }
+  @media (prefers-reduced-motion: reduce) { .world-pick:active { transform: none; } }
+  .wp-here, .wp-cta { display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+  .wp-here { padding: 0 9px 0 12px; }
+  /* De rechterzone krijgt haar eigen glazen vulling, dezelfde stof als .btn.soft
+     (de gedempte tweede knop): dat zegt "hier kan je ook op drukken" zonder in
+     het goud van "hier speel je" te grijpen (dat betekent op deze kaart al iets
+     anders, zie .tour-stop.next). De ronding rechts volgt die van de hele pil,
+     zodat de vulling er niet los bovenop lijkt te liggen. */
+  .wp-cta { padding: 0 11px 0 9px; font-weight: 800; position: relative;
+    border-radius: 0 var(--r-pill) var(--r-pill) 0;
+    background: linear-gradient(180deg, var(--glass-white-20), rgba(255,255,255,.06)); }
+  .wp-cta::before { content: ''; position: absolute; left: 0; top: 15%; bottom: 15%; width: 1px;
+    background: var(--glass-white-22); }
+  .wp-cta-ico { line-height: 1; }
+  .wp-chev { display: block; width: 7px; height: 12px; flex: none; opacity: .85; }
+  .wp-cta-lang { display: none; }
   /* De weg terug. Hij stond in vol goud, en dat was een fout die je pas ziet als
      je de kaart als geheel bekijkt: op dit scherm betekent goud "hier speel je",
      en dat is de halte met de ster erop. Een gouden pil van 240px breed, midden
@@ -8971,22 +9005,35 @@ function navigeerNaarWereld(idx) {
 /* De kop van de kaart draagt nog één ding: in wélke wereld je kijkt. Waar je
    daarin bent staat op de kaart zelf -- genummerde haltes, de gouden huidige
    halte, de ster die erop staat -- en dat leest een kind van vijf wèl. */
-/* Het tekentje achter de wereldnaam. Hier stond een ▾ -- het teken voor "er klapt
-   een lijstje uit", en dat was precies wat eronder zat. Nu opent die pil de hele
-   tournee, en dan hoort er ook geen menu-pijl meer te staan: twee haltes met een
-   pad ertussen, hetzelfde beeld als waar hij heen brengt. */
-const WP_ROUTE = '<svg class="wp-route" viewBox="0 0 14 14" aria-hidden="true">'
-  + '<path d="M3.2 11.7C7.3 11.7 6.5 6.2 10.7 4" fill="none" stroke="currentColor" stroke-width="1.5"'
-  + ' stroke-linecap="round" stroke-dasharray=".01 3.1"/>'
-  + '<circle cx="3.2" cy="11.7" r="1.5" fill="currentColor"/>'
-  + '<circle cx="11" cy="3.3" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+/* PS-11 -- de pil droeg alleen de wereldnaam met een klein routetekentje erachter,
+   en dat las niemand als "hier klik je voor meer werelden": het tekentje was te
+   stil en de naam zelf oogt als titel, niet als knop. Nu draagt de pil twee
+   zones die dat met tekst en kleur zeggen in plaats van met één klein icoontje --
+   links wáár je bent, rechts (met een eigen glazen vulling, zodat hij duidelijk
+   een tweede ding is) dat een tik naar alle werelden gaat. Bewust géén 🗺️: dat
+   icoon is al van de "Kaart"-tab onderaan (déze wereld), en 🌍 hoort juist bij
+   de tournee zelf, zie .rt-ico bij #screen-journey. Het pijltje áchteraan is de
+   enige rest van het oude routetekentje -- nu een gewone chevron, het teken dat
+   overal in de app "hier ga je verder" zegt. */
+const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
+  + '<path d="M1.2 1.2l5.4 5.8-5.4 5.8" fill="none" stroke="currentColor" stroke-width="2"'
+  + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function renderMapTitle(p, opReis) {
   const cur = worldFor(hereLevel(p));
   // || cur: buiten de lijst is er geen wereld meer (fase 4A), en de kop moet
   // altijd iets kunnen noemen -- dan die waar de ster staat.
   const shown = (viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx)) || cur;
   const anders = shown.index !== cur.index;
-  $('map-tournee-label').innerHTML = `${shown.world.icon} ${esc(shown.world.name)}` + WP_ROUTE;
+  const pil = $('map-tournee-label');
+  pil.innerHTML =
+      `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>${esc(shown.world.name)}</span>`
+    + `<span class="wp-cta"><span class="wp-cta-ico" aria-hidden="true">🌍</span>`
+    + `<span class="wp-cta-kort">Werelden</span><span class="wp-cta-lang">Naar werelden</span>${WP_CHEV}</span>`;
+  // Screenlezer en desktop-tooltip krijgen de volledige zin; de pil zelf mag
+  // in twee losse woordjes blijven lezen ("Piratenwereld" / "Werelden").
+  const uitleg = `${shown.world.name} — tik voor alle werelden`;
+  pil.setAttribute('aria-label', uitleg);
+  pil.title = uitleg;
   /* Kijk je in een andere wereld dan waar je speelt, dan ziet de kaart er verder
      precies normaal uit -- en dan kan een kind daar blijven hangen zonder te
      merken dat ze weg is. Vandaar deze gouden weg terug, en alleen dán.
