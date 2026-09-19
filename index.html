@@ -13152,7 +13152,9 @@ function countReveal(q) {
     const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
     if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
-    else { let i = 0; const c = () => { if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
+    // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
+    // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
+    else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
   }
 }
 
@@ -13631,6 +13633,11 @@ function quitGame() {
   $('quit-modal').classList.remove('open');
   stopSpot();
   hideToast();
+  // de show is van het scherm dat we nu verlaten -- geen woord ervan hoort nog
+  // mee te klinken op de kaart. G op null vóór het navigeren laat elke geplande
+  // speak() (countAlong, animateDelta, ...) zichzelf al afmelden; cancelSpeech()
+  // stopt daarnaast wat de stem al hardop aan het zeggen was.
+  cancelSpeech();
   // ook een afgebroken show brengt je terug op de plek waar je hem begon
   const lvl = G ? G.lvl : null;
   G = null;
