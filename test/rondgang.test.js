@@ -672,16 +672,25 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     kast: document.getElementById('screen-trophies').classList.contains('active'),
     kaarten: document.querySelectorAll('.trophy-card, .tro-card').length,
     teller: document.getElementById('trophy-count').textContent,
-    // fase 5C: geen kastbalk, geen plankbalk, geen balk per kaartje
+    // fase 5C: geen kastbalk, geen plankbalk, geen balk per kaartje. PS-32 heeft
+    // daar één uitzondering op gemaakt en die staat hieronder apart: de stand-pil
+    // in de kop vult zichzelf. Een balk als éígen element blijft weg.
     balken: document.querySelectorAll('#screen-trophies .kast-bar, #screen-trophies .rank-bar, #screen-trophies .trophy-progress').length,
+    // PS-32: de groepen staan niet meer in een eigen paneel
+    panelen: document.querySelectorAll('#screen-trophies .shelf').length,
+    groepen: document.querySelectorAll('#screen-trophies .kast-groep').length,
+    groepTelling: document.querySelectorAll('#screen-trophies .groep-telling').length,
     // en geen ster-statusstrook meer aan de voet van de kast
     rangStrook: document.querySelectorAll('#screen-trophies .career-strip').length,
     kopRuim: !document.getElementById('screen-trophies').classList.contains('gescrold'),
   }));
   check(r.kast && r.kaarten > 10, 'de trofeeënkast staat vol kaarten', JSON.stringify(r));
-  // De kop zegt de stand in woorden ("Je hebt er 3 van de 18"), niet als balk.
-  check(/\d+\s+van\s+de\s+\d+/.test(r.teller), 'de kastteller staat er', r.teller);
-  check(r.balken === 0, 'en er staat geen voortgangsbalk meer op het scherm', r.balken);
+  /* PS-32 -- de stand staat als pil in de kop: "3 / 18 verzameld", dezelfde
+     woorden waarmee het schattenvak in de kleedkamer telt. */
+  check(/\d+\s*\/\s*\d+\s+verzameld/.test(r.teller), 'de kastteller staat er', r.teller);
+  check(r.balken === 0, 'en er staat geen losse voortgangsbalk op het scherm', r.balken);
+  check(r.panelen === 0 && r.groepen === 4 && r.groepTelling === 4,
+    'de vier groepen staan als kopregel met een eigen stand, niet als paneel', JSON.stringify(r));
   check(r.rangStrook === 0, 'de kast eindigt bij de trofeeën, zonder ster-statusstrook', r.rangStrook);
   check(r.kopRuim, 'bovenaan staat de ruime kop', 'kop staat meteen in de krappe stand');
 
