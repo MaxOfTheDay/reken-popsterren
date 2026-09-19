@@ -1492,6 +1492,19 @@
      tegels naast elkaar zijn het zes vlakken die eeuwig staan te pulseren, en
      dan beweegt het hele scherm terwijl er niets gebeurt. */
   .ster-tegel .st-podium::after { animation: none; opacity: .85; }
+  /* Het wereldaccent: dezelfde --w-glow/--w-sky als de gloed rond de tegel en
+     de band onderin (zie hierboven), nu ook als een zachte wasem óver het
+     podium -- boven en onder, nooit het midden, want daar staat de pop. Eén
+     kleurzweem in de wereldkleur, met soft-light zodat het gekozen podium
+     (de achtergrond uit de kleedkamer) er gewoon doorheen blijft komen: geen
+     tweede achtergrond, alleen een andere gloed op dezelfde plek als altijd. */
+  .ster-tegel .st-podium::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(85% 55% at 50% 118%, rgba(var(--w-glow-rgb), .55), transparent 70%),
+      linear-gradient(180deg, rgba(var(--w-sky-rgb), .34), transparent 30%);
+    mix-blend-mode: soft-light;
+  }
   /* De podiumversiering (kasteel, discobol, palmboom) blijft hier weg. Op één
      groot podium is dat sfeer; op een tegel van 112-148px zijn het drie emoji die
      over de pop heen vallen, precies op de plek waar een kind moet kunnen zien of
@@ -1510,9 +1523,17 @@
   }
   .st-rij { display: flex; align-items: center; gap: clamp(4px, 4cqw, 9px); min-width: 0; }
   /* Hetzelfde wereldteken als op de reis en op de wereldkaart, en verder niets:
-     een kind hoeft hier alleen te zien dát ze ergens anders is dan haar zus. */
+     een kind hoeft hier alleen te zien dát ze ergens anders is dan haar zus.
+     Het rondje erachter is hetzelfde wereldaccent als de gloed en de wasem
+     hierboven (--w-glow-rgb), alleen nu vlak bij de naam -- zodat het teken
+     ook als los badge leest en niet verdwijnt in de donkere voet. */
   .st-ico { flex: none; line-height: 1; font-size: clamp(13px, 13cqw, 23px);
-            filter: var(--emoji-schaduw); }
+            filter: var(--emoji-schaduw);
+            display: grid; place-items: center;
+            width: clamp(20px, 20cqw, 32px); height: clamp(20px, 20cqw, 32px);
+            border-radius: 50%;
+            background: radial-gradient(120% 120% at 30% 25%, rgba(var(--w-glow-rgb), .55), rgba(var(--w-glow-rgb), .15));
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
   .st-naam {
     flex: 1; min-width: 0; font-weight: 700; letter-spacing: .01em; line-height: 1.15;
     font-size: clamp(13px, 14cqw, 25px);
