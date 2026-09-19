@@ -404,6 +404,17 @@
        kaarten (.set-card) blijven vol wit -- die liggen op het scherm en zweven
        er niet boven. */
     --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
+    /* Hetzelfde papier, maar dan mét de warme kant van de app erin. Voor het ene
+       vel dat NIET in het ouderdeel staat: het maakformulier, dat een kind ziet
+       en dat op de sterrenpoort ligt. Vol wit (#fff) is daar een gat in de
+       tekening -- de enige echt koude, echt neutrale vlek op een scherm dat
+       verder uit violet en amber bestaat. Dit is die vlek een graad warmer, en
+       verder niets: het blijft papier, het blijft dekkend, en de leesbaarheid
+       van de letter erop verandert er niet meetbaar van -- --c-ink (#333) haalt
+       er 12,2:1 tegen 12,6:1 op vol wit, en beide zijn ruim boven AA.
+       De ouderschermen blijven vol wit -- daar ligt het vel op een scherm en
+       niet op een tekening, en daar is koel papier juist goed. */
+    --paper-warm: #fffaf3;
     --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
     --muted-lavender-text: #cfc6df; --muted-text-2: #d8d0e4; --muted-text-3: #e1e5ea; --lavender-text: #e6d6ff;
 
@@ -1247,6 +1258,56 @@
     background-position: 50% 50%, 50% 50%;
     -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
     mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+
+  /* ---- "Nieuwe ster" staat in dezelfde poort als de sterrenkeuze ---------
+     Dit scherm hing als enige gebruiksscherm nog aan de kále gedeelde schil, en
+     dat was te zien: vier lichtbogen in de hoeken plus het voetlicht, waarvan er
+     op een scherm met een vel van bijna de volle hoogte precies twéé zichtbaar
+     blijven -- een oranje baan linksboven en een violette rechtsonder. Wat je dan
+     ziet is niet sfeer maar een verloop dat schuin achter een formulier langs
+     loopt, en dat is precies waar "generiek" vandaan komt.
+
+     De oplossing is geen nieuwe tekening maar de tekening die er al ligt. Een
+     ster maken is de tegel náást de sterren op de sterrenkeuze; je komt er vandaan
+     en je gaat er (uit het ouderdeel) naar terug. Dezelfde poort erachter maakt van
+     die twee schermen één plek in plaats van twee schermen met dezelfde huisstijl.
+     Geen bestand erbij, geen aanvraag erbij: assets/bg/landing.webp staat al in de
+     voorraad van de service worker omdat de sterrenkeuze hem laadt.
+
+     DRIE VERSCHILLEN MET DE STERRENKEUZE, en alle drie omdat de tekening hier
+     niet het onderwerp is maar de kamer waar het formulier in staat:
+
+     1. FIXED, en niet absolute. Dit scherm scrolt -- het is het enige lange
+        formulier van de app. Een absolute laag rekt mee met de scrollhoogte en
+        dan schuift de poort tijdens het bladeren door het beeld. Dezelfde keuze
+        als .app-sfeer en als de kleedkamer.
+     2. EEN EXTRA DEMPING BÓVEN DE SLUIER. --kunst-sluier is afgeregeld op een
+        scherm waar de tekening de hoofdrol speelt (één logo, twee tegels, veel
+        lucht). Hier ligt er een vel overheen en hoort wat eromheen staat stil te
+        zijn, niet mooi. Deze laag haalt daarom nog een slag verzadiging en licht
+        weg -- rustig genoeg dat het oog bij het formulier blijft, licht genoeg
+        dat de gouden bogen bovenin en de wolken onderin er nog zijn.
+        Bewust géén dekkend vel over de hele tekening: dat is precies wat §4
+        verbiedt. Het is dezelfde soort sluier als die er al lag, een trap dieper.
+     3. GEEN MASKER. Het masker op de sterrenkeuze laat de tekening in het midden
+        zachter worden zodat de tegels erop los komen; hier staat op die plek geen
+        tegel maar het vel zelf, en een masker zou alleen de randen oplichten waar
+        de kop en de knop staan.
+
+     Op 412x920 (Pixel 10 staand) snijdt cover links en rechts ~9% weg, net als op
+     de sterrenkeuze -- alles wat ertoe doet in deze tekening staat binnen de
+     middelste 80%, en er staat hier bovendien geen inhoud van de tekening die
+     gelezen moet worden. */
+  #screen-newstar.app-sfeer::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      radial-gradient(130% 78% at 50% 50%, rgba(18,4,38,.56), rgba(18,4,38,.34) 62%, rgba(18,4,38,.2)),
+      var(--kunst-sluier),
+      url("assets/bg/landing.webp");
+    background-size: cover, cover, cover;
+    background-position: 50% 50%, 50% 50%, 50% 50%;
+    background-repeat: no-repeat;
   }
 
   /* ---- De kleedkamer is een kámer, en nu heeft ze er ook een --------------
@@ -6449,26 +6510,80 @@
     border: 1.5px solid var(--paper-border); box-shadow: inset 0 -2px 3px rgba(0,0,0,.16);
   }
   .chip.swatch.on .sw { border-color: rgba(255,255,255,.75); }
-  /* Het voorbeeld staat boven de keuzes: je maakt iemand, je vult geen formulier in.
-     Zelfde podiumkader als op de keuzekaart, zodat het al lijkt op waar ze straks
-     staat. */
-  /* Het voorbeeld staat vóór de keuzes -- je maakt iemand, je vult geen formulier
+  /* ---- Het voorbeeld is een kind, geen app-icoon -------------------------
+     Het voorbeeld staat vóór de keuzes -- je maakt iemand, je vult geen formulier
      in -- maar het is niet het onderwerp. Op 148px vulde het een derde van de
      telefoon en begonnen de échte keuzes pas onder de vouw; op 124px staat "Wie
-     ben je?" er meteen naast in beeld en is de pop nog steeds goed te zien. */
-  .newstar-preview { display: flex; justify-content: center; margin: -2px 0 13px; }
-  .newstar-preview .stage { width: 124px; aspect-ratio: 10 / 11; }
-  /* Klaar! blijft in beeld. Het formulier is één vel (basis, naam, haar, kleren,
-     manier van spelen, en een dichte openklapper met de oefening) en dat vel is op
-     een telefoon anderhalf scherm lang -- de knop die het hele scherm bestáát
-     stond dus onder de vouw, en met het toetsenbord open twee schermen laag. Een
-     plakkende voet lost dat op zonder de volgorde van het formulier aan te raken:
-     de vragen blijven in dezelfde volgorde staan, het antwoord is alleen altijd
-     bereikbaar. (Enter in het naamveld doet nog steeds hetzelfde -- zie daar.)
+     ben je?" er meteen naast in beeld en is de pop nog steeds goed te zien.
 
-     De negatieve marges lopen tot in de randen van de kaart, zodat het wit van de
-     voet doorloopt tot de hoeken en er niets tussen de knop en de kaartrand
-     doorheen schuift. */
+     WAT ER VERANDERD IS, en waarom het alle drie dezelfde fout was. Het stond als
+     124px vierkantje met een violette gloed eromheen bovenin een wit vel, mét de
+     drie podium-emoji (discobol, sterretjes, noten) en met de ademende
+     discolichtjes eroverheen. Dat is precies de beschrijving van een app-icoon:
+     een afgerond vierkant met een gloed en drie tekens in de hoeken. Wat het moet
+     zijn is het kind waar dit scherm over gaat.
+
+     1. HIJ STAAT NIET MEER OP HET VEL MAAR IN DE SCÈNE. Hiervoor lag hij bovenin
+        de witte kaart, en dan is een 124px plaatje op 380px papier hoe dan ook een
+        icoontje. Nu staat hij erboven, op de poort, precies zoals de pop op de
+        sterrenkeuze en in de kleedkamer op de tekening staat. Dat scheelt meteen
+        een schermhoogte aan wit -- zie .newstar-vel hieronder.
+     2. HIJ DRAAGT DE RAND VAN DE STERRENTEGEL EN NIET DIE VAN EEN PODIUM. Exact
+        dezelfde drie lagen als .ster-tegel op de sterrenkeuze: een lichte haarlijn
+        die hem begrenst, een donkere keylijn die hem van de tekening losmaakt, en
+        een zachte gloed erachter. Alleen is die gloed hier warm (het amber van de
+        app) in plaats van de kleur van een wereld -- deze ster heeft er nog geen.
+        Weg is dus de violette gloed van .stage-frame: die stond als enige gloed in
+        de app op rgba(123,47,247,...) en hoorde bij niets.
+     3. DE VERSIERING EN DE LICHTJES STAAN STIL. Dezelfde twee regels als op de
+        sterrentegel, met dezelfde reden: op een podium van 124px vallen drie
+        emoji over de pop heen, precies waar een kind moet zien of het klopt, en
+        een vlak dat eeuwig staat te pulseren beweegt een scherm waarop niets
+        gebeurt. In de kleedkamer, de show en op het eindscherm staat hetzelfde
+        podium mét versiering -- daar is het podium ook echt het podium. */
+  /* Geen eigen marge: het voorbeeld is nu een kind van .settings-panel en die
+     zet de 14px tussen zijn blokken al (gap). */
+  .newstar-preview { display: flex; justify-content: center; }
+  .newstar-preview .stage {
+    width: 124px; aspect-ratio: 10 / 11;
+    border: 0; border-radius: var(--r-md);
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(16,5,34,.45),
+                0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
+  }
+  .newstar-preview .stage::after { animation: none; opacity: .85; }
+  .newstar-preview .deco { display: none; }
+  /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
+     toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
+     Kop (59) plus voorbeeld (136) is daar de helft van het beeld voordat er één
+     vraag in zicht komt. Dezelfde grens als de rest van de app (620). */
+  @media (max-height: 620px) { .newstar-preview .stage { width: 96px; } }
+  /* ---- Het vel: papier dat in de scène ligt, niet erop ---------------------
+     De kaart was .set-card zoals in het ouderdeel: vol wit, één slagschaduw, en
+     omdat het voorbeeld er nog in stond liep hij van vlak onder de kop tot de
+     onderrand van het toestel. Dat is de reden dat dit scherm als een
+     instellingenformulier las en niet als een deel van het spel -- niet de kleur
+     van de pillen erin, maar het feit dat er negentig procent van het beeld wit
+     was en er dus geen scherm meer omheen stond.
+
+     Drie dingen, en samen zijn ze de hele behandeling:
+       WARM   --paper-warm i.p.v. vol wit. Zie de noot bij dat token: een koud wit
+              gat in een tekening die verder uit violet en amber bestaat.
+       GEDRAGEN  onder de gewone kaartschaduw ligt een warme gloed, dezelfde als
+              onder het voorbeeld hierboven. Daarmee rust het vel op de poort in
+              plaats van ervoor te hangen, en het is precies één schaduw meer --
+              geen tweede vlak, geen glas, geen rand van licht.
+       ÉÉN HAARLIJN  de ring die in deze app om een zwevend vel hoort
+              (--paper-ring). Hij stond er niet, en zonder ring loopt bijna-wit
+              papier op een lichte plek in de tekening zonder grens door.
+     Wat er NIET bij komt: doorzichtigheid of waas. Dit is geval c uit §4 -- een
+     formulier hoort op een vlak te staan -- en een kind van vijf hoort "Blond" te
+     kunnen lezen zonder dat er een wolk doorheen schemert. */
+  #screen-newstar .newstar-vel {
+    padding: 15px 16px 14px;
+    background: var(--paper-warm);
+    box-shadow: var(--e-2), 0 0 34px rgba(var(--goud-gloed-rgb),.14),
+                0 0 0 1px var(--paper-ring);
+  }
   /* ---- Het maakformulier leest als keuzes, niet als een formulier ----------
      Vijf rijen label-plus-pillen onder elkaar, elk met een volle 2px-rand om
      élke pil: dat gaf veertig omlijnde vakjes waar de gekozen pil het in zijn
@@ -6478,22 +6593,76 @@
 
      Alleen binnen dit scherm: in het ouderdeel staan dezelfde pillen op een
      scherm dat wél een instellingenformulier ís, en daar horen ze zoals ze zijn. */
-  #screen-newstar .set-field + .set-field { margin-top: 12px; }
+  #screen-newstar .set-field + .set-field { margin-top: 10px; }
   #screen-newstar .set-field { gap: 6px; }
+  /* ---- Drie groepen, en het verschil is lucht en geen streepje ------------
+     De zes vragen stonden als één lijst van zes gelijke rijen, elk 12px uit
+     elkaar: alles even belangrijk, dus niets belangrijk. Ze beantwoorden in
+     werkelijkheid drie vragen -- WIE ben je (basis + naam), hoe ZIE je eruit
+     (haar + kleren), en hoe SPEEL je (modus + oefening) -- en dat is precies de
+     volgorde waarin een ouder ze invult.
+
+     Het verschil zit in de tussenruimte en nergens anders: binnen een groep 10px,
+     ertussen 20px. Geen streepjes en geen kopjes erbij, want dat zou dit scherm
+     langer en drukker maken terwijl het al dicht is -- en twee lucht-maten zijn
+     genoeg om drie blokken te zien. */
+  #screen-newstar .ns-groep + .ns-groep { margin-top: 20px; }
+  /* Eén sport omhoog (13 -> 15). Deze labels zijn geen bijschriften bij een
+     instelling maar de vrágen van het scherm, en ze zijn het enige dat de drie
+     groepen hierboven benoemt. Op 13px stonden ze kleiner dan de pillen die ze
+     aankondigen; op 15px dragen ze de rij eronder, en dat is precies het gewicht
+     waar §5 --tx-label voor heeft. */
+  #screen-newstar .set-field .lbl { font-size: var(--tx-label); }
   #screen-newstar .chip {
     border-width: 1.5px; border-color: var(--paper-border); background: var(--paper-tint);
   }
   #screen-newstar .chip:hover { border-color: var(--purple-light); background: var(--c-white); }
+  /* Haar en kleren kiest het kind zelf, en die pillen stonden op 35px hoog -- de
+     maat van een chip in het ouderdeel, waar een volwassen vinger op mikt. In deze
+     app is 44px overal de ondergrens voor een kinderhand (zie .icon-btn), en dit
+     zijn tien van de weinige knoppen op dit scherm die een kleuter aantikt. De
+     pillen ín de openklapper blijven wél 35: dat is de oefening, en die stelt een
+     ouder in -- precies hetzelfde verschil als in het ouderdeel zelf, en meteen
+     een rangorde op het vel (wat het kind kiest is groter dan wat de ouder zet). */
+  #screen-newstar .chip.swatch { min-height: 44px; box-sizing: border-box; }
   /* de fase-band uit het ouderdeel werkt ook hier; zonder deze regel dekt de
      id-selector hierboven hem af (hogere specificiteit) en zou de openklapper
      in het maakformulier elf identieke rondjes tonen waar het ouderdeel een
      bereik laat zien */
   #screen-newstar .chip.bereik { background: var(--lavender-wash); border-color: rgba(var(--purple-mid-rgb), .22); }
-  #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); }
-  #screen-newstar .set-card { padding: 14px 16px; }
-  #screen-newstar .set-reveal { margin-top: 13px; }
+  /* De gekozen pil houdt zijn volle paarse vulling -- dát is de taal van "dit
+     staat aan" in de hele app en die hoort hier niet anders te zijn. Wat wél
+     weggaat is de gekleurde slagschaduw eronder (.chip.on zet er een paarse
+     gloed van .32 bij). Eén gekozen pil met een gloed is een accent; vier ervan
+     onder elkaar op één vel -- basis, haar, kleren, modus -- zijn vier violette
+     lampjes, en dát is waar "overal paars en roze" vandaan komt. Zonder gloed
+     blijft de vulling onmiskenbaar en wordt het vel rustiger; de rij is nog
+     steeds in één blik te lezen. */
+  #screen-newstar .chip.on { border-color: transparent; background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: none; }
+  #screen-newstar .set-reveal { margin-top: 16px; }
   #screen-newstar input[type=text] { border-width: 1.5px; }
+  /* De twee zwaarste keuzes van dit scherm ("wie ben je?" en "hoe speel je?")
+     staan als twee volle helften met het icoon boven het woord, en dat is niet
+     nieuw: het is letterlijk .mode-row + .chip.gestapeld, het onderdeel dat het
+     ouderdeel voor precies dezelfde twee vragen gebruikt. Zie de noot daar. Ze
+     stonden hier als gewone pillen, dus dezelfde vraag zag er in het ouderdeel
+     anders uit dan op het scherm waar hij voor het eerst gesteld wordt.
+     De eigen maat is die van .mode-row zelf; hier alleen de bodembreedte eraf,
+     want dit vel is smaller (--kolom 460) en twee helften van 96px minimum
+     zouden op een telefoon van 320 naast elkaar niet meer passen. */
+  #screen-newstar .mode-row .chip.gestapeld { min-width: 0; }
 
+  /* Klaar! blijft in beeld. Het formulier is één vel (basis, naam, haar, kleren,
+     manier van spelen, en een dichte openklapper met de oefening) en dat vel is op
+     een telefoon langer dan een scherm -- de knop die het hele scherm bestáát
+     stond dus onder de vouw, en met het toetsenbord open twee schermen laag. Een
+     plakkende voet lost dat op zonder de volgorde van het formulier aan te raken:
+     de vragen blijven in dezelfde volgorde staan, het antwoord is alleen altijd
+     bereikbaar. (Enter in het naamveld doet nog steeds hetzelfde -- zie daar.)
+
+     De negatieve marges lopen tot in de randen van de kaart, zodat het papier van
+     de voet doorloopt tot de hoeken en er niets tussen de knop en de kaartrand
+     doorheen schuift. */
   .newstar-voet {
     /* bottom op -(schermrand): dán plakt de voet gelijk met de ónderkant van het
        scherm. Op 0 zou hij de rand van het scherm vrijlaten en schoof het
@@ -6504,11 +6673,31 @@
        is env() nul en verandert er niets. */
     position: sticky; z-index: 3;
     bottom: calc(env(safe-area-inset-bottom, 0px) - var(--rand));
-    margin: 18px -18px -16px; padding: 12px 18px 14px;
-    background: var(--c-white); border-top: 1px solid var(--paper-border);
+    /* De marges volgen de padding van .newstar-vel (15/16/14), niet die van
+       .set-card in het ouderdeel -- anders laat de voet aan weerszijden een
+       streepje papier staan waar het formulier wél tot de rand loopt. */
+    margin: 16px -16px -14px; padding: 11px 16px 13px;
+    /* Dezelfde warme papierkleur als het vel, en een haarlijn in plaats van een
+       richel: de voet is de onderkant van dit vel en niet een balk die erop
+       geplakt zit. Wat hem laat zien dát er iets onderdoor schuift is de zachte
+       schaduw naar boven, en die is genoeg -- de vorige behandeling (vol wit op
+       een warmer wordend vel, plus een volle rand plus die schaduw) was drie
+       aankondigingen voor één richel. */
+    background: var(--paper-warm); border-top: 1px solid var(--paper-border);
     border-radius: 0 0 var(--r-lg) var(--r-lg);
-    box-shadow: 0 -8px 14px rgba(40,10,70,.07);
+    /* .07 was afgeregeld op vol wit; op het warme papier is dat niet meer te zien,
+       en dan lijkt de rij die er half onder verdwijnt afgeknipt in plaats van
+       doorlopend. .11 is precies genoeg om te zeggen "hier gaat het verder". */
+    box-shadow: 0 -9px 16px rgba(40,10,70,.11);
   }
+  /* De knop is goud, en dat is geen smaakkwestie maar §2: goud is de hoofdknop en
+     "spelen". Deze tik maakt de ster én stapt er meteen mee de eerste wereld in
+     (zie createStar) -- het is dezelfde handeling als "Volgende show" op het
+     eindscherm, en dat is de gouden .btn. Hij stond hier als .btn.purple, de
+     tweede-knop-kleur, onderaan een vel waar al vier paarse pillen op stonden:
+     de belangrijkste knop van het scherm in dezelfde kleur als de keuzes erboven.
+     Goud is bovendien de enige kleur die hier nog niet meedeed, dus hij springt
+     eruit zonder dat er ook maar iets luider hoeft te worden. */
   .newstar-go { width: 100%; font-size: var(--tx-sub); }
   /* Niet [disabled] maar [aria-disabled]: het ziet er hetzelfde uit, maar de tik
      kómt binnen. Een uitgeschakelde knop krijgt in geen enkele browser een
@@ -6516,8 +6705,28 @@
      tikken niets teruggaf -- terwijl dat juist het moment is waarop een kind niet
      weet wat er nog mist. createStar weigert nog steeds (dezelfde regel als
      altijd) en wijst nu aan wáár het antwoord hoort. De indruk-beweging van .btn
-     blijft daarom gewoon staan: er gebéurt iets. */
-  .newstar-go[aria-disabled="true"] { opacity: .45; box-shadow: none; }
+     blijft daarom gewoon staan: er gebéurt iets.
+
+     HOE HIJ ERUITZIET ALS HET NOG NIET KAN. Dat was opacity .45 op de gekleurde
+     knop: een half doorzichtige paarse knop op wit papier, en half doorzichtig is
+     precies hoe een scherm eruitziet dat nog aan het laden is of stuk is. Nu is
+     het een échte stand en geen verzwakking -- het grijs-op-papier paar dat deze
+     app al heeft voor "staat uit" (zie .gi-state.off in het tandwielmenu): vol
+     dekkend, rustig, en zonder lip, want er valt nog niets in te drukken. Er
+     wordt niets aan de maat of de tekst veranderd, dus de knop verspringt niet op
+     het moment dat hij aangaat -- hij kleurt op. */
+  .newstar-go[aria-disabled="true"] {
+    /* De létter is de gedempte inkt van het ouderdeel (--paper-ink-muted) en niet
+       het lichtere --paper-muted-text waar het vlak bij hoort: op deze vulling
+       haalt de eerste 5,1:1 en de tweede 2,5:1. "Nog niet" mag stil zijn maar niet
+       onleesbaar -- juist deze knop moet te lezen zijn op het moment dat een ouder
+       zich afvraagt waarom er nog niets gebeurt. */
+    background: var(--paper-muted-bg); color: var(--paper-ink-muted);
+    box-shadow: inset 0 0 0 1.5px var(--paper-border);
+  }
+  /* Ook de indruk-beweging houdt de rustige stand vast: zonder deze regel valt
+     hij bij een tik terug op de gouden lip van .btn:active. */
+  .newstar-go[aria-disabled="true"]:active { box-shadow: inset 0 0 0 1.5px var(--paper-border); }
   /* De pulse die zegt "hier moet je nog even tikken". Geen rood en geen kruisje:
      er is niets fout gegaan, er is alleen nog niet geantwoord. Twee keer en dan
      stil -- een veld dat blijft kloppen wordt behang. */
@@ -15284,40 +15493,56 @@ function renderNewStar() {
   // bij élke tik naar boven (n.open doet hetzelfde voor de openklapper zelf).
   const scr = $('screen-newstar');
   const keep = scr ? scr.scrollTop : 0;
+  /* De twee zwaarste keuzes ("wie ben je?" en "hoe speel je?") als twee volle
+     helften met het icoon boven het woord: exact het onderdeel dat het ouderdeel
+     voor dezelfde vragen gebruikt (zie modeChip in oefenenPanelHtml). Ze stonden
+     hier als gewone pillen -- dezelfde vraag, twee verschillende bedieningen. */
+  const halfChip = (v, ico, label, on) => `<button class="chip gestapeld${on ? ' on' : ''}" data-v="${v}">`
+    + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
+  /* Het voorbeeld staat BUITEN het vel, op de tekening -- zie .newstar-preview in
+     het stijlblad. Daar staat ook waarom: binnen het vel is het een icoontje op
+     papier, erbuiten is het dezelfde pop op dezelfde poort als op de
+     sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="set-card">
-      <div class="newstar-preview"><div class="stage stage-frame" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
-      <div class="set-field"><label class="lbl">Wie ben je?</label>
-        <div class="chip-row" id="newstar-base">${BASE_CHOICES.map(b =>
-          `<button class="chip${b.id === n.base ? ' on' : ''}" data-v="${b.id}">${b.emoji} ${b.name}</button>`).join('')}</div></div>
-      <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
-        <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
-      <div class="set-field"><label class="lbl">Haar</label>
-        <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
-      <div class="set-field"><label class="lbl">Kleren</label>
-        <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
-      <div class="set-field"><label class="lbl">Hoe speel je?</label>
-        <div class="chip-row" id="newstar-track">
-          <button class="chip${s.track === 'count' ? ' on' : ''}" data-v="count">🧸 Leren tellen</button>
-          <button class="chip${s.track === 'math' ? ' on' : ''}" data-v="math">🎤 Rekenen</button>
-        </div>
-        <div class="note">${s.track === 'count'
-          ? 'Nog niet lezen: tellen met plaatjes.'
-          : 'Met cijfers en sommen.'}</div></div>
-      <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
-        <summary>
-          <span class="sr-ico" aria-hidden="true">⚙️</span>
-          <span class="sr-text"><span class="sr-title">Oefening</span>
-            <span class="sr-val">${oefenSamenvatting(s)}</span></span>
-        </summary>
-        <div class="set-reveal-body">
-          ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">
-            <div class="rg-title">${g.ico} ${g.title}</div>${g.html}</div>`).join('')}
-          <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
-        </div>
-      </details>
+    <div class="newstar-preview"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
+    <div class="set-card newstar-vel">
+      <div class="ns-groep">
+        <div class="set-field"><label class="lbl">Wie ben je?</label>
+          <div class="chip-row mode-row" id="newstar-base">${BASE_CHOICES.map(b =>
+            halfChip(b.id, b.emoji, b.name, b.id === n.base)).join('')}</div></div>
+        <div class="set-field"><label class="lbl" for="newstar-name">Naam</label>
+          <div class="name-edit-wrap"><input type="text" id="newstar-name" value="${esc(n.name)}" maxlength="12" placeholder="Hoe heet je ster?" autocomplete="off" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
+      </div>
+      <div class="ns-groep">
+        <div class="set-field"><label class="lbl">Haar</label>
+          <div class="chip-row" id="newstar-hair">${swatchChips('hair', START_HAIR, n.hair)}</div></div>
+        <div class="set-field"><label class="lbl">Kleren</label>
+          <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
+      </div>
+      <div class="ns-groep">
+        <div class="set-field"><label class="lbl">Hoe speel je?</label>
+          <div class="chip-row mode-row" id="newstar-track">
+            ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
+            ${halfChip('math', '🎤', 'Rekenen', s.track === 'math')}
+          </div>
+          <div class="note">${s.track === 'count'
+            ? 'Nog niet lezen: tellen met plaatjes.'
+            : 'Met cijfers en sommen.'}</div></div>
+        <details class="set-reveal" id="newstar-oefen"${n.open ? ' open' : ''}>
+          <summary>
+            <span class="sr-ico" aria-hidden="true">⚙️</span>
+            <span class="sr-text"><span class="sr-title">Oefening</span>
+              <span class="sr-val">${oefenSamenvatting(s)}</span></span>
+          </summary>
+          <div class="set-reveal-body">
+            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">
+              <div class="rg-title">${g.ico} ${g.title}</div>${g.html}</div>`).join('')}
+            <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
+          </div>
+        </details>
+      </div>
       <div class="newstar-voet">
-        <button class="btn purple newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
+        <button class="btn newstar-go" id="newstar-go" aria-disabled="${ok ? 'false' : 'true'}">🌟 Klaar!</button>
       </div>
     </div>
   </div>`;
