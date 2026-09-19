@@ -319,7 +319,12 @@
     --route-goud: rgba(var(--warm-licht-rgb),.82);
     --stop-keyline: rgba(26,7,48,.55);
     --stop-schaduw: rgba(12,2,26,.5);
-    --halte-rand: rgba(255,240,214,.44);
+    /* --halte-rand-rgb los erbij omdat de reis dezelfde warm-witte rand een slag
+       steviger nodig heeft: daar ligt hij om een tekening en niet om een rondje van
+       30 pixels (zie .reis-halte.uit). Eén kleur, twee dekkingen -- en dan blijft
+       "afgemaakt" op beide kaarten dezelfde kleur als er ooit aan gedraaid wordt. */
+    --halte-rand-rgb: 255,240,214;
+    --halte-rand: rgba(var(--halte-rand-rgb),.44);
     --perfect-ring: rgba(var(--warm-licht-rgb),.82);
     --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
     --slot-vulling: #483f64;
@@ -4462,10 +4467,10 @@
   /* ---- De bestemmingen ----------------------------------------------------
      Eén object per wereld: de tekening, met zijn naam en zijn sterren in de
      onderrand. Geen naampil eronder, geen losse badge ernaast. Er is precies één
-     zegelplek (rechtsonder) en die draagt hooguit één teken:
+     zegelplek (rechtsboven) en die draagt hooguit één teken:
 
-       ✓   uitgespeeld
-       ★   uitgespeeld met álle sterren -- en dan pas krijgt de kaart zijn gouden rand
+       ✓   uitgespeeld -- en dan krijgt de kaart zijn warme rand
+       ★   uitgespeeld met álle sterren -- en dan pas de gouden rand én de lijst
        🔒  nog niet aan de beurt
 
      Dat is dezelfde afspraak als de wereldbadge in de trofeeënkast (één kaart,
@@ -4574,21 +4579,85 @@
     70% { transform: rotate(-5deg) scale(1.06); }
   }
   @media (prefers-reduced-motion: reduce) { .reis-zegel.slot.nee { animation: none; } }
-  /* Vol: géén badge. Een wereld waar alles binnen is heeft al een gouden rand, een
-     warme onderrand en een gouden teller -- er hoeft alleen nog een teken bij dat
-     zégt "dit is bijzonder", en dat is een glinstering en geen schijfje. Drie
-     vonkjes in de hoek, zonder doosje eromheen, dus het kan onmogelijk voor een
-     knop worden aangezien. Stil: geen animatie, want er kunnen er straks twintig
-     tegelijk in beeld staan. */
-  .reis-glans { position: absolute; right: 4px; top: 3px; z-index: 3;
-    width: 26px; height: 26px; pointer-events: none;
+  /* Vol: géén badge. Een wereld waar alles binnen is heeft al zijn eigen lijst en
+     een gouden teller -- er hoeft alleen nog een teken bij dat zégt "dit is
+     bijzonder", en dat is een ornament en geen schijfje. Zonder doosje eromheen,
+     dus het kan onmogelijk voor een knop worden aangezien.
+
+     Hier stonden drie vonkjes, en die zeiden "glans" waar ze "meesterschap" hadden
+     moeten zeggen: een glinstering is iets wat licht doet, en licht heeft dit
+     scherm al genoeg (de huidige bestemming ademt, de gloed van elke wereld hangt
+     er omheen). Nu draagt het ornament de GETEKENDE STER van het spel -- precies de
+     ster die in de teller ernaast staat en op elke halte van de wereldkaart, alleen
+     groot en in vol goud. Dat is geen nieuw teken dat een kind moet leren: het is
+     hetzelfde teken, op de plek waar ze er álle van heeft. De twee vonkjes ernaast
+     blijven: die maken er een ornament van in plaats van een losse ster.
+
+     Stil: geen animatie, want er kunnen er straks twintig tegelijk in beeld staan
+     -- en een stand die alleen te zien is als hij beweegt, is op een stilstaand
+     scherm geen stand. */
+  .reis-glans { position: absolute; right: 3px; top: 2px; z-index: 3;
+    width: 30px; height: 30px; pointer-events: none;
     filter: drop-shadow(0 1px 3px rgba(10,2,26,.75)); }
   .reis-glans svg { width: 100%; height: 100%; display: block; fill: var(--gold-accent); }
+  /* De ster zelf draagt dezelfde donkere zoom als élke ster in dit spel (zie
+     --ster-vol/--ster-vol-rand): daarmee houdt hij zich staande op een lichte
+     tekening -- de suikerwereld is bijna wit in die hoek -- zonder dat er een
+     plaatje onder hoeft. non-scaling-stroke, want de ster staat in een geschaalde
+     groep en anders schaalt zijn zoom mee. */
+  .reis-glans .rg-ster { fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.6; }
 
-  /* ---- De vijf standen ---------------------------------------------------- */
-  /* Vol: álle sterren van die wereld. Dit is de énige kaart met een gouden rand, en
-     dat is precies waarom hij opvalt tussen twintig andere. Eén rand, één zegel, een
-     warme onderrand -- geen glinstering, geen tweede badge, geen label "PERFECT". */
+  /* ---- De vijf standen ----------------------------------------------------
+     DE TRAP. Vier van deze vijf staan zodra er wat gespeeld is tegelijk op één
+     scherm, en ze horen zonder lezen uit elkaar te vallen -- ook op een stilstaand
+     beeld, want zo kijkt een kind ernaar. Elke trede voegt iets toe wat de vorige
+     niet heeft, en niet "hetzelfde maar feller":
+
+       verder    ontkleurd en gedimd, 🔒                 -- je bent er nog niet
+       open      een koele haarrand, geen zegel          -- hier valt nog te halen
+       uit       een WARME rand, warme onderrand, ✓      -- dit is afgemaakt
+       vol       daarbovenop een LIJST om de kaart heen  -- dit is uitgespeeld
+                 en het sterornament in de hoek
+       nu        groter, ademend, met de ster erop       -- hier ben je
+
+     Wat "vol" van "nu" onderscheidt is dus een VORM en geen kleur: twee randen met
+     nacht ertussen tegenover één. Dat blijft gelden als er straks een wereld is die
+     ze allebei is (de toegift) -- dan liggen de twee tekens gewoon over elkaar heen
+     en klopt het nog steeds: hier ben je, en hier is alles binnen.              */
+
+  /* Uitgespeeld, maar niet overal drie sterren. Hier stond niets -- een afgemaakte
+     wereld verschilde van een halfgespeelde door één donker vinkje van 21 pixels in
+     de hoek, en dat is voor een kind van vijf geen verschil maar een detail. Nu
+     draagt hij een WARME RAND: dezelfde warm-witte zoom als een gespeelde halte op
+     de wereldkaart (--halte-rand), dus het is geen nieuwe taal maar dezelfde taal
+     een scherm hoger. Warm wit en nadrukkelijk géén goud: goud is op deze reis van
+     "alles binnen" en van "hier ben je", en een afgemaakte wereld is geen van
+     beide. Rustig dus, maar niet koud -- "ik heb die reis gemaakt" hoort te voelen
+     als iets dat af is, niet als iets dat overgeslagen mag worden.
+
+     Wél een slag sterker dan --halte-rand zelf (.44 op 1,5 px): dáár ligt de rand om
+     een paars rondje van 30 pixels, hier om een tékening van 196 bij 131 waar de
+     suikerwereld bijna wit in de hoek staat. Dezelfde kleur, twee pixels, en de
+     donkere zoom eromheen een haartje dikker -- dan draagt hij op élke wereld. */
+  .reis-halte.uit .reis-plaats {
+    box-shadow: 0 0 0 2px rgba(var(--halte-rand-rgb),.62), 0 0 0 3.6px rgba(18,6,36,.6),
+                0 14px 26px var(--stop-schaduw);
+  }
+  /* De veeg onder de naam gaat mee de warme kant op, een flinke slag stiller dan
+     die van een volle wereld (zie daar): genoeg om de kaart te laten "nagloeien",
+     te weinig om met goud te wedijveren. */
+  .reis-halte.uit .reis-label {
+    --veeg-rgb: 40,21,6; background: var(--op-kunst-veeg);
+  }
+  /* En het vinkje krijgt diezelfde warme zoom in plaats van de witte. Het blijft
+     donker glas -- het hoort bij de bediening en niet bij de beloningen -- maar het
+     hangt nu zichtbaar aan een afgemaakte kaart. */
+  .reis-halte.uit .reis-zegel {
+    box-shadow: inset 0 0 0 1px rgba(var(--warm-licht-rgb),.55);
+  }
+
+  /* Vol: álle sterren van die wereld. Eén gouden rand binnen, één lijst buiten, één
+     ornament -- geen tweede badge en geen label "PERFECT". */
   .reis-halte.vol .reis-plaats {
     box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
                 0 0 20px rgba(var(--goud-gloed-rgb),.3), 0 14px 26px var(--stop-schaduw);
@@ -4597,6 +4666,34 @@
     --veeg-rgb: 54,23,2; background: var(--op-kunst-veeg);
   }
   .reis-halte.vol .reis-sterren { color: var(--gold-accent); }
+  /* DE LIJST. Dit is het structurele verschil, en het enige dat niet met licht of
+     kleur werkt: een tweede rand die een stukje ván de kaart af staat, met nacht
+     ertussen. Een kaart in een lijst hángt ergens; de andere kaarten liggen er
+     alleen maar. Dat leest uit je ooghoek, op een schermafdruk en in grijstinten,
+     en het is precies wat een gloed niet doet.
+
+     Hij hangt aan de halte en niet aan de tekening: .reis-plaats snijdt alles
+     buiten zijn eigen rand af (overflow: hidden), dus daar past niets ómheen. De
+     donkere zoom aan weerszijden is dezelfde truc als overal op dit scherm -- het
+     goud moet het óók doen op de bijna witte hoek van de suikerwereld.
+
+     Twee randen en niet vier hoekjes: een lijst met hoekornamenten was mooier op
+     papier en werd op telefoonmaat een rommeltje van twaalf gouden dingetjes naast
+     een naam, een teller en een ornament.
+
+     Hetzelfde goud als de rand binnenin (--gold-accent, een tikje gedempt): twee
+     tinten naast elkaar zouden als twee métalen lezen -- een gouden rand met een
+     crèmekleurig lijstje eromheen -- en dan is het een kaartje met een randje in
+     plaats van één ding dat ergens in hangt. Eén goud, twee randen, nacht ertussen. */
+  .reis-halte.vol::after {
+    content: ''; position: absolute; inset: -7px; z-index: 1; pointer-events: none;
+    border-radius: calc(var(--r-md) + 7px);
+    border: 2px solid rgba(255,215,64,.82);
+    box-shadow: 0 0 0 1px rgba(18,6,36,.55), inset 0 0 0 1px rgba(18,6,36,.55);
+    transition: transform .12s;
+  }
+  /* de lijst drukt mee in, anders laat de tik de kaart los van zijn eigen rand */
+  .reis-halte.vol:active::after { transform: scale(.972); }
 
   /* Hier ben je. De enige bestemming die groter is, licht geeft en de ster draagt --
      en de enige met beweging op dit scherm. */
@@ -4717,7 +4814,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .reis-halte.nu .reis-plaats { animation: none; }
-    .reis-plaats, .reis-terug { transition: none; }
+    .reis-plaats, .reis-terug, .reis-halte.vol::after { transition: none; }
     .reis-mist .map-sky-inner > span { animation: none; }
   }
 
@@ -11628,15 +11725,29 @@ function reisSterSVG() {
   if (!_reisSter) _reisSter = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STER_PAD}"/></svg>`;
   return _reisSter;
 }
-/* De glinstering van een volle wereld: drie vierpuntige vonkjes, in de hoek van de
-   tekening en zonder doosje eromheen. Eén grote en twee kleintjes -- dat is wat een
-   glans tot een glans maakt in plaats van tot een sterretje. */
+/* Het vonkje: een vierpuntige ster, getekend uit vier bolle bogen. */
 const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
   + `q${-r * .78} ${r * .22} ${-r} ${r}q${-r * .22} ${-r * .78} ${-r} ${-r}`
   + `q${r * .78} ${-r * .22} ${r} ${-r}z`;
-const REIS_GLANS = `<svg viewBox="0 0 26 26" aria-hidden="true">`
-  + `<path d="${VONK(16, 9, 7)}"/><path d="${VONK(7.5, 16.5, 4)}" opacity=".85"/>`
-  + `<path d="${VONK(20, 19.5, 2.6)}" opacity=".7"/></svg>`;
+/* Het ornament van een volle wereld: de ster van het spel, groot en in vol goud,
+   met twee vonkjes ernaast. Hier stonden drie vonkjes en verder niets -- zie de
+   noot bij .reis-glans waarom dat te weinig was: glinstering is licht, en licht
+   zegt op dit scherm "hier ben je". De ster zegt waar het om gaat, en ze zegt het
+   met precies het teken dat een kind de hele show door verzamelt.
+
+   Een functie en geen const, om dezelfde reden als reisSterSVG(): STER_PAD staat
+   verderop in het bestand, en een const leest hem dan bij het inladen -- te vroeg.
+   Eén keer bouwen, daarna uit de la. */
+let _reisGlans = '';
+function reisGlansSVG() {
+  if (!_reisGlans) _reisGlans = `<svg viewBox="0 0 30 30" aria-hidden="true">`
+    // de ster staat in een geschaalde groep: STER_PAD is op 24x24 getekend
+    + `<g transform="translate(3.1 2.6) scale(.84)">`
+    + `<path class="rg-ster" vector-effect="non-scaling-stroke" d="${STER_PAD}"/></g>`
+    + `<path d="${VONK(25.6, 6.6, 3.3)}" opacity=".9"/>`
+    + `<path d="${VONK(4.6, 23.2, 2.4)}" opacity=".75"/></svg>`;
+  return _reisGlans;
+}
 // hetzelfde vonkje, maar los: het heel af en toe sprankeltje naast haar op de kaart
 const TOUR_VONK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${VONK(10, 10, 7)}"/></svg>`;
 /* Een tik op een wereld die nog op slot zit. Hij brengt je nergens heen -- dat is
@@ -11769,9 +11880,9 @@ function renderReis() {
         + `</span>`);
     }
     /* Eén teken in de hoek, nooit twee. Vol gaat vóór uit: een wereld waar alles
-       binnen is krijgt de glinstering en niet óók nog een vinkje. */
+       binnen is krijgt het sterornament en niet óók nog een vinkje. */
     if (b.vol) plaats.insertAdjacentHTML('beforeend',
-      `<span class="reis-glans" aria-hidden="true">${REIS_GLANS}</span>`);
+      `<span class="reis-glans" aria-hidden="true">${reisGlansSVG()}</span>`);
     else if (b.uit) plaats.insertAdjacentHTML('beforeend',
       '<span class="reis-zegel" aria-hidden="true">✓</span>');
     else if (b.staat === 'verder') plaats.insertAdjacentHTML('beforeend',
