@@ -351,7 +351,11 @@ function check(ok, label, detail) {
   /* ================= C2 · Vol tegen uitgespeeld =================
      Twee werelden uit: de eerste op alle sterren, de tweede niet. Dat verschil is
      de hele reden dat de teller er staat, en het hoort zonder te lezen te zien te
-     zijn: één zegel per kaart, en alleen de volle wereld krijgt de gouden rand. */
+     zijn: één zegel per kaart, en alleen de volle wereld krijgt de gouden rand.
+
+     Sinds de reis een trap heeft (zie "De vijf standen" in het stijlblad) keurt
+     deze zaak er nog iets bij: dat de vier standen die hier tegelijk in beeld
+     staan ook écht vier verschillende kaarten zijn. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -384,6 +388,46 @@ function check(ok, label, detail) {
     check(rand[0] && !rand[1], 'C2 · alleen de volle wereld draagt de gouden rand', JSON.stringify(rand));
     check((r.haltes[0].teller || '').indexOf('24/24') >= 0,
       'C2 · en zijn teller staat vol', JSON.stringify(r.haltes[0].teller));
+
+    /* DE TRAP. Vier standen staan hier tegelijk in beeld -- vol (0), uitgespeeld
+       (1), hier-ben-je (2) en op slot (3) -- en ze horen alle vier ánders te zijn,
+       ook op een stilstaand beeld. Dat is precies wat hier eerder mis was: een
+       afgemaakte wereld had exáct de rand van een wereld waar nog niets gebeurd
+       was, en verschilde alleen door een donker vinkje van 21 pixels.
+
+       We keuren hier geen kleuren -- dat is werk voor de ogen en voor `npm run
+       shots` -- maar wél dat de vier randen vier verschillende randen zíjn, en dat
+       er nergens twee standen zijn die dezelfde rand dragen. */
+    const randen = await page.evaluate(() => [0, 1, 2, 3].map(i => {
+      const b = document.querySelector(`.reis-halte[data-w="${i}"]`);
+      return b ? getComputedStyle(b.querySelector('.reis-plaats')).boxShadow : null;
+    }));
+    check(randen.every(x => x) && new Set(randen).size === 4,
+      'C2 · de vier standen dragen vier verschillende randen', JSON.stringify(randen));
+    // en de uitgespeelde wereld is er warm van geworden: geen koel wit meer
+    check(/255, 240, 214/.test(randen[1]),
+      'C2 · de uitgespeelde wereld draagt een warme rand', String(randen[1]));
+
+    /* DE LIJST. Het structurele teken van "vol", en het enige dat niet met licht of
+       kleur werkt: een tweede rand een stukje ván de kaart af. Alleen de volle
+       wereld heeft hem -- ook de wereld waar ze staat niet, want dát is de stand
+       waar hij nooit mee verward mag worden. */
+    const lijst = await page.evaluate(() => [0, 1, 2, 3].map(i => {
+      const b = document.querySelector(`.reis-halte[data-w="${i}"]`);
+      return b ? getComputedStyle(b, '::after').borderTopWidth : null;
+    }));
+    check(lijst[0] !== '0px' && lijst.slice(1).every(x => x === '0px'),
+      'C2 · en alleen de volle wereld hangt in een lijst', JSON.stringify(lijst));
+
+    /* Het ornament in de hoek is de getekende ster van het spel, en niet een emoji
+       of een los vonkje: hetzelfde teken dat ze de hele show door verzamelt. */
+    const ornament = await page.evaluate(() => {
+      const g = document.querySelector('.reis-halte[data-w="0"] .reis-glans');
+      return { ster: !!g.querySelector('.rg-ster'),
+               goud: g.querySelector('.rg-ster') ? getComputedStyle(g.querySelector('.rg-ster')).fill : null };
+    });
+    check(ornament.ster && /255, 215, 64/.test(ornament.goud || ''),
+      'C2 · en draagt de gouden ster van het spel in de hoek', JSON.stringify(ornament));
     await ctx.close();
   }
 
