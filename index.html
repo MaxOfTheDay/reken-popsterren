@@ -5165,8 +5165,8 @@
      anderhalf keer die gloed: één beweging, in de kleur die "verdiend" betekent. */
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: var(--goud-gloed); } 50% { transform: scale(1.03); box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.7); } }
   /* dé gouden mijlpaal-pil: één component voor "rang omhoog" en "trofee klaar",
-     op het eindscherm (.end-milestone) en in de trofeeënkast. Hoogstens één
-     tegelijk in beeld.
+     op het eindscherm (.end-milestone). Hoogstens één tegelijk in beeld, en alleen
+     als er iets gehaald is -- anders staat het vak leeg en valt het weg.
 
      FASE 5E -- hij droeg lettérlijk het verloop van de hoofdknop (--gold-cta-top/
      bottom). Op het eindscherm stonden daardoor twee identieke gouden dingen onder
@@ -5466,7 +5466,6 @@
     .earn-line { gap: 6px; margin: 7px 0 8px; }
     .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
     .end-milestone { min-height: 30px; margin-bottom: 8px; }
-    .milestone-hint { font-size: var(--tx-klein); padding: 6px 12px; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
     .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
@@ -5489,14 +5488,13 @@
      blauw van de diamant (de munt) en het goud van de ster (wat je verdiende). */
   .earn-chip.dia { background: rgba(41,182,246,.32); }
   .earn-chip.star { background: rgba(var(--goud-rgb),.26); }
-  /* Mijlpaal: precies één regel, en hoogstens één ding. Volgorde van belang:
-     nieuwe ster-status > nieuwe trofee > hoe ver nog tot de volgende status.
-     De eerste twee zijn een beloning (gouden pil, tikbaar); de derde is een
-     vooruitblik en blijft daarom bewust stil (gestippeld, niet pulserend). */
+  /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een nieuwe
+     ster-status of een trofee die klaarligt, allebei de gouden pil. De derde stand
+     ("nog 13 ⭐ tot ...", gestippeld en stil) is weg; zie endLevel. Is er niets te
+     vieren, dan houdt het vak ook geen ruimte bezig: de sterren en de knop schuiven
+     dan gewoon naar elkaar toe, in plaats van om een leeg vakje heen te staan. */
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
-  .milestone-hint { display: inline-flex; align-items: center; gap: 6px; font-size: var(--tx-label); font-weight: 700;
-    color: var(--gold-light); background: var(--goud-tint); border: 1px dashed var(--goud-rand);
-    border-radius: var(--r-pill); padding: 8px 15px; }
+  .end-milestone:empty { display: none; }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   .end-actions .btn { width: 100%; max-width: 320px; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
@@ -6957,8 +6955,8 @@
          die een kind niet ziet: de balk ligt er dekkend overheen. Wat hier stond
          en weg is: "Level 6 / 8" en "⭐ 13/24" (de genummerde haltes, de gouden
          huidige halte en de ster die erop staat zeggen dat beter, en een kind van
-         vijf leest geen breuk) en de sterrenladder (staat nu in de Trofeeënkast,
-         waar je juist gaat kijken hoe het ervoor staat). -->
+         vijf leest geen breuk) en de sterrenladder (die gaat open vanaf het
+         eindscherm, op het moment dat de ster-status omhooggaat). -->
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="map-id-btn header-left" onclick="goProfiles()" aria-label="Wie speelt er" title="Wie speelt er">
@@ -14698,8 +14696,21 @@ function endLevel(success) {
     $('end-earn').innerHTML =
         `<span class="earn-chip dia">💎 +${verdiend}</span>`
       + `<span class="earn-chip star">⭐ +${bonus}</span>`;
-    // Eén mijlpaal, in volgorde van belang. Alleen de eerste twee zijn een beloning
-    // (gouden pil, tikbaar); "nog X tot ..." is een vooruitblik en blijft stil.
+    /* Eén mijlpaal, en alleen als er écht iets gehaald is: een nieuwe ster-status
+       of een trofee die klaarligt. Allebei dezelfde gouden pil, allebei tikbaar.
+
+       Wat hier weg is: "🎯 nog 13 ⭐ tot Clubster" -- de stille vooruitblik die na
+       bijna élke show onder de sterren stond. Dat was het laatste stukje ster-status
+       dat ongevraagd in beeld kwam, en het vertelde een kind precies het verkeerde:
+       niet wat ze net gehaald heeft, maar hoeveel er nóg niet af is, met een rangnaam
+       erbij ("Platinaster") die op dat moment nergens naar verwijst. Dezelfde
+       opruiming als "⭐ 13/24" op de kaart en de balken in de kast: een teller die
+       vanzelf oploopt is geen prestatie, en een kind van vijf leest geen breuk.
+
+       De ster-status zelf verandert niet: hij betaalt zijn diamanten (checkRankUp),
+       hij krijgt zijn feestje (rankUpCelebrate), en de ladder gaat open vanaf de pil
+       hieronder -- op het moment dat er iets over te zeggen valt, en dán vertelt hij
+       ook meteen wat de volgende status is. */
     const mile = $('end-milestone');
     mile.innerHTML = '';
     if (rankUp) {
@@ -14709,10 +14720,6 @@ function endLevel(success) {
       const label = trofees.length === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${trofees.length} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
       mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
-    } else {
-      const r = starRank(totalStarCount(p));
-      const remain = r.nextMin - totalStarCount(p);
-      if (remain > 0) mile.innerHTML = `<span class="milestone-hint">🎯 nog ${remain} ⭐ tot ${r.nextName}</span>`;
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); goMap(lvl); };
