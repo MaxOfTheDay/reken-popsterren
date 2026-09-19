@@ -5898,8 +5898,37 @@
   .item-card.equipped:hover { background: rgba(var(--goud-rgb),.24); }
   .item-card.selected:hover, .item-card.owned.selected:hover { background: rgba(56,189,248,.3); }
   .item-card.selected.equipped:hover { background: rgba(var(--goud-rgb),.24); }
-  .item-card.just-bought { animation: boughtPop .85s ease; }
-  @keyframes boughtPop { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 22px rgba(var(--goud-rgb),.75); } 100% { transform: scale(1); } }
+  /* NET GEKOCHT. Twee korte dingen tegelijk, en allebei op het kaartje zelf --
+     daar is het om te doen en nergens anders.
+
+     (1) het kaartje veert één keer op. Dat deed het al, maar in 0,85s en met een
+         gouden gloed erin: een box-shadow laten meegroeien is de duurste manier
+         om iets te laten opvallen (de browser tekent hem elke frame opnieuw) en
+         het kaartje stáát al in het goud, want kopen doet het meteen aan. Wat
+         overblijft is puur transform -- dat draait op de compositor en kost ook
+         op een eenvoudige telefoon niets -- en het duurt nog maar de helft,
+         zodat drie aankopen achter elkaar niet als wachten voelen.
+     (2) er loopt één gouden glans overheen. Precies dezelfde als over een net
+         behaalde trofee (.trophy-card.just-claimed, claimShimmer): "dit is nu
+         van jou" hoort in de hele app hetzelfde te zeggen, of het nu verdiend of
+         gekocht is. */
+  .item-card.just-bought { animation: boughtPop .5s cubic-bezier(.2,.86,.3,1.2); }
+  @keyframes boughtPop {
+    0%   { transform: scale(1); }
+    32%  { transform: scale(1.085); }
+    64%  { transform: scale(.985); }
+    100% { transform: scale(1); }
+  }
+  /* De glans blijft binnen het kaartje: inset:0 plus een gradient die eroverheen
+     schuift, en de ronding van het kaartje zelf. Hij ligt over de tekening heen,
+     en dat kan hier gewoon -- het hoekbadge met het wereldteken staat alleen op
+     een wereldschat, en die is niet te koop. */
+  .item-card.just-bought::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.55) 50%, transparent 62%);
+    background-size: 250% 100%; background-position: 120% 0;
+    animation: claimShimmer .62s ease-out .05s forwards;
+  }
   /* Eén miniatuur-zone voor álle spullen. Er waren er drie: een getekende jurk
      zweefde vrij op een basislijn, een emoji hing eronder zonder schaduw, en een
      podium was een wit omrand bolletje van 46px. Dezelfde soort dingen zagen er
@@ -5969,11 +5998,35 @@
      draag je) -> vol goud met een gloed (net gekocht). */
   .item-status.owned { color: rgba(255,255,255,.82); background: rgba(0,0,0,.26); }
   .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
-  .item-status.new { color: var(--ink-on-gold); background: var(--gold-accent); animation: readyPulse 1.4s ease-in-out 2; }
+  /* Het pilletje wisselt van "💎 45" naar "Nieuw!" en dat is een antwoord op
+     de tik: het mag even zien te zijn dat het antwoord er is. Eerst een korte
+     pop (de wissel zelf), daarna precies één rustige ademhaling. Het waren er
+     twee -- 2 x 1,4s = 2,8s -- terwijl het kaartje na 1,8s van plek gaat, dus die
+     tweede werd altijd halverwege afgeknipt. Nu past de hele animatie (0,32 +
+     1,4 = 1,72s) binnen het venster. 'forwards' op de laatste, want readyPulse
+     zet zijn gouden gloed in de keyframes: zonder dat valt die 80ms voor de
+     verhuizing ineens weg, en dat is precies een knip te veel. Alleen op de
+     laatste -- 'backwards' erbij zou readyPulse zijn scale-1 al tijdens de
+     vertraging laten gelden, en dan is er van de pop niets meer over. */
+  .item-status.new {
+    color: var(--ink-on-gold); background: var(--gold-accent);
+    animation: statusPop .32s cubic-bezier(.2,.86,.3,1.3), readyPulse 1.4s ease-in-out .32s 1 forwards;
+  }
+  @keyframes statusPop { 0% { transform: scale(.72); } 55% { transform: scale(1.12); } 100% { transform: scale(1); } }
   /* FASE 4D.1 -- nog te verdienen bij een wereld. Bewust dezelfde rustige taal als
      "te weinig diamanten" en niet iets prikkelends: het is een doel om naartoe te
      spelen, geen aanbieding. Het wereld-icoon ernaast zegt bij wélke wereld. */
   .item-status.slot { color: var(--gold-light); background: rgba(var(--goud-rgb),.13); opacity: .9; }
+  /* Beperkte beweging: het koopmoment houdt zijn héle betekenis zonder beweging --
+     het kaartje staat in het goud en het pilletje zegt "Nieuw!". Alleen de
+     versiering gaat eraf. Deze staat hier en niet bij .item-card hierboven: een
+     media-regel wint een gelijkspel op bronvolgorde, en .item-status.new staat
+     er vlak boven. */
+  @media (prefers-reduced-motion: reduce) {
+    .item-card.just-bought { animation: none; }
+    .item-card.just-bought::after { display: none; }
+    .item-status.new { animation: none; }
+  }
 
   /* Bezit staat óók op het kaartje zelf, want het pilletje is klein en een kind
      van vijf leest hem niet. Dit was grijs ("uitgeschakeld"-taal voor precies de
@@ -14959,6 +15012,12 @@ function itemThumb(it, base) {
 let shopCat = 'dress';
 let shopSelectedId = null;
 let shopJustBoughtId = null;
+/* Het "Nieuw!"-venster loopt op een timer (zie confirmShopBuy). Er is er precies
+   een tegelijk: wie snel twee dingen achter elkaar koopt, of tussendoor iets
+   anders aantikt, laat anders een timer van het vorige moment achter die daarna
+   alsnog het rek komt herbouwen. Hij controleerde dat al op de id, maar een
+   opgeruimde timer kan sowieso niets meer aanrichten. */
+let shopBoughtTimer = null;
 let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-kaart kwam -- terug-navigatie gaat dan naar de kast i.p.v. de kaart
 // FASE 1: de Looks-lijst (complete thema-outfits als spaardoel) is uit de kleedkamer
 // gehaald. Wat overblijft is één vraag: kies een soort, kies een stuk, doe het aan.
@@ -15127,6 +15186,7 @@ function renderShop() {
          moet het rek dan wél opnieuw. In alle andere gevallen blijft het staan
          waar het staat. */
       const herbouw = !!shopJustBoughtId;
+      clearTimeout(shopBoughtTimer);
       shopJustBoughtId = null; shopSelectedId = it.id;
       herbouw ? renderShop() : paintShop();
     };
@@ -15265,7 +15325,10 @@ function paintShop() {
      staat, en het kaartje blijft het medaillon met het vraagteken. */
   const geheim = selected && isBeloning(selected.id) && !p.owned.includes(selected.id);
   const preview = (selected && !geheim) ? previewProfile(p, selected) : p;
-  $('shop-diamonds').textContent = p.diamonds;
+  /* De teller. Loopt er een afteltelling (na een aankoop, zie telNaar), dan
+     schrijft die hem en mag deze regel er niet overheen -- anders staat het
+     eindbedrag er al voordat het kind de diamanten heeft zien gaan. */
+  zetTeller($('shop-diamonds'), p.diamonds);
   /* Alleen de pop. Hier stond applyStage(): dat zette het podium dat dit kind
      ooit kocht áchter haar, met drie emoji in de hoeken. Podia zijn sinds fase 1
      geen kleedkamercategorie meer, dus dat was versiering van een systeem dat
@@ -15360,6 +15423,79 @@ function renderDressBar(it, p) {
   $('db-buy').onclick = () => confirmShopBuy(it.id);
 }
 
+/* ---- Een teller die naar zijn nieuwe stand toe loopt --------------------------
+   Betalen is het enige moment waarop het getal in de portemonnee omlaag gaat, en
+   het sprong. Een sprong van 60 naar 15 is geen gebeurtenis maar een ander getal:
+   je ziet niet dat er iets af ging, alleen dat er iets anders staat. Een halve
+   seconde aftellen maakt er wel een gebeurtenis van -- en het loopt gelijk op met
+   de diamanten die op datzelfde moment de portemonnee uit vliegen.
+
+   Kort en ease-out: het meeste is in de eerste 200ms al gebeurd, dus het voelt
+   niet als wachten. Alleen het getal verandert -- de pil staat rechts in een
+   raster-kop, dus wat er aan breedte af gaat trekt niets anders mee.
+
+   Beperkte beweging, geen echte frames (de node-harnas) of een pil die er niet
+   is: dan gewoon het eindbedrag. */
+const tellers = new WeakMap();
+function zetTeller(el, naar) {
+  if (!el) return;
+  if (!tellers.has(el)) el.textContent = naar;   // loopt er niets, dan is dit de enige schrijver
+}
+function telNaar(el, naar, ms) {
+  if (!el) return;
+  const lopend = tellers.get(el);
+  if (lopend) cancelAnimationFrame(lopend.id);
+  tellers.delete(el);
+  // Vanaf wat er nu staat en niet vanaf een onthouden waarde: onderbreek je een
+  // aftelling met een tweede aankoop, dan telt hij verder waar het oog was.
+  const nu = parseInt(el.textContent, 10);
+  const van = Number.isFinite(nu) ? nu : naar;
+  if (motionOff() || van === naar) { el.textContent = naar; return; }
+  const t0 = performance.now();
+  const stap = () => {
+    const k = Math.min(1, (performance.now() - t0) / ms);
+    const e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(van + (naar - van) * e);
+    if (k < 1) { const id = requestAnimationFrame(stap); if (id) { tellers.set(el, { id }); return; } }
+    tellers.delete(el);
+    el.textContent = naar;
+  };
+  const id = requestAnimationFrame(stap);
+  if (id) tellers.set(el, { id }); else el.textContent = naar;
+}
+/* ---- Een handjevol sterretjes boven het gekochte kaartje ----------------------
+   Hier stond confetti(12): stukjes die over de volle breedte van het scherm naar
+   beneden regenden, tot vier seconden lang, en die zich niets aantrokken van
+   prefers-reduced-motion. Dat is een feest over het hele beeld voor iets wat op
+   een kaartje van ruim honderd pixels gebeurt -- en wie drie dingen koopt
+   speelt de rest van de kleedkamer onder een regenbui.
+
+   Nu is het een klein boeketje recht boven het kaartje zelf, met dezelfde stukjes
+   en dezelfde animatie als het confetti-kanon (.burst-bit/burstOut) maar met een
+   korte straal en een korte duur: nadruk op dit ene spulletje, weg voor je erover
+   nadenkt. burstOut is puur transform + opacity, dus het kost geen opmaak. */
+function koopVonken(el) {
+  if (!el || motionOff() || !el.getBoundingClientRect) return;
+  const r = el.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height * .42;
+  const emo = ['✨', '⭐', '💫', '🌟'];
+  for (let i = 0; i < 6; i++) {
+    const b = document.createElement('div');
+    b.className = 'burst-bit';
+    b.textContent = emo[i % emo.length];
+    // een waaier omhoog (-90 graden is recht boven), niet een bol naar alle kanten
+    const hoek = (-90 + (i - 2.5) * 26 + rnd(-7, 7)) * Math.PI / 180;
+    const straal = rnd(34, 58);
+    b.style.left = cx + 'px'; b.style.top = cy + 'px';
+    b.style.fontSize = '17px';
+    b.style.animationDuration = '.62s';
+    b.style.setProperty('--dx', Math.round(Math.cos(hoek) * straal) + 'px');
+    b.style.setProperty('--dy', Math.round(Math.sin(hoek) * straal) + 'px');
+    b.style.setProperty('--rot', rnd(-80, 80) + 'deg');
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 700);
+  }
+}
 // Diamant-feedback: een paar diamanten vliegen van A naar B, en de teller-pil
 // pulseert aan de portemonnee-kant. Verdienen = naar de portemonnee toe
 // (spelscherm), betalen = van de portemonnee wég (kleedkamer).
@@ -15413,23 +15549,38 @@ function confirmShopBuy(id) {
      die het al draagt. Het kaartje wordt hieronder op zijn id opgezocht en niet
      meer op .selected, want die klasse hoort nu alleen nog bij kiezen om te kopen. */
   shopSelectedId = null;
+  clearTimeout(shopBoughtTimer);        // een vorig "Nieuw!"-venster is hiermee voorbij
   shopJustBoughtId = it.id;
   sndCoin();
-  confetti(12);
-  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
+  /* De afteltelling start vóór het opnieuw tekenen: paintShop zou het eindbedrag er
+     anders meteen neerzetten, en dan valt er niets meer af te tellen. Hij loopt
+     gelijk op met de diamanten die hieronder de portemonnee uit vliegen. */
+  telNaar($('shop-diamonds'), p.diamonds, 520);
   const trofees = checkTrophies(p);
   save();
   noticeReady(trofees);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
-  renderShop();           // het spulletje blijft nog even op zijn eigen plek staan (zie shopItems)
+  /* paintShop en niet renderShop -- dezelfde afspraak als bij kiezen en aandoen.
+     De volgorde verandert nog niet (het gekochte stuk telt tijdens zijn
+     "Nieuw!"-moment nog als te koop, zie shopItems), dus er valt niets te
+     herschikken; herbouwen gooide alleen het hele rek weg en tekende elk
+     kaartje met zijn miniatuur opnieuw -- een lade vol SVG's, precies op het
+     moment dat er een animatie moet lopen. Nu blijft het kaartje hetzelfde
+     element en krijgt het er alleen zijn nieuwe staat bij. Dat is wat de pop en
+     de gouden glans nodig hebben: iets om op te starten dat er al stond. */
+  paintShop();
+  const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
+  koopVonken(kaart);                                       // een klein boeketje boven het kaartje zelf
+  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
   /* Als het "Nieuw!"-moment voorbij is verhuist het spulletje naar de bezit-groep
      bovenaan. Dat is een sprong, en een sprong die je niet ziet is een spulletje
      dat weg lijkt -- dus reist het beeld mee naar waar het nu staat. */
-  setTimeout(() => {
+  shopBoughtTimer = setTimeout(() => {
+    shopBoughtTimer = null;
     if (shopJustBoughtId !== it.id) return;
     shopJustBoughtId = null;
     renderShop();
-    const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
-    if (kaart && kaart.scrollIntoView) kaart.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const na = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
+    if (na && na.scrollIntoView) na.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, 1800);
   tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
 }
@@ -15439,6 +15590,7 @@ function equipShopItem(id) {
   const p = P();
   if (!p.owned.includes(it.id)) return;
   const herbouw = !!shopJustBoughtId;   // zie de kaartklik: het rek herschikt na een aankoop
+  clearTimeout(shopBoughtTimer);
   p.equipped[it.cat] = it.id;
   shopJustBoughtId = null;
   /* En géén keuze meer. "Gekozen" is sinds de tik-om-aan-te-doen één ding: het
