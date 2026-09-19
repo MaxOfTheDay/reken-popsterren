@@ -582,7 +582,7 @@ makes them safe.
 | **Pre-show / venue** | A | *Create it* — 1.2 s card between `Speel!` and Q1. Reuses the venue + city assets. | Currently `startLevel` cuts straight to a question. The "arriving at the venue" beat is free drama. |
 | **Post-show / rewards** | **A** | **Fully illustrated celebration scene**, confetti moved *behind* the card | The loop's payoff has no art and a readability bug |
 | **Kleedkamer** | C | Softly illustrated: mirror-bulb arc + rail silhouette behind the sticky header only; grid stays flat | 95 items at 130 px need a calm field |
-| **Trofeeënkast** | C→D | **Almost neutral.** Optional: a thin wood-shelf edge under each `.shelf-title` | 45 cards; the cards are the content |
+| **Trofeeënkast** | C→D | **Almost neutral.** Optional: a thin wood-shelf edge under each `.groep-kop` | The cards are the content |
 | **Memory** | D + one asset | Neutral field, but a real **card back** | The back is the only thing on screen 90 % of the time |
 | **Profile / onboarding forms** | **D** | **Leave intentionally minimal** | Best-designed screens in the app |
 
@@ -917,7 +917,7 @@ processing · a CSS-in-JS layer.
 | Rank badges ×8 | 94 px platform emoji | A designed ladder | 8 SVG badges | Medium | **P3** | `RANK_TIERS` 2712, `rankUpCelebrate` 4173 |
 | Trophies ×45 | 36 px platform emoji | One collectible set | 45 SVG icons | Medium | **P3** | Real project; do as one set or not at all |
 | Pets / instruments / acc ×39 | Platform emoji | Match the avatar's SVG line | 39 SVG props | Medium | **P3** | The UX review's open "D11" item |
-| Trophy shelves | Flat glass panels | Wood-shelf edge | 1 SVG shelf lip | Low | **P3** | |
+| Trophy shelves | Header row + hairline (PS-32 dropped the panels) | Wood-shelf edge | 1 SVG shelf lip | Low | **P3** | |
 | Confetti ×7 emoji | Platform emoji | Designed confetti | 6 SVG shapes | Low | **P3** | Colour-only; keep the physics |
 | **Question card** | White, 15:1, huge type | — | **none** | — | **Never** | Protect it |
 | **Answer tiles / counting aids** | Flat, high contrast | — | **none** | — | **Never** | `cqw`-driven; art would break sizing |
