@@ -867,12 +867,26 @@
     /* Eén lichtrichting voor de hele app: warm van onderen, koel in de lucht.
        De koele gloed stond hiervoor rechtsonder en vocht daar met het voetlicht;
        hij hoort bij de verte, en de verte is boven. */
-    background:
+    /* De schil hoort bíí de app en niet bij het venster. Dat scheelt normaal
+       niets -- de app vúlt het venster -- maar op een Android-PWA niet: --vh-lock
+       (zie het scriptje vóór de INHOUD-index) legt de app vast op de hoogte van
+       vóór het vervagen van de statusbalk, en het venster is daarna een balk
+       hóger. Stond de schil op vensterformaat, dan lag het voetlicht -- de warme
+       gloed die op 99% zijn kern heeft -- een balk láger dan de onderrand van de
+       app, en keek je onder de navigatie tegen een lichte streep aan die nergens
+       bij hoorde. Nu eindigt de schil op de onderrand van de app, en is wat
+       daaronder overblijft --bg-4: exact de kleur waar het verloop op uitkomt,
+       dus je ziet de naad niet. Zonder zo'n balk (desktop, iOS) is --vh-lock
+       gewoon de vensterhoogte en verandert er niets. */
+    background-color: var(--bg-4);
+    background-image:
       radial-gradient(150% 40% at 50% 99%, var(--bg-glow-warm), transparent 68%),
       radial-gradient(circle at 18% 12%, var(--bg-glow-pink), transparent 45%),
       radial-gradient(circle at 86% 18%, var(--bg-glow-blue), transparent 46%),
       linear-gradient(168deg, var(--bg-1) 0%, var(--bg-2) 42%, var(--bg-3) 76%, var(--bg-4) 100%);
     background-attachment: fixed;
+    background-size: 100% var(--vh-lock, 100%);
+    background-repeat: no-repeat;
     color: var(--c-white);
     overflow: hidden;
     user-select: none;
@@ -2297,18 +2311,62 @@
      midden van de balk -- en de balk staat altijd gecentreerd) en een negatieve
      bottom die precies de zweefruimte van de balk terugneemt. Dezelfde plek als
      bedoeld, maar zonder van fixed af te hangen in een element dat dat woord
-     afpakt. */
+     afpakt.
+
+     FASE 6B.1 -- en hij reikt tot de échte schermrand, niet tot die van de app.
+     De balk hangt sinds --vh-drift (zie de regel hieronder) aan het vastgelegde
+     slot, en op een Android-PWA is het venster daar een statusbalk hóger dan. De
+     veeg hing aan de balk en schoof dus mee omhoog: onder de balk kwam een streep
+     kale schil tevoorschijn -- de warme gloed van <body>, een stuk lichter dan de
+     veeg erboven. Precies de rand waar hij vóór die verzetting wél overheen lag,
+     en daarom viel het daar nooit op.
+
+     Dus zakt de doos die drift weer mee naar beneden en wordt hij even veel
+     hoger, zodat zijn bovenrand op dezelfde plek blijft. Het verloop zelf houdt
+     daarbij zijn eigen, nagemeten hoogte (background-size) en wordt niet
+     uitgerekt -- de vier stops hierboven zijn op de pixel afgemeten, en een veeg
+     die per toestel een andere kromme krijgt is geen veeg meer. Wat eronder
+     overblijft is de eindkleur, vlak doorgetrokken: precies de waarde waar het
+     verloop op ophoudt, dus er valt geen naad te zien. Zonder drift (desktop,
+     iOS) is de doos exact zoals hij was en dekt het verloop hem helemaal af. */
   .main-nav::before {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
     left: 50%; width: 100vw; margin-left: -50vw;
-    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder));
-    height: calc(var(--balk-ruimte) + 44px);
-    background: linear-gradient(180deg,
-      rgba(14,7,30,0) 0%,
-      rgba(14,7,30,.05) 34%,
-      rgba(14,7,30,.44) 70%,
-      rgba(14,7,30,.62) 100%);
+    bottom: calc(0px - var(--balk-rand) - var(--veilig-onder) - var(--vh-drift, 0px));
+    height: calc(var(--balk-ruimte) + 44px + var(--vh-drift, 0px));
+    background:
+      linear-gradient(180deg,
+        rgba(14,7,30,0) 0%,
+        rgba(14,7,30,.05) 34%,
+        rgba(14,7,30,.44) 70%,
+        rgba(14,7,30,.62) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
+      linear-gradient(rgba(14,7,30,.62), rgba(14,7,30,.62))
+        bottom / 100% var(--vh-drift, 0px) no-repeat;
   }
+  /* ---- De balk hangt aan hetzelfde slot als de rest van de app -------------
+     --vh-lock (zie het scriptje vóór de INHOUD-index) legde de hoogte van de app
+     vast, zodat de wereldkaart niet meer meegroeit als de Android-statusbalk een
+     fractie na het opstarten vanzelf wegvaagt. Dat hielp alles ónder #app, want
+     dat hangt via height:100% aan <body>. Maar position:fixed kijkt niet naar
+     <body>: het rekent altijd tegen het vénster, en juist dat venster is het ding
+     dat gróeit. De inhoud bleef dus keurig stil staan en de zwevende balken
+     onderaan zakten in hun eentje de hoogte van die statusbalk mee naar beneden --
+     het schokje dat je op een telefoon ziet op precies het moment dat de klok
+     bovenin vervaagt. Dat de rest wél stilstond maakte het juist zo zichtbaar:
+     er is niets anders in beeld dat op hetzelfde moment meebeweegt.
+
+     --vh-drift is hoeveel het venster inmiddels ónder dat slot is uitgegroeid. Als
+     margin-bottom op een element dat aan bottom: hangt, schuift dat het even ver
+     terug omhoog -- de balk staat dan weer op de onderrand van de app in plaats
+     van op die van het venster. Op elk toestel zonder zo'n verdwijnende balk
+     (desktop, iOS, elke test) is het 0px en verandert er letterlijk niets.
+
+     Dit zijn de drie die aan de onderrand hángen: de navigatie, de actiebalk van
+     de kleedkamer erboven, en het terug-knopje van de reis. .mem-fab hoort er
+     bewust niet bij: die zet zichzelf af tegen --nav-h, en dat getal meet
+     meetChroom() aan de balk zelf op -- hij schuift dus vanzelf mee zodra de balk
+     hier verzet is, en de drift er nóg eens bij zou hem dubbel optillen. */
+  .main-nav, .dress-bar, .reis-terug { margin-bottom: var(--vh-drift, 0px); }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
     font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .82;
@@ -7637,12 +7695,30 @@
    dat is altijd van vóórdat de balk kan zijn gaan vervagen (die vervaagt pas een
    moment later, nooit eerder). Een latere resize wijzigt 'm alleen als ook de
    breedte anders is -- draaien, een ander vensterformaat -- want dat is een échte
-   afmeting; een balk die op- of dichtklapt raakt nooit de breedte. */
+   afmeting; een balk die op- of dichtklapt raakt nooit de breedte.
+
+   En --vh-drift is het verschil dat daardoor ontstaat: hoeveel het venster op dit
+   moment ónder dat vastgelegde slot is uitgegroeid. Dat is precies nul zolang de
+   statusbalk er nog staat, en de hoogte van die balk zodra hij weg is. Alles wat
+   via height:100% aan <body> hangt heeft er niets aan -- dat staat al stil -- maar
+   position:fixed rekent tegen het vénster en niet tegen <body>, dus de zwevende
+   balken ónderaan zakten in hun eentje mee. Zie de regel bij .main-nav in het
+   stijlblad, die ze met dit getal terugzet.
+
+   Hij loopt nooit onder nul: een venster dat juist kléiner wordt is op een telefoon
+   het toetsenbord dat openschuift, en daar hóórt de bediening bovenop te blijven
+   staan in plaats van erachter te verdwijnen. */
 (function () {
-  let w = innerWidth;
-  const zet = () => document.documentElement.style.setProperty('--vh-lock', innerHeight + 'px');
+  let w = innerWidth, slot = innerHeight;
+  const el = document.documentElement;
+  const drift = () => el.style.setProperty('--vh-drift', Math.max(0, innerHeight - slot) + 'px');
+  const zet = () => {
+    slot = innerHeight;
+    el.style.setProperty('--vh-lock', slot + 'px');
+    drift();
+  };
   zet();
-  addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; zet(); } });
+  addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; zet(); } else drift(); });
 })();
 /* =====================================================================
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
