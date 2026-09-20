@@ -146,12 +146,15 @@ verjaart niet.
 
 ### Waar je voorzichtig moet zijn
 
-* **`goMap`** lost zes elkaar uitsluitende manieren van aankomen op (uit een
-  show, een reis, een onthulling, de tabbalk, een herhaalde tik) en verbruikt
-  daarbij een handvol losse vlaggen (`pendingTravel`, `reisDoel`, `kaartFocus`,
-  `netAf`, `tourMapVoltooi`, `terugBezig`). De volgorde van de regels is
-  betekenisvol en staat als commentaar uitgelegd — lees het vóór je er iets
-  tussen zet.
+* **`goMap`** lost zes elkaar uitsluitende manieren van aankomen op: uit een
+  show, een reis, een onthulling, de tabbalk, een herhaalde tik, of gewoon
+  "verder". Hij leest dat nu in drie stappen, en die staan elk apart:
+  `kaartOpdracht` zegt wat er moet gebeuren (en maakt de vier briefjes op),
+  `kaartVertrek` laat het vorige scherm weggaan, en de staart van `goMap` zelf
+  doet de aankomst. **De volgorde van die drie is betekenisvol**, en `goMap`
+  is de enige plek waar je dat ziet — `kaartVertrek` moet vóór het verbruiken
+  van `tourMapVoltooi` staan, want ze lezen allebei `kaartFocus` en wie eerst
+  is wint. Wat de vlaggen zelf betekenen staat in `src/17-kaartstand.js`.
 * **De overgangen** (`= Bewegingstaal`, `= De reis`, `= Wereld naar wereld`)
   zijn op enkele beeldjes afgeregeld. Verplaats er niets zonder het op een
   telefoon te bekijken; headless ziet dit soort fouten niet.
