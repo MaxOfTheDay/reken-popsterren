@@ -125,10 +125,38 @@ nodig en er gaat geen voortgang verloren: de opslag van een speler staat in
 
 ## Venster, veilige zone en toetsenbord
 
-* `html, body { height: 100% }`, niet `100vh`. Daardoor klopt de hoogte ook als
-  de browserbalk in- of uitklapt. Nagemeten: van 844 naar 700 en terug, en
-  liggend en weer staand, blijft de balk op 10 px van de onderrand en is er nooit
-  zijwaartse scroll.
+* `html, body { height: var(--vh-lock, 100svh) }`, niet `100vh`. Daardoor klopt
+  de hoogte ook als de browserbalk in- of uitklapt. Nagemeten: van 844 naar 700
+  en terug, en liggend en weer staand, blijft de balk op 10 px van de onderrand
+  en is er nooit zijwaartse scroll.
+* `--vh-lock` is de hoogte van het allereerste beeldje, gezet door het scriptje
+  vóór de INHOUD-index in `index.html`. Reden: `manifest.json` zet
+  `display:fullscreen`, en op Android staat de statusbalk bij het opstarten nog
+  even in beeld en vervaagt hij een fractie later — het venster wordt dan hóger.
+  Het slot beweegt daarom alleen mee met een échte andere maat (draaien, een
+  ander vensterformaat, te herkennen aan een andere bréédte); een balk die op-
+  of dichtklapt raakt de breedte nooit. `100svh` loste dit niet op: die eenheid
+  gaat over de inklapbare werkbalk van de brówser, niet over een systeembalk die
+  over een fullscreen-PWA heen ligt.
+* `--vh-drift` hoort daarbij: hoeveel het venster inmiddels ónder dat slot is
+  uitgegroeid, nooit minder dan nul. **Dit is het getal dat je nodig hebt zodra
+  je iets nieuws aan de ónderrand hangt.** `position: fixed` kijkt namelijk niet
+  naar `<body>` maar naar het venster, en dat is precies het ding dat groeit —
+  het slot geldt er dus niet voor. Zonder correctie zakt zo'n balk in zijn eentje
+  de hoogte van de statusbalk mee naar beneden terwijl de rest van het scherm
+  stil blijft staan, en dát is het schokje dat op een telefoon te zien was op het
+  moment dat de klok bovenin vervaagde. `.main-nav`, `.dress-bar` en
+  `.reis-terug` zetten zich terug met `margin-bottom: var(--vh-drift, 0px)`;
+  `.mem-fab` heeft het niet nodig, want die meet zich via `--nav-h` aan de balk
+  zelf af. `npm run test:onderrand` meet dit na.
+* Twee dingen dekken de strook af die daardoor ónder de app overblijft. De schil
+  van `<body>` hangt aan de app en niet aan het venster
+  (`background-size: 100% var(--vh-lock, 100%)` plus
+  `background-color: var(--bg-4)`), zodat het voetlicht niet een balk láger
+  uitkomt dan de app; en de veeg onder de navigatie (`.main-nav::before`) zakt de
+  drift weer mee naar beneden en trekt zijn eindkleur vlak door. Het verloop zelf
+  houdt daarbij zijn nagemeten hoogte via `background-size` — rek het niet op,
+  dan krijgt elk toestel een andere kromme.
 * De veilige zone onderaan loopt via `--veilig-onder`
   (`env(safe-area-inset-bottom)`) naar `--balk-ruimte`; elk scherm mét vaste
   navigatie telt daar zijn eigen lucht bij. Bovenaan staat niets: er is geen

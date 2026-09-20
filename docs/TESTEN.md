@@ -33,6 +33,7 @@ npm run test:reis
 npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
+npm run test:onderrand   # de zwevende bediening onderaan blijft staan
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
 ```
 
@@ -267,6 +268,30 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
   tekening onzichtbaar — ook na herladen, en ook in het voorbeeldje op een
   kaartje, want zijn bereik is `/` en hij bedient dus ook de studiopagina.
+
+### `test/onderrand.test.js` — de zwevende bediening onderaan
+
+Een browsersuite over één ding dat geen enkele andere test uitlokt: een venster
+dat alleen in de hóógte verandert. Op Android staat de statusbalk bij het
+opstarten van de fullscreen-PWA nog even in beeld en vervaagt hij een fractie
+later — dan wordt het venster hóger terwijl de breedte gelijk blijft, en dat doet
+een bureaubladvenster nooit uit zichzelf. `setViewportSize` doet het wel, en
+daarmee is op een laptop na te meten wat anders alleen op een telefoon te zien
+is. De beloftes, op de kaart, in de kleedkamer, in de kast en op de reis:
+
+- **de zwevende bediening onderaan beweegt niet mee** — `.main-nav`,
+  `.dress-bar`, `.reis-terug` en `.mem-fab` staan na de groei nog op dezelfde
+  plek. Één pixel speling, want `--nav-h` gaat in hele pixels de deur uit; het
+  verschil dat deze suite zoekt is de hele hoogte van een statusbalk;
+- **en het slot zelf blijft ook staan** — `--vh-lock` en de hoogte van `<body>`
+  veranderen niet, en `--vh-drift` is precies de balk die wegging;
+- **een kleiner venster is het toetsenbord** — `--vh-drift` loopt nooit onder
+  nul, anders zou een openschuivend toetsenbord de bediening er juist áchter
+  duwen in plaats van ervoor;
+- **draaien is wel een échte andere maat** — een andere bréédte legt het slot
+  opnieuw vast en zet de drift terug op nul.
+
+Zie `docs/LADEN.md`, "Venster, veilige zone en toetsenbord", voor de maten zelf.
 
 ### `test/studio.test.js` — de wereldstudio
 
