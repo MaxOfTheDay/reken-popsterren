@@ -3334,13 +3334,21 @@
     #screen-journey .hub-sticky { width: var(--balk-w); margin-left: auto; margin-right: auto; }
   }
   /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
-     verschijnen alleen aan de kant waar nog meer te scrollen valt */
-  .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%);
-    mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
-  .hscroll-fade.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px);
-    mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
-  .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); }
+     verschijnen alleen aan de kant waar nog meer te scrollen valt.
+
+     --fade is hoe breed die overgang is, en dat is met opzet een knop en geen
+     vast getal: de fade hoort smaller te zijn dan het stukje knop dat er aan die
+     kant nog uitsteekt. Is hij breder, dan wist hij precies datgene uit wat hij
+     moest aankondigen -- dan ziet een rij die dóórloopt eruit als een rij die
+     ophoudt. Een rij met smalle knopjes zet hem daarom zelf smaller (zie
+     .shop-tabs). */
+  .hscroll-fade { --fade: 34px; }
+  .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%); }
+  .hscroll-fade.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade));
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade)); }
+  .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%); }
   /* De weg: twee lagen over de volle tekening. Het hele pad dof ("nog te
      ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --
      dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
@@ -5875,16 +5883,18 @@
   /* padding-inline 12 en niet 4: aan het begin en het eind van de rij hoort lucht
      te staan. Zonder die lucht lag de eerste knop tegen de schermrand en las een
      half weggeschoven knop als een fout in plaats van als "er staat hier meer".
-     scroll-padding-inline zet dezelfde lucht neer als de rij zichzélf verschuift
-     (scrollIntoView bij een categoriewissel), zodat de gekozen knop nooit tegen
-     de rand aan landt. */
+     Waar de rij landt als hij zichzelf verschuift (een categoriewissel) rekent
+     tabRijDoel() uit -- daar staat ook waarom dat niet met scrollIntoView en
+     scroll-padding-inline gaat. */
   .shop-tabs {
     display: flex; gap: 7px; padding: 1px 12px; overflow-x: auto;
-    /* 36 en niet 12: de rij draagt een fade-masker van 34px aan de kant waar nog
-       meer staat (zie .hscroll-fade). Met minder marge landt de gekozen knop
-       precies ónder die fade en staat juist het woord dat je net koos half
-       vervaagd -- de enige knop die volledig leesbaar hoort te zijn. */
-    scroll-padding-inline: 36px;
+    /* 22 en niet de gedeelde 34: deze knopjes zijn maar ~50px breed, dus van het
+       knopje dat over de rand steekt is er hooguit 38 te zien (zie TAB_KIER). Een
+       fade van 34 legt daar bijna zijn hele overgang overheen en maakt er een
+       spookje van; op 22 blijft het icoon te herkennen én is de rechterkant
+       zichtbaar afgesneden. Dat is precies wat die kier moet zeggen: hier gaat
+       het verder. */
+    --fade: 22px;
     scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
   }
   .shop-tabs::-webkit-scrollbar { display: none; }
@@ -15206,6 +15216,75 @@ function openKleedkamerItem(id) {
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
   if (kaart && kaart.scrollIntoView) kaart.scrollIntoView({ block: 'center' });
 }
+/* Waar de categorierij hoort te staan.
+
+   De rij is breder dan een telefoon: er staan zeven laden in en er passen er vijf
+   à zes. Dat is geen probleem zolang je kunt zíen dat het doorloopt, en precies
+   daar ging het mis. Het enige wat "er staat hier meer" zei was het fade-masker
+   aan de rand (.hscroll-fade), en dat masker wist net zo goed uit wat het moest
+   aankondigen: stond Accessoires aan, dan landde die knop kraakhelder tegen de
+   fade aan en was Dieren erachter nog een grauwsluier van 28px -- een rij die
+   ophield bij het felste ding op het scherm.
+
+   Het stond hiervoor op scrollIntoView({ inline: 'nearest' }) plus
+   scroll-padding-inline. Dat kan dit niet, om twee redenen:
+     - scroll-padding werkt alleen als de rij écht moet schuiven. Staat de gekozen
+       knop al in beeld (Microfoons, Schoenen) dan gebeurt er niets, en dan is de
+       kier aan de rand wat het toeval ervan maakt -- 8px bij Microfoons.
+     - het reserveert lucht ná de gekozen knop, niet een stuk van de volgende.
+       Lucht zegt niets; een half knopje wel.
+
+   Dus rekent deze functie het zelf uit, in twee stappen die allebei over de rand
+   gaan waar nog iets achter zit:
+     1  de gekozen knop helemaal in beeld, met een randje lucht ernaast
+     2  valt er dan een knopje over de rechterrand, dan hoort daar een kier van te
+        zien die groot genoeg is om een knopje te zijn.
+
+   Wat er expres NÍET staat: centreren. De gekozen knop midden in de rij zetten
+   verschuift hem ook als hij al lang in beeld staat, en bij de eerste en de
+   laatste categorie duwt het de rand die je juist wilt zien uit beeld. */
+const TAB_LUCHT = 12;      // lucht tussen de gekozen knop en de rand -- dezelfde als de padding van de rij
+const TAB_SNIPPER = 24;    // minder dan dit is een snipper: daar maakt de fade een spookje van
+const TAB_KIER = 38;       // ... en dan schuiven we door tot zoveel: icoon leesbaar, rechterkant zichtbaar afgesneden
+function tabRijDoel(rij, gekozen) {
+  const max = rij.scrollWidth - rij.clientWidth;
+  if (max <= 0) return 0;                      // alles past: er valt niets aan te wijzen
+  const breed = rij.clientWidth;
+  // schermpositie van inhoud-x 0, zodat elke knop in één stelsel te meten is
+  const nul = rij.getBoundingClientRect().left - rij.scrollLeft;
+  const vak = el => { const r = el.getBoundingClientRect(); return { l: r.left - nul, r: r.right - nul }; };
+
+  // 1 -- de gekozen knop helemaal in beeld. Alleen schuiven als het moet: staat
+  //      hij er al, dan blijft de rij staan waar het kind hem liet staan.
+  const g = vak(gekozen);
+  let x = Math.min(rij.scrollLeft, g.l - TAB_LUCHT);
+  x = Math.max(x, g.r + TAB_LUCHT - breed);
+  x = Math.max(0, Math.min(x, max));
+
+  /* 2 -- de kier. De eerste knop die er niet hélemaal in past is degene die het
+        moet doen: die steekt over de rechterrand. Toont hij minder dan een
+        snipper -- of staat hij er zelfs nog nipt buiten, want tussen twee knoppen
+        zit ruimte -- dan schuiven we door tot er TAB_KIER van te zien is.
+
+        Alles of niets, en dat is de hele reden dat dit geen éénregelaar is. De
+        gekozen knop houdt zijn lucht (de rem hieronder), en op een smal toestel
+        kan die rem de kier in de weg zitten: bij de eerste categorie op een 320px
+        scherm is er links niets om weg te schuiven. Half schuiven is dan het
+        slechtste van twee: de eerste knop verliest zijn lucht, er verschijnt een
+        fade links naar niks, en de kier rechts is nog steeds te klein om te zien.
+        Levert het schuiven geen echte kier op, dan blijft de rij dus gewoon staan
+        en doet de fade over de laatste hele knop het werk. */
+  for (const knop of rij.children) {
+    const k = vak(knop);
+    if (k.r <= x + breed) continue;          // past er helemaal in
+    if (x + breed - k.l < TAB_SNIPPER) {
+      const doel = Math.min(k.l + TAB_KIER - breed, max, g.l - TAB_LUCHT);
+      if (doel + breed - k.l >= TAB_SNIPPER) x = doel;
+    }
+    break;
+  }
+  return Math.max(0, x);
+}
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
    keer dat de kleedkamer opengaat -- en verder niet: kijken en aandoen gaan via
    paintShop() hieronder, dat dezelfde kaartjes laat staan en alleen hun stand
@@ -15243,13 +15322,14 @@ function renderShop() {
   } }));
   // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
   tabs.onscroll = () => updateFades(tabs);
+  /* Ook als er géén categorie aanstaat -- in het schattenvak staat de hele rij uit.
+     Zonder deze regel bleven de fade-randen daar hangen op wat ze vóór het
+     openen waren, en dan wijst de rand naar een kant waar niets meer zit. */
+  updateFades(tabs);
   if (activeTab) requestAnimationFrame(() => {
-    /* 'nearest' en niet 'center': centreren verschoof de rij ook als de gekozen
-       knop al helemaal in beeld stond, en dan lag de eerste knop halverwege
-       afgesneden tegen de rand terwijl daar niets voor nodig was. Nu schuift de
-       rij alleen als het moet, en dankzij scroll-padding-inline (zie .shop-tabs)
-       landt de knop dan met lucht ernaast in plaats van tegen de rand. */
-    if (activeTab.isConnected) { activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' }); updateFades(tabs); }
+    if (!activeTab.isConnected) return;
+    tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
+    updateFades(tabs);   // schuift de rij echt, dan werkt onscroll hem onderweg nog bij
   });
   renderSchatEntry(p);
   const schatVak = shopCat === SCHAT_CAT;
