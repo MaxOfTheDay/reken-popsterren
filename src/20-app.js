@@ -2,11 +2,12 @@
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
 
-   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog vijf
+   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog zes
    bronbestanden die samen met dit ene het scriptblok vormen (zie test/bouw.js):
    00-vh-lock (de vensterhoogte, moet eerst), 10-feestjes (de gedeelde toast,
    confetti, danspasjes en dialogen), 15-kaart-en-weg (de vormleer van de
-   wereldkaart), 90-wereldstudio en 99-servicewerker.
+   wereldkaart), 17-kaartstand (waar de kaart naar kijkt en wat er loopt),
+   90-wereldstudio en 99-servicewerker.
 
    De secties hieronder staan in de volgorde van dít bestand; wat naar een
    buurbestand verhuisd is, staat er met zijn nieuwe plek bij. Zoeken op de
@@ -46,6 +47,9 @@
                           viewWorldIdx/showWorld. De kaart, de reis én de
                           wereldstudio leunen erop, en het kent zelf geen
                           scherm -- daarom een eigen bestand
+     De kaartstand ...... STAAT IN src/17-kaartstand.js. De vijftien namen die
+                          samen zeggen waar de kaart naar kijkt, wat de
+                          eerstvolgende opbouw moet doen en wat er nu loopt
      Wat er geladen wordt   preloadArt: welke tekening wanneer binnenkomt
 
    ---- DE BEWEGING: waar het meeste denkwerk in zit -------------------------
@@ -2846,13 +2850,6 @@ const WERELDREIS = {
   na: 'cubic-bezier(.2,.8,.25,1)',              // het kader dat nazoomt bij een onthulling
 };
 
-/* De grendel. Eén reis tegelijk, en hij gaat altijd weer open: de opruimer hangt
-   niet alleen aan animation.onfinish (die kan uitblijven als het scherm tussentijds
-   wisselt) maar ook aan een vangnet-timer, en élke andere weg naar showWorld roept
-   hem ook aan. Blijft hij ooit toch hangen, dan staat er een kind op een kaart waar
-   geen enkele wereldknop nog iets doet -- dus liever drie keer opruimen dan één
-   keer niet. */
-let wereldReisOp = null;
 function wereldReisBezig() { return !!wereldReisOp; }
 function stopWereldReis() {
   const op = wereldReisOp;
@@ -3275,11 +3272,6 @@ const MOTION = {
 // 140ms klaar, ruim voordat het aankomende scherm op 300 tot rust komt.
 MOTION.totaal = MOTION.komNa + MOTION.kom;
 
-/* Eén overgang tegelijk. Een kind tikt drie keer op dezelfde halte; dat hoort
-   één keer de zaal in te gaan. De vlag gaat altijd weer uit -- eindigOvergang
-   hangt niet alleen aan animation.onfinish (die kan uitblijven als het scherm
-   tussentijds weggaat) maar ook aan een vangnet-timer. */
-let overgangBezig = false;
 function eindigOvergang(anim, dur, opruimen) {
   let gedaan = false;
   const klaar = () => {
@@ -3606,7 +3598,6 @@ function zelfdePlek(a, b) {
       && Math.abs(ra.width - rb.width) < 2 && Math.abs(ra.height - rb.height) < 2;
 }
 
-let vluchtOp = null;   // de vlucht die nu loopt -- er is er altijd hoogstens één
 function vluchtKlaar() {
   if (!vluchtOp) return;
   const v = vluchtOp;
@@ -3922,28 +3913,6 @@ function toonHub(id) {
   naar.classList.add('komt-op');
   hubWissel(vorige, naar);
 }
-/* De halte waar de laatste show speelde. Twee losse dingen, bewust:
-     naShowLvl   onthouden, zodat élke uitgang van het eindscherm (de knop, de ←,
-                 de terugknop van het toestel) op dezelfde plek uitkomt
-     kaartFocus  een eenmalige opdracht aan de eerstvolgende kaart-opbouw. Wordt
-                 door renderTourMap meteen geleegd, zodat een latere kaart via de
-                 navigatiebalk gewoon normaal opengaat. */
-let naShowLvl = null, kaartFocus = null;
-/* FASE 4C -- welke halte zojuist gespeeld is. Eenmalige opdracht aan de
-   eerstvolgende kaart in de éíndstand: daar laat hij het sterrentabje inlanden
-   (zie .net-af). Bewust niet naShowLvl hergebruiken: die blijft staan zodat elke
-   uitgang van het eindscherm op dezelfde plek uitkomt, en zou het momentje dan
-   bij élke kaartopbouw opnieuw afspelen. */
-let netAf = null;
-// de grendel op de terugweg (zie goMap) -- het tegenhangertje van overgangBezig
-let terugBezig = false, terugTimer = null;
-/* Het afrondende werk van renderTourMap (schuifstand, --kop-h/--nav-h, de
-   terugzoom) als losse functie, zodat goMap() het meteen kan uitvoeren zodra
-   het scherm zelf aan staat -- zie tourMapVoltooi hieronder en de regel bij
-   renderTourMap voor waarom dat ooit een requestAnimationFrame was en waarom
-   dat een beeldje te laat is. null zolang renderTourMap het al zelf synchroon
-   kon afronden (elke kaartwissel behalve de allereerste van een navigatie). */
-let tourMapVoltooi = null;
 /* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
    landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
 
@@ -4009,7 +3978,6 @@ const GROET = {
   pas: { cls: 'move-wave' },
   duur: 950,   // dezelfde als dance/tapDance: mvWave duurt .9s
 };
-let kaartBezocht = 0, groetTimer = null, pulsTimer = null;
 /* Eén keer de halte laten oplichten waar je heen moet. Alleen de huidige halte
    heeft die laag (zie .tour-stop.next .stop-body::after); staat er geen -- je
    kijkt in een wereld die je al uit hebt -- dan gebeurt er niets. */
@@ -4854,13 +4822,6 @@ function reisTerugNaarNu() {
   if (scherm.scrollTo && !motionOff()) scherm.scrollTo({ top, behavior: 'smooth' });
   else scherm.scrollTop = top;
 }
-/* De wereld waar de kaart stond toen de reis openging. De ← van dit scherm brengt
-   je daar terug -- weglopen van de reis is nooit "ergens anders uitkomen". */
-let reisVanuit = null;
-/* Eenmalige opdracht aan de eerstvolgende kaart: open op déze wereld. Zelfde soort
-   ding als kaartFocus -- hij wordt door goMap meteen verbruikt, dus de kaart daarna
-   opent gewoon weer waar de voortgang staat. */
-let reisDoel = null;
 
 /* De reis openen = uitzoomen, en wel op de manier die een kind ook echt zo leest:
    de wereld waar ze in staat krímpt naar het kaartje waar hij op Werelden ligt.
