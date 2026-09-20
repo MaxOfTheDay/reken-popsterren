@@ -11523,7 +11523,22 @@ function dressBarMee(van) {
 function toonHub(id) {
   const vorige = document.querySelector('.screen.active');
   show(id);
-  hubWissel(vorige, $(id));
+  const naar = $(id);
+  /* .komt-op gaat er altijd op -- en juist ook als je al op dit scherm stónd.
+     show() haalt de klasse van élk scherm af en zet .active opnieuw; op het
+     scherm waar je al was betekent dat dat 'animation' van none terugspringt
+     naar screenIn, en dan komt het scherm nog één keer uit het niets opzetten.
+     Dát is de flits bij twee keer tikken op Kleedkamer of Trofeeën.
+
+     Waarom je hem alleen de tweede keer zag en daarna niet meer: de derde keer
+     stond .komt-op er al niet meer, en dan verandert er in de opmaak niets wat
+     een nieuwe animatie kán starten. Eén flits, precies één keer, en daarna
+     stilte -- het soort spoor dat naar een klasse wijst en niet naar een timer.
+
+     De kaart had dit nooit: goMap zet hem er onvoorwaardelijk op (zie daar). Dit
+     is dezelfde regel, nu ook voor de zes bijschermen. */
+  naar.classList.add('komt-op');
+  hubWissel(vorige, naar);
 }
 /* De halte waar de laatste show speelde. Twee losse dingen, bewust:
      naShowLvl   onthouden, zodat élke uitgang van het eindscherm (de knop, de ←,
