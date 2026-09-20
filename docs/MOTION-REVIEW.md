@@ -97,7 +97,7 @@ short of *one* motion.
 | C9 | `flyBadge` (`:12709`) | world finished | world icon arcs to the Trofeeën tab, coin sound at 900 ms | 1100 ms | no | no | once | ❌ |
 | C10 | `.net-af` star landing (`:3961`) | first map draw after a show | star tab drops in, three stars land | 100/185/270 ms delay, 280 ms each | no | no | once | ✅ |
 | C11 | `starRevealBeat` (`:11350`) | before any travel | *nothing* — a deliberate 550 ms + 200 ms pause | 750 ms | yes (gates travel) | no | once | ✅ |
-| C12 | `runTravel` hop (`:12734`) | level-up inside a world | avatar hops three times to the next stop; gold road grows with her; sparkle every 280 ms; haptic pattern | 1400 ms after 400 ms delay | yes (map locked) | no | once | ✅ |
+| C12 | `runTravel` walk (`:13430`) | level-up inside a world | avatar follows the road itself to the next stop (`heroRoadFrames`, sampled off the same path with `getPointAtLength`); gold road grows with her, from the same length; light three-step spring; sparkle every 280 ms; haptic pattern | `REIS_DUUR` 1400 ms after `REIS_WACHT` 400 ms | yes (map locked) | no | once | ✅ |
 | C13 | `runTravel` arrival (`:12755`) | end of C12 | next stop dot pops, coin, `confetti(14)`, praise | 450 ms | no | no | once | partial |
 | C14 | `runWorldChange` (`:12673`) | level-up across a world border | C9 → C10/C11 → 560 ms silence → A9 (900 ms) → `confetti(26)` + praise | ≈ 3.3 s chain | yes | no | once | ✅ |
 | C15 | `runWorldReveal` (`:11478`) | a world released since last play | A9 (900 ms) → coin + `confetti(26)` + praise | ≈ 1.2 s | yes | no | once | ✅ |
