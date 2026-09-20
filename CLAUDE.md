@@ -15,13 +15,13 @@ zonder iets stuk te maken.
 
 ```sh
 npm run studio     # de gewone manier van werken — http://localhost:8099/studio
-npm run bouw       # src/ -> het scriptblok van index.html. Draai dit na élke codewijziging
+npm run bouw       # src/ -> het stijl- en scriptblok van index.html. Na élke wijziging
 npm run check      # de keuring: ± 2 seconden, kaal Node, géén npm install nodig
 npm test           # alles, inclusief echte Chromium — minuten, vereist npm install
 open index.html    # het spel zelf, zonder meer
 ```
 
-**`npm run check` is de poort waar élke wijziging doorheen moet** (1.185
+**`npm run check` is de poort waar élke wijziging doorheen moet** (1.186
 controles in vier Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal
 Node). `npm test` doet die vier en daarna nog twaalf, waarvan de meeste een
 echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
@@ -36,11 +36,12 @@ mee te vergelijken) of `npm run achtergrondproef`.
 Dit zijn de valkuilen die je niet aan de code ziet. Vier ervan zijn ooit
 omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
 
-0. **De code staat in `src/`, niet in `index.html`.** Het scriptblok daar is het
-   resultaat van `npm run bouw` — bewerk je het met de hand, dan is je wijziging
-   weg zodra er voor iets anders gebouwd wordt. `npm run check` vergelijkt de
-   twee en zegt het meteen (zaak H). Het stijlblad en de markup in `index.html`
-   zijn wél gewoon van jou; die staan niet in `src/`.
+0. **Code én stijlblad staan in `src/`, niet in `index.html`.** De blokken
+   `<style>` en `<script>` daar zijn het resultaat van `npm run bouw` — bewerk je
+   ze met de hand, dan is je wijziging weg zodra er voor iets anders gebouwd
+   wordt. `npm run check` vergelijkt ze en zegt meteen wélk blok is afgedreven en
+   op welke regel (zaak H). De markup tussen `<body>` en `</body>` is wél gewoon
+   van jou; die staat niet in `src/`.
    De bronbestanden worden op naam gesorteerd achter elkaar geplakt, zonder iets
    ertussen — dus de cijfers in de naam zíjn de leesvolgorde, en elk bestand
    eindigt op een regeleinde.
@@ -57,6 +58,13 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    terwijl de pagina in een browser meteen omvalt. Verander je de volgorde of
    verplaats je een `const`, draai dan óók een browsersuite
    (`npm run test:sterren` is de kortste die het beginscherm echt opbouwt).
+   **Bij de CSS is de volgorde de cascade.** In het hele stijlblad staan drie
+   `!important`, dus vrijwel élke voorrang komt uit "wie staat er later". Een
+   stuk verhangen is daar geen opruiming maar een wijziging in het uiterlijk, en
+   hij is stil: er breekt niets, er ziet alleen iets er anders uit. `bouw.js`
+   kijkt per CSS-bestand of de accolades kloppen en of het commentaar dichtgaat,
+   zodat een knip midden in een regel of een uitleg niet door kan glippen — maar
+   wát je verhangt, kan hij niet weten.
 1. **Er is precies één `<script>`-blok en precies één `</script>`, ook in
    commentaar.** `test/app.js` knipt de app uit het gebouwde `index.html` met
    `indexOf('<script>')` en draait hem in een `vm`; `inhoud.test.js` zaak H kijkt
@@ -77,9 +85,10 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    en daarna bouwt. Zie `docs/UITBREIDEN.md`. Let op: *Bewaar* schrijft het blok
    opnieuw uit de gegevens, dus handgeschreven commentaar erbinnen overleeft dat
    niet — zet een toelichting bóven `WERELDEN-BEGIN`, want dat stuk blijft staan.
-4. **Het scriptje bovenaan het scriptblok (`--vh-lock` / `--vh-drift`) moet de
-   eerste uitvoerende regel blijven.** Het legt de vensterhoogte vast vóór de
-   Android-statusbalk wegvaagt; alles wat erna komt rekent erop.
+4. **`src/00-vh-lock.js` moet het eerste bronbestand blijven.** Het legt de
+   vensterhoogte vast vóór de Android-statusbalk wegvaagt, en alles wat erna komt
+   rekent erop. Het volgnummer 00 is wat dat garandeert — geen afspraak maar de
+   sorteervolgorde.
 
 Verder: **geen framework, geen bundler, geen TypeScript, geen bibliotheek.** De
 app moet het doen op een oude tablet in een woonkamer, zonder net. Er gaat bij
@@ -100,9 +109,28 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 | `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
 | `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
-| `<style>` | het stijlblad, in `index.html` zelf. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
+| `src/css/*.css` | **het stijlblad**, in dertien stukken (zie hieronder) |
 | `<body` | de tien schermen als markup, in `index.html` zelf, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
-| `<script>` het scriptblok | het resultaat van de bouw. Lees het gerust, bewerk het niet |
+| `<style>` / `<script>` | het resultaat van de bouw. Lees het gerust, bewerk het niet |
+
+Het stijlblad, in leesvolgorde — en die volgorde is de cascade, dus verhang er
+niets zonder reden:
+
+| bestand | wat erin staat |
+|---|---|
+| `00-afspraak.css` | `@font-face` en **DE AFSPRAAK**: kleur, letter, vlakken, beweging, plus de reset. Lees dit vóórdat je een kleur of een maat kiest |
+| `10-basis.css` | de letterladder, de twee soorten scherm, de sterrenkeuze, het spelogo |
+| `20-schil.css` | de schil buiten de werelden om, het vak waar een gebruiksscherm in staat, de schermtekeningen |
+| `30-onderdelen.css` | de sterrentegel, het tandwielmenu, het podium en de danspasjes |
+| `40-kaart.css` | home, de wereldkaart met zijn topbalk en vaste navigatie, de carrière-ladder |
+| `50-zaal.css` | de zaal en de show: telmodus, stippenraam, memory, de wereldtournee, de camera |
+| `55-haltes.css` | de haltes op de kaart en het sterrentabje |
+| `60-reis.css` | de hele tournee: baan, route, bestemmingen, de vijf standen, de mist |
+| `65-kast.css` | de trofeeënkast en de drie standen van een trofee |
+| `70-feest.css` | de feestjes: claim, ster-status, wereldfeest, trofee, het eindscherm |
+| `75-kleedkamer.css` | de kleedkamer, de spiegel, de wereldschatten |
+| `80-ouderdeel.css` | het ouderdeel: dashboard, fasekiezer, maakformulier, statistiek, modal |
+| `90-stilstand.css` | wie geen beweging wil |
 
 **Navigeren doe je op sectienaam, niet op regelnummer.** Zoek op bijvoorbeeld
 `= Telmodus` of `= De hele tournee`; het stijlblad heeft dezelfde soort koppen.
