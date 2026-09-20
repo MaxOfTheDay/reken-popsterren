@@ -1660,6 +1660,181 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= De sterrenkeuze leeft =================
+     Eén begroeting bij binnenkomst, en daarna af en toe één pop -- niet een rij
+     tegels die een animatie draait. Wat hier vastligt is de dosering, want dát
+     is het verschil tussen "iemand zegt hoi" en een schermbeveiliger:
+
+       - bij binnenkomst groet iedereen, één keer, en daarna is het stil
+       - hertekenen is geen binnenkomst (renderProfiles draait ook als er een
+         ster bijkomt of wegvalt)
+       - in de stilte beweegt er hoogstens één pop tegelijk, en nooit twee keer
+         achter elkaar dezelfde
+       - een tik wint het van een wachtend groetje
+       - weglopen laat niets achter: geen timer, geen halve zwaai
+       - zonder beweging gebeurt er niets, en staan de tegels er gewoon
+
+     De rust staat in het echte spel op elf tot negentien seconden. Die worden
+     hieronder kortgezet -- het gaat hier om de regels, niet om de klok. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const mk = (n, j) => { const q = defaultProfile(n, j); q.level = 3; q.stars = { 1: 3, 2: 2 }; return q; };
+      db.profiles = { p1: mk('Roos', 'dress_roze'), p2: mk('Sem', 'dress_blauw'), p3: mk('Nina', 'dress_geel') };
+      save();
+    });
+    await page.reload();
+    await page.waitForTimeout(250);
+    await page.evaluate(() => {
+      // welk pasje doet elke pop op dit moment? '-' = ze staat gewoon
+      window.__poppen = () => [...document.querySelectorAll('#profile-row .ster-tegel .avatar-holder')]
+        .map(el => (el.className.match(/move-[a-z]+/) || ['-'])[0]);
+      window.__volg = async (ms) => {
+        const reeks = [];
+        await new Promise(klaar => {
+          const t0 = performance.now();
+          const stap = () => {
+            reeks.push(window.__poppen());
+            if (performance.now() - t0 < ms) requestAnimationFrame(stap); else klaar();
+          };
+          requestAnimationFrame(stap);
+        });
+        return reeks;
+      };
+      window.__bewoog = reeks => reeks.some(r => r.some(x => x !== '-'));
+      // de échte rusttijden, zodat een zaak die ze kortzet ze ook weer terug kan zetten
+      window.__echteRust = { rustMin: LANDING.rustMin, rustMax: LANDING.rustMax };
+    });
+
+    const groet = await page.evaluate(async () => {
+      goProfiles();
+      const reeks = await window.__volg(2600);
+      return {
+        wie: [0, 1, 2].map(i => reeks.some(r => r[i] !== '-')),
+        // elke pop begint op een ánder beeldje: de groet loopt door de rij
+        starts: [0, 1, 2].map(i => reeks.findIndex(r => r[i] !== '-')),
+        stilAanEind: reeks[reeks.length - 1].every(x => x === '-'),
+      };
+    });
+    check(groet.wie.every(Boolean), 'bij binnenkomst groet elke ster één keer', JSON.stringify(groet));
+    check(groet.starts[0] < groet.starts[1] && groet.starts[1] < groet.starts[2],
+      'en ze doen het na elkaar, niet allemaal tegelijk', JSON.stringify(groet.starts));
+    check(groet.stilAanEind, 'daarna is het stil -- de groet is geen lus', JSON.stringify(groet));
+
+    const hertekend = await page.evaluate(async () => {
+      renderProfiles();
+      return window.__bewoog(await window.__volg(1800));
+    });
+    check(hertekend === false, 'de tegels opnieuw tekenen is geen nieuwe binnenkomst', String(hertekend));
+
+    /* De stilte erna. Met korte rust gemeten, maar de regel die telt is dat er
+       nooit twee poppen tegelijk bewegen -- en dat komt niet door de klok maar
+       doordat de volgende stilte pas begint als het pasje uit is. */
+    const rustig = await page.evaluate(async () => {
+      LANDING.rustMin = 220; LANDING.rustMax = 380;
+      goProfiles();
+      await new Promise(r => setTimeout(r, 2400));   // de groet uitzitten
+      const beurten = [], tegelijk = [];
+      for (let i = 0; i < 150; i++) {
+        await new Promise(r => setTimeout(r, 55));
+        const aan = window.__poppen().map((x, n) => (x !== '-' ? n : -1)).filter(n => n >= 0);
+        tegelijk.push(aan.length);
+        if (aan.length && beurten[beurten.length - 1] !== aan[0]) beurten.push(aan[0]);
+      }
+      return { beurten, meerTegelijk: Math.max(...tegelijk) };
+    });
+    check(rustig.meerTegelijk <= 1, 'in de stilte beweegt er hoogstens één pop tegelijk',
+      JSON.stringify(rustig));
+    check(rustig.beurten.length >= 4 && rustig.beurten.every((b, i) => i === 0 || b !== rustig.beurten[i - 1]),
+      'en nooit twee keer achter elkaar dezelfde', JSON.stringify(rustig.beurten));
+    check(new Set(rustig.beurten).size > 1, 'het is ook niet steeds dezelfde ster',
+      JSON.stringify(rustig.beurten));
+
+    const tik = await page.evaluate(async () => {
+      const kijk = async (ms) => {
+        let gezien = 0;
+        for (let i = 0; i < ms / 50; i++) {
+          await new Promise(r => setTimeout(r, 50));
+          if (document.querySelector('#profile-row .ster-tegel .avatar-holder.dancing')) gezien++;
+        }
+        return gezien;
+      };
+      LANDING.rustMin = 700; LANDING.rustMax = 750;
+      goProfiles();
+      await new Promise(r => setTimeout(r, 2200));
+      const zonder = await kijk(1500);
+      const tikken = () => document.getElementById('screen-profile')
+        .dispatchEvent(new Event('pointerdown', { bubbles: true }));
+      tikken();
+      const bezig = setInterval(tikken, 300);
+      const met = await kijk(1500);
+      clearInterval(bezig);
+      return { zonder, met };
+    });
+    check(tik.zonder > 0 && tik.met === 0, 'wie aan het kiezen is ziet geen pop bewegen',
+      JSON.stringify(tik));
+
+    const weg = await page.evaluate(async () => {
+      goProfiles();
+      await new Promise(r => setTimeout(r, 560));    // middenin de groet weglopen
+      selectProfile('p1');
+      await new Promise(r => setTimeout(r, 1400));
+      return { timers: landingTimers.length, poppen: window.__poppen() };
+    });
+    check(weg.timers === 0 && weg.poppen.every(x => x === '-'),
+      'weglopen laat geen timer en geen halve zwaai achter', JSON.stringify(weg));
+
+    const snel = await page.evaluate(async () => {
+      // de rust weer op zijn echte lengte: deze zaak gaat over de groet, en een
+      // kortgezette stilte uit de vorige zaak zou er middenin vallen
+      Object.assign(LANDING, window.__echteRust);
+      for (let i = 0; i < 6; i++) {
+        goProfiles(); await new Promise(r => setTimeout(r, 80));
+        selectProfile('p1'); await new Promise(r => setTimeout(r, 80));
+      }
+      goProfiles();
+      await new Promise(r => setTimeout(r, 2600));
+      return { timers: landingTimers.length, poppen: window.__poppen() };
+    });
+    check(snel.timers <= 2 && snel.poppen.every(x => x === '-'),
+      'zes keer snel in en uit stapelt geen groeten op', JSON.stringify(snel));
+    await ctx.close();
+  }
+
+  /* ---- en dit alles zonder beweging ---- */
+  {
+    const stilCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(stilCtx);
+    const st = await stilCtx.newPage();
+    st.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await st.goto(APP_URL);
+    await st.evaluate(() => {
+      localStorage.clear();
+      const mk = (n, j) => { const q = defaultProfile(n, j); q.level = 3; q.stars = { 1: 3 }; return q; };
+      db.profiles = { p1: mk('Roos', 'dress_roze'), p2: mk('Sem', 'dress_blauw') };
+      save();
+    });
+    await st.goto(APP_URL);
+    const stil = await st.evaluate(async () => {
+      goProfiles();
+      let bewoog = false;
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 50));
+        if (document.querySelector('#profile-row .ster-tegel .avatar-holder.dancing')) bewoog = true;
+      }
+      const pop = document.querySelector('#profile-row .ster-tegel .avatar-holder');
+      return { bewoog, timers: landingTimers.length, klas: pop.className,
+               tekening: !!pop.querySelector('svg'),
+               vonk: getComputedStyle(document.querySelector('.spellogo .vonk')).display };
+    });
+    check(!stil.bewoog && stil.timers === 0,
+      'zonder beweging wordt er niet gegroet en wacht er niets', JSON.stringify(stil));
+    check(stil.klas === 'avatar-holder' && stil.tekening,
+      'en de tegels staan er precies zoals ze horen te staan', JSON.stringify(stil));
+    check(stil.vonk === 'none', 'ook de sterretjes bij het logo houden zich stil', stil.vonk);
+    await stilCtx.close();
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */
