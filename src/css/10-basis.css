@@ -1,0 +1,330 @@
+  /* ---- De letter: vier gewichten, en meer bestaan er niet ------------------
+     FASE 5E. @font-face hierboven levert Fredoka als variabele letter van 400 tot
+     700 -- dat zijn álle gewichten die deze app heeft. In het blad stonden er ook 800, 900 en
+     "bold": zevenendertig regels die om een letter vroegen die nooit geleverd werd
+     en dus als 700 op het scherm kwam. Een naam op een trofeekaart (900) en de
+     naam van het kind op de sterrenkaart (800) waren daarmee precies even zwaar --
+     alleen kon je dat in de bron niet zien, en werd elke volgende regel een gok.
+
+     Nu staat er wat er ook echt gebeurt. De ladder is daarmee:
+       700  koppen, namen, knoplabels, getallen -- alles wat draagt
+       600  bijschriften, hulptekst, de stand onder een kaart
+       500  lopende tekst in het ouderdeel
+       400  wordt niet gebruikt en is de terugval van de browser
+     Er is niets kleiner of groter geworden; de bron liegt alleen niet meer. */
+  body {
+    /* De reserveletter telt alleen nog voor de allereerste verf van de allereerste
+       start -- daarna staat Fredoka in de voorraad. Daarom system-ui en niet meer
+       Comic Sans: die bestaat op Android niet, en op Windows gaf hij precies één
+       scherm lang een ándere, veel smallere letter dan de letter erna. system-ui
+       is op elk toestel de letter die het kind daar al gewend is. */
+    font-family: "Fredoka", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* Eén lichtrichting voor de hele app: warm van onderen, koel in de lucht.
+       De koele gloed stond hiervoor rechtsonder en vocht daar met het voetlicht;
+       hij hoort bij de verte, en de verte is boven. */
+    /* De schil hoort bíí de app en niet bij het venster. Dat scheelt normaal
+       niets -- de app vúlt het venster -- maar op een Android-PWA niet: --vh-lock
+       (zie het scriptje vóór de INHOUD-index) legt de app vast op de hoogte van
+       vóór het vervagen van de statusbalk, en het venster is daarna een balk
+       hóger. Stond de schil op vensterformaat, dan lag het voetlicht -- de warme
+       gloed die op 99% zijn kern heeft -- een balk láger dan de onderrand van de
+       app, en keek je onder de navigatie tegen een lichte streep aan die nergens
+       bij hoorde. Nu eindigt de schil op de onderrand van de app, en is wat
+       daaronder overblijft --bg-4: exact de kleur waar het verloop op uitkomt,
+       dus je ziet de naad niet. Zonder zo'n balk (desktop, iOS) is --vh-lock
+       gewoon de vensterhoogte en verandert er niets. */
+    background-color: var(--bg-4);
+    background-image:
+      radial-gradient(150% 40% at 50% 99%, var(--bg-glow-warm), transparent 68%),
+      radial-gradient(circle at 18% 12%, var(--bg-glow-pink), transparent 45%),
+      radial-gradient(circle at 86% 18%, var(--bg-glow-blue), transparent 46%),
+      linear-gradient(168deg, var(--bg-1) 0%, var(--bg-2) 42%, var(--bg-3) 76%, var(--bg-4) 100%);
+    background-attachment: fixed;
+    background-size: 100% var(--vh-lock, 100%);
+    background-repeat: no-repeat;
+    color: var(--c-white);
+    overflow: hidden;
+    user-select: none;
+  }
+  /* Drie lagen boven elkaar, en de volgorde is de hele truc:
+       .grain          -- filmkorrel over het verloop (z 0, eerst in de DOM)
+       #confetti-layer -- vallende confetti      (z 0, daarna in de DOM)
+       #app            -- het spel zelf          (z 1, dus altijd bovenop)
+     Confetti viel hiervoor rechtstreeks in <body> op z-index 90 en dus vóór het
+     eindscherm langs: veertig emoji over de juichtekst heen, precies op het
+     moment dat die gelezen moet worden. Nu valt ze er altijd achter -- ook
+     tijdens een show, waar ze anders over de som heen viel. */
+  #app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+  .grain, #confetti-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  #confetti-layer { overflow: hidden; }
+  /* Korrel als ingebakken SVG-ruis i.p.v. een apart plaatje: de app heeft geen
+     bouwstap en laadt niets van buiten, dus een bestand erbij zou ook een
+     regel in sw.js en een extra aanvraag betekenen -- voor tweehonderd bytes
+     die het bandjes-effect op de grote verlopen wegnemen. stitchTiles zorgt dat
+     het naadloos herhaalt. */
+  .grain {
+    opacity: .09;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  /* app-breed toetsenbord-focusringetje -- stond eerder alleen lokaal in het
+     instellingenscherm; hier geldt hij overal, incl. het instellingen-tandwiel-
+     menu (echt role="menu"/menuitem, dus ook echt met toetsenbord te bedienen) */
+  button:focus-visible, a:focus-visible, input:focus-visible,
+  [role="menuitem"]:focus-visible, [role="menuitemcheckbox"]:focus-visible {
+    outline: 3px solid var(--gold-accent); outline-offset: 2px;
+  }
+
+  /* schermen scrollen nooit zijwaarts: horizontaal scrollen gebeurt alleen
+     ín de reisroute en de tabbladen zelf */
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 12px; overflow-y: auto; overflow-x: hidden;
+    /* --rand moet gelijk zijn aan de padding hierboven: de plakkende kop bloedt
+       er met een negatieve marge precies overheen, zodat hij tot de schermrand
+       doorloopt terwijl de inhoud eronder netjes binnen de rand blijft. Stond
+       drie keer met de hand uitgerekend (12 op de hubs, 8 in het spel, 10 op de
+       kaart); nu één keer, per scherm. */
+    --rand: 12px;
+    /* Hoeveel lucht er onder de kop zit voordat de inhoud begint. */
+    --kop-gap: 12px;
+    /* De inhoudskolom van dit scherm -- zie het skelet in :root. Elk scherm dat
+       iets anders wil, zet hem hieronder om; de kop volgt automatisch. */
+    --kolom: 680px;
+  }
+  /* Eén waarde per scherm, op één plek. Dit is de hele afspraak: wat hier staat
+     is óók de breedte van de kop van dat scherm.
+       kaart       100% -- de kop hoort bij de wereldtekening en die is
+                   volledig aflopend; in liggende stand knijpt de kaart zichzelf
+                   naar --balk-w en de kop gaat automatisch mee (zie onder).
+       spel        860 -- de arena, waar show en rekenen op een breed scherm
+                   naast elkaar staan.
+       eindscherm  420 -- de resultaatkaart. Smal, want het is één kaart.
+       kleedkamer/kast  --stage-breed -- de twee verzamelschermen. Zie het skelet
+                   bovenaan: dit was 680 en 760, en dat verschil was er nooit een.
+       instellingen/nieuwe ster  640 -- het instellingenvel.
+       memory      620 -- het kaartenraster.
+       profiel     560 -- de rij sterrenkaarten (dit scherm heeft geen kop).
+
+     De kaart wijkt daarnaast op twee hóógtes af (--rand 10 i.p.v. 12, --kop-gap
+     4 i.p.v. 12) en die blijven staan zoals ze staan: ZONE is uit de onderrand
+     van déze kop gemeten, dus er 2px aan draaien verschuift de veilige zone van
+     élke wereldtekening. Ze staan hier alleen niet meer als losse regel in de
+     kop-stijl, maar als dezelfde twee variabelen als elk ander scherm.
+     Zie docs/WORLD-ART-BRIEF.md §8. */
+  #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
+  #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
+  #screen-end { --kolom: 420px; }
+  /* De twee verzamelschermen delen één maat. De kast stond op 760 "omdat de
+     perfecte werelden met z'n drieën naast elkaar moeten", de kleedkamer viel
+     stilzwijgend terug op de 680 uit .screen -- en op een bureaublad zag je die
+     tachtig pixels wél: van de kleedkamer naar de kast sprong de kop, en met de
+     kop sprong de hele linkerkant van het scherm. Beide lezen --stage-breed, dus
+     het blijft één getal op één plek. */
+  #screen-dress, #screen-trophies { --kolom: var(--stage-breed); }
+  #screen-settings { --kolom: 640px; }
+  /* Smaller dan het ouderdeel, en dat is geen detail. Het maakformulier is een
+     kort lijstje pillenrijen; op 640 breed stond op een tablet een vel van een
+     halve meter met een pop van 124px eenzaam in het midden en de labels ver naar
+     links. Op 460 staat alles weer bij elkaar en is het op een tablet hetzelfde
+     formulier als op een telefoon -- daar is het toch al 100%. */
+  #screen-newstar { --kolom: 460px; }
+  /* Het naamveld mag nooit onder de plakkende Klaar-knop uitkomen als de browser
+     er bij het focussen naartoe scrolt (zie .newstar-voet). */
+  #screen-newstar { scroll-padding-bottom: 96px; }
+  #screen-memory { --kolom: 620px; }
+  #screen-profile { --kolom: 560px; }
+
+  /* ---- Twee soorten scherm, en op een tablet is dat het verschil ----------
+     FASE 5D. De klacht was: "sommige schermen staan op een tablet netjes in het
+     midden, andere lopen van rand tot rand". Dat wás ook zo, maar niet volgens
+     een regel -- het hing ervan af of iemand dat scherm ooit op een breed
+     venster had bekeken. De regel die er nu ligt:
+
+       BELEVING (kaart, reis, spel, eindscherm) -- de tekening ís het scherm.
+         Die mag de hele breedte pakken; hun kop hoort bij de wereld eronder en
+         zweeft mee. Ze zetten hun eigen --kolom (100% / 860 / 420) en hebben
+         geen gedeelde regel nodig.
+
+       GEBRUIK (kleedkamer, trofeeën, ouderdeel, nieuwe ster) -- dit is inhoud
+         om te lezen en te bedienen. Die staat gecentreerd in een kolom, en
+         DAAR HOORT DE KOP BIJ: zodra het venster breder is dan de kolom
+         krimpt de plakkende kop mee, zodat de terugknop links en de eerste
+         kaart eronder op dezelfde lijn beginnen. Op een telefoon verandert er
+         niets -- daar ís de schermrand de kolomrand.
+
+     De 740 is de smalste tablet staand (768) min wat marge: daaronder blijft
+     alles vol. Het +2x--rand is precies de overbloeding die de kop op een
+     telefoon ook heeft, zodat hij op elke maat even ver buiten de kolom steekt.
+     Dit stond eerder alleen op #screen-dress; de kast en het ouderdeel misten
+     hem en rekten daar hun kop wél uit tot de vensterrand. */
+  @media (min-width: 740px) {
+    .screen.gebruik .hub-sticky {
+      width: min(100%, calc(var(--kolom) + var(--rand) * 2));
+      margin-left: auto; margin-right: auto;
+      border-radius: 0 0 var(--r-lg) var(--r-lg);
+    }
+  }
+  /* Schermwissels waren een harde knip. Tussen twee vlakke verlopen valt dat
+     niet op; zodra er straks getekende achtergronden staan wel. Een animatie
+     (geen transition): het element komt uit display:none, en daar loopt geen
+     transition op. Opnieuw hetzelfde scherm tonen herstart hem niet -- show()
+     haalt .active weg en zet hem in dezelfde taak terug -- dus nogmaals op
+     hetzelfde tabblad tikken geeft geen flits. */
+  .screen.active { display: flex; animation: screenIn .18s ease both; }
+  @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
+  /* FASE 6B -- het éérste scherm komt niet op, het staat er.
+
+     screenIn begint bij opacity 0, en hij begint zodra de opmaak van #screen-profile
+     doorgerekend is -- dus tijdens het inlezen van de pagina, ruim voordat het
+     scriptblok onderaan aan de beurt is. Het eerste beeldje dat een kind te zien kreeg
+     was daardoor niet het startscherm maar de kále verloopachtergrond van <body>,
+     met alleen het tandwiel erop: 180 ms (gemeten op een snelle machine met het
+     bestand ernaast; op een telefoon meer) een leeg paars vlak dat bovendien
+     lichter is dan het startscherm zelf, want de schil (.app-sfeer) legt daar juist
+     een donkere avond overheen. Een fade die iets binnenhaalt dat er al hoort te
+     staan is geen overgang maar een flits.
+
+     body.start staat in de opmaak en gaat er in show() af, bij de eerste échte
+     schermwissel. Alles wat daarna komt fadet gewoon; alleen de eerste aanblik niet. */
+  body.start .screen.active { animation: none; }
+
+  h1.title {
+    font-size: clamp(28px, 5.4vw, 46px);
+    font-weight: 700; letter-spacing: .5px;
+    text-shadow: var(--op-vlak-ink), 0 4px 12px rgba(0,0,0,.28);
+    margin: 10px 0 4px;
+    text-align: center;
+  }
+  .subtitle { opacity: .92; margin-bottom: 18px; text-align: center; font-size: var(--tx-body); font-weight: 500; }
+
+  .btn {
+    font-family: inherit; font-size: var(--tx-sub); font-weight: 600; color: var(--purple-shadow);
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    border: none; border-radius: var(--r-md); padding: 14px 26px; cursor: pointer;
+    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
+    transition: transform var(--t-tik), box-shadow var(--t-tik);
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
+  .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; }
+  /* .purple/.gray zetten hun eigen achtergrond, dus ook expliciet hun
+     eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
+     gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is.
+     (Er was ook een .green; geen enkele knop droeg hem nog. De groene
+     kleurtrap --green-* zelf is wél in gebruik: goede antwoorden.) */
+  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
+  .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
+  /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
+  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); }
+  .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
+  /* .small zet alleen de MAAT (en dus de kleinere lip); de kleur van die lip
+     hoort bij de kleurvariant. Dat ging hier mis: .btn.small stond ná .btn.purple
+     in het blad en overschreef diens paarse lip met de gouden -- elke kleine
+     paarse knop in het ouderdeel (Nieuwe ster maken, Back-up maken) stond op een
+     oranje randje. Nu draagt elke variant zijn eigen kleine lip. */
+  .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
+  .btn.small.purple { box-shadow: 0 3px 0 var(--purple-shadow); }
+  .btn.small.gray   { box-shadow: 0 3px 0 var(--gray-shadow); }
+  .btn.small:active { box-shadow: 0 1px 0 var(--gold-cta-shadow); }
+  .btn.small.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
+  .btn.small.gray:active   { box-shadow: 0 1px 0 var(--gray-shadow); }
+  /* De tweede knop op een wit vel. .soft is gemaakt voor het paarse scherm (een
+     lichte glazen vulling) en verdwijnt op papier. Dit is dezelfde taal als een
+     niet-gekozen .chip -- witte vulling, paarse letter, een fijne rand -- en dus
+     geen nieuwe knopsoort, maar wel een tweede gewicht waar er tot nu toe maar
+     één was. */
+  .btn.small.paper {
+    color: var(--purple-mid); background: var(--c-white);
+    border: 1.5px solid var(--paper-border); box-shadow: 0 2px 0 var(--paper-border);
+  }
+  .btn.small.paper:hover { border-color: var(--purple-light); }
+  .btn.small.paper:active { transform: translateY(2px); box-shadow: none; }
+  /* secundaire knoppen: rustig, maar met een vleugje kleur (lichter dan de gouden hoofdknop) */
+  .btn.soft {
+    font-size: var(--tx-body); padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
+    border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  }
+  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
+
+  /* ---- Sterrenkeuze ----
+     Dit scherm stelt één vraag -- "wie speelt er?" -- en het antwoord is een tik
+     op jezelf. Het is dus geen overzicht en geen dashboard: elke tegel toont wie
+     je bent en waar je gebleven was, en verder niets. Geen kale tellers om
+     zusjes mee te vergelijken. */
+  /* verticaal gecentreerd via auto-marges: veilig bij overloop (justify-content:
+     center zou op lage/liggende schermen de bovenkant onbereikbaar knippen) */
+  #screen-profile { position: relative; padding-bottom: 30px; }
+  /* ---- Het spelogo --------------------------------------------------------
+     De kop van dit scherm wás tekst en is nu de tekening van de naam. Die
+     tekening brengt haar eigen behandeling mee -- rand, schaduw, gloed, sterren
+     -- dus hier komt er niets bovenop: geen paneel, geen tweede gloed, geen
+     ondertitel. Alles wat deze regels doen is de maat bepalen.
+
+     En dat gebeurt met één waarde, langs drie grenzen tegelijk:
+
+       74%    de breedte van het scherm, met een marge die ook op 320 px blijft
+              staan. Dit is de maat die het logo de hoofdrol geeft.
+       400px  op een tablet houdt het ergens op: een logo van een halve meter
+              breed is geen logo meer.
+       33vh   de hóógte, uitgedrukt in breedte -- de tekening is 3:1, dus 33vh
+              breed is 11vh hoog. Dit is de grens die op een laag of liggend
+              scherm ingrijpt, en die maakt dat er geen tweede opmaak per
+              schermmaat nodig is: hij knijpt vanzelf mee.
+
+     Bij de twee bovengrenzen komt --focus-groei op (zie het skelet bovenaan), en
+     bij de 74% met opzet níét. Die 74% is de telefoonmaat en daar valt niets te
+     winnen -- op een telefoon is --focus-groei toch nul, en op een bureaublad is
+     74% van 1440 al lang niet meer de bindende grens. Wat daar wél bond waren de
+     400 en de 33vh, en precies die twee waren op een telefoon afgeregeld: op
+     1440x900 kwam het logo op 297 uit, drie pixels minder dan op een Pixel. Met
+     de groei erbij is dat 405 -- een logo dat het blok eronder weer draagt in
+     plaats van erboven te zweven.
+
+     margin-top:auto is de auto-marge waarmee dit blok (logo + sterren + knop)
+     verticaal in het midden staat; .profile-spacer duwt van onderaf terug. Die
+     stond hiervoor op de tekstkop en hoort nu hier. */
+  .spellogo { margin: auto 0 0; padding: 0 16px; text-align: center; position: relative; }
+  /* ---- Sterretjes op de achtergrond --------------------------------------
+     Hier hingen twee vonkjes vást aan het logo, elk met een eigen eeuwige
+     CSS-animatie van 17 en 23 seconden waarvan ze maar 7% van de ronde zichtbaar
+     waren. Dat gaf precies één vonkje per acht à negen seconden, altijd op
+     dezelfde twee plekken en altijd even groot -- en tussendoor lange gaten
+     waarin het scherm weer helemaal stilstond.
+
+     Nu is het een laagje met drie herbruikbare vonkjes waar de JS mee rondgaat
+     (zie vonkje): elk vonkje krijgt bij het aangaan een eigen plek, maat en
+     duur, en de volgende wordt na een begrensde toevalspauze ingepland. Drie is
+     precies genoeg -- twee die vlak na elkaar komen plus eentje bij het logo --
+     en meer dan drie kán dus ook niet, want een bezet vonkje wordt overgeslagen.
+
+     Dat het een animatie per keer is en geen eeuwige lus is het hele punt: een
+     ritme dat je kunt voorspellen leest als een lus, een ritme dat je niet kunt
+     voorspellen leest als sprankeling. */
+  .vonk-laag { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .vonk-laag .vonk {
+    position: absolute; line-height: 1; opacity: 0;
+    color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);
+  }
+  /* Kort en klein: opkomen, even staan, weer weg. Alleen doorzichtigheid en een
+     minieme draai-en-schaal, dus het kost niets en het verschuift niets. */
+  .vonk-laag .vonk.aan { animation: vonkje 800ms ease-in-out; }
+  @keyframes vonkje {
+    0%   { opacity: 0; transform: scale(.3) rotate(-20deg); }
+    40%  { opacity: 1; transform: scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: scale(.55) rotate(16deg); }
+  }
+  /* Beperkte beweging: de JS plant hier niets in (zie landingLeeft) en het laagje
+     blijft sowieso leeg. */
+  @media (prefers-reduced-motion: reduce) { .vonk-laag { display: none; } }
+  /* contain is een vangnet en geen opmaak: mocht een afgeleide ooit met een
+     andere verhouding terugkomen, dan wordt hij hier kleiner getekend en niet
+     uitgerekt of bijgesneden. */
+  .spellogo img {
+    display: block; margin: 0 auto;
+    width: min(74%, calc(400px + var(--focus-groei)), calc(33vh + var(--focus-groei)));
+    height: auto;
+    object-fit: contain;
+  }
+

@@ -1,0 +1,913 @@
+  /* ==== De letter: Fredoka, en hij staat hier naast het spel ==================
+     Hiervoor kwam hij van fonts.googleapis.com. Dat werkt -- tot het moment
+     waarop deze app voor gemaakt is: een tablet in een woonkamer, zonder net.
+     Wat er dan gebeurde:
+
+       - de eerste start zonder net gaf géén Fredoka. De terugvallen waren
+         "Comic Sans MS", "Segoe UI", "Trebuchet MS" -- drie letters die op
+         Windows en macOS bestaan en op Android geen van drieën. Een kind met
+         een Android-tablet kreeg dus Roboto, en daarmee een ander spel dan het
+         spel dat op het logo staat.
+       - de <link> naar Google was een stijlblad in de <head>, en dus een
+         blokkade vóór het scriptblok eronder. Op een trage verbinding stond het
+         hele spel te wachten op een lettertype (zie ook de noot in
+         test/browser.js, waar de tests dat om dezelfde reden afvangen).
+       - en het was het enige verzoek dat deze app ooit buiten de deur deed. Een
+         rekenspel voor kinderen hoort geen derde partij te laten weten wanneer
+         er gespeeld wordt.
+
+     Nu staat het bestand onder assets/, en dat is niet toevallig: sw.js
+     behandelt álles onder /assets/ als tekening -- voorraad-eerst, in een cache
+     die niet met een uitgave meegaat. De letter wordt dus één keer opgehaald en
+     daarna nooit meer, precies zoals een wereldtekening. Er hoefde geen regel
+     bij in de servicewerker.
+
+     Eén bestand per subset, en het is een variabele letter (300-700 in één
+     bestand): 400, 500, 600 en 700 komen er alle vier uit, zonder vier
+     downloads. latin is 29 kB en draagt het hele spel; latin-ext is 4 kB en
+     wordt alleen opgehaald als er een naam wordt getypt die 'm nodig heeft --
+     dáár is unicode-range voor. De preload in de <head> geldt alleen voor
+     latin, want dat is de enige die élke start nodig heeft.
+
+     font-display: swap blijft staan: liever meteen leesbare tekst in de
+     reserveletter dan een leeg scherm. Vanaf de tweede start is er niets te
+     swappen, want dan komt hij uit de voorraad.
+
+     De letter is Fredoka (SIL Open Font License 1.1); assets/font/OFL.txt is de
+     licentie, en die hoort erbij te blijven staan. */
+  @font-face {
+    font-family: 'Fredoka';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('assets/font/fredoka-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                   U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                   U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fredoka';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('assets/font/fredoka-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                   U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                   U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
+  /* ===========================================================================
+     DE AFSPRAAK -- kleur en letter van Rekensterren, in één scherm
+     ===========================================================================
+     Hieronder staan honderd tokens met elk hun eigen verhaal. Dit stuk is de
+     inhoudsopgave ervan: het zegt welke je pakt, niet waarom hij die waarde
+     heeft. Wie een nieuw scherm bouwt heeft hier genoeg aan.
+
+     ---- DRIE LAGEN, EN ZE MOGEN ELKAAR NIET OVERSCHRIJVEN -------------------
+     1  GEDEELD  wat overal hetzelfde is: de letter, de vlakken, de knoppen, de
+                 navigatie, de koppen. Eén wereld mag hier niets aan veranderen.
+     2  BETEKENIS wat een kleur zégt: goed, fout, verdiend, aan, op slot. Ook
+                 hier heeft een wereld niets te zoeken -- "groen is goed" hoort
+                 in de IJswereld hetzelfde te zijn als in de Jungle.
+     3  WERELD   waar een wereld wél over gaat: zijn tekening, zijn lucht, zijn
+                 gloed, zijn weg. Vier kanalen (--w-sky/--w-deep/--w-glow/
+                 --w-road), gezet door applyWorldTheme, en verder niets.
+
+     ---- §1 KLEUR: waar de app van gemaakt is --------------------------------
+     Violet is de grond (--bg-1..4). Het logo staat erop met goud, ijsblauw en
+     magenta, en dat zijn precies de drie accenten die de app verder gebruikt:
+
+       GOUD     --gold-* / --goud-*   "dit heb je verdiend / dit staat aan"
+       CYAAN    --cyaan-*            "hier ben je / hier kijk je naar"
+       MAGENTA  --pink-*             feest. Versiering, nooit een stand.
+
+     Goud en cyaan zijn elkaars tegenpool en dát onderscheid is de hele taal:
+     goud is wat áchter je ligt, cyaan is waar je nú staat. Zet nooit goud op
+     iets dat alleen maar geselecteerd is, en nooit cyaan op iets dat verdiend is.
+
+     ---- §2 BETEKENIS: één kleur per begrip ----------------------------------
+       hoofdknop / spelen      --gold-cta-top/-bottom/-shadow (+ --btn-lip)
+       tweede knop             --purple-mid/--purple-light/--purple-shadow
+       antwoordknop in het spel --purple-input-*  (bewust een eigen paars: dit is
+                               de enige knop die een kind honderd keer per show
+                               indrukt, en hij hoort niet op "hoofdknop" te lijken)
+       goed / klaar            --green-top/--green-deep/--green-shadow
+       fout                    --red-answer-600/--red-answer-shadow
+       gevaar (ouderdeel)      --red-danger-500/--red-danger-shadow
+       verdiend / beheerst     --goud-* (zie de trap bij "Goud als toestand")
+       aan / geselecteerd      --cyaan-tint + --cyaan-rand (balk: --nav-sel)
+       op slot / nog niet      --gray-* voor knoppen, --slot-* voor haltes.
+                               Nooit rood: "later" is geen fout.
+       diamanten               het teken 💎 en een neutrale pil, en met opzet
+                               géén eigen kleur -- ijsblauw is al vergeven aan
+                               "hier ben je", en twee dingen in dezelfde kleur is
+                               precies wat dit stelsel probeert te voorkomen.
+
+     ---- §3 VLAKKEN: vier soorten, en een kaart hoort bij precies één --------
+       de schil        het verloop van <body>: de sfeer buiten de werelden om
+       de tekening     een wereldkaart of een schilderij: een eigen ondergrond
+       --vlak*         het nutskaartje: een plankje op een scherm (kast, kleedkamer)
+       --paneel*       het zwevende paneel: glas boven een scherm (eindkaart, feest)
+       --kop-plaat*    de plakkende kop van een gebruiksscherm
+       --hud-*         de zwevende kop van een wereldscherm (lichter dan de rest)
+       --paper-*       het ouderdeel: wit papier, rustige letters, geen feest
+     Een doorzichtig zwart of wit dat níets betekent schrijf je gewoon uit.
+
+     ---- §4 OP EEN TEKENING: wanneer mag tekst rechtstreeks op kunst? --------
+     De achtergronden van Landing, Kleedkamer en Trofeeën worden later vervangen.
+     Daarom staat hier een regel en geen afstemming op de tekening van vandaag:
+
+       a  KORTE TEKST, GROOT EN VET  -- mag rechtstreeks op de tekening, mits
+          --op-kunst-ink eronder staat. Die schaduw is zo gekozen dat hij het óók
+          wint van een lichte lucht: hij is donker en zit strak om de letter.
+          Voorbeeld: de wereldnaam in de kop, de labels in de balk onderaan.
+       b  MEER DAN TWEE WOORDEN, OF KLEINE TEKST -- er hoort een veeg onder:
+          --op-kunst-veeg, met --veeg-rgb om 'm warm of koel te zetten. Lokaal,
+          dus alleen waar de tekst staat en niet over het halve scherm.
+       c  EEN BLOK TEKST, EEN FORMULIER, EEN GETAL DAT KLOPPEN MOET -- dan geen
+          tekening eronder maar een vlak uit §3. Het ouderdeel en de vraagkaart
+          in het spel staan daarom op wit en niet op sfeer.
+     Wat hier NIET mag: een dekkend paneel of een schermbrede sluier omdat één
+     tekening toevallig te licht is. Dan is de tekening aan de beurt, niet de CSS.
+     Tekst op een vlak van de app krijgt --op-vlak-ink en verder niets.
+
+     EN ÉÉN AFSPRAAK OVER DE ONDERGROND ZELF. De gedeelde kaartjes (--vlak) zijn
+     licht-op-donker: ze hebben wit op .075 en halen hun contrast dus uit wat
+     erachter staat. Dat is met opzet -- het is wat ze glas maakt in plaats van
+     dozen -- maar het betekent wél dat een schermtekening donker moet blijven
+     waar de inhoud staat. Daar is één plek voor, en die staat vast:
+       een schermtekening gaat in `#screen-<naam>.app-sfeer::before`, als laag
+       ónder --kunst-sluier -- precies zoals de sterrenkeuze het vandaag doet.
+     Zie de noot bij --kunst-sluier. Zolang dat gebeurt kan élke tekening
+     vervangen worden zonder dat er één regel kleur of letter mee hoeft. Gebeurt
+     het níet -- een tekening als losse laag erbovenop, of in ::after -- dan zijn
+     de namen in de kleedkamer en de kast bij een lichte tekening onleesbaar, en
+     is dát het gebrek en niet de kleur van de letter.
+
+     ---- §5 DE LETTER: zeven maten, vier gewichten --------------------------
+       --tx-mini   11  een telletje, een maatje, een tabje
+       --tx-klein  13  compact label, chip, bijschrift
+       --tx-label  15  label, tweede regel, een regel in een lijst
+       --tx-body   17  lopende tekst, uitleg, het label op een knop
+       --tx-sub    20  sectiekop, de kop van een paneel
+       --tx-kop    24  de kop van een scherm
+       --tx-groot  28  de hoofdknop, een groot getal
+       --tx-feest(-kort)  de kop van een feestje (meeschalend)
+     Daarbuiten vallen met opzet twee dingen: de SPELLETTERS (de som, de
+     antwoordknoppen, de telkaarten) zijn per breekpunt afgeregeld omdat
+     leesbaarheid daar boven netheid gaat -- en de MAAT VAN EEN TEKEN (emoji,
+     pijltje, de ster op een halte) is geen letter maar een afmeting, en staat
+     daarom als getal in de regel zelf.
+     Gewichten: 700 draagt, 600 licht toe, 500 is lopende tekst in het ouderdeel.
+     Er is geen 800 of 900 -- die bestaan niet in dit lettertype.
+
+     ---- §6 WAT EEN WERELD MAG -----------------------------------------------
+     Precies vier kanalen, gezet in WORLDS.theme en nergens anders:
+       sky / deep   het verloop van de zaal en de kaart
+       glow         de warme veeg onderaan
+       road         de nog niet afgelegde route
+     applyWorldTheme zet elk kanaal ook als "r,g,b" (--w-*-rgb), zodat de CSS er
+     lagen van kan maken. Er is een vijfde kanaal voorzien (accent) dat nog geen
+     wereld gebruikt; het is er voor een decoratief accent, niet voor een stand.
+     Een wereld raakt goed/fout/verdiend/diamanten/navigatie NOOIT aan.
+     =========================================================================== */
+  :root {
+    /* ---- Backdrop / brand gradient ----
+       --bg-3 was #f107a3: fel magenta, onderaan élk scherm. Dat zette de heetste
+       kleur van de app precies onder de duimen van het kind, en het maakte het
+       voetlicht van de reiskaart (.map-ground) onzichtbaar -- een warme gloed
+       heeft niets om tegen op te lichten als de ondergrond zelf al gloeit.
+
+       Nu loopt het verloop van nachtlucht (1) via violet (2) naar een warme
+       band (3) en eindigt het in een donkere vloer (4): elk scherm heeft
+       daarmee een horizon in plaats van alleen kleur. --bg-glow-warm is het
+       licht dat er net achter staat; magenta gaat terug naar de rol waar hij
+       wél werkt, een gloed in de lucht (--bg-glow-pink). ---- */
+    --bg-1: #33084c;   /* nachtlucht, bovenaan  */
+    --bg-2: #7b2ff7;   /* violet, het midden    */
+    --bg-3: #6d2a80;   /* waar het licht van onderen begint */
+    --bg-4: #3a0f48;   /* de vloer, het donkerst */
+    --bg-glow-pink: rgba(255,120,220,.30); --bg-glow-blue: rgba(80,200,255,.24);
+    --bg-glow-warm: rgba(var(--voetlicht-rgb),.58);
+
+    /* (--scene-scrim stond hier: een sluier voor een geschilderde schermachtergrond.
+       Die achtergronden zijn er niet meer -- de schil (.app-sfeer) doet dat werk --
+       en het token werd nergens meer gelezen. Fase 5E heeft hem weggehaald.) */
+
+    /* ---- Neutrals ---- */
+    --c-white: #fff; --c-ink: #333;
+
+    /* ---- Gold. Er waren er veertien; elk kwam ooit binnen voor één component
+       en bleef staan, waardoor "goud" als kleur niets meer betekende. Nu zes,
+       met elk een eigen rol:
+         cta-top/bottom/shadow -- de hoofdknop (spelen), inclusief zijn schaduwlip
+         accent                -- "verdiend / dit staat aan" (randen, badges, balken)
+         light                 -- goud als tékst op donker (leesbaar)
+         ink-on-gold(-card)    -- tekst óp goud
+       Alles wat hier weg is, is naar de dichtstbijzijnde van deze zes gegaan. ---- */
+    --gold-cta-top: #ffc23d; --gold-cta-bottom: #ff8f00; --gold-cta-shadow: #b36200;
+    --gold-accent: #ffd740; --gold-light: #ffe082;
+    --ink-on-gold: #5d2a00; --ink-on-gold-card: #7a4f00;
+
+    /* ---- Purple: brand / secondary actions ---- */
+    --purple-light: #ab47bc; --purple-mid: #8e24aa; --purple-mid-rgb: 142,36,170; --purple-shadow: #4a148c;
+    /* ---- Purple: answer-input controls (choice-btn / num-btn), kept distinct ---- */
+    --purple-input-top: #8e5fd6; --purple-input-bottom: #5e35b1; --purple-input-shadow: #311b92;
+    /* ---- Purple: misc singles, kept distinct ---- */
+    --purple-deep: #7b1fa2; --purple-golden-accent: #6a1b9a; --purple-ink: #32115f;
+
+    /* ---- De speellaag op de wereldkaart -------------------------------------
+       Eén set waarden voor álle werelden. De tekening eronder is per wereld
+       anders; de route, de haltes en de sterren horen dat níet te zijn -- een
+       kind dat van de Junglewereld naar de IJswereld loopt moet dezelfde taal
+       blijven lezen. Daarom staan ze híer en niet bij de wereldkleuren
+       (--w-sky/--w-deep/--w-glow/--w-road), die wél per wereld gezet worden.
+
+       Wat ze moeten kunnen: leesbaar blijven op een lichte lucht, op nat zand,
+       op donkere rotsen én op druk gebladerte, zonder dat er per wereld iets
+       wordt bijgesteld. Dat lukt door onder élk goud-of-wit element een donkere
+       pruim te leggen: de donkere laag draagt het op een lichte ondergrond, de
+       lichte laag draagt zichzelf op een donkere.
+
+       Vol goud (--gold-accent) is op dit scherm één ding: de halte waar je NÚ
+       speelt. Alles wat daar niet is, staat een trap lager -- de afgelegde weg in
+       een gedempt goud, een afgemaakte halte in een warme rand. Zonder die trap
+       is het goud van de huidige halte niets bijzonders meer: dan staan er acht
+       gouden dingen op de kaart en moet een kind zoeken welk ervan de bedoeling
+       is (zie fase 4C).
+
+       route-onder  de donkere pruim ónder de gestippelde route
+       route-goud   het afgelegde stuk weg. Gedempt goud en geen --gold-accent:
+                    de weg loopt over de hele tekening en zou in vol goud de
+                    luidste vorm op het scherm zijn -- luider dan de halte waar
+                    het om gaat.
+       stop-keyline het donkere haarlijntje net buiten de rand van een halte
+       stop-schaduw de zachte contactschaduw waarmee een halte op de tekening rust
+       halte-rand   de rand van een gespeelde halte. Warm wít en nadrukkelijk
+                    géén goud: goud op deze kaart is er voor "af" (de ring) en
+                    voor "hier speel je" (de vulling), en een gespeelde halte is
+                    geen van beide. Zolang hij hier óók goud was, waren op ware
+                    telefoongrootte een gespeelde en een perfecte halte twee
+                    gouden ringetjes die maar een haartje verschilden -- en dan
+                    moet je vergelijken in plaats van zien.
+       perfect-ring een gouden ring BUITEN de rand van een halte op drie sterren,
+                    plus perfect-gloed als heel zachte staart eromheen. Samen het
+                    teken dat "af" van "gespeeld" onderscheidt zonder het rondje
+                    zelf te verbouwen -- en bewust géén vulling, want een gouden
+                    vulling betekent op deze kaart precies één ding.
+       slot-vulling de vulling van een halte die nog niet aan de beurt is. DEKKEND,
+                    en dat is het hele punt: half doorzichtig pruim liet de
+                    tekening én de weg er dwars doorheen praten, en dan staat er
+                    geen bestemming maar een vlek waar toevallig een cijfer in
+                    hangt. Niet grijs (grijs leest als kapot) en niet donkerder
+                    dan de rest: het is een STOFFIGE LEISTEENVIOLET -- dezelfde
+                    familie als de pruim van een gespeelde halte, met ongeveer
+                    dezelfde helderheid, maar met driekwart van de verzadiging
+                    eraf. #4a148c is HSL(275, 75%, 32%); deze is HSL(255, 23%,
+                    32%). Dát verschil is waar "later" en "gehaald" uit elkaar te
+                    houden zijn, ook uit je ooghoek: het koninklijke paars is van
+                    wat je verdiend hebt, het stoffige van wat er nog ligt. Sinds
+                    het slotje weg is draagt deze kleur dat verschil alléén, samen
+                    met het ontbrekende sterrentabje en de plek op de route. Dus niet donkerder maken om hem stiller te
+                    krijgen -- dat kost alleen het cijfer.
+       slot-vulling-top
+                    de bovenkant van diezelfde vulling, een tikje lichter. Samen
+                    zijn ze een verloop van niets bijzonders -- precies genoeg om
+                    het rondje bol te laten staan zoals alle andere haltes, en te
+                    weinig om als glans op te vallen.
+       slot-rand    de zachte lavendelgrijze haarrand daarvan (.3, en dus een
+                    tint zachter dan de rand van welke andere staat ook). Die doet hetzelfde
+                    werk als het donkere keylijntje, maar de andere kant op: de
+                    dekkende vulling draagt zichzelf op sneeuw en suikerglazuur, en
+                    op de donkere rots van de Jungle- en Toverwereld is deze
+                    lichte rand het enige dat de halte nog begrenst. Samen zijn ze
+                    het lichte/donkere paar waar de hele draaglaag op rust. Geen
+                    vol wit maar een lavendeltint, zodat hij bij de stoffige
+                    vulling hoort in plaats van er als een lichtje op te liggen.
+                    Nu de vulling dekkend is, mengt deze rand met de vulling
+                    eronder en niet meer met de tekening -- hij is dus in élke
+                    wereld dezelfde kleur, en dat was hij eerder niet.
+       ster-tab     het donkere tabje waar de drie sterren in liggen
+       ster-tab-vol hetzelfde tabje als alle drie de sterren vol zijn -- dát is
+                    waar "perfect" aan te zien is, en niet aan een eigen insigne
+       ster-leeg    een nog niet verdiende ster (zichtbaar, maar stil)
+       ster-vol     een verdiende ster                                          */
+    --route-onder: rgba(38,12,64,.78);
+    --route-goud: rgba(var(--warm-licht-rgb),.82);
+    --stop-keyline: rgba(26,7,48,.55);
+    --stop-schaduw: rgba(12,2,26,.5);
+    /* --halte-rand-rgb los erbij omdat de reis dezelfde warm-witte rand een slag
+       steviger nodig heeft: daar ligt hij om een tekening en niet om een rondje van
+       30 pixels (zie .reis-halte.uit). Eén kleur, twee dekkingen -- en dan blijft
+       "afgemaakt" op beide kaarten dezelfde kleur als er ooit aan gedraaid wordt. */
+    --halte-rand-rgb: 255,240,214;
+    --halte-rand: rgba(var(--halte-rand-rgb),.44);
+    --perfect-ring: rgba(var(--warm-licht-rgb),.82);
+    --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
+    --slot-vulling: #483f64;
+    --slot-vulling-top: #564c73;
+    --slot-rand: rgba(222,214,255,.3);
+    --ster-tab: rgba(38,12,64,.74);
+    --ster-tab-rand: rgba(255,255,255,.16);
+    --ster-tab-vol: rgba(92,48,10,.76);
+    --ster-tab-vol-rand: rgba(var(--warm-licht-rgb),.5);
+    --ster-leeg: rgba(255,255,255,.5);
+    --ster-leeg-rand: rgba(20,5,40,.56);
+    --ster-vol: #ffd740;
+    --ster-vol-rand: rgba(146,84,0,.55);
+
+    /* ---- De vier wereldkanalen, en wat een wereld zónder kleur doet ---------
+       Zie §6 van de afspraak bovenaan: dit is álles wat een wereld mag zetten.
+       applyWorldTheme schrijft ze op het element van het wereldscherm; hieronder
+       staat wat er geldt als een wereld een kanaal overslaat.
+
+       Die terugval stond tot nu toe NIET hier maar dertig keer in het blad, als
+       `var(--w-sky, #3d1a63)`. Dat is dezelfde afspraak op dertig plekken, en dan
+       is het een kwestie van tijd tot de eenendertigste hem anders schrijft --
+       #2a0c47 stond er tien keer, #3d1a63 vijf keer, en de gloed had twee
+       verschillende doorzichtigheden als terugval, afhankelijk van wélke regel je
+       toevallig las. Nu staat de terugval op één plek en leest de rest gewoon
+       var(--w-sky). LET OP: daarom moeten deze vier hier blíjven staan. Haal je
+       ze weg, dan is var(--w-sky) op een scherm zonder wereldkleur ongeldig, en
+       een ongeldige var() maakt de héle regel eromheen ongeldig -- dan valt niet
+       de kleur weg maar de achtergrond.
+
+       De hex-vorm en de "r,g,b"-vorm staan er allebei, en dat is geen dubbelop:
+       de wereldstudio bewerkt de kleuren met <input type="color"> en dat veld kent
+       alleen #rrggbb (zie WERELDEN-BEGIN), terwijl de zaal juist uit
+       halfdoorzichtige lagen over elkaar bestaat en dus rgba(var(--w-deep-rgb),.6)
+       nodig heeft. applyWorldTheme zet ze samen -- één bron, twee schrijfwijzen.
+
+       Waarom niet color-mix(): dat zou hetzelfde doen in één regel, maar het is
+       de jongste van de twee en deze app draait ook op oudere tablets. Een komma
+       gescheiden drietal werkt overal waar rgba() werkt, en dat is overal. */
+    --w-sky: #3d1a63;
+    --w-deep: #2a0c47;
+    --w-glow: rgba(var(--warm-licht-rgb),.34);
+    --w-road: rgba(255,255,255,.42);
+    --w-sky-rgb: 61,26,99;
+    --w-deep-rgb: 42,12,71;
+    --w-glow-rgb: var(--warm-licht-rgb);
+
+    /* ---- Green: success / done. The original #66bb6a/#43a047 gradient only
+       reached 2.36-3.3:1 contrast for the white text/glyphs on top of it --
+       well under WCAG AA's 4.5:1. --green-top/--green-deep is a darker two-stop
+       gradient that clears AA at both ends (4.79:1 / 5.13:1); --green-shadow
+       stays a genuinely separate, darker shadow-lip color (not reused as the
+       gradient's own bottom stop -- doing that once collapsed the visible
+       "edge" between the button face and its shadow, flattening the 3D look). ---- */
+    --green-top: #457f48; --green-deep: #2e7d32; --green-shadow: #1b5e20;
+    --green-badge-bg: #e3f7e7;
+
+    /* ---- Red: kept as two distinct pairs (wrong-answer vs. parent danger-zone).
+       red-danger-500 is a darkened red-500 (not a plain reuse) so white button
+       text clears WCAG AA contrast (4.5:1) at every point of the gradient --
+       the original #ef5350/#e53935 pair only reached 3.49-4.23:1. ---- */
+    --red-500: #ef5350;
+    --red-answer-600: #d32f2f; --red-answer-shadow: #8e0000;
+    --red-danger-500: #cb4744; --red-danger-shadow: #a31414;
+
+    /* ---- Gray: neutral / locked / unavailable ---- */
+    --gray-top: #90a4ae; --gray-bottom: #607d8b; --gray-shadow: #37474f;
+
+    /* ---- Blue: active / selected / info ---- */
+    --blue-fill-top: #38bdf8; --blue-fill-bottom: #6ad3ff; --blue-text: #8fd6ff;
+    --blue-ring: rgba(143,214,255,.2);
+
+    /* ---- Pink accents (kast bar / stat bar / trophy pop) ---- */
+    --pink-accent: #ff80ab; --pink-hot: #ff4081; --pink-deep: #f50057; --pink-light: #ffd6f4;
+
+    /* ---- "Paper" theme: parent-facing screens (settings / modal / gear-menu) ---- */
+    --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
+    --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
+    /* Het vel zelf, zwevend boven de schil: bijna wit, maar met een zweem van de
+       paarse achtergrond erdoorheen, plus de fijne ring die er altijd omheen
+       hoort. Gebruikt door het instellingen-paneel onder het tandwiel; de vaste
+       kaarten (.set-card) blijven vol wit -- die liggen op het scherm en zweven
+       er niet boven. */
+    --paper-surface: rgba(255,255,255,.96); --paper-ring: rgba(142,36,170,.14);
+    /* Hetzelfde papier, maar dan mét de warme kant van de app erin. Voor het ene
+       vel dat NIET in het ouderdeel staat: het maakformulier, dat een kind ziet
+       en dat op de sterrenpoort ligt. Vol wit (#fff) is daar een gat in de
+       tekening -- de enige echt koude, echt neutrale vlek op een scherm dat
+       verder uit violet en amber bestaat. Dit is die vlek een graad warmer, en
+       verder niets: het blijft papier, het blijft dekkend, en de leesbaarheid
+       van de letter erop verandert er niet meetbaar van -- --c-ink (#333) haalt
+       er 12,2:1 tegen 12,6:1 op vol wit, en beide zijn ruim boven AA.
+       De ouderschermen blijven vol wit -- daar ligt het vel op een scherm en
+       niet op een tekening, en daar is koel papier juist goed. */
+    --paper-warm: #fffaf3;
+    --lavender-wash: #f3e9ff; --lavender-wash-2: #f4e9fb; --lavender-wash-3: #efe4f7;
+    --muted-lavender-text: #cfc6df; --muted-text-2: #d8d0e4; --muted-text-3: #e1e5ea; --lavender-text: #e6d6ff;
+
+    /* ---- Danger zone / practice chips (parent settings) ---- */
+    --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
+    --practice-bg: #fff3e0; --practice-text: #b3560d;
+    /* Voortgang-tab: twee betekenissen, twee kleuren. Er stonden zes tegels in
+       zes kleuren zonder dat de kleur iets zei -- decoratie op juist het scherm
+       dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
+       goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
+    --stat-green: #2e9e4f;
+
+    /* (Hier stond de --glass-*-familie: eenentwintig tokens van de vorm
+       rgba(0,0,0,.35) onder de naam --glass-black-35. Ze zijn weg. Een naam die
+       zijn eigen waarde herhaalt legt niets uit -- je moet 'm nog steeds opzoeken
+       om te weten wat er staat -- en hij hield de belofte ook niet: negenenvijftig
+       regels lazen een token, negenentachtig schreven dezelfde soort waarde er
+       gewoon naast. Eén plek om aan te draaien was het dus nooit.
+
+       De regel die ervoor in de plaats komt: een doorzichtig zwart of wit dat
+       níets betekent schrijf je uit. Betekent het wél iets -- een schaduwhoogte,
+       een vlak, een sluier over een tekening -- dan hoort het bij een van de
+       families hieronder (--e-1..3, --vlak*, --paneel*, --op-kunst-*) en heeft het
+       daar een naam die zegt wat het dóét. Zie ook §3 van de afspraak bovenaan.) */
+
+    /* ---- Hoekrondingen: één schaal van drie maten + de pil.
+       Hiervoor stonden er acht tokens én dertien losse waarden in het blad --
+       zeventien verschillende rondingen in één app, wat de belangrijkste reden
+       was dat losse componenten niet als één familie aanvoelden. De maten zijn
+       bewust gekozen rond het zwaartepunt van wat er al stond (12-16 / 18-20 /
+       24-28), zodat dit een opschoning is en geen restyling.
+         sm  -- chips, kleine knopjes, raamvakjes
+         md  -- kaarten, tegels, knoppen
+         lg  -- panelen, vellen, de vraagkaart
+         pill -- alles wat een pil is ---- */
+    --r-sm: 10px; --r-md: 16px; --r-lg: 24px; --r-pill: 999px;
+
+    /* ---- Diepte: drie hoogtes, meer niet. (De schaduw-"lip" onder een knop is
+       iets anders -- dat is de knopvorm zelf, zie --btn-lip.)
+         e-1 -- badge / portretje dat net van zijn ondergrond loskomt
+         e-2 -- kaart, paneel, plakkende kop
+         e-3 -- overlay die bovenop het scherm ligt ---- */
+    --e-1: 0 2px 7px rgba(0,0,0,.35);
+    --e-2: 0 10px 26px rgba(0,0,0,.35);
+    --e-3: 0 14px 34px rgba(0,0,0,.5);
+
+    /* ---- De vlakken: drie families, en elke kaart hoort bij precies één ----
+       FASE 5E. Er stonden drie manieren om "een kaartje op een paarse achtergrond"
+       te schrijven, en ze verschilden net genoeg om als toeval te lezen:
+       het kleedkamerkaartje op wit .075 met een rand van .10 en een haarlijn licht
+       bovenin, de trofeekaart op wit .07 met een rand van .14 en géén haarlijn, en
+       de plank eronder op weer een ander wit. Op ware grootte ziet niemand het
+       verschil tussen .07 en .075 -- maar je voelt wel dat de kast en de kleedkamer
+       niet hetzelfde materiaal zijn, en dat is precies wat fase 5E wil oplossen.
+
+       Drie families, meer niet:
+         --vlak*    het NUTSKAARTJE. Een plankje, geen doos: bijna geen rand, één
+                    haarlijn licht bovenin, en het vlak zelf doet de rest. Van de
+                    kleedkamer en de trofeeënkast -- de twee verzamelschermen, en
+                    dus de twee die als broer en zus horen te lezen.
+         --paneel*  het ZWEVENDE PANEEL. Diep aubergine glas met waas erachter: het
+                    eindscherm, de ster-status, het wereldfeest, een trofeefeestje.
+                    Alles wat bóven een scherm hangt in plaats van erop te staan.
+         --kop-plaat  de PLAKKENDE KOP van een gebruiksscherm. Dezelfde nacht als
+                    het paneel, maar een slag paarser: een richel en geen ruit.
+       Wat níet in deze lijst staat is de zwevende kop van de wereldschermen -- die
+       heeft zijn eigen, veel lichtere stof (--hud-*, zie onder). Dat verschil is
+       wél opzet: een wereldscherm draagt zijn kop, een gebruiksscherm draagt hem
+       niet. */
+    /* FASE 5E.1 -- de rand nog een trap terug (.12 -> .07) en de haarlijn mee
+       (.10 -> .07). Zeventien kaartjes met een rand van .12 onder elkaar lezen nog
+       steeds als een ráster van dozen, en dat was precies wat "een plankje, geen
+       doos" wilde voorkomen. Het vlak zelf (--vlak) blijft ongewijzigd en doet het
+       scheidingswerk; wat weggaat is alleen de omlijning.
+       De winst zit niet op de neutrale kaartjes maar op de andere: cyaan "hier kijk
+       je naar" en goud "dit staat aan" hebben nu een stillere buurman om zich van
+       te onderscheiden, en dáármee betekent hun rand ineens iets. Zelfde effect in
+       de trofeeënkast, die dezelfde token leest. */
+    --vlak: rgba(255,255,255,.075);
+    --vlak-rand: rgba(255,255,255,.07);
+    --vlak-top: inset 0 1px 0 rgba(255,255,255,.07);
+    --vlak-hover: rgba(255,255,255,.15);
+    --paneel: rgba(32,8,54,.8);
+    --paneel-rand: rgba(255,255,255,.2);
+    --paneel-waas: blur(12px) saturate(1.15);
+    --kop-plaat: rgba(43,7,71,.82);
+    /* Dezelfde kop, maar dan dicht: zodra er inhoud onderdoor schuift wordt de
+       richel ondoorzichtig (zie de noot bij #screen-trophies.gescrold). De kast en
+       het ouderdeel deden dat allebei al, met twee verlopen die 7 punten van
+       elkaar lagen (#3b0b60/#220337 tegen #34094f/#250538) -- hetzelfde ding,
+       twee keer gegokt. Eén verloop, en het sluit aan op de open stand hierboven. */
+    --kop-plaat-vol: linear-gradient(180deg, #34094f, #230637);
+
+    /* ---- Goud als tóestand, niet als kleur ---------------------------------
+       FASE 5E. "Verdiend" werd op zes plekken geschreven en met vier verschillende
+       gouden grondtonen: 255,214,90 op de trofeekaart, 255,215,64 op de mijlpaal,
+       255,179,0 op het prijspilletje en 255,170,0 in de gloed eromheen. Elk voor
+       zich prima; naast elkaar in één kolom is het vier keer bijna-hetzelfde-goud,
+       en dan betekent goud niets meer.
+
+       Nu één grondtoon -- die van --gold-accent, het goud dat de app al voor
+       "verdiend" gebruikt -- in twee trappen, en de trap ís de betekenis.
+
+       FASE 5E.1 heeft die trap afgemaakt. Na 5E stond "behaald" (een trofee die je
+       al hebt) op bijna dezelfde randsterkte als "klaar om te openen", en in een
+       kast met acht kaarten was dat weer één gouden vlak waarin het ene kaartje dat
+       om een tik vraagt niet meer opviel. Dus:
+
+         BEZONKEN -- je hebt het, het is klaar, er hoeft niets meer
+           --goud-tint-zacht + --goud-rand-zacht (+ hooguit --goud-gloed-zacht)
+           behaalde trofee, gepasseerde rang
+         LUID -- hier moet je nú naar kijken
+           vol --gold-accent als rand + --goud-tint als vulling + --goud-gloed
+           klaarliggende trofee, het kledingstuk dat aanstaat, de volgende rang
+
+       Vol --gold-accent als VULLING blijft waar het altijd al voor was: het ene
+       ding op dit scherm dat om een tik vraagt.
+
+       LET OP -- het VERLOOP (--gold-cta-top/bottom + de lip) is hier bewust géén
+       onderdeel van. Dat is de hóófdknop, en sinds fase 5E niets anders: zie §4
+       van de fase-opdracht en de noot bij .gold-pill. */
+    /* De vijf warme gronden. Hiervoor stonden er eenenveertig: het blad schreef
+       "goud" met 255,215,64 en met 255,214,90 en met 255,196,61 en met 255,193,7
+       en met achtendertig andere drietallen die er allemaal net naast zaten. Elk
+       ervan was ooit ter plekke gekozen en klopte daar; bij elkaar betekende goud
+       niets meer, want alles was een beetje goud.
+
+       Nu vijf, en de vraag die je stelt is niet "welke tint" maar "wat doet het":
+
+         --goud-rgb        HET GOUD. Vulling, rand, badge, pil: het spul zelf.
+         --goud-glans-rgb  DE GLANS eróp: de haarlijn bovenin, de veeg die
+                           overloopt, het vonkje. Licht dat van het goud af komt.
+         --goud-gloed-rgb  DE GLOED eromhéén. Amber, en warmer dan het goud zelf,
+                           want een gloed die dezelfde kleur heeft als zijn bron
+                           leest als een onscherpe rand in plaats van als licht.
+         --warm-licht-rgb  WARM LICHT IN DE RUIMTE: de gloed van een wereld, licht
+                           dat op een kaart valt, de halo om de halte waar je
+                           staat. Geen goud -- licht. Dit is ook de terugval van
+                           --w-glow, en dus wat een wereld zónder eigen gloed doet.
+         --voetlicht-rgb   HET VOETLICHT: de warme band onderaan een scherm, de
+                           hoeken van de schil. Het oranjegst van de vijf, en de
+                           enige die van onderen komt.
+
+       Ze staan als "r,g,b" en niet als kleur, want ze worden vrijwel altijd half
+       doorzichtig gebruikt -- zie de noot bij --w-sky-rgb over waarom dat een
+       komma-drietal is en geen color-mix(). */
+    --goud-rgb: 255,215,64;
+    --goud-glans-rgb: 255,236,168;
+    --goud-gloed-rgb: 255,193,7;
+    --warm-licht-rgb: 255,216,128;
+    --voetlicht-rgb: 255,170,70;
+    --goud-tint-zacht: rgba(var(--goud-rgb),.09);
+    --goud-tint: rgba(var(--goud-rgb),.15);
+    --goud-rand-zacht: rgba(var(--goud-rgb),.28);
+    --goud-rand: rgba(var(--goud-rgb),.5);
+    --goud-gloed-zacht: 0 0 12px rgba(var(--goud-gloed-rgb),.24);
+    --goud-gloed: 0 0 16px rgba(var(--goud-gloed-rgb),.46);
+
+    /* ---- Emoji staan ergens op ---------------------------------------------
+       FASE 5E. De app tekent met emoji, en die komen plat en zonder eigen licht
+       binnen. Waar er een contactschaduw onder stond zag dat er goed uit -- en waar
+       niet (de drie iconen in de balk onderaan, de categorierij, de trofee op zijn
+       kaart, de rangen in de ster-status) plakten ze op het glas.
+
+       Twee sterktes, en het verschil is waar de emoji óp ligt:
+         --emoji-schaduw       op een vlak van de app (kaartje, pil, balk)
+         --emoji-schaduw-diep  op een tekening -- daar moet hij het winnen van een
+                               geschilderde ondergrond die zelf al licht en donker
+                               heeft
+       Hiervoor stonden er zeven varianten (1px/2px/3px op vijf verschillende
+       zwarten) zonder dat één ervan een reden had om anders te zijn dan zijn buur. */
+    --emoji-schaduw: drop-shadow(0 2px 3px rgba(8,2,20,.45));
+    --emoji-schaduw-diep: drop-shadow(0 2px 6px rgba(8,2,20,.72));
+
+    /* ---- Cyaan: "hier kijk je / dit staat aan" -----------------------------
+       De tegenhanger van goud, en het onderscheid is de hele afspraak: goud is
+       wat je verdíend hebt, cyaan is waar je nú bent. Een tabblad, een gekozen
+       categorie, het spulletje waar je naar kijkt -- alle drie hetzelfde licht.
+       Het stond er twee keer in twee sterktes (.26/.5 in de balk, .19/.62 op het
+       kaartje); dit is er één, ertussenin. De navigatie leest ze nog steeds via
+       --nav-sel, zodat dáár aan één knop te draaien blijft. */
+    --cyaan-tint: rgba(56,189,248,.22);
+    --cyaan-rand: rgba(143,214,255,.55);
+
+    /* ---- Button "press-lip" depth (see .btn / .choice-btn / .num-btn convention) ----
+       --btn-diep is de zachte contactschaduw eronder. .btn droeg die al ("0 8px 14px"
+       achter elke lip), de antwoordknoppen in het spel niet -- en juist die staan op
+       de donkere vloer van een zaal, waar een knop zónder contactschaduw op het
+       scherm geplakt lijkt in plaats van in de kamer te staan. FASE 5E geeft ze
+       dezelfde, en meteen als token: lip en diepte horen bij elkaar. */
+    --btn-lip: 5px; --btn-lip-sm: 4px;
+    --btn-diep: 0 8px 14px rgba(0,0,0,.3);
+
+    /* ---- De veilige zone van het toestel, en de ruimte onder de balk ----
+       FASE 5D. Dit stond vijf keer met de hand uitgerekend: de balk op bottom 10
+       zonder veilige zone, de actiebalk erboven op 88, en de vrije ruimte eronder
+       op 100 (kaart en hubs) en 168 (kleedkamer). Vier van die vijf getallen
+       vergaten env(): op een toestel met een streepje onderaan schuift de balk
+       daar dan bovenop, en de onderste rij van een scherm valt eronder.
+
+       Nu volgt alles uit drie waarden, en de afspraak is:
+         --veilig-onder  de veilige zone van het toestel (0 op alles zonder
+                         streepje; zonder viewport-fit=cover kadert de browser
+                         zelf al af, dan is dit óók 0 en verandert er niets)
+         --balk-h        hoe hoog .main-nav is (een knop van 55 plus 2x6 padding)
+         --balk-rand     hoe ver de balk van de schermrand zweeft
+         --balk-ruimte   wat een scherm mét vaste navigatie onderaan vrij moet
+                         houden, veilige zone incl. Elk scherm telt daar zijn
+                         eigen lucht bij (zie .screen.hub / #screen-dress).
+
+       LET OP -- niet te verwarren met --nav-h: dat is een ándere maat, die de
+       kaart bij het openen zélf opmeet (zie meetChroom) en die de balk plús wat
+       eronder zit plús marge bevat. Vandaar --balk-* voor de vaste waarden. */
+    --veilig-onder: env(safe-area-inset-bottom, 0px);
+    --balk-h: 66px;
+    --balk-rand: 10px;
+    --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
+
+    /* ---- Vaste ondernavigatie ----
+       Aan één plek te draaien, want de juiste waarde hangt af van hoe de
+       wereldtekeningen eruit gaan zien. De rangorde die we willen: de kop zweeft
+       (het lichtst), de inhoud draagt het scherm, de navigatie is duidelijk
+       herkenbaar maar zachter dan vroeger.
+         --nav-bg      hoeveel vlak: hoger = steviger, lager = meer wereld erdoorheen
+         --nav-blur    hoe onscherp wat erachter staat
+         --nav-ring    het randje; houdt de balk los van de inhoud zonder een lijn
+         --nav-sel     het blauw van het gekozen tabblad
+         --nav-sel-ring  het randje daaromheen -- draai dit op voor meer nadruk  */
+    /* .52 en niet .44: over de kaart was lichter mooier, maar in de kleedkamer
+       schemerden de winkeltegels er doorheen tot vlak achter de labels. Dit is
+       de waarde die op alle drie de schermen nog scheiding geeft. */
+    --nav-bg: rgba(28, 6, 52, .52);
+    --nav-blur: 20px;
+    --nav-ring: rgba(255, 255, 255, .15);
+    --nav-shadow: 0 8px 26px rgba(8, 1, 20, .34);
+    /* FASE 5E -- het cyaan komt uit de gedeelde --cyaan-*-familie hierboven, zodat
+       de balk, de categorierij en het gekozen kaartje letterlijk dezelfde kleur
+       "hier sta je" zeggen. Er blijft hier wél een eigen token staan: aan de balk
+       draaien zonder de rest mee te nemen moet één regel blijven. */
+    --nav-sel: var(--cyaan-tint);
+    --nav-sel-ring: var(--cyaan-rand);
+    --nav-ink: var(--op-kunst-ink);
+
+    /* ---- Zwevende kop op de kaart ----
+       Eén materiaal voor alle drie de zones, zodat ze als één systeem lezen en niet
+       als drie losse bellen: dezelfde vulling, hetzelfde randje, dezelfde schaduw.
+       Het portretje draagt er geen pil van maar wél dezelfde ring eromheen. */
+    --hud-bg: rgba(28, 6, 52, .3);
+    --hud-ring: rgba(255, 255, 255, .08);
+    --hud-shadow: 0 2px 8px rgba(10, 2, 24, .22);
+    --hud-ink: var(--op-kunst-ink);
+    --hud-h: 34px;
+
+    /* ---- Op een tekening: drie sterktes, en dat is de hele afspraak --------
+       Zie §4 van de afspraak bovenaan. Waarom het als tokens staat en niet per
+       scherm: de tekeningen van Landing, Kleedkamer en Trofeeën worden vervangen,
+       en dan moet er niets aan de tekst hoeven veranderen. Een schaduw die alleen
+       werkt tegen de lucht van de tekening van vandaag is een schuld, geen stijl.
+
+         --op-kunst-ink   tekst die RECHTSTREEKS op kunst staat. Twee schaduwen:
+                          een strakke donkere rand tegen een lichte ondergrond, en
+                          een wijdere zachte tegen een drukke. Samen dragen ze een
+                          witte letter op sneeuw én op nachtjungle, zonder dat er
+                          per wereld iets bijgesteld wordt.
+                          Hiervoor was dit --hud-ink én --nav-ink: twee waarden die
+                          op .05 alpha na gelijk waren -- twee keer hetzelfde ding
+                          gegokt. Beide namen blijven bestaan en lezen deze ene,
+                          zodat aan de kop of aan de balk draaien één regel blijft.
+         --op-kunst-veeg  de VEEG onder een stuk tekst dat te lang of te klein is
+                          voor a. Van niets naar donker, en alleen zo hoog als de
+                          tekst zelf. --veeg-rgb zet de kleur: standaard de nacht
+                          van de app, lokaal te vervangen (de gouden bestemming op
+                          de reis zet er een warme in).
+         --op-vlak-ink    tekst op een VLAK van de app. Eén korte donkere zet
+                          eronder, meer niet: het vlak doet het contrastwerk al en
+                          een gloed eromheen zou de letter alleen maar vertroebelen.
+       Een letter op wit papier (het ouderdeel, de vraagkaart) krijgt geen van
+       drieën. Daar is de ondergrond het antwoord. */
+    --op-kunst-ink: 0 1px 2px rgba(10,2,24,.92), 0 0 9px rgba(10,2,24,.58);
+    --veeg-rgb: 10,3,24;
+    --op-kunst-veeg: linear-gradient(180deg, transparent,
+                     rgba(var(--veeg-rgb),.62) 38%, rgba(var(--veeg-rgb),.9));
+    --op-vlak-ink: 0 2px 0 rgba(0,0,0,.2);
+    /* Goud dat gloeit: de kop van een feestje, de gouden vraag. Een gloed in de
+       kleur van de hoofdknop plus dezelfde donkere zet als hierboven -- want een
+       gouden letter mét gloed en zónder donkere rand verdwijnt in zijn eigen licht
+       zodra er iets lichts achter staat. */
+    --goud-ink: 0 0 14px var(--gold-cta-bottom), 0 2px 0 rgba(0,0,0,.38);
+
+    /* ---- De letterladder: zeven maten ---------------------------------------
+       Zie §5 van de afspraak bovenaan voor wélke maat waarvoor is.
+
+       Hiervoor stonden er vijfenzeventig verschillende maten in het blad, en de
+       ladder liep van 10 via 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15,
+       15.5, 16, 16.5 tot 17 -- vijftien sporten over zeven pixels. Op een scherm
+       is het verschil tussen 12.5 en 13 niet te zien; in de bron is het wél een
+       keuze, en dus moest iemand hem elke keer opnieuw maken. Twee bijschriften
+       naast elkaar op 12.5 en 13 lezen niet als twee niveaus maar als slordigheid.
+
+       Zeven sporten, gekozen rond het zwaartepunt van wat er al stond, precies
+       zoals de hoekrondingen dat eerder deden: dit is een opschoning en geen
+       herontwerp. Elke oude maat is naar de dichtstbijzijnde sport gegaan, en bij
+       gelijke afstand naar de GROTERE -- dit is een app voor kinderen van vijf tot
+       acht, en daar wint leesbaarheid van compactheid. Niets is meer dan 2px
+       verschoven.
+
+       De verhouding tussen de sporten is ongeveer 1,18. Groot genoeg dat twee
+       opeenvolgende maten naast elkaar als twee niveaus lezen, klein genoeg dat de
+       ladder van 11 tot 28 in zeven stappen past.
+
+       Er is geen --tx-display. De koppen die meeschalen zijn er twee, en ze staan
+       hieronder; alles wat nog groter is, is een teken (een emoji, een ster) of
+       een spelletter (de som), en dat zijn geen letterrollen maar afmetingen. */
+    --tx-mini: 11px; --tx-klein: 13px; --tx-label: 15px; --tx-body: 17px;
+    --tx-sub: 20px; --tx-kop: 24px; --tx-groot: 28px;
+    /* De kop van een feestje. Meeschalend, want hij staat midden op het scherm en
+       heeft de ruimte; --kort is dezelfde kop op een laag toestel en op de
+       eindkaart, waar de sterren eronder de blikvanger horen te blijven. Er stonden
+       er vijf met clamp-waarden die hooguit 2px van elkaar lagen. */
+    --tx-feest: clamp(24px, 7vw, 32px);
+    --tx-feest-kort: clamp(19px, 5.4vw, 25px);
+
+    /* ---- Het skelet: twee breedtes, en niets ertussen ----
+       Hiervoor koos elk scherm zijn eigen maat en kwam de kop op géén van die
+       maten uit. Opgemeten: kop 700, winkeltabs 960, spelarena 860, kast en
+       winkelraster 680, instellingen 640, memory 620, eindkaart 420, en de
+       balken onderaan 430. Op een telefoon valt dat niet op -- daar wordt alles
+       100% -- maar op een tablet of bureaublad stond de donkere kopbalk 700 breed
+       boven een kolom van 680, met een balk van 430 eronder: drie randen op drie
+       plekken, alsof de drie bij verschillende schermen hoorden.
+
+         --balk-w   de zwevende balken ONDERaan: .main-nav en .dress-bar. Voor
+                    duimen gemaakt, dus bewust telefoonbreed en niet meegroeiend.
+                    Ook de kop van de kaart en van Werelden in liggende stand,
+                    zodat podium + kop + balk daar samen één toestel vormen.
+         --kolom    de inhoudskolom van ÉÉN scherm. Elk scherm zet zijn eigen
+                    waarde (zie .screen hieronder) en zowel de kop als de inhoud
+                    lezen hem -- daarmee is "de kop is net zo breed als wat
+                    eronder staat" geen afspraak meer die je per scherm kunt
+                    vergeten, maar iets dat niet ánders kan.
+
+       Waarom niet één breedte voor alles: een balk die je met je duim bedient wil
+       telefoonbreed blijven, ook op een tablet, terwijl een raster met kaartjes
+       juist wél breder mag worden (op 680 staan er vier op een rij, op 430 nog
+       maar twee). Dat zijn twee verschillende dingen en die krijgen dus twee
+       maten -- maar niet zeven.
+
+       LET OP -- dit zijn alleen bréedtes. De hoogtes van de kop en de
+       navigatiebalk liggen vast: ZONE (de veilige zone van de wereldtekeningen)
+       is eruit gemeten. Zie docs/WORLD-ART-BRIEF.md §8. */
+    --balk-w: min(94vw, 430px);
+
+    /* ---- TWEE SOORTEN PODIUM, EN EEN BUREAUBLAD IS GEEN TWEEDE APP ---------
+       De app is voor een telefoon gemaakt en dat blijft de hoofdrol. Maar ze wordt
+       ook in een gewoon bureaubladvenster geopend, en daar liep elk scherm zijn
+       eigen kant op: de kaart stond als staand toestel in het midden (goed), de
+       kleedkamer en de kast liepen als een gewone webpagina uit tot 680 en 760
+       (twee maten, tachtig pixels uit elkaar, zonder reden), en de sterrenkeuze
+       werd schermvullend terwijl het logo en de tegels op hun telefoonmaat bleven
+       staan -- een keuzeschermpje in een enorme lucht.
+
+       De afspraak die dat rechtzet is dezelfde als op een telefoon, alleen met
+       een bovengrens erbij: mobiel eerst, dan twee gedeelde maten, en daarboven
+       niets meer per scherm.
+
+         --stage-spel   BELEVING: kaart, werelden, zaal. Hier ís de tekening het
+                        scherm, dus die houdt op een breed venster zijn staande
+                        compositie en groeit tot deze maat -- daarna niet meer.
+                        Zonder die grens werd het podium zo breed als de hoogte
+                        toeliet: 592 op 1920x1080, en op een hoog venster van
+                        1400 zelfs 771 -- een wereldkaart van driekwart meter met
+                        een balk van 430 eronder, en dan valt het toestel uit
+                        elkaar in een plaatje met een balkje.
+                        560 en niet 480 of 520, en dat is opgemeten. Zodra het
+                        podium smáller wordt dan de hoogte toelaat, blijft er
+                        lucht boven en onder over -- en dáár staan de kop en de
+                        balk, dus die komen dan náást de wereld te hangen in
+                        plaats van erop. 560 is precies de breedte waarop een
+                        gewoon 16:9-venster (1920x1080) nog vol loopt: de kop
+                        blijft op de tekening staan, en de grens doet alleen nog
+                        zijn werk op de vensters waar hij voor bedoeld is.
+                        Wat er buiten het podium overblijft is geen leegte maar
+                        omgeving: de kaart zet daar zijn eigen wereld onscherp
+                        neer (zie de liggende stand bij .world-frame).
+         --stage-breed  GEBRUIK: kleedkamer, trofeeënkast, ouderdeel. Dit is
+                        inhoud om te bedienen, en die heeft aan extra breedte wél
+                        iets: op 820 staan er zes spulletjes op een rij in plaats
+                        van vijf, en vier trofeeën in plaats van vier met een gat.
+                        Eén maat voor beide verzamelschermen, want het verschil
+                        van tachtig pixels ertussen was nooit een keuze -- en de
+                        kop leest --kolom al, dus kop, raster en teller schuiven
+                        samen mee.
+
+       Er staat met opzet géén derde maat bij voor "en dan de rest": een scherm
+       dat in geen van de twee families past (de spelarena, het maakformulier)
+       houdt zijn eigen --kolom, en dat is één regel bij dat scherm.
+
+       Waarom vaste pixels en geen vw: dit zijn bovengrenzen op een venster dat
+       breder is dan de app ooit nodig heeft. Onder die grens doet --kolom al het
+       werk via max-width, en dan is 100% de maat -- precies zoals op een telefoon.
+
+         --stage-vlak   het VAK waar een gebruiksscherm in staat, als
+                        achtergrondlaag. Zie de noot bij .screen.gebruik.app-sfeer
+                        hieronder: op een telefoon is dit 'none' en verandert er
+                        niets. */
+    --stage-spel: 560px;
+    --stage-breed: 820px;
+    --stage-vlak: none;
+    /* De verhouding van een wereldtekening. Stond op .tour-map; zie de noot daar.
+       Dit is de terugval voor het eerste beeldje -- renderMap zet dezelfde twee
+       op <html> zodra hij tekent. */
+    --art-w: 1215;
+    --art-h: 2160;
+
+    /* ---- Hoeveel een brandpunt op een groot scherm mag groeien -------------
+       Alleen de sterrenkeuze gebruikt dit, en die is met opzet de uitzondering:
+       zij is het enige scherm dat aflopend hóórt te zijn (de lucht is daar het
+       scherm) en dus geen podium heeft dat haar inhoud bij elkaar houdt. Het
+       gevolg was dat het logo, de sterrentegels en "Nieuwe ster" op een
+       bureaublad exact hun telefoonmaat hielden: samen zo'n 380 pixels midden in
+       een venster van 1440 bij 900.
+
+       Dit is dus geen schaal voor de hele app maar één getal voor dat ene blok,
+       en het is een lengte en geen factor -- CSS kan van pixels geen kale
+       vermenigvuldiger maken. Elk element telt hem met zijn eigen gewicht mee
+       (zie .spellogo img en .star-grid), zodat logo en tegel dezelfde slag
+       groeien en het blok zijn verhoudingen houdt.
+
+       De ondergrens is nul en die is het punt: onder de 620 px vensterbreedte --
+       élke telefoon staand -- komt er geen pixel bij en is de compositie
+       letterlijk de compositie van vandaag. Daarboven loopt hij op tot 108: op
+       1440x900 gaat het logo van 297 naar 405 en de tegel van 130 naar 175, dus
+       net geen 1,4x. Opgemeten en niet gegokt; zie de beelden bij deze fase.
+
+       De hóógte staat er als tweede rem bij, en niet voor de sier: een telefoon
+       in liggende stand is 844 breed en dus breder dan de 620, terwijl juist
+       daar geen pixel te missen is -- de sterrentegels staan er in twee rijen en
+       het scherm scrollt al (zie de regel bij max-height: 480px). Met (100vh -
+       560) erbij is de groei daar nul en op een bureaubladvenster, waar hoogte
+       nooit het probleem is, niet merkbaar minder. Twee grenzen in één min(),
+       en geen enkel breekpunt: hij loopt overal vanzelf naar de goede kant. */
+    --focus-groei: clamp(0px, min((100vw - 620px) / 7, (var(--vh-lock, 100svh) - 560px) / 2.6), 108px);
+
+    /* ---- Bewegingstaal: vier snelheden, en niets ertussen ------------------
+       Beweging is hier geen versiering maar een zin: ze zegt wat er net gebeurde
+       en waar je naartoe gaat. Hoe groter de betekenis, hoe langer hij mag duren
+       -- en omgekeerd: een knop die 300ms nadenkt vóélt kapot.
+
+         tik    70ms   een knop die indrukt. Moet ónder de reactietijd blijven.
+                       PS-54: dit is de énige indrukduur. Achttien knoppen en
+                       kaartjes kozen er ooit hun eigen (.07 tot .15s); twee
+                       lazen deze. Dat is geen zichtbare rommel maar iets
+                       ergers -- niets dat opvalt, dus ook niets dat ergens
+                       naar verwijst. Nu lezen ze --t-tik allemaal, op drie
+                       uitzonderingen na die er elk een eigen reden bij
+                       hebben staan: de veer van .tour-stop (een plek op een
+                       kaart, geen knop), het tandwiel dat openstaat (een
+                       stand) en de kaartjesdraai van het memoryspel (een
+                       stap in een reeks). De kleuren die bij zo'n tik ook
+                       verschuiven (achtergrond, rand) zijn geen indruk maar
+                       een stand en houden hun eigen tijd.
+         snel  220ms   goed / fout: het antwoord op wat het kind net deed.
+         nav           een gewone schermwissel.
+         reis          kaart <-> wereldkaartje. De enige beweging die ruimte
+                       uitlegt en daarom de enige die je mag zien duren.
+
+       DE BOVENSTE TWEE STAAN HIER, DE ONDERSTE TWEE HEBBEN GEEN GETAL. De twee
+       korte zijn hier echte overgangen en dus eigendom van dit stijlblad. De
+       twee lange zijn schermwissels: die worden in JS geanimeerd en bestaan uit
+       stukjes (eerst weg, dan aan / eerst vliegen, dan overvloeien). Hun duur is
+       de som van die stukjes en staat in MOTION.totaal en VLUCHT.totaal, boven
+       goMap -- daar staat de hele ladder nog eens, met de curves erbij.
+
+       Hier stonden ze eerder wél als getal, mét de opdracht ze gelijk te houden
+       met het commentaar daar. Dat is precies zo afgelopen als zulke afspraken
+       aflopen: er stond nav 320 en reis 380 terwijl het spel er 300 en 420 deed.
+       Eén getal op twee plekken overschrijven is geen afspraak maar een gok, dus
+       staat het er nu nog maar op één plek -- en daar wordt het uitgerekend.
+
+       --ease-uit is alles wat áánkomt: snel los, zacht neerzetten. */
+    --t-tik: 70ms; --t-snel: 220ms;
+    --ease-uit: cubic-bezier(.2,.8,.3,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  /* De browser verbergt [hidden] met display:none uit zijn eigen stijlblad, en dat
+     is de zwakste regel die er is: élke eigen regel met een display wint ervan. Dat
+     ging hier ook mis -- .world-back stond op display:flex, kreeg netjes hidden
+     mee vanuit de JS en bleef alsnog als leeg oranje pilletje in beeld staan. In de
+     studio was dezelfde bug al vier keer apart dichtgeplamuurd; dit is die vier keer
+     in één regel, en meteen voor alles wat er later bijkomt. */
+  [hidden] { display: none !important; }
+  /* height: 100% volgt de láátste viewporthoogte die de browser doorgeeft, en die
+     hoogte is niet constant: manifest.json zet display:fullscreen, en op Android
+     toont het systeem de statusbalk (klok, batterij) even bij het opstarten en
+     verbergt hem daarna weer -- een balk die weggaat maakt de viewport hóger. Alles
+     onder #app volgt die hoogte mee via inset:0 / height:100%, en dus groeide de
+     hele kaart (met .world-frame's cover-vulling voorop) een fractie mee zodra de
+     balk faded: precies het "hij landt goed en springt dan nog een tikje" dat op
+     een telefoon te zien was en dat geen desktop-browser of headless-test ooit
+     laat zien, want geen van beide heeft een balk die zo verdwijnt.
+
+     100svh loste dit niet op: die eenheid gaat over de eigen, inklapbare werkbalk
+     van de browser (zoals Safari's adresbalk), niet over een statusbalk die het
+     besturingssysteem er in een fullscreen-PWA overheen legt en zelf weer wegneemt
+     -- Chrome op Android rekent die twee kennelijk niet hetzelfde toe, dus small
+     en large vielen hier op dezelfde, meebewegende maat samen. --vh-lock (zie het
+     scriptje vóór de INHOUD-index) is daarom de eerste die telt: een hoogte die
+     vóór alle opmaak al vastligt op wat innerHeight was tóen de statusbalk nog in
+     beeld stond, en die alleen meebeweegt met een écht andere afmeting (draaien,
+     een ander vensterformaat) -- nooit met de balk zelf die op- of dichtklapt.
+     100svh en 100% blijven staan als terugval voor het beeldje vóórdat dat
+     scriptje geweest is en voor een browser die custom properties niet kent. */
+  html, body { height: 100%; height: 100svh; height: var(--vh-lock, 100svh); }

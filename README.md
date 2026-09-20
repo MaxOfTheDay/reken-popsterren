@@ -5,13 +5,22 @@ haar eigen ster, speelt shows in een reeks werelden, en verdient daarmee
 sterren, diamanten, kleren en trofeeën.
 
 Het is één bestand — `index.html` — met de HTML, de CSS en de JavaScript erin.
-**Er is geen bouwstap en geen bibliotheek.** Je opent het bestand en het spel
-draait. Dat is met opzet: de app moet het doen op een oude tablet in een
-woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
+**Er is geen bibliotheek, en je hoeft niets te bouwen om het te dráaien.** Je
+opent het bestand en het spel draait. Dat is met opzet: de app moet het doen op
+een oude tablet in een woonkamer, zonder server, zonder netwerk en zonder
+update-ritueel.
+
+Wat er wél is, is een bouwstap om het te schríjven: de JavaScript staat in
+`src/` en het stijlblad in `src/css/`, en `npm run bouw` zet ze in `index.html`.
+Die twee blokken waren dertienduizend en zevenduizend regels geworden, en dat is
+de grens waarop je geen stuk meer kunt openslaan zonder de rest mee te dragen.
+Het uitgeleverde bestand verandert er niet door — het blijft één bestand dat je
+opent, ook vanaf `file://`.
 
 | bestand | wat het is |
 |---|---|
-| `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio |
+| `src/*.js`, `src/css/*.css` | **wat je schrijft**, in stukken die op volgnummer aan elkaar komen. Wordt met `npm run bouw` het script- en stijlblok van `index.html` |
+| `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio. Het stijl- en scriptblok erin komen uit `src/` — bewerk ze daar |
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
@@ -27,6 +36,7 @@ woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
 ```
 npm run studio                 # de Dev Studio — http://localhost:8099/studio
 npm run snelkoppeling          # zet er een icoontje voor op je bureaublad
+npm run bouw                   # src/ -> het scriptblok van index.html
 open index.html                # het spel, zonder meer
 npm install                    # alleen nodig voor de browsertests
 npm run check                  # de keuringen (Node, ± 2 seconden)
@@ -46,7 +56,7 @@ Zie **`DEV-STUDIO.md`** — dat is kort.
 
 Daarbinnen zit de **wereldstudio** (`?debug&mapedit`, of de knop *Open
 wereldstudio*): daar maak je werelden op de echte kaart en schrijf je het
-`WORLDS`-blok terug naar `index.html`. Zie `docs/UITBREIDEN.md`.
+`WORLDS`-blok terug naar `src/`. Zie `docs/UITBREIDEN.md`.
 
 ## De vijf begrippen
 
@@ -54,7 +64,7 @@ Wie iets aan het spel verandert heeft aan deze vijf genoeg om zich te
 oriënteren; de rest staat als commentaar bij de code zelf.
 
 * **Wereld** — een stuk van de reis met een eigen tekening en sfeer.
-  Alles wat de app over een wereld weet staat in `WORLDS` in `index.html`.
+  Alles wat de app over een wereld weet staat in `WORLDS` in `src/20-app.js`.
 * **Show (level)** — één optreden. Levels lopen dóór de werelden heen: `p.level`
   is één getal van 1 tot `WORLD_LAST + 1`.
 * **Ster** — wat een show opleverde (1, 2 of 3). `p.stars[level]`. Dít is de
@@ -64,11 +74,18 @@ oriënteren; de rest staat als commentaar bij de code zelf.
 * **Diamant** — de munt van de kleedkamer. Verdien je met spelen, geef je uit
   aan spulletjes. Zie `docs/DIAMANTEN.md`.
 
-## Waar dingen staan in `index.html`
+## Waar dingen staan
 
-Bovenaan het `<script>`-blok staat een inhoudsopgave. Zoek op de sectienaam
-(bijvoorbeeld `= Telmodus` of `= Werelden`) om ergens te komen; regelnummers
-staan er bewust niet bij, want die verouderen meteen.
+De code staat in `src/`, het stijlblad in `src/css/`, en de markup in
+`index.html` zelf. Het spel zelf is `src/20-app.js`, en bovenaan dát bestand
+staat een inhoudsopgave die álle secties noemt.
+Zoek op de sectienaam (bijvoorbeeld `= Telmodus` of `= De hele tournee`) om
+ergens te komen; regelnummers staan er bewust niet bij, want die verouderen
+meteen. Het stijlblad heeft dezelfde soort koppen.
+
+Bewerk het stijl- en scriptblok in `index.html` niet met de hand: dat is het resultaat van
+`npm run bouw` en het wordt bij de eerstvolgende bouw overschreven. `npm run
+check` zegt het als de twee uit elkaar zijn gelopen.
 
 ## Verder lezen
 
@@ -81,7 +98,7 @@ staan er bewust niet bij, want die verouderen meteen.
 | een wereldtekening laat maken | `docs/WORLD-ART-BRIEF.md` |
 | aan de prijzen of de economie komt | `docs/DIAMANTEN.md` |
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
-| aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan het stijlblad in `index.html`, en `docs/UITBREIDEN.md` |
+| aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan `src/css/00-afspraak.css`, en `docs/UITBREIDEN.md` |
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
 | het logo of het app-icoon vervangt | `docs/MERK.md` |
 
