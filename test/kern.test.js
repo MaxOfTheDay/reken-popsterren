@@ -26,6 +26,7 @@
  *   K  wereldlengtes                    -> een wereld hoeft geen acht shows te zijn
  *   L  de trofeeplanken                 -> groeien mee met de werelden
  *   M  trofeeën met pensioen           -> uit de kast, maar niet uit de save
+ *   N  beperkte beweging                -> dezelfde uitkomst, zonder de reis erheen
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -500,6 +501,106 @@ zaak('M', () => {
   wereldErbij(app, 'test8');
   check(app.isRetiredTrophy('wereld-test8'), 'M · ook de badge van een níeuwe wereld is met pensioen', 'test8');
   check(!app.TROPHIES.some(t => t.id === 'wereld-test8'), 'M · en hij wordt niet aangelegd', 'test8');
+});
+
+/* ================= N · Beperkte beweging =================
+   prefers-reduced-motion is in dit bestand geen schakelaar die alles uitzet maar
+   een afspraak: de uitkomst blijft, de weg ernaartoe niet. Dít is de JS-kant
+   daarvan -- de functies die zélf iets in de body neerzetten of een danspasje op
+   de pop plakken. Die kan geen enkele CSS-regel nog tegenhouden zodra ze gelopen
+   hebben, dus ze moeten het zelf weten.
+
+   Elke controle wordt twee keer gedaan: één keer met beweging en één keer
+   zonder. Dat is met opzet -- een grendel die altijd dichtzit ziet er in een
+   test precies zo uit als een grendel die werkt, en dan zou een stille app die
+   ook zonder de voorkeur niets meer viert hier gewoon groen blijven.
+
+   Wat een kind ziet staan (de juichkaart, de toast, de gouden vraag, de lampen)
+   ligt in de CSS en hoort dus in een echte browser gemeten te worden: dat is
+   zaak M in beloning.test.js. */
+
+// Een app die denkt dat de gebruiker wel/geen beweging wil, met een pop die een
+// echte klassenlijst bijhoudt en een teller op alles wat er in de body bijkomt.
+// Meer dan dat heeft geen van deze functies van een scherm nodig.
+function metBeweging(aan) {
+  const app = laadApp();
+  app.run(`window.matchMedia = () => ({ matches: ${aan ? 'false' : 'true'},
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });`);
+  app.run(`
+    globalThis.__gemaakt = 0;
+    globalThis.__pop = (() => {
+      const set = new Set(['idle']);
+      return {
+        klassen: () => [...set].sort().join(' '),
+        classList: {
+          add: (...k) => k.forEach(x => set.add(x)),
+          remove: (...k) => k.forEach(x => set.delete(x)),
+          contains: k => set.has(k),
+          toggle: (k, aan) => (aan == null ? (set.has(k) ? set.delete(k) : set.add(k)) : (aan ? set.add(k) : set.delete(k))),
+        },
+        style: { setProperty() {}, removeProperty() {} },
+        animate: () => ({ cancel() {}, finished: Promise.resolve() }),
+        getBoundingClientRect: () => ({ left: 10, top: 10, width: 40, height: 40, right: 50, bottom: 50 }),
+        closest: () => null, appendChild: k => k, remove() {},
+        get offsetWidth() { return 0; },
+      };
+    })();
+    const __maak = document.createElement;
+    document.createElement = function (t) { globalThis.__gemaakt++; return __maak.call(document, t); };
+    document.getElementById = () => globalThis.__pop;
+  `);
+  // hoeveel losse dingen zet dit stukje app in de body?
+  app.telt = code => app.run(`__gemaakt = 0; ${code}; __gemaakt;`);
+  app.klassen = () => app.run('__pop.klassen()');
+  return app;
+}
+
+zaak('N', () => {
+  for (const aan of [true, false]) {
+    const app = metBeweging(aan);
+    const wat = aan ? 'gewoon' : 'stil';
+    check(app.run('motionOff()') === !aan, `N · ${wat} · motionOff leest de voorkeur`, String(app.run('motionOff()')));
+
+    /* Feest en beloning: de vier plekken waar de app zelf stukjes in de body
+       legt. Bij beperkte beweging komt er niets -- en dat mag, want wat ze
+       vieren of afleveren staat er zonder hen ook: de sterren, de juichtekst,
+       de teller die al bijgeschreven is. */
+    const deeltjes = {
+      'confetti van het eindscherm': ['confetti(30)', 30],
+      'het confetti-kanon': ['confettiBurst(50, 50, 8)', 8],
+      'een los sterretje': ['sparkleAt({ left: 0, top: 0, width: 10, height: 10 })', 1],
+      'de diamanten naar de teller': ['flyDiamonds(__pop, __pop, 3)', 3],
+      'de wereldbadge omhoog': ["flyBadge(__pop, __pop, '🌍')", 1],
+    };
+    for (const naam of Object.keys(deeltjes)) {
+      const [code, hoeveel] = deeltjes[naam];
+      const n = app.telt(code);
+      check(n === (aan ? hoeveel : 0), `N · ${wat} · ${naam}`, `${n} i.p.v. ${aan ? hoeveel : 0}`);
+    }
+
+    /* De pop. Een pasje is karakter bij iets dat al gezegd is, dus bij beperkte
+       beweging blijft ze staan -- maar wél in de stand waar ze anders ook in
+       eindigt ('idle'), en niet halverwege een sprong. */
+    const dansen = ["dance('game-avatar-inner')", "tapDance('end-avatar')", "finaleDance('end-avatar', 6)"];
+    for (const code of dansen) {
+      app.run(`__pop.classList.remove(...MOVE_CLASSES); __pop.classList.remove('dancing'); __pop.classList.add('idle'); ${code};`);
+      const k = app.klassen();
+      if (aan) check(/\bdancing\b/.test(k) && /\bmove-/.test(k), `N · ${wat} · ${code} danst`, k);
+      else check(k === 'idle', `N · ${wat} · ${code} laat haar rechtop staan`, k);
+    }
+
+    /* De sterrenceremonie van het eindscherm is een tijdstip geworden en geen
+       los getal, want er wacht iets op: een rang of een wereldfeest mag er pas
+       overheen als de sterren gevallen zijn (zie endLevel). */
+    const cer = app.run('STERCEREMONIE');
+    const derde = cer.eerste + 2 * cer.tussen + cer.land;
+    check(cer.totaal >= derde, 'N · de ceremonie duurt tot de derde ster stilstaat', `${cer.totaal} < ${derde}`);
+    check(cer.totaal >= cer.knal + cer.puls, 'N · en tot het kanon van foutloos uitgevallen is',
+      `${cer.totaal} < ${cer.knal + cer.puls}`);
+    const wacht = app.run('naSterren()');
+    check(wacht === (aan ? cer.totaal : cer.stil), `N · ${wat} · zolang houdt het eindscherm het scherm`, String(wacht));
+    if (!aan) check(cer.stil < derde, 'N · stil wacht niet op een ceremonie die er niet is', String(cer.stil));
+  }
 });
 
 klaar();

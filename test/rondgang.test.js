@@ -748,7 +748,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   const gescrold = await page.evaluate(async () => {
     const sc = document.getElementById('screen-trophies');
     sc.scrollTop = 260;
-    await new Promise(res => setTimeout(res, 200));
+    // de inklapping duurt 220ms (zie .kast-telling); 200 was er altijd al net
+    // te krap voor en viel onder belasting soms om
+    await new Promise(res => setTimeout(res, 400));
     const zin = document.getElementById('trophy-count');
     return {
       klasse: sc.classList.contains('gescrold'),
@@ -1000,6 +1002,367 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         r.randlagen.join(' | '));
       await zaalCtx.close();
     }
+  }
+
+  /* ================= 9 · De kaart zegt hallo =================
+     Eén zwaai als de kaart zélf de aankomst is, en geen als er al iets beweegt
+     dat uitlegt waaróm de ster daar staat. Dat is de hele regel (zie kaartGroet
+     boven goMap), en hij is alleen iets waard als hij aan beide kanten klopt --
+     dus staan hier de wegen die wél zwaaien naast de wegen die dat niet mogen.
+
+     Er wordt gekeken naar de klassen op de pop en niet naar een schermafdruk:
+     "ze zwaait" is in dit bestand letterlijk .dancing.move-wave, en "ze staat
+     gewoon" is .idle. Het onderscheid dat ertoe doet -- gebeurt er íets, of
+     niet -- is daarmee een waarde en geen oordeel. */
+  {
+    const groetCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(groetCtx);
+    const g = await groetCtx.newPage();
+    g.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    g.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+    await g.goto(SPEL_URL);
+    await g.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.order = 0; q.level = 5; for (let i = 1; i < 5; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await g.goto(SPEL_URL);
+    await g.evaluate(() => {
+      // de pop op de kaart, in klassen: 'dancing move-wave' of 'idle'
+      window.__ster = () => {
+        const el = document.querySelector('#tour-map .tour-hero .avatar-holder');
+        return el ? el.className : '(geen ster op de kaart)';
+      };
+    });
+    // de zwaai begint op MOTION.totaal en duurt .9s: hier zit hij er middenin
+    const kijk = async (ms) => { await g.waitForTimeout(ms == null ? 450 : ms); return g.evaluate(() => window.__ster()); };
+    const rust = () => g.waitForTimeout(2700);   // ruim over de koeltijd heen
+
+    let k = (await g.evaluate(() => selectProfile('p1')), await kijk());
+    check(/move-wave/.test(k), 'een ster kiezen komt aan op de kaart, en daar wordt gezwaaid', k);
+
+    // binnen de koeltijd heen en weer: één zwaai per bezoek, niet drie
+    k = await g.evaluate(async () => {
+      openKleedkamer();
+      await new Promise(r => setTimeout(r, 150));
+      goMap();
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'meteen heen en weer naar de kleedkamer zwaait niet nóg een keer', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      openTrophies();
+      await new Promise(r => setTimeout(r, 200));
+      goMap();
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(/move-wave/.test(k), 'maar een echte terugkomst uit de kast later wél', k);
+
+    // en daarna staat ze gewoon weer te wiegen -- geen klasse blijft hangen
+    k = await kijk(900);
+    check(k === 'avatar-holder idle', 'na de zwaai staat ze weer gewoon op haar plek', k);
+
+    /* Wegwandelen middenin de zwaai stopt hem. Niet uit netheid: een zwaai die
+       doorloopt op een scherm dat je verlaten hebt vecht om beeldjes met wat er
+       dán begint, en dat is meestal de vlucht naar Werelden -- de enige animatie
+       in de app die van élk beeldje afhangt. Opgemeten lag de tekening op het
+       eerste beeldje van die vlucht al 18% op weg. */
+    await rust();
+    const onderbroken = await g.evaluate(async () => {
+      openTrophies();
+      await new Promise(r => setTimeout(r, 200));
+      goMap();
+      await new Promise(r => setTimeout(r, 450));
+      const tijdens = window.__ster();
+      openReis();
+      await new Promise(r => setTimeout(r, 80));
+      return { tijdens, nog: window.__ster() };
+    });
+    check(/move-wave/.test(onderbroken.tijdens) && !/move-wave|dancing/.test(onderbroken.nog),
+      'wegwandelen middenin de zwaai stopt hem, en laat niets bewegen op een scherm dat weg is',
+      JSON.stringify(onderbroken));
+    await g.evaluate(() => goMap());
+    await g.waitForTimeout(600);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      startLevel(2); G.misses = 1; endLevel(true);
+      await new Promise(r => setTimeout(r, 400));
+      goMap(2);
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'terugkomen uit een show is geen begroeting maar een afloop', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      renderTourMap();
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'de kaart opnieuw tekenen is geen aankomst', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      goMap();   // nog eens op Kaart tikken terwijl je er al staat
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'en op Kaart tikken terwijl je er al staat ook niet', k);
+
+    // een wereld kiezen op de reis: de vlucht is al een aankomst
+    await rust();
+    const reis = await g.evaluate(async () => {
+      openReis();
+      await new Promise(r => setTimeout(r, 900));
+      reisNaarWereld(0, document.querySelector('.reis-halte[data-w="0"]'));
+      const uit = [];
+      for (let i = 0; i < 8; i++) { await new Promise(r => setTimeout(r, 180)); uit.push(window.__ster()); }
+      return uit.filter(x => /move-wave/.test(x));
+    });
+    check(reis.length === 0, 'een wereld kiezen op de reis vliegt al -- er komt geen zwaai overheen',
+      JSON.stringify(reis));
+    await groetCtx.close();
+
+    // en wie om minder beweging vraagt, krijgt de pop precies zoals ze staat
+    const stilCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(stilCtx);
+    const st = await stilCtx.newPage();
+    st.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await st.goto(SPEL_URL);
+    await st.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.order = 0; q.level = 5; for (let i = 1; i < 5; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await st.goto(SPEL_URL);
+    const stil = await st.evaluate(async () => {
+      selectProfile('p1');
+      await new Promise(r => setTimeout(r, 900));
+      const el = document.querySelector('#tour-map .tour-hero .avatar-holder');
+      return { klas: el ? el.className : '(geen ster)', beweegt: el ? getComputedStyle(el).animationName : '?' };
+    });
+    check(stil.klas === 'avatar-holder idle' && stil.beweegt === 'none',
+      'zonder beweging wordt er niet gezwaaid en staat ze in haar gewone stand', JSON.stringify(stil));
+    await stilCtx.close();
+  }
+
+  /* ================= 10 · Elke schermwissel is er één =================
+     PS-51. De bewegingstaal gold voor vier schermen; de kleedkamer, de kast,
+     het ouderdeel, het memoryspel, het maakformulier en de sterrenkeuze hadden
+     er geen. Wat hier gemeten wordt is niet hoe het eruitziet maar de regel
+     eronder, dezelfde als bij zaak 6f: op élk beeldje van een wissel ligt er
+     precies één dekkend scherm over het venster. Ligt dat er niet, dan kijk je
+     naar de achtergrond van de app, en dát is de "overvloeier tegen niets" die
+     van de kaart naar de kleedkamer te zien was.
+
+     En erna hoort er niets te blijven staan: geen tweede actief scherm en geen
+     vertrekkend scherm dat vast is komen te zitten. */
+  {
+    const wisselCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(wisselCtx);
+    const w = await wisselCtx.newPage();
+    w.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    w.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+    await w.goto(SPEL_URL);
+    await w.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.order = 0; q.level = 9; q.diamonds = 200; for (let i = 1; i < 9; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await w.goto(SPEL_URL);
+    await w.evaluate(() => {
+      selectProfile('p1');
+      // één beeldje van een wissel: wat ligt er, hoe doorzichtig, en dekt het?
+      window.__beeldje = () => [...document.querySelectorAll('.screen')]
+        .filter(s => s.classList.contains('active') || s.classList.contains('wegvallend'))
+        .map(s => {
+          const b = s.getBoundingClientRect();
+          const dekt = b.left <= .5 && b.top <= .5 && b.right >= innerWidth - .5 && b.bottom >= innerHeight - .5;
+          return { id: s.id, op: +getComputedStyle(s).opacity, dekt };
+        });
+      window.__rust = () => ({
+        actief: document.querySelectorAll('.screen.active').length,
+        weg: document.querySelectorAll('.wegvallend').length,
+        welk: (document.querySelector('.screen.active') || {}).id,
+      });
+      window.__wissel = async (code) => {
+        const kaal = [];
+        let vertrok = null;
+        eval(code);
+        for (let i = 0; i < 6; i++) {
+          await new Promise(r => setTimeout(r, 55));
+          const beeld = window.__beeldje();
+          if (!beeld.some(x => x.op > .98 && x.dekt)) kaal.push(beeld);
+          const weg = document.querySelector('.wegvallend');
+          if (weg && !vertrok) vertrok = weg.id;
+        }
+        await new Promise(r => setTimeout(r, 600));
+        return { kaal, vertrok, rust: window.__rust() };
+      };
+    });
+    await w.waitForTimeout(600);
+    // naam, wat er gebeurt, waar je uitkomt, en welk scherm hoort te vertrekken
+    const paren = [
+      ['kaart -> kleedkamer', 'openKleedkamer()', 'screen-dress', 'screen-map'],
+      ['kleedkamer -> kast', 'openTrophies()', 'screen-trophies', 'screen-dress'],
+      ['kast -> kaart', 'goMap()', 'screen-map', 'screen-trophies'],
+      ['kaart -> ouderdeel', 'openSettings()', 'screen-settings', 'screen-map'],
+      ['ouderdeel -> kaart', 'goMap()', 'screen-map', 'screen-settings'],
+      ['kaart -> memory', 'startMemory()', 'screen-memory', 'screen-map'],
+      ['memory -> kaart', 'exitMemory()', 'screen-map', 'screen-memory'],
+      ['kaart -> sterrenkeuze', 'goProfiles()', 'screen-profile', 'screen-map'],
+      ['sterrenkeuze -> kaart', "selectProfile('p1')", 'screen-map', 'screen-profile'],
+      ['kaart -> kast', 'openTrophies()', 'screen-trophies', 'screen-map'],
+      ['kast -> kleedkamer', 'openKleedkamer()', 'screen-dress', 'screen-trophies'],
+      ['kleedkamer -> kaart', 'goMap()', 'screen-map', 'screen-dress'],
+    ];
+    for (const [naam, code, doel, vanaf] of paren) {
+      const r = await w.evaluate(c => window.__wissel(c), code);
+      check(r.kaal.length === 0, `${naam} laat op geen enkel beeldje de app-achtergrond zien`,
+        JSON.stringify(r.kaal[0] || []));
+      /* En het scherm waar je vandaan komt vertrékt ook echt, in beide
+         richtingen. Dít is wat er van de kaart naar de kleedkamer ontbrak: heen
+         verdween de kaart op het eerste beeldje en terug verdween de kleedkamer,
+         terwijl de andere helft van diezelfde tik wél een beweging deed. Zonder
+         deze controle valt dat niet op -- er ligt immers altijd één dekkend
+         scherm -- en is de helft van PS-51 stil weer weg te halen. */
+      check(r.vertrok === vanaf, `${naam} laat het vorige scherm ook echt vertrekken`,
+        `${r.vertrok} i.p.v. ${vanaf}`);
+      check(r.rust.actief === 1 && r.rust.weg === 0 && r.rust.welk === doel,
+        `${naam} komt netjes tot stilstand`, JSON.stringify(r.rust));
+    }
+    // een kind dat blijft tikken mag geen scherm achterlaten
+    const snel = await w.evaluate(async () => {
+      for (let i = 0; i < 10; i++) {
+        openKleedkamer(); await new Promise(r => setTimeout(r, 40));
+        goMap(); await new Promise(r => setTimeout(r, 40));
+        openTrophies(); await new Promise(r => setTimeout(r, 40));
+      }
+      goMap();
+      await new Promise(r => setTimeout(r, 900));
+      return window.__rust();
+    });
+    check(snel.actief === 1 && snel.weg === 0 && snel.welk === 'screen-map',
+      'dertig wissels achter elkaar laten geen scherm staan', JSON.stringify(snel));
+
+    /* ---- PS-54 · één indrukduur ----
+       Achttien knoppen kozen elk hun eigen, tussen .07 en .15s. Wat hier
+       gecontroleerd wordt is niet het getal maar of ze het uit dezelfde bron
+       lezen: --t-tik. Vandaar computed style en geen tekst in het stijlblad --
+       dit is wat de browser ervan maakt. */
+    const tik = await w.evaluate(() => {
+      const duur = (el, eig) => {
+        const st = getComputedStyle(el);
+        const props = st.transitionProperty.split(',').map(x => x.trim());
+        const tijden = st.transitionDuration.split(',').map(x => x.trim());
+        const i = props.indexOf(eig);
+        return i < 0 ? null : tijden[i % tijden.length];
+      };
+      const token = getComputedStyle(document.documentElement).getPropertyValue('--t-tik').trim();
+      const meet = klas => {
+        const d = document.createElement('div');
+        d.className = klas;
+        document.body.appendChild(d);
+        const v = duur(d, 'transform');
+        d.remove();
+        return v;
+      };
+      // alles wat bij een tik beweegt. (.gear-item licht alleen op en staat er
+      // dus niet bij; .tour-stop heeft zijn eigen veer, met reden -- zie de CSS.)
+      const knoppen = ['btn', 'ster-tegel', 'add-tegel', 'map-id-btn', 'nav-item', 'count-tile',
+                       'reis-plaats', 'trophy-card', 'spiegel', 'shuffle-btn', 'tab-btn',
+                       'item-card', 'schat-entry', 'chip', 'choice-btn'];
+      const uit = {};
+      knoppen.forEach(k => { uit[k] = meet(k); });
+      return { token, uit };
+    });
+    // het token staat als 70ms in :root, de browser rekent er 0.07s van -- dus
+    // in milliseconden vergelijken en niet in tekst
+    const ms = v => (v == null ? null : (/ms$/.test(v) ? parseFloat(v) : parseFloat(v) * 1000));
+    const afwijkend = Object.keys(tik.uit).filter(k => ms(tik.uit[k]) !== ms(tik.token));
+    check(ms(tik.token) === 70 && afwijkend.length === 0,
+      'elke gewone indruk leest dezelfde --t-tik', JSON.stringify({ token: tik.token, afwijkend, uit: tik.uit }));
+
+    /* ---- PS-53 · de teller loopt mee, niet vooruit ----
+       Het getal stond er vóórdat de diamanten die het kwamen brengen vertrokken
+       waren: het gevolg kwam eerder dan de oorzaak. Wat bewaard wordt verandert
+       niet -- alleen wat er te zien is, wacht. */
+    const dia = await w.evaluate(async () => {
+      goMap();
+      await new Promise(r => setTimeout(r, 400));
+      P().diamonds = 40; save();
+      startLevel(P().level);
+      await new Promise(r => setTimeout(r, 300));
+      const teller = () => document.getElementById('game-diamonds').textContent;
+      const voor = teller();
+      const q = G.qs[G.idx];
+      submitAnswer(q.ans);
+      const meteen = { teller: teller(), opgeslagen: P().diamonds,
+                       bewaard: JSON.parse(localStorage.getItem('rekenPopsterren_v1')).profiles.p1.diamonds };
+      await new Promise(r => setTimeout(r, 1000));
+      return { voor, meteen, erna: teller(), echt: P().diamonds };
+    });
+    check(dia.meteen.teller === dia.voor && dia.meteen.opgeslagen > +dia.voor,
+      'de teller wacht op de diamanten, de voortgang niet', JSON.stringify(dia));
+    check(dia.meteen.bewaard === dia.meteen.opgeslagen,
+      'en wat bewaard wordt staat er meteen goed in', JSON.stringify(dia.meteen));
+    check(dia.erna === String(dia.echt),
+      'als ze aangekomen zijn staat het goede getal er', JSON.stringify(dia));
+    // twee beloningen vlak na elkaar: de laatste stand wint, en niet een oude
+    const dubbel = await w.evaluate(async () => {
+      const el = document.getElementById('game-diamonds');
+      telNu(el, 10);
+      telStraks(el, 12);
+      await new Promise(r => setTimeout(r, 120));
+      telStraks(el, 15);
+      await new Promise(r => setTimeout(r, 1200));
+      return el.textContent;
+    });
+    check(dubbel === '15', 'twee beloningen vlak na elkaar eindigen op de laatste stand', dubbel);
+    await wisselCtx.close();
+
+    /* ---- en dit alles zonder beweging ---- */
+    const stilCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(stilCtx);
+    const sp = await stilCtx.newPage();
+    sp.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await sp.goto(SPEL_URL);
+    await sp.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.order = 0; q.level = 9; q.diamonds = 40; for (let i = 1; i < 9; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await sp.goto(SPEL_URL);
+    const stil = await sp.evaluate(async () => {
+      selectProfile('p1');
+      await new Promise(r => setTimeout(r, 500));
+      openKleedkamer();
+      await new Promise(r => setTimeout(r, 60));
+      const tussen = { weg: document.querySelectorAll('.wegvallend').length,
+                       actief: (document.querySelector('.screen.active') || {}).id };
+      await new Promise(r => setTimeout(r, 400));
+      goMap();
+      await new Promise(r => setTimeout(r, 400));
+      startLevel(P().level);
+      await new Promise(r => setTimeout(r, 300));
+      const voor = +document.getElementById('game-diamonds').textContent;
+      submitAnswer(G.qs[G.idx].ans);
+      return { tussen, eind: (document.querySelector('.screen.active') || {}).id,
+               voor, meteen: +document.getElementById('game-diamonds').textContent, echt: P().diamonds };
+    });
+    check(stil.tussen.weg === 0 && stil.tussen.actief === 'screen-dress' && stil.eind === 'screen-game',
+      'zonder beweging staat het volgende scherm er meteen, zonder vertrekkend scherm', JSON.stringify(stil));
+    check(stil.meteen === stil.echt && stil.meteen > stil.voor,
+      'en de diamanten staan er meteen bij, zonder op een vlucht te wachten', JSON.stringify(stil));
+    await stilCtx.close();
   }
 
   await browser.close();
