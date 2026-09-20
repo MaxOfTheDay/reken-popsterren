@@ -1066,6 +1066,28 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     k = await kijk(900);
     check(k === 'avatar-holder idle', 'na de zwaai staat ze weer gewoon op haar plek', k);
 
+    /* Wegwandelen middenin de zwaai stopt hem. Niet uit netheid: een zwaai die
+       doorloopt op een scherm dat je verlaten hebt vecht om beeldjes met wat er
+       dán begint, en dat is meestal de vlucht naar Werelden -- de enige animatie
+       in de app die van élk beeldje afhangt. Opgemeten lag de tekening op het
+       eerste beeldje van die vlucht al 18% op weg. */
+    await rust();
+    const onderbroken = await g.evaluate(async () => {
+      openTrophies();
+      await new Promise(r => setTimeout(r, 200));
+      goMap();
+      await new Promise(r => setTimeout(r, 450));
+      const tijdens = window.__ster();
+      openReis();
+      await new Promise(r => setTimeout(r, 80));
+      return { tijdens, nog: window.__ster() };
+    });
+    check(/move-wave/.test(onderbroken.tijdens) && !/move-wave|dancing/.test(onderbroken.nog),
+      'wegwandelen middenin de zwaai stopt hem, en laat niets bewegen op een scherm dat weg is',
+      JSON.stringify(onderbroken));
+    await g.evaluate(() => goMap());
+    await g.waitForTimeout(600);
+
     await rust();
     k = await g.evaluate(async () => {
       startLevel(2); G.misses = 1; endLevel(true);
