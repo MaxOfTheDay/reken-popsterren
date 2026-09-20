@@ -93,6 +93,7 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 |---|---|
 | `src/00-vh-lock.js` | de vensterhoogte vastleggen. Moet als eerste draaien — vandaar het volgnummer |
 | `src/10-feestjes.js` | de **gedeelde feestjes**: `motionOff`, toast, praise, confetti, sparkle, danspasjes, confirm/notice. Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is |
+| `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
 | `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
