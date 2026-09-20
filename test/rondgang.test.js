@@ -1088,6 +1088,59 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     await g.evaluate(() => goMap());
     await g.waitForTimeout(600);
 
+    /* ---- De naad tussen wiegen en zwaaien ----
+       Het wiegen en het pasje zijn twee lagen (zie de CSS bij de danspasjes) en
+       juist daarom is er geen wissel meer: het pasje staat op de tekening, het
+       wiegen op de pop, en elk pasje voegt op 0% en 100% niets toe. Wat hier
+       gemeten wordt is precies dat -- de stand die een kind écht ziet (houder
+       maal tekening), beeldje voor beeldje, op de twee momenten waar het pasje
+       aan- en weer uitgaat.
+
+       Stonden ze weer op één element, dan botsen ze over de ruststand: sway
+       begint op -2,5 graden en elk pasje op 0. Opgemeten was dat 2,07 graden bij
+       het inzetten en 2,5 bij het uitlopen, allebei in één beeldje en allebei op
+       het rustigste moment van de beweging. Het wiegen zelf legt zo'n 0,12 graad
+       per beeldje af, dus een halve graad is ruim boven de ruis en ver onder een
+       tikje dat je ziet. (Middenin het pasje mág het hard gaan -- daar is het
+       beweging en geen naad, en daar wordt dus niet naar gekeken.) */
+    await rust();
+    const naad = await g.evaluate(async () => {
+      openTrophies();
+      await new Promise(r => setTimeout(r, 200));
+      goMap();
+      // de stand die je ziet: het wiegen van de pop maal het pasje op haar laagje
+      const pose = () => {
+        const h = document.querySelector('#tour-map .tour-hero .avatar-holder');
+        const laag = h && h.querySelector('.pas-laag');
+        if (!laag) return null;
+        const M = el => new DOMMatrixReadOnly(getComputedStyle(el).transform);
+        const m = M(h).multiply(M(laag));
+        return { deg: Math.atan2(m.b, m.a) * 180 / Math.PI, pas: /move-/.test(h.className) };
+      };
+      const rij = [];
+      await new Promise(klaar => {
+        const t0 = performance.now();
+        const stap = () => {
+          const p = pose(); if (p) rij.push(p);
+          if (performance.now() - t0 < 1700) requestAnimationFrame(stap); else klaar();
+        };
+        requestAnimationFrame(stap);
+      });
+      // alleen de twee beeldjes waar het pasje aan- of uitgaat
+      const stappen = [];
+      for (let i = 1; i < rij.length; i++) {
+        if (rij[i].pas !== rij[i - 1].pas) stappen.push(+Math.abs(rij[i].deg - rij[i - 1].deg).toFixed(2));
+      }
+      return { stappen, beeldjes: rij.length, uitslag: +Math.max(...rij.map(x => Math.abs(x.deg))).toFixed(1) };
+    });
+    check(naad.stappen.length === 2 && naad.stappen.every(d => d < 0.5),
+      'het pasje zet in en loopt uit zonder tikje: het wiegen loopt gewoon door',
+      JSON.stringify(naad));
+    check(naad.uitslag > 4,
+      'en het is nog steeds een echte zwaai, geen beleefd knikje', JSON.stringify(naad));
+    await g.evaluate(() => goMap());
+    await g.waitForTimeout(600);
+
     await rust();
     k = await g.evaluate(async () => {
       startLevel(2); G.misses = 1; endLevel(true);
