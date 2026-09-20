@@ -44,6 +44,16 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    De bronbestanden worden op naam gesorteerd achter elkaar geplakt, zonder iets
    ertussen — dus de cijfers in de naam zíjn de leesvolgorde, en elk bestand
    eindigt op een regeleinde.
+   **Die volgorde is dragend en niet cosmetisch.** Functies worden gehesen en
+   mogen dus overal staan, maar een `const` of `let` op het hoogste niveau niet:
+   wie die leest vóórdat zijn regel gedraaid heeft, krijgt een ReferenceError en
+   een lege pagina. Zo hoort `10-feestjes.js` vóór `20-app.js`, want
+   `stilStaan` leest `MOVE_CLASSES` en dat gebeurt al bij het opstarten.
+   **`npm run check` ziet dit soort fouten niet** — die keuring draait met een
+   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1186/1186 uit
+   terwijl de pagina in een browser meteen omvalt. Verander je de volgorde of
+   verplaats je een `const`, draai dan óók een browsersuite
+   (`npm run test:sterren` is de kortste die het beginscherm echt opbouwt).
 1. **Er is precies één `<script>`-blok en precies één `</script>`, ook in
    commentaar.** `test/app.js` knipt de app uit het gebouwde `index.html` met
    `indexOf('<script>')` en draait hem in een `vm`; `inhoud.test.js` zaak H kijkt
@@ -81,7 +91,9 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 
 | zoek op | wat |
 |---|---|
-| `src/00-app.js` | **het spel.** Hier schrijf je. Bovenaan staat de inhoudsopgave van alle secties |
+| `src/00-vh-lock.js` | de vensterhoogte vastleggen. Moet als eerste draaien — vandaar het volgnummer |
+| `src/10-feestjes.js` | de **gedeelde feestjes**: `motionOff`, toast, praise, confetti, sparkle, danspasjes, confirm/notice. Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is |
+| `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
 | `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
 | `<style>` | het stijlblad, in `index.html` zelf. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
