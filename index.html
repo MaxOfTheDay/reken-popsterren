@@ -1794,14 +1794,46 @@
     0%,100% { transform: rotate(-2.5deg); }
     50%     { transform: rotate(2.5deg); }
   }
-  /* ---- Danspasjes: elke juiste som = een pasje in de show ---- */
-  .avatar-holder.dancing { transform-origin: 50% 95%; }
-  .avatar-holder.move-jump   { animation: mvJump .9s ease-in-out; }
-  .avatar-holder.move-spin   { animation: mvSpin .9s ease-in-out; }
-  .avatar-holder.move-sway   { animation: mvSway .9s ease-in-out; }
-  .avatar-holder.move-kick   { animation: mvKick .9s ease-in-out; }
-  .avatar-holder.move-wave   { animation: mvWave .9s ease-in-out; }
-  .avatar-holder.move-bounce { animation: mvBounce .9s ease-in-out; }
+  /* ---- Danspasjes: elke juiste som = een pasje in de show ----------------
+     HET PASJE ZIT OP DE TEKENING, HET WIEGEN OP DE HOUDER. Twee lagen, en dat
+     is geen omweg maar precies wat een naadloze overgang mogelijk maakt.
+
+     Eerst stond allebei op .avatar-holder, en dan kan er maar één tegelijk: het
+     wiegen ging uit, het pasje liep, het wiegen kwam terug. Bij elke wissel
+     botsten twee animaties die het niet eens waren over de stand van de pop --
+     sway begint op -2.5 graden, elk pasje op 0. Opgemeten op de kaart, waar de
+     ster je begroet: bij het inzetten sprong ze in één beeldje van -2,07 naar 0
+     graden, en bij het uitlopen van 0 naar -2,5. Twee tikjes van ruim twee
+     graden, allebei op het rustigste moment van de beweging -- precies waar je
+     ze ziet.
+
+     Nu loopt het wiegen gewoon door en komt het pasje eroverheen. Geneste
+     transforms vermenigvuldigen, dus de pop wiegt én zwaait; en omdat elk pasje
+     op 0% én 100% op niets staat, voegt het aan het begin en aan het eind
+     letterlijk nul toe. Er valt dus niets meer over te onderhandelen: er is geen
+     wissel meer, alleen een laag die aan- en weer uitgaat.
+
+     EN HET PASJE KRIJGT EEN EIGEN LAAG, niet de tekening zelf. Dat scheelt niets
+     in wat je ziet en alles in wat het kost: de ster op de kaart draagt een
+     SVG-filter (zie .tour-hero svg -- contour, schaduwtje, verzadiging), en een
+     transform óp een gefilterd element laat de browser dat filter elk beeldje
+     opnieuw uitrekenen. Op een laagje eromheen hoeft dat niet: het filter wordt
+     één keer berekend en daarna verschoven. Opgemeten kostte de verkeerde kant
+     hiervan de vlucht naar Werelden zijn eerste beeldjes (zaak D in
+     test/vlucht.test.js viel drie van de acht keer om); met deze laag ertussen
+     nul van de acht.
+
+     De laag vult de houder helemaal (line-height 0, hoogte 100%), dus het
+     draaipunt en de maatvoering zijn dezelfde als toen het pasje nog op de
+     houder stond. */
+  .avatar-holder > .pas-laag { display: block; height: 100%; line-height: 0; }
+  .avatar-holder.dancing > .pas-laag { transform-origin: 50% 95%; }
+  .avatar-holder.move-jump   > .pas-laag { animation: mvJump .9s ease-in-out; }
+  .avatar-holder.move-spin   > .pas-laag { animation: mvSpin .9s ease-in-out; }
+  .avatar-holder.move-sway   > .pas-laag { animation: mvSway .9s ease-in-out; }
+  .avatar-holder.move-kick   > .pas-laag { animation: mvKick .9s ease-in-out; }
+  .avatar-holder.move-wave   > .pas-laag { animation: mvWave .9s ease-in-out; }
+  .avatar-holder.move-bounce > .pas-laag { animation: mvBounce .9s ease-in-out; }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }
     30% { transform: translateY(-38px) scale(1.06); }
@@ -1846,7 +1878,9 @@
      weg toch op komt te staan, zodat er nooit een halve sprong blijft hangen. */
   @media (prefers-reduced-motion: reduce) {
     .stage::after { animation: none; }
-    .avatar-holder.dancing, .avatar-holder[class*="move-"] { animation: none; transform: none; }
+    .avatar-holder.dancing, .avatar-holder[class*="move-"],
+    .avatar-holder.dancing > .pas-laag,
+    .avatar-holder[class*="move-"] > .pas-laag { animation: none; transform: none; }
   }
 
   /* ---- Home ---- */
@@ -12704,7 +12738,7 @@ function renderTourMap(travelFrom) {
     // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
     if (open && st === 3) b.classList.add('perfect');
     const hero = lvl === heroLvl
-      ? `<div class="tour-hero"><div class="avatar-holder idle">${avatarSVG(p, 96)}</div>`
+      ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
         + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
 
     // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
@@ -14542,7 +14576,7 @@ function startLevel(lvl) {
   $('game-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   telNu($('game-diamonds'), p.diamonds);
-  $('game-avatar-inner').innerHTML = avatarSVG(p, 168);
+  $('game-avatar-inner').innerHTML = pasLaag(avatarSVG(p, 168));
   // De zaal van deze wereld. Heeft de wereld er geen, dan geeft applyVenue false
   // terug, blijft .venue-aan eraf en is dit scherm letterlijk wat het was: het
   // podiumkader van applyStage op het app-verloop.
@@ -14909,6 +14943,11 @@ function nextStep() {
 }
 
 const MOVE_CLASSES = MOVES.map(m => m.cls);
+/* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
+   dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
+   maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
+   voor waarom het pasje niet op de tekening zelf staat. */
+function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
 /* Een pasje aanzetten -- of, bij beperkte beweging, niet.
 
    De drie dansers (dance, tapDance, finaleDance) deden alle drie dezelfde twee
@@ -14921,15 +14960,25 @@ const MOVE_CLASSES = MOVES.map(m => m.cls);
    eindigt hoe dan ook in dezelfde stand ('idle', die op zijn beurt al stilstaat
    bij beperkte beweging) -- er blijft dus nooit een halve sprong hangen.
 
+   HET WIEGEN GAAT NIET MEER UIT. Dat deed het wél, en dat was de hele bron van
+   het tikje bij het in- en uitzetten: het pasje staat sinds kort op de tekening
+   in de pop en het wiegen op de pop zelf (zie de CSS bij de danspasjes), dus ze
+   zitten elkaar niet meer in de weg. 'idle' blijft daarom gewoon staan.
+
+   De herstart wordt op de tekening afgedwongen en niet meer op de houder -- daar
+   loopt nu de animatie die opnieuw moet beginnen als hetzelfde pasje twee keer
+   achter elkaar komt (finaleDance doet dat).
+
    Terug komt of er iets te wachten valt: false betekent "ze staat al stil". */
 function zetPas(el, move) {
-  el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
-  if (motionOff()) { el.classList.add('idle'); return false; }
-  void el.offsetWidth;
+  el.classList.remove('dancing', ...MOVE_CLASSES);
+  if (motionOff()) return false;
+  const pop = el.firstElementChild;
+  if (pop) void pop.offsetWidth;
   el.classList.add('dancing', move.cls);
   return true;
 }
-// en weer uit: terug naar de stand waar elke pop tussen de pasjes door in staat
+// en weer uit: het pasje eraf, het wiegen loopt door (en stond ook nooit stil)
 function stilStaan(el) { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }
 function dance(elId) {
   const el = $(elId);
@@ -15140,7 +15189,7 @@ function endLevel(success) {
   const fanBonus = Math.floor(G.fan / 25);
   if (fanBonus > 0) p.diamonds += fanBonus;
   const verdiend = G.earned + fanBonus;
-  $('end-avatar').innerHTML = avatarSVG(p, 150);
+  $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
   // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
   applyVenue($('screen-end'), wl.world);
@@ -15876,7 +15925,7 @@ function paintShop() {
      vaste licht (zie .spiegel), en het podium staat nog gewoon achter haar in de
      show en op het eindscherm. De opslag is niet aangeraakt: p.equipped.stage
      blijft staan zoals het stond. */
-  $('shop-avatar').innerHTML = avatarSVG(preview, 165, true);
+  $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
