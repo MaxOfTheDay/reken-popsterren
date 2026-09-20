@@ -1098,7 +1098,38 @@
      margin-top:auto is de auto-marge waarmee dit blok (logo + sterren + knop)
      verticaal in het midden staat; .profile-spacer duwt van onderaf terug. Die
      stond hiervoor op de tekstkop en hoort nu hier. */
-  .spellogo { margin: auto 0 0; padding: 0 16px; text-align: center; }
+  .spellogo { margin: auto 0 0; padding: 0 16px; text-align: center; position: relative; }
+  /* Twee sterretjes naast de naam van het spel. Ze lenen de cyclus van de vonk
+     bij de ster op de kaart (heroVonk): alleen doorzichtigheid en een minieme
+     schaal, zichtbaar in nog geen vijfde van hun ronde. Op 17 en 23 seconden
+     lopen ze uit de pas, dus ze staan vrijwel nooit samen aan -- meestal zie je
+     er geen, af en toe eentje.
+
+     Zo weinig is met opzet. Dit scherm is er om een ster te kiezen, en het houdt
+     zichzelf daar bewust stil voor: de discolichtjes op de tegels ademen hier
+     niet mee (zie .ster-tegel .st-podium::after) juist omdat zes pulserende
+     vlakken het hele scherm laten bewegen terwijl er niets gebeurt. Dit is de
+     tegenhanger daarvan -- één klein teken van leven, ver van de tegels vandaan,
+     en nooit twee tegelijk. Het leven op dit scherm hoort van de poppen te komen
+     (zie landingLeeft), niet van de achtergrond. */
+  .spellogo .vonk {
+    position: absolute; z-index: 1; line-height: 1; opacity: 0; pointer-events: none;
+    color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);
+    animation: logoVonk 17s ease-in-out infinite;
+  }
+  /* Dezelfde vorm als heroVonk bij de ster op de kaart -- alleen
+     doorzichtigheid en een minieme schaal -- maar veel spaarzamer gedoseerd.
+     Daar is de vonk een aanwijzing ("hier sta je"); hier is hij versiering naast
+     een naam, en dan is elke seconde dat hij áán staat er een te veel. Opgemeten
+     met de curve van heroVonk was er 31% van de tijd eentje zichtbaar; met dit
+     venster is dat ruim een tiende, en met twee cyclussen die niet op elkaar
+     passen (17 en 23 seconden) staan ze nooit samen aan. */
+  @keyframes logoVonk {
+    0%, 93%, 100% { opacity: 0; transform: scale(.5); }
+    96%           { opacity: .85; transform: scale(1); }
+    98%           { opacity: .3; transform: scale(.72); }
+  }
+  @media (prefers-reduced-motion: reduce) { .spellogo .vonk { display: none; } }
   /* contain is een vangnet en geen opmaak: mocht een afgeleide ooit met een
      andere verhouding terugkomen, dan wordt hij hier kleiner getekend en niet
      uitgerekt of bijgesneden. */
@@ -7192,6 +7223,9 @@
     <h1 class="spellogo">
       <img src="assets/branding/wordmark.webp" alt="Rekensterren"
            width="1080" height="360" decoding="async">
+      <!-- versiering, geen inhoud: de naam staat in de alt hierboven -->
+      <span class="vonk" style="top:6%;left:9%;font-size:15px" aria-hidden="true">✦</span>
+      <span class="vonk" style="top:58%;right:10%;font-size:11px;animation-duration:23s;animation-delay:-8s" aria-hidden="true">✦</span>
     </h1>
     <div class="subtitle" id="profile-subtitle"></div>
     <!-- De "+" staat vást in het raster en wordt nooit weggegooid: renderProfiles
@@ -9893,6 +9927,8 @@ function show(id) {
   document.body.classList.remove('start');
   // De begroeting van de kaart hoort bij de kaart -- zie kaartGroetStop.
   if (id !== 'screen-map') kaartGroetStop();
+  // en die van de sterrenkeuze bij de sterrenkeuze -- zie landingStil.
+  if (id !== 'screen-profile') landingStil();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -9919,6 +9955,108 @@ function navGo(t) {
   else (wasActive ? openTrophies : resumeTrophies)();
 }
 
+/* ================= De sterrenkeuze leeft ==================================
+   Dit scherm heeft één taak -- kies een ster -- en het houdt zich daar bewust
+   stil voor. Er stond hier ooit een begroeting waarin álle sterren na elkaar
+   zwaaiden bij elke opbouw, en die is er juist afgehaald: een rij poppen die
+   telkens weer dezelfde golf doet leest als een schermbeveiliger, niet als
+   iemand die hallo zegt.
+
+   Wat er nu staat is hetzelfde idee met een andere dosering:
+
+     binnenkomen   iedereen zwaait één keer, net niet tegelijk, en daarna is het
+                   klaar. Eén keer per kéér dat je hier komt -- niet per
+                   hertekening, want renderProfiles draait ook als er een ster
+                   bijkomt of wegvalt.
+     daarna        lange stilte, één pop, lange stilte. Nooit twee tegelijk,
+                   nooit twee keer achter elkaar dezelfde.
+
+   Dat verschil is het hele punt: "af en toe zegt er iemand hoi" in plaats van
+   "de tegels draaien een animatie". Vandaar ook de rust van elf tot negentien
+   seconden -- lang genoeg dat je het niet ziet aankomen.
+
+   Alles hangt aan timers die in landingStil() weer losgelaten worden, en dat
+   gebeurt bij élke schermwissel (zie show). Er loopt dus niets door op een
+   scherm dat je verlaten hebt, en twee keer binnenkomen stapelt niet. */
+const LANDING = {
+  komNa: 520,       // het scherm eerst laten landen -- ruim na MOTION.totaal
+  tussen: 140,      // en dan de sterren na elkaar, net genoeg uit de pas
+  duur: 950,        // zolang duurt een pasje (zie de move-* in de CSS)
+  rustMin: 11000,   // daarna minstens zoveel stilte
+  rustMax: 19000,   // en hoogstens zoveel
+};
+/* Twee pasjes, en met opzet de twee kleinste. Een tegel snijdt af (overflow:
+   hidden) en een sprong van 38 pixels zet de pop met haar hoofd buiten het
+   podium; zwaaien en wiegen blijven binnen hun eigen vak. */
+const LANDING_PASJES = [{ cls: 'move-wave' }, { cls: 'move-sway' }];
+let landingTimers = [], landingVorige = -1;
+
+// de poppen op de tegels, élke keer vers opgezocht: renderProfiles bouwt ze opnieuw
+function landingPoppen() {
+  const rij = $('profile-row');
+  return rij ? [...rij.querySelectorAll('.ster-tegel .avatar-holder')] : [];
+}
+/* Een timer die zichzelf weer opruimt. Zonder dat laatste groeit de lijst een
+   hele sessie lang door: elk groetje legt er twee bij, en op een scherm waar een
+   gezin gerust een kwartier op kan blijven staan is dat een lijst met honderden
+   afgelopen id's erin. Nu staan er hoogstens de paar in die nog moeten komen. */
+function landingNa(ms, fn) {
+  const id = setTimeout(() => {
+    landingTimers = landingTimers.filter(x => x !== id);
+    fn();
+  }, ms);
+  landingTimers.push(id);
+}
+function landingPas(el, move) {
+  if (!el || !zetPas(el, move)) return;
+  landingNa(LANDING.duur, () => stilStaan(el));
+}
+// Alles los: geen wachtende groet, geen wachtende stilte, geen halve zwaai.
+function landingStil() {
+  landingTimers.forEach(clearTimeout);
+  landingTimers = [];
+  landingPoppen().forEach(stilStaan);
+}
+/* De stilte, en aan het eind ervan één pop. Daarna weer stilte -- dit is de enige
+   lus, en hij bestaat uit één timer tegelijk. */
+function landingRust(extra) {
+  const rust = LANDING.rustMin + Math.random() * (LANDING.rustMax - LANDING.rustMin);
+  landingNa((extra || 0) + rust, () => {
+    const poppen = landingPoppen();
+    if (poppen.length) {
+      let i = Math.floor(Math.random() * poppen.length);
+      if (poppen.length > 1 && i === landingVorige) i = (i + 1) % poppen.length;
+      landingVorige = i;
+      landingPas(poppen[i], pick(LANDING_PASJES));
+    }
+    /* De volgende stilte begint ná dit pasje en niet ernaast. Anders is "rust"
+       de tijd tussen twee begínnen in plaats van tussen twee bewegingen, en
+       kunnen er bij een korte rust twee poppen tegelijk staan te zwaaien -- wat
+       precies is wat dit scherm niet moet doen. */
+    landingRust(LANDING.duur);
+  });
+}
+/* Een tik wint het altijd van een groetje. Wie aan het kiezen is moet niet net
+   op dat moment een pop zien bewegen, dus begint de stilte gewoon opnieuw. */
+function landingTikje() { landingStil(); landingRust(0); }
+function landingLeeft() {
+  landingStil();
+  const scherm = $('screen-profile');
+  if (scherm) {
+    scherm.removeEventListener('pointerdown', landingTikje);
+    scherm.addEventListener('pointerdown', landingTikje);
+  }
+  // Beperkte beweging: geen begroeting en geen stilte die op iets wacht. De
+  // tegels staan er precies zoals ze horen te staan, alleen zonder zwaai.
+  if (motionOff()) return;
+  landingVorige = -1;
+  const aantal = landingPoppen().length;
+  for (let i = 0; i < aantal; i++) {
+    landingNa(LANDING.komNa + i * LANDING.tussen, () => landingPas(landingPoppen()[i], LANDING_PASJES[0]));
+  }
+  landingRust(LANDING.komNa + aantal * LANDING.tussen);
+}
+
 function goProfiles() {
   /* Een klaarliggende reis hoort bij de ster die hem verdiend heeft. Ging het kind
      vanaf het eindscherm terug naar de sterrenkeuze in plaats van naar de kaart,
@@ -9935,6 +10073,7 @@ function goProfiles() {
   kiesBezig = false;   // terug op de landing mag er weer gekozen worden (zie kiesSter)
   renderProfiles();
   toonHub('screen-profile');
+  landingLeeft();
 }
 /* Eén tegel per kind, en op die tegel alleen wat er nodig is om jezelf te vinden
    en te zien waar je gebleven was.
@@ -9956,7 +10095,7 @@ function sterTegel(key, p) {
   const tegel = document.createElement('button');
   tegel.className = 'ster-tegel';
   tegel.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${avatarSVG(p, 132, 'klein')}</div></div>
+    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
      <div class="st-voet">
        <div class="st-rij">
          <span class="st-ico" aria-hidden="true">${w.icon}</span>
@@ -14993,8 +15132,12 @@ function zetPas(el, move) {
   el.classList.add('dancing', move.cls);
   return true;
 }
-// en weer uit: het pasje eraf, het wiegen loopt door (en stond ook nooit stil)
-function stilStaan(el) { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }
+/* En weer uit: alleen het pasje eraf. Het wiegen loopt door en stond ook nooit
+   stil, dus dat hoeft hier niet meer aangezet te worden -- 'idle' stond er al en
+   zetPas haalt hem niet meer weg. Dat scheelt niet alleen een regel: de poppen op
+   de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
+   wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
+function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
 function dance(elId) {
   const el = $(elId);
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
@@ -17381,6 +17524,10 @@ function zetSchermkunst() {
 load();
 zetSchermkunst();
 renderProfiles();
+// Bij het opstarten staat dit scherm er al uit de opmaak, dus er komt geen
+// goProfiles() langs om de begroeting aan te zwengelen. Brengt ?debug je meteen
+// ergens anders heen, dan zet show() hem hieronder net zo goed weer stil.
+landingLeeft();
 syncBackGuard();
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
