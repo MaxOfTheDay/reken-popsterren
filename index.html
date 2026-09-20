@@ -779,16 +779,22 @@
 
          tik    70ms   een knop die indrukt. Moet ónder de reactietijd blijven.
          snel  220ms   goed / fout: het antwoord op wat het kind net deed.
-         nav   320ms   een gewone schermwissel.
-         reis  380ms   kaart <-> zaal. De enige beweging die ruimte uitlegt en
-                       daarom de enige die je mag zien duren.
+         nav           een gewone schermwissel.
+         reis          kaart <-> wereldkaartje. De enige beweging die ruimte
+                       uitlegt en daarom de enige die je mag zien duren.
 
-       Hier staan alleen de twee die de CSS zelf gebruikt. De andere twee horen bij
-       schermwissels, en die worden in JS geanimeerd (transform/opacity op een heel
-       scherm, met een opruimer) -- ze staan daarom in MOTION, boven goMap, samen
-       met de curves die die animaties gebruiken. Eén ladder, twee plekken, en de
-       hele ladder staat in beide commentaren zodat niemand er één uit het oog
-       verliest.
+       DE BOVENSTE TWEE STAAN HIER, DE ONDERSTE TWEE HEBBEN GEEN GETAL. De twee
+       korte zijn hier echte overgangen en dus eigendom van dit stijlblad. De
+       twee lange zijn schermwissels: die worden in JS geanimeerd en bestaan uit
+       stukjes (eerst weg, dan aan / eerst vliegen, dan overvloeien). Hun duur is
+       de som van die stukjes en staat in MOTION.totaal en VLUCHT.totaal, boven
+       goMap -- daar staat de hele ladder nog eens, met de curves erbij.
+
+       Hier stonden ze eerder wél als getal, mét de opdracht ze gelijk te houden
+       met het commentaar daar. Dat is precies zo afgelopen als zulke afspraken
+       aflopen: er stond nav 320 en reis 380 terwijl het spel er 300 en 420 deed.
+       Eén getal op twee plekken overschrijven is geen afspraak maar een gok, dus
+       staat het er nu nog maar op één plek -- en daar wordt het uitgerekend.
 
        --ease-uit is alles wat áánkomt: snel los, zacht neerzetten. */
     --t-tik: 70ms; --t-snel: 220ms;
@@ -1670,6 +1676,8 @@
   }
   .gear-menu.open { display: flex; animation: gearPop .16s var(--ease-uit); }
   @keyframes gearPop { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
+  /* Wie geen beweging wil, krijgt hetzelfde menu -- het klapt alleen niet open. */
+  @media (prefers-reduced-motion: reduce) { .gear-menu.open { animation: none; } }
   .gear-item {
     font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
@@ -1814,6 +1822,16 @@
     20% { transform: translateY(0) scaleY(.82) scaleX(1.1); }
     45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
     70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
+  }
+  /* Wie geen beweging wil: de lampen ademen niet en er wordt niet gedanst.
+     Het licht blijft liggen (het is een kleur op het podium, geen beweging) en
+     de pop staat rechtop op haar plek -- dezelfde eindstand als na een pasje,
+     alleen zonder het pasje. De danspasjes worden in JS al overgeslagen (zie
+     zetPas); dit is het slot op de deur voor een .move-* die er langs een andere
+     weg toch op komt te staan, zodat er nooit een halve sprong blijft hangen. */
+  @media (prefers-reduced-motion: reduce) {
+    .stage::after { animation: none; }
+    .avatar-holder.dancing, .avatar-holder[class*="move-"] { animation: none; transform: none; }
   }
 
   /* ---- Home ---- */
@@ -3024,6 +3042,25 @@
     from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
+  /* Wie geen beweging wil. Deze twee kaarten dragen wat er net gebeurde en wat
+     het opleverde ("Goed zo, je had het! 💎 +2"), dus ze uitzetten kan niet:
+     beide animaties eindigen bovendien op een andere doorzichtigheid dan waar
+     hun eigen regel ze neerzet, en `animation: none` zou ze onzichtbaar maken --
+     precies het gat waar de rest van dit bestand zo op let.
+
+     Dus: geen groei, geen opstijgen, wél de kaart. De praise-kaart staat meteen
+     op ware grootte en doet alleen nog zijn eigen tijd (opkomen, blijven staan,
+     weggaan) in doorzichtigheid; de toast staat er gewoon en wacht op de tik die
+     hem wegstuurt, net als anders. */
+  @keyframes praiseStil {
+    0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .praise { transform: translate(-50%,-50%) scale(1); }
+    .praise.docked { transform: translateX(-50%) scale(1); }
+    .praise.pop, .praise.docked.pop { animation: praiseStil .9s ease forwards; }
+    .toast.show { animation: none; opacity: 1; transform: translateX(-50%); }
+  }
   .toast-main { font-size: clamp(16px, 4.6vw, 19px); font-weight: 700; color: var(--c-white); line-height: 1.3; text-wrap: balance; }
   .toast-sub { font-size: var(--tx-klein); font-weight: 600; color: var(--c-white); opacity: .75; margin-top: 1px; }
   /* op lage schermen zit de paspop al vlak onder de kop (zie .show-stage
@@ -3046,6 +3083,9 @@
     0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
     40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); }
   }
+  /* Wie geen beweging wil: geen schud. Het bericht zit in de hartjes zelf --
+     loseHeart schrijft er een gebroken hartje in -- en dat blijft staan. */
+  @media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
   /* Zachte "foute noot": een korte kanteling, geen schud. Duurde .7s en dat is
      lang genoeg om als straf te lezen; op .42s is het een hoofdschudden en is de
      som daarna meteen weer gewoon leesbaar. */
@@ -3067,6 +3107,14 @@
     20% { opacity: 1; transform: translate(-50%, 6px) rotate(-8deg); }
     100% { opacity: 0; transform: translate(-50%, 90px) rotate(30deg); }
   }
+  /* Wie geen beweging wil: het nootje valt niet weg, het is er even en dan niet
+     meer. Uitzetten kan hier niet zomaar -- .slip-note staat op opacity 0 en de
+     animatie is het enige wat hem ooit zichtbaar maakt, dus `animation: none`
+     haalt de misser-knipoog stilletjes weg. Nu blijft hij, zonder de val. */
+  @keyframes slipStil {
+    0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .slip-note.go { animation: slipStil 1.2s ease forwards; } }
 
   /* ---- Gouden vraag ---- */
   .question-card.golden {
@@ -3075,6 +3123,10 @@
     animation: goldGlow 1s ease-in-out infinite alternate;
   }
   @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(var(--goud-gloed-rgb),.7), 0 8px 20px rgba(0,0,0,.3); } to { box-shadow: 0 0 34px rgba(var(--goud-gloed-rgb),1), 0 8px 20px rgba(0,0,0,.3); } }
+  /* Wie geen beweging wil: de gouden vraag blijft goud en blijft glimmen -- hij
+     ademt alleen niet meer. De gloed staat in de regel hierboven, dus zonder de
+     animatie is de kaart nog steeds herkenbaar de gouden. */
+  @media (prefers-reduced-motion: reduce) { .question-card.golden { animation: none; } }
   .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
 
   /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
@@ -7017,6 +7069,21 @@
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); }
   }
+
+  /* ---- Wie geen beweging wil: wat er los in de body wordt neergezet --------
+     Deze vier bestaan alleen om te bewegen -- ze dragen geen tekst, geen knop en
+     geen stand. Wat ze vieren of afleveren staat ergens anders: de diamanten
+     staan in de teller vóórdat ze vertrekken, de badge staat in de kast, de
+     confetti viert sterren die er zelf ook staan. Weglaten kost dus niets.
+
+     De JS laat ze bij beperkte beweging al niet meer ontstaan (confetti,
+     confettiBurst, sparkleAt, flyDiamonds, flyBadge). Dit is het slot op de
+     deur: komt er ooit langs een andere weg toch zo'n stukje in de body, dan
+     dwarrelt het niet alsnog over het scherm. (.burst-bit en .tap-ripple staan
+     al in het blok bij het trofee-feestje.) */
+  @media (prefers-reduced-motion: reduce) {
+    .confetti-bit, .fly-dia, .fly-badge { display: none; }
+  }
 </style>
 </head>
 <body class="start">
@@ -10645,15 +10712,24 @@ function openCareer() {
   speak(`Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
 }
 /* ================= Bewegingstaal: kaart <-> zaal ===========================
-   MOTION is de JS-kant van de bewegingsladder die boven in :root staat. Dezelfde
-   vier snelheden, en ze staan op twee plekken omdat een CSS-overgang en een
-   WAAPI-animatie nu eenmaal niet uit dezelfde bron kunnen lezen:
+   MOTION is de JS-kant van de bewegingsladder. Vier snelheden, en niets ertussen:
 
-     tik 70 . snel 220 . nav 320 . reis 380
+     tik     70ms   --t-tik            een knop die indrukt        (CSS)
+     snel   220ms   --t-snel           goed / fout                 (CSS)
+     nav            MOTION.totaal      een gewone schermwissel
+     reis           VLUCHT.totaal      kaart <-> wereldkaartje
 
-   De CSS draagt de twee korte (--t-tik, --t-snel, want dat zijn daar echte
-   overgangen); hier staan alle vier plus de curves. Verschuift er een, dan
-   verschuift hij op beide plekken.
+   DE ONDERSTE TWEE KRIJGEN GEEN EIGEN GETAL, en dat is het hele punt. Een
+   schermwissel is niet één duur maar drie stukjes achter elkaar (weg, komNa,
+   kom); een vlucht is er twee (duur, kruis). Wie wil weten hoe lang zo'n wissel
+   duurt telt ze niet over uit een commentaar maar leest MOTION.totaal of
+   VLUCHT.totaal -- die kunnen per definitie niet uit de pas lopen met wat er
+   echt gebeurt.
+
+   Want dat liepen ze. Hier stond, samen met hetzelfde lijstje in :root en de
+   opdracht de twee gelijk te houden: "nav 320 . reis 380". Het spel deed toen al
+   300 en 420. Twee commentaren die naar elkaar wijzen houden elkaar niet bij; de
+   code doet dat wel.
 
    Wat een overgang hier moet doen, en verder niets: uitleggen dat de zaal de plek
    ís die je net aantikte. Geen titelkaartje, geen laadscherm, geen keten van
@@ -10734,7 +10810,9 @@ const MOTION = {
   in: 'cubic-bezier(.5,0,.75,0)',                   // vertrekt: zacht los, snel weg
   plop: 'cubic-bezier(.2,1.3,.4,1)',                // de enige overshoot: "ja, deze"
 };
-// hoe lang de hele wissel duurt, van de tik tot alles stilstaat
+// De sport 'nav' van de ladder: hoe lang de hele wissel duurt, van de tik tot
+// alles stilstaat. Het vertrekkende scherm (weg) valt hier binnen -- dat is op
+// 140ms klaar, ruim voordat het aankomende scherm op 300 tot rust komt.
 MOTION.totaal = MOTION.komNa + MOTION.kom;
 
 /* Eén overgang tegelijk. Een kind tikt drie keer op dezelfde halte; dat hoort
@@ -10904,6 +10982,8 @@ const VLUCHT = {
   baanPunten: [.33, .72, .25, 1],
 };
 VLUCHT.baan = 'cubic-bezier(' + VLUCHT.baanPunten.join(',') + ')';
+// De sport 'reis' van de ladder: de beweging plus de overvloeier erachteraan.
+VLUCHT.totaal = VLUCHT.duur + VLUCHT.kruis;
 /* Dezelfde curve, maar uit te rekenen in JS. Dat is nodig omdat de vlucht uit twee
    transforms bestaat die samen één beweging moeten zijn (zie vluchtBeelden): laat
    je de browser ze allebei los interpoleren, dan klopt hun product er tussenin
@@ -12708,6 +12788,11 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
    midden van de kaart, met een boogje. */
 function flyBadge(vanEl, naarEl, teken) {
   if (!vanEl || !naarEl || !vanEl.animate) return;
+  /* Bij beperkte beweging blijft de badge op de kaart en stijgt er niets op. De
+     munt hoort bij het moment en niet bij de vlucht: beide aanroepers laten hem
+     zelf klinken (zie vier() in runTravel en de toegift-tak), dus hier zou hij
+     dubbel vallen. */
+  if (motionOff()) return;
   const f = vanEl.getBoundingClientRect(), t = naarEl.getBoundingClientRect();
   const d = document.createElement('div');
   d.className = 'fly-badge';
@@ -14621,31 +14706,51 @@ function nextStep() {
 }
 
 const MOVE_CLASSES = MOVES.map(m => m.cls);
+/* Een pasje aanzetten -- of, bij beperkte beweging, niet.
+
+   De drie dansers (dance, tapDance, finaleDance) deden alle drie dezelfde twee
+   regels: alles eraf, herstart afdwingen, 'dancing' plus het pasje erop. Ze
+   staan hier één keer, zodat de uitzondering er ook maar één keer staat.
+
+   Wat een pasje zegt is al gezegd vóórdat hij begint: de klank, de juichtekst,
+   de diamanten die bijgeschreven zijn. Het pasje is het karakter eromheen, en
+   dat is precies wat prefers-reduced-motion bedoelt met "niet nodig". De pop
+   eindigt hoe dan ook in dezelfde stand ('idle', die op zijn beurt al stilstaat
+   bij beperkte beweging) -- er blijft dus nooit een halve sprong hangen.
+
+   Terug komt of er iets te wachten valt: false betekent "ze staat al stil". */
+function zetPas(el, move) {
+  el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
+  if (motionOff()) { el.classList.add('idle'); return false; }
+  void el.offsetWidth;
+  el.classList.add('dancing', move.cls);
+  return true;
+}
+// en weer uit: terug naar de stand waar elke pop tussen de pasjes door in staat
+function stilStaan(el) { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }
 function dance(elId) {
   const el = $(elId);
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
-  el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
-  void el.offsetWidth;
-  el.classList.add('dancing', move.cls);
-  setTimeout(() => { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }, 950);
+  if (!zetPas(el, move)) return;
+  setTimeout(() => stilStaan(el), 950);
 }
 // Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
 function tapDance(elId) {
   const el = $(elId);
   if (!el || el.classList.contains('dancing')) return;
-  const move = pick(MOVES);
-  el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
-  void el.offsetWidth;
-  el.classList.add('dancing', move.cls);
+  // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
+  // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
   sndTap();
+  if (!zetPas(el, pick(MOVES))) return;
   sparkle(el);
-  setTimeout(() => { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); }, 950);
+  setTimeout(() => stilStaan(el), 950);
 }
 // klein sterretje dat oppopt bij een tik-dans
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
 function sparkleAt(r, emojis) {
+  if (motionOff()) return;   // een los dwarrelend sterretje: sier, en verder niets
   const s = document.createElement('div');
   s.className = 'confetti-bit';
   s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
@@ -14678,13 +14783,14 @@ function bumpPintjeTaps(el) {
 function finaleDance(elId, count) {
   const el = $(elId);
   if (!el) return;
+  // Bijna vier seconden dansen is precies het soort beweging dat je niet wilt
+  // als je om minder beweging gevraagd hebt. Ze staat er gewoon, in haar nieuwe
+  // spullen, en het eindscherm vertelt de rest.
+  if (motionOff()) { stilStaan(el); return; }
   let i = 0;
   const step = () => {
-    if (i >= count) { el.classList.remove('dancing', ...MOVE_CLASSES); el.classList.add('idle'); return; }
-    const move = MOVES[i % MOVES.length];
-    el.classList.remove('idle', 'dancing', ...MOVE_CLASSES);
-    void el.offsetWidth;
-    el.classList.add('dancing', move.cls);
+    if (i >= count) { stilStaan(el); return; }
+    if (!zetPas(el, MOVES[i % MOVES.length])) return;
     i++;
     setTimeout(step, 620);
   };
@@ -14930,18 +15036,56 @@ function endLevel(success) {
      Het wereldfeest komt ná het eindscherm en niet erin: de sterren van déze show
      zijn eerst, en de wereld is het laagje daarboven. Daarna gaat "Verder op
      tournee" gewoon naar de kaart, waar de reis of de nieuwe wereld wacht -- daar
-     is niets aan veranderd. */
+     is niets aan veranderd.
+
+     "EERST" IS EEN TIJDSTIP EN GEEN VOLGORDE IN DE CODE. Hier stond 650ms, en dat
+     was minder dan de ceremonie hierboven duurt: de tweede ster landt op 720ms,
+     de derde op 1020ms en het kanon van foutloos gaat op 1160ms. Een kind dat net
+     drie sterren haalde zag dus precies het zeldzaamste stuk van haar eindscherm
+     achter een schermvullende laag verdwijnen -- en hoe beter de show, hoe meer er
+     afgedekt werd. Nu wacht dit moment op de ceremonie zelf (naSterren), en niet
+     op een getal dat toevallig ooit groot genoeg leek. */
   const naFeest = feest ? () => wereldFeest(feest) : null;
-  if (rankUp) setTimeout(() => rankUpCelebrate(rankUp.rank, naFeest), 650);
-  else if (naFeest) setTimeout(naFeest, 650);
+  const wacht = naSterren();
+  if (rankUp) setTimeout(() => rankUpCelebrate(rankUp.rank, naFeest), wacht);
+  else if (naFeest) setTimeout(naFeest, wacht);
 }
+/* De klok van het sterrenmoment.
+
+   Deze tijden stonden als losse getallen in renderEndStars, en dat was prima
+   zolang niemand erop wachtte. Er wacht er wél iets op: endLevel staat het
+   scherm daarna af aan een ster-status of een wereldfeest, en dat mag pas als
+   deze ceremonie uitgespeeld is (zie naSterren). Twee plekken die met de hand
+   op hetzelfde getal gehouden moeten worden lopen uit elkaar -- dat is precies
+   hoe het eerder misging: de overlay stond op 650ms en dekte de tweede en derde
+   ster af. Dus staan ze hier, één keer, met een naam. */
+const STERCEREMONIE = {
+  eerste: 420,   // wanneer de eerste ster landt
+  tussen: 300,   // en elke volgende zoveel later
+  land: 480,     // hoe lang één ster erover doet om neer te komen
+  knal: 1160,    // foutloos: het confetti-kanon vanuit de sterrenrij
+  puls: 420,     // en het opveren van die rij zelf
+  // Beperkte beweging: de sterren staan er meteen (zie hieronder), dus er valt
+  // niets af te wachten. Alleen even ademen, zodat het volgende moment niet in
+  // hetzelfde beeldje over het eindscherm heen valt.
+  stil: 320,
+};
+/* Wanneer de ceremonie voorbij is: de derde ster staat stil én het kanon van
+   3-op-3 is uitgevallen. Dit is de enige plek waar "het sterrenmoment is klaar"
+   als tijdstip bestaat. */
+STERCEREMONIE.totaal = Math.max(
+  STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + STERCEREMONIE.land,
+  STERCEREMONIE.knal + STERCEREMONIE.puls);
+// Hoe lang het eindscherm voor zichzelf houdt voordat er iets groters overheen mag.
+function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.totaal; }
+
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
 // hoger klankje; een gemiste ster verschijnt stil en dof. Dé ceremonie van het
 // eindscherm — bij prefers-reduced-motion staan ze er meteen.
 function renderEndStars(n) {
   const wrap = $('end-stars');
   wrap.innerHTML = '';
-  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still = motionOff();
   for (let i = 0; i < 3; i++) {
     const s = document.createElement('span');
     s.textContent = '⭐';
@@ -14956,25 +15100,29 @@ function renderEndStars(n) {
           { transform: 'scale(0) rotate(-30deg)', opacity: 0 },
           { transform: 'scale(1.45) rotate(8deg)', opacity: 1, offset: .6 },
           { transform: 'scale(1) rotate(0deg)', opacity: 1 }
-        ], { duration: 480, easing: 'ease-out' });
+        ], { duration: STERCEREMONIE.land, easing: 'ease-out' });
         buzz(20);
         beep(660 + i * 170, 0.2, 0, 'triangle', 0.16);
       } else {
         s.animate([{ opacity: 0 }, { opacity: .25 }], { duration: 400, easing: 'ease-out' });
       }
-    }, 420 + i * 300);
+    }, STERCEREMONIE.eerste + i * STERCEREMONIE.tussen);
   }
   // Foutloos (3 sterren): een confetti-kanon vanuit de sterren zodra ze staan.
   if (n === 3 && !still) {
     setTimeout(() => {
       const r = wrap.getBoundingClientRect();
       confettiBurst(r.left + r.width / 2, r.top + r.height / 2, 26, '⭐');
-      if (wrap.animate) wrap.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
-    }, 1160);
+      if (wrap.animate) wrap.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: STERCEREMONIE.puls, easing: 'ease-out' });
+    }, STERCEREMONIE.knal);
   }
 }
 
 function confetti(n) {
+  // Hetzelfde antwoord als confettiBurst hieronder: wie om minder beweging
+  // vraagt, krijgt het feest zonder de veertig dwarrelende stukjes. Wat er
+  // gevierd wordt staat er zelf ook -- de sterren, de juichtekst, de teller.
+  if (motionOff()) return;
   const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
@@ -15619,6 +15767,11 @@ function koopVonken(el) {
 // (spelscherm), betalen = van de portemonnee wég (kleedkamer).
 function flyDiamonds(fromEl, toEl, n) {
   if (!fromEl || !toEl || !fromEl.animate) return;
+  /* Bij beperkte beweging vliegt er niets. Dat mag, want de diamanten zijn hier
+     al: elke aanroep komt ná p.diamonds en ná de teller op het scherm (zie
+     submitAnswer en confirmShopBuy). Deze boog vertelt alleen wáár ze vandaan
+     komen -- de opbrengst zelf staat er met of zonder. */
+  if (motionOff()) return;
   const f = fromEl.getBoundingClientRect(), t = toEl.getBoundingClientRect();
   const dx = t.left + t.width / 2 - (f.left + f.width / 2);
   const dy = t.top + t.height / 2 - (f.top + f.height / 2);

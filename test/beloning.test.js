@@ -18,6 +18,7 @@
  *   H  een wereld erbij               -> één regel configuratie, verder niets
  *   K  de onthulling                  -> één keer, met een knop om 'm aan te doen
  *   L  het teken op de kaart          -> één fonkeling, en alleen zolang er iets ligt
+ *   M  beperkte beweging             -> hetzelfde eindscherm, zonder de vertoning
  *
  * Draaien:
  *   npm run test:beloning     (of: npm test voor alle suites)
@@ -38,8 +39,8 @@ function check(ok, label, detail) {
 
   // Elke zaak begint met een schone opslag: de beloningen van de ene zaak mogen
   // nooit in de volgende opduiken.
-  async function fresh(seed) {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  async function fresh(seed, opties) {
+    const ctx = await browser.newContext(Object.assign({ viewport: { width: 390, height: 844 } }, opties || {}));
     await cacheFonts(ctx);
     const page = await ctx.newPage();
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
@@ -59,13 +60,28 @@ function check(ok, label, detail) {
          moment dat vóór het wereldfeest komt, en dan zou elke zaak op de klok van
          díe animatie moeten wachten i.p.v. op wat ze test. Zaak C kijkt apart of
          die twee elkaar netjes opvolgen.
-         (Het feestje zelf komt 650 ms na endLevel -- zie endLevel.) */
+
+         Het feestje komt pas als de sterrenceremonie van het eindscherm
+         uitgespeeld is (naSterren, zie endLevel) -- ruim anderhalve seconde, en
+         niet meer de 650 ms van vroeger. Dat is te lang om na élke show af te
+         wachten: de zaken hieronder spelen tientallen shows. Dus wordt er alleen
+         gewacht als er iets te vieren ís, en dat is precies te zien aan de
+         beloningen die deze show heeft opgeleverd -- want dát is waar het
+         feestje over gaat. */
       window.__speel = async (lvl, sterren) => {
         P().rankSeen = 99;
+        const telt = () => {
+          const q = P();
+          return [q.owned.filter(id => isBeloning(id)).length,
+                  q.trophies.filter(id => id.indexOf(PERFECT_BADGE) === 0).length,
+                  (q.readyTrophies || []).filter(id => id.indexOf(PERFECT_BADGE) === 0).length].join();
+        };
+        const voor = telt();
         startLevel(lvl);
         G.misses = sterren >= 3 ? 0 : sterren === 2 ? 1 : 2;
         endLevel(true);
-        await new Promise(r => setTimeout(r, 900));
+        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, telt() === voor ? 200 : 1600));
       };
       window.__speelWereld = async (i, sterren) => {
         const w = worldForIndex(i);
@@ -264,7 +280,9 @@ function check(ok, label, detail) {
       startLevel(w.first + w.levels - 1);
       G.misses = 0;
       endLevel(true);
-      await new Promise(r2 => setTimeout(r2, 900));
+      // ruim ná de sterrenceremonie (naSterren), dus de rang staat er en het
+      // wereldfeest wacht nog op zijn beurt
+      await new Promise(r2 => setTimeout(r2, 1900));
       const tussen = { rang: !!document.querySelector('.rankup-overlay:not(.closing)'), feest: !!window.__feest() };
       await new Promise(r2 => setTimeout(r2, 3000));
       const daarna = { rang: !!document.querySelector('.rankup-overlay:not(.closing)'), feest: !!window.__feest() };
@@ -778,6 +796,81 @@ function check(ok, label, detail) {
       return [...document.querySelectorAll('.stop-schat')].length;
     });
     check(na === 0, 'L · en hij is weg zodra de schat van haar is', String(na));
+    await ctx.close();
+  }
+
+  /* ---- M · Wie geen beweging vraagt -------------------------------------
+     prefers-reduced-motion verandert hóe een scherm zijn stand bereikt, niet
+     wélke stand dat is. De JS-kant daarvan ligt vast in kern.test.js zaak N;
+     hier staat wat een kind écht ziet, want in de CSS zit een val die je pas
+     in een browser tegenkomt.
+
+     Die val: sommige animaties zijn het enige dat hun element ooit zichtbaar
+     maakt. De juichkaart staat op opacity 0 en wordt door praisePop opgehaald;
+     de toast net zo; het nootje bij een misser ook. Ze allemaal netjes op
+     `animation: none` zetten is dan geen rust maar verlies -- dan verdwijnt de
+     kaart mét de diamanten erin, en de toast die vertelt wat het juiste
+     antwoord was. Vandaar dat hier niet gemeten wordt of er iets uit staat,
+     maar of het er nog stáát. */
+  {
+    const { ctx, page } = await fresh(null, { reducedMotion: 'reduce' });
+    await nieuweSter(page);
+    // een hele wereld foutloos uitspelen: het drukste moment dat de app kent
+    const r = await page.evaluate(async () => {
+      const w = worldForIndex(0);
+      for (let l = w.first; l < w.first + w.levels; l++) await window.__speel(l, 3);
+      const pop = document.getElementById('end-avatar');
+      const sterren = [...document.querySelectorAll('#end-stars span')];
+      return {
+        deeltjes: document.querySelectorAll('.confetti-bit, .burst-bit, .fly-dia, .fly-badge, .tap-ripple').length,
+        sterren: sterren.length,
+        helder: sterren.filter(x => !x.classList.contains('dim') && +getComputedStyle(x).opacity > .95).length,
+        popKlas: pop.className,
+        popBeweegt: getComputedStyle(pop).animationName,
+        lampen: getComputedStyle(document.getElementById('end-stage'), '::after').animationName,
+        feest: !!window.__feest(),
+        spullen: P().owned.filter(id => isBeloning(id)),
+      };
+    });
+    check(r.deeltjes === 0, 'M · er dwarrelt, vliegt en spat niets', String(r.deeltjes));
+    check(r.sterren === 3 && r.helder === 3,
+      'M · en de drie verdiende sterren staan er gewoon, alle drie', JSON.stringify(r));
+    check(/\bidle\b/.test(r.popKlas) && !/move-|dancing/.test(r.popKlas) && r.popBeweegt === 'none',
+      'M · de pop staat rechtop stil en niet halverwege een sprong', `${r.popKlas} / ${r.popBeweegt}`);
+    check(r.lampen === 'none', 'M · de podiumlampen ademen niet', r.lampen);
+    check(r.feest && r.spullen.join() === 'acc_wereld_muziek',
+      'M · en de wereldschat wordt gewoon uitgereikt, met feestje', JSON.stringify(r));
+
+    // De kaarten die iets te zeggen hebben: die horen er te staan, niet te gaan.
+    const kaarten = await page.evaluate(async () => {
+      showPraise('Goed zo, je had het!', '💎 +2');
+      showToast('Het juiste antwoord was 7');
+      slipNote();
+      await new Promise(res => setTimeout(res, 300));
+      const zicht = id => {
+        const st = getComputedStyle(document.getElementById(id));
+        return { op: +st.opacity, tonen: st.display, vorm: st.transform };
+      };
+      // een los stukje met alleen die klasse erop: wat zou dít doen?
+      const meet = klas => {
+        const d = document.createElement('div');
+        d.className = klas;
+        document.body.appendChild(d);
+        const naam = getComputedStyle(d).animationName;
+        d.remove();
+        return naam;
+      };
+      return { praise: zicht('praise'), toast: zicht('toast'), noot: zicht('slip-note'),
+               gouden: meet('question-card golden'), schud: meet('shake') };
+    });
+    const schaal = +(/matrix\(([-\d.]+)/.exec(kaarten.praise.vorm) || [0, 0])[1];
+    check(kaarten.praise.op > .9 && Math.abs(schaal - 1) < .02,
+      'M · de juichkaart met de diamanten erin staat er, en op ware grootte', JSON.stringify(kaarten.praise));
+    check(kaarten.toast.op > .9 && kaarten.toast.tonen === 'flex',
+      'M · de toast vertelt nog steeds wat het juiste antwoord was', JSON.stringify(kaarten.toast));
+    check(kaarten.noot.op > .5, 'M · en de knipoog bij een misser is er ook nog', JSON.stringify(kaarten.noot));
+    check(kaarten.gouden === 'none', 'M · de gouden vraag blijft goud maar ademt niet', kaarten.gouden);
+    check(kaarten.schud === 'none', 'M · en de hartjes schudden niet', kaarten.schud);
     await ctx.close();
   }
 
