@@ -934,6 +934,165 @@ function check(ok, label, detail) {
     }
   }
 
+  /* =========== 7d-quinquies · De kaart viert de sterren niet nog een keer ===========
+   * Het eindscherm onthult de sterren, viert ze, en wacht tot het kind zelf op
+   * "Verder op tournee" tikt. Daarna kwam de kaart op en gebeurde dat nog een keer:
+   * dezelfde sterren landden onder de zojuist gespeelde halte (.net-af, een halve
+   * seconde), er ging een trilling af, er viel een vonkje -- en pás daarna vertrok
+   * ze. Opgemeten duurde het 1202ms voordat er iets bewoog, waarvan het grootste
+   * deel een herhaling was van nieuws dat het kind al had weggetikt.
+   *
+   * Het eindscherm is het beloningsmoment; de kaart is het voortgangsmoment. Dus:
+   * kaart op -> korte landing van het scherm zelf -> ze loopt.
+   *
+   * De grens van deze ingreep is waar het hier om draait, want "geen sterren meer
+   * op de kaart" zou drie andere dingen kapotmaken. Alleen een level-up die binnen
+   * dezelfde wereld doorreist slaat de landing over. Een show overdoen zonder dat
+   * de voortgang opschuift moet hem houden (de kaart is dan de eerste plek waar de
+   * nieuwe score staat), een wereldgrens heeft zijn eigen opbouw, en gewoon de
+   * kaart openen heeft er sowieso niets mee te maken.                          */
+  {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+    await page.goto(APP_URL);
+    await page.evaluate(() => {
+      localStorage.clear();
+      const p = defaultProfile('Roos', 'dress_roze');
+      p.level = 2; p.stars = { 1: 3 };
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: false, haptics: true, schemaV: 3, profiles: { p1: p } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(500);
+
+    /* ---- 7d.5a · level-up binnen de wereld: geen landing, en meteen op pad ----
+       De echte weg wordt nagelopen -- goMap(23), precies wat "Verder op tournee"
+       aanroept -- en niet runTravel rechtstreeks: de sterrenlanding wordt in goMap
+       overgeslagen, dus een test die runTravel zelf aanroept zou er langs kijken. */
+    const reis = await page.evaluate(async () => {
+      const log = [];
+      let start = 0;
+      const nu = () => performance.now() - start;
+      Object.defineProperty(navigator, 'vibrate', {
+        configurable: true, value: v => { log.push({ op: 'tril', t: nu(), v }); return true; },
+      });
+      const echt = window.sparkleAt;
+      window.sparkleAt = (r, e) => { log.push({ op: 'vonk', t: nu(), v: (e || []).join('') }); return echt(r, e); };
+
+      const p = P();
+      p.level = 24;
+      for (let l = 1; l <= 23; l++) p.stars[l] = 3;
+      pendingTravel = { from: 23, to: 24 };   // Junglewereld, binnen dezelfde wereld
+      naShowLvl = 23;
+      viewWorldIdx = 2;
+
+      start = performance.now();
+      goMap(23);
+      // vlak na de tekening: staat er een sterrenlanding op de kaart?
+      const landtMeteen = !!document.querySelector('.tour-stop.net-af');
+      // en staan de sterren er wél gewoon? (weghalen van de beat mag geen score wissen)
+      const sterrenZichtbaar = document.querySelectorAll('.tour-stop[data-lvl="23"] .cs-vol').length;
+
+      let landtOoit = landtMeteen, beweegtVanaf = null, aangekomen = null;
+      await new Promise(res => {
+        const kijk = () => {
+          if (document.querySelector('.tour-stop.net-af')) landtOoit = true;
+          const h = document.querySelector('.tour-stop[data-lvl="23"] .tour-hero');
+          if (h && beweegtVanaf === null) {
+            const a = h.getAnimations().find(x => x.effect
+              && x.effect.getKeyframes().some(k => k.transform));
+            if (a && a.startTime != null) beweegtVanaf = a.startTime + a.effect.getTiming().delay - start;
+          }
+          if (document.querySelector('.tour-stop[data-lvl="24"] .tour-hero') && aangekomen === null) aangekomen = nu();
+          if (aangekomen !== null || nu() > 4000) return res();
+          requestAnimationFrame(kijk);
+        };
+        requestAnimationFrame(kijk);
+      });
+      window.sparkleAt = echt;
+      return {
+        landtMeteen, landtOoit, sterrenZichtbaar,
+        beweegtVanaf: beweegtVanaf === null ? null : Math.round(beweegtVanaf),
+        aangekomen: aangekomen === null ? null : Math.round(aangekomen),
+        // alles wat er vóór de eerste beweging gebeurde
+        voorVertrek: log.filter(e => beweegtVanaf !== null && e.t < beweegtVanaf)
+          .map(e => `${e.op}@${Math.round(e.t)}`),
+        tikken: log.filter(e => e.op === 'tril').map(e => e.v),
+        vonken: [...new Set(log.filter(e => e.op === 'vonk').map(e => e.v))],
+        opkomstKlaar: MOTION.komNa + MOTION.kom,
+      };
+    });
+
+    check(reis.landtMeteen === false && reis.landtOoit === false,
+      'geen tweede sterrenlanding op de kaart bij een level-up', JSON.stringify(reis));
+    check(reis.sterrenZichtbaar === 3,
+      'de sterren staan er nog gewoon -- alleen de herhaling is weg', String(reis.sterrenZichtbaar));
+    check(reis.voorVertrek.length === 0,
+      'er trilt en vonkt niets vóór ze vertrekt', JSON.stringify(reis.voorVertrek));
+    /* Promptheid, maar niet zo prompt dat ze vertrekt terwijl de kaart nog inzoomt:
+       tussen het einde van de opkomst en haar eerste stap hoort een korte tel te
+       zitten, geen moment om op te wachten. */
+    check(reis.beweegtVanaf >= reis.opkomstKlaar && reis.beweegtVanaf <= 600,
+      'ze vertrekt kort ná de opkomst van de kaart en niet veel later',
+      `${reis.beweegtVanaf}ms, opkomst klaar op ${reis.opkomstKlaar}ms`);
+    check(reis.tikken.length === 1 && reis.tikken[0] === 15,
+      'de enige trilling van de hele reis is het tikje bij aankomst', JSON.stringify(reis.tikken));
+    check(reis.vonken.length > 0 && reis.vonken.every(v => !/\u2b50/.test(v)),
+      'het vonkenspoor draagt geen sterren -- die zijn op het eindscherm uitgedeeld',
+      JSON.stringify(reis.vonken));
+    check(reis.aangekomen !== null && reis.aangekomen < 2500,
+      'en ze komt ook echt aan', JSON.stringify(reis.aangekomen));
+
+    /* ---- 7d.5b · de drie stromen die dit NIET mogen merken ---- */
+    const rand = await page.evaluate(async () => {
+      const wacht = () => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+      const stil = () => document.getAnimations().forEach(a => a.cancel());
+      const p = P();
+      const uit = {};
+
+      // een show overdoen: de voortgang schuift niet op, dus geen reis
+      p.level = 24;
+      for (let l = 1; l <= 23; l++) p.stars[l] = 3;
+      pendingTravel = null;
+      viewWorldIdx = 2;
+      goMap(20);
+      await wacht();
+      uit.overdoen = !!document.querySelector('.tour-stop[data-lvl="20"].net-af');
+      stil();
+
+      // over een wereldgrens: eigen opbouw, eigen beat
+      p.level = 25;
+      for (let l = 1; l <= 24; l++) p.stars[l] = 3;
+      pendingTravel = { from: 24, to: 25 };
+      viewWorldIdx = 2;
+      goMap(24);
+      await wacht();
+      uit.wereldgrens = !!document.querySelector('.tour-stop[data-lvl="24"].net-af');
+      stopWereldReis();
+      stil();
+
+      // gewoon de kaart openen (tabbladbalk, terugknop, kleedkamer)
+      pendingTravel = null;
+      goMap();
+      await wacht();
+      uit.gewoonOpenen = !!document.querySelector('.tour-stop.net-af');
+      stil();
+      return uit;
+    });
+    check(rand.overdoen === true,
+      'een show overdoen laat de sterren wél op de kaart landen', JSON.stringify(rand));
+    check(rand.wereldgrens === true,
+      'een wereldgrens houdt zijn eigen sterrenmoment', JSON.stringify(rand));
+    check(rand.gewoonOpenen === false,
+      'gewoon de kaart openen laat nog steeds niets landen', JSON.stringify(rand));
+    await c.close();
+  }
+
   /* ========== 7d-bis · Beperkte beweging landt meteen goed ==========
    * De reis is een beloning en geen bericht: met 'prefers-reduced-motion: reduce'
    * hoort er niets te huppelen en niets te groeien, maar wel exact dezelfde kaart
