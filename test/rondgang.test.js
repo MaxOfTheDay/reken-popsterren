@@ -953,6 +953,132 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     }
   }
 
+  /* ================= 9 · De kaart zegt hallo =================
+     Eén zwaai als de kaart zélf de aankomst is, en geen als er al iets beweegt
+     dat uitlegt waaróm de ster daar staat. Dat is de hele regel (zie kaartGroet
+     boven goMap), en hij is alleen iets waard als hij aan beide kanten klopt --
+     dus staan hier de wegen die wél zwaaien naast de wegen die dat niet mogen.
+
+     Er wordt gekeken naar de klassen op de pop en niet naar een schermafdruk:
+     "ze zwaait" is in dit bestand letterlijk .dancing.move-wave, en "ze staat
+     gewoon" is .idle. Het onderscheid dat ertoe doet -- gebeurt er íets, of
+     niet -- is daarmee een waarde en geen oordeel. */
+  {
+    const groetCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(groetCtx);
+    const g = await groetCtx.newPage();
+    g.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    g.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+    await g.goto(SPEL_URL);
+    await g.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.order = 0; q.level = 5; for (let i = 1; i < 5; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await g.goto(SPEL_URL);
+    await g.evaluate(() => {
+      // de pop op de kaart, in klassen: 'dancing move-wave' of 'idle'
+      window.__ster = () => {
+        const el = document.querySelector('#tour-map .tour-hero .avatar-holder');
+        return el ? el.className : '(geen ster op de kaart)';
+      };
+    });
+    // de zwaai begint op MOTION.totaal en duurt .9s: hier zit hij er middenin
+    const kijk = async (ms) => { await g.waitForTimeout(ms == null ? 450 : ms); return g.evaluate(() => window.__ster()); };
+    const rust = () => g.waitForTimeout(2700);   // ruim over de koeltijd heen
+
+    let k = (await g.evaluate(() => selectProfile('p1')), await kijk());
+    check(/move-wave/.test(k), 'een ster kiezen komt aan op de kaart, en daar wordt gezwaaid', k);
+
+    // binnen de koeltijd heen en weer: één zwaai per bezoek, niet drie
+    k = await g.evaluate(async () => {
+      openKleedkamer();
+      await new Promise(r => setTimeout(r, 150));
+      goMap();
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'meteen heen en weer naar de kleedkamer zwaait niet nóg een keer', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      openTrophies();
+      await new Promise(r => setTimeout(r, 200));
+      goMap();
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(/move-wave/.test(k), 'maar een echte terugkomst uit de kast later wél', k);
+
+    // en daarna staat ze gewoon weer te wiegen -- geen klasse blijft hangen
+    k = await kijk(900);
+    check(k === 'avatar-holder idle', 'na de zwaai staat ze weer gewoon op haar plek', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      startLevel(2); G.misses = 1; endLevel(true);
+      await new Promise(r => setTimeout(r, 400));
+      goMap(2);
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'terugkomen uit een show is geen begroeting maar een afloop', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      renderTourMap();
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'de kaart opnieuw tekenen is geen aankomst', k);
+
+    await rust();
+    k = await g.evaluate(async () => {
+      goMap();   // nog eens op Kaart tikken terwijl je er al staat
+      await new Promise(r => setTimeout(r, 450));
+      return window.__ster();
+    });
+    check(!/move-wave/.test(k), 'en op Kaart tikken terwijl je er al staat ook niet', k);
+
+    // een wereld kiezen op de reis: de vlucht is al een aankomst
+    await rust();
+    const reis = await g.evaluate(async () => {
+      openReis();
+      await new Promise(r => setTimeout(r, 900));
+      reisNaarWereld(0, document.querySelector('.reis-halte[data-w="0"]'));
+      const uit = [];
+      for (let i = 0; i < 8; i++) { await new Promise(r => setTimeout(r, 180)); uit.push(window.__ster()); }
+      return uit.filter(x => /move-wave/.test(x));
+    });
+    check(reis.length === 0, 'een wereld kiezen op de reis vliegt al -- er komt geen zwaai overheen',
+      JSON.stringify(reis));
+    await groetCtx.close();
+
+    // en wie om minder beweging vraagt, krijgt de pop precies zoals ze staat
+    const stilCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(stilCtx);
+    const st = await stilCtx.newPage();
+    st.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await st.goto(SPEL_URL);
+    await st.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.order = 0; q.level = 5; for (let i = 1; i < 5; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await st.goto(SPEL_URL);
+    const stil = await st.evaluate(async () => {
+      selectProfile('p1');
+      await new Promise(r => setTimeout(r, 900));
+      const el = document.querySelector('#tour-map .tour-hero .avatar-holder');
+      return { klas: el ? el.className : '(geen ster)', beweegt: el ? getComputedStyle(el).animationName : '?' };
+    });
+    check(stil.klas === 'avatar-holder idle' && stil.beweegt === 'none',
+      'zonder beweging wordt er niet gezwaaid en staat ze in haar gewone stand', JSON.stringify(stil));
+    await stilCtx.close();
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */

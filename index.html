@@ -9958,19 +9958,16 @@ function renderProfiles() {
   const hint = $('restore-hint');
   if (hint) hint.style.display = n ? 'none' : 'block';
   renderGearMenu();
-  /* Begroeting: de sterren zwaaien één keer naar je en staan daarna stil. Ze
-     wiegden hiervoor onafgebroken door (.idle), alle zes tegelijk -- met zes
-     poppen is dat geen leven maar een scherm dat niet tot rust komt, en het is
-     zes keer een animatie die blijft lopen zolang de app open staat. */
-  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
-    row.querySelectorAll('.avatar-holder').forEach((el, i) => {
-      setTimeout(() => {
-        if (!el.isConnected) return;
-        el.classList.add('dancing', 'move-wave');
-        setTimeout(() => el.classList.remove('dancing', 'move-wave'), 950);
-      }, 350 + i * 130);
-    });
-  }
+  /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
+     sterren zwaaiden één keer, kort na elkaar. Dat was ooit de enige plek in de
+     app waar een pop iets deed bij het binnenkomen van een scherm, en daarmee
+     stond hij op de verkeerde plaats -- want een kind is hier maar twee tellen.
+     Tikken, en je staat op de kaart; de zwaai op dit scherm en de zwaai daar
+     vielen dus bijna in elkaar (zie kaartGroet, boven goMap).
+
+     Eén begroeting, op de plek waar de ster woont. Dit scherm is een keuze en
+     geen plek: hier staan zes poppen naast elkaar en er is er één van jou. De
+     tegels staan daarom stil -- ook geen .idle, dat stond er al niet op. */
 }
 function selectProfile(key) { cur = key; goMap(); }
 
@@ -11436,6 +11433,78 @@ function starRevealBeat(lvl, cb) {
 }
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
 
+/* ================= De kaart zegt hallo =====================================
+   De kaart is het hoofdscherm en de ster woont er, maar ze deed er niets als je
+   binnenkwam: ze wiegde al vóór je er was en wiegde daarna door. Dit is het
+   enige wat daaraan verandert -- één zwaai, als de kaart zélf de aankomst is.
+
+   WANNEER WEL. goMap() weet in zijn eerste regels al precies wat voor aankomst
+   dit is: uitShow (je komt uit een show), travel (er ligt een level-up klaar),
+   onthul (er is een wereld bijgekomen) en gekozen (je koos een wereld op de
+   reis). Elk van die vier heeft zijn eigen beweging die uitlegt waarom de ster
+   hier nu staat -- de terugzoom, de huppel over de route, de camera die
+   doorklimt, de vlucht uit het kaartje. Daar hoort geen begroeting overheen:
+   dan zijn er twee aankomsten voor één handeling. Blijft over: de tabbladbalk,
+   de terugknop uit de kleedkamer of de kast, het memoryspel uit, en het kiezen
+   van een ster. Dat zijn precies de keren dat er niets anders gebeurt dan dat
+   jij er weer bent.
+
+   In één regel: als er al iets beweegt dat verklaart waaróm ze hier staat, dan
+   zwaait ze niet.
+
+   NIET UIT RENDERTOURMAP. Die bouwt de kaart opnieuw op bij elke wereldpijl,
+   elke tussenstand van een reis en beide helften van een onthulling -- veel
+   vaker dan een kind aankomt. De aanleiding is een navigatie en geen tekening,
+   dus hangt dit aan goMap() en aan niets anders.
+
+   DE KOELTIJD, en geen grendel. Een tabbladwissel mag nooit geblokkeerd worden
+   (zie goMap) -- een kind dat vastzit op een scherm is erger dan een zwaai te
+   veel. Dus onthoudt dit alleen wannéér de kaart voor het laatst openging, en
+   slaat het over als dat net was. Kaart -> Kleedkamer -> Kaart geeft dus één
+   zwaai en geen drie, en een echte terugkomst een halve minuut later gewoon
+   weer één. Elke aankomst zet die tijd, ook een aankomst die zelf niet zwaait:
+   na een reis of een onthulling is er net iets gevierd, en dan hoort de
+   kleedkamer-en-terug daarna ook nog even stil te zijn. */
+const GROET = {
+  koeltijd: 2500,
+  // Eén pasje uit de bestaande woordenschat -- 👋, zie MOVES en mvWave. Als los
+  // kaartje en niet uit MOVES opgezocht: die lijst staat verderop in het bestand
+  // en dit is een const die bij het inlezen al gelezen wordt.
+  pas: { cls: 'move-wave' },
+  duur: 950,   // dezelfde als dance/tapDance: mvWave duurt .9s
+};
+let kaartBezocht = 0, groetTimer = null;
+function kaartGroet(mag) {
+  const nu = Date.now();
+  const rustig = nu - kaartBezocht > GROET.koeltijd;
+  kaartBezocht = nu;
+  // Een nieuwe aankomst annuleert altijd een zwaai die nog moest beginnen: er is
+  // er hoogstens één onderweg, en er blijft dus nooit een tweede timer hangen.
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  /* Beperkte beweging: dan gebeurt er hier niets, ook geen klasse die er even
+     op en weer af gaat. Een begroeting is karakter en geen bericht -- er valt
+     dus niets te vervangen, en de ster staat precies zoals ze anders ook staat
+     (zie de bewegingsafspraak bij zetPas). */
+  if (!mag || !rustig || motionOff()) return;
+  /* Pas als de schermwissel tot rust is. Zwaaien terwijl de kaart nog aan het
+     opkomen is leest als één brij; op MOTION.totaal staat het scherm stil en is
+     de zwaai het enige wat er nog beweegt. */
+  groetTimer = setTimeout(() => {
+    groetTimer = null;
+    const map = $('tour-map');
+    const el = map && map.querySelector('.tour-hero .avatar-holder');
+    /* Ondertussen weggelopen, of de kaart is opnieuw opgebouwd, of de ster staat
+       in een wereld waar je niet naar kijkt: dan is er niemand om naar te
+       zwaaien en gebeurt er gewoon niets. Dit is ook wat ?debug&screen=ouder
+       opvangt -- daar opent goMap() de kaart en schuift er meteen een ander
+       scherm overheen. */
+    if (!el || !el.isConnected || !$('screen-map').classList.contains('active')) return;
+    if (!zetPas(el, GROET.pas)) return;
+    setTimeout(() => stilStaan(el), GROET.duur);
+  }, MOTION.totaal);
+}
+
 function goMap(vanLvl) {
   const p = P();
   // Alleen een échte halte laat de kaart terugzoomen. goMap komt ook langs als
@@ -11551,6 +11620,11 @@ function goMap(vanLvl) {
   if (tourMapVoltooi) { const v = tourMapVoltooi; tourMapVoltooi = null; v(); }
   if (travel) requestAnimationFrame(() => runTravel(travel));
   else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
+  /* En dan pas: is de kaart zélf de aankomst? Alle vier de uitzonderingen staan
+     hierboven al uitgerekend, dus de regel is hier één regel lang. De laatste
+     voorwaarde vangt "nog eens op Kaart tikken terwijl je er al staat": dat is
+     geen aankomst. Zie de hele redenering bij kaartGroet. */
+  kaartGroet(!uitShow && !travel && !onthul && gekozen == null && vorige !== $('screen-map'));
 }
 /* De onthulling van een wereld die pas uitgebracht is. Precies dezelfde camera als
    bij het uitspelen van een wereld (zie runWorldChange), alleen zonder de badge en
