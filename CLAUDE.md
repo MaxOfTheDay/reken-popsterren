@@ -81,14 +81,17 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 
 | zoek op | wat |
 |---|---|
-| `src/*.js` | **de code.** Hier schrijf je; `npm run bouw` zet het in `index.html` |
+| `src/00-app.js` | **het spel.** Hier schrijf je. Bovenaan staat de inhoudsopgave van alle secties |
+| `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
+| `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
 | `<style>` | het stijlblad, in `index.html` zelf. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
 | `<body` | de tien schermen als markup, in `index.html` zelf, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
 | `<script>` het scriptblok | het resultaat van de bouw. Lees het gerust, bewerk het niet |
-| `function startMapEdit` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 
 **Navigeren doe je op sectienaam, niet op regelnummer.** Zoek op bijvoorbeeld
 `= Telmodus` of `= De hele tournee`; het stijlblad heeft dezelfde soort koppen.
+Staat er nog maar één bronbestand op je zoekterm, dan weet je meteen ook in welk
+stuk je zit.
 
 En zet hier geen regelnummers neer. In dit bestand stond eerst een tabel met
 vier regelbereiken erin; alle vier waren nog dezelfde dag verlopen, omdat er
