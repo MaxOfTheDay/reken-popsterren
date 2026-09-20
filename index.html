@@ -4265,14 +4265,50 @@
      is verder ingetogen. */
   .tour-stop.next::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
-    left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
+    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(var(--warm-licht-rgb),.2), rgba(var(--warm-licht-rgb),.07) 52%, transparent 74%);
-    animation: stopSpot 2.8s ease-in-out infinite;
+    background: radial-gradient(closest-side,
+      rgba(var(--warm-licht-rgb),.22),
+      rgba(var(--warm-licht-rgb),.58) 44%,
+      rgba(var(--warm-licht-rgb),.3) 68%,
+      transparent 92%);
+    animation: stopSpot 3s ease-in-out infinite;
   }
+  /* De maat en de sterkte hieronder zijn opgemeten tegen een échte wereld en niet
+     tegen een egale achtergrond, en dat is het hele verschil. Hij stond op 27cqw
+     met .2/.07 en ademde van .68 naar .84 op een schaal van 1 naar 1,035 -- op
+     papier keurig, en op de Muziekwereld letterlijk niet te zien: twee
+     schermafdrukken op het diepte- en het hoogtepunt waren naast elkaar niet uit
+     elkaar te houden. Die tekening is zelf al vol licht (gouden stralenkrans,
+     watervallen, lampjes), dus een waas van een vijfde dekking verdwijnt erin.
+
+     EN HET ZAT NIET ALLEEN IN DE STERKTE. Een radial-gradient met zijn kern in
+     het midden legt zijn licht precies dáár waar het gouden rondje eroverheen
+     staat: dat rondje beslaat de binnenste derde van de gloed, dus het felste
+     deel was per definitie onzichtbaar. Wat je overhield was de flauwe staart.
+     Opgemeten op de ring net buiten het rondje verschilde het diepte- van het
+     hoogtepunt met een halve RGB-trap -- nul, met andere woorden.
+
+     De gloed is daarom een ring geworden: laag in het midden (daar staat het
+     rondje toch), vol op 44% en uitdovend naar 92%. Het licht ligt nu in de band
+     die je écht ziet, van de rand van het rondje tot ruim daarbuiten.
+
+     Drie dingen zijn daarnaast omhoog gegaan, in deze volgorde van belang:
+       de maat    27 -> 34cqw, ruim drie keer het rondje. De gloed moet buiten de
+                  halte uitkomen, anders valt hij samen met de gouden vulling en
+                  is er niets om te zien ademen.
+       de sterkte de top van de ring staat op .58, waar de oude kern op .2 stond
+                  en de rand die je werkelijk zag op .07. Met het ademen erover
+                  komt dat op .55 dekking uit en in rust op .35 -- een verhouding
+                  van ruim anderhalf, en dát is wat een oog als "het beweegt" leest.
+       de adem    1 -> 1,12 in plaats van 1,035. Drie keer zoveel uitslag, nog
+                  steeds traag genoeg (3s) om te ademen in plaats van te knipperen.
+
+     Het rondje zelf staat nog altijd volkomen stil; alles hierboven gebeurt op de
+     gloed erachter. */
   @keyframes stopSpot {
-    0%, 100% { opacity: .68; transform: scale(1); }
-    50%      { opacity: .84;   transform: scale(1.035); }
+    0%, 100% { opacity: .6;  transform: scale(1); }
+    50%      { opacity: .95; transform: scale(1.12); }
   }
   /* ADEMEN DOET HIJ ALLEEN ALS ER VERDER NIETS GEBEURT. Loopt er een wereldreis
      (de camera klimt, zie .wereld-reist), ligt er een laag overheen -- rangfeest,
@@ -4308,15 +4344,22 @@
      daarvan, precies waar de ademende gloed ook ligt. */
   .tour-stop.next .stop-body::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none; opacity: 0;
-    left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
+    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(var(--warm-licht-rgb),.3), rgba(var(--warm-licht-rgb),.1) 52%, transparent 74%);
+    background: radial-gradient(closest-side,
+      rgba(var(--warm-licht-rgb),.26),
+      rgba(var(--warm-licht-rgb),.72) 44%,
+      rgba(var(--warm-licht-rgb),.36) 68%,
+      transparent 92%);
   }
-  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 620ms var(--ease-uit); }
+  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 680ms var(--ease-uit); }
+  /* Duidelijk feller dan het ademen (.72 in de ring tegen .58) en een stuk ruimer:
+     hij komt op 1,18 en dijt dan uit naar 1,5 terwijl hij naar nul zakt. Geen
+     veer, geen doorschieter -- opkomen, even staan, oplossen. */
   @keyframes haltePuls {
-    0%   { opacity: 0; transform: scale(.8); }
-    35%  { opacity: 1; transform: scale(1.06); }
-    100% { opacity: 0; transform: scale(1.34); }
+    0%   { opacity: 0; transform: scale(.88); }
+    30%  { opacity: 1; transform: scale(1.18); }
+    100% { opacity: 0; transform: scale(1.5); }
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
@@ -5268,10 +5311,15 @@
     .tour-hero .hero-vonk { display: none; }
     /* De spotlight blíjft -- hij is een kleur op de grond, geen beweging, en juist
        zonder de ademende gloed is hij wat er nog overblijft om "hier speel je"
-       te zeggen. Alleen het ademen ervan gaat uit. Op .9 staat hij bovendien
-       sterker dan waar het ademen ooit komt (dat gaat van .68 naar .84), dus wie
-       geen beweging wil ziet de huidige halte juist het duidelijkst. */
-    .tour-stop.next::after { animation: none; opacity: .9; }
+       te zeggen. Alleen het ademen ervan gaat uit.
+
+       En dan staat hij op zijn sterkst: vol dekkend, dus boven de .95 waar het
+       ademen op zijn hoogtepunt komt (in rust is dat .6), en meteen een tikje
+       ruimer dan zijn ruststand in plaats van dat je op het hoogtepunt moet
+       wachten. Wie geen beweging wil ziet de huidige halte dus het duidelijkst
+       van iedereen -- en hij staat stil, want een vaste schaal is geen
+       beweging. */
+    .tour-stop.next::after { animation: none; opacity: 1; transform: scale(1.08); }
     /* En de aankomstpuls blijft helemaal weg: die is een moment, en een moment
        zonder beweging bestaat niet. */
     .tour-stop.next .stop-body::after { display: none; }
@@ -12308,11 +12356,19 @@ function kaartGroet(mag) {
      dus niets te vervangen, en de ster staat precies zoals ze anders ook staat
      (zie de bewegingsafspraak bij zetPas). */
   if (!mag || !rustig || motionOff()) return;
-  /* De halte gaat vóór de zwaai, en dat is de rangorde van dit scherm: eerst weet
-     je wáár je bent en waar je heen moet, en pas daarna zegt zij hallo. Op
-     MOTION.kom is de kaart klaar met opkomen; de zwaai volgt een tel later. Ze
-     lopen dus niet samen op, en de puls is ook los van haar de zachtste van de
-     twee -- een gloed die opkomt en wegvalt, tegenover een pop die beweegt.
+  /* De puls stond op MOTION.kom, en dat was precies te vroeg: op 190ms is
+     kaartKomtOp net klaar met inzoomen, dus de halte lichtte op terwijl de hele
+     kaart nog aan het stilvallen was. Een gloed die opkomt op een beeld dat zelf
+     nog beweegt is geen aankondiging maar ruis -- je oog is op dat moment met
+     het scherm bezig en niet met een plek daarin. Nu wacht hij tot de kaart een
+     tel stil heeft gestaan: MOTION.totaal is het einde van de schermwissel, en
+     daar komt een rustmoment van 300ms overheen voordat de halte iets zegt.
+
+     Dat is ook waarom hij láter valt dan de zwaai en niet ervoor. Zij is de
+     hoofdrol en mag als eerste; de halte is de tweede stem en zet er een zachte
+     gloed onder terwijl zij nog zwaait. Ze bijten elkaar niet, want ze zijn niet
+     van dezelfde soort: zij beweegt, de halte staat stil en wordt alleen even
+     helderder.
 
      Hij hangt aan dezelfde poort als de zwaai (zie de aanroep onderaan goMap) en
      dus aan dezelfde koeltijd: kom je uit een show, ligt er een reis klaar, gaat
@@ -12320,7 +12376,7 @@ function kaartGroet(mag) {
      al uit waarom je hier bent en hoort er niets overheen. Na een level-up huppelt
      de ster naar de volgende halte -- dát is de aankomst, en de nieuwe halte
      ademt daarna gewoon verder zonder er nog een puls bovenop. */
-  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.kom);
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + 300);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
