@@ -18,7 +18,7 @@ er niet door — het blijft één bestand dat je opent, ook vanaf `file://`.
 
 | bestand | wat het is |
 |---|---|
-| `src/*.js` | **de code die je schrijft.** Wordt met `npm run bouw` het scriptblok van `index.html` |
+| `src/*.js` | **de code die je schrijft**, in stukken die op volgnummer aan elkaar komen. Wordt met `npm run bouw` het scriptblok van `index.html` |
 | `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio. Het scriptblok erin komt uit `src/` — bewerk het daar |
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
@@ -55,7 +55,7 @@ Zie **`DEV-STUDIO.md`** — dat is kort.
 
 Daarbinnen zit de **wereldstudio** (`?debug&mapedit`, of de knop *Open
 wereldstudio*): daar maak je werelden op de echte kaart en schrijf je het
-`WORLDS`-blok terug naar `index.html`. Zie `docs/UITBREIDEN.md`.
+`WORLDS`-blok terug naar `src/`. Zie `docs/UITBREIDEN.md`.
 
 ## De vijf begrippen
 
@@ -63,7 +63,7 @@ Wie iets aan het spel verandert heeft aan deze vijf genoeg om zich te
 oriënteren; de rest staat als commentaar bij de code zelf.
 
 * **Wereld** — een stuk van de reis met een eigen tekening en sfeer.
-  Alles wat de app over een wereld weet staat in `WORLDS` in `index.html`.
+  Alles wat de app over een wereld weet staat in `WORLDS` in `src/20-app.js`.
 * **Show (level)** — één optreden. Levels lopen dóór de werelden heen: `p.level`
   is één getal van 1 tot `WORLD_LAST + 1`.
 * **Ster** — wat een show opleverde (1, 2 of 3). `p.stars[level]`. Dít is de
@@ -76,7 +76,8 @@ oriënteren; de rest staat als commentaar bij de code zelf.
 ## Waar dingen staan
 
 De code staat in `src/`; het stijlblad en de markup staan in `index.html` zelf.
-Bovenaan het eerste bronbestand staat een inhoudsopgave die álle secties noemt.
+Het spel zelf is `src/20-app.js`, en bovenaan dát bestand staat een
+inhoudsopgave die álle secties noemt.
 Zoek op de sectienaam (bijvoorbeeld `= Telmodus` of `= De hele tournee`) om
 ergens te komen; regelnummers staan er bewust niet bij, want die verouderen
 meteen. Het stijlblad heeft dezelfde soort koppen.
