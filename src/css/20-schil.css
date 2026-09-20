@@ -1,0 +1,350 @@
+  /* ===== De schil: de vaste sfeer buiten de werelden om ======================
+     Dit is géén wereld en geen tekening, maar de rúimte waar de app in staat als
+     er even geen wereld in beeld is: blauw uur, diep aubergine, een warme gloed
+     laag in beeld, koele en warme lichtvegen langs de randen -- en middenin
+     bewust niets, want daar staat de inhoud.
+
+     Er hing hier een geschilderd startscherm, en dat kwam uit de tijd dat het
+     spel podia en prijzen had: grote gouden sterren en een noot. Die beloven
+     iets, en dit scherm belooft niets -- het vraagt alleen wie er speelt. Het was
+     bovendien één tekening voor één scherm; dit is een laag die élk scherm buiten
+     de werelden kan dragen, en ze kost geen byte en geen aanvraag.
+
+     Drie dingen, van boven naar beneden:
+       1. de fonkeling  een handvol zachte lichtpuntjes en wat bokeh, allemaal
+                        buiten de middenband -- als losse SVG-laag en niet als
+                        twintig gradient-lagen (zelfde truc als .grain)
+       2. de vegen      vier heel grote ringen die grotendeels búiten beeld
+                        liggen, zodat er alleen een boog van te zien is. Dát is
+                        wat een lichtspoor is: een cirkel die je maar half ziet.
+       3. de rust       een zachte verdonkering middenin, zodat wat daar staat
+                        zijn contrast niet zelf hoeft te verzinnen.
+     De grondkleur komt van <body> (--bg-1..4) en wordt hier niet herhaald.
+
+     Bedoeld voor hergebruik op de andere niet-wereldschermen (kleedkamer,
+     trofeeën, ouderdeel); nu staat hij op de sterrenkeuze. */
+  /* De fonkeling: het stoflaagje sterretjes dat op élk schilscherm ligt. Staat
+     als token en niet als regel, omdat de kast er hieronder haar eigen, rustiger
+     lucht omheen zet (zie #screen-trophies.app-sfeer::before) -- en twee kopieën
+     van dezelfde sterrenhemel is precies het soort ding dat uit de pas loopt. */
+  :root { --fonkeling: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice'><circle cx='32.0' cy='48.0' r='1.8' fill='%23fff' opacity='0.42'/><circle cx='88.0' cy='112.0' r='1.2' fill='%23ffd79a' opacity='0.38'/><circle cx='144.0' cy='40.0' r='2.2' fill='%23fff' opacity='0.30'/><circle cx='208.0' cy='144.0' r='1.4' fill='%239fe8ff' opacity='0.34'/><circle cx='272.0' cy='72.0' r='1.9' fill='%23fff' opacity='0.40'/><circle cx='328.0' cy='160.0' r='1.3' fill='%23ffd79a' opacity='0.32'/><circle cx='368.0' cy='56.0' r='1.6' fill='%23fff' opacity='0.28'/><circle cx='60.0' cy='192.0' r='1.1' fill='%239fe8ff' opacity='0.30'/><circle cx='296.0' cy='208.0' r='1.5' fill='%23fff' opacity='0.24'/><circle cx='40.0' cy='640.0' r='1.7' fill='%23fff' opacity='0.34'/><circle cx='104.0' cy='736.0' r='1.3' fill='%23ffd79a' opacity='0.36'/><circle cx='176.0' cy='608.0' r='1.2' fill='%239fe8ff' opacity='0.26'/><circle cx='240.0' cy='760.0' r='1.9' fill='%23fff' opacity='0.32'/><circle cx='312.0' cy='656.0' r='1.4' fill='%23ffd79a' opacity='0.30'/><circle cx='360.0' cy='720.0' r='1.6' fill='%23fff' opacity='0.26'/><circle cx='136.0' cy='688.0' r='1.1' fill='%23fff' opacity='0.22'/><circle cx='272.0' cy='592.0' r='1.3' fill='%239fe8ff' opacity='0.24'/><circle cx='20.0' cy='352.0' r='1.5' fill='%23fff' opacity='0.22'/><circle cx='380.0' cy='448.0' r='1.4' fill='%23ffd79a' opacity='0.22'/><circle cx='28.0' cy='496.0' r='1.2' fill='%239fe8ff' opacity='0.20'/><circle cx='372.0' cy='304.0' r='1.6' fill='%23fff' opacity='0.20'/><circle cx='72.0' cy='80.0' r='7.0' fill='%23ffd79a' opacity='0.07'/><circle cx='344.0' cy='112.0' r='6.0' fill='%239fe8ff' opacity='0.06'/><circle cx='120.0' cy='704.0' r='7.0' fill='%23ffd79a' opacity='0.06'/><circle cx='288.0' cy='720.0' r='6.0' fill='%23fff' opacity='0.05'/></svg>"); }
+  .app-sfeer { position: relative; isolation: isolate; }
+  /* isolation + z-index:-1 -- een absoluut geplaatste ::before met z-index:0
+     schildert óver gewone tekst heen, ook al staat die er in de opmaak vóór.
+     Met een eigen stapelcontext op het scherm blijft -1 netjes hierbinnen: boven
+     de schermachtergrond, onder alle inhoud. */
+  /* fixed en niet absolute: dit is de lúcht waar het scherm in staat, en lucht
+     scrolt niet mee. Op een scrollend scherm (het maakformulier) zou een absolute
+     laag zich over de hele scrollhoogte uitrekken en lagen de vegen dus half
+     buiten beeld. */
+  .app-sfeer::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      var(--fonkeling),
+      radial-gradient(64% 54% at -12% -10%, transparent 57%, rgba(var(--warm-licht-rgb),.34) 64%, transparent 72%),
+      radial-gradient(58% 50% at 112% -4%, transparent 59%, rgba(128,226,255,.26) 66%, transparent 74%),
+      radial-gradient(74% 60% at 110% 108%, transparent 58%, rgba(var(--voetlicht-rgb),.26) 65%, transparent 73%),
+      radial-gradient(68% 54% at -10% 110%, transparent 59%, rgba(198,146,255,.22) 66%, transparent 74%),
+      radial-gradient(80% 48% at 50% 50%, rgba(18,4,38,.5), rgba(18,4,38,.2) 58%, transparent 78%),
+      /* Het voetlicht. FASE 5E: <body> zet onder élk scherm een warme gloed laag in
+         beeld -- dat is de lichtrichting van de hele app (warm van onderen, koel in
+         de lucht) en je ziet hem op de wereldkaart, in de zaal en onderaan de reis.
+         De nacht hieronder dekte hem op de schilschermen juist af, en dus stond de
+         sterrenkeuze als enige scherm van de app in vlak violet zonder horizon.
+         Deze laag zet hem terug -- boven de nacht, onder de vegen, en breed genoeg
+         dat hij een horizon is en geen band. */
+      radial-gradient(146% 28% at 50% 103%, rgba(var(--voetlicht-rgb),.34), transparent 72%),
+      /* Het blauwe uur. De grondkleur van <body> loopt door élk scherm en is daar
+         goed zoals hij is; buiten de werelden mag hij een paar trappen dieper,
+         anders staat er violet licht waar nacht hoort te staan. Deze laag ligt
+         onderop, dus de warme gloed onderin en de vegen hierboven komen er
+         gewoon doorheen. */
+      linear-gradient(176deg, rgba(17,5,40,.62) 0%, rgba(22,7,48,.46) 34%,
+                              rgba(26,9,50,.5) 68%, rgba(18,5,38,.64) 100%);
+    background-repeat: no-repeat;
+  }
+  /* De zwevende wolk-emoji horen bij de wereldkaart, niet hier: de schil heeft
+     haar eigen fonkeling en twee soorten versiering over elkaar is rommel. */
+  .app-sfeer .map-sky span { display: none; }
+  /* ---- De schil, maar dan in een kleedkamer -------------------------------
+     FASE 5B.1 zette hier het licht van een kaptafel neer: twee warme kegels van
+     bovenaf en een violette gloed langs de onderrand, omdat het scherm verder
+     niets had dan de gedeelde schil.
+
+     PS-45 heeft dat licht verhuisd naar waar het hoort -- in de tekening van de
+     kamer zelf (zie --kleed-tekening): de lampjes hángen er nu, en de warme plas
+     ligt op de vloer. Twee keer hetzelfde licht over elkaar maakt het niet
+     warmer, alleen waziger, en de violette gloed onderin tilde precies de
+     donkere vloer op waar de twee balken op moeten rusten.
+
+     Wat overblijft is één laag met één taak: de onderrand een tikje dieper, zodat
+     de lade en de navigatiebalk gedragen worden door de kamer in plaats van door
+     hun eigen vulling. Daardoor mág die vulling lichter (zie .dress-bar). */
+  .app-sfeer.kleedkamer { --sfeer-vloer: radial-gradient(124% 30% at 50% 106%, rgba(10,2,24,.36), transparent 74%); }
+  /* ---- De schil, maar dan in een vitrine ----------------------------------
+     FASE 5E. Zelfde soort variant als de kleedkamer hierboven, en met opzet in
+     dezelfde vorm geschreven: één licht van boven, één schaduw langs de onderrand.
+     Het verschil zit in de temperatuur. Een kaptafel is warm en breed (daar wordt
+     een gezicht uitgelicht); een vitrine is smaller en koeler, met een vleugje
+     goud precies waar de bovenste plank staat. Daarmee zijn de kleedkamer en de
+     kast herkenbaar broer en zus zónder hetzelfde scherm te worden. */
+  .app-sfeer.kast {
+    --sfeer-vloer:
+      radial-gradient(64% 26% at 50% 2%, rgba(var(--warm-licht-rgb),.10), transparent 74%),
+      radial-gradient(46% 34% at 50% 20%, rgba(190,170,255,.06), transparent 76%),
+      radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
+  }
+  /* ---- DE DERDE LAAG: het vak waar een gebruiksscherm in staat ------------
+     Die twee sfeerlagen hierboven stonden elk in hun eigen ::after met dezelfde
+     vier regels eromheen (fixed, inset 0, z-index -1, pointer-events none) --
+     twee keer hetzelfde laagje, en een derde scherm dat er ook een wilde had er
+     een derde kopie bij gekregen. Nu is er één laag, en zetten de schermen alleen
+     nog hun eigen licht erin (--sfeer-vloer).
+
+     Waarom die ene laag er toch al moest komen: op een bureaublad stond de
+     kleedkamer met haar kop, haar rek en haar balk midden in een venster van
+     1440 bij 900 zonder dat er iets zei waar het scherm ophoudt. De kaart hééft
+     dat wel -- daar staat de wereld als staand toestel in het midden met zijn
+     eigen omgeving eromheen, en dát is de gelaagdheid die alle rustpunten horen
+     te hebben:
+
+       1  de omgeving   de schil, de kamer, de vitrine -- aflopend, vult het venster
+       2  het VAK       waar de inhoud in staat: --kolom breed, begrensd
+       3  de bediening  de kop erboven en de balk eronder
+
+     --stage-vlak is die tweede laag: een heel zachte, staande baan van precies de
+     breedte van de kop erboven (dezelfde som: --kolom + 2x--rand), met aan beide
+     kanten een haarlijntje licht en onderin uitlopend naar niets. Geen paneel en
+     geen doos -- de kamer en de vitrine moeten er gewoon doorheen te zien blijven;
+     het is genoeg dat het óóg weet waar het scherm begint en eindigt.
+
+     Op een telefoon is hij 'none' en verandert er niets -- daar ís de schermrand
+     de vakrand en zou zo'n baan het hele scherm beslaan. Hij komt pas op als er
+     werkelijk iets te begrenzen valt: 1000px is --stage-breed (820) plus de rand
+     eromheen plus een slag lucht aan weerskanten. Eén breekpunt, en dat is
+     meteen het enige dat dit vak nodig heeft. */
+  .screen.gebruik.app-sfeer::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: var(--stage-vlak), var(--sfeer-vloer, none);
+  }
+  @media (min-width: 1000px) {
+    .screen.gebruik {
+      /* De breedte van de kop erboven, letterlijk dezelfde som als in de regel
+         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen. */
+      --vak-w: min(100%, calc(var(--kolom) + var(--rand) * 2));
+      --stage-vlak:
+        /* de twee haarlijnen: waar het vak begint en waar het ophoudt */
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
+          left calc(50% - var(--vak-w) / 2) top 0 / 1px 88% no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
+          left calc(50% + var(--vak-w) / 2 - 1px) top 0 / 1px 88% no-repeat,
+        /* en de vulling ertussen: net genoeg om het vak van de omgeving te
+           scheiden, en naar onderen toe weg, zodat de balk op de kamer staat en
+           niet op een plank */
+        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.028) 54%, rgba(255,255,255,0))
+          center top / var(--vak-w) 100% no-repeat;
+    }
+  }
+  /* ---- En de vitrine krijgt haar eigen, rustiger lucht --------------------
+     De gedeelde schil hierboven zet in elke hoek een LICHTBOOG neer: een
+     radiale rand (`transparent 57%, kleur 64%, transparent 72%`) en niet een
+     gloed. Dat is met opzet -- op de sterrenkeuze is het de bundel van een
+     schijnwerper, en daar staat één tegel per kind op een verder leeg scherm.
+
+     Op de kast werkt precies dat tegen. Hier staan achttien halfdoorzichtige
+     kaartjes van licht-op-donker, en een boog die dwars over drie rijen heen
+     loopt tekent een streep door kaartjes die niets met elkaar te maken hebben:
+     de helft van een kaart licht op, de andere helft niet. Wat je ziet is de
+     lichtbundel, en waar je naar kwam kijken is de kast.
+
+     Dus: dezelfde vier lichtbronnen, dezelfde hoeken, dezelfde kleuren -- maar
+     als brede, zachte gloed in plaats van als boog, en op ongeveer een derde van
+     de sterkte. Het scherm blijft magisch en uitgelicht; er loopt alleen geen
+     rand meer doorheen. De fonkeling (het SVG-laagje sterretjes) blijft staan:
+     stof in het licht is precies wat hier wél mag.
+
+     Eén klasse meer dan `.app-sfeer::before` (id + klasse), dus deze wint --
+     en `#screen-trophies.kunst.app-sfeer::before` hieronder wint weer van
+     deze, zodat een echte schermtekening alles blijft vervangen. */
+  #screen-trophies.app-sfeer::before {
+    background-image:
+      var(--fonkeling),
+      radial-gradient(72% 48% at 4% 2%, rgba(var(--warm-licht-rgb),.11), transparent 70%),
+      radial-gradient(66% 44% at 98% 6%, rgba(128,226,255,.08), transparent 72%),
+      radial-gradient(84% 50% at 96% 104%, rgba(var(--voetlicht-rgb),.09), transparent 72%),
+      radial-gradient(78% 48% at 2% 102%, rgba(198,146,255,.07), transparent 74%),
+      radial-gradient(86% 52% at 50% 48%, rgba(18,4,38,.46), rgba(18,4,38,.18) 60%, transparent 80%),
+      radial-gradient(146% 28% at 50% 103%, rgba(var(--voetlicht-rgb),.3), transparent 72%),
+      linear-gradient(176deg, rgba(17,5,40,.62) 0%, rgba(22,7,48,.46) 34%,
+                              rgba(26,9,50,.5) 68%, rgba(18,5,38,.64) 100%);
+  }
+
+  /* ---- Waar de tekening van een schilscherm komt --------------------------
+     Er komt een nieuwe tekening voor de sterrenkeuze, de kleedkamer en de
+     trofeeënkast (PS-45 / PS-32). Dit is de plek waar hij straks in gaat, en de
+     regel eromheen staat hier zodat niemand hem opnieuw hoeft te verzinnen.
+
+     DE REGEL: een schermtekening gaat in `#screen-<naam>.app-sfeer::before`, als
+     laag ónder --kunst-sluier, en nergens anders. Niet in ::after (dat ligt
+     erbóven en heeft geen sluier), en niet als losse laag tussen de inhoud. De
+     kleedkamer en de kast hebben vandaag géén eigen tekening -- ze lenen de
+     gedeelde schil -- dus daar komt straks een blok bij dat er net zo uitziet als
+     dat van #screen-profile hieronder.
+
+     Waarom dat uitmaakt is te meten: de gedeelde kaartjes van dit soort schermen
+     (--vlak, wit op .075) zijn LICHT-OP-DONKER. Ze krijgen hun contrast niet uit
+     zichzelf maar uit wat erachter staat. Leg er een lichte tekening achter
+     zonder sluier en de namen op de kaartjes in de kleedkamer en de kast zijn
+     wég -- niet een beetje flets, onleesbaar. Mét de sluier erover maakt het niet
+     uit wat de tekening doet, en dat is precies wat een vervangbare tekening
+     hoort te zijn.
+
+     De sluier is daarom een token en geen regel: hij hoort bij élke schermtekening
+     en niet bij dít schilderij. Hij is het donkerst in het midden -- daar staan de
+     kaartjes en de knoppen -- en laat de randen van de tekening staan, want daar
+     zit meestal de sfeer waarvoor je hem liet maken. Wie hem sterker nodig heeft
+     dan dit heeft geen sluier nodig maar een andere tekening. */
+  :root { --kunst-sluier: radial-gradient(120% 70% at 50% 62%,
+            rgba(20,4,40,.62), rgba(20,4,40,.24) 58%, transparent 84%); }
+  /* De sterrenkeuze is het enige schilscherm dat vandaag een tekening heeft
+     (assets/bg/landing.webp). Het masker laat de rand van de tekening zacht in de
+     schil overlopen in plaats van een harde snede. */
+  #screen-profile.app-sfeer::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      var(--kunst-sluier),
+      url("assets/bg/landing.webp");
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+
+  /* ---- "Nieuwe ster" staat in dezelfde poort als de sterrenkeuze ---------
+     Dit scherm hing als enige gebruiksscherm nog aan de kále gedeelde schil, en
+     dat was te zien: vier lichtbogen in de hoeken plus het voetlicht, waarvan er
+     op een scherm met een vel van bijna de volle hoogte precies twéé zichtbaar
+     blijven -- een oranje baan linksboven en een violette rechtsonder. Wat je dan
+     ziet is niet sfeer maar een verloop dat schuin achter een formulier langs
+     loopt, en dat is precies waar "generiek" vandaan komt.
+
+     De oplossing is geen nieuwe tekening maar de tekening die er al ligt. Een
+     ster maken is de tegel náást de sterren op de sterrenkeuze; je komt er vandaan
+     en je gaat er (uit het ouderdeel) naar terug. Dezelfde poort erachter maakt van
+     die twee schermen één plek in plaats van twee schermen met dezelfde huisstijl.
+     Geen bestand erbij, geen aanvraag erbij: assets/bg/landing.webp staat al in de
+     voorraad van de service worker omdat de sterrenkeuze hem laadt.
+
+     DRIE VERSCHILLEN MET DE STERRENKEUZE, en alle drie omdat de tekening hier
+     niet het onderwerp is maar de kamer waar het formulier in staat:
+
+     1. FIXED, en niet absolute. Dit scherm scrolt -- het is het enige lange
+        formulier van de app. Een absolute laag rekt mee met de scrollhoogte en
+        dan schuift de poort tijdens het bladeren door het beeld. Dezelfde keuze
+        als .app-sfeer en als de kleedkamer.
+     2. EEN EXTRA DEMPING BÓVEN DE SLUIER. --kunst-sluier is afgeregeld op een
+        scherm waar de tekening de hoofdrol speelt (één logo, twee tegels, veel
+        lucht). Hier ligt er een vel overheen en hoort wat eromheen staat stil te
+        zijn, niet mooi. Deze laag haalt daarom nog een slag verzadiging en licht
+        weg -- rustig genoeg dat het oog bij het formulier blijft, licht genoeg
+        dat de gouden bogen bovenin en de wolken onderin er nog zijn.
+        Bewust géén dekkend vel over de hele tekening: dat is precies wat §4
+        verbiedt. Het is dezelfde soort sluier als die er al lag, een trap dieper.
+     3. GEEN MASKER. Het masker op de sterrenkeuze laat de tekening in het midden
+        zachter worden zodat de tegels erop los komen; hier staat op die plek geen
+        tegel maar het vel zelf, en een masker zou alleen de randen oplichten waar
+        de kop en de knop staan.
+
+     Op 412x920 (Pixel 10 staand) snijdt cover links en rechts ~9% weg, net als op
+     de sterrenkeuze -- alles wat ertoe doet in deze tekening staat binnen de
+     middelste 80%, en er staat hier bovendien geen inhoud van de tekening die
+     gelezen moet worden. */
+  #screen-newstar.app-sfeer::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      radial-gradient(130% 78% at 50% 50%, rgba(18,4,38,.56), rgba(18,4,38,.34) 62%, rgba(18,4,38,.2)),
+      var(--kunst-sluier),
+      url("assets/bg/landing.webp");
+    background-size: cover, cover, cover;
+    background-position: 50% 50%, 50% 50%, 50% 50%;
+    background-repeat: no-repeat;
+  }
+
+  /* ---- De kleedkamer is een kámer, en nu heeft ze er ook een --------------
+     PS-45. Precies het blok dat de regel hierboven aankondigde: de tekening van
+     dit scherm gaat in #screen-dress.app-sfeer::before, ónder --kunst-sluier, en
+     vervangt daarmee de gedeelde schil. Wat je ziet is een kleedkamer: een rij
+     lampjes boven de spiegel, twee rekken met kleren links en rechts ervan, en
+     een warme plas licht op de vloer. Vijf soorten vorm, verder niets -- het is
+     de kamer waar de pop in staat en niet een plaatje om naar te kijken.
+
+     DRIE DINGEN DIE HIER MET OPZET STAAN:
+
+     1. FIXED, en niet absolute. Het rek eronder scrolt; de kamer niet. Een
+        absolute laag rekt zich uit over de hele scrollhoogte en dan schuift de
+        vloer bij het bladeren door het beeld. Dezelfde keuze als .app-sfeer.
+     2. COVER met het midden als anker. Een 9:16-tekening op een telefoon van
+        390x844 verliest links en rechts elk ~9%, op een langer toestel ~10%.
+        Alles wat ertoe doet staat daarom binnen de middelste 80% van de breedte
+        -- de veilige zone uit ART-PLAN 1. Een liggende tablet ziet de middenband
+        en dat is stille muur: goed, want daar is dit scherm het krapst.
+     3. EEN TEKENING EN GEEN TWEEDE SCHIL. De lagen van dit scherm zijn, van
+        achter naar voren: de kamer -> de sluier -> een halfdoorzichtig aubergine
+        vlak alleen waar de inhoud dicht staat (de kop, de twee balken) -> de
+        inhoud. Nergens een dekkend paars vel over de hele tekening; waar het
+        krap wordt is de sluier aan zet en niet een extra paneel.
+
+     DE TEKENING ZELF staat als SVG in een token hieronder, in dezelfde vorm als
+     de fonkeling van .app-sfeer: geen bestand, geen aanvraag, niets dat 404 kan
+     geven, en hij is er ook zonder netwerk.
+
+     EN DE GESCHILDERDE VERSIE GAAT HIER NIET IN. Daar is het blok hieronder voor
+     (.kunst + SCHERMKUNST, uit de studio): dat leest een pad dat de studio heeft
+     weggeschreven, en het wint van deze regel op specificiteit -- één klasse
+     meer. Die twee horen dus zo: dit is de kamer die de app zélf tekent, en
+     zodra er een echte tekening ligt legt de studio hem eroverheen. Zolang er
+     geen ligt staat er geen url() naar een bestand dat er niet is, en dat is
+     precies waarom die twee gescheiden blijven. */
+  :root { --kleed-tekening: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%2357225f'/><stop offset='.28' stop-color='%233c1450'/><stop offset='.64' stop-color='%23260c36'/><stop offset='1' stop-color='%23170522'/></linearGradient><radialGradient id='lamp' cx='.5' cy='.06' r='.46'><stop offset='0' stop-color='%23ffdcae' stop-opacity='.5'/><stop offset='.5' stop-color='%23ffb367' stop-opacity='.15'/><stop offset='1' stop-color='%23ff9a4d' stop-opacity='0'/></radialGradient><radialGradient id='nis' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23f6e2ff' stop-opacity='.2'/><stop offset='.58' stop-color='%23b98cff' stop-opacity='.07'/><stop offset='1' stop-color='%23b98cff' stop-opacity='0'/></radialGradient><radialGradient id='pool' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23ffb066' stop-opacity='.24'/><stop offset='1' stop-color='%23ffb066' stop-opacity='0'/></radialGradient><linearGradient id='ka' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23b47ce4' stop-opacity='.92'/><stop offset='1' stop-color='%233d1460' stop-opacity='.8'/></linearGradient><linearGradient id='kb' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23ef9cc4' stop-opacity='.8'/><stop offset='1' stop-color='%234a1550' stop-opacity='.78'/></linearGradient><linearGradient id='kc' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%238fdcec' stop-opacity='.7'/><stop offset='1' stop-color='%232d1a5c' stop-opacity='.78'/></linearGradient><linearGradient id='vloer' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23140420' stop-opacity='0'/><stop offset='1' stop-color='%23140420' stop-opacity='.6'/></linearGradient></defs><rect width='1080' height='1920' fill='url(%23w)'/><rect width='1080' height='1920' fill='url(%23lamp)'/><ellipse cx='540' cy='420' rx='470' ry='400' fill='url(%23nis)'/><g fill='%23ffd9a8'><rect x='-20' y='92' width='400' height='9' rx='4' opacity='.2'/><rect x='700' y='92' width='400' height='9' rx='4' opacity='.2'/></g><g fill='%23ffe6bd'><circle cx='160' cy='126' r='48' opacity='.09'/><circle cx='160' cy='126' r='15' opacity='.55'/><circle cx='330' cy='126' r='48' opacity='.09'/><circle cx='330' cy='126' r='15' opacity='.55'/><circle cx='750' cy='126' r='48' opacity='.09'/><circle cx='750' cy='126' r='15' opacity='.55'/><circle cx='920' cy='126' r='48' opacity='.09'/><circle cx='920' cy='126' r='15' opacity='.55'/></g><g><rect x='20' y='196' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M84 236h64l40 214q3 40-72 40t-72-40z' fill='url(%23ka)'/><path d='M190 248h68l42 238q3 42-76 42t-76-42z' fill='url(%23kb)'/><path d='M292 230h60l38 196q3 38-68 38t-68-38z' fill='url(%23kc)'/><rect x='720' y='176' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M768 216h64l40 222q3 40-72 40t-72-40z' fill='url(%23kb)'/><path d='M874 228h68l42 202q3 42-76 42t-76-42z' fill='url(%23ka)'/><path d='M978 210h62l40 230q3 40-71 40t-71-40z' fill='url(%23kc)'/></g><g fill='%23ffe6bd' opacity='.45'><circle cx='430' cy='150' r='5'/><circle cx='648' cy='188' r='4'/><circle cx='232' cy='700' r='5'/><circle cx='852' cy='760' r='4'/><circle cx='404' cy='940' r='4'/><circle cx='700' cy='880' r='3'/></g><rect y='1100' width='1080' height='820' fill='url(%23vloer)'/><ellipse cx='540' cy='1340' rx='580' ry='240' fill='url(%23pool)'/><ellipse cx='540' cy='1560' rx='440' ry='124' fill='%23ffffff' opacity='.028'/></svg>"); }
+  #screen-dress.app-sfeer::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      var(--kunst-sluier),
+      var(--kleed-tekening);
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    background-repeat: no-repeat, no-repeat;
+  }
+
+  /* ---- De kleedkamer en de kast ------------------------------------------
+     PS-45 / PS-32, en precies volgens de regel hierboven: dezelfde ::before,
+     dezelfde sluier eronder, hetzelfde masker. Eén verschil met de sterrenkeuze,
+     en dat is er met opzet: deze twee schermen hebben pas een tekening als er
+     werkelijk een ligt.
+
+     Vandaar de klasse .kunst. Het spel zet hem op het scherm zodra SCHERMKUNST
+     een pad noemt (zie zetSchermkunst), en tot die tijd gebeurt hier niets --
+     de gedeelde schil blijft staan, precies zoals de kleedkamer en de kast er
+     nu uitzien. Zonder die klasse zou een url() naar een bestand dat er nog
+     niet is de hele schillaag vervangen door niets: een 404 in de console en
+     twee schermen die platter zijn dan ze waren.
+
+     De sluier is hier geen luxe maar de voorwaarde. De winkeltegels en de
+     trofeekaartjes zijn licht-op-donker en doorschijnend; zonder sluier leest
+     niemand er nog een naam op. Dat is ook precies wat je in de Dev Studio
+     hoort na te kijken voordat je een tekening vastzet. */
+  #screen-dress.kunst.app-sfeer::before,
+  #screen-trophies.kunst.app-sfeer::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      var(--kunst-sluier),
+      var(--kunst-scherm);
+    background-size: cover, cover;
+    background-position: 50% 50%, 50% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+    mask-image: linear-gradient(to bottom, #000 16%, rgba(0,0,0,.42) 32%, rgba(0,0,0,.42) 72%, #000 88%);
+  }
+
+  /* (Hier stond een gloed onder de tekstkop, zodat "Rekensterren" van de
+     lichte lucht in de tekening los kwam. Het logo is nu zelf een tekening met
+     een rand en een gloed erin -- een tweede gloed eronder is dan dubbelop.) */

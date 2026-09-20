@@ -1,0 +1,524 @@
+  /* ---- De sterrentegel ----------------------------------------------------
+     Eén omhulsel per kind, met twee zones erin en niets ertussen:
+
+       .ster-tegel   de tegel zelf. Eén rand, één schaduw, één ronding -- dezelfde
+                     behandeling als .stage-frame, alleen nu om het geheel heen in
+                     plaats van om de pop alleen. Hiervoor waren dit twee kaders
+                     (een doorzichtige kaart mét een ingelijst podium erbinnen) en
+                     twee zwevende merkjes op de naad ertussen: vier randen om één
+                     kind te laten zien.
+       .st-podium    de pop op haar eigen podium. Het grootste deel van de tegel,
+                     want hieraan herkent een kind van vijf zichzelf -- niet aan
+                     haar naam.
+       .st-voet      de wereldband: wereldteken, naam, en als onderrand een dun
+                     streepje voortgang. Vást aan de tegel en niet als badge op de
+                     rand: "Clara is in de Snoepwereld" hoort bij Clara.
+
+     De hele tegel is de knop. Er zat een gouden ▶-merkje op elke kaart, en met
+     zes kinderen op het scherm stonden daar zes gouden knopjes die alle zes
+     hetzelfde beloofden als de tegel eronder -- een tweede aanwijzing voor iets
+     wat maar op één manier kan.
+
+     Alle maten komen uit de tegel zélf (container-query, cqw) en niet uit de
+     schermbreedte. Eén ster op een tablet en zes op een telefoon zijn daarmee
+     hetzelfde ding op twee formaten, en er hoeft per aantal niets ingesteld. */
+  /* De bovengrenzen groeien mee met --focus-groei (zie het skelet bovenaan), elk
+     met zijn eigen gewicht: 130 + .42x, 232 + .74x, 148 + .48x, 136 + .44x. Dat
+     zijn vier getallen voor één beweging, en ze staan er toch los omdat de vier
+     kolommaten zélf niet in verhouding staan -- ze zijn per aantal opgemeten. De
+     gewichten zijn zo gekozen dat alle vier dezelfde slag groeien (~1,35x op een
+     bureaublad), zodat een scherm met twee sterren en een scherm met vijf op een
+     groot venster net zo veel bij elkaar horen als op een telefoon. */
+  .star-grid {
+    display: grid; gap: 14px; justify-content: center; align-items: center;
+    grid-template-columns: repeat(3, minmax(0, calc(130px + var(--focus-groei) * .42)));
+    width: 100%; max-width: var(--kolom); margin: 14px 0 0; z-index: 1;
+  }
+  /* De kolomtelling komt uit het aantal sterren (zie renderProfiles), maar de
+     máten liggen dicht bij elkaar -- en dat is het punt. Eén kind maakte van de
+     tegel een poster van 236px en zes kinderen van dezelfde tegel een plaatje van
+     112px: hetzelfde onderdeel, maar twee keer zo groot, en dus las het als twee
+     verschillende dingen. Nu scheelt de eenzame tegel nog ongeveer een derde met
+     de krapste -- genoeg om ruimer te voelen, te weinig om iets ánders te worden.
+
+     Het zijn bovengrenzen en geen maten: op een telefoon knijpt het raster de drie
+     kolommen vanzelf naar ~112px, op een tablet lopen ze tegen deze grens aan in
+     plaats van uit te rekken tot halve schermbreedte. Daardoor is de tegel op een
+     tablet ook echt dezelfde tegel als op een telefoon. */
+  /* Nog geen enkele ster: er is dan geen raster om iets in te passen, dus de
+     uitnodiging krijgt de maat van een knop en niet die van een tegel. Zonder deze
+     regel perste de kolom van één tegel (148px) "Maak je eerste ster" over twee
+     regels. */
+  .star-grid.kol-0 { grid-template-columns: minmax(0, calc(232px + var(--focus-groei) * .74)); }
+  .star-grid.kol-1 { grid-template-columns: minmax(0, calc(148px + var(--focus-groei) * .48)); }
+  .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, calc(136px + var(--focus-groei) * .44))); }
+  /* Drie kolommen staan al in .star-grid hierboven: renderProfiles zet daarom
+     alleen kol-0/1/2 en laat drie of meer sterren op de basisregel vallen. */
+  @media (max-width: 380px) { .star-grid { gap: 10px; } }
+  /* Het blok titel + sterren + knop hoort bij elkaar en staat samen in het midden.
+     De auto-marge stond hiervoor op de rij zelf, dus alles eronder werd naar de
+     schermrand geduwd -- op een leeg scherm belandde "Maak je eerste ster" een
+     halve telefoon onder het welkom. Nu duwt deze lege staart van onderaf terug,
+     tegen de auto-marge bovenaan de titel in. */
+  /* De staart weegt iets zwaarder dan de kop: puur optisch, want de tekening is
+     bovenaan druk (de gouden bogen) en onderaan rustig. Zonder dit hangt het blok
+     tegen die drukte aan. */
+  .profile-spacer { margin-top: auto; min-height: 6vh; }
+
+  .ster-tegel {
+    container-type: inline-size;
+    display: flex; flex-direction: column; overflow: hidden;
+    width: 100%; padding: 0; cursor: pointer; font-family: inherit;
+    color: var(--c-white); text-align: left;
+    border: 0; border-radius: var(--r-md);
+    background: rgba(var(--w-deep-rgb), .6);
+    /* Precies de randbehandeling van een bestemming op de reis (.reis-plaats):
+       een lichte haarlijn die de tegel begrenst, daarbuiten een donkere keylijn
+       die hem van de tekening losmaakt. Dat werkt op elke ondergrond, en het is
+       hier dezelfde afspraak als daar -- één taal voor "dit is een plek waar je
+       heen kunt".
+
+       De gloed erachter is de kléur van de wereld waar dit kind speelt
+       (applyWorldTheme zet --w-glow-rgb op de tegel). Dat is het hele
+       "wereldaccent": geen band, geen tweede vlak, geen extra regel per wereld --
+       dezelfde schaduw in een andere kleur. */
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.15), 0 0 0 2.5px rgba(16,5,34,.45),
+                0 0 20px rgba(var(--w-glow-rgb), .26), var(--e-2);
+    transition: transform var(--t-tik), box-shadow .14s;
+  }
+  .ster-tegel:hover { transform: translateY(-4px);
+    box-shadow: 0 0 0 1.25px rgba(255,255,255,.24), 0 0 0 2.5px rgba(16,5,34,.45),
+                0 0 24px rgba(var(--w-glow-rgb), .36), var(--e-3); }
+  .ster-tegel:active { transform: scale(.97); }
+  /* De tik zelf: even indrukken en oplichten, en dán pas het spel in (zie
+     kiesSter). Kort genoeg om antwoord te zijn en niet om een animatie te zijn. */
+  .ster-tegel.kiest {
+    transform: scale(.965);
+    box-shadow: 0 0 0 2.5px rgba(255,255,255,.62), 0 0 0 4px rgba(16,5,34,.45),
+                0 0 26px rgba(var(--goud-glans-rgb),.5), var(--e-2);
+  }
+  @media (prefers-reduced-motion: reduce) { .ster-tegel { transition: none; } }
+  /* Het podium binnen de tegel draagt geen eigen rand meer: de tegel ís het
+     kader. Verder precies hetzelfde podium als in de kleedkamer -- zelfde
+     achtergrond uit applyStage, zelfde pop, zelfde verhoudingen. */
+  .ster-tegel .st-podium {
+    width: 100%; aspect-ratio: 10 / 11; flex: none;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
+  /* De discolichtjes ademen hier niet mee. Op één podium is dat sfeer; met zes
+     tegels naast elkaar zijn het zes vlakken die eeuwig staan te pulseren, en
+     dan beweegt het hele scherm terwijl er niets gebeurt. */
+  .ster-tegel .st-podium::after { animation: none; opacity: .85; }
+  /* Het wereldaccent: dezelfde --w-glow/--w-sky als de gloed rond de tegel en
+     de band onderin (zie hierboven), nu ook als een zachte wasem óver het
+     podium -- boven en onder, nooit het midden, want daar staat de pop. Eén
+     kleurzweem in de wereldkleur, met soft-light zodat het gekozen podium
+     (de achtergrond uit de kleedkamer) er gewoon doorheen blijft komen: geen
+     tweede achtergrond, alleen een andere gloed op dezelfde plek als altijd. */
+  .ster-tegel .st-podium::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(85% 55% at 50% 118%, rgba(var(--w-glow-rgb), .55), transparent 70%),
+      linear-gradient(180deg, rgba(var(--w-sky-rgb), .34), transparent 30%);
+    mix-blend-mode: soft-light;
+  }
+  /* De podiumversiering (kasteel, discobol, palmboom) blijft hier weg. Op één
+     groot podium is dat sfeer; op een tegel van 112-148px zijn het drie emoji die
+     over de pop heen vallen, precies op de plek waar een kind moet kunnen zien of
+     zíj het is. Het podium zélf -- de kleur waar ze op staat -- blijft staan, en
+     dat is waaraan je haar van een afstandje herkent.
+
+     Ze verdwijnen niet uit het spel: in de kleedkamer, de show en op het
+     eindscherm staat hetzelfde podium mét versiering. */
+  .ster-tegel .deco { display: none; }
+
+  .st-voet {
+    display: flex; flex-direction: column; gap: clamp(4px, 3.5cqw, 7px);
+    padding: clamp(6px, 5.5cqw, 12px) clamp(7px, 6cqw, 14px) clamp(7px, 6cqw, 14px);
+    background: linear-gradient(180deg, rgba(var(--w-deep-rgb), .82), rgba(var(--w-deep-rgb), .96));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+  }
+  .st-rij { display: flex; align-items: center; gap: clamp(4px, 4cqw, 9px); min-width: 0; }
+  /* Hetzelfde wereldteken als op de reis en op de wereldkaart, en verder niets:
+     een kind hoeft hier alleen te zien dát ze ergens anders is dan haar zus.
+     Het rondje erachter is hetzelfde wereldaccent als de gloed en de wasem
+     hierboven (--w-glow-rgb), alleen nu vlak bij de naam -- zodat het teken
+     ook als los badge leest en niet verdwijnt in de donkere voet. */
+  .st-ico { flex: none; line-height: 1; font-size: clamp(13px, 13cqw, 23px);
+            filter: var(--emoji-schaduw);
+            display: grid; place-items: center;
+            width: clamp(20px, 20cqw, 32px); height: clamp(20px, 20cqw, 32px);
+            border-radius: 50%;
+            background: radial-gradient(120% 120% at 30% 25%, rgba(var(--w-glow-rgb), .55), rgba(var(--w-glow-rgb), .15));
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  .st-naam {
+    flex: 1; min-width: 0; font-weight: 700; letter-spacing: .01em; line-height: 1.15;
+    font-size: clamp(13px, 14cqw, 25px);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-shadow: var(--op-kunst-ink);
+  }
+  /* Hoe ver in déze wereld, als streep en niet als teller. Geen getallen, geen
+     sterrentotaal, geen tweede balk: zes kinderen op één scherm horen zich niet
+     met elkaar te kunnen vergelijken, en een streep zegt "bijna klaar" zonder
+     dat er iets gelezen hoeft te worden.
+
+     Warm wit en nadrukkelijk geen goud -- goud betekent in dit spel "af" en "hier
+     speel je", en dit is geen van beide. Zelfde kleur als de rand van een
+     gespeelde halte op de wereldkaart (--halte-rand). */
+  .st-baan {
+    height: 5px; border-radius: var(--r-pill); overflow: hidden;
+    background: rgba(255,255,255,.17); box-shadow: inset 0 1px 2px rgba(8,2,20,.45);
+  }
+  .st-baan i {
+    display: block; height: 100%; border-radius: var(--r-pill);
+    background: linear-gradient(90deg, rgba(255,240,214,.72), rgba(255,240,214,.98));
+    box-shadow: 0 0 8px rgba(255,235,200,.4);
+  }
+
+  /* "+" is geen ster. Hij staat in hetzelfde raster (en dus vanzelf ná de laatste
+     tegel) maar is veel lager en heeft geen podium, geen naam en geen kleur: een
+     leeg plekje, geen kind. Gestippeld en glazen, zoals elke "hier kan nog iets
+     bij" in dit spel -- en bewust niet de taal van het tandwiel, want dit is geen
+     instelling. */
+  .add-tegel {
+    /* Een eigen rij onder de sterren, en niet het eerstvolgende lege vakje: dan
+       staat hij naast een kind alsof hij er ook een is, en bij vijf sterren vult
+       hij precies het gat waar de zesde hoort te komen. */
+    /* Maat en letter groeien mee met de tegels erboven (--focus-groei, zie het
+       skelet): hij hoort bij dat blok, en een knop die op zijn telefoonmaat
+       blijft staan onder tegels van 175 leest als een voetnoot in plaats van als
+       de tweede mogelijkheid op dit scherm. */
+    grid-column: 1 / -1; justify-self: center;
+    max-width: calc(196px + var(--focus-groei) * .62);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; width: 100%; min-height: calc(60px + var(--focus-groei) * .2); padding: 10px 8px;
+    font-family: inherit; font-weight: 700; line-height: 1.15;
+    font-size: calc(var(--tx-klein) + var(--focus-groei) * .03);
+    color: var(--c-white); text-align: center; cursor: pointer; z-index: 1;
+    border: 1.5px dashed rgba(255,255,255,.35); border-radius: var(--r-md);
+    background: rgba(255,255,255,.1);
+    transition: transform var(--t-tik), background .12s;
+  }
+  .add-tegel .at-plus { font-size: calc(21px + var(--focus-groei) * .05); line-height: 1; opacity: .9; }
+  .add-tegel:hover { background: rgba(255,255,255,.18); }
+  .add-tegel:active { transform: scale(.96); }
+  /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
+     groot zijn. Geen leeg raster met zes lege vakjes -- één uitnodiging. */
+  /* Breder dan hoog, en breed genoeg voor "Maak je eerste ster" op één regel: een
+     uitnodiging leest als een knop, niet als een leeg vierkant. */
+  .add-tegel.leeg {
+    min-height: 116px; max-width: 232px; gap: 8px;
+    font-size: var(--tx-body); border-width: 2px;
+  }
+  .add-tegel.leeg .at-plus { font-size: 38px; }
+  /* Liggend (of een heel lage viewport) passen twee rijen tegels er niet bij.
+     De auto-marges hierboven centreren het blok en laten het dan langs de
+     bovenkant weglopen zonder scrollbalk -- dus daar zetten we het centreren uit
+     en mag het scherm gewoon scrollen. */
+  @media (max-height: 480px) {
+    #screen-profile { justify-content: flex-start; padding-top: 12px; }
+    .spellogo { margin-top: 0; }
+    /* En smaller dan de kolom van dit scherm: liggend is de breedte er in
+       overvloed en de hóógte het probleem, dus een tegel die de volle 560 pakt
+       maakt twee rijen even hoog als anderhalf scherm. Alles binnen de tegel
+       schaalt mee (container-query), dus dit is één regel en geen tweede opmaak. */
+    .star-grid { margin-top: 10px; max-width: 430px; }
+    /* en het podium een slag lager: liggend is hoogte het enige dat telt, en met
+       10/8 passen zes tegels in twee rijen zónder te scrollen. De pop schaalt mee
+       (ze staat op 92% van de podiumhoogte), dus er wordt niets afgesneden. */
+    .ster-tegel .st-podium { aspect-ratio: 10 / 8; }
+    .profile-spacer { margin-top: 0; min-height: 0; }
+  }
+  /* alleen zichtbaar als er nog niets is: dán is een back-up terugzetten het
+     andere ding dat een ouder hier kan willen */
+  .restore-hint { display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1; }
+
+  /* --balk-rand en niet twee keer 10: dit is dezelfde afstand tot de schermrand
+     als waarop de navigatiebalk onderaan zweeft, en dat is geen toeval maar de
+     bedoeling -- boven en onder even ver van de rand. Hij hangt aan het vénster
+     en niet aan een inhoudskolom, en dat mag: hij staat alleen op de sterrenkeuze
+     (zie de regel bij show()), en dat is het ene scherm dat met opzet aflopend is. */
+  .corner-btns { position: fixed; top: var(--balk-rand); right: var(--balk-rand); display: flex; gap: 8px; z-index: 50; }
+  /* rustig maar wél te vinden rond icoon-knopje: rand + glazen vulling + zachte
+     schaduw-lip, geleend van .btn.soft's taal i.p.v. het bijna onzichtbare
+     .btn.ghost. Gedeeld door de Instellingen-knop (thuisscherm) en de
+     X-stopknop (spelscherm) -- twee losse "hoekknopjes" die er nu hetzelfde
+     rustige gewicht bij hebben. */
+  /* 44px: de minimale comfortabele tikmaat voor een kinderhand -- gold ook voor
+     het ✕ 'show stoppen' (de enige onomkeerbare tik in het spel) en het tandwiel */
+  .icon-btn {
+    width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--c-white); border-radius: 50%; border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  }
+  .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .icon-btn.on { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.14)); }
+  /* alleen het tandwiel zélf draait — niet de hele (nu ronde) knop eromheen.
+     Geen --t-tik, en dat is de bedoeling: dit is niet de indruk van de knop maar
+     de stand van het menu (open = gedraaid), en die blijft staan zolang het menu
+     openstaat. Zie de ladder bij --t-tik. */
+  #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
+  #btn-gear.on .gear-ico { transform: rotate(35deg); }
+
+  /* ---- Instellingen-menu (popover onder het tandwiel) --------------------
+     FASE 5D. Het paneel stond 18px onder de knop, zonder enige verbinding: een
+     wit blok dat uit de lucht kwam vallen en meer op een browsermelding leek dan
+     op iets van deze app. Drie dingen zijn eraan veranderd, en geen ervan maakt
+     er een scherm van:
+
+       1. HET ZIT VAST AAN HET TANDWIEL. Acht pixels lucht in plaats van
+          achttien, een puntje dat naar de knop wijst (::before, dezelfde vorm
+          als de tipbubbels in het spel), en het openklappen begint in de
+          rechterbovenhoek -- dus vlak onder de knop die het opende.
+       2. HET IS VAN DIT HUIS. Papierkleuren en de ronding van een kaart
+          (--r-lg), een fijne paarse ring eromheen in plaats van alleen een
+          schaduw, en een vleugje waas erachter -- hetzelfde glas als de
+          plakkende koppen. Geen nieuwe kleuren en geen nieuwe schaduw.
+       3. DE STANDEN ZIJN AAN TE WIJZEN. Zie .gi-state hieronder. */
+  .gear-menu {
+    position: absolute; top: 52px; right: 0; width: 252px; max-width: calc(100vw - 20px);
+    background: var(--paper-surface); color: var(--c-ink);
+    border-radius: var(--r-lg); padding: 7px;
+    backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: var(--e-3), inset 0 0 0 1.5px var(--paper-ring);
+    display: none; flex-direction: column;
+    transform-origin: top right;
+  }
+  /* Het puntje. Staat precies onder het midden van de tandwielknop (44px breed,
+     dus 22 uit de rechterrand) en is een gedraaid vierkantje, zodat het dezelfde
+     vulling en dezelfde ring meeneemt als het paneel zelf. */
+  .gear-menu::before {
+    content: ''; position: absolute; top: -6px; right: 15px; width: 14px; height: 14px;
+    background: var(--paper-surface); border-radius: 3px;
+    box-shadow: inset 0 0 0 1.5px var(--paper-ring);
+    transform: rotate(45deg); clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+  .gear-menu.open { display: flex; animation: gearPop .16s var(--ease-uit); }
+  @keyframes gearPop { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
+  /* Wie geen beweging wil, krijgt hetzelfde menu -- het klapt alleen niet open. */
+  @media (prefers-reduced-motion: reduce) { .gear-menu.open { animation: none; } }
+  .gear-item {
+    font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
+    background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
+    display: flex; align-items: center; gap: 11px; padding: 0 11px; min-height: 48px;
+    border-radius: var(--r-md); transition: background var(--t-tik) ease;
+  }
+  .gear-item:hover { background: var(--paper-tint); }
+  /* Niet krimpen maar oplichten: een rij van 48px die 2% kleiner wordt zie je
+     niet, een rij die even paars oplicht wél -- en dat is precies wat een tik op
+     een schakelaar moet bevestigen. */
+  .gear-item:active { background: var(--lavender-wash-3); }
+  .gear-item .gi-ico { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+  .gear-item .gi-label { flex: 1; min-width: 0; }
+  /* De stand, en niet alleen het woord. "Uit" in een grijs pilletje leest als
+     een label; met een stip ervoor -- groen en vol als het aanstaat, hol en grijs
+     als het uit staat -- is het een schakelaar in twee standen. De pil zelf houdt
+     dezelfde maat, zodat de rij niet verspringt bij het omzetten. */
+  .gear-item .gi-state {
+    font-size: var(--tx-klein); font-weight: 700; padding: 5px 12px 5px 9px; border-radius: var(--r-pill);
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--green-badge-bg); color: var(--green-deep);
+    box-shadow: inset 0 0 0 1px rgba(46,125,50,.22);
+  }
+  .gear-item .gi-state::before {
+    content: ''; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--green-deep); box-shadow: 0 0 0 2px rgba(46,125,50,.16);
+  }
+  .gear-item .gi-state.off {
+    background: var(--paper-muted-bg); color: var(--paper-muted-text);
+    box-shadow: inset 0 0 0 1px var(--paper-border);
+  }
+  .gear-item .gi-state.off::before {
+    background: transparent; box-shadow: inset 0 0 0 2px var(--paper-muted-text);
+  }
+  /* De weg naar buiten. Een tweede regel eronder ("Voortgang, oefenen, beheer")
+     zegt dat hier een gróter deel achter zit; de paarse tegel met het icoon en de
+     chevron zeggen dat het een deur is en geen schakelaar. Het staat onder een
+     streepje, dus het is duidelijk níet een van de twee schakelaars -- maar het
+     is wel het enige gekleurde ding in het paneel, en dus vindbaar voor een
+     ouder die er bewust naar zoekt. */
+  .gear-item.parents { color: var(--purple-mid); align-items: center; padding: 9px 11px; }
+  /* Een lichte tegel en geen paars vlak: het gezins-emoji is zelf donker en
+     verdween op een paarse vulling tot een vlek. Dit is hetzelfde tegeltje als op
+     elke kaartkop in het ouderdeel (.set-card-head .ico), dus de rij belooft
+     precies waar ze heen gaat. */
+  .gear-item.parents .gi-ico {
+    width: 34px; height: 34px; border-radius: var(--r-sm); font-size: 17px;
+    display: grid; place-items: center;
+    background: var(--lavender-wash); box-shadow: inset 0 0 0 1.5px var(--purple-light);
+  }
+  .gear-item.parents .gi-sub {
+    display: block; font-size: var(--tx-mini); font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
+  }
+  /* een teken en geen letter: het pijltje staat als maat in de regel, zie §5 */
+  .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
+  .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
+
+  /* ---- Podium / avatar ---- */
+  .stage {
+    position: relative; border-radius: var(--r-lg); overflow: hidden; flex-shrink: 0;
+    border: 4px solid rgba(255,255,255,.5); box-shadow: var(--e-2);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  /* verfijnde randbehandeling, gedeeld door elke plek waar de avatar het
+     hoofdelement is (kleedkamer, profielkeuze): dunner en minder grijs dan de
+     kale .stage hierboven, dezelfde lichte lavendel/wit-rand als een
+     item-card (rgba(255,255,255,.35)), met een zachte paarse gloed erbij
+     i.p.v. alleen de kale slagschaduw. Bewust géén goud -- dat blijft
+     voorbehouden aan geselecteerd/primaire acties. */
+  .stage-frame {
+    border-width: 2px; border-color: rgba(255,255,255,.35);
+    box-shadow: var(--e-2), 0 0 20px rgba(123,47,247,.28);
+  }
+  /* avatar schaalt altijd mee met de podiumhoogte (fix voor afgesneden avatar op mobiel) */
+  .stage .avatar-holder { height: 92%; }
+  .stage .avatar-holder svg { height: 100%; width: auto; display: block; }
+  .stage::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle 60px at 20% 15%, rgba(255,255,120,.35), transparent 70%),
+      radial-gradient(circle 60px at 80% 20%, rgba(120,220,255,.35), transparent 70%),
+      radial-gradient(circle 70px at 55% 8%, rgba(255,120,220,.30), transparent 70%);
+    animation: lights 3.5s ease-in-out infinite alternate;
+  }
+  /* Ademen, niet verkleuren. Hier draaide de tint in 3,5 seconden 120 graden
+     rond: op een vlak verloop viel dat weg als "disco", maar het is licht dat
+     van kleur verschiet, en zodra er een getekend podium achter staat vecht dat
+     met de geschilderde belichting. De lichtvlekken zelf blijven staan. */
+  @keyframes lights {
+    from { opacity: .74; }
+    to   { opacity: 1; }
+  }
+  .stage .deco { position: absolute; font-size: 26px; text-shadow: var(--op-kunst-ink); }
+  .stage.tappable { cursor: pointer; }
+  .stage.tappable:active { transform: scale(.98); }
+  .avatar-holder { line-height: 0; }
+  .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
+  @keyframes sway {
+    0%,100% { transform: rotate(-2.5deg); }
+    50%     { transform: rotate(2.5deg); }
+  }
+  /* ---- Danspasjes: elke juiste som = een pasje in de show ----------------
+     HET PASJE ZIT OP DE TEKENING, HET WIEGEN OP DE HOUDER. Twee lagen, en dat
+     is geen omweg maar precies wat een naadloze overgang mogelijk maakt.
+
+     Eerst stond allebei op .avatar-holder, en dan kan er maar één tegelijk: het
+     wiegen ging uit, het pasje liep, het wiegen kwam terug. Bij elke wissel
+     botsten twee animaties die het niet eens waren over de stand van de pop --
+     sway begint op -2.5 graden, elk pasje op 0. Opgemeten op de kaart, waar de
+     ster je begroet: bij het inzetten sprong ze in één beeldje van -2,07 naar 0
+     graden, en bij het uitlopen van 0 naar -2,5. Twee tikjes van ruim twee
+     graden, allebei op het rustigste moment van de beweging -- precies waar je
+     ze ziet.
+
+     Nu loopt het wiegen gewoon door en komt het pasje eroverheen. Geneste
+     transforms vermenigvuldigen, dus de pop wiegt én zwaait; en omdat elk pasje
+     op 0% én 100% op niets staat, voegt het aan het begin en aan het eind
+     letterlijk nul toe. Er valt dus niets meer over te onderhandelen: er is geen
+     wissel meer, alleen een laag die aan- en weer uitgaat.
+
+     EN HET PASJE KRIJGT EEN EIGEN LAAG, niet de tekening zelf. Dat scheelt niets
+     in wat je ziet en alles in wat het kost: de ster op de kaart draagt een
+     SVG-filter (zie .tour-hero svg -- contour, schaduwtje, verzadiging), en een
+     transform óp een gefilterd element laat de browser dat filter elk beeldje
+     opnieuw uitrekenen. Op een laagje eromheen hoeft dat niet: het filter wordt
+     één keer berekend en daarna verschoven. Opgemeten kostte de verkeerde kant
+     hiervan de vlucht naar Werelden zijn eerste beeldjes (zaak D in
+     test/vlucht.test.js viel drie van de acht keer om); met deze laag ertussen
+     nul van de acht.
+
+     De laag vult de houder helemaal (line-height 0, hoogte 100%), dus het
+     draaipunt en de maatvoering zijn dezelfde als toen het pasje nog op de
+     houder stond. */
+  .avatar-holder > .pas-laag { display: block; height: 100%; line-height: 0; }
+  .avatar-holder.dancing > .pas-laag { transform-origin: 50% 95%; }
+  .avatar-holder.move-jump   > .pas-laag { animation: mvJump .9s ease-in-out; }
+  .avatar-holder.move-spin   > .pas-laag { animation: mvSpin .9s ease-in-out; }
+  .avatar-holder.move-sway   > .pas-laag { animation: mvSway .9s ease-in-out; }
+  .avatar-holder.move-kick   > .pas-laag { animation: mvKick .9s ease-in-out; }
+  .avatar-holder.move-wave   > .pas-laag { animation: mvWave .9s ease-in-out; }
+  .avatar-holder.move-bounce > .pas-laag { animation: mvBounce .9s ease-in-out; }
+  @keyframes mvJump {
+    0%,100% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-38px) scale(1.06); }
+    55% { transform: translateY(0) scale(.96); }
+    75% { transform: translateY(-14px); }
+  }
+  @keyframes mvSpin {
+    0% { transform: rotateY(0) scale(1); }
+    50% { transform: rotateY(360deg) scale(1.08) translateY(-10px); }
+    100% { transform: rotateY(720deg) scale(1); }
+  }
+  @keyframes mvSway {
+    0%,100% { transform: rotate(0); }
+    20% { transform: rotate(-16deg) translateX(-8px); }
+    50% { transform: rotate(16deg) translateX(8px); }
+    80% { transform: rotate(-10deg) translateX(-4px); }
+  }
+  @keyframes mvKick {
+    0%,100% { transform: rotate(0) translateX(0); }
+    25% { transform: rotate(-10deg) translateX(-10px) scale(1.03); }
+    50% { transform: rotate(12deg) translateX(12px); }
+    70% { transform: rotate(-6deg) translateX(-6px); }
+  }
+  @keyframes mvWave {
+    0%,100% { transform: translateY(0) rotate(0); }
+    20% { transform: translateY(-8px) rotate(6deg); }
+    40% { transform: translateY(0) rotate(-6deg); }
+    60% { transform: translateY(-8px) rotate(6deg); }
+    80% { transform: translateY(0) rotate(-4deg); }
+  }
+  @keyframes mvBounce {
+    0%,100% { transform: translateY(0) scaleY(1); }
+    20% { transform: translateY(0) scaleY(.82) scaleX(1.1); }
+    45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
+    70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
+  }
+  /* Wie geen beweging wil: de lampen ademen niet en er wordt niet gedanst.
+     Het licht blijft liggen (het is een kleur op het podium, geen beweging) en
+     de pop staat rechtop op haar plek -- dezelfde eindstand als na een pasje,
+     alleen zonder het pasje. De danspasjes worden in JS al overgeslagen (zie
+     zetPas); dit is het slot op de deur voor een .move-* die er langs een andere
+     weg toch op komt te staan, zodat er nooit een halve sprong blijft hangen. */
+  @media (prefers-reduced-motion: reduce) {
+    .stage::after { animation: none; }
+    .avatar-holder.dancing, .avatar-holder[class*="move-"],
+    .avatar-holder.dancing > .pas-laag,
+    .avatar-holder[class*="move-"] > .pas-laag { animation: none; transform: none; }
+  }
+
+  /* ---- Home ---- */
+  /* De kop is nooit breder dan de inhoud waar hij bij hoort. Hier stond een
+     eigen max-width van 700px -- een achtste maat, die op geen enkel scherm
+     samenviel met de kolom eronder. Nu leest hij --kolom van het scherm, dus
+     "de kop lijnt uit met de inhoud" kan niet meer per scherm scheef lopen. */
+  .screen-header {
+    display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
+    align-items: center; gap: 12px; width: 100%; max-width: var(--kolom, 680px); margin-bottom: 8px;
+  }
+  .screen-header .header-title {
+    font-size: var(--tx-kop); font-weight: 700; text-align: center; white-space: nowrap;
+    text-shadow: var(--op-vlak-ink);
+  }
+  /* op de kaart draagt de kop twee dingen: wélke wereld, en waar je daarin bent */
+  .world-sub { display: block; font-size: var(--tx-klein); font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
+  .screen-header .header-left { justify-self: start; }
+  .screen-header .header-right { justify-self: end; }
+  /* De teller-pil. Er stonden er drie maten naast elkaar (.chip-badge en
+     .diamond-badge.compact); geen van beide werd nog ergens gezet, en één
+     💎-pil in één maat is ook precies wat de kop op elk scherm nodig heeft. */
+  .diamond-badge {
+    background: rgba(0,0,0,.32); border-radius: var(--r-pill); font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    /* --tx-sub en niet --tx-kop: de teller is een bijzin naast de schermnaam en
+       hoort niet even groot te zijn als de kop. Op 320px kostte elke pixel hier
+       een letter van de naam ernaast -- "Trofeeënkast" werd "Trofeeë...". */
+    padding: 8px 18px; font-size: var(--tx-sub);
+    /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
+    border: 0; color: inherit; font-family: inherit;
+  }
+  button.diamond-badge { cursor: pointer; }
+  button.diamond-badge:active { transform: scale(.95); }
+  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+

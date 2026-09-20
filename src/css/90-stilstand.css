@@ -1,0 +1,115 @@
+  /* ---- Wie geen beweging wil: wat er los in de body wordt neergezet --------
+     Deze vier bestaan alleen om te bewegen -- ze dragen geen tekst, geen knop en
+     geen stand. Wat ze vieren of afleveren staat ergens anders: de diamanten
+     staan in de teller vóórdat ze vertrekken, de badge staat in de kast, de
+     confetti viert sterren die er zelf ook staan. Weglaten kost dus niets.
+
+     De JS laat ze bij beperkte beweging al niet meer ontstaan (confetti,
+     confettiBurst, sparkleAt, flyDiamonds, flyBadge). Dit is het slot op de
+     deur: komt er ooit langs een andere weg toch zo'n stukje in de body, dan
+     dwarrelt het niet alsnog over het scherm. (.burst-bit en .tap-ripple staan
+     al in het blok bij het trofee-feestje.) */
+  @media (prefers-reduced-motion: reduce) {
+    .confetti-bit, .fly-dia, .fly-badge { display: none; }
+  }
+  /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
+     stond het portretje links en de diamanten rechts ergens in de onscherpe rand,
+     terwijl de navigatiebalk eronder wél op podiumbreedte staat -- dan lijken de
+     twee balken bij twee verschillende schermen te horen. Dezelfde maat als
+     .main-nav, zodat ze samen één toestel vormen. Om dezelfde reden op de
+     tournee: de reis staat daar in een kolom in het midden (.reis-pad), dus de
+     kop hoort daar ook boven en niet in de hoeken.
+
+     DEZE REGEL STAAT MET OPZET ONDERAAN HET BLAD. Hij stond in het liggende-stand
+     blok bij .world-frame, en voor de reis deed hij daar niets: #screen-journey
+     zet zijn eigen kop verderop in het blad óók op width: 100% (zie de sluier
+     onder de kop van Werelden), en bij gelijke specificiteit wint de laatste. Op een
+     bureaublad stond de terugknop van Werelden dus in de linkerbovenhoek van het
+     vénster terwijl de kaart ernaast zijn kop netjes op podiumbreedte had -- twee
+     schermen die met één tik in elkaar overgaan en waarvan de kop op twee
+     verschillende plekken staat. Nu staat de gedeelde regel ná beide, zodat hij
+     het per definitie wint van wat een scherm over zijn eigen kop zegt. */
+  @media (min-aspect-ratio: 1/1) and (min-height: 600px) {
+    #screen-map .hub-sticky, #screen-journey .hub-sticky {
+      width: var(--balk-w); margin-left: auto; margin-right: auto;
+    }
+    /* ---- En de kop en de balk zakken mee het podium op ---------------------
+       Zodra --stage-spel bindt is het podium smaller dan de hoogte toelaat, en
+       dan blijft er lucht boven en onder over. De kop plakt aan de bovenrand van
+       het schérm en de balk zweeft boven de onderrand ervan, dus die twee bleven
+       daar achter: op 2560x1440 stond de kop 240 pixels boven de wereldkaart en
+       de balk er 240 onder, alle drie los van elkaar in het onscherpe.
+
+       Dat is precies de gelaagdheid die dit scherm juist goed had (omgeving --
+       podium -- bediening), alleen viel de bediening van het podium af. Dus
+       rekent het scherm die lucht uit en schuiven ze allebei mee naar binnen.
+       Op een venster waar het podium de hoogte vult is --podium-lucht nul en
+       staat alles waar het altijd stond -- ook op elke telefoon, want daar geldt
+       dit hele blok niet.
+
+       Waarom dat mag terwijl de balk verder overal hetzelfde hoort te staan: de
+       balk hoort onderaan het PODIUM en niet onderaan het vénster. Op elk ander
+       scherm is dat hetzelfde punt (het podium vult daar de hoogte), en dan
+       verandert er ook niets. Zijn maat, zijn ronding, zijn glas en zijn
+       knoprij blijven bovendien hoe dan ook gelijk -- alleen zijn voet volgt het
+       toestel waar hij bij hoort.
+
+       De som is dezelfde als die van .world-frame hieronder, met dezelfde bron
+       voor de verhouding (--art-w/--art-h): --podium-h is de hoogte van het
+       kaartvak (de app minus zijn 14px lucht boven en onder), daaruit volgt de
+       breedte van het podium, daaruit zijn hoogte, en het verschil valt in
+       tweeën. max(0px, ...) vangt het geval af waarin het podium juist groter is
+       dan het vak (een krap venster, waar de ondergrens van 340 wint): dan is er
+       geen lucht maar overloop, en hoort er niets te schuiven. */
+    :root {
+      --podium-h: calc(var(--vh-lock, 100svh) - 28px);
+      --podium-w: clamp(min(340px, 100vw),
+                        min(calc(var(--podium-h) * var(--art-w) / var(--art-h)), var(--stage-spel)),
+                        100vw);
+      --podium-lucht: max(0px, calc((var(--podium-h) - var(--podium-w) * var(--art-h) / var(--art-w)) / 2));
+    }
+    /* De kop draagt al een negatieve bovenmarge (de overbloeding uit .hub-sticky);
+       die blijft staan en de lucht komt erbij. */
+    #screen-map .hub-sticky { margin-top: calc(var(--rand, 12px) * -1 + var(--podium-lucht)); }
+    /* En de balk alleen op de kaart -- het enige scherm met een podium dat
+       smaller kan zijn dan het venster hoog is. :has() staat al elders in dit
+       blad (zie de wolkjes bij #screen-map), dus het is hier geen nieuw middel. */
+    body:has(#screen-map.active) .main-nav {
+      bottom: calc(var(--balk-rand) + var(--veilig-onder) + var(--podium-lucht));
+    }
+    /* Van de kaart naar de kleedkamer verandert die voet, en zonder deze regel
+       verspringt de balk op het moment van de schermwissel. .18s is precies de
+       duur van screenIn (zie .screen.active): de balk zakt dus mee terwijl het
+       ene scherm in het andere overvloeit, in plaats van eroverheen te knippen.
+       Hij staat hier en niet op .main-nav zelf, zodat er op een telefoon -- waar
+       --podium-lucht niet bestaat en er dus nooit iets te bewegen valt -- ook
+       geen overgang op een positie-eigenschap loopt. */
+    .main-nav { transition: bottom .18s ease; }
+    @media (prefers-reduced-motion: reduce) { .main-nav { transition: none; } }
+    /* En de veeg ónder de balk hoort bij dezelfde wereld. Hij is 100vw breed --
+       op een telefoon klopt dat, want daar ís de wereld het scherm -- maar op een
+       podium van 560 in een venster van 2560 trok hij een donkere streep dwars
+       over de onscherpe omgeving, met een kaarsrechte rand op precies de hoogte
+       waar de kaart ophoudt. Dat is het tegenovergestelde van wat hij moet doen:
+       hij hoort de ónderste band van de wereld te dempen zodat "Kleedkamer" er
+       leesbaar op blijft, en niet de omgeving te verdelen.
+
+       Dus krijgt hij de breedte van het podium en de ronde onderhoeken ervan. Op
+       een venster waar het podium de volle breedte pakt is --podium-w gewoon
+       100vw en staat er precies wat er altijd stond. */
+    body:has(#screen-map.active) .main-nav::before {
+      width: var(--podium-w); margin-left: calc(var(--podium-w) / -2);
+      border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);
+    }
+    /* Twee zwevende knopjes hangen met right: 14px aan de rechter VENSTERrand, en
+       die rand is hier niet meer de rand van het scherm: de memory-knop kwam op
+       een breed venster een halve monitor naast de wereldkaart te staan, en het
+       terug-pijltje van Werelden naast de reis. Ze horen aan de rand van hun
+       eigen podium, met dezelfde 14px lucht als op een telefoon -- waar die twee
+       randen samenvallen en er dus niets verandert. max() houdt ze binnen boord
+       als het podium toch de volle breedte pakt.
+       Hun hóógte laat dit met rust: die hangt al aan --nav-h en aan
+       --balk-ruimte, en die schuiven met de balk mee. */
+    #screen-map .mem-fab { right: max(14px, calc(50vw - var(--podium-w) / 2 + 14px)); }
+    #screen-journey .reis-terug { right: max(14px, calc(50vw - var(--balk-w) / 2 + 14px)); }
+  }

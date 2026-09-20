@@ -1,8 +1,11 @@
 # Testen
 
-Het spel is één bestand (`index.html`) zonder bouwstap. De tests zijn dat ook zo
-veel mogelijk: gewone Node-scripts, geen testframework, geen configuratie. Er
-staan twee soorten naast elkaar.
+Het spel wordt uitgeleverd als één bestand (`index.html`) dat zonder bouwstap
+draait; de code en het stijlblad ervoor staan in `src/` en gaan er met
+`npm run bouw` in. De tests zijn zo kaal mogelijk gehouden: gewone
+Node-scripts, geen testframework, geen configuratie. Ze draaien tegen het
+gebouwde `index.html` en niet tegen `src/` — ze horen te meten wat een kind
+werkelijk draait. Er staan twee soorten naast elkaar.
 
 | soort | draait in | wat het bewijst | kosten |
 |---|---|---|---|

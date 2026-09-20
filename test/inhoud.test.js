@@ -398,6 +398,25 @@ zaak('H', () => {
   check(tel('<script>') === 1, 'H · er is precies één <' + 'script>', tel('<script>'));
   check(tel('</' + 'script>') === 1, 'H · en precies één afsluiting', tel('</' + 'script>'));
 
+  /* 2b. En die twee blokken komen uit src/.
+     Sinds de bouw (test/bouw.js) is src/ de bron en zijn het stijlblad én het
+     scriptblok in index.html het resultaat. Ze kunnen uit elkaar lopen op
+     precies één manier: iemand bewerkt zo'n blok rechtstreeks. Dat werkt -- het
+     spel draait er gewoon op -- en het is weg zodra er voor iets anders gebouwd
+     wordt. Een wijziging die het een dag later zonder melding begeeft is het
+     ergste soort, dus staat de controle hier en niet in de bouw: `npm run check`
+     draai je sowieso, `npm run bouw` alleen als je eraan denkt.
+
+     De melding zegt zelf wélk blok is afgedreven en op welke regel ervan, want
+     dat is precies wat je wilt weten als dit omvalt.
+
+     Niet met RP_INDEX: dan kijkt de keuring naar een nagemaakt bestand dat
+     helemaal niet uit deze src/ hoeft te komen (zie docs/TESTEN.md). */
+  if (!process.env.RP_INDEX) {
+    const mis = require('./bouw').achterstand();
+    check(!mis, 'H · stijlblad en scriptblok komen uit src/ (draai `npm run bouw`)', mis || '');
+  }
+
   /* 3. Tekeningen van een verstandig formaat.
      Geen begroting (die staat bij B, per wereld) maar een vangrail: een bestand
      dat per ongeluk tien keer zo groot wordt, en twee tekeningen die byte voor

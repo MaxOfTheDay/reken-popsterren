@@ -8115,30 +8115,641 @@
   zet();
   addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; zet(); } else drift(); });
 })();
+/* ================= De gedeelde feestjes =====================================
+   Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is. Geen
+   spelregels, geen voortgang, geen scherm dat het bezit -- alleen de taal
+   waarin de app reageert.
+
+   Dit stond in de sectie "Spel", en dat was een ongeluk van plaatsing en geen
+   keuze: motionOff wordt zevenentwintig keer buiten het spel aangeroepen,
+   showToast en hideToast samen zevenentwintig, confetti vier. De kleedkamer, de
+   kast, de reis en het ouderdeel hingen dus allemaal aan "het spel", terwijl ze
+   in werkelijkheid aan dit lijstje hangen.
+
+     de poort      motionOff  -- wie minder beweging wil, krijgt de mededeling
+                   zonder de versiering. Alles hieronder vraagt het eerst.
+     vragen        showConfirm / showNotice / closeConfirmModal
+     zeggen        showPraise, showToast / hideToast
+     dansen        MOVES, pasLaag, zetPas, stilStaan, dance, tapDance,
+                   finaleDance
+     vonken        sparkle / sparkleAt, confetti, confettiBurst, tapRipple
+
+   WAAROM DIT STUK VÓÓR HET SPEL STAAT EN NIET ERNA. MOVE_CLASSES is een const,
+   en stilStaan leest hem. Dat laatste gebeurt al bij het opstarten: landingLeeft
+   roept landingStil aan en die zet elke pop stil. Stond dit blok achter de app,
+   dan viel die aanroep in de dode zone van de const en kreeg een kind een lege
+   pagina -- alleen als er al sterren zijn, dus niet op een verse installatie en
+   niet in de keuring, die met een nagebootst scherm draait waar geen pop in
+   zit. Precies het soort fout dat pas op iemands tablet omvalt.
+
+   Daarom is de volgorde hier geen smaak maar een voorwaarde, en daarom staat
+   het --vh-lock-scriptje sinds deze stap in zijn eigen bestand: dat hóórt als
+   eerste te draaien, en dat is nu een eigenschap van de bestandsnamen in plaats
+   van een afspraak in een opmerking.
+   ========================================================================= */
+
+
+/* Generieke mededeling/bevestiging in de eigen stijl van de app -- vervangt de
+   systeem-confirm()/alert() die verder nergens in de app voorkomen en er (vooral
+   rond het definitief wissen van voortgang) als een foutmelding uitzien i.p.v.
+   een vraag van de app zelf. */
+function closeConfirmModal() { $('confirm-modal').classList.remove('open'); syncBackGuard(); }
+function showConfirm(title, body, confirmLabel, onConfirm) {
+  $('confirm-title').textContent = title;
+  $('confirm-body').textContent = body;
+  $('confirm-actions').innerHTML =
+    `<button class="btn" id="confirm-no">Nee, terug</button>
+     <button class="danger-btn" id="confirm-yes">${confirmLabel}</button>`;
+  $('confirm-no').onclick = closeConfirmModal;
+  $('confirm-yes').onclick = () => { closeConfirmModal(); onConfirm(); };
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
+function showNotice(title, body) {
+  $('confirm-title').textContent = title;
+  $('confirm-body').textContent = body;
+  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok">Oké</button>`;
+  $('confirm-ok').onclick = closeConfirmModal;
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
+// Danspasjes: elk juist antwoord voegt een pasje toe aan de show van de avatar
+const MOVES = [
+  { cls: 'move-jump',   label: '🦘 Sprong!' },
+  { cls: 'move-spin',   label: '💫 Pirouette!' },
+  { cls: 'move-sway',   label: '💃 Heupwiegen!' },
+  { cls: 'move-kick',   label: '🕺 Zijpasje!' },
+  { cls: 'move-wave',   label: '👋 Golf!' },
+  { cls: 'move-bounce', label: '⭐ Stuiter!' },
+];
+const MOVE_CLASSES = MOVES.map(m => m.cls);
+/* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
+   dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
+   maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
+   voor waarom het pasje niet op de tekening zelf staat. */
+function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
+/* Een pasje aanzetten -- of, bij beperkte beweging, niet.
+
+   De drie dansers (dance, tapDance, finaleDance) deden alle drie dezelfde twee
+   regels: alles eraf, herstart afdwingen, 'dancing' plus het pasje erop. Ze
+   staan hier één keer, zodat de uitzondering er ook maar één keer staat.
+
+   Wat een pasje zegt is al gezegd vóórdat hij begint: de klank, de juichtekst,
+   de diamanten die bijgeschreven zijn. Het pasje is het karakter eromheen, en
+   dat is precies wat prefers-reduced-motion bedoelt met "niet nodig". De pop
+   eindigt hoe dan ook in dezelfde stand ('idle', die op zijn beurt al stilstaat
+   bij beperkte beweging) -- er blijft dus nooit een halve sprong hangen.
+
+   HET WIEGEN GAAT NIET MEER UIT. Dat deed het wél, en dat was de hele bron van
+   het tikje bij het in- en uitzetten: het pasje staat sinds kort op de tekening
+   in de pop en het wiegen op de pop zelf (zie de CSS bij de danspasjes), dus ze
+   zitten elkaar niet meer in de weg. 'idle' blijft daarom gewoon staan.
+
+   De herstart wordt op de tekening afgedwongen en niet meer op de houder -- daar
+   loopt nu de animatie die opnieuw moet beginnen als hetzelfde pasje twee keer
+   achter elkaar komt (finaleDance doet dat).
+
+   Terug komt of er iets te wachten valt: false betekent "ze staat al stil". */
+function zetPas(el, move) {
+  el.classList.remove('dancing', ...MOVE_CLASSES);
+  if (motionOff()) return false;
+  const pop = el.firstElementChild;
+  if (pop) void pop.offsetWidth;
+  el.classList.add('dancing', move.cls);
+  return true;
+}
+/* En weer uit: alleen het pasje eraf. Het wiegen loopt door en stond ook nooit
+   stil, dus dat hoeft hier niet meer aangezet te worden -- 'idle' stond er al en
+   zetPas haalt hem niet meer weg. Dat scheelt niet alleen een regel: de poppen op
+   de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
+   wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
+function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
+function dance(elId) {
+  const el = $(elId);
+  // kies het volgende danspasje van de show (afwisselend, met een verrassing)
+  const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
+  if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
+  if (!zetPas(el, move)) return;
+  setTimeout(() => stilStaan(el), 950);
+}
+// Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
+function tapDance(elId) {
+  const el = $(elId);
+  if (!el || el.classList.contains('dancing')) return;
+  // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
+  // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
+  sndTap();
+  if (!zetPas(el, pick(MOVES))) return;
+  sparkle(el);
+  setTimeout(() => stilStaan(el), 950);
+}
+// klein sterretje dat oppopt bij een tik-dans
+function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
+function sparkleAt(r, emojis) {
+  if (motionOff()) return;   // een los dwarrelend sterretje: sier, en verder niets
+  const s = document.createElement('div');
+  s.className = 'confetti-bit';
+  s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
+  s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
+  s.style.top = (r.top + 10) + 'px';
+  s.style.animationDuration = '1.2s';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 1400);
+}
+// Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
+function finaleDance(elId, count) {
+  const el = $(elId);
+  if (!el) return;
+  // Bijna vier seconden dansen is precies het soort beweging dat je niet wilt
+  // als je om minder beweging gevraagd hebt. Ze staat er gewoon, in haar nieuwe
+  // spullen, en het eindscherm vertelt de rest.
+  if (motionOff()) { stilStaan(el); return; }
+  let i = 0;
+  const step = () => {
+    if (i >= count) { stilStaan(el); return; }
+    if (!zetPas(el, MOVES[i % MOVES.length])) return;
+    i++;
+    setTimeout(step, 620);
+  };
+  step();
+}
+// reward (optioneel): apart pilletje onder de tekst, zelfde stijl als de
+// opbrengst-badges op het eindscherm (.earn-chip.dia) -- zo staat "wat er
+// gebeurde" en "wat je kreeg" niet meer als één aaneengeregen zin.
+// Tijdens het spel ("docked", zie .docked in CSS) hangt de kaart vlak onder
+// de vaste kop i.p.v. los in het midden, zodat hij nooit over de paspop valt.
+function showPraise(txt, reward) {
+  const el = $('praise');
+  el.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+// sub (optioneel): eigen, dunnere regel eronder voor een tweede gedachte
+// (bv. "tik om verder te gaan") i.p.v. die met een liggend streepje aan de
+// hoofdtekst te plakken.
+// onTap (optioneel): maakt het hele scherm aantikbaar i.p.v. na een vaste tijd
+// te verdwijnen -- gebruikt bij de "dit was het juiste antwoord"-toast, zodat
+// het kind zelf de tijd neemt om te lezen i.p.v. dat een timer raadt hoe lang
+// dat duurt. Bewust niet alleen de kleine toast-bubbel zelf: die precies
+// moeten raken is minder vergevingsgezind dan overal mogen tikken.
+function showToast(txt, onTap, sub) {
+  const t = $('toast');
+  t.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
+  t.style.display = 'flex';
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+  const veil = $('tap-veil');
+  veil.onclick = null;
+  veil.style.display = 'none';
+  if (onTap) {
+    veil.onclick = () => { hideToast(); onTap(); };
+    veil.style.display = 'block';
+  }
+}
+function hideToast() {
+  const t = $('toast');
+  t.style.display = 'none';
+  t.classList.remove('show');
+  const veil = $('tap-veil');
+  veil.onclick = null;
+  veil.style.display = 'none';
+}
+
+function confetti(n) {
+  // Hetzelfde antwoord als confettiBurst hieronder: wie om minder beweging
+  // vraagt, krijgt het feest zonder de veertig dwarrelende stukjes. Wat er
+  // gevierd wordt staat er zelf ook -- de sterren, de juichtekst, de teller.
+  if (motionOff()) return;
+  const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div');
+    d.className = 'confetti-bit';
+    d.textContent = pick(emo);
+    d.style.left = rnd(0, 96) + 'vw';
+    d.style.animationDuration = (rnd(18, 34) / 10) + 's';
+    d.style.animationDelay = (rnd(0, 8) / 10) + 's';
+    $('confetti-layer').appendChild(d);
+    setTimeout(() => d.remove(), 4500);
+  }
+}
+// Reduced-motion? Dan geen sier-animaties.
+function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
+// Lichtkringetje vanaf een tikpunt (x,y in viewport-coördinaten).
+function tapRipple(x, y) {
+  if (motionOff() || x == null) return;
+  const r = document.createElement('div');
+  r.className = 'tap-ripple';
+  r.style.left = x + 'px'; r.style.top = y + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 520);
+}
+// Confetti-kanon: stukjes spuiten vanuit (cx,cy) naar buiten, met wat zwaartekracht.
+// 'hero' = een emoji (bijv. het trofee-icoon) die er tussendoor meevliegt.
+function confettiBurst(cx, cy, n, hero) {
+  if (motionOff()) return;
+  const emo = ['🎉', '🎊', '⭐', '💖', '✨', '💎', '🌟'];
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('div');
+    b.className = 'burst-bit';
+    b.textContent = (hero && i % 4 === 0) ? hero : pick(emo);
+    const ang = rnd(0, 359) * Math.PI / 180;
+    const dist = rnd(60, 190);
+    const dx = Math.round(Math.cos(ang) * dist);
+    const dy = Math.round(Math.sin(ang) * dist) + rnd(20, 70);   // lichte val naar beneden
+    b.style.left = cx + 'px'; b.style.top = cy + 'px';
+    b.style.setProperty('--dx', dx + 'px');
+    b.style.setProperty('--dy', dy + 'px');
+    b.style.setProperty('--rot', rnd(-220, 220) + 'deg');
+    if (i % 5 === 0) b.style.fontSize = '32px';                  // een paar grote 'hero'-stukken
+    b.style.animationDelay = (rnd(0, 6) / 100) + 's';
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 1050);
+  }
+}
+/* ================= De kaart: welke wereld, en waar de weg loopt ============
+   Hier houdt de sterrenkeuze op en begint de rékenkant van de wereldkaart. Geen
+   scherm, geen animatie: alleen wat een wereld uit WORLDS in vormen omzet.
+
+     welke wereld    viewWorldIdx + showWorld -- de enige plek die de kaart naar
+                     een andere wereld laat kijken
+     de haltes       worldNodes / defaultNodes -- percentages binnen één kader
+     de weg          roadPoints, roadParts, roadD, worldCurve -- de slinger
+                     erlangs, met per stuk een eigen stuurpunt
+     het streeppatroon roadDashArray -- zodat er op élke halte een streepje valt
+     de maten        ART_W/ART_H, ZONE, VB_W/vbx/vby
+
+   ALLES REKENT IN PROCENTEN VAN DE TEKENING, en dat is de hele reden dat de weg
+   op elk toestel over de achtergrond klopt: kader, tekening, weg en haltes
+   schalen samen mee, en er wordt nergens iets opgemeten. Draaien of een ander
+   vensterformaat kost dus geen herberekening.
+
+   Eén uitzondering, en hij staat er met opzet als parameter bij: roadDashArray
+   heeft een echte <svg> nodig om padlengtes te meten (getTotalLength). Die krijgt
+   hij mee; hij zoekt er zelf nooit een op.
+
+   Dit blok heeft geen enkele wereld-toestand nodig behalve WORLDS, en dat is
+   waarom er drie dingen op leunen: de kaart (renderTourMap), de reis en de
+   wereldstudio. Verander hier iets en je verandert die drie tegelijk.
+   ========================================================================== */
+
+// Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt
+// (gedeeld door de reisroute en de kleedkamer-tabbladen).
+function updateFades(el) {
+  const max = el.scrollWidth - el.clientWidth;
+  el.classList.toggle('can-left', el.scrollLeft > 2);
+  el.classList.toggle('can-right', el.scrollLeft < max - 2);
+}
+/* De kaart is het hoofdscherm: de eigen ster staat óp de route bij haar volgende
+   show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
+   zichtbaar door naar de volgende halte (zie runTravel). */
+let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
+
+/* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
+   scrollen. Alle haltes staan op percentages binnen één kader met een vaste
+   beeldverhouding (zie .world-frame). Dáárom klopt de weg op elk toestel met de
+   achtergrondtekening: de weg wordt getekend uit dezelfde percentages als de
+   haltes, en kader, tekening, weg en haltes schalen samen mee. Er wordt niets
+   opgemeten, dus er is ook geen herberekening nodig bij draaien of resizen. */
+
+// Welke wereld staat er in beeld? Normaal die van p.level, maar met de pijltjes
+// onder/boven de kaart kun je terug naar een eerdere wereld om daar haltes te
+// verbeteren. Wordt gereset zodra de kaart opnieuw geopend wordt.
+let viewWorldIdx = null;
+
+// Reservekaart: een wereld zonder eigen haltelijst krijgt een slingerend pad van
+// onder naar boven. Zo is een wereld al speelbaar vóórdat zijn tekening klaar is.
+function defaultNodes(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const t = n > 1 ? i / (n - 1) : 0;
+    // Eén doorlopende S: naar rechts, terug naar links, en weer terug. Een snellere
+    // slinger (elke halte de andere kant op) ligt wiskundig netter uit elkaar, maar
+    // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
+    // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
+    // ruimte tussen de haltes komt van de verticale spreiding hieronder.
+    // y van 80% tot 25%: ruim binnen de veilige zone (zie ZONE). Die loopt sinds de
+    // kop opzij stapt door tot 14%, maar de standaardslinger blijft bewust op
+    // ZONE.y0kop: dit is de opmaak van een wereld die nog géén tekening heeft, en
+    // daar is niets te winnen met een halte die de bovenbalk laat dimmen.
+    //
+    // De onderrand stond op 82 -- de ondergrens van de zone zelf -- en dat is precies
+    // één pixel te ver. ZONE.y1 is opgemeten tegen de navigatiebálk, maar op dezelfde
+    // plek zweeft ook de pil "⟲ terug naar je eigen wereld", strak boven die balk.
+    // De eerste halte van de slinger komt op x 60,1 uit, dus vrijwel midden onder, en
+    // op een kort scherm (iPhone SE, 375x667) verdween het sterrentabje daar precies
+    // achter die pil -- zie test 7f. Twee procent hoger geeft 8px lucht en verandert
+    // verder niets: de slinger is de terugval voor werelden zónder eigen haltes, en
+    // alle zes geschreven werelden zetten die zelf.
+    //
+    // Niet verder omhoog dan dit, en dat is geen smaak: de verticale stap van de
+    // slinger (55% / 7 stappen = 13,97cqw) is de krápste afstand tussen twee haltes
+    // die er in het hele spel bestaat, en dus de bovengrens voor de hoogte van een
+    // raakvlak (zie .tour-stop::before). Elke procent die deze reeks korter wordt,
+    // gaat rechtstreeks van dat raakvlak af.
+    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 80 - t * 55 });
+  }
+  return out;
+}
+// De haltes van een wereld, als percentages binnen het kader (0..100).
+function worldNodes(w) {
+  const given = w.world.nodes;
+  return (given && given.length === w.levels) ? given : defaultNodes(w.levels);
+}
+/* De maat van een wereldtekening, en meteen de viewBox van de weg.
+
+   Dat die twee hetzelfde móéten zijn was een stille aanname, en hij klopte niet:
+   de viewBox stond op 1080x1840 terwijl het kader 1:2 was. Een SVG schaalt zijn
+   viewBox standaard met preserveAspectRatio="xMidYMid meet" -- dus één uniforme
+   schaal, gecentreerd, met ruimte over. De weg werd daardoor in de middelste 719
+   van de 844 pixels geperst terwijl de haltes de volle hoogte gebruikten. Gemeten:
+   de weg liep er tot 42px naast op een telefoon en 77px op een tablet, het ergst
+   bij de eerste en de laatste halte en bijna nul in het midden -- precies het
+   patroon van een samengeknepen middenstuk.
+
+   (De haltes staan in procenten van het káder, de weg in viewBox-eenheden. Zolang
+   die twee stelsels dezelfde verhouding hebben vallen ze samen, en anders niet.)
+
+   9:16 en niet 1:2, omdat dat de verhouding is die beeldgeneratoren maken: anders
+   snijdt de studio bij het inlezen blind 11% van de breedte weg, en die stroken
+   zijn op een tablet -- waar de hele breedte in beeld komt -- voorgoed weg. Één
+   plek om te wijzigen; de kaart, de weg en de studio volgen vanzelf. */
+const ART_W = 1215, ART_H = 2160;
+
+/* De veilige zone voor haltemiddelpunten, in procenten van de tekening. Eén plek:
+   de standaardslinger hierboven, de stippellijn in de studio en de controle vooraf
+   lezen 'm alle drie hier.
+
+   Opgemeten over acht toestellen. Elke rand wordt door een ánder toestel bepaald,
+   en nooit door het ontwerpdoel:
+     x 18,5   een 21:9-telefoon (412x961) snijdt het meest van de zijkanten
+     y 13,97  een kleine telefoon (320x568): daar is de vaste 62px kop de grootste
+              hap van het scherm, en de bovenste stiprand moet er net onderuit
+     y 82,3   een iPhone SE (375x667): een vaste balk van 82px op een kort scherm,
+              en die kaart schuift niet, dus er valt niets onderuit te halen
+
+   y0 stond lang op 23. Dat was niet de stip maar de ster: zij staat bóven haar
+   halte en is bijna 11% van het kader hoog, dus haar kruin raakte de pillen. Die
+   11% is een vaste hap op élk toestel -- de kop zelf is maar 6,5 tot 10,9% -- en
+   was daarmee twee derde van de bovenmarge. Ze mag nu gewoon vóór de pillen komen:
+   die stappen opzij zodra ze er tegenaan staat (zie kopOpzij). Wat overbleef was
+   de eis dat de stip zelf aanraakbaar blijft, en dat was 14%.
+
+   FASE 4F -- terug naar 18. Puur de stip aanraakbaar houden gaf haar bijna geen
+   lucht meer boven de halte (test 7c-bis dwong de zak tot 7,8cqw om haar kruin
+   nog op het scherm te houden), en dat drukte haar half ín de halte in plaats
+   van erboven. Geen van de zes geschreven werelden komt in de buurt: hun hoogste
+   halte staat op zijn scherpst op 20,7% (Junglewereld). 18 laat dus alles wat er
+   al staat ongemoeid en geeft de zak weer ruimte om terug te zakken.
+
+   y0kop is geen grens maar een streep: boven die lijn dimt de bovenbalk op minstens
+   één toestel. Alleen de studio en de tekenbrief gebruiken 'm -- de dimming zelf
+   wordt gemeten, niet uit dit getal afgeleid. Hij stond op 23 toen de ster 13,1cqw
+   was, en op 25 toen ze 16,4cqw was; FASE 4F liet haar weer dieper in de halte
+   zakken (zie hierboven) zonder haar kleiner te maken, dus reikt ze opnieuw verder
+   boven haar halte uit dan toen -- gemeten (test 7c-bis) komt de streep nu op 28.
+   Naar binnen afgerond. Zie docs/WORLD-ART-BRIEF.md §2. */
+const ZONE = { x0: 19, x1: 81, y0: 18, y1: 82, y0kop: 28 };
+// Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
+// tekening, zodat de weg er exact overheen valt).
+const VB_W = ART_W, VB_H = ART_H;
+const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
+
+/* De weg slingert méér dan de haltes zelf. Een curve dóór alleen de haltes is
+   namelijk zo recht als de haltes toevallig liggen -- en drie haltes op een rij
+   liggen al snel bijna op één lijn, waardoor de weg als een liniaal leest.
+   Daarom krijgt elk stuk tussen twee haltes een stuurpunt dat loodrecht op dat
+   stuk naar buiten ligt, om en om naar links en rechts. De haltes blijven exact
+   waar ze staan -- ook als ze straks met de hand op de richels van een tekening
+   gezet zijn -- maar de weg ertussen bolt. */
+const ROAD_BOW = 0.17;
+// Waar het stuurpunt van stuk i vanzelf komt te liggen: loodrecht op dat stuk,
+// om en om naar links en rechts, en binnen het kader geklemd.
+function defaultControl(a, b, i) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const s = (i % 2 ? 1 : -1) * ROAD_BOW * len;
+  return {
+    x: Math.max(VB_W * .05, Math.min(VB_W * .95, (a.x + b.x) / 2 + (-dy / len) * s)),
+    y: Math.max(VB_H * .03, Math.min(VB_H * .97, (a.y + b.y) / 2 + (dx / len) * s)),
+  };
+}
+/* De punten waar de weg doorheen loopt: halte, stuurpunt, halte, stuurpunt, ...
+   `curve` is de eigen stuurpuntenlijst van een wereld (percentages, net als de
+   haltes) en heeft er één minder dan er haltes zijn. Ontbreekt hij, dan wordt
+   elk stuurpunt berekend -- zo werkt een wereld zonder dat er iets ingesteld is,
+   en kun je in de studio alsnog elk stuk apart om een rots heen buigen. */
+function roadPoints(pts, curve) {
+  if (pts.length < 2) return pts;
+  const out = [pts[0]];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const c = curve && curve[i]
+      ? { x: vbx(curve[i].x), y: vby(curve[i].y) }
+      : defaultControl(pts[i], pts[i + 1], i);
+    out.push(c);
+    out.push(pts[i + 1]);
+  }
+  return out;
+}
+/* De weg als één reeks bezier-stukken plus het gereedschap om er een deel van te
+   nemen. smoothPath kijkt naar de buurpunten, dus een korter pad ópnieuw berekenen
+   gaf een ander laatste stuk: het gouden (afgelegde) stuk lag dan net níet op het
+   grijze. Nu is het gouden pad letterlijk een voorvoegsel van dezelfde d.
+
+   Elk stuk weg tussen twee haltes is precies twee C-opdrachten: halte → stuurpunt
+   → halte. */
+function roadParts(pts, curve) {
+  const d = count => count >= 2 ? smoothPath(roadPoints(pts.slice(0, count), curve)) : '';
+  const heel = d(pts.length);
+  const m = /^M[^C]*/.exec(heel);
+  return { start: m ? m[0] : '', cs: heel.match(/C[^C]*/g) || [] };
+}
+// De d van de weg tot en met de zoveelste halte (gebruikt voor zowel het hele
+// pad als het afgelegde gouden stuk, zodat die twee gegarandeerd samenvallen).
+function roadD(pts, count, curve) {
+  if (count < 2) return '';
+  const parts = roadParts(pts, curve);
+  return parts.start + parts.cs.slice(0, (count - 1) * 2).join('');
+}
+
+/* Een streeppatroon dat précies op de weg past.
+
+   De weg is gestippeld, en wáár een streepje viel was tot nu toe toeval: 26 aan,
+   34 uit, vanaf het begin doorgeteld. Bij sommige haltes hield de stippellijn
+   daardoor tot 11px vóór de rand van de halte op. Het pad liep er wel degelijk
+   doorheen -- gemeten 0,2 viewBox-eenheid van het middelpunt -- maar omdat de
+   halte de weg over een straal van 67 eenheden afdekt, zag je hem niet aankomen.
+   Dat las als "de weg raakt de halte niet", en per halte anders.
+
+   Nu krijgt elk stuk weg zijn eigen patroon: n gaten en n+1 streepjes die samen
+   exact de lengte van dat stuk zijn. Dus altijd een streepje óp beide haltes,
+   op elk toestel en bij elke bocht die je in de studio trekt. */
+const DASH_ON = 26, DASH_OFF = 34;
+function roadDashArray(svg, pts, curve, count) {
+  if (count < 2) return '';
+  const parts = roadParts(pts, curve);
+  const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  svg.appendChild(probe);
+  const tot = [0];
+  for (let k = 2; k <= count; k++) {
+    probe.setAttribute('d', parts.start + parts.cs.slice(0, (k - 1) * 2).join(''));
+    tot.push(probe.getTotalLength());
+  }
+  probe.remove();
+  const uit = [];
+  const r = DASH_OFF / DASH_ON;
+  for (let i = 0; i + 1 < count; i++) {
+    const len = tot[i + 1] - tot[i];
+    if (!(len > 0)) continue;
+    const n = Math.max(1, Math.round((len - DASH_ON) / (DASH_ON + DASH_OFF)));
+    const streep = len / (n + 1 + r * n), gat = streep * r;
+    for (let j = 0; j <= n; j++) {
+      // het eerste streepje van een stuk sluit aan op het laatste van het vorige:
+      // samen één streepje dwars óver de halte, die het toch afdekt
+      if (j === 0 && uit.length) uit[uit.length - 1] += streep;
+      else uit.push(streep);
+      if (j < n) uit.push(gat);
+    }
+  }
+  uit.push(0);   // even aantal, anders herhaalt SVG de lijst dubbel
+  return uit.map(v => v.toFixed(1)).join(' ');
+}
+// De stuurpunten van een wereld in percentages -- berekend waar ze niet gezet zijn.
+function worldCurve(w) {
+  const pts = worldNodes(w).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const own = w.world.curve || [];
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const c = own[i] ? { x: own[i].x, y: own[i].y }
+      : (d => ({ x: d.x / VB_W * 100, y: d.y / VB_H * 100 }))(defaultControl(pts[i], pts[i + 1], i));
+    out.push(c);
+  }
+  return out;
+}
+
+/* Één plek die de kaart naar een wereld laat kijken.
+
+   Dit stond vier keer los in het bestand als hetzelfde drietal: viewWorldIdx zetten,
+   renderMapTitle() en renderTourMap(). Dat drietal móét bij elkaar blijven -- de kop
+   en de kaart lezen allebei viewWorldIdx, dus één vergeten regel laat de pil een
+   andere wereld noemen dan er onder staat. Vandaar één functie, en niet vier keer
+   dezelfde drie regels.
+
+   Dit is ook waar toekomstig overgangswerk (kaart → wereld, wereld → wereld) thuis
+   hoort: elke wereldwissel loopt hier langs. De functies zelf blijven bestaan --
+   runTravel gebruikt renderTourMap nog apart voor de tussenstand vóór de animatie,
+   en de wereldstudio hangt zich aan renderTourMap op.
+
+   travelFrom > 0 = de tussenstand vlak vóór de reis-animatie (zie renderTourMap). */
+function showWorld(idx, travelFrom) {
+  /* Een directe wisseling breekt een lopende wereldreis af. Dat gebeurt als een
+     kind midden in een overgang op de navigatiebalk of de terugknop drukt: dan
+     staat er straks een kaart van wereld A met de kop van wereld B, en die twee
+     mogen het nooit oneens zijn. stopWereldReis ruimt de schaduwlaag op en zet
+     alles terug; hij is bewust leeg als er geen reis loopt.
+
+     wereldCamera roept showWorld aan vóórdat hij zijn eigen reis aanmeldt, dus
+     deze regel breekt nooit de reis af waar hij zelf bij hoort. */
+  stopWereldReis();
+  // Binnen de lijst blijven: worldForIndex geeft buiten de lijst null terug (fase
+  // 4A -- er is geen verzonnen wereld meer om op terug te vallen), en de kaart
+  // heeft altijd een wereld nodig om te tekenen.
+  viewWorldIdx = Math.max(0, Math.min(WORLDS.length - 1, idx | 0));
+  renderMapTitle(P(), travelFrom || 0);
+  renderTourMap(travelFrom || 0);
+  preloadNextWorldArt();
+  preloadBuurwerelden();
+}
 /* =====================================================================
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
 
-     Helpers ............ mini-hulpjes ($, rnd, pick, shuffle)
+   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog vijf
+   bronbestanden die samen met dit ene het scriptblok vormen (zie test/bouw.js):
+   00-vh-lock (de vensterhoogte, moet eerst), 10-feestjes (de gedeelde toast,
+   confetti, danspasjes en dialogen), 15-kaart-en-weg (de vormleer van de
+   wereldkaart), 90-wereldstudio en 99-servicewerker.
+
+   De secties hieronder staan in de volgorde van dít bestand; wat naar een
+   buurbestand verhuisd is, staat er met zijn nieuwe plek bij. Zoeken op de
+   sectienaam werkt onveranderd -- de kop verhuisde mee.
+
+   Álle secties staan hieronder, in de volgorde van het bestand. Dat is geen
+   volledigheid om de volledigheid: een lijst die er dertien mist wijst je bij de
+   moeilijkste stukken juist naar de verkeerde plek, en dat deed deze. Komt er een
+   sectie bij, zet hem hier dan ook neer.
+
+   ---- DE GEGEVENS: tabellen, en verder niets -------------------------------
+     Helpers ............ mini-hulpjes ($, rnd, pick, shuffle, esc)
+     De wereldbeloningen, getekend   de zes koptooien als SVG (fase 4D.2)
      Items .............. kleerkast-inhoud (data)
-     Werelden ........... WORLDS + level→wereld + afgeleide voortgang (data)
+     Werelden ........... WORLDS + level→wereld (data; blok wordt machinaal
+                          geschreven — zie WERELDEN-BEGIN)
      Trofeeën ........... trofee-definities + planken (data)
+
+   ---- DE KERN: de regels, zonder scherm ------------------------------------
+     De voortgang, afgeleid   worldDone/frontierWorld/continueWorld. ALLEEN
+                          p.stars wordt bewaard; de rest volgt eruit
+     Wereldbeloningen ... wat een wereld uitdeelt als hij uit of perfect is
      Sterrencarrière .... rang-ladder op sterren (RANK_TIERS, starRank)
      Opslag ............. db, load/save, migratie, profielen
+
+   ---- DE ZINTUIGEN ---------------------------------------------------------
      Trilfeedback ....... haptics
      Geluid ............. klikjes, fanfares (WebAudio)
      Gesproken opdrachten  nl-NL stem — ALLEEN telmodus (zie speak())
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
-     Schermen ........... navigatie, kaart, kop/voet
-     Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
+
+   ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
+     Schermen ........... show()/navGo()/toonHub: welk scherm staat aan
+     De sterrenkeuze leeft   het beginscherm: zwaaien, vonkjes, ster kiezen
+     De kaart: welke wereld   STAAT IN src/15-kaart-en-weg.js. De rékenkant
+                          van de kaart: haltes, weg, streeppatroon,
+                          viewWorldIdx/showWorld. De kaart, de reis én de
+                          wereldstudio leunen erop, en het kent zelf geen
+                          scherm -- daarom een eigen bestand
+     Wat er geladen wordt   preloadArt: welke tekening wanneer binnenkomt
+
+   ---- DE BEWEGING: waar het meeste denkwerk in zit -------------------------
+     Wereld naar wereld   de camera die van wereld naar wereld klimt
+     Zwevende lagen ..... overlays
+     Bewegingstaal ...... MOTION/VLUCHT + de wissel kaart ⇄ zaal. De twee lánge
+                          duren staan hier en niet in :root — zie MOTION.totaal
+     De kaart zegt hallo   de begroeting bij aankomst op de kaart
+     De hele tournee .... de reis boven de werelden uit (het grootste blok)
+
+   ---- HET SPEL -------------------------------------------------------------
      Vragen maken ....... rekenmodus: genTriple/genQuestion/genMissing/genChain
      Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
      Memory-spel ........ los kaartspel (lees-vrij)
      Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
-     Spel ............... de show: renderQuestion, submitAnswer, endLevel
-     Kleedkamer ......... winkel, passen, aankleden
-     Instellingen ....... ouderscherm: voortgang + oefening
+     Spel ............... de show: renderQuestion, submitAnswer, endLevel.
+                          De gedeelde feestjes stonden hier ooit ook in; die
+                          staan sinds kort in src/10-feestjes.js
+     Wereldfeest ........ wereld uit en/of overal drie sterren (fase 4D.1)
+     Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
+
+   ---- DE SCHERMEN ERNAAST --------------------------------------------------
+     Kleedkamer ......... winkel, passen, aankleden. Staat ook de 💎-tellers in
+                          (zetTeller/telNu/telNaar/telStraks, gedeeld)
+     Nieuwe ster ........ het maakformulier
+     Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Terug-navigatie .... Android back / browser back
+
+   ---- OPSTARTEN EN GEREEDSCHAP ---------------------------------------------
      Start .............. opstarten, service worker
+     -- Ontwikkelaarsschakelaars   alles achter ?debug
+     -- Kijkstanden ..... ?debug&wereld=n&stand=... : een stand zonder spelen
+     -- Wereldstudio .... ?debug&mapedit. Bijna een vijfde van dit scriptblok en
+                          het gewone spel raakt het nooit aan — sla het over
+                          tenzij je er expliciet aan werkt
+
+   Twee koppen lijken op elkaar; zoek op genoeg letters. "= Werelden" is de
+   tabel, "= Wereldbeloningen" wat een wereld uitdeelt, "= De wereldbeloningen"
+   hun tekeningen. "= Trofeeën" is de tabel, "= Trofeeën-scherm" de kast.
 
    Tests: test/counting.test.js (telmodus) en test/maths.test.js
    (rekenmodus + adaptieve motor). Draaien met `npm test`.
@@ -10755,273 +11366,6 @@ function renderProfiles() {
 }
 function selectProfile(key) { cur = key; goMap(); }
 
-// Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt
-// (gedeeld door de reisroute en de kleedkamer-tabbladen).
-function updateFades(el) {
-  const max = el.scrollWidth - el.clientWidth;
-  el.classList.toggle('can-left', el.scrollLeft > 2);
-  el.classList.toggle('can-right', el.scrollLeft < max - 2);
-}
-/* De kaart is het hoofdscherm: de eigen ster staat óp de route bij haar volgende
-   show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
-   zichtbaar door naar de volgende halte (zie runTravel). */
-let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
-
-/* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
-   scrollen. Alle haltes staan op percentages binnen één kader met een vaste
-   beeldverhouding (zie .world-frame). Dáárom klopt de weg op elk toestel met de
-   achtergrondtekening: de weg wordt getekend uit dezelfde percentages als de
-   haltes, en kader, tekening, weg en haltes schalen samen mee. Er wordt niets
-   opgemeten, dus er is ook geen herberekening nodig bij draaien of resizen. */
-
-// Welke wereld staat er in beeld? Normaal die van p.level, maar met de pijltjes
-// onder/boven de kaart kun je terug naar een eerdere wereld om daar haltes te
-// verbeteren. Wordt gereset zodra de kaart opnieuw geopend wordt.
-let viewWorldIdx = null;
-
-// Reservekaart: een wereld zonder eigen haltelijst krijgt een slingerend pad van
-// onder naar boven. Zo is een wereld al speelbaar vóórdat zijn tekening klaar is.
-function defaultNodes(n) {
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const t = n > 1 ? i / (n - 1) : 0;
-    // Eén doorlopende S: naar rechts, terug naar links, en weer terug. Een snellere
-    // slinger (elke halte de andere kant op) ligt wiskundig netter uit elkaar, maar
-    // tekent een zigzag -- de bocht bij elke halte wordt dan zo scherp dat de weg
-    // als losse rechte stukken leest. Deze frequentie houdt de curve vloeiend; de
-    // ruimte tussen de haltes komt van de verticale spreiding hieronder.
-    // y van 80% tot 25%: ruim binnen de veilige zone (zie ZONE). Die loopt sinds de
-    // kop opzij stapt door tot 14%, maar de standaardslinger blijft bewust op
-    // ZONE.y0kop: dit is de opmaak van een wereld die nog géén tekening heeft, en
-    // daar is niets te winnen met een halte die de bovenbalk laat dimmen.
-    //
-    // De onderrand stond op 82 -- de ondergrens van de zone zelf -- en dat is precies
-    // één pixel te ver. ZONE.y1 is opgemeten tegen de navigatiebálk, maar op dezelfde
-    // plek zweeft ook de pil "⟲ terug naar je eigen wereld", strak boven die balk.
-    // De eerste halte van de slinger komt op x 60,1 uit, dus vrijwel midden onder, en
-    // op een kort scherm (iPhone SE, 375x667) verdween het sterrentabje daar precies
-    // achter die pil -- zie test 7f. Twee procent hoger geeft 8px lucht en verandert
-    // verder niets: de slinger is de terugval voor werelden zónder eigen haltes, en
-    // alle zes geschreven werelden zetten die zelf.
-    //
-    // Niet verder omhoog dan dit, en dat is geen smaak: de verticale stap van de
-    // slinger (55% / 7 stappen = 13,97cqw) is de krápste afstand tussen twee haltes
-    // die er in het hele spel bestaat, en dus de bovengrens voor de hoogte van een
-    // raakvlak (zie .tour-stop::before). Elke procent die deze reeks korter wordt,
-    // gaat rechtstreeks van dat raakvlak af.
-    out.push({ x: 50 + Math.sin(i * 0.9 + 0.4) * 26, y: 80 - t * 55 });
-  }
-  return out;
-}
-// De haltes van een wereld, als percentages binnen het kader (0..100).
-function worldNodes(w) {
-  const given = w.world.nodes;
-  return (given && given.length === w.levels) ? given : defaultNodes(w.levels);
-}
-/* De maat van een wereldtekening, en meteen de viewBox van de weg.
-
-   Dat die twee hetzelfde móéten zijn was een stille aanname, en hij klopte niet:
-   de viewBox stond op 1080x1840 terwijl het kader 1:2 was. Een SVG schaalt zijn
-   viewBox standaard met preserveAspectRatio="xMidYMid meet" -- dus één uniforme
-   schaal, gecentreerd, met ruimte over. De weg werd daardoor in de middelste 719
-   van de 844 pixels geperst terwijl de haltes de volle hoogte gebruikten. Gemeten:
-   de weg liep er tot 42px naast op een telefoon en 77px op een tablet, het ergst
-   bij de eerste en de laatste halte en bijna nul in het midden -- precies het
-   patroon van een samengeknepen middenstuk.
-
-   (De haltes staan in procenten van het káder, de weg in viewBox-eenheden. Zolang
-   die twee stelsels dezelfde verhouding hebben vallen ze samen, en anders niet.)
-
-   9:16 en niet 1:2, omdat dat de verhouding is die beeldgeneratoren maken: anders
-   snijdt de studio bij het inlezen blind 11% van de breedte weg, en die stroken
-   zijn op een tablet -- waar de hele breedte in beeld komt -- voorgoed weg. Één
-   plek om te wijzigen; de kaart, de weg en de studio volgen vanzelf. */
-const ART_W = 1215, ART_H = 2160;
-
-/* De veilige zone voor haltemiddelpunten, in procenten van de tekening. Eén plek:
-   de standaardslinger hierboven, de stippellijn in de studio en de controle vooraf
-   lezen 'm alle drie hier.
-
-   Opgemeten over acht toestellen. Elke rand wordt door een ánder toestel bepaald,
-   en nooit door het ontwerpdoel:
-     x 18,5   een 21:9-telefoon (412x961) snijdt het meest van de zijkanten
-     y 13,97  een kleine telefoon (320x568): daar is de vaste 62px kop de grootste
-              hap van het scherm, en de bovenste stiprand moet er net onderuit
-     y 82,3   een iPhone SE (375x667): een vaste balk van 82px op een kort scherm,
-              en die kaart schuift niet, dus er valt niets onderuit te halen
-
-   y0 stond lang op 23. Dat was niet de stip maar de ster: zij staat bóven haar
-   halte en is bijna 11% van het kader hoog, dus haar kruin raakte de pillen. Die
-   11% is een vaste hap op élk toestel -- de kop zelf is maar 6,5 tot 10,9% -- en
-   was daarmee twee derde van de bovenmarge. Ze mag nu gewoon vóór de pillen komen:
-   die stappen opzij zodra ze er tegenaan staat (zie kopOpzij). Wat overbleef was
-   de eis dat de stip zelf aanraakbaar blijft, en dat was 14%.
-
-   FASE 4F -- terug naar 18. Puur de stip aanraakbaar houden gaf haar bijna geen
-   lucht meer boven de halte (test 7c-bis dwong de zak tot 7,8cqw om haar kruin
-   nog op het scherm te houden), en dat drukte haar half ín de halte in plaats
-   van erboven. Geen van de zes geschreven werelden komt in de buurt: hun hoogste
-   halte staat op zijn scherpst op 20,7% (Junglewereld). 18 laat dus alles wat er
-   al staat ongemoeid en geeft de zak weer ruimte om terug te zakken.
-
-   y0kop is geen grens maar een streep: boven die lijn dimt de bovenbalk op minstens
-   één toestel. Alleen de studio en de tekenbrief gebruiken 'm -- de dimming zelf
-   wordt gemeten, niet uit dit getal afgeleid. Hij stond op 23 toen de ster 13,1cqw
-   was, en op 25 toen ze 16,4cqw was; FASE 4F liet haar weer dieper in de halte
-   zakken (zie hierboven) zonder haar kleiner te maken, dus reikt ze opnieuw verder
-   boven haar halte uit dan toen -- gemeten (test 7c-bis) komt de streep nu op 28.
-   Naar binnen afgerond. Zie docs/WORLD-ART-BRIEF.md §2. */
-const ZONE = { x0: 19, x1: 81, y0: 18, y1: 82, y0kop: 28 };
-// Percentage -> coördinaat in de viewBox van de weg-SVG (zelfde stelsel als de
-// tekening, zodat de weg er exact overheen valt).
-const VB_W = ART_W, VB_H = ART_H;
-const vbx = x => x / 100 * VB_W, vby = y => y / 100 * VB_H;
-
-/* De weg slingert méér dan de haltes zelf. Een curve dóór alleen de haltes is
-   namelijk zo recht als de haltes toevallig liggen -- en drie haltes op een rij
-   liggen al snel bijna op één lijn, waardoor de weg als een liniaal leest.
-   Daarom krijgt elk stuk tussen twee haltes een stuurpunt dat loodrecht op dat
-   stuk naar buiten ligt, om en om naar links en rechts. De haltes blijven exact
-   waar ze staan -- ook als ze straks met de hand op de richels van een tekening
-   gezet zijn -- maar de weg ertussen bolt. */
-const ROAD_BOW = 0.17;
-// Waar het stuurpunt van stuk i vanzelf komt te liggen: loodrecht op dat stuk,
-// om en om naar links en rechts, en binnen het kader geklemd.
-function defaultControl(a, b, i) {
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const s = (i % 2 ? 1 : -1) * ROAD_BOW * len;
-  return {
-    x: Math.max(VB_W * .05, Math.min(VB_W * .95, (a.x + b.x) / 2 + (-dy / len) * s)),
-    y: Math.max(VB_H * .03, Math.min(VB_H * .97, (a.y + b.y) / 2 + (dx / len) * s)),
-  };
-}
-/* De punten waar de weg doorheen loopt: halte, stuurpunt, halte, stuurpunt, ...
-   `curve` is de eigen stuurpuntenlijst van een wereld (percentages, net als de
-   haltes) en heeft er één minder dan er haltes zijn. Ontbreekt hij, dan wordt
-   elk stuurpunt berekend -- zo werkt een wereld zonder dat er iets ingesteld is,
-   en kun je in de studio alsnog elk stuk apart om een rots heen buigen. */
-function roadPoints(pts, curve) {
-  if (pts.length < 2) return pts;
-  const out = [pts[0]];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const c = curve && curve[i]
-      ? { x: vbx(curve[i].x), y: vby(curve[i].y) }
-      : defaultControl(pts[i], pts[i + 1], i);
-    out.push(c);
-    out.push(pts[i + 1]);
-  }
-  return out;
-}
-/* De weg als één reeks bezier-stukken plus het gereedschap om er een deel van te
-   nemen. smoothPath kijkt naar de buurpunten, dus een korter pad ópnieuw berekenen
-   gaf een ander laatste stuk: het gouden (afgelegde) stuk lag dan net níet op het
-   grijze. Nu is het gouden pad letterlijk een voorvoegsel van dezelfde d.
-
-   Elk stuk weg tussen twee haltes is precies twee C-opdrachten: halte → stuurpunt
-   → halte. */
-function roadParts(pts, curve) {
-  const d = count => count >= 2 ? smoothPath(roadPoints(pts.slice(0, count), curve)) : '';
-  const heel = d(pts.length);
-  const m = /^M[^C]*/.exec(heel);
-  return { start: m ? m[0] : '', cs: heel.match(/C[^C]*/g) || [] };
-}
-// De d van de weg tot en met de zoveelste halte (gebruikt voor zowel het hele
-// pad als het afgelegde gouden stuk, zodat die twee gegarandeerd samenvallen).
-function roadD(pts, count, curve) {
-  if (count < 2) return '';
-  const parts = roadParts(pts, curve);
-  return parts.start + parts.cs.slice(0, (count - 1) * 2).join('');
-}
-
-/* Een streeppatroon dat précies op de weg past.
-
-   De weg is gestippeld, en wáár een streepje viel was tot nu toe toeval: 26 aan,
-   34 uit, vanaf het begin doorgeteld. Bij sommige haltes hield de stippellijn
-   daardoor tot 11px vóór de rand van de halte op. Het pad liep er wel degelijk
-   doorheen -- gemeten 0,2 viewBox-eenheid van het middelpunt -- maar omdat de
-   halte de weg over een straal van 67 eenheden afdekt, zag je hem niet aankomen.
-   Dat las als "de weg raakt de halte niet", en per halte anders.
-
-   Nu krijgt elk stuk weg zijn eigen patroon: n gaten en n+1 streepjes die samen
-   exact de lengte van dat stuk zijn. Dus altijd een streepje óp beide haltes,
-   op elk toestel en bij elke bocht die je in de studio trekt. */
-const DASH_ON = 26, DASH_OFF = 34;
-function roadDashArray(svg, pts, curve, count) {
-  if (count < 2) return '';
-  const parts = roadParts(pts, curve);
-  const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  svg.appendChild(probe);
-  const tot = [0];
-  for (let k = 2; k <= count; k++) {
-    probe.setAttribute('d', parts.start + parts.cs.slice(0, (k - 1) * 2).join(''));
-    tot.push(probe.getTotalLength());
-  }
-  probe.remove();
-  const uit = [];
-  const r = DASH_OFF / DASH_ON;
-  for (let i = 0; i + 1 < count; i++) {
-    const len = tot[i + 1] - tot[i];
-    if (!(len > 0)) continue;
-    const n = Math.max(1, Math.round((len - DASH_ON) / (DASH_ON + DASH_OFF)));
-    const streep = len / (n + 1 + r * n), gat = streep * r;
-    for (let j = 0; j <= n; j++) {
-      // het eerste streepje van een stuk sluit aan op het laatste van het vorige:
-      // samen één streepje dwars óver de halte, die het toch afdekt
-      if (j === 0 && uit.length) uit[uit.length - 1] += streep;
-      else uit.push(streep);
-      if (j < n) uit.push(gat);
-    }
-  }
-  uit.push(0);   // even aantal, anders herhaalt SVG de lijst dubbel
-  return uit.map(v => v.toFixed(1)).join(' ');
-}
-// De stuurpunten van een wereld in percentages -- berekend waar ze niet gezet zijn.
-function worldCurve(w) {
-  const pts = worldNodes(w).map(n => ({ x: vbx(n.x), y: vby(n.y) }));
-  const own = w.world.curve || [];
-  const out = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const c = own[i] ? { x: own[i].x, y: own[i].y }
-      : (d => ({ x: d.x / VB_W * 100, y: d.y / VB_H * 100 }))(defaultControl(pts[i], pts[i + 1], i));
-    out.push(c);
-  }
-  return out;
-}
-
-/* Één plek die de kaart naar een wereld laat kijken.
-
-   Dit stond vier keer los in het bestand als hetzelfde drietal: viewWorldIdx zetten,
-   renderMapTitle() en renderTourMap(). Dat drietal móét bij elkaar blijven -- de kop
-   en de kaart lezen allebei viewWorldIdx, dus één vergeten regel laat de pil een
-   andere wereld noemen dan er onder staat. Vandaar één functie, en niet vier keer
-   dezelfde drie regels.
-
-   Dit is ook waar toekomstig overgangswerk (kaart → wereld, wereld → wereld) thuis
-   hoort: elke wereldwissel loopt hier langs. De functies zelf blijven bestaan --
-   runTravel gebruikt renderTourMap nog apart voor de tussenstand vóór de animatie,
-   en de wereldstudio hangt zich aan renderTourMap op.
-
-   travelFrom > 0 = de tussenstand vlak vóór de reis-animatie (zie renderTourMap). */
-function showWorld(idx, travelFrom) {
-  /* Een directe wisseling breekt een lopende wereldreis af. Dat gebeurt als een
-     kind midden in een overgang op de navigatiebalk of de terugknop drukt: dan
-     staat er straks een kaart van wereld A met de kop van wereld B, en die twee
-     mogen het nooit oneens zijn. stopWereldReis ruimt de schaduwlaag op en zet
-     alles terug; hij is bewust leeg als er geen reis loopt.
-
-     wereldCamera roept showWorld aan vóórdat hij zijn eigen reis aanmeldt, dus
-     deze regel breekt nooit de reis af waar hij zelf bij hoort. */
-  stopWereldReis();
-  // Binnen de lijst blijven: worldForIndex geeft buiten de lijst null terug (fase
-  // 4A -- er is geen verzonnen wereld meer om op terug te vallen), en de kaart
-  // heeft altijd een wereld nodig om te tekenen.
-  viewWorldIdx = Math.max(0, Math.min(WORLDS.length - 1, idx | 0));
-  renderMapTitle(P(), travelFrom || 0);
-  renderTourMap(travelFrom || 0);
-  preloadNextWorldArt();
-  preloadBuurwerelden();
-}
 /* ================= Wat er geladen wordt, en wanneer =========================
    Drie soorten spullen, en ze horen op drie verschillende momenten binnen te
    komen. De hele reden dat dit uit elkaar gehouden wordt: het aantal werelden
@@ -15506,15 +15850,6 @@ function hintFor(q, val) {
 
 /* ================= Spel ================= */
 const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 🎊', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
-// Danspasjes: elk juist antwoord voegt een pasje toe aan de show van de avatar
-const MOVES = [
-  { cls: 'move-jump',   label: '🦘 Sprong!' },
-  { cls: 'move-spin',   label: '💫 Pirouette!' },
-  { cls: 'move-sway',   label: '💃 Heupwiegen!' },
-  { cls: 'move-kick',   label: '🕺 Zijpasje!' },
-  { cls: 'move-wave',   label: '👋 Golf!' },
-  { cls: 'move-bounce', label: '⭐ Stuiter!' },
-];
 let G = null;
 
 function startLevel(lvl) {
@@ -15578,31 +15913,6 @@ function quitGame() {
   const lvl = G ? G.lvl : null;
   G = null;
   goMap(lvl);
-}
-
-/* Generieke mededeling/bevestiging in de eigen stijl van de app -- vervangt de
-   systeem-confirm()/alert() die verder nergens in de app voorkomen en er (vooral
-   rond het definitief wissen van voortgang) als een foutmelding uitzien i.p.v.
-   een vraag van de app zelf. */
-function closeConfirmModal() { $('confirm-modal').classList.remove('open'); syncBackGuard(); }
-function showConfirm(title, body, confirmLabel, onConfirm) {
-  $('confirm-title').textContent = title;
-  $('confirm-body').textContent = body;
-  $('confirm-actions').innerHTML =
-    `<button class="btn" id="confirm-no">Nee, terug</button>
-     <button class="danger-btn" id="confirm-yes">${confirmLabel}</button>`;
-  $('confirm-no').onclick = closeConfirmModal;
-  $('confirm-yes').onclick = () => { closeConfirmModal(); onConfirm(); };
-  $('confirm-modal').classList.add('open');
-  syncBackGuard();
-}
-function showNotice(title, body) {
-  $('confirm-title').textContent = title;
-  $('confirm-body').textContent = body;
-  $('confirm-actions').innerHTML = `<button class="btn" id="confirm-ok">Oké</button>`;
-  $('confirm-ok').onclick = closeConfirmModal;
-  $('confirm-modal').classList.add('open');
-  syncBackGuard();
 }
 
 function renderQuestion() {
@@ -15911,80 +16221,6 @@ function nextStep() {
   else renderQuestion();
 }
 
-const MOVE_CLASSES = MOVES.map(m => m.cls);
-/* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
-   dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
-   maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
-   voor waarom het pasje niet op de tekening zelf staat. */
-function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
-/* Een pasje aanzetten -- of, bij beperkte beweging, niet.
-
-   De drie dansers (dance, tapDance, finaleDance) deden alle drie dezelfde twee
-   regels: alles eraf, herstart afdwingen, 'dancing' plus het pasje erop. Ze
-   staan hier één keer, zodat de uitzondering er ook maar één keer staat.
-
-   Wat een pasje zegt is al gezegd vóórdat hij begint: de klank, de juichtekst,
-   de diamanten die bijgeschreven zijn. Het pasje is het karakter eromheen, en
-   dat is precies wat prefers-reduced-motion bedoelt met "niet nodig". De pop
-   eindigt hoe dan ook in dezelfde stand ('idle', die op zijn beurt al stilstaat
-   bij beperkte beweging) -- er blijft dus nooit een halve sprong hangen.
-
-   HET WIEGEN GAAT NIET MEER UIT. Dat deed het wél, en dat was de hele bron van
-   het tikje bij het in- en uitzetten: het pasje staat sinds kort op de tekening
-   in de pop en het wiegen op de pop zelf (zie de CSS bij de danspasjes), dus ze
-   zitten elkaar niet meer in de weg. 'idle' blijft daarom gewoon staan.
-
-   De herstart wordt op de tekening afgedwongen en niet meer op de houder -- daar
-   loopt nu de animatie die opnieuw moet beginnen als hetzelfde pasje twee keer
-   achter elkaar komt (finaleDance doet dat).
-
-   Terug komt of er iets te wachten valt: false betekent "ze staat al stil". */
-function zetPas(el, move) {
-  el.classList.remove('dancing', ...MOVE_CLASSES);
-  if (motionOff()) return false;
-  const pop = el.firstElementChild;
-  if (pop) void pop.offsetWidth;
-  el.classList.add('dancing', move.cls);
-  return true;
-}
-/* En weer uit: alleen het pasje eraf. Het wiegen loopt door en stond ook nooit
-   stil, dus dat hoeft hier niet meer aangezet te worden -- 'idle' stond er al en
-   zetPas haalt hem niet meer weg. Dat scheelt niet alleen een regel: de poppen op
-   de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
-   wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
-function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
-function dance(elId) {
-  const el = $(elId);
-  // kies het volgende danspasje van de show (afwisselend, met een verrassing)
-  const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
-  if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
-  if (!zetPas(el, move)) return;
-  setTimeout(() => stilStaan(el), 950);
-}
-// Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
-function tapDance(elId) {
-  const el = $(elId);
-  if (!el || el.classList.contains('dancing')) return;
-  // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
-  // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
-  sndTap();
-  if (!zetPas(el, pick(MOVES))) return;
-  sparkle(el);
-  setTimeout(() => stilStaan(el), 950);
-}
-// klein sterretje dat oppopt bij een tik-dans
-function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
-function sparkleAt(r, emojis) {
-  if (motionOff()) return;   // een los dwarrelend sterretje: sier, en verder niets
-  const s = document.createElement('div');
-  s.className = 'confetti-bit';
-  s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
-  s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
-  s.style.top = (r.top + 10) + 'px';
-  s.style.animationDuration = '1.2s';
-  document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1400);
-}
 // Easter egg 🍺: 5x tikken op het pintje-kaartje in de winkel (los aantikken,
 // hoeft niet gekocht/uitgerust te zijn) — en ze heft 'm toastend: "Schol!"
 // met een klein bubbelfeestje.
@@ -16003,68 +16239,6 @@ function bumpPintjeTaps(el) {
   showPraise('Schol! 🍻');
   sndCoin();
   buzz([0, 20, 60, 20]);
-}
-// Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
-function finaleDance(elId, count) {
-  const el = $(elId);
-  if (!el) return;
-  // Bijna vier seconden dansen is precies het soort beweging dat je niet wilt
-  // als je om minder beweging gevraagd hebt. Ze staat er gewoon, in haar nieuwe
-  // spullen, en het eindscherm vertelt de rest.
-  if (motionOff()) { stilStaan(el); return; }
-  let i = 0;
-  const step = () => {
-    if (i >= count) { stilStaan(el); return; }
-    if (!zetPas(el, MOVES[i % MOVES.length])) return;
-    i++;
-    setTimeout(step, 620);
-  };
-  step();
-}
-// reward (optioneel): apart pilletje onder de tekst, zelfde stijl als de
-// opbrengst-badges op het eindscherm (.earn-chip.dia) -- zo staat "wat er
-// gebeurde" en "wat je kreeg" niet meer als één aaneengeregen zin.
-// Tijdens het spel ("docked", zie .docked in CSS) hangt de kaart vlak onder
-// de vaste kop i.p.v. los in het midden, zodat hij nooit over de paspop valt.
-function showPraise(txt, reward) {
-  const el = $('praise');
-  el.classList.toggle('docked', $('screen-game').classList.contains('active'));
-  el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
-  el.classList.remove('pop');
-  void el.offsetWidth;
-  el.classList.add('pop');
-}
-// sub (optioneel): eigen, dunnere regel eronder voor een tweede gedachte
-// (bv. "tik om verder te gaan") i.p.v. die met een liggend streepje aan de
-// hoofdtekst te plakken.
-// onTap (optioneel): maakt het hele scherm aantikbaar i.p.v. na een vaste tijd
-// te verdwijnen -- gebruikt bij de "dit was het juiste antwoord"-toast, zodat
-// het kind zelf de tijd neemt om te lezen i.p.v. dat een timer raadt hoe lang
-// dat duurt. Bewust niet alleen de kleine toast-bubbel zelf: die precies
-// moeten raken is minder vergevingsgezind dan overal mogen tikken.
-function showToast(txt, onTap, sub) {
-  const t = $('toast');
-  t.classList.toggle('docked', $('screen-game').classList.contains('active'));
-  t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
-  t.style.display = 'flex';
-  t.classList.remove('show');
-  void t.offsetWidth;
-  t.classList.add('show');
-  const veil = $('tap-veil');
-  veil.onclick = null;
-  veil.style.display = 'none';
-  if (onTap) {
-    veil.onclick = () => { hideToast(); onTap(); };
-    veil.style.display = 'block';
-  }
-}
-function hideToast() {
-  const t = $('toast');
-  t.style.display = 'none';
-  t.classList.remove('show');
-  const veil = $('tap-veil');
-  veil.onclick = null;
-  veil.style.display = 'none';
 }
 
 /* Wat deze show waard was, in sterren. Puur rekenwerk op de stand van G: geen
@@ -16340,58 +16514,6 @@ function renderEndStars(n) {
       confettiBurst(r.left + r.width / 2, r.top + r.height / 2, 26, '⭐');
       if (wrap.animate) wrap.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: STERCEREMONIE.puls, easing: 'ease-out' });
     }, STERCEREMONIE.knal);
-  }
-}
-
-function confetti(n) {
-  // Hetzelfde antwoord als confettiBurst hieronder: wie om minder beweging
-  // vraagt, krijgt het feest zonder de veertig dwarrelende stukjes. Wat er
-  // gevierd wordt staat er zelf ook -- de sterren, de juichtekst, de teller.
-  if (motionOff()) return;
-  const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
-  for (let i = 0; i < n; i++) {
-    const d = document.createElement('div');
-    d.className = 'confetti-bit';
-    d.textContent = pick(emo);
-    d.style.left = rnd(0, 96) + 'vw';
-    d.style.animationDuration = (rnd(18, 34) / 10) + 's';
-    d.style.animationDelay = (rnd(0, 8) / 10) + 's';
-    $('confetti-layer').appendChild(d);
-    setTimeout(() => d.remove(), 4500);
-  }
-}
-// Reduced-motion? Dan geen sier-animaties.
-function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
-// Lichtkringetje vanaf een tikpunt (x,y in viewport-coördinaten).
-function tapRipple(x, y) {
-  if (motionOff() || x == null) return;
-  const r = document.createElement('div');
-  r.className = 'tap-ripple';
-  r.style.left = x + 'px'; r.style.top = y + 'px';
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 520);
-}
-// Confetti-kanon: stukjes spuiten vanuit (cx,cy) naar buiten, met wat zwaartekracht.
-// 'hero' = een emoji (bijv. het trofee-icoon) die er tussendoor meevliegt.
-function confettiBurst(cx, cy, n, hero) {
-  if (motionOff()) return;
-  const emo = ['🎉', '🎊', '⭐', '💖', '✨', '💎', '🌟'];
-  for (let i = 0; i < n; i++) {
-    const b = document.createElement('div');
-    b.className = 'burst-bit';
-    b.textContent = (hero && i % 4 === 0) ? hero : pick(emo);
-    const ang = rnd(0, 359) * Math.PI / 180;
-    const dist = rnd(60, 190);
-    const dx = Math.round(Math.cos(ang) * dist);
-    const dy = Math.round(Math.sin(ang) * dist) + rnd(20, 70);   // lichte val naar beneden
-    b.style.left = cx + 'px'; b.style.top = cy + 'px';
-    b.style.setProperty('--dx', dx + 'px');
-    b.style.setProperty('--dy', dy + 'px');
-    b.style.setProperty('--rot', rnd(-220, 220) + 'deg');
-    if (i % 5 === 0) b.style.fontSize = '32px';                  // een paar grote 'hero'-stukken
-    b.style.animationDelay = (rnd(0, 6) / 100) + 's';
-    document.body.appendChild(b);
-    setTimeout(() => b.remove(), 1050);
   }
 }
 
@@ -17219,7 +17341,6 @@ function equipShopItem(id) {
 }
 
 
-/* ================= Instellingen ================= */
 /* ================= Nieuwe ster ================= */
 /* Eén formulier, niet een reeks stappen: het zijn vier keuzes en een ouder mag ze
    allemaal tegelijk zien. De naam en het uiterlijk zijn wat een kind leuk vindt;
@@ -17459,6 +17580,15 @@ function createStar() {
   setTimeout(hideToast, 2400);
 }
 
+/* ================= Instellingen ================= */
+/* Het ouderdeel: wit papier, rustige letters, geen feest. Drie onderdelen
+   (Voortgang, Oefenen, Beheer) over één gekozen ster, met de sterrenrij erboven.
+
+   Deze kop stond eerder boven "Nieuwe ster" hierboven, en dat was geen kleine
+   slordigheid: de README zegt dat je op sectienaam zoekt om ergens te komen, dus
+   wie "= Instellingen" zocht kwam tweehonderd regels te vroeg uit, midden in een
+   formulier dat over iets anders gaat. Een inhoudsopgave die je op de verkeerde
+   plek afzet is erger dan geen. */
 let setKey = 'p1';
 // 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (profiel + data).
 // Bewust niet 'instellen': dat botst met de app-instellingen onder het tandwiel.
