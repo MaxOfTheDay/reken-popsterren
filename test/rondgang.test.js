@@ -1475,6 +1475,189 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     await stilCtx.close();
   }
 
+  /* ================= 11 · De halte waar je heen moet =================
+     De huidige halte ademt al sinds jaar en dag (stopSpot, een gloed achter het
+     rondje). Wat daar nu bij komt is één puls bij het binnenkomen, en de regel
+     dat het ademen stilstaat zodra er iets belangrijkers gebeurt.
+
+     Wat hier vastligt is vooral wat er NIET mag: niet pulsen als de ster net
+     zelf over de route naar die halte toe gehuppeld is (die reis ís de
+     aankomst), en niet doorademen onder een laag of tijdens een wereldreis. En
+     het rondje zelf hoort stil te staan -- alleen de gloed eromheen beweegt. */
+  {
+    const hCtx = await browser.newContext({ viewport: { width: 412, height: 915 } });
+    await cacheFonts(hCtx);
+    const h = await hCtx.newPage();
+    h.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    h.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+    await h.goto(SPEL_URL);
+    await h.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      for (let i = 0; i < 3; i++) for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) q.stars[l] = 2;
+      q.level = WORLD_START[3];
+      db.profiles = { p1: q }; save();
+    });
+    await h.goto(SPEL_URL);
+    await h.evaluate(() => {
+      window.__adem = () => {
+        const n = document.querySelector('#tour-map .tour-stop.next');
+        return n ? getComputedStyle(n, '::after').animationPlayState : 'geen halte';
+      };
+      // heeft de huidige halte één keer gepulst in dit tijdvak?
+      window.__pulst = async (doen, ms) => {
+        let gezien = false;
+        doen();
+        for (let i = 0; i < ms / 40; i++) {
+          await new Promise(r => setTimeout(r, 40));
+          const b = document.querySelector('#tour-map .tour-stop.next.aangekomen .stop-body');
+          if (b && getComputedStyle(b, '::after').animationName === 'haltePuls'
+              && +getComputedStyle(b, '::after').opacity > .02) gezien = true;
+        }
+        return gezien;
+      };
+    });
+    await h.evaluate(() => selectProfile('p1'));
+    await h.waitForTimeout(3200);   // ruim over de koeltijd van de aankomst
+
+    // alleen de huidige halte, nooit een gespeelde of een op slot
+    const wie = await h.evaluate(() => {
+      const per = k => [...document.querySelectorAll('#tour-map .tour-stop.' + k)]
+        .map(n => getComputedStyle(n, '::after').animationName);
+      return { next: per('next'), done: per('done'), locked: per('locked') };
+    });
+    check(wie.next.length === 1 && wie.next[0] === 'stopSpot',
+      'alleen de huidige halte ademt', JSON.stringify(wie));
+    check(wie.done.every(a => a === 'none') && wie.locked.every(a => a === 'none'),
+      'en een gespeelde of gesloten halte doet niets', JSON.stringify(wie));
+
+    check(await h.evaluate(() => window.__pulst(() => { openKleedkamer(); setTimeout(goMap, 300); }, 1800)),
+      'gewoon terugkomen op de kaart laat de halte één keer oplichten', 'geen puls gezien');
+
+    /* Ná een show huppelt de ster zelf naar de volgende halte. Dát is de
+       aankomst; er hoort geen tweede aankondiging overheen. */
+    await h.waitForTimeout(3200);
+    const naShow = await h.evaluate(async () => {
+      startLevel(P().level); G.misses = 0; endLevel(true);
+      await new Promise(r => setTimeout(r, 2000));
+      document.querySelectorAll('.rp-overlay').forEach(o => o._close && o._close());
+      const gepulst = await window.__pulst(() => goMap(P().level - 1), 3200);
+      await new Promise(r => setTimeout(r, 2200));
+      return { gepulst, adem: window.__adem() };
+    });
+    check(naShow.gepulst === false,
+      'maar na een show met een reis niet: die reis is de aankomst', JSON.stringify(naShow));
+    check(naShow.adem === 'running',
+      'en als de reis voorbij is ademt de nieuwe halte gewoon verder', JSON.stringify(naShow));
+
+
+    // een laag eroverheen zet het ademen stil, en daarna gaat het weer door
+    const laag = await h.evaluate(async () => {
+      openCareer();
+      await new Promise(r => setTimeout(r, 300));
+      const tijdens = window.__adem();
+      document.querySelectorAll('.rp-overlay').forEach(o => o._close && o._close());
+      await new Promise(r => setTimeout(r, 700));
+      return { tijdens, erna: window.__adem() };
+    });
+    check(laag.tijdens === 'paused' && laag.erna === 'running',
+      'onder een laag staat het ademen stil, en daarna weer aan', JSON.stringify(laag));
+
+    // en tijdens een wereldreis ook
+    const reis = await h.evaluate(async () => {
+      navigeerNaarWereld(2);
+      await new Promise(r => setTimeout(r, 1600));
+      navigeerNaarWereld(3);                       // terug naar haar wereld: dáár staat de halte
+      const tijdens = [];
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 90));
+        if (document.getElementById('screen-map').classList.contains('wereld-reist')) tijdens.push(window.__adem());
+      }
+      await new Promise(r => setTimeout(r, 1500));
+      return { tijdens, erna: window.__adem() };
+    });
+    check(reis.tijdens.length > 0 && reis.tijdens.every(x => x === 'paused' || x === 'geen halte'),
+      'tijdens een wereldreis ademt er niets mee', JSON.stringify(reis));
+    check(reis.erna === 'running', 'en als de camera stilstaat gaat het weer door', JSON.stringify(reis));
+
+    // het rondje zelf verroert zich niet -- alleen de gloed eromheen
+    const stil = await h.evaluate(async () => {
+      const dot = document.querySelector('#tour-map .tour-stop.next .dot');
+      const meet = () => { const b = dot.getBoundingClientRect();
+        return [b.left, b.top, b.width, b.height].map(v => Math.round(v * 10) / 10); };
+      const eerste = meet(); let grootste = 0;
+      for (let i = 0; i < 40; i++) {
+        await new Promise(r => setTimeout(r, 80));
+        const nu = meet();
+        grootste = Math.max(grootste, ...nu.map((v, k) => Math.abs(v - eerste[k])));
+      }
+      return { eerste, grootste };
+    });
+    check(stil.grootste < 0.5, 'en het rondje zelf staat stil: alleen de gloed ademt',
+      JSON.stringify(stil));
+    /* En een show overdoen midden in een wereld: dan is er géén reis, dus staat
+       de huidige halte er gewoon -- en tóch hoort er niet gepulst te worden.
+       Deze zaak staat er apart omdat hij de énige is die de poort zelf nameet:
+       bij een reis is er sowieso geen huidige halte (renderTourMap laat 'next'
+       dan weg), dus daar zou ook een kapotte poort onopgemerkt blijven. */
+    const overdoen = await h.evaluate(async () => {
+      const q = P();
+      q.stars = { 1: 3, 2: 2, 3: 3 }; q.level = 4;   // midden in de eerste wereld
+      save();
+      goMap();
+      await new Promise(r => setTimeout(r, 3200));   // koeltijd voorbij
+      startLevel(2); G.misses = 1; endLevel(true);   // een halte die al gespeeld is
+      await new Promise(r => setTimeout(r, 2000));
+      document.querySelectorAll('.rp-overlay').forEach(o => o._close && o._close());
+      const gepulst = await window.__pulst(() => goMap(2), 1800);
+      return { gepulst, halte: !!document.querySelector('#tour-map .tour-stop.next') };
+    });
+    check(overdoen.halte && !overdoen.gepulst,
+      'en uit een show zonder reis pulst hij evenmin, ook al staat de halte er',
+      JSON.stringify(overdoen));
+    await hCtx.close();
+
+    /* ---- en zonder beweging ---- */
+    const sCtx = await browser.newContext({ viewport: { width: 412, height: 915 }, reducedMotion: 'reduce' });
+    await cacheFonts(sCtx);
+    const sp = await sCtx.newPage();
+    sp.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await sp.goto(SPEL_URL);
+    await sp.evaluate(() => {
+      localStorage.clear();
+      const q = defaultProfile('Roos', 'dress_roze');
+      q.level = 5; for (let i = 1; i < 5; i++) q.stars[i] = 3;
+      db.profiles = { p1: q }; save();
+    });
+    await sp.goto(SPEL_URL);
+    await sp.evaluate(() => selectProfile('p1'));
+    await sp.waitForTimeout(1200);
+    const stilstand = await sp.evaluate(async () => {
+      // élke keer vers opzoeken: goMap bouwt de kaart opnieuw op, en op een
+      // losgekoppeld element geeft getComputedStyle lege waarden terug
+      const halte = () => document.querySelector('#tour-map .tour-stop.next');
+      const lijf = () => document.querySelector('#tour-map .tour-stop.next .stop-body');
+      let gepulst = false;
+      openKleedkamer();
+      await new Promise(r => setTimeout(r, 300));
+      goMap();
+      for (let i = 0; i < 40; i++) {
+        await new Promise(r => setTimeout(r, 40));
+        const b = lijf();
+        if (b && getComputedStyle(b, '::after').display !== 'none'
+            && getComputedStyle(b, '::after').animationName !== 'none') gepulst = true;
+      }
+      const na = getComputedStyle(halte(), '::after');
+      return { adem: na.animationName, gloed: +na.opacity, gepulst,
+               pulslaag: getComputedStyle(lijf(), '::after').display };
+    });
+    check(stilstand.adem === 'none' && !stilstand.gepulst && stilstand.pulslaag === 'none',
+      'zonder beweging ademt en pulst er niets', JSON.stringify(stilstand));
+    check(stilstand.gloed > .84,
+      'maar de gloed staat er juist stérker op, zodat de halte opvalt', JSON.stringify(stilstand));
+    await sCtx.close();
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */
