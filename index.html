@@ -8064,26 +8064,77 @@
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
 
-     Helpers ............ mini-hulpjes ($, rnd, pick, shuffle)
+   Álle secties staan hieronder, in de volgorde van het bestand. Dat is geen
+   volledigheid om de volledigheid: een lijst die er dertien mist wijst je bij de
+   moeilijkste stukken juist naar de verkeerde plek, en dat deed deze. Komt er een
+   sectie bij, zet hem hier dan ook neer.
+
+   ---- DE GEGEVENS: tabellen, en verder niets -------------------------------
+     Helpers ............ mini-hulpjes ($, rnd, pick, shuffle, esc)
+     De wereldbeloningen, getekend   de zes koptooien als SVG (fase 4D.2)
      Items .............. kleerkast-inhoud (data)
-     Werelden ........... WORLDS + level→wereld + afgeleide voortgang (data)
+     Werelden ........... WORLDS + level→wereld (data; blok wordt machinaal
+                          geschreven — zie WERELDEN-BEGIN)
      Trofeeën ........... trofee-definities + planken (data)
+
+   ---- DE KERN: de regels, zonder scherm ------------------------------------
+     De voortgang, afgeleid   worldDone/frontierWorld/continueWorld. ALLEEN
+                          p.stars wordt bewaard; de rest volgt eruit
+     Wereldbeloningen ... wat een wereld uitdeelt als hij uit of perfect is
      Sterrencarrière .... rang-ladder op sterren (RANK_TIERS, starRank)
      Opslag ............. db, load/save, migratie, profielen
+
+   ---- DE ZINTUIGEN ---------------------------------------------------------
      Trilfeedback ....... haptics
      Geluid ............. klikjes, fanfares (WebAudio)
      Gesproken opdrachten  nl-NL stem — ALLEEN telmodus (zie speak())
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
-     Schermen ........... navigatie, kaart, kop/voet
-     Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
+
+   ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
+     Schermen ........... show()/navGo()/toonHub: welk scherm staat aan
+     De sterrenkeuze leeft   het beginscherm: zwaaien, vonkjes, ster kiezen
+     De kaart: welke wereld   de rékenkant van de kaart: haltes, weg,
+                          streeppatroon, viewWorldIdx/showWorld. Puur maths;
+                          de reis en de wereldstudio leunen er ook op
+     Wat er geladen wordt   preloadArt: welke tekening wanneer binnenkomt
+
+   ---- DE BEWEGING: waar het meeste denkwerk in zit -------------------------
+     Wereld naar wereld   de camera die van wereld naar wereld klimt
+     Zwevende lagen ..... overlays
+     Bewegingstaal ...... MOTION/VLUCHT + de wissel kaart ⇄ zaal. De twee lánge
+                          duren staan hier en niet in :root — zie MOTION.totaal
+     De kaart zegt hallo   de begroeting bij aankomst op de kaart
+     De hele tournee .... de reis boven de werelden uit (het grootste blok)
+
+   ---- HET SPEL -------------------------------------------------------------
      Vragen maken ....... rekenmodus: genTriple/genQuestion/genMissing/genChain
      Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
      Memory-spel ........ los kaartspel (lees-vrij)
      Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
-     Spel ............... de show: renderQuestion, submitAnswer, endLevel
-     Kleedkamer ......... winkel, passen, aankleden
-     Instellingen ....... ouderscherm: voortgang + oefening
+     Spel ............... de show: renderQuestion, submitAnswer, endLevel.
+                          Staat ook de gedeelde feestjes in: toast, confetti,
+                          sparkle, danspasjes, motionOff, confirm/notice
+     Wereldfeest ........ wereld uit en/of overal drie sterren (fase 4D.1)
+     Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
+
+   ---- DE SCHERMEN ERNAAST --------------------------------------------------
+     Kleedkamer ......... winkel, passen, aankleden. Staat ook de 💎-tellers in
+                          (zetTeller/telNu/telNaar/telStraks, gedeeld)
+     Nieuwe ster ........ het maakformulier
+     Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Terug-navigatie .... Android back / browser back
+
+   ---- OPSTARTEN EN GEREEDSCHAP ---------------------------------------------
      Start .............. opstarten, service worker
+     -- Ontwikkelaarsschakelaars   alles achter ?debug
+     -- Kijkstanden ..... ?debug&wereld=n&stand=... : een stand zonder spelen
+     -- Wereldstudio .... ?debug&mapedit. Bijna een vijfde van dit scriptblok en
+                          het gewone spel raakt het nooit aan — sla het over
+                          tenzij je er expliciet aan werkt
+
+   Twee koppen lijken op elkaar; zoek op genoeg letters. "= Werelden" is de
+   tabel, "= Wereldbeloningen" wat een wereld uitdeelt, "= De wereldbeloningen"
+   hun tekeningen. "= Trofeeën" is de tabel, "= Trofeeën-scherm" de kast.
 
    Tests: test/counting.test.js (telmodus) en test/maths.test.js
    (rekenmodus + adaptieve motor). Draaien met `npm test`.
@@ -10699,6 +10750,32 @@ function renderProfiles() {
      tegels staan daarom stil -- ook geen .idle, dat stond er al niet op. */
 }
 function selectProfile(key) { cur = key; goMap(); }
+
+/* ================= De kaart: welke wereld, en waar de weg loopt ============
+   Hier houdt de sterrenkeuze op en begint de rékenkant van de wereldkaart. Geen
+   scherm, geen animatie: alleen wat een wereld uit WORLDS in vormen omzet.
+
+     welke wereld    viewWorldIdx + showWorld -- de enige plek die de kaart naar
+                     een andere wereld laat kijken
+     de haltes       worldNodes / defaultNodes -- percentages binnen één kader
+     de weg          roadPoints, roadParts, roadD, worldCurve -- de slinger
+                     erlangs, met per stuk een eigen stuurpunt
+     het streeppatroon roadDashArray -- zodat er op élke halte een streepje valt
+     de maten        ART_W/ART_H, ZONE, VB_W/vbx/vby
+
+   ALLES REKENT IN PROCENTEN VAN DE TEKENING, en dat is de hele reden dat de weg
+   op elk toestel over de achtergrond klopt: kader, tekening, weg en haltes
+   schalen samen mee, en er wordt nergens iets opgemeten. Draaien of een ander
+   vensterformaat kost dus geen herberekening.
+
+   Eén uitzondering, en hij staat er met opzet als parameter bij: roadDashArray
+   heeft een echte <svg> nodig om padlengtes te meten (getTotalLength). Die krijgt
+   hij mee; hij zoekt er zelf nooit een op.
+
+   Dit blok heeft geen enkele wereld-toestand nodig behalve WORLDS, en dat is
+   waarom er drie dingen op leunen: de kaart (renderTourMap), de reis en de
+   wereldstudio. Verander hier iets en je verandert die drie tegelijk.
+   ========================================================================== */
 
 // Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt
 // (gedeeld door de reisroute en de kleedkamer-tabbladen).
@@ -17039,7 +17116,6 @@ function equipShopItem(id) {
 }
 
 
-/* ================= Instellingen ================= */
 /* ================= Nieuwe ster ================= */
 /* Eén formulier, niet een reeks stappen: het zijn vier keuzes en een ouder mag ze
    allemaal tegelijk zien. De naam en het uiterlijk zijn wat een kind leuk vindt;
@@ -17279,6 +17355,15 @@ function createStar() {
   setTimeout(hideToast, 2400);
 }
 
+/* ================= Instellingen ================= */
+/* Het ouderdeel: wit papier, rustige letters, geen feest. Drie onderdelen
+   (Voortgang, Oefenen, Beheer) over één gekozen ster, met de sterrenrij erboven.
+
+   Deze kop stond eerder boven "Nieuwe ster" hierboven, en dat was geen kleine
+   slordigheid: de README zegt dat je op sectienaam zoekt om ergens te komen, dus
+   wie "= Instellingen" zocht kwam tweehonderd regels te vroeg uit, midden in een
+   formulier dat over iets anders gaat. Een inhoudsopgave die je op de verkeerde
+   plek afzet is erger dan geen. */
 let setKey = 'p1';
 // 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (profiel + data).
 // Bewust niet 'instellen': dat botst met de app-instellingen onder het tandwiel.
