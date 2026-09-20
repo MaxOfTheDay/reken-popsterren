@@ -582,6 +582,55 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     return { id: kaart && kaart.dataset.item, had: P().owned.length };
   });
   check(!!r.id, 'de kleedkamer toont spullen die nog te koop staan', JSON.stringify(r));
+
+  /* DE CATEGORIERIJ LOOPT ZICHTBAAR DOOR. Er staan zeven laden in een rij die er
+     op een telefoon vijf à zes kwijt kan, dus de rij scrolt -- en dan is de enige
+     vraag die telt of een kind kán zien dat er meer staat. Dat ging mis bij
+     Accessoires: die knop landde kraakhelder tegen de fade aan en Dieren erachter
+     was een grauwsluier van 28px, waardoor de rij ophield bij het felste ding op
+     het scherm. Sindsdien rekent tabRijDoel() uit waar de rij hoort te staan.
+
+     Drie dingen per categorie, en ze zijn alle drie met het oog te controleren:
+       - de gekozen knop staat helemáal in beeld (nooit half onder een rand)
+       - de fade staat aan precies de kant waar nog iets zit, en nergens anders
+       - zit er rechts nog iets, dan steekt daar een kier van een volgend knopje
+         uit die groot genoeg is om te zíen (TAB_SNIPPER, 24px)
+     Uitzondering op de laatste: bij de eérste categorie ligt de rij aan het begin
+     verankerd -- doorschuiven zou de gekozen knop zelf tegen de rand duwen -- en
+     doet de fade over de laatste hele knop het werk. */
+  const rij = await page.evaluate(async () => {
+    const uit = [];
+    const el = document.getElementById('shop-tabs');
+    for (const c of CATS) {
+      openKleedkamerCat(c.id);
+      await new Promise(res => setTimeout(res, 420));   // scroll-behavior: smooth
+      const vak = el.getBoundingClientRect(), breed = el.clientWidth;
+      const max = el.scrollWidth - breed;
+      let kier = null, heel = false, eerste = false;
+      el.querySelectorAll('.tab-btn').forEach((b, i) => {
+        const bb = b.getBoundingClientRect(), l = bb.left - vak.left, r = bb.right - vak.left;
+        if (b.classList.contains('active')) { heel = l >= -0.5 && r <= breed + 0.5; eerste = i === 0; }
+        if (r > breed && kier === null) kier = Math.max(0, breed - l);
+      });
+      uit.push({ cat: c.id, heel, eerste, kier: kier === null ? null : Math.round(kier),
+        meerR: max > 2 && el.scrollLeft < max - 2, meerL: el.scrollLeft > 2,
+        fadeR: el.classList.contains('can-right'), fadeL: el.classList.contains('can-left') });
+    }
+    return uit;
+  });
+  check(rij.length === 7 && rij.every(c => c.heel),
+    'de gekozen categorie staat altijd helemaal in beeld',
+    JSON.stringify(rij.filter(c => !c.heel)));
+  check(rij.every(c => c.fadeR === c.meerR && c.fadeL === c.meerL),
+    'de fade staat aan de kant waar nog meer staat, en alleen daar',
+    JSON.stringify(rij.filter(c => c.fadeR !== c.meerR || c.fadeL !== c.meerL)));
+  const zwak = rij.filter(c => c.meerR && !c.eerste && (c.kier === null || c.kier < 24));
+  check(zwak.length === 0,
+    'loopt de rij rechts door, dan steekt daar een zichtbare kier van het volgende knopje uit',
+    JSON.stringify(zwak));
+  check(rij.some(c => c.meerR), 'de rij is op een telefoon ook echt breder dan het scherm', JSON.stringify(rij));
+  await page.evaluate(() => openKleedkamerCat('dress'));
+  await page.waitForTimeout(300);
   /* Eerst: tikken kóópt niet. Een tik op iets dat nog niet van haar is kiest het --
      de pop past het en de lade onderaan zegt wat het kost -- en drie tikken doen
      precies hetzelfde als één. Diamanten uitgeven blijft een aparte, benoemde
