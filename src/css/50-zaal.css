@@ -1,0 +1,1265 @@
+  /* ================= De zaal (fase 3.3: élke wereld) =========================
+     Een show speelt in een plek, niet op een verloop. Deze laag maakt van het
+     spelscherm de binnenkant van de wereld die het kind net op de kaart aantikte.
+
+     De volgorde van onder naar boven is de hele afspraak, en ze loopt precies
+     omgekeerd aan hoe belangrijk iets is:
+
+       .venue-sfeer   de wereldkleuren als één naadloos verloop -- de bodem
+       .venue-art     de wereld, onscherp en weggemaskerd -- licht, geen vormen
+       .venue-bundel  de lichtbundel die op de ster valt
+       .venue-licht   het zaallicht, het vignet en -- het belangrijkste -- de
+                      donkere vloer waar de som op staat
+       .game-arena    de ster, de som, de antwoorden
+       .hub-sticky    de kop (zweeft, net als op de kaart)
+
+     Regel waar alles aan opgehangen is: alles onder ~52% van het scherm blijft
+     een rustig donker vlak. Dáár staat het rekenwerk, en het rekenwerk is het
+     scherpste, lichtste en grootste ding op dit scherm. De zaal mag alles erboven
+     hebben. Zie docs/ART-DIRECTION.md §4.3.
+
+     Geen enkele regel hieronder weet in wélke wereld hij staat: alles loopt via
+     var(--w-*) (de wereldkleuren) en var(--venue-*) (de zaalinstelling). Dat is
+     wat voorkomt dat hier ooit een `if (wereld === 'ijs')` komt te staan. */
+  #screen-game, #screen-end { position: relative; }
+  .venue { display: none; position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .venue-aan .venue { display: block; }
+  /* Boven de zaal uit. .hub-sticky draagt zijn eigen z-index (5), dus alleen de
+     arena en de eindkaart hebben hier iets te zeggen. */
+  .venue-aan .game-arena, .venue-aan .result-card { position: relative; z-index: 1; }
+
+  /* ---- De bodem: de wereld als sfeer ----
+     Twee verlopen die het hele scherm naadloos vullen, in de kleuren van déze
+     wereld. Dit is de laag die de belofte draagt dat er nooit een rand, een naad
+     of een herhaald stuk tekening te zien is: er ís geen beeld, dus er is niets
+     om af te knippen. Wat er ook boven deze laag gebeurt, het scherm is altijd
+     dicht. Kost niets -- een verloop wordt één keer getekend en daarna niet meer.
+
+     Komt er ooit een échte zaaltekening per wereld (venue.art), dan blijft deze
+     laag gewoon staan en dekt hij precies af wat die tekening niet vult. */
+  .venue-sfeer {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 64%, var(--w-deep) 100%);
+  }
+
+  /* ---- De wereldtekening, als licht en niet als landschap ----
+     Zolang er geen eigen zaaltekening is, leent de zaal de wereldkaart zelf: het
+     kind stapt ín de plek die het net aantikte, en dat bestand staat al in het
+     geheugen omdat de kaart het een tel geleden getoond heeft. Nul extra bytes.
+
+     Dat leent alleen niet vanzelf. Een kaart is een staande tekening met een
+     horizon, een kustlijn en gebouwen die aan de rand ophouden. Zoom je daarop in
+     en laat je hem het scherm vullen, dan valt de snede precies dáár: op een breed
+     venster liep er een kaarsrechte kustlijn dwars door het beeld en stond er een
+     halve tent tegen de schermrand -- de tekening lag zichtbaar afgeknipt op het
+     scherm in plaats van erachter.
+
+     De oplossing is niet een grotere zoom of een andere uitsnede (elke uitsnede
+     heeft randen), maar het omdraaien van de rol. Deze laag hoeft het scherm niet
+     te vullen: .venue-sfeer doet dat al. Ze mag dus naar alle kanten wégvallen --
+     en een rand die op nul staat is geen rand meer.
+
+     Drie dingen doen dat samen:
+       het masker een ovaal dat naar buiten toe uitdooft. Hij staat in procenten
+                  van het element, dus hij past zich aan élke vensterverhouding
+                  aan: de schermrand ligt altijd op dezelfde plek in het ovaal en
+                  is daar altijd (bijna) doorzichtig. Waar de snede zit doet er
+                  niet meer toe -- hij valt per definitie in het doorzichtige deel.
+       de blur    genoeg om vorm in kleur te veranderen. Een gebouw dat je kunt
+                  aanwijzen hoort op de kaart; hier hoort alleen zijn licht.
+       de dekking net onder de één, zodat de sfeerlaag er doorheen blijft praten
+                  en de tekening nooit als tweede achtergrond gaat lezen.
+
+     Het blijft een noodoplossing, en een goedkope: één regel in de wereld
+     (venue.art) hangt hier later een echte zaaltekening in, en dan mag zoom terug
+     naar ~100, blur naar 0-4 en de dekking naar 1. Verder verandert er niets. */
+  .venue-art {
+    position: absolute; inset: -8%;
+    background-image: var(--venue-art, none);
+    /* Zoom op de breedte en niet 'cover', want cover perst de héle wereldkaart in
+       het scherm en dan kijk je naar een landschap in plaats van naar een zaal.
+       Op de breedte, omdat de tekening staand is: dan is de uitsnede horizontaal
+       altijd hetzelfde stuk, op elk toestel. --venue-focus kiest wélk stuk. */
+    background-size: var(--venue-zoom, 220%) auto;
+    background-position: var(--venue-focus, 70% 14%);
+    background-repeat: no-repeat;
+    /* geen background-color: .venue-sfeer is de bodem. Stond die hier wél, dan
+       zou dit element zijn eigen vlak meebrengen en was het masker zinloos. */
+    filter: blur(var(--venue-blur, 11px)) brightness(var(--venue-dim, .62)) saturate(1.1);
+    opacity: var(--venue-op, .96);
+    -webkit-mask-image: radial-gradient(74% 86% at 50% 18%,
+      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+    mask-image: radial-gradient(74% 86% at 50% 18%,
+      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+  }
+  /* Ligt het venster op zijn kant, dan zie je van een staande tekening een brede,
+     lage strook -- en juist in zo'n strook komen kustlijnen en daken als rechte
+     lijnen door het beeld. Verder inzoomen laat minder tekening zien, meer blur
+     maakt van wat overblijft licht, en minder dekking laat de sfeerlaag winnen.
+     Drie kleine draaien aan dezelfde knoppen; geen aparte laag, geen apart beeld. */
+  @media (min-aspect-ratio: 1/1) {
+    .venue-art {
+      background-size: calc(var(--venue-zoom, 220%) * 1.75) auto;
+      filter: blur(calc(var(--venue-blur, 11px) * 2.1)) brightness(var(--venue-dim, .62)) saturate(1.1);
+      opacity: calc(var(--venue-op, .96) * .7);
+    }
+  }
+  /* Zaallicht + vloer. Vier verlopen, één element: warm van boven (het is een
+     show), de wereldkleur in de hoeken (het is een zaal), en daaronder de vloer
+     die het onderste deel van het scherm terugbrengt naar rustig donker.
+
+     De donkere kleur is hier niet meer het paars van de Muziekwereld maar
+     --w-deep van de wereld waar je staat: in de IJswereld is de vloer donkerblauw,
+     in de Snoepwereld donkerrood. Dezelfde zaal, ander licht -- precies het
+     verschil dat een wereld hoort te maken. */
+  .venue-licht {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(112% 40% at 50% 2%, rgba(var(--goud-glans-rgb),.30), transparent 64%),
+      radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(var(--w-deep-rgb), .62) 100%),
+      linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
+                      rgba(var(--w-deep-rgb), .82) 62%, rgba(var(--w-deep-rgb), .93) 100%);
+  }
+  /* Het voetlicht op de rand van het podium: een lijn licht, dwars over de vloer.
+
+     Het ovaal stond hiervoor met zijn mídden op de ónderrand van zijn eigen doosje
+     (at 50% 100%, height 26%). Precies daar is het licht op zijn felst -- en precies
+     daar hield het element op. Wat je dus zag was niet een uitdovende gloed maar een
+     kaarsrechte streep dwars over het scherm, op 70% hoogte (64% op een kort scherm,
+     waar de regel hieronder top naar 38% zet). Opgemeten op alle zes de werelden en
+     op 320x568, 390x844, 412x915 en 768x1024: dezelfde lijn, altijd op dezelfde
+     breuk van de hoogte -- het licht wérd afgeknipt, de tekening niet.
+
+     Hetzelfde ovaal, nu heel: het doosje is twee keer zo hoog en het middelpunt
+     staat op de halve hoogte. Middelpunt (70%), horizontale straal (60% van 120%
+     schermbreedte) en verticale straal (26% van de schermhoogte) zijn tot op de
+     pixel wat ze waren -- alleen loopt de onderste helft nu ook echt uit, in plaats
+     van tegen de rand van zijn eigen element te eindigen. De gloed dooft op 72% van
+     de straal uit, dus ruim binnen de nieuwe onderrand (96%, of 90% op een kort
+     scherm): er komt geen tweede rand voor terug. */
+  .venue-licht::after {
+    content: ''; position: absolute; left: -10%; right: -10%; top: 44%; height: 52%;
+    background: radial-gradient(60% 50% at 50% 50%, rgba(var(--warm-licht-rgb),.34), transparent 72%);
+    opacity: .6; transition: opacity var(--t-snel) ease;
+  }
+  /* De warme golf die bij een goed antwoord door de zaal trekt. Staat bewust als
+     eigen laag op opacity 0 klaar en wordt niet uit het beeld zelf gehaald: de
+     helderheid van .venue-art opdraaien zou een filter-overgang zijn, en dan
+     wordt die hele onscherpe tekening bij élk goed antwoord opnieuw berekend.
+     Twee lagen die alleen van opacity veranderen kosten de samensteller niets. */
+  .venue-licht::before {
+    content: ''; position: absolute; inset: 0; opacity: 0;
+    transition: opacity var(--t-snel) ease;
+    background:
+      radial-gradient(90% 44% at 50% 4%, rgba(var(--goud-glans-rgb),.34), transparent 66%),
+      radial-gradient(70% 34% at 50% 52%, rgba(var(--warm-licht-rgb),.22), transparent 74%);
+  }
+  /* Goed antwoord: de zaal licht één tel op -- zie submitAnswer/zaalJuicht, dat de
+     klasse 380ms zet. Meer dan dit doet de zaal niet; de knop, de diamanten en de
+     dans van de ster zeggen de rest. */
+  .venue.juist .venue-licht::after { opacity: 1; }
+  .venue.juist .venue-licht::before { opacity: 1; }
+
+  /* ---- De ster op het podium ----
+     Buiten een zaal is .show-panel precies wat het was: een kader met de paspop
+     erin. Ín een zaal valt dat kader weg -- een omlijst vakje is een etalage, en
+     zij staat niet in een etalage maar op een podium. Wat ervoor in de plaats
+     komt: een bundel van boven en een richel onder haar voeten. */
+  .show-panel { position: relative; }
+  .venue-bundel, .venue-vloer { display: none; pointer-events: none; }
+  .venue-aan .venue-bundel, .venue-aan .venue-vloer { display: block; position: absolute; z-index: 0; }
+  /* De bundel valt van boven het scherm op haar. Loopt bewust boven het paneel
+     uit: overloop naar bóven maakt een scrollvak nooit scrollbaar (alleen naar
+     onderen), dus dit kost geen schuifbalk en geen extra hoogte. */
+  .venue-aan .venue-bundel {
+    left: 50%; bottom: 8%; width: 210%; height: 260%; transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.42) 0%, rgba(var(--warm-licht-rgb),.15) 54%, rgba(var(--warm-licht-rgb),0) 86%);
+    -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+    clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+    filter: blur(13px);
+  }
+  /* De richel waar ze op staat: een ellips onder haar voeten met een warme lip
+     aan de voorkant. Dit is wat "zij staat ergens" van "zij zweeft" onderscheidt. */
+  .venue-aan .venue-vloer {
+    left: 50%; bottom: -5%; width: 132%; height: 30%; transform: translateX(-50%);
+    border-radius: 50%;
+    /* De warme lip is zaallicht en blijft dus in élke wereld hetzelfde goud; de
+       schaduw eronder is de vloer van díe wereld en volgt --w-deep. */
+    background:
+      radial-gradient(52% 46% at 50% 14%, rgba(var(--goud-glans-rgb),.70), rgba(var(--warm-licht-rgb),.22) 56%, transparent 76%),
+      radial-gradient(58% 64% at 50% 52%, rgba(var(--w-deep-rgb), .88), rgba(var(--w-deep-rgb), .36) 72%, transparent 88%);
+    box-shadow: 0 0 40px rgba(var(--warm-licht-rgb),.30), inset 0 2px 0 rgba(var(--goud-glans-rgb),.35);
+  }
+  /* Op het eindscherm staat het podium ín een kaart. Het paneel moet dus precies
+     zo breed zijn als de paspop, anders loopt de richel als een streep dwars over
+     de hele kaart. De ruimte erboven is voor de slotchoreografie: die springt tot
+     38px omhoog, en zonder kader is dat nu zichtbaar in plaats van weggeknipt. */
+  .venue-aan .end-panel { width: 150px; margin: 24px auto 0; }
+  .venue-aan .end-stage { margin: 0; }
+  /* de kop van de kaart blijft bovenop, ook als ze op haar hoogste sprong zit */
+  .venue-aan .result-card .title { position: relative; z-index: 2; }
+  @media (max-height: 740px) {
+    .venue-aan .end-panel { width: 104px; margin-top: 12px; }
+  }
+  /* Het kader zelf gaat weg, de maat blijft: alles eromheen (de arena, de
+     smalle-schermregels) rekent op deze afmeting. */
+  .venue-aan .show-stage, .venue-aan .end-stage {
+    background: none !important; border: 0; box-shadow: none; overflow: visible;
+    position: relative; z-index: 1;
+  }
+  /* de gekleurde lichtvlekken van het oude kader, en zijn drie hoek-emoji:
+     het geschilderde licht van de zaal doet dit werk nu */
+  .venue-aan .show-stage::after, .venue-aan .end-stage::after { display: none; }
+  .venue-aan .show-stage .deco, .venue-aan .end-stage .deco { display: none; }
+  /* zonder kader mag ze groter -- ze is nu zelf het onderwerp en niet de inhoud
+     van een vakje. Een zachte schaduw onder haar houdt haar op de richel. */
+  .venue-aan .show-stage .avatar-holder, .venue-aan .end-stage .avatar-holder {
+    height: 104%; filter: drop-shadow(0 6px 10px rgba(14,2,30,.55));
+  }
+
+  /* ---- De kop van een show ----
+     Op de kaart zweeft de kop: geen balk, drie kleine pillen, de tekening loopt
+     er ongebroken onderdoor. In de zaal hoort dat net zo, en om precies dezelfde
+     reden -- elke pixel dekkende balk is een pixel zaal die een kind niet ziet.
+     Dezelfde stof (--hud-*), dus dit is letterlijk dezelfde kop, één scherm
+     verder. */
+  .venue-aan .hub-sticky {
+    background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 2px;
+  }
+  .venue-aan .screen-header .header-title { text-shadow: var(--hud-ink); }
+  .venue-aan .screen-header .icon-btn,
+  .venue-aan .screen-header .diamond-badge {
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
+  }
+  /* De diamantenteller is hier een teller en geen knop: hij is het doel waar de
+     verdiende diamanten naartoe vliegen. Een maat kleiner dan op de rustpunten,
+     zodat hij niet met de som concurreert. */
+  .venue-aan .screen-header .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
+  /* Hartjes en showvoortgang: samen één pilletje van dezelfde stof, zodat ze als
+     één ding lezen ("hoe sta ik ervoor") in plaats van als twee meters. */
+  .venue-aan .game-progress-row {
+    padding: 5px 14px 6px; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+  }
+  /* de showvoortgang is hier de hoofdzaak, de hartjes de bijzin */
+  .venue-aan .notes-left { font-size: var(--tx-label); opacity: .92; }
+  .venue-aan .segbar > span { height: 8px; }
+
+  /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
+     zodat hij op de vloer staat en er niet op geplakt is. */
+  .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
+  /* Elke nieuwe vraag komt binnen in plaats van te verspringen. Heel kort (140ms):
+     dit is geen overgang maar een aankondiging. */
+  .venue-aan .question-card.vers { animation: vraagIn .14s var(--ease-uit) both; }
+  @keyframes vraagIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+  /* ---- Kaart <-> zaal ----
+     Twee klassen, en verder niets. Beide zetten alleen transform en opacity, dus
+     er wordt nooit iets opnieuw ingedeeld.
+
+     .wegvallend  het scherm dat vertrekt. Vast gepositioneerd, zodat het uit de
+                  kolom stapt en het binnenkomende scherm meteen zijn volle maat
+                  krijgt -- anders zouden er even twee schermen naast elkaar in
+                  dezelfde flexkolom staan en springt de opmaak. Het ligt altijd
+                  bovenop, want het is het enige dat doorzichtig wordt.
+     .komt-op     het scherm dat aankomt. Doet niets anders dan de eigen fade van
+                  .screen.active uitzetten, want die zou met de animatie vechten
+                  -- en die fade is precies wat hier niet meer hoort te gebeuren.
+
+     Hier stond ook .komt-boven: dan lag het aankomende scherm er juist bovenop.
+     Dat kan niet meer bestaan naast de regel bij MOTION ("wie bovenop ligt, doet
+     de doorzichtigheid"): een aankomend scherm is vanaf zijn eerste beeldje
+     ondoorzichtig, en iets ondoorzichtigs bovenop leggen laat niets meer te
+     onthullen over. De klasse is daarom weg, en niet alleen ongebruikt.
+
+     De z-waarden zijn klein en gelden alleen tussen de schermen onderling: #app
+     is zelf een stapelcontext (position:relative, z-index 1), dus geen enkel
+     scherm kan ooit boven .main-nav uitkomen. Die balk staat búiten de schermen
+     en wordt daarom apart meegenomen -- zie navMee.
+
+     Waarom show() .komt-op weghaalt en de animatie zelf niet: 'animation: none'
+     weghalen terwijl het scherm in beeld staat zet screenIn alsnog aan, en dan
+     fade't het scherm voor de tweede keer in. Dat was een zichtbare knipper aan
+     het eind van élke overgang -- gemeten: opacity viel op 330ms terug naar 0 en
+     klom er opnieuw uit. */
+  /* ALLE TIEN DE SCHERMEN, en niet de vier waar dit voor bedacht is. Deze twee
+     klassen hingen aan kaart, zaal, eindscherm en reis; de kleedkamer, de kast,
+     het ouderdeel, het memoryspel, het maakformulier en de sterrenkeuze hadden
+     geen enkele wissel. Dat was op één plek het duidelijkst te zien, en het is
+     precies de meest gebruikte knop van de app: van de kaart naar de kleedkamer
+     verdween de kaart op het eerste beeldje en kwam de kleedkamer uit de
+     achtergrond van de app omhoog -- een overvloeier tegen niets. Terug deed de
+     kaart wél zijn terugzoom terwijl de kleedkamer verdween. Twee richtingen van
+     dezelfde tik, twee verschillende dingen.
+
+     Wat er níet gebeurt: elk scherm zijn eigen voorstelling. De vier hierboven
+     houden wat ze hebben (de zaal die om je tik heen indraait, de vlucht naar
+     Werelden); de zes erbij delen één stille wissel -- zie hubWissel. De klassen
+     zijn dezelfde, want het is dezelfde afspraak: wie vertrekt ligt bovenop en
+     doet de doorzichtigheid, wie aankomt beweegt en is dekkend.
+
+     Eén id per scherm i.p.v. !important: #screen-map/#screen-profile zetten zelf
+     al een position, en een klasse verliest daar altijd van. */
+  #screen-map.wegvallend, #screen-game.wegvallend, #screen-end.wegvallend,
+  #screen-journey.wegvallend, #screen-dress.wegvallend, #screen-trophies.wegvallend,
+  #screen-settings.wegvallend, #screen-memory.wegvallend, #screen-newstar.wegvallend,
+  #screen-profile.wegvallend {
+    display: flex; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  }
+  #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op,
+  #screen-journey.komt-op, #screen-dress.komt-op, #screen-trophies.komt-op,
+  #screen-settings.komt-op, #screen-memory.komt-op, #screen-newstar.komt-op,
+  #screen-profile.komt-op { animation: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .venue-aan .question-card.vers { animation: none; }
+    .venue-licht::after, .venue-licht::before { transition: none; }
+  }
+  /* Krap scherm: de zaal verliest hoogte, het rekenwerk niet. De bundel en de
+     richel krimpen mee met de paspop; de vloer begint hoger zodat er onder de
+     som nog evenveel rustig vlak overblijft. */
+  @media (max-height: 700px) {
+    .venue-licht { background:
+      radial-gradient(112% 34% at 50% 0%, rgba(var(--goud-glans-rgb),.26), transparent 62%),
+      radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(var(--w-deep-rgb), .62) 100%),
+      linear-gradient(180deg, transparent 18%, rgba(var(--w-deep-rgb), .54) 40%,
+                      rgba(var(--w-deep-rgb), .84) 58%, rgba(var(--w-deep-rgb), .93) 100%); }
+    .venue-licht::after { top: 38%; }
+    /* minder hoogte = de vloer begint hoger, dus het ovaal moet ook hoger
+       uitdoven; verder hetzelfde masker en dezelfde redenering */
+    .venue-art { -webkit-mask-image: radial-gradient(74% 72% at 50% 12%,
+        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%);
+      mask-image: radial-gradient(74% 72% at 50% 12%,
+        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%); }
+  }
+
+  /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
+  /* De vraagkaart toont in deze modus een groep objecten (of een opdracht-icoon)
+     met een 🔊-knop om de gesproken opdracht te herhalen. */
+  /* de 🔊-knop stond hier vroeger ín (absoluut, rechts); nu staat hij als echte
+     knop ónder de kaart (zie .replay-btn), dus de kaart hoeft er geen 30px
+     zijruimte meer voor vrij te houden en de som/groep krijgt die breedte terug */
+  .count-q { position: relative; display: flex; align-items: center; justify-content: center; min-height: 84px; padding: 4px 14px; }
+  .cq-groupwrap { display: flex; align-items: center; justify-content: center; }
+  .cgroup { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; max-width: 260px; line-height: 1; }
+  /* tot 3 objecten op een rij: netjes groepeerbaar in beeld (subitiseren) */
+  .cgroup.n4, .cgroup.n5, .cgroup.n6 { max-width: 168px; }
+  .cg-obj { font-size: 34px; }
+  .cgroup.big .cg-obj { font-size: 46px; }
+  .cg-dot { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, var(--purple-input-top) 70%, var(--purple-input-bottom)); box-shadow: inset 0 -2px 3px rgba(0,0,0,.25); }
+  .cgroup.big .cg-dot { width: 34px; height: 34px; }
+  .cgroup.mini { gap: 2px 3px; max-width: 74px; margin-top: 4px; }
+  .cgroup.mini .cg-dot { width: 9px; height: 9px; background: rgba(255,255,255,.9); box-shadow: none; }
+  .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 700; color: var(--purple-shadow); }
+  .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
+  @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+  /* In de telmodus is de gesproken opdracht de héle vraag. "Nog eens voorlezen"
+     was daarom precies het verkeerde element om weg te moffelen (26px, 45%
+     doorzichtig, tegen de rand van de kaart). Nu een echte knop van 48px, vol
+     zichtbaar, direct onder de somkaart: na de antwoordtegels de belangrijkste
+     tik op het scherm. Gouden randje = "dit hoort bij de vraag"; verder de
+     rustige glas-vulling van .btn.soft, zodat hij niet met de tegels concurreert. */
+  .replay-btn {
+    width: 48px; height: 48px; padding: 0; margin: 4px auto 2px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    font-family: inherit; font-size: 22px; line-height: 1; color: var(--c-white);
+    /* FASE 5E -- de ring was vol --gold-accent. Dat is in deze app de kleur van
+       "verdiend", en hij zat hier op een hulpknop: nog eens voorlezen. Op het
+       telscherm was daarmee het luidsprekertje het enige gouden ding in beeld,
+       luider dan de twee antwoorden eronder waar het om gaat. Cyaan is de kleur
+       van bediening (dezelfde als de gekozen tab, de gekozen categorie en het
+       kaartje waar je naar kijkt), en dat is precies wat deze knop is. Vindbaar
+       blijft hij van zijn maat -- 48px, vol dekking -- en niet van zijn kleur. */
+    border-radius: 50%; border: 2px solid var(--cyaan-rand);
+    background: linear-gradient(180deg, var(--cyaan-tint), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  }
+  .replay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  /* meetellen: elk object popt op maat op */
+  .cg-obj.pre, .cg-dot.pre { opacity: .22; transform: scale(.7); }
+  .cg-obj.pop, .cg-dot.pop { animation: cpop .4s ease; opacity: 1; }
+  @keyframes cpop { 0% { transform: scale(.5); opacity: .3; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
+  .cg-obj.fade-out, .cg-dot.fade-out { animation: cfade .5s ease forwards; }
+  @keyframes cfade { to { opacity: .12; transform: scale(.5); } }
+
+  /* Tienraam: 2 rijen van 5 vakjes — 6–10 in één oogopslag herkenbaar (subitiseren) */
+  .cframe { display: inline-grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .tf-cell { width: 28px; height: 28px; border-radius: var(--r-sm); border: 2px solid rgba(74,20,140,.22); display: flex; align-items: center; justify-content: center; }
+  .tf-cell.on { border-color: rgba(74,20,140,.38); background: rgba(142,36,170,.08); }
+  .tf-cell.hidden { background: rgba(74,20,140,.14); font-size: var(--tx-label); }
+  .cframe.big .tf-cell { width: 34px; height: 34px; }
+  .cframe .cg-obj { font-size: 20px; }
+  .cframe.big .cg-obj { font-size: 24px; }
+  .cframe .cg-dot { width: 16px; height: 16px; }
+  /* tienraam in een antwoordknop: écht kleinere vakjes (geen transform-schaal —
+     die verkleint alleen visueel, niet de layout, waardoor 3 tegels op smalle
+     schermen buiten beeld liepen). De maten schalen mee met de tegel (cqw, zie
+     .count-tile): bij 3 of 4 tegels naast elkaar is één tegel maar een derde of
+     een kwart van de rij breed. De px-waarde ervoor is de bovengrens én de
+     terugval voor browsers zonder containerquery's. */
+  .count-tile .cframe { gap: 2px; gap: min(2px, 2cqw); }
+  /* de mini-raampjes houden hun eigen kleine ronding: dat is de tekening van het
+     reken-hulpmiddel, niet de UI-schaal -- --r-sm op een vakje van 10-15px maakt
+     er een rondje van */
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(15px, 17cqw); height: min(15px, 17cqw); border-width: 1.5px; border-radius: 4px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(11px, 12cqw); }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(8px, 9cqw); height: min(8px, 9cqw); }
+
+  /* ---- Stippenraam (leer-aid): vijf-/tienraam met VASTE plekken ----
+     Vaste vulvolgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar,
+     de rijen staan iets uit elkaar (5-anker), zodat je "5 en nog wat" en "hoeveel
+     nog tot 10" in één oogopslag ziet, zonder elke stip te hertellen. */
+  .dframe { display: inline-grid; grid-template-columns: repeat(5, auto); column-gap: 5px; row-gap: 8px; }
+  .df-cell { width: 22px; height: 22px; border-radius: var(--r-sm); border: 1.5px solid rgba(74,20,140,.16); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .df-cell.on { border-color: rgba(74,20,140,.30); }
+  .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); }
+  .dframe.big .df-cell { width: 27px; height: 27px; }
+  .dframe.faint .df-dot { opacity: .34; }
+  /* kleine steunstipjes ónder een cijfer (antwoordknoppen + som-operanden) */
+  .dframe.mini { column-gap: 2px; row-gap: 2px; }
+  .dframe.mini .df-cell { width: 10px; height: 10px; border-radius: 3px; border-width: 1px; }
+  /* Stippenraam in een antwoordknop: net als het tienraam hierboven kleiner, en
+     meeschalend met de tegel. Zonder deze regel hield het raam zijn volle vakjes
+     van 22px: vijf naast elkaar (130px) is breder dan een tegel als er 3 of 4
+     naast elkaar staan, en dan liep de hele rij tegels buiten beeld -- de derde
+     tegel was op een telefoon half weg. De steunstipjes onder een cijfer
+     (.dframe.mini) houden hun eigen maat. */
+  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(4px, 2cqw); row-gap: min(7px, 6cqw); }
+  /* ronding in procenten i.p.v. --r-sm: het vakje is nu geen vaste 22px meer, en
+     een vaste 10px ronding maakt van een geslonken vakje een rondje */
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(20px, 18cqw); height: min(20px, 18cqw); border-radius: 45%; }
+  /* op paarse knoppen: witte stippen + lichtere randjes (i.p.v. donker op wit) */
+  .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
+  .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
+  .count-tile .df-dot { background: rgba(255,255,255,.95); }
+  .df-dot.pre { opacity: .22; transform: scale(.6); }
+  .df-dot.pop { animation: cpop .4s ease; }
+  .df-dot.fade-out { animation: cfade .5s ease forwards; }
+  /* Grote-cijferkaart (cijfer → hoeveelheid) */
+  .cq-bignum { font-size: clamp(52px, 15vw, 84px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
+  /* Één-meer/minder-badge naast de groep */
+  .cq-delta { font-size: 30px; font-weight: 700; margin-left: 6px; }
+  .cq-delta.add { color: var(--green-deep); }
+  .cq-delta.rem { color: var(--red-500); }
+  /* Twee groepjes samen */
+  .cq-combine { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .cq-plus { font-size: 34px; font-weight: 700; color: var(--purple-shadow); }
+  /* Vervaagde cijfersteun (fase 6, hogere rung) */
+  .cgroup.mini.faint { opacity: .35; }
+  /* Gesteunde sommen (fases 9–11): de vergelijking a ＋/➖ b ＝ ? */
+  /* cijfers + tekens op één gemeenschappelijke onderlijn; de stippen hangen er los
+     onder (absoluut), zodat ze de uitlijning van de som niet scheeftrekken */
+  .sum-eq { display: flex; align-items: baseline; justify-content: center; gap: 4px 10px; flex-wrap: wrap; max-width: 100%; }
+  .sum-op { font-size: clamp(26px, 6.5vw, 36px); font-weight: 700; color: var(--purple-shadow); }
+  .sum-eq-q { font-size: clamp(34px, 9vw, 50px); font-weight: 700; color: var(--purple-input-bottom); align-self: baseline; }
+  /* elke operand krijgt genoeg breedte om zijn eigen stippenraam eronder te dragen,
+     zodat de raampjes van 7 en 3 elkaar niet overlappen */
+  .sum-operand { position: relative; display: inline-block; min-width: 62px; padding-bottom: 30px; }
+  .sum-num { font-size: clamp(30px, 8vw, 46px); font-weight: 700; color: var(--purple-shadow); line-height: 1; }
+  .sum-eq .cgroup.big .cg-obj { font-size: clamp(22px, 6vw, 32px); }
+  .sum-eq .cgroup.big { max-width: 128px; }   /* alleen de zichtbare voorwerp-groepjes (fase 9) breed */
+  /* de cijfer-stippen (fase 10/11) staan als net rijtje ónder het cijfer, gecentreerd */
+  .sum-operand .dframe.mini { position: absolute; top: 100%; left: 50%; transform: translate(-50%, -30px); }
+  /* Wegstrepen bij aftrekken gebeurt per stuk binnen één startgroep (5 dingen,
+     laatste 3 weg). Er stond hier ook een .cgroup.crossed dat een hele groep
+     doorstreepte; die klasse werd nergens meer gezet. */
+  .cg-obj.xed { opacity: .45; text-decoration: line-through; text-decoration-thickness: 2px; }
+  .df-dot.xed { opacity: .5; filter: grayscale(1); position: relative; }
+  .df-dot.xed::after { content: ''; position: absolute; left: -30%; right: -30%; top: calc(50% - 1.25px); height: 2.5px; background: var(--purple-shadow); transform: rotate(-15deg); border-radius: 2px; }
+
+  /* minmax(0, 1fr) i.p.v. 1fr: een kolom mag nooit breder worden dan haar deel
+     van de rij, ook niet als de inhoud (een raampje) van zichzelf breder is --
+     anders groeit de rij tegels buiten het scherm. */
+  .count-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(88vw, 400px); margin-top: 4px; }
+  .count-tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .count-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .count-tile {
+    font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
+    min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform var(--t-tik), box-shadow var(--t-tik);
+    /* de tegel is de maatstok voor alles wat erin staat (cqw hierboven): hoeveel
+       tegels er naast elkaar staan verschilt per vraag (2, 3 of 4), dus een
+       vw-maat zou bij 2 tegels te klein en bij 4 te groot uitvallen */
+    container-type: inline-size;
+  }
+  .count-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
+  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
+  .count-tile .cg-obj { font-size: 27px; }
+  .count-tile .cg-dot { width: 20px; height: 20px; }
+  .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
+
+  /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
+  .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes goodPop { 0% { transform: scale(1); } 35% { transform: scale(1.11); } 70% { transform: scale(.98); } 100% { transform: scale(1); } }
+  .choice-btn.good::before, .count-tile.good::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    box-shadow: 0 0 0 3px var(--green-top); opacity: 0; animation: goodRing .55s ease-out forwards;
+  }
+  @keyframes goodRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.14); } }
+  @media (prefers-reduced-motion: reduce) {
+    .choice-btn.good, .count-tile.good { animation: none; }
+    .choice-btn.good::before, .count-tile.good::before { display: none; }
+  }
+
+  /* ---- Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ---- */
+  /* Het memory-spel hangt als los knopje over de kaart, en dat is precies de plek
+     waar het moet oppassen: rechtsonder, boven de navigatiebalk, in de hoek van
+     de veilige zone waar een wereld een halte mág neerzetten (zie ZONE en
+     docs/WORLD-ART-BRIEF.md).
+
+     Het was een opgetild blokje van 78x86px met een harde 3px-lip eronder --
+     een knop met hetzelfde gewicht als de dingen op de kaart zélf, terwijl het
+     een zijspoor is. Nu compacter (62x66) en vlakker glas zonder lip: dezelfde
+     plek, dezelfde inhoud, minder stem, en een kwart minder tekening afgedekt.
+
+     Volledig vrij van die zonehoek krijg je het niet: op een telefoon van 320px
+     is de veilige zone 198px breed en blijft er links en rechts maar 61px over,
+     smaller dan welk bruikbaar knopje ook. Wat wél te garanderen is, is dat hij
+     geen enkele échte halte afdekt -- test 7f meet dat na op alle werelden, zodat
+     een nieuwe wereld die daar wél een halte neerzet opvalt vóór een kind erop
+     tikt in plaats van erna. */
+  .mem-fab {
+    position: fixed; right: 14px; bottom: calc(var(--nav-h, 94px) - 12px); z-index: 30;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+    font-family: inherit; font-size: 21px; font-weight: 700; color: var(--c-white);
+    cursor: pointer; padding: 8px 11px 7px; border-radius: var(--r-md);
+    border: 1px solid rgba(255,255,255,.2);
+    background: rgba(32,12,58,.6);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(0,0,0,.32);
+  }
+  .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
+  /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning */
+  .mem-fab .mem-pay { font-size: var(--tx-mini); font-weight: 700; opacity: .88; letter-spacing: .01em; }
+  .mem-fab:active { transform: scale(.95); }
+  /* ---- Op het kortste scherm: het woord eraf --------------------------------
+     Op 320x568 is het knopje 67x70 en staat de onderste halte van de Piratenwereld
+     er pal achter: het hárt van halte 26 viel binnen het knopje, dus een tik daarop
+     startte het memoryspel in plaats van de show. Opgemeten met elementFromPoint,
+     en het gold ook vóór deze fase -- de kaart stond er alleen net vaak genoeg
+     geschoven dat controle 7f het niet zag (zie de opmerking bij die controle).
+
+     Wat eraf gaat is het woord "Memory", niet de knop: het microfoontje en wat hij
+     oplevert (💎 9) blijven staan. Daarmee wordt hij 50x56 in plaats van 67x70, en
+     schuiven zijn linker- en bovenrand voorbij het hart van élke halte in élke
+     wereld. Dezelfde ingreep als bij .saved-pill .sp-word op een smal scherm, en om
+     dezelfde reden: het plaatje zegt het al, het woord kost de ruimte.
+
+     .world-back gaat in dezelfde adem een maatje kleiner. Die pil staat middenonder
+     en dat is precies waar de standaardslinger zijn eerste halte neerzet; kleiner
+     maken brengt de overlap daar van 41% terug naar 27%, binnen de marge die
+     controle 7f bewaakt. */
+  @media (max-height: 620px) {
+    /* > span, niet span: het bedrag zit als eigen <span> ín .mem-pay, en zonder de
+       directe-kindselector verdween dát nummer mee -- dan stond er "💎" zonder
+       getal, precies de knop-zonder-beloofde-beloning die hierboven is opgelost. */
+    .mem-fab > span:not(.mem-pay) { display: none; }
+  }
+  /* de kaartjes stonden klein in het midden met ~430px lucht eromheen; ze mogen
+     de ruimte gewoon gebruiken -- het is een spel dat je op afstand van tafel speelt */
+  .mem-arena { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
+  .mem-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); align-items: start; gap: 12px; width: min(96vw, var(--kolom)); }
+  .mem-card {
+    position: relative; aspect-ratio: 1 / 1; border: none; background: none; cursor: pointer; padding: 0;
+    perspective: 600px;
+    /* de inhoud schaalt mee met de kaart zelf (cqw hieronder), niet met het scherm:
+       memFitCols kiest per situatie een ander aantal kolommen, dus een vw-maat zou
+       bij 2 kolommen veel te groot en bij 4 veel te klein uitvallen */
+    container-type: inline-size;
+  }
+  .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .35s; }
+  .mem-card.open .mem-inner, .mem-card.done .mem-inner { transform: rotateY(180deg); }
+  .mem-back, .mem-face {
+    position: absolute; inset: 0; border-radius: var(--r-md); backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    box-shadow: 0 4px 0 rgba(0,0,0,.18);
+  }
+  .mem-back {
+    font-size: clamp(26px, 8vw, 40px); font-size: 34cqw;
+    background: linear-gradient(150deg, var(--purple-input-top), var(--purple-input-bottom));
+    border: 2px solid rgba(255,255,255,.35);
+  }
+  .mem-face {
+    transform: rotateY(180deg); background: var(--c-white);
+    border: 2px solid rgba(255,255,255,.7); padding: 6px;
+  }
+  .mem-card.done .mem-face { background: var(--green-badge-bg); border-color: var(--green-deep); animation: cpop .4s ease; }
+  /* mis: de twee kaarten schudden kort voor ze dichtklappen; match: ze 'klikken samen' */
+  .mem-card.wrong { animation: memShake .4s ease; }
+  @keyframes memShake { 0%,100% { transform: translateX(0); } 22% { transform: translateX(-5px); } 48% { transform: translateX(5px); } 74% { transform: translateX(-3px); } }
+  .mem-card.snap { animation: memSnap .42s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes memSnap { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .mem-card.wrong, .mem-card.snap { animation: none; } }
+  /* Memory-kaartjes zijn klein: elke weergave krijgt een eigen compacte maat die
+     écht binnen de kaart past (geen transform:scale -- dan blijft de layout-box
+     te groot en wordt de inhoud afgekapt). */
+  .mem-face .cg-obj { font-size: clamp(12px, 3.6vw, 17px); font-size: 13cqw; }
+  .mem-face .ct-num { font-size: clamp(26px, 10vw, 40px); font-size: 30cqw; font-weight: 700; color: var(--purple-shadow); }
+  .mem-face .cgroup { gap: 2px 3px; max-width: 96%; }
+  .mem-face .cframe { gap: 2.5px; }
+  .mem-face .cframe .tf-cell { width: 12px; height: 12px; width: 12cqw; height: 12cqw; border-width: 1.5px; border-radius: 4px; }
+  /* een voorwerp ín een raamvakje moet in dat vakje passen -- losse groepjes
+     (.cgroup, hierboven) mogen juist groter */
+  .mem-face .cframe .cg-obj { font-size: 8cqw; }
+  .mem-face .dframe { column-gap: 2.5px; row-gap: 3px; }
+  .mem-face .dframe .df-cell { width: 10px; height: 10px; width: 10cqw; height: 10cqw; border-width: 1px; border-radius: 3px; }
+  .mem-done { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(24,6,44,.55); z-index: 40; }
+  .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
+  .mem-done-title { font-size: 54px; line-height: 1; }
+  .mem-done-earn { margin: 12px auto 4px; }
+  .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+
+  /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
+  @media (max-width: 720px) {
+    .game-arena { gap: 10px; }
+    .show-stage { width: 175px; height: 147px; }
+    .question-card { font-size: clamp(38px, 12vw, 56px); padding: 14px 22px 24px; }
+  }
+  /* op lage schermen alles compacter: som + alle antwoorden moeten ALTIJD
+     zonder scrollen in beeld staan */
+  @media (max-height: 700px) {
+    .show-stage { width: 145px; height: 122px; }
+    .game-arena { gap: 6px; margin-top: 2px; }
+    .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
+    .gold-banner { height: 18px; font-size: var(--tx-label); margin-top: 2px; }
+    .replay-btn { width: 40px; height: 40px; font-size: 19px; margin: 2px auto 0; }
+    .choice-btn { padding: 12px 8px; font-size: 27px; }
+    .choices { gap: 10px; }
+    .num-btn { padding: 9px 0; font-size: 23px; }
+    .numpad { gap: 8px; }
+    .count-tile { min-height: 62px; padding: 8px 6px; }
+    .count-tiles { gap: 9px; }
+    .count-tiles.three { gap: 7px; }
+    .cgroup.big .cg-obj { font-size: 38px; }
+    .count-tile .cg-obj { font-size: 23px; }
+    .count-q { min-height: 66px; }
+    .cframe.big .tf-cell { width: 29px; height: 29px; }
+    .cq-bignum { font-size: clamp(44px, 13vw, 68px); }
+    .sum-num { font-size: clamp(26px, 7vw, 38px); }
+    .sum-eq .cgroup.big .cg-obj { font-size: clamp(19px, 5vw, 26px); }
+  }
+  /* Ruimte over? Dan groeit de sóm, niet de paspop. De paspop is decor; de
+     vraagkaart is waar het kind naar moet kijken -- en die was op een telefoon
+     (99px hoog) juist kleiner dan het decor ernaast (147px). */
+  @media (min-height: 780px) {
+    .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
+  }
+  @media (min-width: 900px) and (min-height: 760px) {
+    .show-stage { width: 240px; height: 202px; }
+    .question-card { font-size: clamp(50px, 6vw, 68px); }
+  }
+
+  /* feedback-kaarten (praise/toast): kregen vroeger een vaste viewport-%
+     positie, wat ze op elk formaat over de paspop/avatar heen liet vallen
+     zodra de tekst iets langer was. Tijdens het spel ("docked", zie JS)
+     hangen ze nu vlak onder de vaste kop, altijd vrij van de paspop; op de
+     andere schermen (kaart, kleedkamer, trofeeën, winkel, instellingen)
+     blijft de bestaande losse positie -- daar was geen overlap-probleem. */
+  .praise {
+    position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.7);
+    z-index: 60; opacity: 0; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: rgba(48,10,80,.94);
+    border: 1.5px solid rgba(var(--warm-licht-rgb),.5); border-radius: var(--r-md); padding: 12px 22px 14px;
+    box-shadow: var(--e-2), 0 0 22px rgba(var(--goud-gloed-rgb),.25);
+    max-width: min(84vw, 320px);
+  }
+  /* gedockte kaart is compacter dan de losse variant (kleiner pilletje,
+     minder padding) -- moet altijd tussen kop en paspop passen, ook op
+     smallere formaten waar de paspop hoger in het scherm begint */
+  .praise.docked {
+    top: 98px; transform: translateX(-50%) scale(.7); gap: 5px; padding: 9px 18px 11px;
+  }
+  .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
+  .praise-headline {
+    font-size: var(--tx-feest-kort); font-weight: 700; color: var(--gold-light);
+    text-shadow: var(--goud-ink);
+    text-align: center; text-wrap: balance; line-height: 1.15;
+  }
+  .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
+  .praise.docked.pop { animation-name: praisePopDocked; }
+  @keyframes praisePop {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(.7); }
+    55% { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
+    80% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-64%) scale(1); }
+  }
+  @keyframes praisePopDocked {
+    0% { opacity: 0; transform: translateX(-50%) scale(.7) translateY(-6px); }
+    55% { opacity: 1; transform: translateX(-50%) scale(1.05) translateY(0); }
+    80% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-10px); }
+  }
+  .toast {
+    position: fixed; left: 50%; top: 12%; transform: translateX(-50%) translateY(-8px);
+    z-index: 60; display: none; opacity: 0;
+    flex-direction: column; align-items: center; gap: 2px; text-align: center;
+    background: rgba(43,7,71,.94);
+    border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-md); padding: 11px 20px 12px;
+    box-shadow: var(--e-2);
+    max-width: min(88vw, 360px);
+    pointer-events: none;
+  }
+  .toast.docked { top: 98px; }
+  .toast.show { display: flex; animation: toastIn .3s ease forwards; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  /* Wie geen beweging wil. Deze twee kaarten dragen wat er net gebeurde en wat
+     het opleverde ("Goed zo, je had het! 💎 +2"), dus ze uitzetten kan niet:
+     beide animaties eindigen bovendien op een andere doorzichtigheid dan waar
+     hun eigen regel ze neerzet, en `animation: none` zou ze onzichtbaar maken --
+     precies het gat waar de rest van dit bestand zo op let.
+
+     Dus: geen groei, geen opstijgen, wél de kaart. De praise-kaart staat meteen
+     op ware grootte en doet alleen nog zijn eigen tijd (opkomen, blijven staan,
+     weggaan) in doorzichtigheid; de toast staat er gewoon en wacht op de tik die
+     hem wegstuurt, net als anders. */
+  @keyframes praiseStil {
+    0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .praise { transform: translate(-50%,-50%) scale(1); }
+    .praise.docked { transform: translateX(-50%) scale(1); }
+    .praise.pop, .praise.docked.pop { animation: praiseStil .9s ease forwards; }
+    .toast.show { animation: none; opacity: 1; transform: translateX(-50%); }
+  }
+  .toast-main { font-size: clamp(16px, 4.6vw, 19px); font-weight: 700; color: var(--c-white); line-height: 1.3; text-wrap: balance; }
+  .toast-sub { font-size: var(--tx-klein); font-weight: 600; color: var(--c-white); opacity: .75; margin-top: 1px; }
+  /* op lage schermen zit de paspop al vlak onder de kop (zie .show-stage
+     hierboven) -- de gedockte kaart moet dan even compact zijn om de
+     ruimte ertussen niet te overschrijden */
+  @media (max-height: 700px) {
+    .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .praise.docked .praise-headline { font-size: var(--tx-klein); }
+    .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
+    .toast.docked .toast-main { font-size: var(--tx-label); }
+    .toast.docked .toast-sub { font-size: var(--tx-mini); margin-top: 0; }
+  }
+  /* "tik om verder te gaan": een onzichtbare, schermvullende laag ónder de
+     toast (die zelf pointer-events:none heeft, dus een tik daarop valt door
+     naar deze laag) zodat een kind overal mag tikken, niet precies op de
+     kleine bubbel zelf moet mikken. */
+  .tap-veil { position: fixed; inset: 0; z-index: 59; display: none; }
+  .shake { animation: shake .4s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); }
+  }
+  /* Wie geen beweging wil: geen schud. Het bericht zit in de hartjes zelf --
+     loseHeart schrijft er een gebroken hartje in -- en dat blijft staan. */
+  @media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
+  /* Zachte "foute noot": een korte kanteling, geen schud. Duurde .7s en dat is
+     lang genoeg om als straf te lezen; op .42s is het een hoofdschudden en is de
+     som daarna meteen weer gewoon leesbaar. */
+  .wobble { animation: wobble .42s ease; }
+  @keyframes wobble {
+    0%,100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-2.4deg) scale(.985); }
+    60% { transform: rotate(2deg) scale(.995); }
+    85% { transform: rotate(-1deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .wobble { animation: none; } }
+  .slip-note {
+    position: fixed; left: 50%; top: 34%; transform: translateX(-50%);
+    font-size: 52px; z-index: 60; pointer-events: none; opacity: 0;
+  }
+  .slip-note.go { animation: slipNote 1.6s ease forwards; }
+  @keyframes slipNote {
+    0% { opacity: 0; transform: translate(-50%, 0) rotate(0); }
+    20% { opacity: 1; transform: translate(-50%, 6px) rotate(-8deg); }
+    100% { opacity: 0; transform: translate(-50%, 90px) rotate(30deg); }
+  }
+  /* Wie geen beweging wil: het nootje valt niet weg, het is er even en dan niet
+     meer. Uitzetten kan hier niet zomaar -- .slip-note staat op opacity 0 en de
+     animatie is het enige wat hem ooit zichtbaar maakt, dus `animation: none`
+     haalt de misser-knipoog stilletjes weg. Nu blijft hij, zonder de val. */
+  @keyframes slipStil {
+    0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .slip-note.go { animation: slipStil 1.2s ease forwards; } }
+
+  /* ---- Gouden vraag ---- */
+  .question-card.golden {
+    background: var(--gold-accent);
+    color: var(--ink-on-gold-card); box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.9), 0 8px 20px rgba(0,0,0,.3);
+    animation: goldGlow 1s ease-in-out infinite alternate;
+  }
+  @keyframes goldGlow { from { box-shadow: 0 0 18px rgba(var(--goud-gloed-rgb),.7), 0 8px 20px rgba(0,0,0,.3); } to { box-shadow: 0 0 34px rgba(var(--goud-gloed-rgb),1), 0 8px 20px rgba(0,0,0,.3); } }
+  /* Wie geen beweging wil: de gouden vraag blijft goud en blijft glimmen -- hij
+     ademt alleen niet meer. De gloed staat in de regel hierboven, dus zonder de
+     animatie is de kaart nog steeds herkenbaar de gouden. */
+  @media (prefers-reduced-motion: reduce) { .question-card.golden { animation: none; } }
+  .gold-banner { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); margin-top: 6px; height: 22px; }
+
+  /* ---- Wereldtournee: één wereld per scherm, volledig in beeld ----
+     Er valt niets te scrollen. Het kader (.world-frame) heeft de beeldverhouding
+     van de wereldtekening en wordt met container-query-eenheden precies ingepast
+     in de ruimte die er is -- de CSS-versie van object-fit:contain, zonder een
+     regel JavaScript. Wat overblijft aan de zijkanten is geen leegte maar de
+     lucht van de wereld zelf (zie .tour-map).
+
+     Alles bínnen het kader staat op percentages: de tekening, de weg (een SVG met
+     exact dezelfde viewBox-verhouding) en de haltes. Daarom valt de weg op élk
+     toestel precies op de haltes en op de tekening -- het klopt per constructie,
+     niet per afstelling, en draaien of resizen vraagt geen herberekening. */
+  .tour-map {
+    position: absolute; inset: 0; z-index: 0; container-type: size;
+    /* Verticaal safe center: staat het kader hóger dan het vak, dan zou gewoon center
+       de bovenkant buiten het scrollbereik duwen en was halte 8 onbereikbaar.
+       Horizontaal júist gewoon center: daar valt niets te scrollen (overflow-x is
+       hidden), en "safe" viel bij overloop terug op links uitlijnen -- dan werd de
+       hele rechterkant van de tekening weggeknipt in plaats van een beetje aan
+       beide kanten. */
+    display: flex; align-items: safe center; justify-content: center;
+    /* Horizontaal wordt geknipt -- dat is de cover-snede. Verticaal mag je schuiven:
+       een staande tekening past niet in elke vensterverhouding, en schuiven is beter
+       dan de tekening kleiner maken. Kleiner maken laat de app-achtergrond als
+       gekleurde banden om de kaart heen staan, en dat las als een fout. */
+    overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .tour-map::-webkit-scrollbar { display: none; }
+  /* COVER, niet contain: de tekening vult het hele scherm, zoals in de mockup.
+     Daarvoor staat hier max() waar bij contain min() zou staan -- het kader wordt
+     dus juist groter dan het scherm en wat eroverheen steekt wordt weggeknipt.
+
+     Cruciaal: de haltes zitten ín ditzelfde kader. Ze schuiven dus exact met de
+     tekening mee en kunnen er nooit vanaf glijden. Wat het wél betekent: aan de
+     randen wordt geknipt (op een telefoon ~4-6% per kant), dus haltes horen in de
+     veilige zone -- zie docs/PROGRESSION-REVIEW.md §E8. */
+  /* De maat van een wereldtekening stond hier, op .tour-map. Hij staat nu in
+     :root (zoek op --art-w daar) en wordt door de JS ook op <html> gezet in
+     plaats van op het kaartvak: niet alleen de kaart heeft hem nodig maar ook
+     het scherm eromheen, dat er in liggende stand mee uitrekent hoeveel lucht er
+     boven en onder het podium overblijft (zie --podium-lucht). Eén bron voor die
+     verhouding is geen netheid maar noodzaak -- de weg-SVG gebruikt hem als
+     viewBox, en liepen ze uiteen dan viel de weg naast de haltes (zie VB_W). */
+  .world-frame {
+    position: relative; flex: none;
+    /* min-width + min-height + aspect-ratio = cover. Gemeten tegen de variant met
+       max(100cqw, 100cqh * ...): die liet op 390x844 een gat van 64px onderaan.
+       container-type staat er voor de cqw-eenheden van de haltes, niet voor de maat. */
+    min-width: 100%; min-height: 100%;
+    aspect-ratio: var(--art-w) / var(--art-h);
+    container-type: size;
+    /* De wereldkleur als ondergrond, ónder de tekening. Zo'n tekening is ~300 kB en
+       is bij een wereldwissel niet altijd al gedecodeerd; zonder deze regel kijk je
+       die ene tel door het kader heen naar het paars van de app, en dát leest als
+       een flits. De onderlaag is nu de wereld zelf, dus er valt niets te flitsen. */
+    background-color: var(--w-deep);
+    background-size: cover; background-position: 50% 50%;
+    /* FASE 6B -- de tekening is de bóvenste van drie lagen, en de twee eronder
+       zijn de wereld op zijn eigen kleuren.
+
+       Waarom gelaagd en niet "eerst het verloop, daarna de tekening erin zetten":
+       een laag die nog niet te tekenen is, tekent gewoon niet, en dan staat de laag
+       eronder er. Er valt dus niets te timen -- geen onload, geen decode(), geen
+       moment waarop je het mag omzetten. Dat is precies waar de fout zat: met
+       alleen background-color eronder was die onderlaag --w-deep, en dat is in de
+       Muziekwereld #170a35. Zo goed als zwart. Van de sterkeuze naar de kaart stond
+       er daardoor 71 ms een bijna zwart scherm met de haltes erop, en dan sprong het
+       beeld in één keer naar de wereld: dát is de zwarte flits bij het kiezen van
+       een ster, en tegelijk de donkere band bij het opengaan van een wereldkaart --
+       één fout, twee meldingen. Op een telefoon over mobiel net duurt dat geen 71 ms.
+
+       Het is ook wat .reis-plaats op de reis al deed (de tekening ligt daar in een
+       eigen laagje boven het verloop), dus het is hier geen nieuw idee maar
+       hetzelfde idee op de tweede plek.
+
+       --w-art is 'none' als er geen tekening is; dan blijven de twee verlooplagen
+       over en draagt de wereld zichzelf -- een wereld is speelbaar vóórdat hij
+       getekend is, en een ontbrekend bestand levert nooit een leeg vlak op. */
+    --w-art: none;
+    background-image: var(--w-art),
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow), transparent 66%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
+  }
+  /* Heeft een wereld een eigen tekening, dan brengt die zijn eigen lucht en grond
+     mee: de gedeelde wolkjes en het voetlicht van de app zouden er dan dwars
+     doorheen lopen. */
+  #screen-map:has(.world-frame:not(.no-art)) .map-sky,
+  #screen-map:has(.world-frame:not(.no-art)) .map-ground { display: none; }
+
+  /* ---- Wereld naar wereld: de camera klimt (fase 3.4) --------------------
+     De kaarten lopen van onder naar boven, en de tournee loopt van wereld 1 naar
+     wereld 6. Eén doorlopende klim dus -- en dat betekent dat de cámera omhoog
+     gaat, niet de wereld. Ga je vooruit, dan zakt de wereld waar je was ónder het
+     beeld weg en komt de volgende van bóven in beeld; terug is precies andersom.
+     (Hiervoor stond het omgekeerd: de wereld schoof omhoog weg, wat leest als een
+     camera die daalt terwijl het kind vooruit gaat.)
+
+     Twee lagen schuiven daarvoor tegelijk over hetzelfde scherm:
+       #tour-map          de nieuwe wereld, die er al staat vóórdat hij in beeld komt
+       .wereld-schaduw    een stilstaande kopie van de wereld die vertrekt
+
+     Ze reizen met dezelfde duur en dezelfde curve, precies één schermhoogte uit
+     elkaar -- ze raken elkaar dus aan en overlappen nooit. Wat je ziet is één
+     beeld dat langsschuift, geen twee schermen die over elkaar heen vervagen.
+
+     wereld-reist staat op het scherm zolang dat duurt: overflow dicht (een laag die
+     een schermhoogte naar beneden staat mag nooit een schuifbalk in de app zetten)
+     en de diepe kleur van de bestemming eronder, zodat een naad van een halve pixel
+     tussen de twee lagen de wereld zelf is en niet het paars van de app. */
+  #screen-map.wereld-reist { overflow: hidden; background-color: var(--w-deep); }
+  #screen-map.wereld-reist .tour-map { will-change: transform; }
+  /* De kopie is een plaatje en verder niets: er valt niet op te tikken en niet in
+     te schuiven, en een schermlezer hoort hem niet nog een keer op te lezen. */
+  .tour-map.wereld-schaduw { pointer-events: none; }
+
+  /* ---- Uitzoomen: de wereld en zijn kaartje zijn hetzelfde ding (PS-24) ----
+     De wereldkaart en de bestemming op Werelden tonen dezelfde tekening op twee
+     maten. Tikt een kind op de wereldpil, dan hoort het dát te zien: de wereld
+     waar ze in staat krimpt naar het kaartje waar hij op Werelden ligt -- en
+     andersom groeit datzelfde kaartje uit tot de hele wereld.
+
+     Wat er NIET gebeurt: de kaart wordt niet gekloond en niet als geheel
+     verschaald. Wat er vliegt is één tijdelijke laag met dezelfde tekening erin,
+     en verder niets -- de haltes, de weg, de ster en de Memory-knop horen bij de
+     ingezoomde wereld en verdwijnen vroeg (zie .vlucht-weg).
+
+     Twee elementen, en die verdeling is de hele truc:
+
+       .wereld-vlucht       het kíjkgat: een echt vak met overflow:hidden, dat
+                            met één transform van "de hele kaart" naar "het
+                            kaartje" schaalt. Een gewoon overflow-vak en geen
+                            clip-path, en dat is geen smaakkwestie -- zie de
+                            regel bij vluchtBeelden.
+       .wereld-vlucht-art   de tékening. Beweegt met één transform (translate +
+                            een gelíjke schaal in x en y), dus hij vervormt op
+                            geen enkel beeldje -- wat er verandert is hoe groot
+                            hij is en hoeveel je ervan ziet, precies zoals bij
+                            een camera die terugstapt.
+
+     Allebei krijgen ze dezelfde easing mee, dus het gat en de tekening lopen
+     altijd gelijk op. z-index 1: boven het scherm dat aankomt (z 0), onder het
+     scherm dat vertrekt (z 2, zie .wegvallend) en ver onder de navigatiebalk
+     (z 40) -- die blijft dus gewoon staan waar hij staat. */
+  .wereld-vlucht { position: fixed; z-index: 1; pointer-events: none;
+    overflow: hidden; transform-origin: 0 0; will-change: transform; }
+  /* Op de terugweg draait de stapeling om: dan vertrekt Werelden (z 2) en komt de
+     kaart aan, en dan hoort de tekening daar juist tússen. Zie reisNaarWereld. */
+  .wereld-vlucht.hoog { z-index: 3; }
+  #screen-map.vlucht-boven { z-index: 4; }
+  .wereld-vlucht-art {
+    position: absolute; transform-origin: 0 0; will-change: transform;
+    /* exact dezelfde drie lagen als .world-frame, op een vak dat exact de
+       verhouding van de tekening heeft -- dus 100% 100% ís hier cover */
+    background-color: var(--w-deep);
+    background-size: 100% 100%; background-repeat: no-repeat;
+    background-image: var(--w-art, none),
+      radial-gradient(120% 40% at 50% 103%, var(--w-glow), transparent 66%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
+  }
+  /* De kaart tijdens een vlucht: zijn tekening ligt even in de vluchtlaag, dus
+     hier blijft alleen het plaatselijke werk over (haltes, weg, ster). Het kader
+     wordt dóórzichtig en niet onzichtbaar -- die haltes moeten er nog even
+     overheen kunnen wegdoven.
+
+     Ook de onscherpe rand in liggende stand gaat uit: die is de wereld nóg een
+     keer, en die hoort niet te blijven staan terwijl de wereld zelf wegvliegt. */
+  /* Zolang de tekening in de lucht hangt vangt de kaart geen tikken. Op de heenweg
+     doet .wegvallend dat al, op de terugweg niet -- en daar staan de haltes er een
+     tel lang onzichtbaar (ze komen pas op de landing op). Een halte die je kunt
+     aantikken zonder hem te zien is geen halte. */
+  #screen-map.vlucht-weg { pointer-events: none; }
+  #screen-map.vlucht-weg .world-frame { background-image: none; background-color: transparent;
+    box-shadow: none; }
+  #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { opacity: 0; }
+  /* Het bestemmingskaartje zolang de tekening er nog naartoe onderweg is. Zonder
+     dit staat hetzelfde kaartje twee keer in beeld: één keer op zijn plek en één
+     keer in de lucht. */
+  .reis-halte.vlucht-doel { opacity: 0; }
+  /* De globe van de wereldpil op weg naar de kop van Werelden. Eén teken, één
+     transform -- geen letter-voor-letter gedoe; de rest van de pil en de titel
+     kruisen gewoon over elkaar heen. */
+  /* Géén line-height hier. Die wordt van de globe zélf overgenomen (zie
+     globeVlucht), want een vaste waarde hier is een tweede waarheid over hoe dat
+     teken gezet wordt -- en zodra die twee uit elkaar lopen, staat de kopie een
+     paar pixels hoger dan het echte teken dat hij vervangt. Dat is precies wat er
+     gebeurde toen de globes op 1.25 gingen en dit op 1 bleef staan: een sprongetje
+     omhoog bij het loskomen en weer omlaag bij de landing. */
+  .globe-vlucht { position: fixed; z-index: 5; pointer-events: none;
+    transform-origin: 50% 50%; will-change: transform; }
+  /* Staat het venster rechtop, dan vult de kaart het gewoon en schuif je verticaal
+     -- net als op een telefoon, alleen is er meer te schuiven. Ligt het venster op
+     zijn kant, dan wordt het een podium: de kaart zo groot als de hóógte toelaat,
+     met een zachte rand, en ernaast dezelfde tekening nog een keer -- uitvergroot,
+     onscherp en donker, zodat de randen de wereld zelf zijn en geen leegte.
+
+     De grens was eerder "liggend én breder dan 1215px" (= ART_W, het punt waarop de
+     tekening uitgerekt zou worden). Dat klonk logisch en was het niet: het podium is
+     in béide gevallen kleiner dan de tekening, dus er werd sowieso nooit iets
+     uitgerekt -- die 1215 koos alleen wáár de omslag lag, niet óf de kwaliteit
+     bewaard bleef. En ertussen zat een band waar het stil misging: een liggend
+     venster smaller dan 1216 stond in telefoonstand op een breed scherm. Opgemeten
+     hoeveel van de kaart je daar zag: 1000x900 51%, 1215x950 44%, en een liggende
+     tablet op 1024x768 maar 42% -- de rest moest je eronderuit schuiven.
+
+     Nu op de verhouding alleen. Dat is ook de enige grens die je als mens vóélt:
+     het moment dat een venster breder wordt dan hoog. 1216 was een getal over
+     bestandsafmetingen dat niemand ervaart.
+
+     De omslag zelf blijft een sprong, en dat is niet op te lossen: "vul het scherm
+     en schuif" en "laat alles in één keer zien" zijn twee verschillende manieren om
+     hetzelfde te tonen, en daartussen bestaat geen geleidelijke weg.
+
+     min-height staat er omdat een podium alleen iets oplevert als het er ook in
+     past. Het kader kan niet smaller dan 340px (anders wordt een halte kleiner dan
+     een vingertop), en 340 breed is 604 hoog. Op een telefoon in liggende stand --
+     844x390 -- past dat niet: dan schuift het podium alsnog, zie je 65% van de
+     kaart en vallen haltes 1, 2, 7 en 8 achter de kop of de balk. Daar is
+     volledig-vullen gewoon beter. Opgemeten grens: vanaf 600px hoog past het. */
+  @media (min-aspect-ratio: 1/1) and (min-height: 600px) {
+    /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
+       een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
+    #screen-map { isolation: isolate; }
+    #screen-map::before { content: ''; position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%); }
+    #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
+      background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
+      filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
+    /* Tijdens een vlucht ligt de wereld in de vluchtlaag en staat deze rand uit
+       (zie .vlucht-weg). Hij komt er niet terug met een knip maar in dezelfde 80ms
+       als de overvloeier -- dat is het enige stukje kaart dat op de landing niet
+       al onder de vluchtlaag klaar ligt. */
+    #screen-map::before, #screen-map::after { transition: opacity 90ms linear; }
+    @media (prefers-reduced-motion: reduce) {
+      #screen-map::before, #screen-map::after { transition: none; }
+    }
+    /* Het podium is zo groot als de hóógte toelaat, en niet kleiner.
+       Hier stond padding: var(--kop-h) 0 var(--nav-h) -- het podium werd dus vrij
+       gehouden van de kop en de balk. Dat is precies andersom dan op een telefoon,
+       waar die twee juist óver de kaart zweven: daar is de doorzichtige kop voor
+       bedacht en daar gaat de veilige zone van uit. Het kostte 14 tot 17% van het
+       podium (443 in plaats van 519 breed op 1780x950) zonder dat er iets mee
+       gewonnen werd. Nu alleen nog een randje lucht, zodat de ronde hoek en de
+       schaduw niet tegen de vensterrand aan liggen -- anders leest het niet meer
+       als een toestel op een achtergrond. */
+    .tour-map { align-items: center; padding: 14px 0; }
+    /* En het podium houdt daarbij een bovengrens: --stage-spel (zie het skelet
+       bovenaan, waar ook staat waarom die op 560 ligt en niet lager). De min()
+       zit ín de clamp en niet eromheen: de ondergrens van 340 -- waaronder een
+       halte kleiner wordt dan een vingertop -- moet ook daarna nog de ondergrens
+       zijn. */
+    .world-frame { min-width: 0; min-height: 0;
+      width: clamp(min(340px, 100cqw),
+                   min(100cqh * var(--art-w) / var(--art-h), var(--stage-spel)),
+                   100cqw);
+      border-radius: var(--r-md); box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
+  }
+  /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
+     verschijnen alleen aan de kant waar nog meer te scrollen valt.
+
+     --fade is hoe breed die overgang is, en dat is met opzet een knop en geen
+     vast getal: de fade hoort smaller te zijn dan het stukje knop dat er aan die
+     kant nog uitsteekt. Is hij breder, dan wist hij precies datgene uit wat hij
+     moest aankondigen -- dan ziet een rij die dóórloopt eruit als een rij die
+     ophoudt. Een rij met smalle knopjes zet hem daarom zelf smaller (zie
+     .shop-tabs). */
+  .hscroll-fade { --fade: 34px; }
+  .hscroll-fade.can-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent 100%); }
+  .hscroll-fade.can-left { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade));
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade)); }
+  .hscroll-fade.can-left.can-right { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%); }
+  /* De weg: twee lagen over de volle tekening. Het hele pad dof ("nog te
+     ontdekken"), het afgelegde stuk daar bovenop vol goud ("al gehaald") --
+     dezelfde taal als de haltes zelf. Gestippeld, zodat het als een route leest
+     en niet als een muur. */
+  .fly-badge { position: fixed; z-index: 90; font-size: 40px; pointer-events: none;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
+  .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  /* De 26/34 hieronder is de terugval. Normaal zet renderTourMap er een patroon
+     overheen dat per stuk weg precies past, zodat er op elke halte een streepje
+     ligt -- zie roadDashArray. */
+  .tour-road-bg, .tour-road-fg, .tour-road-under { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  /* De route is één streep in drie lagen, en die volgorde is het hele verhaal:
+
+       onder   donkere pruim, het breedst -- steekt maar een paar eenheden aan
+               weerszijden uit en leest daardoor als een contourlijn, niet als een
+               tweede weg
+       bg      de nog niet afgelegde route, in de wereldkleur
+       fg      het afgelegde stuk, vol goud
+
+     Waarom de onderlaag er moet zijn: goud op zand, goud op een lichte lucht en
+     goud op een waterval zijn alle drie licht-op-licht. Zonder donkere drager
+     verdwijnt de route daar -- en precies dáár lopen de mooiste stukken van de
+     tekeningen. Omgekeerd draagt het goud zichzelf op een donkere rots. Eén van
+     de twee werkt dus altijd, op elke wereld die er nog bij komt, zonder dat er
+     per thema iets wordt bijgesteld.
+
+     Hij stond eerder op rgba(22,6,42,.42) mét blur(2px). Dat is gemeten tegen
+     zand en waterval en het hield niets vast: 42% zwartpaars dat ook nog eens
+     uitgesmeerd wordt, is op een lichte ondergrond een grijze waas in plaats van
+     een rand. Nu vol genoeg om te dragen (78%) en scherp, zodat de streep een
+     streep blijft.
+
+     Ronde uiteinden blijven staan: de streepjes horen capsules te zijn, geen
+     blokjes, en de pruim eronder krijgt door dezelfde linecap vanzelf hetzelfde
+     ronde uiteinde. Pijlen zijn er bewust niet -- de genummerde haltes vertellen
+     de richting al.
+
+     FASE 4C -- de weg is een trap lager gezet, en dat is de grootste ingreep van
+     deze ronde. Hij stond op 15 eenheden vol --gold-accent, en dat maakte hem het
+     lúidste ding op elke kaart: één doorlopende, volgouden streep van onder naar
+     boven, over de hele tekening, terwijl de halte waar het om gaat één rondje is
+     van 10cqw. Op de Junglewereld en de Toverwereld was de weg met afstand het
+     eerste wat je zag -- niet de wereld, en niet waar je heen moest.
+
+     Drie dingen samen halen hem omlaag zonder hem te laten verdwijnen:
+       11 i.p.v. 15   de streep zelf is 27% dunner
+       17 i.p.v. 21   de pruim eronder gaat mee, zodat de contour even dik blíjft
+                      (3 eenheden per kant -- dat is wat hem op zand en sneeuw
+                      overeind houdt, en daar mocht niets vanaf)
+       --route-goud   gedempt goud i.p.v. --gold-accent, zodat vol goud weer
+                      uitsluitend "hier speel je" betekent
+     De nog niet afgelegde route ging van de volle wereldkleur naar 78% daarvan:
+     die helft van de weg is "nog te ontdekken" en hoeft niet even hard te praten
+     als het stuk dat je gelopen hebt.
+
+     Wat hetzelfde blijft: de geometrie, het streeppatroon en het feit dat het
+     gouden stuk precies bij de huidige halte ophoudt. Dát is wat de weg over
+     voortgang zegt, en dat werkte al. */
+  .tour-road-under { stroke: var(--route-onder); stroke-width: 17; }
+  .tour-road-bg { stroke: var(--w-road); stroke-width: 11; opacity: .68; }
+  .tour-road-fg { stroke: var(--route-goud); stroke-width: 11; }
+  /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
+     glas en klein: goud is voor spelen en verdiend, en dit mag nooit met de halte
+     waar je nú speelt concurreren. */
+  /* De wereldnaam in de kop is de ingang naar alle werelden. Twee zwevende pijlen
+     (één wereld per tik) waren daarvoor de navigatie; met zes werelden is dat vijf
+     tikken van de laatste naar de eerste, en ze lagen bovendien over de tekening.
+     De naam is toch al de plek waar je kijkt om te weten wáár je bent.
+
+     PS-11 -- de pil is twee zones in één knop: .wp-here (waar je bent) en
+     .wp-cta (waar de tik heen gaat). Eén <button>, dus altijd precies één
+     raakvlak; de twee zones zijn opmaak, geen aparte knoppen.
+
+     Refine -- .wp-cta droeg eerst nog een woord ("Werelden"). Dat maakte de pil
+     twee regels hoog op een telefoon, en een label náást een pictogram dat het
+     al zegt is uitleg die niemand vroeg. Het icoon (groter, zie hieronder) en de
+     lichtblauwe waas moeten het nu alleen doen.
+
+     Refine 2 -- de waas was een vlak dat de rand van de pil zelf volgde: leesbaar
+     als "iets anders hier", maar nog niet als een eigen ding. Nu is .wp-cta een
+     eigen klein capsuletje mét lucht eromheen (margin, geen randlijn meer) --
+     dat leest sneller als "hier zit een tweede knopje in" dan een vlak dat toch
+     aan de rest vastzit. */
+  .world-pick { display: inline-flex; align-items: stretch; gap: 0;
+    border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+    padding: 0; border-radius: var(--r-pill); }
+  .world-pick:active { transform: scale(.96); filter: brightness(1.15); }
+  @media (prefers-reduced-motion: reduce) { .world-pick:active { transform: none; } }
+  .wp-here, .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+  /* .wp-here mag krimpen, .wp-cta nooit: het icoon + de chevron zijn wat deze
+     pil als knop leest, dus die blijven altijd voluit staan. Wijkt er iets, dan
+     is dat de wereldnaam zelf (.wp-here-naam neemt de ellips), niet het icoon
+     ernaast en niet de cta-zone. min-width:0 zet flexbox's eigen bodem (nooit
+     kleiner dan de inhoud) opzij -- zonder dat blijft .wp-here altijd zijn volle
+     tekstbreedte opeisen, ook als de kolom (zie #screen-map hieronder) minder
+     overheeft. */
+  .wp-here { flex: 1 1 auto; min-width: 0; gap: 6px; padding: 0 8px 0 14px; }
+  .wp-here-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .wp-cta { flex: none; }
+  /* De rechterzone krijgt een lichte cyaan waas -- dezelfde familie als
+     --cyaan-tint/--cyaan-rand, de kleur die elders al "hier kijk je" zegt (een
+     gekozen tabblad, een categorie). Bewust géén goud: dat betekent op deze
+     kaart al iets anders ("hier speel je", zie .tour-stop.next). En bewust
+     gedempt, niet vol verzadigd: het moet lezen als een eigen chipje in de pil,
+     niet als een tweede, dwingender knop.
+
+     Rondom margin i.p.v. tegen de randen van .world-pick aan: dat legt de
+     capsule los van de rand (align-items:stretch op .world-pick rekt 'm
+     daardoor automatisch tot de hoogte min die marge, en houdt 'm verticaal
+     gecentreerd) en geeft de chevron aan de rechterkant vanzelf lucht in plaats
+     van tegen de buitenrand van de pil te staan. De inset-ring geeft het beetje
+     diepte dat een vlak vlak anders niet heeft, zonder een aparte schaduw of
+     gloed erbij te zetten. */
+  .wp-cta { gap: 4px; margin: 4px 4px 4px 1px; padding: 0 10px 0 9px; position: relative;
+    border-radius: var(--r-pill);
+    background: linear-gradient(180deg, rgba(56,189,248,.3), rgba(56,189,248,.12));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  /* ~26px: groot genoeg dat een kind de wereldbol meteen herkent, klein genoeg
+     dat hij niet met de wereldnaam concurreert -- die blijft de hoofdtekst. */
+  /* line-height 1.25 en niet 1: een emoji tekent breder dan zijn em-vierkant, en op
+     precies 1em wordt 🌍 boven en onder afgesneden -- een platte wereldbol. Opgemeten
+     op 17, 23, 24 en 26px: op 1 is de glyph steeds ~11% platter dan breed, op 1.25
+     is hij rond. Het kost niets aan de pil: die heeft een vaste hoogte en het icoon
+     staat er gecentreerd in, dus alleen het vakje óm de glyph groeit -- de pil, de
+     cta-capsule, de koprij en de diamantenpil staan op de pixel waar ze stonden.
+     Dezelfde reden als bij .rt-ico op Werelden; het is dezelfde globe. */
+  .wp-cta-ico { display: inline-block; font-size: 26px; line-height: 1.25; }
+  /* Wit en niet cyaan: het icoon en de waas dragen de kleur van deze hoek al,
+     en een piepklein pijltje in datzelfde gedempte blauw viel bij het toetsen
+     bijna weg. Gewoon de tekstkleur van de pil, subtiel door de opacity. */
+  .wp-chev { display: block; width: 8px; height: 13px; flex: none; opacity: .8; color: var(--c-white); }
+  /* Eénmalige knipoog (zie wpHintKlaar): een korte bootje + een zachte gloed,
+     met een startvertraging zodat hij ná de intro van de kaart komt en niet
+     erdoorheen. Nooit herhaald, dus geen keyframe die blijft lopen. */
+  @keyframes wpHintKnipoog {
+    0%, 100% { transform: scale(1); filter: none; }
+    35% { transform: scale(1.3); filter: drop-shadow(0 0 6px rgba(143,214,255,.9)); }
+    62% { transform: scale(.94); filter: none; }
+    82% { transform: scale(1.07); }
+  }
+  .wp-hint { animation: wpHintKnipoog .9s ease-out .6s 1; }
+  @media (prefers-reduced-motion: reduce) { .wp-hint { animation: none; } }
+  /* De weg terug. Hij stond in vol goud, en dat was een fout die je pas ziet als
+     je de kaart als geheel bekijkt: op dit scherm betekent goud "hier speel je",
+     en dat is de halte met de ster erop. Een gouden pil van 240px breed, midden
+     onderaan, is dan een tweede en veel gróter goud ding op hetzelfde scherm --
+     en het brengt je niet naar een show maar naar een andere wereld.
+
+     Nu donker glas: dezelfde vorm en dezelfde plek, maar de toon van de wereldpil
+     in de kop waar hij bij hoort. Hij blijft goed vindbaar (hij staat als enige
+     midden onderaan en verschijnt alleen als je ergens anders kíjkt dan waar je
+     speelt), maar hij vraagt niet meer als eerste je aandacht.
+
+     Iets smaller ook: kleinere letter en minder padding, zodat hij minder van de
+     tekening afdekt op de plek waar de onderste haltes staan. */
+  .world-back {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 6;
+    /* Strak tegen de navigatiebalk in plaats van er 12px boven te zweven. Die
+       twaalf pixels kwamen uit --nav-h (balk + wat eronder zit + 12 marge) en
+       waren hier niets waard: onder de pil zit al de balk, en boven de pil staat
+       de onderste rij haltes. Elke pixel lager is een pixel minder tekening en
+       minder halte die hij afdekt. */
+    bottom: calc(var(--nav-h, 96px) - 12px);
+    display: flex; align-items: center; gap: 5px; padding: 6px 12px;
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+    white-space: nowrap; max-width: calc(100% - 24px);
+    color: var(--c-white); cursor: pointer;
+    background: rgba(32,12,58,.72);
+    border: 1px solid rgba(255,255,255,.28); border-radius: var(--r-pill);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 3px 12px rgba(0,0,0,.42);
+  }
+  .world-back:active { transform: translateX(-50%) scale(.95); }
+  /* Een maatje kleiner op het kortste scherm -- zie de opmerking bij .mem-fab
+     hierboven: deze pil staat middenonder, en daar zet de standaardslinger zijn
+     eerste halte neer.
+     Sinds de letterladder gaat dat kleiner maken via de RUIMTE en niet meer via
+     de letter: de pil stond hier op 12px en de gewone stand op 13.5px, en dat
+     zijn allebei geen sport -- ze liggen anderhalve pixel uit elkaar en dat ziet
+     niemand. Nu leest hij in beide standen --tx-klein en wordt hij hier smal
+     gemaakt met minder lucht eromheen. Dat scheelt evenveel breedte, en het
+     scheelt een kind van vijf geen leesbaarheid. Controle 7f in
+     test/profiles.test.js meet wat de pil van de onderste halte afdekt. */
+  @media (max-height: 620px) {
+    /* Twee pixels lager ook. Dat is dezelfde afweging als bij de bottom hierboven,
+       en hier telt hij dubbel: onder de pil zit de balk (die niets afdekt), boven
+       de pil de onderste halte (die alles afdekt). De marge staat daarmee ruimer
+       dan vóór de ladder, en niet net-aan. */
+    .world-back { padding: 3px 8px; gap: 4px; bottom: calc(var(--nav-h, 96px) - 14px); }
+  }

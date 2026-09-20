@@ -1,0 +1,287 @@
+  /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
+  .trophy-pop-overlay {
+    position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+    background: rgba(20,4,40,.45); animation: popFade .25s ease; cursor: pointer;
+  }
+  .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
+  .trophy-pop { padding: 22px 30px; }
+  .tp-head { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
+  .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.8)); }
+  .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
+  .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
+  @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+
+  /* ---- Ster-status omhoog: dé grote mijlpaal. Het nieuwe rang-icoon knalt naar
+     voren met een uitbarsting van datzelfde icoon eromheen. ---- */
+  .rankup-overlay {
+    position: fixed; inset: 0; z-index: 95; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: radial-gradient(circle at 50% 44%, rgba(74,20,140,.5), rgba(20,4,40,.66)); animation: popFade .3s ease;
+  }
+  .rankup-overlay.closing { animation: popFade .3s ease reverse forwards; }
+  .rankup-core { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+  .rankup-sparks { position: absolute; left: 50%; top: 50px; width: 0; height: 0; }
+  .rankup-spark { position: absolute; left: 0; top: 0; font-size: 30px; opacity: 0; animation: rankSpark 1s ease-out both; }
+  .rankup-badge { font-size: 94px; line-height: 1; filter: drop-shadow(0 6px 16px rgba(0,0,0,.55)); animation: rankBadgePop .7s cubic-bezier(.2,1.5,.4,1) both; }
+  .rankup-label { font-size: var(--tx-label); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-light); text-shadow: var(--op-kunst-ink); animation: rankTextRise .5s ease .28s both; }
+  .rankup-name { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); text-shadow: var(--goud-ink); animation: rankTextRise .5s ease .4s both; }
+  @keyframes rankBadgePop { 0% { transform: scale(0) rotate(-45deg); } 60% { transform: scale(1.2) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+  @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes rankSpark {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+    22% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.05); }
+  }
+
+  /* ---- Wereldfeest (fase 4D.1): wereld uit, en/of overal drie sterren ----
+     Eén laag voor allebei. De vorm is met opzet die van een kaartje en niet die
+     van de trofee-onthulling: er wordt hier niets geopend, er wordt iets láten
+     zien. Vandaar geen kist, geen stralenkrans en geen spanning -- alleen wat je
+     nu hebt, met een confetti-kanon eromheen (dat komt uit confettiBurst, niet
+     uit de CSS).
+
+     Eén regel of twee, en de tweede is niet belangrijker dan de eerste: ze staan
+     onder elkaar in dezelfde vorm, want "je hebt een spulletje" en "je wereld is
+     perfect" zijn twee even grote dingen die toevallig samenvielen. */
+  .wereld-feest-overlay {
+    position: fixed; inset: 0; z-index: 96; display: flex; align-items: center; justify-content: center;
+    padding: 16px; cursor: pointer;
+    background: radial-gradient(circle at 50% 42%, rgba(74,20,140,.5), rgba(20,4,40,.66)); animation: popFade .3s ease;
+  }
+  /* pointer-events uit zodra hij wegfadet: die 300 ms zijn anders een laag glas
+     over de knop waar het kind net naartoe wilde */
+  .wereld-feest-overlay.closing { animation: popFade .3s ease reverse forwards; pointer-events: none; }
+  .wereld-feest { width: min(92vw, 360px); padding: 18px 18px 14px; }
+  .wf-kop { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); line-height: 1.1;
+    text-shadow: var(--goud-ink); }
+  .wf-wereld { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); margin-top: 3px; }
+  .wf-rijen { display: flex; flex-direction: column; gap: 8px; margin: 13px 0 4px; }
+  /* Een regel is een plaatje links en twee woorden rechts -- links uitgelijnd, want
+     twee gecentreerde regels onder elkaar hebben geen gemeenschappelijke lijn en
+     lezen dan als twee losse plaatjes. */
+  .wf-rij { display: flex; align-items: center; gap: 11px; text-align: left;
+    padding: 9px 12px; border-radius: var(--r-sm);
+    background: rgba(var(--goud-rgb),.13); border: 2px solid var(--gold-accent); }
+  /* Iets breder dan het vakje in de kleedkamer (52), en dat is fase 4D.2: de
+     getekende beloningen zijn niet allemaal even breed als hoog -- de
+     bladerkrans is bijna twee keer zo breed als hij hoog is. In een raster van
+     kaartjes is daar plaats voor, in één regel naast een tekst niet. */
+  .wf-beeld { flex: none; width: 72px; display: flex; align-items: center; justify-content: center; }
+  /* het item leent het miniatuur uit de kleedkamer: één tekening, twee plekken */
+  .wf-beeld .item-thumb { margin: 0; width: 72px; }
+  .wf-trofee {
+    position: relative; display: grid; place-items: center; width: 46px; height: 46px;
+    border-radius: 50%; font-size: 26px; line-height: 1;
+    /* exact hetzelfde medaillon als .pw-medal in de kast, alleen kleiner: de
+       wereldkleuren van binnen, de gouden ring eromheen, de ster in de hoek. */
+    background:
+      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
+      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
+    border: 2px solid var(--gold-accent);
+    box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 12px rgba(var(--goud-rgb),.45);
+  }
+  /* dezelfde ster in dezelfde hoek als op het medaillon in de kast (.pw-medal) */
+  .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
+    font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .wf-tekst b { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
+  .wf-tekst span { font-size: var(--tx-label); font-weight: 700; color: var(--c-white); opacity: .92;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
+  .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
+  .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
+  @media (prefers-reduced-motion: reduce) {
+    .wereld-feest-overlay { animation: none; }
+    .wereld-feest .wf-rij { animation: none; }
+  }
+
+  /* ===== Trofee-feestje, versie "dopamine" =====
+     Vier momenten: (1) de klare kaart lokt met glans + wiebel, (2) de tik geeft
+     een ripple, (3) het openen is een schatkist die openknalt met stralen,
+     schokgolf en een confetti-kanon, (4) de behaalde kaart glimt kort na. */
+
+  /* (1) Klare trofee: een glans-veeg glijdt over de kaart + het cadeau wiebelt */
+  .trophy-card.ready { overflow: hidden; }
+  .trophy-card.ready::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
+    transform: translateX(0) skewX(-18deg);
+    animation: shineSweep 2.6s ease-in-out infinite;
+  }
+  /* FASE 6B -- dezelfde veeg, maar op transform in plaats van op left.
+
+     Hij liep van left:-60% naar left:130%: 190% van de kaartbreedte, en left is
+     een opmaakwaarde, dus de browser rekende de opmaak van die kaart bij élk
+     beeldje opnieuw uit. Met vier klaarliggende trofeeën in beeld werd dat 29 keer
+     per seconde een layout op een scherm waar verder niets beweegt -- de kaart
+     doet er in dezelfde drie seconden nul. Gemeten met de processor acht keer
+     geremd: 123 ms layout per drie seconden. Geen enkel beeldje viel daardoor weg,
+     ook niet op 8x -- dit is dus geen haperingsbug maar werk dat nergens voor
+     nodig is, en het groeit mee met het aantal trofeeën dat klaarligt.
+
+     De veeg is 45% van de kaart breed, dus die 190% van de kaart is 422,2% van de
+     veeg zelf (procenten in translateX gaan over het element zelf). De skew komt
+     erachteraan en staat op dezelfde plek in de keten als eerst, dus het beeld is
+     pixel voor pixel hetzelfde -- nagemeten op zes standen van de animatie. */
+  @keyframes shineSweep {
+    0% { transform: translateX(0) skewX(-18deg); }
+    55%, 100% { transform: translateX(422.222%) skewX(-18deg); }
+  }
+  /* ook het medaillon van een klaarliggende perfecte wereld wiebelt: de kaart ziet
+     er anders uit, maar "hier ligt iets voor je klaar" moet overal hetzelfde zeggen */
+  .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+  @keyframes giftWiggle {
+    0%, 58%, 100% { transform: rotate(0) translateY(0); }
+    66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
+    82% { transform: rotate(-5deg) translateY(-2px); } 90% { transform: rotate(3deg); }
+  }
+
+  /* (2) Tik-ripple: een lichtkringetje dat vanaf de vingerplek uitdijt */
+  .tap-ripple {
+    position: fixed; z-index: 93; pointer-events: none; width: 14px; height: 14px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--goud-glans-rgb),.85), rgba(var(--goud-glans-rgb),0) 70%);
+    transform: translate(-50%, -50%) scale(0); animation: tapRipple .5s ease-out forwards;
+  }
+  @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
+
+  /* (3) Openen: schatkist-moment met stralen, schokgolf en emoji-inslag */
+  .tp-stage { position: relative; width: 150px; height: 118px; margin: 6px auto 2px; display: flex; align-items: center; justify-content: center; }
+  .tp-chest { position: absolute; z-index: 2; font-size: 74px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
+  @keyframes chestShake { 0%,100% { transform: rotate(-5deg) translateY(0); } 25% { transform: rotate(5deg) translateY(-2px); } 50% { transform: rotate(-4deg); } 75% { transform: rotate(4deg) translateY(-2px); } }
+  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.85)); opacity: 0; transform: scale(.2); }
+  .tp-rays {
+    position: absolute; width: 210px; height: 210px; z-index: 1; opacity: 0; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(var(--goud-glans-rgb),.5) 0deg 9deg, transparent 9deg 21deg);
+    -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
+  }
+  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+  .trophy-pop .tp-name, .trophy-pop .tp-joepie { opacity: 0; }
+  .trophy-pop.burst .tp-chest { animation: chestBurst .4s ease forwards; }
+  @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
+  /* Onthulling én daarna: het emoji verschijnt met een bounce en blijft dan zacht
+     wiegen zolang de trofee 'open' staat (tot je sluit). */
+  .trophy-pop.burst .tp-emoji { animation: emojiReveal .55s cubic-bezier(.2,1.5,.4,1) .12s forwards, emojiBob 2.6s ease-in-out .75s infinite; }
+  @keyframes emojiReveal { 0% { opacity: 0; transform: scale(.2) rotate(-12deg); } 60% { opacity: 1; transform: scale(1.18) rotate(5deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+  @keyframes emojiBob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } }
+  /* De lichtstralen blijven traag ronddraaien terwijl de trofee open is. */
+  .trophy-pop.burst .tp-rays { animation: raysReveal .5s ease .12s forwards, raysSpin 10s linear .12s infinite; }
+  @keyframes raysReveal { 0% { opacity: 0; } 100% { opacity: .5; } }
+  @keyframes raysSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  .trophy-pop.burst .tp-ring { animation: ringOut .55s ease-out .12s forwards; }
+  @keyframes ringOut { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3.4); } }
+  .trophy-pop.burst .tp-name { animation: rankTextRise .45s ease .25s both; }
+  .trophy-pop.burst .tp-joepie { animation: rankTextRise .45s ease .38s both; }
+
+  /* Confetti-kanon: stukjes vliegen vanuit één punt naar buiten (met lichte zwaartekracht) */
+  .burst-bit { position: fixed; z-index: 92; pointer-events: none; font-size: 24px; will-change: transform, opacity; animation: burstOut .95s cubic-bezier(.15,.6,.3,1) forwards; }
+  @keyframes burstOut {
+    0% { transform: translate(-50%,-50%) scale(.3); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; }
+  }
+
+  /* (4) Net behaald: een eenmalige gouden shimmer over de kaart. Blijft binnen de
+     kaart (inset:0 + verschuivende gradient); z-index 2 houdt 'm onder een eventueel
+     hoekbadge (het slotje staat op z-index 3). */
+  .trophy-card.just-claimed::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.7) 50%, transparent 62%);
+    background-size: 250% 100%; background-position: 120% 0;
+    animation: claimShimmer .9s ease-out forwards;
+  }
+  @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .trophy-card.ready, .ready-open { animation: none; }
+    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
+    .trophy-card.just-claimed::after { animation: none; }
+
+    .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
+    .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
+    .rankup-badge, .rankup-label, .rankup-name { animation: none; }
+    .rankup-spark { display: none; }
+  }
+  /* geel/goud stipje op het Trofeeën-tabblad zolang er iets nieuws in de kast ligt —
+     zelfde kleurtaal als de rest van de trofee-elementen (banner, ready-kaart) */
+  .nav-item { position: relative; }
+  .nav-item .nav-dot {
+    position: absolute; top: 3px; right: calc(50% - 22px); width: 12px; height: 12px;
+    border-radius: 50%; background: var(--gold-accent); border: 2px solid var(--c-white); display: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  }
+  .nav-item.has-new .nav-dot { display: block; }
+  @media (max-width: 520px) {
+    /* gelijke flexibele zijkolommen: de titel blijft écht in het schermmidden,
+       ook nu de linkercel leeg is (met auto|1fr|auto hing hij ~47px naar links) */
+    .screen-header { grid-template-columns: 1fr auto 1fr; gap: 8px; }
+    .screen-header .header-title { font-size: var(--tx-sub); overflow: hidden; text-overflow: ellipsis; }
+  }
+
+  /* ---- Level einde ---- */
+  /* verticaal gecentreerd via veilige auto-marges (knipt nooit af bij overloop) */
+  /* Wit glas op 14% was net genoeg om op een vlak verloop te bestaan, maar het
+     is geen oppervlak: de gouden pil, de drie vakjes en de juichtekst zweefden
+     er meer bovenop dan erin. Nu een echt donker paneel in dezelfde taal als de
+     plakkende kop -- dat leest ook straks nog, als er licht achter staat. */
+  .result-card {
+    background: var(--paneel);
+    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
+    border: 1.5px solid var(--paneel-rand);
+    box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
+    border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
+    width: 100%; max-width: var(--kolom); margin: auto 0;
+  }
+  /* de titel is hier de kop van een kaart, niet van een scherm: kleiner dan de
+     .title elders, zodat de sterren eronder de blikvanger blijven */
+  .result-card .title { font-size: var(--tx-feest); margin: 2px 0 0; }
+  /* eigen klasse i.p.v. de vorige losse inline width/height -- net als de andere
+     paspop-scènes (.show-stage, en .spiegel in de kleedkamer) nu met eigen
+     smalle-scherm-maat, zodat 'm ook op een laag/liggend toestel nooit
+     afgesneden wordt */
+  .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
+  .end-text { font-size: var(--tx-body); }
+  .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
+  /* korte schermen: het eindscherm moet ook op een 320x568 in één beeld passen --
+     het is een vier-seconden-moment, daar hoort geen scrollen bij */
+  @media (max-height: 740px) {
+    .result-card { padding: 11px 16px 10px; }
+    .result-card .title { font-size: var(--tx-feest-kort); }
+    .end-stage { width: 104px; height: 116px; }
+    .result-stars { font-size: 36px; letter-spacing: 2px; margin: 3px 0 0; }
+    .end-text { font-size: var(--tx-label); }
+    .earn-line { gap: 6px; margin: 7px 0 8px; }
+    .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
+    .end-milestone { min-height: 30px; margin-bottom: 8px; }
+    .end-actions { gap: 7px; }
+    .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
+    .end-actions .btn.soft { font-size: var(--tx-label); padding: 9px 16px; }
+    .gold-pill { font-size: var(--tx-label); padding: 6px 13px; min-height: 30px; }
+  }
+  .result-stars span { display: inline-block; }
+  /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
+  .result-stars .dim { opacity: .25; filter: grayscale(1); }
+  /* Opbrengst: altijd dezelfde twee vakjes, altijd in dezelfde volgorde en
+     dezelfde breedte -- 💎 verdiend · ⭐ sterren. Het was een rij losse pillen
+     die op een telefoon in 1/2/1 afbrak, met wisselend aantal chips, plús een
+     rangpil en een trofeebanner erbij: zes gouden/gekleurde dingen onder elkaar
+     op precies het scherm dat één ding moet vieren. Een nul tonen mag.
+     (Het derde vakje was 👏 publiek, bij de publieksmeter; die is vervallen.) */
+  .earn-line { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0 12px; }
+  .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: var(--tx-body); font-weight: 700; line-height: 1;
+    background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
+  /* De twee vakjes dragen de twee accenten van de app, elk in zijn eigen rol: het
+     blauw van de diamant (de munt) en het goud van de ster (wat je verdiende). */
+  .earn-chip.dia { background: rgba(41,182,246,.32); }
+  .earn-chip.star { background: rgba(var(--goud-rgb),.26); }
+  /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een nieuwe
+     ster-status of een trofee die klaarligt, allebei de gouden pil. De derde stand
+     ("nog 13 ⭐ tot ...", gestippeld en stil) is weg; zie endLevel. Is er niets te
+     vieren, dan houdt het vak ook geen ruimte bezig: de sterren en de knop schuiven
+     dan gewoon naar elkaar toe, in plaats van om een leeg vakje heen te staan. */
+  .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .end-milestone:empty { display: none; }
+  .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .end-actions .btn { width: 100%; max-width: 320px; }
+  .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
+

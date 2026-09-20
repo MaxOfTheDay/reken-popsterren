@@ -11,15 +11,16 @@ een oude tablet in een woonkamer, zonder server, zonder netwerk en zonder
 update-ritueel.
 
 Wat er wél is, is een bouwstap om het te schríjven: de JavaScript staat in
-`src/` en wordt met `npm run bouw` het scriptblok van `index.html`. Dat ene blok
-was dertienduizend regels geworden, en dat is de grens waarop je geen stuk meer
-kunt openslaan zonder de rest mee te dragen. Het uitgeleverde bestand verandert
-er niet door — het blijft één bestand dat je opent, ook vanaf `file://`.
+`src/` en het stijlblad in `src/css/`, en `npm run bouw` zet ze in `index.html`.
+Die twee blokken waren dertienduizend en zevenduizend regels geworden, en dat is
+de grens waarop je geen stuk meer kunt openslaan zonder de rest mee te dragen.
+Het uitgeleverde bestand verandert er niet door — het blijft één bestand dat je
+opent, ook vanaf `file://`.
 
 | bestand | wat het is |
 |---|---|
-| `src/*.js` | **de code die je schrijft**, in stukken die op volgnummer aan elkaar komen. Wordt met `npm run bouw` het scriptblok van `index.html` |
-| `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio. Het scriptblok erin komt uit `src/` — bewerk het daar |
+| `src/*.js`, `src/css/*.css` | **wat je schrijft**, in stukken die op volgnummer aan elkaar komen. Wordt met `npm run bouw` het script- en stijlblok van `index.html` |
+| `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio. Het stijl- en scriptblok erin komen uit `src/` — bewerk ze daar |
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
@@ -75,14 +76,14 @@ oriënteren; de rest staat als commentaar bij de code zelf.
 
 ## Waar dingen staan
 
-De code staat in `src/`; het stijlblad en de markup staan in `index.html` zelf.
-Het spel zelf is `src/20-app.js`, en bovenaan dát bestand staat een
-inhoudsopgave die álle secties noemt.
+De code staat in `src/`, het stijlblad in `src/css/`, en de markup in
+`index.html` zelf. Het spel zelf is `src/20-app.js`, en bovenaan dát bestand
+staat een inhoudsopgave die álle secties noemt.
 Zoek op de sectienaam (bijvoorbeeld `= Telmodus` of `= De hele tournee`) om
 ergens te komen; regelnummers staan er bewust niet bij, want die verouderen
 meteen. Het stijlblad heeft dezelfde soort koppen.
 
-Bewerk het scriptblok in `index.html` niet met de hand: dat is het resultaat van
+Bewerk het stijl- en scriptblok in `index.html` niet met de hand: dat is het resultaat van
 `npm run bouw` en het wordt bij de eerstvolgende bouw overschreven. `npm run
 check` zegt het als de twee uit elkaar zijn gelopen.
 
@@ -97,7 +98,7 @@ check` zegt het als de twee uit elkaar zijn gelopen.
 | een wereldtekening laat maken | `docs/WORLD-ART-BRIEF.md` |
 | aan de prijzen of de economie komt | `docs/DIAMANTEN.md` |
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
-| aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan het stijlblad in `index.html`, en `docs/UITBREIDEN.md` |
+| aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan `src/css/00-afspraak.css`, en `docs/UITBREIDEN.md` |
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
 | het logo of het app-icoon vervangt | `docs/MERK.md` |
 
