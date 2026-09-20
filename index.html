@@ -4274,6 +4274,50 @@
     0%, 100% { opacity: .68; transform: scale(1); }
     50%      { opacity: .84;   transform: scale(1.035); }
   }
+  /* ADEMEN DOET HIJ ALLEEN ALS ER VERDER NIETS GEBEURT. Loopt er een wereldreis
+     (de camera klimt, zie .wereld-reist), ligt er een laag overheen -- rangfeest,
+     wereldfeest, trofee, ster-status, allemaal .rp-overlay -- of is de kaart zelf
+     aan het vertrekken of aan het wegvliegen naar Werelden, dan staat hij stil.
+
+     Pauzeren en niet uitzetten: bij 'animation: none' springt hij naar zijn
+     ruststand en bij het oppakken weer terug, en zo'n naad is in dit bestand al
+     eens duur betaald (zie het wiegen en de danspasjes). Op paused blijft hij
+     staan waar hij stond en gaat hij daar weer verder.
+
+     Twee gevallen uit de lijst staan hier niet bij, want die regelen zichzelf al:
+     tijdens een reis over de route krijgt géén enkele halte 'next' (zie
+     renderTourMap, waar 'travelling' dat afvangt), en een scherm dat niet actief
+     is staat op display:none en draait sowieso geen animaties. */
+  #screen-map.wereld-reist .tour-stop.next::after,
+  #screen-map.wegvallend .tour-stop.next::after,
+  #screen-map.vlucht-weg .tour-stop.next::after,
+  body:has(.rp-overlay:not(.closing)) .tour-stop.next::after { animation-play-state: paused; }
+  /* DE AANKOMSTPULS. Kom je gewoon op de kaart binnen, dan licht de halte waar je
+     heen moet één keer wat sterker op: één zachte uitdijende gloed die meteen weer
+     wegvalt. Geen veer, geen sprong, en het rondje zelf verroert zich niet -- dit
+     is puur de gloed eromheen.
+
+     Hij staat op een eigen laagje en niet op de ademende gloed hierboven, en dat
+     is met opzet: twee animaties op hetzelfde element vechten om dezelfde
+     eigenschappen, en zodra de ene afloopt springt de andere naar zijn eigen
+     stand. Deze laag begint én eindigt op niets, dus hij telt er alleen bij op
+     zolang hij loopt en er valt achteraf niets te verrekenen.
+
+     .stop-body maakt zijn eigen stapelcontext (hij draagt een transform), dus
+     z-index -1 legt hem net achter het rondje -- op dezelfde 5,15cqw als het hart
+     daarvan, precies waar de ademende gloed ook ligt. */
+  .tour-stop.next .stop-body::after {
+    content: ''; position: absolute; z-index: -1; pointer-events: none; opacity: 0;
+    left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--warm-licht-rgb),.3), rgba(var(--warm-licht-rgb),.1) 52%, transparent 74%);
+  }
+  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 620ms var(--ease-uit); }
+  @keyframes haltePuls {
+    0%   { opacity: 0; transform: scale(.8); }
+    35%  { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 0; transform: scale(1.34); }
+  }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
      ware telefoongrootte niet stand: naast een perfecte halte stonden dan twee
@@ -5217,8 +5261,13 @@
     .tour-hero .hero-vonk { display: none; }
     /* De spotlight blíjft -- hij is een kleur op de grond, geen beweging, en juist
        zonder de ademende gloed is hij wat er nog overblijft om "hier speel je"
-       te zeggen. Alleen het ademen ervan gaat uit. */
+       te zeggen. Alleen het ademen ervan gaat uit. Op .9 staat hij bovendien
+       sterker dan waar het ademen ooit komt (dat gaat van .68 naar .84), dus wie
+       geen beweging wil ziet de huidige halte juist het duidelijkst. */
     .tour-stop.next::after { animation: none; opacity: .9; }
+    /* En de aankomstpuls blijft helemaal weg: die is een moment, en een moment
+       zonder beweging bestaat niet. */
+    .tour-stop.next .stop-body::after { display: none; }
     /* De indrukveer gaat uit; de tik zelf blijft voelbaar via het filter op .dot,
        dat geen beweging is. */
     .tour-stop .stop-body, .tour-stop:active .stop-body { transition: none; }
@@ -12223,7 +12272,18 @@ const GROET = {
   pas: { cls: 'move-wave' },
   duur: 950,   // dezelfde als dance/tapDance: mvWave duurt .9s
 };
-let kaartBezocht = 0, groetTimer = null;
+let kaartBezocht = 0, groetTimer = null, pulsTimer = null;
+/* Eén keer de halte laten oplichten waar je heen moet. Alleen de huidige halte
+   heeft die laag (zie .tour-stop.next .stop-body::after); staat er geen -- je
+   kijkt in een wereld die je al uit hebt -- dan gebeurt er niets. */
+function haltePuls() {
+  const map = $('tour-map');
+  const halte = map && map.querySelector('.tour-stop.next');
+  if (!halte || !$('screen-map').classList.contains('active')) return;
+  halte.classList.remove('aangekomen');
+  void halte.offsetWidth;                 // herstart afdwingen bij opnieuw binnenkomen
+  halte.classList.add('aangekomen');
+}
 function kaartGroet(mag) {
   const nu = Date.now();
   const rustig = nu - kaartBezocht > GROET.koeltijd;
@@ -12231,15 +12291,26 @@ function kaartGroet(mag) {
   // Een nieuwe aankomst annuleert altijd een zwaai die nog moest beginnen: er is
   // er hoogstens één onderweg, en er blijft dus nooit een tweede timer hangen.
   clearTimeout(groetTimer);
-  groetTimer = null;
+  clearTimeout(pulsTimer);
+  groetTimer = pulsTimer = null;
   /* Beperkte beweging: dan gebeurt er hier niets, ook geen klasse die er even
      op en weer af gaat. Een begroeting is karakter en geen bericht -- er valt
      dus niets te vervangen, en de ster staat precies zoals ze anders ook staat
      (zie de bewegingsafspraak bij zetPas). */
   if (!mag || !rustig || motionOff()) return;
-  /* Pas als de schermwissel tot rust is. Zwaaien terwijl de kaart nog aan het
-     opkomen is leest als één brij; op MOTION.totaal staat het scherm stil en is
-     de zwaai het enige wat er nog beweegt. */
+  /* De halte gaat vóór de zwaai, en dat is de rangorde van dit scherm: eerst weet
+     je wáár je bent en waar je heen moet, en pas daarna zegt zij hallo. Op
+     MOTION.kom is de kaart klaar met opkomen; de zwaai volgt een tel later. Ze
+     lopen dus niet samen op, en de puls is ook los van haar de zachtste van de
+     twee -- een gloed die opkomt en wegvalt, tegenover een pop die beweegt.
+
+     Hij hangt aan dezelfde poort als de zwaai (zie de aanroep onderaan goMap) en
+     dus aan dezelfde koeltijd: kom je uit een show, ligt er een reis klaar, gaat
+     er een wereld open of koos je er net een op de reis, dan legt díe beweging
+     al uit waarom je hier bent en hoort er niets overheen. Na een level-up huppelt
+     de ster naar de volgende halte -- dát is de aankomst, en de nieuwe halte
+     ademt daarna gewoon verder zonder er nog een puls bovenop. */
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.kom);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
@@ -12267,7 +12338,8 @@ function kaartGroet(mag) {
    de tabbladbalk, de terugknop van het toestel, de wereldpil. */
 function kaartGroetStop() {
   clearTimeout(groetTimer);
-  groetTimer = null;
+  clearTimeout(pulsTimer);
+  groetTimer = pulsTimer = null;
   const map = $('tour-map');
   const el = map && map.querySelector('.tour-hero .avatar-holder.dancing');
   if (el) stilStaan(el);
