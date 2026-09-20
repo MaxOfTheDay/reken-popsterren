@@ -9857,6 +9857,8 @@ function show(id) {
   // De eerste aanblik staat er zonder fade (zie body.start); vanaf de eerste
   // schermwissel fadet alles weer zoals het hoort.
   document.body.classList.remove('start');
+  // De begroeting van de kaart hoort bij de kaart -- zie kaartGroetStop.
+  if (id !== 'screen-map') kaartGroetStop();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -11603,6 +11605,24 @@ function kaartGroet(mag) {
     if (!zetPas(el, GROET.pas)) return;
     setTimeout(() => stilStaan(el), GROET.duur);
   }, MOTION.totaal);
+}
+/* EN HIJ STOPT ALS JE WEGGAAT. Een zwaai hoort bij de kaart; loopt hij door
+   terwijl je er al vanaf bent, dan staat er 950ms lang een pop te bewegen op een
+   scherm dat niemand ziet. Dat is niet alleen onzin maar ook duur: precies in
+   dat raam kan de vlucht naar Werelden beginnen, en die hangt van élk beeldje af
+   (zie wereldVlucht -- vijfentwintig vooraf uitgerekende standen die samen één
+   beweging moeten zijn). Opgemeten: met een zwaai eroverheen stond de tekening
+   op het eerste beeldje van de vlucht al 18% op weg, dus die beweging begon
+   letterlijk niet bij het begin.
+
+   Vandaar dat show() dit aanroept en niet goMap: weglopen kan langs elke kant --
+   de tabbladbalk, de terugknop van het toestel, de wereldpil. */
+function kaartGroetStop() {
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  const map = $('tour-map');
+  const el = map && map.querySelector('.tour-hero .avatar-holder.dancing');
+  if (el) stilStaan(el);
 }
 
 function goMap(vanLvl) {
