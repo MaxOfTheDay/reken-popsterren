@@ -2,10 +2,11 @@
   "name": "reken-popsterren",
   "version": "1.0.0",
   "private": true,
-  "description": "Rekensterren — rekenspel voor kinderen (single-file PWA). Deze package.json is alleen voor de tests; de app zelf heeft geen build-stap en laadt niets uit node_modules.",
+  "description": "Rekensterren — rekenspel voor kinderen (single-file PWA). De JavaScript wordt uit src/ samengesteld met `npm run bouw`; het spel zelf draait op index.html alleen, zonder bouwstap en zonder node_modules.",
   "scripts": {
     "test": "npm run check && node test/counting.test.js && node test/maths.test.js && node test/profiles.test.js && node test/ouder.test.js && node test/rondgang.test.js && node test/voortgang.test.js && node test/reis.test.js && node test/vlucht.test.js && node test/beloning.test.js && node test/hub.test.js && node test/onderrand.test.js && node test/studio.test.js",
     "check": "node test/inhoud.test.js && node test/kern.test.js && node test/saves.test.js && node test/kleedkamer.test.js",
+    "bouw": "node test/bouw.js",
     "test:inhoud": "node test/inhoud.test.js",
     "test:kern": "node test/kern.test.js",
     "test:saves": "node test/saves.test.js",
