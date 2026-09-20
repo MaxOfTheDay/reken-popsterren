@@ -12879,6 +12879,53 @@ function goMap(vanLvl) {
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
   $('mem-fab').style.display = memOn ? 'flex' : 'none';
   if (memOn) $('mem-fab-pay').textContent = memPayout(p);
+  const o = kaartOpdracht(p, vanLvl, uitShow);
+  const travel = o.travel, gekozen = o.gekozen, thuis = o.thuis, onthul = o.onthul;
+  markWorldSeen(p, thuis);
+  showWorld(onthul ? onthul.van : thuis, travel ? travel.from : 0);
+  show('screen-map');
+  /* .komt-op gaat er meteen hierna op, en niet pas bij de animatie. Die komt
+     namelijk uit de rAF van renderTourMap, één beeldje later, en in dat ene
+     beeldje heeft .screen.active zijn eigen fade (screenIn) al aangezet -- dan
+     stond de kaart toch één beeldje half doorzichtig met de app-achtergrond
+     erdoorheen. Eén beeldje, maar wel precies het beeldje dat deze hele regel moet
+     wegnemen. (Het moet ná show(): die haalt de klasse van álle schermen af.)
+     Zie kaartKomtOp en de regel bij MOTION. */
+  $('screen-map').classList.add('komt-op');
+  kaartVertrek(vorige, gekozen);
+  /* Pas hierna, en niet in een requestAnimationFrame: renderTourMap kon zijn
+     eigen afrondende werk (scrollstand, --kop-h/--nav-h, kaartTerugZoom) niet
+     synchroon doen, want toen het draaide stond het scherm nog niet .active en
+     leverde elke meting 0 op. Nu, een paar regels later in dezelfde taak, wél
+     -- en dat is nog steeds vóór de browser iets van dit beeldje verft. Moet
+     wel ná kaartVertrek hierboven staan: die leest kaartFocus om te zien of de
+     zaal moet wijken, en kaartTerugZoom (via tourMapVoltooi) verbruikt diezelfde
+     kaartFocus. Verwissel die twee regels en de terug-grendel wordt gezet op een
+     vlag die al leeg is. Zie de regel bij tourMapVoltooi en bij renderTourMap. */
+  if (tourMapVoltooi) { const v = tourMapVoltooi; tourMapVoltooi = null; v(); }
+  if (travel) requestAnimationFrame(() => runTravel(travel));
+  else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
+  /* En dan pas: is de kaart zélf de aankomst? Alle vier de uitzonderingen staan
+     hierboven al uitgerekend, dus de regel is hier één regel lang. De laatste
+     voorwaarde vangt "nog eens op Kaart tikken terwijl je er al staat": dat is
+     geen aankomst. Zie de hele redenering bij kaartGroet. */
+  kaartGroet(!uitShow && !travel && !onthul && gekozen == null && vorige !== $('screen-map'));
+}
+/* Wat moet déze kaart doen?
+
+   Vier opdrachten liggen klaar als briefje, en dit is de enige plek die ze
+   opmaakt: gelezen, meteen op null, en verder werken met de kopie. Wat eruit
+   komt zegt precies één ding -- welke wereld er in beeld komt en wat er daarna
+   nog moet gebeuren -- en verandert verder niets aan het scherm.
+
+   Stond hier eerder als zeventig regels midden in goMap. Ze horen bij elkaar
+   (alle vier gaan ze over dezelfde vraag) en ze horen niet bij de rest (die
+   gaat over tekenen en bewegen), dus staan ze nu apart. Er is geen regel aan
+   veranderd; wel is nu in één oogopslag te zien dat de vier elkaar uitsluiten.
+
+   netAf wordt hier soms gewist en niet gezet -- goMap zet hem vlak hiervoor, en
+   alleen de reis-binnen-een-wereld neemt hem weer weg. Zie de uitleg daar. */
+function kaartOpdracht(p, vanLvl, uitShow) {
   /* De onthulling van een nieuwe wereld hoort bij precies één sprong: die van p.level
      zoals hij er nú staat. Klopt dat niet meer (opslag opnieuw geladen, ster gewisseld,
      of een reis die is blijven liggen), dan opent de kaart gewoon zonder reis -- nooit
@@ -12947,17 +12994,18 @@ function goMap(vanLvl) {
      dat niet, worldsSeen wél. */
   const onthul = (!travel && !uitShow && gekozen == null && thuis > 0 && !worldSeen(p, thuis) && worldSeen(p, thuis - 1))
     ? { van: thuis - 1, naar: thuis } : null;
-  markWorldSeen(p, thuis);
-  showWorld(onthul ? onthul.van : thuis, travel ? travel.from : 0);
-  show('screen-map');
-  /* .komt-op gaat er meteen hierna op, en niet pas bij de animatie. Die komt
-     namelijk uit de rAF van renderTourMap, één beeldje later, en in dat ene
-     beeldje heeft .screen.active zijn eigen fade (screenIn) al aangezet -- dan
-     stond de kaart toch één beeldje half doorzichtig met de app-achtergrond
-     erdoorheen. Eén beeldje, maar wel precies het beeldje dat deze hele regel moet
-     wegnemen. (Het moet ná show(): die haalt de klasse van álle schermen af.)
-     Zie kaartKomtOp en de regel bij MOTION. */
-  $('screen-map').classList.add('komt-op');
+  return { travel: travel, gekozen: gekozen, thuis: thuis, onthul: onthul };
+}
+/* Het scherm waar je vandaan komt, en hoe het vertrekt.
+
+   Twee takken die elkaar uitsluiten: terug uit een show (de zaal wijkt, en de
+   terug-grendel gaat dicht) of een gewone wissel (de kaart komt ondoorzichtig
+   op en het vorige scherm dooft). Een reis heeft geen van beide nodig --
+   reisNaarWereld beweegt de kaart zelf.
+
+   Leest kaartFocus en niet uitShow: goMap zet die twee vlak na elkaar, maar het
+   is kaartFocus die zegt of er een halte is om naartoe te zoomen. */
+function kaartVertrek(vorige, gekozen) {
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
   /* De balk wordt hier meegenomen en niet in kaartTerugZoom: die draait pas in de
@@ -12988,23 +13036,6 @@ function goMap(vanLvl) {
     schermWeg(vorige, false);
     dressBarMee(vorige);
   }
-  /* Pas hierna, en niet in een requestAnimationFrame: renderTourMap kon zijn
-     eigen afrondende werk (scrollstand, --kop-h/--nav-h, kaartTerugZoom) niet
-     synchroon doen, want toen het draaide stond het scherm nog niet .active en
-     leverde elke meting 0 op. Nu, een paar regels later in dezelfde taak, wél
-     -- en dat is nog steeds vóór de browser iets van dit beeldje verft. Moet
-     wel ná de kaartFocus-controle hierboven staan: kaartTerugZoom (via
-     tourMapVoltooi) verbruikt diezelfde kaartFocus, en die controle moet 'm
-     nog aantreffen om de terug-grendel te zetten. Zie de regel bij
-     tourMapVoltooi en bij renderTourMap. */
-  if (tourMapVoltooi) { const v = tourMapVoltooi; tourMapVoltooi = null; v(); }
-  if (travel) requestAnimationFrame(() => runTravel(travel));
-  else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
-  /* En dan pas: is de kaart zélf de aankomst? Alle vier de uitzonderingen staan
-     hierboven al uitgerekend, dus de regel is hier één regel lang. De laatste
-     voorwaarde vangt "nog eens op Kaart tikken terwijl je er al staat": dat is
-     geen aankomst. Zie de hele redenering bij kaartGroet. */
-  kaartGroet(!uitShow && !travel && !onthul && gekozen == null && vorige !== $('screen-map'));
 }
 /* De onthulling van een wereld die pas uitgebracht is. Precies dezelfde camera als
    bij het uitspelen van een wereld (zie runWorldChange), alleen zonder de badge en
