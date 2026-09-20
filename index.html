@@ -4265,14 +4265,50 @@
      is verder ingetogen. */
   .tour-stop.next::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none;
-    left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
+    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(var(--warm-licht-rgb),.2), rgba(var(--warm-licht-rgb),.07) 52%, transparent 74%);
-    animation: stopSpot 2.8s ease-in-out infinite;
+    background: radial-gradient(closest-side,
+      rgba(var(--warm-licht-rgb),.22),
+      rgba(var(--warm-licht-rgb),.58) 44%,
+      rgba(var(--warm-licht-rgb),.3) 68%,
+      transparent 92%);
+    animation: stopSpot 3s ease-in-out infinite;
   }
+  /* De maat en de sterkte hieronder zijn opgemeten tegen een échte wereld en niet
+     tegen een egale achtergrond, en dat is het hele verschil. Hij stond op 27cqw
+     met .2/.07 en ademde van .68 naar .84 op een schaal van 1 naar 1,035 -- op
+     papier keurig, en op de Muziekwereld letterlijk niet te zien: twee
+     schermafdrukken op het diepte- en het hoogtepunt waren naast elkaar niet uit
+     elkaar te houden. Die tekening is zelf al vol licht (gouden stralenkrans,
+     watervallen, lampjes), dus een waas van een vijfde dekking verdwijnt erin.
+
+     EN HET ZAT NIET ALLEEN IN DE STERKTE. Een radial-gradient met zijn kern in
+     het midden legt zijn licht precies dáár waar het gouden rondje eroverheen
+     staat: dat rondje beslaat de binnenste derde van de gloed, dus het felste
+     deel was per definitie onzichtbaar. Wat je overhield was de flauwe staart.
+     Opgemeten op de ring net buiten het rondje verschilde het diepte- van het
+     hoogtepunt met een halve RGB-trap -- nul, met andere woorden.
+
+     De gloed is daarom een ring geworden: laag in het midden (daar staat het
+     rondje toch), vol op 44% en uitdovend naar 92%. Het licht ligt nu in de band
+     die je écht ziet, van de rand van het rondje tot ruim daarbuiten.
+
+     Drie dingen zijn daarnaast omhoog gegaan, in deze volgorde van belang:
+       de maat    27 -> 34cqw, ruim drie keer het rondje. De gloed moet buiten de
+                  halte uitkomen, anders valt hij samen met de gouden vulling en
+                  is er niets om te zien ademen.
+       de sterkte de top van de ring staat op .58, waar de oude kern op .2 stond
+                  en de rand die je werkelijk zag op .07. Met het ademen erover
+                  komt dat op .55 dekking uit en in rust op .35 -- een verhouding
+                  van ruim anderhalf, en dát is wat een oog als "het beweegt" leest.
+       de adem    1 -> 1,12 in plaats van 1,035. Drie keer zoveel uitslag, nog
+                  steeds traag genoeg (3s) om te ademen in plaats van te knipperen.
+
+     Het rondje zelf staat nog altijd volkomen stil; alles hierboven gebeurt op de
+     gloed erachter. */
   @keyframes stopSpot {
-    0%, 100% { opacity: .68; transform: scale(1); }
-    50%      { opacity: .84;   transform: scale(1.035); }
+    0%, 100% { opacity: .6;  transform: scale(1); }
+    50%      { opacity: .95; transform: scale(1.12); }
   }
   /* ADEMEN DOET HIJ ALLEEN ALS ER VERDER NIETS GEBEURT. Loopt er een wereldreis
      (de camera klimt, zie .wereld-reist), ligt er een laag overheen -- rangfeest,
@@ -4308,15 +4344,22 @@
      daarvan, precies waar de ademende gloed ook ligt. */
   .tour-stop.next .stop-body::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none; opacity: 0;
-    left: 50%; top: 5.15cqw; width: 27cqw; height: 27cqw; margin: -13.5cqw 0 0 -13.5cqw;
+    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(var(--warm-licht-rgb),.3), rgba(var(--warm-licht-rgb),.1) 52%, transparent 74%);
+    background: radial-gradient(closest-side,
+      rgba(var(--warm-licht-rgb),.26),
+      rgba(var(--warm-licht-rgb),.72) 44%,
+      rgba(var(--warm-licht-rgb),.36) 68%,
+      transparent 92%);
   }
-  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 620ms var(--ease-uit); }
+  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 680ms var(--ease-uit); }
+  /* Duidelijk feller dan het ademen (.72 in de ring tegen .58) en een stuk ruimer:
+     hij komt op 1,18 en dijt dan uit naar 1,5 terwijl hij naar nul zakt. Geen
+     veer, geen doorschieter -- opkomen, even staan, oplossen. */
   @keyframes haltePuls {
-    0%   { opacity: 0; transform: scale(.8); }
-    35%  { opacity: 1; transform: scale(1.06); }
-    100% { opacity: 0; transform: scale(1.34); }
+    0%   { opacity: 0; transform: scale(.88); }
+    30%  { opacity: 1; transform: scale(1.18); }
+    100% { opacity: 0; transform: scale(1.5); }
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
      hier eerst een gouden rand (eerst vol, daarna op 66%), en dat hield tot op
@@ -4387,11 +4430,18 @@
      geen beloning bij, geen confetti (die valt pas bij de volgende halte, zie
      runTravel) en geen tweede cijfer -- alleen "dit is wat je hier gehaald hebt".
 
-     Bij een level-up gebeurt dit juist NIET tegelijk met de aankomst op de
-     volgende halte: het is de beloning vóór het vertrek, en de aankomst moet
-     het grote moment blijven. Daarom wacht goMap met de reisanimatie tot deze
-     beat voorbij is (zie starRevealBeat) -- twee verschillende haltes, twee
-     momenten na elkaar, en geen twee feestjes tegelijk.
+     EN NIET BIJ EEN LEVEL-UP DIE METEEN DOORREIST. Dit hing hier lang vóór het
+     vertrek, met de reis die er een halve seconde op wachtte -- maar het
+     eindscherm had de sterren toen al onthuld, gevierd en door het kind laten
+     wegtikken. Het was dus geen beat maar een herhaling, en ze vertrok pas nadat
+     hij was uitgelopen. Nu geldt: is er een reis binnen dezelfde wereld, dan
+     slaat goMap deze landing over en gaat ze meteen op pad (zie
+     reisBinnenWereld daar). Het eindscherm is het beloningsmoment; de kaart is
+     het voortgangsmoment.
+
+     Waar hij wél blijft: terugkomen zonder dat de voortgang opschuift -- een show
+     overdoen om je sterren te verbeteren. Dan is de kaart de eerste plek waar die
+     nieuwe score staat, en hoort hij te laten zien dat er iets veranderd is.
 
      Eenmalig: renderTourMap zet .net-af maar één keer (zie netAf daar), dus een
      latere kaart via de navigatiebalk begint gewoon stil. Puur transform en
@@ -5261,10 +5311,15 @@
     .tour-hero .hero-vonk { display: none; }
     /* De spotlight blíjft -- hij is een kleur op de grond, geen beweging, en juist
        zonder de ademende gloed is hij wat er nog overblijft om "hier speel je"
-       te zeggen. Alleen het ademen ervan gaat uit. Op .9 staat hij bovendien
-       sterker dan waar het ademen ooit komt (dat gaat van .68 naar .84), dus wie
-       geen beweging wil ziet de huidige halte juist het duidelijkst. */
-    .tour-stop.next::after { animation: none; opacity: .9; }
+       te zeggen. Alleen het ademen ervan gaat uit.
+
+       En dan staat hij op zijn sterkst: vol dekkend, dus boven de .95 waar het
+       ademen op zijn hoogtepunt komt (in rust is dat .6), en meteen een tikje
+       ruimer dan zijn ruststand in plaats van dat je op het hoogtepunt moet
+       wachten. Wie geen beweging wil ziet de huidige halte dus het duidelijkst
+       van iedereen -- en hij staat stil, want een vaste schaal is geen
+       beweging. */
+    .tour-stop.next::after { animation: none; opacity: 1; transform: scale(1.08); }
     /* En de aankomstpuls blijft helemaal weg: die is een moment, en een moment
        zonder beweging bestaat niet. */
     .tour-stop.next .stop-body::after { display: none; }
@@ -12287,13 +12342,16 @@ let terugBezig = false, terugTimer = null;
    dat een beeldje te laat is. null zolang renderTourMap het al zelf synchroon
    kon afronden (elke kaartwissel behalve de allereerste van een navigatie). */
 let tourMapVoltooi = null;
-/* Het korte moment vóór het vertrek waarin de sterren van de zojuist gespeelde
-   halte landen. De beloning zélf is al gevierd op het eindscherm (geluid,
-   tikjes, confetti bij drie op drie -- zie renderEndStars); hier op de kaart
-   hoeft dat niet nog een keer. Dit is dus stil: alleen de bestaande, tikkende
-   landing uit renderTourMap/de CSS (.net-af, sterLandt), en verder niets. cb
-   (de reisanimatie) wacht tot die landing voorbij is, zodat het vertrek er
-   niet doorheen valt.
+/* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
+   landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
+
+   NOG ÉÉN GEBRUIKER: runWorldChange. De gewone reis naar de volgende halte ging
+   hier ook langs en doet dat niet meer -- daar was de landing een herhaling van
+   wat het eindscherm al gevierd had, met een halve seconde wachten eraan vast
+   (zie reisBinnenWereld in goMap). Bij een wereldgrens ligt dat anders: daar is
+   het de laatste keer dat je die wereld ziet, de badge vliegt er net vandaan naar
+   de kast, en de camera heeft daarna nog een hele klim te gaan. Verdwijnt die
+   laatste gebruiker ook een keer, dan kan deze functie weg.
 
    STAP en LAND zijn dezelfde getallen als de val-vertraging (.1/.185/.27s) en
    de landingsduur (.28s) in de CSS -- verander je de één, meet dan de ander
@@ -12375,11 +12433,19 @@ function kaartGroet(mag) {
      dus niets te vervangen, en de ster staat precies zoals ze anders ook staat
      (zie de bewegingsafspraak bij zetPas). */
   if (!mag || !rustig || motionOff()) return;
-  /* De halte gaat vóór de zwaai, en dat is de rangorde van dit scherm: eerst weet
-     je wáár je bent en waar je heen moet, en pas daarna zegt zij hallo. Op
-     MOTION.kom is de kaart klaar met opkomen; de zwaai volgt een tel later. Ze
-     lopen dus niet samen op, en de puls is ook los van haar de zachtste van de
-     twee -- een gloed die opkomt en wegvalt, tegenover een pop die beweegt.
+  /* De puls stond op MOTION.kom, en dat was precies te vroeg: op 190ms is
+     kaartKomtOp net klaar met inzoomen, dus de halte lichtte op terwijl de hele
+     kaart nog aan het stilvallen was. Een gloed die opkomt op een beeld dat zelf
+     nog beweegt is geen aankondiging maar ruis -- je oog is op dat moment met
+     het scherm bezig en niet met een plek daarin. Nu wacht hij tot de kaart een
+     tel stil heeft gestaan: MOTION.totaal is het einde van de schermwissel, en
+     daar komt een rustmoment van 300ms overheen voordat de halte iets zegt.
+
+     Dat is ook waarom hij láter valt dan de zwaai en niet ervoor. Zij is de
+     hoofdrol en mag als eerste; de halte is de tweede stem en zet er een zachte
+     gloed onder terwijl zij nog zwaait. Ze bijten elkaar niet, want ze zijn niet
+     van dezelfde soort: zij beweegt, de halte staat stil en wordt alleen even
+     helderder.
 
      Hij hangt aan dezelfde poort als de zwaai (zie de aanroep onderaan goMap) en
      dus aan dezelfde koeltijd: kom je uit een show, ligt er een reis klaar, gaat
@@ -12387,7 +12453,7 @@ function kaartGroet(mag) {
      al uit waarom je hier bent en hoort er niets overheen. Na een level-up huppelt
      de ster naar de volgende halte -- dát is de aankomst, en de nieuwe halte
      ademt daarna gewoon verder zonder er nog een puls bovenop. */
-  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.kom);
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + 300);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
@@ -12449,6 +12515,25 @@ function goMap(vanLvl) {
   let travel = pendingTravel;
   pendingTravel = null;
   if (travel && travel.to !== p.level) travel = null;
+  /* GEEN TWEEDE STERRENMOMENT OP DE KAART.
+
+     Het eindscherm heeft de sterren al onthuld, gevierd én door het kind laten
+     wegtikken. Daarna kwam de kaart op en landden diezelfde sterren nog een keer
+     onder de zojuist gespeelde halte (.net-af, een halve seconde), stond de reis
+     daar op te wachten, en vertrok ze pas daarna. Twee keer hetzelfde nieuws, en
+     het enige wat hier wél nieuw is -- dat ze verder komt -- moest achteraan
+     aansluiten. Het eindscherm is het beloningsmoment; de kaart is het
+     voortgangsmoment.
+
+     Alleen in déze stroom: een level-up die binnen dezelfde wereld naar de
+     volgende halte reist. Kom je terug zonder dat de voortgang opschuift (een
+     show overdoen om je sterren te verbeteren), dan is de kaart wél de eerste
+     plek waar die nieuwe score staat, en blijft de landing dus staan. Een
+     wereldgrens heeft een eigen opbouw met een eigen beat (runWorldChange) en
+     blijft hier ook buiten. */
+  const reisBinnenWereld = !!travel && travel.to <= WORLD_LAST
+    && worldFor(travel.from).index === worldFor(travel.to).index;
+  if (reisBinnenWereld) netAf = null;
   /* Kwam je hier uit de tournee, dan opent de kaart op de wereld die je daar koos.
      Dat is kíjken en geen voortgang: de opdracht geldt voor dit ene openen en wordt
      hier meteen verbruikt, dus de eerstvolgende keer (tabblad, terugknop, na een
@@ -13433,12 +13518,14 @@ function renderTourMap(travelFrom) {
      hereLevel() klemt dat; playable blijft p.level, dus alles blijft open. */
   const heroLvl = travelling ? travelFrom : hereLevel(p);
   /* De sterren van de zojuist gespeelde halte landen hier, bij de allereerste
-     tekening van de kaart -- vóór er iets vertrekt. Dat geldt ook voor de
-     tussenstand vlak vóór een reisanimatie: juist dáár hoort het
-     beloningsmomentje (zie starRevealBeat in goMap), niet pas bij de aankomst
-     op de volgende halte. netAf wordt daarom verbruikt zodra hij gebruikt is,
-     ongeacht travelling -- de latere tekening die de aankomst laat zien, raakt
-     deze halte niet nog eens aan. */
+     tekening van de kaart. Of ze überhaupt landen beslist goMap: reist ze meteen
+     door naar de volgende halte binnen dezelfde wereld, dan is netAf daar al op
+     null gezet en gebeurt hier niets -- het eindscherm heeft die sterren dan net
+     gevierd (zie reisBinnenWereld). Bij een wereldgrens en bij terugkomen zonder
+     level-up staat hij er wél.
+
+     netAf wordt verbruikt zodra hij gebruikt is, ongeacht travelling -- de latere
+     tekening die de aankomst laat zien, raakt deze halte niet nog eens aan. */
   const netAfLvl = netAf;
   netAf = null;
 
@@ -13657,9 +13744,18 @@ function starRowHTML(n, gespeeld) {
 /* De maat van de reis over de kaart: één duur, één vertraging, één easing. Het
    goud (growRoad hieronder) en de ster (heroRoadFrames) gebruiken alle drie
    dezelfde getallen -- dat is de enige manier waarop ze gegarandeerd samen
-   aankomen. De vertraging is de tel waarin de sterrenlanding van de vorige halte
-   uitdempt (zie starRevealBeat). */
+   aankomen.
+
+   REIS_WACHT is de opkomst van de kaart en geen beat: die loopt van 110 tot
+   300ms (MOTION.komNa + MOTION.kom, zie kaartKomtOp), dus ze zet haar eerste
+   stap een tiende nadat het scherm stilstaat. Korter en ze vertrekt terwijl de
+   kaart nog inzoomt; langer en het wordt een moment om op te wachten. Hier stond
+   dat dit de tel was waarin de sterrenlanding uitdempte -- die landing is weg
+   (zie reisBinnenWereld in goMap) en het getal bleef, om deze andere reden. */
 const REIS_DUUR = 1400, REIS_WACHT = 400, REIS_EASING = 'ease-in-out';
+/* Waar het vonkenspoor onderweg uit kiest. Bewust zonder ⭐ (en zonder 💖 en 🎵,
+   die hun eigen plek hebben): een ster is op deze kaart een score en geen sier. */
+const REIS_VONKEN = ['✨', '💫'];
 
 /* Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
    aankomst in één klap door te schieten.
@@ -13763,12 +13859,16 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
    de tijd eerst om en interpoleert er daarna tussen. Precies wat het goud ook
    doet, met zijn twee keyframes.
 
-   HET HUPPELEN BLIJFT, maar klein. De 30px sprong van hiervoor tilde haar zo ver
-   van de weg dat het spoor onder haar vandaan leek te lopen; dat is precies wat
-   hier opgelost wordt, dus het mag er niet via de achterdeur weer in. REIS_VEER
-   is een lichte veer bovenop de baan, drie passen lang, nul bij vertrek én bij
-   aankomst -- genoeg om het een loopje te laten zijn in plaats van een zweving,
-   te weinig om haar van de weg te tillen.
+   TWEE LAGEN, en dat is de hele opzet. De halte-laag (.tour-hero) staat éxact op
+   de weg -- niets erbij, geen veer, geen boog. Het loopje zit één laag dieper, op
+   de tekening zelf (zie heroWalkFrames). Zo kan het loopje nooit haar plek op de
+   weg beïnvloeden: wat er ook met haar houding gebeurt, haar voeten staan waar het
+   goud is.
+
+   Hier stond eerst wél een veer op deze laag (REIS_VEER, 38 eenheden ~ 12px). Dat
+   werkte, maar het was de verkeerde laag: het is houding en geen plek, en twee
+   verticale bewegingen boven op elkaar stapelen is precies hoe ze weer van de weg
+   af drijft. Eén verticale beweging dus, en die zit binnenin.
 
    WAT ZE NIET DOET is meedraaien met de bocht. Een tangenthoek zou haar op een
    scherp stuk zichtbaar schuin zetten, en ze staat in de hele app rechtop -- op
@@ -13782,27 +13882,73 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
    basis is translateX(-50%) binnen haar eigen halte; wat we animeren is dus het
    verschil met de oude halte, niet een absolute plek. */
 const REIS_STAPPEN = 40;   // aftastpunten over het stuk weg -- ruim genoeg voor de scherpste bocht
-const REIS_VEER = 38;      // hoogte van de veer tussen de passen, in viewBox-eenheden
-const REIS_PASSEN = 3;     // evenveel passen als de drie huppeltjes van hiervoor
-function heroRoadFrames(map, geo) {
+/* Hoeveel pixels één viewBox-eenheid is in het kader waar de kaart in staat.
+   Layoutmaten en geen getBoundingClientRect: midden in een kaartovergang staat er
+   een transform op de kaart, en daar hoort deze omrekening niets van te merken. */
+function kaderSchaal(map) {
   const frame = map && map.querySelector('.world-frame');
+  const w = frame ? frame.clientWidth : 0, h = frame ? frame.clientHeight : 0;
+  return (w > 0 && h > 0) ? { x: w / VB_W, y: h / VB_H } : null;
+}
+function heroRoadFrames(map, geo) {
   const pad = geo && geo.pad;
-  if (!frame || !pad || !pad.getPointAtLength || !geo.start) return null;
-  // layoutmaten en geen getBoundingClientRect: midden in een kaartovergang staat
-  // er een transform op de kaart, en daar hoort deze omrekening niets van te merken
-  const w = frame.clientWidth, h = frame.clientHeight;
+  const sch = kaderSchaal(map);
+  if (!sch || !pad || !pad.getPointAtLength || !geo.start) return null;
   const lengte = geo.tot - geo.van;
-  if (!(w > 0) || !(h > 0) || !(lengte > 0)) return null;
-  const sx = w / VB_W, sy = h / VB_H;
+  if (!(lengte > 0)) return null;
   const frames = [];
   for (let i = 0; i <= REIS_STAPPEN; i++) {
     const t = i / REIS_STAPPEN;
     const pt = pad.getPointAtLength(geo.van + lengte * t);
-    const veer = Math.abs(Math.sin(t * Math.PI * REIS_PASSEN)) * REIS_VEER;
-    const dx = (pt.x - geo.start.x) * sx;
-    const dy = (pt.y - geo.start.y - veer) * sy;
+    const dx = (pt.x - geo.start.x) * sch.x;
+    const dy = (pt.y - geo.start.y) * sch.y;
     frames.push({
       transform: `translate(calc(-50% + ${dx.toFixed(2)}px), ${dy.toFixed(2)}px)`,
+      offset: t,
+    });
+  }
+  return frames;
+}
+/* HET LOOPJE. Onderweg gleed ze: haar plek klopte tot op de pixel, maar er
+   gebeurde verder niets met haar, en een pop die over een weg schuift leest als
+   een pion op een bord in plaats van als iemand die ergens heen gaat.
+
+   Dit is de kleinst mogelijke ingreep die dat omdraait: drie zachte pasjes over de
+   hele reis, elk een goeie 4px omhoog, met een rek van anderhalve procent op het
+   hoogste punt. Geen sprong (dat was de oude veer, drie keer zo hoog), geen
+   slingeren, geen draaien -- alleen het verschil tussen glijden en lopen.
+
+   OP .pas-laag, niet op de houder en niet op de tekening. Die laag bestaat al voor
+   de danspasjes en is er om precies één reden (zie het stijlblad bij .pas-laag):
+   de ster op de kaart draagt een SVG-filter, en een transform óp een gefilterd
+   element laat de browser dat filter elk beeldje opnieuw uitrekenen. Het loopje
+   hoort dus op dezelfde laag als de pasjes, met hetzelfde draaipunt bij haar
+   voeten -- en dan kost het niets. Het wiegen op de houder erboven (.idle, sway)
+   loopt gewoon door: geneste transforms vermenigvuldigen, dus ze wiegt én loopt.
+
+   NUL AAN BEIDE KANTEN. |sin| is nul bij offset 0 en bij offset 1, en de rek hangt
+   aan diezelfde waarde -- vertrek en aankomst staan dus exact op niets. Daar hoeft
+   geen envelop omheen en er valt bij het begin en het eind niets te zien springen.
+
+   DEZELFDE TIJD als de baan en het goud: REIS_DUUR, REIS_WACHT, REIS_EASING. De
+   easing werkt op de tijd, dus haar pas gaat vanzelf mee met haar snelheid --
+   traag aan het begin, vlotter in het midden. */
+const REIS_PASSEN = 3;      // pasjes over de hele reis -- ~470ms per pas, een kinderwandeltempo
+const REIS_STAP = 11;       // hoogte van één pasje, in viewBox-eenheden (opgemeten 4,3px op een telefoon)
+const REIS_REK = 0.015;     // 1,5% langer op het hoogste punt, en net zoveel smaller
+function heroWalkFrames(map) {
+  const sch = kaderSchaal(map);
+  if (!sch) return null;
+  const frames = [];
+  for (let i = 0; i <= REIS_STAPPEN; i++) {
+    const t = i / REIS_STAPPEN;
+    const op = Math.abs(Math.sin(t * Math.PI * REIS_PASSEN));   // 0 op de grond, 1 op het hoogste punt
+    const rek = 1 + op * REIS_REK;
+    frames.push({
+      transform: `translateY(${(-op * REIS_STAP * sch.y).toFixed(2)}px) `
+        + `scale(${(1 / rek).toFixed(4)}, ${rek.toFixed(4)})`,
+      // bij haar voeten, net als de danspasjes -- een rek mag haar niet van de weg tillen
+      transformOrigin: '50% 95%',
       offset: t,
     });
   }
@@ -13943,6 +14089,18 @@ function runTravel(t) {
     if (dot && dot.animate && !still) dot.animate(
       [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
       { duration: 450, easing: 'ease-out' });
+    /* HET TIKJE VAN AANKOMEN ZIT AL IN sndCoin -- buzz(15), zie daar. Niet bij elke
+       pas dus (dat zou een ratel zijn en geen aankomst), maar één keer, hier, samen
+       met het muntje. buzz() kijkt zelf al naar db.haptics en naar wat het toestel
+       kan; zonder trilmotor gebeurt er gewoon niets. vier() draait precies één keer
+       per reis -- vanuit finish(), vanuit de wereldwissel, of meteen bij beperkte
+       beweging -- en nooit opnieuw bij een hertekening, dus dubbel kan het niet.
+
+       Er stond hier even een eigen buzz() vóór deze regel, en dat was twee keer
+       fout: het is een tweede trilling naast een bestaande, én hij werd niet eens
+       gevoeld. navigator.vibrate() breekt een lopende trilling af en begint
+       opnieuw, dus een tik van 12ms met 15ms er meteen achteraan is gewoon 15ms.
+       Wie hier een aankomsttrilling zoekt: hij is er, en hij zit in sndCoin. */
     sndCoin();
     confetti(crossing ? 26 : 14);
     showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
@@ -13966,24 +14124,46 @@ function runTravel(t) {
   }
   if (crossing) { runWorldChange(t.from, fromW, toW, plaats, vier, still); return; }
   if (!from || !to || !hero || !hero.animate || still) { finish(); return; }
-  /* Eerst de beloning, dan pas het huppelen (zie starRevealBeat): de sterren van
-     de zojuist gespeelde halte landen hier al (netAf, zie renderTourMap), en
-     pas als die beat voorbij is vertrekt ze -- anders valt de aankomst op de
-     volgende halte samen met de sterren die hier nog aan het landen zijn. */
-  starRevealBeat(t.from, () => {
-    /* Eerst het goud, dan de ster -- niet omdat de volgorde in beeld iets
-       uitmaakt (ze krijgen dezelfde vertraging en beginnen dus samen), maar omdat
-       growRoad het pad opmeet waar zij overheen loopt. Zonder dat pad is er niets
-       om langs te lopen en valt ze terug op de rechte lijn. */
-    const geo = growRoad(map, t.from, t.to, REIS_DUUR, REIS_WACHT);
-    const frames = heroRoadFrames(map, geo) || heroLineFrames(from, to);
-    buzz([0, 25, 90, 25, 90, 25]);
-    const anim = hero.animate(frames,
-      { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
-    const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
-    setTimeout(() => clearInterval(trail), REIS_DUUR + REIS_WACHT + 50);
-    anim.onfinish = finish;
-  });
+  /* METEEN VERTREKKEN. Hier stond starRevealBeat: een halve seconde waarin de
+     sterren van de zojuist gespeelde halte op de kaart landden, plus 200ms
+     stilte, en pás daarna de reis. Met de sterrenlanding weg (zie goMap) is er
+     niets meer om op te wachten, en het wachten zelf was nooit het punt.
+
+     Wat overblijft is REIS_WACHT: 400ms, en dat is geen beat maar de opkomst van
+     de kaart. Die loopt van 110 tot 300ms (MOTION.komNa + MOTION.kom, zie
+     kaartKomtOp) -- ze zet dus haar eerste stap een tiende nadat het scherm tot
+     stilstand is gekomen. Eerder zou ze vertrekken terwijl de kaart nog inzoomt.
+
+     Eerst het goud, dan de ster -- niet omdat de volgorde in beeld iets uitmaakt
+     (ze krijgen dezelfde vertraging en beginnen dus samen), maar omdat growRoad
+     het pad opmeet waar zij overheen loopt. Zonder dat pad is er niets om langs
+     te lopen en valt ze terug op de rechte lijn. */
+  const geo = growRoad(map, t.from, t.to, REIS_DUUR, REIS_WACHT);
+  const frames = heroRoadFrames(map, geo) || heroLineFrames(from, to);
+  const anim = hero.animate(frames,
+    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
+  /* En het loopje eronder (zie heroWalkFrames): dezelfde tijd, dezelfde easing,
+     maar op de tekening in plaats van op de halte-laag. Geen fill -- het laatste
+     beeldje staat toch al op niets, en zo laat het de laag daarna gewoon weer
+     los. Lukt het niet, dan reist ze zoals hiervoor: glijdend, maar goed. */
+  const stap = hero.querySelector('.pas-laag');
+  const loopje = heroWalkFrames(map);
+  if (stap && stap.animate && loopje) stap.animate(loopje,
+    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING });
+  /* Het vonkenspoor loopt mét haar mee en niet voor haar uit. Het hing aan een
+     setInterval die meteen ging lopen, dus het eerste vonkje viel op 280ms --
+     120ms vóór haar eerste stap, stilstaand naast de halte die ze net had
+     afgerond. Dat leest als een vonkje bij de aankomst van de vorige show en niet
+     als een spoor. Nu begint het met de beweging en stopt het ermee.
+
+     En zonder ⭐: sparkleAt kiest uit vijf tekens, en juist de ster daarvan is het
+     ene teken dat op deze kaart iets betékent (zie het sterrentabje). Stof en
+     glinstering onderweg, geen sterren -- die zijn op het eindscherm uitgedeeld. */
+  setTimeout(() => {
+    const tik = setInterval(() => { if (hero.isConnected) sparkle(hero, REIS_VONKEN); }, 280);
+    setTimeout(() => clearInterval(tik), REIS_DUUR);
+  }, REIS_WACHT);
+  anim.onfinish = finish;
 }
 /* ================= Trofeeën-scherm ================= */
 // Verse start (o.a. nogmaals op het al-actieve Trofeeën-tabblad tikken):
