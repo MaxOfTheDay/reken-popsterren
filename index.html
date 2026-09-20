@@ -753,8 +753,8 @@
 
          --balk-w   de zwevende balken ONDERaan: .main-nav en .dress-bar. Voor
                     duimen gemaakt, dus bewust telefoonbreed en niet meegroeiend.
-                    Ook de kop van de kaart in liggende stand, zodat kaart + kop
-                    + balk daar samen één toestel vormen.
+                    Ook de kop van de kaart en van Werelden in liggende stand,
+                    zodat podium + kop + balk daar samen één toestel vormen.
          --kolom    de inhoudskolom van ÉÉN scherm. Elk scherm zet zijn eigen
                     waarde (zie .screen hieronder) en zowel de kop als de inhoud
                     lezen hem -- daarmee is "de kop is net zo breed als wat
@@ -771,6 +771,97 @@
        navigatiebalk liggen vast: ZONE (de veilige zone van de wereldtekeningen)
        is eruit gemeten. Zie docs/WORLD-ART-BRIEF.md §8. */
     --balk-w: min(94vw, 430px);
+
+    /* ---- TWEE SOORTEN PODIUM, EN EEN BUREAUBLAD IS GEEN TWEEDE APP ---------
+       De app is voor een telefoon gemaakt en dat blijft de hoofdrol. Maar ze wordt
+       ook in een gewoon bureaubladvenster geopend, en daar liep elk scherm zijn
+       eigen kant op: de kaart stond als staand toestel in het midden (goed), de
+       kleedkamer en de kast liepen als een gewone webpagina uit tot 680 en 760
+       (twee maten, tachtig pixels uit elkaar, zonder reden), en de sterrenkeuze
+       werd schermvullend terwijl het logo en de tegels op hun telefoonmaat bleven
+       staan -- een keuzeschermpje in een enorme lucht.
+
+       De afspraak die dat rechtzet is dezelfde als op een telefoon, alleen met
+       een bovengrens erbij: mobiel eerst, dan twee gedeelde maten, en daarboven
+       niets meer per scherm.
+
+         --stage-spel   BELEVING: kaart, werelden, zaal. Hier ís de tekening het
+                        scherm, dus die houdt op een breed venster zijn staande
+                        compositie en groeit tot deze maat -- daarna niet meer.
+                        Zonder die grens werd het podium zo breed als de hoogte
+                        toeliet: 592 op 1920x1080, en op een hoog venster van
+                        1400 zelfs 771 -- een wereldkaart van driekwart meter met
+                        een balk van 430 eronder, en dan valt het toestel uit
+                        elkaar in een plaatje met een balkje.
+                        560 en niet 480 of 520, en dat is opgemeten. Zodra het
+                        podium smáller wordt dan de hoogte toelaat, blijft er
+                        lucht boven en onder over -- en dáár staan de kop en de
+                        balk, dus die komen dan náást de wereld te hangen in
+                        plaats van erop. 560 is precies de breedte waarop een
+                        gewoon 16:9-venster (1920x1080) nog vol loopt: de kop
+                        blijft op de tekening staan, en de grens doet alleen nog
+                        zijn werk op de vensters waar hij voor bedoeld is.
+                        Wat er buiten het podium overblijft is geen leegte maar
+                        omgeving: de kaart zet daar zijn eigen wereld onscherp
+                        neer (zie de liggende stand bij .world-frame).
+         --stage-breed  GEBRUIK: kleedkamer, trofeeënkast, ouderdeel. Dit is
+                        inhoud om te bedienen, en die heeft aan extra breedte wél
+                        iets: op 820 staan er zes spulletjes op een rij in plaats
+                        van vijf, en vier trofeeën in plaats van vier met een gat.
+                        Eén maat voor beide verzamelschermen, want het verschil
+                        van tachtig pixels ertussen was nooit een keuze -- en de
+                        kop leest --kolom al, dus kop, raster en teller schuiven
+                        samen mee.
+
+       Er staat met opzet géén derde maat bij voor "en dan de rest": een scherm
+       dat in geen van de twee families past (de spelarena, het maakformulier)
+       houdt zijn eigen --kolom, en dat is één regel bij dat scherm.
+
+       Waarom vaste pixels en geen vw: dit zijn bovengrenzen op een venster dat
+       breder is dan de app ooit nodig heeft. Onder die grens doet --kolom al het
+       werk via max-width, en dan is 100% de maat -- precies zoals op een telefoon.
+
+         --stage-vlak   het VAK waar een gebruiksscherm in staat, als
+                        achtergrondlaag. Zie de noot bij .screen.gebruik.app-sfeer
+                        hieronder: op een telefoon is dit 'none' en verandert er
+                        niets. */
+    --stage-spel: 560px;
+    --stage-breed: 820px;
+    --stage-vlak: none;
+    /* De verhouding van een wereldtekening. Stond op .tour-map; zie de noot daar.
+       Dit is de terugval voor het eerste beeldje -- renderMap zet dezelfde twee
+       op <html> zodra hij tekent. */
+    --art-w: 1215;
+    --art-h: 2160;
+
+    /* ---- Hoeveel een brandpunt op een groot scherm mag groeien -------------
+       Alleen de sterrenkeuze gebruikt dit, en die is met opzet de uitzondering:
+       zij is het enige scherm dat aflopend hóórt te zijn (de lucht is daar het
+       scherm) en dus geen podium heeft dat haar inhoud bij elkaar houdt. Het
+       gevolg was dat het logo, de sterrentegels en "Nieuwe ster" op een
+       bureaublad exact hun telefoonmaat hielden: samen zo'n 380 pixels midden in
+       een venster van 1440 bij 900.
+
+       Dit is dus geen schaal voor de hele app maar één getal voor dat ene blok,
+       en het is een lengte en geen factor -- CSS kan van pixels geen kale
+       vermenigvuldiger maken. Elk element telt hem met zijn eigen gewicht mee
+       (zie .spellogo img en .star-grid), zodat logo en tegel dezelfde slag
+       groeien en het blok zijn verhoudingen houdt.
+
+       De ondergrens is nul en die is het punt: onder de 620 px vensterbreedte --
+       élke telefoon staand -- komt er geen pixel bij en is de compositie
+       letterlijk de compositie van vandaag. Daarboven loopt hij op tot 108: op
+       1440x900 gaat het logo van 297 naar 405 en de tegel van 130 naar 175, dus
+       net geen 1,4x. Opgemeten en niet gegokt; zie de beelden bij deze fase.
+
+       De hóógte staat er als tweede rem bij, en niet voor de sier: een telefoon
+       in liggende stand is 844 breed en dus breder dan de 620, terwijl juist
+       daar geen pixel te missen is -- de sterrentegels staan er in twee rijen en
+       het scherm scrollt al (zie de regel bij max-height: 480px). Met (100vh -
+       560) erbij is de groei daar nul en op een bureaubladvenster, waar hoogte
+       nooit het probleem is, niet merkbaar minder. Twee grenzen in één min(),
+       en geen enkel breekpunt: hij loopt overal vanzelf naar de goede kant. */
+    --focus-groei: clamp(0px, min((100vw - 620px) / 7, (var(--vh-lock, 100svh) - 560px) / 2.6), 108px);
 
     /* ---- Bewegingstaal: vier snelheden, en niets ertussen ------------------
        Beweging is hier geen versiering maar een zin: ze zegt wat er net gebeurde
@@ -943,6 +1034,8 @@
        spel        860 -- de arena, waar show en rekenen op een breed scherm
                    naast elkaar staan.
        eindscherm  420 -- de resultaatkaart. Smal, want het is één kaart.
+       kleedkamer/kast  --stage-breed -- de twee verzamelschermen. Zie het skelet
+                   bovenaan: dit was 680 en 760, en dat verschil was er nooit een.
        instellingen/nieuwe ster  640 -- het instellingenvel.
        memory      620 -- het kaartenraster.
        profiel     560 -- de rij sterrenkaarten (dit scherm heeft geen kop).
@@ -956,6 +1049,13 @@
   #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
   #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
   #screen-end { --kolom: 420px; }
+  /* De twee verzamelschermen delen één maat. De kast stond op 760 "omdat de
+     perfecte werelden met z'n drieën naast elkaar moeten", de kleedkamer viel
+     stilzwijgend terug op de 680 uit .screen -- en op een bureaublad zag je die
+     tachtig pixels wél: van de kleedkamer naar de kast sprong de kop, en met de
+     kop sprong de hele linkerkant van het scherm. Beide lezen --stage-breed, dus
+     het blijft één getal op één plek. */
+  #screen-dress, #screen-trophies { --kolom: var(--stage-breed); }
   #screen-settings { --kolom: 640px; }
   /* Smaller dan het ouderdeel, en dat is geen detail. Het maakformulier is een
      kort lijstje pillenrijen; op 640 breed stond op een tablet een vel van een
@@ -1109,6 +1209,15 @@
               scherm ingrijpt, en die maakt dat er geen tweede opmaak per
               schermmaat nodig is: hij knijpt vanzelf mee.
 
+     Bij de twee bovengrenzen komt --focus-groei op (zie het skelet bovenaan), en
+     bij de 74% met opzet níét. Die 74% is de telefoonmaat en daar valt niets te
+     winnen -- op een telefoon is --focus-groei toch nul, en op een bureaublad is
+     74% van 1440 al lang niet meer de bindende grens. Wat daar wél bond waren de
+     400 en de 33vh, en precies die twee waren op een telefoon afgeregeld: op
+     1440x900 kwam het logo op 297 uit, drie pixels minder dan op een Pixel. Met
+     de groei erbij is dat 405 -- een logo dat het blok eronder weer draagt in
+     plaats van erboven te zweven.
+
      margin-top:auto is de auto-marge waarmee dit blok (logo + sterren + knop)
      verticaal in het midden staat; .profile-spacer duwt van onderaf terug. Die
      stond hiervoor op de tekstkop en hoort nu hier. */
@@ -1149,7 +1258,8 @@
      uitgerekt of bijgesneden. */
   .spellogo img {
     display: block; margin: 0 auto;
-    width: min(74%, 400px, 33vh); height: auto;
+    width: min(74%, calc(400px + var(--focus-groei)), calc(33vh + var(--focus-groei)));
+    height: auto;
     object-fit: contain;
   }
 
@@ -1235,10 +1345,7 @@
      Wat overblijft is één laag met één taak: de onderrand een tikje dieper, zodat
      de lade en de navigatiebalk gedragen worden door de kamer in plaats van door
      hun eigen vulling. Daardoor mág die vulling lichter (zie .dress-bar). */
-  .app-sfeer.kleedkamer::after {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    background: radial-gradient(124% 30% at 50% 106%, rgba(10,2,24,.36), transparent 74%);
-  }
+  .app-sfeer.kleedkamer { --sfeer-vloer: radial-gradient(124% 30% at 50% 106%, rgba(10,2,24,.36), transparent 74%); }
   /* ---- De schil, maar dan in een vitrine ----------------------------------
      FASE 5E. Zelfde soort variant als de kleedkamer hierboven, en met opzet in
      dezelfde vorm geschreven: één licht van boven, één schaduw langs de onderrand.
@@ -1246,12 +1353,62 @@
      een gezicht uitgelicht); een vitrine is smaller en koeler, met een vleugje
      goud precies waar de bovenste plank staat. Daarmee zijn de kleedkamer en de
      kast herkenbaar broer en zus zónder hetzelfde scherm te worden. */
-  .app-sfeer.kast::after {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    background:
+  .app-sfeer.kast {
+    --sfeer-vloer:
       radial-gradient(64% 26% at 50% 2%, rgba(var(--warm-licht-rgb),.10), transparent 74%),
       radial-gradient(46% 34% at 50% 20%, rgba(190,170,255,.06), transparent 76%),
       radial-gradient(90% 46% at 50% 108%, rgba(96,52,168,.2), transparent 70%);
+  }
+  /* ---- DE DERDE LAAG: het vak waar een gebruiksscherm in staat ------------
+     Die twee sfeerlagen hierboven stonden elk in hun eigen ::after met dezelfde
+     vier regels eromheen (fixed, inset 0, z-index -1, pointer-events none) --
+     twee keer hetzelfde laagje, en een derde scherm dat er ook een wilde had er
+     een derde kopie bij gekregen. Nu is er één laag, en zetten de schermen alleen
+     nog hun eigen licht erin (--sfeer-vloer).
+
+     Waarom die ene laag er toch al moest komen: op een bureaublad stond de
+     kleedkamer met haar kop, haar rek en haar balk midden in een venster van
+     1440 bij 900 zonder dat er iets zei waar het scherm ophoudt. De kaart hééft
+     dat wel -- daar staat de wereld als staand toestel in het midden met zijn
+     eigen omgeving eromheen, en dát is de gelaagdheid die alle rustpunten horen
+     te hebben:
+
+       1  de omgeving   de schil, de kamer, de vitrine -- aflopend, vult het venster
+       2  het VAK       waar de inhoud in staat: --kolom breed, begrensd
+       3  de bediening  de kop erboven en de balk eronder
+
+     --stage-vlak is die tweede laag: een heel zachte, staande baan van precies de
+     breedte van de kop erboven (dezelfde som: --kolom + 2x--rand), met aan beide
+     kanten een haarlijntje licht en onderin uitlopend naar niets. Geen paneel en
+     geen doos -- de kamer en de vitrine moeten er gewoon doorheen te zien blijven;
+     het is genoeg dat het óóg weet waar het scherm begint en eindigt.
+
+     Op een telefoon is hij 'none' en verandert er niets -- daar ís de schermrand
+     de vakrand en zou zo'n baan het hele scherm beslaan. Hij komt pas op als er
+     werkelijk iets te begrenzen valt: 1000px is --stage-breed (820) plus de rand
+     eromheen plus een slag lucht aan weerskanten. Eén breekpunt, en dat is
+     meteen het enige dat dit vak nodig heeft. */
+  .screen.gebruik.app-sfeer::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: var(--stage-vlak), var(--sfeer-vloer, none);
+  }
+  @media (min-width: 1000px) {
+    .screen.gebruik {
+      /* De breedte van de kop erboven, letterlijk dezelfde som als in de regel
+         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen. */
+      --vak-w: min(100%, calc(var(--kolom) + var(--rand) * 2));
+      --stage-vlak:
+        /* de twee haarlijnen: waar het vak begint en waar het ophoudt */
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
+          left calc(50% - var(--vak-w) / 2) top 0 / 1px 88% no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 46%, rgba(255,255,255,0))
+          left calc(50% + var(--vak-w) / 2 - 1px) top 0 / 1px 88% no-repeat,
+        /* en de vulling ertussen: net genoeg om het vak van de omgeving te
+           scheiden, en naar onderen toe weg, zodat de balk op de kamer staat en
+           niet op een plank */
+        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.028) 54%, rgba(255,255,255,0))
+          center top / var(--vak-w) 100% no-repeat;
+    }
   }
   /* ---- En de vitrine krijgt haar eigen, rustiger lucht --------------------
      De gedeelde schil hierboven zet in elke hoek een LICHTBOOG neer: een
@@ -1480,9 +1637,16 @@
      Alle maten komen uit de tegel zélf (container-query, cqw) en niet uit de
      schermbreedte. Eén ster op een tablet en zes op een telefoon zijn daarmee
      hetzelfde ding op twee formaten, en er hoeft per aantal niets ingesteld. */
+  /* De bovengrenzen groeien mee met --focus-groei (zie het skelet bovenaan), elk
+     met zijn eigen gewicht: 130 + .42x, 232 + .74x, 148 + .48x, 136 + .44x. Dat
+     zijn vier getallen voor één beweging, en ze staan er toch los omdat de vier
+     kolommaten zélf niet in verhouding staan -- ze zijn per aantal opgemeten. De
+     gewichten zijn zo gekozen dat alle vier dezelfde slag groeien (~1,35x op een
+     bureaublad), zodat een scherm met twee sterren en een scherm met vijf op een
+     groot venster net zo veel bij elkaar horen als op een telefoon. */
   .star-grid {
     display: grid; gap: 14px; justify-content: center; align-items: center;
-    grid-template-columns: repeat(3, minmax(0, 130px));
+    grid-template-columns: repeat(3, minmax(0, calc(130px + var(--focus-groei) * .42)));
     width: 100%; max-width: var(--kolom); margin: 14px 0 0; z-index: 1;
   }
   /* De kolomtelling komt uit het aantal sterren (zie renderProfiles), maar de
@@ -1500,9 +1664,9 @@
      uitnodiging krijgt de maat van een knop en niet die van een tegel. Zonder deze
      regel perste de kolom van één tegel (148px) "Maak je eerste ster" over twee
      regels. */
-  .star-grid.kol-0 { grid-template-columns: minmax(0, 232px); }
-  .star-grid.kol-1 { grid-template-columns: minmax(0, 148px); }
-  .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, 136px)); }
+  .star-grid.kol-0 { grid-template-columns: minmax(0, calc(232px + var(--focus-groei) * .74)); }
+  .star-grid.kol-1 { grid-template-columns: minmax(0, calc(148px + var(--focus-groei) * .48)); }
+  .star-grid.kol-2 { grid-template-columns: repeat(2, minmax(0, calc(136px + var(--focus-groei) * .44))); }
   /* Drie kolommen staan al in .star-grid hierboven: renderProfiles zet daarom
      alleen kol-0/1/2 en laat drie of meer sterren op de basisregel vallen. */
   @media (max-width: 380px) { .star-grid { gap: 10px; } }
@@ -1635,16 +1799,22 @@
     /* Een eigen rij onder de sterren, en niet het eerstvolgende lege vakje: dan
        staat hij naast een kind alsof hij er ook een is, en bij vijf sterren vult
        hij precies het gat waar de zesde hoort te komen. */
-    grid-column: 1 / -1; justify-self: center; max-width: 196px;
+    /* Maat en letter groeien mee met de tegels erboven (--focus-groei, zie het
+       skelet): hij hoort bij dat blok, en een knop die op zijn telefoonmaat
+       blijft staan onder tegels van 175 leest als een voetnoot in plaats van als
+       de tweede mogelijkheid op dit scherm. */
+    grid-column: 1 / -1; justify-self: center;
+    max-width: calc(196px + var(--focus-groei) * .62);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; width: 100%; min-height: 60px; padding: 10px 8px;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; line-height: 1.15;
+    gap: 2px; width: 100%; min-height: calc(60px + var(--focus-groei) * .2); padding: 10px 8px;
+    font-family: inherit; font-weight: 700; line-height: 1.15;
+    font-size: calc(var(--tx-klein) + var(--focus-groei) * .03);
     color: var(--c-white); text-align: center; cursor: pointer; z-index: 1;
     border: 1.5px dashed rgba(255,255,255,.35); border-radius: var(--r-md);
     background: rgba(255,255,255,.1);
     transition: transform var(--t-tik), background .12s;
   }
-  .add-tegel .at-plus { font-size: 21px; line-height: 1; opacity: .9; }
+  .add-tegel .at-plus { font-size: calc(21px + var(--focus-groei) * .05); line-height: 1; opacity: .9; }
   .add-tegel:hover { background: rgba(255,255,255,.18); }
   .add-tegel:active { transform: scale(.96); }
   /* Nog geen enkele ster: dan is dit het enige op het scherm en mag het ook zo
@@ -1678,7 +1848,12 @@
      andere ding dat een ouder hier kan willen */
   .restore-hint { display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1; }
 
-  .corner-btns { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 50; }
+  /* --balk-rand en niet twee keer 10: dit is dezelfde afstand tot de schermrand
+     als waarop de navigatiebalk onderaan zweeft, en dat is geen toeval maar de
+     bedoeling -- boven en onder even ver van de rand. Hij hangt aan het vénster
+     en niet aan een inhoudskolom, en dat mag: hij staat alleen op de sterrenkeuze
+     (zie de regel bij show()), en dat is het ene scherm dat met opzet aflopend is. */
+  .corner-btns { position: fixed; top: var(--balk-rand); right: var(--balk-rand); display: flex; gap: 8px; z-index: 50; }
   /* rustig maar wél te vinden rond icoon-knopje: rand + glazen vulling + zachte
      schaduw-lip, geleend van .btn.soft's taal i.p.v. het bijna onzichtbare
      .btn.ghost. Gedeeld door de Instellingen-knop (thuisscherm) en de
@@ -3323,11 +3498,13 @@
      tekening mee en kunnen er nooit vanaf glijden. Wat het wél betekent: aan de
      randen wordt geknipt (op een telefoon ~4-6% per kant), dus haltes horen in de
      veilige zone -- zie docs/PROGRESSION-REVIEW.md §E8. */
-  /* De maat van een wereldtekening. Staat híer als terugval voor het eerste
-     beeldje; ART_W/ART_H in de JS is de bron en zet ze bij elke tekening opnieuw.
-     Dat moet één getal zijn, want de weg-SVG gebruikt dezelfde verhouding als
-     viewBox -- liepen ze uiteen, dan viel de weg naast de haltes (zie VB_W). */
-  .tour-map { --art-w: 1215; --art-h: 2160; }
+  /* De maat van een wereldtekening stond hier, op .tour-map. Hij staat nu in
+     :root (zoek op --art-w daar) en wordt door de JS ook op <html> gezet in
+     plaats van op het kaartvak: niet alleen de kaart heeft hem nodig maar ook
+     het scherm eromheen, dat er in liggende stand mee uitrekent hoeveel lucht er
+     boven en onder het podium overblijft (zie --podium-lucht). Eén bron voor die
+     verhouding is geen netheid maar noodzaak -- de weg-SVG gebruikt hem als
+     viewBox, en liepen ze uiteen dan viel de weg naast de haltes (zie VB_W). */
   .world-frame {
     position: relative; flex: none;
     /* min-width + min-height + aspect-ratio = cover. Gemeten tegen de variant met
@@ -3530,18 +3707,16 @@
        schaduw niet tegen de vensterrand aan liggen -- anders leest het niet meer
        als een toestel op een achtergrond. */
     .tour-map { align-items: center; padding: 14px 0; }
+    /* En het podium houdt daarbij een bovengrens: --stage-spel (zie het skelet
+       bovenaan, waar ook staat waarom die op 560 ligt en niet lager). De min()
+       zit ín de clamp en niet eromheen: de ondergrens van 340 -- waaronder een
+       halte kleiner wordt dan een vingertop -- moet ook daarna nog de ondergrens
+       zijn. */
     .world-frame { min-width: 0; min-height: 0;
-      width: clamp(min(340px, 100cqw), 100cqh * var(--art-w) / var(--art-h), 100cqw);
+      width: clamp(min(340px, 100cqw),
+                   min(100cqh * var(--art-w) / var(--art-h), var(--stage-spel)),
+                   100cqw);
       border-radius: var(--r-md); box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 20px 70px rgba(0,0,0,.6); }
-    /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
-       stond het portretje links en de diamanten rechts ergens in de onscherpe
-       rand, terwijl de navigatiebalk eronder wél op podiumbreedte staat -- dan
-       lijken de twee balken bij twee verschillende schermen te horen. Dezelfde
-       maat als .main-nav, zodat ze samen één toestel vormen. */
-    #screen-map .hub-sticky { width: var(--balk-w); margin-left: auto; margin-right: auto; }
-    /* Om dezelfde reden op de tournee: de reis staat daar in een kolom in het
-       midden (.reis-pad), dus de kop hoort daar ook boven en niet in de hoeken. */
-    #screen-journey .hub-sticky { width: var(--balk-w); margin-left: auto; margin-right: auto; }
   }
   /* zachte fade-randen op horizontale scrollers (tabbladen, kindkiezer):
      verschijnen alleen aan de kant waar nog meer te scrollen valt.
@@ -5070,9 +5245,11 @@
      die ertoe doen -- goud (van mij) en gedempt (nog niet). Het paars, de ronde
      hoeken, het glas en het goud blijven precies zoals de rest van de app ze
      gebruikt; er is geen nieuwe vormtaal bijgekomen. */
-  /* Breder dan de standaard 680: de perfecte werelden staan op tabletbreedte met
-     z'n drieën naast elkaar en hebben ruimte nodig voor hun medaillon. */
-  #screen-trophies { --kolom: 760px; }
+  /* (Hier stond --kolom: 760px, "breder dan de standaard 680 want de perfecte
+     werelden moeten met z'n drieën naast elkaar". Die reden klopt nog steeds;
+     alleen deelt de kast die breedte nu met de kleedkamer in plaats van er zijn
+     eigen getal voor te hebben -- zie --stage-breed in het skelet bovenaan en de
+     regel bij #screen-dress, #screen-trophies daar.) */
   /* ---- De stand: één pil, geen losse regel -------------------------------
      Hier stond "Je hebt er 4 van de 18" als kale zin onder de titel: een
      bijschrift dat aan niets vastzat en dus las als hulptekst die iemand erbij
@@ -6098,6 +6275,16 @@
      scroll-padding-inline gaat. */
   .shop-tabs {
     display: flex; gap: 7px; padding: 1px 12px; overflow-x: auto;
+    /* Past de hele rij (een breed venster, of een ster met weinig categorieën),
+       dan staat hij in het midden onder de spiegel in plaats van links tegen de
+       kolomrand. Op --stage-breed was dat zichtbaar scheef: de spiegel en het
+       schattenvak gecentreerd, de categorierij eronder tegen de linkerkant.
+       Met 'safe' blijft hij bij overloop gewoon links beginnen -- anders zou de
+       eerste knop buiten het scrollbereik vallen en niet meer te bereiken zijn.
+       Een browser die het woord niet kent laat de hele regel vallen en doet wat
+       hij nu al deed. tabRijDoel() merkt er niets van: die geeft 0 terug zodra
+       alles past, en meet verder alleen met rechthoeken. */
+    justify-content: safe center;
     /* 22 en niet de gedeelde 34: deze knopjes zijn maar ~50px breed, dus van het
        knopje dat over de rand steekt is er hooguit 38 te zien (zie TAB_KIER). Een
        fade van 34 legt daar bijna zijn hele overgang overheen en maakt er een
@@ -7251,6 +7438,107 @@
      al in het blok bij het trofee-feestje.) */
   @media (prefers-reduced-motion: reduce) {
     .confetti-bit, .fly-dia, .fly-badge { display: none; }
+  }
+  /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
+     stond het portretje links en de diamanten rechts ergens in de onscherpe rand,
+     terwijl de navigatiebalk eronder wél op podiumbreedte staat -- dan lijken de
+     twee balken bij twee verschillende schermen te horen. Dezelfde maat als
+     .main-nav, zodat ze samen één toestel vormen. Om dezelfde reden op de
+     tournee: de reis staat daar in een kolom in het midden (.reis-pad), dus de
+     kop hoort daar ook boven en niet in de hoeken.
+
+     DEZE REGEL STAAT MET OPZET ONDERAAN HET BLAD. Hij stond in het liggende-stand
+     blok bij .world-frame, en voor de reis deed hij daar niets: #screen-journey
+     zet zijn eigen kop verderop in het blad óók op width: 100% (zie de sluier
+     onder de kop van Werelden), en bij gelijke specificiteit wint de laatste. Op een
+     bureaublad stond de terugknop van Werelden dus in de linkerbovenhoek van het
+     vénster terwijl de kaart ernaast zijn kop netjes op podiumbreedte had -- twee
+     schermen die met één tik in elkaar overgaan en waarvan de kop op twee
+     verschillende plekken staat. Nu staat de gedeelde regel ná beide, zodat hij
+     het per definitie wint van wat een scherm over zijn eigen kop zegt. */
+  @media (min-aspect-ratio: 1/1) and (min-height: 600px) {
+    #screen-map .hub-sticky, #screen-journey .hub-sticky {
+      width: var(--balk-w); margin-left: auto; margin-right: auto;
+    }
+    /* ---- En de kop en de balk zakken mee het podium op ---------------------
+       Zodra --stage-spel bindt is het podium smaller dan de hoogte toelaat, en
+       dan blijft er lucht boven en onder over. De kop plakt aan de bovenrand van
+       het schérm en de balk zweeft boven de onderrand ervan, dus die twee bleven
+       daar achter: op 2560x1440 stond de kop 240 pixels boven de wereldkaart en
+       de balk er 240 onder, alle drie los van elkaar in het onscherpe.
+
+       Dat is precies de gelaagdheid die dit scherm juist goed had (omgeving --
+       podium -- bediening), alleen viel de bediening van het podium af. Dus
+       rekent het scherm die lucht uit en schuiven ze allebei mee naar binnen.
+       Op een venster waar het podium de hoogte vult is --podium-lucht nul en
+       staat alles waar het altijd stond -- ook op elke telefoon, want daar geldt
+       dit hele blok niet.
+
+       Waarom dat mag terwijl de balk verder overal hetzelfde hoort te staan: de
+       balk hoort onderaan het PODIUM en niet onderaan het vénster. Op elk ander
+       scherm is dat hetzelfde punt (het podium vult daar de hoogte), en dan
+       verandert er ook niets. Zijn maat, zijn ronding, zijn glas en zijn
+       knoprij blijven bovendien hoe dan ook gelijk -- alleen zijn voet volgt het
+       toestel waar hij bij hoort.
+
+       De som is dezelfde als die van .world-frame hieronder, met dezelfde bron
+       voor de verhouding (--art-w/--art-h): --podium-h is de hoogte van het
+       kaartvak (de app minus zijn 14px lucht boven en onder), daaruit volgt de
+       breedte van het podium, daaruit zijn hoogte, en het verschil valt in
+       tweeën. max(0px, ...) vangt het geval af waarin het podium juist groter is
+       dan het vak (een krap venster, waar de ondergrens van 340 wint): dan is er
+       geen lucht maar overloop, en hoort er niets te schuiven. */
+    :root {
+      --podium-h: calc(var(--vh-lock, 100svh) - 28px);
+      --podium-w: clamp(min(340px, 100vw),
+                        min(calc(var(--podium-h) * var(--art-w) / var(--art-h)), var(--stage-spel)),
+                        100vw);
+      --podium-lucht: max(0px, calc((var(--podium-h) - var(--podium-w) * var(--art-h) / var(--art-w)) / 2));
+    }
+    /* De kop draagt al een negatieve bovenmarge (de overbloeding uit .hub-sticky);
+       die blijft staan en de lucht komt erbij. */
+    #screen-map .hub-sticky { margin-top: calc(var(--rand, 12px) * -1 + var(--podium-lucht)); }
+    /* En de balk alleen op de kaart -- het enige scherm met een podium dat
+       smaller kan zijn dan het venster hoog is. :has() staat al elders in dit
+       blad (zie de wolkjes bij #screen-map), dus het is hier geen nieuw middel. */
+    body:has(#screen-map.active) .main-nav {
+      bottom: calc(var(--balk-rand) + var(--veilig-onder) + var(--podium-lucht));
+    }
+    /* Van de kaart naar de kleedkamer verandert die voet, en zonder deze regel
+       verspringt de balk op het moment van de schermwissel. .18s is precies de
+       duur van screenIn (zie .screen.active): de balk zakt dus mee terwijl het
+       ene scherm in het andere overvloeit, in plaats van eroverheen te knippen.
+       Hij staat hier en niet op .main-nav zelf, zodat er op een telefoon -- waar
+       --podium-lucht niet bestaat en er dus nooit iets te bewegen valt -- ook
+       geen overgang op een positie-eigenschap loopt. */
+    .main-nav { transition: bottom .18s ease; }
+    @media (prefers-reduced-motion: reduce) { .main-nav { transition: none; } }
+    /* En de veeg ónder de balk hoort bij dezelfde wereld. Hij is 100vw breed --
+       op een telefoon klopt dat, want daar ís de wereld het scherm -- maar op een
+       podium van 560 in een venster van 2560 trok hij een donkere streep dwars
+       over de onscherpe omgeving, met een kaarsrechte rand op precies de hoogte
+       waar de kaart ophoudt. Dat is het tegenovergestelde van wat hij moet doen:
+       hij hoort de ónderste band van de wereld te dempen zodat "Kleedkamer" er
+       leesbaar op blijft, en niet de omgeving te verdelen.
+
+       Dus krijgt hij de breedte van het podium en de ronde onderhoeken ervan. Op
+       een venster waar het podium de volle breedte pakt is --podium-w gewoon
+       100vw en staat er precies wat er altijd stond. */
+    body:has(#screen-map.active) .main-nav::before {
+      width: var(--podium-w); margin-left: calc(var(--podium-w) / -2);
+      border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md);
+    }
+    /* Twee zwevende knopjes hangen met right: 14px aan de rechter VENSTERrand, en
+       die rand is hier niet meer de rand van het scherm: de memory-knop kwam op
+       een breed venster een halve monitor naast de wereldkaart te staan, en het
+       terug-pijltje van Werelden naast de reis. Ze horen aan de rand van hun
+       eigen podium, met dezelfde 14px lucht als op een telefoon -- waar die twee
+       randen samenvallen en er dus niets verandert. max() houdt ze binnen boord
+       als het podium toch de volle breedte pakt.
+       Hun hóógte laat dit met rust: die hangt al aan --nav-h en aan
+       --balk-ruimte, en die schuiven met de balk mee. */
+    #screen-map .mem-fab { right: max(14px, calc(50vw - var(--podium-w) / 2 + 14px)); }
+    #screen-journey .reis-terug { right: max(14px, calc(50vw - var(--balk-w) / 2 + 14px)); }
   }
 </style>
 </head>
@@ -12911,8 +13199,12 @@ function renderTourMap(travelFrom) {
 
   const map = $('tour-map');
   map.innerHTML = '';
-  map.style.setProperty('--art-w', ART_W);
-  map.style.setProperty('--art-h', ART_H);
+  /* Op <html> en niet op het kaartvak: de liggende stand rekent er op
+     #screen-map mee uit hoeveel lucht er boven en onder het podium overblijft
+     (--podium-lucht in het stijlblad), en die kan niet bij een variabele die
+     ónder hem staat. .tour-map erft hem gewoon mee. */
+  document.documentElement.style.setProperty('--art-w', ART_W);
+  document.documentElement.style.setProperty('--art-h', ART_H);
   const frame = document.createElement('div');
   frame.className = 'world-frame';
   applyWorldArt(frame, shown.world);
