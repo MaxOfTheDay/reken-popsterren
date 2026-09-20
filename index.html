@@ -13518,12 +13518,16 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
    de tijd eerst om en interpoleert er daarna tussen. Precies wat het goud ook
    doet, met zijn twee keyframes.
 
-   HET HUPPELEN BLIJFT, maar klein. De 30px sprong van hiervoor tilde haar zo ver
-   van de weg dat het spoor onder haar vandaan leek te lopen; dat is precies wat
-   hier opgelost wordt, dus het mag er niet via de achterdeur weer in. REIS_VEER
-   is een lichte veer bovenop de baan, drie passen lang, nul bij vertrek én bij
-   aankomst -- genoeg om het een loopje te laten zijn in plaats van een zweving,
-   te weinig om haar van de weg te tillen.
+   TWEE LAGEN, en dat is de hele opzet. De halte-laag (.tour-hero) staat éxact op
+   de weg -- niets erbij, geen veer, geen boog. Het loopje zit één laag dieper, op
+   de tekening zelf (zie heroWalkFrames). Zo kan het loopje nooit haar plek op de
+   weg beïnvloeden: wat er ook met haar houding gebeurt, haar voeten staan waar het
+   goud is.
+
+   Hier stond eerst wél een veer op deze laag (REIS_VEER, 38 eenheden ~ 12px). Dat
+   werkte, maar het was de verkeerde laag: het is houding en geen plek, en twee
+   verticale bewegingen boven op elkaar stapelen is precies hoe ze weer van de weg
+   af drijft. Eén verticale beweging dus, en die zit binnenin.
 
    WAT ZE NIET DOET is meedraaien met de bocht. Een tangenthoek zou haar op een
    scherp stuk zichtbaar schuin zetten, en ze staat in de hele app rechtop -- op
@@ -13537,27 +13541,73 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
    basis is translateX(-50%) binnen haar eigen halte; wat we animeren is dus het
    verschil met de oude halte, niet een absolute plek. */
 const REIS_STAPPEN = 40;   // aftastpunten over het stuk weg -- ruim genoeg voor de scherpste bocht
-const REIS_VEER = 38;      // hoogte van de veer tussen de passen, in viewBox-eenheden
-const REIS_PASSEN = 3;     // evenveel passen als de drie huppeltjes van hiervoor
-function heroRoadFrames(map, geo) {
+/* Hoeveel pixels één viewBox-eenheid is in het kader waar de kaart in staat.
+   Layoutmaten en geen getBoundingClientRect: midden in een kaartovergang staat er
+   een transform op de kaart, en daar hoort deze omrekening niets van te merken. */
+function kaderSchaal(map) {
   const frame = map && map.querySelector('.world-frame');
+  const w = frame ? frame.clientWidth : 0, h = frame ? frame.clientHeight : 0;
+  return (w > 0 && h > 0) ? { x: w / VB_W, y: h / VB_H } : null;
+}
+function heroRoadFrames(map, geo) {
   const pad = geo && geo.pad;
-  if (!frame || !pad || !pad.getPointAtLength || !geo.start) return null;
-  // layoutmaten en geen getBoundingClientRect: midden in een kaartovergang staat
-  // er een transform op de kaart, en daar hoort deze omrekening niets van te merken
-  const w = frame.clientWidth, h = frame.clientHeight;
+  const sch = kaderSchaal(map);
+  if (!sch || !pad || !pad.getPointAtLength || !geo.start) return null;
   const lengte = geo.tot - geo.van;
-  if (!(w > 0) || !(h > 0) || !(lengte > 0)) return null;
-  const sx = w / VB_W, sy = h / VB_H;
+  if (!(lengte > 0)) return null;
   const frames = [];
   for (let i = 0; i <= REIS_STAPPEN; i++) {
     const t = i / REIS_STAPPEN;
     const pt = pad.getPointAtLength(geo.van + lengte * t);
-    const veer = Math.abs(Math.sin(t * Math.PI * REIS_PASSEN)) * REIS_VEER;
-    const dx = (pt.x - geo.start.x) * sx;
-    const dy = (pt.y - geo.start.y - veer) * sy;
+    const dx = (pt.x - geo.start.x) * sch.x;
+    const dy = (pt.y - geo.start.y) * sch.y;
     frames.push({
       transform: `translate(calc(-50% + ${dx.toFixed(2)}px), ${dy.toFixed(2)}px)`,
+      offset: t,
+    });
+  }
+  return frames;
+}
+/* HET LOOPJE. Onderweg gleed ze: haar plek klopte tot op de pixel, maar er
+   gebeurde verder niets met haar, en een pop die over een weg schuift leest als
+   een pion op een bord in plaats van als iemand die ergens heen gaat.
+
+   Dit is de kleinst mogelijke ingreep die dat omdraait: drie zachte pasjes over de
+   hele reis, elk een goeie 4px omhoog, met een rek van anderhalve procent op het
+   hoogste punt. Geen sprong (dat was de oude veer, drie keer zo hoog), geen
+   slingeren, geen draaien -- alleen het verschil tussen glijden en lopen.
+
+   OP .pas-laag, niet op de houder en niet op de tekening. Die laag bestaat al voor
+   de danspasjes en is er om precies één reden (zie het stijlblad bij .pas-laag):
+   de ster op de kaart draagt een SVG-filter, en een transform óp een gefilterd
+   element laat de browser dat filter elk beeldje opnieuw uitrekenen. Het loopje
+   hoort dus op dezelfde laag als de pasjes, met hetzelfde draaipunt bij haar
+   voeten -- en dan kost het niets. Het wiegen op de houder erboven (.idle, sway)
+   loopt gewoon door: geneste transforms vermenigvuldigen, dus ze wiegt én loopt.
+
+   NUL AAN BEIDE KANTEN. |sin| is nul bij offset 0 en bij offset 1, en de rek hangt
+   aan diezelfde waarde -- vertrek en aankomst staan dus exact op niets. Daar hoeft
+   geen envelop omheen en er valt bij het begin en het eind niets te zien springen.
+
+   DEZELFDE TIJD als de baan en het goud: REIS_DUUR, REIS_WACHT, REIS_EASING. De
+   easing werkt op de tijd, dus haar pas gaat vanzelf mee met haar snelheid --
+   traag aan het begin, vlotter in het midden. */
+const REIS_PASSEN = 3;      // pasjes over de hele reis -- ~470ms per pas, een kinderwandeltempo
+const REIS_STAP = 11;       // hoogte van één pasje, in viewBox-eenheden (opgemeten 4,3px op een telefoon)
+const REIS_REK = 0.015;     // 1,5% langer op het hoogste punt, en net zoveel smaller
+function heroWalkFrames(map) {
+  const sch = kaderSchaal(map);
+  if (!sch) return null;
+  const frames = [];
+  for (let i = 0; i <= REIS_STAPPEN; i++) {
+    const t = i / REIS_STAPPEN;
+    const op = Math.abs(Math.sin(t * Math.PI * REIS_PASSEN));   // 0 op de grond, 1 op het hoogste punt
+    const rek = 1 + op * REIS_REK;
+    frames.push({
+      transform: `translateY(${(-op * REIS_STAP * sch.y).toFixed(2)}px) `
+        + `scale(${(1 / rek).toFixed(4)}, ${rek.toFixed(4)})`,
+      // bij haar voeten, net als de danspasjes -- een rek mag haar niet van de weg tillen
+      transformOrigin: '50% 95%',
       offset: t,
     });
   }
@@ -13698,6 +13748,18 @@ function runTravel(t) {
     if (dot && dot.animate && !still) dot.animate(
       [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
       { duration: 450, easing: 'ease-out' });
+    /* HET TIKJE VAN AANKOMEN ZIT AL IN sndCoin -- buzz(15), zie daar. Niet bij elke
+       pas dus (dat zou een ratel zijn en geen aankomst), maar één keer, hier, samen
+       met het muntje. buzz() kijkt zelf al naar db.haptics en naar wat het toestel
+       kan; zonder trilmotor gebeurt er gewoon niets. vier() draait precies één keer
+       per reis -- vanuit finish(), vanuit de wereldwissel, of meteen bij beperkte
+       beweging -- en nooit opnieuw bij een hertekening, dus dubbel kan het niet.
+
+       Er stond hier even een eigen buzz() vóór deze regel, en dat was twee keer
+       fout: het is een tweede trilling naast een bestaande, én hij werd niet eens
+       gevoeld. navigator.vibrate() breekt een lopende trilling af en begint
+       opnieuw, dus een tik van 12ms met 15ms er meteen achteraan is gewoon 15ms.
+       Wie hier een aankomsttrilling zoekt: hij is er, en hij zit in sndCoin. */
     sndCoin();
     confetti(crossing ? 26 : 14);
     showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
@@ -13735,6 +13797,14 @@ function runTravel(t) {
     buzz([0, 25, 90, 25, 90, 25]);
     const anim = hero.animate(frames,
       { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
+    /* En het loopje eronder (zie heroWalkFrames): dezelfde tijd, dezelfde easing,
+       maar op de tekening in plaats van op de halte-laag. Geen fill -- het laatste
+       beeldje staat toch al op niets, en zo laat het de laag daarna gewoon weer
+       los. Lukt het niet, dan reist ze zoals hiervoor: glijdend, maar goed. */
+    const stap = hero.querySelector('.pas-laag');
+    const loopje = heroWalkFrames(map);
+    if (stap && stap.animate && loopje) stap.animate(loopje,
+      { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING });
     const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
     setTimeout(() => clearInterval(trail), REIS_DUUR + REIS_WACHT + 50);
     anim.onfinish = finish;

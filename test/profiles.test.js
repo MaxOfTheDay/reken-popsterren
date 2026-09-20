@@ -599,20 +599,17 @@ function check(ok, label, detail) {
           const lengte = geo.tot - geo.van;
           const a = { x: vbx(nodes[k].x), y: vby(nodes[k].y) };
           const b = { x: vbx(nodes[k + 1].x), y: vby(nodes[k + 1].y) };
-          let naast = 0, veerMax = 0, recht = 0, opHalte = [];
+          let naast = 0, recht = 0, opHalte = [];
           frames.forEach(f => {
             const m = /translate\(calc\(-50% \+ (-?[\d.]+)px\), (-?[\d.]+)px\)/.exec(f.transform);
             if (!m) { naast = 1e9; return; }
             const x = geo.start.x + parseFloat(m[1]) / sx;   // terug in viewBox-eenheden
             const y = geo.start.y + parseFloat(m[2]) / sy;
-            // de veer tilt haar recht omhoog; die hoort er voor de vergelijking uit
-            const veer = Math.abs(Math.sin(f.offset * Math.PI * REIS_PASSEN)) * REIS_VEER;
-            veerMax = Math.max(veerMax, veer * sy);
+            /* Káál vergelijken, zonder er iets uit te rekenen. Deze laag dráágt niets
+               meer: het loopje zit een laag dieper (zie 7d-ter), juist zodat haar plek
+               op de weg door niets anders meer beïnvloed kan worden. */
             const q = geo.pad.getPointAtLength(geo.van + lengte * f.offset);
-            naast = Math.max(naast, Math.hypot(x - q.x, y + veer - q.y) * M.a);
-            /* Vertrek en aankomst apart, en dan zonder de veer eruit te rekenen:
-               daar hoort ze niet naast de halte te zweven maar er precies op te
-               staan, anders springt ze bij het begin of het eind van de reis. */
+            naast = Math.max(naast, Math.hypot(x - q.x, y - q.y) * M.a);
             if (f.offset === 0) opHalte.push(Math.hypot(x - a.x, y - a.y) * M.a);
             if (f.offset === 1) opHalte.push(Math.hypot(x - b.x, y - b.y) * M.a);
             // en waar de oude rechte lijn op ditzelfde punt gelopen zou hebben
@@ -621,7 +618,7 @@ function check(ok, label, detail) {
           });
           uit.push({
             wi, k, stappen: frames.length,
-            naast: +naast.toFixed(2), veerMax: +veerMax.toFixed(1), recht: +recht.toFixed(1),
+            naast: +naast.toFixed(2), recht: +recht.toFixed(1),
             vertrek: +(opHalte[0] != null ? opHalte[0] : 99).toFixed(2),
             aankomst: +(opHalte[1] != null ? opHalte[1] : 99).toFixed(2),
           });
@@ -638,11 +635,8 @@ function check(ok, label, detail) {
     const ergNaast = Math.max(...r.map(x => x.naast));
     check(ergNaast <= 2, 'haar baan valt op de weg en niet ernaast', 'ergste ' + ergNaast + 'px');
     check(r.every(x => x.vertrek <= 1 && x.aankomst <= 1),
-      'ze vertrekt óp de oude halte en landt óp de nieuwe -- de veer staat daar stil',
+      'ze vertrekt óp de oude halte en landt óp de nieuwe',
       JSON.stringify(r.filter(x => x.vertrek > 1 || x.aankomst > 1)).slice(0, 300));
-    const hoogsteVeer = Math.max(...r.map(x => x.veerMax));
-    check(hoogsteVeer > 2 && hoogsteVeer < 20,
-      'de veer is een loopje en geen sprong', hoogsteVeer + 'px');
     /* Zonder deze laatste zou 7d.1 ook slagen op een kaart waar elke bocht toevallig
        een rechte lijn is -- en dan bewijst hij niets. */
     const bocht = Math.max(...r.map(x => x.recht));
@@ -707,14 +701,13 @@ function check(ok, label, detail) {
         const m = new DOMMatrix(getComputedStyle(hero).transform);
         const x = start.x + (m.m41 + hero.offsetWidth / 2) / sx;
         const y = start.y + m.m42 / sy;
-        /* De veer hoort er voor de vergelijking uit, en die hangt aan de voortgang
-           ná de easing -- die staat in het goud, want dat loopt lineair in dezelfde
-           voortgang. Geen aanname over de easing dus; hij wordt afgelezen. */
+        /* Recht tegen elkaar aan, zonder correctie: deze laag is kale weg. De
+           voortgang ná de easing komt uit het goud zelf (dat loopt er lineair in
+           mee), dus ook daarvoor hoeft niets over de easing aangenomen te worden. */
         const e = (gevuld - van) / (tot - van);
-        const veer = Math.abs(Math.sin(e * Math.PI * REIS_PASSEN)) * REIS_VEER;
         meet.push({
           t: i / 10, e: +e.toFixed(3),
-          af: +(Math.hypot(x - rand.x, y + veer - rand.y) * M.a).toFixed(2),
+          af: +(Math.hypot(x - rand.x, y - rand.y) * M.a).toFixed(2),
         });
       }
       hA.cancel(); rA.cancel();
@@ -737,6 +730,187 @@ function check(ok, label, detail) {
         JSON.stringify([e2e.meet[0], e2e.meet[10]]));
     }
     await ctx.close();
+  }
+
+  /* ================= 7d-ter · Ze loopt, en ze tikt bij aankomst =================
+   * Haar plek klopte tot op de pixel, maar er gebeurde verder niets met haar: een
+   * pop die over een weg schuift leest als een pion op een bord. Er is nu een
+   * loopje, en dat zit bewust één laag dieper dan de baan -- op .pas-laag, dezelfde
+   * laag als de danspasjes. Dat is de hele afspraak van deze zaak:
+   *
+   *   de halte-laag (.tour-hero)   = káál de weg, niets erbij
+   *   de tekening (.pas-laag)      = het loopje, en verder niets
+   *
+   * Zo kan het loopje nooit haar plek op de weg beïnvloeden. Ging het op de baan
+   * zitten -- en daar zát het eerst, als REIS_VEER -- dan stapelen twee verticale
+   * bewegingen zich op en drijft ze alsnog van het goud weg.
+   *
+   * Wat hier vastligt:
+   *   1  de baan zelf draagt geen verticale extra meer (de keyframes op de
+   *      halte-laag zijn exact de weg -- dat meet 7d.1/7d.2 al, hier wordt
+   *      vastgelegd dat het loopje op een ándere laag staat)
+   *   2  het loopje is klein: een paar pixels, niet een sprong
+   *   3  het staat op niets bij vertrek én bij aankomst -- geen tikje in beeld
+   *   4  het zijn een paar passen, geen trilling en geen één lange boog
+   *   5  ze blijft rechtop: geen draaiing, geen zijwaartse verschuiving
+   *   6  bij aankomst trilt het toestel één keer kort, en niet bij elke pas    */
+  {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+    await page.goto(APP_URL);
+    await page.evaluate(() => {
+      localStorage.clear();
+      const p = defaultProfile('Roos', 'dress_roze');
+      p.level = 2; p.stars = { 1: 3 };
+      // trillen aan, geluid uit: buzz() en beep() kijken naar aparte schakelaars
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: false, haptics: true, schemaV: 3, profiles: { p1: p } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(500);
+
+    // elke trilling opvangen, met patroon en al
+    await page.evaluate(() => {
+      window.__buzz = [];
+      Object.defineProperty(navigator, 'vibrate', {
+        configurable: true, value: v => { window.__buzz.push(v); return true; },
+      });
+    });
+    await page.evaluate(() => {
+      const p = P();
+      p.level = 24;
+      for (let l = 1; l <= 23; l++) p.stars[l] = 3;
+      showWorld(2, 23);
+      runTravel({ from: 23, to: 24 });   // Junglewereld, het bochtigste stuk
+    });
+    await page.waitForFunction(() => {
+      const h = document.querySelector('.tour-stop[data-lvl="23"] .tour-hero');
+      const l = h && h.querySelector('.pas-laag');
+      return !!(h && l && h.getAnimations().length && l.getAnimations().length);
+    }, null, { timeout: 6000 }).catch(() => {});
+
+    const loop = await page.evaluate(async () => {
+      const map = document.getElementById('tour-map');
+      const hero = map.querySelector('.tour-stop[data-lvl="23"] .tour-hero');
+      const stap = hero && hero.querySelector('.pas-laag');
+      if (!hero || !stap) return { fout: 'geen ster of geen paslaag' };
+      const beweegt = el => el.getAnimations().find(a => a.effect
+        && a.effect.getKeyframes().some(k => k.transform));
+      const hA = beweegt(hero), sA = beweegt(stap);
+      if (!hA || !sA) return { fout: `halte-laag=${!!hA} paslaag=${!!sA}` };
+      hA.pause(); sA.pause();
+      const hT = hA.effect.getTiming(), sT = sA.effect.getTiming();
+      const meet = [];
+      for (let i = 0; i <= 28; i++) {
+        const tijd = REIS_WACHT + REIS_DUUR * i / 28;
+        hA.currentTime = tijd; sA.currentTime = tijd;
+        await new Promise(res => requestAnimationFrame(res));
+        const m = new DOMMatrix(getComputedStyle(stap).transform);
+        meet.push({
+          op: +(-m.m42).toFixed(2),        // omhoog, in pixels
+          zij: +m.m41.toFixed(2),          // opzij -- hoort nul te zijn
+          scheef: +(m.b || 0).toFixed(4),  // draaiing -- hoort nul te zijn
+          sx: +m.m11.toFixed(4), sy: +m.m22.toFixed(4),
+        });
+      }
+      /* finish() en geen cancel(): de reis moet hierna nog échte aankomen. Een
+         cancel neemt anim.onfinish weg, en daarmee finish() -> vier() -> de tik en
+         de hertekening; dan meet het stuk hieronder een reis die nooit aankwam. */
+      hA.finish(); sA.finish();
+      return { meet, hT, sT, origin: getComputedStyle(stap).transformOrigin };
+    });
+
+    if (loop.fout) check(false, 'de ster loopt op een eigen laag', loop.fout);
+    else {
+      const op = loop.meet.map(m => m.op);
+      check(loop.hT.duration === loop.sT.duration && loop.hT.delay === loop.sT.delay
+        && loop.hT.easing === loop.sT.easing,
+        'het loopje deelt duur, vertraging én easing met de baan',
+        JSON.stringify([loop.hT, loop.sT]));
+      const hoogste = Math.max(...op);
+      check(hoogste > 2 && hoogste < 9,
+        'het loopje is een paar pixels en geen sprong', hoogste + 'px');
+      check(Math.min(...op) >= -0.01, 'ze veert omhoog en niet omlaag', Math.min(...op) + 'px');
+      check(Math.abs(op[0]) < 0.01 && Math.abs(op[op.length - 1]) < 0.01,
+        'het loopje staat op niets bij vertrek én bij aankomst',
+        JSON.stringify([op[0], op[op.length - 1]]));
+      // toppen tellen: een paar passen, geen trilling en geen één lange boog
+      let toppen = 0;
+      for (let i = 1; i + 1 < op.length; i++) if (op[i] > op[i - 1] && op[i] >= op[i + 1]) toppen++;
+      check(toppen >= 2 && toppen <= 4, 'het zijn een paar passen', 'toppen: ' + toppen);
+      check(loop.meet.every(m => Math.abs(m.zij) < 0.01 && Math.abs(m.scheef) < 0.001),
+        'ze blijft rechtop en schuift niet opzij',
+        JSON.stringify(loop.meet.filter(m => Math.abs(m.zij) >= 0.01 || Math.abs(m.scheef) >= 0.001).slice(0, 3)));
+      const rek = loop.meet.reduce((m, x) => Math.max(m, Math.abs(x.sx - 1), Math.abs(x.sy - 1)), 0);
+      check(rek > 0.002 && rek <= 0.03, 'het kneepje blijft onder de drie procent', rek.toFixed(4));
+      check(/50%\s+95%/.test(loop.origin),
+        'het draaipunt ligt bij haar voeten, net als bij de danspasjes', loop.origin);
+    }
+
+    // en dan de reis uitlopen: één korte tik bij aankomst, en verder niets
+    await page.waitForTimeout(3200);
+    const na = await page.evaluate(() => ({
+      buzz: window.__buzz.slice(),
+      opNieuw: (() => { const st = document.querySelector('.tour-stop[data-lvl="24"]');
+        return !!st && !!st.querySelector('.tour-hero'); })(),
+    }));
+    const tikken = na.buzz.filter(v => typeof v === 'number');
+    check(na.opNieuw, 'de reis is afgelopen en ze staat op de nieuwe halte', JSON.stringify(na));
+    check(tikken.length === 1 && tikken[0] >= 8 && tikken[0] <= 15,
+      'aankomst geeft precies één korte tik, niet één per pas', JSON.stringify(na.buzz));
+    await c.close();
+  }
+
+  /* ========== 7d-quater · Geen trilmotor, of trillen uit ==========
+   * buzz() is de enige plek waar de app aan navigator.vibrate komt, en hij kijkt
+   * zelf naar db.haptics en naar of de browser het überhaupt kan. Dat is precies
+   * wat een aankomsttik nodig heeft, en de reden om er geen tweede naast te zetten:
+   * een eigen aanroep zou allebei die vangnetten missen én de tik van sndCoin
+   * afbreken (navigator.vibrate begint opnieuw in plaats van erbij).             */
+  {
+    for (const [naam, haptics, motor] of [['trillen uit', false, true], ['geen trilmotor', true, false]]) {
+      const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      await cacheFonts(c);
+      const page = await c.newPage();
+      page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
+      await page.goto(APP_URL);
+      await page.evaluate(h => {
+        localStorage.clear();
+        const p = defaultProfile('Roos', 'dress_roze');
+        p.level = 2; p.stars = { 1: 3 };
+        localStorage.setItem('rekenPopsterren_v1',
+          JSON.stringify({ sound: false, haptics: h, schemaV: 3, profiles: { p1: p } }));
+      }, haptics);
+      await page.reload();
+      await page.waitForTimeout(300);
+      await page.evaluate(() => selectProfile('p1'));
+      await page.waitForTimeout(400);
+      await page.evaluate(heeftMotor => {
+        window.__buzz = [];
+        if (heeftMotor) Object.defineProperty(navigator, 'vibrate',
+          { configurable: true, value: v => { window.__buzz.push(v); return true; } });
+        else { delete Navigator.prototype.vibrate; delete navigator.vibrate; }
+      }, motor);
+      const r = await page.evaluate(async () => {
+        const p = P();
+        p.level = 24;
+        for (let l = 1; l <= 23; l++) p.stars[l] = 3;
+        showWorld(2, 23);
+        runTravel({ from: 23, to: 24 });
+        await new Promise(res => setTimeout(res, 3200));
+        const st = document.querySelector('.tour-stop[data-lvl="24"]');
+        return { buzz: window.__buzz.slice(), aangekomen: !!st && !!st.querySelector('.tour-hero') };
+      });
+      check(r.buzz.length === 0 && r.aangekomen,
+        `${naam}: de reis loopt gewoon af, er trilt niets`, JSON.stringify(r));
+      await c.close();
+    }
   }
 
   /* ========== 7d-bis · Beperkte beweging landt meteen goed ==========
