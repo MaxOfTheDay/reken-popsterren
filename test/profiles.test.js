@@ -2032,6 +2032,63 @@ function check(ok, label, detail) {
     check(tik.zonder > 0 && tik.met === 0, 'wie aan het kiezen is ziet geen pop bewegen',
       JSON.stringify(tik));
 
+    /* ---- De sterretjes op de achtergrond ----
+       Wat hier vastligt is de dosering, want die is het hele verschil tussen
+       "sprankeling" en "een scherm dat stilstaat". Eerst hingen er twee vaste
+       vonkjes aan het logo met elk een eeuwige animatie van 17 en 23 seconden;
+       samen gaf dat er ongeveer één per acht seconden, met gaten van bijna tien
+       seconden waarin er niets gebeurde. Vandaar dat er hier vooral op het
+       grootste gat gelet wordt.
+
+       Twintig seconden meten is genoeg: bij een sterretje per anderhalve tel
+       zijn dat er een stuk of vijftien. */
+    const sprankel = await page.evaluate(async () => {
+      Object.assign(LANDING, window.__echteRust);
+      goProfiles();
+      await new Promise(r => setTimeout(r, 2600));    // de groet eerst uitzitten
+      const vonken = [...document.querySelectorAll('.vonk-laag .vonk')];
+      const rij = document.getElementById('profile-row').getBoundingClientRect();
+      const raakt = (b, k) => !(b.right < k.left || b.left > k.right || b.bottom < k.top || b.top > k.bottom);
+      const starts = [], tegelijk = [];
+      let opTegel = 0, groot = 0, was = vonken.map(() => false);
+      await new Promise(klaar => {
+        const t0 = performance.now();
+        const stap = () => {
+          const t = performance.now() - t0;
+          let aan = 0;
+          vonken.forEach((v, i) => {
+            const nu = v.classList.contains('aan');
+            if (nu) aan++;
+            if (nu && !was[i]) {
+              starts.push(Math.round(t));
+              if (raakt(v.getBoundingClientRect(), rij)) opTegel++;
+              if (parseFloat(getComputedStyle(v).fontSize) >= 15) groot++;
+            }
+            was[i] = nu;
+          });
+          tegelijk.push(aan);
+          if (t < 20000) requestAnimationFrame(stap); else klaar();
+        };
+        requestAnimationFrame(stap);
+      });
+      const gaten = starts.slice(1).map((t, i) => t - starts[i]);
+      return { aantal: starts.length, grootsteGat: Math.max(...gaten),
+               maxTegelijk: Math.max(...tegelijk), opTegel, groot,
+               elementen: vonken.length };
+    });
+    check(sprankel.elementen === 3, 'er zijn drie sterretjes die hergebruikt worden',
+      String(sprankel.elementen));
+    check(sprankel.aantal >= 8, 'er sprankelt geregeld iets op de achtergrond',
+      JSON.stringify(sprankel));
+    check(sprankel.grootsteGat <= 3600, 'en nooit lang niets -- geen dood gat van tellen',
+      JSON.stringify(sprankel));
+    check(sprankel.maxTegelijk <= 3, 'maar nooit meer dan drie tegelijk',
+      JSON.stringify(sprankel));
+    check(sprankel.opTegel === 0, 'en nooit over een tegel heen: daar staan gezichten en namen',
+      JSON.stringify(sprankel));
+    check(sprankel.groot >= 1, 'de opvallende bij het logo komt op zijn eigen, tragere beurt',
+      JSON.stringify(sprankel));
+
     const weg = await page.evaluate(async () => {
       goProfiles();
       await new Promise(r => setTimeout(r, 560));    // middenin de groet weglopen
@@ -2042,20 +2099,30 @@ function check(ok, label, detail) {
     check(weg.timers === 0 && weg.poppen.every(x => x === '-'),
       'weglopen laat geen timer en geen halve zwaai achter', JSON.stringify(weg));
 
+    /* Zes keer snel in en uit hoort precies zoveel op te leveren als één keer
+       binnenkomen. Dat wordt hier dan ook zo gemeten en niet tegen een vast
+       getal: hoeveel lussen er lopen mag groeien (er kwamen sterretjes bij, en
+       er kan later nog iets bij komen) -- wat niet mag groeien is het aantal
+       kopieën ervan. */
     const snel = await page.evaluate(async () => {
       // de rust weer op zijn echte lengte: deze zaak gaat over de groet, en een
       // kortgezette stilte uit de vorige zaak zou er middenin vallen
       Object.assign(LANDING, window.__echteRust);
+      const rustig = async () => {
+        goProfiles();
+        await new Promise(r => setTimeout(r, 2600));
+        return landingTimers.length;
+      };
+      const eenmaal = await rustig();
       for (let i = 0; i < 6; i++) {
         goProfiles(); await new Promise(r => setTimeout(r, 80));
         selectProfile('p1'); await new Promise(r => setTimeout(r, 80));
       }
-      goProfiles();
-      await new Promise(r => setTimeout(r, 2600));
-      return { timers: landingTimers.length, poppen: window.__poppen() };
+      const zesmaal = await rustig();
+      return { eenmaal, zesmaal, poppen: window.__poppen() };
     });
-    check(snel.timers <= 2 && snel.poppen.every(x => x === '-'),
-      'zes keer snel in en uit stapelt geen groeten op', JSON.stringify(snel));
+    check(snel.zesmaal === snel.eenmaal && snel.poppen.every(x => x === '-'),
+      'zes keer snel in en uit laat net zoveel lopen als één keer', JSON.stringify(snel));
     await ctx.close();
   }
 
@@ -2083,13 +2150,15 @@ function check(ok, label, detail) {
       const pop = document.querySelector('#profile-row .ster-tegel .avatar-holder');
       return { bewoog, timers: landingTimers.length, klas: pop.className,
                tekening: !!pop.querySelector('svg'),
-               vonk: getComputedStyle(document.querySelector('.spellogo .vonk')).display };
+               vonkjes: document.querySelectorAll('.vonk-laag .vonk.aan').length,
+               laag: getComputedStyle(document.querySelector('.vonk-laag')).display };
     });
     check(!stil.bewoog && stil.timers === 0,
       'zonder beweging wordt er niet gegroet en wacht er niets', JSON.stringify(stil));
     check(stil.klas === 'avatar-holder' && stil.tekening,
       'en de tegels staan er precies zoals ze horen te staan', JSON.stringify(stil));
-    check(stil.vonk === 'none', 'ook de sterretjes bij het logo houden zich stil', stil.vonk);
+    check(stil.vonkjes === 0 && stil.laag === 'none',
+      'en er sprankelt niets op de achtergrond', JSON.stringify(stil));
     await stilCtx.close();
   }
 

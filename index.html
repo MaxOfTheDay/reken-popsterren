@@ -1222,37 +1222,38 @@
      verticaal in het midden staat; .profile-spacer duwt van onderaf terug. Die
      stond hiervoor op de tekstkop en hoort nu hier. */
   .spellogo { margin: auto 0 0; padding: 0 16px; text-align: center; position: relative; }
-  /* Twee sterretjes naast de naam van het spel. Ze lenen de cyclus van de vonk
-     bij de ster op de kaart (heroVonk): alleen doorzichtigheid en een minieme
-     schaal, zichtbaar in nog geen vijfde van hun ronde. Op 17 en 23 seconden
-     lopen ze uit de pas, dus ze staan vrijwel nooit samen aan -- meestal zie je
-     er geen, af en toe eentje.
+  /* ---- Sterretjes op de achtergrond --------------------------------------
+     Hier hingen twee vonkjes vást aan het logo, elk met een eigen eeuwige
+     CSS-animatie van 17 en 23 seconden waarvan ze maar 7% van de ronde zichtbaar
+     waren. Dat gaf precies één vonkje per acht à negen seconden, altijd op
+     dezelfde twee plekken en altijd even groot -- en tussendoor lange gaten
+     waarin het scherm weer helemaal stilstond.
 
-     Zo weinig is met opzet. Dit scherm is er om een ster te kiezen, en het houdt
-     zichzelf daar bewust stil voor: de discolichtjes op de tegels ademen hier
-     niet mee (zie .ster-tegel .st-podium::after) juist omdat zes pulserende
-     vlakken het hele scherm laten bewegen terwijl er niets gebeurt. Dit is de
-     tegenhanger daarvan -- één klein teken van leven, ver van de tegels vandaan,
-     en nooit twee tegelijk. Het leven op dit scherm hoort van de poppen te komen
-     (zie landingLeeft), niet van de achtergrond. */
-  .spellogo .vonk {
-    position: absolute; z-index: 1; line-height: 1; opacity: 0; pointer-events: none;
+     Nu is het een laagje met drie herbruikbare vonkjes waar de JS mee rondgaat
+     (zie vonkje): elk vonkje krijgt bij het aangaan een eigen plek, maat en
+     duur, en de volgende wordt na een begrensde toevalspauze ingepland. Drie is
+     precies genoeg -- twee die vlak na elkaar komen plus eentje bij het logo --
+     en meer dan drie kán dus ook niet, want een bezet vonkje wordt overgeslagen.
+
+     Dat het een animatie per keer is en geen eeuwige lus is het hele punt: een
+     ritme dat je kunt voorspellen leest als een lus, een ritme dat je niet kunt
+     voorspellen leest als sprankeling. */
+  .vonk-laag { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .vonk-laag .vonk {
+    position: absolute; line-height: 1; opacity: 0;
     color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);
-    animation: logoVonk 17s ease-in-out infinite;
   }
-  /* Dezelfde vorm als heroVonk bij de ster op de kaart -- alleen
-     doorzichtigheid en een minieme schaal -- maar veel spaarzamer gedoseerd.
-     Daar is de vonk een aanwijzing ("hier sta je"); hier is hij versiering naast
-     een naam, en dan is elke seconde dat hij áán staat er een te veel. Opgemeten
-     met de curve van heroVonk was er 31% van de tijd eentje zichtbaar; met dit
-     venster is dat ruim een tiende, en met twee cyclussen die niet op elkaar
-     passen (17 en 23 seconden) staan ze nooit samen aan. */
-  @keyframes logoVonk {
-    0%, 93%, 100% { opacity: 0; transform: scale(.5); }
-    96%           { opacity: .85; transform: scale(1); }
-    98%           { opacity: .3; transform: scale(.72); }
+  /* Kort en klein: opkomen, even staan, weer weg. Alleen doorzichtigheid en een
+     minieme draai-en-schaal, dus het kost niets en het verschuift niets. */
+  .vonk-laag .vonk.aan { animation: vonkje 800ms ease-in-out; }
+  @keyframes vonkje {
+    0%   { opacity: 0; transform: scale(.3) rotate(-20deg); }
+    40%  { opacity: 1; transform: scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: scale(.55) rotate(16deg); }
   }
-  @media (prefers-reduced-motion: reduce) { .spellogo .vonk { display: none; } }
+  /* Beperkte beweging: de JS plant hier niets in (zie landingLeeft) en het laagje
+     blijft sowieso leeg. */
+  @media (prefers-reduced-motion: reduce) { .vonk-laag { display: none; } }
   /* contain is een vangnet en geen opmaak: mocht een afgeleide ooit met een
      andere verhouding terugkomen, dan wordt hij hier kleiner getekend en niet
      uitgerekt of bijgesneden. */
@@ -7557,6 +7558,11 @@
         <span style="top:84%;font-size:26px;animation-duration:88s;animation-delay:-42s;opacity:.22">☁️</span>
       </div>
     </div>
+    <!-- Drie sterretjes die steeds opnieuw gebruikt worden: de JS zet ze telkens
+         ergens anders neer (zie vonkje). Versiering, dus buiten de voorleesvolgorde. -->
+    <div class="vonk-laag" aria-hidden="true">
+      <span class="vonk">✦</span><span class="vonk">✦</span><span class="vonk">✦</span>
+    </div>
     <!-- Het spelogo. Een <img> en geen achtergrond: dit is de naam van het spel,
          dus hij hoort een kop te zijn met leesbare tekst erin (de alt) -- voor een
          schermlezer, en als de tekening onverhoopt niet binnenkomt.
@@ -7569,9 +7575,6 @@
     <h1 class="spellogo">
       <img src="assets/branding/wordmark.webp" alt="Rekensterren"
            width="1080" height="360" decoding="async">
-      <!-- versiering, geen inhoud: de naam staat in de alt hierboven -->
-      <span class="vonk" style="top:6%;left:9%;font-size:15px" aria-hidden="true">✦</span>
-      <span class="vonk" style="top:58%;right:10%;font-size:11px;animation-duration:23s;animation-delay:-8s" aria-hidden="true">✦</span>
     </h1>
     <div class="subtitle" id="profile-subtitle"></div>
     <!-- De "+" staat vást in het raster en wordt nooit weggegooid: renderProfiles
@@ -10353,6 +10356,22 @@ const LANDING = {
    hidden) en een sprong van 38 pixels zet de pop met haar hoofd buiten het
    podium; zwaaien en wiegen blijven binnen hun eigen vak. */
 const LANDING_PASJES = [{ cls: 'move-wave' }, { cls: 'move-sway' }];
+/* De sterretjes op de achtergrond. Ze stonden eerst als twee eeuwige
+   CSS-animaties van 17 en 23 seconden vast aan het logo: altijd dezelfde twee
+   plekken, altijd dezelfde maat, en samen ongeveer één vonkje per acht seconden
+   met lange dooie gaten ertussen.
+
+   Nu twee lussen met elk een eigen tempo, en allebei van de vorm "er is er net
+   een geweest, plan de volgende na een begrensde toevalspauze". Geen kansworp
+   per tel: dan kún je pech hebben en valt het scherm alsnog stil. */
+const VONKJES = {
+  kleinMin: 1500, kleinMax: 3000,   // een klein sterretje, ergens op de achtergrond
+  logoMin: 6000,  logoMax: 10000,   // en wat vaker opvallend: eentje naast de naam
+  duurMin: 620,   duurMax: 900,     // zo kort staat er eentje
+  trosKans: .3,                     // hoe vaak er meteen nog eentje achteraan komt
+  trosMin: 170,   trosMax: 430,     // en hoe kort daarna
+  laagKans: .3,                     // deel dat ónder de tegels komt i.p.v. erboven
+};
 let landingTimers = [], landingVorige = -1;
 
 // de poppen op de tegels, élke keer vers opgezocht: renderProfiles bouwt ze opnieuw
@@ -10360,6 +10379,80 @@ function landingPoppen() {
   const rij = $('profile-row');
   return rij ? [...rij.querySelectorAll('.ster-tegel .avatar-holder')] : [];
 }
+const vonkTussen = (a, b) => a + Math.random() * (b - a);
+/* Waar mag een sterretje staan? Uit de opmaak zoals hij er nú ligt, niet uit
+   vaste getallen: op een telefoon is het raster met tegels bijna het hele midden
+   en op een tablet blijft er links en rechts een brede rand over.
+
+   Twee plekken, en allebei zijn ze leeg: de band bóven de tegels (waar het logo
+   staat) en de band eronder. Nooit óp een tegel -- daar staan gezichten, namen
+   en de knop waar een kind op moet tikken, en daar hoort geen glinstering
+   overheen. Het woordmerk wordt ook ontweken: een vonkje dwars door de naam van
+   het spel leest als een vlek. Vandaar dat hij dan opzij geschoven wordt, want
+   naast de naam is juist waar hij hoort. */
+function vonkPlek(bijLogo) {
+  const scherm = $('screen-profile');
+  const rij = $('profile-row');
+  if (!scherm || !rij) return null;
+  const s = scherm.getBoundingClientRect(), r = rij.getBoundingClientRect();
+  const logoEl = scherm.querySelector('.spellogo img');
+  const logo = logoEl ? logoEl.getBoundingClientRect() : null;
+  const rand = 14;
+  let y;
+  if (bijLogo && logo) y = vonkTussen(logo.top - s.top - 6, logo.bottom - s.top + 6);
+  /* De 30 hieronder is de vrije ruimte rond het raster met tegels, en hij is
+     ruimer dan hij hoeft te zijn: een vonkje wordt gezet op zijn punt linksboven
+     en groeit daarna nog (schaal tot 1, plus een kwartslag draai), dus met een
+     krappe marge schampt hij alsnog de bovenste tegelrand. Op 30 gebeurt dat
+     niet meer -- gemeten over drie schermmaten, duizend vonkjes, nul aanrakingen. */
+  else if (Math.random() < VONKJES.laagKans && s.bottom - r.bottom > 70) y = vonkTussen(r.bottom - s.top + 30, s.height - rand);
+  else y = vonkTussen(s.height * .04, Math.max(s.height * .08, r.top - s.top - 30));
+  let x = vonkTussen(rand, s.width - rand);
+  /* Door de naam van het spel heen: opzij schuiven naar de dichtstbijzijnde kant.
+     Bij het grote vonkje is dat het hele doel -- hij hoort er nét naast. */
+  if (logo) {
+    const l = logo.left - s.left, rr = logo.right - s.left;
+    const binnen = x > l - 10 && x < rr + 10 && y > logo.top - s.top - 10 && y < logo.bottom - s.top + 10;
+    if (binnen || bijLogo) {
+      x = (bijLogo ? Math.random() < .5 : x < (l + rr) / 2)
+        ? vonkTussen(Math.max(rand, l - 34), Math.max(rand + 1, l - 8))
+        : vonkTussen(Math.min(s.width - rand - 1, rr + 8), Math.min(s.width - rand, rr + 34));
+    }
+  }
+  return { x, y };
+}
+/* Eén sterretje aan. De drie in het laagje worden steeds hergebruikt: is er
+   geen vrij, dan gebeurt er niets -- en daarmee staan er nooit meer dan drie
+   tegelijk, zonder dat daar een teller voor nodig is. */
+function vonkje(bijLogo) {
+  const laag = $('screen-profile') && $('screen-profile').querySelector('.vonk-laag');
+  if (!laag) return;
+  const el = [...laag.querySelectorAll('.vonk')].find(v => !v.classList.contains('aan'));
+  const plek = el && vonkPlek(bijLogo);
+  if (!plek) return;
+  el.style.left = Math.round(plek.x) + 'px';
+  el.style.top = Math.round(plek.y) + 'px';
+  el.style.fontSize = Math.round(bijLogo ? vonkTussen(15, 19) : vonkTussen(8, 13)) + 'px';
+  el.style.opacity = (bijLogo ? .95 : vonkTussen(.55, .8)).toFixed(2);
+  el.style.animationDuration = Math.round(vonkTussen(VONKJES.duurMin, VONKJES.duurMax)) + 'ms';
+  el.classList.add('aan');
+  // Geen timer voor het uitzetten: de animatie meldt zelf wanneer ze klaar is.
+  el.addEventListener('animationend', () => el.classList.remove('aan'), { once: true });
+}
+// De lus: eentje laten zien, en meteen bepalen wanneer de volgende komt.
+function vonkLus(bijLogo) {
+  const wacht = bijLogo ? vonkTussen(VONKJES.logoMin, VONKJES.logoMax) : vonkTussen(VONKJES.kleinMin, VONKJES.kleinMax);
+  landingNa(wacht, () => {
+    vonkje(bijLogo);
+    /* Af en toe meteen nog eentje erachteraan. Dat is het verschil tussen een
+       metronoom en sprankeling: een tempo dat je niet kunt voorspellen. */
+    if (!bijLogo && Math.random() < VONKJES.trosKans) {
+      landingNa(vonkTussen(VONKJES.trosMin, VONKJES.trosMax), () => vonkje(false));
+    }
+    vonkLus(bijLogo);
+  });
+}
+function vonkAan() { vonkLus(false); vonkLus(true); }
 /* Een timer die zichzelf weer opruimt. Zonder dat laatste groeit de lijst een
    hele sessie lang door: elk groetje legt er twee bij, en op een scherm waar een
    gezin gerust een kwartier op kan blijven staan is dat een lijst met honderden
@@ -10380,6 +10473,8 @@ function landingStil() {
   landingTimers.forEach(clearTimeout);
   landingTimers = [];
   landingPoppen().forEach(stilStaan);
+  const scherm = $('screen-profile');
+  if (scherm) scherm.querySelectorAll('.vonk-laag .vonk.aan').forEach(v => v.classList.remove('aan'));
 }
 /* De stilte, en aan het eind ervan één pop. Daarna weer stilte -- dit is de enige
    lus, en hij bestaat uit één timer tegelijk. */
@@ -10402,7 +10497,7 @@ function landingRust(extra) {
 }
 /* Een tik wint het altijd van een groetje. Wie aan het kiezen is moet niet net
    op dat moment een pop zien bewegen, dus begint de stilte gewoon opnieuw. */
-function landingTikje() { landingStil(); landingRust(0); }
+function landingTikje() { landingStil(); landingRust(0); vonkAan(); }
 function landingLeeft() {
   landingStil();
   const scherm = $('screen-profile');
@@ -10419,6 +10514,7 @@ function landingLeeft() {
     landingNa(LANDING.komNa + i * LANDING.tussen, () => landingPas(landingPoppen()[i], LANDING_PASJES[0]));
   }
   landingRust(LANDING.komNa + aantal * LANDING.tussen);
+  vonkAan();
 }
 
 function goProfiles() {
