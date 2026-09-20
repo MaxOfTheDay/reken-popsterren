@@ -818,11 +818,29 @@ function check(ok, label, detail) {
           sx: +m.m11.toFixed(4), sy: +m.m22.toFixed(4),
         });
       }
-      /* finish() en geen cancel(): de reis moet hierna nog échte aankomen. Een
+      /* Het draaipunt uit de keyframes zelf, en niet uit getComputedStyle. Twee
+         redenen, en allebei bijten ze: de opmaak lost het op naar pixels (je krijgt
+         "48px 114px" terug en nooit "50% 95%"), en het loopje heeft geen fill, dus
+         zodra het klaar is geldt het niet meer en krijg je de standaard 50% 50%
+         terug -- van een animatie die het wél goed deed. De keyframes zijn de bron. */
+      const kf = sA.effect.getKeyframes();
+      const origin = kf.map(k => k.transformOrigin);
+      /* finish() en geen cancel(): de reis moet hierna nog écht aankomen. Een
          cancel neemt anim.onfinish weg, en daarmee finish() -> vier() -> de tik en
          de hertekening; dan meet het stuk hieronder een reis die nooit aankwam. */
       hA.finish(); sA.finish();
-      return { meet, hT, sT, origin: getComputedStyle(stap).transformOrigin };
+      /* En wat het draaipunt móét doen: bij het uiterste kneepje mogen haar voeten
+         niet van hun plek. Dat is de hele reden dat het bij 95% ligt en niet in het
+         midden -- met 50% zou ze bij elke pas een halve rek omhoog kruipen. Nu de
+         animatie klaar is staat er niets meer op deze laag, dus dit meet zuiver. */
+      const rekMax = Math.max(...meet.map(m => m.sy));
+      const svg = stap.querySelector('svg');
+      const voor = svg.getBoundingClientRect().bottom;
+      stap.style.transformOrigin = origin[0];
+      stap.style.transform = `scale(${1 / rekMax}, ${rekMax})`;
+      const voeten = Math.abs(svg.getBoundingClientRect().bottom - voor);
+      stap.style.transform = ''; stap.style.transformOrigin = '';
+      return { meet, hT, sT, origin, voeten: +voeten.toFixed(2) };
     });
 
     if (loop.fout) check(false, 'de ster loopt op een eigen laag', loop.fout);
@@ -848,8 +866,11 @@ function check(ok, label, detail) {
         JSON.stringify(loop.meet.filter(m => Math.abs(m.zij) >= 0.01 || Math.abs(m.scheef) >= 0.001).slice(0, 3)));
       const rek = loop.meet.reduce((m, x) => Math.max(m, Math.abs(x.sx - 1), Math.abs(x.sy - 1)), 0);
       check(rek > 0.002 && rek <= 0.03, 'het kneepje blijft onder de drie procent', rek.toFixed(4));
-      check(/50%\s+95%/.test(loop.origin),
-        'het draaipunt ligt bij haar voeten, net als bij de danspasjes', loop.origin);
+      check(loop.origin.length > 1 && loop.origin.every(o => o === '50% 95%'),
+        'elk beeldje draait om hetzelfde punt: 50% 95%, net als de danspasjes',
+        JSON.stringify(loop.origin.slice(0, 3)));
+      check(loop.voeten < 0.5,
+        'het kneepje laat haar voeten staan waar ze staan', loop.voeten + 'px');
     }
 
     // en dan de reis uitlopen: één korte tik bij aankomst, en verder niets
