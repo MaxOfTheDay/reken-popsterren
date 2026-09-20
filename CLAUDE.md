@@ -47,8 +47,11 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    **Die volgorde is dragend en niet cosmetisch.** Functies worden gehesen en
    mogen dus overal staan, maar een `const` of `let` op het hoogste niveau niet:
    wie die leest vóórdat zijn regel gedraaid heeft, krijgt een ReferenceError en
-   een lege pagina. Zo hoort `10-feestjes.js` vóór `20-app.js`, want
-   `stilStaan` leest `MOVE_CLASSES` en dat gebeurt al bij het opstarten.
+   een lege pagina. Zo horen `10-feestjes.js` en `15-kaart-en-weg.js` vóór
+   `20-app.js`: `stilStaan` leest `MOVE_CLASSES` en `goMap` leest
+   `pendingTravel`, en allebei gebeurt al bij het opstarten. Zet je zo'n bestand
+   erachter, dan valt de pagina meteen om met "Cannot access ... before
+   initialization" — voor allebei nagemeten in een echte browser.
    **`npm run check` ziet dit soort fouten niet** — die keuring draait met een
    nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1186/1186 uit
    terwijl de pagina in een browser meteen omvalt. Verander je de volgorde of
