@@ -122,33 +122,35 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   r = await page.evaluate(() => ({ level: P().level, ster7: P().stars[7] }));
   check(r.ster7 === 3 && r.level === 8, 'foutloos = drie sterren, en een level erbij', JSON.stringify(r));
 
-  /* ---- 4 · Terug naar de kaart: eerst de beloning, dan pas de reis ----
-     De kaart komt meteen op met de zojuist gespeelde halte in beeld, en het
-     sterrentabje landt daar meteen (.net-af) -- vóórdat er iets vertrekt. Pas
-     ná die korte beloningsbeat (zie starRevealBeat) begint het huppelen naar
-     de volgende halte. Twee momenten na elkaar, dus twee metingen: kort na de
-     tik (de beloning) en pas na de volle reis (de aankomst). */
+  /* ---- 4 · Terug naar de kaart: geen tweede feestje, meteen op pad ----
+     Hier stond de omgekeerde verwachting: het sterrentabje moest op de kaart
+     landen (.net-af) en de reis moest daarop wachten. Dat is precies wat eruit
+     is. Het eindscherm heeft de sterren dan al onthuld, gevierd én door het kind
+     laten wegtikken -- ze op de kaart nog een keer laten landen is dezelfde
+     mededeling twee keer, met de reis die er een halve seconde achter aansluit.
+
+     Wat er nú hoort te staan: de score gewoon zichtbaar onder de zojuist
+     gespeelde halte, zónder dat hij nog een keer komt inlanden, en een ster die
+     kort daarna vertrekt. Zie reisBinnenWereld in goMap.
+
+     Twee metingen blijven: kort na de tik (staat de kaart er, en hoe), en na de
+     volle reis (is ze aangekomen). */
   await page.click('#btn-end-next');
   await page.waitForTimeout(400);
   r = await page.evaluate(() => {
-    const af = document.querySelector('.tour-stop.net-af');
+    const zeven = document.querySelector('.tour-stop[data-lvl="7"]');
     return {
       kaart: document.getElementById('screen-map').classList.contains('active'),
-      /* Fase 4C: de halte die je zojuist speelde zet zijn score vast -- het
-         sterrentabje landt eronder (.net-af). Dát is het hele beloningsmoment,
-         en het hoort op de zojuist gespeelde halte te staan en nergens anders --
-         en op dít moment, vóór de reis, niet pas bij de aankomst. */
-      afLvl: af ? af.dataset.lvl : null,
-      afSterren: af ? af.querySelectorAll('.cs-vol').length : -1,
-      afPerfect: af ? af.classList.contains('perfect') : false,
       afAantal: document.querySelectorAll('.tour-stop.net-af').length,
+      sterren: zeven ? zeven.querySelectorAll('.cs-vol').length : -1,
+      perfect: zeven ? zeven.classList.contains('perfect') : false,
     };
   });
   check(r.kaart, 'de kaart staat er al vóór de reis begint', JSON.stringify(r));
-  check(r.afLvl === '7' && r.afAantal === 1,
-    'de zojuist gespeelde halte -- en alleen die -- krijgt het beloningsmoment vóór het vertrek', JSON.stringify(r));
-  check(r.afSterren === 3 && r.afPerfect,
-    'de verdiende sterren landen erin, en drie sterren leest als perfect', JSON.stringify(r));
+  check(r.afAantal === 0,
+    'de kaart viert de sterren niet nog een keer -- dat deed het eindscherm al', JSON.stringify(r));
+  check(r.sterren === 3 && r.perfect,
+    'maar de score stáát er wel, en drie sterren leest als perfect', JSON.stringify(r));
   await page.waitForTimeout(2600);
   r = await page.evaluate(() => ({
     nu: (document.querySelector('.tour-stop.next') || {}).dataset,
@@ -156,10 +158,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   }));
   check(r.nu && r.nu.lvl === '8', 'terug op de kaart staat de ster op de volgende halte', JSON.stringify(r));
   check(r.afAantal === 0,
-    'bij aankomst is het beloningsmoment allang voorbij, en speelt het niet opnieuw af op de nieuwe halte', JSON.stringify(r));
-  /* Eenmalig: de opdracht wordt bij het tekenen verbruikt. Zonder dat zou het
-     tabje bij élke kaartopbouw opnieuw komen inlanden -- ook als je alleen maar
-     via de balk langs de kaart loopt. */
+    'en ook bij aankomst landt er niets op de nieuwe halte', JSON.stringify(r));
+  /* Eenmalig, en dus ook niet bij een latere kaart. Deze controle blijft staan
+     omdat hij een ándere weg afdekt dan de reis hierboven: via de kleedkamer
+     terugkomen is geen level-up, dus daar wordt netAf niet overgeslagen maar was
+     hij simpelweg al verbruikt. */
   r = await page.evaluate(async () => {
     openKleedkamer(); await new Promise(res => setTimeout(res, 250));
     goMap(); await new Promise(res => setTimeout(res, 400));
