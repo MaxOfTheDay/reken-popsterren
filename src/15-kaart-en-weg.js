@@ -31,10 +31,6 @@ function updateFades(el) {
   el.classList.toggle('can-left', el.scrollLeft > 2);
   el.classList.toggle('can-right', el.scrollLeft < max - 2);
 }
-/* De kaart is het hoofdscherm: de eigen ster staat óp de route bij haar volgende
-   show, en dé speelknop zit vast aan die halte. Na een level-up reist de ster
-   zichtbaar door naar de volgende halte (zie runTravel). */
-let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld zodra de kaart opent
 
 /* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
    scrollen. Alle haltes staan op percentages binnen één kader met een vaste
@@ -42,11 +38,6 @@ let pendingTravel = null;   // { from, to } gezet bij een level-up; afgespeeld z
    achtergrondtekening: de weg wordt getekend uit dezelfde percentages als de
    haltes, en kader, tekening, weg en haltes schalen samen mee. Er wordt niets
    opgemeten, dus er is ook geen herberekening nodig bij draaien of resizen. */
-
-// Welke wereld staat er in beeld? Normaal die van p.level, maar met de pijltjes
-// onder/boven de kaart kun je terug naar een eerdere wereld om daar haltes te
-// verbeteren. Wordt gereset zodra de kaart opnieuw geopend wordt.
-let viewWorldIdx = null;
 
 // Reservekaart: een wereld zonder eigen haltelijst krijgt een slingerend pad van
 // onder naar boven. Zo is een wereld al speelbaar vóórdat zijn tekening klaar is.
