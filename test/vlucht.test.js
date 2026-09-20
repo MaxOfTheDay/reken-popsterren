@@ -87,9 +87,42 @@ const TELEFOON = { width: 390, height: 844 };
     return { ctx, page };
   }
 
-  // een beeldje na de start van een vlucht
+  /* HET EERSTE BEELDJE VAN EEN VLUCHT -- en niet "een beeldje ná de start".
+
+     Hier stonden twee requestAnimationFrames, met de aanname dat er in die twee
+     beeldjes nog niets verschoven was. Die aanname is niet hard. De baan van een
+     vlucht legt 42% van de weg af in de eerste 60ms (zie VLUCHT.baanPunten, waar
+     dat met zoveel woorden staat), dus één beeldje te laat is al ruim een tiende
+     van de reis. Staat de machine onder druk, dan is dat precies wat er gebeurt:
+     zaak D mat de tekening dan op 212px terwijl het kaartje 179 breed is -- een
+     vlucht die er 18% in zit, gemeld als een vlucht die op de verkeerde maat
+     begint. Groen en rood hingen daarmee aan de belasting van de machine, en dat
+     is erger dan een test die niets meet: het verstopt een échte fout tussen de
+     ruis.
+
+     Meten gebeurt daarom niet meer op de klok maar op de animatie zelf. Elke
+     animatie van de vluchtlaag wordt heel even op zijn eerste beeldje gezet
+     (currentTime 0 -- de keyframes staan op offset 0 exact op de beginmaat, zie
+     vluchtBeelden), opgemeten, en meteen teruggezet waar hij was. Dat gebeurt
+     allemaal binnen één taak, dus er wordt geen enkel beeldje mee geverfd: de
+     vlucht loopt gewoon door en de rest van elke zaak (de landing, het
+     opruimen) merkt er niets van.
+
+     Wat er gemeten wordt is daarmee precies wat deze controles zeggen te
+     controleren: wáár de vlucht begint. Hoe snel de machine op dat moment is,
+     doet niet meer mee. */
   const straks = page => page.evaluate(() => new Promise(r =>
-    requestAnimationFrame(() => requestAnimationFrame(() => r(__vlucht())))));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const laag = document.querySelector('.wereld-vlucht');
+      // Geen vlucht (reduced motion, zie zaak H)? Dan valt er niets te bevriezen
+      // en leest dit precies zoals het altijd al deed.
+      const anims = laag ? laag.getAnimations({ subtree: true }) : [];
+      const stand = anims.map(a => a.currentTime);
+      anims.forEach(a => { a.currentTime = 0; });
+      const uit = __vlucht();
+      anims.forEach((a, i) => { if (stand[i] != null) a.currentTime = stand[i]; });
+      r(uit);
+    }))));
   const rust = async page => { await page.waitForTimeout(900); return page.evaluate(() => __vlucht()); };
   const bijna = (a, b, marge) => a.every((v, i) => Math.abs(v - b[i]) <= (marge == null ? 2 : marge));
 
