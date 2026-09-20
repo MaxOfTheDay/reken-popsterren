@@ -19,10 +19,11 @@ open index.html    # het spel zelf, zonder meer
 ```
 
 **`npm run check` is de poort waar élke wijziging doorheen moet** (1.185
-controles in vier Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`). De
-twaalf browsersuites draaien een echte Chromium; losse suites staan in
-`docs/TESTEN.md` en in `package.json`. Eén suite draaien gaat met
-`npm run test:<naam>` — bijvoorbeeld `npm run test:reis`.
+controles in vier Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal
+Node). `npm test` doet die vier en daarna nog twaalf, waarvan de meeste een
+echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
+Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
+`npm run test:reis`; de hele lijst staat in `docs/TESTEN.md` en `package.json`.
 
 Raak je aan het uiterlijk, draai dan ook `npm run shots` (schermafdrukken om
 mee te vergelijken) of `npm run achtergrondproef`.
@@ -58,19 +59,25 @@ een gewone start géén enkel verzoek naar buiten (ook het lettertype staat in
 
 ## Waar de dingen staan
 
-`index.html` is ± 20.700 regels, waarvan **43% commentaar**. De code eronder is
-klein: ± 2.800 CSS-regels en ± 5.900 regels app-JavaScript. Grofweg:
+`index.html` telt ruim twintigduizend regels, maar **43% daarvan is
+commentaar**. De code eronder is klein: ± 2.800 CSS-regels en ± 5.900 regels
+app-JavaScript. Vier blokken, elk te vinden op de tekst in de linkerkolom:
 
-| regels | wat |
+| zoek op | wat |
 |---|---|
-| `23–7593` | het stijlblad. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
-| `7595–8017` | de tien schermen als markup, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
-| `8018–18418` | de app |
-| `18419–20762` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Dit is 18% van de JavaScript en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
+| `<style>` | het stijlblad. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
+| `<body` | de tien schermen als markup, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
+| `<script>` het scriptblok | de app. Bovenaan staat de inhoudsopgave |
+| `function startMapEdit` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 
-**Navigeren doe je op sectienaam, niet op regelnummer.** Bovenaan het
-scriptblok staat een inhoudsopgave; zoek op bijvoorbeeld `= Telmodus` of
-`= De reis`. Het stijlblad heeft dezelfde soort koppen.
+**Navigeren doe je op sectienaam, niet op regelnummer.** Zoek op bijvoorbeeld
+`= Telmodus` of `= De hele tournee`; het stijlblad heeft dezelfde soort koppen.
+
+En zet hier geen regelnummers neer. In dit bestand stond eerst een tabel met
+vier regelbereiken erin; alle vier waren nog dezelfde dag verlopen, omdat er
+negen commits in main bij kwamen. Dat is precies waar de inhoudsopgave in
+`index.html` al voor waarschuwt — "die verouderen meteen". Een zoekterm
+verjaart niet.
 
 ### Waar je voorzichtig moet zijn
 
