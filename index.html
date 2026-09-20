@@ -13117,6 +13117,13 @@ function starRowHTML(n, gespeeld) {
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
 }
+/* De maat van de reis over de kaart: één duur, één vertraging, één easing. Het
+   goud (growRoad hieronder) en de ster (heroRoadFrames) gebruiken alle drie
+   dezelfde getallen -- dat is de enige manier waarop ze gegarandeerd samen
+   aankomen. De vertraging is de tel waarin de sterrenlanding van de vorige halte
+   uitdempt (zie starRevealBeat). */
+const REIS_DUUR = 1400, REIS_WACHT = 400, REIS_EASING = 'ease-in-out';
+
 /* Het goud van de afgelegde weg groeit mee met het huppelen, in plaats van pas ná
    aankomst in één klap door te schieten.
 
@@ -13181,9 +13188,106 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
   svg.appendChild(mask);
   fg.setAttribute('mask', 'url(#road-reveal)');
 
-  return reveal.animate(
-    [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
-    { duration, delay, easing: 'ease-in-out', fill: 'forwards' });
+  /* Niet alleen de animatie terug, maar ook de maat waarin hij gedacht is: welk
+     pad, en waar op dat pad de oude en de nieuwe halte liggen. De ster loopt
+     daar overheen (zie heroRoadFrames) -- met dezelfde lengtes, dezelfde duur
+     en dezelfde easing lopen het goud en zij per definitie gelijk op. */
+  return {
+    anim: reveal.animate(
+      [{ strokeDashoffset: total - covered }, { strokeDashoffset: 0 }],
+      { duration, delay, easing: REIS_EASING, fill: 'forwards' }),
+    pad: fg, van: covered, tot: total, start: pts[fromIdx],
+  };
+}
+/* De ster loopt ÓVER de weg, niet er dwars overheen.
+
+   Hiervoor huppelde ze in een rechte lijn: zes keyframes over translate(dx, dy)
+   tussen de twee haltes, met een sprongetje op de oneven punten. Op een recht
+   stuk viel dat niet op -- maar de weg bólt (zie ROAD_BOW/defaultControl, en in
+   de studio buigt elk stuk apart om een rots heen), en juist in die bochten
+   sneed ze de hoek af. Je zag haar dan naast haar eigen gouden spoor lopen: twee
+   bewegingen die hetzelfde moment vertellen en toch een andere weg nemen.
+   Opgemeten over alle 42 stukken weg van de zes werelden, op een toestel van 390
+   breed: gemiddeld 23px naast de weg, en op het bochtigste stuk (Junglewereld,
+   stuk 7) 98px -- dat is bijna een hele halte breed.
+
+   Nu komt haar plek uit hetzelfde pad als het goud. growRoad zet fg op de d t/m
+   de nieuwe halte en meet waar de oude halte op dat pad ligt (van) en waar de
+   nieuwe (tot); hier wordt datzelfde pad op gelijke afstanden afgetast met
+   getPointAtLength. Eén voortgang 0 -> 1 stuurt dus allebei:
+
+     goud   strokeDashoffset = tot - (van + lengte * voortgang)
+     ster   getPointAtLength(van + lengte * voortgang)
+
+   Ze lopen daardoor niet gelijk op omdat de duur toevallig dezelfde is, maar
+   omdat het dezelfde maat is. Beide animaties krijgen REIS_DUUR, REIS_WACHT en
+   REIS_EASING; die easing werkt op de tíjd en niet op de keyframes, dus de
+   keyframes hieronder mogen gewoon op gelijke afstanden liggen -- WAAPI rekent
+   de tijd eerst om en interpoleert er daarna tussen. Precies wat het goud ook
+   doet, met zijn twee keyframes.
+
+   HET HUPPELEN BLIJFT, maar klein. De 30px sprong van hiervoor tilde haar zo ver
+   van de weg dat het spoor onder haar vandaan leek te lopen; dat is precies wat
+   hier opgelost wordt, dus het mag er niet via de achterdeur weer in. REIS_VEER
+   is een lichte veer bovenop de baan, drie passen lang, nul bij vertrek én bij
+   aankomst -- genoeg om het een loopje te laten zijn in plaats van een zweving,
+   te weinig om haar van de weg te tillen.
+
+   WAT ZE NIET DOET is meedraaien met de bocht. Een tangenthoek zou haar op een
+   scherp stuk zichtbaar schuin zetten, en ze staat in de hele app rechtop -- op
+   de kaart, in de kleedkamer, op het eindscherm. Alleen haar pósitie volgt de
+   weg; haar houding is van haar.
+
+   EENHEDEN. De weg staat in viewBox-eenheden, de ster verschuift in pixels
+   binnen het kader. De SVG dekt het kader precies (.tour-road-svg: inset 0,
+   100%/100%) en .world-frame heeft dezelfde beeldverhouding als de viewBox (zie
+   VB_W), dus er is geen brievenbus en de omrekening is één schaal per as. Haar
+   basis is translateX(-50%) binnen haar eigen halte; wat we animeren is dus het
+   verschil met de oude halte, niet een absolute plek. */
+const REIS_STAPPEN = 40;   // aftastpunten over het stuk weg -- ruim genoeg voor de scherpste bocht
+const REIS_VEER = 38;      // hoogte van de veer tussen de passen, in viewBox-eenheden
+const REIS_PASSEN = 3;     // evenveel passen als de drie huppeltjes van hiervoor
+function heroRoadFrames(map, geo) {
+  const frame = map && map.querySelector('.world-frame');
+  const pad = geo && geo.pad;
+  if (!frame || !pad || !pad.getPointAtLength || !geo.start) return null;
+  // layoutmaten en geen getBoundingClientRect: midden in een kaartovergang staat
+  // er een transform op de kaart, en daar hoort deze omrekening niets van te merken
+  const w = frame.clientWidth, h = frame.clientHeight;
+  const lengte = geo.tot - geo.van;
+  if (!(w > 0) || !(h > 0) || !(lengte > 0)) return null;
+  const sx = w / VB_W, sy = h / VB_H;
+  const frames = [];
+  for (let i = 0; i <= REIS_STAPPEN; i++) {
+    const t = i / REIS_STAPPEN;
+    const pt = pad.getPointAtLength(geo.van + lengte * t);
+    const veer = Math.abs(Math.sin(t * Math.PI * REIS_PASSEN)) * REIS_VEER;
+    const dx = (pt.x - geo.start.x) * sx;
+    const dy = (pt.y - geo.start.y - veer) * sy;
+    frames.push({
+      transform: `translate(calc(-50% + ${dx.toFixed(2)}px), ${dy.toFixed(2)}px)`,
+      offset: t,
+    });
+  }
+  return frames;
+}
+/* De terugval als er geen pad te meten valt (geen SVG, een halte die niet in deze
+   wereld ligt, een kader dat nog geen maat heeft): de rechte lijn van hiervoor,
+   zodat de reis in het ergste geval oud gedrag vertoont in plaats van géén. Het
+   afwisselende ease-in/ease-out per keyframe blijft staan -- dát maakt van drie
+   knikken drie sprongetjes, en dat kan REIS_EASING over de tijd niet nadoen. */
+function heroLineFrames(from, to) {
+  const dx = to.offsetLeft - from.offsetLeft;
+  const dy = to.offsetTop - from.offsetTop;
+  const frames = [];
+  for (let i = 0; i <= 6; i++) {
+    frames.push({
+      transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -30 : 0)}px)`,
+      offset: i / 6,
+      easing: i % 2 ? 'ease-in' : 'ease-out',
+    });
+  }
+  return frames;
 }
 /* De eerste keer dat een wereld opengaat.
 
@@ -13330,22 +13434,17 @@ function runTravel(t) {
      pas als die beat voorbij is vertrekt ze -- anders valt de aankomst op de
      volgende halte samen met de sterren die hier nog aan het landen zijn. */
   starRevealBeat(t.from, () => {
-    const dx = to.offsetLeft - from.offsetLeft;
-    const dy = to.offsetTop - from.offsetTop;
-    // drie huppeltjes naar de volgende halte (op de even punten staat ze op de grond)
-    const frames = [];
-    for (let i = 0; i <= 6; i++) {
-      frames.push({
-        transform: `translate(calc(-50% + ${dx * i / 6}px), ${dy * i / 6 + (i % 2 ? -30 : 0)}px)`,
-        offset: i / 6,
-        easing: i % 2 ? 'ease-in' : 'ease-out'
-      });
-    }
+    /* Eerst het goud, dan de ster -- niet omdat de volgorde in beeld iets
+       uitmaakt (ze krijgen dezelfde vertraging en beginnen dus samen), maar omdat
+       growRoad het pad opmeet waar zij overheen loopt. Zonder dat pad is er niets
+       om langs te lopen en valt ze terug op de rechte lijn. */
+    const geo = growRoad(map, t.from, t.to, REIS_DUUR, REIS_WACHT);
+    const frames = heroRoadFrames(map, geo) || heroLineFrames(from, to);
     buzz([0, 25, 90, 25, 90, 25]);
-    const anim = hero.animate(frames, { duration: 1400, delay: 400, fill: 'forwards' });
-    growRoad(map, t.from, t.to, 1400, 400);   // het goud loopt met haar mee
+    const anim = hero.animate(frames,
+      { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
     const trail = setInterval(() => { if (hero.isConnected) sparkle(hero); }, 280);
-    setTimeout(() => clearInterval(trail), 1850);
+    setTimeout(() => clearInterval(trail), REIS_DUUR + REIS_WACHT + 50);
     anim.onfinish = finish;
   });
 }
