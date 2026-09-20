@@ -1305,6 +1305,63 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     check(snel.actief === 1 && snel.weg === 0 && snel.welk === 'screen-map',
       'dertig wissels achter elkaar laten geen scherm staan', JSON.stringify(snel));
 
+    /* ---- Nog eens tikken op het scherm waar je al staat ----
+       Dat is geen aankomst, dus er hoort niets te bewegen -- en zeker niet het
+       hele scherm dat nog één keer uit het niets komt opzetten. Precies dat
+       gebeurde wél: show() haalt .komt-op van élk scherm af en zet .active
+       opnieuw, en op het scherm waar je al was springt 'animation' daarmee van
+       none terug naar screenIn.
+
+       Het spoor dat ernaartoe wees: het gebeurde één keer en daarna niet meer.
+       De derde tik stond .komt-op er al niet meer, dus veranderde er in de
+       opmaak niets wat een nieuwe animatie kón starten. Vandaar dat er hier
+       drie keer achter elkaar gemeten wordt en niet twee: bij twee metingen
+       ziet [1,0] er hetzelfde uit als een scherm dat gewoon opkomt.
+
+       De kaart en Werelden hadden dit nooit (die zetten .komt-op zelf terug) en
+       staan hier als tegenproef mee. */
+    const nogmaals = await w.evaluate(async () => {
+      const laagste = async (code, id) => {
+        const el = document.getElementById(id);
+        const rij = [];
+        eval(code);
+        await new Promise(klaar => {
+          const t0 = performance.now();
+          const stap = () => {
+            rij.push(+getComputedStyle(el).opacity);
+            if (performance.now() - t0 < 350) requestAnimationFrame(stap); else klaar();
+          };
+          requestAnimationFrame(stap);
+        });
+        return +Math.min(...rij).toFixed(2);
+      };
+      const paden = [
+        ['kleedkamer', 'openKleedkamer()', 'screen-dress'],
+        ['kleedkamer hervat', 'resumeKleedkamer()', 'screen-dress'],
+        ['een lade', "openKleedkamerCat('dress')", 'screen-dress'],
+        ['de kast', 'openTrophies()', 'screen-trophies'],
+        ['de kast hervat', 'resumeTrophies()', 'screen-trophies'],
+        ['het ouderdeel', 'openSettings()', 'screen-settings'],
+        ['het memoryspel', 'startMemory()', 'screen-memory'],
+        ['de kaart', 'goMap()', 'screen-map'],
+      ];
+      const uit = {};
+      for (const [naam, code, id] of paden) {
+        goMap();
+        await new Promise(r => setTimeout(r, 450));
+        if (id === 'screen-map') { openKleedkamer(); await new Promise(r => setTimeout(r, 450)); }
+        const rij = [];
+        for (let i = 0; i < 3; i++) { rij.push(await laagste(code, id)); await new Promise(r => setTimeout(r, 400)); }
+        uit[naam] = rij;
+        if (id === 'screen-memory') { exitMemory(); await new Promise(r => setTimeout(r, 450)); }
+      }
+      return uit;
+    });
+    const flitst = Object.keys(nogmaals).filter(k => nogmaals[k].some(x => x < 0.99));
+    check(flitst.length === 0,
+      'nog eens tikken op het scherm waar je al staat laat het scherm staan -- geen flits',
+      JSON.stringify(nogmaals));
+
     /* ---- PS-54 · één indrukduur ----
        Achttien knoppen kozen elk hun eigen, tussen .07 en .15s. Wat hier
        gecontroleerd wordt is niet het getal maar of ze het uit dezelfde bron
