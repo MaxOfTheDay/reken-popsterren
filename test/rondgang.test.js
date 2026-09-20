@@ -1656,7 +1656,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     });
     check(stilstand.adem === 'none' && !stilstand.gepulst && stilstand.pulslaag === 'none',
       'zonder beweging ademt en pulst er niets', JSON.stringify(stilstand));
-    check(stilstand.gloed > .84,
+    // .95 is waar stopSpot op zijn hoogtepunt komt; stilstaand hoort de gloed
+    // daar niet onder te blijven, anders is "zonder beweging" ook "minder te zien"
+    check(stilstand.gloed >= .95,
       'maar de gloed staat er juist stérker op, zodat de halte opvalt', JSON.stringify(stilstand));
     await sCtx.close();
   }
