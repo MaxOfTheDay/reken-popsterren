@@ -540,6 +540,264 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ================= 7d · De ster loopt ÓVER de weg =================
+   * 7c legt vast dat de weg dóór de haltes loopt. Dit legt vast dat zíj over die weg
+   * loopt, en dat het goud precies met haar meekomt.
+   *
+   * Ze huppelde namelijk in een rechte lijn van halte naar halte, terwijl de weg
+   * bólt (ROAD_BOW, en in de studio buigt elk stuk apart om een rots heen). Ze
+   * sneed de bochten dus af: gemeten over alle 42 stukken weg van de zes werelden
+   * gemiddeld 23px naast de weg en op het ergste stuk 98px, op een telefoon van 390
+   * breed -- bijna een hele halte. Het goud groeide ondertussen wél netjes langs de
+   * weg, dus je zag twee bewegingen die hetzelfde moment vertellen en een andere weg
+   * nemen.
+   *
+   * Twee helften. Eerst de baan zelf, over élk stuk weg van élke wereld -- dat is
+   * waar een nieuwe of verlegde wereld hier omvalt. Daarna één echte reis, met de
+   * twee animaties stilgezet en samen vooruitgespoeld: dat meet niet de bedoeling
+   * maar het resultaat -- waar ze stáát en waar het goud stáát, op hetzelfde moment.
+   *
+   * Alles in schermpixels (getScreenCTM), net als 7c: wat een kind ziet, en niet wat
+   * er in de padgegevens staat.                                                  */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const p = defaultProfile('Roos', 'dress_roze');
+      p.level = 2; p.stars = { 1: 3 };
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: false, haptics: false, schemaV: 3, profiles: { p1: p } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(500);
+
+    // de maten van de reis komen uit de app, niet uit deze test
+    const maat = await page.evaluate(() => ({
+      stappen: REIS_STAPPEN, duur: REIS_DUUR, wacht: REIS_WACHT, easing: REIS_EASING,
+    }));
+
+    /* ---- 7d.1 · elk stuk weg van elke wereld ---- */
+    const r = await page.evaluate(() => {
+      const uit = [];
+      WORLDS.forEach((w, wi) => {
+        const wor = worldForIndex(wi);
+        if (!wor || !worldReleased(w)) return;
+        const nodes = worldNodes(wor);
+        for (let k = 0; k + 1 < nodes.length; k++) {
+          const van = wor.first + k, naar = van + 1;
+          P().level = naar;
+          showWorld(wi, van);                     // de tussenstand vóór de reis
+          const map = document.getElementById('tour-map');
+          const geo = growRoad(map, van, naar, REIS_DUUR, REIS_WACHT);
+          const frames = geo && heroRoadFrames(map, geo);
+          if (!geo || !frames) { uit.push({ wi, k, fout: 'geen baan' }); continue; }
+          const svg = map.querySelector('.tour-road-svg');
+          const M = svg.getScreenCTM();           // viewBox -> schermpixels
+          const frame = map.querySelector('.world-frame');
+          const sx = frame.clientWidth / VB_W, sy = frame.clientHeight / VB_H;
+          const lengte = geo.tot - geo.van;
+          const a = { x: vbx(nodes[k].x), y: vby(nodes[k].y) };
+          const b = { x: vbx(nodes[k + 1].x), y: vby(nodes[k + 1].y) };
+          let naast = 0, veerMax = 0, recht = 0, opHalte = [];
+          frames.forEach(f => {
+            const m = /translate\(calc\(-50% \+ (-?[\d.]+)px\), (-?[\d.]+)px\)/.exec(f.transform);
+            if (!m) { naast = 1e9; return; }
+            const x = geo.start.x + parseFloat(m[1]) / sx;   // terug in viewBox-eenheden
+            const y = geo.start.y + parseFloat(m[2]) / sy;
+            // de veer tilt haar recht omhoog; die hoort er voor de vergelijking uit
+            const veer = Math.abs(Math.sin(f.offset * Math.PI * REIS_PASSEN)) * REIS_VEER;
+            veerMax = Math.max(veerMax, veer * sy);
+            const q = geo.pad.getPointAtLength(geo.van + lengte * f.offset);
+            naast = Math.max(naast, Math.hypot(x - q.x, y + veer - q.y) * M.a);
+            /* Vertrek en aankomst apart, en dan zonder de veer eruit te rekenen:
+               daar hoort ze niet naast de halte te zweven maar er precies op te
+               staan, anders springt ze bij het begin of het eind van de reis. */
+            if (f.offset === 0) opHalte.push(Math.hypot(x - a.x, y - a.y) * M.a);
+            if (f.offset === 1) opHalte.push(Math.hypot(x - b.x, y - b.y) * M.a);
+            // en waar de oude rechte lijn op ditzelfde punt gelopen zou hebben
+            const lx = a.x + (b.x - a.x) * f.offset, ly = a.y + (b.y - a.y) * f.offset;
+            recht = Math.max(recht, Math.hypot(q.x - lx, q.y - ly) * M.a);
+          });
+          uit.push({
+            wi, k, stappen: frames.length,
+            naast: +naast.toFixed(2), veerMax: +veerMax.toFixed(1), recht: +recht.toFixed(1),
+            vertrek: +(opHalte[0] != null ? opHalte[0] : 99).toFixed(2),
+            aankomst: +(opHalte[1] != null ? opHalte[1] : 99).toFixed(2),
+          });
+        }
+      });
+      return uit;
+    });
+
+    const fout = r.filter(x => x.fout);
+    check(r.length === 42 && !fout.length,
+      'elk stuk weg van elke wereld levert een baan op', JSON.stringify(fout).slice(0, 200));
+    check(r.every(x => x.stappen === maat.stappen + 1),
+      'de baan wordt over het hele stuk afgetast', JSON.stringify(r[0] || {}));
+    const ergNaast = Math.max(...r.map(x => x.naast));
+    check(ergNaast <= 2, 'haar baan valt op de weg en niet ernaast', 'ergste ' + ergNaast + 'px');
+    check(r.every(x => x.vertrek <= 1 && x.aankomst <= 1),
+      'ze vertrekt óp de oude halte en landt óp de nieuwe -- de veer staat daar stil',
+      JSON.stringify(r.filter(x => x.vertrek > 1 || x.aankomst > 1)).slice(0, 300));
+    const hoogsteVeer = Math.max(...r.map(x => x.veerMax));
+    check(hoogsteVeer > 2 && hoogsteVeer < 20,
+      'de veer is een loopje en geen sprong', hoogsteVeer + 'px');
+    /* Zonder deze laatste zou 7d.1 ook slagen op een kaart waar elke bocht toevallig
+       een rechte lijn is -- en dan bewijst hij niets. */
+    const bocht = Math.max(...r.map(x => x.recht));
+    check(bocht > 40, 'de weg bóóg ook echt, anders bewijst deze zaak niets',
+      'grootste verschil met de rechte lijn: ' + bocht + 'px');
+
+    /* ---- 7d.2 · één echte reis: loopt het goud met haar mee? ----
+       Het bochtigste stuk van alle werelden (Junglewereld, van halte 7 naar 8).
+       De twee animaties worden stilgezet en samen vooruitgespoeld, dus dit hangt
+       niet aan een wachttijd. Gemeten wordt wat er in de opmaak stáát: haar eigen
+       transform, en de dashoffset van het masker dat het goud opendoet. */
+    await page.evaluate(() => {
+      const p = P();
+      p.level = 24;
+      for (let l = 1; l <= 23; l++) p.stars[l] = 3;
+      showWorld(2, 23);
+      runTravel({ from: 23, to: 24 });
+    });
+    await page.waitForFunction(() => {
+      const h = document.querySelector('.tour-stop[data-lvl="23"] .tour-hero');
+      const rv = document.querySelector('#road-reveal path');
+      return !!(h && rv && h.getAnimations().length && rv.getAnimations().length);
+    }, null, { timeout: 6000 }).catch(() => {});
+
+    const e2e = await page.evaluate(async () => {
+      const map = document.getElementById('tour-map');
+      const hero = map.querySelector('.tour-stop[data-lvl="23"] .tour-hero');
+      const rv = map.querySelector('#road-reveal path');
+      if (!hero || !rv || !hero.getAnimations().length || !rv.getAnimations().length)
+        return { fout: 'de reis is niet begonnen' };
+      const hA = hero.getAnimations().find(a => a.effect
+        && a.effect.getKeyframes().some(k => k.transform));
+      const rA = rv.getAnimations()[0];
+      if (!hA) return { fout: 'de ster beweegt niet' };
+      hA.pause(); rA.pause();
+      const svg = map.querySelector('.tour-road-svg');
+      const fg = svg.querySelector('.tour-road-fg');
+      const frame = map.querySelector('.world-frame');
+      const M = svg.getScreenCTM();
+      const sx = frame.clientWidth / VB_W, sy = frame.clientHeight / VB_H;
+      const tot = fg.getTotalLength();
+      // waar halte 7 op dit pad ligt -- hetzelfde begin als growRoad gebruikt
+      const nodes = worldNodes(worldForIndex(2));
+      const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+      const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      svg.appendChild(probe);
+      probe.setAttribute('d', roadD(pts, 7, WORLDS[2].curve));
+      const van = probe.getTotalLength();
+      probe.remove();
+      const start = pts[6];
+
+      const hT = hA.effect.getTiming(), rT = rA.effect.getTiming();
+      const meet = [];
+      for (let i = 0; i <= 10; i++) {
+        const tijd = REIS_WACHT + REIS_DUUR * i / 10;
+        hA.currentTime = tijd; rA.currentTime = tijd;
+        await new Promise(res => requestAnimationFrame(res));
+        // het goud: de leidende rand uit de dashoffset van het masker
+        const gevuld = tot - parseFloat(getComputedStyle(rv).strokeDashoffset);
+        const rand = fg.getPointAtLength(gevuld);
+        // de ster: uit haar eigen transform (haar basis is translateX(-50%))
+        const m = new DOMMatrix(getComputedStyle(hero).transform);
+        const x = start.x + (m.m41 + hero.offsetWidth / 2) / sx;
+        const y = start.y + m.m42 / sy;
+        /* De veer hoort er voor de vergelijking uit, en die hangt aan de voortgang
+           ná de easing -- die staat in het goud, want dat loopt lineair in dezelfde
+           voortgang. Geen aanname over de easing dus; hij wordt afgelezen. */
+        const e = (gevuld - van) / (tot - van);
+        const veer = Math.abs(Math.sin(e * Math.PI * REIS_PASSEN)) * REIS_VEER;
+        meet.push({
+          t: i / 10, e: +e.toFixed(3),
+          af: +(Math.hypot(x - rand.x, y + veer - rand.y) * M.a).toFixed(2),
+        });
+      }
+      hA.cancel(); rA.cancel();
+      return { meet, hT, rT, tot: +tot.toFixed(1), van: +van.toFixed(1) };
+    });
+
+    if (e2e.fout) check(false, 'de reisanimatie komt op gang', e2e.fout);
+    else {
+      const erg = Math.max(...e2e.meet.map(m => m.af));
+      check(erg <= 3, 'het goud staat op elk moment op dezelfde plek als de ster',
+        'ergste ' + erg + 'px  ' + JSON.stringify(e2e.meet));
+      check(e2e.hT.duration === e2e.rT.duration && e2e.hT.delay === e2e.rT.delay
+        && e2e.hT.easing === e2e.rT.easing
+        && e2e.hT.duration === maat.duur && e2e.hT.delay === maat.wacht
+        && e2e.hT.easing === maat.easing,
+        'de ster en het goud delen duur, vertraging én easing',
+        JSON.stringify([e2e.hT, e2e.rT, maat]));
+      check(e2e.meet[0].e <= 0.001 && e2e.meet[10].e >= 0.999,
+        'de reis begint op de oude halte en eindigt op de nieuwe',
+        JSON.stringify([e2e.meet[0], e2e.meet[10]]));
+    }
+    await ctx.close();
+  }
+
+  /* ========== 7d-bis · Beperkte beweging landt meteen goed ==========
+   * De reis is een beloning en geen bericht: met 'prefers-reduced-motion: reduce'
+   * hoort er niets te huppelen en niets te groeien, maar wel exact dezelfde kaart
+   * te staan als ná de reis -- de nieuwe halte open, de ster erop, het goud
+   * doorgetrokken. Dat is de tak die runTravel via `still` neemt, en die is bij het
+   * verleggen van de baan (7d) precies de tak die je per ongeluk kwijtraakt. */
+  {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL);
+    await page.evaluate(() => {
+      localStorage.clear();
+      const p = defaultProfile('Roos', 'dress_roze');
+      p.level = 2; p.stars = { 1: 3 };
+      localStorage.setItem('rekenPopsterren_v1',
+        JSON.stringify({ sound: false, haptics: false, schemaV: 3, profiles: { p1: p } }));
+    });
+    await page.reload();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => selectProfile('p1'));
+    await page.waitForTimeout(400);
+
+    const r = await page.evaluate(() => {
+      const p = P();
+      p.level = 24;
+      for (let l = 1; l <= 23; l++) p.stars[l] = 3;
+      showWorld(2, 23);
+      runTravel({ from: 23, to: 24 });
+      const map = document.getElementById('tour-map');
+      const stop = map.querySelector('.tour-stop[data-lvl="24"]');
+      return {
+        stil: motionOff(),
+        /* Alleen de reis telt hier. document.getAnimations() geeft ook de vonk
+           naast haar hoofd en de confetti van de aankomst terug, en die horen bij
+           een ander stuk van de app. */
+        bewegend: [...map.querySelectorAll('.tour-hero')]
+          .reduce((n, h) => n + h.getAnimations().length, 0),
+        masker: !!map.querySelector('#road-reveal'),
+        nieuweHalteOpen: !!stop && !stop.classList.contains('locked'),
+        sterOpNieuweHalte: !!stop && !!stop.querySelector('.tour-hero'),
+        goudTot: (() => {
+          const fg = map.querySelector('.tour-road-fg');
+          const nodes = worldNodes(worldForIndex(2));
+          const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+          const eind = fg.getPointAtLength(fg.getTotalLength());
+          return +Math.hypot(eind.x - pts[7].x, eind.y - pts[7].y).toFixed(1);
+        })(),
+      };
+    });
+    check(r.stil, 'de proef draait écht met beperkte beweging', JSON.stringify(r));
+    check(r.bewegend === 0 && !r.masker,
+      'met beperkte beweging huppelt en groeit er niets', JSON.stringify(r));
+    check(r.nieuweHalteOpen && r.sterOpNieuweHalte && r.goudTot <= 1,
+      'maar de kaart staat wel in precies de eindstand', JSON.stringify(r));
+    await c.close();
+  }
+
   /* ========== 7c-bis · De bovenrand van de veilige zone klopt per toestel ==========
    * ZONE.y0 ging van 23 naar 14 omdat de bovenbalk opzij stapt zodra de ster ertegen
    * aan staat. Daarmee hangt die 14 aan drie dingen die los van elkaar kunnen
