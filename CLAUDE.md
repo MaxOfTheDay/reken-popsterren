@@ -4,15 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-Rekensterren is een reken- en teloefenspel voor kinderen van ± 5 tot 8: één
-bestand, geen bouwstap, geen bibliotheek. `README.md` legt uit wát het is en
-noemt de vijf begrippen (wereld, show, ster, grens, diamant); dit bestand gaat
-over hóe je eraan werkt zonder iets stuk te maken.
+Rekensterren is een reken- en teloefenspel voor kinderen van ± 5 tot 8. Het
+wordt uitgeleverd als één bestand zonder bibliotheek, dat je opent en dat het
+dan doet — ook vanaf `file://`. De code schrijf je in `src/` en `npm run bouw`
+zet hem erin. `README.md` legt uit wát het spel is en noemt de vijf begrippen
+(wereld, show, ster, grens, diamant); dit bestand gaat over hóe je eraan werkt
+zonder iets stuk te maken.
 
 ## Draaien en testen
 
 ```sh
 npm run studio     # de gewone manier van werken — http://localhost:8099/studio
+npm run bouw       # src/ -> het scriptblok van index.html. Draai dit na élke codewijziging
 npm run check      # de keuring: ± 2 seconden, kaal Node, géén npm install nodig
 npm test           # alles, inclusief echte Chromium — minuten, vereist npm install
 open index.html    # het spel zelf, zonder meer
@@ -30,24 +33,37 @@ mee te vergelijken) of `npm run achtergrondproef`.
 
 ## De harde regels
 
-Dit zijn de valkuilen die je niet aan de code ziet. Alle vier zijn ooit
-omgevallen.
+Dit zijn de valkuilen die je niet aan de code ziet. Vier ervan zijn ooit
+omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
 
+0. **De code staat in `src/`, niet in `index.html`.** Het scriptblok daar is het
+   resultaat van `npm run bouw` — bewerk je het met de hand, dan is je wijziging
+   weg zodra er voor iets anders gebouwd wordt. `npm run check` vergelijkt de
+   twee en zegt het meteen (zaak H). Het stijlblad en de markup in `index.html`
+   zijn wél gewoon van jou; die staan niet in `src/`.
+   De bronbestanden worden op naam gesorteerd achter elkaar geplakt, zonder iets
+   ertussen — dus de cijfers in de naam zíjn de leesvolgorde, en elk bestand
+   eindigt op een regeleinde.
 1. **Er is precies één `<script>`-blok en precies één `</script>`, ook in
-   commentaar.** `test/app.js` knipt de app eruit met `indexOf('<script>')` en
-   draait hem in een `vm`; `inhoud.test.js` zaak H kijkt het na. Staat het woord
-   er een tweede keer, dan vallen álle Node-suites om met een syntaxfout op een
-   regel Nederlandse tekst. Schrijf het in proza als "scriptblok".
+   commentaar.** `test/app.js` knipt de app uit het gebouwde `index.html` met
+   `indexOf('<script>')` en draait hem in een `vm`; `inhoud.test.js` zaak H kijkt
+   het na. Staat het woord er een tweede keer, dan vallen álle Node-suites om met
+   een syntaxfout op een regel Nederlandse tekst. Schrijf het in proza als
+   "scriptblok". (De tests draaien dus tegen het uitgeleverde bestand en niet
+   tegen `src/` — dat is met opzet: ze horen te meten wat een kind draait.)
 2. **Het spel moet blijven draaien vanaf `file://`.** De browsertests openen
    `file://…/index.html?debug` (zie `test/browser.js`). **Dus geen
    `<script type="module">`**: ES-modules worden met CORS opgehaald en een
    `file://`-herkomst is ondoorzichtig, dus dat mislukt. Klassieke `<script>` en
    `<link rel="stylesheet">` kunnen wel.
-3. **Twee blokken in `index.html` worden door een machine geschreven — bewerk
-   ze niet met de hand.** `WORLDS` staat tussen `/* WERELDEN-BEGIN` en
+3. **Twee blokken in `src/` worden door een machine geschreven — bewerk ze niet
+   met de hand.** `WORLDS` staat tussen `/* WERELDEN-BEGIN` en
    `/* WERELDEN-EINDE */`, `SCHERMKUNST` tussen `/* SCHERMKUNST-BEGIN` en
    `/* SCHERMKUNST-EINDE */`. De wereldstudio (`?debug&mapedit`) stuurt ze naar
-   `test/preview.js`, die ze letterlijk vervangt. Zie `docs/UITBREIDEN.md`.
+   `test/preview.js`, die ze vervangt in het bronbestand waar de markering staat
+   en daarna bouwt. Zie `docs/UITBREIDEN.md`. Let op: *Bewaar* schrijft het blok
+   opnieuw uit de gegevens, dus handgeschreven commentaar erbinnen overleeft dat
+   niet — zet een toelichting bóven `WERELDEN-BEGIN`, want dat stuk blijft staan.
 4. **Het scriptje bovenaan het scriptblok (`--vh-lock` / `--vh-drift`) moet de
    eerste uitvoerende regel blijven.** Het legt de vensterhoogte vast vóór de
    Android-statusbalk wegvaagt; alles wat erna komt rekent erop.
@@ -61,13 +77,14 @@ een gewone start géén enkel verzoek naar buiten (ook het lettertype staat in
 
 `index.html` telt ruim twintigduizend regels, maar **43% daarvan is
 commentaar**. De code eronder is klein: ± 2.800 CSS-regels en ± 5.900 regels
-app-JavaScript. Vier blokken, elk te vinden op de tekst in de linkerkolom:
+app-JavaScript. Waar het staat, en waarop je het vindt:
 
 | zoek op | wat |
 |---|---|
-| `<style>` | het stijlblad. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
-| `<body` | de tien schermen als markup, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
-| `<script>` het scriptblok | de app. Bovenaan staat de inhoudsopgave |
+| `src/*.js` | **de code.** Hier schrijf je; `npm run bouw` zet het in `index.html` |
+| `<style>` | het stijlblad, in `index.html` zelf. Begint met **DE AFSPRAAK** — kleur, letter, vlakken, beweging. Lees dat blok vóórdat je een kleur of een maat kiest |
+| `<body` | de tien schermen als markup, in `index.html` zelf, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
+| `<script>` het scriptblok | het resultaat van de bouw. Lees het gerust, bewerk het niet |
 | `function startMapEdit` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 
 **Navigeren doe je op sectienaam, niet op regelnummer.** Zoek op bijvoorbeeld

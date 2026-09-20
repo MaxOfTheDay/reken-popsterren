@@ -5,13 +5,21 @@ haar eigen ster, speelt shows in een reeks werelden, en verdient daarmee
 sterren, diamanten, kleren en trofeeën.
 
 Het is één bestand — `index.html` — met de HTML, de CSS en de JavaScript erin.
-**Er is geen bouwstap en geen bibliotheek.** Je opent het bestand en het spel
-draait. Dat is met opzet: de app moet het doen op een oude tablet in een
-woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
+**Er is geen bibliotheek, en je hoeft niets te bouwen om het te dráaien.** Je
+opent het bestand en het spel draait. Dat is met opzet: de app moet het doen op
+een oude tablet in een woonkamer, zonder server, zonder netwerk en zonder
+update-ritueel.
+
+Wat er wél is, is een bouwstap om het te schríjven: de JavaScript staat in
+`src/` en wordt met `npm run bouw` het scriptblok van `index.html`. Dat ene blok
+was dertienduizend regels geworden, en dat is de grens waarop je geen stuk meer
+kunt openslaan zonder de rest mee te dragen. Het uitgeleverde bestand verandert
+er niet door — het blijft één bestand dat je opent, ook vanaf `file://`.
 
 | bestand | wat het is |
 |---|---|
-| `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio |
+| `src/*.js` | **de code die je schrijft.** Wordt met `npm run bouw` het scriptblok van `index.html` |
+| `index.html` | het hele spel: stijlblad, schermen, spellogica, wereldstudio. Het scriptblok erin komt uit `src/` — bewerk het daar |
 | `sw.js` | service worker — offline spelen na het eerste bezoek |
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
@@ -27,6 +35,7 @@ woonkamer, zonder server, zonder netwerk en zonder update-ritueel.
 ```
 npm run studio                 # de Dev Studio — http://localhost:8099/studio
 npm run snelkoppeling          # zet er een icoontje voor op je bureaublad
+npm run bouw                   # src/ -> het scriptblok van index.html
 open index.html                # het spel, zonder meer
 npm install                    # alleen nodig voor de browsertests
 npm run check                  # de keuringen (Node, ± 2 seconden)
@@ -64,11 +73,17 @@ oriënteren; de rest staat als commentaar bij de code zelf.
 * **Diamant** — de munt van de kleedkamer. Verdien je met spelen, geef je uit
   aan spulletjes. Zie `docs/DIAMANTEN.md`.
 
-## Waar dingen staan in `index.html`
+## Waar dingen staan
 
-Bovenaan het `<script>`-blok staat een inhoudsopgave. Zoek op de sectienaam
-(bijvoorbeeld `= Telmodus` of `= Werelden`) om ergens te komen; regelnummers
-staan er bewust niet bij, want die verouderen meteen.
+De code staat in `src/`; het stijlblad en de markup staan in `index.html` zelf.
+Bovenaan het eerste bronbestand staat een inhoudsopgave die álle secties noemt.
+Zoek op de sectienaam (bijvoorbeeld `= Telmodus` of `= De hele tournee`) om
+ergens te komen; regelnummers staan er bewust niet bij, want die verouderen
+meteen. Het stijlblad heeft dezelfde soort koppen.
+
+Bewerk het scriptblok in `index.html` niet met de hand: dat is het resultaat van
+`npm run bouw` en het wordt bij de eerstvolgende bouw overschreven. `npm run
+check` zegt het als de twee uit elkaar zijn gelopen.
 
 ## Verder lezen
 

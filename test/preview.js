@@ -30,6 +30,7 @@ const os = require('os');
 const scene = require('./scene.js');
 const merk = require('./merk.js');
 const versie = require('./versie.js');
+const bouwer = require('./bouw.js');
 // Alleen om bij het starten al om te vallen als de studiopagina stuk is; de
 // pagina zelf wordt per verzoek opnieuw ingelezen (zie de route /studio).
 require('./hub.js');
@@ -265,22 +266,41 @@ function page(state) {
 }
 
 /* De wereldstudio (?debug&mapedit) schrijft haar WORLDS-blok hierheen, en deze
-   server zet het in index.html tussen de twee markeringen. Dat is met opzet het
-   enige schrijfpad: alleen lokaal, alleen zolang `npm run preview` draait, en
-   alleen dát ene blok -- de rest van het bestand wordt niet aangeraakt. Zonder
-   deze server valt de studio terug op Kopieer-en-plak. */
+   server zet het tussen de twee markeringen. Dat is met opzet het enige
+   schrijfpad: alleen lokaal, alleen zolang `npm run preview` draait, en alleen
+   dát ene blok -- de rest van het bestand wordt niet aangeraakt. Zonder deze
+   server valt de studio terug op Kopieer-en-plak.
+
+   HET GAAT NAAR src/ EN NIET MEER NAAR index.html. Sinds de bouw (test/bouw.js)
+   is src/ de bron en is het scriptblok het resultaat; rechtstreeks in index.html
+   schrijven zou dus een wereld opleveren die bij de eerstvolgende bouw weer weg
+   is. In welk bronbestand de markering staat zoekt bouw.js op -- de indeling van
+   src/ mag veranderen zonder dat deze server het hoeft te weten.
+
+   Na het schrijven meteen bouwen, zodat de pagina die je hierna ververst de
+   nieuwe wereld ook echt laat zien. Dat is één stap en geen twee: de studio
+   wacht op dit antwoord en zou anders naar een index.html kijken die nog de
+   oude wereld draagt. */
 const MARK_A = '/* WERELDEN-BEGIN';
 const MARK_B = '/* WERELDEN-EINDE */';
+// Een blok tussen twee markeringen vervangen, in het bronbestand waar het staat.
+// De toelichting bóven de markering blijft altijd staan -- die is met de hand
+// geschreven en gaat niet over de inhoud eronder.
+function vervangBlok(markA, markB, blok, wat) {
+  const file = bouwer.bronMetMarkering(markA);
+  const src = fs.readFileSync(file, 'utf8');
+  const a = src.indexOf(markA), b = src.indexOf(markB);
+  if (a < 0 || b < 0 || b < a) throw new Error(`markeringen ${wat} niet gevonden in ${path.basename(file)}`);
+  const head = src.slice(a, src.indexOf('*/', a) + 2);
+  fs.writeFileSync(file, src.slice(0, a) + head + '\n' + blok + '\n' + src.slice(b));
+  bouwer.bouw();
+  return path.basename(file);
+}
 function writeWorlds(body, res) {
   try {
-    const file = path.join(ROOT, 'index.html');
-    const src = fs.readFileSync(file, 'utf8');
-    const a = src.indexOf(MARK_A), b = src.indexOf(MARK_B);
-    if (a < 0 || b < 0 || b < a) throw new Error('markeringen WERELDEN-BEGIN/EINDE niet gevonden');
-    const head = src.slice(a, src.indexOf('*/', a) + 2);   // de toelichting blijft staan
     if (!/^const WORLDS = \[[\s\S]*\];$/.test(body.trim())) throw new Error('dit is geen WORLDS-blok');
-    fs.writeFileSync(file, src.slice(0, a) + head + '\n' + body.trim() + '\n' + src.slice(b));
-    console.log('  wereldstudio: WORLDS bijgewerkt in index.html');
+    const naam = vervangBlok(MARK_A, MARK_B, body.trim(), 'WERELDEN-BEGIN/EINDE');
+    console.log('  wereldstudio: WORLDS bijgewerkt in src/' + naam + ' (en index.html gebouwd)');
     res.writeHead(200, { 'content-type': 'text/plain' });
     res.end('ok');
   } catch (e) {
@@ -322,18 +342,13 @@ function writeSchermkunst(body, res) {
     uit[sleutel] = waarde;
   }
   try {
-    const file = path.join(ROOT, 'index.html');
-    const src = fs.readFileSync(file, 'utf8');
-    const a = src.indexOf(MARK_K_A), b = src.indexOf(MARK_K_B);
-    if (a < 0 || b < 0 || b < a) throw new Error('markeringen SCHERMKUNST-BEGIN/EINDE niet gevonden');
-    const head = src.slice(a, src.indexOf('*/', a) + 2);   // de toelichting blijft staan
     const blok = 'const SCHERMKUNST = {\n'
       + Object.keys(uit).map(k => '  ' + k + ': '
         + (uit[k] ? JSON.stringify(uit[k]) : 'null') + ',').join('\n')
       + '\n};';
-    fs.writeFileSync(file, src.slice(0, a) + head + '\n' + blok + '\n' + src.slice(b));
-    console.log('  studio: SCHERMKUNST bijgewerkt in index.html');
-    zeg(200, 'in index.html gezet');
+    const naam = vervangBlok(MARK_K_A, MARK_K_B, blok, 'SCHERMKUNST-BEGIN/EINDE');
+    console.log('  studio: SCHERMKUNST bijgewerkt in src/' + naam + ' (en index.html gebouwd)');
+    zeg(200, 'in src/' + naam + ' gezet en index.html gebouwd');
   } catch (e) { zeg(500, String(e.message)); }
 }
 
