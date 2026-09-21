@@ -1164,6 +1164,26 @@
      Dit stond eerder alleen op #screen-dress; de kast en het ouderdeel misten
      hem en rekten daar hun kop wél uit tot de vensterrand. */
   @media (min-width: 740px) {
+    /* Eén ding staat niet in die som en bepaalt hem wél: DE SCHUIFBALK.
+
+       De kop en de inhoud staan met `margin: auto` midden in het scherm-element,
+       en dat element scrollt zelf (overflow-y: auto op .screen). Een klassieke
+       schuifbalk -- elk bureaublad heeft er een, een telefoon niet -- neemt zijn
+       vijftien pixels áf van de binnenkant, dus ligt die middenlijn een halve
+       schuifbalk naar links. Het vak eronder (.screen.gebruik.app-sfeer::after),
+       de navigatiebalk en de actiebalk van de kleedkamer staan vast
+       (position: fixed) en kénnen die schuifbalk niet: die blijven op het midden
+       van het vénster mikken. Kop en inhoud stonden daardoor zeven en een halve
+       pixel links van hun eigen kader -- op een bureaublad goed te zien als een
+       kop die net naast zijn lijst hangt, en op alle vier de gebruiksschermen.
+
+       `both-edges` reserveert diezelfde strook ook aan de andere kant, zodat de
+       binnenkant weer midden in het venster staat en alle drie weer op één lijn
+       komen. Het kost op een bureaublad vijftien pixels breedte; waar de
+       schuifbalk over de inhoud zweeft (telefoon, tablet) verandert er niets.
+       Meegenomen: de kolom verspringt nu ook niet meer zijwaarts op het moment
+       dat een scherm net lang genoeg wordt om te gaan scrollen. */
+    .screen.gebruik { scrollbar-gutter: stable both-edges; }
     .screen.gebruik .hub-sticky {
       width: min(100%, calc(var(--kolom) + var(--rand) * 2));
       margin-left: auto; margin-right: auto;
@@ -1508,7 +1528,11 @@
   @media (min-width: 1000px) {
     .screen.gebruik {
       /* De breedte van de kop erboven, letterlijk dezelfde som als in de regel
-         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen. */
+         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen.
+         Dezelfde sóm, maar niet vanzelf hetzelfde midden: dit vak staat vast en
+         mikt op het midden van het venster, de kop staat midden in het scherm-
+         element en dat is een schuifbalk smaller. Wat die twee weer op één lijn
+         houdt is de scrollbar-gutter bij die kopregel; zie de noot daar. */
       --vak-w: min(100%, calc(var(--kolom) + var(--rand) * 2));
       --stage-vlak:
         /* de twee haarlijnen: waar het vak begint en waar het ophoudt */
