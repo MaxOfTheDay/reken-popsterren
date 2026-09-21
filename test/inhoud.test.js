@@ -390,13 +390,33 @@ zaak('H', () => {
     scheef || 'een /* gaat nooit meer dicht');
 
   /* 2. Eén scriptblok.
-     test/app.js knipt de code eruit met indexOf('<script>') en lastIndexOf. Staat
-     dat woord ergens anders -- ook in een opmerking -- dan knipt hij op de
-     verkeerde plek en vallen álle node-suites om met een syntaxfout die niets met
-     het spel te maken heeft. */
+     test/app.js knipt de code eruit vanaf indexOf('<script>') -- de kále opening,
+     zonder attributen -- tot de eerste afsluiting erna. Staat díe kale vorm
+     ergens anders -- ook in een opmerking -- dan knipt hij op de verkeerde plek
+     en vallen álle node-suites om met een syntaxfout die niets met het spel te
+     maken heeft.
+
+     Een scripttag mét attributen mag er wél bij staan: onderin <body> staat het
+     meetscriptje van Cloudflare Web Analytics. Wat dan nog bewaakt moet worden
+     is dat elke afsluiting bij een opening hoort -- anders is er ergens een
+     losse </" + "script> in een opmerking terechtgekomen, en dat is precies de
+     fout waar deze zaak voor bestaat. */
   const tel = (naald) => html.split(naald).length - 1;
-  check(tel('<script>') === 1, 'H · er is precies één <' + 'script>', tel('<script>'));
-  check(tel('</' + 'script>') === 1, 'H · en precies één afsluiting', tel('</' + 'script>'));
+  check(tel('<script>') === 1, 'H · er is precies één kale <' + 'script>', tel('<script>'));
+  check(tel('<script') === tel('</' + 'script>'),
+    'H · elke afsluiting hoort bij een opening',
+    tel('<script') + ' openingen, ' + tel('</' + 'script>') + ' afsluitingen');
+
+  /* 2a. Het meetscriptje staat er precies één keer, en onderin.
+     Cloudflare Web Analytics telt bezoekers vanaf de uitgeleverde pagina op
+     GitHub Pages. Twee keer hetzelfde beacon telt dubbel, en bóven het
+     scriptblok zou het de opbouw van het spel vertragen -- dus hoort het als
+     laatste, vlak vóór </body>. Het hangt niet aan de bouw: het staat in de
+     markup van index.html zelf en niet in src/. */
+  check(tel('static.cloudflareinsights.com/beacon.min.js') === 1,
+    'H · precies één Cloudflare-beacon', tel('static.cloudflareinsights.com/beacon.min.js'));
+  check(/<!-- Cloudflare Web Analytics -->.*<!-- End Cloudflare Web Analytics -->\s*<\/body>/.test(html),
+    'H · en die staat vlak vóór </body>', 'hij staat ergens anders');
 
   /* 2b. En die twee blokken komen uit src/.
      Sinds de bouw (test/bouw.js) is src/ de bron en zijn het stijlblad én het

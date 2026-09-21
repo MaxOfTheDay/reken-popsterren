@@ -8,7 +8,9 @@ Het is één bestand — `index.html` — met de HTML, de CSS en de JavaScript e
 **Er is geen bibliotheek, en je hoeft niets te bouwen om het te dráaien.** Je
 opent het bestand en het spel draait. Dat is met opzet: de app moet het doen op
 een oude tablet in een woonkamer, zonder server, zonder netwerk en zonder
-update-ritueel.
+update-ritueel. Het enige dat van buiten komt is een meetscriptje onderin
+(Cloudflare Web Analytics, om bezoekers van de uitgegeven pagina te tellen); het
+spel leunt er niet op en werkt zonder net precies hetzelfde.
 
 Wat er wél is, is een bouwstap om het te schríjven: de JavaScript staat in
 `src/` en het stijlblad in `src/css/`, en `npm run bouw` zet ze in `index.html`.

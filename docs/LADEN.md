@@ -68,11 +68,18 @@ Verder:
   daarna nooit meer. Hiervoor kwam het van `fonts.googleapis.com` — dat is er
   bewust uit: zonder net was de allereerste start een ander lettertype (op Android
   bestaat geen van de drie oude reserveletters), het stijlblad van Google
-  blokkeerde het scriptblok in de `<head>`, en het was het enige verzoek dat deze
-  app ooit buiten de deur deed. Zie de noot bij `@font-face` bovenaan het
-  stijlblad.
+  blokkeerde het scriptblok in de `<head>`, en het was tot dan toe het enige
+  verzoek dat deze app buiten de deur deed. Zie de noot bij `@font-face` bovenaan
+  het stijlblad.
 * Er hoefde daar géén regel voor bij in `sw.js`: alles onder `/assets/` is voor de
   servicewerker een tekening, en dat klopt hier precies.
+* Er gaat er nu wél weer één naar buiten, maar niet voor het spel: vlak vóór
+  `</body>` staat het meetscriptje van **Cloudflare Web Analytics**. De
+  servicewerker raakt het niet aan en hoefde er ook niet voor te veranderen —
+  `fetch` laat alles met een andere herkomst dan de eigen ongemoeid
+  (`url.origin !== self.location.origin` → `return`), dus het gaat buiten beide
+  voorraden om. Zonder net mislukt die ene aanvraag en verandert er verder
+  niets: geen enkel stuk spel wacht erop.
 * Het spel stuurt na het opstarten één keer door welke tekeningen er vandaag
   bestaan; wat daar niet bij hoort gaat uit de voorraad. Zo blijft er niets van
   een verwijderde of hernoemde wereld achter.
