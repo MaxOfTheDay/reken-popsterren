@@ -43,8 +43,9 @@ const INDEX = process.env.RP_INDEX
   ? path.resolve(process.env.RP_INDEX)
   : path.resolve(__dirname, '..', 'index.html');
 
-/* Het <script>-blok. Er is er precies één in index.html, onderaan het bestand.
-   Dit knipt van de eerste <" + "script> tot de laatste afsluiting.
+/* Het scriptblok van het spel. Er is er precies één in index.html, onderaan het
+   bestand, en het is de kále vorm: <" + "script> zonder één attribuut. Dit knipt
+   van die opening tot de éérste afsluiting erna.
 
    Dat het er één is, wordt hier nagekeken en niet aangenomen. Het viel eerder
    stil om: er kwam een opmerking in het stijlblad te staan waar het woord
@@ -52,20 +53,34 @@ const INDEX = process.env.RP_INDEX
    Wat je dan krijgt is een syntaxfout op een regel Nederlandse tekst, in élke
    node-suite tegelijk, en niets dat naar de oorzaak wijst. Nu staat de oorzaak
    in de melding. (De keuring kijkt er ook naar -- zie zaak H in inhoud.test.js --
-   maar die komt pas aan de beurt nádat dit bestand de app heeft ingeladen.) */
+   maar die komt pas aan de beurt nádat dit bestand de app heeft ingeladen.)
+
+   Een tag mét attributen is niet dit blok en telt dus niet mee. Onderin <body>
+   staat er één: het meetscriptje van Cloudflare Web Analytics. Daarom wordt er
+   niet meer op de láátste afsluiting geknipt -- dat zou die van het meetscriptje
+   zijn en het halve bestand meenemen. Wat er wél overblijft van het oude
+   vangnet: elke afsluiting hoort bij een opening, dus de aantallen moeten
+   gelijk zijn. Eén </" + "script> te veel -- bijvoorbeeld in een opmerking
+   binnen het blok -- valt hier alsnog om. */
 function appScript() {
   const html = fs.readFileSync(INDEX, 'utf8');
   const open = html.split('<script>').length - 1;
+  const koppen = html.split('<script').length - 1;
   const dicht = html.split('</' + 'script>').length - 1;
-  if (open !== 1 || dicht !== 1) {
-    throw new Error(`${INDEX} hoort precies één scriptblok te hebben, maar het woord staat er `
-      + `${open}x als opening en ${dicht}x als afsluiting in -- ook in commentaar telt het mee. `
+  if (open !== 1) {
+    throw new Error(`${INDEX} hoort precies één scriptblok te hebben, maar de kale opening staat er `
+      + `${open}x in -- ook in commentaar telt het mee. `
       + `Zoek de tweede en schrijf hem anders (bijvoorbeeld "scriptblok").`);
   }
-  const begin = html.indexOf('<script>');
-  const eind = html.lastIndexOf('</' + 'script>');
-  if (begin < 0 || eind < 0) throw new Error('geen scriptblok gevonden in ' + INDEX);
-  return html.slice(begin + '<script>'.length, eind);
+  if (koppen !== dicht) {
+    throw new Error(`in ${INDEX} staan ${koppen} openingen tegenover ${dicht} afsluitingen van een `
+      + `scripttag -- ook in commentaar telt het mee. Er is er dus één te veel of te weinig; `
+      + `schrijf hem in proza (bijvoorbeeld "scriptblok").`);
+  }
+  const begin = html.indexOf('<script>') + '<script>'.length;
+  const eind = html.indexOf('</' + 'script>', begin);
+  if (eind < 0) throw new Error('geen scriptblok gevonden in ' + INDEX);
+  return html.slice(begin, eind);
 }
 
 /* Een doe-alsof-element. Alles wat je eraan vraagt bestaat en doet niets; wat je
