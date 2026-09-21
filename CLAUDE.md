@@ -65,18 +65,30 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    kijkt per CSS-bestand of de accolades kloppen en of het commentaar dichtgaat,
    zodat een knip midden in een regel of een uitleg niet door kan glippen — maar
    wát je verhangt, kan hij niet weten.
-1. **Er is precies één `<script>`-blok en precies één `</script>`, ook in
-   commentaar.** `test/app.js` knipt de app uit het gebouwde `index.html` met
-   `indexOf('<script>')` en draait hem in een `vm`; `inhoud.test.js` zaak H kijkt
-   het na. Staat het woord er een tweede keer, dan vallen álle Node-suites om met
-   een syntaxfout op een regel Nederlandse tekst. Schrijf het in proza als
-   "scriptblok". (De tests draaien dus tegen het uitgeleverde bestand en niet
+1. **Er is precies één kále `<script>`, ook in commentaar — en elke afsluiting
+   hoort bij een opening.** `test/app.js` knipt de app uit het gebouwde
+   `index.html` vanaf `indexOf('<script>')` tot de eerste `</script>` erna en
+   draait hem in een `vm`; `inhoud.test.js` zaak H kijkt het na. Schrijf het in
+   proza als "scriptblok" — staat de kale vorm er een tweede keer, dan vallen
+   álle Node-suites om met een syntaxfout op een regel Nederlandse tekst. Een
+   scripttag mét attributen mag er wél bij: onderin `<body>` staat er één (zie
+   regel 2). Daarom wordt er niet meer op de láátste afsluiting geknipt, en is
+   het vangnet nu dat de aantallen openingen en afsluitingen gelijk zijn.
+   (De tests draaien dus tegen het uitgeleverde bestand en niet
    tegen `src/` — dat is met opzet: ze horen te meten wat een kind draait.)
 2. **Het spel moet blijven draaien vanaf `file://`.** De browsertests openen
    `file://…/index.html?debug` (zie `test/browser.js`). **Dus geen
-   `<script type="module">`**: ES-modules worden met CORS opgehaald en een
-   `file://`-herkomst is ondoorzichtig, dus dat mislukt. Klassieke `<script>` en
-   `<link rel="stylesheet">` kunnen wel.
+   `<script type="module">` waar het spel op leunt**: ES-modules worden met CORS
+   opgehaald en een `file://`-herkomst is ondoorzichtig, dus dat mislukt.
+   Klassieke `<script>` en `<link rel="stylesheet">` kunnen wel.
+   De ene uitzondering staat vlak vóór `</body>`: het meetscriptje van
+   **Cloudflare Web Analytics**, een `<script type="module" src="…">` naar
+   buiten. Het spel leunt er niet op — mislukt het, dan draait alles gewoon
+   door — maar het is wél het enige stuk pagina dat zonder net omvalt, en het
+   laat dan een `Failed to load resource` in de console achter. De suites
+   rekenen élke consolefout aan als een fout in de pagina, dus vangt
+   `cacheFonts` in `test/browser.js` die ene aanvraag af met een leeg antwoord.
+   Zet er niets bij dat het spel zelf nodig heeft.
 3. **Twee blokken in `src/` worden door een machine geschreven — bewerk ze niet
    met de hand.** `WORLDS` staat tussen `/* WERELDEN-BEGIN` en
    `/* WERELDEN-EINDE */`, `SCHERMKUNST` tussen `/* SCHERMKUNST-BEGIN` en
@@ -91,9 +103,11 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    sorteervolgorde.
 
 Verder: **geen framework, geen bundler, geen TypeScript, geen bibliotheek.** De
-app moet het doen op een oude tablet in een woonkamer, zonder net. Er gaat bij
-een gewone start géén enkel verzoek naar buiten (ook het lettertype staat in
-`assets/font/`); houd dat zo.
+app moet het doen op een oude tablet in een woonkamer, zonder net. Alles wat het
+spel nodig heeft ligt naast `index.html` (ook het lettertype staat in
+`assets/font/`); houd dat zo. Er gaat bij een gewone start nog precies één
+verzoek naar buiten en dat is het meetscriptje uit regel 2 — niets van het spel
+wacht erop, dus zonder net mist er niets dan een telling.
 
 ## Waar de dingen staan
 
