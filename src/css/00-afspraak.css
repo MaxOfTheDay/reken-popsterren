@@ -482,6 +482,23 @@
     --paneel: rgba(32,8,54,.8);
     --paneel-rand: rgba(255,255,255,.2);
     --paneel-waas: blur(12px) saturate(1.15);
+    /* En de kleine waas: alles wat als los dingetje bóven de inhoud zweeft -- de
+       pillen op de kaart, een plakkende kop, een terugknopje, de wereldkiezer.
+
+       Drie sterktes waas in het hele blad, en meer horen er niet te zijn:
+         8px   --waas-klein    losse dingetjes die boven de inhoud hangen
+         12px  --paneel-waas   een heel paneel dat over een scherm ligt
+         20px  --nav-blur      de vaste balk onderaan
+       Hoe groter het ding, hoe verder wat erachter staat weg mag zakken.
+
+       De 8 stond tien keer als getal in het blad, vijf keer zelfs als exact
+       dezelfde regel naast --hud-bg. Dat is geen rommel die je ziet, maar het
+       soort dat pas opvalt als iemand er negen bijwerkt en één vergeet.
+       Waarom een filter-waarde en geen lengte: dan leest hij net als
+       --paneel-waas, en kan er later saturate bij zonder elke plek aan te raken.
+       (--nav-blur is wél een lengte; die staat in zijn eigen blokje met een
+       eigen verhaal, en dat blijft zo tot er reden is om ze gelijk te trekken.) */
+    --waas-klein: blur(8px);
     --kop-plaat: rgba(43,7,71,.82);
     /* Dezelfde kop, maar dan dicht: zodra er inhoud onderdoor schuift wordt de
        richel ondoorzichtig (zie de noot bij #screen-trophies.gescrold). De kast en

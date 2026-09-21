@@ -35,7 +35,7 @@
     /* was .92 -- dat is in de praktijk ondoorzichtig, en straks een balk dwars
        door de tekening heen. Op .82 schuift de inhoud er zichtbaar onderdoor. */
     background: var(--kop-plaat);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     border-bottom: 2px solid rgba(255,255,255,.14);
     border-radius: 0 0 var(--r-lg) var(--r-lg);
     box-shadow: var(--e-2);
@@ -262,7 +262,7 @@
     border-radius: 50%; display: grid; place-items: center; cursor: pointer;
     font-size: 18px; line-height: 1; font-family: inherit; border: 0;
     background: rgba(38,12,70,.82);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
     transition: transform var(--t-tik), box-shadow .15s;
   }
