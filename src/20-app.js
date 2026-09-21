@@ -2773,6 +2773,10 @@ function landingLeeft() {
     scherm.removeEventListener('pointerdown', landingTikje);
     scherm.addEventListener('pointerdown', landingTikje);
   }
+  // Het vakje op de MAX-ster hangt aan de maat van het scherm en niet aan de
+  // beweging, dus hij staat vóór de uitstap hieronder: ook wie minder beweging
+  // wil, mag de verrassing vinden.
+  maxPlekZet();
   // Beperkte beweging: geen begroeting en geen stilte die op iets wacht. De
   // tegels staan er precies zoals ze horen te staan, alleen zonder zwaai.
   if (motionOff()) return;
@@ -2784,6 +2788,143 @@ function landingLeeft() {
   landingRust(LANDING.komNa + aantal * LANDING.tussen);
   vonkAan();
 }
+
+/* ---- De MAX-ster: een verstopte verrassing --------------------------------
+   Onderaan de tekening van dit scherm (assets/bg/landing.webp) ligt een
+   plaquette met een gouden ster erop en MAX erin. Tik erop en er gebeurt iets
+   kleins: de ster licht op, er spat een handvol sterretjes omhoog, en binnen
+   acht tienden van een seconde is alles weer zoals het was. Geen beloning, geen
+   scherm, geen uitleg -- de tik is het hele antwoord.
+
+   WAAROM DIT MET DELEN VAN DE TEKENING REKENT EN NIET MET PROCENTEN VAN HET
+   SCHERM. De tekening wordt met `cover` ingepast (zie #screen-profile.app-sfeer
+   ::before): ze wordt op de krapste kant geschaald en aan de andere kant
+   bijgesneden. Waar de ster in het venster uitkomt hangt dus af van de
+   verhouding van het scherm, en een vast percentage zou alleen kloppen op de
+   maat waarop het opgemeten is. maxPlekZet() doet daarom elke keer dezelfde som
+   als de browser: schaal = de grootste van de twee, en dan de plek van de ster
+   in delen van de getékende rechthoek.
+
+   EN DAAROM IS HET VAKJE ER VAAK NIET. Met `cover` op een venster dat breder is
+   dan ongeveer 3:4 valt de onderste vijfde van de tekening buiten beeld, en de
+   ster ligt daar -- op een tablet in de breedte en op een bureaublad is er dus
+   niets om op te tikken. Het vakje gaat dan helemáál weg in plaats van ergens
+   te blijven hangen waar niets staat. Hetzelfde als het sterrenraster tot over
+   de plaquette zou reiken: de tegels zijn het scherm, dit is de versiering, en
+   de versiering wijkt.
+
+   Nagemeten op 360x640, 390x844 en 412x920 (het vakje ligt op de ster) en op
+   768x1024, 820x1180, 1024x768 en 1440x900 (geen vakje). */
+const MAXSTER = {
+  kunstB: 941, kunstH: 1672,   // de maat van assets/bg/landing.webp
+  x: .500, y: .886,            // het midden van de ster, in delen van die tekening
+  b: .175, h: .055,            // en het vakje eromheen -- ruimer dan de letters
+  minB: 64, minH: 52,          // maar nooit kleiner dan een vinger van vijf
+};
+function maxPlekZet() {
+  const scherm = $('screen-profile');
+  const plek = $('max-plek');
+  const laag = scherm && scherm.querySelector('.max-laag');
+  if (!plek || !laag) return;
+  const w = laag.offsetWidth, h = laag.offsetHeight;
+  const schaal = Math.max(w / MAXSTER.kunstB, h / MAXSTER.kunstH);
+  const tw = MAXSTER.kunstB * schaal, th = MAXSTER.kunstH * schaal;   // de getekende rechthoek
+  const vw = Math.max(MAXSTER.b * tw, MAXSTER.minB);
+  const vh = Math.max(MAXSTER.h * th, MAXSTER.minH);
+  const l = (w - tw) / 2 + MAXSTER.x * tw - vw / 2;
+  const t = (h - th) / 2 + MAXSTER.y * th - vh / 2;
+  /* Helemaal in beeld, en niet half: een vakje dat voor de helft over de
+     onderrand hangt geeft een gloed die aan de rand afgesneden wordt. */
+  const heel = w > 0 && h > 0 && l >= 0 && t >= 0 && l + vw <= w && t + vh <= h;
+  /* En vrij van de tegels. Dit is een vangnet en geen opmaak: met zes sterren --
+     het maximum -- houdt het raster vandaag op elke telefoonmaat nog twintig tot
+     zestig pixels over boven de plaquette. Maar een onzichtbaar vakje dat een tik
+     op een tegel opvangt is precies het soort fout waar niemand naar zoekt, dus
+     wijkt de versiering als het raster ooit tot hier groeit. Alleen de hoogtes
+     vergelijken volstaat -- het raster loopt over de volle breedte. */
+  const rij = $('profile-row');
+  const r = rij ? rij.getBoundingClientRect() : null;
+  const o = laag.getBoundingClientRect();
+  const vrij = !r || r.bottom - o.top <= t || r.top - o.top >= t + vh;
+  if (!heel || !vrij) { plek.style.display = 'none'; return; }
+  plek.style.left = Math.round(l) + 'px';
+  plek.style.top = Math.round(t) + 'px';
+  plek.style.width = Math.round(vw) + 'px';
+  plek.style.height = Math.round(vh) + 'px';
+  plek.style.display = 'block';
+}
+/* De tik zelf. Drie dingen tegelijk en verder niets: een klankje (dat zijn eigen
+   trilling meebrengt -- zie playSfx), een gloed op de plaquette, en sterretjes
+   omhoog.
+
+   ER KOMT GEEN KLANKJE BIJ, en dat is geen luiheid. De woordenschat van SFX is
+   vol (zie daar) en dit is een tik, geen gebeurtenis in het spel. 'tap.blij' is
+   letterlijk de speelse tik -- elke keer een andere noot -- en de derde tik op
+   rij leent 'star.land' op zijn hoogste sport, want dan schiet er een ster weg.
+   Staat het geluid uit, dan blijft de trilling en blijft het beeld; staat het
+   trillen uit of kan het toestel het niet, dan merk je daar niets van. Alle drie
+   die vragen staan al in playSfx en buzz, en worden hier niet nog eens gesteld.
+
+   De sterretjes ruimen zichzelf op, elk met zijn eigen timer. Ze staan bewust
+   niet in landingTimers: landingStil() loopt op élke tik op dit scherm langs
+   (zie landingTikje, die vlak ná deze functie aan de beurt is omdat de tik naar
+   het scherm doorborrelt), en zou ze dan meteen weer weghalen. */
+const MAXFEEST = {
+  koel: 380,     // zo snel achter elkaar telt een tweede tik niet
+  reeks: 1500,   // en zo lang hoort een tik nog bij de vorige
+  vonken: 6,     // zoveel sterretjes spatten er op
+  duur: 820,     // en zolang vliegen ze
+};
+let maxTijd = 0, maxReeks = 0;
+function maxTik() {
+  const nu = Date.now();
+  if (nu - maxTijd < MAXFEEST.koel) return;   // geen ratel van wie blijft rammen
+  maxReeks = (nu - maxTijd < MAXFEEST.reeks) ? maxReeks + 1 : 1;
+  maxTijd = nu;
+  const groot = maxReeks >= 3;
+  if (groot) maxReeks = 0;                    // en daarna begint het tellen opnieuw
+  playSfx(groot ? 'star.land' : 'tap.blij', groot ? { i: 2 } : null);   // i: de bovenste sport
+  const plek = $('max-plek');
+  if (!plek) return;
+  /* De gloed is het enige dat ook bij beperkte beweging blijft: hij verschuift
+     niets, hij licht alleen even op. Opnieuw afdwingen met offsetWidth, want
+     twee tikken achter elkaar horen twee keer op te lichten. */
+  plek.classList.remove('gloed', 'groot');
+  void plek.offsetWidth;
+  plek.classList.add('gloed');
+  if (groot) plek.classList.add('groot');
+  if (motionOff()) return;
+  const ver = plek.offsetHeight;
+  for (let i = 0; i < MAXFEEST.vonken + (groot ? 2 : 0); i++) {
+    maxVonkje(plek, rnd(202, 338), rnd(ver * .5, ver * 1.3),
+              rnd(MAXFEEST.duur - 140, MAXFEEST.duur), rnd(9, 14));
+  }
+  /* Eén reist verder dan de rest, recht omhoog. De weg in de tekening begint op
+     deze plaquette en loopt daar het beeld in, dus dat is waar een glinstering
+     heen hoort. Bij de derde tik is het een hele schicht. */
+  maxVonkje(plek, rnd(262, 278), ver * (groot ? 3.4 : 1.9), groot ? 780 : 700, groot ? 17 : 12);
+}
+/* Eén sterretje dat wegspat. `hoek` in graden, met 270 recht omhoog -- dezelfde
+   rekensom als confettiBurst, maar naar één kant en over een fractie van de
+   afstand. Het gaat in het vakje zelf, dus (0,0) is de ster. */
+function maxVonkje(plek, hoek, ver, duur, maat) {
+  const v = document.createElement('span');
+  v.className = 'max-vonk';
+  v.textContent = '✦';
+  const r = hoek * Math.PI / 180;
+  v.style.setProperty('--dx', Math.round(Math.cos(r) * ver) + 'px');
+  v.style.setProperty('--dy', Math.round(Math.sin(r) * ver) + 'px');
+  v.style.setProperty('--rot', rnd(-120, 120) + 'deg');
+  v.style.setProperty('--d', duur + 'ms');
+  v.style.fontSize = maat + 'px';
+  plek.appendChild(v);
+  setTimeout(() => v.remove(), duur + 80);
+}
+/* Eén keer vastzetten: het vakje staat in de markup en wordt -- anders dan de
+   tegels -- nooit opnieuw gemaakt. De maat verandert wél, bij het draaien van
+   een toestel en als de adresbalk van Android wegschuift. */
+if ($('max-plek')) $('max-plek').addEventListener('pointerdown', maxTik);
+addEventListener('resize', maxPlekZet);
 
 function goProfiles() {
   /* Een klaarliggende reis hoort bij de ster die hem verdiend heeft. Ging het kind
