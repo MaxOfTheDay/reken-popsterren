@@ -1,8 +1,18 @@
 # Audio Review
 
-*Audit of the sound that is in the app today, written before any custom sound design
-starts. Nothing here is implemented — this is the map before the roadworks. It names
-functions and sections, not line numbers, because those drift (see `CLAUDE.md`).*
+*Audit of the sound that was in the app when this was written, before any custom sound
+design started. It names functions and sections, not line numbers, because those drift
+(see `CLAUDE.md`).*
+
+> **Status.** §1–§6 describe the app **as it was audited**, not as it is now. The slice
+> in §7 has since been built: the bus, the attack ramp, `audioWakker`, the re-trigger
+> gate, the `SFX` table with `playSfx`, and the five cues (`answer.miss`,
+> `celebrate.major`, `travel.arrive`, `star.land`, `tap`). `beep()` is gone; the `snd*`
+> functions are now aliases onto `playSfx`. `test/kern.test.js` zaak O pins the two hard
+> requirements. **Where this document and the code disagree, the code wins** — read the
+> `= Geluid` section of `src/20-app.js`. §8 is still the standing list of what not to do
+> yet, and the deferred cues in §6 (`travel.depart`, `world.unlock`, `reward.claim`) are
+> still deferred.
 
 ---
 

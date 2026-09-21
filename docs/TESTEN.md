@@ -106,7 +106,15 @@ Fase 4A en 4D, rechtstreeks door de functies heen: `worldDone`, `frontierWorld`,
 - **beloningen**: uitspelen geeft het spulletje, perfect maken de trofee, allebei
   precies één keer -- ook na overspelen, na het vangnet, en na heropenen;
 - werelden hoeven geen acht shows te zijn (vijf en twaalf doen hetzelfde);
-- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes.
+- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes;
+- **geluid** -- niet hóé het klinkt (dat hoort een mens op een toestel te doen),
+  maar de twee harde eisen eronder: `playSfx()` gooit nooit, ook niet als de
+  browser geen WebAudio heeft, en "geluid uit" maakt geen context en geen knoop.
+  Daarnaast de eigenschappen van de `SFX`-tabel die je niet ziet: elke noot heeft
+  een aanzet-helling, elke noot gaat via de hoofdkraan naar buiten, geen toon
+  zakt onder de band van een tabletluidspreker, de herhaalrem maakt van drie
+  tikken in één beeldje één tik, "einde show" is uit vóórdat de eerste ster
+  landt, en een stilgelegde context wordt weer wakker gemaakt.
 
 ### `test/saves.test.js` — bestaande bestanden
 

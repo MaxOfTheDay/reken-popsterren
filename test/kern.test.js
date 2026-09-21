@@ -603,4 +603,209 @@ zaak('N', () => {
   }
 });
 
+/* ================= O · Geluid =================
+   Niet hóé het klinkt -- dat hoort een mens op een toestel te beoordelen en
+   headless Chromium heeft geen luidspreker. Wél de twee harde eisen eronder, en
+   die zijn allebei ooit een echte manier geweest om dit stuk stuk te maken:
+
+     1. playSfx() gooit nooit. AudioContext gooit in deze keuringen met opzet
+        (zie test/app.js), en playSfx wordt aangeroepen midden in submitAnswer:
+        een exception die ontsnapt breekt de beurt af én neemt alle vier de
+        Node-suites mee.
+     2. "Geluid uit" is echt uit. Geen context, geen knoop, niets -- en dus ook
+        niets dat een browser als "deze pagina wil geluid maken" kan lezen.
+
+   Daarnaast een paar eigenschappen van de tabel zelf die je met het oog niet
+   ziet maar die wel bedoeld zijn: de aanzet-helling, de plek van de hoofdkraan,
+   de herhaalrem, en de twee tijden waar de sterrenceremonie op staat. */
+
+// Een doe-alsof-WebAudio in een verse app: telt contexten, oscillatoren en alles
+// wat er aan een versterking gevraagd wordt. Geeft ook de app terug.
+function metGeluid() {
+  const app = laadApp();
+  app.run(`
+    window.__au = { ctx: 0, osc: [], gains: [], hervat: 0 };
+    window.AudioContext = function () {
+      window.__au.ctx++;
+      const self = this;
+      this.currentTime = 0;
+      this.state = 'running';
+      this.destination = { wat: 'luidspreker' };
+      this.resume = () => { window.__au.hervat++; };
+      this.createOscillator = () => {
+        const o = { type: '', frequency: { value: 0 }, uit: null,
+                    connect(t) { o.uit = t; }, start(t) { o.t0 = t; }, stop(t) { o.t1 = t; } };
+        window.__au.osc.push(o); return o;
+      };
+      this.createGain = () => {
+        const beurten = [];
+        const g = { uit: null, connect(t) { g.uit = t; }, beurten,
+          gain: { value: 0,
+            setValueAtTime(v, t) { beurten.push(['zet', v, t]); return this; },
+            linearRampToValueAtTime(v, t) { beurten.push(['recht', v, t]); return this; },
+            exponentialRampToValueAtTime(v, t) { beurten.push(['exp', v, t]); return this; },
+            cancelScheduledValues(t) { beurten.push(['wis', t]); return this; } } };
+        window.__au.gains.push(g); return g;
+      };
+    };
+    window.webkitAudioContext = window.AudioContext;
+    actx = null; bus = null; audioStuk = false;
+    db.sound = true; db.haptics = true;
+  `);
+  return app;
+}
+const geluidsStand = app => app.run('window.__au');
+// De rem laat hetzelfde klankje niet twee keer binnen HERHAALREM ms door; voor een
+// test die er twee achter elkaar wil is dat een hindernis en geen onderwerp.
+const remLos = app => app.run('for (const k in klankTijd) delete klankTijd[k];');
+
+zaak('O', () => {
+  /* ---- de tabel zelf ---- */
+  const app0 = laadApp();
+  const sfx = app0.run('SFX');
+  const namen = Object.keys(sfx);
+  check(namen.length >= 10, 'O · er staat een tabel met klankjes op naam', String(namen.length));
+  for (const naam of namen) {
+    const def = sfx[naam];
+    const ok = Array.isArray(def.noten) && def.noten.length > 0
+      && def.noten.every(n => Array.isArray(n) && n.length === 5 && n[1] > 0 && n[2] >= 0 && n[4] > 0);
+    check(ok, `O · ${naam} is een rij nette noten`, JSON.stringify(def.noten));
+    // Een noot zonder eigen toon (0) hoort zijn toon ergens vandaan te krijgen.
+    const losseNul = def.noten.some(n => !n[0]) && !def.ladder && !def.keuze;
+    check(!losseNul, `O · ${naam} laat geen noot zonder toon staan`, JSON.stringify(def.noten));
+  }
+
+  /* De laagste toon in de hele app. Een tabletluidspreker begint ruim boven de
+     311 Hz die hier ooit stond, dus daar bleef van de zachtste helft van
+     'answer.retry' niets over. Dit is de grens die dat tegenhoudt. */
+  let laagste = Infinity, waar = '';
+  for (const naam of namen) {
+    for (const n of sfx[naam].noten) {
+      const tonen = n[0] ? [n[0]] : (sfx[naam].ladder || sfx[naam].keuze || []);
+      for (const t of tonen) if (t < laagste) { laagste = t; waar = naam; }
+    }
+  }
+  check(laagste >= 380, 'O · geen enkele toon zakt onder de band van een tabletluidspreker',
+    `${laagste} Hz in ${waar}`);
+
+  /* De twee missers zijn twee klankjes. Dit is de splitsing waar het in deze
+     ronde om begonnen is: "probeer nog eens" en "je bent een hartje kwijt"
+     klonken tot nu toe precies hetzelfde. */
+  check(JSON.stringify(sfx['answer.retry'].noten) !== JSON.stringify(sfx['answer.miss'].noten),
+    'O · de eerste en de tweede misser klinken niet hetzelfde', '');
+  check(JSON.stringify(sfx['show.complete'].noten) !== JSON.stringify(sfx['celebrate.major'].noten),
+    'O · einde show en een zeldzame top klinken niet hetzelfde', '');
+  check(JSON.stringify(sfx['diamond'].noten) !== JSON.stringify(sfx['travel.arrive'].noten),
+    'O · aankomen klinkt niet als betalen', '');
+
+  /* Einde show moet uit zijn vóórdat de eerste ster landt, anders speelt de
+     ceremonie er weer onderdoor -- dat was de hele reden om hem in te korten. */
+  const einde = Math.max(...sfx['show.complete'].noten.map(n => n[1] + n[2])) * 1000;
+  const eerste = app0.run('STERCEREMONIE').eerste;
+  check(einde < eerste, 'O · einde show is uit voordat de eerste ster landt',
+    `${Math.round(einde)}ms >= ${eerste}ms`);
+
+  /* ---- 1 · playSfx gooit nooit ---- */
+  // Deze app heeft de gooiende AudioContext uit test/app.js, en dat is het punt.
+  for (const naam of namen) {
+    let stuk = null;
+    try { app0.run(`playSfx(${JSON.stringify(naam)}, { i: 1 })`); } catch (e) { stuk = e.message; }
+    check(stuk === null, `O · ${naam} overleeft een browser zonder geluid`, String(stuk));
+  }
+  let stuk = null;
+  try { app0.run("playSfx('bestaat.niet'); playSfx();"); } catch (e) { stuk = e.message; }
+  check(stuk === null, 'O · en een naam die niet bestaat ook', String(stuk));
+
+  /* ---- 2 · stil is echt stil ---- */
+  const stilApp = metGeluid();
+  stilApp.run('db.sound = false;');
+  for (const naam of namen) stilApp.run(`playSfx(${JSON.stringify(naam)})`);
+  const na = geluidsStand(stilApp);
+  check(na.ctx === 0 && na.osc.length === 0 && na.gains.length === 0,
+    'O · met geluid uit wordt er geen context en geen knoop gemaakt',
+    `ctx=${na.ctx} osc=${na.osc.length} gains=${na.gains.length}`);
+
+  /* ---- de bus ---- */
+  const app = metGeluid();
+  app.run("playSfx('tap')");
+  let st = geluidsStand(app);
+  check(st.ctx === 1, 'O · de context wordt één keer gemaakt', String(st.ctx));
+  // gains[0] is de hoofdkraan: die gaat naar de luidspreker, de rest naar de kraan.
+  const kraan = st.gains[0];
+  check(kraan.uit && kraan.uit.wat === 'luidspreker', 'O · de hoofdkraan hangt aan de luidspreker', '');
+  check(st.gains.slice(1).every(g => g.uit === kraan) && st.osc.every(o => o.uit && o.uit !== kraan),
+    'O · en elke noot gaat via de kraan naar buiten en niet erómheen', '');
+
+  remLos(app);
+  app.run("playSfx('celebrate.major')");
+  st = geluidsStand(app);
+  check(st.ctx === 1, 'O · en daarna niet nog een keer', String(st.ctx));
+  const groot = sfx['celebrate.major'].noten.length;
+  check(st.osc.length === 1 + groot, `O · een klankje van ${groot} noten maakt er ${groot}`,
+    String(st.osc.length - 1));
+
+  /* De aanzet: elke noot begint op bijna-nul en loopt in een rechte helling naar
+     zijn hoogte. Zonder die helling springt de versterking in één sample van nul
+     naar vol, en dat hoor je als een klikje vóór het klankje. */
+  const notenKranen = st.gains.slice(1);
+  const netjes = notenKranen.every(g => {
+    const b = g.beurten;
+    return b.length === 3 && b[0][0] === 'zet' && b[0][1] < 0.01
+      && b[1][0] === 'recht' && b[1][1] > b[0][1] && b[1][2] > b[0][2]
+      && b[2][0] === 'exp' && b[2][2] > b[1][2];
+  });
+  check(netjes, 'O · elke noot heeft een aanzet en een staart, geen sprong',
+    JSON.stringify(notenKranen[0] && notenKranen[0].beurten));
+
+  /* ---- de herhaalrem ---- */
+  const rem = metGeluid();
+  rem.run("playSfx('tap'); playSfx('tap'); playSfx('tap');");
+  const na3 = geluidsStand(rem);
+  check(na3.osc.length === 1, 'O · drie tikken in hetzelfde beeldje zijn één tik en geen ratel',
+    String(na3.osc.length));
+  rem.run("playSfx('answer.correct');");
+  check(geluidsStand(rem).osc.length === 1 + sfx['answer.correct'].noten.length,
+    'O · maar een ánder klankje komt er meteen naast', '');
+
+  /* ---- geluid uitzetten middenin ---- */
+  /* Een noot die al ingepland staat kun je niet meer tegenhouden: o.start() is
+     definitief. De kraan dichtdraaien kan wél, en dat is waar hij voor is. */
+  const uit = metGeluid();
+  uit.run("playSfx('celebrate.major'); toggleSound();");
+  const kraanBeurten = geluidsStand(uit).gains[0].beurten;
+  const naarNul = kraanBeurten.some(b => b[0] === 'recht' && b[1] === 0);
+  check(uit.run('db.sound') === false && naarNul,
+    'O · geluid uit draait de kraan dicht, ook als er nog iets loopt', JSON.stringify(kraanBeurten));
+  uit.run('toggleSound();');
+  const weerOpen = geluidsStand(uit).gains[0].beurten.some(b => b[0] === 'recht' && b[1] === uit.run('BUS_OPEN'));
+  check(uit.run('db.sound') === true && weerOpen, 'O · en weer aan doet hem weer open', '');
+
+  /* ---- een context die stil ligt ---- */
+  /* Dit is de stilste manier waarop dit stuk kapot kan: de context wordt
+     opgeschort (schermvergrendeling, een telefoontje, het beleid van de browser),
+     neemt daarna elke noot netjes aan, en er komt niets meer uit. Geen fout, geen
+     melding -- het tandwiel blijft "Aan" zeggen tot iemand herlaadt. */
+  const slaap = metGeluid();
+  slaap.run("playSfx('tap'); actx.state = 'suspended'; audioWakker();");
+  check(geluidsStand(slaap).hervat === 1, 'O · een stilgelegde context wordt wakker gemaakt',
+    String(geluidsStand(slaap).hervat));
+  slaap.run("actx.state = 'running'; audioWakker();");
+  check(geluidsStand(slaap).hervat === 1, 'O · en eentje die al loopt wordt met rust gelaten',
+    String(geluidsStand(slaap).hervat));
+
+  /* ---- trillen staat los van geluid ---- */
+  /* buzz() is de enige plek die aan de trilmotor komt (zie profiles.test.js) en
+     hij kijkt zelf naar db.haptics. Wat hier vastligt is de kant die daar niet
+     staat: een klankje trilt ook als het gelüid uit staat. */
+  const tril = metGeluid();
+  tril.run(`
+    window.__tril = [];
+    navigator.vibrate = p => { window.__tril.push(p); return true; };
+    db.sound = false; db.haptics = true;
+    playSfx('answer.miss');
+  `);
+  check(tril.run('window.__tril').length === 1 && geluidsStand(tril).ctx === 0,
+    'O · stil met trillen aan trilt wél en klinkt niet', JSON.stringify(tril.run('window.__tril')));
+});
+
 klaar();
