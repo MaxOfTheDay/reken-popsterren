@@ -338,6 +338,73 @@
   /* Beperkte beweging: de JS plant hier niets in (zie landingLeeft) en het laagje
      blijft sowieso leeg. */
   @media (prefers-reduced-motion: reduce) { .vonk-laag { display: none; } }
+  /* ---- De MAX-ster: een verstopte verrassing ------------------------------
+     Op de plaquette onderaan de tekening van dit scherm staat een gouden ster
+     met MAX erin. Tik erop en er gebeurt iets kleins: de ster licht even op en
+     er spat een handjevol sterretjes omhoog. Daarna is het weer weg -- geen
+     beloning, geen scherm, geen uitleg. Wie het vindt, vindt het.
+
+     DRIE DINGEN DIE HIER MET OPZET STAAN:
+
+     1. HET VAKJE IS LEEG EN ONZICHTBAAR. Geen rand, geen achtergrond, geen
+        tikaccent, geen cursor die verandert -- dit mag er onder geen beding
+        uitzien als een knop. Wat er gebeurt is de hele aanwijzing, en die komt
+        pas ná de tik. Waar het vakje ligt en hoe groot het is zet maxPlekZet()
+        erop; de opmaak weet dat niet en hoort dat ook niet te weten.
+     2. HETZELFDE LAAGJE ALS DE VONKJES. .max-laag staat op z-index 1, net als
+        .vonk-laag, en met overflow: hidden -- een sterretje dat naar de rand
+        vliegt hoort binnen het scherm te blijven. Dat het laagje ná .vonk-laag
+        maar vóór de tegels in de markup staat is wat #profile-row de tik laat
+        winnen waar ze elkaar zouden raken.
+     3. DE GLOED ZIT IN ::after EN DE STERRETJES ERIN. Zo hoeft de JS maar één
+        klasse te zetten voor het oplichten, en blijven de twee dingen los: bij
+        beperkte beweging blijft de gloed staan (hij verschuift niets, hij licht
+        alleen even op) en gaan de sterretjes weg. Amber en geen goud, want een
+        gloed die dezelfde kleur heeft als zijn bron leest als een onscherpe rand
+        -- zie --goud-gloed-rgb in DE AFSPRAAK. */
+  .max-laag { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .max-plek {
+    position: absolute; display: none; pointer-events: auto;
+    user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .max-plek::after {
+    content: ''; position: absolute; inset: -26% -12%; border-radius: 50%;
+    pointer-events: none; opacity: 0; --gloed: .55;
+    background: radial-gradient(circle, rgba(var(--goud-gloed-rgb),var(--gloed)),
+                                        rgba(var(--goud-gloed-rgb),0) 70%);
+  }
+  .max-plek.gloed::after { animation: maxGloed 760ms ease-out forwards; }
+  /* De derde tik op rij: dezelfde gloed, een slag warmer en iets langer. */
+  .max-plek.gloed.groot::after { --gloed: .72; animation-duration: 860ms; }
+  @keyframes maxGloed {
+    0%   { opacity: 0; transform: scale(.72); }
+    30%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.14); }
+  }
+  /* De sterretjes. Dezelfde vorm als het confetti-kanon (--dx/--dy/--rot, zie
+     burstOut bij de feestjes), maar naar één kant en over een tiende van de
+     afstand: dit is een glinstering en geen feest. */
+  .max-plek .max-vonk {
+    position: absolute; left: 50%; top: 50%; line-height: 1; pointer-events: none;
+    opacity: 0; color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb),.9);
+    animation: maxVonk var(--d, 820ms) cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes maxVonk {
+    0%   { transform: translate(-50%,-50%) scale(.3); opacity: 0; }
+    22%  { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+                      scale(1) rotate(var(--rot)); opacity: 0; }
+  }
+  /* Beperkte beweging: de sterretjes gaan weg -- de JS maakt ze dan al niet meer
+     aan, dit is het slot op de deur -- en de gloed verliest zijn schaalsprong.
+     Wat overblijft is licht dat even aan en weer uit gaat, en dat is precies wat
+     er nog te zeggen valt zonder iets te verplaatsen. */
+  @media (prefers-reduced-motion: reduce) {
+    .max-plek .max-vonk { display: none; }
+    .max-plek.gloed::after { animation-name: maxGloedStil; }
+  }
+  @keyframes maxGloedStil { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
   /* contain is een vangnet en geen opmaak: mocht een afgeleide ooit met een
      andere verhouding terugkomen, dan wordt hij hier kleiner getekend en niet
      uitgerekt of bijgesneden. */
