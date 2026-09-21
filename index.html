@@ -10973,11 +10973,12 @@ function noot(freq, dur, delay, type, vol) {
    of uit `keuze` (willekeurig). `tril` is het trilpatroon dat erbij hoort -- zie
    buzz(), die zelf al naar db.haptics en naar de trilmotor kijkt.
 
-   Wat hier bewust NÍET staat: een klankje voor vertrekken, voor een wereld die
-   opengaat en voor iets aandoen. Die momenten zijn vandaag stil of lenen
-   'diamond'; ze horen erbij zodra deze vijf op een echt toestel bewezen zijn, en
-   niet eerder -- twee dingen tegelijk veranderen maakt onmeetbaar wat er hielp.
-   Zie docs/AUDIO-REVIEW.md, §8. */
+   Veertien regels en dertien gebeurtenissen -- 'tap' en 'tap.blij' zijn twee
+   kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol. Dit is een spel voor
+   vijfjarigen op één tablet in een woonkamer, geen instrument: wat er nog stil is
+   -- een schermwissel, een vraag die verschijnt, elk deeltjesfeestje, de
+   zaalgloed bij een goed antwoord -- is stil gehouden en niet vergeten. Zie
+   docs/AUDIO-REVIEW.md §4.8 voor de plekken waar een klankje láwaai zou zijn. */
 const HERHAALREM = 60;   // ms: zo lang herhaalt hetzelfde klankje zichzelf niet
 const klankTijd = {};
 const SFX = {
@@ -10986,6 +10987,16 @@ const SFX = {
   /* Dezelfde tik, maar speels: de pop aantikken geeft elke keer een andere noot.
      Eén gebeurtenis met twee kleuren, en met opzet geen tweede gebeurtenis. */
   'tap.blij':       { noten: [[0, 0.12, 0, 'triangle', 0.12]], keuze: [784, 880, 988, 1047, 1175], tril: 12 },
+  /* Iets aandoen. Dit stond hier als 'reward.claim' op de lijst, maar de drie
+     plekken die overbleven doen alle drie hetzelfde en het is geen beloning: je
+     zet iets op. Het cadeau-moment zelf -- een trofee die openknalt -- heeft zijn
+     eigen fanfare, dus wat hier nog te benoemen viel is de handeling.
+
+     Hij ligt láger dan de twee tikken erboven, en dat is het hele verschil: een
+     tik zegt "ik heb je gehoord" en hoort licht te zijn, dit zegt "het zit" en
+     hoort te zakken in plaats van te kletteren. Twee warme noten omhoog, en dan
+     is het klaar -- de pop die iets anders aanheeft is het echte antwoord. */
+  'equip':          { noten: [[587, 0.09, 0, 'triangle', 0.11], [740, 0.20, 0.07, 'triangle', 0.12]], tril: 20 },
 
   // ---- de vraag ----
   'answer.correct': { noten: [[523, 0.14, 0, 'sine', 0.18], [659, 0.14, 0.11, 'sine', 0.18], [784, 0.22, 0.22, 'sine', 0.18]], tril: 30 },
@@ -11014,6 +11025,29 @@ const SFX = {
      twee driehoeknoten die omhoog gaan en dan blijven staan.
      HET TIKJE VAN AANKOMEN ZIT HIER, en nergens anders -- zie runTravel. */
   'travel.arrive':  { noten: [[659, 0.10, 0, 'triangle', 0.12], [880, 0.22, 0.09, 'triangle', 0.13]], tril: 15 },
+  /* En vertrekken. De wandeling over de weg duurt 1400ms en was tot nu toe de
+     langste beweging van de hele voortgangslus zonder één noot: ze zette af,
+     liep, en pas bij de volgende halte klonk er iets.
+
+     Hij ligt met opzet een kwart onder de aankomst -- vertrek eindigt op D5, de
+     aankomst op A5 -- zodat de twee één beweging vormen: laag weg, hoog aan. En
+     hij is korter en zachter, want een vertrek is een aanzet en geen gebeurtenis.
+
+     GEEN tril, en dat is geen vergetelheid. De enige trilling van de reis is de
+     tik van aankomen; zie het lange commentaar in runTravel waar een tweede
+     trilling ooit weggehaald is. */
+  'travel.depart':  { noten: [[440, 0.09, 0, 'triangle', 0.09], [587, 0.14, 0.07, 'triangle', 0.10]] },
+  /* Een wereld die opengaat: de onthulling van een nieuwe wereld, en de camera
+     die over de grens heen klimt. Allebei leenden ze het muntje, en daarna de
+     landing van 'travel.arrive' -- maar aankomen op de volgende halte en een
+     héle wereld die opengaat zijn niet hetzelfde ding.
+
+     Drie noten die opengaan in plaats van oplopen: een kwint en dan een kwart,
+     met de bovenste blijvend. Bewust in D en niet in C, want in C is dit de
+     eerste helft van 'celebrate.major' en dan zou een wereld die opengaat
+     klinken als het begin van een wereld die uit is. */
+  'world.unlock':   { noten: [[587, 0.14, 0, 'triangle', 0.14], [880, 0.14, 0.11, 'triangle', 0.14],
+                              [1175, 0.34, 0.22, 'triangle', 0.12]], tril: [0, 20, 40, 30] },
   /* Eén ster die landt op het eindscherm; opts.i zegt de hoeveelste. Dit was het
      enige klankje dat niet op naam bestond -- het stond als los beep()je in
      renderEndStars -- en het is het beste van de app: drie stijgende tonen,
@@ -11085,6 +11119,9 @@ function sndMis() { playSfx('answer.miss'); }
 function sndStreak() { playSfx('streak'); }
 function sndCoin() { playSfx('diamond'); }
 function sndAankomst() { playSfx('travel.arrive'); }
+function sndVertrek() { playSfx('travel.depart'); }
+function sndWereld() { playSfx('world.unlock'); }
+function sndAan() { playSfx('equip'); }
 function sndWin() { playSfx('show.complete'); }
 function sndGroot() { playSfx('celebrate.major'); }
 function toggleSound() {
@@ -13440,7 +13477,7 @@ function runWorldReveal(o) {
   if (!van || !naar) return;
   const plaats = () => showWorld(o.naar);
   const vier = () => {
-    sndCoin();
+    sndWereld();   // een wereld die opengaat, niet de kassa -- zie de SFX-tabel
     confetti(26);
     showPraise(`${naar.world.icon} ${naar.world.name}!`);
   };
@@ -14925,8 +14962,14 @@ function runTravel(t) {
 
        Het klánkje is hier wél veranderd: dit was sndCoin -- hetzelfde muntje als de
        kassa in de kleedkamer. Aankomen en betalen zijn niet hetzelfde, en vanaf nu
-       klinken ze ook niet meer zo. */
-    sndAankomst();
+       klinken ze ook niet meer zo.
+
+       En het zijn er twee geworden, want vier() bedient twee momenten. Binnen een
+       wereld kom je aan op de volgende halte; over een grens heen gaat er een héle
+       wereld open, en dat is waar de camera net overheen geklommen is. Hetzelfde
+       onderscheid dat de confetti en de juichtekst hieronder al maakten -- dit
+       leest dus dezelfde vlag en verzint er geen tweede. */
+    if (crossing) sndWereld(); else sndAankomst();
     confetti(crossing ? 26 : 14);
     showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
   };
@@ -14985,6 +15028,14 @@ function runTravel(t) {
      ene teken dat op deze kaart iets betékent (zie het sterrentabje). Stof en
      glinstering onderweg, geen sterren -- die zijn op het eindscherm uitgedeeld. */
   setTimeout(() => {
+    /* Hier zet ze af, en dit is de enige plek waar dat een tijdstip is: REIS_WACHT
+       is exact de vertraging van de loopanimatie hierboven, dus er komt voor het
+       vertrekklankje geen tweede klok bij. Dezelfde voorwaarde als de vonkjes --
+       staat ze er niet meer (weggenavigeerd tijdens de wachttijd), dan vertrekt er
+       ook niets. Bij beperkte beweging komen we hier niet eens: die tak gaat
+       hierboven al rechtstreeks naar finish(), en dan is er geen wandeling om aan
+       te kondigen. */
+    if (hero.isConnected) sndVertrek();
     const tik = setInterval(() => { if (hero.isConnected) sparkle(hero, REIS_VONKEN); }, 280);
     setTimeout(() => clearInterval(tik), REIS_DUUR);
   }, REIS_WACHT);
@@ -15395,7 +15446,7 @@ function wereldFeest(f) {
   const aan = ov.querySelector('.wf-aan');
   if (aan) aan.onclick = (e) => {
     e.stopPropagation();   // anders sluit de tik óók de laag via ov.onclick hierboven
-    sndClick();
+    sndAan();              // dezelfde handeling als in de kleedkamer, dus hetzelfde klankje
     const q = P();
     q.equipped[f.spul.cat] = f.spul.id;
     noticeReady(checkTrophies(q));   // een outfit-combo kan een geheime trofee zijn
@@ -17616,7 +17667,10 @@ function surpriseOutfit() {
   // alleen ándere spullen aan: het rek zelf verandert niet, dus alleen bijwerken
   paintShop();
   tapDance('shop-avatar');
-  buzz(20);
+  /* Dit was de enige gebeurtenis in de hele app die wél trilde en niet klonk: een
+     buzz(20) zonder noot. Nu hetzelfde klankje als elk ander aandoen -- en de tril
+     van 20 zit erin, dus hij is niet weg maar verhuisd. */
+  sndAan();
 }
 
 /* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
@@ -17889,7 +17943,7 @@ function equipShopItem(id) {
      stuk dat aanstaat terwijl de lade onderaan over datzelfde stuk nog iets
      anders beweerde -- twee standen voor één kledingstuk. */
   shopSelectedId = null;
-  sndClick();
+  sndAan();
   // een outfit-combo kan een (geheime) trofee zijn — check dus ook bij het aandoen
   const trofees = checkTrophies(p);
   noticeReady(trofees);
@@ -17898,8 +17952,8 @@ function equipShopItem(id) {
   // kaartjes blijven staan waar ze staan en alleen hun stand gaat om. Het enige
   // wat zichtbaar beweegt is de pop -- en dat is precies de bedoeling.
   herbouw ? renderShop() : paintShop();
-  // Een stil danspasje, geen tweede geluidje: sndClick() hierboven heeft het
-  // tikken al gezegd, en wat er te zien valt is dat zíj iets anders aanheeft.
+  // Een stil danspasje, geen tweede geluidje: sndAan() hierboven heeft het aandoen
+  // al gezegd, en wat er te zien valt is dat zíj iets anders aanheeft.
   dance('shop-avatar');
 }
 
