@@ -1045,7 +1045,18 @@
        gewonnen werd. Nu alleen nog een randje lucht (--podium-rand), zodat de
        ronde hoek en de schaduw niet tegen de vensterrand aan liggen op de
        vensters waar het podium smaller is dan de hoogte toelaat. */
-    .tour-map { align-items: center; padding: var(--podium-rand) 0; }
+    /* En er valt hier niets meer te schuiven. Het basisvak staat op
+       overflow-y: auto, want op een telefoon ís schuiven de manier waarop je de
+       hele wereld ziet. Op een podium is dat niet zo: alles staat al in beeld,
+       en het enige dat --podium-groei aan schuifruimte oplevert zijn de ~25px
+       die boven en onder buiten het vak vallen. Dat is geen schuifruimte maar
+       een snede, en hem laten schuiven betekent dat één veeg over een muisplaat
+       de kaart scheef zet zonder dat er iets te zien valt. hidden neemt die veeg
+       weg en verandert verder niets: het kader staat nog steeds gecentreerd
+       (align-items: center knipt boven en onder evenveel weg), en scrollTop laat
+       zich nog gewoon zetten -- wat renderTourMap doet als de kaart wél schuift,
+       en wat hier nu op nul blijft omdat er niets te centreren valt. */
+    .tour-map { align-items: center; padding: var(--podium-rand) 0; overflow-y: hidden; }
     /* Het podium houdt twee grenzen, en ze doen om beurten hun werk.
 
        --stage-spel is de bovengrens (zie het skelet bovenaan, waar ook staat
