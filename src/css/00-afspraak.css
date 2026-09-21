@@ -787,14 +787,30 @@
                         1400 zelfs 771 -- een wereldkaart van driekwart meter met
                         een balk van 430 eronder, en dan valt het toestel uit
                         elkaar in een plaatje met een balkje.
-                        560 en niet 480 of 520, en dat is opgemeten. Zodra het
-                        podium smáller wordt dan de hoogte toelaat, blijft er
-                        lucht boven en onder over -- en dáár staan de kop en de
-                        balk, dus die komen dan náást de wereld te hangen in
-                        plaats van erop. 560 is precies de breedte waarop een
-                        gewoon 16:9-venster (1920x1080) nog vol loopt: de kop
-                        blijft op de tekening staan, en de grens doet alleen nog
-                        zijn werk op de vensters waar hij voor bedoeld is.
+                        560 en niet 480 of 520, en dat wás opgemeten -- maar
+                        waaraan het getal gemeten is, geldt niet meer. De
+                        redenering luidde: zodra het podium smáller wordt dan de
+                        hoogte toelaat blijft er lucht boven en onder over, en
+                        dáár staan de kop en de balk, dus die komen náást de
+                        wereld te hangen in plaats van erop; 560 was precies de
+                        breedte waarop een gewoon 16:9-venster (1920x1080) nog
+                        vol liep. Twee dingen hebben dat achterhaald.
+                        --podium-lucht (onderaan het blad) rekent die lucht
+                        tegenwoordig uit en schuift de kop en de balk mee naar
+                        binnen, dus "náást de wereld" gebeurt niet meer. En
+                        --podium-groei hieronder laat het kader een slag hoger
+                        worden dan het vak: een venster van 1080 hoog wíl nu 646
+                        breed en krijgt 560, dus die 1920x1080 loopt niet meer
+                        vol.
+                        WAT DE GRENS VANDAAG DOET: hij begint te binden vanaf
+                        ongeveer 940px vensterhoogte, en je ziet hem vanaf ~1015
+                        -- daar past het kader ook in de hoogte, dus staat het
+                        podium er compleet, met ronde hoek en schaduw, en zakken
+                        de kop en de balk mee naar binnen. Opgemeten op
+                        1920x1080: 560 breed, met 32px lucht boven en onder.
+                        Daaronder doet hij niets en is de hoogte de grens.
+                        Of 560 voor grote en hoge schermen nog het juiste getal
+                        is, is een aparte afweging; die staat bewust open.
                         Wat er buiten het podium overblijft is geen leegte maar
                         omgeving: de kaart zet daar zijn eigen wereld onscherp
                         neer (zie de liggende stand bij .world-frame).
