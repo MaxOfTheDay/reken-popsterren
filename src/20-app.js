@@ -2963,7 +2963,7 @@ function wereldCamera(richting, teken, opts) {
     const nieuw = map.querySelector('.world-frame');
     if (nieuw && nieuw.animate) nieuw.animate(
       [{ transform: 'scale(1.055)' }, { transform: 'none' }],
-      { duration: duur + 260, easing: WERELDREIS.na });
+      { duration: duur + MOTION.vangnet, easing: WERELDREIS.na });
   }
 
   const deze = () => {
@@ -3271,6 +3271,20 @@ const MOTION = {
 // alles stilstaat. Het vertrekkende scherm (weg) valt hier binnen -- dat is op
 // 140ms klaar, ruim voordat het aankomende scherm op 300 tot rust komt.
 MOTION.totaal = MOTION.komNa + MOTION.kom;
+/* Het vangnet. Elke overgang ruimt zichzelf op als hij klaar is (onfinish), maar
+   die belofte houdt niet altijd: wisselt het scherm tussendoor, dan wordt de
+   animatie afgebroken en komt onfinish nooit. Daarom hangt er naast elke
+   overgang een timer die hetzelfde opruimt, een tikje ná de duur.
+
+   Waarom niet strak op de duur: dan racet de timer met onfinish en kan hij er
+   nét vóór zitten, en dan ruimt hij een animatie op die nog loopt. Ruim genoeg
+   dus om altijd de tweede te zijn, kort genoeg om een grendel niet merkbaar te
+   laten hangen als er écht iets misging.
+
+   Dit getal stond negen keer als los "+ 260" in het bestand, elke keer met
+   dezelfde opmerking erbij. Eén naam is korter dan negen opmerkingen, en hij kan
+   niet op acht plekken bijgewerkt worden en op de negende vergeten. */
+MOTION.vangnet = 260;
 
 function eindigOvergang(anim, dur, opruimen) {
   let gedaan = false;
@@ -3281,7 +3295,7 @@ function eindigOvergang(anim, dur, opruimen) {
     try { opruimen(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
   };
   if (anim) anim.onfinish = klaar;
-  setTimeout(klaar, dur + 260);
+  setTimeout(klaar, dur + MOTION.vangnet);
   return klaar;
 }
 /* Transform-origin als percentage van een element, uit een punt in
@@ -3345,7 +3359,7 @@ function schermWeg(el, naarBinnen, punt) {
   el.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
-  setTimeout(op, MOTION.weg + 260);              // vangnet
+  setTimeout(op, MOTION.weg + MOTION.vangnet);
 }
 /* De vaste navigatiebalk staat buíten de schermen, dus hij doet niet vanzelf mee
    met een wissel: hij knipt aan of uit op het moment dat show() hem zet. Tijdens
@@ -3374,7 +3388,7 @@ function navMee(naarBinnen) {
   const a = nav.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
   a.onfinish = op;
-  setTimeout(op, MOTION.weg + 260);
+  setTimeout(op, MOTION.weg + MOTION.vangnet);
 }
 /* ---- De wereld en zijn kaartje: één ding op twee maten (PS-24) ------------
    Wereldkaart en Werelden zijn niet twee schermen maar twee afstanden tot
@@ -3663,7 +3677,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
      Veilig, want elke ingang begint met vluchtKlaar(): een tik in dat venster
      sluit deze vlucht eerst netjes af en begint dan pas aan de volgende. */
   vluchtOp = { laag, op,
-    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + 260),
+    timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
   eind.onfinish = vluchtKlaar;
   overgangBezig = true;
@@ -3736,7 +3750,7 @@ function globeVlucht(vanEl, naarEl, duur) {
      verschijnen. Het wordt dus in één beurt omgewisseld (zie weg): één beeldje, twee
      keer hetzelfde plaatje op dezelfde plek, en dus niets te zien. */
   an.onfinish = weg;
-  setTimeout(weg, duur + 260);   // vangnet, net als bij elke andere overgang
+  setTimeout(weg, duur + MOTION.vangnet);
 }
 /* Kaart -> zaal. "Ik koos deze plek, en nu ga ik er naar binnen."
      1  de halte drukt in en geeft een lichtkringetje terug (meteen, geen wachten)
@@ -3841,7 +3855,7 @@ function kaartKomtOp(punt) {
     { duration: MOTION.kom, delay: punt ? MOTION.komNa : 0, easing: MOTION.uit, fill: 'backwards' });
   const op = () => { scherm.style.transformOrigin = ''; };
   a.onfinish = op;
-  setTimeout(op, MOTION.totaal + 260);     // vangnet, net als bij elke andere overgang
+  setTimeout(op, MOTION.totaal + MOTION.vangnet);
 }
 /* ---- De stille wissel: de bijschermen (PS-51) ----------------------------
    Kaart, zaal, eindscherm en reis leggen met hun beweging iets uit: je duikt de
@@ -3888,7 +3902,7 @@ function dressBarMee(van) {
   const a = bar.animate([{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
-  setTimeout(op, MOTION.weg + 260);
+  setTimeout(op, MOTION.weg + MOTION.vangnet);
 }
 /* Een bijscherm aanzetten. Hetzelfde als show(), met de stille wissel eromheen
    -- en daarom staat het er ook als eigen functie: dan is "welke schermen doen
@@ -4931,7 +4945,7 @@ function openReis() {
         [{ transform: 'scale(1.09)' }, { transform: 'none' }],
         { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
       a.onfinish = op;
-      setTimeout(op, MOTION.totaal + 260);          // vangnet, net als bij elke andere overgang
+      setTimeout(op, MOTION.totaal + MOTION.vangnet);
     });
     return;
   }
@@ -5270,7 +5284,7 @@ function renderTourMap(travelFrom) {
   if (scherm.classList.contains('active')) voltooi();
   else tourMapVoltooi = voltooi;
   // schuift de kaart, dan schuift zij onder de plakkende kop door
-  map.onscroll = kopOpzij;
+  map.onscroll = kaartScroll;
 }
 /* Hoe hoog de kop en de navigatiebalk werkelijk zijn. De wereldknoppen gaan daar
    tussenin staan, en die maten hangen af van het lettertype, de veilige zones van
@@ -5281,6 +5295,26 @@ function renderTourMap(travelFrom) {
    geschoven is (op een tablet schuift hij, en de kop plakt aan de vensterrand).
    Alleen verticaal vergelijken -- dat dimt ook als ze net naast een pil staat, maar
    het is voorspelbaar, en een halve pil naast haar hoofd leest slechter dan geen. */
+/* Aan de scroll van de kaart, en achter een rAF -- niet kopOpzij zelf.
+
+   kopOpzij meet twee rechthoeken op, en dat dwingt de opmaak af. Eén keer is
+   niets; bij élke scrollgebeurtenis is het de enige plek in de app die dat doet
+   (de kast, het ouderdeel en de reis hangen alle drie al achter zo'n klemmetje).
+   Hij stond hier als enige rechtstreeks aan onscroll.
+
+   De klem zit om de áánroep en niet om kopOpzij, want die wordt ook twee keer
+   rechtstreeks aangeroepen -- door renderTourMap vlak voordat het beeldje
+   geverfd wordt, en door de resize. Die twee moeten synchroon blijven: een
+   beeldje later is daar precies het beeldje dat ze moesten wegnemen.
+
+   Op een telefoon schuift de kaart trouwens helemaal niet (één wereld vult het
+   kader); dit gaat over een tablet en een breed venster. */
+let kaartScrollWacht = false;
+function kaartScroll() {
+  if (kaartScrollWacht) return;
+  kaartScrollWacht = true;
+  requestAnimationFrame(() => { kaartScrollWacht = false; kopOpzij(); });
+}
 function kopOpzij() {
   const scherm = $('screen-map');
   if (!scherm) return;
@@ -8133,7 +8167,7 @@ function renderShop() {
     $('screen-dress').scrollTop = 0;   // een nieuwe categorie begint bovenaan
   } }));
   // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
-  tabs.onscroll = () => updateFades(tabs);
+  fadesVolgen(tabs);
   /* Ook als er géén categorie aanstaat -- in het schattenvak staat de hele rij uit.
      Zonder deze regel bleven de fade-randen daar hangen op wat ze vóór het
      openen waren, en dan wijst de rand naar een kant waar niets meer zit. */
@@ -9411,7 +9445,7 @@ function renderWhoRow() {
     row.appendChild(b);
     if (on) active = b;
   }
-  row.onscroll = () => updateFades(row);
+  fadesVolgen(row);
   row.scrollLeft = keep;
   updateFades(row);
   // alleen bij een échte wissel het gekozen kind in beeld trekken

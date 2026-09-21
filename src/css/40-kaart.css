@@ -54,7 +54,7 @@
      er is weer maar één hoogte voor de hele koprij nodig. */
   #screen-map .world-pick, #screen-map .diamond-badge {
     height: var(--hud-h); border-radius: var(--r-pill);
-    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }

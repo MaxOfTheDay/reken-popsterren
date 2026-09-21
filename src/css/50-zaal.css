@@ -232,7 +232,7 @@
   .venue-aan .screen-header .header-title { text-shadow: var(--hud-ink); }
   .venue-aan .screen-header .icon-btn,
   .venue-aan .screen-header .diamond-badge {
-    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
@@ -244,7 +244,7 @@
      één ding lezen ("hoe sta ik ervoor") in plaats van als twee meters. */
   .venue-aan .game-progress-row {
     padding: 5px 14px 6px; border-radius: var(--r-pill);
-    background: var(--hud-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
   }
   /* de showvoortgang is hier de hoofdzaak, de hartjes de bijzin */
@@ -533,7 +533,7 @@
     cursor: pointer; padding: 8px 11px 7px; border-radius: var(--r-md);
     border: 1px solid rgba(255,255,255,.2);
     background: rgba(32,12,58,.6);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: 0 4px 14px rgba(0,0,0,.32);
   }
   .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
@@ -1242,7 +1242,7 @@
     color: var(--c-white); cursor: pointer;
     background: rgba(32,12,58,.72);
     border: 1px solid rgba(255,255,255,.28); border-radius: var(--r-pill);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: 0 3px 12px rgba(0,0,0,.42);
   }
   .world-back:active { transform: translateX(-50%) scale(.95); }
