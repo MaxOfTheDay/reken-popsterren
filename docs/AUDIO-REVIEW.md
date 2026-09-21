@@ -4,15 +4,24 @@
 design started. It names functions and sections, not line numbers, because those drift
 (see `CLAUDE.md`).*
 
-> **Status.** §1–§6 describe the app **as it was audited**, not as it is now. The slice
-> in §7 has since been built: the bus, the attack ramp, `audioWakker`, the re-trigger
-> gate, the `SFX` table with `playSfx`, and the five cues (`answer.miss`,
-> `celebrate.major`, `travel.arrive`, `star.land`, `tap`). `beep()` is gone; the `snd*`
-> functions are now aliases onto `playSfx`. `test/kern.test.js` zaak O pins the two hard
-> requirements. **Where this document and the code disagree, the code wins** — read the
-> `= Geluid` section of `src/20-app.js`. §8 is still the standing list of what not to do
-> yet, and the deferred cues in §6 (`travel.depart`, `world.unlock`, `reward.claim`) are
-> still deferred.
+> **Status.** §1–§6 describe the app **as it was audited**, not as it is now. §7 has
+> since been built, and then the deferred cues in §6 were added on top of it, so the
+> whole vocabulary now exists: the bus, the attack ramp, `audioWakker`, the re-trigger
+> gate, the `SFX` table with `playSfx`, and the full vocabulary — thirteen events
+> across fourteen table rows, since `tap` and `tap.blij` are two colours of one tap. `beep()` is gone; the `snd*`
+> functions are aliases onto `playSfx`. `test/kern.test.js` zaak O pins the hard
+> requirements and the design claims. **Where this document and the code disagree, the
+> code wins** — read the `= Geluid` section of `src/20-app.js`.
+>
+> Two departures from §6 worth knowing. `reward.claim` shipped as **`equip`**: the
+> trophy burst it was meant to cover is a major celebration and went to
+> `celebrate.major`, so the three sites left (`equipShopItem`, the world party's *Doe
+> aan*, `surpriseOutfit`) are all one action — putting something on. And §7's staging
+> advice — prove the five on hardware before adding the rest — was **not** followed;
+> all thirteen landed before anyone heard any of them. If a cue reads wrong on a real
+> device, that is the reason it will be harder to attribute.
+>
+> §8 still stands, minus the three cues now built.
 
 ---
 
@@ -655,5 +664,5 @@ Headless tests cannot hear anything; every item below needs ears on hardware.
 | **A ducking / priority engine** | Two voices is the realistic worst case once §7.1 lands. Ordering the cues in time is cheaper and more legible than arbitrating them at runtime. |
 | **A third-party audio library** | `CLAUDE.md`: "geen framework, geen bundler, geen TypeScript, geen bibliotheek." The whole synth is 12 lines. |
 | **Moving the gear button off the star picker (§5.10)** | Real, but a navigation change with its own test surface (`show()`, `syncBackGuard`, `test/ouder.test.js`). It should not ride along inside an audio slice. |
-| **Sound on the map arrival, travel departure, world climb, equip (§4.7 items 2–6)** | All genuinely missing, all worth doing — but *after* the five splits in §7.1 prove the foundation on hardware. Adding new moments and re-voicing old ones in one slice makes it impossible to tell which change helped. |
+| ~~**Sound on travel departure, world climb, equip**~~ | **Built** — `travel.depart`, `world.unlock`, `equip`. Done in a second slice, before the first was heard on hardware; see the status note at the top. The map's star landing (`.net-af`, §4.7 item 3) is still silent and is still the best remaining candidate. |
 | **Tests that assert effect sounds** | `AudioContext` throws by design in the Node suites, and headless Chromium has no output. A test could only assert that `playSfx` was called with a name — worth it once the vocabulary has stopped moving, not before. |

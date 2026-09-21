@@ -664,7 +664,12 @@ zaak('O', () => {
   const app0 = laadApp();
   const sfx = app0.run('SFX');
   const namen = Object.keys(sfx);
-  check(namen.length >= 10, 'O · er staat een tabel met klankjes op naam', String(namen.length));
+  check(namen.length >= 13, 'O · er staat een tabel met klankjes op naam', String(namen.length));
+  /* De drie die als laatste bijkwamen. Ze staan hier bij naam omdat een naam die
+     stilletjes verdwijnt geen fout geeft -- playSfx() slikt een onbekende naam, en
+     dat moet ook, maar dan merkt niemand het meer. */
+  for (const naam of ['travel.depart', 'world.unlock', 'equip'])
+    check(!!sfx[naam], `O · ${naam} staat in de tabel`, '');
   for (const naam of namen) {
     const def = sfx[naam];
     const ok = Array.isArray(def.noten) && def.noten.length > 0
@@ -697,6 +702,42 @@ zaak('O', () => {
     'O · einde show en een zeldzame top klinken niet hetzelfde', '');
   check(JSON.stringify(sfx['diamond'].noten) !== JSON.stringify(sfx['travel.arrive'].noten),
     'O · aankomen klinkt niet als betalen', '');
+
+  /* De drie laatste namen, en de vorm die ze bedoeld zijn te hebben. Dit zijn
+     uitspraken uit de tabel zelf -- hóé het klinkt hoort een mens op een toestel
+     te beoordelen, maar dát vertrek onder aankomst ligt is een getal. */
+  const toppen = naam => sfx[naam].noten.map(n => n[0]);
+  const hoogste = naam => Math.max(...toppen(naam));
+
+  // Weg en aan zijn één beweging: laag vertrekken, hoog aankomen.
+  check(hoogste('travel.depart') < hoogste('travel.arrive'),
+    'O · vertrekken ligt onder aankomen', `${hoogste('travel.depart')} vs ${hoogste('travel.arrive')}`);
+  const duur = naam => Math.max(...sfx[naam].noten.map(n => n[1] + n[2]));
+  check(duur('travel.depart') < duur('travel.arrive'),
+    'O · en het is korter: een vertrek is een aanzet, geen gebeurtenis', '');
+  /* Geen tril bij vertrekken, en dat is geen vergetelheid maar de afspraak uit
+     runTravel: de enige trilling van de reis is de tik van aankomen. Zonder deze
+     controle sluipt er ooit een tweede in, en die wordt niet eens gevoeld --
+     navigator.vibrate() breekt een lopende trilling af in plaats van erbij te doen. */
+  check(sfx['travel.depart'].tril == null, 'O · vertrekken trilt niet: de reis heeft één tik',
+    JSON.stringify(sfx['travel.depart'].tril));
+  check(sfx['travel.arrive'].tril != null, 'O · en dat is die van aankomen', '');
+
+  /* Een wereld die opengaat mag niet klinken als het begin van een wereld die uit
+     is: 'celebrate.major' opent met 523 en daarom staat deze in D. */
+  check(toppen('world.unlock')[0] !== toppen('celebrate.major')[0],
+    'O · een wereld die opengaat begint niet op dezelfde noot als een wereld die uit is',
+    `${toppen('world.unlock')[0]} vs ${toppen('celebrate.major')[0]}`);
+  check(JSON.stringify(sfx['world.unlock'].noten) !== JSON.stringify(sfx['travel.arrive'].noten),
+    'O · en ook niet als aankomen op de volgende halte', '');
+
+  /* Iets aandoen zakt, een tik klettert. Dat is het hele verschil tussen "het zit"
+     en "ik heb je gehoord", en het is te meten: equip ligt onder beide tikken. */
+  const tikHoog = Math.max(hoogste('tap'), ...(sfx['tap.blij'].keuze || []));
+  check(hoogste('equip') < tikHoog, 'O · iets aandoen ligt onder de tikken',
+    `${hoogste('equip')} vs ${tikHoog}`);
+  check(sfx['equip'].tril != null, 'O · en de tril van de verrassingsoutfit is meeverhuisd, niet weg',
+    JSON.stringify(sfx['equip'].tril));
 
   /* Einde show moet uit zijn vóórdat de eerste ster landt, anders speelt de
      ceremonie er weer onderdoor -- dat was de hele reden om hem in te korten. */
