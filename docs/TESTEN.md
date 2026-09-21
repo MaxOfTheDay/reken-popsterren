@@ -114,7 +114,11 @@ Fase 4A en 4D, rechtstreeks door de functies heen: `worldDone`, `frontierWorld`,
   een aanzet-helling, elke noot gaat via de hoofdkraan naar buiten, geen toon
   zakt onder de band van een tabletluidspreker, de herhaalrem maakt van drie
   tikken in één beeldje één tik, "einde show" is uit vóórdat de eerste ster
-  landt, en een stilgelegde context wordt weer wakker gemaakt.
+  landt, en een stilgelegde context wordt weer wakker gemaakt. Plus de vorm die
+  de klankjes bedoeld zijn te hebben, voor zover die te meten is: vertrekken ligt
+  onder aankomen en trilt niet (de reis heeft één tik), een wereld die opengaat
+  begint niet op dezelfde noot als een wereld die uit is, en iets aandoen ligt
+  onder de tikken.
 
 ### `test/saves.test.js` — bestaande bestanden
 
