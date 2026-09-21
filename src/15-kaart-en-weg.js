@@ -24,12 +24,38 @@
    wereldstudio. Verander hier iets en je verandert die drie tegelijk.
    ========================================================================== */
 
-// Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt
-// (gedeeld door de reisroute en de kleedkamer-tabbladen).
+/* Toont de fade-randen alleen aan de kant waar nog verder te scrollen valt
+   (gedeeld door de kleedkamer-tabbladen en de sterrenrij van het ouderdeel).
+
+   Deze twee horen eigenlijk niet in dít bestand -- ze gaan over een schuivende
+   rij en niet over de vormleer van de wereldkaart. Ze stonden hier al toen de
+   kaartmaths een eigen bestand kreeg, en ze uit elkaar trekken zou erger zijn
+   dan ze samen op de verkeerde plek laten staan. Zet ze samen goed als er ooit
+   een bestand voor schuifrijen komt. */
 function updateFades(el) {
   const max = el.scrollWidth - el.clientWidth;
   el.classList.toggle('can-left', el.scrollLeft > 2);
   el.classList.toggle('can-right', el.scrollLeft < max - 2);
+}
+/* Dezelfde randen, maar dan aan de scroll van een rij gehangen -- achter een rAF,
+   want updateFades leest scrollWidth en clientWidth en dwingt daarmee de opmaak
+   af, en een scrollende vinger vuurt dat tientallen keren per seconde.
+
+   Het klemmetje hoort bij het élement en niet bij de functie: er zijn twee rijen
+   (de kleedkamer en het ouderdeel) en er kunnen er meer komen. Eén gedeelde vlag
+   zou betekenen dat de ene rij de andere stil kan zetten -- vandaag onmogelijk
+   omdat ze op verschillende schermen staan, maar dat is geen eigenschap waar je
+   een klemmetje op wilt bouwen.
+
+   Wie de rij ná een hertekening meteen wil bijwerken roept updateFades zelf aan;
+   dat blijft synchroon, net als bij kopOpzij. */
+function fadesVolgen(el) {
+  let wacht = false;
+  el.onscroll = () => {
+    if (wacht) return;
+    wacht = true;
+    requestAnimationFrame(() => { wacht = false; updateFades(el); });
+  };
 }
 
 /* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
