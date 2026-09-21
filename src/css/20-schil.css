@@ -171,7 +171,11 @@
   @media (min-width: 1000px) {
     .screen.gebruik {
       /* De breedte van de kop erboven, letterlijk dezelfde som als in de regel
-         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen. */
+         bij .screen.gebruik .hub-sticky -- dus er valt niets uit de pas te lopen.
+         Dezelfde sóm, maar niet vanzelf hetzelfde midden: dit vak staat vast en
+         mikt op het midden van het venster, de kop staat midden in het scherm-
+         element en dat is een schuifbalk smaller. Wat die twee weer op één lijn
+         houdt is de scrollbar-gutter bij die kopregel; zie de noot daar. */
       --vak-w: min(100%, calc(var(--kolom) + var(--rand) * 2));
       --stage-vlak:
         /* de twee haarlijnen: waar het vak begint en waar het ophoudt */
