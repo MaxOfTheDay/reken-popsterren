@@ -59,8 +59,8 @@ const SRC_CSS = path.join(SRC, 'css');
 /* De twee blokken, elk met zijn eigen bronmap. De volgorde in deze lijst is de
    volgorde waarin ze in index.html staan; verwacht() leunt erop. */
 const BLOKKEN = [
-  { naam: 'stijlblad',  map: SRC_CSS, ext: '.css', open: '<style>',  dicht: '</style>' },
-  { naam: 'scriptblok', map: SRC,     ext: '.js',  open: '<script>', dicht: '</' + 'script>' },
+  { naam: 'stijlblad',  map: SRC_CSS, ext: '.css', open: '<style>',  dicht: '</style>',        kop: '<style' },
+  { naam: 'scriptblok', map: SRC,     ext: '.js',  open: '<script>', dicht: '</' + 'script>', kop: '<script' },
 ];
 
 /* Elk bestand moet met twee cijfers en een streepje beginnen, en dat wordt hier
@@ -133,19 +133,42 @@ function stukkenUit(blok) {
   }).join('');
 }
 
-/* Waar een blok in index.html begint en eindigt. Er hóórt er van elk precies één
-   te zijn -- aan het scriptblok hangt test/app.js ook, en zaak H bewaakt het.
-   Staat het woord er vaker, dan knipt dit op de verkeerde plek en schrijft het
-   de halve pagina weg; dus liever hier stoppen met een melding die het zegt. */
+/* Waar een blok in index.html begint en eindigt.
+
+   Het gebouwde blok is de kále vorm -- <style> en <script> zonder één attribuut
+   -- en dáárvan hoort er precies één te zijn. Dat is wat dit blok aanwijsbaar
+   maakt: staat het woord er vaker, dan knipt dit op de verkeerde plek en
+   schrijft het de halve pagina weg, dus liever hier stoppen met een melding die
+   het zegt. (test/app.js knipt op dezelfde manier, en zaak H in inhoud.test.js
+   bewaakt het.)
+
+   Een tag mét attributen telt níet mee als tweede blok, want die is niet van de
+   bouw. Sinds er onderin <body> een meetscriptje staat (Cloudflare Web
+   Analytics, een <script type='module' src='...'>) is er meer dan één
+   </script> in het bestand, en dan is "de laatste" de verkeerde: het blok
+   eindigt bij de éérste afsluiting ná zijn opening.
+
+   Het vangnet dat daarmee zou wegvallen blijft staan in een andere vorm: elke
+   afsluiting hoort bij een opening, dus de twee aantallen moeten gelijk zijn.
+   Schrijft iemand </script> in een opmerking binnen het blok, dan is er één
+   afsluiting te veel en valt het hier alsnog om -- precies de fout waar deze
+   controle ooit voor geschreven is. */
 function grenzen(html, blok) {
   const open = html.split(blok.open).length - 1;
+  const koppen = html.split(blok.kop).length - 1;
   const dicht = html.split(blok.dicht).length - 1;
-  if (open !== 1 || dicht !== 1) {
+  if (open !== 1) {
     throw new Error(`index.html hoort precies één ${blok.naam} te hebben, maar ${blok.open} staat er `
-      + `${open}x in en ${blok.dicht} ${dicht}x -- ook in commentaar telt het mee. `
+      + `${open}x in -- ook in commentaar telt het mee. `
       + 'Zoek de tweede en schrijf hem anders.');
   }
-  return { van: html.indexOf(blok.open) + blok.open.length, tot: html.lastIndexOf(blok.dicht) };
+  if (koppen !== dicht) {
+    throw new Error(`in index.html staan ${koppen} openingen ${blok.kop}...> tegenover ${dicht}x `
+      + `${blok.dicht} -- ook in commentaar telt het mee. Er is er dus één te veel of te weinig; `
+      + 'schrijf hem in proza (bijvoorbeeld "scriptblok").');
+  }
+  const van = html.indexOf(blok.open) + blok.open.length;
+  return { van, tot: html.indexOf(blok.dicht, van) };
 }
 
 // Hoe index.html eruit hoort te zien met de huidige src/ erin. In één keer

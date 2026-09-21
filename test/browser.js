@@ -27,23 +27,41 @@ async function launch() {
 }
 
 /*
- * VANGNET, geen noodzaak meer. De app haalt haar letter sinds het kleur- en
- * letterstelsel uit assets/font/ en niet meer van fonts.googleapis.com: er gaat
- * bij een gewone start geen enkel verzoek meer naar buiten, en deze route vangt
- * dus niets meer af.
+ * HET VANGNET NAAR BUITEN. Alles wat de pagina buiten haar eigen map om vraagt,
+ * wordt hier beantwoord in plaats van over het net gehaald. De naam zegt nog
+ * "fonts" omdat het daarmee begon; hieronder hangen er twee routes aan.
  *
- * Hij blijft staan omdat hij de dag waarop iemand die <link> terugzet meteen
- * onschadelijk maakt. Wat er dán weer zou gebeuren, en waarvoor dit ooit
- * geschreven is: een stijlblad in de <head> blokkeert het scriptblok eronder en
- * daarmee DOMContentLoaded, zodat élke page.goto() op een trage verbinding tien
- * seconden of meer kost -- en de sterren-test maakt een verse context per zaak.
+ * 1 · De letter. Geen noodzaak meer: de app haalt haar letter sinds het kleur-
+ *     en letterstelsel uit assets/font/ en niet meer van fonts.googleapis.com,
+ *     dus deze route vangt niets meer af. Hij blijft staan omdat hij de dag
+ *     waarop iemand die <link> terugzet meteen onschadelijk maakt. Wat er dán
+ *     weer zou gebeuren, en waarvoor dit ooit geschreven is: een stijlblad in de
+ *     <head> blokkeert het scriptblok eronder en daarmee DOMContentLoaded, zodat
+ *     élke page.goto() op een trage verbinding tien seconden of meer kost -- en
+ *     de sterren-test maakt een verse context per zaak.
+ *
+ * 2 · Het meetscriptje. Onderin <body> staat Cloudflare Web Analytics. Op
+ *     GitHub Pages laadt dat gewoon, maar de suites openen het spel vanaf
+ *     file:// en zonder net: dan mislukt die ene aanvraag en zet de browser er
+ *     "Failed to load resource" voor in de console. Élke suite rekent een
+ *     consolefout aan als een fout in de pagina, dus zou het spel voortaan
+ *     overal omvallen op iets dat het spel zelf niet is. Hier één leeg antwoord,
+ *     en de suites meten weer wat ze horen te meten: de code van het spel.
  *
  * Een mislukte aanvraag wordt bewust béántwoord met een leeg bestand en niet
- * afgebroken: route.abort() zet "Failed to load resource" in de console, en de
- * suites rekenen elke consolefout aan als een fout in de pagina.
+ * afgebroken: route.abort() zet "Failed to load resource" in de console, en dat
+ * is nu juist wat hier weg moet.
  */
 const fontCache = new Map();
 const EMPTY = { status: 200, headers: { 'content-type': 'text/css' }, body: '' };
+/* Leeg, maar wél als module te laden: een file://-pagina heeft een
+   ondoorzichtige herkomst, dus zonder allow-origin komt er een CORS-fout terug
+   en hebben we de consolefout alleen verplaatst. */
+const LEEG_SCRIPT = {
+  status: 200,
+  headers: { 'content-type': 'text/javascript', 'access-control-allow-origin': '*' },
+  body: '',
+};
 async function cacheFonts(target) {
   await target.route('**://fonts.g*/**', async route => {
     const url = route.request().url();
@@ -56,6 +74,7 @@ async function cacheFonts(target) {
     fontCache.set(url, hit);
     await route.fulfill(hit);
   });
+  await target.route('**://static.cloudflareinsights.com/**', route => route.fulfill(LEEG_SCRIPT));
 }
 
 // file://-URL van de app, met ?debug zodat window.__game beschikbaar is.
