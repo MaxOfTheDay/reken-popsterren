@@ -5425,6 +5425,16 @@ function renderTourMap(travelFrom) {
   // Past de kaart niet in de vensterverhouding, dan schuift hij: zet de halte waar
   // ze nu staat in beeld. Op een staande telefoon valt er niets te schuiven en doet
   // dit niets.
+  //
+  // "Valt er iets te schuiven" is sinds --podium-groei niet meer hetzelfde als
+  // "steekt er iets buiten het vak uit". In liggende stand steekt het kader met
+  // opzet een paar procent boven en onder het vak uit (zie --podium-groei in het
+  // stijlblad), en dat is een snede en geen schuifruimte: álle haltes staan al in
+  // beeld. Dat merk je aan de opmaak -- het kaartvak staat daar op
+  // overflow-y: hidden -- en dus vraagt deze regel het daar ook. Zonder die vraag
+  // schoof de kaart hier 35px omhoog zodra het kind op een lage halte stond, puur
+  // omdat scrollHeight een paar pixels groter was: dezelfde kaart die per halte
+  // net iets anders aangesneden staat, zonder dat er iets zichtbaar werd.
   /* Dit stond hier altijd als requestAnimationFrame, met als reden: goMap()
      roept show() pas ná deze render aan, en zolang het scherm nog niet .active
      is levert elke meting hier (scrollHeight, offsetHeight, getBoundingClientRect)
@@ -5447,7 +5457,9 @@ function renderTourMap(travelFrom) {
      de eerste verf, niet een beeldje erna. */
   const voltooi = () => {
     const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-    if (here && map.scrollHeight > map.clientHeight + 4) {
+    const schuift = map.scrollHeight > map.clientHeight + 4
+      && getComputedStyle(map).overflowY !== 'hidden';
+    if (here && schuift) {
       const f = map.querySelector('.world-frame');
       const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
       map.scrollTop = Math.max(0, y - map.clientHeight / 2);

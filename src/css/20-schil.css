@@ -26,8 +26,39 @@
   /* De fonkeling: het stoflaagje sterretjes dat op élk schilscherm ligt. Staat
      als token en niet als regel, omdat de kast er hieronder haar eigen, rustiger
      lucht omheen zet (zie #screen-trophies.app-sfeer::before) -- en twee kopieën
-     van dezelfde sterrenhemel is precies het soort ding dat uit de pas loopt. */
-  :root { --fonkeling: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice'><circle cx='32.0' cy='48.0' r='1.8' fill='%23fff' opacity='0.42'/><circle cx='88.0' cy='112.0' r='1.2' fill='%23ffd79a' opacity='0.38'/><circle cx='144.0' cy='40.0' r='2.2' fill='%23fff' opacity='0.30'/><circle cx='208.0' cy='144.0' r='1.4' fill='%239fe8ff' opacity='0.34'/><circle cx='272.0' cy='72.0' r='1.9' fill='%23fff' opacity='0.40'/><circle cx='328.0' cy='160.0' r='1.3' fill='%23ffd79a' opacity='0.32'/><circle cx='368.0' cy='56.0' r='1.6' fill='%23fff' opacity='0.28'/><circle cx='60.0' cy='192.0' r='1.1' fill='%239fe8ff' opacity='0.30'/><circle cx='296.0' cy='208.0' r='1.5' fill='%23fff' opacity='0.24'/><circle cx='40.0' cy='640.0' r='1.7' fill='%23fff' opacity='0.34'/><circle cx='104.0' cy='736.0' r='1.3' fill='%23ffd79a' opacity='0.36'/><circle cx='176.0' cy='608.0' r='1.2' fill='%239fe8ff' opacity='0.26'/><circle cx='240.0' cy='760.0' r='1.9' fill='%23fff' opacity='0.32'/><circle cx='312.0' cy='656.0' r='1.4' fill='%23ffd79a' opacity='0.30'/><circle cx='360.0' cy='720.0' r='1.6' fill='%23fff' opacity='0.26'/><circle cx='136.0' cy='688.0' r='1.1' fill='%23fff' opacity='0.22'/><circle cx='272.0' cy='592.0' r='1.3' fill='%239fe8ff' opacity='0.24'/><circle cx='20.0' cy='352.0' r='1.5' fill='%23fff' opacity='0.22'/><circle cx='380.0' cy='448.0' r='1.4' fill='%23ffd79a' opacity='0.22'/><circle cx='28.0' cy='496.0' r='1.2' fill='%239fe8ff' opacity='0.20'/><circle cx='372.0' cy='304.0' r='1.6' fill='%23fff' opacity='0.20'/><circle cx='72.0' cy='80.0' r='7.0' fill='%23ffd79a' opacity='0.07'/><circle cx='344.0' cy='112.0' r='6.0' fill='%239fe8ff' opacity='0.06'/><circle cx='120.0' cy='704.0' r='7.0' fill='%23ffd79a' opacity='0.06'/><circle cx='288.0' cy='720.0' r='6.0' fill='%23fff' opacity='0.05'/></svg>"); }
+     van dezelfde sterrenhemel is precies het soort ding dat uit de pas loopt.
+     De kleedkamer leent hem ook, maar dan ónder haar sluier; zie daar.
+
+     HET VELD IS VIERKANT, EN DAT IS DE HELE TRUC. Hij stond op 400x800 -- de
+     verhouding van een telefoon -- en werd met `slice` ingepast. In een staand
+     venster ging dat goed; in een liggend venster sneed diezelfde slice er twee
+     derde uit en blies de rest 3,6 keer op, zodat er van vijfentwintig sterretjes
+     vier overbleven ter grootte van een erwt. Dát is hoe een sfeerlaag als een
+     handvol losse stipjes gaat lezen: niet omdat er te weinig staan, maar omdat
+     er te veel is weggesneden en de rest te groot is geworden.
+
+     Vierkant snijdt in beide standen ongeveer even veel weg (een liggend venster
+     houdt de middelste ~62% van de hoogte over, een staand de middelste ~45% van
+     de breedte), en daarom is het veld in vijf zones geschreven in plaats van
+     rondgestrooid:
+
+       midden-boven / midden-onder  ziet alleen een staand toestel -- dat is de
+                                    band bóven en ónder de inhoud, waar deze
+                                    laag altijd voor bedoeld was
+       links-midden / rechts-midden ziet alleen een liggend venster: de twee
+                                    marges naast de inhoudskolom
+       het midden zelf              ziet iedereen, en staat bij beide standen
+                                    achter de kaartjes -- daar dus vier stuks op
+                                    de helft van de dekking, en verder niets
+
+     Per stand staan er zo veertien puntjes in beeld, met de grootste en de
+     helderste in de zone die bij die stand hoort. Ze zijn bovendien kleiner dan
+     ze waren: 1,1 tot 2,1 eenheden, wat op een bureaublad neerkomt op 1,6 tot 3
+     pixels -- stof, en geen confetti. De vier bokehvlekken zijn om dezelfde reden
+     gehalveerd: een vlek van vier procent van het veld was op 400 breed een
+     zachte stip, maar op een veld dat nu de volle vensterbreedte vult werd het
+     een schijf van zestig pixels met een zichtbare rand. */
+  :root { --fonkeling: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='xMidYMid slice'><circle cx='330' cy='88' r='2.0' fill='%23fff' opacity='0.34'/><circle cx='452' cy='46' r='1.3' fill='%23ffd79a' opacity='0.3'/><circle cx='560' cy='128' r='1.6' fill='%239fe8ff' opacity='0.26'/><circle cx='668' cy='62' r='1.8' fill='%23fff' opacity='0.32'/><circle cx='394' cy='162' r='1.2' fill='%23ffd79a' opacity='0.24'/><circle cx='318' cy='902' r='1.7' fill='%23fff' opacity='0.32'/><circle cx='436' cy='836' r='1.4' fill='%239fe8ff' opacity='0.26'/><circle cx='548' cy='944' r='2.0' fill='%23ffd79a' opacity='0.3'/><circle cx='664' cy='872' r='1.5' fill='%23fff' opacity='0.28'/><circle cx='392' cy='964' r='1.1' fill='%23fff' opacity='0.22'/><circle cx='56' cy='300' r='1.9' fill='%23fff' opacity='0.32'/><circle cx='168' cy='404' r='1.3' fill='%23ffd79a' opacity='0.28'/><circle cx='36' cy='560' r='1.6' fill='%239fe8ff' opacity='0.24'/><circle cx='204' cy='676' r='2.1' fill='%23fff' opacity='0.3'/><circle cx='112' cy='772' r='1.2' fill='%23ffd79a' opacity='0.22'/><circle cx='944' cy='262' r='1.8' fill='%23fff' opacity='0.3'/><circle cx='812' cy='380' r='1.2' fill='%239fe8ff' opacity='0.26'/><circle cx='968' cy='520' r='1.6' fill='%23ffd79a' opacity='0.28'/><circle cx='836' cy='648' r='2.0' fill='%23fff' opacity='0.26'/><circle cx='924' cy='760' r='1.3' fill='%239fe8ff' opacity='0.22'/><circle cx='352' cy='262' r='1.2' fill='%23fff' opacity='0.18'/><circle cx='648' cy='356' r='1.4' fill='%23ffd79a' opacity='0.16'/><circle cx='420' cy='700' r='1.3' fill='%239fe8ff' opacity='0.18'/><circle cx='700' cy='752' r='1.1' fill='%23fff' opacity='0.16'/><circle cx='620' cy='96' r='10' fill='%23ffd79a' opacity='0.08'/><circle cx='470' cy='912' r='9' fill='%239fe8ff' opacity='0.07'/><circle cx='92' cy='470' r='11' fill='%23ffd79a' opacity='0.08'/><circle cx='900' cy='600' r='9.5' fill='%239fe8ff' opacity='0.07'/></svg>"); }
   .app-sfeer { position: relative; isolation: isolate; }
   /* isolation + z-index:-1 -- een absoluut geplaatste ::before met z-index:0
      schildert óver gewone tekst heen, ook al staat die er in de opmaak vóór.
@@ -37,8 +68,18 @@
      scrolt niet mee. Op een scrollend scherm (het maakformulier) zou een absolute
      laag zich over de hele scrollhoogte uitrekken en lagen de vegen dus half
      buiten beeld. */
+  /* background-size stond hier niet, en dat was een stille fout. Een SVG met
+     alléén een viewBox heeft geen eigen maat, en dan valt `auto` terug op
+     "contain": op 1440x900 werd de fonkeling dus een veld van 450 bij 900 dat
+     met background-position 0% 0% tegen de LINKERrand geplakt stond -- alle
+     sterretjes in de linkerderde van het venster, en rechts niets. Op een
+     telefoon viel hij om dezelfde reden 96px boven de onderrand stil.
+     cover + midden maakt er een echte lucht van, in beide standen. De
+     verlooplagen eronder merken er niets van: een verloop heeft geen eigen maat
+     én geen eigen verhouding, en dan is cover hetzelfde als auto. */
   .app-sfeer::before {
     content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-size: cover; background-position: 50% 50%;
     background-image:
       var(--fonkeling),
       radial-gradient(64% 54% at -12% -10%, transparent 57%, rgba(var(--warm-licht-rgb),.34) 64%, transparent 72%),
@@ -305,15 +346,52 @@
      zodra er een echte tekening ligt legt de studio hem eroverheen. Zolang er
      geen ligt staat er geen url() naar een bestand dat er niet is, en dat is
      precies waarom die twee gescheiden blijven. */
-  :root { --kleed-tekening: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%2357225f'/><stop offset='.28' stop-color='%233c1450'/><stop offset='.64' stop-color='%23260c36'/><stop offset='1' stop-color='%23170522'/></linearGradient><radialGradient id='lamp' cx='.5' cy='.06' r='.46'><stop offset='0' stop-color='%23ffdcae' stop-opacity='.5'/><stop offset='.5' stop-color='%23ffb367' stop-opacity='.15'/><stop offset='1' stop-color='%23ff9a4d' stop-opacity='0'/></radialGradient><radialGradient id='nis' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23f6e2ff' stop-opacity='.2'/><stop offset='.58' stop-color='%23b98cff' stop-opacity='.07'/><stop offset='1' stop-color='%23b98cff' stop-opacity='0'/></radialGradient><radialGradient id='pool' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23ffb066' stop-opacity='.24'/><stop offset='1' stop-color='%23ffb066' stop-opacity='0'/></radialGradient><linearGradient id='ka' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23b47ce4' stop-opacity='.92'/><stop offset='1' stop-color='%233d1460' stop-opacity='.8'/></linearGradient><linearGradient id='kb' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23ef9cc4' stop-opacity='.8'/><stop offset='1' stop-color='%234a1550' stop-opacity='.78'/></linearGradient><linearGradient id='kc' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%238fdcec' stop-opacity='.7'/><stop offset='1' stop-color='%232d1a5c' stop-opacity='.78'/></linearGradient><linearGradient id='vloer' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23140420' stop-opacity='0'/><stop offset='1' stop-color='%23140420' stop-opacity='.6'/></linearGradient></defs><rect width='1080' height='1920' fill='url(%23w)'/><rect width='1080' height='1920' fill='url(%23lamp)'/><ellipse cx='540' cy='420' rx='470' ry='400' fill='url(%23nis)'/><g fill='%23ffd9a8'><rect x='-20' y='92' width='400' height='9' rx='4' opacity='.2'/><rect x='700' y='92' width='400' height='9' rx='4' opacity='.2'/></g><g fill='%23ffe6bd'><circle cx='160' cy='126' r='48' opacity='.09'/><circle cx='160' cy='126' r='15' opacity='.55'/><circle cx='330' cy='126' r='48' opacity='.09'/><circle cx='330' cy='126' r='15' opacity='.55'/><circle cx='750' cy='126' r='48' opacity='.09'/><circle cx='750' cy='126' r='15' opacity='.55'/><circle cx='920' cy='126' r='48' opacity='.09'/><circle cx='920' cy='126' r='15' opacity='.55'/></g><g><rect x='20' y='196' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M84 236h64l40 214q3 40-72 40t-72-40z' fill='url(%23ka)'/><path d='M190 248h68l42 238q3 42-76 42t-76-42z' fill='url(%23kb)'/><path d='M292 230h60l38 196q3 38-68 38t-68-38z' fill='url(%23kc)'/><rect x='720' y='176' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M768 216h64l40 222q3 40-72 40t-72-40z' fill='url(%23kb)'/><path d='M874 228h68l42 202q3 42-76 42t-76-42z' fill='url(%23ka)'/><path d='M978 210h62l40 230q3 40-71 40t-71-40z' fill='url(%23kc)'/></g><g fill='%23ffe6bd' opacity='.45'><circle cx='430' cy='150' r='5'/><circle cx='648' cy='188' r='4'/><circle cx='232' cy='700' r='5'/><circle cx='852' cy='760' r='4'/><circle cx='404' cy='940' r='4'/><circle cx='700' cy='880' r='3'/></g><rect y='1100' width='1080' height='820' fill='url(%23vloer)'/><ellipse cx='540' cy='1340' rx='580' ry='240' fill='url(%23pool)'/><ellipse cx='540' cy='1560' rx='440' ry='124' fill='%23ffffff' opacity='.028'/></svg>"); }
+  :root { --kleed-tekening: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%2357225f'/><stop offset='.28' stop-color='%233c1450'/><stop offset='.64' stop-color='%23260c36'/><stop offset='1' stop-color='%23170522'/></linearGradient><radialGradient id='lamp' cx='.5' cy='.06' r='.46'><stop offset='0' stop-color='%23ffdcae' stop-opacity='.5'/><stop offset='.5' stop-color='%23ffb367' stop-opacity='.15'/><stop offset='1' stop-color='%23ff9a4d' stop-opacity='0'/></radialGradient><radialGradient id='nis' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23f6e2ff' stop-opacity='.2'/><stop offset='.58' stop-color='%23b98cff' stop-opacity='.07'/><stop offset='1' stop-color='%23b98cff' stop-opacity='0'/></radialGradient><radialGradient id='pool' cx='.5' cy='.5' r='.5'><stop offset='0' stop-color='%23ffb066' stop-opacity='.24'/><stop offset='1' stop-color='%23ffb066' stop-opacity='0'/></radialGradient><linearGradient id='ka' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23b47ce4' stop-opacity='.92'/><stop offset='1' stop-color='%233d1460' stop-opacity='.8'/></linearGradient><linearGradient id='kb' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23ef9cc4' stop-opacity='.8'/><stop offset='1' stop-color='%234a1550' stop-opacity='.78'/></linearGradient><linearGradient id='kc' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%238fdcec' stop-opacity='.7'/><stop offset='1' stop-color='%232d1a5c' stop-opacity='.78'/></linearGradient><linearGradient id='vloer' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23140420' stop-opacity='0'/><stop offset='1' stop-color='%23140420' stop-opacity='.6'/></linearGradient></defs><rect width='1080' height='1920' fill='url(%23w)'/><rect width='1080' height='1920' fill='url(%23lamp)'/><ellipse cx='540' cy='420' rx='470' ry='400' fill='url(%23nis)'/><g fill='%23ffd9a8'><rect x='-20' y='92' width='400' height='9' rx='4' opacity='.2'/><rect x='700' y='92' width='400' height='9' rx='4' opacity='.2'/></g><g fill='%23ffe6bd'><circle cx='160' cy='126' r='48' opacity='.09'/><circle cx='160' cy='126' r='15' opacity='.55'/><circle cx='330' cy='126' r='48' opacity='.09'/><circle cx='330' cy='126' r='15' opacity='.55'/><circle cx='750' cy='126' r='48' opacity='.09'/><circle cx='750' cy='126' r='15' opacity='.55'/><circle cx='920' cy='126' r='48' opacity='.09'/><circle cx='920' cy='126' r='15' opacity='.55'/></g><g><rect x='20' y='196' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M84 236h64l40 214q3 40-72 40t-72-40z' fill='url(%23ka)'/><path d='M190 248h68l42 238q3 42-76 42t-76-42z' fill='url(%23kb)'/><path d='M292 230h60l38 196q3 38-68 38t-68-38z' fill='url(%23kc)'/><rect x='720' y='176' width='340' height='15' rx='7' fill='%23ffd9a8' opacity='.4'/><path d='M768 216h64l40 222q3 40-72 40t-72-40z' fill='url(%23kb)'/><path d='M874 228h68l42 202q3 42-76 42t-76-42z' fill='url(%23ka)'/><path d='M978 210h62l40 230q3 40-71 40t-71-40z' fill='url(%23kc)'/></g><rect y='1100' width='1080' height='820' fill='url(%23vloer)'/><ellipse cx='540' cy='1340' rx='580' ry='240' fill='url(%23pool)'/><ellipse cx='540' cy='1560' rx='440' ry='124' fill='%23ffffff' opacity='.028'/></svg>"); }
+  /* ---- TWEE DINGEN DIE HIER NIET VOOR DE HAND LIGGEN ----------------------
+
+     1. DE FONKELING LIGT ERTUSSEN, ÓNDER DE SLUIER. In de kamertekening stonden
+        zes losse lichtpuntjes. In een staand venster waren dat zes stofjes in
+        het licht; in een liggend venster bleven er vier van over, precies in het
+        midden, opgeblazen tot bijna zeven pixels op een verder lege muur -- geen
+        sfeer maar vier vlekjes waarvan je je afvraagt of je scherm vies is. Ze
+        zijn weg. Wat ervoor terugkomt is het gedeelde veld van de schil, dat
+        sinds het vierkant is in béide standen een echte lucht neerzet (zie
+        --fonkeling).
+
+        Dat maakt de kleedkamer en de kast familie zonder ze hetzelfde te maken:
+        het is hetzelfde stof, maar in de kast ligt het bovenop en hier onder de
+        sluier -- dus daar fonkelt de vitrine en hier hangt het stof in de kamer.
+        Eén laag verschil, en verder niets bijgeregeld.
+
+     2. DE SNEDE HANGT HOOG (50% 22%) EN NIET IN HET MIDDEN. De kamer is
+        1080x1920 en wordt met cover ingepast. Op een telefoon past de hoogte
+        precies en snijdt alleen de breedte -- er valt verticaal niets te kiezen,
+        dus die 22% doet daar niets. Op een bureaublad is het andersom: de tekening wordt op de bréedte geschaald en
+        er valt ruim tweederde van de hoogte weg. Met de snede in het midden was
+        dat precies de helft zónder kamer: geen lampen, geen rekken, geen vloer --
+        alleen de lege muur ertussen. Alles wat deze tekening te vertellen heeft
+        staat in de bovenste helft (de lampenrij, de twee kledingrekken, de nis
+        achter de pop), dus daar hangt de snede nu aan. De vloer onderin missen we
+        niet: de verdonkering waar de lade en de balk op rusten komt van
+        --sfeer-vloer en niet van de tekening.
+
+        22 en niet 0 of 12, en dat is opgemeten op 1440x900. Bovenaan wordt de
+        tekening 1,33 keer uitvergroot, en dan zijn de lampenrails twee harde
+        beige stokken en de japonnen zes platte kleurvlakken ter grootte van een
+        kaartje -- luider dan de kast erachter. Twee tiende lager begint de snede
+        net onder de rails: wat er dan staat zijn twee zachte kleurenbanen langs
+        de vensterranden (de rekken, uit focus) met de nis als gloed achter de
+        pop, en het midden blijft leeg voor de inhoud. Dezelfde kamer, alleen op
+        de hoogte waar hij sfeer is in plaats van decor. */
   #screen-dress.app-sfeer::before {
     content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background-image:
       var(--kunst-sluier),
+      var(--fonkeling),
       var(--kleed-tekening);
-    background-size: cover, cover;
-    background-position: 50% 50%, 50% 50%;
-    background-repeat: no-repeat, no-repeat;
+    background-size: cover, cover, cover;
+    background-position: 50% 50%, 50% 50%, 50% 22%;
+    background-repeat: no-repeat, no-repeat, no-repeat;
   }
 
   /* ---- De kleedkamer en de kast ------------------------------------------
