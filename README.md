@@ -100,6 +100,7 @@ check` zegt het als de twee uit elkaar zijn gelopen.
 | wilt weten waarom de voortgang zo werkt | `docs/PROGRESSION-REVIEW.md` |
 | aan kleur of letter komt | het blok **DE AFSPRAAK** bovenaan `src/css/00-afspraak.css`, en `docs/UITBREIDEN.md` |
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
+| aan geluid of trillen komt | `docs/AUDIO-REVIEW.md`, en de secties `= Geluid` en `= Trilfeedback` in `src/20-app.js` |
 | het logo of het app-icoon vervangt | `docs/MERK.md` |
 
 De documenten in `docs/` zijn grotendeels *plandocumenten uit een bepaalde
