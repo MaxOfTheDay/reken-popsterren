@@ -9177,7 +9177,7 @@ function renderNewStar() {
         <div class="set-field"><label class="lbl">Hoe speel je?</label>
           <div class="chip-row mode-row" id="newstar-track">
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
-            ${halfChip('math', '🎤', 'Rekenen', s.track === 'math')}
+            ${halfChip('math', '🧮', 'Rekenen', s.track === 'math')}
           </div>
           <div class="note">${s.track === 'count'
             ? 'Nog niet lezen: tellen met plaatjes.'
@@ -9477,7 +9477,7 @@ function niveauHtml(p) {
     bezig = `🧸 Leren tellen — <b>fase ${st}${top > st ? ' van ' + top : ''}</b>: ${COUNT_STAGE_LABELS[st] || ''}`;
   } else {
     const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
-    bezig = `🎤 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
+    bezig = `🧮 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
   }
   return `<div class="niveau-blok">
     <div class="niveau-kop">Niveau-inschatting</div>
@@ -9583,7 +9583,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
         <span class="hulp">${tablesRelevant ? 'Voor ✖️ en ➗.' : 'Actief zodra ✖️ of ➗ aanstaat.'}</span>
         <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
   }, {
-    ico: '🎮', title: 'Meer opties', sub: 'Antwoorden, lengte en extra uitdaging', secundair: true, html: `
+    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, lengte en extra uitdaging', secundair: true, html: `
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="${pfx}set-mode">
           ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
@@ -9636,6 +9636,10 @@ function oefenSamenvatting(s) {
 function oefenenPanelHtml(p, s) {
   const isCount = s.track === 'count';
   // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus.
+  // Het icoon van de kaartkop is vast (🎮) en niet dat van de gekozen modus: een kop
+  // die zijn eigen chip herhaalt zegt niets extra's en maakt de rangorde juist
+  // vlakker. De twee modi hebben elk hun eigen icoon -- 🧸 tellen, 🧮 rekenen --
+  // en die staan alleen in de chips.
   // De twee keuzes zijn de zwaarste van dit scherm, dus staan ze als twee volle
   // helften naast elkaar (.mode-row) in plaats van als twee pillen in een rij --
   // en de gekozene draagt een vinkje, zodat "dit staat aan" niet alleen van de
@@ -9644,11 +9648,11 @@ function oefenenPanelHtml(p, s) {
     + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
   const modeCard = `
     <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">${isCount ? '🧸' : '🎤'}</div><div><h2>Modus</h2><div class="sub">Hoe ${esc(p.name)} speelt</div></div></div>
+      <div class="set-card-head"><div class="ico">🎮</div><div><h2>Modus</h2><div class="sub">Hoe ${esc(p.name)} speelt</div></div></div>
       <div class="set-field"><span class="lbl">Manier van spelen</span>
         <div class="chip-row mode-row" id="set-track">
           ${modeChip('count', '🧸', 'Leren tellen')}
-          ${modeChip('math', '🎤', 'Rekenen')}
+          ${modeChip('math', '🧮', 'Rekenen')}
         </div>
         <div class="note" style="margin-top:8px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
     </div>`;
