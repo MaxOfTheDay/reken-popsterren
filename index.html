@@ -6020,11 +6020,41 @@
     color: var(--ink-on-gold); background: var(--gold-accent);
     font-size: var(--tx-klein); font-weight: 700; letter-spacing: .01em;
     border-radius: var(--r-pill); padding: 5px 8px;
-    animation: readyPulse 1.4s ease-in-out infinite;
+    position: relative;
+    animation: readyAdem 1.4s ease-in-out infinite;
   }
+  /* De gloed eromheen, in twee lagen die elkaar aflossen: ::before is de gewone
+     gouden gloed (de rust), ::after anderhalf keer die gloed (de top van de klop).
+     Het zijn precies de twee standen van readyPulse hieronder.
+
+     WAAROM NIET GEWOON readyPulse. Die zet box-shadow in zijn keyframes, en een
+     schaduw die verandert moet de browser elk beeldje opnieuw uitrekenen en
+     tekenen, op dezelfde draad die ook de tikken afhandelt. Met elf klaarliggende
+     trofeeën was dat ± 15% van die draad, onafgebroken zolang de kast open stond
+     -- en elke tik op de kast wachtte daardoor zo'n 20ms langer voordat er iets
+     gebeurde (gemeten, 4x gesmoorde processor). Twee vaste schaduwen die alleen
+     in doorzichtigheid wisselen, plus een schaal, doet de grafische kaart
+     helemaal alleen: stilstaand kost de kast nu niets meer, net als de kaart en
+     de kleedkamer.
+
+     Rust en top zien er precies zo uit als eerst; alleen de weg ertussen is een
+     overvloeier en geen groeiende schaduw. Een schaduw laat zich niet binnen zijn
+     eigen vak zien, dus de lagen liggen niet over de tekst heen. */
+  .ready-open::before, .ready-open::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  }
+  .ready-open::before { box-shadow: var(--goud-gloed); animation: readyRust 1.4s ease-in-out infinite; }
+  .ready-open::after { box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.7); opacity: 0; animation: readyTop 1.4s ease-in-out infinite; }
+  @keyframes readyAdem { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+  @keyframes readyRust { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes readyTop { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
   /* FASE 5E -- de klop zit in de gloed en niet meer in een slagschaduw die met de
      schaduwlip van een knop te verwarren was. Van de gedeelde gouden gloed naar
-     anderhalf keer die gloed: één beweging, in de kleur die "verdiend" betekent. */
+     anderhalf keer die gloed: één beweging, in de kleur die "verdiend" betekent.
+
+     De kast gebruikt hem niet meer (zie .ready-open hierboven); het "Nieuw!"-
+     pilletje in de kleedkamer wél, één keer na een aankoop -- en één keer is geen
+     draad die bezig blijft. */
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: var(--goud-gloed); } 50% { transform: scale(1.03); box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.7); } }
   /* dé gouden mijlpaal-pil: één component voor "rang omhoog" en "trofee klaar",
      op het eindscherm (.end-milestone). Hoogstens één tegelijk in beeld, en alleen
@@ -6269,6 +6299,10 @@
 
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready, .ready-open { animation: none; }
+    /* De gloed van .ready-open zat vroeger alleen in de keyframes en viel hier dus
+       vanzelf weg. Nu staat hij op twee eigen lagen -- die gaan hier uit, zodat
+       de pil stilstaand precies blijft zoals hij was: goud, zonder gloed. */
+    .ready-open::before, .ready-open::after { display: none; }
     .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
     .trophy-card.just-claimed::after { animation: none; }
 
