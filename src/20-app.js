@@ -4447,6 +4447,40 @@ function kaartGroet(mag) {
 
    Vandaar dat show() dit aanroept en niet goMap: weglopen kan langs elke kant --
    de tabbladbalk, de terugknop van het toestel, de wereldpil. */
+/* ================= Tik op de ster ==========================================
+   Ze reageert als je haar aantikt: één stuiter en het tikklankje. Het is een
+   antwoord en verder niets -- geen level, geen beloning, geen navigatie. Speel
+   je, dan tik je nog steeds de halte eronder aan, want dat is de enige knop.
+
+   HET RAAKVLAK is alleen haar silhouet (zie .tour-hero in het stijlblad), en
+   het raakvlak van de halte ligt eroverheen waar ze elkaar raken. Een tik die
+   een halte bedoelt, pakt zij dus nooit af.
+
+   STUITEREN EN GEEN ZWAAI. De zwaai is haar groet als je op de kaart aankomt.
+   Zwaait ze ook bij elke tik, dan betekent die groet niets meer. De stuiter
+   komt uit dezelfde woordenschat (MOVES) en geeft dus geen nieuwe beweging.
+
+   WANNEER NIET. Alleen als ze stilstaat op de halte die nu aan de beurt is
+   (.next). Op een reis draagt ze die klasse niet, want dan is er geen "hier
+   spelen" (zie renderTourMap). Ze doet ook niets tijdens een overgang, een
+   wereldvlucht of een wereldreis, en niet als ze al een pasje doet: een
+   tweede tik mag geen tweede pasje beginnen. Bij beperkte beweging hoor je
+   alleen het klankje, net als bij tapDance.
+
+   Wacht de groet nog, dan vervalt die: ze heeft haar kind al gezien. De
+   haltepuls blijft staan, want die wijst de weg en is geen groet. */
+const TIK_PAS = { cls: 'move-bounce' };   // ⭐ uit MOVES; mvBounce duurt .9s, net als de groet
+function kaartTik(ster, halte) {
+  const el = ster.querySelector('.avatar-holder');
+  if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
+  if (overgangBezig || vluchtOp || wereldReisOp || ster.getAnimations().length) return;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  sndTap();
+  if (!zetPas(el, TIK_PAS)) return;
+  setTimeout(() => stilStaan(el), GROET.duur);
+}
+
 function kaartGroetStop() {
   clearTimeout(groetTimer);
   clearTimeout(pulsTimer);
@@ -5619,7 +5653,13 @@ function renderTourMap(travelFrom) {
     // Tikken op een halte is niet "start een level" maar "ga die plek binnen":
     // enterLevel doet het klikje, de halte-reactie en de overgang, en roept
     // startLevel meteen zelf aan. Zie de bewegingstaal boven goMap.
-    if (open) b.onclick = () => enterLevel(lvl, b);
+    /* Zij staat ín de knop van haar halte, dus een tik op haar komt hier ook
+       langs. Dat is nooit "speel": de halte eronder is de enige weg de zaal in
+       (zie kaartTik). */
+    if (open) b.onclick = e => {
+      const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
+      if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
+    };
     frame.appendChild(b);
   });
 
