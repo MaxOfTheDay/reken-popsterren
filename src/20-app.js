@@ -77,6 +77,8 @@
                           (zetTeller/telNu/telNaar/telStraks, gedeeld)
      Nieuwe ster ........ het maakformulier
      Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Op het beginscherm   de uitlegkaart in Beheer: hoe het spel als app op
+                          dit toestel komt. Laat het installeren aan de browser
      Terug-navigatie .... Android back / browser back
 
    ---- OPSTARTEN EN GEREEDSCHAP ---------------------------------------------
@@ -9709,7 +9711,7 @@ function appWideCardsHtml(hasStars) {
         <div class="note">Vervángt alles wat er nu op dit toestel staat, van álle sterren. Er wordt eerst gevraagd of je het zeker weet.</div>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
-    </div>`;
+    </div>${beginschermKaartHtml(hasStars)}`;
 }
 // Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen. Alleen wat
 // over de app als geheel gaat.
@@ -10124,6 +10126,109 @@ function importData(file) {
   reader.onerror = () => showNotice('Oeps!', 'Kon dit bestand niet lezen.');
   reader.readAsText(file);
 }
+
+/* ================= Op het beginscherm =======================================
+   Eén kaart in Beheer, ná "Back-up & herstel": uitleg voor een ouder over hoe
+   Rekensterren als app op dit toestel komt. Uitleg en niets anders -- geen knop,
+   geen schakelaar, geen vraag op de kaart van het kind.
+
+   DE BROWSER DOET HET INSTALLEREN, NIET WIJ. Chrome stelt het soms zelf voor
+   (ook bij een eerste bezoek), en dat voorstel blijft precies zoals het is: er
+   luistert hier met opzet niets naar beforeinstallprompt, dus er wordt niets
+   tegengehouden, uitgesteld of vervangen door een eigen knop. Die knop zou
+   bovendien alleen in Chromium bestaan en elders dood op het scherm staan. Wat
+   de app wél kan is vertellen waar het zit als het voorstel voorbij is -- per
+   soort browser, want het menu heet overal anders. inhoud.test.js zaak J kijkt
+   na dat die luisteraar er ook niet stilletjes bij komt.
+
+   NIETS HIERVAN WORDT BEWAARD. Niet in db (die gaat in zijn geheel de back-up
+   in, en een terugzetting vervángt hem), en ook niet in een eigen sleutel: een
+   vlag "geïnstalleerd" wordt fout zodra iemand de app weer verwijdert. Of de
+   kaart er staat wordt dus elke keer opnieuw aan de browser gevraagd.
+
+   GEÏNSTALLEERD HERKENNEN. manifest.json zet display:fullscreen, dus een
+   geïnstalleerde app op Android antwoordt op (display-mode: fullscreen) en
+   níét op standalone -- wie alleen naar standalone kijkt, toont deze kaart in de
+   app zelf. Een browser die fullscreen niet kan valt terug op standalone of
+   minimal-ui, en iOS zegt het alleen via navigator.standalone. Alle vier dus.
+
+   HET IOS-VOORBEHOUD. Een app op het beginscherm van een iPhone of iPad krijgt
+   zijn eigen opslag, los van Safari: de sterren uit Safari staan er niet in. Wie
+   al gespeeld heeft, maakt dus eerst een back-up -- en daarom staat deze kaart
+   vlak onder die van de back-up, en zegt de waarschuwing "hierboven". */
+function speeltAlsApp(w) {
+  w = w || window;
+  const mm = w.matchMedia;
+  const stand = m => { try { return !!(mm && mm.call(w, '(display-mode: ' + m + ')').matches); } catch (e) { return false; } };
+  return stand('fullscreen') || stand('standalone') || stand('minimal-ui')
+    || !!(w.navigator && w.navigator.standalone === true);
+}
+/* Welke uitleg past bij deze browser. Een grove indeling op de user agent, en dat
+   mag: er hangt geen gedrag aan, alleen een zin, en de 'anders'-zin klopt overal.
+
+     ios          Safari op iPhone of iPad
+     ios-elders   een andere browser of een app-in-app op iOS: daar kan het
+                  niet (betrouwbaar), dus eerst naar Safari
+     android      Chrome op Android
+     desktop      Chrome of Edge op een computer
+     inapp        een ingebouwde browser (WhatsApp, Facebook, Gmail...) op Android
+     anders       de rest: het menu, en anders Chrome
+
+   Een iPad vermomt zich sinds iPadOS 13 als Mac ("Macintosh" in de user agent);
+   hij verraadt zich doordat een Mac geen aanraakscherm heeft. */
+function beginschermSoort(nav) {
+  nav = nav || navigator;
+  const ua = String(nav.userAgent || '');
+  const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp|Snapchat|Pinterest|LinkedInApp|musical_ly|TikTok|GSA\/|; wv\)/.test(ua);
+  const ipadAlsMac = /Macintosh/.test(ua) && (nav.maxTouchPoints || 0) > 1;
+  if (/iPhone|iPad|iPod/.test(ua) || ipadAlsMac) {
+    const safari = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|DuckDuckGo/.test(ua) && !inApp;
+    return safari ? 'ios' : 'ios-elders';
+  }
+  if (inApp) return 'inapp';
+  if (/Android/.test(ua)) {
+    return /Chrome\//.test(ua) && !/SamsungBrowser|OPR\/|Firefox|EdgA|YaBrowser|UCBrowser/.test(ua) ? 'android' : 'anders';
+  }
+  if (/Mobi/.test(ua)) return 'anders';
+  return /Chrome\/|Edg\//.test(ua) && !/OPR\//.test(ua) ? 'desktop' : 'anders';
+}
+// De zinnen per soort. De eerste is de uitleg; een tweede staat er los onder.
+function beginschermUitleg(soort, hasStars) {
+  // Alleen iets om te redden als er ook iets gespeeld is.
+  const redden = kant => hasStars
+    ? `Heb je al gespeeld in ${kant}? Maak dan hierboven eerst een back-up. Zet die terug nadat je Rekensterren vanaf het beginscherm hebt geopend.`
+    : null;
+  switch (soort) {
+    case 'android': return ['Chrome stelt soms zelf voor om Rekensterren te installeren.',
+      'Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'];
+    case 'ios': return ['Tik in Safari op Deel en kies ‘Zet op beginscherm’.', redden('Safari')];
+    case 'ios-elders': return ['Open deze pagina in Safari. Tik daar op Deel en kies ‘Zet op beginscherm’.',
+      redden('deze browser')];
+    case 'desktop': return ['Klik op het installeer-icoon in de adresbalk, of kies ‘App installeren’ in het menu van je browser.'];
+    case 'inapp': return ['Je bekijkt deze pagina in een andere app. Open hem in Chrome om Rekensterren als app te installeren.'];
+    default: return ['Kies in het menu van je browser ‘App installeren’ of ‘Toevoegen aan startscherm’. Staat dat er niet bij? Open de pagina dan in Chrome.'];
+  }
+}
+/* Net geïnstalleerd in déze sessie. Alleen in het geheugen: het tabblad waarin
+   het gebeurde draait zelf nog in de browser, dus speeltAlsApp() zegt daar nog
+   nee -- maar de kaart heeft haar werk gedaan. Bij de volgende start wordt het
+   gewoon weer aan de browser gevraagd. */
+let beginschermNetErop = false;
+function beginschermKaartHtml(hasStars) {
+  if (beginschermNetErop || speeltAlsApp()) return '';
+  const [uitleg, tweede] = beginschermUitleg(beginschermSoort(), hasStars);
+  return `
+    <div class="set-card secundair" id="set-beginscherm">
+      <div class="set-card-head"><div class="ico">📲</div><div><h2>Op het beginscherm</h2><div class="sub">Rekensterren als app op dit toestel</div></div></div>
+      <div class="note">${uitleg}</div>${tweede ? `
+      <div class="note" style="margin-top:8px">${tweede}</div>` : ''}
+    </div>`;
+}
+addEventListener('appinstalled', () => {
+  beginschermNetErop = true;
+  const k = $('set-beginscherm');
+  if (k) k.remove();
+});
 
 /* ================= Terug-navigatie (Android back / browser back) =================
    Er is maar één URL, dus normaal ook maar één history-entry: zonder deze laag

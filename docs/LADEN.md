@@ -205,3 +205,8 @@ De geïnstalleerde stand test je door de app te installeren (menu → *App
 installeren*) en hem daarna te openen met het net uit. Wat er anders is dan in
 een tabblad: geen adresbalk (dus geen in- en uitklappende browserbalk) en
 `display: fullscreen` uit het manifest.
+
+In die stand staat de kaart *Op het beginscherm* (ouderdeel → Beheer) er niet:
+het spel herkent de app aan `display-mode` (`fullscreen`, `standalone`,
+`minimal-ui`) of aan `navigator.standalone` op iOS. Het installeren zelf laat de
+app aan de browser -- zie "= Op het beginscherm" in `src/20-app.js`.
