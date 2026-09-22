@@ -1345,6 +1345,110 @@ function check(ok, label, detail) {
     }
   }
 
+  /* ========== 7e-kwart · De ster antwoordt, de halte blijft de knop ==========
+   * Tik je op de ster, dan stuitert ze en gebeurt er verder niets (zie kaartTik).
+   * Wat hier vastligt is dat die tik nooit een tik van een halte afpakt. Ze staat
+   * ín de knop van haar halte, dus zonder zorg is ze een tweede speelknop.
+   *   - binnen het raakvlak van élke open halte, in elke wereld, wint de halte:
+   *     elementFromPoint komt daar nooit bij de ster uit
+   *   - een tik op haar silhouet laat de kaart staan en geeft één stuiter; een
+   *     tweede tik meteen erna begint hem niet opnieuw
+   *   - tijdens een overgang doet ze niets, en de halte start daarna gewoon
+   * Op de maat van een Pixel 10 staand, met aanraking. */
+  {
+    const c = await browser.newContext({ viewport: { width: 412, height: 923 }, hasTouch: true, isMobile: true });
+    await cacheFonts(c);
+    const page = await c.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.waitForTimeout(2500);   // opkomst en groet voorbij
+    const gestolen = await page.evaluate(() => {
+      const uit = [];
+      for (let wi = 0; wi < WORLDS.length; wi++) {
+        const p = P(), first = WORLD_START[wi];
+        p.level = first + 3;
+        p.stars = { [first]: 3, [first + 1]: 2, [first + 2]: 1 };
+        viewWorldIdx = wi;
+        renderMapTitle(p);
+        renderTourMap(0);
+        // het raakvlak zelf opmeten: wat de halte nu vangt als de ster níets vangt
+        const uitzetten = document.createElement('style');
+        uitzetten.textContent = '.tour-hero * { pointer-events: none !important; }';
+        document.querySelectorAll('.tour-stop:not(.locked)').forEach(s => {
+          const d = s.querySelector('.dot').getBoundingClientRect();
+          const cx = d.left + d.width / 2, cy = d.top + d.height / 2;
+          for (let x = cx - 40; x <= cx + 40; x += 2) for (let y = cy - 40; y <= cy + 40; y += 2) {
+            if (y < 70 || y > innerHeight - 110) continue;
+            const e = document.elementFromPoint(x, y);
+            if (!e || !e.closest('.tour-hero')) continue;
+            document.head.appendChild(uitzetten);
+            const eronder = document.elementFromPoint(x, y);
+            uitzetten.remove();
+            if (eronder && eronder.closest('.tour-stop') === s) uit.push(`wereld ${wi + 1} halte ${s.dataset.lvl}`);
+          }
+        });
+      }
+      return [...new Set(uit)];
+    });
+    check(gestolen.length === 0, 'de ster pakt geen tik van het raakvlak van een halte af',
+      gestolen.join(', '));
+
+    // een bekende stand, rechtstreeks getekend: renderTourMap groet niet
+    await page.evaluate(() => {
+      const p = P(), first = WORLD_START[0];
+      p.level = first + 3;
+      p.stars = { [first]: 3, [first + 1]: 2, [first + 2]: 1 };
+      viewWorldIdx = 0;
+      renderMapTitle(p);
+      renderTourMap(0);
+    });
+    await page.waitForTimeout(300);
+    const punt = await page.evaluate(() => {
+      const hr = document.querySelector('.tour-hero').getBoundingClientRect();
+      const x = hr.left + hr.width / 2;
+      for (let y = hr.top + hr.height * .45; y < hr.bottom; y++) {
+        const e = document.elementFromPoint(x, y);
+        if (e && e.closest('.tour-stop') && e.closest('.tour-hero')) return { x, y };
+      }
+      return null;
+    });
+    check(!!punt, 'haar silhouet neemt een tik aan', 'geen punt op de ster gevonden');
+    if (punt) {
+      const staat = () => page.evaluate(() => ({
+        scherm: document.querySelector('.screen.active').id,
+        pas: [...(document.querySelector('.tour-hero .pas-laag')?.getAnimations() || [])]
+          .map(a => a.animationName + '@' + Math.round(a.currentTime)),
+      }));
+      await page.touchscreen.tap(punt.x, punt.y);
+      await page.waitForTimeout(150);
+      const een = await staat();
+      await page.touchscreen.tap(punt.x, punt.y);
+      await page.waitForTimeout(150);
+      const twee = await staat();
+      check(een.scherm === 'screen-map' && twee.scherm === 'screen-map',
+        'een tik op de ster start geen show', JSON.stringify([een, twee]));
+      check(een.pas.length === 1 && /^mvBounce@/.test(een.pas[0]),
+        'een tik op de ster geeft één stuiter', JSON.stringify(een.pas));
+      check(twee.pas.length === 1 && parseInt(twee.pas[0].split('@')[1], 10) > parseInt(een.pas[0].split('@')[1], 10),
+        'een tweede tik meteen erna begint de stuiter niet opnieuw', JSON.stringify([een.pas, twee.pas]));
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => { overgangBezig = true; });
+      await page.touchscreen.tap(punt.x, punt.y);
+      await page.waitForTimeout(150);
+      const tijdens = await staat();
+      await page.evaluate(() => { overgangBezig = false; });
+      check(tijdens.pas.length === 0, 'tijdens een overgang doet de ster niets', JSON.stringify(tijdens));
+      const dot = await page.evaluate(() => {
+        const r = document.querySelector('.tour-stop.next .dot').getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      });
+      await page.touchscreen.tap(dot.x, dot.y);
+      await page.waitForTimeout(900);
+      check((await staat()).scherm === 'screen-game', 'de halte onder de ster start de show nog altijd');
+    }
+    await c.close();
+  }
+
   /* ========== 7e-bis · Drie sterplekken, altijd ==========
    * 1/3 was één los sterretje onder een halte en 2/3 waren er twee: het verschil
    * tussen "bijna af" en "áf" moest je tellen. Dat is precies de reden om een show
