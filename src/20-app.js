@@ -3692,9 +3692,36 @@ function oorsprongPct(el, punt) {
    binnenkomende scherm meteen zijn volle maat krijgt in plaats van er even naast
    te staan -- en boven de vaste navigatiebalk, zodat die er niet doorheen prikt
    terwijl dit scherm nog in beeld is. */
+/* Wat schermWeg en schermKomtOp zelf op een scherm zetten, per scherm bijgehouden.
+
+   Hier stond op beide plekken el.getAnimations(). Dat klinkt als opvragen, maar
+   de browser moet daarvoor eerst stijl én opmaak bijwerken -- midden in de tik,
+   op een scherm dat show() net heeft aangezet en dat daarna nog helemaal gevuld
+   wordt. De kleedkamer werd zo bij één tik twee keer opgemeten met de inhoud
+   van de vorige keer, en daarna nog eens met de nieuwe. Gemeten op de eerste
+   tik op Kleedkamer: zo'n 60ms van de tik, op een gesmoorde processor.
+
+   Wat er weg moet is ook alleen wat deze twee er zelf op zetten: een scherm
+   waar je snel naar terugkomt draagt nog de opacity-0 van zijn vertrek
+   (fill: 'forwards'), en een tweede tik mag geen tweede animatie stapelen. Wat
+   een ander er eerder op zette (kaartKomtOp, de opkomst van de reis) wordt door
+   de nieuwe animatie overstemd, want die komt later en zet dezelfde
+   eigenschappen -- en de opruimer van schermWeg ruimt het na afloop alsnog op,
+   daar mag getAnimations() wél: dat is geen tik meer. */
+const schermAnims = new WeakMap();
+function schermAnim(el, frames, opts) {
+  const a = el.animate(frames, opts);
+  if (!schermAnims.has(el)) schermAnims.set(el, []);
+  schermAnims.get(el).push(a);
+  return a;
+}
+function schermAnimsStop(el) {
+  (schermAnims.get(el) || []).forEach(a => a.cancel());
+  schermAnims.delete(el);
+}
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
-  el.getAnimations().forEach(a => a.cancel());   // een tweede tik stapelt geen tweede animatie
+  schermAnimsStop(el);   // een tweede tik stapelt geen tweede animatie
   el.classList.add('wegvallend');
   // draaipunt: de aangetikte halte, zodat de beweging om díe plek gaat en niet om
   // het midden van het scherm. Dat is het enige wat de continuïteit draagt.
@@ -3709,11 +3736,11 @@ function schermWeg(el, naarBinnen, punt) {
      nodig. De beweging houdt 'in' (zacht los, snel weg -- dat is het karakter);
      het wegdoven krijgt 'uit', zodat het scherm al vrijwel weg is op het moment
      dat het volgende losgaat. Zie de regel bij MOTION. */
-  const a = el.animate(
+  const a = schermAnim(el,
     [{ transform: 'none' },
      { transform: naarBinnen ? 'scale(1.07)' : 'scale(.96) translateY(10px)' }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
-  el.animate([{ opacity: 1 }, { opacity: 0 }],
+  schermAnim(el, [{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + MOTION.vangnet);
@@ -4231,9 +4258,9 @@ function kaartKomtOp(punt) {
    de kaart. Deze weet van geen enkel scherm iets. */
 function schermKomtOp(el) {
   if (!el || !el.animate || motionOff()) return;
-  el.getAnimations().forEach(a => a.cancel());
+  schermAnimsStop(el);   // zie schermAnims: zonder stijl en opmaak af te dwingen
   el.classList.add('komt-op');
-  el.animate([{ transform: 'scale(1.03)' }, { transform: 'none' }],
+  schermAnim(el, [{ transform: 'scale(1.03)' }, { transform: 'none' }],
     { duration: MOTION.kom, easing: MOTION.uit, fill: 'backwards' });
 }
 /* De twee helften van zo'n wissel. Zonder vorig scherm gebeurt er niets: dat is
@@ -8401,6 +8428,9 @@ function openKleedkamer() {
 // aanraakte). Een gerichte sprong hierheen (bv. vanuit de Verzamelaar-trofee, zie
 // openKleedkamerCat) heeft die variabelen intussen al naar zijn eigen doel gezet
 // -- dát wordt dus vanzelf de nieuwe "waar je gebleven was"-stand.
+// De scrollpositie blijft alleen staan zolang niemand de opmaak opvraagt terwijl
+// renderShop het rek vervangt: een leeg rek maakt het scherm te kort om te
+// scrollen, en dan zet de browser het terug naar bovenaan. Zie renderShop.
 function resumeKleedkamer() {
   toonHub('screen-dress');
   renderShop();
@@ -8532,7 +8562,14 @@ function tabRijDoel(rij, gekozen) {
 function renderShop() {
   const p = P();
   const grid = $('item-grid');
-  grid.innerHTML = '';
+  /* De nieuwe kaartjes komen eerst in een los stapeltje en gaan pas onderaan in
+     één keer het rek in. Het rek staat dus nooit leeg zolang deze functie loopt,
+     en dat is waar het om gaat: vraagt er tussendoor iets de opmaak op, dan meet
+     de browser een leeg rek, is het scherm ineens niet meer hoog genoeg om te
+     scrollen, en zet hij het terug naar bovenaan. Precies zo verloor de
+     kleedkamer vroeger haar plek als je van een ander tabblad terugkwam (zie
+     resumeKleedkamer). */
+  const kaarten = document.createDocumentFragment();
   // Eén keuzerij: de kledingsoorten. Er stond hier eerder eerst een
   // Spullen/Looks-schakelaar bóven deze rij en daarna "Looks" als eerste chip
   // in de rij zelf; sinds fase 1 is de lijst met thema-looks er helemaal uit.
@@ -8560,13 +8597,18 @@ function renderShop() {
   } }));
   // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
   fadesVolgen(tabs);
-  /* Ook als er géén categorie aanstaat -- in het schattenvak staat de hele rij uit.
-     Zonder deze regel bleven de fade-randen daar hangen op wat ze vóór het
-     openen waren, en dan wijst de rand naar een kant waar niets meer zit. */
-  updateFades(tabs);
-  if (activeTab) requestAnimationFrame(() => {
-    if (!activeTab.isConnected) return;
-    tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
+  /* De rij rechtzetten en de fade-randen bijwerken, allebei in het eerstvolgende
+     beeldje en niet hier. Beide meten de rij op, en hier is dat een opmaak die de
+     browser midden in de tik moet afdwingen -- met een rek dat op dat moment net
+     leeggemaakt is en daarna meteen weer gevuld wordt. In de rAF staat alles er
+     al, en is het die ene opmaak die dat beeldje toch al nodig had. Het beeldje
+     wordt pas daarna getekend, dus er is nooit een rand te zien van vóór de wissel.
+
+     De randen ook als er géén categorie aanstaat -- in het schattenvak staat de
+     hele rij uit. Zonder dat bleven ze daar hangen op wat ze vóór het openen
+     waren, en dan wijst de rand naar een kant waar niets meer zit. */
+  requestAnimationFrame(() => {
+    if (activeTab && activeTab.isConnected) tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
     updateFades(tabs);   // schuift de rij echt, dan werkt onscroll hem onderweg nog bij
   });
   renderSchatEntry(p);
@@ -8626,8 +8668,10 @@ function renderShop() {
       shopJustBoughtId = null; shopSelectedId = it.id;
       herbouw ? renderShop() : paintShop();
     };
-    grid.appendChild(card);
+    kaarten.appendChild(card);
   });
+  grid.textContent = '';
+  grid.appendChild(kaarten);
   paintShop();
 }
 /* Wat er in het rek staat, en in welke volgorde.
