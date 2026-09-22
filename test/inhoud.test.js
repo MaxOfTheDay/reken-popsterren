@@ -22,6 +22,9 @@
  *   H  het ene bestand    -- de vorm waar de rest op staat: commentaar dat
  *                           dichtgaat, één scriptblok, en tekeningen van een
  *                           verstandig formaat
+ *   I  het merk           -- geen meesters in de app, en de iconen kloppen
+ *   J  op het beginscherm -- de uitlegkaart per browser, weg in de app, en het
+ *                           installeervoorstel van de browser blijft onaangeroerd
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -576,6 +579,110 @@ zaak('I', () => {
      in het manifest, dus die regel is de enige die daar iets over zegt. */
   [...bron.matchAll(/<link rel="(?:apple-touch-)?icon" href="([^"]+)"/g)].forEach(m =>
     check(fs.existsSync(path.join(WORTEL, m[1])), `I · ${m[1]} uit de <head> bestaat`, m[1]));
+});
+
+/* ================= J · Op het beginscherm =================
+   Het installeren is van de browser. Chrome stelt het soms zelf voor, ook bij een
+   eerste bezoek, en dat voorstel hoort er onaangeroerd te blijven: wie naar
+   beforeinstallprompt luistert (en er preventDefault op zet, wat het gewone
+   patroon is), zet het stil. De app geeft alleen uitleg -- een kaart in Beheer,
+   met per soort browser de juiste zin, en weg zodra het spel als app draait.
+   Zie "= Op het beginscherm". */
+zaak('J', () => {
+  const lees = f => fs.readFileSync(path.join(WORTEL, f), 'utf8');
+  const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
+    : lees('index.html');
+  const alles = bron + lees('sw.js');
+  // Op de code kijken en niet op het woord: de uitleg mag het event best noemen.
+  check(!/addEventListener\(\s*['"]beforeinstallprompt/.test(alles) && !/onbeforeinstallprompt/.test(alles),
+    'J · niemand luistert naar beforeinstallprompt -- het voorstel van de browser blijft staan', '');
+  check(!/\.prompt\(\s*\)/.test(alles) && !/userChoice/.test(alles),
+    'J · en er is geen eigen installeerknop die het voorstel opvraagt', '');
+
+  const vers = () => {
+    const a = laadApp();
+    a.run(`db.profiles.p1 = defaultProfile('Anna', 'dress_roze'); db.profiles.p1.order = 0; save();`);
+    return a;
+  };
+  const html = (a, ua, extra) => {
+    a.run(`navigator = Object.assign({ userAgent: ${JSON.stringify(ua)}, maxTouchPoints: 0 }, ${JSON.stringify(extra || {})});`);
+    return a.run('appWideCardsHtml(true)');
+  };
+  const UA = {
+    android: 'Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+    iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+    ipad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15',
+    iosChrome: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/140.0 Mobile/15E148 Safari/604.1',
+    iosInApp: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/500.0]',
+    macSafari: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15',
+    desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+    edge: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+    firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0',
+    samsung: 'Mozilla/5.0 (Linux; Android 16; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36',
+    androidWebView: 'Mozilla/5.0 (Linux; Android 16; Pixel 10; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/140.0.0.0 Mobile Safari/537.36',
+  };
+
+  // De indeling per browser.
+  const a = vers();
+  const soort = (ua, extra) => a.run(`beginschermSoort(${JSON.stringify(Object.assign({ userAgent: ua, maxTouchPoints: 0 }, extra || {}))})`);
+  [
+    ['android', UA.android, 'android'], ['iphone', UA.iphone, 'ios'],
+    ['ipad (als Mac, met aanraken)', UA.ipad, 'ios', { maxTouchPoints: 5 }],
+    ['een echte Mac met Safari', UA.macSafari, 'anders'],
+    ['Chrome op iOS', UA.iosChrome, 'ios-elders'], ['Facebook op iOS', UA.iosInApp, 'ios-elders'],
+    ['Chrome op een computer', UA.desktop, 'desktop'], ['Edge', UA.edge, 'desktop'],
+    ['Firefox op een computer', UA.firefox, 'anders'], ['Samsung Internet', UA.samsung, 'anders'],
+    ['een ingebouwde browser op Android', UA.androidWebView, 'inapp'],
+  ].forEach(([naam, ua, wil, extra]) => {
+    const is = soort(ua, extra);
+    check(is === wil, `J · ${naam} krijgt de uitleg voor '${wil}'`, is);
+  });
+
+  // De kaart staat ná de back-up, en is het laatste van het app-brede blok.
+  const and = html(a, UA.android);
+  const back = and.indexOf('Back-up &amp; herstel'), kaart = and.indexOf('id="set-beginscherm"');
+  check(back > -1 && kaart > back, 'J · de kaart staat direct na Back-up & herstel', `${back} / ${kaart}`);
+  check(/class="set-card secundair" id="set-beginscherm"/.test(and), 'J · als stille secundaire kaart', '');
+  check(and.includes('Op het beginscherm') && and.includes('Rekensterren als app op dit toestel'),
+    'J · met de kop en de ondertitel', '');
+  check(!/<button/.test(and.slice(kaart)), 'J · uitleg, geen knop', and.slice(kaart));
+
+  // Per soort de juiste zin.
+  check(and.includes('Chrome stelt soms zelf voor') && and.includes('Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'),
+    'J · Android: het voorstel van Chrome, en anders het ⋮-menu', and.slice(kaart));
+  const ios = html(a, UA.iphone);
+  check(ios.includes('Tik in Safari op Deel en kies ‘Zet op beginscherm’.'), 'J · iPhone: Deel → Zet op beginscherm', ios.slice(kaart));
+  check(ios.includes('Heb je al gespeeld in Safari? Maak dan hierboven eerst een back-up.'),
+    'J · iPhone: met sterren komt de back-upwaarschuwing erbij', ios.slice(kaart));
+  a.run(`navigator = { userAgent: ${JSON.stringify(UA.iphone)}, maxTouchPoints: 5 };`);
+  check(!a.run('appWideCardsHtml(false)').includes('Heb je al gespeeld'),
+    'J · zonder sterren valt er niets te redden, en blijft de waarschuwing weg', '');
+  check(html(a, UA.ipad, { maxTouchPoints: 5 }).includes('Tik in Safari op Deel'), 'J · een iPad die zich als Mac voordoet krijgt de iPad-uitleg', '');
+  check(html(a, UA.iosInApp).includes('Open deze pagina in Safari'), 'J · iOS buiten Safari: eerst naar Safari', '');
+  check(html(a, UA.desktop).includes('installeer-icoon in de adresbalk'), 'J · computer: het icoon in de adresbalk', '');
+  check(html(a, UA.androidWebView).includes('Open hem in Chrome'), 'J · ingebouwde browser: open hem in Chrome', '');
+  check(html(a, UA.firefox).includes('Open de pagina dan in Chrome'), 'J · de rest: het menu, en anders Chrome', '');
+
+  // Draait het spel als app, dan is er niets uit te leggen -- in alle vier de standen.
+  ['fullscreen', 'standalone', 'minimal-ui'].forEach(stand => {
+    const b = vers();
+    b.run(`matchMedia = q => ({ matches: q === '(display-mode: ${stand})' });`);
+    check(!html(b, UA.android).includes('set-beginscherm'), `J · weg in display-mode: ${stand}`, '');
+  });
+  const iosApp = vers();
+  check(!html(iosApp, UA.iphone, { standalone: true }).includes('set-beginscherm'), 'J · weg met navigator.standalone (iOS)', '');
+  check(html(iosApp, UA.iphone, { standalone: false }).includes('set-beginscherm'), 'J · en terug in Safari zelf', '');
+
+  // appinstalled: weg voor de rest van deze sessie, en niets bewaard.
+  const c = vers();
+  const voor = JSON.stringify(c.opslag());
+  html(c, UA.android);
+  c.run('beginschermNetErop = true');
+  check(!html(c, UA.android).includes('set-beginscherm'), 'J · na appinstalled is de kaart weg in deze sessie', '');
+  check(JSON.stringify(c.opslag()) === voor, 'J · de kaart schrijft niets weg (geen sleutel, geen db)', JSON.stringify(c.opslag()));
+  check(!/beginscherm|install/i.test(JSON.stringify(c.db)), 'J · en db -- dus de back-up -- weet er niets van', Object.keys(c.db).join(', '));
+  const morgen = laadApp({ opslag: c.opslag() });
+  check(html(morgen, UA.android).includes('set-beginscherm'), 'J · een nieuwe start vraagt het gewoon weer aan de browser', '');
 });
 
 klaar();

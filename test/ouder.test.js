@@ -25,6 +25,7 @@
  *   L  de trofeeteller heeft één bron, en de kast noemt hetzelfde getal
  *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
  *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
+ *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
  *
  * Draaien:
  *   npm run test:ouder          (of: npm test voor alle suites)
@@ -45,9 +46,14 @@ function check(ok, label, detail) {
 
   // Elke zaak begint met een schone opslag, en met twee sterren erin: het
   // ouderdeel gaat over "wiens gegevens", en dat is pas een vraag vanaf twee.
-  async function fresh(sterren) {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  // `toestel` (optioneel, zaak O): een ander venster of een andere user agent,
+  // plus een scriptje dat vóór de app draait -- om een iPhone of een
+  // geïnstalleerde app na te doen.
+  async function fresh(sterren, toestel) {
+    toestel = toestel || {};
+    const ctx = await browser.newContext(Object.assign({ viewport: { width: 390, height: 844 } }, toestel.ctx));
     await cacheFonts(ctx);
+    if (toestel.init) await ctx.addInitScript(toestel.init, toestel.arg);
     const page = await ctx.newPage();
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
     page.on('console', m => { if (m.type() === 'error' && !/ERR_CONNECTION_RESET/.test(m.text())) pageErrors.push('CONSOLE ' + m.text()); });
@@ -731,6 +737,121 @@ function check(ok, label, detail) {
     check(smal.regels === 2 && smal.labelsEenRegel,
       'op een onmogelijk smal venster wikkelt de rij i.p.v. de woorden', JSON.stringify(smal));
     await ctx.close();
+  }
+
+  /* ================= O · Op het beginscherm ================= */
+  /* De uitlegkaart in Beheer, in een echte browser en op de maat van een Pixel
+     (412×920). Het toestel wordt nagedaan met een user agent en een scriptje
+     dat vóór de app draait: matchMedia voor de display-mode, navigator.standalone
+     en maxTouchPoints voor iOS. Zie "= Op het beginscherm". */
+  {
+    const UA = {
+      android: 'Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+      iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+      ipad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15',
+      desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+      firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0',
+    };
+    // Vóór de app: een display-mode die "aan" staat, en de iOS-velden.
+    const doeNa = o => {
+      if (o.stand) {
+        const echt = window.matchMedia.bind(window);
+        window.matchMedia = q => q === '(display-mode: ' + o.stand + ')'
+          ? { matches: true, media: q, onchange: null, addEventListener() {}, removeEventListener() {},
+              addListener() {}, removeListener() {} }
+          : echt(q);
+      }
+      if (o.standalone != null) Object.defineProperty(Navigator.prototype, 'standalone', { get: () => o.standalone, configurable: true });
+      if (o.aanraak != null) Object.defineProperty(Navigator.prototype, 'maxTouchPoints', { get: () => o.aanraak, configurable: true });
+    };
+    const toestel = (ua, o) => ({ ctx: { viewport: { width: 412, height: 920 }, userAgent: ua }, init: doeNa, arg: o || {} });
+    const kaart = page => page.evaluate(() => {
+      const k = document.getElementById('set-beginscherm');
+      const kaarten = [...document.querySelectorAll('#settings-body .set-card')];
+      const i = kaarten.indexOf(k);
+      return {
+        er: !!k,
+        vorige: i > 0 ? kaarten[i - 1].querySelector('h2').textContent : null,
+        laatste: i === kaarten.length - 1,
+        secundair: !!k && k.classList.contains('secundair'),
+        kop: k ? k.querySelector('h2').textContent : '',
+        tekst: k ? k.textContent.replace(/\s+/g, ' ') : '',
+        knoppen: k ? k.querySelectorAll('button, a, input').length : -1,
+        noten: k ? [...k.querySelectorAll('.note')].map(n => getComputedStyle(n).fontSize) : [],
+      };
+    });
+
+    // Android (Pixel): na de back-up, stil, zonder knop, met het ⋮-menu.
+    {
+      const { ctx, page } = await fresh(null, toestel(UA.android));
+      await open(page, 'p1', 'beheer');
+      await page.waitForTimeout(200);
+      const r = await kaart(page);
+      check(r.er && r.vorige === 'Back-up & herstel' && r.laatste,
+        'O · de kaart staat direct na Back-up & herstel, als laatste', JSON.stringify(r));
+      check(r.secundair && r.kop === 'Op het beginscherm' && r.knoppen === 0,
+        'O · een stille secundaire kaart, uitleg zonder knop', JSON.stringify(r));
+      check(/Chrome stelt soms zelf voor/.test(r.tekst) && /Tik op ⋮ en kies ‘App installeren’/.test(r.tekst),
+        'O · Android: het voorstel van Chrome, en anders het ⋮-menu', r.tekst);
+      // Nul sterren: de kaart staat er óók (het app-brede blok), zonder waarschuwing.
+      await page.evaluate(() => { db.profiles = {}; save(); openSettings(); });
+      await page.waitForTimeout(200);
+      const leeg = await kaart(page);
+      check(leeg.er && leeg.vorige === 'Back-up & herstel', 'O · ook zonder sterren, na de back-up', JSON.stringify(leeg));
+      // appinstalled: meteen weg, en niets bewaard.
+      await open(page, null, 'beheer');
+      const voor = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
+      await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
+      await page.waitForTimeout(100);
+      check(!(await kaart(page)).er, 'O · appinstalled haalt de kaart meteen weg', '');
+      await page.evaluate(() => renderSettings());
+      check(!(await kaart(page)).er, 'O · en ze blijft weg in deze sessie', '');
+      const na = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
+      check(voor === na, 'O · appinstalled schrijft niets weg', na.slice(0, 120));
+      await page.reload();
+      await page.waitForTimeout(250);
+      await open(page, null, 'beheer');
+      check((await kaart(page)).er, 'O · een nieuwe start vraagt het weer aan de browser', '');
+      await ctx.close();
+    }
+
+    // iPhone en iPad: Safari → Deel, en de back-upwaarschuwing blijft een stille noot.
+    for (const [naam, ua, o] of [['iPhone', UA.iphone, {}], ['iPad', UA.ipad, { aanraak: 5 }]]) {
+      const { ctx, page } = await fresh(null, toestel(ua, o));
+      await open(page, 'p1', 'beheer');
+      await page.waitForTimeout(200);
+      const r = await kaart(page);
+      check(/Tik in Safari op Deel en kies ‘Zet op beginscherm’/.test(r.tekst), `O · ${naam}: Deel → Zet op beginscherm`, r.tekst);
+      check(/Heb je al gespeeld in Safari\? Maak dan hierboven eerst een back-up/.test(r.tekst),
+        `O · ${naam}: met de back-upwaarschuwing`, r.tekst);
+      check(r.noten.length === 2 && r.noten[0] === r.noten[1],
+        `O · ${naam}: de waarschuwing is een gewone noot, niet groter dan de uitleg`, JSON.stringify(r.noten));
+      await ctx.close();
+    }
+
+    // Computer en de rest.
+    for (const [naam, ua, zin] of [['computer', UA.desktop, /installeer-icoon in de adresbalk/],
+      ['Firefox', UA.firefox, /Open de pagina dan in Chrome/]]) {
+      const { ctx, page } = await fresh(null, toestel(ua));
+      await open(page, 'p1', 'beheer');
+      await page.waitForTimeout(200);
+      const r = await kaart(page);
+      check(r.er && zin.test(r.tekst), `O · ${naam}: de juiste uitleg`, r.tekst);
+      await ctx.close();
+    }
+
+    // Als app: weg, in alle vier de standen.
+    for (const [naam, ua, o] of [['fullscreen', UA.android, { stand: 'fullscreen' }],
+      ['standalone', UA.android, { stand: 'standalone' }], ['minimal-ui', UA.desktop, { stand: 'minimal-ui' }],
+      ['navigator.standalone', UA.iphone, { standalone: true }]]) {
+      const { ctx, page } = await fresh(null, toestel(ua, o));
+      await open(page, 'p1', 'beheer');
+      await page.waitForTimeout(200);
+      const r = await kaart(page);
+      const backup = await page.evaluate(() => !!document.getElementById('set-export'));
+      check(!r.er && backup, `O · als app (${naam}) is de kaart weg, en de back-up staat er nog`, JSON.stringify(r));
+      await ctx.close();
+    }
   }
 
   await browser.close();
