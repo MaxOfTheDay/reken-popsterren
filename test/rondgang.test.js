@@ -717,6 +717,75 @@ const SPEL_URL = APP_URL.replace('?debug', '');
      && r.nogEens.top === r.voor.top && r.nogEens.lade === 'none',
     'nog eens tikken op wat aanstaat is veilig niets', JSON.stringify(r));
 
+  /* ---- 7c · Heen en weer tussen de tabbladen ----
+     SNEL HEEN EN WEER. schermWeg en schermKomtOp stoppen bij een tik alleen de
+     animaties die ze zelf op een scherm zetten (zie schermAnims) -- niet meer
+     alles wat getAnimations() vindt, want dat dwong midden in de tik de opmaak af.
+     Het gevaar daarvan is precies één ding: een scherm waar je terugkomt terwijl
+     het nog aan het wegdoven is, draagt de opacity 0 van dat vertrek nog. Wordt
+     die niet gestopt, dan kijkt het kind naar een scherm dat er niet is. Zet
+     iemand ooit een nieuwe animatie op een heel scherm zonder schermAnim, dan
+     valt het hier om.
+
+     Dus: tikken met 40ms ertussen, ruim binnen het wegdoven, en daarna elk
+     beeldje nameten. Het scherm dat er staat hoort vanaf het eerste beeldje
+     dekkend te zijn (aankomen is alleen beweging, zie schermKomtOp), en na
+     afloop staat er niets meer: geen animatie, geen .wegvallend, geen tweede
+     actief scherm.
+
+     DE PLEK BLIJFT. Terug naar de kleedkamer vanaf een ánder tabblad hervat waar
+     je was, ook hoe ver je naar beneden stond (zie resumeKleedkamer). Dat deed
+     het niet: renderShop maakte het rek eerst leeg, en een opmaak die daar
+     tussendoor werd afgedwongen mat een scherm dat niet meer hoog genoeg was om
+     te scrollen -- en zette het terug naar bovenaan. */
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    const beeldje = () => new Promise(res => requestAnimationFrame(res));
+    const uit = [];
+    for (const reeks of [['dress', 'map', 'dress'], ['dress', 'tro', 'dress'],
+                         ['tro', 'dress', 'tro'], ['dress', 'map'], ['dress', 'dress']]) {
+      goMap(); await wacht(700);
+      for (const t of reeks) { navGo(t); await wacht(40); }
+      const el = document.querySelector('.screen.active');
+      let minOp = 1;
+      for (let i = 0; i < 30; i++) { minOp = Math.min(minOp, +getComputedStyle(el).opacity); await beeldje(); }
+      await wacht(500);
+      uit.push({ reeks: reeks.join('>'), scherm: el.id, minOp,
+        tf: getComputedStyle(el).transform,
+        anims: document.querySelectorAll('.screen.active').length === 1
+          ? [...document.querySelectorAll('.screen')].reduce((n, s) => n + s.getAnimations().length, 0) : -1,
+        wegvallend: document.querySelectorAll('.wegvallend').length });
+    }
+    return uit;
+  });
+  check(r.every(x => x.minOp > 0.999),
+    'snel heen en weer: het scherm waar je terugkomt is vanaf het eerste beeldje dekkend',
+    JSON.stringify(r.filter(x => x.minOp <= 0.999)));
+  check(r.every(x => x.tf === 'none' && x.anims === 0 && x.wegvallend === 0),
+    'en daarna blijft er niets hangen: geen animatie, geen vertrekkend scherm',
+    JSON.stringify(r.filter(x => x.tf !== 'none' || x.anims !== 0 || x.wegvallend !== 0)));
+
+  r = await page.evaluate(async () => {
+    const wacht = ms => new Promise(res => setTimeout(res, ms));
+    const sc = document.getElementById('screen-dress');
+    openKleedkamerCat('dress'); await wacht(500);
+    const max = sc.scrollHeight - sc.clientHeight;
+    const uit = { max };
+    for (const via of ['map', 'tro']) {
+      sc.scrollTop = Math.min(180, max);
+      const voor = sc.scrollTop;
+      navGo(via); await wacht(600);
+      navGo('dress'); await wacht(400);
+      uit[via] = { voor, na: sc.scrollTop };
+    }
+    return uit;
+  });
+  check(r.max > 60, 'de kleedkamer is hoog genoeg om te scrollen (anders meet het volgende niets)', JSON.stringify(r));
+  check(r.map.voor > 0 && r.map.na === r.map.voor && r.tro.na === r.tro.voor,
+    'terug naar de kleedkamer vanaf een ander tabblad staat ze nog waar je was', JSON.stringify(r));
+  await page.evaluate(() => openKleedkamerCat('dress'));
+  await page.waitForTimeout(400);
+
   /* ---- 8 · Trofeeënkast ---- */
   await page.click('#nav-tro');
   await page.waitForTimeout(400);
