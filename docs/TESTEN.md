@@ -85,6 +85,14 @@ geeft een foutmelding.
   naam die niet bestaat laat `addAll()` mislukken en dan installeert de service
   worker helemaal niet), de cache heeft een versienummer, en het manifest wijst
   naar bestaande iconen.
+- **op het beginscherm** — niets in de code luistert naar `beforeinstallprompt`
+  of vraagt het voorstel op: installeren is van de browser. De uitlegkaart in
+  Beheer staat direct na *Back-up & herstel*, geeft per browser de juiste zin
+  (Android-Chrome, Safari op iPhone en iPad, iOS buiten Safari, Chrome of Edge
+  op een computer, een ingebouwde browser, de rest), verdwijnt in alle vier de
+  app-standen (`fullscreen`, `standalone`, `minimal-ui`, `navigator.standalone`)
+  en na `appinstalled`, en schrijft niets weg -- niet in `db` en dus niet in de
+  back-up.
 
 ### `test/kern.test.js` — de voortgangsregels
 
@@ -215,6 +223,17 @@ Fase 5D.1 heeft er vier zaken bij gezet:
 - **drie weergavekeuzes op één regel** — op 390, 360 en 320px drie gelijke
   kolommen met elk woord op één regel en een raakvlak van minstens 44px; op een
   onmogelijk smal venster (280px) wikkelt de rij in plaats van de woorden.
+
+En één voor de uitlegkaart over installeren:
+
+- **op het beginscherm** — op 412×920, met een nagedane user agent en
+  display-mode: de kaart staat als laatste, direct na *Back-up & herstel* (ook
+  zonder sterren), zonder knop; Android, iPhone, iPad-als-Mac, computer en
+  Firefox krijgen elk hun eigen zin; de iOS-waarschuwing is een gewone noot, niet
+  groter dan de uitleg; in `fullscreen`, `standalone`, `minimal-ui` en met
+  `navigator.standalone` is de kaart weg en de back-up niet; `appinstalled` haalt
+  haar meteen weg, schrijft niets in de opslag, en na herladen vraagt het spel
+  het gewoon weer aan de browser.
 
 ### `test/kleedkamer.test.js` — de catalogus en het rek
 
