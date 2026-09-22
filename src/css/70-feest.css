@@ -193,6 +193,10 @@
 
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ready, .ready-open { animation: none; }
+    /* De gloed van .ready-open zat vroeger alleen in de keyframes en viel hier dus
+       vanzelf weg. Nu staat hij op twee eigen lagen -- die gaan hier uit, zodat
+       de pil stilstaand precies blijft zoals hij was: goud, zonder gloed. */
+    .ready-open::before, .ready-open::after { display: none; }
     .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
     .trophy-card.just-claimed::after { animation: none; }
 
