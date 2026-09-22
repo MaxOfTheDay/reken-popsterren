@@ -3692,9 +3692,36 @@ function oorsprongPct(el, punt) {
    binnenkomende scherm meteen zijn volle maat krijgt in plaats van er even naast
    te staan -- en boven de vaste navigatiebalk, zodat die er niet doorheen prikt
    terwijl dit scherm nog in beeld is. */
+/* Wat schermWeg en schermKomtOp zelf op een scherm zetten, per scherm bijgehouden.
+
+   Hier stond op beide plekken el.getAnimations(). Dat klinkt als opvragen, maar
+   de browser moet daarvoor eerst stijl én opmaak bijwerken -- midden in de tik,
+   op een scherm dat show() net heeft aangezet en dat daarna nog helemaal gevuld
+   wordt. De kleedkamer werd zo bij één tik twee keer opgemeten met de inhoud
+   van de vorige keer, en daarna nog eens met de nieuwe. Gemeten op de eerste
+   tik op Kleedkamer: zo'n 60ms van de tik, op een gesmoorde processor.
+
+   Wat er weg moet is ook alleen wat deze twee er zelf op zetten: een scherm
+   waar je snel naar terugkomt draagt nog de opacity-0 van zijn vertrek
+   (fill: 'forwards'), en een tweede tik mag geen tweede animatie stapelen. Wat
+   een ander er eerder op zette (kaartKomtOp, de opkomst van de reis) wordt door
+   de nieuwe animatie overstemd, want die komt later en zet dezelfde
+   eigenschappen -- en de opruimer van schermWeg ruimt het na afloop alsnog op,
+   daar mag getAnimations() wél: dat is geen tik meer. */
+const schermAnims = new WeakMap();
+function schermAnim(el, frames, opts) {
+  const a = el.animate(frames, opts);
+  if (!schermAnims.has(el)) schermAnims.set(el, []);
+  schermAnims.get(el).push(a);
+  return a;
+}
+function schermAnimsStop(el) {
+  (schermAnims.get(el) || []).forEach(a => a.cancel());
+  schermAnims.delete(el);
+}
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
-  el.getAnimations().forEach(a => a.cancel());   // een tweede tik stapelt geen tweede animatie
+  schermAnimsStop(el);   // een tweede tik stapelt geen tweede animatie
   el.classList.add('wegvallend');
   // draaipunt: de aangetikte halte, zodat de beweging om díe plek gaat en niet om
   // het midden van het scherm. Dat is het enige wat de continuïteit draagt.
@@ -3709,11 +3736,11 @@ function schermWeg(el, naarBinnen, punt) {
      nodig. De beweging houdt 'in' (zacht los, snel weg -- dat is het karakter);
      het wegdoven krijgt 'uit', zodat het scherm al vrijwel weg is op het moment
      dat het volgende losgaat. Zie de regel bij MOTION. */
-  const a = el.animate(
+  const a = schermAnim(el,
     [{ transform: 'none' },
      { transform: naarBinnen ? 'scale(1.07)' : 'scale(.96) translateY(10px)' }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
-  el.animate([{ opacity: 1 }, { opacity: 0 }],
+  schermAnim(el, [{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + MOTION.vangnet);
@@ -4231,9 +4258,9 @@ function kaartKomtOp(punt) {
    de kaart. Deze weet van geen enkel scherm iets. */
 function schermKomtOp(el) {
   if (!el || !el.animate || motionOff()) return;
-  el.getAnimations().forEach(a => a.cancel());
+  schermAnimsStop(el);   // zie schermAnims: zonder stijl en opmaak af te dwingen
   el.classList.add('komt-op');
-  el.animate([{ transform: 'scale(1.03)' }, { transform: 'none' }],
+  schermAnim(el, [{ transform: 'scale(1.03)' }, { transform: 'none' }],
     { duration: MOTION.kom, easing: MOTION.uit, fill: 'backwards' });
 }
 /* De twee helften van zo'n wissel. Zonder vorig scherm gebeurt er niets: dat is
