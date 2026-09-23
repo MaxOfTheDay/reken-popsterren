@@ -2870,8 +2870,14 @@
   .spot-rail {
     position: absolute; left: 16px; right: 16px; bottom: 9px; height: 7px;
     border-radius: var(--r-pill); background: rgba(74, 20, 140, .10);
+    overflow: hidden;
   }
-  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .1s linear; }
+  /* Altijd de volle breedte van de rail; wat er verstreken is schuift er links
+     uit (zie zetSpot). Een verschuiving en geen breedte, want een breedte die
+     verandert moet elk beeldje opnieuw opgemeten en getekend worden. Alleen de
+     gouden vraag krimpt nog in de breedte -- zie zetSpot waarom -- vandaar dat
+     de overgang voor allebei geldt. */
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: transform .1s linear, width .1s linear; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
@@ -5471,15 +5477,35 @@
      helderste ding op de kaart, en dat is de bedoeling. */
   .reis-halte.nu .reis-plaats {
     box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                0 0 20px rgba(var(--goud-gloed-rgb),.32), 0 16px 30px var(--stop-schaduw);
-    animation: reisGloed 3.4s ease-in-out infinite alternate;
+                0 16px 30px var(--stop-schaduw);
   }
-  @keyframes reisGloed {
-    from { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                       0 0 13px rgba(var(--goud-gloed-rgb),.2), 0 16px 30px var(--stop-schaduw); }
-    to   { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                       0 0 26px rgba(var(--goud-gloed-rgb),.42), 0 16px 30px var(--stop-schaduw); }
+  /* De gloed zelf, op een eigen laag vlak vóór de tekening (renderReis zet hem
+     alleen bij "hier ben je"). Hij zat in de box-shadow van .reis-plaats en ademde
+     daar in de keyframes mee, van 13px/.2 naar 26px/.42 en terug. Een schaduw die
+     verandert moet elk beeldje opnieuw gestyled en getekend worden, op de draad
+     die ook de tikken afhandelt: zolang Werelden openstond was dat ± 90ms per
+     seconde, en een tik op een wereld wachtte daardoor zo'n 20ms langer (gemeten,
+     4x gesmoorde processor). Nu staan die twee standen elk als vaste schaduw op
+     ::before en ::after, en wisselen ze alleen in doorzichtigheid -- dat doet de
+     grafische kaart alleen, net als de klop van "Open!" in de kast.
+
+     Waarom een eigen laag en niet ::before/::after van .reis-plaats: die snijdt
+     alles buiten zijn rand af (overflow: hidden), en een gloed ís buiten de rand.
+     Hij staat vóór de tekening in de knop, zodat hij eronder valt zoals hij eerst
+     in de schaduwlijst onder de randen viel. Een schaduw laat zich niet binnen zijn
+     eigen vak zien, dus de tekening blijft onaangeroerd. */
+  .reis-gloed {
+    position: absolute; inset: 0; border-radius: var(--r-md); pointer-events: none;
+    transition: transform var(--t-tik);
   }
+  .reis-halte:active .reis-gloed { transform: scale(.965); }
+  .reis-gloed::before, .reis-gloed::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+  }
+  .reis-gloed::before { box-shadow: 0 0 13px rgba(var(--goud-gloed-rgb),.2); animation: reisGloedRust 3.4s ease-in-out infinite alternate; }
+  .reis-gloed::after { box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.42); opacity: 0; animation: reisGloedTop 3.4s ease-in-out infinite alternate; }
+  @keyframes reisGloedRust { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes reisGloedTop { from { opacity: 0; } to { opacity: 1; } }
   .reis-halte.nu::before { background: radial-gradient(closest-side,
     rgba(var(--warm-licht-rgb),.22), rgba(var(--w-sky-rgb), .2) 48%, transparent 76%); }
   .reis-halte.nu .rn-tekst { font-size: var(--tx-klein); }
@@ -5580,8 +5606,10 @@
     #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .reis-halte.nu .reis-plaats { animation: none; }
-    .reis-plaats, .reis-terug, .reis-halte.vol::after { transition: none; }
+    /* stil: één vaste gloed op de sterkte die hier altijd al stond (20px/.32) */
+    .reis-gloed::before { animation: none; opacity: 1; box-shadow: 0 0 20px rgba(var(--goud-gloed-rgb),.32); }
+    .reis-gloed::after { display: none; }
+    .reis-plaats, .reis-gloed, .reis-terug, .reis-halte.vol::after { transition: none; }
     .reis-mist .map-sky-inner > span { animation: none; }
   }
 
@@ -14302,6 +14330,10 @@ function renderReis() {
       '<span class="reis-zegel" aria-hidden="true">✓</span>');
     else if (b.staat === 'verder') plaats.insertAdjacentHTML('beforeend',
       '<span class="reis-zegel slot" aria-hidden="true">🔒</span>');
+    /* De gloed van "hier ben je" op een eigen laag, vóór de tekening -- zie
+       .reis-gloed in het stijlblad voor waarom hij niet in de box-shadow van
+       .reis-plaats zelf zit. */
+    if (b.staat === 'nu') knop.insertAdjacentHTML('beforeend', '<span class="reis-gloed" aria-hidden="true"></span>');
     knop.appendChild(plaats);
     if (b.i === doel) {
       // een tikje naar de kant waar de route verdergaat: dan kijkt ze de reis in
@@ -17016,14 +17048,39 @@ document.addEventListener('keydown', e => {
    zichzelf anders opruimt. Dat is een regel die geen enkele aanroeper hoeft te
    kennen: een teller die zijn show kwijt is, stopt uit zichzelf. startLevel zet
    er nog een slot voor (zie daar), maar dit is het vangnet eronder. */
+/* De balk schuift, hij krimpt niet. Hij is altijd even breed als zijn rail en
+   schuift er naar links uit (de rail snijdt af, zie .spot-rail). Hier stond
+   style.width, en een breedte die verandert laat de browser elk beeldje
+   opnieuw opmeten en tekenen: tien keer per seconde een nieuwe breedte, met
+   een overgang van .1s ertussen, dus eigenlijk elk beeldje, de hele vraag lang
+   -- en op dezelfde draad die de tik op het antwoord moet afhandelen. Een
+   verschuiving doet de grafische kaart alleen. Het rechtereind is hetzelfde
+   ronde eind als eerst; het linkereind is de ronding van de rail.
+
+   Behalve bij de gouden vraag: daar krimpt hij nog zoals altijd. Zijn balk is
+   een kleurverloop, en dat hoort mee te krimpen -- van licht naar donker over
+   wat er nog over is. Schuiven zou alleen het donkere eind laten zien. Het is
+   één vraag per show, en die kaart moet elk beeldje toch al opnieuw getekend
+   worden voor zijn eigen gloed (goldGlow). drawQuestion zet .golden vóór
+   startSpot, dus hier staat al vast welke van de twee het is. */
+function zetSpot(pct) {
+  const balk = $('spotlight-bar');
+  if ($('question-card').classList.contains('golden')) {
+    balk.style.transform = '';
+    balk.style.width = pct + '%';
+  } else {
+    balk.style.width = '';
+    balk.style.transform = `translateX(${pct - 100}%)`;
+  }
+}
 function startSpot() {
   stopSpot();
   G.spot = 100;
-  $('spotlight-bar').style.width = '100%';
+  zetSpot(100);
   const id = setInterval(() => {
     if (!G || G.timer !== id) { clearInterval(id); return; }
     G.spot = Math.max(0, G.spot - 100 / 120);
-    $('spotlight-bar').style.width = G.spot + '%';
+    zetSpot(G.spot);
     if (G.spot <= 0) stopSpot();
   }, 100);
   G.timer = id;
@@ -17130,7 +17187,7 @@ function submitAnswer(val, btnEl) {
     // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
     G.retried = true;
     G.misses++;
-    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%';
+    stopSpot(); G.spot = 0; zetSpot(0);
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }

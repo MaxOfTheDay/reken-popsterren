@@ -5144,6 +5144,10 @@ function renderReis() {
       '<span class="reis-zegel" aria-hidden="true">✓</span>');
     else if (b.staat === 'verder') plaats.insertAdjacentHTML('beforeend',
       '<span class="reis-zegel slot" aria-hidden="true">🔒</span>');
+    /* De gloed van "hier ben je" op een eigen laag, vóór de tekening -- zie
+       .reis-gloed in het stijlblad voor waarom hij niet in de box-shadow van
+       .reis-plaats zelf zit. */
+    if (b.staat === 'nu') knop.insertAdjacentHTML('beforeend', '<span class="reis-gloed" aria-hidden="true"></span>');
     knop.appendChild(plaats);
     if (b.i === doel) {
       // een tikje naar de kant waar de route verdergaat: dan kijkt ze de reis in
@@ -7858,14 +7862,39 @@ document.addEventListener('keydown', e => {
    zichzelf anders opruimt. Dat is een regel die geen enkele aanroeper hoeft te
    kennen: een teller die zijn show kwijt is, stopt uit zichzelf. startLevel zet
    er nog een slot voor (zie daar), maar dit is het vangnet eronder. */
+/* De balk schuift, hij krimpt niet. Hij is altijd even breed als zijn rail en
+   schuift er naar links uit (de rail snijdt af, zie .spot-rail). Hier stond
+   style.width, en een breedte die verandert laat de browser elk beeldje
+   opnieuw opmeten en tekenen: tien keer per seconde een nieuwe breedte, met
+   een overgang van .1s ertussen, dus eigenlijk elk beeldje, de hele vraag lang
+   -- en op dezelfde draad die de tik op het antwoord moet afhandelen. Een
+   verschuiving doet de grafische kaart alleen. Het rechtereind is hetzelfde
+   ronde eind als eerst; het linkereind is de ronding van de rail.
+
+   Behalve bij de gouden vraag: daar krimpt hij nog zoals altijd. Zijn balk is
+   een kleurverloop, en dat hoort mee te krimpen -- van licht naar donker over
+   wat er nog over is. Schuiven zou alleen het donkere eind laten zien. Het is
+   één vraag per show, en die kaart moet elk beeldje toch al opnieuw getekend
+   worden voor zijn eigen gloed (goldGlow). drawQuestion zet .golden vóór
+   startSpot, dus hier staat al vast welke van de twee het is. */
+function zetSpot(pct) {
+  const balk = $('spotlight-bar');
+  if ($('question-card').classList.contains('golden')) {
+    balk.style.transform = '';
+    balk.style.width = pct + '%';
+  } else {
+    balk.style.width = '';
+    balk.style.transform = `translateX(${pct - 100}%)`;
+  }
+}
 function startSpot() {
   stopSpot();
   G.spot = 100;
-  $('spotlight-bar').style.width = '100%';
+  zetSpot(100);
   const id = setInterval(() => {
     if (!G || G.timer !== id) { clearInterval(id); return; }
     G.spot = Math.max(0, G.spot - 100 / 120);
-    $('spotlight-bar').style.width = G.spot + '%';
+    zetSpot(G.spot);
     if (G.spot <= 0) stopSpot();
   }, 100);
   G.timer = id;
@@ -7972,7 +8001,7 @@ function submitAnswer(val, btnEl) {
     // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
     G.retried = true;
     G.misses++;
-    stopSpot(); G.spot = 0; $('spotlight-bar').style.width = '0%';
+    stopSpot(); G.spot = 0; zetSpot(0);
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
