@@ -500,15 +500,35 @@
      helderste ding op de kaart, en dat is de bedoeling. */
   .reis-halte.nu .reis-plaats {
     box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                0 0 20px rgba(var(--goud-gloed-rgb),.32), 0 16px 30px var(--stop-schaduw);
-    animation: reisGloed 3.4s ease-in-out infinite alternate;
+                0 16px 30px var(--stop-schaduw);
   }
-  @keyframes reisGloed {
-    from { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                       0 0 13px rgba(var(--goud-gloed-rgb),.2), 0 16px 30px var(--stop-schaduw); }
-    to   { box-shadow: inset 0 0 0 2.5px var(--gold-accent), 0 0 0 1px rgba(18,6,36,.6),
-                       0 0 26px rgba(var(--goud-gloed-rgb),.42), 0 16px 30px var(--stop-schaduw); }
+  /* De gloed zelf, op een eigen laag vlak vóór de tekening (renderReis zet hem
+     alleen bij "hier ben je"). Hij zat in de box-shadow van .reis-plaats en ademde
+     daar in de keyframes mee, van 13px/.2 naar 26px/.42 en terug. Een schaduw die
+     verandert moet elk beeldje opnieuw gestyled en getekend worden, op de draad
+     die ook de tikken afhandelt: zolang Werelden openstond was dat ± 90ms per
+     seconde, en een tik op een wereld wachtte daardoor zo'n 20ms langer (gemeten,
+     4x gesmoorde processor). Nu staan die twee standen elk als vaste schaduw op
+     ::before en ::after, en wisselen ze alleen in doorzichtigheid -- dat doet de
+     grafische kaart alleen, net als de klop van "Open!" in de kast.
+
+     Waarom een eigen laag en niet ::before/::after van .reis-plaats: die snijdt
+     alles buiten zijn rand af (overflow: hidden), en een gloed ís buiten de rand.
+     Hij staat vóór de tekening in de knop, zodat hij eronder valt zoals hij eerst
+     in de schaduwlijst onder de randen viel. Een schaduw laat zich niet binnen zijn
+     eigen vak zien, dus de tekening blijft onaangeroerd. */
+  .reis-gloed {
+    position: absolute; inset: 0; border-radius: var(--r-md); pointer-events: none;
+    transition: transform var(--t-tik);
   }
+  .reis-halte:active .reis-gloed { transform: scale(.965); }
+  .reis-gloed::before, .reis-gloed::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+  }
+  .reis-gloed::before { box-shadow: 0 0 13px rgba(var(--goud-gloed-rgb),.2); animation: reisGloedRust 3.4s ease-in-out infinite alternate; }
+  .reis-gloed::after { box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.42); opacity: 0; animation: reisGloedTop 3.4s ease-in-out infinite alternate; }
+  @keyframes reisGloedRust { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes reisGloedTop { from { opacity: 0; } to { opacity: 1; } }
   .reis-halte.nu::before { background: radial-gradient(closest-side,
     rgba(var(--warm-licht-rgb),.22), rgba(var(--w-sky-rgb), .2) 48%, transparent 76%); }
   .reis-halte.nu .rn-tekst { font-size: var(--tx-klein); }
@@ -609,8 +629,10 @@
     #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .reis-halte.nu .reis-plaats { animation: none; }
-    .reis-plaats, .reis-terug, .reis-halte.vol::after { transition: none; }
+    /* stil: één vaste gloed op de sterkte die hier altijd al stond (20px/.32) */
+    .reis-gloed::before { animation: none; opacity: 1; box-shadow: 0 0 20px rgba(var(--goud-gloed-rgb),.32); }
+    .reis-gloed::after { display: none; }
+    .reis-plaats, .reis-gloed, .reis-terug, .reis-halte.vol::after { transition: none; }
     .reis-mist .map-sky-inner > span { animation: none; }
   }
 
