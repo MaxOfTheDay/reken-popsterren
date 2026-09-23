@@ -718,9 +718,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'nog eens tikken op wat aanstaat is veilig niets', JSON.stringify(r));
 
   /* ---- 7c · Heen en weer tussen de tabbladen ----
-     SNEL HEEN EN WEER. schermWeg en schermKomtOp stoppen bij een tik alleen de
-     animaties die ze zelf op een scherm zetten (zie schermAnims) -- niet meer
-     alles wat getAnimations() vindt, want dat dwong midden in de tik de opmaak af.
+     SNEL HEEN EN WEER. schermWeg, schermKomtOp en kaartKomtOp stoppen bij een
+     tik alleen de animaties die ze zelf op een scherm zetten (zie schermAnims)
+     -- niet meer alles wat getAnimations() vindt, want dat dwong midden in de
+     tik de opmaak af.
      Het gevaar daarvan is precies één ding: een scherm waar je terugkomt terwijl
      het nog aan het wegdoven is, draagt de opacity 0 van dat vertrek nog. Wordt
      die niet gestopt, dan kijkt het kind naar een scherm dat er niet is. Zet
@@ -729,7 +730,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
      Dus: tikken met 40ms ertussen, ruim binnen het wegdoven, en daarna elk
      beeldje nameten. Het scherm dat er staat hoort vanaf het eerste beeldje
-     dekkend te zijn (aankomen is alleen beweging, zie schermKomtOp), en na
+     dekkend te zijn (aankomen is alleen beweging, zie schermKomtOp en
+     kaartKomtOp), en na
      afloop staat er niets meer: geen animatie, geen .wegvallend, geen tweede
      actief scherm.
 
@@ -742,8 +744,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     const wacht = ms => new Promise(res => setTimeout(res, ms));
     const beeldje = () => new Promise(res => requestAnimationFrame(res));
     const uit = [];
+    // elke reeks begint op de kaart; die met 'map' achteraan komen terug op een
+    // kaart die nog aan het wegdoven is -- dat is kaartKomtOp, de andere schermKomtOp
     for (const reeks of [['dress', 'map', 'dress'], ['dress', 'tro', 'dress'],
-                         ['tro', 'dress', 'tro'], ['dress', 'map'], ['dress', 'dress']]) {
+                         ['tro', 'dress', 'tro'], ['dress', 'map'], ['tro', 'map'],
+                         ['dress', 'map', 'tro', 'map'], ['dress', 'dress']]) {
       goMap(); await wacht(700);
       for (const t of reeks) { navGo(t); await wacht(40); }
       const el = document.querySelector('.screen.active');
