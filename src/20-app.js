@@ -3692,20 +3692,21 @@ function oorsprongPct(el, punt) {
    binnenkomende scherm meteen zijn volle maat krijgt in plaats van er even naast
    te staan -- en boven de vaste navigatiebalk, zodat die er niet doorheen prikt
    terwijl dit scherm nog in beeld is. */
-/* Wat schermWeg en schermKomtOp zelf op een scherm zetten, per scherm bijgehouden.
+/* Wat schermWeg, schermKomtOp en kaartKomtOp zelf op een scherm zetten, per
+   scherm bijgehouden.
 
-   Hier stond op beide plekken el.getAnimations(). Dat klinkt als opvragen, maar
+   Hier stond op alle drie de plekken el.getAnimations(). Dat klinkt als opvragen, maar
    de browser moet daarvoor eerst stijl én opmaak bijwerken -- midden in de tik,
    op een scherm dat show() net heeft aangezet en dat daarna nog helemaal gevuld
    wordt. De kleedkamer werd zo bij één tik twee keer opgemeten met de inhoud
    van de vorige keer, en daarna nog eens met de nieuwe. Gemeten op de eerste
    tik op Kleedkamer: zo'n 60ms van de tik, op een gesmoorde processor.
 
-   Wat er weg moet is ook alleen wat deze twee er zelf op zetten: een scherm
+   Wat er weg moet is ook alleen wat deze drie er zelf op zetten: een scherm
    waar je snel naar terugkomt draagt nog de opacity-0 van zijn vertrek
    (fill: 'forwards'), en een tweede tik mag geen tweede animatie stapelen. Wat
-   een ander er eerder op zette (kaartKomtOp, de opkomst van de reis) wordt door
-   de nieuwe animatie overstemd, want die komt later en zet dezelfde
+   een ander er eerder op zette (de opkomst van de reis, de groei van de zaal)
+   wordt door de nieuwe animatie overstemd, want die komt later en zet dezelfde
    eigenschappen -- en de opruimer van schermWeg ruimt het na afloop alsnog op,
    daar mag getAnimations() wél: dat is geen tik meer. */
 const schermAnims = new WeakMap();
@@ -4231,10 +4232,19 @@ function kaartTerugZoom(map, lvl) {
 function kaartKomtOp(punt) {
   const scherm = $('screen-map');
   if (!scherm || !scherm.animate || motionOff()) return;
-  scherm.getAnimations().forEach(a => a.cancel());   // een tweede opkomst stapelt niet
+  /* Een tweede opkomst stapelt niet, en een kaart waar je snel naar terugkomt
+     draagt nog de opacity 0 van zijn vertrek (schermWeg) -- die gaan er hier af.
+     Uit de lijst van schermAnims en niet met getAnimations(): dat dwong midden
+     in de tik de opmaak af, en wel precies op het moment dat show() het scherm
+     waar je vandaan kwam al had uitgezet en schermWeg het nog niet weer had
+     neergezet. De browser gooide dat scherm dus weg en bouwde het één regel
+     later opnieuw op, voor zijn vertrek. Meer dan deze twee zet er niets op
+     #screen-map zelf: de wereldcamera en de vlucht bewegen #tour-map en wat erin
+     staat. */
+  schermAnimsStop(scherm);
   scherm.classList.add('komt-op');
   scherm.style.transformOrigin = punt ? oorsprongPct(scherm, punt) : '50% 50%';
-  const a = scherm.animate(
+  const a = schermAnim(scherm,
     [{ transform: punt ? 'scale(1.06)' : 'scale(1.03)' }, { transform: 'none' }],
     { duration: MOTION.kom, delay: punt ? MOTION.komNa : 0, easing: MOTION.uit, fill: 'backwards' });
   const op = () => { scherm.style.transformOrigin = ''; };
