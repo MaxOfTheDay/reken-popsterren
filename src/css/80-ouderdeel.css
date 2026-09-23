@@ -715,3 +715,11 @@
     to { transform: translateY(110vh) rotate(720deg); }
   }
 
+
+  /* = Cloudback-up (ouderaccount) -- de kaart uit src/18-ouderaccount.js.
+     Nieuwe klassen, dus hier achteraan zonder iets anders te verschuiven. De
+     stand ("Verbonden" / "Niet verbonden") is een regel tekst en geen knop;
+     groen alleen als er echt iets verbonden is. */
+  .account-stand { font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink-muted); }
+  .account-stand.aan { color: var(--green-deep); }
+  .account-mail { font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink); margin-top: 2px; overflow-wrap: anywhere; }

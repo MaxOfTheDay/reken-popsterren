@@ -107,7 +107,12 @@ app moet het doen op een oude tablet in een woonkamer, zonder net. Alles wat het
 spel nodig heeft ligt naast `index.html` (ook het lettertype staat in
 `assets/font/`); houd dat zo. Er gaat bij een gewone start nog precies één
 verzoek naar buiten en dat is het meetscriptje uit regel 2 — niets van het spel
-wacht erop, dus zonder net mist er niets dan een telling.
+wacht erop, dus zonder net mist er niets dan een telling. Het ouderaccount
+(`src/18-ouderaccount.js`) praat alleen met Supabase als een ouder daar zelf om
+vraagt: inloggen, afmelden, of het ouderdeel openen met een verlopen sessie.
+In de browser staan alléén de projectURL en de `sb_publishable_`-sleutel; een
+secret/service-role-sleutel of het Google client secret hoort nooit in deze
+repo.
 
 ## Waar de dingen staan
 
@@ -121,6 +126,7 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 | `src/10-feestjes.js` | de **gedeelde feestjes**: `motionOff`, toast, praise, confetti, sparkle, danspasjes, confirm/notice. Wat élk scherm mag gebruiken om te zeggen dat er iets gebeurd is |
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |
+| `src/18-ouderaccount.js` | het **ouderaccount**: inloggen met Google via Supabase Auth, voor de ouder alleen, en de kaart "Cloudback-up" in Beheer. Een eigen `fetch`-clientje (PKCE), geen supabase-js. Raakt `db` en de saves nergens aan en heeft twee eigen `localStorage`-sleutels. Staat vóór `20-app.js` omdat `?debug&screen=ouder` de kaart al bij het opstarten tekent |
 | `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
 | `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |

@@ -2,12 +2,13 @@
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
 
-   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog zes
+   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog zeven
    bronbestanden die samen met dit ene het scriptblok vormen (zie test/bouw.js):
    00-vh-lock (de vensterhoogte, moet eerst), 10-feestjes (de gedeelde toast,
    confetti, danspasjes en dialogen), 15-kaart-en-weg (de vormleer van de
    wereldkaart), 17-kaartstand (waar de kaart naar kijkt en wat er loopt),
-   90-wereldstudio en 99-servicewerker.
+   18-ouderaccount (inloggen met Google voor de ouder), 90-wereldstudio en
+   99-servicewerker.
 
    De secties hieronder staan in de volgorde van dít bestand; wat naar een
    buurbestand verhuisd is, staat er met zijn nieuwe plek bij. Zoeken op de
@@ -77,6 +78,9 @@
                           (zetTeller/telNu/telNaar/telStraks, gedeeld)
      Nieuwe ster ........ het maakformulier
      Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Ouderaccount ....... STAAT IN src/18-ouderaccount.js. Inloggen met Google
+                          (Supabase Auth) voor de ouder; de kaart "Cloudback-up"
+                          in Beheer. Raakt db en de saves nergens aan
      Op het beginscherm   de uitlegkaart in Beheer: hoe het spel als app op
                           dit toestel komt. Laat het installeren aan de browser
      Terug-navigatie .... Android back / browser back
@@ -9822,7 +9826,9 @@ function appWideCardsHtml(hasStars) {
       <div class="set-card-head"><div class="ico">➕</div><div><h2>Nieuwe ster</h2><div class="sub">Nog een kind erbij.${vol}</div></div></div>
       <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
     </div>`;
-  return `${addCard}
+  // De cloudback-up (src/18-ouderaccount.js) staat vóór de gewone back-up: die
+  // moet direct boven "Op het beginscherm" blijven staan (zie zaak O).
+  return `${addCard}${ouderAccountKaartHtml()}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Geldt voor alle sterren en voor de app zelf</div></div></div>
       <div class="note" style="margin-bottom:11px">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel.</div>
@@ -10170,6 +10176,7 @@ function bindSettings(p, s) {
       }
     );
   });
+  ouderAccountBind();
   on('set-export', 'onclick', exportData);
   on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
   on('set-import-file', 'onchange', e => {
@@ -10453,6 +10460,9 @@ function zetSchermkunst() {
 
 /* ================= Start ================= */
 load();
+// Terug van Google? Dan eerst de adresbalk opruimen, vóór syncBackGuard er een
+// geschiedenisregel op zet. Zie "= Ouderaccount" in src/18-ouderaccount.js.
+const ouderTerug = ouderStart();
 zetSchermkunst();
 renderProfiles();
 // Bij het opstarten staat dit scherm er al uit de opmaak, dus er komt geen
@@ -10460,6 +10470,13 @@ renderProfiles();
 // ergens anders heen, dan zet show() hem hieronder net zo goed weer stil.
 landingLeeft();
 syncBackGuard();
+// De ouder vertrok uit Beheer naar Google; daar komen we ook weer uit.
+if (ouderTerug) {
+  openSettings();
+  setTab = 'beheer';
+  renderSettings();
+  requestAnimationFrame(() => { const k = $('set-account'); if (k) k.scrollIntoView({ block: 'center' }); });
+}
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
    lopende show mee, en wie aan het uiterlijk werkt moet élk scherm kunnen zien

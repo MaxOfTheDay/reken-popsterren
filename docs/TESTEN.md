@@ -234,6 +234,19 @@ En één voor de uitlegkaart over installeren:
   `navigator.standalone` is de kaart weg en de back-up niet; `appinstalled` haalt
   haar meteen weg, schrijft niets in de opslag, en na herladen vraagt het spel
   het gewoon weer aan de browser.
+- **Cloudback-up (het ouderaccount)** — Supabase wordt met `page.route`
+  nagedaan, Google ook. Afgemeld: "Niet verbonden", de uitleg en één knop
+  (vanaf `file://` uit, met een zin erbij), en bij een gewone start gaat er
+  géén aanvraag naar Supabase; spelen zonder account gaat gewoon. Een bewaarde
+  sessie overleeft een herstart en toont het adres; afmelden haalt haar weg en
+  meldt het bij Supabase. Terug van Google wordt de code met de verifier
+  ingewisseld, staat het ouderdeel weer open en is de adresbalk schoon;
+  geannuleerd, mislukt of een vreemde `?code=` verandert niets. Een verlopen
+  sessie wordt pas nagekeken als het ouderdeel de kaart tekent. En één
+  rondreis over `http://127.0.0.1` (een veilige context): de knop, de sprong
+  met `provider=google`, PKCE en zonder extra scopes, en een verifier die bij de
+  challenge hoort. Bij élk van die gevallen blijft alles in `localStorage`
+  buiten de twee accountsleutels byte voor byte gelijk.
 
 ### `test/kleedkamer.test.js` — de catalogus en het rek
 
@@ -455,6 +468,8 @@ minstens één suite opgemerkt:
 | de trofeenoemer komt uit een tweede lijstje | ouderdeel |
 | het percentage komt terug bij de niveau-inschatting | ouderdeel |
 | de weergavekeuzes vallen weer over twee regels | ouderdeel |
+| inloggen, afmelden of een mislukte login schrijft in de save | ouderdeel (P) |
+| de app praat bij een gewone start met Supabase | ouderdeel (P) |
 
 ## Wat er bij het schrijven opviel
 
