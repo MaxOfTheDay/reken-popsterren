@@ -28,6 +28,8 @@
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
  *   P  Cloudback-up (ouderaccount): de twee standen, inloggen en afmelden --
  *      en geen van beide raakt een save
+ *   Q  Cloudback-up maken: wie, wat, één keer tegelijk, twee keer = één rij,
+ *      en een mislukte poging laat alles staan
  *
  * Draaien:
  *   npm run test:ouder          (of: npm test voor alle suites)
@@ -874,16 +876,23 @@ function check(ok, label, detail) {
     // Alles in localStorage behalve de accountsleutels, als één string.
     const spelOpslag = page => page.evaluate(([a, b]) => JSON.stringify(Object.keys(localStorage)
       .filter(k => k !== a && k !== b).sort().map(k => [k, localStorage.getItem(k)])), [SESSIE, PKCE]);
-    // Supabase nadoen: antwoord(pad, body) -> [status, json]
-    async function nepSupabase(ctx, antwoord) {
+    // Supabase nadoen: antwoord(pad, body) -> [status, json] voor de Auth-API.
+    // De database (/rest/v1/, zaak Q) krijgt zijn eigen `rest`; zonder die zegt
+    // hij "nog geen back-up" -- een ingelogde kaart vraagt daar altijd naar.
+    async function nepSupabase(ctx, antwoord, rest) {
       const log = [];
-      await ctx.route(SB, route => {
+      await ctx.route(SB, async route => {
         const req = route.request();
         if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
         const u = new URL(req.url());
         const body = req.postData() ? JSON.parse(req.postData()) : null;
-        log.push({ pad: u.pathname + u.search, body, headers: req.headers() });
-        const [status, json] = antwoord(u.pathname + u.search, body);
+        log.push({ pad: u.pathname + u.search, methode: req.method(), body, headers: req.headers() });
+        const req2 = { methode: req.method(), headers: req.headers() };
+        const antw = /^\/rest\/v1\//.test(u.pathname)
+          ? (rest || (() => [200, []]))(u.pathname + u.search, body, req2)
+          : antwoord(u.pathname + u.search, body);
+        const [status, json] = await antw;          // mag een belofte zijn (zaak Q: trage server)
+        if (status === 'afbreken') return route.abort();
         return route.fulfill({ status, headers: Object.assign({ 'content-type': 'application/json' }, CORS),
           body: json == null ? '' : JSON.stringify(json) });
       });
@@ -950,9 +959,9 @@ function check(ok, label, detail) {
       let r = await kaart(page);
       check(/Verbonden/.test(r.tekst) && !/Niet verbonden/.test(r.tekst) && /ouder@voorbeeld\.be/.test(r.tekst),
         'P · de sessie overleeft een herstart: "Verbonden" met het adres', r.tekst);
-      check(/Cloudback-up wordt in een volgende slice toegevoegd\./.test(r.tekst) && JSON.stringify(r.knoppen) === '["Afmelden"]',
-        'P · verbonden: de aankondiging en één knop "Afmelden"', JSON.stringify(r));
-      check(log.length === 0, 'P · een geldige sessie wordt niet nodeloos ververst', JSON.stringify(log.map(l => l.pad)));
+      check(JSON.stringify(r.knoppen) === '["Nu back-up maken","Afmelden"]',
+        'P · verbonden: "Nu back-up maken" en "Afmelden"', JSON.stringify(r));
+      check(!log.some(l => /\/auth\/v1\//.test(l.pad)), 'P · een geldige sessie wordt niet nodeloos ververst', JSON.stringify(log.map(l => l.pad)));
       await page.click('#set-account-uit');
       await page.waitForTimeout(300);
       r = await kaart(page);
@@ -1103,6 +1112,256 @@ function check(ok, label, detail) {
       check(/Verbonden/.test(r.tekst) && sterren === '{"1":3,"2":2}', 'P · rondreis: na een herstart nog verbonden, en de voortgang is dezelfde', r.tekst + ' ' + sterren);
       await ctx.close();
       server.close();
+    }
+
+    /* ================= Q · Een cloudback-up maken ================= */
+    /* src/19-cloudbackup.js. De database zelf (RLS, één rij per ouder) wordt in
+       test/rls.test.js tegen een echte PostgreSQL nagekeken; hier gaat het om
+       wat de app verstuurt en wat de kaart zegt. De server hieronder houdt zijn
+       rijen bij in een Map op user_id, net als de primaire sleutel. */
+    {
+      const QFOUT = pageErrors.length;
+      const LS = 'rekenPopsterren_v1';
+      // De "server": één rij per user_id; een upsert overschrijft.
+      function nepTabel() {
+        const rijen = new Map();
+        let klok = Date.parse('2026-09-23T08:00:00Z');
+        const t = { rijen, posts: [], gets: [], stand: 'ok', wacht: null };
+        t.rest = async (pad, body, req) => {
+          if (req.methode === 'GET') {
+            t.gets.push({ pad, req });
+            if (t.stand === 'status-kapot') return [500, { message: 'kapot' }];
+            const id = (/user_id=eq\.([^&]+)/.exec(pad) || [])[1];
+            const rij = rijen.get(decodeURIComponent(id || ''));
+            return [200, rij ? [{ updated_at: rij.updated_at }] : []];
+          }
+          t.posts.push({ pad, body, req });
+          if (t.wacht) await t.wacht;
+          if (t.stand === 'kapot') return [500, { message: 'kapot' }];
+          if (t.stand === 'weg') return ['afbreken'];
+          klok += 60000;
+          const rij = Object.assign({}, body, { updated_at: new Date(klok).toISOString() });
+          rijen.set(body.user_id, rij);
+          return [201, [{ updated_at: rij.updated_at }]];
+        };
+        return t;
+      }
+      const inlog = async (page, s) => {
+        await page.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [SESSIE, s]);
+        await page.reload();
+        await page.waitForTimeout(250);
+      };
+      const spelEnDb = page => page.evaluate(() => JSON.stringify(db));
+      const verzondenIsSave = (post, lsTekst) =>
+        JSON.stringify(post.body.backup_data) === JSON.stringify(JSON.parse(lsTekst));
+
+      // Afgemeld: geen knop, en de functie zelf aanroepen doet niets.
+      {
+        const { ctx, page } = await fresh();
+        const t = nepTabel();
+        const log = await nepSupabase(ctx, () => [500, null], t.rest);
+        await page.reload();
+        await page.waitForTimeout(250);
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(200);
+        const knop = await page.evaluate(() => !!document.getElementById('set-cloud-maak'));
+        await page.evaluate(() => cloudBackupMaken());
+        await page.waitForTimeout(300);
+        check(!knop && t.posts.length === 0 && log.length === 0,
+          'Q · afgemeld: geen knop, en cloudBackupMaken() stuurt niets', JSON.stringify(log.map(l => l.pad)));
+        await ctx.close();
+      }
+
+      // Ingelogd: nog geen back-up -> maken -> bewaard, met de juiste gebruiker en de hele save.
+      {
+        const { ctx, page } = await fresh(['Anna', 'Bas', 'Cato']);
+        const t = nepTabel();
+        const log = await nepSupabase(ctx, () => [500, null], t.rest);
+        await page.evaluate(() => {
+          db.profiles.p1.stars = { 1: 3, 2: 3, 3: 1 }; db.profiles.p1.diamonds = 140;
+          db.profiles.p2.owned.push('mic_zilver'); db.profiles.p2.equipped.mic = 'mic_zilver';
+          save();
+        });
+        await inlog(page, sessie('ouder@voorbeeld.be', 3000));
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(300);
+        let r = await kaart(page);
+        const get = t.gets[0];
+        check(/Verbonden/.test(r.tekst) && /ouder@voorbeeld\.be/.test(r.tekst) && /Nog geen cloudback-up/.test(r.tekst)
+          && JSON.stringify(r.knoppen) === '["Nu back-up maken","Afmelden"]',
+          'Q · verbonden zonder back-up: "Nog geen cloudback-up" en de knop', JSON.stringify(r));
+        check(get && /user_id=eq\.u-1/.test(get.pad) && /select=updated_at/.test(get.pad)
+          && get.req.headers.authorization === 'Bearer at-oud',
+          'Q · de stand wordt voor déze ouder opgevraagd, zonder de save zelf', JSON.stringify(get));
+
+        const lsVoor = await page.evaluate(k => localStorage.getItem(k), LS);
+        const voor = await spelOpslag(page), dbVoor = await spelEnDb(page);
+        // een trage server, om de laadstand te kunnen zien
+        let los; t.wacht = new Promise(k => { los = k; });
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(200);
+        r = await kaart(page);
+        await page.evaluate(() => { cloudBackupMaken(); cloudBackupMaken(); });
+        await page.waitForTimeout(200);
+        check(r.knoppen[0] === 'Bezig met back-up… (uit)', 'Q · tijdens het versturen: de knop staat uit en zegt het', JSON.stringify(r.knoppen));
+        check(t.posts.length === 1, 'Q · nog eens tikken stuurt niets dubbel', String(t.posts.length));
+        los(); t.wacht = null;
+        await page.waitForTimeout(300);
+        r = await kaart(page);
+        const post = t.posts[0];
+        const verwachtDatum = await page.evaluate(iso => cloudDatum(iso), t.rijen.get('u-1').updated_at);
+        check(/✓ Back-up bewaard/.test(r.tekst) && r.tekst.includes('Laatste back-up: ' + verwachtDatum) && !/Nog geen/.test(r.tekst),
+          'Q · daarna: "✓ Back-up bewaard" met de tijd van de server', r.tekst + ' | ' + verwachtDatum);
+        check(JSON.stringify(r.knoppen) === '["Nu back-up maken","Afmelden"]', 'Q · en de knop kan weer', JSON.stringify(r.knoppen));
+        check(post.req.methode === 'POST' && /\/rest\/v1\/account_backups\?on_conflict=user_id/.test(post.pad)
+          && /resolution=merge-duplicates/.test(post.req.headers.prefer),
+          'Q · het is een upsert op user_id', JSON.stringify([post.pad, post.req.headers.prefer]));
+        check(post.body.user_id === 'u-1' && post.req.headers.authorization === 'Bearer at-oud'
+          && /^sb_publishable_/.test(post.req.headers.apikey),
+          'Q · met het id en het token van de ingelogde ouder, en de publishable sleutel', JSON.stringify([post.body.user_id, post.req.headers.authorization]));
+        check(post.body.backup_version === 1 && Object.keys(post.body).sort().join() === 'backup_data,backup_version,user_id',
+          'Q · de envelop: user_id, backup_version 1, backup_data -- verder niets', JSON.stringify(Object.keys(post.body)));
+        check(verzondenIsSave(post, lsVoor), 'Q · backup_data is precies de save uit localStorage', '');
+        const inhoud = post.body.backup_data;
+        check(Object.keys(inhoud.profiles).length === 3 && inhoud.profiles.p1.diamonds === 140
+          && inhoud.profiles.p1.stars['2'] === 3 && inhoud.profiles.p2.equipped.mic === 'mic_zilver'
+          && typeof inhoud.sound === 'boolean' && inhoud.schemaV >= 1,
+          'Q · met alle sterren, hun voortgang en kast, en de app-brede schakelaars', JSON.stringify(Object.keys(inhoud)));
+        check(await spelOpslag(page) === voor && await spelEnDb(page) === dbVoor,
+          'Q · back-uppen verandert niets aan de opslag of aan db', '');
+        check(JSON.stringify(inhoud) === dbVoor, 'Q · en de save is dezelfde als db (dus als het back-upbestand)', '');
+
+        // Twee keer: dezelfde rij, een nieuwere tijd, de nieuwe inhoud.
+        const eerste = t.rijen.get('u-1').updated_at;
+        await page.evaluate(() => { db.profiles.p1.diamonds = 150; save(); });
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(400);
+        r = await kaart(page);
+        const tweede = t.rijen.get('u-1');
+        const datum2 = await page.evaluate(iso => cloudDatum(iso), tweede.updated_at);
+        check(t.posts.length === 2 && t.rijen.size === 1 && t.posts[1].body.user_id === 'u-1'
+          && /on_conflict=user_id/.test(t.posts[1].pad),
+          'Q · twee keer back-uppen: dezelfde rij, geen tweede', JSON.stringify([...t.rijen.keys()]));
+        check(tweede.updated_at > eerste && tweede.backup_data.profiles.p1.diamonds === 150 && r.tekst.includes('Laatste back-up: ' + datum2),
+          'Q · met de nieuwe inhoud en de nieuwe tijd op de kaart', r.tekst);
+
+        // Herstarten: de kaart vraagt de stand opnieuw en weet dat er een back-up is.
+        await page.reload();
+        await page.waitForTimeout(250);
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(300);
+        r = await kaart(page);
+        check(/✓ Back-up bewaard/.test(r.tekst) && r.tekst.includes('Laatste back-up: ' + datum2),
+          'Q · na een herstart weet de kaart nog wanneer de laatste back-up was', r.tekst);
+        check(!log.some(l => /\/auth\/v1\//.test(l.pad)), 'Q · een geldig token: niets ververst', JSON.stringify(log.map(l => l.pad)));
+        await ctx.close();
+      }
+
+      // Mislukt: een serverfout en geen net. Niets verloren, opnieuw proberen kan.
+      for (const [naam, stand] of [['serverfout', 'kapot'], ['geen verbinding', 'weg']]) {
+        const { ctx, page } = await fresh();
+        const t = nepTabel();
+        await nepSupabase(ctx, () => [500, null], t.rest);
+        await inlog(page, sessie('ouder@voorbeeld.be', 3000));
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(300);
+        const voor = await spelOpslag(page), dbVoor = await spelEnDb(page);
+        t.stand = stand;
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(400);
+        let r = await kaart(page);
+        check(/Back-up mislukt\. Je voortgang op dit toestel is niet veranderd\. Probeer het opnieuw\./.test(r.tekst)
+          && /Nog geen cloudback-up/.test(r.tekst) && r.knoppen[0] === 'Nu back-up maken',
+          `Q · ${naam}: een duidelijke zin, de oude stand, en de knop kan weer`, JSON.stringify(r));
+        check(await spelOpslag(page) === voor && await spelEnDb(page) === dbVoor,
+          `Q · ${naam}: de opslag en db zijn onaangeroerd`, '');
+        t.stand = 'ok';
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(400);
+        r = await kaart(page);
+        check(/✓ Back-up bewaard/.test(r.tekst) && !/mislukt/.test(r.tekst), `Q · ${naam}: opnieuw proberen lukt, en de fout is weg`, r.tekst);
+        // en spelen gaat gewoon door
+        await page.evaluate(() => { closeSettings(); selectProfile('p1'); });
+        await page.waitForTimeout(300);
+        await page.evaluate(() => startLevel(P().level));
+        await page.waitForTimeout(400);
+        const speelt = await page.evaluate(() => document.getElementById('screen-game').classList.contains('active'));
+        check(speelt, `Q · ${naam}: daarna gewoon een show spelen`, '');
+        await ctx.close();
+      }
+
+      // De stand ophalen mislukt: dat zegt de kaart, en back-uppen kan toch.
+      {
+        const { ctx, page } = await fresh();
+        const t = nepTabel();
+        t.stand = 'status-kapot';
+        await nepSupabase(ctx, () => [500, null], t.rest);
+        await inlog(page, sessie('ouder@voorbeeld.be', 3000));
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(300);
+        let r = await kaart(page);
+        check(/Laatste back-up onbekend/.test(r.tekst) && r.knoppen[0] === 'Nu back-up maken',
+          'Q · stand onbekend: dat staat er, en de knop blijft', r.tekst);
+        t.stand = 'ok';
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(400);
+        r = await kaart(page);
+        check(/✓ Back-up bewaard/.test(r.tekst), 'Q · en een back-up maken lukt dan gewoon', r.tekst);
+        await ctx.close();
+      }
+
+      // Een save die niet door de keuring komt, wordt niet verstuurd.
+      {
+        const { ctx, page } = await fresh();
+        const t = nepTabel();
+        await nepSupabase(ctx, () => [500, null], t.rest);
+        await inlog(page, sessie('ouder@voorbeeld.be', 3000));
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(300);
+        // de opgeslagen save even vervangen door iets dat geen save van ons is
+        await page.evaluate(k => { window.__save = localStorage.getItem(k); localStorage.setItem(k, '{"profiles":[1]}'); }, LS);
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(300);
+        const r = await kaart(page);
+        const bleef = await page.evaluate(k => { const v = localStorage.getItem(k); localStorage.setItem(k, window.__save); return v; }, LS);
+        check(t.posts.length === 0 && /kon niet klaargemaakt worden\. Er is niets verstuurd\./.test(r.tekst),
+          'Q · een save die de keuring niet haalt gaat niet de deur uit', r.tekst);
+        check(bleef === '{"profiles":[1]}', 'Q · en de mislukte poging schrijft zelf niets terug', bleef);
+        // een kijkstand (?debug&demo) wordt nooit opgeslagen, en gaat dus ook niet mee
+        const lsTekst = await page.evaluate(k => localStorage.getItem(k), LS);
+        await page.goto(APP_URL + '&demo');
+        await page.waitForTimeout(300);
+        await page.evaluate(() => { openSettings(); setTab = 'beheer'; renderSettings(); });
+        await page.waitForTimeout(300);
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(400);
+        const demoPost = t.posts[0];
+        check(demoPost && verzondenIsSave(demoPost, lsTekst) && !demoPost.body.backup_data.profiles.p1.name.includes('Lotte'),
+          'Q · met ?debug&demo gaat de opgeslagen save mee, niet de voorbeeldsterren', JSON.stringify(demoPost && Object.values(demoPost.body.backup_data.profiles).map(p => p.name)));
+        await ctx.close();
+      }
+
+      // Verlopen token: eerst verversen, dan pas versturen -- met het nieuwe token.
+      {
+        const { ctx, page } = await fresh();
+        const t = nepTabel();
+        const log = await nepSupabase(ctx, pad => /grant_type=refresh_token/.test(pad)
+          ? [200, antwoordSessie('ouder@voorbeeld.be')] : [500, null], t.rest);
+        await inlog(page, sessie('ouder@voorbeeld.be', -100));
+        await open(page, 'p1', 'beheer');
+        await page.waitForTimeout(400);
+        await page.click('#set-cloud-maak');
+        await page.waitForTimeout(400);
+        const verversingen = log.filter(l => /grant_type=refresh_token/.test(l.pad)).length;
+        check(verversingen === 1 && t.gets[0].req.headers.authorization === 'Bearer at-nieuw'
+          && t.posts[0].req.headers.authorization === 'Bearer at-nieuw',
+          'Q · een verlopen token wordt één keer ververst, en daarna gebruikt', JSON.stringify(log.map(l => l.pad)));
+        await ctx.close();
+      }
+
+      // De 500's en het afgebroken verzoek hierboven zijn de nagedane gevallen.
+      const nieuw = pageErrors.splice(QFOUT);
+      pageErrors.push(...nieuw.filter(e => !/status of 500|ERR_FAILED/.test(e)));
     }
 
     // Verlopen sessie: pas bij het tonen van de kaart nakijken. Ingetrokken -> afgemeld.

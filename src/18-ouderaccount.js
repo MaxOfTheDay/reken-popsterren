@@ -4,10 +4,10 @@
    WAT DIT IS
    Een ouder kan in het ouderdeel (Beheer, "Voor alle sterren") een account
    verbinden: Supabase Auth met Google als enige aanbieder. Dit stuk weet alleen
-   wíé er verbonden is. Het slaat niets op in de cloud, leest geen voortgang en
-   raakt `db` nergens aan -- de cloudback-up zelf komt in een volgende stap, en
-   die leunt dan op de RLS-regels in Supabase, niet op wat hier in de browser
-   staat. Wat deze code "verbonden" noemt is dus nooit een toestemming.
+   wíé er verbonden is, en raakt `db` nergens aan. De cloudback-up zelf staat
+   ernaast, in src/19-cloudbackup.js, en leunt op de RLS-regels in Supabase --
+   niet op wat hier in de browser staat. Wat deze code "verbonden" noemt is dus
+   nooit een toestemming.
 
    Er is één account per toestel, voor de ouder. Sterren (kinderen) hebben geen
    account en krijgen er ook geen.
@@ -161,6 +161,7 @@ async function ouderLogin() {
 async function ouderLogout() {
   const s = ouderSessie;
   ouderBewaar(null);
+  cloudStand = null;
   ouderToon();
   if (!s) return;
   try { await ouderPost('logout?scope=local', {}, s.access_token); } catch (e) { /* offline */ }
@@ -170,7 +171,17 @@ async function ouderLogout() {
    getekend wordt, niet bij het opstarten (zie NETWERK in de kop).
    Supabase zegt "nee" (400/401/403): de sessie is ingetrokken, dan zijn we
    afgemeld. Geen net: niets veranderen, de sessie blijft zoals ze was. */
-async function ouderVervers() {
+/* Eén verversing tegelijk: de kaart (ouderNakijken) en een back-up (ouderToken)
+   kunnen er tegelijk om vragen, en twee keer hetzelfde refresh token inwisselen
+   kan Supabase als hergebruik zien. */
+let ouderVerversLoopt = null;
+function ouderVervers() {
+  if (!ouderVerversLoopt) {
+    ouderVerversLoopt = ouderVerversNu().finally(() => { ouderVerversLoopt = null; });
+  }
+  return ouderVerversLoopt;
+}
+async function ouderVerversNu() {
   const s = ouderSessie;
   if (!s) return;
   try {
@@ -180,6 +191,16 @@ async function ouderVervers() {
     else if (r.status >= 400 && r.status < 500) ouderBewaar(null);
     ouderToon();
   } catch (e) { /* offline */ }
+}
+/* Een access token dat nog minstens een minuut meegaat, of null (afgemeld, of
+   verlopen en geen net om te verversen). Voor de cloudback-up. */
+async function ouderToken() {
+  const nu = () => Math.floor(Date.now() / 1000);
+  if (!ouderSessie) return null;
+  if (ouderSessie.expires_at - nu() > 60) return ouderSessie.access_token;
+  await ouderVervers();
+  const s = ouderSessie;
+  return (s && s.expires_at - nu() > 0) ? s.access_token : null;
 }
 function ouderNakijken() {
   if (ouderNagekeken || !ouderSessie) return;
@@ -263,10 +284,7 @@ function ouderAccountKaartHtml() {
   } else if (s) {
     body = `<div class="account-stand aan">Verbonden</div>
       <div class="account-mail" id="set-account-mail">${esc(s.user.email)}</div>
-      <div class="note" style="margin-top:8px">Cloudback-up wordt in een volgende slice toegevoegd.</div>
-      <div class="data-btns" style="margin-top:11px">
-        <button class="btn small paper" id="set-account-uit">Afmelden</button>
-      </div>`;
+      ${cloudKaartHtml(s)}`;
   } else {
     const kan = ouderKanInloggen();
     body = `<div class="account-stand">Niet verbonden</div>
@@ -283,9 +301,10 @@ function ouderAccountKaartHtml() {
     </div>`;
 }
 function ouderAccountBind() {
-  const i = $('set-account-in'), u = $('set-account-uit');
+  const i = $('set-account-in'), u = $('set-account-uit'), m = $('set-cloud-maak');
   if (i) i.onclick = ouderLogin;
   if (u) u.onclick = ouderLogout;
+  if (m) m.onclick = cloudBackupMaken;
 }
 // Stand veranderd: alleen de kaart vervangen als ze er staat. De rest van het
 // ouderdeel blijft staan (geen scrollsprong, geen focusverlies).

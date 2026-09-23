@@ -108,8 +108,11 @@ spel nodig heeft ligt naast `index.html` (ook het lettertype staat in
 `assets/font/`); houd dat zo. Er gaat bij een gewone start nog precies één
 verzoek naar buiten en dat is het meetscriptje uit regel 2 — niets van het spel
 wacht erop, dus zonder net mist er niets dan een telling. Het ouderaccount
-(`src/18-ouderaccount.js`) praat alleen met Supabase als een ouder daar zelf om
-vraagt: inloggen, afmelden, of het ouderdeel openen met een verlopen sessie.
+(`src/18-ouderaccount.js`, `src/19-cloudbackup.js`) praat alleen met Supabase
+als een ouder daar zelf om vraagt: inloggen, afmelden, het ouderdeel openen
+(dan wordt gevraagd wanneer de laatste back-up was) of "Nu back-up maken".
+Een migratie in `supabase/migrations/` gaat niet vanzelf live: die moet je in
+Supabase toepassen.
 In de browser staan alléén de projectURL en de `sb_publishable_`-sleutel; een
 secret/service-role-sleutel of het Google client secret hoort nooit in deze
 repo.
@@ -127,6 +130,7 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |
 | `src/18-ouderaccount.js` | het **ouderaccount**: inloggen met Google via Supabase Auth, voor de ouder alleen, en de kaart "Cloudback-up" in Beheer. Een eigen `fetch`-clientje (PKCE), geen supabase-js. Raakt `db` en de saves nergens aan en heeft twee eigen `localStorage`-sleutels. Staat vóór `20-app.js` omdat `?debug&screen=ouder` de kaart al bij het opstarten tekent |
+| `src/19-cloudbackup.js` | de **cloudback-up**: "Nu back-up maken" stuurt `JSON.stringify(db)` — dezelfde save als localStorage en het back-upbestand — naar de tabel `account_backups`. Alleen handmatig en alleen die kant op: leest `db`, schrijft er nooit in. De tabel en haar RLS staan in `supabase/migrations/`, nagekeken door `npm run test:rls` (vraagt een lokale PostgreSQL) |
 | `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
 | `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
