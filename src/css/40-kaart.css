@@ -490,8 +490,14 @@
   .spot-rail {
     position: absolute; left: 16px; right: 16px; bottom: 9px; height: 7px;
     border-radius: var(--r-pill); background: rgba(74, 20, 140, .10);
+    overflow: hidden;
   }
-  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: width .1s linear; }
+  /* Altijd de volle breedte van de rail; wat er verstreken is schuift er links
+     uit (zie zetSpot). Een verschuiving en geen breedte, want een breedte die
+     verandert moet elk beeldje opnieuw opgemeten en getekend worden. Alleen de
+     gouden vraag krimpt nog in de breedte -- zie zetSpot waarom -- vandaar dat
+     de overgang voor allebei geldt. */
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: transform .1s linear, width .1s linear; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }
