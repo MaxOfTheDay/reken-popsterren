@@ -15,7 +15,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { launch } = require('../test/browser.js');
 
-const [naam = 'promo', van = '0', tot = '25'] = process.argv.slice(2);
+const [naam = 'promo', van = '0', tot = '26'] = process.argv.slice(2);
 const FPS = 30;
 const OUT = path.join(__dirname, `rekensterren-${naam}.mp4`);
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
