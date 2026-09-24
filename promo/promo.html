@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rekensterren promo</title>
+<!--
+  Het promofilmpje van Rekensterren: 25 seconden, 1920x1080.
+
+  Open dit bestand gewoon in een browser en het speelt in een lus. Alles wat je
+  ziet is één functie van de tijd -- render(t) -- zodat promo/render.js het beeld
+  voor beeld kan vastleggen en er een mp4 van maken (zie promo/LEESMIJ.md).
+  Geen requestAnimationFrame-toestand, geen Math.random: hetzelfde tijdstip
+  geeft altijd hetzelfde beeld.
+
+  Scènes:
+    0.0 -  4.5  vallende ster, het merkteken ploft erin
+    4.5 -  8.0  het spelogo veegt open, de ondertitel springt erbij
+    8.0 - 20.0  vijf schermen uit het echte spel in een telefoon
+   20.0 - 25.0  eindkaart met het adres
+  De schermen in beelden/ komen uit `npm run shots` (390x844).
+-->
+<style>
+  @font-face {
+    font-family: 'Fredoka';
+    font-weight: 400 700;
+    src: url('../assets/font/fredoka-latin.woff2') format('woff2');
+  }
+  :root {
+    --bg-1: #33084c; --bg-2: #7b2ff7; --bg-3: #6d2a80; --bg-4: #3a0f48;
+    --gold: #ffd740; --gold-top: #ffc23d; --gold-bottom: #ff8f00;
+    --ink: #2a0a55; --pink: #ff80ab;
+  }
+  html, body { margin: 0; height: 100%; background: #12031f; overflow: hidden; }
+  body { display: grid; place-items: center; font-family: 'Fredoka', system-ui, sans-serif; }
+
+  #stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    transform-origin: 0 0; flex: none;
+    background: radial-gradient(120% 90% at 50% 110%, var(--bg-3) 0%, var(--bg-1) 55%, #1d0433 100%);
+  }
+  #stage > * { position: absolute; }
+  canvas { inset: 0; }
+
+  .kop {
+    font-weight: 700; color: var(--gold);
+    -webkit-text-stroke: 14px var(--ink); paint-order: stroke fill;
+    text-shadow: 0 10px 0 rgba(20,4,40,.55);
+    letter-spacing: .5px; white-space: nowrap;
+  }
+  .kop .licht { color: #fff4fb; }
+
+  /* scène 1 en 2 */
+  #mark { width: 420px; left: 750px; top: 280px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45)); }
+  #woord { width: 1180px; left: 370px; top: 300px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
+  #tag { left: 0; right: 0; top: 700px; text-align: center; font-size: 76px; }
+  #tag span { display: inline-block; }
+
+  /* scène 3 */
+  #wereld { inset: -60px; background-size: cover; background-position: center; filter: blur(14px) saturate(1.15) brightness(.55); }
+  #wereld2 { inset: -60px; background-size: cover; background-position: center; filter: blur(14px) saturate(1.15) brightness(.55); }
+  #sluier { inset: 0; background: linear-gradient(90deg, rgba(30,5,55,.85) 0%, rgba(30,5,55,.35) 55%, rgba(30,5,55,.1) 100%); }
+  #tel {
+    left: 1230px; top: 90px; width: 410px; height: 884px; border-radius: 64px;
+    background: linear-gradient(145deg, #3b1a63, #14052a);
+    box-shadow: 0 0 0 4px #5b3197, 0 40px 90px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.12);
+  }
+  #scherm { position: absolute; left: 10px; top: 20px; width: 390px; height: 844px; border-radius: 52px; overflow: hidden; background: #000; }
+  #scherm img { position: absolute; left: 0; top: 0; width: 390px; height: 844px; }
+  #tel2 {
+    left: 1560px; top: 250px; width: 300px; height: 648px; border-radius: 48px;
+    background: #1e0b3a; box-shadow: 0 0 0 3px #4b2785, 0 30px 70px rgba(0,0,0,.55); overflow: hidden;
+  }
+  #tel2 img { position: absolute; left: 8px; top: 14px; width: 284px; height: 620px; border-radius: 40px; }
+  #tekst { left: 180px; top: 0; height: 1080px; width: 1000px; display: flex; flex-direction: column; justify-content: center; gap: 34px; }
+  #teller {
+    align-self: flex-start; height: 64px; padding: 0 28px; border-radius: 40px;
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,.12); color: #fff; font-size: 34px; font-weight: 600;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.2);
+  }
+  #teller b { color: var(--gold); }
+  #bijschrift { font-size: 100px; line-height: 1.08; white-space: normal; }
+  #onder { margin-left: 4px; width: 900px; font-size: 40px; color: #f1e3ff; font-weight: 500; opacity: .92; }
+  .som {
+    font-weight: 700; font-size: 64px; color: #fff; padding: 6px 26px; border-radius: 26px;
+    background: rgba(123,47,247,.55); box-shadow: inset 0 0 0 3px rgba(255,255,255,.25);
+  }
+  #hoekmerk { width: 120px; left: 60px; top: 50px; filter: drop-shadow(0 8px 14px rgba(0,0,0,.4)); }
+
+  /* scène 4 */
+  #eindwoord { width: 1100px; left: 410px; top: 170px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
+  #pillen { left: 0; right: 0; top: 610px; display: flex; justify-content: center; gap: 28px; }
+  .pil {
+    padding: 18px 36px; border-radius: 50px; font-size: 38px; font-weight: 600; color: #fff;
+    background: #4a1a7a; box-shadow: inset 0 0 0 2px rgba(255,255,255,.22), 0 10px 24px rgba(0,0,0,.3);
+  }
+  .pil b { color: var(--gold); margin-right: 6px; }
+  #knop {
+    left: 660px; top: 780px; width: 600px; height: 120px; border-radius: 70px;
+    display: grid; place-items: center; font-size: 58px; font-weight: 700; color: var(--ink);
+    background: linear-gradient(var(--gold-top), var(--gold-bottom));
+    box-shadow: 0 12px 0 #b36200, 0 30px 60px rgba(0,0,0,.45);
+  }
+
+  #wipe { inset: 0; pointer-events: none; }
+  #flits { inset: 0; background: #fff; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="lucht" width="1920" height="1080"></canvas>
+
+  <div id="wereld"></div>
+  <div id="wereld2"></div>
+  <div id="sluier"></div>
+  <canvas id="sommen" width="1920" height="1080"></canvas>
+  <img id="hoekmerk" src="../assets/branding/mark.webp" alt="">
+  <div id="tekst">
+    <div id="teller"><b>1</b>/ 5</div>
+    <div id="bijschrift" class="kop"></div>
+    <div id="onder"></div>
+  </div>
+  <div id="tel2"><img alt=""></div>
+  <div id="tel"><div id="scherm"><img id="nu" alt=""><img id="straks" alt=""></div></div>
+
+  <img id="mark" src="../assets/branding/mark.webp" alt="">
+  <img id="woord" src="../assets/branding/wordmark.webp" alt="Rekensterren">
+  <div id="tag" class="kop"></div>
+
+  <!-- de sterrenconfetti valt achter de eindkaart langs, niet eroverheen -->
+  <canvas id="voor" width="1920" height="1080"></canvas>
+
+  <img id="eindwoord" src="../assets/branding/wordmark.webp" alt="Rekensterren">
+  <div id="pillen">
+    <div class="pil"><b>★</b> Voor kinderen van 5 tot 8</div>
+    <div class="pil"><b>★</b> Zes werelden</div>
+    <div class="pil"><b>★</b> Werkt ook zonder internet</div>
+  </div>
+  <div id="knop">rekensterren.be</div>
+  <canvas id="wipe" width="1920" height="1080"></canvas>
+  <div id="flits"></div>
+</div>
+
+<script>
+'use strict';
+const DUUR = 25;
+const $ = id => document.getElementById(id);
+
+/* ---- tijd en vorm ------------------------------------------------------ */
+const klem = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const tussen = (t, a, b) => klem((t - a) / (b - a));
+const uitKubisch = p => 1 - Math.pow(1 - p, 3);
+const inUit = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const uitTerug = (p, s = 1.9) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+const uitVeer = p => p === 0 || p === 1 ? p
+  : Math.pow(2, -10 * p) * Math.sin((p * 10 - .75) * (2 * Math.PI) / 3) + 1;
+const mix = (a, b, p) => a + (b - a) * p;
+
+// vaste 'toeval': elke keer dezelfde sterrenhemel
+function zaad(s) { return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+const rnd = zaad(20240917);
+const HEMEL = Array.from({ length: 170 }, () => ({
+  x: rnd() * 1920, y: rnd() * 1080, r: .6 + rnd() * 2.1,
+  f: .6 + rnd() * 2.2, fase: rnd() * 6.28, kleur: rnd() < .15 ? '#ffe082' : rnd() < .25 ? '#9fe3ff' : '#fff',
+}));
+const VONKEN = Array.from({ length: 16 }, (_, i) => ({
+  hoek: i / 16 * 6.283 + rnd() * .3, afstand: 260 + rnd() * 200, r: 12 + rnd() * 16,
+  kleur: ['#ffd740', '#ffe082', '#ff80ab', '#9fe3ff'][i % 4], draai: rnd() * 6,
+}));
+const CONFETTI = Array.from({ length: 70 }, () => ({
+  x: rnd() * 1920, v: 180 + rnd() * 260, r: 10 + rnd() * 18, zwaai: 20 + rnd() * 60,
+  fase: rnd() * 6.28, start: rnd() * 1.6, draai: rnd() * 4 - 2,
+  kleur: ['#ffd740', '#ffc23d', '#ff80ab', '#9fe3ff', '#ffffff', '#c59bff'][Math.floor(rnd() * 6)],
+}));
+const SOMMEN = ['3 + 4', '5 − 2', '2 + 2', '6 + 1', '8 − 3', '1 + 5', '9 − 4', '4 + 3', '7 − 5', '2 + 6']
+  .map((s, i) => ({ s, x: 120 + (i * 197) % 1100, y: 1100 + (i * 131) % 500, v: 50 + (i * 37) % 40, fase: i }));
+
+function ster(ctx, x, y, r, draai, vul, rand) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(draai); ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .47 : r;
+    ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  if (rand) { ctx.lineJoin = 'round'; ctx.lineWidth = r * .28; ctx.strokeStyle = rand; ctx.stroke(); }
+  ctx.fillStyle = vul; ctx.fill(); ctx.restore();
+}
+function glinster(ctx, x, y, r, a) { // het vierpuntige sterretje uit het logo
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.fillStyle = '#fff8d8';
+  ctx.shadowColor = '#ffd740'; ctx.shadowBlur = r * 1.5; ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const hk = i * Math.PI / 4, rr = i % 2 ? r * .18 : r;
+    ctx.lineTo(Math.cos(hk) * rr, Math.sin(hk) * rr);
+  }
+  ctx.fill(); ctx.restore();
+}
+
+/* ---- de scènes --------------------------------------------------------- */
+const SCHERMEN = [
+  { img: '01-profielkeuze', wereld: 'muziek', kop: 'Maak je <span class="licht">eigen ster</span>', onder: 'Elk kind kiest een naam, een kleur en een look.' },
+  { img: '02-kaart',        wereld: 'snoep',  kop: 'Speel <span class="licht">shows</span> op de kaart', onder: 'Van halte naar halte, show na show.' },
+  { img: '04-show-rekenen', wereld: 'jungle', kop: 'Tel en reken <span class="licht">op het podium</span>', onder: 'Plussen, minnen en tellen — het publiek juicht mee.' },
+  { img: '05-einde',        wereld: 'piraten', kop: 'Verdien <span class="licht">sterren</span> en diamanten', onder: 'Drie sterren? Het publiek gaat uit zijn dak!' },
+  { img: '06-kleedkamer',   wereld: 'ijs',    kop: 'Kleed je ster aan <span class="licht">voor de show</span>', onder: 'Kleren, hoedjes en instrumenten om te sparen.' },
+];
+const S3 = 8, STAP = 2.4;
+
+function lucht(ctx, t) {
+  ctx.clearRect(0, 0, 1920, 1080);
+  for (const s of HEMEL) {
+    const a = .35 + .45 * (.5 + .5 * Math.sin(t * s.f + s.fase));
+    ctx.globalAlpha = a; ctx.fillStyle = s.kleur;
+    ctx.beginPath(); ctx.arc(s.x, s.y - t * 6 * s.r % 1080, s.r, 0, 6.283); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // zachte gloed in roze en blauw, zoals de achtergrond van het spel
+  const g1 = ctx.createRadialGradient(360, 900, 0, 360, 900, 700);
+  g1.addColorStop(0, 'rgba(255,120,220,.22)'); g1.addColorStop(1, 'rgba(255,120,220,0)');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, 1920, 1080);
+  const g2 = ctx.createRadialGradient(1600, 200, 0, 1600, 200, 700);
+  g2.addColorStop(0, 'rgba(80,200,255,.18)'); g2.addColorStop(1, 'rgba(80,200,255,0)');
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, 1920, 1080);
+}
+
+function voor(ctx, t) {
+  ctx.clearRect(0, 0, 1920, 1080);
+  // scène 1: de vallende ster, met staart
+  const vp = tussen(t, .2, 1.3);
+  if (vp > 0 && vp < 1) {
+    const e = inUit(vp);
+    const pos = p => [mix(-150, 960, p), mix(-120, 490, p) - Math.sin(p * Math.PI) * 180];
+    for (let i = 26; i >= 0; i--) {
+      const q = klem(e - i * .012);
+      const [x, y] = pos(q);
+      ctx.globalAlpha = (1 - i / 27) * .8;
+      ster(ctx, x, y, 30 * (1 - i / 32), q * 8, i ? (i % 3 ? '#ffe082' : '#ff80ab') : '#ffd740');
+    }
+    ctx.globalAlpha = 1;
+    const [x, y] = pos(e);
+    ster(ctx, x, y, 44, e * 8, '#ffd740', '#2a0a55');
+  }
+  // de uitbarsting als het merkteken landt
+  const bp = tussen(t, 1.3, 2.5);
+  if (bp > 0 && bp < 1) {
+    const e = uitKubisch(bp);
+    for (const v of VONKEN) {
+      ctx.globalAlpha = 1 - bp * bp;
+      ster(ctx, 960 + Math.cos(v.hoek) * v.afstand * e, 490 + Math.sin(v.hoek) * v.afstand * e,
+        v.r * (1 - bp * .5), v.draai + bp * 4, v.kleur);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // glinsters rond het logo (scène 1 en 2)
+  if (t > 1.4 && t < 8.2) {
+    const a = t < 7.6 ? 1 : 1 - tussen(t, 7.6, 8.2);
+    const plekken = t < 4.5 ? [[720, 330], [1210, 360], [700, 640], [1230, 690], [960, 240]]
+      : [[400, 330], [1560, 300], [470, 600], [1500, 620], [960, 250], [1180, 820], [720, 820]];
+    plekken.forEach(([x, y], i) => {
+      const k = Math.pow(Math.max(0, Math.sin(t * 2.4 + i * 1.7)), 3);
+      glinster(ctx, x, y, 34 * k + 4, a * k);
+    });
+  }
+  // scène 4: sterrenconfetti
+  if (t > S3 + 5 * STAP) {
+    const lt = t - (S3 + 5 * STAP);
+    for (const c of CONFETTI) {
+      const tt = lt - c.start; if (tt < 0) continue;
+      const y = -40 + tt * c.v;
+      if (y > 1120) continue;
+      ctx.globalAlpha = .9 * (1 - tussen(t, DUUR - .5, DUUR));
+      ster(ctx, c.x + Math.sin(tt * 2 + c.fase) * c.zwaai, y, c.r, c.fase + tt * c.draai, c.kleur);
+    }
+    ctx.globalAlpha = 1;
+    const k = Math.pow(Math.max(0, Math.sin(t * 3)), 4);
+    glinster(ctx, 1480, 200, 40 * k + 4, k);
+    glinster(ctx, 430, 480, 34 * (1 - k) + 4, 1 - k);
+  }
+}
+
+function sommen(ctx, t, zicht) {
+  ctx.clearRect(0, 0, 1920, 1080);
+  if (!zicht) return;
+  ctx.font = '700 44px Fredoka'; ctx.textAlign = 'center';
+  for (const s of SOMMEN) {
+    const y = s.y - (t - S3) * s.v;
+    ctx.globalAlpha = .16 * zicht;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(s.s, s.x + Math.sin(t + s.fase) * 20, y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// de overgang: een gouden ster die het hele beeld vult en weer openvalt
+function wipe(ctx, t, om) {
+  ctx.clearRect(0, 0, 1920, 1080);
+  const p = tussen(t, om - .45, om + .45);
+  if (p <= 0 || p >= 1) return;
+  const r = p < .5 ? inUit(p * 2) * 1500 : 1500;
+  ctx.globalAlpha = p < .5 ? 1 : 1 - inUit((p - .5) * 2);
+  ster(ctx, 960, 540, r, p * 1.4, '#ffc23d', '#2a0a55');
+  ctx.globalAlpha = 1;
+}
+
+function zet(el, zicht, transform = '') {
+  el.style.opacity = zicht;
+  el.style.visibility = zicht > 0.001 ? 'visible' : 'hidden';
+  el.style.transform = transform;
+}
+
+let laatsteKop = -1, laatsteTag = '';
+function render(t) {
+  t = ((t % DUUR) + DUUR) % DUUR;
+  lucht($('lucht').getContext('2d'), t);
+
+  /* scène 1 + 2: merkteken en spelogo */
+  const mIn = tussen(t, 1.3, 2.2), mUit = tussen(t, 4.3, 4.9);
+  const mSchaal = uitVeer(mIn) * mix(1, .35, inUit(mUit));
+  const zweef = Math.sin(t * 2.2) * 10;
+  zet($('mark'), mIn > 0 ? 1 - mUit : 0,
+    `translate(${mix(0, -560, inUit(mUit))}px, ${zweef + mix(0, -250, inUit(mUit))}px) scale(${mSchaal}) rotate(${(1 - uitKubisch(mIn)) * -40 + Math.sin(t * 1.6) * 3}deg)`);
+
+  const wIn = tussen(t, 4.5, 5.4), wUit = tussen(t, 7.6, 8.05);
+  const woord = $('woord');
+  zet(woord, t >= 4.5 && t < 8.05 ? 1 - wUit : 0,
+    `translateY(${zweef * .6 - 60 * uitKubisch(tussen(t, 5.6, 6.2))}px) scale(${mix(.85, 1, uitTerug(wIn)) * (1 + wUit * .2)}) rotate(${Math.sin(t * 1.3) * 1.2}deg)`);
+  woord.style.clipPath = `inset(-10% ${100 - inUit(wIn) * 110}% -10% -10%)`;
+
+  // de ondertitel springt er letter voor letter bij
+  const tag = $('tag');
+  const TAG = 'Tel, reken en word een ster!';
+  if (laatsteTag !== TAG) { tag.innerHTML = [...TAG].map(c => `<span>${c === ' ' ? '&nbsp;' : c}</span>`).join(''); laatsteTag = TAG; }
+  zet(tag, t > 5.6 && t < 8.05 ? 1 - wUit : 0);
+  [...tag.children].forEach((sp, i) => {
+    const p = tussen(t, 5.9 + i * .035, 6.35 + i * .035);
+    sp.style.opacity = p > 0 ? 1 : 0;
+    sp.style.transform = `translateY(${(1 - uitTerug(p, 2.4)) * 50 + Math.sin(t * 4 + i * .5) * 3 * p}px) scale(${mix(.3, 1, uitTerug(p, 2.4))})`;
+  });
+  if (tag.firstChild) {
+    const n = tag.children.length;
+    // "ster!" in goud, de rest licht
+    [...tag.children].forEach((sp, i) => sp.style.color = i >= n - 5 ? '#ffd740' : '#fff4fb');
+  }
+
+  /* scène 3: het echte spel */
+  const inDemo = t >= S3 && t < S3 + 5 * STAP + .5;
+  const demoZicht = t < S3 ? 0 : 1 - tussen(t, S3 + 5 * STAP - .05, S3 + 5 * STAP + .4);
+  const i = klem(Math.floor((t - S3) / STAP), 0, 4);
+  const lt = t - S3 - i * STAP;                // tijd binnen dit scherm
+  const sch = SCHERMEN[i], volgend = SCHERMEN[Math.min(4, i + 1)];
+  ['wereld', 'sluier', 'hoekmerk', 'teller', 'bijschrift', 'onder', 'tel', 'tel2', 'sommen'].forEach(id => $(id).style.visibility = inDemo ? 'visible' : 'hidden');
+  sommen($('sommen').getContext('2d'), t, inDemo ? demoZicht : 0);
+  if (inDemo) {
+    const w = $('wereld'), w2 = $('wereld2');
+    w.style.backgroundImage = `url(../assets/world/${sch.wereld}-map.webp)`;
+    w.style.opacity = demoZicht;
+    w.style.transform = `scale(${1.08 + lt * .02}) translateX(${-lt * 8}px)`;
+    // de volgende wereld vloeit er aan het eind van elk scherm al in
+    const over = i < 4 ? tussen(lt, STAP - .5, STAP) : 0;
+    w2.style.backgroundImage = `url(../assets/world/${volgend.wereld}-map.webp)`;
+    zet(w2, over * demoZicht, `scale(1.08)`);
+    $('sluier').style.opacity = demoZicht;
+    zet($('hoekmerk'), demoZicht, `rotate(${Math.sin(t * 2) * 4}deg)`);
+
+    if (laatsteKop !== i) {
+      $('bijschrift').innerHTML = sch.kop; $('onder').textContent = sch.onder;
+      $('teller').innerHTML = `<b>${i + 1}</b>/ 5`;
+      $('nu').src = `beelden/${sch.img}.jpg`;
+      $('straks').src = `beelden/${volgend.img}.jpg`;
+      $('tel2').firstChild.src = `beelden/${i < 4 ? volgend.img : '02b-tournee'}.jpg`;
+      laatsteKop = i;
+    }
+    const kIn = uitTerug(tussen(lt, .05, .5)), kUit = inUit(tussen(lt, STAP - .35, STAP));
+    const laatsteUit = i === 4 ? 0 : kUit;
+    zet($('bijschrift'), klem(kIn) * (1 - laatsteUit) * demoZicht, `translateX(${(1 - kIn) * -120 + laatsteUit * -60}px)`);
+    zet($('onder'), tussen(lt, .3, .7) * (1 - laatsteUit) * demoZicht, `translateY(${(1 - uitKubisch(tussen(lt, .3, .7))) * 30}px)`);
+    zet($('teller'), demoZicht, `scale(${1 + .15 * Math.max(0, 1 - lt * 4)})`);
+
+    // de telefoon: bij de eerste komt hij binnen, daarna schuift het scherm
+    const binnen = uitTerug(tussen(t, S3, S3 + .8), 1.2);
+    const bob = Math.sin(t * 1.8) * 12;
+    zet($('tel'), demoZicht, `translate(${(1 - binnen) * 900}px, ${bob}px) rotate(${mix(12, -3, binnen) + Math.sin(t * 1.1)}deg)`);
+    const schuif = i < 4 ? inUit(tussen(lt, STAP - .45, STAP)) : 0;
+    $('nu').style.transform = `translateX(${-schuif * 390}px)`;
+    $('straks').style.transform = `translateX(${(1 - schuif) * 390}px)`;
+    const binnen2 = uitTerug(tussen(t, S3 + .35, S3 + 1.2), 1.2);
+    zet($('tel2'), demoZicht * .9, `translate(${(1 - binnen2) * 700}px, ${-bob * .7}px) rotate(${mix(20, 7, binnen2)}deg) scale(.96)`);
+  } else {
+    zet($('wereld2'), 0);
+  }
+
+  /* scène 4: eindkaart */
+  const E = S3 + 5 * STAP;
+  const eIn = tussen(t, E + .1, E + 1.0);
+  zet($('eindwoord'), t > E ? 1 - tussen(t, DUUR - .5, DUUR) : 0,
+    `translateY(${Math.sin(t * 2) * 8}px) scale(${uitVeer(eIn) * .98 + .02})`);
+  const pillen = $('pillen');
+  zet(pillen, t > E ? 1 - tussen(t, DUUR - .5, DUUR) : 0);
+  [...pillen.children].forEach((p, k) => {
+    const q = uitTerug(tussen(t, E + .9 + k * .18, E + 1.4 + k * .18));
+    p.style.opacity = klem(q * 2); p.style.transform = `translateY(${(1 - q) * 60}px)`;
+  });
+  const kq = uitVeer(tussen(t, E + 1.7, E + 2.6));
+  const puls = 1 + .04 * Math.max(0, Math.sin((t - E - 2.6) * 5)) * (t > E + 2.6);
+  zet($('knop'), t > E + 1.7 ? 1 - tussen(t, DUUR - .5, DUUR) : 0, `scale(${kq * puls})`);
+
+  voor($('voor').getContext('2d'), t);
+  wipe($('wipe').getContext('2d'), t, S3);
+  // korte witte flits waar het merkteken landt
+  $('flits').style.opacity = .55 * (1 - tussen(t, 1.3, 1.65)) * (t >= 1.3);
+}
+window.render = render;
+window.DUUR = DUUR;
+
+/* ---- schalen naar het venster, en afspelen tenzij render.js het stuur heeft */
+function pas() {
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  const st = $('stage');
+  st.style.transform = `scale(${s})`;
+  st.style.margin = `0 ${1920 * (s - 1)}px ${1080 * (s - 1)}px 0`;
+}
+const opname = location.search.includes('opname');
+if (!opname) {
+  addEventListener('resize', pas); pas();
+  const t0 = performance.now();
+  (function speel(nu) { render((nu - t0) / 1000); requestAnimationFrame(speel); })(t0);
+} else {
+  render(0);
+}
+</script>
+</body>
+</html>
