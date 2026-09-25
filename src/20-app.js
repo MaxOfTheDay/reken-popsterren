@@ -43,6 +43,7 @@
    ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
      Schermen ........... show()/navGo()/toonHub: welk scherm staat aan
      De sterrenkeuze leeft   het beginscherm: zwaaien, vonkjes, ster kiezen
+     Het spelogo komt binnen   de korte logo-intro bij het opstarten
      De kaart: welke wereld   STAAT IN src/15-kaart-en-weg.js. De rékenkant
                           van de kaart: haltes, weg, streeppatroon,
                           viewWorldIdx/showWorld. De kaart, de reis én de
@@ -2565,7 +2566,7 @@ function show(id) {
   // De begroeting van de kaart hoort bij de kaart -- zie kaartGroetStop.
   if (id !== 'screen-map') kaartGroetStop();
   // en die van de sterrenkeuze bij de sterrenkeuze -- zie landingStil.
-  if (id !== 'screen-profile') landingStil();
+  if (id !== 'screen-profile') { landingStil(); logoIntroStop(); }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -2927,6 +2928,277 @@ function maxVonkje(plek, hoek, ver, duur, maat) {
    een toestel en als de adresbalk van Android wegschuift. */
 if ($('max-plek')) $('max-plek').addEventListener('pointerdown', maxTik);
 addEventListener('resize', maxPlekZet);
+
+/* ================= Het spelogo komt binnen =================
+   Eén keer per start, en alleen hier: het logo bouwt zichzelf op. De R staat er
+   met de ster tegen zijn been (zoals in het merkteken), duikt even in, en de ster
+   springt in een boog naar zijn plek boven "sterren". Onder hem door ploppen de
+   letters één voor één op, en wat rechts van zijn landingsplek staat rimpelt
+   daarna naar buiten; als laatste veegt de zwaai eronder open. Ruim anderhalve
+   seconde. Het promofilmpje (promo/promo.html) doet hetzelfde in het groot.
+
+   HET LOGO IN LAGEN. assets/branding/logo-lagen.webp is het spelogo in veertien
+   delen onder elkaar -- de R, elke letter los, de ster en de zwaai -- geknipt
+   uit dezelfde meester als wordmark.webp (zie test/lagen.js en LOGO_DELEN). Ze
+   overlappen niet, dus op hun plek gelegd zijn ze het logo zelf. Daarom is er aan
+   het eind niets te wisselen: het echte logo komt terug op precies dezelfde
+   pixels. Eén bestand en niet vijf: de sterrenkeuze haalt zo drie vaste beelden
+   op en geen zeven (zie de grens in test/rondgang.test.js).
+
+   WAT HET NIET MAG:
+     - iets tegenhouden. De tegels doen het meteen, en élke tik -- waar dan ook --
+       maakt de intro af: het logo staat er dan in één keer, heel.
+     - de kop wegnemen. Het logo is de <h1> van dit scherm en blijft dat: het
+       wordt alleen onzichtbaar gemaakt (opacity, geen visibility of display,
+       dus een schermlezer leest "Rekensterren" gewoon). Wat er beweegt is
+       aria-hidden en vangt geen tikken.
+     - spelen bij wie geen beweging wil. Dan gebeurt er niets en staat het logo
+       er zoals altijd.
+     - spelen onder ?debug, tenzij er &intro bij staat. De tests en npm run shots
+       kijken naar het scherm zoals het blijft, niet naar de eerste seconden.
+     - wachten op het netwerk. Het lagenblad staat onder assets/ en komt dus na
+       de eerste keer uit de voorraad (zie sw.js). Is het er niet op tijd, dan
+       valt de intro weg en verschijnt het logo gewoon.
+
+   De plekken hieronder zijn in pixels van wordmark.webp (1080x360). */
+/* Het lagenblad: zijn maat, en per deel [naam, x0, y0, x1, y1, bx, by] -- de
+   rechthoek waar het deel in het logo staat (in pixels van het logo, 1080x360),
+   en waar diezelfde rechthoek in het blad begint. Niet met de hand bijwerken:
+   npm run lagen rekent hem uit en zegt het als hij hier niet meer klopt. */
+const LOGO_DELEN = {"blad":[1080,647],"delen":[["r",80,58,373,288,0,296],["e1",231,128,317,236,268,528],["k",304,72,426,257,295,296],["e2",377,126,457,233,356,528],["n1",442,119,536,238,949,296],["s",519,99,600,247,419,296],["t",588,130,654,243,200,528],["e3",632,114,714,236,865,296],["r1",704,113,790,241,622,296],["r2",750,128,848,246,100,528],["e4",804,141,902,260,0,528],["n2",871,154,989,291,502,296],["ster",526,27,679,153,710,296],["zwaai",45,34,1031,328,0,0]]};
+const LOGO_INTRO = {
+  rMidden: [165, 165],         // midden van de R: daar ploft en wipt hij om
+  ster: [616, 103],            // middelpunt van de ster in het logo
+  sterBijR: [266, 208],        // en waar hij begint: tegen het been van de R
+  sterBegin: .9,               // en hoe groot dan, tegenover zijn eindmaat
+  boog: .17,                   // hoe hoog de ster springt, in logobreedtes
+  // de tijdlijn, in ms. De letters hebben geen vaste tijd: een letter links van
+  // de landingsplek plopt op zodra de ster over hem heen is (voor: hoeveel
+  // pixels erna), die rechts ervan rimpelen na de landing naar buiten.
+  //
+  // Ruim anderhalve seconde. De vlucht is het verhaal en blijft ruim (een kind
+  // van vijf moet de ster kunnen volgen); de staart na de landing is afronding en
+  // is kort gehouden -- dit speelt bij élke start, en de poppen op de tegels
+  // beginnen al na een halve seconde te zwaaien.
+  plof: 450, wip: [440, 640], sprong: [550, 1150],
+  voor: 30, rimpel: .5, letter: 360, zwaai: [-100, 350], na: 550,
+  overname: 200,               // de laatste zoveel ms: het echte logo neemt het over
+  // Tot hoe lang na het openen van de pagina de intro nog mag beginnen. Het logo
+  // staat vanaf het eerste beeld verstopt (class intro-wacht in de opmaak); is het
+  // lagenblad er dan nog niet, dan gaat de intro niet door en verschijnt het logo
+  // gewoon. De CSS laat het na 1,2 s hoe dan ook zien -- ook als dit script nooit
+  // draait -- en dit moet daar dus vóór liggen.
+  uiterlijk: 1000,
+  // En als er bij het opstarten al minder dan zoveel over is, begint hij er niet
+  // eens aan -- ook het blad wordt dan niet opgehaald. Nagemeten op een trage
+  // eerste keer (3G, trage tablet): dit script draait dan pas na bijna drie
+  // seconden, en een blad dat dán nog binnenkomt concurreert met het logo zelf,
+  // dat daardoor vier seconden later verscheen. Om dezelfde reden staat er geen
+  // <link rel="preload"> voor het blad in de <head>: die haalde het eerste beeld
+  // een halve seconde naar achteren, en bij een gewone start (uit de voorraad) won
+  // hij niets.
+  minstens: 300,
+};
+let logoIntroLoopt = null;   // { stop } zolang hij loopt
+
+// ?debug&intro: speel hem hoe dan ook, ook als de pagina er te lang over deed. Voor
+// de tests en voor opnames met een stilgezette klok -- die gaan over wat de intro
+// doet, niet over hoe snel de machine toevallig was.
+function logoIntroGedwongen() {
+  return location.search.indexOf('debug') !== -1 && location.search.indexOf('intro') !== -1;
+}
+function logoIntroMag() {
+  if (motionOff()) return false;
+  if (location.search.indexOf('debug') !== -1 && location.search.indexOf('intro') === -1) return false;
+  return !document.hidden && !!document.querySelector('#screen-profile.active .spellogo img');
+}
+function logoIntro() {
+  const kop = document.querySelector('#screen-profile .spellogo');
+  if (!kop) return;
+  /* Het logo staat al vanaf de opmaak op wachten (<h1 class="spellogo
+     intro-wacht">). Dat moet daar en niet pas hier: index.html is groot, en een
+     trage tablet schildert het scherm al vóórdat dit script aan de beurt is. Stond
+     het wachten hier, dan zag je het logo eerst heel, dan weg, en dan opgebouwd. */
+  const uiterlijk = logoIntroGedwongen() ? Infinity : LOGO_INTRO.uiterlijk;
+  if (!logoIntroMag() || performance.now() > uiterlijk - LOGO_INTRO.minstens) {
+    kop.classList.remove('intro-wacht');
+    return;
+  }
+  const woord = kop.querySelector('img');
+
+  const laag = document.createElement('div');
+  laag.className = 'logo-intro';
+  laag.setAttribute('aria-hidden', 'true');
+  // Elk deel is een vak op zijn eigen plek in het logo, met het blad erin zo
+  // verschoven dat precies zijn eigen stuk in het vak valt (de maten zet
+  // logoIntroSpeel, die kent de schaal). Een <img> en geen CSS-achtergrond:
+  // <img>'s met hetzelfde adres delen één download, een achtergrond haalt het blad
+  // nóg een keer op (zie rondgang).
+  const blad = new Image();
+  blad.src = 'assets/branding/logo-lagen.webp';
+  const delen = {};
+  LOGO_DELEN.delen.forEach(([naam]) => {
+    const d = document.createElement('div');
+    d.className = 'li-laag li-' + naam;
+    const b = new Image();
+    b.alt = ''; b.src = blad.src;
+    d.appendChild(b);
+    delen[naam] = d;
+  });
+  // van onder naar boven: de zwaai onder alles, dan de letters, de ster erbovenop
+  laag.appendChild(delen.zwaai);
+  LOGO_DELEN.delen.forEach(([n]) => { if (n !== 'zwaai' && n !== 'ster') laag.appendChild(delen[n]); });
+  laag.appendChild(delen.ster);
+
+  let raf = 0, klaar = false;
+  function stop() {
+    if (klaar) return;
+    klaar = true;
+    cancelAnimationFrame(raf);
+    clearTimeout(wacht);
+    laag.remove();
+    kop.classList.remove('intro-wacht');
+    woord.style.animation = '';
+    removeEventListener('pointerdown', stop, true);
+    removeEventListener('resize', stop);
+    document.removeEventListener('visibilitychange', stop);
+    logoIntroLoopt = null;
+  }
+  logoIntroLoopt = { stop };
+  addEventListener('pointerdown', stop, true);
+  addEventListener('resize', stop);
+  document.addEventListener('visibilitychange', stop);
+
+  const wacht = setTimeout(stop, uiterlijk === Infinity ? 5000 : Math.max(0, uiterlijk - performance.now()));
+  const binnen = el => el.decode ? el.decode() : new Promise((ok, nee) => { el.onload = ok; el.onerror = nee; });
+  Promise.all([binnen(woord), binnen(blad)]).then(() => {
+    if (klaar) return;
+    clearTimeout(wacht);
+    if (!logoIntroMag() || !woord.offsetWidth || performance.now() > uiterlijk) return stop();
+    woord.style.animation = 'none';           // het vangnet in de CSS: nu hebben wij het
+    kop.appendChild(laag);
+    logoIntroSpeel(woord, laag, delen, stop, f => { raf = f; });
+  }, stop);
+}
+function logoIntroStop() { if (logoIntroLoopt) logoIntroLoopt.stop(); }
+
+function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
+  const L = LOGO_INTRO;
+  // De laag ligt precies over het logo, en elk deel beslaat de hele laag. Gemeten
+  // met getBoundingClientRect en niet met offsetWidth/-Left: die ronden af op
+  // hele pixels, het logo zelf niet -- en dan staat het opgebouwde logo tot een
+  // halve pixel naast het echte, en schokt het als dat het aan het eind overneemt.
+  const vakLogo = woord.getBoundingClientRect(), vakKop = laag.parentNode.getBoundingClientRect();
+  const W = vakLogo.width, k = W / 1080;       // één pixel van het logo -> scherm
+  laag.style.left = (vakLogo.left - vakKop.left) + 'px'; laag.style.top = (vakLogo.top - vakKop.top) + 'px';
+  laag.style.width = W + 'px'; laag.style.height = vakLogo.height + 'px';
+  // elk deel op zijn plek, met zijn stuk van het blad erin
+  const vak = {};
+  LOGO_DELEN.delen.forEach(([naam, x0, y0, x1, y1, bx, by]) => {
+    vak[naam] = [x0, y0];
+    const d = delen[naam], b = d.firstChild;
+    d.style.left = x0 * k + 'px'; d.style.top = y0 * k + 'px';
+    d.style.width = (x1 - x0) * k + 'px'; d.style.height = (y1 - y0) * k + 'px';
+    b.style.left = -bx * k + 'px'; b.style.top = -by * k + 'px';
+    b.style.width = LOGO_DELEN.blad[0] * k + 'px';
+  });
+  // een draaipunt, in pixels van het logo, omgerekend naar het vak van dat deel
+  const oorsprong = (naam, [x, y]) => (x - vak[naam][0]) * k + 'px ' + (y - vak[naam][1]) * k + 'px';
+  delen.r.style.transformOrigin = oorsprong('r', L.rMidden);
+  delen.ster.style.transformOrigin = oorsprong('ster', L.ster);
+
+  const tussen = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+  const mix = (a, b, p) => a + (b - a) * p;
+  // Zachte krommes: een sinus in en uit voor alles wat reist, en hooguit één
+  // kleine doorschieter voor wat erbij komt. Geen verende nazwiep -- die las als
+  // schokken.
+  const zacht = p => -(Math.cos(Math.PI * p) - 1) / 2;
+  const terug = (p, s) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+  const uit = p => 1 - Math.pow(1 - p, 3);
+
+  // de sprong: waar de ster is op elk moment van zijn vlucht
+  // waar de ster begint, als verschuiving vanaf zijn eindplek: tegen het been
+  // van de R, en daar groeit hij mee met de R -- om het midden van de R, niet om
+  // zijn eindplek. (Eerst groeide de verschuiving mee vanaf nul, en dan vloog de
+  // ster in het begin vanaf "sterren" naar de R toe.)
+  const bijR = p => [(L.rMidden[0] + (L.sterBijR[0] - L.rMidden[0]) * p - L.ster[0]) * k,
+                     (L.rMidden[1] + (L.sterBijR[1] - L.rMidden[1]) * p - L.ster[1]) * k];
+  const sterX = t => L.sterBijR[0] + (L.ster[0] - L.sterBijR[0]) * zacht(tussen(t, L.sprong[0], L.sprong[1]));
+  const land = L.sprong[1];
+  // wanneer elke letter opkomt: links van de landing als de ster over hem heen
+  // is, rechts ervan in een rimpel na de landing
+  const letters = LOGO_DELEN.delen.filter(([n]) => n !== 'r' && n !== 'ster' && n !== 'zwaai').map(([n, x0, y0, x1, y1], i) => {
+    const midden = (x0 + x1) / 2;
+    let op = land - 60;
+    if (midden + L.voor < L.ster[0]) {
+      for (let t = L.sprong[0]; t < land; t += 5) if (sterX(t) >= midden + L.voor) { op = t; break; }
+    } else if (midden > L.ster[0]) op = land + (midden - L.ster[0]) * L.rimpel;
+    delen[n].style.transformOrigin = oorsprong(n, [midden, y1]);   // ze groeien uit hun voet
+    return { el: delen[n], op, hoog: (y1 - y0) * k, kant: i % 2 ? 1 : -1 };   // om en om een kant op
+  });
+  const klaar = land + L.na;
+  let geland = false;
+
+  const t0 = performance.now();
+  function beeld(nu) {
+    const t = nu - t0;
+    if (t >= klaar) return stop();
+    /* 5. De overname. Het echte logo gaat eronder aan en de lagen lossen erboven
+       op. Dat is geen overvloeier tussen twee tekeningen -- het is twee keer
+       dezelfde, op dezelfde pixels -- maar de browser schaalt het hoge lagenblad
+       nét iets anders dan wordmark.webp, en een harde wissel liet dat zien als
+       een trilling op het laatste moment. Zo glijdt dat verschil weg. */
+    const over = tussen(t, klaar - L.overname, klaar);
+    if (over > 0) { laag.parentNode.classList.remove('intro-wacht'); laag.style.opacity = 1 - over; }
+    // 1. de R met de ster ertegen komt op, met één kleine doorschieter
+    const p = terug(tussen(t, 0, L.plof), 1.4);
+    // en duikt even in elkaar vlak voor de sprong, alsof hij de ster wegschiet
+    const wip = Math.sin(tussen(t, L.wip[0], L.wip[1]) * Math.PI);
+    delen.r.style.transform = `scale(${p * (1 + .05 * wip)}, ${p * (1 - .08 * wip)})`;
+    // 2. de ster springt in een boog naar zijn plek, en draait een keer rond
+    const vl = zacht(tussen(t, L.sprong[0], L.sprong[1]));
+    // Hij landt zonder na te veren: de sinus-kromme brengt hem al zacht tot
+    // stilstand, en een platdrukken erbovenop las als trillen. De draai eindigt
+    // op precies een hele slag (-12 -> -360 = 0 graden), zodat hij rechtop staat
+    // zoals in het logo -- anders sprong hij recht als het echte logo het
+    // overnam.
+    const sch = mix(L.sterBegin * p, 1, vl) * (1 + .22 * Math.sin(vl * Math.PI));
+    const [bx, by] = bijR(p);
+    const dx = mix(bx, 0, vl), dy = mix(by, 0, vl) - Math.sin(vl * Math.PI) * L.boog * W;
+    delen.ster.style.transform = `translate(${dx}px, ${dy}px) rotate(${mix(-12, -360, vl)}deg) scale(${sch})`;
+    if (!geland && t >= land) { geland = true; logoIntroVonken(laag, [L.ster[0] * k, L.ster[1] * k]); }
+    // 3. de letters, één voor één: uit hun voet omhoog, met een klein kantelje
+    for (const l of letters) {
+      const q = tussen(t, l.op, l.op + L.letter);
+      l.el.style.visibility = q > 0 ? 'visible' : 'hidden';
+      l.el.style.transform = `translateY(${(1 - uit(q)) * .25 * l.hoog}px) rotate(${(1 - uit(q)) * 8 * l.kant}deg) scale(${terug(q, 1.6)})`;
+    }
+    // 4. de zwaai veegt eronder open, met een zachte rand
+    const z = zacht(tussen(t, land + L.zwaai[0], land + L.zwaai[1])) * 108;
+    delen.zwaai.style.visibility = z > 0 ? 'visible' : 'hidden';
+    delen.zwaai.style.webkitMaskImage = delen.zwaai.style.maskImage = z >= 108 ? ''
+      : `linear-gradient(90deg, #000 ${z - 8}%, transparent ${z}%)`;
+    zetRaf(requestAnimationFrame(beeld));
+  }
+  // Het eerste beeld meteen, niet pas bij het volgende frame: anders staan de
+  // delen één frame lang onbewerkt op het scherm -- en dat is het hele logo.
+  beeld(t0);
+}
+// Een handvol sterretjes waar de ster landt. Dezelfde vonk als bij de MAX-ster.
+function logoIntroVonken(laag, [x, y]) {
+  for (let i = 0; i < 6; i++) {
+    const v = document.createElement('span');
+    v.className = 'li-vonk';
+    v.textContent = '✦';
+    const hoek = (200 + i * 28) * Math.PI / 180, ver = rnd(22, 40);
+    v.style.left = x + 'px'; v.style.top = y + 'px';
+    v.style.setProperty('--dx', Math.round(Math.cos(hoek) * ver) + 'px');
+    v.style.setProperty('--dy', Math.round(Math.sin(hoek) * ver) + 'px');
+    v.style.setProperty('--rot', rnd(-120, 120) + 'deg');
+    v.style.fontSize = rnd(9, 14) + 'px';
+    laag.appendChild(v);
+  }
+}
 
 function goProfiles() {
   /* Een klaarliggende reis hoort bij de ster die hem verdiend heeft. Ging het kind
@@ -10459,6 +10731,9 @@ renderProfiles();
 // goProfiles() langs om de begroeting aan te zwengelen. Brengt ?debug je meteen
 // ergens anders heen, dan zet show() hem hieronder net zo goed weer stil.
 landingLeeft();
+// Alleen hier, bij het opstarten -- niet bij elke terugkeer naar dit scherm. Zie
+// "= Het spelogo komt binnen".
+logoIntro();
 syncBackGuard();
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
@@ -10471,6 +10746,9 @@ syncBackGuard();
                         niets opgeslagen, dus een echte familie-opslag op
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
+   &intro            -- speel de logo-intro toch af (onder ?debug staat hij uit,
+                        zie "= Het spelogo komt binnen"), en dan ook als de
+                        pagina er te lang over deed
    &wereld=<n>       -- open meteen in wereld n (1 = de eerste). Zet een
                         samenhangende stand neer -- alles ervóór uitgespeeld --
                         en grendelt de opslag, dus ook op een echte ster wordt

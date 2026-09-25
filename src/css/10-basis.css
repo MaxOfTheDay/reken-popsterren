@@ -414,4 +414,38 @@
     height: auto;
     object-fit: contain;
   }
+  /* ---- Het spelogo komt binnen ------------------------------------------
+     De intro bij het opstarten (zie "= Het spelogo komt binnen" in de JS). Het
+     logo zelf gaat zolang op opacity 0 en niet op visibility: zo blijft de kop
+     voor een schermlezer gewoon staan. Wat er beweegt ligt in .logo-intro, een
+     laag precies over het logo die niets vangt; de maten zet de JS, want die
+     hangen aan hoe breed het logo op dít scherm uitvalt.
+
+     Elk deel is een vak op zijn eigen plek in het logo, met het hele lagenblad
+     erin, zo verschoven dat alleen zijn eigen stuk in het vak valt; wat
+     erbuiten valt knipt overflow weg. Plekken en maten zet de JS.
+
+     HET WACHTEN STAAT IN DE OPMAAK: <h1 class="spellogo intro-wacht">, zodat het
+     logo vanaf het allereerste beeld verstopt is en niet eerst heel verschijnt
+     en dan pas weggaat. Twee vangnetten, want een verstopte naam mag nooit
+     blijven hangen:
+       - introVangnet: na 1,2 s komt het logo hoe dan ook tevoorschijn, ook als
+         het script nooit draait. De JS zet dit uit zodra de intro echt begint,
+         en beslist zelf al vóór 1 s (LOGO_INTRO.uiterlijk).
+       - bij beperkte beweging wordt er niets verstopt (onderaan). */
+  .spellogo.intro-wacht > img { opacity: 0; animation: introVangnet 0s 1.2s forwards; }
+  @keyframes introVangnet { to { opacity: 1; } }
+  .logo-intro { position: absolute; pointer-events: none; z-index: 2; }
+  .logo-intro .li-laag { position: absolute; overflow: hidden; will-change: transform; }
+  .logo-intro .li-laag img { position: absolute; height: auto; max-width: none; }
+  .logo-intro .li-vonk {
+    position: absolute; line-height: 1; opacity: 0;
+    color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);
+    animation: maxVonk 700ms cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  /* De JS begint er bij beperkte beweging niet aan; dit is het slot op de deur. */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-intro { display: none; }
+    .spellogo.intro-wacht > img { opacity: 1; animation: none; }
+  }
 

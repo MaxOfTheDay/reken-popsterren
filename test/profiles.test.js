@@ -2620,6 +2620,62 @@ function check(ok, label, detail) {
     await stilCtx.close();
   }
 
+  /* ================= Het spelogo komt binnen =================
+     De intro bij het opstarten (zie "= Het spelogo komt binnen" in de app). Wat
+     hier nagekeken wordt is niet hoe hij eruitziet maar wat hij níet mag: iets
+     tegenhouden, de kop wegnemen, of blijven hangen. */
+  {
+    const staat = page => page.evaluate(() => {
+      const kop = document.querySelector('#screen-profile .spellogo');
+      const img = kop.querySelector('img'), cs = getComputedStyle(img);
+      return { laag: !!document.querySelector('.logo-intro'), wacht: kop.classList.contains('intro-wacht'),
+               loopt: !!logoIntroLoopt, alt: img.alt, zicht: cs.visibility, weer: cs.display,
+               schoon: !img.style.transform && !img.style.maskImage && !img.style.webkitMaskImage };
+    });
+    const heel = s => !s.laag && !s.wacht && !s.loopt && s.schoon;
+
+    // onder ?debug (dus in elke andere suite) speelt hij niet
+    const c1 = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(c1);
+    const p1 = await c1.newPage();
+    await p1.goto(APP_URL);
+    await p1.waitForTimeout(150);
+    const zonder = await staat(p1);
+    check(heel(zonder), 'onder ?debug speelt de logo-intro niet', JSON.stringify(zonder));
+
+    // met &intro wel -- en de kop blijft een kop
+    await p1.goto(APP_URL + '&intro');
+    await p1.waitForTimeout(250);
+    const bezig = await staat(p1);
+    check(bezig.loopt && bezig.laag, 'met &intro speelt de logo-intro', JSON.stringify(bezig));
+    check(bezig.alt === 'Rekensterren' && bezig.zicht === 'visible' && bezig.weer !== 'none',
+      'tijdens de intro blijft het logo de kop, leesbaar voor een schermlezer', JSON.stringify(bezig));
+    const vangt = await p1.evaluate(() => getComputedStyle(document.querySelector('.logo-intro')).pointerEvents);
+    check(vangt === 'none', 'wat er beweegt vangt geen tikken', vangt);
+
+    // een tik, waar dan ook, maakt hem af: het logo staat er meteen heel
+    await p1.evaluate(() => document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+    const getikt = await staat(p1);
+    check(heel(getikt), 'een tik maakt de logo-intro meteen af', JSON.stringify(getikt));
+
+    // en wie niets doet, ziet hem vanzelf ophouden
+    await p1.goto(APP_URL + '&intro');
+    await p1.waitForTimeout(3200);   // de intro duurt ruim twee seconden, plus het laden
+    const af = await staat(p1);
+    check(heel(af), 'de logo-intro ruimt zichzelf op', JSON.stringify(af));
+    await c1.close();
+
+    // wie geen beweging wil, krijgt hem nooit -- ook niet met &intro
+    const c2 = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await cacheFonts(c2);
+    const p2 = await c2.newPage();
+    await p2.goto(APP_URL + '&intro');
+    await p2.waitForTimeout(150);
+    const stil = await staat(p2);
+    check(heel(stil), 'zonder beweging geen logo-intro', JSON.stringify(stil));
+    await c2.close();
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */

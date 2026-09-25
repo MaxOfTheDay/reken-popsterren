@@ -27,7 +27,7 @@ opent, ook vanaf `file://`.
 | `manifest.json` | PWA-gegevens (naam, iconen, kleuren) |
 | `assets/world/*.webp` | de wereldtekeningen |
 | `assets/font/` | het lettertype (Fredoka) en zijn licentie. De app haalt niets van buiten |
-| `assets/branding/` | het merk: het spelogo en het merkteken. De meesters staan in `source/`, de app laadt de afgeleiden ernaast (`npm run merk`) |
+| `assets/branding/` | het merk: het spelogo, het merkteken en het spelogo in lagen (voor de logo-intro). De meesters staan in `source/`, de app laadt de afgeleiden ernaast (`npm run merk`, `npm run lagen`) |
 | `icon-*.png` | de app-iconen, ook uit `npm run merk` |
 | `test/` | de keuringen, de browsertests én de Dev Studio (zie `docs/TESTEN.md`) |
 | `DEV-STUDIO.md` | starten, takken en PR's testen, werelden nakijken |
@@ -45,6 +45,7 @@ npm run check                  # de keuringen (Node, ± 2 seconden)
 npm test                       # alles, inclusief echte Chromium (minuten)
 npm run preview                # dezelfde server, zonder zelf een venster te openen
 npm run merk                   # de merkbestanden opnieuw uit hun meesters
+npm run lagen                  # het spelogo in lagen, voor de logo-intro (zie test/lagen.js)
 npm run achtergrondproef       # houdt de voorgrond het als de tekening verandert?
 ```
 
