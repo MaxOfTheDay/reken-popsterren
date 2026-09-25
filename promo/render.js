@@ -16,7 +16,8 @@ const { spawn } = require('child_process');
 const { launch } = require('../test/browser.js');
 
 const [naam = 'promo', van = '0', tot = '26'] = process.argv.slice(2);
-const FPS = 30;
+// 60 beelden per seconde: bij 30 hakte de draaiende ster zichtbaar
+const FPS = +process.env.FPS || 60;
 const OUT = path.join(__dirname, `rekensterren-${naam}.mp4`);
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 
