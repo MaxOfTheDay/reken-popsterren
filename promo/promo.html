@@ -14,10 +14,10 @@
   geeft altijd hetzelfde beeld.
 
   Scènes:
-    0.0 -  4.2  vallende ster, het merkteken ploft erin
-    4.2 -  6.4  het merkteken wordt het spelogo: zijn R schuift op de R van
-                het woord en draait om als een munt, zijn ster springt weg
-                naar de ster boven "sterren"
+    0.0 -  4.2  vallende ster, de R met zijn ster ploft erin
+    4.2 -  6.4  het logo bouwt zichzelf op: de R schuift naar zijn plek, de
+                ster springt naar zijn plek boven "sterren", de letters en de
+                zwaai komen erbij (het logo in lagen, zie test/lagen.js)
     6.4 -  9.0  de ondertitel springt erbij
     9.0 - 21.0  vijf schermen uit het echte spel in een telefoon
    21.0 - 26.0  eindkaart met het adres
@@ -55,21 +55,16 @@
   }
   .kop .licht { color: #fff4fb; }
 
-  /* scène 1 en 2 */
-  #mark { width: 420px; left: 750px; top: 280px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45));
-    /* met een gat waar de ster zit: die staat los in #merkster erboven, en als de R
-       omdraait moet hij geen tweede ster meenemen */
-    clip-path: polygon(evenodd, -20% -20%, 120% -20%, 120% 120%, -20% 120%, -20% -20%, 75.0% 41.4%, 79.5% 49.8%, 88.3% 53.9%, 81.4% 59.0%, 81.1% 68.8%, 72.7% 63.9%, 62.9% 66.8%, 65.2% 58.0%, 59.8% 51.2%, 69.7% 49.2%, 75.0% 41.4%, -20% -20%); }
-  /* de schaduw zit op het vak eromheen, zodat het masker van de veeg hem niet afknipt */
-  #woordvak { left: 370px; top: 240px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
-  #woord { display: block; width: 1180px; }
-  /* de ster van het merkteken, los geknipt: dezelfde tekening, maar alleen
-     de ster. Hij staat met zijn middelpunt op (0,0) en wordt met translate op
-     zijn plek gezet -- zie MERK in het script. */
-  #merkster {
-    width: 420px; left: -308.4px; top: -237.1px; transform-origin: 308.4px 237.1px;
-    clip-path: polygon(75.2% 39.3%, 80.2% 49.0%, 90.4% 53.6%, 82.4% 59.3%, 82.1% 70.5%, 72.6% 64.8%, 61.4% 68.2%, 64.2% 58.2%, 57.9% 50.4%, 69.3% 48.4%);
-  }
+  /* scène 1 en 2: het logo in lagen (zie test/lagen.js). Vijf vlakken zo groot
+     als het logo, elk met het lagenblad als achtergrond op een andere hoogte. Op
+     elkaar gelegd zijn ze het logo zelf -- er hoeft nergens gewisseld te worden. */
+  #logo { left: 370px; top: 240px; width: 1180px; height: 393.3px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
+  #logo .laag { position: absolute; inset: 0; background: url('../assets/branding/logo-lagen.webp') no-repeat; background-size: 100% 500%; }
+  #l-r { background-position: 0 0 !important; }
+  #l-eken { background-position: 0 25% !important; }
+  #l-sterren { background-position: 0 50% !important; }
+  #l-ster { background-position: 0 75% !important; }
+  #l-zwaai { background-position: 0 100% !important; }
   #tag { left: 0; right: 0; top: 700px; text-align: center; font-size: 76px; }
   #tag span { display: inline-block; }
 
@@ -141,9 +136,10 @@
   <div id="tel2"><img alt=""></div>
   <div id="tel"><div id="scherm"><img id="nu" alt=""><img id="straks" alt=""></div></div>
 
-  <img id="mark" src="../assets/branding/mark.webp" alt="">
-  <div id="woordvak"><img id="woord" src="../assets/branding/wordmark.webp" alt="Rekensterren"></div>
-  <img id="merkster" src="../assets/branding/mark.webp" alt="">
+  <div id="logo" role="img" aria-label="Rekensterren">
+    <div class="laag" id="l-zwaai"></div><div class="laag" id="l-sterren"></div><div class="laag" id="l-eken"></div>
+    <div class="laag" id="l-r"></div><div class="laag" id="l-ster"></div>
+  </div>
   <div id="tag" class="kop"></div>
 
   <!-- de sterrenconfetti valt achter de eindkaart langs, niet eroverheen -->
@@ -233,36 +229,31 @@ SCHERMEN.forEach((s, i) => {
   s.kunst = n ? '../' + WERELDEN[Math.round(i * (n - 1) / Math.max(1, SCHERMEN.length - 1)) % n].art : '';
 });
 
-/* De overgang van merkteken naar spelogo. De twee tekeningen hebben elk hun
-   eigen R en hun eigen ster; hieronder staat waar die zitten, in pixels van
-   het bronbestand (mark.webp is 512x512, wordmark.webp 1080x360). De R's zijn
-   niet dezelfde letter -- die van het merkteken heeft een langere staart --
-   dus ze worden op hun linkerbovenhoek en hun hoogte gelijkgezet, en de
-   breedte wordt wat samengedrukt. Tijdens het overvloeien valt dat niet op. */
-const MERK = {
-  mk: 420 / 512, wk: 1180 / 1080,        // bronpixel -> beeldpixel
-  markPos: [750, 280], woordPos: [370, 240], midden: 210,
-  rMark: [90, 42], rWoord: [97, 62],     // linkerbovenhoek van de gele R
-  rMaat: [[270, 348], [137, 206]],       // breedte (tot de boog) en hoogte, mark en woord
-  sterMark: [376, 289, 77], sterWoord: [616, 103, 50],   // middelpunt en straal tot de punt
-  rRand: 258,                            // tot hier is het woord nog alleen de R
-  draai: 4.92,                           // de R begint om te draaien
-  land: 5.7,                             // de ster landt op het woord
+/* Het logo bouwt zichzelf op, net als in de app (zie "= Het spelogo komt
+   binnen" in src/20-app.js): eerst staat alleen de R er, met de ster tegen zijn
+   been, groot in het midden. Dan schuift hij naar zijn plek in het logo, wipt,
+   en de ster springt naar zijn plek boven "sterren"; "eken" en "sterren" ploppen
+   erbij en de zwaai veegt eronder open. Plekken in pixels van het logo
+   (1080x360), tijden in seconden. */
+const LOGO = {
+  k: 1180 / 1080, pos: [370, 240],
+  midden: { r: [165, 165], eken: [385, 189], sterren: [750, 195] },
+  ster: [616, 103], sterBijR: [266, 208], sterBegin: .9,
+  groot: 1.55, rGroot: [930, 480],       // scène 1: de R zo groot, met zijn midden hier
+  schuif: [4.2, 4.85], wip: [4.8, 5.0], sprong: [4.95, 5.7],
+  eken: [5.3, 5.65], sterren: [5.45, 5.8], zwaai: [5.75, 6.35],   // letters pas als de ster weg is
 };
-MERK.rAs = [(MERK.rWoord[0] + MERK.rMaat[1][0] / 2) * MERK.wk, (MERK.rWoord[1] + MERK.rMaat[1][1] / 2) * MERK.wk];
-MERK.rSchaal = [MERK.rMaat[1][0] * MERK.wk / (MERK.rMaat[0][0] * MERK.mk),
-                MERK.rMaat[1][1] * MERK.wk / (MERK.rMaat[0][1] * MERK.mk)];
-// waar een punt uit mark.webp op het beeld komt, bij deze transform van #mark
-function merkPunt(P, T, draai, S) {
-  const o = MERK.midden, dx = (P[0] * MERK.mk - o) * S[0], dy = (P[1] * MERK.mk - o) * S[1];
-  const c = Math.cos(draai), z = Math.sin(draai);
-  return [MERK.markPos[0] + o + T[0] + c * dx - z * dy, MERK.markPos[1] + o + T[1] + z * dx + c * dy];
-}
-// de translate waarbij de R van het merkteken precies op de R van het woord staat
-MERK.tEind = [0, 1].map(k => MERK.woordPos[k] + MERK.rWoord[k] * MERK.wk
-  - MERK.markPos[k] - MERK.midden - MERK.rSchaal[k] * (MERK.rMark[k] * MERK.mk - MERK.midden));
-MERK.sterDoel = [MERK.woordPos[0] + MERK.sterWoord[0] * MERK.wk, MERK.woordPos[1] + MERK.sterWoord[1] * MERK.wk];
-MERK.sterDoelSchaal = MERK.sterWoord[2] * MERK.wk / (MERK.sterMark[2] * MERK.mk);
+LOGO.rMidden = [LOGO.pos[0] + LOGO.midden.r[0] * LOGO.k, LOGO.pos[1] + LOGO.midden.r[1] * LOGO.k];
+LOGO.sterPlek = [LOGO.pos[0] + LOGO.ster[0] * LOGO.k, LOGO.pos[1] + LOGO.ster[1] * LOGO.k];
+LOGO.land = LOGO.sprong[1];
+(function () {
+  const o = ([x, y]) => `${x * LOGO.k}px ${y * LOGO.k}px`;
+  document.getElementById('logo').style.transformOrigin = o(LOGO.midden.r);
+  document.getElementById('l-r').style.transformOrigin = o(LOGO.midden.r);
+  document.getElementById('l-eken').style.transformOrigin = o(LOGO.midden.eken);
+  document.getElementById('l-sterren').style.transformOrigin = o(LOGO.midden.sterren);
+  document.getElementById('l-ster').style.transformOrigin = o(LOGO.ster);
+})();
 
 function lucht(ctx, t) {
   ctx.clearRect(0, 0, 1920, 1080);
@@ -321,19 +312,17 @@ function voor(ctx, t) {
   }
   // een kleine uitbarsting waar de ster op het woord landt, en een glinster
   // waar de twee R's in elkaar overvloeien
-  const lp = tussen(t, MERK.land, MERK.land + .75);
+  const lp = tussen(t, LOGO.land, LOGO.land + .75);
   if (lp > 0 && lp < 1) {
     const e = uitKubisch(lp);
     VONKEN.forEach((v, k) => {
       if (k % 2) return;
       ctx.globalAlpha = 1 - lp * lp;
-      ster(ctx, MERK.sterDoel[0] + Math.cos(v.hoek) * v.afstand * .45 * e,
-        MERK.sterDoel[1] + Math.sin(v.hoek) * v.afstand * .45 * e, v.r * .6 * (1 - lp * .5), v.draai + lp * 4, v.kleur);
+      ster(ctx, LOGO.sterPlek[0] + Math.cos(v.hoek) * v.afstand * .45 * e,
+        LOGO.sterPlek[1] + Math.sin(v.hoek) * v.afstand * .45 * e, v.r * .6 * (1 - lp * .5), v.draai + lp * 4, v.kleur);
     });
     ctx.globalAlpha = 1;
   }
-  const rg = tussen(t, MERK.draai - .08, MERK.draai + .4);
-  if (rg > 0 && rg < 1) glinster(ctx, 600, 318, 80 * Math.sin(rg * Math.PI) + 4, Math.sin(rg * Math.PI));
   // scène 4: sterrenconfetti
   if (t > S3 + 5 * STAP) {
     const lt = t - (S3 + 5 * STAP);
@@ -386,53 +375,40 @@ function render(t) {
   t = ((t % DUUR) + DUUR) % DUUR;
   lucht($('lucht').getContext('2d'), t);
 
-  /* scène 1 + 2: merkteken en spelogo */
-  // 1) het merkteken ploft erin en zweeft; 2) vanaf 4.2 schuift het met zijn R
-  // op de R van het woord (en wordt daarbij smaller); 3) de R draait om als een
-  // munt, en precies als hij op zijn kant staat -- en dus onzichtbaar is -- wordt
-  // hij de R van het woord. Geen overvloeien: de twee R's zijn verschillend
-  // getekend en dat zag je als een dubbel beeld. 4) Met die draai springt de ster
-  // weg naar zijn plek in het woord, en het woord veegt achter hem aan open.
-  const mIn = tussen(t, 1.3, 2.2), mv = inUit(tussen(t, 4.2, 4.85));
+  /* scène 1 + 2: het logo bouwt zichzelf op */
+  const L = LOGO;
+  const mIn = tussen(t, 1.3, 2.2), mv = inUit(tussen(t, ...L.schuif));
   const zweef = Math.sin(t * 2.2) * 10;
-  const mS = uitVeer(mIn);
-  const T = [mix(0, MERK.tEind[0], mv), mix(zweef, MERK.tEind[1], mv)];
-  const draai = mix(((1 - uitKubisch(mIn)) * -40 + Math.sin(t * 1.6) * 3) * Math.PI / 180, 0, mv);
-  const S = [mix(mS, MERK.rSchaal[0], mv), mix(mS, MERK.rSchaal[1], mv)];
-  // de draai-as loopt door het midden van de R, niet door het midden van het beeld
-  const as = S[0] * ((MERK.rMark[0] + MERK.rMaat[0][0] / 2) * MERK.mk - MERK.midden);
-  const om = inUit(tussen(t, MERK.draai, MERK.draai + .13)) * 90;
-  zet($('mark'), mIn > 0 && om < 90 ? 1 : 0,
-    `translate(${T[0]}px, ${T[1]}px) translateX(${as}px) perspective(900px) rotateY(${om}deg) translateX(${-as}px) rotate(${draai}rad) scale(${S[0]}, ${S[1]})`);
-
-  // de ster: tot de draai zit hij vast aan het merkteken, dan springt hij in een boog
-  const vl = inUit(tussen(t, MERK.draai + .03, MERK.land));
-  const start = merkPunt(MERK.sterMark, T, draai, S);
-  const C = [mix(start[0], MERK.sterDoel[0], vl), mix(start[1], MERK.sterDoel[1], vl) - Math.sin(vl * Math.PI) * 200];
-  const plof = Math.sin(tussen(t, MERK.land, MERK.land + .25) * Math.PI);   // even platdrukken bij het landen
-  const sd = MERK.sterDoelSchaal * (1 + .35 * Math.sin(vl * Math.PI));
-  const sS = [mix(S[0], sd, vl) * (1 + .15 * plof), mix(S[1], sd, vl) * (1 - .15 * plof)];
-  zet($('merkster'), mIn > 0 ? 1 - tussen(t, MERK.land + .1, MERK.land + .3) : 0,
-    `translate(${C[0]}px, ${C[1]}px) rotate(${draai + mix(0, -2 * Math.PI - .1, vl)}rad) scale(${sS[0]}, ${sS[1]})`);
-
-  // het woord: eerst alleen de R, dan veegt het open achter de ster aan
   const wUit = tussen(t, S3 - .4, S3 + .05);
-  const woord = $('woord');
-  const rand = t < MERK.land
-    ? Math.max(MERK.rRand, (C[0] - 25 - MERK.woordPos[0]) / MERK.wk)
-    : mix(MERK.sterDoel[0] - 25 - MERK.woordPos[0], 1180, uitKubisch(tussen(t, MERK.land, MERK.land + .55))) / MERK.wk;
-  const rust = tussen(t, 6.4, 7.0);         // pas als alles staat mag het woord zweven
-  // de tweede helft van de munt: het woord komt van de andere kant terug, met
-  // een klein beetje doorzwaaien
-  const terug = tussen(t, MERK.draai + .13, MERK.draai + .45);
-  const vak = $('woordvak');
-  vak.style.transformOrigin = t < 6 ? `${MERK.rAs[0]}px ${MERK.rAs[1]}px` : '50% 50%';
-  zet(vak, t >= MERK.draai + .13 && t < S3 + .05 ? 1 - wUit : 0,
-    `perspective(900px) rotateY(${(1 - uitTerug(terug, 1.4)) * -90}deg) translateY(${zweef * .6 * rust}px) scale(${1 + wUit * .2}) rotate(${Math.sin(t * 1.3) * 1.2 * rust}deg)`);
-  // een zachte rand, geen harde snede door de letters
-  const rp = rand / 10.8;
-  woord.style.webkitMaskImage = woord.style.maskImage = rp >= 100 ? 'none'
-    : `linear-gradient(90deg, #000 ${rp}%, transparent ${rp + 4}%)`;
+  const rust = tussen(t, 6.4, 7.0);         // pas als alles staat mag het logo zweven
+  // het hele logo: eerst groot in het midden (alleen de R en de ster zijn dan te
+  // zien), dan naar zijn plek. De R blijft daarbij dezelfde R.
+  const groot = uitVeer(mIn) * mix(L.groot, 1, mv);
+  const logoT = [mix(L.rGroot[0] - L.rMidden[0], 0, mv), mix(L.rGroot[1] - L.rMidden[1] + zweef, 0, mv) + zweef * .6 * rust];
+  const logoDraai = mix((1 - uitKubisch(mIn)) * -40 + Math.sin(t * 1.6) * 3, 0, mv) + Math.sin(t * 1.3) * 1.2 * rust;
+  zet($('logo'), mIn > 0 && t < S3 + .05 ? 1 - wUit : 0,
+    `translate(${logoT[0]}px, ${logoT[1]}px) rotate(${logoDraai}deg) scale(${groot * (1 + wUit * .2)})`);
+  // de R wipt vlak voor de sprong, alsof hij de ster wegschiet
+  const wip = Math.sin(tussen(t, ...L.wip) * Math.PI);
+  $('l-r').style.transform = `scale(${1 + .06 * wip}, ${1 - .1 * wip})`;
+  // de ster: tegen het been van de R, dan in een boog naar zijn plek
+  const vl = inUit(tussen(t, ...L.sprong));
+  const druk = Math.sin(tussen(t, L.land, L.land + .25) * Math.PI);
+  const sterMaat = mix(L.sterBegin, 1, vl) * (1 + .3 * Math.sin(vl * Math.PI));
+  const van = [(L.sterBijR[0] - L.ster[0]) * L.k, (L.sterBijR[1] - L.ster[1]) * L.k];
+  $('l-ster').style.transform = `translate(${mix(van[0], 0, vl)}px, ${mix(van[1], 0, vl) - Math.sin(vl * Math.PI) * 200}px) ` +
+    `rotate(${mix(-12, -372, vl)}deg) scale(${sterMaat * (1 + .14 * druk)}, ${sterMaat * (1 - .14 * druk)})`;
+  // de letters ploppen erbij, verend, om hun eigen midden
+  const plop = (el, p) => {
+    el.style.visibility = p > 0 ? 'visible' : 'hidden';
+    el.style.transform = `translateY(${(1 - uitKubisch(p)) * 20}px) scale(${uitVeer(p)})`;
+  };
+  plop($('l-eken'), tussen(t, ...L.eken));
+  plop($('l-sterren'), tussen(t, ...L.sterren));
+  // en de zwaai veegt eronder open, met een zachte rand
+  const z = uitKubisch(tussen(t, ...L.zwaai)) * 104, zw = $('l-zwaai');
+  zw.style.visibility = z > 0 ? 'visible' : 'hidden';
+  zw.style.webkitMaskImage = zw.style.maskImage = z >= 104 ? 'none' : `linear-gradient(90deg, #000 ${z - 4}%, transparent ${z}%)`;
 
   // de ondertitel springt er letter voor letter bij
   const tag = $('tag');

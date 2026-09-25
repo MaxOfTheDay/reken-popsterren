@@ -22,6 +22,7 @@
     "test:beloning": "node test/beloning.test.js",
     "test:studio": "node test/studio.test.js",
     "merk": "node test/merk.js",
+    "lagen": "node test/lagen.js",
     "shots": "node test/shots.js",
     "achtergrondproef": "node test/achtergrondproef.js",
     "try": "node test/try.js",

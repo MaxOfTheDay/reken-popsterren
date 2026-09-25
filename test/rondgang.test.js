@@ -897,10 +897,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
      -- dáár gaat deze controle over. Wat daarbuiten ligt is een vast beeld van een
      scherm en groeit nergens in mee; op de sterrenkeuze zijn dat er drie: het
      schilderij erachter (assets/bg/landing.webp), het spelogo erop
-     (assets/branding/wordmark.webp), en het merkteken waarmee dat logo bij het
-     opstarten binnenkomt (assets/branding/mark.webp -- zie "= Het spelogo komt
-     binnen"). Dat derde is er één keer per start en daarna uit de voorraad; het
-     groeit net zo min mee als de andere twee.
+     (assets/branding/wordmark.webp), en dat logo in lagen waarmee het zich bij
+     het opstarten opbouwt (assets/branding/logo-lagen.webp -- zie "= Het spelogo
+     komt binnen"). Dat derde is één blad met alle lagen, één keer per start en
+     daarna uit de voorraad; het groeit net zo min mee als de andere twee.
 
      Eerder telde de meting álles onder assets/ als wereldtekening, en dus viel
      hij om op dat schilderij: "het startscherm haalt geen enkele wereldtekening
@@ -942,7 +942,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'het startscherm haalt geen enkele wereldtekening op',
     JSON.stringify(r.gehaald) + ' / ' + JSON.stringify(opgehaald));
   /* En zijn eigen beelden zijn er drie en blijven er drie: het schilderij achter de
-     sterrenkeuze, het logo erop en het merkteken van de intro horen niet mee te
+     sterrenkeuze, het logo erop en het lagenblad van de intro horen niet mee te
      groeien met het aantal werelden of kinderen. Eén logo per kind zou hier
      omvallen, en dat is de bedoeling. */
   check(anders.length <= 3, 'en zijn eigen beelden zijn er hooguit drie',

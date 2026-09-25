@@ -24,6 +24,10 @@ node promo/render.js logo 0 8.5     # -> rekensterren-logo.mp4
 Nodig: Playwright (zoals voor `npm test`) en een ffmpeg met libx264; staat die
 niet op het pad, zet dan `FFMPEG=/pad/naar/ffmpeg`.
 
+Het logo in het filmpje is `assets/branding/logo-lagen.webp`: het spelogo in
+vijf lagen, geknipt uit de meester met `npm run lagen` (zie `test/lagen.js`). De
+losse lagen op volle maat staan in `assets/branding/source/lagen/`.
+
 Het spel veranderd, of een wereld erbij? Eerst opnieuw opnemen, dan renderen:
 
 ```sh
