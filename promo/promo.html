@@ -20,7 +20,9 @@
     6.4 -  9.0  de ondertitel springt erbij
     9.0 - 21.0  vijf schermen uit het echte spel in een telefoon
    21.0 - 26.0  eindkaart met het adres
-  De schermen in beelden/ komen uit `npm run shots` (390x844).
+  De schermen in beelden/ en de lijst werelden (beelden/werelden.js) komen uit
+  promo/opname.js. Het filmpje noemt nergens een aantal werelden: er komen er
+  steeds bij, en dan is opnieuw opnemen en renderen genoeg.
 -->
 <style>
   @font-face {
@@ -146,7 +148,7 @@
   <img id="eindwoord" src="../assets/branding/wordmark.webp" alt="Rekensterren">
   <div id="pillen">
     <div class="pil"><b>★</b> Voor kinderen van 5 tot 8</div>
-    <div class="pil"><b>★</b> Zes werelden</div>
+    <div class="pil"><b>★</b> Steeds nieuwe werelden</div>
     <div class="pil"><b>★</b> Werkt ook zonder internet</div>
   </div>
   <div id="knop">rekensterren.be</div>
@@ -154,6 +156,7 @@
   <div id="flits"></div>
 </div>
 
+<script src="beelden/werelden.js"></script>
 <script>
 'use strict';
 const DUUR = 26;
@@ -210,13 +213,21 @@ function glinster(ctx, x, y, r, a) { // het vierpuntige sterretje uit het logo
 
 /* ---- de scènes --------------------------------------------------------- */
 const SCHERMEN = [
-  { img: '01-profielkeuze', wereld: 'muziek', kop: 'Maak je <span class="licht">eigen ster</span>', onder: 'Elk kind kiest een naam, een kleur en een look.' },
-  { img: '02-kaart',        wereld: 'snoep',  kop: 'Speel <span class="licht">shows</span> op de kaart', onder: 'Van halte naar halte, show na show.' },
-  { img: '04-show-rekenen', wereld: 'jungle', kop: 'Tel en reken <span class="licht">op het podium</span>', onder: 'Plussen, minnen en tellen — het publiek juicht mee.' },
-  { img: '05-einde',        wereld: 'piraten', kop: 'Verdien <span class="licht">sterren</span> en diamanten', onder: 'Drie sterren? Het publiek gaat uit zijn dak!' },
-  { img: '06-kleedkamer',   wereld: 'ijs',    kop: 'Kleed je ster aan <span class="licht">voor de show</span>', onder: 'Kleren, hoedjes en instrumenten om te sparen.' },
+  { img: '01-profielkeuze', kop: 'Maak je <span class="licht">eigen ster</span>', onder: 'Elk kind kiest een naam, een kleur en een look.' },
+  { img: '02b-tournee',     kop: 'Reis van <span class="licht">wereld naar wereld</span>', onder: 'En er komen steeds nieuwe werelden bij.' },
+  { img: '04-show-rekenen', kop: 'Tel en reken <span class="licht">op het podium</span>', onder: 'Plussen, minnen en tellen — het publiek juicht mee.' },
+  { img: '05-einde',        kop: 'Verdien <span class="licht">sterren</span> en diamanten', onder: 'Drie sterren? Het publiek gaat uit zijn dak!' },
+  { img: '06-kleedkamer',   kop: 'Kleed je ster aan <span class="licht">voor de show</span>', onder: 'Kleren, hoedjes en instrumenten om te sparen.' },
 ];
 const S3 = 9, STAP = 2.4;
+// De achtergrond achter de telefoon loopt de werelden af, in de volgorde van het
+// spel. Zijn het er meer dan schermen, dan wordt er verspreid gekozen, zodat de
+// nieuwste er ook in zit.
+const WERELDEN = (window.WERELDEN || []).filter(w => w.art);
+SCHERMEN.forEach((s, i) => {
+  const n = WERELDEN.length;
+  s.kunst = n ? '../' + WERELDEN[Math.round(i * (n - 1) / Math.max(1, SCHERMEN.length - 1)) % n].art : '';
+});
 
 /* De overgang van merkteken naar spelogo. De twee tekeningen hebben elk hun
    eigen R en hun eigen ster; hieronder staat waar die zitten, in pixels van
@@ -433,12 +444,12 @@ function render(t) {
   sommen($('sommen').getContext('2d'), t, inDemo ? demoZicht : 0);
   if (inDemo) {
     const w = $('wereld'), w2 = $('wereld2');
-    w.style.backgroundImage = `url(../assets/world/${sch.wereld}-map.webp)`;
+    w.style.backgroundImage = sch.kunst ? `url(${sch.kunst})` : 'none';
     w.style.opacity = demoZicht;
     w.style.transform = `scale(${1.08 + lt * .02}) translateX(${-lt * 8}px)`;
     // de volgende wereld vloeit er aan het eind van elk scherm al in
     const over = i < 4 ? tussen(lt, STAP - .5, STAP) : 0;
-    w2.style.backgroundImage = `url(../assets/world/${volgend.wereld}-map.webp)`;
+    w2.style.backgroundImage = volgend.kunst ? `url(${volgend.kunst})` : 'none';
     zet(w2, over * demoZicht, `scale(1.08)`);
     $('sluier').style.opacity = demoZicht;
     zet($('hoekmerk'), demoZicht, `rotate(${Math.sin(t * 2) * 4}deg)`);
@@ -448,7 +459,7 @@ function render(t) {
       $('teller').innerHTML = `<b>${i + 1}</b>/ 5`;
       $('nu').src = `beelden/${sch.img}.jpg`;
       $('straks').src = `beelden/${volgend.img}.jpg`;
-      $('tel2').firstChild.src = `beelden/${i < 4 ? volgend.img : '02b-tournee'}.jpg`;
+      $('tel2').firstChild.src = `beelden/${i < 4 ? volgend.img : '02-kaart'}.jpg`;
       laatsteKop = i;
     }
     const kIn = uitTerug(tussen(lt, .05, .5)), kUit = inUit(tussen(lt, STAP - .35, STAP));
@@ -501,7 +512,12 @@ function pas() {
   st.style.margin = `0 ${1920 * (s - 1)}px ${1080 * (s - 1)}px 0`;
 }
 const opname = location.search.includes('opname');
-if (!opname) {
+const stil = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!opname && stil) {
+  // wie geen beweging wil, krijgt de eindkaart als stilstaand beeld
+  addEventListener('resize', pas); pas();
+  render(DUUR - 1.5);
+} else if (!opname) {
   addEventListener('resize', pas); pas();
   const t0 = performance.now();
   (function speel(nu) { render((nu - t0) / 1000); requestAnimationFrame(speel); })(t0);

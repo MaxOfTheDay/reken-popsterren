@@ -31,7 +31,7 @@ const FFMPEG = process.env.FFMPEG || 'ffmpeg';
     await document.fonts.ready;
     const srcs = [...document.querySelectorAll('img')].map(i => i.src)
       .concat(['01-profielkeuze', '02-kaart', '04-show-rekenen', '05-einde', '06-kleedkamer', '02b-tournee'].map(n => `beelden/${n}.jpg`))
-      .concat(['muziek', 'snoep', 'jungle', 'piraten', 'ijs'].map(w => `../assets/world/${w}-map.webp`));
+      .concat((window.WERELDEN || []).map(w => '../' + w.art));
     window.__vast = await Promise.all(srcs.map(s => new Promise(ok => {
       const im = new Image(); im.onload = im.onerror = () => ok(im); im.src = s;
     })));
