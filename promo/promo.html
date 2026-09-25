@@ -59,7 +59,7 @@
      als het logo, elk met het lagenblad als achtergrond op een andere hoogte. Op
      elkaar gelegd zijn ze het logo zelf -- er hoeft nergens gewisseld te worden. */
   #logo { left: 370px; top: 240px; width: 1180px; height: 393.3px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
-  #logo .laag { position: absolute; inset: 0; background: url('../assets/branding/logo-lagen.webp') no-repeat; background-size: 100% 1400%; }
+  #logo .laag { position: absolute; background: url('../assets/branding/logo-lagen.webp') no-repeat; }
   #tag { left: 0; right: 0; top: 700px; text-align: center; font-size: 76px; }
   #tag span { display: inline-block; }
 
@@ -228,9 +228,10 @@ SCHERMEN.forEach((s, i) => {
    ploppen de letters één voor één op, wat rechts van de landing staat rimpelt
    daarna naar buiten, en de zwaai veegt eronder open.
 
-   LOGO_DELEN komt uit npm run lagen (test/lagen.js): per laag van het blad de
-   rechthoek eromheen, in pixels van het logo (1080x360). Tijden in seconden. */
-const LOGO_DELEN = [["r",81,59,373,287],["e1",231,130,316,235],["k",305,73,425,256],["e2",378,127,456,232],["n1",443,120,535,238],["s",520,100,599,246],["t",589,132,653,241],["e3",633,115,713,235],["r1",704,114,789,240],["r2",751,129,847,245],["e4",805,142,901,259],["n2",872,156,988,290],["ster",527,29,677,152],["zwaai",47,45,1030,316]];
+   LOGO_DELEN komt uit npm run lagen (test/lagen.js): de maat van het lagenblad,
+   en per deel de rechthoek in het logo (pixels van 1080x360) en waar die in het
+   blad staat. Tijden in seconden. */
+const LOGO_DELEN = {"blad":[1080,647],"delen":[["r",80,58,373,288,0,296],["e1",231,128,317,236,268,528],["k",304,72,426,257,295,296],["e2",377,126,457,233,356,528],["n1",442,119,536,238,949,296],["s",519,99,600,247,419,296],["t",588,130,654,243,200,528],["e3",632,114,714,236,865,296],["r1",704,113,790,241,622,296],["r2",750,128,848,246,100,528],["e4",804,141,902,260,0,528],["n2",871,154,989,291,502,296],["ster",526,27,679,153,710,296],["zwaai",45,34,1031,328,0,0]]};
 const LOGO = {
   k: 1180 / 1080, pos: [370, 240],
   rMidden: [165, 165], ster: [616, 103], sterBijR: [266, 208], sterBegin: .9,
@@ -245,30 +246,34 @@ const zacht = p => -(Math.cos(Math.PI * p) - 1) / 2;
 // de delen maken: de zwaai onderop, dan de letters, de ster bovenop
 const DEEL = {};
 (function () {
-  const logo = document.getElementById('logo'), n = LOGO_DELEN.length;
-  const o = ([x, y]) => `${x * LOGO.k}px ${y * LOGO.k}px`;
-  logo.style.transformOrigin = o(LOGO.rMidden);
-  LOGO_DELEN.forEach(([naam], i) => {
+  const logo = document.getElementById('logo'), K = LOGO.k, vak = {};
+  logo.style.transformOrigin = `${LOGO.rMidden[0] * K}px ${LOGO.rMidden[1] * K}px`;
+  // elk deel op zijn plek, met zijn stuk van het blad als achtergrond
+  LOGO_DELEN.delen.forEach(([naam, x0, y0, x1, y1, bx, by]) => {
     const d = document.createElement('div');
     d.className = 'laag';
-    d.style.backgroundPosition = `0 ${i / (n - 1) * 100}%`;
+    Object.assign(d.style, { left: x0 * K + 'px', top: y0 * K + 'px', width: (x1 - x0) * K + 'px', height: (y1 - y0) * K + 'px',
+      backgroundSize: LOGO_DELEN.blad[0] * K + 'px auto', backgroundPosition: `${-bx * K}px ${-by * K}px` });
+    vak[naam] = [x0, y0];
     DEEL[naam] = d;
   });
+  // een draaipunt in pixels van het logo, omgerekend naar het vak van dat deel
+  const o = (naam, [x, y]) => `${(x - vak[naam][0]) * K}px ${(y - vak[naam][1]) * K}px`;
   logo.appendChild(DEEL.zwaai);
-  LOGO_DELEN.forEach(([naam]) => { if (naam !== 'zwaai' && naam !== 'ster') logo.appendChild(DEEL[naam]); });
+  LOGO_DELEN.delen.forEach(([naam]) => { if (naam !== 'zwaai' && naam !== 'ster') logo.appendChild(DEEL[naam]); });
   logo.appendChild(DEEL.ster);
-  DEEL.r.style.transformOrigin = o(LOGO.rMidden);
-  DEEL.ster.style.transformOrigin = o(LOGO.ster);
+  DEEL.r.style.transformOrigin = o('r', LOGO.rMidden);
+  DEEL.ster.style.transformOrigin = o('ster', LOGO.ster);
   // wanneer elke letter opkomt: links van de landing als de ster over hem heen
   // is, rechts ervan in een rimpel na de landing
   const sterX = t => LOGO.sterBijR[0] + (LOGO.ster[0] - LOGO.sterBijR[0]) * zacht(tussen(t, ...LOGO.sprong));
-  LOGO.letters = LOGO_DELEN.filter(([n]) => !['r', 'ster', 'zwaai'].includes(n)).map(([naam, x0, y0, x1, y1], i) => {
+  LOGO.letters = LOGO_DELEN.delen.filter(([n]) => !['r', 'ster', 'zwaai'].includes(n)).map(([naam, x0, y0, x1, y1], i) => {
     const midden = (x0 + x1) / 2;
     let op = LOGO.land - .06;
     if (midden + LOGO.voor < LOGO.ster[0]) {
       for (let t = LOGO.sprong[0]; t < LOGO.land; t += 1 / 240) if (sterX(t) >= midden + LOGO.voor) { op = t; break; }
     } else if (midden > LOGO.ster[0]) op = LOGO.land + (midden - LOGO.ster[0]) * LOGO.rimpel;
-    DEEL[naam].style.transformOrigin = o([midden, y1]);
+    DEEL[naam].style.transformOrigin = o(naam, [midden, y1]);
     return { el: DEEL[naam], op, hoog: (y1 - y0) * LOGO.k, kant: i % 2 ? 1 : -1 };
   });
 })();

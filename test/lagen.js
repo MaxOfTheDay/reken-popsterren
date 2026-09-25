@@ -22,9 +22,10 @@
  *   ster                    de grote ster met zijn drie spatjes
  *   zwaai                   alles wat overblijft: de zwaai, de sterretjes, de glinsters
  *
- * Elke letter los, zodat ze één voor één kunnen opploppen. Waar ze staan zet
- * dit script ook in een tabel (LOGO_DELEN) die de app en het filmpje gebruiken:
- * de rechthoek om elke laag, in pixels van het blad. Die tabel staat met de
+ * Elke letter los, zodat ze één voor één kunnen opploppen. Het blad dat de app
+ * laadt is geen stapel van veertien volle lagen maar een compact blad met alleen
+ * de rechthoek om elk deel. Waar elk stuk staat -- in het logo en in het blad --
+ * zet dit script in een tabel (LOGO_DELEN) die de app en het filmpje gebruiken. Die tabel staat met de
  * hand in src/20-app.js en promo/promo.html; dit script kijkt of hij daar nog
  * klopt en zegt anders welke regel er moet staan.
  *
@@ -197,13 +198,47 @@ function naarBestand(dataUrl, pad) {
     }
     const cc = document.createElement('canvas'); cc.width = W; cc.height = H;
     cc.getContext('2d').putImageData(ctl, 0, 0);
-    // het blad: de vijf lagen onder elkaar, op de maat van wordmark.webp
-    const h = Math.round(BREED * H / W);
-    const blad = document.createElement('canvas'); blad.width = BREED; blad.height = h * LAGEN.length;
-    const bc = blad.getContext('2d'); bc.imageSmoothingQuality = 'high';
-    LAGEN.forEach((l, i) => bc.drawImage(meesters[l], 0, i * h, BREED, h));
+    /* Het blad voor de app. Elke laag wordt eerst op volle logomaat verkleind
+       (1080 breed, zoals wordmark.webp), en dan gaat alleen de rechthoek waar
+       echt iets staat het blad in -- pixel voor pixel, niet nog eens geschaald.
+       Veertien volle lagen onder elkaar was 1080x5040: 22 MB zodra de browser
+       het uitpakt, op een oude tablet te veel en te traag om op te wachten.
+       Tussen twee stukken blijft TUSSEN pixels leeg, zodat een browser die het
+       blad schaalt nooit de rand van de buurman meeneemt. */
+    const h = Math.round(BREED * H / W), TUSSEN = 2;
+    const stukken = LAGEN.map(l => {
+      const c = document.createElement('canvas'); c.width = BREED; c.height = h;
+      const cc2 = c.getContext('2d'); cc2.imageSmoothingQuality = 'high';
+      cc2.drawImage(meesters[l], 0, 0, BREED, h);
+      const d = cc2.getImageData(0, 0, BREED, h).data;
+      let x0 = BREED, y0 = h, x1 = 0, y1 = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < BREED; x++) if (d[4 * (y * BREED + x) + 3]) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      return { l, c, x0, y0, x1: x1 + 1, y1: y1 + 1, w: x1 + 1 - x0, hh: y1 + 1 - y0 };
+    });
+    // op planken, de hoogste eerst
+    let px0 = 0, py0 = 0, plank = 0;
+    [...stukken].sort((a, b) => b.hh - a.hh).forEach(s => {
+      if (px0 + s.w > BREED) { py0 += plank + TUSSEN; px0 = 0; plank = 0; }
+      s.ax = px0; s.ay = py0; px0 += s.w + TUSSEN; plank = Math.max(plank, s.hh);
+    });
+    const blad = document.createElement('canvas'); blad.width = BREED; blad.height = py0 + plank;
+    const bc = blad.getContext('2d');
+    stukken.forEach(s => bc.drawImage(s.c, s.x0, s.y0, s.w, s.hh, s.ax, s.ay, s.w, s.hh));
+    // en terug: de stukken op hun plek moeten precies de verkleinde lagen zijn
+    const heel = document.createElement('canvas'); heel.width = BREED; heel.height = h;
+    const terugC = document.createElement('canvas'); terugC.width = BREED; terugC.height = h;
+    stukken.forEach(s => {
+      heel.getContext('2d').drawImage(s.c, 0, 0);
+      terugC.getContext('2d').drawImage(blad, s.ax, s.ay, s.w, s.hh, s.x0, s.y0, s.w, s.hh);
+    });
+    const hd = heel.getContext('2d').getImageData(0, 0, BREED, h).data, td = terugC.getContext('2d').getImageData(0, 0, BREED, h).data;
+    let bladVerschil = 0;
+    for (let i = 0; i < hd.length; i++) bladVerschil = Math.max(bladVerschil, Math.abs(hd[i] - td[i]));
+    const delen = stukken.map(s => [s.l, s.x0, s.y0, s.x1, s.y1, s.ax, s.ay]);
     return {
-      W, H, h, kernen, aantal, verschil, vak,
+      W, H, h, kernen, aantal, verschil, vak, delen, bladVerschil, bladMaat: [blad.width, blad.height],
       meesters: Object.fromEntries(LAGEN.map(l => [l, meesters[l].toDataURL('image/png')])),
       controle: cc.toDataURL('image/png'),
       blad: blad.toDataURL('image/webp', KWAL),
@@ -218,7 +253,9 @@ function naarBestand(dataUrl, pad) {
   });
   naarBestand(uit.controle, path.join(MEESTERS, 'controle.png'));
   const kb = naarBestand(uit.blad, UIT);
-  console.log(`blad ${BREED}x${uit.h * LAGEN.length} (${LAGEN.length} x ${uit.h}) -> ${path.relative(WORTEL, UIT)}  ${kb} kB`);
+  console.log(`blad ${uit.bladMaat.join('x')} (${LAGEN.length} stukken, uitgepakt ${(uit.bladMaat[0] * uit.bladMaat[1] * 4 / 1e6).toFixed(1)} MB) -> ${path.relative(WORTEL, UIT)}  ${kb} kB`);
+  console.log(`de stukken terug op hun plek: grootste afwijking ${uit.bladVerschil} (van 255)`);
+  if (uit.bladVerschil > 0) { console.log('FOUT: het blad geeft de lagen niet precies terug'); process.exitCode = 1; }
   console.log(`op elkaar gelegd: grootste afwijking van het origineel ${uit.verschil} (van 255)`);
   const zonderKern = LAGEN.filter((l, i) => l !== 'zwaai' && !uit.kernen[i]);
   if (uit.verschil > 0 || zonderKern.length) {
@@ -229,8 +266,9 @@ function naarBestand(dataUrl, pad) {
   for (const f of fs.readdirSync(MEESTERS)) {
     if (f.endsWith('.png') && f !== 'controle.png' && !LAGEN.includes(f.slice(0, -4))) fs.unlinkSync(path.join(MEESTERS, f));
   }
-  // de tabel die de app en het filmpje gebruiken: [naam, x0, y0, x1, y1] per laag
-  const regel = 'const LOGO_DELEN = ' + JSON.stringify(LAGEN.map(l => [l, ...uit.vak[l]])) + ';';
+  // de tabel die de app en het filmpje gebruiken: de maat van het blad, en per laag
+  // [naam, x0, y0, x1, y1, bx, by] -- waar hij in het logo staat, en waar in het blad
+  const regel = 'const LOGO_DELEN = ' + JSON.stringify({ blad: uit.bladMaat, delen: uit.delen }) + ';';
   for (const bestand of ['src/20-app.js', 'promo/promo.html']) {
     const tekst = fs.readFileSync(path.join(WORTEL, bestand), 'utf8');
     if (tekst.includes(regel)) console.log(`${bestand}: LOGO_DELEN klopt`);

@@ -350,7 +350,7 @@ zaak('G', () => {
   /* De kop van het keuzescherm is een tekening geworden (assets/branding/), dus de
      naam staat daar in de alt. Dát is waar deze controle over gaat: de naam die een
      kind ziet -- en een schermlezer voorleest -- hoort dezelfde te zijn. */
-  const kop = (indexHtml.match(/<h1 class="spellogo">[\s\S]*?alt="([^"]*)"/) || [, ''])[1];
+  const kop = (indexHtml.match(/<h1 class="spellogo[^"]*">[\s\S]*?alt="([^"]*)"/) || [, ''])[1];
   check(titel.includes(NAAM), `G · de tabtitel noemt ${NAAM}`, titel);
   check(kop.trim() === NAAM, `G · de kop van het keuzescherm is ${NAAM}`, kop);
   check(man.name === NAAM, `G · het manifest heet ${NAAM}`, man.name);
