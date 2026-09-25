@@ -422,13 +422,13 @@
      hangen aan hoe breed het logo op dít scherm uitvalt.
 
      Elk deel is een vak zo groot als het logo, met het hele lagenblad erin:
-     vijf lagen onder elkaar, dus 500% hoog, en per deel zo ver omhoog
+     veertien lagen onder elkaar, dus 1400% hoog, en per deel zo ver omhoog
      geschoven (top 0, -100, -200 ... %) dat alleen zijn eigen laag in het vak
      valt. Wat erbuiten valt knipt overflow weg. */
   .spellogo.intro-wacht > img { opacity: 0; }
   .logo-intro { position: absolute; pointer-events: none; z-index: 2; }
   .logo-intro .li-laag { position: absolute; inset: 0; overflow: hidden; will-change: transform; }
-  .logo-intro .li-laag img { position: absolute; left: 0; width: 100%; height: 500%; max-width: none; }
+  .logo-intro .li-laag img { position: absolute; left: 0; width: 100%; height: 1400%; max-width: none; }
   .logo-intro .li-vonk {
     position: absolute; line-height: 1; opacity: 0;
     color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);

@@ -2660,7 +2660,7 @@ function check(ok, label, detail) {
 
     // en wie niets doet, ziet hem vanzelf ophouden
     await p1.goto(APP_URL + '&intro');
-    await p1.waitForTimeout(2300);
+    await p1.waitForTimeout(3200);   // de intro duurt ruim twee seconden, plus het laden
     const af = await staat(p1);
     check(heel(af), 'de logo-intro ruimt zichzelf op', JSON.stringify(af));
     await c1.close();

@@ -5,7 +5,7 @@ niets hieronder wordt door `index.html` of `sw.js` geladen.
 
 | bestand | wat |
 |---|---|
-| `rekensterren-promo.mp4` | het filmpje, 26 s, 1920×1080, zonder geluid |
+| `rekensterren-promo.mp4` | het filmpje, 26 s, 1920×1080, 60 beelden per seconde, zonder geluid |
 | `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 8,5 s) |
 | `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/20-app.js`); de intro zelf staat in de app, niet hier |
 | `poster.jpg` | de eindkaart als stilstaand beeld |
@@ -25,7 +25,7 @@ Nodig: Playwright (zoals voor `npm test`) en een ffmpeg met libx264; staat die
 niet op het pad, zet dan `FFMPEG=/pad/naar/ffmpeg`.
 
 Het logo in het filmpje is `assets/branding/logo-lagen.webp`: het spelogo in
-vijf lagen, geknipt uit de meester met `npm run lagen` (zie `test/lagen.js`). De
+veertien lagen (de R, elke letter los, de ster en de zwaai), geknipt uit de meester met `npm run lagen` (zie `test/lagen.js`). De
 losse lagen op volle maat staan in `assets/branding/source/lagen/`.
 
 Het spel veranderd, of een wereld erbij? Eerst opnieuw opnemen, dan renderen:

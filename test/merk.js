@@ -13,7 +13,7 @@
  *   source/appicon.webp   ->  icon-192.png, icon-512.png      het app-icoon
  *                             icon-maskable-512.png           idem, voor een launcher
  *
- * Het spelogo bestaat ook in lagen (de R, "eken", "sterren", de ster en de zwaai),
+ * Het spelogo bestaat ook in lagen (de R, elke letter los, de ster en de zwaai),
  * voor de logo-intro en het promofilmpje. Die worden niet hier maar met
  * `npm run lagen` uit dezelfde meester geknipt -- zie test/lagen.js. Krijgt
  * source/wordmark.webp een nieuwe versie, draai dan allebei.

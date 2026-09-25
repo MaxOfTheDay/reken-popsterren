@@ -59,12 +59,7 @@
      als het logo, elk met het lagenblad als achtergrond op een andere hoogte. Op
      elkaar gelegd zijn ze het logo zelf -- er hoeft nergens gewisseld te worden. */
   #logo { left: 370px; top: 240px; width: 1180px; height: 393.3px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
-  #logo .laag { position: absolute; inset: 0; background: url('../assets/branding/logo-lagen.webp') no-repeat; background-size: 100% 500%; }
-  #l-r { background-position: 0 0 !important; }
-  #l-eken { background-position: 0 25% !important; }
-  #l-sterren { background-position: 0 50% !important; }
-  #l-ster { background-position: 0 75% !important; }
-  #l-zwaai { background-position: 0 100% !important; }
+  #logo .laag { position: absolute; inset: 0; background: url('../assets/branding/logo-lagen.webp') no-repeat; background-size: 100% 1400%; }
   #tag { left: 0; right: 0; top: 700px; text-align: center; font-size: 76px; }
   #tag span { display: inline-block; }
 
@@ -136,10 +131,7 @@
   <div id="tel2"><img alt=""></div>
   <div id="tel"><div id="scherm"><img id="nu" alt=""><img id="straks" alt=""></div></div>
 
-  <div id="logo" role="img" aria-label="Rekensterren">
-    <div class="laag" id="l-zwaai"></div><div class="laag" id="l-sterren"></div><div class="laag" id="l-eken"></div>
-    <div class="laag" id="l-r"></div><div class="laag" id="l-ster"></div>
-  </div>
+  <div id="logo" role="img" aria-label="Rekensterren"></div>
   <div id="tag" class="kop"></div>
 
   <!-- de sterrenconfetti valt achter de eindkaart langs, niet eroverheen -->
@@ -231,28 +223,54 @@ SCHERMEN.forEach((s, i) => {
 
 /* Het logo bouwt zichzelf op, net als in de app (zie "= Het spelogo komt
    binnen" in src/20-app.js): eerst staat alleen de R er, met de ster tegen zijn
-   been, groot in het midden. Dan schuift hij naar zijn plek in het logo, wipt,
-   en de ster springt naar zijn plek boven "sterren"; "eken" en "sterren" ploppen
-   erbij en de zwaai veegt eronder open. Plekken in pixels van het logo
-   (1080x360), tijden in seconden. */
+   been, groot in het midden. Dan schuift hij naar zijn plek in het logo, duikt
+   even in, en de ster springt naar zijn plek boven "sterren"; onder hem door
+   ploppen de letters één voor één op, wat rechts van de landing staat rimpelt
+   daarna naar buiten, en de zwaai veegt eronder open.
+
+   LOGO_DELEN komt uit npm run lagen (test/lagen.js): per laag van het blad de
+   rechthoek eromheen, in pixels van het logo (1080x360). Tijden in seconden. */
+const LOGO_DELEN = [["r",81,59,373,287],["e1",231,130,316,235],["k",305,73,425,256],["e2",378,127,456,232],["n1",443,120,535,238],["s",520,100,599,246],["t",589,132,653,241],["e3",633,115,713,235],["r1",704,114,789,240],["r2",751,129,847,245],["e4",805,142,901,259],["n2",872,156,988,290],["ster",527,29,677,152],["zwaai",47,45,1030,316]];
 const LOGO = {
   k: 1180 / 1080, pos: [370, 240],
-  midden: { r: [165, 165], eken: [385, 189], sterren: [750, 195] },
-  ster: [616, 103], sterBijR: [266, 208], sterBegin: .9,
+  rMidden: [165, 165], ster: [616, 103], sterBijR: [266, 208], sterBegin: .9,
   groot: 1.55, rGroot: [930, 480],       // scène 1: de R zo groot, met zijn midden hier
-  schuif: [4.2, 4.85], wip: [4.8, 5.0], sprong: [4.95, 5.7],
-  eken: [5.3, 5.65], sterren: [5.45, 5.8], zwaai: [5.75, 6.35],   // letters pas als de ster weg is
+  schuif: [4.1, 4.9], wip: [4.85, 5.15], sprong: [5.0, 5.8],
+  voor: 30, rimpel: .0009, letter: .5, zwaai: [.15, .85],   // rimpel: seconden per pixel
 };
-LOGO.rMidden = [LOGO.pos[0] + LOGO.midden.r[0] * LOGO.k, LOGO.pos[1] + LOGO.midden.r[1] * LOGO.k];
+LOGO.rMiddenBeeld = [LOGO.pos[0] + LOGO.rMidden[0] * LOGO.k, LOGO.pos[1] + LOGO.rMidden[1] * LOGO.k];
 LOGO.sterPlek = [LOGO.pos[0] + LOGO.ster[0] * LOGO.k, LOGO.pos[1] + LOGO.ster[1] * LOGO.k];
 LOGO.land = LOGO.sprong[1];
+const zacht = p => -(Math.cos(Math.PI * p) - 1) / 2;
+// de delen maken: de zwaai onderop, dan de letters, de ster bovenop
+const DEEL = {};
 (function () {
+  const logo = document.getElementById('logo'), n = LOGO_DELEN.length;
   const o = ([x, y]) => `${x * LOGO.k}px ${y * LOGO.k}px`;
-  document.getElementById('logo').style.transformOrigin = o(LOGO.midden.r);
-  document.getElementById('l-r').style.transformOrigin = o(LOGO.midden.r);
-  document.getElementById('l-eken').style.transformOrigin = o(LOGO.midden.eken);
-  document.getElementById('l-sterren').style.transformOrigin = o(LOGO.midden.sterren);
-  document.getElementById('l-ster').style.transformOrigin = o(LOGO.ster);
+  logo.style.transformOrigin = o(LOGO.rMidden);
+  LOGO_DELEN.forEach(([naam], i) => {
+    const d = document.createElement('div');
+    d.className = 'laag';
+    d.style.backgroundPosition = `0 ${i / (n - 1) * 100}%`;
+    DEEL[naam] = d;
+  });
+  logo.appendChild(DEEL.zwaai);
+  LOGO_DELEN.forEach(([naam]) => { if (naam !== 'zwaai' && naam !== 'ster') logo.appendChild(DEEL[naam]); });
+  logo.appendChild(DEEL.ster);
+  DEEL.r.style.transformOrigin = o(LOGO.rMidden);
+  DEEL.ster.style.transformOrigin = o(LOGO.ster);
+  // wanneer elke letter opkomt: links van de landing als de ster over hem heen
+  // is, rechts ervan in een rimpel na de landing
+  const sterX = t => LOGO.sterBijR[0] + (LOGO.ster[0] - LOGO.sterBijR[0]) * zacht(tussen(t, ...LOGO.sprong));
+  LOGO.letters = LOGO_DELEN.filter(([n]) => !['r', 'ster', 'zwaai'].includes(n)).map(([naam, x0, y0, x1, y1], i) => {
+    const midden = (x0 + x1) / 2;
+    let op = LOGO.land - .06;
+    if (midden + LOGO.voor < LOGO.ster[0]) {
+      for (let t = LOGO.sprong[0]; t < LOGO.land; t += 1 / 240) if (sterX(t) >= midden + LOGO.voor) { op = t; break; }
+    } else if (midden > LOGO.ster[0]) op = LOGO.land + (midden - LOGO.ster[0]) * LOGO.rimpel;
+    DEEL[naam].style.transformOrigin = o([midden, y1]);
+    return { el: DEEL[naam], op, hoog: (y1 - y0) * LOGO.k, kant: i % 2 ? 1 : -1 };
+  });
 })();
 
 function lucht(ctx, t) {
@@ -377,38 +395,37 @@ function render(t) {
 
   /* scène 1 + 2: het logo bouwt zichzelf op */
   const L = LOGO;
-  const mIn = tussen(t, 1.3, 2.2), mv = inUit(tussen(t, ...L.schuif));
+  const mIn = tussen(t, 1.3, 2.2), mv = zacht(tussen(t, ...L.schuif));
   const zweef = Math.sin(t * 2.2) * 10;
   const wUit = tussen(t, S3 - .4, S3 + .05);
-  const rust = tussen(t, 6.4, 7.0);         // pas als alles staat mag het logo zweven
+  const rust = zacht(tussen(t, 6.6, 7.4));  // pas als alles staat mag het logo zweven
   // het hele logo: eerst groot in het midden (alleen de R en de ster zijn dan te
   // zien), dan naar zijn plek. De R blijft daarbij dezelfde R.
-  const groot = uitVeer(mIn) * mix(L.groot, 1, mv);
-  const logoT = [mix(L.rGroot[0] - L.rMidden[0], 0, mv), mix(L.rGroot[1] - L.rMidden[1] + zweef, 0, mv) + zweef * .6 * rust];
-  const logoDraai = mix((1 - uitKubisch(mIn)) * -40 + Math.sin(t * 1.6) * 3, 0, mv) + Math.sin(t * 1.3) * 1.2 * rust;
+  const groot = uitTerug(mIn, 1.4) * mix(L.groot, 1, mv);
+  const logoT = [mix(L.rGroot[0] - L.rMiddenBeeld[0], 0, mv), mix(L.rGroot[1] - L.rMiddenBeeld[1] + zweef, 0, mv) + zweef * .6 * rust];
+  const logoDraai = mix((1 - uitKubisch(mIn)) * -30 + Math.sin(t * 1.6) * 3, 0, mv) + Math.sin(t * 1.3) * 1.2 * rust;
   zet($('logo'), mIn > 0 && t < S3 + .05 ? 1 - wUit : 0,
     `translate(${logoT[0]}px, ${logoT[1]}px) rotate(${logoDraai}deg) scale(${groot * (1 + wUit * .2)})`);
-  // de R wipt vlak voor de sprong, alsof hij de ster wegschiet
+  // de R duikt even in vlak voor de sprong, alsof hij de ster wegschiet
   const wip = Math.sin(tussen(t, ...L.wip) * Math.PI);
-  $('l-r').style.transform = `scale(${1 + .06 * wip}, ${1 - .1 * wip})`;
+  DEEL.r.style.transform = `scale(${1 + .05 * wip}, ${1 - .08 * wip})`;
   // de ster: tegen het been van de R, dan in een boog naar zijn plek
-  const vl = inUit(tussen(t, ...L.sprong));
-  const druk = Math.sin(tussen(t, L.land, L.land + .25) * Math.PI);
-  const sterMaat = mix(L.sterBegin, 1, vl) * (1 + .3 * Math.sin(vl * Math.PI));
+  const vl = zacht(tussen(t, ...L.sprong));
+  const druk = Math.sin(tussen(t, L.land, L.land + .26) * Math.PI);
+  const sterMaat = mix(L.sterBegin, 1, vl) * (1 + .22 * Math.sin(vl * Math.PI));
   const van = [(L.sterBijR[0] - L.ster[0]) * L.k, (L.sterBijR[1] - L.ster[1]) * L.k];
-  $('l-ster').style.transform = `translate(${mix(van[0], 0, vl)}px, ${mix(van[1], 0, vl) - Math.sin(vl * Math.PI) * 200}px) ` +
-    `rotate(${mix(-12, -372, vl)}deg) scale(${sterMaat * (1 + .14 * druk)}, ${sterMaat * (1 - .14 * druk)})`;
-  // de letters ploppen erbij, verend, om hun eigen midden
-  const plop = (el, p) => {
-    el.style.visibility = p > 0 ? 'visible' : 'hidden';
-    el.style.transform = `translateY(${(1 - uitKubisch(p)) * 20}px) scale(${uitVeer(p)})`;
-  };
-  plop($('l-eken'), tussen(t, ...L.eken));
-  plop($('l-sterren'), tussen(t, ...L.sterren));
+  DEEL.ster.style.transform = `translate(${mix(van[0], 0, vl)}px, ${mix(van[1], 0, vl) - Math.sin(vl * Math.PI) * 200}px) ` +
+    `rotate(${mix(-12, -372, vl)}deg) scale(${sterMaat * (1 + .08 * druk)}, ${sterMaat * (1 - .08 * druk)})`;
+  // de letters, één voor één: uit hun voet omhoog, met een klein kanteltje
+  for (const l of L.letters) {
+    const q = tussen(t, l.op, l.op + L.letter);
+    l.el.style.visibility = q > 0 ? 'visible' : 'hidden';
+    l.el.style.transform = `translateY(${(1 - uitKubisch(q)) * .25 * l.hoog}px) rotate(${(1 - uitKubisch(q)) * 8 * l.kant}deg) scale(${uitTerug(q, 1.6)})`;
+  }
   // en de zwaai veegt eronder open, met een zachte rand
-  const z = uitKubisch(tussen(t, ...L.zwaai)) * 104, zw = $('l-zwaai');
+  const z = zacht(tussen(t, L.land + L.zwaai[0], L.land + L.zwaai[1])) * 108, zw = DEEL.zwaai;
   zw.style.visibility = z > 0 ? 'visible' : 'hidden';
-  zw.style.webkitMaskImage = zw.style.maskImage = z >= 104 ? 'none' : `linear-gradient(90deg, #000 ${z - 4}%, transparent ${z}%)`;
+  zw.style.webkitMaskImage = zw.style.maskImage = z >= 108 ? 'none' : `linear-gradient(90deg, #000 ${z - 8}%, transparent ${z}%)`;
 
   // de ondertitel springt er letter voor letter bij
   const tag = $('tag');

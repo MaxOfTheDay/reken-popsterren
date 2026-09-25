@@ -12,15 +12,21 @@
  * knippen uit source/wordmark.webp in plaats van een tekenprogramma: elke pixel
  * komt uit de meester en staat op zijn eigen plek.
  *
- * DE VIJF LAGEN, en ze overlappen niet: elke pixel van de meester hoort bij
- * precies één laag. Op elkaar gelegd zijn ze dus het origineel, en dat wordt
- * hieronder ook nagerekend.
+ * DE LAGEN, en ze overlappen niet: elke pixel van de meester hoort bij precies
+ * één laag. Op elkaar gelegd zijn ze dus het origineel, en dat wordt hieronder
+ * ook nagerekend.
  *
- *   r        de R
- *   eken     de gele letters erna
- *   sterren  de witte letters, zonder de ster
- *   ster     de grote ster met zijn drie spatjes
- *   zwaai    alles wat overblijft: de zwaai, de sterretjes, de glinsters
+ *   r                       de R
+ *   e1 k e2 n1              de gele letters erna, elk los
+ *   s t e3 r1 r2 e4 n2      de witte letters, elk los; de t zonder de ster
+ *   ster                    de grote ster met zijn drie spatjes
+ *   zwaai                   alles wat overblijft: de zwaai, de sterretjes, de glinsters
+ *
+ * Elke letter los, zodat ze één voor één kunnen opploppen. Waar ze staan zet
+ * dit script ook in een tabel (LOGO_DELEN) die de app en het filmpje gebruiken:
+ * de rechthoek om elke laag, in pixels van het blad. Die tabel staat met de
+ * hand in src/20-app.js en promo/promo.html; dit script kijkt of hij daar nog
+ * klopt en zegt anders welke regel er moet staan.
  *
  * HOE ER GEKNIPT WORDT. Elke letter heeft een vulling (geel of wit) met een
  * donkere rand eromheen, en tussen twee letters zit altijd rand. De vullingen
@@ -41,7 +47,8 @@ const WORTEL = path.resolve(__dirname, '..');
 const BRON = path.join(WORTEL, 'assets', 'branding', 'source', 'wordmark.webp');
 const MEESTERS = path.join(WORTEL, 'assets', 'branding', 'source', 'lagen');
 const UIT = path.join(WORTEL, 'assets', 'branding', 'logo-lagen.webp');
-const LAGEN = ['r', 'eken', 'sterren', 'ster', 'zwaai'];   // ook de volgorde in logo-lagen.webp
+const LETTERS = ['r', 'e1', 'k', 'e2', 'n1', 's', 't', 'e3', 'r1', 'r2', 'e4', 'n2'];
+const LAGEN = [...LETTERS, 'ster', 'zwaai'];            // ook de volgorde in logo-lagen.webp
 const BREED = 1080;                                         // zoals assets/branding/wordmark.webp
 const KWAL = 0.92;                                          // idem (zie test/merk.js)
 const RAND = 24;                                            // randdikte, in pixels van de meester
@@ -50,11 +57,20 @@ const RAND = 24;                                            // randdikte, in pix
    ligt, in pixels van de 2000 brede meester. Alles wat hier niet onder valt is
    zwaai. */
 const KERNEN = [
-  { laag: 'r',       kleur: 'geel', min: 20000, x: [0, 450],     y: [0, 667] },
-  { laag: 'eken',    kleur: 'geel', min: 5000,  x: [450, 980],   y: [0, 667] },
-  { laag: 'ster',    kleur: 'geel', min: 5000,  x: [980, 1260],  y: [0, 260] },
-  { laag: 'ster',    kleur: 'geel', min: 500,   x: [990, 1240],  y: [0, 170] },   // de spatjes
-  { laag: 'sterren', kleur: 'wit',  min: 5000,  x: [970, 2000],  y: [300, 667] },
+  { laag: 'r',    kleur: 'geel', min: 20000, x: [0, 450],     y: [0, 667] },
+  { laag: 'e1',   kleur: 'geel', min: 5000,  x: [450, 580],   y: [0, 667] },
+  { laag: 'k',    kleur: 'geel', min: 5000,  x: [580, 715],   y: [0, 667] },
+  { laag: 'e2',   kleur: 'geel', min: 5000,  x: [715, 840],   y: [0, 667] },
+  { laag: 'n1',   kleur: 'geel', min: 5000,  x: [840, 980],   y: [0, 667] },
+  { laag: 'ster', kleur: 'geel', min: 5000,  x: [980, 1260],  y: [0, 260] },
+  { laag: 'ster', kleur: 'geel', min: 500,   x: [990, 1240],  y: [0, 170] },   // de spatjes
+  { laag: 's',    kleur: 'wit',  min: 5000,  x: [970, 1105],  y: [300, 667] },
+  { laag: 't',    kleur: 'wit',  min: 5000,  x: [1105, 1200], y: [300, 667] },
+  { laag: 'e3',   kleur: 'wit',  min: 5000,  x: [1200, 1318], y: [300, 667] },
+  { laag: 'r1',   kleur: 'wit',  min: 5000,  x: [1318, 1420], y: [300, 667] },
+  { laag: 'r2',   kleur: 'wit',  min: 5000,  x: [1420, 1520], y: [300, 667] },
+  { laag: 'e4',   kleur: 'wit',  min: 5000,  x: [1520, 1640], y: [300, 667] },
+  { laag: 'n2',   kleur: 'wit',  min: 5000,  x: [1640, 2000], y: [300, 667] },
 ];
 
 function naarBestand(dataUrl, pad) {
@@ -145,7 +161,16 @@ function naarBestand(dataUrl, pad) {
     }
 
     // 5. de lagen zelf, de controle, en het blad voor de app
-    const meesters = {}, aantal = {};
+    const meesters = {}, aantal = {}, vak = {};
+    const sch = BREED / W;
+    for (let l = 0; l < LAGEN.length; l++) {
+      let x0 = W, y0 = H, x1 = 0, y1 = 0;
+      for (let i = 0; i < N; i++) if (laag[i] === l && px[4 * i + 3] > 40) {
+        const x = i % W, y = (i - x) / W;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      vak[LAGEN[l]] = [x0, y0, x1 + 1, y1 + 1].map(v => Math.round(v * sch));
+    }
     for (let l = 0; l < LAGEN.length; l++) {
       const d = cx.createImageData(W, H);
       let n = 0;
@@ -162,7 +187,8 @@ function naarBestand(dataUrl, pad) {
     let verschil = 0;
     for (let i = 0; i < 4 * N; i++) verschil = Math.max(verschil, Math.abs(terug[i] - px[i]));
     // een controlebeeld: elke laag in zijn eigen kleur over een donker origineel
-    const KLEUR = [[255, 60, 60], [60, 200, 60], [60, 140, 255], [255, 200, 0], [150, 70, 200]];
+    const KLEUR = LAGEN.map((l, i) => l === 'zwaai' ? [150, 70, 200] : l === 'ster' ? [255, 200, 0]
+      : [[255, 60, 60], [60, 200, 60], [60, 140, 255], [255, 120, 200]][i % 4]);
     const ctl = cx.createImageData(W, H);
     for (let i = 0; i < N; i++) {
       const c = KLEUR[laag[i]], a = px[4 * i + 3] / 255;
@@ -177,7 +203,7 @@ function naarBestand(dataUrl, pad) {
     const bc = blad.getContext('2d'); bc.imageSmoothingQuality = 'high';
     LAGEN.forEach((l, i) => bc.drawImage(meesters[l], 0, i * h, BREED, h));
     return {
-      W, H, h, kernen, aantal, verschil,
+      W, H, h, kernen, aantal, verschil, vak,
       meesters: Object.fromEntries(LAGEN.map(l => [l, meesters[l].toDataURL('image/png')])),
       controle: cc.toDataURL('image/png'),
       blad: blad.toDataURL('image/webp', KWAL),
@@ -198,5 +224,16 @@ function naarBestand(dataUrl, pad) {
   if (uit.verschil > 0 || zonderKern.length) {
     console.log('FOUT: ' + (zonderKern.length ? 'geen kern voor ' + zonderKern.join(', ') : 'de lagen zijn samen niet het origineel'));
     process.exitCode = 1;
+  }
+  // oude meesters van lagen die niet meer bestaan opruimen
+  for (const f of fs.readdirSync(MEESTERS)) {
+    if (f.endsWith('.png') && f !== 'controle.png' && !LAGEN.includes(f.slice(0, -4))) fs.unlinkSync(path.join(MEESTERS, f));
+  }
+  // de tabel die de app en het filmpje gebruiken: [naam, x0, y0, x1, y1] per laag
+  const regel = 'const LOGO_DELEN = ' + JSON.stringify(LAGEN.map(l => [l, ...uit.vak[l]])) + ';';
+  for (const bestand of ['src/20-app.js', 'promo/promo.html']) {
+    const tekst = fs.readFileSync(path.join(WORTEL, bestand), 'utf8');
+    if (tekst.includes(regel)) console.log(`${bestand}: LOGO_DELEN klopt`);
+    else { console.log(`FOUT: ${bestand} heeft niet de LOGO_DELEN van dit blad. Zet deze regel erin:\n${regel}`); process.exitCode = 1; }
   }
 })();
