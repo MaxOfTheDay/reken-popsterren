@@ -2934,8 +2934,8 @@ addEventListener('resize', maxPlekZet);
    met de ster tegen zijn been (zoals in het merkteken), duikt even in, en de ster
    springt in een boog naar zijn plek boven "sterren". Onder hem door ploppen de
    letters één voor één op, en wat rechts van zijn landingsplek staat rimpelt
-   daarna naar buiten; als laatste veegt de zwaai eronder open. Ruim twee
-   seconden. Het promofilmpje (promo/promo.html) doet hetzelfde in het groot.
+   daarna naar buiten; als laatste veegt de zwaai eronder open. Ruim anderhalve
+   seconde. Het promofilmpje (promo/promo.html) doet hetzelfde in het groot.
 
    HET LOGO IN LAGEN. assets/branding/logo-lagen.webp is het spelogo in veertien
    delen onder elkaar -- de R, elke letter los, de ster en de zwaai -- geknipt
@@ -2974,9 +2974,14 @@ const LOGO_INTRO = {
   // de tijdlijn, in ms. De letters hebben geen vaste tijd: een letter links van
   // de landingsplek plopt op zodra de ster over hem heen is (voor: hoeveel
   // pixels erna), die rechts ervan rimpelen na de landing naar buiten.
-  plof: 520, wip: [520, 760], sprong: [640, 1300],
-  voor: 30, rimpel: .8, letter: 420, zwaai: [150, 750], na: 800,
-  overname: 250,               // de laatste zoveel ms: het echte logo neemt het over
+  //
+  // Ruim anderhalve seconde. De vlucht is het verhaal en blijft ruim (een kind
+  // van vijf moet de ster kunnen volgen); de staart na de landing is afronding en
+  // is kort gehouden -- dit speelt bij élke start, en de poppen op de tegels
+  // beginnen al na een halve seconde te zwaaien.
+  plof: 450, wip: [440, 640], sprong: [550, 1150],
+  voor: 30, rimpel: .5, letter: 360, zwaai: [-100, 350], na: 550,
+  overname: 200,               // de laatste zoveel ms: het echte logo neemt het over
   wachtOpBeeld: 800,           // zo lang mag het lagenblad erover doen
 };
 let logoIntroLoopt = null;   // { stop } zolang hij loopt
