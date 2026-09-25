@@ -2769,7 +2769,13 @@ function landingRust(extra) {
 /* Een tik wint het altijd van een groetje. Wie aan het kiezen is moet niet net
    op dat moment een pop zien bewegen, dus begint de stilte gewoon opnieuw. */
 function landingTikje() { landingStil(); landingRust(0); vonkAan(); }
-function landingLeeft() {
+/* `groetNa` (ms): wanneer de eerste pop zwaait. Gewoon is dat LANDING.komNa; de
+   logo-intro schuift hem op tot zijn laatste letter staat (zie "= Het spelogo
+   komt binnen"): eerst zegt het logo wie het is, dan zeggen de poppen "hoi, tik
+   op mij" -- na elkaar, van boven naar beneden, en niet door elkaar heen. De
+   vonkjes op de achtergrond wachten dan mee. */
+function landingLeeft(groetNa) {
+  const na = groetNa == null ? LANDING.komNa : groetNa;
   landingStil();
   const scherm = $('screen-profile');
   if (scherm) {
@@ -2786,10 +2792,10 @@ function landingLeeft() {
   landingVorige = -1;
   const aantal = landingPoppen().length;
   for (let i = 0; i < aantal; i++) {
-    landingNa(LANDING.komNa + i * LANDING.tussen, () => landingPas(landingPoppen()[i], LANDING_PASJES[0]));
+    landingNa(na + i * LANDING.tussen, () => landingPas(landingPoppen()[i], LANDING_PASJES[0]));
   }
-  landingRust(LANDING.komNa + aantal * LANDING.tussen);
-  vonkAan();
+  landingRust(na + aantal * LANDING.tussen);
+  if (na > LANDING.komNa) landingNa(na, vonkAan); else vonkAan();
 }
 
 /* ---- De MAX-ster: een verstopte verrassing --------------------------------
@@ -3137,6 +3143,9 @@ function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
     return { el: delen[n], op, hoog: (y1 - y0) * k, kant: i % 2 ? 1 : -1 };   // om en om een kant op
   });
   const klaar = land + L.na;
+  // De poppen zwaaien pas als de laatste letter staat, niet door de intro heen.
+  // Alleen als de intro echt speelt: valt hij weg, dan blijft de gewone groet.
+  landingLeeft(Math.max(...letters.map(l => l.op + L.letter)));
   let geland = false;
 
   const t0 = performance.now();

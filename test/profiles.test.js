@@ -2663,6 +2663,26 @@ function check(ok, label, detail) {
     await p1.waitForTimeout(3200);   // de intro duurt ruim twee seconden, plus het laden
     const af = await staat(p1);
     check(heel(af), 'de logo-intro ruimt zichzelf op', JSON.stringify(af));
+
+    // eerst het logo, dan de poppen: de eerste zwaai komt pas als de laatste
+    // letter staat (ruim anderhalve seconde na het begin van de intro), niet
+    // door de intro heen
+    await p1.goto(APP_URL + '&demo&intro');
+    const volgorde = await p1.evaluate(async () => {
+      const t0 = performance.now();
+      let intro = null, zwaai = null;
+      await new Promise(klaar => {
+        (function stap() {
+          const t = performance.now() - t0;
+          if (intro == null && document.querySelector('.logo-intro')) intro = Math.round(t);
+          if (zwaai == null && document.querySelector('#profile-row .avatar-holder[class*="move-"]')) zwaai = Math.round(t);
+          if (t < 4000) requestAnimationFrame(stap); else klaar();
+        })();
+      });
+      return { intro, zwaai };
+    });
+    check(volgorde.intro != null && volgorde.zwaai != null && volgorde.zwaai - volgorde.intro >= 1400,
+      'de poppen zwaaien pas als het logo staat', JSON.stringify(volgorde));
     await c1.close();
 
     // wie geen beweging wil, krijgt hem nooit -- ook niet met &intro
