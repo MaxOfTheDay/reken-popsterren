@@ -16,7 +16,8 @@
   Scènes:
     0.0 -  4.2  vallende ster, het merkteken ploft erin
     4.2 -  6.4  het merkteken wordt het spelogo: zijn R schuift op de R van
-                het woord, zijn ster vliegt naar de ster boven "sterren"
+                het woord en draait om als een munt, zijn ster springt weg
+                naar de ster boven "sterren"
     6.4 -  9.0  de ondertitel springt erbij
     9.0 - 21.0  vijf schermen uit het echte spel in een telefoon
    21.0 - 26.0  eindkaart met het adres
@@ -55,7 +56,10 @@
   .kop .licht { color: #fff4fb; }
 
   /* scène 1 en 2 */
-  #mark { width: 420px; left: 750px; top: 280px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45)); }
+  #mark { width: 420px; left: 750px; top: 280px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45));
+    /* met een gat waar de ster zit: die staat los in #merkster erboven, en als de R
+       omdraait moet hij geen tweede ster meenemen */
+    clip-path: polygon(evenodd, -20% -20%, 120% -20%, 120% 120%, -20% 120%, -20% -20%, 75.0% 41.4%, 79.5% 49.8%, 88.3% 53.9%, 81.4% 59.0%, 81.1% 68.8%, 72.7% 63.9%, 62.9% 66.8%, 65.2% 58.0%, 59.8% 51.2%, 69.7% 49.2%, 75.0% 41.4%, -20% -20%); }
   /* de schaduw zit op het vak eromheen, zodat het masker van de veeg hem niet afknipt */
   #woordvak { left: 370px; top: 240px; filter: drop-shadow(0 20px 36px rgba(0,0,0,.5)); }
   #woord { display: block; width: 1180px; }
@@ -242,7 +246,10 @@ const MERK = {
   rMaat: [[270, 348], [137, 206]],       // breedte (tot de boog) en hoogte, mark en woord
   sterMark: [376, 289, 77], sterWoord: [616, 103, 50],   // middelpunt en straal tot de punt
   rRand: 258,                            // tot hier is het woord nog alleen de R
+  draai: 4.92,                           // de R begint om te draaien
+  land: 5.7,                             // de ster landt op het woord
 };
+MERK.rAs = [(MERK.rWoord[0] + MERK.rMaat[1][0] / 2) * MERK.wk, (MERK.rWoord[1] + MERK.rMaat[1][1] / 2) * MERK.wk];
 MERK.rSchaal = [MERK.rMaat[1][0] * MERK.wk / (MERK.rMaat[0][0] * MERK.mk),
                 MERK.rMaat[1][1] * MERK.wk / (MERK.rMaat[0][1] * MERK.mk)];
 // waar een punt uit mark.webp op het beeld komt, bij deze transform van #mark
@@ -314,7 +321,7 @@ function voor(ctx, t) {
   }
   // een kleine uitbarsting waar de ster op het woord landt, en een glinster
   // waar de twee R's in elkaar overvloeien
-  const lp = tussen(t, 5.85, 6.6);
+  const lp = tussen(t, MERK.land, MERK.land + .75);
   if (lp > 0 && lp < 1) {
     const e = uitKubisch(lp);
     VONKEN.forEach((v, k) => {
@@ -325,7 +332,7 @@ function voor(ctx, t) {
     });
     ctx.globalAlpha = 1;
   }
-  const rg = tussen(t, 4.72, 5.2);
+  const rg = tussen(t, MERK.draai - .08, MERK.draai + .4);
   if (rg > 0 && rg < 1) glinster(ctx, 600, 318, 80 * Math.sin(rg * Math.PI) + 4, Math.sin(rg * Math.PI));
   // scène 4: sterrenconfetti
   if (t > S3 + 5 * STAP) {
@@ -381,38 +388,47 @@ function render(t) {
 
   /* scène 1 + 2: merkteken en spelogo */
   // 1) het merkteken ploft erin en zweeft; 2) vanaf 4.2 schuift het met zijn R
-  // op de R van het woord (en wordt daarbij smaller); 3) de R's vloeien in
-  // elkaar over; 4) de ster maakt zich los en vliegt naar zijn plek in het woord,
-  // en het woord veegt achter hem aan open.
+  // op de R van het woord (en wordt daarbij smaller); 3) de R draait om als een
+  // munt, en precies als hij op zijn kant staat -- en dus onzichtbaar is -- wordt
+  // hij de R van het woord. Geen overvloeien: de twee R's zijn verschillend
+  // getekend en dat zag je als een dubbel beeld. 4) Met die draai springt de ster
+  // weg naar zijn plek in het woord, en het woord veegt achter hem aan open.
   const mIn = tussen(t, 1.3, 2.2), mv = inUit(tussen(t, 4.2, 4.85));
   const zweef = Math.sin(t * 2.2) * 10;
   const mS = uitVeer(mIn);
   const T = [mix(0, MERK.tEind[0], mv), mix(zweef, MERK.tEind[1], mv)];
   const draai = mix(((1 - uitKubisch(mIn)) * -40 + Math.sin(t * 1.6) * 3) * Math.PI / 180, 0, mv);
   const S = [mix(mS, MERK.rSchaal[0], mv), mix(mS, MERK.rSchaal[1], mv)];
-  const overvloei = tussen(t, 4.82, 5.04);
-  zet($('mark'), mIn > 0 ? 1 - overvloei : 0,
-    `translate(${T[0]}px, ${T[1]}px) rotate(${draai}rad) scale(${S[0]}, ${S[1]})`);
+  // de draai-as loopt door het midden van de R, niet door het midden van het beeld
+  const as = S[0] * ((MERK.rMark[0] + MERK.rMaat[0][0] / 2) * MERK.mk - MERK.midden);
+  const om = inUit(tussen(t, MERK.draai, MERK.draai + .13)) * 90;
+  zet($('mark'), mIn > 0 && om < 90 ? 1 : 0,
+    `translate(${T[0]}px, ${T[1]}px) translateX(${as}px) perspective(900px) rotateY(${om}deg) translateX(${-as}px) rotate(${draai}rad) scale(${S[0]}, ${S[1]})`);
 
-  // de ster: tot 5.1 zit hij vast aan het merkteken, dan vliegt hij in een boog
-  const vl = inUit(tussen(t, 5.1, 5.85));
+  // de ster: tot de draai zit hij vast aan het merkteken, dan springt hij in een boog
+  const vl = inUit(tussen(t, MERK.draai + .03, MERK.land));
   const start = merkPunt(MERK.sterMark, T, draai, S);
   const C = [mix(start[0], MERK.sterDoel[0], vl), mix(start[1], MERK.sterDoel[1], vl) - Math.sin(vl * Math.PI) * 200];
-  const plof = Math.sin(tussen(t, 5.85, 6.1) * Math.PI);   // even platdrukken bij het landen
+  const plof = Math.sin(tussen(t, MERK.land, MERK.land + .25) * Math.PI);   // even platdrukken bij het landen
   const sd = MERK.sterDoelSchaal * (1 + .35 * Math.sin(vl * Math.PI));
   const sS = [mix(S[0], sd, vl) * (1 + .15 * plof), mix(S[1], sd, vl) * (1 - .15 * plof)];
-  zet($('merkster'), mIn > 0 ? 1 - tussen(t, 5.95, 6.15) : 0,
+  zet($('merkster'), mIn > 0 ? 1 - tussen(t, MERK.land + .1, MERK.land + .3) : 0,
     `translate(${C[0]}px, ${C[1]}px) rotate(${draai + mix(0, -2 * Math.PI - .1, vl)}rad) scale(${sS[0]}, ${sS[1]})`);
 
   // het woord: eerst alleen de R, dan veegt het open achter de ster aan
   const wUit = tussen(t, S3 - .4, S3 + .05);
   const woord = $('woord');
-  const rand = t < 5.85
+  const rand = t < MERK.land
     ? Math.max(MERK.rRand, (C[0] - 25 - MERK.woordPos[0]) / MERK.wk)
-    : mix(MERK.sterDoel[0] - 25 - MERK.woordPos[0], 1180, uitKubisch(tussen(t, 5.85, 6.4))) / MERK.wk;
+    : mix(MERK.sterDoel[0] - 25 - MERK.woordPos[0], 1180, uitKubisch(tussen(t, MERK.land, MERK.land + .55))) / MERK.wk;
   const rust = tussen(t, 6.4, 7.0);         // pas als alles staat mag het woord zweven
-  zet($('woordvak'), t >= 4.8 && t < S3 + .05 ? tussen(t, 4.8, 5.02) * (1 - wUit) : 0,
-    `translateY(${zweef * .6 * rust}px) scale(${1 + wUit * .2}) rotate(${Math.sin(t * 1.3) * 1.2 * rust}deg)`);
+  // de tweede helft van de munt: het woord komt van de andere kant terug, met
+  // een klein beetje doorzwaaien
+  const terug = tussen(t, MERK.draai + .13, MERK.draai + .45);
+  const vak = $('woordvak');
+  vak.style.transformOrigin = t < 6 ? `${MERK.rAs[0]}px ${MERK.rAs[1]}px` : '50% 50%';
+  zet(vak, t >= MERK.draai + .13 && t < S3 + .05 ? 1 - wUit : 0,
+    `perspective(900px) rotateY(${(1 - uitTerug(terug, 1.4)) * -90}deg) translateY(${zweef * .6 * rust}px) scale(${1 + wUit * .2}) rotate(${Math.sin(t * 1.3) * 1.2 * rust}deg)`);
   // een zachte rand, geen harde snede door de letters
   const rp = rand / 10.8;
   woord.style.webkitMaskImage = woord.style.maskImage = rp >= 100 ? 'none'
