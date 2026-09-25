@@ -13,6 +13,11 @@
  *   source/appicon.webp   ->  icon-192.png, icon-512.png      het app-icoon
  *                             icon-maskable-512.png           idem, voor een launcher
  *
+ * Het spelogo bestaat ook in lagen (de R, "eken", "sterren", de ster en de zwaai),
+ * voor de logo-intro en het promofilmpje. Die worden niet hier maar met
+ * `npm run lagen` uit dezelfde meester geknipt -- zie test/lagen.js. Krijgt
+ * source/wordmark.webp een nieuwe versie, draai dan allebei.
+ *
  * De iconen staan met opzet in de wortel en niet onder assets/: de servicewerker
  * behandelt álles onder /assets/ als tekening (voorraad-eerst, eigen cachenaam die
  * niet met een uitgave meegaat) en de iconen horen bij de schil. Zie sw.js.
