@@ -7,6 +7,7 @@ niets hieronder wordt door `index.html` of `sw.js` geladen.
 |---|---|
 | `rekensterren-promo.mp4` | het filmpje, 26 s, 1920×1080, zonder geluid |
 | `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 8,5 s) |
+| `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/20-app.js`); de intro zelf staat in de app, niet hier |
 | `poster.jpg` | de eindkaart als stilstaand beeld |
 | `promo.html` | de bron. Open hem in een browser en hij speelt in een lus |
 | `render.js` | maakt er beeld voor beeld een mp4 van |

@@ -1421,6 +1421,38 @@
     height: auto;
     object-fit: contain;
   }
+  /* ---- Het spelogo komt binnen ------------------------------------------
+     De intro bij het opstarten (zie "= Het spelogo komt binnen" in de JS). Het
+     logo zelf gaat zolang op opacity 0 en niet op visibility: zo blijft de kop
+     voor een schermlezer gewoon staan. Wat er beweegt ligt in .logo-intro, een
+     laag precies over het logo die niets vangt; de maten en plekken zet de JS,
+     want die hangen aan hoe breed het logo op dít scherm uitvalt. */
+  .spellogo.intro-wacht > img { opacity: 0; }
+  .logo-intro { position: absolute; pointer-events: none; z-index: 2; }
+  .logo-intro img { position: absolute; max-width: none; height: auto; will-change: transform; }
+  /* Het merkteken met een gat waar zijn ster zit: die ster ligt los erboven
+     (.li-ster), en een R die omdraait mag geen tweede ster meenemen. De punten
+     zijn de ster in mark.webp, in procenten; bij .li-ster iets ruimer genomen,
+     zodat hij het gat helemaal dekt. */
+  .logo-intro .li-mark {
+    clip-path: polygon(evenodd, -20% -20%, 120% -20%, 120% 120%, -20% 120%, -20% -20%,
+      75.0% 41.4%, 79.5% 49.8%, 88.3% 53.9%, 81.4% 59.0%, 81.1% 68.8%, 72.7% 63.9%,
+      62.9% 66.8%, 65.2% 58.0%, 59.8% 51.2%, 69.7% 49.2%, 75.0% 41.4%, -20% -20%);
+  }
+  .logo-intro .li-ster {
+    clip-path: polygon(75.2% 39.3%, 80.2% 49.0%, 90.4% 53.6%, 82.4% 59.3%, 82.1% 70.5%,
+      72.6% 64.8%, 61.4% 68.2%, 64.2% 58.2%, 57.9% 50.4%, 69.3% 48.4%);
+  }
+  .logo-intro .li-vonk {
+    position: absolute; line-height: 1; opacity: 0;
+    color: #fff7dc; text-shadow: 0 0 7px rgba(var(--warm-licht-rgb), .9);
+    animation: maxVonk 700ms cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  /* De JS begint er bij beperkte beweging niet aan; dit is het slot op de deur. */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-intro { display: none; }
+    .spellogo.intro-wacht > img { opacity: 1; }
+  }
 
   /* ===== De schil: de vaste sfeer buiten de werelden om ======================
      Dit is géén wereld en geen tekening, maar de rúimte waar de app in staat als
@@ -9229,6 +9261,7 @@ let kaartBezocht = 0, groetTimer = null, pulsTimer = null;
    ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
      Schermen ........... show()/navGo()/toonHub: welk scherm staat aan
      De sterrenkeuze leeft   het beginscherm: zwaaien, vonkjes, ster kiezen
+     Het spelogo komt binnen   de korte logo-intro bij het opstarten
      De kaart: welke wereld   STAAT IN src/15-kaart-en-weg.js. De rékenkant
                           van de kaart: haltes, weg, streeppatroon,
                           viewWorldIdx/showWorld. De kaart, de reis én de
@@ -11751,7 +11784,7 @@ function show(id) {
   // De begroeting van de kaart hoort bij de kaart -- zie kaartGroetStop.
   if (id !== 'screen-map') kaartGroetStop();
   // en die van de sterrenkeuze bij de sterrenkeuze -- zie landingStil.
-  if (id !== 'screen-profile') landingStil();
+  if (id !== 'screen-profile') { landingStil(); logoIntroStop(); }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -12113,6 +12146,188 @@ function maxVonkje(plek, hoek, ver, duur, maat) {
    een toestel en als de adresbalk van Android wegschuift. */
 if ($('max-plek')) $('max-plek').addEventListener('pointerdown', maxTik);
 addEventListener('resize', maxPlekZet);
+
+/* ================= Het spelogo komt binnen =================
+   Eén keer per start, en alleen hier: het merkteken (de R met de ster) ploft op
+   de plek van de R in het spelogo, draait om als een munt en ís dan de R van het
+   woord; de ster springt eraf, landt op de ster boven "sterren", en het woord
+   veegt achter hem aan open. Ruim anderhalve seconde. Het promofilmpje
+   (promo/promo.html) doet hetzelfde in het groot.
+
+   WAAROM EEN MUNT EN GEEN OVERVLOEIER. De twee R's zijn verschillend getekend --
+   die van het merkteken heeft een langere staart -- en overvloeien liet dat zien
+   als een dubbel beeld. Op zijn kant is een R onzichtbaar, en precies dan wordt
+   er gewisseld.
+
+   WAT HET NIET MAG:
+     - iets tegenhouden. De tegels doen het meteen, en élke tik -- waar dan ook --
+       maakt de intro af: het logo staat er dan in één keer, heel.
+     - de kop wegnemen. Het logo is de <h1> van dit scherm en blijft dat: het
+       wordt alleen onzichtbaar gemaakt (opacity, geen visibility of display,
+       dus een schermlezer leest "Rekensterren" gewoon). Wat er beweegt is
+       aria-hidden en vangt geen tikken.
+     - spelen bij wie geen beweging wil. Dan gebeurt er niets en staat het logo
+       er zoals altijd.
+     - spelen onder ?debug, tenzij er &intro bij staat. De tests en npm run shots
+       kijken naar het scherm zoals het blijft, niet naar de eerste seconden.
+     - wachten op het netwerk. mark.webp is een tekening onder assets/ en komt
+       dus na de eerste keer uit de voorraad (zie sw.js). Is hij er niet op tijd,
+       dan valt de intro weg en verschijnt het logo gewoon.
+
+   De maten zijn in pixels van wordmark.webp (1080x360) en mark.webp (512x512),
+   opgemeten op de tekeningen. Komt er een nieuwe tekening, dan kloppen ze niet
+   meer: dan landt de R of de ster ernaast. De meting staat ook in promo.html. */
+const LOGO_INTRO = {
+  rMark: [90, 42], rWoord: [97, 62],        // linkerbovenhoek van de gele R
+  rMaat: [[270, 348], [137, 206]],          // breedte tot de boog, en hoogte: mark, woord
+  sterMark: [376, 289, 77],                 // middelpunt en straal tot de punt
+  sterWoord: [616, 103, 50],
+  rRand: 258,                               // tot hier is het woord alleen de R
+  boog: .17,                                // hoe hoog de ster springt, in logobreedtes
+  // de tijdlijn, in ms
+  plof: 450, draai: 560, om: 130, terug: 300, sprong: 700, open: 450, klaar: 1800,
+  wachtOpBeeld: 800,                        // zo lang mogen de tekeningen erover doen
+};
+let logoIntroLoopt = null;   // { stop } zolang hij loopt
+
+function logoIntroMag() {
+  if (motionOff()) return false;
+  if (location.search.indexOf('debug') !== -1 && location.search.indexOf('intro') === -1) return false;
+  return !document.hidden && !!document.querySelector('#screen-profile.active .spellogo img');
+}
+function logoIntro() {
+  if (!logoIntroMag()) return;
+  const kop = document.querySelector('#screen-profile .spellogo');
+  const woord = kop.querySelector('img');
+  kop.classList.add('intro-wacht');           // meteen: anders staat het logo er even heel
+
+  const laag = document.createElement('div');
+  laag.className = 'logo-intro';
+  laag.setAttribute('aria-hidden', 'true');
+  const mark = new Image(), ster = new Image();
+  mark.className = 'li-mark'; ster.className = 'li-ster';
+  mark.alt = ster.alt = '';
+  mark.src = ster.src = 'assets/branding/mark.webp';
+  laag.appendChild(mark); laag.appendChild(ster);
+
+  let raf = 0, klaar = false;
+  function stop() {
+    if (klaar) return;
+    klaar = true;
+    cancelAnimationFrame(raf);
+    clearTimeout(wacht);
+    laag.remove();
+    kop.classList.remove('intro-wacht');
+    woord.style.transform = woord.style.transformOrigin = '';
+    woord.style.webkitMaskImage = woord.style.maskImage = '';
+    removeEventListener('pointerdown', stop, true);
+    removeEventListener('resize', stop);
+    document.removeEventListener('visibilitychange', stop);
+    logoIntroLoopt = null;
+  }
+  logoIntroLoopt = { stop };
+  addEventListener('pointerdown', stop, true);
+  addEventListener('resize', stop);
+  document.addEventListener('visibilitychange', stop);
+
+  const wacht = setTimeout(stop, LOGO_INTRO.wachtOpBeeld);
+  const binnen = el => el.decode ? el.decode() : new Promise((ok, nee) => { el.onload = ok; el.onerror = nee; });
+  Promise.all([binnen(woord), binnen(mark)]).then(() => {
+    if (klaar) return;
+    clearTimeout(wacht);
+    if (!logoIntroMag() || !woord.offsetWidth) return stop();
+    kop.appendChild(laag);
+    logoIntroSpeel(woord, laag, mark, ster, stop, f => { raf = f; });
+  }, stop);
+}
+function logoIntroStop() { if (logoIntroLoopt) logoIntroLoopt.stop(); }
+
+function logoIntroSpeel(woord, laag, mark, ster, stop, zetRaf) {
+  const L = LOGO_INTRO;
+  // één bronpixel -> scherm. mark.webp krijgt dezelfde schaal, en daarna scale(sx, sy)
+  // zodat zijn R precies zo groot is als die van het woord
+  const W = woord.offsetWidth, k = W / 1080;
+  const sx = L.rMaat[1][0] / L.rMaat[0][0], sy = L.rMaat[1][1] / L.rMaat[0][1];
+  const persp = Math.round(W * .76);
+  // de laag ligt precies over het logo
+  laag.style.left = woord.offsetLeft + 'px'; laag.style.top = woord.offsetTop + 'px';
+  laag.style.width = W + 'px'; laag.style.height = woord.offsetHeight + 'px';
+
+  // het merkteken, met zijn linkerbovenhoek van de R op die van het woord
+  const A = [L.rMark[0] * k, L.rMark[1] * k];
+  mark.style.width = ster.style.width = 512 * k + 'px';
+  mark.style.left = (L.rWoord[0] * k - A[0]) + 'px';
+  mark.style.top = (L.rWoord[1] * k - A[1]) + 'px';
+  mark.style.transformOrigin = A[0] + 'px ' + A[1] + 'px';
+  const c = [sx * L.rMaat[0][0] / 2 * k, sy * L.rMaat[0][1] / 2 * k];   // van hoek naar midden van de R
+  const rMidden = [L.rWoord[0] * k + c[0], L.rWoord[1] * k + c[1]];
+  // de ster: zijn middelpunt op (0,0), en dan met translate op zijn plek
+  ster.style.left = -L.sterMark[0] * k + 'px'; ster.style.top = -L.sterMark[1] * k + 'px';
+  ster.style.transformOrigin = L.sterMark[0] * k + 'px ' + L.sterMark[1] * k + 'px';
+  const ster0 = [L.rWoord[0] * k + sx * (L.sterMark[0] - L.rMark[0]) * k,
+                 L.rWoord[1] * k + sy * (L.sterMark[1] - L.rMark[1]) * k];
+  const ster1 = [L.sterWoord[0] * k, L.sterWoord[1] * k];
+  const sterDoel = L.sterWoord[2] * k / (L.sterMark[2] * k);
+  // het woord draait om het midden van zijn R
+  woord.style.transformOrigin = (L.rWoord[0] + L.rMaat[1][0] / 2) * k + 'px ' + (L.rWoord[1] + L.rMaat[1][1] / 2) * k + 'px';
+
+  const tussen = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+  const mix = (a, b, p) => a + (b - a) * p;
+  const inUit = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  const uitTerug = (p, s) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+  const veer = p => p === 0 || p === 1 ? p : Math.pow(2, -10 * p) * Math.sin((p * 10 - .75) * (2 * Math.PI) / 3) + 1;
+  const land = L.draai + 30 + L.sprong;
+  let geland = false;
+
+  const t0 = performance.now();
+  function beeld(nu) {
+    const t = nu - t0;
+    if (t >= L.klaar) return stop();
+    // 1. het merkteken ploft erin, verend, om het midden van zijn R
+    const plof = veer(tussen(t, 0, L.plof));
+    // 2. de munt: tot 90 graden is het het merkteken, daarna het woord
+    const om = tussen(t, L.draai, L.draai + L.om);
+    mark.style.opacity = om < 1 ? 1 : 0;
+    mark.style.transform = `translate(${c[0]}px, ${c[1]}px) perspective(${persp}px) rotateY(${om * om * 90}deg) scale(${plof}) translate(${-c[0]}px, ${-c[1]}px) scale(${sx}, ${sy})`;
+    const terug = tussen(t, L.draai + L.om, L.draai + L.om + L.terug);
+    if (om >= 1) laag.parentNode.classList.remove('intro-wacht');
+    woord.style.transform = om < 1 ? '' : `perspective(${persp}px) rotateY(${(1 - uitTerug(terug, 1.4)) * -90}deg)`;
+    // 3. de ster springt in een boog naar zijn plek, en draait een keer rond
+    const vl = inUit(tussen(t, L.draai + 30, land));
+    const p0 = [mix(rMidden[0], ster0[0], plof), mix(rMidden[1], ster0[1], plof)];
+    const x = mix(p0[0], ster1[0], vl), y = mix(p0[1], ster1[1], vl) - Math.sin(vl * Math.PI) * L.boog * W;
+    const druk = Math.sin(tussen(t, land, land + 250) * Math.PI);
+    const bult = sterDoel * (1 + .35 * Math.sin(vl * Math.PI));
+    ster.style.opacity = t < land + 100 ? 1 : 1 - tussen(t, land + 100, land + 250);
+    ster.style.transform = `translate(${x}px, ${y}px) rotate(${vl * -366}deg) ` +
+      `scale(${mix(sx * plof, bult, vl) * (1 + .15 * druk)}, ${mix(sy * plof, bult, vl) * (1 - .15 * druk)})`;
+    if (!geland && t >= land) { geland = true; logoIntroVonken(laag, ster1); }
+    // 4. het woord veegt achter de ster aan open, met een zachte rand
+    const rand = t < land ? Math.max(L.rRand * k, x - 12)
+      : mix(ster1[0] - 12, W * 1.05, 1 - Math.pow(1 - tussen(t, land, land + L.open), 3));
+    const pr = rand / W * 100;
+    woord.style.webkitMaskImage = woord.style.maskImage = pr >= 100 ? '' : `linear-gradient(90deg, #000 ${pr}%, transparent ${pr + 4}%)`;
+    zetRaf(requestAnimationFrame(beeld));
+  }
+  // Het eerste beeld meteen, niet pas bij het volgende frame: anders staan de
+  // twee tekeningen één frame lang onbewerkt op het scherm, groot en los.
+  beeld(t0);
+}
+// Een handvol sterretjes waar de ster landt. Dezelfde vonk als bij de MAX-ster.
+function logoIntroVonken(laag, [x, y]) {
+  for (let i = 0; i < 6; i++) {
+    const v = document.createElement('span');
+    v.className = 'li-vonk';
+    v.textContent = '✦';
+    const hoek = (200 + i * 28) * Math.PI / 180, ver = rnd(22, 40);
+    v.style.left = x + 'px'; v.style.top = y + 'px';
+    v.style.setProperty('--dx', Math.round(Math.cos(hoek) * ver) + 'px');
+    v.style.setProperty('--dy', Math.round(Math.sin(hoek) * ver) + 'px');
+    v.style.setProperty('--rot', rnd(-120, 120) + 'deg');
+    v.style.fontSize = rnd(9, 14) + 'px';
+    laag.appendChild(v);
+  }
+}
 
 function goProfiles() {
   /* Een klaarliggende reis hoort bij de ster die hem verdiend heeft. Ging het kind
@@ -19645,6 +19860,9 @@ renderProfiles();
 // goProfiles() langs om de begroeting aan te zwengelen. Brengt ?debug je meteen
 // ergens anders heen, dan zet show() hem hieronder net zo goed weer stil.
 landingLeeft();
+// Alleen hier, bij het opstarten -- niet bij elke terugkeer naar dit scherm. Zie
+// "= Het spelogo komt binnen".
+logoIntro();
 syncBackGuard();
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
@@ -19657,6 +19875,8 @@ syncBackGuard();
                         niets opgeslagen, dus een echte familie-opslag op
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
+   &intro            -- speel de logo-intro toch af (onder ?debug staat hij uit,
+                        zie "= Het spelogo komt binnen")
    &wereld=<n>       -- open meteen in wereld n (1 = de eerste). Zet een
                         samenhangende stand neer -- alles ervóór uitgespeeld --
                         en grendelt de opslag, dus ook op een echte ster wordt

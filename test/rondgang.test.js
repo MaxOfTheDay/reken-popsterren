@@ -895,9 +895,12 @@ const SPEL_URL = APP_URL.replace('?debug', '');
      De aanvragen worden op twee stapels gelegd, en dat onderscheid is de hele
      regel. Wat uit assets/world/ komt is wereldtekening en groeit mee met WORLDS
      -- dáár gaat deze controle over. Wat daarbuiten ligt is een vast beeld van een
-     scherm en groeit nergens in mee; op de sterrenkeuze zijn dat er twee: het
-     schilderij erachter (assets/bg/landing.webp) en het spelogo erop
-     (assets/branding/wordmark.webp).
+     scherm en groeit nergens in mee; op de sterrenkeuze zijn dat er drie: het
+     schilderij erachter (assets/bg/landing.webp), het spelogo erop
+     (assets/branding/wordmark.webp), en het merkteken waarmee dat logo bij het
+     opstarten binnenkomt (assets/branding/mark.webp -- zie "= Het spelogo komt
+     binnen"). Dat derde is er één keer per start en daarna uit de voorraad; het
+     groeit net zo min mee als de andere twee.
 
      Eerder telde de meting álles onder assets/ als wereldtekening, en dus viel
      hij om op dat schilderij: "het startscherm haalt geen enkele wereldtekening
@@ -938,10 +941,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.gehaald.length === 0 && opgehaald.length === 0,
     'het startscherm haalt geen enkele wereldtekening op',
     JSON.stringify(r.gehaald) + ' / ' + JSON.stringify(opgehaald));
-  /* En zijn eigen beelden zijn er twee en blijven er twee: het schilderij achter de
-     sterrenkeuze en het logo erop horen niet mee te groeien met het aantal werelden
-     of kinderen. Eén logo per kind zou hier omvallen, en dat is de bedoeling. */
-  check(anders.length <= 2, 'en zijn eigen beelden zijn er hooguit twee',
+  /* En zijn eigen beelden zijn er drie en blijven er drie: het schilderij achter de
+     sterrenkeuze, het logo erop en het merkteken van de intro horen niet mee te
+     groeien met het aantal werelden of kinderen. Eén logo per kind zou hier
+     omvallen, en dat is de bedoeling. */
+  check(anders.length <= 3, 'en zijn eigen beelden zijn er hooguit drie',
     r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
 
   await vers.click('.ster-tegel');
@@ -958,7 +962,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(opgehaald.length <= 3 && opgehaald.length >= 1,
     'en de browser vraagt er ook echt niet meer op dan dat',
     r.werelden + ' werelden, over de lijn: ' + JSON.stringify(opgehaald));
-  check(anders.length <= 2, 'en buiten de wereldtekeningen blijft het bij die twee beelden',
+  check(anders.length <= 3, 'en buiten de wereldtekeningen blijft het bij die drie beelden',
     r.werelden + ' werelden, buiten assets/world/: ' + JSON.stringify(anders));
   /* De tekening van de wereld waar ze op staat hoort erbij te zitten -- anders is
      "hooguit drie" gehaald door er nul op te halen, en dan kijkt ze naar een kaart
