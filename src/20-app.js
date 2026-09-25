@@ -2976,6 +2976,7 @@ const LOGO_INTRO = {
   // pixels erna), die rechts ervan rimpelen na de landing naar buiten.
   plof: 520, wip: [520, 760], sprong: [640, 1300],
   voor: 30, rimpel: .8, letter: 420, zwaai: [150, 750], na: 800,
+  overname: 250,               // de laatste zoveel ms: het echte logo neemt het over
   wachtOpBeeld: 800,           // zo lang mag het lagenblad erover doen
 };
 let logoIntroLoopt = null;   // { stop } zolang hij loopt
@@ -3047,10 +3048,14 @@ function logoIntroStop() { if (logoIntroLoopt) logoIntroLoopt.stop(); }
 
 function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
   const L = LOGO_INTRO;
-  const W = woord.offsetWidth, k = W / 1080;   // één pixel van het logo -> scherm
-  // de laag ligt precies over het logo, en elk deel beslaat de hele laag
-  laag.style.left = woord.offsetLeft + 'px'; laag.style.top = woord.offsetTop + 'px';
-  laag.style.width = W + 'px'; laag.style.height = woord.offsetHeight + 'px';
+  // De laag ligt precies over het logo, en elk deel beslaat de hele laag. Gemeten
+  // met getBoundingClientRect en niet met offsetWidth/-Left: die ronden af op
+  // hele pixels, het logo zelf niet -- en dan staat het opgebouwde logo tot een
+  // halve pixel naast het echte, en schokt het als dat het aan het eind overneemt.
+  const vakLogo = woord.getBoundingClientRect(), vakKop = laag.parentNode.getBoundingClientRect();
+  const W = vakLogo.width, k = W / 1080;       // één pixel van het logo -> scherm
+  laag.style.left = (vakLogo.left - vakKop.left) + 'px'; laag.style.top = (vakLogo.top - vakKop.top) + 'px';
+  laag.style.width = W + 'px'; laag.style.height = vakLogo.height + 'px';
   const oorsprong = ([x, y]) => (x * k) + 'px ' + (y * k) + 'px';
   delen.r.style.transformOrigin = oorsprong(L.rMidden);
   delen.ster.style.transformOrigin = oorsprong(L.ster);
@@ -3065,7 +3070,12 @@ function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
   const uit = p => 1 - Math.pow(1 - p, 3);
 
   // de sprong: waar de ster is op elk moment van zijn vlucht
-  const van = [(L.sterBijR[0] - L.ster[0]) * k, (L.sterBijR[1] - L.ster[1]) * k];
+  // waar de ster begint, als verschuiving vanaf zijn eindplek: tegen het been
+  // van de R, en daar groeit hij mee met de R -- om het midden van de R, niet om
+  // zijn eindplek. (Eerst groeide de verschuiving mee vanaf nul, en dan vloog de
+  // ster in het begin vanaf "sterren" naar de R toe.)
+  const bijR = p => [(L.rMidden[0] + (L.sterBijR[0] - L.rMidden[0]) * p - L.ster[0]) * k,
+                     (L.rMidden[1] + (L.sterBijR[1] - L.rMidden[1]) * p - L.ster[1]) * k];
   const sterX = t => L.sterBijR[0] + (L.ster[0] - L.sterBijR[0]) * zacht(tussen(t, L.sprong[0], L.sprong[1]));
   const land = L.sprong[1];
   // wanneer elke letter opkomt: links van de landing als de ster over hem heen
@@ -3086,6 +3096,13 @@ function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
   function beeld(nu) {
     const t = nu - t0;
     if (t >= klaar) return stop();
+    /* 5. De overname. Het echte logo gaat eronder aan en de lagen lossen erboven
+       op. Dat is geen overvloeier tussen twee tekeningen -- het is twee keer
+       dezelfde, op dezelfde pixels -- maar de browser schaalt het hoge lagenblad
+       nét iets anders dan wordmark.webp, en een harde wissel liet dat zien als
+       een trilling op het laatste moment. Zo glijdt dat verschil weg. */
+    const over = tussen(t, klaar - L.overname, klaar);
+    if (over > 0) { laag.parentNode.classList.remove('intro-wacht'); laag.style.opacity = 1 - over; }
     // 1. de R met de ster ertegen komt op, met één kleine doorschieter
     const p = terug(tussen(t, 0, L.plof), 1.4);
     // en duikt even in elkaar vlak voor de sprong, alsof hij de ster wegschiet
@@ -3093,11 +3110,15 @@ function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
     delen.r.style.transform = `scale(${p * (1 + .05 * wip)}, ${p * (1 - .08 * wip)})`;
     // 2. de ster springt in een boog naar zijn plek, en draait een keer rond
     const vl = zacht(tussen(t, L.sprong[0], L.sprong[1]));
-    const druk = Math.sin(tussen(t, land, land + 260) * Math.PI);
+    // Hij landt zonder na te veren: de sinus-kromme brengt hem al zacht tot
+    // stilstand, en een platdrukken erbovenop las als trillen. De draai eindigt
+    // op precies een hele slag (-12 -> -360 = 0 graden), zodat hij rechtop staat
+    // zoals in het logo -- anders sprong hij recht als het echte logo het
+    // overnam.
     const sch = mix(L.sterBegin * p, 1, vl) * (1 + .22 * Math.sin(vl * Math.PI));
-    const dx = mix(van[0] * p, 0, vl), dy = mix(van[1] * p, 0, vl) - Math.sin(vl * Math.PI) * L.boog * W;
-    delen.ster.style.transform = `translate(${dx}px, ${dy}px) rotate(${mix(-12, -372, vl)}deg) ` +
-      `scale(${sch * (1 + .08 * druk)}, ${sch * (1 - .08 * druk)})`;
+    const [bx, by] = bijR(p);
+    const dx = mix(bx, 0, vl), dy = mix(by, 0, vl) - Math.sin(vl * Math.PI) * L.boog * W;
+    delen.ster.style.transform = `translate(${dx}px, ${dy}px) rotate(${mix(-12, -360, vl)}deg) scale(${sch})`;
     if (!geland && t >= land) { geland = true; logoIntroVonken(laag, [L.ster[0] * k, L.ster[1] * k]); }
     // 3. de letters, één voor één: uit hun voet omhoog, met een klein kantelje
     for (const l of letters) {
