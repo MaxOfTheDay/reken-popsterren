@@ -2939,8 +2939,8 @@ addEventListener('resize', maxPlekZet);
 
    HET LOGO IN LAGEN. assets/branding/logo-lagen.webp is het spelogo in veertien
    delen onder elkaar -- de R, elke letter los, de ster en de zwaai -- geknipt
-   uit dezelfde meester als wordmark.webp (zie test/lagen.js en LOGO_DELEN). Ze overlappen niet en liggen op
-   hun eigen plek, dus op elkaar gelegd zijn ze het logo zelf. Daarom is er aan
+   uit dezelfde meester als wordmark.webp (zie test/lagen.js en LOGO_DELEN). Ze
+   overlappen niet, dus op hun plek gelegd zijn ze het logo zelf. Daarom is er aan
    het eind niets te wisselen: het echte logo komt terug op precies dezelfde
    pixels. Eén bestand en niet vijf: de sterrenkeuze haalt zo drie vaste beelden
    op en geen zeven (zie de grens in test/rondgang.test.js).
@@ -2961,10 +2961,11 @@ addEventListener('resize', maxPlekZet);
        valt de intro weg en verschijnt het logo gewoon.
 
    De plekken hieronder zijn in pixels van wordmark.webp (1080x360). */
-/* Waar elk deel in het logo staat: [naam, x0, y0, x1, y1] in pixels van het blad
-   (1080x360 per laag), in de volgorde van het blad. Niet met de hand bijwerken:
+/* Het lagenblad: zijn maat, en per deel [naam, x0, y0, x1, y1, bx, by] -- de
+   rechthoek waar het deel in het logo staat (in pixels van het logo, 1080x360),
+   en waar diezelfde rechthoek in het blad begint. Niet met de hand bijwerken:
    npm run lagen rekent hem uit en zegt het als hij hier niet meer klopt. */
-const LOGO_DELEN = [["r",81,59,373,287],["e1",231,130,316,235],["k",305,73,425,256],["e2",378,127,456,232],["n1",443,120,535,238],["s",520,100,599,246],["t",589,132,653,241],["e3",633,115,713,235],["r1",704,114,789,240],["r2",751,129,847,245],["e4",805,142,901,259],["n2",872,156,988,290],["ster",527,29,677,152],["zwaai",47,45,1030,316]];
+const LOGO_DELEN = {"blad":[1080,647],"delen":[["r",80,58,373,288,0,296],["e1",231,128,317,236,268,528],["k",304,72,426,257,295,296],["e2",377,126,457,233,356,528],["n1",442,119,536,238,949,296],["s",519,99,600,247,419,296],["t",588,130,654,243,200,528],["e3",632,114,714,236,865,296],["r1",704,113,790,241,622,296],["r2",750,128,848,246,100,528],["e4",804,141,902,260,0,528],["n2",871,154,989,291,502,296],["ster",526,27,679,153,710,296],["zwaai",45,34,1031,328,0,0]]};
 const LOGO_INTRO = {
   rMidden: [165, 165],         // midden van de R: daar ploft en wipt hij om
   ster: [616, 103],            // middelpunt van de ster in het logo
@@ -2982,43 +2983,71 @@ const LOGO_INTRO = {
   plof: 450, wip: [440, 640], sprong: [550, 1150],
   voor: 30, rimpel: .5, letter: 360, zwaai: [-100, 350], na: 550,
   overname: 200,               // de laatste zoveel ms: het echte logo neemt het over
-  wachtOpBeeld: 800,           // zo lang mag het lagenblad erover doen
+  // Tot hoe lang na het openen van de pagina de intro nog mag beginnen. Het logo
+  // staat vanaf het eerste beeld verstopt (class intro-wacht in de opmaak); is het
+  // lagenblad er dan nog niet, dan gaat de intro niet door en verschijnt het logo
+  // gewoon. De CSS laat het na 1,2 s hoe dan ook zien -- ook als dit script nooit
+  // draait -- en dit moet daar dus vóór liggen.
+  uiterlijk: 1000,
+  // En als er bij het opstarten al minder dan zoveel over is, begint hij er niet
+  // eens aan -- ook het blad wordt dan niet opgehaald. Nagemeten op een trage
+  // eerste keer (3G, trage tablet): dit script draait dan pas na bijna drie
+  // seconden, en een blad dat dán nog binnenkomt concurreert met het logo zelf,
+  // dat daardoor vier seconden later verscheen. Om dezelfde reden staat er geen
+  // <link rel="preload"> voor het blad in de <head>: die haalde het eerste beeld
+  // een halve seconde naar achteren, en bij een gewone start (uit de voorraad) won
+  // hij niets.
+  minstens: 300,
 };
 let logoIntroLoopt = null;   // { stop } zolang hij loopt
 
+// ?debug&intro: speel hem hoe dan ook, ook als de pagina er te lang over deed. Voor
+// de tests en voor opnames met een stilgezette klok -- die gaan over wat de intro
+// doet, niet over hoe snel de machine toevallig was.
+function logoIntroGedwongen() {
+  return location.search.indexOf('debug') !== -1 && location.search.indexOf('intro') !== -1;
+}
 function logoIntroMag() {
   if (motionOff()) return false;
   if (location.search.indexOf('debug') !== -1 && location.search.indexOf('intro') === -1) return false;
   return !document.hidden && !!document.querySelector('#screen-profile.active .spellogo img');
 }
 function logoIntro() {
-  if (!logoIntroMag()) return;
   const kop = document.querySelector('#screen-profile .spellogo');
+  if (!kop) return;
+  /* Het logo staat al vanaf de opmaak op wachten (<h1 class="spellogo
+     intro-wacht">). Dat moet daar en niet pas hier: index.html is groot, en een
+     trage tablet schildert het scherm al vóórdat dit script aan de beurt is. Stond
+     het wachten hier, dan zag je het logo eerst heel, dan weg, en dan opgebouwd. */
+  const uiterlijk = logoIntroGedwongen() ? Infinity : LOGO_INTRO.uiterlijk;
+  if (!logoIntroMag() || performance.now() > uiterlijk - LOGO_INTRO.minstens) {
+    kop.classList.remove('intro-wacht');
+    return;
+  }
   const woord = kop.querySelector('img');
-  kop.classList.add('intro-wacht');           // meteen: anders staat het logo er even heel
 
   const laag = document.createElement('div');
   laag.className = 'logo-intro';
   laag.setAttribute('aria-hidden', 'true');
-  // Elk deel is een vak zo groot als het logo met het hele blad erin, zo ver
-  // omhoog geschoven dat precies zijn eigen laag in het vak valt. Een <img> en
-  // geen CSS-achtergrond: <img>'s met hetzelfde adres delen één download, een
-  // achtergrond haalt het blad nóg een keer op (zie de grens in rondgang).
+  // Elk deel is een vak op zijn eigen plek in het logo, met het blad erin zo
+  // verschoven dat precies zijn eigen stuk in het vak valt (de maten zet
+  // logoIntroSpeel, die kent de schaal). Een <img> en geen CSS-achtergrond:
+  // <img>'s met hetzelfde adres delen één download, een achtergrond haalt het blad
+  // nóg een keer op (zie rondgang).
   const blad = new Image();
   blad.src = 'assets/branding/logo-lagen.webp';
   const delen = {};
-  LOGO_DELEN.forEach(([naam], i) => {
+  LOGO_DELEN.delen.forEach(([naam]) => {
     const d = document.createElement('div');
     d.className = 'li-laag li-' + naam;
     const b = new Image();
     b.alt = ''; b.src = blad.src;
-    b.style.top = (-100 * i) + '%';
     d.appendChild(b);
     delen[naam] = d;
   });
   // van onder naar boven: de zwaai onder alles, dan de letters, de ster erbovenop
   laag.appendChild(delen.zwaai);
-  LOGO_DELEN.forEach(([n]) => { if (n !== 'zwaai' && n !== 'ster') laag.appendChild(delen[n]); });
+  LOGO_DELEN.delen.forEach(([n]) => { if (n !== 'zwaai' && n !== 'ster') laag.appendChild(delen[n]); });
   laag.appendChild(delen.ster);
 
   let raf = 0, klaar = false;
@@ -3029,6 +3058,7 @@ function logoIntro() {
     clearTimeout(wacht);
     laag.remove();
     kop.classList.remove('intro-wacht');
+    woord.style.animation = '';
     removeEventListener('pointerdown', stop, true);
     removeEventListener('resize', stop);
     document.removeEventListener('visibilitychange', stop);
@@ -3039,12 +3069,13 @@ function logoIntro() {
   addEventListener('resize', stop);
   document.addEventListener('visibilitychange', stop);
 
-  const wacht = setTimeout(stop, LOGO_INTRO.wachtOpBeeld);
+  const wacht = setTimeout(stop, uiterlijk === Infinity ? 5000 : Math.max(0, uiterlijk - performance.now()));
   const binnen = el => el.decode ? el.decode() : new Promise((ok, nee) => { el.onload = ok; el.onerror = nee; });
   Promise.all([binnen(woord), binnen(blad)]).then(() => {
     if (klaar) return;
     clearTimeout(wacht);
-    if (!logoIntroMag() || !woord.offsetWidth) return stop();
+    if (!logoIntroMag() || !woord.offsetWidth || performance.now() > uiterlijk) return stop();
+    woord.style.animation = 'none';           // het vangnet in de CSS: nu hebben wij het
     kop.appendChild(laag);
     logoIntroSpeel(woord, laag, delen, stop, f => { raf = f; });
   }, stop);
@@ -3061,9 +3092,20 @@ function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
   const W = vakLogo.width, k = W / 1080;       // één pixel van het logo -> scherm
   laag.style.left = (vakLogo.left - vakKop.left) + 'px'; laag.style.top = (vakLogo.top - vakKop.top) + 'px';
   laag.style.width = W + 'px'; laag.style.height = vakLogo.height + 'px';
-  const oorsprong = ([x, y]) => (x * k) + 'px ' + (y * k) + 'px';
-  delen.r.style.transformOrigin = oorsprong(L.rMidden);
-  delen.ster.style.transformOrigin = oorsprong(L.ster);
+  // elk deel op zijn plek, met zijn stuk van het blad erin
+  const vak = {};
+  LOGO_DELEN.delen.forEach(([naam, x0, y0, x1, y1, bx, by]) => {
+    vak[naam] = [x0, y0];
+    const d = delen[naam], b = d.firstChild;
+    d.style.left = x0 * k + 'px'; d.style.top = y0 * k + 'px';
+    d.style.width = (x1 - x0) * k + 'px'; d.style.height = (y1 - y0) * k + 'px';
+    b.style.left = -bx * k + 'px'; b.style.top = -by * k + 'px';
+    b.style.width = LOGO_DELEN.blad[0] * k + 'px';
+  });
+  // een draaipunt, in pixels van het logo, omgerekend naar het vak van dat deel
+  const oorsprong = (naam, [x, y]) => (x - vak[naam][0]) * k + 'px ' + (y - vak[naam][1]) * k + 'px';
+  delen.r.style.transformOrigin = oorsprong('r', L.rMidden);
+  delen.ster.style.transformOrigin = oorsprong('ster', L.ster);
 
   const tussen = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
   const mix = (a, b, p) => a + (b - a) * p;
@@ -3085,13 +3127,13 @@ function logoIntroSpeel(woord, laag, delen, stop, zetRaf) {
   const land = L.sprong[1];
   // wanneer elke letter opkomt: links van de landing als de ster over hem heen
   // is, rechts ervan in een rimpel na de landing
-  const letters = LOGO_DELEN.filter(([n]) => n !== 'r' && n !== 'ster' && n !== 'zwaai').map(([n, x0, y0, x1, y1], i) => {
+  const letters = LOGO_DELEN.delen.filter(([n]) => n !== 'r' && n !== 'ster' && n !== 'zwaai').map(([n, x0, y0, x1, y1], i) => {
     const midden = (x0 + x1) / 2;
     let op = land - 60;
     if (midden + L.voor < L.ster[0]) {
       for (let t = L.sprong[0]; t < land; t += 5) if (sterX(t) >= midden + L.voor) { op = t; break; }
     } else if (midden > L.ster[0]) op = land + (midden - L.ster[0]) * L.rimpel;
-    delen[n].style.transformOrigin = oorsprong([midden, y1]);   // ze groeien uit hun voet
+    delen[n].style.transformOrigin = oorsprong(n, [midden, y1]);   // ze groeien uit hun voet
     return { el: delen[n], op, hoog: (y1 - y0) * k, kant: i % 2 ? 1 : -1 };   // om en om een kant op
   });
   const klaar = land + L.na;
@@ -10705,7 +10747,8 @@ syncBackGuard();
                         hetzelfde toestel blijft ongemoeid.
    &star=p1|p2       -- welke voorbeeldster meteen geselecteerd wordt
    &intro            -- speel de logo-intro toch af (onder ?debug staat hij uit,
-                        zie "= Het spelogo komt binnen")
+                        zie "= Het spelogo komt binnen"), en dan ook als de
+                        pagina er te lang over deed
    &wereld=<n>       -- open meteen in wereld n (1 = de eerste). Zet een
                         samenhangende stand neer -- alles ervóór uitgespeeld --
                         en grendelt de opslag, dus ook op een echte ster wordt
