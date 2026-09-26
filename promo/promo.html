@@ -416,11 +416,13 @@ function render(t) {
   DEEL.r.style.transform = `scale(${1 + .05 * wip}, ${1 - .08 * wip})`;
   // de ster: tegen het been van de R, dan in een boog naar zijn plek
   const vl = zacht(tussen(t, ...L.sprong));
-  const druk = Math.sin(tussen(t, L.land, L.land + .26) * Math.PI);
+  // Zoals in de app: hij landt zonder na te veren, en de draai eindigt op precies
+  // een hele slag (-12 -> -360 = 0 graden), zodat hij rechtop staat zoals in het
+  // logo. Eerst liep hij tot -372 en bleef hij de rest van de scène scheef staan.
   const sterMaat = mix(L.sterBegin, 1, vl) * (1 + .22 * Math.sin(vl * Math.PI));
   const van = [(L.sterBijR[0] - L.ster[0]) * L.k, (L.sterBijR[1] - L.ster[1]) * L.k];
   DEEL.ster.style.transform = `translate(${mix(van[0], 0, vl)}px, ${mix(van[1], 0, vl) - Math.sin(vl * Math.PI) * 200}px) ` +
-    `rotate(${mix(-12, -372, vl)}deg) scale(${sterMaat * (1 + .08 * druk)}, ${sterMaat * (1 - .08 * druk)})`;
+    `rotate(${mix(-12, -360, vl)}deg) scale(${sterMaat})`;
   // de letters, één voor één: uit hun voet omhoog, met een klein kanteltje
   for (const l of L.letters) {
     const q = tussen(t, l.op, l.op + L.letter);
