@@ -504,6 +504,43 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     'na een tweede misser gaat de som rustig dicht', JSON.stringify(dicht.mis));
   check(dicht.mis.toast === '👉', 'en de kaart zegt alleen nog hoe je verder komt', JSON.stringify(dicht.mis));
 
+  /* en zonder schok: "?" is smaller dan "16", en de som staat gecentreerd. Sprong
+     het vakje in één keer naar zijn nieuwe breedte, dan schoot de hele som bijna
+     11 pixels opzij op het moment dat het getal landde. Nu glijdt hij mee, en
+     landt de kopie precies op het vakje. */
+  const glad = await page.evaluate(async () => {
+    G.lock = false; G.retried = false;
+    G.qs[G.idx] = { tmpl: '9 + 7 = @', ans: 16, op: '+', kind: 'classic' };
+    drawQuestion();
+    const kaart = document.getElementById('question-text');
+    const x = () => { const r = document.createRange(); r.setStart(kaart.firstChild, 0); r.setEnd(kaart.firstChild, 1); return r.getBoundingClientRect().left; };
+    const knop = document.createElement('button');
+    knop.style.cssText = 'position:fixed;left:40px;top:700px;width:80px;height:50px';
+    document.body.appendChild(knop);
+    somVult(G.qs[G.idx], knop);
+    const xs = []; let kopie = null;
+    await new Promise(klaar => { (function stap() {
+      xs.push(x());
+      const k = document.querySelector('.som-vlucht');
+      if (k) { const b = k.getBoundingClientRect(); kopie = [b.left, b.top, b.width, b.height]; }
+      if (xs.length < 36) requestAnimationFrame(stap); else klaar();
+    })(); });
+    knop.remove();
+    const v = kaart.querySelector('.q-blank').getBoundingClientRect();
+    const vak = [v.left, v.top, v.width, v.height];
+    return {
+      grootsteStap: Math.max(...xs.slice(1).map((w, i) => Math.abs(w - xs[i]))),
+      verschoven: Math.abs(xs[xs.length - 1] - xs[0]),
+      landing: Math.max(...vak.map((w, i) => Math.abs(w - kopie[i]))),
+    };
+  });
+  check(glad.verschoven > 5 && glad.grootsteStap < 2,
+    'de som glijdt naar zijn nieuwe breedte en springt niet', JSON.stringify(glad));
+  // Het laatste beeld mét kopie is er één vóór de landing, dus hij mag daar nog
+  // de laatste stap van zijn (afremmende) vlucht van af zitten -- niet meer. De
+  // oude fout was 18%: een vakje van 64 dat in één beeld 75 werd.
+  check(glad.landing < 2, 'het vliegende getal landt precies op het vakje', JSON.stringify(glad));
+
   // zonder beweging: niets vliegt, het getal staat er meteen
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, reducedMotion: 'reduce' });
