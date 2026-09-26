@@ -70,6 +70,7 @@
      Spel ............... de show: renderQuestion, submitAnswer, endLevel.
                           De gedeelde feestjes stonden hier ooit ook in; die
                           staan sinds kort in src/10-feestjes.js
+     De som valt dicht    een goed antwoord vliegt het vakje van de som in
      Wereldfeest ........ wereld uit en/of overal drie sterren (fase 4D.1)
      Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
 
@@ -8111,6 +8112,7 @@ function drawQuestion() {
   // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
   // staat de som gewoon te lezen en wordt er niets uitgesproken)
   $('btn-replay').style.display = G.count ? 'flex' : 'none';
+  somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) { drawCountQuestion(q); return; }
   const shown = G.mode === 'typ' ? G.input : '?';
   $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
@@ -8184,6 +8186,99 @@ function stopSpot() {
   if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
 }
 
+/* ================= De som valt dicht =================
+   Een goed antwoord landt in het vakje van de som: het getal vliegt van de knop
+   naar het "?" en de som staat er even helemaal, "5 − 2 = 3", voordat de
+   volgende komt. Hiervoor ging het vakje in de kiesmodus nooit dicht -- de knop
+   werd groen, de diamanten vlogen, en de som verdween met het vraagteken er nog
+   in. Terwijl dát het moment is waarop de som moet kloppen.
+
+   Er komt geen tijd bij: de vlucht duurt SOM_VLUCHT, en de volgende vraag komt op
+   hetzelfde moment als altijd (zie de 950 in submitAnswer). Wat er verschuift, is
+   de volgorde: de diamanten vertrekken nu uit de dichte som in plaats van uit de
+   knop, dus eerst het antwoord, dan de beloning.
+
+   Na een tweede misser gaat de som óók dicht, maar rustig (rustig = true): geen
+   vlucht, geen groen, geen pop. Het goede antwoord hoort dan in de som te staan,
+   niet alleen in een losse kaart.
+
+   Bij beperkte beweging vliegt er niets en staat het getal meteen in het vakje;
+   wat het leert, blijft. In de telmodus is er geen vakje (lees-vrij, andere
+   kaarten) en doet dit niets. In de typmodus stond het getal al in het vakje;
+   daar komt alleen de pop bij.
+
+   Geeft het vakje terug (of null als er geen is), zodat submitAnswer de
+   diamanten daaruit kan laten vertrekken. */
+const SOM_VLUCHT = 320;   // ms: van de knop naar het vakje
+let somVlucht = null;     // het getal dat nog onderweg is
+/* Het getal in het vakje zetten zonder dat de som verspringt. Het vakje wordt er
+   breder of smaller van ("?" is smaller dan "16"), en de som staat gecentreerd --
+   dus sprong de hele regel opzij op het moment dat het getal erin kwam: 2 pixels
+   bij één cijfer, bijna 11 bij twee. Nu groeit het vakje in `duur` ms naar zijn
+   nieuwe breedte, en glijdt de som mee in plaats van te springen. Geeft de
+   rechthoek terug waar het vakje uitkomt, om op te mikken. */
+function vakNaar(vak, tekst, duur) {
+  const w0 = vak.getBoundingClientRect().width;
+  vak.textContent = tekst;
+  const eind = vak.getBoundingClientRect();
+  if (duur && !motionOff() && vak.animate && Math.abs(eind.width - w0) > .5) {
+    vak.style.boxSizing = 'border-box';   // de breedte is dan die van de hele rand
+    vak.animate([{ width: w0 + 'px' }, { width: eind.width + 'px' }],
+      { duration: duur, easing: 'cubic-bezier(.3,.6,.35,1)' });
+  }
+  return eind;
+}
+function somVult(q, vanEl, rustig) {
+  const kaart = $('question-text');
+  const vak = kaart && kaart.querySelector('.q-blank');
+  if (!vak) return null;
+  const zet = () => {
+    vak.style.visibility = '';
+    vak.classList.add('done', rustig ? 'rustig' : 'klikt');
+  };
+  if (rustig || G.mode === 'typ' || !vanEl || !vanEl.getBoundingClientRect || motionOff()) {
+    vakNaar(vak, q.ans, rustig ? 240 : 0);   // typmodus: het getal stond er al
+    zet();
+    return vak;
+  }
+  // Het vraagteken eronder even weg (de plek blijft): de kopie is half
+  // doorzichtig, en een "?" dat door het landende getal heen schijnt leest als
+  // twee antwoorden. En het getal staat er meteen al in, onzichtbaar: dan weet
+  // de kopie waar het vakje uitkomt, en groeit het vakje er tijdens de vlucht
+  // naartoe (zie vakNaar).
+  vak.style.visibility = 'hidden';
+  const v = vanEl.getBoundingClientRect(), n = vakNaar(vak, q.ans, SOM_VLUCHT), cs = getComputedStyle(vak);
+  // Een kopie van het gevulde vakje, los boven alles: de somkaart knipt af
+  // (overflow: hidden), dus binnen de kaart zou hij halverwege verdwijnen.
+  const kopie = document.createElement('span');
+  kopie.className = 'q-blank done som-vlucht';
+  kopie.setAttribute('aria-hidden', 'true');
+  kopie.textContent = q.ans;
+  Object.assign(kopie.style, {
+    left: n.left + 'px', top: n.top + 'px', width: n.width + 'px', height: n.height + 'px',
+    fontSize: cs.fontSize, fontWeight: cs.fontWeight, fontFamily: cs.fontFamily,
+  });
+  document.body.appendChild(kopie);
+  somVlucht = kopie;
+  const dx = (v.left + v.width / 2) - (n.left + n.width / 2);
+  const dy = (v.top + v.height / 2) - (n.top + n.height / 2);
+  const a = kopie.animate([
+    { transform: `translate(${dx}px, ${dy}px) scale(.75)` },
+    { transform: `translate(${dx * .45}px, ${dy * .45 - 36}px) scale(1.12)`, offset: .55 },
+    { transform: 'none' },
+  ], { duration: SOM_VLUCHT, easing: 'cubic-bezier(.3,.6,.35,1)' });
+  const land = () => {
+    if (somVlucht === kopie) somVlucht = null;
+    if (!kopie.isConnected) return;   // al opgeruimd: er staat een nieuwe som
+    kopie.remove();
+    zet();
+  };
+  a.onfinish = land;
+  setTimeout(land, SOM_VLUCHT + 150);
+  return vak;
+}
+function somVluchtWeg() { if (somVlucht) { somVlucht.remove(); somVlucht = null; } }
+
 function submitAnswer(val, btnEl) {
   if (!G || G.lock) return;
   if (btnEl && btnEl.getBoundingClientRect) {   // tactiel: ripple vanaf de aangetikte tegel
@@ -8232,13 +8327,21 @@ function submitAnswer(val, btnEl) {
       p.diamonds += 5; G.earned += 5; p.encores++;
     }
     save();
+    if (btnEl) btnEl.classList.add('good');
+    // Eerst landt het antwoord in de som (zie "= De som valt dicht"), en dán pas
+    // vliegen de diamanten -- uit de dichte som naar de teller: jouw antwoord
+    // maakt de som af, en de som betaalt je uit. Zonder vakje (telmodus) komen ze
+    // gewoon uit de knop, zoals altijd.
+    const vak = somVult(q, btnEl);
+    // alleen wachten als er ook echt een getal vliegt (niet zonder knop, niet in
+    // de typmodus, niet bij beperkte beweging) -- somVlucht staat dan klaar
+    const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
     // De teller wacht op wat eraan komt (zie telStraks): eerst vliegen ze, dan
     // staat het er. Bewaren doet save() hierboven, meteen en zonder te wachten.
-    telStraks($('game-diamonds'), p.diamonds);
+    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_AANKOMST);
     // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
-    flyDiamonds(btnEl || $('question-card'), $('game-diamonds'), q.gold ? 3 : 2);
-    if (btnEl) btnEl.classList.add('good');
-    if (G.mode === 'typ') $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank done">${q.ans}</span>`);
+    const diaVan = vak || btnEl || $('question-card');
+    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2), vlucht);
     if (encore) { sndStreak(); confetti(24); showPraise('🎆 EXTRA SHOW!', '💎 +5 bonus'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
@@ -8311,8 +8414,12 @@ function submitAnswer(val, btnEl) {
     const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
     if (cb) cb.classList.add('good');
   }
+  // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
+  // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een
+  // losse kaart ernaast. Die kaart zegt dan alleen nog hoe je verder komt.
+  somVult(q, null, true);
   loseHeart();
-  showToast(q.tmpl.replace('@', q.ans), nextStep, 'tik om verder te gaan 👉');
+  showToast('👉', nextStep, 'tik om verder te gaan');
 }
 // het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
