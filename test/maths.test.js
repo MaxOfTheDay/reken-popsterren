@@ -463,6 +463,70 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   check(storage.rewarded === true, 'beloning wordt nog steeds gegeven als opslag faalt', String(storage.rewarded));
   check(storage.advanced === true, 'het spel gaat verder als opslag faalt', String(storage.advanced));
 
+  /* ---- de som valt dicht (zie "= De som valt dicht" in de app) ----
+     Een goed antwoord landt in het vakje; na een tweede misser gaat de som óók
+     dicht, maar rustig; en er blijft niets rondvliegen als de volgende som komt. */
+  const dicht = await page.evaluate(async () => {
+    const wacht = ms => new Promise(r => setTimeout(r, ms));
+    const vak = () => document.querySelector('#question-text .q-blank');
+    const knop = v => [...document.querySelectorAll('.choice-btn')].find(b => Number(b.dataset.v) === v);
+    const out = {};
+    P().settings.mode = 'kies';
+    startLevel(1);
+    await wacht(400);
+    let q = G.qs[G.idx];
+    out.voor = vak().textContent;
+    knop(q.ans).click();
+    await wacht(80);
+    out.onderweg = document.querySelectorAll('.som-vlucht').length;
+    await wacht(420);
+    out.goed = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className, vlucht: document.querySelectorAll('.som-vlucht').length };
+    await wacht(800);                                     // de volgende som is er
+    out.volgende = { tekst: vak().textContent, vlucht: document.querySelectorAll('.som-vlucht').length };
+    q = G.qs[G.idx];
+    const fout = [...document.querySelectorAll('.choice-btn')].map(b => Number(b.dataset.v)).filter(v => v !== q.ans);
+    knop(fout[0]).click();
+    await wacht(500);
+    knop(fout[1]).click();
+    await wacht(400);
+    out.mis = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className,
+                toast: document.querySelector('#toast .toast-main').textContent };
+    hideToast();
+    return out;
+  });
+  check(dicht.voor === '?', 'de som begint met een vraagteken', JSON.stringify(dicht));
+  check(dicht.onderweg === 1, 'een goed antwoord vliegt naar het vakje', JSON.stringify(dicht));
+  check(dicht.goed.tekst === dicht.goed.ans && /\bdone\b/.test(dicht.goed.klas) && /\bklikt\b/.test(dicht.goed.klas) && dicht.goed.vlucht === 0,
+    'en landt erin: de som staat er dicht', JSON.stringify(dicht.goed));
+  check(dicht.volgende.tekst === '?' && dicht.volgende.vlucht === 0,
+    'de volgende som begint weer open, zonder iets dat nog rondvliegt', JSON.stringify(dicht.volgende));
+  check(dicht.mis.tekst === dicht.mis.ans && /\brustig\b/.test(dicht.mis.klas) && !/\bklikt\b/.test(dicht.mis.klas),
+    'na een tweede misser gaat de som rustig dicht', JSON.stringify(dicht.mis));
+  check(dicht.mis.toast === '👉', 'en de kaart zegt alleen nog hoe je verder komt', JSON.stringify(dicht.mis));
+
+  // zonder beweging: niets vliegt, het getal staat er meteen
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, reducedMotion: 'reduce' });
+    await cacheFonts(ctx);
+    const stil = await ctx.newPage();
+    stil.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await stil.goto(APP_URL);
+    await stil.waitForTimeout(300);
+    const r = await stil.evaluate(async () => {
+      db.profiles.t1 = defaultProfile('Rekenster', 'dress_paars', {});
+      const p = db.profiles.t1; p.settings.track = 'math'; p.settings.mode = 'kies';
+      cur = 't1';
+      startLevel(1);
+      await new Promise(r => setTimeout(r, 300));
+      const q = G.qs[G.idx];
+      [...document.querySelectorAll('.choice-btn')].find(b => Number(b.dataset.v) === q.ans).click();
+      const vak = document.querySelector('#question-text .q-blank');
+      return { tekst: vak.textContent, ans: String(q.ans), vlucht: document.querySelectorAll('.som-vlucht').length };
+    });
+    check(r.tekst === r.ans && r.vlucht === 0, 'zonder beweging staat het antwoord meteen in de som', JSON.stringify(r));
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();
