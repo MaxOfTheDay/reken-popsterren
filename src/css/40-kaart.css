@@ -485,6 +485,26 @@
     border: 3px dashed rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
   }
   .q-blank.done { border-style: solid; border-color: var(--green-deep); background: rgba(102,187,106,.18); color: var(--green-deep); }
+  /* De som valt dicht (zie die kop in de JS). klikt: het goede antwoord is net
+     geland en plopt één keer. rustig: na een tweede misser staat het goede
+     antwoord er ook, maar zonder feest -- geen groen, gewoon de kleur van de som,
+     en het komt zacht op in plaats van te ploppen. som-vlucht: de kopie die van de
+     knop naar het vakje vliegt, los boven de kaart. */
+  /* De pop begint op de maat waarop het getal landt en zwelt dán pas op: begon
+     hij op zijn grootst, dan sprong het getal bij het landen in één beeld 18%
+     groter -- een schokje, precies op het moment waar je naar kijkt. */
+  .q-blank.done.klikt { animation: somKlikt 300ms ease-out; }
+  @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
+  .q-blank.done.rustig {
+    border-color: rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
+    animation: somRustig 320ms ease-out;
+  }
+  @keyframes somRustig { from { opacity: 0; } to { opacity: 1; } }
+  .som-vlucht {
+    position: fixed; z-index: 55; margin: 0; pointer-events: none; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center; will-change: transform;
+  }
+  @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig { animation: none; } }
   /* de spotlight-bonus leeft ín de somkaart: een gouden randje dat langzaam dooft —
      geen aparte tijdbalk-rij die als "haast je!" leest */
   .spot-rail {

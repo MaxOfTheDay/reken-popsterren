@@ -463,6 +463,107 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   check(storage.rewarded === true, 'beloning wordt nog steeds gegeven als opslag faalt', String(storage.rewarded));
   check(storage.advanced === true, 'het spel gaat verder als opslag faalt', String(storage.advanced));
 
+  /* ---- de som valt dicht (zie "= De som valt dicht" in de app) ----
+     Een goed antwoord landt in het vakje; na een tweede misser gaat de som óók
+     dicht, maar rustig; en er blijft niets rondvliegen als de volgende som komt. */
+  const dicht = await page.evaluate(async () => {
+    const wacht = ms => new Promise(r => setTimeout(r, ms));
+    const vak = () => document.querySelector('#question-text .q-blank');
+    const knop = v => [...document.querySelectorAll('.choice-btn')].find(b => Number(b.dataset.v) === v);
+    const out = {};
+    P().settings.mode = 'kies';
+    startLevel(1);
+    await wacht(400);
+    let q = G.qs[G.idx];
+    out.voor = vak().textContent;
+    knop(q.ans).click();
+    await wacht(80);
+    out.onderweg = document.querySelectorAll('.som-vlucht').length;
+    await wacht(420);
+    out.goed = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className, vlucht: document.querySelectorAll('.som-vlucht').length };
+    await wacht(800);                                     // de volgende som is er
+    out.volgende = { tekst: vak().textContent, vlucht: document.querySelectorAll('.som-vlucht').length };
+    q = G.qs[G.idx];
+    const fout = [...document.querySelectorAll('.choice-btn')].map(b => Number(b.dataset.v)).filter(v => v !== q.ans);
+    knop(fout[0]).click();
+    await wacht(500);
+    knop(fout[1]).click();
+    await wacht(400);
+    out.mis = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className,
+                toast: document.querySelector('#toast .toast-main').textContent };
+    hideToast();
+    return out;
+  });
+  check(dicht.voor === '?', 'de som begint met een vraagteken', JSON.stringify(dicht));
+  check(dicht.onderweg === 1, 'een goed antwoord vliegt naar het vakje', JSON.stringify(dicht));
+  check(dicht.goed.tekst === dicht.goed.ans && /\bdone\b/.test(dicht.goed.klas) && /\bklikt\b/.test(dicht.goed.klas) && dicht.goed.vlucht === 0,
+    'en landt erin: de som staat er dicht', JSON.stringify(dicht.goed));
+  check(dicht.volgende.tekst === '?' && dicht.volgende.vlucht === 0,
+    'de volgende som begint weer open, zonder iets dat nog rondvliegt', JSON.stringify(dicht.volgende));
+  check(dicht.mis.tekst === dicht.mis.ans && /\brustig\b/.test(dicht.mis.klas) && !/\bklikt\b/.test(dicht.mis.klas),
+    'na een tweede misser gaat de som rustig dicht', JSON.stringify(dicht.mis));
+  check(dicht.mis.toast === '👉', 'en de kaart zegt alleen nog hoe je verder komt', JSON.stringify(dicht.mis));
+
+  /* en zonder schok: "?" is smaller dan "16", en de som staat gecentreerd. Sprong
+     het vakje in één keer naar zijn nieuwe breedte, dan schoot de hele som bijna
+     11 pixels opzij op het moment dat het getal landde. Nu glijdt hij mee, en
+     landt de kopie precies op het vakje. */
+  const glad = await page.evaluate(async () => {
+    G.lock = false; G.retried = false;
+    G.qs[G.idx] = { tmpl: '9 + 7 = @', ans: 16, op: '+', kind: 'classic' };
+    drawQuestion();
+    const kaart = document.getElementById('question-text');
+    const x = () => { const r = document.createRange(); r.setStart(kaart.firstChild, 0); r.setEnd(kaart.firstChild, 1); return r.getBoundingClientRect().left; };
+    const knop = document.createElement('button');
+    knop.style.cssText = 'position:fixed;left:40px;top:700px;width:80px;height:50px';
+    document.body.appendChild(knop);
+    somVult(G.qs[G.idx], knop);
+    const xs = []; let kopie = null;
+    await new Promise(klaar => { (function stap() {
+      xs.push(x());
+      const k = document.querySelector('.som-vlucht');
+      if (k) { const b = k.getBoundingClientRect(); kopie = [b.left, b.top, b.width, b.height]; }
+      if (xs.length < 36) requestAnimationFrame(stap); else klaar();
+    })(); });
+    knop.remove();
+    const v = kaart.querySelector('.q-blank').getBoundingClientRect();
+    const vak = [v.left, v.top, v.width, v.height];
+    return {
+      grootsteStap: Math.max(...xs.slice(1).map((w, i) => Math.abs(w - xs[i]))),
+      verschoven: Math.abs(xs[xs.length - 1] - xs[0]),
+      landing: Math.max(...vak.map((w, i) => Math.abs(w - kopie[i]))),
+    };
+  });
+  check(glad.verschoven > 5 && glad.grootsteStap < 2,
+    'de som glijdt naar zijn nieuwe breedte en springt niet', JSON.stringify(glad));
+  // Het laatste beeld mét kopie is er één vóór de landing, dus hij mag daar nog
+  // de laatste stap van zijn (afremmende) vlucht van af zitten -- niet meer. De
+  // oude fout was 18%: een vakje van 64 dat in één beeld 75 werd.
+  check(glad.landing < 2, 'het vliegende getal landt precies op het vakje', JSON.stringify(glad));
+
+  // zonder beweging: niets vliegt, het getal staat er meteen
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, reducedMotion: 'reduce' });
+    await cacheFonts(ctx);
+    const stil = await ctx.newPage();
+    stil.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await stil.goto(APP_URL);
+    await stil.waitForTimeout(300);
+    const r = await stil.evaluate(async () => {
+      db.profiles.t1 = defaultProfile('Rekenster', 'dress_paars', {});
+      const p = db.profiles.t1; p.settings.track = 'math'; p.settings.mode = 'kies';
+      cur = 't1';
+      startLevel(1);
+      await new Promise(r => setTimeout(r, 300));
+      const q = G.qs[G.idx];
+      [...document.querySelectorAll('.choice-btn')].find(b => Number(b.dataset.v) === q.ans).click();
+      const vak = document.querySelector('#question-text .q-blank');
+      return { tekst: vak.textContent, ans: String(q.ans), vlucht: document.querySelectorAll('.som-vlucht').length };
+    });
+    check(r.tekst === r.ans && r.vlucht === 0, 'zonder beweging staat het antwoord meteen in de som', JSON.stringify(r));
+    await ctx.close();
+  }
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();
