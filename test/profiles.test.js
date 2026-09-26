@@ -2544,6 +2544,38 @@ function check(ok, label, detail) {
       JSON.stringify(sprankel));
     check(sprankel.opTegel === 0, 'en nooit over een tegel heen: daar staan gezichten en namen',
       JSON.stringify(sprankel));
+
+    /* En dan zonder toeval. Twintig seconden kijken ziet een vonkje dat een tegel
+       raakt maar af en toe -- en dan nog op zijn beginmaat. Hier gaan er per
+       schermmaat tweeduizend plekken van elke soort langs, elk op zijn vólle maat
+       (de grootste letter, schaal 1, een kwartslag gedraaid). Het grote vonkje
+       naast de naam raakte zo op een telefoon een op de zes keer de bovenste
+       tegelrand. */
+    for (const [w, h] of [[390, 844], [320, 568], [1024, 768], [844, 390]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.waitForTimeout(150);
+      const raak = await page.evaluate(() => {
+        const laag = document.querySelector('#screen-profile .vonk-laag');
+        const rij = document.getElementById('profile-row').getBoundingClientRect();
+        const uit = { logo: 0, klein: 0 };
+        for (const bijLogo of [true, false]) for (let i = 0; i < 2000; i++) {
+          const plek = vonkPlek(bijLogo);
+          if (!plek) continue;
+          const v = document.createElement('span');
+          v.className = 'vonk'; v.textContent = '✦';
+          v.style.cssText = `position:absolute;left:${Math.round(plek.x)}px;top:${Math.round(plek.y)}px;font-size:${bijLogo ? 19 : 13}px;line-height:1`;
+          laag.appendChild(v);
+          const b = v.getBoundingClientRect();
+          v.remove();
+          const m = (Math.max(b.width, b.height) * Math.SQRT2 - b.height) / 2;
+          if (!(b.right + m < rij.left || b.left - m > rij.right || b.bottom + m < rij.top || b.top - m > rij.bottom)) uit[bijLogo ? 'logo' : 'klein']++;
+        }
+        return uit;
+      });
+      check(raak.logo === 0 && raak.klein === 0,
+        `ook op volle maat raakt geen vonkje een tegel — ${w}x${h}`, JSON.stringify(raak));
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     check(sprankel.groot >= 1, 'de opvallende bij het logo komt op zijn eigen, tragere beurt',
       JSON.stringify(sprankel));
 

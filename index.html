@@ -11910,15 +11910,30 @@ function vonkPlek(bijLogo) {
   const logoEl = scherm.querySelector('.spellogo img');
   const logo = logoEl ? logoEl.getBoundingClientRect() : null;
   const rand = 14;
-  let y;
-  if (bijLogo && logo) y = vonkTussen(logo.top - s.top - 6, logo.bottom - s.top + 6);
   /* De 30 hieronder is de vrije ruimte rond het raster met tegels, en hij is
      ruimer dan hij hoeft te zijn: een vonkje wordt gezet op zijn punt linksboven
      en groeit daarna nog (schaal tot 1, plus een kwartslag draai), dus met een
      krappe marge schampt hij alsnog de bovenste tegelrand. Op 30 gebeurt dat
-     niet meer -- gemeten over drie schermmaten, duizend vonkjes, nul aanrakingen. */
+     niet meer -- gemeten over zes schermmaten, drieduizend vonkjes per soort en
+     per maat, op hun volle maat: nul aanrakingen.
+
+     Die grens geldt voor élk vonkje boven de tegels, ook voor het grote naast de
+     naam. Dat had hem niet: het mocht tot 6 pixels onder de onderkant van het
+     logo staan, en het logo staat vlak boven de tegels -- op volle grootte raakte
+     een op de zes de bovenste tegelrand, liggend op een telefoon een op de drie.
+     Is er boven de tegels geen plek (boven < 0), dan komt er dit keer geen. */
+  const boven = r.top - s.top - 30;
+  let y;
+  if (bijLogo && logo) {
+    const hoog = Math.min(logo.bottom - s.top + 6, boven);
+    if (hoog < 0) return null;
+    y = vonkTussen(Math.min(logo.top - s.top - 6, hoog), hoog);
+  }
   else if (Math.random() < VONKJES.laagKans && s.bottom - r.bottom > 70) y = vonkTussen(r.bottom - s.top + 30, s.height - rand);
-  else y = vonkTussen(s.height * .04, Math.max(s.height * .08, r.top - s.top - 30));
+  else {
+    if (boven < 0) return null;
+    y = vonkTussen(Math.min(s.height * .04, boven), boven);
+  }
   let x = vonkTussen(rand, s.width - rand);
   /* Door de naam van het spel heen: opzij schuiven naar de dichtstbijzijnde kant.
      Bij het grote vonkje is dat het hele doel -- hij hoort er nét naast. */
