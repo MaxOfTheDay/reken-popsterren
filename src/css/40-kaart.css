@@ -490,8 +490,11 @@
      antwoord er ook, maar zonder feest -- geen groen, gewoon de kleur van de som,
      en het komt zacht op in plaats van te ploppen. som-vlucht: de kopie die van de
      knop naar het vakje vliegt, los boven de kaart. */
-  .q-blank.done.klikt { animation: somKlikt 260ms cubic-bezier(.3,1.4,.5,1); }
-  @keyframes somKlikt { 0% { transform: scale(1.18); } 100% { transform: none; } }
+  /* De pop begint op de maat waarop het getal landt en zwelt dán pas op: begon
+     hij op zijn grootst, dan sprong het getal bij het landen in één beeld 18%
+     groter -- een schokje, precies op het moment waar je naar kijkt. */
+  .q-blank.done.klikt { animation: somKlikt 300ms ease-out; }
+  @keyframes somKlikt { 0% { transform: none; } 35% { transform: scale(1.14); } 100% { transform: none; } }
   .q-blank.done.rustig {
     border-color: rgba(126,87,194,.55); background: rgba(126,87,194,.08); color: var(--purple-shadow);
     animation: somRustig 320ms ease-out;

@@ -8211,17 +8211,43 @@ function stopSpot() {
    diamanten daaruit kan laten vertrekken. */
 const SOM_VLUCHT = 320;   // ms: van de knop naar het vakje
 let somVlucht = null;     // het getal dat nog onderweg is
+/* Het getal in het vakje zetten zonder dat de som verspringt. Het vakje wordt er
+   breder of smaller van ("?" is smaller dan "16"), en de som staat gecentreerd --
+   dus sprong de hele regel opzij op het moment dat het getal erin kwam: 2 pixels
+   bij één cijfer, bijna 11 bij twee. Nu groeit het vakje in `duur` ms naar zijn
+   nieuwe breedte, en glijdt de som mee in plaats van te springen. Geeft de
+   rechthoek terug waar het vakje uitkomt, om op te mikken. */
+function vakNaar(vak, tekst, duur) {
+  const w0 = vak.getBoundingClientRect().width;
+  vak.textContent = tekst;
+  const eind = vak.getBoundingClientRect();
+  if (duur && !motionOff() && vak.animate && Math.abs(eind.width - w0) > .5) {
+    vak.style.boxSizing = 'border-box';   // de breedte is dan die van de hele rand
+    vak.animate([{ width: w0 + 'px' }, { width: eind.width + 'px' }],
+      { duration: duur, easing: 'cubic-bezier(.3,.6,.35,1)' });
+  }
+  return eind;
+}
 function somVult(q, vanEl, rustig) {
   const kaart = $('question-text');
   const vak = kaart && kaart.querySelector('.q-blank');
   if (!vak) return null;
   const zet = () => {
-    vak.textContent = q.ans;
     vak.style.visibility = '';
     vak.classList.add('done', rustig ? 'rustig' : 'klikt');
   };
-  if (rustig || G.mode === 'typ' || !vanEl || !vanEl.getBoundingClientRect || motionOff()) { zet(); return vak; }
-  const v = vanEl.getBoundingClientRect(), n = vak.getBoundingClientRect(), cs = getComputedStyle(vak);
+  if (rustig || G.mode === 'typ' || !vanEl || !vanEl.getBoundingClientRect || motionOff()) {
+    vakNaar(vak, q.ans, rustig ? 240 : 0);   // typmodus: het getal stond er al
+    zet();
+    return vak;
+  }
+  // Het vraagteken eronder even weg (de plek blijft): de kopie is half
+  // doorzichtig, en een "?" dat door het landende getal heen schijnt leest als
+  // twee antwoorden. En het getal staat er meteen al in, onzichtbaar: dan weet
+  // de kopie waar het vakje uitkomt, en groeit het vakje er tijdens de vlucht
+  // naartoe (zie vakNaar).
+  vak.style.visibility = 'hidden';
+  const v = vanEl.getBoundingClientRect(), n = vakNaar(vak, q.ans, SOM_VLUCHT), cs = getComputedStyle(vak);
   // Een kopie van het gevulde vakje, los boven alles: de somkaart knipt af
   // (overflow: hidden), dus binnen de kaart zou hij halverwege verdwijnen.
   const kopie = document.createElement('span');
@@ -8234,10 +8260,6 @@ function somVult(q, vanEl, rustig) {
   });
   document.body.appendChild(kopie);
   somVlucht = kopie;
-  // Het vraagteken eronder even weg (de plek blijft): de kopie is half
-  // doorzichtig, en een "?" dat door het landende getal heen schijnt leest als
-  // twee antwoorden.
-  vak.style.visibility = 'hidden';
   const dx = (v.left + v.width / 2) - (n.left + n.width / 2);
   const dy = (v.top + v.height / 2) - (n.top + n.height / 2);
   const a = kopie.animate([
