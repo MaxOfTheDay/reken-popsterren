@@ -7925,6 +7925,22 @@
     to { transform: translateY(110vh) rotate(720deg); }
   }
 
+
+  /* = Cloudback-up (ouderaccount) -- de kaart uit src/18-ouderaccount.js.
+     Nieuwe klassen, dus hier achteraan zonder iets anders te verschuiven. De
+     stand ("Verbonden" / "Niet verbonden") is een regel tekst en geen knop;
+     groen alleen als er echt iets verbonden is. */
+  .account-stand { font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink-muted); }
+  .account-stand.aan { color: var(--green-deep); }
+  .account-mail { font-size: var(--tx-klein); font-weight: 600; color: var(--paper-ink); margin-top: 2px; overflow-wrap: anywhere; }
+  /* De cloudback-up onder het adres (src/19-cloudbackup.js): een streepje, dan
+     de stand in woorden. Een mislukte poging is een rode zin en geen venster --
+     er is niets kapot, je kunt meteen opnieuw. */
+  .cloud-blok { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--paper-border); }
+  .cloud-blok .note { margin-top: 2px; }
+  .cloud-stand { font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink); }
+  .cloud-stand.ok { color: var(--green-deep); }
+  .cloud-fout { margin-top: 8px; font-size: var(--tx-klein); font-weight: 600; color: var(--red-danger-shadow); }
   /* ---- Wie geen beweging wil: wat er los in de body wordt neergezet --------
      Deze vier bestaan alleen om te bewegen -- ze dragen geen tekst, geen knop en
      geen stand. Wat ze vieren of afleveren staat ergens anders: de diamanten
@@ -9238,16 +9254,497 @@ let wereldReisOp = null;
 // Hoe vaak de kaart al is opengegaan (de eerste keer groet ze niet), plus de twee
 // timers van het groetje en de haltepuls. Zie kaartGroet en kaartGroetStop.
 let kaartBezocht = 0, groetTimer = null, pulsTimer = null;
+/* ================= Ouderaccount ================= */
+/* Inloggen met Google, voor de ouder -- en verder nog niets.
+
+   WAT DIT IS
+   Een ouder kan in het ouderdeel (Beheer, "Voor alle sterren") een account
+   verbinden: Supabase Auth met Google als enige aanbieder. Dit stuk weet alleen
+   wíé er verbonden is, en raakt `db` nergens aan. De cloudback-up zelf staat
+   ernaast, in src/19-cloudbackup.js, en leunt op de RLS-regels in Supabase --
+   niet op wat hier in de browser staat. Wat deze code "verbonden" noemt is dus
+   nooit een toestemming.
+
+   Er is één account per toestel, voor de ouder. Sterren (kinderen) hebben geen
+   account en krijgen er ook geen.
+
+   WAAROM GEEN supabase-js
+   Het spel is één bestand zonder bibliotheek dat ook vanaf file:// draait (zie
+   CLAUDE.md). supabase-js is een bibliotheek, en de ESM-versie laadt niet vanaf
+   file://. Wat we ervan nodig hebben zijn vier HTTP-aanroepen naar dezelfde
+   Auth-API (GoTrue) die supabase-js zelf ook doet:
+
+     GET  /auth/v1/authorize?provider=google&...   (een gewone paginasprong)
+     POST /auth/v1/token?grant_type=pkce           code -> sessie
+     POST /auth/v1/token?grant_type=refresh_token  verlopen -> vers
+     POST /auth/v1/logout?scope=local              afmelden op dit toestel
+
+   De stroom is PKCE, net als supabase-js in de browser: vóór de sprong maken we
+   een geheim (verifier) en sturen alleen de hash ervan mee; Google stuurt via
+   Supabase een ?code= terug en alleen wie de verifier heeft kan die inwisselen.
+   Er komt dus nooit een token in de URL te staan.
+
+   WAT HIER STAAT EN WAT NIET
+   Alleen de projectURL en de publishable sleutel. Die zijn bedoeld om openbaar
+   te zijn (ze staan in élke browser die de pagina opent). Een secret key, de
+   service-role-sleutel of het Google client secret horen hier NOOIT: die geven
+   rechten buiten RLS om.
+
+   Google-scopes: geen. Supabase vraagt zelf alleen openid/e-mail/profiel op, en
+   meer hebben we niet nodig -- geen Gmail, Drive of contacten.
+
+   OPSLAG
+   Twee eigen sleutels in localStorage, allebei los van LS_KEY:
+     OUDER_SESSIE_KEY  de sessie (tokens, verloopmoment, id en e-mail)
+     OUDER_PKCE_KEY    de verifier, alleen tussen "Doorgaan met Google" en de
+                       terugkeer; daarna meteen weg
+   Inloggen, afmelden of een mislukte poging schrijven dus nooit in de save van
+   een kind. test/ouder.test.js zaak P kijkt dat na.
+
+   NETWERK
+   Bij een gewone start gaat er niets naar Supabase: de sessie wordt uit
+   localStorage gelezen en pas nagekeken (en zo nodig ververst) als het ouderdeel
+   de kaart tekent. Een kind dat offline speelt merkt er niets van.
+
+   file:// en een onveilige herkomst: daar kan de sprong niet terugkomen (Supabase
+   stuurt alleen terug naar een toegestane http(s)-URL) en is er geen
+   crypto.subtle voor de PKCE-hash. De knop staat er dan uit, met een zin erbij. */
+
+const OUDER_AUTH = {
+  url: 'https://iufyykmcembysfdcoogg.supabase.co',
+  // publishable: openbaar bedoeld, beperkt tot wat RLS toelaat
+  sleutel: 'sb_publishable_oLMDbbWeW-kDd6T7iW6p3A_RsiYsecd',
+};
+const OUDER_SESSIE_KEY = 'rekensterren-ouderaccount';
+const OUDER_PKCE_KEY = 'rekensterren-ouderaccount-pkce';
+
+/* De stand, in het geheugen. `bezig` staat aan zolang er een terugkeer van
+   Google wordt ingewisseld of er naar Google gesprongen wordt; de kaart zegt dan
+   "even geduld" in plaats van een knop die je twee keer kunt indrukken. */
+let ouderSessie = null;
+let ouderBezig = false;
+let ouderNagekeken = false;   // één keer per start de sessie bij Supabase nakijken
+
+function ouderLees() {
+  try {
+    const s = JSON.parse(localStorage.getItem(OUDER_SESSIE_KEY) || 'null');
+    return (s && s.refresh_token && s.user) ? s : null;
+  } catch (e) { return null; }
+}
+function ouderBewaar(s) {
+  ouderSessie = s;
+  try {
+    if (s) localStorage.setItem(OUDER_SESSIE_KEY, JSON.stringify(s));
+    else localStorage.removeItem(OUDER_SESSIE_KEY);
+  } catch (e) { /* vol of dicht: dan alleen voor deze sessie */ }
+}
+// Alleen wat we nodig hebben uit het GoTrue-antwoord; geen naam, foto of
+// identiteiten van Google in localStorage.
+function ouderUitAntwoord(a) {
+  if (!a || !a.access_token || !a.refresh_token || !a.user) return null;
+  const nu = Math.floor(Date.now() / 1000);
+  return {
+    access_token: a.access_token,
+    refresh_token: a.refresh_token,
+    expires_at: a.expires_at || (nu + (a.expires_in || 3600)),
+    user: { id: a.user.id, email: a.user.email || '' },
+  };
+}
+
+// Kan er hier ingelogd worden? Zie de kop: niet vanaf file://, en niet zonder
+// crypto.subtle (dat is er alleen in een veilige context).
+function ouderKanInloggen() {
+  return /^https?:$/.test(location.protocol)
+    && !!window.isSecureContext && !!(window.crypto && window.crypto.subtle);
+}
+// Waar Google ons terugzet: deze pagina, zonder zoekvraag of hekje. Online is
+// dat https://rekensterren.be/; lokaal localhost. Die URL moet in Supabase bij
+// de Redirect URLs staan, anders valt Supabase terug op de Site URL.
+function ouderTerugUrl() {
+  return location.origin + location.pathname;
+}
+
+function ouderBase64url(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function ouderPkce() {
+  const r = new Uint8Array(32);
+  window.crypto.getRandomValues(r);
+  const verifier = ouderBase64url(r);
+  const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  return { verifier, challenge: ouderBase64url(new Uint8Array(hash)) };
+}
+
+async function ouderPost(pad, body, token) {
+  const headers = { 'Content-Type': 'application/json', apikey: OUDER_AUTH.sleutel };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(OUDER_AUTH.url + '/auth/v1/' + pad, {
+    method: 'POST', headers, body: JSON.stringify(body || {}),
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* leeg antwoord (logout) */ }
+  return { ok: res.ok, status: res.status, data };
+}
+
+/* "Doorgaan met Google": verifier bewaren, dan de hele pagina naar Supabase.
+   Alles wat een kind speelde staat al in localStorage (save() schrijft meteen
+   weg), dus weggaan kost niets. */
+async function ouderLogin() {
+  if (ouderBezig || !ouderKanInloggen()) return;
+  ouderBezig = true;
+  ouderToon();
+  try {
+    const { verifier, challenge } = await ouderPkce();
+    localStorage.setItem(OUDER_PKCE_KEY, verifier);
+    const q = new URLSearchParams({
+      provider: 'google',
+      redirect_to: ouderTerugUrl(),
+      code_challenge: challenge,
+      code_challenge_method: 's256',
+    });
+    location.assign(OUDER_AUTH.url + '/auth/v1/authorize?' + q.toString());
+  } catch (e) {
+    ouderBezig = false;
+    ouderToon();
+    ouderMeld('Verbinden lukte niet. Probeer het later nog eens.');
+  }
+}
+
+// Afmelden: hier meteen, bij Supabase zo goed als het gaat. Mislukt dat laatste
+// (geen net), dan is dit toestel toch afgemeld -- de tokens zijn weg.
+async function ouderLogout() {
+  const s = ouderSessie;
+  ouderBewaar(null);
+  cloudStand = null;
+  ouderToon();
+  if (!s) return;
+  try { await ouderPost('logout?scope=local', {}, s.access_token); } catch (e) { /* offline */ }
+}
+
+/* De sessie nakijken en zo nodig verversen. Wordt aangeroepen als de kaart
+   getekend wordt, niet bij het opstarten (zie NETWERK in de kop).
+   Supabase zegt "nee" (400/401/403): de sessie is ingetrokken, dan zijn we
+   afgemeld. Geen net: niets veranderen, de sessie blijft zoals ze was. */
+/* Eén verversing tegelijk: de kaart (ouderNakijken) en een back-up (ouderToken)
+   kunnen er tegelijk om vragen, en twee keer hetzelfde refresh token inwisselen
+   kan Supabase als hergebruik zien. */
+let ouderVerversLoopt = null;
+function ouderVervers() {
+  if (!ouderVerversLoopt) {
+    ouderVerversLoopt = ouderVerversNu().finally(() => { ouderVerversLoopt = null; });
+  }
+  return ouderVerversLoopt;
+}
+async function ouderVerversNu() {
+  const s = ouderSessie;
+  if (!s) return;
+  try {
+    const r = await ouderPost('token?grant_type=refresh_token', { refresh_token: s.refresh_token });
+    if (ouderSessie !== s) return;               // intussen afgemeld of opnieuw ingelogd
+    if (r.ok) { const n = ouderUitAntwoord(r.data); if (n) ouderBewaar(n); }
+    else if (r.status >= 400 && r.status < 500) ouderBewaar(null);
+    ouderToon();
+  } catch (e) { /* offline */ }
+}
+/* Een access token dat nog minstens een minuut meegaat, of null (afgemeld, of
+   verlopen en geen net om te verversen). Voor de cloudback-up. */
+async function ouderToken() {
+  const nu = () => Math.floor(Date.now() / 1000);
+  if (!ouderSessie) return null;
+  if (ouderSessie.expires_at - nu() > 60) return ouderSessie.access_token;
+  await ouderVervers();
+  const s = ouderSessie;
+  return (s && s.expires_at - nu() > 0) ? s.access_token : null;
+}
+function ouderNakijken() {
+  if (ouderNagekeken || !ouderSessie) return;
+  if (ouderSessie.expires_at - Math.floor(Date.now() / 1000) > 60) return;
+  ouderNagekeken = true;
+  ouderVervers();
+}
+
+/* De terugkeer van Google. Draait bij het opstarten (zie "= Start"), vóór er
+   iets met de geschiedenis gebeurt.
+
+   Alleen als wíj de sprong maakten -- er staat een verifier klaar -- lezen we
+   ?code= of ?error=. Een link met toevallig ?code= erin doet dus niets. De
+   parameters gaan meteen uit de adresbalk, zodat herladen niet nog eens
+   probeert in te wisselen en de code niet in een bladwijzer belandt.
+
+   Geeft true terug als er een terugkeer was: dan opent de start het ouderdeel
+   op Beheer, waar de ouder ook vandaan kwam. */
+function ouderStart() {
+  ouderSessie = ouderLees();
+  let verifier = null;
+  try { verifier = localStorage.getItem(OUDER_PKCE_KEY); } catch (e) { /* dicht */ }
+  if (!verifier) return false;
+  const zoek = new URLSearchParams(location.search || '');
+  const hek = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  const code = zoek.get('code');
+  const fout = zoek.get('error') || hek.get('error');
+  if (!code && !fout) return false;
+
+  try { localStorage.removeItem(OUDER_PKCE_KEY); } catch (e) { /* dicht */ }
+  // Met de hand en niet met zoek.toString(): dat maakt van ?debug een ?debug=.
+  const weg = ['code', 'error', 'error_code', 'error_description', 'state'];
+  const rest = (location.search || '').replace(/^\?/, '').split('&')
+    .filter(d => d && !weg.includes(decodeURIComponent(d.split('=')[0]))).join('&');
+  try { history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '')); } catch (e) { /* file:// */ }
+
+  if (fout || !code) {
+    // Geannuleerd of geweigerd: niets veranderd, en een eerdere sessie blijft.
+    ouderMeld(fout === 'access_denied' ? 'Inloggen geannuleerd.' : 'Inloggen is niet gelukt.');
+    return true;
+  }
+  ouderBezig = true;
+  ouderPost('token?grant_type=pkce', { auth_code: code, code_verifier: verifier })
+    .then(r => {
+      const n = r.ok ? ouderUitAntwoord(r.data) : null;
+      ouderBezig = false;
+      if (n) { ouderBewaar(n); ouderNagekeken = true; ouderMeld('✅ Verbonden met ' + n.user.email); }
+      else ouderMeld('Inloggen is niet gelukt.');
+      ouderToon();
+    })
+    .catch(() => { ouderBezig = false; ouderMeld('Inloggen is niet gelukt. Is er internet?'); ouderToon(); });
+  return true;
+}
+
+function ouderMeld(tekst) {
+  showToast(esc(tekst));
+  setTimeout(hideToast, 2200);
+}
+
+// Terug met de terugknop vanaf Google (zonder ?error=): de pagina komt uit de
+// bfcache met ouderBezig nog aan. Dan de knop weer vrijgeven.
+addEventListener('pageshow', e => {
+  if (!e.persisted || !ouderBezig) return;
+  ouderBezig = false;
+  ouderToon();
+});
+// Een ander tabblad meldde zich aan of af: meelopen.
+addEventListener('storage', e => {
+  if (e.key !== OUDER_SESSIE_KEY) return;
+  ouderSessie = ouderLees();
+  ouderToon();
+});
+
+/* ---- De kaart in het ouderdeel ---- */
+function ouderAccountKaartHtml() {
+  ouderNakijken();
+  const s = ouderSessie;
+  let body;
+  if (ouderBezig) {
+    body = `<div class="account-stand">Even geduld…</div>`;
+  } else if (s) {
+    body = `<div class="account-stand aan">Verbonden</div>
+      <div class="account-mail" id="set-account-mail">${esc(s.user.email)}</div>
+      ${cloudKaartHtml(s)}`;
+  } else {
+    const kan = ouderKanInloggen();
+    body = `<div class="account-stand">Niet verbonden</div>
+      <div class="note" style="margin-top:8px">Bewaar je voortgang veilig en zet hem later terug op een ander toestel.</div>
+      <div class="data-btns" style="margin-top:11px">
+        <button class="btn small paper" id="set-account-in"${kan ? '' : ' disabled'}>Doorgaan met Google</button>
+      </div>${kan ? '' : `
+      <div class="note" style="margin-top:8px">Inloggen kan alleen in de online versie, op rekensterren.be.</div>`}`;
+  }
+  return `
+    <div class="set-card" id="set-account">
+      <div class="set-card-head"><div class="ico">☁️</div><div><h2>Cloudback-up</h2><div class="sub">Een account voor de ouder, niet voor de sterren</div></div></div>
+      ${body}
+    </div>`;
+}
+function ouderAccountBind() {
+  const i = $('set-account-in'), u = $('set-account-uit'), m = $('set-cloud-maak');
+  if (i) i.onclick = ouderLogin;
+  if (u) u.onclick = ouderLogout;
+  if (m) m.onclick = cloudBackupMaken;
+}
+// Stand veranderd: alleen de kaart vervangen als ze er staat. De rest van het
+// ouderdeel blijft staan (geen scrollsprong, geen focusverlies).
+function ouderToon() {
+  const k = document.getElementById('set-account');
+  if (!k) return;
+  k.outerHTML = ouderAccountKaartHtml().trim();
+  ouderAccountBind();
+}
+/* ================= Cloudback-up ================= */
+/* Een ingelogde ouder kan met één tik de save van dit toestel naar Supabase
+   sturen. Handmatig, en alleen die kant op.
+
+   DE RICHTING
+     spel -> db -> localStorage (save(), zoals altijd)
+                -> "Nu back-up maken" -> Supabase
+   Nooit andersom. Er is hier geen terugzetten, geen automatische back-up en geen
+   synchronisatie; de lokale save blijft wat het spel leest en schrijft. Deze
+   code LEEST de save en schrijft nergens in -- niet in `db`, niet in LS_KEY,
+   geen save(), geen migrate(). Mislukt het versturen, dan is er dus niets om
+   terug te draaien. test/ouder.test.js zaak Q kijkt dat na.
+
+   WAT ER GAAT
+   De lokale save zelf: de tekst onder LS_KEY in localStorage, precies zoals
+   save() hem schreef (JSON.stringify(db) -- hetzelfde object dat "Back-up
+   maken" als bestand uitschrijft). Geen tweede voorstelling van de spelstand:
+   alle sterren met hun voortgang, kast en diamanten, plus de app-brede
+   schakelaars, in één object.
+   Bewust de opgeslagen save en niet `db` in het geheugen: dat is wat er op dit
+   toestel bewaard ís, en een kijkstand achter ?debug (&demo, &wereld=) die met
+   opzet nooit wordt opgeslagen kan zo ook nooit in de cloud belanden.
+   Hij gaat eerst langs dezelfde keuring als een back-upbestand dat teruggezet
+   wordt (backupVormOk), zodat er nooit iets in de cloud belandt dat de
+   terugzet-stap straks zou weigeren.
+
+   De rij in account_backups (zie supabase/migrations/):
+     user_id         de ouder (auth.users.id) -- één rij per account
+     backup_version  CLOUD_BACKUP_VERSIE: de versie van déze envelop. Los van
+                     db.schemaV, dat ín de save staat en met de save meereist
+     backup_data     de save
+     updated_at      gezet door de database, niet door de klok van dit toestel
+   Twee keer back-uppen overschrijft dezelfde rij (upsert op user_id).
+
+   WIE MAG WAT
+   De database beslist, niet deze code: RLS laat een ouder alleen haar eigen rij
+   lezen, maken en bijwerken (test/rls.test.js). Dat we hier ons eigen user_id
+   meesturen is dus geen beveiliging maar de sleutel van de upsert.
+
+   NETWERK
+   Pas als het ouderdeel de kaart tekent vragen we één keer wanneer de laatste
+   back-up was (alleen updated_at, niet de save zelf). De rest gebeurt alleen op
+   een tik. Het spel wacht nergens op. */
+
+const CLOUD_BACKUP_VERSIE = 1;
+
+/* Wat de kaart moet weten, per ingelogde ouder. Wisselt de gebruiker (afmelden,
+   iemand anders meldt zich aan), dan begint dit opnieuw -- de stand van de één
+   hoort nooit bij de ander te staan.
+     stand   'onbekend' | 'laden' | 'geen' | 'bewaard' | 'kwijt' (ophalen mislukt)
+     laatste updated_at van de laatste back-up (ISO), of null
+     bezig   er wordt nu verstuurd; de knop staat dan uit
+     fout    de zin die zegt dat het versturen mislukte, tot de volgende poging */
+let cloudStand = null;
+function cloudVoor(s) {
+  if (!s) return null;
+  if (!cloudStand || cloudStand.user !== s.user.id) {
+    cloudStand = { user: s.user.id, stand: 'onbekend', laatste: null, bezig: false, fout: null };
+  }
+  return cloudStand;
+}
+
+async function cloudRest(methode, pad, token, body, prefer) {
+  const headers = { apikey: OUDER_AUTH.sleutel, Authorization: 'Bearer ' + token };
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (prefer) headers.Prefer = prefer;
+  const res = await fetch(OUDER_AUTH.url + '/rest/v1/' + pad, {
+    method: methode, headers, body: body === undefined ? undefined : body,
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* leeg antwoord */ }
+  return { ok: res.ok, status: res.status, data };
+}
+
+/* De save klaarmaken: de opgeslagen tekst inlezen. Zo weten we zeker dat hij
+   heen en terug kan, en is wat we versturen een losse kopie -- niets hierna kan
+   per ongeluk aan `db` komen. Geeft null als er geen save is of als hij niet
+   door de keuring komt. */
+function cloudPakket(userId) {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) { return null; }
+  if (!backupVormOk(data)) return null;
+  return { user_id: userId, backup_version: CLOUD_BACKUP_VERSIE, backup_data: data };
+}
+
+// Wanneer was de laatste back-up? Eén keer per ouder per start.
+async function cloudStatusOphalen() {
+  const s = ouderSessie, c = cloudVoor(s);
+  if (!c || c.stand !== 'onbekend') return;
+  c.stand = 'laden';
+  try {
+    const token = await ouderToken();
+    if (!token) throw new Error('geen sessie');
+    const r = await cloudRest('GET', 'account_backups?select=updated_at&user_id=eq.'
+      + encodeURIComponent(s.user.id), token);
+    if (cloudStand !== c) return;                 // intussen iemand anders
+    if (!r.ok || !Array.isArray(r.data)) throw new Error('status ' + r.status);
+    c.stand = r.data.length ? 'bewaard' : 'geen';
+    c.laatste = r.data.length ? r.data[0].updated_at : null;
+  } catch (e) {
+    if (cloudStand === c && c.stand === 'laden') c.stand = 'kwijt';
+  }
+  ouderToon();
+}
+
+/* "Nu back-up maken". Afgemeld of al bezig: niets. */
+async function cloudBackupMaken() {
+  const s = ouderSessie, c = cloudVoor(s);
+  if (!c || c.bezig) return;
+  c.bezig = true;
+  c.fout = null;
+  ouderToon();
+  try {
+    const pakket = cloudPakket(s.user.id);
+    if (!pakket) throw Object.assign(new Error('pakket'), { zin: 'De voortgang kon niet klaargemaakt worden. Er is niets verstuurd.' });
+    const token = await ouderToken();
+    if (!token) throw new Error('geen sessie');
+    const r = await cloudRest('POST', 'account_backups?on_conflict=user_id&select=updated_at', token,
+      JSON.stringify(pakket), 'resolution=merge-duplicates,return=representation');
+    if (!r.ok || !Array.isArray(r.data) || !r.data.length) throw new Error('status ' + r.status);
+    if (cloudStand !== c) return;
+    c.stand = 'bewaard';
+    c.laatste = r.data[0].updated_at;
+    ouderMeld('✅ Cloudback-up bewaard');
+  } catch (e) {
+    if (cloudStand !== c) return;
+    c.fout = e.zin || 'Back-up mislukt. Je voortgang op dit toestel is niet veranderd. Probeer het opnieuw.';
+  } finally {
+    if (cloudStand === c) c.bezig = false;
+    ouderToon();
+  }
+}
+
+function cloudDatum(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  try { return d.toLocaleString('nl-BE', { dateStyle: 'medium', timeStyle: 'short' }); }
+  catch (e) { return d.toLocaleString(); }
+}
+
+// Het cloudstuk van de kaart, onder "Verbonden" en het adres.
+function cloudKaartHtml(s) {
+  const c = cloudVoor(s);
+  if (c.stand === 'onbekend') cloudStatusOphalen();
+  let stand;
+  if (c.stand === 'bewaard') {
+    stand = `<div class="cloud-stand ok" id="set-cloud-stand">✓ Back-up bewaard</div>
+      <div class="note" id="set-cloud-laatste">Laatste back-up: ${esc(cloudDatum(c.laatste))}</div>`;
+  } else if (c.stand === 'geen') {
+    stand = `<div class="cloud-stand" id="set-cloud-stand">Nog geen cloudback-up</div>`;
+  } else if (c.stand === 'kwijt') {
+    stand = `<div class="cloud-stand" id="set-cloud-stand">Laatste back-up onbekend</div>
+      <div class="note">Kon Supabase niet bereiken. Een nieuwe back-up maken kan wel.</div>`;
+  } else {
+    stand = `<div class="cloud-stand" id="set-cloud-stand">Even kijken…</div>`;
+  }
+  const fout = c.fout ? `
+      <div class="cloud-fout" id="set-cloud-fout" role="alert">${esc(c.fout)}</div>` : '';
+  return `<div class="cloud-blok">${stand}${fout}</div>
+      <div class="data-btns" style="margin-top:11px">
+        <button class="btn small purple" id="set-cloud-maak"${c.bezig ? ' disabled aria-busy="true"' : ''}>${c.bezig ? 'Bezig met back-up…' : 'Nu back-up maken'}</button>
+        <button class="btn small paper" id="set-account-uit">Afmelden</button>
+      </div>`;
+}
 /* =====================================================================
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
 
-   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog zes
+   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog acht
    bronbestanden die samen met dit ene het scriptblok vormen (zie test/bouw.js):
    00-vh-lock (de vensterhoogte, moet eerst), 10-feestjes (de gedeelde toast,
    confetti, danspasjes en dialogen), 15-kaart-en-weg (de vormleer van de
    wereldkaart), 17-kaartstand (waar de kaart naar kijkt en wat er loopt),
-   90-wereldstudio en 99-servicewerker.
+   18-ouderaccount (inloggen met Google voor de ouder), 19-cloudbackup (de
+   save handmatig naar Supabase), 90-wereldstudio en 99-servicewerker.
 
    De secties hieronder staan in de volgorde van dít bestand; wat naar een
    buurbestand verhuisd is, staat er met zijn nieuwe plek bij. Zoeken op de
@@ -9319,6 +9816,12 @@ let kaartBezocht = 0, groetTimer = null, pulsTimer = null;
                           (zetTeller/telNu/telNaar/telStraks, gedeeld)
      Nieuwe ster ........ het maakformulier
      Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Ouderaccount ....... STAAT IN src/18-ouderaccount.js. Inloggen met Google
+                          (Supabase Auth) voor de ouder; de kaart "Cloudback-up"
+                          in Beheer. Raakt db en de saves nergens aan
+     Cloudback-up ....... STAAT IN src/19-cloudbackup.js. "Nu back-up maken":
+                          JSON.stringify(db) naar account_backups (Supabase,
+                          RLS). Leest db, schrijft er nooit in
      Op het beginscherm   de uitlegkaart in Beheer: hoe het spel als app op
                           dit toestel komt. Laat het installeren aan de browser
      Terug-navigatie .... Android back / browser back
@@ -19450,7 +19953,9 @@ function appWideCardsHtml(hasStars) {
       <div class="set-card-head"><div class="ico">➕</div><div><h2>Nieuwe ster</h2><div class="sub">Nog een kind erbij.${vol}</div></div></div>
       <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
     </div>`;
-  return `${addCard}
+  // De cloudback-up (src/18-ouderaccount.js) staat vóór de gewone back-up: die
+  // moet direct boven "Op het beginscherm" blijven staan (zie zaak O).
+  return `${addCard}${ouderAccountKaartHtml()}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Geldt voor alle sterren en voor de app zelf</div></div></div>
       <div class="note" style="margin-bottom:11px">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel.</div>
@@ -19798,6 +20303,7 @@ function bindSettings(p, s) {
       }
     );
   });
+  ouderAccountBind();
   on('set-export', 'onclick', exportData);
   on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
   on('set-import-file', 'onchange', e => {
@@ -19823,6 +20329,25 @@ function exportData() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/* Is dit een save van óns? Eén keuring voor alles wat een hele save van buiten
+   krijgt of naar buiten stuurt: het back-upbestand dat teruggezet wordt, en de
+   cloudback-up (src/19-cloudbackup.js) vóór hij verstuurd wordt.
+
+   Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
+   een familie kan één ster hebben, of vijf, of er net eentje verwijderd
+   hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
+   namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
+   niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
+   data.sound is dan het merkteken dat dit een bestand van óns is. */
+function backupVormOk(data) {
+  const profs = data && typeof data === 'object' ? data.profiles : null;
+  const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
+    && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
+    && !!p.equipped && typeof p.equipped === 'object';
+  return !!(profs && typeof profs === 'object' && !Array.isArray(profs)
+    && Object.values(profs).every(okShape)
+    && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean'));
+}
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
 // ALLE huidige profielen, dus (net als bij wissen) eerst een bevestiging --
 // pas ná "ja" wordt de huidige voortgang echt vervangen.
@@ -19832,20 +20357,7 @@ function importData(file) {
     let data;
     try {
       data = JSON.parse(reader.result);
-      // Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
-      // een familie kan één ster hebben, of vijf, of er net eentje verwijderd
-      // hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
-      // namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
-      // niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
-      // data.sound is dan het merkteken dat dit een bestand van óns is.
-      const profs = data && typeof data === 'object' ? data.profiles : null;
-      const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
-        && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
-        && !!p.equipped && typeof p.equipped === 'object';
-      const ok = profs && typeof profs === 'object' && !Array.isArray(profs)
-        && Object.values(profs).every(okShape)
-        && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean');
-      if (!ok) throw new Error('ongeldig back-upbestand');
+      if (!backupVormOk(data)) throw new Error('ongeldig back-upbestand');
     } catch (e) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
@@ -20081,6 +20593,9 @@ function zetSchermkunst() {
 
 /* ================= Start ================= */
 load();
+// Terug van Google? Dan eerst de adresbalk opruimen, vóór syncBackGuard er een
+// geschiedenisregel op zet. Zie "= Ouderaccount" in src/18-ouderaccount.js.
+const ouderTerug = ouderStart();
 zetSchermkunst();
 renderProfiles();
 // Bij het opstarten staat dit scherm er al uit de opmaak, dus er komt geen
@@ -20091,6 +20606,13 @@ landingLeeft();
 // "= Het spelogo komt binnen".
 logoIntro();
 syncBackGuard();
+// De ouder vertrok uit Beheer naar Google; daar komen we ook weer uit.
+if (ouderTerug) {
+  openSettings();
+  setTab = 'beheer';
+  renderSettings();
+  requestAnimationFrame(() => { const k = $('set-account'); if (k) k.scrollIntoView({ block: 'center' }); });
+}
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
    lopende show mee, en wie aan het uiterlijk werkt moet élk scherm kunnen zien

@@ -2,12 +2,13 @@
    INHOUD — zoek op de sectienaam (bv. "= Telmodus") om er te springen.
    Regelnummers staan er bewust niet bij: die verouderen meteen.
 
-   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog zes
+   Dit is de inhoudsopgave van src/20-app.js -- het spel. Ernaast liggen nog acht
    bronbestanden die samen met dit ene het scriptblok vormen (zie test/bouw.js):
    00-vh-lock (de vensterhoogte, moet eerst), 10-feestjes (de gedeelde toast,
    confetti, danspasjes en dialogen), 15-kaart-en-weg (de vormleer van de
    wereldkaart), 17-kaartstand (waar de kaart naar kijkt en wat er loopt),
-   90-wereldstudio en 99-servicewerker.
+   18-ouderaccount (inloggen met Google voor de ouder), 19-cloudbackup (de
+   save handmatig naar Supabase), 90-wereldstudio en 99-servicewerker.
 
    De secties hieronder staan in de volgorde van dít bestand; wat naar een
    buurbestand verhuisd is, staat er met zijn nieuwe plek bij. Zoeken op de
@@ -79,6 +80,12 @@
                           (zetTeller/telNu/telNaar/telStraks, gedeeld)
      Nieuwe ster ........ het maakformulier
      Instellingen ....... ouderscherm: voortgang + oefening + beheer
+     Ouderaccount ....... STAAT IN src/18-ouderaccount.js. Inloggen met Google
+                          (Supabase Auth) voor de ouder; de kaart "Cloudback-up"
+                          in Beheer. Raakt db en de saves nergens aan
+     Cloudback-up ....... STAAT IN src/19-cloudbackup.js. "Nu back-up maken":
+                          JSON.stringify(db) naar account_backups (Supabase,
+                          RLS). Leest db, schrijft er nooit in
      Op het beginscherm   de uitlegkaart in Beheer: hoe het spel als app op
                           dit toestel komt. Laat het installeren aan de browser
      Terug-navigatie .... Android back / browser back
@@ -10210,7 +10217,9 @@ function appWideCardsHtml(hasStars) {
       <div class="set-card-head"><div class="ico">➕</div><div><h2>Nieuwe ster</h2><div class="sub">Nog een kind erbij.${vol}</div></div></div>
       <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
     </div>`;
-  return `${addCard}
+  // De cloudback-up (src/18-ouderaccount.js) staat vóór de gewone back-up: die
+  // moet direct boven "Op het beginscherm" blijven staan (zie zaak O).
+  return `${addCard}${ouderAccountKaartHtml()}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Geldt voor alle sterren en voor de app zelf</div></div></div>
       <div class="note" style="margin-bottom:11px">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel.</div>
@@ -10558,6 +10567,7 @@ function bindSettings(p, s) {
       }
     );
   });
+  ouderAccountBind();
   on('set-export', 'onclick', exportData);
   on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
   on('set-import-file', 'onchange', e => {
@@ -10583,6 +10593,25 @@ function exportData() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/* Is dit een save van óns? Eén keuring voor alles wat een hele save van buiten
+   krijgt of naar buiten stuurt: het back-upbestand dat teruggezet wordt, en de
+   cloudback-up (src/19-cloudbackup.js) vóór hij verstuurd wordt.
+
+   Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
+   een familie kan één ster hebben, of vijf, of er net eentje verwijderd
+   hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
+   namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
+   niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
+   data.sound is dan het merkteken dat dit een bestand van óns is. */
+function backupVormOk(data) {
+  const profs = data && typeof data === 'object' ? data.profiles : null;
+  const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
+    && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
+    && !!p.equipped && typeof p.equipped === 'object';
+  return !!(profs && typeof profs === 'object' && !Array.isArray(profs)
+    && Object.values(profs).every(okShape)
+    && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean'));
+}
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
 // ALLE huidige profielen, dus (net als bij wissen) eerst een bevestiging --
 // pas ná "ja" wordt de huidige voortgang echt vervangen.
@@ -10592,20 +10621,7 @@ function importData(file) {
     let data;
     try {
       data = JSON.parse(reader.result);
-      // Hiervoor stond hier "heeft p1 én p2". Die sleutels zijn niet meer heilig:
-      // een familie kan één ster hebben, of vijf, of er net eentje verwijderd
-      // hebben. Dus kijken we naar de vórm van elk profiel in plaats van naar de
-      // namen van de sleutels -- en meteen streng genoeg dat migrate() er verderop
-      // niet op stukloopt. Een lege back-up (familie wiste iedereen) mag ook;
-      // data.sound is dan het merkteken dat dit een bestand van óns is.
-      const profs = data && typeof data === 'object' ? data.profiles : null;
-      const okShape = p => !!p && typeof p === 'object' && typeof p.name === 'string'
-        && Array.isArray(p.owned) && !!p.stars && typeof p.stars === 'object'
-        && !!p.equipped && typeof p.equipped === 'object';
-      const ok = profs && typeof profs === 'object' && !Array.isArray(profs)
-        && Object.values(profs).every(okShape)
-        && (Object.keys(profs).length > 0 || typeof data.sound === 'boolean');
-      if (!ok) throw new Error('ongeldig back-upbestand');
+      if (!backupVormOk(data)) throw new Error('ongeldig back-upbestand');
     } catch (e) {
       showNotice('Oeps!', 'Kon dit bestand niet lezen. Kies een geldig back-upbestand.');
       return;
@@ -10841,6 +10857,9 @@ function zetSchermkunst() {
 
 /* ================= Start ================= */
 load();
+// Terug van Google? Dan eerst de adresbalk opruimen, vóór syncBackGuard er een
+// geschiedenisregel op zet. Zie "= Ouderaccount" in src/18-ouderaccount.js.
+const ouderTerug = ouderStart();
 zetSchermkunst();
 renderProfiles();
 // Bij het opstarten staat dit scherm er al uit de opmaak, dus er komt geen
@@ -10851,6 +10870,13 @@ landingLeeft();
 // "= Het spelogo komt binnen".
 logoIntro();
 syncBackGuard();
+// De ouder vertrok uit Beheer naar Google; daar komen we ook weer uit.
+if (ouderTerug) {
+  openSettings();
+  setTab = 'beheer';
+  renderSettings();
+  requestAnimationFrame(() => { const k = $('set-account'); if (k) k.scrollIntoView({ block: 'center' }); });
+}
 /* ---- Ontwikkelaarsschakelaars (alleen met ?debug in de URL) ----
    Bestaat om twee redenen: de geautomatiseerde tests kijken via __game() in de
    lopende show mee, en wie aan het uiterlijk werkt moet élk scherm kunnen zien

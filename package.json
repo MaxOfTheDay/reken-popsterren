@@ -30,7 +30,8 @@
     "snelkoppeling": "node test/snelkoppeling.js",
     "preview": "node test/preview.js",
     "test:hub": "node test/hub.test.js",
-    "test:onderrand": "node test/onderrand.test.js"
+    "test:onderrand": "node test/onderrand.test.js",
+    "test:rls": "node test/rls.test.js"
   },
   "devDependencies": {
     "playwright": "^1.55.0"

@@ -169,6 +169,24 @@ elkaar:
 Allebei meten ze dozen en stijlen, geen pixels: een nieuwe wereld of een nieuwe
 laag valt er dan om zonder dat een schermafdruk hoeft te kloppen.
 
+### `test/rls.test.js` — de beveiliging van de cloudback-up
+
+Geen browser maar een échte PostgreSQL: de suite start er tijdelijk een, zet
+het stukje Supabase neer waar de migratie op leunt (de rollen `anon` en
+`authenticated`, `auth.users`, `auth.uid()` uit de JWT-claims) — met opzet mét
+standaardrechten die elke nieuwe tabel openzetten, het slechtste geval — en
+draait dan alles uit `supabase/migrations/`. Daarna doet ze wat PostgREST doet:
+per aanvraag een rol en een gebruiker. Ouder A maakt, leest en werkt haar rij
+bij; twee keer is één rij en `updated_at` komt van de server; ouder B ziet A's
+rij niet, kan hem niet maken, upserten, bijwerken of naar zich toe trekken; `anon`
+mag niets; niemand mag wissen; `backup_data` moet een object zijn; account weg is
+back-up weg. Staat er geen PostgreSQL (`initdb`, `pg_ctl`, `psql`), dan zegt ze
+dat en stopt ze zonder fout — daarom zit ze niet in `npm test`.
+
+```sh
+npm run test:rls
+```
+
 ### `test/ouder.test.js` — het ouderdeel
 
 Een browsersuite (fase 5D). `profiles.test.js` gaat over sterren *maken* en
@@ -234,6 +252,30 @@ En één voor de uitlegkaart over installeren:
   `navigator.standalone` is de kaart weg en de back-up niet; `appinstalled` haalt
   haar meteen weg, schrijft niets in de opslag, en na herladen vraagt het spel
   het gewoon weer aan de browser.
+- **Cloudback-up (het ouderaccount)** — Supabase wordt met `page.route`
+  nagedaan, Google ook. Afgemeld: "Niet verbonden", de uitleg en één knop
+  (vanaf `file://` uit, met een zin erbij), en bij een gewone start gaat er
+  géén aanvraag naar Supabase; spelen zonder account gaat gewoon. Een bewaarde
+  sessie overleeft een herstart en toont het adres; afmelden haalt haar weg en
+  meldt het bij Supabase. Terug van Google wordt de code met de verifier
+  ingewisseld, staat het ouderdeel weer open en is de adresbalk schoon;
+  geannuleerd, mislukt of een vreemde `?code=` verandert niets. Een verlopen
+  sessie wordt pas nagekeken als het ouderdeel de kaart tekent. En één
+  rondreis over `http://127.0.0.1` (een veilige context): de knop, de sprong
+  met `provider=google`, PKCE en zonder extra scopes, en een verifier die bij de
+  challenge hoort. Bij élk van die gevallen blijft alles in `localStorage`
+  buiten de twee accountsleutels byte voor byte gelijk.
+- **een cloudback-up maken** — afgemeld is er geen knop en stuurt
+  `cloudBackupMaken()` niets. Ingelogd vraagt de kaart alleen `updated_at` op
+  (voor déze ouder), zegt "Nog geen cloudback-up", en "Nu back-up maken" stuurt
+  één upsert op `user_id` met het id en token van de ingelogde ouder en precies
+  de save uit `localStorage` (alle sterren, kast, diamanten, schakelaars) in
+  `backup_data`. Tijdens het versturen staat de knop uit en gaat er niets dubbel;
+  daarna staat er "✓ Back-up bewaard" met de tijd van de server, ook na een
+  herstart. Twee keer is één rij. Een serverfout of geen net laat de opslag en
+  `db` staan, zegt het in één zin en laat opnieuw proberen toe; spelen gaat
+  gewoon door. Een save die de keuring niet haalt gaat niet de deur uit, en een
+  verlopen token wordt één keer ververst.
 
 ### `test/kleedkamer.test.js` — de catalogus en het rek
 
@@ -455,6 +497,12 @@ minstens één suite opgemerkt:
 | de trofeenoemer komt uit een tweede lijstje | ouderdeel |
 | het percentage komt terug bij de niveau-inschatting | ouderdeel |
 | de weergavekeuzes vallen weer over twee regels | ouderdeel |
+| inloggen, afmelden of een mislukte login schrijft in de save | ouderdeel (P) |
+| de app praat bij een gewone start met Supabase | ouderdeel (P) |
+| de cloudback-up schrijft in `db` of in de save | ouderdeel (Q) |
+| de cloudback-up stuurt iets anders dan de save | ouderdeel (Q) |
+| ouder B leest of overschrijft de back-up van ouder A | rls |
+| anon kan bij `account_backups` | rls |
 
 ## Wat er bij het schrijven opviel
 
