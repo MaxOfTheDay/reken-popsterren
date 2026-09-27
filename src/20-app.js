@@ -68,8 +68,6 @@
      Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
      Memory-spel ........ los kaartspel (lees-vrij)
      Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
-                          (en "Nieuw!": een nieuwe vraagsoort één keer voordoen,
-                          bij renderQuestion in Spel)
      Spel ............... de show: renderQuestion, submitAnswer, endLevel.
                           De gedeelde feestjes stonden hier ooit ook in; die
                           staan sinds kort in src/10-feestjes.js
@@ -1636,7 +1634,6 @@ function defaultProfile(name, dress, opts) {
     opTrack: {},                                    // op -> { n, acc, paused, unlockStap }
     missRamp: { rung: 1, hot: 0 },                  // zoek-het-getal: 1 of 2 per optreden
     chainTrack: { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 },  // drie getallen
-    vormGezien: {},                                 // nieuwe vraagsoorten die al voorgedaan zijn (zie toonNieuweVorm)
     // telmodus: welke fase het kind nú speelt (klimt mee met de beheersing, binnen
     // het door de ouder toegestane bereik) + een lopende nauwkeurigheid voor die klim
     // rung = moeilijkheidstrap bínnen de fase (past bereik, afleiders, cijfersteun aan);
@@ -1747,13 +1744,6 @@ function migrate(p) {
       delete t.unlockRound;
     }
   });
-  /* Welke nieuwe vraagsoorten dit kind al een keer voorgedaan kreeg (zie
-     toonNieuweVorm). Wie zoek-het-getal al kreeg -- een bewerking die al
-     losgekomen is -- hoeft het voorbeeld niet meer te zien; drie getallen kwam
-     tot nu toe nooit, dus dat voorbeeld krijgt iedereen één keer. */
-  if (!p.vormGezien) p.vormGezien = {
-    missing: Object.values(p.opTrack).some(t => t && t.unlockStap != null),
-  };
   if (!p.missRamp) p.missRamp = { rung: 1, hot: 0 };
   if (!p.chainTrack) p.chainTrack = { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 };
   // telmodus (lees-vrij): standaard uit (track 'math') voor bestaande profielen
@@ -8230,8 +8220,6 @@ function renderQuestion() {
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
-  // de eerste keer zoek-het-getal of drie getallen: eerst één keer voordoen
-  if (!G.count && nieuweVorm(p, q)) { toonNieuweVorm(p, q, renderQuestion); return; }
   G.mode = G.count ? 'count' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
@@ -8295,53 +8283,6 @@ function vraagKomtIn(kaart) {
   vraagInAnim = kaart.animate(
     [{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
-}
-/* ---- Nieuw! Eén keer voordoen -------------------------------------------
-   Een nieuwe vraagsoort kwam onaangekondigd: het vakje stond ineens in het
-   midden ("3 + ▢ = 7"), en een kind moest zelf raden wat daar de bedoeling van
-   was. Nu staat er de allereerste keer een voorbeeld tussen: dezelfde soort som,
-   met andere getallen, die zichzelf invult. Daarna een 👉, en dan de echte vraag.
-
-   Geen uitleg in woorden: het enige woord is "Nieuw!". Het voorbeeld ís de uitleg,
-   en het ziet er precies zo uit als de somkaart eronder. Eén keer per kind per
-   vraagsoort (p.vormGezien), en de vraag erna telt gewoon -- het voorbeeld zelf
-   levert niets op en kost niets.
-
-   Tikken vóór het vakje gevuld is doet niets: het voorbeeld is het hele punt.
-   Terug (Android) sluit het wel, en dan komt de vraag. */
-const NIEUWE_VORM = {
-  missing: { '+': ['3 + ', 4, ' = 7'], '-': ['9 − ', 4, ' = 5'], 'x': ['2 × ', 3, ' = 6'] },
-  chain:   { '+': ['2 + 3 + 4 = ', 9, ''] },
-};
-const NIEUW_VOORDOEN = 900;   // ms tot het voorbeeld zichzelf invult
-function nieuweVorm(p, q) {
-  return !!NIEUWE_VORM[q.kind] && !(p.vormGezien && p.vormGezien[q.kind]);
-}
-function toonNieuweVorm(p, q, verder) {
-  if (!p.vormGezien) p.vormGezien = {};
-  p.vormGezien[q.kind] = true;
-  save();
-  const soort = NIEUWE_VORM[q.kind];
-  const [voor, ans, na] = soort[q.op] || soort['+'];
-  let door = false;
-  const verderMet = () => {
-    if (door) return;
-    door = true;
-    if (G && G.qs[G.idx] === q) verder();
-  };
-  const ov = openOverlay('nieuw-overlay', `<div class="pop-panel nieuw-panel">`
-    + `<div class="nieuw-kop">✨ Nieuw!</div>`
-    + `<div class="question-card nieuw-kaart">${voor}<span class="q-blank">?</span>${na}</div>`
-    + `<div class="nieuw-verder" aria-hidden="true">👉</div></div>`, { onClose: verderMet });
-  ov.onclick = () => { if (ov.classList.contains('ingevuld')) { sndClick(); ov._close(); } };
-  setTimeout(() => {
-    const vak = ov.querySelector('.q-blank');
-    if (!vak || !ov.isConnected) return;
-    vak.textContent = ans;
-    vak.classList.add('done', 'klikt');
-    ov.classList.add('ingevuld');
-    sndTap();
-  }, NIEUW_VOORDOEN);
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
