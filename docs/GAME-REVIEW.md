@@ -1,9 +1,23 @@
 # Rekensterren — whole-game review
 
-*Written against `7ca7996` (2026-09-26). Nothing in here is implemented. Like the
-other reviews in `docs/`, this is a snapshot: where it and the code disagree
-later, the code wins. Code is referenced by function and section name, not by
-line.*
+*Written against `7ca7996` (2026-09-26). Like the other reviews in `docs/`, this
+is a snapshot: where it and the code disagree later, the code wins. Code is
+referenced by function and section name, not by line.*
+
+> **Status:** the three slices at the end are built, one commit each.
+> Where the build deviates from what is written below:
+> * **no dots in math mode** (decided before building): #1 keeps the picture
+>   hint, the "oh!" face, the spaced retries and the 👉;
+> * "continue" is **the 👉 counting mode already used**, not a new ▶ — one sign
+>   for one meaning;
+> * the 2 ★ band is **up to 45 % slipped**, not "about a quarter": that is
+>   counting mode's existing band, so no child gets fewer stars for the same show;
+> * the Werelden step icon was **dropped** (see slice 3);
+> * found while building: three-number sums could **never** appear before
+>   (see #3). They now come in world 5.
+>
+> Not built: the rest of A (the spotlight as light, the small fixes other than
+> level 49), and everything in B and C.
 
 **How this was made.** I played the game in Chromium at 412×920 with touch:
 
@@ -190,9 +204,13 @@ end on 2 ★; stars already saved don't change.
   show 10, which is world 2, show 2.
 - After that the only new things are:
   - "find the number" sums from show 25;
-  - three-number sums from show 37;
+  - three-number sums, in theory from show 37;
   - and each of those only once the child has mastered the basics (`tourRound`,
     `planSpecials`).
+- Found while building slice 3: three-number sums could never actually appear.
+  `chainReady` wanted two rounds between unlocking "find the number" (round 3 at
+  the earliest) and itself, so round 5, which starts at show 49: one past the last
+  show that exists.
 - `ROUND_LEN = 12` doesn't line up with worlds of 8 shows, so a new kind of
   question can show up in the middle of a world.
 - When it does, nothing introduces it: the "?" box simply moves to the middle.
@@ -574,17 +592,31 @@ mistakes feel fair: a wider 2 ★ band means more when a slip has taught somethi
 
 **What's in**
 
-- Tie the difficulty to the world index, inside the parent's ceiling. The ramp now
-  depends on the show number and stops rising at show 10; per world, it keeps
-  going.
-- Align `tourRound` with world borders, so a new kind of question starts at a
-  world's show 1.
-- A one-time "Nieuw!" worked example for each new kind of question.
-- The world's step shown as an icon on the Werelden card ("10", "20", "?"), not as
-  text.
+- Tie the difficulty to the world index, inside the parent's ceiling
+  (`LEERSTAPPEN`). The ramp used to depend on the show number and stopped rising
+  at show 10. Now:
+  1. up to half the ceiling ("tot 20": up to 10);
+  2. the whole ceiling, never crossing a ten (12 + 5, 17 − 4);
+  3. crossing a ten, half of the time on purpose (8 + 5, 13 − 6);
+  4. "find the number", once the plain sum is mastered;
+  5. three numbers, once "find the number" came loose in an earlier world;
+  6. everything mixed (and every world added later).
+- Replace the 12-show round clock with the world step. "Find the number" still
+  starts at show 25 (world 4, show 1), exactly as before; three numbers become
+  reachable (world 5).
+- A one-time "Nieuw!" worked example for each new kind of question: the same kind
+  of sum with other numbers, filling itself in, then 👉.
 - Adaptation (`perf`) and mastery gates stay, so no child gets stuck.
+- Saves: the unlock marker moves from rounds to worlds (`unlockRound` →
+  `unlockStap`, round r = step r + 1), and a child who already had "find the
+  number" doesn't get its example.
 
 **What's out** Dressing up the maths per world, new modes, and new art.
+
+**Dropped while building:** the step shown as an icon on the Werelden card
+("10", "20", "?"). For a child those are cryptic marks on a picture; the worked
+example at the moment a new kind of question appears says it better. The parent
+area is the better home for "what does this world teach", later.
 
 **Why third** It has the biggest long-term effect on replay. But it needs a
 teaching decision on the table of steps, and it touches the adaptive engine. It

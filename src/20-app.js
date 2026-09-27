@@ -63,10 +63,13 @@
      De hele tournee .... de reis boven de werelden uit (het grootste blok)
 
    ---- HET SPEL -------------------------------------------------------------
-     Vragen maken ....... rekenmodus: genTriple/genQuestion/genMissing/genChain
+     Vragen maken ....... rekenmodus: de leerstap per wereld (LEERSTAPPEN),
+                          genTriple/genQuestion/genMissing/genChain
      Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
      Memory-spel ........ los kaartspel (lees-vrij)
      Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
+                          (en "Nieuw!": een nieuwe vraagsoort één keer voordoen,
+                          bij renderQuestion in Spel)
      Spel ............... de show: renderQuestion, submitAnswer, endLevel.
                           De gedeelde feestjes stonden hier ooit ook in; die
                           staan sinds kort in src/10-feestjes.js
@@ -1298,15 +1301,12 @@ function rebuildWorldBadges() {
   if (perfectPlank) perfectPlank.ids = perfectIds;
 }
 
-/* De pedagogische klok. Dit was `ronde` in cityFor en stuurt wannéér de extra
-   uitdagingen mogen verschijnen: zoek-het-getal vanaf ronde 3, drie-getallen
-   vanaf ronde 4 (zie opReady/chainReady). BEWUST losgekoppeld van de wereld-
-   indeling: een ronde is 12 optredens en een wereld is er 8, dus die twee door
-   elkaar halen zou allebei die uitdagingen ineens acht shows te vroeg laten
-   beginnen -- een stille verandering in wanneer een zesjarige voor het eerst
-   "3 + ▢ = 7" ziet. Verander dit getal alleen met opzet. */
-const ROUND_LEN = 12;
-function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
+/* De pedagogische klok stond hier: tourRound(), rondes van twaalf shows, los van
+   de werelden. Hij is vervangen door de leerstap per wereld (zie "De leerstap"
+   bij Vragen maken). Zoek-het-getal begint nog altijd op show 25 -- dat is show 1
+   van wereld 4 -- dus wanneer een zesjarige voor het eerst "3 + ▢ = 7" ziet is
+   niet veranderd. Drie getallen wél: die wachtten op ronde 5, en die begon bij
+   show 49, één voorbij de laatste show. */
 
 /* ================= Trofeeën =================
    FASE 5C -- de kast is uitgedund. Er stonden 42 trofeeën op acht planken, en dat
@@ -1633,9 +1633,10 @@ function defaultProfile(name, dress, opts) {
     weak: {},   // zwakke sommen: "7 × 8 = @" -> { ans, op, w } om gericht te herhalen
     learned: {},// geoefende sommen in onderhoud: "7 × 8 = @" -> { ans, op, iv, due }
     // per-bewerking-beheersing (klaarheid extra uitdagingen) + frequentie-trappen
-    opTrack: {},                                    // op -> { n, acc, paused, unlockRound }
+    opTrack: {},                                    // op -> { n, acc, paused, unlockStap }
     missRamp: { rung: 1, hot: 0 },                  // zoek-het-getal: 1 of 2 per optreden
     chainTrack: { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 },  // drie getallen
+    vormGezien: {},                                 // nieuwe vraagsoorten die al voorgedaan zijn (zie toonNieuweVorm)
     // telmodus: welke fase het kind nú speelt (klimt mee met de beheersing, binnen
     // het door de ouder toegestane bereik) + een lopende nauwkeurigheid voor die klim
     // rung = moeilijkheidstrap bínnen de fase (past bereik, afleiders, cijfersteun aan);
@@ -1735,6 +1736,24 @@ function migrate(p) {
   if (p.settings.missNum == null) p.settings.missNum = true;
   if (p.settings.chain3 == null) p.settings.chain3 = true;
   if (!p.opTrack) p.opTrack = {};
+  /* De stempel "sinds wanneer beheerst" telde in rondes van twaalf shows
+     (unlockRound) en telt nu in werelden (unlockStap, zie "De leerstap"). Ronde 3
+     begon op show 25 = wereld 4, ronde 4 op show 37 = wereld 5: een ronde is dus
+     de stap erna. Zo komt drie-getallen voor een bestaand kind niet ineens in
+     dezelfde wereld als zoek-het-getal. Eén keer, en daarna is het oude veld weg. */
+  Object.values(p.opTrack).forEach(t => {
+    if (t && t.unlockRound !== undefined) {
+      if (t.unlockStap == null && t.unlockRound != null) t.unlockStap = t.unlockRound + 1;
+      delete t.unlockRound;
+    }
+  });
+  /* Welke nieuwe vraagsoorten dit kind al een keer voorgedaan kreeg (zie
+     toonNieuweVorm). Wie zoek-het-getal al kreeg -- een bewerking die al
+     losgekomen is -- hoeft het voorbeeld niet meer te zien; drie getallen kwam
+     tot nu toe nooit, dus dat voorbeeld krijgt iedereen één keer. */
+  if (!p.vormGezien) p.vormGezien = {
+    missing: Object.values(p.opTrack).some(t => t && t.unlockStap != null),
+  };
   if (!p.missRamp) p.missRamp = { rung: 1, hot: 0 };
   if (!p.chainTrack) p.chainTrack = { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 };
   // telmodus (lees-vrij): standaard uit (track 'math') voor bestaande profielen
@@ -7046,24 +7065,82 @@ function updateTroDot() {
    Omdat het gezochte getal altijd één getal is, blijven meerkeuze, typen, hints,
    zwakke-sommen en álle beloningen ongewijzigd werken. */
 
-// Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
-// Alles komt uit de bestaande moeilijkheidslogica (level + vaardigheid).
-function genTriple(s, lvl, perf, op) {
-  // Moeilijkheid = basis per level + bijsturing op vaardigheid (perf 0..1 → ±0.25).
-  // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
+/* ---- De leerstap: elke wereld leert iets nieuws ------------------------
+   Een wereld is niet alleen een nieuwe tekening maar ook een nieuwe stap in het
+   rekenen, binnen het plafond dat de ouder zette ("getallen tot 20"):
+
+     stap  wereld  wat er nieuw is
+     1     1       sommen tot de helft van het plafond (bij "tot 20": tot 10)
+     2     2       het hele plafond, zonder over een tiental heen (12 + 5, 17 − 4)
+     3     3       over het tiental heen, en dat vaak (8 + 5, 13 − 6)
+     4     4       zoek het getal (3 + ▢ = 7), zodra de gewone som beheerst is
+     5     5       drie getallen (3 + 4 + 2), zodra zoek-het-getal er een wereld
+                   eerder bij kwam -- nooit twee nieuwe dingen tegelijk
+     6     6       alles door elkaar
+   Een wereld die later bijkomt krijgt stap 6: alles, zoals de laatste.
+
+   Waarom. De moeilijkheid liep op het shownummer: 0.35 + 0.07 per show, en dat
+   stond bij show 10 op het plafond. Daarna waren de sommen in wereld 2 tot en
+   met 6 van dezelfde soort, met een andere tekening erachter. Zoek-het-getal
+   kwam op show 25 en drie getallen nooit: die wachtte op "ronde 5", en die begon
+   bij show 49 -- één voorbij de laatste show die er is.
+
+   Wat blijft: de bijsturing op hoe het gaat (perf, ±0.25 op de moeilijkheid, dus
+   een kind dat worstelt krijgt in elke stap lichtere sommen) en de beheersing-
+   poorten van de extra uitdagingen (opMastered, pauze bij worstelen). Zoek-het-
+   getal begint op dezelfde show als altijd: show 1 van wereld 4 ís show 25. De
+   wereld verandert niets aan hoe een som eruitziet -- dat blijft overal gelijk.
+   Wat hij verandert is wát er te leren valt. */
+const LEERSTAPPEN = [
+  { t: 0.5, brug: 'nee' },
+  { t: 1,   brug: 'nee' },
+  { t: 1,   brug: 'vaak' },
+  { t: 1,   brug: 'vrij' },
+  { t: 1,   brug: 'vrij' },
+  { t: 1,   brug: 'vrij' },
+];
+const STAP_ZOEK = 4;      // vanaf deze stap mag zoek-het-getal (zie opReady)
+const STAP_DRIE = 5;      // vanaf deze stap mogen drie getallen (zie chainReady)
+const BRUG_VAAK = 0.5;    // in stap 3: zo vaak gaat een plus- of minsom over het tiental
+function leerStap(lvl) { return worldFor(lvl).index + 1; }
+function stapVan(lvl) { return LEERSTAPPEN[Math.min(leerStap(lvl), LEERSTAPPEN.length) - 1]; }
+// Moeilijkheid 0..1: de basis van de stap, bijgestuurd op vaardigheid (perf 0..1 → ±0.25).
+function moeilijkheid(lvl, perf) {
   const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
+  return Math.max(0.2, Math.min(1, stapVan(lvl).t + skillAdj));
+}
+/* Gaat deze som over een tiental heen? Voor plus: tellen de eenheden samen tot
+   boven de tien (8 + 5 wel, 7 + 3 en 15 + 5 niet -- die landen óp een tiental).
+   Voor min precies andersom: c + b moet over het tiental heen (13 − 6 wel,
+   10 − 3 en 20 − 3 niet). Zo werkt het ook bij "tot 100" (27 + 5, 43 − 8). */
+function overTiental(a, b, c, op) {
+  if (op === '+') return (a % 10) + (b % 10) > 10;
+  if (op === '-') return (c % 10) + (b % 10) > 10;
+  return false;
+}
+
+// Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
+// Alles komt uit de moeilijkheidslogica hierboven (leerstap + vaardigheid).
+function genTriple(s, lvl, perf, op) {
+  // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
+  const t = moeilijkheid(lvl, perf);
   const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
-  if (op === '+') {
-    a = rnd(1, effMax - 1);
-    b = rnd(1, effMax - a);
-    c = a + b; sym = '+';
-  } else if (op === '-') {
-    a = rnd(2, effMax);
-    b = rnd(1, a - 1);
-    c = a - b; sym = '−';
+  if (op === '+' || op === '-') {
+    /* De tiental-regel van deze stap. Onder de 11 kán een som niet over het
+       tiental, dus dan valt er niets te kiezen en wordt er ook niet gezocht. */
+    const brug = stapVan(lvl).brug;
+    const wilBrug = brug === 'vaak' && effMax > 10 && Math.random() < BRUG_VAAK;
+    const magBrug = brug !== 'nee';
+    let poging = 0;
+    do {
+      if (op === '+') { a = rnd(1, effMax - 1); b = rnd(1, effMax - a); c = a + b; }
+      else { a = rnd(2, effMax); b = rnd(1, a - 1); c = a - b; }
+      const over = overTiental(a, b, c, op);
+      if ((wilBrug ? over : (magBrug || !over))) break;
+    } while (++poging < 40);
+    sym = op === '+' ? '+' : '−';
   } else if (op === 'x') {
     b = pick(tables);
     const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
@@ -7097,8 +7174,7 @@ function genMissing(s, lvl, perf, op) {
 // ingestelde bovengrens; elke term is bescheiden (≈ hooguit de helft), zodat het
 // hoofdrekenen behapbaar blijft. 0-termen mogen, maar niet te vaak.
 function genChain(s, lvl, perf) {
-  const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
+  const t = moeilijkheid(lvl, perf);
   const effMax = Math.max(10, Math.round(s.max * t));
   const cap = Math.max(1, Math.floor(effMax / 2));
   let a, b, c, sum, tries = 0;
@@ -7885,7 +7961,7 @@ function buildQuestion(p, lvl, g) {
 // pogingen en of het (met hysterese) op pauze staat.
 function ot(p, op) {
   let t = p.opTrack[op];
-  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockRound: null, fast: 0.5 }; p.opTrack[op] = t; }
+  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockStap: null, fast: 0.5 }; p.opTrack[op] = t; }
   if (t.fast == null) t.fast = 0.5;   // bestaande spelers: neutraal beginnen
   return t;
 }
@@ -7916,28 +7992,30 @@ function opMastered(p, op) {
   // voldoende pogingen gaat de poort alsnog open.
   return (t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN || t.n >= PATIENCE_N;
 }
-// Klaar voor zoek-het-getal bij deze bewerking: vanaf ronde 3, beheerst, niet op pauze.
-function opReady(p, op, round) {
+// Klaar voor zoek-het-getal bij deze bewerking: vanaf leerstap STAP_ZOEK (wereld
+// 4), beheerst, niet op pauze.
+function opReady(p, op, stap) {
   const t = p.opTrack[op];
-  if (!t || round < 3 || t.paused) return false;
+  if (!t || stap < STAP_ZOEK || t.paused) return false;
   return opMastered(p, op);
 }
-// Klaar voor drie-getallen (alleen optellen): vanaf ronde 4, tel-beheersing, en pas
-// nadat zoek-het-getal voor + is losgekomen (≥2 rondes geleden) — nooit twee nieuwe
-// dingen tegelijk. Werkt met de tel-beheersing, ook als de ouder missNum uit heeft.
-function chainReady(p, s, round) {
+// Klaar voor drie-getallen (alleen optellen): vanaf leerstap STAP_DRIE (wereld 5),
+// tel-beheersing, en pas nadat zoek-het-getal voor + in een éérdere wereld is
+// losgekomen — nooit twee nieuwe dingen in dezelfde wereld. Werkt met de
+// tel-beheersing, ook als de ouder missNum uit heeft.
+function chainReady(p, s, stap) {
   const ct = p.chainTrack;
-  if (round < 4 || ct.paused) return false;
+  if (stap < STAP_DRIE || ct.paused) return false;
   if (!opMastered(p, '+')) return false;
   const plus = p.opTrack['+'];
-  if (!plus || plus.unlockRound == null || round - plus.unlockRound < 2) return false;
+  if (!plus || plus.unlockStap == null || stap - plus.unlockStap < 1) return false;
   return true;
 }
-// Zet de "sinds-ronde"-stempel zodra een bewerking beheerst is (voor de chain-gate).
-function refreshReadiness(p, round) {
+// Zet de "sinds-stap"-stempel zodra een bewerking beheerst is (voor de chain-gate).
+function refreshReadiness(p, stap) {
   ['+', '-', 'x', ':'].forEach(op => {
     const t = ot(p, op);
-    if (round >= 3 && opMastered(p, op) && t.unlockRound == null) t.unlockRound = round;
+    if (stap >= STAP_ZOEK && opMastered(p, op) && t.unlockStap == null) t.unlockStap = stap;
   });
 }
 // Werkt de per-bewerking-nauwkeurigheid bij ná de definitieve afronding van een
@@ -7994,11 +8072,11 @@ function pickSlots(total, count, avoid) {
 // Roostert de speciale vragen van dit optreden in: hoeveel, welk type, welke plek.
 // Zolang drie-getallen nog in de introductiefase zit (trap < 2) mag er hoogstens
 // één speciale vraag per ronde zijn — óf zoek-het-getal, óf drie-getallen, nooit beide.
-function planSpecials(p, s, total, round, goldIdx) {
-  refreshReadiness(p, round);
-  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, round));
+function planSpecials(p, s, total, stap, goldIdx) {
+  refreshReadiness(p, stap);
+  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, stap));
   const missAvail = missOps.length > 0;
-  const chainAvail = !!s.chain3 && chainReady(p, s, round);
+  const chainAvail = !!s.chain3 && chainReady(p, s, stap);
   const twoOk = s.perLevel >= 8;   // 2 speciale vragen alleen bij lange optredens (≥8)
   const both = missAvail && chainAvail;
   let types = [];
@@ -8082,7 +8160,7 @@ function startLevel(lvl) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, tourRound(lvl), goldIdx);
+  const plan = count ? [] : planSpecials(p, s, s.perLevel, leerStap(lvl), goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
   // (zie submitAnswer/endLevel): hij bepaalt nog altijd de toegift en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
@@ -8152,6 +8230,8 @@ function renderQuestion() {
     G.qs[G.idx] = built;
   }
   const q = G.qs[G.idx];
+  // de eerste keer zoek-het-getal of drie getallen: eerst één keer voordoen
+  if (!G.count && nieuweVorm(p, q)) { toonNieuweVorm(p, q, renderQuestion); return; }
   G.mode = G.count ? 'count' : (s.mode === 'mix' ? pick(['kies', 'typ']) : s.mode);
   G.input = '';
   G.lock = false;
@@ -8215,6 +8295,53 @@ function vraagKomtIn(kaart) {
   vraagInAnim = kaart.animate(
     [{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
+}
+/* ---- Nieuw! Eén keer voordoen -------------------------------------------
+   Een nieuwe vraagsoort kwam onaangekondigd: het vakje stond ineens in het
+   midden ("3 + ▢ = 7"), en een kind moest zelf raden wat daar de bedoeling van
+   was. Nu staat er de allereerste keer een voorbeeld tussen: dezelfde soort som,
+   met andere getallen, die zichzelf invult. Daarna een 👉, en dan de echte vraag.
+
+   Geen uitleg in woorden: het enige woord is "Nieuw!". Het voorbeeld ís de uitleg,
+   en het ziet er precies zo uit als de somkaart eronder. Eén keer per kind per
+   vraagsoort (p.vormGezien), en de vraag erna telt gewoon -- het voorbeeld zelf
+   levert niets op en kost niets.
+
+   Tikken vóór het vakje gevuld is doet niets: het voorbeeld is het hele punt.
+   Terug (Android) sluit het wel, en dan komt de vraag. */
+const NIEUWE_VORM = {
+  missing: { '+': ['3 + ', 4, ' = 7'], '-': ['9 − ', 4, ' = 5'], 'x': ['2 × ', 3, ' = 6'] },
+  chain:   { '+': ['2 + 3 + 4 = ', 9, ''] },
+};
+const NIEUW_VOORDOEN = 900;   // ms tot het voorbeeld zichzelf invult
+function nieuweVorm(p, q) {
+  return !!NIEUWE_VORM[q.kind] && !(p.vormGezien && p.vormGezien[q.kind]);
+}
+function toonNieuweVorm(p, q, verder) {
+  if (!p.vormGezien) p.vormGezien = {};
+  p.vormGezien[q.kind] = true;
+  save();
+  const soort = NIEUWE_VORM[q.kind];
+  const [voor, ans, na] = soort[q.op] || soort['+'];
+  let door = false;
+  const verderMet = () => {
+    if (door) return;
+    door = true;
+    if (G && G.qs[G.idx] === q) verder();
+  };
+  const ov = openOverlay('nieuw-overlay', `<div class="pop-panel nieuw-panel">`
+    + `<div class="nieuw-kop">✨ Nieuw!</div>`
+    + `<div class="question-card nieuw-kaart">${voor}<span class="q-blank">?</span>${na}</div>`
+    + `<div class="nieuw-verder" aria-hidden="true">👉</div></div>`, { onClose: verderMet });
+  ov.onclick = () => { if (ov.classList.contains('ingevuld')) { sndClick(); ov._close(); } };
+  setTimeout(() => {
+    const vak = ov.querySelector('.q-blank');
+    if (!vak || !ov.isConnected) return;
+    vak.textContent = ans;
+    vak.classList.add('done', 'klikt');
+    ov.classList.add('ingevuld');
+    sndTap();
+  }, NIEUW_VOORDOEN);
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.

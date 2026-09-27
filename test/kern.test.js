@@ -29,6 +29,7 @@
  *   N  beperkte beweging                -> dezelfde uitkomst, zonder de reis erheen
  *   O  het geluid                       -> een tabel op naam, en stil is stil
  *   P  sterren en ster-status           -> één regel, en een ladder die je kunt halen
+ *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -923,6 +924,47 @@ zaak('P', () => {
   const { p: vers } = verseSter('Nieuw');
   check(vers.rangVersie === app.run('RANG_VERSIE') && vers.rankSeen === 0,
     'P · een nieuwe ster kent de nieuwe drempels meteen', `${vers.rangVersie} / ${vers.rankSeen}`);
+});
+
+/* ================= Q · De leerstap =================
+   Elke wereld is een stap in het rekenen (zie "De leerstap" in de app). Wat hier
+   vastligt is de kant zonder browser: welke stap bij welke show hoort, en wat er
+   met een save gebeurt die nog in rondes van twaalf rekende. */
+zaak('Q', () => {
+  const app = laadApp();
+  const stap = l => app.run(`leerStap(${l})`);
+  check([1, 8, 9, 16, 17, 24, 25, 32, 33, 40, 41, 48].map(stap).join(',') === '1,1,2,2,3,3,4,4,5,5,6,6',
+    'Q · elke wereld van acht shows is één stap', [1, 8, 9, 16, 17, 24, 25, 32, 33, 40, 41, 48].map(stap).join(','));
+  check(stap(24) < app.run('STAP_ZOEK') && stap(25) === app.run('STAP_ZOEK'),
+    'Q · zoek-het-getal begint op show 25, net als met de oude klok', '');
+  check(stap(app.WORLD_LAST) >= app.run('STAP_DRIE'),
+    'Q · drie getallen valt binnen de tournee (het wachtte op show 49)', String(stap(app.WORLD_LAST)));
+  // een wereld erbij krijgt de laatste stap: alles
+  const erbij = laadApp();
+  const i = wereldErbij(erbij, 'test7');
+  check(erbij.run(`stapVan(${erbij.WORLD_START[i]})`) === erbij.run('LEERSTAPPEN[LEERSTAPPEN.length - 1]'),
+    'Q · een wereld die later bijkomt krijgt de laatste stap', '');
+
+  /* ---- een save uit de tijd van de rondes ---- */
+  const { app: oudApp, p: oud } = verseSter('Oud');
+  oud.opTrack = { '+': { n: 40, acc: 0.95, paused: false, unlockRound: 3, fast: 0.8 },
+                  '-': { n: 12, acc: 0.8, paused: false, unlockRound: null, fast: 0.5 } };
+  delete oud.vormGezien;
+  oudApp.save();
+  const na = heropen(oudApp);
+  const q = na.db.profiles.p1;
+  check(q.opTrack['+'].unlockStap === 4 && !('unlockRound' in q.opTrack['+']),
+    'Q · ronde 3 wordt stap 4 (show 25 = wereld 4), en het oude veld is weg', JSON.stringify(q.opTrack['+']));
+  check(q.opTrack['-'].unlockStap == null && !('unlockRound' in q.opTrack['-']),
+    'Q · een bewerking die nog niet los was blijft dat', JSON.stringify(q.opTrack['-']));
+  check(q.vormGezien && q.vormGezien.missing === true && !q.vormGezien.chain,
+    'Q · wie zoek-het-getal al had krijgt dat voorbeeld niet meer, drie getallen wel', JSON.stringify(q.vormGezien));
+  const nogEens = heropen(na).db.profiles.p1;
+  check(JSON.stringify(nogEens.opTrack) === JSON.stringify(q.opTrack) && JSON.stringify(nogEens.vormGezien) === JSON.stringify(q.vormGezien),
+    'Q · en een tweede keer openen verandert niets meer', '');
+  const { p: vers } = verseSter('Nieuw');
+  check(vers.vormGezien && Object.keys(vers.vormGezien).length === 0, 'Q · een nieuwe ster heeft nog niets voorgedaan gekregen',
+    JSON.stringify(vers.vormGezien));
 });
 
 klaar();

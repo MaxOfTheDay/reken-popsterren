@@ -799,6 +799,27 @@
     .toast.teken.docked .toast-main { font-size: 30px; }
   }
 
+  /* ---- Nieuw! (zie toonNieuweVorm) ----
+     Eén keer per vraagsoort: een voorbeeld dat er precies uitziet als de somkaart
+     in de show, en zichzelf invult. De kaart is de échte .question-card, dus hij
+     leest vanzelf als "zo'n som"; het paneel eromheen is hetzelfde glas als de
+     ster-status. De 👉 verschijnt pas als het vakje gevuld is: eerst kijken, dan
+     verder. */
+  .nieuw-overlay {
+    position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center;
+    background: rgba(20,4,40,.55); animation: popFade .25s ease; padding: 16px; cursor: pointer;
+  }
+  .nieuw-overlay.closing { animation: popFade .25s ease reverse forwards; pointer-events: none; }
+  .nieuw-panel { width: min(92vw, 420px); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .nieuw-kop { font-size: var(--tx-feest-kort); font-weight: 700; color: var(--gold-light); text-shadow: var(--goud-ink); }
+  .nieuw-kaart { margin: 0; min-width: 0; width: 100%; font-size: clamp(38px, 10vw, 54px); }
+  .nieuw-verder { font-size: 40px; line-height: 1; opacity: 0; transition: opacity var(--t-snel) ease; }
+  .nieuw-overlay.ingevuld .nieuw-verder { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .nieuw-overlay, .nieuw-overlay.closing { animation: none; }
+    .nieuw-verder { transition: none; }
+  }
+
   /* De pop schrikt ("oh!") bij een misser -- zie oepsGezicht. Het ronde mondje
      en de grote ogen zitten in de tekening zelf (avatarSVG); hier gaan ze aan.
      Daarbovenop een kort ineenkrimpen op de pas-laag, dezelfde laag waar de
