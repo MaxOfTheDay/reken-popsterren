@@ -116,7 +116,8 @@ counted out loud.
   symbol falling over her.
 - A missed sum comes back no sooner than two questions later, and at most once
   per show.
-- After the second miss, show a big ▶ instead of text.
+- After the second miss, show only a big 👉 (the sign counting mode already uses)
+  instead of text.
 
 **Not recommended: dots in math mode.** Counting mode's dot frames are tempting
 here, but a picture that appears *only* after a mistake has to be decoded at the
@@ -522,7 +523,7 @@ missing.
 - The "oh!" face: class hooks on the eyes and mouth in `avatarSVG`, plus a second
   mouth. It replaces the grey slip-note.
 - The missed sum comes back at least two questions later, at most once per show.
-- A ▶ instead of "tik om verder te gaan".
+- A big 👉 instead of "tik om verder te gaan", the same sign counting mode uses.
 - The forced reflow in `renderQuestion`.
 
 **What's out** Dots or any other amount picture in math mode, speech in math
