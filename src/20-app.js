@@ -10237,7 +10237,41 @@ function appWideCardsHtml(hasStars) {
         <div class="note">Vervángt alles wat er nu op dit toestel staat, van álle sterren. Er wordt eerst gevraagd of je het zeker weet.</div>
       </div>
       <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
-    </div>${beginschermKaartHtml(hasStars)}`;
+    </div>${beginschermKaartHtml(hasStars)}${overKaartHtml()}`;
+}
+/* De kaart naar over/: de pagina die in dertig seconden zegt wat dit spel is,
+   met het filmpje erop. Voor de ouder die het aan iemand anders wil laten zien --
+   daarom staat hij hier en niet in het spel: een kind komt er zo nooit per
+   ongeluk. Hij staat als laatste, ná de uitleg over het beginscherm: die is voor
+   wie hier zelf speelt, deze voor wie het nog niet doet. Het filmpje zit niet in de app zelf; het wordt pas opgehaald als
+   iemand op afspelen tikt (en sw.js bewaart het niet). */
+const OVER_URL = 'https://www.rekensterren.be/over/';
+function overKaartHtml() {
+  return `
+    <div class="set-card secundair">
+      <div class="set-card-head"><div class="ico">🎬</div><div><h2>Over Rekensterren</h2><div class="sub">Voor wie het nog niet kent</div></div></div>
+      <div class="note" style="margin-bottom:11px">Een korte pagina met een filmpje van een halve minuut: wat je kind hier doet en wat het ervan leert. Handig om door te sturen.</div>
+      <div class="data-btns">
+        <a class="btn small purple" id="set-over" href="over/index.html" target="_blank" rel="noopener">🎬 Bekijk de pagina</a>
+        <button class="btn small paper" id="set-deel">📤 Deel de link</button>
+      </div>
+    </div>`;
+}
+// Delen: eerst het deelmenu van het toestel, anders de link naar het klembord,
+// en lukt ook dat niet, dan staat hij in de melding zodat je hem kunt overtikken.
+function deelOver() {
+  const melding = t => { showToast(t); setTimeout(hideToast, 2400); };
+  if (navigator.share) {
+    navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
+      .catch(() => {});   // wegtikken is geen fout
+    return;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(OVER_URL)
+      .then(() => melding('📋 Link gekopieerd'), () => melding(esc(OVER_URL)));
+    return;
+  }
+  melding(esc(OVER_URL));
 }
 // Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen. Alleen wat
 // over de app als geheel gaat.
@@ -10574,6 +10608,7 @@ function bindSettings(p, s) {
     );
   });
   on('set-export', 'onclick', exportData);
+  on('set-deel', 'onclick', deelOver);
   on('set-import', 'onclick', () => { const f = $('set-import-file'); if (f) f.click(); });
   on('set-import-file', 'onchange', e => {
     if (e.target.files[0]) importData(e.target.files[0]);

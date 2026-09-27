@@ -772,7 +772,9 @@ function check(ok, label, detail) {
       return {
         er: !!k,
         vorige: i > 0 ? kaarten[i - 1].querySelector('h2').textContent : null,
-        laatste: i === kaarten.length - 1,
+        // na deze kaart mag alleen nog 'Over Rekensterren' komen -- de link naar over/
+        laatste: i === kaarten.length - 1
+          || (i === kaarten.length - 2 && kaarten[i + 1].querySelector('h2').textContent === 'Over Rekensterren'),
         secundair: !!k && k.classList.contains('secundair'),
         kop: k ? k.querySelector('h2').textContent : '',
         tekst: k ? k.textContent.replace(/\s+/g, ' ') : '',
@@ -788,7 +790,7 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const r = await kaart(page);
       check(r.er && r.vorige === 'Back-up & herstel' && r.laatste,
-        'O · de kaart staat direct na Back-up & herstel, als laatste', JSON.stringify(r));
+        'O · de kaart staat direct na Back-up & herstel, als laatste (op Over na)', JSON.stringify(r));
       check(r.secundair && r.kop === 'Op het beginscherm' && r.knoppen === 0,
         'O · een stille secundaire kaart, uitleg zonder knop', JSON.stringify(r));
       check(/Chrome stelt soms zelf voor/.test(r.tekst) && /Tik op ⋮ en kies ‘App installeren’/.test(r.tekst),

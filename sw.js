@@ -88,6 +88,9 @@ self.addEventListener('fetch', e => {
   // voor wat er ooit alsnog van buiten bij zou komen -- een opaque antwoord kost
   // quotum zonder dat we er iets over kunnen zeggen, dus dat bewaren we niet.
   if (url.origin !== self.location.origin) return;
+  // Filmpjes (de promo op over/) gaan langs de voorraad heen: ze zijn groot, ze
+  // worden in stukjes opgevraagd (Range) en een kind heeft ze niet nodig om te spelen.
+  if (/\.mp4$/i.test(url.pathname)) return;
 
   /* Tekeningen: eerst de voorraad. Ze veranderen alleen als ART_CACHE omhoog gaat,
      en het zijn de grootste bestanden van de app -- netwerk-eerst zou ze bij elk
