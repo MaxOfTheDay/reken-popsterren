@@ -1,14 +1,17 @@
 # Promo
 
 Het promofilmpje en het bewegende logo van Rekensterren. Staat los van het spel:
-niets hieronder wordt door `index.html` of `sw.js` geladen.
+niets hieronder wordt door `index.html` geladen, en `sw.js` laat de filmpjes met
+rust. Alleen de over-pagina (`over/index.html`) toont het promofilmpje en zijn
+poster -- staand op een smal scherm, liggend op een breed.
 
 | bestand | wat |
 |---|---|
 | `rekensterren-promo.mp4` | het filmpje, 26 s, 1920×1080, 60 beelden per seconde, zonder geluid |
+| `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 1080×1920: voor telefoons en voor verhalen/status op sociale media |
 | `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 8,5 s) |
 | `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/20-app.js`); de intro zelf staat in de app, niet hier |
-| `poster.jpg` | de eindkaart als stilstaand beeld |
+| `poster.jpg`, `poster-staand.jpg` | de eindkaart als stilstaand beeld, liggend en staand |
 | `promo.html` | de bron. Open hem in een browser en hij speelt in een lus |
 | `render.js` | maakt er beeld voor beeld een mp4 van |
 | `opname.js` | neemt de schermen op uit het echte spel, met Marie, Anna en Clara als voorbeeldsterren |
@@ -18,8 +21,12 @@ Opnieuw maken, na een wijziging in `promo.html`:
 
 ```sh
 node promo/render.js               # -> rekensterren-promo.mp4
+node promo/render.js promo-staand  # -> rekensterren-promo-staand.mp4 (promo.html?staand)
 node promo/render.js logo 0 8.5     # -> rekensterren-logo.mp4
 ```
+
+De posters zijn het beeld op 24 s:
+`ffmpeg -ss 24 -i rekensterren-promo-staand.mp4 -frames:v 1 -q:v 4 poster-staand.jpg`.
 
 Nodig: Playwright (zoals voor `npm test`) en een ffmpeg met libx264; staat die
 niet op het pad, zet dan `FFMPEG=/pad/naar/ffmpeg`.

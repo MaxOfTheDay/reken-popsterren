@@ -66,6 +66,9 @@
 
   .film { margin-top: 30px; border-radius: 18px; overflow: hidden; background: #12031f; box-shadow: 0 16px 40px rgba(0,0,0,.45); }
   .film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  /* staand: zo hoog als past, met wat lucht erboven en eronder */
+  .film.staand { width: min(100%, calc((100svh - 120px) * 9 / 16)); margin-left: auto; margin-right: auto; }
+  .film.staand video { aspect-ratio: 9 / 16; }
 
   section { margin-top: 48px; }
   h2 { font-size: clamp(20px, 5vw, 24px); margin: 0 0 14px; color: var(--goud); text-align: center; }
@@ -100,9 +103,12 @@
     <a class="knop goud" href="../index.html">▶ Speel meteen</a>
   </header>
 
-  <div class="film">
+  <!-- Liggend is de standaard; op een smal scherm zet het scriptje onderaan de
+       staande versie erin, vóór er iets geladen is (preload="none"). -->
+  <div class="film" id="film">
     <video controls playsinline preload="none" width="1920" height="1080"
            poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
+           data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
            aria-label="Filmpje van 26 seconden, zonder geluid: het logo en vier schermen uit het spel"></video>
   </div>
 
@@ -136,6 +142,16 @@
 
 </main>
 <script>
+  // Op een telefoon het staande filmpje: dat vult het scherm, het liggende is
+  // daar een strookje van een paar honderd pixels hoog.
+  (function () {
+    if (!window.matchMedia || !matchMedia('(max-width: 640px)').matches) return;
+    var v = document.querySelector('#film video');
+    v.poster = v.getAttribute('data-staand-poster');
+    v.src = v.getAttribute('data-staand-src');
+    v.width = 1080; v.height = 1920;
+    document.getElementById('film').classList.add('staand');
+  })();
   // Delen: het deelmenu van het toestel als dat er is, anders de link kopiëren,
   // en anders de link gewoon laten zien. Altijd het echte adres, ook vanaf een
   // voorbeeld of file://: dat is wat een andere ouder moet krijgen.

@@ -695,7 +695,8 @@ zaak('K', () => {
   const over = fs.readFileSync(path.join(WORTEL, 'over/index.html'), 'utf8');
   // Alles wat de pagina zelf ophaalt of aanwijst, relatief: een ontbrekend beeld
   // of een dode terugknop geeft geen fout, alleen een gat.
-  const refs = [...over.matchAll(/(?:src|href|poster)="([^"]+)"/g)].map(m => m[1])
+  // (ook de data-staand-*: die zet het scriptje op een telefoon in de plaats)
+  const refs = [...over.matchAll(/(?:src|href|poster|data-staand-[a-z]+)="([^"]+)"/g)].map(m => m[1])
     .filter(r => !/^(https?:|mailto:|#|data:)/.test(r));
   check(refs.length >= 8, 'K · de pagina wijst naar zijn eigen bestanden', refs.join(', '));
   const weg = refs.filter(r => !fs.existsSync(path.join(WORTEL, 'over', r.split(/[?#]/)[0])));
