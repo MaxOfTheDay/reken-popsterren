@@ -949,7 +949,6 @@ zaak('Q', () => {
   const { app: oudApp, p: oud } = verseSter('Oud');
   oud.opTrack = { '+': { n: 40, acc: 0.95, paused: false, unlockRound: 3, fast: 0.8 },
                   '-': { n: 12, acc: 0.8, paused: false, unlockRound: null, fast: 0.5 } };
-  delete oud.vormGezien;
   oudApp.save();
   const na = heropen(oudApp);
   const q = na.db.profiles.p1;
@@ -957,14 +956,9 @@ zaak('Q', () => {
     'Q · ronde 3 wordt stap 4 (show 25 = wereld 4), en het oude veld is weg', JSON.stringify(q.opTrack['+']));
   check(q.opTrack['-'].unlockStap == null && !('unlockRound' in q.opTrack['-']),
     'Q · een bewerking die nog niet los was blijft dat', JSON.stringify(q.opTrack['-']));
-  check(q.vormGezien && q.vormGezien.missing === true && !q.vormGezien.chain,
-    'Q · wie zoek-het-getal al had krijgt dat voorbeeld niet meer, drie getallen wel', JSON.stringify(q.vormGezien));
   const nogEens = heropen(na).db.profiles.p1;
-  check(JSON.stringify(nogEens.opTrack) === JSON.stringify(q.opTrack) && JSON.stringify(nogEens.vormGezien) === JSON.stringify(q.vormGezien),
+  check(JSON.stringify(nogEens.opTrack) === JSON.stringify(q.opTrack),
     'Q · en een tweede keer openen verandert niets meer', '');
-  const { p: vers } = verseSter('Nieuw');
-  check(vers.vormGezien && Object.keys(vers.vormGezien).length === 0, 'Q · een nieuwe ster heeft nog niets voorgedaan gekregen',
-    JSON.stringify(vers.vormGezien));
 });
 
 klaar();

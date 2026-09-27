@@ -21,6 +21,10 @@ referenced by function and section name, not by line.*
 >   work moved from inside the tap to the next frame; what costs time is laying
 >   out the show screen itself. Measure on a real slow device before doing more.
 >
+> * **no "Nieuw!" example** when a new kind of question appears: built, then
+>   removed at the owner's request. New kinds of question arrive without an
+>   introduction, as before.
+>
 > Not built: the rest of A (the spotlight as light, the small fixes other than
 > level 49), and everything in B and C.
 
@@ -235,8 +239,7 @@ parent set. For example:
 6. a mix.
 
 Within each step, keep the adaptation to how the child is doing (`perf`) and keep
-the mastery gates. The first time a new kind of question appears, show one worked
-example.
+the mastery gates.
 
 This does not dress the maths up per world; that earlier decision stands. The
 worlds keep the same look for their sums and differ in what they teach.
@@ -501,9 +504,7 @@ missing.
    #7, since that function is being touched anyway.
 2. **The end of a show** (#2), the rescaled star status (#4) and the level-49 fix.
 3. **The spotlight as light instead of a bar** (the first half of #5).
-4. **One worked example** when a new kind of question first appears (the first cut
-   of #3).
-5. The small fixes above.
+4. The small fixes above.
 
 ## B — Worth planning
 
@@ -609,19 +610,19 @@ mistakes feel fair: a wider 2 ★ band means more when a slip has taught somethi
 - Replace the 12-show round clock with the world step. "Find the number" still
   starts at show 25 (world 4, show 1), exactly as before; three numbers become
   reachable (world 5).
-- A one-time "Nieuw!" worked example for each new kind of question: the same kind
-  of sum with other numbers, filling itself in, then 👉.
 - Adaptation (`perf`) and mastery gates stay, so no child gets stuck.
 - Saves: the unlock marker moves from rounds to worlds (`unlockRound` →
-  `unlockStap`, round r = step r + 1), and a child who already had "find the
-  number" doesn't get its example.
+  `unlockStap`, round r = step r + 1).
 
 **What's out** Dressing up the maths per world, new modes, and new art.
 
-**Dropped while building:** the step shown as an icon on the Werelden card
-("10", "20", "?"). For a child those are cryptic marks on a picture; the worked
-example at the moment a new kind of question appears says it better. The parent
-area is the better home for "what does this world teach", later.
+**Dropped:**
+
+- the step shown as an icon on the Werelden card ("10", "20", "?"). For a child
+  those are cryptic marks on a picture. The parent area is the better home for
+  "what does this world teach", later.
+- the one-time "Nieuw!" worked example before the first "find the number" or
+  three-number sum: built, then removed at the owner's request.
 
 **Why third** It has the biggest long-term effect on replay. But it needs a
 teaching decision on the table of steps, and it touches the adaptive engine. It
