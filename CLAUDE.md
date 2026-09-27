@@ -92,11 +92,14 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
 3. **Twee blokken in `src/` worden door een machine geschreven — bewerk ze niet
    met de hand.** `WORLDS` staat tussen `/* WERELDEN-BEGIN` en
    `/* WERELDEN-EINDE */`, `SCHERMKUNST` tussen `/* SCHERMKUNST-BEGIN` en
-   `/* SCHERMKUNST-EINDE */`. De wereldstudio (`?debug&mapedit`) stuurt ze naar
-   `test/preview.js`, die ze vervangt in het bronbestand waar de markering staat
-   en daarna bouwt. Zie `docs/UITBREIDEN.md`. Let op: *Bewaar* schrijft het blok
-   opnieuw uit de gegevens, dus handgeschreven commentaar erbinnen overleeft dat
-   niet — zet een toelichting bóven `WERELDEN-BEGIN`, want dat stuk blijft staan.
+   `/* SCHERMKUNST-EINDE */`. De studio stuurt het wereldconcept naar
+   `test/preview.js` (`/api/concept`), die het keurt met `wereldControle`, het
+   blok met `worldsSource()` opnieuw opbouwt, het vervangt in het bronbestand waar
+   de markering staat en daarna bouwt. Zie `docs/UITBREIDEN.md`. Let op: *Opslaan
+   in het project* schrijft het blok opnieuw uit de gegevens, dus handgeschreven
+   commentaar erbinnen overleeft dat niet — zet een toelichting bóven
+   `WERELDEN-BEGIN`, want dat stuk blijft staan. Een wereldveld dat
+   `worldsSource` niet kent gaat wél ongeschonden mee (als JSON).
 4. **`src/00-vh-lock.js` moet het eerste bronbestand blijven.** Het legt de
    vensterhoogte vast vóór de Android-statusbalk wegvaagt, en alles wat erna komt
    rekent erop. Het volgnummer 00 is wat dat garandeert — geen afspraak maar de

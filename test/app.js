@@ -190,7 +190,11 @@ const BRUG = `globalThis.__api = {
   // Staan hier omdat het uitspraken over een wereld zijn en geen paneelwerk --
   // test/werelden.js kijkt er de werelden mee na zonder een browser te openen.
   wereldId, vrijWereldId, wereldArtPad, wereldControle, worldsSource, ZONE,
-  worldNodes, worldCurve, WORLD_DRAFT_KEY,
+  worldNodes, worldCurve, WORLD_DRAFT_KEY, uitgebrachtTot,
+  // het concept: bewaren met zijn basis, en op het spel van nu leggen. De server
+  // doet hiermee precies wat de studio in de browser doet (zie test/werelden.js).
+  WORLD_DRAFT_BASIS_KEY, rebaseWorldDraft, loadWorldDraft, saveWorldDraft, applyWorldDraft,
+  sameWorld, get WORLD_DRAFT_INFO() { return WORLD_DRAFT_INFO; },
   worldFor, worldForIndex, worldProgress, worldAvailable, worldDone,
   frontierWorld, allWorldsDone, continueWorld, hereLevel,
   laatsteZichtbareWereld, meerWereldenVooruit, worldSeen, markWorldSeen,
@@ -271,8 +275,22 @@ function laadApp(opties) {
   vm.runInContext(appScript(), context, { filename: 'index.html', timeout: 30000 });
   vm.runInContext(BRUG, context, { filename: 'test/app.js:brug' });
 
+  /* alleenUitgebracht: het spel zoals een kind het heeft. Een wereld die al
+     geschreven is maar nog dicht staat (released:false -- zo komt een nieuwe
+     wereld uit de wereldstudio) gaat er hier uit, samen met zijn levelnummers en
+     zijn trofee. De voortgangssuites hebben dat nodig: die zetten "een wereld die
+     later bijkomt" achteraan, en achter een dichte wereld is zo'n proefwereld
+     terecht onbereikbaar. Zonder deze stand viel `npm run check` om op precies de
+     manier van werken die docs/UITBREIDEN.md aanraadt. De inhoudskeuring en het
+     wereldoverzicht laden zonder deze stand: die moeten de dichte werelden juist
+     wél zien. */
+  if (opties.alleenUitgebracht) {
+    vm.runInContext('(() => { const n = uitgebrachtTot(); WORLDS.splice(n); WORLDS_SHIPPED.splice(n);'
+      + ' rebuildWorldStarts(); rebuildWorldBadges(); })()', context, { filename: 'test/app.js:uitgebracht' });
+  }
   const api = ctx.__api;
   const app = Object.create(api);
+  app.__opties = { alleenUitgebracht: !!opties.alleenUitgebracht };
   app.run = code => vm.runInContext(code, context, { filename: 'test/app.js:run' });
   app.zetSpeler = key => app.run('cur = ' + JSON.stringify(key));
   app.opslag = () => Object.fromEntries(opslag.map);
@@ -290,7 +308,7 @@ function laadApp(opties) {
 // Dit is wat er gebeurt als een kind de app dichtdoet en morgen weer opent --
 // inclusief load(), migrate() en alles wat daaraan hangt.
 function heropen(app, opties) {
-  return laadApp(Object.assign({}, opties, { opslag: app.opslag() }));
+  return laadApp(Object.assign({}, app.__opties, opties, { opslag: app.opslag() }));
 }
 
 module.exports = { laadApp, heropen, INDEX, appScript };

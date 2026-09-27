@@ -93,6 +93,18 @@ geeft een foutmelding.
   app-standen (`fullscreen`, `standalone`, `minimal-ui`, `navigator.standalone`)
   en na `appinstalled`, en schrijft niets weg -- niet in `db` en dus niet in de
   back-up.
+- **de studiokeuring** (zaak K) — `wereldControle` uit het spel, met dezelfde
+  bestandslijst als de studio krijgt, mag geen punt opleveren dat de studio
+  "blokkeert" noemt. Zo zijn de wereldstudio en deze keuring het per constructie
+  eens over wat "klaar" is: er is één lijst regels. Plus de proef dat de brug
+  draagt: een uitgebrachte wereld zonder schat blokkeert, een dichte niet, en een
+  winkelspulletje als schat altijd.
+
+`kern`, `saves` en `kleedkamer` laden het spel met `alleenUitgebracht` (zie
+`test/app.js`): ze gaan over het spel zoals een kind het heeft. Een wereld die al
+in `WORLDS` staat maar nog `released: false` is — zo komt een nieuwe wereld uit de
+studio — hoort daar niet bij, en zonder die stand viel elke proef met "er komt
+later een wereld bij" erop om. `inhoud` en het wereldoverzicht laden wél alles.
 
 ### `test/kern.test.js` — de voortgangsregels
 
@@ -297,6 +309,12 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   `SCHERMKUNST` in `index.html` zegt of de app hem gebruikt, en de kandidaat in de
   studio wordt met dezelfde `scene.css()` getekend als de productieregel. Zo kan
   "wat je in de studio ziet" niet uiteenlopen met "wat er op een telefoon staat";
+- **het concept** (zaak K) — de studiopagina leest het wereldconcept onder de
+  sleutels van het spel; een nieuwe wereld uit het concept staat in het
+  overzicht, als nieuw en dicht; een oud concept draait geen nieuwere wereld
+  terug (`rebaseWorldDraft`) en meldt een botsing; en het blok dat *Opslaan*
+  schrijft geeft precies terug wat erin ging, ook een veld dat nog niemand kent
+  (`blokTerug` in `test/werelden.js`, dezelfde proef die de server doet);
 - **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
   `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
   voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
@@ -336,11 +354,19 @@ gezin:
 
 - **een concept staat apart van het spel** — een half afgemaakte wereld leeft in
   `localStorage` onder een eigen sleutel en wordt alleen met `?debug` ingelezen,
-  dus hij kan nooit bij een kind terechtkomen;
+  dus hij kan nooit bij een kind terechtkomen; en een oud concept legt alleen
+  jouw wijzigingen op het spel van nu (zaak O);
+- **een nieuwe wereld, van naam tot proberen** (zaak N) — `&nieuw=<naam>` maakt
+  hem één keer, achteraan en niet uitgebracht; herladen maakt er geen tweede van;
+  proberen opent déze wereld (`&wereld=`, `&onuitgebracht`) en in het spel speel
+  je hem, terwijl hij zonder die vlag dicht blijft; en *✕ weg* haalt een nieuwe
+  wereld in twee tikken weer uit het concept;
 - **een naam is genoeg** — het id, het pad van de tekening en de twee trofeeën
   rollen daaruit; je hoeft niets over de binnenkant te weten;
-- **de beloning hoort bij de wereld**, en een verwijzing naar een spulletje dat
-  niet bestaat wordt gezien;
+- **de beloning hoort bij de wereld** — alleen vrije wereldschatten staan in de
+  lijst (geen winkelspulletjes), en de controle zegt welke fout blokkeert: een
+  schat die niet bestaat of in de winkel staat altijd, geen schat alleen in een
+  uitgebrachte wereld;
 - **slepen verandert die ene wereld** en niets anders;
 - **de standen zijn de échte standen** van het spel (`p.stars`, `p.level`), geen
   nagemaakte studioplaatjes;

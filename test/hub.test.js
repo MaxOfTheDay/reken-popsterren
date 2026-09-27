@@ -16,6 +16,8 @@
  *      index.html zegt of hij aanstaat, en de kandidaat gebruikt dezelfde opmaak
  *   J  de servicewerker staat uit in het kijkvak -- anders is een vervangen
  *      tekening onzichtbaar, hoe vaak je ook ververst
+ *   K  het concept: de studiopagina leest het met de sleutels van het spel, een
+ *      oud concept draait niets terug, en opslaan verliest geen veld
  *
  * De reden voor A: een knop met een vlag die index.html niet kent doet niets, en
  * dat merk je pas als je staat te kijken naar een scherm dat er anders uitziet
@@ -385,7 +387,7 @@ zaak('J · de servicewerker staat uit in het kijkvak', () => {
   check(a >= 0 && b >= 0 && a < b,
     'J · het uitzetten staat vóór die tak — anders blijft hij in het kijkvak staan',
     'uitzetten op ' + a + ', de tak op ' + b);
-  check(/caches\.delete\('rekenpop-art-2'\)/.test(bron),
+  check(/indexOf\('rekenpop-art'\) === 0\) caches\.delete\(k\)/.test(bron),
     'J · en de tekeningenvoorraad gaat weg — uitschrijven alleen is niet genoeg',
     'geen caches.delete');
 
@@ -401,6 +403,72 @@ zaak('J · de servicewerker staat uit in het kijkvak', () => {
   const pagina = hub.pagina({ adres: 'x', lan: null });
   check(/getRegistrations\(\)/.test(pagina) && /unregister\(\)/.test(pagina),
     'J · de studiopagina schrijft er zelf ook een uit', 'doet hij niet');
+});
+
+/* ---- K: het concept -------------------------------------------------------
+   Wat de wereldstudio in localStorage bewaart, moet overal hetzelfde betekenen:
+   in het kijkvak (loadWorldDraft), in deze pagina (die het leest om de lijst te
+   tonen) en op de server (die het opslaat). Daar staat telkens de code van het
+   spel achter; hier ligt vast dat de lijm ertussen klopt. */
+zaak('K · het concept', () => {
+  const app = laadApp();
+  const p = hub.pagina({ adres: 'x', lan: null });
+  check(p.indexOf("const CONCEPT_KEY = '" + app.WORLD_DRAFT_KEY + "'") >= 0,
+    'K · de studiopagina leest het concept onder de sleutel van het spel', app.WORLD_DRAFT_KEY);
+  check(p.indexOf("const CONCEPT_BASIS_KEY = '" + app.WORLD_DRAFT_BASIS_KEY + "'") >= 0,
+    'K · en de basis ook', app.WORLD_DRAFT_BASIS_KEY);
+
+  const kopie = x => JSON.parse(JSON.stringify(x));
+  const spel = kopie(app.WORLDS);
+
+  // een nieuwe wereld in het concept: de lijst ziet hem, als nieuw en nog dicht
+  const nieuw = kopie(spel).concat([{ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8, released: false }]);
+  const o = werelden.overzicht({ concept: nieuw, basis: spel });
+  const r = o.werelden[o.werelden.length - 1];
+  check(o.werelden.length === spel.length + 1 && r.staat === 'nieuw' && r.speelbaar === false,
+    'K · een nieuwe wereld uit het concept staat in de lijst, nieuw en dicht', JSON.stringify(r).slice(0, 160));
+  check(o.concept && o.concept.mijn.join() === 'regenboog', 'K · en het concept weet dat hij van jou is',
+    JSON.stringify(o.concept));
+  check(r.tedoen > 0 && r.blokkeert === 0, 'K · zonder schat: nog te doen, en niets blokkeert',
+    JSON.stringify(r.punten));
+  check(o.werelden.slice(0, spel.length).every(w => w.staat === 'gelijk'),
+    'K · de andere werelden staan zoals in het project', o.werelden.map(w => w.staat).join(','));
+
+  // een oud concept: alleen wat je veranderde gaat over het spel heen
+  const oud = kopie(spel); oud[0].theme.road = '#000000';
+  const mijn = kopie(oud); mijn[1].name = 'Mijn Snoep';
+  const r2 = app.rebaseWorldDraft(mijn, oud, spel);
+  check(r2.lijst[0].theme.road === spel[0].theme.road, 'K · een oud concept draait een nieuwere wereld niet terug',
+    r2.lijst[0].theme.road);
+  check(r2.lijst[1].name === 'Mijn Snoep' && r2.mijn.join() === 'snoep' && r2.verouderd,
+    'K · en houdt wat jij veranderde', JSON.stringify({ mijn: r2.mijn, verouderd: r2.verouderd }));
+  const botst = kopie(mijn); botst[0].name = 'Ook anders';
+  check(app.rebaseWorldDraft(botst, oud, spel).botsing.join() === 'muziek',
+    'K · beide kanten veranderd: een botsing, en die wordt gemeld', 'niet gemeld');
+  const zonder = kopie(spel).slice(0, 3);
+  check(app.rebaseWorldDraft(zonder, null, spel).lijst.length === spel.length,
+    'K · een concept zonder basis haalt nooit een wereld weg', 'wereld kwijt');
+
+  // opslaan: het blok geeft precies terug wat erin ging -- ook een veld dat nog niemand kent
+  const proef = laadApp();
+  proef.run("WORLDS.push({ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8, released: false,"
+    + " venue: { dim: 0.55 }, toekomst: { iets: [1, 2] }, 'met-streep': 'ja',"
+    + " nodes: Array.from({ length: 8 }, (_, i) => ({ x: 40.123456, y: 20 + i * 7.77777 })) });"
+    + ' rebuildWorldStarts();');
+  const b = werelden.blokTerug(proef);
+  check(b.ok, 'K · opslaan verliest geen veld, ook geen onbekend', b.tekst);
+  check(/toekomst: \{"iets":\[1,2\]\}/.test(b.bron) && /"met-streep": "ja"/.test(b.bron),
+    'K · een onbekend veld komt er als JSON uit', b.bron.slice(-400));
+  check(werelden.blokTerug(laadApp()).ok, 'K · en de werelden van nu komen er letterlijk uit', 'niet gelijk');
+
+  /* Opslaan zonder iets te veranderen verandert ook niets aan het bestand. Anders
+     brengt de eerste keer opslaan een diff mee in werelden waar niemand aan zat
+     (".56" dat "0.56" werd), of verdwijnt er stil een uitleg die iemand tussen de
+     markeringen schreef -- zet die erboven. */
+  const bronTekst = fs.readFileSync(path.resolve(__dirname, '..', 'src', '20-app.js'), 'utf8');
+  const blokNu = bronTekst.slice(bronTekst.indexOf('const WORLDS = ['), bronTekst.indexOf('/* WERELDEN-EINDE */')).trim();
+  check(blokNu === app.worldsSource(), 'K · opslaan zonder wijziging laat het blok letterlijk staan',
+    'het blok tussen WERELDEN-BEGIN/EINDE wijkt af van worldsSource() — commentaar erin, of een andere schrijfwijze');
 });
 
 // ---- F: de snelkoppeling ------------------------------------------------
