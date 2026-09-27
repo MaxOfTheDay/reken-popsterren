@@ -162,7 +162,9 @@ star everywhere, so the "oh!" face must be invisible until a miss asks for it.
 
 - **One star rule for both tracks**, scaled to the length of the show:
   - 3 ★ stays "flawless", because that is what a perfect world means;
-  - 2 ★ means up to about a quarter slipped;
+  - 2 ★ means up to 45 % slipped: the band counting mode already used, so no
+    child gets fewer stars for the same show (except counting mode's 3 ★ with a
+    slip, which contradicted its own "Foutloos" cheer);
   - 1 ★ is everything else.
 - Show the stars only as stars. Show one 💎 total that includes the star bonus.
 - Let the title and the cheer follow the result.
@@ -544,11 +546,13 @@ turns into a moment.
 **What's in**
 
 - One star rule for both tracks, scaled to the length of the show, with 3 ★ still
-  meaning flawless.
+  meaning flawless and 2 ★ up to 45 % slipped.
 - Stars shown as stars, one 💎 total, and a title that follows the result.
-- An honest toegift: something the child can see happen, or no label at all.
+- An honest toegift: "👏 Toegift!", and the star takes a bow (a move that only
+  the toegift uses).
 - In-show trophies counted in the pill.
-- `RANK_TIERS` rescaled to 144, with a silent `rankSeen` migration.
+- `RANK_TIERS` rescaled so the top rank is "every show perfect" (144 today, and
+  it follows the worlds), with a silent `rankSeen` migration.
 - The level-49 fix.
 
 **What's out** A new currency, the wish item, rewards on trophies, and any new

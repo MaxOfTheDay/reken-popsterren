@@ -26,7 +26,7 @@ shows, geen herkansingen, geen moeilijkheid, geen trofeeën en geen wereldbeloni
 | … in één keer goed, binnen de spotlight (12 s) | +1 💎 | ja | idem |
 | … derde op een rij | +2 💎 | ja, elke 3 | idem |
 | gouden vraag (kans 50% per show, hoogstens één) | × 3 op die vraag | ja | idem |
-| extra show (publieksmeter vol) | +5 💎 | 1–2 per show | idem |
+| toegift (publieksmeter vol) | +5 💎 | 1–2 per show | idem |
 | rest van de publieksmeter | +1 💎 per volle 25% | 1× per show | `endLevel` |
 | sterren van de show | ⭐ × 5 💎 (5 / 10 / 15) | ja, ook bij overdoen | `endLevel` |
 | rang omhoog | 10 / 15 / 20 / 30 / 40 / 50 / 60 💎 | nee, één keer per rang | `checkRankUp` |
@@ -51,12 +51,12 @@ Doorgerekend met bovenstaande formules, gemiddeld over wel/geen gouden vraag:
 | foutloos en snel | 55 | 3 |
 | foutloos, rustig tempo | 47 | 3 |
 | één hapering | 48 | 2 |
-| twee haperingen | 41 | 1 |
-| drie haperingen | 40 | 1 |
+| twee haperingen | 46 | 2 |
+| drie haperingen | 45 | 2 |
 | telmodus (5 vragen), goed | 45 | 3 |
 
 **≈ 45 💎 per show**, en dat is opvallend vlak: tussen "het ging moeizaam" en
-"foutloos en snel" zit maar 15 💎. Dat is precies goed voor een gezinsspel — moeite
+"foutloos en snel" zit maar 10 💎 (tot drie haperingen zijn het twee sterren, zie `showStars`). Dat is precies goed voor een gezinsspel — moeite
 loont, maar een kind dat worstelt loopt niet leeg.
 
 Een memory-potje levert 9–13 💎 in ~1 minuut; een show ~45 💎 in 2–4 minuten. Grinden
@@ -91,6 +91,9 @@ zaak B legt dat vast, zodat de tab niet stilletjes terug kan komen.
 - Een verse ster (30 💎) kan in élke categorie meteen iets kiezen.
 - Alle werelden samen zijn 48 shows → ≈ 2250 💎 spelen + 225 💎 rangbonussen + 30 💎 start
   ≈ **2500 💎**, oftewel iets meer dan de helft van de catalogus.
+  Die 225 zijn sinds de review van september 2026 ook echt te halen: de ladder
+  liep door tot 300 sterren terwijl er 144 bestaan, dus meer dan 75 💎 kwam er
+  nooit uit. De bovenste rang is nu "alles perfect" (zie `RANK_TIERS`).
 
 Dat is de cadans die we willen: spelen → sparen → kiezen → meteen zien. Eén show is
 één keuze; alles hebben is een lange reis die ook na de laatste wereld doorloopt.

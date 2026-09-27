@@ -65,7 +65,13 @@ const MOVES = [
   { cls: 'move-wave',   label: '👋 Golf!' },
   { cls: 'move-bounce', label: '⭐ Stuiter!' },
 ];
-const MOVE_CLASSES = MOVES.map(m => m.cls);
+/* De buiging staat met opzet níét in MOVES: die zit in de gewone rotatie van
+   dance() en finaleDance(), en dan zou ze na elk goed antwoord kunnen komen.
+   Een buiging betekent één ding -- het publiek wil een toegift, en die krijgt
+   het (zie submitAnswer). Ze moet wel in MOVE_CLASSES, anders ruimen zetPas en
+   stilStaan haar niet op. */
+const BUIGING = { cls: 'move-buig', label: '🙇 Buiging!' };
+const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls);
 /* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
    dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
    maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
@@ -113,6 +119,11 @@ function dance(elId) {
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
   if (!zetPas(el, move)) return;
+  setTimeout(() => stilStaan(el), 950);
+}
+function buiging(elId) {
+  const el = $(elId);
+  if (!el || !zetPas(el, BUIGING)) return;
   setTimeout(() => stilStaan(el), 950);
 }
 // Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
