@@ -59,47 +59,34 @@
   header h1 { margin: 0; }
   header h1 img { width: min(86%, 440px); height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.35)); }
   .belofte { font-size: clamp(20px, 5vw, 26px); font-weight: 600; margin: 10px auto 22px; max-width: 30ch; }
-  .knoppen { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
   .knop { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 999px;
     font: inherit; font-weight: 700; font-size: 19px; text-decoration: none; cursor: pointer; border: 0; }
   .knop.goud { color: var(--inkt); background: linear-gradient(var(--goud-top), var(--goud-onder)); box-shadow: 0 5px 0 var(--goud-schaduw); }
   .knop.goud:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--goud-schaduw); }
-  .knop.stil { color: var(--tekst); background: var(--vlak); border: 1.5px solid var(--vlak-rand); }
 
-  section { margin-top: 44px; }
-  h2 { font-size: clamp(22px, 5.4vw, 28px); margin: 0 0 14px; color: var(--goud); }
-  p { margin: 0 0 10px; }
-  .klein { color: var(--zacht); font-size: 15px; }
-
-  .film { border-radius: 18px; overflow: hidden; background: #12031f; box-shadow: 0 16px 40px rgba(0,0,0,.45); border: 1px solid var(--vlak-rand); }
+  .film { margin-top: 30px; border-radius: 18px; overflow: hidden; background: #12031f; box-shadow: 0 16px 40px rgba(0,0,0,.45); }
   .film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
 
-  .kaarten { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  @media (min-width: 640px) { .kaarten { grid-template-columns: repeat(4, 1fr); } }
-  .kaart { background: var(--vlak); border: 1px solid var(--vlak-rand); border-radius: 16px; padding: 10px 10px 12px; }
-  .kaart img { display: block; width: 100%; height: auto; aspect-ratio: 390 / 844; object-fit: cover; object-position: top;
-    border-radius: 12px; max-height: 260px; }
-  .kaart h3 { font-size: 17px; margin: 10px 2px 2px; }
-  .kaart p { font-size: 14px; color: var(--zacht); margin: 0 2px; line-height: 1.35; }
+  section { margin-top: 48px; }
+  h2 { font-size: clamp(20px, 5vw, 24px); margin: 0 0 14px; color: var(--goud); text-align: center; }
+  p { margin: 0 0 10px; }
+  .klein { color: var(--zacht); font-size: 14px; }
 
-  ul.lijst { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-  ul.lijst li { background: var(--vlak); border: 1px solid var(--vlak-rand); border-radius: 14px; padding: 12px 14px 12px 50px; position: relative; }
-  ul.lijst li b { display: block; }
-  ul.lijst li span.ico { position: absolute; left: 14px; top: 11px; font-size: 22px; line-height: 1; }
-  ul.lijst li .klein { display: block; margin-top: 2px; }
+  /* drie schermen, zonder kaders: het beeld zegt het, het onderschrift is een naam */
+  .schermen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
+  .schermen img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+  .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
 
-  ol.stappen { padding: 0; margin: 0; list-style: none; counter-reset: stap; display: grid; gap: 10px; }
-  ol.stappen li { counter-increment: stap; background: var(--vlak); border: 1px solid var(--vlak-rand); border-radius: 14px; padding: 12px 14px 12px 52px; position: relative; }
-  ol.stappen li::before { content: counter(stap); position: absolute; left: 12px; top: 10px; width: 28px; height: 28px; border-radius: 50%;
-    display: grid; place-items: center; font-weight: 700; color: var(--inkt); background: linear-gradient(var(--goud-top), var(--goud-onder)); }
+  .feiten { list-style: none; padding: 0; margin: 0 auto; max-width: 34ch; text-align: center; font-size: 18px; }
+  .feiten li + li { margin-top: 6px; }
 
-  .deel { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
-    background: var(--vlak); border: 1px solid var(--vlak-rand); border-radius: 18px; padding: 16px; }
-  .deel img { width: 132px; height: 132px; border-radius: 10px; display: block; }
-  @media (max-width: 420px) { .deel { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  .deel { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
+  .deel img { width: 112px; height: 112px; border-radius: 10px; display: block; }
+  /* op een telefoon scan je geen QR-code van je eigen scherm */
+  @media (max-width: 640px) { .deel img { display: none; } }
   #deel-uit { min-height: 1.5em; margin-top: 8px; }
 
-  footer { text-align: center; margin-top: 48px; color: var(--zacht); font-size: 14px; }
+  footer { text-align: center; margin-top: 56px; color: var(--zacht); font-size: 13px; opacity: .8; }
 </style>
 </head>
 <body>
@@ -111,106 +98,46 @@
   <header>
     <h1><img src="../assets/branding/wordmark.webp" alt="Rekensterren" width="1080" height="360"></h1>
     <p class="belofte">Rekenen en tellen als een show, voor kinderen van 5 tot 8.</p>
-    <div class="knoppen">
-      <a class="knop goud" href="../index.html">▶ Speel meteen</a>
-      <a class="knop stil" href="#filmpje">Bekijk het filmpje · 26 s</a>
-    </div>
+    <a class="knop goud" href="../index.html">▶ Speel meteen</a>
   </header>
 
-  <section id="filmpje" aria-labelledby="kop-film">
-    <h2 id="kop-film">In 26 seconden</h2>
-    <div class="film">
-      <video controls playsinline preload="none" width="1920" height="1080"
-             poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
-             aria-describedby="film-uitleg"></video>
-    </div>
-    <p class="klein" id="film-uitleg">Zonder geluid. Het filmpje toont het logo, vier schermen uit het spel en waar je het vindt.</p>
-  </section>
+  <div class="film">
+    <video controls playsinline preload="none" width="1920" height="1080"
+           poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
+           aria-label="Filmpje van 26 seconden, zonder geluid: het logo en vier schermen uit het spel"></video>
+  </div>
 
-  <section aria-labelledby="kop-doet">
-    <h2 id="kop-doet">Wat je kind doet</h2>
-    <div class="kaarten">
-      <div class="kaart">
-        <img src="beelden/01-profielkeuze.webp" alt="Het beginscherm met drie sterren: Marie, Anna en Clara" loading="lazy" width="360" height="779">
-        <h3>Een eigen ster</h3>
-        <p>Een naam, een kleur en een look. Elk kind in het gezin krijgt een eigen ster.</p>
-      </div>
-      <div class="kaart">
-        <img src="beelden/02-kaart.webp" alt="De wereldkaart met haltes" loading="lazy" width="360" height="779">
-        <h3>Op reis</h3>
-        <p>Van halte naar halte, door steeds nieuwe werelden.</p>
-      </div>
-      <div class="kaart">
-        <img src="beelden/04-show-rekenen.webp" alt="Een show: een som met vier antwoorden" loading="lazy" width="360" height="779">
-        <h3>Shows spelen</h3>
-        <p>Op het podium, met publiek. Elke show is een reeks sommen of telopdrachten.</p>
-      </div>
-      <div class="kaart">
-        <img src="beelden/05-einde.webp" alt="Het einde van een show met drie sterren" loading="lazy" width="360" height="779">
-        <h3>Sterren verdienen</h3>
-        <p>Sterren per show, diamanten voor de kleedkamer, en trofeeën om te verzamelen.</p>
-      </div>
-    </div>
-  </section>
-
-  <section aria-labelledby="kop-leert">
-    <h2 id="kop-leert">Wat het leert</h2>
-    <ul class="lijst">
-      <li><span class="ico" aria-hidden="true">🔢</span><b>Tellen, ook als je nog niet leest</b>
-        <span class="klein">In de telmodus wordt alles voorgelezen.</span></li>
-      <li><span class="ico" aria-hidden="true">➕</span><b>Plussen, minnen, maal en delen</b>
-        <span class="klein">Jij kiest wat er geoefend wordt en tot welk getal.</span></li>
-      <li><span class="ico" aria-hidden="true">🔁</span><b>Wat moeilijk is, komt vaker terug</b>
-        <span class="klein">En wat al lukt, komt af en toe terug, zodat het niet wegzakt.</span></li>
-      <li><span class="ico" aria-hidden="true">💡</span><b>Fout mag</b>
-        <span class="klein">Na een fout volgt een zachte hint, en daarna staat de goede som er altijd.</span></li>
+  <section>
+    <ul class="schermen">
+      <li><img src="beelden/01-profielkeuze.webp" alt="Het beginscherm met drie sterren: Marie, Anna en Clara" loading="lazy" width="360" height="779"><span>Een eigen ster</span></li>
+      <li><img src="beelden/04-show-rekenen.webp" alt="Een show: een som met vier antwoorden" loading="lazy" width="360" height="779"><span>Shows spelen</span></li>
+      <li><img src="beelden/05-einde.webp" alt="Het einde van een show met drie sterren" loading="lazy" width="360" height="779"><span>Sterren verdienen</span></li>
     </ul>
   </section>
 
-  <section aria-labelledby="kop-veilig">
-    <h2 id="kop-veilig">Rustig en veilig</h2>
-    <ul class="lijst">
-      <li><span class="ico" aria-hidden="true">🚫</span><b>Geen reclame</b></li>
-      <li><span class="ico" aria-hidden="true">👤</span><b>Geen account, geen e-mailadres</b></li>
-      <li><span class="ico" aria-hidden="true">💎</span><b>Geen aankopen</b>
-        <span class="klein">Diamanten verdien je alleen door te spelen.</span></li>
-      <li><span class="ico" aria-hidden="true">📱</span><b>Alles blijft op dit toestel</b>
-        <span class="klein">De voortgang staat op het toestel zelf, niet op een server. Wil je overstappen naar een ander toestel? Maak dan een back-up in het ouderdeel.</span></li>
-      <li><span class="ico" aria-hidden="true">📴</span><b>Werkt zonder internet</b>
-        <span class="klein">Na het eerste bezoek.</span></li>
+  <section aria-labelledby="kop-weten">
+    <h2 id="kop-weten">Goed om te weten</h2>
+    <ul class="feiten">
+      <li>Geen reclame, geen account, geen aankopen.</li>
+      <li>De voortgang blijft op dit toestel.</li>
+      <li>Werkt ook zonder internet.</li>
+      <li>Wat er geoefend wordt, kies je zelf achter het tandwiel.</li>
     </ul>
-    <p class="klein" style="margin-top:12px">De site telt alleen anoniem hoeveel bezoekers er zijn (Cloudflare Web Analytics, zonder cookies). Wat je kind speelt, verlaat het toestel niet.</p>
-  </section>
-
-  <section aria-labelledby="kop-begin">
-    <h2 id="kop-begin">Zo begin je</h2>
-    <ol class="stappen">
-      <li>Open <a href="../index.html">rekensterren.be</a>.</li>
-      <li>Tik op <b>Nieuwe ster</b> en maak de ster van je kind.</li>
-      <li>Liever als app? Zet het op je beginscherm.
-        <span class="klein" style="display:block;margin-top:4px">iPhone of iPad: tik in Safari op Deel en kies ‘Zet op beginscherm’. Android: tik in Chrome op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.</span></li>
-    </ol>
-    <p class="klein" style="margin-top:12px">Achter het tandwiel op het beginscherm zit het ouderdeel: hoe het gaat per ster, wat er geoefend wordt, en een back-up om naar een ander toestel over te zetten.</p>
   </section>
 
   <section aria-labelledby="kop-deel">
     <h2 id="kop-deel">Vertel het verder</h2>
     <div class="deel">
       <div>
-        <p>Ken je andere ouders, of een juf of meester? Stuur ze deze pagina.</p>
-        <button class="knop goud" type="button" id="deel">📤 Delen</button>
+        <button class="knop goud" type="button" id="deel">📤 Deel deze pagina</button>
         <p class="klein" id="deel-uit" role="status"></p>
       </div>
-      <div>
-        <img src="qr.svg" alt="QR-code naar deze pagina" width="132" height="132">
-        <p class="klein" style="text-align:center;margin:6px 0 0"><a href="qr.svg" download="rekensterren-qr.svg">QR-code bewaren</a></p>
-      </div>
+      <img src="qr.svg" alt="QR-code naar deze pagina" width="112" height="112">
     </div>
   </section>
 
   <footer>
-    <p>Rekensterren · <a href="../index.html">rekensterren.be</a></p>
-    <p>Het lettertype is Fredoka (SIL Open Font License).</p>
+    <p>De site telt alleen anoniem het aantal bezoekers (Cloudflare Web Analytics, zonder cookies).<br>Wat je kind speelt, verlaat het toestel niet. · Letter: Fredoka (SIL OFL)</p>
   </footer>
 </main>
 <script>
