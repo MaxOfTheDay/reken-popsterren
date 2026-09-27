@@ -563,28 +563,35 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     knop.style.cssText = 'position:fixed;left:40px;top:700px;width:80px;height:50px';
     document.body.appendChild(knop);
     somVult(G.qs[G.idx], knop);
-    const xs = []; let kopie = null;
+    const xs = []; let plek = null;
     await new Promise(klaar => { (function stap() {
       xs.push(x());
+      // waar de kopie landt: zijn eigen vak, zonder de vlucht-transform erop
       const k = document.querySelector('.som-vlucht');
-      if (k) { const b = k.getBoundingClientRect(); kopie = [b.left, b.top, b.width, b.height]; }
+      if (k) plek = ['left', 'top', 'width', 'height'].map(z => parseFloat(k.style[z]));
       if (xs.length < 36) requestAnimationFrame(stap); else klaar();
     })(); });
     knop.remove();
-    const v = kaart.querySelector('.q-blank').getBoundingClientRect();
+    /* Het vakje meten als het stilstaat. Bij het landen plopt het één keer
+       (.klikt, 300ms), en 36 beelden na de start zat het daar nog nét in: op
+       schaal 1,02 of 1,04, al naar gelang waar de beeldjes vielen. Dat gaf een
+       "landing" van 1,5 of 2,9 pixel die niets met de vlucht te maken had. */
+    const blank = kaart.querySelector('.q-blank');
+    await Promise.all(blank.getAnimations().map(an => an.finished.catch(() => {})));
+    const v = blank.getBoundingClientRect();
     const vak = [v.left, v.top, v.width, v.height];
     return {
       grootsteStap: Math.max(...xs.slice(1).map((w, i) => Math.abs(w - xs[i]))),
       verschoven: Math.abs(xs[xs.length - 1] - xs[0]),
-      landing: Math.max(...vak.map((w, i) => Math.abs(w - kopie[i]))),
+      landing: plek ? Math.max(...vak.map((w, i) => Math.abs(w - plek[i]))) : null,
     };
   });
   check(glad.verschoven > 5 && glad.grootsteStap < 2,
     'de som glijdt naar zijn nieuwe breedte en springt niet', JSON.stringify(glad));
-  // Het laatste beeld mét kopie is er één vóór de landing, dus hij mag daar nog
-  // de laatste stap van zijn (afremmende) vlucht van af zitten -- niet meer. De
-  // oude fout was 18%: een vakje van 64 dat in één beeld 75 werd.
-  check(glad.landing < 2, 'het vliegende getal landt precies op het vakje', JSON.stringify(glad));
+  // De kopie landt op zijn eigen vak (transform: none); dat vak hoort precies het
+  // vakje te zijn zoals het uiteindelijk staat. De oude fout was 18%: een vakje
+  // van 64 dat in één beeld 75 werd.
+  check(glad.landing != null && glad.landing < 1, 'het vliegende getal landt precies op het vakje', JSON.stringify(glad));
 
   // zonder beweging: niets vliegt, het getal staat er meteen
   {
@@ -606,6 +613,40 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
       return { tekst: vak.textContent, ans: String(q.ans), vlucht: document.querySelectorAll('.som-vlucht').length };
     });
     check(r.tekst === r.ans && r.vlucht === 0, 'zonder beweging staat het antwoord meteen in de som', JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* ---- De spotlight-balk wacht eerst ----
+     De eerste SPOT_RUST staat de balk vol, daarna dooft hij over de rest. Alleen
+     het beeld wacht: G.spot loopt vanaf het begin, dus "vlot" meet hetzelfde. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(ctx);
+    const p2 = await ctx.newPage();
+    p2.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await p2.goto(APP_URL + '&demo&star=p1');
+    await p2.waitForFunction(() => typeof startLevel === 'function');
+    const balk = await p2.evaluate(async () => {
+      P().settings.mode = 'kies';
+      startLevel(P().level);
+      await new Promise(r => setTimeout(r, 300));
+      const staat = () => document.getElementById('spotlight-bar').style.transform;
+      const nu = { golden: document.getElementById('question-card').classList.contains('golden'), begin: staat() };
+      await new Promise(r => setTimeout(r, 2500));
+      nu.naTweeEnHalf = staat(); nu.spotNaTweeEnHalf = Math.round(G.spot);
+      zetSpot(50); nu.half = staat();
+      zetSpot(0); nu.leeg = staat();
+      nu.rail = getComputedStyle(document.querySelector('#question-card .spot-rail')).display;
+      return nu;
+    });
+    const x = t => parseFloat((/translateX\((-?[\d.]+)%\)/.exec(t || '') || [0, NaN])[1]);
+    if (!balk.golden) {
+      check(x(balk.begin) === 0 && x(balk.naTweeEnHalf) === 0 && balk.spotNaTweeEnHalf < 90,
+        'de spotlight-balk staat de eerste seconden vol, terwijl de meting al loopt', JSON.stringify(balk));
+      check(x(balk.half) === -25 && x(balk.leeg) === -100,
+        'daarna dooft hij over de rest (halverwege de meting nog driekwart vol)', JSON.stringify(balk));
+    }
+    check(balk.rail !== 'none', 'in de rekenmodus is de spotlight-balk er gewoon', balk.rail);
     await ctx.close();
   }
 

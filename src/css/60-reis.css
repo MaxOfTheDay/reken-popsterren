@@ -336,15 +336,20 @@
     font-size: var(--tx-klein); font-weight: 700; letter-spacing: .005em; line-height: 1.1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: var(--op-kunst-ink); }
-  /* De sterrenteller. Het teken doet het werk, het getal is de bijzin: een kind van
-     vijf ziet "ster, en nog niet vol", een kind van acht leest 17/24. Getekend en
-     niet ⭐, om dezelfde reden als op de wereldkaart -- een emoji wordt per toestel
-     anders getekend, en naast elkaar valt dat op. */
-  .reis-sterren { flex: none; display: inline-flex; align-items: center; gap: 3px;
-    font-size: var(--tx-mini); font-weight: 700; color: var(--gold-light); white-space: nowrap;
-    text-shadow: var(--op-kunst-ink); }
+  /* De sterrenteller: een ster en een streepje dat volloopt. Hier stond "17/24",
+     en een kind van vijf leest geen breuk -- het teken en de lengte zeggen het
+     allebei zonder te lezen: "ster, en nog niet vol". Hetzelfde soort baan als op
+     de sterrenkeuze (.st-baan), maar in goud: dit zijn verdiende sterren. De ster
+     is getekend en niet ⭐, om dezelfde reden als op de wereldkaart -- een emoji
+     wordt per toestel anders getekend, en naast elkaar valt dat op. */
+  .reis-sterren { flex: none; display: inline-flex; align-items: center; gap: 4px; }
   .reis-sterren svg { width: 11px; height: 11px; display: block; flex: none;
     fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.1; }
+  .rs-baan {
+    width: 30px; height: 5px; border-radius: var(--r-pill); overflow: hidden;
+    background: rgba(255,255,255,.2); box-shadow: inset 0 1px 2px rgba(8,2,20,.45);
+  }
+  .rs-baan i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-light); }
 
   /* Het zegel: één plek, hooguit één teken, en bewust stil. Hier stond een volle
      gouden schijf, en die las als een knop -- alsof je erop moest tikken om iets
@@ -461,7 +466,7 @@
   .reis-halte.vol .reis-label {
     --veeg-rgb: 54,23,2; background: var(--op-kunst-veeg);
   }
-  .reis-halte.vol .reis-sterren { color: var(--gold-accent); }
+  .reis-halte.vol .rs-baan i { background: var(--gold-accent); }
   /* DE LIJST. Dit is het structurele verschil, en het enige dat niet met licht of
      kleur werkt: een tweede rand die een stukje ván de kaart af staat, met nacht
      ertussen. Een kaart in een lijst hángt ergens; de andere kaarten liggen er
