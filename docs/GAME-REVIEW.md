@@ -14,7 +14,12 @@ referenced by function and section name, not by line.*
 >   counting mode's existing band, so no child gets fewer stars for the same show;
 > * the Werelden step icon was **dropped** (see slice 3);
 > * found while building: three-number sums could **never** appear before
->   (see #3). They now come in world 5.
+>   (see #3). They now come in world 5;
+> * **#7 was wrong about the win.** The forced reflows in `renderQuestion` and
+>   `navMee` are gone, but tap-to-paint did not measurably change: the first
+>   tap on a stop took ~330–360 ms at 6× CPU both before and after. The layout
+>   work moved from inside the tap to the next frame; what costs time is laying
+>   out the show screen itself. Measure on a real slow device before doing more.
 >
 > Not built: the rest of A (the spotlight as light, the small fixes other than
 > level 49), and everything in B and C.
