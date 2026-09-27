@@ -262,6 +262,28 @@ function check(ok, label, detail) {
   check(range.length === 0, 'elke antwoordknop blijft binnen het bereik van zijn fase',
     range.slice(0, 3).join(' | ') + (range.length > 3 ? ` (+${range.length - 3} meer)` : ''));
 
+  /* ---- Geen klok in de telmodus ----
+     De vraag wordt hier voorgelezen, en de spotlight-balk liep leeg terwijl het
+     spel nog praatte. Nu is er geen balk en geen teller; elk antwoord dat in één
+     keer goed is krijgt de +1 💎 die vroeger aan snel-genoeg hing. */
+  const klok = await page.evaluate(async () => {
+    startLevel(P().level);
+    await new Promise(r => setTimeout(r, 1500));
+    const rail = document.querySelector('#question-card .spot-rail');
+    const voor = P().diamonds;
+    const q = G.qs[G.idx];
+    const uit = { timer: G.timer, spot: G.spot, railZicht: getComputedStyle(rail).display };
+    const knop = [...document.querySelectorAll('#answer-area button')].find(b => String(b.dataset.v) === String(q.ans));
+    knop.click();
+    uit.gekregen = P().diamonds - voor;
+    uit.gouden = !!q.gold;
+    return uit;
+  });
+  check(!klok.timer && klok.spot === 100 && klok.railZicht === 'none',
+    'telmodus: geen spotlight-balk en geen klok', JSON.stringify(klok));
+  check(klok.gouden || klok.gekregen >= 3,
+    'telmodus: in één keer goed levert de volle 3 💎 op, ook na een lange voorleesvraag', JSON.stringify(klok));
+
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 
   await browser.close();

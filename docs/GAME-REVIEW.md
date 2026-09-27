@@ -25,8 +25,25 @@ referenced by function and section name, not by line.*
 >   removed at the owner's request. New kinds of question arrive without an
 >   introduction, as before.
 >
-> Not built: the rest of A (the spotlight as light, the small fixes other than
-> level 49), and everything in B and C.
+> **Second round (after the three slices):**
+> * **the spotlight bar stays in math mode**, not the "light over the star" of
+>   #5: the child looks at the sum, not the stage, so a dimming light would have
+>   turned the +1 💎 into another hidden meter. It now stays full for the first 4
+>   seconds and then drains, and is thinner and softer. The "fast" measurement
+>   behind it is unchanged;
+> * **no bar in counting mode**: the timer ran while the question was still being
+>   spoken (about 5.6 s for counting along with eight things). Every first-try
+>   answer there now gets the +1 💎;
+> * the first-run toast no longer promises a show that doesn't start;
+> * the Werelden card and the star-status ladder show a bar instead of a
+>   fraction. The trophy case keeps its numbers: a collection is where counting
+>   up is the point;
+> * **withdrawn:** the "backup text shown to a child". It only shows when there
+>   are no stars yet, which is when a parent is setting up;
+> * **skipped** at the owner's request: phones held sideways.
+>
+> Not built: the wish item (#6), the crowd and venue art (#5), and the rest of B
+> and C.
 
 **How this was made.** I played the game in Chromium at 412×920 with touch:
 
@@ -503,7 +520,8 @@ missing.
 1. **Mistakes that teach** (#1), together with the `renderQuestion` reflow from
    #7, since that function is being touched anyway.
 2. **The end of a show** (#2), the rescaled star status (#4) and the level-49 fix.
-3. **The spotlight as light instead of a bar** (the first half of #5).
+3. **A gentler spotlight bar** (the first half of #5; built as a bar, not a
+   light, see the status note).
 4. The small fixes above.
 
 ## B — Worth planning
