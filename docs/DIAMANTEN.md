@@ -26,7 +26,7 @@ shows, geen herkansingen, geen moeilijkheid, geen trofeeën en geen wereldbeloni
 | … in één keer goed, binnen de spotlight (12 s) | +1 💎 | ja | idem |
 | … derde op een rij | +2 💎 | ja, elke 3 | idem |
 | gouden vraag (kans 50% per show, hoogstens één) | × 3 op die vraag | ja | idem |
-| toegift (publieksmeter vol) | +5 💎 | 1–2 per show | idem |
+| applaus (publieksmeter vol) | +5 💎 | 1–2 per show | idem |
 | rest van de publieksmeter | +1 💎 per volle 25% | 1× per show | `endLevel` |
 | sterren van de show | ⭐ × 5 💎 (5 / 10 / 15) | ja, ook bij overdoen | `endLevel` |
 | rang omhoog | 10 / 15 / 20 / 30 / 40 / 50 / 60 💎 | nee, één keer per rang | `checkRankUp` |

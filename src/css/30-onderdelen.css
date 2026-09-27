@@ -439,9 +439,9 @@
   .avatar-holder.move-kick   > .pas-laag { animation: mvKick .9s ease-in-out; }
   .avatar-holder.move-wave   > .pas-laag { animation: mvWave .9s ease-in-out; }
   .avatar-holder.move-bounce > .pas-laag { animation: mvBounce .9s ease-in-out; }
-  /* De buiging bij een toegift (zie buiging in de JS): ze helt naar het publiek
+  /* De buiging bij het applaus (zie buiging in de JS): ze helt naar het publiek
      toe -- naar jou -- en komt weer overeind. Geen gewoon pasje; hij komt alleen
-     als de zaal om meer vraagt. */
+     als de zaal extra hard klapt. */
   .avatar-holder.move-buig   > .pas-laag { animation: mvBuig .9s ease-in-out; }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }

@@ -192,7 +192,7 @@ star everywhere, so the "oh!" face must be invisible until a miss asks for it.
 - Show the stars only as stars. Show one 💎 total that includes the star bonus.
 - Let the title and the cheer follow the result.
 - **Fix the "EXTRA SHOW!" label.** Either:
-  - rename it to something the child can *see* happen: "Toegift!", with the star
+  - rename it to something the child can *see* happen: "Applaus!", with the star
     taking a bow; or
   - drop the label and fold the +5 into the streak moment.
 - Count trophies that became ready during the show in the pill.
@@ -309,7 +309,7 @@ real place; on the stage it is a blur.
 - **First, a small step:** move the spotlight out of the card and onto the stage.
   The actual cone of light over the star dims slowly, instead of a bar.
 - **Later, when there is art:** a silhouette crowd per world that grows with
-  `G.fan` and cheers on streaks. That also gives the "Toegift" from #2 a visible
+  `G.fan` and cheers on streaks. That also gives the "Applaus!" from #2 a visible
   reason.
 - The question card stays plain; the art contract forbids art behind it.
 
@@ -460,7 +460,7 @@ to come back after about ten shows.
 
 The praise card's text ("Super! 🌟", seven variants) repeats what the other seven
 already say, and a young child can't read it. Keep the card for streaks, gold
-questions and toegift only; those moments will stand out more.
+questions and applause only; those moments will stand out more.
 
 Replace the grey slip-note (#1). Otherwise the motion review's line still holds:
 no more celebrations, idle loops or per-world motion.
@@ -572,8 +572,8 @@ turns into a moment.
 - One star rule for both tracks, scaled to the length of the show, with 3 ★ still
   meaning flawless and 2 ★ up to 45 % slipped.
 - Stars shown as stars, one 💎 total, and a title that follows the result.
-- An honest toegift: "👏 Toegift!", and the star takes a bow (a move that only
-  the toegift uses).
+- An honest label: "👏 Applaus!" (first built as "Toegift!", which didn't sound
+  right), and the star takes a bow (a move only this moment uses).
 - In-show trophies counted in the pill.
 - `RANK_TIERS` rescaled so the top rank is "every show perfect" (144 today, and
   it follows the worlds), with a silent `rankSeen` migration.
