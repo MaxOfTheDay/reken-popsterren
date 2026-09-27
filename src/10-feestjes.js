@@ -67,8 +67,8 @@ const MOVES = [
 ];
 /* De buiging staat met opzet níét in MOVES: die zit in de gewone rotatie van
    dance() en finaleDance(), en dan zou ze na elk goed antwoord kunnen komen.
-   Een buiging betekent één ding -- het publiek wil een toegift, en die krijgt
-   het (zie submitAnswer). Ze moet wel in MOVE_CLASSES, anders ruimen zetPas en
+   Een buiging betekent één ding -- het publiek klapt extra hard, en zij buigt
+   (zie het applaus in submitAnswer). Ze moet wel in MOVE_CLASSES, anders ruimen zetPas en
    stilStaan haar niet op. */
 const BUIGING = { cls: 'move-buig', label: '🙇 Buiging!' };
 const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls);

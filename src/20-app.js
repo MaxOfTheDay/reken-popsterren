@@ -1318,7 +1318,7 @@ function rebuildWorldBadges() {
    viert waar een kind trots op is. Een teller die vanzelf oploopt is dat niet.
    Concreet weggevallen (zie RETIRED_TROPHIES):
      - tussenstappen die niets toevoegen (3 shows, show 5, show 10, 250 sommen,
-       3 perfecte shows, 25 toegiften)
+       3 perfecte shows, 25 keer applaus)
      - de zes "wereld uitgespeeld"-badges: een uitgespeelde wereld gééft al een
        spulletje en een feestje (zie grantWorldRewards). Twee keer dezelfde
        mijlpaal belonen maakt geen van beide bijzonderder. Perfect blijft.
@@ -1344,7 +1344,8 @@ function rebuildWorldBadges() {
 const TROPHIES = [
   // 🎤 Avontuur — de momenten die je je herinnert
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
-  { id: 'toegift',    emoji: '🎉', name: 'Toegift!',        desc: 'Je eerste toegift',     has: p => (p.encores || 0) >= 1 },
+  // id blijft 'toegift' (zo staat hij in de saves); het kind ziet "Applaus!"
+  { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
   /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en dat
      blijft het. Komt er een wereld bij, dan gaat deze trofee weer open staan --
@@ -8152,7 +8153,7 @@ function startLevel(lvl) {
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
   const plan = count ? [] : planSpecials(p, s, s.perLevel, leerStap(lvl), goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
-  // (zie submitAnswer/endLevel): hij bepaalt nog altijd de toegift en de restbonus,
+  // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
@@ -8509,7 +8510,7 @@ function submitAnswer(val, btnEl) {
     G.earned += gain;
     p.diamonds += gain;
     // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
-    // je speelt, hoe sneller hij volloopt. Vol = een toegift, met bonusdiamanten.
+    // je speelt, hoe sneller hij volloopt. Vol = applaus, met bonusdiamanten.
     let fanMul = 1;
     if (!firstTry) fanMul = 0.5;               // een herkansing laat het publiek maar half zo hard juichen
     else {
@@ -8539,11 +8540,12 @@ function submitAnswer(val, btnEl) {
     // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
     const diaVan = vak || btnEl || $('question-card');
     setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2), vlucht);
-    /* Het publiek wil een toegift, en die krijgt het: ze buigt (zie buiging).
-       Hier stond "🎆 EXTRA SHOW!", en een extra show kwam er nooit -- de meter
-       erachter is sinds fase 1 onzichtbaar, dus een kind kreeg een belofte die
-       niets deed. Nu is wat er staat ook wat er gebeurt. */
-    if (encore) { sndStreak(); confetti(24); showPraise('👏 Toegift!', '💎 +5'); }
+    /* Het publiek klapt extra hard, en zij buigt (zie buiging). Hier stond
+       "🎆 EXTRA SHOW!", en een extra show kwam er nooit -- de meter erachter is
+       sinds fase 1 onzichtbaar, dus een kind kreeg een belofte die niets deed.
+       Nu is wat er staat ook wat er gebeurt. "Applaus" en niet "toegift": dat
+       kent elk kind, en voor applaus buig je. */
+    if (encore) { sndStreak(); confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
     else if (!firstTry) { sndGood(); showPraise('Goed zo, je had het!', '💎 +' + gain); }
@@ -8556,7 +8558,7 @@ function submitAnswer(val, btnEl) {
     zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
     // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
     // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
-    // wachten. Een gouden vraag en een toegift mogen wél even duren; die zijn
+    // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
     // bedoeld om op te vallen.
     setTimeout(nextStep, encore || q.gold ? 1400 : 950);
     return;
@@ -8815,7 +8817,7 @@ function endLevel(success) {
   $('end-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   // Wat er van de stille publieksteller overblijft telt altijd mee: +1 💎 per volle
-  // 25%, zodat inspanning ook loont als de toegift (100%) net niet gehaald is.
+  // 25%, zodat inspanning ook loont als het applaus (100%) net niet gehaald is.
   // Sinds fase 1 heeft die bonus geen eigen vakje meer op het eindscherm -- hij zit
   // gewoon in de 💎 die je deze show verdiend hebt (zie verdiend hieronder).
   const fanBonus = Math.floor(G.fan / 25);
@@ -8833,7 +8835,7 @@ function endLevel(success) {
     const r = applyShowResult(p, lvl, wl, showStars(G));
     const { stars, beter, bonus } = r;
     /* Wat er tijdens déze show klaar kwam te liggen, en niet alleen aan het eind.
-       Trofeeën als "25 sommen goed" of "Toegift!" worden al bij het antwoord
+       Trofeeën als "25 sommen goed" of "Applaus!" worden al bij het antwoord
        klaargelegd (submitAnswer), dus r.trofees -- wat applyShowResult er aan
        het eind nog bij vindt -- miste ze: na de eerste show stond er "Nieuwe
        trofee klaar!" terwijl er twee lagen. */
