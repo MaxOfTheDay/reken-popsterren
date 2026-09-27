@@ -25,6 +25,9 @@
  *   I  het merk           -- geen meesters in de app, en de iconen kloppen
  *   J  op het beginscherm -- de uitlegkaart per browser, weg in de app, en het
  *                           installeervoorstel van de browser blijft onaangeroerd
+ *   K  de over-pagina     -- over/ staat op zichzelf: wat hij noemt bestaat, hij
+ *                           leidt terug naar het spel, en het filmpje laadt pas
+ *                           als iemand het afspeelt
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -645,7 +648,9 @@ zaak('J', () => {
   check(/class="set-card secundair" id="set-beginscherm"/.test(and), 'J · als stille secundaire kaart', '');
   check(and.includes('Op het beginscherm') && and.includes('Rekensterren als app op dit toestel'),
     'J · met de kop en de ondertitel', '');
-  check(!/<button/.test(and.slice(kaart)), 'J · uitleg, geen knop', and.slice(kaart));
+  // alleen deze kaart: daarna komt nog die naar over/, en die heeft wél knoppen
+  const eigen = and.slice(kaart).split('class="set-card')[0];
+  check(!/<button/.test(eigen), 'J · uitleg, geen knop', eigen);
 
   // Per soort de juiste zin.
   check(and.includes('Chrome stelt soms zelf voor') && and.includes('Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'),
@@ -683,6 +688,29 @@ zaak('J', () => {
   check(!/beginscherm|install/i.test(JSON.stringify(c.db)), 'J · en db -- dus de back-up -- weet er niets van', Object.keys(c.db).join(', '));
   const morgen = laadApp({ opslag: c.opslag() });
   check(html(morgen, UA.android).includes('set-beginscherm'), 'J · een nieuwe start vraagt het gewoon weer aan de browser', '');
+});
+
+/* ================= K · De over-pagina ================= */
+zaak('K', () => {
+  const over = fs.readFileSync(path.join(WORTEL, 'over/index.html'), 'utf8');
+  // Alles wat de pagina zelf ophaalt of aanwijst, relatief: een ontbrekend beeld
+  // of een dode terugknop geeft geen fout, alleen een gat.
+  const refs = [...over.matchAll(/(?:src|href|poster)="([^"]+)"/g)].map(m => m[1])
+    .filter(r => !/^(https?:|mailto:|#|data:)/.test(r));
+  check(refs.length >= 8, 'K · de pagina wijst naar zijn eigen bestanden', refs.join(', '));
+  const weg = refs.filter(r => !fs.existsSync(path.join(WORTEL, 'over', r.split(/[?#]/)[0])));
+  check(!weg.length, 'K · en die bestaan allemaal', weg.join(', '));
+  check(/href="\.\.\/index\.html"/.test(over), 'K · er is een weg terug naar het spel', '');
+  check(/<video\b[^>]*preload="none"/.test(over), 'K · het filmpje laadt pas bij afspelen (preload="none")', '');
+  const og = (over.match(/property="og:image" content="([^"]+)"/) || [])[1] || '';
+  check(og.startsWith('https://') && fs.existsSync(path.join(WORTEL, 'over', path.basename(og))),
+    'K · het deelbeeld is een volledig adres, en het bestand ligt klaar', og);
+  // de kaart in het ouderdeel wijst naar dezelfde pagina
+  const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
+    : fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
+  check(bron.includes('href="over/index.html"'), 'K · het ouderdeel linkt naar over/', '');
+  check(/\.mp4\$/.test(fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8')),
+    'K · sw.js laat filmpjes buiten de voorraad', '');
 });
 
 klaar();

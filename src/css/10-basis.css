@@ -225,6 +225,8 @@
     transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
+  /* een link die eruitziet als knop ("Bekijk de pagina" in het ouderdeel) */
+  a.btn { display: inline-block; text-decoration: none; text-align: center; }
   .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; }
   /* .purple/.gray zetten hun eigen achtergrond, dus ook expliciet hun
      eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
