@@ -2448,9 +2448,17 @@ function avatarSVG(p, width, propMaat) {
   // hoofd
   s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
   s += B.hairFront(hc);
-  s += `<circle cx="88" cy="72" r="3.6" fill="#333"/><circle cx="112" cy="72" r="3.6" fill="#333"/>`;
+  s += `<circle class="av-oog" cx="88" cy="72" r="3.6" fill="#333"/><circle class="av-oog" cx="112" cy="72" r="3.6" fill="#333"/>`;
   s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
-  s += `<path d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  /* Twee monden, en er staat er altijd maar één aan. De lach is de gewone; het
+     rondje eronder is "oh!" -- de pop die schrikt van een misser (zie .oeps in
+     het stijlblad en oepsGezicht). Het rondje staat met opacity="0" als
+     áttribuut uit en niet in het stijlblad: deze tekening gaat ook zonder
+     stijlblad over straat (een miniatuur, een geëxporteerd plaatje), en dan
+     hoort ze gewoon te lachen. Een CSS-regel wint het van een attribuut, dus
+     .oeps kan hem wél aanzetten. */
+  s += `<path class="av-mond" d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#c2572b" opacity="0"/>`;
   // accessoire op het hoofd / gezicht
   if (acc) {
     /* Een item mag zijn eigen tekening meebrengen: acc.draw() geeft een stukje SVG
@@ -4052,12 +4060,16 @@ function schermWeg(el, naarBinnen, punt) {
 function navMee(naarBinnen) {
   const nav = $('main-nav');
   if (!nav || !nav.animate || motionOff()) return;
-  nav.getAnimations().forEach(a => a.cancel());
+  /* Alleen wat navMee er zelf op zette, en niet nav.getAnimations(): dat dwingt
+     stijl en opmaak af midden in de tik (gemeten: 9 tot 22ms per tik op een
+     zesvoudig gesmoorde processor, op de halte én op "Verder op tournee"). Zie
+     schermAnim -- dezelfde reden, dezelfde oplossing. */
+  schermAnimsStop(nav);
   if (!naarBinnen) {
     // De kaart komt op en neemt zijn balk mee. fill:'backwards' houdt hem op nul
     // zolang de vorige nog wegvalt, dus hij verschijnt niet alvast over een zaal.
     if (nav.style.display === 'none') return;
-    nav.animate([{ opacity: 0 }, { opacity: 1 }],
+    schermAnim(nav, [{ opacity: 0 }, { opacity: 1 }],
       { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
     return;
   }
@@ -4066,8 +4078,8 @@ function navMee(naarBinnen) {
      kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij komt
      dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem wilde. */
   nav.style.display = 'flex';
-  const op = () => { nav.getAnimations().forEach(a => a.cancel()); navVolgtScherm(); };
-  const a = nav.animate([{ opacity: 1 }, { opacity: 0 }],
+  const op = () => { schermAnimsStop(nav); navVolgtScherm(); };
+  const a = schermAnim(nav, [{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + MOTION.vangnet);
@@ -7774,14 +7786,15 @@ function bumpLearned(p, q) {
 function demoteLearned(p, q) { if (p.learned) delete p.learned[q.tmpl]; }
 // Een som die aan onderhoud toe is: het langst over tijd gaat voor. Alleen
 // bewerkingen die nu aanstaan, en niets boven de ingestelde bovengrens.
-function pickRefresh(p, s) {
+// mag (optioneel): zegt per sjabloon of hij nu terug mag komen (zie buildQuestion).
+function pickRefresh(p, s, mag) {
   if (!p.learned) return null;
   const ops = s.ops.length ? s.ops : ['+'];
   const now = qClock(p);
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-    if (!ops.includes(e.op) || e.ans > s.max) continue;
+    if (!ops.includes(e.op) || e.ans > s.max || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -7790,27 +7803,51 @@ function pickRefresh(p, s) {
   return { tmpl: best, ans: e.ans, op: e.op, kind: 'classic', refresh: true };
 }
 // Kies een zwakke som om te herhalen (alleen als de bewerking nog aanstaat); zwaardere vaker.
-function pickWeak(p, s) {
+// mag (optioneel): zegt per sjabloon of hij nu terug mag komen (zie buildQuestion).
+function pickWeak(p, s, mag) {
   const ops = s.ops.length ? s.ops : ['+'];
-  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op));
+  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op) && (!mag || mag(k)));
   if (!keys.length) return null;
   const pool = [];
   keys.forEach(k => { for (let i = 0; i < p.weak[k].w; i++) pool.push(k); });
   const k = pick(pool.length ? pool : keys);
   return { tmpl: k, ans: p.weak[k].ans, op: p.weak[k].op, kind: 'classic' };
 }
-// Bouwt de volgende vraag: ~35% kans op een zwakke herhaling, anders een verse (adaptieve) som.
-function buildQuestion(p, lvl) {
+/* Bouwt de volgende vraag: ~35% kans op een zwakke herhaling, anders een verse
+   (adaptieve) som.
+
+   g (optioneel) is de show die loopt, en die bepaalt wat er nu níét mag:
+
+     net geweest   een som uit de laatste HERHAAL_AFSTAND vragen komt niet
+                   terug -- ook niet als verse som. Een gemiste som is dus pas
+                   twee vragen later weer aan de beurt.
+     al herhaald   een zwakke of geleerde som komt hoogstens één keer per show
+                   terug (g.herhaald).
+
+   Zonder die twee regels kon een gemiste som meteen de volgende vraag zijn, en
+   daarna nóg eens: in één show van acht kwam 3 + 7 drie keer, waarvan twee keer
+   vlak achter elkaar. Dat leest niet als oefenen maar als vastzitten. Het
+   gewicht in p.weak blijft gewoon staan; hij komt in een volgende show terug. */
+const HERHAAL_AFSTAND = 2;
+function buildQuestion(p, lvl, g) {
+  const net = [];
+  if (g) for (let i = Math.max(0, g.idx - HERHAAL_AFSTAND); i < g.idx; i++) if (g.qs[i]) net.push(g.qs[i].tmpl);
+  const al = g && g.herhaald;
+  const mag = k => !net.includes(k) && !(al && al.has(k));
   if (Math.random() < 0.35) {
-    const wq = pickWeak(p, p.settings);
-    if (wq) return wq;
+    const wq = pickWeak(p, p.settings, mag);
+    if (wq) { if (al) al.add(wq.tmpl); return wq; }
   }
   // onderhoud: af en toe een som die al geleerd is maar lang niet langskwam
   if (Math.random() < 0.12) {
-    const rq = pickRefresh(p, p.settings);
-    if (rq) return rq;
+    const rq = pickRefresh(p, p.settings, mag);
+    if (rq) { if (al) al.add(rq.tmpl); return rq; }
   }
-  return genQuestion(p.settings, lvl, p.perf);
+  // een verse som, maar niet precies die van net (een paar pogingen, en dan
+  // toch: bij "tot 10" met alleen plus is de pot klein)
+  let q, poging = 0;
+  do { q = genQuestion(p.settings, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
+  return q;
 }
 
 /* ================= Extra uitdagingen: klaarheid, tempo, inroostering =================
@@ -7965,13 +8002,43 @@ function planSpecials(p, s, total, round, goldIdx) {
   });
   return plan;
 }
-// Vriendelijke richtinghint bij een fout antwoord (helpt zonder het antwoord te verklappen).
-function hintFor(q, val) {
-  if (typeof val === 'number' && !isNaN(val)) {
-    if (val > q.ans) return 'Net iets te veel — probeer een kleiner getal! 👇';
-    if (val < q.ans) return 'Net iets te weinig — probeer een groter getal! 👆';
-  }
-  return 'Bijna! Probeer nog eens 💪';
+/* De hint na een eerste misser in de rekenmodus, als plaatje: het getal dat je
+   koos, met een pijl erbij -- omhoog als het antwoord méér is, omlaag als het
+   minder is. Dezelfde pijl komt klein op de rode tegel zelf, zodat hij bij het
+   getal staat waar hij over gaat.
+
+   Hier stond een zin: "Net iets te weinig — probeer een groter getal! 👆". De
+   jongste rekenaars lezen cijfers maar nog geen zinnen, dus voor hen was een
+   misser een rode kleur en een regel die ze niet konden lezen. De woorden
+   blijven, klein onder het plaatje, voor wie wél leest -- en ze kloppen nu ook:
+   "net iets" staat er alleen als het ook net iets was. De foute keuzes liggen
+   op ±1, ±2 en ±10 (zie makeChoices), en bij tien ernaast is "net iets" niet
+   waar.
+
+   Bewust géén stippen of ander hoeveelheidsplaatje: de rekenmodus is cijfers,
+   en een plaatje dat alleen na een fout opduikt moet je ontcijferen op het
+   slechtste moment -- en wordt een teken dat het misging. Zie docs/GAME-REVIEW.md. */
+const HINT_DICHTBIJ = 2;
+function hintVoor(q, val) {
+  if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
+  const meer = q.ans > val;
+  const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
+  const woord = meer ? 'meer' : 'minder';
+  return { pijl: meer ? 'op' : 'neer',
+           woorden: (net ? 'Net iets ' + woord : woord[0].toUpperCase() + woord.slice(1)) + ' dan ' + val };
+}
+// Een dikke pijl als SVG en niet als teken: ⬆️ is op elk toestel een ander
+// blauw vierkantje, en een ↑ in de letter is te dun om van een meter af te zien.
+function pijlSVG(richting) {
+  const draai = richting === 'neer' ? ' transform="rotate(180 12 12)"' : '';
+  return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><path${draai} d="M12 3 L21 13 H15.5 V21 H8.5 V13 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+function toonHint(q, val, btnEl) {
+  const h = hintVoor(q, val);
+  if (!h) { showToast('🤔', null, null, 'teken'); return; }
+  if (btnEl) btnEl.insertAdjacentHTML('beforeend', `<span class="tegel-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`);
+  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`,
+            null, h.woorden, 'hint');
 }
 
 /* ================= Spel ================= */
@@ -7997,7 +8064,7 @@ function startLevel(lvl) {
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0,
+  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
   // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
@@ -8051,7 +8118,7 @@ function renderQuestion() {
       const plan = G.plan[G.idx];
       if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
       else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
-      else built = buildQuestion(p, G.lvl);
+      else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
     // telmodus: kondig de gouden vraag hoorbaar aan (lees-vrij) -- de prompt wordt
@@ -8068,13 +8135,7 @@ function renderQuestion() {
   renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
-  // Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
-  // opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
-  // antwoord dat er net was -- geen overgang, een aankondiging.
-  const kaart = $('question-card');
-  kaart.classList.remove('vers');
-  void kaart.offsetWidth;
-  kaart.classList.add('vers');
+  vraagKomtIn($('question-card'));
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
@@ -8101,6 +8162,34 @@ function renderQuestion() {
     });
   }
   startSpot();
+}
+/* Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
+   opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
+   antwoord dat er net was -- geen overgang, een aankondiging. Alleen in een
+   zaal (.venue-aan); zonder zaal staat de kaart er gewoon.
+
+   Met een eigen Animation en niet meer met een klasse die eraf en er weer op
+   gaat. Die klasse herstartte via "void kaart.offsetWidth", en dat dwingt de
+   browser de hele opmaak uit te rekenen midden in de tik. Bij de eerste vraag
+   is dat de tik op de halte, op een scherm dat show() net aanzette: gemeten
+   127ms van die tik op een zesvoudig gesmoorde processor, de grootste post van
+   de hele overgang. Hier wordt niets opgevraagd; de vorige animatie stoppen we
+   omdat we hem zelf bijhouden (net als schermAnim).
+
+   fill 'both', net als de CSS-animatie hiervoor: de kaart blijft na afloop op
+   zijn eindstand staan, en daarmee op een eigen laag. Met 'backwards' viel hij
+   daar na 140ms van af, en dan tekent de browser de som net anders -- genoeg om
+   het getal dat erin vliegt (somVult) af en toe ruim een pixel naast het vakje
+   te laten landen. test/maths.test.js meet precies dat. */
+const VRAAG_IN = 140;
+let vraagInAnim = null;
+function vraagKomtIn(kaart) {
+  if (vraagInAnim) { vraagInAnim.cancel(); vraagInAnim = null; }
+  if (!kaart || !kaart.animate || motionOff()) return;
+  if (!$('screen-game').classList.contains('venue-aan')) return;
+  vraagInAnim = kaart.animate(
+    [{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
+    { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
@@ -8387,7 +8476,7 @@ function submitAnswer(val, btnEl) {
      G.retried staat hier nog op de stand van vóór deze beurt -- hij gaat pas om in
      de eerste-misser-tak hieronder, dus dit leest de vorige poging en niet deze. */
   if (G.retried) sndMis(); else sndWrong();
-  slipNote();
+  oepsGezicht();
   // "Niet die -- probeer nog eens", en klaar. 420ms i.p.v. 700: een misser mag
   // duidelijk zijn maar hoort niet ook nog te dúren. De rode tegel blijft staan
   // (die zegt wélke), de kaart schudt kort en is dan weer gewoon de som.
@@ -8404,8 +8493,8 @@ function submitAnswer(val, btnEl) {
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
-    if (G.count) { countMissSpeak(q, val); showToast('🤔'); }   // lees-vrij: gesproken hint, geen tekst
-    else showToast(hintFor(q, val));
+    if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
+    else toonHint(q, val, btnEl);
     return;                                        // G.lock blijft false → kind mag opnieuw antwoorden
   }
   // tweede misser: hartje kwijt, antwoord tonen en door
@@ -8422,7 +8511,7 @@ function submitAnswer(val, btnEl) {
   if (G.count) {
     countReveal(q);                               // juiste hoeveelheid hardop meetellen, geen tekst
     loseHeart();
-    showToast('👉', nextStep);
+    toonVerder();
     return;
   }
   if (G.mode === 'kies') {
@@ -8434,7 +8523,34 @@ function submitAnswer(val, btnEl) {
   // losse kaart ernaast. Die kaart zegt dan alleen nog hoe je verder komt.
   somVult(q, null, true);
   loseHeart();
-  showToast('👉', nextStep, 'tik om verder te gaan');
+  toonVerder();
+}
+/* "Verder", zonder één woord. Na een tweede misser wacht de show op een tik
+   (overal op het scherm, zie .tap-veil), en de kaart bovenin zegt alleen nog
+   dát: een wijzende hand, groot. In de rekenmodus stond er "tik om verder te
+   gaan" onder, en dat is precies het stuk dat een kind van zes niet leest --
+   de telmodus deed het al zonder, en nu doen ze het allebei zo. */
+function toonVerder() { showToast('👉', nextStep, null, 'teken'); }
+/* De pop schrikt: even een rond "oh!"-mondje en grote ogen (zie avatarSVG en
+   .oeps in het stijlblad). Dit kwam in de plaats van een grijs nootje van 52px
+   dat over haar lijf naar beneden viel -- op telefoonmaat las dat als een vlek
+   op de pop, en zelf deed ze intussen niets: ze bleef gewoon lachen.
+
+   Nu reageert zíj, en dat is ook meteen het hele bericht. Geen straf, geen
+   verdriet: een "oeps", en dan staat ze weer klaar voor de volgende poging.
+   Vóór de volgende misser gaat de klasse er eerst af, anders begint het
+   schrikken niet opnieuw. */
+const OEPS_DUUR = 700;
+let oepsTimer = null;
+function oepsGezicht() {
+  const pop = $('game-avatar-inner');
+  if (!pop) return;
+  clearTimeout(oepsTimer);
+  pop.classList.remove('oeps');
+  requestAnimationFrame(() => {
+    pop.classList.add('oeps');
+    oepsTimer = setTimeout(() => pop.classList.remove('oeps'), OEPS_DUUR);
+  });
 }
 // het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
@@ -8467,13 +8583,6 @@ function loseHeart() {
 function livesText() {
   const left = Math.max(0, 3 - G.errors);
   return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
-}
-function slipNote() {
-  const el = $('slip-note');
-  el.textContent = pick(['🎵', '🎶', '😅']);
-  el.classList.remove('go');
-  void el.offsetWidth;
-  el.classList.add('go');
 }
 function nextStep() {
   hideToast();

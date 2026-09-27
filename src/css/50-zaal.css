@@ -254,10 +254,9 @@
   /* De somkaart draagt in een zaal zijn eigen licht: een zachte gloed eromheen,
      zodat hij op de vloer staat en er niet op geplakt is. */
   .venue-aan .question-card { box-shadow: var(--e-2), 0 0 34px rgba(var(--warm-licht-rgb),.18); }
-  /* Elke nieuwe vraag komt binnen in plaats van te verspringen. Heel kort (140ms):
-     dit is geen overgang maar een aankondiging. */
-  .venue-aan .question-card.vers { animation: vraagIn .14s var(--ease-uit) both; }
-  @keyframes vraagIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+  /* Elke nieuwe vraag komt binnen in plaats van te verspringen: dat staat nu in
+     JavaScript (vraagKomtIn), zodat hij kan herstarten zonder de opmaak af te
+     dwingen. */
 
   /* ---- Kaart <-> zaal ----
      Twee klassen, en verder niets. Beide zetten alleen transform en opacity, dus
@@ -317,7 +316,6 @@
   #screen-settings.komt-op, #screen-memory.komt-op, #screen-newstar.komt-op,
   #screen-profile.komt-op { animation: none; }
   @media (prefers-reduced-motion: reduce) {
-    .venue-aan .question-card.vers { animation: none; }
     .venue-licht::after, .venue-licht::before { transition: none; }
   }
   /* Krap scherm: de zaal verliest hoogte, het rekenwerk niet. De bundel en de
@@ -745,7 +743,7 @@
     .toast.docked .toast-main { font-size: var(--tx-label); }
     .toast.docked .toast-sub { font-size: var(--tx-mini); margin-top: 0; }
   }
-  /* "tik om verder te gaan": een onzichtbare, schermvullende laag ónder de
+  /* "verder" (👉, zie toonVerder): een onzichtbare, schermvullende laag ónder de
      toast (die zelf pointer-events:none heeft, dus een tik daarop valt door
      naar deze laag) zodat een kind overal mag tikken, niet precies op de
      kleine bubbel zelf moet mikken. */
@@ -769,24 +767,58 @@
     85% { transform: rotate(-1deg); }
   }
   @media (prefers-reduced-motion: reduce) { .wobble { animation: none; } }
-  .slip-note {
-    position: fixed; left: 50%; top: 34%; transform: translateX(-50%);
-    font-size: 52px; z-index: 60; pointer-events: none; opacity: 0;
+  /* ---- Een misser, zonder te lezen ----
+     Drie dingen, en geen ervan is een zin:
+
+       de hint      het getal dat je koos met een dikke pijl ernaast: omhoog als
+                    het antwoord meer is, omlaag als het minder is (toonHint).
+                    De woorden eronder zijn er voor wie leest, en zijn klein.
+       de tegel     dezelfde pijl, klein in de hoek van de rode tegel -- daar
+                    kijkt een kind naar als ze opnieuw kiest.
+       het teken    een kaart met alléén een teken (🤔 in de telmodus, 👉 om
+                    verder te gaan) krijgt dat teken groot. Het is het hele
+                    bericht, dus het hoort niet op tekstmaat te staan.
+
+     De pijl is wit en niet goud: goud zegt "verdiend", en een misser heeft
+     niets verdiend. Hij zegt alleen welke kant op. */
+  .toast.hint .toast-main { display: flex; align-items: center; gap: 6px; font-size: 38px; line-height: 1; }
+  .toast.hint .toast-sub { margin-top: 4px; }
+  .hint-getal { font-variant-numeric: tabular-nums; }
+  .hint-pijl { display: inline-flex; width: 34px; height: 34px; color: var(--c-white); }
+  .pijl-teken { display: block; width: 100%; height: 100%; }
+  .toast.teken .toast-main { font-size: 40px; line-height: 1.1; }
+  .choice-btn.bad { position: relative; }
+  .tegel-pijl {
+    position: absolute; top: 7px; right: 9px; width: 24px; height: 24px;
+    color: var(--c-white); opacity: .92; pointer-events: none;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
   }
-  .slip-note.go { animation: slipNote 1.6s ease forwards; }
-  @keyframes slipNote {
-    0% { opacity: 0; transform: translate(-50%, 0) rotate(0); }
-    20% { opacity: 1; transform: translate(-50%, 6px) rotate(-8deg); }
-    100% { opacity: 0; transform: translate(-50%, 90px) rotate(30deg); }
+  @media (max-height: 700px) {
+    .toast.hint.docked .toast-main { font-size: 28px; }
+    .toast.hint.docked .hint-pijl { width: 26px; height: 26px; }
+    .toast.teken.docked .toast-main { font-size: 30px; }
   }
-  /* Wie geen beweging wil: het nootje valt niet weg, het is er even en dan niet
-     meer. Uitzetten kan hier niet zomaar -- .slip-note staat op opacity 0 en de
-     animatie is het enige wat hem ooit zichtbaar maakt, dus `animation: none`
-     haalt de misser-knipoog stilletjes weg. Nu blijft hij, zonder de val. */
-  @keyframes slipStil {
-    0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; }
+
+  /* De pop schrikt ("oh!") bij een misser -- zie oepsGezicht. Het ronde mondje
+     en de grote ogen zitten in de tekening zelf (avatarSVG); hier gaan ze aan.
+     Daarbovenop een kort ineenkrimpen op de pas-laag, dezelfde laag waar de
+     danspasjes op draaien, zodat het wiegen van de houder gewoon doorloopt.
+
+     Hier viel eerst een grijs nootje van 52px over haar heen. Dat las als een
+     vlek op de pop, en zij deed zelf niets. */
+  .av-oog { transform-box: fill-box; transform-origin: center; }
+  .avatar-holder.oeps .av-oog { transform: scale(1.35); }
+  .avatar-holder.oeps .av-mond { opacity: 0; }
+  .avatar-holder.oeps .av-mond-o { opacity: 1; }
+  .avatar-holder.oeps > .pas-laag { transform-origin: 50% 95%; animation: oepsSchrik .45s var(--ease-uit); }
+  @keyframes oepsSchrik {
+    0%, 100% { transform: none; }
+    30% { transform: translateY(4px) scale(1.03, .95); }
+    65% { transform: translateY(-2px) scale(.99, 1.02); }
   }
-  @media (prefers-reduced-motion: reduce) { .slip-note.go { animation: slipStil 1.2s ease forwards; } }
+  /* Wie geen beweging wil: wel het gezicht (dat is een uitdrukking, geen
+     beweging), niet het ineenkrimpen. */
+  @media (prefers-reduced-motion: reduce) { .avatar-holder.oeps > .pas-laag { animation: none; } }
 
   /* ---- Gouden vraag ---- */
   .question-card.golden {

@@ -490,7 +490,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     knop(fout[1]).click();
     await wacht(400);
     out.mis = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className,
-                toast: document.querySelector('#toast .toast-main').textContent };
+                toast: document.querySelector('#toast .toast-main').textContent,
+                woorden: !!document.querySelector('#toast .toast-sub') };
     hideToast();
     return out;
   });
@@ -502,7 +503,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     'de volgende som begint weer open, zonder iets dat nog rondvliegt', JSON.stringify(dicht.volgende));
   check(dicht.mis.tekst === dicht.mis.ans && /\brustig\b/.test(dicht.mis.klas) && !/\bklikt\b/.test(dicht.mis.klas),
     'na een tweede misser gaat de som rustig dicht', JSON.stringify(dicht.mis));
-  check(dicht.mis.toast === '👉', 'en de kaart zegt alleen nog hoe je verder komt', JSON.stringify(dicht.mis));
+  check(dicht.mis.toast === '👉' && !dicht.mis.woorden,
+    'en de kaart zegt alleen nog hoe je verder komt, zonder een zin te lezen', JSON.stringify(dicht.mis));
 
   /* en zonder schok: "?" is smaller dan "16", en de som staat gecentreerd. Sprong
      het vakje in één keer naar zijn nieuwe breedte, dan schoot de hele som bijna
