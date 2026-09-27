@@ -88,9 +88,7 @@ changes around the child but not with her. That is the weakest link.
 - a 52 px grey 🎵 / 🎶 / 😅 dropping over the star's body (`slipNote`). At phone
   size it reads as a smudge.
 
-The star keeps smiling, because `avatarSVG` draws exactly one face. There is no
-picture of the sum: the ten-frames and dot groups exist, but only in counting mode
-(`frameHTML`, `dotFrameHTML`, `takeAwayHTML`).
+The star keeps smiling, because `avatarSVG` draws exactly one face.
 
 "Net iets" ("just a little") is also shown when the pick was 10 off (the wrong
 options are ±1, ±2 and ±10).
@@ -111,21 +109,23 @@ counted out loud.
 
 **Recommendation.**
 
-- After the first miss, show the sum as amounts under the card: two dot groups in
-  the existing ten-frame renderer, or crossed-out dots for minus. Do this for
-  answers up to 20; above that, show a small arrow on a number line.
 - Replace the sentence with a picture hint: the number she tapped, with a big ↑ or
-  ↓.
+  ↓. The words stay underneath, small, for children who do read.
+- Say "net iets" only when the pick really was close.
 - Let the star react with an "oh!" face for about 600 ms, instead of the grey
   symbol falling over her.
 - A missed sum comes back no sooner than two questions later, and at most once
   per show.
 - After the second miss, show a big ▶ instead of text.
 
+**Not recommended: dots in math mode.** Counting mode's dot frames are tempting
+here, but a picture that appears *only* after a mistake has to be decoded at the
+worst moment, turns into a sign that "you messed up", and makes the retry about
+counting instead of thinking. Math mode stays numbers only.
+
 **Impact** High. **Effort / risk** Small–medium. The work sits in `submitAnswer`,
-`hintFor`, `buildQuestion`, `avatarSVG` and `50-zaal.css`, and it reuses renderers
-that counting mode already tests. The pedagogical risk is that the picture must
-show the amounts, not the answer.
+`hintFor`, `buildQuestion`, `avatarSVG` and `50-zaal.css`. `avatarSVG` draws the
+star everywhere, so the "oh!" face must be invisible until a miss asks for it.
 
 **Evidence** `= Spel`, `= Telmodus`, `= Avatar (SVG)`, and the first-show playthrough.
 
@@ -386,7 +386,7 @@ device before doing anything more.
 | age | what works | where it breaks |
 |---|---|---|
 | 5 | counting mode, the spoken prompts, dressing up, the map | the draining bar; in math mode, every hint is a sentence |
-| 6 | first sums, the flying number, walking the map | a miss gives no picture; 1 ★ under "was geweldig!" |
+| 6 | first sums, the flying number, walking the map | a miss is a sentence; 1 ★ under "was geweldig!" |
 | 7 | the sweet spot: reads the hints, plans outfits | "⭐ +15" confuses; from world 2 on, the same sums |
 | 8 | trophies, the ladder, perfect worlds | "tot 20" is too easy after show 10 unless a parent raises it |
 
@@ -440,8 +440,8 @@ no more celebrations, idle loops or per-world motion.
 different from a miss, and silences that are intended. Nothing important is
 missing.
 
-- New features should reuse existing cues: a soft tap when the dot picture
-  appears, and the `streak` cue for the crowd.
+- New features should reuse existing cues, for example the `streak` cue for the
+  crowd.
 - The star landing on the map is still silent. It is fine to give it a cue (the
   audio review's best remaining candidate).
 - Don't add music.
@@ -491,8 +491,10 @@ missing.
 
 ## C — Interesting, but probably don't do yet
 
-- **Speech in math mode.** Picture scaffolds first; counting mode already serves
+- **Speech in math mode.** The picture hint first; counting mode already serves
   children who can't read yet.
+- **Dots or other amount pictures in math mode.** See #1: help that appears only
+  after a mistake is the wrong moment to introduce a new picture.
 - **Music or background sound.** The synthesised sounds are coherent, and music on
   a family tablet mostly gets muted.
 - **Daily streaks, chests, battle passes, energy.** No.
@@ -515,31 +517,26 @@ missing.
 
 **What's in**
 
-- In math mode, after the first miss, the sum as a picture of amounts under the
-  card. It reuses the counting-mode renderers; up to 20 as a picture, above 20 as
-  a number-line arrow.
-- A picture hint instead of the sentence: the tapped number with ↑ or ↓.
+- A picture hint instead of the sentence: the tapped number with ↑ or ↓, the
+  words small underneath. "Net iets" only when the pick was close.
 - The "oh!" face: class hooks on the eyes and mouth in `avatarSVG`, plus a second
   mouth. It replaces the grey slip-note.
 - The missed sum comes back at least two questions later, at most once per show.
 - A ▶ instead of "tik om verder te gaan".
 - The forced reflow in `renderQuestion`.
 
-**What's out** Speech in math mode, the star rules, new kinds of question, and
-counting mode (it already works).
+**What's out** Dots or any other amount picture in math mode, speech in math
+mode, the star rules, new kinds of question, and counting mode (it already works).
 
 **Why first** It happens in every show. It is the learning heart of the game. It
 stays inside `submitAnswer`, `hintFor`, `buildQuestion`, `renderQuestion` and
-`avatarSVG`, and it reuses renderers that are already tested.
+`avatarSVG`.
 
 **Impact** High, both for the child's understanding and for the fun: a mistake
 turns into a moment.
 
-**Risk** Low–medium.
-
-- The picture must show the amounts, not give away the answer.
-- `avatarSVG` draws the star everywhere, so run `npm run test:sterren`,
-  `npm run test:rekenen` and `npm run shots`.
+**Risk** Low–medium. `avatarSVG` draws the star everywhere, so run
+`npm run test:sterren`, `npm run test:rekenen` and `npm run shots`.
 
 ### Slice 2 — Het eindscherm klopt (the end screen adds up)
 
