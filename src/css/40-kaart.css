@@ -207,7 +207,8 @@
   .career-title { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
   /* Slanke ladder: één doorlopende lijst van laag naar hoog. Verleden gedimd met ✓,
      de huidige rung uitgeklapt met balk, de volgende als goud doel, de rest gedempt.
-     Alleen bij 'nu' en 'volgende' staan getallen -- de rest blijft rustig. */
+     Getallen staan er niet meer bij de sterren: de balk zegt hoe ver, en "13/30"
+     is een breuk die een kind van vijf niet leest. Alleen de beloning (+15 💎). */
   .career-list { display: flex; flex-direction: column; gap: 5px; text-align: left; margin-top: 6px; }
   .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: rgba(255,255,255,.1); }
   .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; filter: var(--emoji-schaduw); }
@@ -235,7 +236,6 @@
   .lr-progress { display: flex; align-items: center; gap: 8px; }
   .lr-bar { flex: 1; height: 11px; border-radius: var(--r-pill); background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.14); overflow: hidden; }
   .lr-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); }
-  .lr-count { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); flex: none; }
   /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
   .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: var(--goud-rand-zacht); }
   .lr-now { font-size: var(--tx-mini); font-weight: 700; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
@@ -506,9 +506,11 @@
   }
   @media (prefers-reduced-motion: reduce) { .q-blank.done.klikt, .q-blank.done.rustig { animation: none; } }
   /* de spotlight-bonus leeft ín de somkaart: een gouden randje dat langzaam dooft —
-     geen aparte tijdbalk-rij die als "haast je!" leest */
+     geen aparte tijdbalk-rij die als "haast je!" leest. Dun en zacht goud: het is
+     een bonus om naar te kijken als je wilt, geen klok die je aanspreekt. In de
+     telmodus is hij er niet (.zonder-tijd, zie spotZonderTijd). */
   .spot-rail {
-    position: absolute; left: 16px; right: 16px; bottom: 9px; height: 7px;
+    position: absolute; left: 16px; right: 16px; bottom: 10px; height: 5px;
     border-radius: var(--r-pill); background: rgba(74, 20, 140, .10);
     overflow: hidden;
   }
@@ -517,7 +519,8 @@
      verandert moet elk beeldje opnieuw opgemeten en getekend worden. Alleen de
      gouden vraag krimpt nog in de breedte -- zie zetSpot waarom -- vandaar dat
      de overgang voor allebei geldt. */
-  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-accent); transition: transform .1s linear, width .1s linear; }
+  .spotlight-bar { height: 100%; width: 100%; border-radius: var(--r-pill); background: var(--gold-light); transition: transform .1s linear, width .1s linear; }
+  .question-card.zonder-tijd .spot-rail { display: none; }
   /* gouden vraag: gele balk op gele kaart is onzichtbaar → donkere baan + paarse balk */
   .question-card.golden .spot-rail { background: rgba(74, 20, 140, .28); }
   .question-card.golden .spotlight-bar { background: linear-gradient(90deg, var(--purple-light), var(--purple-golden-accent)); }

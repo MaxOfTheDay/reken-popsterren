@@ -3827,8 +3827,7 @@ function openCareer() {
   const goalRow = (emoji, name) => `<div class="ladder-row goal">`
     + `<div class="lr-top"><span class="lr-emoji">${emoji}</span><span class="lr-name">${name}</span>`
     + (rankBonusFor(cur.idx + 1) > 0 ? `<span class="lr-bonus">+${rankBonusFor(cur.idx + 1)} 💎</span>` : '') + `</div>`
-    + `<div class="lr-progress"><span class="lr-bar"><span style="width:${pct}%"></span></span>`
-    + `<span class="lr-count">${total}/${cur.nextMin} ⭐</span></div></div>`;
+    + `<div class="lr-progress"><span class="lr-bar"><span style="width:${pct}%"></span></span></div></div>`;
   // Alleen het stuk ladder waar je iets aan hebt: de vorige status, waar je nu
   // staat, je volgende doel en twee daarboven. De hele lijst (acht rangen, waarvan
   // de bovenste op 36% doorzichtigheid) was voor een kind vooral onleesbare ruis --
@@ -5472,12 +5471,23 @@ function renderReis() {
        met een pil eronder en een badge ernaast -- en de sterrenteller is meteen het
        antwoord op de vraag die de kaart tot nu toe niet beantwoordde: hoe góed heb
        ik die wereld gedaan? Een wereld op slot krijgt geen teller: daar valt nog
-       niets te tellen. */
-    {
+       niets te tellen.
+
+       Een ster en een streepje dat volloopt, en geen "13/24": een kind van vijf
+       leest geen breuk (zie ook de ster-status-ladder). Het streepje is dezelfde
+       baan als op de sterrenkeuze; de getallen staan er voor een schermlezer en
+       voor de tests in data-sterren/data-max. */
+    if (b.open) {
+      const deel = b.max ? Math.round(100 * b.sterren / b.max) : 0;
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
         + `<span class="rn-tekst">${esc(b.world.name)}</span>`
-        + (b.open ? `<span class="reis-sterren">${reisSterSVG()}${b.sterren}/${b.max}</span>` : '')
+        + `<span class="reis-sterren" data-sterren="${b.sterren}" data-max="${b.max}"`
+        + ` role="img" aria-label="${b.sterren} van ${b.max} sterren">`
+        + `${reisSterSVG()}<span class="rs-baan"><i style="width:${deel}%"></i></span></span>`
         + `</span>`);
+    } else {
+      plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
+        + `<span class="rn-tekst">${esc(b.world.name)}</span></span>`);
     }
     /* Eén teken in de hoek, nooit twee. Vol gaat vóór uit: een wereld waar alles
        binnen is krijgt het sterornament en niet óók nog een vinkje. */
@@ -7964,7 +7974,7 @@ function ot(p, op) {
    'acc' (klopt het) ook 'fast' (gaat het vanzelf) mee vóór een moeilijkere
    vraagsoort vrijkomt. Alleen gemeten bij goed-in-één-keer, want snelheid bij
    een fout antwoord zegt niets. */
-const FAST_SPOT_KIES = 50;   // spotlight loopt in 12s leeg -> 50 = binnen ~6s
+const FAST_SPOT_KIES = 50;   // spotlight loopt in SPOT_DUUR (12s) leeg -> 50 = binnen ~6s
 const FAST_SPOT_TYP = 25;    // typen kost meer tikken -> ~9s
 const FLUENT_MIN = 0.55;     // ruwweg: meer dan de helft van de goede antwoorden komt vlot
 const PATIENCE_N = 60;       // geduld-overrule: nooit permanent blokkeren
@@ -8234,7 +8244,7 @@ function renderQuestion() {
   const area = $('answer-area');
   if (G.count) {
     renderCountAnswers(q, area);
-    startSpot();
+    spotZonderTijd();
     return;
   }
   if (G.mode === 'kies') {
@@ -8303,6 +8313,7 @@ function renderSegBar(el, total, done, hasNow) {
 function drawQuestion() {
   const q = G.qs[G.idx];
   $('question-card').classList.toggle('golden', !!q.gold);
+  $('question-card').classList.toggle('zonder-tijd', !!G.count);   // telmodus: geen spotlight-balk
   // telmodus is lees-vrij: geen tekstbanner maar een emoji-signaal (de gesproken
   // "Gouden vraag!"-aankondiging zit in de vraag-prompt, zie renderQuestion)
   // Overal hetzelfde, lees-vrije gouden-vraag-signaal (emoji voorop, ook in de rekenmodus).
@@ -8331,7 +8342,20 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Enter') numpadPress('ok');
 });
 
-/* Spotlight-bonus (12 seconden): het gouden randje onderin de somkaart dooft langzaam.
+/* Spotlight-bonus: het gouden randje onderin de somkaart dooft langzaam. Wie in
+   één keer goed antwoordt vóór het uit is, krijgt +1 💎 en een luider publiek;
+   daarnaast meet de adaptieve motor ermee of een som "vlot" ging (fastEnough) --
+   dat meten staat los van wat de balk laat zien.
+
+   SPOT_DUUR is hoe lang de bonus loopt. De eerste SPOT_RUST daarvan staat de balk
+   vol en stil: niemand hoort zich opgejaagd te voelen op het moment dat de som
+   er net staat. Daarna dooft hij over de rest. Alleen het beeld wacht; G.spot
+   loopt vanaf het begin, dus "vlot" (binnen ~6 seconden) is niet veranderd.
+
+   In de telmodus is er geen balk en geen klok (zie spotZonderTijd): daar wordt de
+   vraag hardop voorgelezen -- bij meetellen met acht dingen al zo'n vijf en een
+   halve seconde -- en liep de balk leeg terwijl het spel nog aan het praten was.
+   De telmodus meet geen tempo, dus de klok deed daar niets dan de bonus afpakken.
 
    De teller hangt aan G (de show die nu loopt), en stopSpot kan hem dus alleen
    nog vinden zolang díe G er staat. Vervangt er iets G zonder eerst te stoppen,
@@ -8360,21 +8384,25 @@ document.addEventListener('keydown', e => {
    startSpot, dus hier staat al vast welke van de twee het is. */
 function zetSpot(pct) {
   const balk = $('spotlight-bar');
+  // wat de balk laat zien: vol tijdens SPOT_RUST, daarna naar nul (zie boven)
+  const zicht = Math.min(100, pct * SPOT_DUUR / (SPOT_DUUR - SPOT_RUST));
   if ($('question-card').classList.contains('golden')) {
     balk.style.transform = '';
-    balk.style.width = pct + '%';
+    balk.style.width = zicht + '%';
   } else {
     balk.style.width = '';
-    balk.style.transform = `translateX(${pct - 100}%)`;
+    balk.style.transform = `translateX(${zicht - 100}%)`;
   }
 }
+const SPOT_DUUR = 12000;   // ms: zo lang loopt de spotlight-bonus
+const SPOT_RUST = 4000;    // ms: zo lang staat de balk eerst vol en stil
 function startSpot() {
   stopSpot();
   G.spot = 100;
   zetSpot(100);
   const id = setInterval(() => {
     if (!G || G.timer !== id) { clearInterval(id); return; }
-    G.spot = Math.max(0, G.spot - 100 / 120);
+    G.spot = Math.max(0, G.spot - 100 / (SPOT_DUUR / 100));
     zetSpot(G.spot);
     if (G.spot <= 0) stopSpot();
   }, 100);
@@ -8382,6 +8410,14 @@ function startSpot() {
 }
 function stopSpot() {
   if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
+}
+/* De telmodus: geen klok, geen balk (zie hierboven). G.spot staat vol, dus elk
+   antwoord dat in één keer goed is krijgt de +1 💎 en het luidere publiek -- wat
+   een kind in de telmodus kreeg als het snel genoeg was, krijgt het nu altijd.
+   Een eerste misser zet hem op nul, net als in de rekenmodus. */
+function spotZonderTijd() {
+  stopSpot();
+  G.spot = 100;
 }
 
 /* ================= De som valt dicht =================
@@ -10099,8 +10135,11 @@ function createStar() {
      dan is meteen wegspringen naar de kaart van de nieuwe ster juist verkeerd. */
   if (newStarReturn === 'settings') { setKey = key; setTab = 'beheer'; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else { kiesBezig = false; selectProfile(key); }
-  showToast(`🌟 ${esc(name)} staat op het podium!`, null,
-            newStarReturn === 'settings' ? null : 'Jouw eerste show begint!');
+  /* Alleen dat ze er staat. Hier stond eronder "Jouw eerste show begint!", maar er
+     begint niets tot ze zelf op halte 1 tikt -- en die gouden halte pulst al en de
+     pop zwaait al. Die tik is haar eerste eigen stap; de kaart hoeft hem niet voor
+     te zeggen. */
+  showToast(`🌟 ${esc(name)} staat op het podium!`);
   setTimeout(hideToast, 2400);
 }
 
