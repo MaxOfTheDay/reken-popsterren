@@ -65,7 +65,13 @@ const MOVES = [
   { cls: 'move-wave',   label: '👋 Golf!' },
   { cls: 'move-bounce', label: '⭐ Stuiter!' },
 ];
-const MOVE_CLASSES = MOVES.map(m => m.cls);
+/* De buiging staat met opzet níét in MOVES: die zit in de gewone rotatie van
+   dance() en finaleDance(), en dan zou ze na elk goed antwoord kunnen komen.
+   Een buiging betekent één ding -- het publiek klapt extra hard, en zij buigt
+   (zie het applaus in submitAnswer). Ze moet wel in MOVE_CLASSES, anders ruimen zetPas en
+   stilStaan haar niet op. */
+const BUIGING = { cls: 'move-buig', label: '🙇 Buiging!' };
+const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls);
 /* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
    dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
    maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
@@ -113,6 +119,11 @@ function dance(elId) {
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
   if (!zetPas(el, move)) return;
+  setTimeout(() => stilStaan(el), 950);
+}
+function buiging(elId) {
+  const el = $(elId);
+  if (!el || !zetPas(el, BUIGING)) return;
   setTimeout(() => stilStaan(el), 950);
 }
 // Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
@@ -170,16 +181,21 @@ function showPraise(txt, reward) {
   el.classList.add('pop');
 }
 // sub (optioneel): eigen, dunnere regel eronder voor een tweede gedachte
-// (bv. "tik om verder te gaan") i.p.v. die met een liggend streepje aan de
-// hoofdtekst te plakken.
+// (bv. de woorden onder de pijl-hint) i.p.v. die met een liggend streepje aan
+// de hoofdtekst te plakken.
 // onTap (optioneel): maakt het hele scherm aantikbaar i.p.v. na een vaste tijd
 // te verdwijnen -- gebruikt bij de "dit was het juiste antwoord"-toast, zodat
 // het kind zelf de tijd neemt om te lezen i.p.v. dat een timer raadt hoe lang
 // dat duurt. Bewust niet alleen de kleine toast-bubbel zelf: die precies
 // moeten raken is minder vergevingsgezind dan overal mogen tikken.
-function showToast(txt, onTap, sub) {
+// soort (optioneel): 'teken' voor een kaart met alleen één groot teken (🤔, 👉)
+// en 'hint' voor het plaatje na een eerste misser (zie toonHint). Zonder soort
+// is het de gewone kaart met tekst; de vorige soort blijft nooit hangen.
+function showToast(txt, onTap, sub, soort) {
   const t = $('toast');
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  t.classList.toggle('teken', soort === 'teken');
+  t.classList.toggle('hint', soort === 'hint');
   t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
   t.style.display = 'flex';
   t.classList.remove('show');

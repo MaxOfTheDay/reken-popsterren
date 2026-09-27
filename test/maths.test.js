@@ -176,9 +176,9 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     out.masteredWithHeavyWeak = opMastered(p, '+');     // verwacht false
     delete p.weak['7 + 8 = @'];
 
-    // -- klaar voor zoek-het-getal: niet in ronde 1-2, wel vanaf ronde 3
-    out.readyRound2 = opReady(p, '+', 2);               // verwacht false
-    out.readyRound3 = opReady(p, '+', 3);               // verwacht true
+    // -- klaar voor zoek-het-getal: niet vóór wereld 4 (STAP_ZOEK), wel vanaf daar
+    out.readyStap3 = opReady(p, '+', STAP_ZOEK - 1);    // verwacht false
+    out.readyStap4 = opReady(p, '+', STAP_ZOEK);        // verwacht true
 
     // -- worstelen pauzeert, en herstel vraagt méér dan één goed antwoord (hysterese)
     drill(p, '+', 6, false);
@@ -189,14 +189,20 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     drill(p, '+', 10, true);
     out.recovered = !ot(p, '+').paused;                 // verwacht true
 
-    // -- drie getallen: pas ná zoek-het-getal, en nooit tegelijk losgelaten
+    // -- drie getallen: pas ná zoek-het-getal, en nooit in dezelfde wereld losgelaten
     p = fresh();
     drill(p, '+', 25, true);
-    refreshReadiness(p, 3);
-    out.chainRound3 = chainReady(p, p.settings, 3);     // verwacht false (te vroeg)
-    out.chainRound4TooSoon = chainReady(p, p.settings, 4);  // verwacht false (< 2 rondes na unlock)
-    out.chainRound5 = chainReady(p, p.settings, 5);     // verwacht true
-    out.unlockRound = ot(p, '+').unlockRound;           // verwacht 3
+    refreshReadiness(p, STAP_ZOEK);                     // zoek-het-getal komt los in wereld 4
+    out.chainStap4 = chainReady(p, p.settings, STAP_ZOEK);   // verwacht false (te vroeg)
+    out.chainStap5 = chainReady(p, p.settings, STAP_DRIE);   // verwacht true: een wereld later
+    out.unlockStap = ot(p, '+').unlockStap;             // verwacht STAP_ZOEK
+    out.stapZoek = STAP_ZOEK;
+    // pas in wereld 5 beheerst? dan komt drie getallen pas een wereld later
+    const laat = fresh();
+    drill(laat, '+', 25, true);
+    refreshReadiness(laat, STAP_DRIE);
+    out.chainZelfdeWereld = chainReady(laat, laat.settings, STAP_DRIE);      // verwacht false
+    out.chainWereldErna = chainReady(laat, laat.settings, STAP_DRIE + 1);    // verwacht true
 
     // -- zwakke sommen: zwaarder bij fout, lichter bij goed, verdwijnen bij 0
     p = fresh();
@@ -209,7 +215,7 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     // -- inroostering: nooit als eerste vraag, nooit op de gouden vraag, nooit naast elkaar
     p = fresh();
     drill(p, '+', 25, true); drill(p, '-', 25, true);
-    refreshReadiness(p, 3);
+    refreshReadiness(p, STAP_ZOEK);
     p.chainTrack.rung = 2; p.missRamp.rung = 2;
     const plans = [];
     for (let i = 0; i < 300; i++) plans.push(planSpecials(p, p.settings, 8, 6, 3));
@@ -232,15 +238,52 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
   check(e.masteredTooFew === false, 'beheersing vraagt genoeg pogingen', `n=10 gaf ${e.masteredTooFew}`);
   check(e.masteredEnough === true, 'beheersing wordt herkend na genoeg goede pogingen', String(e.masteredEnough));
   check(e.masteredWithHeavyWeak === false, 'een hardnekkig gemiste som blokkeert beheersing', String(e.masteredWithHeavyWeak));
-  check(e.readyRound2 === false, 'zoek-het-getal komt niet in de eerste rondes', String(e.readyRound2));
-  check(e.readyRound3 === true, 'zoek-het-getal komt vrij zodra het kind er klaar voor is', String(e.readyRound3));
+  check(e.readyStap3 === false, 'zoek-het-getal komt niet vóór wereld 4', String(e.readyStap3));
+  check(e.readyStap4 === true, 'zoek-het-getal komt vrij zodra het kind er klaar voor is', String(e.readyStap4));
   check(e.pausedAfterMisses === true, 'worstelen zet de vraagsoort op pauze', String(e.pausedAfterMisses));
   check(e.readyWhilePaused === false, 'op pauze komt de vraagsoort niet terug', String(e.readyWhilePaused));
   check(e.stillPausedAfterOneGood === true, 'herstel vraagt meer dan één goed antwoord (hysterese)', String(e.stillPausedAfterOneGood));
   check(e.recovered === true, 'na consequent goed spelen komt de vraagsoort terug', String(e.recovered));
-  check(e.chainRound3 === false && e.chainRound4TooSoon === false, 'drie getallen komt niet meteen na zoek-het-getal', `r3=${e.chainRound3} r4=${e.chainRound4TooSoon}`);
-  check(e.chainRound5 === true, 'drie getallen komt vrij na een rustige tussenperiode', String(e.chainRound5));
-  check(e.unlockRound === 3, 'moment van beheersing wordt onthouden', String(e.unlockRound));
+  check(e.chainStap4 === false && e.chainZelfdeWereld === false,
+    'drie getallen komt niet in dezelfde wereld als zoek-het-getal', `w4=${e.chainStap4} zelfde=${e.chainZelfdeWereld}`);
+  check(e.chainStap5 === true && e.chainWereldErna === true,
+    'drie getallen komt vrij een wereld later', `w5=${e.chainStap5} erna=${e.chainWereldErna}`);
+  check(e.unlockStap === e.stapZoek, 'moment van beheersing wordt onthouden', String(e.unlockStap));
+
+  /* ================= 3b · De leerstap: elke wereld leert iets nieuws =================
+     Zie "De leerstap" in de app. De moeilijkheid liep op het shownummer en stond
+     bij show 10 op het plafond; daarna waren wereld 2 tot en met 6 dezelfde
+     sommen. Hier ligt vast dat elke wereld zijn eigen stap is. */
+  const stap = await page.evaluate(() => {
+    const s = { ops: ['+', '-'], max: 20, tables: [2, 5, 10] };
+    const N = 400;
+    const trek = lvl => { const r = []; for (let i = 0; i < N; i++) r.push(genTriple(s, lvl, 0.5, pick(['+', '-']))); return r; };
+    const over = t => overTiental(t.a, t.b, t.c, t.op);
+    const groot = t => Math.max(t.a, t.b, t.c);
+    const w = i => WORLD_START[i];                      // eerste show van wereld i (0-based)
+    const w1 = trek(w(0)), w1laat = trek(w(0) + 7), w2 = trek(w(1)), w3 = trek(w(2));
+    return {
+      w1Max: Math.max(...w1.concat(w1laat).map(groot)),
+      w2Groot: w2.filter(t => groot(t) > 10).length,
+      w2Over: w2.filter(over).length,
+      w3Over: w3.filter(over).length,
+      stappen: [1, 8, 9, 16, 17, 24, 25, 32, 33, WORLD_LAST].map(leerStap).join(','),
+      zoekStart: WORLD_START.findIndex((_, i) => leerStap(WORLD_START[i]) === STAP_ZOEK),
+      drieBinnen: leerStap(WORLD_LAST) >= STAP_DRIE,
+      tiental: [[8, 5, 13, '+'], [7, 3, 10, '+'], [15, 5, 20, '+'], [13, 6, 7, '-'], [10, 3, 7, '-'], [20, 3, 17, '-'], [27, 5, 32, '+']]
+        .map(([a, b, c, op]) => overTiental(a, b, c, op)).join(','),
+      N,
+    };
+  });
+  check(stap.stappen === '1,1,2,2,3,3,4,4,5,6', 'elke wereld is één stap, en een stap is een hele wereld', stap.stappen);
+  check(stap.w1Max <= 10, 'wereld 1 blijft bij "tot 20" onder de tien', String(stap.w1Max));
+  check(stap.w2Groot > stap.N / 4, 'wereld 2 gaat tot het plafond', `${stap.w2Groot}/${stap.N}`);
+  check(stap.w2Over === 0, 'wereld 2 gaat nooit over het tiental', `${stap.w2Over}/${stap.N}`);
+  check(stap.w3Over > stap.N * 0.4, 'wereld 3 gaat vaak over het tiental', `${stap.w3Over}/${stap.N}`);
+  check(stap.tiental === 'true,false,false,true,false,false,true',
+    'over het tiental: 8+5 en 13−6 wel, 7+3, 15+5, 10−3 en 20−3 niet (ze landen óp een tiental)', stap.tiental);
+  check(stap.zoekStart === 3, 'zoek-het-getal begint in wereld 4, op show 25, net als eerst', String(stap.zoekStart));
+  check(stap.drieBinnen, 'drie getallen valt binnen de tournee (het wachtte op show 49)', '');
   check(e.weakCapped === 6, 'zwakke som wordt niet zwaarder dan het maximum', String(e.weakCapped));
   check(e.weakCleared === true, 'een geoefende som verdwijnt uit de zwakke lijst', String(e.weakCleared));
   check(e.planFirstSlot === false, 'speciale vraag komt nooit als eerste', String(e.planFirstSlot));
@@ -490,7 +533,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     knop(fout[1]).click();
     await wacht(400);
     out.mis = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className,
-                toast: document.querySelector('#toast .toast-main').textContent };
+                toast: document.querySelector('#toast .toast-main').textContent,
+                woorden: !!document.querySelector('#toast .toast-sub') };
     hideToast();
     return out;
   });
@@ -502,7 +546,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     'de volgende som begint weer open, zonder iets dat nog rondvliegt', JSON.stringify(dicht.volgende));
   check(dicht.mis.tekst === dicht.mis.ans && /\brustig\b/.test(dicht.mis.klas) && !/\bklikt\b/.test(dicht.mis.klas),
     'na een tweede misser gaat de som rustig dicht', JSON.stringify(dicht.mis));
-  check(dicht.mis.toast === '👉', 'en de kaart zegt alleen nog hoe je verder komt', JSON.stringify(dicht.mis));
+  check(dicht.mis.toast === '👉' && !dicht.mis.woorden,
+    'en de kaart zegt alleen nog hoe je verder komt, zonder een zin te lezen', JSON.stringify(dicht.mis));
 
   /* en zonder schok: "?" is smaller dan "16", en de som staat gecentreerd. Sprong
      het vakje in één keer naar zijn nieuwe breedte, dan schoot de hele som bijna
