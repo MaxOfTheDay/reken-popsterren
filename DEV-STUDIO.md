@@ -5,7 +5,7 @@ Eén scherm, twee werkbladen, en een hoekje ernaast:
 | | |
 |---|---|
 | **Testomgeving** | speel en controleer de game in een gekozen toestand |
-| **Wereldstudio** | bouw en beheer de werelden |
+| **Wereldstudio** | bouw een wereld, probeer hem in het echte spel, en breng hem naar het spel |
 | *App & merk* | het beeld dat bij de héle app hoort en bij geen wereld |
 
 Links de bedieningen van het werkblad waar je in zit, rechts het échte spel op
@@ -164,17 +164,50 @@ een keuze en hoort niet achter een knopje.
 | **Toestel** | Pixel 10 voorop, dan de maten die elk een ándere rand van de opmaak bepalen, en *Eigen maat* als je iets anders zoekt. Daarnaast drie schakelaars: randen, raster, animaties uit. De échte toestelmaat staat altijd boven het kijkvak, met daarnaast hoe hard hij voor je ogen is opgeblazen. |
 | **Gereedschap** | herladen, opslag/cache/servicewerker van het kijkvak leegmaken, het spel zonder vlaggen, en de servicewerker aanzetten om de bijwerkstroom van de PWA na te kijken. |
 
-### Wereldstudio — "laat deze wereld zien en klopt hij"
+### Wereldstudio — "maak een wereld, probeer hem, en breng hem naar het spel"
 
-Links de wereldlijst (icoon, naam, volgorde, en een bolletje dat zegt of er iets
-aan mankeert), rechts die ene wereld in vier groepen:
+Links de wereldlijst en daaronder **Van concept naar spel**; in het midden die
+ene wereld; rechts het kijkvak. Een wereld maken gaat zo:
 
-| groep | waarvoor |
-|---|---|
-| **Wereld** | naam, icoon, volgorde, id. *Bewerken in het kijkvak* opent de wereldstudio ín de app (`?debug&mapedit`): daar zet je haltes, buig je de weg, kies je kleuren en een beloning. |
-| **Tekening** | de wereldkaart als beeldkaartje: voorbeeld, maat, verhouding, bestandsmaat met de aanbevolen begroting ernaast, en vervangen door te slepen of te tikken. |
-| **Voortgang** | shows, wanneer de wereld opengaat, beloning, trofee, haltes — en de standen om hem in te bekijken (net begonnen, halverwege, bijna uit, perfect, op slot). Dat zijn dezelfde standen als in de Testomgeving; er is geen tweede standenmachine. |
-| **Controles** | wat er niet klopt: een ontbrekend bestand, een beloning die niet bestaat, een tekening die te zwaar is. *Keuringen draaien* doet de vier snelle controles van `npm run check`. |
+1. **+ Nieuwe wereld**, naam intikken, *Maak*. De wereldstudio opent in het
+   kijkvak, op de hele breedte, met de nieuwe wereld erin — nog **niet
+   uitgebracht**: hij staat straks wél in het spel, maar geen kind komt erin.
+2. **Bewerken** (dat is de editor): tekening erop slepen, *haal uit de tekening*
+   voor de kleuren, haltes op de richels, de zaal donkerder of lichter, een
+   wereldschat kiezen. Alles staat meteen in je **concept** (in deze browser).
+3. **▶ Probeer in het spel** of **✓ Klaar**: terug naar het overzicht, en het
+   kijkvak op telefoonmaat. Onder *Probeer in het spel* zet je hem in een stand
+   (net begonnen, halverwege, bijna uit, perfect, op slot) of speel je hem echt:
+   de eerste show, de laatste (met het wereldfeest en de schat), het einde van
+   een show, de reis erheen. Met je concept erin, ook als de wereld nog dicht is,
+   en zonder dat er iets wordt opgeslagen. Terug naar *Bewerken* is één klik.
+4. **Klaar om uit te brengen?** zegt wat er nog is, in drie soorten:
+   *houdt opslaan tegen* (een kind zou het nu merken), *nog te doen vóór
+   uitbrengen*, en *let op*. Dezelfde regels als `npm run check` — er is maar één
+   lijst, `wereldControle` in `src/20-app.js`.
+5. **Van concept naar spel**, van boven naar beneden:
+
+| stap | waar het nu staat | de knop |
+|---|---|---|
+| **1 · Concept** | alleen in deze browser | *Opslaan in het project* — keurt, schrijft `WORLDS` in `src/`, bouwt `index.html` en draait de snelle keuring |
+| **2 · Project** | je werkmap, niet vastgelegd | *Vastleggen…* — de snelle keuring, dan een commit. Op main komt er eerst een eigen tak onder |
+| **3 · Online** | je tak, nog niet op main | *Publiceren…* — twee klikken: eerst zien wát er gaat, dan alle tests, samenvoegen en pushen |
+
+**Uitbrengen** is geen stap van die lijn maar een vinkje in de editor (*Gegevens*).
+Een wereld die niet uitgebracht is gaat gewoon mee naar main — de tests laten
+dat toe, en een ontbrekende wereldschat blokkeert dan nog niet. Zet het vinkje
+pas als *Klaar om uit te brengen?* niets meer te doen heeft, en publiceer dan
+nog één keer.
+
+Het chipje **✎ concept** bovenin staat er zolang er een concept in deze browser
+staat — dat kleurt élk kijkvak, ook in de Testomgeving. Een concept van vorige
+week draait niets terug: alleen de werelden die jíj veranderde gaan over het spel
+heen, en is zo'n wereld intussen óók in het project veranderd, dan zegt de studio
+dat.
+
+De wereldschat zelf is een tekening in code (een regel in `ITEMS` en een
+tekenfunctie). Is er geen vrije meer, dan geeft de editor de aanzet om te kopiëren
+— zie `docs/UITBREIDEN.md`.
 
 ### App & merk
 
@@ -227,16 +260,18 @@ lijstje dat alleen de studio kent. *Zet uit* haalt de tekening uit het spel zond
 het bestand weg te gooien: de kleedkamer staat dan weer op de gedeelde schil,
 precies zoals hij eruitzag.
 
-### Vervangen, en "vastzetten"
+### Vervangen, en "opslaan"
 
 Twee verschillende dingen, en de studio houdt ze uit elkaar:
 
-* **een beeld vervangen** schrijft naar je wérkmap, en dat werkt gewoon zolang
-  `npm run studio` (of `npm run preview`) draait. Het is daarna een gewone
-  wijziging in git: je ziet hem terug als *Gewijzigd* bovenin.
-* **het `WORLDS`-blok terugschrijven** naar `index.html` — dát is de stap die
+* **een beeld vervangen** schrijft meteen naar je wérkmap, en dat werkt gewoon
+  zolang `npm run studio` (of `npm run preview`) draait. Het is daarna een gewone
+  wijziging in git: je ziet hem terug onder *2 · Project*. Vervang je een bestaand
+  beeld, dan gaat `ART_CACHE` in `sw.js` één keer omhoog, zodat telefoons die hem
+  al hadden de nieuwe krijgen; een nieuw bestand heeft dat niet nodig.
+* **het concept opslaan** (het `WORLDS`-blok in `src/`) — dát is de stap die
   alléén met die server kan. Zonder server valt de wereldstudio terug op
-  Kopieer-en-plak.
+  Kopieer-en-plak (*Geavanceerd*).
 
 ### Open werk
 
@@ -256,6 +291,6 @@ is *Gewoon spel* — die draait het spel zonder vlaggen en schrijft dus wél weg
 maar naar de opslag van `localhost`, niet naar die van een geïnstalleerde app.
 *Kijkvak leegmaken* veegt die weer leeg.
 
-Een wereld toevoegen doe je in de wereldstudio: naam geven, tekening erop,
-kleuren accepteren, haltes zetten, beloning kiezen, standen doorlopen, *Zet in
-het spel*. Zie `docs/UITBREIDEN.md`.
+Een wereld toevoegen doe je in de Wereldstudio: *+ Nieuwe wereld*, tekening
+erop, kleuren accepteren, haltes zetten, schat kiezen, proberen, *Opslaan in het
+project*. Zie hierboven, en `docs/UITBREIDEN.md`.

@@ -411,7 +411,7 @@ async function vastleggen(bericht) {
     const sha = gitStil(['rev-parse', '--short', 'HEAD']);
     return { ok: true, tekst: 'Vastgelegd op ' + doel + ' · ' + sha
       + (opMain ? '\nMain staat nog waar hij stond.' : '')
-      + '\nNog niet gepusht — dat doe je in de wereldstudio (Publiceren) of met de hand.' };
+      + '\nNog niet op main — dat doet Publiceren (Wereldstudio → Van concept naar spel).' };
   } catch (e) {
     return { ok: false, tekst: 'Vastleggen mislukte — je werk staat er nog.\n'
       + String(e.message).split('\n').slice(0, 6).join('\n') };

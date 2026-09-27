@@ -25,6 +25,8 @@
  *   I  het merk           -- geen meesters in de app, en de iconen kloppen
  *   J  op het beginscherm -- de uitlegkaart per browser, weg in de app, en het
  *                           installeervoorstel van de browser blijft onaangeroerd
+ *   K  de studiokeuring   -- wat de wereldstudio "blokkeert" noemt, houdt ook
+ *                           deze keuring tegen; er is één lijst regels
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -112,9 +114,15 @@ zaak('B', () => {
    een kind krijgt, de kleedkamer die het als "te verdienen" toont, en de winkel
    die het juist níét mag verkopen. */
 zaak('C', () => {
+  /* Elke wereld die een kind kan spelen deelt iets uit. Een wereld op
+     released:false mag nog zonder: een wereldschat is een tekening in code en
+     komt vaak later dan de kaart, en zo kan zo'n wereld al veilig mee naar main
+     zonder dat een kind hem ziet. Dezelfde regel als in wereldControle (zie zaak
+     K) -- de studio en deze keuring zijn het dus eens over wat "klaar" is. */
+  const open = WORLDS.slice(0, app.uitgebrachtTot());
+  check(open.every(w => 'beloning' in w), 'C · elke uitgebrachte wereld deelt een spulletje uit',
+    JSON.stringify(open.filter(w => !('beloning' in w)).map(w => w.id)));
   const beloningen = WORLDS.filter(w => 'beloning' in w);
-  check(beloningen.length === WORLDS.length, 'C · elke wereld deelt een spulletje uit',
-    JSON.stringify(WORLDS.filter(w => !('beloning' in w)).map(w => w.id)));
   const ids = beloningen.map(w => w.beloning);
   check(dubbel(ids).length === 0, 'C · geen twee werelden die hetzelfde spulletje uitdelen', JSON.stringify(dubbel(ids)));
   beloningen.forEach(w => {
@@ -683,6 +691,54 @@ zaak('J', () => {
   check(!/beginscherm|install/i.test(JSON.stringify(c.db)), 'J · en db -- dus de back-up -- weet er niets van', Object.keys(c.db).join(', '));
   const morgen = laadApp({ opslag: c.opslag() });
   check(html(morgen, UA.android).includes('set-beginscherm'), 'J · een nieuwe start vraagt het gewoon weer aan de browser', '');
+});
+
+/* ================= K · De studiokeuring =================
+   De wereldstudio kijkt de werelden na met wereldControle (in src/20-app.js), en
+   noemt een punt "blokkeert" als een kind er nu last van heeft. Precies die
+   punten horen deze keuring te laten omvallen, en niets anders -- anders zegt de
+   studio "in orde" en valt het vastleggen daarna om, of andersom.
+
+   Hiervoor stonden de regels twee keer: in de studio en in de zaken hierboven, en
+   ze liepen uiteen. De studio noemde "geen beloning" een opmerking terwijl zaak C
+   erop omviel; je merkte het pas bij het vastleggen, na minuten testen. Nu is dit
+   de brug: dezelfde functie, dezelfde bestandslijst als de studio krijgt. */
+zaak('K', () => {
+  const { assetsOpSchijf } = require('./werelden');
+  const punten = app.wereldControle(assetsOpSchijf('assets'));
+  const blok = punten.filter(p => p.blokkeert);
+  check(blok.length === 0, 'K · niets wat de studio blokkerend noemt',
+    blok.map(p => p.w + ': ' + p.t).join(' | '));
+  check(punten.every(p => p.ernst === 'fout' || !p.blokkeert),
+    'K · alleen een fout kan blokkeren', JSON.stringify(punten.filter(p => p.ernst !== 'fout' && p.blokkeert)));
+
+  /* En de brug draagt ook: een echte fout in een uitgebrachte wereld blokkeert,
+     dezelfde fout in een wereld die nog dicht is niet. Zonder deze drie zou
+     "niets blokkeert" ook waar zijn als er niet gekeken werd.
+
+     Op de eerste wereld (die is altijd open) en op een proefwereld achteraan die
+     dicht is -- niet op "de laatste wereld", want staat daar al een wereld die
+     nog niet uitgebracht is, dan meet je iets anders. */
+  const proef = laadApp();
+  proef.run("WORLDS.push({ id: 'proef', name: 'Proefwereld', icon: '🧪', levels: 8, released: false });"
+    + 'rebuildWorldStarts(); rebuildWorldBadges();');
+  const dicht = proef.wereldControle({}).filter(p => /Proefwereld/.test(p.w));
+  check(dicht.some(p => p.waar === 'beloning' && p.ernst === 'fout' && !p.blokkeert),
+    'K · een dichte wereld zonder schat: nog te doen, blokkeert niet', JSON.stringify(dicht));
+  check(!dicht.some(p => p.blokkeert), 'K · en een dichte wereld achteraan blokkeert niets', JSON.stringify(dicht));
+  const schat = proef.WORLDS[0].beloning;
+  proef.run('delete WORLDS[0].beloning;');
+  check(proef.wereldControle({}).some(p => p.waar === 'beloning' && p.blokkeert && p.w.indexOf(proef.WORLDS[0].name) >= 0),
+    'K · een uitgebrachte wereld zonder schat: dat blokkeert', 'niet gezien');
+  proef.run("WORLDS[0].beloning = 'pet_poes';");
+  check(proef.wereldControle({}).some(p => /winkel/.test(p.t) && p.blokkeert),
+    'K · een winkelspulletje als schat blokkeert', 'niet gezien');
+  proef.run('WORLDS[0].beloning = ' + JSON.stringify(schat) + ';');
+  // een wereld die kinderen al spelen weer dichtzetten
+  proef.run('WORLDS[1].released = false; rebuildWorldStarts();');
+  check(proef.wereldControle({}).some(p => /al uitgebracht/.test(p.t) && p.blokkeert),
+    'K · een uitgebrachte wereld weer dichtzetten blokkeert', 'niet gezien');
+  proef.run('delete WORLDS[1].released; rebuildWorldStarts();');
 });
 
 klaar();
