@@ -3,6 +3,10 @@
  *
  *   node promo/render.js                 -> promo/rekensterren-promo.mp4 (25 s)
  *   node promo/render.js logo 0 8        -> promo/rekensterren-logo.mp4  (alleen het logo)
+ *   node promo/render.js promo-staand    -> promo/rekensterren-promo-staand.mp4 (1080x1920)
+ *
+ * Een naam met "staand" erin geeft het staande filmpje: promo.html?staand, voor
+ * telefoons en verhalen/status op sociale media.
  *
  * promo.html tekent alles als functie van de tijd (render(t)), dus hier wordt
  * niet gefilmd maar per beeld een tijdstip gezet en een schermafdruk gemaakt.
@@ -19,14 +23,16 @@ const [naam = 'promo', van = '0', tot = '26'] = process.argv.slice(2);
 // 60 beelden per seconde: bij 30 hakte de draaiende ster zichtbaar
 const FPS = +process.env.FPS || 60;
 const OUT = path.join(__dirname, `rekensterren-${naam}.mp4`);
+const STAAND = /staand/.test(naam);
+const [W, H] = STAAND ? [1080, 1920] : [1920, 1080];
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 
 (async () => {
   const browser = await launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  const page = await browser.newPage({ viewport: { width: W, height: H } });
   const fouten = [];
   page.on('pageerror', e => fouten.push(e.message));
-  await page.goto('file://' + path.join(__dirname, 'promo.html') + '?opname');
+  await page.goto('file://' + path.join(__dirname, 'promo.html') + '?opname' + (STAAND ? '&staand' : ''));
   // alle beelden en werelden vooraf laden, anders mist er een frame bij het wisselen
   await page.evaluate(async () => {
     await document.fonts.ready;
