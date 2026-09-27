@@ -63,7 +63,8 @@
      De hele tournee .... de reis boven de werelden uit (het grootste blok)
 
    ---- HET SPEL -------------------------------------------------------------
-     Vragen maken ....... rekenmodus: genTriple/genQuestion/genMissing/genChain
+     Vragen maken ....... rekenmodus: de leerstap per wereld (LEERSTAPPEN),
+                          genTriple/genQuestion/genMissing/genChain
      Telmodus ........... lees-vrije vragen: fases, rungs, genCount, rendering
      Memory-spel ........ los kaartspel (lees-vrij)
      Extra uitdagingen .. beheersing, pauzeren, inroostering speciale vragen
@@ -1298,15 +1299,12 @@ function rebuildWorldBadges() {
   if (perfectPlank) perfectPlank.ids = perfectIds;
 }
 
-/* De pedagogische klok. Dit was `ronde` in cityFor en stuurt wannéér de extra
-   uitdagingen mogen verschijnen: zoek-het-getal vanaf ronde 3, drie-getallen
-   vanaf ronde 4 (zie opReady/chainReady). BEWUST losgekoppeld van de wereld-
-   indeling: een ronde is 12 optredens en een wereld is er 8, dus die twee door
-   elkaar halen zou allebei die uitdagingen ineens acht shows te vroeg laten
-   beginnen -- een stille verandering in wanneer een zesjarige voor het eerst
-   "3 + ▢ = 7" ziet. Verander dit getal alleen met opzet. */
-const ROUND_LEN = 12;
-function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
+/* De pedagogische klok stond hier: tourRound(), rondes van twaalf shows, los van
+   de werelden. Hij is vervangen door de leerstap per wereld (zie "De leerstap"
+   bij Vragen maken). Zoek-het-getal begint nog altijd op show 25 -- dat is show 1
+   van wereld 4 -- dus wanneer een zesjarige voor het eerst "3 + ▢ = 7" ziet is
+   niet veranderd. Drie getallen wél: die wachtten op ronde 5, en die begon bij
+   show 49, één voorbij de laatste show. */
 
 /* ================= Trofeeën =================
    FASE 5C -- de kast is uitgedund. Er stonden 42 trofeeën op acht planken, en dat
@@ -1320,13 +1318,13 @@ function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
    viert waar een kind trots op is. Een teller die vanzelf oploopt is dat niet.
    Concreet weggevallen (zie RETIRED_TROPHIES):
      - tussenstappen die niets toevoegen (3 shows, show 5, show 10, 250 sommen,
-       3 perfecte shows, 25 extra shows)
+       3 perfecte shows, 25 keer applaus)
      - de zes "wereld uitgespeeld"-badges: een uitgespeelde wereld gééft al een
        spulletje en een feestje (zie grantWorldRewards). Twee keer dezelfde
        mijlpaal belonen maakt geen van beide bijzonderder. Perfect blijft.
-     - de sterrentotalen 12/30/60: dat ís de ster-status-ladder (zie RANK_TIERS),
-       letterlijk dezelfde drempels met dezelfde namen. Een tweede kaartje ernaast
-       voegt geen prestatie toe, alleen een tweede plek waar hetzelfde staat.
+     - de sterrentotalen 12/30/60: dat wás de ster-status-ladder (zie RANK_TIERS),
+       toen letterlijk dezelfde drempels met dezelfde namen. Een tweede kaartje
+       ernaast voegt geen prestatie toe, alleen een tweede plek waar hetzelfde staat.
      - de twee diamantsaldo's: die leerden precies het verkeerde. Diamanten zijn
        er om uit te geven in de kleedkamer; een trofee voor "niet uitgegeven"
        straft het kind dat doet waar de munt voor is.
@@ -1346,7 +1344,8 @@ function tourRound(lvl) { return Math.floor((lvl - 1) / ROUND_LEN) + 1; }
 const TROPHIES = [
   // 🎤 Avontuur — de momenten die je je herinnert
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
-  { id: 'toegift',    emoji: '🎉', name: 'Extra show!',     desc: 'Je eerste extra show',  has: p => (p.encores || 0) >= 1 },
+  // id blijft 'toegift' (zo staat hij in de saves); het kind ziet "Applaus!"
+  { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
   /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en dat
      blijft het. Komt er een wereld bij, dan gaat deze trofee weer open staan --
@@ -1468,43 +1467,58 @@ function boughtCount(p) {
 }
 
 /* ================= Sterrencarrière ================= */
-// Eén doorlopende carrièreladder op basis van álle verdiende sterren (over alle
-// tournees heen). Elke show geeft sterren, dus de rang-balk beweegt altíjd —
-// hét lange-termijndoel dat nooit "op" is. Elke rang omhoog geeft een diamant-
-// bonus, zodat het lange sparen óók de kleedkamer blijft voeden. Hergebruikt het
-// bestaande sterren-systeem volledig: geen nieuwe munt, verzameling of scherm.
+/* Eén doorlopende carrièreladder op basis van álle verdiende sterren. Elke rang
+   omhoog geeft een diamantbonus, zodat het lange sparen óók de kleedkamer blijft
+   voeden. Hergebruikt het bestaande sterrensysteem volledig: geen nieuwe munt,
+   verzameling of scherm.
+
+   DE LADDER PAST IN WAT ER TE HALEN VALT. Een show levert hoogstens drie sterren
+   op, en overdoen houdt de beste uitslag (Math.max in applyShowResult). Met zes
+   werelden van acht shows is dat 144 sterren, en meer bestaat er niet. De ladder
+   liep door tot 150, 220, 300 en daarna elke honderd verder: drie namen en een
+   oneindige staart die geen kind kon halen, en een Radioster op 144 hoorde voor
+   altijd "nog 6 sterren". De drempels stamden uit de tijd van de eindeloze
+   tournee (zie migrate), toen sterren wél bleven komen.
+
+   Nu is de bovenste rang "alles perfect": elke show van elke uitgebrachte wereld
+   op drie sterren. Daarmee zijn de ster-status, de perfecte werelden en het
+   overdoen voor drie sterren één doel in plaats van drie. Wie de tournee
+   gewoon uitspeelt (gemiddeld zo'n twee sterren per show) komt rond Radioster
+   en Toursensatie uit; de laatste twee rangen zijn voor wie teruggaat om het
+   perfect te doen.
+
+   De bovenste drempel staat daarom niet als getal in de tabel maar volgt de
+   werelden (rangDrempel): komt er een wereld bij, dan hoort "alles perfect" die
+   ook te omvatten. Wie de top al had, zakt dan één rang in de ladder, maar
+   krijgt de bonus niet nog eens (p.rankSeen). */
 const RANK_TIERS = [
   { min: 0,   name: 'Straatartiest', emoji: '🎤', bonus: 0 },
   { min: 12,  name: 'Lokale ster',   emoji: '⭐', bonus: 10 },
   { min: 30,  name: 'Clubster',      emoji: '🎶', bonus: 15 },
-  { min: 60,  name: 'Stadsster',     emoji: '🏙️', bonus: 20 },
-  { min: 100, name: 'Radioster',     emoji: '📻', bonus: 30 },
-  { min: 150, name: 'Toursensatie',  emoji: '✈️', bonus: 40 },
-  { min: 220, name: 'Platinaster',   emoji: '💿', bonus: 50 },
-  { min: 300, name: 'Wereldlegende', emoji: '👑', bonus: 60 },
+  { min: 50,  name: 'Stadsster',     emoji: '🏙️', bonus: 20 },
+  { min: 75,  name: 'Radioster',     emoji: '📻', bonus: 30 },
+  { min: 100, name: 'Toursensatie',  emoji: '✈️', bonus: 40 },
+  { min: 125, name: 'Platinaster',   emoji: '💿', bonus: 50 },
+  { alles: true, name: 'Wereldlegende', emoji: '👑', bonus: 60 },
 ];
-const RANK_STEP = 100;   // na Wereldlegende: elke +100 sterren een nieuwe ⭐-tier
-// Rang-beschrijving voor een bepaald sterrentotaal, inclusief de open-einde
-// "Wereldlegende ⭐×N"-tiers voorbij de laatste vaste rang. idx is doorlopend
-// (0,1,2,…) zodat we een rang-stijging betrouwbaar kunnen herkennen.
+/* Welke versie van de drempels een profiel kent. Ging de tabel hierboven op de
+   schop, dan hoort migrate() p.rankSeen één keer stil op de nieuwe rang te zetten
+   (zie daar) -- anders krijgt een kind bij de volgende show ineens een reeks
+   rangen in één keer, of juist nooit meer een feestje. */
+const RANG_VERSIE = 2;
+function rangDrempel(i) {
+  const t = RANK_TIERS[i];
+  return t.alles ? Math.max(RANK_TIERS[i - 1].min + 1, 3 * WORLD_LAST) : t.min;
+}
+// Rang-beschrijving voor een bepaald sterrentotaal. Op de bovenste rang is er
+// geen volgende: nextMin en nextName zijn dan null.
 function starRank(total) {
   let i = 0;
-  for (let k = 0; k < RANK_TIERS.length; k++) if (total >= RANK_TIERS[k].min) i = k;
-  const base = RANK_TIERS[i];
-  const last = RANK_TIERS.length - 1;
-  if (i < last) {
-    const nxt = RANK_TIERS[i + 1];
-    return { idx: i, name: base.name, emoji: base.emoji, curMin: base.min, nextMin: nxt.min, nextName: nxt.name };
-  }
-  // open einde: Wereldlegende ⭐2, ⭐3, …
-  const over = Math.floor((total - base.min) / RANK_STEP);
-  const curMin = base.min + over * RANK_STEP;
-  const stars = over + 1;
-  return {
-    idx: last + over, emoji: base.emoji,
-    name: over === 0 ? base.name : `${base.name} ⭐${stars}`,
-    curMin, nextMin: curMin + RANK_STEP, nextName: `${base.name} ⭐${stars + 1}`,
-  };
+  for (let k = 0; k < RANK_TIERS.length; k++) if (total >= rangDrempel(k)) i = k;
+  const t = RANK_TIERS[i];
+  const nxt = RANK_TIERS[i + 1];
+  return { idx: i, name: t.name, emoji: t.emoji, curMin: rangDrempel(i),
+           nextMin: nxt ? rangDrempel(i + 1) : null, nextName: nxt ? nxt.name : null };
 }
 function rankBonusFor(idx) { return RANK_TIERS[Math.min(idx, RANK_TIERS.length - 1)].bonus; }
 // Na het verdienen van sterren: is de speler een rang gestegen? Zo ja, keer de
@@ -1613,11 +1627,12 @@ function defaultProfile(name, dress, opts) {
     // worldsSeen vult zich vanzelf: de kaart zet er elke wereld in die ze opent.
     tourStars: {}, worldsSeen: [],
     rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
+    rangVersie: RANG_VERSIE,   // welke drempels rankSeen kent (zie RANG_VERSIE)
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
     weak: {},   // zwakke sommen: "7 × 8 = @" -> { ans, op, w } om gericht te herhalen
     learned: {},// geoefende sommen in onderhoud: "7 × 8 = @" -> { ans, op, iv, due }
     // per-bewerking-beheersing (klaarheid extra uitdagingen) + frequentie-trappen
-    opTrack: {},                                    // op -> { n, acc, paused, unlockRound }
+    opTrack: {},                                    // op -> { n, acc, paused, unlockStap }
     missRamp: { rung: 1, hot: 0 },                  // zoek-het-getal: 1 of 2 per optreden
     chainTrack: { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 },  // drie getallen
     // telmodus: welke fase het kind nú speelt (klimt mee met de beheersing, binnen
@@ -1697,6 +1712,12 @@ function migrate(p) {
   // bestaande spelers beginnen op hun huidige rang (geen bonus met terugwerkende
   // kracht voor sterren die ze al hadden); nieuwe rangen daarna betalen wél uit
   if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
+  /* De drempels zijn veranderd (RANG_VERSIE): zet de uitbetaalde rang één keer
+     stil op waar dit kind nu staat. Zonder dit krijgt een kind met 100 sterren
+     -- onder de oude tabel Radioster, nu Toursensatie -- bij de volgende show
+     een feestje voor een rang die ze niet net haalde. Stil en zonder bonus:
+     hetzelfde als voor een bestaande speler hierboven. */
+  if (p.rangVersie !== RANG_VERSIE) { p.rankSeen = starRank(totalStarCount(p)).idx; p.rangVersie = RANG_VERSIE; }
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
   // bestaande spelers beginnen met een lege onderhoudslijst; die vult zich vanzelf
@@ -1713,6 +1734,17 @@ function migrate(p) {
   if (p.settings.missNum == null) p.settings.missNum = true;
   if (p.settings.chain3 == null) p.settings.chain3 = true;
   if (!p.opTrack) p.opTrack = {};
+  /* De stempel "sinds wanneer beheerst" telde in rondes van twaalf shows
+     (unlockRound) en telt nu in werelden (unlockStap, zie "De leerstap"). Ronde 3
+     begon op show 25 = wereld 4, ronde 4 op show 37 = wereld 5: een ronde is dus
+     de stap erna. Zo komt drie-getallen voor een bestaand kind niet ineens in
+     dezelfde wereld als zoek-het-getal. Eén keer, en daarna is het oude veld weg. */
+  Object.values(p.opTrack).forEach(t => {
+    if (t && t.unlockRound !== undefined) {
+      if (t.unlockStap == null && t.unlockRound != null) t.unlockStap = t.unlockRound + 1;
+      delete t.unlockRound;
+    }
+  });
   if (!p.missRamp) p.missRamp = { rung: 1, hot: 0 };
   if (!p.chainTrack) p.chainTrack = { seen: 0, acc: 0.5, paused: false, rung: 1, hot: 0 };
   // telmodus (lees-vrij): standaard uit (track 'math') voor bestaande profielen
@@ -2448,9 +2480,17 @@ function avatarSVG(p, width, propMaat) {
   // hoofd
   s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
   s += B.hairFront(hc);
-  s += `<circle cx="88" cy="72" r="3.6" fill="#333"/><circle cx="112" cy="72" r="3.6" fill="#333"/>`;
+  s += `<circle class="av-oog" cx="88" cy="72" r="3.6" fill="#333"/><circle class="av-oog" cx="112" cy="72" r="3.6" fill="#333"/>`;
   s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
-  s += `<path d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  /* Twee monden, en er staat er altijd maar één aan. De lach is de gewone; het
+     rondje eronder is "oh!" -- de pop die schrikt van een misser (zie .oeps in
+     het stijlblad en oepsGezicht). Het rondje staat met opacity="0" als
+     áttribuut uit en niet in het stijlblad: deze tekening gaat ook zonder
+     stijlblad over straat (een miniatuur, een geëxporteerd plaatje), en dan
+     hoort ze gewoon te lachen. Een CSS-regel wint het van een attribuut, dus
+     .oeps kan hem wél aanzetten. */
+  s += `<path class="av-mond" d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#c2572b" opacity="0"/>`;
   // accessoire op het hoofd / gezicht
   if (acc) {
     /* Een item mag zijn eigen tekening meebrengen: acc.draw() geeft een stukje SVG
@@ -3775,14 +3815,15 @@ function openCareer() {
   const total = totalStarCount(p);
   const cur = starRank(total);
   const last = RANK_TIERS.length - 1;
-  const curBase = Math.min(cur.idx, last);
-  const into = total - cur.curMin, span = cur.nextMin - cur.curMin;
-  const pct = Math.max(0, Math.min(100, Math.round((into / span) * 100)));
-  const remain = cur.nextMin - total;
+  const curBase = cur.idx;
+  const top = cur.nextMin == null;   // de bovenste rang: alles perfect, er is geen volgende
+  const into = total - cur.curMin, span = top ? 1 : cur.nextMin - cur.curMin;
+  const pct = top ? 100 : Math.max(0, Math.min(100, Math.round((into / span) * 100)));
+  const remain = top ? 0 : cur.nextMin - total;
   // Eén doorlopende ladder van laag naar hoog. De huidige rung (curBase) toont de
-  // eigen naam/emoji uit starRank (klopt ook voor de open-einde Wereldlegende ⭐N).
-  // De doel-rij (volgende status) draagt de balk: naam + beloning boven, voortgang
-  // eronder. De balk vult van je huidige tier naar déze drempel (de /nextMin).
+  // eigen naam/emoji uit starRank. De doel-rij (volgende status) draagt de balk:
+  // naam + beloning boven, voortgang eronder. De balk vult van je huidige tier
+  // naar déze drempel (de /nextMin).
   const goalRow = (emoji, name) => `<div class="ladder-row goal">`
     + `<div class="lr-top"><span class="lr-emoji">${emoji}</span><span class="lr-name">${name}</span>`
     + (rankBonusFor(cur.idx + 1) > 0 ? `<span class="lr-bonus">+${rankBonusFor(cur.idx + 1)} 💎</span>` : '') + `</div>`
@@ -3809,10 +3850,10 @@ function openCareer() {
       rows += `<div class="ladder-row future"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span></div>`;
     }
   });
-  // open einde: is de volgende status een Wereldlegende ⭐N (voorbij de vaste rangen),
-  // dan is díé het doel; anders sluit een gedimde "…en verder"-rij de ladder af.
-  if (cur.idx >= last) rows += goalRow('⭐', cur.nextName);
-  else rows += `<div class="ladder-row future"><span class="lr-emoji">⭐</span><span class="lr-name">…en verder</span></div>`;
+  // Staan er boven het getoonde stuk nog rangen, dan sluit een gedimde
+  // "…en verder"-rij de ladder af. Is de top in beeld, dan niet: daarboven is er
+  // niets meer, en een rij die dat wél belooft is precies de oude fout.
+  if (tot < last) rows += `<div class="ladder-row future"><span class="lr-emoji">⭐</span><span class="lr-name">…en verder</span></div>`;
   const ov = openOverlay('career-overlay', `<div class="pop-panel career-panel">`
     + `<button class="career-close" type="button" aria-label="Sluiten">✕</button>`
     + `<div class="career-title">Jouw ster-status</div>`
@@ -3820,7 +3861,8 @@ function openCareer() {
   ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) ov._close(); };
   requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
   // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
-  speak(`Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
+  speak(top ? `Je bent een ${cur.name}. Alle shows perfect!`
+             : `Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
 }
 /* ================= Bewegingstaal: kaart <-> zaal ===========================
    MOTION is de JS-kant van de bewegingsladder. Vier snelheden, en niets ertussen:
@@ -4052,12 +4094,16 @@ function schermWeg(el, naarBinnen, punt) {
 function navMee(naarBinnen) {
   const nav = $('main-nav');
   if (!nav || !nav.animate || motionOff()) return;
-  nav.getAnimations().forEach(a => a.cancel());
+  /* Alleen wat navMee er zelf op zette, en niet nav.getAnimations(): dat dwingt
+     stijl en opmaak af midden in de tik (gemeten: 9 tot 22ms per tik op een
+     zesvoudig gesmoorde processor, op de halte én op "Verder op tournee"). Zie
+     schermAnim -- dezelfde reden, dezelfde oplossing. */
+  schermAnimsStop(nav);
   if (!naarBinnen) {
     // De kaart komt op en neemt zijn balk mee. fill:'backwards' houdt hem op nul
     // zolang de vorige nog wegvalt, dus hij verschijnt niet alvast over een zaal.
     if (nav.style.display === 'none') return;
-    nav.animate([{ opacity: 0 }, { opacity: 1 }],
+    schermAnim(nav, [{ opacity: 0 }, { opacity: 1 }],
       { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
     return;
   }
@@ -4066,8 +4112,8 @@ function navMee(naarBinnen) {
      kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij komt
      dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem wilde. */
   nav.style.display = 'flex';
-  const op = () => { nav.getAnimations().forEach(a => a.cancel()); navVolgtScherm(); };
-  const a = nav.animate([{ opacity: 1 }, { opacity: 0 }],
+  const op = () => { schermAnimsStop(nav); navVolgtScherm(); };
+  const a = schermAnim(nav, [{ opacity: 1 }, { opacity: 0 }],
     { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + MOTION.vangnet);
@@ -7010,24 +7056,82 @@ function updateTroDot() {
    Omdat het gezochte getal altijd één getal is, blijven meerkeuze, typen, hints,
    zwakke-sommen en álle beloningen ongewijzigd werken. */
 
-// Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
-// Alles komt uit de bestaande moeilijkheidslogica (level + vaardigheid).
-function genTriple(s, lvl, perf, op) {
-  // Moeilijkheid = basis per level + bijsturing op vaardigheid (perf 0..1 → ±0.25).
-  // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
+/* ---- De leerstap: elke wereld leert iets nieuws ------------------------
+   Een wereld is niet alleen een nieuwe tekening maar ook een nieuwe stap in het
+   rekenen, binnen het plafond dat de ouder zette ("getallen tot 20"):
+
+     stap  wereld  wat er nieuw is
+     1     1       sommen tot de helft van het plafond (bij "tot 20": tot 10)
+     2     2       het hele plafond, zonder over een tiental heen (12 + 5, 17 − 4)
+     3     3       over het tiental heen, en dat vaak (8 + 5, 13 − 6)
+     4     4       zoek het getal (3 + ▢ = 7), zodra de gewone som beheerst is
+     5     5       drie getallen (3 + 4 + 2), zodra zoek-het-getal er een wereld
+                   eerder bij kwam -- nooit twee nieuwe dingen tegelijk
+     6     6       alles door elkaar
+   Een wereld die later bijkomt krijgt stap 6: alles, zoals de laatste.
+
+   Waarom. De moeilijkheid liep op het shownummer: 0.35 + 0.07 per show, en dat
+   stond bij show 10 op het plafond. Daarna waren de sommen in wereld 2 tot en
+   met 6 van dezelfde soort, met een andere tekening erachter. Zoek-het-getal
+   kwam op show 25 en drie getallen nooit: die wachtte op "ronde 5", en die begon
+   bij show 49 -- één voorbij de laatste show die er is.
+
+   Wat blijft: de bijsturing op hoe het gaat (perf, ±0.25 op de moeilijkheid, dus
+   een kind dat worstelt krijgt in elke stap lichtere sommen) en de beheersing-
+   poorten van de extra uitdagingen (opMastered, pauze bij worstelen). Zoek-het-
+   getal begint op dezelfde show als altijd: show 1 van wereld 4 ís show 25. De
+   wereld verandert niets aan hoe een som eruitziet -- dat blijft overal gelijk.
+   Wat hij verandert is wát er te leren valt. */
+const LEERSTAPPEN = [
+  { t: 0.5, brug: 'nee' },
+  { t: 1,   brug: 'nee' },
+  { t: 1,   brug: 'vaak' },
+  { t: 1,   brug: 'vrij' },
+  { t: 1,   brug: 'vrij' },
+  { t: 1,   brug: 'vrij' },
+];
+const STAP_ZOEK = 4;      // vanaf deze stap mag zoek-het-getal (zie opReady)
+const STAP_DRIE = 5;      // vanaf deze stap mogen drie getallen (zie chainReady)
+const BRUG_VAAK = 0.5;    // in stap 3: zo vaak gaat een plus- of minsom over het tiental
+function leerStap(lvl) { return worldFor(lvl).index + 1; }
+function stapVan(lvl) { return LEERSTAPPEN[Math.min(leerStap(lvl), LEERSTAPPEN.length) - 1]; }
+// Moeilijkheid 0..1: de basis van de stap, bijgestuurd op vaardigheid (perf 0..1 → ±0.25).
+function moeilijkheid(lvl, perf) {
   const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
+  return Math.max(0.2, Math.min(1, stapVan(lvl).t + skillAdj));
+}
+/* Gaat deze som over een tiental heen? Voor plus: tellen de eenheden samen tot
+   boven de tien (8 + 5 wel, 7 + 3 en 15 + 5 niet -- die landen óp een tiental).
+   Voor min precies andersom: c + b moet over het tiental heen (13 − 6 wel,
+   10 − 3 en 20 − 3 niet). Zo werkt het ook bij "tot 100" (27 + 5, 43 − 8). */
+function overTiental(a, b, c, op) {
+  if (op === '+') return (a % 10) + (b % 10) > 10;
+  if (op === '-') return (c % 10) + (b % 10) > 10;
+  return false;
+}
+
+// Bouwt één geldige, niet-negatieve, exacte drieling voor een bewerking.
+// Alles komt uit de moeilijkheidslogica hierboven (leerstap + vaardigheid).
+function genTriple(s, lvl, perf, op) {
+  // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
+  const t = moeilijkheid(lvl, perf);
   const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
-  if (op === '+') {
-    a = rnd(1, effMax - 1);
-    b = rnd(1, effMax - a);
-    c = a + b; sym = '+';
-  } else if (op === '-') {
-    a = rnd(2, effMax);
-    b = rnd(1, a - 1);
-    c = a - b; sym = '−';
+  if (op === '+' || op === '-') {
+    /* De tiental-regel van deze stap. Onder de 11 kán een som niet over het
+       tiental, dus dan valt er niets te kiezen en wordt er ook niet gezocht. */
+    const brug = stapVan(lvl).brug;
+    const wilBrug = brug === 'vaak' && effMax > 10 && Math.random() < BRUG_VAAK;
+    const magBrug = brug !== 'nee';
+    let poging = 0;
+    do {
+      if (op === '+') { a = rnd(1, effMax - 1); b = rnd(1, effMax - a); c = a + b; }
+      else { a = rnd(2, effMax); b = rnd(1, a - 1); c = a - b; }
+      const over = overTiental(a, b, c, op);
+      if ((wilBrug ? over : (magBrug || !over))) break;
+    } while (++poging < 40);
+    sym = op === '+' ? '+' : '−';
   } else if (op === 'x') {
     b = pick(tables);
     const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
@@ -7061,8 +7165,7 @@ function genMissing(s, lvl, perf, op) {
 // ingestelde bovengrens; elke term is bescheiden (≈ hooguit de helft), zodat het
 // hoofdrekenen behapbaar blijft. 0-termen mogen, maar niet te vaak.
 function genChain(s, lvl, perf) {
-  const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  const t = Math.max(0.2, Math.min(1, 0.35 + lvl * 0.07 + skillAdj));
+  const t = moeilijkheid(lvl, perf);
   const effMax = Math.max(10, Math.round(s.max * t));
   const cap = Math.max(1, Math.floor(effMax / 2));
   let a, b, c, sum, tries = 0;
@@ -7774,14 +7877,15 @@ function bumpLearned(p, q) {
 function demoteLearned(p, q) { if (p.learned) delete p.learned[q.tmpl]; }
 // Een som die aan onderhoud toe is: het langst over tijd gaat voor. Alleen
 // bewerkingen die nu aanstaan, en niets boven de ingestelde bovengrens.
-function pickRefresh(p, s) {
+// mag (optioneel): zegt per sjabloon of hij nu terug mag komen (zie buildQuestion).
+function pickRefresh(p, s, mag) {
   if (!p.learned) return null;
   const ops = s.ops.length ? s.ops : ['+'];
   const now = qClock(p);
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-    if (!ops.includes(e.op) || e.ans > s.max) continue;
+    if (!ops.includes(e.op) || e.ans > s.max || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -7790,27 +7894,51 @@ function pickRefresh(p, s) {
   return { tmpl: best, ans: e.ans, op: e.op, kind: 'classic', refresh: true };
 }
 // Kies een zwakke som om te herhalen (alleen als de bewerking nog aanstaat); zwaardere vaker.
-function pickWeak(p, s) {
+// mag (optioneel): zegt per sjabloon of hij nu terug mag komen (zie buildQuestion).
+function pickWeak(p, s, mag) {
   const ops = s.ops.length ? s.ops : ['+'];
-  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op));
+  const keys = Object.keys(p.weak).filter(k => ops.includes(p.weak[k].op) && (!mag || mag(k)));
   if (!keys.length) return null;
   const pool = [];
   keys.forEach(k => { for (let i = 0; i < p.weak[k].w; i++) pool.push(k); });
   const k = pick(pool.length ? pool : keys);
   return { tmpl: k, ans: p.weak[k].ans, op: p.weak[k].op, kind: 'classic' };
 }
-// Bouwt de volgende vraag: ~35% kans op een zwakke herhaling, anders een verse (adaptieve) som.
-function buildQuestion(p, lvl) {
+/* Bouwt de volgende vraag: ~35% kans op een zwakke herhaling, anders een verse
+   (adaptieve) som.
+
+   g (optioneel) is de show die loopt, en die bepaalt wat er nu níét mag:
+
+     net geweest   een som uit de laatste HERHAAL_AFSTAND vragen komt niet
+                   terug -- ook niet als verse som. Een gemiste som is dus pas
+                   twee vragen later weer aan de beurt.
+     al herhaald   een zwakke of geleerde som komt hoogstens één keer per show
+                   terug (g.herhaald).
+
+   Zonder die twee regels kon een gemiste som meteen de volgende vraag zijn, en
+   daarna nóg eens: in één show van acht kwam 3 + 7 drie keer, waarvan twee keer
+   vlak achter elkaar. Dat leest niet als oefenen maar als vastzitten. Het
+   gewicht in p.weak blijft gewoon staan; hij komt in een volgende show terug. */
+const HERHAAL_AFSTAND = 2;
+function buildQuestion(p, lvl, g) {
+  const net = [];
+  if (g) for (let i = Math.max(0, g.idx - HERHAAL_AFSTAND); i < g.idx; i++) if (g.qs[i]) net.push(g.qs[i].tmpl);
+  const al = g && g.herhaald;
+  const mag = k => !net.includes(k) && !(al && al.has(k));
   if (Math.random() < 0.35) {
-    const wq = pickWeak(p, p.settings);
-    if (wq) return wq;
+    const wq = pickWeak(p, p.settings, mag);
+    if (wq) { if (al) al.add(wq.tmpl); return wq; }
   }
   // onderhoud: af en toe een som die al geleerd is maar lang niet langskwam
   if (Math.random() < 0.12) {
-    const rq = pickRefresh(p, p.settings);
-    if (rq) return rq;
+    const rq = pickRefresh(p, p.settings, mag);
+    if (rq) { if (al) al.add(rq.tmpl); return rq; }
   }
-  return genQuestion(p.settings, lvl, p.perf);
+  // een verse som, maar niet precies die van net (een paar pogingen, en dan
+  // toch: bij "tot 10" met alleen plus is de pot klein)
+  let q, poging = 0;
+  do { q = genQuestion(p.settings, lvl, p.perf); } while (net.includes(q.tmpl) && ++poging < 8);
+  return q;
 }
 
 /* ================= Extra uitdagingen: klaarheid, tempo, inroostering =================
@@ -7824,7 +7952,7 @@ function buildQuestion(p, lvl) {
 // pogingen en of het (met hysterese) op pauze staat.
 function ot(p, op) {
   let t = p.opTrack[op];
-  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockRound: null, fast: 0.5 }; p.opTrack[op] = t; }
+  if (!t) { t = { n: 0, acc: 0.5, paused: false, unlockStap: null, fast: 0.5 }; p.opTrack[op] = t; }
   if (t.fast == null) t.fast = 0.5;   // bestaande spelers: neutraal beginnen
   return t;
 }
@@ -7855,28 +7983,30 @@ function opMastered(p, op) {
   // voldoende pogingen gaat de poort alsnog open.
   return (t.fast == null ? 0.5 : t.fast) >= FLUENT_MIN || t.n >= PATIENCE_N;
 }
-// Klaar voor zoek-het-getal bij deze bewerking: vanaf ronde 3, beheerst, niet op pauze.
-function opReady(p, op, round) {
+// Klaar voor zoek-het-getal bij deze bewerking: vanaf leerstap STAP_ZOEK (wereld
+// 4), beheerst, niet op pauze.
+function opReady(p, op, stap) {
   const t = p.opTrack[op];
-  if (!t || round < 3 || t.paused) return false;
+  if (!t || stap < STAP_ZOEK || t.paused) return false;
   return opMastered(p, op);
 }
-// Klaar voor drie-getallen (alleen optellen): vanaf ronde 4, tel-beheersing, en pas
-// nadat zoek-het-getal voor + is losgekomen (≥2 rondes geleden) — nooit twee nieuwe
-// dingen tegelijk. Werkt met de tel-beheersing, ook als de ouder missNum uit heeft.
-function chainReady(p, s, round) {
+// Klaar voor drie-getallen (alleen optellen): vanaf leerstap STAP_DRIE (wereld 5),
+// tel-beheersing, en pas nadat zoek-het-getal voor + in een éérdere wereld is
+// losgekomen — nooit twee nieuwe dingen in dezelfde wereld. Werkt met de
+// tel-beheersing, ook als de ouder missNum uit heeft.
+function chainReady(p, s, stap) {
   const ct = p.chainTrack;
-  if (round < 4 || ct.paused) return false;
+  if (stap < STAP_DRIE || ct.paused) return false;
   if (!opMastered(p, '+')) return false;
   const plus = p.opTrack['+'];
-  if (!plus || plus.unlockRound == null || round - plus.unlockRound < 2) return false;
+  if (!plus || plus.unlockStap == null || stap - plus.unlockStap < 1) return false;
   return true;
 }
-// Zet de "sinds-ronde"-stempel zodra een bewerking beheerst is (voor de chain-gate).
-function refreshReadiness(p, round) {
+// Zet de "sinds-stap"-stempel zodra een bewerking beheerst is (voor de chain-gate).
+function refreshReadiness(p, stap) {
   ['+', '-', 'x', ':'].forEach(op => {
     const t = ot(p, op);
-    if (round >= 3 && opMastered(p, op) && t.unlockRound == null) t.unlockRound = round;
+    if (stap >= STAP_ZOEK && opMastered(p, op) && t.unlockStap == null) t.unlockStap = stap;
   });
 }
 // Werkt de per-bewerking-nauwkeurigheid bij ná de definitieve afronding van een
@@ -7933,11 +8063,11 @@ function pickSlots(total, count, avoid) {
 // Roostert de speciale vragen van dit optreden in: hoeveel, welk type, welke plek.
 // Zolang drie-getallen nog in de introductiefase zit (trap < 2) mag er hoogstens
 // één speciale vraag per ronde zijn — óf zoek-het-getal, óf drie-getallen, nooit beide.
-function planSpecials(p, s, total, round, goldIdx) {
-  refreshReadiness(p, round);
-  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, round));
+function planSpecials(p, s, total, stap, goldIdx) {
+  refreshReadiness(p, stap);
+  const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, stap));
   const missAvail = missOps.length > 0;
-  const chainAvail = !!s.chain3 && chainReady(p, s, round);
+  const chainAvail = !!s.chain3 && chainReady(p, s, stap);
   const twoOk = s.perLevel >= 8;   // 2 speciale vragen alleen bij lange optredens (≥8)
   const both = missAvail && chainAvail;
   let types = [];
@@ -7965,13 +8095,43 @@ function planSpecials(p, s, total, round, goldIdx) {
   });
   return plan;
 }
-// Vriendelijke richtinghint bij een fout antwoord (helpt zonder het antwoord te verklappen).
-function hintFor(q, val) {
-  if (typeof val === 'number' && !isNaN(val)) {
-    if (val > q.ans) return 'Net iets te veel — probeer een kleiner getal! 👇';
-    if (val < q.ans) return 'Net iets te weinig — probeer een groter getal! 👆';
-  }
-  return 'Bijna! Probeer nog eens 💪';
+/* De hint na een eerste misser in de rekenmodus, als plaatje: het getal dat je
+   koos, met een pijl erbij -- omhoog als het antwoord méér is, omlaag als het
+   minder is. Dezelfde pijl komt klein op de rode tegel zelf, zodat hij bij het
+   getal staat waar hij over gaat.
+
+   Hier stond een zin: "Net iets te weinig — probeer een groter getal! 👆". De
+   jongste rekenaars lezen cijfers maar nog geen zinnen, dus voor hen was een
+   misser een rode kleur en een regel die ze niet konden lezen. De woorden
+   blijven, klein onder het plaatje, voor wie wél leest -- en ze kloppen nu ook:
+   "net iets" staat er alleen als het ook net iets was. De foute keuzes liggen
+   op ±1, ±2 en ±10 (zie makeChoices), en bij tien ernaast is "net iets" niet
+   waar.
+
+   Bewust géén stippen of ander hoeveelheidsplaatje: de rekenmodus is cijfers,
+   en een plaatje dat alleen na een fout opduikt moet je ontcijferen op het
+   slechtste moment -- en wordt een teken dat het misging. Zie docs/GAME-REVIEW.md. */
+const HINT_DICHTBIJ = 2;
+function hintVoor(q, val) {
+  if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
+  const meer = q.ans > val;
+  const net = Math.abs(q.ans - val) <= HINT_DICHTBIJ;
+  const woord = meer ? 'meer' : 'minder';
+  return { pijl: meer ? 'op' : 'neer',
+           woorden: (net ? 'Net iets ' + woord : woord[0].toUpperCase() + woord.slice(1)) + ' dan ' + val };
+}
+// Een dikke pijl als SVG en niet als teken: ⬆️ is op elk toestel een ander
+// blauw vierkantje, en een ↑ in de letter is te dun om van een meter af te zien.
+function pijlSVG(richting) {
+  const draai = richting === 'neer' ? ' transform="rotate(180 12 12)"' : '';
+  return `<svg class="pijl-teken" viewBox="0 0 24 24" aria-hidden="true"><path${draai} d="M12 3 L21 13 H15.5 V21 H8.5 V13 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+function toonHint(q, val, btnEl) {
+  const h = hintVoor(q, val);
+  if (!h) { showToast('🤔', null, null, 'teken'); return; }
+  if (btnEl) btnEl.insertAdjacentHTML('beforeend', `<span class="tegel-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`);
+  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`,
+            null, h.woorden, 'hint');
 }
 
 /* ================= Spel ================= */
@@ -7991,13 +8151,14 @@ function startLevel(lvl) {
   // Extra-uitdaging-vragen (zoek-het-getal / drie getallen) vooraf inroosteren op
   // vaste plekken; de gewone vragen worden per stuk gebouwd (incl. zwakke herhaling).
   // In de telmodus komen die niet voor -- daar bouwt genCount elke vraag.
-  const plan = count ? [] : planSpecials(p, s, s.perLevel, tourRound(lvl), goldIdx);
+  const plan = count ? [] : planSpecials(p, s, s.perLevel, leerStap(lvl), goldIdx);
   // FASE 1: de publieksmeter is uit het spel gehaald. De teller zelf loopt stil door
-  // (zie submitAnswer/endLevel): hij bepaalt nog altijd de extra show en de restbonus,
+  // (zie submitAnswer/endLevel): hij bepaalt nog altijd het applaus en de restbonus,
   // maar er staat geen balk meer op het scherm. G.fan/G.fanStep zijn daarmee interne
   // staat geworden -- bewust blijven staan i.p.v. de beloningen eruit te slopen.
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
-  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0,
+  G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
+        klaarBijStart: (p.readyTrophies || []).slice(),
         missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
   // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
@@ -8051,7 +8212,7 @@ function renderQuestion() {
       const plan = G.plan[G.idx];
       if (plan && plan.type === 'miss') { built = genMissing(s, G.lvl, p.perf, plan.op); G.missShown++; }
       else if (plan && plan.type === 'chain') { built = genChain(s, G.lvl, p.perf); G.chainShown++; }
-      else built = buildQuestion(p, G.lvl);
+      else built = buildQuestion(p, G.lvl, G);
     }
     if (G.idx === G.goldIdx) built.gold = true;
     // telmodus: kondig de gouden vraag hoorbaar aan (lees-vrij) -- de prompt wordt
@@ -8068,13 +8229,7 @@ function renderQuestion() {
   renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
-  // Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
-  // opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
-  // antwoord dat er net was -- geen overgang, een aankondiging.
-  const kaart = $('question-card');
-  kaart.classList.remove('vers');
-  void kaart.offsetWidth;
-  kaart.classList.add('vers');
+  vraagKomtIn($('question-card'));
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
@@ -8101,6 +8256,34 @@ function renderQuestion() {
     });
   }
   startSpot();
+}
+/* Een nieuwe vraag komt binnen in plaats van te verspringen: 140ms, alleen
+   opacity + een duwtje omhoog. Dat is het "en nu de volgende" van het goede
+   antwoord dat er net was -- geen overgang, een aankondiging. Alleen in een
+   zaal (.venue-aan); zonder zaal staat de kaart er gewoon.
+
+   Met een eigen Animation en niet meer met een klasse die eraf en er weer op
+   gaat. Die klasse herstartte via "void kaart.offsetWidth", en dat dwingt de
+   browser de hele opmaak uit te rekenen midden in de tik. Bij de eerste vraag
+   is dat de tik op de halte, op een scherm dat show() net aanzette: gemeten
+   127ms van die tik op een zesvoudig gesmoorde processor, de grootste post van
+   de hele overgang. Hier wordt niets opgevraagd; de vorige animatie stoppen we
+   omdat we hem zelf bijhouden (net als schermAnim).
+
+   fill 'both', net als de CSS-animatie hiervoor: de kaart blijft na afloop op
+   zijn eindstand staan, en daarmee op een eigen laag. Met 'backwards' viel hij
+   daar na 140ms van af, en dan tekent de browser de som net anders -- genoeg om
+   het getal dat erin vliegt (somVult) af en toe ruim een pixel naast het vakje
+   te laten landen. test/maths.test.js meet precies dat. */
+const VRAAG_IN = 140;
+let vraagInAnim = null;
+function vraagKomtIn(kaart) {
+  if (vraagInAnim) { vraagInAnim.cancel(); vraagInAnim = null; }
+  if (!kaart || !kaart.animate || motionOff()) return;
+  if (!$('screen-game').classList.contains('venue-aan')) return;
+  vraagInAnim = kaart.animate(
+    [{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
+    { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
@@ -8327,7 +8510,7 @@ function submitAnswer(val, btnEl) {
     G.earned += gain;
     p.diamonds += gain;
     // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
-    // je speelt, hoe sneller hij volloopt. Vol = een extra show, met bonusdiamanten.
+    // je speelt, hoe sneller hij volloopt. Vol = applaus, met bonusdiamanten.
     let fanMul = 1;
     if (!firstTry) fanMul = 0.5;               // een herkansing laat het publiek maar half zo hard juichen
     else {
@@ -8357,7 +8540,12 @@ function submitAnswer(val, btnEl) {
     // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
     const diaVan = vak || btnEl || $('question-card');
     setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2), vlucht);
-    if (encore) { sndStreak(); confetti(24); showPraise('🎆 EXTRA SHOW!', '💎 +5 bonus'); }
+    /* Het publiek klapt extra hard, en zij buigt (zie buiging). Hier stond
+       "🎆 EXTRA SHOW!", en een extra show kwam er nooit -- de meter erachter is
+       sinds fase 1 onzichtbaar, dus een kind kreeg een belofte die niets deed.
+       Nu is wat er staat ook wat er gebeurt. "Applaus" en niet "toegift": dat
+       kent elk kind, en voor applaus buig je. */
+    if (encore) { sndStreak(); confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
     else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
     else if (!firstTry) { sndGood(); showPraise('Goed zo, je had het!', '💎 +' + gain); }
@@ -8365,11 +8553,12 @@ function submitAnswer(val, btnEl) {
     if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
     const trofees = checkTrophies(p);
     if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
-    dance('game-avatar-inner');
+    if (encore) buiging('game-avatar-inner');
+    else dance('game-avatar-inner');
     zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
     // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
     // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
-    // wachten. Een gouden vraag en een extra show mogen wél even duren; die zijn
+    // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
     // bedoeld om op te vallen.
     setTimeout(nextStep, encore || q.gold ? 1400 : 950);
     return;
@@ -8387,7 +8576,7 @@ function submitAnswer(val, btnEl) {
      G.retried staat hier nog op de stand van vóór deze beurt -- hij gaat pas om in
      de eerste-misser-tak hieronder, dus dit leest de vorige poging en niet deze. */
   if (G.retried) sndMis(); else sndWrong();
-  slipNote();
+  oepsGezicht();
   // "Niet die -- probeer nog eens", en klaar. 420ms i.p.v. 700: een misser mag
   // duidelijk zijn maar hoort niet ook nog te dúren. De rode tegel blijft staan
   // (die zegt wélke), de kaart schudt kort en is dan weer gewoon de som.
@@ -8404,8 +8593,8 @@ function submitAnswer(val, btnEl) {
     save();
     if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
     if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
-    if (G.count) { countMissSpeak(q, val); showToast('🤔'); }   // lees-vrij: gesproken hint, geen tekst
-    else showToast(hintFor(q, val));
+    if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
+    else toonHint(q, val, btnEl);
     return;                                        // G.lock blijft false → kind mag opnieuw antwoorden
   }
   // tweede misser: hartje kwijt, antwoord tonen en door
@@ -8422,7 +8611,7 @@ function submitAnswer(val, btnEl) {
   if (G.count) {
     countReveal(q);                               // juiste hoeveelheid hardop meetellen, geen tekst
     loseHeart();
-    showToast('👉', nextStep);
+    toonVerder();
     return;
   }
   if (G.mode === 'kies') {
@@ -8434,7 +8623,34 @@ function submitAnswer(val, btnEl) {
   // losse kaart ernaast. Die kaart zegt dan alleen nog hoe je verder komt.
   somVult(q, null, true);
   loseHeart();
-  showToast('👉', nextStep, 'tik om verder te gaan');
+  toonVerder();
+}
+/* "Verder", zonder één woord. Na een tweede misser wacht de show op een tik
+   (overal op het scherm, zie .tap-veil), en de kaart bovenin zegt alleen nog
+   dát: een wijzende hand, groot. In de rekenmodus stond er "tik om verder te
+   gaan" onder, en dat is precies het stuk dat een kind van zes niet leest --
+   de telmodus deed het al zonder, en nu doen ze het allebei zo. */
+function toonVerder() { showToast('👉', nextStep, null, 'teken'); }
+/* De pop schrikt: even een rond "oh!"-mondje en grote ogen (zie avatarSVG en
+   .oeps in het stijlblad). Dit kwam in de plaats van een grijs nootje van 52px
+   dat over haar lijf naar beneden viel -- op telefoonmaat las dat als een vlek
+   op de pop, en zelf deed ze intussen niets: ze bleef gewoon lachen.
+
+   Nu reageert zíj, en dat is ook meteen het hele bericht. Geen straf, geen
+   verdriet: een "oeps", en dan staat ze weer klaar voor de volgende poging.
+   Vóór de volgende misser gaat de klasse er eerst af, anders begint het
+   schrikken niet opnieuw. */
+const OEPS_DUUR = 700;
+let oepsTimer = null;
+function oepsGezicht() {
+  const pop = $('game-avatar-inner');
+  if (!pop) return;
+  clearTimeout(oepsTimer);
+  pop.classList.remove('oeps');
+  requestAnimationFrame(() => {
+    pop.classList.add('oeps');
+    oepsTimer = setTimeout(() => pop.classList.remove('oeps'), OEPS_DUUR);
+  });
 }
 // het verloren hartje breekt even zichtbaar (💔 + schudden) voor het wit wordt
 /* De zaal reageert op een goed antwoord: het voetlicht trekt aan en de wereld
@@ -8468,13 +8684,6 @@ function livesText() {
   const left = Math.max(0, 3 - G.errors);
   return '❤️'.repeat(left) + '🤍'.repeat(3 - left);
 }
-function slipNote() {
-  const el = $('slip-note');
-  el.textContent = pick(['🎵', '🎶', '😅']);
-  el.classList.remove('go');
-  void el.offsetWidth;
-  el.classList.add('go');
-}
 function nextStep() {
   hideToast();
   if (!G) return;
@@ -8507,13 +8716,28 @@ function bumpPintjeTaps(el) {
 /* Wat deze show waard was, in sterren. Puur rekenwerk op de stand van G: geen
    profiel, geen scherm, niets dat blijft staan.
 
-   Rekenmodus telt missers hard (foutloos = 3). De telmodus (kleuters) is milder
-   en kijkt naar hoeveel er over de héle ronde in één keer goed ging, zodat één
-   verbeterde hapering een sterke ronde niet meteen degradeert. */
+   Eén regel voor allebei de modi, en hij groeit mee met de lengte van de show.
+   G.misses telt de vragen die niet in één keer goed gingen:
+
+     3   foutloos: elke vraag in één keer goed. Dat is wat het eindscherm dan
+         belooft ("Foutloos — het publiek gaat uit zijn dak!"), en wat een
+         perfecte wereld betekent.
+     2   hooguit STER_MARGE van de vragen niet in één keer goed: bij 5 vragen
+         1 of 2, bij 8 vragen 1 tot 3, bij 10 vragen 1 tot 4
+     1   de rest: de show is gehaald
+
+   Hiervoor waren het twee regels. De rekenmodus gaf 1 ster vanaf twee
+   haperingen: zes van de acht in één keer goed leverde 1 ster op, onder
+   "🎉 Show 1 was geweldig!", en een kind dat van vijf haperingen naar twee
+   ging zag geen verschil. De telmodus keek naar de verhouding (85% en 55%), en
+   gaf bij acht of tien vragen ook drie sterren mét een hapering -- onder
+   datzelfde "Foutloos". De marge hierboven is de 55% van de telmodus: geen kind
+   krijgt voor dezelfde show minder sterren dan eerst, behalve die ene drie
+   sterren die niet foutloos was. */
+const STER_MARGE = 0.45;
 function showStars(g) {
-  if (!g.count) return g.misses === 0 ? 3 : g.misses === 1 ? 2 : 1;
-  const ratio = g.total > 0 ? (g.total - g.misses) / g.total : 1;
-  return ratio >= 0.85 ? 3 : ratio >= 0.55 ? 2 : 1;
+  if (g.misses === 0) return 3;
+  return g.misses <= Math.floor(g.total * STER_MARGE) ? 2 : 1;
 }
 /* Een geslaagde show wegschrijven. Álles wat blíjft staan gebeurt hier en
    nergens anders: de sterren, de positie, de beloningen van de wereld, de
@@ -8593,7 +8817,7 @@ function endLevel(success) {
   $('end-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   // Wat er van de stille publieksteller overblijft telt altijd mee: +1 💎 per volle
-  // 25%, zodat inspanning ook loont als de extra show (100%) net niet gehaald is.
+  // 25%, zodat inspanning ook loont als het applaus (100%) net niet gehaald is.
   // Sinds fase 1 heeft die bonus geen eigen vakje meer op het eindscherm -- hij zit
   // gewoon in de 💎 die je deze show verdiend hebt (zie verdiend hieronder).
   const fanBonus = Math.floor(G.fan / 25);
@@ -8609,11 +8833,23 @@ function endLevel(success) {
        Wat eruit komt is materiaal voor het scherm hieronder, en niets anders:
        vanaf hier wordt er niets meer bewaard. */
     const r = applyShowResult(p, lvl, wl, showStars(G));
-    const { stars, beter, bonus, trofees } = r;
+    const { stars, beter, bonus } = r;
+    /* Wat er tijdens déze show klaar kwam te liggen, en niet alleen aan het eind.
+       Trofeeën als "25 sommen goed" of "Applaus!" worden al bij het antwoord
+       klaargelegd (submitAnswer), dus r.trofees -- wat applyShowResult er aan
+       het eind nog bij vindt -- miste ze: na de eerste show stond er "Nieuwe
+       trofee klaar!" terwijl er twee lagen. */
+    const nieuwKlaar = (p.readyTrophies || []).filter(id => !G.klaarBijStart.includes(id)).length;
     if (r.travel) pendingTravel = r.travel;   // de ster reist zichtbaar door op de kaart
     rankUp = r.rankUp;
     feest = r.feest;
-    $('end-title').textContent = `🎉 Show ${wl.nr} was geweldig!`;
+    /* De kop zegt wat de sterren zeggen. Hier stond altijd "was geweldig!", ook
+       boven één ster -- en dan spreken de kop en de sterren elkaar tegen op het
+       ene moment dat een kind leest hoe het ging. Elke kop is blij; alleen
+       "geweldig" is voor foutloos. */
+    $('end-title').textContent = stars === 3 ? `🎉 Show ${wl.nr} was geweldig!`
+      : stars === 2 ? `👏 Show ${wl.nr} was goed!`
+      : `🎤 Show ${wl.nr} gehaald!`;
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
     // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
@@ -8624,10 +8860,13 @@ function endLevel(success) {
       : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
       : 'Het publiek klapt hard voor je! 👏';
     $('end-text').textContent = juich;
-    // Altijd deze twee, altijd in deze volgorde, altijd even breed.
-    $('end-earn').innerHTML =
-        `<span class="earn-chip dia">💎 +${verdiend}</span>`
-      + `<span class="earn-chip star">⭐ +${bonus}</span>`;
+    /* Eén vakje: alle 💎 van deze show, de sterrenbonus erbij. Hier stonden er
+       twee, en het tweede was "⭐ +15" -- maar die 15 waren diamanten (5 per ster,
+       zie applyShowResult), met een ster ervoor. Een kind las vijftien sterren,
+       vlak onder de drie die ze net gehaald had, en het 💎-vakje ernaast was dan
+       weer vijftien te laag. De sterren staan erboven, groot; dit vakje is de munt.
+       De bonus van een nieuwe ster-status staat in zijn eigen pil hieronder. */
+    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend + bonus}</span>`;
     /* Eén mijlpaal, en alleen als er écht iets gehaald is: een nieuwe ster-status
        of een trofee die klaarligt. Allebei dezelfde gouden pil, allebei tikbaar.
 
@@ -8648,8 +8887,8 @@ function endLevel(success) {
     if (rankUp) {
       mile.innerHTML = `<button class="gold-pill" type="button">${rankUp.rank.emoji} ${rankUp.rank.name}! +${rankUp.bonus} 💎</button>`;
       mile.firstChild.onclick = () => { sndClick(); openCareer(); };
-    } else if (trofees.length) {
-      const label = trofees.length === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${trofees.length} nieuwe trofeeën klaar!`;
+    } else if (nieuwKlaar) {
+      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
       mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
     }
@@ -8676,11 +8915,9 @@ function endLevel(success) {
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
     $('end-milestone').innerHTML = '';
-    // zelfde twee vakjes als bij een geslaagde show, zodat het scherm niet
-    // ineens een andere vorm heeft: alleen wat je verdiend hebt, staat erin
-    $('end-earn').innerHTML =
-        `<span class="earn-chip dia">💎 +${verdiend}</span>`
-      + `<span class="earn-chip star">⭐ +0</span>`;
+    // hetzelfde 💎-vakje als bij een geslaagde show, zodat het scherm niet
+    // ineens een andere vorm heeft: wat je verdiend hebt, blijft van jou
+    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend}</span>`;
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
@@ -9379,7 +9616,12 @@ function renderDressBar(it, p) {
       <div class="db-info"><span class="db-name">${naam(it)}</span>
         <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
       <button class="btn small" id="db-earn">Speel</button>`;
-    $('db-earn').onclick = () => { sndClick(); startLevel(P().level); };
+    /* De show waar de kaart je nu heen stuurt. Is alles uit, dan staat p.level op
+       WORLD_LAST + 1 -- een level dat niet bestaat. Een show dáár speelde gewoon,
+       onder de naam van de laatste halte, en schreef p.stars[49] weg: precies de
+       fout die fase 4A uit het spel haalde, en die wereld 7 later zou laten
+       beginnen met een halte die al gespeeld lijkt. Dan dus de laatste show. */
+    $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
     return;
   }
   bar.innerHTML = `

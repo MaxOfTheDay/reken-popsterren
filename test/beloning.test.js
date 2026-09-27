@@ -78,7 +78,8 @@ function check(ok, label, detail) {
         };
         const voor = telt();
         startLevel(lvl);
-        G.misses = sterren >= 3 ? 0 : sterren === 2 ? 1 : 2;
+        // 1 ster: alles gehaperd (zie showStars -- tot 45% haperingen is het er twee)
+        G.misses = sterren >= 3 ? 0 : sterren === 2 ? 1 : G.total;
         endLevel(true);
         await new Promise(r => setTimeout(r, 400));
         await new Promise(r => setTimeout(r, telt() === voor ? 200 : 1600));
@@ -807,11 +808,13 @@ function check(ok, label, detail) {
 
      Die val: sommige animaties zijn het enige dat hun element ooit zichtbaar
      maakt. De juichkaart staat op opacity 0 en wordt door praisePop opgehaald;
-     de toast net zo; het nootje bij een misser ook. Ze allemaal netjes op
+     de toast net zo. Ze allemaal netjes op
      `animation: none` zetten is dan geen rust maar verlies -- dan verdwijnt de
      kaart mét de diamanten erin, en de toast die vertelt wat het juiste
      antwoord was. Vandaar dat hier niet gemeten wordt of er iets uit staat,
-     maar of het er nog stáát. */
+     maar of het er nog stáát. Het "oh!" van de pop bij een misser hoort daar
+     ook bij: het gezicht is een uitdrukking en blijft, alleen het ineenkrimpen
+     valt weg. */
   {
     const { ctx, page } = await fresh(null, { reducedMotion: 'reduce' });
     await nieuweSter(page);
@@ -845,7 +848,10 @@ function check(ok, label, detail) {
     const kaarten = await page.evaluate(async () => {
       showPraise('Goed zo, je had het!', '💎 +2');
       showToast('Het juiste antwoord was 7');
-      slipNote();
+      // de pop in de zaal, en haar "oh!" bij een misser (zie oepsGezicht)
+      const pop = document.getElementById('game-avatar-inner');
+      pop.innerHTML = pasLaag(avatarSVG(P(), 168));
+      oepsGezicht();
       await new Promise(res => setTimeout(res, 300));
       const zicht = id => {
         const st = getComputedStyle(document.getElementById(id));
@@ -860,7 +866,11 @@ function check(ok, label, detail) {
         d.remove();
         return naam;
       };
-      return { praise: zicht('praise'), toast: zicht('toast'), noot: zicht('slip-note'),
+      const laag = pop.querySelector('.pas-laag');
+      const oeps = { mond: +getComputedStyle(pop.querySelector('.av-mond-o')).opacity,
+                     lach: +getComputedStyle(pop.querySelector('.av-mond')).opacity,
+                     schrik: getComputedStyle(laag).animationName };
+      return { praise: zicht('praise'), toast: zicht('toast'), oeps,
                gouden: meet('question-card golden'), schud: meet('shake') };
     });
     const schaal = +(/matrix\(([-\d.]+)/.exec(kaarten.praise.vorm) || [0, 0])[1];
@@ -868,7 +878,8 @@ function check(ok, label, detail) {
       'M · de juichkaart met de diamanten erin staat er, en op ware grootte', JSON.stringify(kaarten.praise));
     check(kaarten.toast.op > .9 && kaarten.toast.tonen === 'flex',
       'M · de toast vertelt nog steeds wat het juiste antwoord was', JSON.stringify(kaarten.toast));
-    check(kaarten.noot.op > .5, 'M · en de knipoog bij een misser is er ook nog', JSON.stringify(kaarten.noot));
+    check(kaarten.oeps.mond === 1 && kaarten.oeps.lach === 0 && kaarten.oeps.schrik === 'none',
+      'M · bij een misser zegt haar gezicht "oh!", zonder dat ze ineenkrimpt', JSON.stringify(kaarten.oeps));
     check(kaarten.gouden === 'none', 'M · de gouden vraag blijft goud maar ademt niet', kaarten.gouden);
     check(kaarten.schud === 'none', 'M · en de hartjes schudden niet', kaarten.schud);
     await ctx.close();
