@@ -78,7 +78,8 @@ function check(ok, label, detail) {
         };
         const voor = telt();
         startLevel(lvl);
-        G.misses = sterren >= 3 ? 0 : sterren === 2 ? 1 : 2;
+        // 1 ster: alles gehaperd (zie showStars -- tot 45% haperingen is het er twee)
+        G.misses = sterren >= 3 ? 0 : sterren === 2 ? 1 : G.total;
         endLevel(true);
         await new Promise(r => setTimeout(r, 400));
         await new Promise(r => setTimeout(r, telt() === voor ? 200 : 1600));
