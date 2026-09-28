@@ -86,6 +86,15 @@ function check(ok, label, detail) {
     check(/Welkom/.test(r.sub), 'verse installatie verwelkomt', r.sub);
     check(/eerste ster/.test(r.addLabel), 'de knop noemt de eerste ster', r.addLabel);
     check(r.hintShown, 'de back-up-hint staat er bij nul sterren', 'verborgen');
+    // en hij is een knop: één tik en je staat bij "Back-up terugzetten"
+    await page.click('#restore-hint');
+    await page.waitForTimeout(300);
+    const naHint = await page.evaluate(() => ({
+      scherm: document.querySelector('.screen.active').id, tab: setTab,
+      terugzetten: !!document.getElementById('set-import'),
+    }));
+    check(naHint.scherm === 'screen-settings' && naHint.tab === 'beheer' && naHint.terugzetten,
+      'de hint brengt je meteen bij terugzetten', JSON.stringify(naHint));
     check(r.stored === null, 'een verse start schrijft nog niets weg', `stored=${r.stored && r.stored.slice(0, 40)}`);
     await ctx.close();
   }

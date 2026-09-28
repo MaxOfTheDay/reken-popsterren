@@ -2638,13 +2638,19 @@ function renderGearMenu() {
     st.classList.toggle('off', !on);
     item.setAttribute('aria-checked', on ? 'true' : 'false');
     item.querySelector('.gi-ico').textContent = on ? icoOn : icoOff;
+    item.classList.toggle('uit', !on);   // het icoon gedempt, zie .gear-item.uit
   };
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
   // dezelfde schakelaar in het stopvenster van een show (zie quit-modal)
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
   const hi = $('gear-haptics');
   if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
-  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📴');
+  /* Trillen houdt zijn eigen icoon, ook als hij uit staat: 📴 werd op de meeste
+     toestellen een fel oranje blokje met OFF erin, het luidste ding in het paneel
+     -- en dat voor een schakelaar die net stíl gezet is. De pil zegt al "Uit";
+     het icoon wordt alleen gedempt. 🔇 bij het geluid blijft wel: een doorgestreepte
+     luidspreker is dé tekening voor stil, en hij schreeuwt niet. */
+  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -10762,7 +10768,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
       <div class="set-field"><span class="lbl">Hoogste fase</span><span class="hulp">Zover mag het spel groeien.</span>${stageChips('set-stagemax', s.stageMax)}</div>
       ${legend}`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden en lengte', secundair: true, html: `
+    ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden, lengte en memory', secundair: true, html: `
       <div class="set-field"><span class="lbl">Cijfers tonen</span>
         <span class="hulp">Cijfers, minder stippensteun en meer redeneren vanaf fase 6.</span>
         <div class="chip-row" id="${pfx}set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
@@ -10775,7 +10781,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
           reprChip('objects', '🧸', 'Voorwerpen', (s.repr || 'objects') === 'objects')}${
           reprChip('dots', '⚫', 'Stippen', s.repr === 'dots')}${
           reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>
-      <div class="set-field"><span class="lbl">🎤 Memory-spel</span>
+      <div class="set-field"><span class="lbl">Memory-spel</span>
         <span class="hulp">Op de kaart: zoek de gelijke hoeveelheden.</span>
         <div class="chip-row" id="${pfx}set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
@@ -11015,17 +11021,27 @@ function beheerEmptyHtml() {
        weggaat -- dat is bij "opnieuw beginnen" precies het verschil met
        verwijderen, en dat verschil stond alleen in een losse notitie.
    De bevestigingsvensters erachter zijn ongewijzigd (drie tikken: openklappen,
-   knop, ja). */
+   knop, ja).
+
+   En twee dingen die er minder staan:
+     * De naamkaart noemde zichzelf drie keer ("Profiel", "De naam van deze
+       ster", en dan het label "Naam") voor één invulveld. De kop ís nu het
+       label -- een <label> in de <h2> -- dus een schermlezer hoort nog steeds
+       "Naam" bij het veld, zonder een verstopt tweede label.
+     * De stille kaart droeg een ⚠️ terwijl er nog niets open was. De waarschuwing
+       hoort bij het rode vlak, en dáár staat hij nog; de dichte kaart krijgt een
+       gewoon tegeltje. En de tweede openklapper noemt de ster bij naam, net als
+       het rode vlak erachter ("Lotte verwijderen"). */
 function beheerPanelHtml(p) {
   return `<div class="settings-panel">
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2>Profiel</h2><div class="sub">De naam van deze ster</div></div></div>
-      <div class="set-field"><label class="lbl" for="set-name">Naam</label>
+      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Naam</label></h2></div></div>
+      <div class="set-field">
         <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
         <div class="note">Wijzigingen worden meteen opgeslagen.</div></div>
     </div>
     <div class="set-card secundair">
-      <div class="set-card-head"><div class="ico">⚠️</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor ${esc(p.name)} — en niet terug te draaien</div></div></div>
+      <div class="set-card-head"><div class="ico">🔄</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor <span class="set-naam">${esc(p.name)}</span> — en niet terug te draaien</div></div></div>
       <!-- rode vlak bestaat pas als een ouder er zelf om vraagt; een permanent
            zichtbare wisknop hoort niet tussen gewone instellingen te staan -->
       <details class="danger-reveal" id="set-danger">
@@ -11040,7 +11056,9 @@ function beheerPanelHtml(p) {
       <!-- verwijderen hoort bij "wie deze ster is", niet bij "opnieuw beginnen":
            het ene haalt haar wég, het andere laat haar juist blijven -->
       <details class="danger-reveal" id="set-danger-del">
-        <summary>Deze ster verwijderen…</summary>
+        <!-- één tekstvak: de summary is flex met een gat, en anders valt dat gat
+             tussen de naam en "verwijderen" -->
+        <summary><span><span class="set-naam">${esc(p.name)}</span> verwijderen…</span></summary>
         <div class="danger-zone">
           <div><div class="t">⚠️ ${esc(p.name)} verwijderen</div>
             <div class="d">Haalt ${esc(p.name)} helemaal weg van dit toestel, met alle diamanten, sterren en spulletjes. De andere sterren blijven. Kan niet ongedaan gemaakt worden.</div></div>
@@ -11272,6 +11290,8 @@ function bindSettings(p, s) {
     // hertekenen (dat zou de focus uit het invulveld halen)
     const lbl = $('settings-profiles').querySelector('.active .tab-label');
     if (lbl) lbl.textContent = p.name;
+    // en in de wiskaart eronder, die haar ook bij naam noemt (.set-naam)
+    document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
   });
   /* Enter betekent "klaar met dit veld", net als op het maakformulier (zie daar):
      het toetsenbord gaat weg en de kaarten eronder zijn weer te zien. Er wordt
