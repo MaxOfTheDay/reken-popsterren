@@ -75,19 +75,24 @@
   p { margin: 0 0 10px; }
   .klein { color: var(--zacht); font-size: 14px; }
 
-  /* de schermen, zonder kaders: vier naast elkaar, op een telefoon twee aan twee */
-  .schermen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
-  @media (max-width: 640px) { .schermen { grid-template-columns: repeat(2, 1fr); gap: 14px 12px; } }
+  /* de schermen, zonder kaders: drie naast elkaar */
+  .schermen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
   .schermen img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; object-position: top;
     border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
-  /* bij het ouderscherm staat het belangrijkste lager: de lastige sommen */
-  .schermen img.lager { object-position: center 78%; }
   .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
 
-  /* drie korte regels over het rekenen */
-  .punten { list-style: none; padding: 0; margin: 0 auto; max-width: 40ch; text-align: center; font-size: 18px; }
-  .punten li + li { margin-top: 8px; }
-  .punten b { color: #fff; }
+  /* drie punten over het rekenen: icoon, kop, één regel. Naast elkaar op een
+     breed scherm, als drie nette rijen (icoon links) op een telefoon. */
+  .punten { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; text-align: center; }
+  .punten .ico { display: block; font-size: 34px; line-height: 1; margin-bottom: 8px; }
+  .punten b { display: block; color: #fff; font-size: 18px; line-height: 1.25; }
+  .punten span:not(.ico) { display: block; margin-top: 4px; color: var(--zacht); font-size: 15px; line-height: 1.35; }
+  @media (max-width: 640px) {
+    .punten { grid-template-columns: 1fr; gap: 14px; text-align: left; max-width: 34ch; margin: 0 auto; }
+    .punten li { display: grid; grid-template-columns: 44px 1fr; align-items: center; }
+    .punten .ico { grid-row: span 2; margin: 0; font-size: 30px; }
+    .punten span:not(.ico) { margin-top: 1px; }
+  }
   .kort { text-align: center; margin: 18px 0 0; }
 
   .deel { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
@@ -119,26 +124,27 @@
            aria-label="Filmpje van twintig seconden, zonder geluid: het logo en negen schermen uit het spel en het ouderdeel"></video>
   </div>
 
-  <!-- Eerst het plezier, dan het rekenen. De schermen worden bovenaan
-       afgesneden (3:4), zodat de rij op een telefoon niet te lang wordt. -->
-  <section>
+  <!-- Twee helften die elkaar spiegelen: wat je kind eraan heeft (het plezier,
+       in beeld) en wat jij eraan hebt (het rekenen, in drie punten). De schermen
+       worden bovenaan afgesneden (3:4), zodat de rij op een telefoon kort blijft. -->
+  <section aria-labelledby="kop-kind">
+    <h2 id="kop-kind">Voor je kind</h2>
     <ul class="schermen">
       <li><img src="beelden/02b-tournee.webp" alt="De tournee: werelden om te ontdekken, de volgende nog op slot" loading="lazy" width="360" height="779"><span>Werelden ontdekken</span></li>
       <li><img src="beelden/09-trofeeen.webp" alt="De trofeeënkast met trofeeën om te openen" loading="lazy" width="360" height="779"><span>Trofeeën verzamelen</span></li>
-      <li><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" loading="lazy" width="360" height="779"><span>De kleedkamer</span></li>
-      <li><img class="lager" src="beelden/08-ouder-voortgang.webp" alt="Het ouderdeel: hoe vlot het gaat en welke sommen nog lastig zijn" loading="lazy" width="360" height="779"><span>Wat jij ziet</span></li>
+      <li><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" loading="lazy" width="360" height="779"><span>De ster aankleden</span></li>
     </ul>
   </section>
 
   <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
        maken" en "= Extra uitdagingen" in src/20-app.js, en "Sommen die nu nog
        lastig zijn" in het ouderdeel. -->
-  <section aria-labelledby="kop-rekenen">
-    <h2 id="kop-rekenen">Het rekenen</h2>
+  <section aria-labelledby="kop-jou">
+    <h2 id="kop-jou">Voor jou</h2>
     <ul class="punten">
-      <li><b>Jij kiest</b> wat er geoefend wordt: + − × ÷, tot 10, 20, 50 of 100.</li>
-      <li><b>Het groeit mee:</b> lukt het, dan worden de sommen pittiger.</li>
-      <li><b>Lastige sommen komen terug</b>, en jij ziet welke.</li>
+      <li><span class="ico" aria-hidden="true">🎯</span><b>Jij kiest</b><span>+ − × ÷, tot 10, 20, 50 of 100</span></li>
+      <li><span class="ico" aria-hidden="true">📈</span><b>Het groeit mee</b><span>Lukt het, dan worden de sommen pittiger</span></li>
+      <li><span class="ico" aria-hidden="true">🔁</span><b>Lastige sommen komen terug</b><span>En in het ouderdeel zie je welke</span></li>
     </ul>
     <p class="klein kort">De voortgang blijft op dit toestel, en het werkt ook zonder internet.</p>
   </section>
