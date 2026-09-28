@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rekensterren promo</title>
 <!--
-  Het promofilmpje van Rekensterren: 26 seconden, 1920x1080.
+  Het promofilmpje van Rekensterren: 26 seconden, 1920x1080 -- of staand,
+  1080x1920, met ?staand erachter. Staand is voor de telefoon: de over-pagina op
+  een smal scherm, en verhalen/status op sociale media. Het is hetzelfde filmpje
+  met dezelfde tijden; alleen waar de dingen staan en hoe groot ze zijn is anders
+  (de blokken "staand" hieronder, in het stijlblad en in STAAND_ in het script).
 
   Open dit bestand gewoon in een browser en het speelt in een lus. Alles wat je
   ziet is één functie van de tijd -- render(t) -- zodat promo/render.js het beeld
@@ -110,6 +114,22 @@
     box-shadow: 0 12px 0 #b36200, 0 30px 60px rgba(0,0,0,.45);
   }
 
+  /* ---- staand, 1080x1920: dezelfde stukken, onder elkaar in plaats van naast
+     elkaar. Wat hier niet staat, is gelijk aan liggend. */
+  .staand #stage { width: 1080px; height: 1920px; }
+  .staand #logo { left: 60px; top: 740px; width: 960px; height: 320px; }
+  .staand #tag { top: 1130px; font-size: 64px; -webkit-text-stroke-width: 12px; }
+  .staand #sluier { background: linear-gradient(180deg, rgba(30,5,55,.88) 0%, rgba(30,5,55,.5) 38%, rgba(30,5,55,.15) 100%); }
+  .staand #tekst { left: 80px; top: 170px; width: 920px; height: auto; justify-content: flex-start; gap: 26px; }
+  .staand #bijschrift { font-size: 92px; }
+  .staand #onder { width: 900px; font-size: 38px; }
+  .staand #tel { left: 335px; top: 800px; }
+  .staand #tel2 { left: 770px; top: 960px; }
+  .staand #eindwoord { width: 960px; left: 60px; top: 380px; }
+  .staand #pillen { top: 860px; flex-direction: column; align-items: center; gap: 22px; }
+  .staand .pil { font-size: 46px; }
+  .staand #knop { left: 240px; top: 1330px; }
+
   #wipe { inset: 0; pointer-events: none; }
   #flits { inset: 0; background: #fff; pointer-events: none; }
 </style>
@@ -153,6 +173,26 @@
 'use strict';
 const DUUR = 26;
 const $ = id => document.getElementById(id);
+// staand of liggend: de maat van het beeld, en de plekken die daarvan afhangen
+const STAAND = location.search.includes('staand');
+const W = STAAND ? 1080 : 1920, H = STAAND ? 1920 : 1080;
+document.documentElement.classList.toggle('staand', STAAND);
+document.querySelectorAll('canvas').forEach(c => { c.width = W; c.height = H; });
+const PLEK = STAAND ? {
+  midden: [540, 940],                    // waar de vallende ster landt en de R groot staat
+  glinsters1: [[330, 780], [760, 800], [320, 1120], [770, 1150], [540, 700]],
+  glinsters2: [[110, 700], [980, 680], [150, 1070], [960, 1090], [540, 660], [800, 1290], [280, 1290]],
+  glinsters4: [[900, 380], [150, 640]],
+  gloed: [[200, 1600], [900, 300]],
+  telMaat: 1.4,                          // de telefoon mag hier groter: hij is het beeld
+} : {
+  midden: [960, 490],
+  glinsters1: [[720, 330], [1210, 360], [700, 640], [1230, 690], [960, 240]],
+  glinsters2: [[400, 330], [1560, 300], [470, 600], [1500, 620], [960, 250], [1180, 820], [720, 820]],
+  glinsters4: [[1480, 200], [430, 480]],
+  gloed: [[360, 900], [1600, 200]],
+  telMaat: 1,
+};
 
 /* ---- tijd en vorm ------------------------------------------------------ */
 const klem = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -168,7 +208,7 @@ const mix = (a, b, p) => a + (b - a) * p;
 function zaad(s) { return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
 const rnd = zaad(20240917);
 const HEMEL = Array.from({ length: 170 }, () => ({
-  x: rnd() * 1920, y: rnd() * 1080, r: .6 + rnd() * 2.1,
+  x: rnd() * W, y: rnd() * H, r: .6 + rnd() * 2.1,
   f: .6 + rnd() * 2.2, fase: rnd() * 6.28, kleur: rnd() < .15 ? '#ffe082' : rnd() < .25 ? '#9fe3ff' : '#fff',
 }));
 const VONKEN = Array.from({ length: 16 }, (_, i) => ({
@@ -176,12 +216,12 @@ const VONKEN = Array.from({ length: 16 }, (_, i) => ({
   kleur: ['#ffd740', '#ffe082', '#ff80ab', '#9fe3ff'][i % 4], draai: rnd() * 6,
 }));
 const CONFETTI = Array.from({ length: 70 }, () => ({
-  x: rnd() * 1920, v: 180 + rnd() * 260, r: 10 + rnd() * 18, zwaai: 20 + rnd() * 60,
+  x: rnd() * W, v: 180 + rnd() * 260, r: 10 + rnd() * 18, zwaai: 20 + rnd() * 60,
   fase: rnd() * 6.28, start: rnd() * 1.6, draai: rnd() * 4 - 2,
   kleur: ['#ffd740', '#ffc23d', '#ff80ab', '#9fe3ff', '#ffffff', '#c59bff'][Math.floor(rnd() * 6)],
 }));
 const SOMMEN = ['3 + 4', '5 − 2', '2 + 2', '6 + 1', '8 − 3', '1 + 5', '9 − 4', '4 + 3', '7 − 5', '2 + 6']
-  .map((s, i) => ({ s, x: 120 + (i * 197) % 1100, y: 1100 + (i * 131) % 500, v: 50 + (i * 37) % 40, fase: i }));
+  .map((s, i) => ({ s, x: 120 + (i * 197) % (STAAND ? 860 : 1100), y: H + 20 + (i * 131) % 500, v: 50 + (i * 37) % 40, fase: i }));
 
 function ster(ctx, x, y, r, draai, vul, rand) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(draai); ctx.beginPath();
@@ -233,9 +273,9 @@ SCHERMEN.forEach((s, i) => {
    blad staat. Tijden in seconden. */
 const LOGO_DELEN = {"blad":[1080,647],"delen":[["r",80,58,373,288,0,296],["e1",231,128,317,236,268,528],["k",304,72,426,257,295,296],["e2",377,126,457,233,356,528],["n1",442,119,536,238,949,296],["s",519,99,600,247,419,296],["t",588,130,654,243,200,528],["e3",632,114,714,236,865,296],["r1",704,113,790,241,622,296],["r2",750,128,848,246,100,528],["e4",804,141,902,260,0,528],["n2",871,154,989,291,502,296],["ster",526,27,679,153,710,296],["zwaai",45,34,1031,328,0,0]]};
 const LOGO = {
-  k: 1180 / 1080, pos: [370, 240],
+  k: (STAAND ? 960 : 1180) / 1080, pos: STAAND ? [60, 740] : [370, 240],
   rMidden: [165, 165], ster: [616, 103], sterBijR: [266, 208], sterBegin: .9,
-  groot: 1.55, rGroot: [930, 480],       // scène 1: de R zo groot, met zijn midden hier
+  groot: 1.55, rGroot: STAAND ? [520, 960] : [930, 480],       // scène 1: de R zo groot, met zijn midden hier
   schuif: [4.1, 4.9], wip: [4.85, 5.15], sprong: [5.0, 5.8],
   voor: 30, rimpel: .0009, letter: .5, zwaai: [.15, .85],   // rimpel: seconden per pixel
 };
@@ -279,29 +319,30 @@ const DEEL = {};
 })();
 
 function lucht(ctx, t) {
-  ctx.clearRect(0, 0, 1920, 1080);
+  ctx.clearRect(0, 0, W, H);
   for (const s of HEMEL) {
     const a = .35 + .45 * (.5 + .5 * Math.sin(t * s.f + s.fase));
     ctx.globalAlpha = a; ctx.fillStyle = s.kleur;
-    ctx.beginPath(); ctx.arc(s.x, s.y - t * 6 * s.r % 1080, s.r, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x, s.y - t * 6 * s.r % H, s.r, 0, 6.283); ctx.fill();
   }
   ctx.globalAlpha = 1;
   // zachte gloed in roze en blauw, zoals de achtergrond van het spel
-  const g1 = ctx.createRadialGradient(360, 900, 0, 360, 900, 700);
+  const [[x1, y1], [x2, y2]] = PLEK.gloed;
+  const g1 = ctx.createRadialGradient(x1, y1, 0, x1, y1, 700);
   g1.addColorStop(0, 'rgba(255,120,220,.22)'); g1.addColorStop(1, 'rgba(255,120,220,0)');
-  ctx.fillStyle = g1; ctx.fillRect(0, 0, 1920, 1080);
-  const g2 = ctx.createRadialGradient(1600, 200, 0, 1600, 200, 700);
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+  const g2 = ctx.createRadialGradient(x2, y2, 0, x2, y2, 700);
   g2.addColorStop(0, 'rgba(80,200,255,.18)'); g2.addColorStop(1, 'rgba(80,200,255,0)');
-  ctx.fillStyle = g2; ctx.fillRect(0, 0, 1920, 1080);
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
 }
 
 function voor(ctx, t) {
-  ctx.clearRect(0, 0, 1920, 1080);
+  ctx.clearRect(0, 0, W, H);
   // scène 1: de vallende ster, met staart
   const vp = tussen(t, .2, 1.3);
   if (vp > 0 && vp < 1) {
     const e = inUit(vp);
-    const pos = p => [mix(-150, 960, p), mix(-120, 490, p) - Math.sin(p * Math.PI) * 180];
+    const pos = p => [mix(-150, PLEK.midden[0], p), mix(-120, PLEK.midden[1], p) - Math.sin(p * Math.PI) * 180];
     for (let i = 26; i >= 0; i--) {
       const q = klem(e - i * .012);
       const [x, y] = pos(q);
@@ -318,7 +359,7 @@ function voor(ctx, t) {
     const e = uitKubisch(bp);
     for (const v of VONKEN) {
       ctx.globalAlpha = 1 - bp * bp;
-      ster(ctx, 960 + Math.cos(v.hoek) * v.afstand * e, 490 + Math.sin(v.hoek) * v.afstand * e,
+      ster(ctx, PLEK.midden[0] + Math.cos(v.hoek) * v.afstand * e, PLEK.midden[1] + Math.sin(v.hoek) * v.afstand * e,
         v.r * (1 - bp * .5), v.draai + bp * 4, v.kleur);
     }
     ctx.globalAlpha = 1;
@@ -326,8 +367,7 @@ function voor(ctx, t) {
   // glinsters rond het logo (scène 1 en 2)
   if (t > 1.4 && t < S3 + .2) {
     const a = t < 4.5 ? 1 - tussen(t, 3.9, 4.2) : tussen(t, 6.4, 6.8) * (1 - tussen(t, S3 - .4, S3 + .2));
-    const plekken = t < 4.5 ? [[720, 330], [1210, 360], [700, 640], [1230, 690], [960, 240]]
-      : [[400, 330], [1560, 300], [470, 600], [1500, 620], [960, 250], [1180, 820], [720, 820]];
+    const plekken = t < 4.5 ? PLEK.glinsters1 : PLEK.glinsters2;
     plekken.forEach(([x, y], i) => {
       const k = Math.pow(Math.max(0, Math.sin(t * 2.4 + i * 1.7)), 3);
       glinster(ctx, x, y, 34 * k + 4, a * k);
@@ -352,19 +392,20 @@ function voor(ctx, t) {
     for (const c of CONFETTI) {
       const tt = lt - c.start; if (tt < 0) continue;
       const y = -40 + tt * c.v;
-      if (y > 1120) continue;
+      if (y > H + 40) continue;
       ctx.globalAlpha = .9 * (1 - tussen(t, DUUR - .5, DUUR));
       ster(ctx, c.x + Math.sin(tt * 2 + c.fase) * c.zwaai, y, c.r, c.fase + tt * c.draai, c.kleur);
     }
     ctx.globalAlpha = 1;
     const k = Math.pow(Math.max(0, Math.sin(t * 3)), 4);
-    glinster(ctx, 1480, 200, 40 * k + 4, k);
-    glinster(ctx, 430, 480, 34 * (1 - k) + 4, 1 - k);
+    const [[ax, ay], [bx, by]] = PLEK.glinsters4;
+    glinster(ctx, ax, ay, 40 * k + 4, k);
+    glinster(ctx, bx, by, 34 * (1 - k) + 4, 1 - k);
   }
 }
 
 function sommen(ctx, t, zicht) {
-  ctx.clearRect(0, 0, 1920, 1080);
+  ctx.clearRect(0, 0, W, H);
   if (!zicht) return;
   ctx.font = '700 44px Fredoka'; ctx.textAlign = 'center';
   for (const s of SOMMEN) {
@@ -378,12 +419,12 @@ function sommen(ctx, t, zicht) {
 
 // de overgang: een gouden ster die het hele beeld vult en weer openvalt
 function wipe(ctx, t, om) {
-  ctx.clearRect(0, 0, 1920, 1080);
+  ctx.clearRect(0, 0, W, H);
   const p = tussen(t, om - .45, om + .45);
   if (p <= 0 || p >= 1) return;
   const r = p < .5 ? inUit(p * 2) * 1500 : 1500;
   ctx.globalAlpha = p < .5 ? 1 : 1 - inUit((p - .5) * 2);
-  ster(ctx, 960, 540, r, p * 1.4, '#ffc23d', '#2a0a55');
+  ster(ctx, W / 2, H / 2, r, p * 1.4, '#ffc23d', '#2a0a55');
   ctx.globalAlpha = 1;
 }
 
@@ -416,11 +457,13 @@ function render(t) {
   DEEL.r.style.transform = `scale(${1 + .05 * wip}, ${1 - .08 * wip})`;
   // de ster: tegen het been van de R, dan in een boog naar zijn plek
   const vl = zacht(tussen(t, ...L.sprong));
-  const druk = Math.sin(tussen(t, L.land, L.land + .26) * Math.PI);
+  // Zoals in de app: hij landt zonder na te veren, en de draai eindigt op precies
+  // een hele slag (-12 -> -360 = 0 graden), zodat hij rechtop staat zoals in het
+  // logo. Eerst liep hij tot -372 en bleef hij de rest van de scène scheef staan.
   const sterMaat = mix(L.sterBegin, 1, vl) * (1 + .22 * Math.sin(vl * Math.PI));
   const van = [(L.sterBijR[0] - L.ster[0]) * L.k, (L.sterBijR[1] - L.ster[1]) * L.k];
   DEEL.ster.style.transform = `translate(${mix(van[0], 0, vl)}px, ${mix(van[1], 0, vl) - Math.sin(vl * Math.PI) * 200}px) ` +
-    `rotate(${mix(-12, -372, vl)}deg) scale(${sterMaat * (1 + .08 * druk)}, ${sterMaat * (1 - .08 * druk)})`;
+    `rotate(${mix(-12, -360, vl)}deg) scale(${sterMaat})`;
   // de letters, één voor één: uit hun voet omhoog, met een klein kanteltje
   for (const l of L.letters) {
     const q = tussen(t, l.op, l.op + L.letter);
@@ -485,12 +528,12 @@ function render(t) {
     // de telefoon: bij de eerste komt hij binnen, daarna schuift het scherm
     const binnen = uitTerug(tussen(t, S3, S3 + .8), 1.2);
     const bob = Math.sin(t * 1.8) * 12;
-    zet($('tel'), demoZicht, `translate(${(1 - binnen) * 900}px, ${bob}px) rotate(${mix(12, -3, binnen) + Math.sin(t * 1.1)}deg)`);
+    zet($('tel'), demoZicht, `translate(${(1 - binnen) * 900}px, ${bob}px) rotate(${mix(12, -3, binnen) + Math.sin(t * 1.1)}deg) scale(${PLEK.telMaat})`);
     const schuif = i < 4 ? inUit(tussen(lt, STAP - .45, STAP)) : 0;
     $('nu').style.transform = `translateX(${-schuif * 390}px)`;
     $('straks').style.transform = `translateX(${(1 - schuif) * 390}px)`;
     const binnen2 = uitTerug(tussen(t, S3 + .35, S3 + 1.2), 1.2);
-    zet($('tel2'), demoZicht * .9, `translate(${(1 - binnen2) * 700}px, ${-bob * .7}px) rotate(${mix(20, 7, binnen2)}deg) scale(.96)`);
+    zet($('tel2'), demoZicht * .9, `translate(${(1 - binnen2) * 700}px, ${-bob * .7}px) rotate(${mix(20, 7, binnen2)}deg) scale(${.96 * (STAAND ? 1.25 : 1)})`);
   } else {
     zet($('wereld2'), 0);
   }
@@ -520,10 +563,10 @@ window.DUUR = DUUR;
 
 /* ---- schalen naar het venster, en afspelen tenzij render.js het stuur heeft */
 function pas() {
-  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  const s = Math.min(innerWidth / W, innerHeight / H);
   const st = $('stage');
   st.style.transform = `scale(${s})`;
-  st.style.margin = `0 ${1920 * (s - 1)}px ${1080 * (s - 1)}px 0`;
+  st.style.margin = `0 ${W * (s - 1)}px ${H * (s - 1)}px 0`;
 }
 const opname = location.search.includes('opname');
 const stil = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;

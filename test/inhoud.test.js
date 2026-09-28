@@ -30,6 +30,9 @@
  *   L  de getekende schat -- een schat uit de studio is gegevens bij zijn
  *                           wereld; wat erin mag, en dat hij een gewoon,
  *                           onverkoopbaar spulletje wordt
+ *   M  de over-pagina     -- over/ staat op zichzelf: wat hij noemt bestaat, hij
+ *                           leidt terug naar het spel, en het filmpje laadt pas
+ *                           als iemand het afspeelt
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -656,7 +659,9 @@ zaak('J', () => {
   check(/class="set-card secundair" id="set-beginscherm"/.test(and), 'J · als stille secundaire kaart', '');
   check(and.includes('Op het beginscherm') && and.includes('Rekensterren als app op dit toestel'),
     'J · met de kop en de ondertitel', '');
-  check(!/<button/.test(and.slice(kaart)), 'J · uitleg, geen knop', and.slice(kaart));
+  // alleen deze kaart: daarna komt nog die naar over/, en die heeft wél knoppen
+  const eigen = and.slice(kaart).split('class="set-card')[0];
+  check(!/<button/.test(eigen), 'J · uitleg, geen knop', eigen);
 
   // Per soort de juiste zin.
   check(and.includes('Chrome stelt soms zelf voor') && and.includes('Geen voorstel gezien? Tik op ⋮ en kies ‘App installeren’ of ‘Toevoegen aan startscherm’.'),
@@ -806,6 +811,38 @@ zaak('L', () => {
   const viaConcept = laadApp({ opslag: { [K]: JSON.stringify(concept), [K + '_basis']: JSON.stringify(app.WORLDS) } });
   viaConcept.loadWorldDraft();
   check(!!viaConcept.item('acc_wereld_regenboog'), 'L · een schat uit het concept staat meteen in ITEMS', 'niet');
+});
+
+/* ================= M · De over-pagina ================= */
+zaak('M', () => {
+  const over = fs.readFileSync(path.join(WORTEL, 'over/index.html'), 'utf8');
+  // Alles wat de pagina zelf ophaalt of aanwijst, relatief: een ontbrekend beeld
+  // of een dode terugknop geeft geen fout, alleen een gat.
+  // (ook de data-staand-*: die zet het scriptje op een telefoon in de plaats)
+  const refs = [...over.matchAll(/(?:src|href|poster|data-staand-[a-z]+)="([^"]+)"/g)].map(m => m[1])
+    .filter(r => !/^(https?:|mailto:|#|data:)/.test(r));
+  check(refs.length >= 8, 'M · de pagina wijst naar zijn eigen bestanden', refs.join(', '));
+  const weg = refs.filter(r => !fs.existsSync(path.join(WORTEL, 'over', r.split(/[?#]/)[0])));
+  check(!weg.length, 'M · en die bestaan allemaal', weg.join(', '));
+  check(/href="\.\.\/index\.html"/.test(over), 'M · er is een weg terug naar het spel', '');
+  check(/<video\b[^>]*preload="none"/.test(over), 'M · het filmpje laadt pas bij afspelen (preload="none")', '');
+  const og = (over.match(/property="og:image" content="([^"]+)"/) || [])[1] || '';
+  check(og.startsWith('https://') && fs.existsSync(path.join(WORTEL, 'over', path.basename(og))),
+    'M · het deelbeeld is een volledig adres, en het bestand ligt klaar', og);
+  // de kaart in het ouderdeel wijst naar dezelfde pagina
+  const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
+    : fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
+  check(bron.includes('href="over/index.html"'), 'M · het ouderdeel linkt naar over/', '');
+  const sw = fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8');
+  check(/\.mp4\$/.test(sw), 'M · sw.js laat filmpjes buiten de voorraad', '');
+  check(sw.includes('(over|promo)'), 'M · en over/ en promo/ helemaal: de voorraad van het spel blijft van het spel', '');
+  // Wat de pagina afspeelt is de webversie. Een scherpe -hoog-versie van 7 MB of
+  // meer die per ongeluk op de plek van de webversie belandt, merk je anders pas
+  // aan de telefoondata van een ouder.
+  ['rekensterren-promo.mp4', 'rekensterren-promo-staand.mp4'].forEach(f => {
+    const mb = fs.statSync(path.join(WORTEL, 'promo', f)).size / 1e6;
+    check(mb <= 4.5, `M · ${f} is de lichte webversie (≤ 4,5 MB)`, `${mb.toFixed(1)} MB`);
+  });
 });
 
 klaar();

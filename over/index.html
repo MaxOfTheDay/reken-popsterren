@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rekensterren — rekenen en tellen als een show</title>
+<meta name="description" content="Een reken- en telspel voor kinderen van 5 tot 8. Werkt ook zonder internet.">
+<!-- Hoe de link eruitziet als hij gedeeld wordt (WhatsApp, Messenger, mail).
+     Een voorbeeldbeeld moet een vol adres hebben, dus hier staat het echte domein. -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="nl_BE">
+<meta property="og:site_name" content="Rekensterren">
+<meta property="og:title" content="Rekensterren — rekenen en tellen als een show">
+<meta property="og:description" content="Voor kinderen van 5 tot 8. Werkt ook zonder internet.">
+<meta property="og:url" content="https://www.rekensterren.be/over/">
+<meta property="og:image" content="https://www.rekensterren.be/over/deel.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icon-192.png">
+<meta name="theme-color" content="#33084c">
+<!--
+  De pagina "over Rekensterren": voor ouders die het spel nog niet kennen. Los van
+  het spel zelf (index.html) en met opzet klein: geen bouwstap, bijna geen script,
+  dezelfde letter en kleuren als het spel. Alle adressen zijn relatief, zodat hij
+  ook werkt als voorbeeld van een tak en vanaf file://.
+
+  Wat hier beloofd wordt, moet kloppen met het spel. Verandert er iets aan
+  waar de voortgang staat of aan spelen zonder internet, pas dan ook deze pagina
+  aan. Er staat met opzet geen aantal werelden in: dat groeit.
+
+  Het filmpje staat in promo/ en wordt pas opgehaald als iemand op spelen tikt
+  (preload="none"). De servicewerker laat video met rust (zie sw.js).
+-->
+<style>
+  @font-face {
+    font-family: 'Fredoka'; font-style: normal; font-weight: 400 700; font-display: swap;
+    src: url('../assets/font/fredoka-latin.woff2') format('woff2');
+  }
+  :root {
+    --nacht: #33084c; --violet: #7b2ff7; --vloer: #3a0f48;
+    --goud-top: #ffc23d; --goud-onder: #ff8f00; --goud-schaduw: #b36200; --goud: #ffd740;
+    --inkt: #2a0a55; --tekst: #f6ecff; --zacht: #d9c6f2;
+    --vlak: rgba(255,255,255,.075); --vlak-rand: rgba(255,255,255,.14);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; font-family: 'Fredoka', system-ui, sans-serif; color: var(--tekst); line-height: 1.5;
+    background: var(--nacht) radial-gradient(120% 80% at 50% 0%, #4b1580 0%, var(--nacht) 55%, var(--vloer) 100%) fixed;
+  }
+  a { color: var(--goud); }
+  main { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+  .terug { display: inline-block; margin: 14px 0 0; padding: 8px 12px; border-radius: 999px;
+    color: var(--tekst); text-decoration: none; background: var(--vlak); border: 1px solid var(--vlak-rand); font-weight: 500; }
+
+  header { text-align: center; padding: 28px 0 8px; }
+  header h1 { margin: 0; }
+  header h1 img { width: min(86%, 440px); height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.35)); }
+  .belofte { font-size: clamp(20px, 5vw, 26px); font-weight: 600; margin: 10px auto 22px; max-width: 30ch; }
+  .knop { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 999px;
+    font: inherit; font-weight: 700; font-size: 19px; text-decoration: none; cursor: pointer; border: 0; }
+  .knop.goud { color: var(--inkt); background: linear-gradient(var(--goud-top), var(--goud-onder)); box-shadow: 0 5px 0 var(--goud-schaduw); }
+  .knop.goud:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--goud-schaduw); }
+
+  .film { margin-top: 30px; border-radius: 18px; overflow: hidden; background: #12031f; box-shadow: 0 16px 40px rgba(0,0,0,.45); }
+  .film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  /* staand: zo hoog als past, met wat lucht erboven en eronder */
+  .film.staand { width: min(100%, calc((100svh - 120px) * 9 / 16)); margin-left: auto; margin-right: auto; }
+  .film.staand video { aspect-ratio: 9 / 16; }
+
+  section { margin-top: 48px; }
+  h2 { font-size: clamp(20px, 5vw, 24px); margin: 0 0 14px; color: var(--goud); text-align: center; }
+  p { margin: 0 0 10px; }
+  .klein { color: var(--zacht); font-size: 14px; }
+
+  /* drie schermen, zonder kaders: het beeld zegt het, het onderschrift is een naam */
+  .schermen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
+  .schermen img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+  .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
+
+  .feiten { list-style: none; padding: 0; margin: 0 auto; max-width: 34ch; text-align: center; font-size: 18px; }
+  .feiten li + li { margin-top: 6px; }
+
+  .deel { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
+  .deel img { width: 112px; height: 112px; border-radius: 10px; display: block; }
+  /* op een telefoon scan je geen QR-code van je eigen scherm */
+  @media (max-width: 640px) { .deel img { display: none; } }
+  #deel-uit { min-height: 1.5em; margin-top: 8px; }
+
+</style>
+</head>
+<body>
+<main>
+  <!-- Vanuit de geïnstalleerde app is er geen terugknop van de browser: de app
+       draait schermvullend. Deze link is dan de enige weg terug. -->
+  <a class="terug" href="../index.html">← Terug naar het spel</a>
+
+  <header>
+    <h1><img src="../assets/branding/wordmark.webp" alt="Rekensterren" width="1080" height="360"></h1>
+    <p class="belofte">Rekenen en tellen als een show, voor kinderen van 5 tot 8.</p>
+    <a class="knop goud" href="../index.html">▶ Speel meteen</a>
+  </header>
+
+  <!-- Liggend is de standaard; op een smal scherm zet het scriptje onderaan de
+       staande versie erin, vóór er iets geladen is (preload="none"). -->
+  <div class="film" id="film">
+    <video controls playsinline preload="none" width="1920" height="1080"
+           poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
+           data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
+           aria-label="Filmpje van 26 seconden, zonder geluid: het logo en vier schermen uit het spel"></video>
+  </div>
+
+  <section>
+    <ul class="schermen">
+      <li><img src="beelden/01-profielkeuze.webp" alt="Het beginscherm met drie sterren: Marie, Anna en Clara" loading="lazy" width="360" height="779"><span>Een eigen ster</span></li>
+      <li><img src="beelden/04-show-rekenen.webp" alt="Een show: een som met vier antwoorden" loading="lazy" width="360" height="779"><span>Shows spelen</span></li>
+      <li><img src="beelden/05-einde.webp" alt="Het einde van een show met drie sterren" loading="lazy" width="360" height="779"><span>Sterren verdienen</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="kop-weten">
+    <h2 id="kop-weten">Goed om te weten</h2>
+    <ul class="feiten">
+      <li>De voortgang blijft op dit toestel.</li>
+      <li>Werkt ook zonder internet.</li>
+      <li>Wat er geoefend wordt, kies je zelf achter het tandwiel.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="kop-deel">
+    <h2 id="kop-deel">Vertel het verder</h2>
+    <div class="deel">
+      <div>
+        <button class="knop goud" type="button" id="deel">📤 Deel deze pagina</button>
+        <p class="klein" id="deel-uit" role="status"></p>
+      </div>
+      <img src="qr.svg" alt="QR-code naar deze pagina" width="112" height="112">
+    </div>
+  </section>
+
+</main>
+<script>
+  // Op een telefoon het staande filmpje: dat vult het scherm, het liggende is
+  // daar een strookje van een paar honderd pixels hoog.
+  (function () {
+    if (!window.matchMedia || !matchMedia('(max-width: 640px)').matches) return;
+    var v = document.querySelector('#film video');
+    v.poster = v.getAttribute('data-staand-poster');
+    v.src = v.getAttribute('data-staand-src');
+    v.width = 1080; v.height = 1920;
+    document.getElementById('film').classList.add('staand');
+  })();
+  // Delen: het deelmenu van het toestel als dat er is, anders de link kopiëren,
+  // en anders de link gewoon laten zien. Altijd het echte adres, ook vanaf een
+  // voorbeeld of file://: dat is wat een andere ouder moet krijgen.
+  (function () {
+    var URL_ECHT = 'https://www.rekensterren.be/over/';
+    var knop = document.getElementById('deel'), uit = document.getElementById('deel-uit');
+    knop.addEventListener('click', function () {
+      if (navigator.share) {
+        navigator.share({ title: 'Rekensterren', text: 'Rekenen en tellen als een show, voor kinderen van 5 tot 8.', url: URL_ECHT })
+          .catch(function () {});
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(URL_ECHT).then(
+          function () { uit.textContent = 'Link gekopieerd: ' + URL_ECHT; },
+          function () { uit.textContent = URL_ECHT; });
+        return;
+      }
+      uit.textContent = URL_ECHT;
+    });
+  })();
+</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "751adbf884644ea6a09b13135a54484d"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
