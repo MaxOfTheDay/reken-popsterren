@@ -2622,15 +2622,32 @@ function check(ok, label, detail) {
        binnenkomen. Dat wordt hier dan ook zo gemeten en niet tegen een vast
        getal: hoeveel lussen er lopen mag groeien (er kwamen sterretjes bij, en
        er kan later nog iets bij komen) -- wat niet mag groeien is het aantal
-       kopieën ervan. */
+       kopieën ervan.
+
+       Gemeten als het LAAGSTE aantal wachtende timers over twee tellen, en niet
+       op één moment. In landingTimers staan de lussen (de stilte, de kleine en
+       de grote vonk), die elk altijd precies één timer hebben staan -- hun
+       callback haalt de eigen timer weg en zet in dezelfde tel de volgende. Maar
+       er staan ook losse timers in die komen en gaan: na een klein vonkje volgt
+       er in drie op de tien gevallen meteen nog eentje (VONKJES.trosKans), en die
+       wacht 170 tot 430 ms. Eén momentopname gaf daardoor soms 3 en soms 4, ook
+       op een spel waar niets aan veranderd was -- en dan viel deze zaak om, de
+       ene keer eenmaal > zesmaal, de andere keer andersom. Een lek is een lus die
+       dubbel loopt, en die drukt het minimum blijvend omhoog; een los vonkje
+       duurt nooit twee tellen. */
     const snel = await page.evaluate(async () => {
       // de rust weer op zijn echte lengte: deze zaak gaat over de groet, en een
       // kortgezette stilte uit de vorige zaak zou er middenin vallen
       Object.assign(LANDING, window.__echteRust);
       const rustig = async () => {
         goProfiles();
-        await new Promise(r => setTimeout(r, 2600));
-        return landingTimers.length;
+        await new Promise(r => setTimeout(r, 2600));   // de groet is voorbij, de lussen lopen
+        let minst = Infinity;
+        for (let t = 0; t < 40; t++) {
+          minst = Math.min(minst, landingTimers.length);
+          await new Promise(r => setTimeout(r, 50));
+        }
+        return minst;
       };
       const eenmaal = await rustig();
       for (let i = 0; i < 6; i++) {
