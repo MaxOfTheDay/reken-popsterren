@@ -833,6 +833,10 @@ zaak('M', () => {
   const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
     : fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
   check(bron.includes('href="over/index.html"'), 'M · het ouderdeel linkt naar over/', '');
+  // In hetzelfde venster: een nieuw venster (target="_blank") gooit je in de
+  // geïnstalleerde app uit de app, de browser in.
+  const overLink = (bron.match(/<a [^>]*id="set-over"[^>]*>/) || [''])[0];
+  check(overLink && !/target=/.test(overLink), 'M · en die link blijft in de app (geen target)', overLink);
   const sw = fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8');
   check(/\.mp4\$/.test(sw), 'M · sw.js laat filmpjes buiten de voorraad', '');
   check(sw.includes('(over|promo)'), 'M · en over/ en promo/ helemaal: de voorraad van het spel blijft van het spel', '');
