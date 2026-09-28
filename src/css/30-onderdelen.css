@@ -231,7 +231,15 @@
   }
   /* alleen zichtbaar als er nog niets is: dán is een back-up terugzetten het
      andere ding dat een ouder hier kan willen */
-  .restore-hint { display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1; }
+  .restore-hint {
+    display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
+    /* een knop die leest als de zin die hij was: geen vlak, geen rand -- wel een
+       echt raakvlak van 44, en helder als je erop wijst */
+    font-family: inherit; font-weight: 600; color: var(--c-white); background: transparent; border: none;
+    cursor: pointer; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill);
+    transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
+  }
+  .restore-hint:hover, .restore-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
 
   /* --balk-rand en niet twee keer 10: dit is dezelfde afstand tot de schermrand
      als waarop de navigatiebalk onderaan zweeft, en dat is geen toeval maar de
@@ -310,6 +318,9 @@
      een schakelaar moet bevestigen. */
   .gear-item:active { background: var(--lavender-wash-3); }
   .gear-item .gi-ico { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+  /* Uit: het icoon een stap terug, zodat de rij in één blik "staat stil" zegt --
+     zonder een ander, feller plaatje (zie renderGearMenu). */
+  .gear-item.uit .gi-ico { opacity: .45; filter: grayscale(1); }
   .gear-item .gi-label { flex: 1; min-width: 0; }
   /* De stand, en niet alleen het woord. "Uit" in een grijs pilletje leest als
      een label; met een stip ervoor -- groen en vol als het aanstaat, hol en grijs

@@ -380,6 +380,13 @@ function check(ok, label, detail) {
     r.zichtbaar = await page.evaluate(() =>
       document.getElementById('set-delete').checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }));
     check(!r.open && !r.zichtbaar, 'de verwijderknop zit achter een openklapper', JSON.stringify(r));
+    // de openklapper zelf noemt haar ook, en loopt mee als de naam verandert
+    r = await page.evaluate(() => document.querySelector('#set-danger-del summary').textContent);
+    check(/^Bas verwijderen/.test(r.trim()), 'de openklapper noemt de ster bij naam', r);
+    await page.fill('#set-name', 'Bastiaan');
+    r = await page.evaluate(() => document.querySelector('#set-danger-del summary').textContent);
+    check(/^Bastiaan verwijderen/.test(r.trim()), 'en past zich aan als de naam verandert', r);
+    await page.fill('#set-name', 'Bas');
     await page.click('#set-danger-del summary');
     await page.waitForTimeout(150);
     r = await page.evaluate(() => document.querySelector('#set-danger-del .danger-zone .t').textContent);
