@@ -439,6 +439,10 @@
   .avatar-holder.move-kick   > .pas-laag { animation: mvKick .9s ease-in-out; }
   .avatar-holder.move-wave   > .pas-laag { animation: mvWave .9s ease-in-out; }
   .avatar-holder.move-bounce > .pas-laag { animation: mvBounce .9s ease-in-out; }
+  /* De buiging bij het applaus (zie buiging in de JS): ze helt naar het publiek
+     toe -- naar jou -- en komt weer overeind. Geen gewoon pasje; hij komt alleen
+     als de zaal extra hard klapt. */
+  .avatar-holder.move-buig   > .pas-laag { animation: mvBuig .9s ease-in-out; }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }
     30% { transform: translateY(-38px) scale(1.06); }
@@ -468,6 +472,10 @@
     40% { transform: translateY(0) rotate(-6deg); }
     60% { transform: translateY(-8px) rotate(6deg); }
     80% { transform: translateY(0) rotate(-4deg); }
+  }
+  @keyframes mvBuig {
+    0%,100% { transform: none; }
+    35%,62% { transform: perspective(360px) rotateX(-30deg) translateY(5px) scaleY(.94); }
   }
   @keyframes mvBounce {
     0%,100% { transform: translateY(0) scaleY(1); }
