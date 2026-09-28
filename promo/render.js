@@ -1,7 +1,7 @@
 /*
  * Maakt van promo/promo.html een mp4, beeld voor beeld.
  *
- *   node promo/render.js                 -> promo/rekensterren-promo.mp4 (26 s)
+ *   node promo/render.js                 -> promo/rekensterren-promo.mp4 (heel het filmpje)
  *   node promo/render.js logo 0 8        -> promo/rekensterren-logo.mp4  (alleen het logo)
  *   node promo/render.js promo-staand    -> promo/rekensterren-promo-staand.mp4 (staand)
  *
@@ -29,7 +29,8 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { launch } = require('../test/browser.js');
 
-const [naam = 'promo', van = '0', tot = '26'] = process.argv.slice(2);
+// zonder 'tot' loopt hij tot het eind: DUUR uit promo.html
+const [naam = 'promo', van = '0', totArg] = process.argv.slice(2);
 // 60 beelden per seconde: bij 30 hakte de draaiende ster zichtbaar
 const FPS = +process.env.FPS || 60;
 const OUT = path.join(__dirname, `rekensterren-${naam}.mp4`);
@@ -49,7 +50,7 @@ const WEB_CRF = '23';
   await page.evaluate(async () => {
     await document.fonts.ready;
     const srcs = [...document.querySelectorAll('img')].map(i => i.src)
-      .concat(['01-profielkeuze', '02-kaart', '04-show-rekenen', '05-einde', '06-kleedkamer', '02b-tournee'].map(n => `beelden/${n}.jpg`))
+      .concat(SCHERMEN.map(s => `beelden/${s.img}.jpg`).concat(['beelden/02-kaart.jpg']))
       .concat((window.WERELDEN || []).map(w => '../' + w.art))
       .concat(['../assets/branding/logo-lagen.webp']);   // het logo in lagen staat als achtergrond, niet als <img>
     window.__vast = await Promise.all(srcs.map(s => new Promise(ok => {
@@ -61,7 +62,8 @@ const WEB_CRF = '23';
     '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-tune', 'animation',
     '-pix_fmt', 'yuv420p', '-movflags', '+faststart', HOOG], { stdio: ['pipe', 'inherit', 'inherit'] });
 
-  const eerste = Math.round(+van * FPS), laatste = Math.round(+tot * FPS);
+  const tot = totArg != null ? +totArg : await page.evaluate(() => window.DUUR);
+  const eerste = Math.round(+van * FPS), laatste = Math.round(tot * FPS);
   for (let f = eerste; f < laatste; f++) {
     await page.evaluate(async t => {
       render(t);

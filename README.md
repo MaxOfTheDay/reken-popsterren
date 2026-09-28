@@ -105,6 +105,7 @@ check` zegt het als de twee uit elkaar zijn gelopen.
 | aan het uiterlijk werkt | `docs/ART-PLAN.md`, `docs/ART-DIRECTION.md` |
 | aan geluid of trillen komt | `docs/AUDIO-REVIEW.md`, en de secties `= Geluid` en `= Trilfeedback` in `src/20-app.js` |
 | het logo of het app-icoon vervangt | `docs/MERK.md` |
+| de over-pagina (rekensterren.be/over/) of het promofilmpje aanpast | `over/index.html` (staat op zichzelf, geen bouwstap) en `promo/LEESMIJ.md` |
 
 De documenten in `docs/` zijn grotendeels *plandocumenten uit een bepaalde
 fase*: ze leggen uit waarom er iets is besloten, niet wat er vandaag staat.
