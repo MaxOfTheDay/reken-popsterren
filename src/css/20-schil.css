@@ -224,6 +224,29 @@
                               rgba(26,9,50,.5) 68%, rgba(18,5,38,.64) 100%);
   }
 
+  /* ---- De schil, maar dan achter het toneel: het ouderdeel ---------------
+     Het ouderdeel leende de gedeelde schil, en die is gemaakt voor schermen waar
+     een kind naar kijkt: vier lichtbogen uit de hoeken, voetlicht onderin,
+     fonkeling. Achter witte kaarten met cijfers en knoppen lezen die bogen als
+     willekeurige vegen door de lege ruimte onder de laatste kaart, en de warme
+     gloed onderin werd daar bruin.
+
+     Het ouderdeel is al stiller dan de rest -- wit papier, geen feest -- en de
+     achtergrond doet nu mee: hetzelfde violet als de app, een trap lichter dan de
+     nacht van de schil, met één zachte lavendelgloed van boven en verder niets.
+     Geen bogen, geen voetlicht, geen fonkeling. Dekkend, en dat is nodig: het
+     verloop van <body> zet onder élk scherm een warme gloed, en een doorzichtige
+     laag liet die hier onderaan gewoon weer door.
+
+     Alleen #screen-settings. Het maakformulier (#screen-newstar) is ook een
+     gebruiksscherm, maar een kind komt daar via de "+" op de sterrenkeuze, en
+     daarom heeft het met opzet de tekening van dat scherm onder zich. */
+  #screen-settings.app-sfeer::before {
+    background-image:
+      radial-gradient(120% 60% at 50% 0%, rgba(160,120,255,.22), transparent 70%),
+      linear-gradient(180deg, #2c1558 0%, #21104a 55%, #1b0c3e 100%);
+  }
+
   /* ---- Waar de tekening van een schilscherm komt --------------------------
      Er komt een nieuwe tekening voor de sterrenkeuze, de kleedkamer en de
      trofeeënkast (PS-45 / PS-32). Dit is de plek waar hij straks in gaat, en de
