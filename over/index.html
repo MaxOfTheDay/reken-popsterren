@@ -75,14 +75,18 @@
   p { margin: 0 0 10px; }
   .klein { color: var(--zacht); font-size: 14px; }
 
-  /* drie schermen, zonder kaders: het beeld zegt het, het onderschrift is een naam */
-  .schermen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
-  .schermen img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+  /* de schermen, zonder kaders: vier naast elkaar, op een telefoon twee aan twee */
+  .schermen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; text-align: center; }
+  @media (max-width: 640px) { .schermen { grid-template-columns: repeat(2, 1fr); gap: 14px 12px; } }
+  .schermen img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; object-position: top;
+    border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+  /* bij het ouderscherm staat het belangrijkste lager: de lastige sommen */
+  .schermen img.lager { object-position: center 78%; }
   .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
 
-  /* drie korte punten over het rekenen: gewone alinea's, het vetje is de kop */
-  .punten { max-width: 52ch; margin: 0 auto; font-size: 17px; }
-  .punten p { margin: 0 0 14px; }
+  /* drie korte regels over het rekenen */
+  .punten { list-style: none; padding: 0; margin: 0 auto; max-width: 40ch; text-align: center; font-size: 18px; }
+  .punten li + li { margin-top: 8px; }
   .punten b { color: #fff; }
   .kort { text-align: center; margin: 18px 0 0; }
 
@@ -112,31 +116,29 @@
     <video controls playsinline preload="none" width="1920" height="1080"
            poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
            data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
-           aria-label="Filmpje van twintig seconden, zonder geluid: het logo, vier schermen uit het spel en twee uit het ouderdeel"></video>
+           aria-label="Filmpje van twintig seconden, zonder geluid: het logo en negen schermen uit het spel en het ouderdeel"></video>
   </div>
 
-  <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
-       maken" (de leerstap per wereld) en "= Extra uitdagingen" (pas iets nieuws
-       als het vorige vlot zit) in src/20-app.js, en "Sommen die nu nog lastig
-       zijn" in het ouderdeel. Geen belofte over hoeveel werelden: dat groeit. -->
-  <section aria-labelledby="kop-rekenen">
-    <h2 id="kop-rekenen">Het rekenen</h2>
-    <div class="punten">
-      <p><b>Jij kiest wat er geoefend wordt.</b> Plus, min, maal en delen, getallen
-        tot 10, 20, 50 of 100, en welke tafels. Of lees-vrij tellen voor wie nog niet leest.</p>
-      <p><b>Het groeit mee.</b> Gaat het vlot, dan worden de sommen pittiger, en elke
-        wereld brengt een nieuwe stap: over het tiental, zoek het getal, drie getallen.
-        Iets nieuws komt pas als het vorige vlot zit.</p>
-      <p><b>Wat moeilijk is, komt vaker terug.</b> En wat al lukt af en toe, zodat het
-        blijft zitten. In het ouderdeel zie je welke sommen nog lastig zijn, en hoe vlot het gaat.</p>
-    </div>
-  </section>
-
+  <!-- Eerst het plezier, dan het rekenen. De schermen worden bovenaan
+       afgesneden (3:4), zodat de rij op een telefoon niet te lang wordt. -->
   <section>
     <ul class="schermen">
-      <li><img src="beelden/04-show-rekenen.webp" alt="Een show: een som met vier antwoorden" loading="lazy" width="360" height="779"><span>Shows spelen</span></li>
-      <li><img src="beelden/07-ouder-oefenen.webp" alt="Het ouderdeel, Oefenen: plus, min en maal, getallen tot 20, de tafels van 2, 5 en 10" loading="lazy" width="540" height="1169"><span>Jij stelt het in</span></li>
-      <li><img src="beelden/08-ouder-voortgang.webp" alt="Het ouderdeel, Voortgang: hoe vlot het gaat en welke sommen nog lastig zijn" loading="lazy" width="540" height="1169"><span>Jij ziet hoe het gaat</span></li>
+      <li><img src="beelden/02b-tournee.webp" alt="De tournee: werelden om te ontdekken, de volgende nog op slot" loading="lazy" width="360" height="779"><span>Werelden ontdekken</span></li>
+      <li><img src="beelden/09-trofeeen.webp" alt="De trofeeënkast met trofeeën om te openen" loading="lazy" width="360" height="779"><span>Trofeeën verzamelen</span></li>
+      <li><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" loading="lazy" width="360" height="779"><span>De kleedkamer</span></li>
+      <li><img class="lager" src="beelden/08-ouder-voortgang.webp" alt="Het ouderdeel: hoe vlot het gaat en welke sommen nog lastig zijn" loading="lazy" width="360" height="779"><span>Wat jij ziet</span></li>
+    </ul>
+  </section>
+
+  <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
+       maken" en "= Extra uitdagingen" in src/20-app.js, en "Sommen die nu nog
+       lastig zijn" in het ouderdeel. -->
+  <section aria-labelledby="kop-rekenen">
+    <h2 id="kop-rekenen">Het rekenen</h2>
+    <ul class="punten">
+      <li><b>Jij kiest</b> wat er geoefend wordt: + − × ÷, tot 10, 20, 50 of 100.</li>
+      <li><b>Het groeit mee:</b> lukt het, dan worden de sommen pittiger.</li>
+      <li><b>Lastige sommen komen terug</b>, en jij ziet welke.</li>
     </ul>
     <p class="klein kort">De voortgang blijft op dit toestel, en het werkt ook zonder internet.</p>
   </section>

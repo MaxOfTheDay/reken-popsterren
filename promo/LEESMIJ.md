@@ -7,10 +7,10 @@ poster -- staand op een smal scherm, liggend op een breed.
 
 | bestand | wat |
 |---|---|
-| `rekensterren-promo.mp4` | het filmpje, ± 21 s, 60 beelden per seconde, zonder geluid. De webversie: 1280×720, ± 3 MB |
+| `rekensterren-promo.mp4` | het filmpje, ± 20 s, 60 beelden per seconde, zonder geluid. De webversie: 1280×720, ± 3 MB |
 | `rekensterren-promo-staand.mp4` | hetzelfde filmpje staand, 720×1280, ± 3,4 MB: wat de over-pagina op een telefoon toont |
 | `*-hoog.mp4` | de scherpe versies op volle maat (1920×1080 en 1080×1920), om op sociale media te posten. **Niet in git** -- `render.js` maakt ze, bewaar ze zelf |
-| `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 4,6 s) |
+| `rekensterren-logo.mp4` | alleen het logo: het merkteken dat het spelogo wordt (de eerste 3,3 s) |
 | `in-app-intro.mp4` | opname van de korte logo-intro zoals hij ín het spel speelt (zie "= Het spelogo komt binnen" in `src/20-app.js`); de intro zelf staat in de app, niet hier |
 | `poster.jpg`, `poster-staand.jpg` | de eindkaart als stilstaand beeld, liggend en staand |
 | `promo.html` | de bron. Open hem in een browser en hij speelt in een lus |
@@ -23,11 +23,12 @@ Opnieuw maken, na een wijziging in `promo.html`:
 ```sh
 node promo/render.js               # -> rekensterren-promo.mp4
 node promo/render.js promo-staand  # -> rekensterren-promo-staand.mp4 (promo.html?staand)
-node promo/render.js logo 0 4.6     # -> rekensterren-logo.mp4
+node promo/render.js logo 0 3.3     # -> rekensterren-logo.mp4
 ```
 
-De posters zijn de eindkaart, het beeld op 20,5 s:
-`ffmpeg -ss 20.5 -i rekensterren-promo-staand-hoog.mp4 -frames:v 1 -q:v 4 poster-staand.jpg`.
+De posters zijn het laatste beeld: de eindkaart, die in de opname blijft staan
+(in de lus in de browser vervaagt hij):
+`ffmpeg -sseof -0.1 -i rekensterren-promo-staand-hoog.mp4 -frames:v 1 -q:v 4 poster-staand.jpg`.
 
 Wat het filmpje over het rekenen zegt, moet kloppen met het spel (zie SCHERMEN
 in `promo.html`). De twee schermen uit het ouderdeel neemt `opname.js` op met

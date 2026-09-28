@@ -64,9 +64,19 @@ const SCHERMEN = [
       q.level = WORLD_START[2] + 4;
       goMap(); openReis();
     } },
-  { key: '04-show-rekenen', go: () => { selectProfile('p1'); startLevel(6); } },
+  // een tafelsom uit een latere wereld: bij "maal en delen" hoort geen 2 − 1
+  { key: '04-show-rekenen', go: () => {
+      selectProfile('p1'); marieRekent(); P().settings.ops = ['x'];
+      const l = WORLD_START[2] + 2;
+      startLevel(l);
+      // de sommen zijn willekeurig; zoek er een waar echt iets te rekenen valt (5 × 6, niet 1 × 5)
+      let q, n = 0;
+      do q = genQuestion(P().settings, l, P().perf); while (!/[3-9] × [3-9]/.test(q.tmpl) && ++n < 300);
+      G.qs[G.idx] = q; renderQuestion();
+    } },
   { key: '05-einde', wacht: 3200, go: () => { selectProfile('p1'); startLevel(6); G.stars = 3; endLevel(true); } },
   { key: '06-kleedkamer', go: () => { selectProfile('p1'); openKleedkamer(); } },
+  { key: '09-trofeeen', go: () => { selectProfile('p1'); openTrophies(); } },
   // het rekenen, voor de ouder: zo stel je het in, en zo zie je hoe het gaat
   { key: '07-ouder-oefenen', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'oefenen'; renderSettings(); } },
   { key: '08-ouder-voortgang', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'voortgang'; renderSettings(); } },
