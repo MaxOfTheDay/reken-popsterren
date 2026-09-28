@@ -5065,6 +5065,58 @@ function toonHub(id) {
   naar.classList.add('komt-op');
   hubWissel(vorige, naar);
 }
+/* ---- De plakkende kop met twee standen ----
+   Twee schermen hebben een kop die krimpt zodra er gescrold wordt: de
+   trofeeënkast en het ouderdeel (zie .gescrold in 65-kast.css en
+   80-ouderdeel.css; kastScroll en ouderScroll zetten de klasse). Die kop staat in
+   de stroom, en daar zat het haperen: als hij kromp trok hij alles eronder mee
+   omhoog, de scroll anchoring van Chrome zette de schuifstand met die krimp
+   terug, de stand viel onder de drempel, de kop werd weer ruim -- en stilgezet
+   op de verkeerde plek ging dat elk beeldje zo door.
+
+   Daarom komt wat de kop krimpt er in de krappe stand als marge onder weer bij
+   (--kop-krimp): de plaat wordt kleiner, de plek in de stroom niet, en de inhoud
+   staat stil. Dit meet hoeveel dat is.
+
+   Gemeten en niet opgeschreven: op een laag scherm begint de kop van het
+   ouderdeel al krap en krimpt hij nauwelijks, en zonder ster vallen de twee
+   keuzerijen weg. Meten gaat door de klasse even om te zetten, met de
+   overgangen uit (.kop-meten, per scherm in het stijlblad) -- anders lees je de
+   beginstand van een overgang die nog moet beginnen. Alles in één taak, dus er
+   komt geen beeldje tussen waarin iemand de verkeerde stand ziet.
+
+   De hoogte komt uit getComputedStyle en niet uit getBoundingClientRect: die
+   laatste rekent een transform mee, en vlak na toonHub komt het scherm nog met
+   een schaal van 1,03 binnen (zie schermKomtOp). Zo gemeten kwam er 23,69 uit in
+   plaats van 23, en schoof de inhoud alsnog 0,69px. offsetHeight rekent geen
+   transform mee maar rondt af op hele pixels; dit is de maat van de opmaak zelf,
+   met breuken (border-box, zie de reset).
+
+   Eén bijwerking: loopt er op dat moment net een kopovergang -- een tik vlak na
+   het scrollen -- dan springt die naar zijn eindstand. Dat is hooguit één kleine
+   sprong, en alleen als je binnen --t-snel na het scrollen tikt.
+
+   Staat het scherm niet in beeld, dan is alles 0 hoog en valt er niets te meten;
+   dan blijft de vorige maat staan. */
+function kopKrimpMeten(scherm) {
+  const kop = scherm && scherm.querySelector('.hub-sticky');
+  if (!kop || !kop.offsetHeight) return;
+  const hoogte = () => parseFloat(getComputedStyle(kop).height);
+  const stand = scherm.classList.contains('gescrold');
+  scherm.classList.add('kop-meten');
+  scherm.classList.remove('gescrold');
+  const ruim = hoogte();
+  scherm.classList.add('gescrold');
+  const krap = hoogte();
+  scherm.classList.toggle('gescrold', stand);
+  void kop.offsetHeight;   // de stand vastleggen vóórdat de overgangen terugkomen
+  scherm.classList.remove('kop-meten');
+  scherm.style.setProperty('--kop-krimp', (ruim - krap) + 'px');
+}
+// Draaien, of een toetsenbord dat opkomt, kan een laag scherm maken -- en dan
+// krimpt de kop van het ouderdeel anders. Een scherm dat niet in beeld staat
+// slaat de meting vanzelf over.
+addEventListener('resize', () => ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))));
 /* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
    landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
 
@@ -7022,6 +7074,7 @@ function runTravel(t) {
 function openTrophies() {
   renderShelves();
   toonHub('screen-trophies');
+  kopKrimpMeten($('screen-trophies'));
   $('screen-trophies').scrollTop = 0;
   kastScroll();   // verse start = bovenaan = de ruime kop
 }
@@ -7032,7 +7085,11 @@ function openTrophies() {
    De drempel ligt op 4px en niet op 0: met 0 wisselt de kop bij het minste
    duimtrilletje heen en weer, en een kop die knippert is erger dan een kop die
    iets te lang ruim blijft. Eén rAF-vertraging ertussen, net als bij de reis
-   (zie reisScroll): scroll vuurt vaker dan er beeldjes zijn. */
+   (zie reisScroll): scroll vuurt vaker dan er beeldjes zijn.
+
+   Die drempel beschermt alleen tegen een trillende duim. Tegen een kop die zelf
+   de schuifstand terugduwt -- en dat deed hij, op 10px stilgezet wisselde hij
+   elk beeldje -- helpt hij niet; daarvoor is kopKrimpMeten (zie daar). */
 let kastScrollWacht = false;
 function kastScroll() {
   if (kastScrollWacht) return;
@@ -7050,6 +7107,7 @@ function kastScroll() {
 function resumeTrophies() {
   renderShelves();
   toonHub('screen-trophies');
+  kopKrimpMeten($('screen-trophies'));
   kastScroll();   // de scrollpositie bleef staan, dus de kopstand ook
 }
 /* De status van een trofee, in prioriteitsvolgorde:
@@ -10571,7 +10629,7 @@ function openSettings() {
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
-  ouderKopMeten();        // renderSettings meet ook, maar toen stond het scherm nog niet in beeld
+  kopKrimpMeten($('screen-settings'));   // renderSettings meet ook, maar toen stond het scherm nog niet in beeld
   // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
   // dus er kan er nooit meer dan één staan -- zelfde patroon als de kast)
   $('screen-settings').onscroll = ouderScroll;
@@ -11096,7 +11154,8 @@ function settingsToTop() {
    het stijlblad): ruim bovenaan, krap zodra er kaarten onderdoor schuiven. Dit is
    letterlijk dezelfde afspraak als in de trofeeënkast (kastScroll), met dezelfde
    drempel van 4px -- op 0 wisselt hij bij het minste duimtrilletje heen en weer --
-   en dezelfde rAF-rem, want scroll vuurt vaker dan er beeldjes zijn. */
+   en dezelfde rAF-rem, want scroll vuurt vaker dan er beeldjes zijn. Dat de
+   inhoud daarbij blijft staan, regelt kopKrimpMeten (zie daar). */
 let ouderScrollWacht = false;
 function ouderScroll() {
   if (ouderScrollWacht) return;
@@ -11107,47 +11166,6 @@ function ouderScroll() {
     if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
   });
 }
-/* Hoeveel de kop krimpt als hij krap wordt. Het stijlblad zet precies dat als
-   marge onder de gescrolde kop (--kop-krimp), zodat de inhoud blijft staan waar
-   hij stond -- zie #screen-settings.gescrold .hub-sticky voor waarom dat moet.
-
-   Gemeten en niet opgeschreven: op een laag scherm begint de kop al krap en
-   krimpt hij nauwelijks, en zonder ster vallen de twee keuzerijen weg. Meten
-   gaat door de klasse even om te zetten, met de overgangen uit (.kop-meten) --
-   anders lees je de beginstand van een overgang die nog moet beginnen. Alles in
-   één taak, dus er komt geen beeldje tussen waarin iemand de verkeerde stand ziet.
-
-   De hoogte komt uit getComputedStyle en niet uit getBoundingClientRect: die
-   laatste rekent een transform mee, en vlak na openSettings komt het scherm nog
-   met een schaal van 1,03 binnen (zie schermKomtOp). Zo gemeten kwam er 23,69
-   uit in plaats van 23, en schoof de inhoud alsnog 0,69px. offsetHeight rekent
-   geen transform mee maar rondt af op hele pixels; dit is de maat van de opmaak
-   zelf, met breuken (border-box, zie de reset).
-
-   Eén bijwerking: loopt er op dat moment net een kopovergang -- een tik op een
-   keuze vlak na het scrollen -- dan springt die naar zijn eindstand. Dat is
-   hooguit één kleine sprong, en alleen als je binnen --t-snel na het scrollen
-   tikt.
-
-   Staat het scherm niet in beeld, dan is alles 0 hoog en valt er niets te meten;
-   dan blijft de vorige maat staan. */
-function ouderKopMeten() {
-  const sc = $('screen-settings');
-  const kop = sc && sc.querySelector('.hub-sticky');
-  if (!kop || !kop.offsetHeight) return;
-  const hoogte = () => parseFloat(getComputedStyle(kop).height);
-  const stand = sc.classList.contains('gescrold');
-  sc.classList.add('kop-meten');
-  sc.classList.remove('gescrold');
-  const ruim = hoogte();
-  sc.classList.add('gescrold');
-  const krap = hoogte();
-  sc.classList.toggle('gescrold', stand);
-  void kop.offsetHeight;   // de stand vastleggen vóórdat de overgangen terugkomen
-  sc.classList.remove('kop-meten');
-  sc.style.setProperty('--kop-krimp', (ruim - krap) + 'px');
-}
-addEventListener('resize', ouderKopMeten);
 let savedPillTimer = null;
 function saveAndFlash() {
   save();
@@ -11240,7 +11258,7 @@ function renderSettings() {
     $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = beheerEmptyHtml();
     bindSettings(null, null);
-    ouderKopMeten();      // zonder de twee keuzerijen krimpt de kop minder
+    kopKrimpMeten($('screen-settings'));   // zonder de twee keuzerijen krimpt de kop minder
     return;
   }
   renderWhoRow();
@@ -11251,7 +11269,7 @@ function renderSettings() {
     : setTab === 'beheer'  ? beheerPanelHtml(p)
     :                        statsPanelHtml(p);
   bindSettings(p, s);
-  ouderKopMeten();
+  kopKrimpMeten($('screen-settings'));
 }
 
 /* Elk onderdeel toont maar een déél van de bedieningen, dus alles wordt alleen
