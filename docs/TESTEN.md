@@ -107,6 +107,9 @@ geeft een foutmelding.
   `<image>`, `url(…)`, `href`, `on…=`, een onbekend element, te groot, ...) en
   `wereldControle` blokkeert erop; na opslaan staat er geen tweede scripttag in
   het blok. Een id dat al aan een handgeschreven spulletje hangt blokkeert ook.
+  En de maat, zonder browser: onder de nek, boven de pop uit, twee keer zo hoog
+  of drie keer zo breed als de andere houdt `schatMaatFouten` tegen, op de
+  uitsnede (`view`). Elke vorm uit `SCHAT_VORMEN` mag vooraan staan.
 - **de over-pagina** (zaak M) — alles wat `over/index.html` aanwijst bestaat
   (ook de staande versie van het filmpje), er is een weg terug naar het spel,
   het filmpje laadt pas bij afspelen, het deelbeeld heeft een volledig adres, het
@@ -340,12 +343,19 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   overzicht, als nieuw en dicht; een oud concept draait geen nieuwere wereld
   terug (`rebaseWorldDraft`) en meldt een botsing; en het blok dat *Opslaan*
   schrijft geeft precies terug wat erin ging, ook een veld dat nog niemand kent
-  (`blokTerug` in `test/werelden.js`, dezelfde proef die de server doet);
+  (`blokTerug` in `test/werelden.js`, dezelfde proef die de server doet). Wijkt
+  het blok af, dan noemt de melding de eerste regel die anders is en de weg
+  terug: `npm run werelden:netjes`, voor een wereld die met de hand is bijgezet;
 - **de prompts kloppen met de code** (zaak L) — `docs/prompts/*.txt` hebben
   hun invulplekken, de 9:16 van de kaartprompt is `ART_W`/`ART_H`, en de
   schatprompt noemt alleen elementen uit `SCHAT_ELEMENTEN` en het hoofd waar het
   werkelijk staat. Een prompt die iets anders vraagt dan de studio aanneemt,
   levert een tekening op die de studio weer weggooit;
+- **de tekeningenvoorraad gaat alleen omhoog voor wat al uitgeleverd is** (zaak
+  M) — `geleverd()` in `test/beelden.js` vraagt git of een bestand in de laatste
+  commit staat, en de studio hoogt `ART_CACHE` daarop op en niet op "staat op de
+  schijf". Anders kostte twee keer slepen van een nieuwe wereldkaart elk gezin een
+  volle download. Zonder git zegt hij `null` en valt de studio terug op de schijf;
 - **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
   `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
   voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen

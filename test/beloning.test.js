@@ -564,14 +564,16 @@ function check(ok, label, detail) {
       // Elke wereld die een spulletje uitdeelt, en alleen die: een wereld zonder
       // beloning werkt (zie grantWorldRewards) en hoort deze zaak niet om te gooien.
       const ids = WORLDS.map(w => w.beloning).filter(id => !!id);
-      const uit = { ids, mist: [], geenSvg: [], metPrijs: [], basisVerschil: [], teLaag: [], extern: [], maten: {} };
+      const uit = { ids, mist: [], geenSvg: [], metPrijs: [], basisVerschil: [], teLaag: [], extern: [], maten: {}, buitenUitsnede: [] };
+      // dezelfde lijst als schatFouten: een tekening die de keuring doorlaat, laat deze zaak ook door
+      const begin = new RegExp('^\\s*<(svg|' + SCHAT_VORMEN.join('|') + ')\\b');
       const p = P();
       ids.forEach(id => {
         const it = item(id);
         if (!it || typeof it.draw !== 'function' || typeof it.thumb !== 'function') { uit.mist.push(id); return; }
         const meisje = it.draw('meisje', 1), jongen = it.draw('jongen', 1);
         if (meisje !== jongen) uit.basisVerschil.push(id);
-        if (!/^\s*<(path|circle|line|g|ellipse|svg)/.test(meisje)) uit.geenSvg.push(id);
+        if (!begin.test(meisje)) uit.geenSvg.push(id);
         if (it.price !== undefined) uit.metPrijs.push(id);
         // geen enkele verwijzing naar buiten: geen plaatje, geen url(), geen klasse
         if (/<image|url\(|class=/.test(meisje + it.thumb('meisje'))) uit.extern.push(id);
@@ -588,6 +590,13 @@ function check(ok, label, detail) {
         doos.remove();
         uit.maten[id] = [b.x, b.y, b.width, b.height].map(n => Math.round(n * 10) / 10);
         if (b.y + b.height > 94 || b.y < -2) uit.teLaag.push(id);
+        /* De uitsnede van het miniatuur past om de tekening heen. Dat is niet alleen
+           netjes: npm run check meet de maatfamilie op die uitsnede (schatMaatFouten),
+           omdat Node niet kan tekenen. Liegt een uitsnede, dan liegt die keuring --
+           en dat hoort hier op te vallen, waar wél gemeten wordt. */
+        const u = schatUitsnede(it);
+        if (!u || b.x < u[0] - 0.5 || b.y < u[1] - 0.5 || b.x + b.width > u[0] + u[2] + 0.5
+            || b.y + b.height > u[1] + u[3] + 0.5) uit.buitenUitsnede.push(id + ' ' + JSON.stringify(u));
       });
       // en ze komen ook echt allemaal op de pop terecht, op allebei de basissen
       uit.opDePop = ['meisje', 'jongen'].map(b => {
@@ -631,6 +640,9 @@ function check(ok, label, detail) {
       'I · en ze zijn onderling in verhouding: één set, geen uitschieter', JSON.stringify(r.maten));
     check(r.metPrijs.length === 0,
       'I · nog steeds geen prijs: het blijven beloningen en geen koopwaar', JSON.stringify(r.metPrijs));
+    check(r.buitenUitsnede.length === 0,
+      'I · de uitsnede van elk miniatuur past om zijn tekening heen (daar meet npm run check op)',
+      JSON.stringify({ buiten: r.buitenUitsnede, maten: r.maten }));
     check(r.opDePop.join() === [r.ids.length, r.ids.length].join(),
       'I · en ze staan allemaal op allebei de paspoppen', JSON.stringify(r.opDePop));
     check(r.kaartjes === r.zichtbaar.length && r.kaartjes > 0,

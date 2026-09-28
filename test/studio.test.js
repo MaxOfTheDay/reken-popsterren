@@ -537,7 +537,10 @@ function check(ok, label, detail) {
     await cacheFonts(ctx);
     const page = await ctx.newPage();
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
-    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit&nieuw=Regenboogwereld');
+    // Een naam die geen echte wereld ooit krijgt. Hier stond Regenboogwereld -- het
+    // voorbeeld uit de docs -- en wie de echte zevende zo noemde, zag deze zaak
+    // omvallen op een dubbel id in plaats van op iets wat er mis was.
+    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit&nieuw=Studiotestwereld');
     await page.waitForSelector('#studio');
     await page.waitForTimeout(500);
     const na = await page.evaluate(() => ({
@@ -547,7 +550,7 @@ function check(ok, label, detail) {
       aanzet: !document.getElementById('st-schat').hidden && document.getElementById('st-schat').open,
       zoek: location.search,
     }));
-    check(na.laatste.name === 'Regenboogwereld' && na.laatste.id === 'regenboog' && na.kijk === na.n - 1,
+    check(na.laatste.name === 'Studiotestwereld' && na.laatste.id === 'studiotest' && na.kijk === na.n - 1,
       'N · de nieuwe wereld staat achteraan, en is gekozen', JSON.stringify(na));
     check(na.laatste.released === false && na.vink === false, 'N · en is nog niet uitgebracht', JSON.stringify(na.laatste));
     check(!/staat er niet/.test(na.tekening), 'N · geen valse melding over een ontbrekend bestand', na.tekening);
@@ -560,7 +563,7 @@ function check(ok, label, detail) {
     await page.reload();
     await page.waitForSelector('#studio');
     await page.waitForTimeout(400);
-    check(await page.evaluate(() => WORLDS.filter(w => w.name === 'Regenboogwereld').length) === 1,
+    check(await page.evaluate(() => WORLDS.filter(w => w.name === 'Studiotestwereld').length) === 1,
       'N · herladen maakt er geen tweede van', 'dubbel');
     // proberen: de URL van het venster, zonder echt een venster te openen
     const url = await page.evaluate(() => {
@@ -578,12 +581,12 @@ function check(ok, label, detail) {
     await spel.waitForTimeout(700);
     const inSpel = await spel.evaluate(() => ({ w: worldFor(P().level).world.name,
       scherm: (document.querySelector('.screen.active') || {}).id }));
-    check(inSpel.w === 'Regenboogwereld' && inSpel.scherm === 'screen-game',
+    check(inSpel.w === 'Studiotestwereld' && inSpel.scherm === 'screen-game',
       'N · en in het spel speel je hem, met het concept erin', JSON.stringify(inSpel));
     const kaal = await ctx.newPage();
     await kaal.goto(APP_URL + '&demo&star=p1&wereld=' + nr + '&stand=vers&screen=game');
     await kaal.waitForTimeout(700);
-    check(await kaal.evaluate(() => worldFor(P().level).world.name) !== 'Regenboogwereld',
+    check(await kaal.evaluate(() => worldFor(P().level).world.name) !== 'Studiotestwereld',
       'N · zonder &onuitgebracht blijft hij dicht, zoals voor een kind', 'toch open');
     // weg, in twee tikken
     await page.click('#st-weg');
@@ -617,7 +620,7 @@ function check(ok, label, detail) {
     const dialogen = [];
     page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
     page.on('dialog', d => { dialogen.push(d.message()); d.dismiss(); });
-    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit&nieuw=Regenboogwereld');
+    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit&nieuw=Studiotestwereld');
     await page.waitForSelector('#studio');
     await page.waitForTimeout(500);
     const vies = 'Hier is je schat!\n```svg\n'
@@ -663,7 +666,7 @@ function check(ok, label, detail) {
         bron: /schat: \{/.test(worldsSource()),
       };
     });
-    check(na.beloning === 'acc_wereld_regenboog' && na.naam === 'Regenboogkroon' && na.uitWereld === 'regenboog',
+    check(na.beloning === 'acc_wereld_studiotest' && na.naam === 'Regenboogkroon' && na.uitWereld === 'studiotest',
       'P · de schat staat bij de wereld, en is een spulletje van die wereld', JSON.stringify(na).slice(0, 200));
     check(!/script|onload|class=|style=|url\(/i.test(na.svg) && /fill="#ff5c8a"/.test(na.svg),
       'P · schoon opgeslagen, en het verloop is zijn eerste kleur', String(na.svg).slice(0, 200));

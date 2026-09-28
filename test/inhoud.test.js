@@ -798,18 +798,41 @@ zaak('L', () => {
     ['een rare uitsnede', met('view', '0 0 abc')],
     ['een te grote tekening', met('svg', '<g>' + '<path d="M0 0"/>'.repeat(900) + '</g>')],
   ].forEach(([wat, s]) => check(app.schatFouten(s).length > 0, 'L · ' + wat + ' wordt tegengehouden', s.svg && s.svg.slice(0, 60)));
+  // elke vorm uit SCHAT_VORMEN mag vooraan staan -- dezelfde lijst als beloning.test.js I
+  const vooraan = app.SCHAT_VORMEN.filter(v => app.schatFouten(met('svg', '<' + v + ' fill="#fff"/>')).length);
+  check(!vooraan.length && app.SCHAT_VORMEN.every(v => app.SCHAT_ELEMENTEN.includes(v)),
+    'L · een tekening mag met elke vorm uit SCHAT_VORMEN beginnen', vooraan.join());
+
+  /* De maat, zonder browser (schatMaatFouten): uit de uitsnede. Naast de zes
+     handgeschreven schatten -- die zelf allemaal een leesbare uitsnede hebben. */
+  const anderen = app.schatUitsneden(null);
+  check(anderen.length === app.WORLDS.filter(w => w.beloning).length && anderen.every(v => v[2] > 0 && v[3] > 0),
+    'L · elke schat heeft een uitsnede om aan te meten', JSON.stringify(anderen));
+  check(app.schatMaatFouten(goed, anderen).length === 0, 'L · de nette schat past in de familie',
+    JSON.stringify(app.schatMaatFouten(goed, anderen)));
+  [
+    ['onder de nek', '70 60 60 46'],               // onderrand 104
+    ['boven de pop uit', '70 -30 60 46'],
+    ['twee keer zo hoog', '70 5 60 110'],
+    ['veel te plat', '70 40 60 12'],
+    ['drie keer zo breed', '0 10 200 46'],
+  ].forEach(([wat, view]) => check(app.schatMaatFouten(met('view', view), anderen).length > 0,
+    'L · een schat ' + wat + ' wordt tegengehouden', view));
 
   // bij een wereld: een spulletje, prijsloos, van die wereld, en dus niet te koop
   const proef = laadApp();
-  proef.run("WORLDS.push({ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8, released: false,"
-    + " beloning: 'acc_wereld_regenboog', schat: " + JSON.stringify(goed) + " });"
+  // Een naam die geen echte wereld ooit krijgt. Hier stond Regenboogwereld -- het
+  // voorbeeld uit de docs -- en wie de echte zevende zo noemde, zag deze zaak
+  // omvallen op een dubbel id in plaats van op iets wat er mis was.
+  proef.run("WORLDS.push({ id: 'schattest', name: 'Schattestwereld', icon: '🌈', levels: 8, released: false,"
+    + " beloning: 'acc_wereld_schattest', schat: " + JSON.stringify(goed) + " });"
     + ' rebuildWorldStarts(); rebuildWorldBadges(); rebuildWereldschatten();');
-  const it = proef.item('acc_wereld_regenboog');
-  check(!!it && it.uitWereld === 'regenboog' && it.price === undefined && it.cat === 'acc',
+  const it = proef.item('acc_wereld_schattest');
+  check(!!it && it.uitWereld === 'schattest' && it.price === undefined && it.cat === 'acc',
     'L · de schat wordt een spulletje van zijn wereld, zonder prijs', JSON.stringify(it && { id: it.id, cat: it.cat, price: it.price }));
   check(!!it && it.draw('meisje', 1) === goed.svg && it.thumb('meisje').indexOf('<svg viewBox="70 10 60 46"') === 0,
     'L · met de tekening op de pop en de uitsnede in het miniatuur', it ? it.thumb('meisje').slice(0, 60) : 'geen');
-  check(proef.isBeloning('acc_wereld_regenboog'), 'L · en hij staat dus niet in de winkel', 'wel');
+  check(proef.isBeloning('acc_wereld_schattest'), 'L · en hij staat dus niet in de winkel', 'wel');
   check(!proef.wereldControle({}).some(p => p.blokkeert), 'L · een nette schat blokkeert niets',
     JSON.stringify(proef.wereldControle({}).filter(p => p.blokkeert)));
   const blok = require('./werelden').blokTerug(proef);
@@ -817,8 +840,12 @@ zaak('L', () => {
     "L · het blok geeft hem letterlijk terug (ook een ' in de naam), zonder scripttag", blok.tekst);
   // een kapotte schat: blokkeert, en komt niet in ITEMS
   proef.run("WORLDS[WORLDS.length - 1].schat.svg = '<g/><script>x</script>'; rebuildWereldschatten();");
-  check(!proef.item('acc_wereld_regenboog') && proef.wereldControle({}).some(p => p.blokkeert && p.waar === 'beloning'),
+  check(!proef.item('acc_wereld_schattest') && proef.wereldControle({}).some(p => p.blokkeert && p.waar === 'beloning'),
     'L · een kapotte schat blokkeert en komt niet in het spel', 'toch');
+  // ...en de maat telt mee in wereldControle, dus ook in npm run check en Opslaan
+  proef.run("WORLDS[WORLDS.length - 1].schat = " + JSON.stringify(Object.assign({}, goed, { view: '70 60 60 46' })) + '; rebuildWereldschatten();');
+  check(proef.wereldControle({}).some(p => p.blokkeert && p.waar === 'beloning' && /nek/.test(p.t)),
+    'L · een schat onder de nek blokkeert, zonder browser', 'niet gezien');
   // een schat die een handgemaakt id wil: blokkeert, de handgemaakte wint
   proef.run("WORLDS[WORLDS.length - 1].schat = " + JSON.stringify(goed) + ";"
     + " WORLDS[WORLDS.length - 1].beloning = 'acc_kroon'; rebuildWereldschatten();");
@@ -827,11 +854,11 @@ zaak('L', () => {
     'L · een schat met het id van een bestaand spulletje blokkeert', 'niet gezien');
   // en via het concept, zoals in de studio
   const K = app.WORLD_DRAFT_KEY;
-  const concept = JSON.parse(JSON.stringify(app.WORLDS)).concat([{ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈',
-    levels: 8, released: false, beloning: 'acc_wereld_regenboog', schat: goed }]);
+  const concept = JSON.parse(JSON.stringify(app.WORLDS)).concat([{ id: 'schattest', name: 'Schattestwereld', icon: '🌈',
+    levels: 8, released: false, beloning: 'acc_wereld_schattest', schat: goed }]);
   const viaConcept = laadApp({ opslag: { [K]: JSON.stringify(concept), [K + '_basis']: JSON.stringify(app.WORLDS) } });
   viaConcept.loadWorldDraft();
-  check(!!viaConcept.item('acc_wereld_regenboog'), 'L · een schat uit het concept staat meteen in ITEMS', 'niet');
+  check(!!viaConcept.item('acc_wereld_schattest'), 'L · een schat uit het concept staat meteen in ITEMS', 'niet');
 });
 
 /* ================= M · De over-pagina ================= */
