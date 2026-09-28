@@ -19,14 +19,14 @@
 
   Scènes, in ontwerptijd (S3, STAP en EIND in het script zetten de maat; het
   filmpje speelt dat SNEL = 1,4 keer zo snel af, dus ± 20 echte seconden):
-    0   - 1.1   de ster landt, de R met zijn ster ploft erin
-    1.1 - 4.1   het logo bouwt zichzelf op: de R schuift naar zijn plek, de
+    0   - 0.8   de ster landt, de R met zijn ster ploft erin
+    0.8 - 3.1   het logo bouwt zichzelf op: de R schuift naar zijn plek, de
                 ster springt naar zijn plek boven "sterren", de letters en de
                 zwaai komen erbij (het logo in lagen, zie test/lagen.js), en de
                 ondertitel springt erbij
-    4.6 - 23.5  negen schermen uit het echte spel in een telefoon, om en om
+    3.6 - 22.5  negen schermen uit het echte spel in een telefoon, om en om
                 het plezier en het rekenen (twee komen uit het ouderdeel)
-   23.5 - 27.7  eindkaart met het adres
+   22.5 - 26.7  eindkaart met het adres
   Het logo-deel is geschreven in de tijd van de eerste versie (26 s, logo tot
   9 s) en wordt afgespeeld via logoTijd(): die slaat het aanloopje van de
   vallende ster en het wachten over en speelt de opbouw iets vlotter. Zo bleef
@@ -266,7 +266,7 @@ const SCHERMEN = [
   { img: '06-kleedkamer',      kop: 'Kleed je ster aan <span class="licht">voor de show</span>', onder: '' },
 ];
 const N = SCHERMEN.length, LAATSTE = N - 1;
-const S3 = 4.6, STAP = 2.1, EIND = 4.2;
+const S3 = 3.6, STAP = 2.1, EIND = 4.2;
 const DUUR = S3 + N * STAP + EIND;   // in 'ontwerptijd'; zie SNEL
 /* Alles hierboven en hieronder is in ontwerptijd geschreven; het filmpje speelt
    die SNEL keer zo snel af. Op een telefoon voelde de ontwerptijd traag, en zo
@@ -281,8 +281,10 @@ const LUS = !location.search.includes('opname');
 const uitLus = t => LUS ? 1 - tussen(t, DUUR - .5, DUUR) : 1;
 /* Het logo-deel speelt in de tijd van de eerste versie (zie de kop). Knikpunten
    [nu, toen]: de ster is al bijna geland als het filmpje begint, de R blijft
-   niet alleen staan wachten, en de opbouw zelf loopt 1,3 keer zo snel. */
-const LOGO_TIJD = [[0, 1], [.3, 1.3], [.85, 2.2], [.95, 3.9], [1.1, 4.1], [3.8, 7.6]];
+   niet alleen staan wachten, en de opbouw zelf loopt 1,8 keer zo snel -- met
+   SNEL erbovenop is het logo dus vlotter dan de schermen erna, en dat is zo
+   bedoeld: het logo is de aanloop, de schermen zijn het verhaal. */
+const LOGO_TIJD = [[0, 1.05], [.2, 1.3], [.6, 2.2], [.7, 3.9], [.8, 4.1], [2.75, 7.6]];
 function logoTijd(t) {
   const k = LOGO_TIJD;
   if (t >= k[k.length - 1][0]) return k[k.length - 1][1] + (t - k[k.length - 1][0]);
