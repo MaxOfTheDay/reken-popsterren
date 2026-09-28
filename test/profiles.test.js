@@ -2639,6 +2639,14 @@ function check(ok, label, detail) {
       // de rust weer op zijn echte lengte: deze zaak gaat over de groet, en een
       // kortgezette stilte uit de vorige zaak zou er middenin vallen
       Object.assign(LANDING, window.__echteRust);
+      /* En zonder tros. Na een klein sterretje komt er met kans trosKans meteen
+         nog eentje achteraan, op een eigen timer -- dus of die op het moment van
+         tellen net klaarstaat is een dobbelsteen. Dan telde de ene keer 3 en de
+         andere 4 zonder dat er iets verdubbeld was, en viel deze zaak zo nu en
+         dan om (nagemeten: 16 keer tellen gaf één 4). Een gekopieerde lus legt
+         er zonder tros nog steeds een timer bij, en dáár gaat het hier om. */
+      const trosKans = VONKJES.trosKans;
+      VONKJES.trosKans = 0;
       const rustig = async () => {
         goProfiles();
         await new Promise(r => setTimeout(r, 2600));
@@ -2650,6 +2658,7 @@ function check(ok, label, detail) {
         selectProfile('p1'); await new Promise(r => setTimeout(r, 80));
       }
       const zesmaal = await rustig();
+      VONKJES.trosKans = trosKans;
       return { eenmaal, zesmaal, poppen: window.__poppen() };
     });
     check(snel.zesmaal === snel.eenmaal && snel.poppen.every(x => x === '-'),

@@ -824,6 +824,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
      de plaat dekkender, zodat er geen trofeenamen meer door de kop heen lezen. */
   const gescrold = await page.evaluate(async () => {
     const sc = document.getElementById('screen-trophies');
+    const inhoudRuim = document.getElementById('trophy-shelves').offsetTop;
     sc.scrollTop = 260;
     // de inklapping duurt 220ms (zie .kast-telling); 200 was er altijd al net
     // te krap voor en viel onder belasting soms om
@@ -834,11 +835,35 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       zinWeg: zin.getBoundingClientRect().height < 2,
       titel: !!document.querySelector('#screen-trophies .header-title'),
       terug: !!document.querySelector('#screen-trophies .header-left'),
+      inhoudRuim, inhoudKrap: document.getElementById('trophy-shelves').offsetTop,
     };
   });
   check(gescrold.klasse && gescrold.zinWeg, 'gescrold krimpt de kop en klapt de stand-zin weg',
     JSON.stringify(gescrold));
   check(gescrold.titel && gescrold.terug, 'maar terug en de titel blijven staan', JSON.stringify(gescrold));
+  /* Wat de kop krimpt komt er als marge onder weer bij (--kop-krimp, zie
+     kopKrimpMeten): de plaat wordt kleiner, de plek in de stroom niet. Zonder dat
+     trok de krimpende kop de kaartjes eronder mee omhoog. */
+  check(gescrold.inhoudKrap === gescrold.inhoudRuim, 'en de kaartjes eronder schuiven niet mee',
+    `${gescrold.inhoudRuim} -> ${gescrold.inhoudKrap}`);
+  /* En de kop mag de schuifstand niet terugduwen. Toen hij in de stroom kromp,
+     zette de scroll anchoring de schuifstand met de krimp terug; op 10px stilgezet
+     viel die onder de drempel van kastScroll, werd de kop weer ruim, schoof de
+     stand weer op -- elk beeldje, zolang niemand het scherm aanraakte. */
+  const stil = await page.evaluate(async () => {
+    const sc = document.getElementById('screen-trophies');
+    sc.scrollTop = 0;
+    await new Promise(res => setTimeout(res, 400));
+    let wissels = 0;
+    const ob = new MutationObserver(() => wissels++);
+    ob.observe(sc, { attributes: true, attributeFilter: ['class'] });
+    sc.scrollTop = 10;
+    await new Promise(res => setTimeout(res, 600));
+    ob.disconnect();
+    return { wissels, stand: sc.scrollTop, gescrold: sc.classList.contains('gescrold') };
+  });
+  check(stil.gescrold && stil.wissels === 1 && stil.stand === 10,
+    'net voorbij de drempel stilgezet blijven de kop en de schuifstand staan', JSON.stringify(stil));
 
   /* ---- 9 · Terug-navigatie (de Android-terugknop) ---- */
   await page.goBack();

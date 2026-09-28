@@ -98,10 +98,9 @@
        kleiner, maar de plek die hij in de stroom inneemt blijft precies gelijk:
        de inhoud staat stil, de schuifstand blijft van de vinger, en er valt voor
        de scroll anchoring niets meer recht te zetten. Hoeveel dat is, meet
-       ouderKopMeten -- het
-       hangt af van de schermhoogte (hieronder begint een laag scherm al krap) en
-       van of de twee keuzerijen er staan, en dat opschrijven zou op de eerste
-       de beste wijziging uit de pas gaan lopen. */
+       kopKrimpMeten -- het hangt af van de schermhoogte (hieronder begint een
+       laag scherm al krap) en van of de twee keuzerijen er staan, en dat
+       opschrijven zou op de eerste de beste wijziging uit de pas gaan lopen. */
     margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
     /* Dekkend gescrold, om dezelfde reden als bij de kast: op .82 bleven de
        koppen van de witte kaarten dwars door "Voor ouders" heen leesbaar. */
@@ -124,7 +123,7 @@
   #screen-settings.gescrold #settings-subtabs { margin-top: 5px; }
   #screen-settings.gescrold .segmented { padding: 3px; }
   #screen-settings.gescrold .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
-  /* Uit, bij wie geen beweging wil -- en even uit terwijl ouderKopMeten meet, want
+  /* Uit, bij wie geen beweging wil -- en even uit terwijl kopKrimpMeten meet, want
      een maat die nog onderweg is, is geen maat. Het `.screen` in de kiezer is er
      om te winnen: `#screen-settings .hub-sticky .icon-btn` hierboven weegt zwaarder
      dan `#screen-settings .hub-sticky *`, dus zonder liep de terugknop bij
