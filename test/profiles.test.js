@@ -446,11 +446,16 @@ function check(ok, label, detail) {
         // FASE 4A: voorbij het laatste level is er geen wereld meer maar een
         // toegift -- worldFor klemt op de laatste show van de laatste wereld.
         staart: [WORLD_LAST + 1, WORLD_LAST + 9, WORLD_LAST + 52].map(naam),
-        staartVerwacht: (() => { const w = WORLDS[WORLDS.length - 1]; return w.name + ' ' + w.levels + '/' + w.levels; })(),
+        // de laatste UITGEBRACHTE wereld: een dichte achteraan in WORLDS is er
+        // voor een kind nog niet, en de toegift speelt dus in de wereld ervóór
+        staartVerwacht: (() => { const w = WORLDS[WORLD_AVAIL - 1]; return w.name + ' ' + w.levels + '/' + w.levels; })(),
         altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
         stappen: [1, 8, 9, 24, 25, 32, 33].map(leerStap),
         zoekVanaf: (() => { let l = 1; while (l <= WORLD_LAST && leerStap(l) < STAP_ZOEK) l++; return l; })(),
         eersteLevels: WORLDS.map((w, i) => WORLD_START[i]),
+        // de regel zelf, voor élke geschreven wereld (ook een dichte: die houdt
+        // zijn levelnummers al vast, zie rebuildWorldStarts)
+        aansluitend: WORLDS.every((w, i) => WORLD_START[i] === (i ? WORLD_START[i - 1] + WORLDS[i - 1].levels : 1)),
       };
     });
     check(r.grenzen.join(' | ') === r.grenzenVerwacht.join(' | '),
@@ -464,8 +469,11 @@ function check(ok, label, detail) {
       'de leerstap loopt per wereld', r.stappen.join(','));
     check(r.zoekVanaf === 25, 'zoek-het-getal komt niet vroeger dan show 25, net als met de oude klok',
       String(r.zoekVanaf));
-    check(r.eersteLevels.join(',') === '1,9,17,25,33,41',
-      'elke wereld begint waar de vorige ophoudt', r.eersteLevels.join(','));
+    check(r.aansluitend, 'elke wereld begint waar de vorige ophoudt', r.eersteLevels.join(','));
+    // De zes van toen liggen vast: daar staan de sterren van elk kind op (zie
+    // LEGACY_TOUR_END). Een wereld erbij komt erachter en schuift hier niets op.
+    check(r.eersteLevels.slice(0, 6).join(',') === '1,9,17,25,33,41',
+      'de eerste zes werelden beginnen nog op dezelfde levels', r.eersteLevels.join(','));
     await ctx.close();
   }
 
@@ -630,9 +638,15 @@ function check(ok, label, detail) {
       return uit;
     });
 
+    // hoeveel stukken weg er zijn, langs hetzelfde filter als de lus hierboven --
+    // hier stond 42 (zes werelden van zeven stukken), en dat is één wereld houdbaar
+    const stukken = await page.evaluate(() => WORLDS.reduce((n, w, wi) => {
+      const wor = worldForIndex(wi);
+      return (!wor || !worldReleased(w)) ? n : n + worldNodes(wor).length - 1;
+    }, 0));
     const fout = r.filter(x => x.fout);
-    check(r.length === 42 && !fout.length,
-      'elk stuk weg van elke wereld levert een baan op', JSON.stringify(fout).slice(0, 200));
+    check(r.length === stukken && stukken >= 42 && !fout.length,
+      'elk stuk weg van elke wereld levert een baan op', r.length + '/' + stukken + ' ' + JSON.stringify(fout).slice(0, 200));
     check(r.every(x => x.stappen === maat.stappen + 1),
       'de baan wordt over het hele stuk afgetast', JSON.stringify(r[0] || {}));
     const ergNaast = Math.max(...r.map(x => x.naast));
@@ -1256,7 +1270,14 @@ function check(ok, label, detail) {
    *   - elk raakvlak is minstens 40px in beide richtingen (kindervinger)
    *   - het sterrentabje onder de halte opent dezelfde halte (het hóórt erbij)
    *   - twee raakvlakken overlappen elkaar niet -- gecontroleerd op álle werelden
-   *     én op de standaardslinger, want dáár zit het krapste paar                */
+   *     én op de standaardslinger, want dáár zit het krapste paar
+   *
+   * Met &onuitgebracht, zoals de studio een wereld bekijkt: dan meet je een wereld
+   * die nog dicht is zoals een kind hem straks ziet. Zonder die vlag kan geen kind
+   * ín zo'n wereld staan -- de positie klemt op de laatste uitgebrachte -- en dan
+   * meet de zaak een kaart van "een andere wereld", met de terugknop over halte 1.
+   * Dat is een stand die in het spel niet bestaat. Voor zes uitgebrachte werelden
+   * verandert de vlag niets.                                                   */
   {
     for (const [naam, w, h] of [['kleine telefoon', 320, 568], ['iPhone 14', 390, 844],
                                 ['21:9', 412, 961]]) {
@@ -1264,7 +1285,7 @@ function check(ok, label, detail) {
       await cacheFonts(c);
       const page = await c.newPage();
       page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
-      await page.goto(APP_URL + '&demo&star=p1&screen=map');
+      await page.goto(APP_URL + '&demo&star=p1&screen=map&onuitgebracht');
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
         const uit = { werelden: [], kleinste: Infinity, tabMis: [], overlap: [] };
@@ -1669,7 +1690,11 @@ function check(ok, label, detail) {
         // één ronde extra op de standaardslinger -- zie 7e, hetzelfde recept
         const tot = WORLDS.length + 1;
         for (let wi = 0; wi < tot; wi++) {
-          const slinger = wi >= WORLDS.length;
+          /* Een wereld zonder eigen haltes ís de standaardslinger, en krijgt dus
+             ook alleen de marge. Dat kan alleen een dichte wereld zijn: een
+             uitgebrachte zonder haltes houdt wereldControle al tegen (en daarmee
+             npm run check), dus die komt hier nooit als "geschreven" langs. */
+          const slinger = wi >= WORLDS.length || !WORLDS[Math.min(wi, WORLDS.length - 1)].nodes;
           const wx = Math.min(wi, WORLDS.length - 1);
           const bewaard = slinger ? { n: WORLDS[wx].nodes, c: WORLDS[wx].curve } : null;
           if (slinger) { delete WORLDS[wx].nodes; delete WORLDS[wx].curve; }
@@ -1876,7 +1901,8 @@ function check(ok, label, detail) {
       const klaarPerfect = checkTrophies(q).map(t => t.id);
       return {
         plankNaam: plank.name,
-        perWereld: plank.ids.length === WORLDS.length,
+        // per UITGEBRACHTE wereld: een dichte hangt nog niet in de kast
+        perWereld: plank.ids.length === WORLD_AVAIL,
         ids: plank.ids.join(','),
         allemaalInTabel: plank.ids.every(id => TROPHIES.some(t => t.id === id)),
         geenBadgeMeer: !TROPHIES.some(t => t.id.indexOf('wereld-') === 0),
@@ -1888,7 +1914,7 @@ function check(ok, label, detail) {
         tweedeNogNiet: TROPHIES.filter(t => t.id === 'perfect-' + WORLDS[1].id)[0].has(q),
       };
     });
-    check(r.perWereld, 'er is precies één perfecte-wereldtrofee per wereld', r.ids);
+    check(r.perWereld, 'er is precies één perfecte-wereldtrofee per uitgebrachte wereld', r.ids);
     check(r.allemaalInTabel, 'elke perfecte-wereldtrofee staat ook in de trofeetabel', r.ids);
     check(r.geenBadgeMeer, 'de losse "wereld uit"-badges staan niet meer in de kast', r.ids);
     check(r.geenBadgeKlaar, 'een wereld uitspelen legt geen badge meer klaar', r.ids);

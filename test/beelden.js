@@ -140,4 +140,24 @@ function wereldAsset(wereld, schijf) {
   };
 }
 
-module.exports = { overzicht, wereldAsset, SCHRIJFBAAR, magSchrijven, ROOT };
+/* Staat dit bestand in de laatste commit? Dat is de vraag achter "moet de
+   tekeningenvoorraad van de service worker omhoog" (zie bumpArtCache in
+   preview.js): alleen een bestand dat al bij kinderen op de telefoon kan staan,
+   kan daar verouderd raken. Eerst keek de studio naar de schijf, en dan hoogde
+   een tweede keer slepen van een nieuwe, nog niet vastgelegde wereldkaart de
+   voorraad op -- en haalde elke telefoon alle tekeningen opnieuw binnen voor een
+   bestand dat er nooit geweest was.
+   true / false, of null als git er niet is: dan beslist de aanroeper. */
+function geleverd(rel, root) {
+  try {
+    // ls-tree zegt niets over een pad dat er niet is, en valt alleen om zonder
+    // repository (cat-file geeft in beide gevallen dezelfde foutcode)
+    const uit = require('child_process').execFileSync('git', ['ls-tree', 'HEAD', '--', rel],
+      { cwd: root || ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    return uit.trim() !== '';
+  } catch (e) {
+    return null;
+  }
+}
+
+module.exports = { overzicht, wereldAsset, SCHRIJFBAAR, magSchrijven, geleverd, ROOT };

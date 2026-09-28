@@ -68,7 +68,10 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
 3. **Kleuren**: *haal uit de tekening* doet een voorstel; *meet het contrast*
    kijkt of de haltes en de weg overal te zien blijven.
 4. **Haltes & weg**: sleep de haltes op de richels, de groene ruitjes buigen de
-   weg. Binnen de gestippelde zone blijven.
+   weg. Binnen de gestippelde zone blijven. Zolang je niets sleept staat er de
+   standaardslinger, en die mag niet mee naar buiten: halte 1 staat dan
+   middenonder, onder de terugknop van een kleine telefoon. *Klaar om uit te
+   brengen?* zegt het zolang het zo is.
 5. **Zaal**: hoe donker het achter de show wordt. Een lichte tekening wil meer
    donker; *bekijk in de show* laat het zien.
 6. **Wereldschat**: een vrije kiezen, of er een laten tekenen onder *Beloning →
@@ -80,7 +83,8 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
    *Publiceren*. Opslaan weigert zolang er iets is wat een kind nu zou merken;
    wat alleen "nog te doen vóór uitbrengen" is, mag mee. Een wereld die niet
    uitgebracht is, gaat dus gewoon al mee naar main — hij reserveert zijn
-   levelnummers en blijft voor kinderen dicht.
+   levelnummers en blijft voor kinderen dicht: niet op de reis, niet in het
+   schattenvak en niet in de trofeeënkast. Alle tests draaien daar ook mee.
 9. **Uitbrengen**: het vinkje *uitgebracht* in de editor (*Gegevens*), als *Klaar
    om uit te brengen?* niets meer te doen heeft. Opslaan, vastleggen,
    publiceren — en vanaf dan speelt een kind hem.
@@ -100,22 +104,30 @@ Zet de wereld in `WORLDS`, achteraan, tussen de markeringen `WERELDEN-BEGIN` en
   released: false,
   beloning: 'acc_wereld_regenboog',
   art: 'assets/world/regenboog-map.webp',
-  theme: { sky: '#…', deep: '#…', glow: '#…', road: '#…' },
   venue: { dim: .56 },
+  theme: { sky: '#…', deep: '#…', glow: '#…', road: '#…' },
   nodes: [ … ], curve: [ … ],
 }
 ```
 
+Dat is de volgorde waarin de studio hem schrijft (`worldsSource`). Draai na het
+bijzetten **`npm run werelden:netjes`**: die schrijft het blok opnieuw uit de
+gegevens, precies zoals *Opslaan* dat doet — velden in deze volgorde, getallen
+als `.56`. Anders valt `npm test` (hub zaak K) erover, want die houdt vast dat
+opslaan zonder wijziging niets aan het bestand verandert. Geen commentaar tussen
+de markeringen: dat overleeft het opnieuw schrijven niet (zet het erboven).
+
 `nodes` (één per show) en `curve` (één minder) zet je niet met de hand: laat je
 ze weg, dan slingert `defaultNodes()` er een route doorheen — speelbaar, maar
-niet mooi. `venue` mag weg (dan geldt `VENUE_TERUGVAL`). `released: false` haal
+niet mooi, en daarom niet uit te brengen (`wereldControle` houdt het tegen; zet
+ze in de studio). `venue` mag weg (dan geldt `VENUE_TERUGVAL`). `released: false` haal
 je weg als hij uitgebracht wordt. Een veld dat hier niet staat mag er gewoon bij:
 de studio schrijft het bij opslaan ongeschonden terug (zie `worldsSource`).
 
 Draai daarna `npm run check`. Die kijkt na of het pad bestaat, of de schat
 bestaat, gratis is en nog niet aan een andere wereld hangt, of het aantal haltes
 bij het aantal shows past — en of een uitgebrachte wereld überhaupt een schat
-heeft.
+en eigen haltes heeft.
 
 Wat **vanzelf** meekomt, zonder dat je er iets voor doet:
 
@@ -127,8 +139,10 @@ Wat **vanzelf** meekomt, zonder dat je er iets voor doet:
 | de voortgang | `worldDone()` / `frontierWorld()` tellen hem mee |
 | de reis | `reisPlaatsen()` rijgt hem erbij zodra hij binnen de horizon valt |
 | de zaal | `venue`, of anders `VENUE_TERUGVAL` (de kaart zelf) |
-| de perfecte-wereldtrofee | `rebuildWorldBadges()` maakt `perfect-<id>` aan en hangt hem op de plank |
-| de tests | elke zaak die over werelden gaat telt uit `WORLDS`, niet uit een getal |
+| de perfecte-wereldtrofee | `rebuildWorldBadges()` maakt `perfect-<id>` aan en hangt hem op de plank — zodra hij uitgebracht is, niet eerder |
+| de Wereldtournee | wie hem nog niet geopend had, ziet hem terug naar "bezig" gaan tot ook deze wereld uit is; een geopende blijft van haar (zie het einde van `migrate()`) |
+| de leerstap | een wereld voorbij `LEERSTAPPEN` speelt de laatste stap, alles door elkaar (`stapVan`) |
+| de tests | elke zaak die over werelden gaat telt uit `WORLDS` en `WORLD_AVAIL`, niet uit een getal — met een zevende wereld erbij, uitgebracht of nog dicht, blijft alles groen |
 | het laden | de tekening komt binnen als die wereld in beeld komt of bijna in beeld is — het opstarten wordt er geen byte zwaarder van |
 | de cache | de service worker kent geen werelden; de nieuwe tekening komt erin bij het eerste bezoek en er hoeft geen versienummer omhoog |
 
@@ -249,11 +263,19 @@ In de editor, onder *Beloning → Een eigen wereldschat tekenen*:
 Wat een getekende schat moet (`schatFouten` in `src/20-app.js`; de keuring
 blokkeert erop via `wereldControle`, zaak L in `test/inhoud.test.js`): een naam,
 een emoji, een `view` van vier getallen, hoogstens 12.000 tekens, en alleen de
-vormen uit `SCHAT_ELEMENTEN`. Geen scripttag, `<style>`, `<image>`, `<use>`,
-`url(…)`, `href`, `class`, `style`, `on…=` of `&` — de tekening gaat als tekst
-het scriptblok in, dus wat daar niet in mag, mag hier ook niet. Het id mag niet
-al aan een handgeschreven spulletje hangen, en de keuze in de lijst staat uit
-zolang de wereld een eigen tekening heeft.
+vormen uit `SCHAT_ELEMENTEN`, beginnend met een uit `SCHAT_VORMEN`. Geen
+scripttag, `<style>`, `<image>`, `<use>`, `url(…)`, `href`, `class`, `style`,
+`on…=` of `&` — de tekening gaat als tekst het scriptblok in, dus wat daar niet
+in mag, mag hier ook niet. Het id mag niet al aan een handgeschreven spulletje
+hangen, en de keuze in de lijst staat uit zolang de wereld een eigen tekening
+heeft.
+
+En de maat (`schatMaatFouten`): boven de nek (y = 94), niet boven de pop uit, en
+in de familie van de andere schatten — niet twee keer zo hoog of drie keer zo
+breed. Node kan niet tekenen, dus dit wordt nagekeken op `view`: de studio meet
+de tekening bij het plaatsen en zet `view` op de omhullende plus `SCHAT_RAND`.
+Schrijf je een schat met de hand, zet `view` dan net om de tekening heen;
+`beloning.test.js` zaak I meet in de browser na dat hij dat ook doet.
 
 Liever met de hand? Dat kan nog steeds: een regel in `ITEMS` met een `artX()`
 zoals hierboven, en de wereld verwijst ernaar. Een wereld met een handgeschreven
@@ -280,8 +302,9 @@ Moet het toch:
    valt om als dat vergeten wordt.
 
 **Een perfecte-wereldtrofee hoef je nooit te maken.** `rebuildWorldBadges()`
-legt er per wereld één aan, op `perfect-<wereld-id>`, met dezelfde voorwaarde
-voor elke wereld (overal drie sterren). Er komt géén tweede trofee voor
+legt er per uitgebrachte wereld één aan, op `perfect-<wereld-id>`, met dezelfde
+voorwaarde voor elke wereld (overal drie sterren). Een wereld die nog dicht is
+krijgt er nog geen: anders stond hij met naam en icoon in de kast van elk kind. Er komt géén tweede trofee voor
 "uitgespeeld": die mijlpaal geeft het spulletje uit `beloning`.
 
 **Een trofee weghalen doe je niet door de regel te wissen** maar door het id in

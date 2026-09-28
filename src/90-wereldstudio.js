@@ -1149,7 +1149,10 @@ function startMapEdit() {
       + schoon.wortel + '>' + schoon.binnen + '</g>';
     const f = meetSvg(svg);
     if (!f) return { fout: 'De tekening kon niet worden gemeten.' };
-    const view = [f.x - 2, f.y - 2, f.width + 4, f.height + 4].map(n => Math.round(n * 10) / 10).join(' ');
+    // de omhullende plus een randje: dit is ook de maat waar npm run check op
+    // nakijkt (schatMaatFouten), dus hier geen ander getal dan SCHAT_RAND
+    const R = SCHAT_RAND;
+    const view = [f.x - R, f.y - R, f.width + 2 * R, f.height + 2 * R].map(n => Math.round(n * 10) / 10).join(' ');
     return { svg, view, maat: { x: f.x, y: f.y, w: f.width, h: f.height } };
   }
   // De maten van de schatten van de andere werelden, om de nieuwe tegen af te zetten.
@@ -1223,6 +1226,10 @@ function startMapEdit() {
       if (Math.max.apply(null, hs) / Math.min.apply(null, hs) >= 2) rood.push('te hoog of te laag naast de andere schatten — schuif "groter"');
       if (Math.max.apply(null, bs) / Math.min.apply(null, bs) >= 3) rood.push('te breed of te smal naast de andere schatten — dit is de vorm zelf; een andere tekening');
     }
+    /* En dezelfde regels zoals npm run check ze nakijkt: op de uitsnede, zonder
+       browser (schatMaatFouten). Hierboven is nauwkeuriger, maar wat de studio
+       goedkeurt moet ook door de keuring -- anders valt het pas bij Opslaan om. */
+    if (!rood.length) schatMaatFouten({ view: p.view }, schatUitsneden(w)).forEach(t => rood.push(t));
     const geel = p.weg && p.weg.length ? ['weggehaald omdat het niet mag: ' + p.weg.join(', ')] : [];
     let_.hidden = !rood.length && !geel.length;
     let_.className = 'st-check' + (!rood.length && !geel.length ? ' schoon' : '');

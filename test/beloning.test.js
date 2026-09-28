@@ -447,7 +447,8 @@ function check(ok, label, detail) {
         balk,
         heeft: P().owned.includes('acc_wereld_muziek'),
         diamanten: P().diamonds,
-        beloningen: WORLDS.map(w => w.beloning).filter(id => !!item(id)),
+        // de schatten van de UITGEBRACHTE werelden: een dichte verklapt niets
+        beloningen: WORLDS.filter((w, i) => worldAvailable(i)).map(w => w.beloning).filter(id => !!item(id)),
         volgorde: [...document.querySelectorAll('.item-card')].map(c => c.dataset.item),
         popPastKoopstuk: await (async () => {
           openKleedkamerCat('acc');
@@ -522,6 +523,9 @@ function check(ok, label, detail) {
     await nieuweSter(page);
     const r = await page.evaluate(async () => {
       ITEMS.push({ id: 'acc_wereld_test', cat: 'acc', name: 'Testhoedje', emoji: '🧪', spot: 'top' });
+      // wat er geschreven staat eerst uitbrengen: achter een dichte wereld zou de
+      // testwereld ook dicht blijven (uitbrengen gaat op volgorde)
+      WORLDS.forEach(w => { delete w.released; });
       const bestaand = WORLDS.length;
       WORLDS.push({ id: 'testwereld', name: 'Testwereld', icon: '🧪', levels: 2, beloning: 'acc_wereld_test' });
       rebuildWorldStarts();
@@ -560,14 +564,16 @@ function check(ok, label, detail) {
       // Elke wereld die een spulletje uitdeelt, en alleen die: een wereld zonder
       // beloning werkt (zie grantWorldRewards) en hoort deze zaak niet om te gooien.
       const ids = WORLDS.map(w => w.beloning).filter(id => !!id);
-      const uit = { ids, mist: [], geenSvg: [], metPrijs: [], basisVerschil: [], teLaag: [], extern: [], maten: {} };
+      const uit = { ids, mist: [], geenSvg: [], metPrijs: [], basisVerschil: [], teLaag: [], extern: [], maten: {}, buitenUitsnede: [] };
+      // dezelfde lijst als schatFouten: een tekening die de keuring doorlaat, laat deze zaak ook door
+      const begin = new RegExp('^\\s*<(svg|' + SCHAT_VORMEN.join('|') + ')\\b');
       const p = P();
       ids.forEach(id => {
         const it = item(id);
         if (!it || typeof it.draw !== 'function' || typeof it.thumb !== 'function') { uit.mist.push(id); return; }
         const meisje = it.draw('meisje', 1), jongen = it.draw('jongen', 1);
         if (meisje !== jongen) uit.basisVerschil.push(id);
-        if (!/^\s*<(path|circle|line|g|ellipse|svg)/.test(meisje)) uit.geenSvg.push(id);
+        if (!begin.test(meisje)) uit.geenSvg.push(id);
         if (it.price !== undefined) uit.metPrijs.push(id);
         // geen enkele verwijzing naar buiten: geen plaatje, geen url(), geen klasse
         if (/<image|url\(|class=/.test(meisje + it.thumb('meisje'))) uit.extern.push(id);
@@ -584,6 +590,13 @@ function check(ok, label, detail) {
         doos.remove();
         uit.maten[id] = [b.x, b.y, b.width, b.height].map(n => Math.round(n * 10) / 10);
         if (b.y + b.height > 94 || b.y < -2) uit.teLaag.push(id);
+        /* De uitsnede van het miniatuur past om de tekening heen. Dat is niet alleen
+           netjes: npm run check meet de maatfamilie op die uitsnede (schatMaatFouten),
+           omdat Node niet kan tekenen. Liegt een uitsnede, dan liegt die keuring --
+           en dat hoort hier op te vallen, waar wél gemeten wordt. */
+        const u = schatUitsnede(it);
+        if (!u || b.x < u[0] - 0.5 || b.y < u[1] - 0.5 || b.x + b.width > u[0] + u[2] + 0.5
+            || b.y + b.height > u[1] + u[3] + 0.5) uit.buitenUitsnede.push(id + ' ' + JSON.stringify(u));
       });
       // en ze komen ook echt allemaal op de pop terecht, op allebei de basissen
       uit.opDePop = ['meisje', 'jongen'].map(b => {
@@ -598,7 +611,11 @@ function check(ok, label, detail) {
          met opzet het raadsel en niet zijn tekening (fase 6E, zie zaak G). */
       ids.forEach(id => { if (!p.owned.includes(id)) p.owned.push(id); });
       openKleedkamerItem(ids[0]);
-      uit.kaartjes = ids.filter(id => {
+      // de tekeningen hierboven gelden voor elke wereld, ook een dichte (die wil je
+      // nagekeken hebben vóór hij uitgaat); in de kleedkamer staan alleen de
+      // schatten van de uitgebrachte
+      uit.zichtbaar = WORLDS.filter((w, i) => w.beloning && worldAvailable(i)).map(w => w.beloning);
+      uit.kaartjes = uit.zichtbaar.filter(id => {
         const k = document.querySelector(`.item-card[data-item="${id}"] .item-thumb svg`);
         return !!k;
       }).length;
@@ -623,11 +640,14 @@ function check(ok, label, detail) {
       'I · en ze zijn onderling in verhouding: één set, geen uitschieter', JSON.stringify(r.maten));
     check(r.metPrijs.length === 0,
       'I · nog steeds geen prijs: het blijven beloningen en geen koopwaar', JSON.stringify(r.metPrijs));
+    check(r.buitenUitsnede.length === 0,
+      'I · de uitsnede van elk miniatuur past om zijn tekening heen (daar meet npm run check op)',
+      JSON.stringify({ buiten: r.buitenUitsnede, maten: r.maten }));
     check(r.opDePop.join() === [r.ids.length, r.ids.length].join(),
       'I · en ze staan allemaal op allebei de paspoppen', JSON.stringify(r.opDePop));
-    check(r.kaartjes === r.ids.length,
+    check(r.kaartjes === r.zichtbaar.length && r.kaartjes > 0,
       'I · de kleedkamer toont de tekening op de kaartjes, niet het emoji',
-      JSON.stringify({ kaartjes: r.kaartjes, hoort: r.ids.length }));
+      JSON.stringify({ kaartjes: r.kaartjes, hoort: r.zichtbaar.length }));
     await ctx.close();
   }
 
