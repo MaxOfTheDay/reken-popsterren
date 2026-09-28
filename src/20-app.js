@@ -247,6 +247,73 @@ function beloningThumb(view, art) {
   return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${art}</svg>`;
 }
 
+/* ---- Een wereldschat uit de studio: een tekening, geen code ---------------
+   De zes hierboven zijn met de hand geschreven functies. Een schat die in de
+   wereldstudio gemaakt wordt, staat als gegevens bij zijn wereld in WORLDS:
+
+     beloning: 'acc_wereld_regenboog',
+     schat: { naam: 'Regenboogkroon', emoji: '🌈', view: '70 10 60 46', svg: '<g …>…</g>' },
+
+   en rebuildWereldschatten() maakt er een gewoon spulletje van in ITEMS -- met
+   dezelfde draw() en thumb() als de zes, dus de kleedkamer, het wereldfeest en de
+   kaart merken geen verschil. Waarom bij de wereld en niet in een eigen lijst:
+     - een schat hoort bij precies één wereld; zo kan er geen losse schat zijn die
+       aan niemand hangt (die zou prijsloos in de winkel komen, zie isBeloning);
+     - hij gaat mee in het concept van de studio, dus je ziet hem meteen in
+       Probeer, en hij wordt samen met de wereld gekeurd en opgeslagen.
+
+   De tekening is al op het hoofd gezet door de studio (in de 200x250-ruimte van
+   de pop) en `view` is de uitsnede voor het miniatuur. Het spel rekent hier niets
+   meer uit; dat vraagt een browser, en daar is de studio. */
+function schatItem(w) {
+  const s = w.schat;
+  return { id: w.beloning, cat: 'acc', name: s.naam, full: s.naam, emoji: s.emoji || w.icon,
+           uitWereld: w.id, draw: () => s.svg, thumb: () => beloningThumb(s.view, s.svg) };
+}
+function rebuildWereldschatten() {
+  for (let i = ITEMS.length - 1; i >= 0; i--) if (ITEMS[i].uitWereld) ITEMS.splice(i, 1);
+  WORLDS.forEach(w => {
+    if (!w.schat || !w.beloning || item(w.beloning)) return;   // een handgemaakte wint: zie wereldControle
+    if (schatFouten(w.schat).length) return;                     // kapot: niet in het spel, wél in de keuring
+    ITEMS.push(schatItem(w));
+  });
+}
+/* Wat er in de tekening van een schat mag staan. Het is tekst die letterlijk in
+   het scriptblok van index.html terechtkomt, en daar gelden twee soorten regels:
+
+     - die van de app (zie de kop van "De wereldbeloningen, getekend"): losse
+       vormen, geen verwijzing naar buiten -- geen <image>, geen url(), geen klasse,
+       want het miniatuur heeft geen stijlblad bij zich;
+     - die van het ene bestand (CLAUDE.md, regel 1): nergens de opening of de
+       afsluiting van een scripttag. Staat die er, dan knipt test/app.js het
+       scriptblok op de verkeerde plek en valt elke Node-suite om.
+
+   Dus een korte lijst toegestane elementen, en een nog kortere lijst van wat
+   nooit mag. De studio maakt een tekening eerst zelf schoon; dit is het vangnet
+   dat de keuring en het opslaan gebruiken. Zuiver: geen DOM, zodat het ook in
+   Node draait. */
+const SCHAT_ELEMENTEN = ['g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'text'];
+function schatFouten(s) {
+  const uit = [];
+  if (!s || typeof s !== 'object') return ['de schat is geen kaartje met naam, emoji, view en svg'];
+  if (!String(s.naam || '').trim()) uit.push('de schat heeft nog geen naam');
+  if (!String(s.emoji || '').trim()) uit.push('de schat heeft nog geen emoji (dat is de confetti bij het wereldfeest)');
+  if (!/^-?\d+(\.\d+)? -?\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?$/.test(String(s.view || ''))) {
+    uit.push('de uitsnede van het miniatuur ("' + s.view + '") is geen x y breedte hoogte');
+  }
+  const svg = String(s.svg || '');
+  if (!svg.trim()) { uit.push('de schat heeft nog geen tekening'); return uit; }
+  if (svg.length > 12000) uit.push('de tekening is ' + Math.round(svg.length / 1024) + ' kB tekst; houd hem onder de 12 — hij gaat mee in elke download');
+  if (/<\s*\/?\s*script|<\s*(image|use|foreignobject|style|a)\b|url\s*\(|href|javascript:|\son[a-z]+\s*=|\sclass\s*=|\sstyle\s*=|<!|<\?|&/i.test(svg)) {
+    uit.push('de tekening bevat iets wat niet mag: een script, een plaatje, een link, een stijl of een klasse');
+  }
+  const vreemd = [];
+  svg.replace(/<\/?\s*([a-zA-Z][\w:-]*)/g, (_, t) => { if (SCHAT_ELEMENTEN.indexOf(t.toLowerCase()) < 0) vreemd.push(t); return _; });
+  if (vreemd.length) uit.push('onbekende elementen in de tekening: ' + [...new Set(vreemd)].join(', '));
+  if (!/^\s*<(g|path|circle|ellipse|line|polyline|polygon|rect)\b/.test(svg)) uit.push('de tekening moet met een vorm of een <g> beginnen');
+  return uit;
+}
+
 /* ================= Items ================= */
 const ITEMS = [
   // Haar
@@ -779,6 +846,8 @@ function rebuildWorldStarts() {
   WORLD_LAST = WORLD_AVAIL ? WORLD_START[WORLD_AVAIL - 1] + WORLDS[WORLD_AVAIL - 1].levels - 1 : 0;
 }
 rebuildWorldStarts();
+// de schatten die de studio tekende, als spulletje in ITEMS (zie schatItem)
+rebuildWereldschatten();
 /* Het laatste level dat bestond op de dag dat de oneindige staart verdween (zes
    werelden van acht). Een historisch getal: het hoort bij één eenmalige opruiming
    in migrate() en mag daarom nooit meelopen met WORLD_LAST. Zie daar. */
@@ -833,6 +902,7 @@ function applyWorldDraft(list) {
   list.forEach(w => WORLDS.push(w));
   rebuildWorldStarts();
   if (typeof rebuildWorldBadges === 'function') rebuildWorldBadges();
+  rebuildWereldschatten();
 }
 /* Een concept op het spel van nu leggen, en niet op het spel van toen.
 
@@ -922,10 +992,13 @@ function saveWorldDraft() {
 }
 // De velden die worldsSource hieronder met de hand in vorm zet; de rest gaat als JSON mee.
 const WERELD_VELDEN = ['id', 'name', 'icon', 'levels', 'released', 'beloning', 'art', 'venue',
-  'theme', 'nodes', 'curve'];
+  'schat', 'theme', 'nodes', 'curve'];
 // De broncode van het blok, precies zoals het in index.html hoort te staan.
 function worldsSource() {
-  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+  // Ook een regeleinde ontsnapt: een schat-tekening is lange tekst, en een kaal
+  // regeleinde binnen '…' is een syntaxfout in het hele scriptblok.
+  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r').replace(/\n/g, '\\n') + "'";
   const body = WORLDS.map(w => {
     const L = ['  {'];
     L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
@@ -960,6 +1033,18 @@ function worldsSource() {
       if (v.dim != null) d.push(`dim: ${getal(v.dim)}`);
       if (v.op != null) d.push(`op: ${getal(v.op)}`);
       if (d.length) L.push('    venue: { ' + d.join(', ') + ' },');
+    }
+    /* De getekende schat (zie schatItem). De tekening op een eigen regel: hij is
+       lang, en zo blijft een diff leesbaar -- een andere naam is één regel, een
+       andere tekening een andere. */
+    if (w.schat) {
+      const s = w.schat;
+      L.push('    schat: {');
+      L.push(`      naam: ${q(s.naam || '')}, emoji: ${q(s.emoji || '')}, view: ${q(s.view || '')},`);
+      L.push(`      svg: ${q(s.svg || '')},`);
+      Object.keys(s).filter(k => ['naam', 'emoji', 'view', 'svg'].indexOf(k) < 0 && s[k] !== undefined)
+        .forEach(k => L.push('      ' + (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k)) + ': ' + JSON.stringify(s[k]) + ','));
+      L.push('    },');
     }
     if (w.theme && Object.keys(w.theme).length) {
       L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
@@ -1116,9 +1201,21 @@ function wereldControle(opSchijf) {
        Een schat met een prijs is een winkelspulletje: isBeloning() haalt het dan
        voor iedereen uit de winkel, ook als deze wereld nog dicht is. Dus dat
        blokkeert altijd. De studio biedt ze daarom ook niet meer aan. */
+    /* Een getekende schat uit de studio (zie schatItem). De tekening is tekst die
+       in het scriptblok belandt, dus een fout daarin blokkeert altijd -- ook in een
+       wereld die nog dicht is. */
+    if (w.schat) {
+      schatFouten(w.schat).forEach(t => fout(naam, t, 'beloning'));
+      if (!w.beloning) fout(naam, 'heeft een getekende schat, maar geen beloning die ernaar wijst', 'beloning');
+      else {
+        const al = item(w.beloning);
+        if (al && !al.uitWereld) fout(naam, 'de schat heet ' + w.beloning + ', maar dat id is al van een ander spulletje', 'beloning');
+      }
+    }
     const bel = w.beloning ? item(w.beloning) : null;
     if (!w.beloning) hier('nog geen wereldschat — deze wereld uitspelen levert niets op', 'beloning');
-    else if (!bel) fout(naam, 'de beloning "' + w.beloning + '" bestaat niet in ITEMS', 'beloning');
+    // een kapotte getekende schat staat niet in ITEMS; dat zeggen de regels hierboven al
+    else if (!bel) { if (!w.schat) fout(naam, 'de beloning "' + w.beloning + '" bestaat niet in ITEMS', 'beloning'); }
     else if (bel.price != null) fout(naam, (bel.full || bel.name) + ' staat in de winkel voor ' + bel.price
       + ' 💎 — een wereldschat heeft geen prijs, anders verdwijnt hij uit de winkel', 'beloning');
     else if (beloond[w.beloning]) fout(naam, 'deelt hetzelfde spulletje uit als ' + beloond[w.beloning], 'beloning');

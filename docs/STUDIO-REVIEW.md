@@ -1,7 +1,8 @@
 # Rekensterren Studio — world-authoring review
 
-> **Status:** slices 1–4 below are implemented. The "useful next" and "not worth
-> it" lists are still open. This is a phase document: it records *why* the Studio
+> **Status:** slices 1–5 below are implemented (5 is the follow-up round: the
+> treasure without code). The rest of "useful next" and "not worth it" is still
+> open. This is a phase document: it records *why* the Studio
 > works the way it does. Where it and the code disagree, the code wins. The
 > maintained guides are `DEV-STUDIO.md` and `docs/UITBREIDEN.md`.
 
@@ -118,13 +119,21 @@ drawing is still being made.
 | **Commit gate = fast check; publish explains playwright** | 5 | Branch commits no longer need browsers; publishing says "run `npm install` once" up front instead of failing in a test tail. | — |
 | **Correct art cache bump** | 6 | Replacing an existing asset bumps `ART_CACHE` once per change set (compared to `HEAD`); new files bump nothing. Cache clearing in the studio is prefix-based. | Fixes a real player-facing staleness bug. |
 | **`worldsSource` keeps unknown fields; a no-op save is a no-op** | 7 | Unknown world keys are written as JSON; explicit `released: true` is kept; numbers keep the file's `.56` style. The three explanatory comments that lived *inside* the machine-written block (and would have been deleted by the first save) moved above `WERELDEN-BEGIN`. `hub` K pins that saving unchanged worlds leaves the block byte-identical. | Future world properties need no Studio change to survive a save. |
-| **Editor controls** | 8 | *Uitgebracht* checkbox, venue darkness slider + "view in the show", reward list limited to free treasures with a copyable starter snippet for a new one, *✕ weg* for unsaved new worlds, grouped check list, header overflow fixed, no 404 probe for new worlds. | — |
+| **Editor controls** | 8 | *Uitgebracht* checkbox, venue darkness slider + "view in the show", reward list limited to free treasures, *✕ weg* for unsaved new worlds, grouped check list, header overflow fixed, no 404 probe for new worlds. | — |
+
+### Follow-up round — the treasure without code
+
+| change | problem solved | behaviour | impact / risk |
+|---|---|---|---|
+| **Treasure as world data** (`w.schat` + `rebuildWereldschatten`) | 2 (last developer-only step) | A world can carry its own drawing: `schat: { naam, emoji, view, svg }` next to `beloning`. The game turns it into an unpriced `ITEMS` entry (`uitWereld`), so the shop, dressing room, celebration and old-save grants all work unchanged. It travels with the draft, the in-game preview and *Opslaan*. | The SVG is text inside the one scriptblok: `schatFouten` (element allowlist, no script/style/url/href/on…/&, ≤ 12 kB) blocks anything else, via `wereldControle` → `inhoud` L. An id already used by a hand-written item blocks. |
+| **Drop-in SVG in the editor** | 2 | *Beloning → ✏️ Een eigen wereldschat tekenen*: paste an AI's answer (code fences and chatter are fine) or drop a `.svg`. It is cleaned against an allowlist (styles become attributes, a gradient becomes its first colour, removals are listed), fitted to the head from its measured box onto the size of the six existing treasures, and previewed on both bases plus the dressing-room thumbnail. *hoger*/*groter* nudge it; family rules (height, width, above the neck) go red. | Hand-coded treasures keep working; worlds that have one don't show the panel. |
+| **Two copyable prompts** (`docs/prompts/*.txt`) | 2 | Map: the maintainer's image-generator prompt, with theme and inspiration filled in. Treasure: an SVG prompt for Claude/ChatGPT with the avatar's measurements, the world's colours and the other treasures as examples. Plain text files; `{{KEY}}` placeholders, a line whose value is empty drops out. `hub` L keeps the numbers in them tied to the code (9:16 = `ART_W`/`ART_H`, the head, the element list). | Editing a prompt is editing a text file; a reload picks it up. |
 
 ### Useful next
 
-* **Reward treasure without code.** The only step that still needs a developer.
-  A small set of parametric crown/hat templates (shape + colours + emoji) could
-  cover most new worlds. Worth it only if new worlds become frequent.
+* ~~**Reward treasure without code.**~~ Done in the follow-up round above — by
+  pasting an AI-drawn SVG rather than with parametric templates, which would all
+  have looked alike.
 * **Move the editor out of the shipped bundle.** `src/90-wereldstudio.js` is ~20 %
   of the app's JavaScript and every child downloads it. It could be served as a
   separate classic script only under `?debug&mapedit`. Needs care with the
@@ -156,22 +165,29 @@ drawing is still being made.
 4. **Save → commit → publish** — `/api/concept`, round-trip guard, pipeline
    panel, fast commit gate, art cache fix, `worldsSource` future-proofing.
 
-Each slice ships with tests: `inhoud` K, `hub` K, `studio` C/N/O.
+5. **Treasure without code** — `w.schat`, the SVG panel, both prompts.
+
+Each slice ships with tests: `inhoud` K/L, `hub` K/L, `studio` C/N/O/P.
 
 ## 6 · The resulting workflow
 
 1. `npm run studio` → **Wereldstudio** → **+ Nieuwe wereld** → type
    *Regenboogwereld* → **Maak**. The editor opens full width on the new world.
-2. Drop the map on **Tekening**. Click **haal uit de tekening**. Drag stops onto
-   the ledges. Set **Zaal · donkerte**. Pick a **wereldschat** — or copy the
-   starter snippet if none is free.
-3. **▶ Probeer in het spel**: step through the map states, play the **first** and
+2. Need a map? **Tekening → ✨ Prompt voor een beeldgenerator → Kopieer de
+   prompt**, paste it into the image generator. Drop the result on
+   **Tekening**. Click **haal uit de tekening**. Drag stops onto the ledges. Set
+   **Zaal · donkerte**.
+3. **Beloning**: pick a free **wereldschat**, or open **✏️ Een eigen wereldschat
+   tekenen**: type an idea → **Kopieer de prompt** → give it to Claude/ChatGPT →
+   paste the SVG back → nudge **hoger**/**groter** if needed → name + emoji →
+   **✓ Maak dit de schat**.
+4. **▶ Probeer in het spel**: step through the map states, play the **first** and
    **last show** on a Pixel-sized frame. **✎ Bewerken** to go back. Repeat.
-4. Read **Klaar om uit te brengen?**. Red blocks saving; gold is "before release".
-5. **1 · Concept → Opslaan in het project**. **2 · Project → Vastleggen…**
+5. Read **Klaar om uit te brengen?**. Red blocks saving; gold is "before release".
+6. **1 · Concept → Opslaan in het project**. **2 · Project → Vastleggen…**
    (message, Enter). **3 · Online → Publiceren… → Ja, publiceer.** The world is on
    main — still closed to children.
-6. When the reward exists and nothing is left to do: tick **uitgebracht**, then
+7. When nothing is left to do: tick **uitgebracht**, then
    Opslaan → Vastleggen → Publiceren once more.
 
 Before this round the same journey needed: a second tab and a modal, a

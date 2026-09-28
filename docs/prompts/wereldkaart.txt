@@ -1,0 +1,34 @@
+# De prompt voor een wereldkaart, voor een beeldgenerator. De wereldstudio zet
+# hem onder Tekening -> "Prompt voor een beeldgenerator", vult {{THEMA}} en
+# {{INSPIRATIE}} in, en laat deze regels met # weg. Is {{INSPIRATIE}} leeg, dan
+# valt die hele regel weg. Pas de tekst gerust aan: de studio leest dit bestand
+# bij elke keer openen opnieuw. Zie docs/WORLD-ART-BRIEF.md voor het waarom.
+# Let op: de haltes mogen in de studio alleen tussen x 19% en 81% van de breedte
+# staan (ZONE in src/15-kaart-en-weg.js) — het midden ~60%. De regel over
+# "the central 75-80%" hieronder laat de richels dus breder uitvallen dan de
+# haltes kunnen komen; de buitenste richels blijven dan leeg.
+[THEME]
+Theme: {{THEMA}}
+Optional inspiration: {{INSPIRATIE}}
+Create one portrait 9:16 illustrated world-map background for Reken Popsterren, a playful music-themed game for children ages 5–8.
+Creatively interpret the chosen theme into a distinctive world. Let the theme determine the geography, palette, landmarks, traversal features and overall character of the environment. If only a theme name is provided, invent these elements freely. If optional inspiration is provided, use it as direction rather than as a strict checklist.
+Music / pop-star elements should remain clearly recognizable but naturally integrated as a secondary layer through things like performance spaces, concert lighting, speakers, instruments, musical shapes, banners or rhythmic decorative details. The world should feel theme-first, music-second.
+Use a polished stylised 2D animated-film illustration style with large rounded shapes, friendly geometry, soft painted gradients and rich atmosphere. No outlines, photorealism or 3D-render look. Keep it colourful, magical, playful and adventurous rather than threatening or intense.
+Create an implied bottom-to-top journey of around 8 levels. Start near the lower-left or lower-centre and gradually wind upward toward a spectacular themed music destination near the upper-right or upper-centre.
+Do not draw the actual gameplay path or level markers.
+Instead, shape the environment around a broad, readable winding gameplay corridor with roughly 8 natural stopping areas, such as clearings, terraces, bridges, islands, ledges or crossings. They should provide enough clean space for circular level nodes and a player avatar without looking like deliberate UI placeholders.
+Keep this gameplay corridor somewhat calmer in detail and local contrast, while placing richer scenery and decorative detail toward the sides and around major landmarks.
+At the end of the journey, create one large, unmistakable finale destination suited to the theme. It should feel exciting, rewarding and clearly more important than the intermediate scenery.
+Keep approximately the top 15–18% of the image calm and free of important landmarks for game UI. The finale must sit clearly below this safe area and remain fully visible.
+Keep the extreme bottom-centre free of essential gameplay landmarks so the first level can sit comfortably above the game's bottom navigation.
+Use strong depth:
+
+* atmospheric distant background
+* clear playable midground
+* subtle foreground framing around the edges
+
+The composition should naturally guide the eye upward toward the finale.
+Responsive composition: keep all important landmarks, the gameplay corridor, the natural stopping areas and the final destination within roughly the central 75–80% of the image width. Treat the outer 10–12% on each side as decorative scenery and atmospheric bleed that may be cropped on taller phone screens. Avoid placing distinctive objects half inside and half outside this safe area.
+Do not include game UI, paths, level circles, numbers, locks, progression markers, avatars, children, buttons, labels, signs or other written text.
+Hide one tiny, playful “MAX” easter egg somewhere naturally within the scenery. It should be theme-specific, very subtle and only noticeable on close inspection. This is the only permitted written text.
+The result should feel like a distinct adventure world from the same Reken Popsterren universe: visually consistent with the other worlds, but not a reskin of them and not simply a generic fantasy landscape.

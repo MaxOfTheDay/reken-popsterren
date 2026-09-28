@@ -174,7 +174,8 @@ ene wereld; rechts het kijkvak. Een wereld maken gaat zo:
    uitgebracht**: hij staat straks wél in het spel, maar geen kind komt erin.
 2. **Bewerken** (dat is de editor): tekening erop slepen, *haal uit de tekening*
    voor de kleuren, haltes op de richels, de zaal donkerder of lichter, een
-   wereldschat kiezen. Alles staat meteen in je **concept** (in deze browser).
+   wereldschat kiezen of laten tekenen. Alles staat meteen in je **concept** (in
+   deze browser).
 3. **▶ Probeer in het spel** of **✓ Klaar**: terug naar het overzicht, en het
    kijkvak op telefoonmaat. Onder *Probeer in het spel* zet je hem in een stand
    (net begonnen, halverwege, bijna uit, perfect, op slot) of speel je hem echt:
@@ -205,9 +206,23 @@ week draait niets terug: alleen de werelden die jíj veranderde gaan over het sp
 heen, en is zo'n wereld intussen óók in het project veranderd, dan zegt de studio
 dat.
 
-De wereldschat zelf is een tekening in code (een regel in `ITEMS` en een
-tekenfunctie). Is er geen vrije meer, dan geeft de editor de aanzet om te kopiëren
-— zie `docs/UITBREIDEN.md`.
+**Twee prompts om te kopiëren**, allebei in de editor en allebei gevuld met wat
+de wereld al weet:
+
+* *Tekening → ✨ Prompt voor een beeldgenerator* — voor de kaart. Thema erin
+  (standaard de naam zonder "wereld"), eventueel een paar woorden inspiratie,
+  en het resultaat sleep je op het tekenvak.
+* *Beloning → ✏️ Een eigen wereldschat tekenen* — voor de schat, en die is voor
+  **Claude of ChatGPT**, want een schat is SVG. De prompt krijgt de kleuren van de
+  wereld en de schatten van de andere werelden als voorbeeld mee. Plak wat terugkomt (of
+  sleep een `.svg` erop): de studio maakt het schoon, zet het op het hoofd op de
+  maat van de andere, toont het op beide paspoppen en in het kleedkamervakje, en
+  *✓ Maak dit de schat* zet het in de wereld zelf (`schat:` in `WORLDS`). Geen
+  regel code.
+
+De teksten zelf staan in `docs/prompts/` — gewone tekstbestanden; pas je er één
+aan, dan geeft een herlaad van de studio de nieuwe. Een schat met de hand in code
+kan ook nog; zie `docs/UITBREIDEN.md`.
 
 ### App & merk
 
@@ -292,5 +307,5 @@ maar naar de opslag van `localhost`, niet naar die van een geïnstalleerde app.
 *Kijkvak leegmaken* veegt die weer leeg.
 
 Een wereld toevoegen doe je in de Wereldstudio: *+ Nieuwe wereld*, tekening
-erop, kleuren accepteren, haltes zetten, schat kiezen, proberen, *Opslaan in het
-project*. Zie hierboven, en `docs/UITBREIDEN.md`.
+erop, kleuren accepteren, haltes zetten, schat kiezen of laten tekenen, proberen,
+*Opslaan in het project*. Zie hierboven, en `docs/UITBREIDEN.md`.

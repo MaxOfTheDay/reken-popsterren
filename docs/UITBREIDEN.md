@@ -60,7 +60,9 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
    `wereldId`/`wereldArtPad`). De wereld komt achteraan, met acht shows, en
    **niet uitgebracht** (`released: false`).
 2. **Tekening** erop slepen. Formaat en compositie staan in
-   `docs/WORLD-ART-BRIEF.md`; elke bronmaat mag, de studio snijdt bij als cover
+   `docs/WORLD-ART-BRIEF.md`; wie hem door een beeld-AI laat maken, kopieert de
+   prompt onder *Tekening → ✨ Prompt voor een beeldgenerator* (de tekst staat in
+   `docs/prompts/wereldkaart.txt`). Elke bronmaat mag, de studio snijdt bij als cover
    en zet hem om naar webp. Begroting: ongeveer 125 kB — de keuring waarschuwt
    boven 200 kB.
 3. **Kleuren**: *haal uit de tekening* doet een voorstel; *meet het contrast*
@@ -69,8 +71,8 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
    weg. Binnen de gestippelde zone blijven.
 5. **Zaal**: hoe donker het achter de show wordt. Een lichte tekening wil meer
    donker; *bekijk in de show* laat het zien.
-6. **Wereldschat** kiezen (zie hieronder). Is er geen vrije meer, dan geeft de
-   editor de aanzet om te kopiëren.
+6. **Wereldschat**: een vrije kiezen, of er een laten tekenen onder *Beloning →
+   Een eigen wereldschat tekenen* (zie hieronder). Geen code, geen `ITEMS`-regel.
 7. **Probeer in het spel**: de standen op de kaart, en de eerste en de laatste
    show echt spelen — de laatste eindigt in het wereldfeest met de schat. Dat
    kan ook zolang de wereld nog niet uitgebracht is.
@@ -211,11 +213,51 @@ Een wereld zonder schat kan alleen zolang hij **niet uitgebracht** is: dan deelt
 hij niets uit en valt hij overal vanzelf buiten. Een uitgebrachte wereld zonder
 schat houdt `npm run check` tegen (zaak C en K in `test/inhoud.test.js`).
 
-**Een schat erbij, vanuit de studio.** Staat er geen vrije schat in de lijst, dan
-geeft de editor onder *Beloning* een aanzet om te kopiëren: de regel voor
-`ITEMS` en een lege tekenfunctie, al met het id van de wereld erin. Vul de
-tekening in (of laat Claude hem tekenen, met punt 2 hierboven als opdracht),
-`npm run bouw`, herlaad de studio — en hij staat in de lijst.
+### Een schat tekenen in de studio (zonder code)
+
+De zes schatten hierboven zijn met de hand geschreven. Een nieuwe hoeft dat niet:
+de wereld kan zijn tekening **zelf** meedragen.
+
+```js
+{ id: 'regenboog', …, beloning: 'acc_wereld_regenboog',
+  schat: { naam: 'Regenboogkroon', emoji: '🌈', view: '63 25 74 36',
+    svg: '<g transform="…"><path d="…" fill="#ef5350" stroke="#9e1c1c" stroke-width="2"/>…</g>' },
+}
+```
+
+`rebuildWereldschatten()` maakt daar een `ITEMS`-regel van — zonder `price`,
+met `draw()` en `thumb()` — en daarna gaat alles zoals in de tabel hierboven.
+Omdat hij in `WORLDS` staat, reist hij mee met het concept, de proef in het spel
+en *Opslaan in het project*.
+
+In de editor, onder *Beloning → Een eigen wereldschat tekenen*:
+
+1. Een **idee** in een paar woorden ("een regenboogkroontje met wolkjes").
+2. **Kopieer de prompt** en geef hem aan Claude of ChatGPT — niet aan een
+   beeldgenerator: een schat is SVG, geen plaatje. De prompt
+   (`docs/prompts/wereldschat.txt`) noemt de maten van de paspop, de kleuren van
+   de wereld en de schatten van de andere werelden als voorbeeld.
+3. Plak de SVG die terugkomt (of sleep een `.svg` erop). De studio **maakt hem
+   schoon** — alleen vormen, geen script, geen verwijzing naar buiten, een
+   verloop wordt zijn eerste kleur — en zegt wat hij weggehaald heeft.
+4. Hij wordt vanzelf **op het hoofd gezet**, op de maat van de andere schatten;
+   *hoger* en *groter* stellen bij. Je ziet hem op beide paspoppen en in het
+   vakje van de kleedkamer.
+5. Naam en emoji, dan **✓ Maak dit de schat**. *✕ getekende schat weg* (twee keer
+   tikken) zet de wereld weer zonder schat.
+
+Wat een getekende schat moet (`schatFouten` in `src/20-app.js`; de keuring
+blokkeert erop via `wereldControle`, zaak L in `test/inhoud.test.js`): een naam,
+een emoji, een `view` van vier getallen, hoogstens 12.000 tekens, en alleen de
+vormen uit `SCHAT_ELEMENTEN`. Geen scripttag, `<style>`, `<image>`, `<use>`,
+`url(…)`, `href`, `class`, `style`, `on…=` of `&` — de tekening gaat als tekst
+het scriptblok in, dus wat daar niet in mag, mag hier ook niet. Het id mag niet
+al aan een handgeschreven spulletje hangen, en de keuze in de lijst staat uit
+zolang de wereld een eigen tekening heeft.
+
+Liever met de hand? Dat kan nog steeds: een regel in `ITEMS` met een `artX()`
+zoals hierboven, en de wereld verwijst ernaar. Een wereld met een handgeschreven
+schat toont het tekenvak niet.
 
 ---
 

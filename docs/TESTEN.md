@@ -99,6 +99,13 @@ geeft een foutmelding.
   eens over wat "klaar" is: er is één lijst regels. Plus de proef dat de brug
   draagt: een uitgebrachte wereld zonder schat blokkeert, een dichte niet, en een
   winkelspulletje als schat altijd.
+- **een getekende schat** (zaak L) — een wereld met `schat: { naam, emoji, view,
+  svg }` krijgt zijn spulletje van `rebuildWereldschatten()`: zonder prijs, met
+  een tekening en een miniatuur. De tekening gaat als tekst het scriptblok in,
+  dus `schatFouten` houdt veertien soorten kwaad tegen (een scripttag, `<style>`,
+  `<image>`, `url(…)`, `href`, `on…=`, een onbekend element, te groot, ...) en
+  `wereldControle` blokkeert erop; na opslaan staat er geen tweede scripttag in
+  het blok. Een id dat al aan een handgeschreven spulletje hangt blokkeert ook.
 
 `kern`, `saves` en `kleedkamer` laden het spel met `alleenUitgebracht` (zie
 `test/app.js`): ze gaan over het spel zoals een kind het heeft. Een wereld die al
@@ -315,6 +322,11 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   terug (`rebaseWorldDraft`) en meldt een botsing; en het blok dat *Opslaan*
   schrijft geeft precies terug wat erin ging, ook een veld dat nog niemand kent
   (`blokTerug` in `test/werelden.js`, dezelfde proef die de server doet);
+- **de prompts kloppen met de code** (zaak L) — `docs/prompts/*.txt` hebben
+  hun invulplekken, de 9:16 van de kaartprompt is `ART_W`/`ART_H`, en de
+  schatprompt noemt alleen elementen uit `SCHAT_ELEMENTEN` en het hoofd waar het
+  werkelijk staat. Een prompt die iets anders vraagt dan de studio aanneemt,
+  levert een tekening op die de studio weer weggooit;
 - **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
   `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
   voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen
@@ -367,6 +379,12 @@ gezin:
   lijst (geen winkelspulletjes), en de controle zegt welke fout blokkeert: een
   schat die niet bestaat of in de winkel staat altijd, geen schat alleen in een
   uitgebrachte wereld;
+- **een geplakte schat wordt schoon en past** (zaak P) — een rommelig AI-antwoord
+  (tekst eromheen, een script, een stijl, een verloop, een eigen `viewBox`) wordt
+  een tekening met alleen vormen, en de studio zegt wat er weg is; hij wordt op
+  het hoofd gezet binnen de maatfamilie van de andere schatten; *✓ Maak dit de
+  schat* zet hem in de wereld en in de kleedkamer; en wat niet schoon te krijgen
+  is, houdt de knop dicht;
 - **slepen verandert die ene wereld** en niets anders;
 - **de standen zijn de échte standen** van het spel (`p.stars`, `p.level`), geen
   nagemaakte studioplaatjes;
