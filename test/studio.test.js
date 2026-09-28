@@ -114,26 +114,54 @@ function check(ok, label, detail) {
       opties: document.getElementById('mf-beloning').options.length,
     }));
     check(bel.id === 'acc_wereld_muziek', 'C · de beloning van de wereld staat er', bel.id);
-    check(bel.opties > 50, 'C · en je kunt er een ander spulletje van maken', String(bel.opties));
+    /* Alleen vrije wereldschatten: geen prijs, en niet al van een andere wereld. Een
+       winkelspulletje kiezen haalde het stil uit de winkel, en de keuring viel daar
+       pas bij het vastleggen op om. */
+    const opties = await page.$$eval('#mf-beloning option', os => os.map(o => o.value));
+    const aanbod = await page.evaluate(ids => ids.filter(Boolean).map(id => {
+      const it = item(id), van = beloningWereld(id);
+      return { id, prijs: it ? it.price : 'weg', van: van ? van.id : null };
+    }), opties);
+    check(aanbod.length >= 1 && aanbod.every(o => o.prijs == null && (!o.van || o.van === 'muziek')),
+      'C · alleen vrije wereldschatten, geen winkelspulletjes', JSON.stringify(aanbod));
+    check(opties.indexOf('') === 0, 'C · en "nog geen" staat bovenaan', JSON.stringify(opties));
     // de tovenaarshoed die er al is, blijft de beloning van de Toverwereld
     const tover = await page.evaluate(() =>
       (WORLDS.filter(w => w.id === 'tover')[0] || {}).beloning);
     check(tover === 'acc_wereld_tover', 'C · de Toverwereld deelt de tovenaarshoed uit', String(tover));
     // wisselen doet het, en het komt in WORLDS terecht
-    await page.selectOption('#mf-beloning', 'acc_kroon');
+    await page.selectOption('#mf-beloning', '');
     await page.waitForTimeout(150);
     const na = await page.evaluate(() => WORLDS[0].beloning);
-    check(na === 'acc_kroon', 'C · een andere beloning kiezen werkt', String(na));
-    // een kapotte verwijzing wordt gezien, een ontbrekende alleen gemeld
+    check(na === undefined, 'C · de beloning weghalen werkt', String(na));
+    await page.selectOption('#mf-beloning', 'acc_wereld_muziek');
+    await page.waitForTimeout(150);
+    check(await page.evaluate(() => WORLDS[0].beloning) === 'acc_wereld_muziek',
+      'C · en terugzetten ook', 'niet terug');
+    /* Een kapotte verwijzing blokkeert altijd. Géén beloning blokkeert in een
+       wereld die kinderen spelen, en is "nog te doen" in een wereld die nog dicht
+       is -- dezelfde regel als zaak C en K van test/inhoud.test.js. */
     const punten = await page.evaluate(() => {
       WORLDS[0].beloning = 'bestaat_niet';
       const stuk = wereldControle({}).filter(x => /bestaat_niet/.test(x.t));
       delete WORLDS[0].beloning;
       const leeg = wereldControle({}).filter(x => x.waar === 'beloning');
-      return { stuk: stuk.map(x => x.ernst), leeg: leeg.map(x => x.ernst) };
+      WORLDS.push({ id: 'proef', name: 'Proef', icon: '🧪', levels: 8, released: false });
+      rebuildWorldStarts();
+      const dicht = wereldControle({}).filter(x => x.waar === 'beloning' && /Proef/.test(x.w));
+      WORLDS.pop(); rebuildWorldStarts();
+      WORLDS[0].beloning = 'acc_wereld_muziek';
+      const winkel = (() => { WORLDS[0].beloning = 'acc_kroon';
+        const u = wereldControle({}).filter(x => /winkel/.test(x.t));
+        WORLDS[0].beloning = 'acc_wereld_muziek'; return u; })();
+      const kort = x => ({ ernst: x.ernst, blokkeert: x.blokkeert });
+      return { stuk: stuk.map(kort), leeg: leeg.map(kort), dicht: dicht.map(kort), winkel: winkel.map(kort) };
     });
-    check(punten.stuk[0] === 'fout', 'C · een beloning die niet bestaat is een fout', JSON.stringify(punten.stuk));
-    check(punten.leeg[0] === 'let op', 'C · géén beloning is een opmerking, geen fout', JSON.stringify(punten.leeg));
+    check(punten.stuk[0] && punten.stuk[0].blokkeert, 'C · een beloning die niet bestaat blokkeert', JSON.stringify(punten.stuk));
+    check(punten.leeg[0] && punten.leeg[0].blokkeert, 'C · géén beloning in een uitgebrachte wereld blokkeert', JSON.stringify(punten.leeg));
+    check(punten.dicht[0] && punten.dicht[0].ernst === 'fout' && !punten.dicht[0].blokkeert,
+      'C · in een wereld die nog dicht is: nog te doen', JSON.stringify(punten.dicht));
+    check(punten.winkel[0] && punten.winkel[0].blokkeert, 'C · een winkelspulletje als schat blokkeert', JSON.stringify(punten.winkel));
     const dubbel = await page.evaluate(() => {
       WORLDS[0].beloning = WORLDS[1].beloning;
       const uit = wereldControle({}).filter(x => x.waar === 'beloning' && x.ernst === 'fout').length;
@@ -493,6 +521,196 @@ function check(ok, label, detail) {
 
     await ctx.close();
     await new Promise(ok => server.close(ok));
+  }
+
+  /* ---- N: een nieuwe wereld, van naam tot proberen --------------------------
+   * De weg die de Dev Studio neemt: &nieuw=<naam> in de URL. Wat vastligt:
+   *   1  de wereld komt er één keer, achteraan, en nog niet uitgebracht
+   *   2  herladen maakt er geen tweede van (de URL verliest &nieuw, en de naam
+   *      staat al in het concept)
+   *   3  geen valse "het bestand staat er niet" bij een wereld zonder tekening
+   *   4  proberen opent déze wereld, ook al is hij nog dicht
+   *   5  zonder schat en geen vrije meer: het vak om er zelf een te tekenen staat open
+   *   6  "✕ weg" haalt een nieuwe wereld weer uit het concept, in twee tikken */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit&nieuw=Regenboogwereld');
+    await page.waitForSelector('#studio');
+    await page.waitForTimeout(500);
+    const na = await page.evaluate(() => ({
+      n: WORLDS.length, laatste: WORLDS[WORLDS.length - 1], kijk: viewWorldIdx,
+      vink: document.getElementById('mf-released').checked,
+      tekening: document.getElementById('st-art-let').textContent,
+      aanzet: !document.getElementById('st-schat').hidden && document.getElementById('st-schat').open,
+      zoek: location.search,
+    }));
+    check(na.laatste.name === 'Regenboogwereld' && na.laatste.id === 'regenboog' && na.kijk === na.n - 1,
+      'N · de nieuwe wereld staat achteraan, en is gekozen', JSON.stringify(na));
+    check(na.laatste.released === false && na.vink === false, 'N · en is nog niet uitgebracht', JSON.stringify(na.laatste));
+    check(!/staat er niet/.test(na.tekening), 'N · geen valse melding over een ontbrekend bestand', na.tekening);
+    check(na.aanzet, 'N · geen vrije schat: het tekenvak staat open', String(na.aanzet));
+    check(na.zoek.indexOf('nieuw') < 0 && /wereld=7/.test(na.zoek), 'N · &nieuw is uit de URL, de wereld erin', na.zoek);
+    await page.reload();
+    await page.waitForSelector('#studio');
+    await page.waitForTimeout(400);
+    check(await page.evaluate(() => WORLDS.filter(w => w.name === 'Regenboogwereld').length) === 1,
+      'N · herladen maakt er geen tweede van', 'dubbel');
+    // proberen: de URL van het venster, zonder echt een venster te openen
+    const url = await page.evaluate(() => {
+      let u = null;
+      window.open = x => { u = x; return {}; };
+      document.getElementById('st-vscherm').value = 'game:bijna';
+      document.getElementById('st-venster').click();
+      return u;
+    });
+    check(/wereld=7/.test(url) && /onuitgebracht/.test(url) && /stand=bijna/.test(url) && /screen=game/.test(url),
+      'N · proberen opent déze wereld, ook nog dicht', String(url));
+    // de wereld ook echt spelen, in het echte spel
+    const spel = await ctx.newPage();
+    await spel.goto(APP_URL + '&demo&star=p1&wereld=7&stand=vers&screen=game&onuitgebracht');
+    await spel.waitForTimeout(700);
+    const inSpel = await spel.evaluate(() => ({ w: worldFor(P().level).world.name,
+      scherm: (document.querySelector('.screen.active') || {}).id }));
+    check(inSpel.w === 'Regenboogwereld' && inSpel.scherm === 'screen-game',
+      'N · en in het spel speel je hem, met het concept erin', JSON.stringify(inSpel));
+    const kaal = await ctx.newPage();
+    await kaal.goto(APP_URL + '&demo&star=p1&wereld=7&stand=vers&screen=game');
+    await kaal.waitForTimeout(700);
+    check(await kaal.evaluate(() => worldFor(P().level).world.name) !== 'Regenboogwereld',
+      'N · zonder &onuitgebracht blijft hij dicht, zoals voor een kind', 'toch open');
+    // weg, in twee tikken
+    await page.click('#st-weg');
+    const tussen = await page.evaluate(() => WORLDS.length);
+    await page.click('#st-weg');
+    await page.waitForTimeout(200);
+    const eind = await page.evaluate(() => ({ n: WORLDS.length,
+      concept: localStorage.getItem('rekenPopsterren_wereldconcept') }));
+    check(tussen === 7 && eind.n === 6, 'N · ✕ weg vraagt eerst, en haalt hem dan weg', tussen + ' -> ' + eind.n);
+    check(eind.concept === null, 'N · en dan is er geen concept meer', String(eind.concept).slice(0, 60));
+    await ctx.close();
+  }
+
+  /* ---- P: een wereldschat zonder code ---------------------------------------
+   * De weg van een AI naar een schat: plakken, schoonmaken, op het hoofd zetten,
+   * keuren, en dan is het een gewoon spulletje. Wat vastligt:
+   *   1  alles wat niet mag gaat eruit, en dat wordt gezegd -- een script, een
+   *      onload, een stijlblok, een klasse; een verloop wordt zijn eerste kleur
+   *   2  het resultaat staat op het hoofd en in de maatfamilie van de andere zes:
+   *      boven de nek, hoogte binnen een factor 2, breedte binnen een factor 3 --
+   *      de regels van zaak I in test/beloning.test.js
+   *   3  "Maak dit de schat" zet hem bij de wereld (w.schat + beloning), en dan is
+   *      hij een spulletje dat niet in de winkel staat, met een miniatuur
+   *   4  de keuring en het blok voor het project zijn het ermee eens
+   *   5  wie de tekening om de studio heen met iets gevaarlijks vult, wordt
+   *      tegengehouden: het blokkeert, en het komt niet in ITEMS */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const dialogen = [];
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    page.on('dialog', d => { dialogen.push(d.message()); d.dismiss(); });
+    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit&nieuw=Regenboogwereld');
+    await page.waitForSelector('#studio');
+    await page.waitForTimeout(500);
+    const vies = 'Hier is je schat!\n```svg\n'
+      + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" onload="alert(1)">'
+      + '<defs><linearGradient id="v"><stop offset="0" stop-color="#ff5c8a"/></linearGradient></defs>'
+      + '<script>alert(2)</script><style>.a{fill:red}</style>'
+      + '<g stroke="#7b1fa2" stroke-width="10" stroke-linejoin="round">'
+      + '<path class="a" d="M60 380 L120 140 L200 300 L256 90 L312 300 L392 140 L452 380 Z" style="fill:#ffd54f"/>'
+      + '<path d="M60 380 Q256 330 452 380" fill="url(#v)"/>'
+      + '<circle cx="256" cy="90" r="28" fill="#e91e63"/></g></svg>\n```';
+    await page.fill('#sc-svg', vies);
+    await page.waitForTimeout(500);
+    await page.fill('#sc-naam', 'Regenboogkroon');
+    await page.waitForTimeout(150);
+    const proef = await page.evaluate(() => ({
+      let: document.getElementById('sc-let').innerText,
+      knop: document.getElementById('sc-gebruik').disabled,
+      poppen: document.querySelectorAll('#sc-vb svg').length,
+    }));
+    check(/script/.test(proef.let) && /onload/.test(proef.let) && /style/.test(proef.let) && /class/.test(proef.let),
+      'P · wat niet mag gaat eruit, en dat wordt gezegd', proef.let);
+    check(proef.poppen >= 3 && proef.knop === false, 'P · hij staat op beide poppen en in het miniatuur, en mag erin',
+      JSON.stringify(proef));
+    await page.click('#sc-gebruik');
+    await page.waitForTimeout(300);
+    const na = await page.evaluate(() => {
+      const w = WORLDS[WORLDS.length - 1], it = item(w.beloning);
+      const meet = svg => {
+        const d = document.createElement('div');
+        d.innerHTML = '<svg viewBox="0 0 200 250" width="400">' + svg + '</svg>';
+        document.body.appendChild(d);
+        const b = d.querySelector('svg').getBBox(); d.remove();
+        return { y: b.y, h: b.height, w: b.width };
+      };
+      const alle = WORLDS.filter(x => x.beloning && item(x.beloning)).map(x => meet(item(x.beloning).draw('meisje', 1)));
+      const hs = alle.map(m => m.h), bs = alle.map(m => m.w);
+      return {
+        beloning: w.beloning, naam: w.schat && w.schat.naam, svg: w.schat && w.schat.svg,
+        uitWereld: it && it.uitWereld, prijs: it && it.price, schat: isBeloning(w.beloning),
+        miniatuur: it ? it.thumb('meisje').indexOf('<svg viewBox="' + w.schat.view + '"') === 0 : false,
+        onder: meet(it.draw('meisje', 1)), familie: [Math.max(...hs) / Math.min(...hs), Math.max(...bs) / Math.min(...bs)],
+        fouten: schatFouten(w.schat), blok: wereldControle({}).filter(p => p.blokkeert).map(p => p.t),
+        bron: /schat: \{/.test(worldsSource()),
+      };
+    });
+    check(na.beloning === 'acc_wereld_regenboog' && na.naam === 'Regenboogkroon' && na.uitWereld === 'regenboog',
+      'P · de schat staat bij de wereld, en is een spulletje van die wereld', JSON.stringify(na).slice(0, 200));
+    check(!/script|onload|class=|style=|url\(/i.test(na.svg) && /fill="#ff5c8a"/.test(na.svg),
+      'P · schoon opgeslagen, en het verloop is zijn eerste kleur', String(na.svg).slice(0, 200));
+    check(na.schat && na.prijs === undefined && na.miniatuur, 'P · niet te koop, met een miniatuur', JSON.stringify(na));
+    check(na.onder.y >= -2 && na.onder.y + na.onder.h <= 94, 'P · boven de nek, op de pop', JSON.stringify(na.onder));
+    check(na.familie[0] < 2 && na.familie[1] < 3, 'P · en in de maatfamilie van de andere schatten', JSON.stringify(na.familie));
+    check(!na.fouten.length && !na.blok.length && na.bron, 'P · de keuring en het blok zijn het ermee eens',
+      JSON.stringify([na.fouten, na.blok, na.bron]));
+    check(!dialogen.length, 'P · en er heeft niets uit de SVG gedraaid', dialogen.join(' | '));
+    const gevaar = await page.evaluate(() => {
+      const w = WORLDS[WORLDS.length - 1];
+      w.schat = Object.assign({}, w.schat, { svg: '<g><path d="M0 0"/></g><script>alert(3)</script>' });
+      rebuildWereldschatten();
+      const r = { blok: wereldControle({}).filter(p => p.blokkeert && /script|niet mag/.test(p.t)).length,
+                  inItems: !!item(w.beloning) };
+      return r;
+    });
+    check(gevaar.blok > 0 && !gevaar.inItems, 'P · een script om de studio heen: het blokkeert en komt niet in het spel',
+      JSON.stringify(gevaar));
+    await ctx.close();
+  }
+
+  /* ---- O: een oud concept draait niets terug --------------------------------
+   * Een concept overleeft een git pull. Het werd blind over WORLDS gelegd, en dan
+   * zag je -- en schreef "Opslaan" -- de wereld van vorige week. Nu staat de basis
+   * erbij, en gaat alleen wat jíj veranderde over het spel heen. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1&screen=map');
+    await page.evaluate(() => {
+      const basis = JSON.parse(JSON.stringify(WORLDS_SHIPPED));
+      basis[0].theme.road = '#000000';                 // zo stond het "vorige week"
+      const concept = JSON.parse(JSON.stringify(basis));
+      concept[1].name = 'Mijn Snoep';                  // jouw wijziging
+      localStorage.setItem('rekenPopsterren_wereldconcept', JSON.stringify(concept));
+      localStorage.setItem('rekenPopsterren_wereldconcept_basis', JSON.stringify(basis));
+    });
+    await page.goto(APP_URL + '&demo&star=p1&screen=map&mapedit');
+    await page.waitForSelector('#studio');
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => ({
+      road: WORLDS[0].theme.road, echt: WORLDS_SHIPPED[0].theme.road, snoep: WORLDS[1].name,
+      melding: document.getElementById('st-concept').hidden ? '' : document.getElementById('st-concept').textContent,
+    }));
+    check(r.road === r.echt, 'O · wat je niet aanraakte is zoals het nu in het spel staat', JSON.stringify(r));
+    check(r.snoep === 'Mijn Snoep', 'O · wat je wél veranderde blijft staan', r.snoep);
+    check(/oudere versie/.test(r.melding), 'O · en het paneel zegt dat het concept is bijgewerkt', r.melding);
+    await ctx.close();
   }
 
   /* ---- I: elke knop van de Dev Studio komt ergens uit ---------------------

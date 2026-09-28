@@ -1,0 +1,32 @@
+# De prompt voor een wereldschat, voor een AI die SVG schrijft (Claude, ChatGPT)
+# -- niet voor een beeldgenerator: een schat is geen plaatje maar een tekening in
+# code (zie docs/WORLD-REWARD-BRIEF.md). De wereldstudio zet hem onder Beloning ->
+# "Een eigen wereldschat tekenen", vult {{WERELD}}, {{IDEE}}, {{KLEUREN}} en
+# {{VOORBEELDEN}} in (die laatste zijn de schatten die er al zijn, als SVG), en
+# laat deze regels met # weg. Is een waarde leeg, dan valt die hele regel weg.
+# De regels hieronder zijn dezelfde als die van de app: het hoofd op (100, 72)
+# met straal 32, niets onder y = 59, platte vlakken met een donkere rand. De
+# studio zet het resultaat daarna zelf op het hoofd en keurt het.
+Draw a "world treasure" for Reken Popsterren, a playful music-themed game for children aged 5–8. A child earns it by finishing the world "{{WERELD}}" and wears it on the head of their pop-star avatar.
+
+Idea: {{IDEE}}
+World colours (inspiration, not a rule): {{KLEUREN}}
+
+Reply with SVG code only: one <svg viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg"> element. No explanation, no Markdown.
+
+The canvas is the avatar's 200 × 250 space. The head is a circle at (100, 72) with radius 32, so the top of the scalp is at y = 40. Do not draw the head or the avatar — only the treasure.
+- It sits on or around the top of the head, centred on x = 100.
+- Keep everything between y = 8 and y = 59. Nothing may come below y = 59.
+- Make it about 40–50 units tall and 40–85 units wide, in proportion with the examples below.
+- It must read clearly at 52 pixels (the wardrobe thumbnail): bold, simple shapes, few details.
+
+Style, to match the other treasures:
+- flat fills with one darker outline around each shape (stroke-width about 2; about 1.3 for small details)
+- rounded, friendly shapes; stroke-linejoin="round" and stroke-linecap="round"
+- no gradients, filters, shadows, opacity effects, patterns or masks
+- no <image>, <use>, <style>, <defs>, CSS classes, style attributes or url(…)
+- only these elements: g, path, circle, ellipse, line, polyline, polygon, rect — and text only for a single ★ or ♪ symbol
+- no written words
+
+The treasures that already exist, for reference (same coordinate space, same style). Make the new one clearly different in shape:
+{{VOORBEELDEN}}

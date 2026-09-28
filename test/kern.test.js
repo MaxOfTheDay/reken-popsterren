@@ -34,7 +34,12 @@
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
  */
-const { laadApp, heropen } = require('./app');
+/* Het spel zoals een kind het heeft: alleen de uitgebrachte werelden. Een wereld
+   die al in WORLDS staat maar nog dicht is (released:false) hoort hier niet bij --
+   zie alleenUitgebracht in test/app.js. */
+const harnas = require('./app');
+const laadApp = o => harnas.laadApp(Object.assign({ alleenUitgebracht: true }, o));
+const { heropen } = harnas;
 const { check, zaak, klaar } = require('./meld')('kern');
 
 /* ---- gereedschap ---- */

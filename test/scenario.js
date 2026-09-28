@@ -71,10 +71,14 @@ const VOORKEUZES = [
   { id: 'show-eerste', plek: 'wereld', groep: 'Shows', label: 'Eerste show van deze wereld',
     params: { wereld: 'gekozen', stand: 'vers', screen: 'game' } },
   { id: 'show-laatste', plek: 'wereld', groep: 'Shows', label: 'Laatste show van deze wereld',
+    uitleg: 'speel hem uit: het wereldfeest, de wereldschat en de reis naar de volgende',
     params: { wereld: 'gekozen', stand: 'bijna', screen: 'game' } },
   { id: 'show-einde', plek: 'wereld', groep: 'Shows', label: 'Einde van een show',
     uitleg: 'het sterrenscherm na afloop',
     params: { wereld: 'gekozen', stand: 'halverwege', screen: 'end' } },
+  { id: 'reis-hier', plek: 'wereld', groep: 'Shows', label: 'De reis erheen',
+    uitleg: 'het scherm Werelden, met deze wereld als bestemming',
+    params: { wereld: 'gekozen', stand: 'vers', screen: 'reis' } },
 
   { id: 'arm', plek: 'algemeen', groep: 'Diamanten', label: 'Geen diamanten',
     params: { wereld: 'gekozen', stand: 'halverwege', diamanten: 0, screen: 'dress' } },
@@ -112,7 +116,9 @@ function url(params, basis) {
   if (p.stage) d.push('stage=' + p.stage);
   if (p.screen) d.push('screen=' + p.screen);
   if (p.mapedit) d.push('mapedit');
-  if (p.nieuw) d.push('nieuw');
+  if (p.nieuw) d.push(p.nieuw === 1 || p.nieuw === true ? 'nieuw' : 'nieuw=' + encodeURIComponent(p.nieuw));
+  // ook wat nog niet uitgebracht is (zie PROEF_ONUITGEBRACHT in src/20-app.js)
+  if (p.onuitgebracht) d.push('onuitgebracht');
   if (p.fit) d.push('fit=' + p.fit);
   return (basis || '/') + '?' + d.join('&');
 }

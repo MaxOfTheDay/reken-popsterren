@@ -22,7 +22,11 @@
  * Draaien:
  *   npm run test:kleedkamer      (of: npm test voor alle suites)
  */
-const { laadApp } = require('./app');
+/* Het spel zoals een kind het heeft: alleen de uitgebrachte werelden. Een wereld
+   die al in WORLDS staat maar nog dicht is (released:false) hoort hier niet bij --
+   zie alleenUitgebracht in test/app.js. */
+const harnas = require('./app');
+const laadApp = o => harnas.laadApp(Object.assign({ alleenUitgebracht: true }, o));
 const { check, zaak, klaar } = require('./meld')('kleedkamer');
 
 /* ---- gereedschap ---- */

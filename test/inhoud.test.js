@@ -25,6 +25,11 @@
  *   I  het merk           -- geen meesters in de app, en de iconen kloppen
  *   J  op het beginscherm -- de uitlegkaart per browser, weg in de app, en het
  *                           installeervoorstel van de browser blijft onaangeroerd
+ *   K  de studiokeuring   -- wat de wereldstudio "blokkeert" noemt, houdt ook
+ *                           deze keuring tegen; er is één lijst regels
+ *   L  de getekende schat -- een schat uit de studio is gegevens bij zijn
+ *                           wereld; wat erin mag, en dat hij een gewoon,
+ *                           onverkoopbaar spulletje wordt
  *
  * Draaien:
  *   npm run test:inhoud      (of: npm test voor alle suites)
@@ -112,9 +117,15 @@ zaak('B', () => {
    een kind krijgt, de kleedkamer die het als "te verdienen" toont, en de winkel
    die het juist níét mag verkopen. */
 zaak('C', () => {
+  /* Elke wereld die een kind kan spelen deelt iets uit. Een wereld op
+     released:false mag nog zonder: een wereldschat is een tekening in code en
+     komt vaak later dan de kaart, en zo kan zo'n wereld al veilig mee naar main
+     zonder dat een kind hem ziet. Dezelfde regel als in wereldControle (zie zaak
+     K) -- de studio en deze keuring zijn het dus eens over wat "klaar" is. */
+  const open = WORLDS.slice(0, app.uitgebrachtTot());
+  check(open.every(w => 'beloning' in w), 'C · elke uitgebrachte wereld deelt een spulletje uit',
+    JSON.stringify(open.filter(w => !('beloning' in w)).map(w => w.id)));
   const beloningen = WORLDS.filter(w => 'beloning' in w);
-  check(beloningen.length === WORLDS.length, 'C · elke wereld deelt een spulletje uit',
-    JSON.stringify(WORLDS.filter(w => !('beloning' in w)).map(w => w.id)));
   const ids = beloningen.map(w => w.beloning);
   check(dubbel(ids).length === 0, 'C · geen twee werelden die hetzelfde spulletje uitdelen', JSON.stringify(dubbel(ids)));
   beloningen.forEach(w => {
@@ -683,6 +694,118 @@ zaak('J', () => {
   check(!/beginscherm|install/i.test(JSON.stringify(c.db)), 'J · en db -- dus de back-up -- weet er niets van', Object.keys(c.db).join(', '));
   const morgen = laadApp({ opslag: c.opslag() });
   check(html(morgen, UA.android).includes('set-beginscherm'), 'J · een nieuwe start vraagt het gewoon weer aan de browser', '');
+});
+
+/* ================= K · De studiokeuring =================
+   De wereldstudio kijkt de werelden na met wereldControle (in src/20-app.js), en
+   noemt een punt "blokkeert" als een kind er nu last van heeft. Precies die
+   punten horen deze keuring te laten omvallen, en niets anders -- anders zegt de
+   studio "in orde" en valt het vastleggen daarna om, of andersom.
+
+   Hiervoor stonden de regels twee keer: in de studio en in de zaken hierboven, en
+   ze liepen uiteen. De studio noemde "geen beloning" een opmerking terwijl zaak C
+   erop omviel; je merkte het pas bij het vastleggen, na minuten testen. Nu is dit
+   de brug: dezelfde functie, dezelfde bestandslijst als de studio krijgt. */
+zaak('K', () => {
+  const { assetsOpSchijf } = require('./werelden');
+  const punten = app.wereldControle(assetsOpSchijf('assets'));
+  const blok = punten.filter(p => p.blokkeert);
+  check(blok.length === 0, 'K · niets wat de studio blokkerend noemt',
+    blok.map(p => p.w + ': ' + p.t).join(' | '));
+  check(punten.every(p => p.ernst === 'fout' || !p.blokkeert),
+    'K · alleen een fout kan blokkeren', JSON.stringify(punten.filter(p => p.ernst !== 'fout' && p.blokkeert)));
+
+  /* En de brug draagt ook: een echte fout in een uitgebrachte wereld blokkeert,
+     dezelfde fout in een wereld die nog dicht is niet. Zonder deze drie zou
+     "niets blokkeert" ook waar zijn als er niet gekeken werd.
+
+     Op de eerste wereld (die is altijd open) en op een proefwereld achteraan die
+     dicht is -- niet op "de laatste wereld", want staat daar al een wereld die
+     nog niet uitgebracht is, dan meet je iets anders. */
+  const proef = laadApp();
+  proef.run("WORLDS.push({ id: 'proef', name: 'Proefwereld', icon: '🧪', levels: 8, released: false });"
+    + 'rebuildWorldStarts(); rebuildWorldBadges();');
+  const dicht = proef.wereldControle({}).filter(p => /Proefwereld/.test(p.w));
+  check(dicht.some(p => p.waar === 'beloning' && p.ernst === 'fout' && !p.blokkeert),
+    'K · een dichte wereld zonder schat: nog te doen, blokkeert niet', JSON.stringify(dicht));
+  check(!dicht.some(p => p.blokkeert), 'K · en een dichte wereld achteraan blokkeert niets', JSON.stringify(dicht));
+  const schat = proef.WORLDS[0].beloning;
+  proef.run('delete WORLDS[0].beloning;');
+  check(proef.wereldControle({}).some(p => p.waar === 'beloning' && p.blokkeert && p.w.indexOf(proef.WORLDS[0].name) >= 0),
+    'K · een uitgebrachte wereld zonder schat: dat blokkeert', 'niet gezien');
+  proef.run("WORLDS[0].beloning = 'pet_poes';");
+  check(proef.wereldControle({}).some(p => /winkel/.test(p.t) && p.blokkeert),
+    'K · een winkelspulletje als schat blokkeert', 'niet gezien');
+  proef.run('WORLDS[0].beloning = ' + JSON.stringify(schat) + ';');
+  // een wereld die kinderen al spelen weer dichtzetten
+  proef.run('WORLDS[1].released = false; rebuildWorldStarts();');
+  check(proef.wereldControle({}).some(p => /al uitgebracht/.test(p.t) && p.blokkeert),
+    'K · een uitgebrachte wereld weer dichtzetten blokkeert', 'niet gezien');
+  proef.run('delete WORLDS[1].released; rebuildWorldStarts();');
+});
+
+/* ================= L · De getekende schat =================
+   Een wereldschat uit de studio staat als SVG-tekst bij zijn wereld (w.schat), en
+   rebuildWereldschatten() maakt er een spulletje van. Die tekst belandt
+   letterlijk in het scriptblok van index.html -- dus de regels van schatFouten
+   zijn niet alleen smaak: een scripttag erin en test/app.js knipt het blok op de
+   verkeerde plek (CLAUDE.md, regel 1). */
+zaak('L', () => {
+  const goed = { naam: "Regenboog's kroon", emoji: '🌈', view: '70 10 60 46',
+    svg: '<g transform="translate(1 2) scale(0.5)"><path d="M0 0 L10 10 Z" fill="#fff" stroke="#000"/>'
+      + '<circle cx="5" cy="5" r="3"/><text x="1" y="2" font-size="9" fill="#ffd54f">★</text></g>' };
+  check(app.schatFouten(goed).length === 0, 'L · een nette schat gaat door', JSON.stringify(app.schatFouten(goed)));
+  const met = (veld, waarde) => Object.assign({}, goed, { [veld]: waarde });
+  [
+    ['een scripttag', met('svg', '<g/><script>alert(1)</script>')],
+    ['een afsluitende scripttag', met('svg', '<g/></script>')],
+    ['een plaatje', met('svg', '<g><image href="x.png"/></g>')],
+    ['een url()', met('svg', '<g><path fill="url(#v)" d="M0 0"/></g>')],
+    ['een onload', met('svg', '<g onload="x()"><path d="M0 0"/></g>')],
+    ['een klasse', met('svg', '<g class="a"><path d="M0 0"/></g>')],
+    ['een stijl', met('svg', '<g style="fill:red"><path d="M0 0"/></g>')],
+    ['een entiteit', met('svg', '<g><text>&lt;</text></g>')],
+    ['een onbekend element', met('svg', '<g><foo/></g>')],
+    ['geen vorm vooraan', met('svg', 'tekst<g/>')],
+    ['geen naam', met('naam', ' ')],
+    ['geen emoji', met('emoji', '')],
+    ['een rare uitsnede', met('view', '0 0 abc')],
+    ['een te grote tekening', met('svg', '<g>' + '<path d="M0 0"/>'.repeat(900) + '</g>')],
+  ].forEach(([wat, s]) => check(app.schatFouten(s).length > 0, 'L · ' + wat + ' wordt tegengehouden', s.svg && s.svg.slice(0, 60)));
+
+  // bij een wereld: een spulletje, prijsloos, van die wereld, en dus niet te koop
+  const proef = laadApp();
+  proef.run("WORLDS.push({ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8, released: false,"
+    + " beloning: 'acc_wereld_regenboog', schat: " + JSON.stringify(goed) + " });"
+    + ' rebuildWorldStarts(); rebuildWorldBadges(); rebuildWereldschatten();');
+  const it = proef.item('acc_wereld_regenboog');
+  check(!!it && it.uitWereld === 'regenboog' && it.price === undefined && it.cat === 'acc',
+    'L · de schat wordt een spulletje van zijn wereld, zonder prijs', JSON.stringify(it && { id: it.id, cat: it.cat, price: it.price }));
+  check(!!it && it.draw('meisje', 1) === goed.svg && it.thumb('meisje').indexOf('<svg viewBox="70 10 60 46"') === 0,
+    'L · met de tekening op de pop en de uitsnede in het miniatuur', it ? it.thumb('meisje').slice(0, 60) : 'geen');
+  check(proef.isBeloning('acc_wereld_regenboog'), 'L · en hij staat dus niet in de winkel', 'wel');
+  check(!proef.wereldControle({}).some(p => p.blokkeert), 'L · een nette schat blokkeert niets',
+    JSON.stringify(proef.wereldControle({}).filter(p => p.blokkeert)));
+  const blok = require('./werelden').blokTerug(proef);
+  check(blok.ok && /schat: \{/.test(blok.bron) && blok.bron.indexOf('<' + 'script') < 0,
+    "L · het blok geeft hem letterlijk terug (ook een ' in de naam), zonder scripttag", blok.tekst);
+  // een kapotte schat: blokkeert, en komt niet in ITEMS
+  proef.run("WORLDS[WORLDS.length - 1].schat.svg = '<g/><script>x</script>'; rebuildWereldschatten();");
+  check(!proef.item('acc_wereld_regenboog') && proef.wereldControle({}).some(p => p.blokkeert && p.waar === 'beloning'),
+    'L · een kapotte schat blokkeert en komt niet in het spel', 'toch');
+  // een schat die een handgemaakt id wil: blokkeert, de handgemaakte wint
+  proef.run("WORLDS[WORLDS.length - 1].schat = " + JSON.stringify(goed) + ";"
+    + " WORLDS[WORLDS.length - 1].beloning = 'acc_kroon'; rebuildWereldschatten();");
+  check(proef.item('acc_kroon') && !proef.item('acc_kroon').uitWereld
+    && proef.wereldControle({}).some(p => p.blokkeert && /al van een ander spulletje/.test(p.t)),
+    'L · een schat met het id van een bestaand spulletje blokkeert', 'niet gezien');
+  // en via het concept, zoals in de studio
+  const K = app.WORLD_DRAFT_KEY;
+  const concept = JSON.parse(JSON.stringify(app.WORLDS)).concat([{ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈',
+    levels: 8, released: false, beloning: 'acc_wereld_regenboog', schat: goed }]);
+  const viaConcept = laadApp({ opslag: { [K]: JSON.stringify(concept), [K + '_basis']: JSON.stringify(app.WORLDS) } });
+  viaConcept.loadWorldDraft();
+  check(!!viaConcept.item('acc_wereld_regenboog'), 'L · een schat uit het concept staat meteen in ITEMS', 'niet');
 });
 
 klaar();
