@@ -247,6 +247,73 @@ function beloningThumb(view, art) {
   return `<svg viewBox="${view}" xmlns="http://www.w3.org/2000/svg">${art}</svg>`;
 }
 
+/* ---- Een wereldschat uit de studio: een tekening, geen code ---------------
+   De zes hierboven zijn met de hand geschreven functies. Een schat die in de
+   wereldstudio gemaakt wordt, staat als gegevens bij zijn wereld in WORLDS:
+
+     beloning: 'acc_wereld_regenboog',
+     schat: { naam: 'Regenboogkroon', emoji: '🌈', view: '70 10 60 46', svg: '<g …>…</g>' },
+
+   en rebuildWereldschatten() maakt er een gewoon spulletje van in ITEMS -- met
+   dezelfde draw() en thumb() als de zes, dus de kleedkamer, het wereldfeest en de
+   kaart merken geen verschil. Waarom bij de wereld en niet in een eigen lijst:
+     - een schat hoort bij precies één wereld; zo kan er geen losse schat zijn die
+       aan niemand hangt (die zou prijsloos in de winkel komen, zie isBeloning);
+     - hij gaat mee in het concept van de studio, dus je ziet hem meteen in
+       Probeer, en hij wordt samen met de wereld gekeurd en opgeslagen.
+
+   De tekening is al op het hoofd gezet door de studio (in de 200x250-ruimte van
+   de pop) en `view` is de uitsnede voor het miniatuur. Het spel rekent hier niets
+   meer uit; dat vraagt een browser, en daar is de studio. */
+function schatItem(w) {
+  const s = w.schat;
+  return { id: w.beloning, cat: 'acc', name: s.naam, full: s.naam, emoji: s.emoji || w.icon,
+           uitWereld: w.id, draw: () => s.svg, thumb: () => beloningThumb(s.view, s.svg) };
+}
+function rebuildWereldschatten() {
+  for (let i = ITEMS.length - 1; i >= 0; i--) if (ITEMS[i].uitWereld) ITEMS.splice(i, 1);
+  WORLDS.forEach(w => {
+    if (!w.schat || !w.beloning || item(w.beloning)) return;   // een handgemaakte wint: zie wereldControle
+    if (schatFouten(w.schat).length) return;                     // kapot: niet in het spel, wél in de keuring
+    ITEMS.push(schatItem(w));
+  });
+}
+/* Wat er in de tekening van een schat mag staan. Het is tekst die letterlijk in
+   het scriptblok van index.html terechtkomt, en daar gelden twee soorten regels:
+
+     - die van de app (zie de kop van "De wereldbeloningen, getekend"): losse
+       vormen, geen verwijzing naar buiten -- geen <image>, geen url(), geen klasse,
+       want het miniatuur heeft geen stijlblad bij zich;
+     - die van het ene bestand (CLAUDE.md, regel 1): nergens de opening of de
+       afsluiting van een scripttag. Staat die er, dan knipt test/app.js het
+       scriptblok op de verkeerde plek en valt elke Node-suite om.
+
+   Dus een korte lijst toegestane elementen, en een nog kortere lijst van wat
+   nooit mag. De studio maakt een tekening eerst zelf schoon; dit is het vangnet
+   dat de keuring en het opslaan gebruiken. Zuiver: geen DOM, zodat het ook in
+   Node draait. */
+const SCHAT_ELEMENTEN = ['g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'text'];
+function schatFouten(s) {
+  const uit = [];
+  if (!s || typeof s !== 'object') return ['de schat is geen kaartje met naam, emoji, view en svg'];
+  if (!String(s.naam || '').trim()) uit.push('de schat heeft nog geen naam');
+  if (!String(s.emoji || '').trim()) uit.push('de schat heeft nog geen emoji (dat is de confetti bij het wereldfeest)');
+  if (!/^-?\d+(\.\d+)? -?\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?$/.test(String(s.view || ''))) {
+    uit.push('de uitsnede van het miniatuur ("' + s.view + '") is geen x y breedte hoogte');
+  }
+  const svg = String(s.svg || '');
+  if (!svg.trim()) { uit.push('de schat heeft nog geen tekening'); return uit; }
+  if (svg.length > 12000) uit.push('de tekening is ' + Math.round(svg.length / 1024) + ' kB tekst; houd hem onder de 12 — hij gaat mee in elke download');
+  if (/<\s*\/?\s*script|<\s*(image|use|foreignobject|style|a)\b|url\s*\(|href|javascript:|\son[a-z]+\s*=|\sclass\s*=|\sstyle\s*=|<!|<\?|&/i.test(svg)) {
+    uit.push('de tekening bevat iets wat niet mag: een script, een plaatje, een link, een stijl of een klasse');
+  }
+  const vreemd = [];
+  svg.replace(/<\/?\s*([a-zA-Z][\w:-]*)/g, (_, t) => { if (SCHAT_ELEMENTEN.indexOf(t.toLowerCase()) < 0) vreemd.push(t); return _; });
+  if (vreemd.length) uit.push('onbekende elementen in de tekening: ' + [...new Set(vreemd)].join(', '));
+  if (!/^\s*<(g|path|circle|ellipse|line|polyline|polygon|rect)\b/.test(svg)) uit.push('de tekening moet met een vorm of een <g> beginnen');
+  return uit;
+}
+
 /* ================= Items ================= */
 const ITEMS = [
   // Haar
@@ -522,7 +589,7 @@ const SCHAT_CAT = 'schat';
 
    (beloning stond in dat rijtje tot fase 4D.1; nu is het gewoon een veld.) */
 /* WERELDEN-BEGIN -- alles tussen deze twee markeringen wordt letterlijk vervangen
-   door de wereldstudio (?debug&mapedit -> Bewaar, draait via npm run preview).
+   door de wereldstudio (Opslaan in het project, via npm run studio).
    Met de hand bijwerken mag gewoon; houd de markeringen dan wel staan.
 
    Over de vier kleuren per wereld: zolang er geen tekening is, ís dit de wereld.
@@ -538,7 +605,17 @@ const SCHAT_CAT = 'schat';
    achtergrond zijn gelegd -- vandaar dat 'weg' een gedempte tint is en geen wit.
 
    lucht/diepte = het verloop van boven naar beneden, gloed = de veeg onderaan,
-   weg = de nog niet afgelegde stippellijn (de afgelegde is altijd goud). */
+   weg = de nog niet afgelegde stippellijn (de afgelegde is altijd goud).
+
+   Over venue.dim (hoe donker het achter de show wordt; zonder geldt
+   VENUE_TERUGVAL). Drie werelden wijken af, en waarom:
+     snoep  .56  bijna wit getekend: een tandje donkerder, anders praat de zaal
+                 mee met de som
+     ijs    .54  sneeuw en ijs: de lichtste tekening van alle zes
+     tover  .82  een nachttekening: die hoeft niet nóg donkerder gemaakt te worden
+   Die uitleg staat hier en niet bij de wereld zelf: alles tussen de markeringen
+   schrijft de studio opnieuw uit de gegevens, en commentaar daarbinnen overleeft
+   de eerste keer opslaan niet (zie zaak K in test/hub.test.js). */
 const WORLDS = [
   {
     id: 'muziek', name: 'Muziekwereld', icon: '🎵', levels: 8,
@@ -569,7 +646,6 @@ const WORLDS = [
     id: 'snoep', name: 'Snoepwereld', icon: '🍭', levels: 8,
     beloning: 'acc_wereld_snoep',
     art: 'assets/world/snoep-map.webp',
-    // bijna wit getekend: een tandje donkerder, anders praat de zaal mee met de som
     venue: { dim: .56 },
     theme: { sky: '#a03566', deep: '#40122a', glow: '#c05b7a', road: '#9fd8c3' },
     nodes: [
@@ -646,7 +722,6 @@ const WORLDS = [
     id: 'ijs', name: 'IJswereld', icon: '❄️', levels: 8,
     beloning: 'acc_wereld_ijs',
     art: 'assets/world/ijs-map.webp',
-    // sneeuw en ijs: de lichtste tekening van alle zes
     venue: { dim: .54 },
     theme: { sky: '#34709c', deep: '#102c4a', glow: '#4b93a8', road: '#bcdcee' },
     nodes: [
@@ -673,7 +748,6 @@ const WORLDS = [
     id: 'tover', name: 'Toverwereld', icon: '🪄', levels: 8,
     beloning: 'acc_wereld_tover',
     art: 'assets/world/tover-map.webp',
-    // een nachttekening: die hoeft niet nóg donkerder gemaakt te worden
     venue: { dim: .82 },
     theme: { road: '#9f96d6', sky: '#1b1040', deep: '#05020f', glow: '#3d2a7a' },
     nodes: [
@@ -739,6 +813,18 @@ const SCHERMKUNST = {
    Anders zou er een gat in de tournee vallen en is "de eerste wereld die nog niet
    uit is" geen ladder meer maar een gok. */
 function worldReleased(w) { return !!w && w.released !== false; }
+/* Alleen in de studio (?debug&mapedit, of ?debug&onuitgebracht): speel ook de
+   werelden die nog niet uitgebracht zijn. Een nieuwe wereld begint in de studio
+   op released:false -- zo kan hij veilig mee naar main zonder dat een kind hem
+   ziet -- en dan moet je hem wél kunnen proberen. Dat gebeurt hier en nergens
+   anders: rebuildWorldStarts telt hem mee als speelbaar, en worldReleased blijft
+   zeggen wat er in WORLDS staat. Het staat in het geheugen van één pagina en
+   wordt nooit bewaard; het gewone spel kent de vlag niet.
+
+   Moet hier staan en niet bij de debugvlaggen onderaan: rebuildWorldStarts()
+   draait hieronder al bij het opstarten, en een `let` die dan nog niet gelezen
+   is geeft een lege pagina (zie regel 0 in CLAUDE.md). */
+let PROEF_ONUITGEBRACHT = false;
 /* Eerste level van elke wereld (1-gebaseerd), over ÁLLE geschreven werelden --
    ook de nog niet uitgebrachte. Dat is met opzet: een wereld die later opengaat
    hoort dezelfde levelnummers te krijgen als hij vandaag al zou hebben, anders
@@ -752,13 +838,16 @@ function rebuildWorldStarts() {
   let n = 1;
   WORLD_START = WORLDS.map(w => { const s = n; n += w.levels; return s; });
   WORLD_AVAIL = 0;
-  while (WORLD_AVAIL < WORLDS.length && worldReleased(WORLDS[WORLD_AVAIL])) WORLD_AVAIL++;
+  while (WORLD_AVAIL < WORLDS.length
+    && (PROEF_ONUITGEBRACHT || worldReleased(WORLDS[WORLD_AVAIL]))) WORLD_AVAIL++;
   // Staat er niets uitgebracht (alleen mogelijk in de wereldstudio), dan is de
   // eerste wereld alsnog speelbaar: een kaart zonder enkele halte is geen spel.
   if (!WORLD_AVAIL && WORLDS.length) WORLD_AVAIL = 1;
   WORLD_LAST = WORLD_AVAIL ? WORLD_START[WORLD_AVAIL - 1] + WORLDS[WORLD_AVAIL - 1].levels - 1 : 0;
 }
 rebuildWorldStarts();
+// de schatten die de studio tekende, als spulletje in ITEMS (zie schatItem)
+rebuildWereldschatten();
 /* Het laatste level dat bestond op de dag dat de oneindige staart verdween (zes
    werelden van acht). Een historisch getal: het hoort bij één eenmalige opruiming
    in migrate() en mag daarom nooit meelopen met WORLD_LAST. Zie daar. */
@@ -770,42 +859,146 @@ const LEGACY_TOUR_END = 48;
    wereld kan nooit bij een kind terechtkomen.
 
    Van concept naar spel gaan kan op twee manieren:
-     Bewaar    schrijft het blok tussen WERELDEN-BEGIN/EINDE in index.html op
-               schijf. Werkt alleen via `npm run preview` (die server luistert
-               ernaar); daarna gewoon npm test, committen en pushen.
-     Kopieer   geeft hetzelfde blok als tekst, om zelf te plakken. Werkt overal,
-               ook op een telefoon en over file://.                            */
+     Opslaan   (in het project) stuurt het concept naar de studioserver, die het
+               met deze code op het spel van nu legt, keurt (wereldControle) en
+               het blok tussen WERELDEN-BEGIN/EINDE in src/ schrijft. Werkt
+               alleen via `npm run studio`; daarna vastleggen en publiceren.
+     Kopieer   geeft het blok als tekst, om zelf te plakken. Werkt overal, ook op
+               een telefoon en over file://.                                   */
 const WORLD_DRAFT_KEY = 'rekenPopsterren_wereldconcept';
+/* Waar het concept op gebouwd is: WORLDS zoals index.html het had op het moment
+   dat het concept voor het laatst bewaard werd. Een aparte sleutel, zodat de
+   vorm van het concept zelf (een gewone lijst werelden) niet verandert.
+
+   Waarom dit nodig is. Een concept leeft in localStorage, en dat overleeft een
+   `git pull`, een wissel van tak en een week vakantie. Het werd daarna blind over
+   WORLDS gelegd -- in élke pagina met ?debug, ook in de Testomgeving -- en dan
+   keek je naar de kleuren van vorige week in plaats van naar wat er nu in het spel
+   staat. Erger: "Opslaan" schreef dat oude blok terug en draaide zo andermans
+   wijziging aan een wereld ongemerkt terug. Met de basis erbij weet het concept
+   welke werelden jíj veranderd hebt, en alleen die gaan over het spel heen. */
+const WORLD_DRAFT_BASIS_KEY = 'rekenPopsterren_wereldconcept_basis';
+/* Wat loadWorldDraft vond, voor de studio om te melden: welke werelden van jou
+   zijn, of het concept op een oudere versie gebouwd was, en welke werelden
+   intussen óók in het spel veranderd zijn (die moet je nakijken). null = geen
+   concept. */
+let WORLD_DRAFT_INFO = null;
 /* Wat er ín het spel staat, zoals het uit index.html kwam -- vastgelegd vóór een
    concept eroverheen gaat. Daarmee kan de studio laten zien wat er nog niet
    doorgevoerd is, en een wereld terugdraaien naar de versie die kinderen spelen. */
 const WORLDS_SHIPPED = JSON.parse(JSON.stringify(WORLDS));
-function sameWorld(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+/* Gelijk is gelijk, ongeacht de volgorde van de sleutels. De studio bouwt theme
+   opnieuw op in haar eigen volgorde (weg, lucht, diepte, gloed); met een kale
+   JSON.stringify bleef een wereld daarna voor altijd "gewijzigd", ook als je elke
+   kleur had teruggezet. */
+function vasteVorm(v) {
+  return JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x))
+    ? Object.keys(x).sort().reduce((o, s) => { o[s] = x[s]; return o; }, {}) : x);
+}
+function sameWorld(a, b) { return vasteVorm(a) === vasteVorm(b); }
 
 function applyWorldDraft(list) {
   WORLDS.length = 0;
   list.forEach(w => WORLDS.push(w));
   rebuildWorldStarts();
   if (typeof rebuildWorldBadges === 'function') rebuildWorldBadges();
+  rebuildWereldschatten();
+}
+/* Een concept op het spel van nu leggen, en niet op het spel van toen.
+
+   De identiteit van een wereld is haar PLEK, niet haar id: levels lopen door de
+   lijst heen, dus een wereld verplaatsen is toch al verboden (zie wereldControle),
+   en een id mag in de studio hernoemd worden. Dus:
+     - een wereld die in het concept gelijk is aan de basis heb jij niet
+       aangeraakt -- dan geldt wat er nú in het spel staat;
+     - een wereld die afwijkt van de basis is van jou, en die gaat eroverheen. Is
+       hij intussen óók in het spel veranderd, dan is dat een botsing: jouw versie
+       wint (je bent er middenin), maar de studio zegt het;
+     - een wereld voorbij het eind van de basis is nieuw, en komt achteraan -- tenzij
+       hij er intussen al in staat (dan is hij opgeslagen, eventueel uit een ander
+       tabblad), en dan vervangt hij alleen als hij afwijkt.
+   Een wereld die in het spel staat verdwijnt hier nooit: de studio kan geen
+   bestaande wereld weghalen, dus een concept dat er één mist is oud en niet
+   bedoeld.
+
+   Zonder basis (een concept van vóór deze regel) wordt het spel van nu als basis
+   genomen: alles wat afwijkt telt als van jou. Dat is hoe het altijd ging, alleen
+   gaat er nu geen wereld meer verloren. Zuiver: geen opslag, geen scherm -- zodat
+   test/werelden.js en de server precies hetzelfde kunnen doen. */
+function rebaseWorldDraft(concept, basis, shipped) {
+  const B = Array.isArray(basis) ? basis : shipped;
+  const lijst = shipped.slice();
+  const mijn = [], botsing = [];
+  concept.forEach((w, i) => {
+    if (!w || !w.id) return;
+    if (i < B.length) {
+      if (sameWorld(w, B[i])) return;                 // niet door jou veranderd
+      if (i >= lijst.length) { botsing.push(w.id); return; }   // uit het spel gehaald
+      if (sameWorld(lijst[i], w)) return;             // staat er intussen zo in
+      if (!sameWorld(lijst[i], B[i])) botsing.push(w.id);
+      lijst[i] = w; mijn.push(w.id);
+      return;
+    }
+    const j = lijst.findIndex((x, k) => k >= B.length && x.id === w.id);
+    if (j >= 0) {
+      if (!sameWorld(lijst[j], w)) { lijst[j] = w; mijn.push(w.id); }
+      return;
+    }
+    lijst.push(w); mijn.push(w.id);
+  });
+  return { lijst: JSON.parse(JSON.stringify(lijst)), mijn, botsing,
+           verouderd: Array.isArray(basis) && !sameWorld(basis, shipped) };
 }
 function loadWorldDraft() {
+  WORLD_DRAFT_INFO = null;
   try {
     const raw = localStorage.getItem(WORLD_DRAFT_KEY);
     if (!raw) return false;
     const list = JSON.parse(raw);
     if (!Array.isArray(list) || !list.length) return false;
     if (!list.every(w => w && w.id && w.name && w.levels > 0)) return false;
-    applyWorldDraft(list);
+    let basis = null;
+    try { basis = JSON.parse(localStorage.getItem(WORLD_DRAFT_BASIS_KEY) || 'null'); }
+    catch (e) { basis = null; }
+    const r = rebaseWorldDraft(list, basis, WORLDS_SHIPPED);
+    if (!r.mijn.length) {
+      // niets meer van jou: alles staat al in het spel, dus er is geen concept meer
+      localStorage.removeItem(WORLD_DRAFT_KEY);
+      localStorage.removeItem(WORLD_DRAFT_BASIS_KEY);
+      return false;
+    }
+    WORLD_DRAFT_INFO = { mijn: r.mijn, botsing: r.botsing, verouderd: r.verouderd,
+                         zonderBasis: !Array.isArray(basis) };
+    applyWorldDraft(r.lijst);
+    // opnieuw bewaren op de basis van nu, zodat dit maar één keer gebeurt
+    if (r.verouderd || !Array.isArray(basis)) saveWorldDraft();
     return true;
   } catch (e) { return false; }
 }
+/* Bewaren, mét de basis. Wijkt er niets af van het spel, dan is er geen concept
+   en wordt het weggehaald -- anders bleef er een concept staan dat bij de
+   volgende git pull de nieuwe werelden weer zou overschaduwen. */
 function saveWorldDraft() {
-  try { localStorage.setItem(WORLD_DRAFT_KEY, JSON.stringify(WORLDS)); return true; }
-  catch (e) { return false; }
+  try {
+    if (sameWorld(WORLDS, WORLDS_SHIPPED)) {
+      localStorage.removeItem(WORLD_DRAFT_KEY);
+      localStorage.removeItem(WORLD_DRAFT_BASIS_KEY);
+      return true;
+    }
+    localStorage.setItem(WORLD_DRAFT_KEY, JSON.stringify(WORLDS));
+    localStorage.setItem(WORLD_DRAFT_BASIS_KEY, JSON.stringify(WORLDS_SHIPPED));
+    return true;
+  } catch (e) { return false; }
 }
+// De velden die worldsSource hieronder met de hand in vorm zet; de rest gaat als JSON mee.
+const WERELD_VELDEN = ['id', 'name', 'icon', 'levels', 'released', 'beloning', 'art', 'venue',
+  'schat', 'theme', 'nodes', 'curve'];
 // De broncode van het blok, precies zoals het in index.html hoort te staan.
 function worldsSource() {
-  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+  // Ook een regeleinde ontsnapt: een schat-tekening is lange tekst, en een kaal
+  // regeleinde binnen '…' is een syntaxfout in het hele scriptblok.
+  const q = v => "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r').replace(/\n/g, '\\n') + "'";
   const body = WORLDS.map(w => {
     const L = ['  {'];
     L.push(`    id: ${q(w.id)}, name: ${q(w.name)}, icon: ${q(w.icon)}, levels: ${w.levels},`);
@@ -814,8 +1007,9 @@ function worldsSource() {
     // 'released: true' schrijven, dan kwam er uit de studio een blok terug dat
     // niet meer letterlijk gelijk is aan wat erin ging.
     if (w.released === false) L.push('    released: false,');
-    // Het spulletje dat deze wereld uitdeelt (fase 4D.1). De studio bewerkt het niet,
-    // maar moet het wél teruggeven -- anders schrijft "Bewaar" de beloning weg.
+    else if (w.released === true) L.push('    released: true,');   // wie het zo schreef, houdt het zo
+    // Het spulletje dat deze wereld uitdeelt (fase 4D.1). De studio kiest het alleen,
+    // maar moet het wél teruggeven -- anders schrijft "Opslaan" de beloning weg.
     if (w.beloning) L.push(`    beloning: ${q(w.beloning)},`);
     if (w.art) L.push(`    art: ${q(w.art)},`);
     /* De zaal van deze wereld -- mag ontbreken (dan geldt VENUE_TERUGVAL), en elk
@@ -828,13 +1022,29 @@ function worldsSource() {
        gemaakt heeft. */
     if (w.venue) {
       const v = w.venue, d = [];
+      /* .56 en niet 0.56: zo staat het in dit bestand met de hand geschreven, en
+         anders veranderde de eerste keer opslaan uit de studio drie regels in
+         werelden waar niemand aan had gezeten. */
+      const getal = n => String(+n).replace(/^(-?)0\./, '$1.');
       if ('art' in v) d.push('art: ' + (v.art ? q(v.art) : 'null'));
-      if (v.zoom != null) d.push(`zoom: ${+v.zoom}`);
+      if (v.zoom != null) d.push(`zoom: ${getal(v.zoom)}`);
       if (v.focus) d.push(`focus: ${q(v.focus)}`);
-      if (v.blur != null) d.push(`blur: ${+v.blur}`);
-      if (v.dim != null) d.push(`dim: ${+v.dim}`);
-      if (v.op != null) d.push(`op: ${+v.op}`);
+      if (v.blur != null) d.push(`blur: ${getal(v.blur)}`);
+      if (v.dim != null) d.push(`dim: ${getal(v.dim)}`);
+      if (v.op != null) d.push(`op: ${getal(v.op)}`);
       if (d.length) L.push('    venue: { ' + d.join(', ') + ' },');
+    }
+    /* De getekende schat (zie schatItem). De tekening op een eigen regel: hij is
+       lang, en zo blijft een diff leesbaar -- een andere naam is één regel, een
+       andere tekening een andere. */
+    if (w.schat) {
+      const s = w.schat;
+      L.push('    schat: {');
+      L.push(`      naam: ${q(s.naam || '')}, emoji: ${q(s.emoji || '')}, view: ${q(s.view || '')},`);
+      L.push(`      svg: ${q(s.svg || '')},`);
+      Object.keys(s).filter(k => ['naam', 'emoji', 'view', 'svg'].indexOf(k) < 0 && s[k] !== undefined)
+        .forEach(k => L.push('      ' + (/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k)) + ': ' + JSON.stringify(s[k]) + ','));
+      L.push('    },');
     }
     if (w.theme && Object.keys(w.theme).length) {
       L.push('    theme: { ' + Object.keys(w.theme).map(k => `${k}: ${q(w.theme[k])}`).join(', ') + ' },');
@@ -849,6 +1059,16 @@ function worldsSource() {
       w.curve.forEach(c => L.push(`      { x: ${(+c.x).toFixed(1)}, y: ${(+c.y).toFixed(1)} },`));
       L.push('    ],');
     }
+    /* Elk ander veld gaat mee zoals het is. Een veld dat hierboven niet genoemd
+       wordt -- omdat het er vandaag nog niet is -- viel eerst stil weg bij de
+       eerste keer opslaan uit de studio. Nu komt het er als JSON uit (dat is
+       geldige JavaScript), en hoeft een nieuw wereldveld hier niet eerst bij te
+       komen voordat de studio het ongeschonden laat. De server leest het blok
+       ook nog na voordat hij het schrijft (zie slaConceptOp in test/preview.js). */
+    Object.keys(w).filter(k => WERELD_VELDEN.indexOf(k) < 0 && w[k] !== undefined).forEach(k => {
+      const sleutel = /^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k);
+      L.push('    ' + sleutel + ': ' + JSON.stringify(w[k]) + ',');
+    });
     L.push('  },');
     return L.join('\n');
   }).join('\n');
@@ -901,10 +1121,31 @@ function vrijWereldId(basis, negeerIdx) {
    ontbrekend bestand wijst valt stil terug op de kleurversie -- dat merk je
    anders pas op een telefoon.
 
-   Blokkeert niets, en verschuift niets. Halverwege een wereld wíl je kunnen
-   vastleggen; dit zegt alleen wat er staat. Waar het kan noemt een punt het
-   vak in de studio waar je het oplost (`waar`), zodat een waarschuwing een weg
-   vooruit is en geen verwijt.
+   Verschuift niets. Waar het kan noemt een punt het vak in de studio waar je het
+   oplost (`waar`), zodat een waarschuwing een weg vooruit is en geen verwijt.
+
+   ---- Drie soorten, en het verschil is wie er last van heeft ----------------
+     fout, blokkeert        een kind merkt het nu: een uitgebrachte wereld die
+                            kapot is, of iets dat over de hele lijst gaat (de
+                            levelnummering). Opslaan weigert, en `npm run check`
+                            valt erop om (zie zaak K in test/inhoud.test.js).
+     fout, niet blokkerend  "nog te doen vóór je hem uitbrengt": dezelfde fout,
+                            maar in een wereld op released:false. Geen kind kan
+                            erbij, dus halverwege een wereld mag je gewoon
+                            opslaan en vastleggen.
+     let op                 klopt, maar is het de bedoeling? (een zware tekening,
+                            nog geen tekening)
+   Het veld `blokkeert` zegt welke van de eerste twee het is. Zo zijn de studio
+   en de keuring het per constructie eens: er is maar één lijst regels, en die
+   staat hier. Hiervoor zei de studio "geen beloning is een opmerking" terwijl de
+   keuring precies daarop omviel -- en dat hoorde je pas na minuten testen bij het
+   vastleggen.
+
+   Een paar fouten blokkeren óók in een wereld die nog dicht is, omdat ze buiten
+   die wereld schade doen: een dubbel id (de trofeeën hangen eraan), een id met
+   gekke tekens, een beloning die niet bestaat of die een winkelspulletje uit de
+   winkel trekt, een verwijzing naar een bestand dat er niet is, en een aantal
+   levels dat geen getal is.
 
    Staat hier en niet in de studio omdat het geen studio-werk is: dit is wat er
    over een wereld waar of niet waar is. Een test kan het daardoor aanroepen
@@ -913,40 +1154,75 @@ function vrijWereldId(basis, negeerIdx) {
    opSchijf: { pad -> kB } van de bestanden die er werkelijk liggen. Zonder de
    voorvertoningsserver is die lijst leeg; dan worden de bestandscontroles
    overgeslagen in plaats van alles ten onrechte af te keuren. */
+/* Hoeveel werelden er vóóraan uitgebracht zijn, zoals WORLDS het zegt. Niet
+   WORLD_AVAIL: die telt in de studio ook de werelden mee die je aan het proberen
+   bent (PROEF_ONUITGEBRACHT). De eerste wereld telt altijd, net als in
+   rebuildWorldStarts -- een spel zonder halte bestaat niet. */
+function uitgebrachtTot() {
+  let n = 0;
+  while (n < WORLDS.length && worldReleased(WORLDS[n])) n++;
+  return Math.max(n, WORLDS.length ? 1 : 0);
+}
 function wereldControle(opSchijf) {
   const schijf = opSchijf || {};
   const weetSchijf = Object.keys(schijf).length > 0;
   const punten = [];
-  const fout = (w, t, waar) => punten.push({ ernst: 'fout', w, t, waar });
-  const let_op = (w, t, waar) => punten.push({ ernst: 'let op', w, t, waar });
+  const open = uitgebrachtTot();
+  // blokkeert altijd, ook in een wereld die nog dicht is (zie hierboven)
+  const fout = (w, t, waar) => punten.push({ ernst: 'fout', w, t, waar, blokkeert: true });
+  const let_op = (w, t, waar) => punten.push({ ernst: 'let op', w, t, waar, blokkeert: false });
   const gezien = {}, beloond = {};
   WORLDS.forEach((w, i) => {
     const wl = worldForIndex(i);
     const naam = (w.icon || '') + ' ' + (w.name || w.id);
     const pad = wereldArtPad(w.id);
+    const uit = i < open;
+    // een fout die alleen in déze wereld schade doet: blokkeert pas als hij uit is
+    const hier = (t, waar) => punten.push({ ernst: 'fout', w: naam, t, waar, blokkeert: uit });
 
     if (!/^[a-z0-9-]+$/.test(w.id || '')) fout(naam, 'het id "' + w.id + '" mag alleen kleine letters, cijfers en streepjes bevatten', 'gegevens');
     if (gezien[w.id]) fout(naam, 'het id "' + w.id + '" komt twee keer voor', 'gegevens');
     gezien[w.id] = true;
-    if (!String(w.name || '').trim()) fout(naam, 'deze wereld heeft nog geen naam', 'gegevens');
+    if (!String(w.name || '').trim()) hier('deze wereld heeft nog geen naam', 'gegevens');
+    if (!String(w.icon || '').trim()) hier('deze wereld heeft nog geen icoon', 'gegevens');
+    if (!Number.isInteger(w.levels) || w.levels < 1) fout(naam, 'het aantal shows (' + w.levels + ') is geen heel getal vanaf 1', 'gegevens');
 
     if (!w.art) let_op(naam, 'nog geen tekening — speelt op de kleuren van de wereld', 'tekening');
-    else if (w.art.indexOf('blob:') === 0) let_op(naam, 'de tekening staat alleen in dit tabblad, nog niet op schijf', 'tekening');
+    else if (w.art.indexOf('blob:') === 0) hier('de tekening staat alleen in dit tabblad, nog niet op schijf', 'tekening');
     else if (weetSchijf && !schijf[w.art]) fout(naam, 'wijst naar ' + w.art + ', maar dat bestand staat er niet', 'tekening');
     else if (w.art !== pad) let_op(naam, 'gebruikt ' + w.art + ' terwijl het id ' + pad + ' zegt', 'tekening');
 
-    /* De beloning: het spulletje dat je krijgt als deze wereld uit is. Een wereld
-       zonder beloning werkt gewoon (zie grantWorldRewards), maar hij geeft dan
-       niets -- dat is bijna nooit de bedoeling en bijna altijd vergeten. Een
-       beloning die naar een onbekend id wijst is wél kapot: die wereld deelt voor
-       altijd niets uit en niemand ziet waarom. */
-    if (!w.beloning) let_op(naam, 'geen beloning — deze wereld uitspelen levert geen spulletje op', 'beloning');
-    else if (!item(w.beloning)) fout(naam, 'de beloning "' + w.beloning + '" bestaat niet in ITEMS', 'beloning');
+    /* De beloning: de wereldschat die je krijgt als deze wereld uit is. Een
+       uitgebrachte wereld zonder schat deelt niets uit -- dat is nooit de
+       bedoeling (test/inhoud.test.js zaak C eist hem), dus dat blokkeert. In een
+       wereld die nog dicht is, is het gewoon nog te doen: een schat is een
+       tekening in code, en die komt vaak later dan de kaart.
+
+       Een schat met een prijs is een winkelspulletje: isBeloning() haalt het dan
+       voor iedereen uit de winkel, ook als deze wereld nog dicht is. Dus dat
+       blokkeert altijd. De studio biedt ze daarom ook niet meer aan. */
+    /* Een getekende schat uit de studio (zie schatItem). De tekening is tekst die
+       in het scriptblok belandt, dus een fout daarin blokkeert altijd -- ook in een
+       wereld die nog dicht is. */
+    if (w.schat) {
+      schatFouten(w.schat).forEach(t => fout(naam, t, 'beloning'));
+      if (!w.beloning) fout(naam, 'heeft een getekende schat, maar geen beloning die ernaar wijst', 'beloning');
+      else {
+        const al = item(w.beloning);
+        if (al && !al.uitWereld) fout(naam, 'de schat heet ' + w.beloning + ', maar dat id is al van een ander spulletje', 'beloning');
+      }
+    }
+    const bel = w.beloning ? item(w.beloning) : null;
+    if (!w.beloning) hier('nog geen wereldschat — deze wereld uitspelen levert niets op', 'beloning');
+    // een kapotte getekende schat staat niet in ITEMS; dat zeggen de regels hierboven al
+    else if (!bel) { if (!w.schat) fout(naam, 'de beloning "' + w.beloning + '" bestaat niet in ITEMS', 'beloning'); }
+    else if (bel.price != null) fout(naam, (bel.full || bel.name) + ' staat in de winkel voor ' + bel.price
+      + ' 💎 — een wereldschat heeft geen prijs, anders verdwijnt hij uit de winkel', 'beloning');
     else if (beloond[w.beloning]) fout(naam, 'deelt hetzelfde spulletje uit als ' + beloond[w.beloning], 'beloning');
     if (w.beloning) beloond[w.beloning] = naam;
 
-    if (w.nodes && w.nodes.length !== wl.levels) fout(naam, w.nodes.length + ' haltes voor ' + wl.levels + ' levels — valt terug op de standaardslinger', 'haltes');
-    if (w.curve && w.curve.length !== wl.levels - 1) fout(naam, w.curve.length + ' stuurpunten voor ' + (wl.levels - 1) + ' stukken weg', 'haltes');
+    if (w.nodes && w.nodes.length !== wl.levels) hier(w.nodes.length + ' haltes voor ' + wl.levels + ' levels — valt terug op de standaardslinger', 'haltes');
+    if (w.curve && w.curve.length !== wl.levels - 1) hier(w.curve.length + ' stuurpunten voor ' + (wl.levels - 1) + ' stukken weg', 'haltes');
 
     const buiten = [];
     (w.nodes || worldNodes(wl)).forEach((n, k) => {
@@ -955,11 +1231,31 @@ function wereldControle(opSchijf) {
       if (n.y < ZONE.y0) r.push('boven'); if (n.y > ZONE.y1) r.push('onder');
       if (r.length) buiten.push((k + 1) + ' (' + r.join('+') + ')');
     });
-    if (buiten.length) fout(naam, 'buiten de veilige zone: halte ' + buiten.join(', '), 'haltes');
+    if (buiten.length) hier('buiten de veilige zone: halte ' + buiten.join(', '), 'haltes');
+
+    /* De zaal en de kleuren. dim is de dekking van de donkere laag achter de
+       show: buiten 0..1 tekent de browser hem niet, en dan praat de tekening mee
+       met de som. Een kleur in iets anders dan #rrggbb werkt in het spel wél, maar
+       het kleurveld van de studio leest hem als zwart en schrijft dat bij de
+       eerste de beste wijziging terug -- zie de noot boven WORLDS. */
+    const dim = w.venue && w.venue.dim;
+    if (dim != null && !(typeof dim === 'number' && dim >= 0 && dim <= 1)) hier('de zaal staat op donkerte ' + dim + '; dat moet tussen 0 en 1 liggen', 'zaal');
+    Object.keys(w.theme || {}).forEach(k => {
+      if (!/^#[0-9a-f]{6}$/i.test(String(w.theme[k]))) let_op(naam, 'kleur ' + k + ' is ' + w.theme[k] + ' — de studio kan alleen #rrggbb bewerken', 'kleuren');
+    });
 
     if (schijf[pad] && w.art && w.art !== pad) let_op(naam, pad + ' ligt er ook nog — opruimen of gebruiken', 'tekening');
     const kb = schijf[w.art];
     if (kb && kb > 200) let_op(naam, 'de tekening is ' + kb + ' kB; de begroting is ~125 — zware werelden maken de app traag op mobiele data', 'tekening');
+  });
+
+  /* Uitgebracht is een aaneengesloten kop (zie worldReleased). Een open wereld
+     achter een dichte is onbereikbaar: het spel stopt bij de eerste dichte. */
+  WORLDS.forEach((w, i) => {
+    if (i >= open && worldReleased(w)) {
+      fout((w.icon || '') + ' ' + w.name, 'staat op uitgebracht, maar ' + WORLDS[open].name
+        + ' ervóór niet — dan kan geen kind erbij. Breng ze op volgorde uit', 'lijst');
+    }
   });
 
   /* Twee dingen die over de lijst als géheel gaan, en die stil verkeerd aflopen:
@@ -974,11 +1270,14 @@ function wereldControle(opSchijf) {
      anders leest een hernoeming als een verwijdering. */
   const nuL = WORLDS.map(w => w.id), wasL = WORLDS_SHIPPED.map(w => w.id);
   if (nuL.length !== wasL.length) {
+    /* Achteraan bijzetten hernummert niets, en is precies hoe een wereld erbij
+       komt -- dat hoort geen punt op de lijst te zijn. Stond hier een "let op"
+       voor, dan kreeg elke nieuwe wereld een melding waar niets aan te doen viel,
+       en leer je de lijst negeren. */
     const achteraan = nuL.length > wasL.length && nuL.slice(0, wasL.length).join(',') === wasL.join(',');
-    (achteraan ? let_op : fout)('de wereldlijst',
+    if (!achteraan) fout('de wereldlijst',
       'stond op ' + wasL.length + ' werelden en nu op ' + nuL.length
-      + (achteraan ? ' — er komt er één achteraan, dat hernummert niets'
-         : ' — elk level na de wijziging schuift op, en de sterren van een kind hangen aan levelnummers'), 'lijst');
+      + ' — elk level na de wijziging schuift op, en de sterren van een kind hangen aan levelnummers', 'lijst');
   } else {
     const zelfdeSet = nuL.slice().sort().join(',') === wasL.slice().sort().join(',');
     if (zelfdeSet && wasL.some((id, i) => nuL[i] !== id))
@@ -989,10 +1288,20 @@ function wereldControle(opSchijf) {
         + ' — de levels blijven waar ze zijn; alleen een al behaalde wereldbadge heet anders', 'lijst');
     }
   }
+  /* En een wereld die in het project al uitgebracht was, weer dichtzetten: dan
+     verdwijnt hij bij kinderen die er al sterren in hebben, en schuift hun grens
+     terug. Dat is nooit een vinkje in de studio; als het moet (een wereld die
+     stuk is), is het een bewuste wijziging met de hand. */
+  const wasOpen = (() => { let n = 0;
+    while (n < WORLDS_SHIPPED.length && worldReleased(WORLDS_SHIPPED[n])) n++;
+    return Math.max(n, WORLDS_SHIPPED.length ? 1 : 0); })();
   WORLDS.forEach((w, i) => {
     const ship = WORLDS_SHIPPED[i];
     if (ship && ship.levels !== w.levels)
       fout((w.icon || '') + ' ' + w.name, 'stond op ' + ship.levels + ' levels en nu op ' + w.levels + ' — alles daarna hernummert', 'gegevens');
+    if (ship && i < wasOpen && ship.id === w.id && !worldReleased(w))
+      fout((w.icon || '') + ' ' + w.name, 'is al uitgebracht — kinderen spelen hem. Weer dichtzetten haalt hem '
+        + 'bij hen weg; zet het vinkje "uitgebracht" terug', 'gegevens');
   });
   return punten;
 }
@@ -11173,13 +11482,19 @@ syncBackGuard();
    &stage=<item-id>  -- forceer een podium (bv. stage_vulkaan)
    &screen=<naam>    -- spring meteen naar profile | map | reis | dress | tro |
                         game | end | ouder
-   &nieuw            -- samen met &mapedit: open meteen "een wereld erbij"
+   &nieuw[=<naam>]   -- samen met &mapedit: een wereld erbij. Met een naam maakt
+                        hij hem meteen; zonder naam staat het veld klaar
    &mapedit          -- wereldstudio: een wereld maken en nakijken op de echte
                         kaart -- tekening, kleuren, beloning, haltes en weg --
                         en het blok terugschrijven naar WORLDS (zie
-                        startMapEdit hieronder)                               */
+                        startMapEdit hieronder). Zet &onuitgebracht vanzelf aan
+   &onuitgebracht    -- speel ook de werelden die nog op released:false staan
+                        (zie PROEF_ONUITGEBRACHT). Zo probeer je een nieuwe
+                        wereld in het echte spel voordat een kind hem ziet     */
 if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
+  // vóór het concept: dat bouwt de levelnummers opnieuw op en leest deze vlag
+  if (dbg.has('onuitgebracht') || dbg.has('mapedit')) { PROEF_ONUITGEBRACHT = true; rebuildWorldStarts(); }
   if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
   window.__db = () => db;

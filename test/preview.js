@@ -132,7 +132,22 @@ function studioData(state) {
        daar wordt het gemaakt -- dezelfde afspraak als __SLOTS uit scene.js. */
     + ';window.__MERK=' + JSON.stringify(merk.AFGELEID.map(d => ({
         bron: 'assets/branding/source/' + d.bron, uit: d.uit, merk: d.merk })))
-    + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets()) + ';<\/script>';
+    + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets())
+    /* De twee prompts om te kopiëren (docs/prompts/). Per verzoek gelezen, zodat
+       een aangepaste prompt er na verversen meteen staat. `</` wordt `<\/`: de
+       schatprompt praat over SVG-tags, en de tekst staat hier in een scriptblok. */
+    + ';window.__PROMPTS=' + JSON.stringify(prompts()).replace(/<\//g, '<\\/') + ';<\/script>';
+}
+/* De prompts om te kopiëren: één voor de wereldkaart (een beeldgenerator) en één
+   voor de wereldschat (een AI die SVG schrijft). Ze gaan niet in index.html --
+   een kind hoeft ze niet te downloaden -- maar komen alleen mee met de
+   studioserver. Ontbreekt er een, dan toont de studio die knop niet. */
+function prompts() {
+  const lees = naam => {
+    try { return fs.readFileSync(path.join(ROOT, 'docs', 'prompts', naam + '.txt'), 'utf8'); }
+    catch (e) { return null; }
+  };
+  return { wereldkaart: lees('wereldkaart'), wereldschat: lees('wereldschat') };
 }
 
 function panel(state) {
@@ -219,7 +234,12 @@ function panel(state) {
        die deze pagina al bediende blijft dat doen tot ze herlaadt, en zijn
        tekeningenvoorraad overleeft hem sowieso. Zonder deze regel blijf je na de
        oplossing hierboven nóg een ronde naar je oude tekening kijken. */
-    if (window.caches) caches.delete('rekenpop-art-2').catch(function () {});
+    /* Op voorvoegsel en niet op naam: ART_CACHE in sw.js gaat omhoog als er een
+       tekening vervangen wordt (zie bumpArtCache), en een vaste naam hier ruimde
+       dan de verkeerde voorraad op. */
+    if (window.caches) caches.keys().then(function (ks) {
+      ks.forEach(function (k) { if (k.indexOf('rekenpop-art') === 0) caches.delete(k); });
+    }).catch(function () {});
   }
 
   /* In het kijkvak van de Dev Studio hoort het kandidaatpaneeltje niet: dat scherm
@@ -265,22 +285,32 @@ function page(state) {
              .replace('</body>', panel(state) + para + '</body>');
 }
 
-/* De wereldstudio (?debug&mapedit) schrijft haar WORLDS-blok hierheen, en deze
-   server zet het tussen de twee markeringen. Dat is met opzet het enige
-   schrijfpad: alleen lokaal, alleen zolang `npm run preview` draait, en alleen
-   dát ene blok -- de rest van het bestand wordt niet aangeraakt. Zonder deze
-   server valt de studio terug op Kopieer-en-plak.
+/* Opslaan: het concept van de wereldstudio wordt het WORLDS-blok in src/.
 
-   HET GAAT NAAR src/ EN NIET MEER NAAR index.html. Sinds de bouw (test/bouw.js)
-   is src/ de bron en is het scriptblok het resultaat; rechtstreeks in index.html
-   schrijven zou dus een wereld opleveren die bij de eerstvolgende bouw weer weg
-   is. In welk bronbestand de markering staat zoekt bouw.js op -- de indeling van
-   src/ mag veranderen zonder dat deze server het hoeft te weten.
+   Dat is met opzet het enige schrijfpad voor werelden: alleen lokaal, alleen
+   zolang `npm run studio` (of `npm run preview`) draait, en alleen dát ene blok
+   -- de rest van het bestand wordt niet aangeraakt. Zonder deze server valt de
+   studio terug op Kopieer-en-plak.
 
-   Na het schrijven meteen bouwen, zodat de pagina die je hierna ververst de
-   nieuwe wereld ook echt laat zien. Dat is één stap en geen twee: de studio
-   wacht op dit antwoord en zou anders naar een index.html kijken die nog de
-   oude wereld draagt. */
+   Wat er binnenkomt is het concept zélf (de lijst werelden plus de basis waarop
+   het gebouwd is), niet een stuk broncode. Daardoor gebeurt alles hier met de
+   code van het spel en niet met een kopie ervan:
+     1  loadWorldDraft()  legt het concept op het spel van nú (zie
+                          rebaseWorldDraft) -- een concept van vorige week draait
+                          dus geen nieuwere wereld terug;
+     2  wereldControle()  dezelfde keuring als de studio en `npm run check`.
+                          Blokkeert er iets, dan wordt er niets geschreven, en
+                          zegt het antwoord wát en wáár;
+     3  worldsSource()    de broncode van het blok, en die wordt eerst proef-
+                          gelezen: komt er niet exact dezelfde lijst uit, dan zou
+                          opslaan stil een veld weggooien, en dan weigert hij;
+     4  schrijven + bouwen, en daarna de snelle keuring, zodat je meteen weet of
+                          het vastleggen straks lukt.
+
+   HET GAAT NAAR src/ EN NIET NAAR index.html. Sinds de bouw (test/bouw.js) is
+   src/ de bron en is het scriptblok het resultaat. In welk bronbestand de
+   markering staat zoekt bouw.js op -- de indeling van src/ mag veranderen zonder
+   dat deze server het hoeft te weten. */
 const MARK_A = '/* WERELDEN-BEGIN';
 const MARK_B = '/* WERELDEN-EINDE */';
 // Een blok tussen twee markeringen vervangen, in het bronbestand waar het staat.
@@ -296,20 +326,53 @@ function vervangBlok(markA, markB, blok, wat) {
   bouwer.bouw();
   return path.basename(file);
 }
-function writeWorlds(body, res) {
-  try {
-    if (!/^const WORLDS = \[[\s\S]*\];$/.test(body.trim())) throw new Error('dit is geen WORLDS-blok');
-    const naam = vervangBlok(MARK_A, MARK_B, body.trim(), 'WERELDEN-BEGIN/EINDE');
-    console.log('  wereldstudio: WORLDS bijgewerkt in src/' + naam + ' (en index.html gebouwd)');
-    res.writeHead(200, { 'content-type': 'text/plain' });
-    res.end('ok');
-  } catch (e) {
-    res.writeHead(500, { 'content-type': 'text/plain' });
-    res.end(String(e.message));
+function vers(mod) { delete require.cache[require.resolve(mod)]; return require(mod); }
+async function slaConceptOp(body) {
+  let d;
+  try { d = JSON.parse(body || '{}'); } catch (e) { return { ok: false, tekst: 'Het concept is geen geldige JSON.' }; }
+  if (!Array.isArray(d.concept) || !d.concept.length) {
+    return { ok: false, tekst: 'Er is geen concept om op te slaan.' };
   }
+  const { laadApp } = vers('./app.js');
+  const { assetsOpSchijf, blokTerug } = vers('./werelden.js');
+  const opslag = { rekenPopsterren_wereldconcept: JSON.stringify(d.concept) };
+  if (Array.isArray(d.basis)) opslag.rekenPopsterren_wereldconcept_basis = JSON.stringify(d.basis);
+  const app = laadApp({ opslag });
+  app.loadWorldDraft();
+  if (!app.WORLD_DRAFT_INFO) {
+    return { ok: true, niets: true, tekst: 'Niets op te slaan: je concept staat al zo in het project.' };
+  }
+  // 2 -- dezelfde keuring als overal
+  const punten = app.wereldControle(assetsOpSchijf('assets'));
+  const blok = punten.filter(p => p.blokkeert);
+  if (blok.length) {
+    return { ok: false, punten: blok, tekst: 'Niet opgeslagen — dit zou een kind nu merken:\n'
+      + blok.map(p => '  · ' + p.w + ': ' + p.t).join('\n')
+      + '\n\nLos het op in de wereldstudio, of zet de wereld (nog) op "niet uitgebracht".' };
+  }
+  // 3 -- proeflezen: komt er precies dezelfde lijst uit? (zie blokTerug)
+  const proef = blokTerug(app);
+  if (!proef.ok) {
+    return { ok: false, tekst: 'Niet opgeslagen: ' + proef.tekst };
+  }
+  const bron = proef.bron;
+  // 4 -- schrijven, bouwen, keuren
+  let naam;
+  try { naam = vervangBlok(MARK_A, MARK_B, bron, 'WERELDEN-BEGIN/EINDE'); }
+  catch (e) { return { ok: false, tekst: 'Schrijven mislukte: ' + e.message }; }
+  const mijn = app.WORLD_DRAFT_INFO.mijn;
+  console.log('  studio: WORLDS opgeslagen in src/' + naam + ' (' + mijn.join(', ') + ') en index.html gebouwd');
+  const k = await keuring();
+  const tedoen = punten.filter(p => p.ernst === 'fout' && !p.blokkeert);
+  return { ok: true, keuring: k, bestand: 'src/' + naam, mijn,
+    tekst: 'Opgeslagen in het project: ' + mijn.join(', ') + ' (src/' + naam + ' → index.html).\n'
+      + (k.ok ? 'De snelle keuring slaagt — dit kan vastgelegd worden.'
+              : 'Let op: de snelle keuring slaagt níét:\n' + k.tekst)
+      + (tedoen.length ? '\n\nNog te doen vóór uitbrengen:\n'
+        + tedoen.map(p => '  · ' + p.w + ': ' + p.t).join('\n') : '') };
 }
 
-/* Hetzelfde trucje als writeWorlds, voor het blok dat zegt welke schermen een
+/* Hetzelfde trucje als het opslaan hierboven (vervangBlok), voor het blok dat zegt welke schermen een
    eigen tekening hebben. Twee sleutels, twee paden, meer niet -- maar het hóórt in
    index.html en niet in een lijstje dat alleen de studio kent: wat je in de studio
    ziet moet zijn wat er op een telefoon staat.
@@ -357,9 +420,17 @@ function writeSchermkunst(body, res) {
    hieronder staat, nergens anders. Zo hoeft er geen beeldbibliotheek in het project,
    en gebeurt het omzetten waar het beeld toch al geladen is.
 
-   En hij hoogt meteen CACHE in sw.js op. Dat was de stap die je altijd vergeet: de
-   servicewerker serveert alles onder /assets/ eerst uit de cache, dus een vervangen
-   beeld met dezelfde naam blijft anders op elk toestel dat er al was het oude tonen. */
+   En hij zorgt dat telefoons die er al waren het nieuwe beeld ook krijgen. Dat is
+   de stap die je altijd vergeet, en hij ging hier ook mis: de server hoogde CACHE
+   op (de schil), terwijl sw.js alles onder assets/ voorraad-eerst uit ART_CACHE
+   haalt en die alleen ververst als ART_CACHE verandert. Een vervangen wereldkaart
+   bleef zo op elk toestel dat hem al had de óúde. Nu:
+     - een nieuw bestand (een nieuw pad): niets ophogen. Een nieuw pad staat in
+       geen enkele voorraad, dus het komt vanzelf binnen;
+     - een bestaand bestand vervangen: ART_CACHE één keer omhoog -- één keer per
+       wijziging, niet per vervanging: is hij tegenover de laatste vastlegging al
+       opgehoogd, dan blijft hij staan. Elke ophoging laat elke telefoon alle
+       tekeningen opnieuw ophalen, en dat is telefoondata van een gezin. */
 /* Wélke paden geschreven mogen worden staat in test/beelden.js, want de studio
    moet dezelfde lijst kunnen lézen om te weten of hij een vervangknop mag tonen.
    Eén lijst, twee lezers -- twee kopieën zouden op een dag verschillend gaan
@@ -370,13 +441,20 @@ function writeSchermkunst(body, res) {
    de app niet in; wat de app laadt zijn de afgeleiden, en die worden door
    /api/merk opnieuw gemaakt zodra er een meester vervangen is. */
 const ASSET_OK = require('./beelden.js').SCHRIJFBAAR;
-function bumpCache() {
+function bumpArtCache() {
   const f = path.join(ROOT, 'sw.js');
   const src = fs.readFileSync(f, 'utf8');
-  const m = /const CACHE = '([a-z-]+)(\d+)';/.exec(src);
+  const m = /const ART_CACHE = '([a-z-]+)(\d+)';/.exec(src);
   if (!m) return null;
+  let inHead = null;
+  try {
+    const head = execFileSync('git', ['show', 'HEAD:sw.js'],
+      { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    inHead = (/const ART_CACHE = '([^']+)';/.exec(head) || [])[1] || null;
+  } catch (e) { /* geen git: dan gewoon ophogen */ }
+  if (inHead && inHead !== m[1] + m[2]) return null;      // al opgehoogd in dit werk
   const volgend = m[1] + (Number(m[2]) + 1);
-  fs.writeFileSync(f, src.replace(m[0], "const CACHE = '" + volgend + "';"));
+  fs.writeFileSync(f, src.replace(m[0], "const ART_CACHE = '" + volgend + "';"));
   return volgend;
 }
 /* Hernoemen is er alleen voor één geval: een wereld krijgt een ander id en zijn
@@ -395,9 +473,9 @@ function renameAsset(res, van, naar) {
   try {
     fs.mkdirSync(path.dirname(b), { recursive: true });
     fs.renameSync(a, b);
-    const cache = bumpCache();
-    console.log('  wereldstudio: ' + van + ' -> ' + naar + (cache ? ' \u00b7 sw CACHE -> ' + cache : ''));
-    zeg(200, van.split('/').pop() + ' \u2192 ' + naar.split('/').pop() + (cache ? ' \u00b7 sw ' + cache : ''));
+    // een nieuw pad staat in geen enkele voorraad: niets op te hogen (zie bumpArtCache)
+    console.log('  wereldstudio: ' + van + ' -> ' + naar);
+    zeg(200, van.split('/').pop() + ' \u2192 ' + naar.split('/').pop());
   } catch (e) { zeg(500, String(e.message)); }
 }
 
@@ -414,19 +492,22 @@ function writeAsset(req, res, to) {
       const buf = Buffer.concat(brokken);
       if (!buf.length) throw new Error('leeg bestand');
       const doel = path.join(ROOT, to);
-      const zelfde = fs.existsSync(doel) && Buffer.compare(fs.readFileSync(doel), buf) === 0;
+      const bestond = fs.existsSync(doel);
+      const zelfde = bestond && Buffer.compare(fs.readFileSync(doel), buf) === 0;
       fs.mkdirSync(path.dirname(doel), { recursive: true });
       fs.writeFileSync(doel, buf);
       const kb = Math.round(buf.length / 1024);
-      /* De cachenaam alleen ophogen voor een bestand dat de app werkelijk laadt.
-         Een meester in assets/branding/source/ gaat de app niet in (zie merk.js):
-         die ophogen zou elke telefoon opnieuw laten binnenhalen voor een bestand
-         dat er nooit was. De afgeleiden krijgen hun ophoging van /api/merk. */
+      /* De tekeningenvoorraad alleen ophogen voor een bestand dat de app werkelijk
+         laadt, en dat er al was (zie bumpArtCache). Een meester in
+         assets/branding/source/ gaat de app niet in (zie merk.js): die ophogen zou
+         elke telefoon opnieuw laten binnenhalen voor een bestand dat er nooit was.
+         De afgeleiden krijgen hun ophoging van /api/merk. */
       const inDeApp = !/^assets\/branding\/source\//.test(to);
-      const cache = (zelfde || !inDeApp) ? null : bumpCache();
-      console.log('  wereldstudio: ' + to + ' (' + kb + ' kB)' + (cache ? ' · sw CACHE -> ' + cache : ''));
+      const cache = (zelfde || !inDeApp || !bestond) ? null : bumpArtCache();
+      console.log('  wereldstudio: ' + to + ' (' + kb + ' kB)' + (cache ? ' · sw ART_CACHE -> ' + cache : ''));
       res.writeHead(200, { 'content-type': 'text/plain' });
-      res.end(to + ' — ' + kb + ' kB' + (cache ? ' · sw ' + cache : ' · ongewijzigd'));
+      res.end(to + ' — ' + kb + ' kB' + (zelfde ? ' · ongewijzigd' : cache ? ' · sw ' + cache
+        : bestond ? ' · sw al opgehoogd' : ' · nieuw'));
     } catch (e) {
       res.writeHead(500, { 'content-type': 'text/plain' });
       res.end(String(e.message));
@@ -483,6 +564,12 @@ function eenTest(bestand) {
       });
   });
 }
+function browserTestsKunnen() {
+  for (const m of ['playwright', 'playwright-core']) {
+    try { require.resolve(m, { paths: [ROOT] }); return true; } catch (e) { /* volgende */ }
+  }
+  return false;
+}
 /* Eén voor één en stoppen bij de eerste die valt -- net wat `&&` in package.json
    doet, zodat je de eerste echte fout ziet en niet de ruis erna. */
 async function runTests() {
@@ -512,8 +599,13 @@ async function commitAll(bericht, res) {
     }
     const vuil = await git(['status', '--porcelain']);
     if (!vuil) return zeg(400, 'er is niets gewijzigd');
-    console.log('  wereldstudio: testen draaien vóór het vastleggen…');
-    await runTests();
+    /* De snelle keuring, niet alle suites. Dit gaat naar je eigen tak en niet naar
+       een kind; de browsersuites (minuten, en een `npm install`) horen bij het
+       publiceren. Hier draaide eerst álles, en in een verse kloon zonder
+       playwright kon je daardoor vanuit de studio helemaal niets vastleggen. */
+    console.log('  wereldstudio: de snelle keuring vóór het vastleggen…');
+    const k = await keuring();
+    if (!k.ok) return zeg(400, 'de snelle keuring slaagt niet — er is niets vastgelegd\n\n' + k.tekst);
     await git(['add', '-A']);
     await git(['commit', '-m', bericht]);
     await git(['push', '-u', 'origin', tak]);
@@ -552,6 +644,13 @@ async function publish(fase, res) {
     const nieuw = await git(['log', '--oneline', 'origin/main..' + tak]);
     if (!nieuw) return zeg(400, 'main heeft dit al — er valt niets te publiceren');
 
+    /* Publiceren draait álle suites, ook die in een echte browser: dit is wat
+       er op de telefoon van een kind komt. Staat playwright er niet, dan zeggen
+       we dát -- en niet pas na minuten, in de staart van een testuitvoer. */
+    if (!browserTestsKunnen()) {
+      return zeg(400, 'Publiceren draait alle tests, ook die in een echte browser, en daarvoor '
+        + 'ontbreekt playwright.\nDraai één keer `npm install` in de projectmap en probeer het opnieuw.');
+    }
     if (fase !== 'go') {
       const n = nieuw.split('\n').length;
       return zeg(200, 'KLAAR:' + n + '\n' + nieuw
@@ -635,7 +734,8 @@ function draaiMerk() {
       { cwd: ROOT, maxBuffer: 8e6, timeout: 3e5 }, (e, uit, err) => {
         const tekst = String(uit || '').trim() || String(err || '').trim();
         if (!e) {
-          const cache = bumpCache();
+          // de afgeleiden onder assets/branding/ komen uit de tekeningenvoorraad
+          const cache = bumpArtCache();
           return ok({ ok: true, tekst: 'Afgeleiden bijgewerkt' + (cache ? ' · sw ' + cache : '') + '\n' + tekst });
         }
         const reden = /Cannot find module|playwright/i.test(String(err || uit || e.message))
@@ -664,6 +764,15 @@ async function api(req, res, url) {
       // overzicht dat dat niet ziet is erger dan geen overzicht.
       delete require.cache[require.resolve('./werelden.js')];
       delete require.cache[require.resolve('./app.js')];
+      /* Met een concept erbij (POST): het overzicht zoals het wordt als je dat
+         concept opslaat. De studiopagina leest het uit localStorage -- dezelfde
+         herkomst als het kijkvak -- en stuurt het mee. */
+      if (req.method === 'POST') {
+        let d;
+        try { d = JSON.parse(await lees(req, 600000) || '{}'); }
+        catch (e) { return json(res, { ok: false, tekst: 'het concept is geen geldige JSON' }, 400); }
+        return json(res, require('./werelden.js').overzicht({ concept: d.concept, basis: d.basis }));
+      }
       return json(res, require('./werelden.js').overzicht());
     }
     if (req.method !== 'POST') return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
@@ -671,13 +780,25 @@ async function api(req, res, url) {
     if (url === '/api/bijwerken') return json(res, await versie.bijwerken());
     if (url === '/api/wissel') return json(res, await versie.wissel(await lees(req)));
     if (url === '/api/keuring') return json(res, await keuring());
+    if (url === '/api/concept') return json(res, await slaConceptOp(await lees(req, 600000)));
     if (url === '/api/merk') return json(res, await draaiMerk());
     /* De uitwegen voor open werk. Lezen mag altijd; de vier die iets doen staan
        in test/versie.js en gooien geen van alle iets weg zonder dat je het zelf
        zegt -- terugdraaien gaat zelfs in twee stappen. */
     if (url === '/api/opzij') return json(res, await versie.opzij());
     if (url === '/api/haalterug') return json(res, await versie.haalTerug());
-    if (url === '/api/vastleggen') return json(res, await versie.vastleggen(await lees(req, 200)));
+    /* ?keur: eerst de snelle keuring. Zo gaat de wereldstudio (Vastleggen in de
+       lijn van concept naar spel) nooit iets vastleggen waar `npm run check` op
+       omvalt. Open werk vastleggen zonder keuring blijft kunnen -- dat is ook
+       "dit werk wil ik houden", ook als het nog niet af is. */
+    if (url === '/api/vastleggen') {
+      const bericht = await lees(req, 200);
+      if (/[?&]keur\b/.test(req.url)) {
+        const k = await keuring();
+        if (!k.ok) return json(res, { ok: false, tekst: 'Niet vastgelegd: de snelle keuring slaagt niet.\n\n' + k.tekst });
+      }
+      return json(res, await versie.vastleggen(bericht));
+    }
     if (url === '/api/terugdraaien') return json(res, await versie.terugdraaien(await lees(req, 20)));
     return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
   } catch (e) {
@@ -783,13 +904,6 @@ const server = http.createServer(function (req, res) {
     let body = '';
     req.on('data', c => { body += c; if (body.length > 2000) req.destroy(); });
     req.on('end', () => writeSchermkunst(body, res));
-    return;
-  }
-
-  if (req.method === 'POST' && url === '/werelden') {
-    let body = '';
-    req.on('data', c => { body += c; if (body.length > 200000) req.destroy(); });
-    req.on('end', () => writeWorlds(body, res));
     return;
   }
 

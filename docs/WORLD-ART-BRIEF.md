@@ -10,6 +10,11 @@ stops sit, how the road bends, the world's colours — is set after the drawing 
 in the world studio (`npm run preview` → Wereldstudio), so don't try to get it right
 while drawing.
 
+For an image generator there is a ready prompt in `docs/prompts/wereldkaart.txt`;
+the editor fills in the theme and copies it (*Tekening → ✨ Prompt voor een
+beeldgenerator*). It is a condensed form of §1–§3. Where it and this brief
+disagree, this brief is the measured one.
+
 ---
 
 ## 1. The canvas

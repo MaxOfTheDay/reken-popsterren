@@ -154,7 +154,11 @@ function startMapEdit() {
        of staat te publiceren. Hier stond eerder alleen de toestelkiezer; de stand
        zat verstopt in Haltes & weg en het venster in een eigen tabblad. */
     #studio .st-kijk { display: grid; gap: 5px; padding: 8px 12px 9px;
-      border-bottom: 1px solid rgba(255,255,255,.14); }
+      border-bottom: 1px solid rgba(255,255,255,.14);
+      /* minmax(0, ..): anders is de kolom zo breed als de langste optie in een
+         keuzelijst, en viel de knop aan het eind van de rij buiten het paneel --
+         precies de ▶ waarmee je een wereld probeert */
+      grid-template-columns: minmax(0, 1fr); }
     #studio .st-kijk .kr { display: flex; align-items: center; gap: 6px; }
     #studio .st-kijk label { color: #b79ae0; font-size: 12px; width: 46px; flex: none; }
     #studio .st-kijk select { flex: 1; min-width: 0; padding: 4px 6px; }
@@ -254,6 +258,40 @@ function startMapEdit() {
        klein: het is een bevestiging, geen invoerveld. */
     #studio .st-afgeleid { margin: 2px 0 0; color: #9c86bd; font-size: 11px;
       font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+    /* Een wereld erbij, zonder prompt(): een veld en een knop, op de plek waar de
+       lijst staat. Een modaal venster haalt je uit het werk; dit niet. */
+    #studio .st-nieuwrij { display: flex; gap: 6px; margin-top: 6px; }
+    #studio .st-nieuwrij input { flex: 1; min-width: 0; }
+    #studio .st-vink { display: flex; align-items: center; gap: 7px; margin: 4px 0 6px;
+      font-size: 12px; color: #e6dbf5; cursor: pointer; }
+    #studio .st-vink input { width: 15px; height: 15px; margin: 0; }
+    #studio .st-row input[type=range] { padding: 0; }
+    /* De twee uitklapvakken met een prompt en de schat-tekentafel. Hun velden
+       staan in .st-prow en niet in .st-row: élk veld in een .st-row schrijft bij
+       een wijziging de wereld weg (readSheet), en een idee of een thema is geen
+       wereldgegeven. */
+    #studio .st-prow { display: grid; grid-template-columns: 74px 1fr; gap: 6px; align-items: center; margin-bottom: 6px; }
+    #studio .st-prow label { color: #b79ae0; font-size: 12px; }
+    #studio .st-prow input { width: 100%; min-width: 0; }
+    #studio .st-prow input[type=range] { padding: 0; }
+    #studio details.st-prompt, #studio details.st-schat { margin: 8px 0 0; padding: 7px 9px;
+      border-radius: 8px; background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.2); }
+    #studio details.st-prompt > summary, #studio details.st-schat > summary { cursor: pointer;
+      font-size: 12px; color: #e6dbf5; }
+    #studio details[open].st-prompt > summary, #studio details[open].st-schat > summary { margin-bottom: 8px; }
+    #studio details.st-schat .st-btns { margin: 4px 0 6px; }
+    #studio textarea { width: 100%; box-sizing: border-box; min-height: 58px; resize: vertical;
+      font: 11px/1.4 ui-monospace, monospace; color: #fff; background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.22); border-radius: 7px; padding: 6px 8px; margin-bottom: 6px; }
+    #studio textarea.over { border-color: rgba(120,255,180,.85); background: rgba(120,255,180,.12); }
+    /* Het voorbeeld: de schat op allebei de paspoppen, en het miniatuur zoals de
+       kleedkamer het toont -- de drie plekken waar een kind hem ziet. */
+    #studio .st-sc-vb { display: grid; grid-template-columns: 1fr 1fr 58px; gap: 6px; align-items: end;
+      margin-bottom: 6px; }
+    #studio .st-sc-vb > div { border-radius: 8px; background: rgba(0,0,0,.28); text-align: center;
+      font-size: 10px; color: #9c86bd; padding: 3px 2px 2px; }
+    #studio .st-sc-vb svg { display: block; width: 100%; height: auto; }
+    #studio .st-sc-vb .mini svg { height: 52px; }
     /* Geavanceerd: de dingen die je bijna nooit nodig hebt, en die de gewone
        werkwijze in de weg staan zodra ze bovenaan meedoen. Dicht, tenzij je ze
        zoekt. */
@@ -421,14 +459,16 @@ function startMapEdit() {
         </select>
       </div>
       <div class="kr">
-        <label for="st-vscherm">venster</label>
+        <label for="st-vscherm">probeer</label>
         <select id="st-vscherm">
-          <option value="map">Kaart</option>
-          <option value="game">Show</option>
-          <option value="end">Einde</option>
-          <option value="profile">Wie speelt er</option>
+          <option value="map">de kaart, in deze stand</option>
+          <option value="game:vers">de eerste show</option>
+          <option value="game:bijna">de laatste show → wereldfeest</option>
+          <option value="end:halverwege">het einde van een show</option>
+          <option value="reis:vers">de reis naar deze wereld</option>
+          <option value="profile">wie speelt er</option>
         </select>
-        <button id="st-venster" title="Open dit scherm in een écht venster op de gekozen toestelmaat — met Shift: alle maten naast elkaar">⧉</button>
+        <button id="st-venster" title="Speel het in een écht venster op de gekozen toestelmaat, met deze wereld en je concept erin — met Shift: alle maten naast elkaar">▶</button>
       </div>
       <em class="maat" id="st-toestelmaat"></em>
       <em class="maat" id="st-lan"></em>
@@ -441,11 +481,17 @@ function startMapEdit() {
     <div class="st-body">
 
       <section data-tab="werelden">
+        <p class="st-let" id="st-concept" hidden></p>
         <h6>Welke wereld</h6>
         <div class="st-list" id="st-list"></div>
         <div class="st-btns" style="margin-top:6px">
           <button class="prim" id="st-new">＋ wereld</button>
           <button class="stil" id="st-revert" title="Deze wereld terug naar wat er in het spel staat">↶ deze terug</button>
+          <button class="stil" id="st-weg" title="Alleen voor een wereld die nog niet in het spel staat">✕ weg</button>
+        </div>
+        <div class="st-nieuwrij" id="st-nieuwrij" hidden>
+          <input id="st-nieuwnaam" placeholder="naam, bv. Regenboogwereld">
+          <button class="prim" id="st-nieuwmaak">Maak</button>
         </div>
         <p class="st-hint">Een wereld maken is: naam geven, tekening erop, kleuren
           accepteren, haltes zetten, beloning kiezen, standen doorlopen. Het id en het
@@ -464,11 +510,26 @@ function startMapEdit() {
           erop slepen <b>overschrijft</b> de vorige — er is één tekening per wereld.<br>
           Leg je er een in <code>incoming/</code>, dan komt hij hierboven als <b>nieuw</b>
           naast de huidige te staan en kies je zelf of hij het wordt.</p>
+        <details class="st-prompt" id="st-kaartprompt" hidden>
+          <summary>✨ Prompt voor een beeldgenerator</summary>
+          <div class="st-prow"><label>thema</label><input id="kp-thema"></div>
+          <div class="st-prow"><label>inspiratie</label><input id="kp-insp" placeholder="optioneel, een paar woorden"></div>
+          <div class="st-btns"><button id="kp-kopieer">Kopieer de prompt</button></div>
+          <p class="st-hint" style="display:block">De prompt uit <code>docs/prompts/wereldkaart.txt</code>,
+            met dit thema erin. Plak hem in je beeldgenerator en sleep het resultaat op het vak
+            hierboven.</p>
+        </details>
 
         <h6>Gegevens</h6>
         <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
         <div class="st-row"><label>naam</label><input id="mf-name"></div>
+        <label class="st-vink"><input type="checkbox" id="mf-released">
+          uitgebracht — kinderen kunnen hem spelen</label>
         <p class="st-afgeleid" id="mf-afgeleid"></p>
+        <p class="st-hint">Een nieuwe wereld begint <b>niet uitgebracht</b>: hij staat dan wél in
+          het spel (en mag mee naar main), maar geen kind komt erin. Hier in de studio en in
+          <b>Probeer</b> speel je hem gewoon. Zet het vinkje pas als de controle niets meer
+          te doen heeft — een wereld die kinderen al spelen zet je niet meer terug.</p>
 
         <h6>Beloning</h6>
         <div class="st-bel" id="st-bel">
@@ -477,9 +538,31 @@ function startMapEdit() {
           <button id="st-bel-kijk">bekijk</button>
         </div>
         <select id="mf-beloning" style="width:100%;margin-top:6px"></select>
-        <p class="st-hint">Wat een kind krijgt zodra deze wereld uit is. Eén spulletje per
-          wereld, en het staat níét in de winkel — het is te verdienen. <b>Bekijk</b> zet
-          hem even op de paspop.</p>
+        <details class="st-schat" id="st-schat" hidden>
+          <summary>✏️ Een eigen wereldschat tekenen</summary>
+          <div class="st-prow"><label>idee</label><input id="sc-idee" placeholder="bv. een regenboogkroontje"></div>
+          <div class="st-btns"><button id="sc-prompt">Kopieer de prompt</button></div>
+          <p class="st-hint" style="display:block">Voor <b>Claude of ChatGPT</b>, niet voor een
+            beeldgenerator: een schat is een tekening in SVG. Plak wat je terugkrijgt hieronder,
+            of sleep er een <code>.svg</code> op uit je tekenprogramma.</p>
+          <textarea id="sc-svg" rows="3" spellcheck="false"
+            placeholder="&lt;svg viewBox=&quot;0 0 200 250&quot;&gt;…&lt;/svg&gt;"></textarea>
+          <div class="st-sc-vb" id="sc-vb" hidden></div>
+          <div class="st-prow"><label>naam</label><input id="sc-naam" placeholder="bv. Regenboogkroon"></div>
+          <div class="st-prow"><label>emoji</label><input id="sc-emoji" maxlength="4"></div>
+          <div class="st-prow"><label>hoger</label><input id="sc-hoogte" type="range" min="-12" max="12" step="0.5" value="0"></div>
+          <div class="st-prow"><label>groter</label><input id="sc-grootte" type="range" min="0.7" max="1.3" step="0.02" value="1"></div>
+          <p class="st-check" id="sc-let" hidden></p>
+          <div class="st-btns">
+            <button class="prim" id="sc-gebruik" disabled>✓ Maak dit de schat</button>
+            <button class="stil" id="sc-weg" hidden>✕ getekende schat weg</button>
+          </div>
+        </details>
+        <p class="st-hint">Wat een kind krijgt zodra deze wereld uit is: een <b>wereldschat</b>.
+          Eén per wereld, en hij staat níét in de winkel. Daarom staan hier alleen de schatten
+          die nog vrij zijn — een winkelspulletje kiezen zou het uit de winkel halen.
+          <b>Bekijk</b> zet hem even op de paspop. Is er geen vrije, dan teken je er zelf een
+          onder <b>Een eigen wereldschat tekenen</b>: de studio zet hem op het hoofd en keurt hem.</p>
 
         <h6>Kleuren</h6>
         <div class="st-kleur">
@@ -499,6 +582,18 @@ function startMapEdit() {
           <b>Haal uit de tekening</b> doet een vóórstel: hij meet de lucht bovenin, de
           diepte onderin, de warmste veeg en een weg die tegen de corridor afsteekt. Je
           ziet het meteen en je mag er altijd overheen.</p>
+
+        <h6>Zaal</h6>
+        <div class="st-row"><label>donkerte</label>
+          <input id="mf-dim" type="range" min="0" max="1" step="0.01"></div>
+        <p class="st-afgeleid" id="mf-dim-uit"></p>
+        <div class="st-btns" style="margin-top:4px">
+          <button id="st-zaal-kijk" title="de eerste show van deze wereld, op de gekozen toestelmaat">▶ bekijk in de show</button>
+          <button class="stil" id="st-zaal-terug">↺ standaard</button>
+        </div>
+        <p class="st-hint">Achter de show hangt de tekening van de wereld, uitvergroot en
+          onscherp, met een donkere laag erover zodat de som leesbaar blijft. Een lichte
+          tekening (sneeuw, snoep) heeft meer donker nodig; een nachttekening minder.</p>
 
         <h6>Haltes &amp; weg</h6>
         <p class="st-waarschuwing" id="st-onder" hidden></p>
@@ -551,7 +646,8 @@ function startMapEdit() {
             <button id="st-paste">Plak blok</button>
           </div>
           <p class="st-hint">Het hele WORLDS-blok als tekst — handig om het hierheen te
-            plakken vanuit een gesprek met Claude, of andersom.</p>
+            plakken vanuit een gesprek met Claude, of andersom. Zonder de studioserver
+            (<code>npm run studio</code>) is dit de weg naar het project.</p>
         </details>
       </section>
 
@@ -581,24 +677,27 @@ function startMapEdit() {
           je scherm. Blokkeert niets; loopt ook vanzelf bij "Zet in het spel".</p>
         <div class="st-check" id="st-check" hidden></div>
 
-        <h6>Werelden vastleggen</h6>
+        <h6>Opslaan in het project</h6>
         <div class="st-btns">
-          <button class="prim" id="st-push">⇪ Zet in het spel</button>
-          <button class="stil" id="st-pull" title="Concept weggooien en terug naar index.html">⟲ Ophalen</button>
+          <button class="prim" id="st-push">⇪ Opslaan in het project</button>
+          <button class="stil" id="st-pull" title="Concept weggooien en terug naar wat er in het project staat">⟲ Concept weg</button>
         </div>
-        <p class="st-hint">Schrijft je concept in index.html. Beelden staan er al zodra je ze
-          hebt neergezet.</p>
+        <p class="st-hint">Schrijft je concept in <code>src/</code> en bouwt index.html. Dezelfde
+          controle als <code>npm run check</code> kijkt eerst mee: wat een kind nu zou merken
+          houdt het tegen. Beelden staan er al zodra je ze hebt neergezet. Kinderen zien
+          niets tot je publiceert — en een wereld die niet uitgebracht is zelfs dan nog niet.</p>
 
         <h6>Vastleggen &amp; publiceren</h6>
         <div class="st-row"><label>bericht</label>
           <input id="st-msg" placeholder="feat: IJswereld krijgt zijn kaart"></div>
         <div class="st-btns">
-          <button id="st-commit">✓ testen, vastleggen &amp; pushen</button>
+          <button id="st-commit">✓ keuren, vastleggen &amp; pushen</button>
           <button id="st-publish">🚀 publiceer naar main</button>
         </div>
-        <p class="st-hint">Vastleggen gaat naar de wérkbranch. Publiceren voegt die samen
-          met main en dát is wat op de telefoon komt — in twee stappen, en alleen als
-          <code>npm test</code> slaagt.</p>
+        <p class="st-hint">Vastleggen gaat naar de wérkbranch, na de snelle keuring
+          (<code>npm run check</code>, een paar seconden). Publiceren voegt die samen met main en
+          dát is wat op de telefoon komt — in twee stappen, en alleen als <code>npm test</code>
+          slaagt (dat vraagt één keer <code>npm install</code>).</p>
       </section>
 
     </div>
@@ -735,6 +834,7 @@ function startMapEdit() {
      en met de pijltjes verschuif je daarna per 0,2% -- op een verkleind vak is één
      schermpixel geen tekenpixel meer, en een richel raak je niet met de muis alleen. */
   let sel = null;
+  let wegWacht = null;      // welke wereld wacht op de tweede tik van "✕ weg"
   const setOut = t => { F('st-out').textContent = t || ''; };
   /* Een storing die een mens kan lezen, en de volle waarheid in de console.
      Wat er misging, wat er met je werk gebeurd is, en waar de details staan --
@@ -816,48 +916,430 @@ function startMapEdit() {
       + ' · trofee ' + PERFECT_BADGE + (w.id || '—')
       + ' · level ' + shown().first + '–' + (shown().first + w.levels - 1);
     Object.keys(HEX).forEach(k => { F('mf-' + k).value = (w.theme && w.theme[k]) || HEX[k]; });
+    F('mf-released').checked = w.released !== false;
+    vulKaartPrompt(w);
+    // weghalen kan alleen wat nog niet in het project staat
+    F('st-weg').hidden = viewWorldIdx < WORLDS_SHIPPED.length;
+    vulZaal();
     vulBeloning();
   }
+  /* ---- De zaal: hoe donker het achter de show wordt --------------------------
+     Eén getal per wereld (venue.dim), en de rest van de zaal leent de kaart --
+     zie VENUE_TERUGVAL. Drie van de zes werelden hadden er een eigen waarde voor
+     nodig, en die stond tot nu toe alleen met de hand in de code. De standaard
+     schrijven we niet weg: een wereld die niets zegt, volgt de terugval mee als
+     die ooit verandert. */
+  const DIM_STANDAARD = VENUE_TERUGVAL.dim;
+  /* De schuif loopt over het hele geldige bereik (0..1) en niet over "wat
+     verstandig is": readSheet schrijft hem bij élke wijziging terug, en een
+     smallere schuif zou een met de hand gezette waarde daarbuiten dan stil
+     afronden naar zijn rand. */
+  function vulZaal() {
+    const w = shown().world;
+    const eigen = w.venue && typeof w.venue.dim === 'number';
+    const v = eigen ? w.venue.dim : DIM_STANDAARD;
+    F('mf-dim').value = String(v);
+    zegDim(v, eigen);
+  }
+  function zegDim(v, eigen) {
+    F('mf-dim-uit').textContent = Math.round(v * 100) + '% donker'
+      + (eigen ? '' : ' — de standaard') + (v < .5 ? ' · de tekening praat mee met de som' : '');
+  }
+  F('mf-dim').addEventListener('input', () => {
+    const v = Number(F('mf-dim').value);
+    zegDim(v, Math.abs(v - DIM_STANDAARD) > .004);
+  });
+  F('st-zaal-terug').onclick = () => {
+    F('mf-dim').value = String(DIM_STANDAARD);
+    readSheet();
+    setOut('zaal terug naar de standaard');
+  };
+  F('st-zaal-kijk').onclick = () => {
+    saveWorldDraft();
+    const m = toestelKiezer.value || MATEN[0].id;
+    toonVoorbeeld([m], 'game:vers');
+  };
   /* ---- De beloning van deze wereld -------------------------------------
-     Eén spulletje uit ITEMS, en het is niet te koop (zie isBeloning). De lijst
-     laat alles zien wat er is, met de spulletjes die al aan een ándere wereld
-     vastzitten erbij maar gemerkt -- twee werelden die hetzelfde uitdelen is een
-     fout, en de controle zegt dat ook, maar hem hier verbergen zou de vraag
-     "waarom staat mijn hoed er niet bij" opleveren.
+     Een wereldschat: één spulletje uit ITEMS zonder prijs, dat bij geen andere
+     wereld hoort (zie isBeloning). Alleen díe staan in de lijst. Eerder stonden
+     hier alle honderd spulletjes, en een winkelspulletje kiezen haalde het stil
+     uit de winkel -- de keuring viel daar pas bij het vastleggen op om.
+
+     Staat de huidige beloning niet in die lijst (hij bestaat niet, of hij heeft
+     een prijs), dan blijft hij er wél in staan, gemarkeerd: verbergen zou de vraag
+     "waar is mijn beloning gebleven" opleveren.
+
+     Is er geen vrije schat, dan teken je er een (zie "Een eigen wereldschat
+     tekenen" hieronder): een AI of een tekenprogramma levert SVG, en de studio
+     zet hem op het hoofd en bewaart hem bij de wereld. Geen code.
 
      Getekend met item.thumb() -- dezelfde tekening als in de kleedkamer en bij het
      wereldfeest. De studio heeft geen eigen tekenwerk voor spulletjes en hoort dat
      ook niet te krijgen. */
+  function vrijeSchatten(w) {
+    return ITEMS.filter(it => {
+      if (it.price != null) return false;
+      const ander = beloningWereld(it.id);
+      return !ander || ander.id === w.id;
+    });
+  }
   function vulBeloning() {
     const w = shown().world;
     const kiezer = F('mf-beloning');
     kiezer.innerHTML = '';
-    kiezer.appendChild(new Option('— geen beloning —', ''));
-    ITEMS.forEach(it => {
-      // "al van" alleen voor een ánder wereld: bij je eigen beloning zou het
-      // lezen alsof je hem van jezelf afpakt
-      const ander = beloningWereld(it.id);
-      const bezet = ander && ander.id !== w.id;
-      const label = (it.emoji ? it.emoji + ' ' : '') + (it.full || it.name)
-        + ' · ' + it.cat + (bezet ? '  (al van ' + ander.name + ')' : '');
-      kiezer.appendChild(new Option(label, it.id));
-    });
+    kiezer.appendChild(new Option('— nog geen wereldschat —', ''));
+    const vrij = vrijeSchatten(w);
+    vrij.forEach(it => kiezer.appendChild(new Option((it.emoji ? it.emoji + ' ' : '') + (it.full || it.name), it.id)));
+    const huidig = w.beloning ? item(w.beloning) : null;
+    if (w.beloning && !vrij.some(it => it.id === w.beloning)) {
+      kiezer.appendChild(new Option('⚠ ' + (huidig ? (huidig.full || huidig.name) + ' — staat in de winkel'
+        : w.beloning + ' — bestaat niet'), w.beloning));
+    }
     kiezer.value = w.beloning || '';
-    const vak = F('st-bel'), it = w.beloning ? item(w.beloning) : null;
-    const stuk = !!w.beloning && !it;
+    /* Een wereld met een getekende schat kiest hier niets anders: een andere kiezen
+       liet de tekening stil vallen. Weghalen gaat met de knop in het tekenvak. */
+    kiezer.disabled = !!w.schat;
+    kiezer.title = w.schat ? 'deze wereld heeft een getekende schat — haal die weg om een andere te kiezen' : '';
+    const vak = F('st-bel'), it = huidig;
+    const stuk = !!w.beloning && (!it || it.price != null);
     vak.className = 'st-bel' + (stuk ? ' stuk' : it ? '' : ' leeg');
     F('st-bel-vb').innerHTML = it ? (it.thumb ? it.thumb(curBase()) : (it.emoji || '·')) : '·';
-    F('st-bel-naam').textContent = stuk ? 'onbekend spulletje' : it ? (it.full || it.name) : 'nog geen beloning';
-    F('st-bel-uit').textContent = stuk
+    F('st-bel-naam').textContent = !it && w.beloning ? 'onbekend spulletje' : it ? (it.full || it.name) : 'nog geen wereldschat';
+    F('st-bel-uit').textContent = !it && w.beloning
       ? w.beloning + ' staat niet in ITEMS — deze wereld deelt niets uit'
-      : it ? it.id : 'deze wereld uitspelen levert nu niets op';
+      : it && it.price != null ? it.id + ' staat in de winkel voor ' + it.price + ' 💎 — geen wereldschat'
+      : it && it.uitWereld ? it.id + ' · getekend in de studio' : it ? it.id : 'deze wereld uitspelen levert nu niets op';
     F('st-bel-kijk').disabled = !it;
+    vulSchatVak(w, vrij);
   }
   F('mf-beloning').onchange = () => {
     const w = shown().world, v = F('mf-beloning').value;
     if (v) w.beloning = v; else delete w.beloning;
     commit(v ? 'beloning: ' + ((item(v) || {}).full || v) : 'beloning weggehaald');
   };
+
+  /* ---- Een eigen wereldschat tekenen -----------------------------------------
+     De weg zonder code. Een AI (of een tekenprogramma) levert SVG; de studio
+     maakt die schoon, zet hem op het hoofd, toont hem op de pop en keurt hem, en
+     bewaart hem als gegevens bij de wereld (w.schat, zie schatItem in
+     src/20-app.js). Vanaf dan is het een gewoon spulletje: de kleedkamer, het
+     wereldfeest en Probeer tonen hem, en hij gaat met Opslaan mee het project in.
+
+     Alleen voor een wereld zonder handgemaakte schat. Een wereld die er al een uit
+     de code heeft, houdt die: een andere ervoor in de plaats liet de oude
+     prijsloos en aan niemand gekoppeld achter, en zo'n spulletje staat gratis in
+     de winkel (zie isBeloning).
+
+     Drie stappen, elk apart te volgen:
+       schoonSvg   alleen vormen door een korte lijst (SCHAT_ELEMENTEN) en een
+                   korte lijst eigenschappen; wat eruit gaat wordt gemeld. Een
+                   style="…" wordt losse eigenschappen, want zo schrijven
+                   tekenprogramma's het graag.
+       zetOpHoofd  meten (getBBox, dus hier en niet in het spel), schalen en op de
+                   kruin zetten: midden op x = 100, onderrand op y = 54, zo groot
+                   als de andere schatten. Twee schuiven om bij te stellen.
+       de keuring  schatFouten uit het spel (dezelfde regels als bij opslaan) plus
+                   wat alleen een browser kan meten: boven de nek, en in dezelfde
+                   maatfamilie als de andere -- de regels van zaak I in
+                   test/beloning.test.js. */
+  const SCHAT_ATTR = ['d', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'width', 'height', 'x1', 'y1', 'x2', 'y2',
+    'points', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit',
+    'fill-rule', 'clip-rule', 'opacity', 'fill-opacity', 'stroke-opacity', 'transform',
+    'font-size', 'font-weight', 'font-family', 'text-anchor', 'dominant-baseline'];
+  /* Waar een schat landt, gemeten (getBBox) aan de zes die er zijn: hun onderrand
+     ligt tussen y = 51 en 58,5, ze zijn 35 tot 46 hoog en 30 tot 80 breed. Het
+     midden daarvan is het doel: onderrand op 54, 42 hoog, hooguit 80 breed. Zo valt
+     een nieuwe vanzelf binnen de maatfamilie van zaak I in test/beloning.test.js
+     (hoogte binnen een factor 2, breedte binnen een factor 3). */
+  const SCHAT_DOEL = { onder: 54, hoog: 42, breed: 80 };
+  function schoonSvg(tekst) {
+    const weg = new Set();
+    // alleen het <svg>-stuk: een AI zet er graag uitleg of ``` omheen
+    const m = /<svg[\s\S]*<\/svg>/i.exec(tekst);
+    const bron = m ? m[0] : '<svg xmlns="http://www.w3.org/2000/svg">' + tekst + '</svg>';
+    const doc = new DOMParser().parseFromString(bron, 'image/svg+xml');
+    const wortel = doc.documentElement;
+    if (doc.getElementsByTagName('parsererror').length || !wortel || wortel.nodeName.toLowerCase() !== 'svg') {
+      return { fout: 'Dit is geen leesbare SVG. Plak alleen de code, van <svg tot en met </svg>.' };
+    }
+    const waarde = v => String(v).replace(/[<>"&]/g, '').trim();
+    /* Een verloop mag niet (geen url(), en het miniatuur heeft geen <defs>), maar
+       een vorm zonder vulling wordt zwart. Dus: de eerste kleur van dat verloop,
+       effen. Dat is bijna altijd wat de tekening bedoelde. */
+    const verloopKleur = {};
+    Array.from(wortel.getElementsByTagName('*')).forEach(g => {
+      if (!/gradient$/i.test(g.nodeName) || !g.getAttribute('id')) return;
+      const stop = Array.from(g.childNodes).filter(n => n.nodeType === 1 && /stop$/i.test(n.nodeName))[0];
+      const kleur = stop && (stop.getAttribute('stop-color')
+        || ((stop.getAttribute('style') || '').match(/stop-color\s*:\s*([^;]+)/) || [])[1]);
+      if (kleur) verloopKleur[g.getAttribute('id')] = kleur.trim();
+    });
+    const attrs = (el, alleenOpmaak) => {
+      const uit = {};
+      const st = el.getAttribute('style');
+      if (st) st.split(';').forEach(d => {
+        const i = d.indexOf(':');
+        if (i < 0) return;
+        const k = d.slice(0, i).trim().toLowerCase(), v = d.slice(i + 1).trim();
+        if (SCHAT_ATTR.indexOf(k) >= 0) uit[k] = v; else if (k) weg.add('stijl ' + k);
+      });
+      Array.from(el.attributes).forEach(a => {
+        const k = a.name.toLowerCase();
+        if (k === 'style') return;
+        if (SCHAT_ATTR.indexOf(k) >= 0) { uit[k] = a.value; return; }
+        if (!/^(xmlns|id$|data-|version$|viewbox$|xml:|baseprofile$|preserveaspectratio$|width$|height$)/.test(k)) weg.add(k);
+      });
+      Object.keys(uit).forEach(k => {
+        if (!/url\s*\(|javascript:|&/i.test(uit[k])) return;
+        const ref = /url\s*\(\s*['"]?#([^'")\s]+)/.exec(uit[k]);
+        if ((k === 'fill' || k === 'stroke') && ref && verloopKleur[ref[1]]) {
+          uit[k] = verloopKleur[ref[1]];
+          weg.add('verloop (nu effen)');
+        } else if (k === 'fill' || k === 'stroke') {
+          uit[k] = 'none';                  // liever leeg dan een zwarte vlek
+          weg.add('patroon of verloop');
+        } else {
+          delete uit[k];
+          weg.add(k);
+        }
+      });
+      // van de <svg> zelf alleen de opmaak die hij doorgeeft (fill, stroke, …), geen maten
+      if (alleenOpmaak) Object.keys(uit).forEach(k => { if (!/^(fill|stroke|opacity|font-)/.test(k)) delete uit[k]; });
+      return Object.keys(uit).map(k => ' ' + k + '="' + waarde(uit[k]) + '"').join('');
+    };
+    const kind = el => {
+      if (el.nodeType !== 1) return '';
+      const t = el.nodeName.toLowerCase().replace(/^svg:/, '');
+      if (t === 'svg' || t === 'a' || t === 'switch') {        // uitpakken, en zeggen dat het gebeurde
+        weg.add('<' + t + '>');
+        return Array.from(el.childNodes).map(kind).join('');
+      }
+      if (SCHAT_ELEMENTEN.indexOf(t) < 0) { if (t !== 'title' && t !== 'desc') weg.add('<' + t + '>'); return ''; }
+      if (t === 'text') return '<text' + attrs(el) + '>' + waarde(el.textContent).replace(/\s+/g, ' ') + '</text>';
+      if (t === 'g') {
+        const binnen = Array.from(el.childNodes).map(kind).join('');
+        return binnen ? '<g' + attrs(el) + '>' + binnen + '</g>' : '';
+      }
+      return '<' + t + attrs(el) + '/>';
+    };
+    const binnen = Array.from(wortel.childNodes).map(kind).join('');
+    if (!binnen) return { fout: 'Er bleef niets over om te tekenen: alleen vormen tellen mee (path, circle, rect, …).' };
+    return { binnen, wortel: attrs(wortel, true), weg: [...weg] };
+  }
+  function meetSvg(inhoud) {
+    const d = document.createElement('div');
+    d.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px;height:500px;visibility:hidden';
+    d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="400" height="500">'
+      + inhoud + '</svg>';
+    document.body.appendChild(d);
+    try { return d.querySelector('svg').getBBox(); }
+    catch (e) { return null; }
+    finally { d.remove(); }
+  }
+  function zetOpHoofd(schoon, hoger, groter) {
+    const b = meetSvg('<g' + schoon.wortel + '>' + schoon.binnen + '</g>');
+    if (!b || !(b.width > 0.5) || !(b.height > 0.5)) {
+      return { fout: 'De tekening heeft geen maat. Staat er wel iets zichtbaars in?' };
+    }
+    const s = Math.min(SCHAT_DOEL.hoog * groter / b.height, SCHAT_DOEL.breed * groter / b.width);
+    const onder = SCHAT_DOEL.onder - hoger;
+    const r2 = n => Math.round(n * 100) / 100;
+    const tx = 100 - (b.x + b.width / 2) * s, ty = onder - (b.y + b.height) * s;
+    const svg = '<g transform="translate(' + r2(tx) + ' ' + r2(ty) + ') scale(' + Math.round(s * 1e4) / 1e4 + ')"'
+      + schoon.wortel + '>' + schoon.binnen + '</g>';
+    const f = meetSvg(svg);
+    if (!f) return { fout: 'De tekening kon niet worden gemeten.' };
+    const view = [f.x - 2, f.y - 2, f.width + 4, f.height + 4].map(n => Math.round(n * 10) / 10).join(' ');
+    return { svg, view, maat: { x: f.x, y: f.y, w: f.width, h: f.height } };
+  }
+  // De maten van de schatten van de andere werelden, om de nieuwe tegen af te zetten.
+  function schatFamilie(w) {
+    return WORLDS.filter(x => x !== w && x.beloning).map(x => item(x.beloning))
+      .filter(it => it && typeof it.draw === 'function')
+      .map(it => { const b = meetSvg(it.draw('meisje', 1)); return b ? { h: b.height, w: b.width } : null; })
+      .filter(Boolean);
+  }
+  let schatWereld = null;       // voor welke wereld het vak nu gevuld is
+  let schatProef = null;        // { svg, view, maat, weg } -- of { fout }
+  let schatWegWacht = null;
+  function vulSchatVak(w, vrij) {
+    const vak = F('st-schat');
+    const bel = w.beloning ? item(w.beloning) : null;
+    vak.hidden = !!(bel && !bel.uitWereld);
+    if (vak.hidden) return;
+    F('sc-weg').hidden = !w.schat;
+    F('sc-prompt').hidden = !(window.__PROMPTS && window.__PROMPTS.wereldschat);
+    if (schatWereld === w.id) return;              // zelfde wereld: laat staan wat je aan het doen bent
+    schatWereld = w.id;
+    const s = w.schat;
+    F('sc-idee').value = '';
+    F('sc-svg').value = s ? s.svg : '';
+    F('sc-naam').value = s ? s.naam : '';
+    F('sc-emoji').value = s ? s.emoji : (w.icon || '✨');
+    F('sc-hoogte').value = '0';
+    F('sc-grootte').value = '1';
+    vak.open = !!s || (!w.beloning && !vrij.length);
+    // een opgeslagen schat tonen zoals hij is; pas bij een wijziging opnieuw passen
+    const b = s ? meetSvg(s.svg) : null;
+    schatProef = s ? { svg: s.svg, view: s.view, weg: [], opgeslagen: true,
+                       maat: b ? { x: b.x, y: b.y, w: b.width, h: b.height } : null } : null;
+    tekenSchatProef(false);
+  }
+  function tekenSchatProef(opnieuw) {
+    const w = shown().world;
+    if (opnieuw) {
+      const tekst = F('sc-svg').value.trim();
+      const schoon = tekst ? schoonSvg(tekst) : null;
+      schatProef = !schoon ? null : schoon.fout ? schoon
+        : Object.assign(zetOpHoofd(schoon, Number(F('sc-hoogte').value), Number(F('sc-grootte').value)),
+                        { weg: schoon.weg });
+    }
+    const vb = F('sc-vb'), let_ = F('sc-let'), knop = F('sc-gebruik');
+    const p = schatProef;
+    vb.hidden = !p || !!p.fout;
+    knop.disabled = true;
+    if (!p) { let_.hidden = true; return; }
+    if (p.fout) { let_.hidden = false; let_.className = 'st-check'; let_.innerHTML = '<span class="ct-fout">⚠</span> ' + esc(p.fout); return; }
+    // het voorbeeld: dezelfde avatarSVG en thumb() als het spel, met een tijdelijk spulletje
+    const naam = F('sc-naam').value.trim() || 'schat';
+    const proef = { id: '__schatproef', cat: 'acc', name: naam, full: naam,
+                    draw: () => p.svg, thumb: () => beloningThumb(p.view, p.svg) };
+    const ster = sterNu();
+    ITEMS.push(proef);
+    try {
+      const pop = base => ster
+        ? avatarSVG({ ...ster, base, equipped: { ...ster.equipped, acc: proef.id } }, 110) : '';
+      vb.innerHTML = '<div>' + pop('meisje') + 'meisje</div><div>' + pop('jongen') + 'jongen</div>'
+        + '<div class="mini">' + proef.thumb() + 'kast</div>';
+    } finally { ITEMS.splice(ITEMS.indexOf(proef), 1); }
+    // de keuring: de regels van het spel, en wat alleen hier te meten valt
+    const rood = schatFouten({ naam: F('sc-naam').value, emoji: F('sc-emoji').value, view: p.view, svg: p.svg });
+    const m = p.maat;
+    if (m) {
+      if (m.y + m.h > 94) rood.push('zakt onder de nek (y = 94), waar de kleren beginnen');
+      if (m.y < -2) rood.push('steekt boven de rand van de pop uit');
+      const fam = schatFamilie(w).concat([{ h: m.h, w: m.w }]);
+      const hs = fam.map(x => x.h), bs = fam.map(x => x.w);
+      if (Math.max.apply(null, hs) / Math.min.apply(null, hs) >= 2) rood.push('te hoog of te laag naast de andere schatten — schuif "groter"');
+      if (Math.max.apply(null, bs) / Math.min.apply(null, bs) >= 3) rood.push('te breed of te smal naast de andere schatten — dit is de vorm zelf; een andere tekening');
+    }
+    const geel = p.weg && p.weg.length ? ['weggehaald omdat het niet mag: ' + p.weg.join(', ')] : [];
+    let_.hidden = !rood.length && !geel.length;
+    let_.className = 'st-check' + (!rood.length && !geel.length ? ' schoon' : '');
+    let_.innerHTML = rood.map(t => '<span class="ct-fout">⚠</span> ' + esc(t)).concat(
+      geel.map(t => '<span class="ct-let">·</span> ' + esc(t))).join('<br>');
+    knop.disabled = rood.length > 0 || !!p.opgeslagen;
+    knop.textContent = w.schat ? '✓ Vervang de schat' : '✓ Maak dit de schat';
+  }
+  let schatKlok = null;
+  F('sc-svg').addEventListener('input', () => { clearTimeout(schatKlok); schatKlok = setTimeout(() => tekenSchatProef(true), 250); });
+  ['sc-hoogte', 'sc-grootte'].forEach(id => F(id).addEventListener('input', () => tekenSchatProef(true)));
+  ['sc-naam', 'sc-emoji'].forEach(id => F(id).addEventListener('input', () => {
+    if (schatProef && schatProef.opgeslagen) schatProef.opgeslagen = false;   // een nieuwe naam is een wijziging
+    tekenSchatProef(false);
+  }));
+  // een .svg-bestand op het vak slepen: zelfde weg als plakken
+  ['dragenter', 'dragover'].forEach(n => F('sc-svg').addEventListener(n, e => { e.preventDefault(); F('sc-svg').classList.add('over'); }));
+  ['dragleave', 'dragend'].forEach(n => F('sc-svg').addEventListener(n, () => F('sc-svg').classList.remove('over')));
+  F('sc-svg').addEventListener('drop', e => {
+    e.preventDefault();
+    F('sc-svg').classList.remove('over');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    if (!/svg/i.test(f.type) && !/\.svg$/i.test(f.name)) { setOut('dat is geen .svg: ' + f.name + ' — een schat is een tekening, geen foto'); return; }
+    f.text().then(t => { F('sc-svg').value = t; tekenSchatProef(true); });
+  });
+  function vrijSchatId(w) {
+    const basis = 'acc_wereld_' + w.id.replace(/-/g, '_');
+    let id = basis, n = 2;
+    while (item(id) && item(id).uitWereld !== w.id) id = basis + '_' + (n++);
+    return id;
+  }
+  F('sc-gebruik').onclick = () => {
+    const w = shown().world, p = schatProef;
+    if (!p || p.fout) return;
+    const s = { naam: F('sc-naam').value.trim(), emoji: F('sc-emoji').value.trim() || w.icon || '✨',
+                view: p.view, svg: p.svg };
+    const fouten = schatFouten(s);
+    if (fouten.length) { setOut(fouten.join('\n')); return; }
+    const oud = w.beloning ? item(w.beloning) : null;
+    if (oud && !oud.uitWereld) { setOut(w.name + ' heeft al een schat uit de code; die blijft.'); return; }
+    w.schat = s;
+    w.beloning = oud && oud.uitWereld === w.id ? w.beloning : vrijSchatId(w);
+    rebuildWereldschatten();
+    schatWereld = null;                   // het vak opnieuw vullen, nu uit de wereld
+    commit(s.naam + ' is de schat van ' + w.name + '. Probeer de laatste show: daar krijg je hem.');
+  };
+  F('sc-weg').onclick = () => {
+    const w = shown().world;
+    if (!w.schat) return;
+    if (schatWegWacht !== w.id) {
+      schatWegWacht = w.id;
+      F('sc-weg').textContent = '✕ zeker? nog eens';
+      setOut('Nog één tik haalt de getekende schat van ' + w.name + ' weg.');
+      return;
+    }
+    schatWegWacht = null;
+    F('sc-weg').textContent = '✕ getekende schat weg';
+    const it = item(w.beloning);
+    delete w.schat;
+    if (it && it.uitWereld === w.id) delete w.beloning;
+    rebuildWereldschatten();
+    schatWereld = null;
+    commit('getekende schat van ' + w.name + ' weggehaald');
+  };
+
+  /* ---- De prompts om te kopiëren --------------------------------------------
+     Twee, uit docs/prompts/ (de server geeft ze mee als window.__PROMPTS): een
+     voor de wereldkaart, voor een beeldgenerator, en een voor de wereldschat, voor
+     een AI die SVG schrijft. Een regel met een {{…}} die leeg blijft valt weg, en
+     de uitleg bovenaan (regels met #) gaat niet mee. */
+  function vulPrompt(sjabloon, waarden) {
+    const regels = String(sjabloon || '').split('\n');
+    let kop = 0;
+    while (kop < regels.length && /^#/.test(regels[kop])) kop++;
+    return regels.slice(kop)
+      .filter(r => !Object.keys(waarden).some(k => r.indexOf('{{' + k + '}}') >= 0 && !String(waarden[k] || '').trim()))
+      .map(r => r.replace(/\{\{([A-Z]+)\}\}/g, (m, k) => waarden[k] != null ? String(waarden[k]).trim() : m))
+      .join('\n').trim() + '\n';
+  }
+  function kopieer(tekst, wat) {
+    dump.textContent = tekst + '\n(tik om te sluiten)';
+    dump.style.display = 'block';
+    const klaar = () => setOut(wat + ' gekopieerd — plak hem in je AI.');
+    const mis = () => setOut('Kopiëren lukte niet; selecteer de tekst in het venster.');
+    try { navigator.clipboard.writeText(tekst).then(klaar, mis); } catch (e) { mis(); }
+  }
+  function schatPrompt(w) {
+    const t = w.theme || {};
+    return vulPrompt(window.__PROMPTS && window.__PROMPTS.wereldschat, {
+      WERELD: w.name,
+      IDEE: F('sc-idee').value,
+      KLEUREN: Object.keys(t).map(k => k + ' ' + t[k]).join(', '),
+      VOORBEELDEN: WORLDS.filter(x => x !== w && x.beloning).map(x => item(x.beloning))
+        .filter(it => it && typeof it.draw === 'function')
+        .map(it => '- ' + (it.full || it.name) + ' (' + beloningWereld(it.id).name + '):\n'
+          + '<svg viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">' + it.draw('meisje', 1) + '</svg>')
+        .join('\n\n'),
+    });
+  }
+  F('sc-prompt').onclick = () => kopieer(schatPrompt(shown().world), 'De prompt voor de schat');
+  // een wereld heet "Regenboogwereld"; het thema is "Regenboog"
+  const themaVan = w => String(w.name || '').replace(/\s*wereld$/i, '').trim() || w.name;
+  let kaartPromptWereld = null;
+  function vulKaartPrompt(w) {
+    const vak = F('st-kaartprompt');
+    vak.hidden = !(window.__PROMPTS && window.__PROMPTS.wereldkaart);
+    if (vak.hidden || kaartPromptWereld === w.id) return;
+    kaartPromptWereld = w.id;
+    F('kp-thema').value = themaVan(w);
+    F('kp-insp').value = '';
+    vak.open = !w.art;
+  }
+  F('kp-kopieer').onclick = () => kopieer(vulPrompt(window.__PROMPTS && window.__PROMPTS.wereldkaart, {
+    THEMA: F('kp-thema').value || themaVan(shown().world),
+    INSPIRATIE: F('kp-insp').value,
+  }), 'De prompt voor de wereldkaart');
   /* Even op de pop zetten. Geen kleedkamer in de studio: één blik op de paspop met
      dit ding op haar hoofd, en weer weg. Dezelfde avatarSVG als het spel -- dus wat
      je hier ziet is letterlijk wat een kind ziet. */
@@ -929,9 +1411,27 @@ function startMapEdit() {
       if (v && v.toLowerCase() !== HEX[k]) w.theme[k] = v;
     });
     if (!Object.keys(w.theme).length) delete w.theme;
+    /* De zaal: alleen een eigen waarde als hij afwijkt van de standaard, en de
+       andere velden van venue (als iemand die met de hand zette) blijven staan. */
+    const dim = Math.round(Number(F('mf-dim').value) * 100) / 100;
+    const venue = Object.assign({}, w.venue || {});
+    if (Math.abs(dim - DIM_STANDAARD) > .004) venue.dim = dim; else delete venue.dim;
+    if (Object.keys(venue).length) w.venue = venue; else delete w.venue;
     commit('');
   }
   panel.querySelectorAll('.st-row input, .st-kleur input').forEach(i => { i.onchange = readSheet; });
+  /* Uitgebracht: het vinkje schrijft released weg, en alleen als het false is --
+     "uitgebracht" is wat een wereld is als hij er niets over zegt (zie
+     worldReleased). De controle zegt meteen wat er nog te doen is; tegenhouden
+     doet het opslaan, niet het vinkje. */
+  F('mf-released').onchange = () => {
+    const w = shown().world;
+    if (F('mf-released').checked) delete w.released; else w.released = false;
+    commit(F('mf-released').checked
+      ? w.name + ' staat op uitgebracht — kijk in Publiceren of de controle nog iets te doen heeft'
+      : w.name + ' staat op niet uitgebracht — kinderen zien hem niet');
+    if (F('mf-released').checked) toonControle(controleer(), false);
+  };
 
   // ---------------------------------------------------------------- tekenen
   function ownNodes() {
@@ -1152,10 +1652,26 @@ function startMapEdit() {
   function goWorld(i) {
     viewWorldIdx = i;
     kies(null);
+    meldAanStudio();
+    wegWacht = null;
+    F('st-weg').textContent = '✕ weg';
     // de paspop met de beloning hoort bij de wereld die je toen bekeek
     if (F('st-pop')) F('st-pop').remove();
     historie.length = 0;                       // de historie hoort bij één wereld
     zetStand(F('st-stand') ? F('st-stand').value : 'halverwege');
+  }
+
+  /* Draait dit paneel in het kijkvak van de Dev Studio, dan hoort die te weten
+     welke wereld je bewerkt: zijn lijst, zijn overzicht en zijn Probeer-knoppen
+     gaan over dezelfde wereld als dit paneel. Eén berichtje, alleen naar een
+     pagina van dezelfde herkomst; buiten een iframe gebeurt er niets. */
+  function meldAanStudio() {
+    if (window.parent === window) return;
+    try {
+      const g = WORLDS[viewWorldIdx];
+      window.parent.postMessage({ wereldstudio: 'wereld', nr: viewWorldIdx + 1, id: g && g.id },
+        location.origin && location.origin !== 'null' ? location.origin : '*');
+    } catch (e) { /* een andere herkomst: dan is er ook niemand om het aan te zeggen */ }
   }
 
   // ---------------------------------------------------------------- knoppen
@@ -1225,7 +1741,7 @@ function startMapEdit() {
      Bijsnijden gaat als cover -- vullen en de rest weg, nooit vervormen. */
   const SLOTS = window.__SLOTS || {
     world:   { screen: 'map', label: 'Wereldkaart', waar: 'de kaart, van rand tot rand',
-               lever: [1080, 2160], pad: 'assets/world/{wereld}-map.webp', perWereld: true },
+               lever: [1215, 2160], pad: 'assets/world/{wereld}-map.webp', perWereld: true },
   };
   const SCHERMEN = window.__SCHERMEN || [
     { id: 'profile', label: 'Wie speelt er' }, { id: 'map', label: 'Kaart' },
@@ -1418,7 +1934,11 @@ function startMapEdit() {
        - te weinig pixels wordt zichtbaar zacht op een tablet
        - een bestand dat er niet is laat de wereld stil terugvallen op zijn kleuren */
   function tekeningLet(w, pad, kb) {
-    const m = GEMETEN[w.art] || GEMETEN[pad];
+    /* Alleen meten wat de wereld zegt te hebben. Een nieuwe wereld heeft nog geen
+       art, en dan leverde het proefmeten op zijn toekomstige pad een 404 op --
+       met als gevolg "het bestand staat er niet" bij elke wereld die je net
+       gemaakt had, terwijl er ook niets hóórt te staan. */
+    const m = w.art ? GEMETEN[w.art] : (GEMETEN[pad] && GEMETEN[pad].w ? GEMETEN[pad] : null);
     const uit = [];
     /* "Staat het bestand er?" wordt gemeten en niet uit de lijst van de server
        afgeleid: die lijst is er alleen mét `npm run preview`, en zonder server
@@ -1466,7 +1986,10 @@ function startMapEdit() {
       : nogAanHetMeten ? 'tekening ophalen…'
       : w.art ? 'bestand ontbreekt nog' : 'nog geen tekening — sleep er een hierheen';
     meetTekening(toon && toon.indexOf('blob:') !== 0 ? toon : null);
-    if (!w.art) meetTekening(pad);
+    /* Zonder art alleen proefmeten als we niet weten wat er ligt. Met de server
+       weten we dat wél (OP_SCHIJF), en dan kost proberen alleen een 404 in de
+       console -- bij elke nieuwe wereld. */
+    if (!w.art && (OP_SCHIJF[pad] || !Object.keys(OP_SCHIJF).length)) meetTekening(pad);
     const m = GEMETEN[toon];
     const maat = m && m.w ? m.w + '×' + m.h + ' · ' + verhoudingNaam(m.w / m.h)
       : m ? 'kan het bestand niet lezen' : toon ? 'meten…' : SLOTS.world.lever[0] + '×' + SLOTS.world.lever[1] + ' gevraagd';
@@ -1717,16 +2240,64 @@ function startMapEdit() {
 
      Achteraan en nergens anders: een wereld ertussen schuiven hernummert elk level
      erna, en de sterren van een kind hangen aan levelnummers. Acht levels, net als
-     alle andere -- dat aantal ligt vast zodra er iemand in speelt. */
-  F('st-new').onclick = () => {
-    const naam = (prompt('Hoe heet de nieuwe wereld?', 'Wereld ' + (WORLDS.length + 1)) || '').trim();
-    if (!naam) return;
+     alle andere -- dat aantal ligt vast zodra er iemand in speelt.
+
+     Niet uitgebracht: zo kan hij met alles wat nog ontbreekt (een wereldschat, een
+     tekening) al veilig mee naar main, en zet jij het vinkje als hij af is. In de
+     studio en in Probeer speel je hem gewoon (zie PROEF_ONUITGEBRACHT).
+
+     Een veld in het paneel en geen prompt(): een modaal venster haalt je uit het
+     werk, en kon ook niet vooraf ingevuld worden vanuit de Dev Studio. */
+  function maakWereld(naam) {
+    naam = String(naam || '').trim();
+    if (!naam) { setOut('Geef de wereld eerst een naam.'); F('st-nieuwnaam').focus(); return; }
+    /* Staat er al een nieuwe wereld met precies deze naam in je concept, dan is
+       dit dezelfde vraag nog een keer (een herladen kijkvak met &nieuw= erin) en
+       geen tweede wereld. Anders stond er na elke herlaadbeurt een regenboog-2. */
+    const al = WORLDS.findIndex((w, i) => i >= WORLDS_SHIPPED.length && w.name === naam);
+    if (al >= 0) { goWorld(al); setOut(naam + ' stond al in je concept.'); return; }
     const id = vrijWereldId(naam);
-    WORLDS.push({ id, name: naam, icon: '✨', levels: 8 });
+    WORLDS.push({ id, name: naam, icon: '✨', levels: 8, released: false });
     rebuildWorldStarts();
     rebuildWorldBadges();
+    F('st-nieuwrij').hidden = true;
+    F('st-nieuwnaam').value = '';
     goWorld(WORLDS.length - 1);
-    setOut(naam + ' erbij — id ' + id + ', tekening hoort op ' + wereldArtPad(id));
+    setOut(naam + ' erbij — id ' + id + ', nog niet uitgebracht.\nVolgende stap: sleep de tekening '
+      + 'erop (' + SLOTS.world.lever[0] + '×' + SLOTS.world.lever[1] + ', 9:16).');
+  }
+  F('st-new').onclick = () => {
+    const rij = F('st-nieuwrij');
+    rij.hidden = !rij.hidden;
+    if (!rij.hidden) F('st-nieuwnaam').focus();
+  };
+  F('st-nieuwmaak').onclick = () => maakWereld(F('st-nieuwnaam').value);
+  F('st-nieuwnaam').onkeydown = e => { if (e.key === 'Enter') maakWereld(F('st-nieuwnaam').value); };
+  /* Weg, alleen voor een wereld die nog niet in het project staat: een proefje dat
+     je niet wilt houden. Een wereld die er al staat haal je niet met een knop weg
+     -- daar hangen levelnummers aan (zie wereldControle). Twee tikken, want het is
+     niet terug te nemen. */
+  F('st-weg').onclick = () => {
+    const g = wereldNu();
+    if (!g) return;
+    if (viewWorldIdx < WORLDS_SHIPPED.length) {
+      setOut(g.world.name + ' staat al in het project; die haal je niet met een knop weg.');
+      return;
+    }
+    if (wegWacht !== g.world.id) {
+      wegWacht = g.world.id;
+      F('st-weg').textContent = '✕ zeker? nog eens';
+      setOut('Nog één tik haalt ' + g.world.name + ' uit je concept. Een tekening die al op schijf '
+        + 'staat blijft liggen.');
+      return;
+    }
+    wegWacht = null;
+    F('st-weg').textContent = '✕ weg';
+    WORLDS.splice(viewWorldIdx, 1);
+    rebuildWorldStarts();
+    rebuildWorldBadges();
+    goWorld(Math.max(0, viewWorldIdx - 1));
+    setOut(g.world.name + ' is uit je concept.');
   };
   F('st-revert').onclick = () => {
     const g = wereldNu();
@@ -1743,18 +2314,29 @@ function startMapEdit() {
     viewWorldIdx = Math.min(viewWorldIdx, WORLDS.length - 1);
     commit('concept weg — dit is wat er in het spel staat');
   };
+  /* Opslaan in het project. Er gaat geen broncode naar de server maar het concept
+     zelf, met zijn basis: de server legt het op het spel van nu, keurt het met
+     dezelfde wereldControle, en schrijft pas als niets blokkeert (zie
+     slaConceptOp in test/preview.js). Zo is er één schrijfpad voor werelden, en
+     kan een wereld die een kind zou merken het project niet in. */
   F('st-push').onclick = () => {
     toonControle(controleer(), true);   // stil bij enkel 'let op', luid bij een fout
     saveWorldDraft();
-    fetch('/werelden', { method: 'POST', body: worldsSource() })
-      .then(r => r.text().then(t => {
-        if (!r.ok) return setOut('mislukt: ' + t);
+    setOut('opslaan…');
+    fetch('/api/concept', { method: 'POST',
+      body: JSON.stringify({ concept: WORLDS, basis: WORLDS_SHIPPED }) })
+      .then(r => r.json())
+      .then(j => {
+        setOut(j.tekst || (j.ok ? 'opgeslagen' : 'niet opgeslagen'));
+        if (!j.ok) return;
+        // wat er nu in het project staat, is wat dit paneel als "het spel" ziet
         WORLDS_SHIPPED.length = 0;
         JSON.parse(JSON.stringify(WORLDS)).forEach(w => WORLDS_SHIPPED.push(w));
-        refreshList();
-        setOut('in index.html gezet — nu npm test, committen, pushen');
-      }))
-      .catch(() => setOut('alleen via npm run preview — gebruik anders Kopieer'));
+        saveWorldDraft();                   // gelijk aan het spel: het concept verdwijnt
+        commit();
+      })
+      .catch(() => setOut('Opslaan kan alleen met de studioserver (npm run studio).\n'
+        + 'Zonder server: Geavanceerd → Kopieer blok, en plak het in src/20-app.js.'));
   };
   /* ------------------------------------------------------------ contrast
      De regel die bepaalt of een tekening wérkt stond tot nu toe als advies in de
@@ -2067,7 +2649,11 @@ function startMapEdit() {
      wat er mis is maar niet waar je heen moet, laat je zoeken -- en dan is het
      goedkoper om hem te negeren. */
   const WAAR_HEET = { tekening: 'Tekening', gegevens: 'Gegevens', beloning: 'Beloning',
-                      haltes: 'Haltes & weg', lijst: 'Welke wereld' };
+                      haltes: 'Haltes & weg', lijst: 'Welke wereld', zaal: 'Zaal', kleuren: 'Kleuren' };
+  /* Drie groepen, in de volgorde waarin ze ertoe doen (zie wereldControle):
+     wat opslaan tegenhoudt, wat nog moet vóór je een wereld uitbrengt, en wat
+     alleen de moeite van het nakijken waard is. Door elkaar op wereldvolgorde
+     verdronk het ene in het andere. */
   function toonControle(punten, stil) {
     const vak = F('st-check');
     if (!vak) return;
@@ -2080,23 +2666,25 @@ function startMapEdit() {
     if (stil && !punten.some(x => x.ernst === 'fout')) { vak.hidden = true; return; }
     vak.className = 'st-check';
     vak.hidden = false;
-    /* Fouten eerst, opmerkingen daarna -- door elkaar op wereldvolgorde verdronk het
-       ene in het andere. En "nog geen tekening" bij drie of meer werelden is in het
-       begin gewoon de stand van zaken, dus dat wordt een regel in plaats van zes.
-       Hetzelfde geldt voor een nog niet gekozen beloning. */
+    /* "nog geen tekening" bij drie of meer werelden is in het begin gewoon de
+       stand van zaken, dus dat wordt een regel in plaats van zes. */
     let lijst = punten;
-    [/nog geen tekening/, /geen beloning/].forEach(re => {
+    [/nog geen tekening/].forEach(re => {
       const zonder = lijst.filter(x => re.test(x.t));
       if (zonder.length > 2) {
         lijst = lijst.filter(x => !re.test(x.t));
         lijst.push({ ernst: 'let op', w: zonder.length + ' werelden', t: zonder[0].t, waar: zonder[0].waar });
       }
     });
-    lijst = lijst.slice().sort((a, c) => (a.ernst === 'fout' ? 0 : 1) - (c.ernst === 'fout' ? 0 : 1));
-    vak.innerHTML = lijst.map(x =>
-      '<span class="' + (x.ernst === 'fout' ? 'ct-fout' : 'ct-let') + '">'
-      + (x.ernst === 'fout' ? '⚠' : '·') + ' ' + esc(x.w) + '</span> ' + esc(x.t)
-      + (WAAR_HEET[x.waar] ? ' <em style="color:#9c86bd;font-style:normal">→ ' + WAAR_HEET[x.waar] + '</em>' : '')).join('<br>');
+    const regel = x => '<span class="' + (x.ernst === 'fout' ? (x.blokkeert ? 'ct-fout' : 'ct-let') : 'ct-let') + '">'
+      + (x.blokkeert ? '⚠' : '·') + ' ' + esc(x.w) + '</span> ' + esc(x.t)
+      + (WAAR_HEET[x.waar] ? ' <em style="color:#9c86bd;font-style:normal">→ ' + WAAR_HEET[x.waar] + '</em>' : '');
+    const groep = (kop, l) => l.length ? '<b>' + kop + '</b><br>' + l.map(regel).join('<br>') : '';
+    vak.innerHTML = [
+      groep('Houdt opslaan tegen', lijst.filter(x => x.blokkeert)),
+      groep('Nog te doen vóór uitbrengen', lijst.filter(x => x.ernst === 'fout' && !x.blokkeert)),
+      groep('Let op', lijst.filter(x => x.ernst !== 'fout')),
+    ].filter(Boolean).join('<br>');
   }
   const controleer = () => wereldControle(OP_SCHIJF);
   F('st-check-knop').onclick = () => toonControle(controleer(), false);
@@ -2119,6 +2707,9 @@ function startMapEdit() {
         if (ship.icon !== w.icon) wat.push('icoon');
         if (ship.art !== w.art) wat.push('tekening');
         if (ship.beloning !== w.beloning) wat.push('beloning');
+        if (!sameWorld(ship.schat || null, w.schat || null)) wat.push('getekende schat');
+        if (!sameWorld(ship.venue || null, w.venue || null)) wat.push('zaal');
+        if ((ship.released !== false) !== (w.released !== false)) wat.push(w.released === false ? 'dicht' : 'uitgebracht');
         if (JSON.stringify(ship.theme || {}) !== JSON.stringify(w.theme || {})) wat.push('kleuren');
         if (JSON.stringify(ship.nodes || []) !== JSON.stringify(w.nodes || [])) wat.push('haltes');
         if (JSON.stringify(ship.curve || []) !== JSON.stringify(w.curve || [])) wat.push('weg');
@@ -2159,20 +2750,29 @@ function startMapEdit() {
      stiekem een breder venster, valt de kaart in de kolomstand en zie je
      gekleurde randen die op een telefoon niet bestaan. Het venster corrigeert
      zichzelf en zegt eronder wat het écht geworden is. */
-  function toonVoorbeeld(maten) {
+  function toonVoorbeeld(maten, keuze) {
     if (!maten.length) { setOut('kies eerst een toestelmaat'); return; }
     saveWorldDraft();
-    const scherm = F('st-vscherm').value;
+    /* Deze wereld, in de stand die je kiest -- en met &onuitgebracht, want een
+       nieuwe wereld is nog niet uitgebracht en zou anders niet te spelen zijn.
+       Hier ontbrak &wereld= eerst helemaal: het venster opende op de wereld van de
+       demoster, en je probeerde een wereld die je niet aan het maken was. */
+    const [scherm, st] = String(keuze || F('st-vscherm').value).split(':');
+    const stand = st || (F('st-stand') ? F('st-stand').value : 'halverwege');
+    const nr = viewWorldIdx + 1;
     let x = 60;
     maten.forEach(m => {
       const w = Number(m.split('x')[0]), h = Number(m.split('x')[1]);
-      const url = location.pathname + '?debug&demo&star=p1&screen=' + scherm + '&fit=' + w + 'x' + h;
+      const url = location.pathname + '?debug&demo&star=p1&onuitgebracht'
+        + (scherm === 'profile' ? '' : '&wereld=' + nr + '&stand=' + stand)
+        + '&screen=' + scherm + '&fit=' + w + 'x' + h;
       const win = open(url, 'wsvoorbeeld' + w + 'x' + h,
         `popup=1,width=${w},height=${h},left=${x},top=80`);
       if (!win) { setOut('het venster werd geblokkeerd — sta pop-ups toe'); return; }
       x += Math.min(w, 520) + 20;
     });
-    setOut(maten.length + ' venster(s) geopend — ververs ze na een wijziging');
+    setOut(maten.length + ' venster(s) met ' + WORLDS[viewWorldIdx].name
+      + ' geopend — ververs ze na een wijziging');
   }
   F('st-venster').onclick = e => {
     if (e.shiftKey) return toonVoorbeeld(MATEN.map(m => m.id));
@@ -2350,7 +2950,31 @@ function startMapEdit() {
   map.addEventListener('pointerup', endDrag, true);
   map.addEventListener('pointercancel', endDrag, true);
 
-  viewWorldIdx = Math.min(worldFor(P().level).index, WORLDS.length - 1);
+  /* Wat loadWorldDraft vond. Een concept dat op een oudere versie van het spel
+     gebouwd was, is net op het spel van nu gelegd -- met alleen jouw werelden
+     eroverheen. Dat hoort het paneel te zeggen, en zeker als een van jouw
+     werelden intussen óók in het spel veranderd is: die moet je nakijken. */
+  (function toonConcept() {
+    const info = typeof WORLD_DRAFT_INFO !== 'undefined' ? WORLD_DRAFT_INFO : null;
+    const vak = F('st-concept');
+    if (!info || !(info.verouderd || info.botsing.length)) return;
+    const naam = id => { const w = WORLDS.filter(x => x.id === id)[0]; return w ? w.name : id; };
+    vak.hidden = false;
+    vak.innerHTML = 'Je concept was gebouwd op een oudere versie van het spel. Alleen jouw '
+      + 'werelden (' + info.mijn.map(naam).map(esc).join(', ') + ') staan erop; de rest is zoals '
+      + 'het nu in het project staat.'
+      + (info.botsing.length ? '<br><b>⚠ Ook in het project veranderd sinds je begon: '
+        + info.botsing.map(naam).map(esc).join(', ') + '.</b> Jouw versie staat erop — kijk hem na, '
+        + 'of zet hem terug met ↶ deze terug.' : '');
+  })();
+
+  /* Welke wereld: die uit &wereld= als die er is (de Dev Studio en een herladen
+     kijkvak geven hem mee), en anders die waar de ster staat. Alleen op de ster
+     afgaan opende bij de standen slot/uit/perfect een andere wereld dan je vroeg:
+     daar staat de ster met opzet ergens anders (zie zetKijkstand). */
+  const wq = Number(new URLSearchParams(location.search).get('wereld'));
+  viewWorldIdx = wq >= 1 && wq <= WORLDS.length ? wq - 1
+    : Math.min(worldFor(P().level).index, WORLDS.length - 1);
   goWorld(viewWorldIdx);
   zetToestel(toestelKiezer.value);
 
@@ -2359,6 +2983,15 @@ function startMapEdit() {
      een tweede formulier: het maken van een wereld gebeurt óp de kaart, en dit
      paneel is die plek al. Eén vlag scheelt dus een heel tweede begrip van
      "nieuwe wereld" dat met dit paneel uit de pas zou lopen. */
-  if (new URLSearchParams(location.search).has('nieuw')) F('st-new').click();
+  const nieuwQ = new URLSearchParams(location.search);
+  if (nieuwQ.get('nieuw')) {
+    maakWereld(nieuwQ.get('nieuw'));
+    /* Uit de adresbalk, zodat herladen niet nóg een keer vraagt -- en de wereld
+       erin, zodat herladen op deze wereld uitkomt. */
+    nieuwQ.delete('nieuw');
+    nieuwQ.set('wereld', String(viewWorldIdx + 1));
+    try { history.replaceState(history.state, '', location.pathname + '?' + nieuwQ.toString().replace(/=(&|$)/g, '$1')); }
+    catch (e) { /* file:// of een strenge browser: dan blijft hij staan, en vangt maakWereld het af */ }
+  } else if (nieuwQ.has('nieuw')) F('st-new').click();
 }
 
