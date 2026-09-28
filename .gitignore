@@ -8,3 +8,7 @@ shots/
 # Neerzetmap voor kandidaat-beelden (npm run try / npm run preview).
 # Werkmateriaal van buiten: wat goedgekeurd wordt verhuist naar assets/.
 incoming/
+
+# De scherpe versies van het promofilmpje (promo/render.js), om te posten. Op de
+# site staat alleen de lichtere webversie; zie promo/LEESMIJ.md.
+promo/*-hoog.mp4

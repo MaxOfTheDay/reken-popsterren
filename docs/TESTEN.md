@@ -106,6 +106,11 @@ geeft een foutmelding.
   `<image>`, `url(…)`, `href`, `on…=`, een onbekend element, te groot, ...) en
   `wereldControle` blokkeert erop; na opslaan staat er geen tweede scripttag in
   het blok. Een id dat al aan een handgeschreven spulletje hangt blokkeert ook.
+- **de over-pagina** (zaak M) — alles wat `over/index.html` aanwijst bestaat
+  (ook de staande versie van het filmpje), er is een weg terug naar het spel,
+  het filmpje laadt pas bij afspelen, het deelbeeld heeft een volledig adres, het
+  ouderdeel linkt ernaar, `sw.js` laat `/over/`, `/promo/` en `.mp4` buiten de
+  voorraad, en de filmpjes op de site zijn de lichte webversies (≤ 4,5 MB).
 
 `kern`, `saves` en `kleedkamer` laden het spel met `alleenUitgebracht` (zie
 `test/app.js`): ze gaan over het spel zoals een kind het heeft. Een wereld die al
