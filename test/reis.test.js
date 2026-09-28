@@ -55,7 +55,7 @@ function check(ok, label, detail) {
           const w = WORLDS[i];
           for (let l = WORLD_START[i]; l < WORLD_START[i] + w.levels; l++) q.stars[l] = sterren == null ? 2 : sterren;
         }
-        q.level = n < WORLD_START.length ? WORLD_START[n] : WORLD_LAST + 1;
+        q.level = n < WORLD_AVAIL ? WORLD_START[n] : WORLD_LAST + 1;
       };
       window.__breng = n => {
         WORLDS.forEach((w, i) => { if (i < n) delete w.released; else w.released = false; });
@@ -237,6 +237,10 @@ function check(ok, label, detail) {
     const lang = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
       const voor = WORLDS.length;
+      // een langere tournee is een langere UITGEBRACHTE tournee: staat er al een
+      // dichte wereld achteraan, dan zouden de proefwerelden daarachter ook dicht
+      // blijven (uitbrengen gaat op volgorde, zie rebuildWorldStarts)
+      WORLDS.forEach(w => { delete w.released; });
       for (let i = 0; i < 6; i++) {
         WORLDS.push({ id: 'proef' + i, name: 'Proefwereld ' + i, icon: '🎪', levels: 8,
           theme: { sky: '#2b5f8a', deep: '#0d1f33', glow: '#4f88a8', road: '#cfe3f2' } });
@@ -464,12 +468,14 @@ function check(ok, label, detail) {
 
   /* ================= E · Alles uit: de toegift =================
      Geen grens meer. De laatste wereld blijft de plek waar ze staat, er komt géén
-     verzonnen wereld bij, en bovenaan zegt de mist dat het doorgaat. */
+     verzonnen wereld bij, en bovenaan zegt de mist dat het doorgaat.
+     "Alles" is wat er uitgebracht is: een dichte wereld achteraan in WORLDS
+     hoort hier niet als bestemming op te duiken -- ook dat ligt hier dus vast. */
   {
     const { ctx, page } = await fresh();
-    await page.evaluate(() => __speel(WORLDS.length));
+    await page.evaluate(() => __speel(WORLD_AVAIL));
     await open(page);
-    const r = await page.evaluate(() => ({ ...__reis(), ...__stand(), allesUit: allWorldsDone(P()), n: WORLDS.length }));
+    const r = await page.evaluate(() => ({ ...__reis(), ...__stand(), allesUit: allWorldsDone(P()), n: WORLD_AVAIL }));
     check(r.allesUit && r.grens === -1, 'E · alles is uit', JSON.stringify({ grens: r.grens }));
     check(r.haltes.length === r.n, 'E · er komt geen verzonnen bestemming bij', String(r.haltes.length));
     const nu = r.haltes.filter(h => /\bnu\b/.test(h.klas));
@@ -486,7 +492,8 @@ function check(ok, label, detail) {
      geen herontwerp. */
   {
     const { ctx, page } = await fresh();
-    const alles = await page.evaluate(() => { __speel(WORLDS.length); return WORLDS.length; });
+    // alles wat geschreven is uitbrengen en uitspelen; de proefwereld komt erachter
+    const alles = await page.evaluate(() => { __breng(WORLDS.length); __speel(WORLDS.length); return WORLDS.length; });
     await open(page);
     const voor = await page.evaluate(() => ({ ...__reis(), ...__stand() }));
     const na = await page.evaluate(async () => {

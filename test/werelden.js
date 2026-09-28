@@ -181,4 +181,43 @@ function blokTerug(app) {
     + 'dus er zou iets stil verloren gaan. Dat is een fout in worldsSource (src/20-app.js).' };
 }
 
-module.exports = { overzicht, assetsOpSchijf, blokTerug };
+/* Het blok in de vorm zetten die de studio schrijft (npm run werelden:netjes).
+
+   Voor wie een wereld met de hand in WORLDS zet (docs/UITBREIDEN.md, "Met de
+   hand"). De studio schrijft het blok altijd uit worldsSource(), en hub zaak K
+   houdt vast dat opslaan zonder wijziging niets verandert -- byte voor byte, want
+   zo valt een uitleg die iemand tussen de markeringen schreef op vóórdat de
+   eerste keer opslaan hem stil weggooit. Een handgeschreven wereld in een andere
+   volgorde of schrijfwijze valt daar dus ook op, pas bij Publiceren. Dit zet hem
+   recht, op precies dezelfde manier als Opslaan: bouwen, het spel laden, het blok
+   uit worldsSource() opnieuw schrijven en weer bouwen.
+
+   Weigert als er iets verloren zou gaan (blokTerug): dan staat er iets in WORLDS
+   dat worldsSource niet kan teruggeven, en dat hoort een fout te zijn en geen
+   stille opruiming. Commentaar binnen de markeringen gaat wél weg -- dat is het
+   hele punt van de regel; zet het erboven (CLAUDE.md, regel 3). */
+function netjes() {
+  const bouwer = require('./bouw.js');
+  bouwer.bouw();                                  // index.html = src/, anders laden we het oude blok
+  const b = blokTerug(laadApp());
+  if (!b.ok) return { ok: false, tekst: b.tekst };
+  const A = '/* WERELDEN-BEGIN', B = '/* WERELDEN-EINDE */';
+  const file = bouwer.bronMetMarkering(A);
+  const src = fs.readFileSync(file, 'utf8');
+  const a = src.indexOf(A), e = src.indexOf(B);
+  if (a < 0 || e < a) return { ok: false, tekst: 'de markeringen WERELDEN-BEGIN/EINDE staan niet in ' + path.basename(file) };
+  const kop = src.slice(a, src.indexOf('*/', a) + 2);
+  const nieuw = src.slice(0, a) + kop + '\n' + b.bron + '\n' + src.slice(e);
+  if (nieuw === src) return { ok: true, veranderd: false, tekst: 'het blok stond al zoals de studio het schrijft' };
+  fs.writeFileSync(file, nieuw);
+  bouwer.bouw();
+  return { ok: true, veranderd: true, tekst: 'het blok in ' + path.basename(file) + ' staat nu zoals de studio het schrijft' };
+}
+
+module.exports = { overzicht, assetsOpSchijf, blokTerug, netjes };
+
+if (require.main === module && process.argv.includes('--netjes')) {
+  const r = netjes();
+  console.log((r.ok ? '' : 'NIET gedaan: ') + r.tekst);
+  process.exit(r.ok ? 0 : 1);
+}

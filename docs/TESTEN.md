@@ -98,7 +98,8 @@ geeft een foutmelding.
   "blokkeert" noemt. Zo zijn de wereldstudio en deze keuring het per constructie
   eens over wat "klaar" is: er is één lijst regels. Plus de proef dat de brug
   draagt: een uitgebrachte wereld zonder schat blokkeert, een dichte niet, en een
-  winkelspulletje als schat altijd.
+  winkelspulletje als schat altijd. Hetzelfde voor de haltes: zonder eigen haltes
+  (de standaardslinger) mag een wereld dicht naar main, maar niet uit.
 - **een getekende schat** (zaak L) — een wereld met `schat: { naam, emoji, view,
   svg }` krijgt zijn spulletje van `rebuildWereldschatten()`: zonder prijs, met
   een tekening en een miniatuur. De tekening gaat als tekst het scriptblok in,
@@ -106,6 +107,9 @@ geeft een foutmelding.
   `<image>`, `url(…)`, `href`, `on…=`, een onbekend element, te groot, ...) en
   `wereldControle` blokkeert erop; na opslaan staat er geen tweede scripttag in
   het blok. Een id dat al aan een handgeschreven spulletje hangt blokkeert ook.
+  En de maat, zonder browser: onder de nek, boven de pop uit, twee keer zo hoog
+  of drie keer zo breed als de andere houdt `schatMaatFouten` tegen, op de
+  uitsnede (`view`). Elke vorm uit `SCHAT_VORMEN` mag vooraan staan.
 - **de over-pagina** (zaak M) — alles wat `over/index.html` aanwijst bestaat
   (ook de staande versie van het filmpje), er is een weg terug naar het spel,
   het filmpje laadt pas bij afspelen, het deelbeeld heeft een volledig adres, het
@@ -117,6 +121,15 @@ geeft een foutmelding.
 in `WORLDS` staat maar nog `released: false` is — zo komt een nieuwe wereld uit de
 studio — hoort daar niet bij, en zonder die stand viel elke proef met "er komt
 later een wereld bij" erop om. `inhoud` en het wereldoverzicht laden wél alles.
+
+**Een wereld erbij gooit geen test om.** Geen zaak telt "zes werelden", "48
+levels" of "18 trofeeën": ze rekenen uit `WORLDS` (wat geschreven is) en
+`WORLD_AVAIL` (wat uitgebracht is), en een zaak die zelf een wereld achteraan
+zet, brengt eerst uit wat er al staat. Nagemeten door een zevende wereld in een
+kopie te zetten — één keer uitgebracht, één keer nog dicht, allebei via
+`worldsSource()` zoals de studio schrijft — en daar alle suites op te draaien.
+Dat de zes eerste werelden op level 1, 9, … 41 beginnen ligt wél vast (profiles):
+daar staan de sterren van elk kind op.
 
 ### `test/kern.test.js` — de voortgangsregels
 
@@ -138,7 +151,8 @@ Fase 4A en 4D, rechtstreeks door de functies heen: `worldDone`, `frontierWorld`,
 - **beloningen**: uitspelen geeft het spulletje, perfect maken de trofee, allebei
   precies één keer -- ook na overspelen, na het vangnet, en na heropenen;
 - werelden hoeven geen acht shows te zijn (vijf en twaalf doen hetzelfde);
-- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes;
+- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes, en een
+  wereld die nog dicht is hangt er niet in -- pas als hij uitgebracht is;
 - **geluid** -- niet hóé het klinkt (dat hoort een mens op een toestel te doen),
   maar de twee harde eisen eronder: `playSfx()` gooit nooit, ook niet als de
   browser geen WebAudio heeft, en "geluid uit" maakt geen context en geen knoop.
@@ -172,7 +186,10 @@ app vroeger schreef, met de velden die er toen nog niet waren bewust weggelaten.
 - een onleesbaar bestand geeft een verse start én blijft bewaard onder
   `rekenPopsterren_v1.broken` -- er wordt niet overheen geschreven;
 - **de rondreis**: openen, bewaren en opnieuw openen komt tot rust -- de tweede en
-  derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang.
+  derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang;
+- **alles uit, en dan een wereld erbij** (zaak L): de Wereldtournee die nog klaar
+  lag om te openen, gaat terug naar "bezig" tot ook de nieuwe wereld uit is; wie
+  hem al geopend had, houdt hem; de andere trofeeën die klaarlagen blijven liggen.
 
 ### Waar de naadcontroles staan (fase 7A)
 
@@ -326,12 +343,19 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
   overzicht, als nieuw en dicht; een oud concept draait geen nieuwere wereld
   terug (`rebaseWorldDraft`) en meldt een botsing; en het blok dat *Opslaan*
   schrijft geeft precies terug wat erin ging, ook een veld dat nog niemand kent
-  (`blokTerug` in `test/werelden.js`, dezelfde proef die de server doet);
+  (`blokTerug` in `test/werelden.js`, dezelfde proef die de server doet). Wijkt
+  het blok af, dan noemt de melding de eerste regel die anders is en de weg
+  terug: `npm run werelden:netjes`, voor een wereld die met de hand is bijgezet;
 - **de prompts kloppen met de code** (zaak L) — `docs/prompts/*.txt` hebben
   hun invulplekken, de 9:16 van de kaartprompt is `ART_W`/`ART_H`, en de
   schatprompt noemt alleen elementen uit `SCHAT_ELEMENTEN` en het hoofd waar het
   werkelijk staat. Een prompt die iets anders vraagt dan de studio aanneemt,
   levert een tekening op die de studio weer weggooit;
+- **de tekeningenvoorraad gaat alleen omhoog voor wat al uitgeleverd is** (zaak
+  M) — `geleverd()` in `test/beelden.js` vraagt git of een bestand in de laatste
+  commit staat, en de studio hoogt `ART_CACHE` daarop op en niet op "staat op de
+  schijf". Anders kostte twee keer slepen van een nieuwe wereldkaart elk gezin een
+  volle download. Zonder git zegt hij `null` en valt de studio terug op de schijf;
 - **de servicewerker staat uit in het kijkvak** — een volgordecontrole op
   `panel()` in `test/preview.js`. `sw.js` bewaart alles onder `/assets/`
   voorraad-eerst en negeert de query, dus blijft hij staan, dan is een vervangen

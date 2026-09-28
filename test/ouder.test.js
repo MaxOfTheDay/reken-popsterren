@@ -628,9 +628,14 @@ function check(ok, label, detail) {
         kast: document.getElementById('trophy-count').textContent,
         actief: activeTrophies().length,
         tabel: TROPHIES.length,
+        // de kast: de vaste trofeeën plus één perfecte per uitgebrachte wereld
+        verwacht: TROPHIES.filter(t => !t.perfect && !isRetiredTrophy(t.id)).length + WORLD_AVAIL,
       };
     });
-    check(/2\/18/.test(r.teller), 'de teller toont het verdiende aantal en het totaal', r.teller);
+    // Hier stond /2\/18/: twaalf vaste plus zes werelden. Met een wereld erbij
+    // is de teller gewoon 2/19, en dat is geen fout maar het hele punt.
+    check(r.teller.indexOf('2/' + r.verwacht) >= 0 && r.actief === r.verwacht,
+      'de teller toont het verdiende aantal en het totaal', r.teller + ' (verwacht 2/' + r.verwacht + ')');
     check(r.teller.indexOf(r.bron) >= 0, 'en die komen rechtstreeks uit activeTrophies()', `${r.teller} vs ${r.bron}`);
     check(r.kast.indexOf('2') >= 0 && r.kast.indexOf(String(r.actief)) >= 0,
       'de kast noemt exact dezelfde twee getallen', r.kast);

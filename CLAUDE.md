@@ -21,7 +21,7 @@ npm test           # alles, inclusief echte Chromium — minuten, vereist npm in
 open index.html    # het spel zelf, zonder meer
 ```
 
-**`npm run check` is de poort waar élke wijziging doorheen moet** (1.362
+**`npm run check` is de poort waar élke wijziging doorheen moet** (1.391
 controles in vier Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal
 Node). `npm test` doet die vier en daarna nog twaalf, waarvan de meeste een
 echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
@@ -54,7 +54,7 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    erachter, dan valt de pagina meteen om met "Cannot access ... before
    initialization" — voor allebei nagemeten in een echte browser.
    **`npm run check` ziet dit soort fouten niet** — die keuring draait met een
-   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1362/1362 uit
+   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1391/1391 uit
    terwijl de pagina in een browser meteen omvalt. Verander je de volgorde of
    verplaats je een `const`, draai dan óók een browsersuite
    (`npm run test:sterren` is de kortste die het beginscherm echt opbouwt).
@@ -104,6 +104,9 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    blok, en dus in het scriptblok (regel 1). `schatFouten` laat daarom alleen
    vormen toe — geen scripttag, stijl, verwijzing of `&` — en `wereldControle`
    blokkeert erop. Verruim die lijst niet zonder regel 1 in je achterhoofd.
+   Een wereld mét de hand bijgezet? Draai daarna `npm run werelden:netjes`: die
+   schrijft het blok opnieuw zoals de studio dat doet, anders valt hub zaak K
+   erover.
 4. **`src/00-vh-lock.js` moet het eerste bronbestand blijven.** Het legt de
    vensterhoogte vast vóór de Android-statusbalk wegvaagt, en alles wat erna komt
    rekent erop. Het volgnummer 00 is wat dat garandeert — geen afspraak maar de
@@ -197,7 +200,9 @@ Deze delen zijn zuiver en goed afgebakend; raak wat eromheen zit niet aan:
   gaat volgens `docs/UITBREIDEN.md`, en `npm run test:inhoud` kijkt het na.
 * **`sw.js`** — 170 regels, twee voorraden. De schil is netwerk-eerst, dus voor
   een gewone uitgave hoeft `CACHE` niet omhoog. `ART_CACHE` gaat alléén omhoog
-  als er een nieuwe of gewijzigde tekening onder `assets/` komt.
+  als een tekening die al uitgeleverd is (in de laatste commit staat) onder
+  dezelfde naam vervangen wordt; een nieuw bestand op een nieuw pad staat nog in
+  geen enkele voorraad. De studio doet dit zelf (`bumpArtCache`).
 
 ## Verder lezen
 

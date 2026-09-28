@@ -267,7 +267,15 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
       w2Groot: w2.filter(t => groot(t) > 10).length,
       w2Over: w2.filter(over).length,
       w3Over: w3.filter(over).length,
-      stappen: [1, 8, 9, 16, 17, 24, 25, 32, 33, WORLD_LAST].map(leerStap).join(','),
+      /* Eerste en laatste show van elke uitgebrachte wereld, en welke stap dat is.
+         Hier stond een vast lijstje tot en met WORLD_LAST met "…,5,6" als
+         antwoord: bij een zevende wereld werd dat "…,5,7" en viel de suite om,
+         terwijl de app precies deed wat hij moest. */
+      stappen: WORLD_START.slice(0, WORLD_AVAIL)
+        .map((b, i) => leerStap(b) + '-' + leerStap(b + WORLDS[i].levels - 1)).join(','),
+      stappenHoort: WORLD_START.slice(0, WORLD_AVAIL).map((b, i) => (i + 1) + '-' + (i + 1)).join(','),
+      // een wereld voorbij de tabel speelt de laatste stap: alles door elkaar
+      staart: stapVan(WORLD_LAST) === LEERSTAPPEN[Math.min(WORLD_AVAIL, LEERSTAPPEN.length) - 1],
       zoekStart: WORLD_START.findIndex((_, i) => leerStap(WORLD_START[i]) === STAP_ZOEK),
       drieBinnen: leerStap(WORLD_LAST) >= STAP_DRIE,
       tiental: [[8, 5, 13, '+'], [7, 3, 10, '+'], [15, 5, 20, '+'], [13, 6, 7, '-'], [10, 3, 7, '-'], [20, 3, 17, '-'], [27, 5, 32, '+']]
@@ -275,7 +283,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
       N,
     };
   });
-  check(stap.stappen === '1,1,2,2,3,3,4,4,5,6', 'elke wereld is één stap, en een stap is een hele wereld', stap.stappen);
+  check(stap.stappen === stap.stappenHoort, 'elke wereld is één stap, en een stap is een hele wereld', stap.stappen);
+  check(stap.staart, 'een wereld voorbij de laatste leerstap speelt die laatste stap', '');
   check(stap.w1Max <= 10, 'wereld 1 blijft bij "tot 20" onder de tien', String(stap.w1Max));
   check(stap.w2Groot > stap.N / 4, 'wereld 2 gaat tot het plafond', `${stap.w2Groot}/${stap.N}`);
   check(stap.w2Over === 0, 'wereld 2 gaat nooit over het tiental', `${stap.w2Over}/${stap.N}`);

@@ -281,9 +281,11 @@ Twee verschillende dingen, en de studio houdt ze uit elkaar:
 
 * **een beeld vervangen** schrijft meteen naar je wérkmap, en dat werkt gewoon
   zolang `npm run studio` (of `npm run preview`) draait. Het is daarna een gewone
-  wijziging in git: je ziet hem terug onder *2 · Project*. Vervang je een bestaand
-  beeld, dan gaat `ART_CACHE` in `sw.js` één keer omhoog, zodat telefoons die hem
-  al hadden de nieuwe krijgen; een nieuw bestand heeft dat niet nodig.
+  wijziging in git: je ziet hem terug onder *2 · Project*. Vervang je een beeld
+  dat al vastgelegd is, dan gaat `ART_CACHE` in `sw.js` één keer omhoog, zodat
+  telefoons die hem al hadden de nieuwe krijgen. Een nieuw bestand heeft dat niet
+  nodig — ook niet als je het vóór het vastleggen nog eens vervangt: het staat
+  op geen enkele telefoon.
 * **het concept opslaan** (het `WORLDS`-blok in `src/`) — dát is de stap die
   alléén met die server kan. Zonder server valt de wereldstudio terug op
   Kopieer-en-plak (*Geavanceerd*).
