@@ -18,6 +18,9 @@
  *      tekening onzichtbaar, hoe vaak je ook ververst
  *   K  het concept: de studiopagina leest het met de sleutels van het spel, een
  *      oud concept draait niets terug, en opslaan verliest geen veld
+ *   L  de prompts om te kopiëren vragen wat de studio en het spel aannemen
+ *   M  de tekeningenvoorraad gaat alleen omhoog voor een tekening die al
+ *      vastgelegd was -- niet voor een nieuwe die je twee keer sleept
  *
  * De reden voor A: een knop met een vlag die index.html niet kent doet niets, en
  * dat merk je pas als je staat te kijken naar een scherm dat er anders uitziet
@@ -422,12 +425,15 @@ zaak('K · het concept', () => {
   const spel = kopie(app.WORLDS);
 
   // een nieuwe wereld in het concept: de lijst ziet hem, als nieuw en nog dicht
-  const nieuw = kopie(spel).concat([{ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8, released: false }]);
+  // Een naam die geen echte wereld ooit krijgt. Hier stond Regenboogwereld -- het
+  // voorbeeld uit de docs -- en wie de echte zevende zo noemde, zag deze zaak
+  // omvallen op een dubbel id in plaats van op iets wat er mis was.
+  const nieuw = kopie(spel).concat([{ id: 'concepttest', name: 'Concepttestwereld', icon: '🌈', levels: 8, released: false }]);
   const o = werelden.overzicht({ concept: nieuw, basis: spel });
   const r = o.werelden[o.werelden.length - 1];
   check(o.werelden.length === spel.length + 1 && r.staat === 'nieuw' && r.speelbaar === false,
     'K · een nieuwe wereld uit het concept staat in de lijst, nieuw en dicht', JSON.stringify(r).slice(0, 160));
-  check(o.concept && o.concept.mijn.join() === 'regenboog', 'K · en het concept weet dat hij van jou is',
+  check(o.concept && o.concept.mijn.join() === 'concepttest', 'K · en het concept weet dat hij van jou is',
     JSON.stringify(o.concept));
   check(r.tedoen > 0 && r.blokkeert === 0, 'K · zonder schat: nog te doen, en niets blokkeert',
     JSON.stringify(r.punten));
@@ -451,7 +457,7 @@ zaak('K · het concept', () => {
 
   // opslaan: het blok geeft precies terug wat erin ging -- ook een veld dat nog niemand kent
   const proef = laadApp();
-  proef.run("WORLDS.push({ id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8, released: false,"
+  proef.run("WORLDS.push({ id: 'concepttest', name: 'Concepttestwereld', icon: '🌈', levels: 8, released: false,"
     + " venue: { dim: 0.55 }, toekomst: { iets: [1, 2] }, 'met-streep': 'ja',"
     + " nodes: Array.from({ length: 8 }, (_, i) => ({ x: 40.123456, y: 20 + i * 7.77777 })) });"
     + ' rebuildWorldStarts();');
@@ -467,8 +473,17 @@ zaak('K · het concept', () => {
      markeringen schreef -- zet die erboven. */
   const bronTekst = fs.readFileSync(path.resolve(__dirname, '..', 'src', '20-app.js'), 'utf8');
   const blokNu = bronTekst.slice(bronTekst.indexOf('const WORLDS = ['), bronTekst.indexOf('/* WERELDEN-EINDE */')).trim();
+  // Wijkt het af, noem dan de eerste regel die anders is en hoe je het rechtzet:
+  // een wereld die met de hand is bijgezet staat vaak alleen in een andere volgorde.
+  const verschil = (() => {
+    const x = blokNu.split('\n'), y = app.worldsSource().split('\n');
+    const i = x.findIndex((r, k) => r !== y[k]);
+    return i < 0 ? 'lengte' : 'regel ' + (i + 1) + ' van het blok: "' + String(x[i]).trim() + '" ≠ "' + String(y[i]).trim() + '"';
+  })();
   check(blokNu === app.worldsSource(), 'K · opslaan zonder wijziging laat het blok letterlijk staan',
-    'het blok tussen WERELDEN-BEGIN/EINDE wijkt af van worldsSource() — commentaar erin, of een andere schrijfwijze');
+    'het blok tussen WERELDEN-BEGIN/EINDE wijkt af van worldsSource() — commentaar erin, of een andere '
+    + 'schrijfwijze (' + verschil + '). Met de hand bijgezet? `npm run werelden:netjes` zet het in de vorm van de '
+    + 'studio; commentaar hoort bóven WERELDEN-BEGIN.');
 });
 
 /* ---- L: de prompts om te kopiëren ------------------------------------------
@@ -496,6 +511,42 @@ zaak('L · de prompts', () => {
     'L · de schatprompt vraagt alleen elementen die de studio doorlaat', lijn);
   check(/\(100, 72\)/.test(schat) && /radius 32/.test(schat) && /y = 59/.test(schat),
     'L · en noemt het hoofd en de grens zoals de schatten ze gebruiken', 'hoofd of grens ontbreekt');
+});
+
+/* ---- M: de tekeningenvoorraad -----------------------------------------------
+   ART_CACHE omhoog betekent: elke telefoon haalt álle tekeningen opnieuw binnen.
+   Dat hoort alleen bij een tekening die al bij kinderen kan staan -- een bestand
+   in de laatste commit. Eerst keek de studio naar de schijf, en dan kostte het
+   twee keer slepen van een nieuwe wereldkaart elk gezin een volle download. */
+zaak('M · de tekeningenvoorraad', () => {
+  const os = require('os');
+  const { execFileSync } = require('child_process');
+  const { geleverd } = require('./beelden');
+  const map = fs.mkdtempSync(path.join(os.tmpdir(), 'rp-geleverd-'));
+  const git = (...a) => execFileSync('git', a, { cwd: map, stdio: 'ignore' });
+  let kan = true;
+  try {
+    git('init', '-q');
+    fs.mkdirSync(path.join(map, 'assets', 'world'), { recursive: true });
+    fs.writeFileSync(path.join(map, 'assets', 'world', 'oud-map.webp'), 'x');
+    git('add', '-A');
+    git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'basis');
+  } catch (e) { kan = false; }
+  if (kan) {
+    fs.writeFileSync(path.join(map, 'assets', 'world', 'nieuw-map.webp'), 'y');   // wel op schijf
+    check(geleverd('assets/world/oud-map.webp', map) === true,
+      'M · een vastgelegde tekening staat bij kinderen: ophogen', 'niet herkend');
+    check(geleverd('assets/world/nieuw-map.webp', map) === false,
+      'M · een nieuwe op de schijf nog niet: niets op te hogen', 'als vastgelegd gezien');
+  }
+  const leeg = fs.mkdtempSync(path.join(os.tmpdir(), 'rp-geengit-'));
+  check(geleverd('assets/world/oud-map.webp', leeg) === null,
+    'M · zonder git zegt hij dat hij het niet weet', String(geleverd('x', leeg)));
+  // ...en de studio beslist er ook echt op, met de schijf alleen als terugval
+  const prev = fs.readFileSync(path.resolve(__dirname, 'preview.js'), 'utf8');
+  const schrijf = prev.slice(prev.indexOf('function writeAsset'), prev.indexOf('function', prev.indexOf('function writeAsset') + 10));
+  check(/geleverd\(to, ROOT\)/.test(schrijf) && /!wasEr\) \? null : bumpArtCache\(\)/.test(schrijf),
+    'M · writeAsset hoogt op grond van de commit op, niet van de schijf', 'writeAsset kijkt niet naar geleverd()');
 });
 
 // ---- F: de snelkoppeling ------------------------------------------------

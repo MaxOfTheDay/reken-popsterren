@@ -292,7 +292,13 @@ function rebuildWereldschatten() {
    nooit mag. De studio maakt een tekening eerst zelf schoon; dit is het vangnet
    dat de keuring en het opslaan gebruiken. Zuiver: geen DOM, zodat het ook in
    Node draait. */
-const SCHAT_ELEMENTEN = ['g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect', 'text'];
+/* Waar een tekening mee mag beginnen (een vorm of een groep), en wat er verder in
+   mag. Eén lijst voor schatFouten hieronder en voor de tekeningtest in
+   beloning.test.js zaak I: die hadden elk hun eigen rijtje, en dan kwam een
+   tekening die met <rect> begon wel door de keuring maar pas bij Publiceren niet
+   door de browsertest. */
+const SCHAT_VORMEN = ['g', 'path', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'rect'];
+const SCHAT_ELEMENTEN = SCHAT_VORMEN.concat(['text']);
 function schatFouten(s) {
   const uit = [];
   if (!s || typeof s !== 'object') return ['de schat is geen kaartje met naam, emoji, view en svg'];
@@ -310,7 +316,47 @@ function schatFouten(s) {
   const vreemd = [];
   svg.replace(/<\/?\s*([a-zA-Z][\w:-]*)/g, (_, t) => { if (SCHAT_ELEMENTEN.indexOf(t.toLowerCase()) < 0) vreemd.push(t); return _; });
   if (vreemd.length) uit.push('onbekende elementen in de tekening: ' + [...new Set(vreemd)].join(', '));
-  if (!/^\s*<(g|path|circle|ellipse|line|polyline|polygon|rect)\b/.test(svg)) uit.push('de tekening moet met een vorm of een <g> beginnen');
+  if (!new RegExp('^\\s*<(' + SCHAT_VORMEN.join('|') + ')\\b').test(svg)) uit.push('de tekening moet met een vorm of een <g> beginnen');
+  return uit;
+}
+/* De maat van een schat, zonder browser. Een tekening meten kan alleen een
+   browser (getBBox), en dat doet de studio bij het plaatsen: `view` is die
+   omhullende plus SCHAT_RAND aan elke kant (zie zetOpHoofd). De handgeschreven
+   schatten hebben net zo'n uitsnede in hun thumb(). Dus is de uitsnede de maat,
+   voor allemaal -- en kan npm run check de regels van de maatfamilie nakijken die
+   eerst alleen in de browsersuite stonden (beloning.test.js zaak I). Die zaak meet
+   op zijn beurt na dat een view echt om zijn tekening heen past; zo kan de
+   uitsnede hier niet stil gaan liegen.
+
+   De regels zijn die van zaak I: boven de nek (y = 94, daar beginnen de kleren),
+   niet boven de pop uit, en in één familie -- geen schat twee keer zo hoog of drie
+   keer zo breed als een andere. Uitsneden hebben allemaal een randje, dus die
+   verhoudingen zijn hier iets ruimer dan op de kale tekening; de browsertest blijft
+   de strenge. De studio past beide toe, dus wat zij goedkeurt komt hier door. */
+const SCHAT_RAND = 2;
+function schatUitsnede(it) {                          // [x, y, breed, hoog] uit het miniatuur
+  const m = it && typeof it.thumb === 'function' ? /viewBox="([-\d. ]+)"/.exec(it.thumb('meisje')) : null;
+  const v = m ? m[1].trim().split(/\s+/).map(Number) : null;
+  return v && v.length === 4 && v.every(n => !isNaN(n)) ? v : null;
+}
+// De uitsneden van de schatten van alle andere werelden: waar een nieuwe naast staat.
+function schatUitsneden(zonder) {
+  return WORLDS.filter(x => x !== zonder && x.beloning).map(x => item(x.beloning))
+    .filter(it => it && (!zonder || it.id !== zonder.beloning)).map(schatUitsnede).filter(Boolean);
+}
+function schatMaatFouten(s, anderen) {
+  const v = String((s && s.view) || '').trim().split(/\s+/).map(Number);
+  if (v.length !== 4 || v.some(isNaN)) return [];     // dat zegt schatFouten al
+  const uit = [];
+  const r1 = n => Math.round(n * 10) / 10;
+  if (v[1] + v[3] - SCHAT_RAND > 94) uit.push('de schat zakt tot y = ' + r1(v[1] + v[3] - SCHAT_RAND) + ', onder de nek (94) waar de kleren beginnen');
+  if (v[1] + SCHAT_RAND < -2) uit.push('de schat steekt boven de rand van de pop uit');
+  if ((anderen || []).length) {
+    const hs = anderen.map(x => x[3]), bs = anderen.map(x => x[2]);
+    const hi = Math.max(v[3], ...hs) / Math.min(v[3], ...hs), br = Math.max(v[2], ...bs) / Math.min(v[2], ...bs);
+    if (hi >= 2) uit.push('de schat is ' + r1(v[3]) + ' hoog, naast ' + Math.min(...hs) + '–' + Math.max(...hs) + ' bij de andere: meer dan twee keer zo hoog of laag');
+    if (br >= 3) uit.push('de schat is ' + r1(v[2]) + ' breed, naast ' + Math.min(...bs) + '–' + Math.max(...bs) + ' bij de andere: meer dan drie keer zo breed of smal');
+  }
   return uit;
 }
 
@@ -1205,7 +1251,10 @@ function wereldControle(opSchijf) {
        in het scriptblok belandt, dus een fout daarin blokkeert altijd -- ook in een
        wereld die nog dicht is. */
     if (w.schat) {
-      schatFouten(w.schat).forEach(t => fout(naam, t, 'beloning'));
+      const kapot = schatFouten(w.schat);
+      kapot.forEach(t => fout(naam, t, 'beloning'));
+      // de maat pas als de rest klopt: een onleesbare view zegt schatFouten al
+      if (!kapot.length) schatMaatFouten(w.schat, schatUitsneden(w)).forEach(t => fout(naam, t, 'beloning'));
       if (!w.beloning) fout(naam, 'heeft een getekende schat, maar geen beloning die ernaar wijst', 'beloning');
       else {
         const al = item(w.beloning);
@@ -11561,11 +11610,22 @@ syncBackGuard();
                         startMapEdit hieronder). Zet &onuitgebracht vanzelf aan
    &onuitgebracht    -- speel ook de werelden die nog op released:false staan
                         (zie PROEF_ONUITGEBRACHT). Zo probeer je een nieuwe
-                        wereld in het echte spel voordat een kind hem ziet     */
+                        wereld in het echte spel voordat een kind hem ziet.
+                        Grendelt de opslag, net als &wereld: sterren in een
+                        wereld die nog niet uit is horen in geen enkele save
+                        -- dat is precies de "al half uitgespeeld"-fout die
+                        LEGACY_TOUR_END moest voorkomen                      */
 if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
-  // vóór het concept: dat bouwt de levelnummers opnieuw op en leest deze vlag
-  if (dbg.has('onuitgebracht') || dbg.has('mapedit')) { PROEF_ONUITGEBRACHT = true; rebuildWorldStarts(); rebuildWorldBadges(); }
+  /* Vóór het concept: dat bouwt de levelnummers opnieuw op en leest deze vlag.
+     En de opslag op slot (demoStand). De studio en Probeer zetten zelf al &demo,
+     maar wie de URL met de hand intikt op de ster van een echt kind, zou anders
+     sterren op 49..56 bewaren -- in een wereld die voor haar nog niet bestaat, en
+     die dan bij het uitbrengen al half uitgespeeld lijkt. */
+  if (dbg.has('onuitgebracht') || dbg.has('mapedit')) {
+    PROEF_ONUITGEBRACHT = true; demoStand = true;
+    rebuildWorldStarts(); rebuildWorldBadges();
+  }
   if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
   window.__db = () => db;

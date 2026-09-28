@@ -29,6 +29,7 @@
     "studio": "node test/preview.js --open",
     "snelkoppeling": "node test/snelkoppeling.js",
     "preview": "node test/preview.js",
+    "werelden:netjes": "node test/werelden.js --netjes",
     "test:hub": "node test/hub.test.js",
     "test:onderrand": "node test/onderrand.test.js"
   },

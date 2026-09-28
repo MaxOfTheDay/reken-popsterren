@@ -441,6 +441,7 @@ function writeSchermkunst(body, res) {
    de app niet in; wat de app laadt zijn de afgeleiden, en die worden door
    /api/merk opnieuw gemaakt zodra er een meester vervangen is. */
 const ASSET_OK = require('./beelden.js').SCHRIJFBAAR;
+const { geleverd } = require('./beelden.js');
 function bumpArtCache() {
   const f = path.join(ROOT, 'sw.js');
   const src = fs.readFileSync(f, 'utf8');
@@ -503,11 +504,18 @@ function writeAsset(req, res, to) {
          elke telefoon opnieuw laten binnenhalen voor een bestand dat er nooit was.
          De afgeleiden krijgen hun ophoging van /api/merk. */
       const inDeApp = !/^assets\/branding\/source\//.test(to);
-      const cache = (zelfde || !inDeApp || !bestond) ? null : bumpArtCache();
+      /* "Er al" is: in de laatste commit, niet op de schijf. Een nieuwe
+         wereldkaart die je vandaag voor de tweede keer sleept, staat wel op de
+         schijf maar nog op geen enkele telefoon -- daar valt niets te verversen.
+         Zonder git (een losse kopie) valt het terug op de schijf: liever één
+         keer te veel ophogen dan een verouderde tekening laten staan. */
+      const opTelefoons = geleverd(to, ROOT);
+      const wasEr = opTelefoons == null ? bestond : opTelefoons;
+      const cache = (zelfde || !inDeApp || !wasEr) ? null : bumpArtCache();
       console.log('  wereldstudio: ' + to + ' (' + kb + ' kB)' + (cache ? ' · sw ART_CACHE -> ' + cache : ''));
       res.writeHead(200, { 'content-type': 'text/plain' });
       res.end(to + ' — ' + kb + ' kB' + (zelfde ? ' · ongewijzigd' : cache ? ' · sw ' + cache
-        : bestond ? ' · sw al opgehoogd' : ' · nieuw'));
+        : wasEr ? ' · sw al opgehoogd' : ' · nieuw'));
     } catch (e) {
       res.writeHead(500, { 'content-type': 'text/plain' });
       res.end(String(e.message));

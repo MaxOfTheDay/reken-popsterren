@@ -197,6 +197,7 @@ const BRUG = `globalThis.__api = {
   sameWorld, get WORLD_DRAFT_INFO() { return WORLD_DRAFT_INFO; },
   // de getekende wereldschat: gegevens bij de wereld, een spulletje in ITEMS
   schatFouten, schatItem, rebuildWereldschatten, SCHAT_ELEMENTEN, beloningThumb,
+  SCHAT_VORMEN, SCHAT_RAND, schatMaatFouten, schatUitsnede, schatUitsneden,
   worldFor, worldForIndex, worldProgress, worldAvailable, worldDone,
   frontierWorld, allWorldsDone, continueWorld, hereLevel,
   laatsteZichtbareWereld, meerWereldenVooruit, worldSeen, markWorldSeen,

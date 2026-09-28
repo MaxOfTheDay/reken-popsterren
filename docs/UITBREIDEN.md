@@ -104,11 +104,18 @@ Zet de wereld in `WORLDS`, achteraan, tussen de markeringen `WERELDEN-BEGIN` en
   released: false,
   beloning: 'acc_wereld_regenboog',
   art: 'assets/world/regenboog-map.webp',
-  theme: { sky: '#…', deep: '#…', glow: '#…', road: '#…' },
   venue: { dim: .56 },
+  theme: { sky: '#…', deep: '#…', glow: '#…', road: '#…' },
   nodes: [ … ], curve: [ … ],
 }
 ```
+
+Dat is de volgorde waarin de studio hem schrijft (`worldsSource`). Draai na het
+bijzetten **`npm run werelden:netjes`**: die schrijft het blok opnieuw uit de
+gegevens, precies zoals *Opslaan* dat doet — velden in deze volgorde, getallen
+als `.56`. Anders valt `npm test` (hub zaak K) erover, want die houdt vast dat
+opslaan zonder wijziging niets aan het bestand verandert. Geen commentaar tussen
+de markeringen: dat overleeft het opnieuw schrijven niet (zet het erboven).
 
 `nodes` (één per show) en `curve` (één minder) zet je niet met de hand: laat je
 ze weg, dan slingert `defaultNodes()` er een route doorheen — speelbaar, maar
@@ -256,11 +263,19 @@ In de editor, onder *Beloning → Een eigen wereldschat tekenen*:
 Wat een getekende schat moet (`schatFouten` in `src/20-app.js`; de keuring
 blokkeert erop via `wereldControle`, zaak L in `test/inhoud.test.js`): een naam,
 een emoji, een `view` van vier getallen, hoogstens 12.000 tekens, en alleen de
-vormen uit `SCHAT_ELEMENTEN`. Geen scripttag, `<style>`, `<image>`, `<use>`,
-`url(…)`, `href`, `class`, `style`, `on…=` of `&` — de tekening gaat als tekst
-het scriptblok in, dus wat daar niet in mag, mag hier ook niet. Het id mag niet
-al aan een handgeschreven spulletje hangen, en de keuze in de lijst staat uit
-zolang de wereld een eigen tekening heeft.
+vormen uit `SCHAT_ELEMENTEN`, beginnend met een uit `SCHAT_VORMEN`. Geen
+scripttag, `<style>`, `<image>`, `<use>`, `url(…)`, `href`, `class`, `style`,
+`on…=` of `&` — de tekening gaat als tekst het scriptblok in, dus wat daar niet
+in mag, mag hier ook niet. Het id mag niet al aan een handgeschreven spulletje
+hangen, en de keuze in de lijst staat uit zolang de wereld een eigen tekening
+heeft.
+
+En de maat (`schatMaatFouten`): boven de nek (y = 94), niet boven de pop uit, en
+in de familie van de andere schatten — niet twee keer zo hoog of drie keer zo
+breed. Node kan niet tekenen, dus dit wordt nagekeken op `view`: de studio meet
+de tekening bij het plaatsen en zet `view` op de omhullende plus `SCHAT_RAND`.
+Schrijf je een schat met de hand, zet `view` dan net om de tekening heen;
+`beloning.test.js` zaak I meet in de browser na dat hij dat ook doet.
 
 Liever met de hand? Dat kan nog steeds: een regel in `ITEMS` met een `artX()`
 zoals hierboven, en de wereld verwijst ernaar. Een wereld met een handgeschreven
