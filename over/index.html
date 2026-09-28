@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rekensterren — rekenen en tellen als een show</title>
-<meta name="description" content="Een reken- en telspel voor kinderen van 5 tot 8. Werkt ook zonder internet.">
+<meta name="description" content="Een reken- en telspel voor kinderen van 5 tot 8, met sommen die meegroeien. Werkt ook zonder internet.">
 <!-- Hoe de link eruitziet als hij gedeeld wordt (WhatsApp, Messenger, mail).
      Een voorbeeldbeeld moet een vol adres hebben, dus hier staat het echte domein. -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="nl_BE">
 <meta property="og:site_name" content="Rekensterren">
 <meta property="og:title" content="Rekensterren — rekenen en tellen als een show">
-<meta property="og:description" content="Voor kinderen van 5 tot 8. Werkt ook zonder internet.">
+<meta property="og:description" content="Voor kinderen van 5 tot 8, met sommen die meegroeien. Werkt ook zonder internet.">
 <meta property="og:url" content="https://www.rekensterren.be/over/">
 <meta property="og:image" content="https://www.rekensterren.be/over/deel.jpg">
 <meta property="og:image:width" content="1200">
@@ -80,8 +80,11 @@
   .schermen img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
   .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
 
-  .feiten { list-style: none; padding: 0; margin: 0 auto; max-width: 34ch; text-align: center; font-size: 18px; }
-  .feiten li + li { margin-top: 6px; }
+  /* drie korte punten over het rekenen: gewone alinea's, het vetje is de kop */
+  .punten { max-width: 52ch; margin: 0 auto; font-size: 17px; }
+  .punten p { margin: 0 0 14px; }
+  .punten b { color: #fff; }
+  .kort { text-align: center; margin: 18px 0 0; }
 
   .deel { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
   .deel img { width: 112px; height: 112px; border-radius: 10px; display: block; }
@@ -109,24 +112,33 @@
     <video controls playsinline preload="none" width="1920" height="1080"
            poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
            data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
-           aria-label="Filmpje van 26 seconden, zonder geluid: het logo en vier schermen uit het spel"></video>
+           aria-label="Filmpje van twintig seconden, zonder geluid: het logo, vier schermen uit het spel en twee uit het ouderdeel"></video>
   </div>
+
+  <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
+       maken" (de leerstap per wereld) en "= Extra uitdagingen" (pas iets nieuws
+       als het vorige vlot zit) in src/20-app.js, en "Sommen die nu nog lastig
+       zijn" in het ouderdeel. Geen belofte over hoeveel werelden: dat groeit. -->
+  <section aria-labelledby="kop-rekenen">
+    <h2 id="kop-rekenen">Het rekenen</h2>
+    <div class="punten">
+      <p><b>Jij kiest wat er geoefend wordt.</b> Plus, min, maal en delen, getallen
+        tot 10, 20, 50 of 100, en welke tafels. Of lees-vrij tellen voor wie nog niet leest.</p>
+      <p><b>Het groeit mee.</b> Gaat het vlot, dan worden de sommen pittiger, en elke
+        wereld brengt een nieuwe stap: over het tiental, zoek het getal, drie getallen.
+        Iets nieuws komt pas als het vorige vlot zit.</p>
+      <p><b>Wat moeilijk is, komt vaker terug.</b> En wat al lukt af en toe, zodat het
+        blijft zitten. In het ouderdeel zie je welke sommen nog lastig zijn, en hoe vlot het gaat.</p>
+    </div>
+  </section>
 
   <section>
     <ul class="schermen">
-      <li><img src="beelden/01-profielkeuze.webp" alt="Het beginscherm met drie sterren: Marie, Anna en Clara" loading="lazy" width="360" height="779"><span>Een eigen ster</span></li>
       <li><img src="beelden/04-show-rekenen.webp" alt="Een show: een som met vier antwoorden" loading="lazy" width="360" height="779"><span>Shows spelen</span></li>
-      <li><img src="beelden/05-einde.webp" alt="Het einde van een show met drie sterren" loading="lazy" width="360" height="779"><span>Sterren verdienen</span></li>
+      <li><img src="beelden/07-ouder-oefenen.webp" alt="Het ouderdeel, Oefenen: plus, min en maal, getallen tot 20, de tafels van 2, 5 en 10" loading="lazy" width="540" height="1169"><span>Jij stelt het in</span></li>
+      <li><img src="beelden/08-ouder-voortgang.webp" alt="Het ouderdeel, Voortgang: hoe vlot het gaat en welke sommen nog lastig zijn" loading="lazy" width="540" height="1169"><span>Jij ziet hoe het gaat</span></li>
     </ul>
-  </section>
-
-  <section aria-labelledby="kop-weten">
-    <h2 id="kop-weten">Goed om te weten</h2>
-    <ul class="feiten">
-      <li>De voortgang blijft op dit toestel.</li>
-      <li>Werkt ook zonder internet.</li>
-      <li>Wat er geoefend wordt, kies je zelf achter het tandwiel.</li>
-    </ul>
+    <p class="klein kort">De voortgang blijft op dit toestel, en het werkt ook zonder internet.</p>
   </section>
 
   <section aria-labelledby="kop-deel">

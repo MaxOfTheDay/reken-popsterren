@@ -34,6 +34,24 @@ function zetSterren() {
   renderProfiles();
 }
 
+/* Marie rekent: plus, min en maal tot 20, met een paar sommen die nog lastig
+   zijn en een paar die al geleerd zijn. Voor de twee schermen uit het ouderdeel
+   en de som uit een latere wereld. De tellingen van de demo zelf (shows,
+   sommen, sterren) blijven staan, zodat de cijfers bij elkaar passen. */
+function marieRekent() {
+  const p = db.profiles.p1;
+  Object.assign(p.settings, { track: 'math', ops: ['+', '-', 'x'], max: 20, tables: [2, 5, 10], mode: 'kies' });
+  p.weak = {
+    '8 + 5 = @': { ans: 13, op: '+', w: 5 }, '13 − 6 = @': { ans: 7, op: '-', w: 4 },
+    '7 + 6 = @': { ans: 13, op: '+', w: 3 }, '5 × 6 = @': { ans: 30, op: 'x', w: 2 },
+    '15 − 8 = @': { ans: 7, op: '-', w: 2 },
+  };
+  p.learned = p.learned || {};
+  ['9 + 4 = @', '12 − 5 = @', '6 + 7 = @', '2 × 8 = @', '14 − 9 = @', '5 × 4 = @', '8 + 8 = @']
+    .forEach(k => { p.learned[k] = p.learned[k] || { ans: 0, op: '+', t: Date.now() }; });
+  ['+', '-', 'x'].forEach(o => { const t = ot(p, o); t.n = Math.max(t.n, 30); t.acc = .88; t.fast = .64; });
+}
+
 const SCHERMEN = [
   { key: '01-profielkeuze', go: () => { cur = null; goProfiles(); } },
   { key: '02-kaart', go: () => selectProfile('p1') },
@@ -49,6 +67,16 @@ const SCHERMEN = [
   { key: '04-show-rekenen', go: () => { selectProfile('p1'); startLevel(6); } },
   { key: '05-einde', wacht: 3200, go: () => { selectProfile('p1'); startLevel(6); G.stars = 3; endLevel(true); } },
   { key: '06-kleedkamer', go: () => { selectProfile('p1'); openKleedkamer(); } },
+  // het rekenen, voor de ouder: zo stel je het in, en zo zie je hoe het gaat
+  { key: '07-ouder-oefenen', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'oefenen'; renderSettings(); } },
+  { key: '08-ouder-voortgang', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'voortgang'; renderSettings(); } },
+  // een som uit een latere wereld: zoek het getal (leerstap 4, zie "= Vragen maken")
+  { key: '04b-show-zoek', go: () => {
+      selectProfile('p1'); marieRekent();
+      const l = WORLD_START[3] + 2;
+      startLevel(l);
+      G.qs[G.idx] = genMissing(P().settings, l, P().perf, '+'); renderQuestion();
+    } },
 ];
 
 (async () => {
@@ -63,6 +91,7 @@ const SCHERMEN = [
     await page.goto(APP_URL + '&demo&star=p1');
     await page.waitForFunction(() => typeof selectProfile === 'function');
     await page.evaluate('(' + zetSterren + ')()');
+    await page.evaluate('window.marieRekent = ' + marieRekent);
     await page.evaluate('(' + s.go + ')()');
     await page.waitForTimeout(s.wacht || 1500);
     await page.screenshot({ path: path.join(OUT, s.key + '.jpg'), type: 'jpeg', quality: 88 });

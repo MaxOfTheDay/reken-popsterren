@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rekensterren promo</title>
 <!--
-  Het promofilmpje van Rekensterren: 26 seconden, 1920x1080 -- of staand,
+  Het promofilmpje van Rekensterren: ± 21 seconden, 1920x1080 -- of staand,
   1080x1920, met ?staand erachter. Staand is voor de telefoon: de over-pagina op
   een smal scherm, en verhalen/status op sociale media. Het is hetzelfde filmpje
   met dezelfde tijden; alleen waar de dingen staan en hoe groot ze zijn is anders
@@ -17,14 +17,20 @@
   Geen requestAnimationFrame-toestand, geen Math.random: hetzelfde tijdstip
   geeft altijd hetzelfde beeld.
 
-  Scènes:
-    0.0 -  4.2  vallende ster, de R met zijn ster ploft erin
-    4.2 -  6.4  het logo bouwt zichzelf op: de R schuift naar zijn plek, de
+  Scènes (S3, STAP en EIND in het script zetten de maat):
+    0   - 1.75  de ster landt, de R met zijn ster ploft erin
+    1.75- 4.6   het logo bouwt zichzelf op: de R schuift naar zijn plek, de
                 ster springt naar zijn plek boven "sterren", de letters en de
-                zwaai komen erbij (het logo in lagen, zie test/lagen.js)
-    6.4 -  9.0  de ondertitel springt erbij
-    9.0 - 21.0  vijf schermen uit het echte spel in een telefoon
-   21.0 - 26.0  eindkaart met het adres
+                zwaai komen erbij (het logo in lagen, zie test/lagen.js), en de
+                ondertitel springt erbij
+    5.2 - 17.8  zes schermen uit het echte spel in een telefoon: vier over het
+                spel en het rekenen, twee uit het ouderdeel
+   17.8 - 21.2  eindkaart met het adres
+  Het logo-deel is geschreven in de tijd van de eerste versie (26 s, logo tot
+  9 s) en wordt afgespeeld via logoTijd(): die slaat het aanloopje van de
+  vallende ster en het wachten over en speelt de opbouw iets vlotter. Zo bleef
+  elke afstelling van het logo staan, en zit de eerste som er na 5 s in beeld
+  in plaats van na 9 s -- het filmpje voelde traag.
   De schermen in beelden/ en de lijst werelden (beelden/werelden.js) komen uit
   promo/opname.js. Het filmpje noemt nergens een aantal werelden: er komen er
   steeds bij, en dan is opnieuw opnemen en renderen genoeg.
@@ -144,7 +150,7 @@
   <canvas id="sommen" width="1920" height="1080"></canvas>
   <img id="hoekmerk" src="../assets/branding/mark.webp" alt="">
   <div id="tekst">
-    <div id="teller"><b>1</b>/ 5</div>
+    <div id="teller"><b>1</b>/ 6</div>
     <div id="bijschrift" class="kop"></div>
     <div id="onder"></div>
   </div>
@@ -171,7 +177,6 @@
 <script src="beelden/werelden.js"></script>
 <script>
 'use strict';
-const DUUR = 26;
 const $ = id => document.getElementById(id);
 // staand of liggend: de maat van het beeld, en de plekken die daarvan afhangen
 const STAAND = location.search.includes('staand');
@@ -244,14 +249,33 @@ function glinster(ctx, x, y, r, a) { // het vierpuntige sterretje uit het logo
 }
 
 /* ---- de scènes --------------------------------------------------------- */
+// Het filmpje is voor ouders: vier schermen over het spel en het rekenen, twee
+// uit het ouderdeel. Wat hier beloofd wordt moet kloppen met het spel -- zie
+// "= Vragen maken" en "= Extra uitdagingen" in src/20-app.js.
 const SCHERMEN = [
-  { img: '01-profielkeuze', kop: 'Maak je <span class="licht">eigen ster</span>', onder: 'Elk kind kiest een naam, een kleur en een look.' },
-  { img: '02b-tournee',     kop: 'Reis van <span class="licht">wereld naar wereld</span>', onder: 'En er komen steeds nieuwe werelden bij.' },
-  { img: '04-show-rekenen', kop: 'Tel en reken <span class="licht">op het podium</span>', onder: 'Plussen, minnen en tellen — het publiek juicht mee.' },
-  { img: '05-einde',        kop: 'Verdien <span class="licht">sterren</span> en diamanten', onder: 'Drie sterren? Het publiek gaat uit zijn dak!' },
-  { img: '06-kleedkamer',   kop: 'Kleed je ster aan <span class="licht">voor de show</span>', onder: 'Kleren, hoedjes en instrumenten om te sparen.' },
+  { img: '01-profielkeuze',    kop: 'Maak je <span class="licht">eigen ster</span>', onder: 'Elk kind een eigen ster, met een eigen look.' },
+  { img: '04-show-rekenen',    kop: 'Plussen, minnen, <span class="licht">maal en delen</span>', onder: 'Tot 10, 20, 50 of 100 — jij kiest.' },
+  { img: '07-ouder-oefenen',   kop: '<span class="licht">Jij</span> stelt het in', onder: 'Of lees-vrij tellen, voor wie nog niet leest.' },
+  { img: '04b-show-zoek',      kop: 'Het <span class="licht">groeit mee</span>', onder: 'Lukt het vlot? Dan worden de sommen pittiger.' },
+  { img: '08-ouder-voortgang', kop: 'Lastige sommen <span class="licht">komen terug</span>', onder: 'En jij ziet welke.' },
+  { img: '05-einde',           kop: 'Verdien <span class="licht">sterren</span>', onder: 'Drie sterren? Het publiek gaat uit zijn dak!' },
 ];
-const S3 = 9, STAP = 2.4;
+const N = SCHERMEN.length, LAATSTE = N - 1;
+const S3 = 5.2, STAP = 2.1, EIND = 3.4;
+const DUUR = S3 + N * STAP + EIND;
+/* Het logo-deel speelt in de tijd van de eerste versie (zie de kop). Knikpunten
+   [nu, toen]: het aanloopje van de vallende ster valt grotendeels weg, het
+   wachten na de landing ook, en de opbouw zelf loopt 1,25 keer zo snel. */
+const LOGO_TIJD = [[0, .85], [.45, 1.3], [1.3, 2.4], [1.45, 3.9], [1.75, 4.1], [4.55, 7.6]];
+function logoTijd(t) {
+  const k = LOGO_TIJD;
+  if (t >= k[k.length - 1][0]) return k[k.length - 1][1] + (t - k[k.length - 1][0]);
+  for (let i = 1; i < k.length; i++) if (t < k[i][0]) {
+    const [a0, b0] = k[i - 1], [a1, b1] = k[i];
+    return b0 + (t - a0) / (a1 - a0) * (b1 - b0);
+  }
+  return k[0][1];
+}
 // De achtergrond achter de telefoon loopt de werelden af, in de volgorde van het
 // spel. Zijn het er meer dan schermen, dan wordt er verspreid gekozen, zodat de
 // nieuwste er ook in zit.
@@ -338,8 +362,9 @@ function lucht(ctx, t) {
 
 function voor(ctx, t) {
   ctx.clearRect(0, 0, W, H);
+  const tl = logoTijd(t);   // de tijd van het logo-deel, zie logoTijd
   // scène 1: de vallende ster, met staart
-  const vp = tussen(t, .2, 1.3);
+  const vp = tussen(tl, .2, 1.3);
   if (vp > 0 && vp < 1) {
     const e = inUit(vp);
     const pos = p => [mix(-150, PLEK.midden[0], p), mix(-120, PLEK.midden[1], p) - Math.sin(p * Math.PI) * 180];
@@ -354,7 +379,7 @@ function voor(ctx, t) {
     ster(ctx, x, y, 44, e * 8, '#ffd740', '#2a0a55');
   }
   // de uitbarsting als het merkteken landt
-  const bp = tussen(t, 1.3, 2.5);
+  const bp = tussen(tl, 1.3, 2.5);
   if (bp > 0 && bp < 1) {
     const e = uitKubisch(bp);
     for (const v of VONKEN) {
@@ -365,9 +390,9 @@ function voor(ctx, t) {
     ctx.globalAlpha = 1;
   }
   // glinsters rond het logo (scène 1 en 2)
-  if (t > 1.4 && t < S3 + .2) {
-    const a = t < 4.5 ? 1 - tussen(t, 3.9, 4.2) : tussen(t, 6.4, 6.8) * (1 - tussen(t, S3 - .4, S3 + .2));
-    const plekken = t < 4.5 ? PLEK.glinsters1 : PLEK.glinsters2;
+  if (tl > 1.4 && t < S3 + .2) {
+    const a = tl < 4.5 ? 1 - tussen(tl, 3.9, 4.2) : tussen(tl, 6.4, 6.8) * (1 - tussen(t, S3 - .4, S3 + .2));
+    const plekken = tl < 4.5 ? PLEK.glinsters1 : PLEK.glinsters2;
     plekken.forEach(([x, y], i) => {
       const k = Math.pow(Math.max(0, Math.sin(t * 2.4 + i * 1.7)), 3);
       glinster(ctx, x, y, 34 * k + 4, a * k);
@@ -375,7 +400,7 @@ function voor(ctx, t) {
   }
   // een kleine uitbarsting waar de ster op het woord landt, en een glinster
   // waar de twee R's in elkaar overvloeien
-  const lp = tussen(t, LOGO.land, LOGO.land + .75);
+  const lp = tussen(tl, LOGO.land, LOGO.land + .75);
   if (lp > 0 && lp < 1) {
     const e = uitKubisch(lp);
     VONKEN.forEach((v, k) => {
@@ -387,8 +412,8 @@ function voor(ctx, t) {
     ctx.globalAlpha = 1;
   }
   // scène 4: sterrenconfetti
-  if (t > S3 + 5 * STAP) {
-    const lt = t - (S3 + 5 * STAP);
+  if (t > S3 + N * STAP) {
+    const lt = t - (S3 + N * STAP);
     for (const c of CONFETTI) {
       const tt = lt - c.start; if (tt < 0) continue;
       const y = -40 + tt * c.v;
@@ -441,10 +466,11 @@ function render(t) {
 
   /* scène 1 + 2: het logo bouwt zichzelf op */
   const L = LOGO;
-  const mIn = tussen(t, 1.3, 2.2), mv = zacht(tussen(t, ...L.schuif));
+  const tl = logoTijd(t);   // het logo-deel in zijn eigen tijd; zweven en wiegen blijven op t
+  const mIn = tussen(tl, 1.3, 2.2), mv = zacht(tussen(tl, ...L.schuif));
   const zweef = Math.sin(t * 2.2) * 10;
   const wUit = tussen(t, S3 - .4, S3 + .05);
-  const rust = zacht(tussen(t, 6.6, 7.4));  // pas als alles staat mag het logo zweven
+  const rust = zacht(tussen(tl, 6.6, 7.4));  // pas als alles staat mag het logo zweven
   // het hele logo: eerst groot in het midden (alleen de R en de ster zijn dan te
   // zien), dan naar zijn plek. De R blijft daarbij dezelfde R.
   const groot = uitTerug(mIn, 1.4) * mix(L.groot, 1, mv);
@@ -453,10 +479,10 @@ function render(t) {
   zet($('logo'), mIn > 0 && t < S3 + .05 ? 1 - wUit : 0,
     `translate(${logoT[0]}px, ${logoT[1]}px) rotate(${logoDraai}deg) scale(${groot * (1 + wUit * .2)})`);
   // de R duikt even in vlak voor de sprong, alsof hij de ster wegschiet
-  const wip = Math.sin(tussen(t, ...L.wip) * Math.PI);
+  const wip = Math.sin(tussen(tl, ...L.wip) * Math.PI);
   DEEL.r.style.transform = `scale(${1 + .05 * wip}, ${1 - .08 * wip})`;
   // de ster: tegen het been van de R, dan in een boog naar zijn plek
-  const vl = zacht(tussen(t, ...L.sprong));
+  const vl = zacht(tussen(tl, ...L.sprong));
   // Zoals in de app: hij landt zonder na te veren, en de draai eindigt op precies
   // een hele slag (-12 -> -360 = 0 graden), zodat hij rechtop staat zoals in het
   // logo. Eerst liep hij tot -372 en bleef hij de rest van de scène scheef staan.
@@ -466,12 +492,12 @@ function render(t) {
     `rotate(${mix(-12, -360, vl)}deg) scale(${sterMaat})`;
   // de letters, één voor één: uit hun voet omhoog, met een klein kanteltje
   for (const l of L.letters) {
-    const q = tussen(t, l.op, l.op + L.letter);
+    const q = tussen(tl, l.op, l.op + L.letter);
     l.el.style.visibility = q > 0 ? 'visible' : 'hidden';
     l.el.style.transform = `translateY(${(1 - uitKubisch(q)) * .25 * l.hoog}px) rotate(${(1 - uitKubisch(q)) * 8 * l.kant}deg) scale(${uitTerug(q, 1.6)})`;
   }
   // en de zwaai veegt eronder open, met een zachte rand
-  const z = zacht(tussen(t, L.land + L.zwaai[0], L.land + L.zwaai[1])) * 108, zw = DEEL.zwaai;
+  const z = zacht(tussen(tl, L.land + L.zwaai[0], L.land + L.zwaai[1])) * 108, zw = DEEL.zwaai;
   zw.style.visibility = z > 0 ? 'visible' : 'hidden';
   zw.style.webkitMaskImage = zw.style.maskImage = z >= 108 ? 'none' : `linear-gradient(90deg, #000 ${z - 8}%, transparent ${z}%)`;
 
@@ -479,9 +505,9 @@ function render(t) {
   const tag = $('tag');
   const TAG = 'Tel, reken en word een ster!';
   if (laatsteTag !== TAG) { tag.innerHTML = [...TAG].map(c => `<span>${c === ' ' ? '&nbsp;' : c}</span>`).join(''); laatsteTag = TAG; }
-  zet(tag, t > 6.2 && t < S3 + .05 ? 1 - wUit : 0);
+  zet(tag, tl > 6.2 && t < S3 + .05 ? 1 - wUit : 0);
   [...tag.children].forEach((sp, i) => {
-    const p = tussen(t, 6.3 + i * .03, 6.75 + i * .03);
+    const p = tussen(tl, 6.3 + i * .03, 6.75 + i * .03);
     sp.style.opacity = p > 0 ? 1 : 0;
     sp.style.transform = `translateY(${(1 - uitTerug(p, 2.4)) * 50 + Math.sin(t * 4 + i * .5) * 3 * p}px) scale(${mix(.3, 1, uitTerug(p, 2.4))})`;
   });
@@ -492,11 +518,11 @@ function render(t) {
   }
 
   /* scène 3: het echte spel */
-  const inDemo = t >= S3 && t < S3 + 5 * STAP + .5;
-  const demoZicht = t < S3 ? 0 : 1 - tussen(t, S3 + 5 * STAP - .05, S3 + 5 * STAP + .4);
-  const i = klem(Math.floor((t - S3) / STAP), 0, 4);
+  const inDemo = t >= S3 && t < S3 + N * STAP + .5;
+  const demoZicht = t < S3 ? 0 : 1 - tussen(t, S3 + N * STAP - .05, S3 + N * STAP + .4);
+  const i = klem(Math.floor((t - S3) / STAP), 0, LAATSTE);
   const lt = t - S3 - i * STAP;                // tijd binnen dit scherm
-  const sch = SCHERMEN[i], volgend = SCHERMEN[Math.min(4, i + 1)];
+  const sch = SCHERMEN[i], volgend = SCHERMEN[Math.min(LAATSTE, i + 1)];
   ['wereld', 'sluier', 'hoekmerk', 'teller', 'bijschrift', 'onder', 'tel', 'tel2', 'sommen'].forEach(id => $(id).style.visibility = inDemo ? 'visible' : 'hidden');
   sommen($('sommen').getContext('2d'), t, inDemo ? demoZicht : 0);
   if (inDemo) {
@@ -505,7 +531,7 @@ function render(t) {
     w.style.opacity = demoZicht;
     w.style.transform = `scale(${1.08 + lt * .02}) translateX(${-lt * 8}px)`;
     // de volgende wereld vloeit er aan het eind van elk scherm al in
-    const over = i < 4 ? tussen(lt, STAP - .5, STAP) : 0;
+    const over = i < LAATSTE ? tussen(lt, STAP - .5, STAP) : 0;
     w2.style.backgroundImage = volgend.kunst ? `url(${volgend.kunst})` : 'none';
     zet(w2, over * demoZicht, `scale(1.08)`);
     $('sluier').style.opacity = demoZicht;
@@ -513,14 +539,14 @@ function render(t) {
 
     if (laatsteKop !== i) {
       $('bijschrift').innerHTML = sch.kop; $('onder').textContent = sch.onder;
-      $('teller').innerHTML = `<b>${i + 1}</b>/ 5`;
+      $('teller').innerHTML = `<b>${i + 1}</b>/ ${N}`;
       $('nu').src = `beelden/${sch.img}.jpg`;
       $('straks').src = `beelden/${volgend.img}.jpg`;
-      $('tel2').firstChild.src = `beelden/${i < 4 ? volgend.img : '02-kaart'}.jpg`;
+      $('tel2').firstChild.src = `beelden/${i < LAATSTE ? volgend.img : '02-kaart'}.jpg`;
       laatsteKop = i;
     }
     const kIn = uitTerug(tussen(lt, .05, .5)), kUit = inUit(tussen(lt, STAP - .35, STAP));
-    const laatsteUit = i === 4 ? 0 : kUit;
+    const laatsteUit = i === LAATSTE ? 0 : kUit;
     zet($('bijschrift'), klem(kIn) * (1 - laatsteUit) * demoZicht, `translateX(${(1 - kIn) * -120 + laatsteUit * -60}px)`);
     zet($('onder'), tussen(lt, .3, .7) * (1 - laatsteUit) * demoZicht, `translateY(${(1 - uitKubisch(tussen(lt, .3, .7))) * 30}px)`);
     zet($('teller'), demoZicht, `scale(${1 + .15 * Math.max(0, 1 - lt * 4)})`);
@@ -529,7 +555,7 @@ function render(t) {
     const binnen = uitTerug(tussen(t, S3, S3 + .8), 1.2);
     const bob = Math.sin(t * 1.8) * 12;
     zet($('tel'), demoZicht, `translate(${(1 - binnen) * 900}px, ${bob}px) rotate(${mix(12, -3, binnen) + Math.sin(t * 1.1)}deg) scale(${PLEK.telMaat})`);
-    const schuif = i < 4 ? inUit(tussen(lt, STAP - .45, STAP)) : 0;
+    const schuif = i < LAATSTE ? inUit(tussen(lt, STAP - .45, STAP)) : 0;
     $('nu').style.transform = `translateX(${-schuif * 390}px)`;
     $('straks').style.transform = `translateX(${(1 - schuif) * 390}px)`;
     const binnen2 = uitTerug(tussen(t, S3 + .35, S3 + 1.2), 1.2);
@@ -539,7 +565,7 @@ function render(t) {
   }
 
   /* scène 4: eindkaart */
-  const E = S3 + 5 * STAP;
+  const E = S3 + N * STAP;
   const eIn = tussen(t, E + .1, E + 1.0);
   zet($('eindwoord'), t > E ? 1 - tussen(t, DUUR - .5, DUUR) : 0,
     `translateY(${Math.sin(t * 2) * 8}px) scale(${uitVeer(eIn) * .98 + .02})`);
@@ -556,7 +582,7 @@ function render(t) {
   voor($('voor').getContext('2d'), t);
   wipe($('wipe').getContext('2d'), t, S3);
   // korte witte flits waar het merkteken landt
-  $('flits').style.opacity = .55 * (1 - tussen(t, 1.3, 1.65)) * (t >= 1.3);
+  $('flits').style.opacity = .55 * (1 - tussen(tl, 1.3, 1.65)) * (tl >= 1.3);
 }
 window.render = render;
 window.DUUR = DUUR;
