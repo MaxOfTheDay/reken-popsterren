@@ -58,7 +58,7 @@ function check(ok, label, detail) {
           const w = WORLDS[i];
           for (let l = WORLD_START[i]; l < WORLD_START[i] + w.levels; l++) q.stars[l] = sterren == null ? 2 : sterren;
         }
-        q.level = n < WORLD_START.length ? WORLD_START[n] : WORLD_LAST + 1;
+        q.level = n < WORLD_AVAIL ? WORLD_START[n] : WORLD_LAST + 1;
       };
       // Een wereld (nog) niet uitbrengen -- het enige nieuwe wereldveld van deze fase.
       window.__breng = (n) => {
@@ -121,29 +121,32 @@ function check(ok, label, detail) {
   /* ================= C · Alles uit =================
      Er is geen grens meer, maar wél een plek om te zijn: de laatste wereld, als
      toegift. De ster staat op de laatste halte die er is (en niet één erachter,
-     want die bestaat niet), en een show daar overdoen schuift niets vooruit. */
+     want die bestaat niet), en een show daar overdoen schuift niets vooruit.
+     "Alles" en "de laatste" zijn de UITGEBRACHTE werelden (WORLD_AVAIL): een
+     wereld die al in WORLDS staat maar nog dicht is, bestaat voor een kind nog
+     niet -- en zo hoort hij naar main te kunnen zonder dat deze zaak omvalt. */
   {
     const { ctx, page } = await fresh(nieuweSter);
     let r = await page.evaluate(() => {
-      __speelWerelden(db.profiles.p1, WORLDS.length);
+      __speelWerelden(db.profiles.p1, WORLD_AVAIL);
       selectProfile('p1');
       return __stand();
     });
     await page.waitForTimeout(500);
     check(r.grens === -1 && r.allesUit, 'C · alles uit betekent: geen grens meer', JSON.stringify(r));
-    check(r.verder === r.aantal - 1, 'C · "verder" wijst naar de laatste wereld', JSON.stringify(r));
+    check(r.verder === r.beschikbaar - 1, 'C · "verder" wijst naar de laatste wereld', JSON.stringify(r));
     check(r.level === r.laatste + 1 && r.hier === r.laatste,
       'C · de ster staat op de laatste halte die bestaat', JSON.stringify(r));
     r = await page.evaluate(() => ({
       kijkt: viewWorldIdx,
-      laatsteIdx: WORLDS.length - 1,
-      laatsteNaam: WORLDS[WORLDS.length - 1].name,
+      laatsteIdx: WORLD_AVAIL - 1,
+      laatsteNaam: WORLDS[WORLD_AVAIL - 1].name,
       eindLevel: WORLD_LAST,
       nu: (document.querySelector('.tour-stop.next') || {}).dataset,
       haltes: document.querySelectorAll('.tour-stop').length,
       opSlot: document.querySelectorAll('.tour-stop.locked').length,
       naam: document.getElementById('map-tournee-label').textContent,
-      art: !!WORLDS[WORLDS.length - 1].art,
+      art: !!WORLDS[WORLD_AVAIL - 1].art,
     }));
     check(r.kijkt === r.laatsteIdx && r.opSlot === 0 && r.nu && Number(r.nu.lvl) === r.eindLevel,
       'C · de toegift speelt op de gewone kaart van die wereld', JSON.stringify(r));
@@ -299,6 +302,7 @@ function check(ok, label, detail) {
            bijgeschreven staat op de levelnummers waar de staart stond, en hoort
            voor dit kind juist leeg te zijn -- dat is de hele fase-4A-regel. */
         binnen: WORLDS.map((w, i) => WORLD_START[i] + w.levels - 1 <= LEGACY_TOUR_END),
+        beschikbaar: WORLD_AVAIL,
         trofees: q.trophies.slice(), gezien: (q.worldsSeen || []).slice(),
         // waar ze staat is ook waar de onthullingen tot horen te lopen
         gezienVerwacht: worldFor(q.level).index + 1,
@@ -313,7 +317,8 @@ function check(ok, label, detail) {
     check(r.uit.join() === r.binnen.join(),
       'G · precies de werelden van vóór het oude einde blijven uitgespeeld',
       JSON.stringify({ uit: r.uit, verwacht: r.binnen }));
-    check(r.binnen.every(x => x) ? (r.allesUit && r.grens === -1) : (!r.allesUit && r.grens >= 0),
+    // alleen over wat uitgebracht is: een dichte wereld achteraan is geen grens
+    check(r.binnen.slice(0, r.beschikbaar).every(x => x) ? (r.allesUit && r.grens === -1) : (!r.allesUit && r.grens >= 0),
       'G · en de grens staat waar hij hoort', JSON.stringify([r.allesUit, r.grens]));
     check(r.trofees.join() === 'first,rookie3,worldtour',
       'G · behaalde trofeeën blijven onaangeroerd staan', JSON.stringify(r.trofees));
@@ -329,18 +334,24 @@ function check(ok, label, detail) {
     }));
     check(weer.level === r.level && weer.staart === 11 && weer.sterren === r.verwacht,
       'G · en een tweede keer laden verandert er niets meer aan', JSON.stringify(weer));
-    // ...en als er dán een wereld bijkomt, is die leeg
+    /* ...en als er dán een wereld bijkomt, is die leeg. Eerst alles wat er al
+       geschreven staat uitbrengen: staat er een dichte wereld achteraan in WORLDS,
+       dan ligt die al op de levelnummers van de staart, en is hij net zo goed
+       "een latere wereld". De nieuwe komt achter de laatste geschreven. */
     const nieuw = await page.evaluate(() => {
-      const oudLast = WORLD_LAST;
+      WORLDS.forEach(w => { delete w.released; });
+      const n = WORLDS.length, verwachtEerste = WORLD_START[n - 1] + WORLDS[n - 1].levels;
       WORLDS.push({ id: 'piraten2', name: 'Testwereld', icon: '🧪', levels: 8 });
       rebuildWorldStarts();
       const q = db.profiles.p1, i = WORLDS.length - 1;
-      return { uit: worldDone(q, i), idx: i, grensIsNietDeze: frontierWorld(q) <= i,
-               eerste: WORLD_START[i], verwachtEerste: oudLast + 1,
-               sterrenDaar: [0, 1, 2].map(k => q.stars[WORLD_START[i] + k] || 0) };
+      // elke wereld die (deels) op de nummers van de oude staart ligt
+      const opStaart = WORLDS.map((w, k) => k).filter(k => WORLD_START[k] + WORLDS[k].levels - 1 > LEGACY_TOUR_END);
+      return { uit: opStaart.filter(k => worldDone(q, k)), idx: i, grensIsNietDeze: frontierWorld(q) <= i,
+               eerste: WORLD_START[i], verwachtEerste,
+               sterrenDaar: Object.keys(q.stars).filter(l => Number(l) > LEGACY_TOUR_END).length };
     });
-    check(!nieuw.uit && nieuw.grensIsNietDeze && nieuw.eerste === nieuw.verwachtEerste
-       && nieuw.sterrenDaar.join() === '0,0,0',
+    check(!nieuw.uit.length && nieuw.grensIsNietDeze && nieuw.eerste === nieuw.verwachtEerste
+       && nieuw.sterrenDaar === 0,
       'G · een wereld die later op die levelnummers komt, begint leeg', JSON.stringify(nieuw));
     await ctx.close();
   }

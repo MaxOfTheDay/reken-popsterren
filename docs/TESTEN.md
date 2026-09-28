@@ -98,7 +98,8 @@ geeft een foutmelding.
   "blokkeert" noemt. Zo zijn de wereldstudio en deze keuring het per constructie
   eens over wat "klaar" is: er is één lijst regels. Plus de proef dat de brug
   draagt: een uitgebrachte wereld zonder schat blokkeert, een dichte niet, en een
-  winkelspulletje als schat altijd.
+  winkelspulletje als schat altijd. Hetzelfde voor de haltes: zonder eigen haltes
+  (de standaardslinger) mag een wereld dicht naar main, maar niet uit.
 - **een getekende schat** (zaak L) — een wereld met `schat: { naam, emoji, view,
   svg }` krijgt zijn spulletje van `rebuildWereldschatten()`: zonder prijs, met
   een tekening en een miniatuur. De tekening gaat als tekst het scriptblok in,
@@ -117,6 +118,15 @@ geeft een foutmelding.
 in `WORLDS` staat maar nog `released: false` is — zo komt een nieuwe wereld uit de
 studio — hoort daar niet bij, en zonder die stand viel elke proef met "er komt
 later een wereld bij" erop om. `inhoud` en het wereldoverzicht laden wél alles.
+
+**Een wereld erbij gooit geen test om.** Geen zaak telt "zes werelden", "48
+levels" of "18 trofeeën": ze rekenen uit `WORLDS` (wat geschreven is) en
+`WORLD_AVAIL` (wat uitgebracht is), en een zaak die zelf een wereld achteraan
+zet, brengt eerst uit wat er al staat. Nagemeten door een zevende wereld in een
+kopie te zetten — één keer uitgebracht, één keer nog dicht, allebei via
+`worldsSource()` zoals de studio schrijft — en daar alle suites op te draaien.
+Dat de zes eerste werelden op level 1, 9, … 41 beginnen ligt wél vast (profiles):
+daar staan de sterren van elk kind op.
 
 ### `test/kern.test.js` — de voortgangsregels
 
@@ -138,7 +148,8 @@ Fase 4A en 4D, rechtstreeks door de functies heen: `worldDone`, `frontierWorld`,
 - **beloningen**: uitspelen geeft het spulletje, perfect maken de trofee, allebei
   precies één keer -- ook na overspelen, na het vangnet, en na heropenen;
 - werelden hoeven geen acht shows te zijn (vijf en twaalf doen hetzelfde);
-- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes;
+- de trofeeplanken groeien mee met de werelden zonder dubbele kaartjes, en een
+  wereld die nog dicht is hangt er niet in -- pas als hij uitgebracht is;
 - **geluid** -- niet hóé het klinkt (dat hoort een mens op een toestel te doen),
   maar de twee harde eisen eronder: `playSfx()` gooit nooit, ook niet als de
   browser geen WebAudio heeft, en "geluid uit" maakt geen context en geen knoop.
@@ -172,7 +183,10 @@ app vroeger schreef, met de velden die er toen nog niet waren bewust weggelaten.
 - een onleesbaar bestand geeft een verse start én blijft bewaard onder
   `rekenPopsterren_v1.broken` -- er wordt niet overheen geschreven;
 - **de rondreis**: openen, bewaren en opnieuw openen komt tot rust -- de tweede en
-  derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang.
+  derde keer geven exact hetzelfde bestand en dezelfde afgeleide voortgang;
+- **alles uit, en dan een wereld erbij** (zaak L): de Wereldtournee die nog klaar
+  lag om te openen, gaat terug naar "bezig" tot ook de nieuwe wereld uit is; wie
+  hem al geopend had, houdt hem; de andere trofeeën die klaarlagen blijven liggen.
 
 ### Waar de naadcontroles staan (fase 7A)
 

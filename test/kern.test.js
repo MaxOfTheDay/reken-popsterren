@@ -437,8 +437,10 @@ zaak('L', () => {
   const { app, p } = verseSter();
   const plank = key => app.TROPHY_SHELVES.filter(s => s.key === key)[0];
   check(plank('werelden') === undefined, 'L · er is geen wereldbadge-plank meer', 'nog aanwezig');
+  // (deze suite laadt alleen wat uitgebracht is, dus hier is geschreven = uitgebracht;
+  // wat er met een dichte wereld gebeurt staat onderaan deze zaak)
   check(plank('perfect').ids.length === app.WORLDS.length,
-    'L · één perfecte-wereldtrofee per geschreven wereld',
+    'L · één perfecte-wereldtrofee per uitgebrachte wereld',
     plank('perfect').ids.length + ' voor ' + app.WORLDS.length + ' werelden');
   check(app.TROPHIES.every(t => t.id.indexOf('wereld-') !== 0),
     'L · en geen enkele wereldbadge in de kast',
@@ -477,6 +479,19 @@ zaak('L', () => {
   check(!p.readyTrophies.includes('perfect-test7'), 'L · een lege wereld ligt niet klaar om te openen',
     JSON.stringify(p.readyTrophies));
   check(klaarVoor.length <= p.readyTrophies.length, 'L · checkTrophies haalt niets weg', JSON.stringify(p.readyTrophies));
+  /* Een wereld die al geschreven is maar nog dicht (released:false): géén kaartje.
+     Zo gaat een nieuwe wereld naar main zonder dat hij in de kast van elk kind
+     opduikt, met naam en icoon, als belofte die niemand kan inlossen. Gaat hij
+     uit, dan hangt hij er de volgende keer gewoon bij. */
+  const metZeven = plank('perfect').ids.length;
+  const dicht = wereldErbij(app, 'test8', { released: false });
+  check(!badge('perfect-test8') && plank('perfect').ids.length === metZeven
+    && app.activeTrophies().length === actief.length,
+    'L · een dichte wereld erbij geeft (nog) geen kaartje', plank('perfect').ids.join());
+  delete app.WORLDS[dicht].released;
+  app.rebuildWorldStarts(); app.rebuildWorldBadges();
+  check(!!badge('perfect-test8') && plank('perfect').ids.length === metZeven + 1,
+    'L · en uitgebracht wél', plank('perfect').ids.join());
 });
 
 /* ================= M · Trofeeën met pensioen =================
