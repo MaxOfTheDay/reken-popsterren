@@ -45,41 +45,77 @@ veranderen; het id niet.
 
 ## Een wereld erbij
 
-De korte versie: **één regel in `WORLDS`, één tekening, en één spulletje.**
-Er is geen tweede lijst.
+De korte versie: **één regel in `WORLDS`, één tekening, en één wereldschat.**
+Er is geen tweede lijst. En je schrijft die regel niet met de hand: dat doet de
+Wereldstudio.
 
-1. **Maak de tekening.** Formaat en compositie staan in
-   `docs/WORLD-ART-BRIEF.md`. Leg hem neer als
-   `assets/world/<wereld-id>-map.webp` (dat pad komt uit `wereldArtPad`).
-   Begroting: ongeveer 125 kB — de keuring waarschuwt boven 200 kB.
-2. **Zet de wereld in `WORLDS`**, achteraan, tussen de markeringen
-   `WERELDEN-BEGIN` en `WERELDEN-EINDE` in `index.html`:
+### Met de studio (de gewone weg)
 
-   ```js
-   {
-     id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8,
-     beloning: 'acc_wereld_regenboog',
-     art: 'assets/world/regenboog-map.webp',
-     theme: { sky: '#…', deep: '#…', glow: '#…', road: '#…' },
-     nodes: [ … ], curve: [ … ],
-   }
-   ```
+```
+npm run studio      -> Wereldstudio -> + Nieuwe wereld
+```
 
-   `nodes` (één per show) en `curve` (één minder) zet je niet met de hand: die
-   komen uit de **wereldstudio** (`npm run studio`, dan *Wereld toevoegen* of
-   *Open wereldstudio*; rechtstreeks: `?debug&mapedit`). Daar sleep je de haltes op de richels van de tekening en
-   schrijft *Bewaar* het blok hierboven terug in `index.html`. Laat je ze weg,
-   dan slingert `defaultNodes()` er een route doorheen — speelbaar, maar niet
-   mooi.
+1. **Naam** intikken, *Maak*. Het id en het pad van de tekening rollen eruit
+   (`Regenboogwereld` → `regenboog` → `assets/world/regenboog-map.webp`, zie
+   `wereldId`/`wereldArtPad`). De wereld komt achteraan, met acht shows, en
+   **niet uitgebracht** (`released: false`).
+2. **Tekening** erop slepen. Formaat en compositie staan in
+   `docs/WORLD-ART-BRIEF.md`; wie hem door een beeld-AI laat maken, kopieert de
+   prompt onder *Tekening → ✨ Prompt voor een beeldgenerator* (de tekst staat in
+   `docs/prompts/wereldkaart.txt`). Elke bronmaat mag, de studio snijdt bij als cover
+   en zet hem om naar webp. Begroting: ongeveer 125 kB — de keuring waarschuwt
+   boven 200 kB.
+3. **Kleuren**: *haal uit de tekening* doet een voorstel; *meet het contrast*
+   kijkt of de haltes en de weg overal te zien blijven.
+4. **Haltes & weg**: sleep de haltes op de richels, de groene ruitjes buigen de
+   weg. Binnen de gestippelde zone blijven.
+5. **Zaal**: hoe donker het achter de show wordt. Een lichte tekening wil meer
+   donker; *bekijk in de show* laat het zien.
+6. **Wereldschat**: een vrije kiezen, of er een laten tekenen onder *Beloning →
+   Een eigen wereldschat tekenen* (zie hieronder). Geen code, geen `ITEMS`-regel.
+7. **Probeer in het spel**: de standen op de kaart, en de eerste en de laatste
+   show echt spelen — de laatste eindigt in het wereldfeest met de schat. Dat
+   kan ook zolang de wereld nog niet uitgebracht is.
+8. **Van concept naar spel**: *Opslaan in het project* → *Vastleggen* →
+   *Publiceren*. Opslaan weigert zolang er iets is wat een kind nu zou merken;
+   wat alleen "nog te doen vóór uitbrengen" is, mag mee. Een wereld die niet
+   uitgebracht is, gaat dus gewoon al mee naar main — hij reserveert zijn
+   levelnummers en blijft voor kinderen dicht.
+9. **Uitbrengen**: het vinkje *uitgebracht* in de editor (*Gegevens*), als *Klaar
+   om uit te brengen?* niets meer te doen heeft. Opslaan, vastleggen,
+   publiceren — en vanaf dan speelt een kind hem.
 
-   Optioneel: `venue: { dim: .56 }` als de tekening te licht is voor de zaal,
-   en `released: false` om de wereld wél te schrijven maar nog niet uit te
-   brengen.
-3. **Maak het beloningsspulletje** (zie hieronder) en verwijs ernaar met
-   `beloning`.
-4. **Draai `npm run check`.** `inhoud.test.js` kijkt na of het pad bestaat, of
-   het spulletje bestaat, of het gratis is, of het nog niet aan een andere
-   wereld hangt, en of het aantal haltes bij het aantal shows past.
+Wat de studio nakijkt staat op één plek: `wereldControle` in `src/20-app.js`. De
+studio toont het, *Opslaan* weigert erop, en `npm run check` (zaak K in
+`test/inhoud.test.js`) valt erop om — alle drie dezelfde regels.
+
+### Met de hand (als het zonder studio moet)
+
+Zet de wereld in `WORLDS`, achteraan, tussen de markeringen `WERELDEN-BEGIN` en
+`WERELDEN-EINDE` in `src/20-app.js`, en draai `npm run bouw`:
+
+```js
+{
+  id: 'regenboog', name: 'Regenboogwereld', icon: '🌈', levels: 8,
+  released: false,
+  beloning: 'acc_wereld_regenboog',
+  art: 'assets/world/regenboog-map.webp',
+  theme: { sky: '#…', deep: '#…', glow: '#…', road: '#…' },
+  venue: { dim: .56 },
+  nodes: [ … ], curve: [ … ],
+}
+```
+
+`nodes` (één per show) en `curve` (één minder) zet je niet met de hand: laat je
+ze weg, dan slingert `defaultNodes()` er een route doorheen — speelbaar, maar
+niet mooi. `venue` mag weg (dan geldt `VENUE_TERUGVAL`). `released: false` haal
+je weg als hij uitgebracht wordt. Een veld dat hier niet staat mag er gewoon bij:
+de studio schrijft het bij opslaan ongeschonden terug (zie `worldsSource`).
+
+Draai daarna `npm run check`. Die kijkt na of het pad bestaat, of de schat
+bestaat, gratis is en nog niet aan een andere wereld hangt, of het aantal haltes
+bij het aantal shows past — en of een uitgebrachte wereld überhaupt een schat
+heeft.
 
 Wat **vanzelf** meekomt, zonder dat je er iets voor doet:
 
@@ -104,8 +140,8 @@ oude zien.
 **Achteraan bijplakken mag altijd. Ertussen schuiven of korter maken niet.**
 Levels lopen dóór de werelden heen, dus een wereld op plek 3 inkorten
 hernummert alles daarna — en dan verhuizen de sterren van een kind naar een
-andere wereld. De studio waarschuwt daarvoor (`wereldControle`), maar de
-waarschuwing blokkeert niets: let er zelf op.
+andere wereld. `wereldControle` noemt dat een fout die blokkeert: de studio slaat
+het niet op en `npm run check` valt erop om.
 
 ---
 
@@ -171,9 +207,57 @@ niet: het vak toont alleen wat er te halen valt, anders staat er een raadsel op
 de plank dat vandaag niemand open kan maken.
 
 **Wat je dus níét schrijft:** geen ontgrendelcode, geen `verdiend`-lijstje in
-de opslag, geen tweede kaartsoort en geen regel in de kleedkamer. Bestaat er
-ooit een wereld zonder schat, laat `beloning` dan gewoon weg — dan is er niets
-te tonen en valt hij overal vanzelf buiten.
+de opslag, geen tweede kaartsoort en geen regel in de kleedkamer.
+
+Een wereld zonder schat kan alleen zolang hij **niet uitgebracht** is: dan deelt
+hij niets uit en valt hij overal vanzelf buiten. Een uitgebrachte wereld zonder
+schat houdt `npm run check` tegen (zaak C en K in `test/inhoud.test.js`).
+
+### Een schat tekenen in de studio (zonder code)
+
+De zes schatten hierboven zijn met de hand geschreven. Een nieuwe hoeft dat niet:
+de wereld kan zijn tekening **zelf** meedragen.
+
+```js
+{ id: 'regenboog', …, beloning: 'acc_wereld_regenboog',
+  schat: { naam: 'Regenboogkroon', emoji: '🌈', view: '63 25 74 36',
+    svg: '<g transform="…"><path d="…" fill="#ef5350" stroke="#9e1c1c" stroke-width="2"/>…</g>' },
+}
+```
+
+`rebuildWereldschatten()` maakt daar een `ITEMS`-regel van — zonder `price`,
+met `draw()` en `thumb()` — en daarna gaat alles zoals in de tabel hierboven.
+Omdat hij in `WORLDS` staat, reist hij mee met het concept, de proef in het spel
+en *Opslaan in het project*.
+
+In de editor, onder *Beloning → Een eigen wereldschat tekenen*:
+
+1. Een **idee** in een paar woorden ("een regenboogkroontje met wolkjes").
+2. **Kopieer de prompt** en geef hem aan Claude of ChatGPT — niet aan een
+   beeldgenerator: een schat is SVG, geen plaatje. De prompt
+   (`docs/prompts/wereldschat.txt`) noemt de maten van de paspop, de kleuren van
+   de wereld en de schatten van de andere werelden als voorbeeld.
+3. Plak de SVG die terugkomt (of sleep een `.svg` erop). De studio **maakt hem
+   schoon** — alleen vormen, geen script, geen verwijzing naar buiten, een
+   verloop wordt zijn eerste kleur — en zegt wat hij weggehaald heeft.
+4. Hij wordt vanzelf **op het hoofd gezet**, op de maat van de andere schatten;
+   *hoger* en *groter* stellen bij. Je ziet hem op beide paspoppen en in het
+   vakje van de kleedkamer.
+5. Naam en emoji, dan **✓ Maak dit de schat**. *✕ getekende schat weg* (twee keer
+   tikken) zet de wereld weer zonder schat.
+
+Wat een getekende schat moet (`schatFouten` in `src/20-app.js`; de keuring
+blokkeert erop via `wereldControle`, zaak L in `test/inhoud.test.js`): een naam,
+een emoji, een `view` van vier getallen, hoogstens 12.000 tekens, en alleen de
+vormen uit `SCHAT_ELEMENTEN`. Geen scripttag, `<style>`, `<image>`, `<use>`,
+`url(…)`, `href`, `class`, `style`, `on…=` of `&` — de tekening gaat als tekst
+het scriptblok in, dus wat daar niet in mag, mag hier ook niet. Het id mag niet
+al aan een handgeschreven spulletje hangen, en de keuze in de lijst staat uit
+zolang de wereld een eigen tekening heeft.
+
+Liever met de hand? Dat kan nog steeds: een regel in `ITEMS` met een `artX()`
+zoals hierboven, en de wereld verwijst ernaar. Een wereld met een handgeschreven
+schat toont het tekenvak niet.
 
 ---
 
