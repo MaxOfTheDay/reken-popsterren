@@ -129,6 +129,17 @@
     box-shadow: 0 3px 10px rgba(var(--purple-mid-rgb), .38), inset 0 0 0 1.5px rgba(255,255,255,.45);
   }
   .who-btn.active .who-portrait { border-color: var(--c-white); }
+  /* De "+" achter de laatste ster: dezelfde gestreepte, doorzichtige vorm als de
+     "Nieuwe ster"-tegel op de sterrenkeuze, zodat hij als "iemand erbij" leest en
+     niet als nog een kind. Geen portret en geen woord -- dan zou hij net zo breed
+     worden als een ster en ermee gaan wedijveren. De hoogte volgt .who-btn, dus
+     hij krimpt vanzelf mee in de gescrolde en de lage kop. */
+  .who-btn.who-nieuw {
+    padding: 0 14px; background: transparent;
+    border: 1.5px dashed rgba(255,255,255,.4);
+  }
+  .who-btn.who-nieuw:hover { background: rgba(255,255,255,.1); }
+  .who-nieuw .wn-plus { font-size: 18px; line-height: 1; opacity: .9; }
   #settings-subtabs { margin-top: 6px; }
 
   .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); width: 100%; max-width: var(--kolom, 640px); }
@@ -252,6 +263,18 @@
   .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
     color: var(--c-white); opacity: .8; font-size: var(--tx-klein); font-weight: 700; }
   .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.22); }
+  /* De voetregel onder Beheer: "Over Rekensterren" en delen. Geen kaart en geen
+     volle knop -- het is een verwijzing en geen instelling, en hij mag niet even
+     hard roepen als de back-up. Op de paarse achtergrond, dus witte letters, net
+     als het streepje hierboven; wel twee echte raakvlakken van 44. */
+  .ouder-voet { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 6px; }
+  .ov-link {
+    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white);
+    background: transparent; border: none; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 10px;
+    border-radius: var(--r-pill); opacity: .85; transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
+  }
+  .ov-link:hover, .ov-link:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
 
   .set-field { display: flex; flex-direction: column; gap: 7px; }
   .set-field + .set-field { margin-top: 15px; }
@@ -704,6 +727,10 @@
     .modal-actions { flex-direction: column; }
     .modal-actions > * { width: 100%; }
   }
+  /* De geluidsschakelaar in het stopvenster van een show: de rij van het
+     tandwielmenu (.gear-item, zie 30-onderdelen), onder een haarlijn, zodat hij
+     niet als een derde antwoord op "Show stoppen?" leest. */
+  .modal .quit-geluid { margin-top: 16px; border-top: 1px solid var(--paper-border); border-radius: 0 0 var(--r-md) var(--r-md); padding-top: 4px; }
   .modal input {
     font-family: inherit; font-size: var(--tx-groot); text-align: center; width: 110px;
     border: 3px solid var(--purple-light); border-radius: var(--r-sm); padding: 6px; margin: 10px 0;
