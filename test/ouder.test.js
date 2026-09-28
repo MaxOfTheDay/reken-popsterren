@@ -126,6 +126,28 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({ g: db.sound, h: db.haptics }));
     check(r.g === false, 'de geluidskeuze staat er morgen nog', JSON.stringify(r));
     if (heeftTril) check(r.h === false, 'de trilkeuze staat er morgen nog', JSON.stringify(r));
+    // Midden in een show: het tandwiel is er niet, dus zit dezelfde schakelaar in
+    // het stopvenster -- en omzetten daar stopt de show niet.
+    await page.evaluate(() => { selectProfile('p1'); startLevel(1); G.idx = 1; askQuit(); });
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => ({
+      open: document.getElementById('quit-modal').classList.contains('open'),
+      tekst: document.getElementById('quit-sound-state').textContent,
+      aria: document.getElementById('quit-sound').getAttribute('aria-checked'),
+    }));
+    check(r.open && r.tekst === 'Uit' && r.aria === 'false',
+      'het stopvenster van een show toont de geluidsstand van nu', JSON.stringify(r));
+    await page.click('#quit-sound');
+    await page.waitForTimeout(120);
+    r = await page.evaluate(() => ({
+      g: db.sound, tekst: document.getElementById('quit-sound-state').textContent,
+      gear: document.getElementById('gear-sound-state').textContent,
+      open: document.getElementById('quit-modal').classList.contains('open'),
+      show: document.getElementById('screen-game').classList.contains('active'),
+    }));
+    check(r.g === true && r.tekst === 'Aan' && r.gear === 'Aan',
+      'daar omzetten zet het geluid om, ook onder het tandwiel', JSON.stringify(r));
+    check(r.open && r.show, 'en de show loopt gewoon door', JSON.stringify(r));
     await ctx.close();
   }
 
@@ -191,14 +213,17 @@ function check(ok, label, detail) {
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(150);
     let r = await page.evaluate(() => ({
-      chips: [...document.querySelectorAll('#settings-profiles .who-btn')].map(b => b.textContent.trim()),
+      // de "+" achter de rij is geen kind: die telt hier niet mee (zie verderop)
+      chips: [...document.querySelectorAll('#settings-profiles .who-btn:not(.who-nieuw)')].map(b => b.textContent.trim()),
+      plus: [...document.querySelectorAll('#settings-profiles .who-btn')].pop().id,
       actief: document.querySelector('#settings-profiles .who-btn.active').textContent.trim(),
-      pressed: [...document.querySelectorAll('#settings-profiles .who-btn')].map(b => b.getAttribute('aria-pressed')),
+      pressed: [...document.querySelectorAll('#settings-profiles .who-btn:not(.who-nieuw)')].map(b => b.getAttribute('aria-pressed')),
       tab: document.querySelector('#settings-subtabs button.on').dataset.t,
     }));
     check(r.chips.length === 3, 'elk kind krijgt een eigen kaartje in de kiezer', JSON.stringify(r.chips));
     check(/Anna/.test(r.actief), 'en het gekozen kind is te zien', r.actief);
     check(r.pressed.join(',') === 'true,false,false', 'een schermlezer hoort hetzelfde', r.pressed.join(','));
+    check(r.plus === 'set-newstar', 'en achter de laatste ster staat de "+" voor een nieuwe', r.plus);
     // een ander kind kiezen: het ónderdeel blijft waar het was
     await page.evaluate(() => [...document.querySelectorAll('#settings-profiles .who-btn')][2].click());
     await page.waitForTimeout(200);
@@ -777,9 +802,8 @@ function check(ok, label, detail) {
       return {
         er: !!k,
         vorige: i > 0 ? kaarten[i - 1].querySelector('h2').textContent : null,
-        // na deze kaart mag alleen nog 'Over Rekensterren' komen -- de link naar over/
-        laatste: i === kaarten.length - 1
-          || (i === kaarten.length - 2 && kaarten[i + 1].querySelector('h2').textContent === 'Over Rekensterren'),
+        // de laatste kaart: 'Over Rekensterren' staat eronder als voetregel, niet als kaart
+        laatste: i === kaarten.length - 1 && !!document.querySelector('#settings-body .ouder-voet #set-over'),
         secundair: !!k && k.classList.contains('secundair'),
         kop: k ? k.querySelector('h2').textContent : '',
         tekst: k ? k.textContent.replace(/\s+/g, ' ') : '',
@@ -795,16 +819,17 @@ function check(ok, label, detail) {
       await page.waitForTimeout(200);
       const r = await kaart(page);
       check(r.er && r.vorige === 'Back-up & herstel' && r.laatste,
-        'O · de kaart staat direct na Back-up & herstel, als laatste (op Over na)', JSON.stringify(r));
+        'O · de kaart staat direct na Back-up & herstel, als laatste kaart (Over is een voetregel)', JSON.stringify(r));
       check(r.secundair && r.kop === 'Op het beginscherm' && r.knoppen === 0,
         'O · een stille secundaire kaart, uitleg zonder knop', JSON.stringify(r));
       check(/Chrome stelt soms zelf voor/.test(r.tekst) && /Tik op ⋮ en kies ‘App installeren’/.test(r.tekst),
         'O · Android: het voorstel van Chrome, en anders het ⋮-menu', r.tekst);
-      // Nul sterren: de kaart staat er óók (het app-brede blok), zonder waarschuwing.
+      // Nul sterren: de kaart staat er óók, zonder waarschuwing -- direct na de
+      // ene kaart die dan het terugzetten draagt (zie beheerEmptyHtml).
       await page.evaluate(() => { db.profiles = {}; save(); openSettings(); });
       await page.waitForTimeout(200);
       const leeg = await kaart(page);
-      check(leeg.er && leeg.vorige === 'Back-up & herstel', 'O · ook zonder sterren, na de back-up', JSON.stringify(leeg));
+      check(leeg.er && leeg.vorige === 'Nog geen sterren', 'O · ook zonder sterren, na het terugzetten', JSON.stringify(leeg));
       // appinstalled: meteen weg, en niets bewaard.
       await open(page, null, 'beheer');
       const voor = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));

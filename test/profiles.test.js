@@ -322,6 +322,7 @@ function check(ok, label, detail) {
         screen: document.querySelector('.screen.active').id,
         hasImport: !!document.getElementById('set-import'),
         hasExport: !!document.getElementById('set-export'),
+        importVol: !!document.querySelector('#set-import.purple'),
         hasNewStar: !!document.getElementById('set-newstar'),
         whoHidden: getComputedStyle(document.getElementById('settings-profiles')).display === 'none',
         tabsHidden: getComputedStyle(document.getElementById('settings-subtabs')).display === 'none',
@@ -330,7 +331,9 @@ function check(ok, label, detail) {
       };
     });
     check(r.screen === 'screen-settings', 'het ouderdeel opent zonder sterren', r.screen);
-    check(r.hasImport && r.hasExport, 'back-up terugzetten is bereikbaar zonder ster', JSON.stringify(r));
+    check(r.hasImport && r.importVol, 'back-up terugzetten is bereikbaar zonder ster, als de volle knop', JSON.stringify(r));
+    // met nul sterren schreef "Back-up maken" een leeg bestand weg dat eruitzag als een echte back-up
+    check(!r.hasExport, 'en er is niets om een back-up van te maken', JSON.stringify(r));
     check(r.hasNewStar, 'een ster maken kan ook vanuit Beheer', 'knop ontbreekt');
     check(r.whoHidden && r.tabsHidden, 'de twee keuzerijen verdwijnen als er niets te kiezen is', JSON.stringify(r));
     check(!r.hasName && !r.hasReset, 'zonder ster geen naamveld en geen wisknop', JSON.stringify(r));

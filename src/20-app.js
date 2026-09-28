@@ -2640,6 +2640,8 @@ function renderGearMenu() {
     item.querySelector('.gi-ico').textContent = on ? icoOn : icoOff;
   };
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
+  // dezelfde schakelaar in het stopvenster van een show (zie quit-modal)
+  setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
   const hi = $('gear-haptics');
   if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
   setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📴');
@@ -8587,6 +8589,7 @@ function startLevel(lvl) {
 function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
+  renderGearMenu();   // de geluidsrij in dit venster toont de stand van nu
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
@@ -10526,8 +10529,10 @@ function createStar() {
 
      Uit het ouderdeel blijft het wél een terugkeer: daar is een ster maken iets
      wat een ouder doet terwijl er misschien een ánder kind aan het spelen is, en
-     dan is meteen wegspringen naar de kaart van de nieuwe ster juist verkeerd. */
-  if (newStarReturn === 'settings') { setKey = key; setTab = 'beheer'; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
+     dan is meteen wegspringen naar de kaart van de nieuwe ster juist verkeerd.
+     Het onderdeel blijft staan: de "+" staat boven alle drie de tabbladen, dus
+     wie hem vanuit Oefenen indrukte, ziet nu meteen hoe de nieuwe ster oefent. */
+  if (newStarReturn === 'settings') { setKey = key; renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else { kiesBezig = false; selectProfile(key); }
   /* Alleen dat ze er staat. Hier stond eronder "Jouw eerste show begint!", maar er
      begint niets tot ze zelf op halte 1 tikt -- en die gouden halte pulst al en de
@@ -10876,10 +10881,10 @@ function oefenenPanelHtml(p, s) {
    De back-up stond hiervoor ín de kindcontext, met een tekst die niet zei over
    wie hij ging, terwijl "wissen" er vlak onder wél "van Anna" zei: precies de
    verkeerde kant op. Daarom staat back-up nu ná een streepje "Voor alle sterren",
-   buiten de kindkaarten -- en daarom is dat stuk apart (appWideCardsHtml), zodat
-   het óók bestaat als er nog geen enkele ster is. Dat is niet theoretisch: een
-   familie met een nieuwe telefoon heeft nul sterren en wil juist dán bij
-   "Back-up terugzetten". */
+   buiten de kindkaarten (appWideCardsHtml). Terugzetten bestaat óók als er nog
+   geen enkele ster is, en dat is niet theoretisch: een familie met een nieuwe
+   telefoon heeft nul sterren en wil juist dán bij "Back-up terugzetten" -- zie
+   beheerEmptyHtml, dat daar zijn eigen, kortere kaart voor heeft. */
 /* FASE 5D -- hiërarchie in de knoppen.
    Vier knoppen in dit blok stonden alle vier als dezelfde volle paarse knop:
    "Nieuwe ster maken", "Back-up maken" en "Back-up terugzetten" vroegen even hard
@@ -10887,23 +10892,30 @@ function oefenenPanelHtml(p, s) {
 
      vol paars  -- de knop die iets maakt en niets kan kwijtmaken (back-up maken;
                    dat is bovendien wat je hier het vaakst komt doen)
-     .paper     -- de knoppen die ergens anders heen gaan of iets vervángen
-                   (nieuwe ster; terugzetten). De bevestiging erachter is
-                   ongewijzigd -- dit is de vindbaarheid, niet de beveiliging.
+     .paper     -- de knoppen die iets vervángen (terugzetten). De bevestiging
+                   erachter is ongewijzigd -- dit is de vindbaarheid, niet de
+                   beveiliging.
 
-   Er is geen knop verplaatst en geen bevestiging weggehaald. */
+   DE ORDE VAN BEHEER. Dit tabblad was de la geworden waar alles in belandde wat
+   nergens anders paste: naast de back-up ook een kaart om een ster te maken en
+   een kaart over de over-pagina, met een volle paarse knop die even hard riep als
+   "Back-up maken". Die back-up -- zonder cloud de enige manier om voortgang te
+   redden -- stond daardoor op een telefoon van 844 net onder de vouw. Nu:
+     * "Nieuwe ster" is de "+" achter de sterren in de kiezer (renderWhoRow), waar
+       hij hoort: bij wie er zijn, en op dezelfde plek als op de sterrenkeuze;
+     * "Over Rekensterren" is een voetregel zonder kaart (ouderVoetHtml): het is
+       geen instelling, en op dit tabblad staat nog maar één volle knop.
+   Wat hier blijft is wat over dit toestel gaat: de back-up, en zolang het spel
+   nog in de browser draait de uitleg om hem op het beginscherm te zetten. Komt er
+   ooit een account of een cloud bij, dan groeit dát uit de back-upkaart -- geen
+   eigen kaart of eigen kopje ernaast. */
 function appWideCardsHtml(hasStars) {
-  const plek = MAX_PROFILES - Object.keys(db.profiles).length;
-  const vol = hasStars ? ` Nog plek voor ${plek} ${mv(plek, 'ster', 'sterren')}.` : '';
-  const addCard = Object.keys(db.profiles).length >= MAX_PROFILES ? '' : `
-    <div class="set-card secundair">
-      <div class="set-card-head"><div class="ico">➕</div><div><h2>Nieuwe ster</h2><div class="sub">Nog een kind erbij.${vol}</div></div></div>
-      <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
-    </div>`;
-  return `${addCard}
+  return `
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Geldt voor alle sterren en voor de app zelf</div></div></div>
-      <div class="note" style="margin-bottom:11px">Eén bestand met de voortgang van álle sterren — om veilig te bewaren of over te zetten naar een ander toestel.</div>
+      <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Alle sterren, en de instellingen van de app</div></div></div>
+      <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
+           is geen cloud, dus zonder back-up is een nieuw toestel een lege start -->
+      <div class="note" style="margin-bottom:11px">Alles staat alleen op dit toestel. Een back-up is één bestand om veilig te bewaren of mee te nemen naar een ander toestel.</div>
       <div class="data-btns">
         <button class="btn small purple" id="set-export">💾 Back-up maken</button>
       </div>
@@ -10911,15 +10923,23 @@ function appWideCardsHtml(hasStars) {
         <button class="btn small paper" id="set-import">📂 Back-up terugzetten…</button>
         <div class="note">Vervángt alles wat er nu op dit toestel staat, van álle sterren. Er wordt eerst gevraagd of je het zeker weet.</div>
       </div>
-      <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
-    </div>${beginschermKaartHtml(hasStars)}${overKaartHtml()}`;
+      ${importInvoerHtml()}
+    </div>${beginschermKaartHtml(hasStars)}`;
 }
-/* De kaart naar over/: de pagina die in twintig seconden zegt wat dit spel is,
+// Het verborgen bestandsveld achter "terugzetten". Eén keer per paneel, en in
+// beide panelen (met en zonder sterren) onder hetzelfde id -- bindSettings bindt
+// het op dat id, en er staat er nooit meer dan één tegelijk.
+function importInvoerHtml() {
+  return `<input type="file" id="set-import-file" accept="application/json,.json" style="display:none">`;
+}
+/* De weg naar over/: de pagina die in twintig seconden zegt wat dit spel is,
    met het filmpje erop. Voor de ouder die het aan iemand anders wil laten zien --
    daarom staat hij hier en niet in het spel: een kind komt er zo nooit per
-   ongeluk. Hij staat als laatste, ná de uitleg over het beginscherm: die is voor
-   wie hier zelf speelt, deze voor wie het nog niet doet. Het filmpje zit niet in de app zelf; het wordt pas opgehaald als
-   iemand op afspelen tikt (en sw.js bewaart het niet).
+   ongeluk. Hij staat als allerlaatste, en als voetregel zonder kaart: het is geen
+   instelling maar een verwijzing, en een witte kaart met een volle paarse knop
+   vroeg even hard om aandacht als de back-up erboven. Het filmpje zit niet in de
+   app zelf; het wordt pas opgehaald als iemand op afspelen tikt (en sw.js bewaart
+   het niet).
 
    De link opent in hetzelfde venster, niet met target="_blank": over/ valt
    binnen de scope van het manifest, dus in de geïnstalleerde app blijft hij in
@@ -10930,15 +10950,11 @@ function appWideCardsHtml(hasStars) {
    een schermvullende app op een iPhone is er geen terugknop -- je zou vastzitten
    op een foutpagina van de browser. */
 const OVER_URL = 'https://www.rekensterren.be/over/';
-function overKaartHtml() {
+function ouderVoetHtml() {
   return `
-    <div class="set-card secundair">
-      <div class="set-card-head"><div class="ico">🎬</div><div><h2>Over Rekensterren</h2><div class="sub">Voor wie het nog niet kent</div></div></div>
-      <div class="note" style="margin-bottom:11px">Een korte pagina met een filmpje van twintig seconden. Handig om door te sturen.</div>
-      <div class="data-btns">
-        <a class="btn small purple" id="set-over" href="over/index.html">🎬 Bekijk de pagina</a>
-        <button class="btn small paper" id="set-deel">📤 Deel de link</button>
-      </div>
+    <div class="ouder-voet">
+      <a class="ov-link" id="set-over" href="over/index.html">🎬 Over Rekensterren <span aria-hidden="true">›</span></a>
+      <button class="ov-link" id="set-deel" type="button">📤 Deel de link</button>
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
@@ -10967,14 +10983,24 @@ function deelOver() {
   }
   melding(esc(OVER_URL));
 }
-// Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen. Alleen wat
-// over de app als geheel gaat.
+/* Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen -- en ook
+   niets om een back-up van te maken. Wie hier zonder sterren komt, komt bijna
+   altijd via de hint op de sterrenkeuze ("Al een back-up?"): een nieuw toestel,
+   en een back-up die terug moet. Dus is terugzetten hier de volle knop, en staat
+   er geen "Back-up maken" -- die schreef met nul sterren een leeg bestand weg dat
+   er precies zo uitzag als een echte back-up. Eén kaart, want het is één vraag:
+   waar begin je? Een ster maken is de tweede mogelijkheid, en die staat hier
+   gewoon als knop (de kiezer met zijn "+" is er zonder sterren niet). */
 function beheerEmptyHtml() {
   return `<div class="settings-panel">
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Maak er een, of zet een back-up terug</div></div></div>
-    </div>
-    ${appWideCardsHtml(false)}
+      <div class="set-card-head"><div class="ico">🌟</div><div><h2>Nog geen sterren</h2><div class="sub">Al gespeeld op een ander toestel? Zet de back-up hier terug.</div></div></div>
+      <div class="data-btns">
+        <button class="btn small purple" id="set-import">📂 Back-up terugzetten…</button>
+        <button class="btn small paper" id="set-newstar">➕ Nieuwe ster maken</button>
+      </div>
+      ${importInvoerHtml()}
+    </div>${beginschermKaartHtml(false)}${ouderVoetHtml()}
   </div>`;
 }
 /* FASE 5D -- de twee onomkeerbare dingen staan onderaan, en ze zeggen ook wat
@@ -11007,7 +11033,7 @@ function beheerPanelHtml(p) {
         <div class="danger-zone">
           <div><div class="t">⚠️ Voortgang van ${esc(p.name)} wissen</div>
             <div class="d"><b>Weg:</b> alle diamanten, sterren, trofeeën en gekochte spulletjes.<br>
-              <b>Blijft:</b> ${esc(p.name)} zelf, haar naam, haar startoutfit en alle oefeninstellingen.</div></div>
+              <b>Blijft:</b> ${esc(p.name)} zelf, de naam, de startoutfit en alle oefeninstellingen.</div></div>
           <button class="danger-btn" id="set-reset">Wissen</button>
         </div>
       </details>
@@ -11023,7 +11049,7 @@ function beheerPanelHtml(p) {
       </details>
     </div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml(true)}
+    ${appWideCardsHtml(true)}${ouderVoetHtml()}
   </div>`;
 }
 
@@ -11097,6 +11123,21 @@ function renderWhoRow() {
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
     row.appendChild(b);
     if (on) active = b;
+  }
+  /* De "+" staat achter de laatste ster, net als op de sterrenkeuze: daar leert
+     een ouder al dat een nieuwe ster na de rij komt. Hiervoor was het een eigen
+     kaart in Beheer, en dan stond "iemand erbij" op een ander tabblad dan "wie" --
+     en duwde hij de back-up onder de vouw. Bij zes sterren is er geen plek meer,
+     dus dan is er ook geen "+" (openNewStar weigert dan toch). */
+  if (profileKeys().length < MAX_PROFILES) {
+    const add = document.createElement('button');
+    add.className = 'tab-btn who-btn who-nieuw';
+    add.id = 'set-newstar';
+    add.setAttribute('aria-label', 'Nieuwe ster maken');
+    add.title = 'Nieuwe ster';
+    add.innerHTML = '<span class="wn-plus" aria-hidden="true">＋</span>';
+    add.onclick = () => openNewStar('settings');
+    row.appendChild(add);
   }
   fadesVolgen(row);
   row.scrollLeft = keep;
@@ -11259,7 +11300,7 @@ function bindSettings(p, s) {
     showConfirm(
       '⚠️ Weet je het zeker?',
       `Alle voortgang, diamanten, sterren en spulletjes van ${p.name} wissen?`
-      + ` Haar naam, haar startoutfit en alle oefeninstellingen blijven staan.`
+      + ` De naam, de startoutfit en alle oefeninstellingen blijven staan.`
       + ` Dit kan niet ongedaan gemaakt worden.`,
       'Ja, wissen',
       () => {
