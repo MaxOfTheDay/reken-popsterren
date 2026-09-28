@@ -204,7 +204,7 @@ const BRUG = `globalThis.__api = {
   beloningItem, beloningWereld, isBeloning, awardTrophy,
   wereldSchatten, schatStand, SCHAT_CAT,
   grantWorldRewards, grantHistoricRewards, checkTrophies,
-  activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText,
+  activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText, trophyStatus,
   // tellers
   totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount, starRank,
   // opslag
@@ -287,8 +287,11 @@ function laadApp(opties) {
      wereldoverzicht laden zonder deze stand: die moeten de dichte werelden juist
      wél zien. */
   if (opties.alleenUitgebracht) {
+    // rebuildWereldschatten erbij: een dichte wereld kan een getekende schat
+    // hebben (schat:), en die zou anders als prijsloos spulletje zonder wereld in
+    // ITEMS blijven staan -- dan leest de kleedkamertest hem als winkelwaar.
     vm.runInContext('(() => { const n = uitgebrachtTot(); WORLDS.splice(n); WORLDS_SHIPPED.splice(n);'
-      + ' rebuildWorldStarts(); rebuildWorldBadges(); })()', context, { filename: 'test/app.js:uitgebracht' });
+      + ' rebuildWorldStarts(); rebuildWorldBadges(); rebuildWereldschatten(); })()', context, { filename: 'test/app.js:uitgebracht' });
   }
   const api = ctx.__api;
   const app = Object.create(api);

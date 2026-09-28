@@ -234,7 +234,8 @@ zaak('F', () => {
 
      Dus geen totaal meer, maar de vórm van de kast:
        - het vaste deel (alles wat niet uit WORLDS komt) blijft op VASTE_KAST;
-       - er is precies één actieve perfecte wereld per wereld in WORLDS;
+       - er is precies één actieve perfecte wereld per UITGEBRACHTE wereld (een
+         wereld die nog released:false is verklapt zich niet in de kast);
        - en samen zijn dat álle actieve trofeeën -- er hangt niets buiten die twee.
      Een wereld erbij verandert alleen het tweede getal, en dat mag. Een trofee die
      iemand er "even bij" zet valt hier onmiddellijk uit, hoeveel werelden er ook
@@ -245,9 +246,10 @@ zaak('F', () => {
   const perfect = actief.filter(t => t.perfect);
   check(vast.length === VASTE_KAST, `F · het vaste deel van de kast blijft op ${VASTE_KAST} trofeeën`,
     vast.length + ': ' + JSON.stringify(vast.map(t => t.id)));
-  check(perfect.length === WORLDS.length, 'F · en precies één perfecte wereld per wereld',
-    perfect.length + ' bij ' + WORLDS.length + ' werelden');
-  check(actief.length === vast.length + WORLDS.length, 'F · samen is dat de hele kast, er hangt niets buiten',
+  const OPEN = app.WORLD_AVAIL;
+  check(perfect.length === OPEN, 'F · en precies één perfecte wereld per uitgebrachte wereld',
+    perfect.length + ' bij ' + OPEN + ' uitgebrachte werelden');
+  check(actief.length === vast.length + OPEN, 'F · samen is dat de hele kast, er hangt niets buiten',
     actief.length);
   check(perfect.every(t => t.id.indexOf(app.PERFECT_BADGE) === 0),
     'F · en een perfecte wereld is te herkennen aan zijn id',
@@ -269,7 +271,15 @@ zaak('F', () => {
     `F · plank ${sh.key} heeft meer dan één trofee`, sh.ids.length));
   // Eén per wereld, op de perfecte plank -- en géén wereldbadge meer.
   const plank = key => (TROPHY_SHELVES.filter(s => s.key === key)[0] || { ids: [] }).ids;
-  WORLDS.forEach(w => {
+  WORLDS.forEach((w, i) => {
+    /* Een dichte wereld: géén kaartje in de kast. Hier stond er een voor elke
+       geschreven wereld, en dan hing de nieuwe wereld al in de kast van elk kind
+       zodra hij (dicht) naar main ging -- met naam en icoon. */
+    if (i >= OPEN) {
+      check(!ids.includes(app.PERFECT_BADGE + w.id) && !plank('perfect').includes(app.PERFECT_BADGE + w.id),
+        `F · ${w.id}: nog dicht, dus nog geen trofee in de kast`, w.id);
+      return;
+    }
     check(ids.includes(app.PERFECT_BADGE + w.id), `F · ${w.id}: er is een perfecte-wereldtrofee`, app.PERFECT_BADGE + w.id);
     check(!ids.includes(app.WERELD_BADGE + w.id), `F · ${w.id}: en géén losse wereldbadge meer`, app.WERELD_BADGE + w.id);
     check(app.isRetiredTrophy(app.WERELD_BADGE + w.id), `F · ${w.id}: de oude badge geldt als gepensioneerd`, w.id);
@@ -747,6 +757,17 @@ zaak('K', () => {
   check(proef.wereldControle({}).some(p => /al uitgebracht/.test(p.t) && p.blokkeert),
     'K · een uitgebrachte wereld weer dichtzetten blokkeert', 'niet gezien');
   proef.run('delete WORLDS[1].released; rebuildWorldStarts();');
+  /* Geen eigen haltes: de standaardslinger zet halte 1 onder de terugknop van een
+     kleine telefoon. In een dichte wereld mag dat (hij is speelbaar, en zo maakt de
+     studio er een), maar uitbrengen niet -- anders valt pas Publiceren erover. */
+  check(dicht.some(p => p.waar === 'haltes' && /eigen haltes/.test(p.t) && !p.blokkeert),
+    'K · een dichte wereld zonder eigen haltes: nog te doen, blokkeert niet', JSON.stringify(dicht));
+  const haltes = proef.run('JSON.stringify({ n: WORLDS[0].nodes, c: WORLDS[0].curve })');
+  proef.run('delete WORLDS[0].nodes; delete WORLDS[0].curve;');
+  check(proef.wereldControle({}).some(p => p.waar === 'haltes' && /eigen haltes/.test(p.t) && p.blokkeert
+    && p.w.indexOf(proef.WORLDS[0].name) >= 0),
+    'K · een uitgebrachte wereld zonder eigen haltes: dat blokkeert', 'niet gezien');
+  proef.run('(() => { const h = ' + haltes + '; WORLDS[0].nodes = h.n; WORLDS[0].curve = h.c; })();');
 });
 
 /* ================= L · De getekende schat =================

@@ -1222,6 +1222,13 @@ function wereldControle(opSchijf) {
     if (w.beloning) beloond[w.beloning] = naam;
 
     if (w.nodes && w.nodes.length !== wl.levels) hier(w.nodes.length + ' haltes voor ' + wl.levels + ' levels — valt terug op de standaardslinger', 'haltes');
+    /* Geen eigen haltes: dan legt defaultNodes() de standaardslinger, en die is
+       een noodopmaak voor een wereld zonder tekening. Hij zet halte 1 middenonder,
+       en daar staat op een kleine telefoon de terugknop (⟲ naar je eigen wereld)
+       over zijn sterrentabje. Speelbaar, dus mag een dichte wereld zo naar main;
+       maar uitbrengen niet -- de browsertest (profiles, "geen zwevende knop dekt
+       een sterrentabje af") valt er pas bij Publiceren op, en dan is het laat. */
+    else if (!w.nodes) hier('nog geen eigen haltes — de standaardslinger zet halte 1 middenonder, onder de terugknop van een kleine telefoon; sleep ze op de tekening', 'haltes');
     if (w.curve && w.curve.length !== wl.levels - 1) hier(w.curve.length + ' stuurpunten voor ' + (wl.levels - 1) + ' stukken weg', 'haltes');
 
     const buiten = [];
@@ -1582,7 +1589,17 @@ function grantHistoricRewards(p) {
    De wereld zelf gaat als `wereld` mee op de trofee. De kast tekent de perfecte
    werelden als wereld-eigen medaillons (icoon + themakleuren, zie perfectCardHTML);
    zonder dit veld zou die kaart het wereld-id uit de trofee-id moeten terugpellen,
-   en dan is er ineens een tweede plek die weet hoe zo'n id in elkaar zit. */
+   en dan is er ineens een tweede plek die weet hoe zo'n id in elkaar zit.
+
+   Alleen de uitgebrachte werelden (worldAvailable), en niet elke geschreven. Een
+   wereld die al in WORLDS staat maar nog released:false is, hoort nergens te
+   verklappen dat hij bestaat -- het schattenvak en de reis doen dat al zo (zie
+   wereldSchatten, laatsteZichtbareWereld). Hier stond eerst WORLDS.forEach, en
+   dan stond er zodra zo'n wereld naar main ging een "Zeewereld" in de kast van
+   elk kind, en telde de kop "3 / 19" voor een kaartje dat niemand kan halen.
+   Gaat hij uit, dan komt de kaart vanzelf mee: dit draait bij elk opstarten.
+   Wie de vlag PROEF_ONUITGEBRACHT zet (de studio, Probeer) ziet hem wél -- die
+   telt mee in WORLD_AVAIL, dus rebuildWorldBadges daarna opnieuw draaien. */
 const WERELD_BADGE = 'wereld-';
 function rebuildWorldBadges() {
   for (let i = TROPHIES.length - 1; i >= 0; i--) {
@@ -1591,6 +1608,7 @@ function rebuildWorldBadges() {
   }
   const perfectIds = [];
   WORLDS.forEach((w, i) => {
+    if (!worldAvailable(i)) return;
     const pid = PERFECT_BADGE + w.id;
     perfectIds.push(pid);
     TROPHIES.push({
@@ -1656,10 +1674,17 @@ const TROPHIES = [
   // id blijft 'toegift' (zo staat hij in de saves); het kind ziet "Applaus!"
   { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
-  /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en dat
-     blijft het. Komt er een wereld bij, dan gaat deze trofee weer open staan --
-     en dat hoort ook: de tournee is dan niet meer uit. */
-  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
+  /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en nu
+     elke uitgebrachte. De enige trofee die weer onwaar kan worden: komt er een
+     wereld bij, dan is de tournee niet meer uit. Wat er dan gebeurt:
+       - al geopend (p.trophies): blijft van haar. Een trofee wordt nooit
+         ingetrokken -- ze wás de hele tournee rond, en dat blijft waar.
+       - nog niet geopend (readyTrophies): gaat terug in de kast als "bezig", en
+         ligt weer klaar zodra de nieuwe wereld ook uit is. Anders biedt de kast
+         een kind "Alle werelden uitgespeeld — Open!" aan terwijl er net een
+         wereld bij kwam die ze nog nooit gezien heeft. Zie het einde van migrate();
+         telWerelden is de vlag die zegt dat deze trofee daaronder valt. */
+  { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
   // 🧮 Rekenkracht — de lange weg (stats.correct telt elk goed antwoord)
   { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',   desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
   { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',  desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
@@ -2101,6 +2126,17 @@ function migrate(p) {
      houdt die gewoon: behaalde trofeeen worden nooit ingetrokken. */
   if (p.owned) p.owned = p.owned.filter(id => id !== 'acc_tovenaarshoed');
   if (p.equipped && p.equipped.acc === 'acc_tovenaarshoed') p.equipped.acc = null;
+  /* Een trofee die klaarlag voor een tournee die intussen langer werd (zie
+     worldtour). Alleen wat nog niet geopend is, en alleen de trofeeën met
+     telWerelden: de andere gaan over tellers die nooit dalen, en waar ze dat
+     wél doen (de tovenaarshoed hierboven) geldt dat een gehaalde trofee blijft.
+     Hier en niet vooraan in migrate(): has() leest sterren, stats en owned, en
+     die staan pas vanaf hier allemaal op hun plek. Elke keer, want een nieuwe
+     wereld komt met een nieuwe versie en die opent altijd via load(). */
+  p.readyTrophies = p.readyTrophies.filter(id => {
+    const t = TROPHIES.find(x => x.id === id);
+    return !(t && t.telWerelden) || t.has(p);
+  });
 }
 // Werkt de vaardigheidsinschatting bij na elk antwoord (exponentieel voortschrijdend gemiddelde).
 // Goed = omhoog (extra beloond bij snel binnen de spotlight), fout = omlaag.
@@ -11529,7 +11565,7 @@ syncBackGuard();
 if (location.search.indexOf('debug') !== -1) {
   const dbg = new URLSearchParams(location.search);
   // vóór het concept: dat bouwt de levelnummers opnieuw op en leest deze vlag
-  if (dbg.has('onuitgebracht') || dbg.has('mapedit')) { PROEF_ONUITGEBRACHT = true; rebuildWorldStarts(); }
+  if (dbg.has('onuitgebracht') || dbg.has('mapedit')) { PROEF_ONUITGEBRACHT = true; rebuildWorldStarts(); rebuildWorldBadges(); }
   if (loadWorldDraft()) console.log('wereldconcept uit localStorage geladen (' + WORLDS.length + ' werelden)');
   window.__game = () => G;
   window.__db = () => db;

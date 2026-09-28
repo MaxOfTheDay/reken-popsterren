@@ -552,7 +552,11 @@ function check(ok, label, detail) {
     check(na.laatste.released === false && na.vink === false, 'N · en is nog niet uitgebracht', JSON.stringify(na.laatste));
     check(!/staat er niet/.test(na.tekening), 'N · geen valse melding over een ontbrekend bestand', na.tekening);
     check(na.aanzet, 'N · geen vrije schat: het tekenvak staat open', String(na.aanzet));
-    check(na.zoek.indexOf('nieuw') < 0 && /wereld=7/.test(na.zoek), 'N · &nieuw is uit de URL, de wereld erin', na.zoek);
+    /* Zijn nummer: één voorbij wat er al stond. Hier stond wereld=7, en dat hield
+       precies tot de dag dat er een zevende wereld naar main ging -- dan is een
+       nieuwe de achtste, en viel deze zaak om terwijl de studio gelijk had. */
+    const nr = na.n;
+    check(na.zoek.indexOf('nieuw') < 0 && na.zoek.indexOf('wereld=' + nr) >= 0, 'N · &nieuw is uit de URL, de wereld erin', na.zoek);
     await page.reload();
     await page.waitForSelector('#studio');
     await page.waitForTimeout(400);
@@ -566,18 +570,18 @@ function check(ok, label, detail) {
       document.getElementById('st-venster').click();
       return u;
     });
-    check(/wereld=7/.test(url) && /onuitgebracht/.test(url) && /stand=bijna/.test(url) && /screen=game/.test(url),
+    check(String(url).indexOf('wereld=' + nr + '&') >= 0 && /onuitgebracht/.test(url) && /stand=bijna/.test(url) && /screen=game/.test(url),
       'N · proberen opent déze wereld, ook nog dicht', String(url));
     // de wereld ook echt spelen, in het echte spel
     const spel = await ctx.newPage();
-    await spel.goto(APP_URL + '&demo&star=p1&wereld=7&stand=vers&screen=game&onuitgebracht');
+    await spel.goto(APP_URL + '&demo&star=p1&wereld=' + nr + '&stand=vers&screen=game&onuitgebracht');
     await spel.waitForTimeout(700);
     const inSpel = await spel.evaluate(() => ({ w: worldFor(P().level).world.name,
       scherm: (document.querySelector('.screen.active') || {}).id }));
     check(inSpel.w === 'Regenboogwereld' && inSpel.scherm === 'screen-game',
       'N · en in het spel speel je hem, met het concept erin', JSON.stringify(inSpel));
     const kaal = await ctx.newPage();
-    await kaal.goto(APP_URL + '&demo&star=p1&wereld=7&stand=vers&screen=game');
+    await kaal.goto(APP_URL + '&demo&star=p1&wereld=' + nr + '&stand=vers&screen=game');
     await kaal.waitForTimeout(700);
     check(await kaal.evaluate(() => worldFor(P().level).world.name) !== 'Regenboogwereld',
       'N · zonder &onuitgebracht blijft hij dicht, zoals voor een kind', 'toch open');
@@ -588,7 +592,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(200);
     const eind = await page.evaluate(() => ({ n: WORLDS.length,
       concept: localStorage.getItem('rekenPopsterren_wereldconcept') }));
-    check(tussen === 7 && eind.n === 6, 'N · ✕ weg vraagt eerst, en haalt hem dan weg', tussen + ' -> ' + eind.n);
+    check(tussen === nr && eind.n === nr - 1, 'N · ✕ weg vraagt eerst, en haalt hem dan weg', tussen + ' -> ' + eind.n);
     check(eind.concept === null, 'N · en dan is er geen concept meer', String(eind.concept).slice(0, 60));
     await ctx.close();
   }

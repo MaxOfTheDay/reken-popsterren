@@ -447,7 +447,8 @@ function check(ok, label, detail) {
         balk,
         heeft: P().owned.includes('acc_wereld_muziek'),
         diamanten: P().diamonds,
-        beloningen: WORLDS.map(w => w.beloning).filter(id => !!item(id)),
+        // de schatten van de UITGEBRACHTE werelden: een dichte verklapt niets
+        beloningen: WORLDS.filter((w, i) => worldAvailable(i)).map(w => w.beloning).filter(id => !!item(id)),
         volgorde: [...document.querySelectorAll('.item-card')].map(c => c.dataset.item),
         popPastKoopstuk: await (async () => {
           openKleedkamerCat('acc');
@@ -522,6 +523,9 @@ function check(ok, label, detail) {
     await nieuweSter(page);
     const r = await page.evaluate(async () => {
       ITEMS.push({ id: 'acc_wereld_test', cat: 'acc', name: 'Testhoedje', emoji: '🧪', spot: 'top' });
+      // wat er geschreven staat eerst uitbrengen: achter een dichte wereld zou de
+      // testwereld ook dicht blijven (uitbrengen gaat op volgorde)
+      WORLDS.forEach(w => { delete w.released; });
       const bestaand = WORLDS.length;
       WORLDS.push({ id: 'testwereld', name: 'Testwereld', icon: '🧪', levels: 2, beloning: 'acc_wereld_test' });
       rebuildWorldStarts();
@@ -598,7 +602,11 @@ function check(ok, label, detail) {
          met opzet het raadsel en niet zijn tekening (fase 6E, zie zaak G). */
       ids.forEach(id => { if (!p.owned.includes(id)) p.owned.push(id); });
       openKleedkamerItem(ids[0]);
-      uit.kaartjes = ids.filter(id => {
+      // de tekeningen hierboven gelden voor elke wereld, ook een dichte (die wil je
+      // nagekeken hebben vóór hij uitgaat); in de kleedkamer staan alleen de
+      // schatten van de uitgebrachte
+      uit.zichtbaar = WORLDS.filter((w, i) => w.beloning && worldAvailable(i)).map(w => w.beloning);
+      uit.kaartjes = uit.zichtbaar.filter(id => {
         const k = document.querySelector(`.item-card[data-item="${id}"] .item-thumb svg`);
         return !!k;
       }).length;
@@ -625,9 +633,9 @@ function check(ok, label, detail) {
       'I · nog steeds geen prijs: het blijven beloningen en geen koopwaar', JSON.stringify(r.metPrijs));
     check(r.opDePop.join() === [r.ids.length, r.ids.length].join(),
       'I · en ze staan allemaal op allebei de paspoppen', JSON.stringify(r.opDePop));
-    check(r.kaartjes === r.ids.length,
+    check(r.kaartjes === r.zichtbaar.length && r.kaartjes > 0,
       'I · de kleedkamer toont de tekening op de kaartjes, niet het emoji',
-      JSON.stringify({ kaartjes: r.kaartjes, hoort: r.ids.length }));
+      JSON.stringify({ kaartjes: r.kaartjes, hoort: r.zichtbaar.length }));
     await ctx.close();
   }
 
