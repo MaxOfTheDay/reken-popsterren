@@ -21,7 +21,7 @@ npm test           # alles, inclusief echte Chromium — minuten, vereist npm in
 open index.html    # het spel zelf, zonder meer
 ```
 
-**`npm run check` is de poort waar élke wijziging doorheen moet** (1.186
+**`npm run check` is de poort waar élke wijziging doorheen moet** (1.362
 controles in vier Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal
 Node). `npm test` doet die vier en daarna nog twaalf, waarvan de meeste een
 echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
@@ -54,7 +54,7 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    erachter, dan valt de pagina meteen om met "Cannot access ... before
    initialization" — voor allebei nagemeten in een echte browser.
    **`npm run check` ziet dit soort fouten niet** — die keuring draait met een
-   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1186/1186 uit
+   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1362/1362 uit
    terwijl de pagina in een browser meteen omvalt. Verander je de volgorde of
    verplaats je een `const`, draai dan óók een browsersuite
    (`npm run test:sterren` is de kortste die het beginscherm echt opbouwt).
@@ -100,6 +100,10 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    commentaar erbinnen overleeft dat niet — zet een toelichting bóven
    `WERELDEN-BEGIN`, want dat stuk blijft staan. Een wereldveld dat
    `worldsSource` niet kent gaat wél ongeschonden mee (als JSON).
+   Een **getekende wereldschat** (`schat: { … svg }`) staat als SVG-tekst ín dat
+   blok, en dus in het scriptblok (regel 1). `schatFouten` laat daarom alleen
+   vormen toe — geen scripttag, stijl, verwijzing of `&` — en `wereldControle`
+   blokkeert erop. Verruim die lijst niet zonder regel 1 in je achterhoofd.
 4. **`src/00-vh-lock.js` moet het eerste bronbestand blijven.** Het legt de
    vensterhoogte vast vóór de Android-statusbalk wegvaagt, en alles wat erna komt
    rekent erop. Het volgnummer 00 is wat dat garandeert — geen afspraak maar de

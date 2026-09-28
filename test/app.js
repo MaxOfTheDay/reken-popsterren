@@ -195,6 +195,8 @@ const BRUG = `globalThis.__api = {
   // doet hiermee precies wat de studio in de browser doet (zie test/werelden.js).
   WORLD_DRAFT_BASIS_KEY, rebaseWorldDraft, loadWorldDraft, saveWorldDraft, applyWorldDraft,
   sameWorld, get WORLD_DRAFT_INFO() { return WORLD_DRAFT_INFO; },
+  // de getekende wereldschat: gegevens bij de wereld, een spulletje in ITEMS
+  schatFouten, schatItem, rebuildWereldschatten, SCHAT_ELEMENTEN, beloningThumb,
   worldFor, worldForIndex, worldProgress, worldAvailable, worldDone,
   frontierWorld, allWorldsDone, continueWorld, hereLevel,
   laatsteZichtbareWereld, meerWereldenVooruit, worldSeen, markWorldSeen,

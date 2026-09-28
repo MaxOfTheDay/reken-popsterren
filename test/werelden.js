@@ -71,6 +71,7 @@ function watAnders(app, w, ship) {
   if ((ship.released !== false) !== (w.released !== false)) wat.push(w.released === false ? 'dicht' : 'uitgebracht');
   if (!zelfde(ship.theme, w.theme)) wat.push('kleuren');
   if (!zelfde(ship.venue, w.venue)) wat.push('zaal');
+  if (!zelfde(ship.schat, w.schat)) wat.push('schat');
   if (!zelfde(ship.nodes, w.nodes)) wat.push('haltes');
   if (!zelfde(ship.curve, w.curve)) wat.push('weg');
   if (!wat.length && !app.sameWorld(ship, w)) wat.push('gewijzigd');

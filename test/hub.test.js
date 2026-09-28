@@ -471,6 +471,33 @@ zaak('K · het concept', () => {
     'het blok tussen WERELDEN-BEGIN/EINDE wijkt af van worldsSource() — commentaar erin, of een andere schrijfwijze');
 });
 
+/* ---- L: de prompts om te kopiëren ------------------------------------------
+   Twee tekstbestanden in docs/prompts/ die de studio invult en laat kopiëren.
+   Wat vastligt is niet de tekst -- die is van jou en mag altijd beter -- maar de
+   lijm: de invulvelden die de studio vult staan erin, de kaart vraagt de maat
+   die het spel gebruikt, en de schat vraagt alleen elementen die de studio
+   doorlaat (anders levert de AI iets wat er meteen weer uit gaat). */
+zaak('L · de prompts', () => {
+  const lees = n => { try { return fs.readFileSync(path.resolve(__dirname, '..', 'docs', 'prompts', n + '.txt'), 'utf8'); }
+                     catch (e) { return ''; } };
+  const kaart = lees('wereldkaart'), schat = lees('wereldschat');
+  check(/\{\{THEMA\}\}/.test(kaart) && /\{\{INSPIRATIE\}\}/.test(kaart), 'L · de kaartprompt heeft de invulvelden van de studio', kaart.slice(0, 80));
+  check(['WERELD', 'IDEE', 'KLEUREN', 'VOORBEELDEN'].every(k => schat.indexOf('{{' + k + '}}') >= 0),
+    'L · de schatprompt ook', schat.slice(0, 80));
+  const app = laadApp();
+  const src = fs.readFileSync(path.resolve(__dirname, '..', 'src', '15-kaart-en-weg.js'), 'utf8');
+  // ART_W en ART_H staan op één regel: const ART_W = 1215, ART_H = 2160;
+  const artW = Number((/ART_W = (\d+)/.exec(src) || [])[1]), artH = Number((/ART_H = (\d+)/.exec(src) || [])[1]);
+  check(/9:16/.test(kaart) && artW && Math.abs(artW / artH - 9 / 16) < 0.001,
+    'L · de kaart wordt 9:16 gevraagd, en dat is ook de maat van het spel', artW + 'x' + artH);
+  const lijn = (schat.split('\n').filter(r => /^- only these elements/.test(r))[0] || '');
+  const genoemd = (lijn.match(/\b(g|path|circle|ellipse|line|polyline|polygon|rect|text)\b/g) || []);
+  check(genoemd.length >= 8 && genoemd.every(e => app.SCHAT_ELEMENTEN.indexOf(e) >= 0),
+    'L · de schatprompt vraagt alleen elementen die de studio doorlaat', lijn);
+  check(/\(100, 72\)/.test(schat) && /radius 32/.test(schat) && /y = 59/.test(schat),
+    'L · en noemt het hoofd en de grens zoals de schatten ze gebruiken', 'hoofd of grens ontbreekt');
+});
+
 // ---- F: de snelkoppeling ------------------------------------------------
 zaak('F · de snelkoppeling', () => {
   /* Wat hier fout kan gaan is dom en stil: een snelkoppeling die naar een

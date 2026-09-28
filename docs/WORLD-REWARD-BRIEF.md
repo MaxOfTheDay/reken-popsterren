@@ -1,6 +1,11 @@
 # World rewards — what to make for phase 4D.2
 
 > **Status: shipped (phase 4D.2), presented as *Wereldschatten* since phase 6E.**
+> A **new** world's treasure no longer needs code: the world studio takes an SVG
+> (from Claude/ChatGPT via `docs/prompts/wereldschat.txt`, or a drawing program),
+> cleans and fits it to §3's contract, and stores it in the world itself as
+> `schat: { naam, emoji, view, svg }` — see `docs/UITBREIDEN.md`. The six below
+> stay hand-written.
 >
 > Phase 6E changed nothing about the items, the ids or the unlock rule — it changed
 > where they live. They used to sit at the tail of the Accessoires drawer, locked,

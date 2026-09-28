@@ -132,7 +132,22 @@ function studioData(state) {
        daar wordt het gemaakt -- dezelfde afspraak als __SLOTS uit scene.js. */
     + ';window.__MERK=' + JSON.stringify(merk.AFGELEID.map(d => ({
         bron: 'assets/branding/source/' + d.bron, uit: d.uit, merk: d.merk })))
-    + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets()) + ';<\/script>';
+    + ';window.__GEWIJZIGD=' + JSON.stringify(gewijzigdeAssets())
+    /* De twee prompts om te kopiëren (docs/prompts/). Per verzoek gelezen, zodat
+       een aangepaste prompt er na verversen meteen staat. `</` wordt `<\/`: de
+       schatprompt praat over SVG-tags, en de tekst staat hier in een scriptblok. */
+    + ';window.__PROMPTS=' + JSON.stringify(prompts()).replace(/<\//g, '<\\/') + ';<\/script>';
+}
+/* De prompts om te kopiëren: één voor de wereldkaart (een beeldgenerator) en één
+   voor de wereldschat (een AI die SVG schrijft). Ze gaan niet in index.html --
+   een kind hoeft ze niet te downloaden -- maar komen alleen mee met de
+   studioserver. Ontbreekt er een, dan toont de studio die knop niet. */
+function prompts() {
+  const lees = naam => {
+    try { return fs.readFileSync(path.join(ROOT, 'docs', 'prompts', naam + '.txt'), 'utf8'); }
+    catch (e) { return null; }
+  };
+  return { wereldkaart: lees('wereldkaart'), wereldschat: lees('wereldschat') };
 }
 
 function panel(state) {
