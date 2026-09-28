@@ -264,20 +264,18 @@
   .result-stars span { display: inline-block; }
   /* gemiste ster: dof én kleurloos — zelfde taal als op de reiskaart */
   .result-stars .dim { opacity: .25; filter: grayscale(1); }
-  /* Opbrengst: altijd dezelfde twee vakjes, altijd in dezelfde volgorde en
-     dezelfde breedte -- 💎 verdiend · ⭐ sterren. Het was een rij losse pillen
-     die op een telefoon in 1/2/1 afbrak, met wisselend aantal chips, plús een
-     rangpil en een trofeebanner erbij: zes gouden/gekleurde dingen onder elkaar
-     op precies het scherm dat één ding moet vieren. Een nul tonen mag.
-     (Het derde vakje was 👏 publiek, bij de publieksmeter; die is vervallen.) */
-  .earn-line { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0 12px; }
+  /* Opbrengst: één vakje, altijd -- alle 💎 van deze show. Het was een rij losse
+     pillen die op een telefoon in 1/2/1 afbrak, daarna twee vaste vakjes
+     (💎 verdiend · ⭐ sterren). Maar dat tweede vakje was ook diamanten, met een
+     ster ervoor: "⭐ +15" onder drie gehaalde sterren. De sterren staan er al,
+     groot, vlak erboven; dit is de munt. Een nul tonen mag.
+     (Er was ooit ook 👏 publiek, bij de publieksmeter; die is vervallen.) */
+  .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
-  /* De twee vakjes dragen de twee accenten van de app, elk in zijn eigen rol: het
-     blauw van de diamant (de munt) en het goud van de ster (wat je verdiende). */
+  /* Het vakje draagt het blauw van de diamant: de munt. */
   .earn-chip.dia { background: rgba(41,182,246,.32); }
-  .earn-chip.star { background: rgba(var(--goud-rgb),.26); }
   /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een nieuwe
      ster-status of een trofee die klaarligt, allebei de gouden pil. De derde stand
      ("nog 13 ⭐ tot ...", gestippeld en stil) is weg; zie endLevel. Is er niets te

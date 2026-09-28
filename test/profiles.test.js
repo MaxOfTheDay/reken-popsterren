@@ -407,13 +407,13 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= 7b · Werelden: indeling, staart en de ronde-klok =================
-   * Een wereld is puur een hergroepering van p.level. Twee dingen moeten hier
-   * vastliggen: dat de grenzen kloppen en nooit undefined opleveren, en -- het
-   * belangrijkste -- dat tourRound() NIET met de wereldindeling meebeweegt.
-   * Die klok bepaalt wanneer zoek-het-getal (ronde 3) en drie-getallen (ronde 4)
-   * mogen verschijnen; een wereld van 8 i.p.v. een ronde van 12 zou ze acht
-   * shows te vroeg laten beginnen. */
+  /* ================= 7b · Werelden: indeling, staart en de leerstap =================
+   * Een wereld is een hergroepering van p.level, en sinds de review van september
+   * 2026 ook een stap in het rekenen (zie "De leerstap" in de app). Twee dingen
+   * moeten hier vastliggen: dat de grenzen kloppen en nooit undefined opleveren,
+   * en dat zoek-het-getal niet vroeger komt dan het altijd kwam. Dat hing aan een
+   * klok van rondes van twaalf shows (ronde 3 = show 25); nu is het wereld 4, en
+   * die begint ook op show 25. */
   {
     const { ctx, page } = await fresh();
     const r = await page.evaluate(() => {
@@ -448,7 +448,8 @@ function check(ok, label, detail) {
         staart: [WORLD_LAST + 1, WORLD_LAST + 9, WORLD_LAST + 52].map(naam),
         staartVerwacht: (() => { const w = WORLDS[WORLDS.length - 1]; return w.name + ' ' + w.levels + '/' + w.levels; })(),
         altijdIets: [0, -5, null, undefined, NaN].every(l => { const w = worldFor(l); return w && w.world && w.nr >= 1; }),
-        rondes: [1, 12, 13, 24, 25, 36, 37].map(tourRound),
+        stappen: [1, 8, 9, 24, 25, 32, 33].map(leerStap),
+        zoekVanaf: (() => { let l = 1; while (l <= WORLD_LAST && leerStap(l) < STAP_ZOEK) l++; return l; })(),
         eersteLevels: WORLDS.map((w, i) => WORLD_START[i]),
       };
     });
@@ -459,8 +460,10 @@ function check(ok, label, detail) {
       'voorbij de laatste wereld verzint de app geen wereld meer',
       r.staart.join(' | ') + '  !=  ' + r.staartVerwacht);
     check(r.altijdIets, 'een raar level geeft nooit undefined terug', JSON.stringify(r.staart));
-    check(r.rondes.join(',') === '1,1,2,2,3,3,4',
-      'de ronde-klok blijft op twaalf staan, niet op acht', r.rondes.join(','));
+    check(r.stappen.join(',') === '1,1,2,3,4,4,5',
+      'de leerstap loopt per wereld', r.stappen.join(','));
+    check(r.zoekVanaf === 25, 'zoek-het-getal komt niet vroeger dan show 25, net als met de oude klok',
+      String(r.zoekVanaf));
     check(r.eersteLevels.join(',') === '1,9,17,25,33,41',
       'elke wereld begint waar de vorige ophoudt', r.eersteLevels.join(','));
     await ctx.close();
