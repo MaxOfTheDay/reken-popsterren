@@ -91,6 +91,11 @@ self.addEventListener('fetch', e => {
   // Filmpjes (de promo op over/) gaan langs de voorraad heen: ze zijn groot, ze
   // worden in stukjes opgevraagd (Range) en een kind heeft ze niet nodig om te spelen.
   if (/\.mp4$/i.test(url.pathname)) return;
+  // De over-pagina en de promo horen niet bij het spel: wie ze opent, krijgt ze
+  // gewoon van het net, en de voorraad van het spel blijft ervan af. (Het
+  // lettertype en het logo die over/ uit assets/ leent, zijn van het spel zelf en
+  // gaan dus wél via isArt() -- dat zijn dezelfde bestanden.)
+  if (/\/(over|promo)\//.test(url.pathname)) return;
 
   /* Tekeningen: eerst de voorraad. Ze veranderen alleen als ART_CACHE omhoog gaat,
      en het zijn de grootste bestanden van de app -- netwerk-eerst zou ze bij elk

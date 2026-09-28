@@ -710,8 +710,16 @@ zaak('K', () => {
   const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
     : fs.readFileSync(path.join(WORTEL, 'index.html'), 'utf8');
   check(bron.includes('href="over/index.html"'), 'K · het ouderdeel linkt naar over/', '');
-  check(/\.mp4\$/.test(fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8')),
-    'K · sw.js laat filmpjes buiten de voorraad', '');
+  const sw = fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8');
+  check(/\.mp4\$/.test(sw), 'K · sw.js laat filmpjes buiten de voorraad', '');
+  check(sw.includes('(over|promo)'), 'K · en over/ en promo/ helemaal: de voorraad van het spel blijft van het spel', '');
+  // Wat de pagina afspeelt is de webversie. Een scherpe -hoog-versie van 7 MB of
+  // meer die per ongeluk op de plek van de webversie belandt, merk je anders pas
+  // aan de telefoondata van een ouder.
+  ['rekensterren-promo.mp4', 'rekensterren-promo-staand.mp4'].forEach(f => {
+    const mb = fs.statSync(path.join(WORTEL, 'promo', f)).size / 1e6;
+    check(mb <= 4.5, `K · ${f} is de lichte webversie (≤ 4,5 MB)`, `${mb.toFixed(1)} MB`);
+  });
 });
 
 klaar();
