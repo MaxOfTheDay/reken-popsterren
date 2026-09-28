@@ -10571,6 +10571,7 @@ function openSettings() {
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
+  ouderKopMeten();        // renderSettings meet ook, maar toen stond het scherm nog niet in beeld
   // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
   // dus er kan er nooit meer dan één staan -- zelfde patroon als de kast)
   $('screen-settings').onscroll = ouderScroll;
@@ -11106,6 +11107,47 @@ function ouderScroll() {
     if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
   });
 }
+/* Hoeveel de kop krimpt als hij krap wordt. Het stijlblad zet precies dat als
+   marge onder de gescrolde kop (--kop-krimp), zodat de inhoud blijft staan waar
+   hij stond -- zie #screen-settings.gescrold .hub-sticky voor waarom dat moet.
+
+   Gemeten en niet opgeschreven: op een laag scherm begint de kop al krap en
+   krimpt hij nauwelijks, en zonder ster vallen de twee keuzerijen weg. Meten
+   gaat door de klasse even om te zetten, met de overgangen uit (.kop-meten) --
+   anders lees je de beginstand van een overgang die nog moet beginnen. Alles in
+   één taak, dus er komt geen beeldje tussen waarin iemand de verkeerde stand ziet.
+
+   De hoogte komt uit getComputedStyle en niet uit getBoundingClientRect: die
+   laatste rekent een transform mee, en vlak na openSettings komt het scherm nog
+   met een schaal van 1,03 binnen (zie schermKomtOp). Zo gemeten kwam er 23,69
+   uit in plaats van 23, en schoof de inhoud alsnog 0,69px. offsetHeight rekent
+   geen transform mee maar rondt af op hele pixels; dit is de maat van de opmaak
+   zelf, met breuken (border-box, zie de reset).
+
+   Eén bijwerking: loopt er op dat moment net een kopovergang -- een tik op een
+   keuze vlak na het scrollen -- dan springt die naar zijn eindstand. Dat is
+   hooguit één kleine sprong, en alleen als je binnen --t-snel na het scrollen
+   tikt.
+
+   Staat het scherm niet in beeld, dan is alles 0 hoog en valt er niets te meten;
+   dan blijft de vorige maat staan. */
+function ouderKopMeten() {
+  const sc = $('screen-settings');
+  const kop = sc && sc.querySelector('.hub-sticky');
+  if (!kop || !kop.offsetHeight) return;
+  const hoogte = () => parseFloat(getComputedStyle(kop).height);
+  const stand = sc.classList.contains('gescrold');
+  sc.classList.add('kop-meten');
+  sc.classList.remove('gescrold');
+  const ruim = hoogte();
+  sc.classList.add('gescrold');
+  const krap = hoogte();
+  sc.classList.toggle('gescrold', stand);
+  void kop.offsetHeight;   // de stand vastleggen vóórdat de overgangen terugkomen
+  sc.classList.remove('kop-meten');
+  sc.style.setProperty('--kop-krimp', (ruim - krap) + 'px');
+}
+addEventListener('resize', ouderKopMeten);
 let savedPillTimer = null;
 function saveAndFlash() {
   save();
@@ -11198,6 +11240,7 @@ function renderSettings() {
     $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = beheerEmptyHtml();
     bindSettings(null, null);
+    ouderKopMeten();      // zonder de twee keuzerijen krimpt de kop minder
     return;
   }
   renderWhoRow();
@@ -11208,6 +11251,7 @@ function renderSettings() {
     : setTab === 'beheer'  ? beheerPanelHtml(p)
     :                        statsPanelHtml(p);
   bindSettings(p, s);
+  ouderKopMeten();
 }
 
 /* Elk onderdeel toont maar een déél van de bedieningen, dus alles wordt alleen

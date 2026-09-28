@@ -19,7 +19,8 @@
  *   F  een ster verwijderen noemt haar bij naam en vraagt eerst
  *   G  back-up eruit en er weer in: byte voor byte dezelfde voortgang
  *   H  een kapotte back-up verandert niets
- *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld
+ *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld --
+ *      en de inhoud eronder schuift niet mee
  *   J  vanuit Beheer een ster maken komt terug in Beheer, bij de nieuwe ster
  *   K  enkelvoud/meervoud: "1 show gespeeld", "2 shows gespeeld", "0 shows"
  *   L  de trofeeteller heeft één bron, en de kast noemt hetzelfde getal
@@ -508,6 +509,7 @@ function check(ok, label, detail) {
     const ruim = await page.evaluate(() => ({
       h: document.querySelector('#screen-settings .hub-sticky').offsetHeight,
       gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
+      inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
     }));
     await page.evaluate(() => { const sc = document.getElementById('screen-settings'); sc.scrollTop = 400; sc.dispatchEvent(new Event('scroll')); });
     await page.waitForTimeout(500);
@@ -522,6 +524,7 @@ function check(ok, label, detail) {
         wieInBeeld: zichtbaar(wie), watInBeeld: zichtbaar(wat),
         wieNaam: wie.textContent.trim(), watLabel: wat.textContent.trim(),
         terug: !!document.querySelector('#screen-settings .hub-sticky .icon-btn').offsetParent,
+        inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
       };
     });
     check(!ruim.gescrold && krap.gescrold, 'scrollen zet de kop in zijn krappe stand', JSON.stringify([ruim, krap]));
@@ -534,6 +537,11 @@ function check(ok, label, detail) {
     check(krap.wieInBeeld && /Anna/.test(krap.wieNaam), 'welk kind gekozen is blijft in beeld', JSON.stringify(krap));
     check(krap.watInBeeld && /Oefenen/.test(krap.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(krap));
     check(krap.terug, 'en de weg terug blijft er', 'terugknop weg');
+    /* Wat de kop krimpt komt er als marge onder weer bij (--kop-krimp): de plaat
+       wordt kleiner, maar de plek die hij in de stroom inneemt niet. Zonder dat
+       trok de krimpende kop de kaarten eronder 23px mee omhoog. */
+    check(krap.inhoud === ruim.inhoud, 'en de inhoud eronder blijft staan waar hij stond',
+      `${ruim.inhoud} -> ${krap.inhoud}`);
     // en terug naar boven maakt hem weer ruim
     await page.evaluate(() => { const sc = document.getElementById('screen-settings'); sc.scrollTop = 0; sc.dispatchEvent(new Event('scroll')); });
     await page.waitForTimeout(500);
@@ -542,6 +550,23 @@ function check(ok, label, detail) {
       gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
     }));
     check(!weerRuim.gescrold && weerRuim.h === ruim.h, 'bovenaan is hij weer ruim', JSON.stringify(weerRuim));
+    /* En de kop mag de schuifstand niet terugduwen. Toen hij in de stroom kromp,
+       zette de scroll anchoring van Chrome de schuifstand met die krimp terug;
+       stilgezet op 16px viel hij dan onder de drempel van ouderScroll, werd de kop
+       weer ruim, schoof de stand weer op -- en zo verder, elk beeldje, zolang
+       niemand het scherm aanraakte. Eén wissel en de stand blijft van de vinger. */
+    const stil = await page.evaluate(async () => {
+      const sc = document.getElementById('screen-settings');
+      let wissels = 0;
+      const ob = new MutationObserver(() => wissels++);
+      ob.observe(sc, { attributes: true, attributeFilter: ['class'] });
+      sc.scrollTop = 16;
+      await new Promise(r => setTimeout(r, 600));
+      ob.disconnect();
+      return { wissels, stand: sc.scrollTop, gescrold: sc.classList.contains('gescrold') };
+    });
+    check(stil.gescrold && stil.wissels === 1 && stil.stand === 16,
+      'net voorbij de drempel stilgezet blijven de kop en de schuifstand staan', JSON.stringify(stil));
     await ctx.close();
   }
 
