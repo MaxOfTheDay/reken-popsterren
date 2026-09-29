@@ -4087,6 +4087,16 @@
        als de overvloeier -- dat is het enige stukje kaart dat op de landing niet
        al onder de vluchtlaag klaar ligt. */
     #screen-map::before, #screen-map::after { transition: opacity 90ms linear; }
+    /* Maar wég gaat hij in één keer. Die overgang gold ook voor het vertrek, en
+       daar lag hij precies verkeerd: de scherpe tekening gaat met .vlucht-weg meteen
+       uit, maar deze twee lagen horen bij de kaart, en de kaart ligt bóven de
+       vluchtlaag (z 2 tegen z 1; op de terugweg z 4 tegen z 3). Ze dekten de
+       vliegende tekening dus af terwijl ze nog aan het wegdoven waren. Opgemeten
+       op 1024x768: drie beeldjes een kaart zonder tekening -- haltes op een
+       onscherpe achtergrond -- en de vlucht verscheen pas toen hij al 40% op weg
+       was. Terug was het één volledig onscherp scherm. Zonder deze overgang is de
+       tekening op elk beeldje van de vlucht te zien, heen en terug. */
+    #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { transition: none; }
     @media (prefers-reduced-motion: reduce) {
       #screen-map::before, #screen-map::after { transition: none; }
     }
