@@ -1081,6 +1081,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
              pseudo-element komt de doos uit de stijl (top/height t.o.v. .venue-licht,
              dat zelf inset:0 heeft en dus de hele zaal is). */
           const licht = zaal.querySelector('.venue-licht');
+          /* De hoogte van de zaal zelf uit de opmaak, net als die van de lagen
+             hieronder, en niet uit z: getBoundingClientRect rekent een transform
+             mee, en de zaal komt met de stille wissel van toonHub op een schaal
+             van 1,03 binnen (zie startLevel en schermKomtOp). Een laag die
+             onderaan netjes aansluit leek dan 3% te kort. Zie ook kopKrimpMeten,
+             dat om dezelfde reden getComputedStyle leest. */
+          const zaalHoog = getal(getComputedStyle(zaal).height);
           const lagen = [
             ['.venue-sfeer', getComputedStyle(zaal.querySelector('.venue-sfeer')), z.height, 0],
             ['.venue-art', getComputedStyle(zaal.querySelector('.venue-art')), z.height, 0],
@@ -1090,7 +1097,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
           ];
           lagen.forEach(([naam, cs]) => {
             const top = getal(cs.top), hoog = getal(cs.height);
-            const raaktOnder = top + hoog >= z.height - 1;
+            const raaktOnder = top + hoog >= zaalHoog - 1;
             if (raaktOnder) return;                    // loopt door tot onderaan: geen rand
             // "radial-gradient(60% 50% at 50% 50%, ...)" -- de verticale positie
             (cs.backgroundImage.match(/at\s+[\d.]+%\s+[\d.]+%/g) || []).forEach(m => {
