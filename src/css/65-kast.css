@@ -122,8 +122,13 @@
      ernaast -- en bovenaan schuift er niets onderdoor, dus daar mág hij open
      zijn. Gescrold wordt hij alsnog volledig dicht, zie hieronder: dáár is het
      leesbaarheid en geen sfeer. */
+  /* 9 en niet 10 bovenaan: dezelfde rand als de kleedkamer (#screen-dress
+     .hub-sticky). Die twee zijn buren in de tabbladbalk, en bij een wissel
+     vloeien hun koppen op dezelfde plek in elkaar over -- terugknop, naam en
+     saldo. Stond de ene rij een pixel lager, dan was dat het enige dat bij die
+     wissel bewoog. Houd ze gelijk; ook in de lage stand hieronder. */
   #screen-trophies .hub-sticky {
-    padding-top: 10px; padding-bottom: 9px;
+    padding-top: 9px; padding-bottom: 9px;
     background:
       radial-gradient(82% 90% at 50% 0%, rgba(var(--goud-glans-rgb),.11), transparent 72%),
       linear-gradient(180deg, rgba(30,8,54,.5) 0%, rgba(30,8,54,.62) 44%,
@@ -174,18 +179,29 @@
   }
   #screen-trophies.kop-meten .hub-sticky,
   #screen-trophies.kop-meten .hub-sticky *:not(.kt-vul) { transition: none; }
+  /* Lage schermen: de koprij van de kleedkamer, op de pixel. Die zet hier zijn
+     bovenrand op 8 en zijn naam een sport lager (zie de lage-schermregel in
+     75-kleedkamer.css), en de kast deed dat niet -- op een liggende telefoon
+     wisselde de naam bij elke tik tussen de twee tabbladen van 20 naar 24 en
+     terug, en de rij zakte 2px. Staat vóór de smalle-telefoonregels hieronder,
+     zodat op een kleine telefoon die van 360 het laatste woord heeft. */
+  @media (max-height: 700px) {
+    #screen-trophies .hub-sticky { padding-top: 8px; }
+    #screen-trophies .header-title { font-size: var(--tx-sub); }
+  }
   /* Smalle telefoon. Hetzelfde dat de kleedkamer al deed, en om dezelfde reden:
      tussen twee even brede zijkolommen paste "🏆 Trofeeënkast" niet meer en werd
      het "🏆 Trofeeën...". Een kop met puntjes erachter is geen kop meer -- zeker
      niet op het scherm waar een kind naartoe gaat om iets op te zoeken.
      De drie cellen krijgen de breedte die ze écht nodig hebben (terugknop 44, het
-     saldo zoveel als het getal vraagt, de naam de rest) en het saldo een maat
-     kleiner. Onder de 360 zakt de naam er nog één sport bij -- precies genoeg, en
-     één sport en niet "zo klein als het past": daar is de letterladder voor.
+     saldo zoveel als het getal vraagt, de naam de rest). Het saldo kreeg hier ook
+     een maat kleiner; dat is het sindsdien overal (zie .diamond-badge). Onder de
+     360 zakt de naam er nog één sport bij -- precies genoeg, en één sport en niet
+     "zo klein als het past": daar is de letterladder voor. De kleedkamer doet
+     dezelfde stap, zodat de twee buren ook daar even groot heten.
      De raakvlakken veranderen niet; de terugknop blijft 44px. */
   @media (max-width: 380px) {
     #screen-trophies .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-    #screen-trophies .diamond-badge { font-size: var(--tx-body); padding: 6px 12px; }
   }
   @media (max-width: 360px) {
     #screen-trophies .header-title { font-size: var(--tx-body); }

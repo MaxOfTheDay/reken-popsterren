@@ -530,10 +530,21 @@
   .diamond-badge {
     background: rgba(0,0,0,.32); border-radius: var(--r-pill); font-weight: 700;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-    /* --tx-sub en niet --tx-kop: de teller is een bijzin naast de schermnaam en
-       hoort niet even groot te zijn als de kop. Op 320px kostte elke pixel hier
-       een letter van de naam ernaast -- "Trofeeënkast" werd "Trofeeë...". */
-    padding: 8px 18px; font-size: var(--tx-sub);
+    /* De teller is een bijzin naast de schermnaam en hoort niet even groot te
+       zijn als de kop. Op 320px kostte elke pixel hier een letter van de naam
+       ernaast -- "Trofeeënkast" werd "Trofeeë...".
+
+       --tx-body en --hud-h, en dat is precies de pil van de kaart. Hier stond
+       --tx-sub met 8px lucht erboven en eronder, en daarmee klopte "één maat"
+       nergens: op de kaart en in Werelden was hij 34 hoog op 17 (in de zaal ook
+       17), op de kleedkamer en de kast 40 op 20. Tussen die tabbladen was hij het
+       enige in de kop dat bij elke wissel groeide of kromp, terwijl hij als enige
+       op alle drie op dezelfde plek staat. En op een telefoon zakt de schermnaam
+       zelf naar --tx-sub (zie de kopregel onder de 520px), zodat de teller daar
+       even groot was als de kop -- precies wat de eerste zin hierboven verbiedt.
+       De stof blijft per scherm verschillen, en dat hoort zo: op een tekening de
+       zwevende --hud-*, op een plaat deze. Alleen de maat is nu van iedereen. */
+    height: var(--hud-h); padding: 0 13px; font-size: var(--tx-body);
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
     border: 0; color: inherit; font-family: inherit;
   }
