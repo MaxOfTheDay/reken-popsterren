@@ -1550,8 +1550,16 @@
      cover + midden maakt er een echte lucht van, in beide standen. De
      verlooplagen eronder merken er niets van: een verloop heeft geen eigen maat
      én geen eigen verhouding, en dan is cover hetzelfde als auto. */
+  /* Vaste lagen en de wissel. Zolang een scherm een transform draagt (de 1.03 -> 1
+     van schermKomtOp, het wegvallen van schermWeg) is `fixed` niet meer op het
+     venster gerekend maar op het scherm zelf, en dan schuift de laag mee met de
+     schuifstand: op een gescrold scherm stond de lucht dan scrollTop pixels te
+     hoog en liet de onderkant de rauwe gloed van <body> zien -- een lichte flits
+     die verdween zodra de animatie klaar was. wisselSchuif zet --schuif op de
+     schuifstand zolang de wissel loopt; de vier lagen hieronder trekken die er
+     weer af, en buiten een wissel is hij 0. */
   .app-sfeer::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-size: cover; background-position: 50% 50%;
     background-image:
       var(--fonkeling),
@@ -1638,7 +1646,7 @@
      eromheen plus een slag lucht aan weerskanten. Eén breekpunt, en dat is
      meteen het enige dat dit vak nodig heeft. */
   .screen.gebruik.app-sfeer::after {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background: var(--stage-vlak), var(--sfeer-vloer, none);
   }
   @media (min-width: 1000px) {
@@ -1801,7 +1809,7 @@
      middelste 80%, en er staat hier bovendien geen inhoud van de tekening die
      gelezen moet worden. */
   #screen-newstar.app-sfeer::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-image:
       radial-gradient(130% 78% at 50% 50%, rgba(18,4,38,.56), rgba(18,4,38,.34) 62%, rgba(18,4,38,.2)),
       var(--kunst-sluier),
@@ -1884,7 +1892,7 @@
         pop, en het midden blijft leeg voor de inhoud. Dezelfde kamer, alleen op
         de hoogte waar hij sfeer is in plaats van decor. */
   #screen-dress.app-sfeer::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-image:
       var(--kunst-sluier),
       var(--fonkeling),
@@ -6498,7 +6506,12 @@
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
     transform: translateX(0) skewX(-18deg);
-    animation: shineSweep 2.6s ease-in-out infinite;
+    /* De vertraging geldt alleen voor de eerste veeg (een lus wacht niet opnieuw):
+       de veeg begon op het eerste beeldje van het scherm en lag dan midden in de
+       aankomst (1.03 -> 1, zie schermKomtOp) als een felle flits over de klare
+       kaarten die daarna wegtrok. Nu komt het scherm eerst tot rust. Tot die tijd
+       staat hij op translateX(0), buiten de kaart (left:-60%). */
+    animation: shineSweep 2.6s ease-in-out .7s infinite;
   }
   /* FASE 6B -- dezelfde veeg, maar op transform in plaats van op left.
 
@@ -14070,12 +14083,43 @@ function schermAnim(el, frames, opts) {
   const a = el.animate(frames, opts);
   if (!schermAnims.has(el)) schermAnims.set(el, []);
   schermAnims.get(el).push(a);
+  wisselSchuif(el, a);
   return a;
 }
 function schermAnimsStop(el) {
   (schermAnims.get(el) || []).forEach(a => a.cancel());
   schermAnims.delete(el);
+  wisselSchuifUit(el);
 }
+/* De lucht van een gescrold scherm blijft staan tijdens een wissel. Zolang een
+   scherm een transform draagt is `fixed` op het scherm zelf gerekend en schuift de
+   achtergrondlaag met de schuifstand mee: de onderkant liet dan de rauwe gloed van
+   <body> zien (een lichte flits) tot de animatie klaar was. --schuif is de
+   schuifstand, en de vier lagen in 20-schil.css trekken hem er weer af.
+
+   De stand komt uit een scroll-luisteraar en niet uit el.scrollTop: dat is een
+   opmaakvraag midden in de tik (zie schermAnims). Een scherm dat programmatisch
+   naar boven gaat (openTrophies) stuurt een scroll-gebeurtenis, dus dan loopt
+   --schuif vanzelf mee. */
+const schuifStand = new WeakMap();
+document.addEventListener('scroll', e => {
+  const el = e.target;
+  if (!el || !el.classList || !el.classList.contains('screen')) return;
+  schuifStand.set(el, el.scrollTop);
+  if (el.style.getPropertyValue('--schuif')) el.style.setProperty('--schuif', el.scrollTop + 'px');
+}, { capture: true, passive: true });
+function wisselSchuif(el, a) {
+  if (!el.classList.contains('screen')) return;
+  const y = schuifStand.get(el) || 0;
+  if (y) el.style.setProperty('--schuif', y + 'px');
+  const klaar = () => {
+    const nog = (schermAnims.get(el) || []).some(x => x.playState === 'running' || x.playState === 'pending');
+    if (!nog) wisselSchuifUit(el);
+  };
+  a.addEventListener('finish', klaar);
+  a.addEventListener('cancel', klaar);
+}
+function wisselSchuifUit(el) { el.style.removeProperty('--schuif'); }
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);   // een tweede tik stapelt geen tweede animatie
