@@ -6082,6 +6082,16 @@ function reisStartWaarnemer() {
     if (!src) return;
     delete el.dataset.art;
     ART_GEHAALD.add(src);
+    /* Staat hij al in het geheugen, dan is complete meteen waar en tekent het
+       kaartje gewoon. Zo niet, dan blijft het vlak leeg tot hij binnen is en komt
+       hij dan op (zie .reis-art.laadt). Mislukt hij, dan gaat de klasse er ook af:
+       dan staat het vlak er weer zoals altijd. */
+    const beeld = new Image();
+    beeld.src = src;
+    if (!beeld.complete) {
+      el.classList.add('laadt');
+      beeld.onload = beeld.onerror = () => el.classList.remove('laadt');
+    }
     el.style.backgroundImage = `url("${src}")`;
   };
   if (!window.IntersectionObserver) { track.querySelectorAll('.reis-art').forEach(laden); return; }

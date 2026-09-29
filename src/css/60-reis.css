@@ -317,7 +317,16 @@
      <button disabled> meer maar een knop die antwoordt (zie slotWereld), en dan
      hoort hij ook te voelen alsof de tik aankwam. */
   .reis-halte:active .reis-plaats { transform: scale(.965); }
-  .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%; }
+  .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%;
+    transition: opacity var(--t-snel) var(--ease-uit); }
+  /* Een tekening die er nog niet is (zie reisStartWaarnemer) komt erin in plaats
+     van erin te springen. Bij de eerste keer Werelden gaan die bestanden pas mee
+     als de kaartjes opgemeten zijn, dus middenin de vlucht, en dan stond er na de
+     landing een rij effen vlakken die een tel later in één beeldje wisselde naar
+     de tekening. Uit de voorraad is hij er meteen en gaat deze klasse er niet op:
+     dan is er ook niets dat opkomt. */
+  .reis-art.laadt { opacity: 0; transition: none; }
+  @media (prefers-reduced-motion: reduce) { .reis-art { transition: none; } }
   /* alleen als er nog geen tekening is: het wereldteken draagt de kaart */
   .reis-ico { position: relative; font-size: calc(var(--kaart-h) * .34); line-height: 1;
     filter: var(--emoji-schaduw-diep); }
