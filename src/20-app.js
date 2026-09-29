@@ -4491,33 +4491,72 @@ function schermWeg(el, naarBinnen, punt) {
    een overgang is dat precies het ene element dat verraadt dat er twee schermen
    tegelijk staan -- een volledig ondoorzichtige balk over een scherm dat nog aan
    het verschijnen is. Hij krijgt dus dezelfde fade als het scherm waar hij bij
-   hoort. */
-function navMee(naarBinnen) {
+   hoort.
+
+   meteen: het aankomende scherm wacht niet (de stille wissel van hubWissel, zie
+   daar). Dan wacht de balk ook niet op MOTION.komNa, anders kwam hij pas na zijn
+   eigen scherm binnen. */
+let navMeeNr = 0;   // welke navMee het laatst begon; een oudere ruimt niet meer op
+function navMee(naarBinnen, meteen) {
   const nav = $('main-nav');
   if (!nav || !nav.animate || motionOff()) return;
+  const nr = ++navMeeNr;
   /* Alleen wat navMee er zelf op zette, en niet nav.getAnimations(): dat dwingt
      stijl en opmaak af midden in de tik (gemeten: 9 tot 22ms per tik op een
      zesvoudig gesmoorde processor, op de halte én op "Verder op tournee"). Zie
      schermAnim -- dezelfde reden, dezelfde oplossing. */
   schermAnimsStop(nav);
+  nav.style.pointerEvents = '';
   if (!naarBinnen) {
     // De kaart komt op en neemt zijn balk mee. fill:'backwards' houdt hem op nul
     // zolang de vorige nog wegvalt, dus hij verschijnt niet alvast over een zaal.
     if (nav.style.display === 'none') return;
     schermAnim(nav, [{ opacity: 0 }, { opacity: 1 }],
-      { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+      { duration: MOTION.kom, delay: meteen ? 0 : MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
     return;
   }
   /* Andersom: show() heeft de balk al uitgezet omdat er in een show geen
-     navigatie hoort. Maar de kaart is dan nog 140ms bezig met vertrekken, en een
-     kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij komt
-     dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem wilde. */
+     navigatie hoort. Maar de kaart is dan nog MOTION.weg bezig met vertrekken, en
+     een kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij
+     komt dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem
+     wilde.
+
+     MAAR HIJ IS DAN AL WEG, OOK AL ZIE JE HEM NOG. Hij vangt geen tikken meer,
+     net als een scherm met .wegvallend. Dat deed hij wel: een tik op Kleedkamer
+     vlak na een tik op een halte opende de kleedkamer, met de show er nog
+     draaiend achter -- G bleef staan en de spotlight-teller liep door.
+
+     En hij dooft met dezelfde curve als het scherm dat hij volgt: 'uit', zie
+     schermWeg. Hier stond 'in', en daarmee stond de kaart op een derde terwijl
+     de balk nog vrijwel vol was -- een handvol beeldjes lang hing er een losse
+     balk over de zaal die al binnenkwam. */
   nav.style.display = 'flex';
-  const op = () => { schermAnimsStop(nav); navVolgtScherm(); };
+  nav.style.pointerEvents = 'none';
+  const op = () => {
+    // Kwam er intussen een nieuwere wissel, dan heeft die de balk; deze zou hem
+    // anders midden in zijn eigen fade weer afbreken.
+    if (nr !== navMeeNr) return;
+    schermAnimsStop(nav);
+    nav.style.pointerEvents = '';
+    navVolgtScherm();
+  };
   const a = schermAnim(nav, [{ opacity: 1 }, { opacity: 0 }],
-    { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
+    { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + MOTION.vangnet);
+}
+/* De balk bij een stille wissel (hubWissel, en de gewone weg terug naar de kaart
+   in kaartVertrek). Alleen als hij er aan de ene kant wel en aan de andere kant
+   niet hoort: tussen twee schermen mét balk blijft hij gewoon staan, en tussen
+   twee zonder is er niets. Hiervoor deed alleen de weg kaart <-> zaal dit; van
+   het eindscherm naar de kleedkamer stond de balk op het eerste beeldje al vol
+   over een eindscherm dat nog helemaal in beeld was, en van de kaart naar de
+   sterrenkeuze was hij bij de tik al weg. */
+function navWissel(van, naar) {
+  if (!van || !naar) return;
+  const had = !!NAV_FOR_SCREEN[van.id], krijgt = !!NAV_FOR_SCREEN[naar.id];
+  if (had && !krijgt) navMee(true);
+  else if (!had && krijgt) navMee(false, true);
 }
 /* ---- De wereld en zijn kaartje: één ding op twee maten (PS-24) ------------
    Wereldkaart en Werelden zijn niet twee schermen maar twee afstanden tot
@@ -5024,6 +5063,7 @@ function hubWissel(van, naar) {
   if (!van || !naar || van === naar) return;
   schermWeg(van, false);
   dressBarMee(van);
+  navWissel(van, naar);
   schermKomtOp(naar);
 }
 /* De koop-lade hangt buíten de kleedkamer, net als de navigatiebalk buiten de
@@ -5472,6 +5512,7 @@ function kaartVertrek(vorige, gekozen) {
        zie hubWissel, waar de andere helft van deze wissel staat. */
     schermWeg(vorige, false);
     dressBarMee(vorige);
+    navWissel(vorige, $('screen-map'));   // van de sterrenkeuze of het memoryspel: de balk komt mee op
   }
 }
 /* De onthulling van een wereld die pas uitgebracht is. Precies dezelfde camera als
