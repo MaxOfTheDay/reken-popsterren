@@ -1134,6 +1134,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
        B  de kleedkamer gaat gescrold dicht in de band onder de spiegel, zoals de
           kast gescrold dichtgaat -- maar de spiegel zelf blijft open, en de kop
           wordt er niet hoger of lager van.
+       D  de ← op de kleedkamer en de kast heeft geen lip meer: het was het
+          zwaarste ding in hun kop, en het is de uitgang. Dezelfde knop als op de
+          hulpschermen (.hub-sticky.sub), met hetzelfde 44px raakvlak.
 
      Op de telefoon van de rondgang en op de maten waar het uit de pas liep. */
   {
@@ -1152,9 +1155,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
           const s = document.querySelector('.screen.active');
           const midden = el => { const b = el.getBoundingClientRect(); return +(b.top + b.height / 2).toFixed(1); };
           const pil = s.querySelector('.diamond-badge'), naam = s.querySelector('.header-title');
+          const terug = s.querySelector('.header-left');
           return { scherm: s.id, pilH: +pil.getBoundingClientRect().height.toFixed(1),
             pilLetter: getComputedStyle(pil).fontSize, pilMidden: midden(pil),
-            terugMidden: midden(s.querySelector('.header-left')),
+            terugMidden: midden(terug), terugLip: getComputedStyle(terug).boxShadow,
+            terugMaat: terug.offsetWidth + 'x' + terug.offsetHeight,
             naamMidden: midden(naam), naamLetter: getComputedStyle(naam).fontSize,
             afgekapt: naam.scrollWidth > naam.clientWidth + 1 };
         };
@@ -1184,6 +1189,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         && r.kleed.pilMidden === r.kast.pilMidden && r.kleed.naamLetter === r.kast.naamLetter,
         'C · de koprij van de kleedkamer en de kast valt samen' + maat, JSON.stringify([r.kleed, r.kast]));
       check(!r.kleed.afgekapt && !r.kast.afgekapt, 'en geen van beide namen wordt afgekapt' + maat,
+        JSON.stringify([r.kleed, r.kast]));
+      check(r.kleed.terugLip === 'none' && r.kast.terugLip === 'none'
+        && r.kleed.terugMaat === '44x44' && r.kast.terugMaat === '44x44',
+        'D · de ← op de kleedkamer en de kast heeft geen lip, en houdt zijn 44px' + maat,
         JSON.stringify([r.kleed, r.kast]));
       check(!r.ladeOpen.klasse && r.ladeOpen.op === 0 && r.ladeDicht.klasse && r.ladeDicht.op === 1,
         'B · gescrold gaat de band onder de spiegel dicht, bovenaan staat hij open' + maat,
