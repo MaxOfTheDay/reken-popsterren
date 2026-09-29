@@ -77,8 +77,16 @@
      cover + midden maakt er een echte lucht van, in beide standen. De
      verlooplagen eronder merken er niets van: een verloop heeft geen eigen maat
      én geen eigen verhouding, en dan is cover hetzelfde als auto. */
+  /* Vaste lagen en de wissel. Zolang een scherm een transform draagt (de 1.03 -> 1
+     van schermKomtOp, het wegvallen van schermWeg) is `fixed` niet meer op het
+     venster gerekend maar op het scherm zelf, en dan schuift de laag mee met de
+     schuifstand: op een gescrold scherm stond de lucht dan scrollTop pixels te
+     hoog en liet de onderkant de rauwe gloed van <body> zien -- een lichte flits
+     die verdween zodra de animatie klaar was. wisselSchuif zet --schuif op de
+     schuifstand zolang de wissel loopt; de vier lagen hieronder trekken die er
+     weer af, en buiten een wissel is hij 0. */
   .app-sfeer::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-size: cover; background-position: 50% 50%;
     background-image:
       var(--fonkeling),
@@ -165,7 +173,7 @@
      eromheen plus een slag lucht aan weerskanten. Eén breekpunt, en dat is
      meteen het enige dat dit vak nodig heeft. */
   .screen.gebruik.app-sfeer::after {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background: var(--stage-vlak), var(--sfeer-vloer, none);
   }
   @media (min-width: 1000px) {
@@ -328,7 +336,7 @@
      middelste 80%, en er staat hier bovendien geen inhoud van de tekening die
      gelezen moet worden. */
   #screen-newstar.app-sfeer::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-image:
       radial-gradient(130% 78% at 50% 50%, rgba(18,4,38,.56), rgba(18,4,38,.34) 62%, rgba(18,4,38,.2)),
       var(--kunst-sluier),
@@ -411,7 +419,7 @@
         pop, en het midden blijft leeg voor de inhoud. Dezelfde kamer, alleen op
         de hoogte waar hij sfeer is in plaats van decor. */
   #screen-dress.app-sfeer::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ''; position: fixed; inset: var(--schuif, 0px) 0 calc(0px - var(--schuif, 0px)) 0; z-index: -1; pointer-events: none;
     background-image:
       var(--kunst-sluier),
       var(--fonkeling),
