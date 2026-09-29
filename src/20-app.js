@@ -4460,12 +4460,43 @@ function schermAnim(el, frames, opts) {
   const a = el.animate(frames, opts);
   if (!schermAnims.has(el)) schermAnims.set(el, []);
   schermAnims.get(el).push(a);
+  wisselSchuif(el, a);
   return a;
 }
 function schermAnimsStop(el) {
   (schermAnims.get(el) || []).forEach(a => a.cancel());
   schermAnims.delete(el);
+  wisselSchuifUit(el);
 }
+/* De lucht van een gescrold scherm blijft staan tijdens een wissel. Zolang een
+   scherm een transform draagt is `fixed` op het scherm zelf gerekend en schuift de
+   achtergrondlaag met de schuifstand mee: de onderkant liet dan de rauwe gloed van
+   <body> zien (een lichte flits) tot de animatie klaar was. --schuif is de
+   schuifstand, en de vier lagen in 20-schil.css trekken hem er weer af.
+
+   De stand komt uit een scroll-luisteraar en niet uit el.scrollTop: dat is een
+   opmaakvraag midden in de tik (zie schermAnims). Een scherm dat programmatisch
+   naar boven gaat (openTrophies) stuurt een scroll-gebeurtenis, dus dan loopt
+   --schuif vanzelf mee. */
+const schuifStand = new WeakMap();
+document.addEventListener('scroll', e => {
+  const el = e.target;
+  if (!el || !el.classList || !el.classList.contains('screen')) return;
+  schuifStand.set(el, el.scrollTop);
+  if (el.style.getPropertyValue('--schuif')) el.style.setProperty('--schuif', el.scrollTop + 'px');
+}, { capture: true, passive: true });
+function wisselSchuif(el, a) {
+  if (!el.classList.contains('screen')) return;
+  const y = schuifStand.get(el) || 0;
+  if (y) el.style.setProperty('--schuif', y + 'px');
+  const klaar = () => {
+    const nog = (schermAnims.get(el) || []).some(x => x.playState === 'running' || x.playState === 'pending');
+    if (!nog) wisselSchuifUit(el);
+  };
+  a.addEventListener('finish', klaar);
+  a.addEventListener('cancel', klaar);
+}
+function wisselSchuifUit(el) { el.style.removeProperty('--schuif'); }
 function schermWeg(el, naarBinnen, punt) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);   // een tweede tik stapelt geen tweede animatie
