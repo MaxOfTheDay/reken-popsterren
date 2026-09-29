@@ -45,6 +45,12 @@ een wereld die (nog) geen tekening heeft of waarvan het bestand weg is: de kaart
 is dan gewoon een wereld met lucht, gloed en horizon. Een wereld is speelbaar
 vóórdat hij getekend is.
 
+Eén plek let er wél op of de tekening er al is: **Werelden**
+(`reisStartWaarnemer`). Een kaartje waarvan de tekening nog niet in het geheugen
+staat blijft leeg tot hij binnen is en komt dan op (`.reis-art.laadt`), in plaats
+van van een effen vlak in één beeldje naar de tekening te springen. Er wacht
+niets op: het gaat alleen over hóe hij binnenkomt.
+
 ## De service worker: twee voorraden
 
 | voorraad | wat erin zit | strategie | naam |

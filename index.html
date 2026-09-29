@@ -4087,6 +4087,16 @@
        als de overvloeier -- dat is het enige stukje kaart dat op de landing niet
        al onder de vluchtlaag klaar ligt. */
     #screen-map::before, #screen-map::after { transition: opacity 90ms linear; }
+    /* Maar wég gaat hij in één keer. Die overgang gold ook voor het vertrek, en
+       daar lag hij precies verkeerd: de scherpe tekening gaat met .vlucht-weg meteen
+       uit, maar deze twee lagen horen bij de kaart, en de kaart ligt bóven de
+       vluchtlaag (z 2 tegen z 1; op de terugweg z 4 tegen z 3). Ze dekten de
+       vliegende tekening dus af terwijl ze nog aan het wegdoven waren. Opgemeten
+       op 1024x768: drie beeldjes een kaart zonder tekening -- haltes op een
+       onscherpe achtergrond -- en de vlucht verscheen pas toen hij al 40% op weg
+       was. Terug was het één volledig onscherp scherm. Zonder deze overgang is de
+       tekening op elk beeldje van de vlucht te zien, heen en terug. */
+    #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { transition: none; }
     @media (prefers-reduced-motion: reduce) {
       #screen-map::before, #screen-map::after { transition: none; }
     }
@@ -5440,7 +5450,16 @@
      <button disabled> meer maar een knop die antwoordt (zie slotWereld), en dan
      hoort hij ook te voelen alsof de tik aankwam. */
   .reis-halte:active .reis-plaats { transform: scale(.965); }
-  .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%; }
+  .reis-art { position: absolute; inset: 0; background-size: cover; background-position: 50% 36%;
+    transition: opacity var(--t-snel) var(--ease-uit); }
+  /* Een tekening die er nog niet is (zie reisStartWaarnemer) komt erin in plaats
+     van erin te springen. Bij de eerste keer Werelden gaan die bestanden pas mee
+     als de kaartjes opgemeten zijn, dus middenin de vlucht, en dan stond er na de
+     landing een rij effen vlakken die een tel later in één beeldje wisselde naar
+     de tekening. Uit de voorraad is hij er meteen en gaat deze klasse er niet op:
+     dan is er ook niets dat opkomt. */
+  .reis-art.laadt { opacity: 0; transition: none; }
+  @media (prefers-reduced-motion: reduce) { .reis-art { transition: none; } }
   /* alleen als er nog geen tekening is: het wereldteken draagt de kaart */
   .reis-ico { position: relative; font-size: calc(var(--kaart-h) * .34); line-height: 1;
     filter: var(--emoji-schaduw-diep); }
@@ -12518,6 +12537,12 @@ function show(id) {
   if (id !== 'screen-map') kaartGroetStop();
   // en die van de sterrenkeuze bij de sterrenkeuze -- zie landingStil.
   if (id !== 'screen-profile') { landingStil(); logoIntroStop(); }
+  /* En de vlucht tussen de kaart en Werelden hoort bij die twee. Een tik op de
+     tabbladbalk middenin zo'n vlucht werd wel gehonoreerd, maar de tekening vloog
+     gewoon door over het nieuwe scherm tot hij geland was -- over het rek van de
+     kleedkamer, of als hele wereld bovenop de kast die er al onder stond.
+     vluchtKlaar ruimt hem in één keer op; is er geen vlucht, dan doet hij niets. */
+  if (id !== 'screen-map' && id !== 'screen-journey') vluchtKlaar();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -13999,33 +14024,72 @@ function schermWeg(el, naarBinnen, punt) {
    een overgang is dat precies het ene element dat verraadt dat er twee schermen
    tegelijk staan -- een volledig ondoorzichtige balk over een scherm dat nog aan
    het verschijnen is. Hij krijgt dus dezelfde fade als het scherm waar hij bij
-   hoort. */
-function navMee(naarBinnen) {
+   hoort.
+
+   meteen: het aankomende scherm wacht niet (de stille wissel van hubWissel, zie
+   daar). Dan wacht de balk ook niet op MOTION.komNa, anders kwam hij pas na zijn
+   eigen scherm binnen. */
+let navMeeNr = 0;   // welke navMee het laatst begon; een oudere ruimt niet meer op
+function navMee(naarBinnen, meteen) {
   const nav = $('main-nav');
   if (!nav || !nav.animate || motionOff()) return;
+  const nr = ++navMeeNr;
   /* Alleen wat navMee er zelf op zette, en niet nav.getAnimations(): dat dwingt
      stijl en opmaak af midden in de tik (gemeten: 9 tot 22ms per tik op een
      zesvoudig gesmoorde processor, op de halte én op "Verder op tournee"). Zie
      schermAnim -- dezelfde reden, dezelfde oplossing. */
   schermAnimsStop(nav);
+  nav.style.pointerEvents = '';
   if (!naarBinnen) {
     // De kaart komt op en neemt zijn balk mee. fill:'backwards' houdt hem op nul
     // zolang de vorige nog wegvalt, dus hij verschijnt niet alvast over een zaal.
     if (nav.style.display === 'none') return;
     schermAnim(nav, [{ opacity: 0 }, { opacity: 1 }],
-      { duration: MOTION.kom, delay: MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
+      { duration: MOTION.kom, delay: meteen ? 0 : MOTION.komNa, easing: MOTION.uit, fill: 'backwards' });
     return;
   }
   /* Andersom: show() heeft de balk al uitgezet omdat er in een show geen
-     navigatie hoort. Maar de kaart is dan nog 140ms bezig met vertrekken, en een
-     kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij komt
-     dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem wilde. */
+     navigatie hoort. Maar de kaart is dan nog MOTION.weg bezig met vertrekken, en
+     een kaart waarvan de balk al bij de tik verdwenen is ziet er kapot uit. Hij
+     komt dus even terug, gaat mee weg, en wordt daarna gezet zoals show() hem
+     wilde.
+
+     MAAR HIJ IS DAN AL WEG, OOK AL ZIE JE HEM NOG. Hij vangt geen tikken meer,
+     net als een scherm met .wegvallend. Dat deed hij wel: een tik op Kleedkamer
+     vlak na een tik op een halte opende de kleedkamer, met de show er nog
+     draaiend achter -- G bleef staan en de spotlight-teller liep door.
+
+     En hij dooft met dezelfde curve als het scherm dat hij volgt: 'uit', zie
+     schermWeg. Hier stond 'in', en daarmee stond de kaart op een derde terwijl
+     de balk nog vrijwel vol was -- een handvol beeldjes lang hing er een losse
+     balk over de zaal die al binnenkwam. */
   nav.style.display = 'flex';
-  const op = () => { schermAnimsStop(nav); navVolgtScherm(); };
+  nav.style.pointerEvents = 'none';
+  const op = () => {
+    // Kwam er intussen een nieuwere wissel, dan heeft die de balk; deze zou hem
+    // anders midden in zijn eigen fade weer afbreken.
+    if (nr !== navMeeNr) return;
+    schermAnimsStop(nav);
+    nav.style.pointerEvents = '';
+    navVolgtScherm();
+  };
   const a = schermAnim(nav, [{ opacity: 1 }, { opacity: 0 }],
-    { duration: MOTION.weg, easing: MOTION.in, fill: 'forwards' });
+    { duration: MOTION.weg, easing: MOTION.uit, fill: 'forwards' });
   a.onfinish = op;
   setTimeout(op, MOTION.weg + MOTION.vangnet);
+}
+/* De balk bij een stille wissel (hubWissel, en de gewone weg terug naar de kaart
+   in kaartVertrek). Alleen als hij er aan de ene kant wel en aan de andere kant
+   niet hoort: tussen twee schermen mét balk blijft hij gewoon staan, en tussen
+   twee zonder is er niets. Hiervoor deed alleen de weg kaart <-> zaal dit; van
+   het eindscherm naar de kleedkamer stond de balk op het eerste beeldje al vol
+   over een eindscherm dat nog helemaal in beeld was, en van de kaart naar de
+   sterrenkeuze was hij bij de tik al weg. */
+function navWissel(van, naar) {
+  if (!van || !naar) return;
+  const had = !!NAV_FOR_SCREEN[van.id], krijgt = !!NAV_FOR_SCREEN[naar.id];
+  if (had && !krijgt) navMee(true);
+  else if (!had && krijgt) navMee(false, true);
 }
 /* ---- De wereld en zijn kaartje: één ding op twee maten (PS-24) ------------
    Wereldkaart en Werelden zijn niet twee schermen maar twee afstanden tot
@@ -14258,6 +14322,7 @@ function vluchtKlaar() {
   overgangBezig = false;
   try { v.op(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
   if (v.laag && v.laag.parentNode) v.laag.parentNode.removeChild(v.laag);
+  if (v.globe) v.globe();   // de globe landt normaal zelf; wordt de vlucht afgebroken, dan hij ook
 }
 /* De vlucht zelf. van/naar zijn twee vlakken; bron levert de kleuren en de
    tekening (de wereld waar het om gaat). 'op' is het opruimwerk van de aanroeper
@@ -14388,6 +14453,8 @@ function globeVlucht(vanEl, naarEl, duur) {
      keer hetzelfde plaatje op dezelfde plek, en dus niets te zien. */
   an.onfinish = weg;
   setTimeout(weg, duur + MOTION.vangnet);
+  // hij vliegt mee met de wereldvlucht, en gaat dus ook mee weg als die afbreekt
+  if (vluchtOp) vluchtOp.globe = weg;
 }
 /* Kaart -> zaal. "Ik koos deze plek, en nu ga ik er naar binnen."
      1  de halte drukt in en geeft een lichtkringetje terug (meteen, geen wachten)
@@ -14433,8 +14500,9 @@ function enterLevel(lvl, stopEl) {
      loopt daar overheen. fill:'backwards' houdt het scherm op opacity 0 zolang de
      vertraging loopt, dus "later beginnen" kost geen enkele keten van timers --
      het is één animatie die gewoon later aan is. Valt de animatie weg, dan staat
-     het spel er meteen. */
-  startLevel(lvl);
+     het spel er meteen. De true zegt startLevel dat de overgang hier geregeld
+     wordt: zonder die vlag legt hij de stille wissel eroverheen (zie daar). */
+  startLevel(lvl, true);
   spel.classList.add('komt-op');
   navMee(true);                            // de balk van de kaart gaat mét de kaart weg
   spel.style.transformOrigin = oorsprongPct(spel, punt);
@@ -14517,7 +14585,13 @@ function kaartKomtOp(punt) {
    dezelfde beweging, en niet twee losse antwoorden op dezelfde tik.
 
    Dit is geen kleine kaartKomtOp: die zoomt om een aangetikt punt en hoort bij
-   de kaart. Deze weet van geen enkel scherm iets. */
+   de kaart. Deze weet van geen enkel scherm iets.
+
+   Ook de zaal en het eindscherm gebruiken hem, als er niets uit te leggen valt:
+   van de zaal naar het eindscherm (dezelfde show, een stap verder), en terug
+   naar de zaal met "Opnieuw proberen". Alleen de zaal die uit een aangetikte
+   halte groeit heeft een eigen beweging -- zie enterLevel en startLevel. Zo is
+   er geen enkel scherm meer dat met een kale show() uit het niets opkomt. */
 function schermKomtOp(el) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);   // zie schermAnims: zonder stijl en opmaak af te dwingen
@@ -14532,6 +14606,7 @@ function hubWissel(van, naar) {
   if (!van || !naar || van === naar) return;
   schermWeg(van, false);
   dressBarMee(van);
+  navWissel(van, naar);
   schermKomtOp(naar);
 }
 /* De koop-lade hangt buíten de kleedkamer, net als de navigatiebalk buiten de
@@ -14980,6 +15055,7 @@ function kaartVertrek(vorige, gekozen) {
        zie hubWissel, waar de andere helft van deze wissel staat. */
     schermWeg(vorige, false);
     dressBarMee(vorige);
+    navWissel(vorige, $('screen-map'));   // van de sterrenkeuze of het memoryspel: de balk komt mee op
   }
 }
 /* De onthulling van een wereld die pas uitgebracht is. Precies dezelfde camera als
@@ -15533,6 +15609,16 @@ function reisStartWaarnemer() {
     if (!src) return;
     delete el.dataset.art;
     ART_GEHAALD.add(src);
+    /* Staat hij al in het geheugen, dan is complete meteen waar en tekent het
+       kaartje gewoon. Zo niet, dan blijft het vlak leeg tot hij binnen is en komt
+       hij dan op (zie .reis-art.laadt). Mislukt hij, dan gaat de klasse er ook af:
+       dan staat het vlak er weer zoals altijd. */
+    const beeld = new Image();
+    beeld.src = src;
+    if (!beeld.complete) {
+      el.classList.add('laadt');
+      beeld.onload = beeld.onerror = () => el.classList.remove('laadt');
+    }
     el.style.backgroundImage = `url("${src}")`;
   };
   if (!window.IntersectionObserver) { track.querySelectorAll('.reis-art').forEach(laden); return; }
@@ -18116,7 +18202,14 @@ function toonHint(q, val, btnEl) {
 const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 🎊', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
 let G = null;
 
-function startLevel(lvl) {
+/* eigenOvergang: de aanroeper beweegt de zaal zelf. Dat is alleen enterLevel,
+   dat hem uit de aangetikte halte laat groeien. Elke andere weg hierheen --
+   "Opnieuw proberen" op het eindscherm, "Speel" in het ouderdeel -- krijgt de
+   stille wissel van toonHub. Hier stond een kale show(), en die liet de zaal
+   met screenIn uit het niets opkomen: één beeldje alleen de roze achtergrond
+   van de app, en daarna een zaal die er verwassen overheen kwam. Precies de
+   tussenstand die de regel bij MOTION uitsluit. */
+function startLevel(lvl, eigenOvergang) {
   // De vorige show loslaten vóór G vervangen wordt: daarna is haar spotlight-
   // teller niet meer te vinden (die hangt aan G). Zie startSpot.
   stopSpot();
@@ -18151,7 +18244,8 @@ function startLevel(lvl) {
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world);
-  show('screen-game');
+  if (eigenOvergang) show('screen-game');
+  else toonHub('screen-game');
   renderQuestion();
 }
 /* Stoppen: een X sluit/onderbreekt de show. Is er nog geen voortgang (net
@@ -18208,7 +18302,7 @@ function renderQuestion() {
   renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
-  vraagKomtIn($('question-card'));
+  vraagKomtIn($('question-card'), G.idx === 0);
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
@@ -18253,15 +18347,22 @@ function renderQuestion() {
    zijn eindstand staan, en daarmee op een eigen laag. Met 'backwards' viel hij
    daar na 140ms van af, en dan tekent de browser de som net anders -- genoeg om
    het getal dat erin vliegt (somVult) af en toe ruim een pixel naast het vakje
-   te laten landen. test/maths.test.js meet precies dat. */
+   te laten landen. test/maths.test.js meet precies dat.
+
+   metScherm: de eerste vraag van een show. Die komt binnen met het hele scherm
+   (de zaal groeit uit de halte, of de stille wissel), en een tweede opkomst
+   daarbinnen is er één te veel: de kaart stond dan doorzichtig in een zaal die
+   zelf nog binnenkwam. Hij krijgt wél dezelfde animatie, maar dan van rust naar
+   rust -- zo staat ook de eerste som op zijn eigen laag, zie hierboven. */
 const VRAAG_IN = 140;
 let vraagInAnim = null;
-function vraagKomtIn(kaart) {
+function vraagKomtIn(kaart, metScherm) {
   if (vraagInAnim) { vraagInAnim.cancel(); vraagInAnim = null; }
   if (!kaart || !kaart.animate || motionOff()) return;
   if (!$('screen-game').classList.contains('venue-aan')) return;
+  const rust = { opacity: 1, transform: 'none' };
   vraagInAnim = kaart.animate(
-    [{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
+    [metScherm ? rust : { opacity: 0, transform: 'translateY(7px)' }, rust],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
@@ -18930,7 +19031,15 @@ function endLevel(success) {
   }
   telNu($('end-diamonds'), p.diamonds);
   G = null;
-  show('screen-end');
+  /* De stille wissel van toonHub, en geen kale show(). Die liet het eindscherm
+     met screenIn uit het niets opkomen terwijl de zaal op het eerste beeldje al
+     weg was: één beeldje stond er alleen de roze achtergrond van de app, tussen
+     twee donkere zalen in, en daarna kwam het eindscherm er verwassen overheen.
+     Na élke show. Nu ligt de zaal erbovenop en doft weg, en het eindscherm staat
+     er vanaf het eerste beeldje dekkend onder -- dezelfde afspraak als overal.
+     De wissel (MOTION.totaal) is voorbij voordat de eerste ster landt
+     (STERCEREMONIE.eerste). */
+  toonHub('screen-end');
   /* Na het eindscherm hoogstens twee grote momenten, en nooit tegelijk: eerst de
      ster-status (die sluit zichzelf na ~2 tellen), dán het wereldfeest. In de
      praktijk vallen ze zelden samen -- een rang komt op 12/30/60... sterren en een
