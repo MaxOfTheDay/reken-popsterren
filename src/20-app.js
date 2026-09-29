@@ -4964,8 +4964,9 @@ function enterLevel(lvl, stopEl) {
      loopt daar overheen. fill:'backwards' houdt het scherm op opacity 0 zolang de
      vertraging loopt, dus "later beginnen" kost geen enkele keten van timers --
      het is één animatie die gewoon later aan is. Valt de animatie weg, dan staat
-     het spel er meteen. */
-  startLevel(lvl);
+     het spel er meteen. De true zegt startLevel dat de overgang hier geregeld
+     wordt: zonder die vlag legt hij de stille wissel eroverheen (zie daar). */
+  startLevel(lvl, true);
   spel.classList.add('komt-op');
   navMee(true);                            // de balk van de kaart gaat mét de kaart weg
   spel.style.transformOrigin = oorsprongPct(spel, punt);
@@ -5048,7 +5049,13 @@ function kaartKomtOp(punt) {
    dezelfde beweging, en niet twee losse antwoorden op dezelfde tik.
 
    Dit is geen kleine kaartKomtOp: die zoomt om een aangetikt punt en hoort bij
-   de kaart. Deze weet van geen enkel scherm iets. */
+   de kaart. Deze weet van geen enkel scherm iets.
+
+   Ook de zaal en het eindscherm gebruiken hem, als er niets uit te leggen valt:
+   van de zaal naar het eindscherm (dezelfde show, een stap verder), en terug
+   naar de zaal met "Opnieuw proberen". Alleen de zaal die uit een aangetikte
+   halte groeit heeft een eigen beweging -- zie enterLevel en startLevel. Zo is
+   er geen enkel scherm meer dat met een kale show() uit het niets opkomt. */
 function schermKomtOp(el) {
   if (!el || !el.animate || motionOff()) return;
   schermAnimsStop(el);   // zie schermAnims: zonder stijl en opmaak af te dwingen
@@ -8649,7 +8656,14 @@ function toonHint(q, val, btnEl) {
 const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 🎊', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
 let G = null;
 
-function startLevel(lvl) {
+/* eigenOvergang: de aanroeper beweegt de zaal zelf. Dat is alleen enterLevel,
+   dat hem uit de aangetikte halte laat groeien. Elke andere weg hierheen --
+   "Opnieuw proberen" op het eindscherm, "Speel" in het ouderdeel -- krijgt de
+   stille wissel van toonHub. Hier stond een kale show(), en die liet de zaal
+   met screenIn uit het niets opkomen: één beeldje alleen de roze achtergrond
+   van de app, en daarna een zaal die er verwassen overheen kwam. Precies de
+   tussenstand die de regel bij MOTION uitsluit. */
+function startLevel(lvl, eigenOvergang) {
   // De vorige show loslaten vóór G vervangen wordt: daarna is haar spotlight-
   // teller niet meer te vinden (die hangt aan G). Zie startSpot.
   stopSpot();
@@ -8684,7 +8698,8 @@ function startLevel(lvl) {
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world);
-  show('screen-game');
+  if (eigenOvergang) show('screen-game');
+  else toonHub('screen-game');
   renderQuestion();
 }
 /* Stoppen: een X sluit/onderbreekt de show. Is er nog geen voortgang (net
@@ -9463,7 +9478,15 @@ function endLevel(success) {
   }
   telNu($('end-diamonds'), p.diamonds);
   G = null;
-  show('screen-end');
+  /* De stille wissel van toonHub, en geen kale show(). Die liet het eindscherm
+     met screenIn uit het niets opkomen terwijl de zaal op het eerste beeldje al
+     weg was: één beeldje stond er alleen de roze achtergrond van de app, tussen
+     twee donkere zalen in, en daarna kwam het eindscherm er verwassen overheen.
+     Na élke show. Nu ligt de zaal erbovenop en doft weg, en het eindscherm staat
+     er vanaf het eerste beeldje dekkend onder -- dezelfde afspraak als overal.
+     De wissel (MOTION.totaal) is voorbij voordat de eerste ster landt
+     (STERCEREMONIE.eerste). */
+  toonHub('screen-end');
   /* Na het eindscherm hoogstens twee grote momenten, en nooit tegelijk: eerst de
      ster-status (die sluit zichzelf na ~2 tellen), dán het wereldfeest. In de
      praktijk vallen ze zelden samen -- een rang komt op 12/30/60... sterren en een
