@@ -1117,6 +1117,85 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     }
   }
 
+  /* ================= 8b · Eén kop over drie tabbladen =================
+     Kaart, Kleedkamer en Trofeeën delen de tabbladbalk, en bij een wissel vloeien
+     hun koppen in elkaar over. Drie dingen liepen daar uit de pas, en alle drie
+     alleen op sommige maten -- precies het soort fout dat niemand ziet tot een
+     kind heen en weer tikt:
+
+       A  de 💎-pil. Het enige dat op alle drie op dezelfde plek staat, en hij had
+          twee maten: 34 hoog op 17 op de kaart, 40 op 20 op de andere twee. Bij
+          elke wissel groeide of kromp hij. Eén maat nu (zie .diamond-badge).
+       C  de kleedkamer en de kast zijn buren. Hun koprij -- terug, naam, saldo --
+          hoort op de pixel samen te vallen, zodat er bij die wissel alleen een
+          woord verandert. Op een liggende telefoon heette de ene 20 en de andere
+          24, en op de kleinste telefoon andersom 20 en 17. De kaart houdt zijn
+          eigen rij: ZONE is uit de onderrand van díé kop gemeten.
+       B  de kleedkamer gaat gescrold dicht in de band onder de spiegel, zoals de
+          kast gescrold dichtgaat -- maar de spiegel zelf blijft open, en de kop
+          wordt er niet hoger of lager van.
+
+     Op de telefoon van de rondgang en op de maten waar het uit de pas liep. */
+  {
+    for (const [w, h] of [[390, 844], [320, 568], [360, 740], [844, 390], [1024, 768]]) {
+      const kopCtx = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(kopCtx);
+      const kp = await kopCtx.newPage();
+      kp.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await kp.goto(APP_URL + '&demo&star=p1');
+      await kp.waitForFunction(() => typeof selectProfile === 'function');
+      const r = await kp.evaluate(async () => {
+        const wacht = ms => new Promise(res => setTimeout(res, ms));
+        // de opmaak en niet de doos: een scherm komt op een schaal van 1,03 binnen
+        // (schermKomtOp), maar na 500ms staat het stil, dus hier is dat hetzelfde
+        const rij = () => {
+          const s = document.querySelector('.screen.active');
+          const midden = el => { const b = el.getBoundingClientRect(); return +(b.top + b.height / 2).toFixed(1); };
+          const pil = s.querySelector('.diamond-badge'), naam = s.querySelector('.header-title');
+          return { scherm: s.id, pilH: +pil.getBoundingClientRect().height.toFixed(1),
+            pilLetter: getComputedStyle(pil).fontSize, pilMidden: midden(pil),
+            terugMidden: midden(s.querySelector('.header-left')),
+            naamMidden: midden(naam), naamLetter: getComputedStyle(naam).fontSize,
+            afgekapt: naam.scrollWidth > naam.clientWidth + 1 };
+        };
+        const uit = {};
+        goMap(); await wacht(500); uit.kaart = rij();
+        openKleedkamer(); await wacht(500); uit.kleed = rij();
+        const sc = document.getElementById('screen-dress'), kop = sc.querySelector('.hub-sticky');
+        const lade = () => {
+          const k = kop.getBoundingClientRect(), laag = getComputedStyle(kop, '::after');
+          return { klasse: sc.classList.contains('gescrold'), op: +laag.opacity,
+            kopH: parseFloat(getComputedStyle(kop).height),
+            laagBoven: +(k.bottom - parseFloat(getComputedStyle(kop).borderBottomWidth) - parseFloat(laag.height)).toFixed(1) };
+        };
+        uit.ladeOpen = lade();
+        sc.scrollTop = 200; await wacht(400);
+        uit.ladeDicht = lade();
+        uit.spiegelOnder = +document.getElementById('shop-spiegel').getBoundingClientRect().bottom.toFixed(1);
+        uit.rijBoven = +document.getElementById('shop-tabs-wrap').getBoundingClientRect().top.toFixed(1);
+        openTrophies(); await wacht(500); uit.kast = rij();
+        return uit;
+      });
+      const maat = ' — ' + w + 'x' + h;
+      check(r.kleed.pilH === r.kaart.pilH && r.kast.pilH === r.kaart.pilH
+        && r.kleed.pilLetter === r.kaart.pilLetter && r.kast.pilLetter === r.kaart.pilLetter,
+        'A · de 💎-pil is op de kaart, de kleedkamer en de kast even groot' + maat, JSON.stringify(r));
+      check(r.kleed.terugMidden === r.kast.terugMidden && r.kleed.naamMidden === r.kast.naamMidden
+        && r.kleed.pilMidden === r.kast.pilMidden && r.kleed.naamLetter === r.kast.naamLetter,
+        'C · de koprij van de kleedkamer en de kast valt samen' + maat, JSON.stringify([r.kleed, r.kast]));
+      check(!r.kleed.afgekapt && !r.kast.afgekapt, 'en geen van beide namen wordt afgekapt' + maat,
+        JSON.stringify([r.kleed, r.kast]));
+      check(!r.ladeOpen.klasse && r.ladeOpen.op === 0 && r.ladeDicht.klasse && r.ladeDicht.op === 1,
+        'B · gescrold gaat de band onder de spiegel dicht, bovenaan staat hij open' + maat,
+        JSON.stringify([r.ladeOpen, r.ladeDicht]));
+      check(r.ladeDicht.laagBoven >= r.spiegelOnder - 0.5 && r.ladeDicht.laagBoven <= r.rijBoven,
+        'B · die band begint onder de spiegel en vóór de categorierij' + maat, JSON.stringify(r));
+      check(r.ladeDicht.kopH === r.ladeOpen.kopH, 'B · en de kop wordt er niet hoger of lager van' + maat,
+        JSON.stringify([r.ladeOpen, r.ladeDicht]));
+      await kopCtx.close();
+    }
+  }
+
   /* ================= 9 · De kaart zegt hallo =================
      Eén zwaai als de kaart zélf de aankomst is, en geen als er al iets beweegt
      dat uitlegt waaróm de ster daar staat. Dat is de hele regel (zie kaartGroet

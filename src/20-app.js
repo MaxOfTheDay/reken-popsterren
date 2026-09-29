@@ -9859,6 +9859,25 @@ function tabRijDoel(rij, gekozen) {
   }
   return Math.max(0, x);
 }
+/* De kop van de kleedkamer heeft twee standen, net als die van de kast (zie
+   kastScroll): open bovenaan, en zodra er kaartjes onder de kop door schuiven
+   gaat de band met de categorierij en het schattenvak dicht. Hoe dat eruitziet
+   staat bij .hub-sticky::after in het stijlblad; hier wordt alleen de klasse
+   gezet. Zelfde drempel en zelfde rAF als bij de kast.
+
+   Wat hier níet hoeft, en bij de kast wel: meten. Daar krimpt de kop en moet de
+   inhoud eronder stil blijven staan (kopKrimpMeten); hier gaat er alleen een laag
+   aan, en de kop wordt geen pixel hoger of lager. */
+let kleedScrollWacht = false;
+function kleedScroll() {
+  if (kleedScrollWacht) return;
+  kleedScrollWacht = true;
+  requestAnimationFrame(() => {
+    kleedScrollWacht = false;
+    const sc = $('screen-dress');
+    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
+  });
+}
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
    keer dat de kleedkamer opengaat -- en verder niet: kijken en aandoen gaan via
    paintShop() hieronder, dat dezelfde kaartjes laat staan en alleen hun stand
@@ -9867,6 +9886,12 @@ function tabRijDoel(rij, gekozen) {
    onder je vinger vandaan. */
 function renderShop() {
   const p = P();
+  /* De kopstand volgt de schuifstand. Élke weg hierheen loopt hierlangs -- het
+     tabblad, terugkomen, een categorie, een spulletje, het schattenvak -- en de
+     rAF in kleedScroll leest de stand pas als de aanroeper hem heeft gezet (de
+     meeste zetten hem ná deze functie terug op nul). */
+  $('screen-dress').onscroll = kleedScroll;
+  kleedScroll();
   const grid = $('item-grid');
   /* De nieuwe kaartjes komen eerst in een los stapeltje en gaan pas onderaan in
      één keer het rek in. Het rek staat dus nooit leeg zolang deze functie loopt,

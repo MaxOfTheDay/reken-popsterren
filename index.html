@@ -2458,10 +2458,21 @@
   .diamond-badge {
     background: rgba(0,0,0,.32); border-radius: var(--r-pill); font-weight: 700;
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-    /* --tx-sub en niet --tx-kop: de teller is een bijzin naast de schermnaam en
-       hoort niet even groot te zijn als de kop. Op 320px kostte elke pixel hier
-       een letter van de naam ernaast -- "Trofeeënkast" werd "Trofeeë...". */
-    padding: 8px 18px; font-size: var(--tx-sub);
+    /* De teller is een bijzin naast de schermnaam en hoort niet even groot te
+       zijn als de kop. Op 320px kostte elke pixel hier een letter van de naam
+       ernaast -- "Trofeeënkast" werd "Trofeeë...".
+
+       --tx-body en --hud-h, en dat is precies de pil van de kaart. Hier stond
+       --tx-sub met 8px lucht erboven en eronder, en daarmee klopte "één maat"
+       nergens: op de kaart en in Werelden was hij 34 hoog op 17 (in de zaal ook
+       17), op de kleedkamer en de kast 40 op 20. Tussen die tabbladen was hij het
+       enige in de kop dat bij elke wissel groeide of kromp, terwijl hij als enige
+       op alle drie op dezelfde plek staat. En op een telefoon zakt de schermnaam
+       zelf naar --tx-sub (zie de kopregel onder de 520px), zodat de teller daar
+       even groot was als de kop -- precies wat de eerste zin hierboven verbiedt.
+       De stof blijft per scherm verschillen, en dat hoort zo: op een tekening de
+       zwevende --hud-*, op een plaat deze. Alleen de maat is nu van iedereen. */
+    height: var(--hud-h); padding: 0 13px; font-size: var(--tx-body);
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
     border: 0; color: inherit; font-family: inherit;
   }
@@ -5941,8 +5952,13 @@
      ernaast -- en bovenaan schuift er niets onderdoor, dus daar mág hij open
      zijn. Gescrold wordt hij alsnog volledig dicht, zie hieronder: dáár is het
      leesbaarheid en geen sfeer. */
+  /* 9 en niet 10 bovenaan: dezelfde rand als de kleedkamer (#screen-dress
+     .hub-sticky). Die twee zijn buren in de tabbladbalk, en bij een wissel
+     vloeien hun koppen op dezelfde plek in elkaar over -- terugknop, naam en
+     saldo. Stond de ene rij een pixel lager, dan was dat het enige dat bij die
+     wissel bewoog. Houd ze gelijk; ook in de lage stand hieronder. */
   #screen-trophies .hub-sticky {
-    padding-top: 10px; padding-bottom: 9px;
+    padding-top: 9px; padding-bottom: 9px;
     background:
       radial-gradient(82% 90% at 50% 0%, rgba(var(--goud-glans-rgb),.11), transparent 72%),
       linear-gradient(180deg, rgba(30,8,54,.5) 0%, rgba(30,8,54,.62) 44%,
@@ -5993,18 +6009,29 @@
   }
   #screen-trophies.kop-meten .hub-sticky,
   #screen-trophies.kop-meten .hub-sticky *:not(.kt-vul) { transition: none; }
+  /* Lage schermen: de koprij van de kleedkamer, op de pixel. Die zet hier zijn
+     bovenrand op 8 en zijn naam een sport lager (zie de lage-schermregel in
+     75-kleedkamer.css), en de kast deed dat niet -- op een liggende telefoon
+     wisselde de naam bij elke tik tussen de twee tabbladen van 20 naar 24 en
+     terug, en de rij zakte 2px. Staat vóór de smalle-telefoonregels hieronder,
+     zodat op een kleine telefoon die van 360 het laatste woord heeft. */
+  @media (max-height: 700px) {
+    #screen-trophies .hub-sticky { padding-top: 8px; }
+    #screen-trophies .header-title { font-size: var(--tx-sub); }
+  }
   /* Smalle telefoon. Hetzelfde dat de kleedkamer al deed, en om dezelfde reden:
      tussen twee even brede zijkolommen paste "🏆 Trofeeënkast" niet meer en werd
      het "🏆 Trofeeën...". Een kop met puntjes erachter is geen kop meer -- zeker
      niet op het scherm waar een kind naartoe gaat om iets op te zoeken.
      De drie cellen krijgen de breedte die ze écht nodig hebben (terugknop 44, het
-     saldo zoveel als het getal vraagt, de naam de rest) en het saldo een maat
-     kleiner. Onder de 360 zakt de naam er nog één sport bij -- precies genoeg, en
-     één sport en niet "zo klein als het past": daar is de letterladder voor.
+     saldo zoveel als het getal vraagt, de naam de rest). Het saldo kreeg hier ook
+     een maat kleiner; dat is het sindsdien overal (zie .diamond-badge). Onder de
+     360 zakt de naam er nog één sport bij -- precies genoeg, en één sport en niet
+     "zo klein als het past": daar is de letterladder voor. De kleedkamer doet
+     dezelfde stap, zodat de twee buren ook daar even groot heten.
      De raakvlakken veranderen niet; de terugknop blijft 44px. */
   @media (max-width: 380px) {
     #screen-trophies .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-    #screen-trophies .diamond-badge { font-size: var(--tx-body); padding: 6px 12px; }
   }
   @media (max-width: 360px) {
     #screen-trophies .header-title { font-size: var(--tx-body); }
@@ -6714,6 +6741,7 @@
      De waas blijft: één grote, stilstaande laag waas is wat een doorzichtig vlak
      boven een tekening leesbaar houdt, en hij staat hier op precies één element. */
   #screen-dress .hub-sticky {
+    /* de bovenrand is die van de kast, en andersom -- zie #screen-trophies .hub-sticky */
     padding-top: 9px; padding-bottom: 8px;
     background:
       radial-gradient(78% 86% at 50% 0%, rgba(var(--goud-glans-rgb),.13), transparent 70%),
@@ -6728,6 +6756,38 @@
      in de zaal ook doet zodra de zaal een tekening heeft (.venue-aan). Korte,
      vette tekst op kunst: geval a uit §4 van de afspraak bovenaan. */
   #screen-dress .screen-header .header-title { text-shadow: var(--op-kunst-ink); }
+  /* ---- Gescrold gaat de lade dicht ----------------------------------------
+     Onder deze kop schuift het rek door, en de veeg hierboven is onderin maar .58
+     tot .72, met 8px waas. Voor de kamer is dat genoeg, voor een kaartje dat
+     eronder doorschuift niet: de gouden rand van wat ze aanheeft gloeide dwars
+     achter "Kleren" en het schattenvak door -- precies in de band met de kleinste
+     letters. De kast had hetzelfde en gaat daarom gescrold dicht (zie
+     #screen-trophies.gescrold .hub-sticky). Dit is die afspraak, maar alleen voor
+     de onderste band: bovenin staat de spiegel, en daar blijft de kamer te zien.
+
+     Een laag en geen tweede verloop op de kop zelf. Een verloop kan niet
+     overvloeien (de kast springt daarom in één beeldje om); een laag met opacity
+     wel, en die kost de compositor niets.
+
+     Hij loopt van de onderrand van de spiegel tot de onderrand van de kop: 98px,
+     op élke maat van 320 tot 1440 breed gelijk, want wat erin staat -- de rij van
+     44 en het schattenvak -- groeit niet mee met het scherm; alleen de pop doet
+     dat, en die staat erboven. De eerste 4px lopen in, in de kier tussen de
+     spiegel en de rij, dus de spiegel zelf raakt hij niet. De twee lage-
+     schermregels hieronder maken die band krapper, en zetten hem op 93 en 90.
+     Er krimpt niets en de kop wordt er niet hoger van: dit hoeft dus niet
+     gemeten te worden zoals de kop van de kast (kopKrimpMeten). kleedScroll zet
+     de klasse. */
+  #screen-dress .hub-sticky::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 98px;
+    z-index: -1; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(180deg, rgba(32,9,56,0), rgb(32,9,56) 4px);
+    opacity: 0; transition: opacity var(--t-snel) ease;
+  }
+  #screen-dress.gescrold .hub-sticky::after { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-dress .hub-sticky::after { transition: none; }
+  }
   /* ---- De kop van een hulpscherm ------------------------------------------
      Dezelfde plakkende kop, maar dan voor een scherm dat geen spel is: nieuwe
      ster nu, en straks net zo goed de kleedkamer, de trofeeën en het ouderdeel.
@@ -6801,6 +6861,8 @@
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
     #screen-dress .schat-entry { margin-top: 4px; min-height: 32px; padding: 3px 11px; }
+    /* de band onder de spiegel is hier krapper -- zie de lade, bovenaan */
+    #screen-dress .hub-sticky::after { height: 93px; }
   }
   /* Een telefoon in liggende stand (844x390) is de krapste stand die dit scherm
      kent: na de kop en de navigatiebalk blijft er ~100px over, en dat is minder
@@ -6817,16 +6879,25 @@
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
     #screen-dress .schat-raadsel { width: 40px; height: 40px; font-size: 21px; }
     #screen-dress .schat-entry { margin-top: 3px; min-height: 30px; padding: 2px 10px; }
+    #screen-dress .hub-sticky::after { height: 90px; }
   }
   /* Smalle telefoon: de naam van het scherm past niet meer tussen twee even brede
      zijkolommen van elk 108px, en werd afgekapt tot "Kleedka…". De drie cellen
      krijgen hier de breedte die ze écht nodig hebben (terugknop 44, teller zoveel
-     als het getal vraagt, de naam de rest) en de teller een maat kleiner. De naam
-     staat dan een paar pixels uit het optische midden -- ruil ik graag tegen een
-     scherm dat zijn eigen naam voluit kan zeggen. */
+     als het getal vraagt, de naam de rest). De teller kreeg hier ook een maat
+     kleiner; dat is hij sindsdien overal (zie .diamond-badge). De naam staat dan
+     een paar pixels uit het optische midden -- ruil ik graag tegen een scherm dat
+     zijn eigen naam voluit kan zeggen. */
   @media (max-width: 380px) {
     #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
-    #screen-dress .diamond-badge { font-size: var(--tx-body); padding: 6px 12px; }
+  }
+  /* En onder de 360 dezelfde sport als de kast: "Kleedkamer" paste hier nog op 20,
+     maar "Trofeeënkast" niet, en dan heetten de twee buren in de tabbladbalk op de
+     kleinste telefoon in twee maten -- de enige plek waar hun koppen niet gelijk
+     waren. Staat ná de lage-schermregel hierboven, die hem anders op 20 terugzet
+     (320x568 is allebei). */
+  @media (max-width: 360px) {
+    #screen-dress .header-title { font-size: var(--tx-body); }
   }
   /* ---- De spiegel ---------------------------------------------------------
      Waar de kleedkamer om draait: "hoe ziet mijn ster eruit?". Het was een
@@ -19386,6 +19457,25 @@ function tabRijDoel(rij, gekozen) {
   }
   return Math.max(0, x);
 }
+/* De kop van de kleedkamer heeft twee standen, net als die van de kast (zie
+   kastScroll): open bovenaan, en zodra er kaartjes onder de kop door schuiven
+   gaat de band met de categorierij en het schattenvak dicht. Hoe dat eruitziet
+   staat bij .hub-sticky::after in het stijlblad; hier wordt alleen de klasse
+   gezet. Zelfde drempel en zelfde rAF als bij de kast.
+
+   Wat hier níet hoeft, en bij de kast wel: meten. Daar krimpt de kop en moet de
+   inhoud eronder stil blijven staan (kopKrimpMeten); hier gaat er alleen een laag
+   aan, en de kop wordt geen pixel hoger of lager. */
+let kleedScrollWacht = false;
+function kleedScroll() {
+  if (kleedScrollWacht) return;
+  kleedScrollWacht = true;
+  requestAnimationFrame(() => {
+    kleedScrollWacht = false;
+    const sc = $('screen-dress');
+    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
+  });
+}
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
    keer dat de kleedkamer opengaat -- en verder niet: kijken en aandoen gaan via
    paintShop() hieronder, dat dezelfde kaartjes laat staan en alleen hun stand
@@ -19394,6 +19484,12 @@ function tabRijDoel(rij, gekozen) {
    onder je vinger vandaan. */
 function renderShop() {
   const p = P();
+  /* De kopstand volgt de schuifstand. Élke weg hierheen loopt hierlangs -- het
+     tabblad, terugkomen, een categorie, een spulletje, het schattenvak -- en de
+     rAF in kleedScroll leest de stand pas als de aanroeper hem heeft gezet (de
+     meeste zetten hem ná deze functie terug op nul). */
+  $('screen-dress').onscroll = kleedScroll;
+  kleedScroll();
   const grid = $('item-grid');
   /* De nieuwe kaartjes komen eerst in een los stapeltje en gaan pas onderaan in
      één keer het rek in. Het rek staat dus nooit leeg zolang deze functie loopt,
