@@ -6498,7 +6498,12 @@
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
     transform: translateX(0) skewX(-18deg);
-    animation: shineSweep 2.6s ease-in-out infinite;
+    /* De vertraging geldt alleen voor de eerste veeg (een lus wacht niet opnieuw):
+       de veeg begon op het eerste beeldje van het scherm en lag dan midden in de
+       aankomst (1.03 -> 1, zie schermKomtOp) als een felle flits over de klare
+       kaarten die daarna wegtrok. Nu komt het scherm eerst tot rust. Tot die tijd
+       staat hij op translateX(0), buiten de kaart (left:-60%). */
+    animation: shineSweep 2.6s ease-in-out .7s infinite;
   }
   /* FASE 6B -- dezelfde veeg, maar op transform in plaats van op left.
 
