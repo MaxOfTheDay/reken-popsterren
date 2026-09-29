@@ -12528,6 +12528,12 @@ function show(id) {
   if (id !== 'screen-map') kaartGroetStop();
   // en die van de sterrenkeuze bij de sterrenkeuze -- zie landingStil.
   if (id !== 'screen-profile') { landingStil(); logoIntroStop(); }
+  /* En de vlucht tussen de kaart en Werelden hoort bij die twee. Een tik op de
+     tabbladbalk middenin zo'n vlucht werd wel gehonoreerd, maar de tekening vloog
+     gewoon door over het nieuwe scherm tot hij geland was -- over het rek van de
+     kleedkamer, of als hele wereld bovenop de kast die er al onder stond.
+     vluchtKlaar ruimt hem in één keer op; is er geen vlucht, dan doet hij niets. */
+  if (id !== 'screen-map' && id !== 'screen-journey') vluchtKlaar();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'komt-op'));
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
@@ -14307,6 +14313,7 @@ function vluchtKlaar() {
   overgangBezig = false;
   try { v.op(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
   if (v.laag && v.laag.parentNode) v.laag.parentNode.removeChild(v.laag);
+  if (v.globe) v.globe();   // de globe landt normaal zelf; wordt de vlucht afgebroken, dan hij ook
 }
 /* De vlucht zelf. van/naar zijn twee vlakken; bron levert de kleuren en de
    tekening (de wereld waar het om gaat). 'op' is het opruimwerk van de aanroeper
@@ -14437,6 +14444,8 @@ function globeVlucht(vanEl, naarEl, duur) {
      keer hetzelfde plaatje op dezelfde plek, en dus niets te zien. */
   an.onfinish = weg;
   setTimeout(weg, duur + MOTION.vangnet);
+  // hij vliegt mee met de wereldvlucht, en gaat dus ook mee weg als die afbreekt
+  if (vluchtOp) vluchtOp.globe = weg;
 }
 /* Kaart -> zaal. "Ik koos deze plek, en nu ga ik er naar binnen."
      1  de halte drukt in en geeft een lichtkringetje terug (meteen, geen wachten)
