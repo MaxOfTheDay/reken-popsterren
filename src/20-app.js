@@ -8775,7 +8775,7 @@ function renderQuestion() {
   renderSegBar($('qprogress'), G.total, G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
-  vraagKomtIn($('question-card'));
+  vraagKomtIn($('question-card'), G.idx === 0);
   // antwoorden
   const area = $('answer-area');
   if (G.count) {
@@ -8820,15 +8820,22 @@ function renderQuestion() {
    zijn eindstand staan, en daarmee op een eigen laag. Met 'backwards' viel hij
    daar na 140ms van af, en dan tekent de browser de som net anders -- genoeg om
    het getal dat erin vliegt (somVult) af en toe ruim een pixel naast het vakje
-   te laten landen. test/maths.test.js meet precies dat. */
+   te laten landen. test/maths.test.js meet precies dat.
+
+   metScherm: de eerste vraag van een show. Die komt binnen met het hele scherm
+   (de zaal groeit uit de halte, of de stille wissel), en een tweede opkomst
+   daarbinnen is er één te veel: de kaart stond dan doorzichtig in een zaal die
+   zelf nog binnenkwam. Hij krijgt wél dezelfde animatie, maar dan van rust naar
+   rust -- zo staat ook de eerste som op zijn eigen laag, zie hierboven. */
 const VRAAG_IN = 140;
 let vraagInAnim = null;
-function vraagKomtIn(kaart) {
+function vraagKomtIn(kaart, metScherm) {
   if (vraagInAnim) { vraagInAnim.cancel(); vraagInAnim = null; }
   if (!kaart || !kaart.animate || motionOff()) return;
   if (!$('screen-game').classList.contains('venue-aan')) return;
+  const rust = { opacity: 1, transform: 'none' };
   vraagInAnim = kaart.animate(
-    [{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
+    [metScherm ? rust : { opacity: 0, transform: 'translateY(7px)' }, rust],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
