@@ -6822,12 +6822,24 @@
   }
   /* De terugknop houdt zijn 44px raakvlak (kinderhand), maar niet zijn lip: een
      knop die indrukbaar lijkt trekt aandacht, en dit is de uitgang en niet de
-     bedoeling van het scherm. */
-  .hub-sticky.sub .icon-btn {
+     bedoeling van het scherm.
+
+     De kleedkamer en de kast lenen dít stuk van de hulpkop, en alleen dit: hun
+     kop zelf houdt zijn eigen plaat en zijn ronde onderhoeken. Met lip was de ←
+     het zwaarste ding in hun kop -- zwaarder dan de naam en de 💎 ernaast --
+     terwijl het de minst nodige knop is: de tabbladbalk en de terugknop van het
+     toestel brengen je al naar de kaart. En op de kaart zelf staat op die plek het
+     portretje, zonder lip; zo wisselt bij een tik tussen de tabbladen alleen het
+     teken, niet het gewicht. Het ouderdeel heeft zijn lip nog. */
+  .hub-sticky.sub .icon-btn,
+  #screen-dress .hub-sticky .icon-btn, #screen-trophies .hub-sticky .icon-btn {
     font-size: 17px; border-color: rgba(255,255,255,.22);
     background: rgba(255,255,255,.1); box-shadow: none;
   }
-  .hub-sticky.sub .icon-btn:active { transform: scale(.94); box-shadow: none; }
+  .hub-sticky.sub .icon-btn:active,
+  #screen-dress .hub-sticky .icon-btn:active, #screen-trophies .hub-sticky .icon-btn:active {
+    transform: scale(.94); box-shadow: none;
+  }
   /* de rand-/gloedbehandeling zit nu in de gedeelde .stage-frame (zie .stage
      hierboven) -- hier alleen nog de eigen afmeting van de kleedkamer-scène */
   /* FASE 5B -- de pop is waar dit scherm over gáát ("maak mijn ster mooi"), dus
