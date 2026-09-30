@@ -110,6 +110,7 @@
   /* ---- De kop van een hulpscherm ------------------------------------------
      Dezelfde plakkende kop, maar dan voor een scherm dat geen spel is: nieuwe
      ster nu, en straks net zo goed de kleedkamer, de trofeeën en het ouderdeel.
+     (Die drie delen inmiddels de terugknop, zie onder; hun kop zelf nog niet.)
 
      Het verschil met de spelkop is bewust klein en helemaal in gewicht: minder
      hoog, minder vlak, een haarlijn in plaats van een balkrand, en een zachtere
@@ -149,14 +150,24 @@
      terwijl het de minst nodige knop is: de tabbladbalk en de terugknop van het
      toestel brengen je al naar de kaart. En op de kaart zelf staat op die plek het
      portretje, zonder lip; zo wisselt bij een tik tussen de tabbladen alleen het
-     teken, niet het gewicht. Het ouderdeel heeft zijn lip nog. */
+     teken, niet het gewicht.
+
+     Het ouderdeel leent hem ook. Daar is hij precies wat de eerste zin hierboven
+     zegt: een hulpscherm met één weg terug. Zijn eigen maten blijven van hem --
+     gescrold en op een laag scherm krimpt hij naar 38 met een pijl van 16, en die
+     regels staan later in het blad (80-ouderdeel.css) en even zwaar, dus die
+     winnen. Deze regel zet alleen de stof en de ruime maat. Let op als je de 17
+     hier verandert: de overgang daar loopt in hele pixels, in net zoveel stappen
+     als de pijl krimpt (zie #screen-settings .hub-sticky .icon-btn). */
   .hub-sticky.sub .icon-btn,
-  #screen-dress .hub-sticky .icon-btn, #screen-trophies .hub-sticky .icon-btn {
+  #screen-dress .hub-sticky .icon-btn, #screen-trophies .hub-sticky .icon-btn,
+  #screen-settings .hub-sticky .icon-btn {
     font-size: 17px; border-color: rgba(255,255,255,.22);
     background: rgba(255,255,255,.1); box-shadow: none;
   }
   .hub-sticky.sub .icon-btn:active,
-  #screen-dress .hub-sticky .icon-btn:active, #screen-trophies .hub-sticky .icon-btn:active {
+  #screen-dress .hub-sticky .icon-btn:active, #screen-trophies .hub-sticky .icon-btn:active,
+  #screen-settings .hub-sticky .icon-btn:active {
     transform: scale(.94); box-shadow: none;
   }
   /* de rand-/gloedbehandeling zit nu in de gedeelde .stage-frame (zie .stage
