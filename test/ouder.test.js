@@ -506,11 +506,15 @@ function check(ok, label, detail) {
     const { ctx, page } = await fresh();
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(300);
-    const ruim = await page.evaluate(() => ({
-      h: document.querySelector('#screen-settings .hub-sticky').offsetHeight,
-      gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
-      inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
-    }));
+    const ruim = await page.evaluate(() => {
+      const terug = document.querySelector('#screen-settings .hub-sticky .icon-btn');
+      return {
+        h: document.querySelector('#screen-settings .hub-sticky').offsetHeight,
+        gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
+        inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
+        terugLip: getComputedStyle(terug).boxShadow, terugMaat: terug.offsetWidth + 'x' + terug.offsetHeight,
+      };
+    });
     await page.evaluate(() => { const sc = document.getElementById('screen-settings'); sc.scrollTop = 400; sc.dispatchEvent(new Event('scroll')); });
     await page.waitForTimeout(500);
     const krap = await page.evaluate(() => {
@@ -525,6 +529,8 @@ function check(ok, label, detail) {
         wieNaam: wie.textContent.trim(), watLabel: wat.textContent.trim(),
         terug: !!document.querySelector('#screen-settings .hub-sticky .icon-btn').offsetParent,
         inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
+        terugLip: getComputedStyle(document.querySelector('#screen-settings .hub-sticky .icon-btn')).boxShadow,
+        terugMaat: (b => b.offsetWidth + 'x' + b.offsetHeight)(document.querySelector('#screen-settings .hub-sticky .icon-btn')),
       };
     });
     check(!ruim.gescrold && krap.gescrold, 'scrollen zet de kop in zijn krappe stand', JSON.stringify([ruim, krap]));
@@ -537,6 +543,13 @@ function check(ok, label, detail) {
     check(krap.wieInBeeld && /Anna/.test(krap.wieNaam), 'welk kind gekozen is blijft in beeld', JSON.stringify(krap));
     check(krap.watInBeeld && /Oefenen/.test(krap.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(krap));
     check(krap.terug, 'en de weg terug blijft er', 'terugknop weg');
+    /* De terugknop is de vlakke knop van de hulpkop (zie .hub-sticky.sub
+       .icon-btn): geen lip, in geen van beide standen. Zijn eigen maten houdt hij
+       wel -- 44 bovenaan, 38 gescrold. */
+    check(ruim.terugLip === 'none' && krap.terugLip === 'none',
+      'de terugknop heeft geen lip, bovenaan en gescrold', JSON.stringify([ruim.terugLip, krap.terugLip]));
+    check(ruim.terugMaat === '44x44' && krap.terugMaat === '38x38',
+      'en krimpt nog steeds van 44 naar 38', `${ruim.terugMaat} -> ${krap.terugMaat}`);
     /* Wat de kop krimpt komt er als marge onder weer bij (--kop-krimp): de plaat
        wordt kleiner, maar de plek die hij in de stroom inneemt niet. Zonder dat
        trok de krimpende kop de kaarten eronder 23px mee omhoog. */
@@ -567,6 +580,30 @@ function check(ok, label, detail) {
     });
     check(stil.gescrold && stil.wissels === 1 && stil.stand === 16,
       'net voorbij de drempel stilgezet blijven de kop en de schuifstand staan', JSON.stringify(stil));
+    /* De lettergroottes in de kop lopen in hele pixels mee (steps), in net zoveel
+       stappen als ze krimpen -- een gebroken maat is voor de browser een nieuwe
+       letter, en dat was het duurste van de hele overgang (zie de noot bij
+       #screen-settings .hub-sticky .icon-btn). Verandert een beginmaat zonder dat
+       het aantal stappen meegaat, dan duikt er een halve pixel op. Dat is hier
+       elk beeldje nagemeten, voor de terugknop en de titel. */
+    const onderweg = await page.evaluate(async () => {
+      const sc = document.getElementById('screen-settings');
+      sc.scrollTop = 0;
+      await new Promise(r => setTimeout(r, 500));
+      const terug = document.querySelector('#screen-settings .hub-sticky .icon-btn');
+      const titel = document.querySelector('#screen-settings .header-title');
+      const gezien = new Set();
+      sc.scrollTop = 400;
+      const t0 = performance.now();
+      while (performance.now() - t0 < 500) {
+        gezien.add(getComputedStyle(terug).fontSize);
+        gezien.add(getComputedStyle(titel).fontSize);
+        await new Promise(r => requestAnimationFrame(r));
+      }
+      return [...gezien];
+    });
+    check(onderweg.length > 2 && onderweg.every(m => Number.isInteger(parseFloat(m))),
+      'tijdens het krimpen staan de terugknop en de titel altijd op hele pixels', onderweg.join(', '));
     await ctx.close();
   }
 

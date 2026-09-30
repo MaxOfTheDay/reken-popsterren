@@ -57,8 +57,13 @@
      één pixel in een titel zie je niet; een kop die hapert wel. Het aantal stappen
      is het aantal pixels dat hij krimpt (20 -> 17 is 3). De som hierboven lijdt
      er niet onder, want geen van deze regels is zo hoog als zijn letter: de
-     hoogte komt overal van een min-height of van de terugknop. */
-  #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
+     hoogte komt overal van een min-height of van de terugknop.
+
+     De terugknop krimpt van 17 naar 16, dus één stap. Hij was 18 en had er twee;
+     sinds hij de vlakke knop van de hulpkop leent (zie .hub-sticky.sub .icon-btn)
+     begint hij op 17, en twee stappen over één pixel zou juist een halve pixel
+     opleveren. */
+  #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(1); }
   #screen-settings .header-title { transition: font-size var(--t-snel) steps(3); }
   #screen-settings .hub-sticky .screen-header,
   #screen-settings .who-row, #screen-settings .who-portrait, #screen-settings .who-portrait svg,
