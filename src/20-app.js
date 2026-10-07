@@ -11169,6 +11169,8 @@ function ouderVoetHtml() {
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
+// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de rij
+// onder het tandwiel (gear-over, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();

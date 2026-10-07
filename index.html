@@ -2295,12 +2295,17 @@
     display: grid; place-items: center;
     background: var(--lavender-wash); box-shadow: inset 0 0 0 1.5px var(--purple-light);
   }
-  .gear-item.parents .gi-sub {
+  .gear-item .gi-sub {
     display: block; font-size: var(--tx-mini); font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
   }
   /* een teken en geen letter: het pijltje staat als maat in de regel, zie §5 */
   .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
   .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
+  /* "Over Rekensterren": een <a> in een rij die verder uit knoppen bestaat, dus
+     de lijn onder de tekst eraf. Geen eigen kleur en geen tegeltje -- hij hoort
+     onder "Voor ouders" als de kleinere van de twee, niet als tweede kop. */
+  a.gear-item { text-decoration: none; }
+  .gear-item.over { padding: 9px 11px; }
 
   /* ---- Podium / avatar ---- */
   .stage {
@@ -8839,6 +8844,13 @@
       <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
       <span class="gi-chev" aria-hidden="true">›</span>
     </button>
+    <!-- De weg naar over/ (zie ouderVoetHtml en naarOver in het scriptblok). Een echte
+         link in hetzelfde venster, geen knop: lange tik en schermlezer werken zo mee. -->
+    <a class="gear-item over" id="gear-over" href="over/index.html" onclick="naarOver(event)" role="menuitem">
+      <span class="gi-ico" aria-hidden="true">🎬</span>
+      <span class="gi-label">Over Rekensterren<span class="gi-sub">Filmpje · delen</span></span>
+      <span class="gi-chev" aria-hidden="true">›</span>
+    </a>
   </div>
 </div>
 
@@ -20792,6 +20804,8 @@ function ouderVoetHtml() {
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
+// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de rij
+// onder het tandwiel (gear-over, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();

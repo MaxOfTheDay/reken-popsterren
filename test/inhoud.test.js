@@ -885,6 +885,11 @@ zaak('M', () => {
   // geïnstalleerde app uit de app, de browser in.
   const overLink = (bron.match(/<a [^>]*id="set-over"[^>]*>/) || [''])[0];
   check(overLink && !/target=/.test(overLink), 'M · en die link blijft in de app (geen target)', overLink);
+  // En de rij onder het tandwiel: dezelfde pagina, ook in hetzelfde venster.
+  const gearLink = (bron.match(/<a [^>]*id="gear-over"[^>]*>/) || [''])[0];
+  check(/href="over\/index\.html"/.test(gearLink) && !/target=/.test(gearLink),
+    'M · het tandwielmenu linkt ook naar over/, zonder target', gearLink);
+  check(/onclick="naarOver\(event\)"/.test(gearLink), 'M · en gebruikt dezelfde handler (bewaren, en zonder net een melding)', gearLink);
   const sw = fs.readFileSync(path.join(WORTEL, 'sw.js'), 'utf8');
   check(/\.mp4\$/.test(sw), 'M · sw.js laat filmpjes buiten de voorraad', '');
   check(sw.includes('(over|promo)'), 'M · en over/ en promo/ helemaal: de voorraad van het spel blijft van het spel', '');
