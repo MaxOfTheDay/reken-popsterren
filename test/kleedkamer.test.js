@@ -197,7 +197,7 @@ zaak('G · een oude save', () => {
 });
 
 /* ---- H · De wereldschatten (fase 6E). De verzameling die onder het vakje
-   "✨ Wereldschatten · 3 / 6" hangt. Wat hier vastligt is niet hoe hij eruitziet
+   "✨ Wereldschatten · 3 verzameld" hangt. Wat hier vastligt is niet hoe hij eruitziet
    -- dat is smaak -- maar waar hij vandaan komt: uit WORLDS en uit p.owned, en
    nergens anders. Er is geen tweede lijst, geen 'verdiend'-vlaggetje en geen
    getal dat bewaard wordt; dus kan er ook niets uit de pas lopen. ------------- */
@@ -206,15 +206,24 @@ zaak('H · de wereldschatten', () => {
   const uitWerelden = app.WORLDS
     .map((w, i) => (i < app.WORLD_AVAIL && w.beloning && app.item(w.beloning)) ? w.beloning : null)
     .filter(Boolean);
+  /* Het vak houdt op bij de horizon, dezelfde als die van de reis: voor een
+     verse ster wereld 1 plus REIS_VOORUIT. Wat erachter ligt is één mistkaartje
+     (geen spulletje, dus niet in shopItems) -- zie zichtbareSchatten. */
+  const horizon = app.laatsteZichtbareWereld(p);
+  const zicht = app.WORLDS
+    .map((w, i) => (i <= horizon && i < app.WORLD_AVAIL && w.beloning && app.item(w.beloning)) ? w.beloning : null)
+    .filter(Boolean);
   const vak = rek(app, app.SCHAT_CAT);
-  check(vak.join() === uitWerelden.join(),
-    'H · het vak toont precies wat de werelden uitdelen, op wereldvolgorde',
-    JSON.stringify([vak, uitWerelden]));
+  check(vak.join() === zicht.join() && vak.length < uitWerelden.length,
+    'H · het vak toont wat de werelden tot aan de horizon uitdelen, op wereldvolgorde',
+    JSON.stringify([vak, zicht]));
+  check(app.wereldSchatten().map(x => x.item.id).join() === uitWerelden.join(),
+    'H · de hele verzameling (wereldSchatten) kent ze wél allemaal', JSON.stringify(uitWerelden));
   check(vak.every(id => app.item(id).price === undefined),
     'H · en geen van alle heeft een prijs', JSON.stringify(vak.filter(id => app.item(id).price !== undefined)));
   // een verse ster: alles nog te halen
   const leeg = app.schatStand(p);
-  check(leeg.heeft === 0 && leeg.totaal === vak.length,
+  check(leeg.heeft === 0 && leeg.totaal === uitWerelden.length,
     'H · een verse ster heeft er nog geen van allemaal', JSON.stringify(leeg));
   /* Verdienen verandert de teller en niet de volgorde: dit is een verzameling en
      geen rek, dus plek 1 blijft de eerste wereld -- ook als je die nog niet hebt
@@ -223,8 +232,17 @@ zaak('H · de wereldschatten', () => {
   const na = app.schatStand(p);
   check(na.heeft === 1 && na.totaal === leeg.totaal,
     'H · één verdiend telt als één, en het totaal beweegt niet mee', JSON.stringify(na));
-  check(rek(app, app.SCHAT_CAT).join() === uitWerelden.join(),
+  check(rek(app, app.SCHAT_CAT).join() === zicht.join(),
     'H · en de volgorde blijft die van de tournee', JSON.stringify(rek(app, app.SCHAT_CAT)));
+  /* Wat al van jou is staat er altijd, ook voorbij de horizon (een oude save,
+     een wereld die later tussen de andere is gezet): de horizon verbergt alleen
+     wat je nog niet hebt. */
+  const ver = uitWerelden[uitWerelden.length - 1];
+  p.owned.push(ver);
+  const metVer = rek(app, app.SCHAT_CAT);
+  check(metVer.includes(ver) && metVer.length === zicht.length + 1,
+    'H · een schat van jou voorbij de horizon staat er toch', JSON.stringify(metVer));
+  p.owned.splice(p.owned.indexOf(ver), 1);
   /* Een wereld erbij brengt zijn schat vanzelf mee: één regel in WORLDS en één
      regel in ITEMS, verder niets. Zou hier ergens een tweede lijst staan, dan
      stond de zevende schat er niet in. */
@@ -232,8 +250,8 @@ zaak('H · de wereldschatten', () => {
   app2.run(`ITEMS.push({ id: 'acc_wereld_test', cat: 'acc', name: 'Testhoedje', emoji: '🧪', spot: 'top' });
     WORLDS.push({ id: 'testwereld', name: 'Testwereld', icon: '🧪', levels: 2, beloning: 'acc_wereld_test' });
     rebuildWorldStarts(); rebuildWorldBadges();`);
-  const groter = app2.run(`shopCat = SCHAT_CAT; shopItems(P()).map(i => i.id)`);
-  check(groter[groter.length - 1] === 'acc_wereld_test' && groter.length === vak.length + 1,
+  const groter = app2.wereldSchatten().map(x => x.item.id);
+  check(groter[groter.length - 1] === 'acc_wereld_test' && groter.length === uitWerelden.length + 1,
     'H · een zevende wereld zet zijn schat er vanzelf achter', JSON.stringify(groter));
   check(app2.schatStand(p2).totaal === leeg.totaal + 1,
     'H · en de teller telt hem mee zonder dat er iets bijgewerkt wordt',
@@ -245,8 +263,8 @@ zaak('H · de wereldschatten', () => {
   app3.run(`ITEMS.push({ id: 'acc_wereld_stil', cat: 'acc', name: 'Stilhoedje', emoji: '🤫', spot: 'top' });
     WORLDS.push({ id: 'stilwereld', name: 'Stilwereld', icon: '🤫', levels: 2, released: false, beloning: 'acc_wereld_stil' });
     rebuildWorldStarts(); rebuildWorldBadges();`);
-  const stil = app3.run(`shopCat = SCHAT_CAT; shopItems(P()).map(i => i.id)`);
-  check(!stil.includes('acc_wereld_stil') && stil.length === vak.length,
+  const stil = app3.wereldSchatten().map(x => x.item.id);
+  check(!stil.includes('acc_wereld_stil') && stil.length === uitWerelden.length,
     'H · een nog niet uitgebrachte wereld verklapt zijn schat niet', JSON.stringify(stil));
 });
 
