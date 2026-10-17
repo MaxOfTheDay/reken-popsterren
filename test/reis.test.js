@@ -74,7 +74,10 @@ function check(ok, label, detail) {
             slot: !!b.querySelector('.reis-zegel.slot'), art: !!b.querySelector('.reis-art'),
             // de teller is een ster en een streepje; de getallen staan in data-*
             teller: (s => s ? s.dataset.sterren + '/' + s.dataset.max : null)(b.querySelector('.reis-sterren')),
-            baan: (i => i ? Math.round(parseFloat(i.style.width)) : null)(b.querySelector('.reis-sterren .rs-baan i')),
+            // één stip per show: hoeveel er zijn, en hoeveel daarvan goud (drie sterren)
+            stippen: b.querySelectorAll('.reis-sterren i').length || null,
+            goud: b.querySelectorAll('.reis-sterren i.vol').length,
+            perfect: (s => s ? Number(s.dataset.perfect) : null)(b.querySelector('.reis-sterren')),
             tekstInTeller: (b.querySelector('.reis-sterren') || {}).textContent || '',
             top: Math.round(r.top), midden: Math.round(r.top + r.height / 2),
             breed: Math.round(r.width), hoog: Math.round(r.height),
@@ -285,14 +288,17 @@ function check(ok, label, detail) {
     check(r.haltes.slice(0, 3).every(h => (h.teller || '').indexOf(echt[h.w]) >= 0),
       'C · de sterrenteller zegt wat de voortgang zegt',
       JSON.stringify([r.haltes.map(h => h.teller), echt]));
-    /* En hij zegt het zonder breuk: een ster en een streepje, geen "13/24" om te
-       lezen. Het streepje is even lang als het deel van de sterren. */
+    /* En hij zegt het zonder breuk: één stip per show, goud waar de show perfect
+       is. Zoveel stippen als de wereld shows heeft, en zoveel goud als
+       worldProgress() perfecte shows telt. */
     check(r.haltes.slice(0, 3).every(h => h.tekstInTeller.trim() === ''),
-      'C · de teller is een streepje en geen breuk', JSON.stringify(r.haltes.map(h => h.tekstInTeller)));
-    check(r.haltes.slice(0, 3).every(h => {
-      const [n, m] = (h.teller || '0/1').split('/').map(Number);
-      return h.baan === Math.round(100 * n / m);
-    }), 'C · het streepje is zo lang als het deel van de sterren', JSON.stringify(r.haltes.map(h => [h.teller, h.baan])));
+      'C · de teller is stippen en geen breuk', JSON.stringify(r.haltes.map(h => h.tekstInTeller)));
+    const shows = await page.evaluate(() => WORLDS.map((w, i) => {
+      const v = worldProgress(P(), worldForIndex(i));
+      return [v.levels, v.perfect];
+    }));
+    check(r.haltes.slice(0, 3).every(h => h.stippen === shows[h.w][0] && h.goud === shows[h.w][1] && h.perfect === shows[h.w][1]),
+      'C · één stip per show, goud waar hij perfect is', JSON.stringify([r.haltes.map(h => [h.stippen, h.goud, h.perfect]), shows]));
     // `uit` en niet `aan`: sinds fase 6C is een wereld op slot geen <button disabled>
     // meer (hij antwoordt op een tik, zie zaak B), dus de markering is aria-disabled.
     check(!r.haltes[0].uit && !r.haltes[1].uit && !r.haltes[2].uit && r.haltes[3].uit,
