@@ -55,28 +55,27 @@ npm run preview     hetzelfde, zonder venster (handig in een tweede terminal)
 npm run snelkoppeling
 ```
 
-Eén keer. Daarna staan er **twee** icoontjes op je bureaublad:
+Eén keer. Daarna staat er één icoontje op je bureaublad: **Rekensterren Studio**.
+Dubbelklik en hij haalt eerst het nieuwste op, vraagt waarheen, start de server en
+opent het venster. Draait er al een studio, dan opent hij gewoon dat venster in
+plaats van te klagen.
 
-| | |
-|---|---|
-| **Rekensterren Studio** | start wat er nú uitgecheckt staat. Raakt je werkmap niet aan. |
-| **Rekensterren Studio (nieuwste)** | haalt eerst op en vraagt dan waarheen. |
-
-Dubbelklik en de server start én het venster gaat open. Draait er al een studio,
-dan opent de eerste gewoon dat venster in plaats van te klagen.
-
-De tweede is er omdat "even de laatste main bekijken" anders drie handelingen is
-die je vergeet — en dan kijk je naar de studio van vorige week en zoek je waarom
-je wijziging er niet in zit. Hij vraagt het:
+Dat ophalen zit erin omdat "even de laatste main bekijken" anders drie handelingen
+is die je vergeet — en dan kijk je naar de studio van vorige week en zoek je
+waarom je wijziging er niet in zit. Hij vraagt het:
 
 ```
   Je staat op claude/landing-nieuw.
   Waarheen? Enter = de laatste main · h = blijf hier · of een PR-nummer:
 ```
 
+**Enter** voor iets nieuws (een nieuwe wereld begin je op de laatste main).
 **h** is een volwaardig antwoord: hij haalt dan wél op (dat houdt de bronnenlijst
 bij en raakt je werkmap niet aan) maar wisselt niets. Zit je midden in je eigen
 werk, dan is dat het antwoord.
+
+Er stonden er vroeger twee, met een tweede die alleen startte wat er stond; dat
+doet **h** nu. Heb je die nog, dan haalt `npm run snelkoppeling` hem weg.
 
 Hij gooit nog steeds niets weg: staat er werk open in je werkmap, dan weigert de
 wissel met een uitleg en start de studio op wat er stond, zodat je het in
@@ -94,7 +93,7 @@ node test/preview.js --open --naar=vraag     vraagt het bij het starten
 node test/preview.js --open                  zoals altijd: wat er staat
 ```
 
-De icoontjes weten waar jóúw kloon staat en welke node je hebt, dus:
+Het icoontje weet waar jóúw kloon staat en welke node je hebt, dus:
 
 * verplaats je de projectmap, of werk je node bij → `npm run snelkoppeling`
   opnieuw, en hij klopt weer;
