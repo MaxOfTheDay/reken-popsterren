@@ -52,7 +52,7 @@ Wereldstudio.
 ### Met de studio (de gewone weg)
 
 ```
-npm run studio      -> Wereldstudio -> + Nieuwe wereld
+npm run studio      -> Werelden -> + Nieuwe wereld
 ```
 
 1. **Naam** intikken, *Maak*. Het id en het pad van de tekening rollen eruit
@@ -63,47 +63,42 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
    opslag van kinderen. De wereld komt achteraan, met acht shows, en
    **niet uitgebracht** (`released: false`).
 
-   De editor heeft de stappen hieronder in dezelfde volgorde, genummerd:
-   *1 Tekening, 2 Kleuren, 3 Haltes & weg, 4 Zaal, 5 Beloning, 6 Gegevens &
-   uitbrengen*.
-2. **Tekening** erop slepen. Formaat en compositie staan in
-   `docs/WORLD-ART-BRIEF.md`; wie hem door een beeld-AI laat maken, kopieert de
-   prompt onder *Tekening → ✨ Prompt voor een beeldgenerator* (de tekst staat in
+   De editor heeft vier stappen: *1 Kaart, 2 Haltes, 3 Schat, 4 Publiceren*.
+2. **Kaart**: icoon, naam en de tekening erop slepen. Formaat en compositie
+   staan in `docs/WORLD-ART-BRIEF.md`; wie hem door een beeld-AI laat maken,
+   kopieert de prompt onder *✨ Prompt voor de tekening* (de tekst staat in
    `docs/prompts/wereldkaart.txt`). Elke bronmaat mag, de studio snijdt bij als cover
    en zet hem om naar webp. Begroting: ongeveer 125 kB — de keuring waarschuwt
    boven 200 kB. Komt hij erboven uit, dan zakt de studio zelf met de kwaliteit
    tot hij past, maar niet onder 0.55; het paneel zegt welke kwaliteit het werd.
-3. **Kleuren**: *haal uit de tekening* doet een voorstel; *meet het contrast*
-   kijkt of de haltes en de weg overal te zien blijven.
-4. **Haltes & weg**: sleep de haltes op de richels, de groene ruitjes buigen de
+   **Kleuren en zaal** zet de studio er meteen bij, uit de tekening: de lucht, de
+   diepte, de gloed, de weg die het meest opvalt, en hoe donker de zaal achter de
+   show moet (een lichte tekening wil meer donker). Bijsturen kan onder
+   *Kleuren & zaal*.
+3. **Haltes**: sleep de haltes op de richels, de groene ruitjes buigen de
    weg. Binnen de gestippelde zone blijven. Zolang je niets sleept staat er de
    standaardslinger, en die mag niet mee naar buiten: halte 1 staat dan
-   middenonder, onder de terugknop van een kleine telefoon. *Klaar om uit te
-   brengen?* zegt het zolang het zo is.
-5. **Zaal**: hoe donker het achter de show wordt. Een lichte tekening wil meer
-   donker; *bekijk in de show* laat het zien.
-6. **Wereldschat**: een vrije kiezen, of er een laten tekenen onder *Beloning →
-   Een eigen wereldschat tekenen* (zie hieronder). Geen code, geen `ITEMS`-regel.
-7. **Probeer in het spel**: de standen op de kaart, en de eerste en de laatste
-   show echt spelen — de laatste eindigt in het wereldfeest met de schat. Dat
-   kan ook zolang de wereld nog niet uitgebracht is. En bekijk hem op een echte
-   telefoon: de overgangen zijn op beeldjes afgeregeld en dat ziet een test niet.
-   *Klaar om uit te brengen?* heeft voor deze drie een vinkje (*zelf
-   nagekeken*); ze tellen bij "nog te doen" en vervallen zodra je daarna iets
-   aan de wereld verandert.
-8. **Van concept naar spel**: *Opslaan in het project* → *Vastleggen* →
-   *⇡ Push voor een PR* of *Publiceren*. De eerste zet je tak op GitHub en geeft
-   het adres van de PR; *Publiceren* voegt zelf samen met main en pusht, en slaat
-   de PR dus over. Publiceren draait ook de browsertests en vraagt daarom één
-   keer `npm install` — de studio zegt het meteen als dat nog niet gebeurd is.
-   Opslaan weigert zolang er iets is wat een kind nu zou merken;
-   wat alleen "nog te doen vóór uitbrengen" is, mag mee. Een wereld die niet
-   uitgebracht is, gaat dus gewoon al mee naar main — hij reserveert zijn
-   levelnummers en blijft voor kinderen dicht: niet op de reis, niet in het
-   schattenvak en niet in de trofeeënkast. Alle tests draaien daar ook mee.
-9. **Uitbrengen**: het vinkje *uitgebracht* in de editor (*6 · Gegevens &
-   uitbrengen*), als *Klaar om uit te brengen?* niets meer te doen heeft.
-   Opslaan, vastleggen, naar main — en vanaf dan speelt een kind hem.
+   middenonder, onder de terugknop van een kleine telefoon. Stap 4 zegt het
+   zolang het zo is. Laat je een halte los, dan rekent de studio de kleur van de
+   weg opnieuw uit. *Hulpmiddelen* heeft het raster en de contrastmeter.
+4. **Schat**: emoji, naam en een SVG (zie hieronder), met *hoger* en *groter*.
+   Geen code, geen `ITEMS`-regel. Elke wereld krijgt zijn eigen schat.
+5. **Testen** (in de Dev Studio, of *Testen* op de regel van de wereld): de
+   standen op de kaart, en de eerste en de laatste show echt spelen — de laatste
+   eindigt in het wereldfeest met de schat. Dat kan ook zolang de wereld nog niet
+   uitgebracht is. En bekijk hem op een echte telefoon: de overgangen zijn op
+   beeldjes afgeregeld en dat ziet een test niet.
+6. **Publiceren**: stap 4 zegt wat er nog mis is, met een link naar de stap die
+   het oplost, en laat de kaart zien zoals een kind hem ziet. *🚀 Publiceer* zet
+   de wereld op uitgebracht, slaat hem op in `src/`, keurt, legt vast op een eigen
+   tak, pusht, draait alle tests, voegt samen met main en pusht main. Daarna
+   staat de studio op de nieuwste main. Zonder playwright (`npm install` +
+   `npx playwright install chromium`) stopt hij na het pushen en wacht de wereld
+   op een merge. De oude losse stappen (*Opslaan in het project*, *Vastleggen*,
+   *⇡ Push voor een PR*) staan nog onder *⋯ Meer*.
+   Opslaan weigert zolang er iets is wat een kind nu zou merken. Een wereld die
+   niet uitgebracht is mag wel mee naar main (met de losse stappen): hij
+   reserveert zijn levelnummers en blijft voor kinderen dicht.
 
 Wat de studio nakijkt staat op één plek: `wereldControle` in `src/20-app.js`. De
 studio toont het, *Opslaan* weigert erop, en `npm run check` (zaak K in
@@ -260,10 +255,10 @@ met `draw()` en `thumb()` — en daarna gaat alles zoals in de tabel hierboven.
 Omdat hij in `WORLDS` staat, reist hij mee met het concept, de proef in het spel
 en *Opslaan in het project*.
 
-In de editor, onder *Beloning → Een eigen wereldschat tekenen*:
+In de editor, stap *3 Schat*:
 
 1. Een **idee** in een paar woorden ("een regenboogkroontje met wolkjes").
-2. **Kopieer de prompt** en geef hem aan Claude of ChatGPT — niet aan een
+2. **Kopieer de prompt** (onder *✨ Prompt voor de schat*) en geef hem aan Claude of ChatGPT — niet aan een
    beeldgenerator: een schat is SVG, geen plaatje. De prompt
    (`docs/prompts/wereldschat.txt`) noemt de maten van de paspop, de kleuren van
    de wereld en de schatten van de andere werelden als voorbeeld.
@@ -273,7 +268,7 @@ In de editor, onder *Beloning → Een eigen wereldschat tekenen*:
 4. Hij wordt vanzelf **op het hoofd gezet**, op de maat van de andere schatten;
    *hoger* en *groter* stellen bij. Je ziet hem op beide paspoppen en in het
    vakje van de kleedkamer.
-5. Naam en emoji, dan **✓ Maak dit de schat**. *✕ getekende schat weg* (twee keer
+5. Naam en emoji, dan **✓ Maak dit de schat**. *✕ schat weg* (twee keer
    tikken) zet de wereld weer zonder schat.
 
 Wat een getekende schat moet (`schatFouten` in `src/20-app.js`; de keuring
@@ -283,8 +278,7 @@ vormen uit `SCHAT_ELEMENTEN`, beginnend met een uit `SCHAT_VORMEN`. Geen
 scripttag, `<style>`, `<image>`, `<use>`, `url(…)`, `href`, `class`, `style`,
 `on…=` of `&` — de tekening gaat als tekst het scriptblok in, dus wat daar niet
 in mag, mag hier ook niet. Het id mag niet al aan een handgeschreven spulletje
-hangen, en de keuze in de lijst staat uit zolang de wereld een eigen tekening
-heeft.
+hangen.
 
 En de maat (`schatMaatFouten`): boven de nek (y = 94), niet boven de pop uit, en
 in de familie van de andere schatten — niet twee keer zo hoog of drie keer zo
