@@ -572,17 +572,15 @@ zaak('F · de snelkoppeling', () => {
      dan weet je niet of de studio stuk is of de snelkoppeling. */
   const metSpatie = { root: '/pad met spatie/reken-popsterren', node: '/usr/local/bin node/node' };
   for (const plat of ['darwin', 'win32', 'linux']) {
-    /* Er komen er twee: eentje die start wat er staat, en eentje die eerst het
-       nieuwste ophaalt. Dat tweede is waar dit ooit op stukliep -- je startte de
-       studio van vorige week en zocht waarom je wijziging er niet in zat. */
-    const beide = snelkoppeling.maakAlle(plat);
-    check(beide.length === 2, 'F · ' + plat + ' · er zijn er twee', String(beide.length));
-    check(/\(nieuwste\)/.test(beide[1].naam), 'F · ' + plat + ' · en de tweede heet ernaar', beide[1].naam);
-    check(/--naar=vraag/.test(beide[1].inhoud),
-      'F · ' + plat + ' · die vraagt waarheen (main of een PR)', beide[1].naam);
-    check(!/--naar/.test(beide[0].inhoud),
-      'F · ' + plat + ' · en de gewone verzet je werkmap niet', beide[0].naam);
+    /* Eén icoontje, en dat haalt eerst het nieuwste op en vraagt waarheen. Zonder
+       dat liep het ooit stuk: je startte de studio van vorige week en zocht waarom
+       je wijziging er niet in zat. "Blijf hier" is een antwoord op die vraag (zie
+       bronNaam hieronder), dus een tweede icoontje dat alleen start is niet nodig. */
     const s = snelkoppeling.maak(plat);
+    check(/--naar=vraag/.test(s.inhoud), 'F · ' + plat + ' · vraagt waarheen (main, hier of een PR)', s.naam);
+    check(!/nieuwste/.test(s.naam), 'F · ' + plat + ' · en heet gewoon Rekensterren Studio', s.naam);
+    check(!/--naar/.test(snelkoppeling.maak(plat, { naar: false }).inhoud),
+      'F · ' + plat + ' · zonder vraag (naar: false) verzet hij je werkmap niet', s.naam);
     check(s.naam.indexOf('Rekensterren Studio') === 0, 'F · ' + plat + ' · heeft een leesbare naam', s.naam);
     check(s.inhoud.indexOf(snelkoppeling.ROOT) >= 0, 'F · ' + plat + ' · wijst naar déze kloon', s.naam);
     check(s.inhoud.indexOf(process.execPath) >= 0, 'F · ' + plat + ' · met de node die dit draait', s.naam);
@@ -612,9 +610,27 @@ zaak('F · de snelkoppeling', () => {
   /* De vraag komt uit node en niet uit de shell: een .desktop-bestand heeft geen
      plek voor een "lees een antwoord"-tak, en die er met sh -c in wringen is
      precies de quoting-ellende waar de kop van snelkoppeling.js voor waarschuwt. */
-  const linuxNieuw = snelkoppeling.maakAlle('linux')[1];
+  const linuxNieuw = snelkoppeling.maak('linux');
   check(/Terminal=true/.test(linuxNieuw.inhoud) && !/sh -c/.test(linuxNieuw.inhoud),
     'F · linux · de vraag komt uit node, niet uit een shell-tak', linuxNieuw.inhoud.slice(0, 120));
+
+  /* Wie de twee icoontjes van vroeger nog heeft, raakt het tweede kwijt bij de
+     volgende `npm run snelkoppeling` -- maar alleen als het van ons is. Een
+     bestand met die naam dat niet naar preview.js wijst blijft staan. */
+  const os = require('os');
+  const bureau = fs.mkdtempSync(path.join(os.tmpdir(), 'rp-bureau-'));
+  try {
+    const [onze, vreemde] = snelkoppeling.OUDE_NAMEN;
+    fs.writeFileSync(path.join(bureau, onze), '"node" "/ergens/test/preview.js" --open --naar=vraag');
+    fs.writeFileSync(path.join(bureau, vreemde), 'iets van iemand zelf');
+    const weg = snelkoppeling.ruimOudeOp(bureau);
+    check(weg.length === 1 && !fs.existsSync(path.join(bureau, onze)),
+      'F · het oude tweede icoontje gaat weg', JSON.stringify(weg));
+    check(fs.existsSync(path.join(bureau, vreemde)),
+      'F · maar een bestand dat niet van ons is blijft staan', 'weggehaald');
+  } finally {
+    fs.rmSync(bureau, { recursive: true, force: true });
+  }
 
   /* En preview.js kent de vlag ook werkelijk. Een snelkoppeling met een vlag die
      de server negeert is precies het soort stille storing dat deze suite hoort te
