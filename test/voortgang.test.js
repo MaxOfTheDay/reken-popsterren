@@ -145,7 +145,7 @@ function check(ok, label, detail) {
       nu: (document.querySelector('.tour-stop.next') || {}).dataset,
       haltes: document.querySelectorAll('.tour-stop').length,
       opSlot: document.querySelectorAll('.tour-stop.locked').length,
-      naam: document.getElementById('map-tournee-label').textContent,
+      naam: document.getElementById('map-tournee-label').getAttribute('aria-label'),
       art: !!WORLDS[WORLD_AVAIL - 1].art,
     }));
     check(r.kijkt === r.laatsteIdx && r.opSlot === 0 && r.nu && Number(r.nu.lvl) === r.eindLevel,
@@ -204,7 +204,7 @@ function check(ok, label, detail) {
     const reis = await page.evaluate(() => ({ schaduw: !!document.querySelector('.wereld-schaduw'), grendel: wereldReisBezig() }));
     await page.waitForTimeout(1400);
     const rust = await page.evaluate(() => ({
-      kijkt: viewWorldIdx, naam: document.getElementById('map-tournee-label').textContent,
+      kijkt: viewWorldIdx, naam: document.getElementById('map-tournee-label').getAttribute('aria-label'),
       schaduw: !!document.querySelector('.wereld-schaduw'), gezien: P().worldsSeen.slice(),
     }));
     check(reis.schaduw && reis.grendel, 'D · de nieuwe wereld krijgt zijn eigen onthulling', JSON.stringify(reis));
@@ -234,7 +234,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(700);
     const na = await page.evaluate(() => ({
       ...__stand(), terug: !document.getElementById('world-back').hidden,
-      naam: document.getElementById('map-tournee-label').textContent,
+      naam: document.getElementById('map-tournee-label').getAttribute('aria-label'),
     }));
     check(na.kijkt === 1 && na.terug, 'E · terugbladeren zet alleen de kaart terug', JSON.stringify(na));
     check(na.grens === voor.grens && na.verder === voor.verder && na.level === voor.level

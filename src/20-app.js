@@ -4242,6 +4242,19 @@ const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
    het soort ruis dat hier niet hoort. Bewust geen opslag: dit is een duwtje bij
    het openen van de kaart, geen voortgang die bewaard hoeft te blijven. */
 let wpHintKlaar = false;
+/* De naam in een kop: zonder "wereld" erachter. Elke wereld heet "...wereld",
+   en in een kop staat het wereldicoon er al voor -- "🪸 Onderwater" zegt
+   hetzelfde als "🪸 Onderwaterwereld" in zes letters minder. Dat is het
+   verschil tussen passen en een ellips op een gewone telefoon (zie .world-pick).
+   Alleen voor de koppen (kaart, show, eindscherm); Werelden, de kast en het
+   wereldfeest houden de volle naam. Afgeleid en niet opgeslagen, dus de studio
+   hoeft er niets voor te weten. Een naam die ánders eindigt -- of die zonder
+   "wereld" niets overhoudt -- blijft zoals hij is. */
+function korteNaam(w) {
+  const naam = (w && w.name) || '';
+  const kort = naam.replace(/\s*wereld$/i, '');
+  return kort || naam;
+}
 function renderMapTitle(p, opReis) {
   const cur = worldFor(hereLevel(p));
   // || cur: buiten de lijst is er geen wereld meer (fase 4A), en de kop moet
@@ -4252,7 +4265,7 @@ function renderMapTitle(p, opReis) {
   const hint = !wpHintKlaar; wpHintKlaar = true;
   pil.innerHTML =
       `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>`
-    + `<span class="wp-here-naam">${esc(shown.world.name)}</span></span>`
+    + `<span class="wp-here-naam">${esc(korteNaam(shown.world))}</span></span>`
     + `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
   // Screenlezer en desktop-tooltip krijgen de volledige zin; de pil zelf laat
   // nu alleen nog de wereldnaam en twee iconen zien.
@@ -6747,7 +6760,12 @@ function kopOpzij() {
   const scherm = $('screen-map');
   if (!scherm) return;
   const kop = scherm.querySelector('.screen-header');
-  const ster = scherm.querySelector('.tour-hero');
+  /* Alleen de ster op de kaart die er nú staat (#tour-map). Tijdens een
+     wereldreis hangt de vorige wereld er nog even als schaduwlaag naast, mét
+     haar ster -- en die vond querySelector eerst. Dan bleef de kop gedimd
+     terwijl je naar een wereld keek waar je ster helemaal niet staat. */
+  const kaart = $('tour-map');
+  const ster = kaart && kaart.querySelector('.tour-hero');
   if (!kop || !ster) { scherm.classList.remove('ster-bij-kop'); return; }
   const k = kop.getBoundingClientRect(), s = ster.getBoundingClientRect();
   scherm.classList.toggle('ster-bij-kop', s.top < k.bottom && s.bottom > k.top);
@@ -8795,7 +8813,7 @@ function startLevel(lvl, eigenOvergang) {
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
   // en heette het optreden daarna "Rome".
   const wl = worldFor(lvl);
-  $('game-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
+  $('game-lvl-label').innerHTML = `${wl.world.icon} ${esc(korteNaam(wl.world))}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   telNu($('game-diamonds'), p.diamonds);
   $('game-avatar-inner').innerHTML = pasLaag(avatarSVG(p, 168));
@@ -9477,7 +9495,7 @@ function endLevel(success) {
   // zelfde kop als tijdens het optreden: wereld + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const wl = worldFor(lvl);
-  $('end-lvl-label').innerHTML = `${wl.world.icon} ${wl.world.name}`
+  $('end-lvl-label').innerHTML = `${wl.world.icon} ${esc(korteNaam(wl.world))}`
     + `<span class="world-sub">Show ${wl.nr} / ${wl.levels}</span>`;
   // Wat er van de stille publieksteller overblijft telt altijd mee: +1 💎 per volle
   // 25%, zodat inspanning ook loont als het applaus (100%) net niet gehaald is.

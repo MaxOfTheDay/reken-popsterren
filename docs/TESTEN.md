@@ -37,6 +37,7 @@ npm run test:vlucht     # de zoom tussen de wereldkaart en Werelden
 npm run test:beloning
 npm run test:studio      # de wereldstudio (?debug&mapedit)
 npm run test:onderrand   # de zwevende bediening onderaan blijft staan
+npm run test:kop         # de kop van de kaart: niets overlapt, op geen enkele maat
 npm run test:hub         # de Dev Studio (npm run studio) — kaal Node
 ```
 
@@ -386,6 +387,21 @@ is. De beloftes, op de kaart, in de kleedkamer, in de kast en op de reis:
   opnieuw vast en zet de drift terug op nul.
 
 Zie `docs/LADEN.md`, "Venster, veilige zone en toetsenbord", voor de maten zelf.
+
+### `test/kop.test.js` — de kop van de wereldkaart
+
+Een browsersuite over de drie dingen bovenaan de kaart: portretje, wereldpil en
+💎-pil. De wereldpil hoorde bij te weinig ruimte zijn naam in te korten, maar
+liep in werkelijkheid over zijn buren heen (zie `.world-pick` in
+`src/css/40-kaart.css`) — met Onderwaterwereld al op een gewone iPhone. Een
+gewone test zag dat niet, want die speelt in Muziekwereld met dertig diamanten.
+
+- **niets overlapt** — op zes maten van 320 breed tot een liggende tablet, met
+  de langste wereldnaam, 30 tot 12.345 diamanten en een wens;
+- **de kop zegt de korte naam** — "Onderwater" en niet "Onderwaterwereld"
+  (`korteNaam`), met de volle naam in het label voor een schermlezer;
+- **liggend dimt de kop maar half** — en alleen als je ster er echt achter
+  staat, niet als je naar een andere wereld kijkt.
 
 ### `test/studio.test.js` — de wereldstudio
 

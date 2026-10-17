@@ -307,7 +307,7 @@ function check(ok, label, detail) {
     await page.click('.reis-halte[data-w="0"]');
     await page.waitForTimeout(700);
     const na = await page.evaluate(() => ({ ...__stand(), kaart: document.getElementById('screen-map').classList.contains('active'),
-      kop: document.getElementById('map-tournee-label').textContent }));
+      kop: document.getElementById('map-tournee-label').getAttribute('aria-label') }));
     check(na.kaart && na.kijkt === 0 && /Muziekwereld/.test(na.kop),
       'C · een bestemming kiezen opent die échte wereldkaart', JSON.stringify(na));
     check(na.level === voor.level && na.grens === voor.grens && na.verder === voor.verder
