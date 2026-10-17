@@ -23921,7 +23921,13 @@ function startMapEdit() {
       i.src = src;
     });
   }
-  async function naarWebp(src, bw, bh, kwal) {
+  /* Met een begroting (doelKb, uit SLOTS) zakt de kwaliteit vanzelf in stapjes tot
+     het bestand erin past -- maar nooit onder KWAL_BODEM, want daaronder gaat een
+     geschilderde kaart zichtbaar vlekken. Past hij er dan nog niet in, dan blijft
+     de kleinste staan en zegt het paneel dat; de begroting is een advies, geen
+     grens (zie scene.js). Zonder doelKb gebeurt er precies wat je koos. */
+  const KWAL_BODEM = 0.55;
+  async function naarWebp(src, bw, bh, kwal, doelKb) {
     const img = await laadBeeld(src);
     const c = document.createElement('canvas');
     c.width = bw; c.height = bh;
@@ -23929,9 +23935,17 @@ function startMapEdit() {
     const sch = Math.max(bw / img.naturalWidth, bh / img.naturalHeight);
     const w = img.naturalWidth * sch, h = img.naturalHeight * sch;
     g.drawImage(img, (bw - w) / 2, (bh - h) / 2, w, h);
-    const blob = await new Promise(r => c.toBlob(r, 'image/webp', kwal));
+    const maak = q => new Promise(r => c.toBlob(r, 'image/webp', q));
+    let blob = await maak(kwal);
     if (!blob) throw new Error('omzetten naar webp lukte niet');
-    return { blob, bron: img.naturalWidth + 'x' + img.naturalHeight };
+    let q = kwal;
+    while (doelKb && blob.size / 1024 > doelKb && q > KWAL_BODEM) {
+      q = Math.max(KWAL_BODEM, Math.round((q - 0.07) * 100) / 100);
+      const kleiner = await maak(q);
+      if (!kleiner) break;
+      blob = kleiner;
+    }
+    return { blob, bron: img.naturalWidth + 'x' + img.naturalHeight, kwal: q };
   }
   /* bron: een bestand uit een sleep of een bladeraar, óf de URL van een kandidaat
      uit incoming/. Dezelfde weg naar binnen voor allebei -- het verschil is waar
@@ -23965,8 +23979,10 @@ function startMapEdit() {
     // 1 -- omzetten
     let blob, maat;
     try {
-      const r = await naarWebp(url, d.lever[0], d.lever[1], Number(F('st-kwal').value));
+      const gekozen = Number(F('st-kwal').value);
+      const r = await naarWebp(url, d.lever[0], d.lever[1], gekozen, d.budget);
       blob = r.blob; maat = r.bron;
+      if (r.kwal < gekozen) maat += ' · kwaliteit ' + r.kwal.toFixed(2) + ' (begroting ±' + d.budget + ' kB)';
     } catch (err) {
       opruimen();
       meldFout('Afbeelding kon niet worden omgezet (' + label + ')', err,

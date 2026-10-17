@@ -71,7 +71,8 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
    prompt onder *Tekening → ✨ Prompt voor een beeldgenerator* (de tekst staat in
    `docs/prompts/wereldkaart.txt`). Elke bronmaat mag, de studio snijdt bij als cover
    en zet hem om naar webp. Begroting: ongeveer 125 kB — de keuring waarschuwt
-   boven 200 kB.
+   boven 200 kB. Komt hij erboven uit, dan zakt de studio zelf met de kwaliteit
+   tot hij past, maar niet onder 0.55; het paneel zegt welke kwaliteit het werd.
 3. **Kleuren**: *haal uit de tekening* doet een voorstel; *meet het contrast*
    kijkt of de haltes en de weg overal te zien blijven.
 4. **Haltes & weg**: sleep de haltes op de richels, de groene ruitjes buigen de
