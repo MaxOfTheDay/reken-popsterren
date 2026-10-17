@@ -1802,7 +1802,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
 
     // een laag eroverheen zet het ademen stil, en daarna gaat het weer door
     const laag = await h.evaluate(async () => {
-      openCareer();
+      openOverlay('proef-overlay', '<div class="pop-panel">laag</div>');
       await new Promise(r => setTimeout(r, 300));
       const tijdens = window.__adem();
       document.querySelectorAll('.rp-overlay').forEach(o => o._close && o._close());

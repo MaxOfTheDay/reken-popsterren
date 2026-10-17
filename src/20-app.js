@@ -30,7 +30,7 @@
      De voortgang, afgeleid   worldDone/frontierWorld/continueWorld. ALLEEN
                           p.stars wordt bewaard; de rest volgt eruit
      Wereldbeloningen ... wat een wereld uitdeelt als hij uit of perfect is
-     Sterrencarrière .... rang-ladder op sterren (RANK_TIERS, starRank)
+     Sterrencarrière .... met pensioen: waarom er geen ster-status meer is
      Opslag ............. db, load/save, migratie, profielen
 
    ---- DE ZINTUIGEN ---------------------------------------------------------
@@ -73,7 +73,7 @@
                           staan sinds kort in src/10-feestjes.js
      De som valt dicht    een goed antwoord vliegt het vakje van de som in
      Wereldfeest ........ wereld uit en/of overal drie sterren (fase 4D.1)
-     Trofeeën-scherm .... kast, claim-ceremonie, ster-status-ladder
+     Trofeeën-scherm .... kast, claim-ceremonie
 
    ---- DE SCHERMEN ERNAAST --------------------------------------------------
      Kleedkamer ......... winkel, passen, aankleden. Staat ook de 💎-tellers in
@@ -390,7 +390,7 @@ const ITEMS = [
   { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    full: 'Voetbaloutfit', price: 65,  color: '#fafafa', pattern: 'ohl' },
   { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', full: 'Zeemeerminoutfit', price: 85, color: '#26a69a', pattern: 'scales' },
   { id: 'dress_tover',   cat: 'dress', name: 'Tover', full: 'Toveroutfit', price: 95,  color: '#4527a0', pattern: 'magic' },
-  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogoutfit', price: 110, color: 'RAINBOW' },
+  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogoutfit', price: 150, color: 'RAINBOW' },
   // Schoenen (kleuren de vaste schoenen van de paspop)
   { id: 'shoes_roze',  cat: 'shoes', name: 'Roze',   full: 'Roze schoenen',   price: 0,  color: '#e91e63' },
   { id: 'shoes_rood',  cat: 'shoes', name: 'Rood',   full: 'Rode schoenen',   price: 10, color: '#e53935' },
@@ -402,6 +402,7 @@ const ITEMS = [
   { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitter', full: 'Gouden glitterschoenen', price: 55, color: '#ffd54f' },
   { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog', full: 'Regenboogschoenen', price: 80, color: 'RAINBOW' },
   // Microfoons
+  { id: 'mic_rood',   cat: 'mic', name: 'Rood',   full: 'Rode microfoon',   price: 15, color: '#e53935' },
   { id: 'mic_zilver', cat: 'mic', name: 'Zilver', full: 'Zilveren microfoon', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
@@ -410,6 +411,9 @@ const ITEMS = [
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
   { id: 'mic_roze',   cat: 'mic', name: 'Roze glitter', full: 'Roze glittermicrofoon', price: 90, color: '#ff80ab' },
+  // emoji-microfoons: het emoji zit bovenop een steel in de hand (zie avatarSVG)
+  { id: 'mic_ijsje',  cat: 'mic', name: 'IJsje',  full: 'IJsjesmicrofoon', price: 45, emoji: '🍦' },
+  { id: 'mic_vuur',   cat: 'mic', name: 'Vuur',   full: 'Vuurmicrofoon',   price: 75, emoji: '🔥' },
   { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', full: 'Regenboogmicrofoon', price: 100, color: 'RAINBOW' },
   // Instrumenten
   { id: 'instr_tamboerijn', cat: 'instrument', name: 'Tamboerijn', price: 28, emoji: '🪘' },
@@ -420,7 +424,7 @@ const ITEMS = [
   { id: 'instr_accordeon', cat: 'instrument', name: 'Accordeon', price: 65, emoji: '🪗' },
   { id: 'instr_sax',     cat: 'instrument', name: 'Saxofoon',  price: 70, emoji: '🎷' },
   { id: 'instr_trompet', cat: 'instrument', name: 'Trompet',   price: 80, emoji: '🎺' },
-  { id: 'instr_dj',      cat: 'instrument', name: 'DJ-set',    price: 105, emoji: '🎛️' },
+  { id: 'instr_dj',      cat: 'instrument', name: 'DJ-set',    price: 130, emoji: '🎛️' },
   // Extra's
   { id: 'acc_strik',    cat: 'acc', name: 'Strik',    price: 25, emoji: '🎀' },
   { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
@@ -433,7 +437,11 @@ const ITEMS = [
   { id: 'acc_feesthoed', cat: 'acc', name: 'Feesthoedje',   price: 30, emoji: '🎉', spot: 'top' },
   { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
   { id: 'acc_bloemkrans',cat: 'acc', name: 'Bloemenkrans',  price: 55, emoji: '🌼', spot: 'top' },
-  { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 120, emoji: '💎', spot: 'top' },
+  { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 180, emoji: '💎', spot: 'top' },
+  { id: 'acc_kers',     cat: 'acc', name: 'Kersjes',        price: 30, emoji: '🍒', spot: 'zij' },
+  { id: 'acc_anker',    cat: 'acc', name: 'Ankerspeldje',   price: 30, emoji: '⚓', spot: 'zij' },
+  { id: 'acc_schelp',   cat: 'acc', name: 'Schelpje',       price: 35, emoji: '🐚', spot: 'zij' },
+  { id: 'acc_maan',     cat: 'acc', name: 'Maantje',        price: 40, emoji: '🌙', spot: 'top' },
   /* FASE 4D.1 -- de wereldbeloningen. Eén hoofdstuk per wereld, en je krijgt het
      niet van je diamanten maar doordat je die wereld uitspeelt (zie WORLDS.beloning
      en beloningWereld hieronder).
@@ -491,9 +499,18 @@ const ITEMS = [
   { id: 'pet_panda',  cat: 'pet', name: 'Pandabeer',     price: 90,  emoji: '🐼' },
   { id: 'pet_flamingo',cat:'pet', name: 'Flamingo',      price: 95,  emoji: '🦩' },
   { id: 'pet_leeuw',  cat: 'pet', name: 'Leeuwenwelp',   price: 100, emoji: '🦁' },
-  { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
-  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 180, emoji: '🐉' },
-  { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 200, emoji: '🦚' },
+  { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 200, emoji: '🦄' },
+  { id: 'pet_aap',    cat: 'pet', name: 'Aapje',         price: 60,  emoji: '🐒' },
+  { id: 'pet_krab',   cat: 'pet', name: 'Krabbetje',     price: 45,  emoji: '🦀' },
+  { id: 'pet_rendier',cat: 'pet', name: 'Rendiertje',    price: 70,  emoji: '🦌' },
+  { id: 'pet_olifant',cat: 'pet', name: 'Olifantje',     price: 80,  emoji: '🐘' },
+  { id: 'pet_octopus',cat: 'pet', name: 'Octopus',       price: 75,  emoji: '🐙' },
+  { id: 'pet_otter',  cat: 'pet', name: 'Otter',         price: 65,  emoji: '🦦' },
+  { id: 'pet_langnek',cat: 'pet', name: 'Langnek',       price: 90,  emoji: '🦕' },
+  { id: 'pet_alien',  cat: 'pet', name: 'Ruimtevriendje', price: 110, emoji: '👽' },
+  { id: 'pet_trex',   cat: 'pet', name: 'T-rex',         price: 150, emoji: '🦖' },
+  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 250, emoji: '🐉' },
+  { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
   // Podium
   { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
   { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'] },
@@ -1861,7 +1878,7 @@ function rebuildWorldBadges() {
      - de zes "wereld uitgespeeld"-badges: een uitgespeelde wereld gééft al een
        spulletje en een feestje (zie grantWorldRewards). Twee keer dezelfde
        mijlpaal belonen maakt geen van beide bijzonderder. Perfect blijft.
-     - de sterrentotalen 12/30/60: dat wás de ster-status-ladder (zie RANK_TIERS),
+     - de sterrentotalen 12/30/60: dat wás de ster-status-ladder (nu met pensioen),
        toen letterlijk dezelfde drempels met dezelfde namen. Een tweede kaartje
        ernaast voegt geen prestatie toe, alleen een tweede plek waar hetzelfde staat.
      - de twee diamantsaldo's: die leerden precies het verkeerde. Diamanten zijn
@@ -1995,7 +2012,7 @@ rebuildWorldBadges();   // de perfecte werelden erbij, nu de tabel en de planken
 /* De sterren van de oude oneindige staart (zie migrate). Ze horen bij geen enkele
    wereld meer -- hun levelnummers zijn teruggegeven aan de werelden die daar ooit
    komen -- maar ze zijn wél verdiend, dus ze blijven meetellen in alles wat over
-   de héle carrière gaat: het sterrentotaal, de rang, de shows-trofeeën. Voor een
+   de héle carrière gaat: het sterrentotaal en de shows-trofeeën. Voor een
    kind dat nooit zo ver kwam is dit een leeg kaartje en verandert er niets. */
 function tourStarValues(p) { return Object.values(p.tourStars || {}); }
 function allStarValues(p) { return Object.values(p.stars).concat(tourStarValues(p)); }
@@ -2013,75 +2030,16 @@ function boughtCount(p) {
 }
 
 /* ================= Sterrencarrière ================= */
-/* Eén doorlopende carrièreladder op basis van álle verdiende sterren. Elke rang
-   omhoog geeft een diamantbonus, zodat het lange sparen óók de kleedkamer blijft
-   voeden. Hergebruikt het bestaande sterrensysteem volledig: geen nieuwe munt,
-   verzameling of scherm.
+/* MET PENSIOEN (oktober 2026). Hier stond een ster-status: acht rangen op het
+   sterrentotaal (Straatartiest ... Wereldlegende), elk met een diamantbonus, een
+   feestje na de show en een ladder om open te tikken. Hij is weg omdat hij een
+   derde voortgangsmeter was naast de kaart en de trofeeënkast, en een die met
+   elke nieuwe wereld opnieuw uitgerekt moest worden: de vaste rangen stopten op
+   125 sterren, rond wereld zeven, en daarna kwam er vier werelden lang niets.
+   De bonussen waren samen 225 💎 over de hele tournee, zo'n 5% van wat een kind
+   verdient -- dat mist niemand (zie docs/DIAMANTEN.md).
 
-   DE LADDER PAST IN WAT ER TE HALEN VALT. Een show levert hoogstens drie sterren
-   op, en overdoen houdt de beste uitslag (Math.max in applyShowResult). Met zes
-   werelden van acht shows is dat 144 sterren, en meer bestaat er niet. De ladder
-   liep door tot 150, 220, 300 en daarna elke honderd verder: drie namen en een
-   oneindige staart die geen kind kon halen, en een Radioster op 144 hoorde voor
-   altijd "nog 6 sterren". De drempels stamden uit de tijd van de eindeloze
-   tournee (zie migrate), toen sterren wél bleven komen.
-
-   Nu is de bovenste rang "alles perfect": elke show van elke uitgebrachte wereld
-   op drie sterren. Daarmee zijn de ster-status, de perfecte werelden en het
-   overdoen voor drie sterren één doel in plaats van drie. Wie de tournee
-   gewoon uitspeelt (gemiddeld zo'n twee sterren per show) komt rond Radioster
-   en Toursensatie uit; de laatste twee rangen zijn voor wie teruggaat om het
-   perfect te doen.
-
-   De bovenste drempel staat daarom niet als getal in de tabel maar volgt de
-   werelden (rangDrempel): komt er een wereld bij, dan hoort "alles perfect" die
-   ook te omvatten. Wie de top al had, zakt dan één rang in de ladder, maar
-   krijgt de bonus niet nog eens (p.rankSeen). */
-const RANK_TIERS = [
-  { min: 0,   name: 'Straatartiest', emoji: '🎤', bonus: 0 },
-  { min: 12,  name: 'Lokale ster',   emoji: '⭐', bonus: 10 },
-  { min: 30,  name: 'Clubster',      emoji: '🎶', bonus: 15 },
-  { min: 50,  name: 'Stadsster',     emoji: '🏙️', bonus: 20 },
-  { min: 75,  name: 'Radioster',     emoji: '📻', bonus: 30 },
-  { min: 100, name: 'Toursensatie',  emoji: '✈️', bonus: 40 },
-  { min: 125, name: 'Platinaster',   emoji: '💿', bonus: 50 },
-  { alles: true, name: 'Wereldlegende', emoji: '👑', bonus: 60 },
-];
-/* Welke versie van de drempels een profiel kent. Ging de tabel hierboven op de
-   schop, dan hoort migrate() p.rankSeen één keer stil op de nieuwe rang te zetten
-   (zie daar) -- anders krijgt een kind bij de volgende show ineens een reeks
-   rangen in één keer, of juist nooit meer een feestje. */
-const RANG_VERSIE = 2;
-function rangDrempel(i) {
-  const t = RANK_TIERS[i];
-  return t.alles ? Math.max(RANK_TIERS[i - 1].min + 1, 3 * WORLD_LAST) : t.min;
-}
-// Rang-beschrijving voor een bepaald sterrentotaal. Op de bovenste rang is er
-// geen volgende: nextMin en nextName zijn dan null.
-function starRank(total) {
-  let i = 0;
-  for (let k = 0; k < RANK_TIERS.length; k++) if (total >= rangDrempel(k)) i = k;
-  const t = RANK_TIERS[i];
-  const nxt = RANK_TIERS[i + 1];
-  return { idx: i, name: t.name, emoji: t.emoji, curMin: rangDrempel(i),
-           nextMin: nxt ? rangDrempel(i + 1) : null, nextName: nxt ? nxt.name : null };
-}
-function rankBonusFor(idx) { return RANK_TIERS[Math.min(idx, RANK_TIERS.length - 1)].bonus; }
-// Na het verdienen van sterren: is de speler een rang gestegen? Zo ja, keer de
-// bonus(sen) uit (één keer — p.rankSeen onthoudt de hoogst bereikte rang) en
-// geef terug wat er gehaald is voor een feestje op het eindscherm.
-function checkRankUp(p) {
-  const r = starRank(totalStarCount(p));
-  if (p.rankSeen == null) p.rankSeen = r.idx;
-  if (r.idx > p.rankSeen) {
-    let bonus = 0;
-    for (let k = p.rankSeen + 1; k <= r.idx; k++) bonus += rankBonusFor(k);
-    p.rankSeen = r.idx;
-    p.diamonds += bonus;
-    return { rank: r, bonus };
-  }
-  return null;
-}
+   Oude saves dragen nog rankSeen en rangVersie; migrate() haalt ze eruit. */
 function trophyProgress(value, target, label) {
   const now = Math.max(0, Math.min(value, target));
   return { now, target, label, pct: Math.round((now / target) * 100) };
@@ -2172,8 +2130,6 @@ function defaultProfile(name, dress, opts) {
     // bewaarplek voor sterren uit de oude oneindige staart (zie migrate).
     // worldsSeen vult zich vanzelf: de kaart zet er elke wereld in die ze opent.
     tourStars: {}, worldsSeen: [],
-    rankSeen: 0,   // hoogst uitbetaalde carrièrerang (zie checkRankUp) — voorkomt dubbele bonus
-    rangVersie: RANG_VERSIE,   // welke drempels rankSeen kent (zie RANG_VERSIE)
     perf: 0.5,  // lopende inschatting van vaardigheid (0..1), stuurt de moeilijkheid bij
     weak: {},   // zwakke sommen: "7 × 8 = @" -> { ans, op, w } om gericht te herhalen
     learned: {},// geoefende sommen in onderhoud: "7 × 8 = @" -> { ans, op, iv, due }
@@ -2214,7 +2170,7 @@ function migrate(p) {
 
      Dus één keer, hier: die sterren gaan uit p.stars naar p.tourStars. Ze blijven
      staan (niets wordt weggegooid) en blijven meetellen in het sterrentotaal, de
-     rang en de shows-trofeeën -- zie allStarValues. Alleen hun levelnummers zijn
+     de shows-trofeeën -- zie allStarValues. Alleen hun levelnummers zijn
      vrij, en dat is het hele punt.
 
      LEGACY_TOUR_END is 48 en verandert nooit meer: het is het laatste level dat
@@ -2255,15 +2211,13 @@ function migrate(p) {
      Het is daarmee tegelijk het vangnet voor een feestje dat verloren ging doordat
      de app tussen de show en de kaart door dichtging. */
   grantHistoricRewards(p);
-  // bestaande spelers beginnen op hun huidige rang (geen bonus met terugwerkende
-  // kracht voor sterren die ze al hadden); nieuwe rangen daarna betalen wél uit
-  if (p.rankSeen == null) p.rankSeen = starRank(totalStarCount(p)).idx;
-  /* De drempels zijn veranderd (RANG_VERSIE): zet de uitbetaalde rang één keer
-     stil op waar dit kind nu staat. Zonder dit krijgt een kind met 100 sterren
-     -- onder de oude tabel Radioster, nu Toursensatie -- bij de volgende show
-     een feestje voor een rang die ze niet net haalde. Stil en zonder bonus:
-     hetzelfde als voor een bestaande speler hierboven. */
-  if (p.rangVersie !== RANG_VERSIE) { p.rankSeen = starRank(totalStarCount(p)).idx; p.rangVersie = RANG_VERSIE; }
+  // de ster-status is met pensioen (zie "= Sterrencarrière"): zijn twee velden weg
+  delete p.rankSeen; delete p.rangVersie;
+  // een wens die niet meer klopt (weg, al van jou, of geen prijs) gaat eruit
+  if (p.wens != null) {
+    const w = item(p.wens);
+    if (!w || typeof w.price !== 'number' || (p.owned || []).includes(w.id)) delete p.wens;
+  }
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
   // bestaande spelers beginnen met een lege onderhoudslijst; die vult zich vanzelf
@@ -2651,7 +2605,7 @@ const SFX = {
      sterren hun eigen moment laat. Hij eindigt op G en de eerste ster begint op de
      E daarboven -- daarom zijn deze drie noten déze drie. */
   'show.complete':  { noten: [[523, 0.13, 0, 'sine', 0.18], [659, 0.13, 0.10, 'sine', 0.18], [784, 0.13, 0.20, 'sine', 0.18]], tril: [0, 45, 60, 45, 60, 90] },
-  /* En de zeldzame toppen: een ster-status erbij, een wereld uit, álle werelden
+  /* En de zeldzame toppen: een wereld uit, álle werelden
      uit, een trofee die openknalt, memory helemaal gevonden. Die klonken stuk voor
      stuk als "einde show" -- hetzelfde klankje voor het gewoonste en het
      zeldzaamste moment van het spel, en dan betekent het geen van beide meer.
@@ -3115,6 +3069,10 @@ function avatarSVG(p, width, propMaat) {
       // toverstaf met fonkelende sterpunt
       s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
       s += `<text x="150" y="58" font-size="18">⭐</text><text x="165" y="40" font-size="12">✨</text>`;
+    } else if (mic.emoji) {
+      // emoji-microfoon (ijsje, vuur): zelfde steel, het emoji als kop
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<text x="144" y="70" font-size="22">${mic.emoji}</text>`;
     } else {
       s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
@@ -4377,63 +4335,6 @@ function openOverlay(cls, html, opts) {
   syncBackGuard();   // de laag is nu het bovenste ding dat 'terug' moet sluiten
   return ov;
 }
-// De hele carrière-ladder in beeld: behaalde, huidige en komende ster-statussen,
-// met hun sterrendrempel en diamant-bonus. Tik buiten = dicht. Hergebruikt
-// RANK_TIERS/starRank volledig, dus geen nieuwe data.
-function openCareer() {
-  sndClick();
-  const p = P();
-  const total = totalStarCount(p);
-  const cur = starRank(total);
-  const last = RANK_TIERS.length - 1;
-  const curBase = cur.idx;
-  const top = cur.nextMin == null;   // de bovenste rang: alles perfect, er is geen volgende
-  const into = total - cur.curMin, span = top ? 1 : cur.nextMin - cur.curMin;
-  const pct = top ? 100 : Math.max(0, Math.min(100, Math.round((into / span) * 100)));
-  const remain = top ? 0 : cur.nextMin - total;
-  // Eén doorlopende ladder van laag naar hoog. De huidige rung (curBase) toont de
-  // eigen naam/emoji uit starRank. De doel-rij (volgende status) draagt de balk:
-  // naam + beloning boven, voortgang eronder. De balk vult van je huidige tier
-  // naar déze drempel (de /nextMin).
-  const goalRow = (emoji, name) => `<div class="ladder-row goal">`
-    + `<div class="lr-top"><span class="lr-emoji">${emoji}</span><span class="lr-name">${name}</span>`
-    + (rankBonusFor(cur.idx + 1) > 0 ? `<span class="lr-bonus">+${rankBonusFor(cur.idx + 1)} 💎</span>` : '') + `</div>`
-    + `<div class="lr-progress"><span class="lr-bar"><span style="width:${pct}%"></span></span></div></div>`;
-  // Alleen het stuk ladder waar je iets aan hebt: de vorige status, waar je nu
-  // staat, je volgende doel en twee daarboven. De hele lijst (acht rangen, waarvan
-  // de bovenste op 36% doorzichtigheid) was voor een kind vooral onleesbare ruis --
-  // "Platinaster" zegt niets als je nog op 17 sterren staat. De "…en verder"-rij
-  // hieronder maakt zichtbaar dat het daarna nog doorgaat.
-  const vanaf = curBase - 1, tot = cur.idx + 3;
-  let rows = '';
-  RANK_TIERS.forEach((t, i) => {
-    if (i < vanaf || i > tot) return;
-    if (i < curBase) {
-      rows += `<div class="ladder-row past"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span></div>`;
-    } else if (i === curBase) {
-      // huidige status: slanke 'je bent hier'-markering (zonder balk)
-      rows += `<div class="ladder-row current"><span class="lr-emoji">${cur.emoji}</span>`
-        + `<span class="lr-name">${cur.name}</span><span class="lr-now">NU</span></div>`;
-    } else if (i === cur.idx + 1) {
-      rows += goalRow(t.emoji, t.name);   // de volgende vaste rang = het doel
-    } else {
-      rows += `<div class="ladder-row future"><span class="lr-emoji">${t.emoji}</span><span class="lr-name">${t.name}</span></div>`;
-    }
-  });
-  // Staan er boven het getoonde stuk nog rangen, dan sluit een gedimde
-  // "…en verder"-rij de ladder af. Is de top in beeld, dan niet: daarboven is er
-  // niets meer, en een rij die dat wél belooft is precies de oude fout.
-  if (tot < last) rows += `<div class="ladder-row future"><span class="lr-emoji">⭐</span><span class="lr-name">…en verder</span></div>`;
-  const ov = openOverlay('career-overlay', `<div class="pop-panel career-panel">`
-    + `<button class="career-close" type="button" aria-label="Sluiten">✕</button>`
-    + `<div class="career-title">Jouw ster-status</div>`
-    + `<div class="career-list">${rows}</div></div>`);
-  ov.onclick = e => { if (e.target === ov || e.target.classList.contains('career-close')) ov._close(); };
-  requestAnimationFrame(() => { const c = ov.querySelector('.ladder-row.current'); if (c) c.scrollIntoView({ block: 'center' }); });
-  // gesproken samenvatting (lees-vrij, ook fijn voor kleuters)
-  speak(top ? `Je bent een ${cur.name}. Alle shows perfect!`
-             : `Je bent een ${cur.name}. Nog ${remain} sterren tot de volgende ster-status.`);
-}
 /* ================= Bewegingstaal: kaart <-> zaal ===========================
    MOTION is de JS-kant van de bewegingsladder. Vier snelheden, en niets ertussen:
 
@@ -5561,6 +5462,7 @@ function goMap(vanLvl) {
   netAf = uitShow ? vanLvl : null;
   const vorige = document.querySelector('.screen.active');
   telNu($('map-diamonds'), p.diamonds);
+  zetWensPil(p);
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
@@ -7648,42 +7550,6 @@ function celebrateTrophy(t) {
   // Ongeduldig? Eerste tik opent meteen; daarna sluit een tik het feestje.
   ov.onclick = () => { if (!pop.classList.contains('burst')) burst(); else ov._close(); };
 }
-// Ster-status omhoog: het nieuwe rang-icoon knalt naar voren met een uitbarsting
-// van datzelfde icoon eromheen. Tik of ~2,2s = weg. Aangeroepen vanaf endLevel.
-// na (optioneel): wat er hierna nog aan de beurt is -- precies één keer, of je nu
-// zelf tikt of de timer hem sluit (zie endLevel).
-function rankUpCelebrate(rank, na) {
-  sndGroot();
-  buzz([0, 50, 80, 50, 100]);
-  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let sparks = '';
-  if (!reduce) {
-    const N = 16;
-    for (let i = 0; i < N; i++) {
-      const ang = (360 / N) * i + rnd(-8, 8);
-      const dist = rnd(95, 170);
-      const dx = Math.round(Math.cos(ang * Math.PI / 180) * dist);
-      const dy = Math.round(Math.sin(ang * Math.PI / 180) * dist);
-      sparks += `<span class="rankup-spark" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${rnd(0, 12) / 100}s">${rank.emoji}</span>`;
-    }
-  }
-  const ov = openOverlay('rankup-overlay', `<div class="rankup-core"><div class="rankup-sparks">${sparks}</div>`
-    + `<div class="rankup-badge">${rank.emoji}</div>`
-    + `<div class="rankup-label">Nieuwe ster-status!</div>`
-    + `<div class="rankup-name">${rank.name}</div></div>`, { fade: 300 });
-  // De opvolger hangt aan het sluiten zelf en niet aan de timer: tikt een kind de
-  // rang weg, dan komt het volgende feestje meteen en niet pas als die timer toch
-  // nog afloopt (en dan twee keer).
-  let af = false;
-  const dicht = () => {
-    if (af) return;
-    af = true;
-    ov._close();
-    if (na) setTimeout(na, 320);   // de ene laag is weggefaded voor de volgende komt
-  };
-  ov.onclick = dicht;
-  setTimeout(dicht, 2200);
-}
 /* ================= Wereldfeest (fase 4D.1) =================================
    Eén laag voor twee mijlpalen, en met opzet één en niet twee: de laatste show van
    een wereld kan tegelijk de show zijn die hem perfect maakt, en dan zijn twee
@@ -7751,7 +7617,7 @@ function wereldFeest(f) {
   let af = false;
   const dicht = () => { if (af) return; af = true; ov._close(); };
   ov.onclick = dicht;
-  /* Hij sluit zichzelf, net als de ster-status en anders dan de trofeeënkast. Dat
+  /* Hij sluit zichzelf, anders dan de trofeeënkast. Dat
      verschil is precies het verschil tussen de twee momenten: een cadeautje in de
      kast open je zélf en blijft dus open tot jij zegt dat je klaar bent, maar dit
      overkomt je ná de show -- en dan mag het je niet vasthouden. Eronder staat
@@ -9541,7 +9407,7 @@ function showStars(g) {
 }
 /* Een geslaagde show wegschrijven. Álles wat blíjft staan gebeurt hier en
    nergens anders: de sterren, de positie, de beloningen van de wereld, de
-   carrièrerang, de trofeeën -- en de save() die dat vastlegt.
+   trofeeën -- en de save() die dat vastlegt.
 
    Los van het tekenen, omdat het twee vragen zijn die elkaar niet nodig hebben.
    "Wat verandert er aan dit kind" is nu te lezen (en te testen) zonder één
@@ -9559,13 +9425,12 @@ function showStars(g) {
    Geeft terug wat er níeuw is -- niet wat er al stond, want daar is geen
    eindscherm voor:
 
-     { stars, beter, bonus, travel, feest, rankUp, trofees }
+     { stars, beter, bonus, travel, feest, trofees }
        stars    de sterren van déze show (een mindere poging laat de oude staan)
        beter    dit was een geslaagde herkansing van een eerdere show
        bonus    de 💎 die die sterren opleveren
        travel   { from, to } als de ster een halte opschuift, anders null
        feest    de wereld die net uit en/of perfect werd, of null
-       rankUp   { rank, bonus } bij een nieuwe ster-status, anders null
        trofees  de trofeeën die nét klaar zijn komen te liggen               */
 function applyShowResult(p, lvl, wl, stars) {
   const bonus = stars * 5;
@@ -9594,11 +9459,9 @@ function applyShowResult(p, lvl, wl, stars) {
   const netUit = !wasUit && worldDone(p, wl.index) ? beloningItem(wl.world) : null;
   const netVol = !wasVol && beloond.perfect ? beloond.perfect : null;
   const feest = (netUit || netVol) ? { wereld: wl.world, spul: netUit, perfect: netVol } : null;
-  // carrièrerang: net genoeg sterren voor een hogere rang? -> bonus (zie checkRankUp)
-  const rankUp = checkRankUp(p);
   const trofees = checkTrophies(p);
   save();
-  return { stars, beter, bonus, travel, feest, rankUp, trofees };
+  return { stars, beter, bonus, travel, feest, trofees };
 }
 
 function endLevel(success) {
@@ -9607,10 +9470,10 @@ function endLevel(success) {
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
-  /* De twee dingen die pas ná het eindscherm gevierd worden (zie de staart van
-     deze functie): een nieuwe ster-status, en een wereld die net uit of perfect
-     werd. Bij een mislukte show blijven ze allebei leeg. */
-  let rankUp = null, feest = null;
+  /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
+     functie): een wereld die net uit of perfect werd. Bij een mislukte show
+     blijft het leeg. */
+  let feest = null;
   // zelfde kop als tijdens het optreden: wereld + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const wl = worldFor(lvl);
@@ -9641,7 +9504,6 @@ function endLevel(success) {
        trofee klaar!" terwijl er twee lagen. */
     const nieuwKlaar = (p.readyTrophies || []).filter(id => !G.klaarBijStart.includes(id)).length;
     if (r.travel) pendingTravel = r.travel;   // de ster reist zichtbaar door op de kaart
-    rankUp = r.rankUp;
     feest = r.feest;
     /* De kop zegt wat de sterren zeggen. Hier stond altijd "was geweldig!", ook
        boven één ster -- en dan spreken de kop en de sterren elkaar tegen op het
@@ -9665,29 +9527,16 @@ function endLevel(success) {
        zie applyShowResult), met een ster ervoor. Een kind las vijftien sterren,
        vlak onder de drie die ze net gehaald had, en het 💎-vakje ernaast was dan
        weer vijftien te laag. De sterren staan erboven, groot; dit vakje is de munt.
-       De bonus van een nieuwe ster-status staat in zijn eigen pil hieronder. */
+       */
     $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend + bonus}</span>`;
-    /* Eén mijlpaal, en alleen als er écht iets gehaald is: een nieuwe ster-status
-       of een trofee die klaarligt. Allebei dezelfde gouden pil, allebei tikbaar.
+    /* Eén mijlpaal, en alleen als er écht iets gehaald is: een trofee die
+       klaarligt. Een gouden pil, tikbaar.
 
-       Wat hier weg is: "🎯 nog 13 ⭐ tot Clubster" -- de stille vooruitblik die na
-       bijna élke show onder de sterren stond. Dat was het laatste stukje ster-status
-       dat ongevraagd in beeld kwam, en het vertelde een kind precies het verkeerde:
-       niet wat ze net gehaald heeft, maar hoeveel er nóg niet af is, met een rangnaam
-       erbij ("Platinaster") die op dat moment nergens naar verwijst. Dezelfde
-       opruiming als "⭐ 13/24" op de kaart en de balken in de kast: een teller die
-       vanzelf oploopt is geen prestatie, en een kind van vijf leest geen breuk.
-
-       De ster-status zelf verandert niet: hij betaalt zijn diamanten (checkRankUp),
-       hij krijgt zijn feestje (rankUpCelebrate), en de ladder gaat open vanaf de pil
-       hieronder -- op het moment dat er iets over te zeggen valt, en dán vertelt hij
-       ook meteen wat de volgende status is. */
+       Hier stond ook de ster-status (een nieuwe rang, met zijn eigen pil en
+       feestje). Die is met pensioen -- zie "= Sterrencarrière". */
     const mile = $('end-milestone');
     mile.innerHTML = '';
-    if (rankUp) {
-      mile.innerHTML = `<button class="gold-pill" type="button">${rankUp.rank.emoji} ${rankUp.rank.name}! +${rankUp.bonus} 💎</button>`;
-      mile.firstChild.onclick = () => { sndClick(); openCareer(); };
-    } else if (nieuwKlaar) {
+    if (nieuwKlaar) {
       const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
       mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
@@ -9734,11 +9583,8 @@ function endLevel(success) {
      De wissel (MOTION.totaal) is voorbij voordat de eerste ster landt
      (STERCEREMONIE.eerste). */
   toonHub('screen-end');
-  /* Na het eindscherm hoogstens twee grote momenten, en nooit tegelijk: eerst de
-     ster-status (die sluit zichzelf na ~2 tellen), dán het wereldfeest. In de
-     praktijk vallen ze zelden samen -- een rang komt op 12/30/60... sterren en een
-     wereld is om de acht shows -- maar als het gebeurt horen ze achter elkaar en
-     niet over elkaar.
+  /* Na het eindscherm hoogstens één groot moment: het wereldfeest. (Hier stond
+     ook de ster-status, die vóór het wereldfeest kwam; die is met pensioen.)
 
      Het wereldfeest komt ná het eindscherm en niet erin: de sterren van déze show
      zijn eerst, en de wereld is het laagje daarboven. Daarna gaat "Verder op
@@ -9754,14 +9600,13 @@ function endLevel(success) {
      op een getal dat toevallig ooit groot genoeg leek. */
   const naFeest = feest ? () => wereldFeest(feest) : null;
   const wacht = naSterren();
-  if (rankUp) setTimeout(() => rankUpCelebrate(rankUp.rank, naFeest), wacht);
-  else if (naFeest) setTimeout(naFeest, wacht);
+  if (naFeest) setTimeout(naFeest, wacht);
 }
 /* De klok van het sterrenmoment.
 
    Deze tijden stonden als losse getallen in renderEndStars, en dat was prima
    zolang niemand erop wachtte. Er wacht er wél iets op: endLevel staat het
-   scherm daarna af aan een ster-status of een wereldfeest, en dat mag pas als
+   scherm daarna af aan een wereldfeest, en dat mag pas als
    deze ceremonie uitgespeeld is (zie naSterren). Twee plekken die met de hand
    op hetzelfde getal gehouden moeten worden lopen uit elkaar -- dat is precies
    hoe het eerder misging: de overlay stond op 650ms en dekte de tweede en derde
@@ -10347,6 +10192,7 @@ function dressCardState(card, it, p) {
     + (equipped ? ' equipped' : (owned ? ' owned' : ''))
     + (uitWereld ? ' teverdienen' : '')
     + (shopSelectedId === it.id ? ' selected' : '')
+    + (!owned && p.wens === it.id ? ' gewenst' : '')
     + (nieuw ? ' just-bought' : '');
   const st = card.querySelector('.item-status');
   if (!st) return;
@@ -10427,6 +10273,68 @@ function surpriseOutfit() {
   sndAan();
 }
 
+/* ================= Mijn wens ==================================================
+   Eén spulletje dat je nog niet kunt betalen, vastgezet met een hartje in de lade
+   onderaan. De 💎-pil op de kaart draagt het dan mee: het emoji van je wens naast
+   je diamanten, met een streepje eronder dat volloopt naarmate je spaart. Is er
+   genoeg, dan fonkelt de pil, en tikken brengt je meteen naar dát spulletje.
+
+   Waarom: de droomspulletjes kosten vier tot zes shows. Dat is een goed doel,
+   maar een kind van zes houdt "ik spaar voor het draakje" niet vijf shows lang
+   in haar hoofd -- en de pil zei tot nu toe alleen hoeveel je hebt, niet waarvoor.
+
+   Opslag: p.wens is een item-id, en verder niets. Er is er hoogstens één; een
+   nieuwe vervangt de oude, nog eens tikken haalt hem weg, en kopen ruimt hem op
+   (confirmShopBuy). Wat niet meer klopt -- een id dat niet bestaat, iets dat al
+   van je is, een wereldschat -- gooit migrate() weg. */
+function wensItem(p) {
+  const it = p.wens ? item(p.wens) : null;
+  return (it && typeof it.price === 'number' && !p.owned.includes(it.id)) ? it : null;
+}
+function zetWens(id) {
+  const p = P();
+  if (p.wens === id) delete p.wens; else p.wens = id;
+  save();
+  sndClick();
+  const it = item(id);
+  renderDressBar(it, p);
+  paintShop();
+  if (p.wens === id) {
+    buzz(15);
+    showToast('💖', null, 'Je wens!');
+    setTimeout(hideToast, 1300);
+  }
+}
+// Het emoji van de wens, of anders het teken van zijn lade (👕 voor kleren...).
+function wensTeken(it) {
+  if (it.emoji) return it.emoji;
+  const c = CATS.find(c2 => c2.id === it.cat);
+  return c ? c.ico : '💖';
+}
+// De 💎-pil op de kaart bijwerken: met wens, of gewoon zoals hij altijd was.
+function zetWensPil(p) {
+  const pil = $('map-diamonds') && $('map-diamonds').closest('.diamond-badge');
+  const plek = $('map-wens');
+  if (!pil || !plek) return;
+  const it = wensItem(p);
+  if (!it) {
+    plek.textContent = '';
+    pil.classList.remove('met-wens', 'wens-klaar');
+    pil.style.removeProperty('--wens');
+    pil.onclick = () => navGo('dress');
+    pil.setAttribute('aria-label', 'Naar de kleedkamer');
+    return;
+  }
+  const klaar = p.diamonds >= it.price;
+  plek.textContent = wensTeken(it);
+  pil.classList.add('met-wens');
+  pil.classList.toggle('wens-klaar', klaar);
+  pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
+  pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+  pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
+    : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
+}
+
 /* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
    spoor maar een concreet doel: "Nog X 💎" + meteen spelen.
    Hij komt alleen op voor iets dat nóg niet van je is -- een aankoop is de enige
@@ -10464,10 +10372,16 @@ function renderDressBar(it, p) {
   if (owned) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   const tekort = it.price - p.diamonds;
   if (tekort > 0) {
+    /* Te duur? Dan kan het je wens worden (zie "= Mijn wens"): het hartje zet hem
+       vast, en de 💎-pil op de kaart draagt hem tot hij te koop is. */
+    const gewenst = p.wens === it.id;
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
         <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
+      <button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
+        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>
       <button class="btn small" id="db-earn">Speel</button>`;
+    $('db-wens').onclick = () => zetWens(it.id);
     /* De show waar de kaart je nu heen stuurt. Is alles uit, dan staat p.level op
        WORLD_LAST + 1 -- een level dat niet bestaat. Een show dáár speelde gewoon,
        onder de naam van de laatste halte, en schreef p.stars[49] weg: precies de
@@ -10647,6 +10561,7 @@ function confirmShopBuy(id) {
   }
   p.diamonds -= it.price;
   p.owned.push(it.id);
+  if (p.wens === it.id) delete p.wens;   // de wens is uitgekomen
   p.equipped[it.cat] = it.id;
   /* De lade ging over "wil je dit kopen?" en dat is beantwoord: hij verdwijnt, en
      wat ervoor in de plaats komt is het gouden "Nieuw!" op het kaartje plus de pop
@@ -12169,7 +12084,7 @@ if (location.search.indexOf('debug') !== -1) {
       pet: 'pet_eenhoorn', instrument: 'instr_gitaar' };
     a.trophies = ['first', 'sums25', 'perfect1'];
     a.readyTrophies = ['gold5'];
-    a.goldHits = 7; a.encores = 3; a.rankSeen = 2;
+    a.goldHits = 7; a.encores = 3;
     a.stats = { correct: 180, wrong: 22 };
     const c = defaultProfile('Sem', 'dress_blauw',
       { hair: 'hair_bruin', base: 'jongen', track: 'count', stage: 3 });

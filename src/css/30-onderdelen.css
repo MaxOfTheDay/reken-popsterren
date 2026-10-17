@@ -555,5 +555,25 @@
   }
   button.diamond-badge { cursor: pointer; }
   button.diamond-badge:active { transform: scale(.95); }
+  /* Mijn wens op de kaart: het emoji van je wens achter je diamanten, en een
+     streepje onderaan de pil dat volloopt naarmate je spaart (--wens, gezet door
+     zetWensPil). Is er genoeg, dan fonkelt hij zachtjes. Zonder wens staat er
+     niets en is de pil precies wat hij was. */
+  .wens-mini:empty { display: none; }
+  .wens-mini { font-size: .95em; line-height: 1; margin-left: 2px; }
+  .diamond-badge.met-wens { position: relative; }
+  .diamond-badge.met-wens::after {
+    content: ''; position: absolute; left: 10px; right: 10px; bottom: 3px; height: 3px;
+    border-radius: var(--r-pill); pointer-events: none;
+    background: linear-gradient(90deg, var(--gold-accent) var(--wens, 0%), rgba(255,255,255,.18) var(--wens, 0%));
+  }
+  /* Fonkelen met transform en niet met een groeiende gloed: dat draait op de
+     compositor en kost ook op een oude tablet niets (zie .item-card.just-bought). */
+  .diamond-badge.wens-klaar .wens-mini { display: inline-block; animation: wensFonkel 1.4s ease-in-out infinite; }
+  @keyframes wensFonkel {
+    0%, 100% { transform: scale(1) rotate(0); }
+    50%      { transform: scale(1.25) rotate(-8deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .diamond-badge.wens-klaar .wens-mini { animation: none; } }
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
