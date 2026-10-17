@@ -725,6 +725,8 @@ function tekenLijst() {
       + '\nDe rest van de studio blijft werken.');
     return;
   }
+  // lukt het weer (na een tak die even stuk was), dan gaat die melding ook weg
+  if ($('#wmeld') && /niet te lezen/.test($('#wmeld').textContent)) meld('#wmeld', '', '');
   lijst.innerHTML = '';
   WERELDEN.werelden.forEach(w => {
     const st = staatVan(w);
