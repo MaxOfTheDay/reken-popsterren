@@ -61,66 +61,56 @@ header{display:flex;align-items:center;gap:12px;height:var(--kop);padding:0 14px
 .kiezer button.op{background:#32204a;color:var(--goud)}
 .watdoetdit{color:var(--stil);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .rechts{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
-/* het hoekje ernaast -- bewust stiller dan de twee werkbladen */
-#naar-merk{background:none;border:1px solid var(--rand);border-radius:7px;padding:4px 10px;
+/* Meer: wat je zelden nodig hebt -- bewust stiller dan de twee werkbladen */
+#naar-meer{background:none;border:1px solid var(--rand);border-radius:7px;padding:4px 10px;
   color:var(--zacht);cursor:pointer}
-#naar-merk:hover{color:var(--tekst);border-color:#42305e}
-#naar-merk.op{border-color:var(--goud);color:var(--goud)}
+#naar-meer:hover{color:var(--tekst);border-color:#42305e}
+#naar-meer.op{border-color:var(--goud);color:var(--goud)}
 .bouwchip{display:flex;align-items:center;gap:7px;font:600 12px ui-monospace,monospace;
   color:var(--zacht);white-space:nowrap}
 .stip{width:8px;height:8px;border-radius:99px;background:var(--groen);flex:none}
 .stip.let{background:var(--goud)} .stip.fout{background:var(--rood)}
 
-/* ---- het rooster ---------------------------------------------------------- */
+/* ---- het rooster ----------------------------------------------------------
+   Drie werkbladen, en elk heeft één kolom met knoppen naast het kijkvak:
+     wereld   de lijst werelden -- hier begin je, en hier kom je terug
+     test     het spel in een gekozen stand zetten
+     meer     wat je zelden nodig hebt: versies, losse stappen, gereedschap, beeld
+   Bewerken is geen werkblad: dan krijgt de wereldstudio in het kijkvak de hele
+   breedte (body.bewerk). */
 .werkblad{display:grid;gap:16px;padding:14px;align-items:start;
   grid-template-rows:auto minmax(0,1fr)}
-body[data-blad="test"] .werkblad{grid-template-columns:332px minmax(0,1fr);
+body[data-blad="wereld"] .werkblad{grid-template-columns:400px minmax(0,1fr);
+  grid-template-areas:"lijst kijk" "lijst kijk"}
+body[data-blad="test"] .werkblad{grid-template-columns:360px minmax(0,1fr);
   grid-template-areas:"zij kijk" "zij kijk"}
-body[data-blad="wereld"] .werkblad{grid-template-columns:212px 358px minmax(0,1fr);
-  grid-template-areas:"lijst editor kijk" "lijst editor kijk"}
-body[data-blad="merk"] .werkblad{grid-template-columns:392px minmax(0,1fr);
-  grid-template-areas:"merkvak kijk" "merkvak kijk"}
-#zij{grid-area:zij} #wlijst-vak{grid-area:lijst} #weditor{grid-area:editor}
-#merkvak{grid-area:merkvak} .kijk{grid-area:kijk}
+body[data-blad="meer"] .werkblad{grid-template-columns:400px minmax(0,1fr);
+  grid-template-areas:"meervak kijk" "meervak kijk"}
+#zij{grid-area:zij} #wlijst-vak{grid-area:lijst} #meervak{grid-area:meervak} .kijk{grid-area:kijk}
 /* Wat niet in dit werkblad hoort staat er ook niet: een paneel met een grid-area
    die in dit rooster niet bestaat, wordt door de browser ergens anders neergezet
    en duwt dan het kijkvak weg. Weg is hier dus letterlijk weg. */
-body[data-blad="test"] #wlijst-vak, body[data-blad="test"] #weditor,
-body[data-blad="test"] #merkvak,
-body[data-blad="wereld"] #zij, body[data-blad="wereld"] #merkvak,
-body[data-blad="merk"] #zij, body[data-blad="merk"] #wlijst-vak,
-body[data-blad="merk"] #weditor{display:none}
+body[data-blad="test"] #wlijst-vak, body[data-blad="test"] #meervak,
+body[data-blad="wereld"] #zij, body[data-blad="wereld"] #meervak,
+body[data-blad="meer"] #zij, body[data-blad="meer"] #wlijst-vak{display:none}
 [hidden]{display:none!important}
 /* Bewerken: de wereldstudio in het kijkvak krijgt de hele breedte. Ze heeft haar
-   eigen paneel met de wereldlijst en de velden; met onze twee kolommen ernaast
-   bleef er een vak van 800 pixels over, klapte haar paneel naar onderen en zette
-   je haltes op een kaart van een paar centimeter hoog. */
-body[data-blad="wereld"].bewerk .werkblad{grid-template-columns:minmax(0,1fr);
-  grid-template-areas:"kijk" "kijk"}
-body.bewerk #wlijst-vak, body.bewerk #weditor{display:none}
+   eigen paneel met de stappen; met een kolom ernaast bleef er te weinig over en
+   zette je haltes op een kaart van een paar centimeter hoog. */
+body.bewerk .werkblad{grid-template-columns:minmax(0,1fr) !important;
+  grid-template-areas:"kijk" "kijk" !important}
+body.bewerk #wlijst-vak, body.bewerk #zij, body.bewerk #meervak{display:none}
+body.bewerk .kijkbalk, body.bewerk .kijkmaat, body.bewerk .nu{display:none}
 #bewerkbalk{display:none}
 body.bewerk #bewerkbalk{display:flex}
-/* Een laptop van 1280 heeft geen drie volle kolommen; dan gaat de wereldlijst
-   bóven de editor staan en houdt het kijkvak zijn breedte. */
-@media (max-width:1340px){
-  body[data-blad="wereld"]:not(.bewerk) .werkblad{grid-template-columns:330px minmax(0,1fr);
-    grid-template-areas:"lijst kijk" "editor kijk"}
-}
 @media (max-width:1020px){
-  body[data-blad="test"] .werkblad,
-  body[data-blad="merk"] .werkblad{grid-template-columns:300px minmax(0,1fr)}
-  body[data-blad="wereld"]:not(.bewerk) .werkblad{grid-template-columns:300px minmax(0,1fr)}
+  body[data-blad] .werkblad{grid-template-columns:320px minmax(0,1fr)}
 }
 .paneel{display:flex;flex-direction:column;gap:14px;min-width:0;
   position:sticky;top:calc(var(--kop) + 14px);max-height:calc(100vh - var(--kop) - 28px);
   overflow:auto;overscroll-behavior:contain;padding-right:6px}
 .paneel::-webkit-scrollbar{width:8px}
 .paneel::-webkit-scrollbar-thumb{background:#2b1e3d;border-radius:8px}
-/* twee panelen naast elkaar in dezelfde kolom (wereldlijst boven de editor) */
-@media (max-width:1340px){
-  body[data-blad="wereld"] #wlijst-vak{position:static;max-height:none}
-  body[data-blad="wereld"] #weditor{top:calc(var(--kop) + 14px);max-height:calc(100vh - var(--kop) - 28px)}
-}
 
 /* ---- secties: een kop, wat eronder, en een haarlijn ertussen --------------- */
 .vak{display:flex;flex-direction:column;gap:8px;flex:none}
@@ -186,26 +176,28 @@ details.tech[open] > summary::before{content:'▾ '}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:7px 0 0;font-size:12px}
 .kv dt{color:var(--stil)} .kv dd{margin:0;overflow-wrap:anywhere;color:var(--zacht)}
 
-/* ---- wereldlijst ---------------------------------------------------------- */
-.wlijst{display:flex;flex-direction:column;gap:2px}
-.w{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:center;height:auto;
-  padding:6px 8px;border-radius:8px;border:1px solid transparent;background:none;
-  text-align:left;width:100%;cursor:pointer}
-.w:hover{background:#1a1029}
-.w.op{background:#2b1d16;border-color:var(--goud)}
-.w .ic{font-size:15px;line-height:1}
+/* ---- wereldlijst ----------------------------------------------------------
+   Een rij per wereld: icoon, naam, één woord voor waar hij staat, en de drie
+   dingen die je ermee doet. Meer hoeft een rij niet te dragen. */
+.wlijst{display:flex;flex-direction:column;gap:4px}
+.w{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;
+  padding:8px 10px;border-radius:10px;border:1px solid transparent;background:var(--vlak2);cursor:pointer}
+.w:hover{border-color:#42305e}
+.w.op{border-color:var(--goud)}
+.w .ic{font-size:20px;line-height:1;text-align:center}
 .w .nm{min-width:0;display:flex;flex-direction:column;gap:1px}
-.w .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-.w .nm small{color:var(--stil);font-size:10.5px}
-.w.op .nm small{color:var(--zacht)}
+.w .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13.5px}
+.w .nm small{color:var(--stil);font-size:11px}
+/* de knoppen alleen bij de gekozen wereld: elf rijen met elk drie knoppen is
+   een muur, en je werkt toch aan één wereld tegelijk */
+.w .doe{grid-column:2 / 4;display:none;gap:6px;flex-wrap:wrap;margin-top:4px}
+.w.op .doe{display:flex}
+.w .doe button{height:26px;font-size:12px}
+.w .punt{grid-column:2 / 4}
 .bol{width:7px;height:7px;border-radius:99px;background:var(--groen);flex:none}
 .bol.let{background:var(--goud)} .bol.fout{background:var(--rood)}
 .bol.stil{background:var(--stil)}
-/* waar een wereld staat: alleen in je concept, of al in het project */
-.w .tag{font-size:10px;padding:0 5px;border-radius:99px;margin-left:5px;font-weight:600;
-  letter-spacing:.02em;vertical-align:1px}
-.tag.nieuw{background:#1d3b2c;color:var(--groen)} .tag.concept{background:#3a2a12;color:var(--goud)}
-.tag.dicht{background:#1f1330;color:var(--zacht)}
+#nieuwrij input{flex:1}
 
 /* ---- van concept naar spel ------------------------------------------------ */
 .lijn{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
@@ -217,7 +209,6 @@ details.tech[open] > summary::before{content:'▾ '}
 .lijn small{grid-column:2;color:var(--zacht);font-size:11.5px;overflow-wrap:anywhere;white-space:pre-wrap}
 .lijn .rij{grid-column:2;margin-top:4px}
 .lijn .rij button{height:26px;font-size:12px}
-#nieuwrij input{flex:1}
 
 /* ---- keuringspunten ------------------------------------------------------- */
 .punt{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:var(--zacht);
@@ -297,9 +288,9 @@ const WOORD = {
   up: 'Up-to-date', nieuwer: 'Main is nieuwer',
 };
 const WERKBLADEN = {
-  test:   { naam: 'Testomgeving', wat: 'Speel en controleer de game in een gekozen toestand' },
-  wereld: { naam: 'Wereldstudio', wat: 'Bouw en beheer de werelden' },
-  merk:   { naam: 'App & merk',   wat: 'Beeld dat bij de hele app hoort, niet bij één wereld' },
+  wereld: { naam: 'Werelden', wat: 'Maak een wereld, test hem en publiceer hem' },
+  test:   { naam: 'Testen',   wat: 'Zet het spel in een gekozen stand' },
+  meer:   { naam: 'Meer',     wat: 'Versies, losse stappen, gereedschap en het beeld van de app' },
 };
 
 /* ---- de stand van de studio zelf -------------------------------------------
@@ -309,13 +300,14 @@ const WERKBLADEN = {
    opnieuw opgebouwd in plaats van meegesleept: zo staat er nooit een scherm uit
    het ene werkblad in het andere. */
 const S = {
-  blad: 'test',
+  blad: 'wereld',
   wereld: 1,
   toestel: TOESTELLEN[0].id,
   eigen: { w: 412, h: 920 },
   test: { star: 'p1', stand: 'halverwege', diamanten: '', screen: 'map' },
   wstand: 'halverwege',
   bewerken: false,
+  stap: null,             // op welke stap de wereldstudio opent (zie bewerk)
   toestelVoor: null,      // het toestel van vóór het bewerken (dat gaat op vullend)
   vlaggen: {},
   url: '',
@@ -432,15 +424,16 @@ function pasOverlays() {
    andere meegesleept behalve de wereld die je gekozen hebt. Zo kan er nooit een
    kleedkamer uit de Testomgeving in de Wereldstudio blijven hangen. */
 function bladUrl() {
-  /* Het werkblad Wereldstudio speelt ook wat nog niet uitgebracht is
+  /* Werelden en bewerken spelen ook wat nog niet uitgebracht is
      (&onuitgebracht): daar maak je een wereld die geen kind nog ziet, en die wil
-     je wél kunnen proberen. De Testomgeving laat dat met opzet weg -- die toont
-     het spel zoals een kind het krijgt. */
-  if (S.blad === 'wereld') {
-    return bouw({ wereld: S.wereld, stand: S.wstand, screen: 'map',
-                  mapedit: S.bewerken ? 1 : 0, onuitgebracht: 1 });
+     je wél kunnen zien. Testen met Zelf samenstellen laat dat met opzet weg --
+     dat toont het spel zoals een kind het krijgt. */
+  if (S.bewerken) {
+    return bouw({ wereld: S.wereld, stand: S.wstand, screen: 'map', mapedit: 1,
+                  onuitgebracht: 1, stap: S.stap });
   }
-  if (S.blad === 'merk') return bouw({ screen: 'profile' });
+  if (S.blad === 'wereld') return bouw({ wereld: S.wereld, stand: S.wstand, screen: 'map', onuitgebracht: 1 });
+  if (S.blad === 'meer') return bouw({ screen: 'profile' });
   const t = S.test;
   return bouw({ star: t.star, wereld: S.wereld, stand: t.stand,
                 diamanten: t.diamanten === '' ? null : Number(t.diamanten),
@@ -450,18 +443,19 @@ function toonBlad() { ga(bladUrl()); }
 
 /* ---- werkblad wisselen ---------------------------------------------------- */
 function naarBlad(naam) {
-  if (S.blad === naam) return;
+  if (S.bewerken) zetBewerk(false);
+  if (S.blad === naam) { toonBlad(); return; }
   S.blad = naam;
   document.body.dataset.blad = naam;
-  if (naam !== 'wereld' && S.bewerken) zetBewerk(false);   // "bewerken" hoort bij één werkblad
   document.querySelectorAll('.kiezer button').forEach(b => b.classList.toggle('op', b.dataset.blad === naam));
-  $('#naar-merk').classList.toggle('op', naam === 'merk');
+  $('#naar-meer').classList.toggle('op', naam === 'meer');
   $('#watdoetdit').textContent = WERKBLADEN[naam].wat;
-  if (naam === 'wereld' && S.toestel === 'vullend') S.toestel = TOESTELLEN[0].id;
+  if (S.toestel === 'vullend') S.toestel = TOESTELLEN[0].id;
   tekenToestellen();
+  if (naam === 'test') tekenProbeer();
   toonBlad();
   requestAnimationFrame(pasVak);
-  if (naam === 'merk' && !BEELDEN) haalBeelden();
+  if (naam === 'meer' && !BEELDEN) haalBeelden();
 }
 
 /* ---- huidige build ---------------------------------------------------------
@@ -517,9 +511,31 @@ async function haalVersie() {
     : 'geen — deze tak staat alleen hier');
   if (f.vanMain) zet('t.o.v. main', f.vanMain.achter + ' achter, ' + f.vanMain.voor + ' voor');
   if (f.vuil) zet('open werk', f.vuileRegels.join('\n'));
+  tekenLijst();                         // "Wacht op merge" hangt aan de tak
   $('#bijwerk').disabled = !f.achter || !!f.vuil || f.los;
   $('#naarmain').disabled = (f.naam === 'main' && !f.los) || !!f.vuil;
   if ($('#v-open').hidden === !f.vuil) { /* al goed */ } else haalOpenWerk();
+}
+
+/* ---- de nieuwste versie ----------------------------------------------------
+   De knop bovenin: ophalen en naar de nieuwste main (versie.nieuwste in
+   test/versie.js). Wacht er nog een wereld op een merge, of staat er werk open,
+   dan gebeurt er niets en staat er waarom. */
+async function nieuwste() {
+  const b = $('#nieuwste');
+  b.disabled = true;
+  meld('#nieuwstemeld', '', 'De nieuwste versie ophalen…');
+  let j;
+  try { j = await (await fetch('/api/nieuwste', { method: 'POST' })).json(); }
+  catch (e) { b.disabled = false; meldFout('#nieuwstemeld', 'De nieuwste versie ophalen lukte niet', e,
+    'Er is niets veranderd. Draait npm run studio nog?'); return; }
+  b.disabled = false;
+  meld('#nieuwstemeld', j.ok ? 'ok' : 'let', j.tekst);
+  if (S.blad !== 'wereld' && !S.bewerken) naarBlad('wereld');
+  await haalVersie();
+  await haalWerelden();
+  await haalOpenWerk();
+  herlaad();
 }
 
 /* ---- Open werk -------------------------------------------------------------
@@ -647,9 +663,10 @@ async function doe(pad, body, waar, bezig) {
 }
 
 /* ---- werelden --------------------------------------------------------------
-   De lijst is de navigator: icoon, naam, volgorde en één bolletje dat zegt of er
-   iets aan mankeert. Meer hoeft een rij niet te dragen -- de rest staat rechts
-   zodra je hem aantikt. */
+   De lijst is het beginscherm: icoon, naam, één woord voor waar hij staat
+   (staatVan), en de drie dingen die je met een wereld doet -- bewerken, testen,
+   publiceren. Alles over een wereld veranderen gebeurt in de wereldstudio in het
+   kijkvak; hier kies je alleen wélke. */
 async function haalWerelden() {
   const c = leesConcept();
   try {
@@ -660,49 +677,94 @@ async function haalWerelden() {
   catch (e) { WERELDEN = null; console.error('[studio] werelden ophalen mislukt', e); }
   tekenConceptChip();
   tekenLijn();
+  tekenLijst();
+  tekenScenario();
+  tekenProbeer();
+}
+
+/* Waar staat een wereld? Eén woord, uit wat de studio al weet -- er wordt
+   niets extra's bewaard:
+     Probleem          er is iets dat een kind zou merken (opslaan weigert)
+     Niet gepubliceerd anders dan op main: in je concept, of opgeslagen maar
+                       nog niet online
+     Wacht op merge    op GitHub, op een tak die nog niet op main staat
+     Niet uitgebracht  zo op main, maar nog dicht voor kinderen
+     Live              zo op main, en uitgebracht
+   opMain komt van de server (test/werelden.js): die vergelijkt met origin/main. */
+function staatVan(w) {
+  if (w.blokkeert) return { soort: 'fout', tekst: 'Probleem' };
+  if (w.staat === 'gelijk' && w.opMain === 'live') return { soort: 'ok', tekst: 'Live' };
+  if (w.staat === 'gelijk' && w.opMain === 'dicht') return { soort: '', tekst: 'Niet uitgebracht' };
+  const v = VERSIE;
+  const gepusht = w.staat === 'gelijk' && v && v.git && !v.vuil && !v.isMain && !v.los
+    && v.upstream && !v.voor && v.vanMain && v.vanMain.voor > 0;
+  if (gepusht) return { soort: 'let', tekst: 'Wacht op merge' };
+  return { soort: 'let', tekst: 'Niet gepubliceerd' };
+}
+/* Is deze wereld al bij kinderen? Dan vraagt Publiceren het nog één keer. */
+function isLive(w) { return !!w.mainUitgebracht; }
+/* Een nieuwe wereld komt achteraan, en zijn levels volgen op de laatste. Staat er
+   al een nieuwe die nog niet op main is, dan krijgen ze allebei dezelfde levels
+   -- dus wacht de volgende tot de vorige gepubliceerd is. */
+function wachtendeNieuwe() {
+  if (!WERELDEN || !WERELDEN.werelden || WERELDEN.mainAantal == null) return null;
+  return WERELDEN.werelden.filter(w => w.nr > WERELDEN.mainAantal)[0] || null;
+}
+
+function tekenLijst() {
+  const lijst = $('#wlijst');
+  if (!lijst) return;
   /* index.html kan stuk zijn -- je test nu eenmaal ook takken waar iemand nog
      middenin zit. Dan hoort de studio te zéggen wat er mis is en verder gewoon te
      werken; een lege pagina zonder uitleg zou je de fout in je eigen werk laten
      zoeken. */
   if (!WERELDEN || !WERELDEN.werelden) {
-    $('#wlijst').innerHTML = '';
-    $('#weditor-in').innerHTML = '';
+    lijst.innerHTML = '';
     meld('#wmeld', 'fout', 'De werelden zijn niet te lezen uit index.html.\n'
       + ((WERELDEN && WERELDEN.tekst) || 'Onbekende fout.')
       + '\nDe rest van de studio blijft werken.');
     return;
   }
-  meld('#wmeld', '', '');
-  const lijst = $('#wlijst');
   lijst.innerHTML = '';
   WERELDEN.werelden.forEach(w => {
-    const b = el('button', 'w' + (w.nr === S.wereld ? ' op' : ''));
-    b.appendChild(el('span', 'ic', w.icoon || '·'));
+    const st = staatVan(w);
+    const rij = el('div', 'w' + (w.nr === S.wereld ? ' op' : ''));
+    rij.appendChild(el('span', 'ic', w.icoon || '·'));
     const nm = el('span', 'nm');
     nm.appendChild(el('b', null, w.naam));
-    const onder = el('small', null, 'wereld ' + w.nr + ' · show ' + w.eerste + '–' + w.laatste
-      + (w.speelbaar ? '' : ' · niet uitgebracht'));
-    // waar hij staat: alleen in je concept, of al in het project (maar anders)
-    if (w.staat === 'nieuw') onder.appendChild(el('span', 'tag nieuw', 'nieuw'));
-    else if (w.staat === 'gewijzigd') onder.appendChild(el('span', 'tag concept', 'concept'));
-    nm.appendChild(onder);
-    b.appendChild(nm);
-    /* rood = een kind merkt het (opslaan weigert), goud = nog te doen vóór
-       uitbrengen, grijs = alleen een opmerking */
-    const bol = el('span', 'bol ' + (w.blokkeert ? 'fout' : w.tedoen ? 'let' : w.letop ? 'stil' : ''));
-    bol.title = w.blokkeert ? w.blokkeert + ' blokkeert' : w.tedoen ? w.tedoen + ' nog te doen'
-      : w.letop ? w.letop + ' ' + WOORD.waarschuwing.toLowerCase() : 'in orde';
-    b.appendChild(bol);
-    b.onclick = () => kiesWereld(w.nr);
-    lijst.appendChild(b);
+    nm.appendChild(el('small', null, 'wereld ' + w.nr + ' · show ' + w.eerste + '–' + w.laatste));
+    rij.appendChild(nm);
+    rij.appendChild(el('span', 'chip ' + st.soort, st.tekst));
+    const doe = el('div', 'doe');
+    const knop = (tekst, klas, tip, fn) => {
+      const b = el('button', klas, tekst);
+      b.title = tip;
+      b.onclick = e => { e.stopPropagation(); fn(); };
+      doe.appendChild(b);
+    };
+    knop('✎ Bewerken', '', 'kaart, haltes en schat — in stappen', () => bewerk(w.nr, null));
+    knop('▶ Testen', 'stil', 'deze wereld spelen, in elke stand', () => { kiesWereld(w.nr); naarBlad('test'); });
+    if (st.tekst !== 'Live') {
+      knop('🚀 Publiceren', st.tekst === 'Probleem' ? 'stil' : 'prim',
+        'naar de laatste stap: nog één keer kijken, en dan helemaal naar buiten', () => bewerk(w.nr, 4));
+    }
+    rij.appendChild(doe);
+    // wat een kind zou merken, meteen onder de wereld: één regel per punt
+    (w.punten || []).filter(p => p.blokkeert).forEach(p => {
+      const d = el('div', 'punt');
+      d.appendChild(el('span', 'bol fout'));
+      d.appendChild(el('div', null, p.t));
+      rij.appendChild(d);
+    });
+    rij.onclick = () => kiesWereld(w.nr);
+    lijst.appendChild(rij);
   });
-  const t = $('#wtel');
-  t.textContent = WERELDEN.werelden.length + ' werelden · '
-    + (WERELDEN.blokkeert ? WERELDEN.blokkeert + ' blokkeert'
-       : WERELDEN.tedoen ? WERELDEN.tedoen + ' nog te doen'
-       : WERELDEN.letop ? WERELDEN.letop + ' waarschuwing' + (WERELDEN.letop === 1 ? '' : 'en') : 'in orde');
-  tekenWereld();
-  tekenScenario();
+  $('#wtel').textContent = WERELDEN.werelden.length + ' werelden';
+  const wacht = wachtendeNieuwe();
+  const nieuw = $('#wnieuw');
+  nieuw.disabled = !!wacht;
+  nieuw.title = wacht ? 'Publiceer eerst ' + wacht.naam + ' — anders krijgen ze allebei dezelfde levels'
+    : 'een naam, en dan meteen de wereldstudio';
 }
 function kiesWereld(nr) {
   S.wereld = nr;
@@ -710,7 +772,7 @@ function kiesWereld(nr) {
     b.classList.toggle('op', WERELDEN.werelden[i].nr === nr));
   const kw = $('#sc-wereld');
   if (kw) kw.value = String(nr);
-  tekenWereld();
+  tekenProbeer();
   toonBlad();
 }
 function huidigeWereld() {
@@ -718,206 +780,49 @@ function huidigeWereld() {
   return WERELDEN.werelden.filter(x => x.nr === S.wereld)[0] || WERELDEN.werelden[0] || null;
 }
 
-/* Het wereldoverzicht, in de volgorde waarin je een wereld maakt en nakijkt:
-   waar staat hij en wat doe je ermee (bewerken) · probeer hem in het echte spel ·
-   is hij klaar om uit te brengen · de tekening · de gegevens. Paden staan er wel,
-   maar klein en onderaan: ze zijn techniek, geen kop.
-
-   "Probeer" draait de wereld uit je concept, ook als hij nog niet uitgebracht is
-   (&onuitgebracht, zie bladUrl): dáár is hij voor. */
-function tekenWereld() {
-  const vak = $('#weditor-in');
-  const w = huidigeWereld();
-  if (!vak) return;
-  vak.innerHTML = '';
-  if (!w) return;
-  S.wereld = w.nr;
-  $('#wtitel').textContent = (w.icoon || '') + ' ' + w.naam;
-  $('#bewerknaam').textContent = (w.icoon || '') + ' ' + w.naam;
-
-  const groep = (titel, tel) => {
-    const g = el('div', 'vak');
-    const h = el('h2', null, titel);
-    if (tel) h.appendChild(el('span', 'tel', tel));
-    g.appendChild(h);
-    vak.appendChild(g);
-    return g;
-  };
-
-  // WAAR STAAT HIJ, en de twee dingen die je ermee doet
-  const g1 = el('div', 'vak');
-  const chips = el('div', 'rij');
-  chips.appendChild(el('span', 'chip ' + (w.staat === 'gelijk' ? 'ok' : 'let'),
-    w.staat === 'nieuw' ? 'Alleen in je concept' : w.staat === 'gewijzigd' ? 'Gewijzigd in je concept'
-      : 'In het project'));
-  chips.appendChild(el('span', 'chip ' + (w.speelbaar ? 'ok' : ''),
-    w.speelbaar ? 'Uitgebracht' : 'Niet uitgebracht'));
-  g1.appendChild(chips);
-  if (w.staat === 'gewijzigd') g1.appendChild(el('div', 'stiller', 'anders dan in het project: ' + w.anders.join(', ')));
-  if (!w.speelbaar) g1.appendChild(el('div', 'stiller',
-    'Geen kind komt erin, ook niet na publiceren. Hier en in Probeer speel je hem gewoon; '
-    + 'het vinkje "uitgebracht" staat in de editor, bij 6 · Gegevens & uitbrengen.'));
-  const rij1 = el('div', 'rij');
-  const bew = el('button', 'prim', '✎ Bewerken');
-  bew.title = 'de wereldstudio in het kijkvak: 1 tekening · 2 kleuren · 3 haltes en weg · 4 zaal · 5 schat · 6 gegevens en uitbrengen';
-  bew.onclick = () => { zetBewerk(true); toonBlad(); };
-  rij1.appendChild(bew);
-  const eigenv = el('button', 'stil', 'Eigen venster ⧉');
-  eigenv.title = 'de wereldstudio in een eigen tabblad';
-  eigenv.onclick = () => open(bouw({ wereld: S.wereld, stand: S.wstand, screen: 'map', mapedit: 1,
-    onuitgebracht: 1 }), '_blank');
-  rij1.appendChild(eigenv);
-  g1.appendChild(rij1);
-  vak.appendChild(g1);
-
-  // PROBEER IN HET SPEL
-  const g0 = groep('Probeer in het spel');
-  const rijs = el('div', 'rij');
+/* ---- een wereld proberen ---------------------------------------------------
+   De knoppen bij Testen: de kaart in elke stand, en de shows. Allemaal met je
+   concept erin en ook als de wereld nog niet uitgebracht is (&onuitgebracht) --
+   dáár is proberen voor. Er wordt niets opgeslagen: de voortgang van een echt
+   kind blijft onaangeroerd. */
+function tekenProbeer() {
+  const standen = $('#probeer-stand'), shows = $('#probeer-show');
+  if (!standen || !shows) return;
+  standen.innerHTML = ''; shows.innerHTML = '';
   VOORKEUZES.filter(v => v.plek === 'wereld' && v.params.screen === 'map').forEach(v => {
-    const naam = v.label.replace(/ (van )?deze wereld$/, '');
-    const b = el('button', v.params.stand === S.wstand && !S.bewerken ? 'op' : '', naam);
+    const b = el('button', '', v.label.replace(/ (van )?deze wereld$/, ''));
     if (v.uitleg) b.title = v.uitleg;
     b.onclick = () => { S.wstand = v.params.stand;
-      rijs.querySelectorAll('button').forEach(x => x.classList.remove('op'));
-      b.classList.add('op'); toonBlad(); };
-    rijs.appendChild(b);
+      ga(bouw({ wereld: S.wereld, stand: v.params.stand, screen: 'map', onuitgebracht: 1 })); };
+    standen.appendChild(b);
   });
-  g0.appendChild(rijs);
-  const rijs2 = el('div', 'rij');
   VOORKEUZES.filter(v => v.plek === 'wereld' && v.params.screen !== 'map').forEach(v => {
-    const b = el('button', 'stil', '▶ ' + v.label.replace(/ (van )?deze wereld$/, ''));
+    const b = el('button', '', '▶ ' + v.label.replace(/ (van )?deze wereld$/, ''));
     if (v.uitleg) b.title = v.uitleg;
     b.onclick = () => ga(bouw(Object.assign(vul(v, S.wereld), { onuitgebracht: 1 })));
-    rijs2.appendChild(b);
+    shows.appendChild(b);
   });
-  g0.appendChild(rijs2);
-  g0.appendChild(el('div', 'stiller', 'Met je concept erin, op de maat die boven het kijkvak staat. '
-    + 'Er wordt niets opgeslagen: de voortgang van een echt kind blijft onaangeroerd.'));
-
-  // KLAAR OM UIT TE BRENGEN? Drie soorten, zie wereldControle in src/20-app.js.
-  const punten = (w.punten || []).concat(
-    (WERELDEN.lijstPunten || []).map(p => Object.assign({}, p, { waar: 'lijst' })));
-  const blok = punten.filter(p => p.blokkeert);
-  const tedoen = punten.filter(p => p.ernst === 'fout' && !p.blokkeert);
-  const letop = punten.filter(p => p.ernst !== 'fout');
-  // wat je zelf nog moet spelen of bekijken telt mee bij "nog te doen" (zie NAGEKEKEN)
-  const zelf = zelfNakijken(w);
-  const nogZelf = zelf ? zelf.filter(n => !n.gedaan).length : 0;
-  const g4 = groep('Klaar om uit te brengen?', blok.length ? blok.length + ' blokkeert'
-    : tedoen.length + nogZelf ? (tedoen.length + nogZelf) + ' nog te doen' : letop.length ? 'ja, met ' + letop.length
-      + ' opmerking' + (letop.length === 1 ? '' : 'en') : 'ja');
-  if (!punten.length) {
-    g4.appendChild(el('div', 'stiller', 'Geen ontbrekende bestanden, geen ongeldige instellingen.'));
-  }
-  // met het nummer van het onderdeel in de editor, zodat je het meteen terugvindt
-  const WAAR = { tekening: '1 · Tekening', kleuren: '2 · Kleuren', haltes: '3 · Haltes & weg', zaal: '4 · Zaal',
-                 beloning: '5 · Beloning', gegevens: '6 · Gegevens', lijst: 'de wereldlijst' };
-  [[blok, 'fout', 'Houdt opslaan tegen'], [tedoen, 'let', 'Nog te doen vóór uitbrengen'],
-   [letop, 'stil', 'Let op']].forEach(([lijst, soort, kop]) => {
-    lijst.forEach(p => {
-      const d = el('div', 'punt');
-      d.appendChild(el('span', 'bol ' + soort));
-      const tx = el('div');
-      tx.appendChild(el('b', null, kop + (WAAR[p.waar] ? ' · ' + WAAR[p.waar] : '')));
-      tx.appendChild(document.createTextNode(p.t));
-      d.appendChild(tx);
-      g4.appendChild(d);
-    });
-  });
-  if (zelf) {
-    g4.appendChild(el('div', 'stiller', 'Zelf nagekeken — dat kan de controle niet voor je doen:'));
-    zelf.forEach(n => {
-      const r = el('label', 'vink');
-      const i = el('input');
-      i.type = 'checkbox';
-      i.checked = n.gedaan;
-      i.onchange = () => { zetNagekeken(w, n.id, i.checked); tekenWereld(); };
-      r.appendChild(i);
-      const tx = el('span', null, n.tekst);
-      tx.appendChild(el('small', null, n.verlopen ? ' — nagekeken vóór je laatste wijziging; nog een keer'
-        : ' — ' + n.hoe));
-      r.appendChild(tx);
-      g4.appendChild(r);
-    });
-  }
-  const rij4 = el('div', 'rij');
-  const keur = el('button', null, 'Keuringen draaien');
-  keur.title = 'node test/inhoud|kern|saves|kleedkamer — een paar seconden, tegen wat er in het project staat';
-  keur.onclick = async () => {
-    meld('#wmeld', '', 'De keuringen draaien…');
-    try {
-      const j = await (await fetch('/api/keuring', { method: 'POST' })).json();
-      meld('#wmeld', j.ok ? 'ok' : 'fout', j.tekst);
-    } catch (e) { meldFout('#wmeld', 'De keuringen konden niet worden gedraaid', e); return; }
-    haalWerelden();
-  };
-  rij4.appendChild(keur);
-  g4.appendChild(rij4);
-
-  // TEKENING
-  const g2 = groep('Tekening');
-  g2.appendChild(beeldKaart(wereldAsset(w)));
-
-  // GEGEVENS -- wat eruit volgt, om na te lezen; veranderen doe je in de editor
-  const g3 = groep('Gegevens');
-  const dl3 = el('dl', 'kv');
-  const zet3 = (k, v) => { dl3.appendChild(el('dt', null, k)); dl3.appendChild(el('dd', null, v)); };
-  zet3('id', w.id);
-  zet3('volgorde', 'wereld ' + w.nr + (w.slotVan ? ' — gaat open als ' + w.slotVan + ' uit is'
-    : ' — de eerste, altijd open'));
-  zet3('shows', w.levels + ' (show ' + w.eerste + ' t/m ' + w.laatste + ')');
-  zet3('schat', w.beloning ? (w.beloningNaam || '?') + ' (' + w.beloning + ')'
-    + (w.beloningErIs ? '' : ' — BESTAAT NIET') : 'nog geen');
-  zet3('trofee', w.trofee);
-  zet3('haltes', w.haltes + (w.haltesEigen ? ' gezet' : ' (standaardslinger)')
-    + ' · ' + w.stuurpunten + ' stuurpunten');
-  zet3('zaal', w.zaal.tekst);
-  g3.appendChild(dl3);
-}
-
-/* ---- zelf nagekeken --------------------------------------------------------
-   wereldControle kijkt de gegevens na; of de wereld ook goed spéélt kan alleen
-   jij zien. Drie vinkjes, in deze browser (localStorage), per wereld-id, en elk
-   met de vingerafdruk van de wereld zoals hij was toen je het zette (vinger, zie
-   test/werelden.js): verander je daarna iets, dan vervalt het vinkje vanzelf.
-
-   Ze houden niets tegen -- de keuring en Opslaan kennen ze niet, want een vinkje
-   in een browser is geen regel. Ze staan erbij zolang een wereld nog niet
-   uitgebracht is, of anders is dan in het project; een wereld die kinderen al
-   spelen en die je niet aanraakt heeft niets na te kijken. */
-const NAGEKEKEN_KEY = 'rekenStudio_nagekeken';
-const NAGEKEKEN = [
-  ['eerste', 'De eerste show gespeeld', 'Probeer in het spel → ▶ Eerste show'],
-  ['laatste', 'De laatste show gespeeld, tot en met het wereldfeest en de schat',
-    'Probeer in het spel → ▶ Laatste show'],
-  ['telefoon', 'Op een echte telefoon bekeken: de kaart, de reis erheen en een show',
-    'zelfde wifi; het adres staat onder Testomgeving'],
-];
-function leesNagekeken() {
-  try { return JSON.parse(localStorage.getItem(NAGEKEKEN_KEY) || '{}') || {}; } catch (e) { return {}; }
-}
-function zelfNakijken(w) {
-  if (w.speelbaar && w.staat === 'gelijk') return null;
-  const mijn = leesNagekeken()[w.id] || {};
-  return NAGEKEKEN.map(([id, tekst, hoe]) => ({ id, tekst, hoe,
-    gedaan: mijn[id] === w.vinger, verlopen: !!mijn[id] && mijn[id] !== w.vinger }));
-}
-function zetNagekeken(w, id, aan) {
-  const alles = leesNagekeken();
-  const mijn = alles[w.id] || (alles[w.id] = {});
-  if (aan) mijn[id] = w.vinger; else delete mijn[id];
-  try { localStorage.setItem(NAGEKEKEN_KEY, JSON.stringify(alles)); } catch (e) { /* dan vergeten we het */ }
 }
 
 /* ---- bewerken --------------------------------------------------------------
-   Twee standen van hetzelfde werkblad. Overzicht: onze kolommen, en het kijkvak
-   op telefoonmaat om te proberen. Bewerken: de wereldstudio in het kijkvak op de
-   hele breedte, met bovenin één balk terug naar proberen. */
+   De wereldstudio in het kijkvak, op de hele breedte, met bovenin één balk terug
+   naar de lijst. stap: op welke stap ze opent (4 = publiceren); null = waar je
+   was. */
+function bewerk(nr, stap) {
+  S.wereld = nr;
+  S.stap = stap;
+  if (S.blad !== 'wereld') naarBlad('wereld');
+  const w = huidigeWereld();
+  $('#bewerknaam').textContent = w ? ((w.icoon || '') + ' ' + w.naam) : '';
+  zetBewerk(true);
+  toonBlad();
+}
 function zetBewerk(aan) {
   S.bewerken = !!aan;
-  document.body.classList.toggle('bewerk', S.bewerken && S.blad === 'wereld');
+  document.body.classList.toggle('bewerk', S.bewerken);
   if (S.bewerken && S.toestel !== 'vullend') { S.toestelVoor = S.toestel; S.toestel = 'vullend'; }
   if (!S.bewerken && S.toestelVoor) { S.toestel = S.toestelVoor; S.toestelVoor = null; }
+  if (!S.bewerken) S.stap = null;
   tekenToestellen();
   requestAnimationFrame(pasVak);
 }
@@ -1600,7 +1505,6 @@ function tekenBeelden() {
     groepen[naam].forEach(a => g.appendChild(beeldKaart(a)));
     vak.appendChild(g);
   });
-  if (S.blad === 'wereld') tekenWereld();    // de wereldkaart hangt aan dezelfde lijst
 }
 
 /* ---- testscenario ----------------------------------------------------------
@@ -1689,6 +1593,7 @@ function bouw(p) {
   if (p.stage) d.push('stage=' + p.stage);
   if (p.screen) d.push('screen=' + p.screen);
   if (p.mapedit) d.push('mapedit');
+  if (p.stap) d.push('stap=' + p.stap);
   if (p.nieuw) d.push(p.nieuw === 1 || p.nieuw === true ? 'nieuw' : 'nieuw=' + encodeURIComponent(p.nieuw));
   if (p.onuitgebracht) d.push('onuitgebracht');
   if (p.sw) d.push('sw');
@@ -1702,12 +1607,21 @@ function vul(v, nr) {
 
 /* ---- opbouw --------------------------------------------------------------- */
 function init() {
-  document.body.dataset.blad = 'test';
-  $('#watdoetdit').textContent = WERKBLADEN.test.wat;
+  document.body.dataset.blad = 'wereld';
+  $('#watdoetdit').textContent = WERKBLADEN.wereld.wat;
   document.querySelectorAll('.kiezer button').forEach(b => {
     b.onclick = () => naarBlad(b.dataset.blad);
   });
-  $('#naar-merk').onclick = () => naarBlad(S.blad === 'merk' ? 'test' : 'merk');
+  $('#naar-meer').onclick = () => naarBlad(S.blad === 'meer' ? 'wereld' : 'meer');
+  $('#nieuwste').onclick = nieuwste;
+  $('#keurknop').onclick = async () => {
+    meld('#lijnmeld', '', 'De keuringen draaien…');
+    try {
+      const j = await (await fetch('/api/keuring', { method: 'POST' })).json();
+      meld('#lijnmeld', j.ok ? 'ok' : 'fout', j.tekst);
+    } catch (e) { meldFout('#lijnmeld', 'De keuringen konden niet worden gedraaid', e); return; }
+    haalWerelden();
+  };
 
   // vakken in- en uitklappen, en dat onthouden
   document.querySelectorAll('.vak.vouw > h2').forEach(h => {
@@ -1776,29 +1690,46 @@ function init() {
       const spel = $('#spel').contentWindow;
       if (naam && spel && typeof spel.vrijWereldId === 'function') id = spel.vrijWereldId(naam);
     } catch (e) { /* een kijkvak van elders: dan zonder id */ }
-    $('#nieuwid').textContent = (id ? 'Het id wordt ' + id + ' (tekening: assets/world/' + id + '-map.webp). '
-      : 'Het id en de bestandsnaam rollen uit deze naam. ')
-      + 'Kies de naam met zorg: zodra de wereld uitgebracht is, ligt het id vast — de trofee en de '
-      + 'schat van elk kind dat hem speelde hangen eraan. De naam zelf kun je later altijd nog veranderen.';
+    $('#nieuwid').textContent = (id ? 'Id: ' + id + '. ' : '')
+      + 'De naam kun je later nog veranderen, het id niet.';
   }
   $('#nieuwnaam').oninput = toonNieuwId;
-  const maak = () => {
+  /* Eerst de nieuwste versie: een nieuwe wereld hoort achter de laatste wereld
+     van main, anders botsen de levels. Lukt dat niet (geen net, open werk), dan
+     gaat het toch door -- maar dat staat er dan bij. */
+  const maak = async () => {
     const naam = $('#nieuwnaam').value.trim();
     if (!naam) { meld('#wmeld', 'let', 'Geef de nieuwe wereld eerst een naam.'); $('#nieuwnaam').focus(); return; }
+    const wacht = wachtendeNieuwe();
+    if (wacht) { meld('#wmeld', 'let', 'Publiceer eerst ' + wacht.naam + ' — anders krijgen ze allebei dezelfde levels.'); return; }
+    $('#nieuwmaak').disabled = true;
+    let waarschuw = '';
+    const v = VERSIE;
+    if (v && v.git) {
+      meld('#wmeld', '', 'Eerst de nieuwste versie ophalen…');
+      try {
+        const j = await (await fetch('/api/nieuwste', { method: 'POST' })).json();
+        if (!j.ok) waarschuw = '\nLet op: ' + j.tekst;
+      } catch (e) { waarschuw = '\nLet op: de nieuwste versie ophalen lukte niet.'; }
+      await haalVersie();
+      await haalWerelden();
+    }
+    $('#nieuwmaak').disabled = false;
     $('#nieuwnaam').value = '';
     $('#nieuwrij').hidden = true;
     $('#nieuwid').hidden = true;
     S.wereld = (WERELDEN && WERELDEN.werelden ? WERELDEN.werelden.length : 0) + 1;
+    S.stap = 1;
+    $('#bewerknaam').textContent = naam;
     zetBewerk(true);
-    ga(bouw({ wereld: S.wereld, stand: 'vers', screen: 'map', mapedit: 1, onuitgebracht: 1, nieuw: naam }));
-    meld('#wmeld', 'ok', naam + ' staat in je concept. Volgende stap: sleep de tekening op het vak '
-      + 'Tekening in de editor.');
+    ga(bouw({ wereld: S.wereld, stand: 'vers', screen: 'map', mapedit: 1, onuitgebracht: 1, nieuw: naam, stap: 1 }));
+    meld('#wmeld', waarschuw ? 'let' : 'ok', naam + ' staat in je concept.' + waarschuw);
   };
   $('#nieuwmaak').onclick = maak;
   $('#nieuwnaam').onkeydown = e => { if (e.key === 'Enter') maak(); };
 
-  $('#bewerkklaar').onclick = () => { zetBewerk(false); toonBlad(); haalWerelden(); };
-  $('#bewerkprobeer').onclick = () => { zetBewerk(false); toonBlad(); haalWerelden(); };
+  $('#bewerkklaar').onclick = () => { zetBewerk(false); toonBlad(); haalWerelden(); haalVersie(); };
+  $('#bewerkprobeer').onclick = () => { zetBewerk(false); naarBlad('test'); haalWerelden(); };
   $('#conceptchip').onclick = () => naarBlad('wereld');
   $('#vastdoe').onclick = vastleggen;
   $('#vastbericht').onkeydown = e => { if (e.key === 'Enter') vastleggen(); };
@@ -1819,10 +1750,17 @@ function init() {
   addEventListener('message', e => {
     if (e.origin !== location.origin) return;
     const d = e.data || {};
+    /* Na Publiceren in de wereldstudio: de tak, main en de lijst zijn allemaal
+       veranderd, en het concept is opgeslagen. */
+    if (d.wereldstudio === 'gepubliceerd') { haalVersie(); haalWerelden(); haalOpenWerk(); return; }
     if (d.wereldstudio !== 'wereld' || !d.nr) return;
     const was = S.wereld;
     S.wereld = d.nr;
-    if (S.blad === 'wereld') { S.url = bladUrl(); $('#nu').textContent = S.url; }
+    if (S.bewerken) {
+      S.url = bladUrl(); $('#nu').textContent = S.url;
+      const w = huidigeWereld();
+      if (w && w.nr === d.nr) $('#bewerknaam').textContent = (w.icoon || '') + ' ' + w.naam;
+    }
     if (was !== d.nr || !huidigeWereld() || huidigeWereld().nr !== d.nr) haalWerelden();
   });
 
@@ -1913,34 +1851,92 @@ function pagina(gegevens) {
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%23170d26'/%3E%3Cpath d='M8 3l1.5 3.2 3.5.4-2.6 2.4.7 3.4L8 10.7 4.9 12.4l.7-3.4L3 6.6l3.5-.4z' fill='%23ffb43d'/%3E%3C/svg%3E">
 <style>${CSS}</style>
 </head>
-<body data-blad="test">
+<body data-blad="wereld">
 <header>
-  <span class="merk">Rekensterren <span>· Dev Studio</span></span>
+  <span class="merk">Rekensterren <span>· Studio</span></span>
   <nav class="kiezer">
-    <button data-blad="test" class="op">Testomgeving</button>
-    <button data-blad="wereld">Wereldstudio</button>
+    <button data-blad="wereld" class="op">Werelden</button>
+    <button data-blad="test">Testen</button>
   </nav>
   <span class="watdoetdit" id="watdoetdit"></span>
   <span class="rechts">
     <button id="conceptchip" class="stil" hidden title="er staat een wereldconcept in deze browser — het kijkvak laat het zien"></button>
-    <button id="naar-merk" title="het beeld dat bij de hele app hoort">App &amp; merk</button>
-    <span class="bouwchip"><span class="stip" id="vstip"></span><span id="vsam">…</span></span>
+    <span class="bouwchip" title="welke versie er hier draait"><span class="stip" id="vstip"></span><span id="vsam">…</span></span>
+    <button id="nieuwste" class="prim" title="ophalen en naar de nieuwste main — raakt niet-gepubliceerd werk niet aan">⟳ Nieuwste versie</button>
+    <button id="naar-meer" title="versies, losse stappen, gereedschap en het beeld van de app">⋯ Meer</button>
   </span>
 </header>
 
 <div class="werkblad">
 
-  <!-- ============ TESTOMGEVING ============ -->
+  <!-- ============ WERELDEN ============ -->
+  <div class="paneel" id="wlijst-vak">
+    <div class="melding" id="nieuwstemeld"></div>
+    <section class="vak">
+      <h2>Werelden <span class="tel" id="wtel"></span></h2>
+      <div class="rij">
+        <button class="prim" id="wnieuw">+ Nieuwe wereld</button>
+      </div>
+      <div class="rij" id="nieuwrij" hidden>
+        <input type="text" id="nieuwnaam" placeholder="naam, bv. Regenboogwereld">
+        <button class="prim" id="nieuwmaak">Maak</button>
+      </div>
+      <div class="stiller" id="nieuwid" hidden></div>
+      <div class="melding" id="wmeld"></div>
+      <div class="wlijst" id="wlijst"></div>
+    </section>
+  </div>
+
+  <!-- ============ TESTEN ============ -->
   <div class="paneel" id="zij">
 
+    <section class="vak" id="v-probeer">
+      <h2>Een wereld proberen</h2>
+      <label class="veld"><span>Wereld</span><select id="sc-wereld"></select></label>
+      <div class="groep">
+        <h3>De kaart</h3>
+        <div class="rij" id="probeer-stand"></div>
+      </div>
+      <div class="groep">
+        <h3>Spelen</h3>
+        <div class="rij" id="probeer-show"></div>
+      </div>
+      <p class="stiller" style="margin:0">Op je telefoon (zelfde wifi):
+        <span class="mono">${esc(gegevens.lan || 'geen netwerkadres gevonden')}</span></p>
+    </section>
+
+    <section class="vak vouw" id="v-scen">
+      <h2>Zelf samenstellen</h2>
+      <div class="raster2">
+        <label class="veld"><span>Speler</span>
+          <select id="sc-star"><option value="p1">Lotte — ver gevorderd</option>
+            <option value="p2">Sem — net begonnen</option></select></label>
+        <label class="veld"><span>Stand</span>
+          <select id="sc-stand">${opties(scenario.STANDEN)}</select></label>
+        <label class="veld"><span>Scherm</span>
+          <select id="sc-scherm">${opties(scenario.SCHERMEN, 'map')}</select></label>
+        <label class="veld"><span>Diamanten</span>
+          <input type="text" id="sc-dia" placeholder="zoals het is"></label>
+      </div>
+      <div class="groep">
+        <h3>Snelkeuze</h3>
+        <div id="snel"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ MEER ============ -->
+  <div class="paneel" id="meervak">
+
     <section class="vak" id="v-bouw">
-      <h2>Huidige build</h2>
+      <h2>Versie</h2>
       <div class="bouwkop">
         <b id="vbron">…</b><span class="sha" id="vsha"></span><span class="los" id="vlos"></span>
       </div>
       <div class="rij" id="vchips"></div>
       <div class="rij">
-        <button id="haalop" class="prim" title="git fetch --all --prune — raakt je werkmap niet aan">Ophalen</button>
+        <button id="haalop" title="git fetch --all --prune — raakt je werkmap niet aan">Ophalen</button>
         <button id="bijwerk" title="alleen fast-forward">Bijwerken</button>
         <button id="naarmain">Naar main</button>
       </div>
@@ -1954,8 +1950,6 @@ function pagina(gegevens) {
 
     <section class="vak" id="v-open" hidden>
       <h2>Open werk <span class="tel" id="otel"></span></h2>
-      <p class="stiller" style="margin:0">Zolang dit er staat weigert een wissel.
-        De studio ruimt niets op zonder dat jij het zegt.</p>
       <div class="mono stiller" id="olijst" style="white-space:pre-wrap;max-height:120px;overflow:auto"></div>
       <div class="rij">
         <button class="prim" id="o-opzij" title="git stash — alles komt terug met Haal terug">Opzij zetten</button>
@@ -1972,27 +1966,23 @@ function pagina(gegevens) {
       <div class="melding" id="omeld"></div>
     </section>
 
-    <section class="vak" id="v-scen">
-      <h2>Testscenario</h2>
-      <div class="groep">
-        <h3>Snelkeuze</h3>
-        <div id="snel"></div>
+    <!-- De weg naar main in losse stappen. Publiceren bij een wereld doet ze
+         alle drie achter elkaar; dit is voor als je er één wilt doen. -->
+    <section class="vak vouw dicht" id="v-lijn">
+      <h2>Losse stappen naar main</h2>
+      <ol class="lijn">
+        <li id="lijn-concept"></li>
+        <li id="lijn-project"></li>
+        <li id="lijn-tak"></li>
+      </ol>
+      <div class="rij" id="vastrij" hidden>
+        <input type="text" id="vastbericht" placeholder="wat is er veranderd?" style="flex:1">
+        <button class="prim" id="vastdoe">Leg vast</button>
       </div>
-      <div class="groep">
-        <h3>Zelf samenstellen</h3>
-        <div class="raster2">
-          <label class="veld"><span>Speler</span>
-            <select id="sc-star"><option value="p1">Lotte — ver gevorderd</option>
-              <option value="p2">Sem — net begonnen</option></select></label>
-          <label class="veld"><span>Wereld</span><select id="sc-wereld"></select></label>
-          <label class="veld"><span>Stand</span>
-            <select id="sc-stand">${opties(scenario.STANDEN)}</select></label>
-          <label class="veld"><span>Scherm</span>
-            <select id="sc-scherm">${opties(scenario.SCHERMEN, 'map')}</select></label>
-          <label class="veld"><span>Diamanten</span>
-            <input type="text" id="sc-dia" placeholder="zoals het is"></label>
-        </div>
+      <div class="rij">
+        <button id="keurknop" title="node test/inhoud|kern|saves|kleedkamer — een paar seconden">Keuringen draaien</button>
       </div>
+      <div class="melding" id="lijnmeld"></div>
     </section>
 
     <section class="vak vouw dicht" id="v-ger">
@@ -2006,68 +1996,23 @@ function pagina(gegevens) {
         <button id="swstand">Servicewerker-stand</button>
       </div>
       <div class="melding" id="gmeld"></div>
-      <p class="stiller" style="margin:0">Op je telefoon (zelfde wifi):
-        <span class="mono">${esc(gegevens.lan || 'geen netwerkadres gevonden')}</span></p>
     </section>
 
-  </div>
-
-  <!-- ============ WERELDSTUDIO · de lijst ============ -->
-  <div class="paneel" id="wlijst-vak">
-    <section class="vak">
-      <h2>Werelden <span class="tel" id="wtel"></span></h2>
-      <div class="wlijst" id="wlijst"></div>
-      <div class="rij">
-        <button class="prim" id="wnieuw">+ Nieuwe wereld</button>
-      </div>
-      <div class="rij" id="nieuwrij" hidden>
-        <input type="text" id="nieuwnaam" placeholder="naam, bv. Regenboogwereld">
-        <button class="prim" id="nieuwmaak">Maak</button>
-      </div>
-      <div class="stiller" id="nieuwid" hidden></div>
-      <div class="melding" id="wmeld"></div>
-    </section>
-    <!-- De weg van een wijziging naar de telefoon van een kind, met op elke stap
-         wat er nu ligt en de ene knop die hem een stap verder brengt. -->
-    <section class="vak" id="v-lijn">
-      <h2>Van concept naar spel</h2>
-      <ol class="lijn">
-        <li id="lijn-concept"></li>
-        <li id="lijn-project"></li>
-        <li id="lijn-tak"></li>
-      </ol>
-      <div class="rij" id="vastrij" hidden>
-        <input type="text" id="vastbericht" placeholder="wat is er veranderd?" style="flex:1">
-        <button class="prim" id="vastdoe">Leg vast</button>
-      </div>
-      <div class="melding" id="lijnmeld"></div>
-    </section>
-  </div>
-
-  <!-- ============ WERELDSTUDIO · de wereld ============ -->
-  <div class="paneel" id="weditor">
-    <h3 id="wtitel" style="font-size:15px"></h3>
-    <div id="weditor-in" style="display:flex;flex-direction:column;gap:14px"></div>
-  </div>
-
-  <!-- ============ APP &amp; MERK ============ -->
-  <div class="paneel" id="merkvak">
-    <section class="vak">
+    <section class="vak vouw dicht" id="v-merk">
       <h2>App &amp; merk</h2>
-      <p class="stiller" style="margin:0">Beeld dat bij de hele app hoort. Een merkbeeld heeft
-        één meester; de bestanden die de app laadt rollen daaruit.</p>
       <div id="merklijst" style="display:flex;flex-direction:column;gap:14px"></div>
       <div class="melding" id="beeldmeld"></div>
     </section>
+
   </div>
 
   <!-- ============ het kijkvak ============ -->
   <div class="kijk">
     <div id="bewerkbalk">
-      <span class="lab">Bewerken</span><b id="bewerknaam"></b>
-      <span class="stiller" style="flex:1">— alles wat je hier verandert staat meteen in je concept</span>
-      <button id="bewerkprobeer" title="dezelfde wereld, zoals een kind hem speelt">▶ Probeer in het spel</button>
-      <button class="prim" id="bewerkklaar">✓ Klaar</button>
+      <button id="bewerkklaar" title="terug naar de lijst werelden">← Werelden</button>
+      <b id="bewerknaam"></b>
+      <span style="flex:1"></span>
+      <button id="bewerkprobeer" title="dezelfde wereld, zoals een kind hem speelt">▶ Testen</button>
     </div>
     <div class="kijkbalk">
       <span class="lab">Toestel</span>

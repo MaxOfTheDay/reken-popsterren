@@ -17,6 +17,7 @@
  *   await v.bronnen()           -> { prs, takken } om uit te kiezen
  *   await v.wissel('origin/x')  -> { ok, tekst } of { ok:false, tekst }
  *   await v.bijwerken()         -> alleen fast-forward, anders een uitleg
+ *   await v.nieuwste()          -> ophalen en naar de nieuwste main (de knop bovenin)
  */
 const { execFile, execFileSync } = require('child_process');
 const path = require('path');
@@ -321,6 +322,46 @@ async function bijwerken() {
   }
 }
 
+/* De nieuwste versie: de ene knop bovenin de studio. Ophalen, en dan naar de
+   nieuwste main -- dat is in de praktijk altijd wat je wilt vóór je aan een
+   wereld begint.
+
+   Sta je op een tak waarvan alles al op main staat (je PR is gemerged), dan gaat
+   hij gewoon terug naar main: die tak heeft niets meer te vertellen. Staat er op
+   de tak nog iets dat níét op main staat, dan blijft hij staan en zegt hij dat --
+   dat is een wereld die nog op een merge wacht, en die laat je niet achter.
+
+   Net als wissel en bijwerken: met open werk gebeurt er niets. */
+async function nieuwste() {
+  const f = feiten();
+  if (!f.git) return { ok: false, tekst: 'Dit is geen git-map.' };
+  if (f.vuil) {
+    return { ok: false, tekst: 'Er staat nog werk dat niet gepubliceerd is (' + f.vuil + ' bestand'
+      + (f.vuil === 1 ? '' : 'en') + '). Publiceer het eerst, of zet het opzij onder Meer.',
+      vuileRegels: f.vuileRegels };
+  }
+  const h = await haalOp(30000);
+  if (!h.ok) return { ok: false, tekst: 'Ophalen lukte niet: ' + h.tekst + '\nJe hebt wel internet nodig.' };
+  if (!gitStil(['rev-parse', '--verify', '--quiet', 'origin/main'])) {
+    return { ok: false, tekst: 'Er is geen origin/main om bij te werken.' };
+  }
+  try {
+    if (!f.isMain) {
+      const opMain = gitStil(['merge-base', '--is-ancestor', 'HEAD', 'origin/main'], 'nee') !== 'nee';
+      if (!opMain) {
+        return { ok: false, wacht: true, tekst: f.naam + ' staat nog niet helemaal op main — er wacht nog iets op '
+          + 'een merge. Zodra dat gebeurd is, brengt deze knop je naar de nieuwste versie.' };
+      }
+      await git(['checkout', 'main']);
+    }
+    await git(['merge', '--ff-only', 'origin/main']);
+    return { ok: true, tekst: 'Je hebt de nieuwste versie (' + gitStil(['rev-parse', '--short', 'HEAD']) + ').' };
+  } catch (e) {
+    return { ok: false, tekst: 'Bijwerken lukte niet — er is niets veranderd.\n'
+      + String(e.message).split('\n').slice(0, 4).join('\n') };
+  }
+}
+
 /* ---- Open werk ------------------------------------------------------------
    Een wissel weigert zolang er iets openstaat, en dat is juist. Maar tot nu toe
    zei de studio alleen dát, en stond je met een melding zonder uitweg: geen enkele
@@ -448,6 +489,6 @@ async function terugdraaien(fase, paden) {
   }
 }
 
-module.exports = { feiten, samenvatting, bronnen, haalOp, wissel, bijwerken,
+module.exports = { feiten, samenvatting, bronnen, haalOp, wissel, bijwerken, nieuwste,
                    opengewerk, opzij, haalTerug, vastleggen, terugdraaien, takNaam,
                    prVoorSha, prLijst, ROOT };

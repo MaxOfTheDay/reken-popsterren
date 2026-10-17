@@ -22046,6 +22046,7 @@ function startMapEdit() {
       inset 0 0 0 0.3cqw rgba(255,255,255,.7), 0 0 0 0.9cqw rgba(255,214,90,.9); }
     .tour-stop.gekozen .dot { outline: 0.7cqw solid rgba(255,214,90,.95); outline-offset: 0.5cqw; }
     body.mapedit.nocurve .me-ctrl { display: none; }
+    body.mapedit.st-kijken :is(.me-ctrl, .me-safe, .me-snee, .me-kopband, .me-onder, .me-grid) { display: none; }
 
     #studio { position: fixed; top: 0; right: 0; bottom: 0; width: 330px; z-index: 60;
       display: flex; flex-direction: column; overflow: hidden;
@@ -22076,12 +22077,20 @@ function startMapEdit() {
       font-family: ui-monospace, monospace; white-space: nowrap; }
     #studio .st-kijk .maat { padding-left: 46px; }
     #studio.dicht .st-kijk { display: none; }
-    #studio .st-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    /* De vier stappen: één rij, en de stap waar je bent licht op. */
+    #studio .st-stappen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
       padding: 6px 8px 0; border-bottom: 1px solid rgba(255,255,255,.14); }
-    #studio .st-tabs button { border: 0; background: none; border-radius: 7px 7px 0 0;
+    #studio .st-stappen button { border: 0; background: none; border-radius: 7px 7px 0 0;
       padding: 7px 2px; font-size: 11.5px; color: #b79ae0; border-bottom: 2px solid transparent; }
-    #studio .st-tabs button.on { color: #fff; background: rgba(255,255,255,.08);
+    #studio .st-stappen button.on { color: #fff; background: rgba(255,255,255,.08);
       border-bottom-color: #7dffb4; font-weight: 600; }
+    #studio .st-nav { flex: none; display: flex; gap: 6px; padding: 8px 12px;
+      border-top: 1px solid rgba(255,255,255,.14); }
+    #studio .st-nav #st-verder { margin-left: auto; }
+    #studio.dicht .st-stappen, #studio.dicht .st-nav { display: none; }
+    #studio button.groot { padding: 10px 16px; font-size: 14px; }
+    #studio .st-top b#st-wnaam { text-transform: none; letter-spacing: 0; font-size: 14px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #studio .st-body { flex: 1; overflow: auto; padding: 4px 12px 12px; }
     /* beelden per scherm: één regel per plek waar een tekening kan staan */
     #studio .st-scherm { margin: 12px 0 0; }
@@ -22231,6 +22240,7 @@ function startMapEdit() {
     #studio select { background: #23133a; }
     #studio option { background: #23133a; color: #f2ecfa; }
     #studio button { cursor: pointer; }
+    #studio button:disabled { opacity: .4; cursor: default; }
     #studio button:hover { background: rgba(255,255,255,.18); }
     #studio button.prim { background: rgba(120,255,180,.2); border-color: rgba(120,255,180,.55); font-weight: 600; }
     #studio button.on { background: rgba(120,255,180,.24); border-color: rgba(120,255,180,.6); }
@@ -22346,53 +22356,172 @@ function startMapEdit() {
   panel.id = 'studio';
   panel.innerHTML = `
     <div class="st-top">
-      <b>Wereldstudio</b>
+      <b id="st-wnaam">Wereldstudio</b>
       <span class="st-chip" id="st-status">—</span>
       <button id="st-uitleg" title="Uitleg aan/uit">?</button>
       <button id="st-fold" title="In-/uitklappen">⇥</button>
     </div>
-    <div class="st-kijk">
-      <div class="kr">
-        <label for="st-toestel">toestel</label>
-        <select id="st-toestel"></select>
-        <button id="st-kop" class="on" title="Bovenbalk aan/uit">▀</button>
-        <button id="st-balk" class="on" title="Navigatiebalk aan/uit">▄</button>
-      </div>
-      <div class="kr">
-        <label for="st-stand">stand</label>
-        <select id="st-stand">
-          <option value="halverwege" selected>halverwege — 3 gedaan, 1 nu</option>
-          <option value="slot">op slot — nog niet hier geweest</option>
-          <option value="vers">net begonnen — halte 1 is aan de beurt</option>
-          <option value="uit">uit — elke show gespeeld</option>
-          <option value="perfect">perfect — overal drie sterren</option>
-        </select>
-      </div>
-      <div class="kr">
-        <label for="st-vscherm">probeer</label>
-        <select id="st-vscherm">
-          <option value="map">de kaart, in deze stand</option>
-          <option value="game:vers">de eerste show</option>
-          <option value="game:bijna">de laatste show → wereldfeest</option>
-          <option value="end:halverwege">het einde van een show</option>
-          <option value="reis:vers">de reis naar deze wereld</option>
-          <option value="profile">wie speelt er</option>
-        </select>
-        <button id="st-venster" title="Speel het in een écht venster op de gekozen toestelmaat, met deze wereld en je concept erin — met Shift: alle maten naast elkaar">▶</button>
-      </div>
-      <em class="maat" id="st-toestelmaat"></em>
-      <em class="maat" id="st-lan"></em>
-    </div>
-    <div class="st-tabs">
-      <button class="on" data-tab="werelden">Werelden</button>
-      <button data-tab="beelden">Beelden</button>
-      <button data-tab="spel">Publiceren</button>
+    <div class="st-stappen">
+      <button data-stap="1" class="on">1 Kaart</button>
+      <button data-stap="2">2 Haltes</button>
+      <button data-stap="3">3 Schat</button>
+      <button data-stap="4">4 Publiceren</button>
     </div>
     <div class="st-body">
 
-      <section data-tab="werelden">
+      <section data-stap="1">
         <p class="st-let" id="st-concept" hidden></p>
-        <h6>Welke wereld</h6>
+        <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
+        <div class="st-row"><label>naam</label><input id="mf-name"></div>
+        <h6>Tekening</h6>
+        <div class="st-art" id="st-art">
+          <span class="vb" id="st-art-vb">＋</span>
+          <span><b id="st-art-st">nog geen tekening</b><small id="st-art-info"></small></span>
+        </div>
+        <p class="st-let" id="st-art-let" hidden></p>
+        <div class="st-nieuw" id="st-art-nieuw" hidden></div>
+        <p class="st-hint">Sleep een beeld op het vak, of tik erop. Elke maat mag: de studio snijdt
+          hem bij, verkleint hem en zet de kleuren en de zaal er automatisch bij.</p>
+        <details class="st-prompt" id="st-kaartprompt" hidden>
+          <summary>✨ Prompt voor de tekening</summary>
+          <div class="st-prow"><label>thema</label><input id="kp-thema"></div>
+          <div class="st-prow"><label>inspiratie</label><input id="kp-insp" placeholder="optioneel"></div>
+          <div class="st-btns"><button id="kp-kopieer">Kopieer de prompt</button></div>
+        </details>
+        <details class="st-geav" id="st-fijn">
+          <summary>Kleuren &amp; zaal · automatisch</summary>
+          <div class="st-kleur">
+            <div>weg<input id="mf-road" type="color" title="de gestippelde weg tussen de haltes"></div>
+            <div>lucht<input id="mf-sky" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
+            <div>diepte<input id="mf-deep" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
+            <div>gloed<input id="mf-glow" type="color" title="alleen zonder tekening"></div>
+          </div>
+          <div class="st-btns" style="margin-top:6px">
+            <button id="st-kleur-art">🎨 opnieuw uit de tekening</button>
+            <button class="stil" id="st-kleur-terug">↺ standaard</button>
+          </div>
+          <div class="st-row" style="margin-top:10px"><label>zaal</label>
+            <input id="mf-dim" type="range" min="0" max="1" step="0.01"></div>
+          <p class="st-afgeleid" id="mf-dim-uit"></p>
+          <div class="st-btns" style="margin-top:4px">
+            <button id="st-zaal-kijk" title="de eerste show van deze wereld, op de gekozen toestelmaat">▶ bekijk in de show</button>
+            <button class="stil" id="st-zaal-terug">↺ standaard</button>
+          </div>
+          <p class="st-hint">De <b>weg</b> zie je altijd; lucht, diepte en gloed alleen zonder tekening
+            en aan de rand in liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
+            een show: hoe lichter de tekening, hoe donkerder hij moet. De studio kiest beide zelf als
+            je een tekening neerzet, en de weg opnieuw als je de haltes verschuift.</p>
+        </details>
+      </section>
+
+      <section data-stap="2" hidden>
+        <p class="st-waarschuwing" id="st-onder" hidden></p>
+        <p class="st-noot">Sleep de rondjes naar de plekken op de tekening, en de groene ruitjes om de weg te buigen.</p>
+        <div class="st-btns" style="margin-top:6px">
+          <button class="stil" id="st-undo" title="Ctrl+Z">↶ terug</button>
+          <button class="stil" id="st-renodes">↺ haltes</button>
+          <button class="stil" id="st-recurve">↺ weg</button>
+        </div>
+        <div class="st-xy" id="st-xy" hidden>
+          <b id="st-wat"></b>
+          <label>x<input id="st-x" type="number" step="0.1" min="0" max="100"></label>
+          <label>y<input id="st-y" type="number" step="0.1" min="0" max="100"></label>
+        </div>
+        <p class="st-hint">Tik een halte of ruitje aan en verschuif hem met de pijltjes (Shift = vijf keer
+          zo grof), of tik de getallen in. Ctrl+Z neemt terug.</p>
+        <details class="st-geav">
+          <summary>Hulpmiddelen</summary>
+          <div class="st-btns">
+            <button id="st-zone" class="on">⬚ veilige zone</button>
+            <button id="st-grid">▦ raster</button>
+            <button id="st-curve" class="on">∿ stuurpunten</button>
+            <button id="st-sterren">👧 ster overal</button>
+          </div>
+          <div class="st-btns" style="margin-top:6px">
+            <button id="st-contrast-knop">🔍 meet het contrast</button>
+          </div>
+          <div class="st-check" id="st-contrast" hidden></div>
+          <p class="st-hint">Het contrast meet de tekening precies waar de haltes en de weg komen. De
+            weg is het gevoeligst: die is dun en doorzichtig.</p>
+        </details>
+      </section>
+
+      <section data-stap="3" hidden>
+        <div class="st-bel" id="st-bel">
+          <span class="vb" id="st-bel-vb"></span>
+          <span><b id="st-bel-naam">—</b><small id="st-bel-uit"></small></span>
+          <button id="st-bel-kijk">bekijk</button>
+        </div>
+        <select id="mf-beloning" hidden></select>
+        <div class="st-schat" id="st-schat">
+          <h6>Je eigen schat</h6>
+          <div class="st-prow"><label>emoji</label><input id="sc-emoji" maxlength="4"></div>
+          <div class="st-prow"><label>naam</label><input id="sc-naam" placeholder="bv. Regenboogkroon"></div>
+          <textarea id="sc-svg" rows="3" spellcheck="false"
+            placeholder="plak hier de SVG, of sleep een .svg-bestand erop"></textarea>
+          <div class="st-sc-vb" id="sc-vb" hidden></div>
+          <div class="st-prow"><label>hoger</label><input id="sc-hoogte" type="range" min="-12" max="12" step="0.5" value="0"></div>
+          <div class="st-prow"><label>groter</label><input id="sc-grootte" type="range" min="0.7" max="1.3" step="0.02" value="1"></div>
+          <p class="st-check" id="sc-let" hidden></p>
+          <div class="st-btns">
+            <button class="prim" id="sc-gebruik" disabled>✓ Maak dit de schat</button>
+            <button class="stil" id="sc-weg" hidden>✕ schat weg</button>
+          </div>
+          <details class="st-prompt" open>
+            <summary>✨ Prompt voor de schat</summary>
+            <div class="st-prow"><label>idee</label><input id="sc-idee" placeholder="bv. een regenboogkroontje"></div>
+            <div class="st-btns"><button id="sc-prompt">Kopieer de prompt</button></div>
+            <p class="st-hint" style="display:block">Voor Claude of ChatGPT: een schat is een tekening in SVG.</p>
+          </details>
+        </div>
+      </section>
+
+      <section data-stap="4" hidden>
+        <div class="st-check" id="st-klaar"></div>
+        <p class="st-noot" id="st-kijknoot">Kijk nog één keer naar de kaart hiernaast en de schat op de pop.</p>
+        <p class="st-let" id="st-live" hidden></p>
+        <div class="st-btns" style="margin-top:10px">
+          <button class="prim groot" id="st-publiceer">🚀 Publiceer</button>
+        </div>
+        <p class="st-noot" id="st-pubwat"></p>
+      </section>
+
+      <section data-stap="meer" hidden>
+        <h6>Bekijken</h6>
+        <div class="st-kijk">
+          <div class="kr">
+            <label for="st-toestel">toestel</label>
+            <select id="st-toestel"></select>
+            <button id="st-kop" class="on" title="Bovenbalk aan/uit">▀</button>
+            <button id="st-balk" class="on" title="Navigatiebalk aan/uit">▄</button>
+          </div>
+          <div class="kr">
+            <label for="st-stand">stand</label>
+            <select id="st-stand">
+              <option value="halverwege" selected>halverwege — 3 gedaan, 1 nu</option>
+              <option value="slot">op slot — nog niet hier geweest</option>
+              <option value="vers">net begonnen — halte 1 is aan de beurt</option>
+              <option value="uit">uit — elke show gespeeld</option>
+              <option value="perfect">perfect — overal drie sterren</option>
+            </select>
+          </div>
+          <div class="kr">
+            <label for="st-vscherm">probeer</label>
+            <select id="st-vscherm">
+              <option value="map">de kaart, in deze stand</option>
+              <option value="game:vers">de eerste show</option>
+              <option value="game:bijna">de laatste show → wereldfeest</option>
+              <option value="end:halverwege">het einde van een show</option>
+              <option value="reis:vers">de reis naar deze wereld</option>
+              <option value="profile">wie speelt er</option>
+            </select>
+            <button id="st-venster" title="Speel het in een écht venster op de gekozen toestelmaat, met deze wereld en je concept erin — met Shift: alle maten naast elkaar">▶</button>
+          </div>
+          <em class="maat" id="st-toestelmaat"></em>
+          <em class="maat" id="st-lan"></em>
+        </div>
+
+        <h6>Werelden</h6>
         <div class="st-list" id="st-list"></div>
         <div class="st-btns" style="margin-top:6px">
           <button class="prim" id="st-new">＋ wereld</button>
@@ -22404,171 +22533,21 @@ function startMapEdit() {
           <button class="prim" id="st-nieuwmaak">Maak</button>
         </div>
         <p class="st-noot" id="st-nieuwid" hidden></p>
-        <p class="st-hint">Een wereld maken is: naam geven, en dan de onderdelen hieronder van
-          boven naar beneden — 1 tekening erop, 2 kleuren accepteren, 3 haltes zetten, 4 de zaal,
-          5 een beloning kiezen — en de standen doorlopen in <b>Probeer</b>. Het vinkje
-          <b>uitgebracht</b> bij 6 komt als laatste. Het id en het bestandspad rolt de studio er
-          zelf uit — die staan onder <b>Geavanceerd</b> voor de zeldzame keer dat je ze met de
-          hand wilt zetten.</p>
 
-        <h6>1 · Tekening</h6>
-        <div class="st-art" id="st-art">
-          <span class="vb" id="st-art-vb">＋</span>
-          <span><b id="st-art-st">nog geen tekening</b><small id="st-art-info"></small></span>
-        </div>
-        <p class="st-let" id="st-art-let" hidden></p>
-        <div class="st-nieuw" id="st-art-nieuw" hidden></div>
-        <p class="st-hint">Sleep een beeld hierheen of tik erop. Elke bronmaat mag: hij wordt
-          bijgesneden als cover, omgezet naar webp en op de goede plek gezet. Een nieuwe
-          erop slepen <b>overschrijft</b> de vorige — er is één tekening per wereld.<br>
-          Leg je er een in <code>incoming/</code>, dan komt hij hierboven als <b>nieuw</b>
-          naast de huidige te staan en kies je zelf of hij het wordt.</p>
-        <details class="st-prompt" id="st-kaartprompt" hidden>
-          <summary>✨ Prompt voor een beeldgenerator</summary>
-          <div class="st-prow"><label>thema</label><input id="kp-thema"></div>
-          <div class="st-prow"><label>inspiratie</label><input id="kp-insp" placeholder="optioneel, een paar woorden"></div>
-          <div class="st-btns"><button id="kp-kopieer">Kopieer de prompt</button></div>
-          <p class="st-hint" style="display:block">De prompt uit <code>docs/prompts/wereldkaart.txt</code>,
-            met dit thema erin. Plak hem in je beeldgenerator en sleep het resultaat op het vak
-            hierboven.</p>
-        </details>
-
-        <h6>2 · Kleuren</h6>
-        <div class="st-kleur">
-          <div>weg<input id="mf-road" type="color" title="de gestippelde weg tussen de haltes"></div>
-          <div>lucht<input id="mf-sky" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
-          <div>diepte<input id="mf-deep" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
-          <div>gloed<input id="mf-glow" type="color" title="alleen zonder tekening"></div>
-        </div>
-        <div class="st-btns" style="margin-top:6px">
-          <button id="st-kleur-art">🎨 haal uit de tekening</button>
-          <button class="stil" id="st-kleur-terug">↺ standaard</button>
-        </div>
-        <p class="st-hint"><b>weg</b> zie je altijd — die ligt over de tekening heen.
-          <b>lucht</b>, <b>diepte</b> en <b>gloed</b> dragen een wereld die nog géén
-          tekening heeft; lucht en diepte kleuren daarnaast de rand naast de kaart
-          in liggende stand.<br>
-          <b>Haal uit de tekening</b> doet een vóórstel: hij meet de lucht bovenin, de
-          diepte onderin, de warmste veeg en een weg die tegen de corridor afsteekt. Je
-          ziet het meteen en je mag er altijd overheen.</p>
-
-        <h6>3 · Haltes &amp; weg</h6>
-        <p class="st-waarschuwing" id="st-onder" hidden></p>
-        <div class="st-btns">
-          <button id="st-zone" class="on">⬚ veilige zone</button>
-          <button id="st-grid">▦ raster</button>
-          <button id="st-curve" class="on">∿ stuurpunten</button>
-          <button id="st-sterren">👧 ster overal</button>
-        </div>
-        <div class="st-btns" style="margin-top:6px">
-          <button class="stil" id="st-undo" title="Ctrl+Z">↶ terug</button>
-          <button class="stil" id="st-renodes">↺ haltes</button>
-          <button class="stil" id="st-recurve">↺ weg</button>
-        </div>
-        <div class="st-xy" id="st-xy" hidden>
-          <b id="st-wat"></b>
-          <label>x<input id="st-x" type="number" step="0.1" min="0" max="100"></label>
-          <label>y<input id="st-y" type="number" step="0.1" min="0" max="100"></label>
-        </div>
-        <p class="st-hint">Sleep <b>ronde haltes</b> naar de richels en de <b>groene ruitjes</b>
-          om de weg langs de tekening te leiden. Eén ruitje per stuk weg. Tik er een aan en
-          verschuif 'm met de pijltjes (Shift = vijf keer zo grof), of tik de getallen in.
-          Ctrl+Z neemt terug.</p>
-        <p class="st-hint">De <b>stand</b> bovenin zet de kaart in de standen die een kind
-          ziet. De grijze haltes en de grijze sterretjes zijn het zwakst op een getekende
-          kaart, en <b>perfect</b> hoort juist trots te voelen — kijk ze alle vijf na
-          vóórdat je de volgende wereld laat tekenen.</p>
-        <div class="st-btns" style="margin-top:6px">
-          <button id="st-contrast-knop">🔍 meet het contrast</button>
-        </div>
-        <div class="st-check" id="st-contrast" hidden></div>
-        <p class="st-hint">Meet de helderheid van de tekening precies waar de haltes en de
-          weg komen, en zet dat af tegen de kleuren die eroverheen gaan. Een halte redt zich
-          met haar vulling óf met haar lichte ring — één van de twee werkt bijna altijd, dus de
-          béste van de slechtste telt. De weg is het gevoeligst — die is dun, doorzichtig en jij
-          kiest zijn kleur.</p>
-
-        <h6>4 · Zaal</h6>
-        <div class="st-row"><label>donkerte</label>
-          <input id="mf-dim" type="range" min="0" max="1" step="0.01"></div>
-        <p class="st-afgeleid" id="mf-dim-uit"></p>
-        <div class="st-btns" style="margin-top:4px">
-          <button id="st-zaal-kijk" title="de eerste show van deze wereld, op de gekozen toestelmaat">▶ bekijk in de show</button>
-          <button class="stil" id="st-zaal-terug">↺ standaard</button>
-        </div>
-        <p class="st-hint">Achter de show hangt de tekening van de wereld, uitvergroot en
-          onscherp, met een donkere laag erover zodat de som leesbaar blijft. Een lichte
-          tekening (sneeuw, snoep) heeft meer donker nodig; een nachttekening minder.</p>
-
-        <h6>5 · Beloning</h6>
-        <div class="st-bel" id="st-bel">
-          <span class="vb" id="st-bel-vb"></span>
-          <span><b id="st-bel-naam">—</b><small id="st-bel-uit"></small></span>
-          <button id="st-bel-kijk">bekijk</button>
-        </div>
-        <select id="mf-beloning" style="width:100%;margin-top:6px"></select>
-        <details class="st-schat" id="st-schat" hidden>
-          <summary>✏️ Een eigen wereldschat tekenen</summary>
-          <div class="st-prow"><label>idee</label><input id="sc-idee" placeholder="bv. een regenboogkroontje"></div>
-          <div class="st-btns"><button id="sc-prompt">Kopieer de prompt</button></div>
-          <p class="st-hint" style="display:block">Voor <b>Claude of ChatGPT</b>, niet voor een
-            beeldgenerator: een schat is een tekening in SVG. Plak wat je terugkrijgt hieronder,
-            of sleep er een <code>.svg</code> op uit je tekenprogramma.</p>
-          <textarea id="sc-svg" rows="3" spellcheck="false"
-            placeholder="&lt;svg viewBox=&quot;0 0 200 250&quot;&gt;…&lt;/svg&gt;"></textarea>
-          <div class="st-sc-vb" id="sc-vb" hidden></div>
-          <div class="st-prow"><label>naam</label><input id="sc-naam" placeholder="bv. Regenboogkroon"></div>
-          <div class="st-prow"><label>emoji</label><input id="sc-emoji" maxlength="4"></div>
-          <div class="st-prow"><label>hoger</label><input id="sc-hoogte" type="range" min="-12" max="12" step="0.5" value="0"></div>
-          <div class="st-prow"><label>groter</label><input id="sc-grootte" type="range" min="0.7" max="1.3" step="0.02" value="1"></div>
-          <p class="st-check" id="sc-let" hidden></p>
-          <div class="st-btns">
-            <button class="prim" id="sc-gebruik" disabled>✓ Maak dit de schat</button>
-            <button class="stil" id="sc-weg" hidden>✕ getekende schat weg</button>
-          </div>
-        </details>
-        <p class="st-hint">Wat een kind krijgt zodra deze wereld uit is: een <b>wereldschat</b>.
-          Eén per wereld, en hij staat níét in de winkel. Daarom staan hier alleen de schatten
-          die nog vrij zijn — een winkelspulletje kiezen zou het uit de winkel halen.
-          <b>Bekijk</b> zet hem even op de paspop. Is er geen vrije, dan teken je er zelf een
-          onder <b>Een eigen wereldschat tekenen</b>: de studio zet hem op het hoofd en keurt hem.</p>
-
-        <h6>6 · Gegevens &amp; uitbrengen</h6>
-        <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
-        <div class="st-row"><label>naam</label><input id="mf-name"></div>
+        <h6>Gegevens</h6>
         <label class="st-vink"><input type="checkbox" id="mf-released">
           uitgebracht — kinderen kunnen hem spelen</label>
         <p class="st-afgeleid" id="mf-afgeleid"></p>
-        <p class="st-hint">Een nieuwe wereld begint <b>niet uitgebracht</b>: hij staat dan wél in
-          het spel (en mag mee naar main), maar geen kind komt erin. Hier in de studio en in
-          <b>Probeer</b> speel je hem gewoon. Zet het vinkje pas als de controle niets meer
-          te doen heeft — een wereld die kinderen al spelen zet je niet meer terug.</p>
+        <div class="st-row"><label>id</label><input id="mf-id" placeholder="ijs"></div>
+        <div class="st-row"><label>bestand</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
+        <p class="st-hint">Het id ligt vast zodra de wereld uitgebracht is: de trofee en de schat van
+          elk kind hangen eraan. levels: <b id="mf-levels"></b>, vast.</p>
+        <div class="st-btns">
+          <button id="st-copy">Kopieer blok</button>
+          <button id="st-paste">Plak blok</button>
+        </div>
 
-        <details class="st-geav">
-          <summary>Geavanceerd</summary>
-          <div class="st-row"><label>id</label><input id="mf-id" placeholder="ijs"></div>
-          <div class="st-row"><label>bestand</label><input id="mf-art" placeholder="assets/world/ijs-map.webp"></div>
-          <p class="st-hint">Het id is de identiteit van een wereld: het pad van de tekening,
-            de perfecte-wereldtrofee en een getekende schat hangen eraan. Hernoemen mag zolang
-            hij niet uitgebracht is; daarna staan trofee en schat in de opslag van kinderen, en
-            die zijn ze kwijt als het id verandert. De <b>naam</b> veranderen is vrij — dat is
-            bijna altijd wat je bedoelt.</p>
-          <p class="st-hint">levels: <b id="mf-levels"></b> — vast. Dit wijzigen hernummert elk level erna,
-            en dan verhuizen de sterren van een kind naar een andere wereld.</p>
-          <div class="st-btns">
-            <button id="st-copy">Kopieer blok</button>
-            <button id="st-paste">Plak blok</button>
-          </div>
-          <p class="st-hint">Het hele WORLDS-blok als tekst — handig om het hierheen te
-            plakken vanuit een gesprek met Claude, of andersom. Zonder de studioserver
-            (<code>npm run studio</code>) is dit de weg naar het project.</p>
-        </details>
-      </section>
-
-      <section data-tab="beelden" hidden>
-        <p class="st-hint" style="margin-top:10px">De beelden die <b>niet</b> bij één wereld horen.
-          De wereldkaart staat bij <b>Werelden</b>, want die hoort bij de wereld die je aan het
-          maken bent. Show en Einde worden later ook per wereld; dan verhuizen ze mee.</p>
+        <h6>Beelden van de app</h6>
         <div class="st-row" style="margin-top:8px"><label>kwaliteit</label><select id="st-kwal">
           <option value="0.9">0.90 — ruim</option>
           <option value="0.82" selected>0.82 — normaal</option>
@@ -22578,31 +22557,18 @@ function startMapEdit() {
         <div id="st-ongebruikt"></div>
         <div id="st-merk"></div>
         <input type="file" accept="image/*" hidden id="me-file">
-      </section>
 
-      <section data-tab="spel" hidden>
         <h6>Wat verandert er</h6>
         <div class="st-check" id="st-diff"></div>
-
-        <h6>Controle</h6>
-        <div class="st-btns"><button id="st-check-knop">✓ kijk alle werelden na</button></div>
-        <p class="st-hint">Ontbrekende tekeningen en beloningen, haltes buiten de zone, dubbele
-          id's en lijsten van de verkeerde lengte — in <b>alle</b> werelden, niet alleen die op
-          je scherm. Blokkeert niets; loopt ook vanzelf bij "Zet in het spel".</p>
+        <div class="st-btns" style="margin-top:6px"><button id="st-check-knop">✓ kijk alle werelden na</button></div>
         <div class="st-check" id="st-check" hidden></div>
 
-        <h6>Opslaan in het project</h6>
+        <h6>Losse stappen</h6>
         <div class="st-btns">
-          <button class="prim" id="st-push">⇪ Opslaan in het project</button>
+          <button id="st-push">⇪ Opslaan in het project</button>
           <button class="stil" id="st-pull" title="Concept weggooien en terug naar wat er in het project staat">⟲ Concept weg</button>
         </div>
-        <p class="st-hint">Schrijft je concept in <code>src/</code> en bouwt index.html. Dezelfde
-          controle als <code>npm run check</code> kijkt eerst mee: wat een kind nu zou merken
-          houdt het tegen. Beelden staan er al zodra je ze hebt neergezet. Kinderen zien
-          niets tot je publiceert — en een wereld die niet uitgebracht is zelfs dan nog niet.</p>
-
-        <h6>Vastleggen &amp; publiceren</h6>
-        <div class="st-row"><label>bericht</label>
+        <div class="st-row" style="margin-top:6px"><label>bericht</label>
           <input id="st-msg" placeholder="feat: IJswereld krijgt zijn kaart"></div>
         <div class="st-btns">
           <button id="st-commit">✓ keuren, vastleggen &amp; pushen</button>
@@ -22610,17 +22576,14 @@ function startMapEdit() {
           <button id="st-publish" title="voegt hier samen met main en pusht main — zonder PR">🚀 publiceer naar main</button>
         </div>
         <p class="st-let" id="st-pw" hidden>Publiceren draait ook de browsertests, en daarvoor
-          ontbreekt playwright. Draai één keer <code>npm install</code> in de projectmap.
-          Een PR pushen kan zonder.</p>
-        <p class="st-hint">Vastleggen gaat naar de wérkbranch, na de snelle keuring
-          (<code>npm run check</code>, een paar seconden), en pusht die tak. Daarna twee wegen
-          naar main: <b>push voor een PR</b> zet je tak op GitHub en geeft het adres van de PR —
-          main verandert pas als je hem daar samenvoegt. <b>Publiceer naar main</b> voegt hier
-          zelf samen en pusht main: dat slaat de PR over (geen review, geen CI vooraf), in twee
-          stappen, en alleen als <code>npm test</code> slaagt (dat vraagt één keer
-          <code>npm install</code>). Wat op main staat komt op de telefoon.</p>
+          ontbreekt playwright. Draai één keer <code>npm install</code> in de projectmap.</p>
       </section>
 
+    </div>
+    <div class="st-nav">
+      <button class="stil" id="st-terug">← Terug</button>
+      <button class="stil" id="st-meer" title="bekijken, andere werelden, gegevens, beelden, losse stappen">⋯ Meer</button>
+      <button class="prim" id="st-verder">Volgende →</button>
     </div>
     <div class="st-uit" id="st-out"></div>`;
   document.body.appendChild(panel);
@@ -22709,27 +22672,51 @@ function startMapEdit() {
   toestelKiezer.onchange = () => zetToestel(toestelKiezer.value);
   addEventListener('resize', () => zetToestel(toestelKiezer.value));
 
-  /* Drie tabbladen: maken, beelden, vastleggen. Er was er een vierde (Voorbeeld),
-     maar de hele linkerhelft ís al een voorbeeld -- dat tabblad was een tweede
-     voorvertoningsbegrip naast het echte. Wat er bruikbaars in stond staat nu in
-     het kijkvak hierboven: welke stand, welk scherm, en de knop die er een écht
-     venster van opent. */
-  panel.querySelectorAll('.st-tabs button').forEach(b => {
-    b.onclick = () => {
-      panel.querySelectorAll('.st-tabs button').forEach(o => o.classList.toggle('on', o === b));
-      panel.querySelectorAll('.st-body > section').forEach(sec => {
-        sec.hidden = sec.dataset.tab !== b.dataset.tab;
-      });
+  /* ---- De stappen ------------------------------------------------------------
+     Een wereld maken is vier stappen, en het paneel toont er één tegelijk:
+       1 Kaart       icoon, naam en de tekening (kleuren en zaal gaan vanzelf)
+       2 Haltes      de haltes en de weg op de tekening
+       3 Schat       wat een kind krijgt als de wereld uit is
+       4 Publiceren  nog één keer kijken, en dan helemaal naar buiten
+     Alles wat je zelden nodig hebt staat onder ⋯ Meer: bekijken in een andere
+     stand of maat, een andere wereld kiezen, het id, de beelden van de app en de
+     losse stappen naar main. Zo staat er bij het maken van een wereld alleen wat
+     bij die stap hoort -- de rest bestaat nog, maar staat niet in de weg.
+
+     De Dev Studio opent dit paneel met &stap=<n> (Publiceren in de lijst opent
+     stap 4). Zonder vlag begin je bij 1. */
+  const STAPPEN = ['1', '2', '3', '4'];
+  let stapNu = '1', stapVoorMeer = '1';
+  function toonStap(stap) {
+    stap = String(stap);
+    if (stap !== 'meer' && STAPPEN.indexOf(stap) < 0) stap = '1';
+    if (stap === 'meer' && stapNu !== 'meer') stapVoorMeer = stapNu;
+    stapNu = stap;
+    panel.querySelectorAll('.st-stappen button').forEach(b => b.classList.toggle('on', b.dataset.stap === stap));
+    panel.querySelectorAll('.st-body > section').forEach(sec => { sec.hidden = sec.dataset.stap !== stap; });
+    const i = STAPPEN.indexOf(stap);
+    F('st-terug').hidden = stap !== 'meer' && i <= 0;
+    F('st-terug').textContent = stap === 'meer' ? '← Terug naar de stappen' : '← Terug';
+    F('st-verder').hidden = stap === 'meer' || i === STAPPEN.length - 1;
+    F('st-verder').textContent = i === STAPPEN.length - 2 ? 'Naar publiceren →' : 'Volgende →';
+    F('st-meer').classList.toggle('on', stap === 'meer');
+    panel.querySelector('.st-body').scrollTop = 0;
+    if (stap === 'meer') {
       /* Publiceren draait ook de browsertests; zonder playwright weigert de server.
-         Dat hoort te staan zodra je dit tabblad opent, niet pas na de klik. Zonder
-         studioserver (een kaal index.html) is er niets te vragen en zwijgt dit. */
-      if (b.dataset.tab === 'spel') {
-        fetch('/api/versie').then(r => r.json())
-          .then(v => { F('st-pw').hidden = v.browserTests !== false; })
-          .catch(() => {});
-      }
-    };
-  });
+         Zonder studioserver (een kaal index.html) is er niets te vragen en zwijgt dit. */
+      fetch('/api/versie').then(r => r.json())
+        .then(v => { F('st-pw').hidden = v.browserTests !== false; })
+        .catch(() => {});
+    }
+    // bij Publiceren kijk je zoals een kind kijkt: zonder ruitjes, zone en strepen
+    document.body.classList.toggle('st-kijken', stap === '4');
+    if (stap === '4' && typeof tekenPubliceer === 'function') tekenPubliceer(true);
+  }
+  panel.querySelectorAll('.st-stappen button').forEach(b => { b.onclick = () => toonStap(b.dataset.stap); });
+  F('st-verder').onclick = () => toonStap(STAPPEN[Math.min(STAPPEN.length - 1, STAPPEN.indexOf(stapNu) + 1)]);
+  F('st-terug').onclick = () => toonStap(stapNu === 'meer' ? stapVoorMeer
+    : STAPPEN[Math.max(0, STAPPEN.indexOf(stapNu) - 1)]);
+  F('st-meer').onclick = () => toonStap(stapNu === 'meer' ? stapVoorMeer : 'meer');
 
   const shown = () => worldForIndex(viewWorldIdx);
   /* ---- Twee soorten werk, twee soorten context ------------------------------
@@ -22807,7 +22794,9 @@ function startMapEdit() {
        horen ze hier te tellen. "3 niet doorgevoerd" is één getal over één vraag --
        hoeveel dingen wijken af van wat kinderen spelen. */
     const totaal = vuil + GEWIJZIGD.size;
-    chip.textContent = totaal ? totaal + ' niet doorgevoerd' : 'gelijk aan het spel';
+    chip.textContent = totaal ? 'niet gepubliceerd' : '';
+    chip.title = totaal ? totaal + ' ding' + (totaal === 1 ? '' : 'en') + ' anders dan in het project' : '';
+    chip.hidden = !totaal;
     chip.className = 'st-chip ' + (totaal ? 'vuil' : 'schoon');
   }
   function refreshList() {
@@ -22831,6 +22820,7 @@ function startMapEdit() {
     const g = wereldNu();
     if (!g) return;           // geen wereld om te tonen: de velden blijven zoals ze staan
     const w = g.world;
+    F('st-wnaam').textContent = ((w.icon || '') + ' ' + (w.name || '')).trim() || 'Wereldstudio';
     F('mf-icon').value = w.icon || '';
     F('mf-name').value = w.name || '';
     F('mf-id').value = w.id || '';
@@ -22871,8 +22861,10 @@ function startMapEdit() {
     zegDim(v, eigen);
   }
   function zegDim(v, eigen) {
-    F('mf-dim-uit').textContent = Math.round(v * 100) + '% donker'
-      + (eigen ? '' : ' — de standaard') + (v < .5 ? ' · de tekening praat mee met de som' : '');
+    /* dim is de helderheid van de tekening achter de show (brightness() in
+       src/css/50-zaal.css): lager is donkerder. */
+    F('mf-dim-uit').textContent = 'helderheid ' + Math.round(v * 100) + '%'
+      + (eigen ? '' : ' — de standaard') + (v > .9 ? ' · de tekening praat mee met de som' : '');
   }
   F('mf-dim').addEventListener('input', () => {
     const v = Number(F('mf-dim').value);
@@ -23583,6 +23575,7 @@ function startMapEdit() {
     fillSheet();
     if (typeof tekenSchermen === 'function') tekenSchermen();
     if (typeof tekenDiff === 'function') tekenDiff();
+    if (stapNu === '4' && typeof tekenPubliceer === 'function') tekenPubliceer(false);
     if (msg !== undefined) setOut(msg);
   }
   function goWorld(i) {
@@ -24177,8 +24170,10 @@ function startMapEdit() {
         fetch('/incoming-weg?f=' + encodeURIComponent(label), { method: 'POST' }).catch(() => {});
       }
       commit('');
-      setOut('Gewijzigd · ' + label + '  ' + maat + ' → ' + txt
-        + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.'));
+      const klaar = 'Gewijzigd · ' + label + '  ' + maat + ' → ' + txt
+        + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.');
+      setOut(klaar);
+      if (key === 'world') autoKleuren(false, klaar + '\nKleuren en zaal komen uit de tekening.');
     } catch (err) {
       console.error('[wereldstudio] ' + pad + ' is vervangen, maar het paneel bijwerken mislukte', err);
       setOut('Gewijzigd · ' + pad + ' staat op schijf.\n'
@@ -24569,7 +24564,21 @@ function startMapEdit() {
        maar een weg hoort een verlicht pad te zijn en geen schaduw. Binnen 8% van
        het optimum maakt het voor de ogen niets uit en voor het beeld alles. */
     const beste = reeks.filter(o => o.sc >= besteScore * .92).pop().hex;
+    /* De zaal: hoe helder de tekening achter de show mag (brightness, zie
+       src/css/50-zaal.css). Afgeleid van hoe licht de tekening gemiddeld is, en
+       geijkt op de werelden die er met de hand een kregen: IJs (lichtheid .61)
+       staat op .54, Snoep (.58) op .56, Muziek (.52) op de standaard .62 en Tover
+       (.36, een nachttekening) op .82. Daar loopt deze lijn doorheen. Dicht bij de
+       standaard wordt het de standaard, zodat een gewone tekening niets wegschrijft. */
+    let licht = 0, n = 0;
+    for (let i = 0; i < data.length; i += 8) {
+      licht += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255; n++;
+    }
+    licht = n ? licht / n : .5;
+    let dim = Math.round(Math.min(.85, Math.max(.5, .54 + (.6 - licht) * 1.18)) * 100) / 100;
+    if (Math.abs(dim - DIM_STANDAARD) < .04) dim = DIM_STANDAARD;
     return {
+      dim,
       sky:  hslHex(boven.h, Math.min(.72, Math.max(.2, boven.s)), Math.min(.42, Math.max(.16, boven.l))),
       deep: hslHex(onder.h, Math.min(.7, Math.max(.25, onder.s)), Math.min(.16, Math.max(.05, onder.l * .45))),
       glow: hslHex(gloedH, Math.min(.62, Math.max(.28, gloedS)), .34),
@@ -24591,6 +24600,26 @@ function startMapEdit() {
     return 'De tekening kon niet worden uitgelezen.\nDe kleuren blijven zoals ze staan.'
       + '\nBekijk de console voor technische details.';
   };
+  /* Kleuren en zaal vanzelf. Na een nieuwe tekening alles (zie verwerkBeeld), na
+     het verschuiven van haltes alleen de weg (zie endDrag). Wat je met de hand
+     onder "Kleuren & zaal" zet blijft staan tot de volgende tekening of
+     verschuiving -- het is een voorstel dat telkens opnieuw gedaan wordt, geen
+     slot. bericht: wat er daarna onderin hoort te staan (readSheet maakt hem leeg). */
+  async function autoKleuren(alleenWeg, bericht) {
+    const w = shown().world;
+    if (!w.art || w.art.indexOf('blob:') === 0) return false;
+    try {
+      const voor = await kleurenUitTekening();
+      if (shown().world !== w) return false;           // intussen een andere wereld gekozen
+      (alleenWeg ? ['road'] : Object.keys(voor)).forEach(k => { F('mf-' + k).value = String(voor[k]); });
+      readSheet();
+      if (bericht) setOut(bericht);
+      return true;
+    } catch (e) {
+      console.error('[wereldstudio] kleuren uit de tekening halen mislukte', e);
+      return false;
+    }
+  }
   F('st-kleur-art').onclick = async () => {
     setOut('kleuren uitlezen…');
     try {
@@ -24655,6 +24684,116 @@ function startMapEdit() {
   }
   const controleer = () => wereldControle(OP_SCHIJF);
   F('st-check-knop').onclick = () => toonControle(controleer(), false);
+
+  /* ---- Publiceren (stap 4) -----------------------------------------------------
+     Eén knop die een wereld helemaal naar buiten brengt: uitbrengen, opslaan,
+     keuren, vastleggen, pushen en -- als de browsertests hier kunnen draaien --
+     naar main (zie publiceerAlles in test/preview.js). Daarvoor twee dingen die
+     de tests niet kunnen:
+       - kijken. De kaart hiernaast gaat op "halverwege" en de schat op de pop:
+         een halte op een rots of een schat die er raar uitziet vangt geen test.
+       - vragen, bij een wereld die al live is: een fout daarin staat binnen een
+         paar minuten op de tablet van een kind.
+     Wat er nog mis is staat erboven, met een link naar de stap waar je het oplost.
+     De controle is die van straks: met de wereld op uitgebracht, want dat wordt
+     hij -- wat "pas vóór uitbrengen" moest, moet nu. */
+  const STAP_VAN = { tekening: '1', gegevens: '1', kleuren: '1', zaal: '1', haltes: '2', beloning: '3', lijst: 'meer' };
+  const STAP_NAAM = { '1': 'Kaart', '2': 'Haltes', '3': 'Schat', meer: 'Meer' };
+  function publiceerPunten() {
+    const w = shown().world;
+    const was = w.released;
+    delete w.released;
+    let punten;
+    try { punten = controleer(); } finally { if (was === false) w.released = false; }
+    const naam = (w.icon || '') + ' ' + (w.name || w.id);
+    return punten.filter(p => p.ernst === 'fout' && (p.w === naam || p.blokkeert));
+  }
+  let publicerenBezig = false;
+  function tekenPubliceer(kijk) {
+    const g = wereldNu();
+    if (!g) return;
+    const w = g.world;
+    const punten = publiceerPunten();
+    const vak = F('st-klaar');
+    if (punten.length) {
+      vak.className = 'st-check';
+      vak.innerHTML = '<b>Eerst nog:</b><br>' + punten.map(p => {
+        const stap = STAP_VAN[p.waar] || '1';
+        return '· ' + esc(p.t) + ' <a href="#" data-stap="' + stap + '">→ ' + STAP_NAAM[stap] + '</a>';
+      }).join('<br>');
+      vak.querySelectorAll('a').forEach(a => {
+        a.onclick = e => { e.preventDefault(); toonStap(a.dataset.stap); };
+      });
+    } else {
+      vak.className = 'st-check schoon';
+      vak.textContent = '✓ Klaar om te publiceren';
+    }
+    const ship = shippedFor(w.id);
+    const live = !!ship && ship.released !== false;
+    F('st-live').hidden = !live;
+    F('st-live').textContent = w.name + ' is al live: kinderen zien je wijziging binnen een paar minuten.';
+    const knop = F('st-publiceer');
+    knop.textContent = '🚀 Publiceer ' + w.name;
+    knop.disabled = !!punten.length || publicerenBezig;
+    if (!publicerenBezig) {
+      F('st-pubwat').textContent = punten.length ? ''
+        : (live ? '' : 'Hij gaat open voor kinderen. ') + 'Opslaan, testen en naar main, in één keer.';
+    }
+    if (kijk) {
+      if (sterNu()) zetStand('halverwege');
+      const bel = w.beloning ? item(w.beloning) : null;
+      if (bel && !F('st-pop')) F('st-bel-kijk').click();
+    }
+  }
+  F('st-publiceer').onclick = async () => {
+    const w = shown().world;
+    const ship = shippedFor(w.id);
+    if (ship && ship.released !== false
+        && !confirm(w.name + ' is al live. Deze wijziging publiceren?\nKinderen zien hem binnen een paar minuten.')) return;
+    publicerenBezig = true;
+    F('st-publiceer').disabled = true;
+    saveWorldDraft();
+    setOut('');
+    F('st-pubwat').textContent = 'Publiceren…';
+    // de tests duren minuten: laat zien waar hij is
+    const klok = setInterval(() => {
+      fetch('/api/publiceer').then(r => r.json())
+        .then(s => { if (s.bezig && s.stap) F('st-pubwat').textContent = s.stap; })
+        .catch(() => {});
+    }, 1000);
+    let j;
+    try {
+      const r = await fetch('/api/publiceer', { method: 'POST',
+        body: JSON.stringify({ id: w.id, naam: w.name, concept: WORLDS, basis: WORLDS_SHIPPED }) });
+      j = await r.json();
+    } catch (e) {
+      console.error('[wereldstudio] publiceren mislukte', e);
+      j = { ok: false, tekst: 'Publiceren kan alleen met de studioserver (npm run studio).\nEr is niets veranderd.' };
+    }
+    clearInterval(klok);
+    publicerenBezig = false;
+    if (j.ok || j.opgeslagen) {
+      /* Het concept staat nu in het project, met de wereld op uitgebracht: wat dit
+         paneel "het spel" noemt is nu gelijk aan het concept, en dan verdwijnt
+         het concept vanzelf (zie saveWorldDraft). */
+      delete w.released;
+      WORLDS_SHIPPED.length = 0;
+      JSON.parse(JSON.stringify(WORLDS)).forEach(x => WORLDS_SHIPPED.push(x));
+      saveWorldDraft();
+      // vastgelegd = de beelden staan nu ook in git
+      if (j.ok || ['tests', 'main', 'pushen'].indexOf(j.stap) >= 0) GEWIJZIGD.clear();
+      commit();
+      if (window.parent !== window) {
+        try {
+          window.parent.postMessage({ wereldstudio: 'gepubliceerd', id: w.id, live: !!j.live },
+            location.origin && location.origin !== 'null' ? location.origin : '*');
+        } catch (e) { /* geen Dev Studio eromheen */ }
+      }
+    }
+    F('st-pubwat').textContent = '';
+    setOut(j.tekst || (j.ok ? 'Gepubliceerd.' : 'Publiceren lukte niet.'));
+    tekenPubliceer(false);
+  };
   /* Wat er verandert als je nu op "Zet in het spel" drukt. Eén vraag die je vlak
      voor het vastleggen hebt en die nergens beantwoord werd: welke werelden wijken
      af van wat kinderen spelen, en waarin. Geen diff-viewer -- een regel per wereld
@@ -24927,7 +25066,13 @@ function startMapEdit() {
     drag = null;
     saveWorldDraft();
     refreshList();
+    /* De weg loopt nu ergens anders over de tekening, dus de wegkleur die er het
+       best tegen afsteekt kan ook anders zijn. Even wachten: wie vijf haltes na
+       elkaar verschuift hoeft niet vijf keer te wachten op een meting. */
+    clearTimeout(wegKlok);
+    wegKlok = setTimeout(() => { if (!drag) autoKleuren(true); }, 700);
   };
+  let wegKlok = null;
   map.addEventListener('pointerup', endDrag, true);
   map.addEventListener('pointercancel', endDrag, true);
 
@@ -24958,6 +25103,8 @@ function startMapEdit() {
     : Math.min(worldFor(P().level).index, WORLDS.length - 1);
   goWorld(viewWorldIdx);
   zetToestel(toestelKiezer.value);
+  // &stap=<n>: de Dev Studio opent hier meteen een stap (Publiceren in de lijst = 4)
+  toonStap(new URLSearchParams(location.search).get('stap') || '1');
 
   /* &nieuw -- meteen in "een wereld erbij". De ontwikkelstudio (npm run studio)
      heeft een knop "Wereld toevoegen", en die hoort hier uit te komen en niet in
