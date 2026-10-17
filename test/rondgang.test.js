@@ -694,7 +694,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       aan: P().equipped[item(doel).cat],
     });
     // een stuk dat ze al heeft en niet aanheeft
-    const bezit = [...document.querySelectorAll('.item-card.owned')];
+    // (geen micro e.d.: nog eens tikken op een optioneel stuk doet het juist uit, zie 7b2)
+    const bezit = [...document.querySelectorAll('.item-card.owned')]
+      .filter(k => !OPTIONELE_SPULLEN.includes(item(k.dataset.item).cat));
     const doel = bezit.length ? bezit[bezit.length - 1].dataset.item : null;
     if (!doel) return { doel: null };
     const voor = nu();
@@ -716,6 +718,33 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(r.doel && r.nogEens.aan === r.doel && r.nogEens.goud === r.doel
      && r.nogEens.top === r.voor.top && r.nogEens.lade === 'none',
     'nog eens tikken op wat aanstaat is veilig niets', JSON.stringify(r));
+
+  /* ---- 7b2 · Optionele spullen gaan met een tik weer uit ----
+     Micro, instrument, extra en dier kan de pop missen; een tik op wat aanstaat
+     doet het uit en het pilletje zegt "✓ Aan ✕". Een jurk blijft aan. */
+  r = await page.evaluate(async () => {
+    const p = P();
+    if (!p.owned.includes('mic_zilver')) p.owned.push('mic_zilver');
+    p.equipped.mic = 'mic_zilver';
+    shopCat = 'mic'; renderShop();
+    const kaart = () => document.querySelector('.item-card[data-item="mic_zilver"]');
+    const pilAan = kaart().querySelector('.item-status').textContent.trim();
+    kaart().click();
+    await new Promise(res => setTimeout(res, 150));
+    const uit = P().equipped.mic;
+    const pilUit = kaart().querySelector('.item-status').textContent.trim();
+    kaart().click();
+    await new Promise(res => setTimeout(res, 150));
+    const weerAan = P().equipped.mic;
+    const jurk = P().equipped.dress;
+    shopCat = 'dress'; renderShop();
+    document.querySelector(`.item-card[data-item="${jurk}"]`).click();
+    await new Promise(res => setTimeout(res, 150));
+    return { pilAan, uit, pilUit, weerAan, jurk, jurkNa: P().equipped.dress };
+  });
+  check(r.pilAan === '✓ Aan ✕' && r.uit === null && r.pilUit !== '✓ Aan ✕' && r.weerAan === 'mic_zilver',
+    'een optioneel stuk gaat met een tik uit (pilletje ✓ Aan ✕) en weer aan', JSON.stringify(r));
+  check(r.jurkNa === r.jurk, 'een jurk gaat bij nog eens tikken niet uit', JSON.stringify(r));
 
   /* ---- 7c · Heen en weer tussen de tabbladen ----
      SNEL HEEN EN WEER. schermWeg, schermKomtOp en kaartKomtOp stoppen bij een
