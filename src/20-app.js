@@ -847,7 +847,6 @@ const WORLDS = [
   },
   {
     id: 'onderwater', name: 'Onderwaterwereld', icon: '🪸', levels: 8,
-    released: false,
     beloning: 'acc_wereld_onderwater',
     art: 'assets/world/onderwater-map.webp',
     schat: {
