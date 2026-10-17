@@ -903,6 +903,35 @@ const WORLDS = [
       { x: 80.0, y: 25.6 },
     ],
   },
+  {
+    id: 'dino', name: 'Dinowereld', icon: '🦖', levels: 8,
+    beloning: 'acc_wereld_dino',
+    art: 'assets/world/dino-map.webp',
+    schat: {
+      naam: 'Dinohoedje', emoji: '🦕', view: '64.5 5.5 70.9 46',
+      svg: '<g transform="translate(12.39 -0.37) scale(0.875)"><g stroke-linejoin="round" stroke-linecap="round"><path d="M78 51 Q65 51 64 41 Q58 34 69 27 Q66 18 78 18 Q84 10 93 15 Q100 9 107 15 Q118 11 123 20 Q135 19 132 28 Q143 35 135 43 Q133 51 122 51 Z" fill="#a1b94b" stroke="#35452b" stroke-width="2.5"/><path d="M80 32 Q75 20 82 9 Q91 19 91 33 Z" fill="#fff0c5" stroke="#35452b" stroke-width="2.2"/><path d="M109 33 Q109 19 118 9 Q125 20 120 32 Z" fill="#fff0c5" stroke="#35452b" stroke-width="2.2"/><path d="M81 49 Q76 37 86 29 Q100 21 114 29 Q124 37 119 49 Q115 57 100 57 Q85 57 81 49 Z" fill="#72bd75" stroke="#35452b" stroke-width="2.5"/><path d="M84 33 Q100 22 116 33" fill="none" stroke="#a8df83" stroke-width="3"/><ellipse cx="89.5" cy="41" rx="3.5" ry="4" fill="#253a2c"/><ellipse cx="110.5" cy="41" rx="3.5" ry="4" fill="#253a2c"/><circle cx="90.4" cy="39.8" r="1.15" fill="#ffffff"/><circle cx="111.4" cy="39.8" r="1.15" fill="#ffffff"/><path d="M95 47 Q96 39 100 34 Q104 39 105 47 Q100 50 95 47 Z" fill="#fff0c5" stroke="#35452b" stroke-width="2"/><circle cx="90" cy="50" r="2.2" fill="#4c8d57"/><circle cx="110" cy="50" r="2.2" fill="#4c8d57"/><circle cx="71" cy="36" r="4" fill="#e4c95e" stroke="#35452b" stroke-width="1.5"/><circle cx="129" cy="36" r="4" fill="#e4c95e" stroke="#35452b" stroke-width="1.5"/><circle cx="76" cy="27" r="2.6" fill="#e4c95e"/><circle cx="124" cy="27" r="2.6" fill="#e4c95e"/></g></g>',
+    },
+    theme: { road: '#f3f2ec', sky: '#8a4c57', deep: '#221c14', glow: '#8c8221' },
+    nodes: [
+      { x: 31.4, y: 79.3 },
+      { x: 61.2, y: 70.7 },
+      { x: 79.0, y: 63.1 },
+      { x: 33.7, y: 52.6 },
+      { x: 39.8, y: 43.1 },
+      { x: 74.9, y: 34.9 },
+      { x: 52.3, y: 29.0 },
+      { x: 74.9, y: 20.6 },
+    ],
+    curve: [
+      { x: 51.5, y: 79.7 },
+      { x: 69.6, y: 66.1 },
+      { x: 58.9, y: 55.8 },
+      { x: 54.8, y: 46.4 },
+      { x: 61.7, y: 40.1 },
+      { x: 64.5, y: 32.5 },
+      { x: 70.1, y: 27.0 },
+    ],
+  },
 ];
 /* WERELDEN-EINDE */
 
