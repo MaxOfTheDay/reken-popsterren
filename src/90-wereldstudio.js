@@ -792,7 +792,7 @@ function startMapEdit() {
     F('st-verder').textContent = i === STAPPEN.length - 2 ? 'Naar publiceren →' : 'Volgende →';
     F('st-meer').classList.toggle('on', stap === 'meer');
     panel.querySelector('.st-body').scrollTop = 0;
-    if (stap === 'meer') {
+    if (stap === 'meer' && /^http/.test(location.protocol)) {
       /* Publiceren draait ook de browsertests; zonder playwright weigert de server.
          Zonder studioserver (een kaal index.html) is er niets te vragen en zwijgt dit. */
       fetch('/api/versie').then(r => r.json())
@@ -882,8 +882,8 @@ function startMapEdit() {
     const vuil = WORLDS.filter(w => worldState(w) !== 'gelijk').length;
     const chip = F('st-status');
     /* Werelden én beelden: allebei staan ze straks in dezelfde commit, dus allebei
-       horen ze hier te tellen. "3 niet doorgevoerd" is één getal over één vraag --
-       hoeveel dingen wijken af van wat kinderen spelen. */
+       horen ze hier te tellen. Het chipje zegt alleen "niet gepubliceerd"; het getal
+       (hoeveel dingen wijken af van wat kinderen spelen) staat in de tooltip. */
     const totaal = vuil + GEWIJZIGD.size;
     chip.textContent = totaal ? 'niet gepubliceerd' : '';
     chip.title = totaal ? totaal + ' ding' + (totaal === 1 ? '' : 'en') + ' anders dan in het project' : '';

@@ -1,16 +1,15 @@
 # Dev Studio
 
-Eén scherm, twee werkbladen, en een hoekje ernaast:
+De studio is er voor één ding: **een wereld maken en hem online zetten.** Wat je
+daar niet voor nodig hebt staat onder **⋯ Meer**.
 
 | | |
 |---|---|
-| **Testomgeving** | speel en controleer de game in een gekozen toestand |
-| **Wereldstudio** | bouw een wereld, probeer hem in het echte spel, en breng hem naar het spel |
-| *App & merk* | het beeld dat bij de héle app hoort en bij geen wereld |
+| **Werelden** | de lijst met alle werelden: bewerken, testen, publiceren |
+| **Testen** | het spel in een gekozen stand zetten |
+| *⋯ Meer* | versies en takken, losse git-stappen, gereedschap, het beeld van de app |
 
-Links de bedieningen van het werkblad waar je in zit, rechts het échte spel op
-telefoonmaat. Bovenin staat altijd welk werkblad aan staat en welke versie er
-draait.
+Bovenin staat altijd welke versie er draait, met één knop **⟳ Nieuwste versie**.
 
 ```
 npm run studio
@@ -33,8 +32,8 @@ npm run studio
 ```
 
 `npm install` is er alleen voor de browsertests (`npm test`), niet voor de studio.
-Publiceren draait die wél; ontbreekt playwright, dan zegt de studio dat bij het
-starten en bij *3 · Online*, zodat je er niet pas bij de laatste klik achter komt.
+Publiceren draait die wél, om rechtstreeks naar main te kunnen. Ontbreekt
+playwright, dan gaat Publiceren via een PR (zie hieronder).
 
 Is poort 8099 bezet, dan zegt de studio dat, met het alternatief erbij:
 
@@ -125,110 +124,104 @@ terminal valt vanzelf op.
 `192.168.x.x:8099/t` is de kaart, `/t4` de kaart meteen in wereld 4, `/ts` de
 wereldstudio.
 
-## 3. Een andere tak of PR testen
+## 3. De nieuwste versie
 
-In **Testomgeving → Huidige build**:
+**⟳ Nieuwste versie** haalt op en zet de studio op de laatste main. Staat er nog
+werk open dat niet gepubliceerd is, dan weigert hij en zegt hij waarom; de studio
+doet nooit een reset, een stash of een force. Sta je op een tak die al helemaal
+in main zit (een wereld die net gepubliceerd is), dan gaat hij gewoon terug naar
+main.
 
-1. *Ophalen* — `git fetch --all --prune`. Raakt je werkmap niet aan.
-2. Kies in de lijst: **Main**, een **open PR** (met titel), of een **tak**.
-3. *Wissel*.
-
-Een PR wordt met een losse kop uitgecheckt: kijken, niet doorwerken. Een tak
-wordt gewoon uitgecheckt en zo nodig eerst lokaal aangemaakt.
-
-**Staat er werk open in je werkmap, dan weigert de wissel.** De studio doet nooit
-een reset, een stash of een force — leg eerst vast en wissel daarna.
-
-Zonder verbinding met GitHub blijven de PR-titels weg en werkt de rest gewoon;
-er staat dan bij waaróm. Een `GITHUB_TOKEN` in je omgeving verhoogt de
-bezoeklimiet van GitHub.
-
-## 4. Terug naar de laatste main
-
-Knop **Naar main** (of kies *Main* en *Wissel*). Dat is
-`git checkout main` plus een fast-forward naar `origin/main`.
-
-Loopt je eigen tak achter, dan werkt **Bijwerken** hem bij — ook alleen
-fast-forward. Lopen tak en verte uiteen, dan zegt de studio dat: samenvoegen is
-een keuze en hoort niet achter een knopje.
+Een andere tak of een PR bekijken kan nog steeds, onder **⋯ Meer → Versie**.
+Een PR wordt met een losse kop uitgecheckt: kijken, niet doorwerken.
 
 ---
 
-## De twee werkbladen, in het kort
+## Werelden
 
-### Testomgeving — "breng me naar deze stand"
+Eén regel per wereld, met één label:
 
-| onderdeel | waarvoor |
+| label | betekent |
 |---|---|
-| **Huidige build** | welke bron er draait (main, tak of PR), de commit, of main nieuwer is, of er hier iets openstaat, en wanneer er voor het laatst is opgehaald. *Ophalen · Bijwerken · Naar main*, en de lijst om mee te wisselen. Wat alleen git-detail is staat onder *Details*. |
-| **Testscenario** | de stand waarin je het spel wilt zien. Boven de snelkeuzes (nieuwe speler, alles uitgespeeld, geen diamanten, volle kleedkamer, trofeeënkast); eronder vijf velden waarmee je hem zelf samenstelt: speler, wereld, stand, scherm, diamanten. Ze stellen allebei dezelfde vlaggen samen — er wordt hier niets nagebouwd. |
-| **Toestel** | Pixel 10 voorop, dan de maten die elk een ándere rand van de opmaak bepalen, en *Eigen maat* als je iets anders zoekt. Daarnaast drie schakelaars: randen, raster, animaties uit. De échte toestelmaat staat altijd boven het kijkvak, met daarnaast hoe hard hij voor je ogen is opgeblazen. |
-| **Gereedschap** | herladen, opslag/cache/servicewerker van het kijkvak leegmaken, het spel zonder vlaggen, en de servicewerker aanzetten om de bijwerkstroom van de PWA na te kijken. |
+| **Live** | staat op main en kinderen kunnen hem spelen |
+| **Niet uitgebracht** | staat op main, maar kinderen komen er nog niet in |
+| **Niet gepubliceerd** | veranderd (in je concept of je werkmap), nog niet op main |
+| **Wacht op merge** | gepusht naar een tak, nog niet op main |
+| **Probleem** | iets houdt publiceren tegen; *Bewerken* opent de stap die het oplost |
 
-### Wereldstudio — "maak een wereld, probeer hem, en breng hem naar het spel"
+Er wordt niets extra's voor bewaard: de studio leidt het af uit je concept, je
+werkmap en `origin/main`.
 
-Links de wereldlijst en daaronder **Van concept naar spel**; in het midden die
-ene wereld; rechts het kijkvak. Een wereld maken gaat zo:
+**+ Nieuwe wereld** haalt eerst zelf de nieuwste versie op. Staat er nog een
+nieuwe wereld die niet op main is, dan kan het niet, met één regel waarom: de
+levels van twee nieuwe werelden zouden botsen. Eén wereld tegelijk.
 
-1. **+ Nieuwe wereld**, naam intikken, *Maak*. Onder het veld staat welk id
-   eruit rolt; dat ligt vast zodra de wereld uitgebracht is. De wereldstudio opent in het
-   kijkvak, op de hele breedte, met de nieuwe wereld erin — nog **niet
-   uitgebracht**: hij staat straks wél in het spel, maar geen kind komt erin.
-2. **Bewerken** (dat is de editor), van boven naar beneden genummerd:
-   *1 Tekening* erop slepen, *2 Kleuren* (haal uit de tekening), *3 Haltes & weg*
-   op de richels, *4 Zaal* donkerder of lichter, *5 Beloning*: een wereldschat
-   kiezen of laten tekenen, *6 Gegevens & uitbrengen*. Alles staat meteen in je
-   **concept** (in deze browser).
-3. **▶ Probeer in het spel** of **✓ Klaar**: terug naar het overzicht, en het
-   kijkvak op telefoonmaat. Onder *Probeer in het spel* zet je hem in een stand
-   (net begonnen, halverwege, bijna uit, perfect, op slot) of speel je hem echt:
-   de eerste show, de laatste (met het wereldfeest en de schat), het einde van
-   een show, de reis erheen. Met je concept erin, ook als de wereld nog dicht is,
-   en zonder dat er iets wordt opgeslagen. Terug naar *Bewerken* is één klik.
-4. **Klaar om uit te brengen?** zegt wat er nog is, in drie soorten:
-   *houdt opslaan tegen* (een kind zou het nu merken), *nog te doen vóór
-   uitbrengen*, en *let op*. Dezelfde regels als `npm run check` — er is maar één
-   lijst, `wereldControle` in `src/20-app.js`. Daaronder drie vinkjes *zelf
-   nagekeken* (de eerste show, de laatste show, op een echte telefoon): wat geen
-   keuring kan zien. Ze staan in deze browser, tellen bij "nog te doen" en
-   vervallen als je de wereld daarna verandert; ze houden niets tegen.
-5. **Van concept naar spel**, van boven naar beneden:
+### Een wereld bewerken: vier stappen
 
-| stap | waar het nu staat | de knop |
-|---|---|---|
-| **1 · Concept** | alleen in deze browser | *Opslaan in het project* — keurt, schrijft `WORLDS` in `src/`, bouwt `index.html` en draait de snelle keuring |
-| **2 · Project** | je werkmap, niet vastgelegd | *Vastleggen…* — de snelle keuring, dan een commit. Op main komt er eerst een eigen tak onder |
-| **3 · Online** | je tak, nog niet op main | *⇡ Push voor een PR* — de snelle keuring, je tak naar GitHub, en het adres waar de PR opent; main verandert pas als je hem daar samenvoegt. Of *Publiceren…* — twee klikken: eerst zien wát er gaat, dan alle tests, hier samenvoegen en main pushen. Dat slaat de PR over |
+Links de échte kaart, rechts een smal paneel met alleen de stap waar je bent.
 
-**Uitbrengen** is geen stap van die lijn maar een vinkje in de editor (*6 · Gegevens & uitbrengen*).
-Een wereld die niet uitgebracht is gaat gewoon mee naar main — de tests laten
-dat toe, en een ontbrekende wereldschat blokkeert dan nog niet. Zet het vinkje
-pas als *Klaar om uit te brengen?* niets meer te doen heeft, en breng het dan
-nog één keer naar main.
+1. **Kaart** — icoon, naam en de tekening. Sleep een beeld op het vak; de studio
+   snijdt en verkleint hem, en zet de kleuren en de zaal er zelf bij.
+   *✨ Prompt voor de tekening* kopieert een prompt voor een beeldgenerator.
+2. **Haltes** — sleep de acht rondjes en de groene ruitjes op de kaart. Als je
+   loslaat rekent de studio de kleur van de weg opnieuw uit, want die hangt af
+   van waar de weg loopt.
+3. **Schat** — emoji, naam, de SVG (plakken of een `.svg` erop slepen), hoger en
+   groter. Hij staat meteen op de pop. *✨ Prompt voor de schat* is voor Claude of
+   ChatGPT, want een schat is SVG.
+4. **Publiceren** — wat er nog mis is, met een link naar de stap die het
+   oplost. Kijk nog één keer naar de kaart en de schat, en druk op
+   **🚀 Publiceer**.
 
-Het chipje **✎ concept** bovenin staat er zolang er een concept in deze browser
-staat — dat kleurt élk kijkvak, ook in de Testomgeving. Een concept van vorige
-week draait niets terug: alleen de werelden die jíj veranderde gaan over het spel
-heen, en is zo'n wereld intussen óók in het project veranderd, dan zegt de studio
-dat.
+**Kleuren en zaal** zijn automatisch. De zaal is de wazige tekening achter de
+sommen in een show; hoe lichter de tekening, hoe donkerder de laag erover. Wil je
+er toch aan draaien: stap 1, *Kleuren & zaal*.
 
-**Twee prompts om te kopiëren**, allebei in de editor en allebei gevuld met wat
-de wereld al weet:
+### Publiceren: één knop
 
-* *Tekening → ✨ Prompt voor een beeldgenerator* — voor de kaart. Thema erin
-  (standaard de naam zonder "wereld"), eventueel een paar woorden inspiratie,
-  en het resultaat sleep je op het tekenvak.
-* *Beloning → ✏️ Een eigen wereldschat tekenen* — voor de schat, en die is voor
-  **Claude of ChatGPT**, want een schat is SVG. De prompt krijgt de kleuren van de
-  wereld en de schatten van de andere werelden als voorbeeld mee. Plak wat terugkomt (of
-  sleep een `.svg` erop): de studio maakt het schoon, zet het op het hoofd op de
-  maat van de andere, toont het op beide paspoppen en in het kleedkamervakje, en
-  *✓ Maak dit de schat* zet het in de wereld zelf (`schat:` in `WORLDS`). Geen
-  regel code.
+🚀 Publiceer doet alles achter elkaar en zegt onderweg waar hij is:
 
-De teksten zelf staan in `docs/prompts/` — gewone tekstbestanden; pas je er één
-aan, dan geeft een herlaad van de studio de nieuwe. Een schat met de hand in code
-kan ook nog; zie `docs/UITBREIDEN.md`.
+1. de wereld op **uitgebracht** zetten en opslaan in `src/`;
+2. de keuring (`npm run check`);
+3. vastleggen op een eigen tak (`studio/<naam>-<datum>`) en pushen;
+4. **alle tests** draaien, samenvoegen met main en main pushen;
+5. de studio staat dan op de nieuwste main, klaar voor de volgende wereld.
+
+Is de wereld al live, dan vraagt hij eerst of je de wijziging echt wilt
+publiceren: hij staat binnen een paar minuten op de tablets.
+
+Faalt er iets, dan stopt hij daar en zegt hij wat. Er komt niets half op main.
+Ontbreekt playwright (`npm install` + `npx playwright install chromium`), dan
+stopt hij na stap 3: de wereld staat dan als **Wacht op merge** op GitHub, en je
+zegt "go" tegen Claude.
+
+### Testen
+
+Een wereld in een stand zetten (op slot, net begonnen, halverwege, uit,
+perfect), de eerste of laatste show spelen, de reis erheen. Daaronder *Zelf
+samenstellen*: speler, wereld, stand, scherm, diamanten. Alles draait op
+`?debug&demo`, en dat **grendelt de opslag**: niets hier raakt de voortgang van
+een echt kind.
+
+**Op je telefoon** (zelfde wifi) staan de korte paden in de terminal:
+`192.168.x.x:8099/t` is de kaart, `/t4` de kaart meteen in wereld 4.
+
+---
+
+## ⋯ Meer
+
+Wat je zelden nodig hebt, maar wat er nog gewoon is.
+
+| | |
+|---|---|
+| **Versie** | welke bron er draait, ophalen, bijwerken, wisselen naar een tak of PR |
+| **Open werk** | opzij zetten (`git stash`), lokaal vastleggen, terugdraaien |
+| **Losse stappen naar main** | de oude weg: opslaan, vastleggen, push voor een PR |
+| **Gereedschap** | herladen, opslag en servicewerker van het kijkvak leegmaken |
+| **App & merk** | de schermtekeningen en het logo, het merkteken, het app-icoon |
+
+In de editor zelf heeft ⋯ Meer ook nog: het kijkvak met toestelmaat en stand,
+de lijst van alle werelden, id en bestandspad, en kopieer/plak van het blok.
 
 ### App & merk
 
@@ -287,19 +280,19 @@ Twee verschillende dingen, en de studio houdt ze uit elkaar:
 
 * **een beeld vervangen** schrijft meteen naar je wérkmap, en dat werkt gewoon
   zolang `npm run studio` (of `npm run preview`) draait. Het is daarna een gewone
-  wijziging in git: je ziet hem terug onder *2 · Project*. Vervang je een beeld
+  wijziging in git: je ziet hem terug onder *⋯ Meer → Open werk*. Vervang je een beeld
   dat al vastgelegd is, dan gaat `ART_CACHE` in `sw.js` één keer omhoog, zodat
   telefoons die hem al hadden de nieuwe krijgen. Een nieuw bestand heeft dat niet
   nodig — ook niet als je het vóór het vastleggen nog eens vervangt: het staat
   op geen enkele telefoon.
 * **het concept opslaan** (het `WORLDS`-blok in `src/`) — dát is de stap die
   alléén met die server kan. Zonder server valt de wereldstudio terug op
-  Kopieer-en-plak (*Geavanceerd*).
+  kopieer-en-plak (*⋯ Meer* in de editor).
 
 ### Open werk
 
 Staat er iets open in je werkmap, dan weigert elke wissel — de studio ruimt nooit
-iets op zonder dat jij het zegt. Onder *Huidige build* staat dan wát er openstaat,
+iets op zonder dat jij het zegt. Onder *⋯ Meer* staat dan wát er openstaat,
 met drie uitwegen:
 
 | | |
@@ -314,6 +307,5 @@ is *Gewoon spel* — die draait het spel zonder vlaggen en schrijft dus wél weg
 maar naar de opslag van `localhost`, niet naar die van een geïnstalleerde app.
 *Kijkvak leegmaken* veegt die weer leeg.
 
-Een wereld toevoegen doe je in de Wereldstudio: *+ Nieuwe wereld*, tekening
-erop, kleuren accepteren, haltes zetten, schat kiezen of laten tekenen, proberen,
-*Opslaan in het project*. Zie hierboven, en `docs/UITBREIDEN.md`.
+Een wereld toevoegen: *+ Nieuwe wereld*, tekening erop, haltes zetten, schat
+maken, *🚀 Publiceer*. Zie hierboven, en `docs/UITBREIDEN.md`.

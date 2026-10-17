@@ -6,8 +6,8 @@
  * -- maar de beloftes die het doet, en precies die beloftes zijn de reden dat de
  * studio bestaat:
  *
- *   A  hij blijft klein: drie bezigheden, drie tabbladen, en de kaart hiernaast
- *      is het voorbeeld (er is geen apart voorbeeld-tabblad meer)
+ *   A  hij blijft klein: vier stappen voor één wereld (kaart, haltes, schat,
+ *      publiceren), en wat je zelden doet staat onder ⋯ Meer
  *   B  een naam is genoeg: het id, het pad van de tekening en de twee trofeeën
  *      rollen daaruit -- je hoeft niets over de binnenkant te weten
  *   C  de beloning van een wereld hoort bij die wereld, en een kapotte verwijzing
@@ -58,11 +58,14 @@ function check(ok, label, detail) {
   // ---- A: klein blijven ---------------------------------------------------
   {
     const { ctx, page } = await studio();
-    const tabs = await page.$$eval('#studio .st-tabs button', bs => bs.map(b => b.textContent.trim()));
-    check(tabs.length === 3, 'A · drie tabbladen', tabs.join(','));
-    check(tabs.join(',') === 'Werelden,Beelden,Publiceren', 'A · en het zijn deze drie', tabs.join(','));
-    check(!tabs.some(t => /voorbeeld/i.test(t)), 'A · geen apart voorbeeld-tabblad meer', tabs.join(','));
-    // wat het voorbeeld-tabblad waard was staat nu boven de tabbladen, bij de kaart
+    const stappen = await page.$$eval('#studio .st-stappen button', bs => bs.map(b => b.textContent.trim()));
+    check(stappen.join(',') === '1 Kaart,2 Haltes,3 Schat,4 Publiceren', 'A · vier stappen, in deze volgorde', stappen.join(','));
+    const zichtbaar = await page.$$eval('#studio .st-body > section', ss => ss.filter(s => !s.hidden).map(s => s.dataset.stap));
+    check(zichtbaar.join(',') === '1', 'A · je begint bij stap 1, en ziet alleen die', zichtbaar.join(','));
+    await page.click('#st-verder');
+    const tweede = await page.$$eval('#studio .st-body > section', ss => ss.filter(s => !s.hidden).map(s => s.dataset.stap));
+    check(tweede.join(',') === '2', 'A · Volgende gaat naar stap 2', tweede.join(','));
+    // bekijken staat onder Meer, bij elkaar in het kijkvak
     for (const id of ['st-toestel', 'st-stand', 'st-vscherm', 'st-venster']) {
       const waar = await page.evaluate(i => {
         const el = document.getElementById(i);
@@ -111,33 +114,20 @@ function check(ok, label, detail) {
     const bel = await page.evaluate(() => ({
       naam: document.getElementById('st-bel-naam').textContent,
       id: document.getElementById('st-bel-uit').textContent,
-      opties: document.getElementById('mf-beloning').options.length,
     }));
     check(bel.id === 'acc_wereld_muziek', 'C · de beloning van de wereld staat er', bel.id);
-    /* Alleen vrije wereldschatten: geen prijs, en niet al van een andere wereld. Een
-       winkelspulletje kiezen haalde het stil uit de winkel, en de keuring viel daar
-       pas bij het vastleggen op om. */
-    const opties = await page.$$eval('#mf-beloning option', os => os.map(o => o.value));
-    const aanbod = await page.evaluate(ids => ids.filter(Boolean).map(id => {
-      const it = item(id), van = beloningWereld(id);
-      return { id, prijs: it ? it.price : 'weg', van: van ? van.id : null };
-    }), opties);
-    check(aanbod.length >= 1 && aanbod.every(o => o.prijs == null && (!o.van || o.van === 'muziek')),
-      'C · alleen vrije wereldschatten, geen winkelspulletjes', JSON.stringify(aanbod));
-    check(opties.indexOf('') === 0, 'C · en "nog geen" staat bovenaan', JSON.stringify(opties));
+    /* Er is geen keuzelijst van "vrije" spulletjes meer: met elf werelden was er
+       nooit een vrij, en het was een tweede weg naar hetzelfde. Een wereld krijgt
+       altijd zijn eigen schat. */
+    const lijst = await page.evaluate(() => {
+      const el = document.getElementById('mf-beloning');
+      return !el || el.hidden || el.offsetParent === null;
+    });
+    check(lijst, 'C · geen keuzelijst van vrije spulletjes', String(lijst));
     // de tovenaarshoed die er al is, blijft de beloning van de Toverwereld
     const tover = await page.evaluate(() =>
       (WORLDS.filter(w => w.id === 'tover')[0] || {}).beloning);
     check(tover === 'acc_wereld_tover', 'C · de Toverwereld deelt de tovenaarshoed uit', String(tover));
-    // wisselen doet het, en het komt in WORLDS terecht
-    await page.selectOption('#mf-beloning', '');
-    await page.waitForTimeout(150);
-    const na = await page.evaluate(() => WORLDS[0].beloning);
-    check(na === undefined, 'C · de beloning weghalen werkt', String(na));
-    await page.selectOption('#mf-beloning', 'acc_wereld_muziek');
-    await page.waitForTimeout(150);
-    check(await page.evaluate(() => WORLDS[0].beloning) === 'acc_wereld_muziek',
-      'C · en terugzetten ook', 'niet terug');
     /* Een kapotte verwijzing blokkeert altijd. Géén beloning blokkeert in een
        wereld die kinderen spelen, en is "nog te doen" in een wereld die nog dicht
        is -- dezelfde regel als zaak C en K van test/inhoud.test.js. */
@@ -209,6 +199,7 @@ function check(ok, label, detail) {
   // ---- E: de standen zijn de echte standen --------------------------------
   {
     const { ctx, page } = await studio();
+    await page.click('#st-meer');   // bekijken staat onder Meer
     const standen = await page.$$eval('#st-stand option', os => os.map(o => o.value));
     ['slot', 'vers', 'halverwege', 'uit', 'perfect'].forEach(v =>
       check(standen.includes(v), 'E · de stand "' + v + '" bestaat', standen.join(',')));
@@ -337,9 +328,8 @@ function check(ok, label, detail) {
       await page.waitForSelector('#studio');
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
-        [...document.querySelectorAll('#studio .st-tabs button')]
-          .filter(b => b.dataset.tab === 'spel')[0].click();
-        return { chip: document.getElementById('st-status').textContent,
+        document.getElementById('st-meer').click();
+        return { chip: document.getElementById('st-status').title,
                  vuil: document.getElementById('st-status').className.indexOf('vuil') >= 0,
                  diff: document.getElementById('st-diff').textContent };
       });
@@ -349,7 +339,7 @@ function check(ok, label, detail) {
       if (!g.vuil) {
         check(r.diff.indexOf('gewijzigd') < 0, g.naam + ' — geen valse melding', r.diff.slice(0, 200));
       } else {
-        check(/\d+ niet doorgevoerd/.test(r.chip), g.naam + ' — het chipje telt ze', r.chip);
+        check(/\d+ ding(en)? anders/.test(r.chip), g.naam + ' — het chipje telt ze', r.chip);
       }
       await ctx.close();
     }
@@ -371,12 +361,11 @@ function check(ok, label, detail) {
     await page.dispatchEvent('#mf-name', 'change');
     await page.waitForTimeout(300);
     const uit = await page.evaluate(() => {
-      [...document.querySelectorAll('#studio .st-tabs button')]
-        .filter(b => b.dataset.tab === 'spel')[0].click();
-      return { chip: document.getElementById('st-status').textContent,
+      document.getElementById('st-meer').click();
+      return { chip: document.getElementById('st-status').title,
                diff: document.getElementById('st-diff').textContent };
     });
-    check(/2 niet doorgevoerd/.test(uit.chip),
+    check(/^2 dingen anders/.test(uit.chip),
       'H · een wereld én een beeld tellen samen op', uit.chip);
     check(uit.diff.indexOf('Andere naam') >= 0 && uit.diff.indexOf('assets/bg/landing.webp') >= 0,
       'H · allebei staan ze in "Wat verandert er"', uit.diff.slice(0, 240));
@@ -474,8 +463,7 @@ function check(ok, label, detail) {
     // het Beelden-tabblad, en dan naar de landing -- precies de weg die je loopt
     // als je de startschermtekening wilt bekijken
     await page.evaluate(() => {
-      [...document.querySelectorAll('#studio .st-tabs button')]
-        .filter(b => b.dataset.tab === 'beelden')[0].click();
+      document.getElementById('st-meer').click();
     });
     const erIs = await page.$('.st-slot[data-slot="landing"]');
     check(!!erIs, 'J · het startscherm staat in Beelden', String(!!erIs));
@@ -589,6 +577,7 @@ function check(ok, label, detail) {
     check(await kaal.evaluate(() => worldFor(P().level).world.name) !== 'Studiotestwereld',
       'N · zonder &onuitgebracht blijft hij dicht, zoals voor een kind', 'toch open');
     // weg, in twee tikken
+    if (!(await page.isVisible('#st-weg'))) await page.click('#st-meer');
     await page.click('#st-weg');
     const tussen = await page.evaluate(() => WORLDS.length);
     await page.click('#st-weg');
@@ -631,6 +620,7 @@ function check(ok, label, detail) {
       + '<path class="a" d="M60 380 L120 140 L200 300 L256 90 L312 300 L392 140 L452 380 Z" style="fill:#ffd54f"/>'
       + '<path d="M60 380 Q256 330 452 380" fill="url(#v)"/>'
       + '<circle cx="256" cy="90" r="28" fill="#e91e63"/></g></svg>\n```';
+    await page.evaluate(() => document.querySelector('#studio .st-stappen button[data-stap="3"]').click());
     await page.fill('#sc-svg', vies);
     await page.waitForTimeout(500);
     await page.fill('#sc-naam', 'Regenboogkroon');
