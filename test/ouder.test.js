@@ -664,8 +664,8 @@ function check(ok, label, detail) {
   }
 
   /* ================= L · De trofeeteller heeft één bron ================= */
-  /* De noemer op Voortgang ("3/18 trofeeën") en de kop van de kast ("je hebt er
-     3 van de 18") moeten hetzelfde getal zijn, en dat getal hoort uit
+  /* Het verdiende aantal op Voortgang ("3/18 trofeeën") en in de kop van de kast
+     ("3 verzameld") moeten hetzelfde getal zijn, en dat getal hoort uit
      activeTrophies() te komen -- niet uit een tweede lijstje. Zet iemand er een
      trofee bij (of komt er een wereld bij, wat rebuildWorldBadges doet), dan
      lopen ze zonder deze controle stil uit elkaar. */
@@ -694,8 +694,11 @@ function check(ok, label, detail) {
     check(r.teller.indexOf('2/' + r.verwacht) >= 0 && r.actief === r.verwacht,
       'de teller toont het verdiende aantal en het totaal', r.teller + ' (verwacht 2/' + r.verwacht + ')');
     check(r.teller.indexOf(r.bron) >= 0, 'en die komen rechtstreeks uit activeTrophies()', `${r.teller} vs ${r.bron}`);
-    check(r.kast.indexOf('2') >= 0 && r.kast.indexOf(String(r.actief)) >= 0,
-      'de kast noemt exact dezelfde twee getallen', r.kast);
+    /* De kast zelf noemt alleen wat er verzameld is, zonder totaal (zie
+       .kast-telling): dat totaal groeit met elke wereld, en voor een kind leest
+       dat als een kast die leegloopt. De ouder ziet het totaal hierboven wél. */
+    check(/^\s*2\s+verzameld\s*$/.test(r.kast),
+      'de kast noemt hetzelfde verdiende aantal, zonder totaal', r.kast);
     check(r.actief === r.tabel, 'er staat geen tweede trofeelijst naast de tabel',
       `actief=${r.actief} tabel=${r.tabel}`);
     await ctx.close();

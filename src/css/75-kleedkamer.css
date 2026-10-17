@@ -771,3 +771,11 @@
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
 
+  /* Het mistkaartje achteraan het schattenvak (de vorm staat bij de kast, zie
+     .horizon-mist): hier zo hoog als een gewoon kaartje, met de wolk op de maat
+     van een tekening. */
+  .item-card.horizon-mist {
+    background: transparent; border-style: dashed; border-color: rgba(255,255,255,.16); box-shadow: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .item-card.horizon-mist .horizon-wolk { font-size: 34px; }
