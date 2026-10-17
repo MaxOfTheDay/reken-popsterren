@@ -119,6 +119,7 @@
     #screen-map .wp-cta-ico { font-size: 17px; }
     #screen-map .wp-chev { width: 6px; height: 10px; }
     #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
+    #screen-map .wens-mini { font-size: .85em; margin-left: 0; }   /* de wens: zo smal mogelijk */
     #screen-map .hub-sticky { padding-left: 7px; padding-right: 8px; }
   }
   /* 10 links, 14 rechts: het portretje draagt zelf 4px onzichtbare padding voor

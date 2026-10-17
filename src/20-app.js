@@ -2213,6 +2213,11 @@ function migrate(p) {
   grantHistoricRewards(p);
   // de ster-status is met pensioen (zie "= Sterrencarrière"): zijn twee velden weg
   delete p.rankSeen; delete p.rangVersie;
+  // een wens die niet meer klopt (weg, al van jou, of geen prijs) gaat eruit
+  if (p.wens != null) {
+    const w = item(p.wens);
+    if (!w || typeof w.price !== 'number' || (p.owned || []).includes(w.id)) delete p.wens;
+  }
   if (p.perf == null) p.perf = 0.5;
   if (!p.weak) p.weak = {};
   // bestaande spelers beginnen met een lege onderhoudslijst; die vult zich vanzelf
@@ -5457,6 +5462,7 @@ function goMap(vanLvl) {
   netAf = uitShow ? vanLvl : null;
   const vorige = document.querySelector('.screen.active');
   telNu($('map-diamonds'), p.diamonds);
+  zetWensPil(p);
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
@@ -10186,6 +10192,7 @@ function dressCardState(card, it, p) {
     + (equipped ? ' equipped' : (owned ? ' owned' : ''))
     + (uitWereld ? ' teverdienen' : '')
     + (shopSelectedId === it.id ? ' selected' : '')
+    + (!owned && p.wens === it.id ? ' gewenst' : '')
     + (nieuw ? ' just-bought' : '');
   const st = card.querySelector('.item-status');
   if (!st) return;
@@ -10266,6 +10273,68 @@ function surpriseOutfit() {
   sndAan();
 }
 
+/* ================= Mijn wens ==================================================
+   Eén spulletje dat je nog niet kunt betalen, vastgezet met een hartje in de lade
+   onderaan. De 💎-pil op de kaart draagt het dan mee: het emoji van je wens naast
+   je diamanten, met een streepje eronder dat volloopt naarmate je spaart. Is er
+   genoeg, dan fonkelt de pil, en tikken brengt je meteen naar dát spulletje.
+
+   Waarom: de droomspulletjes kosten vier tot zes shows. Dat is een goed doel,
+   maar een kind van zes houdt "ik spaar voor het draakje" niet vijf shows lang
+   in haar hoofd -- en de pil zei tot nu toe alleen hoeveel je hebt, niet waarvoor.
+
+   Opslag: p.wens is een item-id, en verder niets. Er is er hoogstens één; een
+   nieuwe vervangt de oude, nog eens tikken haalt hem weg, en kopen ruimt hem op
+   (confirmShopBuy). Wat niet meer klopt -- een id dat niet bestaat, iets dat al
+   van je is, een wereldschat -- gooit migrate() weg. */
+function wensItem(p) {
+  const it = p.wens ? item(p.wens) : null;
+  return (it && typeof it.price === 'number' && !p.owned.includes(it.id)) ? it : null;
+}
+function zetWens(id) {
+  const p = P();
+  if (p.wens === id) delete p.wens; else p.wens = id;
+  save();
+  sndClick();
+  const it = item(id);
+  renderDressBar(it, p);
+  paintShop();
+  if (p.wens === id) {
+    buzz(15);
+    showToast('💖', null, 'Je wens!');
+    setTimeout(hideToast, 1300);
+  }
+}
+// Het emoji van de wens, of anders het teken van zijn lade (👕 voor kleren...).
+function wensTeken(it) {
+  if (it.emoji) return it.emoji;
+  const c = CATS.find(c2 => c2.id === it.cat);
+  return c ? c.ico : '💖';
+}
+// De 💎-pil op de kaart bijwerken: met wens, of gewoon zoals hij altijd was.
+function zetWensPil(p) {
+  const pil = $('map-diamonds') && $('map-diamonds').closest('.diamond-badge');
+  const plek = $('map-wens');
+  if (!pil || !plek) return;
+  const it = wensItem(p);
+  if (!it) {
+    plek.textContent = '';
+    pil.classList.remove('met-wens', 'wens-klaar');
+    pil.style.removeProperty('--wens');
+    pil.onclick = () => navGo('dress');
+    pil.setAttribute('aria-label', 'Naar de kleedkamer');
+    return;
+  }
+  const klaar = p.diamonds >= it.price;
+  plek.textContent = wensTeken(it);
+  pil.classList.add('met-wens');
+  pil.classList.toggle('wens-klaar', klaar);
+  pil.style.setProperty('--wens', Math.min(100, Math.round(100 * p.diamonds / it.price)) + '%');
+  pil.onclick = () => { sndClick(); openKleedkamerItem(it.id); };
+  pil.setAttribute('aria-label', klaar ? `Je wens: ${it.full || it.name} -- je kunt hem kopen!`
+    : `Je wens: ${it.full || it.name}, nog ${it.price - p.diamonds} diamanten`);
+}
+
 /* De lade onderaan: naam links, dé knop rechts. Bij te weinig diamanten geen dood
    spoor maar een concreet doel: "Nog X 💎" + meteen spelen.
    Hij komt alleen op voor iets dat nóg niet van je is -- een aankoop is de enige
@@ -10303,10 +10372,16 @@ function renderDressBar(it, p) {
   if (owned) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   const tekort = it.price - p.diamonds;
   if (tekort > 0) {
+    /* Te duur? Dan kan het je wens worden (zie "= Mijn wens"): het hartje zet hem
+       vast, en de 💎-pil op de kaart draagt hem tot hij te koop is. */
+    const gewenst = p.wens === it.id;
     bar.innerHTML = `
       <div class="db-info"><span class="db-name">${naam(it)}</span>
         <span class="db-sub">· Nog <span class="db-highlight">${tekort}</span> 💎</span></div>
+      <button class="wens-knop${gewenst ? ' aan' : ''}" id="db-wens" type="button"
+        aria-pressed="${gewenst}" aria-label="${gewenst ? 'Geen wens meer' : 'Maak er je wens van'}">${gewenst ? '💖' : '🤍'}</button>
       <button class="btn small" id="db-earn">Speel</button>`;
+    $('db-wens').onclick = () => zetWens(it.id);
     /* De show waar de kaart je nu heen stuurt. Is alles uit, dan staat p.level op
        WORLD_LAST + 1 -- een level dat niet bestaat. Een show dáár speelde gewoon,
        onder de naam van de laatste halte, en schreef p.stars[49] weg: precies de
@@ -10486,6 +10561,7 @@ function confirmShopBuy(id) {
   }
   p.diamonds -= it.price;
   p.owned.push(it.id);
+  if (p.wens === it.id) delete p.wens;   // de wens is uitgekomen
   p.equipped[it.cat] = it.id;
   /* De lade ging over "wil je dit kopen?" en dat is beantwoord: hij verdwijnt, en
      wat ervoor in de plaats komt is het gouden "Nieuw!" op het kaartje plus de pop
