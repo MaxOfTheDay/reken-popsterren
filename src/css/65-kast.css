@@ -24,18 +24,14 @@
      goud op het getal, zelfde woord erachter ("verzameld"). Die twee schermen
      zijn de twee verzamelschermen van de app en tellen nu op dezelfde manier.
 
-     EN HIJ VULT ZICHZELF. Dat is de ene plek waar fase 5C's "geen balken"
-     bewust één stap terug krijgt, en het blijft binnen de reden die daar stond:
-     wat toen wegging waren de balk over de hele kast, de balk per plank én de
-     balk op élk kaartje -- vier lagen voortgang die samen van een prijzenkast
-     een takenlijst maakten. Wat hier terugkomt is geen vijfde element maar
-     dezelfde pil, van binnen meegekleurd: de vulling ligt ónder de tekst, hij
-     staat op precies één plek in het scherm, en de kaartjes eronder blijven
-     ongemoeid. De kast telt weer, hij overhoort niet.
-
-     Geen aparte lege stand meer ("Hier komen je 18 trofeeën te staan"): op nul
-     leest "0 / 18 verzameld" met een lege pil hetzelfde, en één vorm die altijd
-     klopt is beter dan twee zinnen die om beurten gelden. */
+     GEEN TOTAAL EN GEEN VULLING MEER. Er stond "4 / 23 verzameld" met een pil
+     die van binnen meekleurde. Maar dat totaal groeit met elke wereld die er
+     bijkomt -- elf daarvan waren perfecte werelden die een kind in wereld twee
+     nog lang niet ziet -- en dan zakt een volle kast vanzelf leeg zonder dat ze
+     iets kwijt is. Het schattenvak liep daar eerder tegenaan en telt daarom
+     alleen wat je hebt; de kast doet nu hetzelfde ("4 verzameld"). Wat er nog
+     te halen valt, zie je aan de kaartjes eronder, tot aan de horizon (zie
+     binnenHorizon in de app). */
   .kast-telling {
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
@@ -64,23 +60,6 @@
        --tx-klein plus 2x4 padding; de tekst past er ruim in. */
     transition: height var(--t-snel, .22s) ease, opacity var(--t-tik, .1s) ease,
                 margin-top var(--t-snel, .22s) ease, padding var(--t-snel, .22s) ease;
-  }
-  /* De vulling. Ligt ónder de tekst (die staat op position:relative) en erft de
-     ronding van de pil, zodat een bijna volle kast geen rechte rand laat zien.
-     Eén pixel van de rand af, want die rand is een schaduw naar binnen en de
-     vulling zou er anders overheen liggen; max-width houdt haar op 100% binnen
-     de rand, zoals toen de rand nog een border was. */
-  .kast-telling .kt-vul {
-    position: absolute; left: 1px; top: 1px; bottom: 1px; max-width: calc(100% - 2px);
-    border-radius: inherit;
-    /* De laatste stop is doorzichtig, dus de vulling loopt uit in plaats van met
-       een rechte snede te eindigen. Zonder dat stond er op een kwart vol een
-       harde lichte rand dwars naast het getal -- en dan leest het als een vlak
-       achter dat ene cijfer en niet als een pil die voor een kwart gevuld is. */
-    background: linear-gradient(90deg, rgba(var(--goud-rgb),.17) 0%,
-                                       rgba(var(--goud-rgb),.19) 62%,
-                                       rgba(var(--goud-rgb),0) 100%);
-    transition: width var(--t-snel, .22s) ease;
   }
   .kast-telling .kt-tekst { position: relative; white-space: nowrap; }
   /* Precies de afspraak van .schat-entry: het woord eromheen is stil, het getal
@@ -171,14 +150,12 @@
   #screen-trophies.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
   /* Uit bij wie geen beweging wil, en even uit terwijl kopKrimpMeten meet. Het
      `.screen` in de kiezer is er om te winnen van `#screen-trophies .hub-sticky
-     .screen-header` hierboven. Bij het meten blijft de vulling van de pil erbuiten:
-     die krijgt geen andere hoogte, en ze mag gewoon doorlopen als ze net aan het
-     vollopen is. */
+     .screen-header` hierboven. */
   @media (prefers-reduced-motion: reduce) {
     #screen-trophies.screen .hub-sticky, #screen-trophies.screen .hub-sticky * { transition: none; }
   }
   #screen-trophies.kop-meten .hub-sticky,
-  #screen-trophies.kop-meten .hub-sticky *:not(.kt-vul) { transition: none; }
+  #screen-trophies.kop-meten .hub-sticky * { transition: none; }
   /* Lage schermen: de koprij van de kleedkamer, op de pixel. Die zet hier zijn
      bovenrand op 8 en zijn naam een sport lager (zie de lage-schermregel in
      75-kleedkamer.css), en de kast deed dat niet -- op een liggende telefoon
@@ -560,3 +537,23 @@
   @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
   @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
   .gold-pill:active { transform: scale(.96); }
+  /* ---- De horizon: één mistkaartje achteraan -------------------------------
+     Voorbij de laatste wereld die vooruit te zien is staat geen rij gedempte
+     medaillons meer maar één wolk, op de plek van het volgende kaartje. Geen
+     getal en geen naam -- hetzelfde wat de reis bovenaan zegt met zijn mist.
+     Gestippeld en zonder vlak, zodat hij leest als "hier komt nog iets" en niet
+     als een kaartje dat je nog niet hebt. Geldt voor de kast en de kleedkamer:
+     daarom staat de vorm hier, vóór 75-kleedkamer.css, en zet de kleedkamer er
+     alleen zijn eigen maat bij. */
+  .horizon-mist {
+    background: transparent; border: 2px dashed rgba(255,255,255,.16); box-shadow: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: default;
+  }
+  .horizon-mist:hover { background: transparent; }
+  .horizon-mist:active { transform: none; }
+  .horizon-wolk { font-size: 30px; line-height: 1; opacity: .7; }
+  .horizon-tekst {
+    margin-top: 8px; font-size: var(--tx-klein); font-weight: 700;
+    color: rgba(255,255,255,.62); overflow-wrap: break-word;
+  }

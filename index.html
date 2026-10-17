@@ -5867,18 +5867,14 @@
      goud op het getal, zelfde woord erachter ("verzameld"). Die twee schermen
      zijn de twee verzamelschermen van de app en tellen nu op dezelfde manier.
 
-     EN HIJ VULT ZICHZELF. Dat is de ene plek waar fase 5C's "geen balken"
-     bewust één stap terug krijgt, en het blijft binnen de reden die daar stond:
-     wat toen wegging waren de balk over de hele kast, de balk per plank én de
-     balk op élk kaartje -- vier lagen voortgang die samen van een prijzenkast
-     een takenlijst maakten. Wat hier terugkomt is geen vijfde element maar
-     dezelfde pil, van binnen meegekleurd: de vulling ligt ónder de tekst, hij
-     staat op precies één plek in het scherm, en de kaartjes eronder blijven
-     ongemoeid. De kast telt weer, hij overhoort niet.
-
-     Geen aparte lege stand meer ("Hier komen je 18 trofeeën te staan"): op nul
-     leest "0 / 18 verzameld" met een lege pil hetzelfde, en één vorm die altijd
-     klopt is beter dan twee zinnen die om beurten gelden. */
+     GEEN TOTAAL EN GEEN VULLING MEER. Er stond "4 / 23 verzameld" met een pil
+     die van binnen meekleurde. Maar dat totaal groeit met elke wereld die er
+     bijkomt -- elf daarvan waren perfecte werelden die een kind in wereld twee
+     nog lang niet ziet -- en dan zakt een volle kast vanzelf leeg zonder dat ze
+     iets kwijt is. Het schattenvak liep daar eerder tegenaan en telt daarom
+     alleen wat je hebt; de kast doet nu hetzelfde ("4 verzameld"). Wat er nog
+     te halen valt, zie je aan de kaartjes eronder, tot aan de horizon (zie
+     binnenHorizon in de app). */
   .kast-telling {
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
@@ -5907,23 +5903,6 @@
        --tx-klein plus 2x4 padding; de tekst past er ruim in. */
     transition: height var(--t-snel, .22s) ease, opacity var(--t-tik, .1s) ease,
                 margin-top var(--t-snel, .22s) ease, padding var(--t-snel, .22s) ease;
-  }
-  /* De vulling. Ligt ónder de tekst (die staat op position:relative) en erft de
-     ronding van de pil, zodat een bijna volle kast geen rechte rand laat zien.
-     Eén pixel van de rand af, want die rand is een schaduw naar binnen en de
-     vulling zou er anders overheen liggen; max-width houdt haar op 100% binnen
-     de rand, zoals toen de rand nog een border was. */
-  .kast-telling .kt-vul {
-    position: absolute; left: 1px; top: 1px; bottom: 1px; max-width: calc(100% - 2px);
-    border-radius: inherit;
-    /* De laatste stop is doorzichtig, dus de vulling loopt uit in plaats van met
-       een rechte snede te eindigen. Zonder dat stond er op een kwart vol een
-       harde lichte rand dwars naast het getal -- en dan leest het als een vlak
-       achter dat ene cijfer en niet als een pil die voor een kwart gevuld is. */
-    background: linear-gradient(90deg, rgba(var(--goud-rgb),.17) 0%,
-                                       rgba(var(--goud-rgb),.19) 62%,
-                                       rgba(var(--goud-rgb),0) 100%);
-    transition: width var(--t-snel, .22s) ease;
   }
   .kast-telling .kt-tekst { position: relative; white-space: nowrap; }
   /* Precies de afspraak van .schat-entry: het woord eromheen is stil, het getal
@@ -6014,14 +5993,12 @@
   #screen-trophies.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
   /* Uit bij wie geen beweging wil, en even uit terwijl kopKrimpMeten meet. Het
      `.screen` in de kiezer is er om te winnen van `#screen-trophies .hub-sticky
-     .screen-header` hierboven. Bij het meten blijft de vulling van de pil erbuiten:
-     die krijgt geen andere hoogte, en ze mag gewoon doorlopen als ze net aan het
-     vollopen is. */
+     .screen-header` hierboven. */
   @media (prefers-reduced-motion: reduce) {
     #screen-trophies.screen .hub-sticky, #screen-trophies.screen .hub-sticky * { transition: none; }
   }
   #screen-trophies.kop-meten .hub-sticky,
-  #screen-trophies.kop-meten .hub-sticky *:not(.kt-vul) { transition: none; }
+  #screen-trophies.kop-meten .hub-sticky * { transition: none; }
   /* Lage schermen: de koprij van de kleedkamer, op de pixel. Die zet hier zijn
      bovenrand op 8 en zijn naam een sport lager (zie de lage-schermregel in
      75-kleedkamer.css), en de kast deed dat niet -- op een liggende telefoon
@@ -6403,6 +6380,26 @@
   @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
   @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
   .gold-pill:active { transform: scale(.96); }
+  /* ---- De horizon: één mistkaartje achteraan -------------------------------
+     Voorbij de laatste wereld die vooruit te zien is staat geen rij gedempte
+     medaillons meer maar één wolk, op de plek van het volgende kaartje. Geen
+     getal en geen naam -- hetzelfde wat de reis bovenaan zegt met zijn mist.
+     Gestippeld en zonder vlak, zodat hij leest als "hier komt nog iets" en niet
+     als een kaartje dat je nog niet hebt. Geldt voor de kast en de kleedkamer:
+     daarom staat de vorm hier, vóór 75-kleedkamer.css, en zet de kleedkamer er
+     alleen zijn eigen maat bij. */
+  .horizon-mist {
+    background: transparent; border: 2px dashed rgba(255,255,255,.16); box-shadow: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: default;
+  }
+  .horizon-mist:hover { background: transparent; }
+  .horizon-mist:active { transform: none; }
+  .horizon-wolk { font-size: 30px; line-height: 1; opacity: .7; }
+  .horizon-tekst {
+    margin-top: 8px; font-size: var(--tx-klein); font-weight: 700;
+    color: rgba(255,255,255,.62); overflow-wrap: break-word;
+  }
   /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
@@ -7470,6 +7467,14 @@
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
 
+  /* Het mistkaartje achteraan het schattenvak (de vorm staat bij de kast, zie
+     .horizon-mist): hier zo hoog als een gewoon kaartje, met de wolk op de maat
+     van een tekening. */
+  .item-card.horizon-mist {
+    background: transparent; border-style: dashed; border-color: rgba(255,255,255,.16); box-shadow: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .item-card.horizon-mist .horizon-wolk { font-size: 34px; }
   /* ---- Instellingen (ouder-dashboard) ---- */
   .settings-sheet { width: 100%; max-width: var(--kolom); display: flex; flex-direction: column; gap: 14px; }
 
@@ -11338,6 +11343,24 @@ function wereldSchatten() {
     .map((w, i) => ({ wereld: w, index: i, item: beloningItem(w) }))
     .filter(s => s.item && worldAvailable(s.index));
 }
+/* ---- De horizon: wat de kleedkamer en de kast vooruit laten zien -----------
+   Dezelfde grens als de reis (laatsteZichtbareWereld): alles wat je hebt, plus
+   een paar werelden vooruit, en daarboven één mistkaartje dat niet telt hoeveel
+   er nog liggen. Bij elf werelden zag een kind in wereld twee tien vraagtekens in
+   het schattenvak en tien gedempte medaillons in de kast -- geen belofte meer
+   maar een muur van wat ze níet heeft. De reis had die les al geleerd; nu de
+   twee verzamelschermen ook, en met hetzelfde getal, zodat de drie schermen
+   dezelfde werelden laten zien.
+   Wat al van jou is staat er altijd, waar het ook ligt -- de horizon verbergt
+   alleen wat je nog niet hebt. */
+function binnenHorizon(p, i) { return i <= laatsteZichtbareWereld(p); }
+function zichtbareSchatten(p) {
+  return wereldSchatten().filter(s => binnenHorizon(p, s.index) || (p.owned || []).includes(s.item.id));
+}
+// Het mistkaartje achteraan een rij: geen getal, geen naam, alleen "er is meer".
+function horizonMistHTML(tekst) {
+  return `<span class="horizon-wolk" aria-hidden="true">☁️</span><div class="horizon-tekst">${tekst}</div>`;
+}
 // Het getal achter de ✨: hoeveel er verdiend zijn van hoeveel er te verdienen
 // zijn. Afgeleid, elke keer opnieuw -- er wordt niets van geteld bewaard.
 function schatStand(p) {
@@ -11442,7 +11465,7 @@ function rebuildWorldBadges() {
     perfectIds.push(pid);
     TROPHIES.push({
       id: pid, emoji: w.icon || '🌍', name: w.name, desc: 'Overal drie sterren',
-      wereld: w, perfect: true,
+      wereld: w, index: i, perfect: true,   // index: voor de horizon (zie renderShelves)
       has: q => worldProgress(q, worldForIndex(i)).vol,
       ster: () => true,   // behaald = altijd de gouden rand: dát is wat perfect hier is
       progress: q => {
@@ -17025,25 +17048,33 @@ function renderShelves() {
   $('screen-trophies').onscroll = kastScroll;
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
-  const totaal = activeTrophies().length;
   const earned = earnedActiveCount(p);
   telNu($('trophy-diamonds'), p.diamonds);
-  /* De stand als pil, met de vulling erin -- zie .kast-telling in het stijlblad
-     voor waarom dit geen zin meer is en waarom de vulling hier wél mag. De
-     tekst blijft "4 / 18 verzameld": precies de woorden waarmee het schattenvak
-     in de kleedkamer telt, dus de twee verzamelschermen tellen hetzelfde. */
-  const pct = totaal ? Math.round(earned / totaal * 100) : 0;
+  /* De stand als pil: "4 verzameld", precies de woorden waarmee het schattenvak in
+     de kleedkamer telt. Zonder totaal -- zie .kast-telling in het stijlblad: dat
+     totaal groeide met elke wereld die erbij kwam, en dan loopt een volle kast
+     leeg zonder dat een kind iets kwijt is. */
   $('trophy-count').innerHTML =
-    `<span class="kt-vul" style="width:${pct}%"></span>`
-    + `<span class="kt-tekst"><b>${earned}</b> / ${totaal} <span class="kt-woord">verzameld</span></span>`;
+    `<span class="kt-tekst"><b>${earned}</b> <span class="kt-woord">verzameld</span></span>`;
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
-    const ids = shelf.ids.filter(id => !isRetiredTrophy(id));
-    if (!ids.length) return;   // een plank die helemaal met pensioen is, staat er niet
-    const klaar = ids.filter(id => p.trophies.includes(id)).length;
+    const alle = shelf.ids.filter(id => !isRetiredTrophy(id));
+    if (!alle.length) return;   // een plank die helemaal met pensioen is, staat er niet
+    /* De perfecte plank houdt op bij de horizon (zie binnenHorizon): wat je hebt
+       of kunt openen staat er altijd, de rest alleen tot een paar werelden
+       vooruit. Daarboven één mistkaartje. De andere planken zijn vaste rijen
+       zonder wereld eraan en staan er helemaal. */
+    const perfectPlank = shelf.key === 'perfect';
+    const ids = perfectPlank ? alle.filter(id => {
+      const t = TROPHIES.find(x => x.id === id);
+      return !t || binnenHorizon(p, t.index) || p.trophies.includes(id)
+        || (p.readyTrophies || []).includes(id);
+    }) : alle;
+    const mist = perfectPlank && ids.length < alle.length;
+    const klaar = alle.filter(id => p.trophies.includes(id)).length;
     const groep = document.createElement('section');
-    groep.className = 'kast-groep' + (klaar === ids.length ? ' vol' : '');
+    groep.className = 'kast-groep' + (klaar === alle.length ? ' vol' : '');
     /* De kopregel van de groep: icoon | naam + regeltje | stand. Het icoon staat
        aria-hidden -- het herhaalt de naam ernaast, en een voorlezer die "microfoon
        Avontuur" zegt maakt de kop juist onduidelijker. */
@@ -17053,8 +17084,13 @@ function renderShelves() {
       + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div>`
       + (shelf.note ? `<div class="groep-note">${shelf.note}</div>` : '')
       + `</div>`
-      + `<span class="groep-telling" aria-label="${klaar} van de ${ids.length} behaald">`
-      + `<b>${klaar}</b>/${ids.length}</span>`;
+      /* Ligt er voorbij de horizon nog meer, dan geen "van de": het totaal zou
+         verklappen hoeveel werelden er nog komen, en precies dat laat de mist
+         open. Dan alleen wat je hebt, zoals de pil bovenaan. */
+      + (mist
+        ? `<span class="groep-telling" aria-label="${klaar} behaald"><b>${klaar}</b></span>`
+        : `<span class="groep-telling" aria-label="${klaar} van de ${alle.length} behaald">`
+          + `<b>${klaar}</b>/${alle.length}</span>`);
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
@@ -17062,6 +17098,12 @@ function renderShelves() {
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
     });
+    if (mist) {
+      const wolk = document.createElement('div');
+      wolk.className = 'trophy-card pw-card horizon-mist';
+      wolk.innerHTML = horizonMistHTML('Nog meer werelden');
+      grid.appendChild(wolk);
+    }
     groep.appendChild(grid);
     wrap.appendChild(groep);
   });
@@ -19821,6 +19863,16 @@ function renderShop() {
     };
     kaarten.appendChild(card);
   });
+  /* Achteraan het schattenvak: de horizon. Liggen er voorbij de laatste wereld
+     die je vooruit ziet nog schatten, dan één wolk in plaats van een rij
+     vraagtekens -- zie zichtbareSchatten. Geen klik en geen stand: zonder
+     data-item vindt paintShop er geen spulletje bij en laat hem staan. */
+  if (schatVak && zichtbareSchatten(p).length < wereldSchatten().length) {
+    const wolk = document.createElement('div');
+    wolk.className = 'item-card schat-kaart horizon-mist';
+    wolk.innerHTML = horizonMistHTML('Nog meer schatten');
+    kaarten.appendChild(wolk);
+  }
   grid.textContent = '';
   grid.appendChild(kaarten);
   paintShop();
@@ -19853,7 +19905,7 @@ function renderShop() {
    tijdens zijn "Nieuw!"-moment staan waar het kind het aantikte, en verhuist het
    pas naar de bezit-groep als dat moment voorbij is (zie confirmShopBuy). */
 function shopItems(p) {
-  if (shopCat === SCHAT_CAT) return wereldSchatten().map(s => s.item);
+  if (shopCat === SCHAT_CAT) return zichtbareSchatten(p).map(s => s.item);
   const rang = it => (typeof it.price === 'number' ? it.price : 1e9);
   const groep = it => (p.owned.includes(it.id) && it.id !== shopJustBoughtId) ? 0 : 1;
   return ITEMS.filter(i => i.cat === shopCat && (!isBeloning(i.id) || p.owned.includes(i.id))).slice()
