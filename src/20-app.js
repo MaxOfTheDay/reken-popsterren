@@ -932,6 +932,35 @@ const WORLDS = [
       { x: 70.1, y: 27.0 },
     ],
   },
+  {
+    id: 'vuur', name: 'Vuurwereld', icon: '🌋', levels: 8,
+    beloning: 'acc_wereld_vuur',
+    art: 'assets/world/vuur-map.webp',
+    schat: {
+      naam: 'Vuurkroon', emoji: '🔥', view: '69.4 6 61.2 46',
+      svg: '<g transform="translate(9.52 0.04) scale(0.8842)"><g stroke-linejoin="round" stroke-linecap="round"><path d="M74 49 Q65 40 77 28 Q75 39 85 39 Q78 28 92 18 Q89 29 98 32 Q94 19 108 9 Q104 26 115 32 Q120 25 119 18 Q132 31 122 41 Q131 40 130 31 Q141 46 126 51 Q101 57 76 51 Z" fill="#f4511e" stroke="#5b261b" stroke-width="2.5"/><path d="M85 49 Q79 40 93 30 Q90 39 99 39 Q96 29 108 20 Q104 34 115 39 Q121 47 112 51 Q99 55 85 49 Z" fill="#ffb629" stroke="#9d3516" stroke-width="2"/><path d="M95 49 Q92 44 101 37 Q100 43 105 44 Q109 41 110 47 Q108 52 100 52 Q96 52 95 49 Z" fill="#fff0a3"/><path d="M73 47 Q100 53 127 47 L130 53 Q100 60 70 53 Z" fill="#44343a" stroke="#351911" stroke-width="2.5"/><path d="M78 50 Q89 54 97 51 L104 55 L112 51 Q119 53 123 50" fill="none" stroke="#ff8c32" stroke-width="2.7"/><path d="M97 48 L103 48 L106 52 L100 55 L94 52 Z" fill="#ffd54f" stroke="#5b261b" stroke-width="1.5"/><circle cx="79" cy="51" r="2" fill="#ffb629"/><circle cx="121" cy="51" r="2" fill="#ffb629"/></g></g>',
+    },
+    theme: { road: '#252018', sky: '#8a4c66', deep: '#351911', glow: '#8c6521' },
+    nodes: [
+      { x: 28.1, y: 79.3 },
+      { x: 56.6, y: 74.4 },
+      { x: 72.4, y: 67.5 },
+      { x: 31.2, y: 58.8 },
+      { x: 52.5, y: 52.9 },
+      { x: 78.5, y: 44.2 },
+      { x: 52.3, y: 36.6 },
+      { x: 73.7, y: 23.3 },
+    ],
+    curve: [
+      { x: 43.6, y: 77.1 },
+      { x: 77.7, y: 80.5 },
+      { x: 50.0, y: 62.7 },
+      { x: 42.1, y: 53.9 },
+      { x: 64.8, y: 50.8 },
+      { x: 63.7, y: 40.2 },
+      { x: 73.7, y: 31.5 },
+    ],
+  },
 ];
 /* WERELDEN-EINDE */
 
