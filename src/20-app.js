@@ -5838,7 +5838,7 @@ function reisPlaatsen(p) {
     const staat = i === doel ? 'nu' : !open ? 'verder' : 'open';
     return { i, world: w, staat, open,
              uit: v.uit, vol: v.vol,
-             sterren: v.sterren, max: v.max,
+             sterren: v.sterren, max: v.max, perfect: v.perfect, levels: v.levels,
              x: reisX(i) };
   });
   // pas als alle standen bekend zijn valt de baan uit te meten: de afstanden hangen
@@ -5855,16 +5855,25 @@ function reisLabel(b, doel) {
   return b.world.name + (b.vol ? ' — helemaal vol' : b.uit ? ' — uitgespeeld' : '')
     + sterren + ', ga er heen';
 }
-/* Dezelfde getekende ster als op de wereldkaart (zie STER_PAD): een emoji heeft
-   geen vaste vorm tussen toestellen, en naast elkaar valt dat op.
+/* Eén stip per show van een wereld, in showvolgorde -- dezelfde volgorde als de
+   haltes op zijn wereldkaart. Drie standen, en alleen de eerste is goud:
 
-   Een functie en geen const, omdat STER_PAD verderop in het bestand staat: een
-   const leest hem dan bij het inladen en dat is te vroeg. Eén keer bouwen, daarna
-   uit de la -- hij komt per wereld twee keer langs. */
-let _reisSter = '';
-function reisSterSVG() {
-  if (!_reisSter) _reisSter = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STER_PAD}"/></svg>`;
-  return _reisSter;
+     vol    drie sterren: deze show is perfect
+     half   gespeeld, maar nog geen drie sterren: een gouden ríng, leeg van binnen
+     nog    nog niet gespeeld: dof
+
+   Hier stond een ster met een streepje dat volliep, en dat zei het verkeerde op
+   precies de plek waar het ertoe doet: 22 van de 24 sterren is een streepje dat
+   er vol uitziet, en dan ziet een kind niet dat er nog twee shows te halen zijn.
+   Een lege ring tussen gouden stippen ziet ze wél, en die kan ze tellen -- zonder
+   te lezen, en zonder dat er "PERFECT" op het scherm hoeft te staan. */
+function reisStippen(p, w) {
+  let html = '';
+  for (let l = w.first; l < w.first + w.levels; l++) {
+    const st = p.stars[l] || 0;
+    html += `<i class="${st >= 3 ? 'vol' : st ? 'half' : 'nog'}"></i>`;
+  }
+  return html;
 }
 /* Het vonkje: een vierpuntige ster, getekend uit vier bolle bogen. */
 const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
@@ -5876,8 +5885,8 @@ const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
    zegt op dit scherm "hier ben je". De ster zegt waar het om gaat, en ze zegt het
    met precies het teken dat een kind de hele show door verzamelt.
 
-   Een functie en geen const, om dezelfde reden als reisSterSVG(): STER_PAD staat
-   verderop in het bestand, en een const leest hem dan bij het inladen -- te vroeg.
+   Een functie en geen const, omdat STER_PAD verderop in het bestand staat: een
+   const leest hem dan bij het inladen -- te vroeg.
    Eén keer bouwen, daarna uit de la. */
 let _reisGlans = '';
 function reisGlansSVG() {
@@ -6015,17 +6024,18 @@ function renderReis() {
        ik die wereld gedaan? Een wereld op slot krijgt geen teller: daar valt nog
        niets te tellen.
 
-       Een ster en een streepje dat volloopt, en geen "13/24": een kind van vijf
-       leest geen breuk (zie ook de ster-status-ladder). Het streepje is dezelfde
-       baan als op de sterrenkeuze; de getallen staan er voor een schermlezer en
-       voor de tests in data-sterren/data-max. */
+       Eén stip per show (zie reisStippen) en geen "13/24": een kind van vijf leest
+       geen breuk (zie ook de ster-status-ladder). De stippen staan op een eigen
+       regel onder de naam, want acht stippen naast "Onderwaterwereld" passen niet.
+       De getallen staan er voor een schermlezer en voor de tests in
+       data-sterren/data-max/data-perfect. */
     if (b.open) {
-      const deel = b.max ? Math.round(100 * b.sterren / b.max) : 0;
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
         + `<span class="rn-tekst">${esc(b.world.name)}</span>`
         + `<span class="reis-sterren" data-sterren="${b.sterren}" data-max="${b.max}"`
-        + ` role="img" aria-label="${b.sterren} van ${b.max} sterren">`
-        + `${reisSterSVG()}<span class="rs-baan"><i style="width:${deel}%"></i></span></span>`
+        + ` data-perfect="${b.perfect}" role="img"`
+        + ` aria-label="${b.sterren} van ${b.max} sterren, ${b.perfect} van ${b.levels} shows perfect">`
+        + `${reisStippen(p, worldForIndex(b.i))}</span>`
         + `</span>`);
     } else {
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
@@ -6087,12 +6097,10 @@ function renderReis() {
   mist.className = 'reis-mist';
   const vervolg = meerWereldenVooruit(p) ? '✨ Nog meer avonturen'
     : allWorldsDone(p) ? '✨ Wordt vervolgd' : '';
-  mist.innerHTML = `<div class="map-sky" aria-hidden="true"><div class="map-sky-inner">`
-    + `<span style="top:26%;font-size:30px;animation-duration:96s;animation-delay:-18s">☁️</span>`
-    + `<span style="top:54%;font-size:22px;animation-duration:112s;animation-delay:-74s">☁️</span>`
-    + `<span class="rev" style="top:74%;font-size:18px;animation-duration:86s;animation-delay:-30s">✨</span>`
-    + `</div></div>`
-    + (vervolg ? `<div class="reis-vervolg">${vervolg}</div>` : '');
+  /* Hier dreven twee ☁️ en een ✨ door de mist. Weg: een emoji is een plaatje
+     van een ánder toestel, en naast de geschilderde werelden las het als een
+     sticker. De wolken zitten nu in de mist zelf (zie .reis-mist). */
+  mist.innerHTML = vervolg ? `<div class="reis-vervolg">${vervolg}</div>` : '';
   track.appendChild(mist);
 }
 /* De wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk), en
