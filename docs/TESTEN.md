@@ -314,10 +314,11 @@ Een Node-suite (geen browser) over het gereedschap achter `npm run studio`; zie
 - **de snelkoppeling start déze kloon** — de bestanden die `npm run snelkoppeling`
   op je bureaublad zet, worden voor alle drie de platformen nagekeken: wijzen ze
   naar deze map en deze node, starten ze de server met `--open`, en breekt een
-  spatie in het pad niets. Er zijn er twee — eentje die start wat er staat en
-  eentje die eerst het nieuwste ophaalt (`--naar`) — en de suite kijkt na dat
-  `preview.js` die vlag ook werkelijk kent en hem langs `versie.wissel` laat
-  lopen, die op open werk weigert;
+  spatie in het pad niets. Het is er één, die eerst het nieuwste ophaalt en
+  vraagt waarheen (`--naar=vraag`); de suite kijkt na dat `preview.js` die vlag
+  ook werkelijk kent en hem langs `versie.wissel` laat lopen, die op open werk
+  weigert, en dat het oude tweede icoontje wordt opgeruimd — maar alleen als het
+  van ons is;
 - **de versieregel zegt eerlijk wat er draait**, en **een wissel weigert als er
   werk openstaat** (dat laatste alleen als je werkmap op dat moment vuil is —
   de suite checkt nooit zelf iets uit);

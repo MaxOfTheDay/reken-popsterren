@@ -17,17 +17,19 @@
  *   Windows  Rekensterren Studio.cmd
  *   Linux    Rekensterren Studio.desktop
  *
- * En er komen er twéé van:
+ * Eén icoontje, en dat haalt eerst op en vraagt dan waarheen (--naar=vraag):
+ * Enter voor de laatste main, h om te blijven waar je staat, of een PR-nummer.
  *
- *   Rekensterren Studio             start wat er uitgecheckt staat. Dat is de
- *                                   veilige: hij raakt je werkmap niet aan.
- *   Rekensterren Studio (nieuwste)  haalt eerst op en wisselt dan -- Enter voor
- *                                   de laatste main, of een PR-nummer. Dit is de
- *                                   knop voor "laat me gewoon het nieuwste zien",
- *                                   want dát vergeet je anders elke keer.
+ * Er waren er twee: deze, en een die alleen startte wat er uitgecheckt stond.
+ * Twee icoontjes die bijna hetzelfde doen is een keuze die je bij elke dubbelklik
+ * moet maken, en de verkeerde kiezen gaf precies de storing waarvoor de tweede
+ * bestond: de studio van vorige week, en zoeken waarom je wijziging er niet in
+ * zit. "h" doet wat de gewone deed (hij haalt wel op, maar wisselt niets), dus
+ * die is niet meer nodig. Wie hem nog op zijn bureaublad heeft staan, raakt hem
+ * kwijt bij de volgende `npm run snelkoppeling` (zie ruimOudeOp).
  *
- * De tweede gooit nog steeds niets weg: staat er werk open, dan weigert de wissel
- * met een uitleg en start de studio op wat er stond (zie naarBron in preview.js).
+ * Hij gooit niets weg: staat er werk open, dan weigert de wissel met een uitleg
+ * en start de studio op wat er stond (zie naarBron in preview.js).
  *
  * De node die dit draait wordt erin gezet, zodat het ook werkt als node niet
  * in je PATH staat (bij een dubbelklik is dat vaak een andere PATH dan in je
@@ -54,20 +56,22 @@ function maak(platform, opties) {
   const root = o.root || ROOT;
   const node = o.node || process.execPath;
   const server = path.join(root, 'test', 'preview.js');
-  /* De tweede snelkoppeling. `--naar=vraag` laat preview.js het vragen in plaats
-     van de shell: één implementatie voor drie bureaubladen, en geen drie lagen
-     aanhalingstekens in een .desktop-bestand (zie de kop). */
-  const nieuwste = !!o.naar;
-  const vlaggen = '--open' + (nieuwste ? ' --naar=' + (o.naar === true ? 'vraag' : o.naar) : '');
-  const achter = nieuwste ? ' (nieuwste)' : '';
+  /* `--naar=vraag` laat preview.js het vragen in plaats van de shell: één
+     implementatie voor drie bureaubladen, en geen drie lagen aanhalingstekens in
+     een .desktop-bestand (zie de kop). `naar: false` geeft een snelkoppeling die
+     alleen start wat er staat -- voor wie er zelf een wil, niet voor het
+     bureaublad. */
+  const naar = o.naar === undefined || o.naar === true ? 'vraag' : o.naar;
+  const nieuwste = !!naar;
+  const vlaggen = '--open' + (nieuwste ? ' --naar=' + naar : '');
 
   if (platform === 'win32') {
     return {
-      naam: 'Rekensterren Studio' + achter + '.cmd',
+      naam: 'Rekensterren Studio.cmd',
       uitvoerbaar: false,
       inhoud: [
         '@echo off',
-        'title Rekensterren Dev Studio' + achter,
+        'title Rekensterren Dev Studio',
         'set "NODE=' + node + '"',
         'if not exist "%NODE%" set "NODE=node"',
         'cd /d "' + root + '"',
@@ -86,14 +90,14 @@ function maak(platform, opties) {
        blijft draaien en je wilt hem met Ctrl-C kunnen stoppen -- en je ziet het
        meteen als het pad naar node niet meer klopt (zie de kop). */
     return {
-      naam: 'Rekensterren Studio' + achter + '.desktop',
+      naam: 'Rekensterren Studio.desktop',
       uitvoerbaar: true,
       inhoud: [
         '[Desktop Entry]',
         'Type=Application',
-        'Name=Rekensterren Studio' + achter,
+        'Name=Rekensterren Studio',
         'Comment=' + (nieuwste
-          ? 'Eerst ophalen en wisselen, dan de Dev Studio'
+          ? 'Eerst ophalen en vragen waarheen, dan de Dev Studio'
           : 'De Dev Studio: versie, werelden, standen en beeldkeuring'),
         // Exec kent zijn eigen aanhalingstekens; zonder die breekt een pad met een spatie
         'Exec="' + node + '" "' + server + '" ' + vlaggen,
@@ -109,7 +113,7 @@ function maak(platform, opties) {
   // macOS (en alles wat verder op een unix lijkt): een .command is het enige
   // wat je op een Mac kunt dubbelklikken zonder er een .app omheen te bouwen.
   return {
-    naam: 'Rekensterren Studio' + achter + '.command',
+    naam: 'Rekensterren Studio.command',
     uitvoerbaar: true,
     inhoud: [
       '#!/bin/sh',
@@ -123,11 +127,22 @@ function maak(platform, opties) {
   };
 }
 
-/* Allebei, want ze horen bij elkaar: de ene start wat er staat, de andere haalt
-   eerst het nieuwste op. */
-function maakAlle(platform, opties) {
-  const o = opties || {};
-  return [maak(platform, o), maak(platform, Object.assign({}, o, { naar: o.naar || true }))];
+/* De tweede snelkoppeling van vroeger, "Rekensterren Studio (nieuwste)", van het
+   bureaublad halen -- maar alleen als hij van ons is: een bestand met die naam
+   dat niet naar test/preview.js wijst, is iets wat iemand zelf neerzette, en dat
+   blijft staan. Geeft de paden terug die weg zijn. */
+const OUDE_NAMEN = ['.cmd', '.command', '.desktop'].map(x => 'Rekensterren Studio (nieuwste)' + x);
+function ruimOudeOp(map) {
+  const weg = [];
+  for (const naam of OUDE_NAMEN) {
+    const pad = path.join(map, naam);
+    try {
+      if (!/preview\.js/.test(fs.readFileSync(pad, 'utf8'))) continue;
+      fs.unlinkSync(pad);
+      weg.push(pad);
+    } catch (e) { /* bestaat niet, of mag niet weg: dan laten we hem staan */ }
+  }
+  return weg;
 }
 
 /* Waar staat het bureaublad? Drie plekken om te kijken, en als geen ervan
@@ -150,26 +165,29 @@ function bureaublad() {
 function schrijf() {
   const waar = bureaublad();
   const map = waar || ROOT;
-  const gemaakt = [];
-  for (const s of maakAlle(process.platform)) {
-    const doel = path.join(map, s.naam);
-    fs.writeFileSync(doel, s.inhoud);
-    if (s.uitvoerbaar) fs.chmodSync(doel, 0o755);
-    gemaakt.push(doel);
-  }
+  const s = maak(process.platform);
+  const doel = path.join(map, s.naam);
+  fs.writeFileSync(doel, s.inhoud);
+  if (s.uitvoerbaar) fs.chmodSync(doel, 0o755);
+  const weg = ruimOudeOp(map);
 
   console.log('\n  Gemaakt:');
-  gemaakt.forEach(d => console.log('    ' + d));
+  console.log('    ' + doel);
   if (!waar) {
-    console.log('  (geen bureaublad gevonden — versleep ze er zelf heen,');
+    console.log('  (geen bureaublad gevonden — versleep hem er zelf heen,');
     console.log('   of zet RP_BUREAUBLAD=/pad/naar/bureaublad en probeer opnieuw)');
   }
-  console.log('\n  Rekensterren Studio             start wat er uitgecheckt staat.');
-  console.log('  Rekensterren Studio (nieuwste)  haalt eerst op en vraagt dan waarheen:');
-  console.log('                                  Enter voor de laatste main, of een PR-nummer.');
-  console.log('\n  Geen van beide gooit werk weg: staat er iets open in je werkmap,');
+  if (weg.length) {
+    console.log('\n  Weggehaald (die van vroeger, deze doet nu allebei):');
+    weg.forEach(d => console.log('    ' + d));
+  }
+  console.log('\n  Dubbelklik: hij haalt eerst het nieuwste op en vraagt dan waarheen.');
+  console.log('    Enter  de laatste main — voor iets nieuws, zoals een nieuwe wereld');
+  console.log('    h      blijf waar je staat — als je verder werkt aan iets van jezelf');
+  console.log('    of een PR-nummer, om die te bekijken');
+  console.log('\n  Hij gooit geen werk weg: staat er iets open in je werkmap,');
   console.log('  dan weigert de wissel en start de studio op wat er stond.');
-  console.log('\n  Draait er al een studio, dan opent de eerste gewoon dat venster.');
+  console.log('\n  Draait er al een studio, dan opent hij gewoon dat venster.');
   if (process.platform === 'darwin') {
     console.log('\n  De eerste keer zegt macOS misschien dat hij van een onbekende maker is:');
     console.log('  rechtermuisknop -> Open, en daarna één keer op Open. Daarna nooit meer.');
@@ -182,4 +200,4 @@ function schrijf() {
 
 if (require.main === module) schrijf();
 
-module.exports = { maak, maakAlle, bureaublad, schrijf, ROOT };
+module.exports = { maak, ruimOudeOp, OUDE_NAMEN, bureaublad, schrijf, ROOT };
