@@ -489,7 +489,7 @@
      pilletje in de kleedkamer wél, één keer na een aankoop -- en één keer is geen
      draad die bezig blijft. */
   @keyframes readyPulse { 0%,100% { transform: scale(1); box-shadow: var(--goud-gloed); } 50% { transform: scale(1.03); box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.7); } }
-  /* dé gouden mijlpaal-pil: één component voor "rang omhoog" en "trofee klaar",
+  /* dé gouden mijlpaal-pil: voor "trofee klaar" (tot oktober 2026 ook "rang omhoog"),
      op het eindscherm (.end-milestone). Hoogstens één tegelijk in beeld, en alleen
      als er iets gehaald is -- anders staat het vak leeg en valt het weg.
 

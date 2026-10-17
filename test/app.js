@@ -207,7 +207,7 @@ const BRUG = `globalThis.__api = {
   grantWorldRewards, grantHistoricRewards, checkTrophies,
   activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText, trophyStatus,
   // tellers
-  totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount, starRank,
+  totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount,
   // opslag
   defaultProfile, migrate, normalizeProfiles, load, save, profileKeys, nextProfileKey, P,
 };`;
