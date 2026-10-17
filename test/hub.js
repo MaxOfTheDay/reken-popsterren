@@ -168,10 +168,11 @@ small,.zacht{color:var(--zacht)}
 .melding.let{border-left-color:var(--goud)}
 .melding.ok{border-left-color:var(--groen)}
 .melding:empty{display:none}
+.melding.mono{font:11.5px/1.5 ui-monospace,monospace;max-height:150px;overflow:auto}
+/* een vinkje met zijn uitleg ernaast (zelf nagekeken) */
 .vink{display:flex;gap:8px;align-items:flex-start;padding:3px 0;cursor:pointer;font-size:12px}
 .vink input{margin-top:3px}
 .vink small{color:var(--stil);font-size:11.5px}
-.melding.mono{font:11.5px/1.5 ui-monospace,monospace;max-height:150px;overflow:auto}
 
 /* ---- huidige build -------------------------------------------------------- */
 .bouwkop{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
