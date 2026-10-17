@@ -168,6 +168,9 @@ small,.zacht{color:var(--zacht)}
 .melding.let{border-left-color:var(--goud)}
 .melding.ok{border-left-color:var(--groen)}
 .melding:empty{display:none}
+.vink{display:flex;gap:8px;align-items:flex-start;padding:3px 0;cursor:pointer;font-size:12px}
+.vink input{margin-top:3px}
+.vink small{color:var(--stil);font-size:11.5px}
 .melding.mono{font:11.5px/1.5 ui-monospace,monospace;max-height:150px;overflow:auto}
 
 /* ---- huidige build -------------------------------------------------------- */
@@ -752,10 +755,10 @@ function tekenWereld() {
   if (w.staat === 'gewijzigd') g1.appendChild(el('div', 'stiller', 'anders dan in het project: ' + w.anders.join(', ')));
   if (!w.speelbaar) g1.appendChild(el('div', 'stiller',
     'Geen kind komt erin, ook niet na publiceren. Hier en in Probeer speel je hem gewoon; '
-    + 'het vinkje "uitgebracht" staat in de editor, bij Gegevens.'));
+    + 'het vinkje "uitgebracht" staat in de editor, bij 6 · Gegevens & uitbrengen.'));
   const rij1 = el('div', 'rij');
   const bew = el('button', 'prim', '✎ Bewerken');
-  bew.title = 'de wereldstudio in het kijkvak: tekening, naam, kleuren, zaal, schat, haltes en weg';
+  bew.title = 'de wereldstudio in het kijkvak: 1 tekening · 2 kleuren · 3 haltes en weg · 4 zaal · 5 schat · 6 gegevens en uitbrengen';
   bew.onclick = () => { zetBewerk(true); toonBlad(); };
   rij1.appendChild(bew);
   const eigenv = el('button', 'stil', 'Eigen venster ⧉');
@@ -796,14 +799,18 @@ function tekenWereld() {
   const blok = punten.filter(p => p.blokkeert);
   const tedoen = punten.filter(p => p.ernst === 'fout' && !p.blokkeert);
   const letop = punten.filter(p => p.ernst !== 'fout');
+  // wat je zelf nog moet spelen of bekijken telt mee bij "nog te doen" (zie NAGEKEKEN)
+  const zelf = zelfNakijken(w);
+  const nogZelf = zelf ? zelf.filter(n => !n.gedaan).length : 0;
   const g4 = groep('Klaar om uit te brengen?', blok.length ? blok.length + ' blokkeert'
-    : tedoen.length ? tedoen.length + ' nog te doen' : letop.length ? 'ja, met ' + letop.length
+    : tedoen.length + nogZelf ? (tedoen.length + nogZelf) + ' nog te doen' : letop.length ? 'ja, met ' + letop.length
       + ' opmerking' + (letop.length === 1 ? '' : 'en') : 'ja');
   if (!punten.length) {
     g4.appendChild(el('div', 'stiller', 'Geen ontbrekende bestanden, geen ongeldige instellingen.'));
   }
-  const WAAR = { tekening: 'Tekening', gegevens: 'Gegevens', beloning: 'Beloning', haltes: 'Haltes & weg',
-                 lijst: 'de wereldlijst', zaal: 'Zaal', kleuren: 'Kleuren' };
+  // met het nummer van het onderdeel in de editor, zodat je het meteen terugvindt
+  const WAAR = { tekening: '1 · Tekening', kleuren: '2 · Kleuren', haltes: '3 · Haltes & weg', zaal: '4 · Zaal',
+                 beloning: '5 · Beloning', gegevens: '6 · Gegevens', lijst: 'de wereldlijst' };
   [[blok, 'fout', 'Houdt opslaan tegen'], [tedoen, 'let', 'Nog te doen vóór uitbrengen'],
    [letop, 'stil', 'Let op']].forEach(([lijst, soort, kop]) => {
     lijst.forEach(p => {
@@ -816,6 +823,22 @@ function tekenWereld() {
       g4.appendChild(d);
     });
   });
+  if (zelf) {
+    g4.appendChild(el('div', 'stiller', 'Zelf nagekeken — dat kan de controle niet voor je doen:'));
+    zelf.forEach(n => {
+      const r = el('label', 'vink');
+      const i = el('input');
+      i.type = 'checkbox';
+      i.checked = n.gedaan;
+      i.onchange = () => { zetNagekeken(w, n.id, i.checked); tekenWereld(); };
+      r.appendChild(i);
+      const tx = el('span', null, n.tekst);
+      tx.appendChild(el('small', null, n.verlopen ? ' — nagekeken vóór je laatste wijziging; nog een keer'
+        : ' — ' + n.hoe));
+      r.appendChild(tx);
+      g4.appendChild(r);
+    });
+  }
   const rij4 = el('div', 'rij');
   const keur = el('button', null, 'Keuringen draaien');
   keur.title = 'node test/inhoud|kern|saves|kleedkamer — een paar seconden, tegen wat er in het project staat';
@@ -849,6 +872,40 @@ function tekenWereld() {
     + ' · ' + w.stuurpunten + ' stuurpunten');
   zet3('zaal', w.zaal.tekst);
   g3.appendChild(dl3);
+}
+
+/* ---- zelf nagekeken --------------------------------------------------------
+   wereldControle kijkt de gegevens na; of de wereld ook goed spéélt kan alleen
+   jij zien. Drie vinkjes, in deze browser (localStorage), per wereld-id, en elk
+   met de vingerafdruk van de wereld zoals hij was toen je het zette (vinger, zie
+   test/werelden.js): verander je daarna iets, dan vervalt het vinkje vanzelf.
+
+   Ze houden niets tegen -- de keuring en Opslaan kennen ze niet, want een vinkje
+   in een browser is geen regel. Ze staan erbij zolang een wereld nog niet
+   uitgebracht is, of anders is dan in het project; een wereld die kinderen al
+   spelen en die je niet aanraakt heeft niets na te kijken. */
+const NAGEKEKEN_KEY = 'rekenStudio_nagekeken';
+const NAGEKEKEN = [
+  ['eerste', 'De eerste show gespeeld', 'Probeer in het spel → ▶ Eerste show'],
+  ['laatste', 'De laatste show gespeeld, tot en met het wereldfeest en de schat',
+    'Probeer in het spel → ▶ Laatste show'],
+  ['telefoon', 'Op een echte telefoon bekeken: de kaart, de reis erheen en een show',
+    'zelfde wifi; het adres staat onder Testomgeving'],
+];
+function leesNagekeken() {
+  try { return JSON.parse(localStorage.getItem(NAGEKEKEN_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function zelfNakijken(w) {
+  if (w.speelbaar && w.staat === 'gelijk') return null;
+  const mijn = leesNagekeken()[w.id] || {};
+  return NAGEKEKEN.map(([id, tekst, hoe]) => ({ id, tekst, hoe,
+    gedaan: mijn[id] === w.vinger, verlopen: !!mijn[id] && mijn[id] !== w.vinger }));
+}
+function zetNagekeken(w, id, aan) {
+  const alles = leesNagekeken();
+  const mijn = alles[w.id] || (alles[w.id] = {});
+  if (aan) mijn[id] = w.vinger; else delete mijn[id];
+  try { localStorage.setItem(NAGEKEKEN_KEY, JSON.stringify(alles)); } catch (e) { /* dan vergeten we het */ }
 }
 
 /* ---- bewerken --------------------------------------------------------------
@@ -956,16 +1013,34 @@ function tekenLijn() {
   if (!v || !v.git || v.los) {
     zet('#lijn-tak', 'niets', '3 · Online', v && v.los ? 'Je kijkt naar een losse kop; publiceren gaat vanaf een tak.' : '');
   } else if (v.isMain) {
-    zet('#lijn-tak', 'niets', '3 · Online', 'Je staat op main. Vastleggen maakt eerst een tak, en die publiceer je hier.');
+    zet('#lijn-tak', 'niets', '3 · Online', 'Je staat op main. Vastleggen maakt eerst een tak, en die publiceer je hier.'
+      + playwrightZin(v));
   } else if (voor) {
+    /* Twee wegen naar main, en het verschil hoort er in woorden te staan: Publiceren
+       voegt hier zelf samen en pusht main -- zonder PR, dus zonder review of CI
+       vooraf. "Push voor een PR" zet alleen de tak op GitHub. */
     zet('#lijn-tak', 'werk', '3 · Online — ' + meer(voor, 'vastlegging', 'vastleggingen') + ' nog niet op main',
-      'Publiceren draait alle tests, voegt ' + v.naam + ' samen met main en pusht. Een paar minuten '
-      + 'later staat het op de telefoon.',
-      [knop(PUBLICEERWACHT ? '🚀 Ja, publiceer' : 'Publiceren…', PUBLICEERWACHT ? 'op' : 'prim', publiceer,
-        v.vuil ? 'leg eerst vast wat er openstaat' : null)]);
+      'Twee wegen naar main:\n'
+      + '• Push voor een PR — zet ' + v.naam + ' op GitHub; daar open je de PR, en main verandert pas als je hem samenvoegt.\n'
+      + '• Publiceren — draait alle tests, voegt ' + v.naam + ' hier samen met main en pusht main. '
+      + 'Dat slaat de PR over: geen review, geen CI vooraf. Een paar minuten later staat het op de telefoon.'
+      + playwrightZin(v),
+      [knop('⇡ Push voor een PR', 'prim', pushVoorPr, v.vuil ? 'leg eerst vast wat er openstaat' : null),
+       knop(PUBLICEERWACHT ? '🚀 Ja, publiceer' : 'Publiceren…', PUBLICEERWACHT ? 'op' : 'stil', publiceer,
+        v.vuil ? 'leg eerst vast wat er openstaat'
+          : v.browserTests === false ? 'Publiceren draait ook de browsertests: draai eerst één keer npm install' : null)]);
   } else {
-    zet('#lijn-tak', 'klaar', '3 · Online', 'Main heeft alles van ' + v.naam + '.');
+    zet('#lijn-tak', 'klaar', '3 · Online', 'Main heeft alles van ' + v.naam + '.' + playwrightZin(v));
   }
+}
+/* Publiceren draait ook de browsertests, en zonder playwright weigert de server
+   dat. Dat hoort hier te staan zodra de studio opent, niet pas als je aan het
+   eind op de knop drukt (de server weet het: /api/versie, browserTests). */
+function playwrightZin(v) {
+  return v && v.browserTests === false
+    ? '\n⚠ Publiceren vraagt eenmalig npm install (playwright ontbreekt hier). Draai het nu in de '
+      + 'projectmap, dan staat het klaar als je zover bent. Push voor een PR heeft het niet nodig.'
+    : '';
 }
 
 async function slaOp() {
@@ -1031,6 +1106,21 @@ async function publiceer() {
   }
   PUBLICEERWACHT = false;
   meld('#lijnmeld', 'ok', t);
+  await haalVersie();
+}
+
+async function pushVoorPr() {
+  meld('#lijnmeld', '', 'De snelle keuring, daarna pushen…');
+  let j;
+  try { j = await (await fetch('/api/pushpr', { method: 'POST' })).json(); }
+  catch (e) { meldFout('#lijnmeld', 'Pushen lukte niet', e, 'Er is niets veranderd.'); return; }
+  meld('#lijnmeld', j.ok ? 'ok' : 'fout', j.tekst);
+  if (j.ok && j.url) {
+    const a = el('a', null, 'Open de PR op GitHub ↗');
+    a.href = j.url; a.target = '_blank'; a.rel = 'noopener';
+    $('#lijnmeld').appendChild(document.createElement('br'));
+    $('#lijnmeld').appendChild(a);
+  }
   await haalVersie();
 }
 
@@ -1668,13 +1758,35 @@ function init() {
   $('#wnieuw').onclick = () => {
     const r = $('#nieuwrij');
     r.hidden = !r.hidden;
-    if (!r.hidden) $('#nieuwnaam').focus();
+    $('#nieuwid').hidden = r.hidden;
+    if (!r.hidden) { toonNieuwId(); $('#nieuwnaam').focus(); }
   };
+  /* Uit de naam rolt het id, en dat id ligt vast zodra de wereld uitgebracht is:
+     de perfecte-wereldtrofee (perfect-<id>) en een getekende schat
+     (acc_wereld_<id>) staan dan in de opslag van elk kind dat hem speelde. Dus
+     zeggen we het hier, terwijl je de naam nog intikt -- en niet alleen in de
+     docs. Het id zelf komt van het spel in het kijkvak (vrijWereldId), zodat er
+     geen tweede kopie van die regel bestaat; is het kijkvak er niet, dan staat
+     alleen de waarschuwing er. */
+  function toonNieuwId() {
+    const naam = $('#nieuwnaam').value.trim();
+    let id = null;
+    try {
+      const spel = $('#spel').contentWindow;
+      if (naam && spel && typeof spel.vrijWereldId === 'function') id = spel.vrijWereldId(naam);
+    } catch (e) { /* een kijkvak van elders: dan zonder id */ }
+    $('#nieuwid').textContent = (id ? 'Het id wordt ' + id + ' (tekening: assets/world/' + id + '-map.webp). '
+      : 'Het id en de bestandsnaam rollen uit deze naam. ')
+      + 'Kies de naam met zorg: zodra de wereld uitgebracht is, ligt het id vast — de trofee en de '
+      + 'schat van elk kind dat hem speelde hangen eraan. De naam zelf kun je later altijd nog veranderen.';
+  }
+  $('#nieuwnaam').oninput = toonNieuwId;
   const maak = () => {
     const naam = $('#nieuwnaam').value.trim();
     if (!naam) { meld('#wmeld', 'let', 'Geef de nieuwe wereld eerst een naam.'); $('#nieuwnaam').focus(); return; }
     $('#nieuwnaam').value = '';
     $('#nieuwrij').hidden = true;
+    $('#nieuwid').hidden = true;
     S.wereld = (WERELDEN && WERELDEN.werelden ? WERELDEN.werelden.length : 0) + 1;
     zetBewerk(true);
     ga(bouw({ wereld: S.wereld, stand: 'vers', screen: 'map', mapedit: 1, onuitgebracht: 1, nieuw: naam }));
@@ -1911,6 +2023,7 @@ function pagina(gegevens) {
         <input type="text" id="nieuwnaam" placeholder="naam, bv. Regenboogwereld">
         <button class="prim" id="nieuwmaak">Maak</button>
       </div>
+      <div class="stiller" id="nieuwid" hidden></div>
       <div class="melding" id="wmeld"></div>
     </section>
     <!-- De weg van een wijziging naar de telefoon van een kind, met op elke stap
