@@ -96,8 +96,33 @@ function vinger(w) {
   return require('crypto').createHash('sha1').update(tekst).digest('hex').slice(0, 12);
 }
 
+/* De werelden zoals ze op origin/main staan -- dat is wat er op de telefoon van
+   een kind draait. De studio zet er per wereld één woord bij (Live, Wacht op
+   merge, Concept), en daarvoor moet ze weten wat main heeft. Het blok wordt
+   gelezen zoals blokTerug het doet: de tekst tussen de markeringen, als code.
+   Geen git, geen origin/main of een blok dat niet te lezen is: null, en dan
+   zegt de studio gewoon minder. */
+// haltes en stuurpunten op één decimaal, zoals het blok ze schrijft
+const rond = l => JSON.parse(JSON.stringify(l), (k, v) =>
+  (k === 'x' || k === 'y') && typeof v === 'number' ? Number(v.toFixed(1)) : v);
+function mainWerelden() {
+  try {
+    const { execFileSync } = require('child_process');
+    const bestand = path.relative(ROOT, require('./bouw.js').bronMetMarkering('/* WERELDEN-BEGIN'))
+      .split(path.sep).join('/');
+    const src = String(execFileSync('git', ['show', 'origin/main:' + bestand],
+      { cwd: ROOT, encoding: 'utf8', maxBuffer: 2e7, stdio: ['ignore', 'pipe', 'ignore'] }));
+    const a = src.indexOf('/* WERELDEN-BEGIN'), e = src.indexOf('/* WERELDEN-EINDE */');
+    if (a < 0 || e < a) return null;
+    const blok = src.slice(src.indexOf('*/', a) + 2, e).trim();
+    const lijst = require('vm').runInNewContext('(' + blok.replace(/^const WORLDS = /, '').replace(/;\s*$/, '') + ')');
+    return Array.isArray(lijst) ? lijst : null;
+  } catch (e) { return null; }
+}
+
 function overzicht(opties) {
   opties = opties || {};
+  const opMain = opties.main === undefined ? mainWerelden() : opties.main;
   let app = opties.app;
   let concept = null;
   if (!app && Array.isArray(opties.concept) && opties.concept.length) {
@@ -147,6 +172,15 @@ function overzicht(opties) {
         : app.sameWorld(app.WORLDS_SHIPPED[i], w) ? 'gelijk' : 'gewijzigd',
       anders: app.WORLDS_SHIPPED[i] && app.sameWorld(app.WORLDS_SHIPPED[i], w) ? []
         : watAnders(app, w, app.WORLDS_SHIPPED[i]),
+      /* En op main? 'live' = precies zo op main en uitgebracht, 'dicht' = zo op
+         main maar niet uitgebracht, null = main heeft hem niet, of anders. Op
+         plek vergeleken, net als staat hierboven. De haltes staan in het blok
+         op één decimaal; dat afronden is geen verschil. */
+      opMain: !opMain || !opMain[i] ? null
+        : !app.sameWorld(rond(opMain[i]), rond(w)) ? null
+        : opMain[i].released === false ? 'dicht' : 'live',
+      // staat er op deze plek op main een wereld die kinderen al spelen?
+      mainUitgebracht: !!(opMain && opMain[i] && opMain[i].released !== false),
       punten: mijn,
       fouten: mijn.filter(p => p.ernst === 'fout').length,
       letop: mijn.filter(p => p.ernst === 'let op').length,
@@ -160,6 +194,8 @@ function overzicht(opties) {
   const lijstPunten = punten.filter(p => p.waar === 'lijst');
   return {
     werelden,
+    // hoeveel werelden main heeft: een wereld voorbij dat aantal is nieuw
+    mainAantal: opMain ? opMain.length : null,
     lijstPunten,
     laatsteLevel: app.WORLD_LAST,
     beschikbaar: app.WORLD_AVAIL,
@@ -193,8 +229,6 @@ function blokTerug(app) {
   } catch (e) {
     return { ok: false, bron, tekst: 'het blok dat eruit zou komen is geen geldige code: ' + e.message };
   }
-  const rond = l => JSON.parse(JSON.stringify(l), (k, v) =>
-    (k === 'x' || k === 'y') && typeof v === 'number' ? Number(v.toFixed(1)) : v);
   const ok = app.sameWorld(rond(terug), rond(app.WORLDS));
   return { ok, bron, tekst: ok ? '' : 'het blok zou niet precies teruggeven wat er in je concept staat, '
     + 'dus er zou iets stil verloren gaan. Dat is een fout in worldsSource (src/20-app.js).' };
@@ -233,7 +267,7 @@ function netjes() {
   return { ok: true, veranderd: true, tekst: 'het blok in ' + path.basename(file) + ' staat nu zoals de studio het schrijft' };
 }
 
-module.exports = { overzicht, assetsOpSchijf, blokTerug, netjes, vinger };
+module.exports = { overzicht, mainWerelden, assetsOpSchijf, blokTerug, netjes, vinger };
 
 if (require.main === module && process.argv.includes('--netjes')) {
   const r = netjes();

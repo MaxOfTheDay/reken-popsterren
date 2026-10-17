@@ -327,19 +327,35 @@ function vervangBlok(markA, markB, blok, wat) {
   return path.basename(file);
 }
 function vers(mod) { delete require.cache[require.resolve(mod)]; return require(mod); }
-async function slaConceptOp(body) {
+/* uitbrengen: het id van een wereld die meteen op "uitgebracht" gaat. Dat is
+   wat Publiceren doet (zie publiceerAlles): een wereld die je helemaal naar
+   buiten brengt, hoort ook open te gaan. Dan mag het concept ook leeg zijn --
+   een wereld die al in het project staat maar nog dicht is, gaat zo ook open. */
+async function slaConceptOp(body, uitbrengen) {
   let d;
   try { d = JSON.parse(body || '{}'); } catch (e) { return { ok: false, tekst: 'Het concept is geen geldige JSON.' }; }
-  if (!Array.isArray(d.concept) || !d.concept.length) {
+  const heeftConcept = Array.isArray(d.concept) && d.concept.length;
+  if (!heeftConcept && !uitbrengen) {
     return { ok: false, tekst: 'Er is geen concept om op te slaan.' };
   }
   const { laadApp } = vers('./app.js');
   const { assetsOpSchijf, blokTerug } = vers('./werelden.js');
-  const opslag = { rekenPopsterren_wereldconcept: JSON.stringify(d.concept) };
-  if (Array.isArray(d.basis)) opslag.rekenPopsterren_wereldconcept_basis = JSON.stringify(d.basis);
+  const opslag = {};
+  if (heeftConcept) {
+    opslag.rekenPopsterren_wereldconcept = JSON.stringify(d.concept);
+    if (Array.isArray(d.basis)) opslag.rekenPopsterren_wereldconcept_basis = JSON.stringify(d.basis);
+  }
   const app = laadApp({ opslag });
-  app.loadWorldDraft();
-  if (!app.WORLD_DRAFT_INFO) {
+  if (heeftConcept) app.loadWorldDraft();
+  let opengezet = null;
+  if (uitbrengen) {
+    const w = app.WORLDS.filter(x => x.id === uitbrengen)[0];
+    if (!w) return { ok: false, tekst: 'De wereld "' + uitbrengen + '" staat niet in de lijst.' };
+    if (w.released === false) { delete w.released; opengezet = (w.icon ? w.icon + ' ' : '') + w.name; }
+  }
+  const mijn = (app.WORLD_DRAFT_INFO ? app.WORLD_DRAFT_INFO.mijn : []).slice();
+  if (opengezet && mijn.indexOf(uitbrengen) < 0) mijn.push(uitbrengen);
+  if (!mijn.length) {
     return { ok: true, niets: true, tekst: 'Niets op te slaan: je concept staat al zo in het project.' };
   }
   // 2 -- dezelfde keuring als overal
@@ -360,11 +376,10 @@ async function slaConceptOp(body) {
   let naam;
   try { naam = vervangBlok(MARK_A, MARK_B, bron, 'WERELDEN-BEGIN/EINDE'); }
   catch (e) { return { ok: false, tekst: 'Schrijven mislukte: ' + e.message }; }
-  const mijn = app.WORLD_DRAFT_INFO.mijn;
   console.log('  studio: WORLDS opgeslagen in src/' + naam + ' (' + mijn.join(', ') + ') en index.html gebouwd');
   const k = await keuring();
   const tedoen = punten.filter(p => p.ernst === 'fout' && !p.blokkeert);
-  return { ok: true, keuring: k, bestand: 'src/' + naam, mijn,
+  return { ok: true, keuring: k, bestand: 'src/' + naam, mijn, opengezet,
     tekst: 'Opgeslagen in het project: ' + mijn.join(', ') + ' (src/' + naam + ' → index.html).\n'
       + (k.ok ? 'De snelle keuring slaagt — dit kan vastgelegd worden.'
               : 'Let op: de snelle keuring slaagt níét:\n' + k.tekst)
@@ -716,6 +731,126 @@ async function pushVoorPr() {
       + String(e.message).split('\n').slice(0, 6).join('\n') };
   }
 }
+/* Publiceren in één keer: de knop in de studio waar een wereld helemaal mee naar
+   buiten gaat. Wat er vroeger vijf knoppen waren (Opslaan, Vastleggen, een
+   bericht, Leg vast, Push voor een PR) en daarna nog een merge, gebeurt hier na
+   elkaar, en het stopt bij de eerste stap die niet lukt:
+
+     1  opslaan       het concept in src/, met de wereld op uitgebracht
+     2  vastleggen    op een eigen tak (studio/<naam>-<datum>) als je op main
+                      staat, na de snelle keuring; het bericht is de naam
+     3  pushen        die tak naar GitHub
+     4  naar main     kunnen de browsertests hier draaien (playwright), dan alle
+                      tests, samenvoegen met main, main pushen -- en de studio
+                      blijft op de nieuwste main staan, klaar voor de volgende.
+                      Kan dat niet, dan blijft het bij de tak en het adres van
+                      de PR; dan merget iemand anders hem.
+
+   Main verandert dus alleen na álle tests, net als bij publish() hierboven. Wat
+   er onderweg gebeurt staat in PUBLICEER, zodat de pagina kan laten zien waar
+   hij is (GET /api/publiceer) -- de tests duren minuten, en een knop die al die
+   tijd niets zegt lijkt vastgelopen. */
+const PUBLICEER = { bezig: false, stap: '', sinds: null };
+function publiceerStap(tekst) {
+  PUBLICEER.stap = tekst;
+  console.log('  publiceren: ' + tekst);
+}
+async function publiceerAlles(body) {
+  if (PUBLICEER.bezig) return { ok: false, tekst: 'Er wordt al gepubliceerd: ' + PUBLICEER.stap };
+  PUBLICEER.bezig = true;
+  PUBLICEER.sinds = new Date().toISOString();
+  try { return await publiceerStappen(body); }
+  finally { PUBLICEER.bezig = false; PUBLICEER.stap = ''; }
+}
+async function publiceerStappen(body) {
+  let d;
+  try { d = JSON.parse(body || '{}'); } catch (e) { return { ok: false, tekst: 'Het verzoek is geen geldige JSON.' }; }
+  const id = String(d.id || '');
+  const naam = String(d.naam || id || 'werelden').trim();
+  if (!id) return { ok: false, tekst: 'Welke wereld? Er is geen wereld meegegeven.' };
+
+  let tak = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
+  if (tak === 'HEAD') return { ok: false, tekst: 'Je kijkt naar een losse kop (een PR). Ga eerst terug naar de nieuwste versie.' };
+
+  // 1 -- opslaan (en meteen uitbrengen)
+  publiceerStap('Opslaan…');
+  const op = await slaConceptOp(JSON.stringify({ concept: d.concept, basis: d.basis }), id);
+  if (!op.ok) return { ok: false, stap: 'opslaan', tekst: op.tekst, punten: op.punten };
+  const opgeslagen = !op.niets;
+
+  // 2 -- vastleggen, op een eigen tak
+  if (await git(['status', '--porcelain'])) {
+    if (op.keuring && !op.keuring.ok) {
+      return { ok: false, opgeslagen, stap: 'keuring', tekst: 'Opgeslagen, maar niet gepubliceerd: de keuring slaagt niet.\n\n' + op.keuring.tekst };
+    }
+    if (!op.keuring) {
+      publiceerStap('Keuren…');
+      const k = await keuring();
+      if (!k.ok) return { ok: false, opgeslagen, stap: 'keuring', tekst: 'Niet gepubliceerd: de keuring slaagt niet.\n\n' + k.tekst };
+    }
+    publiceerStap('Vastleggen…');
+    if (tak === 'main' || tak === 'master') {
+      tak = versie.takNaam(naam);
+      await git(['checkout', '-b', tak]);
+    }
+    await git(['add', '-A']);
+    await git(['commit', '-m', naam]);
+  } else if (tak === 'main' || tak === 'master') {
+    return { ok: true, opgeslagen, live: true, niets: true, tekst: naam + ' staat al zo op main. Er valt niets te publiceren.' };
+  }
+
+  // 3 -- pushen
+  publiceerStap('Naar GitHub…');
+  try { await git(['push', '-u', 'origin', tak]); }
+  catch (e) {
+    return { ok: false, opgeslagen, stap: 'pushen', tekst: 'Vastgelegd op ' + tak + ', maar pushen lukte niet. Heb je internet?\n'
+      + String(e.message).split('\n').slice(0, 4).join('\n') };
+  }
+  const adres = prAdres(await git(['remote', 'get-url', 'origin']).catch(() => ''), tak);
+
+  // 4 -- naar main, als dat hier kan
+  if (!browserTestsKunnen()) {
+    return { ok: true, opgeslagen, live: false, tak, url: adres,
+      tekst: naam + ' staat op GitHub en wacht op een merge.\n'
+        + 'Zeg "go" tegen Claude, of open de PR' + (adres ? ': ' + adres : '.')
+        + '\n(Rechtstreeks naar main kan pas na één keer npm install en npx playwright install chromium.)' };
+  }
+  publiceerStap('Alle tests draaien (een paar minuten)…');
+  try { await runTests(); }
+  catch (e) {
+    return { ok: false, opgeslagen, stap: 'tests', tak, url: adres,
+      tekst: naam + ' staat op GitHub (' + tak + '), maar niet op main: een test faalt.\n\n'
+        + String(e.message).replace(/^de testen falen — er is niets vastgelegd\n\n/, '') };
+  }
+  publiceerStap('Naar main…');
+  try {
+    await git(['fetch', 'origin', 'main']);
+    await git(['checkout', 'main']);
+    await git(['merge', '--ff-only', 'origin/main']);
+    await git(['merge', '--no-edit', tak]);
+    await git(['push', 'origin', 'main']);
+  } catch (e) {
+    // terug naar de tak, zodat er niets half achterblijft op main
+    try { await git(['merge', '--abort']); } catch (_) {}
+    try {
+      /* Alleen op main zelf: daar staat hooguit een samenvoeging die niet
+         gepusht is, en alles ervan staat ook op de tak. */
+      if (await git(['rev-parse', '--abbrev-ref', 'HEAD']) === 'main') {
+        await git(['reset', '--hard', 'origin/main']);
+      }
+      await git(['checkout', tak]);
+    } catch (_) {}
+    return { ok: false, opgeslagen, stap: 'main', tak, url: adres,
+      tekst: naam + ' staat op GitHub (' + tak + '), maar samenvoegen met main lukte niet.\n'
+        + String(e.message).split('\n').slice(0, 4).join('\n') + '\nVraag Claude om hem te mergen.' };
+  }
+  const sha = await git(['rev-parse', '--short', 'HEAD']);
+  console.log('  publiceren: main staat op ' + sha);
+  return { ok: true, opgeslagen, live: true, tak,
+    tekst: naam + ' is live (main ' + sha + '). Over een paar minuten staat hij op de telefoons.\n'
+      + 'De studio staat op de nieuwste main: je kunt meteen aan de volgende wereld beginnen.' };
+}
+
 // Het adres waar GitHub een PR van deze tak naar main opent, of null als de verte
 // niet op github.com staat (dan weten we het adres niet en verzinnen we er geen).
 function prAdres(verte, tak) {
@@ -825,7 +960,10 @@ async function api(req, res, url) {
       }
       return json(res, require('./werelden.js').overzicht());
     }
+    if (url === '/api/publiceer' && req.method !== 'POST') return json(res, PUBLICEER);
     if (req.method !== 'POST') return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
+    if (url === '/api/nieuwste') return json(res, await versie.nieuwste());
+    if (url === '/api/publiceer') return json(res, await publiceerAlles(await lees(req, 600000)));
     if (url === '/api/haalop') return json(res, await versie.haalOp());
     if (url === '/api/bijwerken') return json(res, await versie.bijwerken());
     if (url === '/api/wissel') return json(res, await versie.wissel(await lees(req)));

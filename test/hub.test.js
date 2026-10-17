@@ -228,26 +228,29 @@ zaak('E · de pagina', () => {
   });
 });
 
-/* ---- G: twee werkbladen, één hoekje --------------------------------------
+/* ---- G: twee werkbladen en een voorraadkast --------------------------------
    De hele informatie-indeling van de studio staat of valt hiermee: wie de pagina
-   opent moet zonder lezen zien dat er twee bezigheden zijn. Dat is geen opmaak
-   maar een afspraak, en hij hoort dus vast te liggen -- inclusief de zin die bij
-   elk werkblad hoort, want een naam zonder die zin is een raadseltje.
+   opent ziet de werelden, en verder alleen Testen. Al het andere (versies, losse
+   stappen, gereedschap, het beeld van de app) staat onder ⋯ Meer. Dat is geen
+   opmaak maar een afspraak, en hij hoort dus vast te liggen -- inclusief de zin
+   die bij elk werkblad hoort, want een naam zonder die zin is een raadseltje.
 
    En de woordenlijst. Acht woorden voor acht standen; wie er een negende bij
    verzint (of "dirty" laat staan) maakt de studio moeilijker te lezen zonder het
    te merken. */
 zaak('G · de werkbladen en de woorden', () => {
   const p = hub.pagina({ adres: 'http://localhost:8099', lan: '192.168.1.2:8099' });
-  [['test', 'Testomgeving', 'Speel en controleer de game in een gekozen toestand'],
-   ['wereld', 'Wereldstudio', 'Bouw en beheer de werelden']].forEach(([id, naam, wat]) => {
+  [['wereld', 'Werelden', 'Maak een wereld, test hem en publiceer hem'],
+   ['test', 'Testen', 'Zet het spel in een gekozen stand']].forEach(([id, naam, wat]) => {
     check(new RegExp('data-blad="' + id + '"').test(p), 'G · werkblad "' + naam + '" bestaat', id);
-    check(p.indexOf(naam) >= 0, 'G · en het heet ' + naam, naam);
+    check(p.indexOf('>' + naam + '<') >= 0, 'G · en het heet ' + naam, naam);
     check(p.indexOf(wat) >= 0, 'G · met de zin die erbij hoort', wat);
   });
+  check(p.indexOf('⋯ Meer') >= 0, 'G · en de rest staat onder ⋯ Meer', '⋯ Meer');
   check(p.indexOf('App &amp; merk') >= 0 || p.indexOf('App & merk') >= 0,
-    'G · en er is een hoekje voor de app zelf', 'App & merk');
-  /* Het hoekje is bewust géén derde werkblad in de kiezer: twee bezigheden en een
+    'G · met daarin een hoekje voor de app zelf', 'App & merk');
+  check(p.indexOf('⟳ Nieuwste versie') >= 0, 'G · de nieuwste versie is één knop bovenin', 'Nieuwste versie');
+  /* Meer is bewust géén derde werkblad in de kiezer: twee bezigheden en een
      voorraadkast, niet drie applicaties. */
   const kiezer = p.slice(p.indexOf('<nav class="kiezer">'), p.indexOf('</nav>'));
   check((kiezer.match(/data-blad=/g) || []).length === 2,
