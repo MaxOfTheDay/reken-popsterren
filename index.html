@@ -10042,7 +10042,7 @@ const ITEMS = [
   { id: 'dress_voetbal', cat: 'dress', name: 'Voetbal',    full: 'Voetbaloutfit', price: 65,  color: '#fafafa', pattern: 'ohl' },
   { id: 'dress_zeemeermin', cat: 'dress', name: 'Zeemeermin', full: 'Zeemeerminoutfit', price: 85, color: '#26a69a', pattern: 'scales' },
   { id: 'dress_tover',   cat: 'dress', name: 'Tover', full: 'Toveroutfit', price: 95,  color: '#4527a0', pattern: 'magic' },
-  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogoutfit', price: 110, color: 'RAINBOW' },
+  { id: 'dress_regenboog',cat:'dress', name: 'Regenboog',  full: 'Regenboogoutfit', price: 150, color: 'RAINBOW' },
   // Schoenen (kleuren de vaste schoenen van de paspop)
   { id: 'shoes_roze',  cat: 'shoes', name: 'Roze',   full: 'Roze schoenen',   price: 0,  color: '#e91e63' },
   { id: 'shoes_rood',  cat: 'shoes', name: 'Rood',   full: 'Rode schoenen',   price: 10, color: '#e53935' },
@@ -10054,6 +10054,7 @@ const ITEMS = [
   { id: 'shoes_goud',  cat: 'shoes', name: 'Gouden glitter', full: 'Gouden glitterschoenen', price: 55, color: '#ffd54f' },
   { id: 'shoes_regenboog', cat: 'shoes', name: 'Regenboog', full: 'Regenboogschoenen', price: 80, color: 'RAINBOW' },
   // Microfoons
+  { id: 'mic_rood',   cat: 'mic', name: 'Rood',   full: 'Rode microfoon',   price: 15, color: '#e53935' },
   { id: 'mic_zilver', cat: 'mic', name: 'Zilver', full: 'Zilveren microfoon', price: 30, color: '#cfd8dc' },
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
@@ -10062,6 +10063,9 @@ const ITEMS = [
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
   { id: 'mic_roze',   cat: 'mic', name: 'Roze glitter', full: 'Roze glittermicrofoon', price: 90, color: '#ff80ab' },
+  // emoji-microfoons: het emoji zit bovenop een steel in de hand (zie avatarSVG)
+  { id: 'mic_ijsje',  cat: 'mic', name: 'IJsje',  full: 'IJsjesmicrofoon', price: 45, emoji: '🍦' },
+  { id: 'mic_vuur',   cat: 'mic', name: 'Vuur',   full: 'Vuurmicrofoon',   price: 75, emoji: '🔥' },
   { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', full: 'Regenboogmicrofoon', price: 100, color: 'RAINBOW' },
   // Instrumenten
   { id: 'instr_tamboerijn', cat: 'instrument', name: 'Tamboerijn', price: 28, emoji: '🪘' },
@@ -10072,7 +10076,7 @@ const ITEMS = [
   { id: 'instr_accordeon', cat: 'instrument', name: 'Accordeon', price: 65, emoji: '🪗' },
   { id: 'instr_sax',     cat: 'instrument', name: 'Saxofoon',  price: 70, emoji: '🎷' },
   { id: 'instr_trompet', cat: 'instrument', name: 'Trompet',   price: 80, emoji: '🎺' },
-  { id: 'instr_dj',      cat: 'instrument', name: 'DJ-set',    price: 105, emoji: '🎛️' },
+  { id: 'instr_dj',      cat: 'instrument', name: 'DJ-set',    price: 130, emoji: '🎛️' },
   // Extra's
   { id: 'acc_strik',    cat: 'acc', name: 'Strik',    price: 25, emoji: '🎀' },
   { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
@@ -10085,7 +10089,11 @@ const ITEMS = [
   { id: 'acc_feesthoed', cat: 'acc', name: 'Feesthoedje',   price: 30, emoji: '🎉', spot: 'top' },
   { id: 'acc_hoed',     cat: 'acc', name: 'Hoge hoed',      price: 45, emoji: '🎩', spot: 'top' },
   { id: 'acc_bloemkrans',cat: 'acc', name: 'Bloemenkrans',  price: 55, emoji: '🌼', spot: 'top' },
-  { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 120, emoji: '💎', spot: 'top' },
+  { id: 'acc_diadeem',  cat: 'acc', name: 'Diamanten diadeem', price: 180, emoji: '💎', spot: 'top' },
+  { id: 'acc_kers',     cat: 'acc', name: 'Kersjes',        price: 30, emoji: '🍒', spot: 'zij' },
+  { id: 'acc_anker',    cat: 'acc', name: 'Ankerspeldje',   price: 30, emoji: '⚓', spot: 'zij' },
+  { id: 'acc_schelp',   cat: 'acc', name: 'Schelpje',       price: 35, emoji: '🐚', spot: 'zij' },
+  { id: 'acc_maan',     cat: 'acc', name: 'Maantje',        price: 40, emoji: '🌙', spot: 'top' },
   /* FASE 4D.1 -- de wereldbeloningen. Eén hoofdstuk per wereld, en je krijgt het
      niet van je diamanten maar doordat je die wereld uitspeelt (zie WORLDS.beloning
      en beloningWereld hieronder).
@@ -10143,9 +10151,18 @@ const ITEMS = [
   { id: 'pet_panda',  cat: 'pet', name: 'Pandabeer',     price: 90,  emoji: '🐼' },
   { id: 'pet_flamingo',cat:'pet', name: 'Flamingo',      price: 95,  emoji: '🦩' },
   { id: 'pet_leeuw',  cat: 'pet', name: 'Leeuwenwelp',   price: 100, emoji: '🦁' },
-  { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 130, emoji: '🦄' },
-  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 180, emoji: '🐉' },
-  { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 200, emoji: '🦚' },
+  { id: 'pet_eenhoorn',cat:'pet', name: 'Eenhoorn',      price: 200, emoji: '🦄' },
+  { id: 'pet_aap',    cat: 'pet', name: 'Aapje',         price: 60,  emoji: '🐒' },
+  { id: 'pet_krab',   cat: 'pet', name: 'Krabbetje',     price: 45,  emoji: '🦀' },
+  { id: 'pet_rendier',cat: 'pet', name: 'Rendiertje',    price: 70,  emoji: '🦌' },
+  { id: 'pet_olifant',cat: 'pet', name: 'Olifantje',     price: 80,  emoji: '🐘' },
+  { id: 'pet_octopus',cat: 'pet', name: 'Octopus',       price: 75,  emoji: '🐙' },
+  { id: 'pet_otter',  cat: 'pet', name: 'Otter',         price: 65,  emoji: '🦦' },
+  { id: 'pet_langnek',cat: 'pet', name: 'Langnek',       price: 90,  emoji: '🦕' },
+  { id: 'pet_alien',  cat: 'pet', name: 'Ruimtevriendje', price: 110, emoji: '👽' },
+  { id: 'pet_trex',   cat: 'pet', name: 'T-rex',         price: 150, emoji: '🦖' },
+  { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 250, emoji: '🐉' },
+  { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
   // Podium
   { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
   { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'] },
@@ -12767,6 +12784,10 @@ function avatarSVG(p, width, propMaat) {
       // toverstaf met fonkelende sterpunt
       s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
       s += `<text x="150" y="58" font-size="18">⭐</text><text x="165" y="40" font-size="12">✨</text>`;
+    } else if (mic.emoji) {
+      // emoji-microfoon (ijsje, vuur): zelfde steel, het emoji als kop
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<text x="144" y="70" font-size="22">${mic.emoji}</text>`;
     } else {
       s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
