@@ -447,9 +447,14 @@ function check(ok, label, detail) {
         balk,
         heeft: P().owned.includes('acc_wereld_muziek'),
         diamanten: P().diamonds,
-        // de schatten van de UITGEBRACHTE werelden: een dichte verklapt niets
-        beloningen: WORLDS.filter((w, i) => worldAvailable(i)).map(w => w.beloning).filter(id => !!item(id)),
-        volgorde: [...document.querySelectorAll('.item-card')].map(c => c.dataset.item),
+        /* de schatten van de uitgebrachte werelden tot aan de horizon (zie
+           zichtbareSchatten): een dichte verklapt niets, en een verre ook niet --
+           die staan samen achter één mistkaartje zonder getal */
+        beloningen: WORLDS.filter((w, i) => worldAvailable(i) && binnenHorizon(P(), i))
+          .map(w => w.beloning).filter(id => !!item(id)),
+        volgorde: [...document.querySelectorAll('.item-card:not(.horizon-mist)')].map(c => c.dataset.item),
+        mist: document.querySelectorAll('.item-card.horizon-mist').length,
+        meer: zichtbareSchatten(P()).length < wereldSchatten().length,
         popPastKoopstuk: await (async () => {
           openKleedkamerCat('acc');
           await new Promise(res => setTimeout(res, 150));
@@ -468,8 +473,10 @@ function check(ok, label, detail) {
     check(!r.accLade.some(id => /acc_wereld_/.test(id)) && !r.inAcc.some(id => /acc_wereld_/.test(id)),
       'G · en de gewone laden staan er niet meer vol mee', JSON.stringify(r.inAcc));
     check(r.volgorde.join() === r.beloningen.join(),
-      'G · het vak toont precies de wereldschatten, in wereldvolgorde',
+      'G · het vak toont de wereldschatten tot aan de horizon, in wereldvolgorde',
       JSON.stringify({ vak: r.volgorde, hoort: r.beloningen }));
+    check(r.mist === (r.meer ? 1 : 0),
+      'G · en daarachter één mistkaartje als er nog meer schatten liggen', JSON.stringify({ mist: r.mist, meer: r.meer }));
     check(r.opSlot && r.schatKaart && r.status === '🔒 Speel uit',
       'G · een nog niet verdiende schat staat op slot', JSON.stringify(r));
     check(r.raadsel && !r.tekening && r.naamOpKaart === 'Muziekwereld' && r.naamOpKaart !== r.itemNaam,

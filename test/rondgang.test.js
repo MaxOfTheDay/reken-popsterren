@@ -840,13 +840,32 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     kopRuim: !document.getElementById('screen-trophies').classList.contains('gescrold'),
   }));
   check(r.kast && r.kaarten > 10, 'de trofeeënkast staat vol kaarten', JSON.stringify(r));
-  /* PS-32 -- de stand staat als pil in de kop: "3 / 18 verzameld", dezelfde
-     woorden waarmee het schattenvak in de kleedkamer telt. */
-  check(/\d+\s*\/\s*\d+\s+verzameld/.test(r.teller), 'de kastteller staat er', r.teller);
+  /* PS-32 -- de stand staat als pil in de kop, met dezelfde woorden waarmee het
+     schattenvak in de kleedkamer telt: "3 verzameld". Zonder totaal: dat groeide
+     met elke wereld die erbij kwam (zie .kast-telling). */
+  check(/^\s*\d+\s+verzameld\s*$/.test(r.teller), 'de kastteller staat er, zonder totaal', r.teller);
   check(r.balken === 0, 'en er staat geen losse voortgangsbalk op het scherm', r.balken);
   check(r.panelen === 0 && r.groepen === 4 && r.groepTelling === 4,
     'de vier groepen staan als kopregel met een eigen stand, niet als paneel', JSON.stringify(r));
   check(r.rangStrook === 0, 'de kast eindigt bij de trofeeën, zonder ster-statusstrook', r.rangStrook);
+  /* De horizon: de perfecte plank toont wat je hebt plus de werelden tot aan
+     laatsteZichtbareWereld -- dezelfde grens als de reis -- en daarboven één
+     mistkaartje zonder getal. Zo staat er bij elf werelden geen muur van gedempte
+     medaillons voor een kind dat in wereld twee staat. */
+  const hz = await page.evaluate(() => {
+    const p = P();
+    const plank = [...document.querySelectorAll('#screen-trophies .pw-grid')][0];
+    const echt = plank ? plank.querySelectorAll('.pw-card:not(.horizon-mist)').length : -1;
+    const mist = plank ? plank.querySelectorAll('.horizon-mist').length : -1;
+    const verwacht = TROPHIES.filter(t => t.perfect && (binnenHorizon(p, t.index)
+      || p.trophies.includes(t.id) || (p.readyTrophies || []).includes(t.id))).length;
+    const telling = plank ? plank.parentNode.querySelector('.groep-telling').textContent : '';
+    return { echt, mist, verwacht, alle: WORLD_AVAIL, meer: meerWereldenVooruit(p), telling };
+  });
+  check(hz.echt === hz.verwacht && hz.mist === (hz.echt < hz.alle ? 1 : 0),
+    'de perfecte plank houdt op bij de horizon, met één mistkaartje erachter', JSON.stringify(hz));
+  check(hz.mist === 0 || !/\//.test(hz.telling),
+    'en met mist erachter verklapt de plankteller geen totaal', JSON.stringify(hz));
   check(r.kopRuim, 'bovenaan staat de ruime kop', 'kop staat meteen in de krappe stand');
 
   /* De krappe kop: zodra er gescrold wordt klapt de zin met de stand weg en wordt
