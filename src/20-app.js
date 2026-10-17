@@ -874,6 +874,35 @@ const WORLDS = [
       { x: 66.0, y: 29.8 },
     ],
   },
+  {
+    id: 'ruimte', name: 'Ruimtewereld', icon: '🪐', levels: 8,
+    beloning: 'acc_wereld_ruimte',
+    art: 'assets/world/ruimte-map.webp',
+    schat: {
+      naam: 'UFO-hoedje', emoji: '🛸', view: '72.2 -1 55.7 46',
+      svg: '<g transform="translate(0 -2) scale(1)"><g transform="translate(19.23 -1.85) scale(0.8077)"><g stroke-linejoin="round" stroke-linecap="round"><line x1="100" y1="13" x2="100" y2="19" stroke="#221c36" stroke-width="2"/><circle cx="100" cy="10" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="2"/><ellipse cx="100" cy="37" rx="30" ry="9" fill="#cfd9ff" stroke="#221c36" stroke-width="2.4"/><path d="M82 37 Q100 30 118 37" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M86 37 Q86 25 100 20 Q114 25 114 37 L114 42 Q100 46 86 42 Z" fill="#7fe7ff" stroke="#221c36" stroke-width="2.4"/><ellipse cx="100" cy="31" rx="8" ry="5.5" fill="#21558c" stroke="#221c36" stroke-width="1.8"/><circle cx="100" cy="31" r="2.2" fill="#8adfff"/><path d="M68 42 Q100 58 132 42 L125 52 Q100 59 75 52 Z" fill="#6d5bd0" stroke="#221c36" stroke-width="2.5"/><path d="M78 45 Q100 54 122 45" fill="none" stroke="#9f90f0" stroke-width="2"/><circle cx="82" cy="51" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="94" cy="54" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="106" cy="54" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="118" cy="51" r="4" fill="#ffd54f" stroke="#221c36" stroke-width="1.8"/><circle cx="77" cy="24" r="3.2" fill="#fff1a8" stroke="#21558c" stroke-width="1.4"/><circle cx="123" cy="20" r="2.6" fill="#fff1a8" stroke="#21558c" stroke-width="1.2"/></g></g></g>',
+    },
+    theme: { road: '#ecf0f3', sky: '#333177', deep: '#221c36', glow: '#21558c' },
+    nodes: [
+      { x: 36.8, y: 67.2 },
+      { x: 68.3, y: 77.4 },
+      { x: 68.6, y: 61.1 },
+      { x: 71.1, y: 37.8 },
+      { x: 59.9, y: 47.4 },
+      { x: 24.1, y: 49.8 },
+      { x: 59.4, y: 26.6 },
+      { x: 71.9, y: 18.6 },
+    ],
+    curve: [
+      { x: 49.2, y: 75.0 },
+      { x: 65.8, y: 69.4 },
+      { x: 75.4, y: 50.9 },
+      { x: 66.0, y: 43.5 },
+      { x: 39.8, y: 53.6 },
+      { x: 42.1, y: 36.8 },
+      { x: 80.0, y: 25.6 },
+    ],
+  },
 ];
 /* WERELDEN-EINDE */
 
