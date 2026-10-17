@@ -10007,17 +10007,26 @@ function renderShop() {
        Drie gevallen, en meer zijn het er niet:
          van jou, nog niet aan  -> meteen aan (equipShopItem doet het geluid, het
                                    opslaan en het danspasje)
-         van jou en al aan      -> niets. Nadrukkelijk géén "dan maar uit": een
-                                   kind dat nog eens op haar jurk tikt wil hem
-                                   niet kwijt. Wel het danspasje, zodat de tik
-                                   antwoord krijgt.
+         van jou en al aan      -> bij kleren, schoenen en podium niets.
+                                   Nadrukkelijk géén "dan maar uit": een kind dat
+                                   nog eens op haar jurk tikt wil hem niet kwijt,
+                                   en een pop zonder jurk bestaat niet. Wel het
+                                   danspasje, zodat de tik antwoord krijgt.
+                                   Bij de optionele spullen (micro, instrument,
+                                   extra, dier) wél uit: die kan de pop ook
+                                   missen, en zonder deze tik was een eenmaal
+                                   gekozen micro nooit meer kwijt te raken. Het
+                                   pilletje zegt het ("✓ Aan ✕").
          nog niet van jou       -> kiezen: de pop past het en de lade onderaan
                                    zegt wat het kost. */
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
       const p2 = P();
       if (p2.owned.includes(it.id)) {
-        if (p2.equipped[it.cat] === it.id) { sndClick(); tapDance('shop-avatar'); return; }
+        if (p2.equipped[it.cat] === it.id) {
+          if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat);
+          sndClick(); tapDance('shop-avatar'); return;
+        }
         return equipShopItem(it.id);
       }
       sndClick();
@@ -10142,7 +10151,7 @@ function dressCardState(card, it, p) {
   const st = card.querySelector('.item-status');
   if (!st) return;
   if (nieuw)          { st.className = 'item-status new';   st.textContent = 'Nieuw!'; }
-  else if (equipped)  { st.className = 'item-status on';    st.textContent = '✓ Aan'; }
+  else if (equipped)  { st.className = 'item-status on';    st.textContent = OPTIONELE_SPULLEN.includes(it.cat) ? '✓ Aan ✕' : '✓ Aan'; }
   else if (owned)     { st.className = 'item-status owned'; st.textContent = 'Van jou'; }
   /* Nog te verdienen. Sinds fase 6E staat zo'n kaartje alleen nog in het
      schattenvak, en daar draagt het al de naam van zijn wereld en het wereldteken
@@ -10197,7 +10206,7 @@ function previewProfile(p, it) {
 // anders hangt de ster altijd vol.
 function surpriseOutfit() {
   const p = P();
-  const optioneel = ['mic', 'instrument', 'acc', 'pet'];
+  const optioneel = OPTIONELE_SPULLEN;
   CATS.forEach(c => {
     const bezit = ITEMS.filter(i => i.cat === c.id && p.owned.includes(i.id));
     if (!bezit.length) return;
@@ -10478,6 +10487,28 @@ function confirmShopBuy(id) {
     if (na && na.scrollIntoView) na.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, 1800);
   tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
+}
+
+/* Categorieën waar de pop ook zonder kan: een lege plek is daar een geldige stand
+   (nieuwe sterren beginnen zo, en de willekeurige outfit laat ze soms leeg). */
+const OPTIONELE_SPULLEN = ['mic', 'instrument', 'acc', 'pet'];
+
+/* Het omgekeerde van equipShopItem: de plek leeg, de rest blijft. Zelfde
+   nawerk -- trofeecheck, opslaan, het rek bijwerken zonder het te herbouwen. */
+function unequipShopItem(cat) {
+  if (!OPTIONELE_SPULLEN.includes(cat)) return;
+  const p = P();
+  if (!p.equipped[cat]) return;
+  const herbouw = !!shopJustBoughtId;
+  clearTimeout(shopBoughtTimer);
+  p.equipped[cat] = null;
+  shopJustBoughtId = null;
+  shopSelectedId = null;
+  sndClick();
+  noticeReady(checkTrophies(p));
+  save();
+  herbouw ? renderShop() : paintShop();
+  tapDance('shop-avatar');
 }
 
 function equipShopItem(id) {
