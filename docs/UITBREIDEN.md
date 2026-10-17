@@ -57,8 +57,15 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
 
 1. **Naam** intikken, *Maak*. Het id en het pad van de tekening rollen eruit
    (`Regenboogwereld` → `regenboog` → `assets/world/regenboog-map.webp`, zie
-   `wereldId`/`wereldArtPad`). De wereld komt achteraan, met acht shows, en
+   `wereldId`/`wereldArtPad`) — de studio laat het id zien terwijl je tikt. Kies
+   de naam met zorg: zodra de wereld uitgebracht is ligt het id vast, want
+   `perfect-<id>` en een getekende schat (`acc_wereld_<id>`) staan dan in de
+   opslag van kinderen. De wereld komt achteraan, met acht shows, en
    **niet uitgebracht** (`released: false`).
+
+   De editor heeft de stappen hieronder in dezelfde volgorde, genummerd:
+   *1 Tekening, 2 Kleuren, 3 Haltes & weg, 4 Zaal, 5 Beloning, 6 Gegevens &
+   uitbrengen*.
 2. **Tekening** erop slepen. Formaat en compositie staan in
    `docs/WORLD-ART-BRIEF.md`; wie hem door een beeld-AI laat maken, kopieert de
    prompt onder *Tekening → ✨ Prompt voor een beeldgenerator* (de tekst staat in
@@ -78,16 +85,24 @@ npm run studio      -> Wereldstudio -> + Nieuwe wereld
    Een eigen wereldschat tekenen* (zie hieronder). Geen code, geen `ITEMS`-regel.
 7. **Probeer in het spel**: de standen op de kaart, en de eerste en de laatste
    show echt spelen — de laatste eindigt in het wereldfeest met de schat. Dat
-   kan ook zolang de wereld nog niet uitgebracht is.
+   kan ook zolang de wereld nog niet uitgebracht is. En bekijk hem op een echte
+   telefoon: de overgangen zijn op beeldjes afgeregeld en dat ziet een test niet.
+   *Klaar om uit te brengen?* heeft voor deze drie een vinkje (*zelf
+   nagekeken*); ze tellen bij "nog te doen" en vervallen zodra je daarna iets
+   aan de wereld verandert.
 8. **Van concept naar spel**: *Opslaan in het project* → *Vastleggen* →
-   *Publiceren*. Opslaan weigert zolang er iets is wat een kind nu zou merken;
+   *⇡ Push voor een PR* of *Publiceren*. De eerste zet je tak op GitHub en geeft
+   het adres van de PR; *Publiceren* voegt zelf samen met main en pusht, en slaat
+   de PR dus over. Publiceren draait ook de browsertests en vraagt daarom één
+   keer `npm install` — de studio zegt het meteen als dat nog niet gebeurd is.
+   Opslaan weigert zolang er iets is wat een kind nu zou merken;
    wat alleen "nog te doen vóór uitbrengen" is, mag mee. Een wereld die niet
    uitgebracht is, gaat dus gewoon al mee naar main — hij reserveert zijn
    levelnummers en blijft voor kinderen dicht: niet op de reis, niet in het
    schattenvak en niet in de trofeeënkast. Alle tests draaien daar ook mee.
-9. **Uitbrengen**: het vinkje *uitgebracht* in de editor (*Gegevens*), als *Klaar
-   om uit te brengen?* niets meer te doen heeft. Opslaan, vastleggen,
-   publiceren — en vanaf dan speelt een kind hem.
+9. **Uitbrengen**: het vinkje *uitgebracht* in de editor (*6 · Gegevens &
+   uitbrengen*), als *Klaar om uit te brengen?* niets meer te doen heeft.
+   Opslaan, vastleggen, naar main — en vanaf dan speelt een kind hem.
 
 Wat de studio nakijkt staat op één plek: `wereldControle` in `src/20-app.js`. De
 studio toont het, *Opslaan* weigert erop, en `npm run check` (zaak K in

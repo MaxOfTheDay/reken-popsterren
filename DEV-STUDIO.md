@@ -33,6 +33,8 @@ npm run studio
 ```
 
 `npm install` is er alleen voor de browsertests (`npm test`), niet voor de studio.
+Publiceren draait die wél; ontbreekt playwright, dan zegt de studio dat bij het
+starten en bij *3 · Online*, zodat je er niet pas bij de laatste klik achter komt.
 
 Is poort 8099 bezet, dan zegt de studio dat, met het alternatief erbij:
 
@@ -169,13 +171,15 @@ een keuze en hoort niet achter een knopje.
 Links de wereldlijst en daaronder **Van concept naar spel**; in het midden die
 ene wereld; rechts het kijkvak. Een wereld maken gaat zo:
 
-1. **+ Nieuwe wereld**, naam intikken, *Maak*. De wereldstudio opent in het
+1. **+ Nieuwe wereld**, naam intikken, *Maak*. Onder het veld staat welk id
+   eruit rolt; dat ligt vast zodra de wereld uitgebracht is. De wereldstudio opent in het
    kijkvak, op de hele breedte, met de nieuwe wereld erin — nog **niet
    uitgebracht**: hij staat straks wél in het spel, maar geen kind komt erin.
-2. **Bewerken** (dat is de editor): tekening erop slepen, *haal uit de tekening*
-   voor de kleuren, haltes op de richels, de zaal donkerder of lichter, een
-   wereldschat kiezen of laten tekenen. Alles staat meteen in je **concept** (in
-   deze browser).
+2. **Bewerken** (dat is de editor), van boven naar beneden genummerd:
+   *1 Tekening* erop slepen, *2 Kleuren* (haal uit de tekening), *3 Haltes & weg*
+   op de richels, *4 Zaal* donkerder of lichter, *5 Beloning*: een wereldschat
+   kiezen of laten tekenen, *6 Gegevens & uitbrengen*. Alles staat meteen in je
+   **concept** (in deze browser).
 3. **▶ Probeer in het spel** of **✓ Klaar**: terug naar het overzicht, en het
    kijkvak op telefoonmaat. Onder *Probeer in het spel* zet je hem in een stand
    (net begonnen, halverwege, bijna uit, perfect, op slot) of speel je hem echt:
@@ -185,20 +189,23 @@ ene wereld; rechts het kijkvak. Een wereld maken gaat zo:
 4. **Klaar om uit te brengen?** zegt wat er nog is, in drie soorten:
    *houdt opslaan tegen* (een kind zou het nu merken), *nog te doen vóór
    uitbrengen*, en *let op*. Dezelfde regels als `npm run check` — er is maar één
-   lijst, `wereldControle` in `src/20-app.js`.
+   lijst, `wereldControle` in `src/20-app.js`. Daaronder drie vinkjes *zelf
+   nagekeken* (de eerste show, de laatste show, op een echte telefoon): wat geen
+   keuring kan zien. Ze staan in deze browser, tellen bij "nog te doen" en
+   vervallen als je de wereld daarna verandert; ze houden niets tegen.
 5. **Van concept naar spel**, van boven naar beneden:
 
 | stap | waar het nu staat | de knop |
 |---|---|---|
 | **1 · Concept** | alleen in deze browser | *Opslaan in het project* — keurt, schrijft `WORLDS` in `src/`, bouwt `index.html` en draait de snelle keuring |
 | **2 · Project** | je werkmap, niet vastgelegd | *Vastleggen…* — de snelle keuring, dan een commit. Op main komt er eerst een eigen tak onder |
-| **3 · Online** | je tak, nog niet op main | *Publiceren…* — twee klikken: eerst zien wát er gaat, dan alle tests, samenvoegen en pushen |
+| **3 · Online** | je tak, nog niet op main | *⇡ Push voor een PR* — de snelle keuring, je tak naar GitHub, en het adres waar de PR opent; main verandert pas als je hem daar samenvoegt. Of *Publiceren…* — twee klikken: eerst zien wát er gaat, dan alle tests, hier samenvoegen en main pushen. Dat slaat de PR over |
 
-**Uitbrengen** is geen stap van die lijn maar een vinkje in de editor (*Gegevens*).
+**Uitbrengen** is geen stap van die lijn maar een vinkje in de editor (*6 · Gegevens & uitbrengen*).
 Een wereld die niet uitgebracht is gaat gewoon mee naar main — de tests laten
 dat toe, en een ontbrekende wereldschat blokkeert dan nog niet. Zet het vinkje
-pas als *Klaar om uit te brengen?* niets meer te doen heeft, en publiceer dan
-nog één keer.
+pas als *Klaar om uit te brengen?* niets meer te doen heeft, en breng het dan
+nog één keer naar main.
 
 Het chipje **✎ concept** bovenin staat er zolang er een concept in deze browser
 staat — dat kleurt élk kijkvak, ook in de Testomgeving. Een concept van vorige

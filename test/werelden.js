@@ -78,6 +78,24 @@ function watAnders(app, w, ship) {
   return wat;
 }
 
+/* Een vingerafdruk van wat een wereld ís, voor de vinkjes "zelf nagekeken" in de
+   studio: een vinkje geldt voor de wereld zoals hij toen was, en vervalt zodra je
+   er daarna iets aan verandert. Twee dingen tellen niet mee, anders verviel een
+   vinkje zonder dat er iets te spelen veranderde:
+     - released: uitbrengen is de stáp na het nakijken, geen wijziging eraan;
+     - de cijfers achter de komma van haltes en stuurpunten: een sleep levert er
+       twaalf, het blok dat Opslaan schrijft er één (zie blokTerug hieronder).
+   De sleutels op volgorde, om dezelfde reden als vasteVorm in src/20-app.js: de
+   studio bouwt theme in haar eigen volgorde op. */
+function vinger(w) {
+  const vast = (x, rond) => Array.isArray(x) ? x.map(y => vast(y, rond))
+    : x && typeof x === 'object' ? Object.keys(x).sort().reduce((o, k) => {
+      o[k] = vast(x[k], rond || k === 'nodes' || k === 'curve'); return o; }, {})
+      : rond && typeof x === 'number' ? Math.round(x * 10) / 10 : x;
+  const tekst = JSON.stringify(vast(Object.assign({}, w, { released: undefined })));
+  return require('crypto').createHash('sha1').update(tekst).digest('hex').slice(0, 12);
+}
+
 function overzicht(opties) {
   opties = opties || {};
   let app = opties.app;
@@ -106,6 +124,7 @@ function overzicht(opties) {
     const bel = w.beloning ? app.item(w.beloning) : null;
     return {
       nr: i + 1, id: w.id, naam: w.name, icoon: w.icon,
+      vinger: vinger(w),
       levels: wl.levels, eerste: wl.first, laatste: wl.first + wl.levels - 1,
       uitgebracht: app.worldReleased(w),   // worldReleased krijgt de wereld, niet de index
       slotVan: i === 0 ? null : app.WORLDS[i - 1].name,   // deze gaat open zodra die uit is
@@ -214,7 +233,7 @@ function netjes() {
   return { ok: true, veranderd: true, tekst: 'het blok in ' + path.basename(file) + ' staat nu zoals de studio het schrijft' };
 }
 
-module.exports = { overzicht, assetsOpSchijf, blokTerug, netjes };
+module.exports = { overzicht, assetsOpSchijf, blokTerug, netjes, vinger };
 
 if (require.main === module && process.argv.includes('--netjes')) {
   const r = netjes();

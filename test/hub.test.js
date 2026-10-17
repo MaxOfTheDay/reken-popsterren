@@ -467,6 +467,21 @@ zaak('K · het concept', () => {
     'K · een onbekend veld komt er als JSON uit', b.bron.slice(-400));
   check(werelden.blokTerug(laadApp()).ok, 'K · en de werelden van nu komen er letterlijk uit', 'niet gelijk');
 
+  /* De vinkjes "zelf nagekeken" (hub.js, zelfNakijken) gelden voor de wereld
+     zoals hij was. Opslaan rondt de haltes af op één decimaal en uitbrengen zet
+     released -- geen van beide is iets nieuws om te spelen, dus de vingerafdruk
+     blijft. Een halte verschuiven is dat wel. */
+  const concept = proef.WORLDS[proef.WORLDS.length - 1];
+  const opgeslagen = require('vm').runInNewContext('(' + b.bron.replace(/^const WORLDS = /, '')
+    .replace(/;\s*$/, '') + ')').filter(w => w.id === 'concepttest')[0];
+  check(werelden.vinger(concept) === werelden.vinger(opgeslagen),
+    'K · een vinkje "zelf nagekeken" overleeft Opslaan', JSON.stringify(opgeslagen.nodes[1]));
+  check(werelden.vinger(concept) === werelden.vinger(Object.assign({}, concept, { released: true })),
+    'K · en uitbrengen', 'released telt mee');
+  const verschoven = JSON.parse(JSON.stringify(concept)); verschoven.nodes[3].x += 2;
+  check(werelden.vinger(concept) !== werelden.vinger(verschoven),
+    'K · maar een verschoven halte laat het vervallen', 'telt niet mee');
+
   /* Opslaan zonder iets te veranderen verandert ook niets aan het bestand. Anders
      brengt de eerste keer opslaan een diff mee in werelden waar niemand aan zat
      (".56" dat "0.56" werd), of verdwijnt er stil een uitleg die iemand tussen de
