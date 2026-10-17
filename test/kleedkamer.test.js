@@ -27,6 +27,7 @@
    zie alleenUitgebracht in test/app.js. */
 const harnas = require('./app');
 const laadApp = o => harnas.laadApp(Object.assign({ alleenUitgebracht: true }, o));
+const heropen = harnas.heropen;
 const { check, zaak, klaar } = require('./meld')('kleedkamer');
 
 /* ---- gereedschap ---- */
@@ -266,6 +267,33 @@ zaak('H · de wereldschatten', () => {
   const stil = app3.wereldSchatten().map(x => x.item.id);
   check(!stil.includes('acc_wereld_stil') && stil.length === uitWerelden.length,
     'H · een nog niet uitgebrachte wereld verklapt zijn schat niet', JSON.stringify(stil));
+});
+
+/* ---- I · Mijn wens. Eén id in p.wens, en verder niets: wat de pil op de kaart
+   toont wordt eruit afgeleid (wensItem). Wat er niet meer klopt hoort bij het
+   openen te verdwijnen in plaats van een pil te laten wijzen naar iets dat je al
+   hebt -- of naar een wereldschat, die nooit te koop is. ---------------------- */
+zaak('I · mijn wens', () => {
+  const { app, p } = verseSter();
+  check(app.run('wensItem(P())') === null, 'I · een verse ster heeft geen wens', '');
+  app.run(`P().wens = 'pet_draak'`);
+  check(app.run('wensItem(P()) && wensItem(P()).id') === 'pet_draak', 'I · een wens is het spulletje zelf', '');
+  check(app.run(`wensTeken(item('pet_draak'))`) === '🐉' && app.run(`wensTeken(item('dress_geel'))`) === '👕',
+    'I · de pil toont het emoji, of anders het teken van de lade', '');
+  // al van jou: dan is het geen wens meer, ook zonder dat er iets opgeruimd is
+  p.owned.push('pet_draak');
+  check(app.run('wensItem(P())') === null, 'I · wat al van jou is, is geen wens', '');
+  // bij het openen ruimt migrate op wat niet meer klopt, en laat een goede wens staan
+  const proef = (wens, bezit) => {
+    const { app: a, p: q } = verseSter();
+    q.wens = wens; if (bezit) q.owned.push(wens);
+    a.save();
+    return heropen(a).db.profiles.p1.wens;
+  };
+  check(proef('pet_trex') === 'pet_trex', 'I · een goede wens overleeft het openen', '');
+  check(proef('pet_bestaatniet') === undefined, 'I · een wens die niet bestaat gaat eruit', '');
+  check(proef('pet_trex', true) === undefined, 'I · een wens die al van jou is gaat eruit', '');
+  check(proef('acc_wereld_muziek') === undefined, 'I · een wereldschat kan geen wens zijn', '');
 });
 
 klaar();

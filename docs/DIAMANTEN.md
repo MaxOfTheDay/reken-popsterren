@@ -1,6 +1,7 @@
 # Diamanten — wat ze waard zijn
 
-Doorlichting van de diamanteneconomie, fase 5B. Alle getallen komen uit de formules
+Doorlichting van de diamanteneconomie, fase 5B — bijgewerkt in oktober 2026 met
+11 werelden (zie §6). Alle getallen komen uit de formules
 in `index.html` zelf (`submitAnswer`, `endLevel`, `checkRankUp`, `onMemMatch`) en uit
 de catalogus `ITEMS`; er is niets geschat waar het uit te rekenen viel.
 
@@ -29,9 +30,11 @@ shows, geen herkansingen, geen moeilijkheid, geen trofeeën en geen wereldbeloni
 | applaus (publieksmeter vol) | +5 💎 | 1–2 per show | idem |
 | rest van de publieksmeter | +1 💎 per volle 25% | 1× per show | `endLevel` |
 | sterren van de show | ⭐ × 5 💎 (5 / 10 / 15) | ja, ook bij overdoen | `endLevel` |
-| rang omhoog | 10 / 15 / 20 / 30 / 40 / 50 / 60 💎 | nee, één keer per rang | `checkRankUp` |
 | memory (telmodus) | 2 💎 per paar + 3 💎 | ja | `onMemMatch` |
 | verse ster | 30 💎 | eenmalig | `defaultProfile` |
+
+De ster-status (rang omhoog: 10 tot 60 💎, samen 225) stond hier ook; die is in
+oktober 2026 met pensioen gegaan, zie §6.
 
 Trofeeën geven **geen** diamanten, en er is er sinds fase 5C ook geen enkele meer
 die naar je saldo kijkt. De twee spaar-trofeeën (`rich` 100 💎, `diamond250` 250 💎)
@@ -64,20 +67,21 @@ op memory is dus langzamer dan gewoon spelen. Er is geen grind-sluiproute.
 
 ## 3. Wat er te koop is
 
-82 koopbare spulletjes, samen **4555 💎**. Vier daarvan zijn gratis startspullen.
+94 koopbare spulletjes, samen **5885 💎** (stand oktober 2026). Vijf gratis
+startspullen komen daar nog bij.
 
-| categorie | koopbaar | goedkoopste | duurste | mediaan | som |
+| categorie | in de winkel | goedkoopste | duurste | mediaan | som |
 |---|---|---|---|---|---|
-| kleren | 14 | 0 | 110 | 60 | 696 |
+| kleren | 14 | 0 | 150 | 60 | 736 |
 | schoenen | 9 | 0 | 80 | 24 | 276 |
 | kapsels | 12 | 0 | 90 | 40 | 448 |
-| microfoons | 9 | 30 | 100 | 55 | 525 |
-| muziek | 9 | 28 | 105 | 60 | 548 |
-| accessoires | 11 | 25 | 120 | 35 | 525 |
-| dieren | 18 | 22 | 200 | 80 | 1537 |
+| microfoons | 12 | 15 | 100 | 55 | 660 |
+| muziek | 9 | 28 | 130 | 60 | 573 |
+| accessoires | 15 | 25 | 180 | 35 | 720 |
+| dieren | 27 | 22 | 250 | 75 | 2472 |
 
-Daarnaast staan er zes wereldbeloningen in de accessoires. Die hebben **geen prijs**
-en zijn niet te koop — alleen te verdienen door de wereld uit te spelen.
+Daarnaast één wereldschat per wereld. Die hebben **geen prijs** en zijn niet te
+koop — alleen te verdienen door de wereld uit te spelen.
 
 De twaalf podia staan nog in `ITEMS` (ze zijn het decor achter de pop) maar sinds
 fase 1 niet meer in `CATS`: er is geen tab die ernaartoe wijst, dus er is geen
@@ -86,22 +90,32 @@ zaak B legt dat vast, zodat de tab niet stilletjes terug kan komen.
 
 ## 4. Het ritme
 
-- Mediaanprijs ≈ 55 💎 ≈ **iets meer dan één show**.
-- De duurste spulletjes (draakje 180, pauw 200) ≈ **4 shows**.
-- Een verse ster (30 💎) kan in élke categorie meteen iets kiezen.
-- Alle werelden samen zijn 48 shows → ≈ 2250 💎 spelen + 225 💎 rangbonussen + 30 💎 start
-  ≈ **2500 💎**, oftewel iets meer dan de helft van de catalogus.
-  Die 225 zijn sinds de review van september 2026 ook echt te halen: de ladder
-  liep door tot 300 sterren terwijl er 144 bestaan, dus meer dan 75 💎 kwam er
-  nooit uit. De bovenste rang is nu "alles perfect" (zie `RANK_TIERS`).
+- Mediaanprijs ≈ 55 💎 ≈ **iets meer dan één show**. Elke categorie heeft een
+  instap onder het startsaldo van 30 💎.
+- De droomspulletjes (Draakje en Pauw 250, Eenhoorn 200, diadeem 180) ≈ **4 tot
+  6 shows** — het grootste deel van een wereld sparen. Daar is *Mijn wens* voor
+  (zie §6).
+- Eén wereld = 8 shows ≈ **400 💎**, en dat schaalt niet mee: elke wereld betaalt
+  hetzelfde. Wat wél moet meegroeien is de winkel — zie de vuistregel hieronder.
 
-Dat is de cadans die we willen: spelen → sparen → kiezen → meteen zien. Eén show is
-één keuze; alles hebben is een lange reis die ook na de laatste wereld doorloopt.
+Gesimuleerd over de 11 werelden van nu (88 shows, de echte formules, 2000 runs):
 
-De "koop alles uit deze categorie"-trofeeën (alle kleren, alle dieren) waren daar
-tot fase 5C het anker voor, en zijn nu met pensioen: ze veranderden van betekenis
-zodra er één spulletje bijkwam, en ze maakten van de kleedkamer een afvinklijst.
-Wat de kleedkamer trekt is de kleedkamer zelf — kiezen en meteen zien.
+| profiel | 💎 per show | na wereld 1 | na wereld 11 |
+|---|---|---|---|
+| sterk (95% in één keer, snel) | 53 | ± 450 | ± 4500 |
+| gemiddeld (85%, meestal snel) | 48 | ± 400 | ± 4000 |
+| beginner (72%, traag) | 42 | ± 360 | ± 3500 |
+| telmodus (5 vragen) | 40 | ± 345 | ± 3350 |
+| gemiddeld + de helft van de niet-3★-shows overgedaan | 62 | ± 520 | ± 5450 |
+
+Een gemiddeld kind kan aan het eind zo'n twee derde van de winkel betalen, een
+kind dat veel overspeelt bijna alles. Dat is de cadans die we willen: spelen →
+sparen → kiezen → meteen zien, en er is altijd nog iets om naar te verlangen.
+
+**Vuistregel voor een nieuwe wereld:** 4 à 7 winkelstukken erbij, samen ± 500 💎,
+waarvan één van 150 💎 of meer (zie `docs/UITBREIDEN.md`). Zonder dat raakt de
+winkel leeg: met 11 werelden en de oude catalogus (78 stuks, 4555 💎) kon een kind
+dat overspeelt in wereld 9 alles al hebben.
 
 ## 5. Wat er níét veranderd is, en waarom
 
@@ -126,3 +140,30 @@ Wat wél opviel, als materiaal voor een productbeslissing (níét autonoom uitge
 
 Geen van drieën is dringend, en alle drie zijn ze een keuze over inhoud en niet over
 balans.
+
+## 6. Oktober 2026: elf werelden
+
+Met 6 werelden was de catalogus ruim de helft van wat een kind kon verdienen. Met
+11 werelden was dat 93% (gemiddeld kind) tot alles in wereld 9 (wie overspeelt),
+en het Draakje en de Pauw waren al in wereld 1 samen te betalen. Wat er veranderd
+is:
+
+1. **16 nieuwe winkelstukken**, allemaal emoji (geen tekenwerk): tien dieren
+   (Aapje, Krabbetje, Rendiertje, Olifantje, Octopus, Otter, Langnek,
+   Ruimtevriendje, T-rex), vier accessoires (Kersjes, Ankerspeldje, Schelpje,
+   Maantje), twee emoji-microfoons (IJsje, Vuur) en een **rode microfoon van
+   15 💎** — de goedkope instap die microfoons nog misten (zie §5, punt 3).
+2. **Zes droomspulletjes duurder**: Draakje 180 → 250, Pauw 200 → 250, Eenhoorn
+   130 → 200, diadeem 120 → 180, regenboogoutfit 110 → 150, DJ-set 105 → 130.
+   Alles onder de 100 bleef staan: dát is de laag die van één show één keuze maakt.
+3. **De ster-status is met pensioen.** De ladder was een derde voortgangsmeter
+   naast de kaart en de kast, en stopte op 125 sterren (rond wereld 7) terwijl er
+   264 zijn. Zijn 225 💎 over de hele tournee (± 5% van het inkomen) mist niemand.
+4. **Mijn wens.** Een hartje in de lade zet één te duur spulletje vast als wens;
+   de 💎-pil op de kaart toont dan zijn emoji en een streepje dat volloopt, en
+   fonkelt zodra je hem kunt kopen. Eén veld in de opslag (`p.wens`), dat kopen
+   weer opruimt.
+
+Bewust níét gedaan: spullen aan een wereld vastmaken of ze per wereld laten
+vrijkomen. Dat zou naast de wereldschat een tweede beloning voor het uitspelen
+zetten, en die moet de enige blijven.
