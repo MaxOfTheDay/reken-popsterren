@@ -619,9 +619,10 @@ async function commitAll(bericht, res) {
     await git(['push', '-u', 'origin', tak]);
     const sha = await git(['rev-parse', '--short', 'HEAD']);
     console.log('  wereldstudio: ' + sha + ' op ' + tak + ' gepusht');
+    const adres = prAdres(await git(['remote', 'get-url', 'origin']).catch(() => ''), tak);
     zeg(200, 'vastgelegd en gepusht: ' + sha + ' op ' + tak
-      + '\n\nNaar main gaat met de hand:\n'
-      + '  git checkout main && git pull && git merge ' + tak + ' && npm test && git push');
+      + '\n\nNaar main: open een PR' + (adres ? ' — ' + adres : ' van ' + tak + ' naar main')
+      + ', of gebruik 🚀 publiceer naar main (dat slaat de PR over).');
   } catch (e) {
     zeg(500, String(e.message));
   }
@@ -684,6 +685,44 @@ async function publish(fase, res) {
     if (tak) { try { await git(['checkout', tak]); } catch (_) {} }
     zeg(500, String(e.message));
   }
+}
+
+/* Pushen voor een PR: de andere weg naar main. Publiceren hierboven voegt zelf
+   samen en pusht main, en slaat dus de PR over -- geen review, geen CI vóór het
+   landt. Wie liever langs een PR gaat, pusht hiermee alleen de eigen tak en krijgt
+   het adres waar GitHub de PR opent. main blijft waar hij stond.
+
+   De snelle keuring eerst, net als bij Vastleggen: een tak die `npm run check`
+   niet haalt hoort niet op GitHub te staan als iets om naar te kijken. */
+async function pushVoorPr() {
+  try {
+    const tak = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (tak === 'HEAD') return { ok: false, tekst: 'Je kijkt naar een losse kop (een PR); pushen gaat vanaf een tak.' };
+    if (tak === 'main' || tak === 'master') {
+      return { ok: false, tekst: 'Je staat op ' + tak + '. Leg eerst vast — dat zet er een eigen tak onder — '
+        + 'en push dan die.' };
+    }
+    if (await git(['status', '--porcelain'])) return { ok: false, tekst: 'Er staan nog wijzigingen open — leg die eerst vast.' };
+    const k = await keuring();
+    if (!k.ok) return { ok: false, tekst: 'Niet gepusht: de snelle keuring slaagt niet.\n\n' + k.tekst };
+    await git(['push', '-u', 'origin', tak]);
+    const adres = prAdres(await git(['remote', 'get-url', 'origin']).catch(() => ''), tak);
+    console.log('  wereldstudio: ' + tak + ' gepusht voor een PR');
+    return { ok: true, url: adres, tekst: tak + ' staat op GitHub; main is niet veranderd.\n'
+      + (adres ? 'Open de PR: ' + adres : 'Open op GitHub een PR van ' + tak + ' naar main.')
+      + '\nNa het samenvoegen staat het een paar minuten later op de telefoon.' };
+  } catch (e) {
+    return { ok: false, tekst: 'Pushen lukte niet — er is niets veranderd.\n'
+      + String(e.message).split('\n').slice(0, 6).join('\n') };
+  }
+}
+// Het adres waar GitHub een PR van deze tak naar main opent, of null als de verte
+// niet op github.com staat (dan weten we het adres niet en verzinnen we er geen).
+function prAdres(verte, tak) {
+  const m = /github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/.exec(String(verte).trim());
+  if (!m) return null;
+  return 'https://github.com/' + m[1] + '/' + m[2] + '/compare/main...'
+    + tak.split('/').map(encodeURIComponent).join('/') + '?expand=1';
 }
 
 /* ---- De poorten van de studiopagina ----------------------------------------
@@ -757,7 +796,10 @@ function draaiMerk() {
 
 async function api(req, res, url) {
   try {
-    if (url === '/api/versie') return json(res, versie.feiten());
+    /* browserTests: kan Publiceren hier draaien? Dat vraagt playwright (één keer
+       `npm install`), en de studio hoort dat te zeggen vóórdat je aan het eind
+       op Publiceren drukt -- niet pas dan. */
+    if (url === '/api/versie') return json(res, Object.assign({}, versie.feiten(), { browserTests: browserTestsKunnen() }));
     if (url === '/api/openwerk') return json(res, versie.opengewerk());
     if (url === '/api/bronnen') return json(res, await versie.bronnen());
     if (url === '/api/beelden') {
@@ -808,6 +850,7 @@ async function api(req, res, url) {
       return json(res, await versie.vastleggen(bericht));
     }
     if (url === '/api/terugdraaien') return json(res, await versie.terugdraaien(await lees(req, 20)));
+    if (url === '/api/pushpr') return json(res, await pushVoorPr());
     return json(res, { ok: false, tekst: 'onbekende poort' }, 404);
   } catch (e) {
     json(res, { ok: false, tekst: String(e && e.message || e) }, 500);
@@ -1142,6 +1185,11 @@ function gestart() {
       : 'ophalen mislukt (' + r.tekst + ') — de studio werkt gewoon, maar met wat er al was)')));
   } else {
     console.log('  Let op: dit is geen git-map, dus de studio kan niet zeggen welke versie er draait.');
+  }
+
+  if (!browserTestsKunnen()) {
+    console.log('  Let op: playwright ontbreekt. De studio werkt, maar Publiceren draait ook de'
+      + '\n  browsertests en weigert dan. Draai één keer `npm install` in de projectmap.');
   }
 
   if (process.argv.indexOf('--open') >= 0) openBrowser(studio);
