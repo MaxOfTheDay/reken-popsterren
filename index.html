@@ -5323,45 +5323,53 @@
   #screen-journey .icon-btn:active { transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring); }
 
   /* ---- De baan ------------------------------------------------------------
-     Eén oppervlak, drie lagen, en geen ervan hoort op te vallen:
+     Eén oppervlak: de nacht boven een concert in de verte. Vijf lagen, en geen
+     ervan hoort op te vallen -- de tekeningen zijn de hoofdpersoon:
        korrel      dezelfde ingebakken SVG-ruis als .grain elders in de app, hier
                    ín de baan (de app-korrel ligt ónder #app en is hier dus niet
                    te zien). Naadloos door stitchTiles.
-       sterrenstof een handvol puntjes op een tegel van 640px. Groot genoeg dat de
-                   herhaling in geen enkel venster tweemaal volledig in beeld komt,
-                   klein en zwak genoeg dat je er niet naar kijkt.
+       sterren     twee tegels: veel kleine, zwakke puntjes en een handvol grotere.
+                   Verschillende tegelmaten (700 en 900 hoog), zodat hun herhaling
+                   nooit samen valt en je nergens een patroon ziet.
+       schijnwerpers  twee zachte bundels die vanuit het voetlicht omhoog waaieren,
+                   vast aan het venster: het licht staat ín de kamer en de reis
+                   schuift erlangs. De pop is een popster, en dit is haar podium.
+       nevel       drie zachte wolken in violet, roze en blauw, op een tegel van
+                   1300 hoog die over de hele baan herhaalt. Lager in dekking dan
+                   de gloed om een wereld (.reis-halte::before): de kleur van een
+                   plek komt nog steeds van die plek zelf.
        de nacht    één doorlopend verloop, warm onderaan (waar je vandaan komt) en
-                   koud bovenaan (waar het nog donker is). Geen wereldkleuren: die
-                   komen van de bestemmingen zelf.                              */
+                   koud bovenaan (waar het nog donker is).
+
+     Hier stonden twee lichtvegen (FASE 5E): een koele boog linksboven, een warme
+     rechtsonder, om de reis in dezelfde kamer te zetten als de sterrenkeuze en de
+     kast. Naast de geschilderde werelden lazen ze als twee gekleurde ringen die
+     nergens bij hoorden; de schijnwerpers doen nu wat zij moesten doen. Een
+     wereld erbij verandert hier niets: alles herhaalt of hangt aan het venster. */
   .reis-track {
     position: relative; flex: none; width: 100%; overflow: hidden;
     height: calc(var(--reis-stap) * var(--reis-n, 8));
     background-image:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cg fill='%23fff' fill-opacity='.5'%3E%3Ccircle cx='58' cy='96' r='1.3'/%3E%3Ccircle cx='214' cy='41' r='.9'/%3E%3Ccircle cx='377' cy='138' r='1.5'/%3E%3Ccircle cx='523' cy='72' r='1'/%3E%3Ccircle cx='121' cy='247' r='1.1'/%3E%3Ccircle cx='298' cy='312' r='.8'/%3E%3Ccircle cx='449' cy='268' r='1.4'/%3E%3Ccircle cx='601' cy='349' r='1'/%3E%3Ccircle cx='37' cy='431' r='1.2'/%3E%3Ccircle cx='187' cy='519' r='.9'/%3E%3Ccircle cx='341' cy='463' r='1.3'/%3E%3Ccircle cx='492' cy='577' r='1'/%3E%3Ccircle cx='247' cy='611' r='1.1'/%3E%3Ccircle cx='565' cy='191' r='.9'/%3E%3C/g%3E%3C/svg%3E"),
-      /* FASE 5E -- de lichtvegen van de schil, hier ín de baan. De sterrenkeuze, de
-         kleedkamer en de kast staan alle drie in dezelfde ruimte: een koele veeg
-         linksboven, een warme rechtsonder, allebei grotendeels búiten beeld zodat
-         er alleen een boog van te zien is. De reis had die niet en was daardoor het
-         enige scherm van de app dat in vlakke nacht stond -- tussen een violette
-         sterrenkeuze en zes geschilderde werelden in, precies de brug die het
-         minst overtuigde. Vast aan het venster (background-attachment), zodat het
-         licht blijft staan terwijl de reis eronder langs schuift: dan is het licht
-         ín de kamer en niet geverfd op de baan. */
-      radial-gradient(58% 26% at -12% 6%, transparent 57%, rgba(128,226,255,.2) 65%, transparent 73%),
-      radial-gradient(64% 30% at 112% 92%, transparent 57%, rgba(var(--voetlicht-rgb),.22) 65%, transparent 73%),
-      /* De nacht zelf. Twee trappen lichter en een slag paarser dan hiervoor
-         (#110720 -> #180b2c onderaan de lucht): op #11 was dit het donkerste vlak
-         van de hele app, donkerder dan de schil en veel donkerder dan elke
-         wereldkaart, en dan leest de reis als een gat tussen twee lichte schermen
-         in plaats van als de nacht waarin ze allemaal staan. */
-      linear-gradient(to top, #37184a 0%, #27123c 22%, #1d0d31 56%, #180b2c 100%);
-    background-size: 160px 160px, 640px 640px, 100% 100%, 100% 100%, 100% 100%;
-    background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat;
-    background-attachment: scroll, scroll, fixed, fixed, scroll;
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='700'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='255' cy='393' r='0.6' fill-opacity='0.36'/%3E%3Ccircle cx='230' cy='354' r='0.6' fill-opacity='0.60'/%3E%3Ccircle cx='306' cy='288' r='0.8' fill-opacity='0.56'/%3E%3Ccircle cx='342' cy='54' r='1.0' fill-opacity='0.35'/%3E%3Ccircle cx='349' cy='111' r='1.1' fill-opacity='0.45'/%3E%3Ccircle cx='92' cy='35' r='1.4' fill-opacity='0.64'/%3E%3Ccircle cx='63' cy='311' r='1.5' fill-opacity='0.33'/%3E%3Ccircle cx='218' cy='385' r='1.2' fill-opacity='0.37'/%3E%3Ccircle cx='89' cy='690' r='0.9' fill-opacity='0.35'/%3E%3Ccircle cx='284' cy='231' r='0.7' fill-opacity='0.56'/%3E%3Ccircle cx='183' cy='245' r='0.6' fill-opacity='0.62'/%3E%3Ccircle cx='124' cy='619' r='1.0' fill-opacity='0.35'/%3E%3Ccircle cx='314' cy='281' r='1.3' fill-opacity='0.51'/%3E%3Ccircle cx='71' cy='157' r='1.0' fill-opacity='0.30'/%3E%3Ccircle cx='25' cy='289' r='1.2' fill-opacity='0.51'/%3E%3Ccircle cx='497' cy='227' r='0.9' fill-opacity='0.45'/%3E%3Ccircle cx='228' cy='587' r='1.0' fill-opacity='0.43'/%3E%3Ccircle cx='137' cy='166' r='1.2' fill-opacity='0.31'/%3E%3Ccircle cx='141' cy='537' r='1.4' fill-opacity='0.64'/%3E%3Ccircle cx='482' cy='602' r='1.2' fill-opacity='0.51'/%3E%3Ccircle cx='288' cy='17' r='0.8' fill-opacity='0.40'/%3E%3Ccircle cx='112' cy='275' r='1.2' fill-opacity='0.55'/%3E%3Ccircle cx='139' cy='670' r='0.5' fill-opacity='0.40'/%3E%3Ccircle cx='305' cy='309' r='0.6' fill-opacity='0.65'/%3E%3Ccircle cx='237' cy='611' r='1.1' fill-opacity='0.44'/%3E%3Ccircle cx='65' cy='555' r='1.4' fill-opacity='0.36'/%3E%3Ccircle cx='13' cy='108' r='1.2' fill-opacity='0.53'/%3E%3Ccircle cx='343' cy='609' r='0.7' fill-opacity='0.58'/%3E%3Ccircle cx='88' cy='26' r='0.6' fill-opacity='0.27'/%3E%3Ccircle cx='279' cy='582' r='1.3' fill-opacity='0.32'/%3E%3Ccircle cx='257' cy='36' r='0.8' fill-opacity='0.45'/%3E%3Ccircle cx='33' cy='249' r='0.7' fill-opacity='0.38'/%3E%3Ccircle cx='411' cy='96' r='0.7' fill-opacity='0.26'/%3E%3Ccircle cx='324' cy='60' r='0.9' fill-opacity='0.30'/%3E%3Ccircle cx='249' cy='290' r='0.5' fill-opacity='0.55'/%3E%3Ccircle cx='235' cy='517' r='0.8' fill-opacity='0.62'/%3E%3Ccircle cx='373' cy='447' r='0.8' fill-opacity='0.40'/%3E%3Ccircle cx='40' cy='617' r='0.6' fill-opacity='0.29'/%3E%3Ccircle cx='97' cy='213' r='0.5' fill-opacity='0.49'/%3E%3Ccircle cx='229' cy='264' r='1.0' fill-opacity='0.61'/%3E%3Ccircle cx='275' cy='295' r='0.6' fill-opacity='0.61'/%3E%3Ccircle cx='344' cy='349' r='1.4' fill-opacity='0.52'/%3E%3Ccircle cx='238' cy='677' r='1.4' fill-opacity='0.42'/%3E%3Ccircle cx='259' cy='492' r='1.3' fill-opacity='0.62'/%3E%3Ccircle cx='283' cy='693' r='1.1' fill-opacity='0.58'/%3E%3Ccircle cx='229' cy='53' r='1.5' fill-opacity='0.48'/%3E%3Ccircle cx='339' cy='274' r='1.3' fill-opacity='0.57'/%3E%3Ccircle cx='261' cy='311' r='1.4' fill-opacity='0.54'/%3E%3Ccircle cx='27' cy='258' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='343' cy='108' r='1.2' fill-opacity='0.33'/%3E%3Ccircle cx='104' cy='369' r='0.8' fill-opacity='0.27'/%3E%3Ccircle cx='499' cy='360' r='0.5' fill-opacity='0.41'/%3E%3Ccircle cx='96' cy='460' r='0.7' fill-opacity='0.55'/%3E%3Ccircle cx='159' cy='635' r='1.1' fill-opacity='0.41'/%3E%3Ccircle cx='432' cy='125' r='0.8' fill-opacity='0.42'/%3E%3Ccircle cx='465' cy='398' r='0.6' fill-opacity='0.32'/%3E%3Ccircle cx='252' cy='175' r='0.9' fill-opacity='0.46'/%3E%3Ccircle cx='172' cy='19' r='0.6' fill-opacity='0.55'/%3E%3Ccircle cx='237' cy='387' r='1.4' fill-opacity='0.30'/%3E%3Ccircle cx='211' cy='156' r='0.9' fill-opacity='0.27'/%3E%3C/g%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='900'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='233' cy='560' r='0.9' fill-opacity='0.58'/%3E%3Ccircle cx='80' cy='23' r='1.8' fill-opacity='0.67'/%3E%3Ccircle cx='451' cy='881' r='1.0' fill-opacity='0.44'/%3E%3Ccircle cx='223' cy='658' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='160' cy='642' r='1.8' fill-opacity='0.60'/%3E%3Ccircle cx='429' cy='390' r='1.4' fill-opacity='0.38'/%3E%3Ccircle cx='21' cy='22' r='1.8' fill-opacity='0.89'/%3E%3Ccircle cx='163' cy='429' r='1.6' fill-opacity='0.81'/%3E%3Ccircle cx='272' cy='465' r='2.1' fill-opacity='0.55'/%3E%3Ccircle cx='493' cy='153' r='1.1' fill-opacity='0.56'/%3E%3Ccircle cx='437' cy='882' r='0.9' fill-opacity='0.57'/%3E%3Ccircle cx='326' cy='807' r='0.9' fill-opacity='0.75'/%3E%3C/g%3E%3C/svg%3E"),
+      conic-gradient(from 162deg at 10% 112%, transparent 0deg, rgba(var(--voetlicht-rgb),.13) 7deg, rgba(var(--voetlicht-rgb),.04) 17deg, transparent 21deg),
+      conic-gradient(from 179deg at 90% 112%, transparent 0deg, rgba(190,160,255,.13) 5deg, rgba(190,160,255,.04) 15deg, transparent 19deg),
+      radial-gradient(60% 18% at 15% 30%, rgba(120,90,255,.2), transparent 70%),
+      radial-gradient(55% 16% at 90% 62%, rgba(255,90,190,.16), transparent 70%),
+      radial-gradient(70% 20% at 30% 88%, rgba(70,170,255,.14), transparent 70%),
+      /* De nacht zelf. Bovenaan een slag dieper dan de oude #180b2c, zodat de
+         sterren er iets uit springen; onderaan blijft hij warm paars, waar het
+         voetlicht staat. */
+      linear-gradient(to top, #3a1650 0%, #26103c 25%, #1a0c30 60%, #120826 100%);
+    background-size: 160px 160px, 520px 700px, 520px 900px, 100% 100%, 100% 100%,
+      100% 1300px, 100% 1300px, 100% 1300px, 100% 100%;
+    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat,
+      repeat-y, repeat-y, repeat-y, no-repeat;
+    background-attachment: scroll, scroll, scroll, fixed, fixed, scroll, scroll, scroll, scroll;
     /* de korrel wrijft in de nacht in plaats van er grijs overheen te liggen; de
-       sterren blijven gewoon sterren */
-    background-blend-mode: soft-light, normal, normal, normal, normal;
+       rest blijft gewoon wat het is */
+    background-blend-mode: soft-light, normal, normal, normal, normal, normal, normal, normal, normal;
   }
   /* Het voetlicht onderaan: de reis komt ergens vandaan. Warm, breed, en zo zwak
      dat het geen band wordt. */
@@ -5502,20 +5510,23 @@
     font-size: var(--tx-klein); font-weight: 700; letter-spacing: .005em; line-height: 1.1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     text-shadow: var(--op-kunst-ink); }
-  /* De sterrenteller: een ster en een streepje dat volloopt. Hier stond "17/24",
-     en een kind van vijf leest geen breuk -- het teken en de lengte zeggen het
-     allebei zonder te lezen: "ster, en nog niet vol". Hetzelfde soort baan als op
-     de sterrenkeuze (.st-baan), maar in goud: dit zijn verdiende sterren. De ster
-     is getekend en niet ⭐, om dezelfde reden als op de wereldkaart -- een emoji
-     wordt per toestel anders getekend, en naast elkaar valt dat op. */
-  .reis-sterren { flex: none; display: inline-flex; align-items: center; gap: 4px; }
-  .reis-sterren svg { width: 11px; height: 11px; display: block; flex: none;
-    fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.1; }
-  .rs-baan {
-    width: 30px; height: 5px; border-radius: var(--r-pill); overflow: hidden;
-    background: rgba(255,255,255,.2); box-shadow: inset 0 1px 2px rgba(8,2,20,.45);
-  }
-  .rs-baan i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-light); }
+  /* De sterrenteller: één stip per show, op een eigen regel onder de naam (zie
+     reisStippen). Hier stond een ster met een streepje dat volliep, en 22 van de 24
+     sterren zag er dan vol uit -- terwijl dat juist de wereld is waar nog iets te
+     halen valt. Nu:
+       goud     drie sterren, deze show is perfect
+       ring     gespeeld, nog niet perfect: dezelfde gouden kleur, maar leeg
+       dof      nog niet gespeeld
+     De ring is het duwtje. Hij is goud genoeg om bij de beloningen te horen en leeg
+     genoeg om te zeggen dat er nog iets in moet -- zonder woord, zonder getal. Elke
+     stip heeft een donkere zoom, net als elke ster in dit spel (--ster-vol-rand):
+     dan houdt hij zich staande op de bijna witte hoek van de suikerwereld. */
+  .reis-label { flex-wrap: wrap; row-gap: 4px; }
+  .reis-sterren { flex: 0 0 100%; display: flex; align-items: center; gap: 3px; }
+  .reis-sterren i { width: 9px; height: 9px; border-radius: 50%; display: block; flex: none; }
+  .reis-sterren .vol { background: var(--ster-vol); box-shadow: 0 0 0 1px var(--ster-vol-rand), 0 0 5px rgba(var(--goud-gloed-rgb),.55); }
+  .reis-sterren .half { box-shadow: inset 0 0 0 1.6px var(--gold-light), 0 0 0 1px rgba(18,6,36,.5); }
+  .reis-sterren .nog { background: rgba(255,255,255,.2); box-shadow: inset 0 1px 2px rgba(8,2,20,.45); }
 
   /* Het zegel: één plek, hooguit één teken, en bewust stil. Hier stond een volle
      gouden schijf, en die las als een knop -- alsof je erop moest tikken om iets
@@ -5632,7 +5643,6 @@
   .reis-halte.vol .reis-label {
     --veeg-rgb: 54,23,2; background: var(--op-kunst-veeg);
   }
-  .reis-halte.vol .rs-baan i { background: var(--gold-accent); }
   /* DE LIJST. Dit is het structurele verschil, en het enige dat niet met licht of
      kleur werkt: een tweede rand die een stukje ván de kaart af staat, met nacht
      ertussen. Een kaart in een lijst hángt ergens; de andere kaarten liggen er
@@ -5760,9 +5770,12 @@
   .reis-mist {
     position: absolute; left: 0; right: 0; top: 0; z-index: 3; pointer-events: none;
     height: calc(var(--reis-stap) * 1.6); overflow: hidden;
-    background: linear-gradient(180deg, #110720 12%, rgba(17,7,32,.86) 46%, rgba(17,7,32,0) 100%);
+    /* twee zachte wolkenbanken in de mist, waar eerst ☁️ doorheen dreven */
+    background:
+      radial-gradient(40% 50% at 20% 70%, rgba(200,180,255,.16), transparent 70%),
+      radial-gradient(45% 55% at 78% 62%, rgba(255,190,240,.13), transparent 70%),
+      linear-gradient(180deg, #110720 12%, rgba(17,7,32,.86) 46%, rgba(17,7,32,0) 100%);
   }
-  .reis-mist .map-sky-inner > span { opacity: .26; }
   .reis-vervolg {
     position: absolute; left: 50%; top: 38%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 6px; white-space: nowrap;
@@ -5804,7 +5817,6 @@
     .reis-gloed::before { animation: none; opacity: 1; box-shadow: 0 0 20px rgba(var(--goud-gloed-rgb),.32); }
     .reis-gloed::after { display: none; }
     .reis-plaats, .reis-gloed, .reis-terug, .reis-halte.vol::after { transition: none; }
-    .reis-mist .map-sky-inner > span { animation: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -15618,7 +15630,7 @@ function reisPlaatsen(p) {
     const staat = i === doel ? 'nu' : !open ? 'verder' : 'open';
     return { i, world: w, staat, open,
              uit: v.uit, vol: v.vol,
-             sterren: v.sterren, max: v.max,
+             sterren: v.sterren, max: v.max, perfect: v.perfect, levels: v.levels,
              x: reisX(i) };
   });
   // pas als alle standen bekend zijn valt de baan uit te meten: de afstanden hangen
@@ -15635,16 +15647,25 @@ function reisLabel(b, doel) {
   return b.world.name + (b.vol ? ' — helemaal vol' : b.uit ? ' — uitgespeeld' : '')
     + sterren + ', ga er heen';
 }
-/* Dezelfde getekende ster als op de wereldkaart (zie STER_PAD): een emoji heeft
-   geen vaste vorm tussen toestellen, en naast elkaar valt dat op.
+/* Eén stip per show van een wereld, in showvolgorde -- dezelfde volgorde als de
+   haltes op zijn wereldkaart. Drie standen, en alleen de eerste is goud:
 
-   Een functie en geen const, omdat STER_PAD verderop in het bestand staat: een
-   const leest hem dan bij het inladen en dat is te vroeg. Eén keer bouwen, daarna
-   uit de la -- hij komt per wereld twee keer langs. */
-let _reisSter = '';
-function reisSterSVG() {
-  if (!_reisSter) _reisSter = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STER_PAD}"/></svg>`;
-  return _reisSter;
+     vol    drie sterren: deze show is perfect
+     half   gespeeld, maar nog geen drie sterren: een gouden ríng, leeg van binnen
+     nog    nog niet gespeeld: dof
+
+   Hier stond een ster met een streepje dat volliep, en dat zei het verkeerde op
+   precies de plek waar het ertoe doet: 22 van de 24 sterren is een streepje dat
+   er vol uitziet, en dan ziet een kind niet dat er nog twee shows te halen zijn.
+   Een lege ring tussen gouden stippen ziet ze wél, en die kan ze tellen -- zonder
+   te lezen, en zonder dat er "PERFECT" op het scherm hoeft te staan. */
+function reisStippen(p, w) {
+  let html = '';
+  for (let l = w.first; l < w.first + w.levels; l++) {
+    const st = p.stars[l] || 0;
+    html += `<i class="${st >= 3 ? 'vol' : st ? 'half' : 'nog'}"></i>`;
+  }
+  return html;
 }
 /* Het vonkje: een vierpuntige ster, getekend uit vier bolle bogen. */
 const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
@@ -15656,8 +15677,8 @@ const VONK = (cx, cy, r) => `M${cx} ${cy - r}q${r * .22} ${r * .78} ${r} ${r}`
    zegt op dit scherm "hier ben je". De ster zegt waar het om gaat, en ze zegt het
    met precies het teken dat een kind de hele show door verzamelt.
 
-   Een functie en geen const, om dezelfde reden als reisSterSVG(): STER_PAD staat
-   verderop in het bestand, en een const leest hem dan bij het inladen -- te vroeg.
+   Een functie en geen const, omdat STER_PAD verderop in het bestand staat: een
+   const leest hem dan bij het inladen -- te vroeg.
    Eén keer bouwen, daarna uit de la. */
 let _reisGlans = '';
 function reisGlansSVG() {
@@ -15795,17 +15816,18 @@ function renderReis() {
        ik die wereld gedaan? Een wereld op slot krijgt geen teller: daar valt nog
        niets te tellen.
 
-       Een ster en een streepje dat volloopt, en geen "13/24": een kind van vijf
-       leest geen breuk (zie ook de ster-status-ladder). Het streepje is dezelfde
-       baan als op de sterrenkeuze; de getallen staan er voor een schermlezer en
-       voor de tests in data-sterren/data-max. */
+       Eén stip per show (zie reisStippen) en geen "13/24": een kind van vijf leest
+       geen breuk (zie ook de ster-status-ladder). De stippen staan op een eigen
+       regel onder de naam, want acht stippen naast "Onderwaterwereld" passen niet.
+       De getallen staan er voor een schermlezer en voor de tests in
+       data-sterren/data-max/data-perfect. */
     if (b.open) {
-      const deel = b.max ? Math.round(100 * b.sterren / b.max) : 0;
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
         + `<span class="rn-tekst">${esc(b.world.name)}</span>`
         + `<span class="reis-sterren" data-sterren="${b.sterren}" data-max="${b.max}"`
-        + ` role="img" aria-label="${b.sterren} van ${b.max} sterren">`
-        + `${reisSterSVG()}<span class="rs-baan"><i style="width:${deel}%"></i></span></span>`
+        + ` data-perfect="${b.perfect}" role="img"`
+        + ` aria-label="${b.sterren} van ${b.max} sterren, ${b.perfect} van ${b.levels} shows perfect">`
+        + `${reisStippen(p, worldForIndex(b.i))}</span>`
         + `</span>`);
     } else {
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
@@ -15867,12 +15889,10 @@ function renderReis() {
   mist.className = 'reis-mist';
   const vervolg = meerWereldenVooruit(p) ? '✨ Nog meer avonturen'
     : allWorldsDone(p) ? '✨ Wordt vervolgd' : '';
-  mist.innerHTML = `<div class="map-sky" aria-hidden="true"><div class="map-sky-inner">`
-    + `<span style="top:26%;font-size:30px;animation-duration:96s;animation-delay:-18s">☁️</span>`
-    + `<span style="top:54%;font-size:22px;animation-duration:112s;animation-delay:-74s">☁️</span>`
-    + `<span class="rev" style="top:74%;font-size:18px;animation-duration:86s;animation-delay:-30s">✨</span>`
-    + `</div></div>`
-    + (vervolg ? `<div class="reis-vervolg">${vervolg}</div>` : '');
+  /* Hier dreven twee ☁️ en een ✨ door de mist. Weg: een emoji is een plaatje
+     van een ánder toestel, en naast de geschilderde werelden las het als een
+     sticker. De wolken zitten nu in de mist zelf (zie .reis-mist). */
+  mist.innerHTML = vervolg ? `<div class="reis-vervolg">${vervolg}</div>` : '';
   track.appendChild(mist);
 }
 /* De wereldtekeningen zijn de grootste bestanden van de app (~300 kB per stuk), en
