@@ -29,6 +29,13 @@
      Het scheelt 9 procentpunt bovenaan de veilige zone; zie ZONE. */
   #screen-map .screen-header { transition: opacity .3s ease; }
   #screen-map.ster-bij-kop .screen-header { opacity: .18; }
+  /* Liggend op een telefoon is de kaart zo laag dat de ster bijna altijd achter
+     de kop staat -- dan stond de hele kop vast op .18, en waren de diamanten en
+     de wereldnaam er zo goed als weg. Daar dus maar half dimmen: de ster blijft
+     erdoor te zien, en wat er in de kop staat blijft leesbaar. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #screen-map.ster-bij-kop .screen-header { opacity: .6; }
+  }
   @media (prefers-reduced-motion: reduce) {
     #screen-map .screen-header { transition: none; }
   }
@@ -110,8 +117,16 @@
      als geheel -- dat zou weer tegen de buren aan lopen -- maar alleen de
      wereldnaam, met een stille ellips (.wp-here-naam hieronder). Dat gebeurt in
      de praktijk hooguit op de kleinste telefoons met de langste namen; overal
-     elders past alles gewoon voluit. */
-  #screen-map .world-pick { min-width: 0; }
+     elders past alles gewoon voluit.
+
+     MAX-WIDTH IS WAT HET WERK DOET, niet min-width. Een grid-item met
+     justify-self: center krijgt de breedte van zijn eigen inhoud, en die
+     inhoud (naam op één regel) is breder dan de kolom: de pil liep dan aan
+     twee kanten over zijn buren heen en de ellips kwam nooit. Onderwaterwereld
+     schoof zo op een gewone iPhone met de globe onder de 💎-pil. max-width: 100%
+     klemt hem op zijn kolom, en dán krimpt .wp-here-naam zoals bedoeld.
+     test/kop.test.js zaak A meet het na. */
+  #screen-map .world-pick { min-width: 0; max-width: 100%; }
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: var(--tx-klein); }
     #screen-map .wp-here { gap: 3px; padding: 0 4px 0 7px; }

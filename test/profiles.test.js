@@ -107,7 +107,7 @@ function check(ok, label, detail) {
        te komen op een keuzescherm om zichzelf daar nog een keer aan te wijzen. */
     const na = await page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id,
-      ster: cur, wereld: document.getElementById('map-tournee-label').textContent,
+      ster: cur, wereld: document.getElementById('map-tournee-label').getAttribute('aria-label'),
     }));
     check(na.scherm === 'screen-map' && na.ster === 'p1',
       'een verse ster staat meteen op haar eigen kaart', JSON.stringify(na));
@@ -278,7 +278,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(600);
     r = await page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id,
-      kop: document.getElementById('map-tournee-label').textContent,
+      kop: document.getElementById('map-tournee-label').getAttribute('aria-label'),
       wereldNaam: WORLDS[1].name,
     }));
     check(r.scherm === 'screen-map' && r.kop.indexOf(r.wereldNaam) >= 0,
@@ -2004,14 +2004,14 @@ function check(ok, label, detail) {
       const laatste = WORLDS.length - 1;
       showWorld(laatste);
       uit.idx = viewWorldIdx === laatste;
-      uit.kop = document.getElementById('map-tournee-label').textContent
+      uit.kop = document.getElementById('map-tournee-label').getAttribute('aria-label')
         .indexOf(WORLDS[laatste].name) >= 0;
       uit.haltes = document.querySelectorAll('.tour-stop').length === WORLDS[laatste].levels;
       uit.eersteHalte = Number(document.querySelector('.tour-stop').dataset.lvl) === WORLD_START[laatste];
       // en terug naar de eigen wereld via de gouden pil onderaan
       document.getElementById('world-back').onclick();
       uit.terug = viewWorldIdx === 0
-        && document.getElementById('map-tournee-label').textContent.indexOf(WORLDS[0].name) >= 0;
+        && document.getElementById('map-tournee-label').getAttribute('aria-label').indexOf(WORLDS[0].name) >= 0;
       return uit;
     });
 

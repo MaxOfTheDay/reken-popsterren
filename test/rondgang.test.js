@@ -81,7 +81,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   await page.waitForTimeout(500);
   r = await page.evaluate(() => ({
     kaart: document.getElementById('screen-map').classList.contains('active'),
-    wereld: document.getElementById('map-tournee-label').textContent,
+    wereld: document.getElementById('map-tournee-label').getAttribute('aria-label'),
     haltes: document.querySelectorAll('.tour-stop').length,
     open: document.querySelectorAll('.tour-stop:not(.locked)').length,
     nu: document.querySelectorAll('.tour-stop.next').length,
@@ -182,7 +182,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   await page.click('#btn-end-next');
   await page.waitForTimeout(3500);
   r = await page.evaluate(() => ({
-    wereld: document.getElementById('map-tournee-label').textContent,
+    wereld: document.getElementById('map-tournee-label').getAttribute('aria-label'),
     level: P().level,
     nu: (document.querySelector('.tour-stop.next') || {}).dataset,
     spul: P().owned.indexOf('acc_wereld_muziek') >= 0,
@@ -208,7 +208,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   await page.click('.reis-halte[data-w="0"]');
   await page.waitForTimeout(600);
   r = await page.evaluate(() => ({
-    wereld: document.getElementById('map-tournee-label').textContent,
+    wereld: document.getElementById('map-tournee-label').getAttribute('aria-label'),
     eerste: (document.querySelector('.tour-stop') || {}).dataset,
     terugZichtbaar: !document.getElementById('world-back').hidden,
     level: P().level,
@@ -219,7 +219,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'en een bestemming kiezen brengt je op de échte wereldkaart', '');
   await page.click('#world-back');
   await page.waitForTimeout(400);
-  check(await page.evaluate(() => /Snoepwereld/.test(document.getElementById('map-tournee-label').textContent)),
+  check(await page.evaluate(() => /Snoepwereld/.test(document.getElementById('map-tournee-label').getAttribute('aria-label'))),
     'de weg terug brengt kop en kaart samen terug', '');
 
   /* ---- 6a · Wereld naar wereld: de camera klimt (fase 3.4) ----
@@ -305,7 +305,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     await wacht(900);
     const shown = worldForIndex(viewWorldIdx);
     const haltes = [...document.querySelectorAll('#tour-map .tour-stop')].map(b => Number(b.dataset.lvl));
-    return { gelukt, view: viewWorldIdx, kop: document.getElementById('map-tournee-label').textContent,
+    return { gelukt, view: viewWorldIdx, kop: document.getElementById('map-tournee-label').getAttribute('aria-label'),
              naam: shown.world.name, eerste: haltes[0], eersteVanWereld: shown.first,
              schaduwen: document.querySelectorAll('.wereld-schaduw').length, grendel: wereldReisBezig() };
   });
@@ -344,7 +344,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
                    grendel: wereldReisBezig() };
     await wacht(1500);
     const rust = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
-                   grendel: wereldReisBezig(), kop: document.getElementById('map-tournee-label').textContent };
+                   grendel: wereldReisBezig(), kop: document.getElementById('map-tournee-label').getAttribute('aria-label') };
     // en nog een keer de kaart openen speelt hem níet opnieuw af
     goMap();
     await wacht(250);
@@ -413,7 +413,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     await wacht(200);
     quitGame();                                      // afbreken telt net zo goed als uitspelen
     await wacht(500);
-    return { wereld: viewWorldIdx, kop: document.getElementById('map-tournee-label').textContent,
+    return { wereld: viewWorldIdx, kop: document.getElementById('map-tournee-label').getAttribute('aria-label'),
              halte: !!document.querySelector('.tour-stop[data-lvl="2"]'), voor, na: P().level };
   });
   check(r.wereld === 0 && /Muziekwereld/.test(r.kop) && r.halte,
