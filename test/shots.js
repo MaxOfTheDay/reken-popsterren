@@ -51,7 +51,6 @@ const SCREENS = [
       q.level = WORLD_START[2] + 4;
       goMap(); openReis();
     } },
-  { key: '03-sterstatus',   wide: false, go: () => { selectProfile('p1'); openCareer(); } },
   { key: '04-show-rekenen', wide: true,  go: () => { selectProfile('p1'); startLevel(6); } },
   // het eindscherm viert eerst: de sterren ploppen op met een ster-uitbarsting
   // eroverheen. Die duurt ongeveer een seconde; een beeld daar middenin zegt

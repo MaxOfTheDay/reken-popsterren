@@ -56,11 +56,6 @@ function check(ok, label, detail) {
          endLevel doet de rest. Bewust niet p.stars met de hand vullen: juist de
          overgang "was nog niet uit -> is nu uit" is wat hier getest wordt.
 
-         De ster-status wordt uitgezet (rankSeen hoog): die heeft zijn eigen groot
-         moment dat vóór het wereldfeest komt, en dan zou elke zaak op de klok van
-         díe animatie moeten wachten i.p.v. op wat ze test. Zaak C kijkt apart of
-         die twee elkaar netjes opvolgen.
-
          Het feestje komt pas als de sterrenceremonie van het eindscherm
          uitgespeeld is (naSterren, zie endLevel) -- ruim anderhalve seconde, en
          niet meer de 650 ms van vroeger. Dat is te lang om na élke show af te
@@ -69,7 +64,6 @@ function check(ok, label, detail) {
          beloningen die deze show heeft opgeleverd -- want dát is waar het
          feestje over gaat. */
       window.__speel = async (lvl, sterren) => {
-        P().rankSeen = 99;
         const telt = () => {
           const q = P();
           return [q.owned.filter(id => isBeloning(id)).length,
@@ -270,27 +264,6 @@ function check(ok, label, detail) {
       'C · uit én perfect is één feestje met twee regels', JSON.stringify(r.feest));
     check(r.spullen.join() === 'acc_wereld_muziek' && r.perfect.join() === 'perfect-muziek',
       'C · en allebei de beloningen staan er echt', JSON.stringify(r));
-    /* En als de ster-status tegelijk stijgt: eerst die, dan het wereldfeest --
-       nooit over elkaar heen. */
-    const volgorde = await page.evaluate(async () => {
-      window.__sluitFeest();
-      const q = P();
-      const w = worldForIndex(1);
-      for (let l = w.first; l < w.first + w.levels - 1; l++) { await window.__speel(l, 3); window.__sluitFeest(); }
-      q.rankSeen = 0;   // de rang weer aanzetten voor de laatste show
-      startLevel(w.first + w.levels - 1);
-      G.misses = 0;
-      endLevel(true);
-      // ruim ná de sterrenceremonie (naSterren), dus de rang staat er en het
-      // wereldfeest wacht nog op zijn beurt
-      await new Promise(r2 => setTimeout(r2, 1900));
-      const tussen = { rang: !!document.querySelector('.rankup-overlay:not(.closing)'), feest: !!window.__feest() };
-      await new Promise(r2 => setTimeout(r2, 3000));
-      const daarna = { rang: !!document.querySelector('.rankup-overlay:not(.closing)'), feest: !!window.__feest() };
-      return { tussen, daarna };
-    });
-    check(volgorde.tussen.rang && !volgorde.tussen.feest && !volgorde.daarna.rang && volgorde.daarna.feest,
-      'C · een rang-stijging gaat vóór, het wereldfeest komt erna', JSON.stringify(volgorde));
     await ctx.close();
   }
 

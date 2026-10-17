@@ -2039,7 +2039,7 @@ function check(ok, label, detail) {
     const r = await page.evaluate(async () => {
       const wacht = ms => new Promise(res => setTimeout(res, ms));
       const uit = {};
-      openCareer();                                   // laag 1
+      openOverlay('proef-overlay', '<div class="pop-panel">laag 1</div>');   // laag 1
       await wacht(120);
       uit.eenLaag = document.querySelectorAll('.rp-overlay').length === 1;
       uit.heeftClose = typeof document.querySelector('.rp-overlay')._close === 'function';
@@ -2051,8 +2051,8 @@ function check(ok, label, detail) {
       backTarget()();
       await wacht(450);
       uit.trofeeWeg = !document.querySelector('.trophy-pop-overlay');
-      uit.ladderNog = !!document.querySelector('.career-overlay');
-      uit.danDeLadder = backTarget() === document.querySelector('.career-overlay')._close;
+      uit.ladderNog = !!document.querySelector('.proef-overlay');
+      uit.danDeLadder = backTarget() === document.querySelector('.proef-overlay')._close;
       backTarget()();
       await wacht(400);
       uit.allesWeg = document.querySelectorAll('.rp-overlay').length === 0;

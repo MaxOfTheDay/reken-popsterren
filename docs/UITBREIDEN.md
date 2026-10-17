@@ -190,6 +190,17 @@ Vormen die er al zijn: `color` (haar/kleren/schoenen/microfoons kleuren een
 bestaande tekening), `pattern` (een patroon op de kleren), `emoji` (het
 spulletje wórdt dat emoji), `spot: 'zij' | 'top'` voor accessoires.
 
+**Met elke nieuwe wereld een paar winkelstukken erbij.** Een wereld laat een
+kind ± 400 💎 verdienen (8 shows van ± 45–55 💎, zie `docs/DIAMANTEN.md`). Komen
+er geen spullen bij, dan raakt de winkel leeg: met 11 werelden kon een kind dat
+shows overspeelt alles al kopen. Vuistregel per wereld: **4 à 7 spulletjes,
+samen ± 500 💎, waarvan één droomspulletje van 150 💎 of meer**. Liefst in het
+thema van de wereld (🦖 bij de Dinowereld), maar ze zijn gewoon te koop voor
+iedereen — er hangt niets aan een wereld vast en er gaat niets op slot; de
+wereldschat blijft de enige beloning voor het uitspelen. Een emoji-dier,
+-accessoire of -microfoon is één regel en vraagt geen tekenwerk. Kies emoji van
+vóór 2020: een oude tablet toont nieuwere als een leeg vakje.
+
 **Een wereldschat** (een wereldbeloning — in de app heet hij sinds fase 6E
 *wereldschat*) verschilt op drie punten, en alle drie zijn ze een regel:
 
