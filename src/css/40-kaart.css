@@ -172,13 +172,8 @@
   }
   .map-portrait svg, .who-portrait svg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); }
 
-  /* ---- Carrière-ladder (ster-status) ---- */
-  .career-overlay {
-    position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center;
-    background: rgba(20,4,40,.55); animation: popFade .25s ease; cursor: pointer; padding: 16px;
-  }
-  .career-overlay.closing { animation: popFade .25s ease reverse forwards; pointer-events: none; }
-  /* Gedeelde schil voor élk feest-/statuspaneel (ster-status, trofee-onthulling).
+  /* ---- Zwevend paneel ---- */
+  /* Gedeelde schil voor élk feest-/statuspaneel (trofee-onthulling; tot oktober 2026 ook de ster-status).
      Er waren hiervoor twee losse, bijna identieke regels; alleen de breedte
      verschilt nog, en dat zet de gebruiker zelf via een modifier. */
   /* FASE 5E -- hetzelfde materiaal als de eindkaart (--paneel): diep aubergine glas
@@ -188,8 +183,7 @@
      eindkaart las het als een paneel uit een andere app. En de gouden rand was goud
      als ómlijsting: precies het gebruik waar §4 van deze fase vanaf wil, want zolang
      een heel paneel goud omrand is, is de gouden pil erin niets bijzonders meer.
-     Het goud blijft, maar waar het iets zegt: op de rang waar je nú staat, op het
-     doel erboven, op de "NU"-pil. Wat het paneel van het scherm losmaakt is
+     Het goud blijft, maar waar het iets zegt: binnen in het paneel. Wat het paneel van het scherm losmaakt is
      voortaan hetzelfde als bij elk ander zwevend vlak: licht langs de bovenrand,
      een fijne ring, en een diepe schaduw eronder. */
   .pop-panel {
@@ -201,46 +195,7 @@
     box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.12);
     animation: popIn .4s cubic-bezier(.2,1.3,.4,1);
   }
-  .career-panel { width: min(92vw, 420px); max-height: 86vh; overflow-y: auto; }
-  .career-close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
-    background: rgba(255,255,255,.13); color: var(--c-white); font-size: 16px; font-weight: 700; }
-  .career-title { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); letter-spacing: .04em; text-transform: uppercase; }
-  /* Slanke ladder: één doorlopende lijst van laag naar hoog. Verleden gedimd met ✓,
-     de huidige rung uitgeklapt met balk, de volgende als goud doel, de rest gedempt.
-     Getallen staan er niet meer bij de sterren: de balk zegt hoe ver, en "13/30"
-     is een breuk die een kind van vijf niet leest. Alleen de beloning (+15 💎). */
-  .career-list { display: flex; flex-direction: column; gap: 5px; text-align: left; margin-top: 6px; }
-  .ladder-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: var(--r-sm); border: 1px solid transparent; background: rgba(255,255,255,.1); }
-  .lr-emoji { font-size: 21px; flex: none; width: 26px; text-align: center; filter: var(--emoji-schaduw); }
-  .lr-name { flex: 1; font-weight: 700; color: var(--c-white); font-size: var(--tx-label); }
-  /* Behaald = goud, maar bewust een slag zachter dan .trophy-card.done: een trofee
-     is een prijs die blijft staan, een gepasseerde rang is voorgeschiedenis -- hier
-     moet 'nu' en 'volgende' de aandacht krijgen. Geen icoon; toekomst blijft kil/vaag. */
-  .ladder-row.past { opacity: .85; background: var(--goud-tint-zacht); border-color: var(--goud-rand-zacht); }
-  .ladder-row.future { opacity: .36; }
-  /* Doel = de volgende status, nu de rijke rij: naam + beloning boven, balk eronder.
-     De balk vult richting déze tier (de /100 is zijn drempel), dus hij hoort hier. */
-  /* FASE 5E.1 -- de rand stond op vol --gold-accent en was daarmee de enige lijn in
-     de app die als neon las: een felgele omtrek van 2px over de volle breedte van
-     het paneel, met een eigen oranje gloed eromheen. Hij hoort op te vallen, maar
-     in de taal van de rest -- dus dezelfde gouden rand die "hier moet je naar
-     kijken" elders ook draagt, met de gedeelde vulling en de gedeelde zachte gloed.
-     Vol goud blijft op dit paneel waar het al zat: de NU-pil, en de balk die naar
-     deze rang toe loopt. */
-  .ladder-row.goal { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 13px;
-    border: 2px solid var(--goud-rand); background: var(--goud-tint); box-shadow: var(--goud-gloed-zacht); }
-  .lr-top { display: flex; align-items: center; gap: 10px; }
-  .ladder-row.goal .lr-emoji { font-size: 27px; width: 32px; }
-  .ladder-row.goal .lr-name { font-size: var(--tx-body); }
-  .lr-bonus { font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); flex: none; margin-left: auto; }
-  .lr-progress { display: flex; align-items: center; gap: 8px; }
-  .lr-bar { flex: 1; height: 11px; border-radius: var(--r-pill); background: rgba(0,0,0,.32); border: 1px solid rgba(255,255,255,.14); overflow: hidden; }
-  .lr-bar > span { display: block; height: 100%; border-radius: var(--r-pill); background: var(--gold-accent); }
-  /* Huidige status = slanke 'je bent hier'-markering (geen balk meer) */
-  .ladder-row.current { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border-color: var(--goud-rand-zacht); }
-  .lr-now { font-size: var(--tx-mini); font-weight: 700; letter-spacing: .08em; color: var(--ink-on-gold); flex: none;
-    background: var(--gold-accent); padding: 3px 9px; border-radius: var(--r-pill); }
-  @media (prefers-reduced-motion: reduce) { .career-overlay, .pop-panel { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .pop-panel { animation: none; } }
   /* .map-sky (buiten) doet alleen het knippen en blijft zelf altijd op zijn
      plek t.o.v. het scherm; .map-sky-inner (binnen) krijgt de scroll-
      parallax-transform. Ooit zat de transform op

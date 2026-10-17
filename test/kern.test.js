@@ -28,7 +28,7 @@
  *   M  trofeeën met pensioen           -> uit de kast, maar niet uit de save
  *   N  beperkte beweging                -> dezelfde uitkomst, zonder de reis erheen
  *   O  het geluid                       -> een tabel op naam, en stil is stil
- *   P  sterren en ster-status           -> één regel, en een ladder die je kunt halen
+ *   P  sterren (ster-status met pensioen) -> één regel, en geen rangvelden meer
  *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
  *
  * Draaien:
@@ -872,11 +872,11 @@ zaak('O', () => {
     'O · stil met trillen aan trilt wél en klinkt niet', JSON.stringify(tril.run('window.__tril')));
 });
 
-/* ================= P · Sterren en ster-status =================
-   Hoeveel sterren een show waard is, en de ladder die op die sterren loopt. Twee
-   dingen die elkaar tegenspraken: de rekenmodus gaf één ster vanaf twee
-   haperingen (onder "was geweldig!"), en de ladder liep door tot 300 sterren
-   terwijl er 144 te halen zijn. */
+/* ================= P · Sterren (en de ster-status die er niet meer is) =========
+   Hoeveel sterren een show waard is. De rekenmodus gaf eens één ster vanaf twee
+   haperingen (onder "was geweldig!"). Hier liep ook de ladder van de ster-status
+   op; die is in oktober 2026 met pensioen gegaan, en wat er nu nagekeken wordt is
+   dat hij ook echt weg is -- uit de code én uit oude saves. */
 zaak('P', () => {
   const app = laadApp();
   const ster = (total, misses, count) => app.run(`showStars(${JSON.stringify({ total, misses, count: !!count })})`);
@@ -901,49 +901,23 @@ zaak('P', () => {
   for (const n of [5, 8, 10]) for (let m = 0; m <= n; m++) if (ster(n, m, false) !== ster(n, m, true)) zelfde = false;
   check(zelfde, 'P · rekenen en tellen tellen hetzelfde', '');
 
-  /* ---- de ladder ---- */
-  const tiers = app.run('RANK_TIERS');
-  const last = tiers.length - 1;
-  const drempel = i => app.run(`rangDrempel(${i})`);
-  const max = 3 * app.WORLD_LAST;
-  let stijgt = true;
-  for (let i = 1; i <= last; i++) if (!(drempel(i) > drempel(i - 1))) stijgt = false;
-  check(stijgt, 'P · de drempels lopen op', tiers.map((t, i) => drempel(i)).join(','));
-  check(drempel(last) === max, 'P · de bovenste rang is "alles perfect": drie sterren op elke show',
-    `${drempel(last)} vs ${max}`);
-  check(tiers.every((t, i) => drempel(i) <= max), 'P · elke rang is te halen', '');
-  const top = app.starRank(max);
-  check(top.idx === last && top.nextMin === null && top.nextName === null,
-    'P · op de top is er geen volgende rang meer om te beloven', JSON.stringify(top));
-  check(app.starRank(max - 1).idx === last - 1, 'P · en één ster eronder ben je er nog niet', '');
-  const bonus = tiers.reduce((s, t) => s + t.bonus, 0);
-  check(bonus === 225, 'P · de rangen samen geven de 225 💎 uit docs/DIAMANTEN.md', String(bonus));
-
-  // komt er een wereld bij, dan omvat "alles perfect" die ook
-  const erbij = laadApp();
-  wereldErbij(erbij, 'test7');
-  check(erbij.run(`rangDrempel(${last})`) === 3 * erbij.WORLD_LAST,
-    'P · een wereld erbij: de top schuift mee', `${erbij.run(`rangDrempel(${last})`)} vs ${3 * erbij.WORLD_LAST}`);
-
-  /* ---- de nieuwe drempels, één keer stil ---- */
-  // Een kind met 100 sterren was Radioster (4) onder de oude tabel en is nu
-  // Toursensatie (5). Dat mag bij de volgende show geen feestje geven.
+  /* ---- de ster-status is met pensioen ---- */
+  // Er is geen ladder meer, en dus ook geen rang die ergens diamanten uitdeelt.
+  check(app.run('typeof RANK_TIERS') === 'undefined' && app.run('typeof checkRankUp') === 'undefined',
+    'P · er is geen ster-status meer', '');
+  // een nieuwe ster draagt zijn velden niet meer
+  const { p: vers } = verseSter('Nieuw');
+  check(!('rankSeen' in vers) && !('rangVersie' in vers), 'P · een nieuwe ster heeft geen rangvelden',
+    JSON.stringify([vers.rankSeen, vers.rangVersie]));
+  // een oude save raakt ze bij het openen kwijt, en houdt verder alles
   const { app: oudApp, p: oud } = verseSter('Oud');
-  for (let l = 1; l <= 34; l++) oud.stars[l] = 3;   // 102 sterren
-  oud.level = 35; oud.rankSeen = 4; delete oud.rangVersie;
+  for (let l = 1; l <= 34; l++) oud.stars[l] = 3;
+  oud.level = 35; oud.rankSeen = 4; oud.rangVersie = 2; oud.diamonds = 321;
   oudApp.save();
   const na = heropen(oudApp);
   const q = na.db.profiles.p1;
-  check(q.rankSeen === na.starRank(na.totalStarCount(q)).idx && q.rangVersie === na.run('RANG_VERSIE'),
-    'P · een bestaande save staat na het openen stil op zijn nieuwe rang', `${q.rankSeen} / ${q.rangVersie}`);
-  const voor = q.diamonds;
-  na.zetSpeler('p1');
-  check(na.run('checkRankUp(P())') === null && q.diamonds === voor,
-    'P · en de volgende show geeft daar geen feestje of bonus voor', '');
-  // een nieuwe ster begint op de nieuwe drempels en migreert dus nergens heen
-  const { p: vers } = verseSter('Nieuw');
-  check(vers.rangVersie === app.run('RANG_VERSIE') && vers.rankSeen === 0,
-    'P · een nieuwe ster kent de nieuwe drempels meteen', `${vers.rangVersie} / ${vers.rankSeen}`);
+  check(!('rankSeen' in q) && !('rangVersie' in q) && q.diamonds === 321 && na.totalStarCount(q) === 102,
+    'P · een oude save verliest zijn rangvelden en verder niets', JSON.stringify([q.rankSeen, q.rangVersie, q.diamonds]));
 });
 
 /* ================= Q · De leerstap =================
