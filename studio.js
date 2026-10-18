@@ -502,7 +502,7 @@ function startMapEdit() {
           <p class="st-hint">De <b>weg</b> zie je altijd; lucht, diepte en gloed alleen zonder tekening
             en aan de rand in liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
             een show: hoe lichter de tekening, hoe donkerder hij moet. De studio kiest beide zelf als
-            je een tekening neerzet, en de weg opnieuw als je de haltes verschuift.</p>
+            je een tekening neerzet.</p>
         </details>
       </section>
 
@@ -2284,7 +2284,7 @@ function startMapEdit() {
       const klaar = 'Gewijzigd · ' + label + '  ' + maat + ' → ' + txt + klein
         + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.');
       setOut(klaar);
-      if (key === 'world') autoKleuren(false, klaar + '\nKleuren en zaal komen uit de tekening.');
+      if (key === 'world') autoKleuren(klaar + '\nKleuren en zaal komen uit de tekening.');
     } catch (err) {
       console.error('[wereldstudio] ' + pad + ' is vervangen, maar het paneel bijwerken mislukte', err);
       setOut('Gewijzigd · ' + pad + ' staat op schijf.\n'
@@ -2489,6 +2489,8 @@ function startMapEdit() {
     const grijs = kleur('--gray-bottom');
     const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
 
+    const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(38,12,64,.78)');
+
 
 
 
@@ -2526,8 +2528,10 @@ function startMapEdit() {
       const bg = schijf(data, br, ho, pt.x, pt.y, 2.5);
       if (!bg) return;
       const opDeWeg = wegKleur.a < 1 ? meng(wegKleur, bg) : wegKleur;
+      const opDeRand = randKleur.a < 1 ? meng(randKleur, bg) : randKleur;
+
       uit.weg.push({ nr: (i + 1) + '–' + (i + 2), licht: Math.round(lum(bg) * 100),
-                     v: verhouding(lum(bg), lum(opDeWeg)) });
+                     v: Math.max(verhouding(lum(bg), lum(opDeWeg)), verhouding(lum(bg), lum(opDeRand))) });
     });
     return uit;
   }
@@ -2559,9 +2563,8 @@ function startMapEdit() {
     if (slechtW.length) {
       stukken.push(slechtW.map(o => regel('weg ' + o.nr, o, zwak.weg)).join('<br>'));
 
-      const gem = slechtW.reduce((n, o) => n + o.licht, 0) / slechtW.length;
-      stukken.push('<span class="ct-let">·</span> zet <b>weg</b> '
-        + (gem > 45 ? 'donkerder' : 'lichter') + ' voor deze wereld');
+
+      stukken.push('<span class="ct-let">·</span> zet <b>weg</b> lichter voor deze wereld');
     }
     vak.innerHTML = stukken.join('<br>');
   }
@@ -2655,26 +2658,12 @@ function startMapEdit() {
 
 
 
-    const langsDeWeg = leesCurve().map(pt => schijf(data, br, ho, pt.x, pt.y, 4)).filter(Boolean);
-    if (!langsDeWeg.length) langsDeWeg.push({ r: 70, g: 40, b: 100, a: 1 });
-    const kandidaat = l => hslHex(gloedH, .22, l);
 
 
 
 
-    const scoor = hex => Math.min.apply(null, langsDeWeg.map(bg =>
-      verhouding(lum(bg), lum(meng(Object.assign(naarRgb(hex), { a: .68 }), bg)))));
 
-
-
-    const reeks = [];
-    for (let l = .1; l <= .95; l += .02) { const hex = kandidaat(l); reeks.push({ hex, sc: scoor(hex) }); }
-    const besteScore = Math.max.apply(null, reeks.map(o => o.sc));
-
-
-
-
-    const beste = reeks.filter(o => o.sc >= besteScore * .92).pop().hex;
+    const beste = hslHex(gloedH, .3, .8);
 
 
 
@@ -2716,13 +2705,14 @@ function startMapEdit() {
 
 
 
-  async function autoKleuren(alleenWeg, bericht) {
+
+  async function autoKleuren(bericht) {
     const w = shown().world;
     if (!w.art || w.art.indexOf('blob:') === 0) return false;
     try {
       const voor = await kleurenUitTekening();
       if (shown().world !== w) return false;
-      (alleenWeg ? ['road'] : Object.keys(voor)).forEach(k => { F('mf-' + k).value = String(voor[k]); });
+      Object.keys(voor).forEach(k => { F('mf-' + k).value = String(voor[k]); });
       readSheet();
       if (bericht) setOut(bericht);
       return true;
@@ -3177,13 +3167,7 @@ function startMapEdit() {
     drag = null;
     saveWorldDraft();
     refreshList();
-
-
-
-    clearTimeout(wegKlok);
-    wegKlok = setTimeout(() => { if (!drag) autoKleuren(true); }, 700);
   };
-  let wegKlok = null;
   map.addEventListener('pointerup', endDrag, true);
   map.addEventListener('pointercancel', endDrag, true);
 
