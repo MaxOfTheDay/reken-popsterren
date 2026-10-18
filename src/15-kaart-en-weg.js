@@ -335,5 +335,4 @@ function showWorld(idx, travelFrom) {
   renderTourMap(travelFrom || 0);
   preloadNextWorldArt();
   preloadBuurwerelden();
-  preloadReisKaartjes();
 }

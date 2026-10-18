@@ -9871,7 +9871,6 @@ function showWorld(idx, travelFrom) {
   renderTourMap(travelFrom || 0);
   preloadNextWorldArt();
   preloadBuurwerelden();
-  preloadReisKaartjes();
 }
 
 
@@ -14163,33 +14162,6 @@ function preloadBuurwerelden() {
 
 
 
-const KAARTJES_KLAAR = new Map();
-function preloadReisKaartjes() {
-  if (!cur || viewWorldIdx == null) return;
-  const hier = viewWorldIdx, laatste = laatsteZichtbareWereld(P());
-  naDeRust(() => {
-    for (let i = Math.max(0, hier - 2); i <= Math.min(laatste, hier + 2); i++) {
-      const w = worldForIndex(i);
-      const src = w && w.world.art && (wereldKleinPad(w.world.art) || w.world.art);
-      if (!src || KAARTJES_KLAAR.has(src)) continue;
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = src;
-      KAARTJES_KLAAR.set(src, img);
-      if (img.decode) img.decode().catch(() => KAARTJES_KLAAR.delete(src));
-    }
-  });
-}
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -15175,9 +15147,15 @@ function reisCamera(punt, van, naar) {
 
 
 
+
+
+
+
+
+const REIS_CAMERA_MAX = 1.8;
 function reisCameraSchaal(kaartje, wereld) {
   if (!kaartje || !wereld || !kaartje.clip.w) return 1;
-  return Math.max(1, Math.min(4, wereld.clip.w / kaartje.clip.w));
+  return Math.max(1, Math.min(REIS_CAMERA_MAX, wereld.clip.w / kaartje.clip.w));
 }
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;

@@ -4135,33 +4135,6 @@ function preloadBuurwerelden() {
     if (w && w.world) preloadArt(w.world.art);
   }));
 }
-/* En de kaartjes van Werelden rond deze wereld, alvast uitgepakt. Dat is wat er
-   in beeld staat op het moment dat de kaart uitzoomt: de wereld zelf en twee
-   buren aan elke kant. Ze zijn klein (het -klein.webp, een vijfde van een kaart),
-   maar het uitpakken gebeurde precies tijdens de vlucht -- en dát was het beeldje
-   dat haperde, gemeten op een vier keer gesmoorde processor: 50 tot 80ms midden in
-   een beweging van 340.
-
-   decode() pakt hem achter in de rij uit, en het beeld blijft in KAARTJES_KLAAR
-   bewaard zodat de browser het uitgepakte plaatje vasthoudt. Eén keer per
-   bestand per sessie; mislukt het, dan vergeten we het weer (zie ART_GEHAALD). */
-const KAARTJES_KLAAR = new Map();
-function preloadReisKaartjes() {
-  if (!cur || viewWorldIdx == null) return;
-  const hier = viewWorldIdx, laatste = laatsteZichtbareWereld(P());
-  naDeRust(() => {
-    for (let i = Math.max(0, hier - 2); i <= Math.min(laatste, hier + 2); i++) {
-      const w = worldForIndex(i);
-      const src = w && w.world.art && (wereldKleinPad(w.world.art) || w.world.art);
-      if (!src || KAARTJES_KLAAR.has(src)) continue;
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = src;
-      KAARTJES_KLAAR.set(src, img);
-      if (img.decode) img.decode().catch(() => KAARTJES_KLAAR.delete(src));
-    }
-  });
-}
 
 /* ================= Wereld naar wereld: de camera klimt ====================
    Fase 3.4. Eén bewegingsregel voor álle wereldwissels, en hij is ruimtelijk:
@@ -5155,11 +5128,17 @@ function reisCamera(punt, van, naar) {
   return () => { a.cancel(); track.style.transformOrigin = ''; };
 }
 /* Hoeveel groter de wereld is dan zijn kaartje -- de schaal waarmee de camera
-   duwt. Op de breedte gemeten, en begrensd: een héél klein kaartje op een groot
-   scherm zou de buren anders met een ruk het beeld uit gooien. */
+   duwt. Op de breedte gemeten, en begrensd op REIS_CAMERA_MAX. Dat is geen smaak
+   maar geheugen: een animerende laag wordt getekend op de grootste schaal die hij
+   gaat halen, en dit is de hele baan van Werelden. Op een telefoon is het kaartje
+   ruim de helft van de breedte, dus bij 1,8 staan de buren al buiten beeld; wat er
+   nog over is, dooft in het laatste stuk weg. Op een tablet zou de volle schaal
+   boven de 3 uitkomen, en dan tekent hij een baan van duizenden pixels hoog op
+   drie keer de maat. */
+const REIS_CAMERA_MAX = 1.8;
 function reisCameraSchaal(kaartje, wereld) {
   if (!kaartje || !wereld || !kaartje.clip.w) return 1;
-  return Math.max(1, Math.min(4, wereld.clip.w / kaartje.clip.w));
+  return Math.max(1, Math.min(REIS_CAMERA_MAX, wereld.clip.w / kaartje.clip.w));
 }
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
