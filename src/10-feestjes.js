@@ -113,29 +113,43 @@ function zetPas(el, move) {
    de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
    wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
 function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
+/* Hoe lang één pasje duurt: de .9s van de danspasjes in 30-onderdelen.css. Na
+   PAS (plus een beeldje of drie) gaat het pasje er weer af.
+
+   Per pop één klokje, en een nieuw pasje zet het oude klokje stil. Zonder dat
+   haalde het klokje van een vorige tik het volgende pasje halverwege weg: tik
+   twee keer kort na elkaar en de tweede dans brak na een halve seconde af. */
+const PAS = 900;
+const pasKlok = new WeakMap();
+function pasUit(el) {
+  clearTimeout(pasKlok.get(el));
+  pasKlok.set(el, setTimeout(() => stilStaan(el), PAS + 50));
+}
 function dance(elId) {
   const el = $(elId);
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
   if (!zetPas(el, move)) return;
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 function buiging(elId) {
   const el = $(elId);
   if (!el || !zetPas(el, BUIGING)) return;
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 // Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
-function tapDance(elId) {
+// stil: wie al een eigen klankje speelt (Verras me speelt sndAan), krijgt er
+// niet nog het tikje bovenop -- twee klankjes tegelijk lezen als één rommel.
+function tapDance(elId, stil) {
   const el = $(elId);
   if (!el || el.classList.contains('dancing')) return;
   // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
   // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
-  sndTap();
+  if (!stil) sndTap();
   if (!zetPas(el, pick(MOVES))) return;
   sparkle(el);
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 // klein sterretje dat oppopt bij een tik-dans
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
@@ -165,12 +179,16 @@ function finaleDance(elId, count) {
   // als je om minder beweging gevraagd hebt. Ze staat er gewoon, in haar nieuwe
   // spullen, en het eindscherm vertelt de rest.
   if (motionOff()) { stilStaan(el); return; }
+  /* Elk pasje helemaal uit (PAS). Dit stond op 620ms per pasje, terwijl een
+     pasje 900ms duurt: elk pasje werd op tweederde afgebroken en de pop sprong
+     naar de volgende stand -- het duidelijkst midden in de pirouette. */
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
     if (!zetPas(el, MOVES[i % MOVES.length])) return;
     i++;
-    setTimeout(step, 620);
+    clearTimeout(pasKlok.get(el));
+    pasKlok.set(el, setTimeout(step, PAS));
   };
   step();
 }
