@@ -8739,7 +8739,7 @@
          openSettings() komt zonder sterren meteen in Beheer uit, bij terugzetten.
          Een kind dat hierop tikt komt in het ouderdeel, en daar kan het niets
          kwijtraken: er is nog niets. -->
-    <button class="restore-hint" id="restore-hint" type="button" onclick="openSettings()">Al een back-up? Zet hem terug <span aria-hidden="true">›</span></button>
+    <button class="restore-hint" id="restore-hint" type="button" onclick="naTik(openSettings)">Al een back-up? Zet hem terug <span aria-hidden="true">›</span></button>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
 
@@ -8803,7 +8803,7 @@
     <!-- de weg terug naar de wereld waar ze speelt; alleen zichtbaar als ze elders kijkt -->
     <button class="world-back" id="world-back" hidden></button>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
-    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 +<span id="mem-fab-pay">0</span></span></button>
+    <button class="mem-fab" id="mem-fab" onclick="naTik(startMemory)" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 +<span id="mem-fab-pay">0</span></span></button>
   </div>
 
   <!-- ===== Werelden (fase 4B) =====
@@ -8814,7 +8814,7 @@
   <div class="screen hub" id="screen-journey">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="reisSluit()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
         <!-- Alleen de globe, geen woord erbij: het scherm zégt al wat het is (gestapelde
              werelden, de route ertussen, Kaart onderaan geselecteerd) en "Werelden"
              eroverheen is dat nog een keer. Wat overblijft is het ene teken dat óók op
@@ -8843,7 +8843,7 @@
   <div class="screen app-sfeer" id="screen-memory">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="exitMemory()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(exitMemory)" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
         <div class="header-title">🎤 Memory</div>
         <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
       </div>
@@ -8860,8 +8860,8 @@
         <div class="mem-done-title">🎉</div>
         <div class="mem-done-earn earn-chip dia" id="mem-done-earn"></div>
         <div class="mem-done-btns">
-          <button class="btn" onclick="startMemory()">🎤 Nog een keer</button>
-          <button class="btn gray" onclick="exitMemory()">🗺️ Kaart</button>
+          <button class="btn" onclick="naTik(startMemory)">🎤 Nog een keer</button>
+          <button class="btn gray" onclick="naTik(exitMemory)">🗺️ Kaart</button>
         </div>
       </div>
     </div>
@@ -8954,7 +8954,7 @@
   <div class="screen hub gebruik app-sfeer kast" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="goMap()" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
         <div class="header-title">🏆 Trofeeënkast</div>
         <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
       </div>
@@ -9016,7 +9016,7 @@
   <div class="screen hub gebruik app-sfeer kleedkamer" id="screen-dress">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="dressBack()" aria-label="Terug" title="Terug">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(dressBack)" aria-label="Terug" title="Terug">←</button>
         <div class="header-title">👕 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
@@ -9051,7 +9051,7 @@
   <div class="screen gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="closeSettings()" aria-label="Terug" title="Terug">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(closeSettings)" aria-label="Terug" title="Terug">←</button>
         <!-- FASE 5D.1 -- het gezins-emoji stond hier vóór de titel en werd door
              de meeste toestellen zwart-wit getekend: over een donkerpaarse balk
              een grijs blokje, het enige ruwe ding in een verder gepoetst scherm.
@@ -9115,7 +9115,7 @@
       <span class="gi-ico">📳</span><span class="gi-label">Trillen</span><span class="gi-state" id="gear-haptics-state">Aan</span>
     </button>
     <div class="gear-sep"></div>
-    <button class="gear-item parents" onclick="openSettings()" role="menuitem">
+    <button class="gear-item parents" onclick="naTik(openSettings)" role="menuitem">
       <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span>
       <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
       <span class="gi-chev" aria-hidden="true">›</span>
@@ -13227,6 +13227,8 @@ function show(id) {
   if (navId) updateTroDot();
   syncBackGuard();
 }
+
+
 
 
 
@@ -19857,10 +19859,10 @@ function endLevel(success) {
     if (nieuwKlaar) {
       const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
+      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
-    $('btn-end-next').onclick = () => { sndClick(); goMap(lvl); };
+    $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
 
 
 
@@ -19869,8 +19871,8 @@ function endLevel(success) {
     const nieuwSpul = feest && feest.spul;
     $('btn-end-alt').textContent = nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
     $('btn-end-alt').onclick = nieuwSpul
-      ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
-      : () => { sndClick(); openKleedkamer(); };
+      ? () => { sndClick(); naTik(() => openKleedkamerItem(nieuwSpul.id)); }
+      : () => { sndClick(); naTik(openKleedkamer); };
     sndWin();
     confetti(40, $('screen-end'));
     finaleDance('end-avatar', 4);
@@ -19889,9 +19891,9 @@ function endLevel(success) {
 
     $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
-    $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
+    $('btn-end-next').onclick = () => { sndClick(); naTik(() => startLevel(lvl)); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
-    $('btn-end-alt').onclick = () => { sndClick(); goMap(lvl); };
+    $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
   }
 
 

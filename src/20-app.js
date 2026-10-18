@@ -3229,9 +3229,11 @@ function show(id) {
    nieuwe scherm staat er dus even snel als vroeger (een beeldje is ~16 ms), maar
    de tik wacht er niet meer op.
 
-   Alleen voor wat een vinger aanraakt -- de knoppen in de opmaak roepen dit aan.
-   navGo, openReis en goMapNaShow zelf blijven synchroon: de suites roepen ze
-   rechtstreeks aan en lezen meteen na wat er staat.
+   Alleen voor wat een vinger aanraakt: de knoppen die van scherm wisselen (de
+   tabbladen, de pillen in de kop, de terugpijlen, de knoppen op het eindscherm)
+   roepen dit aan. De functies erachter -- navGo, openReis, goMap en de rest --
+   blijven synchroon: de suites roepen ze rechtstreeks aan en lezen meteen na
+   wat er staat.
 
    De grendel: een tweede tik in dat ene beeldje doet niets, anders stapelen er
    twee wissels op elkaar (zie ook kiesBezig bij de sterrenkeuze). */
@@ -9843,10 +9845,10 @@ function endLevel(success) {
     if (nieuwKlaar) {
       const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
+      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
-    $('btn-end-next').onclick = () => { sndClick(); goMap(lvl); };
+    $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
     /* Net een wereldspulletje verdiend? Dan gaat de tweede knop niet naar "de
        kleedkamer" maar naar dát spulletje. Het feestje hierboven laat het één keer
        zien en is daarna weg; zonder deze brug moet een kind zelf bedenken in welke
@@ -9855,8 +9857,8 @@ function endLevel(success) {
     const nieuwSpul = feest && feest.spul;
     $('btn-end-alt').textContent = nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
     $('btn-end-alt').onclick = nieuwSpul
-      ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
-      : () => { sndClick(); openKleedkamer(); };
+      ? () => { sndClick(); naTik(() => openKleedkamerItem(nieuwSpul.id)); }
+      : () => { sndClick(); naTik(openKleedkamer); };
     sndWin();
     confetti(40, $('screen-end'));
     finaleDance('end-avatar', 4);   // grote slotchoreografie: vier hele pasjes, ruim 3.6s
@@ -9875,9 +9877,9 @@ function endLevel(success) {
     // het vakje schuiven de knoppen gewoon een regel op.
     $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
-    $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
+    $('btn-end-next').onclick = () => { sndClick(); naTik(() => startLevel(lvl)); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
-    $('btn-end-alt').onclick = () => { sndClick(); goMap(lvl); };
+    $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
   }
   /* DE VOLGORDE op het eindscherm: eerst de sterren, dan wat ze opleveren, dan
      de weg verder. Hier stond alles behalve de sterren al klaar op het eerste

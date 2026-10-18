@@ -514,16 +514,21 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     const metingen = [];
     document.getElementById('btn-end-next').click();
     for (let i = 0; i < 30; i++) {
-      metingen.push({ kaart: op(kaart), eind: op(eind), maat: dekt(kaart) });
+      metingen.push({ kaart: op(kaart), eind: op(eind), maat: dekt(kaart),
+                      binnen: kaart.classList.contains('active') });
       await new Promise(res => requestAnimationFrame(res));
     }
+    /* De wissel begint één beeldje ná de tik (zie naTik): zolang staat het
+       eindscherm er nog gewoon, en de kaart is dan nog display:none. Wat de
+       kaart moet doen, geldt vanaf het beeldje waarop hij er is. */
+    const opKaart = metingen.filter(m => m.binnen);
     return {
       // op elk beeldje ligt er iets dekkends: de kaart eronder, of het eindscherm erover
       dekkend: metingen.every(m => Math.max(m.kaart, m.eind) > 0.999),
       // en de kaart is er altijd volledig -- hij beweegt, hij doft niet
-      kaartVol: metingen.every(m => m.kaart > 0.999),
+      kaartVol: opKaart.length > 20 && opKaart.every(m => m.kaart > 0.999),
       // ondoorzichtig én zo groot als het venster: kleiner laat de randen los
-      kaartDekt: metingen.every(m => m.maat),
+      kaartDekt: opKaart.length > 20 && opKaart.every(m => m.maat),
       // het eindscherm is wél echt weggegaan (anders meet je een overgang die niet liep)
       eindWeg: metingen.some(m => m.eind < 0.05),
       laagst: Math.min(...metingen.map(m => Math.max(m.kaart, m.eind))).toFixed(3),
