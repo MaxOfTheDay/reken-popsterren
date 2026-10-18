@@ -2307,6 +2307,59 @@
   a.gear-item { text-decoration: none; }
   .gear-item.over { padding: 9px 11px; }
 
+  #gear-app { padding: 9px 11px; }
+
+
+
+
+
+
+  .app-knop {
+    position: fixed; top: var(--balk-rand); left: var(--balk-rand); z-index: 50;
+    height: 44px; padding: 0 15px 0 11px; display: flex; align-items: center; gap: 6px;
+    font: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--c-white); white-space: nowrap;
+    border-radius: var(--r-pill); border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  }
+  .app-knop:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+
+
+
+
+
+  body:has(.modal-bg.open) .app-knop,
+  body:has(.modal-bg.open) #corner-btns { visibility: hidden; }
+
+
+  #app-blad { text-align: left; color: var(--paper-ink); }
+  #app-blad .ab-voor {
+    display: table; margin: 0 auto 8px; padding: 3px 10px; border-radius: var(--r-pill);
+    background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-mini); font-weight: 700;
+  }
+  #app-blad .ab-wat { text-align: center; color: var(--paper-ink-muted); margin-bottom: 10px; }
+  #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
+  #app-blad .ab-nr {
+    flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--purple-mid); color: var(--c-white); font-size: 13px; font-weight: 700;
+  }
+  #app-blad .ab-kbd {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
+    background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
+  }
+  #app-blad .ab-svg { width: 18px; height: 18px; flex: none; }
+
+  #app-blad .ab-balk {
+    display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 4px 0 6px 34px;
+    border-radius: 12px; background: var(--paper-muted-bg); color: #0a84ff; font-size: 18px;
+  }
+  #app-blad .ab-doel { display: grid; padding: 3px; border-radius: 7px; box-shadow: 0 0 0 2.5px var(--pink-hot); }
+  #app-blad .ab-uitleg { margin: 4px 0; }
+  #app-blad .ab-noot {
+    margin-top: 10px; padding: 8px 11px; border-radius: var(--r-sm);
+    background: var(--paper-tint); border: 1px solid var(--paper-border); color: var(--paper-ink-muted); font-size: var(--tx-klein);
+  }
+
 
   .stage {
     position: relative; border-radius: var(--r-lg); overflow: hidden; flex-shrink: 0;
@@ -8829,6 +8882,12 @@
   <button class="nav-item" id="nav-tro" onclick="navGo('tro')"><span class="nav-ico">🏆</span>Trofeeën<span class="nav-dot"></span></button>
 </div>
 
+<!-- Linksboven, het spiegelbeeld van het tandwiel: "Speel als app". Alleen op de
+     sterrenkeuze en alleen in de browser -- appKnopZet zet hem aan en uit. -->
+<button class="app-knop" id="app-knop" style="display:none" onclick="openAppBlad(true)">
+  <span aria-hidden="true">📲</span> Speel als app
+</button>
+
 <div class="corner-btns" id="corner-btns">
   <button class="btn icon-btn" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen"><span class="gear-ico">⚙️</span></button>
   <div class="gear-menu" id="gear-menu" role="menu">
@@ -8842,6 +8901,14 @@
     <button class="gear-item parents" onclick="openSettings()" role="menuitem">
       <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span>
       <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
+      <span class="gi-chev" aria-hidden="true">›</span>
+    </button>
+    <!-- De weg naar het blad "Rekensterren als app" (zie "= Speel als app" in het
+         scriptblok). Blijft staan als het knopje linksboven weg is, en verdwijnt
+         pas als het spel als app draait. -->
+    <button class="gear-item" id="gear-app" onclick="openAppBlad(false)" role="menuitem">
+      <span class="gi-ico" aria-hidden="true">📲</span>
+      <span class="gi-label">Speel als app<span class="gi-sub">Op het beginscherm</span></span>
       <span class="gi-chev" aria-hidden="true">›</span>
     </button>
     <!-- De weg naar over/ (zie ouderVoetHtml en naarOver in het scriptblok). Een echte
@@ -12466,6 +12533,9 @@ function renderGearMenu() {
 
 
   setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
+
+  const app = $('gear-app');
+  if (app) app.style.display = appUitlegNodig() ? '' : 'none';
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -12840,6 +12910,7 @@ function show(id) {
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   if (!onProfile) closeGearMenu();
+  appKnopZet();
 
   const navId = navVolgtScherm();
   ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
@@ -13613,6 +13684,7 @@ function renderProfiles() {
   const hint = $('restore-hint');
   if (hint) hint.style.display = n ? 'none' : 'block';
   renderGearMenu();
+  appKnopZet();
 
 
 
@@ -21616,7 +21688,150 @@ addEventListener('appinstalled', () => {
   beginschermNetErop = true;
   const k = $('set-beginscherm');
   if (k) k.remove();
+  installVoorstel = null;
+  appKnopZet();
+  renderGearMenu();
+  if ($('app-blad')) closeConfirmModal();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const APPKNOP_KEY = 'rekenPopsterren_appknop';
+const APPKNOP = { vanafBezoek: 2, rustDagen: 14, maxNee: 3 };
+let installVoorstel = null;
+addEventListener('beforeinstallprompt', e => { installVoorstel = e; });
+function appKnopLees() {
+  try {
+    const s = JSON.parse(localStorage.getItem(APPKNOP_KEY) || 'null');
+    return s && typeof s === 'object' ? s : {};
+  } catch (e) { return {}; }
+}
+function appKnopSchrijf(s) {
+  try { localStorage.setItem(APPKNOP_KEY, JSON.stringify(s)); } catch (e) { }
+}
+
+(function () {
+  if (speeltAlsApp()) return;
+  const s = appKnopLees();
+  s.bezoek = (s.bezoek | 0) + 1;
+  appKnopSchrijf(s);
+})();
+
+function appUitlegNodig() { return !beginschermNetErop && !speeltAlsApp(); }
+function appKnopTonen(nu) {
+  if (!appUitlegNodig()) return false;
+  const zoek = location.search || '';
+  if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
+  const s = appKnopLees();
+  if ((s.bezoek | 0) < APPKNOP.vanafBezoek) return false;
+  if ((s.nee | 0) >= APPKNOP.maxNee) return false;
+  return !(s.rustTot > (nu || Date.now()));
+}
+
+function appKnopZet() {
+  const k = $('app-knop');
+  if (!k) return;
+  const opLanding = $('screen-profile').classList.contains('active');
+  k.style.display = opLanding && appKnopTonen() ? '' : 'none';
+}
+function appKnopNietNu() {
+  const s = appKnopLees();
+  s.nee = (s.nee | 0) + 1;
+  s.rustTot = Date.now() + APPKNOP.rustDagen * 24 * 3600 * 1000;
+  appKnopSchrijf(s);
+  closeConfirmModal();
+  appKnopZet();
+}
+
+
+const DEEL_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const PLUS_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+function isIpad(nav) {
+  nav = nav || navigator;
+  const ua = String(nav.userAgent || '');
+  return /iPad/.test(ua) || (/Macintosh/.test(ua) && (nav.maxTouchPoints || 0) > 1);
+}
+
+
+function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
+  const stap = (n, t) => `<div class="ab-stap"><span class="ab-nr">${n}</span><span>${t}</span></div>`;
+  const kbd = t => `<span class="ab-kbd">${t}</span>`;
+  const wat = '<p class="ab-wat">Dan staat het spel als icoon op je beginscherm, met het hele scherm om te spelen. Het werkt ook zonder internet.</p>';
+  let html = '<div class="ab-voor">Voor papa of mama</div>' + wat;
+  if (soort === 'ios') {
+    html += ipad
+      ? stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`)
+      : stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
+        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>';
+    html += stap(2, `Kies ${kbd(PLUS_SVG + ' Zet op beginscherm')}${ipad ? '' : ' (een beetje naar beneden scrollen)'}`)
+      + stap(3, 'Tik op <b>Voeg toe</b>, en open Rekensterren voortaan via het icoon.');
+    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app op het beginscherm begint leeg. Maak eerst een back-up via ⚙️ → Voor ouders → Beheer, en zet hem daar in de app terug.</div>';
+    return { html, installeer: false };
+  }
+  if (soort === 'android' && kanInstalleren) {
+    html += '<div class="ab-noot">Je sterren blijven gewoon staan.</div>';
+    return { html, installeer: true };
+  }
+  const [uitleg, tweede] = beginschermUitleg(soort, hasStars);
+  html += `<p class="ab-uitleg">${uitleg}</p>` + (tweede ? `<div class="ab-noot">${tweede}</div>` : '');
+  return { html, installeer: false };
+}
+
+function openAppBlad(vanKnop) {
+  closeGearMenu();
+  sndClick();
+  const hasStars = profileKeys().length > 0;
+  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel);
+  $('confirm-title').textContent = '📲 Rekensterren als app';
+  $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
+  $('confirm-actions').innerHTML =
+    `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
+    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">📲 Installeren</button>' : '');
+  $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
+  const ik = $('app-blad-installeer');
+  if (ik) ik.onclick = () => {
+    const e = installVoorstel;
+    installVoorstel = null;
+    closeConfirmModal();
+    if (e) e.prompt();
+  };
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
 
 
 
