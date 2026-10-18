@@ -677,6 +677,22 @@
     .show-stage { width: 240px; height: 202px; }
     .question-card { font-size: clamp(50px, 6vw, 68px); }
   }
+  /* Een tablet staand (768x1024, 834x1194). Daar paste de ster nét naast de som,
+     dus zette de arena ze naast elkaar: links de pop, rechts in het midden de
+     som met antwoorden van ~165px breed, en onder dat alles 40% leeg scherm.
+     Op een tablet in de woonkamer is dit het scherm waar het om gaat. Hier dus
+     onder elkaar, zoals op een telefoon, maar een maat groter: grotere pop,
+     grotere som, en antwoordknoppen die de breedte nemen. Liggend blijft het
+     naast elkaar -- daar is de hoogte de grens en past het wél. */
+  @media (orientation: portrait) and (min-width: 600px) and (min-height: 900px) {
+    .game-arena { flex-direction: column; flex-wrap: nowrap; gap: 18px; }
+    .show-stage { width: 300px; height: 252px; }
+    .question-card { font-size: 72px; min-width: min(80vw, 560px); padding: 24px 36px 32px; }
+    .choices, .count-tiles { width: min(80vw, 560px); gap: 18px; }
+    .choice-btn { font-size: 44px; padding: 26px 8px; }
+    .numpad { width: min(64vw, 420px); gap: 14px; }
+    .num-btn { font-size: 36px; padding: 18px 0; }
+  }
 
   /* feedback-kaarten (praise/toast): kregen vroeger een vaste viewport-%
      positie, wat ze op elk formaat over de paspop/avatar heen liet vallen
