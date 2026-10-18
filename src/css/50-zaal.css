@@ -1279,7 +1279,9 @@
     62% { transform: scale(.94); filter: none; }
     82% { transform: scale(1.07); }
   }
-  .wp-hint { animation: wpHintKnipoog .9s ease-out .6s 1; }
+  /* 1.3s: ná de begroeting (zwaai op 300, haltepuls op 600). Op .6s viel hij
+     samen met de haltepuls, in de andere hoek van het scherm. */
+  .wp-hint { animation: wpHintKnipoog .9s ease-out 1.3s 1; }
   @media (prefers-reduced-motion: reduce) { .wp-hint { animation: none; } }
   /* De weg terug. Hij stond in vol goud, en dat was een fout die je pas ziet als
      je de kaart als geheel bekijkt: op dit scherm betekent goud "hier speel je",
