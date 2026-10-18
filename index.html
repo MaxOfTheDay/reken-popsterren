@@ -4469,6 +4469,11 @@
 
 
 
+
+
+
+
+
   .world-back {
     position: absolute; left: var(--wp-mid, 50%); top: var(--wp-onder, 62px);
     transform: translateX(-50%); z-index: 6;
@@ -4489,10 +4494,11 @@
   .world-back::before { content: ''; position: absolute; inset: 0 0 -10px; }
   .wb-cta, .wb-naam { display: flex; align-items: center; justify-content: center; }
 
+
   .wb-cta { flex: none; margin: 4px 1px 4px 4px; padding: 0 9px; font-size: 1.15em;
-    border-radius: var(--r-pill);
-    background: linear-gradient(180deg, rgba(56,189,248,.3), rgba(56,189,248,.12));
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+    border-radius: var(--r-pill); color: var(--ink-on-gold); text-shadow: none;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    box-shadow: inset 0 0 0 1px var(--gold-accent); }
   .wb-naam { gap: 6px; padding: 0 14px 0 8px; }
 
 

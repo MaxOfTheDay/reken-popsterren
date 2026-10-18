@@ -1342,7 +1342,12 @@
      Een eigen donkere pil met een gouden rand stond eronder als een ander soort
      ding. Het verschil zit nu alleen in de inhoud, net als bij de wereldpil en de
      diamantpil: daar staat het knopje (🌍 in een blauw capsuletje) rechts, hier de
-     ↑ links. Zelfde capsule, zelfde betekenis: "hier tik je". De ↑ en niet ⟲:
+     ↑ links. Zelfde capsule, "hier tik je" -- maar in goud en niet in blauw. Het
+     blauwe capsuletje betekent al "open het overzicht", en twee handelingen die er
+     hetzelfde uitzien zijn er één te veel. Goud betekent op de kaart "hier speel
+     je" (de huidige halte is een gouden schijf), en dáár brengt deze pil je heen.
+     Alleen het capsuletje, niet de pil: de volledig gouden pil van vroeger
+     concurreerde met die halte (zie hierboven). De ↑ en niet ⟲:
      terug is hier altijd omhoog, en een pijl leest een kind dat nog niet leest
      wél.
 
@@ -1370,11 +1375,12 @@
      een vlakje naar boven pakte de onderste tikken van de wereldpil af. */
   .world-back::before { content: ''; position: absolute; inset: 0 0 -10px; }
   .wb-cta, .wb-naam { display: flex; align-items: center; justify-content: center; }
-  /* Het capsuletje van .wp-cta, gespiegeld: daar zit hij rechts, hier links. */
+  /* Het capsuletje van .wp-cta, gespiegeld: daar zit hij rechts, hier links. In
+     het goud van de huidige halte (.tour-stop.next .dot), zie de kop hierboven. */
   .wb-cta { flex: none; margin: 4px 1px 4px 4px; padding: 0 9px; font-size: 1.15em;
-    border-radius: var(--r-pill);
-    background: linear-gradient(180deg, rgba(56,189,248,.3), rgba(56,189,248,.12));
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+    border-radius: var(--r-pill); color: var(--ink-on-gold); text-shadow: none;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    box-shadow: inset 0 0 0 1px var(--gold-accent); }
   .wb-naam { gap: 6px; padding: 0 14px 0 8px; }
   /* Dezelfde maat kleiner als de wereldpil op een smal scherm (zie #screen-map
      .world-pick in 40-kaart.css): twee pillen boven elkaar in twee lettermaten
