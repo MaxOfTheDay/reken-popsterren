@@ -1312,6 +1312,19 @@ function wereldId(naam) {
 // Waar de tekening van een wereld hoort te staan. Eén plek; de studio, de
 // controle en het hernoemen lezen 'm alle drie hier.
 function wereldArtPad(id) { return 'assets/world/' + id + '-map.webp'; }
+/* En het kleine broertje ervan: dezelfde tekening op 560 breed, voor de
+   bestemmingen op de reis. Die kaartjes zijn hooguit 200 punten breed, maar een
+   volle kaart (1215x2160) kost in het geheugen ruim tien megabyte per stuk, en
+   de reis zet er meerdere tegelijk neer -- op een oude tablet is dát wat het
+   geheugen opmaakt. Het kleine bestand is een vijfde daarvan, en ziet er op die
+   maat hetzelfde uit (zelfde verhouding, dus dezelfde uitsnede).
+
+   Afgeleid van het pad, niet als eigen veld in WORLDS: de studio maakt hem bij
+   elke kaart mee (zie verwerkBeeld), dus hij hoort er altijd te zijn. Is hij er
+   toch niet, dan valt de reis terug op de grote (zie reisStartWaarnemer). */
+function wereldKleinPad(art) {
+  return /-map\.webp$/.test(art || '') ? art.replace(/-map\.webp$/, '-klein.webp') : null;
+}
 // Hetzelfde id twee keer is een fout (zie wereldControle), dus een nieuw id
 // krijgt er een cijfer bij zolang het al bestaat.
 function vrijWereldId(basis, negeerIdx) {
@@ -6088,7 +6101,8 @@ function renderReis() {
     if (b.world.art) {
       const art = document.createElement('span');
       art.className = 'reis-art';
-      art.dataset.art = b.world.art;
+      art.dataset.art = wereldKleinPad(b.world.art) || b.world.art;
+      art.dataset.groot = b.world.art;
       plaats.appendChild(art);
     } else {
       const ico = document.createElement('span');
@@ -6195,19 +6209,28 @@ function reisStartWaarnemer() {
   const track = $('reis-track');
   if (!track) return;
   const laden = el => {
-    const src = el.dataset.art;
+    const src = el.dataset.art, groot = el.dataset.groot;
     if (!src) return;
     delete el.dataset.art;
+    delete el.dataset.groot;
     ART_GEHAALD.add(src);
     /* Staat hij al in het geheugen, dan is complete meteen waar en tekent het
        kaartje gewoon. Zo niet, dan blijft het vlak leeg tot hij binnen is en komt
        hij dan op (zie .reis-art.laadt). Mislukt hij, dan gaat de klasse er ook af:
-       dan staat het vlak er weer zoals altijd. */
+       dan staat het vlak er weer zoals altijd.
+
+       Mislukt het kleine bestand (een wereld die nog geen -klein.webp heeft),
+       dan nog één keer met de grote tekening: zwaarder, maar beter dan een leeg
+       vak. */
     const beeld = new Image();
     beeld.src = src;
     if (!beeld.complete) {
       el.classList.add('laadt');
-      beeld.onload = beeld.onerror = () => el.classList.remove('laadt');
+      beeld.onload = () => el.classList.remove('laadt');
+      beeld.onerror = () => {
+        if (groot && groot !== src) { el.dataset.art = groot; laden(el); }
+        else el.classList.remove('laadt');
+      };
     }
     el.style.backgroundImage = `url("${src}")`;
   };
