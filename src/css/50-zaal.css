@@ -502,6 +502,12 @@
     box-shadow: 0 0 0 3px var(--green-top); opacity: 0; animation: goodRing .55s ease-out forwards;
   }
   @keyframes goodRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.14); } }
+  /* Na een tweede misser: dít was het goede antwoord. Groen, maar zonder veer en
+     zonder ring -- dat zijn de tekens van een gewonnen antwoord. Een korte fade
+     in plaats daarvan, zodat het oplichten wel gezien wordt. */
+  .choice-btn.good.rustig { animation: rustigGroen .3s ease-out; }
+  .choice-btn.good.rustig::before { display: none; }
+  @keyframes rustigGroen { from { opacity: .55; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) {
     .choice-btn.good, .count-tile.good { animation: none; }
     .choice-btn.good::before, .count-tile.good::before { display: none; }
