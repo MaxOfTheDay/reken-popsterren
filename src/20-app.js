@@ -1312,6 +1312,19 @@ function wereldId(naam) {
 // Waar de tekening van een wereld hoort te staan. Eén plek; de studio, de
 // controle en het hernoemen lezen 'm alle drie hier.
 function wereldArtPad(id) { return 'assets/world/' + id + '-map.webp'; }
+/* En het kleine broertje ervan: dezelfde tekening op 560 breed, voor de
+   bestemmingen op de reis. Die kaartjes zijn hooguit 200 punten breed, maar een
+   volle kaart (1215x2160) kost in het geheugen ruim tien megabyte per stuk, en
+   de reis zet er meerdere tegelijk neer -- op een oude tablet is dát wat het
+   geheugen opmaakt. Het kleine bestand is een vijfde daarvan, en ziet er op die
+   maat hetzelfde uit (zelfde verhouding, dus dezelfde uitsnede).
+
+   Afgeleid van het pad, niet als eigen veld in WORLDS: de studio maakt hem bij
+   elke kaart mee (zie verwerkBeeld), dus hij hoort er altijd te zijn. Is hij er
+   toch niet, dan valt de reis terug op de grote (zie reisStartWaarnemer). */
+function wereldKleinPad(art) {
+  return /-map\.webp$/.test(art || '') ? art.replace(/-map\.webp$/, '-klein.webp') : null;
+}
 // Hetzelfde id twee keer is een fout (zie wereldControle), dus een nieuw id
 // krijgt er een cijfer bij zolang het al bestaat.
 function vrijWereldId(basis, negeerIdx) {
@@ -1371,6 +1384,8 @@ function uitgebrachtTot() {
   while (n < WORLDS.length && worldReleased(WORLDS[n])) n++;
   return Math.max(n, WORLDS.length ? 1 : 0);
 }
+const KAART_KB_ZWAAR = 420;      // zie de tekening-regel in wereldControle
+const WINKEL_PER_WERELD = 550;   // 💎 in de winkel per uitgebrachte wereld, minstens
 function wereldControle(opSchijf) {
   const schijf = opSchijf || {};
   const weetSchijf = Object.keys(schijf).length > 0;
@@ -1463,9 +1478,31 @@ function wereldControle(opSchijf) {
     });
 
     if (schijf[pad] && w.art && w.art !== pad) let_op(naam, pad + ' ligt er ook nog — opruimen of gebruiken', 'tekening');
+    /* Hoe zwaar mag een kaart zijn? De studio mikt op 125 kB en zakt daarvoor
+       met de kwaliteit, maar nooit onder 0.55 (zie KWAL_BODEM): daaronder gaat
+       een geschilderde kaart vlekken. In de praktijk komen de kaarten daardoor
+       op 180 tot 380 kB uit, en dat is geaccepteerd. Hier stond een waarschuwing
+       boven 200, en die ging bij bijna elke wereld af -- een melding die altijd
+       klinkt leer je negeren. Nu alleen wat duidelijk zwaarder is dan de rest. */
     const kb = schijf[w.art];
-    if (kb && kb > 200) let_op(naam, 'de tekening is ' + kb + ' kB; de begroting is ~125 — zware werelden maken de app traag op mobiele data', 'tekening');
+    if (kb && kb > KAART_KB_ZWAAR) let_op(naam, 'de tekening is ' + kb + ' kB, zwaarder dan de andere kaarten (180–380 kB) — '
+      + 'zware werelden maken de app traag op mobiele data', 'tekening');
+    // het kleine kaartje voor de reis (zie wereldKleinPad); de studio maakt het mee
+    const klein = wereldKleinPad(w.art);
+    if (weetSchijf && klein && schijf[w.art] && !schijf[klein]) let_op(naam, klein + ' ontbreekt — de reis toont dan de volle tekening, '
+      + 'en die kost een oude tablet veel geheugen. Sleep de kaart opnieuw in de studio', 'tekening');
   });
+
+  /* Groeit de winkel mee? Elke wereld die uitkomt brengt diamanten binnen, en de
+     afspraak is dat er dan ook 4 tot 7 spulletjes bij komen (docs/UITBREIDEN.md).
+     Dat zit in ITEMS en niet in de studio, dus vergeet je het makkelijk -- en dan
+     staat een kind na een paar werelden met een volle zak voor een lege winkel.
+     De maat is de waarde van de winkel per uitgebrachte wereld: bij elf werelden
+     ruim 600 💎. Zakt dat onder WINKEL_PER_WERELD, dan staat het hier. */
+  const winkel = ITEMS.reduce((som, it) => som + (it.price != null ? it.price : 0), 0);
+  if (open > 0 && winkel / open < WINKEL_PER_WERELD) let_op('de winkel',
+    'is ' + winkel + ' 💎 waard voor ' + open + ' werelden (' + Math.round(winkel / open) + ' per wereld) — '
+    + 'zet er spulletjes bij voor de nieuwe wereld (docs/UITBREIDEN.md)', 'winkel');
 
   /* Uitgebracht is een aaneengesloten kop (zie worldReleased). Een open wereld
      achter een dichte is onbereikbaar: het spel stopt bij de eerste dichte. */
@@ -5285,7 +5322,10 @@ function kopKrimpMeten(scherm) {
 // Draaien, of een toetsenbord dat opkomt, kan een laag scherm maken -- en dan
 // krimpt de kop van het ouderdeel anders. Een scherm dat niet in beeld staat
 // slaat de meting vanzelf over.
-addEventListener('resize', () => ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))));
+// Achter rafKlem: draaien of een toetsenbord dat opkomt vuurt een reeks resizes,
+// en kopKrimpMeten meet per scherm een paar keer de opmaak.
+addEventListener('resize', () => rafKlem(koppenKrimpMeten));
+function koppenKrimpMeten() { ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))); }
 /* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
    landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
 
@@ -5499,16 +5539,18 @@ function goMap(vanLvl) {
      wegnemen. (Het moet ná show(): die haalt de klasse van álle schermen af.)
      Zie kaartKomtOp en de regel bij MOTION. */
   $('screen-map').classList.add('komt-op');
-  kaartVertrek(vorige, gekozen);
+  kaartVertrek(vorige, gekozen, uitShow);
   /* Pas hierna, en niet in een requestAnimationFrame: renderTourMap kon zijn
      eigen afrondende werk (scrollstand, --kop-h/--nav-h, kaartTerugZoom) niet
      synchroon doen, want toen het draaide stond het scherm nog niet .active en
      leverde elke meting 0 op. Nu, een paar regels later in dezelfde taak, wél
-     -- en dat is nog steeds vóór de browser iets van dit beeldje verft. Moet
-     wel ná kaartVertrek hierboven staan: die leest kaartFocus om te zien of de
-     zaal moet wijken, en kaartTerugZoom (via tourMapVoltooi) verbruikt diezelfde
-     kaartFocus. Verwissel die twee regels en de terug-grendel wordt gezet op een
-     vlag die al leeg is. Zie de regel bij tourMapVoltooi en bij renderTourMap. */
+     -- en dat is nog steeds vóór de browser iets van dit beeldje verft.
+
+     Hier stond een waarschuwing dat deze regel ná kaartVertrek moest blijven,
+     omdat die twee dezelfde vlag kaartFocus lazen en tourMapVoltooi hem
+     verbruikt. kaartVertrek krijgt nu uitShow mee in plaats van de vlag te
+     lezen, dus die afhankelijkheid is weg. Vóór de eerste verf moet het nog
+     steeds; dat is de reden voor de plek, niet de volgorde met kaartVertrek. */
   if (tourMapVoltooi) { const v = tourMapVoltooi; tourMapVoltooi = null; v(); }
   if (travel) requestAnimationFrame(() => runTravel(travel));
   else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
@@ -5610,16 +5652,18 @@ function kaartOpdracht(p, vanLvl, uitShow) {
    op en het vorige scherm dooft). Een reis heeft geen van beide nodig --
    reisNaarWereld beweegt de kaart zelf.
 
-   Leest kaartFocus en niet uitShow: goMap zet die twee vlak na elkaar, maar het
-   is kaartFocus die zegt of er een halte is om naartoe te zoomen. */
-function kaartVertrek(vorige, gekozen) {
+   uitShow komt van goMap, en het is dezelfde vraag als "is er een halte om
+   naartoe te zoomen" (goMap zet kaartFocus precies dan). Hier stond eerst
+   kaartFocus zelf, en die wordt door tourMapVoltooi verbruikt -- dan hing het
+   ervan af welke van de twee eerst in goMap stond. Met een argument niet. */
+function kaartVertrek(vorige, gekozen, uitShow) {
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
   /* De balk wordt hier meegenomen en niet in kaartTerugZoom: die draait pas in de
      rAF van renderTourMap, één beeldje later, en show() heeft de balk dan al een
      keer volledig zichtbaar over de nog vertrekkende zaal getekend. Eén beeldje,
      maar wel precies het beeld dat deze hele wijziging moet wegnemen. */
-  if (kaartFocus && vorige && vorige !== $('screen-map')) {
+  if (uitShow && vorige && vorige !== $('screen-map')) {
     schermWeg(vorige, false); navMee(false);
     // de grendel gaat vanzelf weer open, ook als er onderweg iets misgaat
     terugBezig = true;
@@ -6093,7 +6137,8 @@ function renderReis() {
     if (b.world.art) {
       const art = document.createElement('span');
       art.className = 'reis-art';
-      art.dataset.art = b.world.art;
+      art.dataset.art = wereldKleinPad(b.world.art) || b.world.art;
+      art.dataset.groot = b.world.art;
       plaats.appendChild(art);
     } else {
       const ico = document.createElement('span');
@@ -6200,19 +6245,28 @@ function reisStartWaarnemer() {
   const track = $('reis-track');
   if (!track) return;
   const laden = el => {
-    const src = el.dataset.art;
+    const src = el.dataset.art, groot = el.dataset.groot;
     if (!src) return;
     delete el.dataset.art;
+    delete el.dataset.groot;
     ART_GEHAALD.add(src);
     /* Staat hij al in het geheugen, dan is complete meteen waar en tekent het
        kaartje gewoon. Zo niet, dan blijft het vlak leeg tot hij binnen is en komt
        hij dan op (zie .reis-art.laadt). Mislukt hij, dan gaat de klasse er ook af:
-       dan staat het vlak er weer zoals altijd. */
+       dan staat het vlak er weer zoals altijd.
+
+       Mislukt het kleine bestand (een wereld die nog geen -klein.webp heeft),
+       dan nog één keer met de grote tekening: zwaarder, maar beter dan een leeg
+       vak. */
     const beeld = new Image();
     beeld.src = src;
     if (!beeld.complete) {
       el.classList.add('laadt');
-      beeld.onload = beeld.onerror = () => el.classList.remove('laadt');
+      beeld.onload = () => el.classList.remove('laadt');
+      beeld.onerror = () => {
+        if (groot && groot !== src) { el.dataset.art = groot; laden(el); }
+        else el.classList.remove('laadt');
+      };
     }
     el.style.backgroundImage = `url("${src}")`;
   };
@@ -6263,7 +6317,6 @@ function reisFocus(opWereld) {
    Meet en tekent niets zwaars: één vergelijking van twee rechthoeken, en de klasse
    verandert alleen als het antwoord ánders is dan het al was. Hij hangt aan de
    scroll van het scherm, dus hij loopt achter een rAF aan. */
-let reisVolgWacht = false;
 function reisVolgKnop() {
   const scherm = $('screen-journey'), knop = $('reis-terug');
   if (!scherm || !knop) return;
@@ -6277,9 +6330,7 @@ function reisVolgKnop() {
   knop.textContent = r.top > s.bottom - 40 ? '↓' : '↑';
 }
 function reisScroll() {
-  if (reisVolgWacht) return;
-  reisVolgWacht = true;
-  requestAnimationFrame(() => { reisVolgWacht = false; reisVolgKnop(); });
+  rafKlem(reisVolgKnop);
 }
 // Zacht terug naar waar ze staat. Geen sprong: dit is de enige plek waar dit scherm
 // zelf scrollt terwijl een kind aan het kijken is, en dan hoort het te glijden.
@@ -6755,12 +6806,7 @@ function renderTourMap(travelFrom) {
 
    Op een telefoon schuift de kaart trouwens helemaal niet (één wereld vult het
    kader); dit gaat over een tablet en een breed venster. */
-let kaartScrollWacht = false;
-function kaartScroll() {
-  if (kaartScrollWacht) return;
-  kaartScrollWacht = true;
-  requestAnimationFrame(() => { kaartScrollWacht = false; kopOpzij(); });
-}
+function kaartScroll() { rafKlem(kopOpzij); }
 function kopOpzij() {
   const scherm = $('screen-map');
   if (!scherm) return;
@@ -6794,7 +6840,8 @@ function meetChroom() {
   if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
-addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij(); } });
+addEventListener('resize', () => rafKlem(kaartChroomMeten));
+function kaartChroomMeten() { if ($('screen-map')) { meetChroom(); kopOpzij(); } }
 /* Drie plekken, altijd -- maar alleen onder een halte die gespeeld is.
 
    Hiervoor stonden er alleen de verdiende sterren: 1/3 was één los sterretje, 2/3
@@ -7284,16 +7331,10 @@ function openTrophies() {
    Die drempel beschermt alleen tegen een trillende duim. Tegen een kop die zelf
    de schuifstand terugduwt -- en dat deed hij, op 10px stilgezet wisselde hij
    elk beeldje -- helpt hij niet; daarvoor is kopKrimpMeten (zie daar). */
-let kastScrollWacht = false;
-function kastScroll() {
-  if (kastScrollWacht) return;
-  kastScrollWacht = true;
-  requestAnimationFrame(() => {
-    kastScrollWacht = false;
-    const sc = $('screen-trophies');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function kastScroll() { rafKlem(kastGescrold); }
+function kastGescrold() { gescrold($('screen-trophies')); }
+// De kop krijgt zijn laag zodra er iets onder schuift (4px tegen een trillende duim).
+function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
 // Terug naar de trofeeënkast via de vaste navigatie (kwam van een ánder
 // tabblad): hervat gewoon waar je gebleven was -- scrollpositie blijft staan,
 // want die reset de browser niet vanzelf bij display:none/flex (zie ook de
@@ -7521,8 +7562,7 @@ function openTrophy(id) {
   const p = P();
   const t = TROPHIES.find(x => x.id === id);
   if (!t || p.trophies.includes(id) || !(p.readyTrophies || []).includes(id)) return;
-  p.readyTrophies = p.readyTrophies.filter(x => x !== id);
-  p.trophies.push(id);
+  awardTrophy(p, id);   // uit de klaarlijst, in de kast -- dezelfde regel als overal
   save();
   celebrateTrophy(t);
   justClaimed = id;   // net-behaalde kaart krijgt eenmalig een gouden shimmer
@@ -9957,16 +9997,8 @@ function tabRijDoel(rij, gekozen) {
    Wat hier níet hoeft, en bij de kast wel: meten. Daar krimpt de kop en moet de
    inhoud eronder stil blijven staan (kopKrimpMeten); hier gaat er alleen een laag
    aan, en de kop wordt geen pixel hoger of lager. */
-let kleedScrollWacht = false;
-function kleedScroll() {
-  if (kleedScrollWacht) return;
-  kleedScrollWacht = true;
-  requestAnimationFrame(() => {
-    kleedScrollWacht = false;
-    const sc = $('screen-dress');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function kleedScroll() { rafKlem(kleedGescrold); }
+function kleedGescrold() { gescrold($('screen-dress')); }
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
    keer dat de kleedkamer opengaat -- en verder niet: kijken en aandoen gaan via
    paintShop() hieronder, dat dezelfde kaartjes laat staan en alleen hun stand
@@ -11067,11 +11099,54 @@ function niveauHtml(p) {
     const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
     bezig = `🧮 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
   }
+  const tip = grensTip(p);
+  const tipHtml = tip ? `<div class="grens-tip" id="grens-tip">
+      <div>💡 ${esc(p.name)} haalt in de latere werelden bijna overal drie sterren met getallen tot ${s.max}.
+        De sommen worden vanaf hier niet vanzelf moeilijker — wil je de grens naar ${tip.naar}?</div>
+      <button class="btn small purple" id="grens-tip-ja" data-v="${tip.naar}">Tot ${tip.naar}</button>
+    </div>` : '';
   return `<div class="niveau-blok">
     <div class="niveau-kop">Niveau-inschatting</div>
     <div class="niveau-bezig">${bezig}</div>
+    ${tipHtml}
     <div class="note">Het spel past de moeilijkheid automatisch aan: het schuift mee met wat goed en fout gaat.</div>
   </div>`;
+}
+/* Een tip voor de ouder: de getallengrens omhoog.
+
+   De werelden leren elk iets nieuws (zie LEERSTAPPEN), maar die stappen houden
+   op: vanaf de wereld ná de laatste stap is het "alles door elkaar", binnen de
+   grens die de ouder koos. Het spel zet die grens zelf niet hoger -- dat is de
+   keuze van de ouder, en een kind dat ineens tot honderd moet zonder dat iemand
+   het wist is geen verrassing maar een tegenvaller. Dus zegt het hier wanneer
+   het tijd lijkt, en doet de ouder het met één tik (of niet).
+
+   Wanneer: het kind speelt (of speelde) voorbij de laatste leerstap, en heeft
+   daar al GRENS_TIP_SHOWS shows met drie sterren gehaald. Sterren en geen p.perf:
+   die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
+   en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
+   Alleen voor rekenen, alleen als er nog een stap op de ladder is (10, 20, 50,
+   100 -- dezelfde keuzes als op het tabblad Oefenen).
+
+   Zet de ouder de grens om (met de tip of op Oefenen), dan begint het tellen
+   opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
+   en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
+   stond direct na "tot 50" al de vraag of het niet 100 moest. */
+const GRENS_LADDER = [10, 20, 50, 100];
+const GRENS_TIP_SHOWS = 6;
+function grensDrieSterren(p) {
+  const vanaf = LEERSTAPPEN.length - 1;          // de eerste wereld zonder nieuwe stap
+  if (vanaf >= WORLD_AVAIL) return 0;
+  let drie = 0;
+  for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
+  return drie;
+}
+function grensTip(p) {
+  const s = p.settings;
+  if (s.track === 'count') return null;
+  const naar = GRENS_LADDER.find(v => v > s.max);
+  if (!naar) return null;
+  return grensDrieSterren(p) - (s.grensTipBasis || 0) >= GRENS_TIP_SHOWS ? { naar } : null;
 }
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
@@ -11473,16 +11548,8 @@ function settingsToTop() {
    drempel van 4px -- op 0 wisselt hij bij het minste duimtrilletje heen en weer --
    en dezelfde rAF-rem, want scroll vuurt vaker dan er beeldjes zijn. Dat de
    inhoud daarbij blijft staan, regelt kopKrimpMeten (zie daar). */
-let ouderScrollWacht = false;
-function ouderScroll() {
-  if (ouderScrollWacht) return;
-  ouderScrollWacht = true;
-  requestAnimationFrame(() => {
-    ouderScrollWacht = false;
-    const sc = $('screen-settings');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function ouderScroll() { rafKlem(ouderGescrold); }
+function ouderGescrold() { gescrold($('screen-settings')); }
 let savedPillTimer = null;
 function saveAndFlash() {
   save();
@@ -11502,23 +11569,35 @@ let lastWhoRendered = null;
    met het echte avatar-portret erin i.p.v. voor elk kind hetzelfde sterretje.
    Niveau 2 (het onderdeel) blijft een .segmented-spoor; twee vormen, twee
    betekenissen -- hiervoor stonden er twee identieke sporen op elkaar. */
+/* renderSettings loopt bij élke tik op een schakelaar of chip, en dan stond deze
+   rij er elke keer opnieuw: zes portretten weggooien en tekenen, plus twee keer de
+   opmaak opmeten (scrollLeft lezen, schrijven, en updateFades leest weer). Wat er
+   staat verandert alleen als er een ster bij komt, weggaat, anders heet of anders
+   gekozen wordt. Dus wordt de inhoud eerst als tekst opgebouwd, en alleen als die
+   anders is dan de vorige keer wordt de rij echt vervangen. Tekst vergelijken is
+   goedkoop; de DOM en de metingen waren het dure deel. */
+let lastWhoHtml = null;
 function renderWhoRow() {
   const row = $('settings-profiles');
+  const keys = profileKeys();
+  const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
+    + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
+  const handtekening = setKey + '|' + delen.join('|');
+  if (handtekening === lastWhoHtml && row.childElementCount) return;
+  lastWhoHtml = handtekening;
   const keep = row.scrollLeft;          // niet terugspringen bij elke hertekening
   row.innerHTML = '';
   let active = null;
-  for (const key of profileKeys()) {
-    const pr = db.profiles[key];
+  keys.forEach((key, k) => {
     const on = key === setKey;
     const b = document.createElement('button');
     b.className = 'tab-btn who-btn' + (on ? ' active' : '');
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.innerHTML = `<span class="who-portrait" aria-hidden="true">${avatarSVG(pr, 65)}</span>`
-      + `<span class="tab-label">${esc(pr.name)}</span>`;
+    b.innerHTML = delen[k];
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
     row.appendChild(b);
     if (on) active = b;
-  }
+  });
   /* De "+" staat achter de laatste ster, net als op de sterrenkeuze: daar leert
      een ouder al dat een nieuwe ster na de rij komt. Hiervoor was het een eigen
      kaart in Beheer, en dan stond "iemand erbij" op een ander tabblad dan "wie" --
@@ -11625,7 +11704,10 @@ function bindOefenChips(s, p, pfx, done) {
     } else s.tables.push(v);
   });
   // enkelkeuze-chips
-  bind('set-max', c => { s.max = parseInt(c.dataset.v, 10); });
+  bind('set-max', c => {
+    s.max = parseInt(c.dataset.v, 10);
+    if (p) s.grensTipBasis = grensDrieSterren(p);   // de tip telt opnieuw (zie grensTip)
+  });
   bind('set-mode', c => { s.mode = c.dataset.v; });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
   // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
@@ -11677,6 +11759,14 @@ function bindSettings(p, s) {
      niets verzonden -- de naam is al opgeslagen bij elke aanslag -- dus dit is
      alleen de uitgang die een telefoontoetsenbord zelf aanbiedt en die hier
      eerder in het niets viel. */
+  // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefenen, met één tik
+  on('grens-tip-ja', 'onclick', e => {
+    sndClick();
+    s.max = parseInt(e.currentTarget.dataset.v, 10);
+    s.grensTipBasis = grensDrieSterren(p);
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-name', 'onkeydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
     e.preventDefault();
@@ -12295,7 +12385,24 @@ if (location.search.indexOf('debug') !== -1) {
     (go[dbg.get('screen')] || goMap)();
   }
   if (dbg.get('fit')) fitVenster(dbg.get('fit'));
-  if (dbg.has('mapedit') && cur) startMapEdit();
+  if (dbg.has('mapedit') && cur) laadStudio();
+}
+/* De wereldstudio staat niet in dit bestand maar ernaast, in studio.js (zie
+   test/bouw.js, LOS): geen kind draait hem, dus hoeft geen tablet hem bij het
+   opstarten te lezen. Hier wordt hij opgehaald als hij nodig is.
+
+   Een klassiek script en geen module, zodat het ook vanaf file:// werkt. Geen
+   tijdstempel erachter: npm run studio stuurt alles met no-store, en de service
+   worker haalt de schil (en dus ook dit bestand) netwerk-eerst -- een stempel zou
+   daar bij elke opening een nieuw item in de voorraad zetten. Staat hij er al
+   (een tweede aanroep), dan meteen. */
+function laadStudio() {
+  if (typeof startMapEdit === 'function') { startMapEdit(); return; }
+  const s = document.createElement('script');
+  s.src = 'studio.js';
+  s.onload = () => startMapEdit();
+  s.onerror = () => console.error('[wereldstudio] studio.js kon niet geladen worden');
+  document.head.appendChild(s);
 }
 /* ---- Kijkstanden (?debug&wereld=n&stand=...) --------------------------------
    Een spel in een representatieve stand zetten zónder ernaartoe te spelen. Dat

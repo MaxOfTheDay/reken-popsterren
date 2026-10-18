@@ -2242,6 +2242,25 @@ function startMapEdit() {
       return;
     }
 
+    /* 2b -- het kleine broertje voor de reis (zie wereldKleinPad), uit hetzelfde
+       beeld. Mislukt dit, dan is de vervanging nog steeds gelukt: de reis valt
+       dan terug op de grote tekening. Dus wel zeggen, niet afkeuren. */
+    let klein = '';
+    const kpad = key === 'world' ? wereldKleinPad(pad) : null;
+    if (kpad) {
+      try {
+        const k = await naarWebp(url, 560, 996, 0.6);
+        const r = await fetch('/asset?to=' + encodeURIComponent(kpad), { method: 'POST', body: k.blob });
+        if (!r.ok) throw new Error((await r.text()).trim() || ('de server gaf ' + r.status));
+        OP_SCHIJF[kpad] = Math.round(k.blob.size / 1024);
+        GEWIJZIGD.add(kpad);
+        klein = '\n+ ' + kpad.split('/').pop() + ' voor de reis (' + OP_SCHIJF[kpad] + ' kB)';
+      } catch (err) {
+        console.error('[wereldstudio] ' + kpad + ' maken mislukt', err);
+        klein = '\nHet kleine kaartje voor de reis lukte niet; de reis gebruikt dan de grote tekening.';
+      }
+    }
+
     // 3 -- het bestand staat er. Wat hierna komt kan de vervanging niet meer
     //      ongedaan maken, dus het mag ook niet als mislukking gemeld worden.
     opruimen();
@@ -2261,7 +2280,7 @@ function startMapEdit() {
         fetch('/incoming-weg?f=' + encodeURIComponent(label), { method: 'POST' }).catch(() => {});
       }
       commit('');
-      const klaar = 'Gewijzigd · ' + label + '  ' + maat + ' → ' + txt
+      const klaar = 'Gewijzigd · ' + label + '  ' + maat + ' → ' + txt + klein
         + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.');
       setOut(klaar);
       if (key === 'world') autoKleuren(false, klaar + '\nKleuren en zaal komen uit de tekening.');

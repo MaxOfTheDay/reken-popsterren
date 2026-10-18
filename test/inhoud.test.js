@@ -112,6 +112,17 @@ zaak('B', () => {
     check(typeof w.art === 'string' && w.art.indexOf('assets/') === 0, `B · ${waar}: de tekening staat in assets/`,
       JSON.stringify(w.art));
     check(fs.existsSync(path.join(WORTEL, w.art)), `B · ${waar}: en die tekening bestaat ook echt`, w.art);
+    /* Het kleine broertje voor de reis. Zonder valt de reis terug op de grote
+       tekening -- dat werkt, maar kost op een oude tablet het geheugen dat dit
+       bestand moest sparen. De studio maakt hem bij elke kaart mee. */
+    const klein = app.wereldKleinPad(w.art);
+    if (!klein) return;
+    const kleinOp = path.join(WORTEL, klein);
+    check(fs.existsSync(kleinOp), `B · ${waar}: en het kleine kaartje voor de reis ook`, klein);
+    if (fs.existsSync(kleinOp)) {
+      check(fs.statSync(kleinOp).size < fs.statSync(path.join(WORTEL, w.art)).size,
+        `B · ${waar}: het kleine kaartje is kleiner dan de tekening`, klein);
+    }
   });
 });
 

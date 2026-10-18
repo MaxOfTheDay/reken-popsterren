@@ -49,6 +49,20 @@ function updateFades(el) {
 
    Wie de rij ná een hertekening meteen wil bijwerken roept updateFades zelf aan;
    dat blijft synchroon, net als bij kopOpzij. */
+/* Eén keer per beeldje, hoe vaak het ook gevraagd wordt. Scroll en resize vuren
+   vaker dan er beeldjes zijn, en wat erachter hangt leest de opmaak; dat hoort
+   maar één keer per beeldje te gebeuren. Hiervoor stond deze rem vijf keer met de
+   hand uitgeschreven, elk met een eigen vlag.
+
+   Het klemmetje hoort bij de functie: dezelfde fn twee keer vragen in één beeldje
+   is één aanroep, twee verschillende lopen allebei. Geef dus een functie met een
+   naam mee en geen pijltje dat elke keer nieuw is -- dat zou nooit klemmen. */
+const RAF_WACHT = new Set();
+function rafKlem(fn) {
+  if (RAF_WACHT.has(fn)) return;
+  RAF_WACHT.add(fn);
+  requestAnimationFrame(() => { RAF_WACHT.delete(fn); fn(); });
+}
 function fadesVolgen(el) {
   let wacht = false;
   el.onscroll = () => {
@@ -233,17 +247,31 @@ function roadD(pts, count, curve) {
    exact de lengte van dat stuk zijn. Dus altijd een streepje óp beide haltes,
    op elk toestel en bij elke bocht die je in de studio trekt. */
 const DASH_ON = 26, DASH_OFF = 34;
-function roadDashArray(svg, pts, curve, count) {
-  if (count < 2) return '';
-  const parts = roadParts(pts, curve);
+/* De lengtes tot elke halte, gemeten op het pad zelf. Opgemeten tot de láátste
+   halte, en bewaard: de kaart vraagt het patroon voor de hele weg én voor het
+   gouden stuk, en de reis nog eens -- telkens hetzelfde pad. Vroeger werd elke
+   keer elk voorvoegsel opnieuw gemeten (bij tien haltes 45 metingen per
+   aanroep); nu één ronde per weg, en een korter stuk leest gewoon de eerste
+   getallen. Dezelfde metingen, dus precies dezelfde getallen. */
+let wegMaatSleutel = null, wegMaat = null;
+function wegLengtes(svg, parts) {
+  const sleutel = parts.start + parts.cs.join('');
+  if (sleutel === wegMaatSleutel) return wegMaat;
   const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   svg.appendChild(probe);
   const tot = [0];
-  for (let k = 2; k <= count; k++) {
+  for (let k = 2; k <= parts.cs.length / 2 + 1; k++) {
     probe.setAttribute('d', parts.start + parts.cs.slice(0, (k - 1) * 2).join(''));
     tot.push(probe.getTotalLength());
   }
   probe.remove();
+  wegMaatSleutel = sleutel; wegMaat = tot;
+  return tot;
+}
+function roadDashArray(svg, pts, curve, count) {
+  if (count < 2) return '';
+  const parts = roadParts(pts, curve);
+  const tot = wegLengtes(svg, parts);
   const uit = [];
   const r = DASH_OFF / DASH_ON;
   for (let i = 0; i + 1 < count; i++) {
