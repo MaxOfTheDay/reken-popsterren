@@ -3795,15 +3795,8 @@
   @media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
   /* Zachte "foute noot": een korte kanteling, geen schud. Duurde .7s en dat is
      lang genoeg om als straf te lezen; op .42s is het een hoofdschudden en is de
-     som daarna meteen weer gewoon leesbaar. */
-  .wobble { animation: wobble .42s ease; }
-  @keyframes wobble {
-    0%,100% { transform: rotate(0) scale(1); }
-    25% { transform: rotate(-2.4deg) scale(.985); }
-    60% { transform: rotate(2deg) scale(.995); }
-    85% { transform: rotate(-1deg); }
-  }
-  @media (prefers-reduced-motion: reduce) { .wobble { animation: none; } }
+     som daarna meteen weer gewoon leesbaar. Staat nu in het script (kaartWiebelt):
+     als CSS-animatie verloor hij het van de opkomst van de kaart. */
   /* ---- Een misser, zonder te lezen ----
      Drie dingen, en geen ervan is een zin:
 
@@ -6415,6 +6408,12 @@
   .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
   .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
+  /* De tekst die opkomt: de naam en "Joepie!" onder de trofee, en de rijen van
+     het wereldfeest. Deze keyframes gingen mee weg met de ster-status (die ze
+     ook gebruikte), en daarmee bleven de trofeenaam en "Joepie!" op opacity 0
+     staan -- de kast toonde een trofee zonder naam. Ze horen dus híér, bij wie
+     ze nog gebruikt. */
+  @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
 
   /* ---- Wereldfeest (fase 4D.1): wereld uit, en/of overal drie sterren ----
@@ -8282,6 +8281,15 @@
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); }
   }
+  /* Het sterretje bij een tik (sparkleAt): kort omhoog en weg, boven alles.
+     Zelfde hoogte als het confetti-kanon (.burst-bit). */
+  .vonk-op { position: fixed; z-index: 92; font-size: 22px; pointer-events: none;
+    animation: vonkOp ease-out forwards; will-change: transform, opacity; }
+  @keyframes vonkOp {
+    0%   { opacity: 0; transform: translate(0, 6px) scale(.6); }
+    25%  { opacity: 1; transform: translate(calc(var(--drift, 0px) * .3), -10px) scale(1.05); }
+    100% { opacity: 0; transform: translate(var(--drift, 0px), -46px) scale(.85); }
+  }
 
   /* ---- Wie geen beweging wil: wat er los in de body wordt neergezet --------
      Deze vier bestaan alleen om te bewegen -- ze dragen geen tekst, geen knop en
@@ -8295,7 +8303,7 @@
      dwarrelt het niet alsnog over het scherm. (.burst-bit en .tap-ripple staan
      al in het blok bij het trofee-feestje.) */
   @media (prefers-reduced-motion: reduce) {
-    .confetti-bit, .fly-dia, .fly-badge { display: none; }
+    .confetti-bit, .vonk-op, .fly-dia, .fly-badge { display: none; }
   }
   /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
      stond het portretje links en de diamanten rechts ergens in de onscherpe rand,
@@ -9048,16 +9056,23 @@ function tapDance(elId) {
 }
 // klein sterretje dat oppopt bij een tik-dans
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
+/* Het sterretje komt óp en is dan weg, vlak bij wat er aangetikt werd. Het was
+   een .confetti-bit, en dat ging twee keer mis: het viel (fall, door het hele
+   scherm) in plaats van op te poppen, en het hing los in <body> zonder z-index,
+   dus achter #app -- onzichtbaar op elk scherm met een eigen achtergrond. Nu
+   een eigen klasse (.vonk-op) die boven alles zit en niets vangt. */
+const VONK_OP = 900;
 function sparkleAt(r, emojis) {
-  if (motionOff()) return;   // een los dwarrelend sterretje: sier, en verder niets
+  if (motionOff()) return;   // een los sterretje: sier, en verder niets
   const s = document.createElement('div');
-  s.className = 'confetti-bit';
+  s.className = 'vonk-op';
   s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
   s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
   s.style.top = (r.top + 10) + 'px';
-  s.style.animationDuration = '1.2s';
+  s.style.setProperty('--drift', rnd(-14, 14) + 'px');
+  s.style.animationDuration = VONK_OP + 'ms';
   document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1400);
+  setTimeout(() => s.remove(), VONK_OP + 60);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 function finaleDance(elId, count) {
@@ -9127,12 +9142,13 @@ function hideToast() {
   veil.style.display = 'none';
 }
 
-function confetti(n) {
+function confetti(n, scherm) {
   // Hetzelfde antwoord als confettiBurst hieronder: wie om minder beweging
   // vraagt, krijgt het feest zonder de veertig dwarrelende stukjes. Wat er
   // gevierd wordt staat er zelf ook -- de sterren, de juichtekst, de teller.
   if (motionOff()) return;
   const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
+  const laag = confettiLaag(scherm);
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
     d.className = 'confetti-bit';
@@ -9140,9 +9156,27 @@ function confetti(n) {
     d.style.left = rnd(0, 96) + 'vw';
     d.style.animationDuration = (rnd(18, 34) / 10) + 's';
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
-    $('confetti-layer').appendChild(d);
+    laag.appendChild(d);
     setTimeout(() => d.remove(), 4500);
   }
+}
+/* Waar de confetti valt: achter het spel, maar vóór de achtergrond.
+
+   #confetti-layer ligt onder heel #app, en dat is met opzet (zie 10-basis.css):
+   confetti mag nooit over de som of de juichtekst heen. Maar de show en het
+   eindscherm hebben een eigen zaal (.venue), en die is dekkend -- alle confetti
+   daar viel er dus onzichtbaar achter. Staat er op het actieve scherm een zaal,
+   dan valt ze nu ín die zaal: boven het verloop en het zaallicht, onder de inhoud
+   (die staat er op z 1 boven, zie 50-zaal.css). Precies dezelfde afspraak, één
+   laag hoger.
+
+   scherm: voor wie confetti strooit vlak vóór de wissel naar een ander scherm
+   (endLevel doet dat, en zet het eindscherm pas daarna aan). Anders het scherm
+   dat nu aan staat. */
+function confettiLaag(scherm) {
+  const s = scherm || document.querySelector('.screen.active');
+  const zaal = s && s.classList.contains('venue-aan') && s.querySelector('.venue');
+  return zaal || $('confetti-layer');
 }
 // Reduced-motion? Dan geen sier-animaties.
 function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -17292,7 +17326,9 @@ function wereldFeest(f) {
     noticeReady(checkTrophies(q));   // een outfit-combo kan een geheime trofee zijn
     save();
     const pop = $('end-avatar');
-    if (pop) { pop.innerHTML = avatarSVG(q, 150); dance('end-avatar'); }
+    // Mét de danslaag: elke pas beweegt .pas-laag, en zonder die laag stond de
+    // pop na het aandoen stil -- ook bij elke tik daarna.
+    if (pop) { pop.innerHTML = pasLaag(avatarSVG(q, 150)); dance('end-avatar'); }
     dicht();
   };
   sndGroot();
@@ -18050,8 +18086,14 @@ function flipCard(i, btn) {
   if (M.flipped.length < 2) return;
   M.lock = true;
   const [a, b] = M.flipped;
+  /* Wie het spel verlaat zet M op null (exitMemory). De klokjes hieronder lopen
+     dan nog door, en lazen M daarna: een fout midden in het feestje, en een
+     bonus die wel opgeteld maar niet bewaard werd. Ze kijken nu eerst of het nog
+     hetzelfde spel is. */
+  const m = M;
   if (a.c.v === b.c.v) {
     setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.add('done'); b.btn.classList.add('done');
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       a.btn.classList.add('snap'); b.btn.classList.add('snap');   // 'klik samen'-bounce
@@ -18063,6 +18105,7 @@ function flipCard(i, btn) {
     a.btn.classList.add('wrong'); b.btn.classList.add('wrong');   // kort schudje bij een misser
     setTimeout(() => { a.btn.classList.remove('wrong'); b.btn.classList.remove('wrong'); }, 430);
     setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       M.flipped = []; M.lock = false;
     }, 950);
@@ -18081,14 +18124,16 @@ function onMemMatch(fromBtn) {
   sparkle(fromBtn, ['⭐', '✨', '💛']);
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
-  if (M.matched >= M.pairs) setTimeout(finishMemory, 650);
+  if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
   else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
 }
-function finishMemory() {
+function finishMemory(m) {
   const p = P();
   const bonus = MEM_DONE_BONUS;
-  p.diamonds += bonus; M.earned += bonus;
+  // De bonus is verdiend, ook als het kind al weg is; alleen het feestje niet meer.
+  p.diamonds += bonus; m.earned += bonus;
   save();
+  if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
   confetti(28);
@@ -18578,6 +18623,25 @@ function vraagKomtIn(kaart, metScherm) {
     [metScherm ? rust : { opacity: 0, transform: 'translateY(7px)' }, rust],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
+/* De kaart schudt kort "nee" bij een misser.
+
+   Dit was een CSS-klasse (.wobble), en die deed niets meer: vraagKomtIn laat
+   hierboven met opzet een animatie met fill 'both' op de kaart staan, en een
+   animatie uit het script gaat altijd vóór een CSS-animatie. De kaart bleef dus
+   op transform none staan terwijl de klasse er netjes op zat. Nu is het schudje
+   zelf ook een animatie uit het script, en omdat hij later begint dan de opkomst,
+   wint hij -- en daarna valt de kaart terug op diezelfde rusttand. */
+const WIEBEL = 420;
+function kaartWiebelt(kaart) {
+  if (!kaart || !kaart.animate || motionOff()) return;
+  kaart.animate([
+    { transform: 'rotate(0) scale(1)' },
+    { transform: 'rotate(-2.4deg) scale(.985)', offset: .25 },
+    { transform: 'rotate(2deg) scale(.995)', offset: .6 },
+    { transform: 'rotate(-1deg)', offset: .85 },
+    { transform: 'rotate(0) scale(1)' },
+  ], { duration: WIEBEL, easing: 'ease' });
+}
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
 function renderSegBar(el, total, done, hasNow) {
@@ -18899,8 +18963,7 @@ function submitAnswer(val, btnEl) {
   // "Niet die -- probeer nog eens", en klaar. 420ms i.p.v. 700: een misser mag
   // duidelijk zijn maar hoort niet ook nog te dúren. De rode tegel blijft staan
   // (die zegt wélke), de kaart schudt kort en is dan weer gewoon de som.
-  $('question-card').classList.add('wobble');
-  setTimeout(() => $('question-card').classList.remove('wobble'), 420);
+  kaartWiebelt($('question-card'));
   // een misser op een speciale vraag maakt de ronde "niet schoon" → frequentie omlaag
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
@@ -19207,7 +19270,7 @@ function endLevel(success) {
       ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
       : () => { sndClick(); openKleedkamer(); };
     sndWin();
-    confetti(40);
+    confetti(40, $('screen-end'));
     finaleDance('end-avatar', 6);   // grote slotchoreografie
   } else {
     // Mislukt: er komt geen ster bij en er schuift niets op. Alleen de 💎 van de
@@ -19251,7 +19314,12 @@ function endLevel(success) {
      achter een schermvullende laag verdwijnen -- en hoe beter de show, hoe meer er
      afgedekt werd. Nu wacht dit moment op de ceremonie zelf (naSterren), en niet
      op een getal dat toevallig ooit groot genoeg leek. */
-  const naFeest = feest ? () => wereldFeest(feest) : null;
+  /* En alleen als het eindscherm er dán nog staat. De knoppen werken vanaf het
+     eerste beeldje, dus wie binnen die anderhalve seconde "Verder op tournee"
+     tikte, kreeg het feest over de kaart en de reis heen. Wat er gevierd werd
+     gaat niet verloren: de schat hangt in de kleedkamer, de badge staat klaar in
+     de kast, en de kaart laat de wereldovergang zelf zien. */
+  const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
 }

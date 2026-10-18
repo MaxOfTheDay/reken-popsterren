@@ -7657,7 +7657,9 @@ function wereldFeest(f) {
     noticeReady(checkTrophies(q));   // een outfit-combo kan een geheime trofee zijn
     save();
     const pop = $('end-avatar');
-    if (pop) { pop.innerHTML = avatarSVG(q, 150); dance('end-avatar'); }
+    // Mét de danslaag: elke pas beweegt .pas-laag, en zonder die laag stond de
+    // pop na het aandoen stil -- ook bij elke tik daarna.
+    if (pop) { pop.innerHTML = pasLaag(avatarSVG(q, 150)); dance('end-avatar'); }
     dicht();
   };
   sndGroot();
@@ -8415,8 +8417,14 @@ function flipCard(i, btn) {
   if (M.flipped.length < 2) return;
   M.lock = true;
   const [a, b] = M.flipped;
+  /* Wie het spel verlaat zet M op null (exitMemory). De klokjes hieronder lopen
+     dan nog door, en lazen M daarna: een fout midden in het feestje, en een
+     bonus die wel opgeteld maar niet bewaard werd. Ze kijken nu eerst of het nog
+     hetzelfde spel is. */
+  const m = M;
   if (a.c.v === b.c.v) {
     setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.add('done'); b.btn.classList.add('done');
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       a.btn.classList.add('snap'); b.btn.classList.add('snap');   // 'klik samen'-bounce
@@ -8428,6 +8436,7 @@ function flipCard(i, btn) {
     a.btn.classList.add('wrong'); b.btn.classList.add('wrong');   // kort schudje bij een misser
     setTimeout(() => { a.btn.classList.remove('wrong'); b.btn.classList.remove('wrong'); }, 430);
     setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       M.flipped = []; M.lock = false;
     }, 950);
@@ -8446,14 +8455,16 @@ function onMemMatch(fromBtn) {
   sparkle(fromBtn, ['⭐', '✨', '💛']);
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
-  if (M.matched >= M.pairs) setTimeout(finishMemory, 650);
+  if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
   else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
 }
-function finishMemory() {
+function finishMemory(m) {
   const p = P();
   const bonus = MEM_DONE_BONUS;
-  p.diamonds += bonus; M.earned += bonus;
+  // De bonus is verdiend, ook als het kind al weg is; alleen het feestje niet meer.
+  p.diamonds += bonus; m.earned += bonus;
   save();
+  if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
   confetti(28);
@@ -8943,6 +8954,25 @@ function vraagKomtIn(kaart, metScherm) {
     [metScherm ? rust : { opacity: 0, transform: 'translateY(7px)' }, rust],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
+/* De kaart schudt kort "nee" bij een misser.
+
+   Dit was een CSS-klasse (.wobble), en die deed niets meer: vraagKomtIn laat
+   hierboven met opzet een animatie met fill 'both' op de kaart staan, en een
+   animatie uit het script gaat altijd vóór een CSS-animatie. De kaart bleef dus
+   op transform none staan terwijl de klasse er netjes op zat. Nu is het schudje
+   zelf ook een animatie uit het script, en omdat hij later begint dan de opkomst,
+   wint hij -- en daarna valt de kaart terug op diezelfde rusttand. */
+const WIEBEL = 420;
+function kaartWiebelt(kaart) {
+  if (!kaart || !kaart.animate || motionOff()) return;
+  kaart.animate([
+    { transform: 'rotate(0) scale(1)' },
+    { transform: 'rotate(-2.4deg) scale(.985)', offset: .25 },
+    { transform: 'rotate(2deg) scale(.995)', offset: .6 },
+    { transform: 'rotate(-1deg)', offset: .85 },
+    { transform: 'rotate(0) scale(1)' },
+  ], { duration: WIEBEL, easing: 'ease' });
+}
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
 function renderSegBar(el, total, done, hasNow) {
@@ -9264,8 +9294,7 @@ function submitAnswer(val, btnEl) {
   // "Niet die -- probeer nog eens", en klaar. 420ms i.p.v. 700: een misser mag
   // duidelijk zijn maar hoort niet ook nog te dúren. De rode tegel blijft staan
   // (die zegt wélke), de kaart schudt kort en is dan weer gewoon de som.
-  $('question-card').classList.add('wobble');
-  setTimeout(() => $('question-card').classList.remove('wobble'), 420);
+  kaartWiebelt($('question-card'));
   // een misser op een speciale vraag maakt de ronde "niet schoon" → frequentie omlaag
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
@@ -9572,7 +9601,7 @@ function endLevel(success) {
       ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
       : () => { sndClick(); openKleedkamer(); };
     sndWin();
-    confetti(40);
+    confetti(40, $('screen-end'));
     finaleDance('end-avatar', 6);   // grote slotchoreografie
   } else {
     // Mislukt: er komt geen ster bij en er schuift niets op. Alleen de 💎 van de
@@ -9616,7 +9645,12 @@ function endLevel(success) {
      achter een schermvullende laag verdwijnen -- en hoe beter de show, hoe meer er
      afgedekt werd. Nu wacht dit moment op de ceremonie zelf (naSterren), en niet
      op een getal dat toevallig ooit groot genoeg leek. */
-  const naFeest = feest ? () => wereldFeest(feest) : null;
+  /* En alleen als het eindscherm er dán nog staat. De knoppen werken vanaf het
+     eerste beeldje, dus wie binnen die anderhalve seconde "Verder op tournee"
+     tikte, kreeg het feest over de kaart en de reis heen. Wat er gevierd werd
+     gaat niet verloren: de schat hangt in de kleedkamer, de badge staat klaar in
+     de kast, en de kaart laat de wereldovergang zelf zien. */
+  const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
 }

@@ -10,6 +10,12 @@
   .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
   .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
+  /* De tekst die opkomt: de naam en "Joepie!" onder de trofee, en de rijen van
+     het wereldfeest. Deze keyframes gingen mee weg met de ster-status (die ze
+     ook gebruikte), en daarmee bleven de trofeenaam en "Joepie!" op opacity 0
+     staan -- de kast toonde een trofee zonder naam. Ze horen dus híér, bij wie
+     ze nog gebruikt. */
+  @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
 
   /* ---- Wereldfeest (fase 4D.1): wereld uit, en/of overal drie sterren ----

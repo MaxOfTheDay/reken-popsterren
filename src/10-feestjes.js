@@ -139,16 +139,23 @@ function tapDance(elId) {
 }
 // klein sterretje dat oppopt bij een tik-dans
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
+/* Het sterretje komt óp en is dan weg, vlak bij wat er aangetikt werd. Het was
+   een .confetti-bit, en dat ging twee keer mis: het viel (fall, door het hele
+   scherm) in plaats van op te poppen, en het hing los in <body> zonder z-index,
+   dus achter #app -- onzichtbaar op elk scherm met een eigen achtergrond. Nu
+   een eigen klasse (.vonk-op) die boven alles zit en niets vangt. */
+const VONK_OP = 900;
 function sparkleAt(r, emojis) {
-  if (motionOff()) return;   // een los dwarrelend sterretje: sier, en verder niets
+  if (motionOff()) return;   // een los sterretje: sier, en verder niets
   const s = document.createElement('div');
-  s.className = 'confetti-bit';
+  s.className = 'vonk-op';
   s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
   s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
   s.style.top = (r.top + 10) + 'px';
-  s.style.animationDuration = '1.2s';
+  s.style.setProperty('--drift', rnd(-14, 14) + 'px');
+  s.style.animationDuration = VONK_OP + 'ms';
   document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1400);
+  setTimeout(() => s.remove(), VONK_OP + 60);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 function finaleDance(elId, count) {
@@ -218,12 +225,13 @@ function hideToast() {
   veil.style.display = 'none';
 }
 
-function confetti(n) {
+function confetti(n, scherm) {
   // Hetzelfde antwoord als confettiBurst hieronder: wie om minder beweging
   // vraagt, krijgt het feest zonder de veertig dwarrelende stukjes. Wat er
   // gevierd wordt staat er zelf ook -- de sterren, de juichtekst, de teller.
   if (motionOff()) return;
   const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
+  const laag = confettiLaag(scherm);
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
     d.className = 'confetti-bit';
@@ -231,9 +239,27 @@ function confetti(n) {
     d.style.left = rnd(0, 96) + 'vw';
     d.style.animationDuration = (rnd(18, 34) / 10) + 's';
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
-    $('confetti-layer').appendChild(d);
+    laag.appendChild(d);
     setTimeout(() => d.remove(), 4500);
   }
+}
+/* Waar de confetti valt: achter het spel, maar vóór de achtergrond.
+
+   #confetti-layer ligt onder heel #app, en dat is met opzet (zie 10-basis.css):
+   confetti mag nooit over de som of de juichtekst heen. Maar de show en het
+   eindscherm hebben een eigen zaal (.venue), en die is dekkend -- alle confetti
+   daar viel er dus onzichtbaar achter. Staat er op het actieve scherm een zaal,
+   dan valt ze nu ín die zaal: boven het verloop en het zaallicht, onder de inhoud
+   (die staat er op z 1 boven, zie 50-zaal.css). Precies dezelfde afspraak, één
+   laag hoger.
+
+   scherm: voor wie confetti strooit vlak vóór de wissel naar een ander scherm
+   (endLevel doet dat, en zet het eindscherm pas daarna aan). Anders het scherm
+   dat nu aan staat. */
+function confettiLaag(scherm) {
+  const s = scherm || document.querySelector('.screen.active');
+  const zaal = s && s.classList.contains('venue-aan') && s.querySelector('.venue');
+  return zaal || $('confetti-layer');
 }
 // Reduced-motion? Dan geen sier-animaties.
 function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
