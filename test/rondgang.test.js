@@ -1184,7 +1184,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
           eigen rij: ZONE is uit de onderrand van díé kop gemeten.
        B  de kleedkamer gaat gescrold dicht in de band onder de spiegel, zoals de
           kast gescrold dichtgaat -- maar de spiegel zelf blijft open, en de kop
-          wordt er niet hoger of lager van.
+          wordt er niet hoger of lager van. Behalve op een laag staand scherm:
+          daar krimpt de spiegel, en blijft het rek eronder stil staan.
        D  de ← op de kleedkamer en de kast heeft geen lip meer: het was het
           zwaarste ding in hun kop, en het is de uitgang. Dezelfde knop als op de
           hulpschermen (.hub-sticky.sub), met hetzelfde 44px raakvlak.
@@ -1225,8 +1226,12 @@ const SPEL_URL = APP_URL.replace('?debug', '');
             laagBoven: +(k.bottom - parseFloat(getComputedStyle(kop).borderBottomWidth) - parseFloat(laag.height)).toFixed(1) };
         };
         uit.ladeOpen = lade();
+        const kaartje = () => { const c = sc.querySelector('#item-grid .item-card'); return +(c.getBoundingClientRect().top + sc.scrollTop).toFixed(1); };
+        uit.rekOpen = kaartje();
         sc.scrollTop = 200; await wacht(400);
         uit.ladeDicht = lade();
+        uit.rekDicht = kaartje();
+        uit.laagStaand = matchMedia('(orientation: portrait) and (max-height: 700px)').matches;
         uit.spiegelOnder = +document.getElementById('shop-spiegel').getBoundingClientRect().bottom.toFixed(1);
         uit.rijBoven = +document.getElementById('shop-tabs-wrap').getBoundingClientRect().top.toFixed(1);
         openTrophies(); await wacht(500); uit.kast = rij();
@@ -1250,8 +1255,16 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         JSON.stringify([r.ladeOpen, r.ladeDicht]));
       check(r.ladeDicht.laagBoven >= r.spiegelOnder - 0.5 && r.ladeDicht.laagBoven <= r.rijBoven,
         'B · die band begint onder de spiegel en vóór de categorierij' + maat, JSON.stringify(r));
-      check(r.ladeDicht.kopH === r.ladeOpen.kopH, 'B · en de kop wordt er niet hoger of lager van' + maat,
-        JSON.stringify([r.ladeOpen, r.ladeDicht]));
+      /* Op een laag staand scherm krimpt de spiegel gescrold wél (zie "Laag en
+         staand" in 75-kleedkamer.css), zodat er meer rek in beeld komt. Wat daar
+         blijft gelden: het rek eronder schuift er geen pixel van op. */
+      if (r.laagStaand)
+        check(r.ladeDicht.kopH < r.ladeOpen.kopH && Math.abs(r.rekDicht - r.rekOpen) <= 0.5,
+          'B · op een laag staand scherm krimpt de kop, maar het rek blijft staan' + maat,
+          JSON.stringify([r.ladeOpen, r.ladeDicht, r.rekOpen, r.rekDicht]));
+      else
+        check(r.ladeDicht.kopH === r.ladeOpen.kopH, 'B · en de kop wordt er niet hoger of lager van' + maat,
+          JSON.stringify([r.ladeOpen, r.ladeDicht]));
       await kopCtx.close();
     }
   }
