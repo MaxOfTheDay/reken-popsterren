@@ -180,10 +180,10 @@ verjaart niet.
   "verder". Hij leest dat nu in drie stappen, en die staan elk apart:
   `kaartOpdracht` zegt wat er moet gebeuren (en maakt de vier briefjes op),
   `kaartVertrek` laat het vorige scherm weggaan, en de staart van `goMap` zelf
-  doet de aankomst. **De volgorde van die drie is betekenisvol**, en `goMap`
-  is de enige plek waar je dat ziet — `kaartVertrek` moet vóór het verbruiken
-  van `tourMapVoltooi` staan, want ze lezen allebei `kaartFocus` en wie eerst
-  is wint. Wat de vlaggen zelf betekenen staat in `src/17-kaartstand.js`.
+  doet de aankomst. Het verbruiken van `tourMapVoltooi` moet in dezelfde taak
+  gebeuren als `show()`, vóór de eerste verf. `kaartVertrek` krijgt `uitShow`
+  als argument, dus die hangt niet meer af van wie `kaartFocus` het eerst leest.
+  Wat de vlaggen zelf betekenen staat in `src/17-kaartstand.js`.
 * **De overgangen** (`= Bewegingstaal`, `= De reis`, `= Wereld naar wereld`)
   zijn op enkele beeldjes afgeregeld. Verplaats er niets zonder het op een
   telefoon te bekijken; headless ziet dit soort fouten niet.
