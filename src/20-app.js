@@ -2553,6 +2553,12 @@ function noot(freq, dur, delay, type, vol) {
    of uit `keuze` (willekeurig). `tril` is het trilpatroon dat erbij hoort -- zie
    buzz(), die zelf al naar db.haptics en naar de trilmotor kijkt.
 
+   ELKE TRILLING STAAT HIER, naast het klankje waar ze bij hoort, en nergens
+   anders: een losse buzz() vlak ná een klankje breekt diens trilling af (een
+   nieuwe vibrate() begint opnieuw), dus die won altijd en dan voelt één
+   gebeurtenis op elke plek anders. De enige buzz() buiten playSfx is die van
+   toggleHaptics -- die hoort bij geen enkel klankje.
+
    Veertien regels en dertien gebeurtenissen -- 'tap' en 'tap.blij' zijn twee
    kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol. Dit is een spel voor
    vijfjarigen op één tablet in een woonkamer, geen instrument: wat er nog stil is
@@ -2588,8 +2594,14 @@ const SFX = {
 
      Ze staan sinds deze ronde wél hoger. De onderste was 311 Hz, en een
      tabletluidspreker begint ruim daarboven; op het toestel waar dit voor gemaakt
-     is bleef er van de zachtste helft van dit klankje dus niets over. */
-  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]], tril: 35 },
+     is bleef er van de zachtste helft van dit klankje dus niets over.
+
+     GEEN tril, en dat is de buzzer van hierboven, maar dan voor de hand. Hier
+     stond 35ms, en een goed antwoord trilt 30ms: wie de tablet vasthoudt voelde
+     goed en "probeer nog eens" als dezelfde zoem. Nu voel je drie dingen: een
+     tik bij goed, niets bij de vriendelijke misser, een dubbele tik bij het
+     hartje dat weg is. */
+  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]] },
   /* En dít is de twééde misser: het hartje is weg en het antwoord komt in beeld.
      Tot nu toe klonk dat precies hetzelfde als "probeer nog eens", en daarmee had
      het enige echte gevolg in het spel geen enkel gewicht. Drie dalende noten in
@@ -2640,8 +2652,12 @@ const SFX = {
      de mooiste ceremonie van het spel speelde ónder de fanfare, en hoe beter de
      show hoe meer erdoorheen ging. Nu een korte opgang die op 330ms uit is en de
      sterren hun eigen moment laat. Hij eindigt op G en de eerste ster begint op de
-     E daarboven -- daarom zijn deze drie noten déze drie. */
-  'show.complete':  { noten: [[523, 0.13, 0, 'sine', 0.18], [659, 0.13, 0.10, 'sine', 0.18], [784, 0.13, 0.20, 'sine', 0.18]], tril: [0, 45, 60, 45, 60, 90] },
+     E daarboven -- daarom zijn deze drie noten déze drie.
+
+     Het trillen is om dezelfde reden kort: twee tikken, en de lange roffel is
+     voor 'celebrate.major'. Hier stond dezelfde roffel als daar, zodat het
+     gewoonste en het zeldzaamste moment in de hand nog altijd één ding waren. */
+  'show.complete':  { noten: [[523, 0.13, 0, 'sine', 0.18], [659, 0.13, 0.10, 'sine', 0.18], [784, 0.13, 0.20, 'sine', 0.18]], tril: [0, 40, 60, 60] },
   /* En de zeldzame toppen: een wereld uit, álle werelden
      uit, een trofee die openknalt, memory helemaal gevonden. Die klonken stuk voor
      stuk als "einde show" -- hetzelfde klankje voor het gewoonste en het
@@ -2650,7 +2666,12 @@ const SFX = {
      Deze mág lang zijn, want hij begint pas als de sterren gevallen zijn (zie
      naSterren in endLevel). Op het eind twee noten tegelijk: dat is de enige plek
      in de app waar dat met opzet gebeurt, en het is waarom hij groter klinkt
-     zonder harder te zijn. */
+     zonder harder te zijn.
+
+     Zijn roffel is van hem alleen, en hij is op alle vier de plekken dezelfde.
+     De trofee en het wereldfeest zetten er elk nog een eigen buzz() achteraan,
+     en navigator.vibrate() breekt af in plaats van erbij te doen: dat eigen
+     patroon won, en dan voelde hetzelfde feest op elke plek anders. */
   'celebrate.major': { noten: [[523, 0.16, 0, 'sine', 0.17], [659, 0.16, 0.12, 'sine', 0.17],
                                [784, 0.16, 0.24, 'sine', 0.17], [1047, 0.16, 0.36, 'sine', 0.17],
                                [1047, 0.42, 0.50, 'sine', 0.15], [1319, 0.42, 0.50, 'sine', 0.13]],
@@ -7204,7 +7225,7 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
      wereldbadge die naar de kast vliegt, en pas als die aankomt de camera. De
      badge vertrok op 0 -- tegelijk met de sterrenlanding en terwijl de kaart nog
      inzoomde, drie plekken tegelijk. Nu vult hij de stilte vóór de klim, en de
-     camera vertrekt als hij aankomt (BADGE.munt van zijn vlucht: het muntje,
+     camera vertrekt als hij aankomt (BADGE.landt van zijn vlucht: het tikje,
      daarna is hij nog maar een stipje), nooit eerder dan WERELDREIS.beat. */
   starRevealBeat(fromLvl, () => {
     if (wereldReisOp !== wachten) return;   // ondertussen afgebroken -- wachten() heeft al opgeruimd
@@ -7216,17 +7237,17 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
       if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
       map.style.pointerEvents = '';
       wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.munt)));
+    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.landt)));
   });
 }
 /* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
    midden van de kaart, met een boogje. */
 function flyBadge(vanEl, naarEl, teken) {
   if (!vanEl || !naarEl || !vanEl.animate) return;
-  /* Bij beperkte beweging blijft de badge op de kaart en stijgt er niets op. De
-     munt hoort bij het moment en niet bij de vlucht: beide aanroepers laten hem
-     zelf klinken (zie vier() in runTravel en de toegift-tak), dus hier zou hij
-     dubbel vallen. */
+  /* Bij beperkte beweging blijft de badge op de kaart en stijgt er niets op, en
+     dan klinkt hij ook niet: het grote klankje hoort bij het moment en niet bij
+     de vlucht, en dat laten beide aanroepers zelf klinken (zie vier() in
+     runTravel en de toegift-tak). */
   if (motionOff()) return;
   const f = vanEl.getBoundingClientRect(), t = naarEl.getBoundingClientRect();
   const d = document.createElement('div');
@@ -7244,17 +7265,23 @@ function flyBadge(vanEl, naarEl, teken) {
     { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 0 },
   ], { duration: BADGE.duur, easing: 'ease-in-out' });
   a.onfinish = () => d.remove();
-  /* Het muntje en het tabblad dat hem opvangt: allebei op het moment dat hij er
-     is (BADGE.munt van de vlucht -- daarna is hij nog maar een stipje). Het
-     tabblad deed niets, dus de badge verdween ergens in de balk. */
+  /* Het tikje en het tabblad dat hem opvangt: allebei op het moment dat hij er
+     is (BADGE.landt van de vlucht -- daarna is hij nog maar een stipje). Het
+     tabblad deed niets, dus de badge verdween ergens in de balk.
+
+     De lichte tik en niet het muntje. Dat stond hier, maar een wereldbadge is
+     geen diamant: het muntje betekent overal anders betalen of verdienen. En het
+     viel op twee plekken waar het niet hoort: midden in de stilte vóór de
+     camera over de grens klimt, en op het slotakkoord van "alle werelden uit".
+     Een tik is klein genoeg voor allebei. */
   setTimeout(() => {
-    sndCoin();
+    sndTap();
     if (naarEl.isConnected && naarEl.animate) naarEl.animate(
       [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
       { duration: 320, easing: MOTION.plop });
-  }, Math.round(BADGE.duur * BADGE.munt));
+  }, Math.round(BADGE.duur * BADGE.landt));
 }
-const BADGE = { duur: 1100, munt: .82 };
+const BADGE = { duur: 1100, landt: .82 };
 
 /* De beloning na een level-up: de ster huppelt over de route naar de volgende
    halte, die daar zichtbaar openspringt. Loopt de sprong over een wereldgrens,
@@ -7647,7 +7674,6 @@ function openTrophy(id) {
 function celebrateTrophy(t) {
   const reduce = motionOff();
   sndClick();          // 'optil'-tik op het moment van openen
-  buzz(20);
   const ov = openOverlay('trophy-pop-overlay',
     '<div class="pop-panel trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
     + '<div class="tp-stage">'
@@ -7672,8 +7698,7 @@ function celebrateTrophy(t) {
   const burst = () => {
     if (!ov.isConnected || pop.classList.contains('burst')) return;
     pop.classList.add('burst');
-    sndGroot();
-    buzz([0, 40, 60, 40, 90]);
+    sndGroot();          // het trillen zit erin, net als op de andere drie plekken
     if (!reduce) {
       const center = () => { const r = pop.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height * 0.42]; };
       const [cx, cy] = center();
@@ -7787,7 +7812,6 @@ function wereldFeest(f) {
     dicht();
   };
   sndGroot();
-  buzz([0, 40, 60, 40, 90]);
   if (!reduce) {
     const panel = ov.querySelector('.wereld-feest');
     const r = panel.getBoundingClientRect();
@@ -9594,7 +9618,6 @@ function bumpPintjeTaps(el) {
   for (let i = 0; i < 10; i++) setTimeout(() => sparkleAt(r, ['🍺', '🍻', '🫧']), i * 70);
   showPraise('Schol! 🍻');
   sndCoin();
-  buzz([0, 20, 60, 20]);
 }
 
 /* Wat deze show waard was, in sterren. Puur rekenwerk op de stand van G: geen
@@ -9692,6 +9715,8 @@ function endLevel(success) {
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
   let feest = null;
+  // wat er in de telmodus hardop gezegd wordt als de sterren er staan (zie onderaan)
+  let zin = null;
   // zelfde kop als tijdens het optreden: wereld + 💎-teller, zodat dit scherm
   // aanvoelt als het vervolg van dezelfde show i.p.v. een los tussenschermpje
   const wl = worldFor(lvl);
@@ -9731,6 +9756,9 @@ function endLevel(success) {
     $('end-title').textContent = stars === 3 ? `🎉 Show ${wl.nr} was geweldig!`
       : stars === 2 ? `👏 Show ${wl.nr} was goed!`
       : `🎤 Show ${wl.nr} gehaald!`;
+    zin = stars === 3 ? 'Drie sterren! Super gedaan!'
+      : stars === 2 ? 'Twee sterren! Goed zo!'
+      : 'Eén ster! Je hebt de show gehaald!';
     renderEndStars(stars);
     // de juichtekst groeit mee met de prestatie
     // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
@@ -9781,6 +9809,7 @@ function endLevel(success) {
     // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
     save();
     $('end-title').textContent = '🎭 Bijna!';
+    zin = 'Bijna! Probeer het nog eens.';
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
     $('end-milestone').innerHTML = '';
@@ -9833,6 +9862,18 @@ function endLevel(success) {
   const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
+  /* Lees-vrij: in de telmodus wordt alles voorgelezen -- de vraag, de hint, de
+     trofee, het wereldfeest -- maar het eindscherm was alleen tekst, en dan zegt
+     het een kind dat nog niet leest alleen iets via de sterren. Eén korte zin,
+     ná de laatste toon (EINDE.beloning, of de stille klok) zodat hij er niet
+     doorheen praat. speak() zwijgt zelf in de rekenmodus en met geluid uit.
+
+     Niet als er een wereldfeest volgt: dat leest zijn eigen zin voor, en een
+     nieuwe zin breekt de vorige af. Dan is de wereld het nieuws. */
+  if (zin && !feest) {
+    const wanneer = !success ? EINDE.mislukt : motionOff() ? STERCEREMONIE.stil : EINDE.beloning;
+    setTimeout(() => { if ($('screen-end').classList.contains('active')) speak(zin); }, wanneer);
+  }
 }
 /* De klok van het sterrenmoment.
 
@@ -9849,10 +9890,13 @@ const STERCEREMONIE = {
   land: 480,     // hoe lang één ster erover doet om neer te komen
   knal: 1160,    // foutloos: het confetti-kanon vanuit de sterrenrij
   puls: 420,     // en het opveren van die rij zelf
-  // Beperkte beweging: de sterren staan er meteen (zie hieronder), dus er valt
-  // niets af te wachten. Alleen even ademen, zodat het volgende moment niet in
-  // hetzelfde beeldje over het eindscherm heen valt.
-  stil: 320,
+  /* Beperkte beweging: de sterren staan er meteen (zie hieronder), maar hun
+     klankjes niet. Beperkte beweging gaat over bewegen en niet over geluid, en
+     de drie stijgende tonen zijn het duidelijkste wat het eindscherm zegt over
+     hóé het ging. Ze klinken dan vlak nadat einde show uitgeklonken is, en
+     sneller na elkaar, want er valt niets te zien om op te wachten. */
+  stilEerste: 340,
+  stilTussen: 150,
 };
 /* Wanneer de ceremonie voorbij is: de derde ster staat stil én het kanon van
    3-op-3 is uitgevallen. Dit is de enige plek waar "het sterrenmoment is klaar"
@@ -9860,6 +9904,10 @@ const STERCEREMONIE = {
 STERCEREMONIE.totaal = Math.max(
   STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + STERCEREMONIE.land,
   STERCEREMONIE.knal + STERCEREMONIE.puls);
+/* En zonder beweging: tot de derde toon uitgeklonken is, zodat het volgende
+   moment er niet overheen valt. De duur van die toon staat in SFX. */
+STERCEREMONIE.stil = STERCEREMONIE.stilEerste + 2 * STERCEREMONIE.stilTussen
+  + Math.round(SFX['star.land'].noten[0][1] * 1000);
 // Hoe lang het eindscherm voor zichzelf houdt voordat er iets groters overheen mag.
 function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.totaal; }
 
@@ -9899,7 +9947,8 @@ function eindKomtOp(success) {
 
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
 // hoger klankje; een gemiste ster verschijnt stil en dof. Dé ceremonie van het
-// eindscherm — bij prefers-reduced-motion staan ze er meteen.
+// eindscherm — bij prefers-reduced-motion staan ze er meteen, en klinken hun
+// tonen sneller na elkaar (zie STERCEREMONIE.stilEerste).
 function renderEndStars(n) {
   const wrap = $('end-stars');
   wrap.innerHTML = '';
@@ -9909,7 +9958,11 @@ function renderEndStars(n) {
     s.textContent = '⭐';
     if (i >= n) s.className = 'dim';
     wrap.appendChild(s);
-    if (still || !s.animate) continue;
+    if (still || !s.animate) {
+      // de ster staat er al; alleen haar toon komt nog, op de stille klok
+      if (i < n) setTimeout(() => playSfx('star.land', { i }), STERCEREMONIE.stilEerste + i * STERCEREMONIE.stilTussen);
+      continue;
+    }
     s.style.opacity = '0';
     setTimeout(() => {
       s.style.opacity = '';
@@ -10558,7 +10611,6 @@ function zetWens(id) {
   renderDressBar(it, p);
   paintShop();
   if (p.wens === id) {
-    buzz(15);
     showToast('💖', null, 'Je wens!');
     toastWeg(1300);
   }
