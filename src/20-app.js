@@ -4232,6 +4232,41 @@ function kopMeeMetCamera(richting, duur) {
     { duration: Math.max(MOTION.snel, Math.round(duur * .45)), delay: Math.max(40, Math.round(duur * .4)),
       easing: MOTION.uit, fill: 'backwards' });
 }
+/* De weg-terug-pil doet mee met de klim, en gaat niet aan of uit op het beeldje
+   van de tik. Daar ging hij eerst wél aan: teken() bouwt de kop opnieuw op vóórdat
+   er iets beweegt, dus de pil stond er al terwijl de camera nog moest vertrekken --
+   en noemde dan de wereld die je net aan het verlaten was. Nu komt hij pas op als
+   de nieuwe wereld er zo goed als staat (de curve is voorlijk: op zes tiende van
+   de duur is het meeste van de weg al afgelegd), en tegelijk met de wereldpil
+   boven hem (zie kopMeeMetCamera).
+
+   Weg gaat hij al wél meteen -- hij heeft zijn werk gedaan, en een knop die nog
+   een kwart seconde blijft staan nodigt uit tot een tweede tik. Maar niet met een
+   knip: een schim van hem (geen id, niet aan te raken, voor een screenlezer
+   onzichtbaar) dooft uit op zijn plek, terwijl de echte pil meteen hidden is.
+   Dat laatste is waar de rest op leunt: navGo en backTarget kijken naar hidden.
+   Geeft die schim terug, zodat de opruimer van de camera hem kan weghalen. */
+function terugMeeMetCamera(was, duur) {
+  const pil = $('world-back');
+  if (!pil || !pil.animate) return null;
+  if (!was && !pil.hidden) {
+    pil.animate([{ opacity: 0 }, { opacity: 1 }],
+      { duration: MOTION.snel, delay: Math.round(duur * .6), easing: MOTION.uit, fill: 'backwards' });
+    return null;
+  }
+  if (!was || !pil.hidden) return null;
+  const schim = pil.cloneNode(true);
+  schim.removeAttribute('id');
+  schim.hidden = false;
+  schim.setAttribute('aria-hidden', 'true');
+  schim.tabIndex = -1;
+  schim.style.pointerEvents = 'none';
+  pil.after(schim);
+  const a = schim.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: MOTION.snel, easing: MOTION.uit, fill: 'forwards' });
+  a.onfinish = () => schim.remove();
+  return schim;
+}
 /* De camera verzetten. Dit is de enige plek waar een wereld in of uit beeld rijdt.
 
      richting  +1 = vooruit in de tournee (camera omhoog), -1 = terug
@@ -4270,8 +4305,10 @@ function wereldCamera(richting, teken, opts) {
   const duur = opts.duur || WERELDREIS.snel;
   const easing = opts.easing || WERELDREIS.uit;
   const schaduw = maakWereldSchaduw(map);
+  const terugWas = !$('world-back').hidden;
   teken();                                      // de nieuwe wereld staat er nu al
   kopMeeMetCamera(richting, duur);
+  const terugSchim = terugMeeMetCamera(terugWas, duur);
   scherm.classList.add('wereld-reist');
   map.style.pointerEvents = 'none';             // niet op een bewegend doel kunnen tikken
 
@@ -4307,6 +4344,7 @@ function wereldCamera(richting, teken, opts) {
   const deze = () => {
     [aUit, aIn].forEach(a => { try { a.cancel(); } catch (e) {} });
     schaduw.remove();
+    if (terugSchim) terugSchim.remove();
     scherm.classList.remove('wereld-reist');
     map.style.pointerEvents = '';
     vier();
@@ -4407,9 +4445,12 @@ function renderMapTitle(p, opReis) {
   terug.hidden = !anders || !!opReis;
   if (anders) {
     /* "⟲ Terug naar 🎵 Muziekwereld" was 216px breed en stond midden onderaan --
-       precies waar de onderste haltes staan. De ⟲ zégt al "terug"; de twee woorden
-       ervoor kostten de helft van de breedte en voegden er niets aan toe. */
-    terug.innerHTML = `⟲ ${cur.world.icon} ${esc(cur.world.name)}`;
+       precies waar de onderste haltes staan. De twee woorden ervoor kostten de
+       helft van de breedte en voegden er niets aan toe. De ⟲ is sindsdien een ↑
+       geworden: terug is hier altijd omhoog, en een pijl leest een kind dat nog
+       niet leest wél (zie .world-back). Een screenlezer krijgt de hele zin. */
+    terug.innerHTML = `<span class="wb-pijl" aria-hidden="true">↑</span> ${cur.world.icon} ${esc(cur.world.name)}`;
+    terug.setAttribute('aria-label', `Terug naar ${cur.world.name}`);
     // Terug naar de wereld waar ze speelt is vóóruit in de tournee -- die ligt per
     // definitie hóger dan waar ze nu staat te kijken. De camera klimt dus, net als
     // wanneer ze er via de kiezer heen gaat. Zie navigeerNaarWereld.
