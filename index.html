@@ -5648,8 +5648,11 @@
     width: 21px; height: 21px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: var(--tx-mini); font-weight: 700; line-height: 1; color: var(--gold-light);
-    background: rgba(18,7,34,.72);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+
+
+
+
+    background: rgba(18,7,34,.8);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
   }
 
@@ -9868,6 +9871,7 @@ function showWorld(idx, travelFrom) {
   renderTourMap(travelFrom || 0);
   preloadNextWorldArt();
   preloadBuurwerelden();
+  preloadReisKaartjes();
 }
 
 
@@ -13268,7 +13272,11 @@ function navTik(t) {
 function navGo(t, wasActiveAl, stil) {
   if (!stil) sndClick();
   const wasActive = wasActiveAl != null ? wasActiveAl : $('nav-' + t).classList.contains('active');
-  if (t === 'map') goMap();
+
+
+
+
+  if (t === 'map') { if ($('screen-journey').classList.contains('active')) reisSluit(true); else goMap(); }
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
 }
@@ -14144,6 +14152,33 @@ function preloadBuurwerelden() {
     const w = worldForIndex(i);
     if (w && w.world) preloadArt(w.world.art);
   }));
+}
+
+
+
+
+
+
+
+
+
+
+const KAARTJES_KLAAR = new Map();
+function preloadReisKaartjes() {
+  if (!cur || viewWorldIdx == null) return;
+  const hier = viewWorldIdx, laatste = laatsteZichtbareWereld(P());
+  naDeRust(() => {
+    for (let i = Math.max(0, hier - 2); i <= Math.min(laatste, hier + 2); i++) {
+      const w = worldForIndex(i);
+      const src = w && w.world.art && (wereldKleinPad(w.world.art) || w.world.art);
+      if (!src || KAARTJES_KLAAR.has(src)) continue;
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+      KAARTJES_KLAAR.set(src, img);
+      if (img.decode) img.decode().catch(() => KAARTJES_KLAAR.delete(src));
+    }
+  });
 }
 
 
@@ -15110,6 +15145,40 @@ function vluchtDoofAlle(lijst, aan, duur, na) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function reisCamera(punt, van, naar) {
+  const track = $('reis-track');
+  if (!track || !track.animate || !punt || !(van > 0) || !(naar > 0)) return null;
+  const r = track.getBoundingClientRect();
+  if (!r.width) return null;
+  track.style.transformOrigin = (punt.x - r.left).toFixed(1) + 'px ' + (punt.y - r.top).toFixed(1) + 'px';
+  const a = track.animate(
+    [{ transform: `scale(${van.toFixed(4)})` }, { transform: `scale(${naar.toFixed(4)})` }],
+    { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' });
+  return () => { a.cancel(); track.style.transformOrigin = ''; };
+}
+
+
+
+function reisCameraSchaal(kaartje, wereld) {
+  if (!kaartje || !wereld || !kaartje.clip.w) return 1;
+  return Math.max(1, Math.min(4, wereld.clip.w / kaartje.clip.w));
+}
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
   const a = vanEl.getBoundingClientRect(), b = naarEl.getBoundingClientRect();
@@ -16579,10 +16648,12 @@ function openReis() {
     const muntV = kaart.querySelector('.diamond-badge'), muntN = reis.querySelector('.diamond-badge');
     const muntKruist = !zelfdePlek(muntV, muntN);
     if (muntKruist) { lokaal.push(muntV); overzicht.push(muntN); }
+    let camera = null;
     const op = () => {
       overgangBezig = false;
       kaart.classList.remove('wegvallend', 'vlucht-weg');
       if (doel) doel.classList.remove('vlucht-doel');
+      if (camera) camera();
       lokaal.concat(overzicht).forEach(el => {
         if (el && el.getAnimations) el.getAnimations().forEach(a => a.cancel());
       });
@@ -16596,6 +16667,10 @@ function openReis() {
     vluchtDoofAlle(lokaal.filter(x => x !== muntV), false, VLUCHT.detail);
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
 
+
+
+    camera = reisCamera({ x: naar.clip.left + naar.clip.w / 2, y: naar.clip.top + naar.clip.h / 2 },
+      reisCameraSchaal(naar, vanaf), 1);
     vluchtDoofAlle([pad, mist], true, VLUCHT.reveal, 40);
 
 
@@ -16612,9 +16687,10 @@ function openReis() {
 }
 
 
-function reisSluit() {
+
+function reisSluit(stil) {
   const idx = reisVanuit == null ? continueWorld(P()) : reisVanuit;
-  reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`));
+  reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`), stil === true);
 }
 
 
@@ -16638,18 +16714,19 @@ function reisSluit() {
 
 
 
-function reisNaarWereld(idx, el) {
+
+function reisNaarWereld(idx, el, stil) {
   if (overgangBezig) return;
   vluchtKlaar();
-  sndClick();
+  if (!stil) sndClick();
   const reis = $('screen-journey'), kaart = $('screen-map');
   reisStopWaarnemer();
   reisDoel = Math.max(0, Math.min(WORLDS.length - 1, idx | 0));
   const bron = worldForIndex(reisDoel);
   const r = (el && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
-  const stil = motionOff() || !r || !r.width || !kaart.animate || !reis.classList.contains('active');
-  const van = stil ? null : halteVlak(el);
-  if (stil || !van || !bron) {
+  const kaal = motionOff() || !r || !r.width || !kaart.animate || !reis.classList.contains('active');
+  const van = kaal ? null : halteVlak(el);
+  if (kaal || !van || !bron) {
     goMap();
 
     if (motionOff()) vluchtDoof($('tour-map'), true, 140);
@@ -16681,11 +16758,13 @@ function reisNaarWereld(idx, el) {
     const muntV = reis.querySelector('.diamond-badge'), muntN = kaart.querySelector('.diamond-badge');
     const muntKruist = !zelfdePlek(muntV, muntN);
     if (muntKruist) { overzicht.push(muntV); lokaal.push(muntN); }
+    let camera = null;
     const op = () => {
       overgangBezig = false;
       kaart.classList.remove('vlucht-weg', 'vlucht-boven');
       reis.classList.remove('wegvallend');
       el.classList.remove('vlucht-doel');
+      if (camera) camera();
       lokaal.concat(overzicht).forEach(a => {
         if (a && a.getAnimations) a.getAnimations().forEach(x => x.cancel());
       });
@@ -16696,7 +16775,14 @@ function reisNaarWereld(idx, el) {
 
     vluchtDoofAlle(lokaal.filter(x => x !== muntN), true, VLUCHT.detail, kruis - VLUCHT.detail);
 
-    vluchtDoofAlle(overzicht.filter(x => x !== muntV), false, VLUCHT.detail);
+
+
+
+    camera = reisCamera(punt, 1, reisCameraSchaal(van, naar));
+    const terugKnop = reis.querySelector('.header-left');
+    vluchtDoofAlle(overzicht.filter(x => x !== muntV && x !== terugKnop), false,
+      VLUCHT.reveal, VLUCHT.duur - VLUCHT.reveal);
+    vluchtDoof(terugKnop, false, VLUCHT.detail);
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
     globeVlucht(kopVan, kaart.querySelector('.wp-cta-ico'), kruis);
 
@@ -22640,6 +22726,12 @@ function backTarget() {
   if ($('screen-trophies').classList.contains('active')) return goMap;
 
   if ($('screen-journey').classList.contains('active')) return reisSluit;
+
+
+
+
+  if ($('screen-map').classList.contains('active') && !$('world-back').hidden
+      && $('world-back').onclick) return $('world-back').onclick;
   if ($('screen-map').classList.contains('active')) return goProfiles;
   return null;
 }
