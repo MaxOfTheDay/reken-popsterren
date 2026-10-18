@@ -786,7 +786,13 @@
      rand eromheen, en een lange tekst (wat er weggaat én wat er blijft) maakt het
      venster hoogstens scrollend in plaats van afgesneden. */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-  .modal-bg.open { display: flex; }
+  /* Een venster sprong er vol in. Nu doft de achtergrond kort op en komt het
+     venster een paar pixels omhoog -- dezelfde popFade als het trofeefeestje
+     (70-feest). Geen beweging erin bij beperkte beweging: alleen de fade. */
+  .modal-bg.open { display: flex; animation: popFade .2s ease-out both; }
+  .modal-bg.open .modal { animation: modalOp .22s ease-out both; }
+  @keyframes modalOp { from { transform: translateY(10px); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .modal-bg.open .modal { animation: none; } }
   .modal {
     background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 24px 28px; text-align: center;
     width: 100%; max-width: 340px; max-height: calc(100vh - 32px); overflow-y: auto;
@@ -817,5 +823,14 @@
   .confetti-bit { position: fixed; top: -40px; font-size: 26px; pointer-events: none; animation: fall linear forwards; }
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); }
+  }
+  /* Het sterretje bij een tik (sparkleAt): kort omhoog en weg, boven alles.
+     Zelfde hoogte als het confetti-kanon (.burst-bit). */
+  .vonk-op { position: fixed; z-index: 92; font-size: 22px; pointer-events: none;
+    animation: vonkOp ease-out forwards; will-change: transform, opacity; }
+  @keyframes vonkOp {
+    0%   { opacity: 0; transform: translate(0, 6px) scale(.6); }
+    25%  { opacity: 1; transform: translate(calc(var(--drift, 0px) * .3), -10px) scale(1.05); }
+    100% { opacity: 0; transform: translate(var(--drift, 0px), -46px) scale(.85); }
   }
 

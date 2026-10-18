@@ -358,6 +358,7 @@
     scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
   }
   .shop-tabs::-webkit-scrollbar { display: none; }
+  @media (prefers-reduced-motion: reduce) { .shop-tabs { scroll-behavior: auto; } }
   .tab-btn {
     font-family: inherit; font-size: var(--tx-label); font-weight: 700; border: none; cursor: pointer;
     padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: rgba(255,255,255,.18);
@@ -477,7 +478,7 @@
          behaalde trofee (.trophy-card.just-claimed, claimShimmer): "dit is nu
          van jou" hoort in de hele app hetzelfde te zeggen, of het nu verdiend of
          gekocht is. */
-  .item-card.just-bought { animation: boughtPop .5s cubic-bezier(.2,.86,.3,1.2); }
+  .item-card.just-bought { animation: boughtPop .5s var(--ease-plop); }
   @keyframes boughtPop {
     0%   { transform: scale(1); }
     32%  { transform: scale(1.085); }
@@ -575,7 +576,7 @@
      vertraging laten gelden, en dan is er van de pop niets meer over. */
   .item-status.new {
     color: var(--ink-on-gold); background: var(--gold-accent);
-    animation: statusPop .32s cubic-bezier(.2,.86,.3,1.3), readyPulse 1.4s ease-in-out .32s 1 forwards;
+    animation: statusPop .32s var(--ease-plop), readyPulse 1.4s ease-in-out .32s 1 forwards;
   }
   @keyframes statusPop { 0% { transform: scale(.72); } 55% { transform: scale(1.12); } 100% { transform: scale(1); } }
   /* FASE 4D.1 -- nog te verdienen bij een wereld. Bewust dezelfde rustige taal als

@@ -113,42 +113,64 @@ function zetPas(el, move) {
    de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
    wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
 function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
+/* Hoe lang één pasje duurt: de .9s van de danspasjes in 30-onderdelen.css. Na
+   PAS (plus een beeldje of drie) gaat het pasje er weer af.
+
+   Per pop één klokje, en een nieuw pasje zet het oude klokje stil. Zonder dat
+   haalde het klokje van een vorige tik het volgende pasje halverwege weg: tik
+   twee keer kort na elkaar en de tweede dans brak na een halve seconde af. */
+const PAS = 900;
+document.documentElement.style.setProperty('--t-pas', PAS + 'ms');   // de CSS leest dezelfde duur
+const pasKlok = new WeakMap();
+function pasUit(el) {
+  clearTimeout(pasKlok.get(el));
+  pasKlok.set(el, setTimeout(() => stilStaan(el), PAS + 50));
+}
 function dance(elId) {
   const el = $(elId);
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
   if (!zetPas(el, move)) return;
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 function buiging(elId) {
   const el = $(elId);
   if (!el || !zetPas(el, BUIGING)) return;
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 // Vrije dans: tik op de avatar (kleedkamer/winkel/eindscherm) voor een willekeurig pasje.
-function tapDance(elId) {
+// stil: wie al een eigen klankje speelt (Verras me speelt sndAan), krijgt er
+// niet nog het tikje bovenop -- twee klankjes tegelijk lezen als één rommel.
+function tapDance(elId, stil) {
   const el = $(elId);
   if (!el || el.classList.contains('dancing')) return;
   // De tik wordt altijd beantwoord -- het klankje is het antwoord, het pasje de
   // versiering. Dus eerst het geluid, en pas daarna kijken of er gedanst wordt.
-  sndTap();
+  if (!stil) sndTap();
   if (!zetPas(el, pick(MOVES))) return;
   sparkle(el);
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 // klein sterretje dat oppopt bij een tik-dans
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
+/* Het sterretje komt óp en is dan weg, vlak bij wat er aangetikt werd. Het was
+   een .confetti-bit, en dat ging twee keer mis: het viel (fall, door het hele
+   scherm) in plaats van op te poppen, en het hing los in <body> zonder z-index,
+   dus achter #app -- onzichtbaar op elk scherm met een eigen achtergrond. Nu
+   een eigen klasse (.vonk-op) die boven alles zit en niets vangt. */
+const VONK_OP = 900;
 function sparkleAt(r, emojis) {
-  if (motionOff()) return;   // een los dwarrelend sterretje: sier, en verder niets
+  if (motionOff()) return;   // een los sterretje: sier, en verder niets
   const s = document.createElement('div');
-  s.className = 'confetti-bit';
+  s.className = 'vonk-op';
   s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
   s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
   s.style.top = (r.top + 10) + 'px';
-  s.style.animationDuration = '1.2s';
+  s.style.setProperty('--drift', rnd(-14, 14) + 'px');
+  s.style.animationDuration = VONK_OP + 'ms';
   document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1400);
+  setTimeout(() => s.remove(), VONK_OP + 60);
 }
 // Grote finale-choreografie op het eindscherm: alle pasjes achter elkaar.
 function finaleDance(elId, count) {
@@ -158,12 +180,16 @@ function finaleDance(elId, count) {
   // als je om minder beweging gevraagd hebt. Ze staat er gewoon, in haar nieuwe
   // spullen, en het eindscherm vertelt de rest.
   if (motionOff()) { stilStaan(el); return; }
+  /* Elk pasje helemaal uit (PAS). Dit stond op 620ms per pasje, terwijl een
+     pasje 900ms duurt: elk pasje werd op tweederde afgebroken en de pop sprong
+     naar de volgende stand -- het duidelijkst midden in de pirouette. */
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
     if (!zetPas(el, MOVES[i % MOVES.length])) return;
     i++;
-    setTimeout(step, 620);
+    clearTimeout(pasKlok.get(el));
+    pasKlok.set(el, setTimeout(step, PAS));
   };
   step();
 }
@@ -191,8 +217,31 @@ function showPraise(txt, reward) {
 // soort (optioneel): 'teken' voor een kaart met alleen één groot teken (🤔, 👉)
 // en 'hint' voor het plaatje na een eerste misser (zie toonHint). Zonder soort
 // is het de gewone kaart met tekst; de vorige soort blijft nooit hangen.
+/* Elke toast krijgt een nummer. toastWeg(ms) haalt alléén de toast weg die er nu
+   staat: hier stonden overal losse setTimeout(hideToast, ..)'s, en een klokje van
+   een vorige toast haalde dan de volgende weg -- tik op een trofee die op slot
+   zit en een tel later op een andere, en die tweede toast was na een halve
+   seconde al weg. Een toast die vanzelf verdwijnt doet dat met een korte fade
+   (TOAST_UIT); hideToast blijft de harde knip voor wie meteen iets anders laat
+   zien. */
+let toastNr = 0, toastFade = null;
+const TOAST_UIT = 160;
+function toastWeg(ms) {
+  const nr = toastNr;
+  setTimeout(() => {
+    if (nr !== toastNr) return;
+    const t = $('toast');
+    if (motionOff() || !t.animate) { hideToast(); return; }
+    // fill 'forwards': anders springt hij na de fade nog één beeldje terug.
+    toastFade = t.animate([{ opacity: 1 }, { opacity: 0 }],
+      { duration: TOAST_UIT, easing: 'ease-in', fill: 'forwards' });
+    toastFade.onfinish = () => { if (nr === toastNr) hideToast(); };
+  }, ms);
+}
 function showToast(txt, onTap, sub, soort) {
+  toastNr++;
   const t = $('toast');
+  if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
@@ -211,6 +260,7 @@ function showToast(txt, onTap, sub, soort) {
 }
 function hideToast() {
   const t = $('toast');
+  if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.style.display = 'none';
   t.classList.remove('show');
   const veil = $('tap-veil');
@@ -218,12 +268,13 @@ function hideToast() {
   veil.style.display = 'none';
 }
 
-function confetti(n) {
+function confetti(n, scherm) {
   // Hetzelfde antwoord als confettiBurst hieronder: wie om minder beweging
   // vraagt, krijgt het feest zonder de veertig dwarrelende stukjes. Wat er
   // gevierd wordt staat er zelf ook -- de sterren, de juichtekst, de teller.
   if (motionOff()) return;
   const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
+  const laag = confettiLaag(scherm);
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
     d.className = 'confetti-bit';
@@ -231,9 +282,27 @@ function confetti(n) {
     d.style.left = rnd(0, 96) + 'vw';
     d.style.animationDuration = (rnd(18, 34) / 10) + 's';
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
-    $('confetti-layer').appendChild(d);
+    laag.appendChild(d);
     setTimeout(() => d.remove(), 4500);
   }
+}
+/* Waar de confetti valt: achter het spel, maar vóór de achtergrond.
+
+   #confetti-layer ligt onder heel #app, en dat is met opzet (zie 10-basis.css):
+   confetti mag nooit over de som of de juichtekst heen. Maar de show en het
+   eindscherm hebben een eigen zaal (.venue), en die is dekkend -- alle confetti
+   daar viel er dus onzichtbaar achter. Staat er op het actieve scherm een zaal,
+   dan valt ze nu ín die zaal: boven het verloop en het zaallicht, onder de inhoud
+   (die staat er op z 1 boven, zie 50-zaal.css). Precies dezelfde afspraak, één
+   laag hoger.
+
+   scherm: voor wie confetti strooit vlak vóór de wissel naar een ander scherm
+   (endLevel doet dat, en zet het eindscherm pas daarna aan). Anders het scherm
+   dat nu aan staat. */
+function confettiLaag(scherm) {
+  const s = scherm || document.querySelector('.screen.active');
+  const zaal = s && s.classList.contains('venue-aan') && s.querySelector('.venue');
+  return zaal || $('confetti-layer');
 }
 // Reduced-motion? Dan geen sier-animaties.
 function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }

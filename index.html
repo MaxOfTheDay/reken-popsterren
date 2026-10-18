@@ -986,6 +986,12 @@
 
     --t-tik: 70ms; --t-snel: 220ms;
     --ease-uit: cubic-bezier(.2,.8,.3,1);
+
+
+
+    --ease-plop: cubic-bezier(.2,1.3,.4,1);
+
+
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -1211,7 +1217,11 @@
 
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
+
+
+
+
+  @media (prefers-reduced-motion: reduce) { .screen.active { animation: screenIn .15s ease both; } }
 
 
 
@@ -2438,16 +2448,16 @@
 
   .avatar-holder > .pas-laag { display: block; height: 100%; line-height: 0; }
   .avatar-holder.dancing > .pas-laag { transform-origin: 50% 95%; }
-  .avatar-holder.move-jump   > .pas-laag { animation: mvJump .9s ease-in-out; }
-  .avatar-holder.move-spin   > .pas-laag { animation: mvSpin .9s ease-in-out; }
-  .avatar-holder.move-sway   > .pas-laag { animation: mvSway .9s ease-in-out; }
-  .avatar-holder.move-kick   > .pas-laag { animation: mvKick .9s ease-in-out; }
-  .avatar-holder.move-wave   > .pas-laag { animation: mvWave .9s ease-in-out; }
-  .avatar-holder.move-bounce > .pas-laag { animation: mvBounce .9s ease-in-out; }
+  .avatar-holder.move-jump   > .pas-laag { animation: mvJump var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-spin   > .pas-laag { animation: mvSpin var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-sway   > .pas-laag { animation: mvSway var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-kick   > .pas-laag { animation: mvKick var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-wave   > .pas-laag { animation: mvWave var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-bounce > .pas-laag { animation: mvBounce var(--t-pas, .9s) ease-in-out; }
 
 
 
-  .avatar-holder.move-buig   > .pas-laag { animation: mvBuig .9s ease-in-out; }
+  .avatar-holder.move-buig   > .pas-laag { animation: mvBuig var(--t-pas, .9s) ease-in-out; }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }
     30% { transform: translateY(-38px) scale(1.06); }
@@ -2777,7 +2787,7 @@
     background: var(--paneel);
     backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
     box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.12);
-    animation: popIn .4s cubic-bezier(.2,1.3,.4,1);
+    animation: popIn .4s ease-out;
   }
   @media (prefers-reduced-motion: reduce) { .pop-panel { animation: none; } }
 
@@ -3405,6 +3415,17 @@
   #screen-journey.komt-op, #screen-dress.komt-op, #screen-trophies.komt-op,
   #screen-settings.komt-op, #screen-memory.komt-op, #screen-newstar.komt-op,
   #screen-profile.komt-op { animation: none; }
+
+
+
+
+
+  @media (prefers-reduced-motion: reduce) {
+    #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op,
+    #screen-journey.komt-op, #screen-dress.komt-op, #screen-trophies.komt-op,
+    #screen-settings.komt-op, #screen-memory.komt-op, #screen-newstar.komt-op,
+    #screen-profile.komt-op { animation: screenIn .15s ease both; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .venue-licht::after, .venue-licht::before { transition: none; }
   }
@@ -3585,13 +3606,19 @@
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
 
 
-  .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s cubic-bezier(.2,1.4,.4,1); }
+  .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }
   @keyframes goodPop { 0% { transform: scale(1); } 35% { transform: scale(1.11); } 70% { transform: scale(.98); } 100% { transform: scale(1); } }
   .choice-btn.good::before, .count-tile.good::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     box-shadow: 0 0 0 3px var(--green-top); opacity: 0; animation: goodRing .55s ease-out forwards;
   }
   @keyframes goodRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.14); } }
+
+
+
+  .choice-btn.good.rustig { animation: rustigGroen .3s ease-out; }
+  .choice-btn.good.rustig::before { display: none; }
+  @keyframes rustigGroen { from { opacity: .55; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) {
     .choice-btn.good, .count-tile.good { animation: none; }
     .choice-btn.good::before, .count-tile.good::before { display: none; }
@@ -3683,7 +3710,7 @@
 
   .mem-card.wrong { animation: memShake .4s ease; }
   @keyframes memShake { 0%,100% { transform: translateX(0); } 22% { transform: translateX(-5px); } 48% { transform: translateX(5px); } 74% { transform: translateX(-3px); } }
-  .mem-card.snap { animation: memSnap .42s cubic-bezier(.2,1.4,.4,1); }
+  .mem-card.snap { animation: memSnap .42s var(--ease-plop); }
   @keyframes memSnap { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) { .mem-card.wrong, .mem-card.snap { animation: none; } }
 
@@ -3849,14 +3876,7 @@
 
 
 
-  .wobble { animation: wobble .42s ease; }
-  @keyframes wobble {
-    0%,100% { transform: rotate(0) scale(1); }
-    25% { transform: rotate(-2.4deg) scale(.985); }
-    60% { transform: rotate(2deg) scale(.995); }
-    85% { transform: rotate(-1deg); }
-  }
-  @media (prefers-reduced-motion: reduce) { .wobble { animation: none; } }
+
 
 
 
@@ -4370,7 +4390,9 @@
     62% { transform: scale(.94); filter: none; }
     82% { transform: scale(1.07); }
   }
-  .wp-hint { animation: wpHintKnipoog .9s ease-out .6s 1; }
+
+
+  .wp-hint { animation: wpHintKnipoog .9s ease-out 1.3s 1; }
   @media (prefers-reduced-motion: reduce) { .wp-hint { animation: none; } }
 
 
@@ -4536,7 +4558,7 @@
 
   .tour-stop .stop-body { position: relative; transform: scale(var(--stop-schaal));
     transform-origin: 50% 5.15cqw;
-    transition: transform .24s cubic-bezier(.34, 1.56, .64, 1); }
+    transition: transform .24s var(--ease-plop); }
 
 
 
@@ -4949,11 +4971,15 @@
     from { opacity: 0; transform: scale(.25); }
     to   { opacity: 1; transform: none; }
   }
-  .tour-stop.net-af .cstars { animation: tabLandt .3s cubic-bezier(.34, 1.56, .64, 1) both; }
-  .tour-stop.net-af .cstars svg { animation: sterLandt .28s cubic-bezier(.34, 1.56, .64, 1) both; }
-  .tour-stop.net-af .cstars svg:nth-child(1) { animation-delay: .1s; }
-  .tour-stop.net-af .cstars svg:nth-child(2) { animation-delay: .185s; }
-  .tour-stop.net-af .cstars svg:nth-child(3) { animation-delay: .27s; }
+
+
+
+
+  .tour-stop.net-af .cstars { animation: tabLandt .3s var(--ease-plop) var(--kaart-rust, 0ms) both; }
+  .tour-stop.net-af .cstars svg { animation: sterLandt .28s var(--ease-plop) both; }
+  .tour-stop.net-af .cstars svg:nth-child(1) { animation-delay: calc(var(--kaart-rust, 0ms) + .1s); }
+  .tour-stop.net-af .cstars svg:nth-child(2) { animation-delay: calc(var(--kaart-rust, 0ms) + .185s); }
+  .tour-stop.net-af .cstars svg:nth-child(3) { animation-delay: calc(var(--kaart-rust, 0ms) + .27s); }
 
 
 
@@ -6468,6 +6494,12 @@
   .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
   .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
+
+
+
+
+
+  @keyframes rankTextRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @keyframes popIn { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.1) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
 
 
@@ -6548,7 +6580,7 @@
 
 
 
-    animation: shineSweep 2.6s ease-in-out .7s infinite;
+    animation: shineSweep 2.8s ease-in-out .7s infinite;
   }
 
 
@@ -6571,7 +6603,9 @@
   }
 
 
-  .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+
+
+  .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -6602,7 +6636,7 @@
   @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
 
 
-  .trophy-pop.burst .tp-emoji { animation: emojiReveal .55s cubic-bezier(.2,1.5,.4,1) .12s forwards, emojiBob 2.6s ease-in-out .75s infinite; }
+  .trophy-pop.burst .tp-emoji { animation: emojiReveal .55s var(--ease-plop) .12s forwards, emojiBob 2.6s ease-in-out .75s infinite; }
   @keyframes emojiReveal { 0% { opacity: 0; transform: scale(.2) rotate(-12deg); } 60% { opacity: 1; transform: scale(1.18) rotate(5deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
   @keyframes emojiBob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } }
 
@@ -7087,6 +7121,7 @@
     scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
   }
   .shop-tabs::-webkit-scrollbar { display: none; }
+  @media (prefers-reduced-motion: reduce) { .shop-tabs { scroll-behavior: auto; } }
   .tab-btn {
     font-family: inherit; font-size: var(--tx-label); font-weight: 700; border: none; cursor: pointer;
     padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: rgba(255,255,255,.18);
@@ -7206,7 +7241,7 @@
 
 
 
-  .item-card.just-bought { animation: boughtPop .5s cubic-bezier(.2,.86,.3,1.2); }
+  .item-card.just-bought { animation: boughtPop .5s var(--ease-plop); }
   @keyframes boughtPop {
     0%   { transform: scale(1); }
     32%  { transform: scale(1.085); }
@@ -7304,7 +7339,7 @@
 
   .item-status.new {
     color: var(--ink-on-gold); background: var(--gold-accent);
-    animation: statusPop .32s cubic-bezier(.2,.86,.3,1.3), readyPulse 1.4s ease-in-out .32s 1 forwards;
+    animation: statusPop .32s var(--ease-plop), readyPulse 1.4s ease-in-out .32s 1 forwards;
   }
   @keyframes statusPop { 0% { transform: scale(.72); } 55% { transform: scale(1.12); } 100% { transform: scale(1); } }
 
@@ -8311,7 +8346,13 @@
 
 
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-  .modal-bg.open { display: flex; }
+
+
+
+  .modal-bg.open { display: flex; animation: popFade .2s ease-out both; }
+  .modal-bg.open .modal { animation: modalOp .22s ease-out both; }
+  @keyframes modalOp { from { transform: translateY(10px); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .modal-bg.open .modal { animation: none; } }
   .modal {
     background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 24px 28px; text-align: center;
     width: 100%; max-width: 340px; max-height: calc(100vh - 32px); overflow-y: auto;
@@ -8345,6 +8386,15 @@
   }
 
 
+  .vonk-op { position: fixed; z-index: 92; font-size: 22px; pointer-events: none;
+    animation: vonkOp ease-out forwards; will-change: transform, opacity; }
+  @keyframes vonkOp {
+    0%   { opacity: 0; transform: translate(0, 6px) scale(.6); }
+    25%  { opacity: 1; transform: translate(calc(var(--drift, 0px) * .3), -10px) scale(1.05); }
+    100% { opacity: 0; transform: translate(var(--drift, 0px), -46px) scale(.85); }
+  }
+
+
 
 
 
@@ -8356,7 +8406,7 @@
 
 
   @media (prefers-reduced-motion: reduce) {
-    .confetti-bit, .fly-dia, .fly-badge { display: none; }
+    .confetti-bit, .vonk-op, .fly-dia, .fly-badge { display: none; }
   }
 
 
@@ -9097,42 +9147,64 @@ function zetPas(el, move) {
 
 
 function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
+
+
+
+
+
+
+const PAS = 900;
+document.documentElement.style.setProperty('--t-pas', PAS + 'ms');
+const pasKlok = new WeakMap();
+function pasUit(el) {
+  clearTimeout(pasKlok.get(el));
+  pasKlok.set(el, setTimeout(() => stilStaan(el), PAS + 50));
+}
 function dance(elId) {
   const el = $(elId);
 
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }
   if (!zetPas(el, move)) return;
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 function buiging(elId) {
   const el = $(elId);
   if (!el || !zetPas(el, BUIGING)) return;
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 
-function tapDance(elId) {
+
+
+function tapDance(elId, stil) {
   const el = $(elId);
   if (!el || el.classList.contains('dancing')) return;
 
 
-  sndTap();
+  if (!stil) sndTap();
   if (!zetPas(el, pick(MOVES))) return;
   sparkle(el);
-  setTimeout(() => stilStaan(el), 950);
+  pasUit(el);
 }
 
 function sparkle(el, emojis) { sparkleAt(el.getBoundingClientRect(), emojis); }
+
+
+
+
+
+const VONK_OP = 900;
 function sparkleAt(r, emojis) {
   if (motionOff()) return;
   const s = document.createElement('div');
-  s.className = 'confetti-bit';
+  s.className = 'vonk-op';
   s.textContent = pick(emojis || ['✨', '⭐', '💖', '🎵', '💫']);
   s.style.left = (r.left + r.width / 2 - 12 + rnd(-20, 20)) + 'px';
   s.style.top = (r.top + 10) + 'px';
-  s.style.animationDuration = '1.2s';
+  s.style.setProperty('--drift', rnd(-14, 14) + 'px');
+  s.style.animationDuration = VONK_OP + 'ms';
   document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1400);
+  setTimeout(() => s.remove(), VONK_OP + 60);
 }
 
 function finaleDance(elId, count) {
@@ -9142,12 +9214,16 @@ function finaleDance(elId, count) {
 
 
   if (motionOff()) { stilStaan(el); return; }
+
+
+
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
     if (!zetPas(el, MOVES[i % MOVES.length])) return;
     i++;
-    setTimeout(step, 620);
+    clearTimeout(pasKlok.get(el));
+    pasKlok.set(el, setTimeout(step, PAS));
   };
   step();
 }
@@ -9175,8 +9251,31 @@ function showPraise(txt, reward) {
 
 
 
+
+
+
+
+
+
+
+let toastNr = 0, toastFade = null;
+const TOAST_UIT = 160;
+function toastWeg(ms) {
+  const nr = toastNr;
+  setTimeout(() => {
+    if (nr !== toastNr) return;
+    const t = $('toast');
+    if (motionOff() || !t.animate) { hideToast(); return; }
+
+    toastFade = t.animate([{ opacity: 1 }, { opacity: 0 }],
+      { duration: TOAST_UIT, easing: 'ease-in', fill: 'forwards' });
+    toastFade.onfinish = () => { if (nr === toastNr) hideToast(); };
+  }, ms);
+}
 function showToast(txt, onTap, sub, soort) {
+  toastNr++;
   const t = $('toast');
+  if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
@@ -9195,6 +9294,7 @@ function showToast(txt, onTap, sub, soort) {
 }
 function hideToast() {
   const t = $('toast');
+  if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.style.display = 'none';
   t.classList.remove('show');
   const veil = $('tap-veil');
@@ -9202,12 +9302,13 @@ function hideToast() {
   veil.style.display = 'none';
 }
 
-function confetti(n) {
+function confetti(n, scherm) {
 
 
 
   if (motionOff()) return;
   const emo = ['🎉', '🎊', '⭐', '💖', '🎵', '✨', '💎'];
+  const laag = confettiLaag(scherm);
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
     d.className = 'confetti-bit';
@@ -9215,9 +9316,27 @@ function confetti(n) {
     d.style.left = rnd(0, 96) + 'vw';
     d.style.animationDuration = (rnd(18, 34) / 10) + 's';
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
-    $('confetti-layer').appendChild(d);
+    laag.appendChild(d);
     setTimeout(() => d.remove(), 4500);
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function confettiLaag(scherm) {
+  const s = scherm || document.querySelector('.screen.active');
+  const zaal = s && s.classList.contains('venue-aan') && s.querySelector('.venue');
+  return zaal || $('confetti-layer');
 }
 
 function motionOff() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -12183,7 +12302,7 @@ function save() {
       saveFailed = true;
       try {
         showToast('⚠️ Voortgang kan niet bewaard worden', null, 'Je kan gewoon verder spelen.');
-        setTimeout(hideToast, 3000);
+        toastWeg(3000);
       } catch (e2) { }
     }
   }
@@ -12966,7 +13085,7 @@ function navGo(t) {
 const LANDING = {
   komNa: 520,
   tussen: 140,
-  duur: 950,
+  duur: PAS + 50,
   rustMin: 11000,
   rustMax: 19000,
 };
@@ -13883,7 +14002,12 @@ function maakWereldSchaduw(map) {
 
 
 
-function kopMeeMetCamera(richting) {
+
+
+
+
+function kopMeeMetCamera(richting, duur) {
+  duur = duur || WERELDREIS.snel;
   const el = $('map-tournee-label');
   if (!el || !el.animate || motionOff()) return;
   el.getAnimations().forEach(a => a.cancel());
@@ -13893,7 +14017,8 @@ function kopMeeMetCamera(richting) {
   el.animate(
     [{ transform: 'translateY(' + (richting > 0 ? -9 : 9) + 'px)', opacity: .2 },
      { transform: 'none', opacity: 1 }],
-    { duration: MOTION.snel, delay: 40, easing: MOTION.uit, fill: 'backwards' });
+    { duration: Math.max(MOTION.snel, Math.round(duur * .45)), delay: Math.max(40, Math.round(duur * .4)),
+      easing: MOTION.uit, fill: 'backwards' });
 }
 
 
@@ -13934,7 +14059,7 @@ function wereldCamera(richting, teken, opts) {
   const easing = opts.easing || WERELDREIS.uit;
   const schaduw = maakWereldSchaduw(map);
   teken();
-  kopMeeMetCamera(richting);
+  kopMeeMetCamera(richting, duur);
   scherm.classList.add('wereld-reist');
   map.style.pointerEvents = 'none';
 
@@ -13977,7 +14102,7 @@ function wereldCamera(richting, teken, opts) {
   wereldReisOp = deze;
   const af = () => { if (wereldReisOp === deze) stopWereldReis(); };
   aIn.onfinish = af;
-  setTimeout(af, duur + 320);
+  setTimeout(af, duur + MOTION.vangnet);
 }
 
 
@@ -14040,7 +14165,10 @@ function renderMapTitle(p, opReis) {
   const shown = (viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx)) || cur;
   const anders = shown.index !== cur.index;
   const pil = $('map-tournee-label');
-  const hint = !wpHintKlaar; wpHintKlaar = true;
+
+
+
+  const hint = !wpHintKlaar;
   pil.innerHTML =
       `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>`
     + `<span class="wp-here-naam">${esc(korteNaam(shown.world))}</span></span>`
@@ -14050,6 +14178,9 @@ function renderMapTitle(p, opReis) {
   const uitleg = `${shown.world.name} — tik voor alle werelden`;
   pil.setAttribute('aria-label', uitleg);
   pil.title = uitleg;
+  const knipoog = hint && pil.querySelector('.wp-hint');
+  if (knipoog) knipoog.addEventListener('animationend', () => { wpHintKlaar = true; }, { once: true });
+  if (hint && motionOff()) wpHintKlaar = true;
 
 
 
@@ -14229,6 +14360,9 @@ const MOTION = {
 
 
 MOTION.totaal = MOTION.komNa + MOTION.kom;
+
+
+document.documentElement.style.setProperty('--kaart-rust', MOTION.totaal + 'ms');
 
 
 
@@ -14840,18 +14974,26 @@ function enterLevel(lvl, stopEl) {
 
 
 
-  const klaar = eindigOvergang(null, MOTION.totaal, () => {
+  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA, () => {
     spel.style.transformOrigin = '';
     spel.style.pointerEvents = '';
   });
   const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   tapRipple(punt.x, punt.y);
 
+
+
+
+
+
   const dot = stopEl.querySelector('.dot');
   if (dot && dot.animate) dot.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(1.05)' }],
-    { duration: 240, easing: MOTION.plop, fill: 'forwards' });
-
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.24)', offset: .55 }, { transform: 'scale(1.08)' }],
+    { duration: 150, easing: MOTION.plop, fill: 'forwards' });
+  setTimeout(() => duikIn(lvl, kaart, spel, punt, klaar), HALTE_JA);
+}
+const HALTE_JA = 80;
+function duikIn(lvl, kaart, spel, punt, klaar) {
   schermWeg(kaart, true, punt);
 
 
@@ -15082,8 +15224,9 @@ function starRevealBeat(lvl, cb) {
   const st = Math.max(0, Math.min(3, P().stars[lvl] || 0));
   if (!st || motionOff()) { cb(); return; }
   const STAP = .085, LAND = .28;
-  const landt = Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
-  setTimeout(cb, landt + 200);
+
+  const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
+  setTimeout(cb, landt + 100);
 }
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
 
@@ -15125,7 +15268,7 @@ const GROET = {
 
 
   pas: { cls: 'move-wave' },
-  duur: 950,
+  duur: PAS + 50,
 };
 
 
@@ -15439,8 +15582,21 @@ function runWorldReveal(o) {
     showPraise(`${naar.world.icon} ${naar.world.name}!`);
   };
   if (motionOff()) { plaats(); vier(); return; }
-  wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+
+
+
+
+
+  let timer = 0;
+  const wachten = () => { clearTimeout(timer); if (cur) plaats(); };
+  wereldReisOp = wachten;
+  timer = setTimeout(() => {
+    if (wereldReisOp !== wachten) return;
+    wereldReisOp = null;
+    wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+  }, MOTION.totaal + ONTHUL_STIL);
 }
+const ONTHUL_STIL = 400;
 
 
 
@@ -15782,7 +15938,7 @@ function slotWereld(knop, doel) {
   }
   const w = WORLDS[doel];
   showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
-  setTimeout(hideToast, 2200);
+  toastWeg(2200);
 }
 
 
@@ -16617,6 +16773,19 @@ function starRowHTML(n, gespeeld) {
 const REIS_DUUR = 1400, REIS_WACHT = 400, REIS_EASING = 'ease-in-out';
 
 
+
+
+
+
+const REIS_KORT = 950;
+function reisDuur(van, naar) {
+  if (!van || !naar) return REIS_DUUR;
+  const a = van.getBoundingClientRect(), b = naar.getBoundingClientRect();
+  const px = Math.hypot(b.left - a.left, b.top - a.top);
+  return Math.round(Math.min(REIS_DUUR, Math.max(REIS_KORT, 700 + px * 2.5)));
+}
+
+
 const REIS_VONKEN = ['✨', '💫'];
 
 
@@ -16866,7 +17035,6 @@ function heroLineFrames(from, to) {
 
 function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   const map = $('tour-map');
-  flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
   if (!map || !map.animate || still) { plaats(); vier(); return; }
 
 
@@ -16888,14 +17056,22 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   map.style.pointerEvents = 'none';
   wereldReisOp = wachten;
 
+
+
+
+
+
   starRevealBeat(fromLvl, () => {
     if (wereldReisOp !== wachten) return;
+
+    const halte = map.querySelector(`.tour-stop[data-lvl="${fromLvl}"] .dot`) || map;
+    flyBadge(halte, $('nav-tro'), fromW.world.icon || '🌍');
     timer = setTimeout(() => {
       gestart = true;
       if (wereldReisOp === wachten) wereldReisOp = null;
       map.style.pointerEvents = '';
       wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-    }, WERELDREIS.beat);
+    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.munt)));
   });
 }
 
@@ -16921,10 +17097,19 @@ function flyBadge(vanEl, naarEl, teken) {
     { transform: 'translate(-50%,-50%) scale(1.5)', opacity: 1, offset: .25 },
     { transform: `translate(calc(-50% + ${dx * .5}px), calc(-50% + ${dy * .5 - 60}px)) scale(1.2)`, opacity: 1, offset: .65 },
     { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 0 },
-  ], { duration: 1100, easing: 'ease-in-out' });
+  ], { duration: BADGE.duur, easing: 'ease-in-out' });
   a.onfinish = () => d.remove();
-  setTimeout(() => { sndCoin(); }, 900);
+
+
+
+  setTimeout(() => {
+    sndCoin();
+    if (naarEl.isConnected && naarEl.animate) naarEl.animate(
+      [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
+      { duration: 320, easing: MOTION.plop });
+  }, Math.round(BADGE.duur * BADGE.munt));
 }
+const BADGE = { duur: 1100, munt: .82 };
 
 
 
@@ -16987,11 +17172,16 @@ function runTravel(t) {
 
 
   if (t.to > WORLD_LAST) {
-    flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
     showWorld(fromW.index);
-    sndGroot();
-    confetti(26);
-    showPraise('✨ Alle werelden uit!');
+
+
+    setTimeout(() => {
+      if (!$('screen-map').classList.contains('active')) return;
+      flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
+      sndGroot();
+      confetti(26);
+      showPraise('✨ Alle werelden uit!');
+    }, still ? 0 : MOTION.totaal);
     return;
   }
   if (crossing) { runWorldChange(t.from, fromW, toW, plaats, vier, still); return; }
@@ -17010,10 +17200,11 @@ function runTravel(t) {
 
 
 
-  const geo = growRoad(map, t.from, t.to, REIS_DUUR, REIS_WACHT);
+  const duur = reisDuur(from, to);
+  const geo = growRoad(map, t.from, t.to, duur, REIS_WACHT);
   const frames = heroRoadFrames(map, geo) || heroLineFrames(from, to);
   const anim = hero.animate(frames,
-    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
+    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
 
 
 
@@ -17021,7 +17212,7 @@ function runTravel(t) {
   const stap = hero.querySelector('.pas-laag');
   const loopje = heroWalkFrames(map);
   if (stap && stap.animate && loopje) stap.animate(loopje,
-    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING });
+    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING });
 
 
 
@@ -17041,7 +17232,7 @@ function runTravel(t) {
 
     if (hero.isConnected) sndVertrek();
     const tik = setInterval(() => { if (hero.isConnected) sparkle(hero, REIS_VONKEN); }, 280);
-    setTimeout(() => clearInterval(tik), REIS_DUUR);
+    setTimeout(() => clearInterval(tik), duur);
   }, REIS_WACHT);
   anim.onfinish = finish;
 }
@@ -17286,12 +17477,12 @@ function tapTrophy(t, card, e) {
 
   if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
-  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
+  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); toastWeg(1500); return; }
   sndClick();
-  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); setTimeout(hideToast, 1700); return; }
+  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   showToast(rem > 0 ? `${t.emoji} Nog ${rem} ${unitText(pr.label, rem)}!` : `${t.emoji} Bijna daar!`);
-  setTimeout(hideToast, 1700);
+  toastWeg(1700);
 }
 
 function openTrophy(id) {
@@ -17323,7 +17514,14 @@ function celebrateTrophy(t) {
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
 
-    { fade: 300, onClose: o => { if (o._spark) clearInterval(o._spark); } });
+
+
+
+    { fade: 300, onClose: o => {
+      if (o._spark) clearInterval(o._spark);
+      const kaart = document.querySelector('.trophy-card.just-claimed');
+      if (kaart) { kaart.classList.remove('just-claimed'); void kaart.offsetWidth; kaart.classList.add('just-claimed'); }
+    } });
   const pop = ov.querySelector('.trophy-pop');
 
   const burst = () => {
@@ -17438,7 +17636,9 @@ function wereldFeest(f) {
     noticeReady(checkTrophies(q));
     save();
     const pop = $('end-avatar');
-    if (pop) { pop.innerHTML = avatarSVG(q, 150); dance('end-avatar'); }
+
+
+    if (pop) { pop.innerHTML = pasLaag(avatarSVG(q, 150)); dance('end-avatar'); }
     dicht();
   };
   sndGroot();
@@ -17458,7 +17658,7 @@ function noticeReady(trofees) {
   if (!trofees || !trofees.length) return;
   updateTroDot();
   showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'} klaar in je kast!`);
-  setTimeout(hideToast, 1900);
+  toastWeg(1900);
 }
 
 
@@ -18185,6 +18385,8 @@ function memFitCols(grid, n) {
   grid.style.width = Math.floor(best.cols * best.size + gap * (best.cols - 1)) + 'px';
 }
 function exitMemory() { sndClick(); hideToast(); M = null; goMap(); }
+
+const MEM_DRAAI = 350, MEM_KIJK = 850;
 function flipCard(i, btn) {
   if (!M || M.lock) return;
   if (btn.classList.contains('open') || btn.classList.contains('done')) return;
@@ -18196,8 +18398,14 @@ function flipCard(i, btn) {
   if (M.flipped.length < 2) return;
   M.lock = true;
   const [a, b] = M.flipped;
+
+
+
+
+  const m = M;
   if (a.c.v === b.c.v) {
     setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.add('done'); b.btn.classList.add('done');
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       a.btn.classList.add('snap'); b.btn.classList.add('snap');
@@ -18206,12 +18414,21 @@ function flipCard(i, btn) {
       M.flipped = []; M.lock = false;
     }, 450);
   } else {
-    a.btn.classList.add('wrong'); b.btn.classList.add('wrong');
-    setTimeout(() => { a.btn.classList.remove('wrong'); b.btn.classList.remove('wrong'); }, 430);
+
+
+
+
+
     setTimeout(() => {
+      if (M !== m) return;
+      a.btn.classList.add('wrong'); b.btn.classList.add('wrong');
+      setTimeout(() => { a.btn.classList.remove('wrong'); b.btn.classList.remove('wrong'); }, 430);
+    }, MEM_DRAAI);
+    setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       M.flipped = []; M.lock = false;
-    }, 950);
+    }, MEM_DRAAI + MEM_KIJK);
   }
 }
 function onMemMatch(fromBtn) {
@@ -18227,14 +18444,16 @@ function onMemMatch(fromBtn) {
   sparkle(fromBtn, ['⭐', '✨', '💛']);
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
-  if (M.matched >= M.pairs) setTimeout(finishMemory, 650);
+  if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
   else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
 }
-function finishMemory() {
+function finishMemory(m) {
   const p = P();
   const bonus = MEM_DONE_BONUS;
-  p.diamonds += bonus; M.earned += bonus;
+
+  p.diamonds += bonus; m.earned += bonus;
   save();
+  if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
   confetti(28);
@@ -18242,6 +18461,13 @@ function finishMemory() {
   speak('Wauw! Je hebt ze allemaal gevonden!');
   $('mem-done-earn').textContent = '💎 +' + M.earned;
   $('mem-done').style.display = 'flex';
+
+  const kaart = $('mem-done').querySelector('.mem-done-card');
+  if (kaart && kaart.animate && !motionOff()) {
+    $('mem-done').animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.snel, easing: 'ease-out' });
+    kaart.animate([{ transform: 'scale(.85)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: 360, delay: 120, easing: MOTION.plop, fill: 'backwards' });
+  }
   syncBackGuard();
 }
 
@@ -18726,6 +18952,25 @@ function vraagKomtIn(kaart, metScherm) {
 }
 
 
+
+
+
+
+
+
+const WIEBEL = 420;
+function kaartWiebelt(kaart) {
+  if (!kaart || !kaart.animate || motionOff()) return;
+  kaart.animate([
+    { transform: 'rotate(0) scale(1)' },
+    { transform: 'rotate(-2.4deg) scale(.985)', offset: .25 },
+    { transform: 'rotate(2deg) scale(.995)', offset: .6 },
+    { transform: 'rotate(-1deg)', offset: .85 },
+    { transform: 'rotate(0) scale(1)' },
+  ], { duration: WIEBEL, easing: 'ease' });
+}
+
+
 function renderSegBar(el, total, done, hasNow) {
   if (!el) return;
   el.innerHTML = '';
@@ -19001,26 +19246,42 @@ function submitAnswer(val, btnEl) {
     const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
 
 
-    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_AANKOMST);
+
+
+
+    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_SHOW);
 
     const diaVan = vak || btnEl || $('question-card');
-    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2), vlucht);
+    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2, DIA_SHOW), vlucht);
 
 
 
 
 
-    if (encore) { sndStreak(); confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
-    else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
-    else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
-    else if (!firstTry) { sndGood(); showPraise('Goed zo, je had het!', '💎 +' + gain); }
-    else { sndGood(); showPraise(pick(PRAISE), '💎 +' + gain); }
+
+
+
+
+
+
+    if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
     if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
     const trofees = checkTrophies(p);
     if (trofees.length) { save(); updateTroDot(); }
-    if (encore) buiging('game-avatar-inner');
-    else dance('game-avatar-inner');
-    zaalJuicht();
+    const g = G;
+    const feest = () => {
+      if (G !== g) return;
+      if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
+      else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
+      else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
+      else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
+      else showPraise(pick(PRAISE), '💎 +' + gain);
+      if (encore) buiging('game-avatar-inner');
+      else dance('game-avatar-inner');
+      zaalJuicht();
+      renderSegBar($('qprogress'), G.total, G.idx + 1, false);
+    };
+    if (vlucht) setTimeout(feest, vlucht); else feest();
 
 
 
@@ -19045,8 +19306,7 @@ function submitAnswer(val, btnEl) {
 
 
 
-  $('question-card').classList.add('wobble');
-  setTimeout(() => $('question-card').classList.remove('wobble'), 420);
+  kaartWiebelt($('question-card'));
 
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
@@ -19079,17 +19339,31 @@ function submitAnswer(val, btnEl) {
     toonVerder();
     return;
   }
-  if (G.mode === 'kies') {
-    const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
-    if (cb) cb.classList.add('good');
-  }
 
 
 
-  somVult(q, null, true);
+
+
+
+
+
   loseHeart();
-  toonVerder();
+  hideToast();
+  const g = G;
+  setTimeout(() => {
+    if (G !== g) return;
+    if (G.mode === 'kies') {
+      const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
+      if (cb) cb.classList.add('good', 'rustig');
+    }
+
+
+
+    somVult(q, null, true);
+  }, motionOff() ? 0 : ONTHUL);
+  setTimeout(() => { if (G === g) toonVerder(); }, motionOff() ? 0 : VERDER_NA);
 }
+const ONTHUL = 300, VERDER_NA = 600;
 
 
 
@@ -19285,6 +19559,7 @@ function endLevel(success) {
   const fanBonus = Math.floor(G.fan / 25);
   if (fanBonus > 0) p.diamonds += fanBonus;
   const verdiend = G.earned + fanBonus;
+  let opbrengst = verdiend;
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
 
@@ -19327,7 +19602,8 @@ function endLevel(success) {
 
 
 
-    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend + bonus}</span>`;
+    opbrengst = verdiend + bonus;
+    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${opbrengst}</span>`;
 
 
 
@@ -19353,8 +19629,8 @@ function endLevel(success) {
       ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
       : () => { sndClick(); openKleedkamer(); };
     sndWin();
-    confetti(40);
-    finaleDance('end-avatar', 6);
+    confetti(40, $('screen-end'));
+    finaleDance('end-avatar', 4);
   } else {
 
 
@@ -19371,7 +19647,14 @@ function endLevel(success) {
     $('btn-end-alt').textContent = '🗺️ Kaart';
     $('btn-end-alt').onclick = () => { sndClick(); goMap(lvl); };
   }
-  telNu($('end-diamonds'), p.diamonds);
+
+
+
+
+
+  telNu($('end-diamonds'), p.diamonds - opbrengst);
+  eindKomtOp(success);
+  telStraks($('end-diamonds'), p.diamonds, motionOff() ? 0 : EINDE.beloning);
   G = null;
 
 
@@ -19397,7 +19680,12 @@ function endLevel(success) {
 
 
 
-  const naFeest = feest ? () => wereldFeest(feest) : null;
+
+
+
+
+
+  const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
 }
@@ -19429,6 +19717,40 @@ STERCEREMONIE.totaal = Math.max(
   STERCEREMONIE.knal + STERCEREMONIE.puls);
 
 function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.totaal; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+const EINDE = {
+  beloning: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 200,
+  pil: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 450,
+  knoppen: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 650,
+  mislukt: 360,
+  op: 260,
+};
+function eindKomtOp(success) {
+  if (motionOff()) return;
+  const t = success ? EINDE : { beloning: EINDE.mislukt, pil: EINDE.mislukt, knoppen: EINDE.mislukt + 150 };
+  const op = (el, delay, pop) => {
+    if (!el || !el.animate || !el.firstChild) return;
+    el.animate(pop
+      ? [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.08)', offset: .6 }, { opacity: 1, transform: 'none' }]
+      : [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+      { duration: EINDE.op, delay, easing: pop ? 'ease-out' : MOTION.uit, fill: 'backwards' });
+  };
+  op($('end-earn'), t.beloning, true);
+  op($('end-milestone'), t.pil);
+  op(document.querySelector('#screen-end .end-actions'), t.knoppen);
+}
 
 
 
@@ -20057,7 +20379,7 @@ function surpriseOutfit() {
   save();
 
   paintShop();
-  tapDance('shop-avatar');
+  tapDance('shop-avatar', true);
 
 
 
@@ -20093,7 +20415,7 @@ function zetWens(id) {
   if (p.wens === id) {
     buzz(15);
     showToast('💖', null, 'Je wens!');
-    setTimeout(hideToast, 1300);
+    toastWeg(1300);
   }
 }
 
@@ -20303,7 +20625,13 @@ function koopVonken(el) {
 
 
 
-function flyDiamonds(fromEl, toEl, n) {
+
+
+
+const DIA_SHOW = 420;
+function flyDiamonds(fromEl, toEl, n, duur) {
+  duur = duur || 620;
+  const na = Math.round(duur * 0.18);
   if (!fromEl || !toEl || !fromEl.animate) return;
 
 
@@ -20324,8 +20652,8 @@ function flyDiamonds(fromEl, toEl, n) {
       { transform: 'translate(0,0) scale(1)', opacity: 1 },
       { transform: `translate(${dx * 0.5 + (i - 1) * 26}px, ${dy * 0.4 - 46}px) scale(1.2)`, offset: .5 },
       { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: .85 }
-    ], { duration: 620 + i * 110, easing: 'ease-in-out' }).onfinish = () => d.remove();
-    setTimeout(() => d.remove(), 900 + i * 110);
+    ], { duration: duur + i * na, easing: 'ease-in-out' }).onfinish = () => d.remove();
+    setTimeout(() => d.remove(), duur + 280 + i * na);
   }
 
 
@@ -20334,7 +20662,7 @@ function flyDiamonds(fromEl, toEl, n) {
   const badge = fromBadge || toBadge;
   if (badge && badge.animate) setTimeout(() => badge.animate(
     [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
-    { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : DIA_AANKOMST);
+    { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : duur - 20);
 }
 
 function confirmShopBuy(id) {
@@ -20347,7 +20675,7 @@ function confirmShopBuy(id) {
   if (p.diamonds < it.price) {
     sndWrong();
     showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
-    setTimeout(hideToast, 1800);
+    toastWeg(1800);
     return;
   }
   p.diamonds -= it.price;
@@ -20368,7 +20696,41 @@ function confirmShopBuy(id) {
   telNaar($('shop-diamonds'), p.diamonds, 520);
   const trofees = checkTrophies(p);
   save();
-  noticeReady(trofees);
+
+
+
+
+
+
+
+
+
+
+
+  renderDressBar(null, p);
+  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);
+  const stil = motionOff();
+  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT);
+  setTimeout(() => {
+    if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
+    koopKomtAan(it);
+  }, stil ? 0 : DIA_AANKOMST);
+
+
+
+
+  shopBoughtTimer = setTimeout(() => {
+    shopBoughtTimer = null;
+    if (shopJustBoughtId !== it.id) return;
+    shopJustBoughtId = null;
+    rekSchuift(() => renderShop());
+    const na = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
+    if (na && na.scrollIntoView) na.scrollIntoView({ block: 'nearest', behavior: motionOff() ? 'auto' : 'smooth' });
+  }, KOOP_HERSCHIK);
+}
+const KOOP_HINT = 1600, KOOP_HERSCHIK = 1800;
+
+function koopKomtAan(it) {
 
 
 
@@ -20380,19 +20742,30 @@ function confirmShopBuy(id) {
   paintShop();
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
   koopVonken(kaart);
-  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);
+  sndAan();
+  const pop = $('shop-avatar');
+  if (zetPas(pop, pick(MOVES))) { sparkle(pop); pasUit(pop); }
+}
 
 
 
-  shopBoughtTimer = setTimeout(() => {
-    shopBoughtTimer = null;
-    if (shopJustBoughtId !== it.id) return;
-    shopJustBoughtId = null;
-    renderShop();
-    const na = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
-    if (na && na.scrollIntoView) na.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, 1800);
-  tapDance('shop-avatar');
+
+const REK_SCHUIF = 320;
+function rekSchuift(bouw) {
+  const rek = $('item-grid');
+  if (!rek || motionOff()) { bouw(); return; }
+  const was = new Map();
+  rek.querySelectorAll('.item-card').forEach(c => was.set(c.dataset.item, c.getBoundingClientRect()));
+  bouw();
+  rek.querySelectorAll('.item-card').forEach(c => {
+    const r0 = was.get(c.dataset.item);
+    if (!r0 || !c.animate) return;
+    const r1 = c.getBoundingClientRect();
+    const dx = r0.left - r1.left, dy = r0.top - r1.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+      { duration: REK_SCHUIF, easing: MOTION.uit });
+  });
 }
 
 
@@ -20638,7 +21011,7 @@ function wijsOntbrekende() {
   });
   setTimeout(() => doelen.forEach(el => el.classList.remove('vraagt')), 2400);
   showToast(basisMist ? 'Kies eerst wie je bent 👆' : 'Geef je ster nog een naam 👆');
-  setTimeout(hideToast, 2200);
+  toastWeg(2200);
 }
 function createStar() {
 
@@ -20654,7 +21027,7 @@ function createStar() {
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al', null, 'Twee sterren met dezelfde naam zijn niet uit elkaar te houden.');
-    setTimeout(hideToast, 2600);
+    toastWeg(2600);
     return;
   }
   const key = nextProfileKey();
@@ -20686,7 +21059,7 @@ function createStar() {
 
 
   showToast(`🌟 ${esc(name)} staat op het podium!`);
-  setTimeout(hideToast, 2400);
+  toastWeg(2400);
 }
 
 
@@ -21155,7 +21528,7 @@ function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
     showToast('📶 Voor deze pagina is internet nodig.');
-    setTimeout(hideToast, 2400);
+    toastWeg(2400);
     return;
   }
   save();
@@ -21163,7 +21536,7 @@ function naarOver(e) {
 
 
 function deelOver() {
-  const melding = t => { showToast(t); setTimeout(hideToast, 2400); };
+  const melding = t => { showToast(t); toastWeg(2400); };
   if (navigator.share) {
     navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
       .catch(() => {});
@@ -21264,7 +21637,7 @@ function blockedMinOne(el) {
   void el.offsetWidth;
   el.classList.add('shake');
   showToast('Kies er minstens 1 👆');
-  setTimeout(hideToast, 1500);
+  toastWeg(1500);
 }
 
 
@@ -21543,7 +21916,7 @@ function bindSettings(p, s) {
         db.profiles[setKey].order = order;
         save(); renderSettings();
         showToast('✅ Voortgang gewist.');
-        setTimeout(hideToast, 1800);
+        toastWeg(1800);
       }
     );
   });
@@ -21563,7 +21936,7 @@ function bindSettings(p, s) {
         if (setKey) renderSettings();
         else closeSettings();
         showToast(`✅ ${esc(naam)} is verwijderd.`);
-        setTimeout(hideToast, 1800);
+        toastWeg(1800);
       }
     );
   });
