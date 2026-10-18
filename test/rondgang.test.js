@@ -339,7 +339,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
                      grendel: wereldReisBezig(),
                      kiezer: document.getElementById('screen-journey').classList.contains('active'),
                      kaartDicht: document.getElementById('tour-map').style.pointerEvents === 'none' };
-    await wacht(1600);                                  // de beloningsbeat is voorbij, de klim loopt
+    await wacht(2000);                                  // sterren, dan de badge naar de kast; nu loopt de klim
     const reis = { view: viewWorldIdx, schaduw: !!document.querySelector('.wereld-schaduw'),
                    grendel: wereldReisBezig() };
     await wacht(1500);
@@ -557,7 +557,10 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     const metingen = [];
     document.querySelector('.tour-stop.next').click();
     for (let i = 0; i < 30; i++) {
-      metingen.push({ spel: op(spel), kaart: op(kaart), maat: dekt(spel) });
+      // De zaal hoeft pas te dekken als hij er is: de eerste HALTE_JA plopt alleen
+      // de halte, en dan staat het spel nog uit (display none, geen maat).
+      const uit = getComputedStyle(spel).display === 'none';
+      metingen.push({ spel: op(spel), kaart: op(kaart), maat: uit || dekt(spel) });
       await new Promise(res => requestAnimationFrame(res));
     }
     quitGame();

@@ -4105,7 +4105,12 @@ function maakWereldSchaduw(map) {
    nog onderweg is, en dat leest als een kop die bij de verkeerde kaart hoort.
    Dezelfde richting, kleiner en korter: 9px is genoeg om "dit hoort bij die
    beweging" te zeggen. */
-function kopMeeMetCamera(richting) {
+/* duur: hoe lang de camera rijdt. De naam wisselt halverwege die rit (vanaf 40%,
+   klaar op 85%), want dan is de helft van het scherm de nieuwe wereld. Hij stond
+   op een vaste 260ms, en bij een onthulling van 900ms stond de nieuwe naam dan al
+   in de kop terwijl er nog vier vijfde van de óude wereld in beeld was. */
+function kopMeeMetCamera(richting, duur) {
+  duur = duur || WERELDREIS.snel;
   const el = $('map-tournee-label');
   if (!el || !el.animate || motionOff()) return;
   el.getAnimations().forEach(a => a.cancel());
@@ -4115,7 +4120,8 @@ function kopMeeMetCamera(richting) {
   el.animate(
     [{ transform: 'translateY(' + (richting > 0 ? -9 : 9) + 'px)', opacity: .2 },
      { transform: 'none', opacity: 1 }],
-    { duration: MOTION.snel, delay: 40, easing: MOTION.uit, fill: 'backwards' });
+    { duration: Math.max(MOTION.snel, Math.round(duur * .45)), delay: Math.max(40, Math.round(duur * .4)),
+      easing: MOTION.uit, fill: 'backwards' });
 }
 /* De camera verzetten. Dit is de enige plek waar een wereld in of uit beeld rijdt.
 
@@ -4156,7 +4162,7 @@ function wereldCamera(richting, teken, opts) {
   const easing = opts.easing || WERELDREIS.uit;
   const schaduw = maakWereldSchaduw(map);
   teken();                                      // de nieuwe wereld staat er nu al
-  kopMeeMetCamera(richting);
+  kopMeeMetCamera(richting, duur);
   scherm.classList.add('wereld-reist');
   map.style.pointerEvents = 'none';             // niet op een bewegend doel kunnen tikken
 
@@ -4262,7 +4268,10 @@ function renderMapTitle(p, opReis) {
   const shown = (viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx)) || cur;
   const anders = shown.index !== cur.index;
   const pil = $('map-tournee-label');
-  const hint = !wpHintKlaar; wpHintKlaar = true;
+  /* De knipoog is pas gedaan als hij gespeeld heeft. Hier ging de vlag meteen om,
+     en bij een onthulling bouwt de camera de kop een beeldje later opnieuw op --
+     zonder knipoog, en daarmee had niemand hem ooit gezien. */
+  const hint = !wpHintKlaar;
   pil.innerHTML =
       `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>`
     + `<span class="wp-here-naam">${esc(korteNaam(shown.world))}</span></span>`
@@ -4272,6 +4281,9 @@ function renderMapTitle(p, opReis) {
   const uitleg = `${shown.world.name} — tik voor alle werelden`;
   pil.setAttribute('aria-label', uitleg);
   pil.title = uitleg;
+  const knipoog = hint && pil.querySelector('.wp-hint');
+  if (knipoog) knipoog.addEventListener('animationend', () => { wpHintKlaar = true; }, { once: true });
+  if (hint && motionOff()) wpHintKlaar = true;   // daar speelt hij niet, dus valt er niets af te wachten
   /* Kijk je in een andere wereld dan waar je speelt, dan ziet de kaart er verder
      precies normaal uit -- en dan kan een kind daar blijven hangen zonder te
      merken dat ze weg is. Vandaar deze gouden weg terug, en alleen dán.
@@ -4451,6 +4463,9 @@ const MOTION = {
 // alles stilstaat. Het vertrekkende scherm (weg) valt hier binnen -- dat is op
 // 140ms klaar, ruim voordat het aankomende scherm op 300 tot rust komt.
 MOTION.totaal = MOTION.komNa + MOTION.kom;
+// Dezelfde tel voor de CSS die op een stilstaande kaart wacht (.net-af): zo staat
+// de duur hier één keer, en niet nog eens als .3s in het stijlblad.
+document.documentElement.style.setProperty('--kaart-rust', MOTION.totaal + 'ms');
 /* Het vangnet. Elke overgang ruimt zichzelf op als hij klaar is (onfinish), maar
    die belofte houdt niet altijd: wisselt het scherm tussendoor, dan wordt de
    animatie afgebroken en komt onfinish nooit. Daarom hangt er naast elke
@@ -5062,18 +5077,26 @@ function enterLevel(lvl, stopEl) {
      wordt de opruimer nog steeds afgeroepen -- anders bleef overgangBezig op true
      staan en deed geen enkele halte ooit nog iets. De kaart ruimt zichzelf op,
      zie schermWeg; hier gaat het alleen over het scherm dat aankomt. */
-  const klaar = eindigOvergang(null, MOTION.totaal, () => {
+  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA, () => {
     spel.style.transformOrigin = '';       // .komt-op blijft tot de volgende show()
     spel.style.pointerEvents = '';
   });
   const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   tapRipple(punt.x, punt.y);               // 1 -- dezelfde tikreactie als elders in de app
-  // en de halte zelf zegt "ja, deze": één korte plop, vóór de kaart begint te duiken
+  /* en de halte zelf zegt "ja, deze": één korte plop, vóór de kaart begint te
+     duiken. Dat "vóór" stond er al, maar ze begonnen in hetzelfde beeldje: de
+     kaart was na 110ms vrijwel weg en de plop van 240ms dan nog niet op de helft
+     -- je zag hem niet. Nu is de plop kort en heeft hij HALTE_JA voor zichzelf;
+     pas daarna gaat de rest. 80ms is genoeg om hem te zien en te kort om op te
+     wachten. */
   const dot = stopEl.querySelector('.dot');
   if (dot && dot.animate) dot.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(1.05)' }],
-    { duration: 240, easing: MOTION.plop, fill: 'forwards' });
-
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.24)', offset: .55 }, { transform: 'scale(1.08)' }],
+    { duration: 150, easing: MOTION.plop, fill: 'forwards' });
+  setTimeout(() => duikIn(lvl, kaart, spel, punt, klaar), HALTE_JA);
+}
+const HALTE_JA = 80;
+function duikIn(lvl, kaart, spel, punt, klaar) {
   schermWeg(kaart, true, punt);            // 2 -- de hele kaart, om het aangetikte punt
 
   /* 3 -- het spel staat er nú al, ook al zie je het nog niet.
@@ -5301,8 +5324,9 @@ function starRevealBeat(lvl, cb) {
   const st = Math.max(0, Math.min(3, P().stars[lvl] || 0));
   if (!st || motionOff()) { cb(); return; }
   const STAP = .085, LAND = .28;
-  const landt = Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
-  setTimeout(cb, landt + 200);   // + een kort, natuurlijk stiltetje vóór het vertrek
+  // MOTION.totaal: de landing wacht tot de kaart stilstaat (--kaart-rust, zie .net-af)
+  const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
+  setTimeout(cb, landt + 100);   // + een kort stiltetje; de badge die daarna opstijgt is zelf al een pauze
 }
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
 
@@ -5654,8 +5678,21 @@ function runWorldReveal(o) {
     showPraise(`${naar.world.icon} ${naar.world.name}!`);
   };
   if (motionOff()) { plaats(); vier(); return; }
-  wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+  /* Eerst even de oude wereld, dán de klim. De camera vertrok in dezelfde beurt
+     als de kaart binnenkwam, dus terwijl het vorige scherm nog wegging: de wereld
+     waar je vandaan kwam heb je dan nooit gezien, en "er komt een nieuwe bij"
+     leest als "de kaart laadt". Zelfde opbouw als runWorldChange: wordt het
+     intussen afgebroken, dan staat de nieuwe wereld er gewoon. */
+  let timer = 0;
+  const wachten = () => { clearTimeout(timer); if (cur) plaats(); };
+  wereldReisOp = wachten;
+  timer = setTimeout(() => {
+    if (wereldReisOp !== wachten) return;
+    wereldReisOp = null;
+    wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+  }, MOTION.totaal + ONTHUL_STIL);
 }
+const ONTHUL_STIL = 400;   // na het binnenkomen van de kaart, vóór de camera klimt
 /* Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
    zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
 
@@ -6827,6 +6864,19 @@ function starRowHTML(n, gespeeld) {
    dat dit de tel was waarin de sterrenlanding uitdempte -- die landing is weg
    (zie reisBinnenWereld in goMap) en het getal bleef, om deze andere reden. */
 const REIS_DUUR = 1400, REIS_WACHT = 400, REIS_EASING = 'ease-in-out';
+/* Hoe lang de wandeling duurt hangt af van hoe ver het is. Elke show eindigt
+   met deze wandeling, dus een vaste 1400ms was voor een halte vlak naast de
+   vorige een tel wachten op niets. Nu: de afstand op het scherm, tussen
+   REIS_KORT en REIS_DUUR. Gemeten op 390x844 (werelden 1 tot 11) liggen
+   buurhaltes 76 tot 231px uit elkaar: dat wordt 950 tot ongeveer 1280ms, en
+   alleen een nog langer stuk (een groot scherm) komt aan de oude 1400. */
+const REIS_KORT = 950;
+function reisDuur(van, naar) {
+  if (!van || !naar) return REIS_DUUR;
+  const a = van.getBoundingClientRect(), b = naar.getBoundingClientRect();
+  const px = Math.hypot(b.left - a.left, b.top - a.top);
+  return Math.round(Math.min(REIS_DUUR, Math.max(REIS_KORT, 700 + px * 2.5)));
+}
 /* Waar het vonkenspoor onderweg uit kiest. Bewust zonder ⭐ (en zonder 💖 en 🎵,
    die hun eigen plek hebben): een ster is op deze kaart een score en geen sier. */
 const REIS_VONKEN = ['✨', '💫'];
@@ -7078,7 +7128,6 @@ function heroLineFrames(from, to) {
    reis gebeurde, en niet pas op een volgend scherm. */
 function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   const map = $('tour-map');
-  flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
   if (!map || !map.animate || still) { plaats(); vier(); return; }
   /* De grendel gaat dicht vóór de beloningsbeat en de stilte, en niet pas als de
      camera vertrekt. Dat hele stuk is namelijk het enige gat waarin een kind nog
@@ -7099,15 +7148,23 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   };
   map.style.pointerEvents = 'none';
   wereldReisOp = wachten;
-  // eerst de sterren van de afgemaakte wereld laten landen, dan pas de klim
+  /* DE VOLGORDE: eerst de sterren onder de halte die net af is, dán de
+     wereldbadge die naar de kast vliegt, en pas als die aankomt de camera. De
+     badge vertrok op 0 -- tegelijk met de sterrenlanding en terwijl de kaart nog
+     inzoomde, drie plekken tegelijk. Nu vult hij de stilte vóór de klim, en de
+     camera vertrekt als hij aankomt (BADGE.munt van zijn vlucht: het muntje,
+     daarna is hij nog maar een stipje), nooit eerder dan WERELDREIS.beat. */
   starRevealBeat(fromLvl, () => {
     if (wereldReisOp !== wachten) return;   // ondertussen afgebroken -- wachten() heeft al opgeruimd
+    // uit de halte die net af is, waar de sterren net landden -- één plek voor het oog
+    const halte = map.querySelector(`.tour-stop[data-lvl="${fromLvl}"] .dot`) || map;
+    flyBadge(halte, $('nav-tro'), fromW.world.icon || '🌍');
     timer = setTimeout(() => {
       gestart = true;
       if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
       map.style.pointerEvents = '';
       wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-    }, WERELDREIS.beat);
+    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.munt)));
   });
 }
 /* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
@@ -7133,10 +7190,19 @@ function flyBadge(vanEl, naarEl, teken) {
     { transform: 'translate(-50%,-50%) scale(1.5)', opacity: 1, offset: .25 },
     { transform: `translate(calc(-50% + ${dx * .5}px), calc(-50% + ${dy * .5 - 60}px)) scale(1.2)`, opacity: 1, offset: .65 },
     { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 0 },
-  ], { duration: 1100, easing: 'ease-in-out' });
+  ], { duration: BADGE.duur, easing: 'ease-in-out' });
   a.onfinish = () => d.remove();
-  setTimeout(() => { sndCoin(); }, 900);
+  /* Het muntje en het tabblad dat hem opvangt: allebei op het moment dat hij er
+     is (BADGE.munt van de vlucht -- daarna is hij nog maar een stipje). Het
+     tabblad deed niets, dus de badge verdween ergens in de balk. */
+  setTimeout(() => {
+    sndCoin();
+    if (naarEl.isConnected && naarEl.animate) naarEl.animate(
+      [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
+      { duration: 320, easing: MOTION.plop });
+  }, Math.round(BADGE.duur * BADGE.munt));
 }
+const BADGE = { duur: 1100, munt: .82 };
 
 /* De beloning na een level-up: de ster huppelt over de route naar de volgende
    halte, die daar zichtbaar openspringt. Loopt de sprong over een wereldgrens,
@@ -7199,11 +7265,16 @@ function runTravel(t) {
      Dit speelt precies één keer: p.level stapt maar één keer over WORLD_LAST heen
      (zie endLevel), en een toegift daarna is geen level-up meer. */
   if (t.to > WORLD_LAST) {
-    flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
     showWorld(fromW.index);
-    sndGroot();
-    confetti(26);
-    showPraise('✨ Alle werelden uit!');
+    /* Pas als de kaart stilstaat: dit draaide in de eerste rAF na goMap, en dan
+       viel het hele feest over een kaart die nog binnenkwam. */
+    setTimeout(() => {
+      if (!$('screen-map').classList.contains('active')) return;
+      flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
+      sndGroot();
+      confetti(26);
+      showPraise('✨ Alle werelden uit!');
+    }, still ? 0 : MOTION.totaal);
     return;
   }
   if (crossing) { runWorldChange(t.from, fromW, toW, plaats, vier, still); return; }
@@ -7222,10 +7293,11 @@ function runTravel(t) {
      (ze krijgen dezelfde vertraging en beginnen dus samen), maar omdat growRoad
      het pad opmeet waar zij overheen loopt. Zonder dat pad is er niets om langs
      te lopen en valt ze terug op de rechte lijn. */
-  const geo = growRoad(map, t.from, t.to, REIS_DUUR, REIS_WACHT);
+  const duur = reisDuur(from, to);
+  const geo = growRoad(map, t.from, t.to, duur, REIS_WACHT);
   const frames = heroRoadFrames(map, geo) || heroLineFrames(from, to);
   const anim = hero.animate(frames,
-    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
+    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
   /* En het loopje eronder (zie heroWalkFrames): dezelfde tijd, dezelfde easing,
      maar op de tekening in plaats van op de halte-laag. Geen fill -- het laatste
      beeldje staat toch al op niets, en zo laat het de laag daarna gewoon weer
@@ -7233,7 +7305,7 @@ function runTravel(t) {
   const stap = hero.querySelector('.pas-laag');
   const loopje = heroWalkFrames(map);
   if (stap && stap.animate && loopje) stap.animate(loopje,
-    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING });
+    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING });
   /* Het vonkenspoor loopt mét haar mee en niet voor haar uit. Het hing aan een
      setInterval die meteen ging lopen, dus het eerste vonkje viel op 280ms --
      120ms vóór haar eerste stap, stilstaand naast de halte die ze net had
@@ -7253,7 +7325,7 @@ function runTravel(t) {
        te kondigen. */
     if (hero.isConnected) sndVertrek();
     const tik = setInterval(() => { if (hero.isConnected) sparkle(hero, REIS_VONKEN); }, 280);
-    setTimeout(() => clearInterval(tik), REIS_DUUR);
+    setTimeout(() => clearInterval(tik), duur);
   }, REIS_WACHT);
   anim.onfinish = finish;
 }
