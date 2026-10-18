@@ -955,4 +955,37 @@ zaak('Q', () => {
     'Q · en een tweede keer openen verandert niets meer', '');
 });
 
+/* ================= R · De tip om de getallengrens hoger te zetten =================
+   Na de laatste leerstap worden de sommen niet vanzelf moeilijker. Het spel zet de
+   grens niet zelf hoger (dat is van de ouder), maar zegt in Voortgang wanneer het
+   tijd lijkt: genoeg drie-sterrenshows voorbij de laatste stap. */
+zaak('R', () => {
+  const { app, p } = verseSter('Tip');
+  const tip = () => app.run('grensTip(P())');
+  const vanaf = app.run('LEERSTAPPEN.length - 1');
+  const eerste = app.WORLD_START[vanaf];
+  const n = app.run('GRENS_TIP_SHOWS');
+  check(tip() === null, 'R · een verse ster krijgt geen tip', JSON.stringify(tip()));
+  // alles vóór de laatste stap met drie sterren: nog geen tip
+  for (let l = 1; l < eerste; l++) p.stars[l] = 3;
+  check(tip() === null, 'R · drie sterren vóór de laatste leerstap tellen niet mee', JSON.stringify(tip()));
+  for (let l = eerste; l < eerste + n - 1; l++) p.stars[l] = 3;
+  check(tip() === null, 'R · één show te weinig: nog geen tip', JSON.stringify(tip()));
+  p.stars[eerste + n - 1] = 2;
+  check(tip() === null, 'R · twee sterren telt niet als beheerst', JSON.stringify(tip()));
+  p.stars[eerste + n - 1] = 3;
+  check(JSON.stringify(tip()) === JSON.stringify({ naar: 50 }), 'R · genoeg drie sterren bij "tot 20": de tip zegt 50', JSON.stringify(tip()));
+  // de ouder zet hem om: de tip telt opnieuw, op de nieuwe grens
+  p.settings.max = 50;
+  p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
+  check(tip() === null, 'R · net omgezet naar 50: niet meteen de vraag of het 100 moet', JSON.stringify(tip()));
+  for (let l = eerste + n; l < eerste + 2 * n; l++) p.stars[l] = 3;
+  check(JSON.stringify(tip()) === JSON.stringify({ naar: 100 }), 'R · na nieuwe drie-sterrenshows bij "tot 50": 100', JSON.stringify(tip()));
+  p.settings.max = 100;
+  check(tip() === null, 'R · bij "tot 100" is er niets hogers', JSON.stringify(tip()));
+  p.settings.max = 20;
+  p.settings.track = 'count';
+  check(tip() === null, 'R · in de telmodus geen getallengrens, dus geen tip', JSON.stringify(tip()));
+});
+
 klaar();

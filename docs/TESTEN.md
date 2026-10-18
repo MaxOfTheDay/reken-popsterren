@@ -10,14 +10,20 @@ werkelijk draait. Er staan twee soorten naast elkaar.
 | soort | draait in | wat het bewijst | kosten |
 |---|---|---|---|
 | **keuring** (`inhoud`, `kern`, `saves`, `kleedkamer`) | Node, zonder browser | de regels en de tabellen: voortgang, beloningen, opslag, catalogus, configuratie | ± 2 seconden, geen installatie |
-| **browsertests** (de rest) | echte Chromium via Playwright | wat een kind ziet en tikt: schermen, animaties, spelverloop | enkele minuten, vereist `npm install` |
+| **browsertests** (de rest) | echte Chromium via Playwright | wat een kind ziet en tikt: schermen, animaties, spelverloop | alles samen ± een kwartier, vereist `npm install` |
 
 ## Draaien
 
 ```sh
 npm run check      # alleen de snelle keuring -- geen browser, geen npm install nodig
-npm test           # alles: eerst de keuring, daarna de browsertests
+npm test           # alles: eerst de keuring, daarna de browsertests, één voor één
+npm run test:snel  # hetzelfde, drie suites tegelijk: ± 5 minuten in plaats van ± 12
 ```
+
+`test:snel` (`test/alles.js`) is de snelle ronde tussendoor. De suites meten op
+enkele beeldjes, en op een drukke machine kan een overgang een beeldje te laat
+zijn; valt daar iets om, draai die ene suite dan los voordat je gaat zoeken.
+`npm test` blijft de maatstaf.
 
 Losse suites:
 
