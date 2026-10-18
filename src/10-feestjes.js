@@ -120,6 +120,7 @@ function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES)
    haalde het klokje van een vorige tik het volgende pasje halverwege weg: tik
    twee keer kort na elkaar en de tweede dans brak na een halve seconde af. */
 const PAS = 900;
+document.documentElement.style.setProperty('--t-pas', PAS + 'ms');   // de CSS leest dezelfde duur
 const pasKlok = new WeakMap();
 function pasUit(el) {
   clearTimeout(pasKlok.get(el));
@@ -216,8 +217,31 @@ function showPraise(txt, reward) {
 // soort (optioneel): 'teken' voor een kaart met alleen één groot teken (🤔, 👉)
 // en 'hint' voor het plaatje na een eerste misser (zie toonHint). Zonder soort
 // is het de gewone kaart met tekst; de vorige soort blijft nooit hangen.
+/* Elke toast krijgt een nummer. toastWeg(ms) haalt alléén de toast weg die er nu
+   staat: hier stonden overal losse setTimeout(hideToast, ..)'s, en een klokje van
+   een vorige toast haalde dan de volgende weg -- tik op een trofee die op slot
+   zit en een tel later op een andere, en die tweede toast was na een halve
+   seconde al weg. Een toast die vanzelf verdwijnt doet dat met een korte fade
+   (TOAST_UIT); hideToast blijft de harde knip voor wie meteen iets anders laat
+   zien. */
+let toastNr = 0, toastFade = null;
+const TOAST_UIT = 160;
+function toastWeg(ms) {
+  const nr = toastNr;
+  setTimeout(() => {
+    if (nr !== toastNr) return;
+    const t = $('toast');
+    if (motionOff() || !t.animate) { hideToast(); return; }
+    // fill 'forwards': anders springt hij na de fade nog één beeldje terug.
+    toastFade = t.animate([{ opacity: 1 }, { opacity: 0 }],
+      { duration: TOAST_UIT, easing: 'ease-in', fill: 'forwards' });
+    toastFade.onfinish = () => { if (nr === toastNr) hideToast(); };
+  }, ms);
+}
 function showToast(txt, onTap, sub, soort) {
+  toastNr++;
   const t = $('toast');
+  if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
@@ -236,6 +260,7 @@ function showToast(txt, onTap, sub, soort) {
 }
 function hideToast() {
   const t = $('toast');
+  if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.style.display = 'none';
   t.classList.remove('show');
   const veil = $('tap-veil');
