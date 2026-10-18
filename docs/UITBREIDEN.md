@@ -157,7 +157,7 @@ Wat **vanzelf** meekomt, zonder dat je er iets voor doet:
 | de perfecte-wereldtrofee | `rebuildWorldBadges()` maakt `perfect-<id>` aan en hangt hem op de plank — zodra hij uitgebracht is, niet eerder |
 | de Wereldtournee | wie hem nog niet geopend had, ziet hem terug naar "bezig" gaan tot ook deze wereld uit is; een geopende blijft van haar (zie het einde van `migrate()`) |
 | de leerstap | een wereld voorbij `LEERSTAPPEN` speelt de laatste stap, alles door elkaar (`stapVan`) |
-| de tests | elke zaak die over werelden gaat telt uit `WORLDS` en `WORLD_AVAIL`, niet uit een getal — met een zevende wereld erbij, uitgebracht of nog dicht, blijft alles groen |
+| de tests | elke zaak die over werelden gaat telt uit `WORLDS` en `WORLD_AVAIL`, niet uit een getal — met een wereld erbij, uitgebracht of nog dicht, blijft alles groen |
 | het laden | de tekening komt binnen als die wereld in beeld komt of bijna in beeld is — het opstarten wordt er geen byte zwaarder van |
 | de cache | de service worker kent geen werelden; de nieuwe tekening komt erin bij het eerste bezoek en er hoeft geen versienummer omhoog |
 
