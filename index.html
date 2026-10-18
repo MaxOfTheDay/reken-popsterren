@@ -8792,9 +8792,9 @@
         <button class="map-id-btn header-left" onclick="goProfiles()" aria-label="Wie speelt er" title="Wie speelt er">
           <span class="map-portrait" id="map-portrait"></span>
         </button>
-        <button class="header-title world-pick" id="map-tournee-label" onclick="openReis()"
+        <button class="header-title world-pick" id="map-tournee-label" onclick="naTik(openReis)"
           aria-label="Bekijk alle werelden" title="Bekijk alle werelden"></button>
-        <button class="diamond-badge header-right" onclick="navGo('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="map-diamonds">0</span><span id="map-wens" class="wens-mini"></span></button>
+        <button class="diamond-badge header-right" onclick="navTik('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="map-diamonds">0</span><span id="map-wens" class="wens-mini"></span></button>
       </div>
     </div>
     <!-- De wereld beslaat het hele scherm; de kop en de navigatie zweven erboven.
@@ -8980,7 +8980,7 @@
     </div>
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="goMapNaShow()" aria-label="Terug naar kaart" title="Terug naar kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(goMapNaShow)" aria-label="Terug naar kaart" title="Terug naar kaart">←</button>
         <div class="header-title" id="end-lvl-label"></div>
         <div class="diamond-badge header-right">💎 <span id="end-diamonds">0</span></div>
       </div>
@@ -9094,9 +9094,9 @@
 
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën -->
 <div class="main-nav" id="main-nav">
-  <button class="nav-item" id="nav-map" onclick="navGo('map')"><span class="nav-ico">🗺️</span>Kaart</button>
-  <button class="nav-item" id="nav-dress" onclick="navGo('dress')"><span class="nav-ico">👕</span>Kleedkamer</button>
-  <button class="nav-item" id="nav-tro" onclick="navGo('tro')"><span class="nav-ico">🏆</span>Trofeeën<span class="nav-dot"></span></button>
+  <button class="nav-item" id="nav-map" onclick="navTik('map')"><span class="nav-ico">🗺️</span>Kaart</button>
+  <button class="nav-item" id="nav-dress" onclick="navTik('dress')"><span class="nav-ico">👕</span>Kleedkamer</button>
+  <button class="nav-item" id="nav-tro" onclick="navTik('tro')"><span class="nav-ico">🏆</span>Trofeeën<span class="nav-dot"></span></button>
 </div>
 
 <!-- Linksboven, het spiegelbeeld van het tandwiel: "Speel als app". Alleen op de
@@ -13231,9 +13231,41 @@ function show(id) {
 
 
 
-function navGo(t) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let tikWacht = false;
+function naTik(fn) {
+  if (tikWacht) return;
+  tikWacht = true;
+  requestAnimationFrame(() => setTimeout(() => { tikWacht = false; fn(); }, 0));
+}
+
+function navTik(t) {
+  if (tikWacht) return;
   sndClick();
   const wasActive = $('nav-' + t).classList.contains('active');
+  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === 'nav-' + t));
+  naTik(() => navGo(t, wasActive, true));
+}
+function navGo(t, wasActiveAl, stil) {
+  if (!stil) sndClick();
+  const wasActive = wasActiveAl != null ? wasActiveAl : $('nav-' + t).classList.contains('active');
   if (t === 'map') goMap();
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
@@ -20694,7 +20726,7 @@ function zetWensPil(p) {
     plek.textContent = '';
     pil.classList.remove('met-wens', 'wens-klaar');
     pil.style.removeProperty('--wens');
-    pil.onclick = () => navGo('dress');
+    pil.onclick = () => navTik('dress');
     pil.setAttribute('aria-label', 'Naar de kleedkamer');
     return;
   }

@@ -3217,9 +3217,41 @@ function show(id) {
 // nooit een onthouden positie). Kleedkamer/Trofeeën onthouden juist wél waar
 // je was: nogmaals tikken op het tabblad waar je al op stond geeft een verse
 // start; vanuit een ánder tabblad hervat je gewoon waar je gebleven was.
-function navGo(t) {
+/* ---- Eerst antwoorden, dan pas het zware werk ----
+   Een schermwissel bouwt en tekent het hele nieuwe scherm, en op een trage
+   tablet duurt dat al gauw een paar honderd milliseconden. Gebeurt dat binnen de
+   tik zelf, dan staat het scherm zolang stil: geen tabblad dat oplicht, niets dat
+   zegt dat de tik is aangekomen. Cloudflare mat dat bij echte spelers als de
+   traagste plek van de app (INP), en een kind tikt dan nog eens.
+
+   Daarom gaat het werk één beeldje later: de tik geeft eerst zijn geluid en zijn
+   oplichtende tabblad, de browser tekent dat, en pas daarna komt de wissel. Het
+   nieuwe scherm staat er dus even snel als vroeger (een beeldje is ~16 ms), maar
+   de tik wacht er niet meer op.
+
+   Alleen voor wat een vinger aanraakt -- de knoppen in de opmaak roepen dit aan.
+   navGo, openReis en goMapNaShow zelf blijven synchroon: de suites roepen ze
+   rechtstreeks aan en lezen meteen na wat er staat.
+
+   De grendel: een tweede tik in dat ene beeldje doet niets, anders stapelen er
+   twee wissels op elkaar (zie ook kiesBezig bij de sterrenkeuze). */
+let tikWacht = false;
+function naTik(fn) {
+  if (tikWacht) return;
+  tikWacht = true;
+  requestAnimationFrame(() => setTimeout(() => { tikWacht = false; fn(); }, 0));
+}
+// De tabbladbalk: het tabblad licht meteen op, de rest volgt na het beeldje.
+function navTik(t) {
+  if (tikWacht) return;
   sndClick();
   const wasActive = $('nav-' + t).classList.contains('active');
+  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === 'nav-' + t));
+  naTik(() => navGo(t, wasActive, true));
+}
+function navGo(t, wasActiveAl, stil) {
+  if (!stil) sndClick();
+  const wasActive = wasActiveAl != null ? wasActiveAl : $('nav-' + t).classList.contains('active');
   if (t === 'map') goMap();
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
@@ -10680,7 +10712,7 @@ function zetWensPil(p) {
     plek.textContent = '';
     pil.classList.remove('met-wens', 'wens-klaar');
     pil.style.removeProperty('--wens');
-    pil.onclick = () => navGo('dress');
+    pil.onclick = () => navTik('dress');
     pil.setAttribute('aria-label', 'Naar de kleedkamer');
     return;
   }
