@@ -9836,9 +9836,11 @@ function endLevel(success) {
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
     $('end-milestone').innerHTML = '';
-    // hetzelfde 💎-vakje als bij een geslaagde show, zodat het scherm niet
-    // ineens een andere vorm heeft: wat je verdiend hebt, blijft van jou
-    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend}</span>`;
+    // hetzelfde 💎-vakje als bij een geslaagde show: wat je verdiend hebt, blijft
+    // van jou. Maar alléén als er iets in zit. Een "💎 +0" vlak onder "Bijna!" was
+    // de enige plek in het spel die een kind liet zien wat ze níét kreeg; zonder
+    // het vakje schuiven de knoppen gewoon een regel op.
+    $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
@@ -10422,8 +10424,28 @@ function renderShop() {
   }
   grid.textContent = '';
   grid.appendChild(kaarten);
+  rekBreedte();
   paintShop();
 }
+/* Elk kaartje in het rek even breed, ook op de laatste rij. Het rek is een
+   flex-wrap met justify-content:center (zie .item-grid), zodat een halve laatste
+   rij in het midden staat in plaats van links. Maar met flex-grow rekte die
+   laatste rij ook óp: op een tablet stonden er vijf kaartjes per rij en dan vier
+   duidelijk bredere eronder. CSS kan het aantal kolommen niet afronden, dus
+   rekenen we hier de breedte van een vólle rij uit en geven die aan élk kaartje
+   (--kaart-b). Zonder die waarde (geen opmaak, een nagebootst scherm) valt
+   .item-card terug op het oude meegroeien. KAART_GAT is de gap van .item-grid. */
+const KAART_GAT = 10;
+function rekBreedte() {
+  const rek = $('item-grid');
+  if (!rek || !rek.clientWidth || typeof getComputedStyle !== 'function') return;
+  const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
+  const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
+  const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
+  rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
+  rek.style.setProperty('--kaart-groei', '0');
+}
+addEventListener('resize', () => rafKlem(rekBreedte));
 /* Wat er in het rek staat, en in welke volgorde.
 
    Twee standen, want de kleedkamer heeft er twee. Het schattenvak (SCHAT_CAT) is

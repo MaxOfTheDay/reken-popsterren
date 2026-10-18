@@ -1706,7 +1706,8 @@ function check(ok, label, detail) {
            nooit wat hij oplevert: dat is de belofte waarvoor het bedrag erop kwam
            te staan. Met de verkeerde selector (span i.p.v. > span) verdwijnt het
            getal mee en staat er "💎" zonder cijfer. */
-        uit.memBedrag = /💎\s*\d+/.test(fab.innerText.replace(/\n/g, ' '));
+        // met plus: "💎 +9" is wat hij oplevert, "💎 9" zou een prijs zijn
+        uit.memBedrag = /💎\s*\+\d+/.test(fab.innerText.replace(/\n/g, ' '));
         // één ronde extra op de standaardslinger -- zie 7e, hetzelfde recept
         const tot = WORLDS.length + 1;
         for (let wi = 0; wi < tot; wi++) {
