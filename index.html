@@ -9229,6 +9229,20 @@ function updateFades(el) {
 
 
 
+
+
+
+
+
+
+
+
+const RAF_WACHT = new Set();
+function rafKlem(fn) {
+  if (RAF_WACHT.has(fn)) return;
+  RAF_WACHT.add(fn);
+  requestAnimationFrame(() => { RAF_WACHT.delete(fn); fn(); });
+}
 function fadesVolgen(el) {
   let wacht = false;
   el.onscroll = () => {
@@ -9413,17 +9427,31 @@ function roadD(pts, count, curve) {
 
 
 const DASH_ON = 26, DASH_OFF = 34;
-function roadDashArray(svg, pts, curve, count) {
-  if (count < 2) return '';
-  const parts = roadParts(pts, curve);
+
+
+
+
+
+
+let wegMaatSleutel = null, wegMaat = null;
+function wegLengtes(svg, parts) {
+  const sleutel = parts.start + parts.cs.join('');
+  if (sleutel === wegMaatSleutel) return wegMaat;
   const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   svg.appendChild(probe);
   const tot = [0];
-  for (let k = 2; k <= count; k++) {
+  for (let k = 2; k <= parts.cs.length / 2 + 1; k++) {
     probe.setAttribute('d', parts.start + parts.cs.slice(0, (k - 1) * 2).join(''));
     tot.push(probe.getTotalLength());
   }
   probe.remove();
+  wegMaatSleutel = sleutel; wegMaat = tot;
+  return tot;
+}
+function roadDashArray(svg, pts, curve, count) {
+  if (count < 2) return '';
+  const parts = roadParts(pts, curve);
+  const tot = wegLengtes(svg, parts);
   const uit = [];
   const r = DASH_OFF / DASH_ON;
   for (let i = 0; i + 1 < count; i++) {
@@ -9488,8 +9516,6 @@ function showWorld(idx, travelFrom) {
   preloadNextWorldArt();
   preloadBuurwerelden();
 }
-
-
 
 
 
@@ -14952,7 +14978,10 @@ function kopKrimpMeten(scherm) {
 
 
 
-addEventListener('resize', () => ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))));
+
+
+addEventListener('resize', () => rafKlem(koppenKrimpMeten));
+function koppenKrimpMeten() { ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))); }
 
 
 
@@ -15166,7 +15195,9 @@ function goMap(vanLvl) {
 
 
   $('screen-map').classList.add('komt-op');
-  kaartVertrek(vorige, gekozen);
+  kaartVertrek(vorige, gekozen, uitShow);
+
+
 
 
 
@@ -15279,14 +15310,16 @@ function kaartOpdracht(p, vanLvl, uitShow) {
 
 
 
-function kaartVertrek(vorige, gekozen) {
+
+
+function kaartVertrek(vorige, gekozen, uitShow) {
 
 
 
 
 
 
-  if (kaartFocus && vorige && vorige !== $('screen-map')) {
+  if (uitShow && vorige && vorige !== $('screen-map')) {
     schermWeg(vorige, false); navMee(false);
 
     terugBezig = true;
@@ -15940,7 +15973,6 @@ function reisFocus(opWereld) {
 
 
 
-let reisVolgWacht = false;
 function reisVolgKnop() {
   const scherm = $('screen-journey'), knop = $('reis-terug');
   if (!scherm || !knop) return;
@@ -15954,9 +15986,7 @@ function reisVolgKnop() {
   knop.textContent = r.top > s.bottom - 40 ? '↓' : '↑';
 }
 function reisScroll() {
-  if (reisVolgWacht) return;
-  reisVolgWacht = true;
-  requestAnimationFrame(() => { reisVolgWacht = false; reisVolgKnop(); });
+  rafKlem(reisVolgKnop);
 }
 
 
@@ -16432,12 +16462,7 @@ function renderTourMap(travelFrom) {
 
 
 
-let kaartScrollWacht = false;
-function kaartScroll() {
-  if (kaartScrollWacht) return;
-  kaartScrollWacht = true;
-  requestAnimationFrame(() => { kaartScrollWacht = false; kopOpzij(); });
-}
+function kaartScroll() { rafKlem(kopOpzij); }
 function kopOpzij() {
   const scherm = $('screen-map');
   if (!scherm) return;
@@ -16471,7 +16496,8 @@ function meetChroom() {
   if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
-addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij(); } });
+addEventListener('resize', () => rafKlem(kaartChroomMeten));
+function kaartChroomMeten() { if ($('screen-map')) { meetChroom(); kopOpzij(); } }
 
 
 
@@ -16961,16 +16987,10 @@ function openTrophies() {
 
 
 
-let kastScrollWacht = false;
-function kastScroll() {
-  if (kastScrollWacht) return;
-  kastScrollWacht = true;
-  requestAnimationFrame(() => {
-    kastScrollWacht = false;
-    const sc = $('screen-trophies');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function kastScroll() { rafKlem(kastGescrold); }
+function kastGescrold() { gescrold($('screen-trophies')); }
+
+function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
 
 
 
@@ -17198,8 +17218,7 @@ function openTrophy(id) {
   const p = P();
   const t = TROPHIES.find(x => x.id === id);
   if (!t || p.trophies.includes(id) || !(p.readyTrophies || []).includes(id)) return;
-  p.readyTrophies = p.readyTrophies.filter(x => x !== id);
-  p.trophies.push(id);
+  awardTrophy(p, id);
   save();
   celebrateTrophy(t);
   justClaimed = id;
@@ -19634,16 +19653,8 @@ function tabRijDoel(rij, gekozen) {
 
 
 
-let kleedScrollWacht = false;
-function kleedScroll() {
-  if (kleedScrollWacht) return;
-  kleedScrollWacht = true;
-  requestAnimationFrame(() => {
-    kleedScrollWacht = false;
-    const sc = $('screen-dress');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function kleedScroll() { rafKlem(kleedGescrold); }
+function kleedGescrold() { gescrold($('screen-dress')); }
 
 
 
@@ -21150,16 +21161,8 @@ function settingsToTop() {
 
 
 
-let ouderScrollWacht = false;
-function ouderScroll() {
-  if (ouderScrollWacht) return;
-  ouderScrollWacht = true;
-  requestAnimationFrame(() => {
-    ouderScrollWacht = false;
-    const sc = $('screen-settings');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function ouderScroll() { rafKlem(ouderGescrold); }
+function ouderGescrold() { gescrold($('screen-settings')); }
 let savedPillTimer = null;
 function saveAndFlash() {
   save();
@@ -21179,23 +21182,35 @@ let lastWhoRendered = null;
 
 
 
+
+
+
+
+
+
+
+let lastWhoHtml = null;
 function renderWhoRow() {
   const row = $('settings-profiles');
+  const keys = profileKeys();
+  const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
+    + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
+  const handtekening = setKey + '|' + delen.join('|');
+  if (handtekening === lastWhoHtml && row.childElementCount) return;
+  lastWhoHtml = handtekening;
   const keep = row.scrollLeft;
   row.innerHTML = '';
   let active = null;
-  for (const key of profileKeys()) {
-    const pr = db.profiles[key];
+  keys.forEach((key, k) => {
     const on = key === setKey;
     const b = document.createElement('button');
     b.className = 'tab-btn who-btn' + (on ? ' active' : '');
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.innerHTML = `<span class="who-portrait" aria-hidden="true">${avatarSVG(pr, 65)}</span>`
-      + `<span class="tab-label">${esc(pr.name)}</span>`;
+    b.innerHTML = delen[k];
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
     row.appendChild(b);
     if (on) active = b;
-  }
+  });
 
 
 

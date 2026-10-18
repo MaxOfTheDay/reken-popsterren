@@ -32,7 +32,8 @@
     "werelden:netjes": "node test/werelden.js --netjes",
     "test:hub": "node test/hub.test.js",
     "test:onderrand": "node test/onderrand.test.js",
-    "test:kop": "node test/kop.test.js"
+    "test:kop": "node test/kop.test.js",
+    "test:snel": "node test/alles.js"
   },
   "devDependencies": {
     "playwright": "^1.55.0"

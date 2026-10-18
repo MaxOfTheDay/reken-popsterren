@@ -5317,7 +5317,10 @@ function kopKrimpMeten(scherm) {
 // Draaien, of een toetsenbord dat opkomt, kan een laag scherm maken -- en dan
 // krimpt de kop van het ouderdeel anders. Een scherm dat niet in beeld staat
 // slaat de meting vanzelf over.
-addEventListener('resize', () => ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))));
+// Achter rafKlem: draaien of een toetsenbord dat opkomt vuurt een reeks resizes,
+// en kopKrimpMeten meet per scherm een paar keer de opmaak.
+addEventListener('resize', () => rafKlem(koppenKrimpMeten));
+function koppenKrimpMeten() { ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))); }
 /* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
    landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
 
@@ -5531,16 +5534,18 @@ function goMap(vanLvl) {
      wegnemen. (Het moet ná show(): die haalt de klasse van álle schermen af.)
      Zie kaartKomtOp en de regel bij MOTION. */
   $('screen-map').classList.add('komt-op');
-  kaartVertrek(vorige, gekozen);
+  kaartVertrek(vorige, gekozen, uitShow);
   /* Pas hierna, en niet in een requestAnimationFrame: renderTourMap kon zijn
      eigen afrondende werk (scrollstand, --kop-h/--nav-h, kaartTerugZoom) niet
      synchroon doen, want toen het draaide stond het scherm nog niet .active en
      leverde elke meting 0 op. Nu, een paar regels later in dezelfde taak, wél
-     -- en dat is nog steeds vóór de browser iets van dit beeldje verft. Moet
-     wel ná kaartVertrek hierboven staan: die leest kaartFocus om te zien of de
-     zaal moet wijken, en kaartTerugZoom (via tourMapVoltooi) verbruikt diezelfde
-     kaartFocus. Verwissel die twee regels en de terug-grendel wordt gezet op een
-     vlag die al leeg is. Zie de regel bij tourMapVoltooi en bij renderTourMap. */
+     -- en dat is nog steeds vóór de browser iets van dit beeldje verft.
+
+     Hier stond een waarschuwing dat deze regel ná kaartVertrek moest blijven,
+     omdat die twee dezelfde vlag kaartFocus lazen en tourMapVoltooi hem
+     verbruikt. kaartVertrek krijgt nu uitShow mee in plaats van de vlag te
+     lezen, dus die afhankelijkheid is weg. Vóór de eerste verf moet het nog
+     steeds; dat is de reden voor de plek, niet de volgorde met kaartVertrek. */
   if (tourMapVoltooi) { const v = tourMapVoltooi; tourMapVoltooi = null; v(); }
   if (travel) requestAnimationFrame(() => runTravel(travel));
   else if (onthul) requestAnimationFrame(() => runWorldReveal(onthul));
@@ -5642,16 +5647,18 @@ function kaartOpdracht(p, vanLvl, uitShow) {
    op en het vorige scherm dooft). Een reis heeft geen van beide nodig --
    reisNaarWereld beweegt de kaart zelf.
 
-   Leest kaartFocus en niet uitShow: goMap zet die twee vlak na elkaar, maar het
-   is kaartFocus die zegt of er een halte is om naartoe te zoomen. */
-function kaartVertrek(vorige, gekozen) {
+   uitShow komt van goMap, en het is dezelfde vraag als "is er een halte om
+   naartoe te zoomen" (goMap zet kaartFocus precies dan). Hier stond eerst
+   kaartFocus zelf, en die wordt door tourMapVoltooi verbruikt -- dan hing het
+   ervan af welke van de twee eerst in goMap stond. Met een argument niet. */
+function kaartVertrek(vorige, gekozen, uitShow) {
   // de zaal wijkt terug en laat de kaart zien -- alleen als we ook echt uit een
   // show komen (anders is dit een gewone tabbladwissel en hoort er niets te wijken)
   /* De balk wordt hier meegenomen en niet in kaartTerugZoom: die draait pas in de
      rAF van renderTourMap, één beeldje later, en show() heeft de balk dan al een
      keer volledig zichtbaar over de nog vertrekkende zaal getekend. Eén beeldje,
      maar wel precies het beeld dat deze hele wijziging moet wegnemen. */
-  if (kaartFocus && vorige && vorige !== $('screen-map')) {
+  if (uitShow && vorige && vorige !== $('screen-map')) {
     schermWeg(vorige, false); navMee(false);
     // de grendel gaat vanzelf weer open, ook als er onderweg iets misgaat
     terugBezig = true;
@@ -6305,7 +6312,6 @@ function reisFocus(opWereld) {
    Meet en tekent niets zwaars: één vergelijking van twee rechthoeken, en de klasse
    verandert alleen als het antwoord ánders is dan het al was. Hij hangt aan de
    scroll van het scherm, dus hij loopt achter een rAF aan. */
-let reisVolgWacht = false;
 function reisVolgKnop() {
   const scherm = $('screen-journey'), knop = $('reis-terug');
   if (!scherm || !knop) return;
@@ -6319,9 +6325,7 @@ function reisVolgKnop() {
   knop.textContent = r.top > s.bottom - 40 ? '↓' : '↑';
 }
 function reisScroll() {
-  if (reisVolgWacht) return;
-  reisVolgWacht = true;
-  requestAnimationFrame(() => { reisVolgWacht = false; reisVolgKnop(); });
+  rafKlem(reisVolgKnop);
 }
 // Zacht terug naar waar ze staat. Geen sprong: dit is de enige plek waar dit scherm
 // zelf scrollt terwijl een kind aan het kijken is, en dan hoort het te glijden.
@@ -6797,12 +6801,7 @@ function renderTourMap(travelFrom) {
 
    Op een telefoon schuift de kaart trouwens helemaal niet (één wereld vult het
    kader); dit gaat over een tablet en een breed venster. */
-let kaartScrollWacht = false;
-function kaartScroll() {
-  if (kaartScrollWacht) return;
-  kaartScrollWacht = true;
-  requestAnimationFrame(() => { kaartScrollWacht = false; kopOpzij(); });
-}
+function kaartScroll() { rafKlem(kopOpzij); }
 function kopOpzij() {
   const scherm = $('screen-map');
   if (!scherm) return;
@@ -6836,7 +6835,8 @@ function meetChroom() {
   if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
 }
-addEventListener('resize', () => { if ($('screen-map')) { meetChroom(); kopOpzij(); } });
+addEventListener('resize', () => rafKlem(kaartChroomMeten));
+function kaartChroomMeten() { if ($('screen-map')) { meetChroom(); kopOpzij(); } }
 /* Drie plekken, altijd -- maar alleen onder een halte die gespeeld is.
 
    Hiervoor stonden er alleen de verdiende sterren: 1/3 was één los sterretje, 2/3
@@ -7326,16 +7326,10 @@ function openTrophies() {
    Die drempel beschermt alleen tegen een trillende duim. Tegen een kop die zelf
    de schuifstand terugduwt -- en dat deed hij, op 10px stilgezet wisselde hij
    elk beeldje -- helpt hij niet; daarvoor is kopKrimpMeten (zie daar). */
-let kastScrollWacht = false;
-function kastScroll() {
-  if (kastScrollWacht) return;
-  kastScrollWacht = true;
-  requestAnimationFrame(() => {
-    kastScrollWacht = false;
-    const sc = $('screen-trophies');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function kastScroll() { rafKlem(kastGescrold); }
+function kastGescrold() { gescrold($('screen-trophies')); }
+// De kop krijgt zijn laag zodra er iets onder schuift (4px tegen een trillende duim).
+function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
 // Terug naar de trofeeënkast via de vaste navigatie (kwam van een ánder
 // tabblad): hervat gewoon waar je gebleven was -- scrollpositie blijft staan,
 // want die reset de browser niet vanzelf bij display:none/flex (zie ook de
@@ -7563,8 +7557,7 @@ function openTrophy(id) {
   const p = P();
   const t = TROPHIES.find(x => x.id === id);
   if (!t || p.trophies.includes(id) || !(p.readyTrophies || []).includes(id)) return;
-  p.readyTrophies = p.readyTrophies.filter(x => x !== id);
-  p.trophies.push(id);
+  awardTrophy(p, id);   // uit de klaarlijst, in de kast -- dezelfde regel als overal
   save();
   celebrateTrophy(t);
   justClaimed = id;   // net-behaalde kaart krijgt eenmalig een gouden shimmer
@@ -9999,16 +9992,8 @@ function tabRijDoel(rij, gekozen) {
    Wat hier níet hoeft, en bij de kast wel: meten. Daar krimpt de kop en moet de
    inhoud eronder stil blijven staan (kopKrimpMeten); hier gaat er alleen een laag
    aan, en de kop wordt geen pixel hoger of lager. */
-let kleedScrollWacht = false;
-function kleedScroll() {
-  if (kleedScrollWacht) return;
-  kleedScrollWacht = true;
-  requestAnimationFrame(() => {
-    kleedScrollWacht = false;
-    const sc = $('screen-dress');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function kleedScroll() { rafKlem(kleedGescrold); }
+function kleedGescrold() { gescrold($('screen-dress')); }
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
    keer dat de kleedkamer opengaat -- en verder niet: kijken en aandoen gaan via
    paintShop() hieronder, dat dezelfde kaartjes laat staan en alleen hun stand
@@ -11515,16 +11500,8 @@ function settingsToTop() {
    drempel van 4px -- op 0 wisselt hij bij het minste duimtrilletje heen en weer --
    en dezelfde rAF-rem, want scroll vuurt vaker dan er beeldjes zijn. Dat de
    inhoud daarbij blijft staan, regelt kopKrimpMeten (zie daar). */
-let ouderScrollWacht = false;
-function ouderScroll() {
-  if (ouderScrollWacht) return;
-  ouderScrollWacht = true;
-  requestAnimationFrame(() => {
-    ouderScrollWacht = false;
-    const sc = $('screen-settings');
-    if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4);
-  });
-}
+function ouderScroll() { rafKlem(ouderGescrold); }
+function ouderGescrold() { gescrold($('screen-settings')); }
 let savedPillTimer = null;
 function saveAndFlash() {
   save();
@@ -11544,23 +11521,35 @@ let lastWhoRendered = null;
    met het echte avatar-portret erin i.p.v. voor elk kind hetzelfde sterretje.
    Niveau 2 (het onderdeel) blijft een .segmented-spoor; twee vormen, twee
    betekenissen -- hiervoor stonden er twee identieke sporen op elkaar. */
+/* renderSettings loopt bij élke tik op een schakelaar of chip, en dan stond deze
+   rij er elke keer opnieuw: zes portretten weggooien en tekenen, plus twee keer de
+   opmaak opmeten (scrollLeft lezen, schrijven, en updateFades leest weer). Wat er
+   staat verandert alleen als er een ster bij komt, weggaat, anders heet of anders
+   gekozen wordt. Dus wordt de inhoud eerst als tekst opgebouwd, en alleen als die
+   anders is dan de vorige keer wordt de rij echt vervangen. Tekst vergelijken is
+   goedkoop; de DOM en de metingen waren het dure deel. */
+let lastWhoHtml = null;
 function renderWhoRow() {
   const row = $('settings-profiles');
+  const keys = profileKeys();
+  const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
+    + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
+  const handtekening = setKey + '|' + delen.join('|');
+  if (handtekening === lastWhoHtml && row.childElementCount) return;
+  lastWhoHtml = handtekening;
   const keep = row.scrollLeft;          // niet terugspringen bij elke hertekening
   row.innerHTML = '';
   let active = null;
-  for (const key of profileKeys()) {
-    const pr = db.profiles[key];
+  keys.forEach((key, k) => {
     const on = key === setKey;
     const b = document.createElement('button');
     b.className = 'tab-btn who-btn' + (on ? ' active' : '');
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.innerHTML = `<span class="who-portrait" aria-hidden="true">${avatarSVG(pr, 65)}</span>`
-      + `<span class="tab-label">${esc(pr.name)}</span>`;
+    b.innerHTML = delen[k];
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
     row.appendChild(b);
     if (on) active = b;
-  }
+  });
   /* De "+" staat achter de laatste ster, net als op de sterrenkeuze: daar leert
      een ouder al dat een nieuwe ster na de rij komt. Hiervoor was het een eigen
      kaart in Beheer, en dan stond "iemand erbij" op een ander tabblad dan "wie" --
