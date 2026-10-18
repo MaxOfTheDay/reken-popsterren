@@ -10,7 +10,7 @@
      dwarrelt het niet alsnog over het scherm. (.burst-bit en .tap-ripple staan
      al in het blok bij het trofee-feestje.) */
   @media (prefers-reduced-motion: reduce) {
-    .confetti-bit, .fly-dia, .fly-badge { display: none; }
+    .confetti-bit, .vonk-op, .fly-dia, .fly-badge { display: none; }
   }
   /* De kop hoort bij het podium, niet bij het venster. Over de volle breedte
      stond het portretje links en de diamanten rechts ergens in de onscherpe rand,
