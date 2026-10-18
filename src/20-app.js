@@ -2768,6 +2768,9 @@ function renderGearMenu() {
      het icoon wordt alleen gedempt. 🔇 bij het geluid blijft wel: een doorgestreepte
      luidspreker is dé tekening voor stil, en hij schreeuwt niet. */
   setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
+  // "Speel als app" staat er alleen zolang het spel nog in de browser draait
+  const app = $('gear-app');
+  if (app) app.style.display = appUitlegNodig() ? '' : 'none';
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -3142,6 +3145,7 @@ function show(id) {
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
   if (!onProfile) closeGearMenu();
+  appKnopZet();   // het knopje linksboven hoort ook alleen bij de sterrenkeuze
   // de vaste navigatie hoort alleen bij de rustpunten, niet bij spel/einde/instellingen
   const navId = navVolgtScherm();
   ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
@@ -3915,6 +3919,7 @@ function renderProfiles() {
   const hint = $('restore-hint');
   if (hint) hint.style.display = n ? 'none' : 'block';
   renderGearMenu();
+  appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
      sterren zwaaiden één keer, kort na elkaar. Dat was ooit de enige plek in de
      app waar een pop iets deed bij het binnenkomen van een scherm, en daarmee
@@ -11919,7 +11924,150 @@ addEventListener('appinstalled', () => {
   beginschermNetErop = true;
   const k = $('set-beginscherm');
   if (k) k.remove();
+  installVoorstel = null;
+  appKnopZet();
+  renderGearMenu();
+  if ($('app-blad')) closeConfirmModal();
 });
+
+/* ================= Speel als app ============================================
+   De kaart hierboven staat in Beheer, en daar komt een ouder zelden. Dit is de
+   weg ernaartoe die je wél ziet: een knopje "📲 Speel als app" linksboven op de
+   sterrenkeuze, het spiegelbeeld van het tandwiel, en dezelfde regel in het
+   tandwielmenu. Een tik opent een blad met de stappen voor déze browser.
+
+   WAAR, EN WAAROM DAAR. Linksboven, op dezelfde hoogte als het tandwiel. Daar
+   raakt het op geen enkele schermmaat het logo, de tegels of de MAX-ster (die
+   is ook een verstopte tik, zie maxPlekZet), en het blijft staan waar het staat
+   bij één ster of zes. Onderaan midden lag het op een kleine telefoon over MAX,
+   en daar tikken kinderen; onder de tegels schoof het mee met het raster.
+
+   WANNEER. Alleen op de sterrenkeuze, alleen in de browser (speeltAlsApp), en
+   pas vanaf het tweede bezoek: wie het spel voor het eerst opent, moet eerst
+   kunnen spelen. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
+   komt het knopje niet meer terug. De regel in het tandwielmenu blijft wél, en
+   de kaart in Beheer ook -- het knopje gaat weg, de weg niet.
+
+   WAT HIERVAN BEWAARD WORDT. Drie getallen in een eigen sleutel (APPKNOP_KEY):
+   het aantal bezoeken, tot wanneer het knopje rust, en hoe vaak er "Niet nu"
+   gezegd is. Bewust niet in db: dat gaat de back-up in en een terugzetting
+   vervángt hem, en dit gaat over dit toestel en niet over de sterren. En er
+   staat nergens "geïnstalleerd" in -- dat wordt nog altijd elke keer aan de
+   browser gevraagd, om dezelfde reden als bij de kaart.
+
+   HET VOORSTEL VAN CHROME. Chrome geeft de pagina een beforeinstallprompt mee
+   als hij hem installeerbaar vindt. Dat event wordt hier bewaard, zodat de knop
+   "Installeren" in het blad in één tik het installeervenster van Chrome opent.
+   Er wordt NOOIT preventDefault op gezet: Chrome toont zijn eigen voorstel dus
+   precies zoals vroeger, en dit is er alleen een tweede deur naar. Elders
+   (Safari, Samsung Internet, Firefox) komt het event niet, en staan er gewoon
+   de stappen. inhoud.test.js zaak J kijkt na dat het bij bewaren blijft.
+
+   ?debug. Onder ?debug blijft het knopje weg, tenzij er &appknop bij staat: de
+   browsersuites openen de pagina vaak meerdere keren in dezelfde opslag, en
+   dan stond er vanaf de tweede keer ineens een knop in hun beeld. */
+const APPKNOP_KEY = 'rekenPopsterren_appknop';
+const APPKNOP = { vanafBezoek: 2, rustDagen: 14, maxNee: 3 };
+let installVoorstel = null;
+addEventListener('beforeinstallprompt', e => { installVoorstel = e; });
+function appKnopLees() {
+  try {
+    const s = JSON.parse(localStorage.getItem(APPKNOP_KEY) || 'null');
+    return s && typeof s === 'object' ? s : {};
+  } catch (e) { return {}; }
+}
+function appKnopSchrijf(s) {
+  try { localStorage.setItem(APPKNOP_KEY, JSON.stringify(s)); } catch (e) { /* vol of dicht: dan maar elke keer */ }
+}
+// Eén bezoek per keer dat de pagina opstart -- in de app telt er niets.
+(function () {
+  if (speeltAlsApp()) return;
+  const s = appKnopLees();
+  s.bezoek = (s.bezoek | 0) + 1;
+  appKnopSchrijf(s);
+})();
+// Mag er iets over "als app" staan: niet in de app zelf, en niet net na installeren.
+function appUitlegNodig() { return !beginschermNetErop && !speeltAlsApp(); }
+function appKnopTonen(nu) {
+  if (!appUitlegNodig()) return false;
+  const zoek = location.search || '';
+  if (zoek.indexOf('debug') !== -1 && zoek.indexOf('appknop') === -1) return false;
+  const s = appKnopLees();
+  if ((s.bezoek | 0) < APPKNOP.vanafBezoek) return false;
+  if ((s.nee | 0) >= APPKNOP.maxNee) return false;
+  return !(s.rustTot > (nu || Date.now()));
+}
+// Het knopje volgt het scherm: show() en renderProfiles roepen dit aan.
+function appKnopZet() {
+  const k = $('app-knop');
+  if (!k) return;
+  const opLanding = $('screen-profile').classList.contains('active');
+  k.style.display = opLanding && appKnopTonen() ? '' : 'none';
+}
+function appKnopNietNu() {
+  const s = appKnopLees();
+  s.nee = (s.nee | 0) + 1;
+  s.rustTot = Date.now() + APPKNOP.rustDagen * 24 * 3600 * 1000;
+  appKnopSchrijf(s);
+  closeConfirmModal();
+  appKnopZet();
+}
+/* Het deel-icoon van Safari, en het plus-vierkantje van "Zet op beginscherm".
+   Getekend en niet als plaatje: dan klopt het op elke schermmaat en kost het niets. */
+const DEEL_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const PLUS_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+function isIpad(nav) {
+  nav = nav || navigator;
+  const ua = String(nav.userAgent || '');
+  return /iPad/.test(ua) || (/Macintosh/.test(ua) && (nav.maxTouchPoints || 0) > 1);
+}
+/* Wat er in het blad staat. Geeft { html, installeer } terug: installeer zegt of
+   er een knop "Installeren" bij hoort (alleen als Chrome zijn voorstel gaf). */
+function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
+  const stap = (n, t) => `<div class="ab-stap"><span class="ab-nr">${n}</span><span>${t}</span></div>`;
+  const kbd = t => `<span class="ab-kbd">${t}</span>`;
+  const wat = '<p class="ab-wat">Dan staat het spel als icoon op je beginscherm, met het hele scherm om te spelen. Het werkt ook zonder internet.</p>';
+  let html = '<div class="ab-voor">Voor papa of mama</div>' + wat;
+  if (soort === 'ios') {
+    html += ipad
+      ? stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`)
+      : stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
+        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>';
+    html += stap(2, `Kies ${kbd(PLUS_SVG + ' Zet op beginscherm')}${ipad ? '' : ' (een beetje naar beneden scrollen)'}`)
+      + stap(3, 'Tik op <b>Voeg toe</b>, en open Rekensterren voortaan via het icoon.');
+    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app op het beginscherm begint leeg. Maak eerst een back-up via ⚙️ → Voor ouders → Beheer, en zet hem daar in de app terug.</div>';
+    return { html, installeer: false };
+  }
+  if (soort === 'android' && kanInstalleren) {
+    html += '<div class="ab-noot">Je sterren blijven gewoon staan.</div>';
+    return { html, installeer: true };
+  }
+  const [uitleg, tweede] = beginschermUitleg(soort, hasStars);
+  html += `<p class="ab-uitleg">${uitleg}</p>` + (tweede ? `<div class="ab-noot">${tweede}</div>` : '');
+  return { html, installeer: false };
+}
+// vanKnop: geopend via het knopje (dan telt "Niet nu"), anders via het menu.
+function openAppBlad(vanKnop) {
+  closeGearMenu();
+  sndClick();
+  const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
+  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel);
+  $('confirm-title').textContent = '📲 Rekensterren als app';
+  $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
+  $('confirm-actions').innerHTML =
+    `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
+    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">📲 Installeren</button>' : '');
+  $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
+  const ik = $('app-blad-installeer');
+  if (ik) ik.onclick = () => {
+    const e = installVoorstel;
+    installVoorstel = null;   // het voorstel kan maar één keer opgevraagd worden
+    closeConfirmModal();
+    if (e) e.prompt();
+  };
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
+}
 
 /* ================= Terug-navigatie (Android back / browser back) =================
    Er is maar één URL, dus normaal ook maar één history-entry: zonder deze laag

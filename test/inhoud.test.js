@@ -607,21 +607,28 @@ zaak('I', () => {
 
 /* ================= J · Op het beginscherm =================
    Het installeren is van de browser. Chrome stelt het soms zelf voor, ook bij een
-   eerste bezoek, en dat voorstel hoort er onaangeroerd te blijven: wie naar
-   beforeinstallprompt luistert (en er preventDefault op zet, wat het gewone
-   patroon is), zet het stil. De app geeft alleen uitleg -- een kaart in Beheer,
-   met per soort browser de juiste zin, en weg zodra het spel als app draait.
-   Zie "= Op het beginscherm". */
+   eerste bezoek, en dat voorstel hoort er onaangeroerd te blijven: wie op
+   beforeinstallprompt preventDefault zet (het gewone patroon), zet het stil. De
+   app bewaart het event alleen, zodat de knop "Installeren" in het blad van
+   "Speel als app" hetzelfde venster kan openen. Verder uitleg: een kaart in
+   Beheer, en het knopje linksboven op de sterrenkeuze met zijn blad -- per soort
+   browser de juiste zin, en weg zodra het spel als app draait.
+   Zie "= Op het beginscherm" en "= Speel als app". */
 zaak('J', () => {
   const lees = f => fs.readFileSync(path.join(WORTEL, f), 'utf8');
   const bron = process.env.RP_INDEX ? fs.readFileSync(path.resolve(process.env.RP_INDEX), 'utf8')
     : lees('index.html');
   const alles = bron + lees('sw.js');
   // Op de code kijken en niet op het woord: de uitleg mag het event best noemen.
-  check(!/addEventListener\(\s*['"]beforeinstallprompt/.test(alles) && !/onbeforeinstallprompt/.test(alles),
-    'J · niemand luistert naar beforeinstallprompt -- het voorstel van de browser blijft staan', '');
-  check(!/\.prompt\(\s*\)/.test(alles) && !/userChoice/.test(alles),
-    'J · en er is geen eigen installeerknop die het voorstel opvraagt', '');
+  // Eén luisteraar, en die doet precies één ding: het event bewaren. Komt er ooit
+  // iets bij (preventDefault, of meteen prompt()), dan valt deze regel om.
+  const luisteraars = [...alles.matchAll(/^.*addEventListener\(\s*['"]beforeinstallprompt.*$/gm)].map(m => m[0].trim());
+  check(luisteraars.length === 1 && luisteraars[0] === "addEventListener('beforeinstallprompt', e => { installVoorstel = e; });",
+    'J · één luisteraar op beforeinstallprompt, en die bewaart het event alleen', luisteraars.join(' | '));
+  check(!/onbeforeinstallprompt/.test(alles) && !/installVoorstel\.preventDefault/.test(alles),
+    'J · en niemand zet het voorstel van de browser stil', '');
+  check((alles.match(/\.prompt\(\s*\)/g) || []).length === 1,
+    'J · het voorstel wordt op één plek opgevraagd: de knop Installeren in het blad', '');
 
   const vers = () => {
     const a = laadApp();
@@ -709,7 +716,55 @@ zaak('J', () => {
   check(!/beginscherm|install/i.test(JSON.stringify(c.db)), 'J · en db -- dus de back-up -- weet er niets van', Object.keys(c.db).join(', '));
   const morgen = laadApp({ opslag: c.opslag() });
   check(html(morgen, UA.android).includes('set-beginscherm'), 'J · een nieuwe start vraagt het gewoon weer aan de browser', '');
+
+  /* ---- Het knopje "Speel als app" ---- */
+  // Het eerste bezoek telt, maar toont nog niets; het tweede wel.
+  const een = laadApp();
+  check(een.run('appKnopTonen()') === false, 'J · knopje: niet bij het eerste bezoek', een.opslag().rekenPopsterren_appknop);
+  const twee = laadApp({ opslag: een.opslag() });
+  check(twee.run('appKnopTonen()') === true, 'J · knopje: wel vanaf het tweede bezoek', twee.opslag().rekenPopsterren_appknop);
+  check(!/appknop|bezoek/i.test(JSON.stringify(twee.db)), 'J · knopje: de tellers staan niet in db, dus niet in de back-up', '');
+  // Onder ?debug alleen met &appknop: de browsersuites openen de pagina vaak opnieuw.
+  check(laadApp({ opslag: twee.opslag(), zoek: '?debug' }).run('appKnopTonen()') === false,
+    'J · knopje: onder ?debug weg', '');
+  check(laadApp({ opslag: twee.opslag(), zoek: '?debug&appknop' }).run('appKnopTonen()') === true,
+    'J · knopje: onder ?debug&appknop wel', '');
+  // In de app, of net geïnstalleerd: nergens een knopje of een menuregel.
+  const inApp = laadApp({ opslag: twee.opslag() });
+  inApp.run(`matchMedia = q => ({ matches: q === '(display-mode: fullscreen)' });`);
+  check(inApp.run('appKnopTonen()') === false && inApp.run('appUitlegNodig()') === false,
+    'J · knopje: weg als het spel als app draait', '');
+  const netErop = laadApp({ opslag: twee.opslag() });
+  netErop.run('beginschermNetErop = true');
+  check(netErop.run('appKnopTonen()') === false, 'J · knopje: weg na appinstalled', '');
+  // "Niet nu": twee weken rust, en na drie keer nooit meer.
+  const nee = laadApp({ opslag: twee.opslag() });
+  nee.run('appKnopNietNu()');
+  check(nee.run('appKnopTonen()') === false, 'J · knopje: na Niet nu weg', '');
+  check(nee.run(`appKnopTonen(Date.now() + 15 * 24 * 3600 * 1000)`) === true, 'J · knopje: na twee weken terug', '');
+  nee.run('appKnopNietNu(); appKnopNietNu()');
+  check(nee.run(`appKnopTonen(Date.now() + 365 * 24 * 3600 * 1000)`) === false, 'J · knopje: na drie keer Niet nu blijft het weg', '');
+  check(nee.run('appUitlegNodig()') === true, 'J · knopje: maar de regel in het tandwielmenu blijft', '');
+
+  /* ---- Het blad ---- */
+  const blad = (soort, ipad, sterren, kan) => a.run(`appBladInhoud(${JSON.stringify(soort)}, ${ipad}, ${sterren}, ${kan})`);
+  const iph = blad('ios', false, true, false);
+  check(iph.html.includes('onderaan') && iph.html.includes('ab-balk') && iph.html.includes('Zet op beginscherm') && !iph.installeer,
+    'J · blad iPhone: deelknop onderaan, met de nagetekende werkbalk', iph.html);
+  check(iph.html.includes('Maak eerst een back-up'), 'J · blad iPhone: met sterren de back-upnoot', '');
+  check(!blad('ios', false, false, false).html.includes('back-up'), 'J · blad iPhone: zonder sterren geen back-upnoot', '');
+  const ipd = blad('ios', true, false, false);
+  check(ipd.html.includes('rechtsboven') && !ipd.html.includes('ab-balk'), 'J · blad iPad: deelknop rechtsboven, zonder werkbalk', ipd.html);
+  check(blad('android', false, true, true).installeer === true, 'J · blad Android: met voorstel van Chrome een knop Installeren', '');
+  const andZonder = blad('android', false, true, false);
+  check(!andZonder.installeer && andZonder.html.includes('Tik op ⋮'), 'J · blad Android: zonder voorstel de stappen via ⋮', andZonder.html);
+  check(!blad('anders', false, true, true).installeer, 'J · blad: Installeren alleen in Chrome op Android', '');
+  check(isIpadVan(a, UA.ipad, 5) && !isIpadVan(a, UA.iphone, 5) && !isIpadVan(a, UA.macSafari, 0),
+    'J · een iPad wordt herkend, ook als hij zich als Mac voordoet', '');
 });
+function isIpadVan(a, ua, punten) {
+  return a.run(`isIpad(${JSON.stringify({ userAgent: ua, maxTouchPoints: punten })})`);
+}
 
 /* ================= K · De studiokeuring =================
    De wereldstudio kijkt de werelden na met wereldControle (in src/20-app.js), en
