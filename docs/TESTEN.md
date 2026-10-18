@@ -10,7 +10,7 @@ werkelijk draait. Er staan twee soorten naast elkaar.
 | soort | draait in | wat het bewijst | kosten |
 |---|---|---|---|
 | **keuring** (`inhoud`, `kern`, `saves`, `kleedkamer`) | Node, zonder browser | de regels en de tabellen: voortgang, beloningen, opslag, catalogus, configuratie | ± 2 seconden, geen installatie |
-| **browsertests** (de rest) | echte Chromium via Playwright | wat een kind ziet en tikt: schermen, animaties, spelverloop | enkele minuten, vereist `npm install` |
+| **browsertests** (de rest) | echte Chromium via Playwright | wat een kind ziet en tikt: schermen, animaties, spelverloop | alles samen ± een kwartier, vereist `npm install` |
 
 ## Draaien
 
