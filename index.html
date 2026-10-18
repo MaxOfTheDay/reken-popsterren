@@ -15397,20 +15397,33 @@ function toonHub(id) {
 
 
 
-function kopKrimpMeten(scherm) {
+
+
+
+
+
+
+
+
+function kopKrimpMeten(scherm, stand) {
   const kop = scherm && scherm.querySelector('.hub-sticky');
-  if (!kop || !kop.offsetHeight) return;
+  if (!kop) return;
+  const sleutel = stand == null ? null : `${innerWidth}x${innerHeight}|${stand}`;
+  if (sleutel && scherm.dataset.krimpBij === sleutel) return;
+  if (!kop.offsetHeight) return;
   const hoogte = () => parseFloat(getComputedStyle(kop).height);
-  const stand = scherm.classList.contains('gescrold');
+  const wasGescrold = scherm.classList.contains('gescrold');
   scherm.classList.add('kop-meten');
   scherm.classList.remove('gescrold');
   const ruim = hoogte();
   scherm.classList.add('gescrold');
   const krap = hoogte();
-  scherm.classList.toggle('gescrold', stand);
+  scherm.classList.toggle('gescrold', wasGescrold);
   void kop.offsetHeight;
   scherm.classList.remove('kop-meten');
   scherm.style.setProperty('--kop-krimp', (ruim - krap) + 'px');
+
+  if (sleutel) scherm.dataset.krimpBij = sleutel; else delete scherm.dataset.krimpBij;
 }
 
 
@@ -17477,7 +17490,7 @@ function runTravel(t) {
 function openTrophies() {
   renderShelves();
   toonHub('screen-trophies');
-  kopKrimpMeten($('screen-trophies'));
+  kopKrimpMeten($('screen-trophies'), 'kast');
   $('screen-trophies').scrollTop = 0;
   kastScroll();
 }
@@ -17504,7 +17517,7 @@ function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4
 function resumeTrophies() {
   renderShelves();
   toonHub('screen-trophies');
-  kopKrimpMeten($('screen-trophies'));
+  kopKrimpMeten($('screen-trophies'), 'kast');
   kastScroll();
 }
 
@@ -20477,7 +20490,7 @@ function renderShop() {
   rekBreedte();
   paintShop();
 
-  kopKrimpMeten($('screen-dress'));
+  kopKrimpMeten($('screen-dress'), 'kleedkamer');
 }
 
 
@@ -20487,15 +20500,22 @@ function renderShop() {
 
 
 
+
+
+
+
 const KAART_GAT = 10;
+let rekBreedteBij = '';
 function rekBreedte() {
   const rek = $('item-grid');
-  if (!rek || !rek.clientWidth || typeof getComputedStyle !== 'function') return;
+  if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
+  if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
   const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
   const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
+  rekBreedteBij = `${innerWidth}x${innerHeight}`;
 }
 addEventListener('resize', () => rafKlem(rekBreedte));
 
@@ -21379,7 +21399,8 @@ function openSettings() {
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
-  kopKrimpMeten($('screen-settings'));
+
+  kopKrimpMeten($('screen-settings'), setKey ? 'met ster' : 'zonder ster');
 
 
   $('screen-settings').onscroll = ouderScroll;
@@ -21985,8 +22006,21 @@ function renderWhoRow() {
   const keys = profileKeys();
   const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
     + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
-  const handtekening = setKey + '|' + delen.join('|');
-  if (handtekening === lastWhoHtml && row.childElementCount) return;
+
+
+
+  const handtekening = delen.join('|');
+  if (handtekening === lastWhoHtml && row.childElementCount) {
+    let active = null;
+    row.querySelectorAll('.who-btn[data-key]').forEach(b => {
+      const on = b.dataset.key === setKey;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (on) active = b;
+    });
+    whoInBeeld(row, active);
+    return;
+  }
   lastWhoHtml = handtekening;
   const keep = row.scrollLeft;
   row.innerHTML = '';
@@ -21995,6 +22029,7 @@ function renderWhoRow() {
     const on = key === setKey;
     const b = document.createElement('button');
     b.className = 'tab-btn who-btn' + (on ? ' active' : '');
+    b.dataset.key = key;
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     b.innerHTML = delen[k];
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
@@ -22019,7 +22054,10 @@ function renderWhoRow() {
   fadesVolgen(row);
   row.scrollLeft = keep;
   updateFades(row);
+  whoInBeeld(row, active);
+}
 
+function whoInBeeld(row, active) {
   if (active && lastWhoRendered !== setKey) requestAnimationFrame(() => {
     if (!active.isConnected) return;
     active.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -22057,7 +22095,7 @@ function renderSettings() {
     $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = beheerEmptyHtml();
     bindSettings(null, null);
-    kopKrimpMeten($('screen-settings'));
+    kopKrimpMeten($('screen-settings'), 'zonder ster');
     return;
   }
   renderWhoRow();
@@ -22068,7 +22106,7 @@ function renderSettings() {
     : setTab === 'beheer'  ? beheerPanelHtml(p)
     :                        statsPanelHtml(p);
   bindSettings(p, s);
-  kopKrimpMeten($('screen-settings'));
+  kopKrimpMeten($('screen-settings'), 'met ster');
 }
 
 
