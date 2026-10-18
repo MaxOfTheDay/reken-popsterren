@@ -885,6 +885,32 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- N · Het eindscherm past, ook op een telefoon op zijn kant ----
+   * Het eindscherm hoort zonder scrollen in beeld te staan (zie .result-card in
+   * 70-feest.css). Staand klopte dat al; liggend stond "Verder op tournee" onder
+   * de rand. Gemeten op de demo-ster, met drie nieuwe trofeeën in de gouden pil:
+   * de langste kaart die er is. Geslaagd én mislukt. */
+  for (const [w, h] of [[844, 390], [667, 375], [568, 320], [320, 568], [390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    for (const gelukt of [true, false]) {
+      await page.goto(APP_URL + '&demo&star=p1');
+      await page.waitForFunction(() => typeof selectProfile === 'function');
+      await page.evaluate(ok => { selectProfile('p1'); startLevel(6); G.stars = ok ? 3 : 0; endLevel(ok); }, gelukt);
+      await page.waitForTimeout(3300);
+      const r = await page.evaluate(() => {
+        const s = document.getElementById('screen-end');
+        const knoppen = ['btn-end-next', 'btn-end-alt'].map(id => document.getElementById(id).getBoundingClientRect());
+        return { teVeel: s.scrollHeight - s.clientHeight, onder: Math.max(...knoppen.map(k => k.bottom)), h: innerHeight };
+      });
+      check(r.teVeel <= 1 && r.onder <= r.h,
+        `N · het eindscherm past zonder scrollen op ${w}x${h} (${gelukt ? 'geslaagd' : 'mislukt'})`, JSON.stringify(r));
+    }
+    await ctx.close();
+  }
+
   /* ---- Uitslag ---- */
   check(pageErrors.length === 0, 'geen fouten in de pagina', pageErrors.slice(0, 5).join(' | '));
   await browser.close();
