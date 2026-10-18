@@ -21,12 +21,16 @@ npm test           # alles, inclusief echte Chromium — minuten, vereist npm in
 open index.html    # het spel zelf, zonder meer
 ```
 
-**`npm run check` is de poort waar élke wijziging doorheen moet** (1.391
-controles in vier Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal
-Node). `npm test` doet die vier en daarna nog twaalf, waarvan de meeste een
-echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
+**`npm run check` is de poort waar élke wijziging doorheen moet** (vier
+Node-suites: `inhoud`, `kern`, `saves`, `kleedkamer`, op kaal Node; hoeveel
+controles het zijn zegt hij zelf). `npm test` doet die vier en daarna de rest
+uit `package.json`, waarvan de meeste een echte Chromium starten — `hub` is de uitzondering en draait ook op kaal Node.
 Eén suite draaien gaat met `npm run test:<naam>`, bijvoorbeeld
 `npm run test:reis`; de hele lijst staat in `docs/TESTEN.md` en `package.json`.
+
+Op GitHub draait bij elke PR en elke push naar main dezelfde keuring, plus `hub`
+en `test:sterren` (`.github/workflows/keuring.yml`). Dat is het vangnet voor
+wat níét via de studio gaat; het vervangt `npm test` op je eigen machine niet.
 
 Raak je aan het uiterlijk, draai dan ook `npm run shots` (schermafdrukken om
 mee te vergelijken) of `npm run achtergrondproef`.
@@ -54,7 +58,7 @@ omgevallen; regel 0 is er om te voorkomen dat er een vijfde bijkomt.
    erachter, dan valt de pagina meteen om met "Cannot access ... before
    initialization" — voor allebei nagemeten in een echte browser.
    **`npm run check` ziet dit soort fouten niet** — die keuring draait met een
-   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op 1391/1391 uit
+   nagebootst scherm waar geen pop in zit, en komt dan vrolijk op alles-geslaagd uit
    terwijl de pagina in een browser meteen omvalt. Verander je de volgorde of
    verplaats je een `const`, draai dan óók een browsersuite
    (`npm run test:sterren` is de kortste die het beginscherm echt opbouwt).
@@ -121,9 +125,10 @@ wacht erop, dus zonder net mist er niets dan een telling.
 
 ## Waar de dingen staan
 
-`index.html` telt ruim twintigduizend regels, maar **43% daarvan is
-commentaar**. De code eronder is klein: ± 2.800 CSS-regels en ± 5.900 regels
-app-JavaScript. Waar het staat, en waarop je het vindt:
+In `src/` is ongeveer de helft commentaar; de code eronder is klein. Wat er in
+`index.html` belandt is dezelfde code zónder dat commentaar (zie `npm run bouw`):
+de uitleg lees je dus in `src/`, niet in het gebouwde bestand. Waar het staat,
+en waarop je het vindt:
 
 | zoek op | wat |
 |---|---|
@@ -132,11 +137,11 @@ app-JavaScript. Waar het staat, en waarop je het vindt:
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |
 | `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
-| `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
+| `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. De bouw zet hem niet in `index.html` maar in `studio.js` ernaast, dat pas opgehaald wordt als de studio opengaat (`laadStudio`). Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
 | `src/css/*.css` | **het stijlblad**, in dertien stukken (zie hieronder) |
 | `<body` | de tien schermen als markup, in `index.html` zelf, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |
-| `<style>` / `<script>` | het resultaat van de bouw. Lees het gerust, bewerk het niet |
+| `<style>` / `<script>` | het resultaat van de bouw, zonder commentaar. Bewerk het niet; de uitleg staat in `src/` |
 
 Het stijlblad, in leesvolgorde — en die volgorde is de cascade, dus verhang er
 niets zonder reden:
@@ -175,10 +180,10 @@ verjaart niet.
   "verder". Hij leest dat nu in drie stappen, en die staan elk apart:
   `kaartOpdracht` zegt wat er moet gebeuren (en maakt de vier briefjes op),
   `kaartVertrek` laat het vorige scherm weggaan, en de staart van `goMap` zelf
-  doet de aankomst. **De volgorde van die drie is betekenisvol**, en `goMap`
-  is de enige plek waar je dat ziet — `kaartVertrek` moet vóór het verbruiken
-  van `tourMapVoltooi` staan, want ze lezen allebei `kaartFocus` en wie eerst
-  is wint. Wat de vlaggen zelf betekenen staat in `src/17-kaartstand.js`.
+  doet de aankomst. Het verbruiken van `tourMapVoltooi` moet in dezelfde taak
+  gebeuren als `show()`, vóór de eerste verf. `kaartVertrek` krijgt `uitShow`
+  als argument, dus die hangt niet meer af van wie `kaartFocus` het eerst leest.
+  Wat de vlaggen zelf betekenen staat in `src/17-kaartstand.js`.
 * **De overgangen** (`= Bewegingstaal`, `= De reis`, `= Wereld naar wereld`)
   zijn op enkele beeldjes afgeregeld. Verplaats er niets zonder het op een
   telefoon te bekijken; headless ziet dit soort fouten niet.
@@ -198,7 +203,7 @@ Deze delen zijn zuiver en goed afgebakend; raak wat eromheen zit niet aan:
   een onleesbaar bestand gaat opzij naar `<sleutel>.broken`. Laat dat staan.
 * **de tabellen** — `ITEMS`, `WORLDS`, `TROPHIES`, `RANK_TIERS`. Er bij zetten
   gaat volgens `docs/UITBREIDEN.md`, en `npm run test:inhoud` kijkt het na.
-* **`sw.js`** — 170 regels, twee voorraden. De schil is netwerk-eerst, dus voor
+* **`sw.js`** — klein, twee voorraden. De schil is netwerk-eerst, dus voor
   een gewone uitgave hoeft `CACHE` niet omhoog. `ART_CACHE` gaat alléén omhoog
   als een tekening die al uitgeleverd is (in de laatste commit staat) onder
   dezelfde naam vervangen wordt; een nieuw bestand op een nieuw pad staat nog in
@@ -212,6 +217,11 @@ bijgehouden zijn `docs/UITBREIDEN.md` (een wereld, spulletje of trofee erbij),
 een bepaalde fase: ze zeggen waarom iets besloten is, niet wat er vandaag staat.
 **Waar plan en code uit elkaar lopen wint de code.**
 
-Het commentaar in `index.html` is de belangrijkste documentatie die er is en het
-wordt bijgehouden. Haal het niet weg om regels te besparen, en laat een uitleg
-niet achter bij code die je verandert.
+Het commentaar in `src/` is de belangrijkste documentatie die er is en het
+wordt bijgehouden. Haal het niet weg om regels te besparen -- de bouw laat het
+al weg uit wat een kind downloadt -- en laat een uitleg niet achter bij code die
+je verandert.
+
+En zet in dit soort bestanden geen tellingen neer (controles, regels, suites):
+die verjaren net zo snel als regelnummers. Wie het wil weten draait
+`npm run check`.

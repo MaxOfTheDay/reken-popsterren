@@ -189,7 +189,7 @@ const BRUG = `globalThis.__api = {
   // de studio: id/pad uit een naam, en de controle die zegt wat er mis is.
   // Staan hier omdat het uitspraken over een wereld zijn en geen paneelwerk --
   // test/werelden.js kijkt er de werelden mee na zonder een browser te openen.
-  wereldId, vrijWereldId, wereldArtPad, wereldControle, worldsSource, ZONE,
+  wereldId, vrijWereldId, wereldArtPad, wereldKleinPad, wereldControle, worldsSource, ZONE,
   worldNodes, worldCurve, WORLD_DRAFT_KEY, uitgebrachtTot,
   // het concept: bewaren met zijn basis, en op het spel van nu leggen. De server
   // doet hiermee precies wat de studio in de browser doet (zie test/werelden.js).

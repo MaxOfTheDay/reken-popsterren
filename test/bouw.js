@@ -63,6 +63,30 @@ const BLOKKEN = [
   { naam: 'scriptblok', map: SRC,     ext: '.js',  open: '<script>', dicht: '</' + 'script>', kop: '<script' },
 ];
 
+/* Wat níét in index.html gaat maar ernaast, als eigen bestand.
+
+   De wereldstudio is ongeveer een vijfde van alle JavaScript, en geen kind
+   draait hem ooit: hij gaat pas aan met ?debug&mapedit. Toch las elke tablet hem
+   bij elke start mee. Nu staat hij in studio.js, en haalt het spel hem pas op als
+   de studio opengaat (zie laadStudio in 20-app.js).
+
+   Dat kan zonder iets van de harde regels op te geven:
+     - een klassiek script dat het spel zelf aanmaakt werkt ook vanaf file://
+       (regel 2: alleen een module zou daar mislukken);
+     - er komt geen scripttag bij in index.html (regel 1): hij wordt in code
+       aangemaakt;
+     - klassieke scripts delen één bereik, dus de studio ziet WORLDS, de kaartstand
+       en alle functies van het spel precies zoals toen hij erin stond. Dat werkt
+       alleen omdat dit bestand niets anders doet dan één functie verklaren:
+       zijn plek in de volgorde draagt niets.
+
+   De bron blijft in src/ staan op zijn eigen nummer, en zaak H kijkt ook dít
+   bestand na: met de hand bewerken valt net zo op als in index.html. */
+const LOS = [{ bron: '90-wereldstudio.js', uit: 'studio.js' }];
+const LOS_KOP = '/* Gebouwd door npm run bouw uit src/{bron} -- bewerk het daar, niet hier. */\n';
+const losTekst = l => LOS_KOP.replace('{bron}', l.bron)
+  + zonderCommentaar(fs.readFileSync(path.join(SRC, l.bron), 'utf8'), '.js');
+
 /* Elk bestand moet met twee cijfers en een streepje beginnen, en dat wordt hier
    afgedwongen in plaats van afgesproken. Reden: een naam zónder cijfers sorteert
    ná élke naam mét cijfers ('a' komt na '1'), dus één bestand dat 'app.js' heet
@@ -118,19 +142,159 @@ function keurCss(naam, tekst) {
     + '-- er is waarschijnlijk midden in een uitleg geknipt');
 }
 
+/* Het commentaar eruit, voor wat er uitgeleverd wordt.
+
+   In src/ blijft elk woord staan: dáár wordt gelezen en geschreven, en het
+   commentaar is de documentatie. Maar een kind hoeft het niet te downloaden --
+   het was ruim de helft van index.html, en op een trage tablet doet de browser
+   er merkbaar langer over om door anderhalve megabyte te lezen dan door een
+   halve. (Nagemeten met een zesvoudig vertraagde processor: het eerste beeld
+   kwam in de helft van de tijd, en pas dan haalt het logo-intro zijn venster.)
+
+   Regels blijven regels: wat een commentaar aan regeleinden had, krijgt het
+   terug. Daardoor is regel n van het gebouwde blok nog steeds regel n van de
+   aan elkaar geplakte bronnen, en wijst een foutmelding uit de browser je de
+   weg. En een regeleinde telt in JavaScript mee voor de automatische puntkomma,
+   dus zo verandert er ook in de betekenis niets. Een commentaar zonder
+   regeleinde wordt één spatie, zodat twee woorden niet aan elkaar komen.
+
+   Dit is geen ontleder, maar het moet wel weten waar een commentaar níet is:
+   in een tekst ('..', "..", `..` met ${..} erin), en in JavaScript ook in een
+   regex -- `/\/\//` is geen commentaar. Of een / een regex opent of een deling
+   is, hangt af van wat ervoor staat; hieronder de gewone regel daarvoor. Een
+   vergissing daarin breekt het spel, en daarom kijkt bouw() het na: wat eruit
+   komt moet nog steeds als script te lezen zijn, en de tests draaien allemaal
+   tegen het gebouwde bestand. */
+const REGEX_NA_WOORD = new Set(['return', 'typeof', 'case', 'do', 'else', 'in', 'of', 'new',
+  'delete', 'void', 'throw', 'instanceof', 'yield', 'await']);
+
+function zonderCommentaar(tekst, soort) {
+  const js = soort === '.js';
+  let uit = '';
+  let i = 0;
+  // Het laatste betekenisvolle stuk code: bepaalt of een / een regex opent.
+  let vorige = '';
+  // Per open `..${ het aantal accolades erbinnen; leeg = niet in een sjabloon.
+  const sjablonen = [];
+
+  // Spaties vlak vóór een commentaar gaan mee weg -- ze staan in code, nooit in
+  // een tekst, dus dat kan veilig.
+  const knipSpaties = () => {
+    let n = uit.length;
+    while (n && (uit[n - 1] === ' ' || uit[n - 1] === '\t')) n--;
+    if (n < uit.length) uit = uit.slice(0, n);
+  };
+
+  function leesTekst(q) {
+    const begin = i;
+    i++;
+    while (i < tekst.length && tekst[i] !== q) {
+      if (tekst[i] === '\\') i++;
+      i++;
+    }
+    i++;
+    uit += tekst.slice(begin, i);
+  }
+  // Het stuk letterlijke tekst van een sjabloon, tot de afsluitende ` of ${.
+  function leesSjabloon() {
+    const begin = i;
+    while (i < tekst.length) {
+      if (tekst[i] === '\\') { i += 2; continue; }
+      if (tekst[i] === '`') { i++; uit += tekst.slice(begin, i); vorige = '`'; return; }
+      if (tekst.startsWith('${', i)) { i += 2; uit += tekst.slice(begin, i); sjablonen.push(0); vorige = '{'; return; }
+      i++;
+    }
+    uit += tekst.slice(begin);
+  }
+  function leesRegex() {
+    const begin = i;
+    i++;
+    let klasse = false;
+    while (i < tekst.length) {
+      const c = tekst[i];
+      if (c === '\\') { i += 2; continue; }
+      if (c === '\n') break;
+      if (klasse) { if (c === ']') klasse = false; }
+      else if (c === '[') klasse = true;
+      else if (c === '/') { i++; break; }
+      i++;
+    }
+    while (i < tekst.length && /[a-z]/.test(tekst[i])) i++;
+    uit += tekst.slice(begin, i);
+    vorige = 'a';
+  }
+  const regexMag = () => {
+    if (vorige === '') return true;
+    if (/[A-Za-z0-9_$]$/.test(vorige)) return REGEX_NA_WOORD.has(vorige);
+    return !/[)\]`'"]$/.test(vorige);
+  };
+
+  while (i < tekst.length) {
+    const c = tekst[i];
+    if (tekst.startsWith('/*', i)) {
+      const eind = tekst.indexOf('*/', i + 2);
+      const stuk = tekst.slice(i, eind < 0 ? tekst.length : eind + 2);
+      const regels = stuk.split('\n').length - 1;
+      knipSpaties();
+      i += stuk.length;
+      if (regels) uit += '\n'.repeat(regels);
+      else if (uit && !/\s$/.test(uit) && i < tekst.length && !/\s/.test(tekst[i])) uit += ' ';
+      continue;
+    }
+    if (js && tekst.startsWith('//', i)) {
+      const eind = tekst.indexOf('\n', i);
+      knipSpaties();
+      i = eind < 0 ? tekst.length : eind;
+      continue;
+    }
+    if (c === '"' || c === "'") { leesTekst(c); vorige = c; continue; }
+    if (js && c === '`') { uit += c; i++; leesSjabloon(); continue; }
+    if (js && c === '/' && regexMag()) { leesRegex(); continue; }
+    if (js && sjablonen.length) {
+      if (c === '{') sjablonen[sjablonen.length - 1]++;
+      else if (c === '}') {
+        if (sjablonen[sjablonen.length - 1] === 0) {
+          sjablonen.pop(); uit += c; i++; leesSjabloon(); continue;
+        }
+        sjablonen[sjablonen.length - 1]--;
+      }
+    }
+    if (js && /[A-Za-z0-9_$]/.test(c)) {
+      const m = /^[A-Za-z0-9_$]+/.exec(tekst.slice(i, i + 64));
+      uit += m[0]; i += m[0].length; vorige = m[0];
+      continue;
+    }
+    if (!/\s/.test(c)) vorige = c;
+    uit += c;
+    i++;
+  }
+  return uit;
+}
+
 /* Alles achter elkaar. Elk stuk moet op een regeleinde eindigen -- zie de kop.
    Een leeg bestand mag: dat is een stuk dat nog niets bevat, en nul regels
    plakken niets aan elkaar vast. */
 function stukkenUit(blok) {
-  return bronnen(blok).map(naam => {
+  return bronnen(blok).filter(naam => !LOS.some(l => l.bron === naam)).map(naam => {
     const tekst = fs.readFileSync(path.join(blok.map, naam), 'utf8');
     if (tekst.length && !tekst.endsWith('\n')) {
       throw new Error(`${path.relative(WORTEL, blok.map)}/${naam} eindigt niet op een regeleinde; `
         + 'dan plakt zijn laatste regel vast aan het volgende bestand');
     }
     if (blok.ext === '.css') keurCss(naam, tekst);
-    return tekst;
+    return zonderCommentaar(tekst, blok.ext);
   }).join('');
+}
+
+/* Het gebouwde scriptblok moet nog als script te lezen zijn. Zo valt een
+   vergissing van zonderCommentaar bij het bouwen op, en niet pas als een kind
+   een lege pagina krijgt. (Inlezen is niet draaien: er gebeurt niets mee.) */
+function keurScript(code) {
+  try { new (require('vm').Script)(code, { filename: 'scriptblok' }); }
+  catch (e) {
+    throw new Error('het gebouwde scriptblok is geen geldig script meer: ' + e.message
+      + ' -- staat er iets in src/ dat zonderCommentaar() verkeerd leest?');
+  }
 }
 
 /* Waar een blok in index.html begint en eindigt.
@@ -177,8 +341,10 @@ function grenzen(html, blok) {
 function verwacht(html) {
   const g = BLOKKEN.map(b => grenzen(html, b));
   if (!(g[0].tot < g[1].van)) throw new Error('het stijlblad hoort vóór het scriptblok te staan');
+  const script = stukkenUit(BLOKKEN[1]);
+  keurScript(script);
   return html.slice(0, g[0].van) + '\n' + stukkenUit(BLOKKEN[0])
-       + html.slice(g[0].tot, g[1].van) + '\n' + stukkenUit(BLOKKEN[1])
+       + html.slice(g[0].tot, g[1].van) + '\n' + script
        + html.slice(g[1].tot);
 }
 
@@ -187,6 +353,14 @@ function verwacht(html) {
    voor -- zodat een handmatige bewerking opvalt bij de eerstvolgende keuring en
    niet pas bij de eerstvolgende bouw. */
 function achterstand() {
+  for (const l of LOS) {
+    const doel = path.join(WORTEL, l.uit);
+    const nu = fs.existsSync(doel) ? fs.readFileSync(doel, 'utf8') : null;
+    if (nu !== losTekst(l)) {
+      return `${l.uit} loopt niet gelijk met src/${l.bron}`
+        + (nu == null ? ' (het bestand ontbreekt)' : '') + '. Draai `npm run bouw`.';
+    }
+  }
   const html = fs.readFileSync(INDEX, 'utf8');
   const wil = verwacht(html);
   if (wil === html) return null;
@@ -209,8 +383,17 @@ function achterstand() {
 function bouw() {
   const html = fs.readFileSync(INDEX, 'utf8');
   const wil = verwacht(html);
-  if (wil !== html) fs.writeFileSync(INDEX, wil);
-  return { gewijzigd: wil !== html };
+  let gewijzigd = wil !== html;
+  if (gewijzigd) fs.writeFileSync(INDEX, wil);
+  for (const l of LOS) {
+    const tekst = losTekst(l);
+    keurScript(tekst);
+    const doel = path.join(WORTEL, l.uit);
+    if (fs.existsSync(doel) && fs.readFileSync(doel, 'utf8') === tekst) continue;
+    fs.writeFileSync(doel, tekst);
+    gewijzigd = true;
+  }
+  return { gewijzigd };
 }
 
 /* In wélk bronbestand staat een machinaal geschreven blok?
@@ -233,7 +416,7 @@ function bronMetMarkering(mark) {
   return path.join(blok.map, raak[0]);
 }
 
-module.exports = { bouw, achterstand, bronnen, bronMetMarkering, BLOKKEN, SRC, SRC_CSS, INDEX };
+module.exports = { bouw, achterstand, zonderCommentaar, LOS, bronnen, bronMetMarkering, BLOKKEN, SRC, SRC_CSS, INDEX };
 
 if (require.main === module) {
   const alleenKijken = process.argv.includes('--controleer');
