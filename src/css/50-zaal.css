@@ -571,10 +571,8 @@
      wereld. Dezelfde ingreep als bij .saved-pill .sp-word op een smal scherm, en om
      dezelfde reden: het plaatje zegt het al, het woord kost de ruimte.
 
-     .world-back gaat in dezelfde adem een maatje kleiner. Die pil staat middenonder
-     en dat is precies waar de standaardslinger zijn eerste halte neerzet; kleiner
-     maken brengt de overlap daar van 41% terug naar 27%, binnen de marge die
-     controle 7f bewaakt. */
+     .world-back ging hier eerst in dezelfde adem een maatje kleiner, omdat hij
+     middenonder stond. Hij staat nu bovenin, onder de kop (zie .world-back). */
   @media (max-height: 620px) {
     /* > span, niet span: het bedrag zit als eigen <span> ín .mem-pay, en zonder de
        directe-kindselector verdween dát nummer mee -- dan stond er "💎" zonder
@@ -1322,45 +1320,73 @@
      onderaan, is dan een tweede en veel gróter goud ding op hetzelfde scherm --
      en het brengt je niet naar een show maar naar een andere wereld.
 
-     Nu donker glas: dezelfde vorm en dezelfde plek, maar de toon van de wereldpil
-     in de kop waar hij bij hoort. Hij blijft goed vindbaar (hij staat als enige
-     midden onderaan en verschijnt alleen als je ergens anders kíjkt dan waar je
-     speelt), maar hij vraagt niet meer als eerste je aandacht.
+     Nu donker glas, in de toon van de wereldpil in de kop waar hij bij hoort. Hij
+     blijft goed vindbaar (hij verschijnt alleen als je ergens anders kíjkt dan
+     waar je speelt), maar hij vraagt niet meer als eerste je aandacht.
 
-     Iets smaller ook: kleinere letter en minder padding, zodat hij minder van de
-     tekening afdekt op de plek waar de onderste haltes staan. */
+     Bovenin, onder de wereldpil -- en niet meer middenonder. Drie redenen, alle
+     drie opgemeten over elke wereld:
+
+     - Hij was te klein om te raken: 27px hoog, en 21px op een kort scherm, en
+       onderaan kón hij niet groeien: tussen de onderste halte en de balk zit op
+       een korte telefoon 21 tot 40px. Boven de hoogste halte is in elke wereld
+       meer ruimte dan onder de laagste.
+     - Hij stond aan de verkeerde kant van de beweging. Terug naar huis is altijd
+       een klim omhóóg (zie navigeerNaarWereld): de camera gaat naar boven, dus de
+       knop die dat doet staat er ook.
+     - Hij hoort bij de wereldpil erboven. Die zegt wáár je kijkt, deze hoe je
+       terugkomt -- samen het hele "je bent elders".
+
+     En dus ziet hij er ook uit als die wereldpil: hetzelfde glas, dezelfde rand,
+     schaduw, hoogte en letter, en dezelfde korte naam ("Piraten", zie korteNaam).
+     Een eigen donkere pil met een gouden rand stond eronder als een ander soort
+     ding. Het verschil zit nu alleen in de inhoud, net als bij de wereldpil en de
+     diamantpil: daar staat het knopje (🌍 in een blauw capsuletje) rechts, hier de
+     ↑ links. Zelfde capsule, "hier tik je" -- maar in goud en niet in blauw. Het
+     blauwe capsuletje betekent al "open het overzicht", en twee handelingen die er
+     hetzelfde uitzien zijn er één te veel. Goud betekent op de kaart "hier speel
+     je" (de huidige halte is een gouden schijf), en dáár brengt deze pil je heen.
+     Alleen het capsuletje, niet de pil: de volledig gouden pil van vroeger
+     concurreerde met die halte (zie hierboven). De ↑ en niet ⟲:
+     terug is hier altijd omhoog, en een pijl leest een kind dat nog niet leest
+     wél.
+
+     Op zijn plek gezet door terugUitlijnen, niet door de CSS: midden onder de
+     wereldpil (--wp-mid, en die staat niet midden op het scherm) en 8px eronder
+     (--wp-onder), dezelfde lucht als tussen de kop en de rest. De terugvallen
+     hieronder gelden alleen zolang er nog niets gemeten is. Controle 7f in
+     test/profiles.test.js meet wat hij afdekt -- waar hij ook staat. */
   .world-back {
-    position: absolute; left: 50%; transform: translateX(-50%); z-index: 6;
-    /* Strak tegen de navigatiebalk in plaats van er 12px boven te zweven. Die
-       twaalf pixels kwamen uit --nav-h (balk + wat eronder zit + 12 marge) en
-       waren hier niets waard: onder de pil zit al de balk, en boven de pil staat
-       de onderste rij haltes. Elke pixel lager is een pixel minder tekening en
-       minder halte die hij afdekt. */
-    bottom: calc(var(--nav-h, 96px) - 12px);
-    display: flex; align-items: center; gap: 5px; padding: 6px 12px;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+    position: absolute; left: var(--wp-mid, 50%); top: var(--wp-onder, 62px);
+    transform: translateX(-50%); z-index: 6;
+    display: flex; align-items: stretch; gap: 0; padding: 0; height: var(--hud-h);
+    font-family: inherit; font-size: var(--tx-body); font-weight: 700; line-height: 1;
     white-space: nowrap; max-width: calc(100% - 24px);
-    color: var(--c-white); cursor: pointer;
-    background: rgba(32,12,58,.72);
-    border: 1px solid rgba(255,255,255,.28); border-radius: var(--r-pill);
-    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: 0 3px 12px rgba(0,0,0,.42);
+    color: var(--c-white); cursor: pointer; border: 0; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
   }
-  .world-back:active { transform: translateX(-50%) scale(.95); }
-  /* Een maatje kleiner op het kortste scherm -- zie de opmerking bij .mem-fab
-     hierboven: deze pil staat middenonder, en daar zet de standaardslinger zijn
-     eerste halte neer.
-     Sinds de letterladder gaat dat kleiner maken via de RUIMTE en niet meer via
-     de letter: de pil stond hier op 12px en de gewone stand op 13.5px, en dat
-     zijn allebei geen sport -- ze liggen anderhalve pixel uit elkaar en dat ziet
-     niemand. Nu leest hij in beide standen --tx-klein en wordt hij hier smal
-     gemaakt met minder lucht eromheen. Dat scheelt evenveel breedte, en het
-     scheelt een kind van vijf geen leesbaarheid. Controle 7f in
-     test/profiles.test.js meet wat de pil van de onderste halte afdekt. */
-  @media (max-height: 620px) {
-    /* Twee pixels lager ook. Dat is dezelfde afweging als bij de bottom hierboven,
-       en hier telt hij dubbel: onder de pil zit de balk (die niets afdekt), boven
-       de pil de onderste halte (die alles afdekt). De marge staat daarmee ruimer
-       dan vóór de ladder, en niet net-aan. */
-    .world-back { padding: 3px 8px; gap: 4px; bottom: calc(var(--nav-h, 96px) - 14px); }
+  .world-back:active { transform: translateX(-50%) scale(.96); filter: brightness(1.15); }
+  /* Het raakvlak, op dezelfde manier als bij de wereldpil: een onzichtbaar vlakje,
+     zodat hij 44px hoog te raken is terwijl hij er even groot uitziet als de pil
+     erboven. Alleen naar ónder: de 8px erboven zijn al van de wereldpil (zijn
+     vlakje steekt precies zo ver uit), en hier ligt deze pil hoger op de stapel --
+     een vlakje naar boven pakte de onderste tikken van de wereldpil af. */
+  .world-back::before { content: ''; position: absolute; inset: 0 0 -10px; }
+  .wb-cta, .wb-naam { display: flex; align-items: center; justify-content: center; }
+  /* Het capsuletje van .wp-cta, gespiegeld: daar zit hij rechts, hier links. In
+     het goud van de huidige halte (.tour-stop.next .dot), zie de kop hierboven. */
+  .wb-cta { flex: none; margin: 4px 1px 4px 4px; padding: 0 9px; font-size: 1.15em;
+    border-radius: var(--r-pill); color: var(--ink-on-gold); text-shadow: none;
+    background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
+    box-shadow: inset 0 0 0 1px var(--gold-accent); }
+  .wb-naam { gap: 6px; padding: 0 14px 0 8px; }
+  /* Dezelfde maat kleiner als de wereldpil op een smal scherm (zie #screen-map
+     .world-pick in 40-kaart.css): twee pillen boven elkaar in twee lettermaten
+     zag eruit als een vergissing. */
+  @media (max-width: 389px) {
+    .world-back { font-size: var(--tx-klein); }
+    .wb-cta { padding: 0 7px; }
+    .wb-naam { gap: 4px; padding: 0 10px 0 6px; }
   }

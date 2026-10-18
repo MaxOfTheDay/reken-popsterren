@@ -1641,8 +1641,8 @@ function check(ok, label, detail) {
 
   /* ========== 7f · De zijsporen dekken geen halte af ==========
    * Over de kaart zweven twee knoppen die niet bij de route horen: het memory-spel
-   * rechtsonder en (alleen als je in een ándere wereld kijkt) de weg terug midden
-   * onderaan. Ze staan op vaste schermplekken, de haltes op percentages van de
+   * rechtsonder en (alleen als je in een ándere wereld kijkt) de weg terug, die
+   * eerst midden onderaan stond en nu midden bovenin onder de kop (zie .world-back). Ze staan op vaste schermplekken, de haltes op percentages van de
    * tekening -- die twee stelsels schuiven onafhankelijk van elkaar, dus "het past
    * nu" is geen garantie dat het over een wereld verder nog past.
    *
@@ -1674,6 +1674,11 @@ function check(ok, label, detail) {
    * halte 26, hetzelfde knopje -- dáár is het scherm hoog genoeg om niet te
    * krimpen) en 320px 27%. Die laatste is de standaardslinger, die zijn eerste
    * halte precies middenonder zet, pal achter de terug-pil.
+   *
+   * Sinds de terug-pil naar boven is verhuisd (onder de wereldpil, in dezelfde
+   * stijl en hoogte) is de krapste plek voor hém halte 72 in de ruimtewereld op
+   * 320x568: die staat 27px onder de kop. Een eerste, hogere versie dekte daar het
+   * hart af.
    *
    * Die marge van 30% komt dus uit de meting, niet uit een gevoel. Hij staat er
    * zodat een nieuwe wereld, een grotere knop of een ander toestel opvalt vóórdat
