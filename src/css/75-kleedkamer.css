@@ -422,6 +422,10 @@
      hetzelfde plankje als de trofeekaart in de kast. Zie het vlakkenblok in :root. */
   .item-card {
     position: relative; flex: 1 1 var(--kaart-min); max-width: calc(var(--kaart-min) * 1.7);
+    /* rekBreedte zet --kaart-b: de breedte van een kaartje in een vólle rij. Dan
+       groeit er niets meer mee, en is de laatste rij net zo breed per kaartje. */
+    flex-basis: var(--kaart-b, var(--kaart-min));
+    flex-grow: var(--kaart-groei, 1);
     background: var(--vlak); border: 2px solid var(--vlak-rand);
     border-radius: var(--r-md); padding: 9px 6px 10px; text-align: center; cursor: pointer;
     box-shadow: var(--vlak-top);

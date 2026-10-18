@@ -3653,6 +3653,9 @@
   }
   .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
 
+
+
+
   .mem-fab .mem-pay { font-size: var(--tx-mini); font-weight: 700; opacity: .88; letter-spacing: .01em; }
   .mem-fab:active { transform: scale(.95); }
 
@@ -6744,6 +6747,7 @@
 
 
 
+
   .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
@@ -7185,6 +7189,10 @@
 
   .item-card {
     position: relative; flex: 1 1 var(--kaart-min); max-width: calc(var(--kaart-min) * 1.7);
+
+
+    flex-basis: var(--kaart-b, var(--kaart-min));
+    flex-grow: var(--kaart-groei, 1);
     background: var(--vlak); border: 2px solid var(--vlak-rand);
     border-radius: var(--r-md); padding: 9px 6px 10px; text-align: center; cursor: pointer;
     box-shadow: var(--vlak-top);
@@ -8644,7 +8652,7 @@
     <!-- de weg terug naar de wereld waar ze speelt; alleen zichtbaar als ze elders kijkt -->
     <button class="world-back" id="world-back" hidden></button>
     <!-- Memory-spel: alleen zichtbaar voor een telmodus-ster met memory aan -->
-    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 <span id="mem-fab-pay">0</span></span></button>
+    <button class="mem-fab" id="mem-fab" onclick="startMemory()" style="display:none" aria-label="Memory-spel">🎤<span>Memory</span><span class="mem-pay">💎 +<span id="mem-fab-pay">0</span></span></button>
   </div>
 
   <!-- ===== Werelden (fase 4B) =====
@@ -19693,7 +19701,9 @@ function endLevel(success) {
     $('end-milestone').innerHTML = '';
 
 
-    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend}</span>`;
+
+
+    $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
     $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
@@ -20277,8 +20287,28 @@ function renderShop() {
   }
   grid.textContent = '';
   grid.appendChild(kaarten);
+  rekBreedte();
   paintShop();
 }
+
+
+
+
+
+
+
+
+const KAART_GAT = 10;
+function rekBreedte() {
+  const rek = $('item-grid');
+  if (!rek || !rek.clientWidth || typeof getComputedStyle !== 'function') return;
+  const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
+  const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
+  const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
+  rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
+  rek.style.setProperty('--kaart-groei', '0');
+}
+addEventListener('resize', () => rafKlem(rekBreedte));
 
 
 

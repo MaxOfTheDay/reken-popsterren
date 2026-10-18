@@ -258,7 +258,8 @@
      pillen die op een telefoon in 1/2/1 afbrak, daarna twee vaste vakjes
      (💎 verdiend · ⭐ sterren). Maar dat tweede vakje was ook diamanten, met een
      ster ervoor: "⭐ +15" onder drie gehaalde sterren. De sterren staan er al,
-     groot, vlak erboven; dit is de munt. Een nul tonen mag.
+     groot, vlak erboven; dit is de munt. Een nul tonen we niet: een mislukte
+     show zonder opbrengst laat het vakje leeg (zie endLevel).
      (Er was ooit ook 👏 publiek, bij de publieksmeter; die is vervallen.) */
   .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
