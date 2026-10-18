@@ -3217,9 +3217,43 @@ function show(id) {
 // nooit een onthouden positie). Kleedkamer/Trofeeën onthouden juist wél waar
 // je was: nogmaals tikken op het tabblad waar je al op stond geeft een verse
 // start; vanuit een ánder tabblad hervat je gewoon waar je gebleven was.
-function navGo(t) {
+/* ---- Eerst antwoorden, dan pas het zware werk ----
+   Een schermwissel bouwt en tekent het hele nieuwe scherm, en op een trage
+   tablet duurt dat al gauw een paar honderd milliseconden. Gebeurt dat binnen de
+   tik zelf, dan staat het scherm zolang stil: geen tabblad dat oplicht, niets dat
+   zegt dat de tik is aangekomen. Cloudflare mat dat bij echte spelers als de
+   traagste plek van de app (INP), en een kind tikt dan nog eens.
+
+   Daarom gaat het werk één beeldje later: de tik geeft eerst zijn geluid en zijn
+   oplichtende tabblad, de browser tekent dat, en pas daarna komt de wissel. Het
+   nieuwe scherm staat er dus even snel als vroeger (een beeldje is ~16 ms), maar
+   de tik wacht er niet meer op.
+
+   Alleen voor wat een vinger aanraakt: de knoppen die van scherm wisselen (de
+   tabbladen, de pillen in de kop, de terugpijlen, de knoppen op het eindscherm)
+   roepen dit aan. De functies erachter -- navGo, openReis, goMap en de rest --
+   blijven synchroon: de suites roepen ze rechtstreeks aan en lezen meteen na
+   wat er staat.
+
+   De grendel: een tweede tik in dat ene beeldje doet niets, anders stapelen er
+   twee wissels op elkaar (zie ook kiesBezig bij de sterrenkeuze). */
+let tikWacht = false;
+function naTik(fn) {
+  if (tikWacht) return;
+  tikWacht = true;
+  requestAnimationFrame(() => setTimeout(() => { tikWacht = false; fn(); }, 0));
+}
+// De tabbladbalk: het tabblad licht meteen op, de rest volgt na het beeldje.
+function navTik(t) {
+  if (tikWacht) return;
   sndClick();
   const wasActive = $('nav-' + t).classList.contains('active');
+  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === 'nav-' + t));
+  naTik(() => navGo(t, wasActive, true));
+}
+function navGo(t, wasActiveAl, stil) {
+  if (!stil) sndClick();
+  const wasActive = wasActiveAl != null ? wasActiveAl : $('nav-' + t).classList.contains('active');
   if (t === 'map') goMap();
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
@@ -5348,21 +5382,34 @@ function toonHub(id) {
    sprong, en alleen als je binnen --t-snel na het scrollen tikt.
 
    Staat het scherm niet in beeld, dan is alles 0 hoog en valt er niets te meten;
-   dan blijft de vorige maat staan. */
-function kopKrimpMeten(scherm) {
+   dan blijft de vorige maat staan.
+
+   ONTHOUDEN. De maat hangt af van de schermmaat en van wat er in de kop staat,
+   niet van welke lade of welk kind er gekozen is. Toch werd hij bij élke tik op
+   een lade opnieuw gemeten, en dat zijn twee volledige opmaakrondes binnen de tik
+   -- op een trage tablet het grootste deel van de wachttijd. Wie een `stand`
+   meegeeft (wat er in de kop staat, in woorden), krijgt de vorige maat terug zolang
+   venster en stand dezelfde zijn. Draaien of een toetsenbord geeft een andere
+   vensterhoogte, en dus vanzelf een nieuwe meting. Zonder stand: altijd meten. */
+function kopKrimpMeten(scherm, stand) {
   const kop = scherm && scherm.querySelector('.hub-sticky');
-  if (!kop || !kop.offsetHeight) return;
+  if (!kop) return;
+  const sleutel = stand == null ? null : `${innerWidth}x${innerHeight}|${stand}`;
+  if (sleutel && scherm.dataset.krimpBij === sleutel) return;
+  if (!kop.offsetHeight) return;
   const hoogte = () => parseFloat(getComputedStyle(kop).height);
-  const stand = scherm.classList.contains('gescrold');
+  const wasGescrold = scherm.classList.contains('gescrold');
   scherm.classList.add('kop-meten');
   scherm.classList.remove('gescrold');
   const ruim = hoogte();
   scherm.classList.add('gescrold');
   const krap = hoogte();
-  scherm.classList.toggle('gescrold', stand);
+  scherm.classList.toggle('gescrold', wasGescrold);
   void kop.offsetHeight;   // de stand vastleggen vóórdat de overgangen terugkomen
   scherm.classList.remove('kop-meten');
   scherm.style.setProperty('--kop-krimp', (ruim - krap) + 'px');
+  // een meting zonder stand kan een andere kop gemeten hebben: dan geldt de oude niet meer
+  if (sleutel) scherm.dataset.krimpBij = sleutel; else delete scherm.dataset.krimpBij;
 }
 // Draaien, of een toetsenbord dat opkomt, kan een laag scherm maken -- en dan
 // krimpt de kop van het ouderdeel anders. Een scherm dat niet in beeld staat
@@ -7429,7 +7476,7 @@ function runTravel(t) {
 function openTrophies() {
   renderShelves();
   toonHub('screen-trophies');
-  kopKrimpMeten($('screen-trophies'));
+  kopKrimpMeten($('screen-trophies'), 'kast');
   $('screen-trophies').scrollTop = 0;
   kastScroll();   // verse start = bovenaan = de ruime kop
 }
@@ -7456,7 +7503,7 @@ function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4
 function resumeTrophies() {
   renderShelves();
   toonHub('screen-trophies');
-  kopKrimpMeten($('screen-trophies'));
+  kopKrimpMeten($('screen-trophies'), 'kast');
   kastScroll();   // de scrollpositie bleef staan, dus de kopstand ook
 }
 /* De status van een trofee, in prioriteitsvolgorde:
@@ -9811,10 +9858,10 @@ function endLevel(success) {
     if (nieuwKlaar) {
       const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); openTrophies(); };
+      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
-    $('btn-end-next').onclick = () => { sndClick(); goMap(lvl); };
+    $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
     /* Net een wereldspulletje verdiend? Dan gaat de tweede knop niet naar "de
        kleedkamer" maar naar dát spulletje. Het feestje hierboven laat het één keer
        zien en is daarna weg; zonder deze brug moet een kind zelf bedenken in welke
@@ -9823,8 +9870,8 @@ function endLevel(success) {
     const nieuwSpul = feest && feest.spul;
     $('btn-end-alt').textContent = nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
     $('btn-end-alt').onclick = nieuwSpul
-      ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
-      : () => { sndClick(); openKleedkamer(); };
+      ? () => { sndClick(); naTik(() => openKleedkamerItem(nieuwSpul.id)); }
+      : () => { sndClick(); naTik(openKleedkamer); };
     sndWin();
     confetti(40, $('screen-end'));
     finaleDance('end-avatar', 4);   // grote slotchoreografie: vier hele pasjes, ruim 3.6s
@@ -9843,9 +9890,9 @@ function endLevel(success) {
     // het vakje schuiven de knoppen gewoon een regel op.
     $('end-earn').innerHTML = verdiend > 0 ? `<span class="earn-chip dia">💎 +${verdiend}</span>` : '';
     $('btn-end-next').textContent = '🔁 Opnieuw proberen';
-    $('btn-end-next').onclick = () => { sndClick(); startLevel(lvl); };
+    $('btn-end-next').onclick = () => { sndClick(); naTik(() => startLevel(lvl)); };
     $('btn-end-alt').textContent = '🗺️ Kaart';
-    $('btn-end-alt').onclick = () => { sndClick(); goMap(lvl); };
+    $('btn-end-alt').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
   }
   /* DE VOLGORDE op het eindscherm: eerst de sterren, dan wat ze opleveren, dan
      de weg verder. Hier stond alles behalve de sterren al klaar op het eerste
@@ -10429,7 +10476,7 @@ function renderShop() {
   rekBreedte();
   paintShop();
   // de kop krimpt op een laag scherm als er gescrold wordt (zie 75-kleedkamer.css)
-  kopKrimpMeten($('screen-dress'));
+  kopKrimpMeten($('screen-dress'), 'kleedkamer');
 }
 /* Elk kaartje in het rek even breed, ook op de laatste rij. Het rek is een
    flex-wrap met justify-content:center (zie .item-grid), zodat een halve laatste
@@ -10438,16 +10485,23 @@ function renderShop() {
    duidelijk bredere eronder. CSS kan het aantal kolommen niet afronden, dus
    rekenen we hier de breedte van een vólle rij uit en geven die aan élk kaartje
    (--kaart-b). Zonder die waarde (geen opmaak, een nagebootst scherm) valt
-   .item-card terug op het oude meegroeien. KAART_GAT is de gap van .item-grid. */
+   .item-card terug op het oude meegroeien. KAART_GAT is de gap van .item-grid.
+
+   De breedte hangt alleen van het venster af. Ze wordt dus onthouden tot het
+   venster verandert: rek.clientWidth opvragen is een volledige opmaakronde, en
+   die zat bij élke tik op een lade in de tik. */
 const KAART_GAT = 10;
+let rekBreedteBij = '';
 function rekBreedte() {
   const rek = $('item-grid');
-  if (!rek || !rek.clientWidth || typeof getComputedStyle !== 'function') return;
+  if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
+  if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
   const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
   const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
+  rekBreedteBij = `${innerWidth}x${innerHeight}`;
 }
 addEventListener('resize', () => rafKlem(rekBreedte));
 /* Wat er in het rek staat, en in welke volgorde.
@@ -10680,7 +10734,7 @@ function zetWensPil(p) {
     plek.textContent = '';
     pil.classList.remove('met-wens', 'wens-klaar');
     pil.style.removeProperty('--wens');
-    pil.onclick = () => navGo('dress');
+    pil.onclick = () => navTik('dress');
     pil.setAttribute('aria-label', 'Naar de kleedkamer');
     return;
   }
@@ -11331,7 +11385,8 @@ function openSettings() {
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
-  kopKrimpMeten($('screen-settings'));   // renderSettings meet ook, maar toen stond het scherm nog niet in beeld
+  // renderSettings meet ook, maar toen stond het scherm nog niet in beeld
+  kopKrimpMeten($('screen-settings'), setKey ? 'met ster' : 'zonder ster');
   // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
   // dus er kan er nooit meer dan één staan -- zelfde patroon als de kast)
   $('screen-settings').onscroll = ouderScroll;
@@ -11937,8 +11992,21 @@ function renderWhoRow() {
   const keys = profileKeys();
   const delen = keys.map(key => `<span class="who-portrait" aria-hidden="true">${avatarSVG(db.profiles[key], 65)}</span>`
     + `<span class="tab-label">${esc(db.profiles[key].name)}</span>`);
-  const handtekening = setKey + '|' + delen.join('|');
-  if (handtekening === lastWhoHtml && row.childElementCount) return;
+  /* Dezelfde sterren als de vorige keer? Dan blijft de rij staan en verhuist alleen
+     de markering. Een ander kind kiezen tekende hier eerst alle poppen opnieuw, en
+     dat was op een trage tablet de traagste tik van het ouderdeel. */
+  const handtekening = delen.join('|');
+  if (handtekening === lastWhoHtml && row.childElementCount) {
+    let active = null;
+    row.querySelectorAll('.who-btn[data-key]').forEach(b => {
+      const on = b.dataset.key === setKey;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (on) active = b;
+    });
+    whoInBeeld(row, active);
+    return;
+  }
   lastWhoHtml = handtekening;
   const keep = row.scrollLeft;          // niet terugspringen bij elke hertekening
   row.innerHTML = '';
@@ -11947,6 +12015,7 @@ function renderWhoRow() {
     const on = key === setKey;
     const b = document.createElement('button');
     b.className = 'tab-btn who-btn' + (on ? ' active' : '');
+    b.dataset.key = key;
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     b.innerHTML = delen[k];
     b.onclick = () => { sndClick(); setKey = key; renderSettings(); };
@@ -11971,7 +12040,10 @@ function renderWhoRow() {
   fadesVolgen(row);
   row.scrollLeft = keep;
   updateFades(row);
-  // alleen bij een échte wissel het gekozen kind in beeld trekken
+  whoInBeeld(row, active);
+}
+// alleen bij een échte wissel het gekozen kind in beeld trekken
+function whoInBeeld(row, active) {
   if (active && lastWhoRendered !== setKey) requestAnimationFrame(() => {
     if (!active.isConnected) return;
     active.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -12009,7 +12081,7 @@ function renderSettings() {
     $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = beheerEmptyHtml();
     bindSettings(null, null);
-    kopKrimpMeten($('screen-settings'));   // zonder de twee keuzerijen krimpt de kop minder
+    kopKrimpMeten($('screen-settings'), 'zonder ster');   // zonder de twee keuzerijen krimpt de kop minder
     return;
   }
   renderWhoRow();
@@ -12020,7 +12092,7 @@ function renderSettings() {
     : setTab === 'beheer'  ? beheerPanelHtml(p)
     :                        statsPanelHtml(p);
   bindSettings(p, s);
-  kopKrimpMeten($('screen-settings'));
+  kopKrimpMeten($('screen-settings'), 'met ster');
 }
 
 /* Elk onderdeel toont maar een déél van de bedieningen, dus alles wordt alleen
