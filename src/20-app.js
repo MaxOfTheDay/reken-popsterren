@@ -2447,7 +2447,7 @@ function save() {
       saveFailed = true;
       try {
         showToast('⚠️ Voortgang kan niet bewaard worden', null, 'Je kan gewoon verder spelen.');
-        setTimeout(hideToast, 3000);
+        toastWeg(3000);
       } catch (e2) { /* UI nog niet klaar: stil doorgaan */ }
     }
   }
@@ -3230,7 +3230,7 @@ function navGo(t) {
 const LANDING = {
   komNa: 520,       // het scherm eerst laten landen -- ruim na MOTION.totaal
   tussen: 140,      // en dan de sterren na elkaar, net genoeg uit de pas
-  duur: 950,        // zolang duurt een pasje (zie de move-* in de CSS)
+  duur: PAS + 50,   // zolang duurt een pasje, plus drie beeldjes (zie PAS in 10-feestjes.js)
   rustMin: 11000,   // daarna minstens zoveel stilte
   rustMax: 19000,   // en hoogstens zoveel
 };
@@ -4147,7 +4147,12 @@ function maakWereldSchaduw(map) {
    nog onderweg is, en dat leest als een kop die bij de verkeerde kaart hoort.
    Dezelfde richting, kleiner en korter: 9px is genoeg om "dit hoort bij die
    beweging" te zeggen. */
-function kopMeeMetCamera(richting) {
+/* duur: hoe lang de camera rijdt. De naam wisselt halverwege die rit (vanaf 40%,
+   klaar op 85%), want dan is de helft van het scherm de nieuwe wereld. Hij stond
+   op een vaste 260ms, en bij een onthulling van 900ms stond de nieuwe naam dan al
+   in de kop terwijl er nog vier vijfde van de óude wereld in beeld was. */
+function kopMeeMetCamera(richting, duur) {
+  duur = duur || WERELDREIS.snel;
   const el = $('map-tournee-label');
   if (!el || !el.animate || motionOff()) return;
   el.getAnimations().forEach(a => a.cancel());
@@ -4157,7 +4162,8 @@ function kopMeeMetCamera(richting) {
   el.animate(
     [{ transform: 'translateY(' + (richting > 0 ? -9 : 9) + 'px)', opacity: .2 },
      { transform: 'none', opacity: 1 }],
-    { duration: MOTION.snel, delay: 40, easing: MOTION.uit, fill: 'backwards' });
+    { duration: Math.max(MOTION.snel, Math.round(duur * .45)), delay: Math.max(40, Math.round(duur * .4)),
+      easing: MOTION.uit, fill: 'backwards' });
 }
 /* De camera verzetten. Dit is de enige plek waar een wereld in of uit beeld rijdt.
 
@@ -4198,7 +4204,7 @@ function wereldCamera(richting, teken, opts) {
   const easing = opts.easing || WERELDREIS.uit;
   const schaduw = maakWereldSchaduw(map);
   teken();                                      // de nieuwe wereld staat er nu al
-  kopMeeMetCamera(richting);
+  kopMeeMetCamera(richting, duur);
   scherm.classList.add('wereld-reist');
   map.style.pointerEvents = 'none';             // niet op een bewegend doel kunnen tikken
 
@@ -4241,7 +4247,7 @@ function wereldCamera(richting, teken, opts) {
   wereldReisOp = deze;
   const af = () => { if (wereldReisOp === deze) stopWereldReis(); };
   aIn.onfinish = af;
-  setTimeout(af, duur + 320);                   // vangnet, net als bij elke andere overgang
+  setTimeout(af, duur + MOTION.vangnet);        // vangnet, net als bij elke andere overgang
 }
 /* De enige weg van wereld naar wereld tijdens gewoon rondkijken: de werelden-kiezer
    en de weg-terug-pil lopen hier allebei langs.
@@ -4304,7 +4310,10 @@ function renderMapTitle(p, opReis) {
   const shown = (viewWorldIdx == null ? cur : worldForIndex(viewWorldIdx)) || cur;
   const anders = shown.index !== cur.index;
   const pil = $('map-tournee-label');
-  const hint = !wpHintKlaar; wpHintKlaar = true;
+  /* De knipoog is pas gedaan als hij gespeeld heeft. Hier ging de vlag meteen om,
+     en bij een onthulling bouwt de camera de kop een beeldje later opnieuw op --
+     zonder knipoog, en daarmee had niemand hem ooit gezien. */
+  const hint = !wpHintKlaar;
   pil.innerHTML =
       `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>`
     + `<span class="wp-here-naam">${esc(korteNaam(shown.world))}</span></span>`
@@ -4314,6 +4323,9 @@ function renderMapTitle(p, opReis) {
   const uitleg = `${shown.world.name} — tik voor alle werelden`;
   pil.setAttribute('aria-label', uitleg);
   pil.title = uitleg;
+  const knipoog = hint && pil.querySelector('.wp-hint');
+  if (knipoog) knipoog.addEventListener('animationend', () => { wpHintKlaar = true; }, { once: true });
+  if (hint && motionOff()) wpHintKlaar = true;   // daar speelt hij niet, dus valt er niets af te wachten
   /* Kijk je in een andere wereld dan waar je speelt, dan ziet de kaart er verder
      precies normaal uit -- en dan kan een kind daar blijven hangen zonder te
      merken dat ze weg is. Vandaar deze gouden weg terug, en alleen dán.
@@ -4487,12 +4499,15 @@ const MOTION = {
   weg: 140, komNa: 110, kom: 190,
   uit: 'cubic-bezier(.2,.8,.3,1)',                  // komt aan: snel los, zacht neerzetten
   in: 'cubic-bezier(.5,0,.75,0)',                   // vertrekt: zacht los, snel weg
-  plop: 'cubic-bezier(.2,1.3,.4,1)',                // de enige overshoot: "ja, deze"
+  plop: 'cubic-bezier(.2,1.3,.4,1)',                // de enige overshoot: "ja, deze" -- dezelfde als --ease-plop in :root
 };
 // De sport 'nav' van de ladder: hoe lang de hele wissel duurt, van de tik tot
 // alles stilstaat. Het vertrekkende scherm (weg) valt hier binnen -- dat is op
 // 140ms klaar, ruim voordat het aankomende scherm op 300 tot rust komt.
 MOTION.totaal = MOTION.komNa + MOTION.kom;
+// Dezelfde tel voor de CSS die op een stilstaande kaart wacht (.net-af): zo staat
+// de duur hier één keer, en niet nog eens als .3s in het stijlblad.
+document.documentElement.style.setProperty('--kaart-rust', MOTION.totaal + 'ms');
 /* Het vangnet. Elke overgang ruimt zichzelf op als hij klaar is (onfinish), maar
    die belofte houdt niet altijd: wisselt het scherm tussendoor, dan wordt de
    animatie afgebroken en komt onfinish nooit. Daarom hangt er naast elke
@@ -5104,18 +5119,26 @@ function enterLevel(lvl, stopEl) {
      wordt de opruimer nog steeds afgeroepen -- anders bleef overgangBezig op true
      staan en deed geen enkele halte ooit nog iets. De kaart ruimt zichzelf op,
      zie schermWeg; hier gaat het alleen over het scherm dat aankomt. */
-  const klaar = eindigOvergang(null, MOTION.totaal, () => {
+  const klaar = eindigOvergang(null, MOTION.totaal + HALTE_JA, () => {
     spel.style.transformOrigin = '';       // .komt-op blijft tot de volgende show()
     spel.style.pointerEvents = '';
   });
   const punt = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   tapRipple(punt.x, punt.y);               // 1 -- dezelfde tikreactie als elders in de app
-  // en de halte zelf zegt "ja, deze": één korte plop, vóór de kaart begint te duiken
+  /* en de halte zelf zegt "ja, deze": één korte plop, vóór de kaart begint te
+     duiken. Dat "vóór" stond er al, maar ze begonnen in hetzelfde beeldje: de
+     kaart was na 110ms vrijwel weg en de plop van 240ms dan nog niet op de helft
+     -- je zag hem niet. Nu is de plop kort en heeft hij HALTE_JA voor zichzelf;
+     pas daarna gaat de rest. 80ms is genoeg om hem te zien en te kort om op te
+     wachten. */
   const dot = stopEl.querySelector('.dot');
   if (dot && dot.animate) dot.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(1.05)' }],
-    { duration: 240, easing: MOTION.plop, fill: 'forwards' });
-
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.24)', offset: .55 }, { transform: 'scale(1.08)' }],
+    { duration: 150, easing: MOTION.plop, fill: 'forwards' });
+  setTimeout(() => duikIn(lvl, kaart, spel, punt, klaar), HALTE_JA);
+}
+const HALTE_JA = 80;
+function duikIn(lvl, kaart, spel, punt, klaar) {
   schermWeg(kaart, true, punt);            // 2 -- de hele kaart, om het aangetikte punt
 
   /* 3 -- het spel staat er nú al, ook al zie je het nog niet.
@@ -5346,8 +5369,9 @@ function starRevealBeat(lvl, cb) {
   const st = Math.max(0, Math.min(3, P().stars[lvl] || 0));
   if (!st || motionOff()) { cb(); return; }
   const STAP = .085, LAND = .28;
-  const landt = Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
-  setTimeout(cb, landt + 200);   // + een kort, natuurlijk stiltetje vóór het vertrek
+  // MOTION.totaal: de landing wacht tot de kaart stilstaat (--kaart-rust, zie .net-af)
+  const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
+  setTimeout(cb, landt + 100);   // + een kort stiltetje; de badge die daarna opstijgt is zelf al een pauze
 }
 function goMapNaShow() { sndClick(); goMap(naShowLvl); }
 
@@ -5389,7 +5413,7 @@ const GROET = {
   // kaartje en niet uit MOVES opgezocht: die lijst staat verderop in het bestand
   // en dit is een const die bij het inlezen al gelezen wordt.
   pas: { cls: 'move-wave' },
-  duur: 950,   // dezelfde als dance/tapDance: mvWave duurt .9s
+  duur: PAS + 50,   // dezelfde als dance/tapDance (zie PAS)
 };
 /* Eén keer de halte laten oplichten waar je heen moet. Alleen de huidige halte
    heeft die laag (zie .tour-stop.next .stop-body::after); staat er geen -- je
@@ -5703,8 +5727,21 @@ function runWorldReveal(o) {
     showPraise(`${naar.world.icon} ${naar.world.name}!`);
   };
   if (motionOff()) { plaats(); vier(); return; }
-  wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+  /* Eerst even de oude wereld, dán de klim. De camera vertrok in dezelfde beurt
+     als de kaart binnenkwam, dus terwijl het vorige scherm nog wegging: de wereld
+     waar je vandaan kwam heb je dan nooit gezien, en "er komt een nieuwe bij"
+     leest als "de kaart laadt". Zelfde opbouw als runWorldChange: wordt het
+     intussen afgebroken, dan staat de nieuwe wereld er gewoon. */
+  let timer = 0;
+  const wachten = () => { clearTimeout(timer); if (cur) plaats(); };
+  wereldReisOp = wachten;
+  timer = setTimeout(() => {
+    if (wereldReisOp !== wachten) return;
+    wereldReisOp = null;
+    wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
+  }, MOTION.totaal + ONTHUL_STIL);
 }
+const ONTHUL_STIL = 400;   // na het binnenkomen van de kaart, vóór de camera klimt
 /* Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
    zonder dit zou de weg een hoekige zigzag tussen de haltes worden.
 
@@ -6046,7 +6083,7 @@ function slotWereld(knop, doel) {
   }
   const w = WORLDS[doel];
   showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
-  setTimeout(hideToast, 2200);
+  toastWeg(2200);
 }
 /* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
    stijlblad -- er wordt niets opgemeten, dus draaien, resizen of een wereld erbij
@@ -6879,6 +6916,19 @@ function starRowHTML(n, gespeeld) {
    dat dit de tel was waarin de sterrenlanding uitdempte -- die landing is weg
    (zie reisBinnenWereld in goMap) en het getal bleef, om deze andere reden. */
 const REIS_DUUR = 1400, REIS_WACHT = 400, REIS_EASING = 'ease-in-out';
+/* Hoe lang de wandeling duurt hangt af van hoe ver het is. Elke show eindigt
+   met deze wandeling, dus een vaste 1400ms was voor een halte vlak naast de
+   vorige een tel wachten op niets. Nu: de afstand op het scherm, tussen
+   REIS_KORT en REIS_DUUR. Gemeten op 390x844 (werelden 1 tot 11) liggen
+   buurhaltes 76 tot 231px uit elkaar: dat wordt 950 tot ongeveer 1280ms, en
+   alleen een nog langer stuk (een groot scherm) komt aan de oude 1400. */
+const REIS_KORT = 950;
+function reisDuur(van, naar) {
+  if (!van || !naar) return REIS_DUUR;
+  const a = van.getBoundingClientRect(), b = naar.getBoundingClientRect();
+  const px = Math.hypot(b.left - a.left, b.top - a.top);
+  return Math.round(Math.min(REIS_DUUR, Math.max(REIS_KORT, 700 + px * 2.5)));
+}
 /* Waar het vonkenspoor onderweg uit kiest. Bewust zonder ⭐ (en zonder 💖 en 🎵,
    die hun eigen plek hebben): een ster is op deze kaart een score en geen sier. */
 const REIS_VONKEN = ['✨', '💫'];
@@ -6979,8 +7029,8 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
      ster   getPointAtLength(van + lengte * voortgang)
 
    Ze lopen daardoor niet gelijk op omdat de duur toevallig dezelfde is, maar
-   omdat het dezelfde maat is. Beide animaties krijgen REIS_DUUR, REIS_WACHT en
-   REIS_EASING; die easing werkt op de tíjd en niet op de keyframes, dus de
+   omdat het dezelfde maat is. Beide animaties krijgen dezelfde duur (reisDuur),
+   REIS_WACHT en REIS_EASING; die easing werkt op de tíjd en niet op de keyframes, dus de
    keyframes hieronder mogen gewoon op gelijke afstanden liggen -- WAAPI rekent
    de tijd eerst om en interpoleert er daarna tussen. Precies wat het goud ook
    doet, met zijn twee keyframes.
@@ -7056,10 +7106,10 @@ function heroRoadFrames(map, geo) {
    aan diezelfde waarde -- vertrek en aankomst staan dus exact op niets. Daar hoeft
    geen envelop omheen en er valt bij het begin en het eind niets te zien springen.
 
-   DEZELFDE TIJD als de baan en het goud: REIS_DUUR, REIS_WACHT, REIS_EASING. De
+   DEZELFDE TIJD als de baan en het goud: reisDuur, REIS_WACHT, REIS_EASING. De
    easing werkt op de tijd, dus haar pas gaat vanzelf mee met haar snelheid --
    traag aan het begin, vlotter in het midden. */
-const REIS_PASSEN = 3;      // pasjes over de hele reis -- ~470ms per pas, een kinderwandeltempo
+const REIS_PASSEN = 3;      // pasjes over de hele reis -- 320 tot 470ms per pas (zie reisDuur), een kinderwandeltempo
 const REIS_STAP = 11;       // hoogte van één pasje, in viewBox-eenheden (opgemeten 4,3px op een telefoon)
 const REIS_REK = 0.015;     // 1,5% langer op het hoogste punt, en net zoveel smaller
 function heroWalkFrames(map) {
@@ -7130,7 +7180,6 @@ function heroLineFrames(from, to) {
    reis gebeurde, en niet pas op een volgend scherm. */
 function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   const map = $('tour-map');
-  flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
   if (!map || !map.animate || still) { plaats(); vier(); return; }
   /* De grendel gaat dicht vóór de beloningsbeat en de stilte, en niet pas als de
      camera vertrekt. Dat hele stuk is namelijk het enige gat waarin een kind nog
@@ -7151,15 +7200,23 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   };
   map.style.pointerEvents = 'none';
   wereldReisOp = wachten;
-  // eerst de sterren van de afgemaakte wereld laten landen, dan pas de klim
+  /* DE VOLGORDE: eerst de sterren onder de halte die net af is, dán de
+     wereldbadge die naar de kast vliegt, en pas als die aankomt de camera. De
+     badge vertrok op 0 -- tegelijk met de sterrenlanding en terwijl de kaart nog
+     inzoomde, drie plekken tegelijk. Nu vult hij de stilte vóór de klim, en de
+     camera vertrekt als hij aankomt (BADGE.munt van zijn vlucht: het muntje,
+     daarna is hij nog maar een stipje), nooit eerder dan WERELDREIS.beat. */
   starRevealBeat(fromLvl, () => {
     if (wereldReisOp !== wachten) return;   // ondertussen afgebroken -- wachten() heeft al opgeruimd
+    // uit de halte die net af is, waar de sterren net landden -- één plek voor het oog
+    const halte = map.querySelector(`.tour-stop[data-lvl="${fromLvl}"] .dot`) || map;
+    flyBadge(halte, $('nav-tro'), fromW.world.icon || '🌍');
     timer = setTimeout(() => {
       gestart = true;
       if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
       map.style.pointerEvents = '';
       wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-    }, WERELDREIS.beat);
+    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.munt)));
   });
 }
 /* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
@@ -7185,10 +7242,19 @@ function flyBadge(vanEl, naarEl, teken) {
     { transform: 'translate(-50%,-50%) scale(1.5)', opacity: 1, offset: .25 },
     { transform: `translate(calc(-50% + ${dx * .5}px), calc(-50% + ${dy * .5 - 60}px)) scale(1.2)`, opacity: 1, offset: .65 },
     { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 0 },
-  ], { duration: 1100, easing: 'ease-in-out' });
+  ], { duration: BADGE.duur, easing: 'ease-in-out' });
   a.onfinish = () => d.remove();
-  setTimeout(() => { sndCoin(); }, 900);
+  /* Het muntje en het tabblad dat hem opvangt: allebei op het moment dat hij er
+     is (BADGE.munt van de vlucht -- daarna is hij nog maar een stipje). Het
+     tabblad deed niets, dus de badge verdween ergens in de balk. */
+  setTimeout(() => {
+    sndCoin();
+    if (naarEl.isConnected && naarEl.animate) naarEl.animate(
+      [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
+      { duration: 320, easing: MOTION.plop });
+  }, Math.round(BADGE.duur * BADGE.munt));
 }
+const BADGE = { duur: 1100, munt: .82 };
 
 /* De beloning na een level-up: de ster huppelt over de route naar de volgende
    halte, die daar zichtbaar openspringt. Loopt de sprong over een wereldgrens,
@@ -7251,11 +7317,16 @@ function runTravel(t) {
      Dit speelt precies één keer: p.level stapt maar één keer over WORLD_LAST heen
      (zie endLevel), en een toegift daarna is geen level-up meer. */
   if (t.to > WORLD_LAST) {
-    flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
     showWorld(fromW.index);
-    sndGroot();
-    confetti(26);
-    showPraise('✨ Alle werelden uit!');
+    /* Pas als de kaart stilstaat: dit draaide in de eerste rAF na goMap, en dan
+       viel het hele feest over een kaart die nog binnenkwam. */
+    setTimeout(() => {
+      if (!$('screen-map').classList.contains('active')) return;
+      flyBadge(map, $('nav-tro'), fromW.world.icon || '🌍');
+      sndGroot();
+      confetti(26);
+      showPraise('✨ Alle werelden uit!');
+    }, still ? 0 : MOTION.totaal);
     return;
   }
   if (crossing) { runWorldChange(t.from, fromW, toW, plaats, vier, still); return; }
@@ -7274,10 +7345,11 @@ function runTravel(t) {
      (ze krijgen dezelfde vertraging en beginnen dus samen), maar omdat growRoad
      het pad opmeet waar zij overheen loopt. Zonder dat pad is er niets om langs
      te lopen en valt ze terug op de rechte lijn. */
-  const geo = growRoad(map, t.from, t.to, REIS_DUUR, REIS_WACHT);
+  const duur = reisDuur(from, to);
+  const geo = growRoad(map, t.from, t.to, duur, REIS_WACHT);
   const frames = heroRoadFrames(map, geo) || heroLineFrames(from, to);
   const anim = hero.animate(frames,
-    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
+    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING, fill: 'forwards' });
   /* En het loopje eronder (zie heroWalkFrames): dezelfde tijd, dezelfde easing,
      maar op de tekening in plaats van op de halte-laag. Geen fill -- het laatste
      beeldje staat toch al op niets, en zo laat het de laag daarna gewoon weer
@@ -7285,7 +7357,7 @@ function runTravel(t) {
   const stap = hero.querySelector('.pas-laag');
   const loopje = heroWalkFrames(map);
   if (stap && stap.animate && loopje) stap.animate(loopje,
-    { duration: REIS_DUUR, delay: REIS_WACHT, easing: REIS_EASING });
+    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING });
   /* Het vonkenspoor loopt mét haar mee en niet voor haar uit. Het hing aan een
      setInterval die meteen ging lopen, dus het eerste vonkje viel op 280ms --
      120ms vóór haar eerste stap, stilstaand naast de halte die ze net had
@@ -7305,7 +7377,7 @@ function runTravel(t) {
        te kondigen. */
     if (hero.isConnected) sndVertrek();
     const tik = setInterval(() => { if (hero.isConnected) sparkle(hero, REIS_VONKEN); }, 280);
-    setTimeout(() => clearInterval(tik), REIS_DUUR);
+    setTimeout(() => clearInterval(tik), duur);
   }, REIS_WACHT);
   anim.onfinish = finish;
 }
@@ -7550,12 +7622,12 @@ function tapTrophy(t, card, e) {
   // een trofee die ergens anders verdiend wordt, wijst de weg erheen
   if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
-  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); setTimeout(hideToast, 1500); return; }
+  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); toastWeg(1500); return; }
   sndClick();
-  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); setTimeout(hideToast, 1700); return; }
+  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   showToast(rem > 0 ? `${t.emoji} Nog ${rem} ${unitText(pr.label, rem)}!` : `${t.emoji} Bijna daar!`);
-  setTimeout(hideToast, 1700);
+  toastWeg(1700);
 }
 // Het claim-moment: van 'klaar' naar 'behaald', met een kort, vrolijk feestje.
 function openTrophy(id) {
@@ -7586,8 +7658,15 @@ function celebrateTrophy(t) {
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
-    // het sprankelen loopt door zolang de trofee open staat -- stoppen bij het sluiten
-    { fade: 300, onClose: o => { if (o._spark) clearInterval(o._spark); } });
+    // het sprankelen loopt door zolang de trofee open staat -- stoppen bij het sluiten.
+    // De gouden shimmer over de net behaalde kaart (.just-claimed) liep af onder
+    // dit feestje, waar niemand hem zag. Hij begint daarom opnieuw zodra het
+    // feestje dichtgaat: eerst het geschenk, dan waar het in de kast terechtkwam.
+    { fade: 300, onClose: o => {
+      if (o._spark) clearInterval(o._spark);
+      const kaart = document.querySelector('.trophy-card.just-claimed');
+      if (kaart) { kaart.classList.remove('just-claimed'); void kaart.offsetWidth; kaart.classList.add('just-claimed'); }
+    } });
   const pop = ov.querySelector('.trophy-pop');
   // De uitbarsting: kist knalt open, emoji slaat in, confetti-kanon + feestgeluid.
   const burst = () => {
@@ -7702,7 +7781,9 @@ function wereldFeest(f) {
     noticeReady(checkTrophies(q));   // een outfit-combo kan een geheime trofee zijn
     save();
     const pop = $('end-avatar');
-    if (pop) { pop.innerHTML = avatarSVG(q, 150); dance('end-avatar'); }
+    // Mét de danslaag: elke pas beweegt .pas-laag, en zonder die laag stond de
+    // pop na het aandoen stil -- ook bij elke tik daarna.
+    if (pop) { pop.innerHTML = pasLaag(avatarSVG(q, 150)); dance('end-avatar'); }
     dicht();
   };
   sndGroot();
@@ -7722,7 +7803,7 @@ function noticeReady(trofees) {
   if (!trofees || !trofees.length) return;
   updateTroDot();
   showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'} klaar in je kast!`);
-  setTimeout(hideToast, 1900);
+  toastWeg(1900);
 }
 // rood stipje op het Trofeeën-tabblad zolang er trofeeën klaarliggen om te openen
 // De memory-knop belooft nu wat hij oplevert (2 per paar + 3 als de hele set uit
@@ -8449,6 +8530,8 @@ function memFitCols(grid, n) {
   grid.style.width = Math.floor(best.cols * best.size + gap * (best.cols - 1)) + 'px';
 }
 function exitMemory() { sndClick(); hideToast(); M = null; goMap(); }
+// MEM_DRAAI is de draai van een kaart (.mem-inner in 50-zaal: transition .35s).
+const MEM_DRAAI = 350, MEM_KIJK = 850;
 function flipCard(i, btn) {
   if (!M || M.lock) return;
   if (btn.classList.contains('open') || btn.classList.contains('done')) return;
@@ -8460,8 +8543,14 @@ function flipCard(i, btn) {
   if (M.flipped.length < 2) return;
   M.lock = true;
   const [a, b] = M.flipped;
+  /* Wie het spel verlaat zet M op null (exitMemory). De klokjes hieronder lopen
+     dan nog door, en lazen M daarna: een fout midden in het feestje, en een
+     bonus die wel opgeteld maar niet bewaard werd. Ze kijken nu eerst of het nog
+     hetzelfde spel is. */
+  const m = M;
   if (a.c.v === b.c.v) {
     setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.add('done'); b.btn.classList.add('done');
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       a.btn.classList.add('snap'); b.btn.classList.add('snap');   // 'klik samen'-bounce
@@ -8470,12 +8559,21 @@ function flipCard(i, btn) {
       M.flipped = []; M.lock = false;
     }, 450);
   } else {
-    a.btn.classList.add('wrong'); b.btn.classList.add('wrong');   // kort schudje bij een misser
-    setTimeout(() => { a.btn.classList.remove('wrong'); b.btn.classList.remove('wrong'); }, 430);
+    /* Kort schudje bij een misser -- maar pas als de tweede kaart helemaal om is
+       (.mem-inner draait in MEM_DRAAI). Het schudde op hetzelfde beeldje als de
+       draai begon: "nee" kwam dan vóór het kind zag wat er op de kaart stond. En
+       daarna even laten liggen (MEM_KIJK), zodat ze kan onthouden wat waar lag;
+       dat is het hele spel. */
     setTimeout(() => {
+      if (M !== m) return;
+      a.btn.classList.add('wrong'); b.btn.classList.add('wrong');
+      setTimeout(() => { a.btn.classList.remove('wrong'); b.btn.classList.remove('wrong'); }, 430);
+    }, MEM_DRAAI);
+    setTimeout(() => {
+      if (M !== m) return;
       a.btn.classList.remove('open'); b.btn.classList.remove('open');
       M.flipped = []; M.lock = false;
-    }, 950);
+    }, MEM_DRAAI + MEM_KIJK);
   }
 }
 function onMemMatch(fromBtn) {
@@ -8491,14 +8589,16 @@ function onMemMatch(fromBtn) {
   sparkle(fromBtn, ['⭐', '✨', '💛']);
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
-  if (M.matched >= M.pairs) setTimeout(finishMemory, 650);
+  if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
   else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
 }
-function finishMemory() {
+function finishMemory(m) {
   const p = P();
   const bonus = MEM_DONE_BONUS;
-  p.diamonds += bonus; M.earned += bonus;
+  // De bonus is verdiend, ook als het kind al weg is; alleen het feestje niet meer.
+  p.diamonds += bonus; m.earned += bonus;
   save();
+  if (M !== m) return;
   telStraks($('mem-diamonds'), p.diamonds);
   sndGroot();
   confetti(28);
@@ -8506,6 +8606,13 @@ function finishMemory() {
   speak('Wauw! Je hebt ze allemaal gevonden!');
   $('mem-done-earn').textContent = '💎 +' + M.earned;
   $('mem-done').style.display = 'flex';
+  // eerst de achtergrond, dan de kaart erop (popIn, 40-kaart) -- hij stond er in één klap
+  const kaart = $('mem-done').querySelector('.mem-done-card');
+  if (kaart && kaart.animate && !motionOff()) {
+    $('mem-done').animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.snel, easing: 'ease-out' });
+    kaart.animate([{ transform: 'scale(.85)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: 360, delay: 120, easing: MOTION.plop, fill: 'backwards' });
+  }
   syncBackGuard();
 }
 
@@ -8988,6 +9095,25 @@ function vraagKomtIn(kaart, metScherm) {
     [metScherm ? rust : { opacity: 0, transform: 'translateY(7px)' }, rust],
     { duration: VRAAG_IN, easing: MOTION.uit, fill: 'both' });
 }
+/* De kaart schudt kort "nee" bij een misser.
+
+   Dit was een CSS-klasse (.wobble), en die deed niets meer: vraagKomtIn laat
+   hierboven met opzet een animatie met fill 'both' op de kaart staan, en een
+   animatie uit het script gaat altijd vóór een CSS-animatie. De kaart bleef dus
+   op transform none staan terwijl de klasse er netjes op zat. Nu is het schudje
+   zelf ook een animatie uit het script, en omdat hij later begint dan de opkomst,
+   wint hij -- en daarna valt de kaart terug op diezelfde rusttand. */
+const WIEBEL = 420;
+function kaartWiebelt(kaart) {
+  if (!kaart || !kaart.animate || motionOff()) return;
+  kaart.animate([
+    { transform: 'rotate(0) scale(1)' },
+    { transform: 'rotate(-2.4deg) scale(.985)', offset: .25 },
+    { transform: 'rotate(2deg) scale(.995)', offset: .6 },
+    { transform: 'rotate(-1deg)', offset: .85 },
+    { transform: 'rotate(0) scale(1)' },
+  ], { duration: WIEBEL, easing: 'ease' });
+}
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
 function renderSegBar(el, total, done, hasNow) {
@@ -9265,26 +9391,42 @@ function submitAnswer(val, btnEl) {
     const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
     // De teller wacht op wat eraan komt (zie telStraks): eerst vliegen ze, dan
     // staat het er. Bewaren doet save() hierboven, meteen en zonder te wachten.
-    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_AANKOMST);
+    /* In de show vliegen ze sneller dan in de kleedkamer (DIA_SHOW i.p.v. 620):
+       de teller moet klaar zijn met tellen vóór de volgende som komt (950). Op
+       de gewone duur landde het laatste steentje bovenop de nieuwe som. */
+    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_SHOW);
     // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
     const diaVan = vak || btnEl || $('question-card');
-    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2), vlucht);
+    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2, DIA_SHOW), vlucht);
     /* Het publiek klapt extra hard, en zij buigt (zie buiging). Hier stond
        "🎆 EXTRA SHOW!", en een extra show kwam er nooit -- de meter erachter is
        sinds fase 1 onzichtbaar, dus een kind kreeg een belofte die niets deed.
        Nu is wat er staat ook wat er gebeurt. "Applaus" en niet "toegift": dat
        kent elk kind, en voor applaus buig je. */
-    if (encore) { sndStreak(); confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
-    else if (q.gold) { sndStreak(); confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
-    else if (streakBonus) { sndStreak(); showPraise('🔥 3 op een rij!', '💎 +' + gain); }
-    else if (!firstTry) { sndGood(); showPraise('Goed zo, je had het!', '💎 +' + gain); }
-    else { sndGood(); showPraise(pick(PRAISE), '💎 +' + gain); }
+    /* DE VOLGORDE. Het klankje en de knop zijn het antwoord op de tik en komen
+       meteen. Het feest -- de lof met "💎 +2", de dans, de zaal die oplicht, het
+       voortgangsvakje -- komt pas als het getal in de som geland is (vlucht).
+       Stond dat allemaal op 0, dan keek een kind op drie plekken tegelijk en
+       stond de beloning er al voordat het antwoord aankwam. Zonder vlucht
+       (typmodus, telmodus, beperkte beweging) is vlucht 0 en is alles meteen. */
+    if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
     if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
     const trofees = checkTrophies(p);
     if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
-    if (encore) buiging('game-avatar-inner');
-    else dance('game-avatar-inner');
-    zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
+    const g = G;
+    const feest = () => {
+      if (G !== g) return;   // de show is intussen gestopt
+      if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
+      else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
+      else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
+      else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
+      else showPraise(pick(PRAISE), '💎 +' + gain);
+      if (encore) buiging('game-avatar-inner');
+      else dance('game-avatar-inner');
+      zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
+      renderSegBar($('qprogress'), G.total, G.idx + 1, false);   // dit vakje is nu gehaald
+    };
+    if (vlucht) setTimeout(feest, vlucht); else feest();
     // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
     // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
     // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
@@ -9309,8 +9451,7 @@ function submitAnswer(val, btnEl) {
   // "Niet die -- probeer nog eens", en klaar. 420ms i.p.v. 700: een misser mag
   // duidelijk zijn maar hoort niet ook nog te dúren. De rode tegel blijft staan
   // (die zegt wélke), de kaart schudt kort en is dan weer gewoon de som.
-  $('question-card').classList.add('wobble');
-  setTimeout(() => $('question-card').classList.remove('wobble'), 420);
+  kaartWiebelt($('question-card'));
   // een misser op een speciale vraag maakt de ronde "niet schoon" → frequentie omlaag
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
@@ -9343,17 +9484,31 @@ function submitAnswer(val, btnEl) {
     toonVerder();
     return;
   }
-  if (G.mode === 'kies') {
-    const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
-    if (cb) cb.classList.add('good');
-  }
-  // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
-  // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een
-  // losse kaart ernaast. Die kaart zegt dan alleen nog hoe je verder komt.
-  somVult(q, null, true);
+  /* DE VOLGORDE na een tweede misser: eerst wat er fout ging (de rode knop, het
+     hartje, het klankje -- meteen), dan pas wat het had moeten zijn (ONTHUL), en
+     pas daarna mag een tik verder (VERDER_NA). Dat stond allemaal op 0: zes
+     dingen tegelijk, en een snelle tweede tik sloeg het antwoord over voordat
+     het er stond.
+
+     De goede knop wordt groen zonder te veren (.rustig): de veerpop en de ring
+     zijn van een gewonnen antwoord, en een misser mag er niet uitzien als winst. */
   loseHeart();
-  toonVerder();
+  hideToast();   // de hint van de eerste misser is nu niet meer waar; het 👉 komt straks
+  const g = G;
+  setTimeout(() => {
+    if (G !== g) return;
+    if (G.mode === 'kies') {
+      const cb = [...document.querySelectorAll('.choice-btn')].find(b => parseInt(b.dataset.v, 10) === q.ans);
+      if (cb) cb.classList.add('good', 'rustig');
+    }
+    // Ook nu gaat de som dicht, maar rustig: geen vlucht, geen groen, geen feest.
+    // Juist hier moet de goede som te zien zijn -- in de som zelf, en niet in een
+    // losse kaart ernaast. Die kaart zegt dan alleen nog hoe je verder komt.
+    somVult(q, null, true);
+  }, motionOff() ? 0 : ONTHUL);
+  setTimeout(() => { if (G === g) toonVerder(); }, motionOff() ? 0 : VERDER_NA);
 }
+const ONTHUL = 300, VERDER_NA = 600;
 /* "Verder", zonder één woord. Na een tweede misser wacht de show op een tik
    (overal op het scherm, zie .tap-veil), en de kaart bovenin zegt alleen nog
    dát: een wijzende hand, groot. In de rekenmodus stond er "tik om verder te
@@ -9549,6 +9704,7 @@ function endLevel(success) {
   const fanBonus = Math.floor(G.fan / 25);
   if (fanBonus > 0) p.diamonds += fanBonus;
   const verdiend = G.earned + fanBonus;
+  let opbrengst = verdiend;   // alles van deze show, de sterrenbonus erbij (zie hieronder)
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
   // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
@@ -9591,7 +9747,8 @@ function endLevel(success) {
        vlak onder de drie die ze net gehaald had, en het 💎-vakje ernaast was dan
        weer vijftien te laag. De sterren staan erboven, groot; dit vakje is de munt.
        */
-    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${verdiend + bonus}</span>`;
+    opbrengst = verdiend + bonus;
+    $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${opbrengst}</span>`;
     /* Eén mijlpaal, en alleen als er écht iets gehaald is: een trofee die
        klaarligt. Een gouden pil, tikbaar.
 
@@ -9617,8 +9774,8 @@ function endLevel(success) {
       ? () => { sndClick(); openKleedkamerItem(nieuwSpul.id); }
       : () => { sndClick(); openKleedkamer(); };
     sndWin();
-    confetti(40);
-    finaleDance('end-avatar', 6);   // grote slotchoreografie
+    confetti(40, $('screen-end'));
+    finaleDance('end-avatar', 4);   // grote slotchoreografie: vier hele pasjes, ruim 3.6s
   } else {
     // Mislukt: er komt geen ster bij en er schuift niets op. Alleen de 💎 van de
     // publieksteller hierboven zijn al bijgeschreven, en die horen bewaard.
@@ -9635,7 +9792,14 @@ function endLevel(success) {
     $('btn-end-alt').textContent = '🗺️ Kaart';
     $('btn-end-alt').onclick = () => { sndClick(); goMap(lvl); };
   }
-  telNu($('end-diamonds'), p.diamonds);
+  /* DE VOLGORDE op het eindscherm: eerst de sterren, dan wat ze opleveren, dan
+     de weg verder. Hier stond alles behalve de sterren al klaar op het eerste
+     beeldje: de "+15", de teller op zijn eindstand, de trofeepil en de knoppen
+     -- en pas daarna landden de sterren die dat allemaal verdiend hadden. Nu
+     telt de teller op vanaf wat er vóór de show stond. */
+  telNu($('end-diamonds'), p.diamonds - opbrengst);
+  eindKomtOp(success);
+  telStraks($('end-diamonds'), p.diamonds, motionOff() ? 0 : EINDE.beloning);
   G = null;
   /* De stille wissel van toonHub, en geen kale show(). Die liet het eindscherm
      met screenIn uit het niets opkomen terwijl de zaal op het eerste beeldje al
@@ -9661,7 +9825,12 @@ function endLevel(success) {
      achter een schermvullende laag verdwijnen -- en hoe beter de show, hoe meer er
      afgedekt werd. Nu wacht dit moment op de ceremonie zelf (naSterren), en niet
      op een getal dat toevallig ooit groot genoeg leek. */
-  const naFeest = feest ? () => wereldFeest(feest) : null;
+  /* En alleen als het eindscherm er dán nog staat. De knoppen werken vanaf het
+     eerste beeldje, dus wie binnen die anderhalve seconde "Verder op tournee"
+     tikte, kreeg het feest over de kaart en de reis heen. Wat er gevierd werd
+     gaat niet verloren: de schat hangt in de kleedkamer, de badge staat klaar in
+     de kast, en de kaart laat de wereldovergang zelf zien. */
+  const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
 }
@@ -9693,6 +9862,40 @@ STERCEREMONIE.totaal = Math.max(
   STERCEREMONIE.knal + STERCEREMONIE.puls);
 // Hoe lang het eindscherm voor zichzelf houdt voordat er iets groters overheen mag.
 function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.totaal; }
+
+/* De rest van het eindscherm komt ná de sterren op, elk op zijn eigen tel.
+
+   beloning  de "💎 +.." en de teller die optelt: wat de sterren opleverden. Op
+             het moment dat de derde plek gevuld is (geland of dof), niet pas
+             na het kanon van foutloos -- dat mag eroverheen.
+   pil       de gouden trofeepil, een tel later
+   knoppen   de weg verder, als laatste
+
+   Het wordt met fill 'backwards' gedaan: elk stuk staat tot zijn tel
+   onzichtbaar en daarna gewoon in de pagina, zonder klokje dat het weer moet
+   opruimen. Een mislukte show heeft geen sterren om op te wachten; daar komt
+   alles kort na de wissel. */
+const EINDE = {
+  beloning: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 200,
+  pil: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 450,
+  knoppen: STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + 650,
+  mislukt: 360,
+  op: 260,
+};
+function eindKomtOp(success) {
+  if (motionOff()) return;
+  const t = success ? EINDE : { beloning: EINDE.mislukt, pil: EINDE.mislukt, knoppen: EINDE.mislukt + 150 };
+  const op = (el, delay, pop) => {
+    if (!el || !el.animate || !el.firstChild) return;
+    el.animate(pop
+      ? [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.08)', offset: .6 }, { opacity: 1, transform: 'none' }]
+      : [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+      { duration: EINDE.op, delay, easing: pop ? 'ease-out' : MOTION.uit, fill: 'backwards' });
+  };
+  op($('end-earn'), t.beloning, true);
+  op($('end-milestone'), t.pil);
+  op(document.querySelector('#screen-end .end-actions'), t.knoppen);
+}
 
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
 // hoger klankje; een gemiste ster verschijnt stil en dof. Dé ceremonie van het
@@ -10321,7 +10524,7 @@ function surpriseOutfit() {
   save();
   // alleen ándere spullen aan: het rek zelf verandert niet, dus alleen bijwerken
   paintShop();
-  tapDance('shop-avatar');
+  tapDance('shop-avatar', true);
   /* Dit was de enige gebeurtenis in de hele app die wél trilde en niet klonk: een
      buzz(20) zonder noot. Nu hetzelfde klankje als elk ander aandoen -- en de tril
      van 20 zit erin, dus hij is niet weg maar verhuisd. */
@@ -10357,7 +10560,7 @@ function zetWens(id) {
   if (p.wens === id) {
     buzz(15);
     showToast('💖', null, 'Je wens!');
-    setTimeout(hideToast, 1300);
+    toastWeg(1300);
   }
 }
 // Het emoji van de wens, of anders het teken van zijn lade (👕 voor kleren...).
@@ -10567,7 +10770,13 @@ function koopVonken(el) {
 // Diamant-feedback: een paar diamanten vliegen van A naar B, en de teller-pil
 // pulseert aan de portemonnee-kant. Verdienen = naar de portemonnee toe
 // (spelscherm), betalen = van de portemonnee wég (kleedkamer).
-function flyDiamonds(fromEl, toEl, n) {
+/* duur: hoe lang het eerste steentje vliegt (de volgende elk een stukje later).
+   De kleedkamer neemt de gewone 620; de show sneller (DIA_SHOW), omdat daar na
+   een seconde de volgende som al komt. */
+const DIA_SHOW = 420;
+function flyDiamonds(fromEl, toEl, n, duur) {
+  duur = duur || 620;
+  const na = Math.round(duur * 0.18);
   if (!fromEl || !toEl || !fromEl.animate) return;
   /* Bij beperkte beweging vliegt er niets. Dat mag, want de diamanten zijn hier
      al: elke aanroep komt ná p.diamonds en ná de teller op het scherm (zie
@@ -10588,8 +10797,8 @@ function flyDiamonds(fromEl, toEl, n) {
       { transform: 'translate(0,0) scale(1)', opacity: 1 },
       { transform: `translate(${dx * 0.5 + (i - 1) * 26}px, ${dy * 0.4 - 46}px) scale(1.2)`, offset: .5 },
       { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: .85 }
-    ], { duration: 620 + i * 110, easing: 'ease-in-out' }).onfinish = () => d.remove();
-    setTimeout(() => d.remove(), 900 + i * 110);
+    ], { duration: duur + i * na, easing: 'ease-in-out' }).onfinish = () => d.remove();
+    setTimeout(() => d.remove(), duur + 280 + i * na);
   }
   // pulseer de portemonnee: meteen als de diamanten eruit vertrekken,
   // pas bij aankomst als ze erin vallen
@@ -10598,7 +10807,7 @@ function flyDiamonds(fromEl, toEl, n) {
   const badge = fromBadge || toBadge;
   if (badge && badge.animate) setTimeout(() => badge.animate(
     [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
-    { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : DIA_AANKOMST);
+    { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : duur - 20);
 }
 
 function confirmShopBuy(id) {
@@ -10611,7 +10820,7 @@ function confirmShopBuy(id) {
   if (p.diamonds < it.price) {
     sndWrong();
     showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
-    setTimeout(hideToast, 1800);
+    toastWeg(1800);
     return;
   }
   p.diamonds -= it.price;
@@ -10632,7 +10841,41 @@ function confirmShopBuy(id) {
   telNaar($('shop-diamonds'), p.diamonds, 520);
   const trofees = checkTrophies(p);
   save();
-  noticeReady(trofees);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
+  /* DE VOLGORDE van een aankoop, in drie tellen:
+       0    betalen -- het muntje, de teller telt af, drie 💎 vliegen naar de pop
+       600  aankomst (DIA_AANKOMST) -- de pop danst in haar nieuwe spulletje, met
+            het klankje van aandoen, en het kaartje viert mee: goud, "Nieuw!",
+            het boeketje vonken
+       1600 pas dán de trofee-hint, als die er is -- bovenaan, als de dans uit is
+     Hier gebeurde dat allemaal op 0: twee klankjes over elkaar (het muntje en
+     het tikje van tapDance), de pop die al danste vóór er iets betaald was, en
+     een trofeetoast die precies over de pop viel op het moment dat zij het
+     middelpunt moest zijn. De lade gaat wél meteen weg: de vraag "kopen?" is
+     beantwoord, en een knop die blijft staan nodigt uit om nog eens te tikken. */
+  renderDressBar(null, p);
+  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
+  const stil = motionOff();
+  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
+  setTimeout(() => {
+    if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
+    koopKomtAan(it);
+  }, stil ? 0 : DIA_AANKOMST);
+  /* Als het "Nieuw!"-moment voorbij is verhuist het spulletje naar de bezit-groep
+     bovenaan. Dat is een sprong, en een sprong die je niet ziet is een spulletje
+     dat weg lijkt -- dus reist het beeld mee naar waar het nu staat (rekSchuift),
+     en de rest van het rek schuift mee in plaats van te verspringen. */
+  shopBoughtTimer = setTimeout(() => {
+    shopBoughtTimer = null;
+    if (shopJustBoughtId !== it.id) return;
+    shopJustBoughtId = null;
+    rekSchuift(() => renderShop());
+    const na = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
+    if (na && na.scrollIntoView) na.scrollIntoView({ block: 'nearest', behavior: motionOff() ? 'auto' : 'smooth' });
+  }, KOOP_HERSCHIK);
+}
+const KOOP_HINT = 1600, KOOP_HERSCHIK = 1800;   // de hint pas als de dans (600 + PAS) uit is
+/* Het tweede tel van een aankoop: de diamanten zijn bij de pop. */
+function koopKomtAan(it) {
   /* paintShop en niet renderShop -- dezelfde afspraak als bij kiezen en aandoen.
      De volgorde verandert nog niet (het gekochte stuk telt tijdens zijn
      "Nieuw!"-moment nog als te koop, zie shopItems), dus er valt niets te
@@ -10643,20 +10886,31 @@ function confirmShopBuy(id) {
      de gouden glans nodig hebben: iets om op te starten dat er al stond. */
   paintShop();
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
-  koopVonken(kaart);                                       // een klein boeketje boven het kaartje zelf
-  flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
-  /* Als het "Nieuw!"-moment voorbij is verhuist het spulletje naar de bezit-groep
-     bovenaan. Dat is een sprong, en een sprong die je niet ziet is een spulletje
-     dat weg lijkt -- dus reist het beeld mee naar waar het nu staat. */
-  shopBoughtTimer = setTimeout(() => {
-    shopBoughtTimer = null;
-    if (shopJustBoughtId !== it.id) return;
-    shopJustBoughtId = null;
-    renderShop();
-    const na = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
-    if (na && na.scrollIntoView) na.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, 1800);
-  tapDance('shop-avatar');              // vreugdedansje in het nieuwe spulletje
+  koopVonken(kaart);                    // een klein boeketje boven het kaartje zelf
+  sndAan();                             // hetzelfde klankje als aandoen: dat is wat er nu gebeurt
+  const pop = $('shop-avatar');
+  if (zetPas(pop, pick(MOVES))) { sparkle(pop); pasUit(pop); }   // vreugdedansje in het nieuwe spulletje
+}
+/* Het rek opnieuw opbouwen zonder dat de kaartjes verspringen: elk kaartje
+   onthoudt waar het stond, en glijdt na het herbouwen van daar naar zijn
+   nieuwe plek (de FLIP-truc: alleen transform, dus goedkoop). Wie geen beweging
+   wil, krijgt gewoon het nieuwe rek. */
+const REK_SCHUIF = 320;
+function rekSchuift(bouw) {
+  const rek = $('item-grid');
+  if (!rek || motionOff()) { bouw(); return; }
+  const was = new Map();
+  rek.querySelectorAll('.item-card').forEach(c => was.set(c.dataset.item, c.getBoundingClientRect()));
+  bouw();
+  rek.querySelectorAll('.item-card').forEach(c => {
+    const r0 = was.get(c.dataset.item);
+    if (!r0 || !c.animate) return;
+    const r1 = c.getBoundingClientRect();
+    const dx = r0.left - r1.left, dy = r0.top - r1.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+      { duration: REK_SCHUIF, easing: MOTION.uit });
+  });
 }
 
 /* Categorieën waar de pop ook zonder kan: een lege plek is daar een geldige stand
@@ -10902,7 +11156,7 @@ function wijsOntbrekende() {
   });
   setTimeout(() => doelen.forEach(el => el.classList.remove('vraagt')), 2400);
   showToast(basisMist ? 'Kies eerst wie je bent 👆' : 'Geef je ster nog een naam 👆');
-  setTimeout(hideToast, 2200);
+  toastWeg(2200);
 }
 function createStar() {
   /* Twee keer Klaar is één ster. Enter én de knop komen hier allebei uit, en op
@@ -10918,7 +11172,7 @@ function createStar() {
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
     showToast('⚠️ Die naam bestaat al', null, 'Twee sterren met dezelfde naam zijn niet uit elkaar te houden.');
-    setTimeout(hideToast, 2600);
+    toastWeg(2600);
     return;
   }
   const key = nextProfileKey();
@@ -10950,7 +11204,7 @@ function createStar() {
      pop zwaait al. Die tik is haar eerste eigen stap; de kaart hoeft hem niet voor
      te zeggen. */
   showToast(`🌟 ${esc(name)} staat op het podium!`);
-  setTimeout(hideToast, 2400);
+  toastWeg(2400);
 }
 
 /* ================= Instellingen ================= */
@@ -11419,7 +11673,7 @@ function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
     showToast('📶 Voor deze pagina is internet nodig.');
-    setTimeout(hideToast, 2400);
+    toastWeg(2400);
     return;
   }
   save();
@@ -11427,7 +11681,7 @@ function naarOver(e) {
 // Delen: eerst het deelmenu van het toestel, anders de link naar het klembord,
 // en lukt ook dat niet, dan staat hij in de melding zodat je hem kunt overtikken.
 function deelOver() {
-  const melding = t => { showToast(t); setTimeout(hideToast, 2400); };
+  const melding = t => { showToast(t); toastWeg(2400); };
   if (navigator.share) {
     navigator.share({ title: 'Rekensterren', text: 'Een reken- en telspel voor kinderen van 5 tot 8.', url: OVER_URL })
       .catch(() => {});   // wegtikken is geen fout
@@ -11528,7 +11782,7 @@ function blockedMinOne(el) {
   void el.offsetWidth;
   el.classList.add('shake');
   showToast('Kies er minstens 1 👆');
-  setTimeout(hideToast, 1500);
+  toastWeg(1500);
 }
 // gewone instellingen slaan meteen op -- geen aparte "Opslaan"-knop nodig,
 // alleen een kort, subtiel pilletje in de kop dat het bevestigt
@@ -11807,7 +12061,7 @@ function bindSettings(p, s) {
         db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
         save(); renderSettings();
         showToast('✅ Voortgang gewist.');
-        setTimeout(hideToast, 1800);
+        toastWeg(1800);
       }
     );
   });
@@ -11827,7 +12081,7 @@ function bindSettings(p, s) {
         if (setKey) renderSettings();
         else closeSettings();                // laatste ster weg -> terug naar het welkomscherm
         showToast(`✅ ${esc(naam)} is verwijderd.`);
-        setTimeout(hideToast, 1800);
+        toastWeg(1800);
       }
     );
   });

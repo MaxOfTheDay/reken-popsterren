@@ -191,7 +191,11 @@
      hetzelfde tabblad tikken geeft geen flits. */
   .screen.active { display: flex; animation: screenIn .18s ease both; }
   @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
+  /* Wie geen beweging wil krijgt geen harde knip maar een kortere fade: een
+     overvloeier verschuift niets en zoomt niets, en een knip tussen twee
+     verschillende achtergronden is juist het felste wat er op dit scherm kan
+     gebeuren. Zie ook de regel bij .komt-op in 50-zaal. */
+  @media (prefers-reduced-motion: reduce) { .screen.active { animation: screenIn .15s ease both; } }
   /* FASE 6B -- het éérste scherm komt niet op, het staat er.
 
      screenIn begint bij opacity 0, en hij begint zodra de opmaak van #screen-profile

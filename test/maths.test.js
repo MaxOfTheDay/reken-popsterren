@@ -540,7 +540,7 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     knop(fout[0]).click();
     await wacht(500);
     knop(fout[1]).click();
-    await wacht(400);
+    await wacht(700);                                     // het 👉 komt pas na de onthulling (VERDER_NA)
     out.mis = { tekst: vak().textContent, ans: String(q.ans), klas: vak().className,
                 toast: document.querySelector('#toast .toast-main').textContent,
                 woorden: !!document.querySelector('#toast .toast-sub') };

@@ -275,7 +275,13 @@ function check(ok, label, detail) {
       'en een schermlezer hoort hetzelfde in woorden', r.label);
     // en de tik komt daar ook echt uit
     await page.evaluate(() => document.querySelector('.ster-tegel').click());
-    await page.waitForTimeout(600);
+    /* Een nieuwe wereld wordt onthuld: de kaart komt eerst tot rust in de oude
+       wereld en klimt daarna pas (runWorldReveal, ONTHUL_STIL). Wachten op de kop
+       dus, en niet op een vaste tijd. */
+    await page.waitForFunction(() => {
+      const k = document.getElementById('map-tournee-label');
+      return k && (k.getAttribute('aria-label') || '').indexOf(WORLDS[1].name) >= 0;
+    }, null, { timeout: 5000 }).catch(() => {});
     r = await page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id,
       kop: document.getElementById('map-tournee-label').getAttribute('aria-label'),
@@ -597,7 +603,7 @@ function check(ok, label, detail) {
 
     // de maten van de reis komen uit de app, niet uit deze test
     const maat = await page.evaluate(() => ({
-      stappen: REIS_STAPPEN, duur: REIS_DUUR, wacht: REIS_WACHT, easing: REIS_EASING,
+      stappen: REIS_STAPPEN, duur: REIS_DUUR, kort: REIS_KORT, wacht: REIS_WACHT, easing: REIS_EASING,
     }));
 
     /* ---- 7d.1 · elk stuk weg van elke wereld ---- */
@@ -720,7 +726,8 @@ function check(ok, label, detail) {
       const hT = hA.effect.getTiming(), rT = rA.effect.getTiming();
       const meet = [];
       for (let i = 0; i <= 10; i++) {
-        const tijd = REIS_WACHT + REIS_DUUR * i / 10;
+        // de duur hangt af van de afstand (reisDuur), dus uit de animatie zelf
+        const tijd = hT.delay + hT.duration * i / 10;
         hA.currentTime = tijd; rA.currentTime = tijd;
         await new Promise(res => requestAnimationFrame(res));
         // het goud: de leidende rand uit de dashoffset van het masker
@@ -750,7 +757,8 @@ function check(ok, label, detail) {
         'ergste ' + erg + 'px  ' + JSON.stringify(e2e.meet));
       check(e2e.hT.duration === e2e.rT.duration && e2e.hT.delay === e2e.rT.delay
         && e2e.hT.easing === e2e.rT.easing
-        && e2e.hT.duration === maat.duur && e2e.hT.delay === maat.wacht
+        && e2e.hT.duration >= maat.kort && e2e.hT.duration <= maat.duur
+        && e2e.hT.delay === maat.wacht
         && e2e.hT.easing === maat.easing,
         'de ster en het goud delen duur, vertraging én easing',
         JSON.stringify([e2e.hT, e2e.rT, maat]));

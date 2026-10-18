@@ -502,16 +502,16 @@
      houder stond. */
   .avatar-holder > .pas-laag { display: block; height: 100%; line-height: 0; }
   .avatar-holder.dancing > .pas-laag { transform-origin: 50% 95%; }
-  .avatar-holder.move-jump   > .pas-laag { animation: mvJump .9s ease-in-out; }
-  .avatar-holder.move-spin   > .pas-laag { animation: mvSpin .9s ease-in-out; }
-  .avatar-holder.move-sway   > .pas-laag { animation: mvSway .9s ease-in-out; }
-  .avatar-holder.move-kick   > .pas-laag { animation: mvKick .9s ease-in-out; }
-  .avatar-holder.move-wave   > .pas-laag { animation: mvWave .9s ease-in-out; }
-  .avatar-holder.move-bounce > .pas-laag { animation: mvBounce .9s ease-in-out; }
+  .avatar-holder.move-jump   > .pas-laag { animation: mvJump var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-spin   > .pas-laag { animation: mvSpin var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-sway   > .pas-laag { animation: mvSway var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-kick   > .pas-laag { animation: mvKick var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-wave   > .pas-laag { animation: mvWave var(--t-pas, .9s) ease-in-out; }
+  .avatar-holder.move-bounce > .pas-laag { animation: mvBounce var(--t-pas, .9s) ease-in-out; }
   /* De buiging bij het applaus (zie buiging in de JS): ze helt naar het publiek
      toe -- naar jou -- en komt weer overeind. Geen gewoon pasje; hij komt alleen
      als de zaal extra hard klapt. */
-  .avatar-holder.move-buig   > .pas-laag { animation: mvBuig .9s ease-in-out; }
+  .avatar-holder.move-buig   > .pas-laag { animation: mvBuig var(--t-pas, .9s) ease-in-out; }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }
     30% { transform: translateY(-38px) scale(1.06); }

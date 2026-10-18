@@ -200,7 +200,7 @@ function check(ok, label, detail) {
       'D · de ster staat op de eerste halte ervan, met evenveel sterren als eerst', JSON.stringify(r.na));
     // ...en de kaart neemt haar er ook echt heen, met de onthulling die erbij hoort
     await page.evaluate(() => goMap());
-    await page.waitForTimeout(260);
+    await page.waitForTimeout(900);                 // de kaart komt binnen, een korte stilte (ONTHUL_STIL), dan de camera
     const reis = await page.evaluate(() => ({ schaduw: !!document.querySelector('.wereld-schaduw'), grendel: wereldReisBezig() }));
     await page.waitForTimeout(1400);
     const rust = await page.evaluate(() => ({
