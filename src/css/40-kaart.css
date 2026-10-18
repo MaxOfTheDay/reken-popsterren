@@ -350,6 +350,24 @@
       linear-gradient(rgba(14,7,30,.62), rgba(14,7,30,.62))
         bottom / 100% var(--vh-drift, 0px) no-repeat;
   }
+  /* Op de kleedkamer en de trofeeënkast schuift er tekst ónder de balk door --
+     prijzen, trofeenamen, de uitleg eronder -- en daar is de veeg van de kaart te
+     licht voor: je las "Perfecte wereld" dwars door "Kaart" heen, en in de strook
+     onder de balk stond hij gewoon scherp. Daar wordt hij dus vanaf de bovenrand
+     van de balk in één keer donker. Bóven die rand verandert er niets (de eerste
+     34% zijn dezelfde stops als hierboven): daar hangt in de kleedkamer de
+     actiebalk, en die moet niet mee verdonkeren. Zonder :has (oude browsers)
+     blijft het gewoon de veeg van de kaart. */
+  body:has(#screen-dress.active, #screen-trophies.active) .main-nav::before {
+    background:
+      linear-gradient(180deg,
+        rgba(14,7,30,0) 0%,
+        rgba(14,7,30,.05) 34%,
+        rgba(14,7,30,.7) 40%,
+        rgba(14,7,30,.92) 100%) top / 100% calc(var(--balk-ruimte) + 44px) no-repeat,
+      linear-gradient(rgba(14,7,30,.92), rgba(14,7,30,.92))
+        bottom / 100% var(--vh-drift, 0px) no-repeat;
+  }
   /* ---- De balk hangt aan hetzelfde slot als de rest van de app -------------
      --vh-lock (zie het scriptje vóór de INHOUD-index) legde de hoogte van de app
      vast, zodat de wereldkaart niet meer meegroeit als de Android-statusbalk een
