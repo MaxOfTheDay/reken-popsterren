@@ -16548,94 +16548,10 @@ function renderTourMap(travelFrom) {
   applyWorldTheme(scherm, shown.world);
   scherm.style.setProperty('--art', shown.world.art ? `url("${shown.world.art}")` : 'none');
 
+  tekenWeg(frame, shown, nodes, playable);
 
-
-
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('class', 'tour-road-svg');
-  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
-  svg.setAttribute('aria-hidden', 'true');
-  const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
-  const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
-
-
-  const unPath = mkPath('tour-road-under'), bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
-  const curve = shown.world.curve;
-  const heleWeg = roadD(pts, pts.length, curve);
-  unPath.setAttribute('d', heleWeg);
-  bgPath.setAttribute('d', heleWeg);
-  const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
-  fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
-  svg.appendChild(unPath);
-  svg.appendChild(bgPath);
-  svg.appendChild(fgPath);
-  frame.appendChild(svg);
-
-  const heelPatroon = roadDashArray(svg, pts, curve, pts.length);
-  unPath.style.strokeDasharray = heelPatroon;
-  bgPath.style.strokeDasharray = heelPatroon;
-  fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
-
-  nodes.forEach((n, i) => {
-    const lvl = shown.first + i;
-    const open = lvl <= playable;
-    const st = p.stars[lvl] || 0;
-    const b = document.createElement('button');
-
-    b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === heroLvl) ? 'next' : 'done');
-    b.dataset.lvl = lvl;
-    b.style.left = n.x + '%';
-    b.style.top = n.y + '%';
-
-
-
-    if (open && st === 3) b.classList.add('perfect');
-    const hero = lvl === heroLvl
-      ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
-        + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
-
-
-
-
-    const gespeeld = open && lvl < playable;
-
-
-    const sterrenRij = starRowHTML(st, gespeeld);
-
-
-
-    if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
-
-
-
-
-
-
-    const laatste = i === nodes.length - 1;
-    const schat = laatste ? beloningItem(shown.world) : null;
-    const schatTeken = (schat && !p.owned.includes(schat.id))
-      ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
-    b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
-      + `${schatTeken}${sterrenRij}</div>`;
-
-
-
-    b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
-      + (open ? ` — ${st} van 3 sterren` : ' — nog op slot')
-      + (schatTeken ? ' — hier ligt een wereldschat' : ''));
-
-
-
-
-
-
-    if (open) b.onclick = e => {
-      const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
-      if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
-    };
-    frame.appendChild(b);
-  });
+  const stand = { p, playable, travelling, heroLvl, netAfLvl };
+  nodes.forEach((n, i) => frame.appendChild(haltKnop(shown, nodes, i, stand)));
 
 
 
@@ -16695,6 +16611,104 @@ function renderTourMap(travelFrom) {
   else tourMapVoltooi = voltooi;
 
   map.onscroll = kaartScroll;
+}
+
+
+
+
+function tekenWeg(frame, shown, nodes, playable) {
+
+
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'tour-road-svg');
+  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  svg.setAttribute('aria-hidden', 'true');
+  const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
+
+
+  const unPath = mkPath('tour-road-under'), bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
+  const curve = shown.world.curve;
+  const heleWeg = roadD(pts, pts.length, curve);
+  unPath.setAttribute('d', heleWeg);
+  bgPath.setAttribute('d', heleWeg);
+  const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
+  fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
+  svg.appendChild(unPath);
+  svg.appendChild(bgPath);
+  svg.appendChild(fgPath);
+  frame.appendChild(svg);
+
+  const heelPatroon = roadDashArray(svg, pts, curve, pts.length);
+  unPath.style.strokeDasharray = heelPatroon;
+  bgPath.style.strokeDasharray = heelPatroon;
+  fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
+}
+
+
+
+function haltKnop(shown, nodes, i, stand) {
+  const { p, playable, travelling, heroLvl, netAfLvl } = stand;
+  const n = nodes[i];
+  const lvl = shown.first + i;
+  const open = lvl <= playable;
+  const st = p.stars[lvl] || 0;
+  const b = document.createElement('button');
+
+  b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === heroLvl) ? 'next' : 'done');
+  b.dataset.lvl = lvl;
+  b.style.left = n.x + '%';
+  b.style.top = n.y + '%';
+
+
+
+  if (open && st === 3) b.classList.add('perfect');
+  const hero = lvl === heroLvl
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
+      + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
+
+
+
+
+  const gespeeld = open && lvl < playable;
+
+
+  const sterrenRij = starRowHTML(st, gespeeld);
+
+
+
+  if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
+
+
+
+
+
+
+  const laatste = i === nodes.length - 1;
+  const schat = laatste ? beloningItem(shown.world) : null;
+  const schatTeken = (schat && !p.owned.includes(schat.id))
+    ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
+  b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
+    + `${schatTeken}${sterrenRij}</div>`;
+
+
+
+  b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
+    + (open ? ` — ${st} van 3 sterren` : ' — nog op slot')
+    + (schatTeken ? ' — hier ligt een wereldschat' : ''));
+
+
+
+
+
+
+  if (open) b.onclick = e => {
+    const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
+    if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
+  };
+  return b;
 }
 
 
@@ -19219,101 +19233,107 @@ function submitAnswer(val, btnEl) {
   }
   const q = G.qs[G.idx];
   const p = P();
-  if (val === q.ans) {
-
-    G.lock = true;
-    stopSpot();
-    hideToast();
-    const firstTry = !G.retried;
-    updatePerf(p, true, firstTry && G.spot > 0);
+  if (val === q.ans) antwoordGoed(q, p, btnEl);
+  else antwoordFout(q, p, val, btnEl);
+}
 
 
-    if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
-    else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
-    else if (q.count) updateCountAcc(p, true, firstTry);
-    p.stats.correct++;
+function antwoordGoed(q, p, btnEl) {
+  G.lock = true;
+  stopSpot();
+  hideToast();
+  const firstTry = !G.retried;
+  updatePerf(p, true, firstTry && G.spot > 0);
 
 
-    if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
-    let gain = 2;
-    if (firstTry && G.spot > 0) gain += 1;
-    G.streak++;
-    let streakBonus = false;
-    if (G.streak % 3 === 0) { gain += 2; streakBonus = true; }
-    if (q.gold) { gain *= 3; p.goldHits++; }
-    G.earned += gain;
-    p.diamonds += gain;
+  if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
+  else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
+  else if (q.count) updateCountAcc(p, true, firstTry);
+  p.stats.correct++;
 
 
-    let fanMul = 1;
-    if (!firstTry) fanMul = 0.5;
-    else {
-      if (G.spot > 0) fanMul += 0.5;
-      if (streakBonus) fanMul += 0.5;
-      if (q.gold) fanMul += 1;
-    }
-    G.fan += G.fanStep * fanMul;
-    let encore = false;
-    if (G.fan >= 100) {
-      G.fan -= 100; encore = true;
-      p.diamonds += 5; G.earned += 5; p.encores++;
-    }
-    save();
-    if (btnEl) btnEl.classList.add('good');
+  if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
+  let gain = 2;
+  if (firstTry && G.spot > 0) gain += 1;
+  G.streak++;
+  let streakBonus = false;
+  if (G.streak % 3 === 0) { gain += 2; streakBonus = true; }
+  if (q.gold) { gain *= 3; p.goldHits++; }
+  G.earned += gain;
+  p.diamonds += gain;
 
 
-
-
-    const vak = somVult(q, btnEl);
-
-
-    const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
-
-
-
-
-
-    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_SHOW);
-
-    const diaVan = vak || btnEl || $('question-card');
-    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2, DIA_SHOW), vlucht);
-
-
-
-
-
-
-
-
-
-
-
-    if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
-    if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
-    const trofees = checkTrophies(p);
-    if (trofees.length) { save(); updateTroDot(); }
-    const g = G;
-    const feest = () => {
-      if (G !== g) return;
-      if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
-      else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
-      else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
-      else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
-      else showPraise(pick(PRAISE), '💎 +' + gain);
-      if (encore) buiging('game-avatar-inner');
-      else dance('game-avatar-inner');
-      zaalJuicht();
-      renderSegBar($('qprogress'), G.total, G.idx + 1, false);
-    };
-    if (vlucht) setTimeout(feest, vlucht); else feest();
-
-
-
-
-    setTimeout(nextStep, encore || q.gold ? 1400 : 950);
-    return;
+  let fanMul = 1;
+  if (!firstTry) fanMul = 0.5;
+  else {
+    if (G.spot > 0) fanMul += 0.5;
+    if (streakBonus) fanMul += 0.5;
+    if (q.gold) fanMul += 1;
   }
+  G.fan += G.fanStep * fanMul;
+  let encore = false;
+  if (G.fan >= 100) {
+    G.fan -= 100; encore = true;
+    p.diamonds += 5; G.earned += 5; p.encores++;
+  }
+  save();
+  if (btnEl) btnEl.classList.add('good');
 
+
+
+
+  const vak = somVult(q, btnEl);
+
+
+  const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
+
+
+
+
+
+  telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_SHOW);
+
+  const diaVan = vak || btnEl || $('question-card');
+  setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2, DIA_SHOW), vlucht);
+
+
+
+
+
+
+
+
+
+
+
+  if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
+  if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
+  const trofees = checkTrophies(p);
+  if (trofees.length) { save(); updateTroDot(); }
+  const g = G;
+  const feest = () => {
+    if (G !== g) return;
+    if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
+    else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
+    else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
+    else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
+    else showPraise(pick(PRAISE), '💎 +' + gain);
+    if (encore) buiging('game-avatar-inner');
+    else dance('game-avatar-inner');
+    zaalJuicht();
+    renderSegBar($('qprogress'), G.total, G.idx + 1, false);
+  };
+  if (vlucht) setTimeout(feest, vlucht); else feest();
+
+
+
+
+  setTimeout(nextStep, encore || q.gold ? 1400 : 950);
+}
+
+
+
+function antwoordFout(q, p, val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
   incWeak(p, q);
@@ -19334,19 +19354,22 @@ function submitAnswer(val, btnEl) {
 
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
-  if (!G.retried) {
+  if (!G.retried) eersteMisser(q, val, btnEl);
+  else tweedeMisser(q, p, btnEl);
+}
 
-    G.retried = true;
-    G.misses++;
-    stopSpot(); G.spot = 0; zetSpot(0);
-    save();
-    if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }
-    if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
-    if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }
-    else toonHint(q, val, btnEl);
-    return;
-  }
+function eersteMisser(q, val, btnEl) {
+  G.retried = true;
+  G.misses++;
+  stopSpot(); G.spot = 0; zetSpot(0);
+  save();
+  if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }
+  if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
+  if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }
+  else toonHint(q, val, btnEl);
+}
 
+function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
