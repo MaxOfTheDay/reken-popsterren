@@ -309,7 +309,9 @@
     background: rgba(255,255,255,.05);
     border-color: rgba(255,255,255,.06);
   }
-  .trophy-card.fresh .temoji { opacity: .6; }
+  /* half ontkleurd, zoals .locked hieronder het uitlegt: "nog niet" zonder dat het
+     kaartje grijs en kapot oogt -- maar wel duidelijk anders dan een behaalde */
+  .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
   .trophy-card.fresh .tname { opacity: .84; }
   .trophy-card.fresh .tdesc { opacity: .62; }
   /* ONDERWEG: actief, maar een trap onder goud. */
@@ -367,15 +369,21 @@
   }
   .trophy-card.done .tname { color: var(--gold-light); }
   .trophy-card.done .tdesc { color: var(--c-white); opacity: .78; }
-  /* Het vonkje in de hoek: het enige versiersel op een behaalde kaart, en met
-     opzet klein (11px) en stil (.7). Het zegt op leesafstand "hier is iets
-     gebeurd" zonder dat er nog een randje of nog een gloed bij hoeft.
+  /* Het vinkje in de hoek: het enige versiersel op een behaalde kaart. Hier stond
+     een vonkje van 11px op .7, en dat was te stil: naast een kaart die je nog
+     niet hebt (zelfde icoon in kleur, zie .fresh) zat het verschil alleen in de
+     kleur van de naam. Een kind dat nog niet leest moet het aan het kaartje
+     zelf zien. Het is hetzelfde ✓ op goud als "✓ Aan" in de kleedkamer: één
+     teken voor "dit is van jou".
      Niet op de perfecte-wereldkaart: die heeft haar eigen ⭐ aan het medaillon,
-     en twee sterretjes op één kaartje is er één te veel. */
+     en twee tekens op één kaartje is er één te veel. */
   .trophy-card.done:not(.pw-card)::before {
-    content: ''; position: absolute; top: 8px; right: 8px; width: 11px; height: 11px;
-    z-index: 2; pointer-events: none; opacity: .7;
-    background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 0c.9 7.4 3.7 10.2 12 12-8.3 1.8-11.1 4.6-12 12-.9-7.4-3.7-10.2-12-12C8.3 10.2 11.1 7.4 12 0z' fill='%23ffeca8'/></svg>") center/contain no-repeat;
+    content: '✓'; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px;
+    z-index: 2; pointer-events: none; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 800; line-height: 1; color: #3a2400;
+    background: var(--gold-accent);
+    box-shadow: 0 1px 3px rgba(8,1,20,.45);
   }
   /* De stand op een lopende kaart: alleen het getal, geen balk. "82 / 100 sommen"
      zegt alles wat een balkje zou zeggen, en het staat er in de taal van een
@@ -537,6 +545,11 @@
   @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
   @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
   .gold-pill:active { transform: scale(.96); }
+  /* Op een laag scherm is de pil 30-34px hoog; het raakvlak komt er met een
+     doorzichtige rand omheen op 44. Hij staat op het eindscherm vrij, met de
+     knoppen ruim eronder, dus hij pakt niemand een tik af. */
+  .gold-pill { position: relative; }
+  .gold-pill::after { content: ''; position: absolute; inset: -7px -4px; border-radius: inherit; }
   /* ---- De horizon: één mistkaartje achteraan -------------------------------
      Voorbij de laatste wereld die vooruit te zien is staat geen rij gedempte
      medaillons meer maar één wolk, op de plek van het volgende kaartje. Geen
