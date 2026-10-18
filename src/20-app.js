@@ -3254,7 +3254,11 @@ function navTik(t) {
 function navGo(t, wasActiveAl, stil) {
   if (!stil) sndClick();
   const wasActive = wasActiveAl != null ? wasActiveAl : $('nav-' + t).classList.contains('active');
-  if (t === 'map') goMap();
+  /* Kaart op Werelden is dezelfde weg terug als de ← erboven: inzoomen op de
+     wereld waar je vandaan kwam. Hier stond gewoon goMap(), en dan kwam je met
+     een kale schermwissel uit bij de grens -- terwijl het tabblad op Werelden al
+     oplicht en dus "terug naar mijn kaart" zegt, niet "ergens anders heen". */
+  if (t === 'map') { if ($('screen-journey').classList.contains('active')) reisSluit(true); else goMap(); }
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
 }
@@ -5096,6 +5100,46 @@ function vluchtDoofAlle(lijst, aan, duur, na) {
 
    Alles eraan is optioneel: is een van de twee koppen er niet (of kent de browser
    geen animate), dan gebeurt er gewoon niets en kruisen de koppen zonder globe. */
+/* De camera duwt mee. De tekening die vliegt is één ding; de reis eromheen hoort
+   mee te bewegen alsof er een camera in- of uitzoomt. Hier deed hij dat niet: bij
+   het inzoomen doofden de route en de andere werelden ter plekke weg in 90ms, en
+   daarna groeide de tekening een tiende seconde lang op een lege nachtlucht. Bij
+   het uitzoomen kwamen ze op hun plek op in plaats van in beeld te schuiven.
+
+   Nu schaalt de baan (#reis-track, niet het hele scherm: de kop met de
+   diamantenpil hoort stil te blijven staan, en de nachtlucht ook -- die ligt
+   "oneindig ver") om het midden van het kaartje dat vliegt. De buren schuiven
+   daardoor naar buiten, het beeld uit, of komen van daar binnen.
+
+     van, naar   de schaal aan het begin en het eind (1 = gewoon)
+     punt        het midden van het kaartje, in vensterpixels
+
+   Eén transform op één laag, op de compositor; er wordt niets gemeten tijdens
+   de vlucht. Geeft een opruimer terug -- of null als er niets te doen viel. */
+function reisCamera(punt, van, naar) {
+  const track = $('reis-track');
+  if (!track || !track.animate || !punt || !(van > 0) || !(naar > 0)) return null;
+  const r = track.getBoundingClientRect();
+  if (!r.width) return null;
+  track.style.transformOrigin = (punt.x - r.left).toFixed(1) + 'px ' + (punt.y - r.top).toFixed(1) + 'px';
+  const a = track.animate(
+    [{ transform: `scale(${van.toFixed(4)})` }, { transform: `scale(${naar.toFixed(4)})` }],
+    { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' });
+  return () => { a.cancel(); track.style.transformOrigin = ''; };
+}
+/* Hoeveel groter de wereld is dan zijn kaartje -- de schaal waarmee de camera
+   duwt. Op de breedte gemeten, en begrensd op REIS_CAMERA_MAX. Dat is geen smaak
+   maar geheugen: een animerende laag wordt getekend op de grootste schaal die hij
+   gaat halen, en dit is de hele baan van Werelden. Op een telefoon is het kaartje
+   ruim de helft van de breedte, dus bij 1,8 staan de buren al buiten beeld; wat er
+   nog over is, dooft in het laatste stuk weg. Op een tablet zou de volle schaal
+   boven de 3 uitkomen, en dan tekent hij een baan van duizenden pixels hoog op
+   drie keer de maat. */
+const REIS_CAMERA_MAX = 1.8;
+function reisCameraSchaal(kaartje, wereld) {
+  if (!kaartje || !wereld || !kaartje.clip.w) return 1;
+  return Math.max(1, Math.min(REIS_CAMERA_MAX, wereld.clip.w / kaartje.clip.w));
+}
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
   const a = vanEl.getBoundingClientRect(), b = naarEl.getBoundingClientRect();
@@ -6565,10 +6609,12 @@ function openReis() {
     const muntV = kaart.querySelector('.diamond-badge'), muntN = reis.querySelector('.diamond-badge');
     const muntKruist = !zelfdePlek(muntV, muntN);
     if (muntKruist) { lokaal.push(muntV); overzicht.push(muntN); }
+    let camera = null;
     const op = () => {
       overgangBezig = false;
       kaart.classList.remove('wegvallend', 'vlucht-weg');
       if (doel) doel.classList.remove('vlucht-doel');
+      if (camera) camera();
       lokaal.concat(overzicht).forEach(el => {
         if (el && el.getAnimations) el.getAnimations().forEach(a => a.cancel());
       });
@@ -6581,7 +6627,11 @@ function openReis() {
     // 2 -- alles wat alleen in de ingezoomde wereld bestaat
     vluchtDoofAlle(lokaal.filter(x => x !== muntV), false, VLUCHT.detail);
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
-    // 3 -- de reis eromheen: de route en de andere werelden waren er al
+    /* 3 -- de reis eromheen: de route en de andere werelden waren er al. Ze komen
+       op én schuiven van buiten het beeld naar hun plek, omdat de camera
+       achteruit stapt (zie reisCamera). */
+    camera = reisCamera({ x: naar.clip.left + naar.clip.w / 2, y: naar.clip.top + naar.clip.h / 2 },
+      reisCameraSchaal(naar, vanaf), 1);
     vluchtDoofAlle([pad, mist], true, VLUCHT.reveal, 40);
     /* 4 -- de kop wisselt van stand. De wereldnaam en de chevron doven met de pil
        weg (die zit in 'lokaal'), de ← komt op, en de globe blijft: hij laat de pil
@@ -6598,9 +6648,10 @@ function openReis() {
 }
 // De reis sluiten is dezelfde beweging als een bestemming kiezen: inzoomen op de
 // wereld waar je vandaan kwam.
-function reisSluit() {
+/* stil: de tik klonk al (het tabblad Kaart, zie navGo). */
+function reisSluit(stil) {
   const idx = reisVanuit == null ? continueWorld(P()) : reisVanuit;
-  reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`));
+  reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`), stil === true);
 }
 /* Een bestemming kiezen = inzoomen op die plek -- letterlijk de vlucht van
    openReis, achteruit afgespeeld: het kaartje groeit uit tot de hele wereld.
@@ -6610,8 +6661,9 @@ function reisSluit() {
    is dat Werelden, en dáár moet de tekening juist overheen. Dus:
 
      z 2  Werelden          de nacht eronder blijft staan tot het einde -- dat is
-                            wat er te zien is rondom de groeiende tekening. Alleen
-                            de route en de andere werelden doven weg.
+                            wat er te zien is rondom de groeiende tekening. De
+                            route en de andere werelden schuiven het beeld uit
+                            (reisCamera) en doven in het laatste stuk weg.
      z 3  de vluchtlaag     de tekening zelf
      z 4  de kaart          zonder zijn tekening (die vliegt); de haltes, de weg,
                             de ster en de kop komen er in de laatste tel overheen
@@ -6624,18 +6676,18 @@ function reisSluit() {
    Wat er NIET gebeurt: er wordt niets afgemaakt, niets vrijgespeeld en niets
    verzet. reisDoel is één opdracht aan de eerstvolgende kaart en goMap verbruikt
    hem meteen; p.level, de sterren en de grens blijven precies staan. */
-function reisNaarWereld(idx, el) {
+function reisNaarWereld(idx, el, stil) {
   if (overgangBezig) return;
   vluchtKlaar();                             // zie openReis: eerst afsluiten, dan pas klassen
-  sndClick();
+  if (!stil) sndClick();
   const reis = $('screen-journey'), kaart = $('screen-map');
   reisStopWaarnemer();
   reisDoel = Math.max(0, Math.min(WORLDS.length - 1, idx | 0));
   const bron = worldForIndex(reisDoel);
   const r = (el && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
-  const stil = motionOff() || !r || !r.width || !kaart.animate || !reis.classList.contains('active');
-  const van = stil ? null : halteVlak(el);
-  if (stil || !van || !bron) {
+  const kaal = motionOff() || !r || !r.width || !kaart.animate || !reis.classList.contains('active');
+  const van = kaal ? null : halteVlak(el);
+  if (kaal || !van || !bron) {
     goMap();
     // reduced motion: geen verplaatsing, wel een kort opkomen -- zie openReis
     if (motionOff()) vluchtDoof($('tour-map'), true, 140);
@@ -6667,11 +6719,13 @@ function reisNaarWereld(idx, el) {
     const muntV = reis.querySelector('.diamond-badge'), muntN = kaart.querySelector('.diamond-badge');
     const muntKruist = !zelfdePlek(muntV, muntN);
     if (muntKruist) { overzicht.push(muntV); lokaal.push(muntN); }
+    let camera = null;
     const op = () => {
       overgangBezig = false;
       kaart.classList.remove('vlucht-weg', 'vlucht-boven');
       reis.classList.remove('wegvallend');
       el.classList.remove('vlucht-doel');
+      if (camera) camera();
       lokaal.concat(overzicht).forEach(a => {
         if (a && a.getAnimations) a.getAnimations().forEach(x => x.cancel());
       });
@@ -6681,8 +6735,15 @@ function reisNaarWereld(idx, el) {
     const kruis = wereldVlucht(van, naar, bron.world, op, true);
     // het plaatselijke werk komt in de laatste tel op, als de tekening er vrijwel is
     vluchtDoofAlle(lokaal.filter(x => x !== muntN), true, VLUCHT.detail, kruis - VLUCHT.detail);
-    // en de route eromheen laat los -- hij was de omgeving, niet de bestemming
-    vluchtDoofAlle(overzicht.filter(x => x !== muntV), false, VLUCHT.detail);
+    /* En de route eromheen laat los -- hij was de omgeving, niet de bestemming.
+       Niet meer ter plekke: de camera duwt in (zie reisCamera) en schuift de andere
+       werelden het beeld uit, en pas in het laatste stuk doven ze weg. Alleen de ←
+       gaat meteen: die hoort bij de kop, en de kop beweegt niet mee. */
+    camera = reisCamera(punt, 1, reisCameraSchaal(van, naar));
+    const terugKnop = reis.querySelector('.header-left');
+    vluchtDoofAlle(overzicht.filter(x => x !== muntV && x !== terugKnop), false,
+      VLUCHT.reveal, VLUCHT.duur - VLUCHT.reveal);
+    vluchtDoof(terugKnop, false, VLUCHT.detail);
     if (muntKruist) { vluchtDoof(muntV, false, VLUCHT.detail, 60); vluchtDoof(muntN, true, VLUCHT.detail, 150); }
     globeVlucht(kopVan, kaart.querySelector('.wp-cta-ico'), kruis);
     // de landing: de echte tekening eronder, en Werelden mag weg
@@ -12626,6 +12687,12 @@ function backTarget() {
   if ($('screen-trophies').classList.contains('active')) return goMap;
   // de reis ligt boven de kaart: terug is één stap inzoomen, niet het spel uit
   if ($('screen-journey').classList.contains('active')) return reisSluit;
+  /* Kijk je op de kaart in een andere wereld dan waar je speelt (een uitstapje via
+     Werelden), dan is terug eerst: naar huis, precies wat de gouden ⟲-pil doet.
+     Hier ging terug meteen naar de sterrenkeuze, en dat is het spel uit terwijl
+     je net één stap opzij had gezet. */
+  if ($('screen-map').classList.contains('active') && !$('world-back').hidden
+      && $('world-back').onclick) return $('world-back').onclick;
   if ($('screen-map').classList.contains('active')) return goProfiles;
   return null;   // screen-profile, niets open: dit ís de bodem -- browser/PWA handelt terug zelf verder af
 }

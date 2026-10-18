@@ -381,8 +381,11 @@
     width: 21px; height: 21px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: var(--tx-mini); font-weight: 700; line-height: 1; color: var(--gold-light);
-    background: rgba(18,7,34,.72);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    /* Geen backdrop-filter meer: het zegel ligt op een dichte tekening van 21px, en
+       vier pixels vervaging is daar niet te zien -- maar elk kaartje betaalde ervoor
+       zolang het scherm wegdoofde of schaalde (zie reisCamera). Het glas is een tikje
+       dichter gemaakt, zodat het zonder vervaging even rustig leest. */
+    background: rgba(18,7,34,.8);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
   }
   /* op slot: hetzelfde plekje, hetzelfde glas, alleen een wit teken */
