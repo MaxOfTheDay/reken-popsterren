@@ -484,7 +484,7 @@ function startMapEdit() {
           <div class="st-kleur">
             <div>weg<input id="mf-road" type="color" title="de gestippelde weg tussen de haltes"></div>
             <div>lucht<input id="mf-sky" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
-            <div>diepte<input id="mf-deep" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
+            <div>diepte<input id="mf-deep" type="color" title="de vloer onder de show, en de rand in liggende stand"></div>
             <div>gloed<input id="mf-glow" type="color" title="alleen zonder tekening"></div>
           </div>
           <div class="st-btns" style="margin-top:6px">
@@ -498,8 +498,9 @@ function startMapEdit() {
             <button id="st-zaal-kijk" title="de eerste show van deze wereld, op de gekozen toestelmaat">▶ bekijk in de show</button>
             <button class="stil" id="st-zaal-terug">↺ standaard</button>
           </div>
-          <p class="st-hint">De <b>weg</b> zie je altijd; lucht, diepte en gloed alleen zonder tekening
-            en aan de rand in liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
+          <p class="st-hint">De <b>weg</b> zie je altijd op de kaart. Lucht, diepte en gloed zie je in de
+            show (de diepte is de vloer) en op de kaart alleen zonder tekening of aan de rand in
+            liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
             een show: hoe lichter de tekening, hoe donkerder hij moet. De studio kiest beide zelf als
             je een tekening neerzet.</p>
         </details>
@@ -2581,7 +2582,7 @@ function startMapEdit() {
      tekening is hier al geladen en de plekken die ertoe doen liggen vast.
 
        lucht    het gemiddelde van de bovenste strook -- daar begint het verloop
-       diepte   het gemiddelde van de onderste strook, een slag donkerder
+       diepte   de tint van de lucht, maar donker: de vloer van de zaal
        gloed    de sterkst verzadigde tint in de ónderste helft, want dáár komt de
                 veeg te liggen
        weg      niet uit de tekening maar eróp: altijd licht, in de tint van de
@@ -2635,7 +2636,6 @@ function startMapEdit() {
     const data = g.getImageData(0, 0, br, ho).data;
 
     const boven = naarHsl(strook(data, br, ho, 0, 14));
-    const onder = naarHsl(strook(data, br, ho, 84, 100));
     /* De gloed is de veeg ónderaan het kader (zie .world-frame.no-art), dus die
        wordt daar gezocht en niet in de hele tekening: het gemiddelde van de sterkst
        verzadigde tiende van de onderste veertig procent. Zocht dit over het hele
@@ -2679,7 +2679,14 @@ function startMapEdit() {
     return {
       dim,
       sky:  hslHex(boven.h, Math.min(.72, Math.max(.2, boven.s)), Math.min(.42, Math.max(.16, boven.l))),
-      deep: hslHex(onder.h, Math.min(.7, Math.max(.25, onder.s)), Math.min(.16, Math.max(.05, onder.l * .45))),
+      /* De diepte is de vloer van de zaal (.venue-sfeer en .venue-licht in 50-zaal.css), en die
+         hoort een donkere versie van de wereld te zijn: groen in de jungle, blauw
+         in het ijs. Hij kwam eerst uit de onderste strook van de tekening, maar
+         daar liggen meestal zand en rotsen: Circus, Dino en Vuur kregen zo een
+         vaalbruine vloer en Onderwater een paarsgrijze. De tint komt nu van de
+         lucht, met de verzadiging en helderheid waar de werelden met de hand-
+         gekozen kleuren (Muziek tot en met Tover) gemiddeld op uitkwamen. */
+      deep: hslHex(boven.h, .6, .12),
       glow: hslHex(gloedH, Math.min(.62, Math.max(.28, gloedS)), .34),
       road: beste,
     };

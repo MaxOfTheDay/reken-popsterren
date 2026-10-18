@@ -485,7 +485,7 @@ function startMapEdit() {
           <div class="st-kleur">
             <div>weg<input id="mf-road" type="color" title="de gestippelde weg tussen de haltes"></div>
             <div>lucht<input id="mf-sky" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
-            <div>diepte<input id="mf-deep" type="color" title="alleen zonder tekening, en de rand in liggende stand"></div>
+            <div>diepte<input id="mf-deep" type="color" title="de vloer onder de show, en de rand in liggende stand"></div>
             <div>gloed<input id="mf-glow" type="color" title="alleen zonder tekening"></div>
           </div>
           <div class="st-btns" style="margin-top:6px">
@@ -499,8 +499,9 @@ function startMapEdit() {
             <button id="st-zaal-kijk" title="de eerste show van deze wereld, op de gekozen toestelmaat">▶ bekijk in de show</button>
             <button class="stil" id="st-zaal-terug">↺ standaard</button>
           </div>
-          <p class="st-hint">De <b>weg</b> zie je altijd; lucht, diepte en gloed alleen zonder tekening
-            en aan de rand in liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
+          <p class="st-hint">De <b>weg</b> zie je altijd op de kaart. Lucht, diepte en gloed zie je in de
+            show (de diepte is de vloer) en op de kaart alleen zonder tekening of aan de rand in
+            liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
             een show: hoe lichter de tekening, hoe donkerder hij moet. De studio kiest beide zelf als
             je een tekening neerzet.</p>
         </details>
@@ -2636,7 +2637,6 @@ function startMapEdit() {
     const data = g.getImageData(0, 0, br, ho).data;
 
     const boven = naarHsl(strook(data, br, ho, 0, 14));
-    const onder = naarHsl(strook(data, br, ho, 84, 100));
 
 
 
@@ -2680,7 +2680,14 @@ function startMapEdit() {
     return {
       dim,
       sky:  hslHex(boven.h, Math.min(.72, Math.max(.2, boven.s)), Math.min(.42, Math.max(.16, boven.l))),
-      deep: hslHex(onder.h, Math.min(.7, Math.max(.25, onder.s)), Math.min(.16, Math.max(.05, onder.l * .45))),
+
+
+
+
+
+
+
+      deep: hslHex(boven.h, .6, .12),
       glow: hslHex(gloedH, Math.min(.62, Math.max(.28, gloedS)), .34),
       road: beste,
     };
