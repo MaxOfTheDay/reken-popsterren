@@ -12414,6 +12414,12 @@ function noot(freq, dur, delay, type, vol) {
 
 
 
+
+
+
+
+
+
 const HERHAALREM = 60;
 const klankTijd = {};
 const SFX = {
@@ -12444,7 +12450,13 @@ const SFX = {
 
 
 
-  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]], tril: 35 },
+
+
+
+
+
+
+  'answer.retry':   { noten: [[494, 0.15, 0, 'triangle', 0.09], [392, 0.22, 0.12, 'triangle', 0.08]] },
 
 
 
@@ -12496,7 +12508,16 @@ const SFX = {
 
 
 
-  'show.complete':  { noten: [[523, 0.13, 0, 'sine', 0.18], [659, 0.13, 0.10, 'sine', 0.18], [784, 0.13, 0.20, 'sine', 0.18]], tril: [0, 45, 60, 45, 60, 90] },
+
+
+
+
+  'show.complete':  { noten: [[523, 0.13, 0, 'sine', 0.18], [659, 0.13, 0.10, 'sine', 0.18], [784, 0.13, 0.20, 'sine', 0.18]], tril: [0, 40, 60, 60] },
+
+
+
+
+
 
 
 
@@ -17071,7 +17092,7 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
       if (wereldReisOp === wachten) wereldReisOp = null;
       map.style.pointerEvents = '';
       wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.munt)));
+    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.landt)));
   });
 }
 
@@ -17102,14 +17123,20 @@ function flyBadge(vanEl, naarEl, teken) {
 
 
 
+
+
+
+
+
+
   setTimeout(() => {
-    sndCoin();
+    sndTap();
     if (naarEl.isConnected && naarEl.animate) naarEl.animate(
       [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
       { duration: 320, easing: MOTION.plop });
-  }, Math.round(BADGE.duur * BADGE.munt));
+  }, Math.round(BADGE.duur * BADGE.landt));
 }
-const BADGE = { duur: 1100, munt: .82 };
+const BADGE = { duur: 1100, landt: .82 };
 
 
 
@@ -17502,7 +17529,6 @@ function openTrophy(id) {
 function celebrateTrophy(t) {
   const reduce = motionOff();
   sndClick();
-  buzz(20);
   const ov = openOverlay('trophy-pop-overlay',
     '<div class="pop-panel trophy-pop"><div class="tp-head">Nieuwe trofee!</div>'
     + '<div class="tp-stage">'
@@ -17528,7 +17554,6 @@ function celebrateTrophy(t) {
     if (!ov.isConnected || pop.classList.contains('burst')) return;
     pop.classList.add('burst');
     sndGroot();
-    buzz([0, 40, 60, 40, 90]);
     if (!reduce) {
       const center = () => { const r = pop.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height * 0.42]; };
       const [cx, cy] = center();
@@ -17642,7 +17667,6 @@ function wereldFeest(f) {
     dicht();
   };
   sndGroot();
-  buzz([0, 40, 60, 40, 90]);
   if (!reduce) {
     const panel = ov.querySelector('.wereld-feest');
     const r = panel.getBoundingClientRect();
@@ -19449,7 +19473,6 @@ function bumpPintjeTaps(el) {
   for (let i = 0; i < 10; i++) setTimeout(() => sparkleAt(r, ['🍺', '🍻', '🫧']), i * 70);
   showPraise('Schol! 🍻');
   sndCoin();
-  buzz([0, 20, 60, 20]);
 }
 
 
@@ -19548,6 +19571,8 @@ function endLevel(success) {
 
   let feest = null;
 
+  let zin = null;
+
 
   const wl = worldFor(lvl);
   $('end-lvl-label').innerHTML = `${wl.world.icon} ${esc(korteNaam(wl.world))}`
@@ -19586,6 +19611,9 @@ function endLevel(success) {
     $('end-title').textContent = stars === 3 ? `🎉 Show ${wl.nr} was geweldig!`
       : stars === 2 ? `👏 Show ${wl.nr} was goed!`
       : `🎤 Show ${wl.nr} gehaald!`;
+    zin = stars === 3 ? 'Drie sterren! Super gedaan!'
+      : stars === 2 ? 'Twee sterren! Goed zo!'
+      : 'Eén ster! Je hebt de show gehaald!';
     renderEndStars(stars);
 
 
@@ -19636,6 +19664,7 @@ function endLevel(success) {
 
     save();
     $('end-title').textContent = '🎭 Bijna!';
+    zin = 'Bijna! Probeer het nog eens.';
     $('end-stars').textContent = '💪';
     $('end-text').textContent = 'Oefening baart kunst — probeer het nog eens!';
     $('end-milestone').innerHTML = '';
@@ -19688,6 +19717,18 @@ function endLevel(success) {
   const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
+
+
+
+
+
+
+
+
+  if (zin && !feest) {
+    const wanneer = !success ? EINDE.mislukt : motionOff() ? STERCEREMONIE.stil : EINDE.beloning;
+    setTimeout(() => { if ($('screen-end').classList.contains('active')) speak(zin); }, wanneer);
+  }
 }
 
 
@@ -19707,7 +19748,10 @@ const STERCEREMONIE = {
 
 
 
-  stil: 320,
+
+
+  stilEerste: 340,
+  stilTussen: 150,
 };
 
 
@@ -19715,6 +19759,10 @@ const STERCEREMONIE = {
 STERCEREMONIE.totaal = Math.max(
   STERCEREMONIE.eerste + 2 * STERCEREMONIE.tussen + STERCEREMONIE.land,
   STERCEREMONIE.knal + STERCEREMONIE.puls);
+
+
+STERCEREMONIE.stil = STERCEREMONIE.stilEerste + 2 * STERCEREMONIE.stilTussen
+  + Math.round(SFX['star.land'].noten[0][1] * 1000);
 
 function naSterren() { return motionOff() ? STERCEREMONIE.stil : STERCEREMONIE.totaal; }
 
@@ -19755,6 +19803,7 @@ function eindKomtOp(success) {
 
 
 
+
 function renderEndStars(n) {
   const wrap = $('end-stars');
   wrap.innerHTML = '';
@@ -19764,7 +19813,11 @@ function renderEndStars(n) {
     s.textContent = '⭐';
     if (i >= n) s.className = 'dim';
     wrap.appendChild(s);
-    if (still || !s.animate) continue;
+    if (still || !s.animate) {
+
+      if (i < n) setTimeout(() => playSfx('star.land', { i }), STERCEREMONIE.stilEerste + i * STERCEREMONIE.stilTussen);
+      continue;
+    }
     s.style.opacity = '0';
     setTimeout(() => {
       s.style.opacity = '';
@@ -20413,7 +20466,6 @@ function zetWens(id) {
   renderDressBar(it, p);
   paintShop();
   if (p.wens === id) {
-    buzz(15);
     showToast('💖', null, 'Je wens!');
     toastWeg(1300);
   }
