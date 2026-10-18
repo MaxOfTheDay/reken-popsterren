@@ -71,6 +71,9 @@ npm run studio      -> Werelden -> + Nieuwe wereld
    en zet hem om naar webp. Begroting: ongeveer 125 kB — de keuring waarschuwt
    boven 200 kB. Komt hij erboven uit, dan zakt de studio zelf met de kwaliteit
    tot hij past, maar niet onder 0.55; het paneel zegt welke kwaliteit het werd.
+   Tegelijk maakt hij `assets/world/<id>-klein.webp` (560 breed), het kaartje
+   waarmee de wereld op Werelden staat. Dat hoort mee in de commit; ontbreekt
+   het, dan zegt `npm run check` het (zaak B) en valt de reis terug op de grote.
    **Kleuren en zaal** zet de studio er meteen bij, uit de tekening: de lucht, de
    diepte, de gloed, de weg die het meest opvalt, en hoe donker de zaal achter de
    show moet (een lichte tekening wil meer donker). Bijsturen kan onder

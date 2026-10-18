@@ -54,7 +54,9 @@ const SCHRIJFBAAR = Object.keys(scene.SLOTS)
   .map(k => scene.SLOTS[k].pad)
   .filter(pad => pad && /^assets\/[a-z0-9/{}-]+\.webp$/.test(pad))
   .map(pandNaarRegex)
-  .concat([/^assets\/branding\/source\/(wordmark|mark|appicon)\.webp$/]);
+  .concat([/^assets\/branding\/source\/(wordmark|mark|appicon)\.webp$/])
+  // het kleine broertje van elke wereldkaart, voor de reis (zie wereldKleinPad)
+  .concat([/^assets\/world\/[a-z0-9-]+-klein\.webp$/]);
 const magSchrijven = p => SCHRIJFBAAR.some(re => re.test(p));
 
 function kb(schijf, pad) {
