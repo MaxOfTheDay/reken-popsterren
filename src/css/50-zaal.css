@@ -552,7 +552,10 @@
     box-shadow: 0 4px 14px rgba(0,0,0,.32);
   }
   .mem-fab span { font-size: var(--tx-mini); font-weight: 700; }
-  /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning */
+  /* wat het oplevert stáát er nu op: het was een knop zonder beloofde beloning.
+     Met een plus ervoor ("💎 +9"), net als het opbrengstvakje op het eindscherm:
+     zonder plus was het precies de prijspil uit de kleedkamer ("💎 15"), en las
+     het als betalen om te mogen spelen. */
   .mem-fab .mem-pay { font-size: var(--tx-mini); font-weight: 700; opacity: .88; letter-spacing: .01em; }
   .mem-fab:active { transform: scale(.95); }
   /* ---- Op het kortste scherm: het woord eraf --------------------------------
