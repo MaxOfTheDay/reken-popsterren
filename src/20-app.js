@@ -6693,94 +6693,10 @@ function renderTourMap(travelFrom) {
   applyWorldTheme(scherm, shown.world);
   scherm.style.setProperty('--art', shown.world.art ? `url("${shown.world.art}")` : 'none');
 
-  // De weg: één vloeiende curve door álle haltes, met het afgelegde stuk in goud
-  // eroverheen. Getekend uit dezelfde percentages als de haltes, in de viewBox van
-  // de tekening -- daarom valt hij op elk scherm precies op de haltes.
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('class', 'tour-road-svg');
-  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
-  svg.setAttribute('aria-hidden', 'true');
-  const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
-  const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
-  // drie lagen: een donkere onderlaag voor de leesbaarheid, het hele pad dof, en
-  // het afgelegde stuk in goud daar bovenop
-  const unPath = mkPath('tour-road-under'), bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
-  const curve = shown.world.curve;
-  const heleWeg = roadD(pts, pts.length, curve);
-  unPath.setAttribute('d', heleWeg);
-  bgPath.setAttribute('d', heleWeg);
-  const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
-  fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
-  svg.appendChild(unPath);
-  svg.appendChild(bgPath);
-  svg.appendChild(fgPath);
-  frame.appendChild(svg);
-  // pas mét de SVG in de opmaak kun je een pad opmeten, dus het streeppatroon hier
-  const heelPatroon = roadDashArray(svg, pts, curve, pts.length);
-  unPath.style.strokeDasharray = heelPatroon;
-  bgPath.style.strokeDasharray = heelPatroon;
-  fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
+  tekenWeg(frame, shown, nodes, playable);
 
-  nodes.forEach((n, i) => {
-    const lvl = shown.first + i;
-    const open = lvl <= playable;
-    const st = p.stars[lvl] || 0;
-    const b = document.createElement('button');
-    // tijdens de reis-tussenstand is er even geen "hier spelen"-halte
-    b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === heroLvl) ? 'next' : 'done');
-    b.dataset.lvl = lvl;
-    b.style.left = n.x + '%';
-    b.style.top = n.y + '%';
-    // drie sterren = deze halte is áf (zie .tour-stop.perfect). Sinds fase 4C zit
-    // dat in de rand en in het gouden sterrentabje, en niet meer in een glans die
-    // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
-    if (open && st === 3) b.classList.add('perfect');
-    const hero = lvl === heroLvl
-      ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
-        + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
-
-    // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
-    // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar
-    // al sterren liggen -- zie starRowHTML.
-    const gespeeld = open && lvl < playable;
-    // rondje + sterrentabje zitten in één blokje: dat is wat er bij een tik
-    // indrukt, en wat als geheel bij deze halte hoort (zie .stop-body)
-    const sterrenRij = starRowHTML(st, gespeeld);
-    /* Het aankomst-moment hangt aan de sterrenrij en niet aan "gespeeld": speel je
-       een halte over zonder dat de voortgang opschuift, dan is gespeeld false maar
-       staat er wél een score -- en juist die mag je zien bijwerken. */
-    if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
-    /* Het schatteken bij de laatste halte (fase 6E). Alleen daar, alleen zolang
-       de schat van deze wereld nog niet van haar is, en bewust niets meer dan een
-       ✨: wát er ligt hoort ze op het feestje te horen en niet hier van de kaart
-       af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
-       loopt -- dat is de bedoeling ("daar ligt iets") en niet een tweede
-       statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft. */
-    const laatste = i === nodes.length - 1;
-    const schat = laatste ? beloningItem(shown.world) : null;
-    const schatTeken = (schat && !p.owned.includes(schat.id))
-      ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
-    b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
-      + `${schatTeken}${sterrenRij}</div>`;
-    /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
-       schermlezer doorloopt heeft geen kleur en geen plek op de route -- daar is
-       "nog op slot" het enige wat de staat draagt, en dat is geen beeldruis. */
-    b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
-      + (open ? ` — ${st} van 3 sterren` : ' — nog op slot')
-      + (schatTeken ? ' — hier ligt een wereldschat' : ''));
-    // Tikken op een halte is niet "start een level" maar "ga die plek binnen":
-    // enterLevel doet het klikje, de halte-reactie en de overgang, en roept
-    // startLevel meteen zelf aan. Zie de bewegingstaal boven goMap.
-    /* Zij staat ín de knop van haar halte, dus een tik op haar komt hier ook
-       langs. Dat is nooit "speel": de halte eronder is de enige weg de zaal in
-       (zie kaartTik). */
-    if (open) b.onclick = e => {
-      const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
-      if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
-    };
-    frame.appendChild(b);
-  });
+  const stand = { p, playable, travelling, heroLvl, netAfLvl };
+  nodes.forEach((n, i) => frame.appendChild(haltKnop(shown, nodes, i, stand)));
 
   // naar een eerdere wereld terug (om daar te verbeteren), of vooruit tot zo ver
   // als ze zelf al gekomen is -- nooit verder
@@ -6840,6 +6756,104 @@ function renderTourMap(travelFrom) {
   else tourMapVoltooi = voltooi;
   // schuift de kaart, dan schuift zij onder de plakkende kop door
   map.onscroll = kaartScroll;
+}
+
+/* De weg op de kaart: drie lagen in de viewBox van de tekening, zie hieronder.
+   Los van renderTourMap omdat hij niets van de haltes zelf weet -- alleen waar
+   ze staan en tot waar ze open zijn. */
+function tekenWeg(frame, shown, nodes, playable) {
+  // De weg: één vloeiende curve door álle haltes, met het afgelegde stuk in goud
+  // eroverheen. Getekend uit dezelfde percentages als de haltes, in de viewBox van
+  // de tekening -- daarom valt hij op elk scherm precies op de haltes.
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'tour-road-svg');
+  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  svg.setAttribute('aria-hidden', 'true');
+  const pts = nodes.map(n => ({ x: vbx(n.x), y: vby(n.y) }));
+  const mkPath = cls => { const e = document.createElementNS(svgNS, 'path'); e.setAttribute('class', cls); return e; };
+  // drie lagen: een donkere onderlaag voor de leesbaarheid, het hele pad dof, en
+  // het afgelegde stuk in goud daar bovenop
+  const unPath = mkPath('tour-road-under'), bgPath = mkPath('tour-road-bg'), fgPath = mkPath('tour-road-fg');
+  const curve = shown.world.curve;
+  const heleWeg = roadD(pts, pts.length, curve);
+  unPath.setAttribute('d', heleWeg);
+  bgPath.setAttribute('d', heleWeg);
+  const lastOpen = Math.min(nodes.length - 1, playable - shown.first);
+  fgPath.setAttribute('d', roadD(pts, lastOpen + 1, curve));
+  svg.appendChild(unPath);
+  svg.appendChild(bgPath);
+  svg.appendChild(fgPath);
+  frame.appendChild(svg);
+  // pas mét de SVG in de opmaak kun je een pad opmeten, dus het streeppatroon hier
+  const heelPatroon = roadDashArray(svg, pts, curve, pts.length);
+  unPath.style.strokeDasharray = heelPatroon;
+  bgPath.style.strokeDasharray = heelPatroon;
+  fgPath.style.strokeDasharray = roadDashArray(svg, pts, curve, lastOpen + 1);
+}
+/* Eén halte op de kaart, als knop. stand is wat renderTourMap één keer
+   uitrekent en voor elke halte hetzelfde is (wie, tot waar open, waar de ster
+   staat, welke halte net af is). */
+function haltKnop(shown, nodes, i, stand) {
+  const { p, playable, travelling, heroLvl, netAfLvl } = stand;
+  const n = nodes[i];
+  const lvl = shown.first + i;
+  const open = lvl <= playable;
+  const st = p.stars[lvl] || 0;
+  const b = document.createElement('button');
+  // tijdens de reis-tussenstand is er even geen "hier spelen"-halte
+  b.className = 'tour-stop ' + (!open ? 'locked' : (!travelling && lvl === heroLvl) ? 'next' : 'done');
+  b.dataset.lvl = lvl;
+  b.style.left = n.x + '%';
+  b.style.top = n.y + '%';
+  // drie sterren = deze halte is áf (zie .tour-stop.perfect). Sinds fase 4C zit
+  // dat in de rand en in het gouden sterrentabje, en niet meer in een glans die
+  // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
+  if (open && st === 3) b.classList.add('perfect');
+  const hero = lvl === heroLvl
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
+      + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
+
+  // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
+  // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar
+  // al sterren liggen -- zie starRowHTML.
+  const gespeeld = open && lvl < playable;
+  // rondje + sterrentabje zitten in één blokje: dat is wat er bij een tik
+  // indrukt, en wat als geheel bij deze halte hoort (zie .stop-body)
+  const sterrenRij = starRowHTML(st, gespeeld);
+  /* Het aankomst-moment hangt aan de sterrenrij en niet aan "gespeeld": speel je
+     een halte over zonder dat de voortgang opschuift, dan is gespeeld false maar
+     staat er wél een score -- en juist die mag je zien bijwerken. */
+  if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
+  /* Het schatteken bij de laatste halte (fase 6E). Alleen daar, alleen zolang
+     de schat van deze wereld nog niet van haar is, en bewust niets meer dan een
+     ✨: wát er ligt hoort ze op het feestje te horen en niet hier van de kaart
+     af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
+     loopt -- dat is de bedoeling ("daar ligt iets") en niet een tweede
+     statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft. */
+  const laatste = i === nodes.length - 1;
+  const schat = laatste ? beloningItem(shown.world) : null;
+  const schatTeken = (schat && !p.owned.includes(schat.id))
+    ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
+  b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
+    + `${schatTeken}${sterrenRij}</div>`;
+  /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
+     schermlezer doorloopt heeft geen kleur en geen plek op de route -- daar is
+     "nog op slot" het enige wat de staat draagt, en dat is geen beeldruis. */
+  b.setAttribute('aria-label', `${shown.world.name}, show ${i + 1}`
+    + (open ? ` — ${st} van 3 sterren` : ' — nog op slot')
+    + (schatTeken ? ' — hier ligt een wereldschat' : ''));
+  // Tikken op een halte is niet "start een level" maar "ga die plek binnen":
+  // enterLevel doet het klikje, de halte-reactie en de overgang, en roept
+  // startLevel meteen zelf aan. Zie de bewegingstaal boven goMap.
+  /* Zij staat ín de knop van haar halte, dus een tik op haar komt hier ook
+     langs. Dat is nooit "speel": de halte eronder is de enige weg de zaal in
+     (zie kaartTik). */
+  if (open) b.onclick = e => {
+    const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
+    if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
+  };
+  return b;
 }
 /* Hoe hoog de kop en de navigatiebalk werkelijk zijn. De wereldknoppen gaan daar
    tussenin staan, en die maten hangen af van het lettertype, de veilige zones van
@@ -9364,101 +9378,107 @@ function submitAnswer(val, btnEl) {
   }
   const q = G.qs[G.idx];
   const p = P();
-  if (val === q.ans) {
-    // ---- juist ----
-    G.lock = true;
-    stopSpot();
-    hideToast();   // een hint van een vorige misser mag het "Goed zo!"-moment niet overschaduwen
-    const firstTry = !G.retried;                 // in één keer goed?
-    updatePerf(p, true, firstTry && G.spot > 0);
-    // per-bewerking-beheersing (voor klaarheid extra uitdagingen) + drie-getallen-tempo
-    // G.spot staat nog op de stand van het moment van antwoorden (stopSpot laat 'm staan)
-    if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
-    else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
-    else if (q.count) updateCountAcc(p, true, firstTry);
-    p.stats.correct++;
-    // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
-    // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
-    if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
-    let gain = 2;
-    if (firstTry && G.spot > 0) gain += 1;       // spotlight-bonus enkel bij directe treffer
-    G.streak++;
-    let streakBonus = false;
-    if (G.streak % 3 === 0) { gain += 2; streakBonus = true; }
-    if (q.gold) { gain *= 3; p.goldHits++; }     // gouden vraag: 3× zoveel
-    G.earned += gain;
-    p.diamonds += gain;
-    // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
-    // je speelt, hoe sneller hij volloopt. Vol = applaus, met bonusdiamanten.
-    let fanMul = 1;
-    if (!firstTry) fanMul = 0.5;               // een herkansing laat het publiek maar half zo hard juichen
-    else {
-      if (G.spot > 0) fanMul += 0.5;           // snel, binnen de spotlight
-      if (streakBonus) fanMul += 0.5;          // op een streak-mijlpaal (3 op een rij)
-      if (q.gold) fanMul += 1;                 // gouden vraag laat de zaal helemaal los
-    }
-    G.fan += G.fanStep * fanMul;
-    let encore = false;
-    if (G.fan >= 100) {
-      G.fan -= 100; encore = true;             // overschot blijft staan voor een mogelijke tweede encore
-      p.diamonds += 5; G.earned += 5; p.encores++;
-    }
-    save();
-    if (btnEl) btnEl.classList.add('good');
-    // Eerst landt het antwoord in de som (zie "= De som valt dicht"), en dán pas
-    // vliegen de diamanten -- uit de dichte som naar de teller: jouw antwoord
-    // maakt de som af, en de som betaalt je uit. Zonder vakje (telmodus) komen ze
-    // gewoon uit de knop, zoals altijd.
-    const vak = somVult(q, btnEl);
-    // alleen wachten als er ook echt een getal vliegt (niet zonder knop, niet in
-    // de typmodus, niet bij beperkte beweging) -- somVlucht staat dan klaar
-    const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
-    // De teller wacht op wat eraan komt (zie telStraks): eerst vliegen ze, dan
-    // staat het er. Bewaren doet save() hierboven, meteen en zonder te wachten.
-    /* In de show vliegen ze sneller dan in de kleedkamer (DIA_SHOW i.p.v. 620):
-       de teller moet klaar zijn met tellen vóór de volgende som komt (950). Op
-       de gewone duur landde het laatste steentje bovenop de nieuwe som. */
-    telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_SHOW);
-    // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
-    const diaVan = vak || btnEl || $('question-card');
-    setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2, DIA_SHOW), vlucht);
-    /* Het publiek klapt extra hard, en zij buigt (zie buiging). Hier stond
-       "🎆 EXTRA SHOW!", en een extra show kwam er nooit -- de meter erachter is
-       sinds fase 1 onzichtbaar, dus een kind kreeg een belofte die niets deed.
-       Nu is wat er staat ook wat er gebeurt. "Applaus" en niet "toegift": dat
-       kent elk kind, en voor applaus buig je. */
-    /* DE VOLGORDE. Het klankje en de knop zijn het antwoord op de tik en komen
-       meteen. Het feest -- de lof met "💎 +2", de dans, de zaal die oplicht, het
-       voortgangsvakje -- komt pas als het getal in de som geland is (vlucht).
-       Stond dat allemaal op 0, dan keek een kind op drie plekken tegelijk en
-       stond de beloning er al voordat het antwoord aankwam. Zonder vlucht
-       (typmodus, telmodus, beperkte beweging) is vlucht 0 en is alles meteen. */
-    if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
-    if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
-    const trofees = checkTrophies(p);
-    if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
-    const g = G;
-    const feest = () => {
-      if (G !== g) return;   // de show is intussen gestopt
-      if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
-      else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
-      else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
-      else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
-      else showPraise(pick(PRAISE), '💎 +' + gain);
-      if (encore) buiging('game-avatar-inner');
-      else dance('game-avatar-inner');
-      zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
-      renderSegBar($('qprogress'), G.total, G.idx + 1, false);   // dit vakje is nu gehaald
-    };
-    if (vlucht) setTimeout(feest, vlucht); else feest();
-    // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
-    // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
-    // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
-    // bedoeld om op te vallen.
-    setTimeout(nextStep, encore || q.gold ? 1400 : 950);
-    return;
+  if (val === q.ans) antwoordGoed(q, p, btnEl);
+  else antwoordFout(q, p, val, btnEl);
+}
+/* Een goed antwoord: tellen, belonen, en in DE VOLGORDE hieronder het feest.
+   submitAnswer zelf zegt alleen nog wélke van de twee het is. */
+function antwoordGoed(q, p, btnEl) {
+  G.lock = true;
+  stopSpot();
+  hideToast();   // een hint van een vorige misser mag het "Goed zo!"-moment niet overschaduwen
+  const firstTry = !G.retried;                 // in één keer goed?
+  updatePerf(p, true, firstTry && G.spot > 0);
+  // per-bewerking-beheersing (voor klaarheid extra uitdagingen) + drie-getallen-tempo
+  // G.spot staat nog op de stand van het moment van antwoorden (stopSpot laat 'm staan)
+  if (q.kind === 'classic') updateOpAcc(p, q.op, true, firstTry, fastEnough(G.mode, G.spot));
+  else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
+  else if (q.count) updateCountAcc(p, true, firstTry);
+  p.stats.correct++;
+  // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
+  // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
+  if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
+  let gain = 2;
+  if (firstTry && G.spot > 0) gain += 1;       // spotlight-bonus enkel bij directe treffer
+  G.streak++;
+  let streakBonus = false;
+  if (G.streak % 3 === 0) { gain += 2; streakBonus = true; }
+  if (q.gold) { gain *= 3; p.goldHits++; }     // gouden vraag: 3× zoveel
+  G.earned += gain;
+  p.diamonds += gain;
+  // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
+  // je speelt, hoe sneller hij volloopt. Vol = applaus, met bonusdiamanten.
+  let fanMul = 1;
+  if (!firstTry) fanMul = 0.5;               // een herkansing laat het publiek maar half zo hard juichen
+  else {
+    if (G.spot > 0) fanMul += 0.5;           // snel, binnen de spotlight
+    if (streakBonus) fanMul += 0.5;          // op een streak-mijlpaal (3 op een rij)
+    if (q.gold) fanMul += 1;                 // gouden vraag laat de zaal helemaal los
   }
-  // ---- fout ---- (zachte, vriendelijke animatie)
+  G.fan += G.fanStep * fanMul;
+  let encore = false;
+  if (G.fan >= 100) {
+    G.fan -= 100; encore = true;             // overschot blijft staan voor een mogelijke tweede encore
+    p.diamonds += 5; G.earned += 5; p.encores++;
+  }
+  save();
+  if (btnEl) btnEl.classList.add('good');
+  // Eerst landt het antwoord in de som (zie "= De som valt dicht"), en dán pas
+  // vliegen de diamanten -- uit de dichte som naar de teller: jouw antwoord
+  // maakt de som af, en de som betaalt je uit. Zonder vakje (telmodus) komen ze
+  // gewoon uit de knop, zoals altijd.
+  const vak = somVult(q, btnEl);
+  // alleen wachten als er ook echt een getal vliegt (niet zonder knop, niet in
+  // de typmodus, niet bij beperkte beweging) -- somVlucht staat dan klaar
+  const vlucht = vak && somVlucht ? SOM_VLUCHT : 0;
+  // De teller wacht op wat eraan komt (zie telStraks): eerst vliegen ze, dan
+  // staat het er. Bewaren doet save() hierboven, meteen en zonder te wachten.
+  /* In de show vliegen ze sneller dan in de kleedkamer (DIA_SHOW i.p.v. 620):
+     de teller moet klaar zijn met tellen vóór de volgende som komt (950). Op
+     de gewone duur landde het laatste steentje bovenop de nieuwe som. */
+  telStraks($('game-diamonds'), p.diamonds, vlucht + DIA_SHOW);
+  // verdiende diamanten vliegen naar de teller — zelfde taal als kopen in de kleedkamer
+  const diaVan = vak || btnEl || $('question-card');
+  setTimeout(() => flyDiamonds(diaVan, $('game-diamonds'), q.gold ? 3 : 2, DIA_SHOW), vlucht);
+  /* Het publiek klapt extra hard, en zij buigt (zie buiging). Hier stond
+     "🎆 EXTRA SHOW!", en een extra show kwam er nooit -- de meter erachter is
+     sinds fase 1 onzichtbaar, dus een kind kreeg een belofte die niets deed.
+     Nu is wat er staat ook wat er gebeurt. "Applaus" en niet "toegift": dat
+     kent elk kind, en voor applaus buig je. */
+  /* DE VOLGORDE. Het klankje en de knop zijn het antwoord op de tik en komen
+     meteen. Het feest -- de lof met "💎 +2", de dans, de zaal die oplicht, het
+     voortgangsvakje -- komt pas als het getal in de som geland is (vlucht).
+     Stond dat allemaal op 0, dan keek een kind op drie plekken tegelijk en
+     stond de beloning er al voordat het antwoord aankwam. Zonder vlucht
+     (typmodus, telmodus, beperkte beweging) is vlucht 0 en is alles meteen. */
+  if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
+  if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
+  const trofees = checkTrophies(p);
+  if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
+  const g = G;
+  const feest = () => {
+    if (G !== g) return;   // de show is intussen gestopt
+    if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
+    else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
+    else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
+    else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
+    else showPraise(pick(PRAISE), '💎 +' + gain);
+    if (encore) buiging('game-avatar-inner');
+    else dance('game-avatar-inner');
+    zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
+    renderSegBar($('qprogress'), G.total, G.idx + 1, false);   // dit vakje is nu gehaald
+  };
+  if (vlucht) setTimeout(feest, vlucht); else feest();
+  // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
+  // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
+  // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
+  // bedoeld om op te vallen.
+  setTimeout(nextStep, encore || q.gold ? 1400 : 950);
+}
+/* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
+   hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
+   (het hartje, en het antwoord). */
+function antwoordFout(q, p, val, btnEl) {
   updatePerf(p, false, false);
   p.stats.wrong++;
   incWeak(p, q);                                  // deze som vaker laten terugkomen
@@ -9479,19 +9499,22 @@ function submitAnswer(val, btnEl) {
   // een misser op een speciale vraag maakt de ronde "niet schoon" → frequentie omlaag
   if (q.kind === 'missing') G.missDirty = true;
   else if (q.kind === 'chain') G.chainDirty = true;
-  if (!G.retried) {
-    // eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
-    G.retried = true;
-    G.misses++;
-    stopSpot(); G.spot = 0; zetSpot(0);
-    save();
-    if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
-    if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
-    if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
-    else toonHint(q, val, btnEl);
-    return;                                        // G.lock blijft false → kind mag opnieuw antwoorden
-  }
-  // tweede misser: hartje kwijt, antwoord tonen en door
+  if (!G.retried) eersteMisser(q, val, btnEl);   // G.lock blijft false → kind mag opnieuw antwoorden
+  else tweedeMisser(q, p, btnEl);
+}
+// eerste misser: nog géén hartje kwijt, wél een tweede kans met een hint
+function eersteMisser(q, val, btnEl) {
+  G.retried = true;
+  G.misses++;
+  stopSpot(); G.spot = 0; zetSpot(0);
+  save();
+  if (btnEl) { btnEl.classList.add('bad'); btnEl.disabled = true; }  // deze keuze uitschakelen
+  if (G.mode === 'typ') { G.input = ''; drawQuestion(); }
+  if (G.count) { countMissSpeak(q, val); showToast('🤔', null, null, 'teken'); }   // lees-vrij: gesproken hint, geen tekst
+  else toonHint(q, val, btnEl);
+}
+// tweede misser: hartje kwijt, antwoord tonen en door
+function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
