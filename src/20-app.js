@@ -88,9 +88,9 @@
      Start .............. opstarten, service worker
      -- Ontwikkelaarsschakelaars   alles achter ?debug
      -- Kijkstanden ..... ?debug&wereld=n&stand=... : een stand zonder spelen
-     -- Wereldstudio .... ?debug&mapedit. Bijna een vijfde van dit scriptblok en
-                          het gewone spel raakt het nooit aan — sla het over
-                          tenzij je er expliciet aan werkt
+     -- Wereldstudio .... ?debug&mapedit. Staat niet hier maar in
+                          src/90-wereldstudio.js, en wordt als studio.js pas
+                          opgehaald als hij opengaat (zie laadStudio)
 
    Twee koppen lijken op elkaar; zoek op genoeg letters. "= Werelden" is de
    tabel, "= Wereldbeloningen" wat een wereld uitdeelt, "= De wereldbeloningen"

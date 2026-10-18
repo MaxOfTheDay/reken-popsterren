@@ -18,7 +18,7 @@ De vuistregel waar alles uit volgt:
 | een ster aanraken | de tekening van de wereld waar díe ster staat — één bestand, op pointerdown |
 | de kaart opent | die wereld, plus hooguit één buurwereld die al open is |
 | op de laatste twee shows van een wereld | de volgende wereld, vast alvast |
-| de reis opent | alleen de bestemmingen in de buurt van het venster (`IntersectionObserver`, 60% marge) |
+| de reis opent | alleen de bestemmingen in de buurt van het venster (`IntersectionObserver`, 60% marge), en dan het kleine kaartje (`<id>-klein.webp`, 560 breed) in plaats van de hele tekening |
 | een show beginnen | niets extra's — de zaal leent de wereldtekening (`VENUE_TERUGVAL`) |
 
 Voorladen gaat altijd via `naDeRust()` (`requestIdleCallback`, 1200 ms
@@ -27,14 +27,14 @@ er nú moet staan. `ART_GEHAALD` onthoudt wat er al aangevraagd is; een aanvraag
 die mislukt wordt weer vergeten, zodat een wegvallend net niet betekent dat die
 wereld deze sessie nooit meer probeert.
 
-**Als er een wereld 7, 8 of 9 bij komt verandert hier niets.** Er staat nergens
+**Als er een wereld bij komt verandert hier niets.** Er staat nergens
 een lus over `WORLDS` die een tekening aanraakt, en `sw.js` kent geen werelden.
 Nagemeten met een kopie van `index.html` met acht werelden: exact hetzelfde
 verkeer als met zes. `rondgang.test.js` zaak 12 houdt dat vast.
 
 ## Wachten hoeft niet: de wereld draagt zichzelf
 
-Een wereldtekening is ~300 kB en 1215×2160. Hij komt daarom bínnen terwijl het
+Een wereldtekening is 180 tot 380 kB en 1215×2160. Hij komt daarom bínnen terwijl het
 scherm er al staat, en niet ervoor. Dat mag, omdat `.world-frame` drie
 achtergrondlagen heeft: de tekening bovenop, en daaronder het verloop in de
 kleuren van de wereld zelf (`--w-sky`, `--w-deep`, `--w-glow`). Een laag die nog
