@@ -646,6 +646,19 @@
   .reis-terug.aan { opacity: 1; transform: none; pointer-events: auto; }
   .reis-terug:active { transform: scale(.92); }
 
+  /* Een tablet. De clamps hierboven houden op bij 196px, en dat is telefoonmaat:
+     op 768 breed stonden de werelden als postzegels in een lege lucht. Hier
+     groeien ze door tot 260px. De drie maten houden onderling dezelfde
+     verhouding (1,11 en 0,87, zie REIS.maat), want de afstand tussen twee
+     bestemmingen wordt daaruit uitgerekend. De ondergrens is de bovengrens van
+     een telefoon, dus er springt niets bij de overgang. Alleen bij genoeg hoogte:
+     een telefoon die je kantelt is breed maar laag, en die houdt de oude maat. */
+  @media (min-width: 600px) and (min-height: 700px) {
+    #screen-journey { --kaart-b: clamp(196px, 30vw, 260px); }
+    .reis-halte.nu { --kaart-b: clamp(218px, 33.3vw, 289px); }
+    .reis-halte.verder { --kaart-b: clamp(171px, 26.1vw, 226px); }
+  }
+
   @media (max-width: 360px) {
     /* Hier stond dat de globe verdween en het woord bleef: op een krap scherm moest
        er iets wijken, en van die twee was het woord het duidelijkst. Nu is de globe
