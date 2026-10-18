@@ -501,7 +501,7 @@ function startMapEdit() {
           <p class="st-hint">De <b>weg</b> zie je altijd; lucht, diepte en gloed alleen zonder tekening
             en aan de rand in liggende stand. De <b>zaal</b> is de wazige tekening achter de sommen in
             een show: hoe lichter de tekening, hoe donkerder hij moet. De studio kiest beide zelf als
-            je een tekening neerzet, en de weg opnieuw als je de haltes verschuift.</p>
+            je een tekening neerzet.</p>
         </details>
       </section>
 
@@ -2283,7 +2283,7 @@ function startMapEdit() {
       const klaar = 'Gewijzigd · ' + label + '  ' + maat + ' → ' + txt + klein
         + (eigen ? '' : '\nVervers de pagina: de kaart toont nu nog de kandidaat uit incoming/.');
       setOut(klaar);
-      if (key === 'world') autoKleuren(false, klaar + '\nKleuren en zaal komen uit de tekening.');
+      if (key === 'world') autoKleuren(klaar + '\nKleuren en zaal komen uit de tekening.');
     } catch (err) {
       console.error('[wereldstudio] ' + pad + ' is vervangen, maar het paneel bijwerken mislukte', err);
       setOut('Gewijzigd · ' + pad + ' staat op schijf.\n'
@@ -2487,6 +2487,8 @@ function startMapEdit() {
     const goud = kleur('--gold-cta-bottom'), paars = kleur('--purple-shadow');
     const grijs = kleur('--gray-bottom');
     const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
+    // de donkere rand onder de weg: 3 eenheden per kant breder (zie .tour-road-under)
+    const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(38,12,64,.78)');
 
     /* Wát meten we eigenlijk? Mijn eerste versie zette de vulling van het rondje
        tegen de tekening af, en die vlagde elke tekening af -- terecht op papier,
@@ -2525,8 +2527,10 @@ function startMapEdit() {
       const bg = schijf(data, br, ho, pt.x, pt.y, 2.5);
       if (!bg) return;
       const opDeWeg = wegKleur.a < 1 ? meng(wegKleur, bg) : wegKleur;
+      const opDeRand = randKleur.a < 1 ? meng(randKleur, bg) : randKleur;
+      // de weg zelf óf de donkere rand eronder mag het dragen, zoals bij een halte
       uit.weg.push({ nr: (i + 1) + '–' + (i + 2), licht: Math.round(lum(bg) * 100),
-                     v: verhouding(lum(bg), lum(opDeWeg)) });
+                     v: Math.max(verhouding(lum(bg), lum(opDeWeg)), verhouding(lum(bg), lum(opDeRand))) });
     });
     return uit;
   }
@@ -2557,10 +2561,9 @@ function startMapEdit() {
     if (slechtH.length) stukken.push(slechtH.map(o => regel('halte ' + o.nr, o, zwak.halte)).join('<br>'));
     if (slechtW.length) {
       stukken.push(slechtW.map(o => regel('weg ' + o.nr, o, zwak.weg)).join('<br>'));
-      // het advies volgt uit de stukken die fálen, niet uit het eerste stuk
-      const gem = slechtW.reduce((n, o) => n + o.licht, 0) / slechtW.length;
-      stukken.push('<span class="ct-let">·</span> zet <b>weg</b> '
-        + (gem > 45 ? 'donkerder' : 'lichter') + ' voor deze wereld');
+      // op een lichte ondergrond draagt de donkere rand de weg al, dus wat hier
+      // nog faalt ligt op een donkere: daar helpt alleen een lichtere weg
+      stukken.push('<span class="ct-let">·</span> zet <b>weg</b> lichter voor deze wereld');
     }
     vak.innerHTML = stukken.join('<br>');
   }
@@ -2581,9 +2584,9 @@ function startMapEdit() {
        diepte   het gemiddelde van de onderste strook, een slag donkerder
        gloed    de sterkst verzadigde tint in de ónderste helft, want dáár komt de
                 veeg te liggen
-       weg      niet uit de tekening maar tégen de tekening: de helderheid die het
-                beste afsteekt tegen het donkerste stuk van de route, want dit is
-                de enige van de vier die je altíjd ziet
+       weg      niet uit de tekening maar eróp: altijd licht, in de tint van de
+                gloed. De donkere rand eronder houdt hem op een lichte kaart
+                overeind, dus donker hoeft hij nooit te worden
 
      Het blijft een vóórstel. Het vult de vier velden en je ziet het meteen op de
      kaart; alles eraan is met één tik te overschrijven en "↺ standaard" zet ze
@@ -2648,32 +2651,18 @@ function startMapEdit() {
     const gloedH = top.reduce((n, o) => n + o.h, 0) / top.length;
     const gloedS = top.reduce((n, o) => n + o.s, 0) / top.length;
 
-    /* De weg komt niet úít de tekening maar staat eróp, dus hij wordt niet
-       bemonsterd maar gekozen: licht of donker, net wat het beste afsteekt tegen de
-       corridor waar de route werkelijk loopt. Precies de verhouding die "meet het
-       contrast" straks narekent -- dus de knop stelt niet iets voor wat de meter
-       een tel later afkeurt. De tint komt van de gloed, zodat de weg bij de wereld
-       hoort in plaats van er als een vreemd wit lint overheen te liggen. */
-    const langsDeWeg = leesCurve().map(pt => schijf(data, br, ho, pt.x, pt.y, 4)).filter(Boolean);
-    if (!langsDeWeg.length) langsDeWeg.push({ r: 70, g: 40, b: 100, a: 1 });
-    const kandidaat = l => hslHex(gloedH, .22, l);
-    /* Niet het gemiddelde maar het slechtste stuk telt -- precies zoals "meet het
-       contrast" het narekent. Een weg die gemiddeld goed staat maar in het donkerste
-       stuk wegvalt is een weg die wegvalt. .68 is de dekking waarmee .tour-road-bg
-       werkelijk over de tekening ligt. */
-    const scoor = hex => Math.min.apply(null, langsDeWeg.map(bg =>
-      verhouding(lum(bg), lum(meng(Object.assign(naarRgb(hex), { a: .68 }), bg)))));
-    // Alle helderheden langslopen en de beste nemen. Twee kandidaten (licht of
-    // donker) waren genoeg zolang een tekening één toon had; op een kaart die van
-    // een donkere grot naar een lichte waterval loopt ligt het optimum ertussenin.
-    const reeks = [];
-    for (let l = .1; l <= .95; l += .02) { const hex = kandidaat(l); reeks.push({ hex, sc: scoor(hex) }); }
-    const besteScore = Math.max.apply(null, reeks.map(o => o.sc));
-    /* Van alles wat bijna even goed leest de líchtste. Puur op de hoogste score
-       kwam er op een donkere wereld een bijna zwarte weg uit: meetbaar leesbaar,
-       maar een weg hoort een verlicht pad te zijn en geen schaduw. Binnen 8% van
-       het optimum maakt het voor de ogen niets uit en voor het beeld alles. */
-    const beste = reeks.filter(o => o.sc >= besteScore * .92).pop().hex;
+    /* De weg komt niet úít de tekening maar staat eróp, en hij is altijd licht:
+       een verlicht pad in de tint van de gloed, zodat hij bij de wereld hoort in
+       plaats van er als een vreemd wit lint overheen te liggen.
+       Hier stond eerst een zoektocht naar de helderheid die het best afstak tegen
+       de tekening langs de route. Die vergat de donkere rand die ónder elke weg
+       ligt (.tour-road-under, --route-onder), en koos op een lichte zandkaart dus
+       een bijna zwarte weg: Circus, Onderwater en Vuur kwamen er zo uit. Zwart
+       verdwijnt in die rand, en wat overblijft is een zwart streepjeslijntje en
+       geen pad. Op een lichte kaart draagt de rand de weg, op een donkere de weg
+       zelf -- net als ring en vulling bij een halte, zie meetContrast. Dus hoeft
+       hier niets gezocht te worden. */
+    const beste = hslHex(gloedH, .3, .8);
     /* De zaal: hoe helder de tekening achter de show mag (brightness, zie
        src/css/50-zaal.css). Afgeleid van hoe licht de tekening gemiddeld is, en
        geijkt op de werelden die er met de hand een kregen: IJs (lichtheid .61)
@@ -2710,18 +2699,19 @@ function startMapEdit() {
     return 'De tekening kon niet worden uitgelezen.\nDe kleuren blijven zoals ze staan.'
       + '\nBekijk de console voor technische details.';
   };
-  /* Kleuren en zaal vanzelf. Na een nieuwe tekening alles (zie verwerkBeeld), na
-     het verschuiven van haltes alleen de weg (zie endDrag). Wat je met de hand
-     onder "Kleuren & zaal" zet blijft staan tot de volgende tekening of
-     verschuiving -- het is een voorstel dat telkens opnieuw gedaan wordt, geen
-     slot. bericht: wat er daarna onderin hoort te staan (readSheet maakt hem leeg). */
-  async function autoKleuren(alleenWeg, bericht) {
+  /* Kleuren en zaal vanzelf, na een nieuwe tekening (zie verwerkBeeld). Wat je
+     met de hand onder "Kleuren & zaal" zet blijft staan tot de volgende tekening
+     -- het is een voorstel dat telkens opnieuw gedaan wordt, geen slot. Haltes
+     verschuiven verandert niets meer: de weg is altijd licht en hangt niet af
+     van waar hij loopt (zie kleurenUitTekening). bericht: wat er daarna onderin
+     hoort te staan (readSheet maakt hem leeg). */
+  async function autoKleuren(bericht) {
     const w = shown().world;
     if (!w.art || w.art.indexOf('blob:') === 0) return false;
     try {
       const voor = await kleurenUitTekening();
       if (shown().world !== w) return false;           // intussen een andere wereld gekozen
-      (alleenWeg ? ['road'] : Object.keys(voor)).forEach(k => { F('mf-' + k).value = String(voor[k]); });
+      Object.keys(voor).forEach(k => { F('mf-' + k).value = String(voor[k]); });
       readSheet();
       if (bericht) setOut(bericht);
       return true;
@@ -3176,13 +3166,7 @@ function startMapEdit() {
     drag = null;
     saveWorldDraft();
     refreshList();
-    /* De weg loopt nu ergens anders over de tekening, dus de wegkleur die er het
-       best tegen afsteekt kan ook anders zijn. Even wachten: wie vijf haltes na
-       elkaar verschuift hoeft niet vijf keer te wachten op een meting. */
-    clearTimeout(wegKlok);
-    wegKlok = setTimeout(() => { if (!drag) autoKleuren(true); }, 700);
   };
-  let wegKlok = null;
   map.addEventListener('pointerup', endDrag, true);
   map.addEventListener('pointercancel', endDrag, true);
 

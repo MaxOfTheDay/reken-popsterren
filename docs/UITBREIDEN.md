@@ -76,15 +76,14 @@ npm run studio      -> Werelden -> + Nieuwe wereld
    waarmee de wereld op Werelden staat. Dat hoort mee in de commit; ontbreekt
    het, dan zegt `npm run check` het (zaak B) en valt de reis terug op de grote.
    **Kleuren en zaal** zet de studio er meteen bij, uit de tekening: de lucht, de
-   diepte, de gloed, de weg die het meest opvalt, en hoe donker de zaal achter de
+   diepte, de gloed, een lichte weg in de tint van de gloed, en hoe donker de zaal achter de
    show moet (een lichte tekening wil meer donker). Bijsturen kan onder
    *Kleuren & zaal*.
 3. **Haltes**: sleep de haltes op de richels, de groene ruitjes buigen de
    weg. Binnen de gestippelde zone blijven. Zolang je niets sleept staat er de
    standaardslinger, en die mag niet mee naar buiten: halte 1 staat dan
    middenonder, onder de terugknop van een kleine telefoon. Stap 4 zegt het
-   zolang het zo is. Laat je een halte los, dan rekent de studio de kleur van de
-   weg opnieuw uit. *Hulpmiddelen* heeft het raster en de contrastmeter.
+   zolang het zo is. *Hulpmiddelen* heeft het raster en de contrastmeter.
 4. **Schat**: emoji, naam en een SVG (zie hieronder), met *hoger* en *groter*.
    Geen code, geen `ITEMS`-regel. Elke wereld krijgt zijn eigen schat.
 5. **Testen** (in de Dev Studio, of *Testen* op de regel van de wereld): de
