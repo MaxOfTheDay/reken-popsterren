@@ -137,7 +137,7 @@ en waarop je het vindt:
 | `src/15-kaart-en-weg.js` | de **vormleer van de wereldkaart**: haltes, de weg erlangs, het streeppatroon, `ZONE`, `showWorld`. Rekent in procenten van de tekening en kent geen scherm. De kaart, de reis én de wereldstudio leunen erop |
 | `src/17-kaartstand.js` | de **kaartstand**: vijftien namen die zeggen waar de kaart naar kijkt (`viewWorldIdx`), wat de eerstvolgende opbouw moet doen (`pendingTravel`, `reisDoel`, `kaartFocus`, `netAf`) en wat er nu loopt (`overgangBezig`, `vluchtOp`, `wereldReisOp`). Begin hier als je aan een overgang werkt |
 | `src/20-app.js` | **het spel.** Hier schrijf je meestal. Bovenaan staat de inhoudsopgave van alle secties |
-| `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. Sla het over tenzij je er expliciet aan werkt |
+| `src/90-wereldstudio.js` | de **wereldstudio** — alleen bereikbaar met `?debug&mapedit`. Ruim een vijfde van de JavaScript, en het gewone spel raakt het nooit aan. De bouw zet hem niet in `index.html` maar in `studio.js` ernaast, dat pas opgehaald wordt als de studio opengaat (`laadStudio`). Sla het over tenzij je er expliciet aan werkt |
 | `src/99-servicewerker.js` | het aanmelden van `sw.js` en het doorgeven van de tekeningenlijst |
 | `src/css/*.css` | **het stijlblad**, in dertien stukken (zie hieronder) |
 | `<body` | de tien schermen als markup, in `index.html` zelf, allemaal tegelijk aanwezig; `.screen.active` bepaalt wat je ziet |

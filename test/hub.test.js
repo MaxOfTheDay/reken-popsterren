@@ -69,7 +69,7 @@ zaak('A · de vlaggen bestaan', () => {
      dbg.get('x') of dbg.has('x'). Dat is de enige lijst die telt: wat daar niet
      in staat wordt genegeerd, hoe mooi de knop ook heet. */
   const kent = new Set();
-  INDEX.replace(/dbg\.(?:get|has)\('([a-z]+)'\)/g, (_, n) => kent.add(n));
+  BRON.replace(/dbg\.(?:get|has)\('([a-z]+)'\)/g, (_, n) => kent.add(n));
   ['debug', 'demo', 'mapedit', 'nieuw', 'sw'].forEach(v => kent.add(v));   // vlaggen zonder dbg.get
   check(kent.has('stand'), 'A · index.html kent &stand', [...kent].join(','));
   check(kent.has('diamanten'), 'A · index.html kent &diamanten', [...kent].join(','));

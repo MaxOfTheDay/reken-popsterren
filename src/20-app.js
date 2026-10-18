@@ -12170,7 +12170,24 @@ if (location.search.indexOf('debug') !== -1) {
     (go[dbg.get('screen')] || goMap)();
   }
   if (dbg.get('fit')) fitVenster(dbg.get('fit'));
-  if (dbg.has('mapedit') && cur) startMapEdit();
+  if (dbg.has('mapedit') && cur) laadStudio();
+}
+/* De wereldstudio staat niet in dit bestand maar ernaast, in studio.js (zie
+   test/bouw.js, LOS): geen kind draait hem, dus hoeft geen tablet hem bij het
+   opstarten te lezen. Hier wordt hij opgehaald als hij nodig is.
+
+   Een klassiek script en geen module, zodat het ook vanaf file:// werkt. Geen
+   tijdstempel erachter: npm run studio stuurt alles met no-store, en de service
+   worker haalt de schil (en dus ook dit bestand) netwerk-eerst -- een stempel zou
+   daar bij elke opening een nieuw item in de voorraad zetten. Staat hij er al
+   (een tweede aanroep), dan meteen. */
+function laadStudio() {
+  if (typeof startMapEdit === 'function') { startMapEdit(); return; }
+  const s = document.createElement('script');
+  s.src = 'studio.js';
+  s.onload = () => startMapEdit();
+  s.onerror = () => console.error('[wereldstudio] studio.js kon niet geladen worden');
+  document.head.appendChild(s);
 }
 /* ---- Kijkstanden (?debug&wereld=n&stand=...) --------------------------------
    Een spel in een representatieve stand zetten zónder ernaartoe te spelen. Dat

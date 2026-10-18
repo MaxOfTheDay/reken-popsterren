@@ -63,6 +63,30 @@ const BLOKKEN = [
   { naam: 'scriptblok', map: SRC,     ext: '.js',  open: '<script>', dicht: '</' + 'script>', kop: '<script' },
 ];
 
+/* Wat níét in index.html gaat maar ernaast, als eigen bestand.
+
+   De wereldstudio is ongeveer een vijfde van alle JavaScript, en geen kind
+   draait hem ooit: hij gaat pas aan met ?debug&mapedit. Toch las elke tablet hem
+   bij elke start mee. Nu staat hij in studio.js, en haalt het spel hem pas op als
+   de studio opengaat (zie laadStudio in 20-app.js).
+
+   Dat kan zonder iets van de harde regels op te geven:
+     - een klassiek script dat het spel zelf aanmaakt werkt ook vanaf file://
+       (regel 2: alleen een module zou daar mislukken);
+     - er komt geen scripttag bij in index.html (regel 1): hij wordt in code
+       aangemaakt;
+     - klassieke scripts delen één bereik, dus de studio ziet WORLDS, de kaartstand
+       en alle functies van het spel precies zoals toen hij erin stond. Dat werkt
+       alleen omdat dit bestand niets anders doet dan één functie verklaren:
+       zijn plek in de volgorde draagt niets.
+
+   De bron blijft in src/ staan op zijn eigen nummer, en zaak H kijkt ook dít
+   bestand na: met de hand bewerken valt net zo op als in index.html. */
+const LOS = [{ bron: '90-wereldstudio.js', uit: 'studio.js' }];
+const LOS_KOP = '/* Gebouwd door npm run bouw uit src/{bron} -- bewerk het daar, niet hier. */\n';
+const losTekst = l => LOS_KOP.replace('{bron}', l.bron)
+  + zonderCommentaar(fs.readFileSync(path.join(SRC, l.bron), 'utf8'), '.js');
+
 /* Elk bestand moet met twee cijfers en een streepje beginnen, en dat wordt hier
    afgedwongen in plaats van afgesproken. Reden: een naam zónder cijfers sorteert
    ná élke naam mét cijfers ('a' komt na '1'), dus één bestand dat 'app.js' heet
@@ -251,7 +275,7 @@ function zonderCommentaar(tekst, soort) {
    Een leeg bestand mag: dat is een stuk dat nog niets bevat, en nul regels
    plakken niets aan elkaar vast. */
 function stukkenUit(blok) {
-  return bronnen(blok).map(naam => {
+  return bronnen(blok).filter(naam => !LOS.some(l => l.bron === naam)).map(naam => {
     const tekst = fs.readFileSync(path.join(blok.map, naam), 'utf8');
     if (tekst.length && !tekst.endsWith('\n')) {
       throw new Error(`${path.relative(WORTEL, blok.map)}/${naam} eindigt niet op een regeleinde; `
@@ -329,6 +353,14 @@ function verwacht(html) {
    voor -- zodat een handmatige bewerking opvalt bij de eerstvolgende keuring en
    niet pas bij de eerstvolgende bouw. */
 function achterstand() {
+  for (const l of LOS) {
+    const doel = path.join(WORTEL, l.uit);
+    const nu = fs.existsSync(doel) ? fs.readFileSync(doel, 'utf8') : null;
+    if (nu !== losTekst(l)) {
+      return `${l.uit} loopt niet gelijk met src/${l.bron}`
+        + (nu == null ? ' (het bestand ontbreekt)' : '') + '. Draai `npm run bouw`.';
+    }
+  }
   const html = fs.readFileSync(INDEX, 'utf8');
   const wil = verwacht(html);
   if (wil === html) return null;
@@ -351,8 +383,17 @@ function achterstand() {
 function bouw() {
   const html = fs.readFileSync(INDEX, 'utf8');
   const wil = verwacht(html);
-  if (wil !== html) fs.writeFileSync(INDEX, wil);
-  return { gewijzigd: wil !== html };
+  let gewijzigd = wil !== html;
+  if (gewijzigd) fs.writeFileSync(INDEX, wil);
+  for (const l of LOS) {
+    const tekst = losTekst(l);
+    keurScript(tekst);
+    const doel = path.join(WORTEL, l.uit);
+    if (fs.existsSync(doel) && fs.readFileSync(doel, 'utf8') === tekst) continue;
+    fs.writeFileSync(doel, tekst);
+    gewijzigd = true;
+  }
+  return { gewijzigd };
 }
 
 /* In wélk bronbestand staat een machinaal geschreven blok?
@@ -375,7 +416,7 @@ function bronMetMarkering(mark) {
   return path.join(blok.map, raak[0]);
 }
 
-module.exports = { bouw, achterstand, zonderCommentaar, bronnen, bronMetMarkering, BLOKKEN, SRC, SRC_CSS, INDEX };
+module.exports = { bouw, achterstand, zonderCommentaar, LOS, bronnen, bronMetMarkering, BLOKKEN, SRC, SRC_CSS, INDEX };
 
 if (require.main === module) {
   const alleenKijken = process.argv.includes('--controleer');
