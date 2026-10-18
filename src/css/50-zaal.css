@@ -315,6 +315,17 @@
   #screen-journey.komt-op, #screen-dress.komt-op, #screen-trophies.komt-op,
   #screen-settings.komt-op, #screen-memory.komt-op, #screen-newstar.komt-op,
   #screen-profile.komt-op { animation: none; }
+  /* Bij beperkte beweging zet de JS geen eigen beweging op het aankomende scherm
+     (schermKomtOp en schermWeg doen dan niets), maar toonHub zet .komt-op er wél
+     op -- en dan stond er alsnog een harde knip. Dezelfde korte fade als bij
+     .screen.active; omdat het dezelfde animatie is, herstart hij niet als
+     .komt-op erbij komt (geen flits bij twee keer tikken). */
+  @media (prefers-reduced-motion: reduce) {
+    #screen-map.komt-op, #screen-game.komt-op, #screen-end.komt-op,
+    #screen-journey.komt-op, #screen-dress.komt-op, #screen-trophies.komt-op,
+    #screen-settings.komt-op, #screen-memory.komt-op, #screen-newstar.komt-op,
+    #screen-profile.komt-op { animation: screenIn .15s ease both; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .venue-licht::after, .venue-licht::before { transition: none; }
   }
@@ -495,7 +506,7 @@
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
 
   /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
-  .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s cubic-bezier(.2,1.4,.4,1); }
+  .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }
   @keyframes goodPop { 0% { transform: scale(1); } 35% { transform: scale(1.11); } 70% { transform: scale(.98); } 100% { transform: scale(1); } }
   .choice-btn.good::before, .count-tile.good::before {
     content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
@@ -599,7 +610,7 @@
   /* mis: de twee kaarten schudden kort voor ze dichtklappen; match: ze 'klikken samen' */
   .mem-card.wrong { animation: memShake .4s ease; }
   @keyframes memShake { 0%,100% { transform: translateX(0); } 22% { transform: translateX(-5px); } 48% { transform: translateX(5px); } 74% { transform: translateX(-3px); } }
-  .mem-card.snap { animation: memSnap .42s cubic-bezier(.2,1.4,.4,1); }
+  .mem-card.snap { animation: memSnap .42s var(--ease-plop); }
   @keyframes memSnap { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) { .mem-card.wrong, .mem-card.snap { animation: none; } }
   /* Memory-kaartjes zijn klein: elke weergave krijgt een eigen compacte maat die

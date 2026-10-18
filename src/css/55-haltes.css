@@ -114,7 +114,7 @@
      tabje netjes meegaat in plaats van los te schuiven. */
   .tour-stop .stop-body { position: relative; transform: scale(var(--stop-schaal));
     transform-origin: 50% 5.15cqw;
-    transition: transform .24s cubic-bezier(.34, 1.56, .64, 1); }
+    transition: transform .24s var(--ease-plop); }
   /* Indrukken: kort en strak erin (88%, 90ms, zonder veer), en er met een kleine
      doorschieter weer uit -- dat is de veer in de overgang hierboven. Eén tik
      voelt daardoor als indrukken en loslaten, en niet als een schakelaartje. */
@@ -531,8 +531,8 @@
      het script op :root gezet). De landing begon op 0, dus onder het eindscherm
      dat nog wegging en terwijl de kaart nog inzoomde; nu landen de sterren op
      een kaart die stilstaat. starRevealBeat rekent met hetzelfde getal. */
-  .tour-stop.net-af .cstars { animation: tabLandt .3s cubic-bezier(.34, 1.56, .64, 1) var(--kaart-rust, 0ms) both; }
-  .tour-stop.net-af .cstars svg { animation: sterLandt .28s cubic-bezier(.34, 1.56, .64, 1) both; }
+  .tour-stop.net-af .cstars { animation: tabLandt .3s var(--ease-plop) var(--kaart-rust, 0ms) both; }
+  .tour-stop.net-af .cstars svg { animation: sterLandt .28s var(--ease-plop) both; }
   .tour-stop.net-af .cstars svg:nth-child(1) { animation-delay: calc(var(--kaart-rust, 0ms) + .1s); }
   .tour-stop.net-af .cstars svg:nth-child(2) { animation-delay: calc(var(--kaart-rust, 0ms) + .185s); }
   .tour-stop.net-af .cstars svg:nth-child(3) { animation-delay: calc(var(--kaart-rust, 0ms) + .27s); }

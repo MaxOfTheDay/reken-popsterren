@@ -950,6 +950,12 @@
        --ease-uit is alles wat áánkomt: snel los, zacht neerzetten. */
     --t-tik: 70ms; --t-snel: 220ms;
     --ease-uit: cubic-bezier(.2,.8,.3,1);
+    /* --ease-plop is de ene overshoot: "ja, deze" / "dit is nu van jou". Zelfde
+       curve als MOTION.plop in het script. Er stonden er zeven, van (.2,1.3) tot
+       (.2,1.5) en (.34,1.56): zeven net-andere veertjes voor één soort moment. */
+    --ease-plop: cubic-bezier(.2,1.3,.4,1);
+    /* --t-pas (de duur van één danspasje) zet het script, uit PAS in
+       10-feestjes.js; .9s is alleen de terugval als er geen script is. */
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }

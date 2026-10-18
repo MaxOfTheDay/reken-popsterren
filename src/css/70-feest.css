@@ -96,7 +96,7 @@
        aankomst (1.03 -> 1, zie schermKomtOp) als een felle flits over de klare
        kaarten die daarna wegtrok. Nu komt het scherm eerst tot rust. Tot die tijd
        staat hij op translateX(0), buiten de kaart (left:-60%). */
-    animation: shineSweep 2.6s ease-in-out .7s infinite;
+    animation: shineSweep 2.8s ease-in-out .7s infinite;
   }
   /* FASE 6B -- dezelfde veeg, maar op transform in plaats van op left.
 
@@ -118,8 +118,10 @@
     55%, 100% { transform: translateX(422.222%) skewX(-18deg); }
   }
   /* ook het medaillon van een klaarliggende perfecte wereld wiebelt: de kaart ziet
-     er anders uit, maar "hier ligt iets voor je klaar" moet overal hetzelfde zeggen */
-  .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+     er anders uit, maar "hier ligt iets voor je klaar" moet overal hetzelfde zeggen.
+     Veeg en wiebel lopen op dezelfde maat (2.8s): op 2.6 tegen 2.2 schoven ze
+     elke ronde langs elkaar en klopte de kast nooit twee keer hetzelfde. */
+  .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -150,7 +152,7 @@
   @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
   /* Onthulling én daarna: het emoji verschijnt met een bounce en blijft dan zacht
      wiegen zolang de trofee 'open' staat (tot je sluit). */
-  .trophy-pop.burst .tp-emoji { animation: emojiReveal .55s cubic-bezier(.2,1.5,.4,1) .12s forwards, emojiBob 2.6s ease-in-out .75s infinite; }
+  .trophy-pop.burst .tp-emoji { animation: emojiReveal .55s var(--ease-plop) .12s forwards, emojiBob 2.6s ease-in-out .75s infinite; }
   @keyframes emojiReveal { 0% { opacity: 0; transform: scale(.2) rotate(-12deg); } 60% { opacity: 1; transform: scale(1.18) rotate(5deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
   @keyframes emojiBob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.05); } }
   /* De lichtstralen blijven traag ronddraaien terwijl de trofee open is. */

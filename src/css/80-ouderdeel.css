@@ -778,7 +778,13 @@
      rand eromheen, en een lange tekst (wat er weggaat én wat er blijft) maakt het
      venster hoogstens scrollend in plaats van afgesneden. */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-  .modal-bg.open { display: flex; }
+  /* Een venster sprong er vol in. Nu doft de achtergrond kort op en komt het
+     venster een paar pixels omhoog -- dezelfde popFade als het trofeefeestje
+     (70-feest). Geen beweging erin bij beperkte beweging: alleen de fade. */
+  .modal-bg.open { display: flex; animation: popFade .2s ease-out both; }
+  .modal-bg.open .modal { animation: modalOp .22s ease-out both; }
+  @keyframes modalOp { from { transform: translateY(10px); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .modal-bg.open .modal { animation: none; } }
   .modal {
     background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 24px 28px; text-align: center;
     width: 100%; max-width: 340px; max-height: calc(100vh - 32px); overflow-y: auto;
