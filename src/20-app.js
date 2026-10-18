@@ -11099,11 +11099,54 @@ function niveauHtml(p) {
     const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
     bezig = `🧮 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
   }
+  const tip = grensTip(p);
+  const tipHtml = tip ? `<div class="grens-tip" id="grens-tip">
+      <div>💡 ${esc(p.name)} haalt in de latere werelden bijna overal drie sterren met getallen tot ${s.max}.
+        De sommen worden vanaf hier niet vanzelf moeilijker — wil je de grens naar ${tip.naar}?</div>
+      <button class="btn small purple" id="grens-tip-ja" data-v="${tip.naar}">Tot ${tip.naar}</button>
+    </div>` : '';
   return `<div class="niveau-blok">
     <div class="niveau-kop">Niveau-inschatting</div>
     <div class="niveau-bezig">${bezig}</div>
+    ${tipHtml}
     <div class="note">Het spel past de moeilijkheid automatisch aan: het schuift mee met wat goed en fout gaat.</div>
   </div>`;
+}
+/* Een tip voor de ouder: de getallengrens omhoog.
+
+   De werelden leren elk iets nieuws (zie LEERSTAPPEN), maar die stappen houden
+   op: vanaf de wereld ná de laatste stap is het "alles door elkaar", binnen de
+   grens die de ouder koos. Het spel zet die grens zelf niet hoger -- dat is de
+   keuze van de ouder, en een kind dat ineens tot honderd moet zonder dat iemand
+   het wist is geen verrassing maar een tegenvaller. Dus zegt het hier wanneer
+   het tijd lijkt, en doet de ouder het met één tik (of niet).
+
+   Wanneer: het kind speelt (of speelde) voorbij de laatste leerstap, en heeft
+   daar al GRENS_TIP_SHOWS shows met drie sterren gehaald. Sterren en geen p.perf:
+   die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
+   en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
+   Alleen voor rekenen, alleen als er nog een stap op de ladder is (10, 20, 50,
+   100 -- dezelfde keuzes als op het tabblad Oefenen).
+
+   Zet de ouder de grens om (met de tip of op Oefenen), dan begint het tellen
+   opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
+   en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
+   stond direct na "tot 50" al de vraag of het niet 100 moest. */
+const GRENS_LADDER = [10, 20, 50, 100];
+const GRENS_TIP_SHOWS = 6;
+function grensDrieSterren(p) {
+  const vanaf = LEERSTAPPEN.length - 1;          // de eerste wereld zonder nieuwe stap
+  if (vanaf >= WORLD_AVAIL) return 0;
+  let drie = 0;
+  for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
+  return drie;
+}
+function grensTip(p) {
+  const s = p.settings;
+  if (s.track === 'count') return null;
+  const naar = GRENS_LADDER.find(v => v > s.max);
+  if (!naar) return null;
+  return grensDrieSterren(p) - (s.grensTipBasis || 0) >= GRENS_TIP_SHOWS ? { naar } : null;
 }
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
@@ -11661,7 +11704,10 @@ function bindOefenChips(s, p, pfx, done) {
     } else s.tables.push(v);
   });
   // enkelkeuze-chips
-  bind('set-max', c => { s.max = parseInt(c.dataset.v, 10); });
+  bind('set-max', c => {
+    s.max = parseInt(c.dataset.v, 10);
+    if (p) s.grensTipBasis = grensDrieSterren(p);   // de tip telt opnieuw (zie grensTip)
+  });
   bind('set-mode', c => { s.mode = c.dataset.v; });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
   // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
@@ -11713,6 +11759,14 @@ function bindSettings(p, s) {
      niets verzonden -- de naam is al opgeslagen bij elke aanslag -- dus dit is
      alleen de uitgang die een telefoontoetsenbord zelf aanbiedt en die hier
      eerder in het niets viel. */
+  // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefenen, met één tik
+  on('grens-tip-ja', 'onclick', e => {
+    sndClick();
+    s.max = parseInt(e.currentTarget.dataset.v, 10);
+    s.grensTipBasis = grensDrieSterren(p);
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-name', 'onkeydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
     e.preventDefault();
