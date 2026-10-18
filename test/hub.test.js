@@ -39,6 +39,14 @@ const hub = require('./hub');
 const snelkoppeling = require('./snelkoppeling');
 
 const INDEX = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+/* De bron mét commentaar. Waar een zaak de uitleg leest (welke standen er zijn,
+   de markeringen van de studio) kijkt hij hier: index.html wordt zonder
+   commentaar gebouwd. */
+const BRON = (() => {
+  const bouw = require('./bouw.js');
+  const blok = bouw.BLOKKEN.find(b => b.ext === '.js');
+  return bouw.bronnen(blok).map(n => fs.readFileSync(path.join(blok.map, n), 'utf8')).join('');
+})();
 
 /* Een verse app met één ster erin, en dan de kijkstand erop. Dit is precies wat
    ?debug&demo&star=p1&wereld=n&stand=x doet, alleen zonder de schermen -- die
@@ -61,7 +69,7 @@ zaak('A · de vlaggen bestaan', () => {
      dbg.get('x') of dbg.has('x'). Dat is de enige lijst die telt: wat daar niet
      in staat wordt genegeerd, hoe mooi de knop ook heet. */
   const kent = new Set();
-  INDEX.replace(/dbg\.(?:get|has)\('([a-z]+)'\)/g, (_, n) => kent.add(n));
+  BRON.replace(/dbg\.(?:get|has)\('([a-z]+)'\)/g, (_, n) => kent.add(n));
   ['debug', 'demo', 'mapedit', 'nieuw', 'sw'].forEach(v => kent.add(v));   // vlaggen zonder dbg.get
   check(kent.has('stand'), 'A · index.html kent &stand', [...kent].join(','));
   check(kent.has('diamanten'), 'A · index.html kent &diamanten', [...kent].join(','));
@@ -84,7 +92,7 @@ zaak('A · de vlaggen bestaan', () => {
     check(new RegExp('(^|[{ ,\\n])' + s.id + ':').test(tabel), 'A · scherm "' + s.id + '" bestaat', tabel.slice(0, 120)));
 
   // de standen moeten in zetKijkstand voorkomen
-  const fn = INDEX.slice(INDEX.indexOf('function zetKijkstand'), INDEX.indexOf('function fitVenster'));
+  const fn = BRON.slice(BRON.indexOf('function zetKijkstand'), BRON.indexOf('function fitVenster'));
   scenario.STANDEN.forEach(s =>
     check(fn.indexOf("'" + s.id + "'") >= 0, 'A · stand "' + s.id + '" bestaat in zetKijkstand', s.id));
 });
@@ -344,8 +352,8 @@ zaak('I · de schermtekeningen', () => {
   /* De markeringen waar de studio tussen schrijft, en de klasse waar het
      stijlblad op mikt. Verdwijnt een van de twee, dan schrijft de studio in het
      niets of laadt de app niets -- allebei stil, dus allebei hier vastgelegd. */
-  check(INDEX.indexOf('/* SCHERMKUNST-BEGIN') >= 0 && INDEX.indexOf('/* SCHERMKUNST-EINDE */') >= 0,
-    'I · de markeringen staan in index.html', 'een van de twee ontbreekt');
+  check(BRON.indexOf('/* SCHERMKUNST-BEGIN') >= 0 && BRON.indexOf('/* SCHERMKUNST-EINDE */') >= 0,
+    'I · de markeringen staan in src/', 'een van de twee ontbreekt');
   check(/#screen-dress\.kunst\.app-sfeer::before/.test(INDEX)
     && /#screen-trophies\.kunst\.app-sfeer::before/.test(INDEX),
     'I · en het stijlblad mikt op .kunst', 'de regel ontbreekt');

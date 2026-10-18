@@ -1,0 +1,39 @@
+# De keuring bij elke PR en elke push naar main.
+#
+# Tot nu toe draaiden de tests alleen op de pc waar de studio op Publiceren
+# drukt, of als Claude ze draaide. Een push met de hand of een bewerking op
+# GitHub zelf werd door niemand nagekeken. Dit is dat vangnet.
+#
+#   keuring   npm run check: de vier Node-suites (± 2 s) plus de vraag of
+#             index.html gelijkloopt met src/ (zaak H) -- geen npm install nodig
+#   sterren   de kortste browsersuite die het beginscherm echt opbouwt. Die ziet
+#             wat check niet kan zien: een const die te vroeg gelezen wordt en een
+#             lege pagina geeft (CLAUDE.md, regel 0)
+name: keuring
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  keuring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: npm run test:hub
+
+  sterren:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:sterren

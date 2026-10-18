@@ -54,19 +54,17 @@
    een opdracht van de vorige ster hoort nooit bij de volgende te landen.
 
    ---- DE VOLGORDE DIE JE NIET MAG OMGOOIEN ----------------------------------
-   Twee ervan staan als waarschuwing bij goMap zelf, en ze zijn er alle twee
-   ingelopen:
+   Er stonden er twee, en ze zijn er alle twee ingelopen. De eerste (kaartVertrek
+   en tourMapVoltooi lazen allebei kaartFocus, dus wie eerst stond won) is weg:
+   kaartVertrek krijgt nu uitShow als argument. Blijft over:
 
-     1  tourMapVoltooi wordt verbruikt NÁ de kaartFocus-controle. Allebei gaan ze
-        over dezelfde kaartFocus, en wie eerst is wint -- verwissel ze en de
-        terug-grendel wordt gezet op een vlag die al geleegd is.
-     2  netAf en kaartFocus worden door renderTourMap geleegd en niet door goMap.
+        netAf en kaartFocus worden door renderTourMap geleegd en niet door goMap.
         Dat is met opzet: goMap tekent de kaart soms vóórdat het scherm aan
         staat, en dan moet de opdracht blijven liggen tot er écht getekend wordt.
 
    ---- WAT HIER NIET IN HOORT ------------------------------------------------
-   Geen rAF-klemmetjes van scrollafhandelaars (reisVolgWacht, kastScrollWacht,
-   ouderScrollWacht): die horen bij hun scherm en zeggen niets over waar je bent.
+   Geen rAF-klemmetjes van scrollafhandelaars (die gaan via rafKlem): die horen
+   bij hun scherm en zeggen niets over waar je bent.
    Geen kiesBezig: dat is de sterrenkeuze. En geen spelstand -- G, db en cur
    staan waar ze horen.
    ========================================================================= */

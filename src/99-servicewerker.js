@@ -13,7 +13,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     if (!sw) return;
     const art = [];
     WORLDS.forEach(w => {
-      [w.art, w.venue && w.venue.art].forEach(a => {
+      [w.art, wereldKleinPad(w.art), w.venue && w.venue.art].forEach(a => {
         if (a && a.indexOf('blob:') !== 0 && !art.includes(a)) art.push(a);
       });
     });

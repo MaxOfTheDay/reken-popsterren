@@ -489,6 +489,9 @@ function renameAsset(res, van, naar) {
   try {
     fs.mkdirSync(path.dirname(b), { recursive: true });
     fs.renameSync(a, b);
+    // het kleine broertje voor de reis (zie wereldKleinPad) gaat mee, als het er is
+    const ka = a.replace(/-map\.webp$/, '-klein.webp'), kb = b.replace(/-map\.webp$/, '-klein.webp');
+    if (ka !== a && fs.existsSync(ka) && !fs.existsSync(kb)) fs.renameSync(ka, kb);
     // een nieuw pad staat in geen enkele voorraad: niets op te hogen (zie bumpArtCache)
     console.log('  wereldstudio: ' + van + ' -> ' + naar);
     zeg(200, van.split('/').pop() + ' \u2192 ' + naar.split('/').pop());
