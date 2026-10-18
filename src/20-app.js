@@ -5316,9 +5316,10 @@ function toonHub(id) {
   hubWissel(vorige, naar);
 }
 /* ---- De plakkende kop met twee standen ----
-   Twee schermen hebben een kop die krimpt zodra er gescrold wordt: de
+   Drie schermen hebben een kop die krimpt zodra er gescrold wordt: de
    trofeeënkast en het ouderdeel (zie .gescrold in 65-kast.css en
-   80-ouderdeel.css; kastScroll en ouderScroll zetten de klasse). Die kop staat in
+   80-ouderdeel.css; kastScroll en ouderScroll zetten de klasse), en op een laag
+   staand scherm de kleedkamer (kleedScroll; daar krimpt de spiegel). Die kop staat in
    de stroom, en daar zat het haperen: als hij kromp trok hij alles eronder mee
    omhoog, de scroll anchoring van Chrome zette de schuifstand met die krimp
    terug, de stand viel onder de drempel, de kop werd weer ruim -- en stilgezet
@@ -5369,7 +5370,7 @@ function kopKrimpMeten(scherm) {
 // Achter rafKlem: draaien of een toetsenbord dat opkomt vuurt een reeks resizes,
 // en kopKrimpMeten meet per scherm een paar keer de opmaak.
 addEventListener('resize', () => rafKlem(koppenKrimpMeten));
-function koppenKrimpMeten() { ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))); }
+function koppenKrimpMeten() { ['screen-trophies', 'screen-settings', 'screen-dress'].forEach(id => kopKrimpMeten($(id))); }
 /* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
    landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
 
@@ -10275,9 +10276,10 @@ function tabRijDoel(rij, gekozen) {
    staat bij .hub-sticky::after in het stijlblad; hier wordt alleen de klasse
    gezet. Zelfde drempel en zelfde rAF als bij de kast.
 
-   Wat hier níet hoeft, en bij de kast wel: meten. Daar krimpt de kop en moet de
-   inhoud eronder stil blijven staan (kopKrimpMeten); hier gaat er alleen een laag
-   aan, en de kop wordt geen pixel hoger of lager. */
+   Op een gewoon scherm gaat er alleen een laag aan en wordt de kop geen pixel
+   hoger of lager. Op een laag staand scherm krimpt ook de spiegel; dan moet de
+   inhoud eronder stil blijven staan, net als bij de kast, en daarvoor meet
+   renderShop met kopKrimpMeten. */
 function kleedScroll() { rafKlem(kleedGescrold); }
 function kleedGescrold() { gescrold($('screen-dress')); }
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
@@ -10426,6 +10428,8 @@ function renderShop() {
   grid.appendChild(kaarten);
   rekBreedte();
   paintShop();
+  // de kop krimpt op een laag scherm als er gescrold wordt (zie 75-kleedkamer.css)
+  kopKrimpMeten($('screen-dress'));
 }
 /* Elk kaartje in het rek even breed, ook op de laatste rij. Het rek is een
    flex-wrap met justify-content:center (zie .item-grid), zodat een halve laatste

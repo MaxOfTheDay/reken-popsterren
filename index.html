@@ -7043,6 +7043,53 @@
 
 
 
+  @media (orientation: portrait) and (max-height: 700px) {
+    #screen-dress .spiegel {
+      transition: transform var(--t-tik), height var(--t-snel) ease, width var(--t-snel) ease;
+    }
+    #screen-dress .hub-sticky { transition: margin-bottom var(--t-snel) ease; }
+    #screen-dress.gescrold { --pop-h: 76px; }
+    #screen-dress.gescrold .hub-sticky { margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px)); }
+  }
+  #screen-dress.kop-meten .spiegel, #screen-dress.kop-meten .hub-sticky { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-dress.screen .spiegel, #screen-dress.screen .hub-sticky { transition: none; }
+  }
+
+
+
+
+
+
+
+  @media (orientation: landscape) and (max-height: 500px) {
+
+
+    #screen-dress.active {
+      display: grid; grid-template-columns: minmax(300px, 36%) minmax(0, 1fr);
+      column-gap: 12px; align-items: start;
+    }
+    #screen-dress > .hub-sticky {
+      grid-column: 1; grid-row: 1 / span 2; width: auto;
+      margin: calc(var(--rand, 12px) * -1) 0 0 calc(var(--rand, 12px) * -1);
+      border-radius: 0 0 var(--r-lg) 0;
+    }
+    #screen-dress > .item-grid { grid-column: 2; grid-row: 1; max-width: none; }
+    #screen-dress .shop-tabs-wrap { max-width: 100%; }
+
+
+    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15247,6 +15294,7 @@ function toonHub(id) {
 
 
 
+
 function kopKrimpMeten(scherm) {
   const kop = scherm && scherm.querySelector('.hub-sticky');
   if (!kop || !kop.offsetHeight) return;
@@ -15268,7 +15316,7 @@ function kopKrimpMeten(scherm) {
 
 
 addEventListener('resize', () => rafKlem(koppenKrimpMeten));
-function koppenKrimpMeten() { ['screen-trophies', 'screen-settings'].forEach(id => kopKrimpMeten($(id))); }
+function koppenKrimpMeten() { ['screen-trophies', 'screen-settings', 'screen-dress'].forEach(id => kopKrimpMeten($(id))); }
 
 
 
@@ -20177,6 +20225,7 @@ function tabRijDoel(rij, gekozen) {
 
 
 
+
 function kleedScroll() { rafKlem(kleedGescrold); }
 function kleedGescrold() { gescrold($('screen-dress')); }
 
@@ -20325,6 +20374,8 @@ function renderShop() {
   grid.appendChild(kaarten);
   rekBreedte();
   paintShop();
+
+  kopKrimpMeten($('screen-dress'));
 }
 
 

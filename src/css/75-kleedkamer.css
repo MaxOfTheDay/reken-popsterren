@@ -94,9 +94,9 @@
      dat, en die staat erboven. De eerste 4px lopen in, in de kier tussen de
      spiegel en de rij, dus de spiegel zelf raakt hij niet. De twee lage-
      schermregels hieronder maken die band krapper, en zetten hem op 93 en 90.
-     Er krimpt niets en de kop wordt er niet hoger van: dit hoeft dus niet
-     gemeten te worden zoals de kop van de kast (kopKrimpMeten). kleedScroll zet
-     de klasse. */
+     De laag zelf krimpt niets en maakt de kop niet hoger. Wat op een laag
+     staand scherm wél krimpt is de spiegel (zie "Laag en staand" hieronder), en
+     dáárvoor meet kopKrimpMeten. kleedScroll zet de klasse. */
   #screen-dress .hub-sticky::after {
     content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 98px;
     z-index: -1; pointer-events: none; border-radius: inherit;
@@ -229,6 +229,53 @@
      (320x568 is allebei). */
   @media (max-width: 360px) {
     #screen-dress .header-title { font-size: var(--tx-body); }
+  }
+  /* ---- Laag en staand: de spiegel krimpt zodra er gescrold wordt -----------
+     Op 320x568 is de kop ook na de lage-schermregel hierboven nog bijna de helft
+     van het beeld, en zag je twee kaartjes. Zodra er gescrold wordt -- je bent dan
+     aan het kiezen, niet aan het kijken -- gaat de spiegel naar een maatje dat
+     nog net laat zien wat ze aanheeft. Terug naar boven en ze is weer groot.
+     De kop staat in de stroom, dus wat hij krimpt komt er als marge onder weer
+     bij (--kop-krimp, gemeten door kopKrimpMeten), net als bij de kast: anders
+     trekt hij het rek mee omhoog en wisselt de stand elk beeldje.
+     Alleen staand: liggend staat de kop naast het rek (zie hieronder) en
+     neemt hij het rek geen ruimte af. */
+  @media (orientation: portrait) and (max-height: 700px) {
+    #screen-dress .spiegel {
+      transition: transform var(--t-tik), height var(--t-snel) ease, width var(--t-snel) ease;
+    }
+    #screen-dress .hub-sticky { transition: margin-bottom var(--t-snel) ease; }
+    #screen-dress.gescrold { --pop-h: 76px; }
+    #screen-dress.gescrold .hub-sticky { margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px)); }
+  }
+  #screen-dress.kop-meten .spiegel, #screen-dress.kop-meten .hub-sticky { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    #screen-dress.screen .spiegel, #screen-dress.screen .hub-sticky { transition: none; }
+  }
+  /* ---- Liggend: de kop naast het rek in plaats van erboven ----------------
+     Een telefoon op zijn kant (844x390) hield na de kop en de navigatiebalk
+     nog geen hele rij kaartjes over, ook met de kleinere kaartjes hierboven. Hier
+     is de breedte er wél, dus gaat de kop als kolom links staan, plakkend, en
+     scrollt het rek er rechts naast. Hetzelfde idee als de zaal liggend: de pop
+     links, het werk rechts. De kop houdt zijn eigen inhoud en volgorde; de
+     categorierij schuift in zijn smalle kolom opzij zoals op een telefoon. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    /* .active en niet alleen het id: anders won dit van .screen {display:none},
+       en stond de kleedkamer liggend ook onder elk ander scherm in de stroom */
+    #screen-dress.active {
+      display: grid; grid-template-columns: minmax(300px, 36%) minmax(0, 1fr);
+      column-gap: 12px; align-items: start;
+    }
+    #screen-dress > .hub-sticky {
+      grid-column: 1; grid-row: 1 / span 2; width: auto;
+      margin: calc(var(--rand, 12px) * -1) 0 0 calc(var(--rand, 12px) * -1);
+      border-radius: 0 0 var(--r-lg) 0;
+    }
+    #screen-dress > .item-grid { grid-column: 2; grid-row: 1; max-width: none; }
+    #screen-dress .shop-tabs-wrap { max-width: 100%; }
+    /* de koprij in een kolom van ~300: dezelfde verdeling als op een smalle
+       telefoon (zie max-width 380 hierboven), anders stak het saldo het rek in */
+    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
   }
   /* ---- De spiegel ---------------------------------------------------------
      Waar de kleedkamer om draait: "hoe ziet mijn ster eruit?". Het was een
