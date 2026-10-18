@@ -370,6 +370,59 @@
      onder "Voor ouders" als de kleinere van de twee, niet als tweede kop. */
   a.gear-item { text-decoration: none; }
   .gear-item.over { padding: 9px 11px; }
+  /* "Speel als app": dezelfde kleinere rij als die naar over/. */
+  #gear-app { padding: 9px 11px; }
+
+  /* ---- "Speel als app": het knopje en het blad --------------------------
+     Het knopje is het spiegelbeeld van het tandwiel: dezelfde hoogte, dezelfde
+     glazen vulling, op dezelfde afstand van de rand -- maar dan linksboven en
+     met woorden, want een ouder moet weten wat het is zonder erop te tikken.
+     Waarom daar en niet onderaan: zie "= Speel als app" in het scriptblok. */
+  .app-knop {
+    position: fixed; top: var(--balk-rand); left: var(--balk-rand); z-index: 50;
+    height: 44px; padding: 0 15px 0 11px; display: flex; align-items: center; gap: 6px;
+    font: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--c-white); white-space: nowrap;
+    border-radius: var(--r-pill); border: 1.5px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  }
+  .app-knop:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  /* Het knopje en het tandwiel staan buiten #app, en dus boven elk venster dat
+     daarin opengaat (#app is zijn eigen stapel; z-index 100 binnenin wint het niet
+     van 50 erbuiten). Op een telefoon van 320 lagen ze zo over de kop van het
+     blad. Zolang er een venster open is, horen ze er niet. Zonder :has (oude
+     browsers) blijven ze gewoon staan, zoals vroeger. */
+  body:has(.modal-bg.open) .app-knop,
+  body:has(.modal-bg.open) #corner-btns { visibility: hidden; }
+  /* Het blad zelf staat in het gewone bevestigingsvenster (#confirm-modal); dit
+     is alleen wat erin staat. Links uitgelijnd: het zijn stappen, geen melding. */
+  #app-blad { text-align: left; color: var(--paper-ink); }
+  #app-blad .ab-voor {
+    display: table; margin: 0 auto 8px; padding: 3px 10px; border-radius: var(--r-pill);
+    background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-mini); font-weight: 700;
+  }
+  #app-blad .ab-wat { text-align: center; color: var(--paper-ink-muted); margin-bottom: 10px; }
+  #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
+  #app-blad .ab-nr {
+    flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--purple-mid); color: var(--c-white); font-size: 13px; font-weight: 700;
+  }
+  #app-blad .ab-kbd {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
+    background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
+  }
+  #app-blad .ab-svg { width: 18px; height: 18px; flex: none; }
+  /* een nagetekende werkbalk van Safari op een iPhone, met de deelknop omcirkeld */
+  #app-blad .ab-balk {
+    display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 4px 0 6px 34px;
+    border-radius: 12px; background: var(--paper-muted-bg); color: #0a84ff; font-size: 18px;
+  }
+  #app-blad .ab-doel { display: grid; padding: 3px; border-radius: 7px; box-shadow: 0 0 0 2.5px var(--pink-hot); }
+  #app-blad .ab-uitleg { margin: 4px 0; }
+  #app-blad .ab-noot {
+    margin-top: 10px; padding: 8px 11px; border-radius: var(--r-sm);
+    background: var(--paper-tint); border: 1px solid var(--paper-border); color: var(--paper-ink-muted); font-size: var(--tx-klein);
+  }
 
   /* ---- Podium / avatar ---- */
   .stage {
