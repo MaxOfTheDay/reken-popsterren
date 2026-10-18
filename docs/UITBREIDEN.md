@@ -68,9 +68,10 @@ npm run studio      -> Werelden -> + Nieuwe wereld
    staan in `docs/WORLD-ART-BRIEF.md`; wie hem door een beeld-AI laat maken,
    kopieert de prompt onder *✨ Prompt voor de tekening* (de tekst staat in
    `docs/prompts/wereldkaart.txt`). Elke bronmaat mag, de studio snijdt bij als cover
-   en zet hem om naar webp. Begroting: ongeveer 125 kB — de keuring waarschuwt
-   boven 200 kB. Komt hij erboven uit, dan zakt de studio zelf met de kwaliteit
-   tot hij past, maar niet onder 0.55; het paneel zegt welke kwaliteit het werd.
+   en zet hem om naar webp. Hij mikt op ongeveer 125 kB en zakt daarvoor zelf met
+   de kwaliteit, maar niet onder 0.55; het paneel zegt welke kwaliteit het werd.
+   In de praktijk komen de kaarten zo op 180 tot 380 kB uit, en dat is goed. De
+   keuring waarschuwt pas boven 420 kB.
    Tegelijk maakt hij `assets/world/<id>-klein.webp` (560 breed), het kaartje
    waarmee de wereld op Werelden staat. Dat hoort mee in de commit; ontbreekt
    het, dan zegt `npm run check` het (zaak B) en valt de reis terug op de grote.
