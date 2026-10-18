@@ -1324,49 +1324,63 @@
      blijft goed vindbaar (hij verschijnt alleen als je ergens anders kíjkt dan
      waar je speelt), maar hij vraagt niet meer als eerste je aandacht.
 
-     Bovenin, onder de kop -- en niet meer middenonder. Drie redenen, alle drie
-     opgemeten over elke wereld:
+     Bovenin, onder de wereldpil -- en niet meer middenonder. Drie redenen, alle
+     drie opgemeten over elke wereld:
 
-     - Hij was te klein om te raken: 27px hoog, en 21px op een kort scherm, waar
-       44 de gewone ondergrens is en een vinger van vijf die nog harder nodig
-       heeft. Onderaan kón hij niet groeien: tussen de onderste halte en de balk
-       zit op een korte telefoon 21 tot 40px. Boven de hoogste halte is in elke
-       wereld meer ruimte dan onder de laagste.
+     - Hij was te klein om te raken: 27px hoog, en 21px op een kort scherm, en
+       onderaan kón hij niet groeien: tussen de onderste halte en de balk zit op
+       een korte telefoon 21 tot 40px. Boven de hoogste halte is in elke wereld
+       meer ruimte dan onder de laagste.
      - Hij stond aan de verkeerde kant van de beweging. Terug naar huis is altijd
        een klim omhóóg (zie navigeerNaarWereld): de camera gaat naar boven, dus de
        knop die dat doet staat er ook.
      - Hij hoort bij de wereldpil erboven. Die zegt wáár je kijkt, deze hoe je
        terugkomt -- samen het hele "je bent elders".
 
-     De ↑ in plaats van ⟲ om dezelfde reden: ⟲ is een abstract "ongedaan maken"
-     dat een kind dat nog niet leest niets zegt, ↑ zegt wat er gebeurt.
+     En dus ziet hij er ook uit als die wereldpil: hetzelfde glas, dezelfde rand,
+     schaduw, hoogte en letter, en dezelfde korte naam ("Piraten", zie korteNaam).
+     Een eigen donkere pil met een gouden rand stond eronder als een ander soort
+     ding. Het verschil zit nu alleen in de inhoud, net als bij de wereldpil en de
+     diamantpil: daar staat het knopje (🌍 in een blauw capsuletje) rechts, hier de
+     ↑ links. Zelfde capsule, zelfde betekenis: "hier tik je". De ↑ en niet ⟲:
+     terug is hier altijd omhoog, en een pijl leest een kind dat nog niet leest
+     wél.
 
-     --kop-h is de kop plus 12 (zie meetChroom), net als --nav-h de balk plus 12
-     is: dezelfde rekensom als onderaan, alleen gespiegeld, met 4px lucht onder de
-     kop. Controle 7f in test/profiles.test.js meet nog steeds wat hij afdekt --
-     waar hij ook staat.
-
-     Donker glas en geen vol goud: zie hierboven. Wel een gouden rand, dun: hij
-     brengt je naar de gouden halte, en daar mag hij een zweem van hebben. */
+     Op zijn plek gezet door terugUitlijnen, niet door de CSS: midden onder de
+     wereldpil (--wp-mid, en die staat niet midden op het scherm) en 8px eronder
+     (--wp-onder), dezelfde lucht als tussen de kop en de rest. De terugvallen
+     hieronder gelden alleen zolang er nog niets gemeten is. Controle 7f in
+     test/profiles.test.js meet wat hij afdekt -- waar hij ook staat. */
   .world-back {
-    position: absolute; left: 50%; transform: translateX(-50%); z-index: 6;
-    top: calc(var(--kop-h, 74px) - 8px);
-    display: flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px 0 12px;
-    font-family: inherit; font-size: var(--tx-label); font-weight: 700; line-height: 1;
+    position: absolute; left: var(--wp-mid, 50%); top: var(--wp-onder, 62px);
+    transform: translateX(-50%); z-index: 6;
+    display: flex; align-items: stretch; gap: 0; padding: 0; height: var(--hud-h);
+    font-family: inherit; font-size: var(--tx-body); font-weight: 700; line-height: 1;
     white-space: nowrap; max-width: calc(100% - 24px);
-    color: var(--c-white); cursor: pointer;
-    background: rgba(32,12,58,.82);
-    border: 1px solid rgba(255,214,102,.55); border-radius: var(--r-pill);
-    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: 0 3px 12px rgba(0,0,0,.42);
+    color: var(--c-white); cursor: pointer; border: 0; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
   }
-  .world-back:active { transform: translateX(-50%) scale(.95); }
-  .world-back .wb-pijl { font-size: 1.25em; }
-  /* Op het kortste scherm is de ruimte boven de hoogste halte op zijn krapst: in
-     de ruimtewereld op 320x568 zit halte 8 op 27px onder de kop, en een pil van
-     40 met 4px lucht dekte daar het hart van af (controle 7f). Hier dus strak
-     tegen de kop aan en 36 hoog -- nog altijd ruim anderhalf keer wat hij onderin
-     was. */
-  @media (max-height: 620px) {
-    .world-back { top: calc(var(--kop-h, 74px) - 12px); height: 36px; }
+  .world-back:active { transform: translateX(-50%) scale(.96); filter: brightness(1.15); }
+  /* Het raakvlak, op dezelfde manier als bij de wereldpil: een onzichtbaar vlakje,
+     zodat hij 44px hoog te raken is terwijl hij er even groot uitziet als de pil
+     erboven. Alleen naar ónder: de 8px erboven zijn al van de wereldpil (zijn
+     vlakje steekt precies zo ver uit), en hier ligt deze pil hoger op de stapel --
+     een vlakje naar boven pakte de onderste tikken van de wereldpil af. */
+  .world-back::before { content: ''; position: absolute; inset: 0 0 -10px; }
+  .wb-cta, .wb-naam { display: flex; align-items: center; justify-content: center; }
+  /* Het capsuletje van .wp-cta, gespiegeld: daar zit hij rechts, hier links. */
+  .wb-cta { flex: none; margin: 4px 1px 4px 4px; padding: 0 9px; font-size: 1.15em;
+    border-radius: var(--r-pill);
+    background: linear-gradient(180deg, rgba(56,189,248,.3), rgba(56,189,248,.12));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  .wb-naam { gap: 6px; padding: 0 14px 0 8px; }
+  /* Dezelfde maat kleiner als de wereldpil op een smal scherm (zie #screen-map
+     .world-pick in 40-kaart.css): twee pillen boven elkaar in twee lettermaten
+     zag eruit als een vergissing. */
+  @media (max-width: 389px) {
+    .world-back { font-size: var(--tx-klein); }
+    .wb-cta { padding: 0 7px; }
+    .wb-naam { gap: 4px; padding: 0 10px 0 6px; }
   }

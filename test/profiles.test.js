@@ -1675,9 +1675,10 @@ function check(ok, label, detail) {
    * krimpen) en 320px 27%. Die laatste is de standaardslinger, die zijn eerste
    * halte precies middenonder zet, pal achter de terug-pil.
    *
-   * Sinds de terug-pil naar boven is verhuisd en 40px hoog werd (36 op een kort
-   * scherm) is de krapste plek voor hém halte 72 in de ruimtewereld op 320x568:
-   * die staat 27px onder de kop. Daar stond hij eerst met zijn rand over het hart.
+   * Sinds de terug-pil naar boven is verhuisd (onder de wereldpil, in dezelfde
+   * stijl en hoogte) is de krapste plek voor hém halte 72 in de ruimtewereld op
+   * 320x568: die staat 27px onder de kop. Een eerste, hogere versie dekte daar het
+   * hart af.
    *
    * Die marge van 30% komt dus uit de meting, niet uit een gevoel. Hij staat er
    * zodat een nieuwe wereld, een grotere knop of een ander toestel opvalt vóórdat

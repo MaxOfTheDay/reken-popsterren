@@ -4449,13 +4449,36 @@ function renderMapTitle(p, opReis) {
        helft van de breedte en voegden er niets aan toe. De ⟲ is sindsdien een ↑
        geworden: terug is hier altijd omhoog, en een pijl leest een kind dat nog
        niet leest wél (zie .world-back). Een screenlezer krijgt de hele zin. */
-    terug.innerHTML = `<span class="wb-pijl" aria-hidden="true">↑</span> ${cur.world.icon} ${esc(cur.world.name)}`;
+    terug.innerHTML = `<span class="wb-cta" aria-hidden="true">↑</span>`
+      + `<span class="wb-naam">${cur.world.icon} ${esc(korteNaam(cur.world))}</span>`;
     terug.setAttribute('aria-label', `Terug naar ${cur.world.name}`);
     // Terug naar de wereld waar ze speelt is vóóruit in de tournee -- die ligt per
     // definitie hóger dan waar ze nu staat te kijken. De camera klimt dus, net als
     // wanneer ze er via de kiezer heen gaat. Zie navigeerNaarWereld.
     terug.onclick = () => { sndClick(); navigeerNaarWereld(cur.index); };
+    terugUitlijnen();
   }
+}
+/* De weg-terug-pil hangt onder de wereldpil, en dan moet hij er ook ónder staan.
+   Midden op het scherm is dat niet: de koprij heeft auto-kolommen (zie
+   #screen-map .screen-header), en omdat het portretje smaller is dan de
+   diamantpil staat de wereldpil een stukje links van het midden -- op een gewone
+   telefoon 17px. Twee pillen boven elkaar die net niet op één lijn staan lezen als
+   een slordigheid, niet als een ontwerp. En 8px onder de wereldpil, niet onder de
+   kop: de kop is hoger dan de pil erin, en dan hing hij er op een tablet verder
+   onder dan op een telefoon.
+
+   Gemeten en niet uitgerekend: hoe ver de wereldpil van het midden staat hangt af
+   van de wereldnaam, het aantal diamanten en de breedte van het scherm. Een
+   scherm dat (nog) niet in beeld is meet nul -- dan niets schrijven, en blijft de
+   CSS op het midden staan tot meetChroom het na de opbouw nog eens doet. */
+function terugUitlijnen() {
+  const terug = $('world-back'), pil = $('map-tournee-label'), scherm = $('screen-map');
+  if (!terug || terug.hidden || !pil || !scherm) return;
+  const p = pil.getBoundingClientRect(), s = scherm.getBoundingClientRect();
+  if (!p.width || !s.width) return;
+  terug.style.setProperty('--wp-mid', Math.round((p.left + p.right) / 2 - s.left) + 'px');
+  terug.style.setProperty('--wp-onder', Math.round(p.bottom - s.top + 8) + 'px');
 }
 /* Dezelfde vorm als worldFor(), maar opgezocht op wereldnummer i.p.v. op level --
    nodig om een eerdere wereld te kunnen tónen zonder p.level aan te raken.
@@ -7094,6 +7117,7 @@ function meetChroom() {
   if (kop && kop.offsetHeight) scherm.style.setProperty('--kop-h', (kop.offsetHeight + 12) + 'px');
   if (nav && nav.offsetHeight) scherm.style.setProperty('--nav-h',
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
+  terugUitlijnen();
 }
 addEventListener('resize', () => rafKlem(kaartChroomMeten));
 function kaartChroomMeten() { if ($('screen-map')) { meetChroom(); kopOpzij(); } }
