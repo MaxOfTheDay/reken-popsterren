@@ -3749,6 +3749,9 @@
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
     .gold-banner { height: 18px; font-size: var(--tx-label); margin-top: 2px; }
     .replay-btn { width: 40px; height: 40px; font-size: 19px; margin: 2px auto 0; }
+
+    .replay-btn { position: relative; z-index: 1; }
+    .replay-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
     .choice-btn { padding: 12px 8px; font-size: 27px; }
     .choices { gap: 10px; }
     .num-btn { padding: 9px 0; font-size: 23px; }
@@ -6237,7 +6240,9 @@
     background: rgba(255,255,255,.05);
     border-color: rgba(255,255,255,.06);
   }
-  .trophy-card.fresh .temoji { opacity: .6; }
+
+
+  .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
   .trophy-card.fresh .tname { opacity: .84; }
   .trophy-card.fresh .tdesc { opacity: .62; }
 
@@ -6300,10 +6305,16 @@
 
 
 
+
+
+
   .trophy-card.done:not(.pw-card)::before {
-    content: ''; position: absolute; top: 8px; right: 8px; width: 11px; height: 11px;
-    z-index: 2; pointer-events: none; opacity: .7;
-    background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 0c.9 7.4 3.7 10.2 12 12-8.3 1.8-11.1 4.6-12 12-.9-7.4-3.7-10.2-12-12C8.3 10.2 11.1 7.4 12 0z' fill='%23ffeca8'/></svg>") center/contain no-repeat;
+    content: '✓'; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px;
+    z-index: 2; pointer-events: none; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 800; line-height: 1; color: #3a2400;
+    background: var(--gold-accent);
+    box-shadow: 0 1px 3px rgba(8,1,20,.45);
   }
 
 
@@ -6465,6 +6476,11 @@
   @keyframes beloningKlop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
   @media (prefers-reduced-motion: reduce) { .gold-pill { animation: none; } }
   .gold-pill:active { transform: scale(.96); }
+
+
+
+  .gold-pill { position: relative; }
+  .gold-pill::after { content: ''; position: absolute; inset: -7px -4px; border-radius: inherit; }
 
 
 
@@ -7172,6 +7188,9 @@
     box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
     transition: transform var(--t-tik), box-shadow .15s;
   }
+
+
+  .shuffle-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
   .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
   .shuffle-btn:active { transform: scale(.92); }
 

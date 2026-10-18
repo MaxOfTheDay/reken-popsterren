@@ -649,6 +649,9 @@
     .question-card { font-size: clamp(30px, 9vw, 44px); padding: 11px 18px 21px; margin-bottom: 5px; }
     .gold-banner { height: 18px; font-size: var(--tx-label); margin-top: 2px; }
     .replay-btn { width: 40px; height: 40px; font-size: 19px; margin: 2px auto 0; }
+    /* kleiner om te zien, niet om te raken: het raakvlak is 52 */
+    .replay-btn { position: relative; z-index: 1; }
+    .replay-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
     .choice-btn { padding: 12px 8px; font-size: 27px; }
     .choices { gap: 10px; }
     .num-btn { padding: 9px 0; font-size: 23px; }
