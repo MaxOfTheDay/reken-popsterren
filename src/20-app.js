@@ -1384,6 +1384,8 @@ function uitgebrachtTot() {
   while (n < WORLDS.length && worldReleased(WORLDS[n])) n++;
   return Math.max(n, WORLDS.length ? 1 : 0);
 }
+const KAART_KB_ZWAAR = 420;      // zie de tekening-regel in wereldControle
+const WINKEL_PER_WERELD = 550;   // 💎 in de winkel per uitgebrachte wereld, minstens
 function wereldControle(opSchijf) {
   const schijf = opSchijf || {};
   const weetSchijf = Object.keys(schijf).length > 0;
@@ -1476,9 +1478,31 @@ function wereldControle(opSchijf) {
     });
 
     if (schijf[pad] && w.art && w.art !== pad) let_op(naam, pad + ' ligt er ook nog — opruimen of gebruiken', 'tekening');
+    /* Hoe zwaar mag een kaart zijn? De studio mikt op 125 kB en zakt daarvoor
+       met de kwaliteit, maar nooit onder 0.55 (zie KWAL_BODEM): daaronder gaat
+       een geschilderde kaart vlekken. In de praktijk komen de kaarten daardoor
+       op 180 tot 380 kB uit, en dat is geaccepteerd. Hier stond een waarschuwing
+       boven 200, en die ging bij bijna elke wereld af -- een melding die altijd
+       klinkt leer je negeren. Nu alleen wat duidelijk zwaarder is dan de rest. */
     const kb = schijf[w.art];
-    if (kb && kb > 200) let_op(naam, 'de tekening is ' + kb + ' kB; de begroting is ~125 — zware werelden maken de app traag op mobiele data', 'tekening');
+    if (kb && kb > KAART_KB_ZWAAR) let_op(naam, 'de tekening is ' + kb + ' kB, zwaarder dan de andere kaarten (180–380 kB) — '
+      + 'zware werelden maken de app traag op mobiele data', 'tekening');
+    // het kleine kaartje voor de reis (zie wereldKleinPad); de studio maakt het mee
+    const klein = wereldKleinPad(w.art);
+    if (weetSchijf && klein && schijf[w.art] && !schijf[klein]) let_op(naam, klein + ' ontbreekt — de reis toont dan de volle tekening, '
+      + 'en die kost een oude tablet veel geheugen. Sleep de kaart opnieuw in de studio', 'tekening');
   });
+
+  /* Groeit de winkel mee? Elke wereld die uitkomt brengt diamanten binnen, en de
+     afspraak is dat er dan ook 4 tot 7 spulletjes bij komen (docs/UITBREIDEN.md).
+     Dat zit in ITEMS en niet in de studio, dus vergeet je het makkelijk -- en dan
+     staat een kind na een paar werelden met een volle zak voor een lege winkel.
+     De maat is de waarde van de winkel per uitgebrachte wereld: bij elf werelden
+     ruim 600 💎. Zakt dat onder WINKEL_PER_WERELD, dan staat het hier. */
+  const winkel = ITEMS.reduce((som, it) => som + (it.price != null ? it.price : 0), 0);
+  if (open > 0 && winkel / open < WINKEL_PER_WERELD) let_op('de winkel',
+    'is ' + winkel + ' 💎 waard voor ' + open + ' werelden (' + Math.round(winkel / open) + ' per wereld) — '
+    + 'zet er spulletjes bij voor de nieuwe wereld (docs/UITBREIDEN.md)', 'winkel');
 
   /* Uitgebracht is een aaneengesloten kop (zie worldReleased). Een open wereld
      achter een dichte is onbereikbaar: het spel stopt bij de eerste dichte. */

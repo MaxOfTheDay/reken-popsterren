@@ -11019,6 +11019,8 @@ function uitgebrachtTot() {
   while (n < WORLDS.length && worldReleased(WORLDS[n])) n++;
   return Math.max(n, WORLDS.length ? 1 : 0);
 }
+const KAART_KB_ZWAAR = 420;
+const WINKEL_PER_WERELD = 550;
 function wereldControle(opSchijf) {
   const schijf = opSchijf || {};
   const weetSchijf = Object.keys(schijf).length > 0;
@@ -11111,9 +11113,31 @@ function wereldControle(opSchijf) {
     });
 
     if (schijf[pad] && w.art && w.art !== pad) let_op(naam, pad + ' ligt er ook nog — opruimen of gebruiken', 'tekening');
+
+
+
+
+
+
     const kb = schijf[w.art];
-    if (kb && kb > 200) let_op(naam, 'de tekening is ' + kb + ' kB; de begroting is ~125 — zware werelden maken de app traag op mobiele data', 'tekening');
+    if (kb && kb > KAART_KB_ZWAAR) let_op(naam, 'de tekening is ' + kb + ' kB, zwaarder dan de andere kaarten (180–380 kB) — '
+      + 'zware werelden maken de app traag op mobiele data', 'tekening');
+
+    const klein = wereldKleinPad(w.art);
+    if (weetSchijf && klein && schijf[w.art] && !schijf[klein]) let_op(naam, klein + ' ontbreekt — de reis toont dan de volle tekening, '
+      + 'en die kost een oude tablet veel geheugen. Sleep de kaart opnieuw in de studio', 'tekening');
   });
+
+
+
+
+
+
+
+  const winkel = ITEMS.reduce((som, it) => som + (it.price != null ? it.price : 0), 0);
+  if (open > 0 && winkel / open < WINKEL_PER_WERELD) let_op('de winkel',
+    'is ' + winkel + ' 💎 waard voor ' + open + ' werelden (' + Math.round(winkel / open) + ' per wereld) — '
+    + 'zet er spulletjes bij voor de nieuwe wereld (docs/UITBREIDEN.md)', 'winkel');
 
 
 
