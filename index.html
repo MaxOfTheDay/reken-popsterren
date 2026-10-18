@@ -13275,7 +13275,15 @@ function navGo(t, wasActiveAl, stil) {
 
 
 
-  if (t === 'map') { if ($('screen-journey').classList.contains('active')) reisSluit(true); else goMap(); }
+
+
+
+  const opUitstapje = $('screen-map').classList.contains('active') && !$('world-back').hidden;
+  if (t === 'map') {
+    if ($('screen-journey').classList.contains('active')) reisSluit(true);
+    else if (opUitstapje) navigeerNaarWereld(worldFor(hereLevel(P())).index);
+    else goMap();
+  }
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
 }
@@ -15133,19 +15141,44 @@ function vluchtDoofAlle(lijst, aan, duur, na) {
 
 
 
+
+
+
+
+
+
+
+
+
+
 function reisCamera(punt, van, naar) {
-  const track = $('reis-track');
+  const track = $('reis-track'), scherm = $('screen-journey');
   if (!track || !track.animate || !punt || !(van > 0) || !(naar > 0)) return null;
-  const r = track.getBoundingClientRect();
-  if (!r.width) return null;
-  track.style.transformOrigin = (punt.x - r.left).toFixed(1) + 'px ' + (punt.y - r.top).toFixed(1) + 'px';
-  const a = track.animate(
-    [{ transform: `scale(${van.toFixed(4)})` }, { transform: `scale(${naar.toFixed(4)})` }],
-    { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' });
-  return () => { a.cancel(); track.style.transformOrigin = ''; };
+  const s = scherm.getBoundingClientRect();
+  const rand = s.height * 0.5;
+  const anims = [];
+  const tijd = { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' };
+
+
+
+
+  const stand = (k, dx, dy) => 'translate(-50%, 50%)'
+    + (k === 1 ? '' : ` translate(${(dx * (k - 1)).toFixed(1)}px, ${(dy * (k - 1)).toFixed(1)}px)`);
+  track.querySelectorAll('.reis-halte:not(.vlucht-doel)').forEach(h => {
+    const r = h.getBoundingClientRect();
+    if (r.bottom < s.top - rand || r.top > s.bottom + rand) return;
+    const dx = r.left + r.width / 2 - punt.x, dy = r.top + r.height / 2 - punt.y;
+    anims.push(h.animate([{ transform: stand(van, dx, dy) }, { transform: stand(naar, dx, dy) }], tijd));
+  });
+  const weg = track.querySelector('.reis-pad > svg');
+  if (weg) {
+    const r = weg.getBoundingClientRect();
+    weg.style.transformOrigin = (punt.x - r.left).toFixed(1) + 'px ' + (punt.y - r.top).toFixed(1) + 'px';
+    anims.push(weg.animate(
+      [{ transform: `scale(${van.toFixed(4)})` }, { transform: `scale(${naar.toFixed(4)})` }], tijd));
+  }
+  return () => { anims.forEach(a => a.cancel()); if (weg) weg.style.transformOrigin = ''; };
 }
-
-
 
 
 

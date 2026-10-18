@@ -3258,7 +3258,15 @@ function navGo(t, wasActiveAl, stil) {
      wereld waar je vandaan kwam. Hier stond gewoon goMap(), en dan kwam je met
      een kale schermwissel uit bij de grens -- terwijl het tabblad op Werelden al
      oplicht en dus "terug naar mijn kaart" zegt, niet "ergens anders heen". */
-  if (t === 'map') { if ($('screen-journey').classList.contains('active')) reisSluit(true); else goMap(); }
+  /* En Kaart op de kaart zelf, terwijl je in een andere wereld staat te kijken, is
+     de gouden ⟲-pil: de camera klimt terug naar huis. Hier deed goMap() dat met
+     een knip -- de kaart werd ter plekke omgebouwd, zonder enige beweging. */
+  const opUitstapje = $('screen-map').classList.contains('active') && !$('world-back').hidden;
+  if (t === 'map') {
+    if ($('screen-journey').classList.contains('active')) reisSluit(true);
+    else if (opUitstapje) navigeerNaarWereld(worldFor(hereLevel(P())).index);
+    else goMap();
+  }
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
   else (wasActive ? openTrophies : resumeTrophies)();
 }
@@ -5106,35 +5114,60 @@ function vluchtDoofAlle(lijst, aan, duur, na) {
    daarna groeide de tekening een tiende seconde lang op een lege nachtlucht. Bij
    het uitzoomen kwamen ze op hun plek op in plaats van in beeld te schuiven.
 
-   Nu schaalt de baan (#reis-track, niet het hele scherm: de kop met de
-   diamantenpil hoort stil te blijven staan, en de nachtlucht ook -- die ligt
-   "oneindig ver") om het midden van het kaartje dat vliegt. De buren schuiven
-   daardoor naar buiten, het beeld uit, of komen van daar binnen.
+   De buren schuiven naar buiten, het beeld uit, of komen van daar binnen --
+   precies waar een camera ze zou laten, want elk kaartje verschuift met
+   (schaal - 1) maal zijn afstand tot het kaartje dat vliegt. Alleen de route
+   (één svg) schaalt echt mee, zodat hij aan de kaartjes vast blijft zitten.
+
+   Waarom zo en niet de hele baan schalen: dat stond er eerst, en het haperde.
+   Een laag die schaalt wordt op elk beeldje opnieuw opgemeten en, op de grootste
+   schaal die hij haalt, opnieuw getekend -- en de baan is alle werelden met al
+   hun tekeningen, honderden pixels langer dan het scherm. Gemeten op een vier
+   keer gesmoorde processor: zo'n 170ms extra werk op de hoofddraad per zoom, en
+   twee gemiste beeldjes meer dan zonder camera. Kaartjes die alleen verschuiven
+   worden niet opnieuw getekend; nu kost de camera evenveel beeldjes als geen
+   camera.
 
      van, naar   de schaal aan het begin en het eind (1 = gewoon)
      punt        het midden van het kaartje, in vensterpixels
 
-   Eén transform op één laag, op de compositor; er wordt niets gemeten tijdens
-   de vlucht. Geeft een opruimer terug -- of null als er niets te doen viel. */
+   Alleen kaartjes in de buurt van het venster bewegen (een half scherm erbuiten
+   is ruim: verder weg komt er geen in beeld). Gemeten wordt er één keer, vóór de
+   eerste beweging. Geeft een opruimer terug -- of null als er niets te doen viel. */
 function reisCamera(punt, van, naar) {
-  const track = $('reis-track');
+  const track = $('reis-track'), scherm = $('screen-journey');
   if (!track || !track.animate || !punt || !(van > 0) || !(naar > 0)) return null;
-  const r = track.getBoundingClientRect();
-  if (!r.width) return null;
-  track.style.transformOrigin = (punt.x - r.left).toFixed(1) + 'px ' + (punt.y - r.top).toFixed(1) + 'px';
-  const a = track.animate(
-    [{ transform: `scale(${van.toFixed(4)})` }, { transform: `scale(${naar.toFixed(4)})` }],
-    { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' });
-  return () => { a.cancel(); track.style.transformOrigin = ''; };
+  const s = scherm.getBoundingClientRect();
+  const rand = s.height * 0.5;
+  const anims = [];
+  const tijd = { duration: VLUCHT.duur, easing: VLUCHT.baan, fill: 'forwards' };
+  /* Een kaartje staat al op translate(-50%, 50%) -- zo hangt hij met zijn hart op
+     de route (zie .reis-halte). Een animatie vervangt die transform, dus hij
+     herhaalt hem vóór zijn eigen verschuiving; anders springt elk kaartje een half
+     kaartje opzij zodra de camera begint. */
+  const stand = (k, dx, dy) => 'translate(-50%, 50%)'
+    + (k === 1 ? '' : ` translate(${(dx * (k - 1)).toFixed(1)}px, ${(dy * (k - 1)).toFixed(1)}px)`);
+  track.querySelectorAll('.reis-halte:not(.vlucht-doel)').forEach(h => {
+    const r = h.getBoundingClientRect();
+    if (r.bottom < s.top - rand || r.top > s.bottom + rand) return;
+    const dx = r.left + r.width / 2 - punt.x, dy = r.top + r.height / 2 - punt.y;
+    anims.push(h.animate([{ transform: stand(van, dx, dy) }, { transform: stand(naar, dx, dy) }], tijd));
+  });
+  const weg = track.querySelector('.reis-pad > svg');
+  if (weg) {
+    const r = weg.getBoundingClientRect();
+    weg.style.transformOrigin = (punt.x - r.left).toFixed(1) + 'px ' + (punt.y - r.top).toFixed(1) + 'px';
+    anims.push(weg.animate(
+      [{ transform: `scale(${van.toFixed(4)})` }, { transform: `scale(${naar.toFixed(4)})` }], tijd));
+  }
+  return () => { anims.forEach(a => a.cancel()); if (weg) weg.style.transformOrigin = ''; };
 }
 /* Hoeveel groter de wereld is dan zijn kaartje -- de schaal waarmee de camera
-   duwt. Op de breedte gemeten, en begrensd op REIS_CAMERA_MAX. Dat is geen smaak
-   maar geheugen: een animerende laag wordt getekend op de grootste schaal die hij
-   gaat halen, en dit is de hele baan van Werelden. Op een telefoon is het kaartje
-   ruim de helft van de breedte, dus bij 1,8 staan de buren al buiten beeld; wat er
-   nog over is, dooft in het laatste stuk weg. Op een tablet zou de volle schaal
-   boven de 3 uitkomen, en dan tekent hij een baan van duizenden pixels hoog op
-   drie keer de maat. */
+   duwt. Op de breedte gemeten, en begrensd op REIS_CAMERA_MAX. Op een telefoon is
+   het kaartje ruim de helft van de breedte, dus bij 1,8 staan de buren al buiten
+   beeld; wat er nog over is, dooft in het laatste stuk weg. Op een tablet zou de
+   volle schaal boven de 3 uitkomen, en dan vliegen de buren met een ruk weg -- en
+   de route, die wél schaalt, wordt getekend op de grootste maat die hij haalt. */
 const REIS_CAMERA_MAX = 1.8;
 function reisCameraSchaal(kaartje, wereld) {
   if (!kaartje || !wereld || !kaartje.clip.w) return 1;
