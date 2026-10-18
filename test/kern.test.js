@@ -768,6 +768,28 @@ zaak('O', () => {
   const eerste = app0.run('STERCEREMONIE').eerste;
   check(einde < eerste, 'O · einde show is uit voordat de eerste ster landt',
     `${Math.round(einde)}ms >= ${eerste}ms`);
+  /* En zonder beweging ook: dan staan de sterren er meteen, maar hun tonen komen
+     nog -- op een snellere klok, die evengoed na einde show hoort te beginnen. */
+  const stilEerste = app0.run('STERCEREMONIE').stilEerste;
+  check(einde < stilEerste, 'O · ook de stille sterrentonen wachten tot einde show uit is',
+    `${Math.round(einde)}ms >= ${stilEerste}ms`);
+
+  /* ---- trillen ---- */
+  /* Goed, de vriendelijke misser en het hartje kwijt voelen als drie dingen: een
+     tik, niets, een dubbele tik. De misser trilde 35ms tegen 30ms voor goed, en
+     in de hand is dat dezelfde zoem. */
+  check(sfx['answer.retry'].tril == null, 'O · de vriendelijke misser trilt niet',
+    JSON.stringify(sfx['answer.retry'].tril));
+  check(sfx['answer.correct'].tril != null && Array.isArray(sfx['answer.miss'].tril),
+    'O · goed trilt, en het hartje kwijt is een patroon', '');
+  check(JSON.stringify(sfx['show.complete'].tril) !== JSON.stringify(sfx['celebrate.major'].tril),
+    'O · einde show en een zeldzame top voelen ook niet hetzelfde', '');
+  /* Elke trilling komt uit de tabel. Een losse buzz() vlak na een klankje breekt
+     diens trilling af, en dan voelt één gebeurtenis op elke plek anders. Alleen
+     playSfx en toggleHaptics (dat bij geen klankje hoort) mogen hem aanroepen. */
+  const losseBuzz = (harnas.appScript().match(/\bbuzz\([^)]*\)/g) || [])
+    .filter(b => b !== 'buzz(pattern)' && b !== 'buzz(def.tril)' && b !== 'buzz(20)');
+  check(losseBuzz.length === 0, 'O · er trilt niets buiten de klankjestabel om', losseBuzz.join(' '));
 
   /* ---- 1 · playSfx gooit nooit ---- */
   // Deze app heeft de gooiende AudioContext uit test/app.js, en dat is het punt.
