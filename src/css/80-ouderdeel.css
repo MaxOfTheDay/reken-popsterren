@@ -297,6 +297,15 @@
   .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
   /* de tweede, vervangende actie in de back-upkaart: een streepje erboven, zodat
      "maken" en "terugzetten" niet als twee knoppen van hetzelfde soort lezen */
+  /* De regel "Laatste back-up: ..." boven de knop (zie backupStandHtml). Amber
+     is een herinnering en geen gevaar -- vandaar de oefen-oranje en niet de
+     danger-kleuren; groen is "het is in orde", in het groen van Voortgang. */
+  .backup-stand {
+    display: flex; align-items: center; gap: 8px; margin: 0 0 11px; padding: 9px 12px;
+    border-radius: var(--r-sm); font-size: var(--tx-label); font-weight: 600;
+    background: var(--stat-green-bg); color: var(--stat-green-tekst); border: 1px solid var(--stat-green-rand);
+  }
+  .backup-stand.oud { background: var(--practice-bg); color: var(--practice-text); border-color: var(--practice-rand); }
   .data-los { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--paper-border); }
   .data-los .note { margin-top: 8px; }
   /* Dezelfde openklapper, maar voor een gewone keuze i.p.v. een gevaarlijke: de

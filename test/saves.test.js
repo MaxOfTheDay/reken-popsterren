@@ -24,6 +24,7 @@
  *   K  rondreis                      -> bewaren en heropenen verandert niets meer
  *   L  alles uit, en een wereld erbij -> de Wereldtournee die nog dicht lag, ligt
  *                                        niet langer klaar; een geopende blijft
+ *   M  de datum van de laatste back-up -> reist mee, en de regel in de kaart klopt
  *
  * Draaien:
  *   npm run test:saves      (of: npm test voor alle suites)
@@ -411,6 +412,34 @@ zaak('K', () => {
   check(na.db.sound === false && na.db.haptics === false, 'K · geluid en trillen blijven staan',
     JSON.stringify([na.db.sound, na.db.haptics]));
   check(na.db.schemaV === app.SCHEMA_V, 'K · en het schema-stempel blijft staan', na.db.schemaV);
+});
+
+/* ================= M · De laatste back-up =================
+   db.backupAt is het enige veld buiten de profielen dat de ouder iets vertelt
+   over de veiligheid van de sterren. Het moet een heropening overleven, en de
+   regel in de back-upkaart moet zeggen wat er is: nooit, recent of te lang
+   geleden. */
+zaak('M', () => {
+  const app = laadApp({ opslag: F.tweeSterren() });
+  const dag = 86400000, nu = Date.parse('2026-10-19T12:00:00Z');
+  check(/Nog nooit/.test(app.backupStandHtml(nu)) && / oud"/.test(app.backupStandHtml(nu)),
+    'M · zonder back-up: "nog nooit", in amber', app.backupStandHtml(nu));
+  app.db.backupAt = new Date(nu - 2 * 3600000).toISOString();
+  check(/vandaag/.test(app.backupStandHtml(nu)) && !/ oud"/.test(app.backupStandHtml(nu)),
+    'M · van vandaag: groen', app.backupStandHtml(nu));
+  app.db.backupAt = new Date(nu - 10 * dag).toISOString();
+  check(/10 dagen geleden/.test(app.backupStandHtml(nu)), 'M · tien dagen: in dagen', app.backupStandHtml(nu));
+  app.db.backupAt = new Date(nu - 35 * dag).toISOString();
+  check(/5 weken geleden/.test(app.backupStandHtml(nu)) && / oud"/.test(app.backupStandHtml(nu)),
+    'M · vijf weken: in weken, en weer amber', app.backupStandHtml(nu));
+  app.db.backupAt = 'onzin';
+  check(/Nog nooit/.test(app.backupStandHtml(nu)), 'M · een onleesbare datum telt als nooit', app.backupStandHtml(nu));
+  app.db.backupAt = new Date(nu).toISOString();
+  app.save();
+  const na = heropen(app);
+  check(na.db.backupAt === app.db.backupAt, 'M · de datum blijft staan na heropenen', na.db.backupAt);
+  check((() => { try { na.opslagVasthouden(false); return true; } catch (e) { return false; } })(),
+    'M · de opslag vragen vast te houden gooit nooit, ook zonder navigator.storage', '');
 });
 
 klaar();

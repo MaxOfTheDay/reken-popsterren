@@ -438,12 +438,14 @@
 
 
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
-    --practice-bg: #fff3e0; --practice-text: #b3560d;
+    --practice-bg: #fff3e0; --practice-text: #b3560d; --practice-rand: #f3cf86;
 
 
 
 
     --stat-green: #2e9e4f;
+
+    --stat-green-bg: #eaf7ee; --stat-green-rand: #b9e2c6; --stat-green-tekst: #22663a;
 
 
 
@@ -8053,6 +8055,15 @@
   .danger-zone .d b { color: var(--danger-title); font-weight: 700; }
 
 
+
+
+
+  .backup-stand {
+    display: flex; align-items: center; gap: 8px; margin: 0 0 11px; padding: 9px 12px;
+    border-radius: var(--r-sm); font-size: var(--tx-label); font-weight: 600;
+    background: var(--stat-green-bg); color: var(--stat-green-tekst); border: 1px solid var(--stat-green-rand);
+  }
+  .backup-stand.oud { background: var(--practice-bg); color: var(--practice-text); border-color: var(--practice-rand); }
   .data-los { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--paper-border); }
   .data-los .note { margin-top: 8px; }
 
@@ -12509,6 +12520,35 @@ function save() {
       } catch (e2) { }
     }
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let opslagGevraagd = false;
+function opslagVasthouden(ouder) {
+  if (opslagGevraagd || demoStand) return;
+  const st = navigator.storage;
+  if (!st || !st.persist) return;
+  if (!ouder && /Firefox\//.test(navigator.userAgent || '')) return;
+  opslagGevraagd = true;
+  try {
+    Promise.resolve(st.persisted ? st.persisted() : false)
+      .then(al => al || st.persist())
+      .catch(() => {});
+  } catch (e) { }
 }
 
 let cur = null;
@@ -19990,6 +20030,8 @@ function applyShowResult(p, lvl, wl, stars) {
   const feest = (netUit || netVol) ? { wereld: wl.world, spul: netUit, perfect: netVol } : null;
   const trofees = checkTrophies(p);
   save();
+
+  opslagVasthouden(false);
   return { stars, beter, bonus, travel, feest, trofees };
 }
 
@@ -21998,6 +22040,7 @@ function appWideCardsHtml(hasStars) {
       <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
            is geen cloud, dus zonder back-up is een nieuw toestel een lege start -->
       <div class="note" style="margin-bottom:11px">Alles staat alleen op dit toestel. Een back-up is één bestand om veilig te bewaren of mee te nemen naar een ander toestel.</div>
+      ${backupStandHtml()}
       <div class="data-btns">
         <button class="btn small purple" id="set-export">💾 Back-up maken</button>
       </div>
@@ -22007,6 +22050,25 @@ function appWideCardsHtml(hasStars) {
       </div>
       ${importInvoerHtml()}
     </div>${beginschermKaartHtml(hasStars)}`;
+}
+
+
+
+
+const BACKUP_OUD_DAGEN = 28;
+function backupStandHtml(nu) {
+  const t = db.backupAt ? Date.parse(db.backupAt) : NaN;
+  const dagen = isNaN(t) ? null : Math.max(0, Math.floor(((nu || Date.now()) - t) / 86400000));
+  const wanneer = dagen === null ? null
+    : dagen === 0 ? 'vandaag'
+    : dagen === 1 ? 'gisteren'
+    : dagen < 14 ? `${dagen} dagen geleden`
+    : dagen < 60 ? `${Math.floor(dagen / 7)} weken geleden`
+    : `${Math.floor(dagen / 30)} maanden geleden`;
+  const oud = dagen === null || dagen > BACKUP_OUD_DAGEN;
+  const tekst = wanneer ? `Laatste back-up: ${wanneer}` : 'Nog nooit een back-up gemaakt';
+  return `<div class="backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">`
+    + `<span aria-hidden="true">${oud ? '⚠️' : '✓'}</span> ${tekst}</div>`;
 }
 
 
@@ -22487,6 +22549,13 @@ function bindSettings(p, s) {
 
 
 function exportData() {
+
+
+
+
+  db.backupAt = new Date().toISOString();
+  save();
+  opslagVasthouden(true);
   const data = JSON.stringify(db, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -22500,6 +22569,9 @@ function exportData() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  const stand = $('set-backup-stand');
+  if (stand) stand.outerHTML = backupStandHtml();
 }
 
 

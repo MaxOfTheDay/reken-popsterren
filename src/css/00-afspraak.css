@@ -402,12 +402,14 @@
 
     /* ---- Danger zone / practice chips (parent settings) ---- */
     --danger-bg: #fff0f0; --danger-border: #f2b2b2; --danger-title: #b71c1c; --danger-desc: #9a4a4a;
-    --practice-bg: #fff3e0; --practice-text: #b3560d;
+    --practice-bg: #fff3e0; --practice-text: #b3560d; --practice-rand: #f3cf86;
     /* Voortgang-tab: twee betekenissen, twee kleuren. Er stonden zes tegels in
        zes kleuren zonder dat de kleur iets zei -- decoratie op juist het scherm
        dat verder het strakst is. Nu: paars = hoeveel er gedaan is, groen = hoe
        goed het ging. --stat-green is de enige die overblijft naast --purple-*. */
     --stat-green: #2e9e4f;
+    /* en als vlak: de regel "laatste back-up" in de back-upkaart (zie .backup-stand) */
+    --stat-green-bg: #eaf7ee; --stat-green-rand: #b9e2c6; --stat-green-tekst: #22663a;
 
     /* (Hier stond de --glass-*-familie: eenentwintig tokens van de vorm
        rgba(0,0,0,.35) onder de naam --glass-black-35. Ze zijn weg. Een naam die
