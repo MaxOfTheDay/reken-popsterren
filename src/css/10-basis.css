@@ -420,6 +420,16 @@
     height: auto;
     object-fit: contain;
   }
+  /* Komt het logo niet binnen (geen net, en het staat nog in geen enkele
+     voorraad), dan de naam als tekst in plaats van het gebroken-beeldje met een
+     afgeknipte alt erin. De img gaat weg met display:none, dus de schermlezer
+     leest de naam hier uit de ::before. */
+  .spellogo.zonder-beeld img { display: none; }
+  .spellogo.zonder-beeld::before {
+    content: 'Rekensterren'; display: block;
+    font-size: var(--tx-feest); font-weight: 700; line-height: 1.1; color: var(--c-white);
+    text-shadow: 0 3px 0 var(--purple-shadow);
+  }
   /* ---- Het spelogo komt binnen ------------------------------------------
      De intro bij het opstarten (zie "= Het spelogo komt binnen" in de JS). Het
      logo zelf gaat zolang op opacity 0 en niet op visibility: zo blijft de kop

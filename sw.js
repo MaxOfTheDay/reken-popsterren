@@ -19,6 +19,15 @@
  *                          veranderen vrijwel nooit, en als er wél een nieuwe
  *                          tekening komt gaat ART_CACHE één keer omhoog.
  *
+ * Eén uitzondering op "pas als het spel erom vraagt": de vier bestanden van het
+ * allereerste scherm (EERSTE_BEELD hieronder). Die vraagt de pagina op vóórdat
+ * deze service worker er is -- bij het eerste bezoek draait hij nog niet, dus die
+ * aanvragen gaan buiten hem om en komen in geen enkele voorraad. Pas een tweede
+ * bezoek mét net zette ze erin. Zonder net daartussen startte het spel dan zonder
+ * logo, zonder schilderij en in een reserveletter. Bij een app op het
+ * beginscherm van een iPhone is elke eerste start zo'n eerste bezoek: iOS geeft
+ * die app een eigen opslag, los van Safari.
+ *
  * Wat hier met opzet NIET gebeurt:
  *   - de wereldtekeningen vooraf binnenhalen. Ze komen erin op het moment dat
  *     het spel ze opvraagt, dus een wereld waar nog niemand geweest is kost
@@ -33,6 +42,14 @@ const ART_CACHE = 'rekenpop-art-2';
 const HUIDIG = [CACHE, ART_CACHE];
 const ASSETS = ['./', './index.html', './manifest.json',
                 './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
+/* Het eerste scherm, in de tekeningen-voorraad (zie boven). Ze zijn een paar
+   tellen eerder al opgehaald, dus dit komt uit de gewone browsercache en kost geen
+   tweede download -- behalve het latin-ext-stukje van de letter (4 kB), dat alleen
+   laadt bij een naam met een letter als ł of ő. Geen wereld in deze lijst: die
+   blijven komen als het spel erom vraagt. */
+const EERSTE_BEELD = ['./assets/font/fredoka-latin.woff2', './assets/font/fredoka-latin-ext.woff2',
+                      './assets/bg/landing.webp', './assets/branding/wordmark.webp',
+                      './assets/branding/logo-lagen.webp'];
 /* Hoe lang de schil op het net wacht voordat hij de bewaarde versie pakt. Een
    telefoon met één streepje laat een fetch minutenlang openstaan; zonder deze
    grens staat een kind naar een wit scherm te kijken terwijl het hele spel al op
@@ -66,7 +83,19 @@ function uitVoorraad(naam, url) {
 }
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(Promise.all([
+    caches.open(CACHE).then(c => c.addAll(ASSETS)),
+    /* Wél bewaard op het pad (sleutel), zoals alles in deze voorraad, en níét
+       dragend: mislukt er hier één, dan installeert de service worker toch. Een
+       ontbrekend logo is een gebrek; geen offline spel is erger. Wat hier mist,
+       zet de fetch hieronder er alsnog in zodra het spel erom vraagt. */
+    caches.open(ART_CACHE).then(c => Promise.all(EERSTE_BEELD.map(p => {
+      const url = new URL(p, self.location.href);
+      return c.match(sleutel(url)).then(hit => hit || fetch(url).then(resp => {
+        if (resp.ok) return c.put(sleutel(url), resp);
+      }));
+    }))).catch(() => {})
+  ]).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
