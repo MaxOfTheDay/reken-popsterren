@@ -55,7 +55,7 @@ niets op: het gaat alleen over hóe hij binnenkomt.
 
 | voorraad | wat erin zit | strategie | naam |
 |---|---|---|---|
-| schil | `index.html`, manifest, iconen | netwerk-eerst, met een grens van 4 s | `rekenpop-v45` — hoeft **niet** omhoog bij een gewone uitgave (zie hieronder) |
+| schil | `index.html`, manifest, iconen | netwerk-eerst, met een grens van 4 s | `rekenpop-v46` — hoeft **niet** omhoog bij een gewone uitgave (zie hieronder) |
 | tekeningen | alles onder `assets/` | cache-eerst | `rekenpop-art-2` — **blijft staan** |
 
 Waarom gescheiden: een tekstwijziging in het spel hoort geen twee megabyte
@@ -64,6 +64,15 @@ veranderen vrijwel nooit.
 
 Verder:
 
+* Het eerste scherm (lettertype, het schilderij achter de sterrenkeuze, de twee
+  logobestanden) gaat bij het installeren al mee in de tekeningen-voorraad
+  (`EERSTE_BEELD` in `sw.js`). Bij het eerste bezoek vraagt de pagina die op
+  vóórdat de service worker er is, dus anders kwamen ze pas bij een twééde bezoek
+  mét net in de voorraad. Zonder net daartussen startte het spel zonder logo,
+  zonder schilderij en in een reserveletter -- en een app op het beginscherm van
+  een iPhone heeft een eigen opslag, dus daar is de eerste start altijd zo'n
+  eerste bezoek. Het kost niets extra: ze komen uit de gewone browsercache. Geen
+  wereld in die lijst.
 * Alleen een écht antwoord gaat de voorraad in (`resp.ok`, niet opaque). Een 404
   bewaren in een cache-eerst-voorraad betekent dat die wereld voorgoed stuk is.
 * Bewaren gaat op het pad zonder `?…`, zodat `?debug` niet een tweede kopie maakt.
@@ -131,7 +140,9 @@ nodig en er gaat geen voortgang verloren: de opslag van een speler staat in
 
 | situatie | wat er gebeurt |
 |---|---|
-| app al een keer geopend | start en speelt gewoon — schermen, sommen, kleedkamer, trofeeën |
+| app al een keer geopend | start en speelt gewoon — schermen, sommen, kleedkamer, trofeeën, met logo, schilderij en lettertype |
+| verder spelen zonder net | alles gaat door: sterren, werelden, spulletjes en trofeeën zitten in het spel zelf, de opslag in `localStorage` |
+| logo toch weg (opslag gewist) | de naam staat er als tekst, geen gebroken beeldje (`.spellogo.zonder-beeld`) |
 | een wereld waar ze eerder was | de tekening staat in de voorraad |
 | een wereld waar ze nog nooit was | de kaart opent op de kleuren van die wereld; alles werkt, alleen de tekening ontbreekt tot er weer net is |
 | nooit eerder geopend | geen app — er valt niets te bewaren wat er nog niet is |

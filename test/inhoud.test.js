@@ -360,6 +360,19 @@ zaak('G', () => {
      wereld wordt toegevoegd. */
   check(!lijst.some(p => p.includes('/assets/')),
     'G · en er staat geen wereldtekening in de vooraf-lijst', lijst.filter(p => p.includes('/assets/')).join(', '));
+  /* Het eerste scherm gaat bij het installeren wél mee (EERSTE_BEELD), omdat de
+     pagina die bestanden opvraagt vóórdat de service worker er is. Een naam die
+     er niet (meer) ligt laat dat stil mislukken -- de installatie gaat door, maar
+     zonder net start het spel dan weer zonder logo. En ook hier geen wereld:
+     dan betaalt elk kind er bij het eerste bezoek voor. */
+  const eerste = sw.match(/const EERSTE_BEELD = \[([^\]]*)\]/);
+  check(!!eerste, 'G · de service worker neemt het eerste scherm mee (EERSTE_BEELD)', 'niet gevonden');
+  if (eerste) {
+    const beelden = eerste[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+    beelden.forEach(p => check(fs.existsSync(path.join(WORTEL, p)), `G · ${p} staat ook echt op schijf`, p));
+    check(!beelden.some(p => p.includes('/assets/world/')),
+      'G · en er staat geen wereldtekening in EERSTE_BEELD', beelden.join(', '));
+  }
   /* En de service worker weet niet wélke werelden er zijn. Zodra daar een id of
      een pad in staat is er een tweede plek die bij elke nieuwe wereld bijgewerkt
      moet worden -- en die wordt vergeten. */
@@ -587,6 +600,8 @@ zaak('I', () => {
     ...[...runtime.matchAll(/url\(\s*["']?([^"')]+)/g)].map(m => m[1]),
     ...[...lees('sw.js').match(/const ASSETS = \[([^\]]*)\]/)[1]
          .split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)],
+    ...[...(lees('sw.js').match(/const EERSTE_BEELD = \[([^\]]*)\]/) || [, ''])[1]
+         .split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '').replace(/^\.\//, '')).filter(Boolean)],
   ];
   const meesters = gevraagd.filter(u => u.includes('branding/source'));
   check(!meesters.length, 'I · geen enkele meester wordt door de app opgehaald', meesters.join(', '));

@@ -1450,6 +1450,16 @@
 
 
 
+  .spellogo.zonder-beeld img { display: none; }
+  .spellogo.zonder-beeld::before {
+    content: 'Rekensterren'; display: block;
+    font-size: var(--tx-feest); font-weight: 700; line-height: 1.1; color: var(--c-white);
+    text-shadow: 0 3px 0 var(--purple-shadow);
+  }
+
+
+
+
 
 
 
@@ -8745,10 +8755,15 @@
          assets/branding/source/. Zie test/merk.js: daar staat wat waarvandaan komt.
 
          width/height staan erbij zodat de regel al ruimte heeft voordat het beeld
-         binnen is; de opmaak hieronder (.spellogo img) bepaalt de échte maat. -->
+         binnen is; de opmaak hieronder (.spellogo img) bepaalt de échte maat.
+
+         onerror staat hier in de opmaak en niet in het script: de fout kan vallen
+         vóórdat het scriptblok gedraaid heeft. Dan geen gebroken-beeldje met een
+         afgeknipte alt, maar de naam als tekst (zie .spellogo.zonder-beeld). -->
     <h1 class="spellogo intro-wacht">
       <img src="assets/branding/wordmark.webp" alt="Rekensterren"
-           width="1080" height="360" decoding="async">
+           width="1080" height="360" decoding="async"
+           onerror="this.parentNode.classList.add('zonder-beeld')">
     </h1>
     <div class="subtitle" id="profile-subtitle"></div>
     <!-- De "+" staat vást in het raster en wordt nooit weggegooid: renderProfiles
