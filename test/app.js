@@ -210,6 +210,8 @@ const BRUG = `globalThis.__api = {
   totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount,
   // opslag
   defaultProfile, migrate, normalizeProfiles, load, save, profileKeys, nextProfileKey, P,
+  // de sterren veiligstellen: de regel in de back-upkaart, en de browser vragen ze te houden
+  backupStandHtml, opslagVasthouden,
 };`;
 
 function laadApp(opties) {

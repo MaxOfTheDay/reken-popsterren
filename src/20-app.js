@@ -2453,6 +2453,35 @@ function save() {
   }
 }
 
+/* ---- De opslag laten vasthouden ---------------------------------------------
+   localStorage is "best effort": onder druk mag een browser hem wissen, en Safari
+   doet dat voor een site die een week of langer niet bezocht is en níét als app op
+   het beginscherm staat. Dan zijn álle sterren weg, en dat is het ergste wat dit
+   spel een kind kan aandoen. navigator.storage.persist() vraagt de browser om dat
+   niet te doen.
+
+   Chrome en Safari beslissen dat zelf en zonder vraag (op hoe vaak de site
+   gebruikt wordt, of hij geïnstalleerd is). Firefox toont er wél een venster
+   voor, en dat hoort niet voor een kind te verschijnen -- daar vragen we het dus
+   alleen als er een ouder bij is (ouder = true, vanuit "Back-up maken").
+
+   Eén keer per sessie, en stil: een nee of een browser die het niet kent is geen
+   fout, dan blijft alles zoals het was. De back-up (exportData) blijft het echte
+   vangnet. */
+let opslagGevraagd = false;
+function opslagVasthouden(ouder) {
+  if (opslagGevraagd || demoStand) return;
+  const st = navigator.storage;
+  if (!st || !st.persist) return;
+  if (!ouder && /Firefox\//.test(navigator.userAgent || '')) return;
+  opslagGevraagd = true;
+  try {
+    Promise.resolve(st.persisted ? st.persisted() : false)
+      .then(al => al || st.persist())
+      .catch(() => {});
+  } catch (e) { /* oude browser: niets aan de hand */ }
+}
+
 let cur = null;                 // huidige profielsleutel: 'p1' | 'p2'
 const P = () => db.profiles[cur];
 
@@ -9932,6 +9961,8 @@ function applyShowResult(p, lvl, wl, stars) {
   const feest = (netUit || netVol) ? { wereld: wl.world, spul: netUit, perfect: netVol } : null;
   const trofees = checkTrophies(p);
   save();
+  // er is nu iets om kwijt te raken -- zie opslagVasthouden
+  opslagVasthouden(false);
   return { stars, beter, bonus, travel, feest, trofees };
 }
 
@@ -11940,6 +11971,7 @@ function appWideCardsHtml(hasStars) {
       <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
            is geen cloud, dus zonder back-up is een nieuw toestel een lege start -->
       <div class="note" style="margin-bottom:11px">Alles staat alleen op dit toestel. Een back-up is één bestand om veilig te bewaren of mee te nemen naar een ander toestel.</div>
+      ${backupStandHtml()}
       <div class="data-btns">
         <button class="btn small purple" id="set-export">💾 Back-up maken</button>
       </div>
@@ -11949,6 +11981,25 @@ function appWideCardsHtml(hasStars) {
       </div>
       ${importInvoerHtml()}
     </div>${beginschermKaartHtml(hasStars)}`;
+}
+/* Wanneer de laatste back-up was. Amber zolang er nooit een was of de laatste
+   langer dan vier weken geleden is -- vier weken spelen is te veel om kwijt te
+   raken; groen daarna. Alleen hier, in het ouderdeel: een kind krijgt hier nooit
+   een melding over te zien. */
+const BACKUP_OUD_DAGEN = 28;
+function backupStandHtml(nu) {
+  const t = db.backupAt ? Date.parse(db.backupAt) : NaN;
+  const dagen = isNaN(t) ? null : Math.max(0, Math.floor(((nu || Date.now()) - t) / 86400000));
+  const wanneer = dagen === null ? null
+    : dagen === 0 ? 'vandaag'
+    : dagen === 1 ? 'gisteren'
+    : dagen < 14 ? `${dagen} dagen geleden`
+    : dagen < 60 ? `${Math.floor(dagen / 7)} weken geleden`
+    : `${Math.floor(dagen / 30)} maanden geleden`;
+  const oud = dagen === null || dagen > BACKUP_OUD_DAGEN;
+  const tekst = wanneer ? `Laatste back-up: ${wanneer}` : 'Nog nooit een back-up gemaakt';
+  return `<div class="backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">`
+    + `<span aria-hidden="true">${oud ? '⚠️' : '✓'}</span> ${tekst}</div>`;
 }
 // Het verborgen bestandsveld achter "terugzetten". Eén keer per paneel, en in
 // beide panelen (met en zonder sterren) onder hetzelfde id -- bindSettings bindt
@@ -12429,6 +12480,13 @@ function bindSettings(p, s) {
 
 // Alle profielen + instellingen als JSON-bestand downloaden.
 function exportData() {
+  /* Wanneer de laatste back-up was, voor de regel in de back-upkaart. Hij staat
+     in db, dus hij reist mee ín het bestand: wie dat later terugzet, ziet de
+     datum van díe back-up -- en dat klopt ook. Een tik op de knop telt als een
+     back-up; of het bestand echt bewaard werd kan een webpagina niet weten. */
+  db.backupAt = new Date().toISOString();
+  save();
+  opslagVasthouden(true);
   const data = JSON.stringify(db, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -12442,6 +12500,9 @@ function exportData() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // de regel bovenaan de kaart meteen bijwerken, zonder het hele paneel te herbouwen
+  const stand = $('set-backup-stand');
+  if (stand) stand.outerHTML = backupStandHtml();
 }
 
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
