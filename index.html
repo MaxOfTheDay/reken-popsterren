@@ -7351,6 +7351,50 @@
 
 
 
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    #screen-dress {
+      --kolom: 1400px;
+      --pop-h: clamp(240px, min(calc(100vh - 340px), 32vw), 560px);
+    }
+    #screen-dress.active {
+      display: grid; grid-template-columns: calc(var(--pop-h) * 1.19 + 56px) minmax(0, 1fr);
+      column-gap: 22px; align-items: start; align-content: start;
+      padding-left: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
+      padding-right: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
+    }
+    #screen-dress > .hub-sticky {
+      grid-column: 1; grid-row: 1 / span 2; width: auto;
+      margin: calc(var(--rand, 12px) * -1) 0 0 0;
+      padding-left: 14px; padding-right: 14px;
+    }
+
+
+    #screen-dress > .item-grid {
+      grid-column: 2; grid-row: 1; max-width: none; margin-top: 60px; --kaart-min: 130px;
+    }
+    #screen-dress .shop-tabs-wrap { max-width: 100%; margin-top: 12px; }
+    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21443,8 +21487,14 @@ function rekBreedte() {
   if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
   if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
-  const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
-  const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
+
+
+
+
+
+  const w = rek.clientWidth - 1;
+  const n = Math.max(1, Math.floor((w + KAART_GAT) / (min + KAART_GAT)));
+  const b = Math.min((w - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
   rekBreedteBij = `${innerWidth}x${innerHeight}`;
