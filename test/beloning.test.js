@@ -502,6 +502,50 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- G2 · De stukken één voor één, zonder Podia uit -------------------
+     De stukjes in de podiumbalk doen wat een kaartje in het rek doet: kiezen
+     (blauw) en passen, één tik = aan als het van haar is. Kopen kan per stuk,
+     het podium blijft gekozen, en de keuze schuift door naar het volgende stuk
+     dat nog ontbreekt. Het laatste stuk maakt het podium af. */
+  {
+    const { ctx, page } = await fresh();
+    await nieuweSter(page);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const p = P(); p.diamonds = 9999; p.owned.push('acc_wereld_muziek'); save();
+      openKleedkamer(); await wacht(250);
+      openPodia(); await wacht(150);
+      document.querySelector('.item-card[data-item="stage_arena"]').click(); await wacht(150);
+      const balk = () => document.getElementById('dress-bar');
+      const tegel = id => balk().querySelector(`.mini-kaart[data-stuk="${id}"]`);
+      const stand = () => ({ lade: shopCat, gekozen: shopSelectedId, knop: (document.getElementById('db-buy') || {}).textContent || '',
+        tegels: [...balk().querySelectorAll('.mini-kaart')].map(k => k.dataset.stuk + ':' + ['selected', 'equipped', 'owned'].filter(c => k.classList.contains(c)).join('+')) });
+      const begin = stand();
+      tegel('instr_dj').click(); await wacht(100);
+      const gekozen = { ...stand(), pop: document.getElementById('shop-avatar').innerHTML.length > 0 };
+      document.getElementById('db-buy').click(); await wacht(2200);
+      const naKoop = { ...stand(), dj: P().owned.includes('instr_dj'), aan: P().equipped.instrument };
+      tegel('acc_wereld_muziek').click(); await wacht(100);
+      const schatAan = { ...stand(), acc: P().equipped.acc };
+      document.getElementById('db-buy').click(); await wacht(2200);
+      return { begin, gekozen, naKoop, schatAan, podium: P().equipped.stage, balkWeg: balk().style.display === 'none',
+        diamanten: P().diamonds, prijs: item('instr_dj').price + item('dress_disco').price, djPrijs: item('instr_dj').price };
+    });
+    check(r.begin.knop.indexOf(String(r.prijs)) >= 0 && r.begin.tegels.join() === 'acc_wereld_muziek:owned,instr_dj:,dress_disco:',
+      'G2 · een podium aantikken: de balk gaat over het hele podium', JSON.stringify(r.begin));
+    check(r.gekozen.lade === 'stage' && r.gekozen.gekozen === 'stage_arena' && r.gekozen.tegels[1] === 'instr_dj:selected'
+      && /Koop/.test(r.gekozen.knop) && r.gekozen.knop.indexOf(String(r.djPrijs)) >= 0,
+      'G2 · een stuk aantikken kiest dat stuk, en de knop gaat over dat stuk', JSON.stringify(r.gekozen));
+    check(r.naKoop.dj && r.naKoop.aan === 'instr_dj' && r.naKoop.lade === 'stage' && r.naKoop.gekozen === 'stage_arena'
+      && r.naKoop.tegels.join() === 'acc_wereld_muziek:owned,instr_dj:equipped,dress_disco:selected',
+      'G2 · na de koop blijft ze in Podia, het stuk is aan, en de keuze schuift door', JSON.stringify(r.naKoop));
+    check(r.schatAan.acc === 'acc_wereld_muziek' && r.schatAan.tegels[0] === 'acc_wereld_muziek:equipped' && r.schatAan.gekozen === 'stage_arena',
+      'G2 · een stuk dat van haar is: één tik doet het aan, zoals in het rek', JSON.stringify(r.schatAan));
+    check(r.podium === 'stage_arena' && r.balkWeg && r.diamanten === 9999 - r.prijs,
+      'G2 · het laatste stuk maakt het podium af, en ze staat erop', JSON.stringify(r));
+    await ctx.close();
+  }
+
   /* ---- H · Een wereld erbij ---------------------------------------------
      Eén regel in WORLDS, met één veld voor de beloning. Er hoort verder niets
      bijgewerkt te hoeven worden -- geen lijst, geen trofee met de hand. */
