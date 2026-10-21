@@ -410,14 +410,21 @@
      schermen buiten beeld liepen). De maten schalen mee met de tegel (cqw, zie
      .count-tile): bij 3 of 4 tegels naast elkaar is één tegel maar een derde of
      een kwart van de rij breed. De px-waarde ervoor is de bovengrens én de
-     terugval voor browsers zonder containerquery's. */
-  .count-tile .cframe { gap: 2px; gap: min(2px, 2cqw); }
+     terugval voor browsers zonder containerquery's.
+     De bovengrenzen stonden op 15px per vakje en 11px per voorwerp: op een
+     telefoon met twee tegels naast elkaar was de tegel dan vooral leeg paars en
+     moest een kind van vijf zes appeltjes van 11px tellen. Nu bepaalt de tegel
+     de maat (17cqw = vijf vakjes plus vier kiertjes past precies) en ligt de
+     grens pas waar het op een tablet te groot zou worden. De vh-term is voor de
+     telefoon dwars: daar is niet de breedte maar de hoogte op, en groeien de
+     twee rijen tegels anders onder de rand van het scherm uit. */
+  .count-tile .cframe { gap: 2px; gap: min(3px, 2cqw); }
   /* de mini-raampjes houden hun eigen kleine ronding: dat is de tekening van het
      reken-hulpmiddel, niet de UI-schaal -- --r-sm op een vakje van 10-15px maakt
      er een rondje van */
-  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(15px, 17cqw); height: min(15px, 17cqw); border-width: 1.5px; border-radius: 4px; }
-  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(11px, 12cqw); }
-  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(8px, 9cqw); height: min(8px, 9cqw); }
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(28px, 17cqw, 4.5vh); height: min(28px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(20px, 12.5cqw, 3.3vh); }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(14px, 10cqw); height: min(14px, 10cqw); }
 
   /* ---- Stippenraam (leer-aid): vijf-/tienraam met VASTE plekken ----
      Vaste vulvolgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar,
@@ -438,10 +445,10 @@
      naast elkaar staan, en dan liep de hele rij tegels buiten beeld -- de derde
      tegel was op een telefoon half weg. De steunstipjes onder een cijfer
      (.dframe.mini) houden hun eigen maat. */
-  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(4px, 2cqw); row-gap: min(7px, 6cqw); }
+  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(5px, 2cqw); row-gap: min(8px, 6cqw); }
   /* ronding in procenten i.p.v. --r-sm: het vakje is nu geen vaste 22px meer, en
      een vaste 10px ronding maakt van een geslonken vakje een rondje */
-  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(20px, 18cqw); height: min(20px, 18cqw); border-radius: 45%; }
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(28px, 18cqw, 4.5vh); height: min(28px, 18cqw, 4.5vh); border-radius: 45%; }
   /* op paarse knoppen: witte stippen + lichtere randjes (i.p.v. donker op wit) */
   .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
   .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
@@ -489,7 +496,7 @@
   .count-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
-    min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
+    min-height: 88px; padding: 12px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform var(--t-tik), box-shadow var(--t-tik);

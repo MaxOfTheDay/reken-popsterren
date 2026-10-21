@@ -3541,13 +3541,20 @@
 
 
 
-  .count-tile .cframe { gap: 2px; gap: min(2px, 2cqw); }
 
 
 
-  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(15px, 17cqw); height: min(15px, 17cqw); border-width: 1.5px; border-radius: 4px; }
-  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(11px, 12cqw); }
-  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(8px, 9cqw); height: min(8px, 9cqw); }
+
+
+
+
+  .count-tile .cframe { gap: 2px; gap: min(3px, 2cqw); }
+
+
+
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(28px, 17cqw, 4.5vh); height: min(28px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(20px, 12.5cqw, 3.3vh); }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(14px, 10cqw); height: min(14px, 10cqw); }
 
 
 
@@ -3568,10 +3575,10 @@
 
 
 
-  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(4px, 2cqw); row-gap: min(7px, 6cqw); }
+  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(5px, 2cqw); row-gap: min(8px, 6cqw); }
 
 
-  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(20px, 18cqw); height: min(20px, 18cqw); border-radius: 45%; }
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(28px, 18cqw, 4.5vh); height: min(28px, 18cqw, 4.5vh); border-radius: 45%; }
 
   .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
   .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
@@ -3619,7 +3626,7 @@
   .count-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
-    min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
+    min-height: 88px; padding: 12px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform var(--t-tik), box-shadow var(--t-tik);
