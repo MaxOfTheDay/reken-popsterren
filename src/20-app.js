@@ -12013,9 +12013,14 @@ function leerpadHtml(p) {
     rijen.push(padRij('nu niveau-bezig', nu.wereld === laatste ? nu.wereld + '+' : nu.wereld,
       `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}.${stil}</small>`));
     stappen.filter(st => st.wereld > nu.wereld).forEach(st => rijen.push(padRij('later', st.wereld, st.lang)));
+    const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
+      ? [`Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.`, `Tot ${grens.naar}`]
+      : grens.naar === 'mix'
+      ? ['Bijna altijd drie sterren. Zelf het antwoord typen is de volgende uitdaging, met dezelfde getallen. Eerst af en toe?', 'Afwisselen']
+      : ['Afwisselen gaat goed. Voortaan altijd zelf typen?', 'Zelf typen'];
     if (grens) tip = `<div class="grens-tip" id="grens-tip">
-      <div>💡 Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.</div>
-      <button class="btn small purple" id="grens-tip-ja" data-v="${grens.naar}">Tot ${grens.naar}</button></div>`;
+      <div>💡 ${tekst}</div>
+      <button class="btn small purple" id="grens-tip-ja" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button></div>`;
     noot = 'Binnen elke stap past het spel de sommen vanzelf aan op wat goed en fout gaat.';
   }
   return `<div class="set-card vg-kaart niveau-blok">
@@ -12108,7 +12113,14 @@ function stemNotitie() {
    Zet de ouder de grens om (met de tip of op Oefenen), dan begint het tellen
    opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
    en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
-   stond direct na "tot 50" al de vraag of het niet 100 moest. */
+   stond direct na "tot 50" al de vraag of het niet 100 moest.
+
+   EERST HET ANTWOORDEN, DAN DE GETALLEN. Bij "kiezen uit 4" is een gok goedkoop
+   (er is een hint en een tweede kans), en zelf typen is de grootste stap in
+   uitdaging mét dezelfde getallen -- voor een kind van zes of zeven een
+   vriendelijker stap dan ineens tot vijftig. Dus stelt de tip eerst Afwisselen
+   voor, dan Zelf typen, en pas daarna een hogere grens. Elke stap telt opnieuw
+   (grensTipBasis), net als bij de grens. Geeft { soort: 'mode' | 'grens', naar }. */
 const GRENS_LADDER = [10, 20, 50, 100];
 const GRENS_TIP_SHOWS = 6;
 function grensDrieSterren(p) {
@@ -12118,12 +12130,14 @@ function grensDrieSterren(p) {
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
   return drie;
 }
+const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {
   const s = p.settings;
   if (s.track === 'count') return null;
+  if (grensDrieSterren(p) - (s.grensTipBasis || 0) < GRENS_TIP_SHOWS) return null;
+  if (MODE_LADDER[s.mode]) return { soort: 'mode', naar: MODE_LADDER[s.mode] };
   const naar = GRENS_LADDER.find(v => v > s.max);
-  if (!naar) return null;
-  return grensDrieSterren(p) - (s.grensTipBasis || 0) >= GRENS_TIP_SHOWS ? { naar } : null;
+  return naar ? { soort: 'grens', naar } : null;
 }
 /* Dezelfde soort tip voor de telmodus. Daar groeit het spel zelf mee, maar
    alleen tot de grenzen die de ouder koos: de hoogste fase, cijfers aan/uit en
@@ -12777,7 +12791,10 @@ function bindOefenChips(s, p, pfx, done) {
     s.max = parseInt(c.dataset.v, 10);
     if (p) s.grensTipBasis = grensDrieSterren(p);   // de tip telt opnieuw (zie grensTip)
   });
-  bind('set-mode', c => { s.mode = c.dataset.v; });
+  bind('set-mode', c => {
+    s.mode = c.dataset.v;
+    if (p) s.grensTipBasis = grensDrieSterren(p);   // ook een antwoordstap telt opnieuw
+  });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
   // los aan/uit-schakelbare extra uitdagingen (elk onafhankelijk, standaard aan)
   bind('set-extra', c => {
@@ -12835,7 +12852,9 @@ function bindSettings(p, s) {
   // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefenen, met één tik
   on('grens-tip-ja', 'onclick', e => {
     sndClick();
-    s.max = parseInt(e.currentTarget.dataset.v, 10);
+    const d = e.currentTarget.dataset;
+    if (d.soort === 'mode') s.mode = d.v;
+    else s.max = parseInt(d.v, 10);
     s.grensTipBasis = grensDrieSterren(p);
     saveAndFlash();
     renderSettings();

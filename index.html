@@ -22151,9 +22151,14 @@ function leerpadHtml(p) {
     rijen.push(padRij('nu niveau-bezig', nu.wereld === laatste ? nu.wereld + '+' : nu.wereld,
       `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}.${stil}</small>`));
     stappen.filter(st => st.wereld > nu.wereld).forEach(st => rijen.push(padRij('later', st.wereld, st.lang)));
+    const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
+      ? [`Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.`, `Tot ${grens.naar}`]
+      : grens.naar === 'mix'
+      ? ['Bijna altijd drie sterren. Zelf het antwoord typen is de volgende uitdaging, met dezelfde getallen. Eerst af en toe?', 'Afwisselen']
+      : ['Afwisselen gaat goed. Voortaan altijd zelf typen?', 'Zelf typen'];
     if (grens) tip = `<div class="grens-tip" id="grens-tip">
-      <div>💡 Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.</div>
-      <button class="btn small purple" id="grens-tip-ja" data-v="${grens.naar}">Tot ${grens.naar}</button></div>`;
+      <div>💡 ${tekst}</div>
+      <button class="btn small purple" id="grens-tip-ja" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button></div>`;
     noot = 'Binnen elke stap past het spel de sommen vanzelf aan op wat goed en fout gaat.';
   }
   return `<div class="set-card vg-kaart niveau-blok">
@@ -22247,6 +22252,13 @@ function stemNotitie() {
 
 
 
+
+
+
+
+
+
+
 const GRENS_LADDER = [10, 20, 50, 100];
 const GRENS_TIP_SHOWS = 6;
 function grensDrieSterren(p) {
@@ -22256,12 +22268,14 @@ function grensDrieSterren(p) {
   for (let l = WORLD_START[vanaf]; l <= WORLD_LAST; l++) if ((p.stars || {})[l] >= 3) drie++;
   return drie;
 }
+const MODE_LADDER = { kies: 'mix', mix: 'typ' };
 function grensTip(p) {
   const s = p.settings;
   if (s.track === 'count') return null;
+  if (grensDrieSterren(p) - (s.grensTipBasis || 0) < GRENS_TIP_SHOWS) return null;
+  if (MODE_LADDER[s.mode]) return { soort: 'mode', naar: MODE_LADDER[s.mode] };
   const naar = GRENS_LADDER.find(v => v > s.max);
-  if (!naar) return null;
-  return grensDrieSterren(p) - (s.grensTipBasis || 0) >= GRENS_TIP_SHOWS ? { naar } : null;
+  return naar ? { soort: 'grens', naar } : null;
 }
 
 
@@ -22915,7 +22929,10 @@ function bindOefenChips(s, p, pfx, done) {
     s.max = parseInt(c.dataset.v, 10);
     if (p) s.grensTipBasis = grensDrieSterren(p);
   });
-  bind('set-mode', c => { s.mode = c.dataset.v; });
+  bind('set-mode', c => {
+    s.mode = c.dataset.v;
+    if (p) s.grensTipBasis = grensDrieSterren(p);
+  });
   bind('set-perlevel', c => { s.perLevel = parseInt(c.dataset.v, 10); });
 
   bind('set-extra', c => {
@@ -22973,7 +22990,9 @@ function bindSettings(p, s) {
 
   on('grens-tip-ja', 'onclick', e => {
     sndClick();
-    s.max = parseInt(e.currentTarget.dataset.v, 10);
+    const d = e.currentTarget.dataset;
+    if (d.soort === 'mode') s.mode = d.v;
+    else s.max = parseInt(d.v, 10);
     s.grensTipBasis = grensDrieSterren(p);
     saveAndFlash();
     renderSettings();
