@@ -2205,7 +2205,7 @@ function check(ok, label, detail) {
     });
     const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
       missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 12, fasesBekend: 12, repr: 'objects',
-      numerals: true, qmax: 10, memory: true, voorlezen: false };
+      numerals: true, qmax: 10, memory: true, voorlezen: false, startStap: 1 };
     const countWant = { ...mathWant, track: 'count', perLevel: 5 };
     check(JSON.stringify(r.math) === JSON.stringify(mathWant),
       'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
@@ -2252,15 +2252,13 @@ function check(ok, label, detail) {
     await page.click('#newstar-track .chip[data-v="count"]');
     await page.waitForTimeout(150);
     const velden = await page.evaluate(() => ({
-      stage: !!document.getElementById('ns-set-stage'),
+      stage: !!document.getElementById('ns-set-fase'),
       ops: !!document.getElementById('ns-set-ops'),
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(velden.stage && !velden.ops, 'de telmodus toont fases in plaats van bewerkingen', JSON.stringify(velden));
     check(/^fase 1–12/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
-    await page.click('#ns-fase-start summary');   // "Begint je kind hoger?"
-    await page.waitForTimeout(120);
-    await page.click('#ns-set-stage .chip[data-v="3"]');
+    await page.click('#ns-set-fase .chip[data-v="3"]');   // dichter bij vanaf dan bij tot
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="jongen"]');
     await page.fill('#newstar-name', 'Fase');
