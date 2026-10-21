@@ -12101,28 +12101,30 @@ function closeSettings() {
    Sterren, perfecte shows, trofeeën en vlotheid staan ingeklapt onder "Meer
    cijfers": ze zijn van het kind, en de kast en de kaart tonen ze groot. */
 const STAND_TEKST = {
-  goed:   { ico: '🟢', kop: 'De uitdaging zit goed' },
-  vlot:   { ico: '🟡', kop: 'Gaat heel vlot' },
+  goed:   { ico: '🟢', kop: 'Zit goed' },
+  vlot:   { ico: '🟡', kop: 'Gaat vlot' },
   pittig: { ico: '🟠', kop: 'Even pittig' },
 };
 /* De statuskaart. Geen cijfer voor het kind, maar een uitspraak over de
    uitdaging: groen is waar het spel naartoe stuurt (een mengeling van drie en
    twee sterren), geel zegt dat er ruimte is, oranje dat het nu even te veel is.
    Bij oranje staat erbij wat het spel zelf al doet, zodat een ouder niet denkt
-   dat er iets moet. */
+   dat er iets moet.
+
+   Onder de kop geen zin ("Laatste 10 shows: 7× drie sterren, 1 niet gelukt")
+   maar de shows zelf: één bolletje per show uit p.recent, vol goud voor drie
+   sterren, licht voor minder, een ring voor een mislukte. Dat leest in één
+   blik, en wie het wil narekenen kan tellen. */
 function statusKaartHtml(p) {
   const s = p.settings;
   const isCount = s.track === 'count';
   const u = uitdagingStand(p);
-  let ico = '🌱', kop = 'Net begonnen', zin = 'Na een paar shows staat hier hoe het gaat.', klas = 'nieuw';
+  let ico = '🌱', kop = 'Net begonnen', zin = 'Na een paar shows zie je hier hoe het gaat.', klas = 'nieuw';
   if (u) {
     ({ ico, kop } = STAND_TEKST[u.stand]);
     klas = u.stand;
-    const laatste = `Laatste ${u.n} shows: ${u.drie}× drie sterren`;
-    if (u.stand === 'pittig') zin = `${u.mis} van de laatste ${u.n} shows lukten niet. Het spel maakt het nu vanzelf wat lichter.`;
-    else if (u.stand === 'vlot') zin = `${laatste}.` + (isCount ? ' Het spel klimt mee.'
-      : (grensTip(p) ? ' Klaar voor een volgende stap: zie het leerpad.' : ''));
-    else zin = `${laatste}${u.mis ? `, ${u.mis} niet gelukt` : ', niets mislukt'}.`;
+    zin = `<span class="vg-reeks">${(p.recent || []).map(v => `<i class="r${v}"></i>`).join('')}</span>`
+      + (u.stand === 'pittig' ? ' Het spel maakt het lichter.' : '');
   }
   const shows = playedCount(p);
   const answered = p.stats.correct + p.stats.wrong;
@@ -12160,24 +12162,26 @@ const COUNT_STAGE_UITLEG = ['',
 /* Wat de werelden leren, in de volgorde van LEERSTAPPEN. Een stap die met deze
    instellingen niets nieuws brengt valt weg: over het tiental kan niet tot tien,
    drie getallen is alleen plus, en de ouder kan de extra's uitzetten. Zo staat
-   er nooit een stap op het pad die het kind niet te zien krijgt. */
+   er nooit een stap op het pad die het kind niet te zien krijgt. Een stap is een
+   naam met een voorbeeldsom erbij, geen zin: "8 + 5" zegt sneller wat "over het
+   tiental" betekent dan een uitleg. */
 function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   return [
-    { kort: 'rustig beginnen', lang: 'Rustig beginnen, met de kleinere getallen.' },
-    plusMin ? { kort: `tot ${s.max}`, lang: `Sommen met het hele bereik, tot ${s.max}.` }
-            : { kort: 'hele tafels', lang: 'De hele tafels, tot × 10.' },
-    plusMin && s.max > 10 && { kort: 'over het tiental', lang: 'Over het tiental heen, zoals 8 + 5.' },
-    s.missNum !== false && { kort: 'zoek het getal', lang: 'Zoek het getal dat ontbreekt, zoals 7 + ? = 12.' },
-    s.chain3 !== false && s.ops.includes('+') && { kort: 'drie getallen', lang: 'Drie getallen optellen, zoals 3 + 4 + 2.' },
-    { kort: 'alles door elkaar', lang: 'Alles door elkaar.' },
+    { lang: 'Kleine sommen' },
+    plusMin ? { lang: `Tot ${s.max}` }
+            : { lang: 'Hele tafels' },
+    plusMin && s.max > 10 && { lang: 'Over het tiental <span class="vg-vb">8 + 5</span>' },
+    s.missNum !== false && { lang: 'Zoek het getal <span class="vg-vb">7 + ▢ = 12</span>' },
+    s.chain3 !== false && s.ops.includes('+') && { lang: 'Drie getallen <span class="vg-vb">3 + 4 + 2</span>' },
+    { lang: 'Alles door elkaar' },
   ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
 }
 // Het accent van een wereld na de laatste leerstap (zie wereldAccent), als het er is.
 function accentTekst(s, w) {
   const a = wereldAccent(w);
-  if (a === 'miss' && s.missNum !== false) return ', met extra zoek het getal';
-  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ', met extra drie getallen';
+  if (a === 'miss' && s.missNum !== false) return ' · extra <span class="vg-vb">7 + ▢ = 12</span>';
+  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra <span class="vg-vb">3 + 4 + 2</span>';
   return '';
 }
 /* Eén rij op het pad. b is wat er in het bolletje staat (✓, een nummer, …). */
@@ -12195,31 +12199,34 @@ const NU_TAG = '<span class="vg-tag">nu</span>';
    makkelijker of moeilijker maakt, en hij zweeft rond het midden omdat hij
    dáárop stuurt. p.perf stuurt nog precies zoals hiervoor; hij wordt alleen
    niet getoond. De streepjes in de telmodus zijn de stapjes binnen een fase
-   (countTrack.rung), geen cijfer. */
+   (countTrack.rung), geen cijfer.
+
+   Zo kort mogelijk: wat al kan is één regel ("Fase 1–6"), zonder de lijst
+   erachter, en er staat geen vaste voetnoot meer onder ("het spel past zich
+   vanzelf aan"). Die stond er bij elk bezoek en zei wat de 🟢🟡🟠 erboven al
+   zegt. Een tip is één regel met de knop ernaast. */
 function leerpadHtml(p) {
   const s = p.settings;
   const rijen = [];
-  let kop, tip = '', noot;
+  let kop, tip = '';
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
     kop = 'leren tellen';
-    if (st > 1) rijen.push(padRij('klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}: ${
-      COUNT_STAGE_LABELS.slice(1, st).join(' · ')}`));
+    if (st > 1) rijen.push(padRij('klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}`));
     const top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
     const streepjes = `<span class="vg-rungs" title="stapje ${rung + 1} van ${top + 1}">${
       Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`;
-    rijen.push(padRij('nu niveau-bezig', st, `<b>${COUNT_STAGE_LABELS[st]}</b> · fase ${st}${hi > st ? ' van ' + hi : ''}${NU_TAG}${streepjes}`
+    rijen.push(padRij('nu niveau-bezig', st, `<b>${COUNT_STAGE_LABELS[st]}</b>${NU_TAG}${streepjes}`
       + `<small>${COUNT_STAGE_UITLEG[st] || ''}</small>`));
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(padRij('later', v, COUNT_STAGE_LABELS[v]));
     if (hi > st + 2) rijen.push(padRij('later', '…', `Tot fase ${hi}: ${COUNT_STAGE_LABELS[hi]}`));
     rijen.push(hi < COUNT_STAGE_MAX
-      ? padRij('later', '🔒', 'Verder groeien zet je aan bij Oefenen')
+      ? padRij('later', '🔒', 'Tot hier')
       : padRij('later', '🧮', 'Daarna: rekenen'));
     const tt = telTip(p);
     if (tt) tip = `<div class="grens-tip" id="grens-tip"><div>💡 ${tt.tekst}</div>
       <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button></div>`;
-    noot = 'Het spel gaat vanzelf een fase hoger als het goed gaat, en terug als het even te moeilijk is.';
   } else {
     const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
@@ -12229,29 +12236,25 @@ function leerpadHtml(p) {
     const laatste = LEERSTAPPEN.length;
     const nu = stappen.filter(st => st.wereld <= Math.min(w, laatste)).pop();
     const klaar = stappen.filter(st => st.wereld < nu.wereld);
-    if (klaar.length) rijen.push(padRij('klaar', '✓', `${klaar.length > 1 ? 'Werelden' : 'Wereld'} ${
-      klaar[0].wereld}${nu.wereld - 1 > klaar[0].wereld ? '–' + (nu.wereld - 1) : ''}: ${klaar.map(st => st.kort).join(', ')}`));
+    if (klaar.length) rijen.push(padRij('klaar', '✓', `Wereld ${
+      klaar[0].wereld}${nu.wereld - 1 > klaar[0].wereld ? '–' + (nu.wereld - 1) : ''}`));
     const grens = grensTip(p);
-    const stil = nu.wereld === laatste && GRENS_LADDER.some(v => v > s.max) && !grens
-      ? ` Moeilijker wordt het pas met een hogere grens.` : '';
     rijen.push(padRij('nu niveau-bezig', nu.wereld === laatste ? nu.wereld + '+' : nu.wereld,
-      `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}${accentTekst(s, w)}.${stil}</small>`));
+      `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}${accentTekst(s, w)}</small>`));
     stappen.filter(st => st.wereld > nu.wereld).forEach(st => rijen.push(padRij('later', st.wereld, st.lang)));
     const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
-      ? [`Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.`, `Tot ${grens.naar}`]
+      ? [`Bijna altijd ⭐⭐⭐ tot ${s.max}. Grotere getallen?`, `Tot ${grens.naar}`]
       : grens.naar === 'mix'
-      ? ['Bijna altijd drie sterren. Zelf het antwoord typen is de volgende uitdaging, met dezelfde getallen. Eerst af en toe?', 'Afwisselen']
-      : ['Afwisselen gaat goed. Voortaan altijd zelf typen?', 'Zelf typen'];
+      ? ['Bijna altijd ⭐⭐⭐. Af en toe zelf typen?', 'Afwisselen']
+      : ['Afwisselen gaat goed. Altijd zelf typen?', 'Zelf typen'];
     if (grens) tip = `<div class="grens-tip" id="grens-tip">
       <div>💡 ${tekst}</div>
       <button class="btn small purple" id="grens-tip-ja" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button></div>`;
-    noot = 'Binnen elke stap past het spel de sommen vanzelf aan op wat goed en fout gaat.';
   }
   return `<div class="set-card vg-kaart niveau-blok">
     <h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>
     <ul class="vg-pad">${rijen.join('')}</ul>
     ${tip}
-    <div class="note">${noot}</div>
   </div>`;
 }
 /* De sommen waar het spel nu extra op oefent -- het nuttigste blok van het
@@ -12267,11 +12270,11 @@ function oefentExtraHtml(p) {
   // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
   const nLearned = Object.keys(p.learned || {}).length;
   return `<div class="set-card vg-kaart">
-    <h2 class="vg-kop">Hier oefent het spel extra op</h2>
+    <h2 class="vg-kop">Oefent extra op</h2>
     ${weak.length
       ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
       : `<div class="stats-empty">Geen lastige sommen op dit moment. 🎉</div>`}
-    ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} ${mv(nLearned, 'som die al goed gaat komt', 'sommen die al goed gaan komen')} later nog eens terug.</div>` : ''}
+    ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later terug.</div>` : ''}
   </div>`;
 }
 /* Vlotheid: hoe vaak komt een goed antwoord er zó uit, i.p.v. uitgerekend te
@@ -12382,27 +12385,21 @@ function telTip(p) {
   const s = p.settings;
   if (s.track !== 'count' || !p.countTrack) return null;
   if ((p.countTrack.plafond || 0) < GRENS_TIP_SHOWS) return null;
-  const naam = esc(p.name);
   const hi = countMaxStage(s);
   const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
   const qtip = () => ({ soort: 'qmax',
-    tekst: `${naam} haalt bijna overal drie sterren met hoeveelheden tot ${s.qmax}. Mogen de aantallen groeien tot ${qnaar}?`,
-    knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
+    tekst: `Tot ${s.qmax} gaat foutloos. Grotere aantallen?`, knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
   // onder de tien houdt countMaxStage het bij fase 11: dan zijn het de aantallen
   if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
   if (hi < COUNT_STAGE_MAX) {
     if (s.numerals === false && hi === 5) return { soort: 'cijfers',
-      tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase zonder cijfers. Mogen de cijfers erbij?`,
-      knop: 'Cijfers aan', doe: p => { p.settings.numerals = true; p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6); } };
+      tekst: 'Fase 5 gaat foutloos. Cijfers erbij?', knop: 'Cijfers aan', doe: p => { p.settings.numerals = true; p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6); } };
     return { soort: 'fase',
-      tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase die je koos (fase ${hi}: ${COUNT_STAGE_LABELS[hi]}). Mag het verder groeien?`,
-      knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
+      tekst: `Fase ${hi} gaat foutloos. Verder groeien?`, knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
   }
   if (qnaar) return qtip();
   return { soort: 'rekenen',
-    tekst: `${naam} maakt de laatste fase bijna altijd in één keer goed. De telmodus heeft geen nieuwe fases meer. Klaar voor de rekenshow? `
-      + `<span class="tip-klein">Plus en min tot 10, kiezen uit 4. De stem leest de sommen nog voor (uitzetten kan bij Oefenen).</span>`,
-    knop: 'Naar rekenen', doe: naarRekenen };
+    tekst: 'De laatste fase gaat foutloos. Klaar om te rekenen? <span class="tip-klein">Plus en min tot 10, de stem leest mee.</span>', knop: 'Naar rekenen', doe: naarRekenen };
 }
 /* Van tellen naar rekenen, zoals de tip het doet. Sterren, kaart en kleren
    hangen niet aan de modus, dus die blijven gewoon staan. Tot 10 en geen 20:
