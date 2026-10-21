@@ -354,51 +354,134 @@ function check(ok, label, detail) {
   check(klok.gouden || klok.gekregen >= 3,
     'telmodus: in één keer goed levert de volle 3 💎 op, ook na een lange voorleesvraag', JSON.stringify(klok));
 
-  /* ---- De lof wordt uitgesproken, niet afgeknipt ----
-     Na een goed antwoord zegt de stem "Ja, zes! Knap gedaan!", en de volgende
-     vraag zegt zelf ook iets. Elke speak() breekt af wat er nog klonk, dus kwam
-     die volgende vraag op een vaste tel, dan knipte hij de lof midden in het woord
-     af: de stem stotterde. Hier een nagebootste stem die echt even praat. */
+  /* ---- Eén stem: wat klinkt, wordt uitgesproken ----
+     Elke speak() breekt af wat er nog klonk. Kwam de volgende zin op een vaste
+     tel, dan knipte hij de vorige midden in het woord af: de stem stotterde.
+     Hier een nagebootste stem die echt even praat (PRAAT ms per zin), met een
+     logboek van wat er gezegd en wat er afgebroken werd. */
+  await page.evaluate(() => {
+    window.__echteStem = { speak: speechSynthesis.speak, cancel: speechSynthesis.cancel };
+    window.__stem = (PRAAT) => {
+      const t0 = performance.now();
+      const log = [];
+      let bezig = null;
+      const nu = () => performance.now() - t0;
+      Object.defineProperty(speechSynthesis, 'speaking', { get: () => !!bezig, configurable: true });
+      Object.defineProperty(speechSynthesis, 'pending', { get: () => false, configurable: true });
+      speechSynthesis.cancel = () => {
+        if (bezig) { log.push({ t: nu(), afgebroken: bezig.text }); const u = bezig; bezig = null; if (u.onerror) u.onerror({ error: 'interrupted' }); }
+      };
+      speechSynthesis.speak = u => {
+        log.push({ t: nu(), zegt: u.text, wacht: !!bezig });
+        bezig = u;
+        if (u.onstart) u.onstart();
+        setTimeout(() => { if (bezig === u) { bezig = null; if (u.onend) u.onend(); } }, PRAAT);
+      };
+      log.t0 = t0;
+      return log;
+    };
+    window.__stemTerug = () => {
+      Object.assign(speechSynthesis, window.__echteStem);
+      delete speechSynthesis.speaking; delete speechSynthesis.pending;
+    };
+    window.__knop = v => [...document.querySelectorAll('#answer-area button')].find(b => String(b.dataset.v) === String(v));
+  });
+
+  // 1 · de lof na een goed antwoord
   const lof = await page.evaluate(async () => {
-    const echt = { speak: speechSynthesis.speak, cancel: speechSynthesis.cancel };
-    const t0 = performance.now();
-    const log = [];
-    let bezig = null;
-    const PRAAT = 1800;   // ruim langer dan de vaste tel tot de volgende vraag
-    speechSynthesis.cancel = () => {
-      if (bezig) { log.push({ t: performance.now() - t0, afgebroken: bezig.text }); const u = bezig; bezig = null; if (u.onerror) u.onerror({ error: 'interrupted' }); }
-    };
-    speechSynthesis.speak = u => {
-      log.push({ t: performance.now() - t0, zegt: u.text });
-      bezig = u;
-      if (u.onstart) u.onstart();
-      setTimeout(() => { if (bezig === u) { bezig = null; if (u.onend) u.onend(); } }, PRAAT);
-    };
+    const log = __stem(1800);
     startLevel(P().level);
     await new Promise(r => setTimeout(r, 400));
-    const idx = G.idx;
-    const q = G.qs[idx];
-    const knop = [...document.querySelectorAll('#answer-area button')].find(b => String(b.dataset.v) === String(q.ans));
+    const idx = G.idx, q = G.qs[idx];
     log.length = 0;
-    knop.click();
+    __knop(q.ans).click();
     await new Promise(r => setTimeout(r, 3600));
-    const uit = { log, door: G.idx > idx };
+    const uit = { log: log.slice(), door: G.idx > idx };
     // en zonder stem (die nooit begint): gewoon op de vaste tel door
     speechSynthesis.speak = () => {};
-    const idx2 = G.idx, q2 = G.qs[idx2];
-    const knop2 = [...document.querySelectorAll('#answer-area button')].find(b => String(b.dataset.v) === String(q2.ans));
+    const idx2 = G.idx, knop2 = __knop(G.qs[idx2].ans);
     if (knop2) { knop2.click(); await new Promise(r => setTimeout(r, 1600)); uit.stilDoor = G.idx > idx2; }
-    Object.assign(speechSynthesis, echt);
+    __stemTerug();
     return uit;
   });
   const lofZin = lof.log.find(e => e.zegt && /^Ja, /.test(e.zegt));
-  check(!!lofZin, 'telmodus: een goed antwoord zegt "Ja, ..."', JSON.stringify(lof.log));
+  check(!!lofZin, 'stem: een goed antwoord zegt "Ja, ..."', JSON.stringify(lof.log));
   check(!lof.log.some(e => e.afgebroken && /^Ja, /.test(e.afgebroken)),
-    'telmodus: de lof wordt niet afgebroken door de volgende vraag', JSON.stringify(lof.log));
+    'stem: de lof wordt niet afgebroken door de volgende vraag', JSON.stringify(lof.log));
   const volgende = lof.log.find(e => e.zegt && lofZin && e.t > lofZin.t && !/^Ja, /.test(e.zegt));
   check(lof.door && !!volgende && volgende.t >= lofZin.t + 1800,
-    'telmodus: de volgende vraag klinkt pas als de lof uit is', JSON.stringify(lof));
-  check(lof.stilDoor === true, 'telmodus: zonder stem gaat de show gewoon op de vaste tel door', JSON.stringify(lof));
+    'stem: de volgende vraag klinkt pas als de lof uit is', JSON.stringify(lof));
+  check(lof.stilDoor === true, 'stem: zonder stem gaat de show gewoon op de vaste tel door', JSON.stringify(lof));
+
+  // 2 · "Tel mee!" en een gouden vraag: de opdracht vóór het eerste telwoord
+  const mee = await page.evaluate(async () => {
+    const p = P();
+    p.settings.repr = 'objects';
+    p.countTrack = { stage: 2, rung: 2, streak: 0, seen: 0, acc: 0.6 };
+    let q = null;
+    for (let i = 0; i < 80 && !q; i++) { const c = genCount(p); if (c.along) q = c; }
+    if (!q) return { skipped: true };
+    q.prompt = 'Gouden vraag! Deze telt drie keer. ' + q.prompt;
+    const log = __stem(1500);
+    G.qs[G.idx] = q; G.mode = 'count';
+    drawCountQuestion(q);
+    await new Promise(r => setTimeout(r, 2600));
+    __stemTerug();
+    return { log };
+  });
+  if (!mee.skipped) {
+    check(!mee.log.some(e => e.afgebroken && /Gouden vraag/.test(e.afgebroken)),
+      'stem: "Tel mee!" en "Gouden vraag!" worden uitgesproken vóór het tellen', JSON.stringify(mee.log));
+    check(mee.log.some(e => e.zegt === 'één'), 'stem: daarna wordt er meegeteld', JSON.stringify(mee.log));
+  }
+
+  // 3 · een tweede misser: eerst uittellen, dan pas het 👉
+  const mis = await page.evaluate(async () => {
+    const log = __stem(500);
+    startLevel(P().level);
+    await new Promise(r => setTimeout(r, 400));
+    const q = G.qs[G.idx];
+    const fout = [...document.querySelectorAll('#answer-area button')].filter(b => String(b.dataset.v) !== String(q.ans));
+    fout[0].click();
+    await new Promise(r => setTimeout(r, 200));
+    if (fout[1]) fout[1].click(); else fout[0].click();
+    const t = log.t0;
+    let teken = null;
+    for (let i = 0; i < 80 && teken == null; i++) {
+      await new Promise(r => setTimeout(r, 50));
+      const toast = document.getElementById('toast');
+      if (toast && toast.classList.contains('show') && /👉/.test(toast.textContent)) teken = performance.now() - t;
+    }
+    __stemTerug();
+    const gezegd = log.filter(e => e.zegt);
+    return { log, teken, ans: q.ans, laatste: gezegd.length ? gezegd[gezegd.length - 1].t : null };
+  });
+  check(mis.teken != null && mis.laatste != null && mis.teken >= mis.laatste + 500,
+    'stem: na een tweede misser wordt het antwoord uitgeteld vóór het 👉', JSON.stringify(mis));
+
+  // 4 · het eindscherm praat niet door over de kaart
+  const weg = await page.evaluate(async () => {
+    const log = __stem(3000);
+    speak('Goed gedaan, drie sterren!');
+    goMapNaShow();
+    await new Promise(r => setTimeout(r, 100));
+    __stemTerug();
+    return { log };
+  });
+  check(weg.log.some(e => e.afgebroken === 'Goed gedaan, drie sterren!'),
+    'stem: van het eindscherm naar de kaart stopt de zin', JSON.stringify(weg.log));
+
+  // 5 · memory: "Goed zo!" sluit aan achter het getal van de tweede kaart
+  const rij = await page.evaluate(async () => {
+    const log = __stem(600);
+    speak('zeven');
+    speak('Goed zo!', { wacht: true });   // zo zegt onMemMatch het
+    await new Promise(r => setTimeout(r, 50));
+    __stemTerug();
+    return { log };
+  });
+  check(!rij.log.some(e => e.afgebroken === 'zeven') && rij.log.some(e => e.wacht),
+    'stem: een zin met wacht sluit achteraan aan (memory: "Goed zo!" na het getal)', JSON.stringify(rij.log));
 
   check(pageErrors.length === 0, 'geen javascript-fouten', pageErrors.join(' | '));
 

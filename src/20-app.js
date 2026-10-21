@@ -2924,7 +2924,11 @@ function speak(text, opts) {
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
-    speechSynthesis.cancel();
+    /* Alleen afbreken als er ook iets klinkt. Safari (iPad, iPhone) slikt soms het
+       begin van een nieuwe zin in als cancel() en speak() vlak na elkaar komen,
+       ook als er niets te stoppen viel. Met opts.wacht schuift de zin achteraan in
+       de rij in plaats van de vorige af te breken. */
+    if (!opts.wacht && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
@@ -5788,7 +5792,9 @@ function starRevealBeat(lvl, cb) {
   const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
   setTimeout(cb, landt + 100);   // + een kort stiltetje; de badge die daarna opstijgt is zelf al een pauze
 }
-function goMapNaShow() { sndClick(); goMap(naShowLvl); }
+// De zin van het eindscherm (of het wereldfeest) hoort niet over de kaart en de
+// reis heen door te praten -- net als bij stoppen midden in een show (quitGame).
+function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
 
 /* ================= De kaart zegt hallo =====================================
    De kaart is het hoofdscherm en de ster woont er, maar ze deed er niets als je
@@ -9032,7 +9038,6 @@ function renderCountAnswers(q, area) {
 // Meetellen: elk object popt op maat op; de getallen worden achter elkaar gezegd.
 function countAlong(objs, n, lead, drawId) {
   let i = 0;
-  speak(lead);
   const step = () => {
     if (!G || !G.count || i >= n) return;
     if (drawId != null && drawId !== countDrawId) return;   // er staat alweer een nieuwe vraag
@@ -9043,7 +9048,10 @@ function countAlong(objs, n, lead, drawId) {
     i++;
     if (i < n) setTimeout(step, 620);
   };
-  setTimeout(step, 650);
+  // Eerst de opdracht helemaal uit ("Tel mee! Hoeveel zie je?", en op een gouden
+  // vraag ook "Gouden vraag! ..."), dan pas "één": elk telwoord breekt af wat er
+  // nog klonk, en zo bleef er van een gouden vraag alleen "Gou-" over.
+  zegEnDan(lead, null, 650, step);
 }
 function replayPrompt() {
   sndClick();
@@ -9146,18 +9154,28 @@ function countMissSpeak(q, val) {
 }
 // De juiste hoeveelheid hardop meetellen bij een definitieve misser -- zo ziet én
 // hoort het kind wat het antwoord was, zonder één woord tekst.
-function countReveal(q) {
+// klaar() komt als de stem uitgesproken is (zie zegEnDan), of meteen zonder tegel.
+const REVEAL_RUST = 400;   // het laatste telwoord krijgt even om te beginnen
+function countReveal(q, klaar) {
+  klaar = klaar || (() => {});
   const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
-  if (tile) {
-    tile.classList.add('good');
-    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
-    // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
-    if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
-    else if (q.ans === 0) speak('Nul. Er is niets meer.');
-    // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
-    // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
-    else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
-  }
+  if (!tile) { klaar(); return; }
+  tile.classList.add('good');
+  const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
+  // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
+  if (tile.querySelector('.ct-num')) { zegEnDan('Dit is de ' + numWord(q.ans) + '.', null, REVEAL_RUST, klaar); return; }
+  if (q.ans === 0) { zegEnDan('Nul. Er is niets meer.', null, REVEAL_RUST, klaar); return; }
+  // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
+  // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
+  let i = 0;
+  const c = () => {
+    if (!G || !G.count || i >= q.ans) return;
+    if (objs[i]) objs[i].classList.add('pop');
+    i++;
+    if (i < q.ans) { speak(numWord(i), { rate: 0.95 }); setTimeout(c, 560); }
+    else zegEnDan(numWord(i), { rate: 0.95 }, REVEAL_RUST, klaar);
+  };
+  setTimeout(c, 250);
 }
 
 /* ================= Memory-spel (lees-vrij) =================
@@ -9315,7 +9333,8 @@ function onMemMatch(fromBtn) {
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
   if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
-  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
+  // achter het getal van de tweede kaart aan, niet eroverheen (wacht)
+  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']), { wacht: true });
 }
 function finishMemory(m) {
   const p = P();
@@ -10245,9 +10264,11 @@ function tweedeMisser(q, p, btnEl) {
   if (btnEl) btnEl.classList.add('bad');
   // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
   if (G.count) {
-    countReveal(q);                               // juiste hoeveelheid hardop meetellen, geen tekst
     loseHeart();
-    toonVerder();
+    // juiste hoeveelheid hardop meetellen, geen tekst -- en het 👉 pas als de stem
+    // klaar is: een snelle tik brak het tellen anders halverwege af
+    const show = G;
+    countReveal(q, () => { if (G === show) toonVerder(); });
     return;
   }
   /* DE VOLGORDE na een tweede misser: eerst wat er fout ging (de rode knop, het

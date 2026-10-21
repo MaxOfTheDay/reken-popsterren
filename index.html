@@ -13115,7 +13115,11 @@ function speak(text, opts) {
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
-    speechSynthesis.cancel();
+
+
+
+
+    if (!opts.wacht && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
@@ -15979,7 +15983,9 @@ function starRevealBeat(lvl, cb) {
   const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
   setTimeout(cb, landt + 100);
 }
-function goMapNaShow() { sndClick(); goMap(naShowLvl); }
+
+
+function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
 
 
 
@@ -19223,7 +19229,6 @@ function renderCountAnswers(q, area) {
 
 function countAlong(objs, n, lead, drawId) {
   let i = 0;
-  speak(lead);
   const step = () => {
     if (!G || !G.count || i >= n) return;
     if (drawId != null && drawId !== countDrawId) return;
@@ -19234,7 +19239,10 @@ function countAlong(objs, n, lead, drawId) {
     i++;
     if (i < n) setTimeout(step, 620);
   };
-  setTimeout(step, 650);
+
+
+
+  zegEnDan(lead, null, 650, step);
 }
 function replayPrompt() {
   sndClick();
@@ -19337,18 +19345,28 @@ function countMissSpeak(q, val) {
 }
 
 
-function countReveal(q) {
+
+const REVEAL_RUST = 400;
+function countReveal(q, klaar) {
+  klaar = klaar || (() => {});
   const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
-  if (tile) {
-    tile.classList.add('good');
-    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
+  if (!tile) { klaar(); return; }
+  tile.classList.add('good');
+  const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
 
-    if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
-    else if (q.ans === 0) speak('Nul. Er is niets meer.');
+  if (tile.querySelector('.ct-num')) { zegEnDan('Dit is de ' + numWord(q.ans) + '.', null, REVEAL_RUST, klaar); return; }
+  if (q.ans === 0) { zegEnDan('Nul. Er is niets meer.', null, REVEAL_RUST, klaar); return; }
 
 
-    else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
-  }
+  let i = 0;
+  const c = () => {
+    if (!G || !G.count || i >= q.ans) return;
+    if (objs[i]) objs[i].classList.add('pop');
+    i++;
+    if (i < q.ans) { speak(numWord(i), { rate: 0.95 }); setTimeout(c, 560); }
+    else zegEnDan(numWord(i), { rate: 0.95 }, REVEAL_RUST, klaar);
+  };
+  setTimeout(c, 250);
 }
 
 
@@ -19506,7 +19524,8 @@ function onMemMatch(fromBtn) {
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
   if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
-  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
+
+  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']), { wacht: true });
 }
 function finishMemory(m) {
   const p = P();
@@ -20436,9 +20455,11 @@ function tweedeMisser(q, p, btnEl) {
   if (btnEl) btnEl.classList.add('bad');
 
   if (G.count) {
-    countReveal(q);
     loseHeart();
-    toonVerder();
+
+
+    const show = G;
+    countReveal(q, () => { if (G === show) toonVerder(); });
     return;
   }
 
