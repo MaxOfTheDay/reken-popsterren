@@ -12316,9 +12316,9 @@ function statsPanelHtml(p) {
    weg en klinkt er geen telwoord meer. Leeg als alles in orde is. Het geluid
    eerst: dat is één tik, en dan doet de rest er niet toe. */
 function stemNotitie() {
-  if (!db.sound) return '🔇 Geluid uit: de vragen worden niet voorgelezen.';
-  if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Fase 5 (luisteren) valt weg.';
-  if (!nlVoice()) return '🗣️ Geen Nederlandse stem op dit toestel. Kies er een bij tekst-naar-spraak.';
+  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+  if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
+  if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
   return '';
 }
 /* Een tip voor de ouder: de getallengrens omhoog.
