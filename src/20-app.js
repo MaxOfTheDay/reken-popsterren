@@ -2933,9 +2933,33 @@ function speak(text, opts) {
     u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
     u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
     u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
-    if (opts.onEnd) u.onend = opts.onEnd;
+    if (opts.onStart) u.onstart = opts.onStart;
+    // Ook een fout (of een zin die afgebroken wordt) is een einde: wie erop wacht,
+    // mag niet blijven hangen. Eén keer, ook als een browser allebei stuurt.
+    if (opts.onEnd) { let af = false; u.onend = u.onerror = () => { if (!af) { af = true; opts.onEnd(); } }; }
     speechSynthesis.speak(u);
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
+}
+/* Zeg een zin en ga daarna pas verder -- maar nooit eerder dan `rust` en nooit
+   later dan STEM_MAX. Elke speak() breekt af wat er nog klonk (cancel), dus wie
+   meteen de volgende zin zegt, knipt de vorige doormidden. Zo klonk "Ja, zes!
+   Knap gedaan!" als "Ja, zes! Knap ge-" en dan de nieuwe vraag: de stem stotterde.
+   Alleen wachten als de stem écht begonnen is (onstart): een toestel zonder stem,
+   geluid uit of de rekenmodus zonder Voorlezen gaat gewoon op `rust` door. */
+const STEM_ADEM = 250;    // het ademhalinkje tussen twee zinnen
+const STEM_MAX = 3200;    // een stem die nooit "klaar" meldt, houdt de show niet op
+function zegEnDan(text, opts, rust, dan) {
+  let begon = false, klaar = false, wacht = false, gedaan = false;
+  const een = () => { if (!gedaan) { gedaan = true; dan(); } };
+  speak(text, Object.assign({}, opts, {
+    onStart: () => { begon = true; },
+    onEnd: () => { klaar = true; if (wacht) setTimeout(een, STEM_ADEM); },
+  }));
+  setTimeout(() => {
+    if (!begon || klaar) { een(); return; }
+    wacht = true;
+    setTimeout(een, Math.max(0, STEM_MAX - rust));
+  }, rust);
 }
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   refreshVoices();
@@ -10102,8 +10126,9 @@ function antwoordGoed(q, p, btnEl) {
      waar het kind een gelijke groep aantikt (1, 2, 4) is dit het enige moment
      dat het telwoord bij de hoeveelheid klinkt -- en precies die koppeling
      ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
-     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan). */
-  speak('Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']));
+     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan).
+     Hij klinkt onderaan, via zegEnDan: de volgende vraag wacht erop. */
+  const lof = 'Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']);
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
   const g = G;
@@ -10124,7 +10149,10 @@ function antwoordGoed(q, p, btnEl) {
   // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
   // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
   // bedoeld om op te vallen.
-  setTimeout(nextStep, encore || q.gold ? 1400 : 950);
+  // De volgende vraag zegt zelf iets, dus die wacht tot de lof uit is (zegEnDan):
+  // anders breekt hij "Knap gedaan!" midden in het woord af. Is de show
+  // intussen gestopt (of al een nieuwe begonnen), dan is er geen volgende vraag.
+  zegEnDan(lof, null, encore || q.gold ? 1400 : 950, () => { if (G === g) nextStep(); });
 }
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
