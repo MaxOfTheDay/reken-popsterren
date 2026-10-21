@@ -2593,6 +2593,43 @@
 
 
 
+
+
+
+
+
+
+
+  .podium {
+    --pod-dik: 6px;
+    position: relative; border-radius: 50%;
+    background: radial-gradient(60% 55% at 50% 38%, var(--pt), var(--pm) 72%);
+    border: 2px solid var(--pr);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 2px var(--pr),
+                0 calc(var(--pod-dik) + 6px) 18px rgba(8,1,20,.38);
+  }
+  .podium::before { content: ''; position: absolute; inset: 8% 6%; border-radius: 50%; pointer-events: none; }
+
+
+  .pod-disco::before    { background: radial-gradient(circle, rgba(255,255,255,.7) 1.1px, transparent 1.8px) 0 0 / 9px 6px; }
+  .pod-stippen::before  { background: radial-gradient(circle, rgba(255,255,255,.45) 1.6px, transparent 2.4px) 0 0 / 14px 9px; }
+  .pod-sterren::before  { background: radial-gradient(circle, #fff 1.1px, transparent 1.9px) 3px 2px / 17px 10px; opacity: .85; }
+  .pod-vonk::before     { background: radial-gradient(circle, #fff8d6 1.3px, transparent 2.2px) 0 0 / 12px 8px; }
+  .pod-lava::before     { background: radial-gradient(ellipse, rgba(255,235,59,.75) 2px, transparent 4.5px) 0 0 / 22px 12px; }
+  .pod-golf::before     { background: repeating-radial-gradient(ellipse at 50% 50%, transparent 0 7px, rgba(255,255,255,.32) 7px 8.5px); }
+  .pod-blad::before     { background: radial-gradient(ellipse, rgba(200,255,200,.6) 2px, transparent 4.5px) 0 0 / 18px 11px; }
+  .pod-sneeuw::before   { background: radial-gradient(circle, #fff 1.3px, transparent 2.2px) 0 0 / 11px 8px; }
+  .pod-zand::before     { background: radial-gradient(circle, rgba(140,90,0,.45) 1.1px, transparent 1.9px) 0 0 / 7px 5px; }
+  .pod-ruit::before     { background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.28) 6px 7.5px); }
+  .pod-regenboog::before { background: repeating-radial-gradient(ellipse at 50% 120%, #ff9a9e 0 4px, #fad0c4 4px 8px, #a1ffce 8px 12px, #a18cd1 12px 16px); opacity: .55; }
+  .pod-circus::before   { background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.55) 0 15deg, transparent 15deg 30deg); }
+  .pod-vlek::before     { background: radial-gradient(ellipse, rgba(60,40,10,.38) 2.4px, transparent 4.5px) 0 0 / 20px 12px; }
+  .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }
+
+
+
+
+
   #screen-map { position: relative; padding: 10px 0 calc(var(--balk-ruimte) + 14px); }
 
 
@@ -6080,7 +6117,6 @@
 
 
 
-
   .kast-telling {
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
@@ -7043,7 +7079,7 @@
 
 
   #screen-dress .hub-sticky::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 98px;
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 59px;
     z-index: -1; pointer-events: none; border-radius: inherit;
     background: linear-gradient(180deg, rgba(32,9,56,0), rgb(32,9,56) 4px);
     opacity: 0; transition: opacity var(--t-snel) ease;
@@ -7136,9 +7172,8 @@
     #screen-dress .screen-header { margin-bottom: 2px; }
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
-    #screen-dress .schat-entry { margin-top: 4px; min-height: 32px; padding: 3px 11px; }
 
-    #screen-dress .hub-sticky::after { height: 93px; }
+    #screen-dress .hub-sticky::after { height: 57px; }
   }
 
 
@@ -7153,9 +7188,7 @@
     #screen-dress .item-thumb svg { height: 40px; }
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
-    #screen-dress .schat-raadsel { width: 40px; height: 40px; font-size: 21px; }
-    #screen-dress .schat-entry { margin-top: 3px; min-height: 30px; padding: 2px 10px; }
-    #screen-dress .hub-sticky::after { height: 90px; }
+    #screen-dress .hub-sticky::after { height: 57px; }
   }
 
 
@@ -7487,7 +7520,6 @@
 
 
 
-
   .item-card.just-bought::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.55) 50%, transparent 62%);
@@ -7514,11 +7546,8 @@
   .item-thumb .thumb-emo { font-size: 38px; line-height: 1; filter: var(--emoji-schaduw); }
 
 
-  .item-thumb .thumb-stage {
-    width: 46px; height: 40px; border-radius: var(--r-sm); display: grid; place-items: center;
-    font-size: 22px; border: 1.5px solid rgba(255,255,255,.5);
-    filter: var(--emoji-schaduw); text-shadow: var(--op-kunst-ink);
-  }
+  .item-thumb.thumb-podium { align-items: flex-end; }
+  .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
   .item-name { font-size: var(--tx-klein); font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
 
@@ -7532,37 +7561,22 @@
 
 
 
+
+
+
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
+    min-height: 21px; min-width: 34px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
     font-size: var(--tx-klein); font-weight: 700; line-height: 1; white-space: nowrap;
-    background: rgba(0,0,0,.24); color: var(--muted-text-2);
+    background: rgba(255,255,255,.12); color: var(--c-white);
   }
-  .item-status.price { color: var(--gold-light); background: rgba(var(--goud-rgb),.14); }
 
 
 
-
-
-  .item-status.need { color: var(--muted-text-2); background: rgba(0,0,0,.3); }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .item-status.owned { color: rgba(255,255,255,.82); background: rgba(0,0,0,.26); }
-  .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
+  .item-status.need { color: rgba(255,255,255,.5); background: rgba(0,0,0,.28); }
+  .item-status.owned { color: rgba(255,255,255,.6); }
+  .item-status.on { color: var(--gold-accent); font-weight: 900; }
+  .item-status.slot { opacity: .85; }
 
 
 
@@ -7578,10 +7592,6 @@
     animation: statusPop .32s var(--ease-plop), readyPulse 1.4s ease-in-out .32s 1 forwards;
   }
   @keyframes statusPop { 0% { transform: scale(.72); } 55% { transform: scale(1.12); } 100% { transform: scale(1); } }
-
-
-
-  .item-status.slot { color: var(--gold-light); background: rgba(var(--goud-rgb),.13); opacity: .9; }
 
 
 
@@ -7604,116 +7614,6 @@
 
   .item-card.owned { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.11); }
 
-
-
-
-
-
-
-
-  .item-card.teverdienen {
-    border-color: rgba(var(--warm-licht-rgb),.32);
-    background:
-      radial-gradient(74% 56% at 50% 26%, rgba(var(--warm-licht-rgb),.18), transparent 72%),
-      var(--goud-tint-zacht);
-  }
-  .item-card.teverdienen:hover {
-    background:
-      radial-gradient(74% 56% at 50% 26%, rgba(var(--warm-licht-rgb),.26), transparent 72%),
-      rgba(var(--goud-rgb),.13);
-  }
-
-
-
-
-  .item-card.teverdienen.selected,
-  .item-card.teverdienen.selected:hover { border-color: var(--cyaan-rand); background: rgba(56,189,248,.15); }
-
-
-
-  .item-card .item-wereld {
-    position: absolute; top: 4px; right: 4px; font-size: 12px; line-height: 1;
-    padding: 3px 5px; border-radius: var(--r-pill); background: rgba(0,0,0,.3);
-    box-shadow: inset 0 0 0 1px rgba(var(--goud-rgb),.34);
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .schat-entry {
-    position: relative;
-    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: auto; max-width: calc(var(--kolom) - 24px); margin: 5px auto 0;
-    min-height: 34px; padding: 4px 12px; cursor: pointer;
-    border: 1px solid rgba(255,255,255,.13); border-radius: var(--r-pill);
-    font-size: var(--tx-klein); font-weight: 700; color: rgba(255,255,255,.86);
-    background: rgba(12,3,26,.34);
-    transition: transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
-  }
-
-
-
-  .schat-entry::after { content: ''; position: absolute; inset: -5px -8px; border-radius: inherit; }
-  .schat-entry:active { transform: scale(.98); }
-  .schat-entry .se-ico { font-size: 17px; line-height: 1; filter: var(--emoji-schaduw); }
-  .schat-entry .se-naam { white-space: nowrap; }
-
-
-
-  .schat-entry .se-telling { color: rgba(255,255,255,.68); font-weight: 600; white-space: nowrap; }
-  .schat-entry .se-telling b { color: var(--gold-accent); font-weight: 700; }
-
-
-  .schat-entry.open {
-    border-color: var(--gold-accent); color: var(--c-white);
-    background: var(--goud-tint);
-
-
-    box-shadow: var(--goud-gloed-zacht);
-  }
-
-
-
-
-
-  .schat-raadsel {
-    width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
-    font-size: 26px; font-weight: 700; line-height: 1;
-    color: rgba(var(--goud-glans-rgb),.86); text-shadow: var(--op-kunst-ink);
-    background:
-      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
-      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
-    border: 2px solid rgba(var(--goud-rgb),.42);
-    box-shadow: inset 0 2px 0 rgba(255,255,255,.16), 0 3px 10px rgba(0,0,0,.3);
-  }
-
-
-
-  .item-card.schat-kaart.owned {
-    border-color: rgba(var(--goud-rgb),.42);
-    background:
-      radial-gradient(74% 56% at 50% 22%, rgba(var(--warm-licht-rgb),.14), transparent 72%),
-      rgba(255,255,255,.16);
-  }
 
 
   .wereld-feest .wf-aan {
@@ -7794,6 +7694,55 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
   .item-card.horizon-mist .horizon-wolk { font-size: 34px; }
+
+
+
+
+
+
+  .spiegel-podium {
+    position: absolute; left: 5%; right: 5%; bottom: 3%; height: 17%; z-index: 0; cursor: pointer;
+  }
+  .spiegel-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
+  .spiegel .avatar-holder { position: relative; z-index: 1; height: 84%; margin-bottom: 8.5%; pointer-events: none; }
+  .spiegel .avatar-holder svg { pointer-events: auto; }
+
+
+  .dress-bar.podium-bar { flex-direction: column; gap: 8px; padding: 10px 10px 11px; }
+  .pb-stukken { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+  .pb-plus { opacity: .5; font-weight: 800; font-size: var(--tx-body); }
+  .pb-knop { display: flex; align-items: center; justify-content: center; gap: 9px; }
+  .pb-knop .db-sub { font-size: var(--tx-klein); font-weight: 600; opacity: .92; }
+  .mini-kaart {
+    width: 82px; padding: 6px 4px 5px; border-radius: var(--r-md); cursor: pointer;
+    font-family: inherit; color: inherit; text-align: center;
+    background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .mini-kaart:active { transform: scale(.96); }
+  .mini-kaart .item-thumb { height: 36px; margin: 0 auto; }
+  .mini-kaart .item-thumb svg { height: 36px; }
+  .mini-kaart .item-thumb .thumb-emo { font-size: 28px; }
+  .mini-kaart .item-thumb .thumb-swatch { width: 30px; height: 30px; }
+  .mini-kaart .item-status { margin-top: 4px; min-height: 18px; padding: 2px 8px; font-size: 12px; }
+
+
+  .mini-kaart.op-slot .item-thumb svg,
+  .mini-kaart.op-slot .item-thumb .thumb-emo { filter: brightness(0) opacity(.45); }
+
+  .slot-bel {
+    position: fixed; z-index: 60; transform: translate(-50%, -100%);
+    padding: 8px 14px; border: 0; border-radius: var(--r-md); cursor: pointer;
+    background: var(--c-white); color: #2a1650; font-family: inherit; font-size: var(--tx-body); font-weight: 700;
+    box-shadow: 0 6px 18px rgba(8,1,20,.4); white-space: nowrap;
+    animation: slotBelIn var(--t-snel) var(--ease-plop);
+  }
+  .slot-bel::after {
+    content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+    border: 7px solid transparent; border-bottom: 0; border-top-color: var(--c-white);
+  }
+  @keyframes slotBelIn { from { opacity: 0; transform: translate(-50%, -88%); } }
+  @media (prefers-reduced-motion: reduce) { .slot-bel { animation: none; } }
 
   .settings-sheet { width: 100%; max-width: var(--kolom); display: flex; flex-direction: column; gap: 14px; }
 
@@ -9157,9 +9106,12 @@
              hier een kasteel en een discobol bij een kind dat die ooit kocht --
              versiering van een systeem dat hier niet meer bestaat. De spiegel
              erft daarom niets meer van .stage: hij heeft zijn eigen kader, zijn
-             eigen licht en geen decor. Het podium zelf blijft gewoon in de
-             opslag en achter haar staan in de show en op het eindscherm. -->
+             eigen licht en geen decor. Wat er sinds Podia wél staat is alleen de
+             schijf onder haar voeten -- het podium waar ze op staat. -->
         <div class="spiegel" id="shop-spiegel" onclick="tapDance('shop-avatar')">
+          <!-- Het podium waar ze op staat (paintShop tekent hem). Een tik erop
+               opent Podia: de snelkoppeling naar de lade waar je er een kiest. -->
+          <div class="spiegel-podium" id="shop-podium" onclick="openPodia(event)"></div>
           <div class="avatar-holder idle" id="shop-avatar"></div>
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
@@ -9167,11 +9119,6 @@
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
         <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
       </div>
-      <!-- De wereldschatten (fase 6E): één regel onder de categorierij, en met
-           opzet geen achtste knop ín die rij. Wat je met spelen verdient is iets
-           anders dan wat je met diamanten koopt, en dat verschil hoort te zien te
-           zijn vóór je ergens op tikt. renderSchatEntry() vult hem. -->
-      <button class="schat-entry" id="schat-entry" type="button" onclick="toggleSchatten()"></button>
     </div>
     <div class="item-grid" id="item-grid"></div>
   </div>
@@ -10667,18 +10614,45 @@ const ITEMS = [
   { id: 'pet_ufo',    cat: 'pet', name: 'Ufo-tje',       price: 90,  emoji: '🛸' },
   { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
 
-  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
-  { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'] },
-  { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
-  { id: 'stage_kasteel',  cat: 'stage', name: 'Sprookjeskasteel', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
-  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
-  { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
-  { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'] },
-  { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'] },
-  { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
-  { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
-  { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'] },
-  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vulkaan',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'] },
+
+
+
+
+
+
+
+
+
+
+
+  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
+    vloer: ['#9c5bd6', '#4a1580', '#22073f', '#e1bee7'], patroon: 'disco' },
+  { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'],
+    vloer: ['#9fa8da', '#5c6bc0', '#283171', '#ede7f6'], patroon: 'stippen' },
+  { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'],
+    vloer: ['#ffe082', '#f9a825', '#7a4f00', '#4fc3f7'], patroon: 'zand', wereld: 'piraten', stukken: ['pet_papegaai', 'instr_accordeon'] },
+  { id: 'stage_kasteel',  cat: 'stage', name: 'Sprookjeskasteel', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'],
+    vloer: ['#f8bbd0', '#b39ddb', '#5e3f8f', '#fff3c4'], patroon: 'ruit', wereld: 'tover', stukken: ['mic_toverstaf', 'dress_tover'] },
+  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'],
+    vloer: ['#4a3bb5', '#241a6e', '#150d47', '#8fd3ff'], patroon: 'sterren', wereld: 'ruimte', stukken: ['pet_alien', 'dress_sterren'] },
+  { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'],
+    vloer: ['#81c784', '#2e7d32', '#123d16', '#c8e6c9'], patroon: 'blad', wereld: 'jungle', stukken: ['pet_aap', 'instr_drums'] },
+  { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'],
+    vloer: ['#66bb6a', '#2e7d32', '#1b4d1f', '#ffffff'], patroon: 'gras' },
+  { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'],
+    vloer: ['#e1f5fe', '#81d4fa', '#2a6f97', '#ffffff'], patroon: 'sneeuw', wereld: 'ijs', stukken: ['pet_pinguin', 'hair_wit'] },
+  { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'],
+    vloer: ['#4dd0e1', '#0277bd', '#01406b', '#e0f7fa'], patroon: 'golf', wereld: 'onderwater', stukken: ['pet_dolfijn', 'dress_zeemeermin'] },
+  { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'],
+    vloer: ['#fad0c4', '#a18cd1', '#5b3f8c', '#ffffff'], patroon: 'regenboog', wereld: 'snoep', stukken: ['mic_ijsje', 'dress_hartjes'] },
+  { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'],
+    vloer: ['#ffd54f', '#a1662f', '#4e2c12', '#fff3c4'], patroon: 'vonk', wereld: 'muziek', stukken: ['instr_dj', 'dress_disco'] },
+  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vulkaan',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'],
+    vloer: ['#ff8a3d', '#bf360c', '#4e1604', '#ffd180'], patroon: 'lava', wereld: 'vuur', stukken: ['pet_draak', 'mic_vuur'] },
+  { id: 'stage_circus',   cat: 'stage', name: 'Circuspiste',     price: 100, bg: 'linear-gradient(#b71c1c, #ef5350 60%, #fff59d)',       deco: ['🎪','🤹','🎈'],
+    vloer: ['#ef5350', '#b71c1c', '#5a0b0b', '#fff59d'], patroon: 'circus', wereld: 'circus', stukken: ['pet_olifant', 'instr_toeter'] },
+  { id: 'stage_dino',     cat: 'stage', name: 'Dinovallei',      price: 120, bg: 'linear-gradient(#33691e, #8bc34a 70%, #dce775)',       deco: ['🌋','🦴','🌿'],
+    vloer: ['#a5d66f', '#558b2f', '#2b4a14', '#fff3c4'], patroon: 'vlek', wereld: 'dino', stukken: ['pet_trex', 'dress_groen'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
 
@@ -10712,15 +10686,12 @@ const CATS = [
 
 
 
-
 ];
 
 
 
-
-
-
-const SCHAT_CAT = 'schat';
+const PODIA_CAT = 'stage';
+const PODIA_CHIP = { ico: '🎪', name: 'Podia' };
 
 
 
@@ -11897,45 +11868,85 @@ function isBeloning(itemId) { return !!beloningWereld(itemId); }
 
 
 
-
-
-
-
-
-
-
-
-
-
-function wereldSchatten() {
-  return WORLDS
-    .map((w, i) => ({ wereld: w, index: i, item: beloningItem(w) }))
-    .filter(s => s.item && worldAvailable(s.index));
-}
-
-
-
-
-
-
-
-
-
-
 function binnenHorizon(p, i) { return i <= laatsteZichtbareWereld(p); }
-function zichtbareSchatten(p) {
-  return wereldSchatten().filter(s => binnenHorizon(p, s.index) || (p.owned || []).includes(s.item.id));
-}
 
 function horizonMistHTML(tekst) {
   return `<span class="horizon-wolk" aria-hidden="true">☁️</span><div class="horizon-tekst">${tekst}</div>`;
 }
 
 
-function schatStand(p) {
-  const alles = wereldSchatten();
-  const heeft = alles.filter(s => (p.owned || []).includes(s.item.id)).length;
-  return { heeft, totaal: alles.length };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function podiumSchat(st) {
+  const w = st && st.wereld ? WORLDS.find(x => x.id === st.wereld) : null;
+  return w ? beloningItem(w) : null;
+}
+function podiumWereldIdx(st) { return st && st.wereld ? WORLDS.findIndex(w => w.id === st.wereld) : -1; }
+
+function podiumStukken(st) {
+  const schat = podiumSchat(st);
+  return (schat ? [schat] : []).concat((st.stukken || []).map(item).filter(Boolean));
+}
+function podiumVanJou(p, st) {
+  if (!st || st.cat !== 'stage') return false;
+  const bezit = p.owned || [];
+  if (st.id === 'stage_disco' || bezit.includes(st.id)) return true;
+  const stukken = podiumStukken(st);
+  return stukken.length === 3 && stukken.every(it => bezit.includes(it.id));
+}
+
+function bezit(p, it) { return it.cat === 'stage' ? podiumVanJou(p, it) : (p.owned || []).includes(it.id); }
+
+function podiumRest(p, st) { return podiumStukken(st).filter(it => !(p.owned || []).includes(it.id)); }
+function podiumPrijs(p, st) { return podiumRest(p, st).reduce((t, it) => t + (it.price || 0), 0); }
+
+function podiumOpSlot(p, st) {
+  const schat = podiumSchat(st);
+  return !!schat && !podiumVanJou(p, st) && !(p.owned || []).includes(schat.id);
+}
+
+
+
+
+
+function zichtbarePodia(p) {
+  const plek = st => { const i = podiumWereldIdx(st); return i < 0 ? 1e9 : i; };
+  return ITEMS.filter(st => {
+    if (st.cat !== 'stage' || st.id === 'stage_disco') return false;
+    if (podiumVanJou(p, st)) return true;
+    const i = podiumWereldIdx(st);
+    return i >= 0 && worldAvailable(i) && !!podiumSchat(st) && binnenHorizon(p, i);
+  }).sort((a, b) => plek(a) - plek(b));
+}
+
+function meerPodia(p) {
+  return ITEMS.some(st => st.cat === 'stage' && worldAvailable(podiumWereldIdx(st))
+    && !!podiumSchat(st) && !zichtbarePodia(p).includes(st));
+}
+
+function podiumVan(itemId) {
+  return ITEMS.find(st => st.cat === 'stage' && podiumStukken(st).some(it => it.id === itemId)) || null;
+}
+
+
+
+function podiumHTML(st) {
+  const v = (st && st.vloer) || item('stage_disco').vloer;
+  const patroon = (st && st.patroon) || 'disco';
+  return `<div class="podium pod-${patroon}" style="--pt:${v[0]};--pm:${v[1]};--ps:${v[2]};--pr:${v[3]}" aria-hidden="true"></div>`;
 }
 
 
@@ -20811,7 +20822,8 @@ function itemThumb(it, base) {
   if (it.cat === 'hair')  return zone(hairThumb(it, base));
   if (it.cat === 'shoes') return zone(shoesThumb(it));
   if (it.cat === 'mic')   return zone(micThumb(it));
-  if (it.bg) return zone(`<span class="thumb-stage" style="background:${it.bg}">${(it.deco && it.deco[0]) || ''}</span>`);
+
+  if (it.cat === 'stage') return zone(podiumHTML(it), 'thumb-podium');
   return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
 }
 
@@ -20830,7 +20842,7 @@ let dressReturnTo = null;
 
 
 function openKleedkamer() {
-  shopCat = 'dress'; schatTerugCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
+  shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
@@ -20850,7 +20862,7 @@ function resumeKleedkamer() {
 }
 
 function openKleedkamerCat(cat) {
-  shopCat = cat; schatTerugCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
+  shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   toonHub('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
@@ -20870,19 +20882,21 @@ function openKleedkamerItem(id) {
 
 
 
-
-  const schat = isBeloning(it.id);
-  if (schat) schatTerugCat = it.cat;
-  shopCat = schat ? SCHAT_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
+  const p = P();
+  const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
+  shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
   renderShop();
+  if (podium) id = podium.id;
 
 
 
 
 
-  if (P().owned.includes(it.id)) {
-    if (P().equipped[it.cat] !== it.id) equipShopItem(it.id);
+
+  const doel = item(id);
+  if (bezit(p, doel)) {
+    if (p.equipped[doel.cat] !== doel.id) equipShopItem(doel.id);
   } else {
     shopSelectedId = id;
     paintShop();
@@ -21021,7 +21035,10 @@ function renderShop() {
     if (opts.on) activeTab = b;
     return b;
   };
-  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
+
+
+
+  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
     sndClick();
     shopCat = c.id; shopSelectedId = null; renderShop();
     $('screen-dress').scrollTop = 0;
@@ -21034,16 +21051,10 @@ function renderShop() {
 
 
 
-
-
-
-
   requestAnimationFrame(() => {
     if (activeTab && activeTab.isConnected) tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
     updateFades(tabs);
   });
-  renderSchatEntry(p);
-  const schatVak = shopCat === SCHAT_CAT;
   shopItems(p).forEach(it => {
     const card = document.createElement('div');
     card.dataset.item = it.id;
@@ -21052,21 +21063,11 @@ function renderShop() {
 
 
 
-    const heeft = p.owned.includes(it.id);
-    const w = (schatVak || heeft) ? beloningWereld(it.id) : null;
+
+    card.className = 'item-card';
+    card.innerHTML = itemThumb(it) + `<div class="item-name">${it.name}</div><div class="item-status"></div>`;
 
 
-
-
-    card.className = 'item-card' + (schatVak ? ' schat-kaart' : '');
-
-
-
-
-    const beeld = (schatVak && !heeft) ? schatRaadselHTML(w) : itemThumb(it);
-    const naam = (schatVak && !heeft) ? esc(w ? w.name : 'Wereldschat') : it.name;
-    card.innerHTML = (w ? `<span class="item-wereld" aria-hidden="true">${w.icon || '🌍'}</span>` : '')
-      + beeld + `<div class="item-name">${naam}</div><div class="item-status"></div>`;
 
 
 
@@ -21091,9 +21092,9 @@ function renderShop() {
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);
       const p2 = P();
-      if (p2.owned.includes(it.id)) {
+      if (bezit(p2, it)) {
         if (p2.equipped[it.cat] === it.id) {
-          if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat);
+          if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
           sndClick(); tapDance('shop-avatar'); return;
         }
         return equipShopItem(it.id);
@@ -21114,10 +21115,10 @@ function renderShop() {
 
 
 
-  if (schatVak && zichtbareSchatten(p).length < wereldSchatten().length) {
+  if (shopCat === PODIA_CAT && meerPodia(p)) {
     const wolk = document.createElement('div');
-    wolk.className = 'item-card schat-kaart horizon-mist';
-    wolk.innerHTML = horizonMistHTML('Nog meer schatten');
+    wolk.className = 'item-card horizon-mist';
+    wolk.innerHTML = horizonMistHTML('Nog meer podia');
     kaarten.appendChild(wolk);
   }
   grid.textContent = '';
@@ -21174,16 +21175,11 @@ addEventListener('resize', () => rafKlem(rekBreedte));
 
 
 
-
-
-
-
-
-
 function shopItems(p) {
-  if (shopCat === SCHAT_CAT) return zichtbareSchatten(p).map(s => s.item);
+  const groep = it => (bezit(p, it) && it.id !== shopJustBoughtId) ? 0 : 1;
+
+  if (shopCat === PODIA_CAT) return zichtbarePodia(p).sort((a, b) => groep(a) - groep(b));
   const rang = it => (typeof it.price === 'number' ? it.price : 1e9);
-  const groep = it => (p.owned.includes(it.id) && it.id !== shopJustBoughtId) ? 0 : 1;
   return ITEMS.filter(i => i.cat === shopCat && (!isBeloning(i.id) || p.owned.includes(i.id))).slice()
     .sort((a, b) => (groep(a) - groep(b)) || (rang(a) - rang(b)));
 }
@@ -21201,75 +21197,41 @@ function shopItems(p) {
 
 
 
-function renderSchatEntry(p) {
-  const knop = $('schat-entry');
-  if (!knop) return;
-  const st = schatStand(p);
-  const open = shopCat === SCHAT_CAT;
-  knop.style.display = st.totaal ? 'flex' : 'none';
-  if (!st.totaal) return;
-  knop.classList.toggle('open', open);
-  knop.setAttribute('aria-pressed', open ? 'true' : 'false');
-  knop.setAttribute('aria-label', `Wereldschatten, ${st.heeft} verzameld`);
-  knop.innerHTML = `<span class="se-ico" aria-hidden="true">✨</span>`
-    + `<span class="se-naam">Wereldschatten</span>`
-    + `<span class="se-telling">· <b>${st.heeft}</b> verzameld</span>`;
+
+
+
+
+const TAG_WOORD = { on: 'Aan', owned: 'Van jou', slot: 'Op slot', new: 'Nieuw' };
+function zetTag(el, stand, prijs) {
+  if (!el) return;
+  el.className = 'item-status ' + stand;
+  el.textContent = stand === 'new' ? 'Nieuw!' : (stand === 'on' || stand === 'owned') ? '✓'
+    : stand === 'slot' ? '🔒' : `💎 ${prijs}`;
+  if (TAG_WOORD[stand]) el.setAttribute('aria-label', TAG_WOORD[stand]);
+  else el.removeAttribute('aria-label');
 }
 
-
-
-let schatTerugCat = 'dress';
-function toggleSchatten() {
-  sndClick();
-  if (shopCat === SCHAT_CAT) shopCat = schatTerugCat;
-  else { schatTerugCat = shopCat; shopCat = SCHAT_CAT; }
-  shopSelectedId = null;
-  renderShop();
-  $('screen-dress').scrollTop = 0;
+function tagStand(it, p) {
+  if (shopJustBoughtId === it.id) return 'new';
+  if (p.equipped[it.cat] === it.id && bezit(p, it)) return 'on';
+  if (bezit(p, it)) return 'owned';
+  if (it.cat === 'stage' ? podiumOpSlot(p, it) : isBeloning(it.id)) return 'slot';
+  return p.diamonds < tagPrijs(it, p) ? 'need' : 'price';
 }
 
-
-
-
-
-function schatRaadselHTML(w) {
-  const th = (w && w.theme) || {};
-  const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
-  return `<div class="item-thumb"><span class="schat-raadsel" style="${kleur}" aria-hidden="true">?</span></div>`;
-}
-
+function tagPrijs(it, p) { return it.cat === 'stage' ? podiumPrijs(p, it) : it.price; }
 
 
 
 function dressCardState(card, it, p) {
-  const owned = p.owned.includes(it.id);
-  const equipped = p.equipped[it.cat] === it.id;
-
-  const uitWereld = owned ? null : beloningWereld(it.id);
-  const nieuw = shopJustBoughtId === it.id;
-
-
-  const schat = card.classList.contains('schat-kaart');
+  const stand = tagStand(it, p);
+  const owned = bezit(p, it);
   card.className = 'item-card'
-    + (schat ? ' schat-kaart' : '')
-    + (equipped ? ' equipped' : (owned ? ' owned' : ''))
-    + (uitWereld ? ' teverdienen' : '')
+    + (stand === 'on' ? ' equipped' : (owned ? ' owned' : ''))
     + (shopSelectedId === it.id ? ' selected' : '')
     + (!owned && p.wens === it.id ? ' gewenst' : '')
-    + (nieuw ? ' just-bought' : '');
-  const st = card.querySelector('.item-status');
-  if (!st) return;
-  if (nieuw)          { st.className = 'item-status new';   st.textContent = 'Nieuw!'; }
-  else if (equipped)  { st.className = 'item-status on';    st.textContent = OPTIONELE_SPULLEN.includes(it.cat) ? '✓ Aan ✕' : '✓ Aan'; }
-  else if (owned)     { st.className = 'item-status owned'; st.textContent = 'Van jou'; }
-
-
-
-
-
-  else if (uitWereld) { st.className = 'item-status slot';  st.textContent = '🔒 Speel uit'; }
-  else if (p.diamonds < it.price) { st.className = 'item-status need';  st.textContent = `💎 ${it.price}`; }
-  else                { st.className = 'item-status price'; st.textContent = `💎 ${it.price}`; }
+    + (stand === 'new' ? ' just-bought' : '');
+  zetTag(card.querySelector('.item-status'), stand, tagPrijs(it, p));
 }
 
 
@@ -21295,8 +21257,12 @@ function paintShop() {
 
 
 
-
-
+  const podium = itemOr(preview.equipped.stage, 'stage_disco');
+  const plek = $('shop-podium');
+  if (plek && plek.dataset.podium !== podium.id) {
+    plek.innerHTML = podiumHTML(podium);
+    plek.dataset.podium = podium.id;
+  }
   $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
@@ -21412,21 +21378,9 @@ function renderDressBar(it, p) {
     return;
   }
   bar.style.display = 'flex';
+  bar.classList.toggle('podium-bar', it.cat === PODIA_CAT);
+  if (it.cat === PODIA_CAT) return renderPodiumBar(bar, it, p);
   const owned = p.owned.includes(it.id);
-
-
-
-
-  const uitWereld = owned ? null : beloningWereld(it.id);
-  if (uitWereld) {
-
-
-
-    bar.innerHTML = `
-      <div class="db-info"><span class="db-name">🎁 Geheime wereldschat</span>
-        <span class="db-sub">· Speel ${esc(uitWereld.name)} uit</span></div>`;
-    return;
-  }
 
 
 
@@ -21456,6 +21410,80 @@ function renderDressBar(it, p) {
     <div class="db-info"><span class="db-name">${naam(it)}</span></div>
     <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
   $('db-buy').onclick = () => confirmShopBuy(it.id);
+}
+
+
+
+
+
+
+
+
+
+
+
+function renderPodiumBar(bar, st, p) {
+  if (podiumVanJou(p, st)) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  const stukken = podiumStukken(st);
+  const kaartjes = stukken.map((it, i) => (i ? '<b class="pb-plus" aria-hidden="true">+</b>' : '')
+    + `<button class="mini-kaart${tagStand(it, p) === 'slot' ? ' op-slot' : ''}" type="button" data-stuk="${it.id}" aria-label="${esc(it.full || it.name)}">`
+    + itemThumb(it) + '<span class="item-status"></span></button>').join('');
+  const prijs = podiumPrijs(p, st);
+  const wereldIdx = podiumWereldIdx(st);
+  let knop = '';
+  if (podiumOpSlot(p, st)) knop = '<button class="btn small" id="db-speel">🗺️ Speel</button>';
+  else if (prijs > p.diamonds) knop = `<span class="db-sub">Nog <span class="db-highlight">${prijs - p.diamonds}</span> 💎</span>`
+    + '<button class="btn small" id="db-earn">Speel</button>';
+  else knop = `<button class="btn small" id="db-buy">Koop · ${prijs} 💎</button>`;
+  bar.innerHTML = `<div class="pb-stukken">${kaartjes}</div><div class="pb-knop">${knop}</div>`;
+  bar.querySelectorAll('.mini-kaart').forEach(k => {
+    const it = item(k.dataset.stuk);
+    zetTag(k.querySelector('.item-status'), tagStand(it, p), it.price);
+    k.onclick = () => {
+      if (tagStand(it, P()) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
+      sndClick(); openKleedkamerItem(it.id);
+    };
+  });
+  if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldIdx); };
+  if ($('db-earn')) $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
+  if ($('db-buy')) $('db-buy').onclick = () => confirmShopBuy(st.id);
+}
+
+
+const SLOT_BEL_DUUR = 2000;
+let slotBelTimer = null;
+function slotBel(bij, w, wereldIdx) {
+  const oud = document.querySelector('.slot-bel');
+  if (oud) oud.remove();
+  clearTimeout(slotBelTimer);
+  if (!w || !bij || !bij.getBoundingClientRect) return;
+  const bel = document.createElement('button');
+  bel.type = 'button';
+  bel.className = 'slot-bel';
+  bel.setAttribute('aria-label', `Speel de ${w.name} uit`);
+  bel.innerHTML = `<span aria-hidden="true">🗺️ ${w.icon || '🌍'} → 🔓</span>`;
+  const r = bij.getBoundingClientRect();
+  bel.style.left = Math.round(r.left + r.width / 2) + 'px';
+  bel.style.top = Math.round(r.top - 8) + 'px';
+  bel.onclick = () => { bel.remove(); sndClick(); naarWereldKaart(wereldIdx); };
+  document.body.appendChild(bel);
+  slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
+}
+
+
+function naarWereldKaart(idx) {
+  const oud = document.querySelector('.slot-bel');
+  if (oud) oud.remove();
+  if (idx >= 0) reisDoel = idx;
+  goMap();
+}
+
+function openPodia(ev) {
+  if (ev) ev.stopPropagation();
+  sndClick();
+  shopCat = PODIA_CAT; shopSelectedId = null;
+  renderShop();
+  $('screen-dress').scrollTop = 0;
 }
 
 
@@ -21617,19 +21645,25 @@ function flyDiamonds(fromEl, toEl, n, duur) {
 function confirmShopBuy(id) {
   const it = item(id);
   const p = P();
-  if (p.owned.includes(it.id)) return equipShopItem(id);
+  if (bezit(p, it)) return equipShopItem(id);
 
 
-  if (isBeloning(it.id)) return;
-  if (p.diamonds < it.price) {
+
+  if (isBeloning(it.id) || (it.cat === PODIA_CAT && podiumOpSlot(p, it))) return;
+
+
+
+  const prijs = tagPrijs(it, p);
+  const erbij = it.cat === PODIA_CAT ? podiumRest(p, it).map(x => x.id) : [it.id];
+  if (p.diamonds < prijs) {
     sndWrong();
-    showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
+    showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
     toastWeg(1800);
     return;
   }
-  p.diamonds -= it.price;
-  p.owned.push(it.id);
-  if (p.wens === it.id) delete p.wens;
+  p.diamonds -= prijs;
+  erbij.forEach(id2 => { if (!p.owned.includes(id2)) p.owned.push(id2); });
+  if (erbij.includes(p.wens)) delete p.wens;
   p.equipped[it.cat] = it.id;
 
 
@@ -21724,12 +21758,13 @@ const OPTIONELE_SPULLEN = ['mic', 'instrument', 'acc', 'pet'];
 
 
 function unequipShopItem(cat) {
-  if (!OPTIONELE_SPULLEN.includes(cat)) return;
+  if (!OPTIONELE_SPULLEN.includes(cat) && cat !== PODIA_CAT) return;
   const p = P();
   if (!p.equipped[cat]) return;
   const herbouw = !!shopJustBoughtId;
   clearTimeout(shopBoughtTimer);
-  p.equipped[cat] = null;
+
+  p.equipped[cat] = cat === PODIA_CAT ? 'stage_disco' : null;
   shopJustBoughtId = null;
   shopSelectedId = null;
   sndClick();
@@ -21742,7 +21777,7 @@ function unequipShopItem(cat) {
 function equipShopItem(id) {
   const it = item(id);
   const p = P();
-  if (!p.owned.includes(it.id)) return;
+  if (!bezit(p, it)) return;
   const herbouw = !!shopJustBoughtId;
   clearTimeout(shopBoughtTimer);
   p.equipped[it.cat] = it.id;

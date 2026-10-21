@@ -524,18 +524,45 @@ const ITEMS = [
   { id: 'pet_ufo',    cat: 'pet', name: 'Ufo-tje',       price: 90,  emoji: '🛸' },
   { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
   // Podium
-  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
-  { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'] },
-  { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'] },
-  { id: 'stage_kasteel',  cat: 'stage', name: 'Sprookjeskasteel', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'] },
-  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'] },
-  { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'] },
-  { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'] },
-  { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'] },
-  { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'] },
-  { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'] },
-  { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'] },
-  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vulkaan',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'] },
+  /* Een podium is waar ze op staat: de schijf onder haar voeten in de spiegel (en
+     straks in de show). Wat hem tekent staat hier als gegevens en niet als
+     plaatje: vloer = de vier kleuren van de schijf (bovenkant, midden, zijband,
+     rand), patroon = één stil CSS-patroon erop (zie .podium in het stijlblad).
+     bg en deco zijn de oude decorvlakken; die blijven voor de sterrentegel.
+
+     wereld + stukken: een WERELDPODIUM. Het hoort bij die wereld, en het is van
+     jou als je de schat van die wereld hebt plus de twee stukken uit de winkel --
+     afgeleid uit p.owned, nooit bewaard (zie "= Podia"). De twee stukken zitten
+     nooit in de hoed-plek (daar zit de schat) en nooit samen in één plek, en een
+     spulletje hoort bij hoogstens één podium. test:inhoud kijkt dat na. */
+  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
+    vloer: ['#9c5bd6', '#4a1580', '#22073f', '#e1bee7'], patroon: 'disco' },
+  { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'],
+    vloer: ['#9fa8da', '#5c6bc0', '#283171', '#ede7f6'], patroon: 'stippen' },
+  { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'],
+    vloer: ['#ffe082', '#f9a825', '#7a4f00', '#4fc3f7'], patroon: 'zand', wereld: 'piraten', stukken: ['pet_papegaai', 'instr_accordeon'] },
+  { id: 'stage_kasteel',  cat: 'stage', name: 'Sprookjeskasteel', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'],
+    vloer: ['#f8bbd0', '#b39ddb', '#5e3f8f', '#fff3c4'], patroon: 'ruit', wereld: 'tover', stukken: ['mic_toverstaf', 'dress_tover'] },
+  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'],
+    vloer: ['#4a3bb5', '#241a6e', '#150d47', '#8fd3ff'], patroon: 'sterren', wereld: 'ruimte', stukken: ['pet_alien', 'dress_sterren'] },
+  { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'],
+    vloer: ['#81c784', '#2e7d32', '#123d16', '#c8e6c9'], patroon: 'blad', wereld: 'jungle', stukken: ['pet_aap', 'instr_drums'] },
+  { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'],
+    vloer: ['#66bb6a', '#2e7d32', '#1b4d1f', '#ffffff'], patroon: 'gras' },
+  { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'],
+    vloer: ['#e1f5fe', '#81d4fa', '#2a6f97', '#ffffff'], patroon: 'sneeuw', wereld: 'ijs', stukken: ['pet_pinguin', 'hair_wit'] },
+  { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'],
+    vloer: ['#4dd0e1', '#0277bd', '#01406b', '#e0f7fa'], patroon: 'golf', wereld: 'onderwater', stukken: ['pet_dolfijn', 'dress_zeemeermin'] },
+  { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'],
+    vloer: ['#fad0c4', '#a18cd1', '#5b3f8c', '#ffffff'], patroon: 'regenboog', wereld: 'snoep', stukken: ['mic_ijsje', 'dress_hartjes'] },
+  { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'],
+    vloer: ['#ffd54f', '#a1662f', '#4e2c12', '#fff3c4'], patroon: 'vonk', wereld: 'muziek', stukken: ['instr_dj', 'dress_disco'] },
+  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vulkaan',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'],
+    vloer: ['#ff8a3d', '#bf360c', '#4e1604', '#ffd180'], patroon: 'lava', wereld: 'vuur', stukken: ['pet_draak', 'mic_vuur'] },
+  { id: 'stage_circus',   cat: 'stage', name: 'Circuspiste',     price: 100, bg: 'linear-gradient(#b71c1c, #ef5350 60%, #fff59d)',       deco: ['🎪','🤹','🎈'],
+    vloer: ['#ef5350', '#b71c1c', '#5a0b0b', '#fff59d'], patroon: 'circus', wereld: 'circus', stukken: ['pet_olifant', 'instr_toeter'] },
+  { id: 'stage_dino',     cat: 'stage', name: 'Dinovallei',      price: 120, bg: 'linear-gradient(#33691e, #8bc34a 70%, #dce775)',       deco: ['🌋','🦴','🌿'],
+    vloer: ['#a5d66f', '#558b2f', '#2b4a14', '#fff3c4'], patroon: 'vlek', wereld: 'dino', stukken: ['pet_trex', 'dress_groen'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
 // Vangnet voor een onbekend spullen-id (beschadigde back-up, handmatig bewerkt
@@ -566,18 +593,15 @@ const CATS = [
   { id: 'instrument', ico: '🎸', name: 'Muziek' },
   { id: 'acc',   ico: '🎀', name: 'Accessoires' },
   { id: 'pet',   ico: '🐾', name: 'Dieren' },
-  // FASE 1: 'stage' (Podium) staat hier bewust NIET meer bij -- podia zijn geen
-  // koopbare categorie meer. De items zelf blijven in ITEMS staan: ze zijn nog
-  // altijd het decor achter de paspop (zie applyStage), en wie er al een had
-  // houdt hem gewoon. Alleen de winkel-ingang is dicht.
+  // 'stage' staat hier niet bij: Podia is een lade, maar geen kledingsoort. De
+  // 🎲 (surpriseOutfit) loopt over deze rij, en die hoort haar niet van haar
+  // podium af te halen. renderShop zet de Podia-knop er zelf vooraan bij.
 ];
-/* De wereldschatten staan er met opzet NIET bij. Ze zijn geen achtste lade maar
-   een eigen vakje onder de rij (zie renderSchatEntry): een lade die alleen maar
-   dingen op slot bevat is een lade waar een kind één keer in kijkt, en tussen
-   zeven iconen die allemaal "kleren" betekenen valt een schatkist niet op.
-   Dit id is dus een stand van de kleedkamer (shopCat), geen categorie -- niets
-   dat over CATS loopt hoeft hem te kennen. */
-const SCHAT_CAT = 'schat';
+/* Podia, de eerste knop van de rij. Een stand van de kleedkamer (shopCat) zoals
+   elke categorie, en ook echt de categorie van zijn spulletjes: een podium is
+   cat 'stage', en p.equipped.stage is waar ze op staat. */
+const PODIA_CAT = 'stage';
+const PODIA_CHIP = { ico: '🎪', name: 'Podia' };
 /* Hier stonden acht tellers per categorie (catCount/instrCount/petCount en de vijf
    *_TOTAL-constanten). Ze bedienden de "koop alles uit deze categorie"-trofeeën,
    en die zijn in fase 5C met pensioen gegaan (zie RETIRED_TROPHIES). Sindsdien
@@ -1744,55 +1768,95 @@ function beloningItem(w) { return (w && w.beloning) ? (item(w.beloning) || null)
 function beloningWereld(itemId) { return WORLDS.filter(w => w.beloning === itemId)[0] || null; }
 // Te koop of te verdienen? Alles wat een wereld uitdeelt staat níét in de winkel.
 function isBeloning(itemId) { return !!beloningWereld(itemId); }
-/* ---- De wereldschatten: dezelfde beloningen, als één verzameling -----------
-   FASE 6E. Ze lagen tot nu toe tussen de accessoires: achteraan de lade, op slot,
-   met een prijsloos pilletje ertussen de prijzen. Daardoor waren ze precies dat
-   wat ze niet zijn -- winkelwaar die toevallig niet te koop is. De kleedkamer
-   heeft er nu een eigen vakje voor ("✨ Wereldschatten · 3/6", zie renderShop) en
-   dit is wat dat vakje leest.
-
-   Er komt geen tweede waarheid bij. Wélke er zijn staat in WORLDS.beloning en
-   welke je hebt in p.owned -- allebei stonden ze er al, en allebei blijven ze
-   waar ze staan. Dit zet ze alleen op een rijtje.
-
-   Alleen uitgebrachte werelden (worldAvailable, dezelfde grens als waar
-   grantWorldRewards op uitdeelt): een wereld die wel geschreven maar nog niet
-   uitgebracht is, hoort niet als raadsel op de plank te liggen -- en zou het
-   totaal laten oplopen naar een getal dat vandaag niemand vol kan maken. Een
-   wereld zonder beloning, of met een beloning die naar een onbekend item wijst,
-   valt er vanzelf uit: dan is er niets te tonen.
-
-   De volgorde is die van de tournee en niet die van bezit. Dit is een verzameling
-   en geen rek: plek 1 is de eerste wereld, vandaag en over drie werelden nog. */
-function wereldSchatten() {
-  return WORLDS
-    .map((w, i) => ({ wereld: w, index: i, item: beloningItem(w) }))
-    .filter(s => s.item && worldAvailable(s.index));
-}
 /* ---- De horizon: wat de kleedkamer en de kast vooruit laten zien -----------
    Dezelfde grens als de reis (laatsteZichtbareWereld): alles wat je hebt, plus
    een paar werelden vooruit, en daarboven één mistkaartje dat niet telt hoeveel
    er nog liggen. Bij elf werelden zag een kind in wereld twee tien vraagtekens in
-   het schattenvak en tien gedempte medaillons in de kast -- geen belofte meer
-   maar een muur van wat ze níet heeft. De reis had die les al geleerd; nu de
-   twee verzamelschermen ook, en met hetzelfde getal, zodat de drie schermen
-   dezelfde werelden laten zien.
+   de kleedkamer en tien gedempte medaillons in de kast -- geen belofte meer maar
+   een muur van wat ze níet heeft. De reis had die les al geleerd; nu Podia en de
+   kast ook, en met hetzelfde getal, zodat de drie schermen dezelfde werelden
+   laten zien.
    Wat al van jou is staat er altijd, waar het ook ligt -- de horizon verbergt
    alleen wat je nog niet hebt. */
 function binnenHorizon(p, i) { return i <= laatsteZichtbareWereld(p); }
-function zichtbareSchatten(p) {
-  return wereldSchatten().filter(s => binnenHorizon(p, s.index) || (p.owned || []).includes(s.item.id));
-}
 // Het mistkaartje achteraan een rij: geen getal, geen naam, alleen "er is meer".
 function horizonMistHTML(tekst) {
   return `<span class="horizon-wolk" aria-hidden="true">☁️</span><div class="horizon-tekst">${tekst}</div>`;
 }
-// Het getal achter de ✨: hoeveel er verdiend zijn van hoeveel er te verdienen
-// zijn. Afgeleid, elke keer opnieuw -- er wordt niets van geteld bewaard.
-function schatStand(p) {
-  const alles = wereldSchatten();
-  const heeft = alles.filter(s => (p.owned || []).includes(s.item.id)).length;
-  return { heeft, totaal: alles.length };
+/* ================= Podia =================
+   Elke wereld heeft een podium, en het podium heeft drie stukken: de schat van
+   die wereld (alleen te verdienen) en twee spulletjes uit de winkel (zie de
+   stage-regels in ITEMS). Heb je ze alle drie, dan is het podium van jou en kun
+   je erop gaan staan. Dat is de hele regel -- en het is de brug tussen spelen en
+   sparen: de wereld geeft het stuk dat je niet kunt kopen, de diamanten doen de
+   rest.
+
+   VAN JOU IS AFGELEID, NIET BEWAARD. Net als de voortgang: er komt geen
+   "podium verdiend" in de opslag, het staat elke keer opnieuw in p.owned. Wat wél
+   bewaard wordt is waar ze op stáát (p.equipped.stage), en dat bestond al.
+   Bezitten telt, dragen niet: wie het aapje weer uitdoet houdt haar podium.
+
+   Twee uitzonderingen op "drie stukken", allebei omdat er al iets in p.owned
+   staat: Disco (het podium van iedereen, waar je op terugvalt) en elk podium dat
+   een kind vóór fase 1 nog gekocht heeft. Dat blijft van haar, ook zonder stukken
+   -- er wordt nooit iets afgepakt. */
+function podiumSchat(st) {
+  const w = st && st.wereld ? WORLDS.find(x => x.id === st.wereld) : null;
+  return w ? beloningItem(w) : null;
+}
+function podiumWereldIdx(st) { return st && st.wereld ? WORLDS.findIndex(w => w.id === st.wereld) : -1; }
+// De drie stukken, schat voorop. Een onbekend id valt eruit (en test:inhoud zegt het).
+function podiumStukken(st) {
+  const schat = podiumSchat(st);
+  return (schat ? [schat] : []).concat((st.stukken || []).map(item).filter(Boolean));
+}
+function podiumVanJou(p, st) {
+  if (!st || st.cat !== 'stage') return false;
+  const bezit = p.owned || [];
+  if (st.id === 'stage_disco' || bezit.includes(st.id)) return true;
+  const stukken = podiumStukken(st);
+  return stukken.length === 3 && stukken.every(it => bezit.includes(it.id));
+}
+// Van jou, gewoon of als podium: de ene vraag die de kleedkamer per kaartje stelt.
+function bezit(p, it) { return it.cat === 'stage' ? podiumVanJou(p, it) : (p.owned || []).includes(it.id); }
+// Wat er nog ontbreekt, en wat dat samen kost. De schat heeft geen prijs.
+function podiumRest(p, st) { return podiumStukken(st).filter(it => !(p.owned || []).includes(it.id)); }
+function podiumPrijs(p, st) { return podiumRest(p, st).reduce((t, it) => t + (it.price || 0), 0); }
+// Nog niet te halen met diamanten: de schat van de wereld ontbreekt.
+function podiumOpSlot(p, st) {
+  const schat = podiumSchat(st);
+  return !!schat && !podiumVanJou(p, st) && !(p.owned || []).includes(schat.id);
+}
+/* Welke podia de lade laat zien: wat van jou is, plus de podia van de werelden
+   tot de horizon -- dezelfde grens als de reis en de kast (binnenHorizon), zodat
+   een kind in wereld twee geen rij van tien sloten ziet. Disco staat er niet
+   tussen: dat is waar je op staat als je van een podium afstapt. Op de volgorde
+   van de tournee; een oud gekocht podium zonder wereld komt achteraan. */
+function zichtbarePodia(p) {
+  const plek = st => { const i = podiumWereldIdx(st); return i < 0 ? 1e9 : i; };
+  return ITEMS.filter(st => {
+    if (st.cat !== 'stage' || st.id === 'stage_disco') return false;
+    if (podiumVanJou(p, st)) return true;
+    const i = podiumWereldIdx(st);
+    return i >= 0 && worldAvailable(i) && !!podiumSchat(st) && binnenHorizon(p, i);
+  }).sort((a, b) => plek(a) - plek(b));
+}
+// Liggen er voorbij de horizon nog wereldpodia? Dan komt er één mistkaartje achteraan.
+function meerPodia(p) {
+  return ITEMS.some(st => st.cat === 'stage' && worldAvailable(podiumWereldIdx(st))
+    && !!podiumSchat(st) && !zichtbarePodia(p).includes(st));
+}
+// Bij welk podium hoort dit spulletje? (de schat óf een van de twee stukken)
+function podiumVan(itemId) {
+  return ITEMS.find(st => st.cat === 'stage' && podiumStukken(st).some(it => it.id === itemId)) || null;
+}
+/* Het podium zelf: één schijf, getekend uit zijn vier kleuren en één patroon (zie
+   .podium in het stijlblad). Hetzelfde stukje opmaak op het kaartje, in de
+   spiegel en -- straks -- onder haar voeten in de show. */
+function podiumHTML(st) {
+  const v = (st && st.vloer) || item('stage_disco').vloer;
+  const patroon = (st && st.patroon) || 'disco';
+  return `<div class="podium pod-${patroon}" style="--pt:${v[0]};--pm:${v[1]};--ps:${v[2]};--pr:${v[3]}" aria-hidden="true"></div>`;
 }
 // De trofee-id van de perfecte wereld: op het wereld-id, dus een wereld hernoemen
 // raakt een al behaalde trofee niet (alleen een gewijzigd id maakt een nieuwe).
@@ -1871,8 +1935,8 @@ function grantHistoricRewards(p) {
 
    Alleen de uitgebrachte werelden (worldAvailable), en niet elke geschreven. Een
    wereld die al in WORLDS staat maar nog released:false is, hoort nergens te
-   verklappen dat hij bestaat -- het schattenvak en de reis doen dat al zo (zie
-   wereldSchatten, laatsteZichtbareWereld). Hier stond eerst WORLDS.forEach, en
+   verklappen dat hij bestaat -- Podia en de reis doen dat al zo (zie
+   zichtbarePodia, laatsteZichtbareWereld). Hier stond eerst WORLDS.forEach, en
    dan stond er zodra zo'n wereld naar main ging een "Zeewereld" in de kast van
    elk kind, en telde de kop "3 / 19" voor een kaartje dat niemand kan halen.
    Gaat hij uit, dan komt de kaart vanzelf mee: dit draait bij elk opstarten.
@@ -7796,8 +7860,8 @@ function renderShelves() {
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const earned = earnedActiveCount(p);
   telNu($('trophy-diamonds'), p.diamonds);
-  /* De stand als pil: "4 verzameld", precies de woorden waarmee het schattenvak in
-     de kleedkamer telt. Zonder totaal -- zie .kast-telling in het stijlblad: dat
+  /* De stand als pil: "4 verzameld", de woorden waarmee het schattenvak in de
+     kleedkamer vroeger telde. Zonder totaal -- zie .kast-telling in het stijlblad: dat
      totaal groeide met elke wereld die erbij kwam, en dan loopt een volle kast
      leeg zonder dat een kind iets kwijt is. */
   $('trophy-count').innerHTML =
@@ -10668,7 +10732,8 @@ function itemThumb(it, base) {
   if (it.cat === 'hair')  return zone(hairThumb(it, base));
   if (it.cat === 'shoes') return zone(shoesThumb(it));
   if (it.cat === 'mic')   return zone(micThumb(it));
-  if (it.bg) return zone(`<span class="thumb-stage" style="background:${it.bg}">${(it.deco && it.deco[0]) || ''}</span>`);
+  // een podium is een plek en geen voorwerp: de schijf zelf, zoals ze erop staat
+  if (it.cat === 'stage') return zone(podiumHTML(it), 'thumb-podium');
   return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
 }
 
@@ -10687,7 +10752,7 @@ let dressReturnTo = null;      // 'trophies' als je hier via een trofeeënkast-k
 // Verse start (o.a. nogmaals op het al-actieve Kleedkamer-tabblad tikken):
 // altijd terug naar de standaardcategorie, zonder selectie.
 function openKleedkamer() {
-  shopCat = 'dress'; schatTerugCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
+  shopCat = 'dress'; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
   renderShop();   // ná show(): renderDressBar mag de balk zelf verbergen zolang niets gekozen is
   $('screen-dress').scrollTop = 0;   // altijd bovenaan beginnen bij (her)openen
@@ -10707,7 +10772,7 @@ function resumeKleedkamer() {
 }
 // vanuit een trofee met een `naar`: open die categorie meteen in de kleedkamer
 function openKleedkamerCat(cat) {
-  shopCat = cat; schatTerugCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
+  shopCat = cat; shopSelectedId = null; dressReturnTo = 'trophies';
   toonHub('screen-dress');
   renderShop();
   $('screen-dress').scrollTop = 0;
@@ -10724,22 +10789,24 @@ function openKleedkamerCat(cat) {
 function openKleedkamerItem(id) {
   const it = item(id);
   if (!it) return openKleedkamer();
-  /* Een wereldschat woont in het schattenvak en niet in zijn categorie: dáár is
-     hij net onthuld, dáár staan zijn broertjes, en dáár blijft hij te vinden. Zijn
-     categorie is de lade waar je 'm ook aan kunt doen -- die onthouden we als de
-     plek om naar terug te vallen als het vak weer dichtgaat. */
-  const schat = isBeloning(it.id);
-  if (schat) schatTerugCat = it.cat;
-  shopCat = schat ? SCHAT_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
+  /* Een wereldschat die nog niet van haar is ligt niet in Accessoires -- daar
+     staan alleen spullen die je kunt kopen of al hebt. Hij is het slotje op zijn
+     podium, dus daar gaan we heen, met dat podium gekozen. */
+  const p = P();
+  const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
+  shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
   toonHub('screen-dress');
   renderShop();
+  if (podium) id = podium.id;
   /* Van haar? Dan doet ze het aan, en niet "even passen": dit pad wordt gelopen
      vanaf de knop "Bekijk je <spulletje>" na een wereld, en de pop droeg het daar
      toch al als voorbeeld. Eén stap eerder echt is precies de beloning die het
      moment bedoelde -- en het is dezelfde afspraak als bij een tik op het kaartje.
-     Nog niet van haar (kan alleen met een geheime schat) -> gewoon gekozen. */
-  if (P().owned.includes(it.id)) {
-    if (P().equipped[it.cat] !== it.id) equipShopItem(it.id);
+     Nog niet van haar (je wens, of een podium waar nog stukken aan ontbreken) ->
+     gekozen, met wat er nog moet in de lade onderaan. */
+  const doel = item(id);
+  if (bezit(p, doel)) {
+    if (p.equipped[doel.cat] !== doel.id) equipShopItem(doel.id);
   } else {
     shopSelectedId = id;
     paintShop();
@@ -10825,7 +10892,7 @@ function tabRijDoel(rij, gekozen) {
 }
 /* De kop van de kleedkamer heeft twee standen, net als die van de kast (zie
    kastScroll): open bovenaan, en zodra er kaartjes onder de kop door schuiven
-   gaat de band met de categorierij en het schattenvak dicht. Hoe dat eruitziet
+   gaat de band met de categorierij dicht. Hoe dat eruitziet
    staat bij .hub-sticky::after in het stijlblad; hier wordt alleen de klasse
    gezet. Zelfde drempel en zelfde rAF als bij de kast.
 
@@ -10844,7 +10911,7 @@ function kleedGescrold() { gescrold($('screen-dress')); }
 function renderShop() {
   const p = P();
   /* De kopstand volgt de schuifstand. Élke weg hierheen loopt hierlangs -- het
-     tabblad, terugkomen, een categorie, een spulletje, het schattenvak -- en de
+     tabblad, terugkomen, een categorie, een spulletje, Podia -- en de
      rAF in kleedScroll leest de stand pas als de aanroeper hem heeft gezet (de
      meeste zetten hem ná deze functie terug op nul). */
   $('screen-dress').onscroll = kleedScroll;
@@ -10878,7 +10945,10 @@ function renderShop() {
     if (opts.on) activeTab = b;
     return b;
   };
-  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
+  /* Podia vooraan, als gewone knop: geen eigen vorm en geen goud. De eerste plek
+     en de 🎪 zeggen genoeg, en "dit is anders" hoort niet bij een lade die werkt
+     zoals alle andere. */
+  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
     sndClick();
     shopCat = c.id; shopSelectedId = null; renderShop();
     $('screen-dress').scrollTop = 0;   // een nieuwe categorie begint bovenaan
@@ -10890,40 +10960,22 @@ function renderShop() {
      browser midden in de tik moet afdwingen -- met een rek dat op dat moment net
      leeggemaakt is en daarna meteen weer gevuld wordt. In de rAF staat alles er
      al, en is het die ene opmaak die dat beeldje toch al nodig had. Het beeldje
-     wordt pas daarna getekend, dus er is nooit een rand te zien van vóór de wissel.
-
-     De randen ook als er géén categorie aanstaat -- in het schattenvak staat de
-     hele rij uit. Zonder dat bleven ze daar hangen op wat ze vóór het openen
-     waren, en dan wijst de rand naar een kant waar niets meer zit. */
+     wordt pas daarna getekend, dus er is nooit een rand te zien van vóór de wissel. */
   requestAnimationFrame(() => {
     if (activeTab && activeTab.isConnected) tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
     updateFades(tabs);   // schuift de rij echt, dan werkt onscroll hem onderweg nog bij
   });
-  renderSchatEntry(p);
-  const schatVak = shopCat === SCHAT_CAT;
   shopItems(p).forEach(it => {
     const card = document.createElement('div');
     card.dataset.item = it.id;
-    /* Waar het vandaan komt. In het gewone rek alleen bij wat je al hebt -- daar
-       staat een nog te verdienen beloning sinds fase 6E sowieso niet meer tussen.
-       In het schattenvak staat het teken er altijd: dát is wat er te weten valt
-       over een schat die je nog niet hebt (bij wélke wereld hij hoort), en het is
-       precies genoeg om er nieuwsgierig naar te zijn. */
-    const heeft = p.owned.includes(it.id);
-    const w = (schatVak || heeft) ? beloningWereld(it.id) : null;
     /* De klasse staat er meteen op en het pilletje blijft leeg: paintShop()
        hieronder vult de stand van élk kaartje in en is daarmee de enige plek waar
        dat gebeurt -- maar hij zoekt ze op met .item-card, dus zonder deze regel
-       vindt hij er nul. */
-    card.className = 'item-card' + (schatVak ? ' schat-kaart' : '');
-    /* Een schat die nog niet van jou is laat zichzelf niet zien: geen tekening en
-       geen naam, maar het raadsel -- een medaillon in de kleuren van zijn wereld
-       met een vraagteken erin, en de wereldnaam eronder. Zo staat er wél iets
-       ("in de Muziekwereld ligt iets voor je") en tóch niet wát. */
-    const beeld = (schatVak && !heeft) ? schatRaadselHTML(w) : itemThumb(it);
-    const naam = (schatVak && !heeft) ? esc(w ? w.name : 'Wereldschat') : it.name;
-    card.innerHTML = (w ? `<span class="item-wereld" aria-hidden="true">${w.icon || '🌍'}</span>` : '')
-      + beeld + `<div class="item-name">${naam}</div><div class="item-status"></div>`;
+       vindt hij er nul.
+       Geen wereldteken in de hoek meer. Een schat is in zijn lade gewoon een van
+       je spullen; bij wélke wereld hij hoort zegt zijn podium. */
+    card.className = 'item-card';
+    card.innerHTML = itemThumb(it) + `<div class="item-name">${it.name}</div><div class="item-status"></div>`;
     /* Tikken op kleren die van je zijn = ze aandoen. Er zat een stap tussen --
        eerst kiezen, dan "Doe aan" in de balk onderaan -- en die stap kostte een
        kind van vijf een tweede tik op een andere plek van het scherm voor iets
@@ -10942,15 +10994,17 @@ function renderShop() {
                                    extra, dier) wél uit: die kan de pop ook
                                    missen, en zonder deze tik was een eenmaal
                                    gekozen micro nooit meer kwijt te raken. Het
-                                   pilletje zegt het ("✓ Aan ✕").
+                                   gouden ✓ zegt dat hij aan is.
+                                   Een podium ook: eraf = terug op Disco.
          nog niet van jou       -> kiezen: de pop past het en de lade onderaan
-                                   zegt wat het kost. */
+                                   zegt wat het kost (bij een podium: wat er nog
+                                   ontbreekt). */
     card.onclick = () => {
       if (it.id === 'mic_pintje') bumpPintjeTaps(card);   // easter egg telt hier mee, ook los aangetikt
       const p2 = P();
-      if (p2.owned.includes(it.id)) {
+      if (bezit(p2, it)) {
         if (p2.equipped[it.cat] === it.id) {
-          if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat);
+          if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
           sndClick(); tapDance('shop-avatar'); return;
         }
         return equipShopItem(it.id);
@@ -10967,14 +11021,14 @@ function renderShop() {
     };
     kaarten.appendChild(card);
   });
-  /* Achteraan het schattenvak: de horizon. Liggen er voorbij de laatste wereld
-     die je vooruit ziet nog schatten, dan één wolk in plaats van een rij
-     vraagtekens -- zie zichtbareSchatten. Geen klik en geen stand: zonder
-     data-item vindt paintShop er geen spulletje bij en laat hem staan. */
-  if (schatVak && zichtbareSchatten(p).length < wereldSchatten().length) {
+  /* Achteraan Podia: de horizon. Liggen er voorbij de laatste wereld die je
+     vooruit ziet nog podia, dan één wolk in plaats van een rij sloten -- zie
+     zichtbarePodia. Geen klik en geen stand: zonder data-item vindt paintShop er
+     geen spulletje bij en laat hem staan. */
+  if (shopCat === PODIA_CAT && meerPodia(p)) {
     const wolk = document.createElement('div');
-    wolk.className = 'item-card schat-kaart horizon-mist';
-    wolk.innerHTML = horizonMistHTML('Nog meer schatten');
+    wolk.className = 'item-card horizon-mist';
+    wolk.innerHTML = horizonMistHTML('Nog meer podia');
     kaarten.appendChild(wolk);
   }
   grid.textContent = '';
@@ -11010,123 +11064,84 @@ function rekBreedte() {
   rekBreedteBij = `${innerWidth}x${innerHeight}`;
 }
 addEventListener('resize', () => rafKlem(rekBreedte));
-/* Wat er in het rek staat, en in welke volgorde.
-
-   Twee standen, want de kleedkamer heeft er twee. Het schattenvak (SCHAT_CAT) is
-   de verzameling: élke wereldschat, in de volgorde van de tournee, of je hem nu
-   hebt of niet. Bezit verandert daar niets aan de plek -- plek 1 is de eerste
-   wereld, vandaag en over drie werelden nog. Dat is wat een verzameling van een
-   rek onderscheidt.
-
-   Een gewone categorie is wél een rek, met twee groepen:
+/* Wat er in het rek staat, en in welke volgorde. Twee groepen:
 
      0  van jou   -- je eigen kast, meteen bovenaan en meteen aan te doen
      1  te koop   -- op prijs oplopend, dus goedkoop eerst
 
    Er was een derde ("te verdienen", de wereldbeloningen achteraan op slot). Die is
    in fase 6E uit de laden gehaald: een slotje tussen de prijzen maakte van een
-   beloning stille winkelwaar die toevallig niet te koop is, en het was precies de
-   plek waar een kind hem nooit vond. Wat je nog niet verdiend hebt staat nu in het
-   schattenvak; wat je wél verdiend hebt blijft gewoon bij je eigen spullen staan,
-   want dáár kies je wat je aandoet. Een beloning heeft geen prijs en krijgt binnen
-   die groep een groot eindig getal -- geen Infinity, want twee ervan geven dan
-   Infinity - Infinity = NaN, en een vergelijker die NaN teruggeeft is geen
-   vergelijker meer. Zo sluiten je verdiende schatten je eigen rij af, op de
-   volgorde van ITEMS.
+   beloning stille winkelwaar die toevallig niet te koop is. Een schat die je nog
+   niet hebt staat nu als slotje op zijn podium (Podia); een schat die je wél hebt
+   staat gewoon bij je eigen spullen, want dáár kies je wat je aandoet. Een
+   beloning heeft geen prijs en krijgt binnen die groep een groot eindig getal --
+   geen Infinity, want twee ervan geven dan Infinity - Infinity = NaN, en een
+   vergelijker die NaN teruggeeft is geen vergelijker meer.
+
+   Podia volgt dezelfde twee groepen, en binnen een groep de volgorde van de
+   tournee in plaats van een prijs: een podium kost wat er nog aan ontbreekt, en
+   dat verschilt per kind.
 
    Het spulletje dat nét gekocht is telt hier even nog als "te koop": zo blijft het
    tijdens zijn "Nieuw!"-moment staan waar het kind het aantikte, en verhuist het
    pas naar de bezit-groep als dat moment voorbij is (zie confirmShopBuy). */
 function shopItems(p) {
-  if (shopCat === SCHAT_CAT) return zichtbareSchatten(p).map(s => s.item);
+  const groep = it => (bezit(p, it) && it.id !== shopJustBoughtId) ? 0 : 1;
+  // Podia: zichtbarePodia staat al op tournee-volgorde, en sort is stabiel
+  if (shopCat === PODIA_CAT) return zichtbarePodia(p).sort((a, b) => groep(a) - groep(b));
   const rang = it => (typeof it.price === 'number' ? it.price : 1e9);
-  const groep = it => (p.owned.includes(it.id) && it.id !== shopJustBoughtId) ? 0 : 1;
   return ITEMS.filter(i => i.cat === shopCat && (!isBeloning(i.id) || p.owned.includes(i.id))).slice()
     .sort((a, b) => (groep(a) - groep(b)) || (rang(a) - rang(b)));
 }
-/* Het vakje onder de categorierij: "✨ Wereldschatten · 3 verzameld". Eén regel,
-   en daarmee het hele verhaal -- er is zoiets als een wereldschat, en je hebt er
-   drie. Meer uitleg krijgt een kind van vijf hier niet, en meer heeft ze ook niet
-   nodig: wat erachter zit legt het vak zelf uit zodra ze erop tikt.
+/* DE TAG: het ene pilletje op een kaartje, op de plek van het prijskaartje. Eén
+   vorm (hetzelfde stille vlak) en vijf standen, van zacht naar luid:
 
-   HET IS EEN VERZAMELING EN GEEN METER. Er stond "3 / 6", en die 6 was het aantal
-   werelden van vandaag. Daar komen er werelden bij, en dan zakt een kind dat alles
-   had van "6 / 6" naar "6 / 7": het scherm zegt dan dat ze iets kwijt is geraakt,
-   terwijl er juist iets bij te halen valt. Een oplopend getal kan dat niet -- het
-   werkt bij 0, bij 2, bij 6 en bij 12, en het blijft even breed.
+     need   💎 45   te koop, nog niet genoeg -- gedempt
+     price  💎 45   te koop, genoeg -- wit
+     slot   🔒      eerst een wereld uitspelen (tik: een bubbeltje zegt welke)
+     owned  ✓      van jou -- een zacht vinkje
+     on     ✓      draag je nu / sta je op -- een gouden vinkje, en het kaartje
+                    krijgt zijn gouden rand
+     new    Nieuw!  net gekocht -- goud, twee tellen
 
-   Staat er geen enkele schat te hálen (een spel zonder beloningen -- mogelijk in
-   de wereldstudio), dan is het vak er niet: schatStand().totaal beslist over het
-   bestaan van het vak, en verder komt het nergens in beeld. */
-function renderSchatEntry(p) {
-  const knop = $('schat-entry');
-  if (!knop) return;
-  const st = schatStand(p);
-  const open = shopCat === SCHAT_CAT;
-  knop.style.display = st.totaal ? 'flex' : 'none';
-  if (!st.totaal) return;
-  knop.classList.toggle('open', open);
-  knop.setAttribute('aria-pressed', open ? 'true' : 'false');
-  knop.setAttribute('aria-label', `Wereldschatten, ${st.heeft} verzameld`);
-  knop.innerHTML = `<span class="se-ico" aria-hidden="true">✨</span>`
-    + `<span class="se-naam">Wereldschatten</span>`
-    + `<span class="se-telling">· <b>${st.heeft}</b> verzameld</span>`;
+   Geen woorden meer ("Van jou", "✓ Aan ✕", "Speel uit"): een kind van vijf leest
+   ze niet, en een rij van zeventien keer "Van jou" was het luidste op het scherm.
+   Het vinkje zegt het, en het goud zit op één plek -- wat aan is. Wie wil weten
+   wat een tag betekent krijgt het als aria-label.
+
+   Een gedeelde bouwsteen: de kleedkamer, de stukken in de lade onderaan en
+   straks de kast gebruiken hem allemaal. Zie .item-status in het stijlblad. */
+const TAG_WOORD = { on: 'Aan', owned: 'Van jou', slot: 'Op slot', new: 'Nieuw' };
+function zetTag(el, stand, prijs) {
+  if (!el) return;
+  el.className = 'item-status ' + stand;
+  el.textContent = stand === 'new' ? 'Nieuw!' : (stand === 'on' || stand === 'owned') ? '✓'
+    : stand === 'slot' ? '🔒' : `💎 ${prijs}`;
+  if (TAG_WOORD[stand]) el.setAttribute('aria-label', TAG_WOORD[stand]);
+  else el.removeAttribute('aria-label');
 }
-// Het vak open- of dichtdoen. Dicht = terug naar de lade waar je vandaan kwam;
-// daarom onthoudt hij die (en niet: altijd terug naar 'Kleren', want dan verlies
-// je de rij waar je net doorheen aan het bladeren was).
-let schatTerugCat = 'dress';
-function toggleSchatten() {
-  sndClick();
-  if (shopCat === SCHAT_CAT) shopCat = schatTerugCat;
-  else { schatTerugCat = shopCat; shopCat = SCHAT_CAT; }
-  shopSelectedId = null;
-  renderShop();
-  $('screen-dress').scrollTop = 0;
+// De stand van één spulletje (of podium) voor dit kind. De volgorde ís de rangorde.
+function tagStand(it, p) {
+  if (shopJustBoughtId === it.id) return 'new';
+  if (p.equipped[it.cat] === it.id && bezit(p, it)) return 'on';
+  if (bezit(p, it)) return 'owned';
+  if (it.cat === 'stage' ? podiumOpSlot(p, it) : isBeloning(it.id)) return 'slot';
+  return p.diamonds < tagPrijs(it, p) ? 'need' : 'price';
 }
-/* Een schat die nog niet van jou is. Geen tekening (dat is de verrassing) en geen
-   slotje over een gewoon kaartje heen (dat leest als "winkelwaar die op is"), maar
-   het medaillon van zijn eigen wereld met een vraagteken erin -- dezelfde vorm en
-   dezelfde wereldkleuren als de perfecte-wereldkaart in de kast (.pw-medal), zodat
-   "dit hoort bij die wereld" er zonder één woord op staat. */
-function schatRaadselHTML(w) {
-  const th = (w && w.theme) || {};
-  const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
-  return `<div class="item-thumb"><span class="schat-raadsel" style="${kleur}" aria-hidden="true">?</span></div>`;
-}
-/* Eén kaartje, één stand. Zet de klassen van het kaartje en de inhoud van zijn
-   pilletje -- zonder het kaartje opnieuw op te bouwen, zodat aandoen en kiezen
-   geen sprong in het rek geven. De volgorde van de vragen ís de rangorde: wat
-   hoger staat wint, dus er staan er nooit twee tegelijk. */
+// Wat er op het prijskaartje staat: een podium kost wat er nog aan ontbreekt.
+function tagPrijs(it, p) { return it.cat === 'stage' ? podiumPrijs(p, it) : it.price; }
+/* Eén kaartje, één stand. Zet de klassen van het kaartje en zijn tag -- zonder
+   het kaartje opnieuw op te bouwen, zodat aandoen en kiezen geen sprong in het
+   rek geven. */
 function dressCardState(card, it, p) {
-  const owned = p.owned.includes(it.id);
-  const equipped = p.equipped[it.cat] === it.id;
-  // De wereld die dit spulletje uitdeelt -- null voor alles wat gewoon te koop is.
-  const uitWereld = owned ? null : beloningWereld(it.id);
-  const nieuw = shopJustBoughtId === it.id;
-  // schat-kaart hoort bij het kaartje en niet bij zijn stand: renderShop zet hem
-  // erop, dus hij moet deze herbouw van className overleven.
-  const schat = card.classList.contains('schat-kaart');
+  const stand = tagStand(it, p);
+  const owned = bezit(p, it);
   card.className = 'item-card'
-    + (schat ? ' schat-kaart' : '')
-    + (equipped ? ' equipped' : (owned ? ' owned' : ''))
-    + (uitWereld ? ' teverdienen' : '')
+    + (stand === 'on' ? ' equipped' : (owned ? ' owned' : ''))
     + (shopSelectedId === it.id ? ' selected' : '')
     + (!owned && p.wens === it.id ? ' gewenst' : '')
-    + (nieuw ? ' just-bought' : '');
-  const st = card.querySelector('.item-status');
-  if (!st) return;
-  if (nieuw)          { st.className = 'item-status new';   st.textContent = 'Nieuw!'; }
-  else if (equipped)  { st.className = 'item-status on';    st.textContent = OPTIONELE_SPULLEN.includes(it.cat) ? '✓ Aan ✕' : '✓ Aan'; }
-  else if (owned)     { st.className = 'item-status owned'; st.textContent = 'Van jou'; }
-  /* Nog te verdienen. Sinds fase 6E staat zo'n kaartje alleen nog in het
-     schattenvak, en daar draagt het al de naam van zijn wereld en het wereldteken
-     in de hoek -- het pilletje hoeft dus alleen nog te zeggen wat je moet doen.
-     Bewust dezelfde rustige taal als "te weinig diamanten": het is een doel om
-     naartoe te spelen, geen aanbieding. Geen prijs, nooit: er is er geen. */
-  else if (uitWereld) { st.className = 'item-status slot';  st.textContent = '🔒 Speel uit'; }
-  else if (p.diamonds < it.price) { st.className = 'item-status need';  st.textContent = `💎 ${it.price}`; }
-  else                { st.className = 'item-status price'; st.textContent = `💎 ${it.price}`; }
+    + (stand === 'new' ? ' just-bought' : '');
+  zetTag(card.querySelector('.item-status'), stand, tagPrijs(it, p));
 }
 /* Alles bijwerken behalve het rek zelf: de pop (met het gekozen stuk al aan), het
    podium, de diamantenteller, de balk onderaan en de stand van elk kaartje dat er
@@ -11146,14 +11161,18 @@ function paintShop() {
      schrijft die hem en mag deze regel er niet overheen -- anders staat het
      eindbedrag er al voordat het kind de diamanten heeft zien gaan. */
   zetTeller($('shop-diamonds'), p.diamonds);
-  /* Alleen de pop. Hier stond applyStage(): dat zette het podium dat dit kind
-     ooit kocht áchter haar, met drie emoji in de hoeken. Podia zijn sinds fase 1
-     geen kleedkamercategorie meer, dus dat was versiering van een systeem dat
-     hier niet meer bestaat -- en het beantwoordde de enige vraag van dit scherm
-     ("hoe ziet mijn ster eruit?") met iets anders. De spiegel heeft nu zijn eigen,
-     vaste licht (zie .spiegel), en het podium staat nog gewoon achter haar in de
-     show en op het eindscherm. De opslag is niet aangeraakt: p.equipped.stage
-     blijft staan zoals het stond. */
+  /* De pop, en het podium onder haar voeten. Hier stond ooit applyStage(): het
+     oude decorvlak áchter haar, met drie emoji in de hoeken -- dat beantwoordde de
+     vraag van dit scherm ("hoe ziet mijn ster eruit?") met iets anders. Wat er nu
+     staat is alleen de schijf waar ze op staat: van jou, of als voorbeeld van het
+     podium dat je net aantikte. De spiegel houdt zijn eigen licht (zie .spiegel).
+     De schijf wordt alleen opnieuw getekend als het een ander podium is. */
+  const podium = itemOr(preview.equipped.stage, 'stage_disco');
+  const plek = $('shop-podium');
+  if (plek && plek.dataset.podium !== podium.id) {
+    plek.innerHTML = podiumHTML(podium);
+    plek.dataset.podium = podium.id;
+  }
   $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
@@ -11269,21 +11288,9 @@ function renderDressBar(it, p) {
     return;
   }
   bar.style.display = 'flex';
+  bar.classList.toggle('podium-bar', it.cat === PODIA_CAT);
+  if (it.cat === PODIA_CAT) return renderPodiumBar(bar, it, p);
   const owned = p.owned.includes(it.id);
-  /* FASE 4D.1 -- een spulletje dat je niet koopt maar verdient. Geen prijs, geen
-     knop: alleen waar het vandaan komt. Bewust geen "Speel"-knop zoals bij te weinig
-     diamanten -- die brengt je naar de eerstvolgende show, en dat is bijna nooit de
-     wereld die dit spulletje uitdeelt. Wat je moet doen staat er gewoon. */
-  const uitWereld = owned ? null : beloningWereld(it.id);
-  if (uitWereld) {
-    /* En zonder de naam van het spulletje, want die verklapt het (fase 6E). Het
-       kaartje zegt bij wélke wereld hij hoort en de balk zegt wat je ervoor doet;
-       wát het is blijft tot het feestje na de laatste show. */
-    bar.innerHTML = `
-      <div class="db-info"><span class="db-name">🎁 Geheime wereldschat</span>
-        <span class="db-sub">· Speel ${esc(uitWereld.name)} uit</span></div>`;
-    return;
-  }
   /* Van jou? Dan is er niets te beslissen -- je hebt het al aan (één tik deed dat)
      of het staat één tik van je af. De lade kwam hier met "Doe aan" of met "Die
      draag je nu", en dat is precies wat het kaartje en de pop óók al zeggen: drie
@@ -11313,6 +11320,80 @@ function renderDressBar(it, p) {
     <div class="db-info"><span class="db-name">${naam(it)}</span></div>
     <button class="btn small" id="db-buy">Koop · ${it.price} 💎</button>`;
   $('db-buy').onclick = () => confirmShopBuy(it.id);
+}
+
+/* De lade onderaan voor een podium dat nog niet van jou is: zijn drie stukken als
+   kleine kaartjes, met + ertussen, en daaronder hoogstens één knop. Er komt geen
+   nieuw teken bij -- elk stuk draagt dezelfde tag als in zijn eigen lade.
+
+   De knop is wat je nu kunt doen, en anders is er geen:
+     de schat ontbreekt       -> 🗺️ Speel: naar die wereld op de kaart
+     alleen koopstukken, genoeg 💎 -> Koop · 55 💎: alles wat ontbreekt in één keer
+     te weinig 💎             -> "Nog X 💎" + Speel, zoals bij elk spulletje
+   Een tik op een stuk brengt je naar dat stuk in zijn eigen lade (daar aandoen of
+   los kopen gaat zoals altijd); een tik op het slotje zegt welke wereld. */
+function renderPodiumBar(bar, st, p) {
+  if (podiumVanJou(p, st)) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  const stukken = podiumStukken(st);
+  const kaartjes = stukken.map((it, i) => (i ? '<b class="pb-plus" aria-hidden="true">+</b>' : '')
+    + `<button class="mini-kaart${tagStand(it, p) === 'slot' ? ' op-slot' : ''}" type="button" data-stuk="${it.id}" aria-label="${esc(it.full || it.name)}">`
+    + itemThumb(it) + '<span class="item-status"></span></button>').join('');
+  const prijs = podiumPrijs(p, st);
+  const wereldIdx = podiumWereldIdx(st);
+  let knop = '';
+  if (podiumOpSlot(p, st)) knop = '<button class="btn small" id="db-speel">🗺️ Speel</button>';
+  else if (prijs > p.diamonds) knop = `<span class="db-sub">Nog <span class="db-highlight">${prijs - p.diamonds}</span> 💎</span>`
+    + '<button class="btn small" id="db-earn">Speel</button>';
+  else knop = `<button class="btn small" id="db-buy">Koop · ${prijs} 💎</button>`;
+  bar.innerHTML = `<div class="pb-stukken">${kaartjes}</div><div class="pb-knop">${knop}</div>`;
+  bar.querySelectorAll('.mini-kaart').forEach(k => {
+    const it = item(k.dataset.stuk);
+    zetTag(k.querySelector('.item-status'), tagStand(it, p), it.price);
+    k.onclick = () => {
+      if (tagStand(it, P()) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
+      sndClick(); openKleedkamerItem(it.id);
+    };
+  });
+  if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldIdx); };
+  if ($('db-earn')) $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
+  if ($('db-buy')) $('db-buy').onclick = () => confirmShopBuy(st.id);
+}
+/* Het bubbeltje bij een 🔒: 🗺️ + het wereldteken -> 🔓. Twee tellen, geen
+   woorden, en een tik erop brengt je naar die wereld. Er staat er hoogstens één. */
+const SLOT_BEL_DUUR = 2000;
+let slotBelTimer = null;
+function slotBel(bij, w, wereldIdx) {
+  const oud = document.querySelector('.slot-bel');
+  if (oud) oud.remove();
+  clearTimeout(slotBelTimer);
+  if (!w || !bij || !bij.getBoundingClientRect) return;
+  const bel = document.createElement('button');
+  bel.type = 'button';
+  bel.className = 'slot-bel';
+  bel.setAttribute('aria-label', `Speel de ${w.name} uit`);
+  bel.innerHTML = `<span aria-hidden="true">🗺️ ${w.icon || '🌍'} → 🔓</span>`;
+  const r = bij.getBoundingClientRect();
+  bel.style.left = Math.round(r.left + r.width / 2) + 'px';
+  bel.style.top = Math.round(r.top - 8) + 'px';
+  bel.onclick = () => { bel.remove(); sndClick(); naarWereldKaart(wereldIdx); };
+  document.body.appendChild(bel);
+  slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
+}
+// Naar de kaart van één wereld, zoals de Werelden-lijst dat doet: reisDoel is één
+// opdracht aan de eerstvolgende kaart (zie src/17-kaartstand.js).
+function naarWereldKaart(idx) {
+  const oud = document.querySelector('.slot-bel');
+  if (oud) oud.remove();
+  if (idx >= 0) reisDoel = idx;
+  goMap();
+}
+// De schijf in de spiegel is een snelkoppeling naar Podia.
+function openPodia(ev) {
+  if (ev) ev.stopPropagation();
+  sndClick();
+  shopCat = PODIA_CAT; shopSelectedId = null;
+  renderShop();
+  $('screen-dress').scrollTop = 0;
 }
 
 /* ---- Een teller die naar zijn nieuwe stand toe loopt --------------------------
@@ -11474,19 +11555,25 @@ function flyDiamonds(fromEl, toEl, n, duur) {
 function confirmShopBuy(id) {
   const it = item(id);
   const p = P();
-  if (p.owned.includes(it.id)) return equipShopItem(id);
-  // Een wereldbeloning heeft geen prijs en is dus niet te koop. De balk biedt de
-  // knop niet eens aan; dit is het slot op de deur, niet de deur zelf.
-  if (isBeloning(it.id)) return;
-  if (p.diamonds < it.price) {
+  if (bezit(p, it)) return equipShopItem(id);
+  // Een wereldbeloning heeft geen prijs en is dus niet te koop, en een podium
+  // zonder zijn schat ook niet. De balk biedt de knop niet eens aan; dit is het
+  // slot op de deur, niet de deur zelf.
+  if (isBeloning(it.id) || (it.cat === PODIA_CAT && podiumOpSlot(p, it))) return;
+  /* Een podium kopen = de stukken kopen die er nog aan ontbreken, in één keer.
+     Wat er dan in p.owned komt zijn die stukken -- het podium zelf niet, dat is
+     afgeleid. Ze komen in hun eigen lade te liggen, als gewone spullen. */
+  const prijs = tagPrijs(it, p);
+  const erbij = it.cat === PODIA_CAT ? podiumRest(p, it).map(x => x.id) : [it.id];
+  if (p.diamonds < prijs) {
     sndWrong();
-    showToast(`Nog ${it.price - p.diamonds} 💎 nodig — speel een optreden!`);
+    showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
     toastWeg(1800);
     return;
   }
-  p.diamonds -= it.price;
-  p.owned.push(it.id);
-  if (p.wens === it.id) delete p.wens;   // de wens is uitgekomen
+  p.diamonds -= prijs;
+  erbij.forEach(id2 => { if (!p.owned.includes(id2)) p.owned.push(id2); });
+  if (erbij.includes(p.wens)) delete p.wens;   // de wens is uitgekomen
   p.equipped[it.cat] = it.id;
   /* De lade ging over "wil je dit kopen?" en dat is beantwoord: hij verdwijnt, en
      wat ervoor in de plaats komt is het gouden "Nieuw!" op het kaartje plus de pop
@@ -11581,12 +11668,13 @@ const OPTIONELE_SPULLEN = ['mic', 'instrument', 'acc', 'pet'];
 /* Het omgekeerde van equipShopItem: de plek leeg, de rest blijft. Zelfde
    nawerk -- trofeecheck, opslaan, het rek bijwerken zonder het te herbouwen. */
 function unequipShopItem(cat) {
-  if (!OPTIONELE_SPULLEN.includes(cat)) return;
+  if (!OPTIONELE_SPULLEN.includes(cat) && cat !== PODIA_CAT) return;
   const p = P();
   if (!p.equipped[cat]) return;
   const herbouw = !!shopJustBoughtId;
   clearTimeout(shopBoughtTimer);
-  p.equipped[cat] = null;
+  // van een podium afstappen = terug op Disco, het podium van iedereen
+  p.equipped[cat] = cat === PODIA_CAT ? 'stage_disco' : null;
   shopJustBoughtId = null;
   shopSelectedId = null;
   sndClick();
@@ -11599,7 +11687,7 @@ function unequipShopItem(cat) {
 function equipShopItem(id) {
   const it = item(id);
   const p = P();
-  if (!p.owned.includes(it.id)) return;
+  if (!bezit(p, it)) return;
   const herbouw = !!shopJustBoughtId;   // zie de kaartklik: het rek herschikt na een aankoop
   clearTimeout(shopBoughtTimer);
   p.equipped[it.cat] = it.id;
