@@ -33,6 +33,7 @@
  *   R  de grenstip                      -> pas na genoeg drie sterren, en opnieuw na een keuze
  *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
  *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet
+ *   U  fase 12 (tot 20)                 -> wie "alles" had krijgt hem erbij, één keer
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1085,6 +1086,30 @@ zaak('T', () => {
   check(na({ stage: 6, rung: 2, seen: 12, acc: 0.9 }, true, false) === 7, 'T · de cijfers na twaalf goede vragen: door', JSON.stringify(p.countTrack));
   check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, true, false) === 4, 'T · het gewone pad werkt zoals altijd', JSON.stringify(p.countTrack));
   check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, false, false) === 2, 'T · een mislukte show zakt een fase', JSON.stringify(p.countTrack));
+});
+
+zaak('U', () => {
+  const { app } = verseSter('Twintig');
+  const MAX = app.COUNT_STAGE_MAX;
+  check(MAX === 12, 'U · er zijn twaalf fases', MAX);
+  // een save van vóór fase 12: plafond op de oude laatste fase = "alles"
+  const oud = app.defaultProfile('Oud', 'dress_roze', app.COUNT_OPTS);
+  delete oud.settings.fasesBekend; oud.settings.stageMax = 11;
+  app.migrate(oud);
+  check(oud.settings.stageMax === 12 && oud.settings.fasesBekend === 12, 'U · een oude telster op "alles" groeit mee naar fase 12', JSON.stringify(oud.settings));
+  // daarna kiest de ouder bewust 11: dat blijft staan, ook na nog een migratie
+  oud.settings.stageMax = 11; app.migrate(oud);
+  check(oud.settings.stageMax === 11, 'U · een bewust gekozen fase 11 blijft fase 11', oud.settings.stageMax);
+  // een oude telster met een lager plafond houdt het
+  const laag = app.defaultProfile('Laag', 'dress_roze', app.COUNT_OPTS);
+  delete laag.settings.fasesBekend; laag.settings.stageMax = 7; app.migrate(laag);
+  check(laag.settings.stageMax === 7, 'U · een lager plafond blijft staan', laag.settings.stageMax);
+  // hoeveelheden onder de tien: fase 12 (tot twintig) hoort er dan niet bij
+  const s = app.defaultProfile('Klein', 'dress_roze', app.COUNT_OPTS).settings;
+  s.qmax = 8;
+  check(app.countMaxStage(s) === 11, 'U · met hoeveelheden tot 8 stopt het bij fase 11', app.countMaxStage(s));
+  s.qmax = 10;
+  check(app.countMaxStage(s) === 12, 'U · tot 10: fase 12 mag', app.countMaxStage(s));
 });
 
 klaar();

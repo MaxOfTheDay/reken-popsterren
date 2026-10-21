@@ -451,6 +451,9 @@
   .df-cell.on { border-color: rgba(74,20,140,.30); }
   .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); }
   .dframe.big .df-cell { width: 27px; height: 27px; }
+  /* boven de tien (fase 12): het eerste tiental staat los van de rest, zodat je
+     "tien en nog wat" ziet zonder de stippen te tellen */
+  .dframe:not(.mini) .df-cell:nth-child(n+11):nth-child(-n+15) { margin-top: 10px; }
   .dframe.faint .df-dot { opacity: .34; }
   /* kleine steunstipjes ónder een cijfer (antwoordknoppen + som-operanden) */
   .dframe.mini { column-gap: 2px; row-gap: 2px; }

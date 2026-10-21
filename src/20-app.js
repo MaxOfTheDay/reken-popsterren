@@ -2115,7 +2115,7 @@ const LS_KEY = 'rekenPopsterren_v1';
 // De telmodus-voorinstelling: lees-vrij, met een kortere ronde (5 vragen) die bij
 // kleuters beter past. Dit is wat een ster krijgt die bij het maken "Leren tellen"
 // kiest; anders start ze gewoon in de rekenmodus.
-const COUNT_STAGE_MAX = 11;  // 11 fases: tellen → vergelijken → cijfers → redeneren → gesteunde sommen (tekens → cijfers+stippen → geschreven)
+const COUNT_STAGE_MAX = 12;  // 12 fases: tellen → vergelijken → cijfers → redeneren → gesteunde sommen (tekens → cijfers+stippen → geschreven) → tot 20
 const DEFAULT_PERLEVEL = 8;  // vragen per optreden in de rekenmodus (de telmodus heeft er 5, zie COUNT_OPTS)
 const COUNT_OPTS = { track: 'count', stage: 1, stageMax: COUNT_STAGE_MAX, repr: 'objects', numerals: true, perLevel: 5, qmax: 10 };
 // Wie je bent kies je bij het maken; wat je wordt koop je in de kleedkamer.
@@ -2169,6 +2169,7 @@ function defaultProfile(name, dress, opts) {
       track: opts.track || 'math',
       stage: opts.stage || 1,                       // laagste (start)fase in de telmodus
       stageMax: opts.stageMax || COUNT_STAGE_MAX,   // hoogste toegestane fase
+      fasesBekend: COUNT_STAGE_MAX,                 // hoeveel fases er waren toen stageMax gekozen werd (zie migrate)
       repr: opts.repr || 'objects',                 // antwoordweergave: 'objects' of 'dots'
       numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
       qmax: opts.qmax || 10,                         // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
@@ -2303,6 +2304,15 @@ function migrate(p) {
   if (p.settings.stageMax == null) p.settings.stageMax = COUNT_STAGE_MAX;
   // bestaande telprofielen mochten tot fase 6; til hun plafond op naar de nieuwe fases
   if (p.settings.track === 'count' && (p.settings.stageMax === 6 || p.settings.stageMax === 8)) p.settings.stageMax = COUNT_STAGE_MAX;
+  /* Er kwam een fase bij (12, tot 20). Wie op de oude laatste fase stond, stond
+     op "alles" -- die gaat mee naar de nieuwe. Eén keer: fasesBekend onthoudt
+     hoeveel fases er toen waren, zodat een ouder die daarna bewust de oude
+     laatste fase kiest die ook houdt. Saves van vóór dit veld kenden er elf. */
+  const bekend = p.settings.fasesBekend || 11;
+  if (bekend < COUNT_STAGE_MAX) {
+    if (p.settings.stageMax === bekend) p.settings.stageMax = COUNT_STAGE_MAX;
+    p.settings.fasesBekend = COUNT_STAGE_MAX;
+  }
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
   if (p.settings.qmax == null) p.settings.qmax = 10;
@@ -8308,6 +8318,8 @@ function countStageInfo(stage) {
     case 9:  return { types: ['sumsym'],     baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     case 10: return { types: ['sumdots'],    baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     case 11: return { types: ['sumwritten'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
+    // tot 20: "tien en nog wat" -- als hoeveelheid (twee volle rijen en meer) en als som
+    case 12: return { types: ['tiental', 'tienplus'], baseMax: 15, topMax: 20, rungs: 3, tiles: 4 };
     default: return { types: ['count'], baseMax: 3, topMax: 3, rungs: 2, tiles: 3 };
   }
 }
@@ -8324,7 +8336,11 @@ function countStageTypes(stage) {
   return speelbaar.length ? speelbaar : ['match'];
 }
 // Hoogste toegestane fase: zonder cijfers stopt het bij fase 5 (fases 6–8 gebruiken cijfers/redeneren).
-function countMaxStage(s) { return s.numerals ? Math.min(COUNT_STAGE_MAX, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX); }
+// Met hoeveelheden onder de tien stopt het vóór fase 12: die gaat tot twintig.
+function countMaxStage(s) {
+  const top = (s.qmax || 10) < 10 ? 11 : COUNT_STAGE_MAX;
+  return s.numerals ? Math.min(top, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX);
+}
 // De fase die het kind nú speelt: de live-stand uit countTrack, geklemd binnen het
 // door de ouder toegestane bereik [stage .. stageMax].
 function countLiveStage(p) {
@@ -8342,7 +8358,8 @@ function countDifficulty(p, stage) {
   const top = info.rungs - 1;
   const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
   const frac = top ? rung / top : 0;
-  const cap = Math.min(s.qmax || 10, 10);
+  // fase 12 gaat per definitie tot twintig; de rest blijft binnen de tien
+  const cap = stage === 12 ? 20 : Math.min(s.qmax || 10, 10);
   const effMax = Math.max(info.baseMax, Math.min(cap, Math.round(info.baseMax + (info.topMax - info.baseMax) * frac)));
   const delta = rung >= top ? 1 : (rung >= 1 ? 2 : 3);           // afleider-nabijheid (±)
   const support = rung === 0 ? 'full' : (rung === 1 ? 'faint' : 'none'); // cijfersteun (stippen vervagen)
@@ -8560,6 +8577,23 @@ function genCount(p) {
     q.choices = countDistractors(q.ans, Math.min(nCh, doel - 1), 1, doel - 1, d.delta)
       .map(v => ({ v, kind: 'numeral', n: v, support: d.support }));
     q.prompt = 'Hoeveel nog tot ' + numWord(doel) + '?';
+  } else if (type === 'tiental' || type === 'tienplus') {
+    /* Tot twintig: "tien en nog wat". Het raam groeit per rij van vijf mee (zie
+       dotFrameHTML), dus elf tot twintig zijn twee volle rijen plus de rest --
+       het tiental zie je zonder te tellen. Bij tienplus staat het als som:
+       10 + n, met de stippen eronder. Antwoord altijd als cijfer, zonder
+       steunstipjes (twintig stipjes onder een cijfer zie je niet meer). */
+    const n = rnd(11, max);
+    q.ans = n;
+    q.support = 'none';
+    if (type === 'tiental') {
+      q.card = { kind: 'tiental', n };
+      q.prompt = 'Hoeveel zie je? Tien, en nog wat.';
+    } else {
+      q.card = { kind: 'sum', style: 'dots', op: '+', a: 10, b: n - 10, c: n, emoji, repr, support: 'full' };
+      q.prompt = 'Tien plus ' + numWord(n - 10) + '. Hoeveel is dat?';
+    }
+    q.choices = countDistractors(n, nCh, 11, max, d.delta).map(v => ({ v, kind: 'numeral', n: v, support: 'none' }));
   } else if (type === 'sumsym') {                   // visuele som met tekens (＋ ➖ ＝), antwoord = groep
     const sub = Math.random() < 0.4;
     let a, b;
@@ -8664,6 +8698,7 @@ function drawCountQuestion(q) {
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
   else if (kind === 'tap') body = tapHTML(q.card);
+  else if (kind === 'tiental') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, 10, 'big', 'full')}</div>`;
   else if (kind === 'vriend') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, q.card.doel, 'big', 'full')}</div>`;
   card.innerHTML = `<div class="count-q">${body}</div>`;
   if (kind === 'tap') {
@@ -8827,6 +8862,7 @@ function countMissSpeak(q, val) {
   if (q.ctype === 'combine') { speak('Bijna! Tel de twee groepjes samen.'); return; }
   if (q.ctype === 'split') { speak('Bijna! Hoeveel horen er nog bij?'); return; }
   if (q.ctype === 'vriend') { speak('Bijna! Tel de lege vakjes.'); return; }
+  if (q.ctype === 'tiental' || q.ctype === 'tienplus') { speak('Bijna! Eerst de tien, en dan tel je verder.'); return; }
   if (q.ctype === 'match' || q.ctype === 'numquant') { speak('Bijna! Zoek de groep met evenveel.'); return; }
   if (q.ctype === 'sumsym' || q.ctype === 'sumdots' || q.ctype === 'sumwritten') {
     speak(q.card && q.card.op === '-' ? 'Bijna! Hoeveel blijven er over?' : 'Bijna! Tel ze samen.');
@@ -8876,7 +8912,7 @@ function memFaceHTML(c) {
 function buildMemoryDeck(p) {
   const stage = countLiveStage(p);
   const d = countDifficulty(p, stage);
-  const max = Math.max(3, d.effMax);
+  const max = Math.max(3, Math.min(10, d.effMax));   // memory blijft binnen de tien, ook in fase 12
   let pairs = 3 + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);   // 3..5
   pairs = Math.min(pairs, max);                                    // niet meer paren dan er hoeveelheden zijn
   const numOK = p.settings.numerals !== false && stage >= 6;
@@ -11930,6 +11966,12 @@ function telTip(p) {
   if ((p.countTrack.plafond || 0) < GRENS_TIP_SHOWS) return null;
   const naam = esc(p.name);
   const hi = countMaxStage(s);
+  const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
+  const qtip = () => ({ soort: 'qmax',
+    tekst: `${naam} haalt bijna overal drie sterren met hoeveelheden tot ${s.qmax}. Mogen de aantallen groeien tot ${qnaar}?`,
+    knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
+  // onder de tien houdt countMaxStage het bij fase 11: dan zijn het de aantallen
+  if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
   if (hi < COUNT_STAGE_MAX) {
     if (s.numerals === false && hi === 5) return { soort: 'cijfers',
       tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase zonder cijfers. Mogen de cijfers erbij?`,
@@ -11938,10 +11980,7 @@ function telTip(p) {
       tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase die je koos (fase ${hi}: ${COUNT_STAGE_LABELS[hi]}). Mag het verder groeien?`,
       knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
   }
-  const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
-  if (qnaar) return { soort: 'qmax',
-    tekst: `${naam} haalt bijna overal drie sterren met hoeveelheden tot ${s.qmax}. Mogen de aantallen groeien tot ${qnaar}?`,
-    knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } };
+  if (qnaar) return qtip();
   return { soort: 'rekenen',
     tekst: `${naam} maakt de laatste fase bijna altijd in één keer goed. De telmodus heeft geen nieuwe fases meer. Klaar voor de rekenshow? `
       + `<span class="tip-klein">Plus en min tot 10, kiezen uit 4. De stem leest de sommen nog voor (uitzetten kan bij Oefenen).</span>`,
@@ -11968,7 +12007,7 @@ function naarRekenen(p) {
 function chip(v, label, on, extra) {
   return `<button class="chip ${on ? 'on' : ''}${extra ? ' ' + extra : ''}" data-v="${v}">${label}</button>`;
 }
-const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som'];
+const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som', 'Tot 20'];
 /* De oefenvelden zelf, los van de omlijsting eromheen. Het ouderdeel zet ze in
    .set-card primary met een icoonkop; het maakformulier zet ze plat in een
    openklapper. Eén bron, twee omlijstingen -- anders staan dezelfde zeven
@@ -11984,7 +12023,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
-  // (1–11, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
+  // (1–12, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
   // kun je een eerder verlaagde bovengrens nooit meer omhoog zetten.
   const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
   const stageNums = [];

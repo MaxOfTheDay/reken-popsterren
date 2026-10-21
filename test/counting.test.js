@@ -1,7 +1,7 @@
 /*
  * Test-suite voor de telmodus (lees-vrije modus).
  *
- * Controleert per fase (1-11) en per rung dat GELUID, OPGAVE en VISUALISATIE
+ * Controleert per fase (1-12) en per rung dat GELUID, OPGAVE en VISUALISATIE
  * hetzelfde getal vertellen. Elke vraag wordt echt gerenderd in een browser;
  * daarna tellen we de stippen/voorwerpen in de DOM en vergelijken die met de
  * bedoelde getallen uit de vraag. Zo vangen we fouten als "5 - 3 toont maar
@@ -57,7 +57,7 @@ function check(ok, label, detail) {
     const p = db.profiles.t1;
     p.settings.track = 'count';
     p.settings.numerals = true;
-    p.settings.stage = 1; p.settings.stageMax = 11; p.settings.qmax = 10;
+    p.settings.stage = 1; p.settings.stageMax = COUNT_STAGE_MAX; p.settings.qmax = 10;
     save();
     renderProfiles();
     selectProfile('t1');
@@ -67,13 +67,13 @@ function check(ok, label, detail) {
   await page.waitForTimeout(400);
 
   for (const repr of ['objects', 'dots']) {
-    for (let stage = 1; stage <= 11; stage++) {
+    for (let stage = 1; stage <= 12; stage++) {
       const rungs = await page.evaluate(s => countStageInfo(s).rungs, stage);
       for (let rung = 0; rung < rungs; rung++) {
         const results = await page.evaluate(({ stage, rung, repr, samples }) => {
           const p = P();
           p.settings.repr = repr;
-          p.settings.stage = 1; p.settings.stageMax = 11;
+          p.settings.stage = 1; p.settings.stageMax = COUNT_STAGE_MAX;
           p.countTrack = { stage, rung, streak: 0, seen: 0, acc: 0.6 };
 
           // Tel de zichtbare "dingen" binnen een element, per soort.
@@ -154,6 +154,8 @@ function check(ok, label, detail) {
             check(r.ans === c.total - c.shown, 'antwoord = verstopte hoeveelheid', `${where} ans=${r.ans}`);
           } else if (c.kind === 'bignum') {
             check(Number(r.seen.bignum) === c.n, 'cijferkaart toont het juiste cijfer', `${where} zag ${r.seen.bignum}`);
+          } else if (c.kind === 'tiental') {
+            check(r.seen.marks === c.n && c.n >= 11 && c.n <= 20, 'tot 20: het raam toont tien en nog wat', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
           } else if (c.kind === 'vriend') {
             check(r.seen.marks === c.n, 'vriendjes: het raam toont de gevulde vakjes', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
             check(r.ans === c.doel - c.n && (c.doel === 5 || c.doel === 10), 'vriendjes: antwoord = de lege vakjes tot vijf of tien', `${where} n=${c.n} doel=${c.doel} ans=${r.ans}`);
@@ -282,7 +284,7 @@ function check(ok, label, detail) {
     const bad = [];
     const p = P();
     p.settings.repr = 'objects';
-    for (let stage = 1; stage <= 11; stage++) {
+    for (let stage = 1; stage <= 12; stage++) {
       const top = countTopRung(stage);
       for (let rung = 0; rung <= top; rung++) {
         p.countTrack = { stage, rung, streak: 0, seen: 0, acc: 0.6 };
