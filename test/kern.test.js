@@ -794,9 +794,9 @@ zaak('O', () => {
     'O · einde show en een zeldzame top voelen ook niet hetzelfde', '');
   /* Elke trilling komt uit de tabel. Een losse buzz() vlak na een klankje breekt
      diens trilling af, en dan voelt één gebeurtenis op elke plek anders. Alleen
-     playSfx en toggleHaptics (dat bij geen klankje hoort) mogen hem aanroepen. */
+     alleen playSfx mag hem aanroepen. */
   const losseBuzz = (harnas.appScript().match(/\bbuzz\([^)]*\)/g) || [])
-    .filter(b => b !== 'buzz(pattern)' && b !== 'buzz(def.tril)' && b !== 'buzz(20)');
+    .filter(b => b !== 'buzz(pattern)' && b !== 'buzz(def.tril)');
   check(losseBuzz.length === 0, 'O · er trilt niets buiten de klankjestabel om', losseBuzz.join(' '));
 
   /* ---- 1 · playSfx gooit nooit ---- */
@@ -888,8 +888,8 @@ zaak('O', () => {
     String(geluidsStand(slaap).hervat));
 
   /* ---- trillen staat los van geluid ---- */
-  /* buzz() is de enige plek die aan de trilmotor komt (zie profiles.test.js) en
-     hij kijkt zelf naar db.haptics. Wat hier vastligt is de kant die daar niet
+  /* buzz() is de enige plek die aan de trilmotor komt (zie profiles.test.js).
+     Wat hier vastligt is de kant die daar niet
      staat: een klankje trilt ook als het gelüid uit staat. */
   const tril = metGeluid();
   tril.run(`

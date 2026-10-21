@@ -2190,15 +2190,16 @@
   }
 
 
-  .restore-hint {
-    display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
+  .over-hint {
+    display: none; align-items: center; justify-content: center; gap: .3em; width: fit-content; text-decoration: none;
+    margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
 
 
     font-family: inherit; font-weight: 600; color: var(--c-white); background: transparent; border: none;
     cursor: pointer; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill);
     transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
   }
-  .restore-hint:hover, .restore-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  .over-hint:hover, .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
 
 
 
@@ -2327,10 +2328,9 @@
 
 
 
-  a.gear-item { text-decoration: none; }
-  .gear-item.over { padding: 9px 11px; }
 
-  #gear-app { padding: 9px 11px; }
+
+
 
 
 
@@ -8139,7 +8139,11 @@
 
 
 
-  .segmented button.on { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+
+
+
+
+  .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
 
 
   .saved-pill {
@@ -8356,10 +8360,12 @@
 
 
 
+
   .mode-row { gap: 9px; }
   .mode-row .chip.gestapeld { gap: 2px; padding: 7px 8px 8px; font-size: var(--tx-label); min-width: 96px; }
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
-  .mode-row .chip.gestapeld.on .mc-label::after { content: ' ✓'; }
+
+  #set-base { margin-bottom: 10px; }
 
 
   .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
@@ -8491,6 +8497,12 @@
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
+
+  .newstar-preview.wacht .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
+  .ns-vraag {
+    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
+    font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  }
   .newstar-preview .deco { display: none; }
 
 
@@ -8565,6 +8577,20 @@
 
 
   #screen-newstar .chip.swatch { min-height: 44px; box-sizing: border-box; }
+
+
+  #screen-newstar .chip.swatch {
+    width: 48px; height: 48px; min-height: 48px; padding: 0; gap: 0;
+    justify-content: center; border-radius: 50%;
+  }
+  #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
+  #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
+
+  .ns-ouder {
+    display: flex; align-items: center; gap: 10px; margin: 2px 0 10px;
+    font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid); opacity: .75;
+  }
+  .ns-ouder::before, .ns-ouder::after { content: ''; flex: 1; height: 1px; background: var(--paper-border); }
 
 
 
@@ -8808,6 +8834,8 @@
 
   .stem-notitie { margin-top: 10px; }
 
+  .stem-notitie .stem-aan { display: flex; margin-top: 8px; }
+
 
 
 
@@ -9048,13 +9076,15 @@
         <span class="at-tekst">Nieuwe ster</span>
       </button>
     </div>
-    <!-- Alleen zonder sterren (renderProfiles). Een knop en geen aanwijzing: hier
-         stond "Zet hem terug via ⚙️ → Voor ouders", en dan moest een ouder op een
-         nieuw toestel zelf de weg zoeken naar een knop die één tik verder lag.
-         openSettings() komt zonder sterren meteen in Beheer uit, bij terugzetten.
-         Een kind dat hierop tikt komt in het ouderdeel, en daar kan het niets
-         kwijtraken: er is nog niets. -->
-    <button class="restore-hint" id="restore-hint" type="button" onclick="naTik(openSettings)">Al een back-up? Zet hem terug <span aria-hidden="true">›</span></button>
+    <!-- Alleen zonder sterren (renderProfiles). Hier stond "Al een back-up? Zet hem
+         terug" -- maar wie dit lege scherm ziet is bijna altijd een gezin dat net
+         begint, en terugzetten is de zeldzaamste reden om hier te staan. Wie het wél
+         nodig heeft, wordt erheen gewezen (het blad "als app" zegt ⚙️ → Voor ouders,
+         en zonder sterren opent dat meteen op terugzetten). Dus zegt de ene stille
+         regel hier wat dit spel is: de pagina over/, met dezelfde handler als in
+         Beheer (eerst bewaren, zonder net een melding). Een echte link, in hetzelfde
+         venster -- zie naarOver. -->
+    <a class="over-hint" id="over-hint" href="over/index.html" onclick="naarOver(event)">🎬 Wat is Rekensterren? <span aria-hidden="true">›</span></a>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
 
@@ -9425,30 +9455,12 @@
     <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
       <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
     </button>
-    <button class="gear-item" id="gear-haptics" onclick="toggleHaptics()" role="menuitemcheckbox">
-      <span class="gi-ico">📳</span><span class="gi-label">Trillen</span><span class="gi-state" id="gear-haptics-state">Aan</span>
-    </button>
     <div class="gear-sep"></div>
     <button class="gear-item parents" onclick="naTik(openSettings)" role="menuitem">
       <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span>
       <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
       <span class="gi-chev" aria-hidden="true">›</span>
     </button>
-    <!-- De weg naar het blad "Rekensterren als app" (zie "= Speel als app" in het
-         scriptblok). Blijft staan als het knopje linksboven weg is, en verdwijnt
-         pas als het spel als app draait. -->
-    <button class="gear-item" id="gear-app" onclick="openAppBlad(false)" role="menuitem">
-      <span class="gi-ico" aria-hidden="true">📲</span>
-      <span class="gi-label">Speel als app<span class="gi-sub">Op het beginscherm</span></span>
-      <span class="gi-chev" aria-hidden="true">›</span>
-    </button>
-    <!-- De weg naar over/ (zie ouderVoetHtml en naarOver in het scriptblok). Een echte
-         link in hetzelfde venster, geen knop: lange tik en schermlezer werken zo mee. -->
-    <a class="gear-item over" id="gear-over" href="over/index.html" onclick="naarOver(event)" role="menuitem">
-      <span class="gi-ico" aria-hidden="true">🎬</span>
-      <span class="gi-label">Over Rekensterren<span class="gi-sub">Filmpje · delen</span></span>
-      <span class="gi-chev" aria-hidden="true">›</span>
-    </a>
   </div>
 </div>
 
@@ -12921,8 +12933,19 @@ const P = () => db.profiles[cur];
 
 
 
+
+
+
+
+
+
+
 function buzz(pattern) {
-  if (!db.haptics) return;
+
+
+
+
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { }
 }
 
@@ -13323,11 +13346,6 @@ async function keepAwake() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });
 keepAwake();
-function toggleHaptics() {
-  db.haptics = !db.haptics; save();
-  renderGearMenu();
-  if (db.haptics) buzz(20);
-}
 
 
 
@@ -13344,17 +13362,6 @@ function renderGearMenu() {
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
 
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
-  const hi = $('gear-haptics');
-  if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
-
-
-
-
-
-  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
-
-  const app = $('gear-app');
-  if (app) app.style.display = appUitlegNodig() ? '' : 'none';
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -14566,8 +14573,8 @@ function renderProfiles() {
     add.setAttribute('aria-label', n ? 'Nieuwe ster maken' : 'Maak je eerste ster');
   }
 
-  const hint = $('restore-hint');
-  if (hint) hint.style.display = n ? 'none' : 'block';
+  const hint = $('over-hint');
+  if (hint) hint.style.display = n ? 'none' : 'flex';
   renderGearMenu();
   appKnopZet();
 
@@ -14581,7 +14588,12 @@ function renderProfiles() {
 
 
 }
-function selectProfile(key) { cur = key; goMap(); }
+
+
+
+
+let laatsteSter = null;
+function selectProfile(key) { cur = key; laatsteSter = key; goMap(); }
 
 
 
@@ -22379,18 +22391,30 @@ function closeNewStar() {
   if (newStarReturn === 'settings') { renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else goProfiles();
 }
+
+
+
+
+
 function swatchChips(group, ids, sel) {
   return ids.map(id => {
     const it = item(id);
-    return `<button class="chip swatch${id === sel ? ' on' : ''}" data-g="${group}" data-v="${id}">`
-      + `<span class="sw" style="background:${it.color}"></span>${esc(it.name)}</button>`;
+    return `<button class="chip swatch${id === sel ? ' on' : ''}" data-g="${group}" data-v="${id}"`
+      + ` aria-label="${esc(it.name)}" aria-pressed="${id === sel}" title="${esc(it.name)}">`
+      + `<span class="sw" style="background:${it.color}"></span></button>`;
   }).join('');
 }
 function renderNewStar() {
   const n = newStar;
   const s = n.settings;
 
-  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base });
+
+
+
+
+
+  const wacht = !n.base;
+  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
   const ok = !!n.name.trim() && !!n.base;
 
 
@@ -22408,7 +22432,7 @@ function renderNewStar() {
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -22424,6 +22448,9 @@ function renderNewStar() {
           <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
       </div>
       <div class="ns-groep">
+        <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
+             bovenaan het blad "als app". Geen kaart en geen uitleg: één lijntje. -->
+        <div class="ns-ouder">Voor papa of mama</div>
         <div class="set-field"><label class="lbl">Hoe speel je?</label>
           <div class="chip-row mode-row" id="newstar-track">
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
@@ -22607,7 +22634,9 @@ function openSettings() {
 
 
 
-  setKey = (cur && db.profiles[cur]) ? cur : (profileKeys()[0] || null);
+
+  const wie = [cur, laatsteSter].find(k => k && db.profiles[k]);
+  setKey = wie || profileKeys()[0] || null;
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
@@ -22672,13 +22701,14 @@ function statusKaartHtml(p) {
   ];
   if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
 
-  const stem = stemAan(p) ? stemNotitie() : '';
+  const stem = stemAan(p) ? stemNotitie(p.name) : '';
   return `<div class="set-card vg-kaart">
     <h2 class="vg-kop">Hoe gaat het met ${esc(p.name)}?</h2>
     <div class="vg-status ${klas}"><span class="vg-dot" aria-hidden="true">${ico}</span>
       <div><b>${kop}</b><span>${zin}</span></div></div>
     <div class="vg-getallen">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}</div>
-    ${stem ? `<div class="note stem-notitie">${stem}</div>` : ''}
+    ${stem ? `<div class="note stem-notitie">${stem}${!db.sound
+      ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
   </div>`;
 }
 
@@ -22853,8 +22883,12 @@ function statsPanelHtml(p) {
 
 
 
-function stemNotitie() {
-  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+
+
+
+
+function stemNotitie(naam) {
+  if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
   if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
   return '';
@@ -23304,10 +23338,12 @@ function beheerEmptyHtml() {
 function beheerPanelHtml(p) {
   return `<div class="settings-panel">
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Naam</label></h2></div></div>
+      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Wie</label></h2></div></div>
       <div class="set-field">
-        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
-        <div class="note">Wijzigingen worden meteen opgeslagen.</div></div>
+        <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
+          `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
+          + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
+        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
     </div>
     <div class="set-card secundair">
       <div class="set-card-head"><div class="ico">🔄</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor <span class="set-naam">${esc(p.name)}</span> — en niet terug te draaien</div></div></div>
@@ -23668,6 +23704,18 @@ function bindSettings(p, s) {
     );
   });
   on('set-newstar', 'onclick', () => openNewStar('settings'));
+
+
+
+
+  const basis = $('set-base');
+  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    if (p.base === c.dataset.v) return;
+    sndClick();
+    p.base = c.dataset.v;
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-delete', 'onclick', () => {
     showConfirm(
       '⚠️ Ster verwijderen?',
@@ -23687,6 +23735,9 @@ function bindSettings(p, s) {
       }
     );
   });
+
+
+  on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
