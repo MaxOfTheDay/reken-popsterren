@@ -3495,6 +3495,22 @@
   .cgroup.mini { gap: 2px 3px; max-width: 74px; margin-top: 4px; }
   .cgroup.mini .cg-dot { width: 9px; height: 9px; background: rgba(255,255,255,.9); box-shadow: none; }
   .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 700; color: var(--purple-shadow); }
+
+
+
+  .cq-tap { position: relative; width: 100%; height: clamp(140px, 20vh, 170px); }
+  .tap-obj { position: absolute; transform: translate(-50%, -50%); min-width: 48px; min-height: 48px;
+    padding: 0; border: none; background: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .tap-obj .cg-obj { font-size: clamp(26px, 5vh, 36px); transition: transform var(--t-tik), opacity var(--t-tik); }
+  .tap-obj.geteld .cg-obj { opacity: .55; transform: scale(.9); }
+  .tap-obj.geteld::after { content: attr(data-nr); position: absolute; top: -2px; right: -4px;
+    min-width: 24px; height: 24px; padding: 0 4px; border-radius: 12px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--purple-input-bottom); color: var(--c-white); font-size: 15px; font-weight: 700;
+    box-shadow: 0 0 0 2px var(--c-white); animation: cpop .3s ease; }
+
+  .count-tiles.wacht { opacity: .4; pointer-events: none; transition: opacity var(--t-snel); }
   .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
   @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
 
@@ -18360,6 +18376,8 @@ function makeChoices(ans) {
 
 
 
+
+
 const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', '🦋', '🍓', '🐟', '🌼', '🐞'];
 
 
@@ -18367,8 +18385,9 @@ const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', 
 
 function countStageInfo(stage) {
   switch (stage) {
-    case 1: return { types: ['count'],              baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
-    case 2: return { types: ['count', 'along'],     baseMax: 5, topMax: 6,  rungs: 3, tiles: 4 };
+
+    case 1: return { types: ['count', 'tap'],        baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
+    case 2: return { types: ['count', 'along', 'tap'], baseMax: 5, topMax: 6, rungs: 3, tiles: 4 };
     case 3: return { types: ['compare'],            baseMax: 5, topMax: 8,  rungs: 3, tiles: 3 };
     case 4: return { types: ['match'],              baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
 
@@ -18552,7 +18571,17 @@ function genCount(p) {
   const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, frame, cap, support: d.support, gold: false };
   const qgroup = v => ({ v, kind: 'group', n: v, emoji, repr, frame, cap });
 
-  if (type === 'count' || type === 'along') {
+  if (type === 'tap') {
+
+
+
+
+    const n = rnd(1, max);
+    q.ans = n; q.tap = true;
+    q.card = { kind: 'tap', n, emoji, pos: tapPlekken(n) };
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(qgroup);
+    q.prompt = 'Tik ze één voor één aan, en tel mee!';
+  } else if (type === 'count' || type === 'along') {
     const n = rnd(1, max);
     q.ans = n; q.along = (type === 'along');
     q.card = { kind: 'group', n, emoji, frame, repr };
@@ -18656,6 +18685,47 @@ function genCount(p) {
 
 
 
+
+function tapPlekken(n) {
+  const vakken = shuffle([...Array(12).keys()]).slice(0, n);
+  return vakken.map(v => {
+    const kol = v % 4, rij = Math.floor(v / 4);
+    return [Math.round(13 + kol * 24.7 + (Math.random() - 0.5) * 8), Math.round(17 + rij * 33 + (Math.random() - 0.5) * 7)];
+  });
+}
+
+function tapHTML(card) {
+  return `<div class="cq-tap">${card.pos.map(([x, y], i) =>
+    `<button type="button" class="tap-obj" data-i="${i}" style="left:${x}%;top:${y}%"><span class="cg-obj">${card.emoji}</span></button>`).join('')}</div>`;
+}
+
+
+
+
+
+
+function bindTap(card, q, drawId) {
+  let geteld = 0;
+  const cijfers = P().settings.numerals !== false;
+  card.querySelectorAll('.tap-obj').forEach(b => {
+    b.onclick = () => {
+      if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
+      geteld++;
+      b.classList.add('geteld');
+      b.dataset.nr = cijfers ? geteld : '✓';
+      sndClick();
+      if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
+      q.getikt = true;
+      const rij = document.querySelector('#answer-area .count-tiles');
+      if (rij) rij.classList.remove('wacht');
+      speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
+    };
+  });
+}
+
+
+
+
 let countDrawId = 0;
 
 function drawCountQuestion(q) {
@@ -18673,7 +18743,12 @@ function drawCountQuestion(q) {
   else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
+  else if (kind === 'tap') body = tapHTML(q.card);
   card.innerHTML = `<div class="count-q">${body}</div>`;
+  if (kind === 'tap') {
+    if (q.getikt) card.querySelectorAll('.tap-obj').forEach(b => b.classList.add('geteld'));
+    else bindTap(card, q, myDraw);
+  }
 
   if (q.along && kind === 'group') {
     const objs = card.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
@@ -18730,7 +18805,8 @@ function renderCountAnswers(q, area) {
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
   const n = q.choices.length;
-  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '');
+
+  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
   area.innerHTML = `<div class="${cls}">${tiles}</div>`;
   area.querySelectorAll('.count-tile').forEach(b => {
     b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);

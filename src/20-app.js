@@ -8281,7 +8281,9 @@ function makeChoices(ans) {
    sterren en trofeeën ongewijzigd blijven meetellen.
 
    Fases:  1 hoeveelheid 1–3 · 2 hoeveelheid 1–5 (+ meetellen) · 3 meer/minder ·
-           4 evenveel · 5 gesproken getal → hoeveelheid · 6 cijfer bij hoeveelheid */
+           4 evenveel · 5 gesproken getal → hoeveelheid · 6 cijfer bij hoeveelheid ·
+           7 één meer/minder · 8 samen/splitsen · 9–11 gesteunde sommen
+   (de volledige tabel staat in countStageInfo hieronder) */
 const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', '🦋', '🍓', '🐟', '🌼', '🐞'];
 /* ---- Fasetabel (8 fases) ----
    Per fase: welke oefeningtypes, het hoeveelheidsbereik (baseMax bij de laagste
@@ -8289,8 +8291,9 @@ const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', 
    fase) en het aantal keuzeknoppen. */
 function countStageInfo(stage) {
   switch (stage) {
-    case 1: return { types: ['count'],              baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
-    case 2: return { types: ['count', 'along'],     baseMax: 5, topMax: 6,  rungs: 3, tiles: 4 };
+    // 'tap' = tik en tel: het kind tikt zelf elk voorwerp aan (zie tapPlekken)
+    case 1: return { types: ['count', 'tap'],        baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
+    case 2: return { types: ['count', 'along', 'tap'], baseMax: 5, topMax: 6, rungs: 3, tiles: 4 };
     case 3: return { types: ['compare'],            baseMax: 5, topMax: 8,  rungs: 3, tiles: 3 };
     case 4: return { types: ['match'],              baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     // fase 5 is de luisterfase; zonder geluid valt hij terug op 'match' (zelfde
@@ -8474,7 +8477,17 @@ function genCount(p) {
   const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, frame, cap, support: d.support, gold: false };
   const qgroup = v => ({ v, kind: 'group', n: v, emoji, repr, frame, cap });
 
-  if (type === 'count' || type === 'along') {
+  if (type === 'tap') {
+    // Tik en tel: het kind telt zelf, één tik per voorwerp, en de stem zegt het
+    // telwoord bij elke tik. Los door elkaar en niet in een raam: dan valt er
+    // niets van een vorm af te lezen en moet je bijhouden welke je al had --
+    // precies het één-op-één tellen dat meetellen alleen voordoet.
+    const n = rnd(1, max);
+    q.ans = n; q.tap = true;
+    q.card = { kind: 'tap', n, emoji, pos: tapPlekken(n) };
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(qgroup);
+    q.prompt = 'Tik ze één voor één aan, en tel mee!';
+  } else if (type === 'count' || type === 'along') {
     const n = rnd(1, max);
     q.ans = n; q.along = (type === 'along');
     q.card = { kind: 'group', n, emoji, frame, repr };
@@ -8574,6 +8587,47 @@ function genCount(p) {
   if (q.choices) q.choices.forEach(c => { if (c.cap == null) c.cap = cap; });
   return q;
 }
+/* Plekken voor tik en tel, in procenten van de kaart: n vakken uit een raster
+   van 4 × 3, elk een beetje verschoven. Een raster en geen vrije worp, zodat er
+   nooit twee voorwerpen over elkaar vallen (dan tel je er één niet); het
+   schuiven maakt dat het er niet als een raam uitziet. Eén keer per vraag
+   gekozen en bewaard, zodat een nieuwe tekening (herhaalknop) niets verplaatst. */
+function tapPlekken(n) {
+  const vakken = shuffle([...Array(12).keys()]).slice(0, n);
+  return vakken.map(v => {
+    const kol = v % 4, rij = Math.floor(v / 4);
+    return [Math.round(13 + kol * 24.7 + (Math.random() - 0.5) * 8), Math.round(17 + rij * 33 + (Math.random() - 0.5) * 7)];
+  });
+}
+// De voorwerpen van tik en tel: elk een eigen knop, zodat een tik precies één telt.
+function tapHTML(card) {
+  return `<div class="cq-tap">${card.pos.map(([x, y], i) =>
+    `<button type="button" class="tap-obj" data-i="${i}" style="left:${x}%;top:${y}%"><span class="cg-obj">${card.emoji}</span></button>`).join('')}</div>`;
+}
+/* Een tik telt een voorwerp dat nog niet geteld was: het krijgt zijn nummer
+   (of een vinkje, als de ouder de cijfers uitzette) en de stem zegt het
+   telwoord. De volgorde maakt niet uit -- wél dat je er geen twee keer telt,
+   dus een tweede tik op hetzelfde voorwerp doet niets. Na het laatste worden
+   de antwoordknoppen tikbaar en klinkt het laatste telwoord nog eens: dát is
+   hoeveel het er zijn. */
+function bindTap(card, q, drawId) {
+  let geteld = 0;
+  const cijfers = P().settings.numerals !== false;
+  card.querySelectorAll('.tap-obj').forEach(b => {
+    b.onclick = () => {
+      if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
+      geteld++;
+      b.classList.add('geteld');
+      b.dataset.nr = cijfers ? geteld : '✓';
+      sndClick();
+      if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
+      q.getikt = true;
+      const rij = document.querySelector('#answer-area .count-tiles');
+      if (rij) rij.classList.remove('wacht');
+      speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
+    };
+  });
+}
 // Elke getekende telvraag krijgt een eigen volgnummer. Vertraagde acties (meetellen,
 // één-erbij/eraf) checken dit: hoort de timer bij een oudere vraag, dan stopt hij.
 // Zonder dit telde de stem van de vórige vraag door over de nieuwe ("vier, vijf...")
@@ -8595,7 +8649,12 @@ function drawCountQuestion(q) {
   else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
+  else if (kind === 'tap') body = tapHTML(q.card);
   card.innerHTML = `<div class="count-q">${body}</div>`;
+  if (kind === 'tap') {
+    if (q.getikt) card.querySelectorAll('.tap-obj').forEach(b => b.classList.add('geteld'));
+    else bindTap(card, q, myDraw);
+  }
   // meetellen: objecten poppen één voor één op terwijl er hardop geteld wordt
   if (q.along && kind === 'group') {
     const objs = card.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
@@ -8652,7 +8711,8 @@ function renderCountAnswers(q, area) {
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
   const n = q.choices.length;
-  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '');
+  // tik en tel: de knoppen wachten tot alles geteld is (zie bindTap)
+  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
   area.innerHTML = `<div class="${cls}">${tiles}</div>`;
   area.querySelectorAll('.count-tile').forEach(b => {
     b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);

@@ -365,6 +365,22 @@
   .cgroup.mini { gap: 2px 3px; max-width: 74px; margin-top: 4px; }
   .cgroup.mini .cg-dot { width: 9px; height: 9px; background: rgba(255,255,255,.9); box-shadow: none; }
   .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 700; color: var(--purple-shadow); }
+  /* Tik en tel: de voorwerpen liggen los op de kaart (plekken in procenten, zie
+     tapPlekken), elk een knop van minstens 44px. Een getelde krijgt zijn
+     nummer als rond kaartje rechtsboven. */
+  .cq-tap { position: relative; width: 100%; height: clamp(140px, 20vh, 170px); }
+  .tap-obj { position: absolute; transform: translate(-50%, -50%); min-width: 48px; min-height: 48px;
+    padding: 0; border: none; background: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .tap-obj .cg-obj { font-size: clamp(26px, 5vh, 36px); transition: transform var(--t-tik), opacity var(--t-tik); }
+  .tap-obj.geteld .cg-obj { opacity: .55; transform: scale(.9); }
+  .tap-obj.geteld::after { content: attr(data-nr); position: absolute; top: -2px; right: -4px;
+    min-width: 24px; height: 24px; padding: 0 4px; border-radius: 12px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--purple-input-bottom); color: var(--c-white); font-size: 15px; font-weight: 700;
+    box-shadow: 0 0 0 2px var(--c-white); animation: cpop .3s ease; }
+  /* de antwoordknoppen wachten tot alles geteld is */
+  .count-tiles.wacht { opacity: .4; pointer-events: none; transition: opacity var(--t-snel); }
   .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
   @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
   /* In de telmodus is de gesproken opdracht de héle vraag. "Nog eens voorlezen"

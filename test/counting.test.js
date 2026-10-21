@@ -18,6 +18,8 @@ const { launch, cacheFonts, APP_URL } = require('./browser');
 
 const SAMPLES = Number(process.env.SAMPLES || 40);   // vragen per fase/rung-combinatie
 
+const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
+const numWordNode = n => NUM_NL[n];
 const fails = [];
 const counts = {};
 function check(ok, label, detail) {
@@ -152,6 +154,9 @@ function check(ok, label, detail) {
             check(r.ans === c.total - c.shown, 'antwoord = verstopte hoeveelheid', `${where} ans=${r.ans}`);
           } else if (c.kind === 'bignum') {
             check(Number(r.seen.bignum) === c.n, 'cijferkaart toont het juiste cijfer', `${where} zag ${r.seen.bignum}`);
+          } else if (c.kind === 'tap') {
+            check(r.seen.marks === c.n, 'tik en tel toont evenveel voorwerpen als gevraagd', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
+            check(Array.isArray(c.pos) && c.pos.length === c.n, 'tik en tel heeft een plek per voorwerp', `${where} pos=${JSON.stringify(c.pos)}`);
           } else if (c.kind === 'listen') {
             check(r.seen.ear && r.seen.marks === 0, 'luistervraag toont geen hoeveelheid', where);
             check(r.spoken.join(' ').length > 0, 'luistervraag spreekt het getal uit', where);
@@ -229,6 +234,38 @@ function check(ok, label, detail) {
   if (!bleed.skipped) {
     check(bleed.after.length === 0, 'telstem van de vorige vraag stopt bij een nieuwe vraag',
       `hoorde nog: ${JSON.stringify(bleed.after)}`);
+  }
+
+  /* ---- tik en tel: het kind telt zelf, en de knoppen wachten erop ---- */
+  const tap = await page.evaluate(() => {
+    const p = P();
+    p.settings.repr = 'objects'; p.settings.numerals = true;
+    p.countTrack = { stage: 2, rung: 2, streak: 0, seen: 0, acc: 0.6 };
+    let q = null;
+    for (let i = 0; i < 400 && !q; i++) { const c = genCount(p); if (c.ctype === 'tap' && c.ans >= 3) q = c; }
+    if (!q) return { skipped: true };
+    G.qs[G.idx] = q; G.mode = 'count'; G.lock = false;
+    drawCountQuestion(q); renderCountAnswers(q, document.getElementById('answer-area'));
+    const rij = () => document.querySelector('#answer-area .count-tiles');
+    const voor = rij().classList.contains('wacht');
+    window.__spoken = [];
+    const objs = [...document.querySelectorAll('#question-text .tap-obj')];
+    objs[0].click(); objs[0].click();                 // twee keer op dezelfde: telt één keer
+    const naDubbel = window.__spoken.length;
+    objs.slice(1).forEach(o => o.click());
+    return { skipped: false, n: q.ans, voor, naDubbel, na: rij().classList.contains('wacht'),
+      spoken: window.__spoken.slice(), nrs: objs.map(o => o.dataset.nr), getikt: !!q.getikt };
+  });
+  if (!tap.skipped) {
+    check(tap.voor === true, 'tik en tel: de antwoordknoppen wachten tot alles geteld is', JSON.stringify(tap));
+    check(tap.naDubbel === 1, 'tik en tel: een tweede tik op hetzelfde voorwerp telt niet', JSON.stringify(tap.spoken));
+    check(tap.na === false && tap.getikt, 'tik en tel: na het laatste voorwerp zijn de knoppen tikbaar', JSON.stringify(tap));
+    const verwacht = Array.from({ length: tap.n - 1 }, (_, i) => numWordNode(i + 1));
+    check(JSON.stringify(tap.spoken.slice(0, tap.n - 1)) === JSON.stringify(verwacht)
+      && tap.spoken[tap.n - 1].startsWith(numWordNode(tap.n) + '!'),
+      'tik en tel: de stem telt mee, en zegt het laatste telwoord als het antwoord', JSON.stringify(tap.spoken));
+    check(JSON.stringify(tap.nrs) === JSON.stringify(Array.from({ length: tap.n }, (_, i) => String(i + 1))),
+      'tik en tel: elk voorwerp krijgt zijn eigen nummer', JSON.stringify(tap.nrs));
   }
 
   /* ---- afleiders blijven binnen het bereik van de vraag ----
