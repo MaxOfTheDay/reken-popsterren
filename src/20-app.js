@@ -7906,10 +7906,12 @@ function renderShelves() {
        Avontuur" zegt maakt de kop juist onduidelijker. */
     const head = document.createElement('div');
     head.className = 'groep-kop';
+    if (shelf.note) head.setAttribute('aria-label', `${shelf.name}: ${shelf.note}`);
     head.innerHTML = `<span class="groep-ico" aria-hidden="true">${shelf.ico || ''}</span>`
-      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div>`
-      + (shelf.note ? `<div class="groep-note">${shelf.note}</div>` : '')
-      + `</div>`
+      /* Geen regeltje meer onder de naam (shelf.note): de kast is een plek om naar
+         te kíjken, en vier zinnen boven de planken maakten er een leesblad van. De
+         tekst staat nog in TROPHY_SHELVES; wie hem wil, vindt hem in de aria-label. */
+      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div></div>`
       /* Ligt er voorbij de horizon nog meer, dan geen "van de": het totaal zou
          verklappen hoeveel werelden er nog komen, en precies dat laat de mist
          open. Dan alleen wat je hebt, zoals de pil bovenaan. */
@@ -7971,7 +7973,7 @@ function unitText(label, remaining) {
 function trophyStand(t, p, status) {
   if (status !== 'busy' || !t.progress) return '';
   const pr = t.progress(p);
-  return `<div class="tstand">${pr.now} / ${pr.target} <span>${unitText(pr.label, pr.target)}</span></div>`;
+  return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
 }
 // Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop.
 // Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
@@ -7983,6 +7985,8 @@ function trophyCard(t, p) {
   card.className = `trophy-card ${t.perfect ? 'pw-card ' : ''}${status}`;
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
+  // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
+  card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
@@ -7992,18 +7996,26 @@ function trophyCard(t, p) {
    van drie kaarten naast elkaar op één lijn, ook als de ene naam over twee regels
    loopt en de andere niet. */
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
+/* Icoon, naam en één pil -- meer niet. De beschrijving ("500 sommen goed") stond
+   eerst op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een
+   trofee vraagt, zie je als je erop tikt: de pil klapt om naar "nog 320 sommen"
+   (zie pilOmklappen). De voet heeft één plek en er staat altijd hoogstens één ding:
+     klaar     🎁 Open!  (goud, de enige knop op het scherm)
+     behaald   ✓         (op dezelfde plek waar Open! stond: er springt niets)
+     onderweg  180 / 500 (kaal getal; het woord komt bij een tik)
+     op slot   🔒 */
 function normalCardHTML(t, p, status) {
   return `<div class="temoji">${t.emoji}</div>`
     + `<div class="tname">${t.name}</div>`
-    + `<div class="tdesc">${t.desc}</div>`
     + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'locked' ? '<div class="tstand sub">Nog niet vrij</div>'
+      : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
+      : status === 'locked' ? '<div class="tstand">🔒</div>'
       : trophyStand(t, p, status));
 }
 /* De perfecte werelden. Dit is de duurste kaart van de kast en dat mag je zien:
    het wereldicoon staat in een medaillon met de kleuren van díe wereld (theme.sky
    en theme.glow, dezelfde twee die de wereldkaart gebruikt), en behaald komt daar
-   de gouden ring met de ster omheen.
+   de gouden ring omheen (de ster in de hoek is weg, zie .pw-medal in de kast).
 
    Precies dezelfde vorm als de onthulling na de laatste ster (zie .wf-trofee): een
    kind dat daar "Perfecte wereld!" kreeg, herkent hier hetzelfde ding terug. Zonder
@@ -8026,7 +8038,7 @@ function perfectCardHTML(t, p, status) {
      zegt "0 / 8" niets wat het gedempte medaillon niet al zegt, en op een behaalde
      wereld zou het 8/8 zijn, wat de gouden ring al vertelt. */
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target} <span>perfect</span></div>`; })()
+    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
     : '';
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
@@ -8046,8 +8058,33 @@ function tapTrophy(t, card, e) {
   sndClick();
   if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
-  showToast(rem > 0 ? `${t.emoji} Nog ${rem} ${unitText(pr.label, rem)}!` : `${t.emoji} Bijna daar!`);
-  toastWeg(1700);
+  pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
+}
+/* Wat telt dit getal? Dat staat niet op het kaartje maar komt bij een tik: de pil
+   in de voet klapt twee tellen om naar "nog 320 sommen" en dan weer terug. Geen
+   ballon en geen melding onderaan het scherm -- het antwoord verschijnt precies op
+   de plek waar je keek, en het scherm blijft leeg van tekst. Een kaartje dat nog
+   op nul staat heeft geen pil; dat krijgt er twee tellen een. In de telmodus (en
+   met Voorlezen aan) zegt de stem het hardop. */
+function pilOmklappen(card, tekst) {
+  let voet = card.querySelector('.tvoet');
+  if (!voet) { voet = document.createElement('div'); voet.className = 'tvoet tijdelijk'; card.appendChild(voet); }
+  let pil = voet.querySelector('.tstand');
+  if (!pil) { pil = document.createElement('div'); pil.className = 'tstand tijdelijk'; voet.appendChild(pil); }
+  if (pil.dataset.terug === undefined) pil.dataset.terug = pil.textContent;
+  pil.textContent = tekst;
+  pil.classList.add('omgeklapt');
+  speak(tekst);
+  clearTimeout(pil._omklap);
+  pil._omklap = setTimeout(() => {
+    if (pil.classList.contains('tijdelijk')) {
+      pil.remove();
+      if (voet.classList.contains('tijdelijk')) voet.remove();
+      return;
+    }
+    pil.textContent = pil.dataset.terug; delete pil.dataset.terug;
+    pil.classList.remove('omgeklapt');
+  }, 2000);
 }
 // Het claim-moment: van 'klaar' naar 'behaald', met een kort, vrolijk feestje.
 function openTrophy(id) {
