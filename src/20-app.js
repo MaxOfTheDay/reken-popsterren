@@ -11819,97 +11819,215 @@ function closeSettings() {
   save();
   goProfiles();
 }
-// Tabblad "Voortgang" — alleen-lezen ouderrapport: kerncijfers, niveau-inschatting
-// en de concrete sommen waar het spel nu extra op oefent.
-// Vlotheid: hoe vaak komt een goed antwoord er zó uit, i.p.v. uitgerekend te
-// worden? Pas tonen als er genoeg gespeeld is, anders zegt het niets. Alleen
-// voor de rekenmodus (de telmodus heeft haar eigen fase-opbouw).
+/* Tabblad "Voortgang" -- het ouderrapport, alleen-lezen.
+
+   Een ouder komt hier met twee vragen: gaat het goed, en wat komt er nu? Hier
+   stonden zeven blokken even zwaar onder elkaar (tellers, oogst, niveau, tip,
+   een vaste zin, vlotheid, lastige sommen), en wie die twee antwoorden zocht
+   moest alles lezen. Nu zijn het drie kaarten, elk met één vraag als kop:
+
+     1. HOE GAAT HET    -- één kleur en één zin over de laatste shows
+                           (uitdagingStand), de kale tellers klein eronder.
+     2. LEERPAD         -- wat al kan (één regel ✓), waar het kind nu zit, wat
+                           er nog komt. Een tip staat óp het pad, waar de
+                           volgende stap is, en niet als los blok ergens anders.
+     3. EXTRA OEFENEN   -- de sommen die nog lastig zijn. Alleen bij rekenen.
+
+   Sterren, perfecte shows, trofeeën en vlotheid staan ingeklapt onder "Meer
+   cijfers": ze zijn van het kind, en de kast en de kaart tonen ze groot. */
+const STAND_TEKST = {
+  goed:   { ico: '🟢', kop: 'De uitdaging zit goed' },
+  vlot:   { ico: '🟡', kop: 'Gaat heel vlot' },
+  pittig: { ico: '🟠', kop: 'Even pittig' },
+};
+/* De statuskaart. Geen cijfer voor het kind, maar een uitspraak over de
+   uitdaging: groen is waar het spel naartoe stuurt (een mengeling van drie en
+   twee sterren), geel zegt dat er ruimte is, oranje dat het nu even te veel is.
+   Bij oranje staat erbij wat het spel zelf al doet, zodat een ouder niet denkt
+   dat er iets moet. */
+function statusKaartHtml(p) {
+  const s = p.settings;
+  const isCount = s.track === 'count';
+  const u = uitdagingStand(p);
+  let ico = '🌱', kop = 'Net begonnen', zin = 'Na een paar shows staat hier hoe het gaat.', klas = 'nieuw';
+  if (u) {
+    ({ ico, kop } = STAND_TEKST[u.stand]);
+    klas = u.stand;
+    const laatste = `Laatste ${u.n} shows: ${u.drie}× drie sterren`;
+    if (u.stand === 'pittig') zin = `${u.mis} van de laatste ${u.n} shows lukten niet. Het spel maakt het nu vanzelf wat lichter.`;
+    else if (u.stand === 'vlot') zin = `${laatste}.` + (isCount ? ' Het spel klimt mee.'
+      : (grensTip(p) ? ' Klaar voor een volgende stap: zie het leerpad.' : ''));
+    else zin = `${laatste}${u.mis ? `, ${u.mis} niet gelukt` : ', niets mislukt'}.`;
+  }
+  const shows = playedCount(p);
+  const answered = p.stats.correct + p.stats.wrong;
+  const getallen = [
+    [shows, mv(shows, 'show', 'shows')],
+    [answered, isCount ? mv(answered, 'vraag', 'vragen') : mv(answered, 'som', 'sommen')],
+  ];
+  if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
+  // de stem: in de telmodus de helft van elke vraag (en bij rekenen met Voorlezen)
+  const stem = stemAan(p) ? stemNotitie() : '';
+  return `<div class="set-card vg-kaart">
+    <h2 class="vg-kop">Hoe gaat het met ${esc(p.name)}?</h2>
+    <div class="vg-status ${klas}"><span class="vg-dot" aria-hidden="true">${ico}</span>
+      <div><b>${kop}</b><span>${zin}</span></div></div>
+    <div class="vg-getallen">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}</div>
+    ${stem ? `<div class="note stem-notitie">${stem}</div>` : ''}
+  </div>`;
+}
+/* Wat elke fase in mensentaal oefent. COUNT_STAGE_LABELS (bij Oefenen) zijn de
+   korte namen; dit is de zin eronder, voor de fase waar het kind nu zit. */
+const COUNT_STAGE_UITLEG = ['',
+  'Tot drie tellen, en zelf elk ding aantikken.',
+  'Tot vijf tellen, meetellen en zelf aantikken.',
+  'Welke groep heeft er meer, en welke minder?',
+  'Dezelfde hoeveelheid terugvinden.',
+  'Een getal horen en de juiste hoeveelheid kiezen.',
+  'Cijfer en hoeveelheid tot tien aan elkaar koppelen.',
+  'Eén meer en één minder dan een getal.',
+  'Twee groepjes samen, splitsen, en de vriendjes van vijf en tien.',
+  'De eerste sommen, met plaatjes en tekens.',
+  'Sommen met cijfers; de stippen helpen nog.',
+  'Sommen tot tien, zonder steun.',
+  'Tien en nog wat: hoeveelheden en sommen tot twintig.',
+];
+/* Wat de werelden leren, in de volgorde van LEERSTAPPEN. Een stap die met deze
+   instellingen niets nieuws brengt valt weg: over het tiental kan niet tot tien,
+   drie getallen is alleen plus, en de ouder kan de extra's uitzetten. Zo staat
+   er nooit een stap op het pad die het kind niet te zien krijgt. */
+function leerpadStappen(s) {
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
+  return [
+    { kort: 'rustig beginnen', lang: 'Rustig beginnen, met de kleinere getallen.' },
+    { kort: `tot ${s.max}`, lang: `Sommen met het hele bereik, tot ${s.max}.` },
+    plusMin && s.max > 10 && { kort: 'over het tiental', lang: 'Over het tiental heen, zoals 8 + 5.' },
+    s.missNum !== false && { kort: 'zoek het getal', lang: 'Zoek het getal dat ontbreekt, zoals 7 + ? = 12.' },
+    s.chain3 !== false && s.ops.includes('+') && { kort: 'drie getallen', lang: 'Drie getallen optellen, zoals 3 + 4 + 2.' },
+    { kort: 'alles door elkaar', lang: 'Alles door elkaar.' },
+  ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
+}
+/* Eén rij op het pad. b is wat er in het bolletje staat (✓, een nummer, …). */
+const padRij = (klas, b, html) => `<li class="${klas}"><span class="b">${b}</span>${html}</li>`;
+const NU_TAG = '<span class="vg-tag">nu</span>';
+/* Het leerpad. De klassen niveau-blok en niveau-bezig zijn gebleven: dat zijn
+   "het blok over het niveau" en "de regel waar het kind nú is", en de tests
+   lezen ze zo.
+
+   Er staat geen percentage of balk in, en dat blijft zo. FASE 5D.1: hier stond
+   "Niveau-inschatting -- 50%" met een half gevulde balk, en dat is een gevecht
+   dat geen uitleg eronder kan winnen: een getal van honderd met een balk ís een
+   rapportcijfer. Een ouder las "mijn kind zit op de helft", en dat betekent
+   p.perf niet -- het is een meelopende maat waarmee het spel de vragen
+   makkelijker of moeilijker maakt, en hij zweeft rond het midden omdat hij
+   dáárop stuurt. p.perf stuurt nog precies zoals hiervoor; hij wordt alleen
+   niet getoond. De streepjes in de telmodus zijn de stapjes binnen een fase
+   (countTrack.rung), geen cijfer. */
+function leerpadHtml(p) {
+  const s = p.settings;
+  const rijen = [];
+  let kop, tip = '', noot;
+  if (s.track === 'count') {
+    const st = countLiveStage(p), hi = countMaxStage(s);
+    kop = 'leren tellen';
+    if (st > 1) rijen.push(padRij('klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}: ${
+      COUNT_STAGE_LABELS.slice(1, st).join(' · ')}`));
+    const top = countTopRung(st);
+    const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
+    const streepjes = `<span class="vg-rungs" title="stapje ${rung + 1} van ${top + 1}">${
+      Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`;
+    rijen.push(padRij('nu niveau-bezig', st, `<b>${COUNT_STAGE_LABELS[st]}</b> · fase ${st}${hi > st ? ' van ' + hi : ''}${NU_TAG}${streepjes}`
+      + `<small>${COUNT_STAGE_UITLEG[st] || ''}</small>`));
+    for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(padRij('later', v, COUNT_STAGE_LABELS[v]));
+    if (hi > st + 2) rijen.push(padRij('later', '…', `Tot fase ${hi}: ${COUNT_STAGE_LABELS[hi]}`));
+    rijen.push(hi < COUNT_STAGE_MAX
+      ? padRij('later', '🔒', 'Verder groeien zet je aan bij Oefenen')
+      : padRij('later', '🧮', 'Daarna: rekenen'));
+    const tt = telTip(p);
+    if (tt) tip = `<div class="grens-tip" id="grens-tip"><div>💡 ${tt.tekst}</div>
+      <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button></div>`;
+    noot = 'Het spel gaat vanzelf een fase hoger als het goed gaat, en terug als het even te moeilijk is.';
+  } else {
+    const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
+    kop = `rekenen ${(s.ops || []).map(o => glyph[o] || o).join(' ')} tot ${s.max}`;
+    const stappen = leerpadStappen(s);
+    const w = continueWorld(p) + 1;                    // de wereld waar het kind nu speelt
+    const laatste = LEERSTAPPEN.length;
+    const nu = stappen.filter(st => st.wereld <= Math.min(w, laatste)).pop();
+    const klaar = stappen.filter(st => st.wereld < nu.wereld);
+    if (klaar.length) rijen.push(padRij('klaar', '✓', `${klaar.length > 1 ? 'Werelden' : 'Wereld'} ${
+      klaar[0].wereld}${nu.wereld - 1 > klaar[0].wereld ? '–' + (nu.wereld - 1) : ''}: ${klaar.map(st => st.kort).join(', ')}`));
+    const grens = grensTip(p);
+    const stil = nu.wereld === laatste && GRENS_LADDER.some(v => v > s.max) && !grens
+      ? ` Moeilijker wordt het pas met een hogere grens.` : '';
+    rijen.push(padRij('nu niveau-bezig', nu.wereld === laatste ? nu.wereld + '+' : nu.wereld,
+      `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}.${stil}</small>`));
+    stappen.filter(st => st.wereld > nu.wereld).forEach(st => rijen.push(padRij('later', st.wereld, st.lang)));
+    if (grens) tip = `<div class="grens-tip" id="grens-tip">
+      <div>💡 Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.</div>
+      <button class="btn small purple" id="grens-tip-ja" data-v="${grens.naar}">Tot ${grens.naar}</button></div>`;
+    noot = 'Binnen elke stap past het spel de sommen vanzelf aan op wat goed en fout gaat.';
+  }
+  return `<div class="set-card vg-kaart niveau-blok">
+    <h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>
+    <ul class="vg-pad">${rijen.join('')}</ul>
+    ${tip}
+    <div class="note">${noot}</div>
+  </div>`;
+}
+/* De sommen waar het spel nu extra op oefent -- het nuttigste blok van het
+   oude scherm, dat helemaal onderaan stond. Alleen bij rekenen: de telmodus
+   kent geen lijst met losse lastige vragen, die stuurt per fase. */
+function oefentExtraHtml(p) {
+  if (p.settings.track === 'count') return '';
+  // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek.
+  // Die plaatshouder is intern; een ouder hoort gewoon de som te zien.
+  const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
+    .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
+  // onderhoud zichtbaar maken: geleerde sommen komen later nog eens terug,
+  // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
+  const nLearned = Object.keys(p.learned || {}).length;
+  return `<div class="set-card vg-kaart">
+    <h2 class="vg-kop">Hier oefent het spel extra op</h2>
+    ${weak.length
+      ? `<div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
+      : `<div class="stats-empty">Geen lastige sommen op dit moment. 🎉</div>`}
+    ${nLearned ? `<div class="note vg-noot">🧠 ${nLearned} ${mv(nLearned, 'som die al goed gaat komt', 'sommen die al goed gaan komen')} later nog eens terug.</div>` : ''}
+  </div>`;
+}
+/* Vlotheid: hoe vaak komt een goed antwoord er zó uit, i.p.v. uitgerekend te
+   worden? Pas als er genoeg gespeeld is, anders zegt het niets, en alleen bij
+   rekenen. Een zin en geen percentage met een balk: dat las als een
+   rapportcijfer, net als het oude niveaugetal (FASE 5D.1). */
 function fluencyHtml(p) {
   if (p.settings.track === 'count') return '';
   const ops = (p.settings.ops || []).filter(o => p.opTrack[o] && p.opTrack[o].n >= 10);
   if (!ops.length) return '';
   const avg = ops.reduce((a, o) => a + (p.opTrack[o].fast == null ? 0.5 : p.opTrack[o].fast), 0) / ops.length;
-  const pct = Math.round(avg * 100);
-  const hint = avg >= FLUENT_MIN
-    ? 'Veel sommen komen er vlot uit — een goed teken om iets moeilijkers te proberen.'
-    : 'De sommen kloppen, maar worden nog vaak uitgerekend. Het spel wacht daarom nog even met moeilijkere vraagsoorten.';
-  return `<div class="stat-line"><span class="k">Vlotheid <span class="note">(uit het hoofd)</span></span><span class="v">${pct}%</span></div>
-    <div class="stat-bar"><div style="width:${pct}%"></div></div>
-    <div class="note" style="margin-top:6px">${hint}</div>`;
+  return `<div class="note vg-noot">⚡ ${avg >= FLUENT_MIN
+    ? 'Veel sommen komen er al vlot uit het hoofd.'
+    : 'De sommen kloppen, maar worden nog vaak uitgerekend. Het spel wacht daarom nog even met moeilijkere vraagsoorten.'}</div>`;
 }
-function statsPanelHtml(p) {
-  const shows = playedCount(p);
+/* "Meer cijfers": de oogst en de vlotheid, dicht tot een ouder hem opent.
+   De trofeeteller is een breuk, en die is altijd meervoud: "1/18 trofeeën"
+   spreek je uit als "1 van de 18 trofeeën". De noemer komt uit
+   activeTrophies() -- dezelfde bron als de kop van de kast, zodat er nooit
+   twee verschillende totalen in de app kunnen staan. */
+function meerCijfersHtml(p) {
   const stars = totalStarCount(p);
   const perfect = perfectCount(p);
-  const answered = p.stats.correct + p.stats.wrong;
-  const acc = answered ? Math.round(100 * p.stats.correct / answered) : 0;
-  const isCount = p.settings.track === 'count';
-  const madeCap = isCount ? mv(answered, 'vraag gemaakt', 'vragen gemaakt')
-                          : mv(answered, 'som gemaakt', 'sommen gemaakt');
-  let practice;
-  if (isCount) {
-    // lees-vrije modus: geen zwakke-sommenlijst, maar in mensentaal wat het kind al kan
-    // Wélke fase het kind nu speelt staat al in niveauHtml hierboven; hier gaat
-    // het over wat er áchter haar ligt. Stond er twee keer, en dan leest de
-    // tweede als een fout.
-    const st = countLiveStage(p);
-    const done = COUNT_STAGE_LABELS.slice(1, st).map(l => `<span class="practice-chip">${l} ✓</span>`).join('');
-    const help = st <= 2 ? 'In deze fases speelt je kind het fijnst met een volwassene erbij.' : 'Je kind kan deze fase meestal alleen spelen.';
-    practice = `<div class="practice-hint">🧸 Fases die ${esc(p.name)} al gehad heeft:</div>
-       <div class="practice-chips">${done || '<span class="stats-empty">Net begonnen — veel plezier! 🎉</span>'}</div>
-       <div class="note" style="margin-top:8px">${help}</div>`;
-  } else {
-    // p.weak wordt op sjabloon gesleuteld ("7 × 8 = @"), met @ als de lege plek.
-    // Die plaatshouder is intern; een ouder hoort gewoon de som te zien.
-    const weak = Object.entries(p.weak).sort((a, b) => b[1].w - a[1].w).slice(0, 8)
-      .map(([tmpl, e]) => tmpl.replace('@', e.ans == null ? '?' : e.ans));
-    practice = weak.length
-      ? `<div class="practice-hint">🎯 Sommen die nu nog lastig zijn — hier oefent het spel extra op:</div>
-         <div class="practice-chips">${weak.map(t => `<span class="practice-chip">${t}</span>`).join('')}</div>`
-      : `<div class="stats-empty">Geen moeilijke sommen op dit moment — goed bezig! 🎉</div>`;
-    // onderhoud zichtbaar maken: geleerde sommen komen later nog eens terug,
-    // zodat we merken of het blijft zitten (i.p.v. ze definitief te vergeten)
-    const nLearned = Object.keys(p.learned || {}).length;
-    if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later nog eens terug, om te controleren of het blijft zitten.</div>`;
-  }
-  // de stem: in de telmodus de helft van elke vraag (en bij rekenen met Voorlezen)
-  const stem = stemAan(p) ? stemNotitie() : '';
-  if (stem) practice += `<div class="note stem-notitie">${stem}</div>`;
-  /* FASE 5D -- niet alles is even belangrijk.
-     Er stonden zes tegels in één raster, alle zes even groot en even zwaar: hoe
-     vaak er gespeeld is stond naast hoeveel trofeeën er in de kast hangen, alsof
-     een ouder die twee even vaak nodig heeft. De rangorde die er nu ligt:
-
-       1. ACTIVITEIT EN RESULTAAT -- drie tegels: hoe vaak, hoeveel vragen, en
-          hoeveel daarvan goed. Dit is waar een ouder voor komt.
-       2. DE OOGST -- sterren, perfecte shows en trofeeën in één rustige regel.
-          Ze zijn niet onbelangrijk, maar ze zijn van het kind: in de kast en op
-          de kaart staan ze groot, hier hoeven ze alleen te bestaan. (Zie ook de
-          UX-review: de kast is de plek waar je gaat kíjken hoe het ervoor staat.)
-       3. HET NIVEAU -- apart, onder een streepje, met de fase erbij (zie
-          niveauHtml). */
-  /* De trofeeteller is een breuk, en die is altijd meervoud: "1/18 trofeeën"
-     spreek je uit als "1 van de 18 trofeeën". De noemer komt uit
-     activeTrophies() -- dezelfde bron als de kop van de kast, zodat er nooit
-     twee verschillende totalen in de app kunnen staan. */
   const oogst = [
     ['⭐', stars, mv(stars, 'ster', 'sterren')],
     ['🌟', perfect, mv(perfect, 'perfecte show', 'perfecte shows')],
     ['🏆', `${earnedActiveCount(p)}/${activeTrophies().length}`, 'trofeeën'],
   ].map(([ico, n, label]) => `<span class="oogst-item"><b>${ico} ${n}</b> ${label}</span>`).join('');
-  return `<div class="settings-panel"><div class="set-card">
-    <div class="set-card-head"><div class="ico">📊</div>
-      <div><h2>Voortgang van ${esc(p.name)}</h2><div class="sub">Wat je kind tot nu toe heeft geoefend</div></div></div>
-    <div class="stat-grid">
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${shows}</div><div class="cap">${mv(shows, 'show', 'shows')} gespeeld</div></div>
-      <div class="stat-tile" style="--tint:var(--purple-light)"><div class="num">${answered}</div><div class="cap">${madeCap}</div></div>
-      <div class="stat-tile" style="--tint:var(--stat-green)"><div class="num">${acc}%</div><div class="cap">goed beantwoord</div></div>
-    </div>
+  return `<details class="set-card vg-kaart vg-meer"><summary>Meer cijfers</summary>
     <div class="oogst-rij">${oogst}</div>
-    ${niveauHtml(p)}
     ${fluencyHtml(p)}
-    ${practice}
-  </div></div>`;
+  </details>`;
+}
+function statsPanelHtml(p) {
+  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
 }
 /* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
    stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
@@ -11920,47 +12038,6 @@ function stemNotitie() {
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
   if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
   return '';
-}
-/* De niveau-inschatting -- en waarom er geen percentage meer staat.
-   FASE 5D.1. Hier stond "Niveau-inschatting -- 50%" met een half gevulde balk
-   eronder, en daaronder een regel die uitlegde dat dit géén schoolniveau is.
-   Dat is een gevecht dat de tekst niet kan winnen: een getal van honderd met een
-   balk eronder ís een rapportcijfer, wat er ook onder staat. Een ouder las
-   "mijn kind zit op de helft", en dat betekent p.perf niet -- het is een
-   meelopende interne maat waarmee het spel de vragen makkelijker of moeilijker
-   maakt, en hij zweeft de hele tijd rond het midden omdat hij dáárop stuurt.
-
-   Dus is het getal en de balk uit het scherm. Aan p.perf zelf is niets
-   veranderd: hij stuurt de moeilijkheid precies zoals hiervoor, hij wordt alleen
-   niet meer als cijfer getoond. Wat een ouder wél wil weten stond er al onder en
-   staat nu vooraan: waar haar kind op dit moment aan werkt. */
-function niveauHtml(p) {
-  const s = p.settings;
-  let bezig;
-  if (s.track === 'count') {
-    const st = countLiveStage(p);
-    const top = countMaxStage(s);
-    bezig = `🧸 Leren tellen — <b>fase ${st}${top > st ? ' van ' + top : ''}</b>: ${COUNT_STAGE_LABELS[st] || ''}`;
-  } else {
-    const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
-    bezig = `🧮 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
-  }
-  const tip = grensTip(p);
-  const tt = telTip(p);
-  const tipHtml = tt ? `<div class="grens-tip" id="grens-tip">
-      <div>💡 ${tt.tekst}</div>
-      <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button>
-    </div>` : tip ? `<div class="grens-tip" id="grens-tip">
-      <div>💡 ${esc(p.name)} haalt in de latere werelden bijna overal drie sterren met getallen tot ${s.max}.
-        De sommen worden vanaf hier niet vanzelf moeilijker — wil je de grens naar ${tip.naar}?</div>
-      <button class="btn small purple" id="grens-tip-ja" data-v="${tip.naar}">Tot ${tip.naar}</button>
-    </div>` : '';
-  return `<div class="niveau-blok">
-    <div class="niveau-kop">Niveau-inschatting</div>
-    <div class="niveau-bezig">${bezig}</div>
-    ${tipHtml}
-    <div class="note">Het spel past de moeilijkheid automatisch aan: het schuift mee met wat goed en fout gaat.</div>
-  </div>`;
 }
 /* Een tip voor de ouder: de getallengrens omhoog.
 
