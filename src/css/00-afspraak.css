@@ -236,11 +236,12 @@
        gouden dingen op de kaart en moet een kind zoeken welk ervan de bedoeling
        is (zie fase 4C).
 
-       route-onder  de donkere pruim ónder de gestippelde route
-       route-goud   het afgelegde stuk weg. Gedempt goud en geen --gold-accent:
-                    de weg loopt over de hele tekening en zou in vol goud de
-                    luidste vorm op het scherm zijn -- luider dan de halte waar
-                    het om gaat.
+       route-onder  het zachte halootje ónder elke stip van de route
+       route-goud   het afgelegde stuk weg. Stond op gedempt goud zolang de weg
+                    een doorlopende streep was: in vol goud was dat de luidste
+                    vorm op het scherm. Sinds de weg uit losse stippen bestaat
+                    is er van dat goud veel minder, en mag het hetzelfde goud
+                    zijn als de route op Werelden (.reis-weg-gelopen).
        stop-keyline het donkere haarlijntje net buiten de rand van een halte
        stop-schaduw de zachte contactschaduw waarmee een halte op de tekening rust
        halte-rand   de rand van een gespeelde halte. Warm wít en nadrukkelijk
@@ -294,8 +295,8 @@
        ster-leeg    een nog niet verdiende ster: een donker gat met een lichte
                     omtrek, even groot als een verdiende
        ster-vol     een verdiende ster                                          */
-    --route-onder: rgba(38,12,64,.78);
-    --route-goud: rgba(var(--warm-licht-rgb),.82);
+    --route-onder: rgba(30,8,52,.45);
+    --route-goud: var(--gold-accent);
     --stop-keyline: rgba(26,7,48,.55);
     --stop-schaduw: rgba(12,2,26,.5);
     /* --halte-rand-rgb los erbij omdat de reis dezelfde warm-witte rand een slag

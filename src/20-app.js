@@ -7464,7 +7464,7 @@ function growRoad(map, fromLvl, toLvl, duration, delay) {
   reveal.setAttribute('d', d);
   reveal.setAttribute('fill', 'none');
   reveal.setAttribute('stroke', '#fff');
-  reveal.setAttribute('stroke-width', 24);   // ruim over de 11 van .tour-road-fg heen
+  reveal.setAttribute('stroke-width', 24);   // ruim over de 14 van .tour-road-fg heen
   reveal.setAttribute('stroke-linecap', 'round');
   reveal.style.strokeDasharray = total;
   reveal.style.strokeDashoffset = total - covered;

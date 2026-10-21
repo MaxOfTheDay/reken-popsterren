@@ -330,8 +330,9 @@
 
 
 
-    --route-onder: rgba(38,12,64,.78);
-    --route-goud: rgba(var(--warm-licht-rgb),.82);
+
+    --route-onder: rgba(30,8,52,.45);
+    --route-goud: var(--gold-accent);
     --stop-keyline: rgba(26,7,48,.55);
     --stop-schaduw: rgba(12,2,26,.5);
 
@@ -4381,7 +4382,7 @@
 
 
 
-  .tour-road-bg, .tour-road-fg, .tour-road-under { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  .tour-road-bg, .tour-road-fg, .tour-road-under { fill: none; stroke-linecap: round; stroke-dasharray: 1 30; }
 
 
 
@@ -4429,9 +4430,26 @@
 
 
 
-  .tour-road-under { stroke: var(--route-onder); stroke-width: 17; }
-  .tour-road-bg { stroke: var(--w-road); stroke-width: 11; opacity: .68; }
-  .tour-road-fg { stroke: var(--route-goud); stroke-width: 11; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .tour-road-under { stroke: var(--route-onder); stroke-width: 18; }
+  .tour-road-bg { stroke: var(--w-road); stroke-width: 10; }
+  .tour-road-fg { stroke: var(--route-goud); stroke-width: 14; }
 
 
 
@@ -4892,8 +4910,10 @@
 
 
 
+
+
   .tour-stop.locked {
-    --stop-schaal: .84;
+    --stop-schaal: .74;
     --dot-drop: 0 0.5cqw 1cqw rgba(12,2,26,.26); }
   .tour-stop.locked .dot {
     background: linear-gradient(180deg, var(--slot-vulling-top), var(--slot-vulling));
@@ -10008,7 +10028,16 @@ function roadD(pts, count, curve) {
 
 
 
-const DASH_ON = 26, DASH_OFF = 34;
+
+
+
+
+
+
+
+
+
+const DASH_ON = 1, DASH_OFF = 30;
 
 
 
