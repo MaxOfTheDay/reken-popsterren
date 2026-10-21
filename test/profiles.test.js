@@ -78,23 +78,25 @@ function check(ok, label, detail) {
       cards: document.querySelectorAll('.ster-tegel').length,
       sub: document.getElementById('profile-subtitle').textContent,
       addLabel: document.getElementById('btn-newstar').textContent,
-      hintShown: getComputedStyle(document.getElementById('restore-hint')).display !== 'none',
+      hintShown: getComputedStyle(document.getElementById('over-hint')).display !== 'none',
+      hintHref: document.getElementById('over-hint').getAttribute('href'),
       stored: localStorage.getItem('rekenPopsterren_v1'),
     }));
     check(r.n === 0, 'verse installatie heeft nul sterren', `n=${r.n}`);
     check(r.cards === 0, 'verse installatie toont geen kaarten', `cards=${r.cards}`);
     check(/Welkom/.test(r.sub), 'verse installatie verwelkomt', r.sub);
     check(/eerste ster/.test(r.addLabel), 'de knop noemt de eerste ster', r.addLabel);
-    check(r.hintShown, 'de back-up-hint staat er bij nul sterren', 'verborgen');
-    // en hij is een knop: één tik en je staat bij "Back-up terugzetten"
-    await page.click('#restore-hint');
+    check(r.hintShown && r.hintHref === 'over/index.html', 'bij nul sterren zegt één stille regel wat het spel is', JSON.stringify(r));
+    // terugzetten zit onder het tandwiel: zonder sterren opent Voor ouders meteen daar
+    await page.click('#btn-gear');
+    await page.click('#gear-menu .gear-item.parents');
     await page.waitForTimeout(300);
     const naHint = await page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id, tab: setTab,
       terugzetten: !!document.getElementById('set-import'),
     }));
     check(naHint.scherm === 'screen-settings' && naHint.tab === 'beheer' && naHint.terugzetten,
-      'de hint brengt je meteen bij terugzetten', JSON.stringify(naHint));
+      'zonder sterren brengt Voor ouders je meteen bij terugzetten', JSON.stringify(naHint));
     check(r.stored === null, 'een verse start schrijft nog niets weg', `stored=${r.stored && r.stored.slice(0, 40)}`);
     await ctx.close();
   }
@@ -926,12 +928,14 @@ function check(ok, label, detail) {
 
   /* ========== 7d-quater · Geen trilmotor, of trillen uit ==========
    * buzz() is de enige plek waar de app aan navigator.vibrate komt, en hij kijkt
-   * zelf naar db.haptics en naar of de browser het überhaupt kan. Dat is precies
+   * zelf of de browser het überhaupt kan. Dat is precies
    * wat een aankomsttik nodig heeft, en de reden om er geen tweede naast te zetten:
    * een eigen aanroep zou allebei die vangnetten missen én de tik van sndCoin
    * afbreken (navigator.vibrate begint opnieuw in plaats van erbij).             */
   {
-    for (const [naam, haptics, motor] of [['trillen uit', false, true], ['geen trilmotor', true, false]]) {
+    /* Een oude save met haptics:false: er is geen schakelaar meer (trillen volgt
+       het toestel, zie "= Trilfeedback"), dus die tikt nu gewoon één keer. */
+    for (const [naam, haptics, motor, tikt] of [['oude save met trillen uit', false, true, 1], ['geen trilmotor', true, false, 0]]) {
       const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
       await cacheFonts(c);
       const page = await c.newPage();
@@ -965,8 +969,8 @@ function check(ok, label, detail) {
         const st = document.querySelector('.tour-stop[data-lvl="24"]');
         return { buzz: window.__buzz.slice(), aangekomen: !!st && !!st.querySelector('.tour-hero') };
       });
-      check(r.buzz.length === 0 && r.aangekomen,
-        `${naam}: de reis loopt gewoon af, er trilt niets`, JSON.stringify(r));
+      check(r.buzz.filter(v => typeof v === 'number').length === tikt && r.aangekomen,
+        `${naam}: de reis loopt gewoon af, ${tikt ? 'met één tik (het toestel beslist)' : 'er trilt niets'}`, JSON.stringify(r));
       await c.close();
     }
   }

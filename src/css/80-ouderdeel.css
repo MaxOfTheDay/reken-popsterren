@@ -226,10 +226,14 @@
     .segmented { gap: 3px; padding: 3px; }
     .segmented button { font-size: var(--tx-label); padding: 10px 4px; }
   }
-  /* blauw = actieve navigatie/keuze (zelfde taal als .tab-btn.active in de
-     kleedkamer en .nav-item.active in de vaste navigatie) -- paars blijft
-     gereserveerd voor gewone (niet-navigatie) keuzes, goud voor spelen/verdiend */
-  .segmented button.on { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+  /* blauw = "hier sta je" (zelfde taal als .tab-btn.active in de kleedkamer en
+     .nav-item.active in de vaste navigatie) -- paars blijft gereserveerd voor
+     gewone (niet-navigatie) keuzes, goud voor spelen/verdiend.
+     En nu ook hetzelfde MATERIAAL: hier stond nog de dekkende cyaan pil met
+     donkere letter die de kleedkamer al eerder kwijtraakte (zie .tab-btn.active),
+     het felste ding van het ouderdeel. Doorschijnend blauw met een ring, net als
+     de tabbalk onderin. */
+  .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
   /* korte, subtiele bevestiging na elke automatische opslag -- verschijnt even
      in de anders lege rechterkop-cel, geen aparte "Opslaan"-knop nodig */
   .saved-pill {
@@ -436,12 +440,14 @@
   /* FASE 5D.1 -- de moduskeuze een slag lager: opgemeten 74 -> 62px (16%). Ze
      was zo hoog dat ze als de hoofdknop van een spel las in plaats van als de
      bovenste keuze van een instellingenscherm. Het raakvlak blijft ruim boven de
-     44px, en het icoon, het woord, het vinkje en de twee gelijke helften blijven
-     alle vier staan. */
+     44px, en het icoon, het woord en de twee gelijke helften blijven staan.
+     Het vinkje achter het woord is weg: in het hele ouderdeel en op het
+     maakformulier zegt de paarse vulling "gekozen", en verder niets. */
   .mode-row { gap: 9px; }
   .mode-row .chip.gestapeld { gap: 2px; padding: 7px 8px 8px; font-size: var(--tx-label); min-width: 96px; }
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
-  .mode-row .chip.gestapeld.on .mc-label::after { content: ' ✓'; }
+  /* Wie: meisje of jongen boven het naamveld in Beheer (zie beheerPanelHtml) */
+  #set-base { margin-bottom: 10px; }
   /* Dezelfde vorm, een maat kleiner: drie op een rij op een telefoon van 390,
      en op 320 wikkelt hij naar 2 + 1 in plaats van de woorden af te knijpen. */
   .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
@@ -573,6 +579,12 @@
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
+  /* nog niet gekozen wie: een schim met een vraagteken (zie renderNewStar) */
+  .newstar-preview.wacht .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
+  .ns-vraag {
+    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
+    font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  }
   .newstar-preview .deco { display: none; }
   /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
      toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
@@ -647,6 +659,20 @@
      ouder in -- precies hetzelfde verschil als in het ouderdeel zelf, en meteen
      een rangorde op het vel (wat het kind kiest is groter dan wat de ouder zet). */
   #screen-newstar .chip.swatch { min-height: 44px; box-sizing: border-box; }
+  /* ...en sinds het woord eraf is, is het bolletje zelf de knop: 48 rond, de kleur
+     30 groot erin. Gekozen = de paarse vulling als ring, zoals elke keuze hier. */
+  #screen-newstar .chip.swatch {
+    width: 48px; height: 48px; min-height: 48px; padding: 0; gap: 0;
+    justify-content: center; border-radius: 50%;
+  }
+  #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
+  #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
+  /* "Voor papa of mama": waar het kinderdeel ophoudt (zie renderNewStar) */
+  .ns-ouder {
+    display: flex; align-items: center; gap: 10px; margin: 2px 0 10px;
+    font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid); opacity: .75;
+  }
+  .ns-ouder::before, .ns-ouder::after { content: ''; flex: 1; height: 1px; background: var(--paper-border); }
   /* De gekozen pil houdt zijn volle paarse vulling -- dát is de taal van "dit
      staat aan" in de hele app en die hoort hier niet anders te zijn. Wat wél
      weggaat is de gekleurde slagschaduw eronder (.chip.on zet er een paarse
@@ -886,6 +912,8 @@
   .grens-tip .tip-klein { color: var(--paper-ink-muted); }
   /* geen stem op dit toestel (zie stemNotitie): een gewone notitie, met wat lucht erboven */
   .stem-notitie { margin-top: 10px; }
+  /* de knop eronder, op een eigen regel: één tik en de notitie is weg */
+  .stem-notitie .stem-aan { display: flex; margin-top: 8px; }
 
   /* ---- Modal (oudervraag) ---- */
   /* De padding op de achtergrond is niet cosmetisch: zonder stond een venster van

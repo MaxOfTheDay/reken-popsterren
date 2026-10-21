@@ -2585,8 +2585,19 @@ const P = () => db.profiles[cur];
 /* ================= Trilfeedback (haptics) ================= */
 // Werkt op mobiele browsers die de Vibration API ondersteunen (Android/Chrome).
 // Staat los van geluid, zodat trillen ook aan kan met de app op stil.
+/* Er is geen eigen schakelaar meer: trillen volgt het toestel. Een iPhone of iPad
+   kan vanuit een webpagina helemaal niet trillen (daar stond de rij al niet), en
+   een recente Android legt web-trillingen stil met zijn eigen "Trillen"-schakelaar.
+   Elke trilling is kort en hoort bij een klankje (zie de SFX-tabel), dus een tweede
+   knop in het enige paneel waar een kind bij kan was er een te veel.
+   db.haptics blijft in de opslag staan (oude saves, back-ups), maar wordt niet
+   meer gelezen: wie hem ooit uitzette, voelt de tikjes weer -- het toestel beslist. */
 function buzz(pattern) {
-  if (!db.haptics) return;
+  /* Vóór de eerste tik weigert Chrome elke trilling, en zet hij er een fout voor in
+     de console. Dat gebeurt alleen als een scherm zichzelf opent zonder tik -- een
+     kijkstand (?debug&wereld=...&screen=end) of een test. Hier stond toen nog de
+     schakelaar voor (de kijkstanden zetten trillen uit); nu is het deze vraag. */
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* geen trilmotor */ }
 }
 
@@ -2689,7 +2700,7 @@ function noot(freq, dur, delay, type, vol) {
    Eén noot is [hertz, duur, uitstel, golfvorm, versterking]; duur en uitstel in
    seconden. Staat er 0 als hertz, dan komt de toon uit `ladder` (op volgnummer)
    of uit `keuze` (willekeurig). `tril` is het trilpatroon dat erbij hoort -- zie
-   buzz(), die zelf al naar db.haptics en naar de trilmotor kijkt.
+   buzz(), die zelf al naar de trilmotor kijkt.
 
    ELKE TRILLING STAAT HIER, naast het klankje waar ze bij hoort, en nergens
    anders: een losse buzz() vlak ná een klankje breekt diens trilling af (een
@@ -2987,14 +2998,9 @@ async function keepAwake() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });   // fallback: browsers die een gebruikersgebaar eisen
 keepAwake();
-function toggleHaptics() {
-  db.haptics = !db.haptics; save();
-  renderGearMenu();
-  if (db.haptics) buzz(20);   // even voelen dat trillen nu aan staat
-}
 
 /* ---- Instellingen-menu onder het tandwiel ---- */
-// Zet de aan/uit-labels goed en verbergt "Trillen" op apparaten zonder trilmotor.
+// Zet de aan/uit-labels goed: onder het tandwiel en in het stopvenster van een show.
 function renderGearMenu() {
   const setRow = (id, stateId, on, icoOn, icoOff) => {
     const item = $(id), st = $(stateId);
@@ -3008,17 +3014,6 @@ function renderGearMenu() {
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
   // dezelfde schakelaar in het stopvenster van een show (zie quit-modal)
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
-  const hi = $('gear-haptics');
-  if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
-  /* Trillen houdt zijn eigen icoon, ook als hij uit staat: 📴 werd op de meeste
-     toestellen een fel oranje blokje met OFF erin, het luidste ding in het paneel
-     -- en dat voor een schakelaar die net stíl gezet is. De pil zegt al "Uit";
-     het icoon wordt alleen gedempt. 🔇 bij het geluid blijft wel: een doorgestreepte
-     luidspreker is dé tekening voor stil, en hij schreeuwt niet. */
-  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
-  // "Speel als app" staat er alleen zolang het spel nog in de browser draait
-  const app = $('gear-app');
-  if (app) app.style.display = appUitlegNodig() ? '' : 'none';
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -4229,9 +4224,9 @@ function renderProfiles() {
     add.querySelector('.at-tekst').textContent = n ? 'Nieuwe ster' : 'Maak je eerste ster';
     add.setAttribute('aria-label', n ? 'Nieuwe ster maken' : 'Maak je eerste ster');
   }
-  // een familie met een nieuw toestel wil hier geen kind maken maar haar back-up
-  const hint = $('restore-hint');
-  if (hint) hint.style.display = n ? 'none' : 'block';
+  // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
+  const hint = $('over-hint');
+  if (hint) hint.style.display = n ? 'none' : 'flex';
   renderGearMenu();
   appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
@@ -4245,7 +4240,12 @@ function renderProfiles() {
      geen plek: hier staan zes poppen naast elkaar en er is er één van jou. De
      tegels staan daarom stil -- ook geen .idle, dat stond er al niet op. */
 }
-function selectProfile(key) { cur = key; goMap(); }
+/* laatsteSter: wie er deze keer het laatst speelde. goProfiles wist cur, maar
+   een ouder die na het spelen het tandwiel opent, wil meestal net dát kind zien
+   (zie openSettings). Alleen in het geheugen: na herladen begint het ouderdeel
+   gewoon weer bij de eerste ster. */
+let laatsteSter = null;
+function selectProfile(key) { cur = key; laatsteSter = key; goMap(); }
 
 /* ================= Wat er geladen wordt, en wanneer =========================
    Drie soorten spullen, en ze horen op drie verschillende momenten binnen te
@@ -7795,7 +7795,7 @@ function runTravel(t) {
       { duration: 450, easing: 'ease-out' });
     /* HET TIKJE VAN AANKOMEN ZIT IN sndAankomst -- tril 15, zie de SFX-tabel. Niet
        bij elke pas dus (dat zou een ratel zijn en geen aankomst), maar één keer,
-       hier. buzz() kijkt zelf al naar db.haptics en naar wat het toestel kan;
+       hier. buzz() kijkt zelf al naar wat het toestel kan;
        zonder trilmotor gebeurt er gewoon niets. vier() draait precies één keer per
        reis -- vanuit finish(), vanuit de wereldwissel, of meteen bij beperkte
        beweging -- en nooit opnieuw bij een hertekening, dus dubbel kan het niet.
@@ -12047,18 +12047,30 @@ function closeNewStar() {
   if (newStarReturn === 'settings') { renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else goProfiles();
 }
+/* Haar en kleren als kleur alleen: een rondje per kleur, de naam alleen voor de
+   schermlezer (aria-label) en als tooltip. Hier stonden tien pillen met een woord
+   ("Blond", "Groen") dat een kind van vijf niet leest -- het kijkt naar het
+   bolletje, dus is het bolletje nu de knop. En het formulier is twee rijen korter,
+   zodat pop, haar en kleren op een gewone telefoon samen in beeld staan. */
 function swatchChips(group, ids, sel) {
   return ids.map(id => {
     const it = item(id);
-    return `<button class="chip swatch${id === sel ? ' on' : ''}" data-g="${group}" data-v="${id}">`
-      + `<span class="sw" style="background:${it.color}"></span>${esc(it.name)}</button>`;
+    return `<button class="chip swatch${id === sel ? ' on' : ''}" data-g="${group}" data-v="${id}"`
+      + ` aria-label="${esc(it.name)}" aria-pressed="${id === sel}" title="${esc(it.name)}">`
+      + `<span class="sw" style="background:${it.color}"></span></button>`;
   }).join('');
 }
 function renderNewStar() {
   const n = newStar;
   const s = n.settings;
   // een echt profiel als voorbeeld: precies wat de ster straks wordt, geen namaak
-  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base });
+  /* Zolang "wie ben je?" open staat, zegt het voorbeeld ook niets: een gedimde
+     figuur met een vraagteken. Hier stond meteen een meisje -- de standaardfiguur
+     -- terwijl die vraag met opzet géén voorkeuze heeft (zie openNewStar). De korte
+     haren van de jongen zijn als schim het minst uitgesproken; welke figuur het
+     ook is, je ziet er alleen de omtrek van. */
+  const wacht = !n.base;
+  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
   const ok = !!n.name.trim() && !!n.base;
   // Elke chip-tik bouwt dit paneel opnieuw op. Met een opengeklapt paneel eronder
   // is dat merkbaar: zonder de scrolstand vast te houden springt het formulier
@@ -12076,7 +12088,7 @@ function renderNewStar() {
      papier, erbuiten is het dezelfde pop op dezelfde poort als op de
      sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -12092,6 +12104,9 @@ function renderNewStar() {
           <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
       </div>
       <div class="ns-groep">
+        <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
+             bovenaan het blad "als app". Geen kaart en geen uitleg: één lijntje. -->
+        <div class="ns-ouder">Voor papa of mama</div>
         <div class="set-field"><label class="lbl">Hoe speel je?</label>
           <div class="chip-row mode-row" id="newstar-track">
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
@@ -12272,10 +12287,12 @@ let setTab = 'voortgang';
 function openSettings() {
   closeGearMenu();
   // cur is hier bijna altijd null (het tandwiel staat alleen op het keuzescherm,
-  // en goProfiles wist cur), dus normaal valt hij terug op de eerste ster. Nul
+  // en goProfiles wist cur). Dan de ster die net speelde (laatsteSter), en pas
+  // daarna de eerste: wie na het spelen kijkt, kijkt naar dat kind. Nul
   // sterren mag ook: dan is Beheer het enige onderdeel, want dáár zit
   // "Back-up terugzetten" -- de reden dat een nieuw toestel hier komt.
-  setKey = (cur && db.profiles[cur]) ? cur : (profileKeys()[0] || null);
+  const wie = [cur, laatsteSter].find(k => k && db.profiles[k]);
+  setKey = wie || profileKeys()[0] || null;
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
@@ -12340,13 +12357,14 @@ function statusKaartHtml(p) {
   ];
   if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
   // de stem: in de telmodus de helft van elke vraag (en bij rekenen met Voorlezen)
-  const stem = stemAan(p) ? stemNotitie() : '';
+  const stem = stemAan(p) ? stemNotitie(p.name) : '';
   return `<div class="set-card vg-kaart">
     <h2 class="vg-kop">Hoe gaat het met ${esc(p.name)}?</h2>
     <div class="vg-status ${klas}"><span class="vg-dot" aria-hidden="true">${ico}</span>
       <div><b>${kop}</b><span>${zin}</span></div></div>
     <div class="vg-getallen">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}</div>
-    ${stem ? `<div class="note stem-notitie">${stem}</div>` : ''}
+    ${stem ? `<div class="note stem-notitie">${stem}${!db.sound
+      ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
   </div>`;
 }
 /* Wat elke fase in mensentaal oefent. COUNT_STAGE_LABELS (bij Oefenen) zijn de
@@ -12525,9 +12543,13 @@ function statsPanelHtml(p) {
 /* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
    stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
    weg en klinkt er geen telwoord meer. Leeg als alles in orde is. Het geluid
-   eerst: dat is één tik, en dan doet de rest er niet toe. */
-function stemNotitie() {
-  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+   eerst: dat is één tik, en dan doet de rest er niet toe.
+
+   Die tik zit er nu ook bij (#stem-aan, zie statusKaartHtml): hier stond "zet het
+   aan met het tandwiel op het beginscherm", en dan moest een ouder het ouderdeel
+   uit, het tandwiel in en weer terug -- voor één schakelaar. */
+function stemNotitie(naam) {
+  if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
   if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
   return '';
@@ -12916,8 +12938,8 @@ function ouderVoetHtml() {
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
-// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de rij
-// onder het tandwiel (gear-over, in de markup van index.html).
+// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de
+// stille regel op het lege beginscherm (over-hint, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
@@ -12945,8 +12967,8 @@ function deelOver() {
 }
 /* Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen -- en ook
    niets om een back-up van te maken. Wie hier zonder sterren komt, komt bijna
-   altijd via de hint op de sterrenkeuze ("Al een back-up?"): een nieuw toestel,
-   en een back-up die terug moet. Dus is terugzetten hier de volle knop, en staat
+   altijd om een back-up terug te zetten: een nieuw toestel, of de app op het
+   beginscherm na Safari (het blad "als app" wijst hierheen: ⚙️ → Voor ouders). Dus is terugzetten hier de volle knop, en staat
    er geen "Back-up maken" -- die schreef met nul sterren een leeg bestand weg dat
    er precies zo uitzag als een echte back-up. Eén kaart, want het is één vraag:
    waar begin je? Een ster maken is de tweede mogelijkheid, en die staat hier
@@ -12989,10 +13011,12 @@ function beheerEmptyHtml() {
 function beheerPanelHtml(p) {
   return `<div class="settings-panel">
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Naam</label></h2></div></div>
+      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Wie</label></h2></div></div>
       <div class="set-field">
-        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
-        <div class="note">Wijzigingen worden meteen opgeslagen.</div></div>
+        <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
+          `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
+          + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
+        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
     </div>
     <div class="set-card secundair">
       <div class="set-card-head"><div class="ico">🔄</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor <span class="set-naam">${esc(p.name)}</span> — en niet terug te draaien</div></div></div>
@@ -13361,6 +13385,18 @@ function bindSettings(p, s) {
     );
   });
   on('set-newstar', 'onclick', () => openNewStar('settings'));
+  /* Meisje of jongen, ook na het maken. Op het maakformulier is dat de enige vraag
+     zonder voorkeuze, en een verkeerde tik was daarna nergens meer recht te zetten
+     dan door de ster te verwijderen -- met al haar voortgang. Haar en kleren gaan
+     mee naar de andere figuur, net als in het voorbeeld van het formulier. */
+  const basis = $('set-base');
+  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    if (p.base === c.dataset.v) return;
+    sndClick();
+    p.base = c.dataset.v;
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-delete', 'onclick', () => {
     showConfirm(
       '⚠️ Ster verwijderen?',
@@ -13380,6 +13416,9 @@ function bindSettings(p, s) {
       }
     );
   });
+  // het geluid aan, vanaf de notitie in Voortgang (zie stemNotitie): dezelfde
+  // schakelaar als onder het tandwiel, en dan staat de notitie er niet meer
+  on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
@@ -13695,7 +13734,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
   html += `<p class="ab-uitleg">${uitleg}</p>` + (tweede ? `<div class="ab-noot">${tweede}</div>` : '');
   return { html, installeer: false };
 }
-// vanKnop: geopend via het knopje (dan telt "Niet nu"), anders via het menu.
+// vanKnop: geopend via het knopje linksboven (dan telt "Niet nu").
 function openAppBlad(vanKnop) {
   closeGearMenu();
   sndClick();
