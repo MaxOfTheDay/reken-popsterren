@@ -7351,6 +7351,50 @@
 
 
 
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    #screen-dress {
+      --kolom: 1400px;
+      --pop-h: clamp(240px, min(calc(100vh - 340px), 32vw), 560px);
+    }
+    #screen-dress.active {
+      display: grid; grid-template-columns: calc(var(--pop-h) * 1.19 + 56px) minmax(0, 1fr);
+      column-gap: 22px; align-items: start; align-content: start;
+      padding-left: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
+      padding-right: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
+    }
+    #screen-dress > .hub-sticky {
+      grid-column: 1; grid-row: 1 / span 2; width: auto;
+      margin: calc(var(--rand, 12px) * -1) 0 0 0;
+      padding-left: 14px; padding-right: 14px;
+    }
+
+
+    #screen-dress > .item-grid {
+      grid-column: 2; grid-row: 1; max-width: none; margin-top: 60px; --kaart-min: 130px;
+    }
+    #screen-dress .shop-tabs-wrap { max-width: 100%; margin-top: 12px; }
+    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13180,7 +13224,11 @@ function speak(text, opts) {
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
-    speechSynthesis.cancel();
+
+
+
+
+    if (!opts.wacht && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
@@ -13189,9 +13237,33 @@ function speak(text, opts) {
     u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
     u.rate = opts.rate || 0.85;
     u.pitch = opts.pitch || 1.15;
-    if (opts.onEnd) u.onend = opts.onEnd;
+    if (opts.onStart) u.onstart = opts.onStart;
+
+
+    if (opts.onEnd) { let af = false; u.onend = u.onerror = () => { if (!af) { af = true; opts.onEnd(); } }; }
     speechSynthesis.speak(u);
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
+}
+
+
+
+
+
+
+const STEM_ADEM = 250;
+const STEM_MAX = 3200;
+function zegEnDan(text, opts, rust, dan) {
+  let begon = false, klaar = false, wacht = false, gedaan = false;
+  const een = () => { if (!gedaan) { gedaan = true; dan(); } };
+  speak(text, Object.assign({}, opts, {
+    onStart: () => { begon = true; },
+    onEnd: () => { klaar = true; if (wacht) setTimeout(een, STEM_ADEM); },
+  }));
+  setTimeout(() => {
+    if (!begon || klaar) { een(); return; }
+    wacht = true;
+    setTimeout(een, Math.max(0, STEM_MAX - rust));
+  }, rust);
 }
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   refreshVoices();
@@ -16020,7 +16092,9 @@ function starRevealBeat(lvl, cb) {
   const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
   setTimeout(cb, landt + 100);
 }
-function goMapNaShow() { sndClick(); goMap(naShowLvl); }
+
+
+function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
 
 
 
@@ -19268,7 +19342,6 @@ function renderCountAnswers(q, area) {
 
 function countAlong(objs, n, lead, drawId) {
   let i = 0;
-  speak(lead);
   const step = () => {
     if (!G || !G.count || i >= n) return;
     if (drawId != null && drawId !== countDrawId) return;
@@ -19279,7 +19352,10 @@ function countAlong(objs, n, lead, drawId) {
     i++;
     if (i < n) setTimeout(step, 620);
   };
-  setTimeout(step, 650);
+
+
+
+  zegEnDan(lead, null, 650, step);
 }
 function replayPrompt() {
   sndClick();
@@ -19382,18 +19458,28 @@ function countMissSpeak(q, val) {
 }
 
 
-function countReveal(q) {
+
+const REVEAL_RUST = 400;
+function countReveal(q, klaar) {
+  klaar = klaar || (() => {});
   const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
-  if (tile) {
-    tile.classList.add('good');
-    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
+  if (!tile) { klaar(); return; }
+  tile.classList.add('good');
+  const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
 
-    if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
-    else if (q.ans === 0) speak('Nul. Er is niets meer.');
+  if (tile.querySelector('.ct-num')) { zegEnDan('Dit is de ' + numWord(q.ans) + '.', null, REVEAL_RUST, klaar); return; }
+  if (q.ans === 0) { zegEnDan('Nul. Er is niets meer.', null, REVEAL_RUST, klaar); return; }
 
 
-    else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
-  }
+  let i = 0;
+  const c = () => {
+    if (!G || !G.count || i >= q.ans) return;
+    if (objs[i]) objs[i].classList.add('pop');
+    i++;
+    if (i < q.ans) { speak(numWord(i), { rate: 0.95 }); setTimeout(c, 560); }
+    else zegEnDan(numWord(i), { rate: 0.95 }, REVEAL_RUST, klaar);
+  };
+  setTimeout(c, 250);
 }
 
 
@@ -19551,7 +19637,8 @@ function onMemMatch(fromBtn) {
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
   if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
-  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
+
+  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']), { wacht: true });
 }
 function finishMemory(m) {
   const p = P();
@@ -20403,7 +20490,8 @@ function antwoordGoed(q, p, btnEl) {
 
 
 
-  speak('Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']));
+
+  const lof = 'Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']);
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }
   const g = G;
@@ -20424,7 +20512,10 @@ function antwoordGoed(q, p, btnEl) {
 
 
 
-  setTimeout(nextStep, encore || q.gold ? 1400 : 950);
+
+
+
+  zegEnDan(lof, null, encore || q.gold ? 1400 : 950, () => { if (G === g) nextStep(); });
 }
 
 
@@ -20477,9 +20568,11 @@ function tweedeMisser(q, p, btnEl) {
   if (btnEl) btnEl.classList.add('bad');
 
   if (G.count) {
-    countReveal(q);
     loseHeart();
-    toonVerder();
+
+
+    const show = G;
+    countReveal(q, () => { if (G === show) toonVerder(); });
     return;
   }
 
@@ -21461,8 +21554,14 @@ function rekBreedte() {
   if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
   if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
-  const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
-  const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
+
+
+
+
+
+  const w = rek.clientWidth - 1;
+  const n = Math.max(1, Math.floor((w + KAART_GAT) / (min + KAART_GAT)));
+  const b = Math.min((w - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
   rekBreedteBij = `${innerWidth}x${innerHeight}`;
