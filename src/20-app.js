@@ -2592,6 +2592,11 @@ const P = () => db.profiles[cur];
    db.haptics blijft in de opslag staan (oude saves, back-ups), maar wordt niet
    meer gelezen: wie hem ooit uitzette, voelt de tikjes weer -- het toestel beslist. */
 function buzz(pattern) {
+  /* Vóór de eerste tik weigert Chrome elke trilling, en zet hij er een fout voor in
+     de console. Dat gebeurt alleen als een scherm zichzelf opent zonder tik -- een
+     kijkstand (?debug&wereld=...&screen=end) of een test. Hier stond toen nog de
+     schakelaar voor (de kijkstanden zetten trillen uit); nu is het deze vraag. */
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* geen trilmotor */ }
 }
 

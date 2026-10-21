@@ -12765,6 +12765,11 @@ const P = () => db.profiles[cur];
 
 
 function buzz(pattern) {
+
+
+
+
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { }
 }
 
