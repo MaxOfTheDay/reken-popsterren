@@ -7401,7 +7401,11 @@ const STER_PAD = 'M12 2.6l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.62'
 function starRowHTML(n, gespeeld) {
   const got = Math.max(0, Math.min(3, n | 0));
   if (!gespeeld && !got) return '';
-  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true">`
+  /* Twee paden per ster: .cs-rand is de donkere zoom erachter (zie "De sterren
+     onder de halte"), zodat er geen tabje en geen filter nodig is. .leeg op de
+     svg zelf is de haak voor het eenmalige fonkelen. */
+  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true"${vol ? '' : ' class="leeg"'}>`
+    + `<path class="cs-rand" d="${STER_PAD}"/>`
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
 }
@@ -10923,6 +10927,9 @@ function itemThumb(it, base) {
 
 let shopCat = 'dress';
 let shopSelectedId = null;
+/* Het stuk dat in de podiumbalk gekozen is (zie renderPodiumBar): een stuk van het
+   gekozen podium dat nog niet van haar is. Leeg = de balk gaat over het hele podium. */
+let podiumStuk = null;
 let shopJustBoughtId = null;
 /* Het "Nieuw!"-venster loopt op een timer (zie confirmShopBuy). Er is er precies
    een tegelijk: wie snel twee dingen achter elkaar koopt, of tussendoor iets
@@ -10978,7 +10985,7 @@ function openKleedkamerItem(id) {
      podium, dus daar gaan we heen, met dat podium gekozen. */
   const p = P();
   const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
-  shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
+  shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; podiumStuk = null; dressReturnTo = null;
   toonHub('screen-dress');
   renderShop();
   if (podium) id = podium.id;
@@ -11200,8 +11207,9 @@ function renderShop() {
          waar het staat. */
       const herbouw = !!shopJustBoughtId;
       clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id;
+      shopJustBoughtId = null; shopSelectedId = it.id; podiumStuk = null;
       herbouw ? renderShop() : paintShop();
+      if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
     };
     kaarten.appendChild(card);
   });
@@ -11359,6 +11367,9 @@ function paintShop() {
   }
   $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
+  // de podiumbalk is drie keer zo hoog als de gewone lade: het rek krijgt eronder meer ruimte
+  const lade = $('dress-bar');
+  $('screen-dress').classList.toggle('met-podiumbalk', lade.classList.contains('podium-bar') && lade.style.display !== 'none');
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
@@ -11366,6 +11377,13 @@ function paintShop() {
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
+  /* Een podium past ze als geheel: de schijf plus de stukken die er te zien
+     zijn, en het stuk dat in de balk gekozen is. Zo staat het doel in de
+     spiegel. Een schat op slot blijft weg -- dat raadsel is van het feestje. */
+  if (it.cat === PODIA_CAT && it.stukken) {
+    podiumStukken(it).forEach(s => { if (tagStand(s, p) !== 'slot') preview.equipped[s.cat] = s.id; });
+    if (podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
+  }
   preview.equipped[it.cat] = it.id;
   return preview;
 }
@@ -11519,28 +11537,51 @@ function renderDressBar(it, p) {
 function renderPodiumBar(bar, st, p) {
   if (podiumVanJou(p, st)) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   const stukken = podiumStukken(st);
+  // het gekozen stuk geldt alleen zolang het bij dit podium hoort en nog te koop is
+  if (podiumStuk && (!stukken.some(it => it.id === podiumStuk) || bezit(p, item(podiumStuk)))) podiumStuk = null;
   const kaartjes = stukken.map((it, i) => (i ? '<b class="pb-plus" aria-hidden="true">+</b>' : '')
-    + `<button class="mini-kaart${tagStand(it, p) === 'slot' ? ' op-slot' : ''}" type="button" data-stuk="${it.id}" aria-label="${esc(it.full || it.name)}">`
+    + `<button class="mini-kaart" type="button" data-stuk="${it.id}" aria-label="${esc(it.full || it.name)}">`
     + itemThumb(it) + '<span class="item-status"></span></button>').join('');
-  const prijs = podiumPrijs(p, st);
   const wereldIdx = podiumWereldIdx(st);
+  /* Eén knop. Is er een stuk gekozen, dan gaat hij over dat stuk; anders over
+     wat er aan het hele podium nog ontbreekt. */
+  const los = podiumStuk ? item(podiumStuk) : null;
+  const prijs = los ? los.price : podiumPrijs(p, st);
   let knop = '';
-  if (podiumOpSlot(p, st)) knop = '<button class="btn small" id="db-speel">🗺️ Speel</button>';
+  if (!los && podiumOpSlot(p, st)) knop = '<button class="btn small" id="db-speel">🗺️ Speel</button>';
   else if (prijs > p.diamonds) knop = `<span class="db-sub">Nog <span class="db-highlight">${prijs - p.diamonds}</span> 💎</span>`
     + '<button class="btn small" id="db-earn">Speel</button>';
   else knop = `<button class="btn small" id="db-buy">Koop · ${prijs} 💎</button>`;
   bar.innerHTML = `<div class="pb-stukken">${kaartjes}</div><div class="pb-knop">${knop}</div>`;
+  /* De stukjes zijn kleine kaartjes uit het rek, en ze doen ook wat die doen
+     (zie de kaartklik in renderShop): van jou = één tik doet het aan of uit,
+     nog niet van jou = kiezen (blauw) en passen, 🔒 = het bubbeltje. Alleen
+     ga je nergens heen: het podium blijft gekozen, en na een aankoop schuift
+     de keuze door naar het volgende stuk dat nog ontbreekt. */
   bar.querySelectorAll('.mini-kaart').forEach(k => {
     const it = item(k.dataset.stuk);
-    zetTag(k.querySelector('.item-status'), tagStand(it, p), it.price);
+    const stand = tagStand(it, p);
+    k.classList.toggle('op-slot', stand === 'slot');
+    k.classList.toggle('equipped', stand === 'on');
+    k.classList.toggle('owned', stand === 'owned');
+    k.classList.toggle('selected', it.id === podiumStuk);
+    zetTag(k.querySelector('.item-status'), stand, it.price);
     k.onclick = () => {
-      if (tagStand(it, P()) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
-      sndClick(); openKleedkamerItem(it.id);
+      const q = P();
+      if (tagStand(it, q) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
+      if (bezit(q, it)) {
+        if (q.equipped[it.cat] !== it.id) return equipShopItem(it.id, st.id);
+        if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat, st.id);
+        sndClick(); tapDance('shop-avatar'); return;
+      }
+      sndClick();
+      podiumStuk = podiumStuk === it.id ? null : it.id;
+      paintShop();
     };
   });
   if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldIdx); };
   if ($('db-earn')) $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
-  if ($('db-buy')) $('db-buy').onclick = () => confirmShopBuy(st.id);
+  if ($('db-buy')) $('db-buy').onclick = () => (los ? confirmShopBuy(los.id, st.id) : confirmShopBuy(st.id));
 }
 /* Het bubbeltje bij een 🔒: 🗺️ + het wereldteken -> 🔓. Twee tellen, geen
    woorden (wel gesproken in de telmodus), en een tik erop brengt je naar die
@@ -11574,11 +11615,25 @@ function naarWereldKaart(idx) {
   if (idx >= 0) reisDoel = idx;
   goMap();
 }
+/* Het podium dat je aantikt hoort in beeld te blijven, en de balk die dan opkomt
+   kan er net overheen vallen. Dan schuift de houder waar het rek in scrolt het
+   kaartje tot boven de balk -- welke houder dat ook is: hij wordt opgezocht en
+   niet aangenomen. (scrollIntoView met een scroll-margin deed hier niets.) */
+function zichtbaarBovenBalk(id) {
+  const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
+  const bar = $('dress-bar');
+  if (!kaart || !bar || bar.style.display === 'none' || !kaart.getBoundingClientRect) return;
+  const teveel = kaart.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  if (teveel <= 0) return;
+  let houder = kaart.parentElement;
+  while (houder && !(houder.scrollHeight > houder.clientHeight && /auto|scroll/.test(getComputedStyle(houder).overflowY))) houder = houder.parentElement;
+  if (houder && houder.scrollBy) houder.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+}
 // De schijf in de spiegel is een snelkoppeling naar Podia.
 function openPodia(ev) {
   if (ev) ev.stopPropagation();
   sndClick();
-  shopCat = PODIA_CAT; shopSelectedId = null;
+  shopCat = PODIA_CAT; shopSelectedId = null; podiumStuk = null;
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -11739,10 +11794,12 @@ function flyDiamonds(fromEl, toEl, n, duur) {
     { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : duur - 20);
 }
 
-function confirmShopBuy(id) {
+/* blijf: het podium dat gekozen blijft als dit stuk vanuit zijn balk gekocht
+   wordt (zie renderPodiumBar). Zonder blijf gaat de keuze weg, zoals altijd. */
+function confirmShopBuy(id, blijf) {
   const it = item(id);
   const p = P();
-  if (bezit(p, it)) return equipShopItem(id);
+  if (bezit(p, it)) return equipShopItem(id, blijf);
   // Een wereldbeloning heeft geen prijs en is dus niet te koop, en een podium
   // zonder zijn schat ook niet. De balk biedt de knop niet eens aan; dit is het
   // slot op de deur, niet de deur zelf.
@@ -11775,8 +11832,11 @@ function confirmShopBuy(id) {
   /* De lade ging over "wil je dit kopen?" en dat is beantwoord: hij verdwijnt, en
      wat ervoor in de plaats komt is het gouden "Nieuw!" op het kaartje plus de pop
      die het al draagt. Het kaartje wordt hieronder op zijn id opgezocht en niet
-     meer op .selected, want die klasse hoort nu alleen nog bij kiezen om te kopen. */
-  shopSelectedId = null;
+     meer op .selected, want die klasse hoort nu alleen nog bij kiezen om te kopen.
+     Kwam de aankoop uit de podiumbalk, dan blijft die staan en kiest hij het
+     volgende stuk dat nog te koop is -- de reeks loopt door zonder te zoeken. */
+  shopSelectedId = blijf || null;
+  podiumStuk = blijf ? (podiumRest(p, item(blijf)).find(x => tagStand(x, p) !== 'slot') || { id: null }).id : null;
   clearTimeout(shopBoughtTimer);        // een vorig "Nieuw!"-venster is hiermee voorbij
   shopJustBoughtId = it.id;
   sndCoin();
@@ -11797,7 +11857,7 @@ function confirmShopBuy(id) {
      een trofeetoast die precies over de pop viel op het moment dat zij het
      middelpunt moest zijn. De lade gaat wél meteen weg: de vraag "kopen?" is
      beantwoord, en een knop die blijft staan nodigt uit om nog eens te tikken. */
-  renderDressBar(null, p);
+  renderDressBar(blijf ? item(blijf) : null, p);
   flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
   const stil = motionOff();
   // nieuwe trofee klaar? stipje aan + vriendelijke hint -- na het podium, als dat er is
@@ -11837,7 +11897,8 @@ function koopKomtAan(it) {
      element en krijgt het er alleen zijn nieuwe staat bij. Dat is wat de pop en
      de gouden glans nodig hebben: iets om op te starten dat er al stond. */
   paintShop();
-  const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
+  const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`)
+    || $('dress-bar').querySelector(`.mini-kaart[data-stuk="${it.id}"]`);   // gekocht uit de podiumbalk
   koopVonken(kaart);                    // een klein boeketje boven het kaartje zelf
   sndAan();                             // hetzelfde klankje als aandoen: dat is wat er nu gebeurt
   const pop = $('shop-avatar');
@@ -11871,7 +11932,7 @@ const OPTIONELE_SPULLEN = ['mic', 'instrument', 'acc', 'pet'];
 
 /* Het omgekeerde van equipShopItem: de plek leeg, de rest blijft. Zelfde
    nawerk -- trofeecheck, opslaan, het rek bijwerken zonder het te herbouwen. */
-function unequipShopItem(cat) {
+function unequipShopItem(cat, blijf) {
   if (!OPTIONELE_SPULLEN.includes(cat) && cat !== PODIA_CAT) return;
   const p = P();
   if (!p.equipped[cat]) return;
@@ -11880,7 +11941,7 @@ function unequipShopItem(cat) {
   // van een podium afstappen = terug op Disco, het podium van iedereen
   p.equipped[cat] = cat === PODIA_CAT ? 'stage_disco' : null;
   shopJustBoughtId = null;
-  shopSelectedId = null;
+  shopSelectedId = blijf || null;   // uit de podiumbalk: het podium blijft gekozen
   sndClick();
   noticeReady(checkTrophies(p));
   save();
@@ -11888,7 +11949,7 @@ function unequipShopItem(cat) {
   tapDance('shop-avatar');
 }
 
-function equipShopItem(id) {
+function equipShopItem(id, blijf) {
   const it = item(id);
   const p = P();
   if (!bezit(p, it)) return;
@@ -11899,8 +11960,9 @@ function equipShopItem(id) {
   /* En géén keuze meer. "Gekozen" is sinds de tik-om-aan-te-doen één ding: het
      stuk dat je bekíjkt om te kopen. Bleef het hier staan, dan droeg de pop het
      stuk dat aanstaat terwijl de lade onderaan over datzelfde stuk nog iets
-     anders beweerde -- twee standen voor één kledingstuk. */
-  shopSelectedId = null;
+     anders beweerde -- twee standen voor één kledingstuk. Behalve in de
+     podiumbalk (blijf): daar is het podium gekozen, niet dit stuk. */
+  shopSelectedId = blijf || null;
   sndAan();
   // een outfit-combo kan een (geheime) trofee zijn — check dus ook bij het aandoen
   const trofees = checkTrophies(p);
