@@ -136,7 +136,13 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
           }
           if (r.kind !== 'chain') {
             const nums = [r.ans, ...(s2 ? [s2.a, s2.b, s2.right].filter(v => v !== '@').map(Number) : [])];
-            check(nums.every(v => v <= max), 'getallen blijven binnen de ingestelde grens', `${where} max=${max} zag ${nums}`);
+            // "tot" is de grens van plus en min; een tafel loopt altijd tot × 10
+            const grens = (r.op === 'x' || r.op === ':') ? 100 : max;
+            check(nums.every(v => v <= grens), 'getallen blijven binnen de ingestelde grens', `${where} max=${grens} zag ${nums}`);
+            if (s2 && (r.op === 'x' || r.op === ':')) {
+              const factor = r.op === 'x' ? (s2.a === '@' ? r.ans : Number(s2.a)) : (s2.right === '@' ? r.ans : Number(s2.right));
+              check(factor >= 1 && factor <= 10, 'een tafel loopt van × 1 tot × 10', `${where} zag ${r.tmpl}`);
+            }
           }
 
           /* --- antwoordknoppen --- */

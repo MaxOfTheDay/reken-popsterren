@@ -182,11 +182,11 @@ function check(ok, label, detail) {
     r = await page.evaluate(() => ({
       gekozenMax: document.querySelector('#set-max .chip.on').dataset.v,
       gekozenMode: document.querySelector('#set-mode .chip.on').dataset.v,
-      kop: document.querySelector('#screen-settings .set-card-head .sub').textContent,
+      kop: document.querySelector('#settings-profiles .active .tab-label').textContent,
     }));
     check(r.gekozenMax === '20' && r.gekozenMode === 'kies',
       'de velden tonen de waarden van het gekozen kind', JSON.stringify(r));
-    check(/Bas/.test(r.kop), 'en de kaart zegt over wie het gaat', r.kop);
+    check(/Bas/.test(r.kop), 'en de kiezer erboven zegt over wie het gaat', r.kop);
     // Bas naar de telmodus: dat mag Anna niet raken
     await page.click('#set-track .chip[data-v="count"]');
     await page.waitForTimeout(150);
@@ -507,6 +507,9 @@ function check(ok, label, detail) {
      onderweg nodig heeft. */
   {
     const { ctx, page } = await fresh();
+    // in de telmodus: de faseladder maakt Oefenen langer dan een telefoon (de
+    // rekenmodus past er sinds de twee kaarten op één scherm in, en valt niet te scrollen)
+    await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(300);
     const ruim = await page.evaluate(() => ({
