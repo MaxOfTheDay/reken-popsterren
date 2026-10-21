@@ -233,17 +233,33 @@ rest volgt eruit:
 
 | | |
 |---|---|
-| het schattenvak | `wereldSchatten()` leest `WORLDS` af — hij staat er meteen in, achteraan, met het medaillon van zijn eigen `theme` als raadsel |
-| de teller | `schatStand()` telt hem mee in "✨ Wereldschatten · 3 / 6" |
+| Podia | de schat is het eerste stuk van het podium van die wereld (zie hieronder); op dat kaartje en in de lade onderaan staat hij als 🔒 tot hij verdiend is |
 | het uitdelen | `grantWorldRewards()` deed dat al en weet niet hoeveel werelden er zijn |
 | de onthulling | `wereldFeest()` toont zijn `thumb()` en een *Aandoen*-knop |
 | de kaart | bij de laatste halte van die wereld staat een ✨ zolang hij nog te halen is |
-| de gewone laden | daar staat hij pas ín zodra hij verdiend is — een schat op slot ligt alleen in het schattenvak |
+| de gewone laden | daar staat hij pas ín zodra hij verdiend is — een schat op slot ligt alleen als 🔒 op zijn podium |
 | oude saves | wie die wereld al uit had krijgt hem stil bij het inladen (`grantHistoricRewards`) |
 
 Een wereld die nog niet uitgebracht is (`released: false`) verklapt zijn schat
-niet: het vak toont alleen wat er te halen valt, anders staat er een raadsel op
-de plank dat vandaag niemand open kan maken.
+niet: Podia toont alleen wat er te halen valt, anders staat er een slot in de
+lade dat vandaag niemand open kan maken.
+
+### Het podium van de wereld
+
+Elke wereld heeft één podium, en dat is wél een regel die je met de hand
+schrijft: een `stage`-regel in `ITEMS` (onder `// Podium`), met
+
+* `wereld: '<wereld-id>'` en `stukken: ['<id>', '<id>']` — de twee
+  spulletjes uit de winkel die samen met de schat het podium maken. Ze zitten
+  niet in de hoed-plek (daar zit de schat), niet samen in één plek, en een
+  spulletje hoort bij hoogstens één podium;
+* `vloer: [boven, midden, zijband, rand]` — vier kleuren, en `patroon` — de naam
+  van een `.pod-*`-patroon in `src/css/30-onderdelen.css`.
+
+Van jou is afgeleid (de drie stukken in `p.owned`), dus er komt niets in de
+opslag bij. `npm run test:kleedkamer` zaak H valt om als een uitgebrachte wereld
+geen podium heeft, of als de stukken niet kloppen. De studio schrijft dit podium
+(nog) niet mee: zet het erbij in dezelfde PR als de wereld.
 
 **Wat je dus níét schrijft:** geen ontgrendelcode, geen `verdiend`-lijstje in
 de opslag, geen tweede kaartsoort en geen regel in de kleedkamer.
