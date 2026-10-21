@@ -3345,6 +3345,22 @@ function applyStage(el, p) {
     if (i === 2) { d.style.bottom = '8px'; d.style.right = '8px'; }
     el.appendChild(d);
   });
+  /* Haar podium onder haar voeten: de schijf uit Podia (podiumHTML), op elke plek
+     waar ze staat -- de show, het eindscherm, haar tegel op het startscherm. Op
+     Disco niet: dat is waar iedereen op staat, en daar doet de zaal het al (zijn
+     gouden richel, .venue-vloer) en de tegel zijn achtergrond.
+     In een zaal vervangt de schijf die richel: de ouder van het podium (het
+     paneel met .venue-vloer erin) krijgt .met-podium, en de richel wijkt. */
+  el.querySelectorAll('.stage-podium').forEach(d => d.remove());
+  const eigen = st.id !== 'stage_disco';
+  el.classList.toggle('op-podium', eigen);
+  const ouder = el.parentElement;
+  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.toggle('met-podium', eigen);
+  if (!eigen) return;
+  const schijf = document.createElement('div');
+  schijf.className = 'stage-podium';
+  schijf.innerHTML = podiumHTML(st);
+  el.insertBefore(schijf, el.firstChild);
 }
 
 /* ================= Schermen ================= */
@@ -8245,6 +8261,26 @@ function wereldFeest(f) {
     rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
       + `<div class="wf-tekst"><b>Nieuwe wereldschat!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
   }
+  /* Het podium van deze wereld. De schat is er het eerste stuk van, en dit is
+     het moment waarop een kind dat leert. Heeft ze de twee andere al, dan is het
+     podium nu af: "Nieuw podium!", en ze staat er meteen op (zoals kopen ook
+     meteen aandoet) -- het eindscherm eronder laat het zien zodra deze laag weg
+     is. Anders één stille regel: welk podium, en hoeveel stukken er nog bij
+     moeten. Geen prijs en geen knop; dat staat in Podia. */
+  const podium = f.spul ? podiumVan(f.spul.id) : null;
+  const q0 = P();
+  const podiumAf = !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
+  if (podium && podiumAf) {
+    q0.equipped.stage = podium.id;
+    save();
+    if ($('end-stage')) applyStage($('end-stage'), q0);
+    rijen += `<div class="wf-rij"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
+      + `<div class="wf-tekst"><b>Nieuw podium!</b><span>${esc(podium.name)}</span></div></div>`;
+  } else if (podium) {
+    const nog = podiumRest(q0, podium).length;
+    rijen += `<div class="wf-rij wf-stil"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
+      + `<div class="wf-tekst"><b>${esc(podium.name)}</b><span>Nog ${nog} ${mv(nog, 'stuk', 'stukken')}</span></div></div>`;
+  }
   if (f.perfect) {
     /* Het wereldicoon in een gouden ring met een ster erop -- precies het kaartje
        dat er vanaf nu in de kast staat (zie .trophy-card.ster). Bewust niet het
@@ -8314,7 +8350,8 @@ function wereldFeest(f) {
   }
   // lees-vrij: dezelfde twee zinnen die er staan, meer niet
   speak(f.spul
-    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (f.perfect ? ' En een perfecte wereld!' : '')
+    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (podiumAf ? ' En een nieuw podium!' : '')
+      + (f.perfect ? ' En een perfecte wereld!' : '')
     : `Perfecte wereld! ${w.name}.`);
 }
 // tijdens het spelen: geen groot feest, wél een vriendelijke hint naar de kast
@@ -11485,7 +11522,8 @@ function renderPodiumBar(bar, st, p) {
   if ($('db-buy')) $('db-buy').onclick = () => confirmShopBuy(st.id);
 }
 /* Het bubbeltje bij een 🔒: 🗺️ + het wereldteken -> 🔓. Twee tellen, geen
-   woorden, en een tik erop brengt je naar die wereld. Er staat er hoogstens één. */
+   woorden (wel gesproken in de telmodus), en een tik erop brengt je naar die
+   wereld. Er staat er hoogstens één. */
 const SLOT_BEL_DUUR = 2000;
 let slotBelTimer = null;
 function slotBel(bij, w, wereldIdx) {
@@ -11504,6 +11542,8 @@ function slotBel(bij, w, wereldIdx) {
   bel.onclick = () => { bel.remove(); sndClick(); naarWereldKaart(wereldIdx); };
   document.body.appendChild(bel);
   slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
+  // in de lees-vrije telmodus zegt de stem het (speak zwijgt daarbuiten zelf)
+  speak(`Speel de ${w.name} uit.`);
 }
 // Naar de kaart van één wereld, zoals de Werelden-lijst dat doet: reisDoel is één
 // opdracht aan de eerstvolgende kaart (zie src/17-kaartstand.js).
@@ -11691,6 +11731,8 @@ function confirmShopBuy(id) {
      afgeleid. Ze komen in hun eigen lade te liggen, als gewone spullen. */
   const prijs = tagPrijs(it, p);
   const erbij = it.cat === PODIA_CAT ? podiumRest(p, it).map(x => x.id) : [it.id];
+  // welke podia er vóór deze aankoop al van haar waren (zie nieuwPodium hieronder)
+  const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
     showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
@@ -11701,6 +11743,14 @@ function confirmShopBuy(id) {
   erbij.forEach(id2 => { if (!p.owned.includes(id2)) p.owned.push(id2); });
   if (erbij.includes(p.wens)) delete p.wens;   // de wens is uitgekomen
   p.equipped[it.cat] = it.id;
+  /* Was dit los gekocht stuk het laatste van een podium? Dan is dat podium nu af,
+     en ze gaat erop staan -- kopen doet aan, en dit is wat het stuk aan haar
+     geeft. Het moment zelf (een toast "Nieuw podium!") komt als de diamanten
+     aankomen; de spiegel laat het podium dan al zien. Een podium dat ze als
+     geheel kocht krijgt geen tweede feestje: dat kaartje zegt al "Nieuw!". */
+  const nieuwPodium = it.cat === PODIA_CAT ? null
+    : ITEMS.find(st => st.cat === PODIA_CAT && podiumVanJou(p, st) && !podiaVoor.includes(st.id)) || null;
+  if (nieuwPodium) p.equipped.stage = nieuwPodium.id;
   /* De lade ging over "wil je dit kopen?" en dat is beantwoord: hij verdwijnt, en
      wat ervoor in de plaats komt is het gouden "Nieuw!" op het kaartje plus de pop
      die het al draagt. Het kaartje wordt hieronder op zijn id opgezocht en niet
@@ -11729,10 +11779,16 @@ function confirmShopBuy(id) {
   renderDressBar(null, p);
   flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);   // betalen: diamanten verláten de portemonnee, naar de paspop
   const stil = motionOff();
-  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT);   // nieuwe trofee klaar? stipje aan + vriendelijke hint
+  // nieuwe trofee klaar? stipje aan + vriendelijke hint -- na het podium, als dat er is
+  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT + (nieuwPodium ? PODIUM_TOAST : 0));
   setTimeout(() => {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
+    if (nieuwPodium) {
+      showToast('🎪 Nieuw podium!', null, esc(nieuwPodium.name));
+      toastWeg(PODIUM_TOAST);
+      speak(`Nieuw podium! ${nieuwPodium.name}.`);
+    }
   }, stil ? 0 : DIA_AANKOMST);
   /* Als het "Nieuw!"-moment voorbij is verhuist het spulletje naar de bezit-groep
      bovenaan. Dat is een sprong, en een sprong die je niet ziet is een spulletje
@@ -11748,6 +11804,7 @@ function confirmShopBuy(id) {
   }, KOOP_HERSCHIK);
 }
 const KOOP_HINT = 1600, KOOP_HERSCHIK = 1800;   // de hint pas als de dans (600 + PAS) uit is
+const PODIUM_TOAST = 1900;                      // zo lang staat "Nieuw podium!" in beeld
 /* Het tweede tel van een aankoop: de diamanten zijn bij de pop. */
 function koopKomtAan(it) {
   /* paintShop en niet renderShop -- dezelfde afspraak als bij kiezen en aandoen.
