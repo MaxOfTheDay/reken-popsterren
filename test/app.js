@@ -203,7 +203,7 @@ const BRUG = `globalThis.__api = {
   laatsteZichtbareWereld, meerWereldenVooruit, worldSeen, markWorldSeen,
   // beloningen en trofeeen
   beloningItem, beloningWereld, isBeloning, awardTrophy,
-  wereldSchatten, schatStand, SCHAT_CAT,
+  PODIA_CAT, podiumStukken, podiumVanJou, podiumRest, podiumPrijs, podiumOpSlot, zichtbarePodia, podiumVan, bezit, tagStand,
   grantWorldRewards, grantHistoricRewards, checkTrophies,
   activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText, trophyStatus,
   // tellers
