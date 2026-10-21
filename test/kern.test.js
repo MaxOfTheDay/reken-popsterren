@@ -1086,7 +1086,13 @@ zaak('T', () => {
   check(na({ stage: 6, rung: 2, seen: 10, acc: 0.95 }, true, true) === 6, 'T · de cijfers: tien vragen is te weinig, ook foutloos', JSON.stringify(p.countTrack));
   check(na({ stage: 6, rung: 2, seen: 12, acc: 0.9 }, true, false) === 7, 'T · de cijfers na twaalf goede vragen: door', JSON.stringify(p.countTrack));
   check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, true, false) === 4, 'T · het gewone pad werkt zoals altijd', JSON.stringify(p.countTrack));
-  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, false, false) === 2, 'T · een mislukte show zakt een fase', JSON.stringify(p.countTrack));
+  // G5: één mislukte show is een slechte middag, twee op rij is een teken
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.6 }, false, false) === 3, 'T · één mislukte show: de fase blijft', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.6, mislukt: 1 }, false, false) === 2, 'T · twee mislukte shows op rij: een fase terug', JSON.stringify(p.countTrack));
+  check(p.countTrack.mislukt === 0, 'T · en daarna begint het tellen opnieuw', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.6, mislukt: 1 }, true, false) === 3 && p.countTrack.mislukt === 0,
+    'T · een gelukte show ertussen wist de teller', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.4 }, false, false) === 2, 'T · echt lage nauwkeurigheid: meteen terug', JSON.stringify(p.countTrack));
 });
 
 zaak('U', () => {

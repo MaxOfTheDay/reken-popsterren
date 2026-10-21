@@ -18969,6 +18969,12 @@ function updateCountAcc(p, correct, firstTry) {
 
 
 const COUNT_MIN_SEEN = 8, COUNT_MIN_SEEN_CIJFERS = 12, COUNT_SNEL_SEEN = 5;
+
+
+
+
+
+const COUNT_TERUG_NA = 2;
 function advanceCountStage(p, success, foutloos) {
   const s = p.settings;
   const lo = Math.max(1, s.stage || 1);
@@ -18980,10 +18986,12 @@ function advanceCountStage(p, success, foutloos) {
   const gewoon = ct.acc >= 0.85 && (ct.seen || 0) >= (cijfers ? COUNT_MIN_SEEN_CIJFERS : COUNT_MIN_SEEN) && (ct.rung || 0) >= top;
 
   const snel = foutloos && !cijfers && (ct.seen || 0) >= COUNT_SNEL_SEEN && (ct.rung || 0) >= top - 1;
+  ct.mislukt = success ? 0 : (ct.mislukt || 0) + 1;
   if (success && (gewoon || snel) && st < hi) {
     st++; ct.rung = 0; ct.streak = 0; ct.seen = 0; ct.acc = 0.6;
-  } else if ((!success || ct.acc < 0.5) && st > lo) {
+  } else if ((ct.mislukt >= COUNT_TERUG_NA || ct.acc < 0.5) && st > lo) {
     st--; ct.rung = countTopRung(st); ct.streak = 0; ct.acc = 0.55; ct.seen = 0;
+    ct.mislukt = 0;
   }
   if (st !== ct.stage) ct.plafond = 0;
   ct.stage = st;
