@@ -2488,8 +2488,8 @@ function startMapEdit() {
     const goud = kleur('--gold-cta-bottom'), paars = kleur('--purple-shadow');
     const grijs = kleur('--gray-bottom');
     const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
-    // de donkere rand onder de weg: 3 eenheden per kant breder (zie .tour-road-under)
-    const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(38,12,64,.78)');
+    // het donkere halootje onder elke stip: 4 eenheden per kant breder (zie .tour-road-under)
+    const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(30,8,52,.45)');
 
     /* Wát meten we eigenlijk? Mijn eerste versie zette de vulling van het rondje
        tegen de tekening af, en die vlagde elke tekening af -- terecht op papier,

@@ -1207,10 +1207,10 @@
   .fly-badge { position: fixed; z-index: 90; font-size: 40px; pointer-events: none;
     filter: drop-shadow(0 3px 10px rgba(0,0,0,.55)); }
   .tour-road-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-  /* De 26/34 hieronder is de terugval. Normaal zet renderTourMap er een patroon
-     overheen dat per stuk weg precies past, zodat er op elke halte een streepje
+  /* De 1/30 hieronder is de terugval. Normaal zet renderTourMap er een patroon
+     overheen dat per stuk weg precies past, zodat er op elke halte een stip
      ligt -- zie roadDashArray. */
-  .tour-road-bg, .tour-road-fg, .tour-road-under { fill: none; stroke-linecap: round; stroke-dasharray: 26 34; }
+  .tour-road-bg, .tour-road-fg, .tour-road-under { fill: none; stroke-linecap: round; stroke-dasharray: 1 30; }
   /* De route is één streep in drie lagen, en die volgorde is het hele verhaal:
 
        onder   donkere pruim, het breedst -- steekt maar een paar eenheden aan
@@ -1258,9 +1258,26 @@
      Wat hetzelfde blijft: de geometrie, het streeppatroon en het feit dat het
      gouden stuk precies bij de huidige halte ophoudt. Dát is wat de weg over
      voortgang zegt, en dat werkte al. */
-  .tour-road-under { stroke: var(--route-onder); stroke-width: 17; }
-  .tour-road-bg { stroke: var(--w-road); stroke-width: 11; opacity: .68; }
-  .tour-road-fg { stroke: var(--route-goud); stroke-width: 11; }
+  /* STIPPEN (na de sterren, oktober). Alles hierboven over streepjes is
+     geschiedenis; de lagen en hun volgorde blijven, de vorm niet. De lange
+     streepjes met een dikke pruimen rand waren een wegmarkering die nergens anders
+     in het spel voorkomt, en het stuk dat nog moest komen was even zwaar als het
+     stuk dat je gelopen had. Nu dezelfde taal als de route op Werelden:
+
+       fg      gouden stippen waar je geweest bent (14 eenheden, ~4,5px op een
+               telefoon), vol goud (--route-goud) -- zoals .reis-weg-gelopen
+       bg      kleinere stippen (10) in de lichte wereldtint voor wat nog komt
+       onder   geen contourlijn meer maar een zacht halootje per stip (18, op de
+               helft van de oude sterkte): genoeg om goud op zand en wit op sneeuw
+               te laten staan, en niet meer een donker kapsel per stuk weg
+
+     Het patroon zelf (1 aan, 30 uit, per stuk passend gemaakt) staat in
+     roadDashArray; het ronde uiteinde maakt van elk streepje van één eenheid een
+     stip. Geen filter: een drop-shadow over de hele weg kost bij elk beeldje
+     waarin de kaart beweegt. */
+  .tour-road-under { stroke: var(--route-onder); stroke-width: 18; }
+  .tour-road-bg { stroke: var(--w-road); stroke-width: 10; }
+  .tour-road-fg { stroke: var(--route-goud); stroke-width: 14; }
   /* Terug naar een eerdere wereld (of vooruit, tot waar ze zelf al was). Bewust
      glas en klein: goud is voor spelen en verdiend, en dit mag nooit met de halte
      waar je nú speelt concurreren. */

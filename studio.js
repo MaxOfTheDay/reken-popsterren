@@ -2490,7 +2490,7 @@ function startMapEdit() {
     const grijs = kleur('--gray-bottom');
     const wegKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--w-road').trim() || 'rgba(255,255,255,.42)');
 
-    const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(38,12,64,.78)');
+    const randKleur = naarRgb(getComputedStyle(frame).getPropertyValue('--route-onder').trim() || 'rgba(30,8,52,.45)');
 
 
 

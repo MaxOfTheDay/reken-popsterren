@@ -7,7 +7,7 @@
      de haltes       worldNodes / defaultNodes -- percentages binnen één kader
      de weg          roadPoints, roadParts, roadD, worldCurve -- de slinger
                      erlangs, met per stuk een eigen stuurpunt
-     het streeppatroon roadDashArray -- zodat er op élke halte een streepje valt
+     het stippenpatroon roadDashArray -- zodat er op élke halte een stip valt
      de maten        ART_W/ART_H, ZONE, VB_W/vbx/vby
 
    ALLES REKENT IN PROCENTEN VAN DE TEKENING, en dat is de hele reden dat de weg
@@ -245,8 +245,17 @@ function roadD(pts, count, curve) {
 
    Nu krijgt elk stuk weg zijn eigen patroon: n gaten en n+1 streepjes die samen
    exact de lengte van dat stuk zijn. Dus altijd een streepje óp beide haltes,
-   op elk toestel en bij elke bocht die je in de studio trekt. */
-const DASH_ON = 26, DASH_OFF = 34;
+   op elk toestel en bij elke bocht die je in de studio trekt.
+
+   STIPPEN I.P.V. STREEPJES. Hetzelfde rekenwerk, met een "streepje" van één
+   eenheid: met ronde uiteinden wordt dat een rond stipje zo breed als de streep,
+   en DASH_OFF is dan de afstand tussen twee stippen. Zo spreekt de kaart dezelfde
+   taal als de route op Werelden (.reis-weg-*) en de stippen per show op het
+   wereldoverzicht; de lange streepjes met hun donkere rand kwamen nergens anders
+   in het spel voor. Eén en niet nul (zoals Werelden doet met .01): hier gaan de
+   lengtes door toFixed(1), en een streepje van 0,0 laat niet elke browser als
+   stip zien. */
+const DASH_ON = 1, DASH_OFF = 30;
 /* De lengtes tot elke halte, gemeten op het pad zelf. Opgemeten tot de láátste
    halte, en bewaard: de kaart vraagt het patroon voor de hele weg én voor het
    gouden stuk, en de reis nog eens -- telkens hetzelfde pad. Vroeger werd elke

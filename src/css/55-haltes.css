@@ -220,10 +220,12 @@
      geen leesbaarheid voor terug.
 
      Drie wijzigingen, en geen ervan is "nog vager maken":
-       kleiner (84%)  een halte die nog niet aan de beurt is mag minder ruimte van
+       kleiner (74%)  een halte die nog niet aan de beurt is mag minder ruimte van
                       de wereld innemen. Alleen het blokje krimpt; het hart blijft
                       op dezelfde plek staan (transform-origin), dus de weg loopt
-                      er nog precies doorheen.
+                      er nog precies doorheen. (Stond op 84%; met de stippenweg
+                      een stap kleiner, zodat de twee laatste haltes minder van
+                      het podium bovenaan de tekening afdekken.)
        donker glas    dezelfde pruim als de rest van de draaglaag in plaats van
                       grijs. Grijs is de kleur van "kapot"; pruim is de kleur die
                       op deze kaart "draagt" betekent.
@@ -285,7 +287,7 @@
      gespeelde halte. Dat laatste is geen slordigheid maar dezelfde trap nog een
      keer: leesbaar hoeft niet even luid te zijn. */
   .tour-stop.locked {
-    --stop-schaal: .84;
+    --stop-schaal: .74;
     --dot-drop: 0 0.5cqw 1cqw rgba(12,2,26,.26); }
   .tour-stop.locked .dot {
     background: linear-gradient(180deg, var(--slot-vulling-top), var(--slot-vulling));
