@@ -2627,6 +2627,10 @@
   .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }
 
 
+  .ster-tegel .stage-podium { bottom: 5%; }
+  .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }
+
+
 
 
 
@@ -4594,6 +4598,21 @@
 
 
 
+  .venue-aan .met-podium > .venue-vloer { display: none; }
+  .stage-podium {
+    position: absolute; left: 50%; bottom: 2%; width: 92%; height: 17%; transform: translateX(-50%);
+    z-index: 0; pointer-events: none;
+  }
+  .stage-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
+  .stage.op-podium .avatar-holder { position: relative; z-index: 1; margin-bottom: 9%; }
+  .venue-aan .op-podium .stage-podium { width: 118%; bottom: -4%; }
+
+
+
+
+
+
+
 
 
 
@@ -5561,6 +5580,12 @@
 
 
 
+
+
+
+
+
+
   .reis-track {
     position: relative; flex: none; width: 100%; overflow: hidden;
     height: calc(var(--reis-stap) * var(--reis-n, 8));
@@ -5568,8 +5593,6 @@
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='700'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='255' cy='393' r='0.6' fill-opacity='0.36'/%3E%3Ccircle cx='230' cy='354' r='0.6' fill-opacity='0.60'/%3E%3Ccircle cx='306' cy='288' r='0.8' fill-opacity='0.56'/%3E%3Ccircle cx='342' cy='54' r='1.0' fill-opacity='0.35'/%3E%3Ccircle cx='349' cy='111' r='1.1' fill-opacity='0.45'/%3E%3Ccircle cx='92' cy='35' r='1.4' fill-opacity='0.64'/%3E%3Ccircle cx='63' cy='311' r='1.5' fill-opacity='0.33'/%3E%3Ccircle cx='218' cy='385' r='1.2' fill-opacity='0.37'/%3E%3Ccircle cx='89' cy='690' r='0.9' fill-opacity='0.35'/%3E%3Ccircle cx='284' cy='231' r='0.7' fill-opacity='0.56'/%3E%3Ccircle cx='183' cy='245' r='0.6' fill-opacity='0.62'/%3E%3Ccircle cx='124' cy='619' r='1.0' fill-opacity='0.35'/%3E%3Ccircle cx='314' cy='281' r='1.3' fill-opacity='0.51'/%3E%3Ccircle cx='71' cy='157' r='1.0' fill-opacity='0.30'/%3E%3Ccircle cx='25' cy='289' r='1.2' fill-opacity='0.51'/%3E%3Ccircle cx='497' cy='227' r='0.9' fill-opacity='0.45'/%3E%3Ccircle cx='228' cy='587' r='1.0' fill-opacity='0.43'/%3E%3Ccircle cx='137' cy='166' r='1.2' fill-opacity='0.31'/%3E%3Ccircle cx='141' cy='537' r='1.4' fill-opacity='0.64'/%3E%3Ccircle cx='482' cy='602' r='1.2' fill-opacity='0.51'/%3E%3Ccircle cx='288' cy='17' r='0.8' fill-opacity='0.40'/%3E%3Ccircle cx='112' cy='275' r='1.2' fill-opacity='0.55'/%3E%3Ccircle cx='139' cy='670' r='0.5' fill-opacity='0.40'/%3E%3Ccircle cx='305' cy='309' r='0.6' fill-opacity='0.65'/%3E%3Ccircle cx='237' cy='611' r='1.1' fill-opacity='0.44'/%3E%3Ccircle cx='65' cy='555' r='1.4' fill-opacity='0.36'/%3E%3Ccircle cx='13' cy='108' r='1.2' fill-opacity='0.53'/%3E%3Ccircle cx='343' cy='609' r='0.7' fill-opacity='0.58'/%3E%3Ccircle cx='88' cy='26' r='0.6' fill-opacity='0.27'/%3E%3Ccircle cx='279' cy='582' r='1.3' fill-opacity='0.32'/%3E%3Ccircle cx='257' cy='36' r='0.8' fill-opacity='0.45'/%3E%3Ccircle cx='33' cy='249' r='0.7' fill-opacity='0.38'/%3E%3Ccircle cx='411' cy='96' r='0.7' fill-opacity='0.26'/%3E%3Ccircle cx='324' cy='60' r='0.9' fill-opacity='0.30'/%3E%3Ccircle cx='249' cy='290' r='0.5' fill-opacity='0.55'/%3E%3Ccircle cx='235' cy='517' r='0.8' fill-opacity='0.62'/%3E%3Ccircle cx='373' cy='447' r='0.8' fill-opacity='0.40'/%3E%3Ccircle cx='40' cy='617' r='0.6' fill-opacity='0.29'/%3E%3Ccircle cx='97' cy='213' r='0.5' fill-opacity='0.49'/%3E%3Ccircle cx='229' cy='264' r='1.0' fill-opacity='0.61'/%3E%3Ccircle cx='275' cy='295' r='0.6' fill-opacity='0.61'/%3E%3Ccircle cx='344' cy='349' r='1.4' fill-opacity='0.52'/%3E%3Ccircle cx='238' cy='677' r='1.4' fill-opacity='0.42'/%3E%3Ccircle cx='259' cy='492' r='1.3' fill-opacity='0.62'/%3E%3Ccircle cx='283' cy='693' r='1.1' fill-opacity='0.58'/%3E%3Ccircle cx='229' cy='53' r='1.5' fill-opacity='0.48'/%3E%3Ccircle cx='339' cy='274' r='1.3' fill-opacity='0.57'/%3E%3Ccircle cx='261' cy='311' r='1.4' fill-opacity='0.54'/%3E%3Ccircle cx='27' cy='258' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='343' cy='108' r='1.2' fill-opacity='0.33'/%3E%3Ccircle cx='104' cy='369' r='0.8' fill-opacity='0.27'/%3E%3Ccircle cx='499' cy='360' r='0.5' fill-opacity='0.41'/%3E%3Ccircle cx='96' cy='460' r='0.7' fill-opacity='0.55'/%3E%3Ccircle cx='159' cy='635' r='1.1' fill-opacity='0.41'/%3E%3Ccircle cx='432' cy='125' r='0.8' fill-opacity='0.42'/%3E%3Ccircle cx='465' cy='398' r='0.6' fill-opacity='0.32'/%3E%3Ccircle cx='252' cy='175' r='0.9' fill-opacity='0.46'/%3E%3Ccircle cx='172' cy='19' r='0.6' fill-opacity='0.55'/%3E%3Ccircle cx='237' cy='387' r='1.4' fill-opacity='0.30'/%3E%3Ccircle cx='211' cy='156' r='0.9' fill-opacity='0.27'/%3E%3C/g%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='900'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='233' cy='560' r='0.9' fill-opacity='0.58'/%3E%3Ccircle cx='80' cy='23' r='1.8' fill-opacity='0.67'/%3E%3Ccircle cx='451' cy='881' r='1.0' fill-opacity='0.44'/%3E%3Ccircle cx='223' cy='658' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='160' cy='642' r='1.8' fill-opacity='0.60'/%3E%3Ccircle cx='429' cy='390' r='1.4' fill-opacity='0.38'/%3E%3Ccircle cx='21' cy='22' r='1.8' fill-opacity='0.89'/%3E%3Ccircle cx='163' cy='429' r='1.6' fill-opacity='0.81'/%3E%3Ccircle cx='272' cy='465' r='2.1' fill-opacity='0.55'/%3E%3Ccircle cx='493' cy='153' r='1.1' fill-opacity='0.56'/%3E%3Ccircle cx='437' cy='882' r='0.9' fill-opacity='0.57'/%3E%3Ccircle cx='326' cy='807' r='0.9' fill-opacity='0.75'/%3E%3C/g%3E%3C/svg%3E"),
-      conic-gradient(from 162deg at 10% 112%, transparent 0deg, rgba(var(--voetlicht-rgb),.13) 7deg, rgba(var(--voetlicht-rgb),.04) 17deg, transparent 21deg),
-      conic-gradient(from 179deg at 90% 112%, transparent 0deg, rgba(190,160,255,.13) 5deg, rgba(190,160,255,.04) 15deg, transparent 19deg),
       radial-gradient(60% 18% at 15% 30%, rgba(120,90,255,.2), transparent 70%),
       radial-gradient(55% 16% at 90% 62%, rgba(255,90,190,.16), transparent 70%),
       radial-gradient(70% 20% at 30% 88%, rgba(70,170,255,.14), transparent 70%),
@@ -5577,14 +5600,13 @@
 
 
       linear-gradient(to top, #3a1650 0%, #26103c 25%, #1a0c30 60%, #120826 100%);
-    background-size: 160px 160px, 520px 700px, 520px 900px, 100% 100%, 100% 100%,
+    background-size: 160px 160px, 520px 700px, 520px 900px,
       100% 1300px, 100% 1300px, 100% 1300px, 100% 100%;
-    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat,
+    background-repeat: repeat, repeat, repeat,
       repeat-y, repeat-y, repeat-y, no-repeat;
-    background-attachment: scroll, scroll, scroll, fixed, fixed, scroll, scroll, scroll, scroll;
 
 
-    background-blend-mode: soft-light, normal, normal, normal, normal, normal, normal, normal, normal;
+    background-blend-mode: soft-light, normal, normal, normal, normal, normal, normal;
   }
 
 
@@ -6731,6 +6753,14 @@
   .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
   .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
+  .wereld-feest .wf-rij:nth-child(3) { animation-delay: .24s; }
+
+
+
+  .wf-podium .podium { width: 64px; height: 20px; margin-bottom: 6px; --pod-dik: 5px; }
+  .wf-rij.wf-stil { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
+  .wf-rij.wf-stil .wf-tekst b { color: var(--c-white); }
+  .wf-rij.wf-stil .wf-tekst span { opacity: .7; }
   @media (prefers-reduced-motion: reduce) {
     .wereld-feest-overlay { animation: none; }
     .wereld-feest .wf-rij { animation: none; }
@@ -6988,6 +7018,10 @@
 
 
   #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 80px); }
+
+
+
+  #screen-dress.met-podiumbalk { padding-bottom: calc(var(--balk-ruimte) + 190px); }
 
 
 
@@ -7715,10 +7749,15 @@
   .mini-kaart {
     width: 82px; padding: 6px 4px 5px; border-radius: var(--r-md); cursor: pointer;
     font-family: inherit; color: inherit; text-align: center;
-    background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.12);
     display: flex; flex-direction: column; align-items: center;
   }
   .mini-kaart:active { transform: scale(.96); }
+
+
+  .mini-kaart.owned { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.11); }
+  .mini-kaart.selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
+  .mini-kaart.equipped { border-color: var(--gold-accent); box-shadow: var(--goud-gloed); background: var(--goud-tint); }
   .mini-kaart .item-thumb { height: 36px; margin: 0 auto; }
   .mini-kaart .item-thumb svg { height: 36px; }
   .mini-kaart .item-thumb .thumb-emo { font-size: 28px; }
@@ -13489,6 +13528,22 @@ function applyStage(el, p) {
     if (i === 2) { d.style.bottom = '8px'; d.style.right = '8px'; }
     el.appendChild(d);
   });
+
+
+
+
+
+
+  el.querySelectorAll('.stage-podium').forEach(d => d.remove());
+  const eigen = st.id !== 'stage_disco';
+  el.classList.toggle('op-podium', eigen);
+  const ouder = el.parentElement;
+  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.toggle('met-podium', eigen);
+  if (!eigen) return;
+  const schijf = document.createElement('div');
+  schijf.className = 'stage-podium';
+  schijf.innerHTML = podiumHTML(st);
+  el.insertBefore(schijf, el.firstChild);
 }
 
 
@@ -16915,7 +16970,10 @@ function reisVolgKnop() {
   const weg = r.bottom < s.top + 40 || r.top > s.bottom - 40;
   knop.classList.toggle('aan', weg);
 
-  knop.textContent = r.top > s.bottom - 40 ? '↓' : '↑';
+
+
+  const pijl = r.top > s.bottom - 40 ? '↓' : '↑';
+  if (knop.textContent !== pijl) knop.textContent = pijl;
 }
 function reisScroll() {
   rafKlem(reisVolgKnop);
@@ -18391,6 +18449,26 @@ function wereldFeest(f) {
     rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
       + `<div class="wf-tekst"><b>Nieuwe wereldschat!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
   }
+
+
+
+
+
+
+  const podium = f.spul ? podiumVan(f.spul.id) : null;
+  const q0 = P();
+  const podiumAf = !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
+  if (podium && podiumAf) {
+    q0.equipped.stage = podium.id;
+    save();
+    if ($('end-stage')) applyStage($('end-stage'), q0);
+    rijen += `<div class="wf-rij"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
+      + `<div class="wf-tekst"><b>Nieuw podium!</b><span>${esc(podium.name)}</span></div></div>`;
+  } else if (podium) {
+    const nog = podiumRest(q0, podium).length;
+    rijen += `<div class="wf-rij wf-stil"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
+      + `<div class="wf-tekst"><b>${esc(podium.name)}</b><span>Nog ${nog} ${mv(nog, 'stuk', 'stukken')}</span></div></div>`;
+  }
   if (f.perfect) {
 
 
@@ -18460,7 +18538,8 @@ function wereldFeest(f) {
   }
 
   speak(f.spul
-    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (f.perfect ? ' En een perfecte wereld!' : '')
+    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (podiumAf ? ' En een nieuw podium!' : '')
+      + (f.perfect ? ' En een perfecte wereld!' : '')
     : `Perfecte wereld! ${w.name}.`);
 }
 
@@ -21007,6 +21086,9 @@ function itemThumb(it, base) {
 
 let shopCat = 'dress';
 let shopSelectedId = null;
+
+
+let podiumStuk = null;
 let shopJustBoughtId = null;
 
 
@@ -21062,7 +21144,7 @@ function openKleedkamerItem(id) {
 
   const p = P();
   const podium = (isBeloning(it.id) && !p.owned.includes(it.id)) ? podiumVan(it.id) : null;
-  shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; dressReturnTo = null;
+  shopCat = podium ? PODIA_CAT : it.cat; shopSelectedId = null; podiumStuk = null; dressReturnTo = null;
   toonHub('screen-dress');
   renderShop();
   if (podium) id = podium.id;
@@ -21284,8 +21366,9 @@ function renderShop() {
 
       const herbouw = !!shopJustBoughtId;
       clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id;
+      shopJustBoughtId = null; shopSelectedId = it.id; podiumStuk = null;
       herbouw ? renderShop() : paintShop();
+      if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
     };
     kaarten.appendChild(card);
   });
@@ -21443,6 +21526,9 @@ function paintShop() {
   }
   $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
+
+  const lade = $('dress-bar');
+  $('screen-dress').classList.toggle('met-podiumbalk', lade.classList.contains('podium-bar') && lade.style.display !== 'none');
   $('item-grid').querySelectorAll('.item-card').forEach(card => {
     const it = item(card.dataset.item);
     if (it) dressCardState(card, it, p);
@@ -21450,6 +21536,13 @@ function paintShop() {
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
+
+
+
+  if (it.cat === PODIA_CAT && it.stukken) {
+    podiumStukken(it).forEach(s => { if (tagStand(s, p) !== 'slot') preview.equipped[s.cat] = s.id; });
+    if (podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
+  }
   preview.equipped[it.cat] = it.id;
   return preview;
 }
@@ -21603,29 +21696,53 @@ function renderDressBar(it, p) {
 function renderPodiumBar(bar, st, p) {
   if (podiumVanJou(p, st)) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   const stukken = podiumStukken(st);
+
+  if (podiumStuk && (!stukken.some(it => it.id === podiumStuk) || bezit(p, item(podiumStuk)))) podiumStuk = null;
   const kaartjes = stukken.map((it, i) => (i ? '<b class="pb-plus" aria-hidden="true">+</b>' : '')
-    + `<button class="mini-kaart${tagStand(it, p) === 'slot' ? ' op-slot' : ''}" type="button" data-stuk="${it.id}" aria-label="${esc(it.full || it.name)}">`
+    + `<button class="mini-kaart" type="button" data-stuk="${it.id}" aria-label="${esc(it.full || it.name)}">`
     + itemThumb(it) + '<span class="item-status"></span></button>').join('');
-  const prijs = podiumPrijs(p, st);
   const wereldIdx = podiumWereldIdx(st);
+
+
+  const los = podiumStuk ? item(podiumStuk) : null;
+  const prijs = los ? los.price : podiumPrijs(p, st);
   let knop = '';
-  if (podiumOpSlot(p, st)) knop = '<button class="btn small" id="db-speel">🗺️ Speel</button>';
+  if (!los && podiumOpSlot(p, st)) knop = '<button class="btn small" id="db-speel">🗺️ Speel</button>';
   else if (prijs > p.diamonds) knop = `<span class="db-sub">Nog <span class="db-highlight">${prijs - p.diamonds}</span> 💎</span>`
     + '<button class="btn small" id="db-earn">Speel</button>';
   else knop = `<button class="btn small" id="db-buy">Koop · ${prijs} 💎</button>`;
   bar.innerHTML = `<div class="pb-stukken">${kaartjes}</div><div class="pb-knop">${knop}</div>`;
+
+
+
+
+
   bar.querySelectorAll('.mini-kaart').forEach(k => {
     const it = item(k.dataset.stuk);
-    zetTag(k.querySelector('.item-status'), tagStand(it, p), it.price);
+    const stand = tagStand(it, p);
+    k.classList.toggle('op-slot', stand === 'slot');
+    k.classList.toggle('equipped', stand === 'on');
+    k.classList.toggle('owned', stand === 'owned');
+    k.classList.toggle('selected', it.id === podiumStuk);
+    zetTag(k.querySelector('.item-status'), stand, it.price);
     k.onclick = () => {
-      if (tagStand(it, P()) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
-      sndClick(); openKleedkamerItem(it.id);
+      const q = P();
+      if (tagStand(it, q) === 'slot') { sndClick(); return slotBel(k, WORLDS[wereldIdx], wereldIdx); }
+      if (bezit(q, it)) {
+        if (q.equipped[it.cat] !== it.id) return equipShopItem(it.id, st.id);
+        if (OPTIONELE_SPULLEN.includes(it.cat)) return unequipShopItem(it.cat, st.id);
+        sndClick(); tapDance('shop-avatar'); return;
+      }
+      sndClick();
+      podiumStuk = podiumStuk === it.id ? null : it.id;
+      paintShop();
     };
   });
   if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldIdx); };
   if ($('db-earn')) $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
-  if ($('db-buy')) $('db-buy').onclick = () => confirmShopBuy(st.id);
+  if ($('db-buy')) $('db-buy').onclick = () => (los ? confirmShopBuy(los.id, st.id) : confirmShopBuy(st.id));
 }
+
 
 
 const SLOT_BEL_DUUR = 2000;
@@ -21646,6 +21763,8 @@ function slotBel(bij, w, wereldIdx) {
   bel.onclick = () => { bel.remove(); sndClick(); naarWereldKaart(wereldIdx); };
   document.body.appendChild(bel);
   slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
+
+  speak(`Speel de ${w.name} uit.`);
 }
 
 
@@ -21656,10 +21775,24 @@ function naarWereldKaart(idx) {
   goMap();
 }
 
+
+
+
+function zichtbaarBovenBalk(id) {
+  const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
+  const bar = $('dress-bar');
+  if (!kaart || !bar || bar.style.display === 'none' || !kaart.getBoundingClientRect) return;
+  const teveel = kaart.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  if (teveel <= 0) return;
+  let houder = kaart.parentElement;
+  while (houder && !(houder.scrollHeight > houder.clientHeight && /auto|scroll/.test(getComputedStyle(houder).overflowY))) houder = houder.parentElement;
+  if (houder && houder.scrollBy) houder.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
+}
+
 function openPodia(ev) {
   if (ev) ev.stopPropagation();
   sndClick();
-  shopCat = PODIA_CAT; shopSelectedId = null;
+  shopCat = PODIA_CAT; shopSelectedId = null; podiumStuk = null;
   renderShop();
   $('screen-dress').scrollTop = 0;
 }
@@ -21820,10 +21953,12 @@ function flyDiamonds(fromEl, toEl, n, duur) {
     { duration: 340, easing: 'ease-out' }), fromBadge ? 0 : duur - 20);
 }
 
-function confirmShopBuy(id) {
+
+
+function confirmShopBuy(id, blijf) {
   const it = item(id);
   const p = P();
-  if (bezit(p, it)) return equipShopItem(id);
+  if (bezit(p, it)) return equipShopItem(id, blijf);
 
 
 
@@ -21833,6 +21968,8 @@ function confirmShopBuy(id) {
 
   const prijs = tagPrijs(it, p);
   const erbij = it.cat === PODIA_CAT ? podiumRest(p, it).map(x => x.id) : [it.id];
+
+  const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
     showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
@@ -21847,7 +21984,18 @@ function confirmShopBuy(id) {
 
 
 
-  shopSelectedId = null;
+
+  const nieuwPodium = it.cat === PODIA_CAT ? null
+    : ITEMS.find(st => st.cat === PODIA_CAT && podiumVanJou(p, st) && !podiaVoor.includes(st.id)) || null;
+  if (nieuwPodium) p.equipped.stage = nieuwPodium.id;
+
+
+
+
+
+
+  shopSelectedId = blijf || null;
+  podiumStuk = blijf ? (podiumRest(p, item(blijf)).find(x => tagStand(x, p) !== 'slot') || { id: null }).id : null;
   clearTimeout(shopBoughtTimer);
   shopJustBoughtId = it.id;
   sndCoin();
@@ -21868,13 +22016,19 @@ function confirmShopBuy(id) {
 
 
 
-  renderDressBar(null, p);
+  renderDressBar(blijf ? item(blijf) : null, p);
   flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);
   const stil = motionOff();
-  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT);
+
+  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT + (nieuwPodium ? PODIUM_TOAST : 0));
   setTimeout(() => {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
+    if (nieuwPodium) {
+      showToast('🎪 Nieuw podium!', null, esc(nieuwPodium.name));
+      toastWeg(PODIUM_TOAST);
+      speak(`Nieuw podium! ${nieuwPodium.name}.`);
+    }
   }, stil ? 0 : DIA_AANKOMST);
 
 
@@ -21890,6 +22044,7 @@ function confirmShopBuy(id) {
   }, KOOP_HERSCHIK);
 }
 const KOOP_HINT = 1600, KOOP_HERSCHIK = 1800;
+const PODIUM_TOAST = 1900;
 
 function koopKomtAan(it) {
 
@@ -21901,7 +22056,8 @@ function koopKomtAan(it) {
 
 
   paintShop();
-  const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`);
+  const kaart = $('item-grid').querySelector(`.item-card[data-item="${it.id}"]`)
+    || $('dress-bar').querySelector(`.mini-kaart[data-stuk="${it.id}"]`);
   koopVonken(kaart);
   sndAan();
   const pop = $('shop-avatar');
@@ -21935,7 +22091,7 @@ const OPTIONELE_SPULLEN = ['mic', 'instrument', 'acc', 'pet'];
 
 
 
-function unequipShopItem(cat) {
+function unequipShopItem(cat, blijf) {
   if (!OPTIONELE_SPULLEN.includes(cat) && cat !== PODIA_CAT) return;
   const p = P();
   if (!p.equipped[cat]) return;
@@ -21944,7 +22100,7 @@ function unequipShopItem(cat) {
 
   p.equipped[cat] = cat === PODIA_CAT ? 'stage_disco' : null;
   shopJustBoughtId = null;
-  shopSelectedId = null;
+  shopSelectedId = blijf || null;
   sndClick();
   noticeReady(checkTrophies(p));
   save();
@@ -21952,7 +22108,7 @@ function unequipShopItem(cat) {
   tapDance('shop-avatar');
 }
 
-function equipShopItem(id) {
+function equipShopItem(id, blijf) {
   const it = item(id);
   const p = P();
   if (!bezit(p, it)) return;
@@ -21964,7 +22120,8 @@ function equipShopItem(id) {
 
 
 
-  shopSelectedId = null;
+
+  shopSelectedId = blijf || null;
   sndAan();
 
   const trofees = checkTrophies(p);
