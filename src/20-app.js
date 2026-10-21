@@ -8765,14 +8765,26 @@ function updateCountAcc(p, correct, firstTry) {
 }
 // Na een optreden: de fase mee laten klimmen (pas op de hoogste rung) of, bij
 // worstelen, zakken — altijd binnen het door de ouder toegestane bereik.
-function advanceCountStage(p, success) {
+/* Hoeveel vragen een fase minstens gezien moet hebben voor hij als beheerst
+   telt. Acht is twee shows; bij de cijfers (fase 6) twaalf, want daar zitten tien
+   verschillende cijfers in en in acht vragen komen ze niet allemaal langs.
+   SNEL: een show zonder één misser, in een fase die het kind duidelijk al kan,
+   mag na één show door -- anders zat een kind van zes dat al kan tellen zo'n
+   tien shows op fases die het te makkelijk vindt. Niet bij de cijfers: daar
+   geldt het minimum altijd. */
+const COUNT_MIN_SEEN = 8, COUNT_MIN_SEEN_CIJFERS = 12, COUNT_SNEL_SEEN = 5;
+function advanceCountStage(p, success, foutloos) {
   const s = p.settings;
   const lo = Math.max(1, s.stage || 1);
   const hi = Math.max(lo, countMaxStage(s));
   const ct = p.countTrack;
   let st = Math.min(hi, Math.max(lo, ct.stage || lo));
   const top = countTopRung(st);
-  if (success && ct.acc >= 0.85 && (ct.seen || 0) >= 8 && (ct.rung || 0) >= top && st < hi) {
+  const cijfers = countStageInfo(st).types.includes('numeral');
+  const gewoon = ct.acc >= 0.85 && (ct.seen || 0) >= (cijfers ? COUNT_MIN_SEEN_CIJFERS : COUNT_MIN_SEEN) && (ct.rung || 0) >= top;
+  // snel: foutloos, genoeg gezien voor één hele show, en bijna bovenaan de fase
+  const snel = foutloos && !cijfers && (ct.seen || 0) >= COUNT_SNEL_SEEN && (ct.rung || 0) >= top - 1;
+  if (success && (gewoon || snel) && st < hi) {
     st++; ct.rung = 0; ct.streak = 0; ct.seen = 0; ct.acc = 0.6;   // frisse start op de nieuwe fase
   } else if ((!success || ct.acc < 0.5) && st > lo) {
     st--; ct.rung = countTopRung(st); ct.streak = 0; ct.acc = 0.55; ct.seen = 0;  // terug naar wat wél lukt
@@ -10099,7 +10111,7 @@ function endLevel(success) {
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
   if (G.count) {
-    advanceCountStage(p, success);              // telmodus: fase mee laten klimmen/zakken
+    advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze

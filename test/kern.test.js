@@ -32,6 +32,7 @@
  *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
  *   R  de grenstip                      -> pas na genoeg drie sterren, en opnieuw na een keuze
  *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
+ *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1066,6 +1067,24 @@ zaak('S', () => {
   check(app.stemAan(p) === true, 'S · met Voorlezen aan mag de stem in de rekenmodus', '');
   s.voorlezen = false;
   check(app.stemAan(p) === false, 'S · zonder Voorlezen zwijgt de rekenmodus zoals altijd', '');
+});
+
+zaak('T', () => {
+  const { app } = verseSter('Klim');
+  const p = app.db.profiles.p1 = app.defaultProfile('Klim', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  const na = (stand, success, foutloos) => {
+    p.countTrack = Object.assign({ streak: 0 }, stand);
+    app.advanceCountStage(p, success, foutloos);
+    return p.countTrack.stage;
+  };
+  check(na({ stage: 2, rung: 1, seen: 5, acc: 0.7 }, true, true) === 3, 'T · één foutloze show bijna bovenaan de fase: door', JSON.stringify(p.countTrack));
+  check(na({ stage: 2, rung: 1, seen: 5, acc: 0.7 }, true, false) === 2, 'T · niet foutloos: het gewone minimum geldt', JSON.stringify(p.countTrack));
+  check(na({ stage: 2, rung: 0, seen: 5, acc: 0.7 }, true, true) === 2, 'T · foutloos maar onderaan de fase: nog niet', JSON.stringify(p.countTrack));
+  check(na({ stage: 6, rung: 2, seen: 10, acc: 0.95 }, true, true) === 6, 'T · de cijfers: tien vragen is te weinig, ook foutloos', JSON.stringify(p.countTrack));
+  check(na({ stage: 6, rung: 2, seen: 12, acc: 0.9 }, true, false) === 7, 'T · de cijfers na twaalf goede vragen: door', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, true, false) === 4, 'T · het gewone pad werkt zoals altijd', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, false, false) === 2, 'T · een mislukte show zakt een fase', JSON.stringify(p.countTrack));
 });
 
 klaar();
