@@ -6741,8 +6741,11 @@ function reisVolgKnop() {
   // ruim gerekend: pas als ze écht weg is, niet als haar rand net wegvalt
   const weg = r.bottom < s.top + 40 || r.top > s.bottom - 40;
   knop.classList.toggle('aan', weg);
-  // wijst de kant op waar ze staat, zodat het knopje zegt wáár je heen gaat
-  knop.textContent = r.top > s.bottom - 40 ? '↓' : '↑';
+  // wijst de kant op waar ze staat, zodat het knopje zegt wáár je heen gaat.
+  // Alleen schrijven als het verandert: dit loopt bij elk beeldje van het
+  // schuiven, en een nieuwe tekst laat het knopje telkens opnieuw opmeten.
+  const pijl = r.top > s.bottom - 40 ? '↓' : '↑';
+  if (knop.textContent !== pijl) knop.textContent = pijl;
 }
 function reisScroll() {
   rafKlem(reisVolgKnop);
