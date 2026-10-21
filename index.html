@@ -6851,6 +6851,14 @@
 
 
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
+
+
+  #trophy-shelves.schuift .trophy-card.ready::after,
+  #trophy-shelves.schuift .trophy-card.ready .temoji,
+  #trophy-shelves.schuift .trophy-card.ready .pw-medal,
+  #trophy-shelves.schuift .ready-open,
+  #trophy-shelves.schuift .ready-open::before,
+  #trophy-shelves.schuift .ready-open::after { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -18128,6 +18136,25 @@ function openTrophies() {
 
 
 function kastScroll() { rafKlem(kastGescrold); }
+
+
+
+
+
+
+
+
+
+let kastStilTimer = null;
+function kastSchuift() {
+  kastScroll();
+
+
+  const planken = $('trophy-shelves');
+  planken.classList.add('schuift');
+  clearTimeout(kastStilTimer);
+  kastStilTimer = setTimeout(() => planken.classList.remove('schuift'), 200);
+}
 function kastGescrold() { gescrold($('screen-trophies')); }
 
 function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
@@ -18175,7 +18202,7 @@ let justClaimed = null;
 
 function renderShelves() {
   const p = P();
-  $('screen-trophies').onscroll = kastScroll;
+  $('screen-trophies').onscroll = kastSchuift;
   checkTrophies(p);
 
   const earned = earnedActiveCount(p);

@@ -130,6 +130,14 @@
      Veeg en wiebel lopen op dezelfde maat (2.8s): op 2.6 tegen 2.2 schoven ze
      elke ronde langs elkaar en klopte de kast nooit twee keer hetzelfde. */
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
+  /* Stil zolang er geschoven wordt (zie kastSchuift): anders rekent de browser de
+     stijl van al deze animaties bij elk beeldje van het schuiven opnieuw uit. */
+  #trophy-shelves.schuift .trophy-card.ready::after,
+  #trophy-shelves.schuift .trophy-card.ready .temoji,
+  #trophy-shelves.schuift .trophy-card.ready .pw-medal,
+  #trophy-shelves.schuift .ready-open,
+  #trophy-shelves.schuift .ready-open::before,
+  #trophy-shelves.schuift .ready-open::after { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
