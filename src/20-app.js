@@ -6594,7 +6594,10 @@ function renderReis() {
         `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
-    if (b.open) knop.onclick = () => reisNaarWereld(b.i, knop);
+    if (b.open) {
+      knop.onpointerdown = () => reisKaartAlvast(b.i);
+      knop.onclick = () => reisTik(b.i, knop);
+    }
     else {
       /* aria-disabled en niet disabled. Een <button disabled> krijgt geen enkele
          gebeurtenis en ook geen :active, en dat maakte een wereld op slot het enige
@@ -6929,7 +6932,49 @@ function reisSluit(stil) {
    Wat er NIET gebeurt: er wordt niets afgemaakt, niets vrijgespeeld en niets
    verzet. reisDoel is één opdracht aan de eerstvolgende kaart en goMap verbruikt
    hem meteen; p.level, de sterren en de grens blijven precies staan. */
-function reisNaarWereld(idx, el, stil) {
+/* ---- De tik op een bestemming: eerst antwoorden, dan pas vliegen ----
+   Hetzelfde als naTik (zie "Eerst antwoorden, dan pas het zware werk"), voor de
+   tik die Cloudflare daarna als traagste meldde: een wereld kiezen op Werelden.
+   De vlucht bouwt de hele kaart van die wereld op en meet hem een paar keer op;
+   gebeurde dat binnen de tik, dan wachtte de tik ruim een halve seconde op het
+   volgende beeldje (6× vertraagd, gemeten). Nu komen het geluid, het indrukken
+   en de rimpel meteen, en vertrekt de vlucht één beeldje later. reisNaarWereld
+   zelf blijft synchroon, net als navGo: de suites roepen hem rechtstreeks aan.
+
+   De rimpel staat hier en niet meer alleen in reisNaarWereld: daar komt hij pas
+   in de taak die ook de kaart bouwt, en dan tekent hij pas ná al dat werk. */
+function reisTik(idx, el) {
+  if (overgangBezig || tikWacht) return;
+  sndClick();
+  reisKaartAlvast(idx);
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+  naTik(() => reisNaarWereld(idx, el, true, true));
+}
+/* De tekening van de bestemming alvast ophalen én uitpakken, bij het neerzetten
+   van de vinger. Tussen neerzetten en loslaten zit op een telefoon zo'n honderd
+   milliseconden, en die waren ongebruikt: de kaart vroeg zijn tekening pas aan
+   als de vlucht al begon, en het eerste beeldje van de vlucht wachtte dan tot hij
+   uitgepakt was (1215×2160, het zwaarste plaatje van de app).
+
+   Alleen de wereld waar de vinger op staat -- niet alles wat op Werelden in
+   beeld is. Dat zou bij elke keer kijken een handvol volle tekeningen ophalen,
+   en dat is precies wat "nooit alles" (zie DE ZWARE SPULLEN) uitsluit. decode()
+   zet het uitgepakte beeld in de gedeelde voorraad van de browser, en de kaart
+   tekent dezelfde URL. reisAlvastBeeld houdt hem vast tot hij klaar is. */
+let reisAlvastBeeld = null;
+function reisKaartAlvast(idx) {
+  const w = worldForIndex(idx);
+  const src = w && w.world && w.world.art;
+  if (!src || (reisAlvastBeeld && reisAlvastBeeld.dataset.src === src)) return;
+  const beeld = new Image();
+  beeld.dataset.src = src;
+  beeld.src = src;
+  ART_GEHAALD.add(src);
+  reisAlvastBeeld = beeld;
+  if (beeld.decode) beeld.decode().catch(() => {});
+}
+function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
   vluchtKlaar();                             // zie openReis: eerst afsluiten, dan pas klassen
   if (!stil) sndClick();
@@ -6948,7 +6993,7 @@ function reisNaarWereld(idx, el, stil) {
   }
   overgangBezig = true;
   const punt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  tapRipple(punt.x, punt.y);                 // de tik komt aan, meteen en zonder wachten
+  if (!alGetikt) tapRipple(punt.x, punt.y);  // de tik komt aan (via reisTik: die gaf hem al)
   el.classList.add('vlucht-doel');           // dit kaartje ligt vanaf nu in de lucht
   const kopVan = reis.querySelector('.rt-ico');
   const schuif = reis.scrollTop;             // display:none zet de schuifstand terug op nul
