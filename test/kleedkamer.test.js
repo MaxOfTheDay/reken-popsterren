@@ -17,7 +17,7 @@
  *   E  net gekocht         -> blijft staan waar het kind het aantikte
  *   F  verdiende beloning  -> hoort bij "van jou", en een niet-verdiende nergens
  *   G  oude saves          -> podia blijven bestaan, maar niet in de winkel
- *   H  de wereldschatten   -> de verzameling: wat erin staat en hoe hij telt
+ *   H  Podia               -> drie stukken per wereld, en van jou is afgeleid
  *
  * Draaien:
  *   npm run test:kleedkamer      (of: npm test voor alle suites)
@@ -197,76 +197,80 @@ zaak('G · een oude save', () => {
     'G · haar podium en haar diamanten blijven', JSON.stringify([p.equipped.stage, p.diamonds]));
 });
 
-/* ---- H · De wereldschatten (fase 6E). De verzameling die onder het vakje
-   "✨ Wereldschatten · 3 verzameld" hangt. Wat hier vastligt is niet hoe hij eruitziet
-   -- dat is smaak -- maar waar hij vandaan komt: uit WORLDS en uit p.owned, en
-   nergens anders. Er is geen tweede lijst, geen 'verdiend'-vlaggetje en geen
-   getal dat bewaard wordt; dus kan er ook niets uit de pas lopen. ------------- */
-zaak('H · de wereldschatten', () => {
+/* ---- H · Podia. Elke wereld heeft een podium met drie stukken: de schat van die
+   wereld en twee spulletjes uit de winkel. Heb je ze alle drie, dan is het podium
+   van jou. Wat hier vastligt is dat dat afgeleid is -- uit ITEMS, WORLDS en
+   p.owned, en nergens anders -- en dat de lade dezelfde horizon houdt als de reis.
+   Hoe het eruitziet staat in beloning.test.js. ---------------------------------- */
+zaak('H · Podia', () => {
   const { app, p } = verseSter();
-  const uitWerelden = app.WORLDS
-    .map((w, i) => (i < app.WORLD_AVAIL && w.beloning && app.item(w.beloning)) ? w.beloning : null)
-    .filter(Boolean);
-  /* Het vak houdt op bij de horizon, dezelfde als die van de reis: voor een
-     verse ster wereld 1 plus REIS_VOORUIT. Wat erachter ligt is één mistkaartje
-     (geen spulletje, dus niet in shopItems) -- zie zichtbareSchatten. */
+  const podia = app.ITEMS.filter(i => i.cat === 'stage' && i.wereld);
+  // elke uitgebrachte wereld met een schat heeft precies één podium
+  for (let i = 0; i < app.WORLD_AVAIL; i++) {
+    const w = app.WORLDS[i];
+    if (!w.beloning || !app.item(w.beloning)) continue;
+    const van = podia.filter(st => st.wereld === w.id);
+    check(van.length === 1, 'H · elke wereld heeft één podium', w.id + ' · ' + JSON.stringify(van.map(x => x.id)));
+  }
+  // drie stukken, elk in een eigen plek, de schat in de hoed, geen spulletje in twee podia
+  const gezien = new Map();
+  for (const st of podia) {
+    const stukken = app.podiumStukken(st);
+    const plekken = stukken.map(it => it.cat);
+    check(stukken.length === 3 && new Set(plekken).size === 3 && plekken[0] === 'acc' && app.isBeloning(stukken[0].id),
+      'H · drie stukken in drie plekken, de schat voorop', st.id + ' · ' + JSON.stringify(stukken.map(x => x.id)));
+    check(stukken.slice(1).every(it => typeof it.price === 'number'),
+      'H · de twee andere stukken zijn te koop', st.id);
+    stukken.forEach(it => {
+      check(!gezien.has(it.id), 'H · een spulletje hoort bij hoogstens één podium', it.id + ' · ' + gezien.get(it.id) + ' + ' + st.id);
+      gezien.set(it.id, st.id);
+    });
+    check(Array.isArray(st.vloer) && st.vloer.length === 4 && !!st.patroon,
+      'H · elk podium heeft zijn vier kleuren en een patroon', st.id);
+  }
+  /* De lade houdt op bij de horizon, dezelfde als die van de reis: voor een verse
+     ster wereld 1 plus REIS_VOORUIT, op wereldvolgorde, en alles op slot. */
   const horizon = app.laatsteZichtbareWereld(p);
-  const zicht = app.WORLDS
-    .map((w, i) => (i <= horizon && i < app.WORLD_AVAIL && w.beloning && app.item(w.beloning)) ? w.beloning : null)
-    .filter(Boolean);
-  const vak = rek(app, app.SCHAT_CAT);
-  check(vak.join() === zicht.join() && vak.length < uitWerelden.length,
-    'H · het vak toont wat de werelden tot aan de horizon uitdelen, op wereldvolgorde',
-    JSON.stringify([vak, zicht]));
-  check(app.wereldSchatten().map(x => x.item.id).join() === uitWerelden.join(),
-    'H · de hele verzameling (wereldSchatten) kent ze wél allemaal', JSON.stringify(uitWerelden));
-  check(vak.every(id => app.item(id).price === undefined),
-    'H · en geen van alle heeft een prijs', JSON.stringify(vak.filter(id => app.item(id).price !== undefined)));
-  // een verse ster: alles nog te halen
-  const leeg = app.schatStand(p);
-  check(leeg.heeft === 0 && leeg.totaal === uitWerelden.length,
-    'H · een verse ster heeft er nog geen van allemaal', JSON.stringify(leeg));
-  /* Verdienen verandert de teller en niet de volgorde: dit is een verzameling en
-     geen rek, dus plek 1 blijft de eerste wereld -- ook als je die nog niet hebt
-     en de tweede wel. */
-  p.owned.push(uitWerelden[1]);
-  const na = app.schatStand(p);
-  check(na.heeft === 1 && na.totaal === leeg.totaal,
-    'H · één verdiend telt als één, en het totaal beweegt niet mee', JSON.stringify(na));
-  check(rek(app, app.SCHAT_CAT).join() === zicht.join(),
-    'H · en de volgorde blijft die van de tournee', JSON.stringify(rek(app, app.SCHAT_CAT)));
-  /* Wat al van jou is staat er altijd, ook voorbij de horizon (een oude save,
-     een wereld die later tussen de andere is gezet): de horizon verbergt alleen
-     wat je nog niet hebt. */
-  const ver = uitWerelden[uitWerelden.length - 1];
-  p.owned.push(ver);
-  const metVer = rek(app, app.SCHAT_CAT);
-  check(metVer.includes(ver) && metVer.length === zicht.length + 1,
-    'H · een schat van jou voorbij de horizon staat er toch', JSON.stringify(metVer));
-  p.owned.splice(p.owned.indexOf(ver), 1);
-  /* Een wereld erbij brengt zijn schat vanzelf mee: één regel in WORLDS en één
-     regel in ITEMS, verder niets. Zou hier ergens een tweede lijst staan, dan
-     stond de zevende schat er niet in. */
+  const zicht = app.WORLDS.map((w, i) => (i <= horizon && i < app.WORLD_AVAIL) ? podia.find(st => st.wereld === w.id) : null)
+    .filter(Boolean).map(st => st.id);
+  const lade = rek(app, app.PODIA_CAT);
+  check(lade.join() === zicht.join() && lade.length < podia.length,
+    'H · de lade toont de podia tot aan de horizon, op wereldvolgorde', JSON.stringify([lade, zicht]));
+  check(lade.every(id => app.tagStand(app.item(id), p) === 'slot'),
+    'H · een verse ster: alles nog op slot', JSON.stringify(lade.map(id => app.tagStand(app.item(id), p))));
+  // de schat erbij: het podium kost wat er nog ontbreekt
+  const jungle = app.item('stage_jungle');
+  p.owned.push('acc_wereld_jungle');
+  check(!app.podiumOpSlot(p, jungle) && app.podiumPrijs(p, jungle) === app.item('pet_aap').price + app.item('instr_drums').price,
+    'H · met de schat kost het podium de twee andere stukken samen', JSON.stringify(app.podiumPrijs(p, jungle)));
+  p.owned.push('pet_aap');
+  check(app.podiumPrijs(p, jungle) === app.item('instr_drums').price && !app.podiumVanJou(p, jungle),
+    'H · één stuk erbij, en de prijs zakt', JSON.stringify(app.podiumPrijs(p, jungle)));
+  // kopen = de ontbrekende stukken kopen, en erop gaan staan
+  p.diamonds = 500;
+  app.run('confirmShopBuy("stage_jungle")');
+  check(p.owned.includes('instr_drums') && !p.owned.includes('stage_jungle') && app.podiumVanJou(p, jungle)
+    && p.equipped.stage === 'stage_jungle' && p.diamonds === 500 - app.item('instr_drums').price,
+    'H · een podium kopen koopt de stukken, en ze staat erop',
+    JSON.stringify([p.diamonds, p.equipped.stage, p.owned.slice(-3)]));
+  app.run('shopJustBoughtId = null');   // het "Nieuw!"-moment is voorbij
+  check(rek(app, app.PODIA_CAT)[0] === 'stage_jungle',
+    'H · en het staat bovenaan, bij haar eigen spullen', JSON.stringify(rek(app, app.PODIA_CAT)));
+  // dragen telt niet, bezitten wel: het aapje uit, het podium blijft
+  p.equipped.pet = null;
+  check(app.podiumVanJou(p, jungle), 'H · een stuk uitdoen kost haar het podium niet', '');
+  // eraf stappen = terug op Disco
+  app.run('unequipShopItem("stage")');
+  check(p.equipped.stage === 'stage_disco', 'H · van een podium afstappen = Disco', JSON.stringify(p.equipped.stage));
+  // zonder schat valt er niets te kopen, ook niet rechtstreeks
   const { app: app2, p: p2 } = verseSter();
-  app2.run(`ITEMS.push({ id: 'acc_wereld_test', cat: 'acc', name: 'Testhoedje', emoji: '🧪', spot: 'top' });
-    WORLDS.push({ id: 'testwereld', name: 'Testwereld', icon: '🧪', levels: 2, beloning: 'acc_wereld_test' });
-    rebuildWorldStarts(); rebuildWorldBadges();`);
-  const groter = app2.wereldSchatten().map(x => x.item.id);
-  check(groter[groter.length - 1] === 'acc_wereld_test' && groter.length === uitWerelden.length + 1,
-    'H · een zevende wereld zet zijn schat er vanzelf achter', JSON.stringify(groter));
-  check(app2.schatStand(p2).totaal === leeg.totaal + 1,
-    'H · en de teller telt hem mee zonder dat er iets bijgewerkt wordt',
-    JSON.stringify(app2.schatStand(p2)));
-  /* Een wereld die wel geschreven maar nog niet uitgebracht is hoort er niet als
-     raadsel bij te liggen: dat is een spoiler én een totaal dat vandaag niemand
-     vol kan maken. */
-  const { app: app3 } = verseSter();
-  app3.run(`ITEMS.push({ id: 'acc_wereld_stil', cat: 'acc', name: 'Stilhoedje', emoji: '🤫', spot: 'top' });
-    WORLDS.push({ id: 'stilwereld', name: 'Stilwereld', icon: '🤫', levels: 2, released: false, beloning: 'acc_wereld_stil' });
-    rebuildWorldStarts(); rebuildWorldBadges();`);
-  const stil = app3.wereldSchatten().map(x => x.item.id);
-  check(!stil.includes('acc_wereld_stil') && stil.length === uitWerelden.length,
-    'H · een nog niet uitgebrachte wereld verklapt zijn schat niet', JSON.stringify(stil));
+  p2.diamonds = 9999;
+  app2.run('confirmShopBuy("stage_vulkaan")');
+  check(p2.diamonds === 9999 && p2.equipped.stage === 'stage_disco',
+    'H · een podium zonder zijn schat is niet te koop', JSON.stringify([p2.diamonds, p2.equipped.stage]));
+  // een schat die je niet hebt brengt je naar zijn podium
+  check(app2.podiumVan('acc_wereld_vuur').id === 'stage_vulkaan' && app2.podiumVan('pet_draak').id === 'stage_vulkaan',
+    'H · elk stuk weet bij welk podium het hoort', '');
 });
 
 /* ---- I · Mijn wens. Eén id in p.wens, en verder niets: wat de pil op de kaart

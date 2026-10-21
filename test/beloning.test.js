@@ -14,7 +14,7 @@
  *   D  nog eens overspelen            -> niets erbij, geen feestje
  *   E  een save van vóór deze fase    -> alles stil met terugwerkende kracht
  *   F  twee sterren op één toestel    -> ieder haar eigen beloningen
- *   G  het schattenvak                -> te verdienen, niet te koop, nog geheim
+ *   G  Podia                          -> de schat is het slot op zijn podium
  *   H  een wereld erbij               -> één regel configuratie, verder niets
  *   K  de onthulling                  -> één keer, met een knop om 'm aan te doen
  *   L  het teken op de kaart          -> één fonkeling, en alleen zolang er iets ligt
@@ -173,7 +173,7 @@ function check(ok, label, detail) {
       return {
         label,
         scherm: (document.querySelector('.screen.active') || {}).id,
-        lade: shopCat, schatVak: shopCat === SCHAT_CAT, gekozen: shopSelectedId,
+        lade: shopCat, gekozen: shopSelectedId,
         aan: P().equipped.acc,
         aanKaart: !!(kaart && kaart.classList.contains('equipped')),
         balk: document.getElementById('dress-bar').textContent.replace(/\s+/g, ' ').trim(),
@@ -187,8 +187,8 @@ function check(ok, label, detail) {
     // geen vaste tekst in de test: de naam komt uit ITEMS, net als op het feestje
     check(weg.label.indexOf(weg.naam) >= 0,
       'A · de tweede knop noemt het spulletje zelf', `${weg.label} (naam: ${weg.naam})`);
-    check(weg.scherm === 'screen-dress' && weg.schatVak && weg.aan === 'acc_wereld_muziek' && weg.aanKaart,
-      'A · en brengt je rechtstreeks naar het schattenvak, met het spulletje al aan', JSON.stringify(weg));
+    check(weg.scherm === 'screen-dress' && weg.lade === 'acc' && weg.aan === 'acc_wereld_muziek' && weg.aanKaart,
+      'A · en brengt je rechtstreeks naar zijn lade, met het spulletje al aan', JSON.stringify(weg));
     check(weg.popDraagt && weg.ladeDicht && weg.gekozen === null,
       'A · de pop draagt het echt, en er staat geen balk meer die daar nog om vraagt',
       JSON.stringify(weg));
@@ -369,12 +369,12 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ---- G · Het schattenvak: te verdienen, niet te koop, en nog geheim -----
-     FASE 6E. De beloningen lagen achteraan in de accessoirelade, op slot, tussen
-     de prijzen -- en daarmee lazen ze als winkelwaar die toevallig niet te koop
-     is. Nu hebben ze een eigen vak ("✨ Wereldschatten · 0 / 6") en is wat er te
-     zien valt precies: er ligt iets, bij die wereld, en je krijgt het door te
-     spelen. Wát het is blijft tot het feestje. */
+  /* ---- G · Podia: de schat is het slot op zijn podium ------------------
+     Een schat die je nog niet hebt ligt niet in een lade (dan is het winkelwaar
+     die toevallig niet te koop is) maar op zijn podium, als 🔒. Wat er te zien
+     valt is precies: dit podium hoort bij die wereld, je krijgt het stuk door te
+     spelen, en de rest koop je. Wát de schat is blijft tot het feestje -- in de
+     lade onderaan staat hij als silhouet. */
   {
     const { ctx, page } = await fresh();
     await nieuweSter(page);
@@ -382,116 +382,92 @@ function check(ok, label, detail) {
       P().diamonds = 9999;
       openKleedkamer();
       await new Promise(res => setTimeout(res, 250));
-      const ingang = document.getElementById('schat-entry');
-      const accLade = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
+      const chips = [...document.querySelectorAll('#shop-tabs .tab-btn')].map(c => c.getAttribute('aria-label'));
       openKleedkamerCat('acc');
       await new Promise(res => setTimeout(res, 150));
       const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
-      // en dan het vak zelf open
-      ingang.click();
+      // de snelkoppeling: een tik op het podium in de spiegel opent Podia
+      document.getElementById('shop-podium').click();
       await new Promise(res => setTimeout(res, 250));
-      const kaart = document.querySelector('.item-card[data-item="acc_wereld_muziek"]');
+      const lade = shopCat;
+      const kaart = document.querySelector('.item-card[data-item="stage_arena"]');
+      const status = kaart.querySelector('.item-status').textContent.trim();
       kaart.click();
       await new Promise(res => setTimeout(res, 150));
-      const balk = document.getElementById('dress-bar').textContent;
+      const balk = document.getElementById('dress-bar');
+      const stukken = [...balk.querySelectorAll('.mini-kaart')].map(k => ({
+        id: k.dataset.stuk, tag: k.querySelector('.item-status').textContent.trim(), slot: k.classList.contains('op-slot') }));
+      const speel = !!document.getElementById('db-speel');
+      const koop = !!document.getElementById('db-buy');
+      // het slotje: een bubbeltje met het wereldteken
+      balk.querySelector('.mini-kaart.op-slot').click();
+      await new Promise(res => setTimeout(res, 100));
+      const bel = document.querySelector('.slot-bel');
+      const belTekst = bel ? bel.textContent : '';
+      if (bel) bel.remove();
       // en zelfs als iemand de koopweg rechtstreeks aanroept
+      confirmShopBuy('stage_arena');
       confirmShopBuy('acc_wereld_muziek');
       return {
-        ingangTekst: ingang.textContent.replace(/\s+/g, ' ').trim(),
-        ingangZichtbaar: ingang.style.display !== 'none',
-        accLade, inAcc,
-        opSlot: kaart.classList.contains('teverdienen'),
-        schatKaart: kaart.classList.contains('schat-kaart'),
-        status: kaart.querySelector('.item-status').textContent.trim(),
-        // het raadsel en niet de tekening: geen SVG op het kaartje van een schat
-        // die nog niet van haar is
-        raadsel: !!kaart.querySelector('.schat-raadsel'),
-        tekening: !!kaart.querySelector('.item-thumb svg'),
-        naamOpKaart: kaart.querySelector('.item-name').textContent,
-        itemNaam: item('acc_wereld_muziek').name,
-        /* De pop verklapt hem ook niet bij een tik. Niet op de HTML vergeleken
-           (avatarSVG geeft elke pop zijn eigen id-achtervoegsel, dus die verschilt
-           altijd) maar op het enige dat telt: staat de tekening van dit spulletje
-           erin of niet. Een koopstuk hóórt daar wél in te komen -- dat is de
-           etalage -- en dat staat er als tegenproef bij. */
-        popDraagtSchat: document.getElementById('shop-avatar').innerHTML
-          .includes(item('acc_wereld_muziek').draw('meisje', 1)),
-        knop: !!document.querySelector('#db-buy'),
-        balk,
+        chips, inAcc, lade, status, stukken, speel, koop, belTekst,
+        balkNoemtSchat: balk.textContent.indexOf(item('acc_wereld_muziek').name) >= 0,
         heeft: P().owned.includes('acc_wereld_muziek'),
+        staat: P().equipped.stage,
         diamanten: P().diamonds,
-        /* de schatten van de uitgebrachte werelden tot aan de horizon (zie
-           zichtbareSchatten): een dichte verklapt niets, en een verre ook niet --
-           die staan samen achter één mistkaartje zonder getal */
-        beloningen: WORLDS.filter((w, i) => worldAvailable(i) && binnenHorizon(P(), i))
-          .map(w => w.beloning).filter(id => !!item(id)),
         volgorde: [...document.querySelectorAll('.item-card:not(.horizon-mist)')].map(c => c.dataset.item),
+        hoort: zichtbarePodia(P()).map(st => st.id),
         mist: document.querySelectorAll('.item-card.horizon-mist').length,
-        meer: zichtbareSchatten(P()).length < wereldSchatten().length,
-        popPastKoopstuk: await (async () => {
-          openKleedkamerCat('acc');
-          await new Promise(res => setTimeout(res, 150));
-          document.querySelector('.item-card[data-item="acc_feesthoed"]').click();
-          await new Promise(res => setTimeout(res, 150));
-          return document.getElementById('shop-avatar').innerHTML.includes('🎉');
-        })(),
+        wereldtekens: document.querySelectorAll('.item-wereld').length,
       };
     });
-    /* Een oplopend getal en geen breuk: het totaal was het aantal werelden van
-       vandaag, en dan zakt een kind met alles van "6 / 6" naar "6 / 7" zodra er een
-       wereld bij komt. De teller zegt daarom hoeveel ze er heeft en verder niets. */
-    check(r.ingangZichtbaar && /Wereldschatten/.test(r.ingangTekst)
-      && /0 verzameld/.test(r.ingangTekst) && !/\//.test(r.ingangTekst),
-      'G · de kleedkamer heeft een schattenvak met een oplopende teller erop', JSON.stringify(r.ingangTekst));
-    check(!r.accLade.some(id => /acc_wereld_/.test(id)) && !r.inAcc.some(id => /acc_wereld_/.test(id)),
-      'G · en de gewone laden staan er niet meer vol mee', JSON.stringify(r.inAcc));
-    check(r.volgorde.join() === r.beloningen.join(),
-      'G · het vak toont de wereldschatten tot aan de horizon, in wereldvolgorde',
-      JSON.stringify({ vak: r.volgorde, hoort: r.beloningen }));
-    check(r.mist === (r.meer ? 1 : 0),
-      'G · en daarachter één mistkaartje als er nog meer schatten liggen', JSON.stringify({ mist: r.mist, meer: r.meer }));
-    check(r.opSlot && r.schatKaart && r.status === '🔒 Speel uit',
-      'G · een nog niet verdiende schat staat op slot', JSON.stringify(r));
-    check(r.raadsel && !r.tekening && r.naamOpKaart === 'Muziekwereld' && r.naamOpKaart !== r.itemNaam,
-      'G · en verklapt zichzelf niet: een raadsel met de naam van zijn wereld', JSON.stringify(r));
-    check(!r.popDraagtSchat && r.popPastKoopstuk,
-      'G · de pop past hem niet even -- een koopstuk wél', JSON.stringify(r));
-    check(!r.knop && /Speel Muziekwereld uit/.test(r.balk) && !/💎/.test(r.balk)
-      && r.balk.indexOf(r.itemNaam) < 0,
-      'G · de balk zegt hoe je hem haalt -- geen prijs, geen koopknop, geen naam', JSON.stringify(r.balk));
-    check(!r.heeft && r.diamanten === 9999,
+    check(r.chips[0] === 'Podia', 'G · Podia is de eerste knop van de rij', JSON.stringify(r.chips));
+    check(!r.inAcc.some(id => /acc_wereld_/.test(id)),
+      'G · de gewone laden staan niet vol met schatten op slot', JSON.stringify(r.inAcc));
+    check(r.lade === 'stage', 'G · een tik op het podium in de spiegel opent Podia', JSON.stringify(r.lade));
+    check(r.volgorde.join() === r.hoort.join() && r.mist === 1,
+      'G · de lade toont de podia tot de horizon, met één mistkaartje erachter', JSON.stringify(r));
+    check(r.status === '🔒', 'G · een podium zonder zijn schat staat op slot', JSON.stringify(r.status));
+    check(r.stukken.length === 3 && r.stukken[0].id === 'acc_wereld_muziek' && r.stukken[0].slot && r.stukken[0].tag === '🔒'
+      && r.stukken.slice(1).every(s => /💎/.test(s.tag)),
+      'G · de lade onderaan: de schat op slot, de twee andere met hun prijs', JSON.stringify(r.stukken));
+    check(r.speel && !r.koop && !r.balkNoemtSchat,
+      'G · één knop: Speel -- geen koopknop, en de naam van de schat blijft geheim', JSON.stringify(r));
+    check(/🎵/.test(r.belTekst) && /🔓/.test(r.belTekst),
+      'G · het slotje zegt met het wereldteken waar je hem haalt', JSON.stringify(r.belTekst));
+    check(!r.heeft && r.staat === 'stage_disco' && r.diamanten === 9999,
       'G · en kopen kan ook niet langs de knop om', JSON.stringify(r));
-    /* Verdiend hoort hij gewoon bij haar spullen: in het vak volledig te zien, én
-       in zijn eigen lade, want dáár kiest een kind wat ze aandoet. */
+    check(r.wereldtekens === 0, 'G · geen wereldteken meer in de hoek van een kaartje', JSON.stringify(r.wereldtekens));
+    /* Verdiend: de schat staat bij haar spullen, het slot gaat eraf, en wat er nog
+       ontbreekt koop je in één keer -- daarna staat ze erop. */
     const na = await page.evaluate(async () => {
       P().owned.push('acc_wereld_muziek');
       renderShop();
       await new Promise(res => setTimeout(res, 150));
-      const kaart = document.querySelector('.item-card[data-item="acc_wereld_muziek"]');
-      const teller = document.getElementById('schat-entry').textContent.replace(/\s+/g, ' ').trim();
+      const kaart = document.querySelector('.item-card[data-item="stage_arena"]');
+      const voor = kaart.querySelector('.item-status').textContent.trim();
+      const prijs = item('instr_dj').price + item('dress_disco').price;
       kaart.click();
       await new Promise(res => setTimeout(res, 150));
-      const balk = document.getElementById('dress-bar').textContent;
-      const aan = P().equipped.acc;
-      openKleedkamerCat('acc');
-      await new Promise(res => setTimeout(res, 150));
-      const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
+      const knop = document.getElementById('db-buy');
+      const knopTekst = knop ? knop.textContent : '';
+      knop.click();
+      await new Promise(res => setTimeout(res, 2200));
+      const na = document.querySelector('.item-card[data-item="stage_arena"]');
       return {
-        teller, balk, inAcc, aan,
-        tekening: !!kaart.querySelector('.item-thumb svg'),
-        raadsel: !!kaart.querySelector('.schat-raadsel'),
-        naamOpKaart: kaart.querySelector('.item-name').textContent,
-        wereldteken: !!kaart.querySelector('.item-wereld'),
+        voor, prijs, knopTekst,
+        staat: P().equipped.stage,
+        stukken: ['instr_dj', 'dress_disco'].every(id => P().owned.includes(id)),
+        diamanten: P().diamonds,
+        aan: na.classList.contains('equipped'), tag: na.querySelector('.item-status').textContent.trim(),
+        spiegel: document.getElementById('shop-podium').dataset.podium,
       };
     });
-    check(/1 verzameld/.test(na.teller), 'G · de teller loopt mee', JSON.stringify(na.teller));
-    check(na.tekening && !na.raadsel && na.naamOpKaart === 'Notenkroontje' && na.wereldteken,
-      'G · een verdiende schat laat zich zien, met het teken van zijn wereld', JSON.stringify(na));
-    check(na.aan === 'acc_wereld_muziek' && na.balk === '',
-      'G · en gaat met één tik aan -- geen balk, geen prijs, geen tussenstap',
-      JSON.stringify([na.aan, na.balk]));
-    check(na.inAcc.filter(id => /acc_wereld_/.test(id)).join() === 'acc_wereld_muziek',
-      'G · in haar eigen lade staat alleen de schat die ze verdiend heeft', JSON.stringify(na.inAcc));
+    check(na.voor === `💎 ${na.prijs}`, 'G · met de schat kost het podium wat er nog ontbreekt', JSON.stringify(na));
+    check(/Koop/.test(na.knopTekst) && na.knopTekst.indexOf(String(na.prijs)) >= 0,
+      'G · en de lade biedt één koopknop voor alles', JSON.stringify(na.knopTekst));
+    check(na.stukken && na.staat === 'stage_arena' && na.diamanten === 9999 - na.prijs && na.aan && na.tag === '✓'
+      && na.spiegel === 'stage_arena',
+      'G · kopen: de stukken zijn van haar, ze staat erop, ook in de spiegel', JSON.stringify(na));
     await ctx.close();
   }
 
@@ -588,7 +564,7 @@ function check(ok, label, detail) {
       });
       /* Het miniatuur in de kleedkamer is de tekening en niet meer het emoji. Ze
          moet ze wél eerst verdiend hebben: een schat die nog op slot staat toont
-         met opzet het raadsel en niet zijn tekening (fase 6E, zie zaak G). */
+         met opzet niet in een lade maar als slotje op zijn podium (zie zaak G). */
       ids.forEach(id => { if (!p.owned.includes(id)) p.owned.push(id); });
       openKleedkamerItem(ids[0]);
       // de tekeningen hierboven gelden voor elke wereld, ook een dichte (die wil je

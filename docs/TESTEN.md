@@ -301,7 +301,11 @@ die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
 - een verdiende wereldbeloning schuift mee naar "van jou" en staat niet meer op
   slot achteraan;
 - een oude save met podia houdt ze (en haar diamanten), maar ziet ze nergens in
-  de winkel terug.
+  de kledinglades terug;
+- **Podia**: elke uitgebrachte wereld heeft één podium van drie stukken (de schat
+  plus twee koopstukken in andere plekken, geen stuk in twee podia); van jou is
+  afgeleid uit `p.owned`; de lade houdt de horizon van de reis; een podium kopen
+  koopt de ontbrekende stukken, en zonder schat valt er niets te kopen.
 
 ### `test/hub.test.js` — de Dev Studio
 
