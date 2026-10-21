@@ -667,3 +667,7 @@
   .pod-circus::before   { background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.55) 0 15deg, transparent 15deg 30deg); }
   .pod-vlek::before     { background: radial-gradient(ellipse, rgba(60,40,10,.38) 2.4px, transparent 4.5px) 0 0 / 20px 12px; }
   .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }
+  /* Op de sterrentegel: een tikje hoger, zodat de zijband niet tegen de onderrand
+     van de tegel valt (die knipt af, zie .stage). */
+  .ster-tegel .stage-podium { bottom: 5%; }
+  .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }

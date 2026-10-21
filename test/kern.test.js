@@ -1077,6 +1077,13 @@ zaak('S', () => {
   // de som als zin, voor Voorlezen
   check(app.somZin({ tmpl: '7 + 3 = @' }) === 'zeven plus drie is hoeveel?', 'S · een som wordt een zin', app.somZin({ tmpl: '7 + 3 = @' }));
   check(app.somZin({ tmpl: '12 − @ = 4' }) === '12 min hoeveel is vier?', 'S · min, en boven tien het cijfer', app.somZin({ tmpl: '12 − @ = 4' }));
+  check(app.somZin({ tmpl: '3 × 4 = @' }) === 'drie maal vier is hoeveel?', 'S · × is maal, zoals op een Vlaamse school', app.somZin({ tmpl: '3 × 4 = @' }));
+  // de stem: Vlaams eerst, dan Nederlands, dan elke nl-stem
+  const stem = lijst => app.run('_voices = ' + JSON.stringify(lijst.map(lang => ({ lang }))) + '; (nlVoice() || {}).lang || null');
+  check(stem(['en-US', 'nl-NL', 'nl-BE']) === 'nl-BE', 'S · een Vlaamse stem gaat voor', stem(['en-US', 'nl-NL', 'nl-BE']));
+  check(stem(['nl_BE', 'nl-NL']) === 'nl_BE', 'S · ook als het toestel nl_BE schrijft', stem(['nl_BE', 'nl-NL']));
+  check(stem(['en-US', 'nl-NL']) === 'nl-NL', 'S · zonder Vlaamse stem wordt het Nederlands', stem(['en-US', 'nl-NL']));
+  check(stem(['en-US']) === null, 'S · en zonder Nederlandstalige stem geen stem', String(stem(['en-US'])));
   check(app.stemAan(p) === true, 'S · met Voorlezen aan mag de stem in de rekenmodus', '');
   s.voorlezen = false;
   check(app.stemAan(p) === false, 'S · zonder Voorlezen zwijgt de rekenmodus zoals altijd', '');

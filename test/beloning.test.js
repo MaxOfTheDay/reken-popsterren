@@ -95,7 +95,9 @@ function check(ok, label, detail) {
         if (!ov) return null;
         return {
           kop: ov.querySelector('.wf-kop').textContent,
-          rijen: [...ov.querySelectorAll('.wf-rij b')].map(b => b.textContent),
+          rijen: [...ov.querySelectorAll('.wf-rij:not(.wf-stil) b')].map(b => b.textContent),
+          // de stille regel: het podium van die wereld, als het nog niet af is
+          podium: [...ov.querySelectorAll('.wf-rij.wf-stil')].map(r => r.textContent),
           lagen: document.querySelectorAll('.wereld-feest-overlay:not(.closing)').length,
         };
       };
@@ -107,6 +109,7 @@ function check(ok, label, detail) {
           perfectKlaar: (q.readyTrophies || []).filter(id => id.indexOf(PERFECT_BADGE) === 0),
           badges: q.trophies.filter(id => id.indexOf(WERELD_BADGE) === 0),
           gekocht: boughtCount(q),
+          stage: q.equipped.stage,
         };
       };
     });
@@ -148,6 +151,11 @@ function check(ok, label, detail) {
       'A · de laatste show maakt de wereld uit en geeft het spulletje', JSON.stringify(r));
     check(r.feest && r.feest.kop === 'Wereld uit!' && r.feest.rijen.join() === 'Nieuwe wereldschat!' && r.feest.lagen === 1,
       'A · met één feestje, en dat gaat over de wereldschat', JSON.stringify(r.feest));
+    /* De schat is het eerste stuk van het podium van die wereld (zie "= Podia").
+       Zonder de twee winkelstukken is het nog niet af: één stille regel met de
+       naam en wat er nog bij moet, en ze blijft staan waar ze stond. */
+    check(r.feest && r.feest.podium.join() === 'SterrenarenaNog 2 stukken' && r.stage === 'stage_disco',
+      'A · en één stille regel over het podium van die wereld', JSON.stringify([r.feest, r.stage]));
     check(r.perfect.length === 0 && r.perfectKlaar.length === 0,
       'A · twee sterren is geen perfecte wereld', JSON.stringify(r));
     check(r.gekocht === 0,
@@ -264,6 +272,29 @@ function check(ok, label, detail) {
       'C · uit én perfect is één feestje met twee regels', JSON.stringify(r.feest));
     check(r.spullen.join() === 'acc_wereld_muziek' && r.perfect.join() === 'perfect-muziek',
       'C · en allebei de beloningen staan er echt', JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* ---- C2 · De schat maakt het podium af ---------------------------------
+     Heeft ze de twee winkelstukken van de Sterrenarena al, dan is de schat het
+     laatste stuk: "Nieuw podium!" en ze staat er meteen op -- in de opslag en
+     op het eindscherm eronder. Het podium zelf komt niet in p.owned: van jou
+     zijn is afgeleid (zie "= Podia"). */
+  {
+    const { ctx, page } = await fresh();
+    await nieuweSter(page);
+    const r = await page.evaluate(async () => {
+      P().owned.push('instr_dj', 'dress_disco'); save();
+      const w = worldForIndex(0);
+      for (let l = w.first; l < w.first + w.levels - 1; l++) { await window.__speel(l, 2); window.__sluitFeest(); }
+      await window.__speel(w.first + w.levels - 1, 2);
+      return { ...window.__stand(), feest: window.__feest(), eigen: P().owned.includes('stage_arena'),
+        schijf: !!document.querySelector('#end-stage .stage-podium .podium') };
+    });
+    check(r.feest && r.feest.rijen.join() === 'Nieuwe wereldschat!,Nieuw podium!' && r.feest.podium.length === 0,
+      'C2 · de schat die het podium afmaakt zegt "Nieuw podium!"', JSON.stringify(r.feest));
+    check(r.stage === 'stage_arena' && !r.eigen && r.schijf,
+      'C2 · en ze staat er meteen op, ook op het eindscherm', JSON.stringify(r));
     await ctx.close();
   }
 
