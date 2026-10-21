@@ -210,7 +210,10 @@
      kopregel leest het als een hoofdstuknummer, en het is het enige wat de
      kopregel over jóu zegt. Vol wordt hij goud -- hetzelfde goud als de kaartjes
      eronder, dus de groep en haar inhoud spreken dezelfde taal. */
-  .kast-groep { width: 100%; margin-top: 22px; }
+  /* Krapper dan eerst (22 -> 16, kop 12/9 -> 9/7): sinds de kaartjes geen
+     beschrijving meer dragen zijn ze lager, en met de oude lucht ertussen viel de
+     kast uiteen in losse rijtjes. */
+  .kast-groep { width: 100%; margin-top: 16px; }
   .kast-groep:first-child { margin-top: 4px; }
   .kast-groep:last-child { margin-bottom: 4px; }
   /* flex-start en niet center: op een smalle telefoon slaat het regeltje onder de
@@ -220,13 +223,13 @@
      groeit alleen het regeltje eronder mee. */
   .groep-kop {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 0 4px 9px; margin-bottom: 12px;
+    padding: 0 4px 7px; margin-bottom: 9px;
     border-bottom: 1px solid rgba(255,255,255,.085);
   }
   .groep-ico { flex: none; font-size: 22px; line-height: 1; margin-top: 2px; filter: var(--emoji-schaduw); }
   .groep-tekst { flex: 1 1 auto; min-width: 0; }
   .groep-naam { font-size: var(--tx-body); font-weight: 700; letter-spacing: .01em; text-shadow: var(--op-vlak-ink); }
-  .groep-note { font-size: var(--tx-klein); font-weight: 600; color: var(--lavender-text); opacity: .7; margin-top: 1px; line-height: 1.25; }
+  /* (Hier stond .groep-note, het regeltje onder de plaknaam. Weg: zie renderShelves.) */
   .groep-telling {
     flex: none; font-size: var(--tx-klein); font-weight: 700; margin-top: 1px;
     color: rgba(255,255,255,.6); white-space: nowrap;
@@ -255,7 +258,7 @@
     position: relative; flex: 0 1 calc(50% - 5px); max-width: 210px;
     background: var(--vlak);
     border: 2px solid var(--vlak-rand);
-    border-radius: var(--r-md); padding: 13px 10px 12px; text-align: center; cursor: pointer;
+    border-radius: var(--r-md); padding: 10px 8px 10px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch; gap: 0;
     box-shadow: var(--vlak-top);
     transition: filter .12s, transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
@@ -273,10 +276,16 @@
        4. de voet     de stand of "Open!" -- met margin-top:auto altijd tégen de
                       onderrand, hoe lang de tekst erboven ook is
      Het raster wordt daar rustig van zonder dat er iets bij komt. */
-  .trophy-card .temoji { font-size: 38px; line-height: 1; height: 46px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
-  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 5px; line-height: 1.16; }
-  .trophy-card .tdesc { font-size: var(--tx-klein); font-weight: 600; color: var(--lavender-text); opacity: .76; margin-top: 4px; line-height: 1.24; }
-  .tvoet { margin-top: auto; padding-top: 9px; display: flex; flex-direction: column; align-items: stretch; }
+  /* Oktober 2026: van vier zones naar drie. De beschrijving ("500 sommen goed")
+     is van het kaartje af -- die komt bij een tik, in de pil (zie pilOmklappen) --
+     en het kaartje is daarmee een derde lager: icoon 38 -> 32, de randen krapper.
+     Behaald en nog-niet zijn nu even hoog; met een regel tekst op het ene en niet
+     op het andere stond de plank scheef. */
+  .trophy-card .temoji { font-size: 32px; line-height: 1; height: 38px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
+  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 4px; line-height: 1.16; }
+  /* De voet: één pil, gecentreerd. Ook "🎁 Open!" is een pil en geen balk over de
+     hele breedte meer -- dezelfde maat als het ✓ dat ervoor in de plaats komt. */
+  .tvoet { margin-top: auto; padding-top: 7px; display: flex; flex-direction: column; align-items: center; }
   /* drie kolommen zodra de plank het comfortabel trekt, vier op tabletbreedte */
   @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
   @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 7.5px); } }
@@ -313,7 +322,6 @@
      kaartje grijs en kapot oogt -- maar wel duidelijk anders dan een behaalde */
   .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
   .trophy-card.fresh .tname { opacity: .84; }
-  .trophy-card.fresh .tdesc { opacity: .62; }
   /* ONDERWEG: actief, maar een trap onder goud. */
   .trophy-card.busy {
     background: linear-gradient(180deg, rgba(178,140,255,.115), rgba(178,140,255,.05));
@@ -329,7 +337,6 @@
   .trophy-card.locked { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.05); box-shadow: none; }
   .trophy-card.locked .temoji { filter: grayscale(.55); opacity: .52; }
   .trophy-card.locked .tname { opacity: .64; }
-  .trophy-card.locked .tdesc { opacity: .5; }
   /* BEHAALD: trots, maar stil.
      Dit is de 'verdiend'-taal die de rest van de app al spreekt (afgelegde halte op
      de kaart, aangetrokken stuk in de kleedkamer), met één bijstelling na het
@@ -368,44 +375,39 @@
                 0 0 14px rgba(var(--goud-gloed-rgb),.12);
   }
   .trophy-card.done .tname { color: var(--gold-light); }
-  .trophy-card.done .tdesc { color: var(--c-white); opacity: .78; }
-  /* Het vinkje in de hoek: het enige versiersel op een behaalde kaart. Hier stond
-     een vonkje van 11px op .7, en dat was te stil: naast een kaart die je nog
-     niet hebt (zelfde icoon in kleur, zie .fresh) zat het verschil alleen in de
-     kleur van de naam. Een kind dat nog niet leest moet het aan het kaartje
-     zelf zien. Het is hetzelfde ✓ op goud als "✓ Aan" in de kleedkamer: één
-     teken voor "dit is van jou".
-     Niet op de perfecte-wereldkaart: die heeft haar eigen ⭐ aan het medaillon,
-     en twee tekens op één kaartje is er één te veel. */
-  .trophy-card.done:not(.pw-card)::before {
-    content: '✓'; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px;
-    z-index: 2; pointer-events: none; border-radius: 50%;
-    display: grid; place-items: center;
-    font-size: 13px; font-weight: 800; line-height: 1; color: #3a2400;
-    background: var(--gold-accent);
-    box-shadow: 0 1px 3px rgba(8,1,20,.45);
+  /* Het vinkje. Stond als gouden rondje in de hoek rechtsboven, en dat sprong: een
+     kind tikte op "🎁 Open!" onderaan, en het teken dat daarna kwam verscheen
+     ergens anders. Nu staat het precies waar Open! stond, als stil pilletje:
+     zachtgoud op een gouden waas, geen vol goud -- dat blijft van Open!, de enige
+     knop op dit scherm. Niet op de perfecte-wereldkaart: daar zeggen de gouden
+     ring, de gouden kaart en de gouden naam het al. */
+  .tvink {
+    min-width: 34px; padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: 14px; font-weight: 800; line-height: 1.15;
+    color: var(--gold-accent); background: rgba(var(--goud-rgb),.16);
   }
   /* De stand op een lopende kaart: alleen het getal, geen balk. "82 / 100 sommen"
      zegt alles wat een balkje zou zeggen, en het staat er in de taal van een
      rekenspel. De balk stond op élke kaart en maakte van de kast een lijst. */
-  .tstand { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .78; }
-  .tstand span { font-weight: 600; opacity: .8; }
-  .tstand.sub { font-weight: 600; opacity: .55; }
-  /* Onderweg: hetzelfde getal, maar als chipje in het violet van de kaart. Een
-     kale regel tekst onderaan een kaartje las als bijschrift; zo leest hij als de
-     stand van iets dat loopt -- en het is nog steeds precies één getal. */
-  .trophy-card.busy .tstand {
-    align-self: center; opacity: 1;
-    color: #e7dcff; background: rgba(178,140,255,.17);
-    border: 1px solid rgba(186,150,255,.26); border-radius: var(--r-pill);
-    padding: 3px 10px;
+  /* Oktober 2026: alleen het getal, zonder woord erachter ("180 / 500", niet
+     "180 / 500 sommen"). Wat er geteld wordt zegt de pil zelf bij een tik: hij
+     klapt twee tellen om naar "nog 320 sommen" (.omgeklapt, zie pilOmklappen). */
+  .tstand {
+    padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; line-height: 1.15; white-space: nowrap;
+    color: var(--c-white); background: rgba(255,255,255,.12);
+    transition: background var(--t-tik, .1s) ease, transform var(--t-tik, .1s) ease;
   }
-  .trophy-card.busy .tstand span { color: rgba(231,220,255,.78); }
+  .tstand.omgeklapt { background: rgba(255,255,255,.24); transform: scale(1.06); }
+  /* (Hier kreeg de pil op een lopende kaart het violet van die kaart. Weg: het
+     violette vlak zegt al "onderweg", en een tweede violet erin maakte van de pil
+     een sticker. Nu is hij dezelfde stille witte pil als elke andere stand.) */
   /* ===== De perfecte werelden =====
      De grootste prijs van het spel, en de enige kaart die eruit springt. Het
      medaillon is dezelfde vorm als bij de onthulling na de laatste ster (zie
-     .wf-trofee): het wereldicoon in een rondje, en behaald een gouden ring met een
-     ster in de hoek. De kleur ín het rondje komt van de wereld zelf (theme.sky /
+     .wf-trofee): het wereldicoon in een rondje, en behaald een gouden ring. De
+     onthulling zet er nog een ster bij; in de kast niet meer, daar staan er tien
+     naast elkaar en dan is het ruis. De kleur ín het rondje komt van de wereld zelf (theme.sky /
      theme.glow, via inline --pw-sky/--pw-glow), dus een zevende wereld krijgt zijn
      eigen medaillon zonder dat hier iets bij hoeft. */
   .pw-grid { gap: 11px; }
@@ -413,12 +415,12 @@
      stond onder elke naam nog "Overal drie sterren", zes keer. Die regel is weg
      (zie perfectCardHTML) en de ruimte gaat naar het medaillon -- dát is waar je
      naar kijkt, niet naar het bijschrift. */
-  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 17px 10px 16px; }
+  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 12px 8px 11px; }
   @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
   @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  .pw-card .tname { margin-top: 9px; font-size: var(--tx-label); }
+  .pw-card .tname { margin-top: 7px; font-size: var(--tx-label); }
   .pw-medal {
-    position: relative; width: 76px; height: 76px; margin: 2px auto 0;
+    position: relative; width: 60px; height: 60px; margin: 2px auto 0;
     border-radius: 50%; display: grid; place-items: center;
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
@@ -426,7 +428,7 @@
     border: 2px solid rgba(255,255,255,.3);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  .pw-ico { font-size: 35px; line-height: 1; filter: var(--emoji-schaduw); }
+  .pw-ico { font-size: 28px; line-height: 1; filter: var(--emoji-schaduw); }
   /* Nog niet perfect: de wereldkleur blijft, een slag zachter. Geen grijs -- de
      blauwe IJswereld hoort ook ongewonnen nog blauw te lokken. */
   .pw-card.fresh .pw-medal { opacity: .68; }
@@ -435,16 +437,13 @@
      en dat is precies wat de violette kaart eromheen ook zegt. */
   .pw-card.busy .pw-medal { opacity: .84; }
   .pw-card.busy .pw-ico { opacity: .94; }
-  /* Behaald: gouden ring, gouden gloed, en de ster in dezelfde hoek als bij de
-     onthulling. Dít is het kaartje waar een kind acht shows lang naar toe werkt. */
+  /* Behaald: gouden ring en gouden gloed. Dít is het kaartje waar een kind acht shows lang naar toe werkt. */
   .trophy-card.done .pw-medal {
     border-color: var(--gold-accent);
     box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
   }
-  .trophy-card.done .pw-medal::after {
-    content: '⭐'; position: absolute; right: -6px; bottom: -6px; font-size: 20px;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
-  }
+  /* (Hier stond een ⭐ in de hoek van het medaillon. Weg, oktober 2026: de gouden
+     ring, de gouden kaart en de gouden naam zeggen "perfect" al drie keer.) */
   /* ===== KLAAR OM TE OPENEN =====
      De normale kaart (eigen icoon, eigen naam, eigen beschrijving) met een gouden
      rand en "🎁 Open!" onderaan. Bewust niet een compleet ander kaartje: vijf
