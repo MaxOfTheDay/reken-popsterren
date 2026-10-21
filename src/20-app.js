@@ -11249,8 +11249,14 @@ function rekBreedte() {
   if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
   if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
-  const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
-  const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
+  /* clientWidth rondt áf naar het dichtstbijzijnde hele getal, dus een rek van
+     625,6 meldt zich als 626 -- en een rij die op 626 precies past, breekt dan
+     op het laatste kaartje af (drie per rij op een bureaublad waar er vier
+     pasten). Eén pixel eraf vangt dat altijd. Niet getBoundingClientRect: het
+     scherm komt binnen met een schaal van 1.03, en die meet hij mee. */
+  const w = rek.clientWidth - 1;
+  const n = Math.max(1, Math.floor((w + KAART_GAT) / (min + KAART_GAT)));
+  const b = Math.min((w - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
   rekBreedteBij = `${innerWidth}x${innerHeight}`;
