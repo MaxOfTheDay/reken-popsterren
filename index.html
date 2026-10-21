@@ -12616,6 +12616,18 @@ function audioWakker() {
   try { if (actx && actx.state !== 'running' && actx.resume) actx.resume(); } catch (e) { }
 }
 document.addEventListener('pointerdown', audioWakker, { passive: true });
+
+
+
+
+
+
+
+
+
+
+
+naDeRust(() => { if (db.sound) audioBus(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWakker(); });
 
 
@@ -12799,6 +12811,7 @@ function playSfx(naam, opts) {
   if (!db.sound) return;
   try {
     if (!audioBus()) return;
+    audioWakker();
     const toon = def.ladder ? def.ladder[Math.min(opts.i | 0, def.ladder.length - 1)]
       : def.keuze ? pick(def.keuze) : 0;
     def.noten.forEach(n => noot(n[0] || toon, n[1], n[2], n[3], n[4]));
