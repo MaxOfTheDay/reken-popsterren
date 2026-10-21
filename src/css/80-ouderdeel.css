@@ -475,7 +475,7 @@
      Alles hieronder is nog .chip -- daar hangt de bediening aan -- maar in vier
      vormen die elk zeggen wat een tik doet:
        .oe-ops    tegels, meer tegelijk mag (+ − × ÷)
-       .oe-trap   treden die naar rechts hoger worden, één keuze (tot, antwoord)
+       .oe-seg    een balk met gelijke vakken, één keuze (tot, antwoord)
        .oe-tafels tegeltjes, meer tegelijk mag
        .oe-rij    een rij zoals onder het tandwiel: icoon, woord, stand
      Gekozen is overal dezelfde volle paarse vulling, zonder vinkje erbij. Deze
@@ -488,23 +488,21 @@
   .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
   .oe-ops { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .oe-ops .chip { height: 56px; padding: 0; border-radius: var(--r-md); font-size: 30px; font-weight: 700; line-height: 1; }
-  .oe-ops .chip.on { box-shadow: 0 3px 0 var(--purple-shadow); }
-  /* De trap. Het vlak (.oe-trede) groeit per trede; het woord eronder. Wat
-     onder de keuze ligt (.onder) is licht gevuld, zodat je "tot hier" ziet. */
-  .oe-trap { display: flex; gap: 6px; align-items: flex-end; }
-  .oe-trap .chip, .oe-trap .chip.on, .oe-trap .chip:hover {
-    flex: 1 1 0; display: flex; flex-direction: column; align-items: stretch; gap: 5px; min-width: 0;
-    padding: 0; border: none; border-radius: 0; background: none; box-shadow: none; color: var(--purple-mid);
+  /* Gekozen is in deze kaart overal hetzelfde vlakke paars, ook bij de tegels:
+     een tegel met een 3D-rand naast een balk zonder leest als twee soorten knop. */
+  .oe-ops .chip.on, .oe-tafels .chip.on { background: var(--purple-mid); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+  /* De balk: één keuze, gelijke vakken, het gekozen vak vol paars. Het gekozen
+     vak is een vlak ín de balk, niet een knop erop: geen 3D-rand eronder, en
+     de ronding is die van de balk min zijn binnenrand (14 - 4 = 10), zodat de
+     twee vormen precies in elkaar passen. Het woord staat in het midden van
+     het vak (flex), niet bovenaan zoals bij een .chip met een minimumhoogte. */
+  .oe-seg { display: flex; gap: 2px; padding: 4px; border-radius: 14px; background: var(--lavender-wash); }
+  .oe-seg .chip, .oe-seg .chip:hover {
+    flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-width: 0; height: 40px; padding: 0 4px;
+    border: none; border-radius: 10px; background: none; box-shadow: none;
+    color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
   }
-  .oe-trede { height: 14px; border-radius: 10px 10px 6px 6px; background: var(--paper-tint); border: 1.5px solid var(--paper-border); }
-  .oe-trap .chip:nth-child(2) .oe-trede { height: 24px; }
-  .oe-trap .chip:nth-child(3) .oe-trede { height: 34px; }
-  .oe-trap .chip:nth-child(4) .oe-trede { height: 44px; }
-  .oe-trap .chip.onder .oe-trede { background: var(--lavender-wash-3); border-color: transparent; }
-  .oe-trap .chip.on .oe-trede { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; box-shadow: 0 3px 0 var(--purple-shadow); }
-  .oe-t { font-size: var(--tx-label); font-weight: 700; }
-  .oe-trap .chip.on .oe-t { color: var(--purple-shadow); }
-  .oe-trap .chip:not(.on):not(.onder) .oe-t { color: var(--paper-ink-muted); font-weight: 600; }
+  .oe-seg .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
   .oe-tafels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
   .oe-tafels .chip { min-width: 0; height: 42px; padding: 0; border-radius: var(--r-sm); font-size: var(--tx-body); font-weight: 700; }
   /* De rijen. De hele rij is de knop (role=switch); de stand rechts is het
@@ -523,9 +521,13 @@
   .oe-som i { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; border: 2px dashed var(--purple-light); border-radius: 6px; }
   .oe-stand { min-width: 46px; padding: 5px 10px; border-radius: var(--r-pill); text-align: center; font-size: var(--tx-klein); font-weight: 700; background: var(--lavender-wash-3); color: var(--paper-ink-muted); }
   .oe-rij.on .oe-stand { background: var(--purple-mid); color: var(--c-white); }
-  .oe-mini { display: flex; gap: 3px; padding: 3px; border-radius: var(--r-sm); background: var(--lavender-wash); }
-  .oe-mini .chip { min-width: 36px; padding: 5px 6px; border: none; border-radius: 8px; background: none; font-size: var(--tx-klein); font-weight: 700; }
-  .oe-mini .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: none; }
+  /* Het kleine keuzerijtje: dezelfde balk, een maat kleiner (10 - 3 = 7). */
+  .oe-mini { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--lavender-wash); }
+  .oe-mini .chip, .oe-mini .chip:hover {
+    display: flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 6px;
+    border: none; border-radius: 7px; background: none; box-shadow: none; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+  }
+  .oe-mini .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
   .oe-rij-blok { flex-wrap: wrap; }
   .oe-rij-blok .chip-row { flex-basis: 100%; }
   /* De modus: twee gelijke helften onderaan, op de donkere achtergrond. Dezelfde
@@ -681,12 +683,13 @@
   #screen-newstar .mode-row .chip.gestapeld { min-width: 0; }
   /* De oefenvelden in de openklapper zijn dezelfde als op Oefenen (zie
      oefenGroups), maar de id-regels hierboven geven elke .chip hier een vulling
-     en een rand. De treden, de rijen en het kleine keuzerijtje hebben die niet,
+     en een rand. De balk, de rijen en het kleine keuzerijtje hebben die niet,
      dus die zetten we hier terug -- met dezelfde id ervoor, anders verliezen ze. */
-  #screen-newstar .oe-trap .chip, #screen-newstar .oe-trap .chip:hover, #screen-newstar .oe-trap .chip.on,
+  #screen-newstar .oe-seg .chip, #screen-newstar .oe-seg .chip:hover,
   #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
   #screen-newstar .oe-mini .chip, #screen-newstar .oe-mini .chip:hover { background: none; border: none; }
-  #screen-newstar .oe-mini .chip.on { background: var(--purple-mid); }
+  #screen-newstar .oe-mini .chip.on, #screen-newstar .oe-seg .chip.on,
+  #screen-newstar .oe-ops .chip.on, #screen-newstar .oe-tafels .chip.on { background: var(--purple-mid); }
 
   /* Klaar! blijft in beeld. Het formulier is één vel (basis, naam, haar, kleren,
      manier van spelen, en een dichte openklapper met de oefening) en dat vel is op

@@ -12440,15 +12440,12 @@ function oefenGroups(s, pfx, hier) {    // -> [{ ico, title, sub, secundair?, ht
      Alles blijft .chip met een data-v in een houder met het oude id -- daar
      hangt bindOefenChips aan, en de tests ook. */
   const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
-  /* De trap: een keuze uit een oplopende rij (tot 10 · 20 · 50 · 100, kiezen ·
-     mix · typen). De treden worden naar rechts hoger, en alles tot en met de
-     keuze is gevuld -- "hoe moeilijk" zonder een woord uitleg. Eén keuze, dus
-     een andere vorm dan de tegels waarvan er meer aan mogen. */
-  const trap = (id, items, sel) => {
-    const k = items.findIndex(([v]) => v === sel);
-    return `<div class="oe-trap" id="${pfx}${id}">${items.map(([v, t], i) =>
-      chip(v, `<span class="oe-trede" aria-hidden="true"></span><span class="oe-t">${t}</span>`, i === k, i < k ? 'onder' : '')).join('')}</div>`;
-  };
+  /* Eén keuze uit een rij (tot 10 · 20 · 50 · 100, kiezen · mix · typen): een
+     balk met gelijke vakken, dezelfde vorm als "vragen per show" en de
+     moduskeuze onderaan. Van links naar rechts wordt het moeilijker. Eerst was
+     dit een trap met treden die naar rechts hoger werden, maar de lege treden
+     lazen als uitgeschakeld in plaats van als te kiezen. */
+  const balk = (id, items, sel) => `<div class="oe-seg" id="${pfx}${id}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
   // Een rij die aan of uit staat. data-v is wat een tik ervan maakt (zie
   // bindOefenChips: 'on'/'off', of bij de extra's de naam van de vlag).
   const schakel = (v, ico, woord, aan, naam) => `<button class="chip oe-rij${aan ? ' on' : ''}" data-v="${v}" role="switch" aria-checked="${aan}"${naam ? ` aria-label="${naam}"` : ''}>`
@@ -12486,10 +12483,10 @@ function oefenGroups(s, pfx, hier) {    // -> [{ ico, title, sub, secundair?, ht
     html: `${lbl('Sommen')}
       <div class="oe-ops" id="${pfx}set-ops">${opDefs.map(([v, teken, woord]) =>
         `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
-      ${plusMin ? `${lbl('tot', '+ −')}${trap('set-max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
+      ${plusMin ? `${lbl('tot', '+ −')}${balk('set-max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
       ${tablesRelevant ? `${lbl('tafels van', '× ÷')}
       <div class="oe-tafels" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}
-      ${lbl('Antwoord')}${trap('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}`
+      ${lbl('Antwoord')}${balk('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}`
   }, {
     secundair: true, html: `
       ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
