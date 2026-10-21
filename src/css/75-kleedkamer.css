@@ -381,6 +381,18 @@
      is slechter dan één van de twee. Twee rijen worden zo één rij, en het woord
      staat er nog steeds -- alleen bij de categorie waar je nú in kijkt. */
   .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 5px; }
+  /* Podia vast vooraan, de rest schuift ernaast (zie renderShop). Samen staan ze
+     in het midden als alles past, en anders krimpt alleen de schuifrij. Het
+     streepje scheidt wat blijft staan van wat schuift; de rij begint er met 6px
+     lucht achter in plaats van met zijn eigen 12. */
+  #screen-dress .shop-tabs-wrap { display: flex; align-items: center; justify-content: safe center; }
+  .shop-tab-vast { flex: none; display: flex; align-items: center; padding: 1px 0 1px 12px; }
+  .shop-tab-vast:empty { display: none; }
+  .shop-tab-vast::after {
+    content: ''; width: 2px; height: 26px; margin-left: 6px; border-radius: 2px;
+    background: rgba(255,255,255,.22);
+  }
+  .shop-tab-vast + .shop-tabs { flex: 0 1 auto; min-width: 0; padding-left: 6px; }
   /* padding-inline 12 en niet 4: aan het begin en het eind van de rij hoort lucht
      te staan. Zonder die lucht lag de eerste knop tegen de schermrand en las een
      half weggeschoven knop als een fout in plaats van als "er staat hier meer".

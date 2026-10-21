@@ -7438,6 +7438,18 @@
 
 
 
+  #screen-dress .shop-tabs-wrap { display: flex; align-items: center; justify-content: safe center; }
+  .shop-tab-vast { flex: none; display: flex; align-items: center; padding: 1px 0 1px 12px; }
+  .shop-tab-vast:empty { display: none; }
+  .shop-tab-vast::after {
+    content: ''; width: 2px; height: 26px; margin-left: 6px; border-radius: 2px;
+    background: rgba(255,255,255,.22);
+  }
+  .shop-tab-vast + .shop-tabs { flex: 0 1 auto; min-width: 0; padding-left: 6px; }
+
+
+
+
 
 
   .shop-tabs {
@@ -9270,6 +9282,7 @@
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
+        <div class="shop-tab-vast" id="shop-tab-vast"></div>
         <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
       </div>
     </div>
@@ -21315,6 +21328,8 @@ function renderShop() {
 
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
+  const vast = $('shop-tab-vast');
+  if (vast) vast.innerHTML = '';
   let activeTab = null;
 
 
@@ -21326,14 +21341,17 @@ function renderShop() {
     b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
       + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
     b.onclick = opts.go;
-    tabs.appendChild(b);
-    if (opts.on) activeTab = b;
+    (opts.vast && vast ? vast : tabs).appendChild(b);
+    if (opts.on && !opts.vast) activeTab = b;
     return b;
   };
 
 
 
-  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
+
+
+
+  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, vast: true }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, vast: c.vast, on: c.id === shopCat, go: () => {
     sndClick();
     shopCat = c.id; shopSelectedId = null; renderShop();
     $('screen-dress').scrollTop = 0;

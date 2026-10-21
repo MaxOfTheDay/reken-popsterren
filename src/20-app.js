@@ -11072,6 +11072,8 @@ function renderShop() {
   // in de rij zelf; sinds fase 1 is de lijst met thema-looks er helemaal uit.
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
+  const vast = $('shop-tab-vast');
+  if (vast) vast.innerHTML = '';
   let activeTab = null;
   // Alleen iconen, plus het woord bij wat aanstaat. aria-label houdt de naam
   // voor een schermlezer altijd beschikbaar.
@@ -11083,14 +11085,17 @@ function renderShop() {
     b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
       + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
     b.onclick = opts.go;
-    tabs.appendChild(b);
-    if (opts.on) activeTab = b;
+    (opts.vast && vast ? vast : tabs).appendChild(b);
+    if (opts.on && !opts.vast) activeTab = b;
     return b;
   };
   /* Podia vooraan, als gewone knop: geen eigen vorm en geen goud. De eerste plek
      en de 🎪 zeggen genoeg, en "dit is anders" hoort niet bij een lade die werkt
-     zoals alle andere. */
-  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
+     zoals alle andere. Hij staat wel níet in de schuifrij maar ervoor, in
+     #shop-tab-vast: wie naar Dieren schoof zag hem anders links wegvallen, en
+     dan was de enige weg terug de schijf in de spiegel. Buiten de rij schuift
+     hij niet mee, en tabRijDoel en de fades hebben er geen weet van. */
+  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, vast: true }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, vast: c.vast, on: c.id === shopCat, go: () => {
     sndClick();
     shopCat = c.id; shopSelectedId = null; renderShop();
     $('screen-dress').scrollTop = 0;   // een nieuwe categorie begint bovenaan

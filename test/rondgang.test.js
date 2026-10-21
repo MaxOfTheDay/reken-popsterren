@@ -635,6 +635,18 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   check(rij.every(c => c.fadeR === c.meerR && c.fadeL === c.meerL),
     'de fade staat aan de kant waar nog meer staat, en alleen daar',
     JSON.stringify(rij.filter(c => c.fadeR !== c.meerR || c.fadeL !== c.meerL)));
+  /* Podia staat niet in de schuifrij maar ervoor (#shop-tab-vast): ook bij de
+     laatste lade, met de rij helemaal naar rechts geschoven, blijft hij heel in
+     beeld en ligt hij niet onder een andere knop. */
+  const vast = await page.evaluate(async () => {
+    openKleedkamerCat(CATS[CATS.length - 1].id);
+    await new Promise(res => setTimeout(res, 420));
+    const k = document.querySelector('#shop-tab-vast .tab-btn').getBoundingClientRect();
+    const rij = document.getElementById('shop-tabs').getBoundingClientRect();
+    return { l: k.left, r: k.right, rijL: rij.left, breed: innerWidth, naam: document.querySelector('#shop-tab-vast .tab-btn').getAttribute('aria-label') };
+  });
+  check(vast.naam === 'Podia' && vast.l >= 0 && vast.r <= vast.breed && vast.r <= vast.rijL,
+    'Podia blijft vooraan in beeld, hoe ver de rij ook geschoven is', JSON.stringify(vast));
   const zwak = rij.filter(c => c.meerR && !c.eerste && (c.kier === null || c.kier < 24));
   check(zwak.length === 0,
     'loopt de rij rechts door, dan steekt daar een zichtbare kier van het volgende knopje uit',
