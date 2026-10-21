@@ -6295,7 +6295,10 @@
 
 
 
-  .kast-groep { width: 100%; margin-top: 22px; }
+
+
+
+  .kast-groep { width: 100%; margin-top: 16px; }
   .kast-groep:first-child { margin-top: 4px; }
   .kast-groep:last-child { margin-bottom: 4px; }
 
@@ -6305,13 +6308,13 @@
 
   .groep-kop {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 0 4px 9px; margin-bottom: 12px;
+    padding: 0 4px 7px; margin-bottom: 9px;
     border-bottom: 1px solid rgba(255,255,255,.085);
   }
   .groep-ico { flex: none; font-size: 22px; line-height: 1; margin-top: 2px; filter: var(--emoji-schaduw); }
   .groep-tekst { flex: 1 1 auto; min-width: 0; }
   .groep-naam { font-size: var(--tx-body); font-weight: 700; letter-spacing: .01em; text-shadow: var(--op-vlak-ink); }
-  .groep-note { font-size: var(--tx-klein); font-weight: 600; color: var(--lavender-text); opacity: .7; margin-top: 1px; line-height: 1.25; }
+
   .groep-telling {
     flex: none; font-size: var(--tx-klein); font-weight: 700; margin-top: 1px;
     color: rgba(255,255,255,.6); white-space: nowrap;
@@ -6340,7 +6343,7 @@
     position: relative; flex: 0 1 calc(50% - 5px); max-width: 210px;
     background: var(--vlak);
     border: 2px solid var(--vlak-rand);
-    border-radius: var(--r-md); padding: 13px 10px 12px; text-align: center; cursor: pointer;
+    border-radius: var(--r-md); padding: 10px 8px 10px; text-align: center; cursor: pointer;
     display: flex; flex-direction: column; align-items: stretch; gap: 0;
     box-shadow: var(--vlak-top);
     transition: filter .12s, transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
@@ -6358,10 +6361,16 @@
 
 
 
-  .trophy-card .temoji { font-size: 38px; line-height: 1; height: 46px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
-  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 5px; line-height: 1.16; }
-  .trophy-card .tdesc { font-size: var(--tx-klein); font-weight: 600; color: var(--lavender-text); opacity: .76; margin-top: 4px; line-height: 1.24; }
-  .tvoet { margin-top: auto; padding-top: 9px; display: flex; flex-direction: column; align-items: stretch; }
+
+
+
+
+
+  .trophy-card .temoji { font-size: 32px; line-height: 1; height: 38px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
+  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 4px; line-height: 1.16; }
+
+
+  .tvoet { margin-top: auto; padding-top: 7px; display: flex; flex-direction: column; align-items: center; }
 
   @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
   @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 7.5px); } }
@@ -6398,7 +6407,6 @@
 
   .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
   .trophy-card.fresh .tname { opacity: .84; }
-  .trophy-card.fresh .tdesc { opacity: .62; }
 
   .trophy-card.busy {
     background: linear-gradient(180deg, rgba(178,140,255,.115), rgba(178,140,255,.05));
@@ -6414,7 +6422,6 @@
   .trophy-card.locked { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.05); box-shadow: none; }
   .trophy-card.locked .temoji { filter: grayscale(.55); opacity: .52; }
   .trophy-card.locked .tname { opacity: .64; }
-  .trophy-card.locked .tdesc { opacity: .5; }
 
 
 
@@ -6453,39 +6460,34 @@
                 0 0 14px rgba(var(--goud-gloed-rgb),.12);
   }
   .trophy-card.done .tname { color: var(--gold-light); }
-  .trophy-card.done .tdesc { color: var(--c-white); opacity: .78; }
 
 
 
 
 
 
-
-
-  .trophy-card.done:not(.pw-card)::before {
-    content: '✓'; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px;
-    z-index: 2; pointer-events: none; border-radius: 50%;
-    display: grid; place-items: center;
-    font-size: 13px; font-weight: 800; line-height: 1; color: #3a2400;
-    background: var(--gold-accent);
-    box-shadow: 0 1px 3px rgba(8,1,20,.45);
+  .tvink {
+    min-width: 34px; padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: 14px; font-weight: 800; line-height: 1.15;
+    color: var(--gold-accent); background: rgba(var(--goud-rgb),.16);
   }
 
 
 
-  .tstand { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .78; }
-  .tstand span { font-weight: 600; opacity: .8; }
-  .tstand.sub { font-weight: 600; opacity: .55; }
 
 
 
-  .trophy-card.busy .tstand {
-    align-self: center; opacity: 1;
-    color: #e7dcff; background: rgba(178,140,255,.17);
-    border: 1px solid rgba(186,150,255,.26); border-radius: var(--r-pill);
-    padding: 3px 10px;
+  .tstand {
+    padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: var(--tx-klein); font-weight: 700; line-height: 1.15; white-space: nowrap;
+    color: var(--c-white); background: rgba(255,255,255,.12);
+    transition: background var(--t-tik, .1s) ease, transform var(--t-tik, .1s) ease;
   }
-  .trophy-card.busy .tstand span { color: rgba(231,220,255,.78); }
+  .tstand.omgeklapt { background: rgba(255,255,255,.24); transform: scale(1.06); }
+
+
+
+
 
 
 
@@ -6498,12 +6500,12 @@
 
 
 
-  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 17px 10px 16px; }
+  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 12px 8px 11px; }
   @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
   @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  .pw-card .tname { margin-top: 9px; font-size: var(--tx-label); }
+  .pw-card .tname { margin-top: 7px; font-size: var(--tx-label); }
   .pw-medal {
-    position: relative; width: 76px; height: 76px; margin: 2px auto 0;
+    position: relative; width: 60px; height: 60px; margin: 2px auto 0;
     border-radius: 50%; display: grid; place-items: center;
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
@@ -6511,7 +6513,7 @@
     border: 2px solid rgba(255,255,255,.3);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  .pw-ico { font-size: 35px; line-height: 1; filter: var(--emoji-schaduw); }
+  .pw-ico { font-size: 28px; line-height: 1; filter: var(--emoji-schaduw); }
 
 
   .pw-card.fresh .pw-medal { opacity: .68; }
@@ -6521,15 +6523,12 @@
   .pw-card.busy .pw-medal { opacity: .84; }
   .pw-card.busy .pw-ico { opacity: .94; }
 
-
   .trophy-card.done .pw-medal {
     border-color: var(--gold-accent);
     box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
   }
-  .trophy-card.done .pw-medal::after {
-    content: '⭐'; position: absolute; right: -6px; bottom: -6px; font-size: 20px;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
-  }
+
+
 
 
 
@@ -18044,10 +18043,12 @@ function renderShelves() {
 
     const head = document.createElement('div');
     head.className = 'groep-kop';
+    if (shelf.note) head.setAttribute('aria-label', `${shelf.name}: ${shelf.note}`);
     head.innerHTML = `<span class="groep-ico" aria-hidden="true">${shelf.ico || ''}</span>`
-      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div>`
-      + (shelf.note ? `<div class="groep-note">${shelf.note}</div>` : '')
-      + `</div>`
+
+
+
+      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div></div>`
 
 
 
@@ -18109,7 +18110,7 @@ function unitText(label, remaining) {
 function trophyStand(t, p, status) {
   if (status !== 'busy' || !t.progress) return '';
   const pr = t.progress(p);
-  return `<div class="tstand">${pr.now} / ${pr.target} <span>${unitText(pr.label, pr.target)}</span></div>`;
+  return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
 }
 
 
@@ -18121,6 +18122,8 @@ function trophyCard(t, p) {
   card.className = `trophy-card ${t.perfect ? 'pw-card ' : ''}${status}`;
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
+
+  card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
@@ -18130,12 +18133,20 @@ function trophyCard(t, p) {
 
 
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
+
+
+
+
+
+
+
+
 function normalCardHTML(t, p, status) {
   return `<div class="temoji">${t.emoji}</div>`
     + `<div class="tname">${t.name}</div>`
-    + `<div class="tdesc">${t.desc}</div>`
     + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'locked' ? '<div class="tstand sub">Nog niet vrij</div>'
+      : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
+      : status === 'locked' ? '<div class="tstand">🔒</div>'
       : trophyStand(t, p, status));
 }
 
@@ -18164,7 +18175,7 @@ function perfectCardHTML(t, p, status) {
 
 
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target} <span>perfect</span></div>`; })()
+    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
     : '';
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
@@ -18184,8 +18195,33 @@ function tapTrophy(t, card, e) {
   sndClick();
   if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
-  showToast(rem > 0 ? `${t.emoji} Nog ${rem} ${unitText(pr.label, rem)}!` : `${t.emoji} Bijna daar!`);
-  toastWeg(1700);
+  pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
+}
+
+
+
+
+
+
+function pilOmklappen(card, tekst) {
+  let voet = card.querySelector('.tvoet');
+  if (!voet) { voet = document.createElement('div'); voet.className = 'tvoet tijdelijk'; card.appendChild(voet); }
+  let pil = voet.querySelector('.tstand');
+  if (!pil) { pil = document.createElement('div'); pil.className = 'tstand tijdelijk'; voet.appendChild(pil); }
+  if (pil.dataset.terug === undefined) pil.dataset.terug = pil.textContent;
+  pil.textContent = tekst;
+  pil.classList.add('omgeklapt');
+  speak(tekst);
+  clearTimeout(pil._omklap);
+  pil._omklap = setTimeout(() => {
+    if (pil.classList.contains('tijdelijk')) {
+      pil.remove();
+      if (voet.classList.contains('tijdelijk')) voet.remove();
+      return;
+    }
+    pil.textContent = pil.dataset.terug; delete pil.dataset.terug;
+    pil.classList.remove('omgeklapt');
+  }, 2000);
 }
 
 function openTrophy(id) {
