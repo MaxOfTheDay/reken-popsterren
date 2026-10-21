@@ -12296,7 +12296,8 @@ function defaultProfile(name, dress, opts) {
 
 
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
-    stats: { correct: 0, wrong: 0 }
+    stats: { correct: 0, wrong: 0 },
+    recent: []
   };
 }
 
@@ -20211,6 +20212,26 @@ function bumpPintjeTaps(el) {
 
 
 const STER_MARGE = 0.45;
+
+
+
+
+
+const RECENT_N = 10;
+function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
+
+
+
+
+
+
+function uitdagingStand(p) {
+  const r = p.recent || [];
+  if (r.length < 4) return null;
+  const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
+  const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
+  return { stand, n: r.length, drie, mis };
+}
 function showStars(g) {
   if (g.misses === 0) return 3;
   return g.misses <= Math.floor(g.total * STER_MARGE) ? 2 : 1;
@@ -20285,6 +20306,7 @@ function endLevel(success) {
     advanceCountStage(p, success, success && showStars(G) === 3);
     telPlafondTel(p, success ? showStars(G) : 0);
   }
+  onthoudUitkomst(p, success ? showStars(G) : 0);
 
 
 

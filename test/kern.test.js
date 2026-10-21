@@ -34,6 +34,7 @@
  *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
  *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet
  *   U  fase 12 (tot 20)                 -> wie "alles" had krijgt hem erbij, één keer
+ *   V  de laatste shows                 -> tien uitkomsten, en wat Voortgang erover zegt
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1110,6 +1111,26 @@ zaak('U', () => {
   check(app.countMaxStage(s) === 11, 'U · met hoeveelheden tot 8 stopt het bij fase 11', app.countMaxStage(s));
   s.qmax = 10;
   check(app.countMaxStage(s) === 12, 'U · tot 10: fase 12 mag', app.countMaxStage(s));
+});
+
+zaak('V', () => {
+  const { app, p } = verseSter('Recent');
+  check(Array.isArray(p.recent) && p.recent.length === 0, 'V · een verse ster heeft nog geen recente shows', JSON.stringify(p.recent));
+  check(app.uitdagingStand(p) === null, 'V · zonder shows zegt de stand niets', '');
+  for (let i = 0; i < 3; i++) app.onthoudUitkomst(p, 3);
+  check(app.uitdagingStand(p) === null, 'V · drie shows is nog te weinig', '');
+  app.onthoudUitkomst(p, 3);
+  check(app.uitdagingStand(p).stand === 'vlot', 'V · alles drie sterren: vlot', JSON.stringify(app.uitdagingStand(p)));
+  for (let i = 0; i < 20; i++) app.onthoudUitkomst(p, i % 2 ? 2 : 3);
+  check(p.recent.length === app.RECENT_N, 'V · er blijven er maar tien bewaard', p.recent.length);
+  check(app.uitdagingStand(p).stand === 'goed', 'V · een mengeling van twee en drie: goed', JSON.stringify(app.uitdagingStand(p)));
+  app.onthoudUitkomst(p, 0); app.onthoudUitkomst(p, 0); app.onthoudUitkomst(p, 0);
+  check(app.uitdagingStand(p).stand === 'pittig', 'V · drie mislukte shows: pittig', JSON.stringify(app.uitdagingStand(p)));
+  // een oude save zonder het veld
+  delete p.recent; app.migrate(p);
+  check(app.uitdagingStand(p) === null, 'V · een oude save zonder recente shows: geen stand, geen fout', '');
+  app.onthoudUitkomst(p, 2);
+  check(p.recent.length === 1, 'V · en hij begint gewoon te tellen', JSON.stringify(p.recent));
 });
 
 klaar();

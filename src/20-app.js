@@ -2193,7 +2193,8 @@ function defaultProfile(name, dress, opts) {
     // rung = moeilijkheidstrap bínnen de fase (past bereik, afleiders, cijfersteun aan);
     // streak = juiste-op-rij in de show (stuurt de rung omhoog), reset bij een misser
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
-    stats: { correct: 0, wrong: 0 }   // voor het ouder-overzicht
+    stats: { correct: 0, wrong: 0 },  // voor het ouder-overzicht
+    recent: []                        // de laatste shows: sterren, of 0 als hij mislukte (zie onthoudUitkomst)
   };
 }
 // Zorgt dat oudere opgeslagen profielen de nieuwe velden krijgen.
@@ -10108,6 +10109,26 @@ function bumpPintjeTaps(el) {
    krijgt voor dezelfde show minder sterren dan eerst, behalve die ene drie
    sterren die niet foutloos was. */
 const STER_MARGE = 0.45;
+/* De laatste RECENT_N shows, als getal: de sterren, of 0 voor een mislukte show.
+   p.stars onthoudt per show alleen het beste resultaat, en een mislukte show
+   helemaal niet -- daarmee kan Voortgang wel zeggen hoeveel er ooit gehaald is,
+   maar niet hoe het de laatste tijd gaat. Dit is geen voortgang: geen wereld,
+   halte of beloning leest het. Alleen het ouderrapport (zie uitdagingStand). */
+const RECENT_N = 10;
+function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
+/* Zit de uitdaging goed? Uit de laatste shows, in drie standen -- en met opzet
+   een uitspraak over de uitdaging, niet over het kind:
+     pittig  drie of meer mislukte shows -- het spel maakt het nu zelf lichter
+     vlot    (bijna) alles drie sterren -- tijd voor iets nieuws
+     goed    de rest: een mengeling van twee en drie sterren
+   Onder de vier shows zegt het nog niets (null). */
+function uitdagingStand(p) {
+  const r = p.recent || [];
+  if (r.length < 4) return null;
+  const drie = r.filter(v => v >= 3).length, mis = r.filter(v => v === 0).length;
+  const stand = mis >= 3 ? 'pittig' : (drie / r.length >= 0.8 ? 'vlot' : 'goed');
+  return { stand, n: r.length, drie, mis };
+}
 function showStars(g) {
   if (g.misses === 0) return 3;
   return g.misses <= Math.floor(g.total * STER_MARGE) ? 2 : 1;
@@ -10182,6 +10203,7 @@ function endLevel(success) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
   }
+  onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
