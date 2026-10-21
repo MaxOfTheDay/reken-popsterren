@@ -192,7 +192,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(150);
     r = await page.evaluate(() => ({
       anna: db.profiles.p1.settings.track, bas: db.profiles.p2.settings.track,
-      basFase: !!document.getElementById('set-stage'),
+      basFase: !!document.getElementById('set-fase'),
     }));
     check(r.bas === 'count' && r.anna === 'math',
       'van modus wisselen raakt alleen dit kind', JSON.stringify(r));
@@ -251,10 +251,11 @@ function check(ok, label, detail) {
   }
 
   /* ================= D · Startfase en hoogste fase ================= */
-  /* De ladder (hoogste fase) en de startrij mogen elkaar niet kruisen: de start
-     kan nooit boven het plafond staan en het plafond nooit onder de start. En
-     wat de ladder laat zien -- het bereik, het slot, waar het kind is -- moet
-     kloppen met de instellingen, anders is het scherm onwaar. */
+  /* Eén ladder met twee lijnen, "vanaf" en "tot". Een tik op een fase verhuist
+     de dichtstbijzijnde lijn: erboven trekt "vanaf" mee, eronder "tot", en
+     binnen de band de lijn die het dichtst bij is (even ver: "tot"). De lijnen
+     kruisen elkaar dus nooit. En wat de ladder laat zien -- de band, de lijnen,
+     waar het kind is -- moet kloppen met de instellingen. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -265,36 +266,37 @@ function check(ok, label, detail) {
     });
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(200);
-    const band = () => page.evaluate(() => ({
-      stage: db.profiles.p1.settings.stage, max: db.profiles.p1.settings.stageMax,
-      startBand: [...document.querySelectorAll('#set-stage .chip')].filter(c => c.classList.contains('bereik')).map(c => +c.dataset.v),
-      binnen: [...document.querySelectorAll('#set-stagemax .chip')].filter(c => !c.classList.contains('uit') && !c.classList.contains('voor')).map(c => +c.dataset.v),
-      startOn: +document.querySelector('#set-stage .chip.on').dataset.v,
-      maxOn: +document.querySelector('#set-stagemax .chip.on').dataset.v,
-      slot: (() => { const g = document.querySelector('#set-stagemax .fl-grens'); return g ? +g.previousElementSibling.dataset.v : null; })(),
-      hier: document.querySelector('#set-stagemax .chip.hier') && +document.querySelector('#set-stagemax .chip.hier').dataset.v,
-    }));
+    const band = () => page.evaluate(() => {
+      const lijn = woord => [...document.querySelectorAll('#set-fase .fl-lijn')].find(l => l.textContent === woord);
+      const v = el => el ? +el.dataset.v : null;
+      const hier = document.querySelector('#set-fase .chip.hier');
+      return {
+        stage: db.profiles.p1.settings.stage, max: db.profiles.p1.settings.stageMax,
+        binnen: [...document.querySelectorAll('#set-fase .chip')].filter(c => !c.classList.contains('uit') && !c.classList.contains('voor')).map(c => +c.dataset.v),
+        vanaf: lijn('vanaf') ? v(lijn('vanaf').nextElementSibling) : null,
+        tot: lijn('tot') ? v(lijn('tot').previousElementSibling) : null,
+        hier: v(hier), pop: !!(hier && hier.querySelector('.fl-n svg')),
+        oud: !!document.getElementById('fase-start'),
+      };
+    });
     let r = await band();
-    check(r.startBand.join(',') === '1,2,3,4' && r.binnen.join(',') === '1,2,3,4',
-      'de ladder en de startrij tonen hetzelfde bereik', JSON.stringify(r));
-    check(r.slot === 4, 'het slot staat onder de hoogste fase', JSON.stringify(r));
-    check(r.hier === 1, 'en de ladder zegt waar het kind nu is', JSON.stringify(r));
-    // de startfase staat in een openklapper; een ouder zet hem open
-    await page.click('#fase-start summary');
-    await page.waitForTimeout(150);
-    // een start boven het plafond tikt het plafond mee omhoog
-    await page.click('#set-stage .chip[data-v="7"]');
-    await page.waitForTimeout(200);
-    r = await band();
-    check(r.stage === 7 && r.max === 7 && r.startOn === 7 && r.maxOn === 7,
-      'een start boven het plafond duwt het plafond mee omhoog', JSON.stringify(r));
-    check(r.startBand.join(',') === '7' && r.binnen.join(',') === '7',
-      'en dan is de band precies één fase breed', JSON.stringify(r));
-    // een plafond onder de start trekt de start mee omlaag
-    await page.click('#set-stagemax .chip[data-v="3"]');
-    await page.waitForTimeout(200);
-    r = await band();
-    check(r.stage === 3 && r.max === 3, 'een plafond onder de start trekt de start mee omlaag', JSON.stringify(r));
+    check(r.binnen.join(',') === '1,2,3,4' && r.vanaf === null && r.tot === 4,
+      'de ladder toont de band tussen de lijnen (vanaf fase 1 staat er geen lijn)', JSON.stringify(r));
+    check(r.hier === 1 && r.pop, 'en haar pop staat in het bolletje van haar fase', JSON.stringify(r));
+    check(!r.oud, 'de openklapper "Begint je kind hoger?" is weg', JSON.stringify(r));
+    const tik = async v => { await page.click(`#set-fase .chip[data-v="${v}"]`); await page.waitForTimeout(200); return band(); };
+    r = await tik(7);
+    check(r.stage === 1 && r.max === 7 && r.tot === 7, 'een fase onder "tot" zet "tot" daar', JSON.stringify(r));
+    r = await tik(2);
+    check(r.stage === 2 && r.max === 7 && r.vanaf === 2, 'binnen de band: de dichtste lijn ("vanaf") komt', JSON.stringify(r));
+    check(r.hier === 2, 'een hogere start tilt het kind mee', JSON.stringify(r));
+    r = await tik(6);
+    check(r.stage === 2 && r.max === 6 && r.tot === 6, 'binnen de band: de dichtste lijn ("tot") komt', JSON.stringify(r));
+    r = await tik(4);
+    check(r.stage === 2 && r.max === 4, 'even ver van allebei: "tot" komt', JSON.stringify(r));
+    r = await tik(1);
+    check(r.stage === 1 && r.max === 4 && r.vanaf === null && r.hier === 2,
+      'een fase boven "vanaf" zet "vanaf" daar, en het kind zakt niet mee', JSON.stringify(r));
     // cijfers uit: dan bestaan de fases boven 5 niet meer als keuze, maar de
     // instelling blijft staan (niet-destructief, zie countMaxStage)
     await page.evaluate(() => { setKey = 'p1'; db.profiles.p1.settings.stageMax = 11; save(); renderSettings(); });
@@ -302,11 +304,53 @@ function check(ok, label, detail) {
     await page.click('#set-numerals .chip[data-v="off"]');
     await page.waitForTimeout(200);
     r = await page.evaluate(() => ({
-      chips: document.querySelectorAll('#set-stage .chip').length,
+      chips: document.querySelectorAll('#set-fase .chip').length,
       bewaard: db.profiles.p1.settings.stageMax,
     }));
     check(r.chips === 5, 'zonder cijfers worden er maar vijf fases aangeboden', 'chips=' + r.chips);
     check(r.bewaard === 11, 'en de gekozen bovengrens blijft bewaard', 'stageMax=' + r.bewaard);
+    await ctx.close();
+  }
+
+  /* ================= D2 · De start in rekenen ================= */
+  /* Het leerpad van rekenen heeft één lijn, "vanaf". Een tik op een stap zet hem
+     daar, en het spel speelt vanaf dan minstens die stap (leerStap). */
+  {
+    const { ctx, page } = await fresh();
+    await open(page, 'p1', 'oefenen');
+    await page.waitForTimeout(200);
+    const pad = () => page.evaluate(() => {
+      const lijn = document.querySelector('#set-startstap .fl-lijn');
+      const hier = document.querySelector('#set-startstap .chip.hier');
+      return {
+        start: db.profiles.p1.settings.startStap,
+        rijen: [...document.querySelectorAll('#set-startstap .chip')].map(c => +c.dataset.v),
+        voor: [...document.querySelectorAll('#set-startstap .chip.voor')].map(c => +c.dataset.v),
+        vanaf: lijn ? +lijn.nextElementSibling.dataset.v : null,
+        lijnen: document.querySelectorAll('#set-startstap .fl-lijn').length,
+        hier: hier ? +hier.dataset.v : null, pop: !!(hier && hier.querySelector('.fl-n svg')),
+        stap: leerStap(1, db.profiles.p1.settings),
+      };
+    });
+    let r = await pad();
+    check(r.rijen.join(',') === '1,2,3,4,5' && r.lijnen === 0 && r.hier === 1 && r.pop,
+      'het leerpad toont vijf stappen, zonder lijn, met haar pop op stap 1', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="3"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.start === 3 && r.vanaf === 3 && r.voor.join(',') === '1,2' && r.lijnen === 1,
+      'een tik zet "vanaf" op die stap en dempt wat ervoor ligt', JSON.stringify(r));
+    check(r.hier === 3 && r.stap === 3, 'en in wereld 1 speelt ze nu stap 3', JSON.stringify(r));
+    // tot 10: over het tiental valt weg, "vanaf" schuift naar de volgende stap
+    await page.click('#set-max .chip[data-v="10"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.rijen.join(',') === '1,2,4,5' && r.vanaf === 4 && r.start === 3,
+      'valt de gekozen stap weg, dan staat "vanaf" bij de volgende', JSON.stringify(r));
+    await page.click('#set-startstap .chip[data-v="1"]');
+    await page.waitForTimeout(200);
+    r = await pad();
+    check(r.start === 1 && r.lijnen === 0 && r.stap === 1, 'terug naar stap 1 haalt de lijn weg', JSON.stringify(r));
     await ctx.close();
   }
 
