@@ -8283,7 +8283,7 @@ function makeChoices(ans) {
   return shuffle([...set]);
 }
 
-/* ================= Telmodus: lees-vrije vragen (fase 1–6) =================
+/* ================= Telmodus: lees-vrije vragen (fase 1–12) =================
    Voor kleuters die nog geen cijfers of woorden lezen. Elke vraag is visueel
    volledig (hoeveelheden als objecten/stippen) én wordt hardop voorgelezen.
    Het antwoord is altijd een getal (de hoeveelheid), zodat submitAnswer exact
