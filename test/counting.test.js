@@ -154,6 +154,9 @@ function check(ok, label, detail) {
             check(r.ans === c.total - c.shown, 'antwoord = verstopte hoeveelheid', `${where} ans=${r.ans}`);
           } else if (c.kind === 'bignum') {
             check(Number(r.seen.bignum) === c.n, 'cijferkaart toont het juiste cijfer', `${where} zag ${r.seen.bignum}`);
+          } else if (c.kind === 'vriend') {
+            check(r.seen.marks === c.n, 'vriendjes: het raam toont de gevulde vakjes', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
+            check(r.ans === c.doel - c.n && (c.doel === 5 || c.doel === 10), 'vriendjes: antwoord = de lege vakjes tot vijf of tien', `${where} n=${c.n} doel=${c.doel} ans=${r.ans}`);
           } else if (c.kind === 'tap') {
             check(r.seen.marks === c.n, 'tik en tel toont evenveel voorwerpen als gevraagd', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
             check(Array.isArray(c.pos) && c.pos.length === c.n, 'tik en tel heeft een plek per voorwerp', `${where} pos=${JSON.stringify(c.pos)}`);

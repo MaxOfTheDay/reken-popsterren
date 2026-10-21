@@ -8302,7 +8302,8 @@ function countStageInfo(stage) {
     case 5: return { types: ['listen'],             baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     case 6: return { types: ['numeral', 'numquant'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     case 7: return { types: ['onemore', 'oneless'], baseMax: 3, topMax: 9,  rungs: 3, tiles: 4 };
-    case 8: return { types: ['combine', 'split'],   baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
+    // 'vriend' = de vriendjes van vijf of tien: hoeveel nog tot een vol raam
+    case 8: return { types: ['combine', 'split', 'vriend'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     // gesteunde sommen: tekens (visueel) → cijfers+stippen → geschreven (steun vervaagt)
     case 9:  return { types: ['sumsym'],     baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     case 10: return { types: ['sumdots'],    baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
@@ -8546,6 +8547,19 @@ function genCount(p) {
     q.card = { kind: 'combine', a, b, emoji, frame, repr };
     q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
     q.prompt = 'Hoeveel zijn het er samen?';
+  } else if (type === 'vriend') {
+    /* Hoeveel nog tot tien (of tot vijf, zolang de aantallen nog klein zijn)? Een
+       vol raam met n stippen; het antwoord zijn de lege vakjes. Dat zijn de
+       "tienvriendjes" (7 en 3, 6 en 4): de grond onder het rekenen over het
+       tiental heen, dat de rekenshow vanaf wereld 3 vraagt. Altijd stippen in
+       een vast raam, ook als de ouder voorwerpen koos: het raam ís de vraag. */
+    const doel = max >= 10 ? 10 : 5;
+    const n = rnd(1, doel - 1);
+    q.ans = doel - n;
+    q.card = { kind: 'vriend', n, doel };
+    q.choices = countDistractors(q.ans, Math.min(nCh, doel - 1), 1, doel - 1, d.delta)
+      .map(v => ({ v, kind: 'numeral', n: v, support: d.support }));
+    q.prompt = 'Hoeveel nog tot ' + numWord(doel) + '?';
   } else if (type === 'sumsym') {                   // visuele som met tekens (＋ ➖ ＝), antwoord = groep
     const sub = Math.random() < 0.4;
     let a, b;
@@ -8650,6 +8664,7 @@ function drawCountQuestion(q) {
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
   else if (kind === 'tap') body = tapHTML(q.card);
+  else if (kind === 'vriend') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, q.card.doel, 'big', 'full')}</div>`;
   card.innerHTML = `<div class="count-q">${body}</div>`;
   if (kind === 'tap') {
     if (q.getikt) card.querySelectorAll('.tap-obj').forEach(b => b.classList.add('geteld'));
@@ -8811,6 +8826,7 @@ function countMissSpeak(q, val) {
   if (q.ctype === 'oneless') { speak('Bijna! Eén eraf is één minder. Tel nog eens.'); return; }
   if (q.ctype === 'combine') { speak('Bijna! Tel de twee groepjes samen.'); return; }
   if (q.ctype === 'split') { speak('Bijna! Hoeveel horen er nog bij?'); return; }
+  if (q.ctype === 'vriend') { speak('Bijna! Tel de lege vakjes.'); return; }
   if (q.ctype === 'match' || q.ctype === 'numquant') { speak('Bijna! Zoek de groep met evenveel.'); return; }
   if (q.ctype === 'sumsym' || q.ctype === 'sumdots' || q.ctype === 'sumwritten') {
     speak(q.card && q.card.op === '-' ? 'Bijna! Hoeveel blijven er over?' : 'Bijna! Tel ze samen.');
