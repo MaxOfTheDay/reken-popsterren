@@ -11,7 +11,7 @@
  * een ouder pas als haar kind vastloopt.
  *
  * De zaken:
- *   A  geluid en trillen: omzetten, opslaan, en morgen nog zo
+ *   A  geluid (trillen volgt het toestel): omzetten, opslaan, en morgen nog zo
  *   B  oefeninstellingen zijn per kind, en lekken niet naar de buur
  *   C  de kiezer wisselt de context; het onderdeel blijft staan
  *   D  de faseladder en de startfase houden elkaar in het gareel (en tonen het bereik)
@@ -28,6 +28,7 @@
  *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
  *   P  Voortgang: status uit de laatste shows, één stap "nu", de oogst dicht
+ *   Q  opstarten en instellingen: wie net speelde, geluid aan, meisje/jongen, het maakformulier
  *
  * Draaien:
  *   npm run test:ouder          (of: npm test voor alle suites)
@@ -968,6 +969,94 @@ function check(ok, label, detail) {
     check(r.kaarten.length === 2 && !/extra/.test(r.kaarten.join(' ')),
       'P · in de telmodus geen sommenkaart', JSON.stringify(r.kaarten));
     check(r.nu === 1, 'P · ook daar één stap "nu"', String(r.nu));
+    await ctx.close();
+  }
+
+  /* ================= Q · Opstarten en instellingen ================= */
+  /* De ronde "opstarten en instellingen" (oktober 2026). Vijf kleine dingen die
+     elk één tik of één misverstand schelen:
+       - Voor ouders opent op de ster die net speelde, niet altijd op de eerste
+       - "het geluid staat uit" in Voortgang heeft zelf de knop om het aan te zetten
+       - meisje of jongen is in Beheer nog te veranderen (de voortgang blijft)
+       - gekozen = paarse vulling, zonder vinkje erachter
+       - het maakformulier: een vraagteken tot "wie ben je?" beantwoord is,
+         kleuren als bolletjes, en een lijntje waar het ouderdeel begint */
+  {
+    const { ctx, page } = await fresh();
+    // Bas speelt, gaat terug, en een ouder opent het tandwiel
+    await page.evaluate(() => { selectProfile('p2'); });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(400);
+    await page.click('#btn-gear');
+    await page.click('#gear-menu .gear-item.parents');
+    await page.waitForTimeout(300);
+    let r = await page.evaluate(() => ({ key: setKey, tab: setTab }));
+    check(r.key === 'p2' && r.tab === 'voortgang', 'Q · Voor ouders opent op wie net speelde', JSON.stringify(r));
+
+    // Geluid uit, Bas telt (dan leest de stem voor): de notitie heeft een knop
+    await page.evaluate(() => {
+      db.sound = false; db.profiles.p2.settings.track = 'count'; save(); renderSettings();
+    });
+    await page.waitForTimeout(150);
+    r = await page.evaluate(() => ({
+      knop: !!document.getElementById('stem-aan'),
+      tekst: (document.querySelector('.stem-notitie') || {}).textContent || '',
+    }));
+    check(r.knop && /Bas/.test(r.tekst) && !/tandwiel/.test(r.tekst),
+      'Q · geluid uit: de notitie noemt het kind en heeft zelf de knop', JSON.stringify(r));
+    await page.click('#stem-aan');
+    await page.waitForTimeout(150);
+    r = await page.evaluate(() => ({ g: db.sound, knop: !!document.getElementById('stem-aan'),
+      gear: document.getElementById('gear-sound-state').textContent }));
+    check(r.g === true && !r.knop && r.gear === 'Aan', 'Q · één tik en het geluid staat aan, ook onder het tandwiel', JSON.stringify(r));
+
+    // Beheer: meisje -> jongen, de voortgang blijft
+    await page.evaluate(() => { db.profiles.p2.stars = { 1: 3 }; db.profiles.p2.diamonds = 12; save(); });
+    await page.click('#settings-subtabs button[data-t="beheer"]');
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => ({
+      chips: [...document.querySelectorAll('#set-base .chip')].map(c => c.dataset.v + (c.classList.contains('on') ? '*' : '')),
+    }));
+    check(JSON.stringify(r.chips) === '["meisje*","jongen"]', 'Q · Beheer toont meisje of jongen, met de huidige gekozen', JSON.stringify(r));
+    await page.click('#set-base .chip[data-v="jongen"]');
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => {
+      const opslag = JSON.parse(localStorage.getItem('rekenPopsterren_v1'));
+      const vink = getComputedStyle(document.querySelector('#set-base .chip.on .mc-label'), '::after').content;
+      return { base: opslag.profiles.p2.base, sterren: opslag.profiles.p2.stars, dia: opslag.profiles.p2.diamonds,
+        anna: opslag.profiles.p1.base, vink };
+    });
+    check(r.base === 'jongen' && r.sterren[1] === 3 && r.dia === 12 && r.anna === 'meisje',
+      'Q · omzetten bewaart, voor dit kind alleen, en de voortgang blijft', JSON.stringify(r));
+    check(r.vink === 'none' || r.vink === 'normal' || r.vink === '""', 'Q · gekozen is paars, zonder vinkje', r.vink);
+
+    // De onderdelen spreken de taal van de tabbalk: doorschijnend, niet dekkend cyaan
+    r = await page.evaluate(() => {
+      const cs = getComputedStyle(document.querySelector('#settings-subtabs button.on'));
+      return { bg: cs.backgroundImage, kleur: cs.color };
+    });
+    check(r.bg === 'none' && r.kleur === 'rgb(255, 255, 255)', 'Q · het gekozen onderdeel heeft het materiaal van de tabbalk', JSON.stringify(r));
+
+    // Het maakformulier
+    await page.click('#set-newstar');
+    await page.waitForTimeout(300);
+    r = await page.evaluate(() => ({
+      wacht: document.querySelector('.newstar-preview').classList.contains('wacht'),
+      vraag: !!document.querySelector('.newstar-preview .ns-vraag'),
+      bolletjes: [...document.querySelectorAll('#newstar-hair .chip')].every(c => !c.textContent.trim() && c.getAttribute('aria-label')),
+      ouder: (document.querySelector('.ns-ouder') || {}).textContent || '',
+    }));
+    check(r.wacht && r.vraag, 'Q · nieuwe ster: een vraagteken zolang niemand koos', JSON.stringify(r));
+    check(r.bolletjes, 'Q · haar als bolletjes, de naam alleen als label', JSON.stringify(r));
+    check(/papa of mama/.test(r.ouder), 'Q · een lijntje waar het ouderdeel van het formulier begint', JSON.stringify(r));
+    await page.click('#newstar-base .chip[data-v="meisje"]');
+    await page.waitForTimeout(150);
+    r = await page.evaluate(() => ({
+      wacht: document.querySelector('.newstar-preview').classList.contains('wacht'),
+      vraag: !!document.querySelector('.newstar-preview .ns-vraag'),
+    }));
+    check(!r.wacht && !r.vraag, 'Q · en na "meisje" staat ze er', JSON.stringify(r));
     await ctx.close();
   }
 

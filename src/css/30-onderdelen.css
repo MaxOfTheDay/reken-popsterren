@@ -232,7 +232,7 @@
   /* alleen zichtbaar als er nog niets is: dan staat hier een gezin dat net
      begint, en is "wat is dit spel?" het andere ding dat een ouder kan willen */
   .over-hint {
-    display: none; align-items: center; justify-content: center; width: fit-content; text-decoration: none;
+    display: none; align-items: center; justify-content: center; gap: .3em; width: fit-content; text-decoration: none;
     margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
     /* een knop die leest als de zin die hij was: geen vlak, geen rand -- wel een
        echt raakvlak van 44, en helder als je erop wijst */

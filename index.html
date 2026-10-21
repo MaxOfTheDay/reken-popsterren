@@ -2190,7 +2190,7 @@
 
 
   .over-hint {
-    display: none; align-items: center; justify-content: center; width: fit-content; text-decoration: none;
+    display: none; align-items: center; justify-content: center; gap: .3em; width: fit-content; text-decoration: none;
     margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
 
 
@@ -7973,7 +7973,11 @@
 
 
 
-  .segmented button.on { background: linear-gradient(180deg, var(--blue-fill-bottom), var(--blue-fill-top)); color: var(--purple-shadow); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+
+
+
+
+  .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
 
 
   .saved-pill {
@@ -8190,10 +8194,12 @@
 
 
 
+
   .mode-row { gap: 9px; }
   .mode-row .chip.gestapeld { gap: 2px; padding: 7px 8px 8px; font-size: var(--tx-label); min-width: 96px; }
   .mode-row .chip.gestapeld .mc-ico { font-size: 21px; }
-  .mode-row .chip.gestapeld.on .mc-label::after { content: ' ✓'; }
+
+  #set-base { margin-bottom: 10px; }
 
 
   .drie-op-een-rij .chip.gestapeld { gap: 1px; padding: 6px 5px 7px; font-size: var(--tx-klein); min-width: 78px; }
@@ -8325,6 +8331,12 @@
                 0 0 22px rgba(var(--goud-gloed-rgb),.2), var(--e-2);
   }
   .newstar-preview .stage::after { animation: none; opacity: .85; }
+
+  .newstar-preview.wacht .avatar-holder { opacity: .22; filter: grayscale(1) brightness(1.7); }
+  .ns-vraag {
+    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
+    font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  }
   .newstar-preview .deco { display: none; }
 
 
@@ -8399,6 +8411,20 @@
 
 
   #screen-newstar .chip.swatch { min-height: 44px; box-sizing: border-box; }
+
+
+  #screen-newstar .chip.swatch {
+    width: 48px; height: 48px; min-height: 48px; padding: 0; gap: 0;
+    justify-content: center; border-radius: 50%;
+  }
+  #screen-newstar .chip.swatch .sw { width: 30px; height: 30px; }
+  #screen-newstar .chip.swatch.on { box-shadow: 0 0 0 3px var(--c-white), 0 0 0 6px var(--purple-mid); }
+
+  .ns-ouder {
+    display: flex; align-items: center; gap: 10px; margin: 2px 0 10px;
+    font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid); opacity: .75;
+  }
+  .ns-ouder::before, .ns-ouder::after { content: ''; flex: 1; height: 1px; background: var(--paper-border); }
 
 
 
@@ -8636,6 +8662,8 @@
   .grens-tip .tip-klein { color: var(--paper-ink-muted); }
 
   .stem-notitie { margin-top: 10px; }
+
+  .stem-notitie .stem-aan { display: flex; margin-top: 8px; }
 
 
 
@@ -14330,7 +14358,12 @@ function renderProfiles() {
 
 
 }
-function selectProfile(key) { cur = key; goMap(); }
+
+
+
+
+let laatsteSter = null;
+function selectProfile(key) { cur = key; laatsteSter = key; goMap(); }
 
 
 
@@ -21971,18 +22004,30 @@ function closeNewStar() {
   if (newStarReturn === 'settings') { renderSettings(); toonHub('screen-settings'); settingsToTop(); }
   else goProfiles();
 }
+
+
+
+
+
 function swatchChips(group, ids, sel) {
   return ids.map(id => {
     const it = item(id);
-    return `<button class="chip swatch${id === sel ? ' on' : ''}" data-g="${group}" data-v="${id}">`
-      + `<span class="sw" style="background:${it.color}"></span>${esc(it.name)}</button>`;
+    return `<button class="chip swatch${id === sel ? ' on' : ''}" data-g="${group}" data-v="${id}"`
+      + ` aria-label="${esc(it.name)}" aria-pressed="${id === sel}" title="${esc(it.name)}">`
+      + `<span class="sw" style="background:${it.color}"></span></button>`;
   }).join('');
 }
 function renderNewStar() {
   const n = newStar;
   const s = n.settings;
 
-  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base });
+
+
+
+
+
+  const wacht = !n.base;
+  const preview = defaultProfile(n.name || '…', n.dress, { hair: n.hair, base: n.base || 'jongen' });
   const ok = !!n.name.trim() && !!n.base;
 
 
@@ -22000,7 +22045,7 @@ function renderNewStar() {
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div></div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
@@ -22016,6 +22061,9 @@ function renderNewStar() {
           <div class="chip-row" id="newstar-dress">${swatchChips('dress', START_DRESS, n.dress)}</div></div>
       </div>
       <div class="ns-groep">
+        <!-- Tot hier kiest het kind; vanaf hier de ouder. Dezelfde woorden als
+             bovenaan het blad "als app". Geen kaart en geen uitleg: één lijntje. -->
+        <div class="ns-ouder">Voor papa of mama</div>
         <div class="set-field"><label class="lbl">Hoe speel je?</label>
           <div class="chip-row mode-row" id="newstar-track">
             ${halfChip('count', '🧸', 'Leren tellen', s.track === 'count')}
@@ -22199,7 +22247,9 @@ function openSettings() {
 
 
 
-  setKey = (cur && db.profiles[cur]) ? cur : (profileKeys()[0] || null);
+
+  const wie = [cur, laatsteSter].find(k => k && db.profiles[k]);
+  setKey = wie || profileKeys()[0] || null;
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
@@ -22262,13 +22312,14 @@ function statusKaartHtml(p) {
   ];
   if (answered) getallen.push([Math.round(100 * p.stats.correct / answered) + '%', 'goed']);
 
-  const stem = stemAan(p) ? stemNotitie() : '';
+  const stem = stemAan(p) ? stemNotitie(p.name) : '';
   return `<div class="set-card vg-kaart">
     <h2 class="vg-kop">Hoe gaat het met ${esc(p.name)}?</h2>
     <div class="vg-status ${klas}"><span class="vg-dot" aria-hidden="true">${ico}</span>
       <div><b>${kop}</b><span>${zin}</span></div></div>
     <div class="vg-getallen">${getallen.map(([n, w]) => `<span class="vg-getal"><b>${n}</b> ${w}</span>`).join('')}</div>
-    ${stem ? `<div class="note stem-notitie">${stem}</div>` : ''}
+    ${stem ? `<div class="note stem-notitie">${stem}${!db.sound
+      ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
   </div>`;
 }
 
@@ -22442,8 +22493,12 @@ function statsPanelHtml(p) {
 
 
 
-function stemNotitie() {
-  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+
+
+
+
+function stemNotitie(naam) {
+  if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
   if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
   return '';
@@ -22899,10 +22954,12 @@ function beheerEmptyHtml() {
 function beheerPanelHtml(p) {
   return `<div class="settings-panel">
     <div class="set-card">
-      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Naam</label></h2></div></div>
+      <div class="set-card-head"><div class="ico">👤</div><div><h2><label for="set-name">Wie</label></h2></div></div>
       <div class="set-field">
-        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div>
-        <div class="note">Wijzigingen worden meteen opgeslagen.</div></div>
+        <div class="chip-row mode-row" id="set-base" role="group" aria-label="Meisje of jongen">${BASE_CHOICES.map(b =>
+          `<button class="chip gestapeld${baseOf(p) === b.id ? ' on' : ''}" data-v="${b.id}">`
+          + `<span class="mc-ico" aria-hidden="true">${b.emoji}</span><span class="mc-label">${b.name}</span></button>`).join('')}</div>
+        <div class="name-edit-wrap"><input type="text" id="set-name" value="${esc(p.name)}" maxlength="12" enterkeyhint="done"><span class="name-edit-ico" aria-hidden="true">✏️</span></div></div>
     </div>
     <div class="set-card secundair">
       <div class="set-card-head"><div class="ico">🔄</div><div><h2>Opnieuw beginnen of verwijderen</h2><div class="sub">Alleen voor <span class="set-naam">${esc(p.name)}</span> — en niet terug te draaien</div></div></div>
@@ -23263,6 +23320,18 @@ function bindSettings(p, s) {
     );
   });
   on('set-newstar', 'onclick', () => openNewStar('settings'));
+
+
+
+
+  const basis = $('set-base');
+  if (basis) basis.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    if (p.base === c.dataset.v) return;
+    sndClick();
+    p.base = c.dataset.v;
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-delete', 'onclick', () => {
     showConfirm(
       '⚠️ Ster verwijderen?',
@@ -23282,6 +23351,9 @@ function bindSettings(p, s) {
       }
     );
   });
+
+
+  on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
