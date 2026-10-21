@@ -2254,6 +2254,8 @@ function check(ok, label, detail) {
     }));
     check(velden.stage && !velden.ops, 'de telmodus toont fases in plaats van bewerkingen', JSON.stringify(velden));
     check(/^fase 1–12/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
+    await page.click('#ns-fase-start summary');   // "Begint je kind hoger?"
+    await page.waitForTimeout(120);
     await page.click('#ns-set-stage .chip[data-v="3"]');
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="jongen"]');

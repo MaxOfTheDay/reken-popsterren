@@ -14,7 +14,7 @@
  *   A  geluid en trillen: omzetten, opslaan, en morgen nog zo
  *   B  oefeninstellingen zijn per kind, en lekken niet naar de buur
  *   C  de kiezer wisselt de context; het onderdeel blijft staan
- *   D  startfase en hoogste fase houden elkaar in het gareel (en tonen het bereik)
+ *   D  de faseladder en de startfase houden elkaar in het gareel (en tonen het bereik)
  *   E  voortgang wissen: eerst vragen, dan wissen -- en de instellingen blijven
  *   F  een ster verwijderen noemt haar bij naam en vraagt eerst
  *   G  back-up eruit en er weer in: byte voor byte dezelfde voortgang
@@ -22,11 +22,12 @@
  *   I  de plakkende kop krimpt bij scrollen, maar wie en wat blijven in beeld --
  *      en de inhoud eronder schuift niet mee
  *   J  vanuit Beheer een ster maken komt terug in Beheer, bij de nieuwe ster
- *   K  enkelvoud/meervoud: "1 show gespeeld", "2 shows gespeeld", "0 shows"
+ *   K  enkelvoud/meervoud: "1 show", "2 shows", "0 shows"
  *   L  de trofeeteller heeft één bron, en de kast noemt hetzelfde getal
  *   M  de inschatting toont geen percentage, en p.perf draait er ongewijzigd door
  *   N  de drie weergavekeuzes staan op één regel, en wikkelen alleen als het moet
  *   O  op het beginscherm: de uitlegkaart na de back-up, per browser, en weg in de app
+ *   P  Voortgang: status uit de laatste shows, één stap "nu", de oogst dicht
  *
  * Draaien:
  *   npm run test:ouder          (of: npm test voor alle suites)
@@ -250,11 +251,10 @@ function check(ok, label, detail) {
   }
 
   /* ================= D · Startfase en hoogste fase ================= */
-  /* Twee rijen die elkaar niet mogen kruisen: de start kan nooit boven het
-     plafond staan en het plafond nooit onder de start. Dat gedrag bestond al;
-     wat er nieuw bij hoort is dat het bereik ook te ZIEN is (.chip.bereik) --
-     dat is de hele reden dat de twee rijen nu als één keuze lezen, dus als die
-     band niet meer klopt is de uitleg op het scherm onwaar. */
+  /* De ladder (hoogste fase) en de startrij mogen elkaar niet kruisen: de start
+     kan nooit boven het plafond staan en het plafond nooit onder de start. En
+     wat de ladder laat zien -- het bereik, het slot, waar het kind is -- moet
+     kloppen met de instellingen, anders is het scherm onwaar. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -268,24 +268,27 @@ function check(ok, label, detail) {
     const band = () => page.evaluate(() => ({
       stage: db.profiles.p1.settings.stage, max: db.profiles.p1.settings.stageMax,
       startBand: [...document.querySelectorAll('#set-stage .chip')].filter(c => c.classList.contains('bereik')).map(c => +c.dataset.v),
-      maxBand: [...document.querySelectorAll('#set-stagemax .chip')].filter(c => c.classList.contains('bereik')).map(c => +c.dataset.v),
+      binnen: [...document.querySelectorAll('#set-stagemax .chip')].filter(c => !c.classList.contains('uit') && !c.classList.contains('voor')).map(c => +c.dataset.v),
       startOn: +document.querySelector('#set-stage .chip.on').dataset.v,
       maxOn: +document.querySelector('#set-stagemax .chip.on').dataset.v,
-      zin: document.querySelector('.fr-zin').textContent,
-      legenda: [...document.querySelectorAll('.stage-legend span')].filter(x => !x.classList.contains('uit')).length,
+      slot: (() => { const g = document.querySelector('#set-stagemax .fl-grens'); return g ? +g.previousElementSibling.dataset.v : null; })(),
+      hier: document.querySelector('#set-stagemax .chip.hier') && +document.querySelector('#set-stagemax .chip.hier').dataset.v,
     }));
     let r = await band();
-    check(r.startBand.join(',') === '1,2,3,4' && r.maxBand.join(',') === '1,2,3,4',
-      'de band loopt in beide rijen van de start tot het plafond', JSON.stringify(r));
-    check(r.legenda === 4, 'en de legenda dempt wat buiten de band valt', 'in beeld: ' + r.legenda);
-    check(/fase 1/.test(r.zin) && /fase 4/.test(r.zin), 'de zin bovenaan zegt hetzelfde in woorden', r.zin);
+    check(r.startBand.join(',') === '1,2,3,4' && r.binnen.join(',') === '1,2,3,4',
+      'de ladder en de startrij tonen hetzelfde bereik', JSON.stringify(r));
+    check(r.slot === 4, 'het slot staat onder de hoogste fase', JSON.stringify(r));
+    check(r.hier === 1, 'en de ladder zegt waar het kind nu is', JSON.stringify(r));
+    // de startfase staat in een openklapper; een ouder zet hem open
+    await page.click('#fase-start summary');
+    await page.waitForTimeout(150);
     // een start boven het plafond tikt het plafond mee omhoog
     await page.click('#set-stage .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await band();
     check(r.stage === 7 && r.max === 7 && r.startOn === 7 && r.maxOn === 7,
       'een start boven het plafond duwt het plafond mee omhoog', JSON.stringify(r));
-    check(r.startBand.join(',') === '7' && r.maxBand.join(',') === '7',
+    check(r.startBand.join(',') === '7' && r.binnen.join(',') === '7',
       'en dan is de band precies één fase breed', JSON.stringify(r));
     // een plafond onder de start trekt de start mee omlaag
     await page.click('#set-stagemax .chip[data-v="3"]');
@@ -615,14 +618,14 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     const kaarten = async () => page.evaluate(() => ({
-      tegels: [...document.querySelectorAll('.stat-tile .cap')].map(e => e.textContent.trim()),
+      tegels: [...document.querySelectorAll('.vg-getal')].map(e => e.textContent.trim()),
       oogst: [...document.querySelectorAll('.oogst-item')].map(e => e.textContent.trim()),
     }));
     // niets gespeeld: nul is meervoud
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     let r = await kaarten();
-    check(r.tegels[0] === 'shows gespeeld' && r.tegels[1] === 'sommen gemaakt',
+    check(r.tegels[0] === '0 shows' && r.tegels[1] === '0 sommen',
       'nul is meervoud (0 shows, 0 sommen)', JSON.stringify(r.tegels));
     check(/0 sterren/.test(r.oogst[0]) && /0 perfecte shows/.test(r.oogst[1]),
       'en dat geldt ook voor de oogstregel', JSON.stringify(r.oogst));
@@ -636,15 +639,15 @@ function check(ok, label, detail) {
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await kaarten();
-    check(r.tegels[0] === 'show gespeeld', 'één show is enkelvoud', JSON.stringify(r.tegels));
-    check(r.tegels[1] === 'som gemaakt', 'één som is enkelvoud', JSON.stringify(r.tegels));
+    check(r.tegels[0] === '1 show', 'één show is enkelvoud', JSON.stringify(r.tegels));
+    check(r.tegels[1] === '1 som', 'één som is enkelvoud', JSON.stringify(r.tegels));
     check(/\b1 ster\b/.test(r.oogst[0]), 'één ster is enkelvoud', JSON.stringify(r.oogst));
     // en in de telmodus heet een som een vraag
     await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await kaarten();
-    check(r.tegels[1] === 'vraag gemaakt', 'in de telmodus is het één vraag', JSON.stringify(r.tegels));
+    check(r.tegels[1] === '1 vraag', 'in de telmodus is het één vraag', JSON.stringify(r.tegels));
     // twee: alles weer meervoud
     await page.evaluate(() => {
       const p = db.profiles.p1;
@@ -656,7 +659,7 @@ function check(ok, label, detail) {
     await open(page, 'p1', 'voortgang');
     await page.waitForTimeout(200);
     r = await kaarten();
-    check(r.tegels[0] === 'shows gespeeld' && r.tegels[1] === 'sommen gemaakt',
+    check(r.tegels[0] === '2 shows' && r.tegels[1] === '2 sommen',
       'twee is weer meervoud', JSON.stringify(r.tegels));
     check(/6 sterren/.test(r.oogst[0]) && /2 perfecte shows/.test(r.oogst[1]),
       'ook in de oogstregel', JSON.stringify(r.oogst));
@@ -726,9 +729,9 @@ function check(ok, label, detail) {
     });
     check(!/%/.test(r.tekst), 'het niveau-blok noemt geen percentage', r.tekst.slice(0, 80));
     check(r.balken === 0, 'en heeft geen voortgangsbalk', 'balken=' + r.balken);
-    check(/automatisch aan/.test(r.tekst), 'maar zegt wél dat het spel zelf bijstelt', r.tekst.slice(0, 80));
-    check(/Rekenen/.test(r.bezig) && /tot 20/.test(r.bezig),
-      'en zet vooraan waar het kind nu aan werkt', r.bezig);
+    check(/vanzelf aan/.test(r.tekst), 'maar zegt wél dat het spel zelf bijstelt', r.tekst.slice(0, 80));
+    check(/rekenen/.test(r.tekst) && /tot 20/.test(r.tekst) && /nu/.test(r.bezig),
+      'en zet op het leerpad waar het kind nu aan werkt', r.bezig);
     check(r.perf === 0.5, 'p.perf staat nog gewoon in de opslag', String(r.perf));
     // telmodus: dan is de fase de bezig-regel
     await page.evaluate(() => {
@@ -919,6 +922,52 @@ function check(ok, label, detail) {
       check(!r.er && backup, `O · als app (${naam}) is de kaart weg, en de back-up staat er nog`, JSON.stringify(r));
       await ctx.close();
     }
+  }
+
+  /* ================= P · Voortgang: drie vragen ================= */
+  /* Voortgang beantwoordt eerst "gaat het goed?" en dan "wat komt er nu?". De
+     stand komt uit de laatste shows (p.recent), niet uit een totaal sinds het
+     begin: een kind dat het nu lastig heeft hoort oranje te krijgen, ook als
+     het vorige maand alles in één keer deed. De oogst staat dicht. */
+  {
+    const { ctx, page } = await fresh();
+    const lees = async () => page.evaluate(() => ({
+      kaarten: [...document.querySelectorAll('#settings-body .vg-kop')].map(e => e.textContent.trim()),
+      stand: document.querySelector('.vg-status').className,
+      kop: document.querySelector('.vg-status b').textContent,
+      meerOpen: document.querySelector('.vg-meer').open,
+      nu: document.querySelectorAll('.vg-pad .nu').length,
+      tip: !!document.getElementById('grens-tip'),
+    }));
+    const met = async (recent, extra) => {
+      await page.evaluate(([rc, ex]) => {
+        const p = db.profiles.p1;
+        p.recent = rc;
+        if (ex) Object.assign(p.settings, ex);
+        save();
+      }, [recent, extra || null]);
+      await open(page, 'p1', 'voortgang');
+      await page.waitForTimeout(150);
+      return lees();
+    };
+    let r = await met([]);
+    check(/Hoe gaat het met/.test(r.kaarten[0]) && /Leerpad/.test(r.kaarten[1]) && /extra/.test(r.kaarten[2]),
+      'P · rekenen: status, leerpad, extra oefenen', JSON.stringify(r.kaarten));
+    check(/nieuw/.test(r.stand) && /Net begonnen/.test(r.kop), 'P · zonder shows: net begonnen', r.kop);
+    check(r.meerOpen === false, 'P · "meer cijfers" staat dicht', String(r.meerOpen));
+    check(r.nu === 1, 'P · er is precies één stap "nu" op het pad', String(r.nu));
+    r = await met([3, 2, 3, 2, 3, 3, 2, 3]);
+    check(/goed/.test(r.stand), 'P · drie en twee sterren door elkaar: de uitdaging zit goed', r.kop);
+    r = await met([3, 3, 3, 3, 3, 3, 3, 3, 3, 2]);
+    check(/vlot/.test(r.stand), 'P · bijna alles drie sterren: vlot', r.kop);
+    r = await met([3, 3, 3, 3, 3, 3, 3, 0, 0, 0]);
+    check(/pittig/.test(r.stand), 'P · drie mislukte shows: pittig, ook na een goede reeks', r.kop);
+    // de telmodus heeft geen sommenkaart
+    r = await met([3, 3, 3, 3], { track: 'count', stage: 1, stageMax: 12, numerals: true });
+    check(r.kaarten.length === 2 && !/extra/.test(r.kaarten.join(' ')),
+      'P · in de telmodus geen sommenkaart', JSON.stringify(r.kaarten));
+    check(r.nu === 1, 'P · ook daar één stap "nu"', String(r.nu));
+    await ctx.close();
   }
 
   await browser.close();

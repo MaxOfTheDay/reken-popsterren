@@ -274,6 +274,14 @@
      dan gewoon naar elkaar toe, in plaats van om een leeg vakje heen te staan. */
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .end-milestone:empty { display: none; }
+  /* Gegroeid (zie groeiMoment): het goud van "verdiend", maar geen knop -- er
+     valt niets te openen, dus geen ademhaling en geen raakvlak zoals .gold-pill. */
+  .groei-pil {
+    display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 16px;
+    border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88); box-shadow: var(--goud-gloed-zacht);
+    color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label);
+  }
+  @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   .end-actions .btn { width: 100%; max-width: 320px; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }

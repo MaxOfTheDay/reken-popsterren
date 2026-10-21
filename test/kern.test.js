@@ -30,10 +30,14 @@
  *   O  het geluid                       -> een tabel op naam, en stil is stil
  *   P  sterren (ster-status met pensioen) -> één regel, en geen rangvelden meer
  *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
- *   R  de grenstip                      -> pas na genoeg drie sterren, en opnieuw na een keuze
+ *   R  de grenstip                      -> pas na genoeg drie sterren, eerst typen dan de grens, en opnieuw na een keuze
  *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
- *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet
+ *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet; terug pas na twee missers
  *   U  fase 12 (tot 20)                 -> wie "alles" had krijgt hem erbij, één keer
+ *   V  de laatste shows                 -> tien uitkomsten, en wat Voortgang erover zegt
+ *   W  gegroeid                         -> "Nieuw!" bij een fase hoger, een nieuwe vraagsoort, grotere getallen
+ *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
+ *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1000,13 +1004,21 @@ zaak('R', () => {
   p.stars[eerste + n - 1] = 2;
   check(tip() === null, 'R · twee sterren telt niet als beheerst', JSON.stringify(tip()));
   p.stars[eerste + n - 1] = 3;
-  check(JSON.stringify(tip()) === JSON.stringify({ naar: 50 }), 'R · genoeg drie sterren bij "tot 20": de tip zegt 50', JSON.stringify(tip()));
+  // G1: eerst het antwoorden (kiezen -> afwisselen -> typen), dan pas de getallen
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'mode', naar: 'mix' }), 'R · bij kiezen uit 4: eerst afwisselen', JSON.stringify(tip()));
+  p.settings.mode = 'mix';
+  p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
+  check(tip() === null, 'R · net omgezet: het tellen begint opnieuw', JSON.stringify(tip()));
+  p.settings.grensTipBasis -= n;
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'mode', naar: 'typ' }), 'R · bij afwisselen: dan zelf typen', JSON.stringify(tip()));
+  p.settings.mode = 'typ';
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'grens', naar: 50 }), 'R · zelf typen bij "tot 20": de tip zegt 50', JSON.stringify(tip()));
   // de ouder zet hem om: de tip telt opnieuw, op de nieuwe grens
   p.settings.max = 50;
   p.settings.grensTipBasis = app.run('grensDrieSterren(P())');
   check(tip() === null, 'R · net omgezet naar 50: niet meteen de vraag of het 100 moet', JSON.stringify(tip()));
   for (let l = eerste + n; l < eerste + 2 * n; l++) p.stars[l] = 3;
-  check(JSON.stringify(tip()) === JSON.stringify({ naar: 100 }), 'R · na nieuwe drie-sterrenshows bij "tot 50": 100', JSON.stringify(tip()));
+  check(JSON.stringify(tip()) === JSON.stringify({ soort: 'grens', naar: 100 }), 'R · na nieuwe drie-sterrenshows bij "tot 50": 100', JSON.stringify(tip()));
   p.settings.max = 100;
   check(tip() === null, 'R · bij "tot 100" is er niets hogers', JSON.stringify(tip()));
   p.settings.max = 20;
@@ -1085,7 +1097,13 @@ zaak('T', () => {
   check(na({ stage: 6, rung: 2, seen: 10, acc: 0.95 }, true, true) === 6, 'T · de cijfers: tien vragen is te weinig, ook foutloos', JSON.stringify(p.countTrack));
   check(na({ stage: 6, rung: 2, seen: 12, acc: 0.9 }, true, false) === 7, 'T · de cijfers na twaalf goede vragen: door', JSON.stringify(p.countTrack));
   check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, true, false) === 4, 'T · het gewone pad werkt zoals altijd', JSON.stringify(p.countTrack));
-  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, false, false) === 2, 'T · een mislukte show zakt een fase', JSON.stringify(p.countTrack));
+  // G5: één mislukte show is een slechte middag, twee op rij is een teken
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.6 }, false, false) === 3, 'T · één mislukte show: de fase blijft', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.6, mislukt: 1 }, false, false) === 2, 'T · twee mislukte shows op rij: een fase terug', JSON.stringify(p.countTrack));
+  check(p.countTrack.mislukt === 0, 'T · en daarna begint het tellen opnieuw', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.6, mislukt: 1 }, true, false) === 3 && p.countTrack.mislukt === 0,
+    'T · een gelukte show ertussen wist de teller', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.4 }, false, false) === 2, 'T · echt lage nauwkeurigheid: meteen terug', JSON.stringify(p.countTrack));
 });
 
 zaak('U', () => {
@@ -1110,6 +1128,94 @@ zaak('U', () => {
   check(app.countMaxStage(s) === 11, 'U · met hoeveelheden tot 8 stopt het bij fase 11', app.countMaxStage(s));
   s.qmax = 10;
   check(app.countMaxStage(s) === 12, 'U · tot 10: fase 12 mag', app.countMaxStage(s));
+});
+
+zaak('V', () => {
+  const { app, p } = verseSter('Recent');
+  check(Array.isArray(p.recent) && p.recent.length === 0, 'V · een verse ster heeft nog geen recente shows', JSON.stringify(p.recent));
+  check(app.uitdagingStand(p) === null, 'V · zonder shows zegt de stand niets', '');
+  for (let i = 0; i < 3; i++) app.onthoudUitkomst(p, 3);
+  check(app.uitdagingStand(p) === null, 'V · drie shows is nog te weinig', '');
+  app.onthoudUitkomst(p, 3);
+  check(app.uitdagingStand(p).stand === 'vlot', 'V · alles drie sterren: vlot', JSON.stringify(app.uitdagingStand(p)));
+  for (let i = 0; i < 20; i++) app.onthoudUitkomst(p, i % 2 ? 2 : 3);
+  check(p.recent.length === app.RECENT_N, 'V · er blijven er maar tien bewaard', p.recent.length);
+  check(app.uitdagingStand(p).stand === 'goed', 'V · een mengeling van twee en drie: goed', JSON.stringify(app.uitdagingStand(p)));
+  app.onthoudUitkomst(p, 0); app.onthoudUitkomst(p, 0); app.onthoudUitkomst(p, 0);
+  check(app.uitdagingStand(p).stand === 'pittig', 'V · drie mislukte shows: pittig', JSON.stringify(app.uitdagingStand(p)));
+  // een oude save zonder het veld
+  delete p.recent; app.migrate(p);
+  check(app.uitdagingStand(p) === null, 'V · een oude save zonder recente shows: geen stand, geen fout', '');
+  app.onthoudUitkomst(p, 2);
+  check(p.recent.length === 1, 'V · en hij begint gewoon te tellen', JSON.stringify(p.recent));
+});
+
+zaak('W', () => {
+  const { app } = verseSter('Groei');
+  const p = app.db.profiles.p1 = app.defaultProfile('Groei', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  // telmodus: alleen een fase omhoog is nieuws
+  p.countTrack.stage = 4;
+  check(app.groeiMoment(p, { count: true }, 3) !== null, 'W · een fase hoger: nieuw spel', '');
+  check(app.groeiMoment(p, { count: true }, 4) === null, 'W · dezelfde fase: niets', '');
+  check(app.groeiMoment(p, { count: true }, 5) === null, 'W · een fase terug: niets (dat hoeft het kind niet te horen)', '');
+  // rekenen
+  const m = app.db.profiles.p2 = app.defaultProfile('Reken', 'dress_roze', {});
+  app.normalizeProfiles();
+  check(app.groeiMoment(m, {}, 0) === null, 'W · de eerste show: de grens wordt stil onthouden', JSON.stringify(m.gezien));
+  const zoek = app.groeiMoment(m, { missShown: 1 }, 0);
+  check(zoek && /zoek het getal/.test(zoek.pil), 'W · de eerste zoek-het-getal is nieuw', JSON.stringify(zoek));
+  check(app.groeiMoment(m, { missShown: 1 }, 0) === null, 'W · de tweede keer niet meer', '');
+  m.settings.max = 50;
+  const groter = app.groeiMoment(m, {}, 0);
+  check(groter && /tot 50/.test(groter.pil), 'W · een hogere grens: grotere getallen', JSON.stringify(groter));
+  m.settings.max = 20; app.groeiMoment(m, {}, 0); m.settings.max = 50;
+  check(app.groeiMoment(m, {}, 0) === null, 'W · omlaag en weer omhoog is geen nieuws', JSON.stringify(m.gezien));
+  // een oude save die zoek-het-getal al kent, krijgt geen "Nieuw!" meer
+  const oud = app.defaultProfile('Oud', 'dress_roze', {});
+  delete oud.gezien; oud.opTrack = { '+': { n: 40, acc: 0.9, paused: false, unlockStap: 4, fast: 0.5 } };
+  app.migrate(oud);
+  check(app.groeiMoment(oud, { missShown: 1 }, 0) === null, 'W · een oude ster die het al kende: geen nieuws', JSON.stringify(oud.gezien));
+});
+
+zaak('X', () => {
+  const { app } = verseSter('Wennen');
+  const s = { max: 20 };
+  const lvl = app.WORLD_START[3];          // wereld 4: t staat daar op 1
+  check(app.moeilijkheid(lvl, 0.5, s) === 1, 'X · zonder wennen: het hele bereik', String(app.moeilijkheid(lvl, 0.5, s)));
+  app.grensOmhoog(s, 50);
+  check(s.max === 50 && s.wennen === app.WEN_SHOWS, 'X · de grens omhoog: wennen begint', JSON.stringify(s));
+  const eerst = app.moeilijkheid(lvl, 0.5, s);
+  check(Math.abs(eerst - 0.6) < 1e-9, 'X · de eerste show op de nieuwe grens: ongeveer dertig van de vijftig', String(eerst));
+  let vorige = eerst, stijgt = true;
+  while (s.wennen > 0) { s.wennen--; const t = app.moeilijkheid(lvl, 0.5, s); if (t < vorige) stijgt = false; vorige = t; }
+  check(stijgt && vorige === 1, 'X · en het plafond klimt zonder terug te vallen naar het hele bereik', String(vorige));
+  app.grensOmhoog(s, 50); app.grensOmhoog(s, 20);
+  check(s.wennen === 0, 'X · omlaag hoeft niet te wennen', JSON.stringify(s));
+  check(app.moeilijkheid(lvl, 0.5) === 1, 'X · zonder instellingen (oude aanroep): zoals altijd', '');
+});
+
+zaak('Y', () => {
+  const { app, p } = verseSter('Accent');
+  const L = app.run('LEERSTAPPEN.length');
+  check(app.wereldAccent(L - 1) === null && app.wereldAccent(L) === null, 'Y · tot en met de eerste "alles door elkaar": geen accent', '');
+  check(app.wereldAccent(L + 1) === 'miss' && app.wereldAccent(L + 2) === 'chain' && app.wereldAccent(L + 3) === null,
+    'Y · daarna om de beurt: zoek het getal, drie getallen, gewoon', '');
+  // alles vrij: in een zoek-wereld zijn alle speciale vragen zoek-het-getal
+  p.opTrack = { '+': { n: 40, acc: 0.95, paused: false, unlockStap: 4, fast: 0.6 }, '-': { n: 40, acc: 0.95, paused: false, unlockStap: 4, fast: 0.6 } };
+  p.chainTrack = { seen: 20, acc: 0.95, paused: false, rung: 2, hot: 3 };
+  p.missRamp = { rung: 1, hot: 0 };
+  const soorten = stap => {
+    const t = new Set();
+    for (let i = 0; i < 60; i++) Object.values(app.planSpecials(p, p.settings, 8, stap, 3)).forEach(x => t.add(x.type));
+    return [...t].sort().join(',');
+  };
+  check(soorten(L + 1) === 'miss', 'Y · een zoek-wereld: alleen zoek het getal', soorten(L + 1));
+  check(soorten(L + 2) === 'chain', 'Y · een drie-getallen-wereld: alleen drie getallen', soorten(L + 2));
+  check(soorten(L) === 'chain,miss', 'Y · een gewone wereld: allebei', soorten(L));
+  // nog niet vrij: dan geen accent, gewoon wat er wél kan
+  p.settings.missNum = false;
+  check(soorten(L + 1) === 'chain', 'Y · zoek het getal uit: de zoek-wereld speelt gewoon', soorten(L + 1));
 });
 
 klaar();
