@@ -287,10 +287,12 @@
                     Nu de vulling dekkend is, mengt deze rand met de vulling
                     eronder en niet meer met de tekening -- hij is dus in élke
                     wereld dezelfde kleur, en dat was hij eerder niet.
-       ster-tab     het donkere tabje waar de drie sterren in liggen
-       ster-tab-vol hetzelfde tabje als alle drie de sterren vol zijn -- dát is
-                    waar "perfect" aan te zien is, en niet aan een eigen insigne
-       ster-leeg    een nog niet verdiende ster (zichtbaar, maar stil)
+       ster-tab     het donkere schijfje onder het schatteken bij de laatste halte
+                    (ooit ook het tabje onder de sterren; dat is weg)
+       ster-zoom    de donkere zoom achter elke ster onder een halte -- wat hem
+                    op sneeuw en zand los houdt, zonder tabje eronder
+       ster-leeg    een nog niet verdiende ster: een donker gat met een lichte
+                    omtrek, even groot als een verdiende
        ster-vol     een verdiende ster                                          */
     --route-onder: rgba(38,12,64,.78);
     --route-goud: rgba(var(--warm-licht-rgb),.82);
@@ -308,11 +310,9 @@
     --slot-vulling-top: #564c73;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
-    --ster-tab-rand: rgba(255,255,255,.16);
-    --ster-tab-vol: rgba(92,48,10,.76);
-    --ster-tab-vol-rand: rgba(var(--warm-licht-rgb),.5);
-    --ster-leeg: rgba(255,255,255,.5);
-    --ster-leeg-rand: rgba(20,5,40,.56);
+    --ster-zoom: rgba(20,5,40,.85);
+    --ster-leeg: rgba(40,14,70,.6);
+    --ster-leeg-rand: rgba(255,255,255,.9);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
