@@ -8079,7 +8079,6 @@
 
 
   .reveal-group + .reveal-group { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--paper-border); }
-  .rg-title { font-size: var(--tx-label); font-weight: 700; color: var(--purple-mid); margin-bottom: 10px; }
 
 
   .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
@@ -8113,9 +8112,6 @@
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
     line-height: 1.3; margin-top: -4px;
   }
-
-
-  .set-field.inactive { opacity: .5; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
 
 
@@ -8126,13 +8122,6 @@
 
 
 
-
-
-
-
-
-
-  .ops-grid { display: grid; grid-template-columns: repeat(2, max-content); }
 
 
 
@@ -8226,6 +8215,75 @@
     border: 1.5px solid var(--paper-border); box-shadow: inset 0 -2px 3px rgba(0,0,0,.16);
   }
   .chip.swatch.on .sw { border-color: rgba(255,255,255,.75); }
+
+
+
+
+
+
+
+
+
+
+  .oefen-kaart.primary { padding: 16px 16px 14px; }
+  .oefen-kaart.secundair { padding: 6px 14px; background: var(--paper-tint); }
+  .oe-lbl { display: flex; align-items: center; gap: 6px; margin: 14px 2px 7px; font-size: var(--tx-klein); font-weight: 700; color: var(--paper-ink-muted); }
+  .oe-lbl:first-child { margin-top: 0; }
+  .oe-teken { padding: 1px 8px; border-radius: var(--r-sm); background: var(--lavender-wash); color: var(--purple-mid); font-size: var(--tx-label); letter-spacing: .5px; }
+  .oe-ops { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .oe-ops .chip { height: 56px; padding: 0; border-radius: var(--r-md); font-size: 30px; font-weight: 700; line-height: 1; }
+
+
+  .oe-ops .chip.on, .oe-tafels .chip.on { background: var(--purple-mid); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+
+
+
+
+
+  .oe-seg { display: flex; gap: 2px; padding: 4px; border-radius: 14px; background: var(--lavender-wash); }
+  .oe-seg .chip, .oe-seg .chip:hover {
+    flex: 1 1 0; display: flex; align-items: center; justify-content: center; min-width: 0; height: 40px; padding: 0 4px;
+    border: none; border-radius: 10px; background: none; box-shadow: none;
+    color: var(--purple-mid); font-size: var(--tx-label); font-weight: 700; line-height: 1;
+  }
+  .oe-seg .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+  .oe-tafels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .oe-tafels .chip { min-width: 0; height: 42px; padding: 0; border-radius: var(--r-sm); font-size: var(--tx-body); font-weight: 700; }
+
+
+  .oe-rij, .oe-rij.chip, .oe-rij.chip.on, .oe-rij.chip:hover {
+    display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 2px;
+    border: none; border-radius: 0; background: none; box-shadow: none;
+    color: var(--paper-ink); font-size: var(--tx-body); font-weight: 600; text-align: left;
+  }
+  .oe-rij.chip:active { transform: none; }
+  .oefen-kaart .oe-rij, .oefen-kaart .oe-rij.chip { border-top: 1px solid var(--paper-border); }
+  .oefen-kaart > .oe-rij:first-child, .oefen-kaart > div:first-child > .oe-rij.chip { border-top: none; }
+  .oe-i { width: 28px; flex: none; text-align: center; font-size: 20px; }
+  .oe-w { flex: 1; min-width: 0; }
+  .oe-som { font-weight: 700; letter-spacing: .5px; }
+  .oe-som i { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; border: 2px dashed var(--purple-light); border-radius: 6px; }
+  .oe-stand { min-width: 46px; padding: 5px 10px; border-radius: var(--r-pill); text-align: center; font-size: var(--tx-klein); font-weight: 700; background: var(--lavender-wash-3); color: var(--paper-ink-muted); }
+  .oe-rij.on .oe-stand { background: var(--purple-mid); color: var(--c-white); }
+
+  .oe-mini { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--lavender-wash); }
+  .oe-mini .chip, .oe-mini .chip:hover {
+    display: flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 6px;
+    border: none; border-radius: 7px; background: none; box-shadow: none; font-size: var(--tx-klein); font-weight: 700; line-height: 1;
+  }
+  .oe-mini .chip.on { background: var(--purple-mid); color: var(--c-white); box-shadow: 0 1px 4px rgba(var(--purple-mid-rgb), .35); }
+  .oe-rij-blok { flex-wrap: wrap; }
+  .oe-rij-blok .chip-row { flex-basis: 100%; }
+
+
+
+
+  .oe-modus { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); }
+  .oe-modus .chip, .oe-modus .chip:hover {
+    flex: 1 1 0; min-height: 44px; padding: 8px 6px; border: none; border-radius: var(--r-sm);
+    background: none; box-shadow: none; color: rgba(255,255,255,.7); font-size: var(--tx-label);
+  }
+  .oe-modus .chip.on { background: rgba(255,255,255,.16); color: var(--c-white); box-shadow: none; }
 
 
 
@@ -8367,6 +8425,15 @@
 
 
   #screen-newstar .mode-row .chip.gestapeld { min-width: 0; }
+
+
+
+
+  #screen-newstar .oe-seg .chip, #screen-newstar .oe-seg .chip:hover,
+  #screen-newstar .oe-rij.chip, #screen-newstar .oe-rij.chip:hover, #screen-newstar .oe-rij.chip.on,
+  #screen-newstar .oe-mini .chip, #screen-newstar .oe-mini .chip:hover { background: none; border: none; }
+  #screen-newstar .oe-mini .chip.on, #screen-newstar .oe-seg .chip.on,
+  #screen-newstar .oe-ops .chip.on, #screen-newstar .oe-tafels .chip.on { background: var(--purple-mid); }
 
 
 
@@ -18444,14 +18511,16 @@ function genTriple(s, lvl, perf, op) {
     } while (++poging < 40);
     sym = op === '+' ? '+' : '−';
   } else if (op === 'x') {
+
+
+
+
     b = pick(tables);
-    const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
-    a = rnd(1, Math.max(1, Math.round(maxA * t)));
+    a = rnd(1, Math.max(1, Math.round(10 * t)));
     c = a * b; sym = '×';
   } else {
     b = pick(tables);
-    const maxQ = Math.max(1, Math.min(10, Math.floor(s.max / b)));
-    const q = rnd(1, Math.max(1, Math.round(maxQ * t)));
+    const q = rnd(1, Math.max(1, Math.round(10 * t)));
     a = q * b; c = q; sym = ':';
   }
   return { a, b, c, sym, op, t, effMax };
@@ -19373,7 +19442,9 @@ function pickRefresh(p, s, mag) {
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-    if (!ops.includes(e.op) || e.ans > s.max || (mag && !mag(k))) continue;
+
+    const teGroot = (e.op === '+' || e.op === '-') && e.ans > s.max;
+    if (!ops.includes(e.op) || teGroot || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -21932,8 +22003,7 @@ function renderNewStar() {
               <span class="sr-val">${oefenSamenvatting(s)}</span></span>
           </summary>
           <div class="set-reveal-body">
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">
-              <div class="rg-title">${g.ico} ${g.title}</div>${g.html}</div>`).join('')}
+            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
         </details>
@@ -22197,7 +22267,8 @@ function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   return [
     { kort: 'rustig beginnen', lang: 'Rustig beginnen, met de kleinere getallen.' },
-    { kort: `tot ${s.max}`, lang: `Sommen met het hele bereik, tot ${s.max}.` },
+    plusMin ? { kort: `tot ${s.max}`, lang: `Sommen met het hele bereik, tot ${s.max}.` }
+            : { kort: 'hele tafels', lang: 'De hele tafels, tot × 10.' },
     plusMin && s.max > 10 && { kort: 'over het tiental', lang: 'Over het tiental heen, zoals 8 + 5.' },
     s.missNum !== false && { kort: 'zoek het getal', lang: 'Zoek het getal dat ontbreekt, zoals 7 + ? = 12.' },
     s.chain3 !== false && s.ops.includes('+') && { kort: 'drie getallen', lang: 'Drie getallen optellen, zoals 3 + 4 + 2.' },
@@ -22253,7 +22324,8 @@ function leerpadHtml(p) {
     noot = 'Het spel gaat vanzelf een fase hoger als het goed gaat, en terug als het even te moeilijk is.';
   } else {
     const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
-    kop = `rekenen ${(s.ops || []).map(o => glyph[o] || o).join(' ')} tot ${s.max}`;
+    const plusMin = s.ops.includes('+') || s.ops.includes('-');
+    kop = `rekenen ${(s.ops || []).map(o => glyph[o] || o).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
     const stappen = leerpadStappen(s);
     const w = continueWorld(p) + 1;
     const laatste = LEERSTAPPEN.length;
@@ -22390,6 +22462,8 @@ function grensTip(p) {
   if (s.track === 'count') return null;
   if (grensDrieSterren(p) - (s.grensTipBasis || 0) < GRENS_TIP_SHOWS) return null;
   if (MODE_LADDER[s.mode]) return { soort: 'mode', naar: MODE_LADDER[s.mode] };
+
+  if (!s.ops.includes('+') && !s.ops.includes('-')) return null;
   const naar = GRENS_LADDER.find(v => v > s.max);
   return naar ? { soort: 'grens', naar } : null;
 }
@@ -22467,7 +22541,10 @@ const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder',
 const faseStartOpen = {};
 function oefenGroups(s, pfx, hier) {
   pfx = pfx || '';
-  const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
+
+
+  const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
 
 
@@ -22507,8 +22584,35 @@ function oefenGroups(s, pfx, hier) {
       + `<span class="fl-n">${v}</span><span class="fl-naam">${COUNT_STAGE_LABELS[v]}</span>${r ? `<span class="fl-r">${r}</span>` : ''}</button>`
       + (v === hi && hi < availMax ? '<div class="fl-grens">🔒 tot hier</div>' : '');
   }).join('');
+
+
+
+
+
+
+
+
+
+
+
+  const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
+
+
+
+
+
+  const balk = (id, items, sel) => `<div class="oe-seg" id="${pfx}${id}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
+
+
+  const schakel = (v, ico, woord, aan, naam) => `<button class="chip oe-rij${aan ? ' on' : ''}" data-v="${v}" role="switch" aria-checked="${aan}"${naam ? ` aria-label="${naam}"` : ''}>`
+    + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand">${aan ? 'Aan' : 'Uit'}</span></button>`;
+  const aanUit = (id, ico, woord, aan) => `<div id="${pfx}${id}">${schakel(aan ? 'off' : 'on', ico, woord, aan)}</div>`;
+
+  const klein = (id, ico, woord, waarden, sel) => `<div class="oe-rij vast"><span class="oe-i" aria-hidden="true">${ico}</span>`
+    + `<span class="oe-w">${woord}</span><span class="oe-mini" id="${pfx}${id}">${waarden.map(v => chip(v, v, sel === v)).join('')}</span></div>`;
+  const perShow = klein('set-perlevel', '🎤', 'Vragen per show', [5, 8, 10], s.perLevel);
   if (s.track === 'count') return [{
-    ico: '🔢', title: 'Hoe ver mag het groeien?', sub: 'Het spel klimt zelf. Tik een fase om er de grens te zetten.', html: `
+    html: `${lbl('Fases · het spel klimt zelf')}
       <div class="fase-ladder" id="${pfx}set-stagemax">${ladder}</div>
       <details class="set-reveal fase-start" id="${pfx}fase-start"${s.stage > 1 || faseStartOpen[pfx] ? ' open' : ''}>
         <summary><span class="sr-text"><span class="sr-title">Begint je kind hoger?</span>
@@ -22516,53 +22620,37 @@ function oefenGroups(s, pfx, hier) {
         <div class="set-field"><span class="hulp">Het spel begint hier, en zakt nooit lager.</span>${stageChips('set-stage', s.stage)}</div>
       </details>`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden, lengte en memory', secundair: true, html: `
-      <div class="set-field"><span class="lbl">Cijfers tonen</span>
-        <span class="hulp">Cijfers, minder stippensteun en meer redeneren vanaf fase 6.</span>
-        <div class="chip-row" id="${pfx}set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
-      <div class="set-field"><span class="lbl">Hoogste hoeveelheid</span>
-        <span class="hulp">Hoe ver de aantallen mogen groeien.</span>
-        <div class="chip-row" id="${pfx}set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
-        <span class="hulp">Bij Mix wisselt het per vraag.</span>
+    secundair: true, html: `
+      ${aanUit('set-numerals', '🔢', 'Cijfers', s.numerals !== false)}
+      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
+      ${klein('set-qmax', '🍎', 'Hoeveelheden tot', [6, 8, 10], s.qmax || 10)}
+      ${perShow}
+      <div class="oe-rij vast oe-rij-blok"><span class="oe-w">Tonen als</span>
         <div class="chip-row drie-op-een-rij" id="${pfx}set-repr">${
           reprChip('objects', '🧸', 'Voorwerpen', (s.repr || 'objects') === 'objects')}${
           reprChip('dots', '⚫', 'Stippen', s.repr === 'dots')}${
-          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>
-      <div class="set-field"><span class="lbl">Memory-spel</span>
-        <span class="hulp">Op de kaart: zoek de gelijke hoeveelheden.</span>
-        <div class="chip-row" id="${pfx}set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
-      <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>`
+          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>`
   }];
+
+
+
+
   return [{
-    ico: '🎓', title: 'Wat oefenen', sub: 'Kies de bewerkingen en het bereik', html: `
-      <div class="set-field"><span class="lbl">Bewerkingen</span>
-        <div class="chip-row ops-grid" id="${pfx}set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Getallen tot</span>
-        <div class="chip-row" id="${pfx}set-max">${[10, 20, 50, 100].map(v => chip(v, v, s.max === v)).join('')}</div></div>
-      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van</span>
-        <span class="hulp">${tablesRelevant ? 'Voor ✖️ en ➗.' : 'Actief zodra ✖️ of ➗ aanstaat.'}</span>
-        <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
+    html: `${lbl('Sommen')}
+      <div class="oe-ops" id="${pfx}set-ops">${opDefs.map(([v, teken, woord]) =>
+        `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
+      ${plusMin ? `${lbl('tot', '+ −')}${balk('set-max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
+      ${tablesRelevant ? `${lbl('tafels van', '× ÷')}
+      <div class="oe-tafels" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}
+      ${lbl('Antwoord')}${balk('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, voorlezen, lengte en extra uitdaging', secundair: true, html: `
-      <div class="set-field"><span class="lbl">Antwoorden</span>
-        <div class="chip-row" id="${pfx}set-mode">
-          ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
-          ${chip('typ', 'Zelf typen', s.mode === 'typ')}
-          ${chip('mix', 'Afwisselen', s.mode === 'mix')}
-        </div></div>
-      <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Sommen voorlezen</span>
-        <span class="hulp">Een stem leest elke som voor. Fijn voor wie net van tellen komt.</span>
-        <div class="chip-row" id="${pfx}set-voorlezen">${chip('on', 'Aan', s.voorlezen === true)}${chip('off', 'Uit', s.voorlezen !== true)}</div></div>
-      <div class="set-field"><span class="lbl">Extra uitdaging</span>
-        <span class="hulp">Verschijnt geleidelijk, pas als de gewone sommen goed gaan.</span>
-        <div class="chip-row" id="${pfx}set-extra">
-          ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
-          ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
-        </div></div>`
+    secundair: true, html: `
+      ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
+      <div id="${pfx}set-extra">
+        ${schakel('missNum', '🔍', '<span class="oe-som">4 + <i></i> = 9</span>', s.missNum !== false, 'Zoek het getal')}
+        ${schakel('chain3', '➕', '<span class="oe-som">2 + 3 + 4</span>', s.chain3 !== false, 'Drie getallen')}
+      </div>
+      ${perShow}`
   }];
 }
 
@@ -22573,11 +22661,13 @@ function oefenSamenvatting(s) {
     return `fase ${s.stage}${top > s.stage ? '–' + top : ''}`
          + ` · hoeveelheden tot ${s.qmax || 10} · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
   }
-  const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
-  const modes = { kies: 'kiezen uit 4', typ: 'zelf typen', mix: 'afwisselend' };
+
+  const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
+  const modes = { kies: 'kiezen', typ: 'typen', mix: 'mix' };
+  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
-  return `${s.ops.map(o => glyph[o] || o).join(' ')} · tot ${s.max}${tafels}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
        + ` · ${modes[s.mode] || s.mode} · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
 
@@ -22592,42 +22682,15 @@ function oefenSamenvatting(s) {
 
 
 
-
-
-
-
-
-
 function oefenenPanelHtml(p, s) {
   const isCount = s.track === 'count';
-
-
-
-
-
-
-
-
-
-  const modeChip = (v, ico, label) => `<button class="chip gestapeld${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
-    + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
-  const modeCard = `
-    <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🎮</div><div><h2>Modus</h2><div class="sub">Hoe ${esc(p.name)} speelt</div></div></div>
-      <div class="set-field"><span class="lbl">Manier van spelen</span>
-        <div class="chip-row mode-row" id="set-track">
-          ${modeChip('count', '🧸', 'Leren tellen')}
-          ${modeChip('math', '🧮', 'Rekenen')}
-        </div>
-        <div class="note" style="margin-top:8px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
-    </div>`;
-
   const cards = oefenGroups(s, '', isCount ? { fase: countLiveStage(p), naam: p.name } : null).map(g => `
-    <div class="set-card${g.secundair ? ' secundair' : ' primary'}">
-      <div class="set-card-head"><div class="ico">${g.ico}</div><div><h2>${g.title}</h2><div class="sub">${g.sub}</div></div></div>
-      ${g.html}
-    </div>`).join('');
-  return `<div class="settings-panel">${modeCard}${cards}</div>`;
+    <div class="set-card oefen-kaart${g.secundair ? ' secundair' : ' primary'}">${g.html}</div>`).join('');
+  const half = (v, ico, woord) => `<button class="chip${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
+    + `<span aria-hidden="true">${ico}</span> ${woord}</button>`;
+  return `<div class="settings-panel">${cards}
+    <div class="oe-modus" id="set-track" role="group" aria-label="Modus">${half('count', '🧸', 'Tellen')}${half('math', '🧮', 'Rekenen')}</div>
+  </div>`;
 }
 
 
