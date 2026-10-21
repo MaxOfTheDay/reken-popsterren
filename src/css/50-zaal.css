@@ -365,6 +365,22 @@
   .cgroup.mini { gap: 2px 3px; max-width: 74px; margin-top: 4px; }
   .cgroup.mini .cg-dot { width: 9px; height: 9px; background: rgba(255,255,255,.9); box-shadow: none; }
   .cq-label { font-size: clamp(26px, 6vw, 40px); font-weight: 700; color: var(--purple-shadow); }
+  /* Tik en tel: de voorwerpen liggen los op de kaart (plekken in procenten, zie
+     tapPlekken), elk een knop van minstens 44px. Een getelde krijgt zijn
+     nummer als rond kaartje rechtsboven. */
+  .cq-tap { position: relative; width: 100%; height: clamp(140px, 20vh, 170px); }
+  .tap-obj { position: absolute; transform: translate(-50%, -50%); min-width: 48px; min-height: 48px;
+    padding: 0; border: none; background: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .tap-obj .cg-obj { font-size: clamp(26px, 5vh, 36px); transition: transform var(--t-tik), opacity var(--t-tik); }
+  .tap-obj.geteld .cg-obj { opacity: .55; transform: scale(.9); }
+  .tap-obj.geteld::after { content: attr(data-nr); position: absolute; top: -2px; right: -4px;
+    min-width: 24px; height: 24px; padding: 0 4px; border-radius: 12px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--purple-input-bottom); color: var(--c-white); font-size: 15px; font-weight: 700;
+    box-shadow: 0 0 0 2px var(--c-white); animation: cpop .3s ease; }
+  /* de antwoordknoppen wachten tot alles geteld is */
+  .count-tiles.wacht { opacity: .4; pointer-events: none; transition: opacity var(--t-snel); }
   .cq-listen { font-size: 56px; animation: earwiggle 1.4s ease-in-out infinite; }
   @keyframes earwiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
   /* In de telmodus is de gesproken opdracht de héle vraag. "Nog eens voorlezen"
@@ -410,14 +426,21 @@
      schermen buiten beeld liepen). De maten schalen mee met de tegel (cqw, zie
      .count-tile): bij 3 of 4 tegels naast elkaar is één tegel maar een derde of
      een kwart van de rij breed. De px-waarde ervoor is de bovengrens én de
-     terugval voor browsers zonder containerquery's. */
-  .count-tile .cframe { gap: 2px; gap: min(2px, 2cqw); }
+     terugval voor browsers zonder containerquery's.
+     De bovengrenzen stonden op 15px per vakje en 11px per voorwerp: op een
+     telefoon met twee tegels naast elkaar was de tegel dan vooral leeg paars en
+     moest een kind van vijf zes appeltjes van 11px tellen. Nu bepaalt de tegel
+     de maat (17cqw = vijf vakjes plus vier kiertjes past precies) en ligt de
+     grens pas waar het op een tablet te groot zou worden. De vh-term is voor de
+     telefoon dwars: daar is niet de breedte maar de hoogte op, en groeien de
+     twee rijen tegels anders onder de rand van het scherm uit. */
+  .count-tile .cframe { gap: 2px; gap: min(3px, 2cqw); }
   /* de mini-raampjes houden hun eigen kleine ronding: dat is de tekening van het
      reken-hulpmiddel, niet de UI-schaal -- --r-sm op een vakje van 10-15px maakt
      er een rondje van */
-  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(15px, 17cqw); height: min(15px, 17cqw); border-width: 1.5px; border-radius: 4px; }
-  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(11px, 12cqw); }
-  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(8px, 9cqw); height: min(8px, 9cqw); }
+  .count-tile .cframe .tf-cell { width: 15px; height: 15px; width: min(28px, 17cqw, 4.5vh); height: min(28px, 17cqw, 4.5vh); border-width: 1.5px; border-radius: 5px; }
+  .count-tile .cframe .cg-obj { font-size: 11px; font-size: min(20px, 12.5cqw, 3.3vh); }
+  .count-tile .cframe .cg-dot { width: 8px; height: 8px; width: min(14px, 10cqw); height: min(14px, 10cqw); }
 
   /* ---- Stippenraam (leer-aid): vijf-/tienraam met VASTE plekken ----
      Vaste vulvolgorde (bovenrij eerst, links→rechts); lege vakjes blijven zichtbaar,
@@ -428,6 +451,9 @@
   .df-cell.on { border-color: rgba(74,20,140,.30); }
   .df-dot { width: 64%; height: 64%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b98be6, var(--purple-input-bottom) 78%); }
   .dframe.big .df-cell { width: 27px; height: 27px; }
+  /* boven de tien (fase 12): het eerste tiental staat los van de rest, zodat je
+     "tien en nog wat" ziet zonder de stippen te tellen */
+  .dframe:not(.mini) .df-cell:nth-child(n+11):nth-child(-n+15) { margin-top: 10px; }
   .dframe.faint .df-dot { opacity: .34; }
   /* kleine steunstipjes ónder een cijfer (antwoordknoppen + som-operanden) */
   .dframe.mini { column-gap: 2px; row-gap: 2px; }
@@ -438,10 +464,10 @@
      naast elkaar staan, en dan liep de hele rij tegels buiten beeld -- de derde
      tegel was op een telefoon half weg. De steunstipjes onder een cijfer
      (.dframe.mini) houden hun eigen maat. */
-  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(4px, 2cqw); row-gap: min(7px, 6cqw); }
+  .count-tile .dframe:not(.mini) { column-gap: 4px; row-gap: 7px; column-gap: min(5px, 2cqw); row-gap: min(8px, 6cqw); }
   /* ronding in procenten i.p.v. --r-sm: het vakje is nu geen vaste 22px meer, en
      een vaste 10px ronding maakt van een geslonken vakje een rondje */
-  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(20px, 18cqw); height: min(20px, 18cqw); border-radius: 45%; }
+  .count-tile .dframe:not(.mini) .df-cell { width: 20px; height: 20px; width: min(28px, 18cqw, 4.5vh); height: min(28px, 18cqw, 4.5vh); border-radius: 45%; }
   /* op paarse knoppen: witte stippen + lichtere randjes (i.p.v. donker op wit) */
   .count-tile .df-cell { border-color: rgba(255,255,255,.3); }
   .count-tile .df-cell.on { border-color: rgba(255,255,255,.5); }
@@ -489,7 +515,7 @@
   .count-tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
-    min-height: 78px; padding: 12px 8px; border-radius: var(--r-lg);
+    min-height: 88px; padding: 12px 8px; border-radius: var(--r-lg);
     background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform var(--t-tik), box-shadow var(--t-tik);
@@ -504,6 +530,10 @@
   .count-tile .cg-obj { font-size: 27px; }
   .count-tile .cg-dot { width: 20px; height: 20px; }
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
+  /* groot tegen klein bij meer/minder (zie genCount, 'compare') */
+  .count-tile .cgroup.groot .cg-obj { font-size: min(44px, 36cqw); }
+  .count-tile .cgroup.klein { gap: 2px 3px; }
+  .count-tile .cgroup.klein .cg-obj { font-size: min(17px, 13cqw); }
 
   /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
   .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }

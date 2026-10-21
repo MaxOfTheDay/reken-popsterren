@@ -139,7 +139,7 @@ function check(ok, label, detail) {
     check(r.base === 'meisje', 'de gekozen basisfiguur wordt bewaard', String(r.base));
     check(r.startHair === 'hair_bruin' && r.startDress === 'dress_blauw', 'de startlook wordt vastgelegd', `${r.startHair}/${r.startDress}`);
     check(r.order === 0, 'de eerste ster staat vooraan', `order=${r.order}`);
-    check(r.track === 'count' && r.perLevel === 5 && r.stageMax === 11, 'telmodus krijgt de hele telvoorinstelling', JSON.stringify(r));
+    check(r.track === 'count' && r.perLevel === 5 && r.stageMax === 12, 'telmodus krijgt de hele telvoorinstelling', JSON.stringify(r));
     check(r.bought === 0, 'gratis startspullen tellen niet als gekocht', `bought=${r.bought}`);
     // Zodra er een ster staat spreekt het scherm voor zich en verdwijnt de
     // ondertitel; het welkom hoort alleen bij een leeg scherm.
@@ -2200,8 +2200,8 @@ function check(ok, label, detail) {
       return { math: byName('Reken'), count: byName('Tel') };
     });
     const mathWant = { ops: ['+', '-'], max: 20, tables: [2, 5, 10], mode: 'kies', perLevel: 8,
-      missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 11, repr: 'objects',
-      numerals: true, qmax: 10, memory: true };
+      missNum: true, chain3: true, track: 'math', stage: 1, stageMax: 12, fasesBekend: 12, repr: 'objects',
+      numerals: true, qmax: 10, memory: true, voorlezen: false };
     const countWant = { ...mathWant, track: 'count', perLevel: 5 };
     check(JSON.stringify(r.math) === JSON.stringify(mathWant),
       'zonder de openklapper aan te raken blijft de rekenster ongewijzigd', JSON.stringify(r.math));
@@ -2253,7 +2253,7 @@ function check(ok, label, detail) {
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(velden.stage && !velden.ops, 'de telmodus toont fases in plaats van bewerkingen', JSON.stringify(velden));
-    check(/^fase 1–11/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
+    check(/^fase 1–12/.test(velden.val), 'de samenvatting schakelt mee naar de telmodus', velden.val);
     await page.click('#ns-set-stage .chip[data-v="3"]');
     await page.waitForTimeout(150);
     await page.click('#newstar-base .chip[data-v="jongen"]');

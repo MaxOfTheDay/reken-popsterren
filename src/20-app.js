@@ -37,7 +37,7 @@
      Trilfeedback ....... haptics
      Geluid ............. de SFX-tabel: klankjes op naam van de gebeurtenis,
                           live gemaakt met oscillatoren. Geen bestanden
-     Gesproken opdrachten  nl-NL stem — ALLEEN telmodus (zie speak())
+     Gesproken opdrachten  nl-NL stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
 
    ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
@@ -2115,7 +2115,7 @@ const LS_KEY = 'rekenPopsterren_v1';
 // De telmodus-voorinstelling: lees-vrij, met een kortere ronde (5 vragen) die bij
 // kleuters beter past. Dit is wat een ster krijgt die bij het maken "Leren tellen"
 // kiest; anders start ze gewoon in de rekenmodus.
-const COUNT_STAGE_MAX = 11;  // 11 fases: tellen → vergelijken → cijfers → redeneren → gesteunde sommen (tekens → cijfers+stippen → geschreven)
+const COUNT_STAGE_MAX = 12;  // 12 fases: tellen → vergelijken → cijfers → redeneren → gesteunde sommen (tekens → cijfers+stippen → geschreven) → tot 20
 const DEFAULT_PERLEVEL = 8;  // vragen per optreden in de rekenmodus (de telmodus heeft er 5, zie COUNT_OPTS)
 const COUNT_OPTS = { track: 'count', stage: 1, stageMax: COUNT_STAGE_MAX, repr: 'objects', numerals: true, perLevel: 5, qmax: 10 };
 // Wie je bent kies je bij het maken; wat je wordt koop je in de kleedkamer.
@@ -2169,10 +2169,12 @@ function defaultProfile(name, dress, opts) {
       track: opts.track || 'math',
       stage: opts.stage || 1,                       // laagste (start)fase in de telmodus
       stageMax: opts.stageMax || COUNT_STAGE_MAX,   // hoogste toegestane fase
+      fasesBekend: COUNT_STAGE_MAX,                 // hoeveel fases er waren toen stageMax gekozen werd (zie migrate)
       repr: opts.repr || 'objects',                 // antwoordweergave: 'objects' of 'dots'
       numerals: opts.numerals !== false,            // fase 6 (cijfers) toestaan
       qmax: opts.qmax || 10,                         // hoogste hoeveelheid waar het spel naartoe mag groeien (6/8/10)
-      memory: opts.memory !== false                 // memory-spelletje op de kaart (standaard aan)
+      memory: opts.memory !== false,                // memory-spelletje op de kaart (standaard aan)
+      voorlezen: opts.voorlezen === true            // rekenmodus: de sommen hardop voorlezen (zie stemAan)
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
     // FASE 4A. tourStars blijft bij een verse ster voorgoed leeg -- het is de
@@ -2302,6 +2304,15 @@ function migrate(p) {
   if (p.settings.stageMax == null) p.settings.stageMax = COUNT_STAGE_MAX;
   // bestaande telprofielen mochten tot fase 6; til hun plafond op naar de nieuwe fases
   if (p.settings.track === 'count' && (p.settings.stageMax === 6 || p.settings.stageMax === 8)) p.settings.stageMax = COUNT_STAGE_MAX;
+  /* Er kwam een fase bij (12, tot 20). Wie op de oude laatste fase stond, stond
+     op "alles" -- die gaat mee naar de nieuwe. Eén keer: fasesBekend onthoudt
+     hoeveel fases er toen waren, zodat een ouder die daarna bewust de oude
+     laatste fase kiest die ook houdt. Saves van vóór dit veld kenden er elf. */
+  const bekend = p.settings.fasesBekend || 11;
+  if (bekend < COUNT_STAGE_MAX) {
+    if (p.settings.stageMax === bekend) p.settings.stageMax = COUNT_STAGE_MAX;
+    p.settings.fasesBekend = COUNT_STAGE_MAX;
+  }
   if (p.settings.repr == null) p.settings.repr = 'objects';
   if (p.settings.numerals == null) p.settings.numerals = true;
   if (p.settings.qmax == null) p.settings.qmax = 10;
@@ -2809,14 +2820,28 @@ function nlVoice() {
   return _voices.find(v => /^nl(\b|[-_])/i.test(v.lang)) || null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
+/* Mag deze ster een stem horen? In de telmodus altijd. In de rekenmodus alleen
+   met Voorlezen aan: zo verliest een kind dat net van tellen naar rekenen ging
+   niet in één klap de stem die alles voorlas (de telmodus-tip zet hem aan, zie
+   naarRekenen). De ouder zet hem uit op Oefenen. */
+function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
+/* Een rekensom als zin: "7 + 3 = @" -> "zeven plus drie is hoeveel?". Het
+   sjabloon is dezelfde bron als wat er in beeld staat, dus ze kunnen niet
+   uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor. */
+const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'keer', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
+function somZin(q) {
+  if (!q || !q.tmpl) return '';
+  return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
+}
 function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} }
 // Leest een zin voor. Volgt bewust de geluid-aan/uit-knop (stil = ook geen stem).
 function speak(text, opts) {
   opts = opts || {};
   // Voice hoort bij de lees-vrije telmodus; in de rekenmodus geen enkele gesproken
-  // uitvoer (ook niet op gedeelde plekken als het trofee-feestje of de ster-status).
+  // uitvoer (ook niet op gedeelde plekken als het trofee-feestje of de ster-status)
+  // -- behalve als de ouder Voorlezen aanzette, zie stemAan.
   const cp = cur ? P() : null;
-  if (cp && cp.settings && cp.settings.track !== 'count') { if (opts.onEnd) opts.onEnd(); return; }
+  if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
     speechSynthesis.cancel();
@@ -8258,7 +8283,7 @@ function makeChoices(ans) {
   return shuffle([...set]);
 }
 
-/* ================= Telmodus: lees-vrije vragen (fase 1–6) =================
+/* ================= Telmodus: lees-vrije vragen (fase 1–12) =================
    Voor kleuters die nog geen cijfers of woorden lezen. Elke vraag is visueel
    volledig (hoeveelheden als objecten/stippen) én wordt hardop voorgelezen.
    Het antwoord is altijd een getal (de hoeveelheid), zodat submitAnswer exact
@@ -8266,7 +8291,9 @@ function makeChoices(ans) {
    sterren en trofeeën ongewijzigd blijven meetellen.
 
    Fases:  1 hoeveelheid 1–3 · 2 hoeveelheid 1–5 (+ meetellen) · 3 meer/minder ·
-           4 evenveel · 5 gesproken getal → hoeveelheid · 6 cijfer bij hoeveelheid */
+           4 evenveel · 5 gesproken getal → hoeveelheid · 6 cijfer bij hoeveelheid ·
+           7 één meer/minder · 8 samen/splitsen · 9–11 gesteunde sommen
+   (de volledige tabel staat in countStageInfo hieronder) */
 const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', '🦋', '🍓', '🐟', '🌼', '🐞'];
 /* ---- Fasetabel (8 fases) ----
    Per fase: welke oefeningtypes, het hoeveelheidsbereik (baseMax bij de laagste
@@ -8274,8 +8301,9 @@ const COUNT_OBJECTS = ['⭐', '❤️', '🎈', '🍎', '🌸', '🐢', '🐱', 
    fase) en het aantal keuzeknoppen. */
 function countStageInfo(stage) {
   switch (stage) {
-    case 1: return { types: ['count'],              baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
-    case 2: return { types: ['count', 'along'],     baseMax: 5, topMax: 6,  rungs: 3, tiles: 4 };
+    // 'tap' = tik en tel: het kind tikt zelf elk voorwerp aan (zie tapPlekken)
+    case 1: return { types: ['count', 'tap'],        baseMax: 3, topMax: 3,  rungs: 2, tiles: 3 };
+    case 2: return { types: ['count', 'along', 'tap'], baseMax: 5, topMax: 6, rungs: 3, tiles: 4 };
     case 3: return { types: ['compare'],            baseMax: 5, topMax: 8,  rungs: 3, tiles: 3 };
     case 4: return { types: ['match'],              baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     // fase 5 is de luisterfase; zonder geluid valt hij terug op 'match' (zelfde
@@ -8284,11 +8312,14 @@ function countStageInfo(stage) {
     case 5: return { types: ['listen'],             baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     case 6: return { types: ['numeral', 'numquant'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     case 7: return { types: ['onemore', 'oneless'], baseMax: 3, topMax: 9,  rungs: 3, tiles: 4 };
-    case 8: return { types: ['combine', 'split'],   baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
+    // 'vriend' = de vriendjes van vijf of tien: hoeveel nog tot een vol raam
+    case 8: return { types: ['combine', 'split', 'vriend'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     // gesteunde sommen: tekens (visueel) → cijfers+stippen → geschreven (steun vervaagt)
     case 9:  return { types: ['sumsym'],     baseMax: 5, topMax: 8,  rungs: 3, tiles: 4 };
     case 10: return { types: ['sumdots'],    baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
     case 11: return { types: ['sumwritten'], baseMax: 5, topMax: 10, rungs: 3, tiles: 4 };
+    // tot 20: "tien en nog wat" -- als hoeveelheid (twee volle rijen en meer) en als som
+    case 12: return { types: ['tiental', 'tienplus'], baseMax: 15, topMax: 20, rungs: 3, tiles: 4 };
     default: return { types: ['count'], baseMax: 3, topMax: 3, rungs: 2, tiles: 3 };
   }
 }
@@ -8305,7 +8336,11 @@ function countStageTypes(stage) {
   return speelbaar.length ? speelbaar : ['match'];
 }
 // Hoogste toegestane fase: zonder cijfers stopt het bij fase 5 (fases 6–8 gebruiken cijfers/redeneren).
-function countMaxStage(s) { return s.numerals ? Math.min(COUNT_STAGE_MAX, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX); }
+// Met hoeveelheden onder de tien stopt het vóór fase 12: die gaat tot twintig.
+function countMaxStage(s) {
+  const top = (s.qmax || 10) < 10 ? 11 : COUNT_STAGE_MAX;
+  return s.numerals ? Math.min(top, s.stageMax || COUNT_STAGE_MAX) : Math.min(5, s.stageMax || COUNT_STAGE_MAX);
+}
 // De fase die het kind nú speelt: de live-stand uit countTrack, geklemd binnen het
 // door de ouder toegestane bereik [stage .. stageMax].
 function countLiveStage(p) {
@@ -8323,7 +8358,8 @@ function countDifficulty(p, stage) {
   const top = info.rungs - 1;
   const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
   const frac = top ? rung / top : 0;
-  const cap = Math.min(s.qmax || 10, 10);
+  // fase 12 gaat per definitie tot twintig; de rest blijft binnen de tien
+  const cap = stage === 12 ? 20 : Math.min(s.qmax || 10, 10);
   const effMax = Math.max(info.baseMax, Math.min(cap, Math.round(info.baseMax + (info.topMax - info.baseMax) * frac)));
   const delta = rung >= top ? 1 : (rung >= 1 ? 2 : 3);           // afleider-nabijheid (±)
   const support = rung === 0 ? 'full' : (rung === 1 ? 'faint' : 'none'); // cijfersteun (stippen vervagen)
@@ -8459,7 +8495,17 @@ function genCount(p) {
   const q = { kind: 'count', count: true, ctype: type, stage, emoji, repr, frame, cap, support: d.support, gold: false };
   const qgroup = v => ({ v, kind: 'group', n: v, emoji, repr, frame, cap });
 
-  if (type === 'count' || type === 'along') {
+  if (type === 'tap') {
+    // Tik en tel: het kind telt zelf, één tik per voorwerp, en de stem zegt het
+    // telwoord bij elke tik. Los door elkaar en niet in een raam: dan valt er
+    // niets van een vorm af te lezen en moet je bijhouden welke je al had --
+    // precies het één-op-één tellen dat meetellen alleen voordoet.
+    const n = rnd(1, max);
+    q.ans = n; q.tap = true;
+    q.card = { kind: 'tap', n, emoji, pos: tapPlekken(n) };
+    q.choices = countDistractors(n, nCh, 1, max, d.delta).map(qgroup);
+    q.prompt = 'Tik ze één voor één aan, en tel mee!';
+  } else if (type === 'count' || type === 'along') {
     const n = rnd(1, max);
     q.ans = n; q.along = (type === 'along');
     q.card = { kind: 'group', n, emoji, frame, repr };
@@ -8479,6 +8525,15 @@ function genCount(p) {
     q.compare = wantMore ? 'more' : 'less';
     q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
     q.choices = shuffle(vals.map(qgroup));
+    /* Groot tegen klein: op de hoogste trap staat de kleinste groep er soms in
+       grote voorwerpen en de andere in kleine, los en niet in een raam. Dan
+       is "de meeste" niet meer "het meeste plek" -- je moet echt tellen. Alleen
+       bij voorwerpen: stippen hebben een vast raam en dus geen maat om mee te
+       misleiden. */
+    if (repr === 'objects' && d.rung >= d.top && Math.random() < 0.5) {
+      const lo = Math.min(...vals);
+      q.choices.forEach(c => { c.frame = false; c.cls = c.v === lo ? 'groot' : 'klein'; });
+    }
     q.prompt = wantMore ? 'Tik op de groep met de meeste.' : 'Tik op de groep met de minste.';
   } else if (type === 'match') {
     const t = rnd(1, max);
@@ -8506,10 +8561,14 @@ function genCount(p) {
     q.prompt = 'Welke groep hoort bij dit cijfer?';
   } else if (type === 'onemore' || type === 'oneless') {
     const dir = type === 'onemore' ? 1 : -1;
-    const base = dir > 0 ? rnd(1, max - 1) : rnd(2, max);
+    /* Nul: op de hoogste trap gaat er af en toe één weg van één. Dan is er niets
+       meer, en ook dat is een getal -- het enige dat in de hele telmodus nog niet
+       voorkwam. De knop met nul is een leeg raampje (zie renderCountAnswers). */
+    const naarNul = dir < 0 && d.rung >= d.top && Math.random() < 0.2;
+    const base = dir > 0 ? rnd(1, max - 1) : (naarNul ? 1 : rnd(2, max));
     q.ans = base + dir;
     q.card = { kind: 'delta', base, dir, emoji, frame, repr };
-    q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
+    q.choices = countDistractors(q.ans, nCh, q.ans === 0 ? 0 : 1, max, d.delta).map(qgroup);
     q.prompt = dir > 0 ? 'Er komt er één bij. Hoeveel zijn het er nu?' : 'Er gaat er één weg. Hoeveel zijn het er nu?';
   } else if (type === 'combine') {                 // twee groepjes samen
     const a = rnd(1, Math.max(1, max - 1));
@@ -8518,6 +8577,36 @@ function genCount(p) {
     q.card = { kind: 'combine', a, b, emoji, frame, repr };
     q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
     q.prompt = 'Hoeveel zijn het er samen?';
+  } else if (type === 'vriend') {
+    /* Hoeveel nog tot tien (of tot vijf, zolang de aantallen nog klein zijn)? Een
+       vol raam met n stippen; het antwoord zijn de lege vakjes. Dat zijn de
+       "tienvriendjes" (7 en 3, 6 en 4): de grond onder het rekenen over het
+       tiental heen, dat de rekenshow vanaf wereld 3 vraagt. Altijd stippen in
+       een vast raam, ook als de ouder voorwerpen koos: het raam ís de vraag. */
+    const doel = max >= 10 ? 10 : 5;
+    const n = rnd(1, doel - 1);
+    q.ans = doel - n;
+    q.card = { kind: 'vriend', n, doel };
+    q.choices = countDistractors(q.ans, Math.min(nCh, doel - 1), 1, doel - 1, d.delta)
+      .map(v => ({ v, kind: 'numeral', n: v, support: d.support }));
+    q.prompt = 'Hoeveel nog tot ' + numWord(doel) + '?';
+  } else if (type === 'tiental' || type === 'tienplus') {
+    /* Tot twintig: "tien en nog wat". Het raam groeit per rij van vijf mee (zie
+       dotFrameHTML), dus elf tot twintig zijn twee volle rijen plus de rest --
+       het tiental zie je zonder te tellen. Bij tienplus staat het als som:
+       10 + n, met de stippen eronder. Antwoord altijd als cijfer, zonder
+       steunstipjes (twintig stipjes onder een cijfer zie je niet meer). */
+    const n = rnd(11, max);
+    q.ans = n;
+    q.support = 'none';
+    if (type === 'tiental') {
+      q.card = { kind: 'tiental', n };
+      q.prompt = 'Hoeveel zie je? Tien, en nog wat.';
+    } else {
+      q.card = { kind: 'sum', style: 'dots', op: '+', a: 10, b: n - 10, c: n, emoji, repr, support: 'full' };
+      q.prompt = 'Tien plus ' + numWord(n - 10) + '. Hoeveel is dat?';
+    }
+    q.choices = countDistractors(n, nCh, 11, max, d.delta).map(v => ({ v, kind: 'numeral', n: v, support: 'none' }));
   } else if (type === 'sumsym') {                   // visuele som met tekens (＋ ➖ ＝), antwoord = groep
     const sub = Math.random() < 0.4;
     let a, b;
@@ -8559,6 +8648,47 @@ function genCount(p) {
   if (q.choices) q.choices.forEach(c => { if (c.cap == null) c.cap = cap; });
   return q;
 }
+/* Plekken voor tik en tel, in procenten van de kaart: n vakken uit een raster
+   van 4 × 3, elk een beetje verschoven. Een raster en geen vrije worp, zodat er
+   nooit twee voorwerpen over elkaar vallen (dan tel je er één niet); het
+   schuiven maakt dat het er niet als een raam uitziet. Eén keer per vraag
+   gekozen en bewaard, zodat een nieuwe tekening (herhaalknop) niets verplaatst. */
+function tapPlekken(n) {
+  const vakken = shuffle([...Array(12).keys()]).slice(0, n);
+  return vakken.map(v => {
+    const kol = v % 4, rij = Math.floor(v / 4);
+    return [Math.round(13 + kol * 24.7 + (Math.random() - 0.5) * 8), Math.round(17 + rij * 33 + (Math.random() - 0.5) * 7)];
+  });
+}
+// De voorwerpen van tik en tel: elk een eigen knop, zodat een tik precies één telt.
+function tapHTML(card) {
+  return `<div class="cq-tap">${card.pos.map(([x, y], i) =>
+    `<button type="button" class="tap-obj" data-i="${i}" style="left:${x}%;top:${y}%"><span class="cg-obj">${card.emoji}</span></button>`).join('')}</div>`;
+}
+/* Een tik telt een voorwerp dat nog niet geteld was: het krijgt zijn nummer
+   (of een vinkje, als de ouder de cijfers uitzette) en de stem zegt het
+   telwoord. De volgorde maakt niet uit -- wél dat je er geen twee keer telt,
+   dus een tweede tik op hetzelfde voorwerp doet niets. Na het laatste worden
+   de antwoordknoppen tikbaar en klinkt het laatste telwoord nog eens: dát is
+   hoeveel het er zijn. */
+function bindTap(card, q, drawId) {
+  let geteld = 0;
+  const cijfers = P().settings.numerals !== false;
+  card.querySelectorAll('.tap-obj').forEach(b => {
+    b.onclick = () => {
+      if (!G || !G.count || drawId !== countDrawId || b.classList.contains('geteld')) return;
+      geteld++;
+      b.classList.add('geteld');
+      b.dataset.nr = cijfers ? geteld : '✓';
+      sndClick();
+      if (geteld < q.card.n) { speak(numWord(geteld), { rate: 0.95 }); return; }
+      q.getikt = true;
+      const rij = document.querySelector('#answer-area .count-tiles');
+      if (rij) rij.classList.remove('wacht');
+      speak(numWord(geteld) + '! Hoeveel zijn het er?', { rate: 0.95 });
+    };
+  });
+}
 // Elke getekende telvraag krijgt een eigen volgnummer. Vertraagde acties (meetellen,
 // één-erbij/eraf) checken dit: hoort de timer bij een oudere vraag, dan stopt hij.
 // Zonder dit telde de stem van de vórige vraag door over de nieuwe ("vier, vijf...")
@@ -8580,7 +8710,14 @@ function drawCountQuestion(q) {
   else if (kind === 'combine') body = `<div class="cq-combine">${groupHTML(q.card.a, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}<span class="cq-plus">＋</span>${groupHTML(q.card.b, q.card.emoji, cardRepr, 'big', q.card.frame, cap)}</div>`;
   else if (kind === 'split') body = `<div class="cq-groupwrap">${splitHTML(q.card.total, q.card.shown, q.card.emoji, cardRepr)}</div>`;
   else if (kind === 'sum') body = sumEqHTML(q.card);
+  else if (kind === 'tap') body = tapHTML(q.card);
+  else if (kind === 'tiental') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, 10, 'big', 'full')}</div>`;
+  else if (kind === 'vriend') body = `<div class="cq-groupwrap">${dotFrameHTML(q.card.n, q.card.doel, 'big', 'full')}</div>`;
   card.innerHTML = `<div class="count-q">${body}</div>`;
+  if (kind === 'tap') {
+    if (q.getikt) card.querySelectorAll('.tap-obj').forEach(b => b.classList.add('geteld'));
+    else bindTap(card, q, myDraw);
+  }
   // meetellen: objecten poppen één voor één op terwijl er hardop geteld wordt
   if (q.along && kind === 'group') {
     const objs = card.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
@@ -8631,13 +8768,16 @@ function renderCountAnswers(q, area) {
       const sup = c.support || 'full';
       const dots = sup === 'none' ? '' : groupHTML(c.v, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''), false, c.cap);
       inner = `<span class="ct-num">${c.v}</span>${dots}`;
+    } else if (c.n === 0) {
+      inner = dotFrameHTML(0, c.cap || 5, '', 'full');   // nul: een leeg raampje, geen lege knop
     } else {
-      inner = groupHTML(c.n, c.emoji, c.repr, '', c.frame, c.cap);
+      inner = groupHTML(c.n, c.emoji, c.repr, c.cls || '', c.frame, c.cap);
     }
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
   const n = q.choices.length;
-  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '');
+  // tik en tel: de knoppen wachten tot alles geteld is (zie bindTap)
+  const cls = 'count-tiles' + (n <= 2 ? ' two' : n === 3 ? ' three' : '') + (q.tap && !q.getikt ? ' wacht' : '');
   area.innerHTML = `<div class="${cls}">${tiles}</div>`;
   area.querySelectorAll('.count-tile').forEach(b => {
     b.onclick = () => submitAnswer(parseInt(b.dataset.v, 10), b);
@@ -8669,7 +8809,7 @@ function replayPrompt() {
     objs.forEach(o => { o.classList.remove('pop'); o.classList.add('pre'); });
     countAlong(objs, q.card.n, q.prompt, countDrawId);
   } else {
-    speak(q.prompt);
+    speak(q.prompt || somZin(q));   // een rekensom heeft geen prompt: die lezen we voor
   }
 }
 // Nauwkeurigheid van de telmodus (voor de fase-klim) + de rung bínnen de fase:
@@ -8690,20 +8830,45 @@ function updateCountAcc(p, correct, firstTry) {
 }
 // Na een optreden: de fase mee laten klimmen (pas op de hoogste rung) of, bij
 // worstelen, zakken — altijd binnen het door de ouder toegestane bereik.
-function advanceCountStage(p, success) {
+/* Hoeveel vragen een fase minstens gezien moet hebben voor hij als beheerst
+   telt. Acht is twee shows; bij de cijfers (fase 6) twaalf, want daar zitten tien
+   verschillende cijfers in en in acht vragen komen ze niet allemaal langs.
+   SNEL: een show zonder één misser, in een fase die het kind duidelijk al kan,
+   mag na één show door -- anders zat een kind van zes dat al kan tellen zo'n
+   tien shows op fases die het te makkelijk vindt. Niet bij de cijfers: daar
+   geldt het minimum altijd. */
+const COUNT_MIN_SEEN = 8, COUNT_MIN_SEEN_CIJFERS = 12, COUNT_SNEL_SEEN = 5;
+function advanceCountStage(p, success, foutloos) {
   const s = p.settings;
   const lo = Math.max(1, s.stage || 1);
   const hi = Math.max(lo, countMaxStage(s));
   const ct = p.countTrack;
   let st = Math.min(hi, Math.max(lo, ct.stage || lo));
   const top = countTopRung(st);
-  if (success && ct.acc >= 0.85 && (ct.seen || 0) >= 8 && (ct.rung || 0) >= top && st < hi) {
+  const cijfers = countStageInfo(st).types.includes('numeral');
+  const gewoon = ct.acc >= 0.85 && (ct.seen || 0) >= (cijfers ? COUNT_MIN_SEEN_CIJFERS : COUNT_MIN_SEEN) && (ct.rung || 0) >= top;
+  // snel: foutloos, genoeg gezien voor één hele show, en bijna bovenaan de fase
+  const snel = foutloos && !cijfers && (ct.seen || 0) >= COUNT_SNEL_SEEN && (ct.rung || 0) >= top - 1;
+  if (success && (gewoon || snel) && st < hi) {
     st++; ct.rung = 0; ct.streak = 0; ct.seen = 0; ct.acc = 0.6;   // frisse start op de nieuwe fase
   } else if ((!success || ct.acc < 0.5) && st > lo) {
     st--; ct.rung = countTopRung(st); ct.streak = 0; ct.acc = 0.55; ct.seen = 0;  // terug naar wat wél lukt
   }
+  if (st !== ct.stage) ct.plafond = 0;   // een andere fase: het plafond is (nog) niet bereikt
   ct.stage = st;
 }
+/* Tegen het plafond aan: hoeveel shows met drie sterren het kind al speelde op
+   de hoogste fase die het mag spelen, op de hoogste trap ervan. Hier groeit het
+   spel niet meer vanzelf verder -- dat is aan de ouder (zie telTip). Telt pas ná
+   advanceCountStage, zodat een show die nét een fase hoger zet niet meetelt. */
+function telPlafondTel(p, stars) {
+  const ct = p.countTrack;
+  const st = countLiveStage(p);
+  if (st < countMaxStage(p.settings) || (ct.rung || 0) < countTopRung(st)) { ct.plafond = 0; return; }
+  if (stars >= 3) ct.plafond = (ct.plafond || 0) + 1;
+}
+// Een andere grens gekozen (fase, cijfers, hoeveelheid of modus): opnieuw tellen.
+function telPlafondOpnieuw(p) { if (p && p.countTrack) p.countTrack.plafond = 0; }
 // Lees-vrije "bijna!" bij een eerste misser: geen tekst, wel een vriendelijke stem.
 function countMissSpeak(q, val) {
   if (q.compare) { speak('Bijna! Kijk goed welke groep ' + (q.compare === 'more' ? 'de meeste' : 'de minste') + ' heeft.'); return; }
@@ -8711,6 +8876,8 @@ function countMissSpeak(q, val) {
   if (q.ctype === 'oneless') { speak('Bijna! Eén eraf is één minder. Tel nog eens.'); return; }
   if (q.ctype === 'combine') { speak('Bijna! Tel de twee groepjes samen.'); return; }
   if (q.ctype === 'split') { speak('Bijna! Hoeveel horen er nog bij?'); return; }
+  if (q.ctype === 'vriend') { speak('Bijna! Tel de lege vakjes.'); return; }
+  if (q.ctype === 'tiental' || q.ctype === 'tienplus') { speak('Bijna! Eerst de tien, en dan tel je verder.'); return; }
   if (q.ctype === 'match' || q.ctype === 'numquant') { speak('Bijna! Zoek de groep met evenveel.'); return; }
   if (q.ctype === 'sumsym' || q.ctype === 'sumdots' || q.ctype === 'sumwritten') {
     speak(q.card && q.card.op === '-' ? 'Bijna! Hoeveel blijven er over?' : 'Bijna! Tel ze samen.');
@@ -8732,6 +8899,7 @@ function countReveal(q) {
     const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
     if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
+    else if (q.ans === 0) speak('Nul. Er is niets meer.');
     // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
     // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
     else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
@@ -8760,7 +8928,7 @@ function memFaceHTML(c) {
 function buildMemoryDeck(p) {
   const stage = countLiveStage(p);
   const d = countDifficulty(p, stage);
-  const max = Math.max(3, d.effMax);
+  const max = Math.max(3, Math.min(10, d.effMax));   // memory blijft binnen de tien, ook in fase 12
   let pairs = 3 + (d.rung >= 1 ? 1 : 0) + (d.rung >= 2 ? 1 : 0);   // 3..5
   pairs = Math.min(pairs, max);                                    // niet meer paren dan er hoeveelheden zijn
   const numOK = p.settings.numerals !== false && stage >= 6;
@@ -9442,11 +9610,16 @@ function drawQuestion() {
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
   // "nog eens voorlezen" hoort alleen bij de lees-vrije telmodus (in de rekenmodus
   // staat de som gewoon te lezen en wordt er niets uitgesproken)
-  $('btn-replay').style.display = G.count ? 'flex' : 'none';
+  // -- en bij een rekensom die voorgelezen wordt (Voorlezen, zie stemAan)
+  const lezen = !G.count && stemAan(P());
+  $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
   somVluchtWeg();   // een getal dat nog naar de vorige som vloog, hoort daar niet meer bij
   if (G.count) { drawCountQuestion(q); return; }
   const shown = G.mode === 'typ' ? G.input : '?';
   $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
+  // drawQuestion tekent opnieuw bij elke cijfertik (typmodus): alleen de eerste
+  // keer per som voorlezen, anders begint de stem bij elk cijfer opnieuw
+  if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -9717,7 +9890,12 @@ function antwoordGoed(q, p, btnEl) {
      stond de beloning er al voordat het antwoord aankwam. Zonder vlucht
      (typmodus, telmodus, beperkte beweging) is vlucht 0 en is alles meteen. */
   if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
-  if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
+  /* Het getal hardop, bij élk goed antwoord: "Ja, zes! Goed zo!". In de fases
+     waar het kind een gelijke groep aantikt (1, 2, 4) is dit het enige moment
+     dat het telwoord bij de hoeveelheid klinkt -- en precies die koppeling
+     ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
+     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan). */
+  speak('Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']));
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
   const g = G;
@@ -10000,7 +10178,10 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
-  if (G.count) advanceCountStage(p, success);   // telmodus: fase mee laten klimmen/zakken
+  if (G.count) {
+    advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
+    telPlafondTel(p, success ? showStars(G) : 0);
+  }
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -10158,7 +10339,8 @@ function endLevel(success) {
      trofee, het wereldfeest -- maar het eindscherm was alleen tekst, en dan zegt
      het een kind dat nog niet leest alleen iets via de sterren. Eén korte zin,
      ná de laatste toon (EINDE.beloning, of de stille klok) zodat hij er niet
-     doorheen praat. speak() zwijgt zelf in de rekenmodus en met geluid uit.
+     doorheen praat. speak() zwijgt zelf in de rekenmodus (tenzij Voorlezen aan
+     staat, zie stemAan) en met geluid uit.
 
      Niet als er een wereldfeest volgt: dat leest zijn eigen zin voor, en een
      nieuwe zin breekt de vorige af. Dan is de wereld het nieuws. */
@@ -11668,6 +11850,9 @@ function statsPanelHtml(p) {
     const nLearned = Object.keys(p.learned || {}).length;
     if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later nog eens terug, om te controleren of het blijft zitten.</div>`;
   }
+  // de stem: in de telmodus de helft van elke vraag (en bij rekenen met Voorlezen)
+  const stem = stemAan(p) ? stemNotitie() : '';
+  if (stem) practice += `<div class="note stem-notitie">${stem}</div>`;
   /* FASE 5D -- niet alles is even belangrijk.
      Er stonden zes tegels in één raster, alle zes even groot en even zwaar: hoe
      vaak er gespeeld is stond naast hoeveel trofeeën er in de kast hangen, alsof
@@ -11704,6 +11889,16 @@ function statsPanelHtml(p) {
     ${practice}
   </div></div>`;
 }
+/* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
+   stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
+   weg en klinkt er geen telwoord meer. Leeg als alles in orde is. Het geluid
+   eerst: dat is één tik, en dan doet de rest er niet toe. */
+function stemNotitie() {
+  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+  if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
+  if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
+  return '';
+}
 /* De niveau-inschatting -- en waarom er geen percentage meer staat.
    FASE 5D.1. Hier stond "Niveau-inschatting -- 50%" met een half gevulde balk
    eronder, en daaronder een regel die uitlegde dat dit géén schoolniveau is.
@@ -11729,7 +11924,11 @@ function niveauHtml(p) {
     bezig = `🧮 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
   }
   const tip = grensTip(p);
-  const tipHtml = tip ? `<div class="grens-tip" id="grens-tip">
+  const tt = telTip(p);
+  const tipHtml = tt ? `<div class="grens-tip" id="grens-tip">
+      <div>💡 ${tt.tekst}</div>
+      <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button>
+    </div>` : tip ? `<div class="grens-tip" id="grens-tip">
       <div>💡 ${esc(p.name)} haalt in de latere werelden bijna overal drie sterren met getallen tot ${s.max}.
         De sommen worden vanaf hier niet vanzelf moeilijker — wil je de grens naar ${tip.naar}?</div>
       <button class="btn small purple" id="grens-tip-ja" data-v="${tip.naar}">Tot ${tip.naar}</button>
@@ -11777,6 +11976,58 @@ function grensTip(p) {
   if (!naar) return null;
   return grensDrieSterren(p) - (s.grensTipBasis || 0) >= GRENS_TIP_SHOWS ? { naar } : null;
 }
+/* Dezelfde soort tip voor de telmodus. Daar groeit het spel zelf mee, maar
+   alleen tot de grenzen die de ouder koos: de hoogste fase, cijfers aan/uit en
+   de hoogste hoeveelheid. Staat het kind daar al GRENS_TIP_SHOWS shows lang met
+   drie sterren tegenaan (countTrack.plafond, zie telPlafondTel), dan zegt het
+   spel dat hier -- en is de volgende stap één tik.
+
+   Op de allerlaatste fase is er in de telmodus niets meer te leren: dan is de
+   volgende stap de rekenshow. Zonder deze tip speelde een kind dat het goed
+   deed vanaf ongeveer wereld 3 tot het einde van de kaart dezelfde soort
+   geschreven som tot tien.
+
+   Geeft { soort, tekst, knop, doe(p) } terug, of null. De volgorde: eerst de
+   fase (daar zit het meeste nieuws), dan de hoeveelheid, dan pas rekenen. */
+function telTip(p) {
+  const s = p.settings;
+  if (s.track !== 'count' || !p.countTrack) return null;
+  if ((p.countTrack.plafond || 0) < GRENS_TIP_SHOWS) return null;
+  const naam = esc(p.name);
+  const hi = countMaxStage(s);
+  const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
+  const qtip = () => ({ soort: 'qmax',
+    tekst: `${naam} haalt bijna overal drie sterren met hoeveelheden tot ${s.qmax}. Mogen de aantallen groeien tot ${qnaar}?`,
+    knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } });
+  // onder de tien houdt countMaxStage het bij fase 11: dan zijn het de aantallen
+  if (qnaar && hi === COUNT_STAGE_MAX - 1 && (s.stageMax || COUNT_STAGE_MAX) >= COUNT_STAGE_MAX) return qtip();
+  if (hi < COUNT_STAGE_MAX) {
+    if (s.numerals === false && hi === 5) return { soort: 'cijfers',
+      tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase zonder cijfers. Mogen de cijfers erbij?`,
+      knop: 'Cijfers aan', doe: p => { p.settings.numerals = true; p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6); } };
+    return { soort: 'fase',
+      tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase die je koos (fase ${hi}: ${COUNT_STAGE_LABELS[hi]}). Mag het verder groeien?`,
+      knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
+  }
+  if (qnaar) return qtip();
+  return { soort: 'rekenen',
+    tekst: `${naam} maakt de laatste fase bijna altijd in één keer goed. De telmodus heeft geen nieuwe fases meer. Klaar voor de rekenshow? `
+      + `<span class="tip-klein">Plus en min tot 10, kiezen uit 4. De stem leest de sommen nog voor (uitzetten kan bij Oefenen).</span>`,
+    knop: 'Naar rekenen', doe: naarRekenen };
+}
+/* Van tellen naar rekenen, zoals de tip het doet. Sterren, kaart en kleren
+   hangen niet aan de modus, dus die blijven gewoon staan. Tot 10 en geen 20:
+   de wereld waar het kind dan zit kan al over het tiental willen (leerstap 3),
+   en tot 10 kán dat niet -- de grenstip stelt 20 later zelf voor. */
+function naarRekenen(p) {
+  const s = p.settings;
+  s.track = 'math';
+  s.ops = ['+', '-'];
+  s.max = 10;
+  s.mode = 'kies';
+  s.voorlezen = true;
+  s.grensTipBasis = grensDrieSterren(p);
+}
 
 // Tabblad "Oefening" — alle bewerkbare instellingen, gegroepeerd in kaarten.
 // Meerkeuze- en enkelkeuze-chips zien er bewust hetzelfde uit (alleen kleur
@@ -11785,7 +12036,7 @@ function grensTip(p) {
 function chip(v, label, on, extra) {
   return `<button class="chip ${on ? 'on' : ''}${extra ? ' ' + extra : ''}" data-v="${v}">${label}</button>`;
 }
-const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som'];
+const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som', 'Tot 20'];
 /* De oefenvelden zelf, los van de omlijsting eromheen. Het ouderdeel zet ze in
    .set-card primary met een icoonkop; het maakformulier zet ze plat in een
    openklapper. Eén bron, twee omlijstingen -- anders staan dezelfde zeven
@@ -11801,7 +12052,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
-  // (1–11, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
+  // (1–12, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
   // kun je een eerder verlaagde bovengrens nooit meer omhoog zetten.
   const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
   const stageNums = [];
@@ -11875,7 +12126,7 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
         <span class="hulp">${tablesRelevant ? 'Voor ✖️ en ➗.' : 'Actief zodra ✖️ of ➗ aanstaat.'}</span>
         <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, lengte en extra uitdaging', secundair: true, html: `
+    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, voorlezen, lengte en extra uitdaging', secundair: true, html: `
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="${pfx}set-mode">
           ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
@@ -11884,6 +12135,9 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
         </div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Sommen voorlezen</span>
+        <span class="hulp">Een stem leest elke som voor. Fijn voor wie net van tellen komt.</span>
+        <div class="chip-row" id="${pfx}set-voorlezen">${chip('on', 'Aan', s.voorlezen === true)}${chip('off', 'Uit', s.voorlezen !== true)}</div></div>
       <div class="set-field"><span class="lbl">Extra uitdaging</span>
         <span class="hulp">Verschijnt geleidelijk, pas als de gewone sommen goed gaan.</span>
         <div class="chip-row" id="${pfx}set-extra">
@@ -12386,6 +12640,7 @@ function bindOefenChips(s, p, pfx, done) {
     const v = parseInt(c.dataset.v, 10);
     s.stage = v;
     if (s.stageMax < v) s.stageMax = v;                 // plafond mag niet onder de start
+    telPlafondOpnieuw(p);                               // de tip telt opnieuw (zie telTip)
     if (p) {
       if (!p.countTrack) p.countTrack = { stage: v, rung: 0, streak: 0, seen: 0, acc: 0.5 };
       p.countTrack.stage = Math.min(Math.max(p.countTrack.stage, v), countMaxStage(s)); // live-stand binnen bereik
@@ -12395,6 +12650,7 @@ function bindOefenChips(s, p, pfx, done) {
     const v = parseInt(c.dataset.v, 10);
     s.stageMax = v;
     if (s.stage > v) s.stage = v;                       // start mag niet boven het plafond
+    telPlafondOpnieuw(p);
     if (p && p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, countMaxStage(s));
   });
   bind('set-numerals', c => {
@@ -12402,9 +12658,11 @@ function bindOefenChips(s, p, pfx, done) {
     // destructief afgedwongen via countMaxStage (chip-weergave + countLiveStage),
     // zodat het weer aanzetten de fase-instelling volledig terugbrengt.
     s.numerals = (c.dataset.v === 'on');
+    telPlafondOpnieuw(p);
   });
-  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); });
+  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
+  bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
 function bindSettings(p, s) {
@@ -12433,6 +12691,16 @@ function bindSettings(p, s) {
     saveAndFlash();
     renderSettings();
   });
+  // en die van de telmodus (zie telTip): de tip weet zelf wat de volgende stap is
+  on('tel-tip-ja', 'onclick', () => {
+    const tt = telTip(p);
+    if (!tt) return;
+    sndClick();
+    tt.doe(p);
+    telPlafondOpnieuw(p);
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-name', 'onkeydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
     e.preventDefault();
@@ -12446,7 +12714,7 @@ function bindSettings(p, s) {
   // modus: wisselen tussen de rekenshow en de lees-vrije telmodus. Blijft hier:
   // de moduskaart hoort bij het ouderdeel (het maakformulier heeft zijn eigen
   // #newstar-track vlak boven de openklapper).
-  bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
+  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).

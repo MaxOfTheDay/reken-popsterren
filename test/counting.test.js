@@ -1,7 +1,7 @@
 /*
  * Test-suite voor de telmodus (lees-vrije modus).
  *
- * Controleert per fase (1-11) en per rung dat GELUID, OPGAVE en VISUALISATIE
+ * Controleert per fase (1-12) en per rung dat GELUID, OPGAVE en VISUALISATIE
  * hetzelfde getal vertellen. Elke vraag wordt echt gerenderd in een browser;
  * daarna tellen we de stippen/voorwerpen in de DOM en vergelijken die met de
  * bedoelde getallen uit de vraag. Zo vangen we fouten als "5 - 3 toont maar
@@ -18,6 +18,8 @@ const { launch, cacheFonts, APP_URL } = require('./browser');
 
 const SAMPLES = Number(process.env.SAMPLES || 40);   // vragen per fase/rung-combinatie
 
+const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
+const numWordNode = n => NUM_NL[n];
 const fails = [];
 const counts = {};
 function check(ok, label, detail) {
@@ -55,7 +57,7 @@ function check(ok, label, detail) {
     const p = db.profiles.t1;
     p.settings.track = 'count';
     p.settings.numerals = true;
-    p.settings.stage = 1; p.settings.stageMax = 11; p.settings.qmax = 10;
+    p.settings.stage = 1; p.settings.stageMax = COUNT_STAGE_MAX; p.settings.qmax = 10;
     save();
     renderProfiles();
     selectProfile('t1');
@@ -65,13 +67,13 @@ function check(ok, label, detail) {
   await page.waitForTimeout(400);
 
   for (const repr of ['objects', 'dots']) {
-    for (let stage = 1; stage <= 11; stage++) {
+    for (let stage = 1; stage <= 12; stage++) {
       const rungs = await page.evaluate(s => countStageInfo(s).rungs, stage);
       for (let rung = 0; rung < rungs; rung++) {
         const results = await page.evaluate(({ stage, rung, repr, samples }) => {
           const p = P();
           p.settings.repr = repr;
-          p.settings.stage = 1; p.settings.stageMax = 11;
+          p.settings.stage = 1; p.settings.stageMax = COUNT_STAGE_MAX;
           p.countTrack = { stage, rung, streak: 0, seen: 0, acc: 0.6 };
 
           // Tel de zichtbare "dingen" binnen een element, per soort.
@@ -152,6 +154,14 @@ function check(ok, label, detail) {
             check(r.ans === c.total - c.shown, 'antwoord = verstopte hoeveelheid', `${where} ans=${r.ans}`);
           } else if (c.kind === 'bignum') {
             check(Number(r.seen.bignum) === c.n, 'cijferkaart toont het juiste cijfer', `${where} zag ${r.seen.bignum}`);
+          } else if (c.kind === 'tiental') {
+            check(r.seen.marks === c.n && c.n >= 11 && c.n <= 20, 'tot 20: het raam toont tien en nog wat', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
+          } else if (c.kind === 'vriend') {
+            check(r.seen.marks === c.n, 'vriendjes: het raam toont de gevulde vakjes', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
+            check(r.ans === c.doel - c.n && (c.doel === 5 || c.doel === 10), 'vriendjes: antwoord = de lege vakjes tot vijf of tien', `${where} n=${c.n} doel=${c.doel} ans=${r.ans}`);
+          } else if (c.kind === 'tap') {
+            check(r.seen.marks === c.n, 'tik en tel toont evenveel voorwerpen als gevraagd', `${where} verwacht ${c.n}, zag ${r.seen.marks}`);
+            check(Array.isArray(c.pos) && c.pos.length === c.n, 'tik en tel heeft een plek per voorwerp', `${where} pos=${JSON.stringify(c.pos)}`);
           } else if (c.kind === 'listen') {
             check(r.seen.ear && r.seen.marks === 0, 'luistervraag toont geen hoeveelheid', where);
             check(r.spoken.join(' ').length > 0, 'luistervraag spreekt het getal uit', where);
@@ -231,6 +241,66 @@ function check(ok, label, detail) {
       `hoorde nog: ${JSON.stringify(bleed.after)}`);
   }
 
+  /* ---- tik en tel: het kind telt zelf, en de knoppen wachten erop ---- */
+  const tap = await page.evaluate(() => {
+    const p = P();
+    p.settings.repr = 'objects'; p.settings.numerals = true;
+    p.countTrack = { stage: 2, rung: 2, streak: 0, seen: 0, acc: 0.6 };
+    let q = null;
+    for (let i = 0; i < 400 && !q; i++) { const c = genCount(p); if (c.ctype === 'tap' && c.ans >= 3) q = c; }
+    if (!q) return { skipped: true };
+    G.qs[G.idx] = q; G.mode = 'count'; G.lock = false;
+    drawCountQuestion(q); renderCountAnswers(q, document.getElementById('answer-area'));
+    const rij = () => document.querySelector('#answer-area .count-tiles');
+    const voor = rij().classList.contains('wacht');
+    window.__spoken = [];
+    const objs = [...document.querySelectorAll('#question-text .tap-obj')];
+    objs[0].click(); objs[0].click();                 // twee keer op dezelfde: telt één keer
+    const naDubbel = window.__spoken.length;
+    objs.slice(1).forEach(o => o.click());
+    return { skipped: false, n: q.ans, voor, naDubbel, na: rij().classList.contains('wacht'),
+      spoken: window.__spoken.slice(), nrs: objs.map(o => o.dataset.nr), getikt: !!q.getikt };
+  });
+  if (!tap.skipped) {
+    check(tap.voor === true, 'tik en tel: de antwoordknoppen wachten tot alles geteld is', JSON.stringify(tap));
+    check(tap.naDubbel === 1, 'tik en tel: een tweede tik op hetzelfde voorwerp telt niet', JSON.stringify(tap.spoken));
+    check(tap.na === false && tap.getikt, 'tik en tel: na het laatste voorwerp zijn de knoppen tikbaar', JSON.stringify(tap));
+    const verwacht = Array.from({ length: tap.n - 1 }, (_, i) => numWordNode(i + 1));
+    check(JSON.stringify(tap.spoken.slice(0, tap.n - 1)) === JSON.stringify(verwacht)
+      && tap.spoken[tap.n - 1].startsWith(numWordNode(tap.n) + '!'),
+      'tik en tel: de stem telt mee, en zegt het laatste telwoord als het antwoord', JSON.stringify(tap.spoken));
+    check(JSON.stringify(tap.nrs) === JSON.stringify(Array.from({ length: tap.n }, (_, i) => String(i + 1))),
+      'tik en tel: elk voorwerp krijgt zijn eigen nummer', JSON.stringify(tap.nrs));
+  }
+
+  /* ---- nul, en groot tegen klein ---- */
+  const randen = await page.evaluate(() => {
+    const p = P(); p.settings.repr = 'objects';
+    p.countTrack = { stage: 7, rung: countTopRung(7), streak: 0, seen: 0, acc: 0.6 };
+    let nul = null;
+    for (let i = 0; i < 2000 && !nul; i++) { const q = genCount(p); if (q.ans === 0) nul = q; }
+    let nulTegel = null;
+    if (nul) {
+      G.qs[G.idx] = nul; drawCountQuestion(nul); renderCountAnswers(nul, document.getElementById('answer-area'));
+      const t = document.querySelector('.count-tile[data-v="0"]');
+      nulTegel = t && { leeg: t.querySelectorAll('.df-dot').length, raam: !!t.querySelector('.dframe') };
+    }
+    p.countTrack = { stage: 3, rung: countTopRung(3), streak: 0, seen: 0, acc: 0.6 };
+    let gk = null;
+    for (let i = 0; i < 400 && !gk; i++) { const q = genCount(p); if (q.choices.some(c => c.cls === 'groot')) gk = q; }
+    let klopt = false;
+    if (gk) {
+      const lo = Math.min(...gk.choices.map(c => c.v)), hi = Math.max(...gk.choices.map(c => c.v));
+      klopt = gk.choices.find(c => c.v === lo).cls === 'groot' && gk.choices.filter(c => c.v !== lo).every(c => c.cls === 'klein') && hi > lo;
+      G.qs[G.idx] = gk; drawCountQuestion(gk); renderCountAnswers(gk, document.getElementById('answer-area'));
+    }
+    return { nul: !!nul, nulTegel, gk: !!gk, klopt, grootInBeeld: !!document.querySelector('.count-tile .cgroup.groot') };
+  });
+  check(randen.nul && randen.nulTegel && randen.nulTegel.raam && randen.nulTegel.leeg === 0,
+    'één eraf van één: nul komt voor, als leeg raampje', JSON.stringify(randen));
+  check(randen.gk && randen.klopt && randen.grootInBeeld,
+    'meer/minder bovenaan: de kleinste groep groot, de rest klein', JSON.stringify(randen));
+
   /* ---- afleiders blijven binnen het bereik van de vraag ----
      De rendering-controle hierboven trekt per fase/rung één willekeurige vraag,
      dus een afleider die net buiten bereik valt kwam maar in ongeveer één op de
@@ -242,7 +312,7 @@ function check(ok, label, detail) {
     const bad = [];
     const p = P();
     p.settings.repr = 'objects';
-    for (let stage = 1; stage <= 11; stage++) {
+    for (let stage = 1; stage <= 12; stage++) {
       const top = countTopRung(stage);
       for (let rung = 0; rung <= top; rung++) {
         p.countTrack = { stage, rung, streak: 0, seen: 0, acc: 0.6 };

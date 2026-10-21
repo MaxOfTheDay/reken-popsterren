@@ -30,6 +30,10 @@
  *   O  het geluid                       -> een tabel op naam, en stil is stil
  *   P  sterren (ster-status met pensioen) -> één regel, en geen rangvelden meer
  *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
+ *   R  de grenstip                      -> pas na genoeg drie sterren, en opnieuw na een keuze
+ *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
+ *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet
+ *   U  fase 12 (tot 20)                 -> wie "alles" had krijgt hem erbij, één keer
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1008,6 +1012,104 @@ zaak('R', () => {
   p.settings.max = 20;
   p.settings.track = 'count';
   check(tip() === null, 'R · in de telmodus geen getallengrens, dus geen tip', JSON.stringify(tip()));
+});
+
+zaak('S', () => {
+  const { app } = verseSter('Tel');
+  const p = app.db.profiles.p1 = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  const tip = () => { const t = app.run('telTip(P())'); return t && t.soort; };
+  const n = app.run('GRENS_TIP_SHOWS');
+  const MAX = app.COUNT_STAGE_MAX;
+  // een show op fase st, top-trap, met zoveel sterren -- zoals endLevel hem afsluit
+  const show = (st, sterren) => {
+    p.countTrack.stage = st;
+    p.countTrack.rung = app.countTopRung(st);
+    app.telPlafondTel(p, sterren);
+  };
+  check(tip() === null, 'S · een verse telster krijgt geen tip', String(tip()));
+  // het plafond dat de ouder koos: fase 4
+  p.settings.stageMax = 4;
+  for (let i = 0; i < n - 1; i++) show(4, 3);
+  check(tip() === null, 'S · één show te weinig: nog geen tip', String(tip()));
+  show(4, 2);
+  check(tip() === null, 'S · twee sterren telt niet mee', String(tip()));
+  show(4, 3);
+  check(tip() === 'fase', 'S · genoeg drie sterren op de hoogste fase: verder groeien', String(tip()));
+  app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
+  check(p.settings.stageMax === 5 && tip() === null, 'S · de knop zet het plafond één fase hoger en telt opnieuw', p.settings.stageMax);
+  // niet op de hoogste fase: telt niet
+  for (let i = 0; i < n; i++) show(3, 3);
+  check(tip() === null, 'S · onder het plafond spelen telt niet', String(tip()));
+  // cijfers uit: na fase 5 is de volgende stap de cijfers
+  p.settings.numerals = false; p.settings.stageMax = MAX;
+  for (let i = 0; i < n; i++) show(5, 3);
+  check(tip() === 'cijfers', 'S · cijfers uit en vast op fase 5: de tip zet de cijfers aan', String(tip()));
+  app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
+  check(p.settings.numerals === true && app.countMaxStage(p.settings) === MAX, 'S · cijfers aan, het bereik is weer heel', app.countMaxStage(p.settings));
+  // de laatste fase met kleine hoeveelheden: eerst de hoeveelheden
+  p.settings.qmax = 8;
+  for (let i = 0; i < n; i++) show(MAX, 3);
+  check(tip() === 'qmax', 'S · laatste fase tot 8: eerst de hoeveelheden groter', String(tip()));
+  app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
+  for (let i = 0; i < n; i++) show(MAX, 3);
+  check(tip() === 'rekenen', 'S · laatste fase, alles open: naar rekenen', String(tip()));
+  const sterrenVoor = JSON.stringify(p.stars);
+  app.run('telTip(P())').doe(p);
+  const s = p.settings;
+  check(s.track === 'math' && s.max === 10 && s.ops.join() === '+,-' && s.mode === 'kies' && s.voorlezen === true,
+    'S · naar rekenen: plus en min tot 10, kiezen, en de stem leest mee', JSON.stringify(s));
+  check(JSON.stringify(p.stars) === sterrenVoor, 'S · de sterren blijven staan', JSON.stringify(p.stars));
+  check(app.run('grensTip(P())') === null, 'S · en de grenstip begint daar opnieuw te tellen', JSON.stringify(app.run('grensTip(P())')));
+  check(tip() === null, 'S · in de rekenmodus geen telmodus-tip', String(tip()));
+  // de som als zin, voor Voorlezen
+  check(app.somZin({ tmpl: '7 + 3 = @' }) === 'zeven plus drie is hoeveel?', 'S · een som wordt een zin', app.somZin({ tmpl: '7 + 3 = @' }));
+  check(app.somZin({ tmpl: '12 − @ = 4' }) === '12 min hoeveel is vier?', 'S · min, en boven tien het cijfer', app.somZin({ tmpl: '12 − @ = 4' }));
+  check(app.stemAan(p) === true, 'S · met Voorlezen aan mag de stem in de rekenmodus', '');
+  s.voorlezen = false;
+  check(app.stemAan(p) === false, 'S · zonder Voorlezen zwijgt de rekenmodus zoals altijd', '');
+});
+
+zaak('T', () => {
+  const { app } = verseSter('Klim');
+  const p = app.db.profiles.p1 = app.defaultProfile('Klim', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  const na = (stand, success, foutloos) => {
+    p.countTrack = Object.assign({ streak: 0 }, stand);
+    app.advanceCountStage(p, success, foutloos);
+    return p.countTrack.stage;
+  };
+  check(na({ stage: 2, rung: 1, seen: 5, acc: 0.7 }, true, true) === 3, 'T · één foutloze show bijna bovenaan de fase: door', JSON.stringify(p.countTrack));
+  check(na({ stage: 2, rung: 1, seen: 5, acc: 0.7 }, true, false) === 2, 'T · niet foutloos: het gewone minimum geldt', JSON.stringify(p.countTrack));
+  check(na({ stage: 2, rung: 0, seen: 5, acc: 0.7 }, true, true) === 2, 'T · foutloos maar onderaan de fase: nog niet', JSON.stringify(p.countTrack));
+  check(na({ stage: 6, rung: 2, seen: 10, acc: 0.95 }, true, true) === 6, 'T · de cijfers: tien vragen is te weinig, ook foutloos', JSON.stringify(p.countTrack));
+  check(na({ stage: 6, rung: 2, seen: 12, acc: 0.9 }, true, false) === 7, 'T · de cijfers na twaalf goede vragen: door', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, true, false) === 4, 'T · het gewone pad werkt zoals altijd', JSON.stringify(p.countTrack));
+  check(na({ stage: 3, rung: 2, seen: 8, acc: 0.9 }, false, false) === 2, 'T · een mislukte show zakt een fase', JSON.stringify(p.countTrack));
+});
+
+zaak('U', () => {
+  const { app } = verseSter('Twintig');
+  const MAX = app.COUNT_STAGE_MAX;
+  check(MAX === 12, 'U · er zijn twaalf fases', MAX);
+  // een save van vóór fase 12: plafond op de oude laatste fase = "alles"
+  const oud = app.defaultProfile('Oud', 'dress_roze', app.COUNT_OPTS);
+  delete oud.settings.fasesBekend; oud.settings.stageMax = 11;
+  app.migrate(oud);
+  check(oud.settings.stageMax === 12 && oud.settings.fasesBekend === 12, 'U · een oude telster op "alles" groeit mee naar fase 12', JSON.stringify(oud.settings));
+  // daarna kiest de ouder bewust 11: dat blijft staan, ook na nog een migratie
+  oud.settings.stageMax = 11; app.migrate(oud);
+  check(oud.settings.stageMax === 11, 'U · een bewust gekozen fase 11 blijft fase 11', oud.settings.stageMax);
+  // een oude telster met een lager plafond houdt het
+  const laag = app.defaultProfile('Laag', 'dress_roze', app.COUNT_OPTS);
+  delete laag.settings.fasesBekend; laag.settings.stageMax = 7; app.migrate(laag);
+  check(laag.settings.stageMax === 7, 'U · een lager plafond blijft staan', laag.settings.stageMax);
+  // hoeveelheden onder de tien: fase 12 (tot twintig) hoort er dan niet bij
+  const s = app.defaultProfile('Klein', 'dress_roze', app.COUNT_OPTS).settings;
+  s.qmax = 8;
+  check(app.countMaxStage(s) === 11, 'U · met hoeveelheden tot 8 stopt het bij fase 11', app.countMaxStage(s));
+  s.qmax = 10;
+  check(app.countMaxStage(s) === 12, 'U · tot 10: fase 12 mag', app.countMaxStage(s));
 });
 
 klaar();
