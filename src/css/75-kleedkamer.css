@@ -274,6 +274,50 @@
        telefoon (zie max-width 380 hierboven), anders stak het saldo het rek in */
     #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
   }
+  /* ---- Breed: de spiegel groot links, het rek rechts ----------------------
+     Op een bureaublad (en een tablet op zijn kant) stond de kleedkamer als een
+     telefoon midden in het venster: een kolom van 820 met een spiegeltje bovenin,
+     zes kaartjes per rij met een wees eronder, en links en rechts niets. Terwijl
+     de breedte er wél is -- alleen de hoogte niet, want 768 of 748 hoog is op een
+     laptop heel gewoon.
+
+     Dus hetzelfde idee als liggend hierboven, maar dan op maat: de hele kop
+     (titel, spiegel, laden) als plakkende kolom links, het rek ernaast. De
+     spiegel groeit mee met de hoogte die er is (en wordt nooit hoger dan een
+     derde van de vensterbreedte, anders blijft er voor het rek te weinig over);
+     de kolom is precies de spiegel plus zijn rand. Het rek begint op de hoogte
+     van de spiegel, niet van de titel, zodat de twee helften op één lijn staan.
+
+     Alles daaronder blijft zoals het was: de lade onderin, de labels, Podia,
+     de gescrolde band onder de spiegel (net als liggend), en de bovenrand van
+     de kop -- die valt met die van de kast samen -- en de padding onderin, want
+     de band is precies tot die onderrand gemeten. Alleen opzij komt er wat lucht
+     bij. Vanaf 1000 breed, en alleen als het venster hoger is dan 500 --
+     daaronder geldt de liggende regel hierboven. */
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    #screen-dress {
+      --kolom: 1400px;
+      --pop-h: clamp(240px, min(calc(100vh - 340px), 32vw), 560px);
+    }
+    #screen-dress.active {
+      display: grid; grid-template-columns: calc(var(--pop-h) * 1.19 + 56px) minmax(0, 1fr);
+      column-gap: 22px; align-items: start; align-content: start;
+      padding-left: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
+      padding-right: max(var(--rand, 12px), calc((100% - var(--kolom)) / 2));
+    }
+    #screen-dress > .hub-sticky {
+      grid-column: 1; grid-row: 1 / span 2; width: auto;
+      margin: calc(var(--rand, 12px) * -1) 0 0 0;
+      padding-left: 14px; padding-right: 14px;
+    }
+    /* 60 is de hoogte van de koprij: zo begint de eerste rij kaartjes waar de
+       spiegel begint */
+    #screen-dress > .item-grid {
+      grid-column: 2; grid-row: 1; max-width: none; margin-top: 60px; --kaart-min: 130px;
+    }
+    #screen-dress .shop-tabs-wrap { max-width: 100%; margin-top: 12px; }
+    #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
+  }
   /* ---- De spiegel ---------------------------------------------------------
      Waar de kleedkamer om draait: "hoe ziet mijn ster eruit?". Het was een
      .stage -- dezelfde bouwsteen als de zaal en het eindscherm -- en dat bracht
