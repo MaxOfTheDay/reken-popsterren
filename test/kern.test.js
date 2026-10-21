@@ -37,6 +37,7 @@
  *   V  de laatste shows                 -> tien uitkomsten, en wat Voortgang erover zegt
  *   W  gegroeid                         -> "Nieuw!" bij een fase hoger, een nieuwe vraagsoort, grotere getallen
  *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
+ *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1192,6 +1193,29 @@ zaak('X', () => {
   app.grensOmhoog(s, 50); app.grensOmhoog(s, 20);
   check(s.wennen === 0, 'X · omlaag hoeft niet te wennen', JSON.stringify(s));
   check(app.moeilijkheid(lvl, 0.5) === 1, 'X · zonder instellingen (oude aanroep): zoals altijd', '');
+});
+
+zaak('Y', () => {
+  const { app, p } = verseSter('Accent');
+  const L = app.run('LEERSTAPPEN.length');
+  check(app.wereldAccent(L - 1) === null && app.wereldAccent(L) === null, 'Y · tot en met de eerste "alles door elkaar": geen accent', '');
+  check(app.wereldAccent(L + 1) === 'miss' && app.wereldAccent(L + 2) === 'chain' && app.wereldAccent(L + 3) === null,
+    'Y · daarna om de beurt: zoek het getal, drie getallen, gewoon', '');
+  // alles vrij: in een zoek-wereld zijn alle speciale vragen zoek-het-getal
+  p.opTrack = { '+': { n: 40, acc: 0.95, paused: false, unlockStap: 4, fast: 0.6 }, '-': { n: 40, acc: 0.95, paused: false, unlockStap: 4, fast: 0.6 } };
+  p.chainTrack = { seen: 20, acc: 0.95, paused: false, rung: 2, hot: 3 };
+  p.missRamp = { rung: 1, hot: 0 };
+  const soorten = stap => {
+    const t = new Set();
+    for (let i = 0; i < 60; i++) Object.values(app.planSpecials(p, p.settings, 8, stap, 3)).forEach(x => t.add(x.type));
+    return [...t].sort().join(',');
+  };
+  check(soorten(L + 1) === 'miss', 'Y · een zoek-wereld: alleen zoek het getal', soorten(L + 1));
+  check(soorten(L + 2) === 'chain', 'Y · een drie-getallen-wereld: alleen drie getallen', soorten(L + 2));
+  check(soorten(L) === 'chain,miss', 'Y · een gewone wereld: allebei', soorten(L));
+  // nog niet vrij: dan geen accent, gewoon wat er wél kan
+  p.settings.missNum = false;
+  check(soorten(L + 1) === 'chain', 'Y · zoek het getal uit: de zoek-wereld speelt gewoon', soorten(L + 1));
 });
 
 klaar();

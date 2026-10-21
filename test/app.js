@@ -217,6 +217,7 @@ const BRUG = `globalThis.__api = {
   updateCountAcc, advanceCountStage, telPlafondTel, telPlafondOpnieuw, stemAan, somZin,
   // het ouderrapport: de laatste shows
   RECENT_N, onthoudUitkomst, uitdagingStand, groeiMoment, wenPlafond, grensOmhoog, WEN_SHOWS, moeilijkheid,
+  wereldAccent, planSpecials,
 };`;
 
 function laadApp(opties) {

@@ -9361,6 +9361,16 @@ function pickSlots(total, count, avoid) {
 // Roostert de speciale vragen van dit optreden in: hoeveel, welk type, welke plek.
 // Zolang drie-getallen nog in de introductiefase zit (trap < 2) mag er hoogstens
 // één speciale vraag per ronde zijn — óf zoek-het-getal, óf drie-getallen, nooit beide.
+/* Na de laatste leerstap is het "alles door elkaar", en dan voelt wereld 7
+   precies als wereld 6. Dus krijgt elke wereld daarna om de beurt een accent:
+   een gewone, een met extra zoek-het-getal, een met extra drie getallen. Er
+   komt niets nieuws bij en niets wordt moeilijker -- het zijn dezelfde vragen,
+   alleen vaker die ene soort, en alleen als die soort al vrij is (opReady,
+   chainReady). Zo heeft elke wereld iets eigens zonder dat de ouder iets hoeft. */
+const WERELD_ACCENT = [null, 'miss', 'chain'];
+function wereldAccent(stap) {
+  return stap < LEERSTAPPEN.length ? null : WERELD_ACCENT[(stap - LEERSTAPPEN.length) % WERELD_ACCENT.length];
+}
 function planSpecials(p, s, total, stap, goldIdx) {
   refreshReadiness(p, stap);
   const missOps = (s.missNum ? s.ops : []).filter(o => ['+', '-', 'x'].includes(o) && opReady(p, o, stap));
@@ -9369,7 +9379,13 @@ function planSpecials(p, s, total, stap, goldIdx) {
   const twoOk = s.perLevel >= 8;   // 2 speciale vragen alleen bij lange optredens (≥8)
   const both = missAvail && chainAvail;
   let types = [];
-  if (chainAvail && p.chainTrack.rung < 2) {
+  const accent = wereldAccent(stap);
+  if (accent === 'miss' && missAvail) {
+    types = twoOk ? ['miss', 'miss'] : ['miss'];
+  } else if (accent === 'chain' && chainAvail) {
+    // ook hier: in de introductiefase hoogstens één drie-getallen-vraag
+    types = twoOk && p.chainTrack.rung >= 2 ? ['chain', 'chain'] : ['chain'];
+  } else if (chainAvail && p.chainTrack.rung < 2) {
     // introductiefase drie-getallen: hoogstens één speciale, chain krijgt voorrang
     types = [(missAvail && Math.random() < 0.4) ? 'miss' : 'chain'];
   } else if (both) {
@@ -11974,6 +11990,13 @@ function leerpadStappen(s) {
     { kort: 'alles door elkaar', lang: 'Alles door elkaar.' },
   ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
 }
+// Het accent van een wereld na de laatste leerstap (zie wereldAccent), als het er is.
+function accentTekst(s, w) {
+  const a = wereldAccent(w);
+  if (a === 'miss' && s.missNum !== false) return ', met extra zoek het getal';
+  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ', met extra drie getallen';
+  return '';
+}
 /* Eén rij op het pad. b is wat er in het bolletje staat (✓, een nummer, …). */
 const padRij = (klas, b, html) => `<li class="${klas}"><span class="b">${b}</span>${html}</li>`;
 const NU_TAG = '<span class="vg-tag">nu</span>';
@@ -12028,7 +12051,7 @@ function leerpadHtml(p) {
     const stil = nu.wereld === laatste && GRENS_LADDER.some(v => v > s.max) && !grens
       ? ` Moeilijker wordt het pas met een hogere grens.` : '';
     rijen.push(padRij('nu niveau-bezig', nu.wereld === laatste ? nu.wereld + '+' : nu.wereld,
-      `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}.${stil}</small>`));
+      `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}${accentTekst(s, w)}.${stil}</small>`));
     stappen.filter(st => st.wereld > nu.wereld).forEach(st => rijen.push(padRij('later', st.wereld, st.lang)));
     const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
       ? [`Bijna altijd drie sterren met getallen tot ${s.max}. De sommen worden vanaf hier niet vanzelf moeilijker.`, `Tot ${grens.naar}`]
@@ -12227,8 +12250,9 @@ const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder',
    zonder voorvoegsel vindt getElementById in bindOefenChips stilletjes de
    verkeerde kopie. Het ouderdeel houdt pfx = '' (alle bestaande selectors en
    tests blijven kloppen), het maakformulier gebruikt 'ns-'. */
-function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, html }]
-  pfx = pfx || '';
+const faseStartOpen = {};               // per voorvoegsel: zette de ouder "Begint je kind hoger?" open?
+function oefenGroups(s, pfx, hier) {    // -> [{ ico, title, sub, secundair?, html }]
+  pfx = pfx || '';                       // hier: { fase, naam } van het kind, als er een is
   const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
@@ -12237,21 +12261,10 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
   const availMax = s.numerals ? COUNT_STAGE_MAX : 5;
   const stageNums = [];
   for (let v = 1; v <= availMax; v++) stageNums.push(v);
-  /* FASE 5D -- de fasekiezer las als tweeëntwintig losse knopjes.
-     Twee rijen van elf gelijke rondjes onder elkaar, elk met een eigen rand: wat
-     een ouder zag was een cijferslot, niet "begin hier, groei tot daar". Er is
-     geen bediening weggehaald (de tik op elk nummer doet precies wat hij deed),
-     maar er zijn drie dingen bijgekomen:
-
-       1. EEN ZIN BOVENAAN. "Begint bij fase 3 en mag groeien tot fase 11" zegt
-          in woorden wat de twee rijen samen betekenen.
-       2. HET BEREIK IS TE ZIEN. De fases binnen [start .. hoogste] staan in
-          beide rijen licht gevuld (.bereik), dus de twee rijen tekenen dezelfde
-          band en je ziet in één blik hoe breed die is. De gekozen fase blijft
-          vol paars, precies zoals elke andere gekozen chip in de app.
-       3. DE NAMEN DOEN MEE. De legenda eronder is een rijtje in kolommen in
-          plaats van een doorlopende alinea, en wat buiten het bereik valt staat
-          gedempt -- met "start" en "max" als kaartje bij de twee grenzen. */
+  /* FASE 5D -- de fasekiezer las als tweeëntwintig losse knopjes: twee rijen
+     van elf rondjes, een cijferslot en geen "begin hier, groei tot daar". Toen
+     kwam er een zin, een zichtbare band (.bereik) en een legenda bij; nu is het
+     één ladder (zie hieronder). De band leeft nog in de startrij. */
   /* FASE 5D.1 -- drie keuzes die samen één vraag beantwoorden, dus drie gelijke
      helften op één regel. Met het icoon náást het woord paste "🧸 Voorwerpen"
      daar niet in (127px nodig, 105 beschikbaar op een telefoon van 390) en
@@ -12266,16 +12279,28 @@ function oefenGroups(s, pfx) {          // -> [{ ico, title, sub, secundair?, ht
   const hi = Math.min(Math.max(lo, s.stageMax || availMax), availMax);
   const stageChips = (id, sel) => `<div class="chip-row stage-chips" id="${pfx}${id}">${stageNums.map(v =>
     chip(v, v, Math.min(sel, availMax) === v, (v >= lo && v <= hi) ? 'bereik' : '')).join('')}</div>`;
-  const legend = `<div class="stage-legend">${stageNums.map(v => {
-    const tag = v === lo ? '<i class="sl-tag">start</i>' : (v === hi && hi > lo ? '<i class="sl-tag">max</i>' : '');
-    return `<span class="${v >= lo && v <= hi ? '' : 'uit'}"><b>${v}</b> ${COUNT_STAGE_LABELS[v]}${tag}</span>`;
-  }).join('')}</div>`;
+  /* DE LADDER. Twee rijen chips (start en hoogste) plus een legenda waren drie
+     voorstellingen van één lijst. Nu is het één lijst: elke fase een rij, met
+     waar het kind nu is, en een 🔒-streep onder de hoogste fase. Een tik op een
+     rij zet de streep daar (dat is de keuze die er echt toe doet: het spel
+     klimt zelf, tot hier). De startfase doet er sinds de snelle klim weinig
+     meer toe -- een kind dat het al kan is er in een show per fase uit -- dus
+     staat die in een openklapper eronder. Die staat open zolang er een
+     hogere start gekozen is, of zolang de ouder hem openzette (faseStartOpen). */
+  const ladder = stageNums.map(v => {
+    const r = hier && v === hier.fase ? `${esc(hier.naam)} is hier` : (v === lo && lo > 1 ? 'start' : '');
+    return `<button class="chip fl-rij${v === hi ? ' on' : ''}${v < lo ? ' voor' : v > hi ? ' uit' : ''}${hier && v === hier.fase ? ' hier' : ''}" data-v="${v}">`
+      + `<span class="fl-n">${v}</span><span class="fl-naam">${COUNT_STAGE_LABELS[v]}</span>${r ? `<span class="fl-r">${r}</span>` : ''}</button>`
+      + (v === hi && hi < availMax ? '<div class="fl-grens">🔒 tot hier</div>' : '');
+  }).join('');
   if (s.track === 'count') return [{
-    ico: '🔢', title: 'Fases', sub: 'Waar het begint, en hoe ver het mag groeien', html: `
-      <div class="fr-zin">Begint bij <b>fase ${lo}</b>${hi > lo ? ` en mag meegroeien tot <b>fase ${hi}</b>` : ' en blijft daar'}.</div>
-      <div class="set-field"><span class="lbl">Startfase</span><span class="hulp">Hier begint het.</span>${stageChips('set-stage', s.stage)}</div>
-      <div class="set-field"><span class="lbl">Hoogste fase</span><span class="hulp">Zover mag het spel groeien.</span>${stageChips('set-stagemax', s.stageMax)}</div>
-      ${legend}`
+    ico: '🔢', title: 'Hoe ver mag het groeien?', sub: 'Het spel klimt zelf. Tik een fase om er de grens te zetten.', html: `
+      <div class="fase-ladder" id="${pfx}set-stagemax">${ladder}</div>
+      <details class="set-reveal fase-start" id="${pfx}fase-start"${s.stage > 1 || faseStartOpen[pfx] ? ' open' : ''}>
+        <summary><span class="sr-text"><span class="sr-title">Begint je kind hoger?</span>
+          <span class="sr-val">start bij fase ${lo}</span></span></summary>
+        <div class="set-field"><span class="hulp">Het spel begint hier, en zakt nooit lager.</span>${stageChips('set-stage', s.stage)}</div>
+      </details>`
   }, {
     ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden, lengte en memory', secundair: true, html: `
       <div class="set-field"><span class="lbl">Cijfers tonen</span>
@@ -12383,7 +12408,7 @@ function oefenenPanelHtml(p, s) {
         <div class="note" style="margin-top:8px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
     </div>`;
   // de kaarten die per modus verschillen
-  const cards = oefenGroups(s, '').map(g => `
+  const cards = oefenGroups(s, '', isCount ? { fase: countLiveStage(p), naam: p.name } : null).map(g => `
     <div class="set-card${g.secundair ? ' secundair' : ' primary'}">
       <div class="set-card-head"><div class="ico">${g.ico}</div><div><h2>${g.title}</h2><div class="sub">${g.sub}</div></div></div>
       ${g.html}
@@ -12836,6 +12861,8 @@ function bindOefenChips(s, p, pfx, done) {
     telPlafondOpnieuw(p);
     if (p && p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, countMaxStage(s));
   });
+  const start = $((pfx || '') + 'fase-start');
+  if (start) start.ontoggle = () => { faseStartOpen[pfx || ''] = start.open; };
   bind('set-numerals', c => {
     // Alleen de vlag omzetten -- de bovengrens (cijfers-uit → fase 5) wordt niet-
     // destructief afgedwongen via countMaxStage (chip-weergave + countLiveStage),

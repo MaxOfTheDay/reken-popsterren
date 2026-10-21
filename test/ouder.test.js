@@ -14,7 +14,7 @@
  *   A  geluid en trillen: omzetten, opslaan, en morgen nog zo
  *   B  oefeninstellingen zijn per kind, en lekken niet naar de buur
  *   C  de kiezer wisselt de context; het onderdeel blijft staan
- *   D  startfase en hoogste fase houden elkaar in het gareel (en tonen het bereik)
+ *   D  de faseladder en de startfase houden elkaar in het gareel (en tonen het bereik)
  *   E  voortgang wissen: eerst vragen, dan wissen -- en de instellingen blijven
  *   F  een ster verwijderen noemt haar bij naam en vraagt eerst
  *   G  back-up eruit en er weer in: byte voor byte dezelfde voortgang
@@ -251,11 +251,10 @@ function check(ok, label, detail) {
   }
 
   /* ================= D · Startfase en hoogste fase ================= */
-  /* Twee rijen die elkaar niet mogen kruisen: de start kan nooit boven het
-     plafond staan en het plafond nooit onder de start. Dat gedrag bestond al;
-     wat er nieuw bij hoort is dat het bereik ook te ZIEN is (.chip.bereik) --
-     dat is de hele reden dat de twee rijen nu als één keuze lezen, dus als die
-     band niet meer klopt is de uitleg op het scherm onwaar. */
+  /* De ladder (hoogste fase) en de startrij mogen elkaar niet kruisen: de start
+     kan nooit boven het plafond staan en het plafond nooit onder de start. En
+     wat de ladder laat zien -- het bereik, het slot, waar het kind is -- moet
+     kloppen met de instellingen, anders is het scherm onwaar. */
   {
     const { ctx, page } = await fresh();
     await page.evaluate(() => {
@@ -269,24 +268,27 @@ function check(ok, label, detail) {
     const band = () => page.evaluate(() => ({
       stage: db.profiles.p1.settings.stage, max: db.profiles.p1.settings.stageMax,
       startBand: [...document.querySelectorAll('#set-stage .chip')].filter(c => c.classList.contains('bereik')).map(c => +c.dataset.v),
-      maxBand: [...document.querySelectorAll('#set-stagemax .chip')].filter(c => c.classList.contains('bereik')).map(c => +c.dataset.v),
+      binnen: [...document.querySelectorAll('#set-stagemax .chip')].filter(c => !c.classList.contains('uit') && !c.classList.contains('voor')).map(c => +c.dataset.v),
       startOn: +document.querySelector('#set-stage .chip.on').dataset.v,
       maxOn: +document.querySelector('#set-stagemax .chip.on').dataset.v,
-      zin: document.querySelector('.fr-zin').textContent,
-      legenda: [...document.querySelectorAll('.stage-legend span')].filter(x => !x.classList.contains('uit')).length,
+      slot: (() => { const g = document.querySelector('#set-stagemax .fl-grens'); return g ? +g.previousElementSibling.dataset.v : null; })(),
+      hier: document.querySelector('#set-stagemax .chip.hier') && +document.querySelector('#set-stagemax .chip.hier').dataset.v,
     }));
     let r = await band();
-    check(r.startBand.join(',') === '1,2,3,4' && r.maxBand.join(',') === '1,2,3,4',
-      'de band loopt in beide rijen van de start tot het plafond', JSON.stringify(r));
-    check(r.legenda === 4, 'en de legenda dempt wat buiten de band valt', 'in beeld: ' + r.legenda);
-    check(/fase 1/.test(r.zin) && /fase 4/.test(r.zin), 'de zin bovenaan zegt hetzelfde in woorden', r.zin);
+    check(r.startBand.join(',') === '1,2,3,4' && r.binnen.join(',') === '1,2,3,4',
+      'de ladder en de startrij tonen hetzelfde bereik', JSON.stringify(r));
+    check(r.slot === 4, 'het slot staat onder de hoogste fase', JSON.stringify(r));
+    check(r.hier === 1, 'en de ladder zegt waar het kind nu is', JSON.stringify(r));
+    // de startfase staat in een openklapper; een ouder zet hem open
+    await page.click('#fase-start summary');
+    await page.waitForTimeout(150);
     // een start boven het plafond tikt het plafond mee omhoog
     await page.click('#set-stage .chip[data-v="7"]');
     await page.waitForTimeout(200);
     r = await band();
     check(r.stage === 7 && r.max === 7 && r.startOn === 7 && r.maxOn === 7,
       'een start boven het plafond duwt het plafond mee omhoog', JSON.stringify(r));
-    check(r.startBand.join(',') === '7' && r.maxBand.join(',') === '7',
+    check(r.startBand.join(',') === '7' && r.binnen.join(',') === '7',
       'en dan is de band precies één fase breed', JSON.stringify(r));
     // een plafond onder de start trekt de start mee omlaag
     await page.click('#set-stagemax .chip[data-v="3"]');

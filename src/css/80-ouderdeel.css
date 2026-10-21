@@ -389,20 +389,36 @@
      Een klasse en geen #set-ops: het maakformulier toont dezelfde rij met een
      eigen id-voorvoegsel, en een id-regel zou daar stilletjes niet meer pakken. */
   .ops-grid { display: grid; grid-template-columns: repeat(2, max-content); }
-  /* ---- Telmodus: de fasekiezer ---------------------------------------------
-     FASE 5D. Zie oefenGroups voor het waarom; dit is de vorm.
-       .fr-zin      de zin bovenaan, die zegt wat de twee rijen samen betekenen
-       .chip.bereik een fase die binnen [start .. hoogste] valt: licht gevuld,
-                    zodat beide rijen dezelfde band tekenen. De gekozen fase
-                    blijft gewoon .chip.on (vol paars) -- .bereik is de zachtere
-                    laag eronder en mag die dus nooit overschrijven.
-       .stage-legend  de namen, in kolommen i.p.v. als alinea, met wat buiten
-                    het bereik valt gedempt. */
-  .fr-zin {
-    background: var(--lavender-wash); border-radius: var(--r-sm); padding: 9px 12px; margin-bottom: 13px;
-    font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
+  /* ---- Telmodus: de faseladder (zie oefenGroups) ---------------------------
+     Elke fase een rij. Het is nog steeds .chip -- daar hangt de bediening aan --
+     maar dan als lijstregel: geen pil, geen paarse vulling voor de gekozen rij.
+     Wat gekozen is, zegt de 🔒-streep eronder; wat binnen bereik is, het gevulde
+     nummer; waar het kind nu is, het lavendel vlak.
+       .voor  onder de start: wordt overgeslagen, gedempt
+       .uit   boven de grens: nog op slot, gedempt */
+  .fase-ladder { display: flex; flex-direction: column; gap: 2px; }
+  .fase-ladder .chip.fl-rij {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 5px 8px;
+    border: none; border-radius: var(--r-sm); background: none; box-shadow: none;
+    color: var(--paper-ink); font-size: var(--tx-label); font-weight: 500; text-align: left;
   }
-  .fr-zin b { color: var(--purple-mid); font-weight: 700; }
+  .fase-ladder .chip.fl-rij.on { background: none; color: var(--paper-ink); }
+  .fase-ladder .chip.fl-rij.hier { background: var(--lavender-wash); font-weight: 700; }
+  .fase-ladder .chip.fl-rij:hover { background: var(--lavender-wash-2); }
+  .fl-n {
+    width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: var(--purple-mid); color: var(--c-white); font-size: 13px; font-weight: 700;
+  }
+  .fl-rij.voor .fl-n, .fl-rij.uit .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
+  .fl-rij.voor, .fl-rij.uit { opacity: .55; }
+  .fl-naam { flex: 1; }
+  .fl-r { font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid); }
+  .fl-grens {
+    display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: var(--tx-klein); font-weight: 700; color: var(--purple-mid);
+  }
+  .fl-grens::before, .fl-grens::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--purple-mid); }
+  .fase-start { margin-top: 12px; }
+  .fase-start .set-field { margin-top: 10px; }
   /* Krapper dan de gewone chip: elf stuks moeten op een telefoon in twee rijen
      passen zonder dat de nummers hun raakvlak kwijtraken (38px hoog blijft
      comfortabel voor een volwassen vinger op een instellingenscherm). */
@@ -418,17 +434,6 @@
   /* .on wint van .bereik: dezelfde volle paarse vulling als elke andere gekozen
      chip in de app, ook als hij binnen het bereik valt (en dat doet hij altijd). */
   .chip.bereik.on { background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); border-color: transparent; }
-  .stage-legend {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-    gap: 3px 14px; margin: 13px 2px 2px; font-size: var(--tx-klein); color: var(--paper-ink-muted);
-  }
-  .stage-legend span { display: flex; align-items: baseline; gap: 5px; line-height: 1.35; }
-  .stage-legend b { color: var(--purple-mid); font-weight: 700; min-width: 15px; }
-  .stage-legend span.uit { opacity: .42; }
-  .stage-legend .sl-tag {
-    font-style: normal; font-size: var(--tx-mini); font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
-    background: var(--purple-mid); color: var(--c-white); border-radius: var(--r-pill); padding: 1px 6px; margin-left: 4px;
-  }
   /* ---- De moduskeuze: twee helften, niet twee pillen --------------------
      Dit is de zwaarste keuze van het scherm (ze verandert alles eronder), dus
      krijgt ze de volle breedte in plaats van twee pillen die links samendrommen.
