@@ -6895,6 +6895,14 @@
 
   .end-milestone { margin: 0 0 14px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
   .end-milestone:empty { display: none; }
+
+
+  .groei-pil {
+    display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 16px;
+    border-radius: var(--r-pill); background: rgba(var(--goud-rgb), .88); box-shadow: var(--goud-gloed-zacht);
+    color: var(--ink-on-gold); font-weight: 700; font-size: var(--tx-label);
+  }
+  @media (max-height: 740px) { .groei-pil { padding: 6px 13px; min-height: 30px; } }
   .end-actions { display: flex; flex-direction: column; align-items: center; gap: 9px; }
   .end-actions .btn { width: 100%; max-width: 320px; }
   .end-actions .btn.big { font-size: var(--tx-kop); padding: 15px 20px; }
@@ -12324,7 +12332,8 @@ function defaultProfile(name, dress, opts) {
 
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },
-    recent: []
+    recent: [],
+    gezien: {}
   };
 }
 
@@ -12342,6 +12351,13 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+
+
+  if (!p.gezien) p.gezien = {
+    zoek: Object.values(p.opTrack || {}).some(t => t && t.unlockStap != null) ? 1 : 0,
+    drie: (p.chainTrack && p.chainTrack.seen) ? 1 : 0,
+    max: p.settings && p.settings.max,
+  };
 
 
 
@@ -20253,6 +20269,32 @@ const STER_MARGE = 0.45;
 
 
 const RECENT_N = 10;
+
+
+
+
+
+
+
+
+
+
+
+
+function groeiMoment(p, g, voor) {
+  if (g.count) {
+    return p.countTrack.stage > voor
+      ? { pil: '⬆️ Nieuw spel erbij!', zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
+  }
+  const z = p.gezien || (p.gezien = {});
+  const max = p.settings.max;
+  let nieuw = null;
+  if (g.missShown && !z.zoek) { z.zoek = 1; nieuw = { pil: '🔍 Nieuw: zoek het getal!' }; }
+  if (g.chainShown && !z.drie) { z.drie = 1; nieuw = { pil: '➕ Nieuw: drie getallen!' }; }
+  if (z.max == null) z.max = max;
+  else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
+  return nieuw;
+}
 function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
 
 
@@ -20337,6 +20379,7 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);
+  const faseVoor = G.count ? countLiveStage(p) : 0;
   if (G.count) {
     advanceCountStage(p, success, success && showStars(G) === 3);
     telPlafondTel(p, success ? showStars(G) : 0);
@@ -20413,9 +20456,16 @@ function endLevel(success) {
 
 
 
+
     const mile = $('end-milestone');
     mile.innerHTML = '';
-    if (nieuwKlaar) {
+
+
+    const groei = groeiMoment(p, G, faseVoor);
+    if (groei) {
+      mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
+      if (groei.zin) zin += ' ' + groei.zin;
+    } else if (nieuwKlaar) {
       const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
       mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };

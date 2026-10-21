@@ -32,9 +32,10 @@
  *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
  *   R  de grenstip                      -> pas na genoeg drie sterren, en opnieuw na een keuze
  *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
- *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet
+ *   T  de telmodus-klim                 -> foutloos mag sneller, de cijfers niet; terug pas na twee missers
  *   U  fase 12 (tot 20)                 -> wie "alles" had krijgt hem erbij, één keer
  *   V  de laatste shows                 -> tien uitkomsten, en wat Voortgang erover zegt
+ *   W  gegroeid                         -> "Nieuw!" bij een fase hoger, een nieuwe vraagsoort, grotere getallen
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1137,6 +1138,34 @@ zaak('V', () => {
   check(app.uitdagingStand(p) === null, 'V · een oude save zonder recente shows: geen stand, geen fout', '');
   app.onthoudUitkomst(p, 2);
   check(p.recent.length === 1, 'V · en hij begint gewoon te tellen', JSON.stringify(p.recent));
+});
+
+zaak('W', () => {
+  const { app } = verseSter('Groei');
+  const p = app.db.profiles.p1 = app.defaultProfile('Groei', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  // telmodus: alleen een fase omhoog is nieuws
+  p.countTrack.stage = 4;
+  check(app.groeiMoment(p, { count: true }, 3) !== null, 'W · een fase hoger: nieuw spel', '');
+  check(app.groeiMoment(p, { count: true }, 4) === null, 'W · dezelfde fase: niets', '');
+  check(app.groeiMoment(p, { count: true }, 5) === null, 'W · een fase terug: niets (dat hoeft het kind niet te horen)', '');
+  // rekenen
+  const m = app.db.profiles.p2 = app.defaultProfile('Reken', 'dress_roze', {});
+  app.normalizeProfiles();
+  check(app.groeiMoment(m, {}, 0) === null, 'W · de eerste show: de grens wordt stil onthouden', JSON.stringify(m.gezien));
+  const zoek = app.groeiMoment(m, { missShown: 1 }, 0);
+  check(zoek && /zoek het getal/.test(zoek.pil), 'W · de eerste zoek-het-getal is nieuw', JSON.stringify(zoek));
+  check(app.groeiMoment(m, { missShown: 1 }, 0) === null, 'W · de tweede keer niet meer', '');
+  m.settings.max = 50;
+  const groter = app.groeiMoment(m, {}, 0);
+  check(groter && /tot 50/.test(groter.pil), 'W · een hogere grens: grotere getallen', JSON.stringify(groter));
+  m.settings.max = 20; app.groeiMoment(m, {}, 0); m.settings.max = 50;
+  check(app.groeiMoment(m, {}, 0) === null, 'W · omlaag en weer omhoog is geen nieuws', JSON.stringify(m.gezien));
+  // een oude save die zoek-het-getal al kent, krijgt geen "Nieuw!" meer
+  const oud = app.defaultProfile('Oud', 'dress_roze', {});
+  delete oud.gezien; oud.opTrack = { '+': { n: 40, acc: 0.9, paused: false, unlockStap: 4, fast: 0.5 } };
+  app.migrate(oud);
+  check(app.groeiMoment(oud, { missShown: 1 }, 0) === null, 'W · een oude ster die het al kende: geen nieuws', JSON.stringify(oud.gezien));
 });
 
 klaar();

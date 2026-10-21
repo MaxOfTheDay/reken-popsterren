@@ -2194,7 +2194,8 @@ function defaultProfile(name, dress, opts) {
     // streak = juiste-op-rij in de show (stuurt de rung omhoog), reset bij een misser
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },  // voor het ouder-overzicht
-    recent: []                        // de laatste shows: sterren, of 0 als hij mislukte (zie onthoudUitkomst)
+    recent: [],                       // de laatste shows: sterren, of 0 als hij mislukte (zie onthoudUitkomst)
+    gezien: {}                        // welke groei het kind al gevierd heeft (zie groeiMoment)
   };
 }
 // Zorgt dat oudere opgeslagen profielen de nieuwe velden krijgen.
@@ -2212,6 +2213,13 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  /* Een ster van vóór groeiMoment: wat ze al kende telt als gevierd, anders
+     kreeg een kind dat al maanden zoek-het-getal speelt morgen "Nieuw!". */
+  if (!p.gezien) p.gezien = {
+    zoek: Object.values(p.opTrack || {}).some(t => t && t.unlockStap != null) ? 1 : 0,
+    drie: (p.chainTrack && p.chainTrack.seen) ? 1 : 0,
+    max: p.settings && p.settings.max,
+  };
   /* ---- FASE 4A: de oneindige staart opruimen -------------------------------
      Tot en met fase 3 liep de tournee voorbij de laatste geschreven wereld gewoon
      door: level 49 en verder heetten "Sterrentournee" en waren geen echte wereld.
@@ -10123,6 +10131,32 @@ const STER_MARGE = 0.45;
    maar niet hoe het de laatste tijd gaat. Dit is geen voortgang: geen wereld,
    halte of beloning leest het. Alleen het ouderrapport (zie uitdagingStand). */
 const RECENT_N = 10;
+/* Groeien mag gezien worden. Een fase hoger, een nieuwe soort vraag of grotere
+   getallen kwam er stil bij: het kind merkte alleen dat het ineens moeilijker
+   was. Nu staat er op het eindscherm één gouden "Nieuw!", en in de telmodus
+   zegt de stem het. Alleen na een gelukte show, en alleen de eerste keer.
+
+   Telmodus: de fase ging omhoog (voor = de fase vóór advanceCountStage). Een
+   fase terug zegt niets; dat merkt het kind niet en hoeft het ook niet te
+   horen.
+   Rekenen: de eerste zoek-het-getal of drie-getallen-vraag (g.missShown,
+   g.chainShown), of een hogere getallengrens dan ooit. p.gezien onthoudt wat
+   al gevierd is; zakt de grens en gaat hij weer omhoog, dan is dat geen nieuws.
+   De grootste van de drie wint: het eindscherm toont er hoogstens één. */
+function groeiMoment(p, g, voor) {
+  if (g.count) {
+    return p.countTrack.stage > voor
+      ? { pil: '⬆️ Nieuw spel erbij!', zin: 'Je bent gegroeid! Er is een nieuw spel.' } : null;
+  }
+  const z = p.gezien || (p.gezien = {});
+  const max = p.settings.max;
+  let nieuw = null;
+  if (g.missShown && !z.zoek) { z.zoek = 1; nieuw = { pil: '🔍 Nieuw: zoek het getal!' }; }
+  if (g.chainShown && !z.drie) { z.drie = 1; nieuw = { pil: '➕ Nieuw: drie getallen!' }; }
+  if (z.max == null) z.max = max;
+  else if (max > z.max) { z.max = max; nieuw = { pil: `⬆️ Nieuw: getallen tot ${max}!` }; }
+  return nieuw;
+}
 function onthoudUitkomst(p, sterren) { p.recent = (p.recent || []).concat(sterren).slice(-RECENT_N); }
 /* Zit de uitdaging goed? Uit de laatste shows, in drie standen -- en met opzet
    een uitspraak over de uitdaging, niet over het kind:
@@ -10207,6 +10241,7 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);   // frequentie-trap van de extra uitdagingen bijstellen
+  const faseVoor = G.count ? countLiveStage(p) : 0;   // voor groeiMoment
   if (G.count) {
     advanceCountStage(p, success, success && showStars(G) === 3);   // telmodus: fase mee laten klimmen/zakken
     telPlafondTel(p, success ? showStars(G) : 0);
@@ -10278,14 +10313,21 @@ function endLevel(success) {
        */
     opbrengst = verdiend + bonus;
     $('end-earn').innerHTML = `<span class="earn-chip dia">💎 +${opbrengst}</span>`;
-    /* Eén mijlpaal, en alleen als er écht iets gehaald is: een trofee die
-       klaarligt. Een gouden pil, tikbaar.
+    /* Eén mijlpaal, en alleen als er écht iets gehaald is: iets nieuws dat het
+       kind nu kan (groeiMoment), of een trofee die klaarligt -- die laatste als
+       gouden pil, tikbaar.
 
        Hier stond ook de ster-status (een nieuwe rang, met zijn eigen pil en
        feestje). Die is met pensioen -- zie "= Sterrencarrière". */
     const mile = $('end-milestone');
     mile.innerHTML = '';
-    if (nieuwKlaar) {
+    /* Gegroeid gaat vóór een trofee: de trofee blijft klaarliggen in de kast
+       (met zijn stipje op het tabblad), dit moment is er maar één keer. */
+    const groei = groeiMoment(p, G, faseVoor);
+    if (groei) {
+      mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
+      if (groei.zin) zin += ' ' + groei.zin;
+    } else if (nieuwKlaar) {
       const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
       mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
       mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };

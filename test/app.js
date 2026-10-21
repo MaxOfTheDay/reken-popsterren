@@ -216,7 +216,7 @@ const BRUG = `globalThis.__api = {
   COUNT_OPTS, COUNT_STAGE_MAX, countTopRung, countMaxStage, countLiveStage,
   updateCountAcc, advanceCountStage, telPlafondTel, telPlafondOpnieuw, stemAan, somZin,
   // het ouderrapport: de laatste shows
-  RECENT_N, onthoudUitkomst, uitdagingStand,
+  RECENT_N, onthoudUitkomst, uitdagingStand, groeiMoment,
 };`;
 
 function laadApp(opties) {
