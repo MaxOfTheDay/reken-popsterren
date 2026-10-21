@@ -448,7 +448,8 @@
   .tour-stop.done .dot { border-color: var(--halte-rand); background: var(--purple-shadow); }
   /* Een halte op drie sterren is áf. FASE 4C laat dat uit de sterren zélf komen in
      plaats van uit een eigen insigne: alle drie de plekken vol is het gegeven, en
-     het tabje eronder krijgt daar een gouden voering bij (zie --ster-tab-vol).
+     de drie sterren eronder zijn dan alle drie goud (het tabje met de gouden
+     voering is weg, zie "De sterren onder de halte").
      De rand van het rondje gaat mee omhoog naar vol goud -- de bovenste trede van
      de rand-trap, terwijl "hier speel je" op de trap erbóven zit met een gouden
      VULLING. Vulling wint het van rand, dus perfect mag gerust helemaal goud zijn.
@@ -461,8 +462,8 @@
      wat op een telefoon niet hoort. En ze vroeg `overflow: hidden` op het rondje,
      wat het toch al fragiele samenspel met rand en schaduw nóg krapper maakte.
 
-     Wat ervoor terugkomt is stil en altijd waar: gouden rand, gouden sterrentabje,
-     drie volle sterren. Van een afstand zie je het goud, van dichtbij lees je
+     Wat ervoor terugkomt is stil en altijd waar: gouden ring en drie volle
+     sterren. Van een afstand zie je het goud, van dichtbij lees je
      waaróm. Geen enkele beweging nodig. */
   .tour-stop.done.perfect .dot {
     border-color: var(--gold-accent);
@@ -483,10 +484,6 @@
        "gouden vulling" toe, en dát is de taal van de halte waar je nú speelt. */
     box-shadow: var(--dot-key), 0 0 0 0.62cqw var(--perfect-ring),
                 var(--dot-drop), 0 0 2cqw 0.2cqw var(--perfect-gloed);
-  }
-  .tour-stop.done.perfect .cstars {
-    background: var(--ster-tab-vol);
-    box-shadow: inset 0 0 0 0.12cqw var(--ster-tab-vol-rand), 0 0.35cqw 0.7cqw rgba(12,2,26,.4);
   }
   /* De indruk-animatie doet het meeste werk; dit is het laagje eroverheen dat
      zegt "hij is ingedrukt" ook als je je vinger niet beweegt. */
@@ -523,9 +520,12 @@
     from { opacity: 0; transform: translateY(-0.7cqw) scaleX(.72); }
     to   { opacity: 1; transform: none; }
   }
+  /* Met `scale` en niet met transform: transform draagt sinds de grote sterren
+     de boog (zie hieronder), en een landing die op transform: none eindigt zou
+     die boog platslaan. */
   @keyframes sterLandt {
-    from { opacity: 0; transform: scale(.25); }
-    to   { opacity: 1; transform: none; }
+    from { opacity: 0; scale: .25; }
+    to   { opacity: 1; scale: 1; }
   }
   /* --kaart-rust: wanneer de kaart na een wissel stilstaat (MOTION.totaal, door
      het script op :root gezet). De landing begon op 0, dus onder het eindscherm
@@ -591,30 +591,71 @@
      hierboven, en die twee moeten samenvallen, anders opent een tik op de sterren
      de halte niet meer. Vandaar dat de marge meebeweegt met de hoogte:
      margin-top = 12,6 - 10,3 - hoogte. Test 7e meet het na. */
+  /* ===== De sterren onder de halte (zonder tabje) ===========================
+     Het tabje hierboven is weg, en alles wat er over zijn maten staat is daarmee
+     geschiedenis. Op een echte telefoon bleef het te klein: een ster van 10px in
+     een donker pilletje, waarin je twee sterren niet van drie onderscheidt -- en
+     dat is nu juist het ene wat deze rij moet zeggen. Daarbij legde het onder
+     élke gespeelde halte een donker blokje op de tekening, en waren de perfecte
+     haltes (gouden ring + gouden tabje) het luidste op de kaart, terwijl de
+     haltes waar nog een ster te halen valt het stilst waren.
+
+     Nu, zoals elke bekende levelkaart het doet:
+       - drie plekken van precies dezelfde maat, ruim anderhalf keer zo groot
+         (4,4cqw: 17px op 390 breed). Verdiend is vol goud, nog te halen is een
+         donker silhouet met een lichte omtrek. Je telt het goud; de vorm
+         verandert nooit. Een verdiende ster wordt dus nergens kleiner gemaakt
+         om de kaart rustiger te krijgen -- dan lijkt hij minder waard.
+       - een zachte glimlach-boog: de buitenste twee staan iets hoger en
+         gekanteld, zodat de rij om het rondje heen hangt in plaats van er als
+         een streepje onder te liggen.
+       - geen achtergrond. Wat de sterren op een lichte ondergrond (sneeuw,
+         suikerglazuur) losmaakt is een donkere zoom ín de tekening zelf: een
+         tweede pad achter elke ster (.cs-rand, zie starRowHTML). Geen filter --
+         een drop-shadow op een handvol svg's is werk bij elk beeldje waarin de
+         kaart beweegt.
+       - "perfect" krijgt er iets bíj (de gouden ring om het rondje), en de
+         plek waar nog een ster ligt nodigt uit door het gat zelf, plus één
+         keer fonkelen als de kaart opent (sterWenk hieronder).
+
+     De onderrand blijft op 12,6cqw (de onderrand van het raakvlak, zie
+     .tour-stop::before): margin-top = 12,6 - 10,3 - 4,6 = -2,3cqw. De sterren
+     schuiven daarmee half over de onderrand van het rondje (z-index 2), wat ze
+     aan de halte vastmaakt. Test 7e meet na dat een tik op de rij dezelfde halte
+     opent. */
   .tour-stop .cstars {
-    position: relative; z-index: 0;
-    width: 9.2cqw; height: 3.2cqw; margin: -0.9cqw auto 0;
-    display: flex; align-items: center; justify-content: center; gap: 0.38cqw;
-    /* Een hele pil en niet alleen onderaan rond. Het tabje is bijna net zo breed
-       als het rondje, dus op de plek waar het eronder doorschuift steekt het aan
-       weerszijden uit -- met vierkante bovenhoeken zijn dat twee scherpe
-       schoudertjes naast een cirkel, en dat leest als een verkeerd uitgelijnd
-       blokje. Rond is hier ook gewoon de taal van de kaart: ronde haltes, ronde
-       streepjes, ronde pillen in de kop. */
-    border-radius: 1.7cqw;
-    background: var(--ster-tab);
-    box-shadow: inset 0 0 0 0.12cqw var(--ster-tab-rand), 0 0.35cqw 0.7cqw rgba(12,2,26,.38);
+    position: relative; z-index: 2;
+    width: 14cqw; height: 4.6cqw; margin: -2.3cqw auto 0;
+    display: flex; align-items: center; justify-content: center; gap: 0;
   }
-  /* 2,6 i.p.v. 2,45cqw: ruim 6% groter, en niet meer dan dat. Op 390px breed gaat
-     een ster daarmee van 11,6 naar 12,3px -- net genoeg om *** ook op een armlengte
-     afstand als drie sterren te lezen in plaats van als een streepje, en te weinig
-     om met het medaillon erboven te gaan concurreren. Het tabje zelf blijft precies
-     even groot (9,2x3,2cqw): de sterren staan er ruim genoeg in, en élke pixel
-     tabje erbij is een pixel tekening eraf. */
-  .tour-stop .cstars svg { flex: none; width: 2.6cqw; height: 2.6cqw; display: block;
-    stroke-linejoin: round; stroke-width: 1.6; }
-  .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); }
-  .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); }
+  .tour-stop .cstars svg { flex: none; width: 4.4cqw; height: 4.4cqw; display: block;
+    overflow: visible; stroke-linejoin: round; }
+  .tour-stop .cstars svg:nth-child(1) { transform: translateY(-0.7cqw) rotate(-16deg); }
+  .tour-stop .cstars svg:nth-child(2) { transform: scale(1.1); }
+  .tour-stop .cstars svg:nth-child(3) { transform: translateY(-0.7cqw) rotate(16deg); }
+  .tour-stop .cstars .cs-rand { fill: none; stroke: var(--ster-zoom); stroke-width: 4; }
+  .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.4; }
+  .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); stroke-width: 1.8; }
+  /* Eén keer fonkelen, als de kaart opent: de plekken waar nog een ster ligt
+     zwellen kort aan en lichten goud op, en staan daarna stil. Dat is de hele
+     uitnodiging -- geen gloed die blijft staan (een leeg gat dat feller is dan een
+     verdiende ster keert de waarde om) en niets wat doorloopt (de kaart heeft al
+     de ademende spotlight). Wacht op --kaart-rust, net als de landing hierboven,
+     zodat het pas gebeurt als de kaart stilstaat. Niet op een halte die net
+     geland is (die heeft zijn eigen beat) en niet op de halte waar ze staat.
+     Alleen `scale` en een kleur op drie piepkleine paden, één keer. */
+  .tour-stop.done:not(.net-af) .cstars svg.leeg {
+    animation: sterWenk .7s var(--ease-plop) calc(var(--kaart-rust, 0ms) + .15s) both; }
+  .tour-stop.done:not(.net-af) .cstars svg.leeg .cs-leeg {
+    animation: sterWenkKleur .7s ease-out calc(var(--kaart-rust, 0ms) + .15s) both; }
+  @keyframes sterWenk {
+    0%, 100% { scale: 1; }
+    40%      { scale: 1.32; }
+  }
+  @keyframes sterWenkKleur {
+    0%, 100% { stroke: var(--ster-leeg-rand); }
+    40%      { stroke: var(--ster-vol); fill: rgba(var(--goud-rgb),.35); }
+  }
   /* de eigen ster staat vol in beeld, bovenop de huidige halte -- het
      shownummer blijft gewoon zichtbaar in de tegel eronder. Voeten landen
      net op de bovenrand van de tegel (klein overlapje voor het "staat erop"-

@@ -7371,7 +7371,11 @@ const STER_PAD = 'M12 2.6l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.62'
 function starRowHTML(n, gespeeld) {
   const got = Math.max(0, Math.min(3, n | 0));
   if (!gespeeld && !got) return '';
-  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true">`
+  /* Twee paden per ster: .cs-rand is de donkere zoom erachter (zie "De sterren
+     onder de halte"), zodat er geen tabje en geen filter nodig is. .leeg op de
+     svg zelf is de haak voor het eenmalige fonkelen. */
+  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true"${vol ? '' : ' class="leeg"'}>`
+    + `<path class="cs-rand" d="${STER_PAD}"/>`
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
 }
