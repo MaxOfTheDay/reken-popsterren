@@ -7915,6 +7915,25 @@ function openTrophies() {
    de schuifstand terugduwt -- en dat deed hij, op 10px stilgezet wisselde hij
    elk beeldje -- helpt hij niet; daarvoor is kopKrimpMeten (zie daar). */
 function kastScroll() { rafKlem(kastGescrold); }
+/* Een klare trofee klopt, glanst en wiebelt: drie tot vier animaties per kaart,
+   eindeloos. Stil kost dat niets, de grafische kaart doet het. Maar tijdens het
+   schuiven tekent de browser elk beeldje ook op de hoofddraad, en dan rekent hij
+   bij elk beeldje de stijl van al die animaties opnieuw uit. Met een handvol
+   klare trofeeën was dat op een trage telefoon het haperen van de kast (6×
+   geremd, negen klare trofeeën: zo'n seconde stijlwerk per veeg, zo nog een
+   derde daarvan). Dus staan ze zolang er geschoven wordt even stil (.schuift, zie
+   70-feest.css), en lopen ze daarna verder waar ze waren. Midden in een veeg zie
+   je het verschil niet: alles beweegt dan toch al. */
+let kastStilTimer = null;
+function kastSchuift() {
+  kastScroll();
+  // op de planken en niet op het scherm: de klassen van het scherm zelf zeggen
+  // hoe de kop staat (.gescrold), en die horen niet bij elke veeg te wisselen
+  const planken = $('trophy-shelves');
+  planken.classList.add('schuift');
+  clearTimeout(kastStilTimer);
+  kastStilTimer = setTimeout(() => planken.classList.remove('schuift'), 200);
+}
 function kastGescrold() { gescrold($('screen-trophies')); }
 // De kop krijgt zijn laag zodra er iets onder schuift (4px tegen een trillende duim).
 function gescrold(sc) { if (sc) sc.classList.toggle('gescrold', sc.scrollTop > 4); }
@@ -7962,7 +7981,7 @@ let justClaimed = null;   // id van de zojuist geopende trofee (voor de shimmer,
    hij. En op de perfecte plank: welke wereld. */
 function renderShelves() {
   const p = P();
-  $('screen-trophies').onscroll = kastScroll;
+  $('screen-trophies').onscroll = kastSchuift;
   checkTrophies(p);   // net gehaalde trofeeën komen 'klaar' te liggen
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const earned = earnedActiveCount(p);
