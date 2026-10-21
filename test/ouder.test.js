@@ -114,20 +114,18 @@ function check(ok, label, detail) {
     check(r.geluid === false && r.tekst === 'Uit' && r.uit && r.aria === 'false',
       'uitzetten verandert de stand én wat er staat', JSON.stringify(r));
     check(r.ico === '🔇', 'en het icoontje gaat mee', r.ico);
-    // trillen staat los van geluid
-    const heeftTril = await page.evaluate(() => 'vibrate' in navigator);
-    if (heeftTril) {
-      await page.click('#gear-haptics');
-      await page.waitForTimeout(120);
-      r = await page.evaluate(() => ({ g: db.sound, h: db.haptics }));
-      check(r.g === false && r.h === false, 'trillen staat los van geluid', JSON.stringify(r));
-    }
+    // Onder het tandwiel staan nog maar twee dingen: Geluid en de deur naar het
+    // ouderdeel. Trillen volgt het toestel; "als app" en "over" staan in Beheer.
+    r = await page.evaluate(() => ({
+      rijen: [...document.querySelectorAll('#gear-menu .gear-item')].map(el => el.id || el.className),
+      weg: ['gear-haptics', 'gear-app', 'gear-over'].filter(id => document.getElementById(id)),
+    }));
+    check(r.rijen.length === 2 && !r.weg.length, 'het tandwiel heeft twee rijen: geluid en Voor ouders', JSON.stringify(r));
     // en morgen weer openen
     await page.reload();
     await page.waitForTimeout(300);
-    r = await page.evaluate(() => ({ g: db.sound, h: db.haptics }));
+    r = await page.evaluate(() => ({ g: db.sound }));
     check(r.g === false, 'de geluidskeuze staat er morgen nog', JSON.stringify(r));
-    if (heeftTril) check(r.h === false, 'de trilkeuze staat er morgen nog', JSON.stringify(r));
     // Midden in een show: het tandwiel is er niet, dus zit dezelfde schakelaar in
     // het stopvenster -- en omzetten daar stopt de show niet.
     await page.evaluate(() => { selectProfile('p1'); startLevel(1); G.idx = 1; askQuit(); });

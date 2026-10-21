@@ -2189,15 +2189,16 @@
   }
 
 
-  .restore-hint {
-    display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
+  .over-hint {
+    display: none; align-items: center; justify-content: center; width: fit-content; text-decoration: none;
+    margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
 
 
     font-family: inherit; font-weight: 600; color: var(--c-white); background: transparent; border: none;
     cursor: pointer; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill);
     transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
   }
-  .restore-hint:hover, .restore-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  .over-hint:hover, .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
 
 
 
@@ -2326,10 +2327,9 @@
 
 
 
-  a.gear-item { text-decoration: none; }
-  .gear-item.over { padding: 9px 11px; }
 
-  #gear-app { padding: 9px 11px; }
+
+
 
 
 
@@ -8877,13 +8877,15 @@
         <span class="at-tekst">Nieuwe ster</span>
       </button>
     </div>
-    <!-- Alleen zonder sterren (renderProfiles). Een knop en geen aanwijzing: hier
-         stond "Zet hem terug via ⚙️ → Voor ouders", en dan moest een ouder op een
-         nieuw toestel zelf de weg zoeken naar een knop die één tik verder lag.
-         openSettings() komt zonder sterren meteen in Beheer uit, bij terugzetten.
-         Een kind dat hierop tikt komt in het ouderdeel, en daar kan het niets
-         kwijtraken: er is nog niets. -->
-    <button class="restore-hint" id="restore-hint" type="button" onclick="naTik(openSettings)">Al een back-up? Zet hem terug <span aria-hidden="true">›</span></button>
+    <!-- Alleen zonder sterren (renderProfiles). Hier stond "Al een back-up? Zet hem
+         terug" -- maar wie dit lege scherm ziet is bijna altijd een gezin dat net
+         begint, en terugzetten is de zeldzaamste reden om hier te staan. Wie het wél
+         nodig heeft, wordt erheen gewezen (het blad "als app" zegt ⚙️ → Voor ouders,
+         en zonder sterren opent dat meteen op terugzetten). Dus zegt de ene stille
+         regel hier wat dit spel is: de pagina over/, met dezelfde handler als in
+         Beheer (eerst bewaren, zonder net een melding). Een echte link, in hetzelfde
+         venster -- zie naarOver. -->
+    <a class="over-hint" id="over-hint" href="over/index.html" onclick="naarOver(event)">🎬 Wat is Rekensterren? <span aria-hidden="true">›</span></a>
     <div class="profile-spacer" aria-hidden="true"></div>
   </div>
 
@@ -9253,30 +9255,12 @@
     <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
       <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
     </button>
-    <button class="gear-item" id="gear-haptics" onclick="toggleHaptics()" role="menuitemcheckbox">
-      <span class="gi-ico">📳</span><span class="gi-label">Trillen</span><span class="gi-state" id="gear-haptics-state">Aan</span>
-    </button>
     <div class="gear-sep"></div>
     <button class="gear-item parents" onclick="naTik(openSettings)" role="menuitem">
       <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span>
       <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
       <span class="gi-chev" aria-hidden="true">›</span>
     </button>
-    <!-- De weg naar het blad "Rekensterren als app" (zie "= Speel als app" in het
-         scriptblok). Blijft staan als het knopje linksboven weg is, en verdwijnt
-         pas als het spel als app draait. -->
-    <button class="gear-item" id="gear-app" onclick="openAppBlad(false)" role="menuitem">
-      <span class="gi-ico" aria-hidden="true">📲</span>
-      <span class="gi-label">Speel als app<span class="gi-sub">Op het beginscherm</span></span>
-      <span class="gi-chev" aria-hidden="true">›</span>
-    </button>
-    <!-- De weg naar over/ (zie ouderVoetHtml en naarOver in het scriptblok). Een echte
-         link in hetzelfde venster, geen knop: lange tik en schermlezer werken zo mee. -->
-    <a class="gear-item over" id="gear-over" href="over/index.html" onclick="naarOver(event)" role="menuitem">
-      <span class="gi-ico" aria-hidden="true">🎬</span>
-      <span class="gi-label">Over Rekensterren<span class="gi-sub">Filmpje · delen</span></span>
-      <span class="gi-chev" aria-hidden="true">›</span>
-    </a>
   </div>
 </div>
 
@@ -12740,8 +12724,14 @@ const P = () => db.profiles[cur];
 
 
 
+
+
+
+
+
+
+
 function buzz(pattern) {
-  if (!db.haptics) return;
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { }
 }
 
@@ -13114,11 +13104,6 @@ async function keepAwake() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });
 keepAwake();
-function toggleHaptics() {
-  db.haptics = !db.haptics; save();
-  renderGearMenu();
-  if (db.haptics) buzz(20);
-}
 
 
 
@@ -13135,17 +13120,6 @@ function renderGearMenu() {
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
 
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
-  const hi = $('gear-haptics');
-  if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
-
-
-
-
-
-  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
-
-  const app = $('gear-app');
-  if (app) app.style.display = appUitlegNodig() ? '' : 'none';
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -14341,8 +14315,8 @@ function renderProfiles() {
     add.setAttribute('aria-label', n ? 'Nieuwe ster maken' : 'Maak je eerste ster');
   }
 
-  const hint = $('restore-hint');
-  if (hint) hint.style.display = n ? 'none' : 'block';
+  const hint = $('over-hint');
+  if (hint) hint.style.display = n ? 'none' : 'flex';
   renderGearMenu();
   appKnopZet();
 

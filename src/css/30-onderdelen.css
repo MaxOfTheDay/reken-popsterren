@@ -229,17 +229,18 @@
     .ster-tegel .st-podium { aspect-ratio: 10 / 8; }
     .profile-spacer { margin-top: 0; min-height: 0; }
   }
-  /* alleen zichtbaar als er nog niets is: dán is een back-up terugzetten het
-     andere ding dat een ouder hier kan willen */
-  .restore-hint {
-    display: none; margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
+  /* alleen zichtbaar als er nog niets is: dan staat hier een gezin dat net
+     begint, en is "wat is dit spel?" het andere ding dat een ouder kan willen */
+  .over-hint {
+    display: none; align-items: center; justify-content: center; width: fit-content; text-decoration: none;
+    margin: 12px auto 0; font-size: var(--tx-klein); opacity: .72; text-align: center; z-index: 1;
     /* een knop die leest als de zin die hij was: geen vlak, geen rand -- wel een
        echt raakvlak van 44, en helder als je erop wijst */
     font-family: inherit; font-weight: 600; color: var(--c-white); background: transparent; border: none;
     cursor: pointer; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill);
     transition: opacity var(--t-tik) ease, background var(--t-tik) ease;
   }
-  .restore-hint:hover, .restore-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
+  .over-hint:hover, .over-hint:focus-visible { opacity: 1; background: rgba(255,255,255,.1); }
 
   /* --balk-rand en niet twee keer 10: dit is dezelfde afstand tot de schermrand
      als waarop de navigatiebalk onderaan zweeft, en dat is geen toeval maar de
@@ -365,13 +366,12 @@
   /* een teken en geen letter: het pijltje staat als maat in de regel, zie §5 */
   .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
   .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
-  /* "Over Rekensterren": een <a> in een rij die verder uit knoppen bestaat, dus
-     de lijn onder de tekst eraf. Geen eigen kleur en geen tegeltje -- hij hoort
-     onder "Voor ouders" als de kleinere van de twee, niet als tweede kop. */
-  a.gear-item { text-decoration: none; }
-  .gear-item.over { padding: 9px 11px; }
-  /* "Speel als app": dezelfde kleinere rij als die naar over/. */
-  #gear-app { padding: 9px 11px; }
+  /* Onder het tandwiel staan nog maar twee dingen: wat dít toestel doet (Geluid)
+     en de ene deur naar het ouderdeel. "Speel als app" en "Over Rekensterren"
+     stonden hier ook, maar dit is het enige paneel waar een kind bij kan, en die
+     twee zijn voor ouders (de ene leidt zelfs het spel uit). Ze staan nu in
+     Voor ouders → Beheer; "als app" ook nog als knopje linksboven. Trillen
+     stond hier ook: dat volgt nu het toestel (zie "= Trilfeedback"). */
 
   /* ---- "Speel als app": het knopje en het blad --------------------------
      Het knopje is het spiegelbeeld van het tandwiel: dezelfde hoogte, dezelfde

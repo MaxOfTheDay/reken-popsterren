@@ -2584,8 +2584,14 @@ const P = () => db.profiles[cur];
 /* ================= Trilfeedback (haptics) ================= */
 // Werkt op mobiele browsers die de Vibration API ondersteunen (Android/Chrome).
 // Staat los van geluid, zodat trillen ook aan kan met de app op stil.
+/* Er is geen eigen schakelaar meer: trillen volgt het toestel. Een iPhone of iPad
+   kan vanuit een webpagina helemaal niet trillen (daar stond de rij al niet), en
+   een recente Android legt web-trillingen stil met zijn eigen "Trillen"-schakelaar.
+   Elke trilling is kort en hoort bij een klankje (zie de SFX-tabel), dus een tweede
+   knop in het enige paneel waar een kind bij kan was er een te veel.
+   db.haptics blijft in de opslag staan (oude saves, back-ups), maar wordt niet
+   meer gelezen: wie hem ooit uitzette, voelt de tikjes weer -- het toestel beslist. */
 function buzz(pattern) {
-  if (!db.haptics) return;
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* geen trilmotor */ }
 }
 
@@ -2688,7 +2694,7 @@ function noot(freq, dur, delay, type, vol) {
    Eén noot is [hertz, duur, uitstel, golfvorm, versterking]; duur en uitstel in
    seconden. Staat er 0 als hertz, dan komt de toon uit `ladder` (op volgnummer)
    of uit `keuze` (willekeurig). `tril` is het trilpatroon dat erbij hoort -- zie
-   buzz(), die zelf al naar db.haptics en naar de trilmotor kijkt.
+   buzz(), die zelf al naar de trilmotor kijkt.
 
    ELKE TRILLING STAAT HIER, naast het klankje waar ze bij hoort, en nergens
    anders: een losse buzz() vlak ná een klankje breekt diens trilling af (een
@@ -2958,14 +2964,9 @@ async function keepAwake() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('pointerdown', keepAwake, { passive: true });   // fallback: browsers die een gebruikersgebaar eisen
 keepAwake();
-function toggleHaptics() {
-  db.haptics = !db.haptics; save();
-  renderGearMenu();
-  if (db.haptics) buzz(20);   // even voelen dat trillen nu aan staat
-}
 
 /* ---- Instellingen-menu onder het tandwiel ---- */
-// Zet de aan/uit-labels goed en verbergt "Trillen" op apparaten zonder trilmotor.
+// Zet de aan/uit-labels goed: onder het tandwiel en in het stopvenster van een show.
 function renderGearMenu() {
   const setRow = (id, stateId, on, icoOn, icoOff) => {
     const item = $(id), st = $(stateId);
@@ -2979,17 +2980,6 @@ function renderGearMenu() {
   setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
   // dezelfde schakelaar in het stopvenster van een show (zie quit-modal)
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
-  const hi = $('gear-haptics');
-  if (hi) hi.style.display = ('vibrate' in navigator) ? '' : 'none';
-  /* Trillen houdt zijn eigen icoon, ook als hij uit staat: 📴 werd op de meeste
-     toestellen een fel oranje blokje met OFF erin, het luidste ding in het paneel
-     -- en dat voor een schakelaar die net stíl gezet is. De pil zegt al "Uit";
-     het icoon wordt alleen gedempt. 🔇 bij het geluid blijft wel: een doorgestreepte
-     luidspreker is dé tekening voor stil, en hij schreeuwt niet. */
-  setRow('gear-haptics', 'gear-haptics-state', db.haptics, '📳', '📳');
-  // "Speel als app" staat er alleen zolang het spel nog in de browser draait
-  const app = $('gear-app');
-  if (app) app.style.display = appUitlegNodig() ? '' : 'none';
 }
 function toggleGearMenu(e) {
   if (e) e.stopPropagation();
@@ -4184,9 +4174,9 @@ function renderProfiles() {
     add.querySelector('.at-tekst').textContent = n ? 'Nieuwe ster' : 'Maak je eerste ster';
     add.setAttribute('aria-label', n ? 'Nieuwe ster maken' : 'Maak je eerste ster');
   }
-  // een familie met een nieuw toestel wil hier geen kind maken maar haar back-up
-  const hint = $('restore-hint');
-  if (hint) hint.style.display = n ? 'none' : 'block';
+  // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
+  const hint = $('over-hint');
+  if (hint) hint.style.display = n ? 'none' : 'flex';
   renderGearMenu();
   appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
@@ -7741,7 +7731,7 @@ function runTravel(t) {
       { duration: 450, easing: 'ease-out' });
     /* HET TIKJE VAN AANKOMEN ZIT IN sndAankomst -- tril 15, zie de SFX-tabel. Niet
        bij elke pas dus (dat zou een ratel zijn en geen aankomst), maar één keer,
-       hier. buzz() kijkt zelf al naar db.haptics en naar wat het toestel kan;
+       hier. buzz() kijkt zelf al naar wat het toestel kan;
        zonder trilmotor gebeurt er gewoon niets. vier() draait precies één keer per
        reis -- vanuit finish(), vanuit de wereldwissel, of meteen bij beperkte
        beweging -- en nooit opnieuw bij een hertekening, dus dubbel kan het niet.
@@ -12696,8 +12686,8 @@ function ouderVoetHtml() {
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
-// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de rij
-// onder het tandwiel (gear-over, in de markup van index.html).
+// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de
+// stille regel op het lege beginscherm (over-hint, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
@@ -12725,8 +12715,8 @@ function deelOver() {
 }
 /* Nul sterren: geen naam om te wijzigen, geen voortgang om te wissen -- en ook
    niets om een back-up van te maken. Wie hier zonder sterren komt, komt bijna
-   altijd via de hint op de sterrenkeuze ("Al een back-up?"): een nieuw toestel,
-   en een back-up die terug moet. Dus is terugzetten hier de volle knop, en staat
+   altijd om een back-up terug te zetten: een nieuw toestel, of de app op het
+   beginscherm na Safari (het blad "als app" wijst hierheen: ⚙️ → Voor ouders). Dus is terugzetten hier de volle knop, en staat
    er geen "Back-up maken" -- die schreef met nul sterren een leeg bestand weg dat
    er precies zo uitzag als een echte back-up. Eén kaart, want het is één vraag:
    waar begin je? Een ster maken is de tweede mogelijkheid, en die staat hier
@@ -13467,7 +13457,7 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
   html += `<p class="ab-uitleg">${uitleg}</p>` + (tweede ? `<div class="ab-noot">${tweede}</div>` : '');
   return { html, installeer: false };
 }
-// vanKnop: geopend via het knopje (dan telt "Niet nu"), anders via het menu.
+// vanKnop: geopend via het knopje linksboven (dan telt "Niet nu").
 function openAppBlad(vanKnop) {
   closeGearMenu();
   sndClick();
