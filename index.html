@@ -16673,7 +16673,10 @@ function renderReis() {
         `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
-    if (b.open) knop.onclick = () => reisNaarWereld(b.i, knop);
+    if (b.open) {
+      knop.onpointerdown = () => reisKaartAlvast(b.i);
+      knop.onclick = () => reisTik(b.i, knop);
+    }
     else {
 
 
@@ -17008,7 +17011,49 @@ function reisSluit(stil) {
 
 
 
-function reisNaarWereld(idx, el, stil) {
+
+
+
+
+
+
+
+
+
+
+
+function reisTik(idx, el) {
+  if (overgangBezig || tikWacht) return;
+  sndClick();
+  reisKaartAlvast(idx);
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+  naTik(() => reisNaarWereld(idx, el, true, true));
+}
+
+
+
+
+
+
+
+
+
+
+
+let reisAlvastBeeld = null;
+function reisKaartAlvast(idx) {
+  const w = worldForIndex(idx);
+  const src = w && w.world && w.world.art;
+  if (!src || (reisAlvastBeeld && reisAlvastBeeld.dataset.src === src)) return;
+  const beeld = new Image();
+  beeld.dataset.src = src;
+  beeld.src = src;
+  ART_GEHAALD.add(src);
+  reisAlvastBeeld = beeld;
+  if (beeld.decode) beeld.decode().catch(() => {});
+}
+function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
   vluchtKlaar();
   if (!stil) sndClick();
@@ -17027,7 +17072,7 @@ function reisNaarWereld(idx, el, stil) {
   }
   overgangBezig = true;
   const punt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  tapRipple(punt.x, punt.y);
+  if (!alGetikt) tapRipple(punt.x, punt.y);
   el.classList.add('vlucht-doel');
   const kopVan = reis.querySelector('.rt-ico');
   const schuif = reis.scrollTop;
