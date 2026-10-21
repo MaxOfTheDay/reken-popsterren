@@ -827,6 +827,11 @@
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 10px 4px 0;
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink-muted);
   }
+  .vg-status span.vg-reeks { display: flex; gap: 4px; margin-top: 5px; }
+  .vg-reeks i { display: block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--gold-accent); }
+  .vg-reeks i.r2, .vg-reeks i.r1 { background: var(--gold-light); }
+  .vg-reeks i.r0 { background: none; border: 2px solid var(--practice-text); box-sizing: border-box; }
+  .vg-vb { margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--lavender-wash); font-weight: 600; white-space: nowrap; }
   .vg-getal b { font-size: var(--tx-body); font-weight: 700; color: var(--paper-ink); }
   /* Het leerpad: bolletjes aan een lijntje. Vol paars = gehad, een ring = nu,
      licht = nog niet. De lijn loopt van bolletje naar bolletje en stopt bij
@@ -887,7 +892,7 @@
     padding: 10px 13px; border-radius: var(--r-sm); border: 1px dashed var(--purple-mid);
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
   }
-  .grens-tip > div { flex: 1 1 200px; }
+  .grens-tip > div { flex: 1 1 150px; }
   /* de uitleg bij een tip: wat de knop precies verandert, een tikje stiller */
   .grens-tip .tip-klein { color: var(--paper-ink-muted); }
   /* geen stem op dit toestel (zie stemNotitie): een gewone notitie, met wat lucht erboven */
