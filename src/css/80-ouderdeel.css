@@ -789,6 +789,8 @@
     font-size: var(--tx-klein); font-weight: 500; color: var(--paper-ink);
   }
   .grens-tip > div { flex: 1 1 200px; }
+  /* de uitleg bij een tip: wat de knop precies verandert, een tikje stiller */
+  .grens-tip .tip-klein { color: var(--paper-ink-muted); }
 
   /* ---- Modal (oudervraag) ---- */
   /* De padding op de achtergrond is niet cosmetisch: zonder stond een venster van

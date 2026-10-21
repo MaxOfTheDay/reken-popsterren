@@ -8548,6 +8548,8 @@
   }
   .grens-tip > div { flex: 1 1 200px; }
 
+  .grens-tip .tip-klein { color: var(--paper-ink-muted); }
+
 
 
 
@@ -12241,7 +12243,8 @@ function defaultProfile(name, dress, opts) {
       repr: opts.repr || 'objects',
       numerals: opts.numerals !== false,
       qmax: opts.qmax || 10,
-      memory: opts.memory !== false
+      memory: opts.memory !== false,
+      voorlezen: opts.voorlezen === true
     },
     trophies: [], readyTrophies: [], goldHits: 0, encores: 0,
 
@@ -12878,14 +12881,28 @@ function nlVoice() {
   return _voices.find(v => /^nl(\b|[-_])/i.test(v.lang)) || null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
+
+
+
+
+function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
+
+
+
+const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'keer', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
+function somZin(q) {
+  if (!q || !q.tmpl) return '';
+  return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
+}
 function cancelSpeech() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} }
 
 function speak(text, opts) {
   opts = opts || {};
 
 
+
   const cp = cur ? P() : null;
-  if (cp && cp.settings && cp.settings.track !== 'count') { if (opts.onEnd) opts.onEnd(); return; }
+  if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
     speechSynthesis.cancel();
@@ -18738,7 +18755,7 @@ function replayPrompt() {
     objs.forEach(o => { o.classList.remove('pop'); o.classList.add('pre'); });
     countAlong(objs, q.card.n, q.prompt, countDrawId);
   } else {
-    speak(q.prompt);
+    speak(q.prompt || somZin(q));
   }
 }
 
@@ -18771,8 +18788,21 @@ function advanceCountStage(p, success) {
   } else if ((!success || ct.acc < 0.5) && st > lo) {
     st--; ct.rung = countTopRung(st); ct.streak = 0; ct.acc = 0.55; ct.seen = 0;
   }
+  if (st !== ct.stage) ct.plafond = 0;
   ct.stage = st;
 }
+
+
+
+
+function telPlafondTel(p, stars) {
+  const ct = p.countTrack;
+  const st = countLiveStage(p);
+  if (st < countMaxStage(p.settings) || (ct.rung || 0) < countTopRung(st)) { ct.plafond = 0; return; }
+  if (stars >= 3) ct.plafond = (ct.plafond || 0) + 1;
+}
+
+function telPlafondOpnieuw(p) { if (p && p.countTrack) p.countTrack.plafond = 0; }
 
 function countMissSpeak(q, val) {
   if (q.compare) { speak('Bijna! Kijk goed welke groep ' + (q.compare === 'more' ? 'de meeste' : 'de minste') + ' heeft.'); return; }
@@ -19511,11 +19541,16 @@ function drawQuestion() {
   $('gold-banner').textContent = q.gold ? '🌟 3× 💎 🌟' : '';
 
 
-  $('btn-replay').style.display = G.count ? 'flex' : 'none';
+
+  const lezen = !G.count && stemAan(P());
+  $('btn-replay').style.display = G.count || lezen ? 'flex' : 'none';
   somVluchtWeg();
   if (G.count) { drawCountQuestion(q); return; }
   const shown = G.mode === 'typ' ? G.input : '?';
   $('question-text').innerHTML = q.tmpl.replace('@', `<span class="q-blank">${shown}</span>`);
+
+
+  if (lezen && !q.voorgelezen) { q.voorgelezen = true; speak(somZin(q)); }
 }
 function numpadPress(n) {
   if (!G || G.lock) return;
@@ -20069,7 +20104,10 @@ function endLevel(success) {
   const p = P();
   const lvl = G.lvl;
   applyRampUpdates(p, G);
-  if (G.count) advanceCountStage(p, success);
+  if (G.count) {
+    advanceCountStage(p, success);
+    telPlafondTel(p, success ? showStars(G) : 0);
+  }
 
 
 
@@ -20223,6 +20261,7 @@ function endLevel(success) {
   const naFeest = feest ? () => { if ($('screen-end').classList.contains('active')) wereldFeest(feest); } : null;
   const wacht = naSterren();
   if (naFeest) setTimeout(naFeest, wacht);
+
 
 
 
@@ -21798,7 +21837,11 @@ function niveauHtml(p) {
     bezig = `🧮 Rekenen — <b>${(s.ops || []).map(o => glyph[o] || o).join(' ')}</b> met getallen tot <b>${s.max}</b>`;
   }
   const tip = grensTip(p);
-  const tipHtml = tip ? `<div class="grens-tip" id="grens-tip">
+  const tt = telTip(p);
+  const tipHtml = tt ? `<div class="grens-tip" id="grens-tip">
+      <div>💡 ${tt.tekst}</div>
+      <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button>
+    </div>` : tip ? `<div class="grens-tip" id="grens-tip">
       <div>💡 ${esc(p.name)} haalt in de latere werelden bijna overal drie sterren met getallen tot ${s.max}.
         De sommen worden vanaf hier niet vanzelf moeilijker — wil je de grens naar ${tip.naar}?</div>
       <button class="btn small purple" id="grens-tip-ja" data-v="${tip.naar}">Tot ${tip.naar}</button>
@@ -21845,6 +21888,55 @@ function grensTip(p) {
   const naar = GRENS_LADDER.find(v => v > s.max);
   if (!naar) return null;
   return grensDrieSterren(p) - (s.grensTipBasis || 0) >= GRENS_TIP_SHOWS ? { naar } : null;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function telTip(p) {
+  const s = p.settings;
+  if (s.track !== 'count' || !p.countTrack) return null;
+  if ((p.countTrack.plafond || 0) < GRENS_TIP_SHOWS) return null;
+  const naam = esc(p.name);
+  const hi = countMaxStage(s);
+  if (hi < COUNT_STAGE_MAX) {
+    if (s.numerals === false && hi === 5) return { soort: 'cijfers',
+      tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase zonder cijfers. Mogen de cijfers erbij?`,
+      knop: 'Cijfers aan', doe: p => { p.settings.numerals = true; p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6); } };
+    return { soort: 'fase',
+      tekst: `${naam} speelt al ${GRENS_TIP_SHOWS} shows foutloos op de hoogste fase die je koos (fase ${hi}: ${COUNT_STAGE_LABELS[hi]}). Mag het verder groeien?`,
+      knop: `Tot fase ${hi + 1}`, doe: p => { p.settings.stageMax = hi + 1; } };
+  }
+  const qnaar = [6, 8, 10].find(v => v > (s.qmax || 10));
+  if (qnaar) return { soort: 'qmax',
+    tekst: `${naam} haalt bijna overal drie sterren met hoeveelheden tot ${s.qmax}. Mogen de aantallen groeien tot ${qnaar}?`,
+    knop: `Tot ${qnaar}`, doe: p => { p.settings.qmax = qnaar; } };
+  return { soort: 'rekenen',
+    tekst: `${naam} maakt de laatste fase bijna altijd in één keer goed. De telmodus heeft geen nieuwe fases meer. Klaar voor de rekenshow? `
+      + `<span class="tip-klein">Plus en min tot 10, kiezen uit 4. De stem leest de sommen nog voor (uitzetten kan bij Oefenen).</span>`,
+    knop: 'Naar rekenen', doe: naarRekenen };
+}
+
+
+
+
+function naarRekenen(p) {
+  const s = p.settings;
+  s.track = 'math';
+  s.ops = ['+', '-'];
+  s.max = 10;
+  s.mode = 'kies';
+  s.voorlezen = true;
+  s.grensTipBasis = grensDrieSterren(p);
 }
 
 
@@ -21944,7 +22036,7 @@ function oefenGroups(s, pfx) {
         <span class="hulp">${tablesRelevant ? 'Voor ✖️ en ➗.' : 'Actief zodra ✖️ of ➗ aanstaat.'}</span>
         <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, lengte en extra uitdaging', secundair: true, html: `
+    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, voorlezen, lengte en extra uitdaging', secundair: true, html: `
       <div class="set-field"><span class="lbl">Antwoorden</span>
         <div class="chip-row" id="${pfx}set-mode">
           ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
@@ -21953,6 +22045,9 @@ function oefenGroups(s, pfx) {
         </div></div>
       <div class="set-field"><span class="lbl">Vragen per optreden</span>
         <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
+      <div class="set-field"><span class="lbl">Sommen voorlezen</span>
+        <span class="hulp">Een stem leest elke som voor. Fijn voor wie net van tellen komt.</span>
+        <div class="chip-row" id="${pfx}set-voorlezen">${chip('on', 'Aan', s.voorlezen === true)}${chip('off', 'Uit', s.voorlezen !== true)}</div></div>
       <div class="set-field"><span class="lbl">Extra uitdaging</span>
         <span class="hulp">Verschijnt geleidelijk, pas als de gewone sommen goed gaan.</span>
         <div class="chip-row" id="${pfx}set-extra">
@@ -22455,6 +22550,7 @@ function bindOefenChips(s, p, pfx, done) {
     const v = parseInt(c.dataset.v, 10);
     s.stage = v;
     if (s.stageMax < v) s.stageMax = v;
+    telPlafondOpnieuw(p);
     if (p) {
       if (!p.countTrack) p.countTrack = { stage: v, rung: 0, streak: 0, seen: 0, acc: 0.5 };
       p.countTrack.stage = Math.min(Math.max(p.countTrack.stage, v), countMaxStage(s));
@@ -22464,6 +22560,7 @@ function bindOefenChips(s, p, pfx, done) {
     const v = parseInt(c.dataset.v, 10);
     s.stageMax = v;
     if (s.stage > v) s.stage = v;
+    telPlafondOpnieuw(p);
     if (p && p.countTrack) p.countTrack.stage = Math.min(p.countTrack.stage, countMaxStage(s));
   });
   bind('set-numerals', c => {
@@ -22471,9 +22568,11 @@ function bindOefenChips(s, p, pfx, done) {
 
 
     s.numerals = (c.dataset.v === 'on');
+    telPlafondOpnieuw(p);
   });
-  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); });
+  bind('set-qmax', c => { s.qmax = parseInt(c.dataset.v, 10); telPlafondOpnieuw(p); });
   bind('set-memory', c => { s.memory = (c.dataset.v === 'on'); });
+  bind('set-voorlezen', c => { s.voorlezen = (c.dataset.v === 'on'); });
   bind('set-repr', c => { s.repr = c.dataset.v; });
 }
 function bindSettings(p, s) {
@@ -22502,6 +22601,16 @@ function bindSettings(p, s) {
     saveAndFlash();
     renderSettings();
   });
+
+  on('tel-tip-ja', 'onclick', () => {
+    const tt = telTip(p);
+    if (!tt) return;
+    sndClick();
+    tt.doe(p);
+    telPlafondOpnieuw(p);
+    saveAndFlash();
+    renderSettings();
+  });
   on('set-name', 'onkeydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
     e.preventDefault();
@@ -22515,7 +22624,7 @@ function bindSettings(p, s) {
 
 
 
-  bind('set-track', c => { s.track = c.dataset.v; if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
+  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
 
 
 

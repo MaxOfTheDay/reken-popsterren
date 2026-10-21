@@ -30,6 +30,8 @@
  *   O  het geluid                       -> een tabel op naam, en stil is stil
  *   P  sterren (ster-status met pensioen) -> één regel, en geen rangvelden meer
  *   Q  de leerstap                      -> een wereld is een stap, en oude saves volgen
+ *   R  de grenstip                      -> pas na genoeg drie sterren, en opnieuw na een keuze
+ *   S  de telmodus-tip                  -> tegen het plafond aan: verder groeien, of naar rekenen
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1008,6 +1010,62 @@ zaak('R', () => {
   p.settings.max = 20;
   p.settings.track = 'count';
   check(tip() === null, 'R · in de telmodus geen getallengrens, dus geen tip', JSON.stringify(tip()));
+});
+
+zaak('S', () => {
+  const { app } = verseSter('Tel');
+  const p = app.db.profiles.p1 = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
+  app.normalizeProfiles();
+  const tip = () => { const t = app.run('telTip(P())'); return t && t.soort; };
+  const n = app.run('GRENS_TIP_SHOWS');
+  const MAX = app.COUNT_STAGE_MAX;
+  // een show op fase st, top-trap, met zoveel sterren -- zoals endLevel hem afsluit
+  const show = (st, sterren) => {
+    p.countTrack.stage = st;
+    p.countTrack.rung = app.countTopRung(st);
+    app.telPlafondTel(p, sterren);
+  };
+  check(tip() === null, 'S · een verse telster krijgt geen tip', String(tip()));
+  // het plafond dat de ouder koos: fase 4
+  p.settings.stageMax = 4;
+  for (let i = 0; i < n - 1; i++) show(4, 3);
+  check(tip() === null, 'S · één show te weinig: nog geen tip', String(tip()));
+  show(4, 2);
+  check(tip() === null, 'S · twee sterren telt niet mee', String(tip()));
+  show(4, 3);
+  check(tip() === 'fase', 'S · genoeg drie sterren op de hoogste fase: verder groeien', String(tip()));
+  app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
+  check(p.settings.stageMax === 5 && tip() === null, 'S · de knop zet het plafond één fase hoger en telt opnieuw', p.settings.stageMax);
+  // niet op de hoogste fase: telt niet
+  for (let i = 0; i < n; i++) show(3, 3);
+  check(tip() === null, 'S · onder het plafond spelen telt niet', String(tip()));
+  // cijfers uit: na fase 5 is de volgende stap de cijfers
+  p.settings.numerals = false; p.settings.stageMax = MAX;
+  for (let i = 0; i < n; i++) show(5, 3);
+  check(tip() === 'cijfers', 'S · cijfers uit en vast op fase 5: de tip zet de cijfers aan', String(tip()));
+  app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
+  check(p.settings.numerals === true && app.countMaxStage(p.settings) === MAX, 'S · cijfers aan, het bereik is weer heel', app.countMaxStage(p.settings));
+  // de laatste fase met kleine hoeveelheden: eerst de hoeveelheden
+  p.settings.qmax = 8;
+  for (let i = 0; i < n; i++) show(MAX, 3);
+  check(tip() === 'qmax', 'S · laatste fase tot 8: eerst de hoeveelheden groter', String(tip()));
+  app.run('telTip(P())').doe(p); app.telPlafondOpnieuw(p);
+  for (let i = 0; i < n; i++) show(MAX, 3);
+  check(tip() === 'rekenen', 'S · laatste fase, alles open: naar rekenen', String(tip()));
+  const sterrenVoor = JSON.stringify(p.stars);
+  app.run('telTip(P())').doe(p);
+  const s = p.settings;
+  check(s.track === 'math' && s.max === 10 && s.ops.join() === '+,-' && s.mode === 'kies' && s.voorlezen === true,
+    'S · naar rekenen: plus en min tot 10, kiezen, en de stem leest mee', JSON.stringify(s));
+  check(JSON.stringify(p.stars) === sterrenVoor, 'S · de sterren blijven staan', JSON.stringify(p.stars));
+  check(app.run('grensTip(P())') === null, 'S · en de grenstip begint daar opnieuw te tellen', JSON.stringify(app.run('grensTip(P())')));
+  check(tip() === null, 'S · in de rekenmodus geen telmodus-tip', String(tip()));
+  // de som als zin, voor Voorlezen
+  check(app.somZin({ tmpl: '7 + 3 = @' }) === 'zeven plus drie is hoeveel?', 'S · een som wordt een zin', app.somZin({ tmpl: '7 + 3 = @' }));
+  check(app.somZin({ tmpl: '12 − @ = 4' }) === '12 min hoeveel is vier?', 'S · min, en boven tien het cijfer', app.somZin({ tmpl: '12 − @ = 4' }));
+  check(app.stemAan(p) === true, 'S · met Voorlezen aan mag de stem in de rekenmodus', '');
+  s.voorlezen = false;
+  check(app.stemAan(p) === false, 'S · zonder Voorlezen zwijgt de rekenmodus zoals altijd', '');
 });
 
 klaar();
