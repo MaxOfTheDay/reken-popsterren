@@ -166,7 +166,7 @@
   #screen-journey .icon-btn:active { transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring); }
 
   /* ---- De baan ------------------------------------------------------------
-     Eén oppervlak: de nacht boven een concert in de verte. Vijf lagen, en geen
+     Eén oppervlak: de nacht boven een concert in de verte. Vier lagen, en geen
      ervan hoort op te vallen -- de tekeningen zijn de hoofdpersoon:
        korrel      dezelfde ingebakken SVG-ruis als .grain elders in de app, hier
                    ín de baan (de app-korrel ligt ónder #app en is hier dus niet
@@ -174,9 +174,6 @@
        sterren     twee tegels: veel kleine, zwakke puntjes en een handvol grotere.
                    Verschillende tegelmaten (700 en 900 hoog), zodat hun herhaling
                    nooit samen valt en je nergens een patroon ziet.
-       schijnwerpers  twee zachte bundels die vanuit het voetlicht omhoog waaieren,
-                   vast aan het venster: het licht staat ín de kamer en de reis
-                   schuift erlangs. De pop is een popster, en dit is haar podium.
        nevel       drie zachte wolken in violet, roze en blauw, op een tegel van
                    1300 hoog die over de hele baan herhaalt. Lager in dekking dan
                    de gloed om een wereld (.reis-halte::before): de kleur van een
@@ -188,7 +185,16 @@
      rechtsonder, om de reis in dezelfde kamer te zetten als de sterrenkeuze en de
      kast. Naast de geschilderde werelden lazen ze als twee gekleurde ringen die
      nergens bij hoorden; de schijnwerpers doen nu wat zij moesten doen. Een
-     wereld erbij verandert hier niets: alles herhaalt of hangt aan het venster. */
+     wereld erbij verandert hier niets: alles herhaalt.
+
+     Er stonden ook twee schijnwerpers in, vast aan het venster
+     (background-attachment: fixed). Die zag je nooit: hun bundels wezen vanaf
+     onder de onderrand nog verder naar beneden (162 tot 183 graden is omlaag), en
+     een schermafdruk met en zonder is pixel voor pixel gelijk. Wat ze wél deden:
+     een vaste laag in de baan laat de browser bij élk beeldje van het schuiven de
+     hele baan opnieuw schilderen, in plaats van hem als één vel te verschuiven --
+     en dat was het haperen op Werelden. Komen ze ooit terug, zet ze dan op een eigen
+     laag die blijft plakken (sticky) en niet in deze lijst. */
   .reis-track {
     position: relative; flex: none; width: 100%; overflow: hidden;
     height: calc(var(--reis-stap) * var(--reis-n, 8));
@@ -196,8 +202,6 @@
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='700'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='255' cy='393' r='0.6' fill-opacity='0.36'/%3E%3Ccircle cx='230' cy='354' r='0.6' fill-opacity='0.60'/%3E%3Ccircle cx='306' cy='288' r='0.8' fill-opacity='0.56'/%3E%3Ccircle cx='342' cy='54' r='1.0' fill-opacity='0.35'/%3E%3Ccircle cx='349' cy='111' r='1.1' fill-opacity='0.45'/%3E%3Ccircle cx='92' cy='35' r='1.4' fill-opacity='0.64'/%3E%3Ccircle cx='63' cy='311' r='1.5' fill-opacity='0.33'/%3E%3Ccircle cx='218' cy='385' r='1.2' fill-opacity='0.37'/%3E%3Ccircle cx='89' cy='690' r='0.9' fill-opacity='0.35'/%3E%3Ccircle cx='284' cy='231' r='0.7' fill-opacity='0.56'/%3E%3Ccircle cx='183' cy='245' r='0.6' fill-opacity='0.62'/%3E%3Ccircle cx='124' cy='619' r='1.0' fill-opacity='0.35'/%3E%3Ccircle cx='314' cy='281' r='1.3' fill-opacity='0.51'/%3E%3Ccircle cx='71' cy='157' r='1.0' fill-opacity='0.30'/%3E%3Ccircle cx='25' cy='289' r='1.2' fill-opacity='0.51'/%3E%3Ccircle cx='497' cy='227' r='0.9' fill-opacity='0.45'/%3E%3Ccircle cx='228' cy='587' r='1.0' fill-opacity='0.43'/%3E%3Ccircle cx='137' cy='166' r='1.2' fill-opacity='0.31'/%3E%3Ccircle cx='141' cy='537' r='1.4' fill-opacity='0.64'/%3E%3Ccircle cx='482' cy='602' r='1.2' fill-opacity='0.51'/%3E%3Ccircle cx='288' cy='17' r='0.8' fill-opacity='0.40'/%3E%3Ccircle cx='112' cy='275' r='1.2' fill-opacity='0.55'/%3E%3Ccircle cx='139' cy='670' r='0.5' fill-opacity='0.40'/%3E%3Ccircle cx='305' cy='309' r='0.6' fill-opacity='0.65'/%3E%3Ccircle cx='237' cy='611' r='1.1' fill-opacity='0.44'/%3E%3Ccircle cx='65' cy='555' r='1.4' fill-opacity='0.36'/%3E%3Ccircle cx='13' cy='108' r='1.2' fill-opacity='0.53'/%3E%3Ccircle cx='343' cy='609' r='0.7' fill-opacity='0.58'/%3E%3Ccircle cx='88' cy='26' r='0.6' fill-opacity='0.27'/%3E%3Ccircle cx='279' cy='582' r='1.3' fill-opacity='0.32'/%3E%3Ccircle cx='257' cy='36' r='0.8' fill-opacity='0.45'/%3E%3Ccircle cx='33' cy='249' r='0.7' fill-opacity='0.38'/%3E%3Ccircle cx='411' cy='96' r='0.7' fill-opacity='0.26'/%3E%3Ccircle cx='324' cy='60' r='0.9' fill-opacity='0.30'/%3E%3Ccircle cx='249' cy='290' r='0.5' fill-opacity='0.55'/%3E%3Ccircle cx='235' cy='517' r='0.8' fill-opacity='0.62'/%3E%3Ccircle cx='373' cy='447' r='0.8' fill-opacity='0.40'/%3E%3Ccircle cx='40' cy='617' r='0.6' fill-opacity='0.29'/%3E%3Ccircle cx='97' cy='213' r='0.5' fill-opacity='0.49'/%3E%3Ccircle cx='229' cy='264' r='1.0' fill-opacity='0.61'/%3E%3Ccircle cx='275' cy='295' r='0.6' fill-opacity='0.61'/%3E%3Ccircle cx='344' cy='349' r='1.4' fill-opacity='0.52'/%3E%3Ccircle cx='238' cy='677' r='1.4' fill-opacity='0.42'/%3E%3Ccircle cx='259' cy='492' r='1.3' fill-opacity='0.62'/%3E%3Ccircle cx='283' cy='693' r='1.1' fill-opacity='0.58'/%3E%3Ccircle cx='229' cy='53' r='1.5' fill-opacity='0.48'/%3E%3Ccircle cx='339' cy='274' r='1.3' fill-opacity='0.57'/%3E%3Ccircle cx='261' cy='311' r='1.4' fill-opacity='0.54'/%3E%3Ccircle cx='27' cy='258' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='343' cy='108' r='1.2' fill-opacity='0.33'/%3E%3Ccircle cx='104' cy='369' r='0.8' fill-opacity='0.27'/%3E%3Ccircle cx='499' cy='360' r='0.5' fill-opacity='0.41'/%3E%3Ccircle cx='96' cy='460' r='0.7' fill-opacity='0.55'/%3E%3Ccircle cx='159' cy='635' r='1.1' fill-opacity='0.41'/%3E%3Ccircle cx='432' cy='125' r='0.8' fill-opacity='0.42'/%3E%3Ccircle cx='465' cy='398' r='0.6' fill-opacity='0.32'/%3E%3Ccircle cx='252' cy='175' r='0.9' fill-opacity='0.46'/%3E%3Ccircle cx='172' cy='19' r='0.6' fill-opacity='0.55'/%3E%3Ccircle cx='237' cy='387' r='1.4' fill-opacity='0.30'/%3E%3Ccircle cx='211' cy='156' r='0.9' fill-opacity='0.27'/%3E%3C/g%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='900'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='233' cy='560' r='0.9' fill-opacity='0.58'/%3E%3Ccircle cx='80' cy='23' r='1.8' fill-opacity='0.67'/%3E%3Ccircle cx='451' cy='881' r='1.0' fill-opacity='0.44'/%3E%3Ccircle cx='223' cy='658' r='1.0' fill-opacity='0.65'/%3E%3Ccircle cx='160' cy='642' r='1.8' fill-opacity='0.60'/%3E%3Ccircle cx='429' cy='390' r='1.4' fill-opacity='0.38'/%3E%3Ccircle cx='21' cy='22' r='1.8' fill-opacity='0.89'/%3E%3Ccircle cx='163' cy='429' r='1.6' fill-opacity='0.81'/%3E%3Ccircle cx='272' cy='465' r='2.1' fill-opacity='0.55'/%3E%3Ccircle cx='493' cy='153' r='1.1' fill-opacity='0.56'/%3E%3Ccircle cx='437' cy='882' r='0.9' fill-opacity='0.57'/%3E%3Ccircle cx='326' cy='807' r='0.9' fill-opacity='0.75'/%3E%3C/g%3E%3C/svg%3E"),
-      conic-gradient(from 162deg at 10% 112%, transparent 0deg, rgba(var(--voetlicht-rgb),.13) 7deg, rgba(var(--voetlicht-rgb),.04) 17deg, transparent 21deg),
-      conic-gradient(from 179deg at 90% 112%, transparent 0deg, rgba(190,160,255,.13) 5deg, rgba(190,160,255,.04) 15deg, transparent 19deg),
       radial-gradient(60% 18% at 15% 30%, rgba(120,90,255,.2), transparent 70%),
       radial-gradient(55% 16% at 90% 62%, rgba(255,90,190,.16), transparent 70%),
       radial-gradient(70% 20% at 30% 88%, rgba(70,170,255,.14), transparent 70%),
@@ -205,14 +209,13 @@
          sterren er iets uit springen; onderaan blijft hij warm paars, waar het
          voetlicht staat. */
       linear-gradient(to top, #3a1650 0%, #26103c 25%, #1a0c30 60%, #120826 100%);
-    background-size: 160px 160px, 520px 700px, 520px 900px, 100% 100%, 100% 100%,
+    background-size: 160px 160px, 520px 700px, 520px 900px,
       100% 1300px, 100% 1300px, 100% 1300px, 100% 100%;
-    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat,
+    background-repeat: repeat, repeat, repeat,
       repeat-y, repeat-y, repeat-y, no-repeat;
-    background-attachment: scroll, scroll, scroll, fixed, fixed, scroll, scroll, scroll, scroll;
     /* de korrel wrijft in de nacht in plaats van er grijs overheen te liggen; de
        rest blijft gewoon wat het is */
-    background-blend-mode: soft-light, normal, normal, normal, normal, normal, normal, normal, normal;
+    background-blend-mode: soft-light, normal, normal, normal, normal, normal, normal;
   }
   /* Het voetlicht onderaan: de reis komt ergens vandaan. Warm, breed, en zo zwak
      dat het geen band wordt. */
