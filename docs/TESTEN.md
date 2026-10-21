@@ -305,7 +305,9 @@ die `shopItems()` teruggeeft. Puur rekenwerk, dus zonder browser.
 - **Podia**: elke uitgebrachte wereld heeft één podium van drie stukken (de schat
   plus twee koopstukken in andere plekken, geen stuk in twee podia); van jou is
   afgeleid uit `p.owned`; de lade houdt de horizon van de reis; een podium kopen
-  koopt de ontbrekende stukken, en zonder schat valt er niets te kopen.
+  koopt de ontbrekende stukken, en zonder schat valt er niets te kopen. De
+  stukjes in de podiumbalk doen wat een kaartje in het rek doet (kiezen, aandoen,
+  los kopen) zonder dat je Podia uit gaat, en de keuze schuift na een koop door.
 
 ### `test/hub.test.js` — de Dev Studio
 
