@@ -37,7 +37,7 @@
      Trilfeedback ....... haptics
      Geluid ............. de SFX-tabel: klankjes op naam van de gebeurtenis,
                           live gemaakt met oscillatoren. Geen bestanden
-     Gesproken opdrachten  nl-NL stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
+     Gesproken opdrachten  nl-BE stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
 
    ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
@@ -2877,8 +2877,10 @@ function toggleSound() {
 
 /* ================= Gesproken opdrachten (telmodus) =================
    Kleuters kunnen nog niet lezen, dus in de telmodus wordt élke opdracht
-   hardop voorgelezen met de ingebouwde spraak van het toestel (SpeechSynthesis,
-   nl-NL). Niet elk toestel heeft een Nederlandse stem -- daarom is spraak nooit
+   hardop voorgelezen met de ingebouwde spraak van het toestel (SpeechSynthesis).
+   De stem is Vlaams (nl-BE) waar het toestel er een heeft -- iPad, iPhone, Mac
+   en Android meestal wel, Chrome op Windows niet -- en anders Nederlands (nl-NL),
+   en anders welke Nederlandstalige stem er ook is. Niet elk toestel heeft een Nederlandse stem -- daarom is spraak nooit
    de énige drager: de vraag staat altijd óók volledig in beeld (objecten/stippen),
    en een 🔊-knop leest de opdracht op verzoek opnieuw voor. Ontbreekt een stem,
    dan blijft alles gewoon speelbaar, enkel zonder stemgeluid. */
@@ -2888,9 +2890,13 @@ const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 
 function numWord(n) { return NUM_NL[n] != null ? NUM_NL[n] : String(n); }
 let _voices = [];
 function refreshVoices() { try { _voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { _voices = []; } }
+// Vlaams eerst, dan Nederlands, dan elke andere nl-stem. Sommige toestellen
+// schrijven nl_BE met een liggend streepje, vandaar [-_].
+const STEM_VOORKEUR = [/^nl[-_]BE$/i, /^nl[-_]NL$/i, /^nl(\b|[-_])/i];
 function nlVoice() {
   if (!_voices.length) refreshVoices();
-  return _voices.find(v => /^nl(\b|[-_])/i.test(v.lang)) || null;
+  for (const re of STEM_VOORKEUR) { const v = _voices.find(x => re.test(x.lang)); if (v) return v; }
+  return null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
 /* Mag deze ster een stem horen? In de telmodus altijd. In de rekenmodus alleen
@@ -2900,8 +2906,9 @@ function hasSpeech() { return 'speechSynthesis' in window; }
 function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
 /* Een rekensom als zin: "7 + 3 = @" -> "zeven plus drie is hoeveel?". Het
    sjabloon is dezelfde bron als wat er in beeld staat, dus ze kunnen niet
-   uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor. */
-const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'keer', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
+   uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor.
+   × is "maal", zoals op een Vlaamse school. */
+const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'maal', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
 function somZin(q) {
   if (!q || !q.tmpl) return '';
   return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
@@ -2921,7 +2928,9 @@ function speak(text, opts) {
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
-    u.lang = 'nl-NL';
+    // De taal volgt de gekozen stem: Safari op iOS kijkt soms alleen naar lang. Zonder
+    // stemmenlijst (die komt soms pas later binnen) vragen we gewoon om Vlaams.
+    u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
     u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
     u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
     if (opts.onEnd) u.onend = opts.onEnd;
@@ -6594,7 +6603,10 @@ function renderReis() {
         `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
-    if (b.open) knop.onclick = () => reisNaarWereld(b.i, knop);
+    if (b.open) {
+      knop.onpointerdown = () => reisKaartAlvast(b.i);
+      knop.onclick = () => reisTik(b.i, knop);
+    }
     else {
       /* aria-disabled en niet disabled. Een <button disabled> krijgt geen enkele
          gebeurtenis en ook geen :active, en dat maakte een wereld op slot het enige
@@ -6929,7 +6941,49 @@ function reisSluit(stil) {
    Wat er NIET gebeurt: er wordt niets afgemaakt, niets vrijgespeeld en niets
    verzet. reisDoel is één opdracht aan de eerstvolgende kaart en goMap verbruikt
    hem meteen; p.level, de sterren en de grens blijven precies staan. */
-function reisNaarWereld(idx, el, stil) {
+/* ---- De tik op een bestemming: eerst antwoorden, dan pas vliegen ----
+   Hetzelfde als naTik (zie "Eerst antwoorden, dan pas het zware werk"), voor de
+   tik die Cloudflare daarna als traagste meldde: een wereld kiezen op Werelden.
+   De vlucht bouwt de hele kaart van die wereld op en meet hem een paar keer op;
+   gebeurde dat binnen de tik, dan wachtte de tik ruim een halve seconde op het
+   volgende beeldje (6× vertraagd, gemeten). Nu komen het geluid, het indrukken
+   en de rimpel meteen, en vertrekt de vlucht één beeldje later. reisNaarWereld
+   zelf blijft synchroon, net als navGo: de suites roepen hem rechtstreeks aan.
+
+   De rimpel staat hier en niet meer alleen in reisNaarWereld: daar komt hij pas
+   in de taak die ook de kaart bouwt, en dan tekent hij pas ná al dat werk. */
+function reisTik(idx, el) {
+  if (overgangBezig || tikWacht) return;
+  sndClick();
+  reisKaartAlvast(idx);
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+  naTik(() => reisNaarWereld(idx, el, true, true));
+}
+/* De tekening van de bestemming alvast ophalen én uitpakken, bij het neerzetten
+   van de vinger. Tussen neerzetten en loslaten zit op een telefoon zo'n honderd
+   milliseconden, en die waren ongebruikt: de kaart vroeg zijn tekening pas aan
+   als de vlucht al begon, en het eerste beeldje van de vlucht wachtte dan tot hij
+   uitgepakt was (1215×2160, het zwaarste plaatje van de app).
+
+   Alleen de wereld waar de vinger op staat -- niet alles wat op Werelden in
+   beeld is. Dat zou bij elke keer kijken een handvol volle tekeningen ophalen,
+   en dat is precies wat "nooit alles" (zie DE ZWARE SPULLEN) uitsluit. decode()
+   zet het uitgepakte beeld in de gedeelde voorraad van de browser, en de kaart
+   tekent dezelfde URL. reisAlvastBeeld houdt hem vast tot hij klaar is. */
+let reisAlvastBeeld = null;
+function reisKaartAlvast(idx) {
+  const w = worldForIndex(idx);
+  const src = w && w.world && w.world.art;
+  if (!src || (reisAlvastBeeld && reisAlvastBeeld.dataset.src === src)) return;
+  const beeld = new Image();
+  beeld.dataset.src = src;
+  beeld.src = src;
+  ART_GEHAALD.add(src);
+  reisAlvastBeeld = beeld;
+  if (beeld.decode) beeld.decode().catch(() => {});
+}
+function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
   vluchtKlaar();                             // zie openReis: eerst afsluiten, dan pas klassen
   if (!stil) sndClick();
@@ -6948,7 +7002,7 @@ function reisNaarWereld(idx, el, stil) {
   }
   overgangBezig = true;
   const punt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  tapRipple(punt.x, punt.y);                 // de tik komt aan, meteen en zonder wachten
+  if (!alGetikt) tapRipple(punt.x, punt.y);  // de tik komt aan (via reisTik: die gaf hem al)
   el.classList.add('vlucht-doel');           // dit kaartje ligt vanaf nu in de lucht
   const kopVan = reis.querySelector('.rt-ico');
   const schuif = reis.scrollTop;             // display:none zet de schuifstand terug op nul
@@ -8359,14 +8413,16 @@ function genTriple(s, lvl, perf, op) {
     } while (++poging < 40);
     sym = op === '+' ? '+' : '−';
   } else if (op === 'x') {
+    /* Een tafel loopt altijd van × 1 tot × 10; t laat hem nog steeds rustig
+       beginnen. Vroeger knipte "Getallen tot" hem ongezegd af (tot 20 en de
+       tafel van 7 gaf nooit meer dan 7 × 2) -- die grens is nu alleen van plus
+       en min (zie oefenGroups). */
     b = pick(tables);
-    const maxA = Math.max(1, Math.min(10, Math.floor(s.max / b)));
-    a = rnd(1, Math.max(1, Math.round(maxA * t)));
+    a = rnd(1, Math.max(1, Math.round(10 * t)));
     c = a * b; sym = '×';
   } else { // ':'
     b = pick(tables);
-    const maxQ = Math.max(1, Math.min(10, Math.floor(s.max / b)));
-    const q = rnd(1, Math.max(1, Math.round(maxQ * t)));
+    const q = rnd(1, Math.max(1, Math.round(10 * t)));
     a = q * b; c = q; sym = ':';
   }
   return { a, b, c, sym, op, t, effMax };
@@ -9288,7 +9344,9 @@ function pickRefresh(p, s, mag) {
   let best = null, bestOver = -1;
   for (const k of Object.keys(p.learned)) {
     const e = p.learned[k];
-    if (!ops.includes(e.op) || e.ans > s.max || (mag && !mag(k))) continue;
+    // de grens geldt alleen voor plus en min; een tafel loopt altijd tot × 10
+    const teGroot = (e.op === '+' || e.op === '-') && e.ans > s.max;
+    if (!ops.includes(e.op) || teGroot || (mag && !mag(k))) continue;
     const over = now - e.due;
     if (over >= 0 && over > bestOver) { best = k; bestOver = over; }
   }
@@ -11847,8 +11905,7 @@ function renderNewStar() {
               <span class="sr-val">${oefenSamenvatting(s)}</span></span>
           </summary>
           <div class="set-reveal-body">
-            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">
-              <div class="rg-title">${g.ico} ${g.title}</div>${g.html}</div>`).join('')}
+            ${oefenGroups(s, 'ns-').map(g => `<div class="reveal-group">${g.html}</div>`).join('')}
             <div class="note" style="margin-top:14px">Later te wijzigen bij 👨‍👩‍👧 Voor ouders.</div>
           </div>
         </details>
@@ -12112,7 +12169,8 @@ function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   return [
     { kort: 'rustig beginnen', lang: 'Rustig beginnen, met de kleinere getallen.' },
-    { kort: `tot ${s.max}`, lang: `Sommen met het hele bereik, tot ${s.max}.` },
+    plusMin ? { kort: `tot ${s.max}`, lang: `Sommen met het hele bereik, tot ${s.max}.` }
+            : { kort: 'hele tafels', lang: 'De hele tafels, tot × 10.' },
     plusMin && s.max > 10 && { kort: 'over het tiental', lang: 'Over het tiental heen, zoals 8 + 5.' },
     s.missNum !== false && { kort: 'zoek het getal', lang: 'Zoek het getal dat ontbreekt, zoals 7 + ? = 12.' },
     s.chain3 !== false && s.ops.includes('+') && { kort: 'drie getallen', lang: 'Drie getallen optellen, zoals 3 + 4 + 2.' },
@@ -12168,7 +12226,8 @@ function leerpadHtml(p) {
     noot = 'Het spel gaat vanzelf een fase hoger als het goed gaat, en terug als het even te moeilijk is.';
   } else {
     const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
-    kop = `rekenen ${(s.ops || []).map(o => glyph[o] || o).join(' ')} tot ${s.max}`;
+    const plusMin = s.ops.includes('+') || s.ops.includes('-');
+    kop = `rekenen ${(s.ops || []).map(o => glyph[o] || o).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
     const stappen = leerpadStappen(s);
     const w = continueWorld(p) + 1;                    // de wereld waar het kind nu speelt
     const laatste = LEERSTAPPEN.length;
@@ -12305,6 +12364,8 @@ function grensTip(p) {
   if (s.track === 'count') return null;
   if (grensDrieSterren(p) - (s.grensTipBasis || 0) < GRENS_TIP_SHOWS) return null;
   if (MODE_LADDER[s.mode]) return { soort: 'mode', naar: MODE_LADDER[s.mode] };
+  // de grens is alleen van plus en min: tafels lopen altijd tot × 10
+  if (!s.ops.includes('+') && !s.ops.includes('-')) return null;
   const naar = GRENS_LADDER.find(v => v > s.max);
   return naar ? { soort: 'grens', naar } : null;
 }
@@ -12382,7 +12443,10 @@ const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder',
 const faseStartOpen = {};               // per voorvoegsel: zette de ouder "Begint je kind hoger?" open?
 function oefenGroups(s, pfx, hier) {    // -> [{ ico, title, sub, secundair?, html }]
   pfx = pfx || '';                       // hier: { fase, naam } van het kind, als er een is
-  const opDefs = [['+', '➕ Plus'], ['-', '➖ Min'], ['x', '✖️ Maal'], [':', '➗ Delen']];
+  // Het teken alleen, groot: een ouder leest + − × ÷ sneller dan "Plus" of "Delen".
+  // Het woord staat er voor een schermlezer nog bij (aria-label).
+  const opDefs = [['+', '+', 'Plus'], ['-', '−', 'Min'], ['x', '×', 'Maal'], [':', '÷', 'Delen']];
+  const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const tablesRelevant = s.ops.includes('x') || s.ops.includes(':');
   // Welke fases áángeboden mogen worden hangt ALLEEN van cijfers-aan/uit af
   // (1–12, of 1–5 zonder cijfers) -- niet van de al gekozen bovengrens. Anders
@@ -12422,8 +12486,35 @@ function oefenGroups(s, pfx, hier) {    // -> [{ ico, title, sub, secundair?, ht
       + `<span class="fl-n">${v}</span><span class="fl-naam">${COUNT_STAGE_LABELS[v]}</span>${r ? `<span class="fl-r">${r}</span>` : ''}</button>`
       + (v === hi && hi < availMax ? '<div class="fl-grens">🔒 tot hier</div>' : '');
   }).join('');
+  /* OEFENEN IN TWEE KAARTEN. Hiervoor stond elk veld er drie keer: kaarttitel,
+     onderregel, label en een hulpregel ("Wat oefenen / Kies de bewerkingen en
+     het bereik / Bewerkingen"), zo'n 110 woorden op een scherm van anderhalve
+     telefoon. Nu:
+       1. de hoofdkaart: wat, en hoe moeilijk. Kleine labels, geen titel.
+       2. een stille kaart met losse rijen, zoals onder het tandwiel: icoon,
+          woord, stand. De hele rij is de knop.
+     De modus staat er niet meer bovenaan maar als schakelaar onderaan het
+     paneel (zie oefenenPanelHtml): die kies je één keer.
+     Alles blijft .chip met een data-v in een houder met het oude id -- daar
+     hangt bindOefenChips aan, en de tests ook. */
+  const lbl = (tekst, teken) => `<div class="oe-lbl">${teken ? `<span class="oe-teken">${teken}</span>` : ''}${tekst}</div>`;
+  /* Eén keuze uit een rij (tot 10 · 20 · 50 · 100, kiezen · mix · typen): een
+     balk met gelijke vakken, dezelfde vorm als "vragen per show" en de
+     moduskeuze onderaan. Van links naar rechts wordt het moeilijker. Eerst was
+     dit een trap met treden die naar rechts hoger werden, maar de lege treden
+     lazen als uitgeschakeld in plaats van als te kiezen. */
+  const balk = (id, items, sel) => `<div class="oe-seg" id="${pfx}${id}">${items.map(([v, t]) => chip(v, t, v === sel)).join('')}</div>`;
+  // Een rij die aan of uit staat. data-v is wat een tik ervan maakt (zie
+  // bindOefenChips: 'on'/'off', of bij de extra's de naam van de vlag).
+  const schakel = (v, ico, woord, aan, naam) => `<button class="chip oe-rij${aan ? ' on' : ''}" data-v="${v}" role="switch" aria-checked="${aan}"${naam ? ` aria-label="${naam}"` : ''}>`
+    + `<span class="oe-i" aria-hidden="true">${ico}</span><span class="oe-w">${woord}</span><span class="oe-stand">${aan ? 'Aan' : 'Uit'}</span></button>`;
+  const aanUit = (id, ico, woord, aan) => `<div id="${pfx}${id}">${schakel(aan ? 'off' : 'on', ico, woord, aan)}</div>`;
+  // Een rij met een klein keuzerijtje rechts, voor de getallen die zelden veranderen.
+  const klein = (id, ico, woord, waarden, sel) => `<div class="oe-rij vast"><span class="oe-i" aria-hidden="true">${ico}</span>`
+    + `<span class="oe-w">${woord}</span><span class="oe-mini" id="${pfx}${id}">${waarden.map(v => chip(v, v, sel === v)).join('')}</span></div>`;
+  const perShow = klein('set-perlevel', '🎤', 'Vragen per show', [5, 8, 10], s.perLevel);
   if (s.track === 'count') return [{
-    ico: '🔢', title: 'Hoe ver mag het groeien?', sub: 'Het spel klimt zelf. Tik een fase om er de grens te zetten.', html: `
+    html: `${lbl('Fases · het spel klimt zelf')}
       <div class="fase-ladder" id="${pfx}set-stagemax">${ladder}</div>
       <details class="set-reveal fase-start" id="${pfx}fase-start"${s.stage > 1 || faseStartOpen[pfx] ? ' open' : ''}>
         <summary><span class="sr-text"><span class="sr-title">Begint je kind hoger?</span>
@@ -12431,53 +12522,37 @@ function oefenGroups(s, pfx, hier) {    // -> [{ ico, title, sub, secundair?, ht
         <div class="set-field"><span class="hulp">Het spel begint hier, en zakt nooit lager.</span>${stageChips('set-stage', s.stage)}</div>
       </details>`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Weergave, hoeveelheden, lengte en memory', secundair: true, html: `
-      <div class="set-field"><span class="lbl">Cijfers tonen</span>
-        <span class="hulp">Cijfers, minder stippensteun en meer redeneren vanaf fase 6.</span>
-        <div class="chip-row" id="${pfx}set-numerals">${chip('on', 'Aan', s.numerals !== false)}${chip('off', 'Uit', s.numerals === false)}</div></div>
-      <div class="set-field"><span class="lbl">Hoogste hoeveelheid</span>
-        <span class="hulp">Hoe ver de aantallen mogen groeien.</span>
-        <div class="chip-row" id="${pfx}set-qmax">${[6, 8, 10].map(v => chip(v, v, (s.qmax || 10) === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Antwoorden tonen als</span>
-        <span class="hulp">Bij Mix wisselt het per vraag.</span>
+    secundair: true, html: `
+      ${aanUit('set-numerals', '🔢', 'Cijfers', s.numerals !== false)}
+      ${aanUit('set-memory', '🃏', 'Memory', s.memory !== false)}
+      ${klein('set-qmax', '🍎', 'Hoeveelheden tot', [6, 8, 10], s.qmax || 10)}
+      ${perShow}
+      <div class="oe-rij vast oe-rij-blok"><span class="oe-w">Tonen als</span>
         <div class="chip-row drie-op-een-rij" id="${pfx}set-repr">${
           reprChip('objects', '🧸', 'Voorwerpen', (s.repr || 'objects') === 'objects')}${
           reprChip('dots', '⚫', 'Stippen', s.repr === 'dots')}${
-          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>
-      <div class="set-field"><span class="lbl">Memory-spel</span>
-        <span class="hulp">Op de kaart: zoek de gelijke hoeveelheden.</span>
-        <div class="chip-row" id="${pfx}set-memory">${chip('on', 'Aan', s.memory !== false)}${chip('off', 'Uit', s.memory === false)}</div></div>
-      <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>`
+          reprChip('mix', '🎲', 'Mix', s.repr === 'mix')}</div></div>`
   }];
+  /* + − en × ÷ hebben elk hun eigen maat, en die staat er alleen als ze geldt.
+     "Getallen tot" gold vroeger ongezegd ook voor de tafels: met tot 20 en de
+     tafel van 7 kwam er nooit meer dan 7 × 2. Nu is "tot" alleen van plus en
+     min, en loopt een tafel altijd van × 1 tot × 10 (zie genTriple). */
   return [{
-    ico: '🎓', title: 'Wat oefenen', sub: 'Kies de bewerkingen en het bereik', html: `
-      <div class="set-field"><span class="lbl">Bewerkingen</span>
-        <div class="chip-row ops-grid" id="${pfx}set-ops">${opDefs.map(([v, l]) => chip(v, l, s.ops.includes(v))).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Getallen tot</span>
-        <div class="chip-row" id="${pfx}set-max">${[10, 20, 50, 100].map(v => chip(v, v, s.max === v)).join('')}</div></div>
-      <div class="set-field ${tablesRelevant ? '' : 'inactive'}"><span class="lbl">Tafels van</span>
-        <span class="hulp">${tablesRelevant ? 'Voor ✖️ en ➗.' : 'Actief zodra ✖️ of ➗ aanstaat.'}</span>
-        <div class="chip-row" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div></div>`
+    html: `${lbl('Sommen')}
+      <div class="oe-ops" id="${pfx}set-ops">${opDefs.map(([v, teken, woord]) =>
+        `<button class="chip${s.ops.includes(v) ? ' on' : ''}" data-v="${v}" aria-label="${woord}" aria-pressed="${s.ops.includes(v)}">${teken}</button>`).join('')}</div>
+      ${plusMin ? `${lbl('tot', '+ −')}${balk('set-max', [[10, '10'], [20, '20'], [50, '50'], [100, '100']], s.max)}` : ''}
+      ${tablesRelevant ? `${lbl('tafels van', '× ÷')}
+      <div class="oe-tafels" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}
+      ${lbl('Antwoord')}${balk('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}`
   }, {
-    ico: '⚙️', title: 'Meer opties', sub: 'Antwoorden, voorlezen, lengte en extra uitdaging', secundair: true, html: `
-      <div class="set-field"><span class="lbl">Antwoorden</span>
-        <div class="chip-row" id="${pfx}set-mode">
-          ${chip('kies', 'Kiezen uit 4', s.mode === 'kies')}
-          ${chip('typ', 'Zelf typen', s.mode === 'typ')}
-          ${chip('mix', 'Afwisselen', s.mode === 'mix')}
-        </div></div>
-      <div class="set-field"><span class="lbl">Vragen per optreden</span>
-        <div class="chip-row" id="${pfx}set-perlevel">${[5, 8, 10].map(v => chip(v, v, s.perLevel === v)).join('')}</div></div>
-      <div class="set-field"><span class="lbl">Sommen voorlezen</span>
-        <span class="hulp">Een stem leest elke som voor. Fijn voor wie net van tellen komt.</span>
-        <div class="chip-row" id="${pfx}set-voorlezen">${chip('on', 'Aan', s.voorlezen === true)}${chip('off', 'Uit', s.voorlezen !== true)}</div></div>
-      <div class="set-field"><span class="lbl">Extra uitdaging</span>
-        <span class="hulp">Verschijnt geleidelijk, pas als de gewone sommen goed gaan.</span>
-        <div class="chip-row" id="${pfx}set-extra">
-          ${chip('missNum', '🔍 Zoek het getal', s.missNum !== false)}
-          ${chip('chain3', '➕ Drie getallen', s.chain3 !== false)}
-        </div></div>`
+    secundair: true, html: `
+      ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
+      <div id="${pfx}set-extra">
+        ${schakel('missNum', '🔍', '<span class="oe-som">4 + <i></i> = 9</span>', s.missNum !== false, 'Zoek het getal')}
+        ${schakel('chain3', '➕', '<span class="oe-som">2 + 3 + 4</span>', s.chain3 !== false, 'Drie getallen')}
+      </div>
+      ${perShow}`
   }];
 }
 /* Wat er in de dichte openklapper te lezen staat: een ouder die hem nooit opent
@@ -12488,61 +12563,36 @@ function oefenSamenvatting(s) {
     return `fase ${s.stage}${top > s.stage ? '–' + top : ''}`
          + ` · hoeveelheden tot ${s.qmax || 10} · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
   }
-  const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
-  const modes = { kies: 'kiezen uit 4', typ: 'zelf typen', mix: 'afwisselend' };
+  // dezelfde volgorde en dezelfde tekens als de velden (zie oefenGroups)
+  const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
+  const modes = { kies: 'kiezen', typ: 'typen', mix: 'mix' };
+  const tot = (s.ops.includes('+') || s.ops.includes('-')) ? ` · tot ${s.max}` : '';
   const tafels = (s.ops.includes('x') || s.ops.includes(':'))
     ? ` · tafels ${s.tables.slice().sort((a, b) => a - b).join(', ')}` : '';
-  return `${s.ops.map(o => glyph[o] || o).join(' ')} · tot ${s.max}${tafels}`
+  return `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${tot}${tafels}`
        + ` · ${modes[s.mode] || s.mode} · ${s.perLevel} ${mv(s.perLevel, 'vraag', 'vragen')}`;
 }
-/* FASE 5D -- vier beslissingen, en ze zijn niet even groot.
-   Dit is het drukste scherm van het ouderdeel, en alle drie de kaarten stonden in
-   dezelfde .primary-omlijsting: modus, wat oefenen en hoe spelen vroegen even hard
-   om aandacht. De volgorde die een ouder nodig heeft is:
-
-     1. MODUS             -- leren tellen of rekenen. Verandert alles eronder.
-     2. WAT / VANAF WAAR  -- de bewerkingen en het bereik, of de startfase.
-     3. HOE VER           -- de hoogste fase (alleen in de telmodus).
-     4. DE REST           -- weergave, lengte, extra uitdaging.
-
-   1 t/m 3 houden de paarse omlijsting; 4 staat in een rustige kaart met een grijs
-   tegeltje ("Meer opties"). Niets is weggestopt -- de velden staan er allemaal nog,
-   zichtbaar, in dezelfde volgorde. Alleen het gewicht verschilt nu.
-
-   Waarom geen openklapper: het zijn er drie tot vijf, ze passen ruim, en een
-   ouder die de antwoordmethode wil omzetten hoort daar niet eerst naar te moeten
-   zoeken. Een stillere kaart doet hier hetzelfde werk als wegklappen, zonder
-   iets te verbergen. */
+/* DE VOLGORDE VAN OEFENEN. Eerst wat het kind oefent en hoe moeilijk (de
+   hoofdkaart), dan de extra's (de stille kaart), en helemaal onderaan de modus.
+   Hiervoor stond de modus bovenaan in de grootste kaart van het scherm, met
+   een uitleg erbij, terwijl hij één keer gekozen wordt -- meestal al bij het
+   maken van de ster, en daarna nog één keer als de tip in Voortgang zegt dat
+   het tijd is om te rekenen.
+   Onderaan is hij een schakelaar met twee gelijke helften (.oe-modus), in de
+   vorm van de tabbalk erboven maar stiller, op de donkere achtergrond. Bewust
+   géén "Naar tellen ›": een pijl leest als een volgende stap, en tellen is
+   geen stap na rekenen maar een andere manier van spelen. Wisselen kost niets
+   -- elke modus houdt zijn eigen instellingen -- dus er komt geen vraag
+   "weet je het zeker" tussen. */
 function oefenenPanelHtml(p, s) {
   const isCount = s.track === 'count';
-  // gemeenschappelijke kop: kiezen tussen de rekenshow en de lees-vrije telmodus.
-  // Het icoon van de kaartkop is vast (🎮) en niet dat van de gekozen modus: een kop
-  // die zijn eigen chip herhaalt zegt niets extra's en maakt de rangorde juist
-  // vlakker. De twee modi hebben elk hun eigen icoon -- 🧸 tellen, 🧮 rekenen --
-  // en die staan alleen in de chips.
-  // De twee keuzes zijn de zwaarste van dit scherm, dus staan ze als twee volle
-  // helften naast elkaar (.mode-row) in plaats van als twee pillen in een rij --
-  // en de gekozene draagt een vinkje, zodat "dit staat aan" niet alleen van de
-  // vulling hoeft te komen.
-  const modeChip = (v, ico, label) => `<button class="chip gestapeld${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
-    + `<span class="mc-ico" aria-hidden="true">${ico}</span><span class="mc-label">${label}</span></button>`;
-  const modeCard = `
-    <div class="set-card primary">
-      <div class="set-card-head"><div class="ico">🎮</div><div><h2>Modus</h2><div class="sub">Hoe ${esc(p.name)} speelt</div></div></div>
-      <div class="set-field"><span class="lbl">Manier van spelen</span>
-        <div class="chip-row mode-row" id="set-track">
-          ${modeChip('count', '🧸', 'Leren tellen')}
-          ${modeChip('math', '🧮', 'Rekenen')}
-        </div>
-        <div class="note" style="margin-top:8px">${isCount ? 'Lees-vrij: gesproken opdrachten en hoeveelheden i.p.v. cijfers. Ideaal voor kleuters die nog niet lezen.' : 'De gewone rekenshow met cijfers en sommen.'}</div></div>
-    </div>`;
-  // de kaarten die per modus verschillen
   const cards = oefenGroups(s, '', isCount ? { fase: countLiveStage(p), naam: p.name } : null).map(g => `
-    <div class="set-card${g.secundair ? ' secundair' : ' primary'}">
-      <div class="set-card-head"><div class="ico">${g.ico}</div><div><h2>${g.title}</h2><div class="sub">${g.sub}</div></div></div>
-      ${g.html}
-    </div>`).join('');
-  return `<div class="settings-panel">${modeCard}${cards}</div>`;
+    <div class="set-card oefen-kaart${g.secundair ? ' secundair' : ' primary'}">${g.html}</div>`).join('');
+  const half = (v, ico, woord) => `<button class="chip${(v === 'count') === isCount ? ' on' : ''}" data-v="${v}">`
+    + `<span aria-hidden="true">${ico}</span> ${woord}</button>`;
+  return `<div class="settings-panel">${cards}
+    <div class="oe-modus" id="set-track" role="group" aria-label="Modus">${half('count', '🧸', 'Tellen')}${half('math', '🧮', 'Rekenen')}</div>
+  </div>`;
 }
 
 /* ---- Beheer: alles wat géén oefeninstelling is ----
