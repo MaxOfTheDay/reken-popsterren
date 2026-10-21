@@ -8,6 +8,10 @@
      laatste kaartje er echt onderuit te scrollen is en niet net eronder blijft
      plakken. */
   #screen-dress { padding-bottom: calc(var(--balk-ruimte) + 80px); }
+  /* De podiumbalk (drie stukjes plus een knop, zie .podium-bar) is ruim honderd
+     pixels hoger, en het podium dat je aantikte moet er nog boven te krijgen zijn
+     (zie zichtbaarBovenBalk). */
+  #screen-dress.met-podiumbalk { padding-bottom: calc(var(--balk-ruimte) + 190px); }
   /* FASE 5B -- de kleedkamer op een breed scherm: de kop krimpt daar mee met de
      kolom. FASE 5D heeft daar één gedeelde regel van gemaakt voor álle
      gebruiksschermen (.screen.gebruik, zie het skelet bovenaan); hier stond hij
@@ -779,10 +783,15 @@
   .mini-kaart {
     width: 82px; padding: 6px 4px 5px; border-radius: var(--r-md); cursor: pointer;
     font-family: inherit; color: inherit; text-align: center;
-    background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.12);
     display: flex; flex-direction: column; align-items: center;
   }
   .mini-kaart:active { transform: scale(.96); }
+  /* Dezelfde drie standen als een kaartje in het rek (zie .item-card hierboven):
+     van jou, gekozen om te kopen, en aan. */
+  .mini-kaart.owned { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.11); }
+  .mini-kaart.selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
+  .mini-kaart.equipped { border-color: var(--gold-accent); box-shadow: var(--goud-gloed); background: var(--goud-tint); }
   .mini-kaart .item-thumb { height: 36px; margin: 0 auto; }
   .mini-kaart .item-thumb svg { height: 36px; }
   .mini-kaart .item-thumb .thumb-emo { font-size: 28px; }
