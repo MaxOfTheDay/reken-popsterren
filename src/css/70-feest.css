@@ -75,6 +75,14 @@
   .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
   .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
+  .wereld-feest .wf-rij:nth-child(3) { animation-delay: .24s; }
+  /* Het podium van de wereld: de schijf zelf (zie .podium), even breed als de
+     tekening erboven. Is hij nog niet af, dan is de regel stil -- geen goud,
+     want er is nog niets gekregen; hij zegt alleen waar de schat bij hoort. */
+  .wf-podium .podium { width: 64px; height: 20px; margin-bottom: 6px; --pod-dik: 5px; }
+  .wf-rij.wf-stil { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
+  .wf-rij.wf-stil .wf-tekst b { color: var(--c-white); }
+  .wf-rij.wf-stil .wf-tekst span { opacity: .7; }
   @media (prefers-reduced-motion: reduce) {
     .wereld-feest-overlay { animation: none; }
     .wereld-feest .wf-rij { animation: none; }

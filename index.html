@@ -2627,6 +2627,10 @@
   .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }
 
 
+  .ster-tegel .stage-podium { bottom: 5%; }
+  .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }
+
+
 
 
 
@@ -4587,6 +4591,21 @@
     .wb-cta { padding: 0 7px; }
     .wb-naam { gap: 4px; padding: 0 10px 0 6px; }
   }
+
+
+
+
+
+
+
+  .venue-aan .met-podium > .venue-vloer { display: none; }
+  .stage-podium {
+    position: absolute; left: 50%; bottom: 2%; width: 92%; height: 17%; transform: translateX(-50%);
+    z-index: 0; pointer-events: none;
+  }
+  .stage-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
+  .stage.op-podium .avatar-holder { position: relative; z-index: 1; margin-bottom: 9%; }
+  .venue-aan .op-podium .stage-podium { width: 118%; bottom: -4%; }
 
 
 
@@ -6732,6 +6751,14 @@
   .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
   .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
+  .wereld-feest .wf-rij:nth-child(3) { animation-delay: .24s; }
+
+
+
+  .wf-podium .podium { width: 64px; height: 20px; margin-bottom: 6px; --pod-dik: 5px; }
+  .wf-rij.wf-stil { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
+  .wf-rij.wf-stil .wf-tekst b { color: var(--c-white); }
+  .wf-rij.wf-stil .wf-tekst span { opacity: .7; }
   @media (prefers-reduced-motion: reduce) {
     .wereld-feest-overlay { animation: none; }
     .wereld-feest .wf-rij { animation: none; }
@@ -13402,6 +13429,22 @@ function applyStage(el, p) {
     if (i === 2) { d.style.bottom = '8px'; d.style.right = '8px'; }
     el.appendChild(d);
   });
+
+
+
+
+
+
+  el.querySelectorAll('.stage-podium').forEach(d => d.remove());
+  const eigen = st.id !== 'stage_disco';
+  el.classList.toggle('op-podium', eigen);
+  const ouder = el.parentElement;
+  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.toggle('met-podium', eigen);
+  if (!eigen) return;
+  const schijf = document.createElement('div');
+  schijf.className = 'stage-podium';
+  schijf.innerHTML = podiumHTML(st);
+  el.insertBefore(schijf, el.firstChild);
 }
 
 
@@ -18217,6 +18260,26 @@ function wereldFeest(f) {
     rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
       + `<div class="wf-tekst"><b>Nieuwe wereldschat!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
   }
+
+
+
+
+
+
+  const podium = f.spul ? podiumVan(f.spul.id) : null;
+  const q0 = P();
+  const podiumAf = !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
+  if (podium && podiumAf) {
+    q0.equipped.stage = podium.id;
+    save();
+    if ($('end-stage')) applyStage($('end-stage'), q0);
+    rijen += `<div class="wf-rij"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
+      + `<div class="wf-tekst"><b>Nieuw podium!</b><span>${esc(podium.name)}</span></div></div>`;
+  } else if (podium) {
+    const nog = podiumRest(q0, podium).length;
+    rijen += `<div class="wf-rij wf-stil"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
+      + `<div class="wf-tekst"><b>${esc(podium.name)}</b><span>Nog ${nog} ${mv(nog, 'stuk', 'stukken')}</span></div></div>`;
+  }
   if (f.perfect) {
 
 
@@ -18286,7 +18349,8 @@ function wereldFeest(f) {
   }
 
   speak(f.spul
-    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (f.perfect ? ' En een perfecte wereld!' : '')
+    ? `${w.name} uit! Een nieuwe wereldschat: een ${f.spul.name}.` + (podiumAf ? ' En een nieuw podium!' : '')
+      + (f.perfect ? ' En een perfecte wereld!' : '')
     : `Perfecte wereld! ${w.name}.`);
 }
 
@@ -21450,6 +21514,7 @@ function renderPodiumBar(bar, st, p) {
 }
 
 
+
 const SLOT_BEL_DUUR = 2000;
 let slotBelTimer = null;
 function slotBel(bij, w, wereldIdx) {
@@ -21468,6 +21533,8 @@ function slotBel(bij, w, wereldIdx) {
   bel.onclick = () => { bel.remove(); sndClick(); naarWereldKaart(wereldIdx); };
   document.body.appendChild(bel);
   slotBelTimer = setTimeout(() => bel.remove(), SLOT_BEL_DUUR);
+
+  speak(`Speel de ${w.name} uit.`);
 }
 
 
@@ -21655,6 +21722,8 @@ function confirmShopBuy(id) {
 
   const prijs = tagPrijs(it, p);
   const erbij = it.cat === PODIA_CAT ? podiumRest(p, it).map(x => x.id) : [it.id];
+
+  const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
     showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
@@ -21665,6 +21734,14 @@ function confirmShopBuy(id) {
   erbij.forEach(id2 => { if (!p.owned.includes(id2)) p.owned.push(id2); });
   if (erbij.includes(p.wens)) delete p.wens;
   p.equipped[it.cat] = it.id;
+
+
+
+
+
+  const nieuwPodium = it.cat === PODIA_CAT ? null
+    : ITEMS.find(st => st.cat === PODIA_CAT && podiumVanJou(p, st) && !podiaVoor.includes(st.id)) || null;
+  if (nieuwPodium) p.equipped.stage = nieuwPodium.id;
 
 
 
@@ -21693,10 +21770,16 @@ function confirmShopBuy(id) {
   renderDressBar(null, p);
   flyDiamonds($('shop-diamonds'), $('shop-spiegel'), 3);
   const stil = motionOff();
-  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT);
+
+  setTimeout(() => noticeReady(trofees), stil ? 0 : KOOP_HINT + (nieuwPodium ? PODIUM_TOAST : 0));
   setTimeout(() => {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
+    if (nieuwPodium) {
+      showToast('🎪 Nieuw podium!', null, esc(nieuwPodium.name));
+      toastWeg(PODIUM_TOAST);
+      speak(`Nieuw podium! ${nieuwPodium.name}.`);
+    }
   }, stil ? 0 : DIA_AANKOMST);
 
 
@@ -21712,6 +21795,7 @@ function confirmShopBuy(id) {
   }, KOOP_HERSCHIK);
 }
 const KOOP_HINT = 1600, KOOP_HERSCHIK = 1800;
+const PODIUM_TOAST = 1900;
 
 function koopKomtAan(it) {
 
