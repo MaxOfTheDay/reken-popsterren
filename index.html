@@ -18339,9 +18339,25 @@ const BRUG_VAAK = 0.5;
 function leerStap(lvl) { return worldFor(lvl).index + 1; }
 function stapVan(lvl) { return LEERSTAPPEN[Math.min(leerStap(lvl), LEERSTAPPEN.length) - 1]; }
 
-function moeilijkheid(lvl, perf) {
+function moeilijkheid(lvl, perf, s) {
   const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  return Math.max(0.2, Math.min(1, stapVan(lvl).t + skillAdj));
+  return Math.max(0.2, Math.min(1, stapVan(lvl).t + skillAdj, wenPlafond(s)));
+}
+
+
+
+
+
+
+const WEN_SHOWS = 8, WEN_VAN = 0.6;
+function wenPlafond(s) {
+  const n = (s && s.wennen) || 0;
+  return n > 0 ? WEN_VAN + (1 - WEN_VAN) * (1 - n / WEN_SHOWS) : 1;
+}
+function grensOmhoog(s, naar) {
+  if (naar > s.max) s.wennen = WEN_SHOWS;
+  else s.wennen = 0;
+  s.max = naar;
 }
 
 
@@ -18357,7 +18373,7 @@ function overTiental(a, b, c, op) {
 
 function genTriple(s, lvl, perf, op) {
 
-  const t = moeilijkheid(lvl, perf);
+  const t = moeilijkheid(lvl, perf, s);
   const effMax = Math.max(10, Math.round(s.max * t));
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
@@ -18408,7 +18424,7 @@ function genMissing(s, lvl, perf, op) {
 
 
 function genChain(s, lvl, perf) {
-  const t = moeilijkheid(lvl, perf);
+  const t = moeilijkheid(lvl, perf, s);
   const effMax = Math.max(10, Math.round(s.max * t));
   const cap = Math.max(1, Math.floor(effMax / 2));
   let a, b, c, sum, tries = 0;
@@ -20385,6 +20401,7 @@ function endLevel(success) {
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);
+  if (!G.count && p.settings.wennen > 0) p.settings.wennen--;
 
 
 
@@ -22926,7 +22943,7 @@ function bindOefenChips(s, p, pfx, done) {
   });
 
   bind('set-max', c => {
-    s.max = parseInt(c.dataset.v, 10);
+    grensOmhoog(s, parseInt(c.dataset.v, 10));
     if (p) s.grensTipBasis = grensDrieSterren(p);
   });
   bind('set-mode', c => {
@@ -22992,7 +23009,7 @@ function bindSettings(p, s) {
     sndClick();
     const d = e.currentTarget.dataset;
     if (d.soort === 'mode') s.mode = d.v;
-    else s.max = parseInt(d.v, 10);
+    else grensOmhoog(s, parseInt(d.v, 10));
     s.grensTipBasis = grensDrieSterren(p);
     saveAndFlash();
     renderSettings();

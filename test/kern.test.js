@@ -36,6 +36,7 @@
  *   U  fase 12 (tot 20)                 -> wie "alles" had krijgt hem erbij, één keer
  *   V  de laatste shows                 -> tien uitkomsten, en wat Voortgang erover zegt
  *   W  gegroeid                         -> "Nieuw!" bij een fase hoger, een nieuwe vraagsoort, grotere getallen
+ *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1174,6 +1175,23 @@ zaak('W', () => {
   delete oud.gezien; oud.opTrack = { '+': { n: 40, acc: 0.9, paused: false, unlockStap: 4, fast: 0.5 } };
   app.migrate(oud);
   check(app.groeiMoment(oud, { missShown: 1 }, 0) === null, 'W · een oude ster die het al kende: geen nieuws', JSON.stringify(oud.gezien));
+});
+
+zaak('X', () => {
+  const { app } = verseSter('Wennen');
+  const s = { max: 20 };
+  const lvl = app.WORLD_START[3];          // wereld 4: t staat daar op 1
+  check(app.moeilijkheid(lvl, 0.5, s) === 1, 'X · zonder wennen: het hele bereik', String(app.moeilijkheid(lvl, 0.5, s)));
+  app.grensOmhoog(s, 50);
+  check(s.max === 50 && s.wennen === app.WEN_SHOWS, 'X · de grens omhoog: wennen begint', JSON.stringify(s));
+  const eerst = app.moeilijkheid(lvl, 0.5, s);
+  check(Math.abs(eerst - 0.6) < 1e-9, 'X · de eerste show op de nieuwe grens: ongeveer dertig van de vijftig', String(eerst));
+  let vorige = eerst, stijgt = true;
+  while (s.wennen > 0) { s.wennen--; const t = app.moeilijkheid(lvl, 0.5, s); if (t < vorige) stijgt = false; vorige = t; }
+  check(stijgt && vorige === 1, 'X · en het plafond klimt zonder terug te vallen naar het hele bereik', String(vorige));
+  app.grensOmhoog(s, 50); app.grensOmhoog(s, 20);
+  check(s.wennen === 0, 'X · omlaag hoeft niet te wennen', JSON.stringify(s));
+  check(app.moeilijkheid(lvl, 0.5) === 1, 'X · zonder instellingen (oude aanroep): zoals altijd', '');
 });
 
 klaar();

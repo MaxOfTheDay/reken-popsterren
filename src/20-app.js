@@ -8201,9 +8201,25 @@ const BRUG_VAAK = 0.5;    // in stap 3: zo vaak gaat een plus- of minsom over he
 function leerStap(lvl) { return worldFor(lvl).index + 1; }
 function stapVan(lvl) { return LEERSTAPPEN[Math.min(leerStap(lvl), LEERSTAPPEN.length) - 1]; }
 // Moeilijkheid 0..1: de basis van de stap, bijgestuurd op vaardigheid (perf 0..1 → ±0.25).
-function moeilijkheid(lvl, perf) {
+function moeilijkheid(lvl, perf, s) {
   const skillAdj = ((perf == null ? 0.5 : perf) - 0.5) * 0.5;
-  return Math.max(0.2, Math.min(1, stapVan(lvl).t + skillAdj));
+  return Math.max(0.2, Math.min(1, stapVan(lvl).t + skillAdj, wenPlafond(s)));
+}
+/* Wennen aan een hogere grens. Vanaf wereld 2 staat t al op 1, dus "tot 50"
+   gaf meteen het hele nieuwe bereik (37 + 8, over het tiental) aan een kind
+   dat net nog tot twintig rekende. Nu klimt het plafond in WEN_SHOWS shows van
+   WEN_VAN naar 1: van twintig naar vijftig begint dus rond de dertig. s.wennen
+   telt af (zie endLevel) en wordt gezet als de grens omhoog gaat, met de tip of
+   op Oefenen (zie grensOmhoog). Omlaag is meteen: kleiner hoeft niet te wennen. */
+const WEN_SHOWS = 8, WEN_VAN = 0.6;
+function wenPlafond(s) {
+  const n = (s && s.wennen) || 0;
+  return n > 0 ? WEN_VAN + (1 - WEN_VAN) * (1 - n / WEN_SHOWS) : 1;
+}
+function grensOmhoog(s, naar) {
+  if (naar > s.max) s.wennen = WEN_SHOWS;
+  else s.wennen = 0;
+  s.max = naar;
 }
 /* Gaat deze som over een tiental heen? Voor plus: tellen de eenheden samen tot
    boven de tien (8 + 5 wel, 7 + 3 en 15 + 5 niet -- die landen óp een tiental).
@@ -8219,7 +8235,7 @@ function overTiental(a, b, c, op) {
 // Alles komt uit de moeilijkheidslogica hierboven (leerstap + vaardigheid).
 function genTriple(s, lvl, perf, op) {
   // Zo krijgt een kind dat worstelt lichtere sommen en een sterk kind wat pittigere.
-  const t = moeilijkheid(lvl, perf);
+  const t = moeilijkheid(lvl, perf, s);
   const effMax = Math.max(10, Math.round(s.max * t)); // binnen ingestelde grens
   const tables = s.tables.length ? s.tables : [2, 5, 10];
   let a, b, c, sym;
@@ -8270,7 +8286,7 @@ function genMissing(s, lvl, perf, op) {
 // ingestelde bovengrens; elke term is bescheiden (≈ hooguit de helft), zodat het
 // hoofdrekenen behapbaar blijft. 0-termen mogen, maar niet te vaak.
 function genChain(s, lvl, perf) {
-  const t = moeilijkheid(lvl, perf);
+  const t = moeilijkheid(lvl, perf, s);
   const effMax = Math.max(10, Math.round(s.max * t));
   const cap = Math.max(1, Math.floor(effMax / 2));
   let a, b, c, sum, tries = 0;
@@ -10247,6 +10263,7 @@ function endLevel(success) {
     telPlafondTel(p, success ? showStars(G) : 0);
   }
   onthoudUitkomst(p, success ? showStars(G) : 0);   // voor de stand in Voortgang (beide takken hieronder bewaren)
+  if (!G.count && p.settings.wennen > 0) p.settings.wennen--;   // een show verder gewend aan de grens
   /* Wat er pas ná het eindscherm gevierd wordt (zie de staart van deze
      functie): een wereld die net uit of perfect werd. Bij een mislukte show
      blijft het leeg. */
@@ -12788,7 +12805,7 @@ function bindOefenChips(s, p, pfx, done) {
   });
   // enkelkeuze-chips
   bind('set-max', c => {
-    s.max = parseInt(c.dataset.v, 10);
+    grensOmhoog(s, parseInt(c.dataset.v, 10));
     if (p) s.grensTipBasis = grensDrieSterren(p);   // de tip telt opnieuw (zie grensTip)
   });
   bind('set-mode', c => {
@@ -12854,7 +12871,7 @@ function bindSettings(p, s) {
     sndClick();
     const d = e.currentTarget.dataset;
     if (d.soort === 'mode') s.mode = d.v;
-    else s.max = parseInt(d.v, 10);
+    else grensOmhoog(s, parseInt(d.v, 10));
     s.grensTipBasis = grensDrieSterren(p);
     saveAndFlash();
     renderSettings();
