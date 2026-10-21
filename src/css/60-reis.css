@@ -702,6 +702,8 @@
        Er gaat niets verloren -- de sterren zíjn het bericht, de beweging was
        alleen de aankondiging ervan. */
     .tour-stop.net-af .cstars, .tour-stop.net-af .cstars svg { animation: none; }
+    /* Het fonkelen van de lege plekken idem: het gat zelf blijft de uitnodiging. */
+    .tour-stop .cstars svg.leeg, .tour-stop .cstars svg.leeg .cs-leeg { animation: none; }
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
     .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }

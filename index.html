@@ -328,6 +328,8 @@
 
 
 
+
+
     --route-onder: rgba(38,12,64,.78);
     --route-goud: rgba(var(--warm-licht-rgb),.82);
     --stop-keyline: rgba(26,7,48,.55);
@@ -344,11 +346,9 @@
     --slot-vulling-top: #564c73;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
-    --ster-tab-rand: rgba(255,255,255,.16);
-    --ster-tab-vol: rgba(92,48,10,.76);
-    --ster-tab-vol-rand: rgba(var(--warm-licht-rgb),.5);
-    --ster-leeg: rgba(255,255,255,.5);
-    --ster-leeg-rand: rgba(20,5,40,.56);
+    --ster-zoom: rgba(20,5,40,.85);
+    --ster-leeg: rgba(40,14,70,.6);
+    --ster-leeg-rand: rgba(255,255,255,.9);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
@@ -5053,6 +5053,7 @@
 
 
 
+
   .tour-stop.done.perfect .dot {
     border-color: var(--gold-accent);
     background: linear-gradient(180deg, rgba(var(--goud-rgb),.14), rgba(var(--goud-rgb),.05)), var(--purple-shadow);
@@ -5072,10 +5073,6 @@
 
     box-shadow: var(--dot-key), 0 0 0 0.62cqw var(--perfect-ring),
                 var(--dot-drop), 0 0 2cqw 0.2cqw var(--perfect-gloed);
-  }
-  .tour-stop.done.perfect .cstars {
-    background: var(--ster-tab-vol);
-    box-shadow: inset 0 0 0 0.12cqw var(--ster-tab-vol-rand), 0 0.35cqw 0.7cqw rgba(12,2,26,.4);
   }
 
 
@@ -5112,9 +5109,12 @@
     from { opacity: 0; transform: translateY(-0.7cqw) scaleX(.72); }
     to   { opacity: 1; transform: none; }
   }
+
+
+
   @keyframes sterLandt {
-    from { opacity: 0; transform: scale(.25); }
-    to   { opacity: 1; transform: none; }
+    from { opacity: 0; scale: .25; }
+    to   { opacity: 1; scale: 1; }
   }
 
 
@@ -5180,30 +5180,71 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   .tour-stop .cstars {
-    position: relative; z-index: 0;
-    width: 9.2cqw; height: 3.2cqw; margin: -0.9cqw auto 0;
-    display: flex; align-items: center; justify-content: center; gap: 0.38cqw;
-
-
-
-
-
-
-    border-radius: 1.7cqw;
-    background: var(--ster-tab);
-    box-shadow: inset 0 0 0 0.12cqw var(--ster-tab-rand), 0 0.35cqw 0.7cqw rgba(12,2,26,.38);
+    position: relative; z-index: 2;
+    width: 14cqw; height: 4.6cqw; margin: -2.3cqw auto 0;
+    display: flex; align-items: center; justify-content: center; gap: 0;
   }
+  .tour-stop .cstars svg { flex: none; width: 4.4cqw; height: 4.4cqw; display: block;
+    overflow: visible; stroke-linejoin: round; }
+  .tour-stop .cstars svg:nth-child(1) { transform: translateY(-0.7cqw) rotate(-16deg); }
+  .tour-stop .cstars svg:nth-child(2) { transform: scale(1.1); }
+  .tour-stop .cstars svg:nth-child(3) { transform: translateY(-0.7cqw) rotate(16deg); }
+  .tour-stop .cstars .cs-rand { fill: none; stroke: var(--ster-zoom); stroke-width: 4; }
+  .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.4; }
+  .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); stroke-width: 1.8; }
 
 
 
 
 
 
-  .tour-stop .cstars svg { flex: none; width: 2.6cqw; height: 2.6cqw; display: block;
-    stroke-linejoin: round; stroke-width: 1.6; }
-  .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); }
-  .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); }
+
+
+  .tour-stop.done:not(.net-af) .cstars svg.leeg {
+    animation: sterWenk .7s var(--ease-plop) calc(var(--kaart-rust, 0ms) + .15s) both; }
+  .tour-stop.done:not(.net-af) .cstars svg.leeg .cs-leeg {
+    animation: sterWenkKleur .7s ease-out calc(var(--kaart-rust, 0ms) + .15s) both; }
+  @keyframes sterWenk {
+    0%, 100% { scale: 1; }
+    40%      { scale: 1.32; }
+  }
+  @keyframes sterWenkKleur {
+    0%, 100% { stroke: var(--ster-leeg-rand); }
+    40%      { stroke: var(--ster-vol); fill: rgba(var(--goud-rgb),.35); }
+  }
 
 
 
@@ -6074,6 +6115,8 @@
 
 
     .tour-stop.net-af .cstars, .tour-stop.net-af .cstars svg { animation: none; }
+
+    .tour-stop .cstars svg.leeg, .tour-stop .cstars svg.leeg .cs-leeg { animation: none; }
     .cq-listen, .cg-obj.pop, .cg-dot.pop { animation: none; }
     .cg-obj.pre, .cg-dot.pre { opacity: 1; transform: none; }
     .cg-obj.fade-out, .cg-dot.fade-out { animation: none; opacity: .12; }
@@ -17387,7 +17430,11 @@ const STER_PAD = 'M12 2.6l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.62'
 function starRowHTML(n, gespeeld) {
   const got = Math.max(0, Math.min(3, n | 0));
   if (!gespeeld && !got) return '';
-  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true">`
+
+
+
+  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true"${vol ? '' : ' class="leeg"'}>`
+    + `<path class="cs-rand" d="${STER_PAD}"/>`
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
 }
