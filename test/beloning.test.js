@@ -413,7 +413,7 @@ function check(ok, label, detail) {
       P().diamonds = 9999;
       openKleedkamer();
       await new Promise(res => setTimeout(res, 250));
-      const chips = [...document.querySelectorAll('#shop-tabs .tab-btn')].map(c => c.getAttribute('aria-label'));
+      const chips = [...document.querySelectorAll('#shop-tabs-wrap .tab-btn')].map(c => c.getAttribute('aria-label'));
       openKleedkamerCat('acc');
       await new Promise(res => setTimeout(res, 150));
       const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
