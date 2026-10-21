@@ -19821,7 +19821,12 @@ function antwoordGoed(q, p, btnEl) {
 
 
   if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
-  if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
+
+
+
+
+
+  speak('Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']));
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }
   const g = G;

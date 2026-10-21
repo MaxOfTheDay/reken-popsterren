@@ -9750,7 +9750,12 @@ function antwoordGoed(q, p, btnEl) {
      stond de beloning er al voordat het antwoord aankwam. Zonder vlucht
      (typmodus, telmodus, beperkte beweging) is vlucht 0 en is alles meteen. */
   if (encore || q.gold || streakBonus) sndStreak(); else sndGood();
-  if (G.count) speak(pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Ja, goed!', 'Wauw!']));
+  /* Het getal hardop, bij élk goed antwoord: "Ja, zes! Goed zo!". In de fases
+     waar het kind een gelijke groep aantikt (1, 2, 4) is dit het enige moment
+     dat het telwoord bij de hoeveelheid klinkt -- en precies die koppeling
+     ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
+     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan). */
+  speak('Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']));
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
   const g = G;
