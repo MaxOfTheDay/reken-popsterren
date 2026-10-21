@@ -414,6 +414,10 @@ const ITEMS = [
   // emoji-microfoons: het emoji zit bovenop een steel in de hand (zie avatarSVG)
   { id: 'mic_ijsje',  cat: 'mic', name: 'IJsje',  full: 'IJsjesmicrofoon', price: 45, emoji: '🍦' },
   { id: 'mic_vuur',   cat: 'mic', name: 'Vuur',   full: 'Vuurmicrofoon',   price: 75, emoji: '🔥' },
+  // de gekke microfoons: ook gewoon een emoji op de steel
+  { id: 'mic_banaan', cat: 'mic', name: 'Banaan', full: 'Banaanmicrofoon', price: 20, emoji: '🍌' },
+  { id: 'mic_friet',  cat: 'mic', name: 'Frietje', full: 'Frietjesmicrofoon', price: 30, emoji: '🍟' },
+  { id: 'mic_wcrol',  cat: 'mic', name: 'Wc-rol', full: 'Wc-rolmicrofoon', price: 35, emoji: '🧻' },
   { id: 'mic_regenboog', cat: 'mic', name: 'Regenboog', full: 'Regenboogmicrofoon', price: 100, color: 'RAINBOW' },
   // Instrumenten
   { id: 'instr_tamboerijn', cat: 'instrument', name: 'Tamboerijn', price: 28, emoji: '🪘' },
@@ -425,6 +429,8 @@ const ITEMS = [
   { id: 'instr_sax',     cat: 'instrument', name: 'Saxofoon',  price: 70, emoji: '🎷' },
   { id: 'instr_trompet', cat: 'instrument', name: 'Trompet',   price: 80, emoji: '🎺' },
   { id: 'instr_dj',      cat: 'instrument', name: 'DJ-set',    price: 130, emoji: '🎛️' },
+  { id: 'instr_toeter',  cat: 'instrument', name: 'Toeter',    price: 20, emoji: '📯' },
+  { id: 'instr_koebel',  cat: 'instrument', name: 'Koebel',    price: 35, emoji: '🔔' },
   // Extra's
   { id: 'acc_strik',    cat: 'acc', name: 'Strik',    price: 25, emoji: '🎀' },
   { id: 'acc_bloem',    cat: 'acc', name: 'Bloem',          price: 25, emoji: '🌸' },
@@ -442,6 +448,8 @@ const ITEMS = [
   { id: 'acc_anker',    cat: 'acc', name: 'Ankerspeldje',   price: 30, emoji: '⚓', spot: 'zij' },
   { id: 'acc_schelp',   cat: 'acc', name: 'Schelpje',       price: 35, emoji: '🐚', spot: 'zij' },
   { id: 'acc_maan',     cat: 'acc', name: 'Maantje',        price: 40, emoji: '🌙', spot: 'top' },
+  { id: 'acc_kaas',     cat: 'acc', name: 'Kaashoedje',     price: 25, emoji: '🧀', spot: 'top' },
+  { id: 'acc_pannenkoek', cat: 'acc', name: 'Pannenkoek', full: 'Pannenkoek op je hoofd', price: 30, emoji: '🥞', spot: 'top' },
   /* FASE 4D.1 -- de wereldbeloningen. Eén hoofdstuk per wereld, en je krijgt het
      niet van je diamanten maar doordat je die wereld uitspeelt (zie WORLDS.beloning
      en beloningWereld hieronder).
@@ -510,6 +518,10 @@ const ITEMS = [
   { id: 'pet_alien',  cat: 'pet', name: 'Ruimtevriendje', price: 110, emoji: '👽' },
   { id: 'pet_trex',   cat: 'pet', name: 'T-rex',         price: 150, emoji: '🦖' },
   { id: 'pet_draak',  cat: 'pet', name: 'Draakje',       price: 250, emoji: '🐉' },
+  { id: 'pet_eend',   cat: 'pet', name: 'Eendje Kwak',   price: 15,  emoji: '🦆' },
+  { id: 'pet_slak',   cat: 'pet', name: 'Slak Turbo',    price: 25,  emoji: '🐌' },
+  { id: 'pet_kogelvis',cat:'pet', name: 'Kogelvis',      price: 45,  emoji: '🐡' },
+  { id: 'pet_ufo',    cat: 'pet', name: 'Ufo-tje',       price: 90,  emoji: '🛸' },
   { id: 'pet_pauw',   cat: 'pet', name: 'Pauw',          price: 250, emoji: '🦚' },
   // Podium
   { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'] },
