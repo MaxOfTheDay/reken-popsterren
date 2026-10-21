@@ -2186,7 +2186,7 @@ function check(ok, label, detail) {
       val: document.querySelector('#newstar-oefen .sr-val').textContent,
     }));
     check(r.open === false, 'de openklapper begint dicht', `open=${r.open}`);
-    check(r.val === '➕ ➖ · tot 20 · kiezen uit 4 · 8 vragen', 'de dichte openklapper vertelt de standaard', r.val);
+    check(r.val === '+ − · tot 20 · kiezen · 8 vragen', 'de dichte openklapper vertelt de standaard', r.val);
     await ctx.close();
   }
 
