@@ -53,8 +53,8 @@
 
      Wat ervoor in de plaats komt is één vlak en geen vier: hetzelfde aubergine,
      maar als veeg die van boven naar beneden dichttrekt. Bovenin (de titel, de
-     spiegel) laat hij de kamer zien; onderin, waar de categorierij en het
-     schattenvak staan -- kleine letters, veel elementen -- is hij dicht genoeg om
+     spiegel) laat hij de kamer zien; onderin, waar de categorierij staat --
+     kleine letters, veel elementen -- is hij dicht genoeg om
      ze te dragen. Dat is letterlijk de afspraak uit §4: korte vette tekst mag op
      de tekening, een dichte rij kleine dingen krijgt een veeg eronder.
      De waas blijft: één grote, stilstaande laag waas is wat een doorzichtig vlak
@@ -79,7 +79,7 @@
      Onder deze kop schuift het rek door, en de veeg hierboven is onderin maar .58
      tot .72, met 8px waas. Voor de kamer is dat genoeg, voor een kaartje dat
      eronder doorschuift niet: de gouden rand van wat ze aanheeft gloeide dwars
-     achter "Kleren" en het schattenvak door -- precies in de band met de kleinste
+     achter de categorierij door -- precies in de band met de kleinste
      letters. De kast had hetzelfde en gaat daarom gescrold dicht (zie
      #screen-trophies.gescrold .hub-sticky). Dit is die afspraak, maar alleen voor
      de onderste band: bovenin staat de spiegel, en daar blijft de kamer te zien.
@@ -88,17 +88,17 @@
      overvloeien (de kast springt daarom in één beeldje om); een laag met opacity
      wel, en die kost de compositor niets.
 
-     Hij loopt van de onderrand van de spiegel tot de onderrand van de kop: 98px,
+     Hij loopt van de onderrand van de spiegel tot de onderrand van de kop: 59px,
      op élke maat van 320 tot 1440 breed gelijk, want wat erin staat -- de rij van
-     44 en het schattenvak -- groeit niet mee met het scherm; alleen de pop doet
+     44 -- groeit niet mee met het scherm; alleen de pop doet
      dat, en die staat erboven. De eerste 4px lopen in, in de kier tussen de
      spiegel en de rij, dus de spiegel zelf raakt hij niet. De twee lage-
-     schermregels hieronder maken die band krapper, en zetten hem op 93 en 90.
+     schermregels hieronder maken die band krapper, en zetten hem op 57.
      De laag zelf krimpt niets en maakt de kop niet hoger. Wat op een laag
      staand scherm wél krimpt is de spiegel (zie "Laag en staand" hieronder), en
      dáárvoor meet kopKrimpMeten. kleedScroll zet de klasse. */
   #screen-dress .hub-sticky::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 98px;
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 59px;
     z-index: -1; pointer-events: none; border-radius: inherit;
     background: linear-gradient(180deg, rgba(32,9,56,0), rgb(32,9,56) 4px);
     opacity: 0; transition: opacity var(--t-snel) ease;
@@ -191,9 +191,8 @@
     #screen-dress .screen-header { margin-bottom: 2px; }
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
-    #screen-dress .schat-entry { margin-top: 4px; min-height: 32px; padding: 3px 11px; }
     /* de band onder de spiegel is hier krapper -- zie de lade, bovenaan */
-    #screen-dress .hub-sticky::after { height: 93px; }
+    #screen-dress .hub-sticky::after { height: 57px; }
   }
   /* Een telefoon in liggende stand (844x390) is de krapste stand die dit scherm
      kent: na de kop en de navigatiebalk blijft er ~100px over, en dat is minder
@@ -208,9 +207,7 @@
     #screen-dress .item-thumb svg { height: 40px; }
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
-    #screen-dress .schat-raadsel { width: 40px; height: 40px; font-size: 21px; }
-    #screen-dress .schat-entry { margin-top: 3px; min-height: 30px; padding: 2px 10px; }
-    #screen-dress .hub-sticky::after { height: 90px; }
+    #screen-dress .hub-sticky::after { height: 57px; }
   }
   /* Smalle telefoon: de naam van het scherm past niet meer tussen twee even brede
      zijkolommen van elk 108px, en werd afgekapt tot "Kleedka…". De drie cellen
@@ -370,7 +367,7 @@
     transition: transform var(--t-tik), box-shadow .15s;
   }
   /* 38px is wat je ziet; het raakvlak is 50, zoals elke knop van een kinderspel
-     hoort te hebben (en zoals .schat-entry::after dat ook doet). Doorzichtig. */
+     hoort te hebben. Doorzichtig. */
   .shuffle-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
   .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
   .shuffle-btn:active { transform: scale(.92); }
@@ -390,8 +387,8 @@
     display: flex; gap: 7px; padding: 1px 12px; overflow-x: auto;
     /* Past de hele rij (een breed venster, of een ster met weinig categorieën),
        dan staat hij in het midden onder de spiegel in plaats van links tegen de
-       kolomrand. Op --stage-breed was dat zichtbaar scheef: de spiegel en het
-       schattenvak gecentreerd, de categorierij eronder tegen de linkerkant.
+       kolomrand. Op --stage-breed was dat zichtbaar scheef: de spiegel
+       gecentreerd, de categorierij eronder tegen de linkerkant.
        Met 'safe' blijft hij bij overloop gewoon links beginnen -- anders zou de
        eerste knop buiten het scrollbereik vallen en niet meer te bereiken zijn.
        Een browser die het woord niet kent laat de hele regel vallen en doet wat
@@ -541,8 +538,7 @@
   }
   /* De glans blijft binnen het kaartje: inset:0 plus een gradient die eroverheen
      schuift, en de ronding van het kaartje zelf. Hij ligt over de tekening heen,
-     en dat kan hier gewoon -- het hoekbadge met het wereldteken staat alleen op
-     een wereldschat, en die is niet te koop. */
+     en dat kan hier gewoon: er staat niets in de hoek dat hij zou bedekken. */
   .item-card.just-bought::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.55) 50%, transparent 62%);
@@ -567,57 +563,39 @@
      dát verschil hoort er niet te zijn (koop en beloning zijn even leuk, alleen
      anders te krijgen). Op 38 wegen ze optisch even zwaar. */
   .item-thumb .thumb-emo { font-size: 38px; line-height: 1; filter: var(--emoji-schaduw); }
-  /* een podium is een plek, geen voorwerp: zijn kleur ís het item, dus een klein
-     decorvlak met het herkenningsicoon erop -- in hetzelfde vak, zelfde schaduw */
-  .item-thumb .thumb-stage {
-    width: 46px; height: 40px; border-radius: var(--r-sm); display: grid; place-items: center;
-    font-size: 22px; border: 1.5px solid rgba(255,255,255,.5);
-    filter: var(--emoji-schaduw); text-shadow: var(--op-kunst-ink);
-  }
+  /* een podium is een plek, geen voorwerp: de schijf zelf, zoals ze erop staat,
+     onderin het vak zodat er lucht boven blijft (zie .podium) */
+  .item-thumb.thumb-podium { align-items: flex-end; }
+  .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
   .item-name { font-size: var(--tx-klein); font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
-  /* Eén pilletje per kaartje, en dus één staat. Ze kunnen niet stapelen: de JS
-     kiest er precies één (zie dressCardState). Van hard naar zacht:
-       new    net gekocht -- goud, pulseert twee tellen
-       on     draag je nu -- goud, vol
-       owned  van jou     -- hetzelfde stille donkere pilletje als een prijs. Het
-              stond ooit op grijs (las als "uit"), daarna op dekkend wit (las als
-              het luidste ding in het rek); dit is de middenweg -- zie PS-45 bij
-              .item-status.owned hieronder
-       slot   nog te verdienen bij een wereld -- rustig goud, met het wereldteken
-       price  te koop en je hebt genoeg -- goud
-       need   te koop maar nog niet genoeg -- stil, geen goud, geen alarm */
+  /* DE TAG -- één pilletje per kaartje, op de plek van het prijskaartje, en dus
+     één staat (de JS kiest er precies één: zie zetTag). Alle standen delen
+     hetzelfde stille vlak; wat verschilt is alleen wat erop staat:
+       need   💎 45  te koop, nog niet genoeg -- gedempt
+       price  💎 45  te koop, genoeg -- wit
+       slot   🔒     eerst een wereld uitspelen
+       owned  ✓     van jou -- een zacht vinkje
+       on     ✓     draag je nu -- een gouden vinkje (het kaartje heeft de gouden rand)
+       new    Nieuw! net gekocht -- het enige volle goud, twee tellen
+     Prijzen zijn wit en niet goud: goud betekende hier "dit kan", en dat zette goud
+     op het halve rek. Nu zit het op één plek, en die zegt "aan".
+     Een gedeelde bouwsteen: de stukken in de podiumlade gebruiken hem ook, en de
+     kast mag hem lenen. Niet doorzichtig maken -- een pilletje zónder vlak haalt
+     zijn contrast uit de tekening eronder (zie npm run achtergrondproef). */
   .item-status {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    min-height: 21px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
+    min-height: 21px; min-width: 34px; margin-top: 5px; padding: 3px 9px; border-radius: var(--r-pill);
     font-size: var(--tx-klein); font-weight: 700; line-height: 1; white-space: nowrap;
-    background: rgba(0,0,0,.24); color: var(--muted-text-2);
+    background: rgba(255,255,255,.12); color: var(--c-white);
   }
-  .item-status.price { color: var(--gold-light); background: rgba(var(--goud-rgb),.14); }
-  /* "Nog niet genoeg" is een stand en geen fout: de pil verliest zijn goud (dat
-     betekent hier "dit kan") en houdt verder alles -- zelfde maat, zelfde plek,
-     zelfde leesbare letter. Geen rood, geen kruisje, geen slotje: het getal
-     ernaast is al het hele verhaal, en de balk onderaan zegt hoeveel er nog bij
-     moet zodra je erop tikt. */
-  .item-status.need { color: var(--muted-text-2); background: rgba(0,0,0,.3); }
-  /* PS-45 -- "Van jou" was een dekkend wit pilletje met paarse letter, en in een
-     lade waar het meeste van jou is stonden er zeventien van onder elkaar: samen
-     de luidste vorm op het scherm, luider dan het ene gouden kaartje dat aanstaat.
-     Terwijl "dit heb je al" juist het rustigste is wat een kaartje kan zeggen.
-
-     Nu is het gewoon het pilletje dat alle andere kaartjes ook dragen: hetzelfde
-     donkere vlak als een prijs, met een witte letter erop. Het woord blijft staan
-     en gaat niet weg ten gunste van "geen prijs = van jou" -- dat is een regel die
-     een kind van vijf niet leest, en een leeg vakje is geen antwoord.
-     Niet doorzichtig maken, hoe verleidelijk ook: een pilletje zónder vlak haalt
-     zijn contrast uit de tekening eronder, en de tekening van dit scherm is er
-     één die vervangen wordt (zie npm run achtergrondproef -- op een lichte proef
-     was "Van jou" zonder vlak niet meer te lezen). Donker vlak, wit woord: dat
-     draagt zichzelf op elke ondergrond.
-     Daarmee is de trap op een kaartje weer compleet: stil (van jou) -> goud (dit
-     draag je) -> vol goud met een gloed (net gekocht). */
-  .item-status.owned { color: rgba(255,255,255,.82); background: rgba(0,0,0,.26); }
-  .item-status.on { color: var(--ink-on-gold); background: var(--gold-accent); }
+  /* "Nog niet genoeg" is een stand en geen fout: zelfde maat, zelfde plek, alleen
+     zachter. Geen rood, geen kruisje: de lade onderaan zegt hoeveel er nog bij moet
+     zodra je erop tikt. */
+  .item-status.need { color: rgba(255,255,255,.5); background: rgba(0,0,0,.28); }
+  .item-status.owned { color: rgba(255,255,255,.6); }
+  .item-status.on { color: var(--gold-accent); font-weight: 900; }
+  .item-status.slot { opacity: .85; }
   /* Het pilletje wisselt van "💎 45" naar "Nieuw!" en dat is een antwoord op
      de tik: het mag even zien te zijn dat het antwoord er is. Eerst een korte
      pop (de wissel zelf), daarna precies één rustige ademhaling. Het waren er
@@ -633,10 +611,6 @@
     animation: statusPop .32s var(--ease-plop), readyPulse 1.4s ease-in-out .32s 1 forwards;
   }
   @keyframes statusPop { 0% { transform: scale(.72); } 55% { transform: scale(1.12); } 100% { transform: scale(1); } }
-  /* FASE 4D.1 -- nog te verdienen bij een wereld. Bewust dezelfde rustige taal als
-     "te weinig diamanten" en niet iets prikkelends: het is een doel om naartoe te
-     spelen, geen aanbieding. Het wereld-icoon ernaast zegt bij wélke wereld. */
-  .item-status.slot { color: var(--gold-light); background: rgba(var(--goud-rgb),.13); opacity: .9; }
   /* Beperkte beweging: het koopmoment houdt zijn héle betekenis zonder beweging --
      het kaartje staat in het goud en het pilletje zegt "Nieuw!". Alleen de
      versiering gaat eraf. Deze staat hier en niet bij .item-card hierboven: een
@@ -658,117 +632,7 @@
      weer het raster dat --vlak-rand net had weggehaald. Het blijft zichtbaar
      lichter dan een kaartje dat nog te koop staat -- dát is het hele verschil. */
   .item-card.owned { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.11); }
-  /* Een wereldbeloning die nog niet van jou is. Dit was een streepjesrand, en die
-     zegt in elke app die een kind ooit ziet hetzelfde: hier hoort iets te staan en
-     het is er niet (een lege plek, een kapot kaartje). Precies het tegenovergestelde
-     van wat bedoeld was. Nu is het een gesloten kaartje met warm licht erin -- iets
-     goudens achter glas, dat je nog niet kunt pakken. Sinds fase 6E staat zo'n
-     kaartje alleen nog in het schattenvak, en wat erin staat is niet het spulletje
-     maar het raadsel (.schat-raadsel): de tekening hoeft dus niet meer gedempt te
-     worden om zich van "van jou" te onderscheiden -- er stáát geen tekening. */
-  .item-card.teverdienen {
-    border-color: rgba(var(--warm-licht-rgb),.32);
-    background:
-      radial-gradient(74% 56% at 50% 26%, rgba(var(--warm-licht-rgb),.18), transparent 72%),
-      var(--goud-tint-zacht);
-  }
-  .item-card.teverdienen:hover {
-    background:
-      radial-gradient(74% 56% at 50% 26%, rgba(var(--warm-licht-rgb),.26), transparent 72%),
-      rgba(var(--goud-rgb),.13);
-  }
-  /* Aangetikt blijft aangetikt, ook bij een beloning: de streepjesrand houdt zijn
-     vorm ("hier hoort nog iets te komen") maar krijgt het blauw van "hier kijk je
-     naar". Dit staat er expliciet omdat .teverdienen ná .selected komt en anders
-     stilzwijgend die gelijkspel wint -- dezelfde val als bij .owned hierboven. */
-  .item-card.teverdienen.selected,
-  .item-card.teverdienen.selected:hover { border-color: var(--cyaan-rand); background: rgba(56,189,248,.15); }
-  /* Waar een spulletje vandaan komt, als het eenmaal van je is: één wereldteken in
-     de hoek en verder niets. Geen "beloning"-label over de tekening heen -- zodra
-     je het hebt is het gewoon een van je spullen, met een herkomst. */
-  .item-card .item-wereld {
-    position: absolute; top: 4px; right: 4px; font-size: 12px; line-height: 1;
-    padding: 3px 5px; border-radius: var(--r-pill); background: rgba(0,0,0,.3);
-    box-shadow: inset 0 0 0 1px rgba(var(--goud-rgb),.34);
-  }
 
-  /* ===== Wereldschatten (fase 6E) =====
-     Eén regel onder de categorierij, en één vak erachter. Wat het moet doen is
-     klein: laten zien dát er zoiets bestaat, laten zien hoever je bent, en er in
-     één tik heen. Wat het níet moet doen is een tweede winkel worden -- dus geen
-     eigen kop, geen eigen scherm, geen eigen navigatielaag. Het rek eronder is
-     letterlijk hetzelfde rek (.item-grid met .item-card), alleen met andere
-     kaartjes erin. */
-  /* PS-45 -- hetzelfde vak, een trap minder gewicht. Het liep over de volle
-     breedte, had een gouden rand van 1,5px, een gouden gloed erin en gouden
-     letters op --tx-label: naast de categorierij erboven en de navigatiebalk
-     onderin was dat een derde balk over de volle breedte, en las het als
-     navigatie in plaats van als "kijk, er valt ook iets te verdienen".
-
-     Nu is het een pil zo breed als zijn eigen woorden, in de rustige taal van de
-     kop: donker vlak, haarlijn, wit woord. Het goud zit nog op precies één plek
-     -- het getal, want dát is wat je komt kijken -- en de open stand hieronder
-     blijft onveranderd vol goud. Niets weg, alleen minder hard.
-
-     EN HET RAAKVLAK BLIJFT GROOT. De pil is 34 hoog en dat is te klein voor een
-     kindervinger; het onzichtbare vlak eromheen (::after, buiten de opmaak om)
-     maakt er 44 van. Zo kan het ding klein zijn zonder dat het moeilijk te raken
-     wordt -- wat je ziet en wat je kunt raken hoeven niet even groot te zijn. */
-  .schat-entry {
-    position: relative;
-    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: auto; max-width: calc(var(--kolom) - 24px); margin: 5px auto 0;
-    min-height: 34px; padding: 4px 12px; cursor: pointer;
-    border: 1px solid rgba(255,255,255,.13); border-radius: var(--r-pill);
-    font-size: var(--tx-klein); font-weight: 700; color: rgba(255,255,255,.86);
-    background: rgba(12,3,26,.34);
-    transition: transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
-  }
-  /* Het raakvlak, en verder niets: geen kleur, geen rand, geen plek in de opmaak.
-     -5 boven en onder maakt van 34 een 44; de 6px lucht naar de categorierij
-     erboven valt binnen die marge en daar staat niets anders wat een tik vangt. */
-  .schat-entry::after { content: ''; position: absolute; inset: -5px -8px; border-radius: inherit; }
-  .schat-entry:active { transform: scale(.98); }
-  .schat-entry .se-ico { font-size: 17px; line-height: 1; filter: var(--emoji-schaduw); }
-  .schat-entry .se-naam { white-space: nowrap; }
-  /* De teller is het antwoord op "hoeveel heb ik er", en het enige goud in dit
-     vak: het woord eromheen is stil, het getal niet -- dát is wat een kind twee
-     keer per week komt kijken. */
-  .schat-entry .se-telling { color: rgba(255,255,255,.68); font-weight: 600; white-space: nowrap; }
-  .schat-entry .se-telling b { color: var(--gold-accent); font-weight: 700; }
-  /* Open: hetzelfde "hier sta je" als de actieve categorieknop, maar dan in goud --
-     want dit vak gaat over wat je verdient en niet over wat je koopt. */
-  .schat-entry.open {
-    border-color: var(--gold-accent); color: var(--c-white);
-    background: var(--goud-tint);
-    /* de zachte gloed en niet de volle: op een pil van 34 hoog was 16px gloed
-       breder dan de pil zelf. Rand plus vulling zeggen "hier sta je" al. */
-    box-shadow: var(--goud-gloed-zacht);
-  }
-  /* Een schat die nog niet van jou is: het medaillon van zijn wereld met een
-     vraagteken erin. Dezelfde vorm en dezelfde wereldkleuren als de perfecte-
-     wereldkaart in de kast (.pw-medal), zodat "dit hoort bij die wereld" er zonder
-     één woord op staat -- en zodat een zevende wereld zijn raadsel meekrijgt uit
-     zijn eigen theme, zonder dat hier iets bij hoeft. */
-  .schat-raadsel {
-    width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
-    font-size: 26px; font-weight: 700; line-height: 1;
-    color: rgba(var(--goud-glans-rgb),.86); text-shadow: var(--op-kunst-ink);
-    background:
-      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
-      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
-    border: 2px solid rgba(var(--goud-rgb),.42);
-    box-shadow: inset 0 2px 0 rgba(255,255,255,.16), 0 3px 10px rgba(0,0,0,.3);
-  }
-  /* Verdiend. Hetzelfde plankje als elk ander kaartje, met een warme ondergrond
-     eronder: genoeg om te zien dat dit er een van de verzameling is, te weinig om
-     met "dit draag je nu" (goud, vol) te gaan wedijveren. */
-  .item-card.schat-kaart.owned {
-    border-color: rgba(var(--goud-rgb),.42);
-    background:
-      radial-gradient(74% 56% at 50% 22%, rgba(var(--warm-licht-rgb),.14), transparent 72%),
-      rgba(255,255,255,.16);
-  }
   /* De Aandoen-knop op het wereldfeest: de enige knop op die laag, dus hij mag de
      gouden zijn -- maar niet groter dan de regel erboven waar hij bij hoort. */
   .wereld-feest .wf-aan {
@@ -833,7 +697,7 @@
   .wens-knop.aan { background: rgba(240,98,146,.3); border-color: rgba(255,128,171,.7); }
   .wens-knop:active { transform: scale(.92); }
   /* ...en op het kaartje zelf: een klein hartje in de hoek, zodat je je wens in
-     het rek terugvindt. Linksboven, want rechtsboven woont het wereldteken. */
+     het rek terugvindt. */
   .item-card.gewenst::before {
     content: '💖'; position: absolute; top: 4px; left: 5px; z-index: 2;
     font-size: 14px; line-height: 1; pointer-events: none;
@@ -841,7 +705,7 @@
   /* wegvliegende diamant bij een aankoop */
   .fly-dia { position: fixed; z-index: 95; font-size: 22px; pointer-events: none; }
 
-  /* Het mistkaartje achteraan het schattenvak (de vorm staat bij de kast, zie
+  /* Het mistkaartje achteraan Podia (de vorm staat bij de kast, zie
      .horizon-mist): hier zo hoog als een gewoon kaartje, met de wolk op de maat
      van een tekening. */
   .item-card.horizon-mist {
@@ -849,3 +713,52 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
   .item-card.horizon-mist .horizon-wolk { font-size: 34px; }
+
+  /* ---- Podia ---------------------------------------------------------------
+     Het podium waar ze op staat, in de spiegel. Breed genoeg dat haar dier en
+     haar instrument er óók op staan, en de pop iets omhoog zodat haar voeten
+     midden op de bovenkant landen en niet op de voorrand. Een tik op de schijf
+     opent Podia (openPodia); de pop zelf blijft dansen als je haar aantikt. */
+  .spiegel-podium {
+    position: absolute; left: 5%; right: 5%; bottom: 3%; height: 17%; z-index: 0; cursor: pointer;
+  }
+  .spiegel-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
+  .spiegel .avatar-holder { position: relative; z-index: 1; height: 84%; margin-bottom: 8.5%; pointer-events: none; }
+  .spiegel .avatar-holder svg { pointer-events: auto; }
+  /* De lade onderaan bij een podium: drie stukken als kleine kaartjes met + ertussen,
+     en daaronder de ene knop. Zelfde balk, alleen hoger en in twee rijen. */
+  .dress-bar.podium-bar { flex-direction: column; gap: 8px; padding: 10px 10px 11px; }
+  .pb-stukken { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+  .pb-plus { opacity: .5; font-weight: 800; font-size: var(--tx-body); }
+  .pb-knop { display: flex; align-items: center; justify-content: center; gap: 9px; }
+  .pb-knop .db-sub { font-size: var(--tx-klein); font-weight: 600; opacity: .92; }
+  .mini-kaart {
+    width: 82px; padding: 6px 4px 5px; border-radius: var(--r-md); cursor: pointer;
+    font-family: inherit; color: inherit; text-align: center;
+    background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .mini-kaart:active { transform: scale(.96); }
+  .mini-kaart .item-thumb { height: 36px; margin: 0 auto; }
+  .mini-kaart .item-thumb svg { height: 36px; }
+  .mini-kaart .item-thumb .thumb-emo { font-size: 28px; }
+  .mini-kaart .item-thumb .thumb-swatch { width: 30px; height: 30px; }
+  .mini-kaart .item-status { margin-top: 4px; min-height: 18px; padding: 2px 8px; font-size: 12px; }
+  /* De schat die je nog moet verdienen: zijn silhouet, niet zijn tekening. Je ziet
+     wélke vorm het wordt, niet hoe hij eruitziet -- dat is voor het feestje. */
+  .mini-kaart.op-slot .item-thumb svg,
+  .mini-kaart.op-slot .item-thumb .thumb-emo { filter: brightness(0) opacity(.45); }
+  /* Het bubbeltje bij een 🔒: wit, boven het slotje, twee tellen. */
+  .slot-bel {
+    position: fixed; z-index: 60; transform: translate(-50%, -100%);
+    padding: 8px 14px; border: 0; border-radius: var(--r-md); cursor: pointer;
+    background: var(--c-white); color: #2a1650; font-family: inherit; font-size: var(--tx-body); font-weight: 700;
+    box-shadow: 0 6px 18px rgba(8,1,20,.4); white-space: nowrap;
+    animation: slotBelIn var(--t-snel) var(--ease-plop);
+  }
+  .slot-bel::after {
+    content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+    border: 7px solid transparent; border-bottom: 0; border-top-color: var(--c-white);
+  }
+  @keyframes slotBelIn { from { opacity: 0; transform: translate(-50%, -88%); } }
+  @media (prefers-reduced-motion: reduce) { .slot-bel { animation: none; } }

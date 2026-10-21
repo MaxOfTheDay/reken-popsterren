@@ -630,3 +630,40 @@
   @media (prefers-reduced-motion: reduce) { .diamond-badge.wens-klaar .wens-mini { animation: none; } }
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
 
+
+  /* ---- Het podium -----------------------------------------------------------
+     De schijf waar ze op staat. Eén vorm voor elk podium: een ovaal met een
+     lichte bovenkant, een rand en een zijband eronder (box-shadow, dus geen
+     extra element). Wat een podium van een ander onderscheidt zijn zijn vier
+     kleuren (--pt boven, --pm midden, --ps zijband, --pr rand; podiumHTML zet ze
+     uit ITEMS) en één stil patroon in ::before. Geen emoji en geen plaatje: met
+     haar dier, haar instrument en haar micro staan er al genoeg dingen aan haar
+     voeten.
+
+     De dikte van de zijband schaalt mee met de schijf (--pod-dik), zodat dezelfde
+     regel werkt op een kaartje van 52px en in de spiegel. */
+  .podium {
+    --pod-dik: 6px;
+    position: relative; border-radius: 50%;
+    background: radial-gradient(60% 55% at 50% 38%, var(--pt), var(--pm) 72%);
+    border: 2px solid var(--pr);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 2px var(--pr),
+                0 calc(var(--pod-dik) + 6px) 18px rgba(8,1,20,.38);
+  }
+  .podium::before { content: ''; position: absolute; inset: 8% 6%; border-radius: 50%; pointer-events: none; }
+  /* De patronen. Elk is één laag (een tweede laag kreeg een eigen
+     background-size nodig en dat liep stil uit de pas). */
+  .pod-disco::before    { background: radial-gradient(circle, rgba(255,255,255,.7) 1.1px, transparent 1.8px) 0 0 / 9px 6px; }
+  .pod-stippen::before  { background: radial-gradient(circle, rgba(255,255,255,.45) 1.6px, transparent 2.4px) 0 0 / 14px 9px; }
+  .pod-sterren::before  { background: radial-gradient(circle, #fff 1.1px, transparent 1.9px) 3px 2px / 17px 10px; opacity: .85; }
+  .pod-vonk::before     { background: radial-gradient(circle, #fff8d6 1.3px, transparent 2.2px) 0 0 / 12px 8px; }
+  .pod-lava::before     { background: radial-gradient(ellipse, rgba(255,235,59,.75) 2px, transparent 4.5px) 0 0 / 22px 12px; }
+  .pod-golf::before     { background: repeating-radial-gradient(ellipse at 50% 50%, transparent 0 7px, rgba(255,255,255,.32) 7px 8.5px); }
+  .pod-blad::before     { background: radial-gradient(ellipse, rgba(200,255,200,.6) 2px, transparent 4.5px) 0 0 / 18px 11px; }
+  .pod-sneeuw::before   { background: radial-gradient(circle, #fff 1.3px, transparent 2.2px) 0 0 / 11px 8px; }
+  .pod-zand::before     { background: radial-gradient(circle, rgba(140,90,0,.45) 1.1px, transparent 1.9px) 0 0 / 7px 5px; }
+  .pod-ruit::before     { background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,.28) 6px 7.5px); }
+  .pod-regenboog::before { background: repeating-radial-gradient(ellipse at 50% 120%, #ff9a9e 0 4px, #fad0c4 4px 8px, #a1ffce 8px 12px, #a18cd1 12px 16px); opacity: .55; }
+  .pod-circus::before   { background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.55) 0 15deg, transparent 15deg 30deg); }
+  .pod-vlek::before     { background: radial-gradient(ellipse, rgba(60,40,10,.38) 2.4px, transparent 4.5px) 0 0 / 20px 12px; }
+  .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }

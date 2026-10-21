@@ -19,17 +19,16 @@
      had getypt. De stand is geen bijschrift maar het antwoord op de vraag
      waarvoor een kind dit scherm opent, en dan hoort hij een ding te zijn.
 
-     Het is bewust dezelfde pil als het schattenvak in de kleedkamer
-     (.schat-entry): zelfde maat, zelfde rand, zelfde donkere vulling, zelfde
-     goud op het getal, zelfde woord erachter ("verzameld"). Die twee schermen
-     zijn de twee verzamelschermen van de app en tellen nu op dezelfde manier.
+     Het was bewust dezelfde pil als het schattenvak dat de kleedkamer had
+     (zelfde maat, rand, vulling, goud op het getal, het woord "verzameld"). Dat
+     vak is sinds Podia weg; de pil hier houdt die vorm.
 
      GEEN TOTAAL EN GEEN VULLING MEER. Er stond "4 / 23 verzameld" met een pil
      die van binnen meekleurde. Maar dat totaal groeit met elke wereld die er
      bijkomt -- elf daarvan waren perfecte werelden die een kind in wereld twee
      nog lang niet ziet -- en dan zakt een volle kast vanzelf leeg zonder dat ze
-     iets kwijt is. Het schattenvak liep daar eerder tegenaan en telt daarom
-     alleen wat je hebt; de kast doet nu hetzelfde ("4 verzameld"). Wat er nog
+     iets kwijt is. Het schattenvak liep daar eerder tegenaan en telde daarom
+     alleen wat je had; de kast doet nu hetzelfde ("4 verzameld"). Wat er nog
      te halen valt, zie je aan de kaartjes eronder, tot aan de horizon (zie
      binnenHorizon in de app). */
   .kast-telling {
@@ -62,7 +61,7 @@
                 margin-top var(--t-snel, .22s) ease, padding var(--t-snel, .22s) ease;
   }
   .kast-telling .kt-tekst { position: relative; white-space: nowrap; }
-  /* Precies de afspraak van .schat-entry: het woord eromheen is stil, het getal
+  /* Het woord eromheen is stil, het getal
      dat je verdiend hebt is goud. Dát is wat een kind komt bekijken. */
   .kast-telling b { color: var(--gold-accent); font-weight: 700; }
   .kast-telling .kt-woord { font-weight: 600; opacity: .76; }
