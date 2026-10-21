@@ -2935,7 +2935,11 @@ function speak(text, opts) {
   if (cp && cp.settings && !stemAan(cp)) { if (opts.onEnd) opts.onEnd(); return; }
   if (!db.sound || !hasSpeech() || !text) { if (opts.onEnd) opts.onEnd(); return; }
   try {
-    speechSynthesis.cancel();
+    /* Alleen afbreken als er ook iets klinkt. Safari (iPad, iPhone) slikt soms het
+       begin van een nieuwe zin in als cancel() en speak() vlak na elkaar komen,
+       ook als er niets te stoppen viel. Met opts.wacht schuift de zin achteraan in
+       de rij in plaats van de vorige af te breken. */
+    if (!opts.wacht && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
@@ -2944,9 +2948,33 @@ function speak(text, opts) {
     u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
     u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
     u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
-    if (opts.onEnd) u.onend = opts.onEnd;
+    if (opts.onStart) u.onstart = opts.onStart;
+    // Ook een fout (of een zin die afgebroken wordt) is een einde: wie erop wacht,
+    // mag niet blijven hangen. Eén keer, ook als een browser allebei stuurt.
+    if (opts.onEnd) { let af = false; u.onend = u.onerror = () => { if (!af) { af = true; opts.onEnd(); } }; }
     speechSynthesis.speak(u);
   } catch (e) { if (opts.onEnd) opts.onEnd(); }
+}
+/* Zeg een zin en ga daarna pas verder -- maar nooit eerder dan `rust` en nooit
+   later dan STEM_MAX. Elke speak() breekt af wat er nog klonk (cancel), dus wie
+   meteen de volgende zin zegt, knipt de vorige doormidden. Zo klonk "Ja, zes!
+   Knap gedaan!" als "Ja, zes! Knap ge-" en dan de nieuwe vraag: de stem stotterde.
+   Alleen wachten als de stem écht begonnen is (onstart): een toestel zonder stem,
+   geluid uit of de rekenmodus zonder Voorlezen gaat gewoon op `rust` door. */
+const STEM_ADEM = 250;    // het ademhalinkje tussen twee zinnen
+const STEM_MAX = 3200;    // een stem die nooit "klaar" meldt, houdt de show niet op
+function zegEnDan(text, opts, rust, dan) {
+  let begon = false, klaar = false, wacht = false, gedaan = false;
+  const een = () => { if (!gedaan) { gedaan = true; dan(); } };
+  speak(text, Object.assign({}, opts, {
+    onStart: () => { begon = true; },
+    onEnd: () => { klaar = true; if (wacht) setTimeout(een, STEM_ADEM); },
+  }));
+  setTimeout(() => {
+    if (!begon || klaar) { een(); return; }
+    wacht = true;
+    setTimeout(een, Math.max(0, STEM_MAX - rust));
+  }, rust);
 }
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   refreshVoices();
@@ -5764,7 +5792,9 @@ function starRevealBeat(lvl, cb) {
   const landt = MOTION.totaal + Math.round((.1 + (st - 1) * STAP + LAND) * 1000);
   setTimeout(cb, landt + 100);   // + een kort stiltetje; de badge die daarna opstijgt is zelf al een pauze
 }
-function goMapNaShow() { sndClick(); goMap(naShowLvl); }
+// De zin van het eindscherm (of het wereldfeest) hoort niet over de kaart en de
+// reis heen door te praten -- net als bij stoppen midden in een show (quitGame).
+function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
 
 /* ================= De kaart zegt hallo =====================================
    De kaart is het hoofdscherm en de ster woont er, maar ze deed er niets als je
@@ -7371,7 +7401,11 @@ const STER_PAD = 'M12 2.6l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.62'
 function starRowHTML(n, gespeeld) {
   const got = Math.max(0, Math.min(3, n | 0));
   if (!gespeeld && !got) return '';
-  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true">`
+  /* Twee paden per ster: .cs-rand is de donkere zoom erachter (zie "De sterren
+     onder de halte"), zodat er geen tabje en geen filter nodig is. .leeg op de
+     svg zelf is de haak voor het eenmalige fonkelen. */
+  const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true"${vol ? '' : ' class="leeg"'}>`
+    + `<path class="cs-rand" d="${STER_PAD}"/>`
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
 }
@@ -9008,7 +9042,6 @@ function renderCountAnswers(q, area) {
 // Meetellen: elk object popt op maat op; de getallen worden achter elkaar gezegd.
 function countAlong(objs, n, lead, drawId) {
   let i = 0;
-  speak(lead);
   const step = () => {
     if (!G || !G.count || i >= n) return;
     if (drawId != null && drawId !== countDrawId) return;   // er staat alweer een nieuwe vraag
@@ -9019,7 +9052,10 @@ function countAlong(objs, n, lead, drawId) {
     i++;
     if (i < n) setTimeout(step, 620);
   };
-  setTimeout(step, 650);
+  // Eerst de opdracht helemaal uit ("Tel mee! Hoeveel zie je?", en op een gouden
+  // vraag ook "Gouden vraag! ..."), dan pas "één": elk telwoord breekt af wat er
+  // nog klonk, en zo bleef er van een gouden vraag alleen "Gou-" over.
+  zegEnDan(lead, null, 650, step);
 }
 function replayPrompt() {
   sndClick();
@@ -9122,18 +9158,28 @@ function countMissSpeak(q, val) {
 }
 // De juiste hoeveelheid hardop meetellen bij een definitieve misser -- zo ziet én
 // hoort het kind wat het antwoord was, zonder één woord tekst.
-function countReveal(q) {
+// klaar() komt als de stem uitgesproken is (zie zegEnDan), of meteen zonder tegel.
+const REVEAL_RUST = 400;   // het laatste telwoord krijgt even om te beginnen
+function countReveal(q, klaar) {
+  klaar = klaar || (() => {});
   const tile = [...document.querySelectorAll('.count-tile')].find(b => parseInt(b.dataset.v, 10) === q.ans);
-  if (tile) {
-    tile.classList.add('good');
-    const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
-    // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
-    if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
-    else if (q.ans === 0) speak('Nul. Er is niets meer.');
-    // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
-    // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
-    else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
-  }
+  if (!tile) { klaar(); return; }
+  tile.classList.add('good');
+  const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
+  // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
+  if (tile.querySelector('.ct-num')) { zegEnDan('Dit is de ' + numWord(q.ans) + '.', null, REVEAL_RUST, klaar); return; }
+  if (q.ans === 0) { zegEnDan('Nul. Er is niets meer.', null, REVEAL_RUST, klaar); return; }
+  // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
+  // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
+  let i = 0;
+  const c = () => {
+    if (!G || !G.count || i >= q.ans) return;
+    if (objs[i]) objs[i].classList.add('pop');
+    i++;
+    if (i < q.ans) { speak(numWord(i), { rate: 0.95 }); setTimeout(c, 560); }
+    else zegEnDan(numWord(i), { rate: 0.95 }, REVEAL_RUST, klaar);
+  };
+  setTimeout(c, 250);
 }
 
 /* ================= Memory-spel (lees-vrij) =================
@@ -9291,7 +9337,8 @@ function onMemMatch(fromBtn) {
   const trofees = checkTrophies(p);
   if (trofees.length) updateTroDot();
   if (M.matched >= M.pairs) { const m = M; setTimeout(() => finishMemory(m), 650); }
-  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']));
+  // achter het getal van de tweede kaart aan, niet eroverheen (wacht)
+  else speak(pick(['Goed zo!', 'Ja!', 'Knap!', 'Gevonden!']), { wacht: true });
 }
 function finishMemory(m) {
   const p = P();
@@ -10142,8 +10189,9 @@ function antwoordGoed(q, p, btnEl) {
      waar het kind een gelijke groep aantikt (1, 2, 4) is dit het enige moment
      dat het telwoord bij de hoeveelheid klinkt -- en precies die koppeling
      ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
-     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan). */
-  speak('Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']));
+     speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan).
+     Hij klinkt onderaan, via zegEnDan: de volgende vraag wacht erop. */
+  const lof = 'Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']);
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
   const g = G;
@@ -10164,7 +10212,10 @@ function antwoordGoed(q, p, btnEl) {
   // zaal licht op -- na een seconde is dat alle drie gezegd en wordt wachten
   // wachten. Een gouden vraag en applaus mogen wél even duren; die zijn
   // bedoeld om op te vallen.
-  setTimeout(nextStep, encore || q.gold ? 1400 : 950);
+  // De volgende vraag zegt zelf iets, dus die wacht tot de lof uit is (zegEnDan):
+  // anders breekt hij "Knap gedaan!" midden in het woord af. Is de show
+  // intussen gestopt (of al een nieuwe begonnen), dan is er geen volgende vraag.
+  zegEnDan(lof, null, encore || q.gold ? 1400 : 950, () => { if (G === g) nextStep(); });
 }
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede
@@ -10217,9 +10268,11 @@ function tweedeMisser(q, p, btnEl) {
   if (btnEl) btnEl.classList.add('bad');
   // laat het juiste antwoord oplichten zodat het kind ziet wat het moest zijn
   if (G.count) {
-    countReveal(q);                               // juiste hoeveelheid hardop meetellen, geen tekst
     loseHeart();
-    toonVerder();
+    // juiste hoeveelheid hardop meetellen, geen tekst -- en het 👉 pas als de stem
+    // klaar is: een snelle tik brak het tellen anders halverwege af
+    const show = G;
+    countReveal(q, () => { if (G === show) toonVerder(); });
     return;
   }
   /* DE VOLGORDE na een tweede misser: eerst wat er fout ging (de rode knop, het
@@ -11196,8 +11249,14 @@ function rekBreedte() {
   if (!rek || rekBreedteBij === `${innerWidth}x${innerHeight}`) return;
   if (!rek.clientWidth || typeof getComputedStyle !== 'function') return;
   const min = parseFloat(getComputedStyle(rek).getPropertyValue('--kaart-min')) || 104;
-  const n = Math.max(1, Math.floor((rek.clientWidth + KAART_GAT) / (min + KAART_GAT)));
-  const b = Math.min((rek.clientWidth - (n - 1) * KAART_GAT) / n, min * 1.7);
+  /* clientWidth rondt áf naar het dichtstbijzijnde hele getal, dus een rek van
+     625,6 meldt zich als 626 -- en een rij die op 626 precies past, breekt dan
+     op het laatste kaartje af (drie per rij op een bureaublad waar er vier
+     pasten). Eén pixel eraf vangt dat altijd. Niet getBoundingClientRect: het
+     scherm komt binnen met een schaal van 1.03, en die meet hij mee. */
+  const w = rek.clientWidth - 1;
+  const n = Math.max(1, Math.floor((w + KAART_GAT) / (min + KAART_GAT)));
+  const b = Math.min((w - (n - 1) * KAART_GAT) / n, min * 1.7);
   rek.style.setProperty('--kaart-b', Math.floor(b) + 'px');
   rek.style.setProperty('--kaart-groei', '0');
   rekBreedteBij = `${innerWidth}x${innerHeight}`;
