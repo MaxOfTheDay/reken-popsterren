@@ -2547,6 +2547,18 @@ function audioWakker() {
   try { if (actx && actx.state !== 'running' && actx.resume) actx.resume(); } catch (e) { /* mag niet */ }
 }
 document.addEventListener('pointerdown', audioWakker, { passive: true });
+/* De context alvast maken, in een rustig moment na het opstarten -- niet pas bij
+   de eerste tik. Een AudioContext aanmaken zet de geluidsuitgang van het toestel
+   aan, en dat kost op een trage tablet al gauw honderden milliseconden. Gebeurde
+   het in sndClick, dan zat die tijd in de allereerste tik van elk bezoek: het
+   tandwiel of een ster kiezen bleef dan even hangen (Cloudflare mat die tikken als
+   de traagste van de app).
+
+   Vóór een tik mag een context niet spelen; hij komt dan stilgelegd binnen. Dat is
+   precies wat punt 3 hierboven al opvangt: audioWakker op de eerste pointerdown, en
+   playSfx vraagt het in de tik zelf nog eens (iOS telt alleen een tik of klik als
+   toestemming). Met het geluid uit wordt er niets gemaakt, net als voorheen. */
+naDeRust(() => { if (db.sound) audioBus(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWakker(); });
 /* De kraan naar v draaien in `tijd` seconden. Een helling en geen sprong: een
    kraan die in één sample dichtgaat knipt lopende noten af met een plof. */
@@ -2730,6 +2742,7 @@ function playSfx(naam, opts) {
   if (!db.sound) return;   // stil is echt stil: geen context, geen knopen, niets
   try {
     if (!audioBus()) return;
+    audioWakker();   // vooraf gemaakt = stilgelegd tot er getikt is (zie hierboven)
     const toon = def.ladder ? def.ladder[Math.min(opts.i | 0, def.ladder.length - 1)]
       : def.keuze ? pick(def.keuze) : 0;
     def.noten.forEach(n => noot(n[0] || toon, n[1], n[2], n[3], n[4]));
