@@ -351,7 +351,9 @@ function check(ok, label, detail) {
       const m = [];
       document.querySelector('.reis-halte[data-w="1"]').click();
       for (let i = 0; i < 40; i++) {
-        m.push({ k: op(kaart), r: op(reis), maat: dekt(kaart),
+        // de vlucht vertrekt één beeldje na de tik (reisTik); zolang staat de
+        // kaart er nog niet en valt er aan zijn maat niets te meten
+        m.push({ k: op(kaart), r: op(reis), maat: !kaart.classList.contains('active') || dekt(kaart),
                  reisUit: getComputedStyle(reis).display === 'none' || op(reis) < 0.05 });
         await new Promise(res => requestAnimationFrame(res));
       }
@@ -366,6 +368,26 @@ function check(ok, label, detail) {
       'C · een bestemming kiezen laat op geen enkel beeldje iets doorschemeren', JSON.stringify(komst));
     check(komst.kaartVol && komst.kaartDekt,
       'C · de kaart komt ondoorzichtig op en is nooit kleiner dan het venster', JSON.stringify(komst));
+
+    /* Eerst antwoorden, dan pas vliegen (reisTik). In de tik zelf alleen de
+       rimpel, en de tekening van de bestemming gaat alvast binnen; de kaart wordt
+       pas na het eerstvolgende beeldje gebouwd. Stond dat werk in de tik, dan
+       wachtte die op een trage tablet ruim een halve seconde op zijn beeldje. */
+    await page.evaluate(() => openReis());
+    await page.waitForTimeout(600);
+    const tik = await page.evaluate(async () => {
+      const kaart = document.getElementById('screen-map');
+      const knop = document.querySelector('.reis-halte[data-w="0"]');
+      knop.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      knop.click();
+      const meteen = { kaart: kaart.classList.contains('active'),
+                       rimpel: !!document.querySelector('.tap-ripple'),
+                       alvast: reisAlvastBeeld && reisAlvastBeeld.dataset.src === WORLDS[0].art };
+      await new Promise(res => requestAnimationFrame(() => setTimeout(res, 20)));
+      return { meteen, daarna: kaart.classList.contains('active') };
+    });
+    check(!tik.meteen.kaart && tik.meteen.rimpel && tik.meteen.alvast && tik.daarna,
+      'C · de tik op een bestemming antwoordt meteen, de vlucht volgt één beeldje later', JSON.stringify(tik));
     await ctx.close();
   }
 

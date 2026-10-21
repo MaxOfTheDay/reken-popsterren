@@ -37,7 +37,7 @@
      Trilfeedback ....... haptics
      Geluid ............. de SFX-tabel: klankjes op naam van de gebeurtenis,
                           live gemaakt met oscillatoren. Geen bestanden
-     Gesproken opdrachten  nl-NL stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
+     Gesproken opdrachten  nl-BE stem — telmodus, en rekenen met Voorlezen aan (zie stemAan)
      Avatar (SVG) ....... de pop tekenen (BASES: meisje of jongen)
 
    ---- SCHERMEN EN NAVIGATIE ------------------------------------------------
@@ -2877,8 +2877,10 @@ function toggleSound() {
 
 /* ================= Gesproken opdrachten (telmodus) =================
    Kleuters kunnen nog niet lezen, dus in de telmodus wordt élke opdracht
-   hardop voorgelezen met de ingebouwde spraak van het toestel (SpeechSynthesis,
-   nl-NL). Niet elk toestel heeft een Nederlandse stem -- daarom is spraak nooit
+   hardop voorgelezen met de ingebouwde spraak van het toestel (SpeechSynthesis).
+   De stem is Vlaams (nl-BE) waar het toestel er een heeft -- iPad, iPhone, Mac
+   en Android meestal wel, Chrome op Windows niet -- en anders Nederlands (nl-NL),
+   en anders welke Nederlandstalige stem er ook is. Niet elk toestel heeft een Nederlandse stem -- daarom is spraak nooit
    de énige drager: de vraag staat altijd óók volledig in beeld (objecten/stippen),
    en een 🔊-knop leest de opdracht op verzoek opnieuw voor. Ontbreekt een stem,
    dan blijft alles gewoon speelbaar, enkel zonder stemgeluid. */
@@ -2888,9 +2890,13 @@ const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 
 function numWord(n) { return NUM_NL[n] != null ? NUM_NL[n] : String(n); }
 let _voices = [];
 function refreshVoices() { try { _voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { _voices = []; } }
+// Vlaams eerst, dan Nederlands, dan elke andere nl-stem. Sommige toestellen
+// schrijven nl_BE met een liggend streepje, vandaar [-_].
+const STEM_VOORKEUR = [/^nl[-_]BE$/i, /^nl[-_]NL$/i, /^nl(\b|[-_])/i];
 function nlVoice() {
   if (!_voices.length) refreshVoices();
-  return _voices.find(v => /^nl(\b|[-_])/i.test(v.lang)) || null;
+  for (const re of STEM_VOORKEUR) { const v = _voices.find(x => re.test(x.lang)); if (v) return v; }
+  return null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
 /* Mag deze ster een stem horen? In de telmodus altijd. In de rekenmodus alleen
@@ -2900,8 +2906,9 @@ function hasSpeech() { return 'speechSynthesis' in window; }
 function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
 /* Een rekensom als zin: "7 + 3 = @" -> "zeven plus drie is hoeveel?". Het
    sjabloon is dezelfde bron als wat er in beeld staat, dus ze kunnen niet
-   uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor. */
-const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'keer', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
+   uit elkaar lopen. Boven de tien leest de stem gewoon het cijfer voor.
+   × is "maal", zoals op een Vlaamse school. */
+const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'maal', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
 function somZin(q) {
   if (!q || !q.tmpl) return '';
   return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
@@ -2921,7 +2928,9 @@ function speak(text, opts) {
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
-    u.lang = 'nl-NL';
+    // De taal volgt de gekozen stem: Safari op iOS kijkt soms alleen naar lang. Zonder
+    // stemmenlijst (die komt soms pas later binnen) vragen we gewoon om Vlaams.
+    u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
     u.rate = opts.rate || 0.85;   // rustig tempo voor jonge kinderen
     u.pitch = opts.pitch || 1.15; // iets hoger/vrolijker
     if (opts.onEnd) u.onend = opts.onEnd;
@@ -6610,7 +6619,10 @@ function renderReis() {
         `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
-    if (b.open) knop.onclick = () => reisNaarWereld(b.i, knop);
+    if (b.open) {
+      knop.onpointerdown = () => reisKaartAlvast(b.i);
+      knop.onclick = () => reisTik(b.i, knop);
+    }
     else {
       /* aria-disabled en niet disabled. Een <button disabled> krijgt geen enkele
          gebeurtenis en ook geen :active, en dat maakte een wereld op slot het enige
@@ -6945,7 +6957,49 @@ function reisSluit(stil) {
    Wat er NIET gebeurt: er wordt niets afgemaakt, niets vrijgespeeld en niets
    verzet. reisDoel is één opdracht aan de eerstvolgende kaart en goMap verbruikt
    hem meteen; p.level, de sterren en de grens blijven precies staan. */
-function reisNaarWereld(idx, el, stil) {
+/* ---- De tik op een bestemming: eerst antwoorden, dan pas vliegen ----
+   Hetzelfde als naTik (zie "Eerst antwoorden, dan pas het zware werk"), voor de
+   tik die Cloudflare daarna als traagste meldde: een wereld kiezen op Werelden.
+   De vlucht bouwt de hele kaart van die wereld op en meet hem een paar keer op;
+   gebeurde dat binnen de tik, dan wachtte de tik ruim een halve seconde op het
+   volgende beeldje (6× vertraagd, gemeten). Nu komen het geluid, het indrukken
+   en de rimpel meteen, en vertrekt de vlucht één beeldje later. reisNaarWereld
+   zelf blijft synchroon, net als navGo: de suites roepen hem rechtstreeks aan.
+
+   De rimpel staat hier en niet meer alleen in reisNaarWereld: daar komt hij pas
+   in de taak die ook de kaart bouwt, en dan tekent hij pas ná al dat werk. */
+function reisTik(idx, el) {
+  if (overgangBezig || tikWacht) return;
+  sndClick();
+  reisKaartAlvast(idx);
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+  naTik(() => reisNaarWereld(idx, el, true, true));
+}
+/* De tekening van de bestemming alvast ophalen én uitpakken, bij het neerzetten
+   van de vinger. Tussen neerzetten en loslaten zit op een telefoon zo'n honderd
+   milliseconden, en die waren ongebruikt: de kaart vroeg zijn tekening pas aan
+   als de vlucht al begon, en het eerste beeldje van de vlucht wachtte dan tot hij
+   uitgepakt was (1215×2160, het zwaarste plaatje van de app).
+
+   Alleen de wereld waar de vinger op staat -- niet alles wat op Werelden in
+   beeld is. Dat zou bij elke keer kijken een handvol volle tekeningen ophalen,
+   en dat is precies wat "nooit alles" (zie DE ZWARE SPULLEN) uitsluit. decode()
+   zet het uitgepakte beeld in de gedeelde voorraad van de browser, en de kaart
+   tekent dezelfde URL. reisAlvastBeeld houdt hem vast tot hij klaar is. */
+let reisAlvastBeeld = null;
+function reisKaartAlvast(idx) {
+  const w = worldForIndex(idx);
+  const src = w && w.world && w.world.art;
+  if (!src || (reisAlvastBeeld && reisAlvastBeeld.dataset.src === src)) return;
+  const beeld = new Image();
+  beeld.dataset.src = src;
+  beeld.src = src;
+  ART_GEHAALD.add(src);
+  reisAlvastBeeld = beeld;
+  if (beeld.decode) beeld.decode().catch(() => {});
+}
+function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
   vluchtKlaar();                             // zie openReis: eerst afsluiten, dan pas klassen
   if (!stil) sndClick();
@@ -6964,7 +7018,7 @@ function reisNaarWereld(idx, el, stil) {
   }
   overgangBezig = true;
   const punt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  tapRipple(punt.x, punt.y);                 // de tik komt aan, meteen en zonder wachten
+  if (!alGetikt) tapRipple(punt.x, punt.y);  // de tik komt aan (via reisTik: die gaf hem al)
   el.classList.add('vlucht-doel');           // dit kaartje ligt vanaf nu in de lucht
   const kopVan = reis.querySelector('.rt-ico');
   const schuif = reis.scrollTop;             // display:none zet de schuifstand terug op nul
