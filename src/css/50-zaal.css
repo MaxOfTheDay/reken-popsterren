@@ -530,6 +530,10 @@
   .count-tile .cg-obj { font-size: 27px; }
   .count-tile .cg-dot { width: 20px; height: 20px; }
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
+  /* groot tegen klein bij meer/minder (zie genCount, 'compare') */
+  .count-tile .cgroup.groot .cg-obj { font-size: min(44px, 36cqw); }
+  .count-tile .cgroup.klein { gap: 2px 3px; }
+  .count-tile .cgroup.klein .cg-obj { font-size: min(17px, 13cqw); }
 
   /* ---- Goed antwoord: de tegel viert zelf mee (veerpop + glow-ring + ✓-stempel) ---- */
   .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }

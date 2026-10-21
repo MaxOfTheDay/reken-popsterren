@@ -273,6 +273,34 @@ function check(ok, label, detail) {
       'tik en tel: elk voorwerp krijgt zijn eigen nummer', JSON.stringify(tap.nrs));
   }
 
+  /* ---- nul, en groot tegen klein ---- */
+  const randen = await page.evaluate(() => {
+    const p = P(); p.settings.repr = 'objects';
+    p.countTrack = { stage: 7, rung: countTopRung(7), streak: 0, seen: 0, acc: 0.6 };
+    let nul = null;
+    for (let i = 0; i < 2000 && !nul; i++) { const q = genCount(p); if (q.ans === 0) nul = q; }
+    let nulTegel = null;
+    if (nul) {
+      G.qs[G.idx] = nul; drawCountQuestion(nul); renderCountAnswers(nul, document.getElementById('answer-area'));
+      const t = document.querySelector('.count-tile[data-v="0"]');
+      nulTegel = t && { leeg: t.querySelectorAll('.df-dot').length, raam: !!t.querySelector('.dframe') };
+    }
+    p.countTrack = { stage: 3, rung: countTopRung(3), streak: 0, seen: 0, acc: 0.6 };
+    let gk = null;
+    for (let i = 0; i < 400 && !gk; i++) { const q = genCount(p); if (q.choices.some(c => c.cls === 'groot')) gk = q; }
+    let klopt = false;
+    if (gk) {
+      const lo = Math.min(...gk.choices.map(c => c.v)), hi = Math.max(...gk.choices.map(c => c.v));
+      klopt = gk.choices.find(c => c.v === lo).cls === 'groot' && gk.choices.filter(c => c.v !== lo).every(c => c.cls === 'klein') && hi > lo;
+      G.qs[G.idx] = gk; drawCountQuestion(gk); renderCountAnswers(gk, document.getElementById('answer-area'));
+    }
+    return { nul: !!nul, nulTegel, gk: !!gk, klopt, grootInBeeld: !!document.querySelector('.count-tile .cgroup.groot') };
+  });
+  check(randen.nul && randen.nulTegel && randen.nulTegel.raam && randen.nulTegel.leeg === 0,
+    'één eraf van één: nul komt voor, als leeg raampje', JSON.stringify(randen));
+  check(randen.gk && randen.klopt && randen.grootInBeeld,
+    'meer/minder bovenaan: de kleinste groep groot, de rest klein', JSON.stringify(randen));
+
   /* ---- afleiders blijven binnen het bereik van de vraag ----
      De rendering-controle hierboven trekt per fase/rung één willekeurige vraag,
      dus een afleider die net buiten bereik valt kwam maar in ongeveer één op de

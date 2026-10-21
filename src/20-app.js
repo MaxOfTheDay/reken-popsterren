@@ -8525,6 +8525,15 @@ function genCount(p) {
     q.compare = wantMore ? 'more' : 'less';
     q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
     q.choices = shuffle(vals.map(qgroup));
+    /* Groot tegen klein: op de hoogste trap staat de kleinste groep er soms in
+       grote voorwerpen en de andere in kleine, los en niet in een raam. Dan
+       is "de meeste" niet meer "het meeste plek" -- je moet echt tellen. Alleen
+       bij voorwerpen: stippen hebben een vast raam en dus geen maat om mee te
+       misleiden. */
+    if (repr === 'objects' && d.rung >= d.top && Math.random() < 0.5) {
+      const lo = Math.min(...vals);
+      q.choices.forEach(c => { c.frame = false; c.cls = c.v === lo ? 'groot' : 'klein'; });
+    }
     q.prompt = wantMore ? 'Tik op de groep met de meeste.' : 'Tik op de groep met de minste.';
   } else if (type === 'match') {
     const t = rnd(1, max);
@@ -8552,10 +8561,14 @@ function genCount(p) {
     q.prompt = 'Welke groep hoort bij dit cijfer?';
   } else if (type === 'onemore' || type === 'oneless') {
     const dir = type === 'onemore' ? 1 : -1;
-    const base = dir > 0 ? rnd(1, max - 1) : rnd(2, max);
+    /* Nul: op de hoogste trap gaat er af en toe één weg van één. Dan is er niets
+       meer, en ook dat is een getal -- het enige dat in de hele telmodus nog niet
+       voorkwam. De knop met nul is een leeg raampje (zie renderCountAnswers). */
+    const naarNul = dir < 0 && d.rung >= d.top && Math.random() < 0.2;
+    const base = dir > 0 ? rnd(1, max - 1) : (naarNul ? 1 : rnd(2, max));
     q.ans = base + dir;
     q.card = { kind: 'delta', base, dir, emoji, frame, repr };
-    q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
+    q.choices = countDistractors(q.ans, nCh, q.ans === 0 ? 0 : 1, max, d.delta).map(qgroup);
     q.prompt = dir > 0 ? 'Er komt er één bij. Hoeveel zijn het er nu?' : 'Er gaat er één weg. Hoeveel zijn het er nu?';
   } else if (type === 'combine') {                 // twee groepjes samen
     const a = rnd(1, Math.max(1, max - 1));
@@ -8755,8 +8768,10 @@ function renderCountAnswers(q, area) {
       const sup = c.support || 'full';
       const dots = sup === 'none' ? '' : groupHTML(c.v, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''), false, c.cap);
       inner = `<span class="ct-num">${c.v}</span>${dots}`;
+    } else if (c.n === 0) {
+      inner = dotFrameHTML(0, c.cap || 5, '', 'full');   // nul: een leeg raampje, geen lege knop
     } else {
-      inner = groupHTML(c.n, c.emoji, c.repr, '', c.frame, c.cap);
+      inner = groupHTML(c.n, c.emoji, c.repr, c.cls || '', c.frame, c.cap);
     }
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
@@ -8884,6 +8899,7 @@ function countReveal(q) {
     const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
     // cijfer-tegel (getal-fases + geschreven sommen): zeg het getal; anders tel de groep mee
     if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
+    else if (q.ans === 0) speak('Nul. Er is niets meer.');
     // net als countAlong/animateDelta: elke geplande stap meldt zich eerst af bij G,
     // anders blijft dit doortellen nadat de show intussen verlaten is (zie quitGame)
     else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
@@ -11834,6 +11850,9 @@ function statsPanelHtml(p) {
     const nLearned = Object.keys(p.learned || {}).length;
     if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later nog eens terug, om te controleren of het blijft zitten.</div>`;
   }
+  // de stem: in de telmodus de helft van elke vraag (en bij rekenen met Voorlezen)
+  const stem = stemAan(p) ? stemNotitie() : '';
+  if (stem) practice += `<div class="note stem-notitie">${stem}</div>`;
   /* FASE 5D -- niet alles is even belangrijk.
      Er stonden zes tegels in één raster, alle zes even groot en even zwaar: hoe
      vaak er gespeeld is stond naast hoeveel trofeeën er in de kast hangen, alsof
@@ -11869,6 +11888,16 @@ function statsPanelHtml(p) {
     ${fluencyHtml(p)}
     ${practice}
   </div></div>`;
+}
+/* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
+   stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
+   weg en klinkt er geen telwoord meer. Leeg als alles in orde is. Het geluid
+   eerst: dat is één tik, en dan doet de rest er niet toe. */
+function stemNotitie() {
+  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+  if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
+  if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
+  return '';
 }
 /* De niveau-inschatting -- en waarom er geen percentage meer staat.
    FASE 5D.1. Hier stond "Niveau-inschatting -- 50%" met een half gevulde balk

@@ -3661,6 +3661,10 @@
   .count-tile .cg-dot { width: 20px; height: 20px; }
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
 
+  .count-tile .cgroup.groot .cg-obj { font-size: min(44px, 36cqw); }
+  .count-tile .cgroup.klein { gap: 2px 3px; }
+  .count-tile .cgroup.klein .cg-obj { font-size: min(17px, 13cqw); }
+
 
   .choice-btn.good, .count-tile.good { position: relative; animation: goodPop .5s var(--ease-plop); }
   @keyframes goodPop { 0% { transform: scale(1); } 35% { transform: scale(1.11); } 70% { transform: scale(.98); } 100% { transform: scale(1); } }
@@ -8575,6 +8579,8 @@
   .grens-tip > div { flex: 1 1 200px; }
 
   .grens-tip .tip-klein { color: var(--paper-ink-muted); }
+
+  .stem-notitie { margin-top: 10px; }
 
 
 
@@ -18622,6 +18628,15 @@ function genCount(p) {
     q.compare = wantMore ? 'more' : 'less';
     q.card = { kind: 'label', text: wantMore ? '⬆️ de meeste' : '⬇️ de minste' };
     q.choices = shuffle(vals.map(qgroup));
+
+
+
+
+
+    if (repr === 'objects' && d.rung >= d.top && Math.random() < 0.5) {
+      const lo = Math.min(...vals);
+      q.choices.forEach(c => { c.frame = false; c.cls = c.v === lo ? 'groot' : 'klein'; });
+    }
     q.prompt = wantMore ? 'Tik op de groep met de meeste.' : 'Tik op de groep met de minste.';
   } else if (type === 'match') {
     const t = rnd(1, max);
@@ -18649,10 +18664,14 @@ function genCount(p) {
     q.prompt = 'Welke groep hoort bij dit cijfer?';
   } else if (type === 'onemore' || type === 'oneless') {
     const dir = type === 'onemore' ? 1 : -1;
-    const base = dir > 0 ? rnd(1, max - 1) : rnd(2, max);
+
+
+
+    const naarNul = dir < 0 && d.rung >= d.top && Math.random() < 0.2;
+    const base = dir > 0 ? rnd(1, max - 1) : (naarNul ? 1 : rnd(2, max));
     q.ans = base + dir;
     q.card = { kind: 'delta', base, dir, emoji, frame, repr };
-    q.choices = countDistractors(q.ans, nCh, 1, max, d.delta).map(qgroup);
+    q.choices = countDistractors(q.ans, nCh, q.ans === 0 ? 0 : 1, max, d.delta).map(qgroup);
     q.prompt = dir > 0 ? 'Er komt er één bij. Hoeveel zijn het er nu?' : 'Er gaat er één weg. Hoeveel zijn het er nu?';
   } else if (type === 'combine') {
     const a = rnd(1, Math.max(1, max - 1));
@@ -18852,8 +18871,10 @@ function renderCountAnswers(q, area) {
       const sup = c.support || 'full';
       const dots = sup === 'none' ? '' : groupHTML(c.v, '•', 'dots', 'mini' + (sup === 'faint' ? ' faint' : ''), false, c.cap);
       inner = `<span class="ct-num">${c.v}</span>${dots}`;
+    } else if (c.n === 0) {
+      inner = dotFrameHTML(0, c.cap || 5, '', 'full');
     } else {
-      inner = groupHTML(c.n, c.emoji, c.repr, '', c.frame, c.cap);
+      inner = groupHTML(c.n, c.emoji, c.repr, c.cls || '', c.frame, c.cap);
     }
     return `<button class="count-tile" data-v="${c.v}">${inner}</button>`;
   }).join('');
@@ -18981,6 +19002,7 @@ function countReveal(q) {
     const objs = tile.querySelectorAll('.cg-obj, .cg-dot, .df-dot');
 
     if (tile.querySelector('.ct-num')) speak('Dit is de ' + numWord(q.ans) + '.');
+    else if (q.ans === 0) speak('Nul. Er is niets meer.');
 
 
     else { let i = 0; const c = () => { if (!G || !G.count) return; if (i >= q.ans) return; if (objs[i]) objs[i].classList.add('pop'); speak(numWord(i + 1), { rate: 0.95 }); i++; if (i < q.ans) setTimeout(c, 560); }; setTimeout(c, 250); }
@@ -21932,6 +21954,9 @@ function statsPanelHtml(p) {
     if (nLearned) practice += `<div class="note" style="margin-top:8px">🧠 ${nLearned} geleerde ${mv(nLearned, 'som komt', 'sommen komen')} later nog eens terug, om te controleren of het blijft zitten.</div>`;
   }
 
+  const stem = stemAan(p) ? stemNotitie() : '';
+  if (stem) practice += `<div class="note stem-notitie">${stem}</div>`;
+
 
 
 
@@ -21966,6 +21991,16 @@ function statsPanelHtml(p) {
     ${fluencyHtml(p)}
     ${practice}
   </div></div>`;
+}
+
+
+
+
+function stemNotitie() {
+  if (!db.sound) return '🔇 Het geluid staat uit, en daarmee ook de stem die de vragen voorleest. Zet het aan met het tandwiel op het beginscherm.';
+  if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
+  if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
+  return '';
 }
 
 
