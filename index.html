@@ -13043,13 +13043,19 @@ function toggleSound() {
 
 
 
+
+
 const NUM_NL = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
 function numWord(n) { return NUM_NL[n] != null ? NUM_NL[n] : String(n); }
 let _voices = [];
 function refreshVoices() { try { _voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { _voices = []; } }
+
+
+const STEM_VOORKEUR = [/^nl[-_]BE$/i, /^nl[-_]NL$/i, /^nl(\b|[-_])/i];
 function nlVoice() {
   if (!_voices.length) refreshVoices();
-  return _voices.find(v => /^nl(\b|[-_])/i.test(v.lang)) || null;
+  for (const re of STEM_VOORKEUR) { const v = _voices.find(x => re.test(x.lang)); if (v) return v; }
+  return null;
 }
 function hasSpeech() { return 'speechSynthesis' in window; }
 
@@ -13060,7 +13066,8 @@ function stemAan(p) { return p.settings.track === 'count' || p.settings.voorleze
 
 
 
-const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'keer', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
+
+const SOM_WOORD = { '+': 'plus', '−': 'min', '×': 'maal', ':': 'gedeeld door', '=': 'is', '@': 'hoeveel' };
 function somZin(q) {
   if (!q || !q.tmpl) return '';
   return q.tmpl.split(' ').map(t => SOM_WOORD[t] || numWord(parseInt(t, 10))).join(' ') + '?';
@@ -13080,7 +13087,9 @@ function speak(text, opts) {
     const u = new SpeechSynthesisUtterance(text);
     const v = nlVoice();
     if (v) u.voice = v;
-    u.lang = 'nl-NL';
+
+
+    u.lang = v ? v.lang.replace('_', '-') : 'nl-BE';
     u.rate = opts.rate || 0.85;
     u.pitch = opts.pitch || 1.15;
     if (opts.onEnd) u.onend = opts.onEnd;
