@@ -731,7 +731,7 @@ function check(ok, label, detail) {
     });
     check(!/%/.test(r.tekst), 'het niveau-blok noemt geen percentage', r.tekst.slice(0, 80));
     check(r.balken === 0, 'en heeft geen voortgangsbalk', 'balken=' + r.balken);
-    check(/vanzelf aan/.test(r.tekst), 'maar zegt wél dat het spel zelf bijstelt', r.tekst.slice(0, 80));
+    check(r.tekst.split(/\s+/).filter(Boolean).length < 40, 'en het leerpad blijft kort (geen vaste voetnoot)', r.tekst.slice(0, 120));
     check(/rekenen/.test(r.tekst) && /tot 20/.test(r.tekst) && /nu/.test(r.bezig),
       'en zet op het leerpad waar het kind nu aan werkt', r.bezig);
     check(r.perf === 0.5, 'p.perf staat nog gewoon in de opslag', String(r.perf));
@@ -748,7 +748,7 @@ function check(ok, label, detail) {
       bezig: document.querySelector('.niveau-bezig').textContent.trim(),
       tekst: document.querySelector('.niveau-blok').textContent,
     }));
-    check(/fase 4 van 11/.test(r.bezig) && /Evenveel/.test(r.bezig),
+    check(/^4\s*Evenveel/.test(r.bezig),
       'in de telmodus staat de fase waar het kind nú speelt er', r.bezig);
     check(!/%/.test(r.tekst), 'ook in de telmodus geen percentage', r.tekst.slice(0, 80));
     // en de moeilijkheid draait nog: perf beweegt mee met goede antwoorden
@@ -959,6 +959,8 @@ function check(ok, label, detail) {
     check(r.meerOpen === false, 'P · "meer cijfers" staat dicht', String(r.meerOpen));
     check(r.nu === 1, 'P · er is precies één stap "nu" op het pad', String(r.nu));
     r = await met([3, 2, 3, 2, 3, 3, 2, 3]);
+    const bolletjes = await page.evaluate(() => [...document.querySelectorAll('.vg-reeks i')].map(i => i.className).join(','));
+    check(bolletjes === 'r3,r2,r3,r2,r3,r3,r2,r3', 'P · één bolletje per show, in volgorde', bolletjes);
     check(/goed/.test(r.stand), 'P · drie en twee sterren door elkaar: de uitdaging zit goed', r.kop);
     r = await met([3, 3, 3, 3, 3, 3, 3, 3, 3, 2]);
     check(/vlot/.test(r.stand), 'P · bijna alles drie sterren: vlot', r.kop);
