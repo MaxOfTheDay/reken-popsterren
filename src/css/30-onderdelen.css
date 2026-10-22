@@ -672,6 +672,10 @@
   .podium::before { content: ''; position: absolute; inset: 8% 6%; border-radius: 50%; pointer-events: none; }
   /* De patronen. Elk is één laag (een tweede laag kreeg een eigen
      background-size nodig en dat liep stil uit de pas). */
+  /* Het parelpodium (stage_disco): waar iedereen op staat zonder eigen podium.
+     Wit met een zachte parelglans, geen patroon -- het eenvoudigste podium is ook
+     het rustigste, en elk wereldpodium ernaast valt daardoor meer op. */
+  .pod-parel::before    { background: radial-gradient(60% 50% at 40% 35%, rgba(255,255,255,.95), transparent 70%); }
   .pod-disco::before    { background: radial-gradient(circle, rgba(255,255,255,.7) 1.1px, transparent 1.8px) 0 0 / 9px 6px; }
   .pod-stippen::before  { background: radial-gradient(circle, rgba(255,255,255,.45) 1.6px, transparent 2.4px) 0 0 / 14px 9px; }
   .pod-sterren::before  { background: radial-gradient(circle, #fff 1.1px, transparent 1.9px) 3px 2px / 17px 10px; opacity: .85; }
@@ -718,7 +722,9 @@
                 0 0 calc(var(--wp, 56px) * .25) rgba(var(--goud-gloed-rgb), .85);
   }
   .wereldprijs.goud:not(.af) .podium { filter: grayscale(.5) brightness(.8); }
-  /* Op de sterrentegel: een tikje hoger, zodat de zijband niet tegen de onderrand
-     van de tegel valt (die knipt af, zie .stage). */
-  .ster-tegel .stage-podium { bottom: 5%; }
+  /* Op de sterrentegel: 80% van de tegel (zie .stage-podium), en zo hoog dat haar
+     voeten midden op de schijf staan en de zijband niet tegen de onderrand valt
+     (die knipt af, zie .stage). */
+  .ster-tegel .stage-podium { width: 80%; bottom: 10.4%; }
+  .ster-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
   .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }

@@ -482,6 +482,30 @@ function check(ok, label, detail) {
     check(!r.heeft && r.staat === 'stage_disco' && r.diamanten === 9999,
       'G · en kopen kan ook niet langs de knop om', JSON.stringify(r));
     check(r.wereldtekens === 0, 'G · geen wereldteken meer in de hoek van een kaartje', JSON.stringify(r.wereldtekens));
+    /* Een podium van een wereld verder vooruit (binnen de horizon, nog op slot op
+       de reis): zien en passen mag, maar het brengt je niet naar die wereld. Het
+       slotje zegt wat de reis zegt, en Speel opent de kaart waar ze nu staat --
+       zonder die verre wereld op "al gezien" te zetten. */
+    const ver = await page.evaluate(async () => {
+      const st = zichtbarePodia(P()).filter(s => podiumWereldIdx(s) > 0).pop();
+      const wi = podiumWereldIdx(st);
+      document.querySelector(`.item-card[data-item="${st.id}"]`).click();
+      await new Promise(res => setTimeout(res, 150));
+      document.querySelector('#dress-bar .mini-kaart.op-slot').click();
+      await new Promise(res => setTimeout(res, 100));
+      const bel = !!document.querySelector('.slot-bel');
+      const toast = document.getElementById('toast').textContent;
+      document.getElementById('db-speel').click();
+      await new Promise(res => setTimeout(res, 600));
+      return { wi, bel, toast, kijk: viewWorldIdx, gezien: worldSeen(P(), wi),
+               kaart: document.getElementById('screen-map').classList.contains('active') };
+    });
+    check(ver.wi > 0 && !ver.bel && /Speel eerst/.test(ver.toast),
+      'G · een podium verder vooruit: het slotje zegt "speel eerst" en wijst geen wereld aan', JSON.stringify(ver));
+    check(ver.kaart && ver.kijk === 0 && !ver.gezien,
+      'G · en Speel opent de kaart waar ze nu staat, niet die verre wereld', JSON.stringify(ver));
+    await page.evaluate(() => { openKleedkamer(); openPodia(); });
+    await new Promise(res => setTimeout(res, 250));
     /* Verdiend: de schat staat bij haar spullen, het slot gaat eraf, en wat er nog
        ontbreekt koop je in één keer -- daarna staat ze erop. */
     const na = await page.evaluate(async () => {
