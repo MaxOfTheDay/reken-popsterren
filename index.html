@@ -1137,7 +1137,11 @@
 
   #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
   #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
-  #screen-end { --kolom: 420px; }
+
+
+
+
+  #screen-end { --kolom: 420px; --kop-kolom: 860px; }
 
 
 
@@ -2222,6 +2226,17 @@
 
 
 
+
+  .ico-bron { position: absolute; width: 0; height: 0; overflow: hidden; }
+  .ico {
+    display: block; flex: none; width: 22px; height: 22px;
+    fill: none; stroke: currentColor; stroke-width: 2.9;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+
+
+
   #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
   #btn-gear.on .gear-ico { transform: rotate(35deg); }
 
@@ -2525,9 +2540,11 @@
 
 
 
+
+
   .screen-header {
     display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
-    align-items: center; gap: 12px; width: 100%; max-width: var(--kolom, 680px); margin-bottom: 8px;
+    align-items: center; gap: 12px; width: 100%; max-width: var(--kop-kolom, var(--kolom, 680px)); margin-bottom: 8px;
   }
   .screen-header .header-title {
     font-size: var(--tx-kop); font-weight: 700; text-align: center; white-space: nowrap;
@@ -2536,6 +2553,24 @@
 
   .world-sub { display: block; font-size: var(--tx-klein); font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
   .screen-header .header-left { justify-self: start; }
+
+
+
+
+
+
+
+
+
+  .screen-header .icon-btn.header-left {
+    border: 0; background: var(--hud-bg);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    text-shadow: var(--hud-ink);
+  }
+  .screen-header .icon-btn.header-left:active {
+    transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+  }
   .screen-header .header-right { justify-self: end; }
 
 
@@ -3398,7 +3433,8 @@
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 2px;
   }
   .venue-aan .screen-header .header-title { text-shadow: var(--hud-ink); }
-  .venue-aan .screen-header .icon-btn,
+
+
   .venue-aan .screen-header .diamond-badge {
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
@@ -4597,6 +4633,8 @@
     box-shadow: inset 0 0 0 1px var(--gold-accent); }
   .wb-naam { gap: 6px; padding: 0 14px 0 8px; }
 
+  .wb-cta .ico { width: .95em; height: .95em; }
+
 
 
   @media (max-width: 389px) {
@@ -5594,19 +5632,13 @@
 
 
 
+
   #screen-journey .diamond-badge {
     height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: var(--tx-body);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
-  #screen-journey .icon-btn {
-    font-size: 17px; border: 0;
-    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
-    text-shadow: var(--hud-ink);
-  }
-  #screen-journey .icon-btn:active { transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring); }
 
 
 
@@ -6081,19 +6113,36 @@
 
 
 
+
+
+
+
+
+
   .reis-terug {
-    position: fixed; right: 14px; bottom: calc(var(--balk-ruimte) + 10px); z-index: 30;
-    width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255,255,255,.28);
-    display: flex; align-items: center; justify-content: center; padding: 0;
-    font-family: inherit; font-size: var(--tx-sub); color: var(--c-white); cursor: pointer;
-    background: rgba(32,12,58,.8);
+    position: fixed; left: 50%; bottom: calc(var(--balk-ruimte) + 10px); z-index: 30;
+    display: flex; align-items: stretch; gap: 0; padding: 0; height: var(--hud-h);
+    font-family: inherit; font-size: var(--tx-body); font-weight: 700; line-height: 1;
+    white-space: nowrap; max-width: calc(100% - 24px);
+    color: var(--c-white); cursor: pointer; border: 0; border-radius: var(--r-pill);
+
+
+    background: rgba(28, 6, 52, .62);
     backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: 0 4px 14px rgba(0,0,0,.45);
-    opacity: 0; transform: translateY(8px) scale(.9); pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
+    opacity: 0; transform: translate(-50%, 8px) scale(.9); pointer-events: none;
     transition: opacity .2s ease, transform .2s var(--ease-uit);
   }
-  .reis-terug.aan { opacity: 1; transform: none; pointer-events: auto; }
-  .reis-terug:active { transform: scale(.92); }
+
+  .reis-terug::before { content: ''; position: absolute; inset: -5px 0; }
+  .reis-terug .ico { transition: transform .2s var(--ease-uit); }
+  .reis-terug.neer .ico { transform: rotate(180deg); }
+  .reis-terug.aan { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+  .reis-terug:active { transform: translateX(-50%) scale(.96); filter: brightness(1.15); }
+  @media (max-width: 389px) {
+    .reis-terug { font-size: var(--tx-klein); }
+  }
 
 
 
@@ -6114,14 +6163,18 @@
 
 
     #screen-journey .rt-ico { font-size: 21px; }
-    #screen-journey .icon-btn { width: 34px; height: 34px; font-size: 16px; }
+
+
+    #screen-journey .icon-btn { width: 34px; height: 34px; position: relative; }
+    #screen-journey .icon-btn .ico { width: 18px; height: 18px; }
+    #screen-journey .icon-btn::before { content: ''; position: absolute; inset: -5px; }
     #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
 
     .reis-gloed::before { animation: none; opacity: 1; box-shadow: 0 0 20px rgba(var(--goud-gloed-rgb),.32); }
     .reis-gloed::after { display: none; }
-    .reis-plaats, .reis-gloed, .reis-terug, .reis-halte.vol::after { transition: none; }
+    .reis-plaats, .reis-gloed, .reis-terug, .reis-terug .ico, .reis-halte.vol::after { transition: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -7217,15 +7270,11 @@
 
 
 
-  .hub-sticky.sub .icon-btn,
-  #screen-dress .hub-sticky .icon-btn, #screen-trophies .hub-sticky .icon-btn {
-    font-size: 17px; border-color: rgba(255,255,255,.22);
-    background: rgba(255,255,255,.1); box-shadow: none;
-  }
-  .hub-sticky.sub .icon-btn:active,
-  #screen-dress .hub-sticky .icon-btn:active, #screen-trophies .hub-sticky .icon-btn:active {
-    transform: scale(.94); box-shadow: none;
-  }
+
+
+
+  #screen-trophies .screen-header .header-left,
+  #screen-dress:not(.met-terug) .screen-header .header-left { visibility: hidden; }
 
 
 
@@ -8141,6 +8190,8 @@
   .speel-als[hidden] { display: none; }
   .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
+  .speel-als .ico { width: 1em; height: 1em; }
+
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -8979,6 +9030,17 @@
 </style>
 </head>
 <body class="start">
+<!-- De pijlen en het kruisje van de terugknoppen (en de ▶ van het ouderdeel), één
+     keer getekend. Ze stonden er als tekst (← ↑ ↓ ✕ ▶), maar die tekens zitten niet in Fredoka: elk toestel
+     tekende ze dan in zijn eigen systeemletter, dun en klein en overal anders.
+     Nu is het één lijn met ronde uiteinden, zo dik als de letter van de knoppen
+     ernaast, en elke knop leent hem met <use>. Zie .ico in het stijlblad. -->
+<svg class="ico-bron" aria-hidden="true" focusable="false">
+  <symbol id="ico-terug" viewBox="0 0 24 24"><path d="M19 12H5.5M11.5 5.5L5 12l6.5 6.5"/></symbol>
+  <symbol id="ico-op" viewBox="0 0 24 24"><path d="M12 19V5.5M5.5 11.5L12 5l6.5 6.5"/></symbol>
+  <symbol id="ico-kruis" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="ico-speel" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.8v12.4L18 12z"/></symbol>
+</svg>
 <div class="grain" aria-hidden="true"></div>
 <div id="confetti-layer" aria-hidden="true"></div>
 <div id="app">
@@ -9142,7 +9204,7 @@
   <div class="screen hub" id="screen-journey">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(reisSluit)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- Alleen de globe, geen woord erbij: het scherm zégt al wat het is (gestapelde
              werelden, de route ertussen, Kaart onderaan geselecteerd) en "Werelden"
              eroverheen is dat nog een keer. Wat overblijft is het ene teken dat óók op
@@ -9159,7 +9221,7 @@
     <div class="reis-track" id="reis-track"></div>
     <!-- Alleen zichtbaar als je jezelf niet meer ziet; zie reisVolgKnop. -->
     <button class="reis-terug" id="reis-terug" type="button" onclick="reisTerugNaarNu()"
-      aria-label="Terug naar waar je bent">↑</button>
+      aria-label="Terug naar waar je bent"></button>
   </div>
 
   <!-- ===== Memory-spel (lees-vrij: zoek de gelijke hoeveelheden) ===== -->
@@ -9171,7 +9233,7 @@
   <div class="screen app-sfeer" id="screen-memory">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(exitMemory)" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(exitMemory)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <div class="header-title">🎤 Memory</div>
         <div class="diamond-badge header-right">💎 <span id="mem-diamonds">0</span></div>
       </div>
@@ -9207,7 +9269,7 @@
     </div>
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen">✕</button>
+        <button class="btn icon-btn header-left" onclick="askQuit()" aria-label="Show stoppen" title="Show stoppen"><svg class="ico" aria-hidden="true"><use href="#ico-kruis"/></svg></button>
         <div class="header-title" id="game-lvl-label"></div>
         <div class="diamond-badge header-right">💎 <span id="game-diamonds">0</span></div>
       </div>
@@ -9282,7 +9344,7 @@
   <div class="screen hub gebruik app-sfeer kast" id="screen-trophies">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <div class="header-title">🏆 Trofeeënkast</div>
         <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
       </div>
@@ -9308,7 +9370,7 @@
     </div>
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(goMapNaShow)" aria-label="Terug naar kaart" title="Terug naar kaart">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(goMapNaShow)" aria-label="Terug naar kaart" title="Terug naar kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <div class="header-title" id="end-lvl-label"></div>
         <div class="diamond-badge header-right">💎 <span id="end-diamonds">0</span></div>
       </div>
@@ -9344,7 +9406,7 @@
   <div class="screen hub gebruik app-sfeer kleedkamer" id="screen-dress">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(dressBack)" aria-label="Terug" title="Terug">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(dressBack)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <div class="header-title">👕 Kleedkamer</div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
@@ -9378,7 +9440,7 @@
   <div class="screen gebruik app-sfeer" id="screen-settings">
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="naTik(closeSettings)" aria-label="Terug" title="Terug">←</button>
+        <button class="btn icon-btn header-left" onclick="naTik(closeSettings)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <!-- FASE 5D.1 -- het gezins-emoji stond hier vóór de titel en werd door
              de meeste toestellen zwart-wit getekend: over een donkerpaarse balk
              een grijs blokje, het enige ruwe ding in een verder gepoetst scherm.
@@ -9389,7 +9451,7 @@
         <div class="header-title">Voor ouders</div>
         <!-- ▶ = meteen spelen als het kind dat hieronder gekozen is (speelAlsGekozen):
              het spiegelbeeld van ← links. Zonder ster verborgen. -->
-        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden>▶<span class="sa-naam"></span></button></div>
+        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg><span class="sa-naam"></span></button></div>
       </div>
       <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
       <div class="segmented" id="settings-subtabs" role="tablist"></div>
@@ -9407,7 +9469,7 @@
   <div class="screen gebruik app-sfeer" id="screen-newstar">
     <div class="hub-sticky sub">
       <div class="screen-header">
-        <button class="btn icon-btn header-left" onclick="closeNewStar()" aria-label="Terug" title="Terug">←</button>
+        <button class="btn icon-btn header-left" onclick="closeNewStar()" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
         <div class="header-title">Nieuwe ster</div>
         <div class="header-right"></div>
       </div>
@@ -14937,6 +14999,11 @@ const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
 
 
 
+const ico = naam => `<svg class="ico" aria-hidden="true"><use href="#ico-${naam}"/></svg>`;
+
+
+
+
 
 let wpHintKlaar = false;
 
@@ -14993,7 +15060,7 @@ function renderMapTitle(p, opReis) {
 
 
 
-    terug.innerHTML = `<span class="wb-cta" aria-hidden="true">↑</span>`
+    terug.innerHTML = `<span class="wb-cta" aria-hidden="true">${ico('op')}</span>`
       + `<span class="wb-naam">${cur.world.icon} ${esc(korteNaam(cur.world))}</span>`;
     terug.setAttribute('aria-label', `Terug naar ${cur.world.name}`);
 
@@ -16854,6 +16921,7 @@ function renderReis() {
   track.style.setProperty('--reis-n', hoogte.toFixed(3));
   $('screen-journey').onscroll = reisScroll;
   telNu($('reis-diamonds'), p.diamonds);
+  reisTerugVullen(WORLDS[doel]);
 
 
 
@@ -17125,8 +17193,18 @@ function reisVolgKnop() {
 
 
 
-  const pijl = r.top > s.bottom - 40 ? '↓' : '↑';
-  if (knop.textContent !== pijl) knop.textContent = pijl;
+  knop.classList.toggle('neer', r.top > s.bottom - 40);
+}
+
+
+
+
+function reisTerugVullen(w) {
+  const knop = $('reis-terug');
+  if (!knop || !w) return;
+  knop.innerHTML = `<span class="wb-cta" aria-hidden="true">${ico('op')}</span>`
+    + `<span class="wb-naam">${w.icon} ${esc(korteNaam(w))}</span>`;
+  knop.setAttribute('aria-label', `Terug naar ${w.name}`);
 }
 function reisScroll() {
   rafKlem(reisVolgKnop);
@@ -21466,6 +21544,10 @@ function renderShop() {
 
 
   $('screen-dress').onscroll = kleedScroll;
+
+
+
+  $('screen-dress').classList.toggle('met-terug', dressReturnTo === 'trophies');
   kleedScroll();
   const grid = $('item-grid');
 

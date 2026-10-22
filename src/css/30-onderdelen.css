@@ -263,6 +263,17 @@
   }
   .icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
   .icon-btn.on { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.14)); }
+  /* De getekende pijlen en het kruisje (zie de tekenset bovenin <body>). Eén lijn
+     met ronde uiteinden, zo dik als Fredoka Bold: als tekst kwamen ← ↑ ↓ ✕ uit de
+     systeemletter van het toestel, want ze zitten niet in Fredoka -- dun, klein,
+     en op een iPhone anders dan op een Android. De maat zet de knop die hem
+     draagt; 22px is die van de terugknop. */
+  .ico-bron { position: absolute; width: 0; height: 0; overflow: hidden; }
+  .ico {
+    display: block; flex: none; width: 22px; height: 22px;
+    fill: none; stroke: currentColor; stroke-width: 2.9;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
   /* alleen het tandwiel zélf draait — niet de hele (nu ronde) knop eromheen.
      Geen --t-tik, en dat is de bedoeling: dit is niet de indruk van de knop maar
      de stand van het menu (open = gedraaid), en die blijft staan zolang het menu
@@ -570,9 +581,11 @@
      eigen max-width van 700px -- een achtste maat, die op geen enkel scherm
      samenviel met de kolom eronder. Nu leest hij --kolom van het scherm, dus
      "de kop lijnt uit met de inhoud" kan niet meer per scherm scheef lopen. */
+  /* --kop-kolom: alleen voor een scherm waarvan de kop breder moet zijn dan zijn
+     inhoud. Dat is er één: het eindscherm, zie daar. */
   .screen-header {
     display: grid; grid-template-columns: minmax(108px, 1fr) auto minmax(108px, 1fr);
-    align-items: center; gap: 12px; width: 100%; max-width: var(--kolom, 680px); margin-bottom: 8px;
+    align-items: center; gap: 12px; width: 100%; max-width: var(--kop-kolom, var(--kolom, 680px)); margin-bottom: 8px;
   }
   .screen-header .header-title {
     font-size: var(--tx-kop); font-weight: 700; text-align: center; white-space: nowrap;
@@ -581,6 +594,24 @@
   /* op de kaart draagt de kop twee dingen: wélke wereld, en waar je daarin bent */
   .world-sub { display: block; font-size: var(--tx-klein); font-weight: 700; opacity: .8; letter-spacing: .01em; margin-top: 1px; }
   .screen-header .header-left { justify-self: start; }
+  /* De terugknop -- en het ✕ van de show, dat op dezelfde plek staat. Eén knop
+     in één stof, op elk scherm: het donkere glas van de kaart (--hud-*), 44px,
+     zonder lip. Hier stonden er vier: glas mét lip (memory, ouderdeel), plat en
+     flauw (kleedkamer, kast, nieuwe ster), dit glas (reis, show, eindscherm), en
+     op de reis nog een donker bolletje rechtsonder. Een lip zegt "druk hier", en
+     dat is de uitgang niet: die hoort te vinden te zijn, niet te roepen. Dit glas
+     leest op een tekening én op een paarse plaat, en het is wat een kind op de
+     kaart al kent. Een eigen maat of overgang per scherm (de reis op een smalle
+     telefoon, het ouderdeel als het krimpt) staat bij dat scherm. */
+  .screen-header .icon-btn.header-left {
+    border: 0; background: var(--hud-bg);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    text-shadow: var(--hud-ink);
+  }
+  .screen-header .icon-btn.header-left:active {
+    transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+  }
   .screen-header .header-right { justify-self: end; }
   /* De teller-pil. Er stonden er drie maten naast elkaar (.chip-badge en
      .diamond-badge.compact); geen van beide werd nog ergens gezet, en één

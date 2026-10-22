@@ -112,7 +112,11 @@
      Zie docs/WORLD-ART-BRIEF.md §8. */
   #screen-map { --kolom: 100%; --rand: 10px; --kop-gap: 4px; }
   #screen-game { --kolom: 860px; --rand: 8px; --kop-gap: 10px; }
-  #screen-end { --kolom: 420px; }
+  /* De kop van het eindscherm is zo breed als die van de show (860), alleen
+     zijn kaart is smal: het ✕ van de show wordt hier een ← op precies dezelfde
+     plek. Met de kop op 420 sprong die knop op een tablet 160px opzij en op een
+     bureaublad 220px, op het moment dat een kind hem zoekt. */
+  #screen-end { --kolom: 420px; --kop-kolom: 860px; }
   /* De twee verzamelschermen delen één maat. De kast stond op 760 "omdat de
      perfecte werelden met z'n drieën naast elkaar moeten", de kleedkamer viel
      stilzwijgend terug op de 680 uit .screen -- en op een bureaublad zag je die

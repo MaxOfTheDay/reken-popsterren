@@ -241,6 +241,8 @@
   }
   .speel-als[hidden] { display: none; }
   .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje */
+  .speel-als .ico { width: 1em; height: 1em; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
