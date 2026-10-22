@@ -3784,7 +3784,6 @@
 
 
 
-
   @media (max-height: 620px) {
 
 
@@ -8044,15 +8043,11 @@
 
 
 
-
-
-
-
   @media (prefers-reduced-motion: reduce) {
     #screen-settings.screen .hub-sticky, #screen-settings.screen .hub-sticky * { transition: none; }
   }
   #screen-settings.kop-meten .hub-sticky,
-  #screen-settings.kop-meten .hub-sticky *:not(.saved-pill) { transition: none; }
+  #screen-settings.kop-meten .hub-sticky * { transition: none; }
 
 
 
@@ -8152,22 +8147,15 @@
   .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
 
 
-  .saved-pill {
-    font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); background: var(--green-badge-bg);
-    border-radius: var(--r-pill); padding: 5px 12px; white-space: nowrap;
-    opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; pointer-events: none;
+
+
+
+  .speel-als {
+    display: inline-flex; align-items: center; gap: .3em; max-width: 34vw;
+    min-height: 40px; padding: 6px 14px; border-radius: var(--r-pill); white-space: nowrap;
   }
-  .saved-pill.show { opacity: 1; transform: translateY(0); }
-
-
-
-
-
-
-  @media (max-width: 400px) {
-    .saved-pill .sp-word { display: none; }
-    .saved-pill { padding: 5px 8px; font-size: var(--tx-label); }
-  }
+  .speel-als[hidden] { display: none; }
+  .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
@@ -9407,7 +9395,9 @@
              tegeltje en wordt het wél in kleur getekend, en daar is het een
              rij-icoon naast twee andere. -->
         <div class="header-title">Voor ouders</div>
-        <div class="header-right"><span class="saved-pill" id="settings-saved">✓<span class="sp-word"> Opgeslagen</span></span></div>
+        <!-- ▶ = meteen spelen als het kind dat hieronder gekozen is (speelAlsGekozen):
+             het spiegelbeeld van ← links. Zonder ster verborgen. -->
+        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden>▶<span class="sa-naam"></span></button></div>
       </div>
       <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
       <div class="segmented" id="settings-subtabs" role="tablist"></div>
@@ -23456,14 +23446,27 @@ function settingsToTop() {
 
 function ouderScroll() { rafKlem(ouderGescrold); }
 function ouderGescrold() { gescrold($('screen-settings')); }
-let savedPillTimer = null;
-function saveAndFlash() {
+
+
+
+
+
+
+
+
+
+function speelAlsGekozen() {
+  if (!setKey || !db.profiles[setKey]) return;
   save();
-  const el = $('settings-saved');
-  if (!el) return;
-  el.classList.add('show');
-  clearTimeout(savedPillTimer);
-  savedPillTimer = setTimeout(() => el.classList.remove('show'), 1400);
+  selectProfile(setKey);
+}
+function speelAlsKnop(p) {
+  const b = $('speel-als');
+  if (!b) return;
+  b.hidden = !p;
+  if (!p) return;
+  b.querySelector('.sa-naam').textContent = p.name;
+  b.setAttribute('aria-label', 'Speel als ' + p.name);
 }
 
 const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
@@ -23576,12 +23579,14 @@ function renderSettings() {
     $('settings-profiles').innerHTML = '';
     $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = beheerEmptyHtml();
+    speelAlsKnop(null);
     bindSettings(null, null);
     kopKrimpMeten($('screen-settings'), 'zonder ster');
     return;
   }
   renderWhoRow();
   renderSectionTabs();
+  speelAlsKnop(p);
   const s = p.settings;
   $('settings-body').innerHTML =
       setTab === 'oefenen' ? oefenenPanelHtml(p, s)
@@ -23686,13 +23691,15 @@ function bindSettings(p, s) {
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
   on('set-name', 'oninput', e => {
     p.name = e.target.value.trim() || p.name;
-    saveAndFlash();
+    save();
 
 
     const lbl = $('settings-profiles').querySelector('.active .tab-label');
     if (lbl) lbl.textContent = p.name;
 
     document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
+
+    speelAlsKnop(p);
   });
 
 
@@ -23706,7 +23713,7 @@ function bindSettings(p, s) {
     if (d.soort === 'mode') s.mode = d.v;
     else grensOmhoog(s, parseInt(d.v, 10));
     s.grensTipBasis = grensDrieSterren(p);
-    saveAndFlash();
+    save();
     renderSettings();
   });
 
@@ -23716,7 +23723,7 @@ function bindSettings(p, s) {
     sndClick();
     tt.doe(p);
     telPlafondOpnieuw(p);
-    saveAndFlash();
+    save();
     renderSettings();
   });
   on('set-name', 'onkeydown', e => {
@@ -23732,11 +23739,11 @@ function bindSettings(p, s) {
 
 
 
-  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
+  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; save(); renderSettings(); });
 
 
 
-  bindOefenChips(s, p, '', () => { saveAndFlash(); renderSettings(); });
+  bindOefenChips(s, p, '', () => { save(); renderSettings(); });
   on('set-reset', 'onclick', () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
@@ -23773,7 +23780,7 @@ function bindSettings(p, s) {
     if (p.base === c.dataset.v) return;
     sndClick();
     p.base = c.dataset.v;
-    saveAndFlash();
+    save();
     renderSettings();
   });
   on('set-delete', 'onclick', () => {

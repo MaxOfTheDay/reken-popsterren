@@ -127,16 +127,12 @@
      een maat die nog onderweg is, is geen maat. Het `.screen` in de kiezer is er
      om te winnen: `#screen-settings .hub-sticky .icon-btn` hierboven weegt zwaarder
      dan `#screen-settings .hub-sticky *`, dus zonder liep de terugknop bij
-     beperkte beweging gewoon door.
-
-     Bij het meten blijft het opslagpilletje erbuiten. Het krijgt geen andere maat,
-     en een tik op een keuze doet saveAndFlash vlak vóór renderSettings (die meet):
-     zonder deze uitzondering sprong "Opgeslagen" erin in plaats van op te komen. */
+     beperkte beweging gewoon door. */
   @media (prefers-reduced-motion: reduce) {
     #screen-settings.screen .hub-sticky, #screen-settings.screen .hub-sticky * { transition: none; }
   }
   #screen-settings.kop-meten .hub-sticky,
-  #screen-settings.kop-meten .hub-sticky *:not(.saved-pill) { transition: none; }
+  #screen-settings.kop-meten .hub-sticky * { transition: none; }
   /* Een laag scherm: een telefoon in liggende stand (844x390) of een heel kleine
      telefoon. Daar is 171px kop gewoon te veel -- bijna de helft van het beeld --
      en de gescrolde stand helpt niet, want bovenaan is hij nog ruim. Dit is
@@ -234,24 +230,17 @@
      het felste ding van het ouderdeel. Doorschijnend blauw met een ring, net als
      de tabbalk onderin. */
   .segmented button.on { background: var(--nav-sel); color: var(--c-white); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); text-shadow: var(--nav-ink); }
-  /* korte, subtiele bevestiging na elke automatische opslag -- verschijnt even
-     in de anders lege rechterkop-cel, geen aparte "Opslaan"-knop nodig */
-  .saved-pill {
-    font-size: var(--tx-klein); font-weight: 700; color: var(--green-deep); background: var(--green-badge-bg);
-    border-radius: var(--r-pill); padding: 5px 12px; white-space: nowrap;
-    opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; pointer-events: none;
+  /* ▶ rechtsboven: meteen spelen als het gekozen kind (speelAlsGekozen). Een
+     gouden .btn.small, want goud is spelen; rond, als spiegelbeeld van ← links.
+     Hier stond eerst een groen "✓ Opgeslagen" dat na elke tik even oplichtte --
+     weg, de keuze die oplicht is zelf de bevestiging. De naam mag niet de titel
+     in het midden dooddrukken (de zijkolommen delen 1fr), dus hij kapt af. */
+  .speel-als {
+    display: inline-flex; align-items: center; gap: .3em; max-width: 34vw;
+    min-height: 40px; padding: 6px 14px; border-radius: var(--r-pill); white-space: nowrap;
   }
-  .saved-pill.show { opacity: 1; transform: translateY(0); }
-  /* De opslagbevestiging reserveert ~100px in de rechtercel, en omdat de
-     zijkolommen 1fr delen kneep dat de titel in het midden dood ("Voor ou..."
-     op 320px). Uit de stroom halen loste dat op maar liet de flits over de
-     titel heen lopen; op smalle schermen krimpt ze daarom tot alleen het vinkje
-     -- kort genoeg om de titel te laten passen, en de betekenis (opgeslagen)
-     zit toch al in het vinkje. */
-  @media (max-width: 400px) {
-    .saved-pill .sp-word { display: none; }
-    .saved-pill { padding: 5px 8px; font-size: var(--tx-label); }
-  }
+  .speel-als[hidden] { display: none; }
+  .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
