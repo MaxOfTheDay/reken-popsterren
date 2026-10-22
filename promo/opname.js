@@ -74,16 +74,17 @@ const SCHERMEN = [
   // het rekenen, voor de ouder: zo stel je het in, en zo zie je hoe het gaat
   { key: '07-ouder-oefenen', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'oefenen'; renderSettings(); } },
   { key: '08-ouder-voortgang', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'voortgang'; renderSettings(); } },
-  // Anna telt: vier bloemen en nog één, en dan kies je het groepje dat erbij
-  // hoort (fase 8). Een vraag waaraan je ziet dat er geteld wordt, niet "de meeste".
+  // Anna telt: een cijfer op de kaart, en dan kies je het groepje dat zo veel is
+  // (fase 6). Een vraag waaraan je ziet dat er geteld wordt, niet "de meeste".
+  // (Twee groepjes samen, fase 8, breekt op een telefoon over twee regels.)
   { key: '03-show-tellen', go: () => {
       selectProfile('p2');
       const p = P();
-      p.settings.stageMax = Math.max(p.settings.stageMax || 0, 8);
-      p.countTrack = Object.assign(p.countTrack || {}, { stage: 8 });
+      p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6);
+      p.countTrack = Object.assign(p.countTrack || {}, { stage: 6 });
       startLevel(2);
       let q, n = 0;
-      do q = genCount(p); while ((q.ctype !== 'combine' || q.ans < 4) && ++n < 400);
+      do q = genCount(p); while ((q.ctype !== 'numquant' || q.ans !== 4) && ++n < 400);
       G.qs[G.idx] = q; renderQuestion();
     } },
   // de podia: in de kleedkamer, naast de kleren
