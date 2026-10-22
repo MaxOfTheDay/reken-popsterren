@@ -4390,8 +4390,51 @@ const WERELDREIS = {
   uit: 'cubic-bezier(.32,.78,.24,1)',           // los en zacht neerzetten
   traag: 'cubic-bezier(.55,0,.2,1)',            // aanzetten, reizen, neerzetten
   na: 'cubic-bezier(.2,.8,.25,1)',              // het kader dat nazoomt bij een onthulling
+  sprong: 420,                                  // zij springt de nieuwe wereld in (zie zijReistMee)
+  beeldWacht: 1500,                             // hoogstens zo lang op de tekening wachten
 };
 
+/* Zij reist mee naar een nieuwe wereld. Ze stond er eerst gewoon al: de oude
+   wereld zakte weg mét haar op de laatste halte, en op de nieuwe stond ze op
+   halte 1 klaar alsof ze er altijd was geweest. Nu is ze er tijdens de klim even
+   niet, en springt ze erin zodra de camera stilstaat -- en pas dán het feest.
+   Oorzaak, dan beloning: eerst is zij er, dan wordt het gevierd.
+
+   Geeft de twee functies voor wereldCamera terug (teken en klaar), om de plaats()
+   en vier() van de aanroeper heen. Wie geen beweging wil, ziet haar gewoon staan.
+   Wordt de reis afgebroken, dan roept de opruimer van de camera klaar ook aan --
+   en dan staat ze er dus ook gewoon weer. */
+function zijReistMee(plaats, vier) {
+  const zij = () => { const m = $('tour-map'); return m && m.querySelector('.tour-hero'); };
+  return {
+    teken: () => {
+      plaats();
+      const z = zij();
+      if (z && !motionOff()) z.style.opacity = '0';
+    },
+    klaar: () => {
+      const z = zij();
+      if (z) z.style.opacity = '';
+      if (!z || !z.animate || motionOff() || !$('screen-map').classList.contains('active')) return vier();
+      z.animate([{ opacity: 0, translate: '0 -70px', scale: '.85' }, { opacity: 1, translate: '0 0', scale: '1' }],
+        { duration: WERELDREIS.sprong, easing: MOTION.plop });
+      setTimeout(vier, Math.round(WERELDREIS.sprong * .8));   // het feest op haar neerkomen, niet erna
+    },
+  };
+}
+/* De tekening van de wereld die opengaat, uitgepakt vóór de camera klimt. Er zit
+   toch al een stilte voor de klim (de sterren, de badge), en die was ongebruikt:
+   op een druk toestel klom de camera dan een donker kader in. Lost altijd op, ook
+   als het mislukt -- dan klimt hij gewoon, zoals altijd. */
+function wereldBeeldKlaar(w) {
+  const src = w && w.world && w.world.art;
+  if (!src) return Promise.resolve();
+  const b = new Image();
+  b.src = src;
+  ART_GEHAALD.add(src);
+  const klaar = b.decode ? b.decode().catch(() => {}) : Promise.resolve();
+  return Promise.race([klaar, new Promise(r => setTimeout(r, WERELDREIS.beeldWacht))]);
+}
 function wereldReisBezig() { return !!wereldReisOp; }
 function stopWereldReis() {
   const op = wereldReisOp;
@@ -5122,6 +5165,22 @@ const VLUCHT = {
      los van de wereld komen, je ziet ze oplossen. */
   detail: 90,      // haltes, weg, ster en knoppen van de ingezoomde wereld
   reveal: 240,     // de route en de andere werelden eromheen
+  /* De andere kant op, op de landing: de kaart bouwt zich op terwijl de tekening
+     uitzakt. Hier kwam alles in één klap op -- weg, acht haltes, de ster, de kop
+     -- en wel pas op het eind, terwijl de tekening er al een tiende seconde kaal
+     en stil lag. Nagemeten: de tekening legt 90% van de weg af in de eerste
+     ~150ms, en de haltes gingen daarna in zo'n 35ms van niets naar alles. Dat
+     las als een flits, en dat was het ook.
+
+     Nu begint het op een kwart van de vlucht, als de tekening er al bijna is:
+     de kop en de weg doven op, de haltes springen van 1 naar 8 op hun plek
+     (haltePas uit elkaar, met de ene overshoot van de app), en zij komt als
+     laatste op haar halte neer -- oorzaak, dan het "hier ben je". Samen is het
+     klaar op ongeveer hetzelfde moment als de oude overvloeier. */
+  opbouw: .25,     // wanneer de kaart begint op te komen, als deel van VLUCHT.duur
+  opbouwDuur: 200, // de kop, de weg, en elke halte apart
+  haltePas: 16,    // tussen twee haltes
+  landing: 300,    // zij, als laatste
   /* De vluchtbaan krijgt een eigen curve, en dat is de enige plek in de app waar
      MOTION.uit niet volstaat. Die curve is gemaakt voor bewegingen van een paar
      procent (een scherm dat 6% inzoomt); hij zet 58% van de weg in de eerste 60ms.
@@ -5324,6 +5383,15 @@ function wereldVlucht(van, naar, bron, op, hoog) {
   kunst.className = 'wereld-vlucht-art';
   applyWorldArt(kunst, bron);
   applyWorldTheme(kunst, bron);
+  /* De grote tekening is het zwaarste plaatje van de app, en is hij nog niet
+     uitgepakt, dan vloog hier een lege doos in de kleur van de wereld -- op een
+     tablet zelfs op een snelle processor. Het kleine beeld van het kaartje ís al
+     uitgepakt (het staat op Werelden), dus dat ligt er nu onder: er vliegt altijd
+     iets echts, en de scherpe versie neemt het over zodra hij er is. Geen extra
+     bestand: zonder kaartjesbeeld (de studio, een wereld zonder -klein) blijft
+     het gewoon de grote. */
+  const klein = wereldKleinPad(bron.art);
+  if (klein) kunst.style.setProperty('--w-art', `url("${bron.art}"), url("${klein}")`);
   // het vak staat op de plek van het kijkgat; de tekening ligt erin, en steekt er
   // met opzet buiten uit -- dat is wat cover doet, en het vak knipt het weg
   laag.style.left = van.clip.left + 'px';
@@ -6162,11 +6230,13 @@ function runWorldReveal(o) {
   let timer = 0;
   const wachten = () => { clearTimeout(timer); if (cur) plaats(); };
   wereldReisOp = wachten;
-  timer = setTimeout(() => {
+  const beeld = wereldBeeldKlaar(naar);
+  timer = setTimeout(() => beeld.then(() => {
     if (wereldReisOp !== wachten) return;
     wereldReisOp = null;
-    wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-  }, MOTION.totaal + ONTHUL_STIL);
+    const mee = zijReistMee(plaats, vier);
+    wereldCamera(1, mee.teken, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: mee.klaar });
+  }), MOTION.totaal + ONTHUL_STIL);
 }
 const ONTHUL_STIL = 400;   // na het binnenkomen van de kaart, vóór de camera klimt
 /* Vloeiend pad dóór alle punten (Catmull-Rom omgezet naar cubic bezier) —
@@ -7049,6 +7119,26 @@ function reisKaartAlvast(idx) {
   reisAlvastBeeld = beeld;
   if (beeld.decode) beeld.decode().catch(() => {});
 }
+/* De kaart bouwt zich op, op de landing van een vlucht -- zie VLUCHT.opbouw.
+   Alleen het plaatselijke werk binnen het kader: de weg, de haltes en zij. De kop
+   staat erbuiten en doet gewoon mee met vluchtDoofAlle.
+
+   Met 'scale' en 'translate' en niet met transform: een halte staat al op een
+   transform (zo hangt hij met zijn hart op de weg), en een animatie op transform
+   zou die vervangen. De losse eigenschappen tellen erbij op. fill backwards: tot
+   hun beurt staan ze er onzichtbaar, daarna is er niets meer dat blijft hangen. */
+function kaartOpbouw(map, start) {
+  if (!map || !map.animate) return;
+  const tijd = (na, duur, curve) => ({ duration: duur, delay: na, easing: curve, fill: 'backwards' });
+  map.querySelectorAll('.tour-road-svg').forEach(w =>
+    w.animate([{ opacity: 0 }, { opacity: 1 }], tijd(start, VLUCHT.opbouwDuur, MOTION.uit)));
+  const haltes = [...map.querySelectorAll('.tour-stop')];
+  haltes.forEach((h, i) => h.animate([{ opacity: 0, scale: '.55' }, { opacity: 1, scale: '1' }],
+    tijd(start + VLUCHT.haltePas * (i + 1), VLUCHT.opbouwDuur, MOTION.plop)));
+  const zij = map.querySelector('.tour-hero');
+  if (zij) zij.animate([{ opacity: 0, translate: '0 -34px' }, { opacity: 1, translate: '0 0' }],
+    tijd(start + VLUCHT.haltePas * (haltes.length + 2), VLUCHT.landing, MOTION.plop));
+}
 function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
   vluchtKlaar();                             // zie openReis: eerst afsluiten, dan pas klassen
@@ -7106,8 +7196,13 @@ function reisNaarWereld(idx, el, stil, alGetikt) {
     if (!naar) { op(); kaartKomtOp(punt); return; }
 
     const kruis = wereldVlucht(van, naar, bron.world, op, true);
-    // het plaatselijke werk komt in de laatste tel op, als de tekening er vrijwel is
-    vluchtDoofAlle(lokaal.filter(x => x !== muntN), true, VLUCHT.detail, kruis - VLUCHT.detail);
+    /* Het plaatselijke werk komt op terwijl de tekening uitzakt, en niet in één
+       klap op het eind (zie VLUCHT.opbouw): de kop dooft op, het kader bouwt zich
+       op. Het kaartvak zelf staat er dus meteen -- wat erin staat komt op. */
+    const opbouw = Math.round(kruis * VLUCHT.opbouw);
+    const kaartVak = $('tour-map');
+    vluchtDoofAlle(lokaal.filter(x => x !== muntN && x !== kaartVak), true, VLUCHT.opbouwDuur, opbouw);
+    kaartOpbouw(kaartVak, opbouw);
     /* En de route eromheen laat los -- hij was de omgeving, niet de bestemming.
        Niet meer ter plekke: de camera duwt in (zie reisCamera) en schuift de andere
        werelden het beeld uit, en pas in het laatste stuk doven ze weg. Alleen de ←
@@ -7724,6 +7819,7 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
   };
   map.style.pointerEvents = 'none';
   wereldReisOp = wachten;
+  const beeld = wereldBeeldKlaar(toW);
   /* DE VOLGORDE: eerst de sterren onder de halte die net af is, dán de
      wereldbadge die naar de kast vliegt, en pas als die aankomt de camera. De
      badge vertrok op 0 -- tegelijk met de sterrenlanding en terwijl de kaart nog
@@ -7735,12 +7831,15 @@ function runWorldChange(fromLvl, fromW, toW, plaats, vier, still) {
     // uit de halte die net af is, waar de sterren net landden -- één plek voor het oog
     const halte = map.querySelector(`.tour-stop[data-lvl="${fromLvl}"] .dot`) || map;
     flyBadge(halte, $('nav-tro'), fromW.world.icon || '🌍');
-    timer = setTimeout(() => {
+    timer = setTimeout(() => beeld.then(() => {
+      // de tekening liet op zich wachten, en intussen is er afgebroken: wachten() heeft al opgeruimd
+      if (wereldReisOp !== wachten) return;
       gestart = true;
-      if (wereldReisOp === wachten) wereldReisOp = null;   // de stilte geeft de grendel door aan de reis
+      wereldReisOp = null;                    // de stilte geeft de grendel door aan de reis
       map.style.pointerEvents = '';
-      wereldCamera(1, plaats, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: vier });
-    }, Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.landt)));
+      const mee = zijReistMee(plaats, vier);
+      wereldCamera(1, mee.teken, { duur: WERELDREIS.onthul, easing: WERELDREIS.traag, zoom: true, klaar: mee.klaar });
+    }), Math.max(WERELDREIS.beat, Math.round(BADGE.duur * BADGE.landt)));
   });
 }
 /* De wereldbadge die opstijgt. Kleiner broertje van flyDiamonds: één stuk, vanaf het
