@@ -331,6 +331,16 @@
     letter-spacing: .3px; color: var(--purple-mid);
   }
   .fl-lijn::before, .fl-lijn::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--purple-mid); }
+  /* De ladder op Oefeningen: tussen elke twee stappen dezelfde naad, en de lijn
+     ligt ín die naad, aan de rand van zijn stap. Hij neemt geen plaats in, dus
+     als hij verhuist schuift er niets op (zie oefenGroups). Het woord staat
+     links, net na het begin van de lijn. */
+  .fase-ladder.naad { gap: 10px; padding: 10px 0; }
+  .fase-ladder.naad .fl-rij { position: relative; min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
+  .fl-rij .fl-lijn { position: absolute; left: 0; right: 0; height: 10px; margin: 0; pointer-events: none; }
+  .fl-rij .fl-lijn.boven { top: -10px; }
+  .fl-rij .fl-lijn.onder { bottom: -10px; }
+  .fl-rij .fl-lijn::before { flex: 0 0 18px; }
   /* De rijen om te lezen (zie flRij zonder v): geen knop, dus ook geen hover.
      "Alles door elkaar" achteraan het leerpad op Oefenen, en het hele leerpad in
      Voortgang: daar is gehad stil met een ✓, en wat nog komt licht. */
