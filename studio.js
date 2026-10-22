@@ -465,6 +465,7 @@ function startMapEdit() {
         <p class="st-let" id="st-concept" hidden></p>
         <div class="st-row"><label>icoon</label><input id="mf-icon" maxlength="4"></div>
         <div class="st-row"><label>naam</label><input id="mf-name"></div>
+        <div class="st-row"><label>feest</label><input id="mf-feest" placeholder="🎈 🤹 🎪"></div>
         <h6>Tekening</h6>
         <div class="st-art" id="st-art">
           <span class="vb" id="st-art-vb">＋</span>
@@ -915,6 +916,7 @@ function startMapEdit() {
     const w = g.world;
     F('st-wnaam').textContent = ((w.icon || '') + ' ' + (w.name || '')).trim() || 'Wereldstudio';
     F('mf-icon').value = w.icon || '';
+    F('mf-feest').value = (w.feest || []).join(' ');
     F('mf-name').value = w.name || '';
     F('mf-id').value = w.id || '';
     F('mf-art').value = (w.art && w.art.indexOf('blob:') !== 0) ? w.art : '';
@@ -1383,6 +1385,10 @@ function startMapEdit() {
     const w = shown().world;
     w.icon = F('mf-icon').value.trim() || w.icon;
     w.name = F('mf-name').value.trim() || w.name;
+
+
+    const feest = F('mf-feest').value.split(/\s+/).filter(Boolean);
+    if (feest.length) w.feest = feest; else delete w.feest;
 
 
 
@@ -2919,6 +2925,7 @@ function startMapEdit() {
       else {
         if (ship.name !== w.name) wat.push('naam');
         if (ship.icon !== w.icon) wat.push('icoon');
+        if (JSON.stringify(ship.feest || []) !== JSON.stringify(w.feest || [])) wat.push('feest');
         if (ship.art !== w.art) wat.push('tekening');
         if (ship.beloning !== w.beloning) wat.push('beloning');
         if (!sameWorld(ship.schat || null, w.schat || null)) wat.push('getekende schat');
