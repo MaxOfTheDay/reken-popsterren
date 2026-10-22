@@ -5706,10 +5706,11 @@ function toonHub(id) {
   hubWissel(vorige, naar);
 }
 /* ---- De plakkende kop met twee standen ----
-   Drie schermen hebben een kop die krimpt zodra er gescrold wordt: de
-   trofeeënkast en het ouderdeel (zie .gescrold in 65-kast.css en
-   80-ouderdeel.css; kastScroll en ouderScroll zetten de klasse), en op een laag
-   staand scherm de kleedkamer (kleedScroll; daar krimpt de spiegel). Die kop staat in
+   Twee schermen hebben een kop die krimpt zodra er gescrold wordt: de
+   trofeeënkast (zie .gescrold in 65-kast.css; kastScroll zet de klasse), en op
+   een laag staand scherm de kleedkamer (kleedScroll; daar krimpt de spiegel).
+   Het ouderdeel deed het ook, maar heeft sinds zijn kop op één regel past één
+   maat (zie 80-ouderdeel.css): daar wordt bij scrollen alleen de plaat dekkend. Die kop staat in
    de stroom, en daar zat het haperen: als hij kromp trok hij alles eronder mee
    omhoog, de scroll anchoring van Chrome zette de schuifstand met die krimp
    terug, de stand viel onder de drempel, de kop werd weer ruim -- en stilgezet
@@ -5719,9 +5720,8 @@ function toonHub(id) {
    (--kop-krimp): de plaat wordt kleiner, de plek in de stroom niet, en de inhoud
    staat stil. Dit meet hoeveel dat is.
 
-   Gemeten en niet opgeschreven: op een laag scherm begint de kop van het
-   ouderdeel al krap en krimpt hij nauwelijks, en zonder ster vallen de twee
-   keuzerijen weg. Meten gaat door de klasse even om te zetten, met de
+   Gemeten en niet opgeschreven: de maat hangt af van de schermmaat en van wat
+   er in de kop staat. Meten gaat door de klasse even om te zetten, met de
    overgangen uit (.kop-meten, per scherm in het stijlblad) -- anders lees je de
    beginstand van een overgang die nog moet beginnen. Alles in één taak, dus er
    komt geen beeldje tussen waarin iemand de verkeerde stand ziet.
@@ -5768,12 +5768,12 @@ function kopKrimpMeten(scherm, stand) {
   if (sleutel) scherm.dataset.krimpBij = sleutel; else delete scherm.dataset.krimpBij;
 }
 // Draaien, of een toetsenbord dat opkomt, kan een laag scherm maken -- en dan
-// krimpt de kop van het ouderdeel anders. Een scherm dat niet in beeld staat
+// krimpt een kop anders. Een scherm dat niet in beeld staat
 // slaat de meting vanzelf over.
 // Achter rafKlem: draaien of een toetsenbord dat opkomt vuurt een reeks resizes,
 // en kopKrimpMeten meet per scherm een paar keer de opmaak.
 addEventListener('resize', () => rafKlem(koppenKrimpMeten));
-function koppenKrimpMeten() { ['screen-trophies', 'screen-settings', 'screen-dress'].forEach(id => kopKrimpMeten($(id))); }
+function koppenKrimpMeten() { ['screen-trophies', 'screen-dress'].forEach(id => kopKrimpMeten($(id))); }
 /* Het korte moment waarin de sterren van de zojuist gespeelde halte op de kaart
    landen, en cb daarop wacht zodat het volgende er niet doorheen valt.
 
@@ -12345,8 +12345,6 @@ function openSettings() {
   setTab = setKey ? 'voortgang' : 'beheer';
   renderSettings();
   toonHub('screen-settings');
-  // renderSettings meet ook, maar toen stond het scherm nog niet in beeld
-  kopKrimpMeten($('screen-settings'), setKey ? 'met ster' : 'zonder ster');
   // één keer aanhangen (een tweede toewijzing aan onscroll vervángt de vorige,
   // dus er kan er nooit meer dan één staan -- zelfde patroon als de kast)
   $('screen-settings').onscroll = ouderScroll;
@@ -13116,14 +13114,13 @@ function settingsToTop() {
   if (!el) return;
   el.scrollTop = 0;
   requestAnimationFrame(() => { el.scrollTop = 0; });
-  ouderScroll();          // bovenaan = de ruime kop
+  ouderScroll();          // bovenaan = de doorschijnende plaat
 }
-/* De kop van het ouderdeel heeft twee standen (zie #screen-settings.gescrold in
-   het stijlblad): ruim bovenaan, krap zodra er kaarten onderdoor schuiven. Dit is
-   letterlijk dezelfde afspraak als in de trofeeënkast (kastScroll), met dezelfde
-   drempel van 4px -- op 0 wisselt hij bij het minste duimtrilletje heen en weer --
-   en dezelfde rAF-rem, want scroll vuurt vaker dan er beeldjes zijn. Dat de
-   inhoud daarbij blijft staan, regelt kopKrimpMeten (zie daar). */
+/* De plaat van de kop van het ouderdeel wordt dekkend zodra er kaarten onderdoor
+   schuiven (zie #screen-settings.gescrold in het stijlblad); van maat verandert
+   hij niet. Dezelfde drempel van 4px als in de trofeeënkast (kastScroll) -- op 0
+   wisselt hij bij het minste duimtrilletje heen en weer -- en dezelfde rAF-rem,
+   want scroll vuurt vaker dan er beeldjes zijn. */
 function ouderScroll() { rafKlem(ouderGescrold); }
 function ouderGescrold() { gescrold($('screen-settings')); }
 /* Elke keuze in het ouderdeel wordt meteen bewaard; er is geen Opslaan-knop.
@@ -13263,7 +13260,6 @@ function renderSettings() {
     $('settings-body').innerHTML = beheerEmptyHtml();
     speelAlsKnop(null);
     bindSettings(null, null);
-    kopKrimpMeten($('screen-settings'), 'zonder ster');   // zonder de twee keuzerijen krimpt de kop minder
     return;
   }
   renderWhoRow();
@@ -13275,7 +13271,6 @@ function renderSettings() {
     : setTab === 'beheer'  ? beheerPanelHtml(p)
     :                        statsPanelHtml(p);
   bindSettings(p, s);
-  kopKrimpMeten($('screen-settings'), 'met ster');
 }
 
 /* Elk onderdeel toont maar een déél van de bedieningen, dus alles wordt alleen

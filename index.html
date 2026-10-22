@@ -6340,7 +6340,6 @@
 
 
 
-
     margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
     background: var(--kop-plaat-vol);
     backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
@@ -6388,7 +6387,6 @@
   @media (max-width: 360px) {
     #screen-trophies .header-title { font-size: var(--tx-body); }
   }
-
 
 
 
@@ -7964,20 +7962,9 @@
 
 
 
-
-
   #screen-settings .hub-sticky {
-
-
-
-
-
-
-
-
     padding-top: 9px; padding-bottom: 7px;
-    transition: padding var(--t-snel) ease, margin-bottom var(--t-snel) ease,
-                background var(--t-snel) ease, box-shadow var(--t-snel) ease;
+    transition: background var(--t-snel) ease, box-shadow var(--t-snel) ease;
   }
 
 
@@ -7996,108 +7983,10 @@
   #screen-settings .screen-header .who-row { flex: 1; min-width: 0; }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  #screen-settings .hub-sticky .icon-btn,
-  #screen-settings .speel-als { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
-  #screen-settings .header-title { transition: font-size var(--t-snel) steps(3); }
-  #screen-settings .hub-sticky .screen-header,
-  #screen-settings .who-row, #screen-settings .who-portrait, #screen-settings .who-portrait svg,
-  #settings-subtabs {
-    transition: margin var(--t-snel) ease, padding var(--t-snel) ease,
-                width var(--t-snel) ease, height var(--t-snel) ease, top var(--t-snel) ease;
-  }
-
-
-
-  #screen-settings .who-btn { transition: transform var(--t-tik), background .12s, min-height var(--t-snel) ease; }
-  #settings-subtabs button {
-    transition: background .15s, color .15s, box-shadow .15s,
-                padding var(--t-snel) ease, min-height var(--t-snel) ease, font-size var(--t-snel) steps(2);
-  }
-
-
-
-
-
-
-
-
-
-  #screen-settings .settings-sheet { contain: layout style; }
-  #screen-settings.gescrold .hub-sticky {
-    padding-top: 7px; padding-bottom: 7px;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
-
-
-    background: var(--kop-plaat-vol);
-    box-shadow: var(--e-3);
-  }
-  #screen-settings.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
-  #screen-settings.gescrold .header-title { font-size: var(--tx-body); }
-
-
-
-
-
-  #screen-settings.gescrold .hub-sticky .icon-btn,
-  #screen-settings.gescrold .speel-als { width: 38px; height: 38px; font-size: 16px; }
-  #screen-settings.gescrold .who-row { padding-top: 0; padding-bottom: 0; }
-  #screen-settings.gescrold .who-btn { min-height: 38px; }
-  #screen-settings.gescrold .who-portrait { width: 28px; height: 28px; }
-  #screen-settings.gescrold .who-portrait svg { top: -3px; width: 48px; }
-  #screen-settings.gescrold .who-btn .tab-label { font-size: var(--tx-label); }
-  #screen-settings.gescrold #settings-subtabs { margin-top: 5px; }
-  #screen-settings.gescrold .segmented { padding: 3px; }
-  #screen-settings.gescrold .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
-
-
-
-
-
+  #screen-settings.gescrold .hub-sticky { background: var(--kop-plaat-vol); box-shadow: var(--e-3); }
   @media (prefers-reduced-motion: reduce) {
-    #screen-settings.screen .hub-sticky, #screen-settings.screen .hub-sticky * { transition: none; }
+    #screen-settings.screen .hub-sticky { transition: none; }
   }
-  #screen-settings.kop-meten .hub-sticky,
-  #screen-settings.kop-meten .hub-sticky * { transition: none; }
-
-
-
-
 
 
 
@@ -16191,7 +16080,7 @@ function kopKrimpMeten(scherm, stand) {
 
 
 addEventListener('resize', () => rafKlem(koppenKrimpMeten));
-function koppenKrimpMeten() { ['screen-trophies', 'screen-settings', 'screen-dress'].forEach(id => kopKrimpMeten($(id))); }
+function koppenKrimpMeten() { ['screen-trophies', 'screen-dress'].forEach(id => kopKrimpMeten($(id))); }
 
 
 
@@ -22764,8 +22653,6 @@ function openSettings() {
   renderSettings();
   toonHub('screen-settings');
 
-  kopKrimpMeten($('screen-settings'), setKey ? 'met ster' : 'zonder ster');
-
 
   $('screen-settings').onscroll = ouderScroll;
   settingsToTop();
@@ -23541,7 +23428,6 @@ function settingsToTop() {
 
 
 
-
 function ouderScroll() { rafKlem(ouderGescrold); }
 function ouderGescrold() { gescrold($('screen-settings')); }
 
@@ -23681,7 +23567,6 @@ function renderSettings() {
     $('settings-body').innerHTML = beheerEmptyHtml();
     speelAlsKnop(null);
     bindSettings(null, null);
-    kopKrimpMeten($('screen-settings'), 'zonder ster');
     return;
   }
   renderWhoRow();
@@ -23693,7 +23578,6 @@ function renderSettings() {
     : setTab === 'beheer'  ? beheerPanelHtml(p)
     :                        statsPanelHtml(p);
   bindSettings(p, s);
-  kopKrimpMeten($('screen-settings'), 'met ster');
 }
 
 

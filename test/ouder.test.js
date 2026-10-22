@@ -544,68 +544,47 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
-  /* ================= I · De kop krimpt, maar laat niets vallen ================= */
-  /* De hele reden dat de kop twee standen heeft is ruimte. De voorwaarde is dat
-     wie en wát nooit uit beeld verdwijnen: dat zijn de twee dingen die een ouder
-     onderweg nodig heeft. */
+  /* ================= I · De kop blijft staan, en laat niets vallen ================= */
+  /* De kop van het ouderdeel heeft één maat: bij scrollen wordt alleen de plaat
+     dekkend (.gescrold). Wie en wát blijven in beeld -- dat zijn de twee dingen
+     die een ouder onderweg nodig heeft -- en niets schuift. */
   {
     const { ctx, page } = await fresh();
-    // in de telmodus: de faseladder maakt Oefenen langer dan een telefoon (de
-    // rekenmodus past er sinds de twee kaarten op één scherm in, en valt niet te scrollen)
+    // in de telmodus: de faseladder maakt Oefenen langer dan een telefoon
     await page.evaluate(() => { db.profiles.p1.settings.track = 'count'; save(); });
     await open(page, 'p1', 'oefenen');
     await page.waitForTimeout(300);
-    const ruim = await page.evaluate(() => ({
-      h: document.querySelector('#screen-settings .hub-sticky').offsetHeight,
-      gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
-      inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
-    }));
-    await page.evaluate(() => { const sc = document.getElementById('screen-settings'); sc.scrollTop = 400; sc.dispatchEvent(new Event('scroll')); });
-    await page.waitForTimeout(500);
-    const krap = await page.evaluate(() => {
+    const meet = () => page.evaluate(() => {
       const kop = document.querySelector('#screen-settings .hub-sticky');
       const wie = document.querySelector('#settings-profiles .who-btn.active');
       const wat = document.querySelector('#settings-subtabs button.on');
       const zichtbaar = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.bottom <= kop.getBoundingClientRect().bottom + 1; };
       return {
-        h: kop.offsetHeight,
+        h: kop.offsetHeight, wieH: wie.offsetHeight,
         gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
+        plaat: getComputedStyle(kop).backgroundColor,
         wieInBeeld: zichtbaar(wie), watInBeeld: zichtbaar(wat),
         wieNaam: wie.textContent.trim(), watLabel: wat.textContent.trim(),
         terug: !!document.querySelector('#screen-settings .hub-sticky .icon-btn').offsetParent,
         inhoud: document.querySelector('#screen-settings .settings-sheet').offsetTop,
       };
     });
-    check(!ruim.gescrold && krap.gescrold, 'scrollen zet de kop in zijn krappe stand', JSON.stringify([ruim, krap]));
-    /* Gemeten op 390x844: 160 -> 139px. De drempel staat op 18 en niet op 20:
-       fase 5D.1 haalde elf pixels uit de rúime stand (zie #screen-settings
-       .hub-sticky), dus het verschil tussen de twee standen wordt kleiner terwijl
-       de kop als geheel juist beter werd. Waar deze test voor staat is dat er
-       écht een tweede, krappere stand is -- niet dat die precies 21px scheelt. */
-    check(krap.h <= ruim.h - 18, 'en dat scheelt echt hoogte', `${ruim.h} -> ${krap.h}`);
-    check(krap.wieInBeeld && /Anna/.test(krap.wieNaam), 'welk kind gekozen is blijft in beeld', JSON.stringify(krap));
-    check(krap.watInBeeld && /Oefenen/.test(krap.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(krap));
-    check(krap.terug, 'en de weg terug blijft er', 'terugknop weg');
-    /* Wat de kop krimpt komt er als marge onder weer bij (--kop-krimp): de plaat
-       wordt kleiner, maar de plek die hij in de stroom inneemt niet. Zonder dat
-       trok de krimpende kop de kaarten eronder 23px mee omhoog. */
-    check(krap.inhoud === ruim.inhoud, 'en de inhoud eronder blijft staan waar hij stond',
-      `${ruim.inhoud} -> ${krap.inhoud}`);
-    // en terug naar boven maakt hem weer ruim
-    await page.evaluate(() => { const sc = document.getElementById('screen-settings'); sc.scrollTop = 0; sc.dispatchEvent(new Event('scroll')); });
+    const boven = await meet();
+    await page.evaluate(() => { const sc = document.getElementById('screen-settings'); sc.scrollTop = 400; sc.dispatchEvent(new Event('scroll')); });
     await page.waitForTimeout(500);
-    const weerRuim = await page.evaluate(() => ({
-      h: document.querySelector('#screen-settings .hub-sticky').offsetHeight,
-      gescrold: document.getElementById('screen-settings').classList.contains('gescrold'),
-    }));
-    check(!weerRuim.gescrold && weerRuim.h === ruim.h, 'bovenaan is hij weer ruim', JSON.stringify(weerRuim));
-    /* En de kop mag de schuifstand niet terugduwen. Toen hij in de stroom kromp,
-       zette de scroll anchoring van Chrome de schuifstand met die krimp terug;
-       stilgezet op 16px viel hij dan onder de drempel van ouderScroll, werd de kop
-       weer ruim, schoof de stand weer op -- en zo verder, elk beeldje, zolang
-       niemand het scherm aanraakte. Eén wissel en de stand blijft van de vinger. */
+    const onder = await meet();
+    check(!boven.gescrold && onder.gescrold && boven.plaat !== onder.plaat, 'scrollen maakt de plaat dekkend', JSON.stringify([boven.plaat, onder.plaat]));
+    check(onder.h === boven.h && onder.wieH === boven.wieH, 'maar de kop blijft even groot', `${boven.h} -> ${onder.h}`);
+    check(onder.wieInBeeld && /Anna/.test(onder.wieNaam), 'welk kind gekozen is blijft in beeld', JSON.stringify(onder));
+    check(onder.watInBeeld && /Oefenen/.test(onder.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(onder));
+    check(onder.terug, 'en de weg terug blijft er', 'terugknop weg');
+    check(onder.inhoud === boven.inhoud, 'en de inhoud eronder blijft staan waar hij stond', `${boven.inhoud} -> ${onder.inhoud}`);
+    /* Net voorbij de drempel stilgezet: één wissel, en de schuifstand blijft van
+       de vinger. */
     const stil = await page.evaluate(async () => {
       const sc = document.getElementById('screen-settings');
+      sc.scrollTop = 0; sc.dispatchEvent(new Event('scroll'));
+      await new Promise(r => setTimeout(r, 200));
       let wissels = 0;
       const ob = new MutationObserver(() => wissels++);
       ob.observe(sc, { attributes: true, attributeFilter: ['class'] });
