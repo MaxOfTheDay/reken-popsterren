@@ -163,6 +163,9 @@
   .speel-als .ico { width: 1em; height: 1em; margin-left: 2px; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
+  /* Geluid: één schakelaarrij als kaart, de eerste onder "Voor alle sterren".
+     De rij brengt zijn eigen binnenmaat mee, dus de kaart maar een randje. */
+  .set-card.geluid-kaart { padding: 6px 8px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .set-card-head .ico { width: 34px; height: 34px; border-radius: var(--r-sm); flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
@@ -392,7 +395,7 @@
        .oe-ops    tegels, meer tegelijk mag (+ − × ÷)
        .oe-seg    een balk met gelijke vakken, één keuze (tot, antwoord)
        .oe-tafels tegeltjes, meer tegelijk mag
-       .oe-rij    een rij zoals onder het tandwiel: icoon, woord, stand
+       .oe-rij    een rij zoals de geluidsrij: icoon, woord, stand
      Gekozen is overal dezelfde volle paarse vulling, zonder vinkje erbij. Deze
      regels staan ná .chip, dus ze winnen op volgorde waar de specificiteit
      gelijk is. */
@@ -682,7 +685,7 @@
      knop: een half doorzichtige paarse knop op wit papier, en half doorzichtig is
      precies hoe een scherm eruitziet dat nog aan het laden is of stuk is. Nu is
      het een échte stand en geen verzwakking -- het grijs-op-papier paar dat deze
-     app al heeft voor "staat uit" (zie .gi-state.off in het tandwielmenu): vol
+     app al heeft voor "staat uit" (zie .gi-state.off bij de schakelaarrij): vol
      dekkend, rustig, en zonder lip, want er valt nog niets in te drukken. Er
      wordt niets aan de maat of de tekst veranderd, dus de knop verspringt niet op
      het moment dat hij aangaat -- hij kleurt op. */
@@ -849,8 +852,8 @@
     .modal-actions { flex-direction: column; }
     .modal-actions > * { width: 100%; }
   }
-  /* De geluidsschakelaar in het stopvenster van een show: de rij van het
-     tandwielmenu (.gear-item, zie 30-onderdelen), onder een haarlijn, zodat hij
+  /* De geluidsschakelaar in het stopvenster van een show: de schakelaarrij
+     (.gear-item, zie 30-onderdelen), onder een haarlijn, zodat hij
      niet als een derde antwoord op "Show stoppen?" leest. */
   .modal .quit-geluid { margin-top: 16px; border-top: 1px solid var(--paper-border); border-radius: 0 0 var(--r-md) var(--r-md); padding-top: 4px; }
   .modal input {

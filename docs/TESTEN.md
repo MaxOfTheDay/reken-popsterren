@@ -120,7 +120,7 @@ geeft een foutmelding.
 - **de over-pagina** (zaak M) — alles wat `over/index.html` aanwijst bestaat
   (ook de staande versie van het filmpje), er is een weg terug naar het spel,
   het filmpje laadt pas bij afspelen, het deelbeeld heeft een volledig adres, het
-  ouderdeel en het tandwielmenu linken ernaar (zonder `target`), `sw.js` laat `/over/`, `/promo/` en `.mp4` buiten de
+  ouderdeel en de regel op het lege beginscherm linken ernaar (zonder `target`), `sw.js` laat `/over/`, `/promo/` en `.mp4` buiten de
   voorraad, en de filmpjes op de site zijn de lichte webversies (≤ 4,5 MB).
 
 `kern`, `saves` en `kleedkamer` laden het spel met `alleenUitgebracht` (zie
@@ -226,9 +226,10 @@ instelling die per ongeluk op `db` in plaats van op het profiel schrijft, of een
 reset die de oefeninstellingen meesleept, merkt een ouder pas als haar kind
 vastloopt.
 
-- **geluid en trillen** — de twee schakelaars onder het tandwiel zetten `db.sound`
-  en `db.haptics` om, zeggen in woorden én in `aria-checked` welke stand dat is,
-  staan los van elkaar, en overleven een herstart;
+- **het tandwiel en het geluid** — het tandwiel opent meteen Voor ouders; de
+  geluidsrij (⋯, "Voor alle sterren", en in "Show stoppen?") zet `db.sound` om,
+  zegt in woorden én in `aria-checked` welke stand dat is, en overleeft een
+  herstart;
 - **oefeninstellingen zijn van één kind** — instellen bij Anna laat Bas byte voor
   byte staan, het paneel toont bij een wissel de waarden van het gekozen kind, van
   modus wisselen schakelt alleen dát kind om, en na heropenen klopt het nog;

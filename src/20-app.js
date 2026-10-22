@@ -2623,7 +2623,7 @@ function buzz(pattern) {
       het toestel waar deze app voor gemaakt is.
    3. Een context die stilgelegd is (schermvergrendeling, een telefoontje, het
       beleid van de browser) geeft géén fout: hij neemt de noot netjes aan en er
-      komt niets uit. De app zou dan geluidloos zijn terwijl het tandwiel "Aan"
+      komt niets uit. De app zou dan geluidloos zijn terwijl de schakelaar "Aan"
       blijft zeggen, tot iemand herlaadt. Daarom vraagt audioWakker() bij elke tik
       en elke terugkeer of hij weer wil lopen.
 
@@ -2878,7 +2878,7 @@ function sndWin() { playSfx('show.complete'); }
 function sndGroot() { playSfx('celebrate.major'); }
 function toggleSound() {
   db.sound = !db.sound; save();
-  renderGearMenu();
+  renderGeluid();
   if (!db.sound) {
     cancelSpeech();
     busNaar(0, 0.04);   // en wat al ingepland stond sterft hier: zie punt 1 bovenaan
@@ -3000,9 +3000,12 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 document.addEventListener('pointerdown', keepAwake, { passive: true });   // fallback: browsers die een gebruikersgebaar eisen
 keepAwake();
 
-/* ---- Instellingen-menu onder het tandwiel ---- */
-// Zet de aan/uit-labels goed: onder het tandwiel en in het stopvenster van een show.
-function renderGearMenu() {
+/* ---- De geluidsschakelaar ----
+   Op twee plekken dezelfde rij: in het ouderdeel (⋯, "Voor alle sterren", zie
+   geluidKaartHtml) en in het stopvenster van een show. Dit zet ze allebei goed;
+   staat er een niet, dan wordt hij overgeslagen. Onder het tandwiel stond hij
+   ook, toen daar nog een menuutje zat -- het tandwiel opent nu meteen Voor ouders. */
+function renderGeluid() {
   const setRow = (id, stateId, on, icoOn, icoOff) => {
     const item = $(id), st = $(stateId);
     if (!item || !st) return;
@@ -3012,32 +3015,9 @@ function renderGearMenu() {
     item.querySelector('.gi-ico').textContent = on ? icoOn : icoOff;
     item.classList.toggle('uit', !on);   // het icoon gedempt, zie .gear-item.uit
   };
-  setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
-  // dezelfde schakelaar in het stopvenster van een show (zie quit-modal)
+  setRow('set-sound', 'set-sound-state', db.sound, '🔊', '🔇');
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
 }
-function toggleGearMenu(e) {
-  if (e) e.stopPropagation();
-  const m = $('gear-menu'), g = $('btn-gear');
-  const open = !m.classList.contains('open');
-  if (open) renderGearMenu();
-  m.classList.toggle('open', open);
-  g.classList.toggle('on', open);
-  g.setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (open) sndClick();
-  syncBackGuard();
-}
-function closeGearMenu() {
-  const m = $('gear-menu'), g = $('btn-gear');
-  if (m) m.classList.remove('open');
-  if (g) { g.classList.remove('on'); g.setAttribute('aria-expanded', 'false'); }
-  syncBackGuard();
-}
-// klik buiten het menu (maar niet op het tandwiel/menu zelf) sluit het
-document.addEventListener('click', e => {
-  const cb = $('corner-btns'), m = $('gear-menu');
-  if (m && m.classList.contains('open') && cb && !cb.contains(e.target)) closeGearMenu();
-});
 
 /* ================= Avatar (SVG) ================= */
 // De pop is één tekening met twee lagen: vaste onderdelen (hoofd, hals, armen,
@@ -3408,7 +3388,6 @@ function show(id) {
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
-  if (!onProfile) closeGearMenu();
   appKnopZet();   // het knopje linksboven hoort ook alleen bij de sterrenkeuze
   // de vaste navigatie hoort alleen bij de rustpunten, niet bij spel/einde/instellingen
   const navId = navVolgtScherm();
@@ -4228,7 +4207,7 @@ function renderProfiles() {
   // alleen op het lege scherm: wat is dit spel (zie de opmaak van #over-hint)
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
-  renderGearMenu();
+  renderGeluid();
   appKnopZet();
   /* HIER WORDT NIET MEER GEZWAAID. Dit scherm had zijn eigen begroeting: alle
      sterren zwaaiden één keer, kort na elkaar. Dat was ooit de enige plek in de
@@ -9895,7 +9874,7 @@ function startLevel(lvl, eigenOvergang) {
 function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
-  renderGearMenu();   // de geluidsrij in dit venster toont de stand van nu
+  renderGeluid();   // de geluidsrij in dit venster toont de stand van nu
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
@@ -12198,7 +12177,6 @@ let newStar = null;
 let newStarReturn = 'profile';   // waar ← en Android-terug naartoe gaan
 function openNewStar(from) {
   if (Object.keys(db.profiles).length >= MAX_PROFILES) return;
-  closeGearMenu();
   sndClick();
   newStarReturn = from || 'profile';
   // De oefeninstellingen komen uit defaultProfile zelf, zodat het concept en de
@@ -12458,10 +12436,8 @@ function createStar() {
    plek afzet is erger dan geen. */
 let setKey = 'p1';
 // 'voortgang' (lezen) | 'oefenen' (hoe dit kind oefent) | 'beheer' (profiel + data).
-// Bewust niet 'instellen': dat botst met de app-instellingen onder het tandwiel.
 let setTab = 'voortgang';
 function openSettings() {
-  closeGearMenu();
   // cur is hier bijna altijd null (het tandwiel staat alleen op het keuzescherm,
   // en goProfiles wist cur). Dan de ster die net speelde (laatsteSter), en pas
   // daarna de eerste: wie na het spelen kijkt, kijkt naar dat kind. Nul
@@ -12721,7 +12697,8 @@ function statsPanelHtml(p) {
 
    Die tik zit er nu ook bij (#stem-aan, zie statusKaartHtml): hier stond "zet het
    aan met het tandwiel op het beginscherm", en dan moest een ouder het ouderdeel
-   uit, het tandwiel in en weer terug -- voor één schakelaar. */
+   uit, het tandwiel in en weer terug -- voor één schakelaar. (De schakelaar zelf
+   staat inmiddels ook in het ouderdeel, onder ⋯.) */
 function stemNotitie(naam) {
   if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
@@ -12900,7 +12877,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
      het bereik / Bewerkingen"), zo'n 110 woorden op een scherm van anderhalve
      telefoon. Nu:
        1. de hoofdkaart: wat, en hoe moeilijk. Kleine labels, geen titel.
-       2. een stille kaart met losse rijen, zoals onder het tandwiel: icoon,
+       2. een stille kaart met losse rijen, zoals de geluidsrij: icoon,
           woord, stand. De hele rij is de knop.
      De modus staat er niet meer bovenaan maar als schakelaar onderaan het
      paneel (zie oefenenPanelHtml): die kies je één keer.
@@ -13055,8 +13032,19 @@ function oefenenPanelHtml(p, s) {
    nog in de browser draait de uitleg om hem op het beginscherm te zetten. Komt er
    ooit een account of een cloud bij, dan groeit dát uit de back-upkaart -- geen
    eigen kaart of eigen kopje ernaast. */
-function appWideCardsHtml(hasStars) {
+/* Geluid: één rij, de eerste onder "Voor alle sterren" -- het geldt voor het
+   hele toestel, niet voor één kind. Dezelfde rij als in "Show stoppen?" (zie
+   renderGeluid); de hele rij is de schakelaar. */
+function geluidKaartHtml() {
   return `
+    <div class="set-card geluid-kaart">
+      <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
+        <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
+      </button>
+    </div>`;
+}
+function appWideCardsHtml(hasStars) {
+  return `${geluidKaartHtml()}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Alle sterren, en de instellingen van de app</div></div></div>
       <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
@@ -13649,8 +13637,9 @@ function bindSettings(p, s) {
     );
   });
   // het geluid aan, vanaf de notitie in Voortgang (zie stemNotitie): dezelfde
-  // schakelaar als onder het tandwiel, en dan staat de notitie er niet meer
+  // schakelaar als onder ⋯, en dan staat de notitie er niet meer
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
+  on('set-sound', 'onclick', toggleSound);
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
@@ -13847,15 +13836,14 @@ addEventListener('appinstalled', () => {
   if (k) k.remove();
   installVoorstel = null;
   appKnopZet();
-  renderGearMenu();
+  renderGeluid();
   if ($('app-blad')) closeConfirmModal();
 });
 
 /* ================= Speel als app ============================================
    De kaart hierboven staat in Beheer, en daar komt een ouder zelden. Dit is de
    weg ernaartoe die je wél ziet: een knopje "📲 Speel als app" linksboven op de
-   sterrenkeuze, het spiegelbeeld van het tandwiel, en dezelfde regel in het
-   tandwielmenu. Een tik opent een blad met de stappen voor déze browser.
+   sterrenkeuze, het spiegelbeeld van het tandwiel. Een tik opent een blad met de stappen voor déze browser.
 
    WAAR, EN WAAROM DAAR. Linksboven, op dezelfde hoogte als het tandwiel. Daar
    raakt het op geen enkele schermmaat het logo, de tegels of de MAX-ster (die
@@ -13866,8 +13854,8 @@ addEventListener('appinstalled', () => {
    WANNEER. Alleen op de sterrenkeuze, alleen in de browser (speeltAlsApp), en
    pas vanaf het tweede bezoek: wie het spel voor het eerst opent, moet eerst
    kunnen spelen. "Niet nu" laat het twee weken met rust; na drie keer "Niet nu"
-   komt het knopje niet meer terug. De regel in het tandwielmenu blijft wél, en
-   de kaart in Beheer ook -- het knopje gaat weg, de weg niet.
+   komt het knopje niet meer terug. De kaart in Beheer blijft wél -- het knopje
+   gaat weg, de weg niet.
 
    WAT HIERVAN BEWAARD WORDT. Drie getallen in een eigen sleutel (APPKNOP_KEY):
    het aantal bezoeken, tot wanneer het knopje rust, en hoe vaak er "Niet nu"
@@ -13969,7 +13957,6 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
 }
 // vanKnop: geopend via het knopje linksboven (dan telt "Niet nu").
 function openAppBlad(vanKnop) {
-  closeGearMenu();
   sndClick();
   const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
   const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel);
@@ -14017,7 +14004,6 @@ function backTarget() {
   //    (rang → ladder → trofee) die niets met de stapeling te maken had.
   const lagen = document.querySelectorAll('.rp-overlay:not(.closing)');
   if (lagen.length) return lagen[lagen.length - 1]._close;
-  if ($('gear-menu').classList.contains('open')) return closeGearMenu;
   if ($('mem-done').style.display === 'flex') return exitMemory;
   // 2) het huidige scherm verlaten naar zijn eigen ouder -- exact dezelfde bestemming
   //    als de zichtbare ✕/←/tab-knop op dat scherm (nooit twee betekenissen van "terug").
@@ -14042,8 +14028,8 @@ function backTarget() {
 
 let backGuardArmed = false, syncingBackGuard = false, backSyncQueued = false;
 // Zorgt dat er precies dan een "wachtpost"-entry op de history staat als backTarget()
-// iets teruggeeft. Eén tussenstap (bv. openSettings() dat eerst closeGearMenu() aanroept
-// en pas dáárna show() naar het echte scherm) kan tussentijds heel even "niks" laten
+// iets teruggeeft. Eén tussenstap (bv. een venster dat eerst dichtgaat en pas
+// dáárna show() naar het echte scherm) kan tussentijds heel even "niks" laten
 // lijken; history.back() is bovendien async terwijl pushState synchroon is, dus een
 // directe her-bewapening zou daarmee kunnen botsen. Daarom pas ná de huidige batch
 // synchrone DOM-wijzigingen checken (via microtask): alle syncBackGuard()-aanroepen

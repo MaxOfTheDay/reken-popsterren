@@ -2234,46 +2234,7 @@
 
 
 
-  #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
-  #btn-gear.on .gear-ico { transform: rotate(35deg); }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .gear-menu {
-    position: absolute; top: 52px; right: 0; width: 252px; max-width: calc(100vw - 20px);
-    background: var(--paper-surface); color: var(--c-ink);
-    border-radius: var(--r-lg); padding: 7px;
-    backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
-    box-shadow: var(--e-3), inset 0 0 0 1.5px var(--paper-ring);
-    display: none; flex-direction: column;
-    transform-origin: top right;
-  }
-
-
-
-  .gear-menu::before {
-    content: ''; position: absolute; top: -6px; right: 15px; width: 14px; height: 14px;
-    background: var(--paper-surface); border-radius: 3px;
-    box-shadow: inset 0 0 0 1.5px var(--paper-ring);
-    transform: rotate(45deg); clip-path: polygon(0 0, 100% 0, 0 100%);
-  }
-  .gear-menu.open { display: flex; animation: gearPop .16s var(--ease-uit); }
-  @keyframes gearPop { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
-
-  @media (prefers-reduced-motion: reduce) { .gear-menu.open { animation: none; } }
   .gear-item {
     font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
@@ -2311,34 +2272,9 @@
   .gear-item .gi-state.off::before {
     background: transparent; box-shadow: inset 0 0 0 2px var(--paper-muted-text);
   }
-
-
-
-
-
-
-  .gear-item.parents { color: var(--purple-mid); align-items: center; padding: 9px 11px; }
-
-
-
-
-  .gear-item.parents .gi-ico {
-    width: 34px; height: 34px; border-radius: var(--r-sm); font-size: 17px;
-    display: grid; place-items: center;
-    background: var(--lavender-wash); box-shadow: inset 0 0 0 1.5px var(--purple-light);
-  }
   .gear-item .gi-sub {
     display: block; font-size: var(--tx-mini); font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
   }
-
-  .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
-  .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
-
-
-
-
-
-
 
 
 
@@ -8112,6 +8048,9 @@
   .speel-als .ico { width: 1em; height: 1em; margin-left: 2px; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
+
+
+  .set-card.geluid-kaart { padding: 6px 8px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .set-card-head .ico { width: 34px; height: 34px; border-radius: var(--r-sm); flex-shrink: 0; display: grid; place-items: center; font-size: 18px; background: var(--paper-tint); border: 1px solid var(--paper-border); }
@@ -9228,7 +9167,7 @@
            wie midden in een show stilte wilde, moest de show uit. Dit venster is
            het ene pauzemoment dat een show heeft, en de ✕ is waar de hand van een
            ouder al naartoe gaat -- zo komt er op geen enkel kinderscherm een knop
-           bij. Dezelfde rij als onder het tandwiel, en renderGearMenu zet ze
+           bij. Dezelfde rij als in het ouderdeel (⋯), en renderGeluid zet ze
            allebei goed. De show loopt gewoon door na "Doorspelen". -->
       <button class="gear-item quit-geluid" id="quit-sound" onclick="toggleSound()" role="switch" aria-checked="true">
         <span class="gi-ico" aria-hidden="true">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="quit-sound-state">Aan</span>
@@ -9413,19 +9352,12 @@
   <span aria-hidden="true">📲</span> Speel als app
 </button>
 
+<!-- Het tandwiel is de deur naar Voor ouders, zonder menu ertussen. Daar stond
+     eerst een menuutje met Geluid en Voor ouders: één tik extra, voor een
+     schakelaar die ook in het ouderdeel staat (⋯, "Voor alle sterren") en in
+     "Show stoppen?" -- daar waar het geluid echt stoort. -->
 <div class="corner-btns" id="corner-btns">
-  <button class="btn icon-btn" id="btn-gear" onclick="toggleGearMenu(event)" aria-haspopup="true" aria-expanded="false" title="Instellingen"><span class="gear-ico">⚙️</span></button>
-  <div class="gear-menu" id="gear-menu" role="menu">
-    <button class="gear-item" id="gear-sound" onclick="toggleSound()" role="menuitemcheckbox">
-      <span class="gi-ico">🔊</span><span class="gi-label">Geluid</span><span class="gi-state" id="gear-sound-state">Aan</span>
-    </button>
-    <div class="gear-sep"></div>
-    <button class="gear-item parents" onclick="naTik(openSettings)" role="menuitem">
-      <span class="gi-ico" aria-hidden="true">👨‍👩‍👧</span>
-      <span class="gi-label">Voor ouders<span class="gi-sub">Voortgang · oefenen · beheer</span></span>
-      <span class="gi-chev" aria-hidden="true">›</span>
-    </button>
-  </div>
+  <button class="btn icon-btn" id="btn-gear" onclick="sndClick(); naTik(openSettings)" aria-label="Voor ouders" title="Voor ouders"><span class="gear-ico">⚙️</span></button>
 </div>
 
 <div class="praise" id="praise"></div>
@@ -13199,7 +13131,7 @@ function sndWin() { playSfx('show.complete'); }
 function sndGroot() { playSfx('celebrate.major'); }
 function toggleSound() {
   db.sound = !db.sound; save();
-  renderGearMenu();
+  renderGeluid();
   if (!db.sound) {
     cancelSpeech();
     busNaar(0, 0.04);
@@ -13323,7 +13255,10 @@ keepAwake();
 
 
 
-function renderGearMenu() {
+
+
+
+function renderGeluid() {
   const setRow = (id, stateId, on, icoOn, icoOff) => {
     const item = $(id), st = $(stateId);
     if (!item || !st) return;
@@ -13333,32 +13268,9 @@ function renderGearMenu() {
     item.querySelector('.gi-ico').textContent = on ? icoOn : icoOff;
     item.classList.toggle('uit', !on);
   };
-  setRow('gear-sound', 'gear-sound-state', db.sound, '🔊', '🔇');
-
+  setRow('set-sound', 'set-sound-state', db.sound, '🔊', '🔇');
   setRow('quit-sound', 'quit-sound-state', db.sound, '🔊', '🔇');
 }
-function toggleGearMenu(e) {
-  if (e) e.stopPropagation();
-  const m = $('gear-menu'), g = $('btn-gear');
-  const open = !m.classList.contains('open');
-  if (open) renderGearMenu();
-  m.classList.toggle('open', open);
-  g.classList.toggle('on', open);
-  g.setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (open) sndClick();
-  syncBackGuard();
-}
-function closeGearMenu() {
-  const m = $('gear-menu'), g = $('btn-gear');
-  if (m) m.classList.remove('open');
-  if (g) { g.classList.remove('on'); g.setAttribute('aria-expanded', 'false'); }
-  syncBackGuard();
-}
-
-document.addEventListener('click', e => {
-  const cb = $('corner-btns'), m = $('gear-menu');
-  if (m && m.classList.contains('open') && cb && !cb.contains(e.target)) closeGearMenu();
-});
 
 
 
@@ -13729,7 +13641,6 @@ function show(id) {
   $(id).classList.add('active');
   const onProfile = (id === 'screen-profile');
   $('corner-btns').style.display = onProfile ? 'flex' : 'none';
-  if (!onProfile) closeGearMenu();
   appKnopZet();
 
   const navId = navVolgtScherm();
@@ -14549,7 +14460,7 @@ function renderProfiles() {
 
   const hint = $('over-hint');
   if (hint) hint.style.display = n ? 'none' : 'flex';
-  renderGearMenu();
+  renderGeluid();
   appKnopZet();
 
 
@@ -20216,7 +20127,7 @@ function startLevel(lvl, eigenOvergang) {
 function askQuit() {
   sndClick();
   if (G && G.idx === 0 && G.errors === 0 && G.misses === 0) { quitGame(); return; }
-  renderGearMenu();
+  renderGeluid();
   $('quit-modal').classList.add('open');
   syncBackGuard();
 }
@@ -22519,7 +22430,6 @@ let newStar = null;
 let newStarReturn = 'profile';
 function openNewStar(from) {
   if (Object.keys(db.profiles).length >= MAX_PROFILES) return;
-  closeGearMenu();
   sndClick();
   newStarReturn = from || 'profile';
 
@@ -22779,10 +22689,8 @@ function createStar() {
 
 let setKey = 'p1';
 
-
 let setTab = 'voortgang';
 function openSettings() {
-  closeGearMenu();
 
 
 
@@ -23035,6 +22943,7 @@ function meerCijfersHtml(p) {
 function statsPanelHtml(p) {
   return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
 }
+
 
 
 
@@ -23376,8 +23285,19 @@ function oefenenPanelHtml(p, s) {
 
 
 
-function appWideCardsHtml(hasStars) {
+
+
+
+function geluidKaartHtml() {
   return `
+    <div class="set-card geluid-kaart">
+      <button class="gear-item" id="set-sound" role="switch" aria-checked="${db.sound ? 'true' : 'false'}">
+        <span class="gi-ico" aria-hidden="true">${db.sound ? '🔊' : '🔇'}</span><span class="gi-label">Geluid<span class="gi-sub">Muziek en de stem die voorleest</span></span><span class="gi-state${db.sound ? '' : ' off'}" id="set-sound-state">${db.sound ? 'Aan' : 'Uit'}</span>
+      </button>
+    </div>`;
+}
+function appWideCardsHtml(hasStars) {
+  return `${geluidKaartHtml()}
     <div class="set-card">
       <div class="set-card-head"><div class="ico">🗄️</div><div><h2>Back-up &amp; herstel</h2><div class="sub">Alle sterren, en de instellingen van de app</div></div></div>
       <!-- de zin die een ouder het meest moet weten, en die er nergens stond: er
@@ -23972,6 +23892,7 @@ function bindSettings(p, s) {
 
 
   on('stem-aan', 'onclick', () => { if (!db.sound) toggleSound(); renderSettings(); });
+  on('set-sound', 'onclick', toggleSound);
   on('set-export', 'onclick', exportData);
   on('set-deel', 'onclick', deelOver);
   on('set-over', 'onclick', naarOver);
@@ -24168,10 +24089,9 @@ addEventListener('appinstalled', () => {
   if (k) k.remove();
   installVoorstel = null;
   appKnopZet();
-  renderGearMenu();
+  renderGeluid();
   if ($('app-blad')) closeConfirmModal();
 });
-
 
 
 
@@ -24290,7 +24210,6 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
 }
 
 function openAppBlad(vanKnop) {
-  closeGearMenu();
   sndClick();
   const hasStars = profileKeys().length > 0;
   const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel);
@@ -24338,7 +24257,6 @@ function backTarget() {
 
   const lagen = document.querySelectorAll('.rp-overlay:not(.closing)');
   if (lagen.length) return lagen[lagen.length - 1]._close;
-  if ($('gear-menu').classList.contains('open')) return closeGearMenu;
   if ($('mem-done').style.display === 'flex') return exitMemory;
 
 

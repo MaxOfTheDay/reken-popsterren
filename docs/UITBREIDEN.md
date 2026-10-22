@@ -420,7 +420,6 @@ precies hetzelfde als de knop die op dat scherm zichtbaar is:
 |---|---|---|
 | modal open (stoppen / bevestigen) | modal dicht, scherm blijft | de ✕ / *Annuleer* |
 | zwevende laag (trofee, rang, ladder) | bovenste laag dicht | tik ernaast |
-| tandwielmenu open | menu dicht | tik ernaast |
 | Show (`screen-game`) | stoppen-vraag — of meteen de kaart als er nog niets gespeeld is | de ✕ |
 | Eindscherm | de kaart, op de halte die net gespeeld is | *Verder op tournee* |
 | Memory | de kaart | de ← |
