@@ -85,6 +85,16 @@ const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls, HUPPEL.cls);
    maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
    voor waarom het pasje niet op de tekening zelf staat. */
 function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
+/* Een pop die al op het scherm staat andere kleren aandoen, zonder haar pasje te
+   breken. De hele houder opnieuw vullen gooit ook de pas-laag weg, en een nieuwe
+   pas-laag begint zijn animatie van voren af aan: ze klikte dan midden in een
+   sprong terug naar de grond. Hier krijgt alleen de tekening ín de laag de
+   nieuwe kleren, en het pasje loopt gewoon door. */
+function popKleren(el, svg) {
+  const laag = el.firstElementChild;
+  if (laag && laag.classList.contains('pas-laag')) laag.innerHTML = svg;
+  else el.innerHTML = pasLaag(svg);
+}
 /* Een pasje aanzetten -- of, bij beperkte beweging, niet.
 
    De drie dansers (dance, tapDance, finaleDance) deden alle drie dezelfde twee
@@ -108,6 +118,7 @@ function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
 
    Terug komt of er iets te wachten valt: false betekent "ze staat al stil". */
 function zetPas(el, move) {
+  pasLos(el);
   el.classList.remove('dancing', ...MOVE_CLASSES);
   if (motionOff()) return false;
   const pop = el.firstElementChild;
@@ -120,22 +131,54 @@ function zetPas(el, move) {
    zetPas haalt hem niet meer weg. Dat scheelt niet alleen een regel: de poppen op
    de sterrenkeuze hébben geen 'idle' (zes wiegende poppen naast elkaar is precies
    wat dit scherm niet wil), en die zouden er hier eentje cadeau krijgen. */
-function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
-/* Hoe lang één pasje duurt: de .9s van de danspasjes in 30-onderdelen.css. Na
-   PAS (plus een beeldje of drie) gaat het pasje er weer af.
+function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); } }
+/* Hoe lang één pasje duurt: de .9s van de danspasjes in 30-onderdelen.css.
 
-   Per pop één klokje, en een nieuw pasje zet het oude klokje stil. Zonder dat
-   haalde het klokje van een vorige tik het volgende pasje halverwege weg: tik
-   twee keer kort na elkaar en de tweede dans brak na een halve seconde af. */
+   AF ALS HIJ UIT IS, NIET ALS DE KLOK HET ZEGT. Het pasje ging er eerst af op
+   een klok (PAS plus drie beeldjes), en dat ging op twee manieren mis. Een klok
+   die korter was dan het pasje -- de stuiter op de kaart stond op de duur van
+   de groet, en dat werd een huppel van 660ms -- knipte hem af terwijl ze nog
+   ingedeukt stond, en dan klikte ze in één beeldje recht. En ook een klok die
+   wél klopte, klopte alleen als het pasje meteen begon: na een zwaar beeldje
+   (het eindscherm dat net opgebouwd is) liep het pasje 100ms achter en ging
+   het er alsnog net voor het eind af. Nu wacht pasUit op animationend van de
+   pas-laag zelf; de klok is alleen nog het vangnet voor als die nooit komt (de
+   pop staat op een scherm dat niet in beeld is, en daar loopt geen animatie).
+
+   Per pop één wachter, en een nieuw pasje (zetPas) of stilstaan ruimt de oude
+   op. Zonder dat haalde de wachter van een vorige tik het volgende pasje
+   halverwege weg: tik twee keer kort na elkaar en de tweede dans brak na een
+   halve seconde af.
+
+   dan: wat er gebeurt als het pasje uit is. Gewoon stilstaan, of -- voor de
+   finale -- het volgende pasje. */
 const PAS = 900;
 document.documentElement.style.setProperty('--t-pas', PAS + 'ms');   // de CSS leest dezelfde duur
+const PAS_VANGNET = PAS + 300;
 const pasKlok = new WeakMap();
-function pasUit(el) {
-  clearTimeout(pasKlok.get(el));
-  pasKlok.set(el, setTimeout(() => stilStaan(el), PAS + 50));
+function pasLos(el) {
+  const k = pasKlok.get(el);
+  if (!k) return;
+  clearTimeout(k.klok);
+  if (el.removeEventListener) el.removeEventListener('animationend', k.eind);
+  pasKlok.delete(el);
+}
+function pasUit(el, dan) {
+  pasLos(el);
+  const klaar = () => { pasLos(el); (dan || stilStaan)(el); };
+  // alleen het pasje zelf telt: het wiegen staat op de houder en eindigt nooit
+  const eind = e => { if (e.target.parentElement === el && e.target.classList.contains('pas-laag')) klaar(); };
+  if (el.addEventListener) el.addEventListener('animationend', eind);   // het nagebootste scherm van de keuring heeft er geen
+  pasKlok.set(el, { klok: setTimeout(klaar, PAS_VANGNET), eind });
 }
 function dance(elId) {
   const el = $(elId);
+  /* Danst ze nog, dan danst ze dat pasje uit. Een nieuw pasje erbovenop begon
+     vanuit de stand waar het vorige was -- halverwege een sprong klikte ze
+     terug naar de grond. In de kleedkamer gebeurde dat bij elk tweede stuk dat
+     je snel na het eerste aantikte; de nieuwe kleren krijgt ze toch al aan
+     (paintShop tekent haar opnieuw, zónder het pasje te herstarten). */
+  if (!el || el.classList.contains('dancing')) return;
   // kies het volgende danspasje van de show (afwisselend, met een verrassing)
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }   // volgend danspasje uit de reeks
@@ -188,16 +231,17 @@ function finaleDance(elId, count) {
   // als je om minder beweging gevraagd hebt. Ze staat er gewoon, in haar nieuwe
   // spullen, en het eindscherm vertelt de rest.
   if (motionOff()) { stilStaan(el); return; }
-  /* Elk pasje helemaal uit (PAS). Dit stond op 620ms per pasje, terwijl een
+  /* Elk pasje helemaal uit (pasUit). Dit stond op 620ms per pasje, terwijl een
      pasje 900ms duurt: elk pasje werd op tweederde afgebroken en de pop sprong
-     naar de volgende stand -- het duidelijkst midden in de pirouette. */
+     naar de volgende stand -- het duidelijkst midden in de pirouette. Daarna
+     stond het op een klok van PAS, en die liep op het eindscherm (dat net
+     zwaar opgebouwd is) nog 100ms vóór op het pasje uit. */
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
     if (!zetPas(el, MOVES[i % MOVES.length])) return;
     i++;
-    clearTimeout(pasKlok.get(el));
-    pasKlok.set(el, setTimeout(step, PAS));
+    pasUit(el, step);
   };
   step();
 }

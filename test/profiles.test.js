@@ -1478,6 +1478,44 @@ function check(ok, label, detail) {
         'een tik op de ster geeft één stuiter', JSON.stringify(een.pas));
       check(twee.pas.length === 1 && parseInt(twee.pas[0].split('@')[1], 10) > parseInt(een.pas[0].split('@')[1], 10),
         'een tweede tik meteen erna begint de stuiter niet opnieuw', JSON.stringify([een.pas, twee.pas]));
+      /* En hij mag uitstuiteren. De stuiter ging er eerst af op de klok van de
+         groet (de huppel, korter dan mvBounce): dan stond ze nog ingedeukt op
+         haar halte en klikte ze in één beeldje recht -- het schokje na de sprong. */
+      const uit = await page.evaluate(() => new Promise(res => {
+        const holder = document.querySelector('.tour-hero .avatar-holder');
+        let laatst = 0;
+        (function kijk() {
+          const a = holder.querySelector('.pas-laag').getAnimations()[0];
+          if (a) laatst = a.currentTime;
+          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk); else res({ op: Math.round(laatst), duur: PAS });
+        })();
+      }));
+      check(uit.op >= uit.duur - 40, 'de stuiter speelt helemaal uit voor ze weer stilstaat',
+        `afgebroken op ${uit.op}ms van ${uit.duur}ms`);
+      /* Hetzelfde in de kleedkamer: twee stukken snel na elkaar aandoen. De pop
+         werd daar elke keer opnieuw getekend mét haar pas-laag, en een nieuwe
+         laag begint zijn pasje van voren af aan -- midden in een sprong terug
+         naar de grond. Nu krijgt ze de kleren aan en danst ze haar pasje uit. */
+      const kast = await page.evaluate(() => new Promise(res => {
+        const p = P();
+        const twee = ITEMS.filter(i => i.cat !== PODIA_CAT).slice(0, 2);
+        twee.forEach(i => { if (!p.owned.includes(i.id)) p.owned.push(i.id); });
+        openKleedkamer();
+        setTimeout(() => {
+          equipShopItem(twee[0].id);
+          const laag = $('shop-avatar').firstElementChild;
+          setTimeout(() => {
+            const voor = laag.getAnimations().map(a => Math.round(a.currentTime));
+            equipShopItem(twee[1].id);
+            const na = $('shop-avatar').firstElementChild;
+            res({ zelfde: na === laag, voor, na: na.getAnimations().map(a => Math.round(a.currentTime)),
+                  kleren: P().equipped[twee[1].cat] === twee[1].id });
+          }, 350);
+        }, 700);
+      }));
+      check(kast.zelfde && kast.kleren && kast.na.length === 1 && kast.na[0] >= kast.voor[0],
+        'twee stukken snel na elkaar aandoen breekt haar pasje niet', JSON.stringify(kast));
+      await page.evaluate(() => goMap());
       await page.waitForTimeout(1000);
       await page.evaluate(() => { overgangBezig = true; });
       await page.touchscreen.tap(punt.x, punt.y);

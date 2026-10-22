@@ -1403,7 +1403,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     k = await kijk(900);
     check(k === 'avatar-holder idle', 'na de huppel staat ze weer gewoon op haar plek', k);
 
-    /* Wegwandelen middenin de huppel stopt hem. Niet uit netheid: een huppel die
+    /* Wegwandelen middenin de huppel zet hem stil. Niet uit netheid: een huppel die
        doorloopt op een scherm dat je verlaten hebt vecht om beeldjes met wat er
        dán begint, en dat is meestal de vlucht naar Werelden -- de enige animatie
        in de app die van élk beeldje afhangt. Opgemeten lag de tekening op het
@@ -1415,11 +1415,17 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       goMap();
       await new Promise(r => setTimeout(r, 450));
       const tijdens = window.__ster();
+      const laag = document.querySelector('#tour-map .tour-hero .pas-laag');
       openReis();
       await new Promise(r => setTimeout(r, 80));
-      return { tijdens, nog: window.__ster() };
+      /* Stilgezet, niet weggehaald (zie kaartGroetStop): ze blijft hangen waar
+         ze was in plaats van in één beeldje naar de grond te klikken, maar er
+         loopt niets meer. Is het scherm weg, dan gaat het pasje er ook af. */
+      const loopt = laag ? laag.getAnimations().filter(a => a.playState === 'running').length : 0;
+      await new Promise(r => setTimeout(r, MOTION.totaal + 50));
+      return { tijdens, loopt, nog: window.__ster() };
     });
-    check(/move-huppel/.test(onderbroken.tijdens) && !/move-huppel|dancing/.test(onderbroken.nog),
+    check(/move-huppel/.test(onderbroken.tijdens) && onderbroken.loopt === 0 && !/move-huppel|dancing/.test(onderbroken.nog),
       'wegwandelen middenin de huppel stopt hem, en laat niets bewegen op een scherm dat weg is',
       JSON.stringify(onderbroken));
     await g.evaluate(() => goMap());

@@ -9546,6 +9546,16 @@ function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
 
 
 
+function popKleren(el, svg) {
+  const laag = el.firstElementChild;
+  if (laag && laag.classList.contains('pas-laag')) laag.innerHTML = svg;
+  else el.innerHTML = pasLaag(svg);
+}
+
+
+
+
+
 
 
 
@@ -9564,6 +9574,7 @@ function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
 
 
 function zetPas(el, move) {
+  pasLos(el);
   el.classList.remove('dancing', ...MOVE_CLASSES);
   if (motionOff()) return false;
   const pop = el.firstElementChild;
@@ -9576,7 +9587,21 @@ function zetPas(el, move) {
 
 
 
-function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES); }
+function stilStaan(el) { if (el) { pasLos(el); el.classList.remove('dancing', ...MOVE_CLASSES); } }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9585,13 +9610,31 @@ function stilStaan(el) { if (el) el.classList.remove('dancing', ...MOVE_CLASSES)
 
 const PAS = 900;
 document.documentElement.style.setProperty('--t-pas', PAS + 'ms');
+const PAS_VANGNET = PAS + 300;
 const pasKlok = new WeakMap();
-function pasUit(el) {
-  clearTimeout(pasKlok.get(el));
-  pasKlok.set(el, setTimeout(() => stilStaan(el), PAS + 50));
+function pasLos(el) {
+  const k = pasKlok.get(el);
+  if (!k) return;
+  clearTimeout(k.klok);
+  if (el.removeEventListener) el.removeEventListener('animationend', k.eind);
+  pasKlok.delete(el);
+}
+function pasUit(el, dan) {
+  pasLos(el);
+  const klaar = () => { pasLos(el); (dan || stilStaan)(el); };
+
+  const eind = e => { if (e.target.parentElement === el && e.target.classList.contains('pas-laag')) klaar(); };
+  if (el.addEventListener) el.addEventListener('animationend', eind);
+  pasKlok.set(el, { klok: setTimeout(klaar, PAS_VANGNET), eind });
 }
 function dance(elId) {
   const el = $(elId);
+
+
+
+
+
+  if (!el || el.classList.contains('dancing')) return;
 
   const move = Math.random() < 0.4 ? pick(MOVES) : MOVES[G ? G.moveIdx % MOVES.length : 0];
   if (G) { G.moveIdx++; }
@@ -9647,13 +9690,14 @@ function finaleDance(elId, count) {
 
 
 
+
+
   let i = 0;
   const step = () => {
     if (i >= count) { stilStaan(el); return; }
     if (!zetPas(el, MOVES[i % MOVES.length])) return;
     i++;
-    clearTimeout(pasKlok.get(el));
-    pasKlok.set(el, setTimeout(step, PAS));
+    pasUit(el, step);
   };
   step();
 }
@@ -13926,7 +13970,7 @@ function landingNa(ms, fn) {
 }
 function landingPas(el, move) {
   if (!el || !zetPas(el, move)) return;
-  landingNa(LANDING.duur, () => stilStaan(el));
+  pasUit(el);
 }
 
 function landingStil() {
@@ -16201,7 +16245,6 @@ const GROET = {
   koeltijd: 2500,
 
   pas: HUPPEL,
-  duur: HUPPEL.duur + 50,
 
   landt: Math.round(HUPPEL.duur * HUPPEL.landt),
 };
@@ -16258,10 +16301,14 @@ function kaartGroet(mag) {
 
 
     if (!el || !el.isConnected || !$('screen-map').classList.contains('active')) return;
-    if (!zetPas(el, GROET.pas)) return;
-    setTimeout(() => stilStaan(el), GROET.duur);
+    if (zetPas(el, GROET.pas)) pasUit(el);
   }, MOTION.totaal);
 }
+
+
+
+
+
 
 
 
@@ -16303,8 +16350,7 @@ function kaartTik(ster, halte) {
   clearTimeout(groetTimer);
   groetTimer = null;
   sndTap();
-  if (!zetPas(el, TIK_PAS)) return;
-  setTimeout(() => stilStaan(el), GROET.duur);
+  if (zetPas(el, TIK_PAS)) pasUit(el);
 }
 
 function kaartGroetStop() {
@@ -16313,7 +16359,21 @@ function kaartGroetStop() {
   groetTimer = pulsTimer = null;
   const map = $('tour-map');
   const el = map && map.querySelector('.tour-hero .avatar-holder.dancing');
-  if (el) stilStaan(el);
+  if (!el) return;
+
+
+
+
+
+
+
+
+  const laag = el.firstElementChild;
+  const loopt = laag ? laag.getAnimations().filter(a => a.playState === 'running') : [];
+  if (!loopt.length) { stilStaan(el); return; }
+  pasLos(el);
+  loopt.forEach(a => a.pause());
+  setTimeout(() => { if (loopt.every(a => a.playState === 'paused')) stilStaan(el); }, MOTION.totaal);
 }
 
 function goMap(vanLvl) {
@@ -18779,7 +18839,7 @@ function wereldFeest(f) {
     const pop = $('end-avatar');
 
 
-    if (pop) { pop.innerHTML = pasLaag(avatarSVG(q, 150)); dance('end-avatar'); }
+    if (pop) { popKleren(pop, avatarSVG(q, 150)); dance('end-avatar'); }
     dicht();
   };
   sndGroot();
@@ -21849,7 +21909,7 @@ function paintShop() {
     plek.innerHTML = podiumHTML(podium);
     plek.dataset.podium = podium.id;
   }
-  $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
+  popKleren($('shop-avatar'), avatarSVG(preview, 165, true));
   renderDressBar(selected, p);
 
   const lade = $('dress-bar');
@@ -22386,7 +22446,9 @@ function koopKomtAan(it) {
   koopVonken(kaart);
   sndAan();
   const pop = $('shop-avatar');
-  if (zetPas(pop, pick(MOVES))) { sparkle(pop); pasUit(pop); }
+
+  if (!pop.classList.contains('dancing') && zetPas(pop, pick(MOVES))) pasUit(pop);
+  sparkle(pop);
 }
 
 
