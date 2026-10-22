@@ -1,35 +1,24 @@
   /* ---- Instellingen (ouder-dashboard) ---- */
   .settings-sheet { width: 100%; max-width: var(--kolom); display: flex; flex-direction: column; gap: 14px; }
 
-  /* ---- De kop van het ouderdeel, twee standen -----------------------------
-     FASE 5D. Deze kop draagt drie dingen (terug + naam van het scherm, wíé, en
-     wát daarover) en dat was op een telefoon 175 van 844 pixels -- op een kleine
-     telefoon 31% van het beeld, vóór er één cijfer in zicht kwam.
+  /* ---- De kop van het ouderdeel: één maat ---------------------------------
+     Deze kop kromp eerst zodra er gescrold werd, net als de trofeeënkast: minder
+     lucht, kleinere portretjes, een kleinere letter. Dat was toen hij 162px hoog
+     was. Sinds ← · de sterren · ▶ op één regel staan is hij 124, en scheelde het
+     krimpen nog maar 23px -- terwijl er zeven dingen tegelijk van maat
+     veranderden en er een meting plus een opvangmarge nodig was om de kaarten
+     eronder stil te houden. Veel beweging voor één regel ruimte, en het is een
+     ouderscherm: rust boven winst. Max koos daarom één maat.
 
-     Bovenaan blijft hij ruim: daar ís de kop het scherm, en een ouder die net
-     binnenkomt moet zien wat dit is. Zodra er gescrold wordt krimpt hij, precies
-     zoals de trofeeënkast dat doet (zie #screen-trophies.gescrold): minder lucht,
-     een kleinere titel, kleinere portretjes. Wat NIET wegvalt zijn de twee
-     keuzerijen zelf -- wie er gekozen is en welk onderdeel je leest zijn precies
-     de twee dingen die je onderweg nodig hebt. Dat scheelt ~40px zonder dat er
-     iets verdwijnt of van plaats wisselt: gemeten 171 -> 139px. De raakvlakken
-     blijven ruim genoeg voor een volwassen vinger -- de kindkaartjes 38, de
-     tabbladen 36 -- en bovenaan zijn ze weer 46 en 40.
+     Wat bij scrollen nog wél verandert is alleen de plaat zelf (zie .gescrold
+     hieronder): dekkend en met een schaduw, zodat er geen kaart door de kop heen
+     schemert. Niets wordt groter of kleiner, dus ook niets schuift.
 
-     Eén element, twee standen, net als bij de kast: dan kan er niets uit de pas
-     gaan lopen. */
+     Een laag scherm (liggend, of een heel kleine telefoon) krijgt meteen de
+     krappe maat; zie de media query hieronder. */
   #screen-settings .hub-sticky {
-    /* Iets krapper dan de standaard 12/10: deze kop draagt drie regels en elke
-       pixel telt er dus driemaal zo zwaar. FASE 5D.1 haalde er nog een paar af,
-       verdeeld over alle vier de regels in plaats van uit één ervan -- gemeten
-       171 -> 162px. Alle drie de dingen (terug + titel, wie, wat) blijven staan,
-       en de winst komt uit de lúcht: geen enkel raakvlak is er kleiner van
-       geworden. De terugknop blijft 44, de tabbladen blijven 40, en het
-       kindkaartje gaat van 46 naar 44 -- de maat die in deze app overal de
-       ondergrens is (zie .icon-btn). */
     padding-top: 9px; padding-bottom: 7px;
-    transition: padding var(--t-snel) ease, margin-bottom var(--t-snel) ease,
-                background var(--t-snel) ease, box-shadow var(--t-snel) ease;
+    transition: background var(--t-snel) ease, box-shadow var(--t-snel) ease;
   }
   /* "Voor ouders" hoeft geen 24px te zijn -- dit scherm heeft geen titel nodig
      die het scherm draagt, alleen een naam. */
@@ -46,114 +35,16 @@
   #screen-settings.met-ster .screen-header { display: flex; gap: 8px; }
   #screen-settings.met-ster .header-title { display: none; }
   #screen-settings .screen-header .who-row { flex: 1; min-width: 0; }
-  /* ---- De overgang: álles wat krimpt loopt mee, en op één maat ------------
-     Hier stond maar de helft. De kindkaartjes, het spoor van de tabbladen, de
-     tabbladen zelf en het avatartje in het portret kregen hun krappe maat in
-     één beeldje, en de rest gleed er in --t-snel achteraan: gemeten zakte de kop
-     van 162 naar 147 in één beeldje en kroop hij daarna nog 8px na. Dat is een
-     schok met een staartje, en bij snel scrollen was dat precies wat er
-     haperde.
-
-     Alles wat in .gescrold hieronder een andere maat krijgt, hoort dus hier een
-     overgang te hebben, met dezelfde duur en dezelfde curve. Dat is niet alleen
-     netjes: de marge onder de kop (--kop-krimp, zie hieronder) loopt met diezelfde
-     curve op, en alleen als alles in de pas loopt blijft de som beeldje voor
-     beeldje gelijk. Zet je er een maat bij, zet hem dan ook hier.
-
-     Eén uitzondering, en die is om de snelheid: de lettergrootte loopt in hele
-     pixels (steps), niet vloeiend. Elke gebroken lettergrootte is voor de browser
-     een nieuwe letter die opnieuw gemeten en gevormd moet worden, en dat was het
-     duurste van de hele overgang: gemeten 3,7ms opmaak per beeldje, op een
-     viermaal tragere processor 12ms -- met hele pixels 0,5 en 2,8. Een stap van
-     één pixel in een titel zie je niet; een kop die hapert wel. Het aantal stappen
-     is het aantal pixels dat hij krimpt (20 -> 17 is 3). De som hierboven lijdt
-     er niet onder, want geen van deze regels is zo hoog als zijn letter: de
-     hoogte komt overal van een min-height of van de terugknop. */
-  #screen-settings .hub-sticky .icon-btn,
-  #screen-settings .speel-als { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
-  #screen-settings .header-title { transition: font-size var(--t-snel) steps(3); }
-  #screen-settings .hub-sticky .screen-header,
-  #screen-settings .who-row, #screen-settings .who-portrait, #screen-settings .who-portrait svg,
-  #settings-subtabs {
-    transition: margin var(--t-snel) ease, padding var(--t-snel) ease,
-                width var(--t-snel) ease, height var(--t-snel) ease, top var(--t-snel) ease;
-  }
-  /* Deze twee hadden al een eigen overgang -- het indrukken van .tab-btn, de kleur
-     van het gekozen tabblad bij .segmented -- en een tweede transition-regel
-     vervángt de eerste. Die lijst staat hier dus nog een keer, aangevuld. */
-  #screen-settings .who-btn { transition: transform var(--t-tik), background .12s, min-height var(--t-snel) ease; }
-  #settings-subtabs button {
-    transition: background .15s, color .15s, box-shadow .15s,
-                padding var(--t-snel) ease, min-height var(--t-snel) ease, font-size var(--t-snel) steps(2);
-  }
-  /* De kaarten onder de kop, in hun eigen opmaak. Tijdens de overgang wordt elk
-     deel van de kop apart afgerond, en de som komt dan een tiende pixel naast
-     de marge uit: de inhoud trilt zo'n 0,1-0,3px -- onzichtbaar, maar het hele
-     vel werd er elk beeldje opnieuw voor getekend. Met deze regel niet meer:
-     gemeten op een viermaal tragere processor van 13 naar 6ms tekenen en van 10
-     naar 4ms rasteren per beeldje. Het moeten ze allebei zijn -- layout of
-     style alléén deed in dezelfde meting niets, en waaróm dat zo is laat de
-     browser niet zien. Veilig hier: er staat niets met position: fixed in het
-     vel (modals en confetti hangen erbuiten), en geen tellers of quotes. */
-  #screen-settings .settings-sheet { contain: layout style; }
-  #screen-settings.gescrold .hub-sticky {
-    padding-top: 7px; padding-bottom: 7px;
-    /* ---- De inhoud schuift niet mee met de kop ----
-       De kop staat in de stroom, dus zolang hij krimpt trok hij alles eronder
-       mee omhoog -- tegen de vinger in, en in Chrome vocht de scroll anchoring
-       daar weer tegen door de schuifstand met de krimp terug te zetten. Onder de
-       23px viel die dan terug onder de drempel van ouderScroll, werd de kop weer
-       ruim, en zo verder: nagemeten wisselde de kop, stilgezet op 16-18px, élk
-       beeldje van stand, en een veeg van 40px leverde er maar 17 op.
-
-       Nu komt wat de kop krimpt er als marge onder weer bij. De plaat wordt
-       kleiner, maar de plek die hij in de stroom inneemt blijft precies gelijk:
-       de inhoud staat stil, de schuifstand blijft van de vinger, en er valt voor
-       de scroll anchoring niets meer recht te zetten. Hoeveel dat is, meet
-       kopKrimpMeten -- het hangt af van de schermhoogte (hieronder begint een
-       laag scherm al krap) en van of de twee keuzerijen er staan, en dat
-       opschrijven zou op de eerste de beste wijziging uit de pas gaan lopen. */
-    margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
-    /* Dekkend gescrold, om dezelfde reden als bij de kast: op .82 bleven de
-       koppen van de witte kaarten dwars door "Voor ouders" heen leesbaar. */
-    background: var(--kop-plaat-vol);
-    box-shadow: var(--e-3);
-  }
-  #screen-settings.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
-  #screen-settings.gescrold .header-title { font-size: var(--tx-body); }
-  /* De enige plek in de app waar een raakvlak onder de 44px komt, en met opzet:
-     dit is een ouderscherm (geen kinderhand), het is alleen de gescrolde stand
-     (bovenaan is hij weer 44), en zonder deze regel bepaalt de terugknop in zijn
-     eentje de hoogte van de bovenste regel -- dan houdt krimpen op bij 44 en
-     levert de hele gescrolde stand nog maar 16px op in plaats van 40. */
-  #screen-settings.gescrold .hub-sticky .icon-btn,
-  #screen-settings.gescrold .speel-als { width: 38px; height: 38px; font-size: 16px; }
-  #screen-settings.gescrold .who-row { padding-top: 0; padding-bottom: 0; }
-  #screen-settings.gescrold .who-btn { min-height: 38px; }
-  #screen-settings.gescrold .who-portrait { width: 28px; height: 28px; }
-  #screen-settings.gescrold .who-portrait svg { top: -3px; width: 48px; }
-  #screen-settings.gescrold .who-btn .tab-label { font-size: var(--tx-label); }
-  #screen-settings.gescrold #settings-subtabs { margin-top: 5px; }
-  #screen-settings.gescrold .segmented { padding: 3px; }
-  #screen-settings.gescrold .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
-  /* Uit, bij wie geen beweging wil -- en even uit terwijl kopKrimpMeten meet, want
-     een maat die nog onderweg is, is geen maat. Het `.screen` in de kiezer is er
-     om te winnen: `#screen-settings .hub-sticky .icon-btn` hierboven weegt zwaarder
-     dan `#screen-settings .hub-sticky *`, dus zonder liep de terugknop bij
-     beperkte beweging gewoon door. */
+  /* Gescrold: alleen de plaat. Op .82 (de doorschijnende standaard) bleven de
+     koppen van de witte kaarten dwars door de kop heen leesbaar. */
+  #screen-settings.gescrold .hub-sticky { background: var(--kop-plaat-vol); box-shadow: var(--e-3); }
   @media (prefers-reduced-motion: reduce) {
-    #screen-settings.screen .hub-sticky, #screen-settings.screen .hub-sticky * { transition: none; }
+    #screen-settings.screen .hub-sticky { transition: none; }
   }
-  #screen-settings.kop-meten .hub-sticky,
-  #screen-settings.kop-meten .hub-sticky * { transition: none; }
   /* Een laag scherm: een telefoon in liggende stand (844x390) of een heel kleine
-     telefoon. Daar is 171px kop gewoon te veel -- bijna de helft van het beeld --
-     en de gescrolde stand helpt niet, want bovenaan is hij nog ruim. Dit is
-     daarom dezelfde krappe maatvoering, maar dan meteen: de kop begint hier al
-     compact. Dezelfde waarden als .gescrold hierboven, met opzet los
-     opgeschreven -- een klasse en een schermmaat zijn twee verschillende
-     aanleidingen voor hetzelfde resultaat, en CSS kan die niet delen zonder de
-     ene aan de andere te knopen. */
+     telefoon. Daar is de gewone kop te veel van het beeld, dus begint hij hier
+     meteen compact: minder lucht, kleinere knoppen en portretjes. De raakvlakken
+     blijven ruim genoeg voor een volwassen vinger (38). */
   @media (max-height: 560px) {
     #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
@@ -212,7 +103,7 @@
      "Nieuwe ster"-tegel op de sterrenkeuze, zodat hij als "iemand erbij" leest en
      niet als nog een kind. Geen portret en geen woord -- dan zou hij net zo breed
      worden als een ster en ermee gaan wedijveren. De hoogte volgt .who-btn, dus
-     hij krimpt vanzelf mee in de gescrolde en de lage kop. */
+     hij krimpt vanzelf mee in de lage kop. */
   .who-btn.who-nieuw {
     padding: 0 14px; background: transparent;
     border: 1.5px dashed rgba(255,255,255,.4);
@@ -249,8 +140,8 @@
      Hier stond eerst een groen "✓ Opgeslagen" dat na elke tik even oplichtte --
      weg, de keuze die oplicht is zelf de bevestiging. Er stond ook de naam in
      ("▶ Sem"), maar die staat pal ernaast al op de gekozen ster: twee keer Sem
-     naast elkaar. Nu een ronde knop, even groot als ← (en krimpt mee, zie
-     .gescrold). */
+     naast elkaar. Nu een ronde knop, even groot als ← (en krimpt mee in de
+     lage kop). */
   /* .btn.speel-als, niet .speel-als: .btn.small zet een hoekige straal en weegt
      anders zwaarder, en dan werd het rond een afgerond vierkantje. */
   .btn.speel-als {

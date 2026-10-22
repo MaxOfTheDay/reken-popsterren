@@ -133,8 +133,7 @@
        anchoring de schuifstand met de krimp terug, viel die onder de drempel van
        kastScroll, en werd de kop weer ruim: op 10px stilgezet wisselde hij élk
        beeldje van stand, en onder de 40px sprong de kast steeds terug naar
-       boven. Hoeveel het is meet kopKrimpMeten; het verhaal staat daar, en bij
-       #screen-settings.gescrold .hub-sticky, dat precies zo werkt. */
+       boven. Hoeveel het is meet kopKrimpMeten; het verhaal staat daar. */
     margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
     background: var(--kop-plaat-vol);
     backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
@@ -182,8 +181,7 @@
   @media (max-width: 360px) {
     #screen-trophies .header-title { font-size: var(--tx-body); }
   }
-  /* Contain om dezelfde reden als het vel in het ouderdeel (zie #screen-settings
-     .settings-sheet): tijdens het krimpen van de kop komt de som van de afgeronde
+  /* Contain (het ouderdeel deed dit ook, toen zijn kop nog kromp): tijdens het krimpen van de kop komt de som van de afgeronde
      delen een fractie naast de marge uit, en dan werd de hele kast elk beeldje
      opnieuw getekend. Gemeten op een viermaal tragere processor van 7 naar 3ms
      tekenen per beeldje, en van 6 naar 2ms rasteren. Veilig: wat er bij het
