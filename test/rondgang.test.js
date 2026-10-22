@@ -1758,14 +1758,14 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   }
 
   /* ================= 11 · De halte waar je heen moet =================
-     De huidige halte ademt al sinds jaar en dag (stopSpot, een gloed achter het
-     rondje). Wat daar nu bij komt is één puls bij het binnenkomen, en de regel
-     dat het ademen stilstaat zodra er iets belangrijkers gebeurt.
+     De huidige halte ademde lang (stopSpot, een gouden gloed achter het
+     rondje). Die gloed is weg: de ster stond er middenin, en licht op licht
+     maakte haar wazig. Wat blijft is één puls bij het binnenkomen.
 
-     Wat hier vastligt is vooral wat er NIET mag: niet pulsen als de ster net
-     zelf over de route naar die halte toe gehuppeld is (die reis ís de
-     aankomst), en niet doorademen onder een laag of tijdens een wereldreis. En
-     het rondje zelf hoort stil te staan -- alleen de gloed eromheen beweegt. */
+     Wat hier vastligt is vooral wat er NIET mag: geen halte die nog doorlopend
+     ademt, niet pulsen als de ster net zelf over de route naar die halte toe
+     gehuppeld is (die reis ís de aankomst), en het rondje zelf hoort stil te
+     staan. */
   {
     const hCtx = await browser.newContext({ viewport: { width: 412, height: 915 } });
     await cacheFonts(hCtx);
@@ -1782,10 +1782,6 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     });
     await h.goto(SPEL_URL);
     await h.evaluate(() => {
-      window.__adem = () => {
-        const n = document.querySelector('#tour-map .tour-stop.next');
-        return n ? getComputedStyle(n, '::after').animationPlayState : 'geen halte';
-      };
       // heeft de huidige halte één keer gepulst in dit tijdvak?
       window.__pulst = async (doen, ms) => {
         let gezien = false;
@@ -1802,14 +1798,14 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     await h.evaluate(() => selectProfile('p1'));
     await h.waitForTimeout(3200);   // ruim over de koeltijd van de aankomst
 
-    // alleen de huidige halte, nooit een gespeelde of een op slot
+    // geen enkele halte ademt nog: niet de huidige, geen gespeelde, geen op slot
     const wie = await h.evaluate(() => {
       const per = k => [...document.querySelectorAll('#tour-map .tour-stop.' + k)]
         .map(n => getComputedStyle(n, '::after').animationName);
       return { next: per('next'), done: per('done'), locked: per('locked') };
     });
-    check(wie.next.length === 1 && wie.next[0] === 'stopSpot',
-      'alleen de huidige halte ademt', JSON.stringify(wie));
+    check(wie.next.length === 1 && wie.next[0] === 'none',
+      'de huidige halte ademt niet meer (geen gloed achter de ster)', JSON.stringify(wie));
     check(wie.done.every(a => a === 'none') && wie.locked.every(a => a === 'none'),
       'en een gespeelde of gesloten halte doet niets', JSON.stringify(wie));
 
@@ -1825,44 +1821,12 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       document.querySelectorAll('.rp-overlay').forEach(o => o._close && o._close());
       const gepulst = await window.__pulst(() => goMap(P().level - 1), 3200);
       await new Promise(r => setTimeout(r, 2200));
-      return { gepulst, adem: window.__adem() };
+      return { gepulst };
     });
     check(naShow.gepulst === false,
       'maar na een show met een reis niet: die reis is de aankomst', JSON.stringify(naShow));
-    check(naShow.adem === 'running',
-      'en als de reis voorbij is ademt de nieuwe halte gewoon verder', JSON.stringify(naShow));
 
-
-    // een laag eroverheen zet het ademen stil, en daarna gaat het weer door
-    const laag = await h.evaluate(async () => {
-      openOverlay('proef-overlay', '<div class="pop-panel">laag</div>');
-      await new Promise(r => setTimeout(r, 300));
-      const tijdens = window.__adem();
-      document.querySelectorAll('.rp-overlay').forEach(o => o._close && o._close());
-      await new Promise(r => setTimeout(r, 700));
-      return { tijdens, erna: window.__adem() };
-    });
-    check(laag.tijdens === 'paused' && laag.erna === 'running',
-      'onder een laag staat het ademen stil, en daarna weer aan', JSON.stringify(laag));
-
-    // en tijdens een wereldreis ook
-    const reis = await h.evaluate(async () => {
-      navigeerNaarWereld(2);
-      await new Promise(r => setTimeout(r, 1600));
-      navigeerNaarWereld(3);                       // terug naar haar wereld: dáár staat de halte
-      const tijdens = [];
-      for (let i = 0; i < 10; i++) {
-        await new Promise(r => setTimeout(r, 90));
-        if (document.getElementById('screen-map').classList.contains('wereld-reist')) tijdens.push(window.__adem());
-      }
-      await new Promise(r => setTimeout(r, 1500));
-      return { tijdens, erna: window.__adem() };
-    });
-    check(reis.tijdens.length > 0 && reis.tijdens.every(x => x === 'paused' || x === 'geen halte'),
-      'tijdens een wereldreis ademt er niets mee', JSON.stringify(reis));
-    check(reis.erna === 'running', 'en als de camera stilstaat gaat het weer door', JSON.stringify(reis));
-
-    // het rondje zelf verroert zich niet -- alleen de gloed eromheen
+    // het rondje zelf verroert zich niet
     const stil = await h.evaluate(async () => {
       const dot = document.querySelector('#tour-map .tour-stop.next .dot');
       const meet = () => { const b = dot.getBoundingClientRect();
@@ -1875,7 +1839,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       }
       return { eerste, grootste };
     });
-    check(stil.grootste < 0.5, 'en het rondje zelf staat stil: alleen de gloed ademt',
+    check(stil.grootste < 0.5, 'en het rondje zelf staat stil',
       JSON.stringify(stil));
     /* En een show overdoen midden in een wereld: dan is er géén reis, dus staat
        de huidige halte er gewoon -- en tóch hoort er niet gepulst te worden.
@@ -1930,15 +1894,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
             && getComputedStyle(b, '::after').animationName !== 'none') gepulst = true;
       }
       const na = getComputedStyle(halte(), '::after');
-      return { adem: na.animationName, gloed: +na.opacity, gepulst,
+      return { adem: na.animationName, gepulst,
                pulslaag: getComputedStyle(lijf(), '::after').display };
     });
     check(stilstand.adem === 'none' && !stilstand.gepulst && stilstand.pulslaag === 'none',
       'zonder beweging ademt en pulst er niets', JSON.stringify(stilstand));
-    // .95 is waar stopSpot op zijn hoogtepunt komt; stilstaand hoort de gloed
-    // daar niet onder te blijven, anders is "zonder beweging" ook "minder te zien"
-    check(stilstand.gloed >= .95,
-      'maar de gloed staat er juist stérker op, zodat de halte opvalt', JSON.stringify(stilstand));
     await sCtx.close();
   }
 
