@@ -331,9 +331,10 @@
 
 
 
+
     --route-onder: rgba(30,8,52,.45);
     --route-goud: var(--gold-accent);
-    --stop-keyline: rgba(26,7,48,.55);
+    --stop-keyline: rgba(42,13,68,.8);
     --stop-schaduw: rgba(12,2,26,.5);
 
 
@@ -341,8 +342,8 @@
 
     --halte-rand-rgb: 255,240,214;
     --halte-rand: rgba(var(--halte-rand-rgb),.44);
-    --perfect-ring: rgba(var(--warm-licht-rgb),.82);
-    --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
+    --halte-sticker: #fffaf0;
+    --slot-sticker: rgba(255,250,240,.45);
     --slot-vulling: #514772;
     --slot-vulling-top: #6a5f8c;
 
@@ -356,7 +357,7 @@
     --halte-lip: #2e0b5e;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
-    --ster-zoom: rgba(20,5,40,.85);
+    --ster-zoom: rgba(42,13,68,.9);
     --ster-leeg: rgba(40,14,70,.6);
     --ster-leeg-rand: rgba(255,255,255,.9);
     --ster-vol: #ffd740;
@@ -4730,7 +4731,7 @@
     background: transparent; padding: 0; text-align: center; z-index: 1;
 
     pointer-events: none;
-    --dot-key: 0 0 0 0.2cqw var(--stop-keyline);
+    --dot-key: 0 0 0 0.32cqw var(--stop-keyline);
 
 
 
@@ -4779,6 +4780,8 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 5.4cqw; font-weight: 700; border: 0.55cqw solid rgba(255,255,255,.3);
     background: var(--purple-shadow); }
+
+
 
 
 
@@ -5057,17 +5060,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-    box-shadow: var(--dot-key), 0 0 0 0.62cqw var(--perfect-ring),
-                var(--dot-drop), 0 0 2cqw 0.2cqw var(--perfect-gloed);
+    box-shadow: var(--dot-key), var(--dot-drop);
   }
 
 
@@ -5096,21 +5089,39 @@
 
 
 
-
-  .tour-stop .dot { border-width: 0.45cqw; text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
+  .tour-stop .dot { text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
   .tour-stop.done .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
-    border-color: rgba(255,255,255,.55);
     box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.done.perfect .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
     border-color: var(--gold-accent);
-    box-shadow: var(--dot-key), 0 0 0 0.55cqw var(--perfect-ring),
-                0 1.1cqw 0 0.25cqw var(--halte-lip), 0 1.8cqw 1.6cqw rgba(12,2,26,.35); }
-  .tour-stop.next .dot { border-color: var(--gold-light); text-shadow: none;
+    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.next .dot { text-shadow: none;
     box-shadow: var(--dot-key), 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.locked .dot {
     box-shadow: var(--dot-key), 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .tour-stop .dot { border-width: 0.55cqw; }
+  .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--halte-sticker); }
+  .tour-stop.done.perfect .dot { border-color: var(--gold-accent); }
+  .tour-stop.locked .dot { border-color: var(--slot-sticker); }
 
 
 

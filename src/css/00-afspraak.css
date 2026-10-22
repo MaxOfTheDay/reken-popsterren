@@ -242,7 +242,9 @@
                     vorm op het scherm. Sinds de weg uit losse stippen bestaat
                     is er van dat goud veel minder, en mag het hetzelfde goud
                     zijn als de route op Werelden (.reis-weg-gelopen).
-       stop-keyline het donkere haarlijntje net buiten de rand van een halte
+       stop-keyline de donkere inktlijn net buiten de rand van een halte. Dezelfde
+                    pruim als de zoom om de sterren (ster-zoom): één inktlijn
+                    om alles wat je op de kaart kunt aantikken
        stop-schaduw de zachte contactschaduw waarmee een halte op de tekening rust
        halte-rand   de rand van een gespeelde halte. Warm wít en nadrukkelijk
                     géén goud: goud op deze kaart is er voor "af" (de ring) en
@@ -251,11 +253,10 @@
                     telefoongrootte een gespeelde en een perfecte halte twee
                     gouden ringetjes die maar een haartje verschilden -- en dan
                     moet je vergelijken in plaats van zien.
-       perfect-ring een gouden ring BUITEN de rand van een halte op drie sterren,
-                    plus perfect-gloed als heel zachte staart eromheen. Samen het
-                    teken dat "af" van "gespeeld" onderscheidt zonder het rondje
-                    zelf te verbouwen -- en bewust géén vulling, want een gouden
-                    vulling betekent op deze kaart precies één ding.
+       halte-sticker de witte stickerrand van een gespeelde halte en van de halte
+                    waar je nu speelt -- dezelfde rand als om de pop op de kaart.
+                    Een perfecte halte draagt op die plek zijn ene gouden rand.
+       slot-sticker diezelfde rand op halve sterkte, om een halte op slot.
        slot-vulling de vulling van een halte die nog niet aan de beurt is. DEKKEND,
                     en dat is het hele punt: half doorzichtig pruim liet de
                     tekening én de weg er dwars doorheen praten, en dan staat er
@@ -297,7 +298,7 @@
        ster-vol     een verdiende ster                                          */
     --route-onder: rgba(30,8,52,.45);
     --route-goud: var(--gold-accent);
-    --stop-keyline: rgba(26,7,48,.55);
+    --stop-keyline: rgba(42,13,68,.8);
     --stop-schaduw: rgba(12,2,26,.5);
     /* --halte-rand-rgb los erbij omdat de reis dezelfde warm-witte rand een slag
        steviger nodig heeft: daar ligt hij om een tekening en niet om een rondje van
@@ -305,8 +306,8 @@
        "afgemaakt" op beide kaarten dezelfde kleur als er ooit aan gedraaid wordt. */
     --halte-rand-rgb: 255,240,214;
     --halte-rand: rgba(var(--halte-rand-rgb),.44);
-    --perfect-ring: rgba(var(--warm-licht-rgb),.82);
-    --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
+    --halte-sticker: #fffaf0;
+    --slot-sticker: rgba(255,250,240,.45);
     --slot-vulling: #514772;
     --slot-vulling-top: #6a5f8c;
     /* De knoplip van de haltes (zie "De knoplip" in 55-haltes.css): de vaste
@@ -320,7 +321,7 @@
     --halte-lip: #2e0b5e;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
-    --ster-zoom: rgba(20,5,40,.85);
+    --ster-zoom: rgba(42,13,68,.9);
     --ster-leeg: rgba(40,14,70,.6);
     --ster-leeg-rand: rgba(255,255,255,.9);
     --ster-vol: #ffd740;
