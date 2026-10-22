@@ -2731,17 +2731,28 @@
 
 
   #screen-map .map-id-btn {
-    padding: 4px;
+    padding: 7px;
     background: none; backdrop-filter: none; box-shadow: none;
   }
 
 
 
 
+
+
+
+
+
   #screen-map .map-portrait {
-    width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.78);
-    box-shadow: 0 2px 8px rgba(10,2,24,.45), 0 0 0 4px var(--hud-bg);
+    width: 34px; height: 34px; border: 2px solid rgba(255,255,255,.78);
+    box-shadow: 0 2px 6px rgba(10,2,24,.4), 0 0 0 2px var(--hud-bg);
   }
+
+
+
+
+
+  #screen-map .map-portrait svg { width: 190.5%; height: auto; top: -14.3%; }
 
 
 
@@ -2783,8 +2794,11 @@
 
 
   #screen-map .world-pick { overflow: visible; }
-  #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px 0; }
-  #screen-map .wp-chev { width: 7px; height: 12px; }
+  #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px -7px; }
+
+
+
+
 
 
 
@@ -2816,12 +2830,20 @@
 
 
 
-  #screen-map .wp-cta { margin: 4px; }
+
+
+
+
+
+
+
+
+
+
+  #screen-map .world-pick { width: var(--hud-h); }
+  #screen-map .wp-cta { width: 100%; margin: 0; padding: 0; background: none; box-shadow: none; }
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: var(--tx-klein); }
-    #screen-map .wp-cta { gap: 2px; margin: 3px; padding: 0 7px 0 6px; }
-    #screen-map .wp-cta-ico { font-size: 17px; }
-    #screen-map .wp-chev { width: 6px; height: 10px; }
     #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
     #screen-map .wens-mini { font-size: .85em; margin-left: 0; }
     #screen-map .hub-sticky { padding-left: 7px; padding-right: 8px; }
@@ -4618,7 +4640,6 @@
 
 
 
-  .wp-chev { display: block; width: 8px; height: 13px; flex: none; opacity: .8; color: var(--c-white); }
 
 
 
@@ -15236,9 +15257,11 @@ function navigeerNaarWereld(idx) {
 
 
 
-const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
-  + '<path d="M1.2 1.2l5.4 5.8-5.4 5.8" fill="none" stroke="currentColor" stroke-width="2"'
-  + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+
+
+
+
 
 
 
@@ -15280,7 +15303,7 @@ function renderMapTitle(p, opReis) {
 
 
   pil.innerHTML =
-      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
+      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span></span>`;
 
 
   const uitleg = `${shown.world.name} — tik voor alle werelden`;

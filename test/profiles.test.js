@@ -1905,8 +1905,13 @@ function check(ok, label, detail) {
           while (t < 120 && raak(cx, cy - t - 1)) t++;
           while (b < 120 && raak(cx, cy + b + 1)) b++;
           if (t + b < uit.kleinste) { uit.kleinste = t + b; uit.wie = WORLDS[i].id; }
-          // het chevrontje van de cta-zone hoort bij dezelfde knop als de naam
-          const svg = pil.querySelector('.wp-chev');
+          // sinds de pil een rondje van 34px is telt de breedte ook
+          let l = 0, rr = 0;
+          while (l < 120 && raak(cx - l - 1, cy)) l++;
+          while (rr < 120 && raak(cx + rr + 1, cy)) rr++;
+          uit.breed = Math.min(uit.breed == null ? Infinity : uit.breed, l + rr);
+          // de globe zelf hoort bij dezelfde knop (en het raakvlak is breder dan de pil)
+          const svg = pil.querySelector('.wp-cta-ico');
           const sr = svg && svg.getBoundingClientRect();
           if (!sr || !raak(sr.left + sr.width / 2, sr.top + sr.height / 2)) uit.ico.push(WORLDS[i].id);
           // en de buren blijven van zichzelf
@@ -1921,7 +1926,8 @@ function check(ok, label, detail) {
       });
       check(r.kleinste >= 44, 'het raakvlak van de wereldpil is minstens 44px hoog — ' + naam,
         r.kleinste + 'px bij ' + r.wie);
-      check(r.ico.length === 0, 'het chevrontje opent dezelfde tournee als de naam — ' + naam,
+      check(r.breed >= 44, 'het raakvlak van de wereldpil is minstens 44px breed — ' + naam, r.breed + 'px');
+      check(r.ico.length === 0, 'de globe opent dezelfde tournee als de pil — ' + naam,
         r.ico.join(', '));
       check(r.buren.length === 0, 'de wereldpil pakt geen tik af van het portret of de diamanten — ' + naam,
         r.buren.join(', '));

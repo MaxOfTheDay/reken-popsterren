@@ -45,17 +45,28 @@
      enige die op dit toestel speelt. De wereldnaam en de diamanten houden wel een
      pil, want die dragen tekst die over elke tekening leesbaar moet blijven. */
   #screen-map .map-id-btn {
-    padding: 4px;   /* onzichtbaar, maar maakt het raakvlak 48px */
+    padding: 7px;   /* onzichtbaar, maar maakt het raakvlak 48px */
     background: none; backdrop-filter: none; box-shadow: none;
   }
   /* Het portretje krijgt een ring van hetzelfde materiaal als de pillen -- geen pil
      eromheen, maar wel dezelfde stof. Daarmee horen de drie zones bij elkaar zonder
-     dat links een blok tekst terugkomt. Iets groter (42px) zodat het gewicht van de
-     linkerzone klopt tegen de twee pillen. */
+     dat links een blok tekst terugkomt.
+
+     34px, de hoogte van de pillen (--hud-h). Het was 42px met een ring van 4px:
+     50px zichtbaar naast twee pillen van 34, en dan woog de linkerhoek anderhalf
+     keer zo zwaar als de rest van de kop. Nu staan er drie dingen van één hoogte;
+     de ring van 2px brengt hem op 38, net genoeg dat een gezicht niet kleiner
+     oogt dan een pil. Het raakvlak blijft 48px, dat doet de padding hierboven. */
   #screen-map .map-portrait {
-    width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.78);
-    box-shadow: 0 2px 8px rgba(10,2,24,.45), 0 0 0 4px var(--hud-bg);
+    width: 34px; height: 34px; border: 2px solid rgba(255,255,255,.78);
+    box-shadow: 0 2px 6px rgba(10,2,24,.4), 0 0 0 2px var(--hud-bg);
   }
+  /* avatarSVG tekent op een vaste 80px, en .map-portrait svg hieronder hangt hem
+     op top: -6px. Bij een kleiner kader is dat geen kleiner beeld maar een
+     uitsnede: op 34px viel de hand met de micro weg en bleef er een gezicht over.
+     Dus de tekening schaalt mee, in dezelfde verhouding als op 42px (80/42 en
+     -6/42) -- dezelfde uitsnede als altijd, alleen kleiner. */
+  #screen-map .map-portrait svg { width: 190.5%; height: auto; top: -14.3%; }
   /* de twee pillen delen achtergrond, randje, schaduw én hoogte -- alleen de
      inhoud verschilt. PS-11 refine bracht de wereldpil terug naar één regel, dus
      er is weer maar één hoogte voor de hele koprij nodig. */
@@ -97,8 +108,11 @@
      vlakje wegknippen, zodat hetzelfde knopje op een telefoon aanraakbaar was en
      op een tablet nog groter. */
   #screen-map .world-pick { overflow: visible; }
-  #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px 0; }
-  #screen-map .wp-chev { width: 7px; height: 12px; }
+  #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px -7px; }
+  /* Sinds de pil een rondje is (zie hieronder) is hij 34px breed, dus mag het
+     vlakje nu óók opzij: 7px aan elke kant maakt het raakvlak 48 x 50, net als
+     het portretje. De buren staan er minstens 8px (de gap van de koprij) plus
+     hun eigen lucht vandaan; kop.test.js en profiles.test.js 7c meten het na. */
   /* De buitenkolommen kregen hiervoor allebei dezelfde gegokte minimumbreedte
      (eerst 80px, toen 52px) om de pil in het midden te houden -- maar het
      portretje (vast, 50px) en de diamantpil (70-95px, want 3, 4 of 5 cijfers)
@@ -128,14 +142,22 @@
      test/kop.test.js zaak A meet het na. */
   #screen-map .world-pick { min-width: 0; max-width: 100%; }
   /* Sinds oktober 2026 staat er alleen de globe in de pil (zie renderMapTitle):
-     geen naam meer die kan krimpen, dus het bovenstaande is nu een vangnet. De
-     capsule staat alleen, dus gelijke lucht aan alle kanten. */
-  #screen-map .wp-cta { margin: 4px; }
+     geen naam meer die kan krimpen, dus het bovenstaande is nu een vangnet.
+
+     En de pil is een rondje van --hud-h: alleen de globe, zonder chevron en
+     zonder het blauwe capsuletje (.wp-cta) erin. Dat capsuletje was er om de
+     tik-kant naast een wereldnaam te zetten; zonder naam was het een pil in een
+     pil. De chevron was het enige pijltje in de kop -- de 💎-pil en het portretje
+     zijn ook knoppen en hebben er geen -- en een pijl naar rechts belooft een
+     schuif opzij, terwijl de weg naar Werelden een vlucht omhoog is. Wat de tik
+     leert is de globe zelf: de knipoog (wpHintKlaar) en de draai van globeVlucht.
+     Bewust niet groter dan 23px: groter vult het rondje, de donkere glasrand valt
+     weg en de globe loopt op een lichte lucht of zee in de tekening over (nagemeten
+     in werelden 1, 3 en 8). Het donkere randje ís wat hem leesbaar maakt. */
+  #screen-map .world-pick { width: var(--hud-h); }
+  #screen-map .wp-cta { width: 100%; margin: 0; padding: 0; background: none; box-shadow: none; }
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: var(--tx-klein); }
-    #screen-map .wp-cta { gap: 2px; margin: 3px; padding: 0 7px 0 6px; }
-    #screen-map .wp-cta-ico { font-size: 17px; }
-    #screen-map .wp-chev { width: 6px; height: 10px; }
     #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
     #screen-map .wens-mini { font-size: .85em; margin-left: 0; }   /* de wens: zo smal mogelijk */
     #screen-map .hub-sticky { padding-left: 7px; padding-right: 8px; }

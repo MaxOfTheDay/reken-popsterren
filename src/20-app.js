@@ -4683,10 +4683,12 @@ function navigeerNaarWereld(idx) {
    die kant duidelijk "hier ga je verder" zegt zonder een tweede, drukkere knop
    te worden. Bewust géén 🗺️: dat icoon is al van de "Kaart"-tab onderaan (déze
    wereld), en 🌍 hoort juist bij de tournee zelf, zie .rt-ico bij
-   #screen-journey. */
-const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
-  + '<path d="M1.2 1.2l5.4 5.8-5.4 5.8" fill="none" stroke="currentColor" stroke-width="2"'
-  + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+   #screen-journey.
+
+   Oktober 2026 -- de chevron (WP_CHEV) is weg en de pil is een rondje met alleen
+   de globe. Het was het enige pijltje in de kop, en een pijl naar rechts belooft
+   een schuif opzij terwijl Werelden een vlucht omhoog is. Zie .world-pick in
+   40-kaart.css. */
 /* Een pijl of kruisje uit de tekenset bovenin <body> (#ico-terug, #ico-op,
    #ico-kruis). De opmaak schrijft ze zelf uit; dit is voor wat hier in
    JavaScript wordt opgebouwd, zodat het dezelfde tekening is en geen ↑ uit de
@@ -4728,7 +4730,7 @@ function renderMapTitle(p, opReis) {
      Werelden is, en zo is hij de draad tussen de twee schermen. De naam staat nog
      in de show, op het eindscherm en op Werelden. */
   pil.innerHTML =
-      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
+      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span></span>`;
   // Screenlezer en desktop-tooltip krijgen de volledige zin, mét de wereldnaam:
   // die zien ze niet in de pil.
   const uitleg = `${shown.world.name} — tik voor alle werelden`;
@@ -7188,8 +7190,8 @@ function openReis(alGetikt) {
     camera = reisCamera({ x: naar.clip.left + naar.clip.w / 2, y: naar.clip.top + naar.clip.h / 2 },
       reisCameraSchaal(naar, vanaf), 1);
     vluchtDoofAlle([pad, mist], true, VLUCHT.reveal, 40);
-    /* 4 -- de kop wisselt van stand. De wereldnaam en de chevron doven met de pil
-       weg (die zit in 'lokaal'), de ← komt op, en de globe blijft: hij laat de pil
+    /* 4 -- de kop wisselt van stand. Het rondje van de pil dooft weg (die zit in
+       'lokaal'), de ← komt op, en de globe blijft: hij laat de pil
        los en schuift naar het midden. Eén teken dat verhuist, geen kop die de
        andere vervangt -- daarom staat de globe nergens in een fade-lijst. */
     vluchtDoof(terugKnop, true, VLUCHT.detail, 120);
