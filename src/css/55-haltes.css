@@ -355,37 +355,31 @@
      staat, en de aankomstpuls hieronder. Zij springt er nu zelf uit met een
      stickerrand (zie .tour-hero en #tourHeroContour in index.html), en er draait
      geen eindeloze animatie meer op de kaart. */
-  /* DE AANKOMSTPULS. Kom je gewoon op de kaart binnen, dan licht de halte waar je
-     heen moet één keer wat sterker op: één zachte uitdijende gloed die meteen weer
-     wegvalt. Geen veer, geen sprong, en het rondje zelf verroert zich niet -- dit
-     is puur de gloed eromheen.
+  /* DE AANKOMSTRING. Komt zij op haar halte neer -- haar huppel als je op de kaart
+     binnenkomt, de landing na een vlucht vanaf Werelden, haar sprong de nieuwe
+     wereld in -- dan antwoordt de halte met één ring die van het rondje af
+     uitdijt en oplost. Oorzaak, dan antwoord: zij landt, de halte zegt "ja, hier".
 
-     Hij staat op een eigen laagje en niet op de ademende gloed hierboven, en dat
-     is met opzet: twee animaties op hetzelfde element vechten om dezelfde
-     eigenschappen, en zodra de ene afloopt springt de andere naar zijn eigen
-     stand. Deze laag begint én eindigt op niets, dus hij telt er alleen bij op
-     zolang hij loopt en er valt achteraf niets te verrekenen.
+     Hier stond een warme gloed van 34cqw (haltePuls). Op zand of op een lichte
+     wereld las die als een vlek op de tekening, en hij was het laatste wazige
+     ding op een kaart die verder uit scherpe stickers bestaat. De ring is de
+     stickerrand zelf (--halte-sticker) met een goud randje erom, dus dezelfde
+     taal als de halte waar hij uit komt.
 
-     .stop-body maakt zijn eigen stapelcontext (hij draagt een transform), dus
-     z-index -1 legt hem net achter het rondje -- op dezelfde 5,15cqw als het hart
-     daarvan, precies waar de ademende gloed ook ligt. */
+     Op een eigen laagje, en dat is met opzet: hij begint én eindigt op niets, dus
+     hij telt er alleen bij op zolang hij loopt en er valt achteraf niets te
+     verrekenen. .stop-body maakt zijn eigen stapelcontext (hij draagt een
+     transform), dus z-index -1 legt hem net achter het rondje, op dezelfde
+     5,15cqw als het hart daarvan. */
   .tour-stop.next .stop-body::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none; opacity: 0;
-    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
-    border-radius: 50%;
-    background: radial-gradient(closest-side,
-      rgba(var(--warm-licht-rgb),.26),
-      rgba(var(--warm-licht-rgb),.72) 44%,
-      rgba(var(--warm-licht-rgb),.36) 68%,
-      transparent 92%);
+    left: 50%; top: 5.15cqw; width: 20cqw; height: 20cqw; margin: -10cqw 0 0 -10cqw;
+    border-radius: 50%; border: 1cqw solid var(--halte-sticker);
+    box-shadow: 0 0 0 .5cqw var(--gold-cta-top), inset 0 0 0 .5cqw var(--gold-cta-top);
   }
-  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 680ms var(--ease-uit); }
-  /* Duidelijk feller dan het ademen (.72 in de ring tegen .58) en een stuk ruimer:
-     hij komt op 1,18 en dijt dan uit naar 1,5 terwijl hij naar nul zakt. Geen
-     veer, geen doorschieter -- opkomen, even staan, oplossen. */
-  @keyframes haltePuls {
-    0%   { opacity: 0; transform: scale(.88); }
-    30%  { opacity: 1; transform: scale(1.18); }
+  .tour-stop.next.aangekomen .stop-body::after { animation: aankomstRing 560ms var(--ease-uit); }
+  @keyframes aankomstRing {
+    0%   { opacity: 1; transform: scale(.6); }
     100% { opacity: 0; transform: scale(1.5); }
   }
   /* Gespeeld: een paars rondje met een warm witte rand, en verder niets. Er zat
@@ -781,19 +775,6 @@
      later in de pagina en tekende dus óver haar schoenen heen. De houder zelf
      boven de schaduw leggen lost dat op. */
   .tour-hero .avatar-holder { position: relative; z-index: 1; }
-  /* Heel af en toe een vonkje naast haar -- geen doorlopend glinsteren, dat zou de
-     halte onrustig maken. Ze mag opvallen zonder dat de kaart dat wordt. */
-  .tour-hero .hero-vonk {
-    position: absolute; z-index: 2; top: 4%; right: -5%; width: 16%;
-    opacity: 0; animation: heroVonk 6.5s ease-in-out infinite;
-  }
-  .tour-hero .hero-vonk svg { width: 100%; height: auto; display: block; fill: #fff7dc;
-    filter: drop-shadow(0 0 4px rgba(var(--warm-licht-rgb),.85)); }
-  @keyframes heroVonk {
-    0%, 80%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
-    86%           { opacity: 1; transform: scale(1.05) rotate(10deg); }
-    93%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
-  }
   /* De halte waar zij staat gaat als geheel boven de andere haltes liggen. Zonder
      dit kan haar hoofd achter het medaillon van de halte erbóven verdwijnen: de
      haltes staan in volgorde in de DOM, dus een latere halte tekent over een
@@ -802,7 +783,7 @@
   /* Tikken op de ster (zie kaartTik). Alleen wat er van haar getékend is neemt de
      tik aan: niet het rechthoekje eromheen, want dat ligt over de lucht en over
      de bovenkant van haar eigen halte. De houder blijft zelf op none staan; de
-     vormen erin kiezen zelf. Het vonkje doet niet mee. Het raakvlak van de
+     vormen erin kiezen zelf. Het raakvlak van de
      halte (::before) gaat hier boven haar liggen, zodat de halte het wint
      waar die twee elkaar raken. Het is doorzichtig, dus er verandert niets
      aan wat je ziet. */

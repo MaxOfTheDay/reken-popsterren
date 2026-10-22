@@ -4234,7 +4234,7 @@ function renderProfiles() {
      sterren zwaaiden één keer, kort na elkaar. Dat was ooit de enige plek in de
      app waar een pop iets deed bij het binnenkomen van een scherm, en daarmee
      stond hij op de verkeerde plaats -- want een kind is hier maar twee tellen.
-     Tikken, en je staat op de kaart; de zwaai op dit scherm en de zwaai daar
+     Tikken, en je staat op de kaart; de zwaai op dit scherm en de begroeting daar
      vielen dus bijna in elkaar (zie kaartGroet, boven goMap).
 
      Eén begroeting, op de plek waar de ster woont. Dit scherm is een keuze en
@@ -4419,6 +4419,7 @@ function zijReistMee(plaats, vier) {
       if (!z || !z.animate || motionOff() || !$('screen-map').classList.contains('active')) return vier();
       z.animate([{ opacity: 0, translate: '0 -70px', scale: '.85' }, { opacity: 1, translate: '0 0', scale: '1' }],
         { duration: WERELDREIS.sprong, easing: MOTION.plop });
+      setTimeout(haltePuls, Math.round(WERELDREIS.sprong * .45));   // haar halte antwoordt (zie .aangekomen)
       setTimeout(vier, Math.round(WERELDREIS.sprong * .8));   // het feest op haar neerkomen, niet erna
     },
   };
@@ -5874,7 +5875,10 @@ function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
 /* ================= De kaart zegt hallo =====================================
    De kaart is het hoofdscherm en de ster woont er, maar ze deed er niets als je
    binnenkwam: ze wiegde al vóór je er was en wiegde daarna door. Dit is het
-   enige wat daaraan verandert -- één zwaai, als de kaart zélf de aankomst is.
+   enige wat daaraan verandert -- één huppel, als de kaart zélf de aankomst is.
+   (Dat was een zwaai: ±6 graden en 8px, en op telefoonmaat las dat als een
+   trillinkje en niet als een groet. De huppel is groter en heeft een landing,
+   en op die landing antwoordt haar halte met een ring -- zie HUPPEL.)
 
    WANNEER WEL. goMap() weet in zijn eerste regels al precies wat voor aankomst
    dit is: uitShow (je komt uit een show), travel (er ligt een level-up klaar),
@@ -5888,7 +5892,7 @@ function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
    jij er weer bent.
 
    In één regel: als er al iets beweegt dat verklaart waaróm ze hier staat, dan
-   zwaait ze niet.
+   huppelt ze niet.
 
    NIET UIT RENDERTOURMAP. Die bouwt de kaart opnieuw op bij elke wereldpijl,
    elke tussenstand van een reis en beide helften van een onthulling -- veel
@@ -5896,24 +5900,27 @@ function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
    dus hangt dit aan goMap() en aan niets anders.
 
    DE KOELTIJD, en geen grendel. Een tabbladwissel mag nooit geblokkeerd worden
-   (zie goMap) -- een kind dat vastzit op een scherm is erger dan een zwaai te
+   (zie goMap) -- een kind dat vastzit op een scherm is erger dan een huppel te
    veel. Dus onthoudt dit alleen wannéér de kaart voor het laatst openging, en
    slaat het over als dat net was. Kaart -> Kleedkamer -> Kaart geeft dus één
-   zwaai en geen drie, en een echte terugkomst een halve minuut later gewoon
-   weer één. Elke aankomst zet die tijd, ook een aankomst die zelf niet zwaait:
+   huppel en geen drie, en een echte terugkomst een halve minuut later gewoon
+   weer één. Elke aankomst zet die tijd, ook een aankomst die zelf niet huppelt:
    na een reis of een onthulling is er net iets gevierd, en dan hoort de
    kleedkamer-en-terug daarna ook nog even stil te zijn. */
 const GROET = {
   koeltijd: 2500,
-  // Eén pasje uit de bestaande woordenschat -- 👋, zie MOVES en mvWave. Als los
-  // kaartje en niet uit MOVES opgezocht: die lijst staat verderop in het bestand
-  // en dit is een const die bij het inlezen al gelezen wordt.
-  pas: { cls: 'move-wave' },
-  duur: PAS + 50,   // dezelfde als dance/tapDance (zie PAS)
+  // De huppel (zie HUPPEL in 10-feestjes.js) -- geen danspasje, haar "hier ben ik".
+  pas: HUPPEL,
+  duur: HUPPEL.duur + 50,   // plus een paar beeldjes, net als bij PAS
+  // wanneer haar voeten de halte raken, gerekend vanaf het begin van de huppel
+  landt: Math.round(HUPPEL.duur * HUPPEL.landt),
 };
-/* Eén keer de halte laten oplichten waar je heen moet. Alleen de huidige halte
-   heeft die laag (zie .tour-stop.next .stop-body::after); staat er geen -- je
-   kijkt in een wereld die je al uit hebt -- dan gebeurt er niets. */
+/* De halte waar je heen moet antwoordt één keer met een ring (zie .aangekomen).
+   Alleen de huidige halte heeft die laag (zie .tour-stop.next .stop-body::after);
+   staat er geen -- je kijkt in een wereld die je al uit hebt -- dan gebeurt er
+   niets. Hij hoort bij elke keer dat zij op haar halte neerkomt: de huppel
+   hieronder, de landing na een vlucht (kaartOpbouw) en de sprong een nieuwe
+   wereld in (zijReistMee). */
 function haltePuls() {
   const map = $('tour-map');
   const halte = map && map.querySelector('.tour-stop.next');
@@ -5926,7 +5933,7 @@ function kaartGroet(mag) {
   const nu = Date.now();
   const rustig = nu - kaartBezocht > GROET.koeltijd;
   kaartBezocht = nu;
-  // Een nieuwe aankomst annuleert altijd een zwaai die nog moest beginnen: er is
+  // Een nieuwe aankomst annuleert altijd een huppel die nog moest beginnen: er is
   // er hoogstens één onderweg, en er blijft dus nooit een tweede timer hangen.
   clearTimeout(groetTimer);
   clearTimeout(pulsTimer);
@@ -5936,34 +5943,28 @@ function kaartGroet(mag) {
      dus niets te vervangen, en de ster staat precies zoals ze anders ook staat
      (zie de bewegingsafspraak bij zetPas). */
   if (!mag || !rustig || motionOff()) return;
-  /* De puls stond op MOTION.kom, en dat was precies te vroeg: op 190ms is
-     kaartKomtOp net klaar met inzoomen, dus de halte lichtte op terwijl de hele
-     kaart nog aan het stilvallen was. Een gloed die opkomt op een beeld dat zelf
-     nog beweegt is geen aankondiging maar ruis -- je oog is op dat moment met
-     het scherm bezig en niet met een plek daarin. Nu wacht hij tot de kaart een
-     tel stil heeft gestaan: MOTION.totaal is het einde van de schermwissel, en
-     daar komt een rustmoment van 300ms overheen voordat de halte iets zegt.
+  /* Eerst rust, dan zij, dan haar halte. De kaart moet stilstaan voor er iets
+     op beweegt: MOTION.totaal is het einde van de schermwissel. Een gloed die
+     opkwam terwijl de kaart nog aan het stilvallen was (hij stond ooit op
+     MOTION.kom) was geen aankondiging maar ruis.
 
-     Dat is ook waarom hij láter valt dan de zwaai en niet ervoor. Zij is de
-     hoofdrol en mag als eerste; de halte is de tweede stem en zet er een zachte
-     gloed onder terwijl zij nog zwaait. Ze bijten elkaar niet, want ze zijn niet
-     van dezelfde soort: zij beweegt, de halte staat stil en wordt alleen even
-     helderder.
+     De ring valt op het moment dat haar voeten de halte raken (GROET.landt),
+     en niet op een eigen klok. Zij is de hoofdrol en gaat eerst; de halte is de
+     tweede stem en antwoordt op haar landing -- oorzaak, dan antwoord.
 
-     Hij hangt aan dezelfde poort als de zwaai (zie de aanroep onderaan goMap) en
-     dus aan dezelfde koeltijd: kom je uit een show, ligt er een reis klaar, gaat
-     er een wereld open of koos je er net een op de reis, dan legt díe beweging
-     al uit waarom je hier bent en hoort er niets overheen. Na een level-up huppelt
-     de ster naar de volgende halte -- dát is de aankomst, en de nieuwe halte
-     ademt daarna gewoon verder zonder er nog een puls bovenop. */
-  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + 300);
+     Hij hangt aan dezelfde poort als de huppel (zie de aanroep onderaan goMap)
+     en dus aan dezelfde koeltijd: kom je uit een show, ligt er een reis klaar,
+     gaat er een wereld open of koos je er net een op de reis, dan legt díe
+     beweging al uit waarom je hier bent. Na een level-up huppelt de ster over de
+     route naar de volgende halte -- dát is de aankomst. */
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + GROET.landt);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
     const el = map && map.querySelector('.tour-hero .avatar-holder');
     /* Ondertussen weggelopen, of de kaart is opnieuw opgebouwd, of de ster staat
-       in een wereld waar je niet naar kijkt: dan is er niemand om naar te
-       zwaaien en gebeurt er gewoon niets. Dit is ook wat ?debug&screen=ouder
+       in een wereld waar je niet naar kijkt: dan is er niemand die kan
+       huppelen, en gebeurt er gewoon niets. Dit is ook wat ?debug&screen=ouder
        opvangt -- daar opent goMap() de kaart en schuift er meteen een ander
        scherm overheen. */
     if (!el || !el.isConnected || !$('screen-map').classList.contains('active')) return;
@@ -5971,12 +5972,12 @@ function kaartGroet(mag) {
     setTimeout(() => stilStaan(el), GROET.duur);
   }, MOTION.totaal);
 }
-/* EN HIJ STOPT ALS JE WEGGAAT. Een zwaai hoort bij de kaart; loopt hij door
+/* EN HIJ STOPT ALS JE WEGGAAT. Een huppel hoort bij de kaart; loopt hij door
    terwijl je er al vanaf bent, dan staat er 950ms lang een pop te bewegen op een
    scherm dat niemand ziet. Dat is niet alleen onzin maar ook duur: precies in
    dat raam kan de vlucht naar Werelden beginnen, en die hangt van élk beeldje af
    (zie wereldVlucht -- vijfentwintig vooraf uitgerekende standen die samen één
-   beweging moeten zijn). Opgemeten: met een zwaai eroverheen stond de tekening
+   beweging moeten zijn). Opgemeten: met een huppel eroverheen stond de tekening
    op het eerste beeldje van de vlucht al 18% op weg, dus die beweging begon
    letterlijk niet bij het begin.
 
@@ -5991,8 +5992,8 @@ function kaartGroet(mag) {
    het raakvlak van de halte ligt eroverheen waar ze elkaar raken. Een tik die
    een halte bedoelt, pakt zij dus nooit af.
 
-   STUITEREN EN GEEN ZWAAI. De zwaai is haar groet als je op de kaart aankomt.
-   Zwaait ze ook bij elke tik, dan betekent die groet niets meer. De stuiter
+   STUITEREN EN GEEN HUPPEL. De huppel is haar groet als je op de kaart aankomt.
+   Huppelt ze ook bij elke tik, dan betekent die groet niets meer. De stuiter
    komt uit dezelfde woordenschat (MOVES) en geeft dus geen nieuwe beweging.
 
    WANNEER NIET. Alleen als ze stilstaat op de halte die nu aan de beurt is
@@ -6560,8 +6561,6 @@ function reisGlansSVG() {
     + `<path d="${VONK(4.6, 23.2, 2.4)}" opacity=".75"/></svg>`;
   return _reisGlans;
 }
-// hetzelfde vonkje, maar los: het heel af en toe sprankeltje naast haar op de kaart
-const TOUR_VONK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${VONK(10, 10, 7)}"/></svg>`;
 /* Een tik op een wereld die nog op slot zit. Hij brengt je nergens heen -- dat is
    de hele bedoeling van een slot -- maar hij zegt wél waaróm, en in één regel: de
    wereld waar ze nu staat is de wereld die eerst uit moet. Precies dezelfde zin als
@@ -7137,8 +7136,12 @@ function kaartOpbouw(map, start) {
   haltes.forEach((h, i) => h.animate([{ opacity: 0, scale: '.55' }, { opacity: 1, scale: '1' }],
     tijd(start + VLUCHT.haltePas * (i + 1), VLUCHT.opbouwDuur, MOTION.plop)));
   const zij = map.querySelector('.tour-hero');
-  if (zij) zij.animate([{ opacity: 0, translate: '0 -34px' }, { opacity: 1, translate: '0 0' }],
-    tijd(start + VLUCHT.haltePas * (haltes.length + 2), VLUCHT.landing, MOTION.plop));
+  if (!zij) return;
+  const na = start + VLUCHT.haltePas * (haltes.length + 2);
+  zij.animate([{ opacity: 0, translate: '0 -34px' }, { opacity: 1, translate: '0 0' }],
+    tijd(na, VLUCHT.landing, MOTION.plop));
+  // en haar halte antwoordt als ze neerkomt -- de plop is op de helft al beneden
+  setTimeout(haltePuls, na + Math.round(VLUCHT.landing * .45));
 }
 function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
@@ -7389,8 +7392,7 @@ function haltKnop(shown, nodes, i, stand) {
   // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
   if (open && st === 3) b.classList.add('perfect');
   const hero = lvl === heroLvl
-    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
-      + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div></div>` : '';
 
   // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
   // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar

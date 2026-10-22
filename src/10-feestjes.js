@@ -71,7 +71,15 @@ const MOVES = [
    (zie het applaus in submitAnswer). Ze moet wel in MOVE_CLASSES, anders ruimen zetPas en
    stilStaan haar niet op. */
 const BUIGING = { cls: 'move-buig', label: '🙇 Buiging!' };
-const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls);
+/* De huppel staat er om dezelfde reden niet in: hij is geen danspasje maar haar
+   "hier ben ik" op de kaart (zie GROET in "= De kaart zegt hallo"). Eén keer
+   door de knieën, omhoog, en neerkomen met een kleine plof -- waarna haar halte
+   antwoordt met een ring (zie .aangekomen). landt is het moment, als deel van de
+   duur, waarop haar voeten de halte raken: de @keyframes mvHuppel zet de landing
+   op diezelfde 62%, en de ring wacht daarop. */
+const HUPPEL = { cls: 'move-huppel', duur: 660, landt: .62 };
+document.documentElement.style.setProperty('--t-huppel', HUPPEL.duur + 'ms');
+const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls, HUPPEL.cls);
 /* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
    dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
    maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes

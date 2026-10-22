@@ -698,7 +698,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .avatar-holder.idle { animation: none; }
-    .tour-hero .hero-vonk { display: none; }
     /* (Hier stond de ademende spotlight stilgezet; die bestaat niet meer, zie
        "DE ADEMENDE SPOTLIGHT IS WEG" in 55-haltes.css.) */
     /* En de aankomstpuls blijft helemaal weg: die is een moment, en een moment
