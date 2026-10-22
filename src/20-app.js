@@ -3747,7 +3747,13 @@ function landingLeeft(groetNa) {
   // Het vakje op de MAX-ster hangt aan de maat van het scherm en niet aan de
   // beweging, dus hij staat vóór de uitstap hieronder: ook wie minder beweging
   // wil, mag de verrassing vinden.
-  maxPlekZet();
+  // In een rAF en niet meteen: hier is het scherm net gewisseld en de tegels net
+  // getekend, dus opmeten dwong een volledige opmaak af die het eerste beeldje
+  // daarna nog eens deed (gemeten: ~90 ms op een 6x vertraagde telefoon, de
+  // meest getikte schermwissel van echte bezoekers). In de rAF valt het opmeten
+  // samen met de opmaak die er toch komt. Het vakje is onzichtbaar tot je erop
+  // tikt, dus dat het één beeldje later op zijn plek ligt, ziet niemand.
+  requestAnimationFrame(maxPlekZet);
   // Beperkte beweging: geen begroeting en geen stilte die op iets wacht. De
   // tegels staan er precies zoals ze horen te staan, alleen zonder zwaai.
   if (motionOff()) return;
@@ -7259,7 +7265,12 @@ function openReis(alGetikt) {
      de reis heeft er een identieke onder liggen. Hij komt vanzelf terug zodra de
      volgende kaart zichzelf opmeet. */
   kaart.classList.remove('ster-bij-kop');
-  if ($('tour-map')) $('tour-map').scrollTop = schuif;
+  /* Alleen als er iets terug te zetten valt. Een scrollTop schrijven dwingt hier de
+     volledige opmaak af van de reis die er net in gezet is (renderReis + show),
+     en dan nog eens in het eerste beeldje: gemeten ~280 ms op een 6x vertraagde
+     telefoon, vóór de vlucht ook maar begint. Op een telefoon schuift de kaart
+     niet (schuif is 0), en 0 is precies waar display:none hem al op zette. */
+  if (schuif && $('tour-map')) $('tour-map').scrollTop = schuif;
 
   requestAnimationFrame(() => {
     reisFocus(reisVanuit);        // pas ná de opmaak: hier staat de baan er en is hij op te meten
