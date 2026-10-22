@@ -4683,10 +4683,12 @@ function navigeerNaarWereld(idx) {
    die kant duidelijk "hier ga je verder" zegt zonder een tweede, drukkere knop
    te worden. Bewust géén 🗺️: dat icoon is al van de "Kaart"-tab onderaan (déze
    wereld), en 🌍 hoort juist bij de tournee zelf, zie .rt-ico bij
-   #screen-journey. */
-const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
-  + '<path d="M1.2 1.2l5.4 5.8-5.4 5.8" fill="none" stroke="currentColor" stroke-width="2"'
-  + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+   #screen-journey.
+
+   Oktober 2026 -- de chevron (WP_CHEV) is weg en de pil is een rondje met alleen
+   de globe. Het was het enige pijltje in de kop, en een pijl naar rechts belooft
+   een schuif opzij terwijl Werelden een vlucht omhoog is. Zie .world-pick in
+   40-kaart.css. */
 /* Een pijl of kruisje uit de tekenset bovenin <body> (#ico-terug, #ico-op,
    #ico-kruis). De opmaak schrijft ze zelf uit; dit is voor wat hier in
    JavaScript wordt opgebouwd, zodat het dezelfde tekening is en geen ↑ uit de
@@ -4728,7 +4730,7 @@ function renderMapTitle(p, opReis) {
      Werelden is, en zo is hij de draad tussen de twee schermen. De naam staat nog
      in de show, op het eindscherm en op Werelden. */
   pil.innerHTML =
-      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
+      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span></span>`;
   // Screenlezer en desktop-tooltip krijgen de volledige zin, mét de wereldnaam:
   // die zien ze niet in de pil.
   const uitleg = `${shown.world.name} — tik voor alle werelden`;
@@ -5612,6 +5614,15 @@ function reisCameraSchaal(kaartje, wereld) {
   if (!kaartje || !wereld || !kaartje.clip.w) return 1;
   return Math.max(1, Math.min(REIS_CAMERA_MAX, wereld.clip.w / kaartje.clip.w));
 }
+/* De globe-vlucht in getallen -- zie "EÉN DRAAI" in globeVlucht.
+     piek      hoe groot hij halverwege is (1 = zijn eigen maat)
+     til       hoeveel pixels hij halverwege omhoog komt: een boogje, geen rechte lijn
+     mid       waar dat halverwege ligt, als deel van de tijd
+     draaiMid  hoeveel van de draai er dan al op zit -- vlot weg, rustig uitdraaien
+     na        hoeveel hij langer duurt dan de vlucht van de tekening
+     op        de curve van het loskomen; de landing is MOTION.plop */
+const GLOBE = { piek: 1.25, til: 8, mid: .55, draaiMid: .7, na: 60,
+                op: 'cubic-bezier(.3, 0, .4, 1)' };
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
   const a = vanEl.getBoundingClientRect(), b = naarEl.getBoundingClientRect();
@@ -5650,18 +5661,32 @@ function globeVlucht(vanEl, naarEl, duur) {
     naarEl.style.visibility = '';        // de echte staat er weer; de kopie mag weg
     if (vlieg.parentNode) vlieg.parentNode.removeChild(vlieg);
   };
-  const an = vlieg.animate(
-    [{ transform: 'none' },
-     { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)})` }],
-    { duration: duur, easing: VLUCHT.baan, fill: 'forwards' });
-  /* Géén wegdoven aan het eind. Hier stond dat wel, en dat klopte zolang er aan de
-     overkant een titel in beeld kwam waar de globe deel van uitmaakte: dan kruisten
-     ze. Nu staat de bestemming te wachten op precies dezelfde plek en maat, en dan
-     is doorzichtigheid een fout -- je zou het teken zien verdwijnen en meteen weer
-     verschijnen. Het wordt dus in één beurt omgewisseld (zie weg): één beeldje, twee
-     keer hetzelfde plaatje op dezelfde plek, en dus niets te zien. */
+  /* EÉN DRAAI. Hij schoof eerst alleen: op een telefoon zo'n 20px opzij op
+     dezelfde maat (de pil staat net links van het midden, en beide globes zijn
+     ~24px), en dat las niet als een vlucht maar als een globe die bleef liggen
+     terwijl de rest wisselde. Nu komt hij even los (GLOBE.piek), draait hij één
+     keer rond -- "de hele wereld", zonder woorden -- en landt hij met de ene plop
+     van de app. Terug draait hij de andere kant op: dezelfde beweging, achteruit.
+
+     Eén animatie, alleen transform, op een los teken boven alles: de compositor
+     doet het hele werk en de hoofddraad merkt er niets van, ook niet als die
+     intussen Werelden of de kaart aan het opbouwen is. Geen filter, geen schaduw
+     op de kopie: dat zou hem per beeldje opnieuw laten tekenen.
+
+     Iets langer dan de vlucht van de tekening (GLOBE.na): de landing valt net ná
+     die van het kaartje, zodat de kop het laatste is dat tot rust komt. */
+  const heen = !!naarEl.closest('#screen-journey');
+  const draai = heen ? -360 : 360;
+  const midden = `translate(${(dx * GLOBE.mid).toFixed(1)}px, ${(dy * GLOBE.mid - GLOBE.til).toFixed(1)}px) `
+    + `scale(${GLOBE.piek}) rotate(${Math.round(draai * GLOBE.draaiMid)}deg)`;
+  const eind = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${draai}deg)`;
+  const tijd = duur + GLOBE.na;
+  const an = vlieg.animate([
+    { transform: 'none', easing: GLOBE.op },
+    { offset: GLOBE.mid, transform: midden, easing: MOTION.plop },
+    { transform: eind }], { duration: tijd, fill: 'forwards' });
   an.onfinish = weg;
-  setTimeout(weg, duur + MOTION.vangnet);
+  setTimeout(weg, tijd + MOTION.vangnet);
   // hij vliegt mee met de wereldvlucht, en gaat dus ook mee weg als die afbreekt
   if (vluchtOp) vluchtOp.globe = weg;
 }
@@ -7165,8 +7190,8 @@ function openReis(alGetikt) {
     camera = reisCamera({ x: naar.clip.left + naar.clip.w / 2, y: naar.clip.top + naar.clip.h / 2 },
       reisCameraSchaal(naar, vanaf), 1);
     vluchtDoofAlle([pad, mist], true, VLUCHT.reveal, 40);
-    /* 4 -- de kop wisselt van stand. De wereldnaam en de chevron doven met de pil
-       weg (die zit in 'lokaal'), de ← komt op, en de globe blijft: hij laat de pil
+    /* 4 -- de kop wisselt van stand. Het rondje van de pil dooft weg (die zit in
+       'lokaal'), de ← komt op, en de globe blijft: hij laat de pil
        los en schuift naar het midden. Eén teken dat verhuist, geen kop die de
        andere vervangt -- daarom staat de globe nergens in een fade-lijst. */
     vluchtDoof(terugKnop, true, VLUCHT.detail, 120);

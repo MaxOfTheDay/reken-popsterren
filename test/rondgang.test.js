@@ -1100,7 +1100,12 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         viewWorldIdx = null; goMap();
         await new Promise(r => setTimeout(r, 80));
         const el = document.getElementById('map-tournee-label');
-        if (el.scrollWidth > el.clientWidth + 1) kwijt.push(`${WORLDS[i].name} (${el.scrollWidth}>${el.clientWidth})`);
+        // de inhoud en niet el.scrollWidth: het onzichtbare raakvlak (::before)
+        // steekt met opzet opzij uit de pil, en dat telde scrollWidth mee
+        const pr = el.getBoundingClientRect();
+        const uit = [...el.children].some(k => { const r = k.getBoundingClientRect(); return r.left < pr.left - 1 || r.right > pr.right + 1; });
+        const naam = el.querySelector('.wp-here-naam');
+        if (uit || (naam && naam.scrollWidth > naam.clientWidth + 1)) kwijt.push(`${WORLDS[i].name} (${Math.round(pr.width)}px)`);
       }
       return kwijt;
     });

@@ -1382,10 +1382,9 @@
      cta-capsule, de koprij en de diamantenpil staan op de pixel waar ze stonden.
      Dezelfde reden als bij .rt-ico op Werelden; het is dezelfde globe. */
   .wp-cta-ico { display: inline-block; font-size: 26px; line-height: 1.25; }
-  /* Wit en niet cyaan: het icoon en de waas dragen de kleur van deze hoek al,
-     en een piepklein pijltje in datzelfde gedempte blauw viel bij het toetsen
-     bijna weg. Gewoon de tekstkleur van de pil, subtiel door de opacity. */
-  .wp-chev { display: block; width: 8px; height: 13px; flex: none; opacity: .8; color: var(--c-white); }
+  /* Hier stond .wp-chev, het pijltje achter de globe. Dat is weg sinds de
+     kaartpil een rondje met alleen de globe is (zie #screen-map .world-pick in
+     40-kaart.css, waar ook staat waarom). */
   /* Eénmalige knipoog (zie wpHintKlaar): een korte bootje + een zachte gloed,
      met een startvertraging zodat hij ná de intro van de kaart komt en niet
      erdoorheen. Nooit herhaald, dus geen keyframe die blijft lopen. */
