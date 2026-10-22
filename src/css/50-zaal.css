@@ -733,8 +733,15 @@
      hangen ze nu vlak onder de vaste kop, altijd vrij van de paspop; op de
      andere schermen (kaart, kleedkamer, trofeeën, winkel, instellingen)
      blijft de bestaande losse positie -- daar was geen overlap-probleem. */
+  /* Midden op het scherm zonder left: 50%. Dat stond hier, met een
+     translateX(-50%) om terug te schuiven -- maar een kaart die zijn breedte
+     zelf kiest, krijgt dan hooguit de helft van het scherm: 195px op een
+     telefoon, en "Speel eerst Piratenwereld" brak altijd in twee of drie
+     regels. Nu links én rechts 0 met marge auto: de volle breedte is
+     beschikbaar en de kaart is zo breed als zijn tekst. */
   .praise {
-    position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.7);
+    position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content;
+    top: 38%; transform: translateY(-50%) scale(.7);
     z-index: 60; opacity: 0; pointer-events: none;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
     background: rgba(48,10,80,.94);
@@ -746,7 +753,7 @@
      minder padding) -- moet altijd tussen kop en paspop passen, ook op
      smallere formaten waar de paspop hoger in het scherm begint */
   .praise.docked {
-    top: 98px; transform: translateX(-50%) scale(.7); gap: 5px; padding: 9px 18px 11px;
+    top: 98px; transform: scale(.7); gap: 5px; padding: 9px 18px 11px;
   }
   .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
@@ -757,32 +764,43 @@
   .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
   .praise.docked.pop { animation-name: praisePopDocked; }
   @keyframes praisePop {
-    0% { opacity: 0; transform: translate(-50%,-50%) scale(.7); }
-    55% { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
-    80% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%,-64%) scale(1); }
+    0% { opacity: 0; transform: translateY(-50%) scale(.7); }
+    55% { opacity: 1; transform: translateY(-50%) scale(1.05); }
+    80% { opacity: 1; transform: translateY(-50%) scale(1); }
+    100% { opacity: 0; transform: translateY(-64%) scale(1); }
   }
   @keyframes praisePopDocked {
-    0% { opacity: 0; transform: translateX(-50%) scale(.7) translateY(-6px); }
-    55% { opacity: 1; transform: translateX(-50%) scale(1.05) translateY(0); }
-    80% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
-    100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-10px); }
+    0% { opacity: 0; transform: scale(.7) translateY(-6px); }
+    55% { opacity: 1; transform: scale(1.05) translateY(0); }
+    80% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(1) translateY(-10px); }
   }
+  /* De melding is één pil: één regel, één teken vooraan, en kleur alleen in
+     de rand -- goud is verdiend (nieuwe trofee, nieuw podium), blauw is "hier
+     ben je" (welkom), en al de rest heeft geen kleur. Dezelfde grond als de
+     juichkaart, zodat er niet twee bijna-dezelfde paarsen naast elkaar staan.
+     Met een tweede regel (.met-sub) of als groot teken wordt hij weer een kaart. */
   .toast {
-    position: fixed; left: 50%; top: 12%; transform: translateX(-50%) translateY(-8px);
+    position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content;
+    top: 12%; transform: translateY(-8px);
     z-index: 60; display: none; opacity: 0;
     flex-direction: column; align-items: center; gap: 2px; text-align: center;
-    background: rgba(43,7,71,.94);
-    border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-md); padding: 11px 20px 12px;
+    background: rgba(48,10,80,.94);
+    border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-pill); padding: 9px 18px 10px;
     box-shadow: var(--e-2);
-    max-width: min(88vw, 360px);
+    max-width: min(92vw, 420px);
     pointer-events: none;
   }
+  .toast.met-sub, .toast.teken, .toast.hint { border-radius: var(--r-md); padding: 11px 20px 12px; }
+  .toast.goud { border-color: rgba(var(--goud-rgb),.6); box-shadow: var(--e-2), 0 0 20px rgba(var(--goud-gloed-rgb),.28); }
+  .toast.goud .toast-main { color: var(--gold-light); }
+  .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
+  .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
   .toast.docked { top: 98px; }
   .toast.show { display: flex; animation: toastIn .3s ease forwards; }
   @keyframes toastIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   /* Wie geen beweging wil. Deze twee kaarten dragen wat er net gebeurde en wat
      het opleverde ("Goed zo, je had het! 💎 +2"), dus ze uitzetten kan niet:
@@ -798,10 +816,10 @@
     0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .praise { transform: translate(-50%,-50%) scale(1); }
-    .praise.docked { transform: translateX(-50%) scale(1); }
+    .praise { transform: translateY(-50%) scale(1); }
+    .praise.docked { transform: scale(1); }
     .praise.pop, .praise.docked.pop { animation: praiseStil .9s ease forwards; }
-    .toast.show { animation: none; opacity: 1; transform: translateX(-50%); }
+    .toast.show { animation: none; opacity: 1; transform: none; }
   }
   .toast-main { font-size: clamp(16px, 4.6vw, 19px); font-weight: 700; color: var(--c-white); line-height: 1.3; text-wrap: balance; }
   .toast-sub { font-size: var(--tx-klein); font-weight: 600; color: var(--c-white); opacity: .75; margin-top: 1px; }

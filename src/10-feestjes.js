@@ -250,9 +250,12 @@ function finaleDance(elId, count) {
 // gebeurde" en "wat je kreeg" niet meer als één aaneengeregen zin.
 // Tijdens het spel ("docked", zie .docked in CSS) hangt de kaart vlak onder
 // de vaste kop i.p.v. los in het midden, zodat hij nooit over de paspop valt.
-function showPraise(txt, reward) {
+// blauw (optioneel): "hier ben je" -- een nieuwe wereld. Wit op een blauwe rand
+// in plaats van goud, want aankomen is iets anders dan verdienen.
+function showPraise(txt, reward, blauw) {
   const el = $('praise');
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  el.classList.toggle('blauw', !!blauw);
   el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
   el.classList.remove('pop');
   void el.offsetWidth;
@@ -267,8 +270,10 @@ function showPraise(txt, reward) {
 // dat duurt. Bewust niet alleen de kleine toast-bubbel zelf: die precies
 // moeten raken is minder vergevingsgezind dan overal mogen tikken.
 // soort (optioneel): 'teken' voor een kaart met alleen één groot teken (🤔, 👉)
-// en 'hint' voor het plaatje na een eerste misser (zie toonHint). Zonder soort
-// is het de gewone kaart met tekst; de vorige soort blijft nooit hangen.
+// en 'hint' voor het plaatje na een eerste misser (zie toonHint); 'goud' voor iets
+// wat ze verdiend heeft (nieuwe trofee, nieuw podium) en 'blauw' voor "hier ben
+// je" (welkom). Zonder soort is het de gewone pil met tekst, zonder kleur; de
+// vorige soort blijft nooit hangen.
 /* Elke toast krijgt een nummer. toastWeg(ms) haalt alléén de toast weg die er nu
    staat: hier stonden overal losse setTimeout(hideToast, ..)'s, en een klokje van
    een vorige toast haalde dan de volgende weg -- tik op een trofee die op slot
@@ -297,6 +302,9 @@ function showToast(txt, onTap, sub, soort) {
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
+  t.classList.toggle('goud', soort === 'goud');
+  t.classList.toggle('blauw', soort === 'blauw');
+  t.classList.toggle('met-sub', !!sub);
   t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
   t.style.display = 'flex';
   t.classList.remove('show');
