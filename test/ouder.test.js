@@ -581,7 +581,7 @@ function check(ok, label, detail) {
     check(!boven.gescrold && onder.gescrold && boven.plaat !== onder.plaat, 'scrollen maakt de plaat dekkend', JSON.stringify([boven.plaat, onder.plaat]));
     check(onder.h === boven.h && onder.wieH === boven.wieH, 'maar de kop blijft even groot', `${boven.h} -> ${onder.h}`);
     check(onder.wieInBeeld && /Anna/.test(onder.wieNaam), 'welk kind gekozen is blijft in beeld', JSON.stringify(onder));
-    check(onder.watInBeeld && /Oefenen/.test(onder.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(onder));
+    check(onder.watInBeeld && /Oefeningen/.test(onder.watLabel), 'en welk onderdeel je leest ook', JSON.stringify(onder));
     check(onder.terug, 'en de weg terug blijft er', 'terugknop weg');
     check(onder.inhoud === boven.inhoud, 'en de inhoud eronder blijft staan waar hij stond', `${boven.inhoud} -> ${onder.inhoud}`);
     /* Net voorbij de drempel stilgezet: één wissel, en de schuifstand blijft van
@@ -1135,7 +1135,7 @@ function check(ok, label, detail) {
   }
 
   /* ================= S · Eén leerpad, en Beheer als "⋯" ================= */
-  /* Voortgang en Oefenen tekenen het leerpad met dezelfde rijen, en zeggen
+  /* Voortgang en Oefeningen tekenen het leerpad met dezelfde rijen, en zeggen
      hetzelfde over waar het kind staat -- ook voorbij de laatste stap, waar
      Oefenen eerst haar pop op "Drie getallen" zette. Beheer is een smal "⋯"
      met een stipje zolang er geen recente back-up is. */
@@ -1175,7 +1175,7 @@ function check(ok, label, detail) {
       eind: !!document.querySelector('#set-startstap .fl-rij.eind.hier'),
       knoppen: document.querySelectorAll('#set-startstap .chip').length }));
     check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 5,
-      'S · "Aanpassen ›" opent Oefenen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
+      'S · "Aanpassen ›" opent Oefeningen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
     // een verse back-up: het stipje gaat weg
     await page.evaluate(() => { db.backupAt = new Date().toISOString(); save(); renderSettings(); });
     await page.waitForTimeout(100);
