@@ -4293,7 +4293,7 @@
   #screen-map.vlucht-weg { pointer-events: none; }
   #screen-map.vlucht-weg .world-frame { background-image: none; background-color: transparent;
     box-shadow: none; }
-  #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { opacity: 0; }
+  #screen-map.vlucht-weg::after { opacity: 0; }
 
 
 
@@ -4342,16 +4342,6 @@
 
 
     #screen-map { isolation: isolate; }
-    #screen-map::before { content: ''; position: absolute; inset: 0; z-index: -1;
-      background: linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%); }
-    #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
-      background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
-      filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
-
-
-
-
-    #screen-map::before, #screen-map::after { transition: opacity 90ms linear; }
 
 
 
@@ -4361,9 +4351,50 @@
 
 
 
-    #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { transition: none; }
+
+
+
+
+
+
+
+
+
+    #screen-map::after, .wereld-doek::after { content: ''; position: absolute; pointer-events: none;
+      left: 50%; top: 50%; width: 14%; height: 14%; transform: translate(-50%, -50%) scale(8);
+      background-image: var(--art, none), linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
+      background-size: cover; background-position: 50% 50%;
+      filter: blur(4.5px) brightness(.46) saturate(.8); }
+    #screen-map::after { z-index: -2; }
+
+
+
+
+
+
+    .wereld-doek { pointer-events: none; overflow: hidden; }
+    .vlucht-doek { position: fixed; inset: 0; z-index: 1; }
+    .vlucht-doek.hoog { z-index: 3; }
+    .klim-doek { position: absolute; inset: 0; z-index: -1; }
+
+
+
+
+
+
+    #screen-map::after { transition: opacity 90ms linear; }
+
+
+
+
+
+
+
+
+
+    #screen-map.vlucht-weg::after { transition: none; }
     @media (prefers-reduced-motion: reduce) {
-      #screen-map::before, #screen-map::after { transition: none; }
+      #screen-map::after { transition: none; }
     }
 
 
@@ -4531,8 +4562,9 @@
   .world-pick { display: inline-flex; align-items: stretch; gap: 0;
     border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
     padding: 0; border-radius: var(--r-pill); }
-  .world-pick:active { transform: scale(.96); filter: brightness(1.15); }
-  @media (prefers-reduced-motion: reduce) { .world-pick:active { transform: none; } }
+
+  .world-pick:active, .world-pick.bezig { transform: scale(.96); filter: brightness(1.15); }
+  @media (prefers-reduced-motion: reduce) { .world-pick:active, .world-pick.bezig { transform: none; } }
   .wp-here, .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
 
 
@@ -9131,7 +9163,7 @@
         <button class="map-id-btn header-left" onclick="goProfiles()" aria-label="Wie speelt er" title="Wie speelt er">
           <span class="map-portrait" id="map-portrait"></span>
         </button>
-        <button class="header-title world-pick" id="map-tournee-label" onclick="naTik(openReis)"
+        <button class="header-title world-pick" id="map-tournee-label" onpointerdown="reisBurenAlvast()" onclick="pilTik(this)"
           aria-label="Bekijk alle werelden" title="Bekijk alle werelden"></button>
         <button class="diamond-badge header-right" onclick="navTik('dress')" aria-label="Naar de kleedkamer" title="Naar de kleedkamer">💎 <span id="map-diamonds">0</span><span id="map-wens" class="wens-mini"></span></button>
       </div>
@@ -15010,6 +15042,11 @@ function wereldCamera(richting, teken, opts) {
   const easing = opts.easing || WERELDREIS.uit;
   const schaduw = maakWereldSchaduw(map);
   const terugWas = !$('world-back').hidden;
+
+
+
+  const klim = randNu(scherm);
+  if (klim) scherm.appendChild(klim);
   teken();
   kopMeeMetCamera(richting, duur);
   const terugSchim = terugMeeMetCamera(terugWas, duur);
@@ -15045,9 +15082,12 @@ function wereldCamera(richting, teken, opts) {
       { duration: duur + MOTION.vangnet, easing: WERELDREIS.na });
   }
 
+  if (klim) klim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: duur, easing: easing, fill: 'forwards' });
+
   const deze = () => {
     [aUit, aIn].forEach(a => { try { a.cancel(); } catch (e) {} });
     schaduw.remove();
+    if (klim) klim.remove();
     if (terugSchim) terugSchim.remove();
     scherm.classList.remove('wereld-reist');
     map.style.pointerEvents = '';
@@ -15819,6 +15859,7 @@ function vluchtKlaar() {
   overgangBezig = false;
   try { v.op(); } catch (e) { }
   if (v.laag && v.laag.parentNode) v.laag.parentNode.removeChild(v.laag);
+  if (v.doek && v.doek.parentNode) v.doek.parentNode.removeChild(v.doek);
   if (v.globe) v.globe();
 }
 
@@ -15828,6 +15869,37 @@ function vluchtKlaar() {
 
 
 
+
+
+
+const BREED_PODIUM = '(min-aspect-ratio: 1/1) and (min-height: 600px)';
+function wereldDoek(soort, wereld) {
+  if (!wereld || !window.matchMedia || !matchMedia(BREED_PODIUM).matches) return null;
+  const doek = document.createElement('div');
+  doek.className = 'wereld-doek ' + soort;
+  doek.setAttribute('aria-hidden', 'true');
+  applyWorldTheme(doek, wereld);
+  doek.style.setProperty('--art', randBeeld(wereld));
+  return doek;
+}
+
+
+
+function randNu(scherm) {
+  if (!window.matchMedia || !matchMedia(BREED_PODIUM).matches) return null;
+  const doek = document.createElement('div');
+  doek.className = 'wereld-doek klim-doek';
+  doek.setAttribute('aria-hidden', 'true');
+  ['--art', '--w-sky', '--w-deep'].forEach(k => {
+    const v = scherm.style.getPropertyValue(k);
+    if (v) doek.style.setProperty(k, v);
+  });
+  return doek;
+}
+
+function randBeeld(wereld) {
+  return wereld.art ? `url("${wereldKleinPad(wereld.art) || wereld.art}")` : 'none';
+}
 function wereldVlucht(van, naar, bron, op, hoog) {
   vluchtKlaar();
   const laag = document.createElement('div');
@@ -15858,6 +15930,18 @@ function wereldVlucht(van, naar, bron, op, hoog) {
   kunst.style.width = van.kunst.w + 'px';
   kunst.style.height = van.kunst.h + 'px';
   laag.appendChild(kunst);
+
+
+
+
+
+
+  const doek = wereldDoek('vlucht-doek' + (hoog ? ' hoog' : ''), bron);
+  if (doek) {
+    $('app').appendChild(doek);
+    doek.animate(hoog ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }],
+      { duration: VLUCHT.duur, easing: 'linear', fill: 'forwards' });
+  }
   $('app').appendChild(laag);
 
 
@@ -15884,7 +15968,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
 
 
 
-  vluchtOp = { laag, op,
+  vluchtOp = { laag, doek, op,
     timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
   eind.onfinish = vluchtKlaar;
@@ -16510,6 +16594,7 @@ function goMap(vanLvl) {
   const vorige = document.querySelector('.screen.active');
   telNu($('map-diamonds'), p.diamonds);
   zetWensPil(p);
+  $('map-tournee-label').classList.remove('bezig');
   $('map-portrait').innerHTML = avatarSVG(p, 80);
 
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
@@ -17286,7 +17371,17 @@ function reisStartWaarnemer() {
   reisWaarnemer = new IntersectionObserver((rijen, obs) => {
     rijen.forEach(r => { if (r.isIntersecting) { laden(r.target); obs.unobserve(r.target); } });
   }, { root: $('screen-journey'), rootMargin: '60% 0px' });
-  track.querySelectorAll('.reis-art').forEach(el => reisWaarnemer.observe(el));
+
+
+
+
+
+
+  track.querySelectorAll('.reis-art').forEach(el => {
+    const halte = el.closest('.reis-halte');
+    if (halte && reisVanuit != null && Math.abs(+halte.dataset.w - reisVanuit) <= REIS_BUREN) laden(el);
+    else reisWaarnemer.observe(el);
+  });
 }
 function reisStopWaarnemer() {
   if (!reisWaarnemer) return;
@@ -17398,14 +17493,15 @@ function reisTerugNaarNu() {
 
 
 
-function openReis() {
+
+function openReis(alGetikt) {
   if (wereldReisBezig() || overgangBezig) return;
 
 
 
 
   vluchtKlaar();
-  sndClick();
+  if (alGetikt !== true) sndClick();
   const kaart = $('screen-map');
   const reis = $('screen-journey');
   const vorige = document.querySelector('.screen.active');
@@ -17569,6 +17665,51 @@ function reisTik(idx, el) {
   const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
   if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
   naTik(() => reisNaarWereld(idx, el, true, true));
+}
+
+
+
+
+
+
+
+
+
+
+function pilTik(el) {
+  if (overgangBezig || tikWacht || wereldReisBezig()) return;
+  sndClick();
+  reisBurenAlvast();
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+  if (el) el.classList.add('bezig');
+  naTik(() => {
+    openReis(true);
+
+    if (el && $('screen-map').classList.contains('active')) el.classList.remove('bezig');
+  });
+}
+
+
+
+
+
+const REIS_BUREN = 2;
+const reisBurenBeelden = new Map();
+function reisBurenAlvast() {
+  const p = P();
+  if (!p) return;
+  const hier = viewWorldIdx == null ? continueWorld(p) : viewWorldIdx;
+  const tot = laatsteZichtbareWereld(p);
+  for (let i = Math.max(0, hier - REIS_BUREN); i <= Math.min(tot, hier + REIS_BUREN); i++) {
+    const art = WORLDS[i] && WORLDS[i].art;
+    const src = wereldKleinPad(art) || art;
+    if (!src || reisBurenBeelden.has(src)) continue;
+    const beeld = new Image();
+    beeld.src = src;
+    reisBurenBeelden.set(src, beeld);
+    if (beeld.decode) beeld.decode().catch(() => reisBurenBeelden.delete(src));
+  }
 }
 
 
@@ -17746,7 +17887,7 @@ function renderTourMap(travelFrom) {
   applyWorldTheme(map, shown.world);
   const scherm = $('screen-map');
   applyWorldTheme(scherm, shown.world);
-  scherm.style.setProperty('--art', shown.world.art ? `url("${shown.world.art}")` : 'none');
+  scherm.style.setProperty('--art', randBeeld(shown.world));
 
   tekenWeg(frame, shown, nodes, playable);
 
