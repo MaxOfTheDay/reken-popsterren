@@ -449,12 +449,15 @@ const TELEFOON = { width: 390, height: 844 };
       const globe = t.querySelector('.rt-ico');
       // alles behalve de globe zelf: dáár hoort niets meer te staan
       const rest = t.textContent.replace(globe ? globe.textContent : '', '').trim();
-      return { rest, naam: t.getAttribute('aria-label'),
+      // de kop zegt waar je bent; de globe erin is de knop terug (zie .reis-titel)
+      const koptekst = t.closest('[role="heading"]');
+      return { rest, naam: koptekst && koptekst.getAttribute('aria-label'), knop: t.tagName === 'BUTTON' && t.getAttribute('aria-label'),
                chevron: !!t.querySelector('svg'), globes: t.querySelectorAll('.rt-ico').length };
     });
     check(kop.rest === '' && !kop.chevron && kop.globes === 1,
       'K · de kop van Werelden draagt alleen een globe', JSON.stringify(kop));
     check(kop.naam === 'Werelden', 'K · maar een schermlezer hoort nog wél waar hij is', String(kop.naam));
+    check(kop.knop === 'Terug naar de kaart', 'K · en de globe is de knop terug, net als de ←', String(kop.knop));
 
     /* En hij is rond. Een emoji tekent breder dan zijn em-vierkant; staat de
        regelhoogte op precies 1em, dan wordt hij boven en onder afgesneden en kijk je
@@ -539,6 +542,91 @@ const TELEFOON = { width: 390, height: 844 };
         `wissel ${wissel}, sprong ${sprong.toFixed(2)}px`);
       await page.waitForTimeout(700);
     }
+    await ctx.close();
+  }
+
+  /* ---- L · Tikken terwijl er iets beweegt (de navigatie-audit) ----
+     Een tik middenin een overgang gaat nooit verloren en raakt nooit iets wat al
+     weg is. Elk geval hier was een dode knop of een fout in de pagina. */
+  {
+    const { ctx, page } = await fresh();
+    const scherm = () => page.evaluate(() => document.querySelector('.screen.active').id);
+    const opKaart = async () => {
+      await page.evaluate(() => { selectProfile('p1'); });
+      await page.waitForTimeout(900);
+    };
+    // 🗺 en terug terwijl de kaart naar Werelden vliegt: na de landing terug naar de kaart
+    await opKaart();
+    await page.click('#map-tournee-label');
+    await page.waitForTimeout(150);
+    await page.click('#nav-map', { force: true });
+    await page.waitForTimeout(1800);
+    check(await scherm() === 'screen-map', 'L · 🗺 middenin de vlucht naar Werelden brengt je na de landing terug', await scherm());
+    await page.click('#map-tournee-label');
+    await page.waitForTimeout(150);
+    await page.evaluate(() => history.back());
+    await page.waitForTimeout(1800);
+    check(await scherm() === 'screen-map', 'L · net zo voor de terugknop van het toestel', await scherm());
+    // een dubbeltik op de pil komt op de globe van Werelden: die stuurt je niet meteen terug
+    await page.click('#map-tournee-label');
+    await page.waitForTimeout(80);
+    await page.click('#map-tournee-label', { force: true });
+    await page.waitForTimeout(1800);
+    check(await scherm() === 'screen-journey', 'L · een dubbeltik op de 🌍 blijft op Werelden', await scherm());
+    // en daar is de globe de weg terug
+    await page.click('#screen-journey .reis-titel');
+    await page.waitForTimeout(1500);
+    check(await scherm() === 'screen-map', 'L · de 🌍 op Werelden vliegt terug naar de kaart', await scherm());
+    // een halte, en meteen een tabblad: het tabblad wint, er start geen show
+    await page.evaluate(() => {
+      document.querySelector('.tour-stop.next').click();
+      setTimeout(() => document.getElementById('nav-dress').click(), 20);
+    });
+    await page.waitForTimeout(900);
+    check(await scherm() === 'screen-dress', 'L · halte en meteen 👕: de kleedkamer blijft, geen show eroverheen', await scherm());
+    // een halte, en meteen terug: de sterrenkeuze, zonder fout
+    await page.click('#nav-map');
+    await page.waitForTimeout(900);
+    await page.evaluate(() => {
+      document.querySelector('.tour-stop.next').click();
+      setTimeout(() => history.back(), 20);
+    });
+    await page.waitForTimeout(900);
+    check(await scherm() === 'screen-profile', 'L · halte en meteen terug: de sterrenkeuze', await scherm());
+    // na een show: op de halte tikken waar ze naartoe loopt, opent die als ze er is
+    await opKaart();
+    await page.evaluate(() => { startLevel(P().level); });
+    await page.waitForTimeout(500);
+    const naar = await page.evaluate(() => { G.stars = 3; endLevel(true); return P().level; });
+    await page.waitForTimeout(1800);
+    await page.click('#btn-end-next');
+    await page.waitForTimeout(700);
+    await page.evaluate(l => document.querySelector(`.tour-stop[data-lvl="${l}"]`).click(), naar);
+    await page.waitForTimeout(3000);
+    const show = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id, lvl: G && G.lvl }));
+    check(show.scherm === 'screen-game' && show.lvl === naar,
+      'L · haar volgende halte tikken terwijl ze loopt, opent die show als ze er is', JSON.stringify(show));
+    // en terug tijdens die wandeling: de sterrenkeuze, zonder fout (Z vangt de fout)
+    await page.evaluate(() => { quitGame(); });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => { startLevel(P().level); });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { G.stars = 3; endLevel(true); });
+    await page.waitForTimeout(1800);
+    await page.click('#btn-end-next');
+    await page.waitForTimeout(700);
+    await page.evaluate(() => history.back());
+    await page.waitForTimeout(2500);
+    check(await scherm() === 'screen-profile', 'L · terug tijdens haar wandeling: de sterrenkeuze', await scherm());
+    // draaien op de kaart: liggend staat haar halte in beeld
+    await opKaart();
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.waitForTimeout(800);
+    const hier = await page.evaluate(() => {
+      const r = document.querySelector('.tour-stop.next').getBoundingClientRect();
+      return { boven: Math.round(r.top), onder: Math.round(r.bottom), hoog: innerHeight };
+    });
+    check(hier.boven >= 0 && hier.onder <= hier.hoog, 'L · na draaien naar liggend staat haar halte in beeld', JSON.stringify(hier));
     await ctx.close();
   }
 

@@ -3438,6 +3438,8 @@ function show(id) {
   // De eerste aanblik staat er zonder fade (zie body.start); vanaf de eerste
   // schermwissel fadet alles weer zoals het hoort.
   document.body.classList.remove('start');
+  // een tik die op een landing wachtte, hoort bij het scherm dat nu weggaat
+  naLanding = null;
   // De begroeting van de kaart hoort bij de kaart -- zie kaartGroetStop.
   if (id !== 'screen-map') kaartGroetStop();
   // en die van de sterrenkeuze bij de sterrenkeuze -- zie landingStil.
@@ -4503,6 +4505,7 @@ function stopWereldReis() {
   const op = wereldReisOp;
   wereldReisOp = null;
   if (op) { try { op(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ } }
+  landingVrij();
 }
 /* Een stilstaande kopie van de wereld die vertrekt. Kopiëren en niet verplaatsen:
    het echte kader houdt zo zijn plek in de opmaak én zijn schuifstand, dus er wordt
@@ -4686,7 +4689,10 @@ function wereldCamera(richting, teken, opts) {
    opnieuw op te bouwen. Geeft false terug als er niets gebeurd is, zodat een
    aanroeper weet dat hij niets hoeft op te ruimen. */
 function navigeerNaarWereld(idx) {
-  if (wereldReisBezig()) return false;
+  if (wereldReisBezig()) {
+    naLandingZet(() => { if ($('screen-map').classList.contains('active')) navigeerNaarWereld(idx); });
+    return false;
+  }
   const doel = Math.max(0, idx | 0);
   const nu = viewWorldIdx == null ? worldFor(P().level).index : viewWorldIdx;
   if (doel === nu) return false;
@@ -4995,10 +5001,28 @@ function eindigOvergang(anim, dur, opruimen) {
     gedaan = true;
     overgangBezig = false;
     try { opruimen(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
+    landingVrij();
   };
   if (anim) anim.onfinish = klaar;
   setTimeout(klaar, dur + MOTION.vangnet);
   return klaar;
+}
+/* Een tik die een grendel tegenkwam, voor straks (zie naLanding in de kaartstand).
+   fn kijkt zelf nog eens of hij dan nog klopt -- de landing kan op een ander
+   scherm uitkomen dan waar de tik voor bedoeld was, en dan doet hij niets. */
+function naLandingZet(fn) { naLanding = fn; }
+/* Aangeroepen waar een grendel opengaat. Een beurt later, zodat het opruimen van
+   de overgang eerst helemaal klaar is; en alleen als er dan niets meer loopt --
+   gaat er één grendel open terwijl er nog een tweede dicht is, dan wacht de tik
+   gewoon op die tweede. */
+function landingVrij() {
+  if (!naLanding) return;
+  setTimeout(() => {
+    if (!naLanding || overgangBezig || vluchtOp || wereldReisOp) return;
+    const fn = naLanding;
+    naLanding = null;
+    try { fn(); } catch (e) { /* een tik van daarnet mag nooit de app tegenhouden */ }
+  }, 0);
 }
 /* Transform-origin als percentage van een element, uit een punt in
    venstercoördinaten. Geklemd op het element zelf (0-100%), en dat is geen
@@ -5436,6 +5460,7 @@ function vluchtKlaar() {
   if (!vluchtOp) return;
   const v = vluchtOp;
   vluchtOp = null;
+  landingVrij();
   clearTimeout(v.timer);
   clearTimeout(v.grendel);
   overgangBezig = false;
@@ -6206,15 +6231,9 @@ function kaartThuis() {
     if (!el || !el.isConnected || el.classList.contains('dancing')) return;
     if (zetPas(el, HUPPEL)) pasUit(el);
   };
-  // dezelfde halte als waar de kaart bij het openen op uitkomt (zie voltooi)
-  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-  const f = map.querySelector('.world-frame');
-  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
-    && getComputedStyle(map).overflowY !== 'hidden';
-  const doel = schuift
-    ? Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
-        here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2))
-    : map.scrollTop;
+  // dezelfde halte als waar de kaart bij het openen op uitkomt (zie kaartHierDoel)
+  const hier = kaartHierDoel(map);
+  const doel = hier == null ? map.scrollTop : hier;
   if (Math.abs(doel - map.scrollTop) < 4) { huppel(); return; }
   if (motionOff() || !map.scrollTo) { map.scrollTop = doel; return; }
   map.scrollTo({ top: doel, behavior: 'smooth' });
@@ -7299,7 +7318,21 @@ function openReis(alGetikt) {
 // De reis sluiten is dezelfde beweging als een bestemming kiezen: inzoomen op de
 // wereld waar je vandaan kwam.
 /* stil: de tik klonk al (het tabblad Kaart, zie navGo). */
+/* De globe in de kop van Werelden. Hij staat op de plek van de wereldpil, dus de
+   tweede tik van een dubbeltik op de pil komt hier terecht -- en dan vloog je
+   terug zodra je er was. Tijdens de vlucht hierheen doet hij daarom niets (de ← en
+   🗺 wél: die staan elders en zijn dus bedoeld). */
+function reisGlobeTik() {
+  if (overgangBezig) return;
+  naTik(reisSluit);
+}
 function reisSluit(stil) {
+  /* Nog onderweg naar Werelden (of een klim die loopt): dan straks. Zo is 🗺, ←,
+     de 🌍 of terug middenin de vlucht geen dode tik meer. */
+  if (overgangBezig || wereldReisBezig()) {
+    naLandingZet(() => { if ($('screen-journey').classList.contains('active')) reisSluit(stil); });
+    return;
+  }
   const idx = reisVanuit == null ? continueWorld(P()) : reisVanuit;
   reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`), stil === true);
 }
@@ -7338,7 +7371,11 @@ function reisSluit(stil) {
    De rimpel staat hier en niet meer alleen in reisNaarWereld: daar komt hij pas
    in de taak die ook de kaart bouwt, en dan tekent hij pas ná al dat werk. */
 function reisTik(idx, el) {
-  if (overgangBezig || tikWacht) return;
+  if (tikWacht) return;
+  if (overgangBezig) {
+    naLandingZet(() => { if ($('screen-journey').classList.contains('active') && el.isConnected) reisTik(idx, el); });
+    return;
+  }
   sndClick();
   reisKaartAlvast(idx);
   const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
@@ -7356,7 +7393,11 @@ function reisTik(idx, el) {
    Bij het neerzetten van de vinger (pointerdown in de opmaak) haalt hij alvast de
    kaartjes op waar de camera straks langs schuift -- zie reisBurenAlvast. */
 function pilTik(el) {
-  if (overgangBezig || tikWacht || wereldReisBezig()) return;
+  if (tikWacht) return;
+  if (overgangBezig || wereldReisBezig()) {
+    naLandingZet(() => { if ($('screen-map').classList.contains('active')) pilTik(el); });
+    return;
+  }
   sndClick();
   reisBurenAlvast();
   const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
@@ -7531,6 +7572,8 @@ function renderTourMap(travelFrom) {
   const shown = worldForIndex(viewWorldIdx);
   const nodes = worldNodes(shown);
   const travelling = !!travelFrom;
+  // waar ze naartoe loopt: die haltes gaan pas open als ze er is
+  const reisTot = travelling ? p.level : 0;
   const playable = travelling ? travelFrom : p.level;   // t/m dit level is alles open
   /* Waar de ster staat, en welke halte goud is. Dat is niet hetzelfde als
      'playable': in de toegift-stand (alles uit) wijst p.level één halte voorbij
@@ -7570,7 +7613,7 @@ function renderTourMap(travelFrom) {
 
   tekenWeg(frame, shown, nodes, playable);
 
-  const stand = { p, playable, travelling, heroLvl, netAfLvl };
+  const stand = { p, playable, travelling, heroLvl, netAfLvl, reisTot };
   nodes.forEach((n, i) => frame.appendChild(haltKnop(shown, nodes, i, stand)));
 
   // naar een eerdere wereld terug (om daar te verbeteren), of vooruit tot zo ver
@@ -7663,7 +7706,7 @@ function tekenWeg(frame, shown, nodes, playable) {
    uitrekent en voor elke halte hetzelfde is (wie, tot waar open, waar de ster
    staat, welke halte net af is). */
 function haltKnop(shown, nodes, i, stand) {
-  const { p, playable, travelling, heroLvl, netAfLvl } = stand;
+  const { p, playable, travelling, heroLvl, netAfLvl, reisTot } = stand;
   const n = nodes[i];
   const lvl = shown.first + i;
   const open = lvl <= playable;
@@ -7730,6 +7773,17 @@ function haltKnop(shown, nodes, i, stand) {
     const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
     if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
   };
+  /* De halte waar ze nu naartoe loopt staat nog dicht, maar een kind tikt er al
+     op -- daar gaat ze immers heen. Die tik wacht tot ze er is (zie naLanding), en
+     dan gaat de nieuwe halte de zaal in. De rimpel zegt meteen dat hij aankwam. */
+  else if (travelling && lvl <= reisTot) b.onclick = () => {
+    const r = b.getBoundingClientRect();
+    tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+    naLandingZet(() => {
+      const nu = $('tour-map') && $('tour-map').querySelector(`.tour-stop[data-lvl="${lvl}"]`);
+      if (nu && !nu.classList.contains('locked') && $('screen-map').classList.contains('active')) enterLevel(lvl, nu);
+    });
+  };
   return b;
 }
 /* Hoe hoog de kop en de navigatiebalk werkelijk zijn. De wereldknoppen gaan daar
@@ -7791,16 +7845,21 @@ function meetChroom() {
   terugUitlijnen();
 }
 /* Schuift de kaart (liggend, of een tablet), dan staat de halte waar zij staat in
-   het midden. renderTourMap doet dit bij elke opbouw; de draai hieronder ook. */
-function kaartNaarHier(map) {
+   het midden. renderTourMap doet dit bij elke opbouw, de draai hieronder ook, en
+   kaartThuis (🗺 op je eigen kaart) glijdt naar dezelfde plek. kaartHierDoel is
+   die plek als schuifstand, of null als de kaart niet schuift. */
+function kaartHierDoel(map) {
   const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-  const schuift = map.scrollHeight > map.clientHeight + 4
+  const f = map.querySelector('.world-frame');
+  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
     && getComputedStyle(map).overflowY !== 'hidden';
-  if (here && schuift) {
-    const f = map.querySelector('.world-frame');
-    const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
-    map.scrollTop = Math.max(0, y - map.clientHeight / 2);
-  }
+  if (!schuift) return null;
+  return Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
+    here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2));
+}
+function kaartNaarHier(map) {
+  const doel = kaartHierDoel(map);
+  if (doel != null) map.scrollTop = doel;
 }
 addEventListener('resize', () => rafKlem(kaartChroomMeten));
 /* Een toestel dat gedraaid wordt, krijgt de kaart opnieuw op haar halte. Staand
@@ -8333,7 +8392,7 @@ function runTravel(t) {
      de kaart van een ster die er niet meer is ombouwen gooide een fout. De
      voortgang zelf staat al vast -- endLevel heeft p.level gezet -- dus hier valt
      dan niets meer te doen. */
-  const finish = () => { if (P() !== p) return; plaats(); vier(); };
+  const finish = () => { if (P() !== p) return; plaats(); vier(); landingVrij(); };
   /* De laatste show van de laatste uitgebrachte wereld. Er is geen volgende halte
      om naartoe te huppelen en geen volgende wereld om te onthullen -- er is een
      toegift: dezelfde wereld, opnieuw te spelen. Dus gaat de badge omhoog, valt
@@ -10550,6 +10609,9 @@ function startSpot() {
   stopSpot();
   G.spot = 100;
   zetSpot(100);
+  spotLoopt();
+}
+function spotLoopt() {
   const id = setInterval(() => {
     if (!G || G.timer !== id) { clearInterval(id); return; }
     G.spot = Math.max(0, G.spot - 100 / (SPOT_DUUR / 100));
@@ -10561,6 +10623,21 @@ function startSpot() {
 function stopSpot() {
   if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
 }
+/* Het spotlicht wacht als de app wegvalt. Een kind dat even naar een ander scherm
+   gaat (een berichtje, het scherm gaat op slot) kwam terug bij een leeg spotlicht
+   en miste de +1 💎 voor een snel antwoord -- voor een som die het nog niet eens
+   gezien had. Nu staat de balk stil zolang de app weg is en loopt hij verder waar
+   hij was. G.spotWacht en niet G.timer: stopSpot zet die op null, en een spotlicht
+   dat al op was hoort ook niet terug te komen. */
+document.addEventListener('visibilitychange', () => {
+  if (!G) return;
+  if (document.visibilityState === 'hidden') {
+    if (G.timer) { stopSpot(); G.spotWacht = true; }
+  } else if (G.spotWacht) {
+    G.spotWacht = false;
+    if (!G.lock && G.spot > 0) spotLoopt();
+  }
+});
 /* De telmodus: geen klok, geen balk (zie hierboven). G.spot staat vol, dus elk
    antwoord dat in één keer goed is krijgt de +1 💎 en het luidere publiek -- wat
    een kind in de telmodus kreeg als het snel genoeg was, krijgt het nu altijd.

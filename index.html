@@ -5854,7 +5854,20 @@
 
 
 
-  #screen-journey .reis-titel { display: inline-flex; align-items: center; justify-content: center; }
+
+  #screen-journey .reis-kop { display: flex; justify-content: center; overflow: visible; }
+  #screen-journey .reis-titel {
+    display: inline-flex; align-items: center; justify-content: center; position: relative;
+    width: var(--hud-h); height: var(--hud-h); padding: 0; border: 0; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+
+  #screen-journey .reis-titel::before { content: ''; position: absolute; inset: -2px; }
+
+  #screen-journey .reis-titel:active { transform: scale(.96); filter: brightness(1.15); }
+  @media (prefers-reduced-motion: reduce) { #screen-journey .reis-titel:active { transform: none; } }
 
 
 
@@ -9474,10 +9487,14 @@
              eroverheen is dat nog een keer. Wat overblijft is het ene teken dat óók op
              de wereldpil staat, en dat maakt het de draad tussen de twee standen in
              plaats van twee koppen die elkaar afwisselen.
-             De naam blijft er wél voor wie luistert: aria-label draagt hem, want een
+             En het is dezelfde knop: de globe die Werelden opende, brengt je ook terug
+             -- net als de ← en 🗺. Een kind tikt hem nog eens, want hij staat waar hij
+             op de kaart ook stond.
+             De naam blijft er wél voor wie luistert: de kop draagt hem, want een
              schermlezer heeft die stapel kaartjes niet. -->
-        <div class="header-title reis-titel" role="heading" aria-level="1" aria-label="Werelden">
-          <span class="rt-ico" aria-hidden="true">🌍</span>
+        <div class="header-title reis-kop" role="heading" aria-level="1" aria-label="Werelden">
+          <button class="reis-titel" type="button" onclick="reisGlobeTik()"
+            aria-label="Terug naar de kaart" title="Terug naar de kaart"><span class="rt-ico" aria-hidden="true">🌍</span></button>
         </div>
         <div class="diamond-badge header-right">💎 <span id="reis-diamonds">0</span></div>
       </div>
@@ -10673,6 +10690,8 @@ function showWorld(idx, travelFrom) {
 
 
 
+
+
 let viewWorldIdx = null;
 
 
@@ -10734,6 +10753,15 @@ let vluchtOp = null;
 
 
 let wereldReisOp = null;
+
+
+
+
+
+
+
+
+let naLanding = null;
 
 
 
@@ -14181,6 +14209,8 @@ function show(id) {
 
   document.body.classList.remove('start');
 
+  naLanding = null;
+
   if (id !== 'screen-map') kaartGroetStop();
 
   if (id !== 'screen-profile') { landingStil(); logoIntroStop(); }
@@ -15245,6 +15275,7 @@ function stopWereldReis() {
   const op = wereldReisOp;
   wereldReisOp = null;
   if (op) { try { op(); } catch (e) { } }
+  landingVrij();
 }
 
 
@@ -15428,7 +15459,10 @@ function wereldCamera(richting, teken, opts) {
 
 
 function navigeerNaarWereld(idx) {
-  if (wereldReisBezig()) return false;
+  if (wereldReisBezig()) {
+    naLandingZet(() => { if ($('screen-map').classList.contains('active')) navigeerNaarWereld(idx); });
+    return false;
+  }
   const doel = Math.max(0, idx | 0);
   const nu = viewWorldIdx == null ? worldFor(P().level).index : viewWorldIdx;
   if (doel === nu) return false;
@@ -15737,10 +15771,28 @@ function eindigOvergang(anim, dur, opruimen) {
     gedaan = true;
     overgangBezig = false;
     try { opruimen(); } catch (e) { }
+    landingVrij();
   };
   if (anim) anim.onfinish = klaar;
   setTimeout(klaar, dur + MOTION.vangnet);
   return klaar;
+}
+
+
+
+function naLandingZet(fn) { naLanding = fn; }
+
+
+
+
+function landingVrij() {
+  if (!naLanding) return;
+  setTimeout(() => {
+    if (!naLanding || overgangBezig || vluchtOp || wereldReisOp) return;
+    const fn = naLanding;
+    naLanding = null;
+    try { fn(); } catch (e) { }
+  }, 0);
 }
 
 
@@ -16178,6 +16230,7 @@ function vluchtKlaar() {
   if (!vluchtOp) return;
   const v = vluchtOp;
   vluchtOp = null;
+  landingVrij();
   clearTimeout(v.timer);
   clearTimeout(v.grendel);
   overgangBezig = false;
@@ -16949,14 +17002,8 @@ function kaartThuis() {
     if (zetPas(el, HUPPEL)) pasUit(el);
   };
 
-  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-  const f = map.querySelector('.world-frame');
-  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
-    && getComputedStyle(map).overflowY !== 'hidden';
-  const doel = schuift
-    ? Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
-        here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2))
-    : map.scrollTop;
+  const hier = kaartHierDoel(map);
+  const doel = hier == null ? map.scrollTop : hier;
   if (Math.abs(doel - map.scrollTop) < 4) { huppel(); return; }
   if (motionOff() || !map.scrollTo) { map.scrollTop = doel; return; }
   map.scrollTo({ top: doel, behavior: 'smooth' });
@@ -18041,7 +18088,21 @@ function openReis(alGetikt) {
 
 
 
+
+
+
+
+function reisGlobeTik() {
+  if (overgangBezig) return;
+  naTik(reisSluit);
+}
 function reisSluit(stil) {
+
+
+  if (overgangBezig || wereldReisBezig()) {
+    naLandingZet(() => { if ($('screen-journey').classList.contains('active')) reisSluit(stil); });
+    return;
+  }
   const idx = reisVanuit == null ? continueWorld(P()) : reisVanuit;
   reisNaarWereld(idx, $('reis-track').querySelector(`.reis-halte[data-w="${idx}"]`), stil === true);
 }
@@ -18080,7 +18141,11 @@ function reisSluit(stil) {
 
 
 function reisTik(idx, el) {
-  if (overgangBezig || tikWacht) return;
+  if (tikWacht) return;
+  if (overgangBezig) {
+    naLandingZet(() => { if ($('screen-journey').classList.contains('active') && el.isConnected) reisTik(idx, el); });
+    return;
+  }
   sndClick();
   reisKaartAlvast(idx);
   const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
@@ -18098,7 +18163,11 @@ function reisTik(idx, el) {
 
 
 function pilTik(el) {
-  if (overgangBezig || tikWacht || wereldReisBezig()) return;
+  if (tikWacht) return;
+  if (overgangBezig || wereldReisBezig()) {
+    naLandingZet(() => { if ($('screen-map').classList.contains('active')) pilTik(el); });
+    return;
+  }
   sndClick();
   reisBurenAlvast();
   const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
@@ -18273,6 +18342,8 @@ function renderTourMap(travelFrom) {
   const shown = worldForIndex(viewWorldIdx);
   const nodes = worldNodes(shown);
   const travelling = !!travelFrom;
+
+  const reisTot = travelling ? p.level : 0;
   const playable = travelling ? travelFrom : p.level;
 
 
@@ -18312,7 +18383,7 @@ function renderTourMap(travelFrom) {
 
   tekenWeg(frame, shown, nodes, playable);
 
-  const stand = { p, playable, travelling, heroLvl, netAfLvl };
+  const stand = { p, playable, travelling, heroLvl, netAfLvl, reisTot };
   nodes.forEach((n, i) => frame.appendChild(haltKnop(shown, nodes, i, stand)));
 
 
@@ -18405,7 +18476,7 @@ function tekenWeg(frame, shown, nodes, playable) {
 
 
 function haltKnop(shown, nodes, i, stand) {
-  const { p, playable, travelling, heroLvl, netAfLvl } = stand;
+  const { p, playable, travelling, heroLvl, netAfLvl, reisTot } = stand;
   const n = nodes[i];
   const lvl = shown.first + i;
   const open = lvl <= playable;
@@ -18472,6 +18543,17 @@ function haltKnop(shown, nodes, i, stand) {
     const ster = e && e.target && e.target.closest && e.target.closest('.tour-hero');
     if (ster) kaartTik(ster, b); else enterLevel(lvl, b);
   };
+
+
+
+  else if (travelling && lvl <= reisTot) b.onclick = () => {
+    const r = b.getBoundingClientRect();
+    tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+    naLandingZet(() => {
+      const nu = $('tour-map') && $('tour-map').querySelector(`.tour-stop[data-lvl="${lvl}"]`);
+      if (nu && !nu.classList.contains('locked') && $('screen-map').classList.contains('active')) enterLevel(lvl, nu);
+    });
+  };
   return b;
 }
 
@@ -18534,15 +18616,20 @@ function meetChroom() {
 }
 
 
-function kaartNaarHier(map) {
+
+
+function kaartHierDoel(map) {
   const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-  const schuift = map.scrollHeight > map.clientHeight + 4
+  const f = map.querySelector('.world-frame');
+  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
     && getComputedStyle(map).overflowY !== 'hidden';
-  if (here && schuift) {
-    const f = map.querySelector('.world-frame');
-    const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
-    map.scrollTop = Math.max(0, y - map.clientHeight / 2);
-  }
+  if (!schuift) return null;
+  return Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
+    here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2));
+}
+function kaartNaarHier(map) {
+  const doel = kaartHierDoel(map);
+  if (doel != null) map.scrollTop = doel;
 }
 addEventListener('resize', () => rafKlem(kaartChroomMeten));
 
@@ -19075,7 +19162,7 @@ function runTravel(t) {
 
 
 
-  const finish = () => { if (P() !== p) return; plaats(); vier(); };
+  const finish = () => { if (P() !== p) return; plaats(); vier(); landingVrij(); };
 
 
 
@@ -21292,6 +21379,9 @@ function startSpot() {
   stopSpot();
   G.spot = 100;
   zetSpot(100);
+  spotLoopt();
+}
+function spotLoopt() {
   const id = setInterval(() => {
     if (!G || G.timer !== id) { clearInterval(id); return; }
     G.spot = Math.max(0, G.spot - 100 / (SPOT_DUUR / 100));
@@ -21303,6 +21393,21 @@ function startSpot() {
 function stopSpot() {
   if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
 }
+
+
+
+
+
+
+document.addEventListener('visibilitychange', () => {
+  if (!G) return;
+  if (document.visibilityState === 'hidden') {
+    if (G.timer) { stopSpot(); G.spotWacht = true; }
+  } else if (G.spotWacht) {
+    G.spotWacht = false;
+    if (!G.lock && G.spot > 0) spotLoopt();
+  }
+});
 
 
 
