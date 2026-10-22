@@ -95,7 +95,7 @@
     background: transparent; padding: 0; text-align: center; z-index: 1;
     /* de knop zelf vangt niets; alleen ::before hierboven doet dat */
     pointer-events: none;
-    --dot-key: 0 0 0 0.2cqw var(--stop-keyline);
+    --dot-key: 0 0 0 0.32cqw var(--stop-keyline);
     /* Iets zachter dan de 1/1,9cqw hiervoor: de hele speellaag ging in fase 4C een
        trap omlaag, en een contactschaduw die op volle sterkte blijft staan is dan
        ineens het zwaarste wat er van een halte overblijft. Het tóken zelf blijft
@@ -147,11 +147,13 @@
   /* Twee dingen tillen de halte van een wíllekeurige ondergrond af, en ze zijn
      allebei bewust klein:
 
-       --dot-key   een donker haarlijntje net búiten de gouden rand. Op een lichte
-                   lucht of op zand is dat het enige dat de rand nog begrenst --
-                   zonder loopt goud op zand in elkaar over. Het is een ring van
-                   0,2cqw (onder een pixel op een telefoon), dus je ziet hem niet
-                   als ring; je ziet alleen dat de halte scherper staat.
+       --dot-key   een donkere inktlijn net búiten de rand. Op een lichte lucht
+                   of op zand is dat het enige dat de rand nog begrenst --
+                   zonder loopt goud op zand in elkaar over. Hij is even dik en
+                   even donker als de zoom om de sterren eronder (zie "De
+                   inktlijn" verderop): eerst was hij een haarlijntje van 0,2cqw,
+                   en dan sprak de halte een zachtere taal dan zijn eigen
+                   sterren.
        --dot-drop  een zachte contactschaduw eronder, zodat de halte op de tekening
                    rúst in plaats van erboven te zweven.
 
@@ -417,22 +419,12 @@
   .tour-stop.done.perfect .dot {
     border-color: var(--gold-accent);
     background: linear-gradient(180deg, rgba(var(--goud-rgb),.14), rgba(var(--goud-rgb),.05)), var(--purple-shadow);
-    /* De ring ligt BUITEN de rand, niet erin: --dot-key houdt zijn donkere
-       haarlijntje op 0,2cqw, daarachter komt het goud tot 0,62cqw, en daar weer
-       achter een heel zachte gloed die net voorbij de ring uitloopt. Drie lagen
-       die samen één ring lezen.
-
-       Waarom búiten en niet gewoon een dikkere rand: een dikkere rand eet het
-       paarse vlak op, en juist dat paars is wat een afgemaakte halte een
-       afgemaakte halte maakt. Een ring eromheen laat het rondje precies zoals het
-       is en legt het teken ernaast -- als een lijstje om een foto.
-
-       De vulling ging juist de andere kant op (van .24 naar .14 goudwas, bijna
-       gelijk aan een gewone gespeelde halte): het signaal hoort in de ring te
-       zitten en niet in de kern. Anders kruipt een perfecte halte langzaam naar
-       "gouden vulling" toe, en dát is de taal van de halte waar je nú speelt. */
-    box-shadow: var(--dot-key), 0 0 0 0.62cqw var(--perfect-ring),
-                var(--dot-drop), 0 0 2cqw 0.2cqw var(--perfect-gloed);
+    /* Eén gouden rand en verder niets. Er lag hier eerst nog een gouden ring
+       búiten de rand, met een zachte gloed erachter -- maar samen met de drie
+       gouden sterren en de lip was dat het drukste plekje van de kaart, precies
+       waar een halte áf hoort te voelen. Gouden rand plus drie volle sterren
+       zegt "perfect" al; zie "De inktlijn" hieronder. */
+    box-shadow: var(--dot-key), var(--dot-drop);
   }
   /* De indruk-animatie doet het meeste werk; dit is het laagje eroverheen dat
      zegt "hij is ingedrukt" ook als je je vinger niet beweegt. */
@@ -450,32 +442,50 @@
      Nu dezelfde knop als .btn, in de kleuren die de haltes al hadden:
        gespeeld  diep paars verloop (--halte-vulling-top/--halte-vulling) met een
                  donkerpaarse lip, en een lichtere rand
-       perfect   hetzelfde, mét de gouden ring; de lip schuift daar een fractie
-                 breder onder, anders verdwijnt hij achter de ring
+       perfect   hetzelfde, met een gouden rand
        hier      het goud van de Speel-knop, met zijn oranje lip
                  (--gold-cta-shadow), net als .btn
        op slot   het stoffige violet met een donkere lip, kleiner (zie hoger)
-     De toestanden zelf veranderen niet: rand, ring, vulling en maat zeggen nog
+     De toestanden zelf veranderen niet: rand, vulling en maat zeggen nog
      precies hetzelfde. Alleen de vorm is die van de rest van het spel.
 
      De lip is een box-shadow zonder vervaging (0 0,9cqw 0) -- geen extra
      element, en hij drukt mee in met de indrukveer van .stop-body. Daaronder
      een zachte contactschaduw, zodat de knop op de tekening staat. Het cijfer
      krijgt een donker lipje mee, zoals de titel op het beginscherm. */
-  .tour-stop .dot { border-width: 0.45cqw; text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
+  .tour-stop .dot { text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
   .tour-stop.done .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
-    border-color: rgba(255,255,255,.55);
     box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.done.perfect .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
     border-color: var(--gold-accent);
-    box-shadow: var(--dot-key), 0 0 0 0.55cqw var(--perfect-ring),
-                0 1.1cqw 0 0.25cqw var(--halte-lip), 0 1.8cqw 1.6cqw rgba(12,2,26,.35); }
-  .tour-stop.next .dot { border-color: var(--gold-light); text-shadow: none;
+    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.next .dot { text-shadow: none;
     box-shadow: var(--dot-key), 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.locked .dot {
     box-shadow: var(--dot-key), 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
+
+  /* ===== De inktlijn ========================================================
+     Eén regel voor de hele speellaag: om elk stuk dat je kunt aantikken ligt
+     een dunne donkere inktlijn, met een lichte rand erbinnen. Zo stond de pop
+     er al (witte stickerrand, donker lijntje, zie #tourHeroContour) en zo
+     stonden de sterren er al (goud met een donkere zoom, --ster-zoom). De
+     haltes hadden elk hun eigen rand -- een vaag lavendelrandje, een dubbele
+     gouden ring -- en spraken daardoor net een andere taal.
+
+       gespeeld  witte stickerrand (--halte-sticker), net als de pop
+       perfect   op die plek één gouden rand; met de drie gouden sterren eronder
+                 is dat genoeg
+       hier      ook wit, zoals de witte rand om de tekst van de Speel-knop
+       op slot   dezelfde witte rand op halve sterkte (--slot-sticker)
+
+     De inktlijn zelf is --dot-key (hierboven), in dezelfde pruim als de zoom
+     om de sterren. */
+  .tour-stop .dot { border-width: 0.55cqw; }
+  .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--halte-sticker); }
+  .tour-stop.done.perfect .dot { border-color: var(--gold-accent); }
+  .tour-stop.locked .dot { border-color: var(--slot-sticker); }
 
   /* ---- Terug uit een show: het punt gaat op de kaart ----------------------
      FASE 4C. Wie uit een show terugkwam zag zijn score er gewoon stáán: het
