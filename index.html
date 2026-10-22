@@ -7205,6 +7205,20 @@
 
 
 
+  .kleed-schakel { display: flex; justify-self: center; gap: 2px; padding: 2px; border-radius: 99px;
+    background: rgba(20,6,40,.45); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14); }
+  .kleed-helft { width: 56px; height: 40px; border: 0; border-radius: 99px; background: none; cursor: pointer;
+    display: grid; place-items: center; font-size: 22px; line-height: 1; font-family: inherit;
+    opacity: .55; transition: transform var(--t-tik), opacity var(--t-tik); }
+  .kleed-helft span { filter: var(--emoji-schaduw-diep); }
+  .kleed-helft.aan { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+  .kleed-helft:active { transform: scale(.94); }
+
+
+
+
+
+
 
 
 
@@ -7542,17 +7556,7 @@
 
   .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 5px; }
 
-
-
-
-  #screen-dress .shop-tabs-wrap { display: flex; align-items: center; justify-content: safe center; }
-  .shop-tab-vast { flex: none; display: flex; align-items: center; padding: 1px 0 1px 12px; }
-  .shop-tab-vast:empty { display: none; }
-  .shop-tab-vast::after {
-    content: ''; width: 2px; height: 26px; margin-left: 6px; border-radius: 2px;
-    background: rgba(255,255,255,.22);
-  }
-  .shop-tab-vast + .shop-tabs { flex: 0 1 auto; min-width: 0; padding-left: 6px; }
+  #screen-dress.in-podia .shop-tabs-wrap { display: none; }
 
 
 
@@ -9321,7 +9325,9 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(dressBack)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
-        <div class="header-title">👕 Kleedkamer</div>
+        <!-- De naam van het scherm is hier een schakelaar: 👕 de kleren | 🎪 Podia
+             (renderShop vult hem). De tabbladbalk zegt al "Kleedkamer". -->
+        <div class="header-title kleed-schakel" id="kleed-schakel" role="group" aria-label="Kleedkamer"></div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
       <div class="stage-wrap">
@@ -9343,7 +9349,6 @@
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
-        <div class="shop-tab-vast" id="shop-tab-vast"></div>
         <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
       </div>
     </div>
@@ -10910,6 +10915,7 @@ const CATS = [
 
 
 ];
+
 
 
 
@@ -21281,6 +21287,8 @@ function itemThumb(it, base) {
 }
 
 let shopCat = 'dress';
+
+let kleedLaatsteCat = 'dress';
 let shopSelectedId = null;
 
 
@@ -21480,8 +21488,6 @@ function renderShop() {
 
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
-  const vast = $('shop-tab-vast');
-  if (vast) vast.innerHTML = '';
   let activeTab = null;
 
 
@@ -21493,8 +21499,8 @@ function renderShop() {
     b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
       + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
     b.onclick = opts.go;
-    (opts.vast && vast ? vast : tabs).appendChild(b);
-    if (opts.on && !opts.vast) activeTab = b;
+    tabs.appendChild(b);
+    if (opts.on) activeTab = b;
     return b;
   };
 
@@ -21503,7 +21509,32 @@ function renderShop() {
 
 
 
-  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, vast: true }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, vast: c.vast, on: c.id === shopCat, go: () => {
+
+
+  const inPodia = shopCat === PODIA_CAT;
+  if (!inPodia) kleedLaatsteCat = shopCat;
+  $('screen-dress').classList.toggle('in-podia', inPodia);
+  const schakel = $('kleed-schakel');
+  if (schakel) {
+    schakel.innerHTML = '';
+    [{ ico: '👕', name: 'Kleren', on: !inPodia, cat: () => kleedLaatsteCat },
+     { ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, on: inPodia, cat: () => PODIA_CAT }].forEach(h => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'kleed-helft' + (h.on ? ' aan' : '');
+      b.setAttribute('aria-label', h.name);
+      b.setAttribute('aria-pressed', h.on ? 'true' : 'false');
+      b.innerHTML = `<span aria-hidden="true">${h.ico}</span>`;
+      b.onclick = () => {
+        sndClick();
+        if (h.on) return;
+        shopCat = h.cat(); shopSelectedId = null; podiumStuk = null; renderShop();
+        $('screen-dress').scrollTop = 0;
+      };
+      schakel.appendChild(b);
+    });
+  }
+  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
     sndClick();
     shopCat = c.id; shopSelectedId = null; renderShop();
     $('screen-dress').scrollTop = 0;

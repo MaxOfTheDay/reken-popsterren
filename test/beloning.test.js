@@ -414,6 +414,7 @@ function check(ok, label, detail) {
       openKleedkamer();
       await new Promise(res => setTimeout(res, 250));
       const chips = [...document.querySelectorAll('#shop-tabs-wrap .tab-btn')].map(c => c.getAttribute('aria-label'));
+      const kop = [...document.querySelectorAll('#kleed-schakel .kleed-helft')].map(c => c.getAttribute('aria-label') + (c.classList.contains('aan') ? '*' : ''));
       openKleedkamerCat('acc');
       await new Promise(res => setTimeout(res, 150));
       const inAcc = [...document.querySelectorAll('.item-card')].map(c => c.dataset.item);
@@ -421,6 +422,8 @@ function check(ok, label, detail) {
       document.getElementById('shop-podium').click();
       await new Promise(res => setTimeout(res, 250));
       const lade = shopCat;
+      const kopPodia = [...document.querySelectorAll('#kleed-schakel .kleed-helft')].map(c => c.getAttribute('aria-label') + (c.classList.contains('aan') ? '*' : ''));
+      const rijWeg = getComputedStyle(document.getElementById('shop-tabs-wrap')).display === 'none';
       const kaart = document.querySelector('.item-card[data-item="stage_arena"]');
       const status = kaart.querySelector('.item-status').textContent.trim();
       kaart.click();
@@ -440,7 +443,7 @@ function check(ok, label, detail) {
       confirmShopBuy('stage_arena');
       confirmShopBuy('acc_wereld_muziek');
       return {
-        chips, inAcc, lade, status, stukken, speel, koop, belTekst,
+        chips, kop, kopPodia, rijWeg, inAcc, lade, status, stukken, speel, koop, belTekst,
         balkNoemtSchat: balk.textContent.indexOf(item('acc_wereld_muziek').name) >= 0,
         heeft: P().owned.includes('acc_wereld_muziek'),
         staat: P().equipped.stage,
@@ -451,7 +454,10 @@ function check(ok, label, detail) {
         wereldtekens: document.querySelectorAll('.item-wereld').length,
       };
     });
-    check(r.chips[0] === 'Podia', 'G · Podia is de eerste knop van de rij', JSON.stringify(r.chips));
+    check(r.kop.join() === 'Kleren*,Podia' && r.chips.indexOf('Podia') < 0,
+      'G · Podia staat in de kop (👕 | 🎪) en niet in de rij', JSON.stringify([r.kop, r.chips]));
+    check(r.kopPodia.join() === 'Kleren,Podia*' && r.rijWeg,
+      'G · in Podia licht 🎪 op en gaat de rij weg', JSON.stringify([r.kopPodia, r.rijWeg]));
     check(!r.inAcc.some(id => /acc_wereld_/.test(id)),
       'G · de gewone laden staan niet vol met schatten op slot', JSON.stringify(r.inAcc));
     check(r.lade === 'stage', 'G · een tik op het podium in de spiegel opent Podia', JSON.stringify(r.lade));
