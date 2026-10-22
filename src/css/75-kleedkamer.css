@@ -628,7 +628,14 @@
   .item-thumb.thumb-podium { align-items: flex-end; }
   .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
-  .item-name { font-size: var(--tx-klein); font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
+  /* het naambordje (naamBordje): even boven in de spiegel na het aandoen, in het
+     stille vlak van de knoppen eromheen. De kaartjes zelf hebben geen naam meer. */
+  .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
+    width: max-content; max-width: calc(100% - 16px); text-align: center; pointer-events: none; font-size: var(--tx-klein); font-weight: 700; color: #fff;
+    padding: 8px 14px; border-radius: 99px; background: rgba(38,12,70,.86);
+    box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
+    transition: opacity var(--t-snel) ease, transform var(--t-snel) ease; }
+  .naam-bordje.aan { opacity: 1; transform: translate(-50%, 0); }
   /* DE TAG -- één pilletje per kaartje, op de plek van het prijskaartje, en dus
      één staat (de JS kiest er precies één: zie zetTag). Alle standen delen
      hetzelfde stille vlak; wat verschilt is alleen wat erop staat:

@@ -7708,7 +7708,14 @@
   .item-thumb.thumb-podium { align-items: flex-end; }
   .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
-  .item-name { font-size: var(--tx-klein); font-weight: 700; overflow-wrap: break-word; hyphens: auto; }
+
+
+  .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
+    width: max-content; max-width: calc(100% - 16px); text-align: center; pointer-events: none; font-size: var(--tx-klein); font-weight: 700; color: #fff;
+    padding: 8px 14px; border-radius: 99px; background: rgba(38,12,70,.86);
+    box-shadow: 0 4px 14px rgba(8,1,20,.42), inset 0 0 0 1.5px rgba(255,255,255,.26);
+    transition: opacity var(--t-snel) ease, transform var(--t-snel) ease; }
+  .naam-bordje.aan { opacity: 1; transform: translate(-50%, 0); }
 
 
 
@@ -21540,7 +21547,15 @@ function renderShop() {
 
 
     card.className = 'item-card';
-    card.innerHTML = itemThumb(it) + `<div class="item-name">${it.name}</div><div class="item-status"></div>`;
+
+
+
+
+
+
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', it.full || it.name);
+    card.innerHTML = itemThumb(it) + `<div class="item-status"></div>`;
 
 
 
@@ -21572,9 +21587,11 @@ function renderShop() {
           if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
           sndClick(); tapDance('shop-avatar'); return;
         }
+        naamBordje(it);
         return equipShopItem(it.id);
       }
       sndClick();
+      speak(it.full || it.name);
 
 
 
@@ -22329,6 +22346,23 @@ function unequipShopItem(cat, blijf) {
   tapDance('shop-avatar');
 }
 
+
+
+
+
+let naamBordjeTimer = null;
+function naamBordje(it) {
+  const spiegel = $('shop-spiegel');
+  if (!spiegel) return;
+  const naam = it.full || it.name;
+  let b = spiegel.querySelector('.naam-bordje');
+  if (!b) { b = document.createElement('div'); b.className = 'naam-bordje'; b.setAttribute('aria-hidden', 'true'); spiegel.appendChild(b); }
+  b.textContent = (it.emoji ? it.emoji + ' ' : '') + naam;
+  b.classList.remove('weg'); void b.offsetWidth; b.classList.add('aan');
+  clearTimeout(naamBordjeTimer);
+  naamBordjeTimer = setTimeout(() => b.classList.replace('aan', 'weg'), 1500);
+  speak(naam);
+}
 function equipShopItem(id, blijf) {
   const it = item(id);
   const p = P();
