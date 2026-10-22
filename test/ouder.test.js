@@ -749,14 +749,16 @@ function check(ok, label, detail) {
         tekst: blok.textContent,
         balken: blok.querySelectorAll('.stat-bar').length,
         bezig: blok.querySelector('.niveau-bezig').textContent.trim(),
+        stap: blok.querySelector('.niveau-bezig').getAttribute('aria-current'),
+        pop: !!blok.querySelector('.niveau-bezig .fl-n svg'),
         perf: db.profiles.p1.perf,
       };
     });
     check(!/%/.test(r.tekst), 'het niveau-blok noemt geen percentage', r.tekst.slice(0, 80));
     check(r.balken === 0, 'en heeft geen voortgangsbalk', 'balken=' + r.balken);
     check(r.tekst.split(/\s+/).filter(Boolean).length < 40, 'en het leerpad blijft kort (geen vaste voetnoot)', r.tekst.slice(0, 120));
-    check(/rekenen/.test(r.tekst) && /tot 20/.test(r.tekst) && /nu/.test(r.bezig),
-      'en zet op het leerpad waar het kind nu aan werkt', r.bezig);
+    check(/Leerpad/.test(r.tekst) && /tot 20/.test(r.tekst) && /Kleine sommen/.test(r.bezig) && r.stap === 'step' && r.pop,
+      'en zet op het leerpad waar het kind nu aan werkt, met haar pop', JSON.stringify(r));
     check(r.perf === 0.5, 'p.perf staat nog gewoon in de opslag', String(r.perf));
     // telmodus: dan is de fase de bezig-regel
     await page.evaluate(() => {
@@ -771,7 +773,7 @@ function check(ok, label, detail) {
       bezig: document.querySelector('.niveau-bezig').textContent.trim(),
       tekst: document.querySelector('.niveau-blok').textContent,
     }));
-    check(/^4\s*Evenveel/.test(r.bezig),
+    check(/^Evenveel/.test(r.bezig),
       'in de telmodus staat de fase waar het kind nú speelt er', r.bezig);
     check(!/%/.test(r.tekst), 'ook in de telmodus geen percentage', r.tekst.slice(0, 80));
     // en de moeilijkheid draait nog: perf beweegt mee met goede antwoorden
@@ -961,7 +963,7 @@ function check(ok, label, detail) {
       stand: document.querySelector('.vg-status').className,
       kop: document.querySelector('.vg-status b').textContent,
       meerOpen: document.querySelector('.vg-meer').open,
-      nu: document.querySelectorAll('.vg-pad .nu').length,
+      nu: document.querySelectorAll('.vg-ladder .hier').length,
       tip: !!document.getElementById('grens-tip'),
     }));
     const met = async (recent, extra) => {
@@ -1127,6 +1129,56 @@ function check(ok, label, detail) {
       titel: getComputedStyle(document.querySelector('#screen-settings .header-title')).display }));
     check(r.verborgen === true, 'R · zonder ster is er niemand om als te spelen', JSON.stringify(r));
     check(r.titel !== 'none', 'R · en dan staat er gewoon "Voor ouders"', JSON.stringify(r));
+    await ctx.close();
+  }
+
+  /* ================= S · Eén leerpad, en Beheer als "⋯" ================= */
+  /* Voortgang en Oefenen tekenen het leerpad met dezelfde rijen, en zeggen
+     hetzelfde over waar het kind staat -- ook voorbij de laatste stap, waar
+     Oefenen eerst haar pop op "Drie getallen" zette. Beheer is een smal "⋯"
+     met een stipje zolang er geen recente back-up is. */
+  {
+    const { ctx, page } = await fresh();
+    await page.evaluate(() => {
+      const p = db.profiles.p1;
+      for (let l = 1; l < WORLD_START[LEERSTAPPEN.length - 1] + 2; l++) p.stars[l] = 3;
+      p.level = WORLD_START[LEERSTAPPEN.length - 1] + 2;
+      delete db.backupAt; save();
+    });
+    await open(page, 'p1', 'voortgang');
+    await page.waitForTimeout(200);
+    const waar = () => page.evaluate(() => {
+      const h = document.querySelector('#settings-body .fl-rij.hier');
+      return h ? h.querySelector('.fl-naam').firstChild.textContent.trim() : null;
+    });
+    const vg = await waar();
+    let r = await page.evaluate(() => ({
+      oudPad: document.querySelectorAll('.vg-pad').length,
+      ladder: !!document.querySelector('.niveau-blok .fase-ladder'),
+      meer: document.querySelector('#settings-subtabs .st-meer').textContent.trim(),
+      label: document.querySelector('#settings-subtabs .st-meer').getAttribute('aria-label'),
+      stip: !!document.querySelector('#settings-subtabs .st-stip'),
+      breed: document.querySelector('#settings-subtabs [data-t="oefenen"]').offsetWidth,
+      smal: document.querySelector('#settings-subtabs .st-meer').offsetWidth,
+    }));
+    check(r.oudPad === 0 && r.ladder, 'S · Voortgang tekent het leerpad als de ladder', JSON.stringify(r));
+    check(vg === 'Alles door elkaar', 'S · voorbij de laatste stap staat ze op "Alles door elkaar"', vg);
+    check(/⋯/.test(r.meer) && /^Beheer/.test(r.label) && r.smal < r.breed / 2, 'S · Beheer is een smal "⋯"', JSON.stringify(r));
+    check(r.stip, 'S · zonder back-up een stipje op "⋯"', JSON.stringify(r));
+    // Aanpassen › brengt je naar Oefenen, en daar staat ze op dezelfde stap
+    await page.click('#leerpad-aanpas');
+    await page.waitForTimeout(300);
+    const oe = await waar();
+    r = await page.evaluate(() => ({ tab: setTab,
+      eind: !!document.querySelector('#set-startstap .fl-rij.eind.hier'),
+      knoppen: document.querySelectorAll('#set-startstap .chip').length }));
+    check(r.tab === 'oefenen' && oe === vg && r.eind && r.knoppen === 5,
+      'S · "Aanpassen ›" opent Oefenen, en die zegt hetzelfde', JSON.stringify({ ...r, oe }));
+    // een verse back-up: het stipje gaat weg
+    await page.evaluate(() => { db.backupAt = new Date().toISOString(); save(); renderSettings(); });
+    await page.waitForTimeout(100);
+    r = await page.evaluate(() => !!document.querySelector('#settings-subtabs .st-stip'));
+    check(!r, 'S · met een verse back-up geen stipje', String(r));
     await ctx.close();
   }
 

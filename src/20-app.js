@@ -12541,55 +12541,54 @@ function statusKaartHtml(p) {
       ? '<button class="btn small purple stem-aan" id="stem-aan" type="button">🔊 Zet aan</button>' : ''}</div>` : ''}
   </div>`;
 }
-/* Wat elke fase in mensentaal oefent. COUNT_STAGE_LABELS (bij Oefenen) zijn de
-   korte namen; dit is de zin eronder, voor de fase waar het kind nu zit. */
-const COUNT_STAGE_UITLEG = ['',
-  'Tot drie tellen, en zelf elk ding aantikken.',
-  'Tot vijf tellen, meetellen en zelf aantikken.',
-  'Welke groep heeft er meer, en welke minder?',
-  'Dezelfde hoeveelheid terugvinden.',
-  'Een getal horen en de juiste hoeveelheid kiezen.',
-  'Cijfer en hoeveelheid tot tien aan elkaar koppelen.',
-  'Eén meer en één minder dan een getal.',
-  'Twee groepjes samen, splitsen, en de vriendjes van vijf en tien.',
-  'De eerste sommen, met plaatjes en tekens.',
-  'Sommen met cijfers; de stippen helpen nog.',
-  'Sommen tot tien, zonder steun.',
-  'Tien en nog wat: hoeveelheden en sommen tot twintig.',
-];
 /* Wat de werelden leren, in de volgorde van LEERSTAPPEN. Een stap die met deze
    instellingen niets nieuws brengt valt weg: over het tiental kan niet tot tien,
    drie getallen is alleen plus, en de ouder kan de extra's uitzetten. Zo staat
    er nooit een stap op het pad die het kind niet te zien krijgt. Een stap is een
    naam met een voorbeeldsom erbij, geen zin: "8 + 5" zegt sneller wat "over het
    tiental" betekent dan een uitleg. */
-/* lang is de regel in Voortgang; naam en vb zijn hetzelfde, uit elkaar, voor de
-   ladder op Oefenen (zie oefenGroups): daar staan de voorbeelden in een eigen
-   kolom rechts, zodat ze niet verschuiven als er een lijn tussen komt. */
+/* naam en vb staan uit elkaar: op de ladder (zie flRij) staat het voorbeeld in
+   een eigen kolom rechts, zodat het niet verschuift als er een lijn tussen komt.
+   Voortgang en Oefenen tekenen het pad met dezelfde rijen. */
 function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const klein = !plusMin ? '2 × 3' : s.ops.includes('+') ? '3 + 4' : '7 − 3';
   const tot = { 10: '6 + 3', 20: '12 + 5', 50: '34 + 12', 100: '56 + 27' }[s.max] || '12 + 5';
-  const stap = (naam, vb, metVb) => ({ naam, vb, lang: metVb ? `${naam} <span class="vg-vb">${vb}</span>` : naam });
+  const stap = (naam, vb) => ({ naam, vb });
   return [
     stap('Kleine sommen', klein),
     plusMin ? stap(`Tot ${s.max}`, tot) : stap('Hele tafels', '7 × 8'),
-    plusMin && s.max > 10 && stap('Over het tiental', '8 + 5', true),
-    s.missNum !== false && stap('Zoek het getal', '7 + ▢ = 12', true),
-    s.chain3 !== false && s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2', true),
+    plusMin && s.max > 10 && stap('Over het tiental', '8 + 5'),
+    s.missNum !== false && stap('Zoek het getal', '7 + ▢ = 12'),
+    s.chain3 !== false && s.ops.includes('+') && stap('Drie getallen', '3 + 4 + 2'),
     stap('Alles door elkaar', ''),
   ].map((st, i) => st && { ...st, wereld: i + 1 }).filter(Boolean);
 }
 // Het accent van een wereld na de laatste leerstap (zie wereldAccent), als het er is.
 function accentTekst(s, w) {
   const a = wereldAccent(w);
-  if (a === 'miss' && s.missNum !== false) return ' · extra <span class="vg-vb">7 + ▢ = 12</span>';
-  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra <span class="vg-vb">3 + 4 + 2</span>';
+  if (a === 'miss' && s.missNum !== false) return ' · extra 7 + ▢ = 12';
+  if (a === 'chain' && s.chain3 !== false && s.ops.includes('+')) return ' · extra 3 + 4 + 2';
   return '';
 }
-/* Eén rij op het pad. b is wat er in het bolletje staat (✓, een nummer, …). */
-const padRij = (klas, b, html) => `<li class="${klas}"><span class="b">${b}</span>${html}</li>`;
-const NU_TAG = '<span class="vg-tag">nu</span>';
+/* EÉN RIJ VAN DE LADDER, voor Voortgang én Oefenen. Bolletje, naam, en rechts
+   een voorbeeld in een vaste kolom. Met een v is het een knop (.chip met data-v,
+   daar hangt bindOefenChips aan); zonder is het een rij om te lezen.
+
+   Hiervoor stond hetzelfde leerpad twee keer in twee talen: Voortgang had een
+   pad met ringen, een "nu"-label en voorbeelden in grijze pilletjes, Oefenen de
+   ladder. Een ouder die van het ene tabblad naar het andere ging las dezelfde
+   stappen twee keer, en moest de tweede keer opnieuw uitzoeken wat wat was. */
+function flRij(klas, n, naam, vb, v) {
+  const binnen = `<span class="fl-n">${n}</span><span class="fl-naam">${naam}</span><span class="fl-vb">${vb || ''}</span>`;
+  return v == null
+    ? `<div class="fl-rij${klas}"${/\bhier\b/.test(klas) ? ' aria-current="step"' : ''}>${binnen}</div>`
+    : `<button class="chip fl-rij${klas}" data-v="${v}">${binnen}</button>`;
+}
+// de pop van het kind in het bolletje van de stap waar ze nu is
+const flAva = p => `<span class="fl-ava">${avatarSVG(p, 26)}</span>`;
+// het lege vakje van "zoek het getal", als vakje en niet als teken
+const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
 /* Het leerpad. De klassen niveau-blok en niveau-bezig zijn gebleven: dat zijn
    "het blok over het niveau" en "de regel waar het kind nú is", en de tests
    lezen ze zo.
@@ -12604,47 +12603,48 @@ const NU_TAG = '<span class="vg-tag">nu</span>';
    niet getoond. De streepjes in de telmodus zijn de stapjes binnen een fase
    (countTrack.rung), geen cijfer.
 
-   Zo kort mogelijk: wat al kan is één regel ("Fase 1–6"), zonder de lijst
-   erachter, en er staat geen vaste voetnoot meer onder ("het spel past zich
-   vanzelf aan"). Die stond er bij elk bezoek en zei wat de 🟢🟡🟠 erboven al
-   zegt. Een tip is één regel met de knop ernaast. */
+   Dezelfde rijen als de ladder op Oefenen (flRij), maar om te lezen: wat al kan
+   is één rij met een ✓ ("Stap 1–2", "Fase 1–5"), dan de stap van nu met haar
+   pop in het bolletje, dan wat er komt. Een zin per fase staat er niet meer: het
+   voorbeeld rechts zegt het sneller. "Aanpassen ›" in de kop brengt je naar
+   dezelfde ladder op Oefenen; lezen en veranderen blijven twee tabbladen, maar
+   liggen één tik uit elkaar. Een tip is één regel met de knop ernaast. */
 function leerpadHtml(p) {
   const s = p.settings;
   const rijen = [];
   let kop, tip = '';
   if (s.track === 'count') {
     const st = countLiveStage(p), hi = countMaxStage(s);
-    kop = 'leren tellen';
-    if (st > 1) rijen.push(padRij('klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}`));
+    kop = 'tellen';
+    if (st > 1) rijen.push(flRij(' klaar', '✓', `Fase ${st > 2 ? '1–' + (st - 1) : 1}`));
     const top = countTopRung(st);
     const rung = Math.min(top, Math.max(0, (p.countTrack && p.countTrack.rung) || 0));
     const streepjes = `<span class="vg-rungs" title="stapje ${rung + 1} van ${top + 1}">${
       Array.from({ length: top + 1 }, (_, i) => `<i class="${i <= rung ? 'aan' : ''}"></i>`).join('')}</span>`;
-    rijen.push(padRij('nu niveau-bezig', st, `<b>${COUNT_STAGE_LABELS[st]}</b>${NU_TAG}${streepjes}`
-      + `<small>${COUNT_STAGE_UITLEG[st] || ''}</small>`));
-    for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(padRij('later', v, COUNT_STAGE_LABELS[v]));
-    if (hi > st + 2) rijen.push(padRij('later', '…', `Tot fase ${hi}: ${COUNT_STAGE_LABELS[hi]}`));
-    rijen.push(hi < COUNT_STAGE_MAX
-      ? padRij('later', '🔒', 'Tot hier')
-      : padRij('later', '🧮', 'Daarna: rekenen'));
+    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${COUNT_STAGE_LABELS[st]}${streepjes}`, COUNT_STAGE_VB[st]));
+    // de twee volgende fases, en de laatste die de ouder toelaat (de sprong in de nummers zegt dat er iets tussen zit)
+    for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
+    if (hi > st + 2) rijen.push(flRij(' later', hi, COUNT_STAGE_LABELS[hi], COUNT_STAGE_VB[hi]));
+    // dezelfde "tot"-lijn als op Oefenen; zonder grens is rekenen de volgende stap
+    rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', '🧮', 'Daarna rekenen'));
     const tt = telTip(p);
     if (tt) tip = `<div class="grens-tip" id="grens-tip"><div>💡 ${tt.tekst}</div>
       <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button></div>`;
   } else {
-    const glyph = { '+': '➕', '-': '➖', 'x': '✖️', ':': '➗' };
+    // dezelfde tekens als de tegels op Oefenen
+    const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
-    kop = `rekenen ${(s.ops || []).map(o => glyph[o] || o).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
+    kop = `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
     const stappen = leerpadStappen(s);
     const w = continueWorld(p) + 1;                    // de wereld waar het kind nu speelt
     const laatste = LEERSTAPPEN.length;
     const nu = stappen.filter(st => st.wereld <= Math.min(Math.max(w, s.startStap || 1), laatste)).pop();
-    const klaar = stappen.filter(st => st.wereld < nu.wereld);
-    if (klaar.length) rijen.push(padRij('klaar', '✓', `Wereld ${
-      klaar[0].wereld}${nu.wereld - 1 > klaar[0].wereld ? '–' + (nu.wereld - 1) : ''}`));
+    const nr = stappen.indexOf(nu);                    // = hoeveel stappen er al achter liggen
+    // genummerd op plaats, net als de ladder op Oefenen: valt er een stap weg, dan schuift de rest op
+    if (nr) rijen.push(flRij(' klaar', '✓', `Stap ${nr > 1 ? '1–' + nr : 1}`));
     const grens = grensTip(p);
-    rijen.push(padRij('nu niveau-bezig', nu.wereld === laatste ? nu.wereld + '+' : nu.wereld,
-      `<b>${nu.lang}</b>${NU_TAG}<small>Wereld ${w}${accentTekst(s, w)}</small>`));
-    stappen.filter(st => st.wereld > nu.wereld).forEach(st => rijen.push(padRij('later', st.wereld, st.lang)));
+    rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small>Wereld ${w}${accentTekst(s, w)}</small>`, flVb(nu.vb)));
+    stappen.slice(nr + 1).forEach((st, i) => rijen.push(flRij(' later', nr + 2 + i, st.naam, flVb(st.vb))));
     const [tekst, knop] = !grens ? [] : grens.soort === 'grens'
       ? [`Bijna altijd ⭐⭐⭐ tot ${s.max}. Grotere getallen?`, `Tot ${grens.naar}`]
       : grens.naar === 'mix'
@@ -12655,8 +12655,8 @@ function leerpadHtml(p) {
       <button class="btn small purple" id="grens-tip-ja" data-soort="${grens.soort}" data-v="${grens.naar}">${knop}</button></div>`;
   }
   return `<div class="set-card vg-kaart niveau-blok">
-    <h2 class="vg-kop">Leerpad <span>· ${kop}</span></h2>
-    <ul class="vg-pad">${rijen.join('')}</ul>
+    <h2 class="vg-kop vg-kop-link">Leerpad <span>· ${kop}</span><button class="vg-aanpas" id="leerpad-aanpas" type="button">Aanpassen ›</button></h2>
+    <div class="fase-ladder vg-ladder">${rijen.join('')}</div>
     ${tip}
   </div>`;
 }
@@ -12725,7 +12725,12 @@ function statsPanelHtml(p) {
 function stemNotitie(naam) {
   if (!db.sound) return `🔇 Het geluid staat uit, dus ${esc(naam || 'je ster')} hoort de vragen niet.`;
   if (!hasSpeech()) return '🔇 Dit toestel kan niet voorlezen. Alles blijft speelbaar, maar de luisteroefening (fase 5) wordt overgeslagen.';
-  if (!nlVoice()) return '🗣️ Er is geen Nederlandse stem gevonden. Het voorlezen kan met een vreemde uitspraak klinken; een Nederlandse stem kies je bij de spraakinstellingen van het toestel (tekst-naar-spraak).';
+  /* Eén regel; de uitleg pas als een ouder erom vraagt. Hier stond een zin van
+     vijfendertig woorden, de langste tekst van Voortgang, over een instelling
+     van het toestel en niet van het spel. */
+  if (!nlVoice()) return '🗣️ Geen Nederlandse stem op dit toestel.'
+    + '<details class="stem-hoe"><summary>Hoe?</summary>Kies een Nederlandse stem bij de spraakinstellingen van het toestel'
+    + ' (tekst-naar-spraak). Zonder klinkt het voorlezen met een vreemde uitspraak.</details>';
   return '';
 }
 /* Een tip voor de ouder: de getallengrens omhoog.
@@ -12883,13 +12888,13 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
      stond de telstart in een openklapper "Begint je kind hoger?" met twaalf
      losse nummers: een tweede lijst van dezelfde fases.
 
-     rijen: [{ v, naam, vb }]. Een lijn komt er alleen als hij iets afsnijdt. */
-  const ava = p ? `<span class="fl-ava">${avatarSVG(p, 26)}</span>` : '';
-  const ladder = (id, rijen, lo, hi, hier) => `<div class="fase-ladder" id="${pfx}${id}">${rijen.map((r, i) =>
+     rijen: [{ v, naam, vb }]. Een lijn komt er alleen als hij iets afsnijdt.
+     staart: een rij om te lezen achteraan (zie het leerpad van rekenen). */
+  const ava = p ? flAva(p) : '';
+  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder" id="${pfx}${id}">${rijen.map((r, i) =>
     (r.v === lo && i > 0 ? '<div class="fl-lijn">vanaf</div>' : '')
-    + `<button class="chip fl-rij${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}" data-v="${r.v}">`
-    + `<span class="fl-n">${r.v === hier && ava ? ava : i + 1}</span><span class="fl-naam">${r.naam}</span><span class="fl-vb">${r.vb}</span></button>`
-    + (r.v === hi && i < rijen.length - 1 ? '<div class="fl-lijn">tot</div>' : '')).join('')}</div>`;
+    + flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v)
+    + (r.v === hi && i < rijen.length - 1 ? '<div class="fl-lijn">tot</div>' : '')).join('')}${staart || ''}</div>`;
   /* OEFENEN IN TWEE KAARTEN. Hiervoor stond elk veld er drie keer: kaarttitel,
      onderregel, label en een hulpregel ("Wat oefenen / Kies de bewerkingen en
      het bereik / Bewerkingen"), zo'n 110 woorden op een scherm van anderhalve
@@ -12940,7 +12945,14 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
   const stappen = leerpadStappen(s).filter(st => st.wereld < LEERSTAPPEN.length);
   const start = Math.min(s.startStap || 1, stappen[stappen.length - 1].wereld);
   const startRij = stappen.find(st => st.wereld >= start).wereld;
-  const nuStap = p ? Math.min(Math.max(continueWorld(p) + 1, start), stappen[stappen.length - 1].wereld) : 0;
+  const wNu = p ? Math.max(continueWorld(p) + 1, start) : 0;
+  const nuStap = Math.min(wNu, stappen[stappen.length - 1].wereld);
+  /* "Alles door elkaar" staat er wél, als laatste rij om te lezen: daar begin je
+     niet, maar een kind dat voorbij de laatste stap speelt staat daar. Zonder
+     die rij stond haar pop op Oefenen op "Drie getallen", terwijl Voortgang
+     (terecht) "Alles door elkaar" zei. */
+  const voorbij = !!p && wNu >= LEERSTAPPEN.length;
+  const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij ? ava : stappen.length + 1, 'Alles door elkaar');
   /* + − en × ÷ hebben elk hun eigen maat, en die staat er alleen als ze geldt.
      "Getallen tot" gold vroeger ongezegd ook voor de tafels: met tot 20 en de
      tafel van 7 kwam er nooit meer dan 7 × 2. Nu is "tot" alleen van plus en
@@ -12953,8 +12965,8 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
       ${tablesRelevant ? `${lbl('tafels van', '× ÷')}
       <div class="oe-tafels" id="${pfx}set-tables">${[1,2,3,4,5,6,7,8,9,10].map(v => chip(v, v, s.tables.includes(v))).join('')}</div>` : ''}
       ${lbl('Antwoord')}${balk('set-mode', [['kies', 'Kiezen'], ['mix', 'Mix'], ['typ', 'Typen']], s.mode)}
-      ${lbl('Leerpad')}${ladder('set-startstap', stappen.map(st => ({ v: st.wereld, naam: st.naam, vb: st.vb.replace('▢', '<i class="fl-vak"></i>') })),
-        startRij, Infinity, p && stappen.filter(st => st.wereld <= nuStap).pop().wereld)}`
+      ${lbl('Leerpad')}${ladder('set-startstap', stappen.map(st => ({ v: st.wereld, naam: st.naam, vb: flVb(st.vb) })),
+        startRij, Infinity, p && !voorbij && stappen.filter(st => st.wereld <= nuStap).pop().wereld, eind)}`
   }, {
     secundair: true, html: `
       ${aanUit('set-voorlezen', '🔊', 'Voorlezen', s.voorlezen === true)}
@@ -13066,16 +13078,24 @@ function appWideCardsHtml(hasStars) {
    raken; groen daarna. Alleen hier, in het ouderdeel: een kind krijgt hier nooit
    een melding over te zien. */
 const BACKUP_OUD_DAGEN = 28;
-function backupStandHtml(nu) {
+function backupDagen(nu) {
   const t = db.backupAt ? Date.parse(db.backupAt) : NaN;
-  const dagen = isNaN(t) ? null : Math.max(0, Math.floor(((nu || Date.now()) - t) / 86400000));
+  return isNaN(t) ? null : Math.max(0, Math.floor(((nu || Date.now()) - t) / 86400000));
+}
+// ook het stipje op "⋯" (zie renderSectionTabs)
+function backupOud(nu) {
+  const dagen = backupDagen(nu);
+  return dagen === null || dagen > BACKUP_OUD_DAGEN;
+}
+function backupStandHtml(nu) {
+  const dagen = backupDagen(nu);
   const wanneer = dagen === null ? null
     : dagen === 0 ? 'vandaag'
     : dagen === 1 ? 'gisteren'
     : dagen < 14 ? `${dagen} dagen geleden`
     : dagen < 60 ? `${Math.floor(dagen / 7)} weken geleden`
     : `${Math.floor(dagen / 30)} maanden geleden`;
-  const oud = dagen === null || dagen > BACKUP_OUD_DAGEN;
+  const oud = backupOud(nu);
   const tekst = wanneer ? `Laatste back-up: ${wanneer}` : 'Nog nooit een back-up gemaakt';
   return `<div class="backup-stand${oud ? ' oud' : ''}" id="set-backup-stand">`
     + `<span aria-hidden="true">${oud ? '⚠️' : '✓'}</span> ${tekst}</div>`;
@@ -13273,6 +13293,7 @@ function speelAlsKnop(p) {
   b.title = 'Speel als ' + p.name;
 }
 // De drie onderdelen van het ouderdeel. Waarde = staat, label = wat er staat.
+// Beheer staat er als "⋯": zie renderSectionTabs.
 const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
 // Alleen naar boven springen als het ónderdeel wisselt, niet bij elke chip-tik.
 let lastWhoRendered = null;
@@ -13355,14 +13376,27 @@ function whoInBeeld(row, active) {
   lastWhoRendered = setKey;
 }
 
-/* Niveau 2 -- wát: Voortgang | Oefenen | Beheer. Bewust zonder emoji: drie
+/* Niveau 2 -- wát: Voortgang | Oefenen | ⋯. Bewust zonder emoji: drie
    labels mét icoon passen niet in het 460px-spoor op een 320px-telefoon (~333px
    nodig, 288px beschikbaar), en zonder is het bovendien rustiger. De iconen
-   blijven wél op de kaartkoppen staan, waar ze iets betekenen. */
+   blijven wél op de kaartkoppen staan, waar ze iets betekenen.
+
+   BEHEER IS EEN UITZONDERING, GEEN DERDE HOOFDZAAK. Naam, meisje of jongen,
+   wissen, verwijderen, back-up: allemaal dingen die een ouder zelden doet,
+   terwijl het tabblad even breed was als Voortgang en Oefenen, waar je elke keer
+   komt. Nu is het een smal vakje "⋯" achteraan; de inhoud is dezelfde, en een
+   schermlezer hoort nog gewoon "Beheer".
+   Het enige in Beheer waar een ouder voor terug moet komen is de back-up -- er is
+   geen cloud. Dus krijgt "⋯" een amber stipje zolang er nooit een back-up was of
+   de laatste te oud is (backupOud, dezelfde regel als de amber regel in de
+   back-upkaart). Verder nooit een signaal op dit vakje. */
 function renderSectionTabs() {
   const t = $('settings-subtabs');
-  t.innerHTML = SET_TABS.map(([v, label]) =>
-    `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
+  const oud = backupOud();
+  t.innerHTML = SET_TABS.map(([v, label]) => v === 'beheer'
+    ? `<button class="st-meer${setTab === v ? ' on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}" aria-label="${label}${oud ? ', back-up nodig' : ''}" title="${label}">`
+      + `<span aria-hidden="true">⋯</span>${oud ? '<span class="st-stip" aria-hidden="true"></span>' : ''}</button>`
+    : `<button class="${setTab === v ? 'on' : ''}" role="tab" aria-selected="${setTab === v}" data-t="${v}">${label}</button>`).join('');
   t.querySelectorAll('button').forEach(b => b.onclick = () => {
     if (b.dataset.t === setTab) return;
     sndClick(); setTab = b.dataset.t; renderSettings(); settingsToTop();
@@ -13530,6 +13564,14 @@ function bindSettings(p, s) {
     save();
     renderSettings();
   });
+  // "Aanpassen ›" op het leerpad: naar dezelfde ladder op Oefenen, midden in beeld
+  on('leerpad-aanpas', 'onclick', () => {
+    sndClick();
+    setTab = 'oefenen';
+    renderSettings();
+    const lad = $('set-startstap') || $('set-fase');
+    if (lad) requestAnimationFrame(() => lad.scrollIntoView({ block: 'center' }));
+  });
   on('set-name', 'onkeydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
     e.preventDefault();
@@ -13644,6 +13686,7 @@ function exportData() {
   // de regel bovenaan de kaart meteen bijwerken, zonder het hele paneel te herbouwen
   const stand = $('set-backup-stand');
   if (stand) stand.outerHTML = backupStandHtml();
+  if ($('settings-subtabs').childElementCount) renderSectionTabs();   // het stipje op "⋯" gaat weg
 }
 
 // Een eerder opgeslagen back-upbestand inlezen en terugzetten. Overschrijft
