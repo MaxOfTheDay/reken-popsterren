@@ -127,10 +127,13 @@
      klemt hem op zijn kolom, en dán krimpt .wp-here-naam zoals bedoeld.
      test/kop.test.js zaak A meet het na. */
   #screen-map .world-pick { min-width: 0; max-width: 100%; }
+  /* Sinds oktober 2026 staat er alleen de globe in de pil (zie renderMapTitle):
+     geen naam meer die kan krimpen, dus het bovenstaande is nu een vangnet. De
+     capsule staat alleen, dus gelijke lucht aan alle kanten. */
+  #screen-map .wp-cta { margin: 4px; }
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: var(--tx-klein); }
-    #screen-map .wp-here { gap: 3px; padding: 0 4px 0 7px; }
-    #screen-map .wp-cta { gap: 2px; margin: 3px 3px 3px 1px; padding: 0 7px 0 6px; }
+    #screen-map .wp-cta { gap: 2px; margin: 3px; padding: 0 7px 0 6px; }
     #screen-map .wp-cta-ico { font-size: 17px; }
     #screen-map .wp-chev { width: 6px; height: 10px; }
     #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
@@ -398,12 +401,16 @@
     /* dezelfde donkere kern-plus-waas als de koppillen: draagt de letters ook als
        er een lichte lucht achter het glas staat */
     text-shadow: var(--nav-ink);
-    /* 6/5 in plaats van 7/6: de balk wordt er 5px lager van (71 -> 66) zonder dat
-       het raakvlak onder de 44px komt -- een knop blijft 55px hoog. */
-    background: transparent; border: none; border-radius: var(--r-md); padding: 6px 4px 5px; cursor: pointer;
+    /* Alleen een icoon, geen woord eronder (oktober 2026): 🗺️ 👕 🏆 zeggen het zelf,
+       en de meeste spelers lezen "Kleedkamer" nog niet. Het icoon is daarom groter
+       (25 -> 31px) en de knop lager: 7 + 34 + 7 = 48px, nog altijd boven de 44px
+       van een kindervinger. De balk wordt er 6px lager van (66 -> 60, --balk-h),
+       en dat is 6px meer tekening. */
+    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px; cursor: pointer;
     transition: transform var(--t-tik), background .15s, opacity .15s;
+    justify-content: center;
   }
-  .nav-item .nav-ico { font-size: 25px; line-height: 1.1; filter: var(--emoji-schaduw); }
+  .nav-item .nav-ico { font-size: 31px; line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(.94); }
   /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
