@@ -2281,15 +2281,30 @@
 
 
 
+
+
+
+
+
+
+
+  .app-knop, .corner-btns .icon-btn {
+    border: 0; background: var(--hud-bg);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    text-shadow: var(--hud-ink);
+  }
+  .app-knop:active, .corner-btns .icon-btn:active {
+    transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+  }
   .app-knop {
     position: fixed; top: var(--balk-rand); left: var(--balk-rand); z-index: 50;
-    height: 44px; padding: 0 15px 0 11px; display: flex; align-items: center; gap: 6px;
+    height: 44px; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 7px;
     font: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--c-white); white-space: nowrap;
-    border-radius: var(--r-pill); border: 1.5px solid rgba(255,255,255,.28);
-    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+    border-radius: var(--r-pill);
   }
-  .app-knop:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+
+  .app-knop .ico { stroke-width: 2.4; }
 
 
 
@@ -2304,7 +2319,17 @@
     display: table; margin: 0 auto 8px; padding: 3px 10px; border-radius: var(--r-pill);
     background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-mini); font-weight: 700;
   }
-  #app-blad .ab-wat { text-align: center; color: var(--paper-ink-muted); margin-bottom: 10px; }
+
+  #app-blad .ab-voordelen { display: flex; gap: 8px; margin: 2px 0 12px; }
+  #app-blad .ab-vd {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: var(--tx-mini); font-weight: 700; color: var(--paper-ink-muted); text-align: center;
+  }
+  #app-blad .ab-vd-i {
+    width: 40px; height: 40px; padding: 9px; border-radius: var(--r-sm);
+    background: var(--lavender-wash); color: var(--purple-deep);
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
   #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
   #app-blad .ab-nr {
     flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
@@ -2314,13 +2339,27 @@
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
     background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
   }
-  #app-blad .ab-svg { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-svg, #app-blad .ab-kbd .ico { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-kbd .ico { stroke-width: 2.2; }
+  #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
 
   #app-blad .ab-balk {
     display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 4px 0 6px 34px;
     border-radius: 12px; background: var(--paper-muted-bg); color: #0a84ff; font-size: 18px;
   }
   #app-blad .ab-doel { display: grid; padding: 3px; border-radius: 7px; box-shadow: 0 0 0 2.5px var(--pink-hot); }
+
+  #app-blad .ab-balk26 { display: flex; align-items: center; gap: 8px; height: 44px; margin: 4px 0 8px 34px; }
+  #app-blad .ab-rond {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--paper-muted-bg); color: var(--paper-ink); font-size: 18px; font-weight: 700;
+  }
+  #app-blad .ab-adres {
+    flex: 1; min-width: 0; height: 40px; border-radius: var(--r-pill); display: grid; place-items: center;
+    background: var(--paper-muted-bg); color: var(--paper-ink-muted); font-size: var(--tx-klein);
+    overflow: hidden; white-space: nowrap;
+  }
+  #app-blad .ab-rond.ab-doel { padding: 0; border-radius: 50%; }
   #app-blad .ab-uitleg { margin: 4px 0; }
   #app-blad .ab-noot {
     margin-top: 10px; padding: 8px 11px; border-radius: var(--r-sm);
@@ -8882,7 +8921,8 @@
 </style>
 </head>
 <body class="start">
-<!-- De pijlen en het kruisje van de terugknoppen (en de ▶ van het ouderdeel), één
+<!-- De pijlen en het kruisje van de terugknoppen (en de ▶ van het ouderdeel, en
+     het plus-vierkantje van "Als app"), één
      keer getekend. Ze stonden er als tekst (← ↑ ↓ ✕ ▶), maar die tekens zitten niet in Fredoka: elk toestel
      tekende ze dan in zijn eigen systeemletter, dun en klein en overal anders.
      Nu is het één lijn met ronde uiteinden, zo dik als de letter van de knoppen
@@ -8892,6 +8932,7 @@
   <symbol id="ico-op" viewBox="0 0 24 24"><path d="M12 19V5.5M5.5 11.5L12 5l6.5 6.5"/></symbol>
   <symbol id="ico-kruis" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
   <symbol id="ico-speel" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.8v12.4L18 12z"/></symbol>
+  <symbol id="ico-erbij" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M12 8v8M8 12h8"/></symbol>
 </svg>
 <div class="grain" aria-hidden="true"></div>
 <div id="confetti-layer" aria-hidden="true"></div>
@@ -9346,10 +9387,10 @@
   <button class="nav-item" id="nav-tro" onclick="navTik('tro')"><span class="nav-ico">🏆</span>Trofeeën<span class="nav-dot"></span></button>
 </div>
 
-<!-- Linksboven, het spiegelbeeld van het tandwiel: "Speel als app". Alleen op de
+<!-- Linksboven, het spiegelbeeld van het tandwiel: "Als app". Alleen op de
      sterrenkeuze en alleen in de browser -- appKnopZet zet hem aan en uit. -->
 <button class="app-knop" id="app-knop" style="display:none" onclick="openAppBlad(true)">
-  <span aria-hidden="true">📲</span> Speel als app
+  <svg class="ico" aria-hidden="true"><use href="#ico-erbij"/></svg> Als app
 </button>
 
 <!-- Het tandwiel is de deur naar Voor ouders, zonder menu ertussen. Daar stond
@@ -24128,6 +24169,13 @@ addEventListener('appinstalled', () => {
 
 
 
+
+
+
+
+
+
+
 const APPKNOP_KEY = 'rekenPopsterren_appknop';
 const APPKNOP = { vanafBezoek: 2, rustDagen: 14, maxNee: 3 };
 let installVoorstel = null;
@@ -24176,8 +24224,8 @@ function appKnopNietNu() {
 }
 
 
+
 const DEEL_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
-const PLUS_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 function isIpad(nav) {
   nav = nav || navigator;
   const ua = String(nav.userAgent || '');
@@ -24185,19 +24233,43 @@ function isIpad(nav) {
 }
 
 
-function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
+
+
+
+function isSafari26(nav) {
+  const m = /Version\/(\d+)/.exec(String((nav || navigator).userAgent || ''));
+  return !!m && +m[1] >= 26;
+}
+
+
+
+function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const stap = (n, t) => `<div class="ab-stap"><span class="ab-nr">${n}</span><span>${t}</span></div>`;
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
-  const wat = '<p class="ab-wat">Dan staat het spel als icoon op je beginscherm, met het hele scherm om te spelen. Het werkt ook zonder internet.</p>';
-  let html = '<div class="ab-voor">Voor papa of mama</div>' + wat;
+  const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
+
+
+  const voordeel = (pad, t) => `<span class="ab-vd"><svg class="ab-vd-i" viewBox="0 0 24 24" aria-hidden="true">${pad}</svg>${t}</span>`;
+  let html = '<div class="ab-voor">Voor papa of mama</div><div class="ab-voordelen">'
+    + voordeel('<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/>', 'Eigen icoon')
+    + voordeel('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', 'Heel scherm')
+    + voordeel('<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0M3 3l18 18"/>', 'Zonder internet')
+    + '</div>';
   if (soort === 'ios') {
-    html += ipad
-      ? stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`)
-      : stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
-        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>';
-    html += stap(2, `Kies ${kbd(PLUS_SVG + ' Zet op beginscherm')}${ipad ? '' : ' (een beetje naar beneden scrollen)'}`)
-      + stap(3, 'Tik op <b>Voeg toe</b>, en open Rekensterren voortaan via het icoon.');
-    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app op het beginscherm begint leeg. Maak eerst een back-up via ⚙️ → Voor ouders → Beheer, en zet hem daar in de app terug.</div>';
+    if (ipad) {
+      html += stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`) + stap(2, `Kies ${erbij}`);
+    } else if (nieuw) {
+
+      html += stap(1, `Tik onderaan op ${kbd('···')}`)
+        + '<div class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></div>'
+        + stap(2, `Tik op ${kbd(DEEL_SVG + ' Deel')} en dan op ${erbij}`);
+    } else {
+      html += stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
+        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>'
+        + stap(2, `Kies ${erbij}`);
+    }
+    html += stap(3, `Tik op ${kbd('Voeg toe')}`);
+    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ → ⋯, en zet hem daar in de app terug.</div>';
     return { html, installeer: false };
   }
   if (soort === 'android' && kanInstalleren) {
@@ -24212,12 +24284,12 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
 function openAppBlad(vanKnop) {
   sndClick();
   const hasStars = profileKeys().length > 0;
-  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel);
-  $('confirm-title').textContent = '📲 Rekensterren als app';
+  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
     `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
-    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">📲 Installeren</button>' : '');
+    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '');
   $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
   const ik = $('app-blad-installeer');
   if (ik) ik.onclick = () => {
