@@ -1107,9 +1107,10 @@ function check(ok, label, detail) {
   }
 
   /* R -- ▶ rechtsboven: meteen spelen als het kind dat je bekeek, in plaats van
-     terug naar het keuzescherm en het daar opnieuw zoeken. De naam loopt mee met
-     de kiezer en met het naamveld; zonder ster is er geen ▶. En het groene
-     "Opgeslagen" dat er eerst stond is weg. */
+     terug naar het keuzescherm en het daar opnieuw zoeken. Wat hij voorleest
+     loopt mee met de kiezer en met het naamveld; zonder ster is er geen ▶ (en
+     dan staat de titel er wél). ← · sterren · ▶ staan op één regel. En het
+     groene "Opgeslagen" dat er eerst stond is weg. */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-gear');
@@ -1119,15 +1120,19 @@ function check(ok, label, detail) {
     await page.waitForTimeout(150);
     let r = await page.evaluate(() => {
       const b = document.getElementById('speel-als');
-      return { zicht: !!b && !b.hidden && b.offsetWidth > 0, tekst: b && b.textContent, label: b && b.getAttribute('aria-label'),
-        oud: !!document.getElementById('settings-saved') };
+      const kop = document.querySelector('#screen-settings .screen-header');
+      return { zicht: !!b && !b.hidden && b.offsetWidth > 0, label: b && b.getAttribute('aria-label'),
+        oud: !!document.getElementById('settings-saved'),
+        eenRegel: kop.contains(document.getElementById('settings-profiles')) && kop.contains(b),
+        titel: getComputedStyle(kop.querySelector('.header-title')).display };
     });
-    check(r.zicht && /Bas/.test(r.tekst) && r.label === 'Speel als Bas', 'R · ▶ noemt wie er in de kiezer gekozen is', JSON.stringify(r));
+    check(r.zicht && r.label === 'Speel als Bas', 'R · ▶ zegt wie er in de kiezer gekozen is', JSON.stringify(r));
+    check(r.eenRegel && r.titel === 'none', 'R · ← · de sterren · ▶ op één regel, zonder titel', JSON.stringify(r));
     check(!r.oud, 'R · het opslagpilletje is weg', JSON.stringify(r));
     await page.click('#settings-subtabs button[data-t="beheer"]');
     await page.fill('#set-name', 'Basje');
-    r = await page.evaluate(() => document.getElementById('speel-als').textContent);
-    check(/Basje/.test(r), 'R · een nieuwe naam staat meteen in ▶', r);
+    r = await page.evaluate(() => document.getElementById('speel-als').getAttribute('aria-label'));
+    check(r === 'Speel als Basje', 'R · een nieuwe naam staat meteen in ▶', r);
     await page.click('#speel-als');
     await page.waitForTimeout(900);
     r = await page.evaluate(() => ({ cur, kaart: document.getElementById('screen-map').classList.contains('active'),
@@ -1139,8 +1144,10 @@ function check(ok, label, detail) {
     await page.waitForTimeout(300);
     await page.evaluate(() => openSettings());
     await page.waitForTimeout(300);
-    r = await page.evaluate(() => document.getElementById('speel-als').hidden);
-    check(r === true, 'R · zonder ster is er niemand om als te spelen', String(r));
+    r = await page.evaluate(() => ({ verborgen: document.getElementById('speel-als').hidden,
+      titel: getComputedStyle(document.querySelector('#screen-settings .header-title')).display }));
+    check(r.verborgen === true, 'R · zonder ster is er niemand om als te spelen', JSON.stringify(r));
+    check(r.titel !== 'none', 'R · en dan staat er gewoon "Voor ouders"', JSON.stringify(r));
     await ctx.close();
   }
 

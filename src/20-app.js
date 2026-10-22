@@ -13145,8 +13145,8 @@ function speelAlsKnop(p) {
   if (!b) return;
   b.hidden = !p;
   if (!p) return;
-  b.querySelector('.sa-naam').textContent = p.name;
   b.setAttribute('aria-label', 'Speel als ' + p.name);
+  b.title = 'Speel als ' + p.name;
 }
 // De drie onderdelen van het ouderdeel. Waarde = staat, label = wat er staat.
 const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
@@ -13253,6 +13253,8 @@ function renderSettings() {
   // Zonder ster is er niets om "wiens" of "wat daarover" mee te kiezen; die twee
   // rijen verdwijnen dan in plaats van leeg te blijven staan.
   $('settings-profiles').style.display = p ? '' : 'none';
+  // mét ster staat de rij sterren op de plek van de titel (zie de kop in index.html)
+  $('screen-settings').classList.toggle('met-ster', !!p);
   $('settings-subtabs').style.display = p ? '' : 'none';
   if (!p) {
     setTab = 'beheer';
@@ -13378,7 +13380,7 @@ function bindSettings(p, s) {
     if (lbl) lbl.textContent = p.name;
     // en in de wiskaart eronder, die haar ook bij naam noemt (.set-naam)
     document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
-    // en in ▶ rechtsboven
+    // en in wat ▶ rechtsboven voorleest
     speelAlsKnop(p);
   });
   /* Enter betekent "klaar met dit veld", net als op het maakformulier (zie daar):

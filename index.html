@@ -7991,6 +7991,9 @@
 
 
 
+  #screen-settings.met-ster .screen-header { display: flex; gap: 8px; }
+  #screen-settings.met-ster .header-title { display: none; }
+  #screen-settings .screen-header .who-row { flex: 1; min-width: 0; }
 
 
 
@@ -8006,7 +8009,16 @@
 
 
 
-  #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
+
+
+
+
+
+
+
+
+  #screen-settings .hub-sticky .icon-btn,
+  #screen-settings .speel-als { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
   #screen-settings .header-title { transition: font-size var(--t-snel) steps(3); }
   #screen-settings .hub-sticky .screen-header,
   #screen-settings .who-row, #screen-settings .who-portrait, #screen-settings .who-portrait svg,
@@ -8062,7 +8074,8 @@
 
 
 
-  #screen-settings.gescrold .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
+  #screen-settings.gescrold .hub-sticky .icon-btn,
+  #screen-settings.gescrold .speel-als { width: 38px; height: 38px; font-size: 16px; }
   #screen-settings.gescrold .who-row { padding-top: 0; padding-bottom: 0; }
   #screen-settings.gescrold .who-btn { min-height: 38px; }
   #screen-settings.gescrold .who-portrait { width: 28px; height: 28px; }
@@ -8093,7 +8106,8 @@
     #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
     #screen-settings .header-title { font-size: var(--tx-body); }
-    #screen-settings .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .hub-sticky .icon-btn,
+    #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
     #screen-settings .who-btn { min-height: 38px; }
     #screen-settings .who-portrait { width: 28px; height: 28px; }
     #screen-settings .who-portrait svg { top: -3px; width: 48px; }
@@ -8153,7 +8167,7 @@
   }
   .who-btn.who-nieuw:hover { background: rgba(255,255,255,.1); }
   .who-nieuw .wn-plus { font-size: 18px; line-height: 1; opacity: .9; }
-  #settings-subtabs { margin-top: 6px; }
+  #settings-subtabs { margin-top: 12px; }
 
   .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); width: 100%; max-width: var(--kolom, 640px); }
   .segmented button {
@@ -8183,14 +8197,19 @@
 
 
 
-  .speel-als {
-    display: inline-flex; align-items: center; gap: .3em; max-width: 34vw;
-    min-height: 40px; padding: 6px 14px; border-radius: var(--r-pill); white-space: nowrap;
+
+
+
+
+  .btn.speel-als {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 20px;
   }
   .speel-als[hidden] { display: none; }
-  .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
-  .speel-als .ico { width: 1em; height: 1em; }
+
+
+  .speel-als .ico { width: 1em; height: 1em; margin-left: 2px; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
@@ -9448,12 +9467,15 @@
              onder het tandwiel blijft het staan -- daar ligt het op een licht
              tegeltje en wordt het wél in kleur getekend, en daar is het een
              rij-icoon naast twee andere. -->
+        <!-- De titel staat er alleen zonder ster (.met-ster, zie renderSettings):
+             mét sterren staat op zijn plek de rij sterren zelf, en zeggen de
+             tabbladen eronder al waar je bent. Eén regel in plaats van twee. -->
         <div class="header-title">Voor ouders</div>
-        <!-- ▶ = meteen spelen als het kind dat hieronder gekozen is (speelAlsGekozen):
-             het spiegelbeeld van ← links. Zonder ster verborgen. -->
-        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg><span class="sa-naam"></span></button></div>
+        <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
+        <!-- ▶ = meteen spelen als de ster die links gekozen is (speelAlsGekozen):
+             het spiegelbeeld van ←. Zonder naam erin, die staat er pal naast al. -->
+        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg></button></div>
       </div>
-      <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
       <div class="segmented" id="settings-subtabs" role="tablist"></div>
     </div>
     <div class="settings-sheet">
@@ -23541,8 +23563,8 @@ function speelAlsKnop(p) {
   if (!b) return;
   b.hidden = !p;
   if (!p) return;
-  b.querySelector('.sa-naam').textContent = p.name;
   b.setAttribute('aria-label', 'Speel als ' + p.name);
+  b.title = 'Speel als ' + p.name;
 }
 
 const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
@@ -23649,6 +23671,8 @@ function renderSettings() {
 
 
   $('settings-profiles').style.display = p ? '' : 'none';
+
+  $('screen-settings').classList.toggle('met-ster', !!p);
   $('settings-subtabs').style.display = p ? '' : 'none';
   if (!p) {
     setTab = 'beheer';

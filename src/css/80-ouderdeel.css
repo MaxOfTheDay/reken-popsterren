@@ -35,6 +35,17 @@
      die het scherm draagt, alleen een naam. */
   #screen-settings .header-title { font-size: var(--tx-sub); }
   #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
+  /* ---- Eén regel: ← · de sterren · ▶ --------------------------------------
+     Hier stonden drie regels pillen op elkaar: ← Voor ouders ▶ Sem, dan de
+     sterren, dan de tabbladen, bijna tegen elkaar aan en met de naam twee keer
+     naast elkaar. Mét sterren valt de titel weg (de tabbladen zeggen al waar je
+     bent) en staat de rij sterren op zijn plek, tussen ← en ▶ in. Bij veel
+     sterren scrolt die rij daar, net als eerst over de volle breedte. Zonder
+     ster blijft het de gewone kop met titel (dan is er geen rij en geen ▶).
+     De regel minder is lucht geworden: 12px tussen de sterren en de tabbladen. */
+  #screen-settings.met-ster .screen-header { display: flex; gap: 8px; }
+  #screen-settings.met-ster .header-title { display: none; }
+  #screen-settings .screen-header .who-row { flex: 1; min-width: 0; }
   /* ---- De overgang: álles wat krimpt loopt mee, en op één maat ------------
      Hier stond maar de helft. De kindkaartjes, het spoor van de tabbladen, de
      tabbladen zelf en het avatartje in het portret kregen hun krappe maat in
@@ -58,7 +69,8 @@
      is het aantal pixels dat hij krimpt (20 -> 17 is 3). De som hierboven lijdt
      er niet onder, want geen van deze regels is zo hoog als zijn letter: de
      hoogte komt overal van een min-height of van de terugknop. */
-  #screen-settings .hub-sticky .icon-btn { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
+  #screen-settings .hub-sticky .icon-btn,
+  #screen-settings .speel-als { transition: width var(--t-snel) ease, height var(--t-snel) ease, font-size var(--t-snel) steps(2); }
   #screen-settings .header-title { transition: font-size var(--t-snel) steps(3); }
   #screen-settings .hub-sticky .screen-header,
   #screen-settings .who-row, #screen-settings .who-portrait, #screen-settings .who-portrait svg,
@@ -114,7 +126,8 @@
      (bovenaan is hij weer 44), en zonder deze regel bepaalt de terugknop in zijn
      eentje de hoogte van de bovenste regel -- dan houdt krimpen op bij 44 en
      levert de hele gescrolde stand nog maar 16px op in plaats van 40. */
-  #screen-settings.gescrold .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
+  #screen-settings.gescrold .hub-sticky .icon-btn,
+  #screen-settings.gescrold .speel-als { width: 38px; height: 38px; font-size: 16px; }
   #screen-settings.gescrold .who-row { padding-top: 0; padding-bottom: 0; }
   #screen-settings.gescrold .who-btn { min-height: 38px; }
   #screen-settings.gescrold .who-portrait { width: 28px; height: 28px; }
@@ -145,7 +158,8 @@
     #screen-settings .hub-sticky { padding-top: 7px; padding-bottom: 6px; }
     #screen-settings .hub-sticky .screen-header { margin-bottom: 0; }
     #screen-settings .header-title { font-size: var(--tx-body); }
-    #screen-settings .hub-sticky .icon-btn { width: 38px; height: 38px; font-size: 16px; }
+    #screen-settings .hub-sticky .icon-btn,
+    #screen-settings .speel-als { width: 38px; height: 38px; font-size: 16px; }
     #screen-settings .who-btn { min-height: 38px; }
     #screen-settings .who-portrait { width: 28px; height: 28px; }
     #screen-settings .who-portrait svg { top: -3px; width: 48px; }
@@ -155,9 +169,9 @@
     #screen-settings .segmented button { padding: 7px 8px; min-height: 36px; font-size: var(--tx-label); }
   }
 
-  /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← terug ·
-     Voor ouders · (opgeslagen-bevestiging), met de profielkiezer en de
-     Voortgang|Oefenen|Beheer-navigatie er direct onder, ook altijd in beeld */
+  /* zelfde donkerpaarse .hub-sticky-kop als de rest van de app: ← · de sterren ·
+     ▶ (zonder ster: ← · Voor ouders), met de Voortgang|Oefenen|Beheer-navigatie
+     er direct onder, ook altijd in beeld */
   /* ==== Ouderdeel: twee navigatieniveaus, en ze moeten er ánders uitzien ====
      Hiervoor waren het twee identieke .segmented-sporen, pal op elkaar: niets
      vertelde dat het ene "wiens gegevens" kiest en het andere "wat daarover".
@@ -205,7 +219,7 @@
   }
   .who-btn.who-nieuw:hover { background: rgba(255,255,255,.1); }
   .who-nieuw .wn-plus { font-size: 18px; line-height: 1; opacity: .9; }
-  #settings-subtabs { margin-top: 6px; }
+  #settings-subtabs { margin-top: 12px; }
 
   .segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-md); background: rgba(0,0,0,.26); width: 100%; max-width: var(--kolom, 640px); }
   .segmented button {
@@ -233,16 +247,21 @@
   /* ▶ rechtsboven: meteen spelen als het gekozen kind (speelAlsGekozen). Een
      gouden .btn.small, want goud is spelen; rond, als spiegelbeeld van ← links.
      Hier stond eerst een groen "✓ Opgeslagen" dat na elke tik even oplichtte --
-     weg, de keuze die oplicht is zelf de bevestiging. De naam mag niet de titel
-     in het midden dooddrukken (de zijkolommen delen 1fr), dus hij kapt af. */
-  .speel-als {
-    display: inline-flex; align-items: center; gap: .3em; max-width: 34vw;
-    min-height: 40px; padding: 6px 14px; border-radius: var(--r-pill); white-space: nowrap;
+     weg, de keuze die oplicht is zelf de bevestiging. Er stond ook de naam in
+     ("▶ Sem"), maar die staat pal ernaast al op de gekozen ster: twee keer Sem
+     naast elkaar. Nu een ronde knop, even groot als ← (en krimpt mee, zie
+     .gescrold). */
+  /* .btn.speel-als, niet .speel-als: .btn.small zet een hoekige straal en weegt
+     anders zwaarder, en dan werd het rond een afgerond vierkantje. */
+  .btn.speel-als {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 20px;
   }
   .speel-als[hidden] { display: none; }
-  .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje */
-  .speel-als .ico { width: 1em; height: 1em; }
+  /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje.
+     Een tikje naar rechts, want een driehoek met zijn punt naar rechts staat
+     optisch pas in het midden als zijn zwaartepunt daar staat. */
+  .speel-als .ico { width: 1em; height: 1em; margin-left: 2px; }
 
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
