@@ -13842,8 +13842,15 @@ addEventListener('appinstalled', () => {
 
 /* ================= Speel als app ============================================
    De kaart hierboven staat in Beheer, en daar komt een ouder zelden. Dit is de
-   weg ernaartoe die je wél ziet: een knopje "📲 Speel als app" linksboven op de
-   sterrenkeuze, het spiegelbeeld van het tandwiel. Een tik opent een blad met de stappen voor déze browser.
+   weg ernaartoe die je wél ziet: een knopje "⊞ Als app" linksboven op de
+   sterrenkeuze, het spiegelbeeld van het tandwiel. Een tik opent een blad met
+   de stappen voor déze browser.
+
+   WAT EROP STAAT. "Als app", en niet "Speel als app": een kind leest "Speel"
+   en tikt, en dit knopje is voor de ouder. Het teken is het vierkantje met de
+   plus (#ico-erbij), omdat Safari precies dat teken naast "Zet op beginscherm"
+   zet: wat de ouder hier ziet, zoekt die straks in dat menu. Eerder stond er 📲,
+   en dat ziet er op elk toestel anders uit.
 
    WAAR, EN WAAROM DAAR. Linksboven, op dezelfde hoogte als het tandwiel. Daar
    raakt het op geen enkele schermmaat het logo, de tegels of de MAX-ster (die
@@ -13921,30 +13928,54 @@ function appKnopNietNu() {
   closeConfirmModal();
   appKnopZet();
 }
-/* Het deel-icoon van Safari, en het plus-vierkantje van "Zet op beginscherm".
-   Getekend en niet als plaatje: dan klopt het op elke schermmaat en kost het niets. */
+/* Het deel-icoon van Safari, getekend en niet als plaatje: dan klopt het op
+   elke schermmaat en kost het niets. Het plus-vierkantje van "Zet op
+   beginscherm" is #ico-erbij uit de tekenset, hetzelfde als op het knopje. */
 const DEEL_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
-const PLUS_SVG = '<svg class="ab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
 function isIpad(nav) {
   nav = nav || navigator;
   const ua = String(nav.userAgent || '');
   return /iPad/.test(ua) || (/Macintosh/.test(ua) && (nav.maxTouchPoints || 0) > 1);
 }
+/* Safari 26 (iOS 26) zet op een iPhone standaard een smalle balk onderaan:
+   ‹, het adres, en ···. De deelknop zit dáárachter; de oude werkbalk met Deel
+   in het midden zie je alleen nog als iemand die indeling zelf terugzet. Het
+   systeem in de user agent staat sinds 26 bevroren op 18_x, maar "Version/26"
+   klopt wel -- daar wordt dus op gekeken. */
+function isSafari26(nav) {
+  const m = /Version\/(\d+)/.exec(String((nav || navigator).userAgent || ''));
+  return !!m && +m[1] >= 26;
+}
 /* Wat er in het blad staat. Geeft { html, installeer } terug: installeer zegt of
-   er een knop "Installeren" bij hoort (alleen als Chrome zijn voorstel gaf). */
-function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
+   er een knop "Installeren" bij hoort (alleen als Chrome zijn voorstel gaf).
+   nieuw: Safari 26 of later (zie isSafari26). */
+function appBladInhoud(soort, ipad, hasStars, kanInstalleren, nieuw) {
   const stap = (n, t) => `<div class="ab-stap"><span class="ab-nr">${n}</span><span>${t}</span></div>`;
   const kbd = t => `<span class="ab-kbd">${t}</span>`;
-  const wat = '<p class="ab-wat">Dan staat het spel als icoon op je beginscherm, met het hele scherm om te spelen. Het werkt ook zonder internet.</p>';
-  let html = '<div class="ab-voor">Voor papa of mama</div>' + wat;
+  const erbij = kbd(ico('erbij') + ' Zet op beginscherm');
+  /* Wat je eraan hebt, in drie tegeltjes in plaats van een zin: een eigen
+     icoon, het hele scherm, en spelen zonder internet. */
+  const voordeel = (pad, t) => `<span class="ab-vd"><svg class="ab-vd-i" viewBox="0 0 24 24" aria-hidden="true">${pad}</svg>${t}</span>`;
+  let html = '<div class="ab-voor">Voor papa of mama</div><div class="ab-voordelen">'
+    + voordeel('<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/>', 'Eigen icoon')
+    + voordeel('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', 'Heel scherm')
+    + voordeel('<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0M3 3l18 18"/>', 'Zonder internet')
+    + '</div>';
   if (soort === 'ios') {
-    html += ipad
-      ? stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`)
-      : stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
-        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>';
-    html += stap(2, `Kies ${kbd(PLUS_SVG + ' Zet op beginscherm')}${ipad ? '' : ' (een beetje naar beneden scrollen)'}`)
-      + stap(3, 'Tik op <b>Voeg toe</b>, en open Rekensterren voortaan via het icoon.');
-    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app op het beginscherm begint leeg. Maak eerst een back-up via ⚙️ → Voor ouders → Beheer, en zet hem daar in de app terug.</div>';
+    if (ipad) {
+      html += stap(1, `Tik in Safari rechtsboven op ${kbd(DEEL_SVG + ' Deel')}`) + stap(2, `Kies ${erbij}`);
+    } else if (nieuw) {
+      // een nagetekende smalle balk van Safari 26, met ··· omcirkeld
+      html += stap(1, `Tik onderaan op ${kbd('···')}`)
+        + '<div class="ab-balk26" aria-hidden="true"><span class="ab-rond">‹</span><span class="ab-adres">rekensterren.be</span><span class="ab-rond ab-doel">···</span></div>'
+        + stap(2, `Tik op ${kbd(DEEL_SVG + ' Deel')} en dan op ${erbij}`);
+    } else {
+      html += stap(1, `Tik in Safari onderaan op ${kbd(DEEL_SVG + ' Deel')}`)
+        + '<div class="ab-balk" aria-hidden="true"><span>‹</span><span>›</span><span class="ab-doel">' + DEEL_SVG + '</span><span>📖</span><span>⧉</span></div>'
+        + stap(2, `Kies ${erbij}`);
+    }
+    html += stap(3, `Tik op ${kbd('Voeg toe')}`);
+    if (hasStars) html += '<div class="ab-noot">⭐ Al gespeeld in Safari? De app begint leeg. Maak eerst een back-up via ⚙️ → ⋯, en zet hem daar in de app terug.</div>';
     return { html, installeer: false };
   }
   if (soort === 'android' && kanInstalleren) {
@@ -13959,12 +13990,12 @@ function appBladInhoud(soort, ipad, hasStars, kanInstalleren) {
 function openAppBlad(vanKnop) {
   sndClick();
   const hasStars = profileKeys().length > 0;   // zoals in Beheer: wie een ster heeft, heeft iets te redden
-  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel);
-  $('confirm-title').textContent = '📲 Rekensterren als app';
+  const { html, installeer } = appBladInhoud(beginschermSoort(), isIpad(), hasStars, !!installVoorstel, isSafari26());
+  $('confirm-title').innerHTML = ico('erbij') + ' Rekensterren als app';
   $('confirm-body').innerHTML = `<div id="app-blad">${html}</div>`;
   $('confirm-actions').innerHTML =
     `<button class="btn small paper" id="app-blad-dicht">${vanKnop ? 'Niet nu' : 'Sluiten'}</button>`
-    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">📲 Installeren</button>' : '');
+    + (installeer ? '<button class="btn small purple" id="app-blad-installeer">Installeren</button>' : '');
   $('app-blad-dicht').onclick = vanKnop ? appKnopNietNu : closeConfirmModal;
   const ik = $('app-blad-installeer');
   if (ik) ik.onclick = () => {

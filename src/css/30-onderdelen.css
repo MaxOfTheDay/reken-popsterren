@@ -320,20 +320,35 @@
     display: block; font-size: var(--tx-mini); font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
   }
 
-  /* ---- "Speel als app": het knopje en het blad --------------------------
+  /* ---- "Als app": het knopje en het blad --------------------------------
      Het knopje is het spiegelbeeld van het tandwiel: dezelfde hoogte, dezelfde
-     glazen vulling, op dezelfde afstand van de rand -- maar dan linksboven en
-     met woorden, want een ouder moet weten wat het is zonder erop te tikken.
-     Waarom daar en niet onderaan: zie "= Speel als app" in het scriptblok. */
+     stof, op dezelfde afstand van de rand -- maar dan linksboven en met een
+     woord, want een ouder moet weten wat het is zonder erop te tikken.
+     Waarom daar en niet onderaan: zie "= Speel als app" in het scriptblok.
+
+     De stof is het donkere glas van de kaart (--hud-*), zonder lip, net als de
+     terugknop (.screen-header .icon-btn.header-left). Hier stond het lichte
+     glas mét lip, en daarmee was dit het luidste op de sterrenkeuze, luider dan
+     de tegels waar het kind voor komt. Een lip zegt "druk hier", en dat hoort
+     dit knopje niet te roepen: het is er voor wie het zoekt. Het tandwiel
+     ernaast draagt dezelfde stof, zodat de twee hoeken één paar zijn. */
+  .app-knop, .corner-btns .icon-btn {
+    border: 0; background: var(--hud-bg);
+    backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+    text-shadow: var(--hud-ink);
+  }
+  .app-knop:active, .corner-btns .icon-btn:active {
+    transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+  }
   .app-knop {
     position: fixed; top: var(--balk-rand); left: var(--balk-rand); z-index: 50;
-    height: 44px; padding: 0 15px 0 11px; display: flex; align-items: center; gap: 6px;
+    height: 44px; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 7px;
     font: inherit; font-size: var(--tx-label); font-weight: 700; color: var(--c-white); white-space: nowrap;
-    border-radius: var(--r-pill); border: 1.5px solid rgba(255,255,255,.28);
-    background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+    border-radius: var(--r-pill);
   }
-  .app-knop:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  /* het vierkantje is een vlak en geen pijl: een tikje dunner dan .ico */
+  .app-knop .ico { stroke-width: 2.4; }
   /* Het knopje en het tandwiel staan buiten #app, en dus boven elk venster dat
      daarin opengaat (#app is zijn eigen stapel; z-index 100 binnenin wint het niet
      van 50 erbuiten). Op een telefoon van 320 lagen ze zo over de kop van het
@@ -348,7 +363,17 @@
     display: table; margin: 0 auto 8px; padding: 3px 10px; border-radius: var(--r-pill);
     background: var(--lavender-wash); color: var(--purple-deep); font-size: var(--tx-mini); font-weight: 700;
   }
-  #app-blad .ab-wat { text-align: center; color: var(--paper-ink-muted); margin-bottom: 10px; }
+  /* wat je eraan hebt: drie tegeltjes naast elkaar, in de stof van .ab-voor */
+  #app-blad .ab-voordelen { display: flex; gap: 8px; margin: 2px 0 12px; }
+  #app-blad .ab-vd {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: var(--tx-mini); font-weight: 700; color: var(--paper-ink-muted); text-align: center;
+  }
+  #app-blad .ab-vd-i {
+    width: 40px; height: 40px; padding: 9px; border-radius: var(--r-sm);
+    background: var(--lavender-wash); color: var(--purple-deep);
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
   #app-blad .ab-stap { display: flex; gap: 10px; align-items: flex-start; margin: 9px 0; line-height: 1.4; }
   #app-blad .ab-nr {
     flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
@@ -358,13 +383,27 @@
     display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 8px;
     background: var(--paper-muted-bg); font-weight: 700; white-space: nowrap;
   }
-  #app-blad .ab-svg { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-svg, #app-blad .ab-kbd .ico { width: 18px; height: 18px; flex: none; }
+  #app-blad .ab-kbd .ico { stroke-width: 2.2; }
+  #confirm-title .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; stroke-width: 2.6; }
   /* een nagetekende werkbalk van Safari op een iPhone, met de deelknop omcirkeld */
   #app-blad .ab-balk {
     display: flex; justify-content: space-around; align-items: center; height: 40px; margin: 4px 0 6px 34px;
     border-radius: 12px; background: var(--paper-muted-bg); color: #0a84ff; font-size: 18px;
   }
   #app-blad .ab-doel { display: grid; padding: 3px; border-radius: 7px; box-shadow: 0 0 0 2.5px var(--pink-hot); }
+  /* en de smalle balk van Safari 26: ‹, het adres, en ··· -- daar zit Deel achter */
+  #app-blad .ab-balk26 { display: flex; align-items: center; gap: 8px; height: 44px; margin: 4px 0 8px 34px; }
+  #app-blad .ab-rond {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--paper-muted-bg); color: var(--paper-ink); font-size: 18px; font-weight: 700;
+  }
+  #app-blad .ab-adres {
+    flex: 1; min-width: 0; height: 40px; border-radius: var(--r-pill); display: grid; place-items: center;
+    background: var(--paper-muted-bg); color: var(--paper-ink-muted); font-size: var(--tx-klein);
+    overflow: hidden; white-space: nowrap;
+  }
+  #app-blad .ab-rond.ab-doel { padding: 0; border-radius: 50%; }
   #app-blad .ab-uitleg { margin: 4px 0; }
   #app-blad .ab-noot {
     margin-top: 10px; padding: 8px 11px; border-radius: var(--r-sm);

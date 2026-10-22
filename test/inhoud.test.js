@@ -770,13 +770,21 @@ zaak('J', () => {
   check(nee.run(`appKnopTonen(Date.now() + 15 * 24 * 3600 * 1000)`) === true, 'J · knopje: na twee weken terug', '');
   nee.run('appKnopNietNu(); appKnopNietNu()');
   check(nee.run(`appKnopTonen(Date.now() + 365 * 24 * 3600 * 1000)`) === false, 'J · knopje: na drie keer Niet nu blijft het weg', '');
-  check(nee.run('appUitlegNodig()') === true, 'J · knopje: maar de regel in het tandwielmenu blijft', '');
+  check(nee.run('appUitlegNodig()') === true, 'J · knopje: maar de uitleg in Voor ouders blijft', '');
 
   /* ---- Het blad ---- */
-  const blad = (soort, ipad, sterren, kan) => a.run(`appBladInhoud(${JSON.stringify(soort)}, ${ipad}, ${sterren}, ${kan})`);
+  const blad = (soort, ipad, sterren, kan, nieuw) => a.run(`appBladInhoud(${JSON.stringify(soort)}, ${ipad}, ${sterren}, ${kan}, ${!!nieuw})`);
   const iph = blad('ios', false, true, false);
   check(iph.html.includes('onderaan') && iph.html.includes('ab-balk') && iph.html.includes('Zet op beginscherm') && !iph.installeer,
     'J · blad iPhone: deelknop onderaan, met de nagetekende werkbalk', iph.html);
+  // Safari 26: Deel zit achter ···, dus de smalle balk en niet de oude werkbalk.
+  const iph26 = blad('ios', false, false, false, true);
+  check(iph26.html.includes('···') && iph26.html.includes('ab-balk26') && !iph26.html.includes('"ab-balk"') && iph26.html.includes('Zet op beginscherm'),
+    'J · blad iPhone, Safari 26: eerst ···, met de smalle balk', iph26.html);
+  check(!blad('ios', true, false, false, true).html.includes('ab-balk26'), 'J · blad iPad, Safari 26: gewoon Deel rechtsboven', '');
+  const s26 = ua => a.run(`isSafari26(${JSON.stringify({ userAgent: ua })})`);
+  check(s26(UA.iphone.replace('Version/18.5', 'Version/26.0')) && !s26(UA.iphone) && !s26(UA.android),
+    'J · Safari 26 wordt herkend aan Version/26 (het systeem staat bevroren op 18_x)', '');
   check(iph.html.includes('Maak eerst een back-up'), 'J · blad iPhone: met sterren de back-upnoot', '');
   check(!blad('ios', false, false, false).html.includes('back-up'), 'J · blad iPhone: zonder sterren geen back-upnoot', '');
   const ipd = blad('ios', true, false, false);
