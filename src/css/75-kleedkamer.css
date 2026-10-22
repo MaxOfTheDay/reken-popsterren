@@ -219,6 +219,8 @@
     #screen-dress { --pop-h: clamp(92px, 26vh, 120px); }
     #screen-dress .item-thumb { height: 40px; margin-bottom: 4px; }
     #screen-dress .item-thumb svg { height: 40px; }
+    #screen-dress .item-thumb .wereldprijs { transform: scale(.77); transform-origin: 50% 100%; }
+    #screen-dress .item-thumb .wereldprijs svg { height: 100%; }
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
     #screen-dress .hub-sticky::after { height: 57px; }
@@ -627,6 +629,8 @@
      onderin het vak zodat er lucht boven blijft (zie .podium) */
   .item-thumb.thumb-podium { align-items: flex-end; }
   .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
+  /* een wereldpodium draagt zijn schat (wereldPrijsHTML): 60 breed is 52 hoog, het vak precies */
+  .item-thumb.thumb-prijs { align-items: flex-end; }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
   /* het naambordje (naamBordje): even boven in de spiegel na het aandoen, in het
      stille vlak van de knoppen eromheen. De kaartjes zelf hebben geen naam meer. */

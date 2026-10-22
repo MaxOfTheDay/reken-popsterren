@@ -83,10 +83,13 @@ startspullen komen daar nog bij.
 Daarnaast één wereldschat per wereld. Die hebben **geen prijs** en zijn niet te
 koop — alleen te verdienen door de wereld uit te spelen.
 
-De twaalf podia staan nog in `ITEMS` (ze zijn het decor achter de pop) maar sinds
-fase 1 niet meer in `CATS`: er is geen tab die ernaartoe wijst, dus er is geen
-manier om ze te kopen. Hun prijzen zijn dode gegevens. `test/kleedkamer.test.js`
-zaak B legt dat vast, zodat de tab niet stilletjes terug kan komen.
+**Podia** koop je niet los. Elk wereldpodium is van jou zodra je zijn drie stukken
+hebt: de wereldschat (alleen te verdienen) plus twee gewone winkelstukken (samen
+± 145 tot 325 💎). Dat is afgeleid uit `p.owned`; zie "= Podia" in `src/20-app.js`.
+De `price` op een podiumregel in `ITEMS` is een overblijfsel uit de oude winkel en
+wordt nergens gebruikt. Het podium mét zijn schat is meteen de **prijs van de
+wereld** die het spel overal tekent (kaart, reis, Podia): schat → podium → goud
+voor een perfecte wereld, zie "= De prijs van een wereld".
 
 ## 4. Het ritme
 
@@ -164,6 +167,6 @@ is:
    fonkelt zodra je hem kunt kopen. Eén veld in de opslag (`p.wens`), dat kopen
    weer opruimt.
 
-Bewust níét gedaan: spullen aan een wereld vastmaken of ze per wereld laten
-vrijkomen. Dat zou naast de wereldschat een tweede beloning voor het uitspelen
-zetten, en die moet de enige blijven.
+Bewust níét gedaan: spullen per wereld laten vrijkomen. De winkel blijft helemaal
+open. Wél horen sinds de podia twee winkelstukken per wereld bij zijn podium; ze
+blijven gewoon los te koop, het podium is wat je krijgt als je de set rond hebt.

@@ -686,6 +686,38 @@
   .pod-circus::before   { background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.55) 0 15deg, transparent 15deg 30deg); }
   .pod-vlek::before     { background: radial-gradient(ellipse, rgba(60,40,10,.38) 2.4px, transparent 4.5px) 0 0 / 20px 12px; }
   .pod-gras::before     { background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,.18) 8px 16px); }
+  /* De prijs van een wereld: zijn podium met de schat erop (zie "= De prijs van
+     een wereld" in 20-app.js). Eén bouwsteen voor de kaart, de reis, Podia, het
+     wereldfeest en de kast; --wp is zijn breedte en al het andere schaalt mee.
+     De vier standen zitten in drie klassen. Bleek (nog niet af) en het silhouet
+     (nog geheim) zijn een filter: het zijn kleine stilstaande stukjes, en een
+     tweede kleurenset per podium zou elf keer bijgehouden moeten worden. */
+  .wereldprijs {
+    position: relative; display: block; flex: none; pointer-events: none;
+    width: var(--wp, 56px); height: calc(var(--wp, 56px) * .86);
+  }
+  .wereldprijs .podium {
+    position: absolute; left: 6%; right: 6%; bottom: 10%; height: 30%;
+    --pod-dik: calc(var(--wp, 56px) * .07); border-width: calc(var(--wp, 56px) * .03);
+  }
+  .wereldprijs:not(.af) .podium { filter: grayscale(.85) brightness(.62); opacity: .75; }
+  .wereldprijs .wp-schat {
+    position: absolute; left: 50%; bottom: 30%; width: 76%; height: 66%;
+    transform: translateX(-50%);
+  }
+  .wereldprijs .wp-schat svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .wereldprijs .wp-schat .thumb-emo { position: absolute; inset: 0; display: grid; place-items: end center;
+    font-size: calc(var(--wp, 56px) * .5); line-height: 1; }
+  /* Geheim: wát je wint blijft een verrassing (zie paintShop), dát je iets wint niet. */
+  .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.5); }
+  /* Goud: overal drie sterren. Een gouden rand en een gloed om het podium; de
+     zijband blijft van het podium zelf. */
+  .wereldprijs.goud .podium {
+    border-color: var(--gold-accent);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .04) var(--gold-accent),
+                0 0 calc(var(--wp, 56px) * .25) rgba(var(--goud-gloed-rgb), .85);
+  }
+  .wereldprijs.goud:not(.af) .podium { filter: grayscale(.5) brightness(.8); }
   /* Op de sterrentegel: een tikje hoger, zodat de zijband niet tegen de onderrand
      van de tegel valt (die knipt af, zie .stage). */
   .ster-tegel .stage-podium { bottom: 5%; }

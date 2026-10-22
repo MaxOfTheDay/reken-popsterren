@@ -175,6 +175,8 @@
        licht. Een cadeautje leest elk kind zonder te lezen, en de app gebruikt 🎁
        al voor "er ligt een beloning klaar" (de trofeeënkast, het eindscherm).
        Wát er ligt zegt het nog steeds niet; dat blijft voor het feestje.
+       Sinds de prijs van een wereld staat het 🎁 hier alleen nog bij een wereld
+       zonder podium; de rest krijgt zijn prijs als silhouet (.met-prijs).
 
        De rand is vier harde drop-shadows: een emoji heeft geen pad om een stroke
        op te zetten. Het is één klein element op één halte van de acht, stil, dus
@@ -184,6 +186,19 @@
             drop-shadow(0 0.3cqw 0 var(--halte-sticker)) drop-shadow(0 -0.3cqw 0 var(--halte-sticker))
             drop-shadow(0 0.35cqw 0 var(--ster-lip));
   }
+  /* De prijs van de wereld als silhouet in plaats van het 🎁 (zie renderMap): een
+     podium met een donkere hoed erop, met dezelfde stickerrand. Iets breder dan
+     het cadeautje en wat hoger, zodat hij naast de halte staat en niet erop. */
+  .tour-stop .stop-schat.met-prijs {
+    width: 11cqw; height: 9.5cqw; margin-left: 3.8cqw; top: -8cqw; font-size: 0;
+    filter: drop-shadow(0.45cqw 0 0 var(--halte-sticker)) drop-shadow(-0.45cqw 0 0 var(--halte-sticker))
+            drop-shadow(0 0.45cqw 0 var(--halte-sticker)) drop-shadow(0 -0.45cqw 0 var(--halte-sticker))
+            drop-shadow(0 0.5cqw 0 var(--ster-lip));
+  }
+  .tour-stop .stop-schat.met-prijs .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.85); }
+  /* zonder de zachte slagschaduw van het podium: die viel als een veeg over de halte */
+  .tour-stop .stop-schat.met-prijs .wereldprijs .podium { opacity: 1; filter: grayscale(.6) brightness(.8);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 1px var(--pr); }
   /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst
      als 🔒-emoji, daarna getekend, en steeds kleiner en stiller. Die reeks eindigt
      hier, en niet omdat het teken niet deugde: het zegt inmiddels iets wat de
