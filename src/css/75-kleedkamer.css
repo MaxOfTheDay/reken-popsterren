@@ -863,9 +863,11 @@
      Het podium waar ze op staat, in de spiegel. Breed genoeg dat haar dier en
      haar instrument er óók op staan, en de pop iets omhoog zodat haar voeten
      midden op de bovenkant landen en niet op de voorrand. Een tik op de schijf
-     opent Podia (openPodia); de pop zelf blijft dansen als je haar aantikt. */
+     opent Podia (openPodia); de pop zelf blijft dansen als je haar aantikt.
+     De maat is dezelfde regel als overal (zie .stage-podium in 50-zaal.css):
+     1,35 keer de pop, voeten op 45% van de bovenkant, lucht tot de spiegelrand. */
   .spiegel-podium {
-    position: absolute; left: 5%; right: 5%; bottom: 3%; height: 17%; z-index: 0; cursor: pointer;
+    position: absolute; left: 10%; right: 10%; bottom: 5.9%; aspect-ratio: 100 / 16; z-index: 0; cursor: pointer;
   }
   .spiegel-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .spiegel .avatar-holder { position: relative; z-index: 1; height: 84%; margin-bottom: 8.5%; pointer-events: none; }
