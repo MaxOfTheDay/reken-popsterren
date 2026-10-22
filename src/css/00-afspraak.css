@@ -242,9 +242,6 @@
                     vorm op het scherm. Sinds de weg uit losse stippen bestaat
                     is er van dat goud veel minder, en mag het hetzelfde goud
                     zijn als de route op Werelden (.reis-weg-gelopen).
-       stop-keyline de donkere inktlijn net buiten de rand van een halte. Dezelfde
-                    pruim als de zoom om de sterren (ster-zoom): één inktlijn
-                    om alles wat je op de kaart kunt aantikken
        stop-schaduw de zachte contactschaduw waarmee een halte op de tekening rust
        halte-rand   de rand van een gespeelde halte. Warm wít en nadrukkelijk
                     géén goud: goud op deze kaart is er voor "af" (de ring) en
@@ -253,52 +250,42 @@
                     telefoongrootte een gespeelde en een perfecte halte twee
                     gouden ringetjes die maar een haartje verschilden -- en dan
                     moet je vergelijken in plaats van zien.
-       halte-sticker de witte stickerrand van een gespeelde halte en van de halte
-                    waar je nu speelt -- dezelfde rand als om de pop op de kaart.
-                    Een perfecte halte draagt op die plek zijn ene gouden rand.
-       slot-sticker diezelfde rand op halve sterkte, om een halte op slot.
-       slot-vulling de vulling van een halte die nog niet aan de beurt is. DEKKEND,
-                    en dat is het hele punt: half doorzichtig pruim liet de
-                    tekening én de weg er dwars doorheen praten, en dan staat er
-                    geen bestemming maar een vlek waar toevallig een cijfer in
-                    hangt. Niet grijs (grijs leest als kapot) en niet donkerder
-                    dan de rest: het is een STOFFIGE LEISTEENVIOLET -- dezelfde
-                    familie als de pruim van een gespeelde halte, met ongeveer
-                    dezelfde helderheid, maar met driekwart van de verzadiging
-                    eraf. #4a148c is HSL(275, 75%, 32%); deze is HSL(255, 23%,
-                    32%). Dát verschil is waar "later" en "gehaald" uit elkaar te
-                    houden zijn, ook uit je ooghoek: het koninklijke paars is van
-                    wat je verdiend hebt, het stoffige van wat er nog ligt. Sinds
-                    het slotje weg is draagt deze kleur dat verschil alléén, samen
-                    met het ontbrekende sterrentabje en de plek op de route. Dus niet donkerder maken om hem stiller te
-                    krijgen -- dat kost alleen het cijfer.
+       halte-sticker de witte stickerrand om élke halte die aan de beurt is of
+                    was: gespeeld, perfect en die waar je nu speelt. Dezelfde rand
+                    als om de pop en om de sterren (ster-zoom) -- alles op de
+                    kaart is een sticker, net als de spulletjes aan haar voeten.
+                    Geen donkere inktlijn meer erbuiten: twee randen om één ding
+                    was precies wat de kaart onrustig maakte.
+       slot-sticker diezelfde rand iets zachter, om een halte op slot.
+       slot-vulling de vulling van een halte die nog niet aan de beurt is. DEKKEND:
+                    half doorzichtig liet de tekening én de weg er dwars doorheen
+                    praten. Het is HETZELFDE PAARS als een gespeelde halte, maar
+                    "uitgeschakeld": minder verzadigd en donkerder. Eerst was dit
+                    een stoffig leisteenviolet (een andere tint, HSL 255), en dan
+                    lazen gespeeld, hier en later als drie verschillende dingen in
+                    plaats van één knop in drie standen. Nu is het dezelfde knop
+                    -- zelfde vorm, rand en lip -- en zegt alleen de vulling of hij
+                    al aan is geweest. Niet grijs (grijs leest als kapot).
        slot-vulling-top
                     de bovenkant van diezelfde vulling, een tikje lichter. Samen
                     zijn ze een verloop van niets bijzonders -- precies genoeg om
                     het rondje bol te laten staan zoals alle andere haltes, en te
                     weinig om als glans op te vallen.
-       slot-rand    de zachte lavendelgrijze haarrand daarvan (.3, en dus een
-                    tint zachter dan de rand van welke andere staat ook). Die doet hetzelfde
-                    werk als het donkere keylijntje, maar de andere kant op: de
-                    dekkende vulling draagt zichzelf op sneeuw en suikerglazuur, en
-                    op de donkere rots van de Jungle- en Toverwereld is deze
-                    lichte rand het enige dat de halte nog begrenst. Samen zijn ze
-                    het lichte/donkere paar waar de hele draaglaag op rust. Geen
-                    vol wit maar een lavendeltint, zodat hij bij de stoffige
-                    vulling hoort in plaats van er als een lichtje op te liggen.
-                    Nu de vulling dekkend is, mengt deze rand met de vulling
-                    eronder en niet meer met de tekening -- hij is dus in élke
-                    wereld dezelfde kleur, en dat was hij eerder niet.
        ster-tab     het donkere schijfje onder het schatteken bij de laatste halte
                     (ooit ook het tabje onder de sterren; dat is weg)
-       ster-zoom    de donkere zoom achter elke ster onder een halte -- wat hem
-                    op sneeuw en zand los houdt, zonder tabje eronder
-       ster-leeg    een nog niet verdiende ster: een donker gat met een lichte
-                    omtrek, even groot als een verdiende
-       ster-vol     een verdiende ster                                          */
+       ster-zoom    de witte stickerrand om elke ster onder een halte (zelfde wit
+                    als halte-sticker)
+       ster-lip     het donkere lipje eronder, zoals de lip onder een halte --
+                    wat de ster op sneeuw en zand los houdt, zonder filter
+       ster-leeg    een nog niet verdiende ster: een gat in het uitgeschakelde
+                    paars van slot-vulling, met dezelfde witte rand, even groot
+                    als een verdiende
+       ster-vol     een verdiende ster. Op de kaart zelf is hij een verloop van
+                    geel naar oranje (#sterVerloop in index.html), net als de ⭐
+                    op het eindscherm; deze vlakke kleur is voor de stippen op
+                    Werelden                                          */
     --route-onder: rgba(30,8,52,.45);
     --route-goud: var(--gold-accent);
-    --stop-keyline: rgba(42,13,68,.8);
     --stop-schaduw: rgba(12,2,26,.5);
     /* --halte-rand-rgb los erbij omdat de reis dezelfde warm-witte rand een slag
        steviger nodig heeft: daar ligt hij om een tekening en niet om een rondje van
@@ -307,23 +294,22 @@
     --halte-rand-rgb: 255,240,214;
     --halte-rand: rgba(var(--halte-rand-rgb),.44);
     --halte-sticker: #fffaf0;
-    --slot-sticker: rgba(255,250,240,.45);
-    --slot-vulling: #514772;
-    --slot-vulling-top: #6a5f8c;
+    --slot-sticker: rgba(255,250,240,.55);
+    --slot-vulling: #563d7c;
+    --slot-vulling-top: #6e5596;
     /* De knoplip van de haltes (zie "De knoplip" in 55-haltes.css): de vaste
        donkere rand onder elke halte, zoals onder .btn. slot-lip onder een halte op
        slot, halte-lip onder een gespeelde; halte-vulling(-top) is het diepe
        paarse verloop van een gespeelde halte, een slag lichter dan
        --purple-shadow zodat de lip eronder te zien is. */
-    --slot-lip: #2f2848;
+    --slot-lip: #2f2150;
     --halte-vulling-top: #7b2cbf;
     --halte-vulling: #5a189a;
     --halte-lip: #2e0b5e;
-    --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
-    --ster-zoom: rgba(42,13,68,.9);
-    --ster-leeg: rgba(40,14,70,.6);
-    --ster-leeg-rand: rgba(255,255,255,.9);
+    --ster-zoom: var(--halte-sticker);
+    --ster-lip: rgba(46,11,94,.5);
+    --ster-leeg: var(--slot-vulling);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
