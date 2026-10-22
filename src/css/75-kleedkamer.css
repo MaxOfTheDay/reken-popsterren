@@ -66,12 +66,71 @@
   #screen-dress .hub-sticky {
     /* de bovenrand is die van de kast, en andersom -- zie #screen-trophies .hub-sticky */
     padding-top: 9px; padding-bottom: 8px;
-    background:
+    background: var(--kleed-veeg);
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 10px 22px rgba(8,1,20,.26);
+  }
+  #screen-dress {
+    --kleed-veeg:
       radial-gradient(78% 86% at 50% 0%, rgba(var(--goud-glans-rgb),.13), transparent 70%),
       linear-gradient(180deg, rgba(30,8,54,.18) 0%, rgba(30,8,54,.22) 36%,
                               rgba(32,9,56,.58) 68%, rgba(32,9,56,.72) 100%);
-    border-bottom: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 10px 22px rgba(8,1,20,.26);
+  }
+  /* ---- De kamer achter de kop, en geen rek --------------------------------
+     De veeg hierboven is bovenin bijna doorzichtig (.18), met 8px waas eronder.
+     Dat waas zag niet alleen de kamer maar alles wat erachter lag, en bij een
+     lange lade schoven de kaartjes ónder de spiegel door: wazige schimmen van
+     een dino en een vos naast de pop. De band onderin (::after, hieronder) dekt
+     alleen de categorierij af; daarboven bleef het rek zichtbaar.
+
+     Dus kijkt de kop niet meer door zich heen, maar schildert hij de kamer zelf:
+     .kop-kamer is dezelfde stapel lagen als #screen-dress.app-sfeer::before, op
+     precies de maat van het venster en met de kop aan de bovenrand -- en de kop
+     staat altijd aan de bovenrand, ook ongescrold. Met dezelfde 8px waas erover
+     is het beeld bovenaan hetzelfde als dat van het waas van vroeger; alleen staat
+     er nu niets meer achter. Een stilstaande, eenmaal gewaasde laag kost
+     bovendien minder dan een backdrop-filter die bij elke schuifstap opnieuw
+     moet rekenen.
+
+     De lagen, van onder naar boven: de vlakke kleur van de kop zelf (wat het waas
+     aan de randen laat doorschemeren, in plaats van een kaartje), de kamer
+     (.kop-kamer, z -2), de veeg (::before, z -1) en de band (::after, ook z -1 en
+     later in de boom, dus erboven). isolation houdt die negatieve lagen binnen de
+     kop. Het knippen doet .kop-kamer zelf (een vak zo groot als de kop, met de
+     vensterhoge kamer in zijn ::before) en niet de kop: met overflow: hidden op
+     de kop wordt hij een scrollvak, en dan mag hij in de kolom van het scherm
+     krimpen tot zijn minimum -- hij viel terug tot alleen de koprij. En clip, dat
+     dat niet doet, kent een oudere Safari niet: dan hing de kamer over het rek.
+
+     Alleen waar het rek ónder de kop doorschuift: staand. Liggend en breed staat
+     de kop in een eigen kolom naast het rek (zie hieronder), en een geschilderde
+     tekening (.kunst) schuift met het scherm mee, dus die is met een vaste kopie
+     niet bij te houden. Daar blijft het waas van hiervoor. */
+  #screen-dress:not(.kunst) .hub-sticky {
+    isolation: isolate;
+    background: rgb(58,20,80);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #screen-dress:not(.kunst) .hub-sticky::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    border-radius: inherit; background: var(--kleed-veeg);
+  }
+  #screen-dress .kop-kamer { display: none; }
+  #screen-dress:not(.kunst) .kop-kamer {
+    display: block; position: absolute; inset: 0; z-index: -2; pointer-events: none;
+    overflow: hidden; border-radius: inherit;
+  }
+  #screen-dress:not(.kunst) .kop-kamer::before {
+    content: ''; position: absolute; top: 0; left: 50%;
+    width: 100vw; height: 100vh; height: 100dvh; transform: translateX(-50%);
+    filter: var(--waas-klein);
+    background-image:
+      var(--kunst-sluier),
+      var(--fonkeling),
+      var(--kleed-tekening);
+    background-size: cover, cover, cover;
+    background-position: 50% 50%, 50% 50%, 50% 22%;
+    background-repeat: no-repeat, no-repeat, no-repeat;
   }
   #screen-dress .hub-sticky .screen-header { margin-bottom: 3px; }
   /* De schermnaam staat sinds de tekening niet meer op een vlak maar op de kamer.
@@ -286,6 +345,14 @@
     }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 1; max-width: none; }
     #screen-dress .shop-tabs-wrap { max-width: 100%; }
+    /* de kop staat hier naast het rek: niets schuift eronder, dus het waas van
+       vroeger (zie "De kamer achter de kop") */
+    #screen-dress:not(.kunst) .hub-sticky {
+      background: var(--kleed-veeg);
+      backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    }
+    #screen-dress:not(.kunst) .hub-sticky::before,
+    #screen-dress:not(.kunst) .kop-kamer { display: none; }
     /* de koprij in een kolom van ~300: dezelfde verdeling als op een smalle
        telefoon (zie max-width 380 hierboven), anders stak het saldo het rek in */
     #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
@@ -332,6 +399,13 @@
       grid-column: 2; grid-row: 1; max-width: none; margin-top: 60px; --kaart-min: 130px;
     }
     #screen-dress .shop-tabs-wrap { max-width: 100%; margin-top: 12px; }
+    /* net als liggend: de kop heeft zijn eigen kolom en houdt het waas */
+    #screen-dress:not(.kunst) .hub-sticky {
+      background: var(--kleed-veeg);
+      backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    }
+    #screen-dress:not(.kunst) .hub-sticky::before,
+    #screen-dress:not(.kunst) .kop-kamer { display: none; }
     #screen-dress .screen-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
   }
   /* ---- De spiegel ---------------------------------------------------------
