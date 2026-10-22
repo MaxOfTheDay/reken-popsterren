@@ -802,6 +802,45 @@
      weer het raster dat --vlak-rand net had weggehaald. Het blijft zichtbaar
      lichter dan een kaartje dat nog te koop staat -- dát is het hele verschil. */
   .item-card.owned { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.11); }
+  /* EEN PILLETJE ZEGT WAT HET KOST. Elk kaartje droeg er een: ✓ als het van jou
+     was, een gouden ✓ als je het droeg, 💎 als je het nog moest kopen. Drie
+     soorten pilletjes op dezelfde plek, en "van jou" en "te koop" verschilden
+     dan nog alleen in wat er in dat pilletje stond. Nu staat er alleen nog een
+     pilletje als er iets te doen is: een prijs, een 🔒, "Nieuw!".
+     Wat van jou is staat zonder pilletje, en de tekening schuift naar het
+     midden van het kaartje, een slag groter, op een zacht lichtje -- zodat het
+     vakje niet leeg leest. Het pilletje blijft wél in de opmaak staan (alleen
+     onzichtbaar), dus elk kaartje houdt dezelfde hoogte; de tekening wordt met
+     een transform verplaatst en verschuift dus niets in het rek.
+     Wat je draagt houdt zijn gouden rand en krijgt een gouden ✓ in de hoek, en
+     zijn lichtje is goud. Te koop is een slag donkerder dan van jou.
+     Net gekocht (.just-bought) blijft zoals het was: het "Nieuw!"-pilletje en de
+     glans gebruiken dezelfde plekken. */
+  .item-card:not(.owned):not(.equipped):not(.horizon-mist) { background: rgba(0,0,0,.16); border-color: rgba(255,255,255,.07); }
+  .item-card:not(.owned):not(.equipped):not(.horizon-mist):hover { background: rgba(255,255,255,.06); }
+  .item-card:not(.owned):not(.equipped).selected { background: var(--cyaan-tint); border-color: var(--cyaan-rand); }
+  .item-card.owned { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.13); }
+  .item-card.owned .item-status, .item-card.equipped:not(.just-bought) .item-status { visibility: hidden; }
+  .item-card.owned .item-thumb, .item-card.equipped:not(.just-bought) .item-thumb { transform: translateY(13px) scale(1.18); }
+  /* Het lichtje is een rondje achter de tekening, op het midden van het
+     kaartje. Niet als achtergrond van .item-thumb: dat vak is maar 52 hoog en
+     sneed het rondje boven en onder af tot een zachte rechthoek. ::before is
+     hier vrij -- het hartje van een wens (.gewenst) staat alleen op wat nog
+     niet van jou is. De tekening heeft een transform en ligt er dus bovenop. */
+  .item-card.owned::before, .item-card.equipped:not(.just-bought)::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 76px; height: 76px;
+    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.2), rgba(255,255,255,.07) 62%, transparent);
+  }
+  .item-card.equipped:not(.just-bought)::before {
+    background: radial-gradient(closest-side, rgba(var(--goud-rgb),.34), rgba(var(--goud-rgb),.1) 62%, transparent);
+  }
+  .item-card.equipped:not(.just-bought)::after {
+    content: '✓'; position: absolute; top: -7px; right: -7px; z-index: 3; width: 24px; height: 24px;
+    border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 900; line-height: 1;
+    color: var(--ink-on-gold); background: var(--gold-accent);
+    box-shadow: 0 2px 6px rgba(8,1,20,.5), 0 0 0 2px rgba(38,12,70,.9); pointer-events: none;
+  }
 
   /* De Aandoen-knop op het wereldfeest: de enige knop op die laag, dus hij mag de
      gouden zijn -- maar niet groter dan de regel erboven waar hij bij hoort. */
