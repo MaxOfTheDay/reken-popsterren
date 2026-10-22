@@ -13104,14 +13104,27 @@ function settingsToTop() {
    inhoud daarbij blijft staan, regelt kopKrimpMeten (zie daar). */
 function ouderScroll() { rafKlem(ouderGescrold); }
 function ouderGescrold() { gescrold($('screen-settings')); }
-let savedPillTimer = null;
-function saveAndFlash() {
+/* Elke keuze in het ouderdeel wordt meteen bewaard; er is geen Opslaan-knop.
+   Hier flitste eerst na elke tik een groen "✓ Opgeslagen" rechtsboven. Dat is
+   weg: de keuze die oplicht ís de bevestiging (zoals in de instellingen van een
+   telefoon), en de rechterkop is nu van ▶.
+
+   ▶ rechtsboven: meteen spelen als het kind dat je net bekeek. Het spiegelbeeld
+   van ← linksboven, dat terug naar het keuzescherm gaat -- waar je dan dat kind
+   weer moest opzoeken en aantikken. Dit is precies die tik (selectProfile),
+   zonder de omweg. Goud, want goud is spelen. */
+function speelAlsGekozen() {
+  if (!setKey || !db.profiles[setKey]) return;
   save();
-  const el = $('settings-saved');
-  if (!el) return;
-  el.classList.add('show');
-  clearTimeout(savedPillTimer);
-  savedPillTimer = setTimeout(() => el.classList.remove('show'), 1400);
+  selectProfile(setKey);
+}
+function speelAlsKnop(p) {
+  const b = $('speel-als');
+  if (!b) return;
+  b.hidden = !p;
+  if (!p) return;
+  b.querySelector('.sa-naam').textContent = p.name;
+  b.setAttribute('aria-label', 'Speel als ' + p.name);
 }
 // De drie onderdelen van het ouderdeel. Waarde = staat, label = wat er staat.
 const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
@@ -13224,12 +13237,14 @@ function renderSettings() {
     $('settings-profiles').innerHTML = '';
     $('settings-subtabs').innerHTML = '';
     $('settings-body').innerHTML = beheerEmptyHtml();
+    speelAlsKnop(null);
     bindSettings(null, null);
     kopKrimpMeten($('screen-settings'), 'zonder ster');   // zonder de twee keuzerijen krimpt de kop minder
     return;
   }
   renderWhoRow();
   renderSectionTabs();
+  speelAlsKnop(p);
   const s = p.settings;
   $('settings-body').innerHTML =
       setTab === 'oefenen' ? oefenenPanelHtml(p, s)
@@ -13334,13 +13349,15 @@ function bindSettings(p, s) {
   const on = (id, ev, fn) => { const el = $(id); if (el) el[ev] = fn; };
   on('set-name', 'oninput', e => {
     p.name = e.target.value.trim() || p.name;
-    saveAndFlash();
+    save();
     // de naam staat ook in de kiezer hierboven: die meteen laten meelopen, zonder
     // hertekenen (dat zou de focus uit het invulveld halen)
     const lbl = $('settings-profiles').querySelector('.active .tab-label');
     if (lbl) lbl.textContent = p.name;
     // en in de wiskaart eronder, die haar ook bij naam noemt (.set-naam)
     document.querySelectorAll('#settings-body .set-naam').forEach(n => { n.textContent = p.name; });
+    // en in ▶ rechtsboven
+    speelAlsKnop(p);
   });
   /* Enter betekent "klaar met dit veld", net als op het maakformulier (zie daar):
      het toetsenbord gaat weg en de kaarten eronder zijn weer te zien. Er wordt
@@ -13354,7 +13371,7 @@ function bindSettings(p, s) {
     if (d.soort === 'mode') s.mode = d.v;
     else grensOmhoog(s, parseInt(d.v, 10));
     s.grensTipBasis = grensDrieSterren(p);
-    saveAndFlash();
+    save();
     renderSettings();
   });
   // en die van de telmodus (zie telTip): de tip weet zelf wat de volgende stap is
@@ -13364,7 +13381,7 @@ function bindSettings(p, s) {
     sndClick();
     tt.doe(p);
     telPlafondOpnieuw(p);
-    saveAndFlash();
+    save();
     renderSettings();
   });
   on('set-name', 'onkeydown', e => {
@@ -13380,11 +13397,11 @@ function bindSettings(p, s) {
   // modus: wisselen tussen de rekenshow en de lees-vrije telmodus. Blijft hier:
   // de moduskaart hoort bij het ouderdeel (het maakformulier heeft zijn eigen
   // #newstar-track vlak boven de openklapper).
-  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; saveAndFlash(); renderSettings(); });
+  bind('set-track', c => { s.track = c.dataset.v; telPlafondOpnieuw(p); if (s.track === 'count' && !p.countTrack) p.countTrack = { stage: s.stage, rung: 0, streak: 0, seen: 0, acc: 0.5 }; save(); renderSettings(); });
   // De velden zelf staan óók op het maakformulier; de bediening is gedeeld.
   // Het maakformulier heeft niets op te slaan, dus wat er ná een wijziging
   // gebeurt komt van de aanroeper (hier: opslaan + hertekenen).
-  bindOefenChips(s, p, '', () => { saveAndFlash(); renderSettings(); });
+  bindOefenChips(s, p, '', () => { save(); renderSettings(); });
   on('set-reset', 'onclick', () => {
     showConfirm(
       '⚠️ Weet je het zeker?',
@@ -13421,7 +13438,7 @@ function bindSettings(p, s) {
     if (p.base === c.dataset.v) return;
     sndClick();
     p.base = c.dataset.v;
-    saveAndFlash();
+    save();
     renderSettings();
   });
   on('set-delete', 'onclick', () => {
