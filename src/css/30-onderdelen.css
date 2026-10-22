@@ -620,11 +620,16 @@
        zelf naar --tx-sub (zie de kopregel onder de 520px), zodat de teller daar
        even groot was als de kop -- precies wat de eerste zin hierboven verbiedt.
        De stof blijft per scherm verschillen, en dat hoort zo: op een tekening de
-       zwevende --hud-*, op een plaat deze. Alleen de maat is nu van iedereen. */
-    height: var(--hud-h); padding: 0 13px; font-size: var(--tx-body);
+       zwevende --hud-*, op een plaat deze. Alleen de maat is nu van iedereen.
+       Sinds --hud-h 44 is, staat het getal op --tx-sub: 17 in een pil van 44
+       oogde als een te groot jasje. */
+    height: var(--hud-h); padding: 0 15px; font-size: var(--tx-sub);
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
     border: 0; color: inherit; font-family: inherit;
   }
+  /* Onder de 390px terug naar --tx-body: op 320 kostte --tx-sub de schermnaam
+     ernaast weer letters ("Trofeeënk..."). De hoogte blijft --hud-h. */
+  @media (max-width: 389px) { .diamond-badge { font-size: var(--tx-body); padding: 0 11px; } }
   button.diamond-badge { cursor: pointer; }
   button.diamond-badge:active { transform: scale(.95); }
   /* Mijn wens op de kaart: het emoji van je wens achter je diamanten, en een

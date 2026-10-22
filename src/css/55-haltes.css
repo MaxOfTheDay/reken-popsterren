@@ -825,9 +825,9 @@
      onder de route; grotere haltes, ster en speelknop halen dat terug. De drempel
      staat op 760 (was 800) zodat ook de wat kortere telefoons meedoen. */
 
-  /* heel smalle toestellen: topbalk compacter zodat naam + tellers samen passen */
-  @media (max-width: 390px) {
-    #screen-map .diamond-badge { font-size: var(--tx-body); padding: 6px 13px; }
-    .map-portrait { width: 38px; height: 38px; }
-    .map-portrait svg { top: -5px; width: 65px; }
-  }
+  /* Hier stond een blok voor "heel smalle toestellen" (max-width: 390px) dat de
+     💎-pil en het portretje kleiner zette. Het portretdeel won al lang niet meer
+     (#screen-map .map-portrait in 40-kaart.css is specifieker), en het pildeel
+     maakte de kaartpil op precies 390 een maat kleiner dan op de kleedkamer en de
+     kast. Wat smalle schermen nodig hebben staat nu bij de kop zelf, in
+     40-kaart.css (onder de 390px) en bij .diamond-badge in 30-onderdelen.css. */

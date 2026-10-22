@@ -662,7 +662,12 @@
     --hud-ring: rgba(255, 255, 255, .08);
     --hud-shadow: 0 2px 8px rgba(10, 2, 24, .22);
     --hud-ink: var(--op-kunst-ink);
-    --hud-h: 34px;
+    /* 44 en niet meer 34 (oktober 2026): even hoog als de wisselknop van de
+       kleedkamer en élke andere ronde knop (.icon-btn), en dicht bij de 48 van de
+       knoppen in de balk onderaan. Op 34 woog de kop te licht tegen die balk, en
+       was hij met een onzichtbaar vlakje pas een kindervinger. Eén maat voor de
+       hele app, zodat de 💎-pil op elk tabblad op dezelfde plek even groot is. */
+    --hud-h: 44px;
 
     /* ---- Op een tekening: drie sterktes, en dat is de hele afspraak --------
        Zie §4 van de afspraak bovenaan. Waarom het als tokens staat en niet per
