@@ -16468,6 +16468,13 @@ function enterLevel(lvl, stopEl) {
 }
 const HALTE_JA = 80;
 function duikIn(lvl, kaart, spel, punt, klaar) {
+
+
+
+
+
+
+  if (!cur || !kaart.classList.contains('active')) { klaar(); return; }
   schermWeg(kaart, true, punt);
 
 
@@ -18259,14 +18266,7 @@ function renderTourMap(travelFrom) {
 
 
   const voltooi = () => {
-    const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-    const schuift = map.scrollHeight > map.clientHeight + 4
-      && getComputedStyle(map).overflowY !== 'hidden';
-    if (here && schuift) {
-      const f = map.querySelector('.world-frame');
-      const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
-      map.scrollTop = Math.max(0, y - map.clientHeight / 2);
-    }
+    kaartNaarHier(map);
     meetChroom();
     kopOpzij();
 
@@ -18443,8 +18443,42 @@ function meetChroom() {
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
   terugUitlijnen();
 }
+
+
+function kaartNaarHier(map) {
+  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+  const schuift = map.scrollHeight > map.clientHeight + 4
+    && getComputedStyle(map).overflowY !== 'hidden';
+  if (here && schuift) {
+    const f = map.querySelector('.world-frame');
+    const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
+    map.scrollTop = Math.max(0, y - map.clientHeight / 2);
+  }
+}
 addEventListener('resize', () => rafKlem(kaartChroomMeten));
-function kaartChroomMeten() { if ($('screen-map')) { meetChroom(); kopOpzij(); } }
+
+
+
+
+
+
+let kaartLiggend = innerWidth > innerHeight;
+function kaartChroomMeten() {
+  if (!$('screen-map')) return;
+  meetChroom(); kopOpzij();
+  const liggend = innerWidth > innerHeight;
+  if (liggend === kaartLiggend) return;
+  kaartLiggend = liggend;
+  kaartDraaiBij(0);
+}
+
+
+function kaartDraaiBij(n) {
+  const map = $('tour-map');
+  if (!map || !$('screen-map').classList.contains('active')) return;
+  if (wereldReisOp || vluchtOp || overgangBezig) { if (n < 40) setTimeout(() => kaartDraaiBij(n + 1), 150); return; }
+  kaartNaarHier(map);
+}
 
 
 
@@ -18892,7 +18926,12 @@ function runTravel(t) {
 
     if (crossing) showPraise(`${toW.world.icon} ${toW.world.name}`, null, true);
   };
-  const finish = () => { plaats(); vier(); };
+
+
+
+
+
+  const finish = () => { if (P() !== p) return; plaats(); vier(); };
 
 
 

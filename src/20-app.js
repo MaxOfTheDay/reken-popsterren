@@ -5760,6 +5760,13 @@ function enterLevel(lvl, stopEl) {
 }
 const HALTE_JA = 80;
 function duikIn(lvl, kaart, spel, punt, klaar) {
+  /* De halte zei "ja" HALTE_JA geleden, en in dat stukje kan er nog een tik of een
+     terugdruk tussen zijn gekomen: een tabblad, de pil, de terugknop van het
+     toestel. Dan is dát het laatste wat het kind wilde, en duikt de kaart niet
+     alsnog de zaal in. Hier ging de show gewoon door: de kleedkamer flitste even
+     op en de zaal kwam eroverheen -- of, na terug naar de sterrenkeuze, viel
+     startLevel om omdat er geen ster meer was. */
+  if (!cur || !kaart.classList.contains('active')) { klaar(); return; }
   schermWeg(kaart, true, punt);            // 2 -- de hele kaart, om het aangetikte punt
 
   /* 3 -- het spel staat er nú al, ook al zie je het nog niet.
@@ -7551,14 +7558,7 @@ function renderTourMap(travelFrom) {
      zodra het ná show() precies dezelfde taak nog loopt -- dus nog steeds vóór
      de eerste verf, niet een beeldje erna. */
   const voltooi = () => {
-    const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
-    const schuift = map.scrollHeight > map.clientHeight + 4
-      && getComputedStyle(map).overflowY !== 'hidden';
-    if (here && schuift) {
-      const f = map.querySelector('.world-frame');
-      const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
-      map.scrollTop = Math.max(0, y - map.clientHeight / 2);
-    }
+    kaartNaarHier(map);
     meetChroom();
     kopOpzij();
     // Terug uit een show: de kaart komt ingezoomd op die halte binnen en zakt
@@ -7735,8 +7735,42 @@ function meetChroom() {
     (nav.offsetHeight + (innerHeight - nav.getBoundingClientRect().bottom) + 12) + 'px');
   terugUitlijnen();
 }
+/* Schuift de kaart (liggend, of een tablet), dan staat de halte waar zij staat in
+   het midden. renderTourMap doet dit bij elke opbouw; de draai hieronder ook. */
+function kaartNaarHier(map) {
+  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+  const schuift = map.scrollHeight > map.clientHeight + 4
+    && getComputedStyle(map).overflowY !== 'hidden';
+  if (here && schuift) {
+    const f = map.querySelector('.world-frame');
+    const y = here.getBoundingClientRect().top - f.getBoundingClientRect().top;
+    map.scrollTop = Math.max(0, y - map.clientHeight / 2);
+  }
+}
 addEventListener('resize', () => rafKlem(kaartChroomMeten));
-function kaartChroomMeten() { if ($('screen-map')) { meetChroom(); kopOpzij(); } }
+/* Een toestel dat gedraaid wordt, krijgt de kaart opnieuw op haar halte. Staand
+   schuift een telefoon niet, liggend wel -- en de schuifstand van staand is dan 0,
+   dus kwam de kaart liggend bovenaan uit: de laatste halte in beeld, zij ergens
+   eronder buiten het scherm. Alleen bij een échte draai (breed wordt hoog of
+   andersom), niet bij elke resize: een adresbalk die inklapt mag een kind dat zelf
+   aan het schuiven is niet terugzetten. */
+let kaartLiggend = innerWidth > innerHeight;
+function kaartChroomMeten() {
+  if (!$('screen-map')) return;
+  meetChroom(); kopOpzij();
+  const liggend = innerWidth > innerHeight;
+  if (liggend === kaartLiggend) return;
+  kaartLiggend = liggend;
+  kaartDraaiBij(0);
+}
+/* Midden in een vlucht of een klim beweegt de camera zelf; dan pas erna, anders
+   trekt de draai de kaart onder de landing vandaan. */
+function kaartDraaiBij(n) {
+  const map = $('tour-map');
+  if (!map || !$('screen-map').classList.contains('active')) return;
+  if (wereldReisOp || vluchtOp || overgangBezig) { if (n < 40) setTimeout(() => kaartDraaiBij(n + 1), 150); return; }
+  kaartNaarHier(map);
+}
 /* Drie plekken, altijd -- maar alleen onder een halte die gespeeld is.
 
    Hiervoor stonden er alleen de verdiende sterren: 1/3 was één los sterretje, 2/3
@@ -8184,7 +8218,12 @@ function runTravel(t) {
        pulst al en de pop huppelt er al naartoe; de kaart zei het een tweede keer. */
     if (crossing) showPraise(`${toW.world.icon} ${toW.world.name}`, null, true);
   };
-  const finish = () => { plaats(); vier(); };
+  /* Alleen voor de ster die op reis was. Drukt een kind middenin de wandeling op
+     terug, dan staat het op de sterrenkeuze en is er geen ster meer (cur = null):
+     de kaart van een ster die er niet meer is ombouwen gooide een fout. De
+     voortgang zelf staat al vast -- endLevel heeft p.level gezet -- dus hier valt
+     dan niets meer te doen. */
+  const finish = () => { if (P() !== p) return; plaats(); vier(); };
   /* De laatste show van de laatste uitgebrachte wereld. Er is geen volgende halte
      om naartoe te huppelen en geen volgende wereld om te onthullen -- er is een
      toegift: dezelfde wereld, opnieuw te spelen. Dus gaat de badge omhoog, valt
