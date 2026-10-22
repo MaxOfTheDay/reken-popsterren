@@ -1834,6 +1834,14 @@ function bezit(p, it) { return it.cat === 'stage' ? podiumVanJou(p, it) : (p.own
 // Wat er nog ontbreekt, en wat dat samen kost. De schat heeft geen prijs.
 function podiumRest(p, st) { return podiumStukken(st).filter(it => !(p.owned || []).includes(it.id)); }
 function podiumPrijs(p, st) { return podiumRest(p, st).reduce((t, it) => t + (it.price || 0), 0); }
+/* Het stuk dat als eerste aan de beurt is: wie een podium aantikt, krijgt dat stuk
+   meteen gekozen in de balk, met één knop voor dat ene stuk. Geen keuze als de
+   schat nog ontbreekt (dan is de knop 🗺️ Speel) of als het podium al van jou is. */
+function volgendStuk(p, st) {
+  if (!st || podiumVanJou(p, st) || podiumOpSlot(p, st)) return null;
+  const s = podiumRest(p, st).find(x => tagStand(x, p) !== 'slot');
+  return s ? s.id : null;
+}
 // Nog niet te halen met diamanten: de schat van de wereld ontbreekt.
 function podiumOpSlot(p, st) {
   const schat = podiumSchat(st);
@@ -11410,6 +11418,7 @@ function openKleedkamerItem(id) {
     if (p.equipped[doel.cat] !== doel.id) equipShopItem(doel.id);
   } else {
     shopSelectedId = id;
+    if (doel.cat === PODIA_CAT) podiumStuk = volgendStuk(p, doel);
     paintShop();
   }
   /* Hier niet bovenaan beginnen (zoals openKleedkamer en openKleedkamerCat), maar
@@ -11659,7 +11668,8 @@ function renderShop() {
          waar het staat. */
       const herbouw = !!shopJustBoughtId;
       clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id; podiumStuk = null;
+      shopJustBoughtId = null; shopSelectedId = it.id;
+      podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
       herbouw ? renderShop() : paintShop();
       if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
     };
@@ -11791,7 +11801,29 @@ function dressCardState(card, it, p) {
     + (shopSelectedId === it.id ? ' selected' : '')
     + (!owned && p.wens === it.id ? ' gewenst' : '')
     + (stand === 'new' ? ' just-bought' : '');
-  zetTag(card.querySelector('.item-status'), stand, tagPrijs(it, p));
+  const tag = card.querySelector('.item-status');
+  if (it.cat === PODIA_CAT && (stand === 'price' || stand === 'need') && it.stukken) return zetSetRij(tag, it, p);
+  zetTag(tag, stand, tagPrijs(it, p));
+}
+/* DE VERZAMELKAART. Een podium dat nog niet af is, draagt onder zijn schijf geen
+   bedrag maar zijn set: drie kleine vakjes met zijn drie stukken. Wat ze heeft
+   staat in kleur met een groene rand, wat nog ontbreekt als donker silhouet.
+   Eerst stond hier "💎 210": geen prijs maar het totaal van wat er nog
+   ontbrak, met dezelfde tag als een spulletje dat je in één keer koopt. Een kind
+   las dan "dit podium kost 210" -- terwijl je stukken verzamelt. Wat het kost
+   staat per stuk in de balk, als je het podium aantikt.
+   Een podium op slot (de schat ontbreekt nog) houdt gewoon zijn 🔒: dat is de
+   eerste stap van de set, en die zegt het slotje al. De vakjes worden alleen
+   opnieuw getekend als er iets veranderd is (paintShop loopt vaak). */
+function zetSetRij(el, st, p) {
+  if (!el) return;
+  const stukken = podiumStukken(st);
+  const sleutel = stukken.map(s => ((p.owned || []).includes(s.id) ? 1 : 0)).join('');
+  if (el.classList.contains('set-rij') && el.dataset.set === sleutel) return;
+  el.className = 'item-status set-rij';
+  el.dataset.set = sleutel;
+  el.setAttribute('aria-label', `${sleutel.split('1').length - 1} van de ${stukken.length}`);
+  el.innerHTML = stukken.map((s, i) => `<span class="sv${sleutel[i] === '1' ? ' heb' : ''}">${itemThumb(s)}</span>`).join('');
 }
 /* Alles bijwerken behalve het rek zelf: de pop (met het gekozen stuk al aan), het
    podium, de diamantenteller, de balk onderaan en de stand van elk kaartje dat er
@@ -11835,13 +11867,12 @@ function paintShop() {
 }
 function previewProfile(p, it) {
   const preview = { ...p, equipped: { ...p.equipped } };
-  /* Een podium past ze als geheel: de schijf plus de stukken die er te zien
-     zijn, en het stuk dat in de balk gekozen is. Zo staat het doel in de
-     spiegel. Een schat op slot blijft weg -- dat raadsel is van het feestje. */
-  if (it.cat === PODIA_CAT && it.stukken) {
-    podiumStukken(it).forEach(s => { if (tagStand(s, p) !== 'slot') preview.equipped[s.cat] = s.id; });
-    if (podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
-  }
+  /* Een podium past ze als schijf: alleen het podium verandert in de spiegel,
+     plus het ene stuk dat in de balk gekozen is (dat pas je, zoals elk
+     spulletje). Eerst trok ze hier de hele set aan, en dan stond ze in de spiegel
+     in kleren die niet van haar waren -- wat van jou is en wat niet, was dan niet
+     meer te zien. */
+  if (it.cat === PODIA_CAT && podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
   preview.equipped[it.cat] = it.id;
   return preview;
 }
