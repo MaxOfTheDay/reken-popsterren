@@ -534,34 +534,39 @@ const ITEMS = [
      jou als je de schat van die wereld hebt plus de twee stukken uit de winkel --
      afgeleid uit p.owned, nooit bewaard (zie "= Podia"). De twee stukken zitten
      nooit in de hoed-plek (daar zit de schat) en nooit samen in één plek, en een
-     spulletje hoort bij hoogstens één podium. test:inhoud kijkt dat na. */
+     spulletje hoort bij hoogstens één podium. test:inhoud kijkt dat na.
+
+     Een wereldpodium heet naar zijn wereld (Piratenpodium, niet Strandfeest). Dat
+     waren de namen uit de oude winkel, en dan las een kind dat net de
+     Piratenwereld uitspeelde "Strandfeest · Nog 2 stukken". De ids zijn gebleven,
+     dus wie er een had, heeft hem nog. */
   { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
     vloer: ['#9c5bd6', '#4a1580', '#22073f', '#e1bee7'], patroon: 'disco' },
   { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'],
     vloer: ['#9fa8da', '#5c6bc0', '#283171', '#ede7f6'], patroon: 'stippen' },
-  { id: 'stage_strand',   cat: 'stage', name: 'Strandfeest',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'],
+  { id: 'stage_strand',   cat: 'stage', name: 'Piratenpodium',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'],
     vloer: ['#ffe082', '#f9a825', '#7a4f00', '#4fc3f7'], patroon: 'zand', wereld: 'piraten', stukken: ['pet_papegaai', 'instr_accordeon'] },
-  { id: 'stage_kasteel',  cat: 'stage', name: 'Sprookjeskasteel', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'],
+  { id: 'stage_kasteel',  cat: 'stage', name: 'Toverpodium', price: 90, bg: 'linear-gradient(#b39ddb, #f48fb1)',                    deco: ['🏰','✨','👑'],
     vloer: ['#f8bbd0', '#b39ddb', '#5e3f8f', '#fff3c4'], patroon: 'ruit', wereld: 'tover', stukken: ['mic_toverstaf', 'dress_tover'] },
-  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimte',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'],
+  { id: 'stage_ruimte',   cat: 'stage', name: 'Ruimtepodium',      price: 90,  bg: 'linear-gradient(#0d1b4c, #311b92)',                    deco: ['🪐','⭐','🚀'],
     vloer: ['#4a3bb5', '#241a6e', '#150d47', '#8fd3ff'], patroon: 'sterren', wereld: 'ruimte', stukken: ['pet_alien', 'dress_sterren'] },
-  { id: 'stage_jungle',   cat: 'stage', name: 'Jungle',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'],
+  { id: 'stage_jungle',   cat: 'stage', name: 'Junglepodium',    price: 90,  bg: 'linear-gradient(#1b5e20, #66bb6a)',                    deco: ['🌿','🦜','🌺'],
     vloer: ['#81c784', '#2e7d32', '#123d16', '#c8e6c9'], patroon: 'blad', wereld: 'jungle', stukken: ['pet_aap', 'instr_drums'] },
   { id: 'stage_stadion',  cat: 'stage', name: 'Voetbalstadion',  price: 95,  bg: 'linear-gradient(#263238 34%, #43a047 34%)',            deco: ['⚽','🥅','📣'],
     vloer: ['#66bb6a', '#2e7d32', '#1b4d1f', '#ffffff'], patroon: 'gras' },
-  { id: 'stage_winter',   cat: 'stage', name: 'Winterwonderland',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'],
+  { id: 'stage_winter',   cat: 'stage', name: 'IJspodium',price: 100, bg: 'linear-gradient(#81d4fa, #e1f5fe)',                    deco: ['❄️','⛄','✨'],
     vloer: ['#e1f5fe', '#81d4fa', '#2a6f97', '#ffffff'], patroon: 'sneeuw', wereld: 'ijs', stukken: ['pet_pinguin', 'hair_wit'] },
-  { id: 'stage_onderwater',cat:'stage', name: 'Onderwater',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'],
+  { id: 'stage_onderwater',cat:'stage', name: 'Onderwaterpodium',  price: 110, bg: 'linear-gradient(#0277bd, #26c6da)',                    deco: ['🐠','🐳','💦'],
     vloer: ['#4dd0e1', '#0277bd', '#01406b', '#e0f7fa'], patroon: 'golf', wereld: 'onderwater', stukken: ['pet_dolfijn', 'dress_zeemeermin'] },
-  { id: 'stage_regenboog',cat: 'stage', name: 'Regenboogland',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'],
+  { id: 'stage_regenboog',cat: 'stage', name: 'Snoeppodium',   price: 120, bg: 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a1ffce, #a18cd1)', deco: ['🌈','☁️','🦋'],
     vloer: ['#fad0c4', '#a18cd1', '#5b3f8c', '#ffffff'], patroon: 'regenboog', wereld: 'snoep', stukken: ['mic_ijsje', 'dress_hartjes'] },
-  { id: 'stage_arena',    cat: 'stage', name: 'Sterrenarena',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'],
+  { id: 'stage_arena',    cat: 'stage', name: 'Muziekpodium',     price: 130, bg: 'radial-gradient(circle at 50% 0%, #ffd54f, #6d4c41 75%)', deco: ['🏟️','🎇','🎆'],
     vloer: ['#ffd54f', '#a1662f', '#4e2c12', '#fff3c4'], patroon: 'vonk', wereld: 'muziek', stukken: ['instr_dj', 'dress_disco'] },
-  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vulkaan',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'],
+  { id: 'stage_vulkaan',  cat: 'stage', name: 'Vuurpodium',         price: 150, bg: 'linear-gradient(#3e2723, #bf360c 70%, #ff6f00)',       deco: ['🌋','🔥','🌫️'],
     vloer: ['#ff8a3d', '#bf360c', '#4e1604', '#ffd180'], patroon: 'lava', wereld: 'vuur', stukken: ['pet_draak', 'mic_vuur'] },
-  { id: 'stage_circus',   cat: 'stage', name: 'Circuspiste',     price: 100, bg: 'linear-gradient(#b71c1c, #ef5350 60%, #fff59d)',       deco: ['🎪','🤹','🎈'],
+  { id: 'stage_circus',   cat: 'stage', name: 'Circuspodium',     price: 100, bg: 'linear-gradient(#b71c1c, #ef5350 60%, #fff59d)',       deco: ['🎪','🤹','🎈'],
     vloer: ['#ef5350', '#b71c1c', '#5a0b0b', '#fff59d'], patroon: 'circus', wereld: 'circus', stukken: ['pet_olifant', 'instr_toeter'] },
-  { id: 'stage_dino',     cat: 'stage', name: 'Dinovallei',      price: 120, bg: 'linear-gradient(#33691e, #8bc34a 70%, #dce775)',       deco: ['🌋','🦴','🌿'],
+  { id: 'stage_dino',     cat: 'stage', name: 'Dinopodium',      price: 120, bg: 'linear-gradient(#33691e, #8bc34a 70%, #dce775)',       deco: ['🌋','🦴','🌿'],
     vloer: ['#a5d66f', '#558b2f', '#2b4a14', '#fff3c4'], patroon: 'vlek', wereld: 'dino', stukken: ['pet_trex', 'dress_groen'] },
 ];
 const item = id => ITEMS.find(i => i.id === id);
@@ -1858,6 +1863,58 @@ function podiumHTML(st) {
   const v = (st && st.vloer) || item('stage_disco').vloer;
   const patroon = (st && st.patroon) || 'disco';
   return `<div class="podium pod-${patroon}" style="--pt:${v[0]};--pm:${v[1]};--ps:${v[2]};--pr:${v[3]}" aria-hidden="true"></div>`;
+}
+/* ---- De prijs van een wereld ----------------------------------------------
+   Een wereld deelde drie dingen uit, op drie plekken en onder drie namen: een
+   hoed (de kleedkamer), een podium dat je met diamanten afmaakt (Podia) en een
+   medaillon voor perfect (de kast). Voor een kind waren dat drie soorten prijs,
+   en het wereldfeest zette ze alle drie onder elkaar.
+
+   Nu is het één ding: HET PODIUM VAN DIE WERELD MET ZIJN SCHAT EROP, overal op
+   dezelfde manier getekend. Het heeft vier standen, en ze lopen in de volgorde
+   waarin een kind ze haalt:
+
+     geheim   de schat als donker silhouet, het podium bleek   nog niets
+     schat    de schat in kleur, het podium nog bleek          wereld uit
+     af       het podium in kleur                              + de twee stukken
+     goud     een gouden rand om het podium                    overal drie sterren
+
+   Goud staat los van af: goud zegt hoe je speelde, kleur zegt wat je kocht. Een
+   perfecte wereld waarvan de stukken nog niet gekocht zijn is dus een bleek
+   podium met een gouden rand -- en dat klopt.
+
+   Alles afgeleid, niets bewaard: de schat en de stukken staan in p.owned, perfect
+   staat in p.stars. Dezelfde regel als de voortgang en de podia zelf. */
+function wereldPodium(w) {
+  return (w && ITEMS.find(st => st.cat === 'stage' && st.wereld === w.id)) || null;
+}
+// De standen als klassen: '' (geheim heeft er een), en af/goud komen erbij.
+function wereldPrijsStand(p, i) {
+  const w = WORLDS[i], st = wereldPodium(w), schat = beloningItem(w);
+  const bezit = p.owned || [];
+  /* Geheim tot de wereld uit is. Dat is hetzelfde moment waarop de schat in
+     p.owned komt (grantWorldRewards), maar uit de sterren gelezen hoeft niemand
+     te wachten tot die uitgedeeld is -- de kaart hertekent soms eerder. */
+  const uit = worldAvailable(i) && worldProgress(p, worldForIndex(i)).uit;
+  return {
+    geheim: !schat || !(uit || bezit.includes(schat.id)),
+    af: !!st && podiumVanJou(p, st),
+    goud: worldAvailable(i) && worldProgress(p, worldForIndex(i)).vol,
+  };
+}
+/* Het prijsje zelf: een podium (podiumHTML) met de miniatuur van de schat erop.
+   Zonder podium of schat (een wereld die er nog geen heeft) is er geen prijs, en
+   dan een lege string -- de plek die hem toont valt dan terug op wat er stond.
+   maat = de breedte (een getal is pixels, een string mag ook cqw zijn); de rest schaalt mee (zie .wereldprijs). Een stand
+   meegeven mag (de kast tekent een gewonnen trofee altijd in goud). */
+function wereldPrijsHTML(p, i, maat, stand) {
+  const w = WORLDS[i], st = wereldPodium(w), schat = beloningItem(w);
+  if (!st || !schat) return '';
+  const s = stand || wereldPrijsStand(p, i);
+  const klas = 'wereldprijs' + (s.geheim ? ' geheim' : '') + (s.af ? ' af' : '') + (s.goud ? ' goud' : '');
+  const beeld = schat.thumb ? schat.thumb(curBase()) : `<span class="thumb-emo">${schat.emoji || ''}</span>`;
+  return `<span class="${klas}" style="--wp:${typeof maat === 'number' ? maat + 'px' : maat}" aria-hidden="true">${podiumHTML(st)}`
+    + `<span class="wp-schat">${beeld}</span></span>`;
 }
 // De trofee-id van de perfecte wereld: op het wereld-id, dus een wereld hernoemen
 // raakt een al behaalde trofee niet (alleen een gewijzigd id maakt een nieuwe).
@@ -6683,9 +6740,15 @@ function renderReis() {
       plaats.insertAdjacentHTML('beforeend', `<span class="reis-label">`
         + `<span class="rn-tekst">${esc(b.world.name)}</span></span>`);
     }
-    /* Eén teken in de hoek, nooit twee. Vol gaat vóór uit: een wereld waar alles
-       binnen is krijgt het sterornament en niet óók nog een vinkje. */
-    if (b.vol) plaats.insertAdjacentHTML('beforeend',
+    /* Eén teken in de hoek, nooit twee. Een open wereld draagt zijn prijs (zie
+       "= De prijs van een wereld"): het podium met de schat erop, als silhouet zo
+       lang je hem nog moet winnen, in goud als hij vol is. Dat is het vinkje én
+       het sterornament in één, en het zegt er iets bij wat die twee niet zeiden:
+       waar je hier voor speelt. Een wereld zonder prijs valt terug op de oude
+       tekens; vol gaat dan vóór uit. Op slot blijft het slotje. */
+    const prijs = b.open ? wereldPrijsHTML(p, b.i, 46) : '';
+    if (prijs) plaats.insertAdjacentHTML('beforeend', `<span class="reis-prijs">${prijs}</span>`);
+    else if (b.vol) plaats.insertAdjacentHTML('beforeend',
       `<span class="reis-glans" aria-hidden="true">${reisGlansSVG()}</span>`);
     else if (b.uit) plaats.insertAdjacentHTML('beforeend',
       '<span class="reis-zegel" aria-hidden="true">✓</span>');
@@ -7386,14 +7449,20 @@ function haltKnop(shown, nodes, i, stand) {
   if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
   /* Het schatteken bij de laatste halte (fase 6E). Alleen daar, alleen zolang
      de schat van deze wereld nog niet van haar is, en bewust niets meer dan een
-     🎁: wát er ligt hoort ze op het feestje te horen en niet hier van de kaart
-     af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
+     teken: wát er ligt hoort ze op het feestje te horen en niet hier van de
+     kaart af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
      loopt -- dat is de bedoeling ("daar ligt iets") en niet een tweede
-     statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft. */
+     statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft.
+     Het teken is de prijs van de wereld als silhouet (zie "= De prijs van een
+     wereld"): hetzelfde ding dat ze op de reis, in Podia en op het feestje ziet.
+     Hier stond een 🎁, maar dat teken zegt elders "er ligt een trofee klaar om te
+     openen" -- en dit is juist iets wat je nog moet winnen. Een wereld zonder
+     podium houdt het cadeautje. */
   const laatste = i === nodes.length - 1;
   const schat = laatste ? beloningItem(shown.world) : null;
+  const prijs = (schat && !p.owned.includes(schat.id)) ? wereldPrijsHTML(p, shown.index, '11cqw') : '';
   const schatTeken = (schat && !p.owned.includes(schat.id))
-    ? `<span class="stop-schat" aria-hidden="true">🎁</span>` : '';
+    ? `<span class="stop-schat${prijs ? ' met-prijs' : ''}" aria-hidden="true">${prijs || '🎁'}</span>` : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}</div>`;
   /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een
@@ -8183,6 +8252,10 @@ function unitText(label, remaining) {
 function trophyStand(t, p, status) {
   if (status !== 'busy' || !t.progress) return '';
   const pr = t.progress(p);
+  /* De Wereldtournee telt werelden, en zijn totaal is precies wat de horizon
+     verbergt (zie binnenHorizon): "2 / 11" verklapte hoeveel werelden er nog
+     komen. Ligt er nog mist, dan alleen wat je hebt -- zoals de perfecte plank. */
+  if (t.telWerelden && meerWereldenVooruit(p)) return `<div class="tstand">${pr.now}</div>`;
   return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
 }
 // Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop.
@@ -8268,6 +8341,8 @@ function tapTrophy(t, card, e) {
   sndClick();
   if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
+  // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
+  if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
   pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
 }
 /* Wat telt dit getal? Dat staat niet op het kaartje maar komt bij een tik: de pil
@@ -11044,7 +11119,15 @@ function itemThumb(it, base) {
   if (it.cat === 'shoes') return zone(shoesThumb(it));
   if (it.cat === 'mic')   return zone(micThumb(it));
   // een podium is een plek en geen voorwerp: de schijf zelf, zoals ze erop staat
-  if (it.cat === 'stage') return zone(podiumHTML(it), 'thumb-podium');
+  /* Een wereldpodium is de prijs van zijn wereld, en draagt daarom zijn schat
+     (zie "= De prijs van een wereld"): zonder namen op de kaartjes was het anders
+     een rij bijna gelijke schijven. Disco en een oud gekocht podium zonder wereld
+     blijven een kale schijf. */
+  if (it.cat === 'stage') {
+    const i = podiumWereldIdx(it);
+    const prijs = (i >= 0 && cur) ? wereldPrijsHTML(P(), i, 60) : '';
+    return prijs ? zone(prijs, 'thumb-prijs') : zone(podiumHTML(it), 'thumb-podium');
+  }
   return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
 }
 

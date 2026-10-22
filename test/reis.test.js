@@ -69,8 +69,11 @@ function check(ok, label, detail) {
             w: Number(b.dataset.w), klas: b.className, aan: !b.disabled,
             uit: b.getAttribute('aria-disabled') === 'true',
             naam: (b.querySelector('.rn-tekst') || {}).textContent || null,
-            zegel: !!b.querySelector('.reis-zegel:not(.slot)'), ster: !!b.querySelector('.reis-pop'),
+            // het teken van "uit": de prijs met de schat erop (of, zonder prijs, het vinkje)
+            zegel: !!b.querySelector('.reis-zegel:not(.slot), .reis-prijs .wereldprijs:not(.geheim)'),
+            vinkje: !!b.querySelector('.reis-zegel:not(.slot)'), ster: !!b.querySelector('.reis-pop'),
             glans: !!b.querySelector('.reis-glans'),
+            prijs: (e => e ? e.className : null)(b.querySelector('.reis-prijs .wereldprijs')),
             slot: !!b.querySelector('.reis-zegel.slot'), art: !!b.querySelector('.reis-art'),
             // de teller is een ster en een streepje; de getallen staan in data-*
             teller: (s => s ? s.dataset.sterren + '/' + s.dataset.max : null)(b.querySelector('.reis-sterren')),
@@ -413,16 +416,18 @@ function check(ok, label, detail) {
     check(r.vol[0] && !r.vol[1], 'C2 · de eerste wereld is vol, de tweede niet', JSON.stringify(r.vol));
     check(/\bvol\b/.test(r.haltes[0].klas) && !/\bvol\b/.test(r.haltes[1].klas),
       'C2 · en dat staat zo op de kaart', JSON.stringify(r.haltes.slice(0, 2).map(h => h.klas)));
-    /* De volle wereld draagt geen badge maar een glinstering; de uitgespeelde een
-       stil vinkje. Dat onderscheid is de hele reden dat er geen tweede gouden schijf
-       op de kaart ligt: een schijfje leest als een knop, een glans niet. */
-    check(r.haltes[0].glans && !r.haltes[0].zegel,
-      'C2 · de volle wereld glinstert en draagt geen badge', JSON.stringify(r.haltes[0]));
-    check(r.haltes[1].zegel && !r.haltes[1].glans,
-      'C2 · de uitgespeelde wereld draagt het vinkje', JSON.stringify(r.haltes[1]));
+    /* Eén teken in de hoek: de prijs van de wereld (zie "= De prijs van een
+       wereld"). De volle wereld draagt hem in goud, de uitgespeelde met de schat
+       in kleur, en geen van beide nog een vinkje of een sterornament ernaast. */
+    check(/\bgoud\b/.test(r.haltes[0].prijs || '') && !/geheim/.test(r.haltes[0].prijs) && !r.haltes[0].glans && !r.haltes[0].vinkje,
+      'C2 · de volle wereld draagt zijn prijs in goud', JSON.stringify(r.haltes[0]));
+    check(r.haltes[1].prijs && !/geheim|\bgoud\b/.test(r.haltes[1].prijs) && !r.haltes[1].vinkje,
+      'C2 · de uitgespeelde wereld draagt zijn prijs met de schat erop', JSON.stringify(r.haltes[1]));
+    check(/geheim/.test(r.haltes[2].prijs || '') && r.haltes[3].prijs === null && r.haltes[3].slot,
+      'C2 · hier-ben-je draagt het silhouet, op slot het slotje', JSON.stringify(r.haltes.slice(2, 4)));
     // nooit twee tekens op één kaart
     const tekens = await page.evaluate(() =>
-      [...document.querySelectorAll('.reis-halte')].map(el => el.querySelectorAll('.reis-zegel, .reis-glans').length));
+      [...document.querySelectorAll('.reis-halte')].map(el => el.querySelectorAll('.reis-zegel, .reis-glans, .reis-prijs').length));
     check(tekens.every(z => z <= 1), 'C2 · en nooit meer dan één teken per bestemming', JSON.stringify(tekens));
     const rand = await page.evaluate(() => [0, 1].map(i => {
       const el = document.querySelector(`.reis-halte[data-w="${i}"] .reis-plaats`);
@@ -462,15 +467,6 @@ function check(ok, label, detail) {
     check(lijst[0] !== '0px' && lijst.slice(1).every(x => x === '0px'),
       'C2 · en alleen de volle wereld hangt in een lijst', JSON.stringify(lijst));
 
-    /* Het ornament in de hoek is de getekende ster van het spel, en niet een emoji
-       of een los vonkje: hetzelfde teken dat ze de hele show door verzamelt. */
-    const ornament = await page.evaluate(() => {
-      const g = document.querySelector('.reis-halte[data-w="0"] .reis-glans');
-      return { ster: !!g.querySelector('.rg-ster'),
-               goud: g.querySelector('.rg-ster') ? getComputedStyle(g.querySelector('.rg-ster')).fill : null };
-    });
-    check(ornament.ster && /255, 215, 64/.test(ornament.goud || ''),
-      'C2 · en draagt de gouden ster van het spel in de hoek', JSON.stringify(ornament));
     await ctx.close();
   }
 

@@ -154,7 +154,7 @@ function check(ok, label, detail) {
     /* De schat is het eerste stuk van het podium van die wereld (zie "= Podia").
        Zonder de twee winkelstukken is het nog niet af: één stille regel met de
        naam en wat er nog bij moet, en ze blijft staan waar ze stond. */
-    check(r.feest && r.feest.podium.join() === 'SterrenarenaNog 2 stukken' && r.stage === 'stage_disco',
+    check(r.feest && r.feest.podium.join() === 'MuziekpodiumNog 2 stukken' && r.stage === 'stage_disco',
       'A · en één stille regel over het podium van die wereld', JSON.stringify([r.feest, r.stage]));
     check(r.perfect.length === 0 && r.perfectKlaar.length === 0,
       'A · twee sterren is geen perfecte wereld', JSON.stringify(r));
@@ -276,7 +276,7 @@ function check(ok, label, detail) {
   }
 
   /* ---- C2 · De schat maakt het podium af ---------------------------------
-     Heeft ze de twee winkelstukken van de Sterrenarena al, dan is de schat het
+     Heeft ze de twee winkelstukken van de Muziekpodium al, dan is de schat het
      laatste stuk: "Nieuw podium!" en ze staat er meteen op -- in de opslag en
      op het eindscherm eronder. Het podium zelf komt niet in p.owned: van jou
      zijn is afgeleid (zie "= Podia"). */

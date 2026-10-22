@@ -236,7 +236,8 @@ rest volgt eruit:
 | Podia | de schat is het eerste stuk van het podium van die wereld (zie hieronder); op dat kaartje en in de lade onderaan staat hij als 🔒 tot hij verdiend is |
 | het uitdelen | `grantWorldRewards()` deed dat al en weet niet hoeveel werelden er zijn |
 | de onthulling | `wereldFeest()` toont zijn `thumb()` en een *Aandoen*-knop |
-| de kaart | bij de laatste halte van die wereld staat een ✨ zolang hij nog te halen is |
+| de kaart | bij de laatste halte van die wereld staat de prijs van de wereld (zijn podium met de schat erop) als silhouet zolang hij nog te halen is |
+| de reis | de prijs staat in de hoek van de wereldkaart: silhouet, schat, podium in kleur, gouden rand voor perfect |
 | de gewone laden | daar staat hij pas ín zodra hij verdiend is — een schat op slot ligt alleen als 🔒 op zijn podium |
 | oude saves | wie die wereld al uit had krijgt hem stil bij het inladen (`grantHistoricRewards`) |
 
@@ -253,6 +254,8 @@ schrijft: een `stage`-regel in `ITEMS` (onder `// Podium`), met
   spulletjes uit de winkel die samen met de schat het podium maken. Ze zitten
   niet in de hoed-plek (daar zit de schat), niet samen in één plek, en een
   spulletje hoort bij hoogstens één podium;
+* `name: '<Wereld>podium'` — naar de wereld (Piratenpodium, Vuurpodium), zodat
+  het feestje en de stem hetzelfde woord zeggen als de reis;
 * `vloer: [boven, midden, zijband, rand]` — vier kleuren, en `patroon` — de naam
   van een `.pod-*`-patroon in `src/css/30-onderdelen.css`.
 
