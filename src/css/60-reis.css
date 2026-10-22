@@ -140,8 +140,11 @@
      onder af. Je ziet een platte globe, en dat is precies het soort "bijna" dat als
      slordig leest. Opgemeten: vak 30x24 met een geschilderde glyph van 26,8x24 (plat)
      tegen 30x30 met 26,8x26,8 (rond). De koprij blijft 50px hoog, dus er verschuift
-     hier niets van. */
-  #screen-journey .rt-ico { display: block; font-size: 24px; line-height: 1.25;
+     hier niets van.
+     30px sinds de kop 44 hoog is: dezelfde maat als de globe in de kaartpil
+     (#screen-map .wp-cta-ico), dus globeVlucht verhuist hem zonder te groeien of
+     te krimpen -- het is dezelfde globe, en nu ook even groot. */
+  #screen-journey .rt-ico { display: block; font-size: 30px; line-height: 1.25;
     filter: drop-shadow(0 1px 3px rgba(10,2,24,.85)); }
   /* FASE 5E -- letterlijk de stof van de kaart en de zaal (--hud-*). Dit stond hier
      met de hand nagemaakt: .34 vulling tegen de .30 van --hud-bg, een ring van .07
@@ -153,7 +156,7 @@
      (kaart, reis, zaal) één kop in drie standen. Die stof van de terugknop is
      sindsdien die van élk scherm, zie .screen-header .icon-btn.header-left. */
   #screen-journey .diamond-badge {
-    height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: var(--hud-tx);
+    height: var(--hud-h); padding: 0 15px; border-radius: var(--r-pill); font-size: var(--hud-tx);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
@@ -692,7 +695,7 @@
        er iets wijken, en van die twee was het woord het duidelijkst. Nu is de globe
        het enige dat er staat -- en dan is "hem verbergen" hetzelfde als de kop
        leegmaken. Hij wordt dus alleen een maatje kleiner, net als de knoppen ernaast. */
-    #screen-journey .rt-ico { font-size: 21px; }
+    #screen-journey .rt-ico { font-size: 26px; }
     /* Kleiner om te zien, niet om te raken: het onzichtbare vlakje eromheen
        maakt er weer 44px van, net als bij de wereldpil. */
     #screen-journey .icon-btn { width: 34px; height: 34px; position: relative; }

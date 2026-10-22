@@ -45,25 +45,25 @@
      enige die op dit toestel speelt. De wereldnaam en de diamanten houden wel een
      pil, want die dragen tekst die over elke tekening leesbaar moet blijven. */
   #screen-map .map-id-btn {
-    padding: 7px;   /* onzichtbaar, maar maakt het raakvlak 48px */
+    padding: 2px;   /* onzichtbaar, maar maakt het raakvlak 48px */
     background: none; backdrop-filter: none; box-shadow: none;
   }
   /* Het portretje krijgt een ring van hetzelfde materiaal als de pillen -- geen pil
      eromheen, maar wel dezelfde stof. Daarmee horen de drie zones bij elkaar zonder
      dat links een blok tekst terugkomt.
 
-     34px, de hoogte van de pillen (--hud-h). Het was 42px met een ring van 4px:
-     50px zichtbaar naast twee pillen van 34, en dan woog de linkerhoek anderhalf
-     keer zo zwaar als de rest van de kop. Nu staan er drie dingen van één hoogte;
-     de ring van 2px brengt hem op 38, net genoeg dat een gezicht niet kleiner
-     oogt dan een pil. Het raakvlak blijft 48px, dat doet de padding hierboven. */
+     Even hoog als de pillen (--hud-h, 44). Het was eerst 42px met een ring van
+     4px: 50px zichtbaar naast twee pillen van 34, en dan woog de linkerhoek
+     anderhalf keer zo zwaar als de rest van de kop. Nu staan er drie dingen van
+     één hoogte; de ring van 2px brengt hem op 48, net genoeg dat een gezicht niet
+     kleiner oogt dan een pil. Het raakvlak is 48px, met de padding hierboven. */
   #screen-map .map-portrait {
-    width: 34px; height: 34px; border: 2px solid rgba(255,255,255,.78);
+    width: var(--hud-h); height: var(--hud-h); border: 2px solid rgba(255,255,255,.78);
     box-shadow: 0 2px 6px rgba(10,2,24,.4), 0 0 0 2px var(--hud-bg);
   }
   /* avatarSVG tekent op een vaste 80px, en .map-portrait svg hieronder hangt hem
      op top: -6px. Bij een kleiner kader is dat geen kleiner beeld maar een
-     uitsnede: op 34px viel de hand met de micro weg en bleef er een gezicht over.
+     uitsnede: op een kleiner kader viel de hand met de micro weg en bleef er een gezicht over.
      Dus de tekening schaalt mee, in dezelfde verhouding als op 42px (80/42 en
      -6/42) -- dezelfde uitsnede als altijd, alleen kleiner. */
   #screen-map .map-portrait svg { width: 190.5%; height: auto; top: -14.3%; }
@@ -76,7 +76,7 @@
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
-  #screen-map .diamond-badge { padding: 0 11px; font-size: var(--hud-tx); gap: 5px; }
+  #screen-map .diamond-badge { padding: 0 15px; font-size: var(--hud-tx); gap: 6px; }
   /* Op de kaart een maat kleiner dan op de andere schermen: de tekening eronder
      draagt het scherm, niet de tekst. */
   #screen-map .world-pick { font-size: var(--tx-body); position: relative; }
@@ -88,7 +88,7 @@
      de cta-zone los aan de andere kant -- twee stukken, geen pil meer. Gewoon
      zijn eigen breedte houden en in het midden van wat er is blijven staan. */
   #screen-map .world-pick { justify-self: center; }
-  #screen-map .wp-cta-ico { font-size: 23px; }
+  #screen-map .wp-cta-ico { font-size: 30px; }
   /* FASE 7A -- de pil is de ingang naar de hele tournee, en hij was 34px hoog: dat
      leest goed maar het is geen kindervinger. Het portretje ernaast lost dat al zo
      op (4px onzichtbare padding, raakvlak 48px), alleen kan dat hier niet: deze pil
@@ -108,11 +108,12 @@
      vlakje wegknippen, zodat hetzelfde knopje op een telefoon aanraakbaar was en
      op een tablet nog groter. */
   #screen-map .world-pick { overflow: visible; }
-  #screen-map .world-pick::before { content: ''; position: absolute; inset: -8px -7px; }
-  /* Sinds de pil een rondje is (zie hieronder) is hij 34px breed, dus mag het
-     vlakje nu óók opzij: 7px aan elke kant maakt het raakvlak 48 x 50, net als
-     het portretje. De buren staan er minstens 8px (de gap van de koprij) plus
-     hun eigen lucht vandaan; kop.test.js en profiles.test.js 7c meten het na. */
+  #screen-map .world-pick::before { content: ''; position: absolute; inset: -2px; }
+  /* Sinds --hud-h 44 is en de pil een rondje (zie hieronder), is het vlakje nog
+     maar 2px rondom: een raakvlak van 48 x 48, net als het portretje. Wat
+     hierboven over -8px staat is van toen de pil 34 hoog was. De buren staan er
+     minstens 8px (de gap van de koprij) vandaan; kop.test.js en profiles.test.js
+     7c meten het na. */
   /* De buitenkolommen kregen hiervoor allebei dezelfde gegokte minimumbreedte
      (eerst 80px, toen 52px) om de pil in het midden te houden -- maar het
      portretje (vast, 50px) en de diamantpil (70-95px, want 3, 4 of 5 cijfers)
@@ -162,29 +163,28 @@
      zijn ook knoppen en hebben er geen -- en een pijl naar rechts belooft een
      schuif opzij, terwijl de weg naar Werelden een vlucht omhoog is. Wat de tik
      leert is de globe zelf: de knipoog (wpHintKlaar) en de draai van globeVlucht.
-     Bewust niet groter dan 23px: groter vult het rondje, de donkere glasrand valt
-     weg en de globe loopt op een lichte lucht of zee in de tekening over (nagemeten
-     in werelden 1, 3 en 8). Het donkere randje ís wat hem leesbaar maakt. */
+     De globe is 30px in een rondje van 44: zo'n 0,68 van het rondje, dezelfde
+     verhouding als 23 in 34. Groter vult het rondje, de donkere glasrand valt weg
+     en de globe loopt op een lichte lucht of zee in de tekening over (nagemeten in
+     werelden 1, 3 en 8). Het donkere randje ís wat hem leesbaar maakt. */
   #screen-map .world-pick { width: var(--hud-h); }
   #screen-map .wp-cta { width: 100%; margin: 0; padding: 0; background: none; box-shadow: none; }
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: var(--tx-klein); }
-    #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
+    #screen-map .diamond-badge { font-size: var(--tx-body); gap: 4px; padding-inline: 10px; }
     #screen-map .wens-mini { font-size: .85em; margin-left: 0; }   /* de wens: zo smal mogelijk */
     #screen-map .hub-sticky { padding-left: 7px; padding-right: 8px; }
   }
   /* DE TABLETSTAP. Op een tablet groeit de navigatiebalk mee (knoppen van 88 x
-     60, zie .nav-item), en dan stonden de portret, de globe en de 💎 op 34 in de
+     60, zie .nav-item), en dan stonden de portret, de globe en de 💎 op 44 in de
      verre hoeken van een scherm van 820 breed: onderaan een app, bovenaan
      plakplaatjes. Eén regel voor allebei: de kop is 8px lager dan een knop van de
      balk -- hetzelfde breekpunt, dus ze groeien samen. --hud-h en --hud-tx staan
      op :root en niet op de kaart, zodat de 💎-pil op elk tabblad even groot blijft
-     (zie .diamond-badge). De globe gaat naar 36: dezelfde verhouding tot zijn
-     rondje als 23 op 34, dus het donkere randje dat hem leesbaar maakt blijft. */
+     (zie .diamond-badge); het portret volgt --hud-h vanzelf. De globe gaat naar 36: dezelfde verhouding tot zijn
+     rondje als op de telefoon, dus het donkere randje dat hem leesbaar maakt blijft. */
   @media (min-width: 600px) and (min-height: 700px) {
-    :root { --hud-h: 52px; --hud-tx: var(--tx-sub); }
-    #screen-map .map-id-btn { padding: 0; }   /* het raakvlak is het portret zelf al */
-    #screen-map .map-portrait { width: 52px; height: 52px; }
+    :root { --hud-h: 52px; --hud-tx: var(--tx-kop); }
     #screen-map .wp-cta-ico { font-size: 36px; }
     /* En wat er op de andere tabbladen naast de 💎 staat, groeit mee: de
        terugknop (die op Werelden op de plek van het portret staat) en de globe in
@@ -195,10 +195,10 @@
     #screen-journey .reis-titel .rt-ico { font-size: 36px; }
   }
 
-  /* 10 links, 14 rechts: het portretje draagt zelf 4px onzichtbare padding voor
-     zijn raakvlak, dus met gelijke waarden stond het optisch 4px verder naar
+  /* 12 links, 14 rechts: het portretje draagt zelf 2px onzichtbare padding voor
+     zijn raakvlak, dus met gelijke waarden stond het optisch 2px verder naar
      binnen dan de diamantpil. Zo liggen de zichtbare randen op dezelfde lijn. */
-  #screen-map .hub-sticky { padding-left: 10px; padding-right: 14px; }
+  #screen-map .hub-sticky { padding-left: 12px; padding-right: 14px; }
   /* Hier stond: @media (max-height: 620px) { .tour-map { padding-bottom: 48px } }.
      De redenering was dat de navigatiebalk op een laag scherm een grotere hap uit
      het beeld neemt (82 van 568 = 14%) dan de veilige zone onderaan de tekening
