@@ -663,6 +663,9 @@
     --hud-shadow: 0 2px 8px rgba(10, 2, 24, .22);
     --hud-ink: var(--op-kunst-ink);
     --hud-h: 34px;
+    /* de letter in die kop (de 💎-teller): groeit mee als --hud-h op een tablet
+       groeit, zie de tabletstap bij de kop in 40-kaart.css */
+    --hud-tx: var(--tx-body);
 
     /* ---- Op een tekening: drie sterktes, en dat is de hele afspraak --------
        Zie §4 van de afspraak bovenaan. Waarom het als tokens staat en niet per

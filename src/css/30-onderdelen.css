@@ -621,7 +621,7 @@
        even groot was als de kop -- precies wat de eerste zin hierboven verbiedt.
        De stof blijft per scherm verschillen, en dat hoort zo: op een tekening de
        zwevende --hud-*, op een plaat deze. Alleen de maat is nu van iedereen. */
-    height: var(--hud-h); padding: 0 13px; font-size: var(--tx-body);
+    height: var(--hud-h); padding: 0 13px; font-size: var(--hud-tx);
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
     border: 0; color: inherit; font-family: inherit;
   }
