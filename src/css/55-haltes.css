@@ -196,6 +196,12 @@
             drop-shadow(0 0.5cqw 0 var(--ster-lip));
   }
   .tour-stop .stop-schat.met-prijs .wereldprijs.geheim .wp-schat { filter: brightness(0) opacity(.85); }
+  /* Hij staat er alleen vóór de laatste show (zie renderMap), en komt dan op met
+     de ene overshoot van de app, ná de haltes: "deze wint hem". Met scale en niet
+     met transform, zodat niets anders aan zijn stand hoeft te rekenen. */
+  .tour-stop .stop-schat { animation: prijsOp .45s var(--ease-plop) .55s backwards; }
+  @keyframes prijsOp { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
+  @media (prefers-reduced-motion: reduce) { .tour-stop .stop-schat { animation: none; } }
   /* zonder de zachte slagschaduw van het podium: die viel als een veeg over de halte */
   .tour-stop .stop-schat.met-prijs .wereldprijs .podium { opacity: 1; filter: grayscale(.6) brightness(.8);
     box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 1px var(--pr); }
