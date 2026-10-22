@@ -8303,9 +8303,10 @@ function normalCardHTML(t, p, status) {
    en theme.glow, dezelfde twee die de wereldkaart gebruikt), en behaald komt daar
    de gouden ring omheen (de ster in de hoek is weg, zie .pw-medal in de kast).
 
-   Precies dezelfde vorm als de onthulling na de laatste ster (zie .wf-trofee): een
-   kind dat daar "Perfecte wereld!" kreeg, herkent hier hetzelfde ding terug. Zonder
-   dat zouden het twee losse prijzen zijn die toevallig hetzelfde heten.
+   Sinds de prijs van een wereld staat er geen medaillon meer maar die prijs zelf,
+   in goud (zie perfectCardHTML): hetzelfde ding als op het wereldfeest, de reis en
+   in Podia. Een kind dat daar "Perfecte wereld!" kreeg, herkent hier hetzelfde
+   ding terug. Het medaillon blijft alleen voor een wereld zonder podium.
 
    Niet behaald is niet grijs: de wereldkleuren blijven staan, alleen gedempt. Een
    kleuter die de IJswereld nog moet perfectioneren ziet zo toch dat er een blauwe
@@ -8326,6 +8327,17 @@ function perfectCardHTML(t, p, status) {
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
     : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
     : '';
+  /* Het kaartje toont de prijs van die wereld (zie "= De prijs van een wereld"):
+     hetzelfde podium met dezelfde schat als op de reis en in Podia, en behaald
+     in goud. Zo is de grootste prijs van het spel geen los medaillon meer dat je
+     nergens anders terugziet, maar de gouden stand van iets wat je al kent. Een
+     wereld zonder podium houdt het medaillon. */
+  const i = typeof t.index === 'number' ? t.index : -1;
+  const st = i >= 0 ? wereldPrijsStand(p, i) : null;
+  if (st) st.goud = status === 'done' || status === 'ready';
+  const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
+  if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
+    + `<div class="tname">${t.name}</div>` + cardVoet(stand);
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(stand);
@@ -8457,54 +8469,45 @@ function wereldFeest(f) {
   const reduce = motionOff();
   const w = f.wereld;
   // De kop zegt het grootste dat er gebeurd is. "Wereld uit!" wint van "Perfecte
-  // wereld!" als ze samenvallen -- dan staat perfect eronder als de bonusregel.
+  // wereld!" als ze samenvallen -- dan staat perfect eronder als de gouden regel.
   const kop = f.spul ? 'Wereld uit!' : 'Perfecte wereld!';
-  let rijen = '';
-  if (f.spul) {
-    /* "Nieuwe wereldschat!" en niet "Nieuw!" (fase 6E). Het woord dat hier valt is
-       hetzelfde woord als op het vak in de kleedkamer, en dat is het hele punt:
-       dit is het moment waarop een kind leert wat een wereldschat ís, en over vijf
-       minuten moet ze het ding kunnen terugvinden onder diezelfde naam. */
-    rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
-      + `<div class="wf-tekst"><b>Nieuwe wereldschat!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
-  }
-  /* Het podium van deze wereld. De schat is er het eerste stuk van, en dit is
-     het moment waarop een kind dat leert. Heeft ze de twee andere al, dan is het
-     podium nu af: "Nieuw podium!", en ze staat er meteen op (zoals kopen ook
-     meteen aandoet) -- het eindscherm eronder laat het zien zodra deze laag weg
-     is. Anders één stille regel: welk podium, en hoeveel stukken er nog bij
-     moeten. Geen prijs en geen knop; dat staat in Podia. */
-  const podium = f.spul ? podiumVan(f.spul.id) : null;
+  /* ÉÉN PRIJS, NIET DRIE RIJEN. Hier stonden de schat, het podium en de trofee
+     als drie rijen onder elkaar: drie soorten prijs, met drie namen, en het
+     podium heette dan nog anders dan de wereld. Nu staat er wat de wereld ís: zijn
+     prijs (zie "= De prijs van een wereld"), het podium met de schat erop, groot.
+     Daaronder de som van het podium -- de schat (✓) plus de twee stukken uit de
+     winkel, met hun prijs of hun vinkje, net als in de lade van Podia -- en een
+     gouden regel als hij ook perfect is: dan staat de rand al in goud.
+
+     Heeft ze de twee stukken al, dan is het podium nu af: "Nieuw podium!", en ze
+     staat er meteen op (zoals kopen ook meteen aandoet) -- het eindscherm eronder
+     laat het zien zodra deze laag weg is. Dan geen som: er valt niets meer bij te
+     doen. */
+  const i = WORLDS.indexOf(w);
+  const podium = wereldPodium(w);
   const q0 = P();
-  const podiumAf = !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
-  if (podium && podiumAf) {
+  const podiumAf = !!f.spul && !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
+  if (podiumAf) {
     q0.equipped.stage = podium.id;
     save();
     if ($('end-stage')) applyStage($('end-stage'), q0);
-    rijen += `<div class="wf-rij"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
-      + `<div class="wf-tekst"><b>Nieuw podium!</b><span>${esc(podium.name)}</span></div></div>`;
-  } else if (podium) {
-    const nog = podiumRest(q0, podium).length;
-    rijen += `<div class="wf-rij wf-stil"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
-      + `<div class="wf-tekst"><b>${esc(podium.name)}</b><span>Nog ${nog} ${mv(nog, 'stuk', 'stukken')}</span></div></div>`;
   }
-  if (f.perfect) {
-    /* Het wereldicoon in een gouden ring met een ster erop -- precies het kaartje
-       dat er vanaf nu in de kast staat (zie .trophy-card.ster). Bewust niet het
-       kale icoon: dat is in de Muziekwereld toevallig hetzelfde plaatje als het
-       spulletje erboven, en dan lijken de twee regels één regel die dubbel staat.
-
-       Elke regel zegt wát je gekregen hebt, en de kop zegt waaróm. Staat de trofee
-       er alleen, dan zégt die kop al "Perfecte wereld!" -- dan hoort de regel
-       eronder niet nog eens hetzelfde te zeggen. */
-    const label = f.spul ? 'Perfecte wereld!' : 'Nieuwe trofee!';
-    // dezelfde wereldkleuren als het medaillon in de kast (.pw-medal), zodat het
-    // ding dat hier onthuld wordt hetzelfde ding is als wat er straks in de kast staat
-    const th = w.theme || {};
-    const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
-    rijen += `<div class="wf-rij"><div class="wf-beeld"><span class="wf-trofee" style="${kleur}">${w.icon || '🌍'}</span></div>`
-      + `<div class="wf-tekst"><b>${label}</b><span>Overal drie sterren</span></div></div>`;
+  const prijs = i >= 0 ? wereldPrijsHTML(q0, i, 116) : '';
+  const titel = podiumAf ? 'Nieuw podium!' : f.spul ? 'Nieuwe wereldschat!' : 'Overal drie sterren';
+  const naam = podiumAf ? podium.name : f.spul ? (f.spul.full || f.spul.name) : '';
+  let som = '';
+  if (f.spul && podium && !podiumAf) {
+    som = '<div class="wf-som">' + podiumStukken(podium).map(it => {
+      const heeft = q0.owned.includes(it.id);
+      const stand = heeft ? 'owned' : q0.diamonds < it.price ? 'need' : 'price';
+      return `<span class="mini-kaart${heeft ? ' owned' : ''}">${itemThumb(it)}`
+        + `<span class="item-status ${stand}">${heeft ? '✓' : '💎 ' + it.price}</span></span>`;
+    }).join('<span class="pb-plus" aria-hidden="true">+</span>') + '</div>';
   }
+  const goud = (f.perfect && f.spul) ? '<div class="wf-goud">⭐ Perfecte wereld!</div>' : '';
+  const rijen = `<div class="wf-prijs">${prijs}</div>`
+    + `<div class="wf-tekst"><b>${titel}</b>${naam ? `<span>${esc(naam)}</span>` : ''}</div>`
+    + som + goud;
   /* Eén knop, en alleen als er echt iets nieuws te dragen is: aandoen. Het ding
      staat op het scherm, het is van haar, en de enige gedachte die een kind op dat
      moment heeft is "die wil ik op". Zonder deze knop is het antwoord daarop: dit
@@ -8516,7 +8519,7 @@ function wereldFeest(f) {
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
-    + `<div class="wf-rijen">${rijen}</div>`
+    + `<div class="wf-rijen wf-een">${rijen}</div>`
     + aanKnop
     + `<div class="wf-verder">Tik om verder te gaan</div></div>`, { fade: 300 });
   let af = false;
@@ -10825,10 +10828,17 @@ function endLevel(success) {
        zien en is daarna weg; zonder deze brug moet een kind zelf bedenken in welke
        van de zeven laden het terechtgekomen is. Eén show later is het gewoon weer
        de kleedkamer -- dit is een wegwijzer, geen tweede knop. */
+    /* Sinds de prijs van een wereld gaat die brug niet meer naar de hoed in
+       Accessoires maar naar het podium waar hij bij hoort: daar staat de schat
+       met zijn vinkje, en de twee stukken die nog moeten -- het volgende doel.
+       Is het podium al af, dan zet dezelfde tik haar erop. */
     const nieuwSpul = feest && feest.spul;
-    $('btn-end-alt').textContent = nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
-    $('btn-end-alt').onclick = nieuwSpul
-      ? () => { sndClick(); naTik(() => openKleedkamerItem(nieuwSpul.id)); }
+    const nieuwPodium = nieuwSpul ? podiumVan(nieuwSpul.id) : null;
+    $('btn-end-alt').textContent = nieuwPodium ? '🎪 Naar je podium'
+      : nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
+    const naar = nieuwPodium || nieuwSpul;
+    $('btn-end-alt').onclick = naar
+      ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
     sndWin();
     confetti(40, $('screen-end'));

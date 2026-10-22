@@ -41,51 +41,33 @@
     text-shadow: var(--goud-ink); }
   .wf-wereld { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); margin-top: 3px; }
   .wf-rijen { display: flex; flex-direction: column; gap: 8px; margin: 13px 0 4px; }
-  /* Een regel is een plaatje links en twee woorden rechts -- links uitgelijnd, want
-     twee gecentreerde regels onder elkaar hebben geen gemeenschappelijke lijn en
-     lezen dan als twee losse plaatjes. */
-  .wf-rij { display: flex; align-items: center; gap: 11px; text-align: left;
-    padding: 9px 12px; border-radius: var(--r-sm);
-    background: rgba(var(--goud-rgb),.13); border: 2px solid var(--gold-accent); }
-  /* Iets breder dan het vakje in de kleedkamer (52), en dat is fase 4D.2: de
-     getekende beloningen zijn niet allemaal even breed als hoog -- de
-     bladerkrans is bijna twee keer zo breed als hij hoog is. In een raster van
-     kaartjes is daar plaats voor, in één regel naast een tekst niet. */
-  .wf-beeld { flex: none; width: 72px; display: flex; align-items: center; justify-content: center; }
-  /* het item leent het miniatuur uit de kleedkamer: één tekening, twee plekken */
-  .wf-beeld .item-thumb { margin: 0; width: 72px; }
-  .wf-trofee {
-    position: relative; display: grid; place-items: center; width: 46px; height: 46px;
-    border-radius: 50%; font-size: 26px; line-height: 1;
-    /* exact hetzelfde medaillon als .pw-medal in de kast, alleen kleiner: de
-       wereldkleuren van binnen, de gouden ring eromheen, de ster in de hoek. */
-    background:
-      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
-      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
-    border: 2px solid var(--gold-accent);
-    box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 12px rgba(var(--goud-rgb),.45);
-  }
-  /* dezelfde ster in dezelfde hoek als op het medaillon in de kast (.pw-medal) */
-  .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
-    font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .wf-tekst b { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
   .wf-tekst span { font-size: var(--tx-label); font-weight: 700; color: var(--c-white); opacity: .92;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
-  .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
-  .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
-  .wereld-feest .wf-rij:nth-child(3) { animation-delay: .24s; }
-  /* Het podium van de wereld: de schijf zelf (zie .podium), even breed als de
-     tekening erboven. Is hij nog niet af, dan is de regel stil -- geen goud,
-     want er is nog niets gekregen; hij zegt alleen waar de schat bij hoort. */
-  .wf-podium .podium { width: 64px; height: 20px; margin-bottom: 6px; --pod-dik: 5px; }
-  .wf-rij.wf-stil { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
-  .wf-rij.wf-stil .wf-tekst b { color: var(--c-white); }
-  .wf-rij.wf-stil .wf-tekst span { opacity: .7; }
+  /* Eén prijs in plaats van drie rijen (zie wereldFeest): de prijs groot, zijn
+     naam, de som van het podium, en de gouden regel voor perfect. Alles in het
+     midden en onder elkaar. (Hier stonden de rijen: plaatje links, tekst rechts,
+     een gouden lijst eromheen, en het medaillon van de kast in het klein.) */
+  .wf-rijen.wf-een { align-items: center; gap: 6px; margin-top: 8px; }
+  .wf-prijs { display: flex; justify-content: center; filter: drop-shadow(0 4px 10px rgba(10,2,26,.55)); }
+  .wf-een .wf-tekst { align-items: center; text-align: center; }
+  .wf-som { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 4px; }
+  .wf-som .mini-kaart { width: 62px; cursor: default; padding: 5px 3px 4px; }
+  .wf-som .mini-kaart .item-thumb { height: 30px; }
+  .wf-som .mini-kaart .item-thumb svg { height: 30px; }
+  .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
+  .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
+  .wf-goud { margin-top: 4px; padding: 4px 12px; border-radius: 99px; font-size: var(--tx-klein); font-weight: 700;
+    color: #3a2200; background: linear-gradient(var(--gold-light), var(--gold-accent)); }
+  .wereld-feest .wf-een > * { animation: rankTextRise .45s ease both; }
+  .wereld-feest .wf-een > :nth-child(2) { animation-delay: .1s; }
+  .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
+  .wereld-feest .wf-een > :nth-child(4) { animation-delay: .3s; }
   @media (prefers-reduced-motion: reduce) {
     .wereld-feest-overlay { animation: none; }
-    .wereld-feest .wf-rij { animation: none; }
+    .wereld-feest .wf-een > * { animation: none; }
   }
 
   /* ===== Trofee-feestje, versie "dopamine" =====

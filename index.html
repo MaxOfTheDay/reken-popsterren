@@ -6674,6 +6674,10 @@
   .pw-ico { font-size: 28px; line-height: 1; filter: var(--emoji-schaduw); }
 
 
+  .pw-medal.pw-prijs, .trophy-card.done .pw-medal.pw-prijs {
+    width: 72px; height: 62px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+
+
   .pw-card.fresh .pw-medal { opacity: .68; }
   .pw-card.fresh .pw-ico { opacity: .85; }
 
@@ -6855,51 +6859,33 @@
     text-shadow: var(--goud-ink); }
   .wf-wereld { font-size: var(--tx-label); font-weight: 700; color: var(--gold-light); margin-top: 3px; }
   .wf-rijen { display: flex; flex-direction: column; gap: 8px; margin: 13px 0 4px; }
-
-
-
-  .wf-rij { display: flex; align-items: center; gap: 11px; text-align: left;
-    padding: 9px 12px; border-radius: var(--r-sm);
-    background: rgba(var(--goud-rgb),.13); border: 2px solid var(--gold-accent); }
-
-
-
-
-  .wf-beeld { flex: none; width: 72px; display: flex; align-items: center; justify-content: center; }
-
-  .wf-beeld .item-thumb { margin: 0; width: 72px; }
-  .wf-trofee {
-    position: relative; display: grid; place-items: center; width: 46px; height: 46px;
-    border-radius: 50%; font-size: 26px; line-height: 1;
-
-
-    background:
-      radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
-      linear-gradient(180deg, var(--pw-sky, #3a1f6e), rgba(0,0,0,.42));
-    border: 2px solid var(--gold-accent);
-    box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 12px rgba(var(--goud-rgb),.45);
-  }
-
-  .wf-trofee::after { content: '⭐'; position: absolute; right: -4px; bottom: -4px;
-    font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .wf-tekst { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .wf-tekst b { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
   .wf-tekst span { font-size: var(--tx-label); font-weight: 700; color: var(--c-white); opacity: .92;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wf-verder { font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .6; margin-top: 8px; }
-  .wereld-feest .wf-rij { animation: rankTextRise .45s ease both; }
-  .wereld-feest .wf-rij:nth-child(2) { animation-delay: .12s; }
-  .wereld-feest .wf-rij:nth-child(3) { animation-delay: .24s; }
 
 
 
-  .wf-podium .podium { width: 64px; height: 20px; margin-bottom: 6px; --pod-dik: 5px; }
-  .wf-rij.wf-stil { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
-  .wf-rij.wf-stil .wf-tekst b { color: var(--c-white); }
-  .wf-rij.wf-stil .wf-tekst span { opacity: .7; }
+
+  .wf-rijen.wf-een { align-items: center; gap: 6px; margin-top: 8px; }
+  .wf-prijs { display: flex; justify-content: center; filter: drop-shadow(0 4px 10px rgba(10,2,26,.55)); }
+  .wf-een .wf-tekst { align-items: center; text-align: center; }
+  .wf-som { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 4px; }
+  .wf-som .mini-kaart { width: 62px; cursor: default; padding: 5px 3px 4px; }
+  .wf-som .mini-kaart .item-thumb { height: 30px; }
+  .wf-som .mini-kaart .item-thumb svg { height: 30px; }
+  .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
+  .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
+  .wf-goud { margin-top: 4px; padding: 4px 12px; border-radius: 99px; font-size: var(--tx-klein); font-weight: 700;
+    color: #3a2200; background: linear-gradient(var(--gold-light), var(--gold-accent)); }
+  .wereld-feest .wf-een > * { animation: rankTextRise .45s ease both; }
+  .wereld-feest .wf-een > :nth-child(2) { animation-delay: .1s; }
+  .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
+  .wereld-feest .wf-een > :nth-child(4) { animation-delay: .3s; }
   @media (prefers-reduced-motion: reduce) {
     .wereld-feest-overlay { animation: none; }
-    .wereld-feest .wf-rij { animation: none; }
+    .wereld-feest .wf-een > * { animation: none; }
   }
 
 
@@ -18693,6 +18679,7 @@ function normalCardHTML(t, p, status) {
 
 
 
+
 function perfectCardHTML(t, p, status) {
   const w = t.wereld || {};
   const th = w.theme || {};
@@ -18709,6 +18696,17 @@ function perfectCardHTML(t, p, status) {
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
     : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
     : '';
+
+
+
+
+
+  const i = typeof t.index === 'number' ? t.index : -1;
+  const st = i >= 0 ? wereldPrijsStand(p, i) : null;
+  if (st) st.goud = status === 'done' || status === 'ready';
+  const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
+  if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
+    + `<div class="tname">${t.name}</div>` + cardVoet(stand);
   return `<div class="pw-medal" style="${kleur}"><span class="pw-ico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(stand);
@@ -18842,52 +18840,43 @@ function wereldFeest(f) {
 
 
   const kop = f.spul ? 'Wereld uit!' : 'Perfecte wereld!';
-  let rijen = '';
-  if (f.spul) {
-
-
-
-
-    rijen += `<div class="wf-rij"><div class="wf-beeld">${itemThumb(f.spul)}</div>`
-      + `<div class="wf-tekst"><b>Nieuwe wereldschat!</b><span>${esc(f.spul.full || f.spul.name)}</span></div></div>`;
-  }
 
 
 
 
 
 
-  const podium = f.spul ? podiumVan(f.spul.id) : null;
+
+
+
+
+
+
+  const i = WORLDS.indexOf(w);
+  const podium = wereldPodium(w);
   const q0 = P();
-  const podiumAf = !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
-  if (podium && podiumAf) {
+  const podiumAf = !!f.spul && !!podium && podiumVanJou(q0, podium) && !q0.owned.includes(podium.id);
+  if (podiumAf) {
     q0.equipped.stage = podium.id;
     save();
     if ($('end-stage')) applyStage($('end-stage'), q0);
-    rijen += `<div class="wf-rij"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
-      + `<div class="wf-tekst"><b>Nieuw podium!</b><span>${esc(podium.name)}</span></div></div>`;
-  } else if (podium) {
-    const nog = podiumRest(q0, podium).length;
-    rijen += `<div class="wf-rij wf-stil"><div class="wf-beeld wf-podium">${podiumHTML(podium)}</div>`
-      + `<div class="wf-tekst"><b>${esc(podium.name)}</b><span>Nog ${nog} ${mv(nog, 'stuk', 'stukken')}</span></div></div>`;
   }
-  if (f.perfect) {
-
-
-
-
-
-
-
-
-    const label = f.spul ? 'Perfecte wereld!' : 'Nieuwe trofee!';
-
-
-    const th = w.theme || {};
-    const kleur = `--pw-sky:${th.sky || '#3a1f6e'};--pw-glow:${th.glow || '#7a2f63'}`;
-    rijen += `<div class="wf-rij"><div class="wf-beeld"><span class="wf-trofee" style="${kleur}">${w.icon || '🌍'}</span></div>`
-      + `<div class="wf-tekst"><b>${label}</b><span>Overal drie sterren</span></div></div>`;
+  const prijs = i >= 0 ? wereldPrijsHTML(q0, i, 116) : '';
+  const titel = podiumAf ? 'Nieuw podium!' : f.spul ? 'Nieuwe wereldschat!' : 'Overal drie sterren';
+  const naam = podiumAf ? podium.name : f.spul ? (f.spul.full || f.spul.name) : '';
+  let som = '';
+  if (f.spul && podium && !podiumAf) {
+    som = '<div class="wf-som">' + podiumStukken(podium).map(it => {
+      const heeft = q0.owned.includes(it.id);
+      const stand = heeft ? 'owned' : q0.diamonds < it.price ? 'need' : 'price';
+      return `<span class="mini-kaart${heeft ? ' owned' : ''}">${itemThumb(it)}`
+        + `<span class="item-status ${stand}">${heeft ? '✓' : '💎 ' + it.price}</span></span>`;
+    }).join('<span class="pb-plus" aria-hidden="true">+</span>') + '</div>';
   }
+  const goud = (f.perfect && f.spul) ? '<div class="wf-goud">⭐ Perfecte wereld!</div>' : '';
+  const rijen = `<div class="wf-prijs">${prijs}</div>`
+    + `<div class="wf-tekst"><b>${titel}</b>${naam ? `<span>${esc(naam)}</span>` : ''}</div>`
+    + som + goud;
 
 
 
@@ -18899,7 +18888,7 @@ function wereldFeest(f) {
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
     + `<div class="wf-wereld">${w.icon || '🌍'} ${esc(w.name)}</div>`
-    + `<div class="wf-rijen">${rijen}</div>`
+    + `<div class="wf-rijen wf-een">${rijen}</div>`
     + aanKnop
     + `<div class="wf-verder">Tik om verder te gaan</div></div>`, { fade: 300 });
   let af = false;
@@ -21208,10 +21197,17 @@ function endLevel(success) {
 
 
 
+
+
+
+
     const nieuwSpul = feest && feest.spul;
-    $('btn-end-alt').textContent = nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
-    $('btn-end-alt').onclick = nieuwSpul
-      ? () => { sndClick(); naTik(() => openKleedkamerItem(nieuwSpul.id)); }
+    const nieuwPodium = nieuwSpul ? podiumVan(nieuwSpul.id) : null;
+    $('btn-end-alt').textContent = nieuwPodium ? '🎪 Naar je podium'
+      : nieuwSpul ? `👕 Pas je ${nieuwSpul.name}` : '👕 Kleedkamer';
+    const naar = nieuwPodium || nieuwSpul;
+    $('btn-end-alt').onclick = naar
+      ? () => { sndClick(); naTik(() => openKleedkamerItem(naar.id)); }
       : () => { sndClick(); naTik(openKleedkamer); };
     sndWin();
     confetti(40, $('screen-end'));
