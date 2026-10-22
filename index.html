@@ -9503,7 +9503,7 @@
          eindscherm, op het moment dat de ster-status omhooggaat). -->
     <div class="hub-sticky">
       <div class="screen-header">
-        <button class="map-id-btn header-left" onclick="goProfiles()" aria-label="Wie speelt er" title="Wie speelt er">
+        <button class="map-id-btn header-left" onclick="naTik(goProfiles)" aria-label="Wie speelt er" title="Wie speelt er">
           <span class="map-portrait" id="map-portrait"></span>
         </button>
         <button class="header-title world-pick" id="map-tournee-label" onpointerdown="reisBurenAlvast()" onclick="pilTik(this)"
@@ -14564,7 +14564,13 @@ function landingLeeft(groetNa) {
 
 
 
-  maxPlekZet();
+
+
+
+
+
+
+  requestAnimationFrame(maxPlekZet);
 
 
   if (motionOff()) return;
@@ -18076,7 +18082,12 @@ function openReis(alGetikt) {
 
 
   kaart.classList.remove('ster-bij-kop');
-  if ($('tour-map')) $('tour-map').scrollTop = schuif;
+
+
+
+
+
+  if (schuif && $('tour-map')) $('tour-map').scrollTop = schuif;
 
   requestAnimationFrame(() => {
     reisFocus(reisVanuit);
