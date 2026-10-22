@@ -371,7 +371,7 @@
     /* ---- Pink accents (kast bar / stat bar / trophy pop) ---- */
     --pink-accent: #ff80ab; --pink-hot: #ff4081; --pink-deep: #f50057; --pink-light: #ffd6f4;
 
-    /* ---- "Paper" theme: parent-facing screens (settings / modal / gear-menu) ---- */
+    /* ---- "Paper" theme: parent-facing screens (settings / modal) ---- */
     --paper-ink: #3a0f56; --paper-ink-muted: #6b5b7a; --paper-border: #ecdcf6; --paper-tint: #faf6ff;
     --paper-muted-bg: #eceaef; --paper-muted-text: #9a90a6;
     /* Het vel zelf, zwevend boven de schil: bijna wit, maar met een zweem van de

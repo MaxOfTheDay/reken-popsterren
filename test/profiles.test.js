@@ -87,9 +87,8 @@ function check(ok, label, detail) {
     check(/Welkom/.test(r.sub), 'verse installatie verwelkomt', r.sub);
     check(/eerste ster/.test(r.addLabel), 'de knop noemt de eerste ster', r.addLabel);
     check(r.hintShown && r.hintHref === 'over/index.html', 'bij nul sterren zegt één stille regel wat het spel is', JSON.stringify(r));
-    // terugzetten zit onder het tandwiel: zonder sterren opent Voor ouders meteen daar
+    // terugzetten zit achter het tandwiel: zonder sterren opent Voor ouders meteen daar
     await page.click('#btn-gear');
-    await page.click('#gear-menu .gear-item.parents');
     await page.waitForTimeout(300);
     const naHint = await page.evaluate(() => ({
       scherm: document.querySelector('.screen.active').id, tab: setTab,

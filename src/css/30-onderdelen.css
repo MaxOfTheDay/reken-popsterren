@@ -274,50 +274,11 @@
     fill: none; stroke: currentColor; stroke-width: 2.9;
     stroke-linecap: round; stroke-linejoin: round;
   }
-  /* alleen het tandwiel zélf draait — niet de hele (nu ronde) knop eromheen.
-     Geen --t-tik, en dat is de bedoeling: dit is niet de indruk van de knop maar
-     de stand van het menu (open = gedraaid), en die blijft staan zolang het menu
-     openstaat. Zie de ladder bij --t-tik. */
-  #btn-gear .gear-ico { display: inline-block; transition: transform .12s; }
-  #btn-gear.on .gear-ico { transform: rotate(35deg); }
-
-  /* ---- Instellingen-menu (popover onder het tandwiel) --------------------
-     FASE 5D. Het paneel stond 18px onder de knop, zonder enige verbinding: een
-     wit blok dat uit de lucht kwam vallen en meer op een browsermelding leek dan
-     op iets van deze app. Drie dingen zijn eraan veranderd, en geen ervan maakt
-     er een scherm van:
-
-       1. HET ZIT VAST AAN HET TANDWIEL. Acht pixels lucht in plaats van
-          achttien, een puntje dat naar de knop wijst (::before, dezelfde vorm
-          als de tipbubbels in het spel), en het openklappen begint in de
-          rechterbovenhoek -- dus vlak onder de knop die het opende.
-       2. HET IS VAN DIT HUIS. Papierkleuren en de ronding van een kaart
-          (--r-lg), een fijne paarse ring eromheen in plaats van alleen een
-          schaduw, en een vleugje waas erachter -- hetzelfde glas als de
-          plakkende koppen. Geen nieuwe kleuren en geen nieuwe schaduw.
-       3. DE STANDEN ZIJN AAN TE WIJZEN. Zie .gi-state hieronder. */
-  .gear-menu {
-    position: absolute; top: 52px; right: 0; width: 252px; max-width: calc(100vw - 20px);
-    background: var(--paper-surface); color: var(--c-ink);
-    border-radius: var(--r-lg); padding: 7px;
-    backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
-    box-shadow: var(--e-3), inset 0 0 0 1.5px var(--paper-ring);
-    display: none; flex-direction: column;
-    transform-origin: top right;
-  }
-  /* Het puntje. Staat precies onder het midden van de tandwielknop (44px breed,
-     dus 22 uit de rechterrand) en is een gedraaid vierkantje, zodat het dezelfde
-     vulling en dezelfde ring meeneemt als het paneel zelf. */
-  .gear-menu::before {
-    content: ''; position: absolute; top: -6px; right: 15px; width: 14px; height: 14px;
-    background: var(--paper-surface); border-radius: 3px;
-    box-shadow: inset 0 0 0 1.5px var(--paper-ring);
-    transform: rotate(45deg); clip-path: polygon(0 0, 100% 0, 0 100%);
-  }
-  .gear-menu.open { display: flex; animation: gearPop .16s var(--ease-uit); }
-  @keyframes gearPop { from { opacity: 0; transform: scale(.92) translateY(-8px); } to { opacity: 1; transform: none; } }
-  /* Wie geen beweging wil, krijgt hetzelfde menu -- het klapt alleen niet open. */
-  @media (prefers-reduced-motion: reduce) { .gear-menu.open { animation: none; } }
+  /* ---- De rij van een schakelaar (.gear-item) --------------------------
+     Heette zo naar het menuutje onder het tandwiel, waar hij begon. Dat menu is
+     weg (het tandwiel opent meteen Voor ouders); de rij staat nu in het ouderdeel
+     (Geluid, onder ⋯) en in "Show stoppen?". Icoon, woord, stand -- de hele rij
+     is de knop. */
   .gear-item {
     font-family: inherit; font-size: var(--tx-body); font-weight: 600; color: var(--paper-ink);
     background: transparent; border: none; cursor: pointer; text-align: left; width: 100%;
@@ -331,7 +292,7 @@
   .gear-item:active { background: var(--lavender-wash-3); }
   .gear-item .gi-ico { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
   /* Uit: het icoon een stap terug, zodat de rij in één blik "staat stil" zegt --
-     zonder een ander, feller plaatje (zie renderGearMenu). */
+     zonder een ander, feller plaatje (zie renderGeluid). */
   .gear-item.uit .gi-ico { opacity: .45; filter: grayscale(1); }
   .gear-item .gi-label { flex: 1; min-width: 0; }
   /* De stand, en niet alleen het woord. "Uit" in een grijs pilletje leest als
@@ -355,34 +316,9 @@
   .gear-item .gi-state.off::before {
     background: transparent; box-shadow: inset 0 0 0 2px var(--paper-muted-text);
   }
-  /* De weg naar buiten. Een tweede regel eronder ("Voortgang, oefenen, beheer")
-     zegt dat hier een gróter deel achter zit; de paarse tegel met het icoon en de
-     chevron zeggen dat het een deur is en geen schakelaar. Het staat onder een
-     streepje, dus het is duidelijk níet een van de twee schakelaars -- maar het
-     is wel het enige gekleurde ding in het paneel, en dus vindbaar voor een
-     ouder die er bewust naar zoekt. */
-  .gear-item.parents { color: var(--purple-mid); align-items: center; padding: 9px 11px; }
-  /* Een lichte tegel en geen paars vlak: het gezins-emoji is zelf donker en
-     verdween op een paarse vulling tot een vlek. Dit is hetzelfde tegeltje als op
-     elke kaartkop in het ouderdeel (.set-card-head .ico), dus de rij belooft
-     precies waar ze heen gaat. */
-  .gear-item.parents .gi-ico {
-    width: 34px; height: 34px; border-radius: var(--r-sm); font-size: 17px;
-    display: grid; place-items: center;
-    background: var(--lavender-wash); box-shadow: inset 0 0 0 1.5px var(--purple-light);
-  }
   .gear-item .gi-sub {
     display: block; font-size: var(--tx-mini); font-weight: 600; color: var(--paper-ink-muted); margin-top: 1px;
   }
-  /* een teken en geen letter: het pijltje staat als maat in de regel, zie §5 */
-  .gear-item .gi-chev { font-size: 22px; color: var(--purple-light); line-height: 1; flex: none; }
-  .gear-sep { height: 1px; background: var(--paper-border); margin: 6px 9px; }
-  /* Onder het tandwiel staan nog maar twee dingen: wat dít toestel doet (Geluid)
-     en de ene deur naar het ouderdeel. "Speel als app" en "Over Rekensterren"
-     stonden hier ook, maar dit is het enige paneel waar een kind bij kan, en die
-     twee zijn voor ouders (de ene leidt zelfs het spel uit). Ze staan nu in
-     Voor ouders → Beheer; "als app" ook nog als knopje linksboven. Trillen
-     stond hier ook: dat volgt nu het toestel (zie "= Trilfeedback"). */
 
   /* ---- "Speel als app": het knopje en het blad --------------------------
      Het knopje is het spiegelbeeld van het tandwiel: dezelfde hoogte, dezelfde

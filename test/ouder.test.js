@@ -88,46 +88,52 @@ function check(ok, label, detail) {
     renderSettings();
   }, [key, tab]);
 
-  /* ================= A · Geluid en trillen ================= */
-  /* De twee schakelaars onder het tandwiel zijn app-breed (ze staan náást de
-     profielen in db) en moeten een herstart overleven. */
+  /* ================= A · Het tandwiel en het geluid ================= */
+  /* Het tandwiel opent meteen Voor ouders (geen menu ertussen). Het geluid is
+     app-breed (het staat náást de profielen in db), staat in het ouderdeel als
+     eerste rij onder "Voor alle sterren" (⋯), en moet een herstart overleven. */
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-gear');
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(300);
     let r = await page.evaluate(() => ({
-      open: document.getElementById('gear-menu').classList.contains('open'),
-      geluid: db.sound, tekst: document.getElementById('gear-sound-state').textContent,
-      uit: document.getElementById('gear-sound-state').classList.contains('off'),
-      aria: document.getElementById('gear-sound').getAttribute('aria-checked'),
+      scherm: document.querySelector('.screen.active').id,
+      menu: !!document.getElementById('gear-menu'),
+      weg: ['gear-sound', 'gear-haptics', 'gear-app', 'gear-over'].filter(id => document.getElementById(id)),
     }));
-    check(r.open, 'het tandwiel opent het paneel', 'gesloten');
+    check(r.scherm === 'screen-settings' && !r.menu && !r.weg.length, 'het tandwiel opent meteen Voor ouders, zonder menu', JSON.stringify(r));
+    await page.click('#settings-subtabs button[data-t="beheer"]');
+    await page.waitForTimeout(200);
+    r = await page.evaluate(() => {
+      const regel = [...document.querySelectorAll('#settings-body .sheet-rule')].pop();
+      const kaart = regel && regel.nextElementSibling;
+      return {
+        eerst: !!kaart && kaart.contains(document.getElementById('set-sound')),
+        geluid: db.sound, tekst: document.getElementById('set-sound-state').textContent,
+        uit: document.getElementById('set-sound-state').classList.contains('off'),
+        aria: document.getElementById('set-sound').getAttribute('aria-checked'),
+      };
+    });
+    check(r.eerst, 'Geluid is de eerste rij onder "Voor alle sterren"', JSON.stringify(r));
     check(r.geluid === true && r.tekst === 'Aan' && !r.uit && r.aria === 'true',
       'geluid staat standaard aan en zegt dat ook', JSON.stringify(r));
-    await page.click('#gear-sound');
+    await page.click('#set-sound');
     await page.waitForTimeout(120);
     r = await page.evaluate(() => ({
-      geluid: db.sound, tekst: document.getElementById('gear-sound-state').textContent,
-      uit: document.getElementById('gear-sound-state').classList.contains('off'),
-      aria: document.getElementById('gear-sound').getAttribute('aria-checked'),
-      ico: document.querySelector('#gear-sound .gi-ico').textContent,
+      geluid: db.sound, tekst: document.getElementById('set-sound-state').textContent,
+      uit: document.getElementById('set-sound-state').classList.contains('off'),
+      aria: document.getElementById('set-sound').getAttribute('aria-checked'),
+      ico: document.querySelector('#set-sound .gi-ico').textContent,
     }));
     check(r.geluid === false && r.tekst === 'Uit' && r.uit && r.aria === 'false',
       'uitzetten verandert de stand én wat er staat', JSON.stringify(r));
     check(r.ico === '🔇', 'en het icoontje gaat mee', r.ico);
-    // Onder het tandwiel staan nog maar twee dingen: Geluid en de deur naar het
-    // ouderdeel. Trillen volgt het toestel; "als app" en "over" staan in Beheer.
-    r = await page.evaluate(() => ({
-      rijen: [...document.querySelectorAll('#gear-menu .gear-item')].map(el => el.id || el.className),
-      weg: ['gear-haptics', 'gear-app', 'gear-over'].filter(id => document.getElementById(id)),
-    }));
-    check(r.rijen.length === 2 && !r.weg.length, 'het tandwiel heeft twee rijen: geluid en Voor ouders', JSON.stringify(r));
     // en morgen weer openen
     await page.reload();
     await page.waitForTimeout(300);
     r = await page.evaluate(() => ({ g: db.sound }));
     check(r.g === false, 'de geluidskeuze staat er morgen nog', JSON.stringify(r));
-    // Midden in een show: het tandwiel is er niet, dus zit dezelfde schakelaar in
+    // Midden in een show: het ouderdeel is ver weg, dus zit dezelfde schakelaar in
     // het stopvenster -- en omzetten daar stopt de show niet.
     await page.evaluate(() => { selectProfile('p1'); startLevel(1); G.idx = 1; askQuit(); });
     await page.waitForTimeout(200);
@@ -142,12 +148,11 @@ function check(ok, label, detail) {
     await page.waitForTimeout(120);
     r = await page.evaluate(() => ({
       g: db.sound, tekst: document.getElementById('quit-sound-state').textContent,
-      gear: document.getElementById('gear-sound-state').textContent,
       open: document.getElementById('quit-modal').classList.contains('open'),
       show: document.getElementById('screen-game').classList.contains('active'),
     }));
-    check(r.g === true && r.tekst === 'Aan' && r.gear === 'Aan',
-      'daar omzetten zet het geluid om, ook onder het tandwiel', JSON.stringify(r));
+    check(r.g === true && r.tekst === 'Aan',
+      'daar omzetten zet het geluid om', JSON.stringify(r));
     check(r.open && r.show, 'en de show loopt gewoon door', JSON.stringify(r));
     await ctx.close();
   }
@@ -1016,7 +1021,6 @@ function check(ok, label, detail) {
     await page.evaluate(() => goProfiles());
     await page.waitForTimeout(400);
     await page.click('#btn-gear');
-    await page.click('#gear-menu .gear-item.parents');
     await page.waitForTimeout(300);
     let r = await page.evaluate(() => ({ key: setKey, tab: setTab }));
     check(r.key === 'p2' && r.tab === 'voortgang', 'Q · Voor ouders opent op wie net speelde', JSON.stringify(r));
@@ -1034,9 +1038,8 @@ function check(ok, label, detail) {
       'Q · geluid uit: de notitie noemt het kind en heeft zelf de knop', JSON.stringify(r));
     await page.click('#stem-aan');
     await page.waitForTimeout(150);
-    r = await page.evaluate(() => ({ g: db.sound, knop: !!document.getElementById('stem-aan'),
-      gear: document.getElementById('gear-sound-state').textContent }));
-    check(r.g === true && !r.knop && r.gear === 'Aan', 'Q · één tik en het geluid staat aan, ook onder het tandwiel', JSON.stringify(r));
+    r = await page.evaluate(() => ({ g: db.sound, knop: !!document.getElementById('stem-aan') }));
+    check(r.g === true && !r.knop, 'Q · één tik en het geluid staat aan', JSON.stringify(r));
 
     // Beheer: meisje -> jongen, de voortgang blijft
     await page.evaluate(() => { db.profiles.p2.stars = { 1: 3 }; db.profiles.p2.diamonds = 12; save(); });
@@ -1095,7 +1098,6 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await page.click('#btn-gear');
-    await page.click('#gear-menu .gear-item.parents');
     await page.waitForTimeout(300);
     await page.click('#settings-profiles .who-btn[data-key="p2"]');
     await page.waitForTimeout(150);
