@@ -318,8 +318,6 @@
 
 
 
-
-
     --route-onder: rgba(30,8,52,.45);
     --route-goud: var(--gold-accent);
     --stop-schaduw: rgba(12,2,26,.5);
@@ -342,7 +340,6 @@
     --halte-vulling-top: #7b2cbf;
     --halte-vulling: #5a189a;
     --halte-lip: #2e0b5e;
-    --ster-tab: rgba(38,12,64,.74);
     --ster-zoom: var(--halte-sticker);
     --ster-lip: rgba(46,11,94,.5);
     --ster-leeg: var(--slot-vulling);
@@ -4821,9 +4818,9 @@
 
 
   .tour-stop .stop-schat {
-    position: absolute; z-index: 2; left: 50%; top: -1.6cqw; margin-left: 3.2cqw;
-    width: 5.6cqw; height: 5.6cqw; border-radius: 50%;
-    display: grid; place-items: center; font-size: 3.1cqw; line-height: 1;
+    position: absolute; z-index: 2; left: 50%; top: -2.4cqw; margin-left: 2.6cqw;
+    width: 6.4cqw; height: 6.4cqw;
+    display: grid; place-items: center; font-size: 5cqw; line-height: 1;
     pointer-events: none;
 
 
@@ -4831,8 +4828,17 @@
 
 
 
-    background: var(--ster-tab);
-    box-shadow: inset 0 0 0 0.35cqw rgba(var(--goud-rgb),.75), 0 0.35cqw 0.7cqw rgba(12,2,26,.45);
+
+
+
+
+
+
+
+
+    filter: drop-shadow(0.3cqw 0 0 var(--halte-sticker)) drop-shadow(-0.3cqw 0 0 var(--halte-sticker))
+            drop-shadow(0 0.3cqw 0 var(--halte-sticker)) drop-shadow(0 -0.3cqw 0 var(--halte-sticker))
+            drop-shadow(0 0.35cqw 0 var(--ster-lip));
   }
 
 
@@ -17734,7 +17740,7 @@ function haltKnop(shown, nodes, i, stand) {
   const laatste = i === nodes.length - 1;
   const schat = laatste ? beloningItem(shown.world) : null;
   const schatTeken = (schat && !p.owned.includes(schat.id))
-    ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
+    ? `<span class="stop-schat" aria-hidden="true">🎁</span>` : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}</div>`;
 

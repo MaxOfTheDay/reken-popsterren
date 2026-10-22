@@ -271,8 +271,6 @@
                     zijn ze een verloop van niets bijzonders -- precies genoeg om
                     het rondje bol te laten staan zoals alle andere haltes, en te
                     weinig om als glans op te vallen.
-       ster-tab     het donkere schijfje onder het schatteken bij de laatste halte
-                    (ooit ook het tabje onder de sterren; dat is weg)
        ster-zoom    de witte stickerrand om elke ster onder een halte (zelfde wit
                     als halte-sticker)
        ster-lip     het donkere lipje eronder, zoals de lip onder een halte --
@@ -306,7 +304,6 @@
     --halte-vulling-top: #7b2cbf;
     --halte-vulling: #5a189a;
     --halte-lip: #2e0b5e;
-    --ster-tab: rgba(38,12,64,.74);
     --ster-zoom: var(--halte-sticker);
     --ster-lip: rgba(46,11,94,.5);
     --ster-leeg: var(--slot-vulling);
