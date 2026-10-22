@@ -26,6 +26,8 @@
  *   B  en het slot zelf blijft ook staan -- de app groeit niet alsnog mee
  *   C  een kleiner venster is het toetsenbord: de bediening blijft in beeld
  *   D  draaien is een échte andere maat en legt het slot opnieuw vast
+ *   F  de navigatie zelf: zo breed als haar knoppen, knoppen groot genoeg voor
+ *      een kindervinger, het blauwe vlak schuift mee en een schermlezer weet waar je is
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -180,6 +182,58 @@ async function zetOnderrandAan(page) {
       `slot ${gedraaid.slot}, drift ${gedraaid.drift || '(leeg)'}`);
 
     check(fouten.length === 0, `A · ${scherm.naam} · geen javascript-fouten`, fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- F · de navigatie zelf ----
+     Sinds de balk alleen iconen draagt is hij zo breed als zijn drie knoppen
+     (zie .nav-item in 40-kaart.css). Hier de afspraken die daarbij horen, op een
+     kleine telefoon, een gewone en een tablet. */
+  for (const [w, h] of [[320, 568], [390, 844], [820, 1180]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1');
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      const p = P(); p.readyTrophies = ['x']; goMap(); await wacht(900);
+      const nav = $('main-nav'), sel = nav.querySelector('.nav-sel');
+      const tabs = [...nav.querySelectorAll('.nav-item')];
+      const doos = e => e.getBoundingClientRect();
+      const stand = () => ({
+        huidig: tabs.filter(t => t.getAttribute('aria-current') === 'page').map(t => t.id),
+        vlak: Math.round(doos(sel).left), actief: Math.round(doos(nav.querySelector('.nav-item.active')).left),
+      });
+      const opKaart = stand();
+      navTik('dress');
+      await wacht(60);
+      const onderweg = Math.round(doos(sel).left);
+      await wacht(600);
+      const opKast = stand();
+      return {
+        landmark: nav.tagName === 'NAV' && !!nav.getAttribute('aria-label'),
+        navB: Math.round(doos(nav).width), venster: innerWidth,
+        maten: tabs.map(t => [Math.round(doos(t).width), Math.round(doos(t).height)]),
+        troLabel: $('nav-tro').getAttribute('aria-label'),
+        opKaart, opKast, onderweg,
+      };
+    });
+    const wat = `${w}×${h}`;
+    check(r.landmark, `F · ${wat} · de balk is een <nav> met een naam`, String(r.landmark));
+    check(r.maten.every(([b, hh]) => b >= 44 && hh >= 44), `F · ${wat} · elke knop is minstens 44 x 44`, JSON.stringify(r.maten));
+    const knoppen = r.maten.reduce((a, [b]) => a + b, 0);
+    check(r.navB <= knoppen + 60 && r.navB < r.venster, `F · ${wat} · de balk is zo breed als zijn knoppen`, `${r.navB}px voor ${knoppen}px knoppen`);
+    check(r.opKaart.huidig.join() === 'nav-map' && r.opKast.huidig.join() === 'nav-dress',
+      `F · ${wat} · precies één tabblad draagt aria-current, en het juiste`, `${r.opKaart.huidig} -> ${r.opKast.huidig}`);
+    check(Math.abs(r.opKaart.vlak - r.opKaart.actief) <= 1 && Math.abs(r.opKast.vlak - r.opKast.actief) <= 1,
+      `F · ${wat} · het blauwe vlak ligt onder het gekozen tabblad`, JSON.stringify([r.opKaart, r.opKast]));
+    check(r.onderweg > r.opKaart.vlak + 1 && r.onderweg < r.opKast.vlak - 1,
+      `F · ${wat} · en het schuift ernaartoe in plaats van te verspringen`, `${r.opKaart.vlak} -> ${r.onderweg} -> ${r.opKast.vlak}`);
+    check(r.troLabel === 'Trofeeën, nieuw', `F · ${wat} · het stipje op 🏆 staat ook in woorden`, r.troLabel);
+    check(fouten.length === 0, `F · ${wat} · geen javascript-fouten`, fouten.join(' | '));
     await ctx.close();
   }
 
