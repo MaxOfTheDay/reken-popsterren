@@ -81,18 +81,13 @@
     border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
   .schermen span { display: block; margin-top: 8px; font-size: 15px; font-weight: 600; color: var(--zacht); }
 
-  /* drie punten over het rekenen: icoon, kop, één regel. Naast elkaar op een
-     breed scherm, als drie nette rijen (icoon links) op een telefoon. */
-  .punten { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; text-align: center; }
-  .punten .ico { display: block; font-size: 34px; line-height: 1; margin-bottom: 8px; }
-  .punten b { display: block; color: #fff; font-size: 18px; line-height: 1.25; }
-  .punten span:not(.ico) { display: block; margin-top: 4px; color: var(--zacht); font-size: 15px; line-height: 1.35; }
-  @media (max-width: 640px) {
-    .punten { grid-template-columns: 1fr; gap: 14px; text-align: left; max-width: 34ch; margin: 0 auto; }
-    .punten li { display: grid; grid-template-columns: 44px 1fr; align-items: center; }
-    .punten .ico { grid-row: span 2; margin: 0; font-size: 30px; }
-    .punten span:not(.ico) { margin-top: 1px; }
-  }
+  /* twee schermen uit het ouderdeel, iets groter dan de drie erboven */
+  .schermen.twee { grid-template-columns: repeat(2, 1fr); max-width: 480px; margin: 0 auto; }
+  /* korte punten als pilletjes: een icoon en een paar woorden, zonder uitleg */
+  .chips { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chips li { padding: 8px 14px; border-radius: 999px; background: var(--vlak); border: 1px solid var(--vlak-rand); font-weight: 600; font-size: 15px; }
+  .chips li span { margin-right: 6px; }
+  .kbd { display: inline-block; padding: 1px 10px; border-radius: 8px; background: rgba(255,255,255,.14); color: #fff; white-space: nowrap; }
   .kort { text-align: center; margin: 18px 0 0; }
 
   .deel { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
@@ -121,45 +116,51 @@
     <video controls playsinline preload="none" width="1920" height="1080"
            poster="../promo/poster.jpg" src="../promo/rekensterren-promo.mp4"
            data-staand-poster="../promo/poster-staand.jpg" data-staand-src="../promo/rekensterren-promo-staand.mp4"
-           aria-label="Filmpje van twintig seconden, zonder geluid: het logo en negen schermen uit het spel en het ouderdeel"></video>
+           aria-label="Filmpje van twintig seconden, zonder geluid: het logo en tien schermen uit het spel en het ouderdeel"></video>
   </div>
 
-  <!-- Twee helften die elkaar spiegelen: wat je kind eraan heeft (het plezier,
-       in beeld) en wat jij eraan hebt (het rekenen, in drie punten). De schermen
-       worden bovenaan afgesneden (3:4), zodat de rij op een telefoon kort blijft. -->
+  <!-- Twee helften die elkaar spiegelen: wat je kind eraan heeft (het plezier)
+     en wat jij eraan hebt (het rekenen). Allebei in beeld, met weinig woorden.
+     De schermen komen uit promo/beelden (node promo/opname.js), op 360 breed
+     als webp, en worden bovenaan afgesneden (3:4), zodat de rij op een telefoon
+     kort blijft. -->
   <section aria-labelledby="kop-kind">
     <h2 id="kop-kind">Voor je kind</h2>
     <ul class="schermen">
-      <li><img src="beelden/02b-tournee.webp" alt="De tournee: werelden om te ontdekken, de volgende nog op slot" loading="lazy" width="360" height="779"><span>Werelden ontdekken</span></li>
-      <li><img src="beelden/09-trofeeen.webp" alt="De trofeeënkast met trofeeën om te openen" loading="lazy" width="360" height="779"><span>Trofeeën verzamelen</span></li>
+      <li><img src="beelden/04-show-rekenen.webp" alt="Een show: de ster op het podium en een som met vier antwoorden" loading="lazy" width="360" height="779"><span>Optreden met sommen</span></li>
+      <li><img src="beelden/02-kaart.webp" alt="De wereldkaart met de shows als haltes en hun sterren" loading="lazy" width="360" height="779"><span>Werelden ontdekken</span></li>
       <li><img src="beelden/06-kleedkamer.webp" alt="De kleedkamer: kleren om te kiezen en te sparen" loading="lazy" width="360" height="779"><span>De ster aankleden</span></li>
     </ul>
   </section>
 
   <!-- Wat hier over het rekenen staat, moet kloppen met het spel: zie "= Vragen
-       maken" en "= Extra uitdagingen" in src/20-app.js, en "Sommen die nu nog
-       lastig zijn" in het ouderdeel. -->
+       maken" en "= Extra uitdagingen" in src/20-app.js, de telmodus, de stem die
+       voorleest (stemAan), en "Oefent extra op" in Voortgang. -->
   <section aria-labelledby="kop-jou">
     <h2 id="kop-jou">Voor jou</h2>
-    <ul class="punten">
-      <li><span class="ico" aria-hidden="true">🎯</span><b>Jij kiest</b><span>+ − × ÷, tot 10, 20, 50 of 100</span></li>
-      <li><span class="ico" aria-hidden="true">📈</span><b>Het groeit mee</b><span>Lukt het, dan worden de sommen pittiger</span></li>
-      <li><span class="ico" aria-hidden="true">🔁</span><b>Lastige sommen komen terug</b><span>En in het ouderdeel zie je welke</span></li>
+    <ul class="schermen twee">
+      <li><img src="beelden/07-ouder-oefenen.webp" alt="Oefenen in het ouderdeel: plus, min, maal en delen, tot hoever, en welke tafels" loading="lazy" width="360" height="779"><span>Jij kiest wat</span></li>
+      <li><img src="beelden/08-ouder-voortgang.webp" alt="Voortgang in het ouderdeel: hoe het gaat, het leerpad en de sommen die nog lastig zijn" loading="lazy" width="360" height="779"><span>Je ziet hoe het groeit</span></li>
     </ul>
-    <p class="klein kort">De voortgang blijft op dit toestel, en het werkt ook zonder internet.</p>
+    <ul class="chips">
+      <li><span aria-hidden="true">🧸</span>Eerst leren tellen</li>
+      <li><span aria-hidden="true">🔁</span>Lastige sommen komen terug</li>
+      <li><span aria-hidden="true">🔊</span>Leest voor</li>
+    </ul>
   </section>
 
-  <!-- Dezelfde stappen als in het blad "Rekensterren als app" in het spel (zie
-       "= Speel als app" in src/20-app.js). Hier staan ze voor de ouder die via
-       een link of de QR-code binnenkomt, nog vóór er gespeeld is. -->
+  <!-- Geen stappen per browser meer: die verouderen (Safari 26 verstopte Deel
+       achter ···), en het blad "⊞ Als app" in het spel kent ze per toestel al
+       (zie "= Speel als app" in src/20-app.js). Hier staat alleen wat het je
+       oplevert, met dezelfde drie woorden als in dat blad, en waar je tikt. -->
   <section aria-labelledby="kop-app">
     <h2 id="kop-app">Als app op je tablet</h2>
-    <ul class="punten">
-      <li><span class="ico" aria-hidden="true">🍏</span><b>iPhone en iPad</b><span>In Safari: Deel → Zet op beginscherm</span></li>
-      <li><span class="ico" aria-hidden="true">🤖</span><b>Android</b><span>In Chrome: ⋮ → App installeren</span></li>
-      <li><span class="ico" aria-hidden="true">💻</span><b>Computer</b><span>Het installeer-icoon in de adresbalk</span></li>
+    <ul class="chips">
+      <li><span aria-hidden="true">📱</span>Eigen icoon</li>
+      <li><span aria-hidden="true">⛶</span>Heel scherm</li>
+      <li><span aria-hidden="true">📶</span>Zonder internet</li>
     </ul>
-    <p class="klein kort">Dan opent het spel schermvullend, met een eigen icoon, en zonder internet.</p>
+    <p class="kort">Tik in het spel op <b class="kbd">⊞ Als app</b>.<br><span class="klein">Je krijgt de stappen voor jouw toestel.</span></p>
   </section>
 
   <section aria-labelledby="kop-deel">

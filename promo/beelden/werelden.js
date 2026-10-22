@@ -29,5 +29,30 @@ window.WERELDEN = [
     "id": "tover",
     "name": "Toverwereld",
     "art": "assets/world/tover-map.webp"
+  },
+  {
+    "id": "circus",
+    "name": "Circuswereld",
+    "art": "assets/world/circus-map.webp"
+  },
+  {
+    "id": "onderwater",
+    "name": "Onderwaterwereld",
+    "art": "assets/world/onderwater-map.webp"
+  },
+  {
+    "id": "ruimte",
+    "name": "Ruimtewereld",
+    "art": "assets/world/ruimte-map.webp"
+  },
+  {
+    "id": "dino",
+    "name": "Dinowereld",
+    "art": "assets/world/dino-map.webp"
+  },
+  {
+    "id": "vuur",
+    "name": "Vuurwereld",
+    "art": "assets/world/vuur-map.webp"
   }
 ];

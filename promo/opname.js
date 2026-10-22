@@ -50,20 +50,14 @@ function marieRekent() {
   ['9 + 4 = @', '12 − 5 = @', '6 + 7 = @', '2 × 8 = @', '14 − 9 = @', '5 × 4 = @', '8 + 8 = @']
     .forEach(k => { p.learned[k] = p.learned[k] || { ans: 0, op: '+', t: Date.now() }; });
   ['+', '-', 'x'].forEach(o => { const t = ot(p, o); t.n = Math.max(t.n, 30); t.acc = .88; t.fast = .64; });
+  // de laatste shows, voor de statuskaart in Voortgang: zonder p.recent zegt die
+  // "Net begonnen", naast vijf shows en tweehonderd sommen
+  p.recent = [3, 2, 3, 3, 2, 3, 2, 3, 3, 2];
 }
 
 const SCHERMEN = [
   { key: '01-profielkeuze', go: () => { cur = null; goProfiles(); } },
   { key: '02-kaart', go: () => selectProfile('p1') },
-  { key: '02b-tournee', wacht: 2200, go: () => {
-      selectProfile('p1');
-      const q = P();
-      for (let i = 0; i < 2; i++)
-        for (let l = WORLD_START[i]; l < WORLD_START[i] + WORLDS[i].levels; l++) q.stars[l] = i ? 2 : 3;
-      for (let l = WORLD_START[2]; l < WORLD_START[2] + 4; l++) q.stars[l] = 2;
-      q.level = WORLD_START[2] + 4;
-      goMap(); openReis();
-    } },
   // een tafelsom uit een latere wereld: bij "maal en delen" hoort geen 2 − 1
   { key: '04-show-rekenen', go: () => {
       selectProfile('p1'); marieRekent(); P().settings.ops = ['x'];
@@ -80,13 +74,21 @@ const SCHERMEN = [
   // het rekenen, voor de ouder: zo stel je het in, en zo zie je hoe het gaat
   { key: '07-ouder-oefenen', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'oefenen'; renderSettings(); } },
   { key: '08-ouder-voortgang', go: () => { marieRekent(); openSettings(); setKey = 'p1'; setTab = 'voortgang'; renderSettings(); } },
-  // een som uit een latere wereld: zoek het getal (leerstap 4, zie "= Vragen maken")
-  { key: '04b-show-zoek', go: () => {
-      selectProfile('p1'); marieRekent();
-      const l = WORLD_START[3] + 2;
-      startLevel(l);
-      G.qs[G.idx] = genMissing(P().settings, l, P().perf, '+'); renderQuestion();
+  // Anna telt: een cijfer op de kaart, en dan kies je het groepje dat zo veel is
+  // (fase 6). Een vraag waaraan je ziet dat er geteld wordt, niet "de meeste".
+  // (Twee groepjes samen, fase 8, breekt op een telefoon over twee regels.)
+  { key: '03-show-tellen', go: () => {
+      selectProfile('p2');
+      const p = P();
+      p.settings.stageMax = Math.max(p.settings.stageMax || 0, 6);
+      p.countTrack = Object.assign(p.countTrack || {}, { stage: 6 });
+      startLevel(2);
+      let q, n = 0;
+      do q = genCount(p); while ((q.ctype !== 'numquant' || q.ans !== 4) && ++n < 400);
+      G.qs[G.idx] = q; renderQuestion();
     } },
+  // de podia: in de kleedkamer, naast de kleren
+  { key: '10-podia', go: () => { selectProfile('p1'); openKleedkamer(); openPodia(); } },
 ];
 
 (async () => {

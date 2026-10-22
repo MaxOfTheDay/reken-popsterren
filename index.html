@@ -22982,7 +22982,7 @@ function meerCijfersHtml(p) {
   </details>`;
 }
 function statsPanelHtml(p) {
-  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
+  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}${ouderVoetHtml()}</div>`;
 }
 
 
@@ -23329,6 +23329,7 @@ function oefenenPanelHtml(p, s) {
 
 
 
+
 function geluidKaartHtml() {
   return `
     <div class="set-card geluid-kaart">
@@ -23388,6 +23389,10 @@ function backupStandHtml(nu) {
 function importInvoerHtml() {
   return `<input type="file" id="set-import-file" accept="application/json,.json" style="display:none">`;
 }
+
+
+
+
 
 
 
@@ -23521,7 +23526,7 @@ function beheerPanelHtml(p) {
       </details>
     </div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml(true)}${ouderVoetHtml()}
+    ${appWideCardsHtml(true)}
   </div>`;
 }
 

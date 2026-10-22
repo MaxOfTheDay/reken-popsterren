@@ -24,9 +24,9 @@
                 ster springt naar zijn plek boven "sterren", de letters en de
                 zwaai komen erbij (het logo in lagen, zie test/lagen.js), en de
                 ondertitel springt erbij
-    3.6 - 22.5  negen schermen uit het echte spel in een telefoon, om en om
+    3.6 - 24.6  tien schermen uit het echte spel in een telefoon, om en om
                 het plezier en het rekenen (twee komen uit het ouderdeel)
-   22.5 - 26.7  eindkaart met het adres
+   24.6 - 28.8  eindkaart met het adres
   Het logo-deel is geschreven in de tijd van de eerste versie (26 s, logo tot
   9 s) en wordt afgespeeld via logoTijd(): die slaat het aanloopje van de
   vallende ster en het wachten over en speelt de opbouw iets vlotter. Zo bleef
@@ -256,14 +256,15 @@ function glinster(ctx, x, y, r, a) { // het vierpuntige sterretje uit het logo
 // met het spel -- zie "= Vragen maken" en "= Extra uitdagingen" in src/20-app.js.
 const SCHERMEN = [
   { img: '01-profielkeuze',    kop: 'Maak je <span class="licht">eigen ster</span>', onder: '' },
-  { img: '02b-tournee',        kop: 'Reis langs <span class="licht">nieuwe werelden</span>', onder: '' },
+  { img: '02-kaart',           kop: 'Reis langs <span class="licht">nieuwe werelden</span>', onder: '' },
+  { img: '03-show-tellen',     kop: 'Eerst <span class="licht">leren tellen</span>', onder: '' },
   { img: '04-show-rekenen',    kop: 'Plussen, minnen, <span class="licht">maal en delen</span>', onder: 'Tot 10 of tot 100: jij kiest.' },
   { img: '07-ouder-oefenen',   kop: '<span class="licht">Jij</span> stelt het in', onder: '' },
-  { img: '04b-show-zoek',      kop: 'Het <span class="licht">groeit mee</span>', onder: '' },
-  { img: '08-ouder-voortgang', kop: 'Lastige sommen <span class="licht">komen terug</span>', onder: 'En jij ziet welke.' },
+  { img: '08-ouder-voortgang', kop: 'Het <span class="licht">groeit mee</span>', onder: 'Lastige sommen komen terug.' },
   { img: '05-einde',           kop: 'Verdien <span class="licht">sterren</span>', onder: '' },
   { img: '09-trofeeen',        kop: 'Verzamel <span class="licht">trofeeën</span>', onder: '' },
   { img: '06-kleedkamer',      kop: 'Kleed je ster aan <span class="licht">voor de show</span>', onder: '' },
+  { img: '10-podia',           kop: 'En kies je <span class="licht">podium</span>', onder: '' },
 ];
 const N = SCHERMEN.length, LAATSTE = N - 1;
 const S3 = 3.6, STAP = 2.1, EIND = 4.2;
