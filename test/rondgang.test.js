@@ -594,68 +594,37 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   });
   check(!!r.id, 'de kleedkamer toont spullen die nog te koop staan', JSON.stringify(r));
 
-  /* DE CATEGORIERIJ LOOPT ZICHTBAAR DOOR. Er staan zeven laden in een rij die er
-     op een telefoon vijf à zes kwijt kan, dus de rij scrolt -- en dan is de enige
-     vraag die telt of een kind kán zien dat er meer staat. Dat ging mis bij
-     Accessoires: die knop landde kraakhelder tegen de fade aan en Dieren erachter
-     was een grauwsluier van 28px, waardoor de rij ophield bij het felste ding op
-     het scherm. Sindsdien rekent tabRijDoel() uit waar de rij hoort te staan.
-
-     Drie dingen per categorie, en ze zijn alle drie met het oog te controleren:
-       - de gekozen knop staat helemáal in beeld (nooit half onder een rand)
-       - de fade staat aan precies de kant waar nog iets zit, en nergens anders
-       - zit er rechts nog iets, dan steekt daar een kier van een volgend knopje
-         uit die groot genoeg is om te zíen (TAB_SNIPPER, 24px)
-     Uitzondering op de laatste: bij de eérste categorie ligt de rij aan het begin
-     verankerd -- doorschuiven zou de gekozen knop zelf tegen de rand duwen -- en
-     doet de fade over de laatste hele knop het werk. */
-  const rij = await page.evaluate(async () => {
+  /* DE BALK MET DE LADEN. Acht laden -- de zeven kledingsoorten en 🎪 Podia -- in
+     één balk die niet scrolt: elke lade staat altijd helemaal in beeld, groot
+     genoeg voor een vinger, en wat aanstaat zegt het licht eronder. Elke lade
+     opent zijn eigen rek, en 🎪 brengt haar in Podia zonder dat de balk weggaat.
+     Op de telefoon van de rondgang; de kleinste telefoon staat bij "8 · De kop". */
+  let balk = await page.evaluate(async () => {
     const uit = [];
-    const el = document.getElementById('shop-tabs');
-    for (const c of CATS) {
-      openKleedkamerCat(c.id);
-      await new Promise(res => setTimeout(res, 420));   // scroll-behavior: smooth
-      const vak = el.getBoundingClientRect(), breed = el.clientWidth;
-      const max = el.scrollWidth - breed;
-      let kier = null, heel = false, eerste = false;
-      el.querySelectorAll('.tab-btn').forEach((b, i) => {
-        const bb = b.getBoundingClientRect(), l = bb.left - vak.left, r = bb.right - vak.left;
-        if (b.classList.contains('active')) { heel = l >= -0.5 && r <= breed + 0.5; eerste = i === 0; }
-        if (r > breed && kier === null) kier = Math.max(0, breed - l);
-      });
-      uit.push({ cat: c.id, heel, eerste, kier: kier === null ? null : Math.round(kier),
-        meerR: max > 2 && el.scrollLeft < max - 2, meerL: el.scrollLeft > 2,
-        fadeR: el.classList.contains('can-right'), fadeL: el.classList.contains('can-left') });
+    const knoppen = () => [...document.querySelectorAll('#shop-tabs .tab-btn')];
+    for (let i = 0; i < knoppen().length; i++) {
+      knoppen()[i].click();
+      await new Promise(res => setTimeout(res, 320));   // het licht schuift in --t-snel
+      const k = knoppen(), b = k[i].getBoundingClientRect(), l = document.querySelector('#shop-tabs .rij-licht').getBoundingClientRect();
+      uit.push({ naam: k[i].getAttribute('aria-label'), cat: shopCat,
+        aan: k.filter(x => x.classList.contains('active')).length === 1 && k[i].classList.contains('active'),
+        heel: k.every(x => { const r = x.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; }),
+        maat: Math.round(b.width) + 'x' + Math.round(b.height),
+        licht: Math.abs(l.left - b.left) < 1.5 && Math.abs(l.width - b.width) < 1.5,
+        scroll: document.getElementById('shop-tabs').scrollWidth > document.getElementById('shop-tabs').clientWidth + 1,
+        balkStaat: getComputedStyle(document.getElementById('shop-tabs-wrap')).display !== 'none' });
     }
-    return uit;
+    return { uit, ids: CATS.map(c => c.id).concat(PODIA_CAT) };
   });
-  check(rij.length === 7 && rij.every(c => c.heel),
-    'de gekozen categorie staat altijd helemaal in beeld',
-    JSON.stringify(rij.filter(c => !c.heel)));
-  check(rij.every(c => c.fadeR === c.meerR && c.fadeL === c.meerL),
-    'de fade staat aan de kant waar nog meer staat, en alleen daar',
-    JSON.stringify(rij.filter(c => c.fadeR !== c.meerR || c.fadeL !== c.meerL)));
-  /* Podia staat niet in de rij maar in de kop (👕 | 🎪). Vanuit de laatste lade
-     brengt 🎪 haar in Podia, en 👕 brengt haar terug in diezelfde lade -- niet
-     naar het begin van de rij. Allebei heel in beeld, ook op de kleinste telefoon. */
-  const schakelKop = await page.evaluate(async () => {
-    const laatste = CATS[CATS.length - 1].id;
-    openKleedkamerCat(laatste);
-    await new Promise(res => setTimeout(res, 420));
-    const h = [...document.querySelectorAll('#kleed-schakel .kleed-helft')];
-    const heel = h.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.width >= 44; });
-    h[1].click(); await new Promise(res => setTimeout(res, 200));
-    const inPodia = shopCat;
-    document.querySelectorAll('#kleed-schakel .kleed-helft')[0].click(); await new Promise(res => setTimeout(res, 200));
-    return { heel, inPodia, terug: shopCat, laatste, namen: h.map(b => b.getAttribute('aria-label')) };
-  });
-  check(schakelKop.heel && schakelKop.namen.join() === 'Kleren,Podia' && schakelKop.inPodia === 'stage' && schakelKop.terug === schakelKop.laatste,
-    'de schakelaar in de kop: 🎪 naar Podia, 👕 terug naar de lade waar ze was', JSON.stringify(schakelKop));
-  const zwak = rij.filter(c => c.meerR && !c.eerste && (c.kier === null || c.kier < 24));
-  check(zwak.length === 0,
-    'loopt de rij rechts door, dan steekt daar een zichtbare kier van het volgende knopje uit',
-    JSON.stringify(zwak));
-  check(rij.some(c => c.meerR), 'de rij is op een telefoon ook echt breder dan het scherm', JSON.stringify(rij));
+  const balkIds = balk.ids; balk = balk.uit;
+  check(balk.length === 8 && balk.map(c => c.cat).join() === balkIds.join(),
+    'de balk heeft acht laden, en elke lade opent zijn eigen rek (Podia als laatste)', JSON.stringify(balk.map(c => c.naam + '>' + c.cat)));
+  check(balk.every(c => c.aan && c.licht),
+    'wat aanstaat is precies één lade, en het licht staat eronder', JSON.stringify(balk.filter(c => !c.aan || !c.licht)));
+  check(balk.every(c => c.heel && !c.scroll && c.balkStaat),
+    'alle laden staan altijd helemaal in beeld, niets scrolt, ook niet in Podia', JSON.stringify(balk));
+  check(balk.every(c => parseInt(c.maat.split('x')[1]) >= 44 && parseInt(c.maat) >= 36),
+    'en elke lade is groot genoeg voor een vinger', JSON.stringify(balk.map(c => c.maat)));
   await page.evaluate(() => openKleedkamerCat('dress'));
   await page.waitForTimeout(300);
   /* Eerst: tikken kóópt niet. Een tik op iets dat nog niet van haar is kiest het --
@@ -1215,6 +1184,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
        D  de kleedkamer en de kast hebben geen ← als je er via de tabbladbalk
           komt: de balk zelf is de weg terug. Onzichtbaar en niet weg, zodat zijn
           kolom de titel in het midden houdt (C).
+       E  de balk met de acht laden past op elke maat helemaal in beeld, zonder
+          scrollen, en geen lade wordt te klein om te raken.
 
      Op de telefoon van de rondgang en op de maten waar het uit de pas liep. */
   {
@@ -1260,6 +1231,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         uit.laagStaand = matchMedia('(orientation: portrait) and (max-height: 700px)').matches;
         uit.spiegelOnder = +document.getElementById('shop-spiegel').getBoundingClientRect().bottom.toFixed(1);
         uit.rijBoven = +document.getElementById('shop-tabs-wrap').getBoundingClientRect().top.toFixed(1);
+        uit.balk = [...document.querySelectorAll('#shop-tabs .tab-btn')].map(b => { const r = b.getBoundingClientRect();
+          return { in: r.left >= 0 && r.right <= innerWidth + 0.5, b: Math.round(r.width), h: Math.round(r.height) }; });
         openTrophies(); await wacht(500); uit.kast = rij();
         return uit;
       });
@@ -1272,6 +1245,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         'C · de koprij van de kleedkamer en de kast valt samen' + maat, JSON.stringify([r.kleed, r.kast]));
       check(!r.kleed.afgekapt && !r.kast.afgekapt, 'en geen van beide namen wordt afgekapt' + maat,
         JSON.stringify([r.kleed, r.kast]));
+      check(r.balk.length === 8 && r.balk.every(k => k.in && k.b >= 30 && k.h >= 44),
+        'E · de acht laden staan helemaal in beeld en zijn groot genoeg voor een vinger' + maat, JSON.stringify(r.balk));
       check(r.kleed.terugZicht === 'hidden' && r.kast.terugZicht === 'hidden',
         'D · vanaf de tabbladbalk hebben de kleedkamer en de kast geen ←' + maat,
         JSON.stringify([r.kleed, r.kast]));
