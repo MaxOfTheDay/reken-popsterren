@@ -12688,7 +12688,7 @@ function meerCijfersHtml(p) {
   </details>`;
 }
 function statsPanelHtml(p) {
-  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}</div>`;
+  return `<div class="settings-panel">${statusKaartHtml(p)}${leerpadHtml(p)}${oefentExtraHtml(p)}${meerCijfersHtml(p)}${ouderVoetHtml()}</div>`;
 }
 /* Kan dit toestel de stem laten horen? Een ouder ziet dat anders nergens: zonder
    stem blijft de telmodus speelbaar, maar valt de luisteroefening (fase 5) stil
@@ -13026,8 +13026,9 @@ function oefenenPanelHtml(p, s) {
    redden -- stond daardoor op een telefoon van 844 net onder de vouw. Nu:
      * "Nieuwe ster" is de "+" achter de sterren in de kiezer (renderWhoRow), waar
        hij hoort: bij wie er zijn, en op dezelfde plek als op de sterrenkeuze;
-     * "Over Rekensterren" is een voetregel zonder kaart (ouderVoetHtml): het is
-       geen instelling, en op dit tabblad staat nog maar één volle knop.
+     * "Over Rekensterren" is een voetregel zonder kaart (ouderVoetHtml), en
+       sinds hij hier onvindbaar onderaan stond, staat hij onder Voortgang
+       (alleen zonder sterren nog hier). Op dit tabblad staat nog maar één volle knop.
    Wat hier blijft is wat over dit toestel gaat: de back-up, en zolang het spel
    nog in de browser draait de uitleg om hem op het beginscherm te zetten. Komt er
    ooit een account of een cloud bij, dan groeit dát uit de back-upkaart -- geen
@@ -13097,7 +13098,11 @@ function importInvoerHtml() {
 /* De weg naar over/: de pagina die in twintig seconden zegt wat dit spel is,
    met het filmpje erop. Voor de ouder die het aan iemand anders wil laten zien --
    daarom staat hij hier en niet in het spel: een kind komt er zo nooit per
-   ongeluk. Hij staat als allerlaatste, en als voetregel zonder kaart: het is geen
+   ongeluk. Hij staat onderaan Voortgang, het tabblad waar ⚙️ opent: daar zie je
+   hem op een telefoon zonder te scrollen. Onder ⋯ stond hij eerst als
+   allerlaatste, twee schermen diep achter de back-up, en dan vond geen ouder
+   hem. Zonder sterren is er geen Voortgang en staat hij in ⋯ (beheerEmptyHtml).
+   Hij is een voetregel zonder kaart: het is geen
    instelling maar een verwijzing, en een witte kaart met een volle paarse knop
    vroeg even hard om aandacht als de back-up erboven. Het filmpje zit niet in de
    app zelf; het wordt pas opgehaald als iemand op afspelen tikt (en sw.js bewaart
@@ -13120,7 +13125,7 @@ function ouderVoetHtml() {
     </div>`;
 }
 // Naar over/: eerst bewaren (we verlaten de pagina), en zonder net niet weg.
-// Twee ingangen met dezelfde handler: de voetregel in Beheer (set-over) en de
+// Twee ingangen met dezelfde handler: de voetregel onder Voortgang (set-over) en de
 // stille regel op het lege beginscherm (over-hint, in de markup van index.html).
 function naarOver(e) {
   if (navigator.onLine === false) {
@@ -13227,7 +13232,7 @@ function beheerPanelHtml(p) {
       </details>
     </div>
     <div class="sheet-rule"><span>Voor alle sterren</span></div>
-    ${appWideCardsHtml(true)}${ouderVoetHtml()}
+    ${appWideCardsHtml(true)}
   </div>`;
 }
 

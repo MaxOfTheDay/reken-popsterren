@@ -256,7 +256,7 @@
   .sheet-rule { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0;
     color: var(--c-white); opacity: .8; font-size: var(--tx-klein); font-weight: 700; }
   .sheet-rule::before, .sheet-rule::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.22); }
-  /* De voetregel onder Beheer: "Over Rekensterren" en delen. Geen kaart en geen
+  /* De voetregel onder Voortgang (en zonder sterren onder ⋯): "Over Rekensterren" en delen. Geen kaart en geen
      volle knop -- het is een verwijzing en geen instelling, en hij mag niet even
      hard roepen als de back-up. Op de paarse achtergrond, dus witte letters, net
      als het streepje hierboven; wel twee echte raakvlakken van 44. */
