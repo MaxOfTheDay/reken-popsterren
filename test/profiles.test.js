@@ -787,9 +787,11 @@ function check(ok, label, detail) {
    *   1  de baan zelf draagt geen verticale extra meer (de keyframes op de
    *      halte-laag zijn exact de weg -- dat meet 7d.1/7d.2 al, hier wordt
    *      vastgelegd dat het loopje op een ándere laag staat)
-   *   2  het loopje is klein: een paar pixels, niet een sprong
+   *   2  het loopje is een paar lichte huppels (sinds oktober 2026, zie REIS_HOP):
+   *      goed te zien, maar geen sprong
    *   3  het staat op niets bij vertrek én bij aankomst -- geen tikje in beeld
-   *   4  het zijn een paar passen, geen trilling en geen één lange boog
+   *      (in de hoogte; bij aankomst staat ze in de deuk, die heroLanding overneemt)
+   *   4  het zijn een paar huppels, geen trilling en geen één lange boog
    *   5  ze blijft rechtop: geen draaiing, geen zijwaartse verschuiving
    *   6  bij aankomst trilt het toestel één keer kort, en niet bij elke pas    */
   {
@@ -841,6 +843,9 @@ function check(ok, label, detail) {
         && a.effect.getKeyframes().some(k => k.transform));
       const hA = beweegt(hero), sA = beweegt(stap);
       if (!hA || !sA) return { fout: `halte-laag=${!!hA} paslaag=${!!sA}` };
+      // en haar schaduw huppelt mee (.tour-hero::after, zie REIS_HOP)
+      const schaduw = hero.getAnimations({ subtree: true })
+        .some(a => a.effect && a.effect.pseudoElement === '::after');
       hA.pause(); sA.pause();
       const hT = hA.effect.getTiming(), sT = sA.effect.getTiming();
       const meet = [];
@@ -878,7 +883,7 @@ function check(ok, label, detail) {
       stap.style.transform = `scale(${1 / rekMax}, ${rekMax})`;
       const voeten = Math.abs(svg.getBoundingClientRect().bottom - voor);
       stap.style.transform = ''; stap.style.transformOrigin = '';
-      return { meet, hT, sT, origin, voeten: +voeten.toFixed(2) };
+      return { meet, hT, sT, origin, schaduw, voeten: +voeten.toFixed(2) };
     });
 
     if (loop.fout) check(false, 'de ster loopt op een eigen laag', loop.fout);
@@ -889,8 +894,8 @@ function check(ok, label, detail) {
         'het loopje deelt duur, vertraging én easing met de baan',
         JSON.stringify([loop.hT, loop.sT]));
       const hoogste = Math.max(...op);
-      check(hoogste > 2 && hoogste < 9,
-        'het loopje is een paar pixels en geen sprong', hoogste + 'px');
+      check(hoogste > 6 && hoogste < 14,
+        'het loopje is een lichte huppel en geen sprong', hoogste + 'px');
       check(Math.min(...op) >= -0.01, 'ze veert omhoog en niet omlaag', Math.min(...op) + 'px');
       check(Math.abs(op[0]) < 0.01 && Math.abs(op[op.length - 1]) < 0.01,
         'het loopje staat op niets bij vertrek én bij aankomst',
@@ -903,10 +908,12 @@ function check(ok, label, detail) {
         'ze blijft rechtop en schuift niet opzij',
         JSON.stringify(loop.meet.filter(m => Math.abs(m.zij) >= 0.01 || Math.abs(m.scheef) >= 0.001).slice(0, 3)));
       const rek = loop.meet.reduce((m, x) => Math.max(m, Math.abs(x.sx - 1), Math.abs(x.sy - 1)), 0);
-      check(rek > 0.002 && rek <= 0.03, 'het kneepje blijft onder de drie procent', rek.toFixed(4));
+      // de deuk van een landing (REIS_HOP.deuk) is het grootste kneepje
+      check(rek > 0.02 && rek <= 0.09, 'het kneepje blijft onder de negen procent', rek.toFixed(4));
       check(loop.origin.length > 1 && loop.origin.every(o => o === '50% 95%'),
         'elk beeldje draait om hetzelfde punt: 50% 95%, net als de danspasjes',
         JSON.stringify(loop.origin.slice(0, 3)));
+      check(loop.schaduw, 'haar schaduw huppelt mee', '');
       check(loop.voeten < 0.5,
         'het kneepje laat haar voeten staan waar ze staan', loop.voeten + 'px');
     }
