@@ -2607,7 +2607,7 @@ function save() {
     if (!saveFailed) {
       saveFailed = true;
       try {
-        showToast('⚠️ Voortgang kan niet bewaard worden', null, 'Je kan gewoon verder spelen.');
+        showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel');
         toastWeg(3000);
       } catch (e2) { /* UI nog niet klaar: stil doorgaan */ }
     }
@@ -6353,7 +6353,7 @@ function runWorldReveal(o) {
   const vier = () => {
     sndWereld();   // een wereld die opengaat, niet de kassa -- zie de SFX-tabel
     confetti(26);
-    showPraise(`${naar.world.icon} ${naar.world.name}!`);
+    showPraise(`${naar.world.icon} ${naar.world.name}`, null, true);   // blauw: hier ben je
   };
   if (motionOff()) { plaats(); vier(); return; }
   /* Eerst even de oude wereld, dán de klim. De camera vertrok in dezelfde beurt
@@ -6718,7 +6718,8 @@ function slotWereld(knop, doel) {
 // De ene zin van een slot: de wereld waar ze nu staat moet eerst uit. Ook in Podia.
 function slotToast(doel) {
   const w = WORLDS[doel];
-  showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
+  // één teken: het slotje. Het wereldicoon erachter was een tweede emoji in één regel.
+  showToast(w ? `🔒 Speel eerst ${esc(w.name)}` : '🔒 Nog niet');
   toastWeg(2200);
 }
 /* De baan opbouwen. Alles hier komt uit reisPlaatsen() en uit de staphoogte in het
@@ -8148,7 +8149,10 @@ function runTravel(t) {
        leest dus dezelfde vlag en verzint er geen tweede. */
     if (crossing) sndWereld(); else sndAankomst();
     confetti(crossing ? 26 : 14);
-    showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
+    /* Alleen over een grens heen een kaart, in het blauw van "hier ben je". Binnen
+       een wereld stond hier "🎤 De volgende show wacht!" -- maar de volgende halte
+       pulst al en de pop huppelt er al naartoe; de kaart zei het een tweede keer. */
+    if (crossing) showPraise(`${toW.world.icon} ${toW.world.name}`, null, true);
   };
   const finish = () => { plaats(); vier(); };
   /* De laatste show van de laatste uitgebrachte wereld. Er is geen volgende halte
@@ -8512,9 +8516,12 @@ function tapTrophy(t, card, e) {
   // een trofee die ergens anders verdiend wordt, wijst de weg erheen
   if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
-  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); toastWeg(1500); return; }
+  /* Op slot of zonder teller: ook dat zegt het kaartje zelf, in zijn pil -- net als
+     de trofeeën mét een teller. Hier stond eerst een melding bovenaan het scherm,
+     dus zei de kast het ene ding op het kaartje en het andere ver erboven. */
+  if (st === 'locked') { sndClick(); pilOmklappen(card, '🔒 Nog niet'); return; }
   sndClick();
-  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
+  if (!t.progress) { pilOmklappen(card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
   if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
@@ -8728,7 +8735,7 @@ function wereldFeest(f) {
 function noticeReady(trofees) {
   if (!trofees || !trofees.length) return;
   updateTroDot();
-  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'} klaar in je kast!`);
+  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'}`, null, null, 'goud');
   toastWeg(1900);
 }
 // rood stipje op het Trofeeën-tabblad zolang er trofeeën klaarliggen om te openen
@@ -10059,7 +10066,9 @@ function toonHint(q, val, btnEl) {
 }
 
 /* ================= Spel ================= */
-const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 🎊', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
+// Alleen woorden: de diamanten staan er al als pilletje onder, en een emoji
+// achteraan was een tweede teken in een kaart van één regel.
+const PRAISE = ['Super!', 'Fantastisch!', 'Topster!', 'Wauw!', 'Geweldig!', 'Knap gedaan!', 'Bravo!'];
 let G = null;
 
 /* eigenOvergang: de aanroeper beweegt de zaal zelf. Dat is alleen enterLevel,
@@ -10564,7 +10573,7 @@ function antwoordGoed(q, p, btnEl) {
     if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
     else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
-    else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
+    else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain);
     else showPraise(pick(PRAISE), '💎 +' + gain);
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
@@ -11870,7 +11879,7 @@ function zetWens(id) {
   renderDressBar(it, p);
   paintShop();
   if (p.wens === id) {
-    showToast('💖', null, 'Je wens!');
+    showToast('💖 Je wens');
     toastWeg(1300);
   }
 }
@@ -12248,7 +12257,7 @@ function confirmShopBuy(id, blijf) {
   const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
-    showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
+    showToast(`Nog ${prijs - p.diamonds} 💎`);
     toastWeg(1800);
     return;
   }
@@ -12301,7 +12310,7 @@ function confirmShopBuy(id, blijf) {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
     if (nieuwPodium) {
-      showToast('🎪 Nieuw podium!', null, esc(nieuwPodium.name));
+      showToast('🎪 Nieuw podium', null, null, 'goud');   // de naam zegt de stem
       toastWeg(PODIUM_TOAST);
       speak(`Nieuw podium! ${nieuwPodium.name}.`);
     }
@@ -12611,7 +12620,8 @@ function merkKlaarKnop() {
 }
 /* Wat er nog mist, en waar het antwoord hoort te komen. Dit is het enige dat een
    geweigerde Klaar-tik doet: het veld dat aan de beurt is in beeld zetten, er twee
-   keer zacht omheen kloppen, en in één regel zeggen wat er gevraagd wordt.
+   keer zacht omheen kloppen in het paars van "kies". (Er stond ook nog een regel
+   bovenaan -- "Kies eerst wie je bent 👆" -- maar die zei hetzelfde als de ring.)
 
    Waarom dit er is: "Wie ben je?" heeft met opzet geen voorkeuze (zie openNewStar),
    en dus is een net ingevuld formulier regelmatig nog niet af. De grijze knop zei
@@ -12637,8 +12647,8 @@ function wijsOntbrekende() {
     el.classList.add('vraagt');
   });
   setTimeout(() => doelen.forEach(el => el.classList.remove('vraagt')), 2400);
-  showToast(basisMist ? 'Kies eerst wie je bent 👆' : 'Geef je ster nog een naam 👆');
-  toastWeg(2200);
+  /* Geen melding meer: de paarse ring om wat er nog gekozen moet worden zegt het
+     al, op de plek zelf. Paars is "kies", en een zin erbovenop was dubbel. */
 }
 function createStar() {
   /* Twee keer Klaar is één ster. Enter én de knop komen hier allebei uit, en op
@@ -12653,7 +12663,7 @@ function createStar() {
   if (!name || !newStar.base) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
-    showToast('⚠️ Die naam bestaat al', null, 'Twee sterren met dezelfde naam zijn niet uit elkaar te houden.');
+    showToast('⚠️ Die naam bestaat al');
     toastWeg(2600);
     return;
   }
@@ -12685,7 +12695,7 @@ function createStar() {
      begint niets tot ze zelf op halte 1 tikt -- en die gouden halte pulst al en de
      pop zwaait al. Die tik is haar eerste eigen stap; de kaart hoeft hem niet voor
      te zeggen. */
-  showToast(`🌟 ${esc(name)} staat op het podium!`);
+  showToast(`👋 Welkom, ${esc(name)}`, null, null, 'blauw');
   toastWeg(2400);
 }
 
@@ -13394,7 +13404,7 @@ function ouderVoetHtml() {
 function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
-    showToast('📶 Voor deze pagina is internet nodig.');
+    showToast('📶 Geen internet');
     toastWeg(2400);
     return;
   }
@@ -13411,7 +13421,7 @@ function deelOver() {
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(OVER_URL)
-      .then(() => melding('📋 Link gekopieerd'), () => melding(esc(OVER_URL)));
+      .then(() => melding('✓ Link gekopieerd'), () => melding(esc(OVER_URL)));
     return;
   }
   melding(esc(OVER_URL));
@@ -13505,7 +13515,7 @@ function blockedMinOne(el) {
   el.classList.remove('shake');
   void el.offsetWidth;
   el.classList.add('shake');
-  showToast('Kies er minstens 1 👆');
+  showToast('Minstens 1');
   toastWeg(1500);
 }
 // gewone instellingen slaan meteen op -- geen aparte "Opslaan"-knop nodig,
@@ -13868,7 +13878,7 @@ function bindSettings(p, s) {
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
         db.profiles[setKey].order = order;   // plek in de rij behouden na een reset
         save(); renderSettings();
-        showToast('✅ Voortgang gewist.');
+        showToast('✓ Voortgang gewist');
         toastWeg(1800);
       }
     );
@@ -13900,7 +13910,7 @@ function bindSettings(p, s) {
         save();
         if (setKey) renderSettings();
         else closeSettings();                // laatste ster weg -> terug naar het welkomscherm
-        showToast(`✅ ${esc(naam)} is verwijderd.`);
+        showToast(`✓ ${esc(naam)} is verwijderd`);
         toastWeg(1800);
       }
     );
@@ -13993,8 +14003,10 @@ function importData(file) {
         setKey = profileKeys()[0] || null;   // selectie kan naar een verdwenen sleutel wijzen
         lastWhoRendered = null;
         save();
-        showNotice('🎉 Gelukt!', 'Back-up geladen!');
         renderSettings();
+        // gelukt is geen vraag: een melding, geen venster om weg te tikken
+        showToast('✓ Back-up geladen');
+        toastWeg(2200);
       }
     );
   };

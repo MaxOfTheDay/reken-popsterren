@@ -3988,8 +3988,15 @@
 
 
 
+
+
+
+
+
+
   .praise {
-    position: fixed; left: 50%; top: 38%; transform: translate(-50%,-50%) scale(.7);
+    position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content;
+    top: 38%; transform: translateY(-50%) scale(.7);
     z-index: 60; opacity: 0; pointer-events: none;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
     background: rgba(48,10,80,.94);
@@ -4001,7 +4008,7 @@
 
 
   .praise.docked {
-    top: 98px; transform: translateX(-50%) scale(.7); gap: 5px; padding: 9px 18px 11px;
+    top: 98px; transform: scale(.7); gap: 5px; padding: 9px 18px 11px;
   }
   .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
@@ -4012,32 +4019,43 @@
   .praise.pop { animation: praisePop .9s cubic-bezier(.22,1.1,.4,1) forwards; }
   .praise.docked.pop { animation-name: praisePopDocked; }
   @keyframes praisePop {
-    0% { opacity: 0; transform: translate(-50%,-50%) scale(.7); }
-    55% { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
-    80% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%,-64%) scale(1); }
+    0% { opacity: 0; transform: translateY(-50%) scale(.7); }
+    55% { opacity: 1; transform: translateY(-50%) scale(1.05); }
+    80% { opacity: 1; transform: translateY(-50%) scale(1); }
+    100% { opacity: 0; transform: translateY(-64%) scale(1); }
   }
   @keyframes praisePopDocked {
-    0% { opacity: 0; transform: translateX(-50%) scale(.7) translateY(-6px); }
-    55% { opacity: 1; transform: translateX(-50%) scale(1.05) translateY(0); }
-    80% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
-    100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-10px); }
+    0% { opacity: 0; transform: scale(.7) translateY(-6px); }
+    55% { opacity: 1; transform: scale(1.05) translateY(0); }
+    80% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(1) translateY(-10px); }
   }
+
+
+
+
+
   .toast {
-    position: fixed; left: 50%; top: 12%; transform: translateX(-50%) translateY(-8px);
+    position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content;
+    top: 12%; transform: translateY(-8px);
     z-index: 60; display: none; opacity: 0;
     flex-direction: column; align-items: center; gap: 2px; text-align: center;
-    background: rgba(43,7,71,.94);
-    border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-md); padding: 11px 20px 12px;
+    background: rgba(48,10,80,.94);
+    border: 1.5px solid rgba(255,255,255,.16); border-radius: var(--r-pill); padding: 9px 18px 10px;
     box-shadow: var(--e-2);
-    max-width: min(88vw, 360px);
+    max-width: min(92vw, 420px);
     pointer-events: none;
   }
+  .toast.met-sub, .toast.teken, .toast.hint { border-radius: var(--r-md); padding: 11px 20px 12px; }
+  .toast.goud { border-color: rgba(var(--goud-rgb),.6); box-shadow: var(--e-2), 0 0 20px rgba(var(--goud-gloed-rgb),.28); }
+  .toast.goud .toast-main { color: var(--gold-light); }
+  .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
+  .praise.blauw .praise-headline { color: var(--c-white); text-shadow: none; }
   .toast.docked { top: 98px; }
   .toast.show { display: flex; animation: toastIn .3s ease forwards; }
   @keyframes toastIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
 
@@ -4053,10 +4071,10 @@
     0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .praise { transform: translate(-50%,-50%) scale(1); }
-    .praise.docked { transform: translateX(-50%) scale(1); }
+    .praise { transform: translateY(-50%) scale(1); }
+    .praise.docked { transform: scale(1); }
     .praise.pop, .praise.docked.pop { animation: praiseStil .9s ease forwards; }
-    .toast.show { animation: none; opacity: 1; transform: translateX(-50%); }
+    .toast.show { animation: none; opacity: 1; transform: none; }
   }
   .toast-main { font-size: clamp(16px, 4.6vw, 19px); font-weight: 700; color: var(--c-white); line-height: 1.3; text-wrap: balance; }
   .toast-sub { font-size: var(--tx-klein); font-weight: 600; color: var(--c-white); opacity: .75; margin-top: 1px; }
@@ -9930,14 +9948,19 @@ function finaleDance(elId, count) {
 
 
 
-function showPraise(txt, reward) {
+
+
+function showPraise(txt, reward, blauw) {
   const el = $('praise');
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  el.classList.toggle('blauw', !!blauw);
   el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
   el.classList.remove('pop');
   void el.offsetWidth;
   el.classList.add('pop');
 }
+
+
 
 
 
@@ -9977,6 +10000,9 @@ function showToast(txt, onTap, sub, soort) {
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
+  t.classList.toggle('goud', soort === 'goud');
+  t.classList.toggle('blauw', soort === 'blauw');
+  t.classList.toggle('met-sub', !!sub);
   t.innerHTML = `<div class="toast-main">${txt}</div>` + (sub ? `<div class="toast-sub">${sub}</div>` : '');
   t.style.display = 'flex';
   t.classList.remove('show');
@@ -13186,7 +13212,7 @@ function save() {
     if (!saveFailed) {
       saveFailed = true;
       try {
-        showToast('⚠️ Voortgang kan niet bewaard worden', null, 'Je kan gewoon verder spelen.');
+        showToast('⚠️ Opslaan lukt niet', null, 'Spelen kan wel');
         toastWeg(3000);
       } catch (e2) { }
     }
@@ -16932,7 +16958,7 @@ function runWorldReveal(o) {
   const vier = () => {
     sndWereld();
     confetti(26);
-    showPraise(`${naar.world.icon} ${naar.world.name}!`);
+    showPraise(`${naar.world.icon} ${naar.world.name}`, null, true);
   };
   if (motionOff()) { plaats(); vier(); return; }
 
@@ -17297,7 +17323,8 @@ function slotWereld(knop, doel) {
 
 function slotToast(doel) {
   const w = WORLDS[doel];
-  showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
+
+  showToast(w ? `🔒 Speel eerst ${esc(w.name)}` : '🔒 Nog niet');
   toastWeg(2200);
 }
 
@@ -18727,7 +18754,10 @@ function runTravel(t) {
 
     if (crossing) sndWereld(); else sndAankomst();
     confetti(crossing ? 26 : 14);
-    showPraise(crossing ? `${toW.world.icon} ${toW.world.name}!` : '🎤 De volgende show wacht!');
+
+
+
+    if (crossing) showPraise(`${toW.world.icon} ${toW.world.name}`, null, true);
   };
   const finish = () => { plaats(); vier(); };
 
@@ -19091,9 +19121,12 @@ function tapTrophy(t, card, e) {
 
   if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
   if (st === 'done') { sndTap(); sparkle(card); return; }
-  if (st === 'locked') { sndClick(); showToast('🔒 Nog niet vrij!'); toastWeg(1500); return; }
+
+
+
+  if (st === 'locked') { sndClick(); pilOmklappen(card, '🔒 Nog niet'); return; }
   sndClick();
-  if (!t.progress) { showToast(`${t.emoji} ${t.desc}`); toastWeg(1700); return; }
+  if (!t.progress) { pilOmklappen(card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
 
   if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
@@ -19307,7 +19340,7 @@ function wereldFeest(f) {
 function noticeReady(trofees) {
   if (!trofees || !trofees.length) return;
   updateTroDot();
-  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'} klaar in je kast!`);
+  showToast(`🎁 ${trofees.length === 1 ? 'Nieuwe trofee' : trofees.length + ' nieuwe trofeeën'}`, null, null, 'goud');
   toastWeg(1900);
 }
 
@@ -20638,7 +20671,9 @@ function toonHint(q, val, btnEl) {
 }
 
 
-const PRAISE = ['Super! 🌟', 'Fantastisch! 🎉', 'Topster! 🎤', 'Wauw! 🎊', 'Geweldig! ✨', 'Knap gedaan! 👏', 'Bravo! 🎶'];
+
+
+const PRAISE = ['Super!', 'Fantastisch!', 'Topster!', 'Wauw!', 'Geweldig!', 'Knap gedaan!', 'Bravo!'];
 let G = null;
 
 
@@ -21143,7 +21178,7 @@ function antwoordGoed(q, p, btnEl) {
     if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
     else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
     else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
-    else if (!firstTry) showPraise('Goed zo, je had het!', '💎 +' + gain);
+    else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain);
     else showPraise(pick(PRAISE), '💎 +' + gain);
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
@@ -22449,7 +22484,7 @@ function zetWens(id) {
   renderDressBar(it, p);
   paintShop();
   if (p.wens === id) {
-    showToast('💖', null, 'Je wens!');
+    showToast('💖 Je wens');
     toastWeg(1300);
   }
 }
@@ -22827,7 +22862,7 @@ function confirmShopBuy(id, blijf) {
   const podiaVoor = ITEMS.filter(st => st.cat === PODIA_CAT && podiumVanJou(p, st)).map(st => st.id);
   if (p.diamonds < prijs) {
     sndWrong();
-    showToast(`Nog ${prijs - p.diamonds} 💎 nodig — speel een optreden!`);
+    showToast(`Nog ${prijs - p.diamonds} 💎`);
     toastWeg(1800);
     return;
   }
@@ -22880,7 +22915,7 @@ function confirmShopBuy(id, blijf) {
     if (shopJustBoughtId !== it.id || !$('screen-dress').classList.contains('active')) return;
     koopKomtAan(it);
     if (nieuwPodium) {
-      showToast('🎪 Nieuw podium!', null, esc(nieuwPodium.name));
+      showToast('🎪 Nieuw podium', null, null, 'goud');
       toastWeg(PODIUM_TOAST);
       speak(`Nieuw podium! ${nieuwPodium.name}.`);
     }
@@ -23200,6 +23235,7 @@ function merkKlaarKnop() {
 
 
 
+
 function wijsOntbrekende() {
   if (!newStar) return;
   const basisMist = !newStar.base;
@@ -23216,8 +23252,8 @@ function wijsOntbrekende() {
     el.classList.add('vraagt');
   });
   setTimeout(() => doelen.forEach(el => el.classList.remove('vraagt')), 2400);
-  showToast(basisMist ? 'Kies eerst wie je bent 👆' : 'Geef je ster nog een naam 👆');
-  toastWeg(2200);
+
+
 }
 function createStar() {
 
@@ -23232,7 +23268,7 @@ function createStar() {
   if (!name || !newStar.base) return wijsOntbrekende();
   const taken = Object.values(db.profiles).some(p => p.name.toLowerCase() === name.toLowerCase());
   if (taken) {
-    showToast('⚠️ Die naam bestaat al', null, 'Twee sterren met dezelfde naam zijn niet uit elkaar te houden.');
+    showToast('⚠️ Die naam bestaat al');
     toastWeg(2600);
     return;
   }
@@ -23264,7 +23300,7 @@ function createStar() {
 
 
 
-  showToast(`🌟 ${esc(name)} staat op het podium!`);
+  showToast(`👋 Welkom, ${esc(name)}`, null, null, 'blauw');
   toastWeg(2400);
 }
 
@@ -23973,7 +24009,7 @@ function ouderVoetHtml() {
 function naarOver(e) {
   if (navigator.onLine === false) {
     e.preventDefault();
-    showToast('📶 Voor deze pagina is internet nodig.');
+    showToast('📶 Geen internet');
     toastWeg(2400);
     return;
   }
@@ -23990,7 +24026,7 @@ function deelOver() {
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(OVER_URL)
-      .then(() => melding('📋 Link gekopieerd'), () => melding(esc(OVER_URL)));
+      .then(() => melding('✓ Link gekopieerd'), () => melding(esc(OVER_URL)));
     return;
   }
   melding(esc(OVER_URL));
@@ -24084,7 +24120,7 @@ function blockedMinOne(el) {
   el.classList.remove('shake');
   void el.offsetWidth;
   el.classList.add('shake');
-  showToast('Kies er minstens 1 👆');
+  showToast('Minstens 1');
   toastWeg(1500);
 }
 
@@ -24447,7 +24483,7 @@ function bindSettings(p, s) {
         db.profiles[setKey] = defaultProfile(p.name, dress, opts);
         db.profiles[setKey].order = order;
         save(); renderSettings();
-        showToast('✅ Voortgang gewist.');
+        showToast('✓ Voortgang gewist');
         toastWeg(1800);
       }
     );
@@ -24479,7 +24515,7 @@ function bindSettings(p, s) {
         save();
         if (setKey) renderSettings();
         else closeSettings();
-        showToast(`✅ ${esc(naam)} is verwijderd.`);
+        showToast(`✓ ${esc(naam)} is verwijderd`);
         toastWeg(1800);
       }
     );
@@ -24572,8 +24608,10 @@ function importData(file) {
         setKey = profileKeys()[0] || null;
         lastWhoRendered = null;
         save();
-        showNotice('🎉 Gelukt!', 'Back-up geladen!');
         renderSettings();
+
+        showToast('✓ Back-up geladen');
+        toastWeg(2200);
       }
     );
   };

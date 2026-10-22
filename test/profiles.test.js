@@ -2400,7 +2400,7 @@ function check(ok, label, detail) {
     check(na.n === 0 && na.opScherm, 'een geweigerde tik maakt geen ster', JSON.stringify(na));
     check(na.wijst === 2 && !na.naamWijst,
       'hij wijst de basiskeuze aan, niet de naam die al klopt', JSON.stringify(na));
-    check(/wie je bent/i.test(na.melding), 'en zegt in één regel wat er gevraagd wordt', na.melding);
+    check(!na.melding, 'zonder melding erbovenop: de ring zegt het al', na.melding);
     // omgekeerd: basis gekozen, naam leeg -> dan wijst hij het naamveld aan
     await page.click('#newstar-base .chip[data-v="meisje"]');
     await page.fill('#newstar-name', '');
@@ -2416,7 +2416,7 @@ function check(ok, label, detail) {
     });
     check(om.n === 0 && om.naamWijst && om.basisWijst === 0,
       'zonder naam wijst hij het naamveld aan', JSON.stringify(om));
-    check(/naam/i.test(om.melding), 'met een eigen regel erbij', om.melding);
+    check(!om.melding, 'ook hier zonder melding', om.melding);
     await ctx.close();
   }
 
