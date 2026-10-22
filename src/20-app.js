@@ -3672,7 +3672,7 @@ function landingNa(ms, fn) {
 }
 function landingPas(el, move) {
   if (!el || !zetPas(el, move)) return;
-  landingNa(LANDING.duur, () => stilStaan(el));
+  pasUit(el);   // af als het pasje uit is, niet op een klok (zie pasUit)
 }
 // Alles los: geen wachtende groet, geen wachtende stilte, geen halve zwaai.
 function landingStil() {
@@ -5950,7 +5950,6 @@ const GROET = {
   koeltijd: 2500,
   // De huppel (zie HUPPEL in 10-feestjes.js) -- geen danspasje, haar "hier ben ik".
   pas: HUPPEL,
-  duur: HUPPEL.duur + 50,   // plus een paar beeldjes, net als bij PAS
   // wanneer haar voeten de halte raken, gerekend vanaf het begin van de huppel
   landt: Math.round(HUPPEL.duur * HUPPEL.landt),
 };
@@ -6007,8 +6006,7 @@ function kaartGroet(mag) {
        opvangt -- daar opent goMap() de kaart en schuift er meteen een ander
        scherm overheen. */
     if (!el || !el.isConnected || !$('screen-map').classList.contains('active')) return;
-    if (!zetPas(el, GROET.pas)) return;
-    setTimeout(() => stilStaan(el), GROET.duur);
+    if (zetPas(el, GROET.pas)) pasUit(el);
   }, MOTION.totaal);
 }
 /* EN HIJ STOPT ALS JE WEGGAAT. Een huppel hoort bij de kaart; loopt hij door
@@ -6044,7 +6042,12 @@ function kaartGroet(mag) {
 
    Wacht de groet nog, dan vervalt die: ze heeft haar kind al gezien. De
    haltepuls blijft staan, want die wijst de weg en is geen groet. */
-const TIK_PAS = { cls: 'move-bounce' };   // ⭐ uit MOVES; mvBounce duurt .9s, net als de groet
+/* De stuiter gaat eraf op zijn eigen klok (pasUit, PAS), niet op die van de
+   groet. Die twee waren ooit even lang; sinds de groet een huppel is, is hij
+   korter, en op de groetklok werd de stuiter afgeknipt terwijl ze nog
+   ingedeukt stond -- ze klikte dan in één beeldje recht, een schokje net na de
+   sprong. test/profiles.test.js meet dat de stuiter helemaal uitspeelt. */
+const TIK_PAS = { cls: 'move-bounce' };   // ⭐ uit MOVES
 function kaartTik(ster, halte) {
   const el = ster.querySelector('.avatar-holder');
   if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
@@ -6052,8 +6055,7 @@ function kaartTik(ster, halte) {
   clearTimeout(groetTimer);
   groetTimer = null;
   sndTap();
-  if (!zetPas(el, TIK_PAS)) return;
-  setTimeout(() => stilStaan(el), GROET.duur);
+  if (zetPas(el, TIK_PAS)) pasUit(el);
 }
 
 function kaartGroetStop() {
@@ -6062,7 +6064,21 @@ function kaartGroetStop() {
   groetTimer = pulsTimer = null;
   const map = $('tour-map');
   const el = map && map.querySelector('.tour-hero .avatar-holder.dancing');
-  if (el) stilStaan(el);
+  if (!el) return;
+  /* Stilzetten, niet weghalen. Het pasje eraf halen zette haar midden in een
+     huppel in één beeldje terug op de grond, en dat zag je: tik je op de halte
+     terwijl ze nog huppelt, dan staat de kaart nog een beeldje of tien in beeld
+     (de plop van de halte, dan het wegduiken). Gepauzeerd blijft ze hangen waar
+     ze was en gaat ze zo met de kaart mee weg -- en een gepauzeerde animatie kost
+     per beeldje niets, dus de vlucht hierboven heeft er net zo weinig last van.
+     Is het scherm weg, dan gaat het pasje er alsnog af; staat ze dan al in een
+     nieuw pasje (je kwam meteen terug), dan blijft dat staan. */
+  const laag = el.firstElementChild;
+  const loopt = laag ? laag.getAnimations().filter(a => a.playState === 'running') : [];
+  if (!loopt.length) { stilStaan(el); return; }
+  pasLos(el);
+  loopt.forEach(a => a.pause());
+  setTimeout(() => { if (loopt.every(a => a.playState === 'paused')) stilStaan(el); }, MOTION.totaal);
 }
 
 function goMap(vanLvl) {
@@ -8549,7 +8565,7 @@ function wereldFeest(f) {
     const pop = $('end-avatar');
     // Mét de danslaag: elke pas beweegt .pas-laag, en zonder die laag stond de
     // pop na het aandoen stil -- ook bij elke tik daarna.
-    if (pop) { pop.innerHTML = pasLaag(avatarSVG(q, 150)); dance('end-avatar'); }
+    if (pop) { popKleren(pop, avatarSVG(q, 150)); dance('end-avatar'); }
     dicht();
   };
   sndGroot();
@@ -11634,7 +11650,7 @@ function paintShop() {
     plek.innerHTML = podiumHTML(podium);
     plek.dataset.podium = podium.id;
   }
-  $('shop-avatar').innerHTML = pasLaag(avatarSVG(preview, 165, true));
+  popKleren($('shop-avatar'), avatarSVG(preview, 165, true));   // zonder haar pasje te breken
   renderDressBar(selected, p);
   // de podiumbalk is drie keer zo hoog als de gewone lade: het rek krijgt eronder meer ruimte
   const lade = $('dress-bar');
@@ -12171,7 +12187,9 @@ function koopKomtAan(it) {
   koopVonken(kaart);                    // een klein boeketje boven het kaartje zelf
   sndAan();                             // hetzelfde klankje als aandoen: dat is wat er nu gebeurt
   const pop = $('shop-avatar');
-  if (zetPas(pop, pick(MOVES))) { sparkle(pop); pasUit(pop); }   // vreugdedansje in het nieuwe spulletje
+  // vreugdedansje in het nieuwe spulletje -- of, danst ze nog, dat pasje uit (zie dance)
+  if (!pop.classList.contains('dancing') && zetPas(pop, pick(MOVES))) pasUit(pop);
+  sparkle(pop);
 }
 /* Het rek opnieuw opbouwen zonder dat de kaartjes verspringen: elk kaartje
    onthoudt waar het stond, en glijdt na het herbouwen van daar naar zijn
