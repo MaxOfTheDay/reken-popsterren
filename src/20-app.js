@@ -3531,6 +3531,7 @@ function navGo(t, wasActiveAl, stil) {
   if (t === 'map') {
     if ($('screen-journey').classList.contains('active')) reisSluit(true);
     else if (opUitstapje) navigeerNaarWereld(worldFor(hereLevel(P())).index);
+    else if ($('screen-map').classList.contains('active') && !pendingTravel) kaartThuis();
     else goMap();
   }
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
@@ -6160,6 +6161,60 @@ function kaartTik(ster, halte) {
   groetTimer = null;
   sndTap();
   if (zetPas(el, TIK_PAS)) pasUit(el);
+}
+
+/* ================= Kaart op de kaart =======================================
+   Sta je al op je eigen kaart en tik je 🗺️ nog eens, dan bouwt de kaart zich
+   niet opnieuw op. Dat deed hij eerst (goMap), en dan speelde alles wat "één
+   keer als de kaart opengaat" hoort opnieuw: de lege sterren knipoogden weer,
+   haar wiegen begon van voren af aan, en op een tablet sprong de kaart in één
+   klap terug naar haar halte. Het is het gewone "tik op het tabblad waar je al
+   bent = terug naar het begin": de kaart glijdt terug naar haar halte, en daar
+   huppelt zij -- dezelfde huppel als haar groet en als een tik op haar, haar
+   "hier ben ik". Eerst de kaart, dan zij: er beweegt één ding tegelijk.
+
+   Staat ze al in beeld, dan huppelt ze meteen. Huppelt ze nog, dan maakt ze die
+   huppel af en begint er geen tweede (zie dance: een nieuw pasje halverwege een
+   sprong klikt haar terug naar de grond). Bij beperkte beweging springt de kaart
+   terug zonder glijden, en huppelt er niemand.
+
+   Werelden gaat hier nooit open -- dat is een andere vraag, met een eigen knop
+   (de 🌍). De wachttijd hangt aan groetTimer, zodat kaartGroetStop hem
+   meeneemt als je weggaat voordat ze kon huppelen. */
+let thuisNr = 0;
+const THUIS_GLIJ = 800;
+function kaartThuis() {
+  const map = $('tour-map');
+  if (!map || overgangBezig || vluchtOp || wereldReisOp) return;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  const nr = ++thuisNr;
+  let gedaan = false;     // scrollend en de vangtimer: wie het eerst komt
+  const huppel = () => {
+    if (gedaan || nr !== thuisNr || !$('screen-map').classList.contains('active')) return;
+    gedaan = true;
+    clearTimeout(groetTimer);
+    groetTimer = null;
+    const el = map.querySelector('.tour-hero .avatar-holder');
+    if (!el || !el.isConnected || el.classList.contains('dancing')) return;
+    if (zetPas(el, HUPPEL)) pasUit(el);
+  };
+  // dezelfde halte als waar de kaart bij het openen op uitkomt (zie voltooi)
+  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+  const f = map.querySelector('.world-frame');
+  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
+    && getComputedStyle(map).overflowY !== 'hidden';
+  const doel = schuift
+    ? Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
+        here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2))
+    : map.scrollTop;
+  if (Math.abs(doel - map.scrollTop) < 4) { huppel(); return; }
+  if (motionOff() || !map.scrollTo) { map.scrollTop = doel; return; }
+  map.scrollTo({ top: doel, behavior: 'smooth' });
+  /* Huppelen als de kaart stilstaat: scrollend waar de browser dat kent, en
+     anders (of als hij uitblijft) na de langste glijtijd van een browser. */
+  map.addEventListener('scrollend', huppel, { once: true });
+  groetTimer = setTimeout(huppel, THUIS_GLIJ);
 }
 
 function kaartGroetStop() {
