@@ -1879,7 +1879,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       'gewoon terugkomen op de kaart laat de ring één keer uit de halte springen', 'geen ring gezien');
 
     /* Ná een show huppelt de ster zelf naar de volgende halte. Dát is de
-       aankomst; er hoort geen tweede aankondiging overheen. */
+       aankomst, en geen groet: er komt geen huppel bovenop. Maar waar ze landt,
+       antwoordt de halte wel met dezelfde ring als op haar groet (sinds oktober
+       2026; die verving de plop van het rondje, zie vier() in runTravel). */
     await h.waitForTimeout(3200);
     const naShow = await h.evaluate(async () => {
       startLevel(P().level); G.misses = 0; endLevel(true);
@@ -1889,8 +1891,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 2200));
       return { gepulst };
     });
-    check(naShow.gepulst === false,
-      'maar na een show met een reis niet: die reis is de aankomst', JSON.stringify(naShow));
+    check(naShow.gepulst === true,
+      'en na een show met een reis antwoordt de halte op haar landing', JSON.stringify(naShow));
 
     // het rondje zelf verroert zich niet
     const stil = await h.evaluate(async () => {
