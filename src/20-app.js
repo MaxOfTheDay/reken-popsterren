@@ -6541,8 +6541,11 @@ function reisBaan(standen) {
    "Te bezoeken" is exact wat het op de kaart ook is: tot en met de wereld waar ze
    zelf staat. Verder vooruit kíjken mag, er heen reizen niet -- en dat is niet
    deze fase die dat beslist, dat deed de kiezer die hier stond al net zo.       */
+/* Mag je naar deze wereld toe? Tot en met de wereld waar ze staat. Podia vraagt
+   het ook (zie renderPodiumBar): een podium van verder vooruit mag je zien en
+   passen, maar het brengt je niet naar een wereld waar de reis je niet heen laat. */
+function wereldTeBezoeken(p, i) { return i >= 0 && i <= worldFor(hereLevel(p)).index; }
 function reisPlaatsen(p) {
-  const positie = worldFor(hereLevel(p)).index;
   const doel = continueWorld(p);
   /* Van wereld 1 tot de horizon, en altijd vanaf het begin. Dat "vanaf het begin"
      is geen luiheid maar een afspraak waar de rest op rekent: de plek van een
@@ -6551,7 +6554,7 @@ function reisPlaatsen(p) {
      vanonderen inkorten, dan moet die som mee. */
   const ruw = WORLDS.slice(0, laatsteZichtbareWereld(p) + 1).map((w, i) => {
     const v = worldProgress(p, worldForIndex(i));
-    const open = i <= positie;
+    const open = wereldTeBezoeken(p, i);
     const staat = i === doel ? 'nu' : !open ? 'verder' : 'open';
     return { i, world: w, staat, open,
              uit: v.uit, vol: v.vol,
@@ -6632,6 +6635,10 @@ function slotWereld(knop, doel) {
     slot.classList.add('nee');
     setTimeout(() => slot.classList.remove('nee'), 800);
   }
+  slotToast(doel);
+}
+// De ene zin van een slot: de wereld waar ze nu staat moet eerst uit. Ook in Podia.
+function slotToast(doel) {
   const w = WORLDS[doel];
   showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
   toastWeg(2200);
@@ -11863,7 +11870,11 @@ function renderPodiumBar(bar, st, p) {
       paintShop();
     };
   });
-  if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldIdx); };
+  /* Een wereld verder vooruit dan waar ze staat: dan brengt Speel haar naar waar
+     ze nu speelt (de kaart opent vanzelf op die grens), en niet naar een wereld
+     die de reis nog op slot houdt -- dat verklapte die hele wereld, en zette hem
+     ook nog op "al gezien" (worldsSeen). */
+  if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldTeBezoeken(P(), wereldIdx) ? wereldIdx : -1); };
   if ($('db-earn')) $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
   if ($('db-buy')) $('db-buy').onclick = () => (los ? confirmShopBuy(los.id, st.id) : confirmShopBuy(st.id));
 }
@@ -11877,6 +11888,8 @@ function slotBel(bij, w, wereldIdx) {
   if (oud) oud.remove();
   clearTimeout(slotBelTimer);
   if (!w || !bij || !bij.getBoundingClientRect) return;
+  // nog op slot op de reis: hetzelfde antwoord als daar (zie slotWereld)
+  if (!wereldTeBezoeken(P(), wereldIdx)) return slotToast(continueWorld(P()));
   const bel = document.createElement('button');
   bel.type = 'button';
   bel.className = 'slot-bel';

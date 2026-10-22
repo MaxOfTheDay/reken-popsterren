@@ -16985,8 +16985,11 @@ function reisBaan(standen) {
 
 
 
+
+
+
+function wereldTeBezoeken(p, i) { return i >= 0 && i <= worldFor(hereLevel(p)).index; }
 function reisPlaatsen(p) {
-  const positie = worldFor(hereLevel(p)).index;
   const doel = continueWorld(p);
 
 
@@ -16995,7 +16998,7 @@ function reisPlaatsen(p) {
 
   const ruw = WORLDS.slice(0, laatsteZichtbareWereld(p) + 1).map((w, i) => {
     const v = worldProgress(p, worldForIndex(i));
-    const open = i <= positie;
+    const open = wereldTeBezoeken(p, i);
     const staat = i === doel ? 'nu' : !open ? 'verder' : 'open';
     return { i, world: w, staat, open,
              uit: v.uit, vol: v.vol,
@@ -17076,6 +17079,10 @@ function slotWereld(knop, doel) {
     slot.classList.add('nee');
     setTimeout(() => slot.classList.remove('nee'), 800);
   }
+  slotToast(doel);
+}
+
+function slotToast(doel) {
   const w = WORLDS[doel];
   showToast(w ? `🔒 Speel eerst ${w.icon || '🌍'} ${esc(w.name)} uit!` : '🔒 Nog niet aan de beurt!');
   toastWeg(2200);
@@ -22307,7 +22314,11 @@ function renderPodiumBar(bar, st, p) {
       paintShop();
     };
   });
-  if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldIdx); };
+
+
+
+
+  if ($('db-speel')) $('db-speel').onclick = () => { sndClick(); naarWereldKaart(wereldTeBezoeken(P(), wereldIdx) ? wereldIdx : -1); };
   if ($('db-earn')) $('db-earn').onclick = () => { sndClick(); startLevel(Math.min(P().level, WORLD_LAST)); };
   if ($('db-buy')) $('db-buy').onclick = () => (los ? confirmShopBuy(los.id, st.id) : confirmShopBuy(st.id));
 }
@@ -22321,6 +22332,8 @@ function slotBel(bij, w, wereldIdx) {
   if (oud) oud.remove();
   clearTimeout(slotBelTimer);
   if (!w || !bij || !bij.getBoundingClientRect) return;
+
+  if (!wereldTeBezoeken(P(), wereldIdx)) return slotToast(continueWorld(P()));
   const bel = document.createElement('button');
   bel.type = 'button';
   bel.className = 'slot-bel';
