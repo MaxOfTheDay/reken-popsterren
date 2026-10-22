@@ -595,11 +595,12 @@ const CATS = [
   { id: 'pet',   ico: '🐾', name: 'Dieren' },
   // 'stage' staat hier niet bij: Podia is een lade, maar geen kledingsoort. De
   // 🎲 (surpriseOutfit) loopt over deze rij, en die hoort haar niet van haar
-  // podium af te halen. renderShop zet de Podia-knop er zelf vooraan bij.
+  // podium af te halen. Podia staat dan ook niet in de rij maar in de kop.
 ];
-/* Podia, de eerste knop van de rij. Een stand van de kleedkamer (shopCat) zoals
-   elke categorie, en ook echt de categorie van zijn spulletjes: een podium is
-   cat 'stage', en p.equipped.stage is waar ze op staat. */
+/* Podia, de tweede helft van de schakelaar in de kop (👕 | 🎪, zie renderShop).
+   Een stand van de kleedkamer (shopCat) zoals elke categorie, en ook echt de
+   categorie van zijn spulletjes: een podium is cat 'stage', en p.equipped.stage
+   is waar ze op staat. */
 const PODIA_CAT = 'stage';
 const PODIA_CHIP = { ico: '🎪', name: 'Podia' };
 /* Hier stonden acht tellers per categorie (catCount/instrCount/petCount en de vijf
@@ -11067,6 +11068,8 @@ function itemThumb(it, base) {
 }
 
 let shopCat = 'dress';
+// de kledinglade waar ze het laatst was: 👕 in de kop brengt haar uit Podia daar terug
+let kleedLaatsteCat = 'dress';
 let shopSelectedId = null;
 /* Het stuk dat in de podiumbalk gekozen is (zie renderPodiumBar): een stuk van het
    gekozen podium dat nog niet van haar is. Leeg = de balk gaat over het hele podium. */
@@ -11266,8 +11269,6 @@ function renderShop() {
   // in de rij zelf; sinds fase 1 is de lijst met thema-looks er helemaal uit.
   const tabs = $('shop-tabs');
   tabs.innerHTML = '';
-  const vast = $('shop-tab-vast');
-  if (vast) vast.innerHTML = '';
   let activeTab = null;
   // Alleen iconen, plus het woord bij wat aanstaat. aria-label houdt de naam
   // voor een schermlezer altijd beschikbaar.
@@ -11279,17 +11280,42 @@ function renderShop() {
     b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
       + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
     b.onclick = opts.go;
-    (opts.vast && vast ? vast : tabs).appendChild(b);
-    if (opts.on && !opts.vast) activeTab = b;
+    tabs.appendChild(b);
+    if (opts.on) activeTab = b;
     return b;
   };
-  /* Podia vooraan, als gewone knop: geen eigen vorm en geen goud. De eerste plek
-     en de 🎪 zeggen genoeg, en "dit is anders" hoort niet bij een lade die werkt
-     zoals alle andere. Hij staat wel níet in de schuifrij maar ervoor, in
-     #shop-tab-vast: wie naar Dieren schoof zag hem anders links wegvallen, en
-     dan was de enige weg terug de schijf in de spiegel. Buiten de rij schuift
-     hij niet mee, en tabRijDoel en de fades hebben er geen weet van. */
-  [{ id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, vast: true }].concat(CATS).forEach(c => chip({ ico: c.ico, name: c.name, vast: c.vast, on: c.id === shopCat, go: () => {
+  /* Podia staat niet in deze rij maar in de kop: de naam van het scherm is een
+     schakelaar met twee tekens, 👕 de kleren en 🎪 Podia. Eerst stond Podia
+     vooraan in de rij, toen vast vóór de rij; allebei las het als "de eerste
+     lade", en dat is hij niet -- het is een andere stand van de kleedkamer, met
+     een rek dat er anders uitziet. In de kop kost hij geen rij en geen knop
+     extra, en hij spreekt de taal van de rij eronder: alleen tekens, en wat
+     aanstaat licht op. Het woord staat in het aria-label. In Podia gaat de rij
+     weg (.in-podia): daar valt niets te kiezen. */
+  const inPodia = shopCat === PODIA_CAT;
+  if (!inPodia) kleedLaatsteCat = shopCat;
+  $('screen-dress').classList.toggle('in-podia', inPodia);
+  const schakel = $('kleed-schakel');
+  if (schakel) {
+    schakel.innerHTML = '';
+    [{ ico: '👕', name: 'Kleren', on: !inPodia, cat: () => kleedLaatsteCat },
+     { ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, on: inPodia, cat: () => PODIA_CAT }].forEach(h => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'kleed-helft' + (h.on ? ' aan' : '');
+      b.setAttribute('aria-label', h.name);
+      b.setAttribute('aria-pressed', h.on ? 'true' : 'false');
+      b.innerHTML = `<span aria-hidden="true">${h.ico}</span>`;
+      b.onclick = () => {
+        sndClick();
+        if (h.on) return;
+        shopCat = h.cat(); shopSelectedId = null; podiumStuk = null; renderShop();
+        $('screen-dress').scrollTop = 0;
+      };
+      schakel.appendChild(b);
+    });
+  }
+  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
     sndClick();
     shopCat = c.id; shopSelectedId = null; renderShop();
     $('screen-dress').scrollTop = 0;   // een nieuwe categorie begint bovenaan

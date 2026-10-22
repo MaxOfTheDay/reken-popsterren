@@ -79,6 +79,20 @@
      in de zaal ook doet zodra de zaal een tekening heeft (.venue-aan). Korte,
      vette tekst op kunst: geval a uit §4 van de afspraak bovenaan. */
   #screen-dress .screen-header .header-title { text-shadow: var(--op-kunst-ink); }
+  /* De schakelaar in de kop, 👕 | 🎪 (renderShop): twee tekens in één stille
+     pil, en de helft die aanstaat in de kleur van een gekozen categorieknop.
+     Samen 44px hoog, net als de ← en de 💎-pil ernaast; elke helft is 40 hoog en
+     56 breed, zodat hij ook op 320px nog tussen die twee past. De letter van de
+     kop blijft staan (de kast en de kleedkamer meten hun koprij tegen elkaar):
+     de tekens hebben hun eigen maat. */
+  .kleed-schakel { display: flex; justify-self: center; gap: 2px; padding: 2px; border-radius: 99px;
+    background: rgba(20,6,40,.45); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14); }
+  .kleed-helft { width: 56px; height: 40px; border: 0; border-radius: 99px; background: none; cursor: pointer;
+    display: grid; place-items: center; font-size: 22px; line-height: 1; font-family: inherit;
+    opacity: .55; transition: transform var(--t-tik), opacity var(--t-tik); }
+  .kleed-helft span { filter: var(--emoji-schaduw-diep); }
+  .kleed-helft.aan { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+  .kleed-helft:active { transform: scale(.94); }
   /* ---- Gescrold gaat de lade dicht ----------------------------------------
      Onder deze kop schuift het rek door, en de veeg hierboven is onderin maar .58
      tot .72, met 8px waas. Voor de kamer is dat genoeg, voor een kaartje dat
@@ -421,18 +435,8 @@
      is slechter dan één van de twee. Twee rijen worden zo één rij, en het woord
      staat er nog steeds -- alleen bij de categorie waar je nú in kijkt. */
   .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 5px; }
-  /* Podia vast vooraan, de rest schuift ernaast (zie renderShop). Samen staan ze
-     in het midden als alles past, en anders krimpt alleen de schuifrij. Het
-     streepje scheidt wat blijft staan van wat schuift; de rij begint er met 6px
-     lucht achter in plaats van met zijn eigen 12. */
-  #screen-dress .shop-tabs-wrap { display: flex; align-items: center; justify-content: safe center; }
-  .shop-tab-vast { flex: none; display: flex; align-items: center; padding: 1px 0 1px 12px; }
-  .shop-tab-vast:empty { display: none; }
-  .shop-tab-vast::after {
-    content: ''; width: 2px; height: 26px; margin-left: 6px; border-radius: 2px;
-    background: rgba(255,255,255,.22);
-  }
-  .shop-tab-vast + .shop-tabs { flex: 0 1 auto; min-width: 0; padding-left: 6px; }
+  /* In Podia valt er niets te kiezen in de rij: hij gaat weg (zie renderShop). */
+  #screen-dress.in-podia .shop-tabs-wrap { display: none; }
   /* padding-inline 12 en niet 4: aan het begin en het eind van de rij hoort lucht
      te staan. Zonder die lucht lag de eerste knop tegen de schermrand en las een
      half weggeschoven knop als een fout in plaats van als "er staat hier meer".
