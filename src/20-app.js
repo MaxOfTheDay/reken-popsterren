@@ -8008,10 +8008,18 @@ function heroRoadFrames(map, geo) {
    gebeurde verder niets met haar, en een pop die over een weg schuift leest als
    een pion op een bord in plaats van als iemand die ergens heen gaat.
 
-   Dit is de kleinst mogelijke ingreep die dat omdraait: drie zachte pasjes over de
-   hele reis, elk een goeie 4px omhoog, met een rek van anderhalve procent op het
-   hoogste punt. Geen sprong (dat was de oude veer, drie keer zo hoog), geen
-   slingeren, geen draaien -- alleen het verschil tussen glijden en lopen.
+   Eerst was dit de kleinst mogelijke ingreep die dat omdraaide: drie zachte pasjes
+   van een goeie 4px. Dat was het verschil tussen glijden en lopen, maar op een
+   telefoon zag je het nauwelijks -- ze schoof nog steeds als een pion.
+
+   HUPPELPASJES (oktober 2026). Nu zijn het drie lichte huppels van ~10px, in de
+   taal van haar groet (zie HUPPEL): ze zakt eerst even door de knieën (aanloop),
+   elke landing deukt haar een tikje in, en de laatste landing loopt over in de
+   landing van de huppel op haar nieuwe halte (zie heroLanding), waarna die halte
+   antwoordt met de ring. Elke huppel is een parabool en geen |sin|: in de lucht
+   zweeft ze even, en het contact met de weg is kort -- zo leest het als springen.
+   Haar schaduw (.tour-hero::after) doet mee: kleiner en lichter in de lucht,
+   breder als ze neerkomt, net als bij schaduwHuppel in het stijlblad.
 
    OP .pas-laag, niet op de houder en niet op de tekening. Die laag bestaat al voor
    de danspasjes en is er om precies één reden (zie het stijlblad bij .pas-laag):
@@ -8021,33 +8029,74 @@ function heroRoadFrames(map, geo) {
    voeten -- en dan kost het niets. Het wiegen op de houder erboven (.idle, sway)
    loopt gewoon door: geneste transforms vermenigvuldigen, dus ze wiegt én loopt.
 
-   NUL AAN BEIDE KANTEN. |sin| is nul bij offset 0 en bij offset 1, en de rek hangt
-   aan diezelfde waarde -- vertrek en aankomst staan dus exact op niets. Daar hoeft
-   geen envelop omheen en er valt bij het begin en het eind niets te zien springen.
+   BEGIN OP NIETS, EIND IN DE DEUK. Het eerste beeldje is exact haar ruststand (de
+   aanloop groeit uit nul). Het laatste is de deuk van de landing, en daar neemt
+   heroLanding het over op de nieuwe halte, in dezelfde taak -- er zit dus geen
+   beeldje tussen waarin ze rechtop terugklikt.
 
    DEZELFDE TIJD als de baan en het goud: reisDuur, REIS_WACHT, REIS_EASING. De
    easing werkt op de tijd, dus haar pas gaat vanzelf mee met haar snelheid --
    traag aan het begin, vlotter in het midden. */
-const REIS_PASSEN = 3;      // pasjes over de hele reis -- 320 tot 470ms per pas (zie reisDuur), een kinderwandeltempo
-const REIS_STAP = 11;       // hoogte van één pasje, in viewBox-eenheden (opgemeten 4,3px op een telefoon)
-const REIS_REK = 0.015;     // 1,5% langer op het hoogste punt, en net zoveel smaller
+const REIS_HOP = {
+  passen: 3,      // huppels over de hele reis -- 300 tot 430ms per huppel (zie reisDuur)
+  hoogte: 26,     // hoogte van één huppel, in viewBox-eenheden (~10px op een telefoon)
+  rek: 0.03,      // 3% langer in de lucht, en iets smaller
+  deuk: { x: 0.06, y: 0.08, breed: 0.12 },   // de deuk rond elke landing, als deel van één huppel
+  aanloop: 0.08,  // het deel van de reis waarin ze door de knieën zakt voor ze afzet
+  land: 240,      // ms: de landing op de nieuwe halte (heroLanding)
+};
 function heroWalkFrames(map) {
   const sch = kaderSchaal(map);
   if (!sch) return null;
-  const frames = [];
+  const H = REIS_HOP, stap = [], schaduw = [];
   for (let i = 0; i <= REIS_STAPPEN; i++) {
     const t = i / REIS_STAPPEN;
-    const op = Math.abs(Math.sin(t * Math.PI * REIS_PASSEN));   // 0 op de grond, 1 op het hoogste punt
-    const rek = 1 + op * REIS_REK;
-    frames.push({
-      transform: `translateY(${(-op * REIS_STAP * sch.y).toFixed(2)}px) `
-        + `scale(${(1 / rek).toFixed(4)}, ${rek.toFixed(4)})`,
+    let op = 0, deuk;
+    if (t < H.aanloop) deuk = Math.sin(Math.PI / 2 * t / H.aanloop);
+    else {
+      const f = (t - H.aanloop) / (1 - H.aanloop) * H.passen;
+      const u = t === 1 ? 1 : f - Math.floor(f);
+      op = 4 * u * (1 - u);                                   // 0 op de grond, 1 op het hoogste punt
+      deuk = Math.max(0, 1 - Math.min(u, 1 - u) / H.deuk.breed);
+    }
+    const sx = 1 - op * H.rek * 0.7 + deuk * H.deuk.x;
+    const sy = 1 + op * H.rek - deuk * H.deuk.y;
+    stap.push({
+      transform: `translateY(${(-op * H.hoogte * sch.y).toFixed(2)}px) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`,
       // bij haar voeten, net als de danspasjes -- een rek mag haar niet van de weg tillen
       transformOrigin: '50% 95%',
       offset: t,
     });
+    schaduw.push({
+      transform: `translateX(-50%) scale(${(1 - op * 0.42 + deuk * 0.12).toFixed(3)})`,
+      opacity: (1 - op * 0.55).toFixed(3),
+      offset: t,
+    });
   }
-  return frames;
+  return { stap, schaduw };
+}
+/* Een schaduw animeren gaat met pseudoElement: '::after'. Een browser die die optie
+   niet kent negeert hem stil -- en zet de schaduwframes dan op haar hele halte-laag,
+   met translateX(-50%) en al. Dus alleen als het toestel het echt kan; anders blijft
+   de schaduw gewoon liggen, zoals vroeger. */
+const SCHADUW_ANIM = typeof KeyframeEffect !== 'undefined' && 'pseudoElement' in KeyframeEffect.prototype;
+/* De landing op de nieuwe halte. Na de reis tekent plaats() de kaart opnieuw en
+   staat ze als een nieuw element op haar nieuwe halte; dit zet haar in dezelfde
+   taak in de deuk waar de reis eindigde en laat haar uitveren -- dezelfde
+   landing als die van de huppel (78% van mvHuppel), met haar schaduw erbij. De
+   ring van de halte valt op hetzelfde moment (zie runTravel). */
+function heroLanding(map) {
+  const hero = map && map.querySelector('.tour-stop.next .tour-hero');
+  const laag = hero && hero.querySelector('.pas-laag');
+  if (!laag || !laag.animate) return;
+  const D = REIS_HOP.deuk, opts = { duration: REIS_HOP.land, easing: 'cubic-bezier(.3,.7,.4,1)' };
+  laag.animate([
+    { transform: `scale(${1 + D.x}, ${1 - D.y})`, transformOrigin: '50% 95%' },
+    { transform: 'scale(.98, 1.02)', transformOrigin: '50% 95%', offset: .55 },
+    { transform: 'none', transformOrigin: '50% 95%' }], opts);
+  if (SCHADUW_ANIM) hero.animate([
+    { transform: 'translateX(-50%) scale(1.12)' }, { transform: 'translateX(-50%)' }],
+    { ...opts, pseudoElement: '::after' });
 }
 /* De terugval als er geen pad te meten valt (geen SVG, een halte die niet in deze
    wereld ligt, een kader dat nog geen maat heeft): de rechte lijn van hiervoor,
@@ -8207,7 +8256,13 @@ function runTravel(t) {
   const vier = () => {
     const el = map.querySelector(`.tour-stop[data-lvl="${t.to}"]`);
     const dot = el && el.querySelector('.dot');
-    if (dot && dot.animate && !still) dot.animate(
+    /* Binnen een wereld landt ze op haar nieuwe halte, en die antwoordt met de ring
+       -- hetzelfde antwoord als op haar groet (zie haltePuls). Hier plopte eerst
+       het rondje zelf (.3 -> 1.3 -> 1), en een ring erbovenop zou twee tekens voor
+       één landing zijn. Over een grens heen blijft de plop: daar komt ze aan via
+       zijReistMee, die zijn eigen ring al heeft. */
+    if (!crossing && !still) { heroLanding(map); haltePuls(); }
+    else if (dot && dot.animate && !still) dot.animate(
       [{ transform: 'scale(.3)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
       { duration: 450, easing: 'ease-out' });
     /* HET TIKJE VAN AANKOMEN ZIT IN sndAankomst -- tril 15, zie de SFX-tabel. Niet
@@ -8288,8 +8343,13 @@ function runTravel(t) {
      los. Lukt het niet, dan reist ze zoals hiervoor: glijdend, maar goed. */
   const stap = hero.querySelector('.pas-laag');
   const loopje = heroWalkFrames(map);
-  if (stap && stap.animate && loopje) stap.animate(loopje,
-    { duration: duur, delay: REIS_WACHT, easing: REIS_EASING });
+  const loopTijd = { duration: duur, delay: REIS_WACHT, easing: REIS_EASING };
+  if (stap && stap.animate && loopje) {
+    // fill: ze eindigt in de deuk, en die moet blijven staan tot heroLanding hem
+    // op de nieuwe halte overneemt -- in dezelfde taak, dus zonder beeldje ertussen
+    stap.animate(loopje.stap, { ...loopTijd, fill: 'forwards' });
+    if (SCHADUW_ANIM) hero.animate(loopje.schaduw, { ...loopTijd, fill: 'forwards', pseudoElement: '::after' });
+  }
   /* Het vonkenspoor loopt mét haar mee en niet voor haar uit. Het hing aan een
      setInterval die meteen ging lopen, dus het eerste vonkje viel op 280ms --
      120ms vóór haar eerste stap, stilstaand naast de halte die ze net had
