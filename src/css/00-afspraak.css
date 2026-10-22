@@ -614,7 +614,7 @@
          --veilig-onder  de veilige zone van het toestel (0 op alles zonder
                          streepje; zonder viewport-fit=cover kadert de browser
                          zelf al af, dan is dit óók 0 en verandert er niets)
-         --balk-h        hoe hoog .main-nav is (een knop van 55 plus 2x6 padding)
+         --balk-h        hoe hoog .main-nav is (een knop van 48 plus 2x6 padding)
          --balk-rand     hoe ver de balk van de schermrand zweeft
          --balk-ruimte   wat een scherm mét vaste navigatie onderaan vrij moet
                          houden, veilige zone incl. Elk scherm telt daar zijn
@@ -624,7 +624,7 @@
        kaart bij het openen zélf opmeet (zie meetChroom) en die de balk plús wat
        eronder zit plús marge bevat. Vandaar --balk-* voor de vaste waarden. */
     --veilig-onder: env(safe-area-inset-bottom, 0px);
-    --balk-h: 66px;
+    --balk-h: 60px;
     --balk-rand: 10px;
     --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
 

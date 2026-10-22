@@ -660,7 +660,7 @@
 
 
     --veilig-onder: env(safe-area-inset-bottom, 0px);
-    --balk-h: 66px;
+    --balk-h: 60px;
     --balk-rand: 10px;
     --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
 
@@ -2775,10 +2775,13 @@
 
 
   #screen-map .world-pick { min-width: 0; max-width: 100%; }
+
+
+
+  #screen-map .wp-cta { margin: 4px; }
   @media (max-width: 389px) {
     #screen-map .world-pick { font-size: var(--tx-klein); }
-    #screen-map .wp-here { gap: 3px; padding: 0 4px 0 7px; }
-    #screen-map .wp-cta { gap: 2px; margin: 3px 3px 3px 1px; padding: 0 7px 0 6px; }
+    #screen-map .wp-cta { gap: 2px; margin: 3px; padding: 0 7px 0 6px; }
     #screen-map .wp-cta-ico { font-size: 17px; }
     #screen-map .wp-chev { width: 6px; height: 10px; }
     #screen-map .diamond-badge { font-size: var(--tx-label); gap: 3px; padding-inline: 6px; }
@@ -3048,10 +3051,14 @@
     text-shadow: var(--nav-ink);
 
 
-    background: transparent; border: none; border-radius: var(--r-md); padding: 6px 4px 5px; cursor: pointer;
+
+
+
+    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px; cursor: pointer;
     transition: transform var(--t-tik), background .15s, opacity .15s;
+    justify-content: center;
   }
-  .nav-item .nav-ico { font-size: 25px; line-height: 1.1; filter: var(--emoji-schaduw); }
+  .nav-item .nav-ico { font-size: 31px; line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(.94); }
 
 
@@ -4466,6 +4473,7 @@
   .tour-road-under { stroke: var(--route-onder); stroke-width: 18; }
   .tour-road-bg { stroke: var(--w-road); stroke-width: 10; }
   .tour-road-fg { stroke: var(--route-goud); stroke-width: 14; }
+
 
 
 
@@ -9380,11 +9388,13 @@
 <!-- actiebalk van de kleedkamer: passen/kopen, altijd in beeld boven de navigatie -->
 <div class="dress-bar" id="dress-bar"></div>
 
-<!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën -->
+<!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën.
+     Alleen de iconen: wie hier speelt leest meestal nog niet, 🗺️ 👕 🏆 zeggen het zelf
+     en het blauwe vlak zegt waar je bent. De woorden staan in aria-label en title. -->
 <div class="main-nav" id="main-nav">
-  <button class="nav-item" id="nav-map" onclick="navTik('map')"><span class="nav-ico">🗺️</span>Kaart</button>
-  <button class="nav-item" id="nav-dress" onclick="navTik('dress')"><span class="nav-ico">👕</span>Kleedkamer</button>
-  <button class="nav-item" id="nav-tro" onclick="navTik('tro')"><span class="nav-ico">🏆</span>Trofeeën<span class="nav-dot"></span></button>
+  <button class="nav-item" id="nav-map" onclick="navTik('map')" aria-label="Kaart" title="Kaart"><span class="nav-ico" aria-hidden="true">🗺️</span></button>
+  <button class="nav-item" id="nav-dress" onclick="navTik('dress')" aria-label="Kleedkamer" title="Kleedkamer"><span class="nav-ico" aria-hidden="true">👕</span></button>
+  <button class="nav-item" id="nav-tro" onclick="navTik('tro')" aria-label="Trofeeën" title="Trofeeën"><span class="nav-ico" aria-hidden="true">🏆</span><span class="nav-dot"></span></button>
 </div>
 
 <!-- Linksboven, het spiegelbeeld van het tandwiel: "Als app". Alleen op de
@@ -14969,10 +14979,13 @@ function renderMapTitle(p, opReis) {
 
 
   const hint = !wpHintKlaar;
+
+
+
+
+
   pil.innerHTML =
-      `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>`
-    + `<span class="wp-here-naam">${esc(korteNaam(shown.world))}</span></span>`
-    + `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
+      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
 
 
   const uitleg = `${shown.world.name} — tik voor alle werelden`;

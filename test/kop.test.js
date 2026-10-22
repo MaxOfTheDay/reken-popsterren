@@ -11,7 +11,8 @@
  * niet, want die speelt in Muziekwereld met dertig diamanten.
  *
  *   A  op elke maat, met de langste naam, veel diamanten en een wens: niets overlapt
- *   B  en de kop zegt de korte naam ("Onderwater"), met de volle in het label
+ *   B  de kop toont alleen de globe; de volle naam staat in het label, en
+ *      korteNaam ("Onderwater") blijft goed voor de show en het eindscherm
  *   C  liggend op een telefoon dimt de kop maar half, en alleen als je ster er echt achter staat
  *
  * Draaien:  npm run test:kop
@@ -86,14 +87,13 @@ async function zetKaart(page, { wereld, diamanten, wens }) {
     const r = await page.evaluate(() => {
       const w = WORLDS[WORLDS.reduce((a, x, i) => (x.name.length > WORLDS[a].name.length ? i : a), 0)];
       const pil = document.getElementById('map-tournee-label');
-      const naam = pil.querySelector('.wp-here-naam');
-      return { vol: w.name, kort: korteNaam(w), tekst: naam.textContent, label: pil.getAttribute('aria-label'),
-               afgekapt: naam.scrollWidth > naam.clientWidth + 1,
+      return { vol: w.name, kort: korteNaam(w), tekst: pil.textContent.trim(), label: pil.getAttribute('aria-label'),
+               globe: !!pil.querySelector('.wp-cta-ico'),
                raar: korteNaam({ name: 'Wereld' }), anders: korteNaam({ name: 'Het Bos' }) };
     });
-    check(r.tekst === r.kort && !/wereld$/i.test(r.tekst), 'B · de kop zegt de naam zonder "wereld"', `${r.tekst} (${r.vol})`);
+    check(r.globe && r.tekst === '🌍', 'B · de kop toont alleen de globe, geen wereldnaam', r.tekst);
     check(r.label.indexOf(r.vol) === 0, 'B · en het label voor een schermlezer houdt de volle naam', r.label);
-    check(!r.afgekapt, 'B · op een gewone telefoon past de langste naam voluit', r.tekst);
+    check(r.kort && !/wereld$/i.test(r.kort), 'B · korteNaam laat "wereld" weg (show en eindscherm)', `${r.kort} (${r.vol})`);
     check(r.raar === 'Wereld' && r.anders === 'Het Bos', 'B · een naam die anders eindigt, of niets overhoudt, blijft staan',
       `${r.raar} / ${r.anders}`);
     await ctx.close();
