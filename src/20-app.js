@@ -4596,6 +4596,11 @@ function wereldCamera(richting, teken, opts) {
   const easing = opts.easing || WERELDREIS.uit;
   const schaduw = maakWereldSchaduw(map);
   const terugWas = !$('world-back').hidden;
+  /* Op een breed scherm: de rand van de wereld die je verlaat blijft er even
+     overheen liggen en doft weg terwijl de camera reist. teken() zet de rand al
+     meteen op de nieuwe wereld, en dan sprong hij om vóór de klim begon. */
+  const klim = randNu(scherm);
+  if (klim) scherm.appendChild(klim);
   teken();                                      // de nieuwe wereld staat er nu al
   kopMeeMetCamera(richting, duur);
   const terugSchim = terugMeeMetCamera(terugWas, duur);
@@ -4631,9 +4636,12 @@ function wereldCamera(richting, teken, opts) {
       { duration: duur + MOTION.vangnet, easing: WERELDREIS.na });
   }
 
+  if (klim) klim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: duur, easing: easing, fill: 'forwards' });
+
   const deze = () => {
     [aUit, aIn].forEach(a => { try { a.cancel(); } catch (e) {} });
     schaduw.remove();
+    if (klim) klim.remove();
     if (terugSchim) terugSchim.remove();
     scherm.classList.remove('wereld-reist');
     map.style.pointerEvents = '';
@@ -5405,6 +5413,7 @@ function vluchtKlaar() {
   overgangBezig = false;
   try { v.op(); } catch (e) { /* opruimen mag nooit de app tegenhouden */ }
   if (v.laag && v.laag.parentNode) v.laag.parentNode.removeChild(v.laag);
+  if (v.doek && v.doek.parentNode) v.doek.parentNode.removeChild(v.doek);
   if (v.globe) v.globe();   // de globe landt normaal zelf; wordt de vlucht afgebroken, dan hij ook
 }
 /* De vlucht zelf. van/naar zijn twee vlakken; bron levert de kleuren en de
@@ -5414,6 +5423,37 @@ function vluchtKlaar() {
    Geeft terug wanneer de overvloeier begint -- de aanroeper laat het échte
    kaartje (of de échte kaart) op dat moment verschijnen, zodat de vluchtlaag
    erop wegdooft in plaats van ervoor. */
+/* De onscherpe rand van een wereld als losse laag (zie .wereld-doek), of null
+   waar er geen rand is: op een telefoon vult de kaart het scherm. Dezelfde
+   mediaregel als #screen-map::after -- staat die er niet, dan deze ook niet. */
+const BREED_PODIUM = '(min-aspect-ratio: 1/1) and (min-height: 600px)';
+function wereldDoek(soort, wereld) {
+  if (!wereld || !window.matchMedia || !matchMedia(BREED_PODIUM).matches) return null;
+  const doek = document.createElement('div');
+  doek.className = 'wereld-doek ' + soort;
+  doek.setAttribute('aria-hidden', 'true');
+  applyWorldTheme(doek, wereld);
+  doek.style.setProperty('--art', randBeeld(wereld));
+  return doek;
+}
+/* De rand zoals hij nú op de kaart staat, als .klim-doek: overgenomen van het
+   scherm zelf en niet opgezocht, want wélke wereld dat is weet op dit moment
+   alleen het scherm nog (viewWorldIdx kan al op de volgende staan). */
+function randNu(scherm) {
+  if (!window.matchMedia || !matchMedia(BREED_PODIUM).matches) return null;
+  const doek = document.createElement('div');
+  doek.className = 'wereld-doek klim-doek';
+  doek.setAttribute('aria-hidden', 'true');
+  ['--art', '--w-sky', '--w-deep'].forEach(k => {
+    const v = scherm.style.getPropertyValue(k);
+    if (v) doek.style.setProperty(k, v);
+  });
+  return doek;
+}
+// het kleine kaartjesbeeld: onscherp ziet niemand het verschil, en het is al uitgepakt
+function randBeeld(wereld) {
+  return wereld.art ? `url("${wereldKleinPad(wereld.art) || wereld.art}")` : 'none';
+}
 function wereldVlucht(van, naar, bron, op, hoog) {
   vluchtKlaar();                             // vangnet: de ingangen doen dit al zelf
   const laag = document.createElement('div');
@@ -5444,6 +5484,18 @@ function wereldVlucht(van, naar, bron, op, hoog) {
   kunst.style.width = van.kunst.w + 'px';
   kunst.style.height = van.kunst.h + 'px';
   laag.appendChild(kunst);
+  /* Op een breed scherm staat de kaart als podium in het midden, met de wereld
+     onscherp eromheen (zie #screen-map::after). Die rand vloeit mee met de vlucht:
+     hij doft weg terwijl de tekening naar haar kaartje krimpt, en komt op terwijl
+     ze terug uitgroeit. Hij knipte eerst bij het vertrek naar de nachtlucht van
+     Werelden, en stond op de terugweg pas ná de landing weer op -- met een fel
+     beeldje ertussen. Eén laag onder de vliegende tekening, zelfde duur. */
+  const doek = wereldDoek('vlucht-doek' + (hoog ? ' hoog' : ''), bron);
+  if (doek) {
+    $('app').appendChild(doek);
+    doek.animate(hoog ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }],
+      { duration: VLUCHT.duur, easing: 'linear', fill: 'forwards' });
+  }
   $('app').appendChild(laag);
 
   /* Twee transforms die samen één beweging zijn, plus de ronding apart -- zie
@@ -5470,7 +5522,7 @@ function wereldVlucht(van, naar, bron, op, hoog) {
      tikt hoort gewoon antwoord te krijgen in plaats van een tik die verdwijnt.
      Veilig, want elke ingang begint met vluchtKlaar(): een tik in dat venster
      sluit deze vlucht eerst netjes af en begint dan pas aan de volgende. */
-  vluchtOp = { laag, op,
+  vluchtOp = { laag, doek, op,
     timer: setTimeout(vluchtKlaar, VLUCHT.duur + VLUCHT.kruis + MOTION.vangnet),
     grendel: setTimeout(() => { overgangBezig = false; }, VLUCHT.duur) };
   eind.onfinish = vluchtKlaar;
@@ -6096,6 +6148,7 @@ function goMap(vanLvl) {
   const vorige = document.querySelector('.screen.active');
   telNu($('map-diamonds'), p.diamonds);
   zetWensPil(p);
+  $('map-tournee-label').classList.remove('bezig');   // zie pilTik
   $('map-portrait').innerHTML = avatarSVG(p, 80);
   // Memory-knop: alleen voor een telmodus-ster met het memory-spel aan
   const memOn = p.settings.track === 'count' && p.settings.memory !== false;
@@ -6879,7 +6932,17 @@ function reisStartWaarnemer() {
   reisWaarnemer = new IntersectionObserver((rijen, obs) => {
     rijen.forEach(r => { if (r.isIntersecting) { laden(r.target); obs.unobserve(r.target); } });
   }, { root: $('screen-journey'), rootMargin: '60% 0px' });
-  track.querySelectorAll('.reis-art').forEach(el => reisWaarnemer.observe(el));
+  /* De buren van de wereld waar je vandaan komt meteen, zonder op de waarnemer
+     te wachten. Die meldt zich pas ná het eerste beeldje, en dan vlogen de
+     kaartjes die de camera binnenschuift er leeg in (de kleur van hun wereld) en
+     kwam hun tekening er pas na de landing op. Het zijn er dezelfde vijf die
+     pilTik bij het neerzetten van de vinger al ophaalt, dus hier liggen ze
+     meestal al uitgepakt klaar. */
+  track.querySelectorAll('.reis-art').forEach(el => {
+    const halte = el.closest('.reis-halte');
+    if (halte && reisVanuit != null && Math.abs(+halte.dataset.w - reisVanuit) <= REIS_BUREN) laden(el);
+    else reisWaarnemer.observe(el);
+  });
 }
 function reisStopWaarnemer() {
   if (!reisWaarnemer) return;
@@ -6991,14 +7054,15 @@ function reisTerugNaarNu() {
    hieronder -- dus vóór het eerste beeldje waarop er iets te zien is -- en krijgt
    de wereld mee waar we vandaan komen. Er wordt dus nooit eerst een reis getoond
    die daarna naar de goede plek schuift. */
-function openReis() {
+/* alGetikt: de tik klonk al (de wereldpil, zie pilTik). */
+function openReis(alGetikt) {
   if (wereldReisBezig() || overgangBezig) return;   // midden in een wereldwissel valt er niets te kiezen
   /* Eerst een eventuele vorige vlucht afsluiten, en wel hiér -- vóór er één klasse
      op een scherm gaat. De opruimer van die vlucht haalt zijn eigen klassen weer
      weg, en zou hij later draaien (bijvoorbeeld vanuit wereldVlucht), dan veegde
      hij de klassen weg die deze overgang er net op gezet heeft. */
   vluchtKlaar();
-  sndClick();
+  if (alGetikt !== true) sndClick();
   const kaart = $('screen-map');
   const reis = $('screen-journey');
   const vorige = document.querySelector('.screen.active');
@@ -7162,6 +7226,51 @@ function reisTik(idx, el) {
   const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
   if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
   naTik(() => reisNaarWereld(idx, el, true, true));
+}
+/* En dezelfde tik op de wereldpil, de andere kant op. Die stond op naTik alleen:
+   het geluid kwam pas ná het beeldje, er was geen rimpel, en de pil zelf sprong
+   terug zodra de vinger losliet -- en daarna gebeurde er op een trage telefoon
+   een halve seconde niets (opgemeten: ~0,5s bij 4× vertraagd, ~0,45s op een
+   breed scherm). Nu komen het klikje en de rimpel meteen, en blijft de pil
+   ingedrukt staan (.bezig) tot de vlucht hem meeneemt: de tik is aangekomen,
+   ook als het bouwen even duurt.
+
+   Bij het neerzetten van de vinger (pointerdown in de opmaak) haalt hij alvast de
+   kaartjes op waar de camera straks langs schuift -- zie reisBurenAlvast. */
+function pilTik(el) {
+  if (overgangBezig || tikWacht || wereldReisBezig()) return;
+  sndClick();
+  reisBurenAlvast();
+  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if (r && r.width) tapRipple(r.left + r.width / 2, r.top + r.height / 2);
+  if (el) el.classList.add('bezig');
+  naTik(() => {
+    openReis(true);
+    // ging er niets open (een wereldwissel was nog bezig), dan staat de pil weer op
+    if (el && $('screen-map').classList.contains('active')) el.classList.remove('bezig');
+  });
+}
+/* De kleine kaartjesbeelden van de wereld waar je naar kijkt en van zijn buren,
+   alvast uitgepakt: precies wat de camera van Werelden in beeld schuift (zie
+   reisStartWaarnemer). Klein en weinig -- vijf bestanden van een vijfde van een
+   wereldtekening, en alleen werelden die Werelden ook echt toont. Daarom mag het
+   op de tik en niet bij het openen van de kaart (die haalt er hoogstens drie). */
+const REIS_BUREN = 2;
+const reisBurenBeelden = new Map();
+function reisBurenAlvast() {
+  const p = P();
+  if (!p) return;
+  const hier = viewWorldIdx == null ? continueWorld(p) : viewWorldIdx;
+  const tot = laatsteZichtbareWereld(p);
+  for (let i = Math.max(0, hier - REIS_BUREN); i <= Math.min(tot, hier + REIS_BUREN); i++) {
+    const art = WORLDS[i] && WORLDS[i].art;
+    const src = wereldKleinPad(art) || art;
+    if (!src || reisBurenBeelden.has(src)) continue;
+    const beeld = new Image();
+    beeld.src = src;
+    reisBurenBeelden.set(src, beeld);
+    if (beeld.decode) beeld.decode().catch(() => reisBurenBeelden.delete(src));
+  }
 }
 /* De tekening van de bestemming alvast ophalen én uitpakken, bij het neerzetten
    van de vinger. Tussen neerzetten en loslaten zit op een telefoon zo'n honderd
@@ -7339,7 +7448,7 @@ function renderTourMap(travelFrom) {
   applyWorldTheme(map, shown.world);
   const scherm = $('screen-map');
   applyWorldTheme(scherm, shown.world);
-  scherm.style.setProperty('--art', shown.world.art ? `url("${shown.world.art}")` : 'none');
+  scherm.style.setProperty('--art', randBeeld(shown.world));
 
   tekenWeg(frame, shown, nodes, playable);
 
