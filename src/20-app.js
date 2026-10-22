@@ -4658,12 +4658,15 @@ function renderMapTitle(p, opReis) {
      en bij een onthulling bouwt de camera de kop een beeldje later opnieuw op --
      zonder knipoog, en daarmee had niemand hem ooit gezien. */
   const hint = !wpHintKlaar;
+  /* Alleen de globe, geen wereldicoon of naam ervoor (oktober 2026). Een kind van
+     vijf leest "IJs" niet, en de tekening zegt al in welke wereld je bent. De globe
+     is het deel dat iets betekent: het is hetzelfde 🌍 dat in z'n eentje de kop van
+     Werelden is, en zo is hij de draad tussen de twee schermen. De naam staat nog
+     in de show, op het eindscherm en op Werelden. */
   pil.innerHTML =
-      `<span class="wp-here"><span class="wp-here-ico" aria-hidden="true">${shown.world.icon}</span>`
-    + `<span class="wp-here-naam">${esc(korteNaam(shown.world))}</span></span>`
-    + `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
-  // Screenlezer en desktop-tooltip krijgen de volledige zin; de pil zelf laat
-  // nu alleen nog de wereldnaam en twee iconen zien.
+      `<span class="wp-cta"><span class="wp-cta-ico${hint ? ' wp-hint' : ''}" aria-hidden="true">🌍</span>${WP_CHEV}</span>`;
+  // Screenlezer en desktop-tooltip krijgen de volledige zin, mét de wereldnaam:
+  // die zien ze niet in de pil.
   const uitleg = `${shown.world.name} — tik voor alle werelden`;
   pil.setAttribute('aria-label', uitleg);
   pil.title = uitleg;
