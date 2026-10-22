@@ -8687,6 +8687,16 @@
 
 
 
+
+  .fase-ladder.naad { gap: 10px; padding: 10px 0; }
+  .fase-ladder.naad .fl-rij { position: relative; min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
+  .fl-rij .fl-lijn { position: absolute; left: 0; right: 0; height: 10px; margin: 0; pointer-events: none; }
+  .fl-rij .fl-lijn.boven { top: -10px; }
+  .fl-rij .fl-lijn.onder { bottom: -10px; }
+  .fl-rij .fl-lijn::before { flex: 0 0 18px; }
+
+
+
   .fl-rij.eind .fl-n, .vg-ladder .fl-rij.later .fl-n { background: var(--lavender-wash-3); color: var(--purple-mid); }
   .fl-rij.eind:not(.hier) { color: var(--paper-ink-muted); }
   .vg-ladder .fl-rij.klaar, .vg-ladder .fl-rij.later { color: var(--paper-ink-muted); }
@@ -23969,8 +23979,8 @@ function accentTekst(s, w) {
 
 
 
-function flRij(klas, n, naam, vb, v) {
-  const binnen = `<span class="fl-n">${n}</span><span class="fl-naam">${naam}</span><span class="fl-vb">${vb || ''}</span>`;
+function flRij(klas, n, naam, vb, v, lijnen) {
+  const binnen = `<span class="fl-n">${n}</span><span class="fl-naam">${naam}</span><span class="fl-vb">${vb || ''}</span>${lijnen || ''}`;
   return v == null
     ? `<div class="fl-rij${klas}"${/\bhier\b/.test(klas) ? ' aria-current="step"' : ''}>${binnen}</div>`
     : `<button class="chip fl-rij${klas}" data-v="${v}">${binnen}</button>`;
@@ -24281,11 +24291,21 @@ function oefenGroups(s, pfx, p) {
 
 
 
+
+
+
+
+
+
+
+
+
+
   const ava = p ? flAva(p) : '';
-  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder" id="${pfx}${id}">${rijen.map((r, i) =>
-    (r.v === lo && i > 0 ? '<div class="fl-lijn">vanaf</div>' : '')
-    + flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v)
-    + (r.v === hi && i < rijen.length - 1 ? '<div class="fl-lijn">tot</div>' : '')).join('')}${staart || ''}</div>`;
+  const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
+  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder naad" id="${pfx}${id}">${rijen.map((r, i) =>
+    flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
+      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''))).join('')}${staart || ''}</div>`;
 
 
 
@@ -24854,11 +24874,36 @@ function renderSettings() {
 
 
 
+
+
+
+
+
+let lijnGlij = null;
+function lijnPlekken(ladder) {
+  const top = ladder.getBoundingClientRect().top, plek = {};
+  ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[l.textContent] = l.getBoundingClientRect().top - top; });
+  return plek;
+}
 function bindOefenChips(s, p, pfx, done) {
   const bind = (id, fn) => {
     const el = $((pfx || '') + id);
-    if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { if (fn(c) !== false) done(id); });
+    if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+      if (el.classList.contains('naad')) lijnGlij = { id: el.id, plek: lijnPlekken(el) };
+      if (fn(c) !== false) done(id);
+    });
   };
+  const glij = lijnGlij && $(lijnGlij.id);
+  if (glij && !motionOff()) {
+    const nu = lijnPlekken(glij);
+    glij.querySelectorAll('.fl-lijn').forEach(l => {
+      const d = lijnGlij.plek[l.textContent] - nu[l.textContent];
+      if (!d) return;
+      l.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }],
+        { duration: 160, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+    });
+  }
+  if (glij) lijnGlij = null;
 
 
 

@@ -13152,8 +13152,8 @@ function accentTekst(s, w) {
    pad met ringen, een "nu"-label en voorbeelden in grijze pilletjes, Oefenen de
    ladder. Een ouder die van het ene tabblad naar het andere ging las dezelfde
    stappen twee keer, en moest de tweede keer opnieuw uitzoeken wat wat was. */
-function flRij(klas, n, naam, vb, v) {
-  const binnen = `<span class="fl-n">${n}</span><span class="fl-naam">${naam}</span><span class="fl-vb">${vb || ''}</span>`;
+function flRij(klas, n, naam, vb, v, lijnen) {
+  const binnen = `<span class="fl-n">${n}</span><span class="fl-naam">${naam}</span><span class="fl-vb">${vb || ''}</span>${lijnen || ''}`;
   return v == null
     ? `<div class="fl-rij${klas}"${/\bhier\b/.test(klas) ? ' aria-current="step"' : ''}>${binnen}</div>`
     : `<button class="chip fl-rij${klas}" data-v="${v}">${binnen}</button>`;
@@ -13462,13 +13462,23 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
      stond de telstart in een openklapper "Begint je kind hoger?" met twaalf
      losse nummers: een tweede lijst van dezelfde fases.
 
-     rijen: [{ v, naam, vb }]. Een lijn komt er alleen als hij iets afsnijdt.
+     DE LIJNEN NEMEN GEEN PLAATS IN. Eerst was een lijn een eigen regel tussen
+     twee stappen, en die stond er alleen als hij iets afsneed. Dan schoof bij
+     elke tik alles erachter een regel op -- soms ook de stap waar je net op
+     tikte. Nu staat er tussen élke twee stappen dezelfde vaste naad
+     (.fase-ladder.naad), en de lijn wordt ín die naad getekend: hij hangt aan
+     de rand van zijn stap (.fl-lijn.boven / .onder) en duwt niets weg. Er
+     verschuift dus nooit iets; alleen de lijn verhuist, en glijdt daarbij
+     (zie lijnGlij in bindOefenChips). Beide lijnen staan er altijd, ook als ze
+     niets afsnijden: dan leest de ladder altijd "vanaf ... tot".
+
+     rijen: [{ v, naam, vb }]. hi = Infinity: geen "tot" (rekenen).
      staart: een rij om te lezen achteraan (zie het leerpad van rekenen). */
   const ava = p ? flAva(p) : '';
-  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder" id="${pfx}${id}">${rijen.map((r, i) =>
-    (r.v === lo && i > 0 ? '<div class="fl-lijn">vanaf</div>' : '')
-    + flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v)
-    + (r.v === hi && i < rijen.length - 1 ? '<div class="fl-lijn">tot</div>' : '')).join('')}${staart || ''}</div>`;
+  const lijn = (woord, kant) => `<span class="fl-lijn ${kant}" aria-hidden="true">${woord}</span>`;
+  const ladder = (id, rijen, lo, hi, hier, staart) => `<div class="fase-ladder naad" id="${pfx}${id}">${rijen.map((r, i) =>
+    flRij(`${r.v < lo ? ' voor' : r.v > hi ? ' uit' : ''}${r.v === hier ? ' hier' : ''}`, r.v === hier && ava ? ava : i + 1, r.naam, r.vb, r.v,
+      (r.v === lo ? lijn('vanaf', 'boven') : '') + (r.v === hi ? lijn('tot', 'onder') : ''))).join('')}${staart || ''}</div>`;
   /* OEFENEN IN TWEE KAARTEN. Hiervoor stond elk veld er drie keer: kaarttitel,
      onderregel, label en een hulpregel ("Wat oefenen / Kies de bewerkingen en
      het bereik / Bewerkingen"), zo'n 110 woorden op een scherm van anderhalve
@@ -14037,11 +14047,36 @@ function renderSettings() {
    krijgt de groep mee, zodat de aanroeper kan zien wát er veranderde.
    Een handler die de wijziging wéigert geeft false terug; dan volgt er geen
    done() (de "kies er minstens 1"-schud sloeg het opslaan hiervoor ook over). */
+/* De lijnen van de ladder glijden naar hun nieuwe plek. Na een tik wordt het
+   paneel opnieuw opgebouwd, dus de oude lijn bestaat dan niet meer: vóór de tik
+   onthouden we waar elke lijn stond (ten opzichte van de ladder, want de
+   stappen zelf bewegen niet -- zie oefenGroups), en na de opbouw laten we de
+   nieuwe lijn van daar naar zijn plek schuiven. */
+let lijnGlij = null;
+function lijnPlekken(ladder) {
+  const top = ladder.getBoundingClientRect().top, plek = {};
+  ladder.querySelectorAll('.fl-lijn').forEach(l => { plek[l.textContent] = l.getBoundingClientRect().top - top; });
+  return plek;
+}
 function bindOefenChips(s, p, pfx, done) {
   const bind = (id, fn) => {
     const el = $((pfx || '') + id);
-    if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => { if (fn(c) !== false) done(id); });
+    if (el) el.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+      if (el.classList.contains('naad')) lijnGlij = { id: el.id, plek: lijnPlekken(el) };
+      if (fn(c) !== false) done(id);
+    });
   };
+  const glij = lijnGlij && $(lijnGlij.id);
+  if (glij && !motionOff()) {
+    const nu = lijnPlekken(glij);
+    glij.querySelectorAll('.fl-lijn').forEach(l => {
+      const d = lijnGlij.plek[l.textContent] - nu[l.textContent];
+      if (!d) return;
+      l.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }],
+        { duration: 160, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+    });
+  }
+  if (glij) lijnGlij = null;
   // meerkeuze-chips (aan/uit) -- de laatst overgebleven mag niet uit (er moet altijd
   // iets geoefend worden); dat blokkeren gebeurde eerst stilletjes, nu met een
   // duidelijke schud + tekstje zodat het niet als "kapot" aanvoelt
