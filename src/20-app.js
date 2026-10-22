@@ -7309,14 +7309,14 @@ function haltKnop(shown, nodes, i, stand) {
   if (lvl === netAfLvl && sterrenRij) b.classList.add('net-af');
   /* Het schatteken bij de laatste halte (fase 6E). Alleen daar, alleen zolang
      de schat van deze wereld nog niet van haar is, en bewust niets meer dan een
-     ✨: wát er ligt hoort ze op het feestje te horen en niet hier van de kaart
+     🎁: wát er ligt hoort ze op het feestje te horen en niet hier van de kaart
      af te lezen. Eén teken op de hele kaart, bij de plek waar de route heen
      loopt -- dat is de bedoeling ("daar ligt iets") en niet een tweede
      statussysteem over de haltes heen. Het verdwijnt zodra ze hem heeft. */
   const laatste = i === nodes.length - 1;
   const schat = laatste ? beloningItem(shown.world) : null;
   const schatTeken = (schat && !p.owned.includes(schat.id))
-    ? `<span class="stop-schat" aria-hidden="true">✨</span>` : '';
+    ? `<span class="stop-schat" aria-hidden="true">🎁</span>` : '';
   b.innerHTML = `${hero}<div class="stop-body"><div class="dot">${i + 1}</div>`
     + `${schatTeken}${sterrenRij}</div>`;
   /* Het slotje is weg; de voorleesnaam zegt het nog wél. Wie de kaart met een

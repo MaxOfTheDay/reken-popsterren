@@ -159,21 +159,30 @@
      halte van 33 pixels drukte wordt -- dus dit is er met opzet één, op één halte
      van de acht, en alleen zolang de wereldschat nog te halen is. Geen animatie
      (de kaart heeft er al genoeg die iets betekenen), geen kleurvlak, geen tweede
-     staat op de halte: een fonkeling naast het eindpunt van de route, meer niet.
+     staat op de halte: een cadeautje naast het eindpunt van de route, meer niet.
      Zodra ze hem heeft is hij weg -- zie renderMap. */
   .tour-stop .stop-schat {
-    position: absolute; z-index: 2; left: 50%; top: -1.6cqw; margin-left: 3.2cqw;
-    width: 5.6cqw; height: 5.6cqw; border-radius: 50%;
-    display: grid; place-items: center; font-size: 3.1cqw; line-height: 1;
+    position: absolute; z-index: 2; left: 50%; top: -2.4cqw; margin-left: 2.6cqw;
+    width: 6.4cqw; height: 6.4cqw;
+    display: grid; place-items: center; font-size: 5cqw; line-height: 1;
     pointer-events: none;
-    /* Op zijn eigen donkere schijfje, met dezelfde gouden rand als een halte die
-       aan de beurt is. Een kale emoji verdween: de kaart is de drukste tekening
-       van het scherm en boven de Muziekwereld staat toevallig een verlicht
-       podium -- daar is elke lichte fonkeling gewoon meer licht. Het schijfje is
-       hetzelfde materiaal als het sterrentabje eronder (--ster-tab), dus het is
-       geen nieuw ding op de kaart maar hetzelfde ding, kleiner. */
-    background: var(--ster-tab);
-    box-shadow: inset 0 0 0 0.35cqw rgba(var(--goud-rgb),.75), 0 0.35cqw 0.7cqw rgba(12,2,26,.45);
+    /* Een 🎁 als sticker, zoals de spulletjes aan haar voeten en alles op de
+       kaart sinds de stickerrand: een witte rand en een donker lipje eronder.
+       Eerst was het een ✨ op een donker schijfje met een gouden ring -- precies
+       de taal die de kaart net kwijt was, en het las als een meldingsbolletje.
+       En een fonkeling was op deze plek zwak: elke wereld zet een verlicht
+       podium achter de laatste halte, en daar is een fonkeling gewoon meer
+       licht. Een cadeautje leest elk kind zonder te lezen, en de app gebruikt 🎁
+       al voor "er ligt een beloning klaar" (de trofeeënkast, het eindscherm).
+       Wát er ligt zegt het nog steeds niet; dat blijft voor het feestje.
+
+       De rand is vier harde drop-shadows: een emoji heeft geen pad om een stroke
+       op te zetten. Het is één klein element op één halte van de acht, stil, dus
+       dat filter kost niets wat telt (de sterren, met 24 per kaart, doen het met
+       een pad -- zie .cs-lip). */
+    filter: drop-shadow(0.3cqw 0 0 var(--halte-sticker)) drop-shadow(-0.3cqw 0 0 var(--halte-sticker))
+            drop-shadow(0 0.3cqw 0 var(--halte-sticker)) drop-shadow(0 -0.3cqw 0 var(--halte-sticker))
+            drop-shadow(0 0.35cqw 0 var(--ster-lip));
   }
   /* HET SLOTJE IS WEG. Er hing er een aan de rand van elke halte op slot -- eerst
      als 🔒-emoji, daarna getekend, en steeds kleiner en stiller. Die reeks eindigt
