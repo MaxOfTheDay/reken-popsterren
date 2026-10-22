@@ -5613,6 +5613,15 @@ function reisCameraSchaal(kaartje, wereld) {
   if (!kaartje || !wereld || !kaartje.clip.w) return 1;
   return Math.max(1, Math.min(REIS_CAMERA_MAX, wereld.clip.w / kaartje.clip.w));
 }
+/* De globe-vlucht in getallen -- zie "EÉN DRAAI" in globeVlucht.
+     piek      hoe groot hij halverwege is (1 = zijn eigen maat)
+     til       hoeveel pixels hij halverwege omhoog komt: een boogje, geen rechte lijn
+     mid       waar dat halverwege ligt, als deel van de tijd
+     draaiMid  hoeveel van de draai er dan al op zit -- vlot weg, rustig uitdraaien
+     na        hoeveel hij langer duurt dan de vlucht van de tekening
+     op        de curve van het loskomen; de landing is MOTION.plop */
+const GLOBE = { piek: 1.25, til: 8, mid: .55, draaiMid: .7, na: 60,
+                op: 'cubic-bezier(.3, 0, .4, 1)' };
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
   const a = vanEl.getBoundingClientRect(), b = naarEl.getBoundingClientRect();
@@ -5651,18 +5660,32 @@ function globeVlucht(vanEl, naarEl, duur) {
     naarEl.style.visibility = '';        // de echte staat er weer; de kopie mag weg
     if (vlieg.parentNode) vlieg.parentNode.removeChild(vlieg);
   };
-  const an = vlieg.animate(
-    [{ transform: 'none' },
-     { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)})` }],
-    { duration: duur, easing: VLUCHT.baan, fill: 'forwards' });
-  /* Géén wegdoven aan het eind. Hier stond dat wel, en dat klopte zolang er aan de
-     overkant een titel in beeld kwam waar de globe deel van uitmaakte: dan kruisten
-     ze. Nu staat de bestemming te wachten op precies dezelfde plek en maat, en dan
-     is doorzichtigheid een fout -- je zou het teken zien verdwijnen en meteen weer
-     verschijnen. Het wordt dus in één beurt omgewisseld (zie weg): één beeldje, twee
-     keer hetzelfde plaatje op dezelfde plek, en dus niets te zien. */
+  /* EÉN DRAAI. Hij schoof eerst alleen: op een telefoon zo'n 20px opzij op
+     dezelfde maat (de pil staat net links van het midden, en beide globes zijn
+     ~24px), en dat las niet als een vlucht maar als een globe die bleef liggen
+     terwijl de rest wisselde. Nu komt hij even los (GLOBE.piek), draait hij één
+     keer rond -- "de hele wereld", zonder woorden -- en landt hij met de ene plop
+     van de app. Terug draait hij de andere kant op: dezelfde beweging, achteruit.
+
+     Eén animatie, alleen transform, op een los teken boven alles: de compositor
+     doet het hele werk en de hoofddraad merkt er niets van, ook niet als die
+     intussen Werelden of de kaart aan het opbouwen is. Geen filter, geen schaduw
+     op de kopie: dat zou hem per beeldje opnieuw laten tekenen.
+
+     Iets langer dan de vlucht van de tekening (GLOBE.na): de landing valt net ná
+     die van het kaartje, zodat de kop het laatste is dat tot rust komt. */
+  const heen = !!naarEl.closest('#screen-journey');
+  const draai = heen ? -360 : 360;
+  const midden = `translate(${(dx * GLOBE.mid).toFixed(1)}px, ${(dy * GLOBE.mid - GLOBE.til).toFixed(1)}px) `
+    + `scale(${GLOBE.piek}) rotate(${Math.round(draai * GLOBE.draaiMid)}deg)`;
+  const eind = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${draai}deg)`;
+  const tijd = duur + GLOBE.na;
+  const an = vlieg.animate([
+    { transform: 'none', easing: GLOBE.op },
+    { offset: GLOBE.mid, transform: midden, easing: MOTION.plop },
+    { transform: eind }], { duration: tijd, fill: 'forwards' });
   an.onfinish = weg;
-  setTimeout(weg, duur + MOTION.vangnet);
+  setTimeout(weg, tijd + MOTION.vangnet);
   // hij vliegt mee met de wereldvlucht, en gaat dus ook mee weg als die afbreekt
   if (vluchtOp) vluchtOp.globe = weg;
 }

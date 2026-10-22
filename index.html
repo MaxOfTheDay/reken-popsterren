@@ -16134,6 +16134,15 @@ function reisCameraSchaal(kaartje, wereld) {
   if (!kaartje || !wereld || !kaartje.clip.w) return 1;
   return Math.max(1, Math.min(REIS_CAMERA_MAX, wereld.clip.w / kaartje.clip.w));
 }
+
+
+
+
+
+
+
+const GLOBE = { piek: 1.25, til: 8, mid: .55, draaiMid: .7, na: 60,
+                op: 'cubic-bezier(.3, 0, .4, 1)' };
 function globeVlucht(vanEl, naarEl, duur) {
   if (!vanEl || !naarEl || !vanEl.animate || motionOff()) return;
   const a = vanEl.getBoundingClientRect(), b = naarEl.getBoundingClientRect();
@@ -16172,18 +16181,32 @@ function globeVlucht(vanEl, naarEl, duur) {
     naarEl.style.visibility = '';
     if (vlieg.parentNode) vlieg.parentNode.removeChild(vlieg);
   };
-  const an = vlieg.animate(
-    [{ transform: 'none' },
-     { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)})` }],
-    { duration: duur, easing: VLUCHT.baan, fill: 'forwards' });
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+  const heen = !!naarEl.closest('#screen-journey');
+  const draai = heen ? -360 : 360;
+  const midden = `translate(${(dx * GLOBE.mid).toFixed(1)}px, ${(dy * GLOBE.mid - GLOBE.til).toFixed(1)}px) `
+    + `scale(${GLOBE.piek}) rotate(${Math.round(draai * GLOBE.draaiMid)}deg)`;
+  const eind = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${draai}deg)`;
+  const tijd = duur + GLOBE.na;
+  const an = vlieg.animate([
+    { transform: 'none', easing: GLOBE.op },
+    { offset: GLOBE.mid, transform: midden, easing: MOTION.plop },
+    { transform: eind }], { duration: tijd, fill: 'forwards' });
   an.onfinish = weg;
-  setTimeout(weg, duur + MOTION.vangnet);
+  setTimeout(weg, tijd + MOTION.vangnet);
 
   if (vluchtOp) vluchtOp.globe = weg;
 }
