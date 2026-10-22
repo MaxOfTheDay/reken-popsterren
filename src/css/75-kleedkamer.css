@@ -705,6 +705,14 @@
   .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
   /* een wereldpodium draagt zijn schat (wereldPrijsHTML): 60 breed is 52 hoog, het vak precies */
   .item-thumb.thumb-prijs { align-items: flex-end; }
+  /* Goud is in Podia "van jou en je staat erop". De gouden rand van een perfecte
+     wereld komt daarom pas op het kaartje als het podium van haar is; daarvoor
+     is hij bleek zoals elk podium dat nog niet af is (op de kaart, de reis en in
+     de kast blijft hij wél: daar zegt hij hoe je speelde). */
+  .item-thumb .wereldprijs.goud:not(.af) .podium {
+    border-color: var(--pr); filter: grayscale(.85) brightness(.62);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .03) var(--pr);
+  }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
   /* het naambordje (naamBordje): even boven in de spiegel na het aandoen, in het
      stille vlak van de knoppen eromheen. De kaartjes zelf hebben geen naam meer. */
@@ -741,6 +749,23 @@
   .item-status.owned { color: rgba(255,255,255,.6); }
   .item-status.on { color: var(--gold-accent); font-weight: 900; }
   .item-status.slot { opacity: .85; }
+  /* De verzamelkaart (zetSetRij): een podium dat nog niet af is, toont zijn drie
+     stukken in plaats van een bedrag. Hebben = de tekening in kleur met een groene
+     rand; nog niet = een donker silhouet in een leeg vakje. Het groen is dezelfde
+     "dit is gelukt"-kleur als het vinkje van een goed antwoord, en geen goud:
+     goud is in de kleedkamer "je draagt het". De tekening is die van het rek,
+     verkleind (een itemThumb is 66 in het vierkant). */
+  .item-status.set-rij { gap: 3px; padding: 0; min-width: 0; background: none; }
+  .set-rij .sv {
+    position: relative; width: 24px; height: 24px; border-radius: 7px; overflow: hidden;
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.18);
+  }
+  .set-rij .sv .item-thumb {
+    position: absolute; left: 50%; top: 50%; width: 66px; height: 66px; margin: -33px 0 0 -33px;
+    transform: scale(.36); filter: brightness(0) opacity(.45);
+  }
+  .set-rij .sv.heb { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1.5px rgba(126,231,135,.9); }
+  .set-rij .sv.heb .item-thumb { filter: none; }
   /* Het pilletje wisselt van "💎 45" naar "Nieuw!" en dat is een antwoord op
      de tik: het mag even zien te zijn dat het antwoord er is. Eerst een korte
      pop (de wissel zelf), daarna precies één rustige ademhaling. Het waren er

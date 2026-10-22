@@ -506,14 +506,18 @@ function check(ok, label, detail) {
       'G · en Speel opent de kaart waar ze nu staat, niet die verre wereld', JSON.stringify(ver));
     await page.evaluate(() => { openKleedkamer(); openPodia(); });
     await new Promise(res => setTimeout(res, 250));
-    /* Verdiend: de schat staat bij haar spullen, het slot gaat eraf, en wat er nog
-       ontbreekt koop je in één keer -- daarna staat ze erop. */
+    /* Verdiend: de schat staat bij haar spullen, het slot gaat eraf, en het
+       kaartje wordt een verzamelkaart: geen bedrag maar de drie stukken, waarvan
+       de schat er al een is. Aantikken kiest meteen het eerste stuk dat ontbreekt;
+       twee keer kopen en ze staat erop. */
     const na = await page.evaluate(async () => {
       P().owned.push('acc_wereld_muziek');
       renderShop();
       await new Promise(res => setTimeout(res, 150));
       const kaart = document.querySelector('.item-card[data-item="stage_arena"]');
-      const voor = kaart.querySelector('.item-status').textContent.trim();
+      const tag = kaart.querySelector('.item-status');
+      const voor = { set: tag.classList.contains('set-rij'), vakjes: tag.querySelectorAll('.sv').length,
+        heb: [...tag.querySelectorAll('.sv')].map(v => v.classList.contains('heb') ? 1 : 0).join(''), tekst: tag.textContent.trim() };
       const prijs = item('instr_dj').price + item('dress_disco').price;
       kaart.click();
       await new Promise(res => setTimeout(res, 150));
@@ -521,9 +525,11 @@ function check(ok, label, detail) {
       const knopTekst = knop ? knop.textContent : '';
       knop.click();
       await new Promise(res => setTimeout(res, 2200));
+      document.getElementById('db-buy').click();
+      await new Promise(res => setTimeout(res, 2200));
       const na = document.querySelector('.item-card[data-item="stage_arena"]');
       return {
-        voor, prijs, knopTekst,
+        voor, prijs, knopTekst, djPrijs: item('instr_dj').price,
         staat: P().equipped.stage,
         stukken: ['instr_dj', 'dress_disco'].every(id => P().owned.includes(id)),
         diamanten: P().diamonds,
@@ -531,9 +537,10 @@ function check(ok, label, detail) {
         spiegel: document.getElementById('shop-podium').dataset.podium,
       };
     });
-    check(na.voor === `💎 ${na.prijs}`, 'G · met de schat kost het podium wat er nog ontbreekt', JSON.stringify(na));
-    check(/Koop/.test(na.knopTekst) && na.knopTekst.indexOf(String(na.prijs)) >= 0,
-      'G · en de lade biedt één koopknop voor alles', JSON.stringify(na.knopTekst));
+    check(na.voor.set && na.voor.vakjes === 3 && na.voor.heb === '100' && na.voor.tekst.indexOf('💎') < 0,
+      'G · met de schat toont het kaartje de set (de schat erin), geen bedrag', JSON.stringify(na.voor));
+    check(/Koop/.test(na.knopTekst) && na.knopTekst.indexOf(String(na.djPrijs)) >= 0,
+      'G · aantikken kiest het eerste stuk dat ontbreekt, met één knop voor dat stuk', JSON.stringify(na.knopTekst));
     check(na.stukken && na.staat === 'stage_arena' && na.diamanten === 9999 - na.prijs && na.aan && na.tag === '✓'
       && na.spiegel === 'stage_arena',
       'G · kopen: de stukken zijn van haar, ze staat erop, ook in de spiegel', JSON.stringify(na));
@@ -559,6 +566,9 @@ function check(ok, label, detail) {
       const stand = () => ({ lade: shopCat, gekozen: shopSelectedId, knop: (document.getElementById('db-buy') || {}).textContent || '',
         tegels: [...balk().querySelectorAll('.mini-kaart')].map(k => k.dataset.stuk + ':' + ['selected', 'equipped', 'owned'].filter(c => k.classList.contains(c)).join('+')) });
       const begin = stand();
+      // het gekozen stuk nog eens aantikken: dan gaat de balk over het hele podium
+      tegel('instr_dj').click(); await wacht(100);
+      const heel = stand();
       tegel('instr_dj').click(); await wacht(100);
       const gekozen = { ...stand(), pop: document.getElementById('shop-avatar').innerHTML.length > 0 };
       document.getElementById('db-buy').click(); await wacht(2200);
@@ -566,11 +576,13 @@ function check(ok, label, detail) {
       tegel('acc_wereld_muziek').click(); await wacht(100);
       const schatAan = { ...stand(), acc: P().equipped.acc };
       document.getElementById('db-buy').click(); await wacht(2200);
-      return { begin, gekozen, naKoop, schatAan, podium: P().equipped.stage, balkWeg: balk().style.display === 'none',
+      return { begin, heel, gekozen, naKoop, schatAan, podium: P().equipped.stage, balkWeg: balk().style.display === 'none',
         diamanten: P().diamonds, prijs: item('instr_dj').price + item('dress_disco').price, djPrijs: item('instr_dj').price };
     });
-    check(r.begin.knop.indexOf(String(r.prijs)) >= 0 && r.begin.tegels.join() === 'acc_wereld_muziek:owned,instr_dj:,dress_disco:',
-      'G2 · een podium aantikken: de balk gaat over het hele podium', JSON.stringify(r.begin));
+    check(r.begin.knop.indexOf(String(r.djPrijs)) >= 0 && r.begin.tegels.join() === 'acc_wereld_muziek:owned,instr_dj:selected,dress_disco:',
+      'G2 · een podium aantikken: het eerste stuk dat ontbreekt staat al gekozen', JSON.stringify(r.begin));
+    check(r.heel.knop.indexOf(String(r.prijs)) >= 0 && r.heel.tegels.join() === 'acc_wereld_muziek:owned,instr_dj:,dress_disco:',
+      'G2 · dat stuk weer uitzetten: de knop gaat over het hele podium', JSON.stringify(r.heel));
     check(r.gekozen.lade === 'stage' && r.gekozen.gekozen === 'stage_arena' && r.gekozen.tegels[1] === 'instr_dj:selected'
       && /Koop/.test(r.gekozen.knop) && r.gekozen.knop.indexOf(String(r.djPrijs)) >= 0,
       'G2 · een stuk aantikken kiest dat stuk, en de knop gaat over dat stuk', JSON.stringify(r.gekozen));

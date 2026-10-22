@@ -7967,6 +7967,14 @@
   .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
 
   .item-thumb.thumb-prijs { align-items: flex-end; }
+
+
+
+
+  .item-thumb .wereldprijs.goud:not(.af) .podium {
+    border-color: var(--pr); filter: grayscale(.85) brightness(.62);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .03) var(--pr);
+  }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
 
 
@@ -8003,6 +8011,23 @@
   .item-status.owned { color: rgba(255,255,255,.6); }
   .item-status.on { color: var(--gold-accent); font-weight: 900; }
   .item-status.slot { opacity: .85; }
+
+
+
+
+
+
+  .item-status.set-rij { gap: 3px; padding: 0; min-width: 0; background: none; }
+  .set-rij .sv {
+    position: relative; width: 24px; height: 24px; border-radius: 7px; overflow: hidden;
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.18);
+  }
+  .set-rij .sv .item-thumb {
+    position: absolute; left: 50%; top: 50%; width: 66px; height: 66px; margin: -33px 0 0 -33px;
+    transform: scale(.36); filter: brightness(0) opacity(.45);
+  }
+  .set-rij .sv.heb { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1.5px rgba(126,231,135,.9); }
+  .set-rij .sv.heb .item-thumb { filter: none; }
 
 
 
@@ -12453,6 +12478,14 @@ function bezit(p, it) { return it.cat === 'stage' ? podiumVanJou(p, it) : (p.own
 
 function podiumRest(p, st) { return podiumStukken(st).filter(it => !(p.owned || []).includes(it.id)); }
 function podiumPrijs(p, st) { return podiumRest(p, st).reduce((t, it) => t + (it.price || 0), 0); }
+
+
+
+function volgendStuk(p, st) {
+  if (!st || podiumVanJou(p, st) || podiumOpSlot(p, st)) return null;
+  const s = podiumRest(p, st).find(x => tagStand(x, p) !== 'slot');
+  return s ? s.id : null;
+}
 
 function podiumOpSlot(p, st) {
   const schat = podiumSchat(st);
@@ -22020,6 +22053,7 @@ function openKleedkamerItem(id) {
     if (p.equipped[doel.cat] !== doel.id) equipShopItem(doel.id);
   } else {
     shopSelectedId = id;
+    if (doel.cat === PODIA_CAT) podiumStuk = volgendStuk(p, doel);
     paintShop();
   }
 
@@ -22269,7 +22303,8 @@ function renderShop() {
 
       const herbouw = !!shopJustBoughtId;
       clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id; podiumStuk = null;
+      shopJustBoughtId = null; shopSelectedId = it.id;
+      podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
       herbouw ? renderShop() : paintShop();
       if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
     };
@@ -22401,7 +22436,29 @@ function dressCardState(card, it, p) {
     + (shopSelectedId === it.id ? ' selected' : '')
     + (!owned && p.wens === it.id ? ' gewenst' : '')
     + (stand === 'new' ? ' just-bought' : '');
-  zetTag(card.querySelector('.item-status'), stand, tagPrijs(it, p));
+  const tag = card.querySelector('.item-status');
+  if (it.cat === PODIA_CAT && (stand === 'price' || stand === 'need') && it.stukken) return zetSetRij(tag, it, p);
+  zetTag(tag, stand, tagPrijs(it, p));
+}
+
+
+
+
+
+
+
+
+
+
+function zetSetRij(el, st, p) {
+  if (!el) return;
+  const stukken = podiumStukken(st);
+  const sleutel = stukken.map(s => ((p.owned || []).includes(s.id) ? 1 : 0)).join('');
+  if (el.classList.contains('set-rij') && el.dataset.set === sleutel) return;
+  el.className = 'item-status set-rij';
+  el.dataset.set = sleutel;
+  el.setAttribute('aria-label', `${sleutel.split('1').length - 1} van de ${stukken.length}`);
+  el.innerHTML = stukken.map((s, i) => `<span class="sv${sleutel[i] === '1' ? ' heb' : ''}">${itemThumb(s)}</span>`).join('');
 }
 
 
@@ -22448,10 +22505,9 @@ function previewProfile(p, it) {
 
 
 
-  if (it.cat === PODIA_CAT && it.stukken) {
-    podiumStukken(it).forEach(s => { if (tagStand(s, p) !== 'slot') preview.equipped[s.cat] = s.id; });
-    if (podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
-  }
+
+
+  if (it.cat === PODIA_CAT && podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
   preview.equipped[it.cat] = it.id;
   return preview;
 }
