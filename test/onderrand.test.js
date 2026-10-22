@@ -28,6 +28,8 @@
  *   D  draaien is een échte andere maat en legt het slot opnieuw vast
  *   F  de navigatie zelf: zo breed als haar knoppen, knoppen groot genoeg voor
  *      een kindervinger, het blauwe vlak schuift mee en een schermlezer weet waar je is
+ *   G  🗺️ op je eigen kaart: niets opnieuw opbouwen, terugglijden naar haar halte
+ *      en daar één huppel -- en nooit Werelden
  *
  * De reden voor C: --vh-drift mag nooit onder nul lopen. Zou hij dat wel doen,
  * dan schoof de bediening bij een openschuivend toetsenbord juist eráchter.
@@ -241,6 +243,50 @@ async function zetOnderrandAan(page) {
       `F · ${wat} · en het schuift ernaartoe in plaats van te verspringen`, `${r.opKaart.vlak} -> ${r.onderweg} -> ${r.opKast.vlak}`);
     check(r.troLabel === 'Trofeeën, nieuw', `F · ${wat} · het stipje op 🏆 staat ook in woorden`, r.troLabel);
     check(fouten.length === 0, `F · ${wat} · geen javascript-fouten`, fouten.join(' | '));
+    await ctx.close();
+  }
+
+  /* ---- G · 🗺️ op je eigen kaart ----
+     Geen nieuwe kaart (dezelfde ster, dezelfde haltes), terug naar haar halte en
+     daar een huppel; Werelden gaat niet open. Op de tablet schuift de kaart, dus
+     daar eerst weg van haar. Bij beperkte beweging: wel terug, geen huppel. */
+  for (const [w, h, rustig] of [[390, 844, false], [820, 1180, false], [820, 1180, true]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: rustig ? 'reduce' : 'no-preference' });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    const fouten = [];
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1');
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const wacht = ms => new Promise(res => setTimeout(res, ms));
+      goMap(); await wacht(3200);           // de groet laten uitspelen (koeltijd)
+      const map = $('tour-map');
+      const ster = map.querySelector('.tour-hero'), halte = map.querySelector('.tour-stop.next');
+      const thuis = map.scrollTop;
+      const schuift = map.scrollHeight > map.clientHeight + 40;
+      if (schuift) { map.scrollTop = thuis > 200 ? 0 : map.scrollHeight; await wacht(150); }
+      const weg = map.scrollTop;
+      navTik('map');
+      let huppel = false;
+      for (let t = performance.now(); performance.now() - t < 1600;) {
+        await new Promise(res => requestAnimationFrame(res));
+        if (ster.querySelector('.avatar-holder').classList.contains('dancing')) { huppel = true; break; }
+      }
+      await wacht(400);
+      return {
+        zelfde: map.querySelector('.tour-hero') === ster && map.querySelector('.tour-stop.next') === halte,
+        werelden: $('screen-journey').classList.contains('active'),
+        kaart: $('screen-map').classList.contains('active'),
+        schuift, thuis, weg, na: map.scrollTop, huppel,
+      };
+    });
+    const wat = `${w}×${h}${rustig ? ' · beperkte beweging' : ''}`;
+    check(r.zelfde && r.kaart && !r.werelden, `G · ${wat} · de kaart blijft staan en Werelden gaat niet open`, JSON.stringify(r));
+    if (r.schuift) check(Math.abs(r.na - r.thuis) <= 4 && Math.abs(r.weg - r.thuis) > 40,
+      `G · ${wat} · terug naar haar halte`, `${r.thuis} -> ${r.weg} -> ${r.na}`);
+    check(r.huppel === !rustig, `G · ${wat} · ${rustig ? 'geen huppel' : 'en daar één huppel'}`, String(r.huppel));
+    check(fouten.length === 0, `G · ${wat} · geen javascript-fouten`, fouten.join(' | '));
     await ctx.close();
   }
 

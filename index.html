@@ -14273,6 +14273,7 @@ function navGo(t, wasActiveAl, stil) {
   if (t === 'map') {
     if ($('screen-journey').classList.contains('active')) reisSluit(true);
     else if (opUitstapje) navigeerNaarWereld(worldFor(hereLevel(P())).index);
+    else if ($('screen-map').classList.contains('active') && !pendingTravel) kaartThuis();
     else goMap();
   }
   else if (t === 'dress') (wasActive ? openKleedkamer : resumeKleedkamer)();
@@ -16909,6 +16910,60 @@ function kaartTik(ster, halte) {
   groetTimer = null;
   sndTap();
   if (zetPas(el, TIK_PAS)) pasUit(el);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let thuisNr = 0;
+const THUIS_GLIJ = 800;
+function kaartThuis() {
+  const map = $('tour-map');
+  if (!map || overgangBezig || vluchtOp || wereldReisOp) return;
+  clearTimeout(groetTimer);
+  groetTimer = null;
+  const nr = ++thuisNr;
+  let gedaan = false;
+  const huppel = () => {
+    if (gedaan || nr !== thuisNr || !$('screen-map').classList.contains('active')) return;
+    gedaan = true;
+    clearTimeout(groetTimer);
+    groetTimer = null;
+    const el = map.querySelector('.tour-hero .avatar-holder');
+    if (!el || !el.isConnected || el.classList.contains('dancing')) return;
+    if (zetPas(el, HUPPEL)) pasUit(el);
+  };
+
+  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+  const f = map.querySelector('.world-frame');
+  const schuift = here && f && map.scrollHeight > map.clientHeight + 4
+    && getComputedStyle(map).overflowY !== 'hidden';
+  const doel = schuift
+    ? Math.max(0, Math.min(map.scrollHeight - map.clientHeight,
+        here.getBoundingClientRect().top - f.getBoundingClientRect().top - map.clientHeight / 2))
+    : map.scrollTop;
+  if (Math.abs(doel - map.scrollTop) < 4) { huppel(); return; }
+  if (motionOff() || !map.scrollTo) { map.scrollTop = doel; return; }
+  map.scrollTo({ top: doel, behavior: 'smooth' });
+
+
+  map.addEventListener('scrollend', huppel, { once: true });
+  groetTimer = setTimeout(huppel, THUIS_GLIJ);
 }
 
 function kaartGroetStop() {
