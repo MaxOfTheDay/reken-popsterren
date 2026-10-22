@@ -10470,14 +10470,24 @@ document.addEventListener('keydown', e => {
 
    De teller hangt aan G (de show die nu loopt), en stopSpot kan hem dus alleen
    nog vinden zolang díe G er staat. Vervangt er iets G zonder eerst te stoppen,
-   dan is de teller niet meer te bereiken maar loopt hij wel door: elke 100ms,
-   tot het tabblad dicht gaat -- en zodra het eindscherm G op null zet, elke 100ms
-   met een fout erbij. Eén vergeten show is één teller die nooit meer ophoudt.
+   dan is de teller niet meer te bereiken maar loopt hij wel door. Vroeger was
+   dat een setInterval (elke 100ms, tot het tabblad dicht ging, en na het
+   eindscherm met een fout erbij); nu is het één setTimeout aan het eind, maar
+   de regel blijft: de tik kijkt eerst of hij nog bij de huidige show hóórt en
+   doet anders niets. startLevel zet er nog een slot voor (zie daar), maar dit
+   is het vangnet eronder.
 
-   Vandaar dat elke tik eerst kijkt of hij nog bij de huidige show hóórt en
-   zichzelf anders opruimt. Dat is een regel die geen enkele aanroeper hoeft te
-   kennen: een teller die zijn show kwijt is, stopt uit zichzelf. startLevel zet
-   er nog een slot voor (zie daar), maar dit is het vangnet eronder. */
+   EÉN ANIMATIE, GEEN TIKKENDE KLOK. Hier liep een setInterval van 100ms die
+   elke tik G.spot verlaagde en de balk een nieuwe stand gaf. Dat was tien keer
+   per seconde werk op de hoofddraad -- een stijlronde, een nieuw beeldje --
+   de hele vraag lang, en een vraag is waar een kind het meeste van zijn tijd
+   doorbrengt. Gemeten (4x vertraagd, telefoon): ~210 ms per seconde bezig
+   tijdens een vraag, waar elk ander stilstaand scherm op 3 à 4 zit. Nu draait
+   de balk als één animatie van de browser (spotAnim) en wordt G.spot pas
+   uitgerekend als iemand hem nodig heeft: op het moment dat de klok stopt
+   (stopSpot, bij elk antwoord) uit de verstreken tijd. Dezelfde lijn als
+   vroeger -- 100 bij de start, 0 na SPOT_DUUR -- alleen zonder de trapjes van
+   100ms ertussen. */
 /* De balk schuift, hij krimpt niet. Hij is altijd even breed als zijn rail en
    schuift er naar links uit (de rail snijdt af, zie .spot-rail). Hier stond
    style.width, en een breedte die verandert laat de browser elk beeldje
@@ -10507,20 +10517,41 @@ function zetSpot(pct) {
 }
 const SPOT_DUUR = 12000;   // ms: zo lang loopt de spotlight-bonus
 const SPOT_RUST = 4000;    // ms: zo lang staat de balk eerst vol en stil
+let spotAnim = null;       // de lopende balk-animatie; er is maar één balk
 function startSpot() {
   stopSpot();
+  if (spotAnim) { spotAnim.cancel(); spotAnim = null; }   // van een show die niet gestopt werd
   G.spot = 100;
   zetSpot(100);
-  const id = setInterval(() => {
-    if (!G || G.timer !== id) { clearInterval(id); return; }
-    G.spot = Math.max(0, G.spot - 100 / (SPOT_DUUR / 100));
-    zetSpot(G.spot);
-    if (G.spot <= 0) stopSpot();
-  }, 100);
+  G.spotStart = performance.now();
+  const balk = $('spotlight-bar');
+  if (balk && balk.animate) {
+    // dezelfde lijn als zetSpot: SPOT_RUST vol en stil, daarna rechtlijnig naar nul
+    const rust = SPOT_RUST / SPOT_DUUR;
+    const kf = $('question-card').classList.contains('golden')
+      ? [{ width: '100%' }, { width: '100%', offset: rust }, { width: '0%' }]
+      : [{ transform: 'translateX(0%)' }, { transform: 'translateX(0%)', offset: rust }, { transform: 'translateX(-100%)' }];
+    spotAnim = balk.animate(kf, { duration: SPOT_DUUR, easing: 'linear', fill: 'forwards' });
+  }
+  const id = setTimeout(() => { if (G && G.timer === id) stopSpot(); }, SPOT_DUUR);
   G.timer = id;
 }
+// wat G.spot nu zou zijn als de klok tikte (100 bij de start, 0 na SPOT_DUUR)
+function spotNu() {
+  if (!G || !G.timer) return G ? G.spot : 0;
+  return Math.max(0, 100 * (1 - (performance.now() - G.spotStart) / SPOT_DUUR));
+}
+/* Stoppen = de stand van nu vastzetten: G.spot uit de verstreken tijd, en de balk
+   blijft staan waar hij was (de animatie gaat weg, zetSpot zet dezelfde stand
+   neer als gewone stijl -- daarna kan zetSpot(0) bij een misser hem nog
+   verzetten, wat een lopende animatie zou overstemmen). */
 function stopSpot() {
-  if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
+  if (G && G.timer) {
+    G.spot = spotNu();
+    clearTimeout(G.timer); G.timer = null;
+    if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
+    zetSpot(G.spot);
+  }
 }
 /* De telmodus: geen klok, geen balk (zie hierboven). G.spot staat vol, dus elk
    antwoord dat in één keer goed is krijgt de +1 💎 en het luidere publiek -- wat
