@@ -659,8 +659,9 @@
 
 
 
+
     --veilig-onder: env(safe-area-inset-bottom, 0px);
-    --balk-h: 60px;
+    --balk-h: 64px;
     --balk-rand: 10px;
     --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
 
@@ -772,6 +773,8 @@
 
     --tx-feest: clamp(24px, 7vw, 32px);
     --tx-feest-kort: clamp(19px, 5.4vw, 25px);
+
+
 
 
 
@@ -2990,7 +2993,7 @@
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: calc(var(--balk-rand) + var(--veilig-onder)); z-index: 40;
-    display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: var(--balk-w);
+    display: none; gap: var(--tab-gap); padding: 6px var(--tab-gap); border-radius: var(--r-lg); width: max-content;
     background: var(--nav-bg);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
@@ -3115,27 +3118,60 @@
 
 
   .main-nav, .dress-bar, .reis-terug { margin-bottom: var(--vh-drift, 0px); }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .82;
-
-
-    text-shadow: var(--nav-ink);
 
 
 
 
 
-    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px; cursor: pointer;
-    transition: transform var(--t-tik), background .15s, opacity .15s;
-    justify-content: center;
+
+
+
+
+
+
+
+
+
+  :root { --tab-w: 76px; --tab-h: 52px; --tab-gap: 8px; --tab-ico: 32px; }
+  @media (min-width: 600px) and (min-height: 700px) {
+    :root { --tab-w: 88px; --tab-h: 60px; --tab-ico: 36px; --balk-h: 72px; }
   }
-  .nav-item .nav-ico { font-size: 31px; line-height: 1.1; filter: var(--emoji-schaduw); }
+  .nav-item {
+    flex: none; width: var(--tab-w); height: var(--tab-h);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: inherit; color: var(--c-white);
+
+
+    opacity: .75;
+    background: transparent; border: none; border-radius: var(--r-md); padding: 0; cursor: pointer;
+    position: relative; z-index: 1;
+    transition: transform var(--t-tik), background .15s, opacity .15s;
+  }
+  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(.94); }
+  .nav-item.active { opacity: 1; }
+
+
+  @media (hover: hover) {
+    .nav-item:not(.active):hover { opacity: 1; background: rgba(255,255,255,.08); }
+  }
 
 
 
-  .nav-item.active { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+
+
+
+
+
+
+  .nav-sel {
+    position: absolute; left: var(--tab-gap); top: 6px; width: var(--tab-w); height: var(--tab-h);
+    border-radius: var(--r-md); background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
+    pointer-events: none;
+    transform: translateX(calc(var(--nav-i, 0) * (var(--tab-w) + var(--tab-gap))));
+    transition: transform var(--t-snel) cubic-bezier(.2, .8, .2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) { .nav-sel { transition: none; } }
 
 
 
@@ -7946,6 +7982,14 @@
   .item-thumb.thumb-podium .podium { width: 84%; max-width: 96px; height: 24px; margin-bottom: 8px; --pod-dik: 5px; }
 
   .item-thumb.thumb-prijs { align-items: flex-end; }
+
+
+
+
+  .item-thumb .wereldprijs.goud:not(.af) .podium {
+    border-color: var(--pr); filter: grayscale(.85) brightness(.62);
+    box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .03) var(--pr);
+  }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
 
 
@@ -7982,6 +8026,23 @@
   .item-status.owned { color: rgba(255,255,255,.6); }
   .item-status.on { color: var(--gold-accent); font-weight: 900; }
   .item-status.slot { opacity: .85; }
+
+
+
+
+
+
+  .item-status.set-rij { gap: 3px; padding: 0; min-width: 0; background: none; }
+  .set-rij .sv {
+    position: relative; width: 24px; height: 24px; border-radius: 7px; overflow: hidden;
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.18);
+  }
+  .set-rij .sv .item-thumb {
+    position: absolute; left: 50%; top: 50%; width: 66px; height: 66px; margin: -33px 0 0 -33px;
+    transform: scale(.36); filter: brightness(0) opacity(.45);
+  }
+  .set-rij .sv.heb { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1.5px rgba(126,231,135,.9); }
+  .set-rij .sv.heb .item-thumb { filter: none; }
 
 
 
@@ -9619,12 +9680,16 @@
 
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën.
      Alleen de iconen: wie hier speelt leest meestal nog niet, 🗺️ 👕 🏆 zeggen het zelf
-     en het blauwe vlak zegt waar je bent. De woorden staan in aria-label en title. -->
-<div class="main-nav" id="main-nav">
+     en het blauwe vlak zegt waar je bent. De woorden staan in aria-label en title.
+     Een echte <nav>, zodat een schermlezer hem als menu vindt; het tabblad waar je
+     bent draagt aria-current (zie navZet). .nav-sel is het blauwe vlak zelf: één
+     stuk dat naar het gekozen tabblad schuift, in plaats van drie die aan en uit knippen. -->
+<nav class="main-nav" id="main-nav" aria-label="Menu">
+  <span class="nav-sel" aria-hidden="true"></span>
   <button class="nav-item" id="nav-map" onclick="navTik('map')" aria-label="Kaart" title="Kaart"><span class="nav-ico" aria-hidden="true">🗺️</span></button>
   <button class="nav-item" id="nav-dress" onclick="navTik('dress')" aria-label="Kleedkamer" title="Kleedkamer"><span class="nav-ico" aria-hidden="true">👕</span></button>
   <button class="nav-item" id="nav-tro" onclick="navTik('tro')" aria-label="Trofeeën" title="Trofeeën"><span class="nav-ico" aria-hidden="true">🏆</span><span class="nav-dot"></span></button>
-</div>
+</nav>
 
 <!-- Linksboven, het spiegelbeeld van het tandwiel: "Als app". Alleen op de
      sterrenkeuze en alleen in de browser -- appKnopZet zet hem aan en uit. -->
@@ -12429,6 +12494,14 @@ function bezit(p, it) { return it.cat === 'stage' ? podiumVanJou(p, it) : (p.own
 function podiumRest(p, st) { return podiumStukken(st).filter(it => !(p.owned || []).includes(it.id)); }
 function podiumPrijs(p, st) { return podiumRest(p, st).reduce((t, it) => t + (it.price || 0), 0); }
 
+
+
+function volgendStuk(p, st) {
+  if (!st || podiumVanJou(p, st) || podiumOpSlot(p, st)) return null;
+  const s = podiumRest(p, st).find(x => tagStand(x, p) !== 'slot');
+  return s ? s.id : null;
+}
+
 function podiumOpSlot(p, st) {
   const schat = podiumSchat(st);
   return !!schat && !podiumVanJou(p, st) && !(p.owned || []).includes(schat.id);
@@ -14041,7 +14114,7 @@ function show(id) {
   appKnopZet();
 
   const navId = navVolgtScherm();
-  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
+  navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
 
   if (id !== 'screen-journey') reisStopWaarnemer();
@@ -14079,11 +14152,28 @@ function naTik(fn) {
   requestAnimationFrame(() => setTimeout(() => { tikWacht = false; fn(); }, 0));
 }
 
+
+
+
+
+function navZet(navId) {
+
+
+  const tabs = ['nav-map', 'nav-dress', 'nav-tro'];
+  tabs.forEach(n => {
+    const knop = $(n), aan = n === navId;
+    knop.classList.toggle('active', aan);
+    if (aan) knop.setAttribute('aria-current', 'page'); else knop.removeAttribute('aria-current');
+  });
+  const i = tabs.indexOf(navId);
+  if (i >= 0) $('main-nav').style.setProperty('--nav-i', i);
+}
+
 function navTik(t) {
   if (tikWacht) return;
   sndClick();
   const wasActive = $('nav-' + t).classList.contains('active');
-  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === 'nav-' + t));
+  navZet('nav-' + t);
   naTik(() => navGo(t, wasActive, true));
 }
 function navGo(t, wasActiveAl, stil) {
@@ -19332,7 +19422,10 @@ function memPayout(p) { return buildMemoryDeck(p).pairs * MEM_PAIR_GAIN + MEM_DO
 function updateTroDot() {
   if (!cur) return;
   const p = P();
-  $('nav-tro').classList.toggle('has-new', (p.readyTrophies || []).length > 0);
+  const nieuw = (p.readyTrophies || []).length > 0;
+  $('nav-tro').classList.toggle('has-new', nieuw);
+
+  $('nav-tro').setAttribute('aria-label', nieuw ? 'Trofeeën, nieuw' : 'Trofeeën');
 }
 
 
@@ -21975,6 +22068,7 @@ function openKleedkamerItem(id) {
     if (p.equipped[doel.cat] !== doel.id) equipShopItem(doel.id);
   } else {
     shopSelectedId = id;
+    if (doel.cat === PODIA_CAT) podiumStuk = volgendStuk(p, doel);
     paintShop();
   }
 
@@ -22224,7 +22318,8 @@ function renderShop() {
 
       const herbouw = !!shopJustBoughtId;
       clearTimeout(shopBoughtTimer);
-      shopJustBoughtId = null; shopSelectedId = it.id; podiumStuk = null;
+      shopJustBoughtId = null; shopSelectedId = it.id;
+      podiumStuk = it.cat === PODIA_CAT ? volgendStuk(P(), it) : null;
       herbouw ? renderShop() : paintShop();
       if (it.cat === PODIA_CAT) zichtbaarBovenBalk(it.id);
     };
@@ -22356,7 +22451,29 @@ function dressCardState(card, it, p) {
     + (shopSelectedId === it.id ? ' selected' : '')
     + (!owned && p.wens === it.id ? ' gewenst' : '')
     + (stand === 'new' ? ' just-bought' : '');
-  zetTag(card.querySelector('.item-status'), stand, tagPrijs(it, p));
+  const tag = card.querySelector('.item-status');
+  if (it.cat === PODIA_CAT && (stand === 'price' || stand === 'need') && it.stukken) return zetSetRij(tag, it, p);
+  zetTag(tag, stand, tagPrijs(it, p));
+}
+
+
+
+
+
+
+
+
+
+
+function zetSetRij(el, st, p) {
+  if (!el) return;
+  const stukken = podiumStukken(st);
+  const sleutel = stukken.map(s => ((p.owned || []).includes(s.id) ? 1 : 0)).join('');
+  if (el.classList.contains('set-rij') && el.dataset.set === sleutel) return;
+  el.className = 'item-status set-rij';
+  el.dataset.set = sleutel;
+  el.setAttribute('aria-label', `${sleutel.split('1').length - 1} van de ${stukken.length}`);
+  el.innerHTML = stukken.map((s, i) => `<span class="sv${sleutel[i] === '1' ? ' heb' : ''}">${itemThumb(s)}</span>`).join('');
 }
 
 
@@ -22403,10 +22520,9 @@ function previewProfile(p, it) {
 
 
 
-  if (it.cat === PODIA_CAT && it.stukken) {
-    podiumStukken(it).forEach(s => { if (tagStand(s, p) !== 'slot') preview.equipped[s.cat] = s.id; });
-    if (podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
-  }
+
+
+  if (it.cat === PODIA_CAT && podiumStuk) preview.equipped[item(podiumStuk).cat] = podiumStuk;
   preview.equipped[it.cat] = it.id;
   return preview;
 }

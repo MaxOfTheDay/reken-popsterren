@@ -294,7 +294,7 @@
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: calc(var(--balk-rand) + var(--veilig-onder)); z-index: 40;
-    display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: var(--balk-w);
+    display: none; gap: var(--tab-gap); padding: 6px var(--tab-gap); border-radius: var(--r-lg); width: max-content;
     background: var(--nav-bg);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
@@ -419,27 +419,60 @@
      meetChroom() aan de balk zelf op -- hij schuift dus vanzelf mee zodra de balk
      hier verzet is, en de drift er nóg eens bij zou hem dubbel optillen. */
   .main-nav, .dress-bar, .reis-terug { margin-bottom: var(--vh-drift, 0px); }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .82;
-    /* dezelfde donkere kern-plus-waas als de koppillen: draagt de letters ook als
-       er een lichte lucht achter het glas staat */
-    text-shadow: var(--nav-ink);
-    /* Alleen een icoon, geen woord eronder (oktober 2026): 🗺️ 👕 🏆 zeggen het zelf,
-       en de meeste spelers lezen "Kleedkamer" nog niet. Het icoon is daarom groter
-       (25 -> 31px) en de knop lager: 7 + 34 + 7 = 48px, nog altijd boven de 44px
-       van een kindervinger. De balk wordt er 6px lager van (66 -> 60, --balk-h),
-       en dat is 6px meer tekening. */
-    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px; cursor: pointer;
-    transition: transform var(--t-tik), background .15s, opacity .15s;
-    justify-content: center;
+  /* ---- De maat van de balk ----
+     Hij is zo breed als zijn drie knoppen en niet meer (oktober 2026). Toen er nog
+     woorden onder de iconen stonden ("Kleedkamer") had hij die breedte nodig; sinds
+     het alleen iconen zijn, was hij 367 tot 430px breed voor drie tekens van 31px,
+     met een blauw vlak van een derde van de balk rond één icoon. Op de kaart is
+     elke pixel balk een pixel wereld die je niet ziet -- liggend op een telefoon lag
+     hij over de haltes.
+
+     De maat zelf, nagemeten: een knop van 76 x 52 is op een gewone telefoon zo'n
+     14 x 9,5 mm, boven de ~9 mm die Android (48dp) en Apple (44pt) als ondergrens
+     voor een volwassen vinger nemen, en met 8px lucht ertussen. Op een tablet
+     groeit hij mee naar 88 x 60 (zo'n 19 x 13 mm): daar hangt hij verder van je
+     duim, en een icoon van 31px oogt er verloren.
+     --balk-h is de knop plus 2x6 padding; ZONE en test 7c rekenen erop. */
+  :root { --tab-w: 76px; --tab-h: 52px; --tab-gap: 8px; --tab-ico: 32px; }
+  @media (min-width: 600px) and (min-height: 700px) {
+    :root { --tab-w: 88px; --tab-h: 60px; --tab-ico: 36px; --balk-h: 72px; }
   }
-  .nav-item .nav-ico { font-size: 31px; line-height: 1.1; filter: var(--emoji-schaduw); }
+  .nav-item {
+    flex: none; width: var(--tab-w); height: var(--tab-h);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: inherit; color: var(--c-white);
+    /* Wat er niet gekozen is, staat iets stiller, zodat het blauwe vlak niet het
+       enige is dat zegt waar je bent -- maar niet zo stil dat het uit lijkt te staan. */
+    opacity: .75;
+    background: transparent; border: none; border-radius: var(--r-md); padding: 0; cursor: pointer;
+    position: relative; z-index: 1;   /* boven .nav-sel */
+    transition: transform var(--t-tik), background .15s, opacity .15s;
+  }
+  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(.94); }
-  /* blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
+  .nav-item.active { opacity: 1; }
+  /* Muis: een zacht vlak onder wat je aanwijst. Alleen waar zweven bestaat, anders
+     blijft het op een tablet na een tik hangen. */
+  @media (hover: hover) {
+    .nav-item:not(.active):hover { opacity: 1; background: rgba(255,255,255,.08); }
+  }
+  /* HET BLAUWE VLAK. Eén stuk, en het schuift naar het tabblad dat je kiest
+     (--nav-i, gezet door navZet) in plaats van op de ene plek uit en op de andere
+     aan te knippen: zo zie je dat je van 🗺️ naar 👕 gaat. Alleen transform, dus de
+     compositor doet het en niet de hoofddraad. Wie geen beweging wil krijgt de
+     wissel zonder schuif. Bij het opkomen van de balk schuift hij niet: een
+     element dat display:none was heeft geen vorige stand om vanaf te bewegen.
+     blauw = 'hier ben je / dit staat aan' (zelfde taal als .item-card.selected in
      de kleedkamer). Goud blijft voorbehouden aan spelen + verdiend (zie .btn,
      .tour-stop.next, .item-card.equipped): navigatie is geen beloning. */
-  .nav-item.active { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+  .nav-sel {
+    position: absolute; left: var(--tab-gap); top: 6px; width: var(--tab-w); height: var(--tab-h);
+    border-radius: var(--r-md); background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
+    pointer-events: none;
+    transform: translateX(calc(var(--nav-i, 0) * (var(--tab-w) + var(--tab-gap))));
+    transition: transform var(--t-snel) cubic-bezier(.2, .8, .2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) { .nav-sel { transition: none; } }
   /* Schermen met de vaste navigatie eronder krijgen ruimte zodat niets erachter
      verdwijnt: de balk zelf (--balk-ruimte, veilige zone incl.) plus 14px lucht,
      zodat het laatste element er écht onderuit te scrollen is en niet net
