@@ -6130,9 +6130,13 @@ function kaartGroet(mag) {
    het raakvlak van de halte ligt eroverheen waar ze elkaar raken. Een tik die
    een halte bedoelt, pakt zij dus nooit af.
 
-   STUITEREN EN GEEN HUPPEL. De huppel is haar groet als je op de kaart aankomt.
-   Huppelt ze ook bij elke tik, dan betekent die groet niets meer. De stuiter
-   komt uit dezelfde woordenschat (MOVES) en geeft dus geen nieuwe beweging.
+   DEZELFDE HUPPEL, ZONDER RING (oktober 2026). Hier stond eerst de stuiter uit
+   MOVES, met de redenering dat de groet niets meer betekent als ze bij elke tik
+   huppelt. Maar dan had ze op de kaart twee sprongen voor hetzelfde "hier ben
+   ik", en de stuiter was de grovere van de twee (900ms, zonder landing). Wat de
+   groet nu eigen maakt is niet de sprong maar wat erbij hoort: hij komt vanzelf,
+   en haar halte antwoordt met een ring. Een tik is jij die iets vraagt en zij
+   die met dezelfde huppel antwoordt -- haltePuls wordt hier dus niet geroepen.
 
    WANNEER NIET. Alleen als ze stilstaat op de halte die nu aan de beurt is
    (.next). Op een reis draagt ze die klasse niet, want dan is er geen "hier
@@ -6143,12 +6147,11 @@ function kaartGroet(mag) {
 
    Wacht de groet nog, dan vervalt die: ze heeft haar kind al gezien. De
    haltepuls blijft staan, want die wijst de weg en is geen groet. */
-/* De stuiter gaat eraf op zijn eigen klok (pasUit, PAS), niet op die van de
-   groet. Die twee waren ooit even lang; sinds de groet een huppel is, is hij
-   korter, en op de groetklok werd de stuiter afgeknipt terwijl ze nog
-   ingedeukt stond -- ze klikte dan in één beeldje recht, een schokje net na de
-   sprong. test/profiles.test.js meet dat de stuiter helemaal uitspeelt. */
-const TIK_PAS = { cls: 'move-bounce' };   // ⭐ uit MOVES
+/* Het pasje gaat eraf op zijn eigen klok (pasUit, op animationend), niet op een
+   timer. Toen de tik nog een stuiter was, knipte de groetklok hem af terwijl ze
+   nog ingedeukt stond -- ze klikte dan in één beeldje recht, een schokje net na
+   de sprong. test/profiles.test.js meet dat de huppel helemaal uitspeelt. */
+const TIK_PAS = HUPPEL;
 function kaartTik(ster, halte) {
   const el = ster.querySelector('.avatar-holder');
   if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
@@ -6174,8 +6177,10 @@ function kaartGroetStop() {
      per beeldje niets, dus de vlucht hierboven heeft er net zo weinig last van.
      Is het scherm weg, dan gaat het pasje er alsnog af; staat ze dan al in een
      nieuw pasje (je kwam meteen terug), dan blijft dat staan. */
-  const laag = el.firstElementChild;
-  const loopt = laag ? laag.getAnimations().filter(a => a.playState === 'running') : [];
+  /* Met subtree, zodat haar schaduw (.tour-hero::after, schaduwHuppel) mee
+     stilstaat: anders landt de schaduw terwijl zij nog in de lucht hangt. */
+  const zij = el.closest('.tour-hero') || el;
+  const loopt = zij.getAnimations({ subtree: true }).filter(a => a.playState === 'running');
   if (!loopt.length) { stilStaan(el); return; }
   pasLos(el);
   loopt.forEach(a => a.pause());

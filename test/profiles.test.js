@@ -1393,12 +1393,12 @@ function check(ok, label, detail) {
   }
 
   /* ========== 7e-kwart · De ster antwoordt, de halte blijft de knop ==========
-   * Tik je op de ster, dan stuitert ze en gebeurt er verder niets (zie kaartTik).
+   * Tik je op de ster, dan huppelt ze en gebeurt er verder niets (zie kaartTik).
    * Wat hier vastligt is dat die tik nooit een tik van een halte afpakt. Ze staat
    * ín de knop van haar halte, dus zonder zorg is ze een tweede speelknop.
    *   - binnen het raakvlak van élke open halte, in elke wereld, wint de halte:
    *     elementFromPoint komt daar nooit bij de ster uit
-   *   - een tik op haar silhouet laat de kaart staan en geeft één stuiter; een
+   *   - een tik op haar silhouet laat de kaart staan en geeft één huppel; een
    *     tweede tik meteen erna begint hem niet opnieuw
    *   - tijdens een overgang doet ze niets, en de halte start daarna gewoon
    * Op de maat van een Pixel 10 staand, met aanraking. */
@@ -1474,10 +1474,17 @@ function check(ok, label, detail) {
       const twee = await staat();
       check(een.scherm === 'screen-map' && twee.scherm === 'screen-map',
         'een tik op de ster start geen show', JSON.stringify([een, twee]));
-      check(een.pas.length === 1 && /^mvBounce@/.test(een.pas[0]),
-        'een tik op de ster geeft één stuiter', JSON.stringify(een.pas));
+      check(een.pas.length === 1 && /^mvHuppel@/.test(een.pas[0]),
+        'een tik op de ster geeft één huppel, dezelfde als haar groet', JSON.stringify(een.pas));
+      // en haar schaduw huppelt mee (.tour-hero::after), maar de halte geeft geen ring
+      const mee = await page.evaluate(() => ({
+        schaduw: document.querySelector('.tour-hero').getAnimations({ subtree: true })
+          .filter(a => a.animationName === 'schaduwHuppel').length,
+        ring: !!document.querySelector('.tour-stop.next.aangekomen'),
+      }));
+      check(mee.schaduw === 1 && !mee.ring, 'haar schaduw huppelt mee, en een tik geeft geen ring', JSON.stringify(mee));
       check(twee.pas.length === 1 && parseInt(twee.pas[0].split('@')[1], 10) > parseInt(een.pas[0].split('@')[1], 10),
-        'een tweede tik meteen erna begint de stuiter niet opnieuw', JSON.stringify([een.pas, twee.pas]));
+        'een tweede tik meteen erna begint de huppel niet opnieuw', JSON.stringify([een.pas, twee.pas]));
       /* En hij mag uitstuiteren. De stuiter ging er eerst af op de klok van de
          groet (de huppel, korter dan mvBounce): dan stond ze nog ingedeukt op
          haar halte en klikte ze in één beeldje recht -- het schokje na de sprong. */
@@ -1487,10 +1494,10 @@ function check(ok, label, detail) {
         (function kijk() {
           const a = holder.querySelector('.pas-laag').getAnimations()[0];
           if (a) laatst = a.currentTime;
-          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk); else res({ op: Math.round(laatst), duur: PAS });
+          if (holder.classList.contains('dancing')) requestAnimationFrame(kijk); else res({ op: Math.round(laatst), duur: HUPPEL.duur });
         })();
       }));
-      check(uit.op >= uit.duur - 40, 'de stuiter speelt helemaal uit voor ze weer stilstaat',
+      check(uit.op >= uit.duur - 40, 'de huppel speelt helemaal uit voor ze weer stilstaat',
         `afgebroken op ${uit.op}ms van ${uit.duur}ms`);
       /* Hetzelfde in de kleedkamer: twee stukken snel na elkaar aandoen. De pop
          werd daar elke keer opnieuw getekend mét haar pas-laag, en een nieuwe
