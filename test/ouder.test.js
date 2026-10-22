@@ -1106,6 +1106,44 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* R -- ▶ rechtsboven: meteen spelen als het kind dat je bekeek, in plaats van
+     terug naar het keuzescherm en het daar opnieuw zoeken. De naam loopt mee met
+     de kiezer en met het naamveld; zonder ster is er geen ▶. En het groene
+     "Opgeslagen" dat er eerst stond is weg. */
+  {
+    const { ctx, page } = await fresh();
+    await page.click('#btn-gear');
+    await page.click('#gear-menu .gear-item.parents');
+    await page.waitForTimeout(300);
+    await page.click('#settings-profiles .who-btn[data-key="p2"]');
+    await page.waitForTimeout(150);
+    let r = await page.evaluate(() => {
+      const b = document.getElementById('speel-als');
+      return { zicht: !!b && !b.hidden && b.offsetWidth > 0, tekst: b && b.textContent, label: b && b.getAttribute('aria-label'),
+        oud: !!document.getElementById('settings-saved') };
+    });
+    check(r.zicht && /Bas/.test(r.tekst) && r.label === 'Speel als Bas', 'R · ▶ noemt wie er in de kiezer gekozen is', JSON.stringify(r));
+    check(!r.oud, 'R · het opslagpilletje is weg', JSON.stringify(r));
+    await page.click('#settings-subtabs button[data-t="beheer"]');
+    await page.fill('#set-name', 'Basje');
+    r = await page.evaluate(() => document.getElementById('speel-als').textContent);
+    check(/Basje/.test(r), 'R · een nieuwe naam staat meteen in ▶', r);
+    await page.click('#speel-als');
+    await page.waitForTimeout(900);
+    r = await page.evaluate(() => ({ cur, kaart: document.getElementById('screen-map').classList.contains('active'),
+      ouder: document.getElementById('screen-settings').classList.contains('active'),
+      naam: db.profiles.p2.name }));
+    check(r.cur === 'p2' && r.kaart && !r.ouder && r.naam === 'Basje', 'R · ▶ bewaart en speelt meteen als dat kind', JSON.stringify(r));
+    // zonder ster geen ▶
+    await page.evaluate(() => { db.profiles = {}; save(); goProfiles(); });
+    await page.waitForTimeout(300);
+    await page.evaluate(() => openSettings());
+    await page.waitForTimeout(300);
+    r = await page.evaluate(() => document.getElementById('speel-als').hidden);
+    check(r === true, 'R · zonder ster is er niemand om als te spelen', String(r));
+    await ctx.close();
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */
