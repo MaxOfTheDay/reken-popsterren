@@ -506,6 +506,8 @@
     font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
   }
   .newstar-preview .deco { display: none; }
+  /* haar podium: dezelfde tegelmaat als op het startscherm (zie .ster-tegel .stage-podium) */
+  .newstar-preview .stage-podium { width: 80%; bottom: 6.4%; }
   /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
      toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
      Kop (59) plus voorbeeld (136) is daar de helft van het beeld voordat er één

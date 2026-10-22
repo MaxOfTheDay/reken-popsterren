@@ -196,12 +196,17 @@
      zo breed zijn als de paspop, anders loopt de richel als een streep dwars over
      de hele kaart. De ruimte erboven is voor de slotchoreografie: die springt tot
      38px omhoog, en zonder kader is dat nu zichtbaar in plaats van weggeknipt. */
-  .venue-aan .end-panel { width: 150px; margin: 24px auto 0; }
+  .venue-aan .end-panel { width: 150px; margin: 24px auto 19px; }   /* onder: de zijband van haar podium, zie .stage-podium */
   .venue-aan .end-stage { margin: 0; }
   /* de kop van de kaart blijft bovenop, ook als ze op haar hoogste sprong zit */
   .venue-aan .result-card .title { position: relative; z-index: 2; }
   @media (max-height: 740px) {
     .venue-aan .end-panel { width: 104px; margin-top: 12px; }
+  }
+  /* de kleinste telefoon (320x568): de kaart moet zonder scrollen passen, dus
+     minder lucht rond de pop -- de zijband raakt de sterren nog net niet */
+  @media (max-height: 600px) {
+    .venue-aan .end-panel { margin: 4px auto 10px; }
   }
   /* Het kader zelf gaat weg, de maat blijft: alles eromheen (de arena, de
      smalle-schermregels) rekent op deze afmeting. */
@@ -1441,17 +1446,33 @@
     .wb-naam { gap: 4px; padding: 0 10px 0 6px; }
   }
 
-  /* ---- Haar podium in de zaal ----
-     Staat ze op een eigen podium (applyStage zet .op-podium op het vlak en
-     .met-podium op het paneel), dan neemt de schijf de plek van de gouden richel
-     in: de richel wijkt, de schijf ligt onder haar voeten, en zij staat er iets
-     hoger op -- midden op de bovenkant en niet op de voorrand, net als in de
-     spiegel. De bundel van boven blijft: dat is het zaallicht. */
+  /* ---- Haar podium ----
+     Iedereen staat op een podium (applyStage zet .op-podium op het vlak en
+     .met-podium op het paneel): haar eigen, of het parelpodium. In een zaal neemt
+     de schijf de plek van de gouden richel in: de richel wijkt. De bundel van
+     boven blijft: dat is het zaallicht.
+
+     EÉN REGEL OVERAL, ook in de spiegel (.spiegel-podium): de schijf is 1,35 keer
+     zo breed als de pop, 16% van die breedte hoog, haar voeten staan op 45% van
+     de bovenkant (midden erop, niet op de voorrand), en tussen de zijband en wat
+     eronder komt (de som, de sterren, de spiegelrand) zit lucht. Eerder had elk
+     scherm zijn eigen maat (1,2 tot 1,6 keer) en lag de schijf in de show op de
+     som en op het eindscherm in de sterren.
+     Waarom per scherm een breedte en een bottom: de pop staat in elk vlak op een
+     eigen hoogte (zie de avatar-holders), dus "1,35 keer de pop" is per vlak een
+     ander percentage van het vlak. Het zijn verhoudingen en geen pixels: ze
+     schalen mee met elke schermmaat (nagemeten op 360 tot 768 breed).
+     Op een tegel (het startscherm, het nieuwe-ster-formulier) past 1,35 keer
+     niet: daar is de schijf 80% van de tegel. */
   .venue-aan .met-podium > .venue-vloer { display: none; }
   .stage-podium {
-    position: absolute; left: 50%; bottom: 2%; width: 92%; height: 17%; transform: translateX(-50%);
+    position: absolute; left: 50%; bottom: 2%; width: 92%; aspect-ratio: 100 / 16; transform: translateX(-50%);
     z-index: 0; pointer-events: none;
   }
   .stage-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .stage.op-podium .avatar-holder { position: relative; z-index: 1; margin-bottom: 9%; }
-  .venue-aan .op-podium .stage-podium { width: 118%; bottom: -4%; }
+  .venue-aan #show-stage .stage-podium { width: 99%; bottom: 5.5%; }
+  /* de lucht tussen de zijband en de som (de band hangt een paar pixel onder het vlak) */
+  .venue-aan #show-stage { margin-bottom: 6px; }
+  .venue-aan #end-stage .stage-podium { width: 139%; bottom: .3%; }
+  .venue-aan #end-stage .stage-podium .podium { --pod-dik: 8px; }

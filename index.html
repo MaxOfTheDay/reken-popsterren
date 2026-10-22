@@ -2628,6 +2628,10 @@
   .podium::before { content: ''; position: absolute; inset: 8% 6%; border-radius: 50%; pointer-events: none; }
 
 
+
+
+
+  .pod-parel::before    { background: radial-gradient(60% 50% at 40% 35%, rgba(255,255,255,.95), transparent 70%); }
   .pod-disco::before    { background: radial-gradient(circle, rgba(255,255,255,.7) 1.1px, transparent 1.8px) 0 0 / 9px 6px; }
   .pod-stippen::before  { background: radial-gradient(circle, rgba(255,255,255,.45) 1.6px, transparent 2.4px) 0 0 / 14px 9px; }
   .pod-sterren::before  { background: radial-gradient(circle, #fff 1.1px, transparent 1.9px) 3px 2px / 17px 10px; opacity: .85; }
@@ -2676,7 +2680,9 @@
   .wereldprijs.goud:not(.af) .podium { filter: grayscale(.5) brightness(.8); }
 
 
-  .ster-tegel .stage-podium { bottom: 5%; }
+
+  .ster-tegel .stage-podium { width: 80%; bottom: 10.4%; }
+  .ster-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
   .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }
 
 
@@ -3423,12 +3429,17 @@
 
 
 
-  .venue-aan .end-panel { width: 150px; margin: 24px auto 0; }
+  .venue-aan .end-panel { width: 150px; margin: 24px auto 19px; }
   .venue-aan .end-stage { margin: 0; }
 
   .venue-aan .result-card .title { position: relative; z-index: 2; }
   @media (max-height: 740px) {
     .venue-aan .end-panel { width: 104px; margin-top: 12px; }
+  }
+
+
+  @media (max-height: 600px) {
+    .venue-aan .end-panel { margin: 4px auto 10px; }
   }
 
 
@@ -4674,14 +4685,30 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
   .venue-aan .met-podium > .venue-vloer { display: none; }
   .stage-podium {
-    position: absolute; left: 50%; bottom: 2%; width: 92%; height: 17%; transform: translateX(-50%);
+    position: absolute; left: 50%; bottom: 2%; width: 92%; aspect-ratio: 100 / 16; transform: translateX(-50%);
     z-index: 0; pointer-events: none;
   }
   .stage-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .stage.op-podium .avatar-holder { position: relative; z-index: 1; margin-bottom: 9%; }
-  .venue-aan .op-podium .stage-podium { width: 118%; bottom: -4%; }
+  .venue-aan #show-stage .stage-podium { width: 99%; bottom: 5.5%; }
+
+  .venue-aan #show-stage { margin-bottom: 6px; }
+  .venue-aan #end-stage .stage-podium { width: 139%; bottom: .3%; }
+  .venue-aan #end-stage .stage-podium .podium { --pod-dik: 8px; }
 
 
 
@@ -7930,8 +7957,10 @@
 
 
 
+
+
   .spiegel-podium {
-    position: absolute; left: 5%; right: 5%; bottom: 3%; height: 17%; z-index: 0; cursor: pointer;
+    position: absolute; left: 10%; right: 10%; bottom: 5.9%; aspect-ratio: 100 / 16; z-index: 0; cursor: pointer;
   }
   .spiegel-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .spiegel .avatar-holder { position: relative; z-index: 1; height: 84%; margin-bottom: 8.5%; pointer-events: none; }
@@ -8486,6 +8515,8 @@
     font-size: 54px; font-weight: 700; color: var(--c-white); text-shadow: 0 2px 8px rgba(0,0,0,.35);
   }
   .newstar-preview .deco { display: none; }
+
+  .newstar-preview .stage-podium { width: 80%; bottom: 6.4%; }
 
 
 
@@ -10953,8 +10984,14 @@ const ITEMS = [
 
 
 
-  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
-    vloer: ['#9c5bd6', '#4a1580', '#22073f', '#e1bee7'], patroon: 'disco' },
+
+
+
+
+
+
+  { id: 'stage_disco',    cat: 'stage', name: 'Parelpodium', price: 0, bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
+    vloer: ['#ffffff', '#cfc6ea', '#5b4b93', '#ffffff'], patroon: 'parel' },
   { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'],
     vloer: ['#9fa8da', '#5c6bc0', '#283171', '#ede7f6'], patroon: 'stippen' },
   { id: 'stage_strand',   cat: 'stage', name: 'Piratenpodium',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'],
@@ -12274,7 +12311,7 @@ function podiumVan(itemId) {
 
 function podiumHTML(st) {
   const v = (st && st.vloer) || item('stage_disco').vloer;
-  const patroon = (st && st.patroon) || 'disco';
+  const patroon = (st && st.patroon) || 'parel';
   return `<div class="podium pod-${patroon}" style="--pt:${v[0]};--pm:${v[1]};--ps:${v[2]};--pr:${v[3]}" aria-hidden="true"></div>`;
 }
 
@@ -13785,29 +13822,22 @@ function avatarSVG(p, width, propMaat) {
 }
 function applyStage(el, p) {
   const st = itemOr(p.equipped.stage, 'stage_disco');
-  el.style.background = st.bg;
-  el.querySelectorAll('.deco').forEach(d => d.remove());
-  st.deco.forEach((emoji, i) => {
-    const d = document.createElement('div');
-    d.className = 'deco';
-    d.textContent = emoji;
-    if (i === 0) { d.style.top = '8px'; d.style.left = '8px'; }
-    if (i === 1) { d.style.top = '8px'; d.style.right = '8px'; }
-    if (i === 2) { d.style.bottom = '8px'; d.style.right = '8px'; }
-    el.appendChild(d);
-  });
 
 
 
 
 
 
-  el.querySelectorAll('.stage-podium').forEach(d => d.remove());
-  const eigen = st.id !== 'stage_disco';
-  el.classList.toggle('op-podium', eigen);
+
+
+
+
+
+  el.style.background = '';
+  el.querySelectorAll('.deco, .stage-podium').forEach(d => d.remove());
+  el.classList.add('op-podium');
   const ouder = el.parentElement;
-  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.toggle('met-podium', eigen);
-  if (!eigen) return;
+  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.add('met-podium');
   const schijf = document.createElement('div');
   schijf.className = 'stage-podium';
   schijf.innerHTML = podiumHTML(st);

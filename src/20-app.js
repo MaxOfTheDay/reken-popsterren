@@ -528,7 +528,13 @@ const ITEMS = [
      straks in de show). Wat hem tekent staat hier als gegevens en niet als
      plaatje: vloer = de vier kleuren van de schijf (bovenkant, midden, zijband,
      rand), patroon = één stil CSS-patroon erop (zie .podium in het stijlblad).
-     bg en deco zijn de oude decorvlakken; die blijven voor de sterrentegel.
+     bg en deco zijn de oude decorvlakken uit de winkel. Ze worden nergens meer
+     getekend (zie applyStage); deco geeft alleen nog een emoji voor de naam.
+
+     stage_disco is het PARELPODIUM: waar iedereen op staat die (nog) geen eigen
+     podium heeft. Het id is gebleven (het staat in elke save), het uiterlijk niet:
+     paarse stippen op paars verdwenen tegen de app, een wit podium leest overal
+     als podium en laat elk wereldpodium ernaast meer opvallen.
 
      wereld + stukken: een WERELDPODIUM. Het hoort bij die wereld, en het is van
      jou als je de schat van die wereld hebt plus de twee stukken uit de winkel --
@@ -540,8 +546,8 @@ const ITEMS = [
      waren de namen uit de oude winkel, en dan las een kind dat net de
      Piratenwereld uitspeelde "Strandfeest · Nog 2 stukken". De ids zijn gebleven,
      dus wie er een had, heeft hem nog. */
-  { id: 'stage_disco',    cat: 'stage', name: 'Disco',     price: 0,   bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
-    vloer: ['#9c5bd6', '#4a1580', '#22073f', '#e1bee7'], patroon: 'disco' },
+  { id: 'stage_disco',    cat: 'stage', name: 'Parelpodium', price: 0, bg: 'radial-gradient(circle at 30% 20%, #6a1b9a, #1a0533)', deco: ['🪩','✨','🎶'],
+    vloer: ['#ffffff', '#cfc6ea', '#5b4b93', '#ffffff'], patroon: 'parel' },
   { id: 'stage_slaapkamer', cat: 'stage', name: 'Slaapkamershow', price: 20, bg: 'linear-gradient(#5c6bc0, #b39ddb)',                 deco: ['🛏️','🌙','🧸'],
     vloer: ['#9fa8da', '#5c6bc0', '#283171', '#ede7f6'], patroon: 'stippen' },
   { id: 'stage_strand',   cat: 'stage', name: 'Piratenpodium',     price: 60,  bg: 'linear-gradient(#4fc3f7 62%, #ffe082 62%)',            deco: ['🌴','🌞','🐚'],
@@ -1861,7 +1867,7 @@ function podiumVan(itemId) {
    spiegel en -- straks -- onder haar voeten in de show. */
 function podiumHTML(st) {
   const v = (st && st.vloer) || item('stage_disco').vloer;
-  const patroon = (st && st.patroon) || 'disco';
+  const patroon = (st && st.patroon) || 'parel';
   return `<div class="podium pod-${patroon}" style="--pt:${v[0]};--pm:${v[1]};--ps:${v[2]};--pr:${v[3]}" aria-hidden="true"></div>`;
 }
 /* ---- De prijs van een wereld ----------------------------------------------
@@ -3372,29 +3378,22 @@ function avatarSVG(p, width, propMaat) {
 }
 function applyStage(el, p) {
   const st = itemOr(p.equipped.stage, 'stage_disco');
-  el.style.background = st.bg;
-  el.querySelectorAll('.deco').forEach(d => d.remove());
-  st.deco.forEach((emoji, i) => {
-    const d = document.createElement('div');
-    d.className = 'deco';
-    d.textContent = emoji;
-    if (i === 0) { d.style.top = '8px'; d.style.left = '8px'; }
-    if (i === 1) { d.style.top = '8px'; d.style.right = '8px'; }
-    if (i === 2) { d.style.bottom = '8px'; d.style.right = '8px'; }
-    el.appendChild(d);
-  });
-  /* Haar podium onder haar voeten: de schijf uit Podia (podiumHTML), op elke plek
-     waar ze staat -- de show, het eindscherm, haar tegel op het startscherm. Op
-     Disco niet: dat is waar iedereen op staat, en daar doet de zaal het al (zijn
-     gouden richel, .venue-vloer) en de tegel zijn achtergrond.
-     In een zaal vervangt de schijf die richel: de ouder van het podium (het
-     paneel met .venue-vloer erin) krijgt .met-podium, en de richel wijkt. */
-  el.querySelectorAll('.stage-podium').forEach(d => d.remove());
-  const eigen = st.id !== 'stage_disco';
-  el.classList.toggle('op-podium', eigen);
+  /* Iedereen staat op een podium: haar eigen, of het parelpodium (stage_disco).
+     Op de show, het eindscherm, haar tegel op het startscherm en in het
+     nieuwe-ster-formulier -- en in de spiegel (die tekent zijn eigen schijf, zie
+     paintShop). Hier stond eerst "op Disco niet", en dan stonden er op het
+     startscherm sterren mét en zonder podium naast elkaar.
+     Het oude decorvlak (st.bg met drie emoji in de hoeken) is weg: één achtergrond
+     voor iedereen (zie .stage), en het podium is wat haar onderscheidt.
+     In een zaal vervangt de schijf de gouden richel: de ouder van het podium (het
+     paneel met .venue-vloer erin) krijgt .met-podium, en de richel wijkt. De maat
+     (1,35 x haar breedte, voeten midden op de bovenkant) staat in het stijlblad
+     bij .stage-podium. */
+  el.style.background = '';
+  el.querySelectorAll('.deco, .stage-podium').forEach(d => d.remove());
+  el.classList.add('op-podium');
   const ouder = el.parentElement;
-  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.toggle('met-podium', eigen);
-  if (!eigen) return;
+  if (ouder && [...ouder.children].some(c => c.classList && c.classList.contains('venue-vloer'))) ouder.classList.add('met-podium');
   const schijf = document.createElement('div');
   schijf.className = 'stage-podium';
   schijf.innerHTML = podiumHTML(st);
