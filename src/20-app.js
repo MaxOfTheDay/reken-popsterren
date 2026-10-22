@@ -11195,7 +11195,15 @@ function renderShop() {
        Geen wereldteken in de hoek meer. Een schat is in zijn lade gewoon een van
        je spullen; bij wélke wereld hij hoort zegt zijn podium. */
     card.className = 'item-card';
-    card.innerHTML = itemThumb(it) + `<div class="item-name">${it.name}</div><div class="item-status"></div>`;
+    /* Geen naam meer op het kaartje: het plaatje zegt het, en een rek vol woorden
+       was vooral drukte voor een kind dat nog niet (vlot) leest. De naam is niet
+       weg, hij staat op de plek waar hij iets betekent: in de balk onderaan zodra
+       je iets kiest om te kopen, even als bordje in de spiegel als je iets aandoet
+       (naamBordje), hardop waar de stem aan staat, en voor een schermlezer in het
+       aria-label hieronder. */
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', it.full || it.name);
+    card.innerHTML = itemThumb(it) + `<div class="item-status"></div>`;
     /* Tikken op kleren die van je zijn = ze aandoen. Er zat een stap tussen --
        eerst kiezen, dan "Doe aan" in de balk onderaan -- en die stap kostte een
        kind van vijf een tweede tik op een andere plek van het scherm voor iets
@@ -11227,9 +11235,11 @@ function renderShop() {
           if (OPTIONELE_SPULLEN.includes(it.cat) || it.cat === PODIA_CAT) return unequipShopItem(it.cat);
           sndClick(); tapDance('shop-avatar'); return;
         }
+        naamBordje(it);
         return equipShopItem(it.id);
       }
       sndClick();
+      speak(it.full || it.name);   // de balk zegt het in letters; wie niet leest, hoort het
       /* Stond er een "Nieuw!"-kaartje open, dan verandert de vólgorde zodra dat
          feestje voorbij is (het spulletje verhuist naar de bezit-groep), en dus
          moet het rek dan wél opnieuw. In alle andere gevallen blijft het staan
@@ -11984,6 +11994,23 @@ function unequipShopItem(cat, blijf) {
   tapDance('shop-avatar');
 }
 
+/* Het naambordje: na het aandoen staat de naam van het stuk anderhalve tel boven
+   in de spiegel, en waar de stem aan staat zegt hij hem ook. Alleen bij een tik op
+   een kaartje -- de podiumbalk heeft de naam al in zijn eigen balk staan. Eén
+   bordje tegelijk: een nieuwe tik vervangt het vorige. */
+let naamBordjeTimer = null;
+function naamBordje(it) {
+  const spiegel = $('shop-spiegel');
+  if (!spiegel) return;
+  const naam = it.full || it.name;
+  let b = spiegel.querySelector('.naam-bordje');
+  if (!b) { b = document.createElement('div'); b.className = 'naam-bordje'; b.setAttribute('aria-hidden', 'true'); spiegel.appendChild(b); }
+  b.textContent = (it.emoji ? it.emoji + ' ' : '') + naam;
+  b.classList.remove('weg'); void b.offsetWidth; b.classList.add('aan');
+  clearTimeout(naamBordjeTimer);
+  naamBordjeTimer = setTimeout(() => b.classList.replace('aan', 'weg'), 1500);
+  speak(naam);
+}
 function equipShopItem(id, blijf) {
   const it = item(id);
   const p = P();
