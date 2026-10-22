@@ -9847,10 +9847,15 @@ function confettiBurst(cx, cy, n, hero) {
 
 
 function updateFades(el) {
+
+
+
+  if (!el.clientWidth) return;
   const max = el.scrollWidth - el.clientWidth;
   el.classList.toggle('can-left', el.scrollLeft > 2);
   el.classList.toggle('can-right', el.scrollLeft < max - 2);
 }
+
 
 
 
@@ -9877,13 +9882,25 @@ function rafKlem(fn) {
   RAF_WACHT.add(fn);
   requestAnimationFrame(() => { RAF_WACHT.delete(fn); fn(); });
 }
+
+
+
+
+
+
+
 function fadesVolgen(el) {
   let wacht = false;
-  el.onscroll = () => {
+  const later = () => {
     if (wacht) return;
     wacht = true;
     requestAnimationFrame(() => { wacht = false; updateFades(el); });
   };
+  el.onscroll = later;
+  if (!el._fadeMaat && typeof ResizeObserver === 'function') {
+    el._fadeMaat = new ResizeObserver(later);
+    el._fadeMaat.observe(el);
+  }
 }
 
 

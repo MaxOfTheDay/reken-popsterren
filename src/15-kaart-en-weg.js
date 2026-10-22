@@ -33,6 +33,10 @@
    dan ze samen op de verkeerde plek laten staan. Zet ze samen goed als er ooit
    een bestand voor schuifrijen komt. */
 function updateFades(el) {
+  /* Verborgen (het scherm staat niet in beeld): dan is alles 0 breed en valt er
+     niets te meten. Niets aanraken -- de ResizeObserver in fadesVolgen meet
+     opnieuw zodra de rij weer een maat heeft. */
+  if (!el.clientWidth) return;
   const max = el.scrollWidth - el.clientWidth;
   el.classList.toggle('can-left', el.scrollLeft > 2);
   el.classList.toggle('can-right', el.scrollLeft < max - 2);
@@ -48,7 +52,8 @@ function updateFades(el) {
    een klemmetje op wilt bouwen.
 
    Wie de rij ná een hertekening meteen wil bijwerken roept updateFades zelf aan;
-   dat blijft synchroon, net als bij kopOpzij. */
+   dat blijft synchroon, net als bij kopOpzij. (fadesVolgen staat hieronder, na
+   rafKlem.) */
 /* Eén keer per beeldje, hoe vaak het ook gevraagd wordt. Scroll en resize vuren
    vaker dan er beeldjes zijn, en wat erachter hangt leest de opmaak; dat hoort
    maar één keer per beeldje te gebeuren. Hiervoor stond deze rem vijf keer met de
@@ -63,13 +68,25 @@ function rafKlem(fn) {
   RAF_WACHT.add(fn);
   requestAnimationFrame(() => { RAF_WACHT.delete(fn); fn(); });
 }
+/* En aan de MAAT van de rij. Alleen scroll volgen was niet genoeg: werd de rij
+   bijgewerkt terwijl zijn scherm verborgen stond (terug uit een show, terug van
+   het maakformulier), dan mat updateFades 0 en kwam er bij het tonen niets meer
+   -- een harde snede aan de rand tot iemand de rij een duw gaf. Hetzelfde na
+   draaien of een ander venster. Een ResizeObserver vuurt precies dan: bij
+   verborgen -> zichtbaar (0 -> echte breedte) en bij elke andere breedte. Eén per
+   rij, dus de tweede aanroep (bij elke hertekening) hangt er geen tweede bij. */
 function fadesVolgen(el) {
   let wacht = false;
-  el.onscroll = () => {
+  const later = () => {
     if (wacht) return;
     wacht = true;
     requestAnimationFrame(() => { wacht = false; updateFades(el); });
   };
+  el.onscroll = later;
+  if (!el._fadeMaat && typeof ResizeObserver === 'function') {
+    el._fadeMaat = new ResizeObserver(later);
+    el._fadeMaat.observe(el);
+  }
 }
 
 /* De kaart toont één wereld tegelijk, volledig in beeld -- er valt niets te
