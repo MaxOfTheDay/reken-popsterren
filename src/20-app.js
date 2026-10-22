@@ -7616,8 +7616,12 @@ function haltKnop(shown, nodes, i, stand) {
      wereld"): hetzelfde ding dat ze op de reis, in Podia en op het feestje ziet.
      Hier stond een 🎁, maar dat teken zegt elders "er ligt een trofee klaar om te
      openen" -- en dit is juist iets wat je nog moet winnen. Een wereld zonder
-     podium houdt het cadeautje. */
-  const laatste = i === nodes.length - 1;
+     podium houdt het cadeautje.
+     EN ALLEEN VLAK VOOR HET EIND: zolang de volgende show die van de laatste
+     halte is (lvl === playable). Bij haltes 1 tot 7 is de kaart rustig -- een
+     prijs die er de hele wereld lang stond was nog een ding op een scherm dat al
+     beweegt. Bij de laatste show komt hij één keer op: deze wint hem. */
+  const laatste = i === nodes.length - 1 && lvl === playable;
   const schat = laatste ? beloningItem(shown.world) : null;
   const prijs = (schat && !p.owned.includes(schat.id)) ? wereldPrijsHTML(p, shown.index, '11cqw') : '';
   const schatTeken = (schat && !p.owned.includes(schat.id))
