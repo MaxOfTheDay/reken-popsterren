@@ -209,8 +209,15 @@ async function zetOnderrandAan(page) {
       });
       const opKaart = stand();
       navTik('dress');
-      await wacht(60);
-      const onderweg = Math.round(doos(sel).left);
+      // elk beeldje kijken in plaats van op één gok-moment: op een drukke machine
+      // kan 60ms net vóór het eerste beeldje van de schuif vallen
+      const van = opKaart.vlak, naar = Math.round(doos($('nav-dress')).left);
+      let onderweg = van;
+      for (let t = performance.now(); performance.now() - t < 600;) {
+        await new Promise(res => requestAnimationFrame(res));
+        const x = Math.round(doos(sel).left);
+        if (x > van + 1 && x < naar - 1) { onderweg = x; break; }
+      }
       await wacht(600);
       const opKast = stand();
       return {

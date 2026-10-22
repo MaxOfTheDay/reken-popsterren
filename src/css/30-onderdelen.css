@@ -623,7 +623,7 @@
        zwevende --hud-*, op een plaat deze. Alleen de maat is nu van iedereen.
        Sinds --hud-h 44 is, staat het getal op --tx-sub: 17 in een pil van 44
        oogde als een te groot jasje. */
-    height: var(--hud-h); padding: 0 15px; font-size: var(--tx-sub);
+    height: var(--hud-h); padding: 0 15px; font-size: var(--hud-tx);
     /* ook als <button>: op de kaart brengt tikken je naar de kleedkamer */
     border: 0; color: inherit; font-family: inherit;
   }

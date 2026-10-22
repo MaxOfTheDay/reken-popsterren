@@ -668,6 +668,9 @@
        was hij met een onzichtbaar vlakje pas een kindervinger. Eén maat voor de
        hele app, zodat de 💎-pil op elk tabblad op dezelfde plek even groot is. */
     --hud-h: 44px;
+    /* de letter in die kop (de 💎-teller): groeit mee als --hud-h op een tablet
+       groeit, zie de tabletstap bij de kop in 40-kaart.css */
+    --hud-tx: var(--tx-sub);
 
     /* ---- Op een tekening: drie sterktes, en dat is de hele afspraak --------
        Zie §4 van de afspraak bovenaan. Waarom het als tokens staat en niet per
