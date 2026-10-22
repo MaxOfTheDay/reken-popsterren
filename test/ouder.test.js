@@ -277,15 +277,18 @@ function check(ok, label, detail) {
       return {
         stage: db.profiles.p1.settings.stage, max: db.profiles.p1.settings.stageMax,
         binnen: [...document.querySelectorAll('#set-fase .chip')].filter(c => !c.classList.contains('uit') && !c.classList.contains('voor')).map(c => +c.dataset.v),
-        vanaf: lijn('vanaf') ? v(lijn('vanaf').nextElementSibling) : null,
-        tot: lijn('tot') ? v(lijn('tot').previousElementSibling) : null,
+        vanaf: lijn('vanaf') ? v(lijn('vanaf').closest('.fl-rij')) : null,
+        tot: lijn('tot') ? v(lijn('tot').closest('.fl-rij')) : null,
+        // waar elke stap staat: een lijn neemt geen plaats in, dus dit verandert nooit
+        plek: [...document.querySelectorAll('#set-fase .chip')].map(c => c.offsetTop).join(','),
         hier: v(hier), pop: !!(hier && hier.querySelector('.fl-n svg')),
         oud: !!document.getElementById('fase-start'),
       };
     });
     let r = await band();
-    check(r.binnen.join(',') === '1,2,3,4' && r.vanaf === null && r.tot === 4,
-      'de ladder toont de band tussen de lijnen (vanaf fase 1 staat er geen lijn)', JSON.stringify(r));
+    check(r.binnen.join(',') === '1,2,3,4' && r.vanaf === 1 && r.tot === 4,
+      'de ladder toont de band tussen de twee lijnen, ook als "vanaf" niets afsnijdt', JSON.stringify(r));
+    const plek = r.plek;
     check(r.hier === 1 && r.pop, 'en haar pop staat in het bolletje van haar fase', JSON.stringify(r));
     check(!r.oud, 'de openklapper "Begint je kind hoger?" is weg', JSON.stringify(r));
     const tik = async v => { await page.click(`#set-fase .chip[data-v="${v}"]`); await page.waitForTimeout(200); return band(); };
@@ -299,8 +302,9 @@ function check(ok, label, detail) {
     r = await tik(4);
     check(r.stage === 2 && r.max === 4, 'even ver van allebei: "tot" komt', JSON.stringify(r));
     r = await tik(1);
-    check(r.stage === 1 && r.max === 4 && r.vanaf === null && r.hier === 2,
+    check(r.stage === 1 && r.max === 4 && r.vanaf === 1 && r.hier === 2,
       'een fase boven "vanaf" zet "vanaf" daar, en het kind zakt niet mee', JSON.stringify(r));
+    check(r.plek === plek, 'na vijf tikken staat elke fase nog precies waar hij stond', `${plek} -> ${r.plek}`);
     // cijfers uit: dan bestaan de fases boven 5 niet meer als keuze, maar de
     // instelling blijft staan (niet-destructief, zie countMaxStage)
     await page.evaluate(() => { setKey = 'p1'; db.profiles.p1.settings.stageMax = 11; save(); renderSettings(); });
@@ -330,20 +334,23 @@ function check(ok, label, detail) {
         start: db.profiles.p1.settings.startStap,
         rijen: [...document.querySelectorAll('#set-startstap .chip')].map(c => +c.dataset.v),
         voor: [...document.querySelectorAll('#set-startstap .chip.voor')].map(c => +c.dataset.v),
-        vanaf: lijn ? +lijn.nextElementSibling.dataset.v : null,
+        vanaf: lijn ? +lijn.closest('.fl-rij').dataset.v : null,
+        plek: [...document.querySelectorAll('#set-startstap .chip')].map(c => c.offsetTop).join(','),
         lijnen: document.querySelectorAll('#set-startstap .fl-lijn').length,
         hier: hier ? +hier.dataset.v : null, pop: !!(hier && hier.querySelector('.fl-n svg')),
         stap: leerStap(1, db.profiles.p1.settings),
       };
     });
     let r = await pad();
-    check(r.rijen.join(',') === '1,2,3,4,5' && r.lijnen === 0 && r.hier === 1 && r.pop,
-      'het leerpad toont vijf stappen, zonder lijn, met haar pop op stap 1', JSON.stringify(r));
+    check(r.rijen.join(',') === '1,2,3,4,5' && r.lijnen === 1 && r.vanaf === 1 && r.hier === 1 && r.pop,
+      'het leerpad toont vijf stappen, "vanaf" boven de eerste, en haar pop op stap 1', JSON.stringify(r));
+    const plek = r.plek;
     await page.click('#set-startstap .chip[data-v="3"]');
     await page.waitForTimeout(200);
     r = await pad();
     check(r.start === 3 && r.vanaf === 3 && r.voor.join(',') === '1,2' && r.lijnen === 1,
       'een tik zet "vanaf" op die stap en dempt wat ervoor ligt', JSON.stringify(r));
+    check(r.plek === plek, 'en de stappen blijven staan waar ze stonden', `${plek} -> ${r.plek}`);
     check(r.hier === 3 && r.stap === 3, 'en in wereld 1 speelt ze nu stap 3', JSON.stringify(r));
     // tot 10: over het tiental valt weg, "vanaf" schuift naar de volgende stap
     await page.click('#set-max .chip[data-v="10"]');
@@ -354,7 +361,7 @@ function check(ok, label, detail) {
     await page.click('#set-startstap .chip[data-v="1"]');
     await page.waitForTimeout(200);
     r = await pad();
-    check(r.start === 1 && r.lijnen === 0 && r.stap === 1, 'terug naar stap 1 haalt de lijn weg', JSON.stringify(r));
+    check(r.start === 1 && r.vanaf === 1 && r.lijnen === 1 && r.stap === 1, 'terug naar stap 1 zet de lijn weer bovenaan', JSON.stringify(r));
     await ctx.close();
   }
 
