@@ -1066,7 +1066,7 @@
   #screen-map.vlucht-weg { pointer-events: none; }
   #screen-map.vlucht-weg .world-frame { background-image: none; background-color: transparent;
     box-shadow: none; }
-  #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { opacity: 0; }
+  #screen-map.vlucht-weg::after { opacity: 0; }
   /* Het bestemmingskaartje zolang de tekening er nog naartoe onderweg is. Zonder
      dit staat hetzelfde kaartje twee keer in beeld: één keer op zijn plek en één
      keer in de lucht. */
@@ -1115,28 +1115,59 @@
     /* De onscherpe wereld ligt op #screen-map en niet op .tour-map: dat laatste is
        een scrollvak, en een laagje daarin zou met de kaart mee wegschuiven. */
     #screen-map { isolation: isolate; }
-    #screen-map::before { content: ''; position: absolute; inset: 0; z-index: -1;
-      background: linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%); }
-    #screen-map::after { content: ''; position: absolute; inset: -6%; z-index: -1;
-      background-image: var(--art, none); background-size: cover; background-position: 50% 50%;
-      filter: blur(36px) brightness(.46) saturate(.8); pointer-events: none; }
+    /* EÉN DOEK, KLEIN GETEKEND. De rand is de wereld nog een keer, onscherp en
+       donker. Hij stond hier als twee lagen: een verloop (de wereldkleuren) en
+       daarop de grote tekening met blur(36px) over het hele venster. Dat ging op
+       twee manieren mis, allebei opgemeten op 1440x900:
+         - het verloop kwam een beeldje eerder op dan de tekening, en dan stond er
+           na elke landing één fel paars-oranje beeldje naast de kaart -- het
+           flitsen dat op een groot scherm opviel;
+         - een blur van 36px over 1600x1000 pixels opnieuw tekenen kostte bij elke
+           overvloeier een beeldje van ~100ms, drie à vier keer na elke landing.
+       Nu is het één laag met allebei erin (dus ze komen samen op), het kleine
+       kaartjesbeeld (al uitgepakt, en onscherp ziet niemand het verschil), en hij
+       wordt op een achtste van de maat getekend met een achtste van de blur en
+       daarna opgeschaald: dezelfde waas, een vijftigste van het werk. 14% maal 8
+       is 112%: de zachte rand die blur aan de buitenkant geeft valt buiten beeld.
+
+       z-index -2 en niet -1: tijdens de klim tussen twee werelden ligt de vorige
+       wereld er als .klim-doek (-1) overheen, en die doft weg terwijl de camera
+       reist (zie wereldCamera). */
+    #screen-map::after, .wereld-doek::after { content: ''; position: absolute; pointer-events: none;
+      left: 50%; top: 50%; width: 14%; height: 14%; transform: translate(-50%, -50%) scale(8);
+      background-image: var(--art, none), linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 100%);
+      background-size: cover; background-position: 50% 50%;
+      filter: blur(4.5px) brightness(.46) saturate(.8); }
+    #screen-map::after { z-index: -2; }
+    /* Dezelfde rand als losse laag, voor de twee momenten waarop hij moet
+       overvloeien in plaats van knippen:
+         .vlucht-doek  tijdens de vlucht tussen kaart en Werelden, net onder de
+                       vliegende tekening (z 1 heen, z 3 terug -- zie .wereld-vlucht);
+                       hij doft weg op weg naar Werelden en komt op op weg terug.
+         .klim-doek    tijdens de klim, in de kaart: de wereld die je verlaat. */
+    .wereld-doek { pointer-events: none; overflow: hidden; }
+    .vlucht-doek { position: fixed; inset: 0; z-index: 1; }
+    .vlucht-doek.hoog { z-index: 3; }
+    .klim-doek { position: absolute; inset: 0; z-index: -1; }
     /* Tijdens een vlucht ligt de wereld in de vluchtlaag en staat deze rand uit
        (zie .vlucht-weg). Hij komt er niet terug met een knip maar in dezelfde 80ms
        als de overvloeier -- dat is het enige stukje kaart dat op de landing niet
-       al onder de vluchtlaag klaar ligt. */
-    #screen-map::before, #screen-map::after { transition: opacity 90ms linear; }
+       al onder de vluchtlaag klaar ligt. Het overvloeien zelf doet .vlucht-doek:
+       die ligt er tijdens de hele vlucht onder en is precies dezelfde rand, dus
+       deze laag uit of aan zetten is op geen enkel beeldje te zien. */
+    #screen-map::after { transition: opacity 90ms linear; }
     /* Maar wég gaat hij in één keer. Die overgang gold ook voor het vertrek, en
        daar lag hij precies verkeerd: de scherpe tekening gaat met .vlucht-weg meteen
-       uit, maar deze twee lagen horen bij de kaart, en de kaart ligt bóven de
+       uit, maar deze laag hoort bij de kaart, en de kaart ligt bóven de
        vluchtlaag (z 2 tegen z 1; op de terugweg z 4 tegen z 3). Ze dekten de
        vliegende tekening dus af terwijl ze nog aan het wegdoven waren. Opgemeten
        op 1024x768: drie beeldjes een kaart zonder tekening -- haltes op een
        onscherpe achtergrond -- en de vlucht verscheen pas toen hij al 40% op weg
        was. Terug was het één volledig onscherp scherm. Zonder deze overgang is de
        tekening op elk beeldje van de vlucht te zien, heen en terug. */
-    #screen-map.vlucht-weg::before, #screen-map.vlucht-weg::after { transition: none; }
+    #screen-map.vlucht-weg::after { transition: none; }
     @media (prefers-reduced-motion: reduce) {
-      #screen-map::before, #screen-map::after { transition: none; }
+      #screen-map::after { transition: none; }
     }
     /* Het podium is zo groot als de hóógte toelaat, en niet kleiner.
        Hier stond padding: var(--kop-h) 0 var(--nav-h) -- het podium werd dus vrij
@@ -1304,8 +1335,9 @@
   .world-pick { display: inline-flex; align-items: stretch; gap: 0;
     border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
     padding: 0; border-radius: var(--r-pill); }
-  .world-pick:active { transform: scale(.96); filter: brightness(1.15); }
-  @media (prefers-reduced-motion: reduce) { .world-pick:active { transform: none; } }
+  /* .bezig: ingedrukt blijven tot de vlucht hem meeneemt -- zie pilTik */
+  .world-pick:active, .world-pick.bezig { transform: scale(.96); filter: brightness(1.15); }
+  @media (prefers-reduced-motion: reduce) { .world-pick:active, .world-pick.bezig { transform: none; } }
   .wp-here, .wp-cta { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
   /* .wp-here mag krimpen, .wp-cta nooit: het icoon + de chevron zijn wat deze
      pil als knop leest, dus die blijven altijd voluit staan. Wijkt er iets, dan
