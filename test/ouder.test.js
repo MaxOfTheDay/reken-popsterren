@@ -1184,6 +1184,37 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* T -- de vervaagde rand van de sterrenrij. Werd de rij bijgewerkt terwijl Voor
+     ouders verborgen stond (▶ spelen en terugkomen, terug van het maakformulier)
+     of veranderde het venster, dan stond er een harde snede bij ▶ tot iemand de
+     rij een duw gaf. Nu meet hij opnieuw zodra de rij een (andere) maat krijgt. */
+  {
+    const { ctx, page } = await fresh(['Anna', 'Bas', 'Noor', 'Jules']);
+    const rand = () => page.evaluate(() => {
+      const r = document.getElementById('settings-profiles');
+      return { rechts: r.classList.contains('can-right'), meer: r.scrollWidth - r.clientWidth - r.scrollLeft > 2 };
+    });
+    await page.click('#btn-gear');
+    await page.waitForTimeout(400);
+    let r = await rand();
+    check(r.meer && r.rechts, 'T · vier sterren: rechts vervaagt de rij', JSON.stringify(r));
+    await page.click('#speel-als');
+    await page.waitForTimeout(900);
+    await page.evaluate(() => goProfiles());
+    await page.waitForTimeout(400);
+    await page.click('#btn-gear');
+    await page.waitForTimeout(400);
+    r = await rand();
+    check(r.meer && r.rechts, 'T · ook na ▶ spelen en terugkomen', JSON.stringify(r));
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await page.waitForTimeout(300);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(400);
+    r = await rand();
+    check(r.meer && r.rechts, 'T · en na draaien', JSON.stringify(r));
+    await ctx.close();
+  }
+
   await browser.close();
 
   /* ================= Uitslag ================= */
