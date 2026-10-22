@@ -7245,9 +7245,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
   .result-card {
     background: var(--paneel);
-    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
     border: 1.5px solid var(--paneel-rand);
     box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
     border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;
@@ -21235,6 +21243,16 @@ document.addEventListener('keydown', e => {
 
 
 
+
+
+
+
+
+
+
+
+
+
 function zetSpot(pct) {
   const balk = $('spotlight-bar');
 
@@ -21249,20 +21267,41 @@ function zetSpot(pct) {
 }
 const SPOT_DUUR = 12000;
 const SPOT_RUST = 4000;
+let spotAnim = null;
 function startSpot() {
   stopSpot();
+  if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
   G.spot = 100;
   zetSpot(100);
-  const id = setInterval(() => {
-    if (!G || G.timer !== id) { clearInterval(id); return; }
-    G.spot = Math.max(0, G.spot - 100 / (SPOT_DUUR / 100));
-    zetSpot(G.spot);
-    if (G.spot <= 0) stopSpot();
-  }, 100);
+  G.spotStart = performance.now();
+  const balk = $('spotlight-bar');
+  if (balk && balk.animate) {
+
+    const rust = SPOT_RUST / SPOT_DUUR;
+    const kf = $('question-card').classList.contains('golden')
+      ? [{ width: '100%' }, { width: '100%', offset: rust }, { width: '0%' }]
+      : [{ transform: 'translateX(0%)' }, { transform: 'translateX(0%)', offset: rust }, { transform: 'translateX(-100%)' }];
+    spotAnim = balk.animate(kf, { duration: SPOT_DUUR, easing: 'linear', fill: 'forwards' });
+  }
+  const id = setTimeout(() => { if (G && G.timer === id) stopSpot(); }, SPOT_DUUR);
   G.timer = id;
 }
+
+function spotNu() {
+  if (!G || !G.timer) return G ? G.spot : 0;
+  return Math.max(0, 100 * (1 - (performance.now() - G.spotStart) / SPOT_DUUR));
+}
+
+
+
+
 function stopSpot() {
-  if (G && G.timer) { clearInterval(G.timer); G.timer = null; }
+  if (G && G.timer) {
+    G.spot = spotNu();
+    clearTimeout(G.timer); G.timer = null;
+    if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
+    zetSpot(G.spot);
+  }
 }
 
 
