@@ -320,21 +320,8 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     --route-onder: rgba(30,8,52,.45);
     --route-goud: var(--gold-accent);
-    --stop-keyline: rgba(42,13,68,.8);
     --stop-schaduw: rgba(12,2,26,.5);
 
 
@@ -343,23 +330,22 @@
     --halte-rand-rgb: 255,240,214;
     --halte-rand: rgba(var(--halte-rand-rgb),.44);
     --halte-sticker: #fffaf0;
-    --slot-sticker: rgba(255,250,240,.45);
-    --slot-vulling: #514772;
-    --slot-vulling-top: #6a5f8c;
+    --slot-sticker: rgba(255,250,240,.55);
+    --slot-vulling: #563d7c;
+    --slot-vulling-top: #6e5596;
 
 
 
 
 
-    --slot-lip: #2f2848;
+    --slot-lip: #2f2150;
     --halte-vulling-top: #7b2cbf;
     --halte-vulling: #5a189a;
     --halte-lip: #2e0b5e;
-    --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
-    --ster-zoom: rgba(42,13,68,.9);
-    --ster-leeg: rgba(40,14,70,.6);
-    --ster-leeg-rand: rgba(255,255,255,.9);
+    --ster-zoom: var(--halte-sticker);
+    --ster-lip: rgba(46,11,94,.5);
+    --ster-leeg: var(--slot-vulling);
     --ster-vol: #ffd740;
     --ster-vol-rand: rgba(146,84,0,.55);
 
@@ -4719,6 +4705,10 @@
 
 
 
+
+
+
+
   .tour-stop::before { content: ''; position: absolute; left: 50%; top: 5.95cqw;
     width: 14.4cqw; height: 13.3cqw; margin: -6.65cqw 0 0 -7.2cqw; border-radius: 30%;
     pointer-events: auto; }
@@ -4731,7 +4721,6 @@
     background: transparent; padding: 0; text-align: center; z-index: 1;
 
     pointer-events: none;
-    --dot-key: 0 0 0 0.32cqw var(--stop-keyline);
 
 
 
@@ -4786,19 +4775,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-  .tour-stop .dot { box-shadow: var(--dot-key), var(--dot-drop); }
+  .tour-stop .dot { box-shadow: var(--dot-drop); }
 
 
 
@@ -4924,12 +4901,15 @@
 
 
 
+
+
+
   .tour-stop.locked {
-    --stop-schaal: .74;
+    --stop-schaal: .86;
     --dot-drop: 0 0.5cqw 1cqw rgba(12,2,26,.26); }
   .tour-stop.locked .dot {
     background: linear-gradient(180deg, var(--slot-vulling-top), var(--slot-vulling));
-    border-color: var(--slot-rand); color: rgba(255,255,255,.82); }
+    color: rgba(255,255,255,.82); }
 
 
 
@@ -4956,7 +4936,7 @@
   .tour-stop.next { --stop-schaal: 1.06; }
   .tour-stop.next .dot { border-color: var(--gold-accent); color: var(--ink-on-gold);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
-    box-shadow: var(--dot-key), var(--dot-drop), 0 0 2.1cqw rgba(var(--goud-rgb),.32); }
+    box-shadow: var(--dot-drop), 0 0 2.1cqw rgba(var(--goud-rgb),.32); }
 
 
 
@@ -5052,16 +5032,8 @@
 
 
 
-  .tour-stop.done.perfect .dot {
-    border-color: var(--gold-accent);
-    background: linear-gradient(180deg, rgba(var(--goud-rgb),.14), rgba(var(--goud-rgb),.05)), var(--purple-shadow);
 
 
-
-
-
-    box-shadow: var(--dot-key), var(--dot-drop);
-  }
 
 
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.9); }
@@ -5092,15 +5064,14 @@
   .tour-stop .dot { text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
   .tour-stop.done .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
-    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+    box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.done.perfect .dot {
     background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
-    border-color: var(--gold-accent);
-    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+    box-shadow: 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.next .dot { text-shadow: none;
-    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+    box-shadow: 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
   .tour-stop.locked .dot {
-    box-shadow: var(--dot-key), 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
+    box-shadow: 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
 
 
 
@@ -5118,9 +5089,8 @@
 
 
 
-  .tour-stop .dot { border-width: 0.55cqw; }
-  .tour-stop.done .dot, .tour-stop.next .dot { border-color: var(--halte-sticker); }
-  .tour-stop.done.perfect .dot { border-color: var(--gold-accent); }
+  .tour-stop .dot { border-width: 0.5cqw; }
+  .tour-stop.done .dot, .tour-stop.done.perfect .dot, .tour-stop.next .dot { border-color: var(--halte-sticker); }
   .tour-stop.locked .dot { border-color: var(--slot-sticker); }
 
 
@@ -5257,6 +5227,11 @@
 
 
 
+
+
+
+
+
   .tour-stop .cstars {
     position: relative; z-index: 2;
     width: 14cqw; height: 4.6cqw; margin: -2.3cqw auto 0;
@@ -5267,9 +5242,10 @@
   .tour-stop .cstars svg:nth-child(1) { transform: translateY(-0.7cqw) rotate(-16deg); }
   .tour-stop .cstars svg:nth-child(2) { transform: scale(1.1); }
   .tour-stop .cstars svg:nth-child(3) { transform: translateY(-0.7cqw) rotate(16deg); }
-  .tour-stop .cstars .cs-rand { fill: none; stroke: var(--ster-zoom); stroke-width: 4; }
-  .tour-stop .cstars .cs-vol { fill: var(--ster-vol); stroke: var(--ster-vol-rand); stroke-width: 1.4; }
-  .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); stroke: var(--ster-leeg-rand); stroke-width: 1.8; }
+  .tour-stop .cstars .cs-lip { fill: var(--ster-lip); stroke: var(--ster-lip); stroke-width: 3.4; }
+  .tour-stop .cstars .cs-rand { fill: none; stroke: var(--ster-zoom); stroke-width: 3.4; }
+  .tour-stop .cstars .cs-vol { fill: url(#sterVerloop); stroke: #f08c00; stroke-width: 1; }
+  .tour-stop .cstars .cs-leeg { fill: var(--ster-leeg); }
 
 
 
@@ -5287,8 +5263,8 @@
     40%      { scale: 1.32; }
   }
   @keyframes sterWenkKleur {
-    0%, 100% { stroke: var(--ster-leeg-rand); }
-    40%      { stroke: var(--ster-vol); fill: rgba(var(--goud-rgb),.35); }
+    0%, 100% { fill: var(--ster-leeg); }
+    40%      { fill: rgba(var(--goud-rgb),.6); }
   }
 
 
@@ -5407,9 +5383,17 @@
 
 
 
+
+
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.15cqw; transform: translateX(-50%);
-    width: 7cqw; height: 1.7cqw; border-radius: 50%; background: rgba(10,2,20,.4); filter: blur(1.4px); }
+    left: 50%; bottom: 0.1cqw; transform: translateX(-50%);
+    width: 11cqw; height: 2.2cqw; border-radius: 50%; background: rgba(110,45,0,.42); filter: blur(1px); }
+
+
+
+
+
+  .tour-hero .avatar-holder { position: relative; z-index: 1; }
 
 
   .tour-hero .hero-vonk {
@@ -9085,28 +9069,36 @@
 
   <!-- Eén gedeeld filter, alleen voor de ster op de wereldkaart (.tour-hero svg
        gebruikt 'm via url(#tourHeroContour)). Een STICKERRAND: een witte contour
-       rondom haar silhouet met een dun donker lijntje daarbuiten, zoals een
-       uitgesneden sticker. Daarmee springt ze er op elke tekening uit zonder een
-       gloed achter haar -- de ademende gouden spotlight die er eerst stond maakte
-       haar juist wazig (zie 55-haltes.css). Twee keer feMorphology dilate, elk
-       ingekleurd met feFlood + feComposite "in": overal even dik, scherp, en
-       zonder de wazige opstapeling die losse drop-shadow-lagen gaven. De straal
-       staat in de eenheden van haar eigen svg (96 breed), dus schaalt mee.
-       Nergens anders in de app gebruikt, dus avatarSVG() zelf blijft ongemoeid. -->
+       rondom haar silhouet, zoals een uitgesneden sticker -- dezelfde witte rand
+       als om de haltes en de sterren (zie "De stickerrand" in 55-haltes.css).
+       Daarmee springt ze er op elke tekening uit zonder een gloed achter haar.
+       Eén feMorphology dilate, ingekleurd met feFlood + feComposite "in":
+       overal even dik en scherp. Bewust zonder schaduw achter haar lijf: een
+       verschoven kopie van haar silhouet zegt "plat plaatje dat voor de kaart
+       zweeft", terwijl haar voeten zeggen dat ze óp de halte staat. Die
+       grondigheid komt alleen van de contactschaduw onder haar voeten
+       (.tour-hero::after). Er lag eerst ook een donker lijntje buiten het wit;
+       dat is weg, net als bij de haltes. De straal staat in de eenheden van haar
+       eigen svg (96 breed), dus schaalt mee. Nergens anders in de app gebruikt,
+       dus avatarSVG() zelf blijft ongemoeid.
+
+       sterVerloop is de vulling van een verdiende ster onder een halte: geel
+       naar oranje, zoals de ⭐ op het eindscherm (.cs-vol in 55-haltes.css). -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <filter id="tourHeroContour" x="-30%" y="-30%" width="160%" height="160%">
-      <feMorphology in="SourceAlpha" operator="dilate" radius="2.6" result="wit"/>
-      <feFlood flood-color="#ffffff" result="witkleur"/>
+      <feMorphology in="SourceAlpha" operator="dilate" radius="2.2" result="wit"/>
+      <feFlood flood-color="#fffaf0" result="witkleur"/>
       <feComposite in="witkleur" in2="wit" operator="in" result="witrand"/>
-      <feMorphology in="SourceAlpha" operator="dilate" radius="3.6" result="donker"/>
-      <feFlood flood-color="#2a0d44" flood-opacity="0.55" result="donkerkleur"/>
-      <feComposite in="donkerkleur" in2="donker" operator="in" result="donkerrand"/>
       <feMerge>
-        <feMergeNode in="donkerrand"/>
         <feMergeNode in="witrand"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <linearGradient id="sterVerloop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe866"/>
+      <stop offset=".55" stop-color="#ffc928"/>
+      <stop offset="1" stop-color="#ff9f0a"/>
+    </linearGradient>
   </svg>
 
   <!-- ===== Kaart / wereldtournee (hoofdscherm) ===== -->
@@ -17757,7 +17749,9 @@ function starRowHTML(n, gespeeld) {
 
 
 
+
   const ster = vol => `<svg viewBox="0 0 24 24" aria-hidden="true"${vol ? '' : ' class="leeg"'}>`
+    + `<path class="cs-lip" transform="translate(0 1.5)" d="${STER_PAD}"/>`
     + `<path class="cs-rand" d="${STER_PAD}"/>`
     + `<path class="${vol ? 'cs-vol' : 'cs-leeg'}" d="${STER_PAD}"/></svg>`;
   return `<div class="cstars">${ster(got > 0)}${ster(got > 1)}${ster(got > 2)}</div>`;
