@@ -2915,7 +2915,7 @@ function hasSpeech() { return 'speechSynthesis' in window; }
 /* Mag deze ster een stem horen? In de telmodus altijd. In de rekenmodus alleen
    met Voorlezen aan: zo verliest een kind dat net van tellen naar rekenen ging
    niet in één klap de stem die alles voorlas (de telmodus-tip zet hem aan, zie
-   naarRekenen). De ouder zet hem uit op Oefenen. */
+   naarRekenen). De ouder zet hem uit op Oefeningen. */
 function stemAan(p) { return p.settings.track === 'count' || p.settings.voorlezen === true; }
 /* Een rekensom als zin: "7 + 3 = @" -> "zeven plus drie is hoeveel?". Het
    sjabloon is dezelfde bron als wat er in beeld staat, dus ze kunnen niet
@@ -8583,7 +8583,7 @@ function moeilijkheid(lvl, perf, s) {
    dat net nog tot twintig rekende. Nu klimt het plafond in WEN_SHOWS shows van
    WEN_VAN naar 1: van twintig naar vijftig begint dus rond de dertig. s.wennen
    telt af (zie endLevel) en wordt gezet als de grens omhoog gaat, met de tip of
-   op Oefenen (zie grensOmhoog). Omlaag is meteen: kleiner hoeft niet te wennen. */
+   op Oefeningen (zie grensOmhoog). Omlaag is meteen: kleiner hoeft niet te wennen. */
 const WEN_SHOWS = 8, WEN_VAN = 0.6;
 function wenPlafond(s) {
   const n = (s && s.wennen) || 0;
@@ -12449,7 +12449,7 @@ function createStar() {
 
 /* ================= Instellingen ================= */
 /* Het ouderdeel: wit papier, rustige letters, geen feest. Drie onderdelen
-   (Voortgang, Oefenen, Beheer) over één gekozen ster, met de sterrenrij erboven.
+   (Voortgang, Oefeningen, Beheer) over één gekozen ster, met de sterrenrij erboven.
 
    Deze kop stond eerder boven "Nieuwe ster" hierboven, en dat was geen kleine
    slordigheid: de README zegt dat je op sectienaam zoekt om ergens te komen, dus
@@ -12549,7 +12549,7 @@ function statusKaartHtml(p) {
    tiental" betekent dan een uitleg. */
 /* naam en vb staan uit elkaar: op de ladder (zie flRij) staat het voorbeeld in
    een eigen kolom rechts, zodat het niet verschuift als er een lijn tussen komt.
-   Voortgang en Oefenen tekenen het pad met dezelfde rijen. */
+   Voortgang en Oefeningen tekenen het pad met dezelfde rijen. */
 function leerpadStappen(s) {
   const plusMin = s.ops.includes('+') || s.ops.includes('-');
   const klein = !plusMin ? '2 × 3' : s.ops.includes('+') ? '3 + 4' : '7 − 3';
@@ -12603,11 +12603,11 @@ const flVb = vb => (vb || '').replace('▢', '<i class="fl-vak"></i>');
    niet getoond. De streepjes in de telmodus zijn de stapjes binnen een fase
    (countTrack.rung), geen cijfer.
 
-   Dezelfde rijen als de ladder op Oefenen (flRij), maar om te lezen: wat al kan
+   Dezelfde rijen als de ladder op Oefeningen (flRij), maar om te lezen: wat al kan
    is één rij met een ✓ ("Stap 1–2", "Fase 1–5"), dan de stap van nu met haar
    pop in het bolletje, dan wat er komt. Een zin per fase staat er niet meer: het
    voorbeeld rechts zegt het sneller. "Aanpassen ›" in de kop brengt je naar
-   dezelfde ladder op Oefenen; lezen en veranderen blijven twee tabbladen, maar
+   dezelfde ladder op Oefeningen; lezen en veranderen blijven twee tabbladen, maar
    liggen één tik uit elkaar. Een tip is één regel met de knop ernaast. */
 function leerpadHtml(p) {
   const s = p.settings;
@@ -12625,13 +12625,13 @@ function leerpadHtml(p) {
     // de twee volgende fases, en de laatste die de ouder toelaat (de sprong in de nummers zegt dat er iets tussen zit)
     for (let v = st + 1; v <= Math.min(hi, st + 2); v++) rijen.push(flRij(' later', v, COUNT_STAGE_LABELS[v], COUNT_STAGE_VB[v]));
     if (hi > st + 2) rijen.push(flRij(' later', hi, COUNT_STAGE_LABELS[hi], COUNT_STAGE_VB[hi]));
-    // dezelfde "tot"-lijn als op Oefenen; zonder grens is rekenen de volgende stap
+    // dezelfde "tot"-lijn als op Oefeningen; zonder grens is rekenen de volgende stap
     rijen.push(hi < COUNT_STAGE_MAX ? '<div class="fl-lijn">tot</div>' : flRij(' later', '🧮', 'Daarna rekenen'));
     const tt = telTip(p);
     if (tt) tip = `<div class="grens-tip" id="grens-tip"><div>💡 ${tt.tekst}</div>
       <button class="btn small purple" id="tel-tip-ja">${tt.knop}</button></div>`;
   } else {
-    // dezelfde tekens als de tegels op Oefenen
+    // dezelfde tekens als de tegels op Oefeningen
     const glyph = { '+': '+', '-': '−', 'x': '×', ':': '÷' };
     const plusMin = s.ops.includes('+') || s.ops.includes('-');
     kop = `${['+', '-', 'x', ':'].filter(o => s.ops.includes(o)).map(o => glyph[o]).join(' ')}${plusMin ? ` tot ${s.max}` : ''}`;
@@ -12640,7 +12640,7 @@ function leerpadHtml(p) {
     const laatste = LEERSTAPPEN.length;
     const nu = stappen.filter(st => st.wereld <= Math.min(Math.max(w, s.startStap || 1), laatste)).pop();
     const nr = stappen.indexOf(nu);                    // = hoeveel stappen er al achter liggen
-    // genummerd op plaats, net als de ladder op Oefenen: valt er een stap weg, dan schuift de rest op
+    // genummerd op plaats, net als de ladder op Oefeningen: valt er een stap weg, dan schuift de rest op
     if (nr) rijen.push(flRij(' klaar', '✓', `Stap ${nr > 1 ? '1–' + nr : 1}`));
     const grens = grensTip(p);
     rijen.push(flRij(' hier niveau-bezig', flAva(p), `${nu.naam}<small>Wereld ${w}${accentTekst(s, w)}</small>`, flVb(nu.vb)));
@@ -12747,9 +12747,9 @@ function stemNotitie(naam) {
    die laatste is een gemiddelde over de laatste paar antwoorden en springt heen
    en weer; drie sterren in een hele reeks shows is een stand die blijft staan.
    Alleen voor rekenen, alleen als er nog een stap op de ladder is (10, 20, 50,
-   100 -- dezelfde keuzes als op het tabblad Oefenen).
+   100 -- dezelfde keuzes als op het tabblad Oefeningen).
 
-   Zet de ouder de grens om (met de tip of op Oefenen), dan begint het tellen
+   Zet de ouder de grens om (met de tip of op Oefeningen), dan begint het tellen
    opnieuw: s.grensTipBasis onthoudt hoeveel drie-sterrenshows er toen al waren,
    en pas GRENS_TIP_SHOWS nieuwe op de nieuwe grens geven de volgende tip. Anders
    stond direct na "tot 50" al de vraag of het niet 100 moest.
@@ -12835,7 +12835,7 @@ function chip(v, label, on, extra) {
   return `<button class="chip ${on ? 'on' : ''}${extra ? ' ' + extra : ''}" data-v="${v}">${label}</button>`;
 }
 const COUNT_STAGE_LABELS = ['', 'Tellen 1–3', 'Tellen 1–5', 'Meer / minder', 'Evenveel', 'Luister', 'Cijfers', 'Eén meer / minder', 'Samen / splitsen', 'Som met tekens', 'Cijfers met stippen', 'Geschreven som', 'Tot 20'];
-// Per fase een voorbeeld, rechts in de ladder op Oefenen: wat het kind daar ziet.
+// Per fase een voorbeeld, rechts in de ladder op Oefeningen: wat het kind daar ziet.
 const COUNT_STAGE_VB = ['', '🍎🍎🍎', '🍎🍎🍎🍎🍎', '🐞🐞 · 🐞🐞🐞🐞', '●●● = ●●●', '🔊 → ●●●●', '4 = ●●●●', '5 → 6', '●●● + ●●', '🍎 + 🍎🍎', '2 + 3', '4 + 3', '10 + 4'];
 /* De oefenvelden zelf, los van de omlijsting eromheen. Het ouderdeel zet ze in
    .set-card primary met een icoonkop; het maakformulier zet ze plat in een
@@ -12949,7 +12949,7 @@ function oefenGroups(s, pfx, p) {       // -> [{ ico, title, sub, secundair?, ht
   const nuStap = Math.min(wNu, stappen[stappen.length - 1].wereld);
   /* "Alles door elkaar" staat er wél, als laatste rij om te lezen: daar begin je
      niet, maar een kind dat voorbij de laatste stap speelt staat daar. Zonder
-     die rij stond haar pop op Oefenen op "Drie getallen", terwijl Voortgang
+     die rij stond haar pop op Oefeningen op "Drie getallen", terwijl Voortgang
      (terecht) "Alles door elkaar" zei. */
   const voorbij = !!p && wNu >= LEERSTAPPEN.length;
   const eind = flRij(` eind${voorbij ? ' hier' : ''}`, voorbij ? ava : stappen.length + 1, 'Alles door elkaar');
@@ -13294,7 +13294,7 @@ function speelAlsKnop(p) {
 }
 // De drie onderdelen van het ouderdeel. Waarde = staat, label = wat er staat.
 // Beheer staat er als "⋯": zie renderSectionTabs.
-const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefenen'], ['beheer', 'Beheer']];
+const SET_TABS = [['voortgang', 'Voortgang'], ['oefenen', 'Oefeningen'], ['beheer', 'Beheer']];
 // Alleen naar boven springen als het ónderdeel wisselt, niet bij elke chip-tik.
 let lastWhoRendered = null;
 
@@ -13544,7 +13544,7 @@ function bindSettings(p, s) {
      niets verzonden -- de naam is al opgeslagen bij elke aanslag -- dus dit is
      alleen de uitgang die een telefoontoetsenbord zelf aanbiedt en die hier
      eerder in het niets viel. */
-  // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefenen, met één tik
+  // de tip in Voortgang (zie grensTip): dezelfde instelling als op Oefeningen, met één tik
   on('grens-tip-ja', 'onclick', e => {
     sndClick();
     const d = e.currentTarget.dataset;
@@ -13564,7 +13564,7 @@ function bindSettings(p, s) {
     save();
     renderSettings();
   });
-  // "Aanpassen ›" op het leerpad: naar dezelfde ladder op Oefenen, midden in beeld
+  // "Aanpassen ›" op het leerpad: naar dezelfde ladder op Oefeningen, midden in beeld
   on('leerpad-aanpas', 'onclick', () => {
     sndClick();
     setTab = 'oefenen';
