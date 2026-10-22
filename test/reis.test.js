@@ -568,16 +568,19 @@ function check(ok, label, detail) {
       sch.scrollTop = sch.scrollHeight;        // helemaal omlaag, terug naar wereld 1
       await wacht(120);
       const weg = knop.classList.contains('aan');
-      const teken = knop.textContent;
+      // de pijl draait om (.neer) als ze ónder je staat; hier staat ze erboven
+      const teken = knop.classList.contains('neer') ? 'neer' : 'op';
+      const naam = knop.querySelector('.wb-naam') ? knop.querySelector('.wb-naam').textContent : '';
       knop.click();
       await wacht(900);                        // hij glijdt terug
       const r2 = document.querySelector('.reis-halte.nu').getBoundingClientRect();
       const s2 = sch.getBoundingClientRect();
-      return { bij, weg, teken, terug: !knop.classList.contains('aan'),
+      return { bij, weg, teken, naam, terug: !knop.classList.contains('aan'),
                inBeeld: r2.top > s2.top && r2.bottom < s2.bottom };
     });
     check(!r.bij, 'F2 · staat ze in beeld, dan is er geen knopje', JSON.stringify(r.bij));
-    check(r.weg && r.teken === '\u2191', 'F2 · ver weg gescrold verschijnt het, met de goede richting', JSON.stringify(r));
+    check(r.weg && r.teken === 'op', 'F2 · ver weg gescrold verschijnt het, met de goede richting', JSON.stringify(r));
+    check(/\S/.test(r.naam), 'F2 · en het zegt naar welke wereld, net als de pil op de kaart', JSON.stringify(r));
     check(r.inBeeld && r.terug, 'F2 · en het brengt haar terug in beeld', JSON.stringify(r));
     await ctx.close();
   }

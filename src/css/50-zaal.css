@@ -230,7 +230,8 @@
     border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: 2px;
   }
   .venue-aan .screen-header .header-title { text-shadow: var(--hud-ink); }
-  .venue-aan .screen-header .icon-btn,
+  /* (De terugknop en het ✕ dragen deze stof al overal, zie .screen-header
+     .icon-btn.header-left.) */
   .venue-aan .screen-header .diamond-badge {
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
@@ -1429,6 +1430,8 @@
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     box-shadow: inset 0 0 0 1px var(--gold-accent); }
   .wb-naam { gap: 6px; padding: 0 14px 0 8px; }
+  /* de getekende pijl (zie .ico), op de maat van de letter in het capsuletje */
+  .wb-cta .ico { width: .95em; height: .95em; }
   /* Dezelfde maat kleiner als de wereldpil op een smal scherm (zie #screen-map
      .world-pick in 40-kaart.css): twee pillen boven elkaar in twee lettermaten
      zag eruit als een vergissing. */

@@ -4599,6 +4599,11 @@ function navigeerNaarWereld(idx) {
 const WP_CHEV = '<svg class="wp-chev" viewBox="0 0 8 14" aria-hidden="true">'
   + '<path d="M1.2 1.2l5.4 5.8-5.4 5.8" fill="none" stroke="currentColor" stroke-width="2"'
   + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+/* Een pijl of kruisje uit de tekenset bovenin <body> (#ico-terug, #ico-op,
+   #ico-kruis). De opmaak schrijft ze zelf uit; dit is voor wat hier in
+   JavaScript wordt opgebouwd, zodat het dezelfde tekening is en geen ↑ uit de
+   systeemletter van het toestel. */
+const ico = naam => `<svg class="ico" aria-hidden="true"><use href="#ico-${naam}"/></svg>`;
 /* Eén keer per sessie knipoogt de globe met een zacht bootje + gloed, zodat een
    kind dat het icoon nog nooit heeft opgemerkt er even naar kijkt -- daarna
    nooit meer vanzelf, want een pil die naast de kaart continu beweegt is precies
@@ -4659,7 +4664,7 @@ function renderMapTitle(p, opReis) {
        helft van de breedte en voegden er niets aan toe. De ⟲ is sindsdien een ↑
        geworden: terug is hier altijd omhoog, en een pijl leest een kind dat nog
        niet leest wél (zie .world-back). Een screenlezer krijgt de hele zin. */
-    terug.innerHTML = `<span class="wb-cta" aria-hidden="true">↑</span>`
+    terug.innerHTML = `<span class="wb-cta" aria-hidden="true">${ico('op')}</span>`
       + `<span class="wb-naam">${cur.world.icon} ${esc(korteNaam(cur.world))}</span>`;
     terug.setAttribute('aria-label', `Terug naar ${cur.world.name}`);
     // Terug naar de wereld waar ze speelt is vóóruit in de tournee -- die ligt per
@@ -6520,6 +6525,7 @@ function renderReis() {
   track.style.setProperty('--reis-n', hoogte.toFixed(3));
   $('screen-journey').onscroll = reisScroll;
   telNu($('reis-diamonds'), p.diamonds);
+  reisTerugVullen(WORLDS[doel]);
 
   /* De route. Tussen elke twee bestemmingen ligt een extra stuurpunt, om en om naar
      links en rechts uit de lijn: dát is wat een verbinding een wéggetje maakt. De
@@ -6789,10 +6795,20 @@ function reisVolgKnop() {
   const weg = r.bottom < s.top + 40 || r.top > s.bottom - 40;
   knop.classList.toggle('aan', weg);
   // wijst de kant op waar ze staat, zodat het knopje zegt wáár je heen gaat.
-  // Alleen schrijven als het verandert: dit loopt bij elk beeldje van het
-  // schuiven, en een nieuwe tekst laat het knopje telkens opnieuw opmeten.
-  const pijl = r.top > s.bottom - 40 ? '↓' : '↑';
-  if (knop.textContent !== pijl) knop.textContent = pijl;
+  // Eén pijl die omdraait (.neer), geen nieuwe inhoud: dit loopt bij elk
+  // beeldje van het schuiven, en toggle schrijft alleen als het verandert.
+  knop.classList.toggle('neer', r.top > s.bottom - 40);
+}
+/* De inhoud van dat knopje: dezelfde pil als de weg terug op de kaart
+   (#world-back) -- de pijl in het gouden capsuletje en de wereld waar ze speelt.
+   Het is ook dezelfde vraag ("terug naar waar ik speel"), dus hetzelfde ding, en
+   de naam zegt waar hij heen gaat. Eén keer per opbouw van de reis. */
+function reisTerugVullen(w) {
+  const knop = $('reis-terug');
+  if (!knop || !w) return;
+  knop.innerHTML = `<span class="wb-cta" aria-hidden="true">${ico('op')}</span>`
+    + `<span class="wb-naam">${w.icon} ${esc(korteNaam(w))}</span>`;
+  knop.setAttribute('aria-label', `Terug naar ${w.name}`);
 }
 function reisScroll() {
   rafKlem(reisVolgKnop);
@@ -11130,6 +11146,10 @@ function renderShop() {
      rAF in kleedScroll leest de stand pas als de aanroeper hem heeft gezet (de
      meeste zetten hem ná deze functie terug op nul). */
   $('screen-dress').onscroll = kleedScroll;
+  /* De ← staat er alleen als hij iets anders doet dan de tabbladbalk: terug
+     naar de kast waar je vandaan kwam (zie dressBack). Vanaf het tabblad is de
+     balk zelf de weg terug, net als op de kaart. */
+  $('screen-dress').classList.toggle('met-terug', dressReturnTo === 'trophies');
   kleedScroll();
   const grid = $('item-grid');
   /* De nieuwe kaartjes komen eerst in een los stapeltje en gaan pas onderaan in

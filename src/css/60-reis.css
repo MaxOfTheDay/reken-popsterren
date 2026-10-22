@@ -150,20 +150,14 @@
      slordig leest. De terugknop deed hetzelfde: 38px met een schaduwlip, terwijl
      élke andere ronde knop in de app 44px is en in de wereldschermen dezelfde
      zwevende stof draagt als de pillen ernaast. Nu zijn de drie wereldschermen
-     (kaart, reis, zaal) één kop in drie standen. */
+     (kaart, reis, zaal) één kop in drie standen. Die stof van de terugknop is
+     sindsdien die van élk scherm, zie .screen-header .icon-btn.header-left. */
   #screen-journey .diamond-badge {
     height: var(--hud-h); padding: 0 12px; border-radius: var(--r-pill); font-size: var(--tx-body);
     background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
     box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
     text-shadow: var(--hud-ink);
   }
-  #screen-journey .icon-btn {
-    font-size: 17px; border: 0;
-    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
-    text-shadow: var(--hud-ink);
-  }
-  #screen-journey .icon-btn:active { transform: scale(.94); box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring); }
 
   /* ---- De baan ------------------------------------------------------------
      Eén oppervlak: de nacht boven een concert in de verte. Vier lagen, en geen
@@ -634,23 +628,40 @@
   }
 
   /* ---- Terug naar waar je bent --------------------------------------------
-     Alleen als je zover weggescrold bent dat je jezelf niet meer ziet. Hij staat op
-     dezelfde plek als de memory-knop op de kaart (rechtsonder, boven de balk), draagt
-     hetzelfde donkere glas als de rest van de zwevende bediening, en verdwijnt zodra
-     je weer in de buurt bent -- dus hij staat nooit "voor het geval dat" in beeld. */
+     Alleen als je zover weggescrold bent dat je jezelf niet meer ziet, en hij
+     verdwijnt zodra je weer in de buurt bent -- dus hij staat nooit "voor het
+     geval dat" in beeld.
+
+     Dezelfde pil als de weg terug op de kaart (.world-back): de pijl in het
+     gouden capsuletje (.wb-cta) en de wereld waar ze speelt (.wb-naam). Hier
+     stond een anoniem donker bolletje rechtsonder met een dun pijltje, voor
+     precies dezelfde vraag; nu is het één ding op twee schermen, en de naam zegt
+     waar hij heen gaat. Midden boven de balk, waar de route loopt, en de pijl
+     draait om als ze onder je staat (.neer, zie reisVolgKnop). */
   .reis-terug {
-    position: fixed; right: 14px; bottom: calc(var(--balk-ruimte) + 10px); z-index: 30;
-    width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255,255,255,.28);
-    display: flex; align-items: center; justify-content: center; padding: 0;
-    font-family: inherit; font-size: var(--tx-sub); color: var(--c-white); cursor: pointer;
-    background: rgba(32,12,58,.8);
+    position: fixed; left: 50%; bottom: calc(var(--balk-ruimte) + 10px); z-index: 30;
+    display: flex; align-items: stretch; gap: 0; padding: 0; height: var(--hud-h);
+    font-family: inherit; font-size: var(--tx-body); font-weight: 700; line-height: 1;
+    white-space: nowrap; max-width: calc(100% - 24px);
+    color: var(--c-white); cursor: pointer; border: 0; border-radius: var(--r-pill);
+    /* dekkender dan --hud-bg: hier schuiven tekeningen onderdoor, op de kaart
+       staat hij op een rustig stuk lucht */
+    background: rgba(28, 6, 52, .62);
     backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
-    box-shadow: 0 4px 14px rgba(0,0,0,.45);
-    opacity: 0; transform: translateY(8px) scale(.9); pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4), inset 0 0 0 1px var(--hud-ring);
+    text-shadow: var(--hud-ink);
+    opacity: 0; transform: translate(-50%, 8px) scale(.9); pointer-events: none;
     transition: opacity .2s ease, transform .2s var(--ease-uit);
   }
-  .reis-terug.aan { opacity: 1; transform: none; pointer-events: auto; }
-  .reis-terug:active { transform: scale(.92); }
+  /* het raakvlak: 44px hoog, net als bij de pil op de kaart */
+  .reis-terug::before { content: ''; position: absolute; inset: -5px 0; }
+  .reis-terug .ico { transition: transform .2s var(--ease-uit); }
+  .reis-terug.neer .ico { transform: rotate(180deg); }
+  .reis-terug.aan { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+  .reis-terug:active { transform: translateX(-50%) scale(.96); filter: brightness(1.15); }
+  @media (max-width: 389px) {
+    .reis-terug { font-size: var(--tx-klein); }
+  }
 
   /* Een tablet. De clamps hierboven houden op bij 196px, en dat is telefoonmaat:
      op 768 breed stonden de werelden als postzegels in een lege lucht. Hier
@@ -671,14 +682,18 @@
        het enige dat er staat -- en dan is "hem verbergen" hetzelfde als de kop
        leegmaken. Hij wordt dus alleen een maatje kleiner, net als de knoppen ernaast. */
     #screen-journey .rt-ico { font-size: 21px; }
-    #screen-journey .icon-btn { width: 34px; height: 34px; font-size: 16px; }
+    /* Kleiner om te zien, niet om te raken: het onzichtbare vlakje eromheen
+       maakt er weer 44px van, net als bij de wereldpil. */
+    #screen-journey .icon-btn { width: 34px; height: 34px; position: relative; }
+    #screen-journey .icon-btn .ico { width: 18px; height: 18px; }
+    #screen-journey .icon-btn::before { content: ''; position: absolute; inset: -5px; }
     #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
     /* stil: één vaste gloed op de sterkte die hier altijd al stond (20px/.32) */
     .reis-gloed::before { animation: none; opacity: 1; box-shadow: 0 0 20px rgba(var(--goud-gloed-rgb),.32); }
     .reis-gloed::after { display: none; }
-    .reis-plaats, .reis-gloed, .reis-terug, .reis-halte.vol::after { transition: none; }
+    .reis-plaats, .reis-gloed, .reis-terug, .reis-terug .ico, .reis-halte.vol::after { transition: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {

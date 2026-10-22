@@ -1203,9 +1203,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
           kast gescrold dichtgaat -- maar de spiegel zelf blijft open, en de kop
           wordt er niet hoger of lager van. Behalve op een laag staand scherm:
           daar krimpt de spiegel, en blijft het rek eronder stil staan.
-       D  de ← op de kleedkamer en de kast heeft geen lip meer: het was het
-          zwaarste ding in hun kop, en het is de uitgang. Dezelfde knop als op de
-          hulpschermen (.hub-sticky.sub), met hetzelfde 44px raakvlak.
+       D  de kleedkamer en de kast hebben geen ← als je er via de tabbladbalk
+          komt: de balk zelf is de weg terug. Onzichtbaar en niet weg, zodat zijn
+          kolom de titel in het midden houdt (C).
 
      Op de telefoon van de rondgang en op de maten waar het uit de pas liep. */
   {
@@ -1227,7 +1227,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
           const terug = s.querySelector('.header-left');
           return { scherm: s.id, pilH: +pil.getBoundingClientRect().height.toFixed(1),
             pilLetter: getComputedStyle(pil).fontSize, pilMidden: midden(pil),
-            terugMidden: midden(terug), terugLip: getComputedStyle(terug).boxShadow,
+            terugMidden: midden(terug), terugZicht: getComputedStyle(terug).visibility,
             terugMaat: terug.offsetWidth + 'x' + terug.offsetHeight,
             naamMidden: midden(naam), naamLetter: getComputedStyle(naam).fontSize,
             afgekapt: naam.scrollWidth > naam.clientWidth + 1 };
@@ -1263,9 +1263,8 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         'C · de koprij van de kleedkamer en de kast valt samen' + maat, JSON.stringify([r.kleed, r.kast]));
       check(!r.kleed.afgekapt && !r.kast.afgekapt, 'en geen van beide namen wordt afgekapt' + maat,
         JSON.stringify([r.kleed, r.kast]));
-      check(r.kleed.terugLip === 'none' && r.kast.terugLip === 'none'
-        && r.kleed.terugMaat === '44x44' && r.kast.terugMaat === '44x44',
-        'D · de ← op de kleedkamer en de kast heeft geen lip, en houdt zijn 44px' + maat,
+      check(r.kleed.terugZicht === 'hidden' && r.kast.terugZicht === 'hidden',
+        'D · vanaf de tabbladbalk hebben de kleedkamer en de kast geen ←' + maat,
         JSON.stringify([r.kleed, r.kast]));
       check(!r.ladeOpen.klasse && r.ladeOpen.op === 0 && r.ladeDicht.klasse && r.ladeDicht.op === 1,
         'B · gescrold gaat de band onder de spiegel dicht, bovenaan staat hij open' + maat,
@@ -1283,6 +1282,58 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         check(r.ladeDicht.kopH === r.ladeOpen.kopH, 'B · en de kop wordt er niet hoger of lager van' + maat,
           JSON.stringify([r.ladeOpen, r.ladeDicht]));
       await kopCtx.close();
+    }
+  }
+
+  /* ================= 8b · Eén terugknop =================
+     Elke ← (en het ✕ van de show, dat op dezelfde plek staat) is dezelfde knop:
+     dezelfde stof, een getekende pijl en geen teken uit de systeemletter, en 44px
+     om te raken -- ook waar hij er kleiner uitziet (de reis op een smalle
+     telefoon: een onzichtbaar vlakje eromheen). De kleedkamer heeft hem alleen
+     als je er vanuit de kast komt, want dan doet hij iets anders dan de balk.
+     En van de show naar het eindscherm blijft hij staan waar hij stond: het ✕
+     wordt een ← op dezelfde plek, op elke maat. */
+  {
+    for (const [w, h] of [[390, 844], [320, 568], [1024, 768], [1280, 800]]) {
+      const tCtx = await browser.newContext({ viewport: { width: w, height: h } });
+      await cacheFonts(tCtx);
+      const tp = await tCtx.newPage();
+      tp.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+      await tp.goto(APP_URL + '&demo&star=p1');
+      await tp.waitForFunction(() => typeof selectProfile === 'function');
+      const r = await tp.evaluate(async () => {
+        const wacht = ms => new Promise(res => setTimeout(res, ms));
+        const knop = () => {
+          const b = document.querySelector('.screen.active .header-left');
+          const cs = getComputedStyle(b), voor = getComputedStyle(b, '::before');
+          const uit = voor.content !== 'none' ? Math.max(0, -parseFloat(voor.left) || 0) : 0;
+          const r = b.getBoundingClientRect();
+          return { scherm: document.querySelector('.screen.active').id,
+            raak: Math.min(b.offsetWidth, b.offsetHeight) + 2 * uit,
+            stof: cs.backgroundColor + ' ' + cs.boxShadow, zicht: cs.visibility,
+            tekening: !!b.querySelector('svg.ico use'), tekst: b.textContent.trim(),
+            x: Math.round(r.left), midden: Math.round(r.top + r.height / 2) };
+        };
+        const uit = {};
+        selectProfile('p1');
+        goMap(); await wacht(400); openReis(); await wacht(1200); uit.reis = knop();
+        startLevel(6); await wacht(600); uit.show = knop();
+        G.stars = 3; endLevel(true); await wacht(1200); uit.einde = knop();
+        openKleedkamerCat('hair'); await wacht(500); uit.kleedUitKast = knop();
+        openSettings(); await wacht(500); uit.ouders = knop();
+        return uit;
+      });
+      const maat = ' — ' + w + 'x' + h;
+      const alle = Object.values(r);
+      check(alle.every(k => k.zicht === 'visible' && k.raak >= 44),
+        '8b · elke terugknop is te zien en 44px om te raken' + maat, JSON.stringify(r));
+      check(alle.every(k => k.tekening && k.tekst === ''),
+        '8b · met een getekende pijl, geen teken uit de systeemletter' + maat, JSON.stringify(r));
+      check(new Set(alle.map(k => k.stof)).size === 1, '8b · en overal in dezelfde stof' + maat,
+        JSON.stringify(alle.map(k => k.stof)));
+      check(r.show.x === r.einde.x && r.show.midden === r.einde.midden,
+        '8b · het ✕ van de show wordt een ← op dezelfde plek' + maat, JSON.stringify([r.show, r.einde]));
+      await tCtx.close();
     }
   }
 
