@@ -8206,6 +8206,8 @@
   .speel-als[hidden] { display: none; }
   .speel-als .sa-naam { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
+  .speel-als .ico { width: 1em; height: 1em; }
+
   .settings-panel { display: flex; flex-direction: column; gap: 14px; }
   .set-card { background: var(--c-white); color: var(--c-ink); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--e-2); }
   .set-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -9044,8 +9046,8 @@
 </style>
 </head>
 <body class="start">
-<!-- De pijlen en het kruisje van de terugknoppen, één keer getekend. Ze stonden er
-     als tekst (← ↑ ↓ ✕), maar die tekens zitten niet in Fredoka: elk toestel
+<!-- De pijlen en het kruisje van de terugknoppen (en de ▶ van het ouderdeel), één
+     keer getekend. Ze stonden er als tekst (← ↑ ↓ ✕ ▶), maar die tekens zitten niet in Fredoka: elk toestel
      tekende ze dan in zijn eigen systeemletter, dun en klein en overal anders.
      Nu is het één lijn met ronde uiteinden, zo dik als de letter van de knoppen
      ernaast, en elke knop leent hem met <use>. Zie .ico in het stijlblad. -->
@@ -9053,6 +9055,7 @@
   <symbol id="ico-terug" viewBox="0 0 24 24"><path d="M19 12H5.5M11.5 5.5L5 12l6.5 6.5"/></symbol>
   <symbol id="ico-op" viewBox="0 0 24 24"><path d="M12 19V5.5M5.5 11.5L12 5l6.5 6.5"/></symbol>
   <symbol id="ico-kruis" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="ico-speel" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.8v12.4L18 12z"/></symbol>
 </svg>
 <div class="grain" aria-hidden="true"></div>
 <div id="confetti-layer" aria-hidden="true"></div>
@@ -9456,7 +9459,7 @@
         <div class="header-title">Voor ouders</div>
         <!-- ▶ = meteen spelen als het kind dat hieronder gekozen is (speelAlsGekozen):
              het spiegelbeeld van ← links. Zonder ster verborgen. -->
-        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden>▶<span class="sa-naam"></span></button></div>
+        <div class="header-right"><button class="btn small speel-als" id="speel-als" onclick="naTik(speelAlsGekozen)" hidden><svg class="ico" aria-hidden="true"><use href="#ico-speel"/></svg><span class="sa-naam"></span></button></div>
       </div>
       <div class="who-row hscroll-fade" id="settings-profiles" aria-label="Kies een ster"></div>
       <div class="segmented" id="settings-subtabs" role="tablist"></div>
