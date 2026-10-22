@@ -122,19 +122,32 @@
     background: linear-gradient(180deg, #180b2c 0%, #180b2c 54%,
                 rgba(24,11,44,.72) 74%, rgba(24,11,44,0) 100%);
   }
-  /* De kop draagt géén pil, en sinds PS-25 ook geen woord meer: alleen de globe.
+  /* De globe is hier dezelfde knop als op de kaart: een rondje van --hud-h in het
+     glas van de kop, met de globe erin. Tik je hem, dan vlieg je terug naar je
+     kaart -- net als de ← en 🗺 (naTik(reisSluit) in de opmaak).
 
-     Géén pil, want op de kaart heeft de globe er een (daar staat hij over een
-     getekende lucht en heeft hij zijn eigen ondergrond nodig) en hier ligt de
-     sluier er al onder -- een pil ín een sluier is een doosje in een doosje. En
-     juist het wégvallen van die pil is wat de overgang vertelt: hetzelfde teken,
-     nu zonder knopkleren, want hier valt niets te tikken. Het is een plaatsteken
-     en geen bediening: geen chevron, geen waas, geen cursor, geen :active. Alleen
-     een schaduw, zodat hij over de nacht heen leesbaar blijft.
+     Hier stond eerst juist géén pil: hetzelfde teken "zonder knopkleren, want hier
+     valt niets te tikken", en een pil in de sluier zou een doosje in een doosje
+     zijn. Maar een kind tikt de globe die Werelden opende gewoon nog eens om terug
+     te gaan -- hij staat op precies dezelfde plek -- en dan deed hij niets. Een
+     knop die er als knop uitziet op de kaart en hier als plaatje, op dezelfde
+     plek, is twee betekenissen voor één teken. Nu is het er één.
 
-     24px tegen de 23 van de wereldpil: vrijwel dezelfde maat, zodat de vlucht
-     ertussen een verplaatsing is en geen sprong. */
-  #screen-journey .reis-titel { display: inline-flex; align-items: center; justify-content: center; }
+     De globe zelf houdt zijn maat (30px, op een tablet 36), gelijk aan die in de
+     kaartpil, dus globeVlucht verhuist hem nog steeds zonder te groeien. */
+  #screen-journey .reis-kop { display: flex; justify-content: center; overflow: visible; }
+  #screen-journey .reis-titel {
+    display: inline-flex; align-items: center; justify-content: center; position: relative;
+    width: var(--hud-h); height: var(--hud-h); padding: 0; border: 0; border-radius: var(--r-pill);
+    background: var(--hud-bg); backdrop-filter: var(--waas-klein); -webkit-backdrop-filter: var(--waas-klein);
+    box-shadow: var(--hud-shadow), inset 0 0 0 1px var(--hud-ring);
+    color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  /* 2px raakvlak rondom, net als de pil op de kaart: 48 x 48 */
+  #screen-journey .reis-titel::before { content: ''; position: absolute; inset: -2px; }
+  /* dezelfde indruk als de pil op de kaart (.world-pick:active) */
+  #screen-journey .reis-titel:active { transform: scale(.96); filter: brightness(1.15); }
+  @media (prefers-reduced-motion: reduce) { #screen-journey .reis-titel:active { transform: none; } }
   /* line-height 1.25 en niet 1. Een emoji is breder dan zijn em-vierkant -- op 24px
      tekent hij ~27px -- en een regelhoogte van precies 1em snijdt hem dan boven en
      onder af. Je ziet een platte globe, en dat is precies het soort "bijna" dat als

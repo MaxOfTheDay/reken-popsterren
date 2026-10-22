@@ -49,6 +49,8 @@
      terugBezig      goMap                                 -> goMap (vangnet)
      vluchtOp        wereldVlucht                          -> vluchtKlaar
      wereldReisOp    wereldCamera/runWorldChange           -> stopWereldReis
+     naLanding       reisSluit/pilTik/reisTik/navigeerNaarWereld/een halte
+                     onderweg                              -> landingVrij
      kaartBezocht    kaartGroet                            -> kaartGroet
    goProfiles leegt pendingTravel en reisDoel als een ander kind gekozen wordt:
    een opdracht van de vorige ster hoort nooit bij de volgende te landen.
@@ -135,6 +137,15 @@ let vluchtOp = null;   // de vlucht die nu loopt -- er is er altijd hoogstens é
    geen enkele wereldknop nog iets doet -- dus liever drie keer opruimen dan één
    keer niet. */
 let wereldReisOp = null;
+/* De tik die op een landing wacht. Een tik middenin een overgang werd door de
+   grendels hierboven gewoon weggegooid: 🗺 of terug terwijl de kaart naar Werelden
+   vloog, de 🌍 tijdens een klim, haar halte terwijl ze ernaartoe liep. Voor een
+   kind is dat een kapotte knop -- en een terugdruk was dan zelfs opgebruikt.
+   Nu legt zo'n tik zich hier neer, en zodra de laatste grendel opengaat draait
+   hij alsnog (zie naLandingZet en landingVrij). Eén plek, en de láátste tik wint.
+   show() gooit hem weg: wie intussen ergens anders heen ging, wil niet meer terug
+   naar wat hij daarvoor tikte. */
+let naLanding = null;
 
 /* ---- DE BEGROETING -------------------------------------------------------- */
 
