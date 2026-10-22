@@ -5630,6 +5630,29 @@
 
 
 
+
+
+
+
+
+
+  @keyframes schaduwHuppel {
+    0%   { transform: translateX(-50%); }
+    16%  { transform: translateX(-50%) scale(1.14, 1); }
+    42%  { transform: translateX(-50%) scale(.58); opacity: .4; }
+    62%  { transform: translateX(-50%) scale(1.18, 1); }
+    78%  { transform: translateX(-50%) scale(.97, 1); }
+    100% { transform: translateX(-50%); }
+  }
+  .tour-hero:has(> .avatar-holder.move-huppel)::after {
+    animation: schaduwHuppel var(--t-huppel, .66s) cubic-bezier(.3,.7,.4,1); }
+  @media (prefers-reduced-motion: reduce) {
+    .tour-hero:has(> .avatar-holder.move-huppel)::after { animation: none; }
+  }
+
+
+
+
   .tour-stop:has(.tour-hero) { z-index: 3; }
 
 
@@ -16833,7 +16856,10 @@ function kaartGroet(mag) {
 
 
 
-const TIK_PAS = { cls: 'move-bounce' };
+
+
+
+const TIK_PAS = HUPPEL;
 function kaartTik(ster, halte) {
   const el = ster.querySelector('.avatar-holder');
   if (!el || el.classList.contains('dancing') || !halte.classList.contains('next')) return;
@@ -16859,8 +16885,10 @@ function kaartGroetStop() {
 
 
 
-  const laag = el.firstElementChild;
-  const loopt = laag ? laag.getAnimations().filter(a => a.playState === 'running') : [];
+
+
+  const zij = el.closest('.tour-hero') || el;
+  const loopt = zij.getAnimations({ subtree: true }).filter(a => a.playState === 'running');
   if (!loopt.length) { stilStaan(el); return; }
   pasLos(el);
   loopt.forEach(a => a.pause());

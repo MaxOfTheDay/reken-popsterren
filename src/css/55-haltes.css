@@ -796,6 +796,29 @@
      later in de pagina en tekende dus óver haar schoenen heen. De houder zelf
      boven de schaduw leggen lost dat op. */
   .tour-hero .avatar-holder { position: relative; z-index: 1; }
+  /* De schaduw huppelt mee (oktober 2026). Hij lag als een donkere vlek op het
+     goud terwijl zij al 24px hoger hing, en dan leest de sprong als een plaatje
+     dat omhoog schuift en niet als een meisje dat loskomt van de grond. Nu op
+     dezelfde klok en dezelfde curve als mvHuppel (30-onderdelen.css): iets breder
+     als ze door de knieën gaat (16%), klein en licht in de lucht (42%), breder
+     als ze neerkomt (62%). Alleen transform en opacity van een laag die zijn blur
+     één keer krijgt, dus de compositor doet het en het kost per beeldje niets.
+     Hangt aan de klasse van de houder via :has, zodat zetPas en pasUit de enige
+     baas blijven over wanneer er gehuppeld wordt; kaartGroetStop zet hem samen
+     met haar stil. Een toestel zonder :has laat de schaduw gewoon liggen. */
+  @keyframes schaduwHuppel {
+    0%   { transform: translateX(-50%); }
+    16%  { transform: translateX(-50%) scale(1.14, 1); }
+    42%  { transform: translateX(-50%) scale(.58); opacity: .4; }
+    62%  { transform: translateX(-50%) scale(1.18, 1); }
+    78%  { transform: translateX(-50%) scale(.97, 1); }
+    100% { transform: translateX(-50%); }
+  }
+  .tour-hero:has(> .avatar-holder.move-huppel)::after {
+    animation: schaduwHuppel var(--t-huppel, .66s) cubic-bezier(.3,.7,.4,1); }
+  @media (prefers-reduced-motion: reduce) {
+    .tour-hero:has(> .avatar-holder.move-huppel)::after { animation: none; }
+  }
   /* De halte waar zij staat gaat als geheel boven de andere haltes liggen. Zonder
      dit kan haar hoofd achter het medaillon van de halte erbóven verdwijnen: de
      haltes staan in volgorde in de DOM, dus een latere halte tekent over een
