@@ -684,17 +684,8 @@
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .avatar-holder.idle { animation: none; }
     .tour-hero .hero-vonk { display: none; }
-    /* De spotlight blíjft -- hij is een kleur op de grond, geen beweging, en juist
-       zonder de ademende gloed is hij wat er nog overblijft om "hier speel je"
-       te zeggen. Alleen het ademen ervan gaat uit.
-
-       En dan staat hij op zijn sterkst: vol dekkend, dus boven de .95 waar het
-       ademen op zijn hoogtepunt komt (in rust is dat .6), en meteen een tikje
-       ruimer dan zijn ruststand in plaats van dat je op het hoogtepunt moet
-       wachten. Wie geen beweging wil ziet de huidige halte dus het duidelijkst
-       van iedereen -- en hij staat stil, want een vaste schaal is geen
-       beweging. */
-    .tour-stop.next::after { animation: none; opacity: 1; transform: scale(1.08); }
+    /* (Hier stond de ademende spotlight stilgezet; die bestaat niet meer, zie
+       "DE ADEMENDE SPOTLIGHT IS WEG" in 55-haltes.css.) */
     /* En de aankomstpuls blijft helemaal weg: die is een moment, en een moment
        zonder beweging bestaat niet. */
     .tour-stop.next .stop-body::after { display: none; }

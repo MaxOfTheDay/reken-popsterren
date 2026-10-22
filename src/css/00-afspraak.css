@@ -307,8 +307,17 @@
     --halte-rand: rgba(var(--halte-rand-rgb),.44);
     --perfect-ring: rgba(var(--warm-licht-rgb),.82);
     --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
-    --slot-vulling: #483f64;
-    --slot-vulling-top: #564c73;
+    --slot-vulling: #514772;
+    --slot-vulling-top: #6a5f8c;
+    /* De knoplip van de haltes (zie "De knoplip" in 55-haltes.css): de vaste
+       donkere rand onder elke halte, zoals onder .btn. slot-lip onder een halte op
+       slot, halte-lip onder een gespeelde; halte-vulling(-top) is het diepe
+       paarse verloop van een gespeelde halte, een slag lichter dan
+       --purple-shadow zodat de lip eronder te zien is. */
+    --slot-lip: #2f2848;
+    --halte-vulling-top: #7b2cbf;
+    --halte-vulling: #5a189a;
+    --halte-lip: #2e0b5e;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
     --ster-zoom: rgba(20,5,40,.85);

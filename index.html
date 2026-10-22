@@ -343,8 +343,17 @@
     --halte-rand: rgba(var(--halte-rand-rgb),.44);
     --perfect-ring: rgba(var(--warm-licht-rgb),.82);
     --perfect-gloed: rgba(var(--goud-gloed-rgb),.24);
-    --slot-vulling: #483f64;
-    --slot-vulling-top: #564c73;
+    --slot-vulling: #514772;
+    --slot-vulling-top: #6a5f8c;
+
+
+
+
+
+    --slot-lip: #2f2848;
+    --halte-vulling-top: #7b2cbf;
+    --halte-vulling: #5a189a;
+    --halte-lip: #2e0b5e;
     --slot-rand: rgba(222,214,255,.3);
     --ster-tab: rgba(38,12,64,.74);
     --ster-zoom: rgba(20,5,40,.85);
@@ -4964,17 +4973,6 @@
 
 
 
-  .tour-stop.next::after {
-    content: ''; position: absolute; z-index: -1; pointer-events: none;
-    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
-    border-radius: 50%;
-    background: radial-gradient(closest-side,
-      rgba(var(--warm-licht-rgb),.22),
-      rgba(var(--warm-licht-rgb),.58) 44%,
-      rgba(var(--warm-licht-rgb),.3) 68%,
-      transparent 92%);
-    animation: stopSpot 3s ease-in-out infinite;
-  }
 
 
 
@@ -4987,48 +4985,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  @keyframes stopSpot {
-    0%, 100% { opacity: .6;  transform: scale(1); }
-    50%      { opacity: .95; transform: scale(1.12); }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  #screen-map.wereld-reist .tour-stop.next::after,
-  #screen-map.wegvallend .tour-stop.next::after,
-  #screen-map.vlucht-weg .tour-stop.next::after,
-  body:has(.rp-overlay:not(.closing)) .tour-stop.next::after { animation-play-state: paused; }
 
 
 
@@ -5116,6 +5072,45 @@
 
 
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.9); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .tour-stop .dot { border-width: 0.45cqw; text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
+  .tour-stop.done .dot {
+    background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
+    border-color: rgba(255,255,255,.55);
+    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.done.perfect .dot {
+    background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
+    border-color: var(--gold-accent);
+    box-shadow: var(--dot-key), 0 0 0 0.55cqw var(--perfect-ring),
+                0 1.1cqw 0 0.25cqw var(--halte-lip), 0 1.8cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.next .dot { border-color: var(--gold-light); text-shadow: none;
+    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.locked .dot {
+    box-shadow: var(--dot-key), 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
 
 
 
@@ -5388,7 +5383,9 @@
 
 
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
-    filter: url(#tourHeroContour) drop-shadow(0 0 2px rgba(255,250,235,.3)) saturate(1.2) contrast(1.09); }
+    filter: url(#tourHeroContour) saturate(1.15); }
+
+
 
 
 
@@ -6138,15 +6135,6 @@
     .tour-hero .hero-vonk { display: none; }
 
 
-
-
-
-
-
-
-
-
-    .tour-stop.next::after { animation: none; opacity: 1; transform: scale(1.08); }
 
 
     .tour-stop.next .stop-body::after { display: none; }
@@ -9085,18 +9073,26 @@
   </div>
 
   <!-- Eén gedeeld filter, alleen voor de ster op de wereldkaart (.tour-hero svg
-       gebruikt 'm via url(#tourHeroContour)). feMorphology dilate + feComposite
-       "out" snijdt precies de rand van haar silhouet uit -- overal even dik,
-       zonder de wazige opstapeling die losse drop-shadow-lagen gaven. Nergens
-       anders in de app gebruikt, dus avatarSVG() zelf blijft ongemoeid. -->
+       gebruikt 'm via url(#tourHeroContour)). Een STICKERRAND: een witte contour
+       rondom haar silhouet met een dun donker lijntje daarbuiten, zoals een
+       uitgesneden sticker. Daarmee springt ze er op elke tekening uit zonder een
+       gloed achter haar -- de ademende gouden spotlight die er eerst stond maakte
+       haar juist wazig (zie 55-haltes.css). Twee keer feMorphology dilate, elk
+       ingekleurd met feFlood + feComposite "in": overal even dik, scherp, en
+       zonder de wazige opstapeling die losse drop-shadow-lagen gaven. De straal
+       staat in de eenheden van haar eigen svg (96 breed), dus schaalt mee.
+       Nergens anders in de app gebruikt, dus avatarSVG() zelf blijft ongemoeid. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <filter id="tourHeroContour" x="-30%" y="-30%" width="160%" height="160%">
-      <feMorphology in="SourceAlpha" operator="dilate" radius="1.7" result="dilated"/>
-      <feFlood flood-color="#3a1f48" flood-opacity="0.42" result="lijnkleur"/>
-      <feComposite in="lijnkleur" in2="dilated" operator="in" result="dikkerand"/>
-      <feComposite in="dikkerand" in2="SourceAlpha" operator="out" result="rand"/>
+      <feMorphology in="SourceAlpha" operator="dilate" radius="2.6" result="wit"/>
+      <feFlood flood-color="#ffffff" result="witkleur"/>
+      <feComposite in="witkleur" in2="wit" operator="in" result="witrand"/>
+      <feMorphology in="SourceAlpha" operator="dilate" radius="3.6" result="donker"/>
+      <feFlood flood-color="#2a0d44" flood-opacity="0.55" result="donkerkleur"/>
+      <feComposite in="donkerkleur" in2="donker" operator="in" result="donkerrand"/>
       <feMerge>
-        <feMergeNode in="rand"/>
+        <feMergeNode in="donkerrand"/>
+        <feMergeNode in="witrand"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
