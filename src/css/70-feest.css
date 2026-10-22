@@ -214,10 +214,18 @@
   /* Wit glas op 14% was net genoeg om op een vlak verloop te bestaan, maar het
      is geen oppervlak: de gouden pil, de drie vakjes en de juichtekst zweefden
      er meer bovenop dan erin. Nu een echt donker paneel in dezelfde taal als de
-     plakkende kop -- dat leest ook straks nog, als er licht achter staat. */
+     plakkende kop -- dat leest ook straks nog, als er licht achter staat.
+
+     ZONDER WAAS, en dat is geen smaakkeuze maar de batterij. Achter deze kaart
+     beweegt het podiumlicht, dus een backdrop-filter moest hier élk beeldje
+     opnieuw vervagen, zo lang het eindscherm openstaat: een groot vlak, zestig
+     keer per seconde, op de grafische chip van een oude telefoon. Gemeten (4x
+     vertraagd, 390x844): het tekenen van het stilstaande eindscherm ging van
+     ~750 naar ~85 ms per seconde. En te zien was de waas toch niet -- het paneel
+     is al 80% dicht; op een schermafdruk met en zonder verschillen alleen de
+     pixels van de wiegende pop. Zet hem dus niet terug. */
   .result-card {
     background: var(--paneel);
-    backdrop-filter: var(--paneel-waas); -webkit-backdrop-filter: var(--paneel-waas);
     border: 1.5px solid var(--paneel-rand);
     box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
     border-radius: var(--r-lg); padding: 18px 22px 20px; text-align: center;

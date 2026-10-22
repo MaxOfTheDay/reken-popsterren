@@ -645,12 +645,22 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
       P().settings.mode = 'kies';
       startLevel(P().level);
       await new Promise(r => setTimeout(r, 300));
-      const staat = () => document.getElementById('spotlight-bar').style.transform;
+      /* wat er te zien ís: de balk loopt als animatie (spotAnim), dus de
+         berekende stand, niet de stijl op het element */
+      const staat = () => { const b = document.getElementById('spotlight-bar');
+        const m = new DOMMatrix(getComputedStyle(b).transform);
+        return `translateX(${Math.round(m.m41 / b.offsetWidth * 100)}%)`; };
       const nu = { golden: document.getElementById('question-card').classList.contains('golden'), begin: staat() };
       await new Promise(r => setTimeout(r, 2500));
-      nu.naTweeEnHalf = staat(); nu.spotNaTweeEnHalf = Math.round(G.spot);
-      zetSpot(50); nu.half = staat();
-      zetSpot(0); nu.leeg = staat();
+      nu.naTweeEnHalf = staat(); nu.spotNaTweeEnHalf = Math.round(spotNu());
+      // na de rust staat hij al te dimmen: de animatie verder zetten en kijken
+      nu.loopt = !!spotAnim;
+      if (spotAnim) { const t = spotAnim.currentTime; spotAnim.currentTime = 8000; nu.naAcht = staat(); spotAnim.currentTime = t; }
+      stopSpot(); nu.spotGestopt = Math.round(G.spot); nu.gestopt = !spotAnim;
+      // zetSpot zelf: de stijl die hij neerzet (de berekende stand glijdt er in .1s heen)
+      const stijl = () => document.getElementById('spotlight-bar').style.transform;
+      zetSpot(50); nu.half = stijl();
+      zetSpot(0); nu.leeg = stijl();
       nu.rail = getComputedStyle(document.querySelector('#question-card .spot-rail')).display;
       return nu;
     });
@@ -658,6 +668,10 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
     if (!balk.golden) {
       check(x(balk.begin) === 0 && x(balk.naTweeEnHalf) === 0 && balk.spotNaTweeEnHalf < 90,
         'de spotlight-balk staat de eerste seconden vol, terwijl de meting al loopt', JSON.stringify(balk));
+      check(balk.loopt && x(balk.naAcht) === -50,
+        'de balk loopt als één animatie (na 8 van de 12 seconden halfvol)', JSON.stringify(balk));
+      check(balk.gestopt && balk.spotGestopt > 70 && balk.spotGestopt < 90,
+        'stoppen zet G.spot vast op de verstreken tijd en haalt de animatie weg', JSON.stringify(balk));
       check(x(balk.half) === -25 && x(balk.leeg) === -100,
         'daarna dooft hij over de rest (halverwege de meting nog driekwart vol)', JSON.stringify(balk));
     }
