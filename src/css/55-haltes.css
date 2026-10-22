@@ -338,71 +338,18 @@
      rondje trok met zijn oranjegele bloom nog te veel mee. Rondje blijft solide
      goud en beweegt nog altijd als enige op de kaart -- alleen de gloed eromheen
      is verder ingetogen. */
-  .tour-stop.next::after {
-    content: ''; position: absolute; z-index: -1; pointer-events: none;
-    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
-    border-radius: 50%;
-    background: radial-gradient(closest-side,
-      rgba(var(--warm-licht-rgb),.22),
-      rgba(var(--warm-licht-rgb),.58) 44%,
-      rgba(var(--warm-licht-rgb),.3) 68%,
-      transparent 92%);
-    animation: stopSpot 3s ease-in-out infinite;
-  }
-  /* De maat en de sterkte hieronder zijn opgemeten tegen een échte wereld en niet
-     tegen een egale achtergrond, en dat is het hele verschil. Hij stond op 27cqw
-     met .2/.07 en ademde van .68 naar .84 op een schaal van 1 naar 1,035 -- op
-     papier keurig, en op de Muziekwereld letterlijk niet te zien: twee
-     schermafdrukken op het diepte- en het hoogtepunt waren naast elkaar niet uit
-     elkaar te houden. Die tekening is zelf al vol licht (gouden stralenkrans,
-     watervallen, lampjes), dus een waas van een vijfde dekking verdwijnt erin.
+  /* DE ADEMENDE SPOTLIGHT IS WEG (oktober, na de sterren en de stippenweg).
+     Hier stond een gouden gloed van 34cqw achter de huidige halte die eindeloos
+     ademde (stopSpot), met een lijstje momenten waarop hij moest pauzeren. Alles
+     hierboven over hoe sterk en hoe groot hij moest zijn is daarmee geschiedenis.
 
-     EN HET ZAT NIET ALLEEN IN DE STERKTE. Een radial-gradient met zijn kern in
-     het midden legt zijn licht precies dáár waar het gouden rondje eroverheen
-     staat: dat rondje beslaat de binnenste derde van de gloed, dus het felste
-     deel was per definitie onzichtbaar. Wat je overhield was de flauwe staart.
-     Opgemeten op de ring net buiten het rondje verschilde het diepte- van het
-     hoogtepunt met een halve RGB-trap -- nul, met andere woorden.
-
-     De gloed is daarom een ring geworden: laag in het midden (daar staat het
-     rondje toch), vol op 44% en uitdovend naar 92%. Het licht ligt nu in de band
-     die je écht ziet, van de rand van het rondje tot ruim daarbuiten.
-
-     Drie dingen zijn daarnaast omhoog gegaan, in deze volgorde van belang:
-       de maat    27 -> 34cqw, ruim drie keer het rondje. De gloed moet buiten de
-                  halte uitkomen, anders valt hij samen met de gouden vulling en
-                  is er niets om te zien ademen.
-       de sterkte de top van de ring staat op .58, waar de oude kern op .2 stond
-                  en de rand die je werkelijk zag op .07. Met het ademen erover
-                  komt dat op .55 dekking uit en in rust op .35 -- een verhouding
-                  van ruim anderhalf, en dát is wat een oog als "het beweegt" leest.
-       de adem    1 -> 1,12 in plaats van 1,035. Drie keer zoveel uitslag, nog
-                  steeds traag genoeg (3s) om te ademen in plaats van te knipperen.
-
-     Het rondje zelf staat nog altijd volkomen stil; alles hierboven gebeurt op de
-     gloed erachter. */
-  @keyframes stopSpot {
-    0%, 100% { opacity: .6;  transform: scale(1); }
-    50%      { opacity: .95; transform: scale(1.12); }
-  }
-  /* ADEMEN DOET HIJ ALLEEN ALS ER VERDER NIETS GEBEURT. Loopt er een wereldreis
-     (de camera klimt, zie .wereld-reist), ligt er een laag overheen -- rangfeest,
-     wereldfeest, trofee, ster-status, allemaal .rp-overlay -- of is de kaart zelf
-     aan het vertrekken of aan het wegvliegen naar Werelden, dan staat hij stil.
-
-     Pauzeren en niet uitzetten: bij 'animation: none' springt hij naar zijn
-     ruststand en bij het oppakken weer terug, en zo'n naad is in dit bestand al
-     eens duur betaald (zie het wiegen en de danspasjes). Op paused blijft hij
-     staan waar hij stond en gaat hij daar weer verder.
-
-     Twee gevallen uit de lijst staan hier niet bij, want die regelen zichzelf al:
-     tijdens een reis over de route krijgt géén enkele halte 'next' (zie
-     renderTourMap, waar 'travelling' dat afvangt), en een scherm dat niet actief
-     is staat op display:none en draait sowieso geen animaties. */
-  #screen-map.wereld-reist .tour-stop.next::after,
-  #screen-map.wegvallend .tour-stop.next::after,
-  #screen-map.vlucht-weg .tour-stop.next::after,
-  body:has(.rp-overlay:not(.closing)) .tour-stop.next::after { animation-play-state: paused; }
+     Wat er misging: de ster staat er precies middenin. Haar lichte jurk en huid
+     op licht goud lieten haar rand verdwijnen, en op de kaart las dat als een
+     wazige ster -- het tegendeel van wat de gloed moest doen. En hij zei iets wat
+     er al drie keer stond: de enige gouden vulling van de kaart, zij die erop
+     staat, en de aankomstpuls hieronder. Zij springt er nu zelf uit met een
+     stickerrand (zie .tour-hero en #tourHeroContour in index.html), en er draait
+     geen eindeloze animatie meer op de kaart. */
   /* DE AANKOMSTPULS. Kom je gewoon op de kaart binnen, dan licht de halte waar je
      heen moet één keer wat sterker op: één zachte uitdijende gloed die meteen weer
      wegvalt. Geen veer, geen sprong, en het rondje zelf verroert zich niet -- dit
@@ -490,6 +437,45 @@
   /* De indruk-animatie doet het meeste werk; dit is het laagje eroverheen dat
      zegt "hij is ingedrukt" ook als je je vinger niet beweegt. */
   .tour-stop.done:active .dot, .tour-stop.next:active .dot { filter: brightness(.9); }
+
+  /* ===== De knoplip =========================================================
+     Alles wat je in dit spel aantikt is een knop met een vaste lip eronder: Speel
+     (goud met een oranje lip), de paarse knoppen, de tegels in de winkel. De
+     haltes waren de enige platte schijven -- "een plek op een kaart, geen knop"
+     (zie hierboven) -- en tussen de stevige sterren met hun donkere zoom en de
+     ronde gouden stippen was dat de vorm die een andere taal sprak. De gouden
+     halte droeg het verloop van de Speel-knop al, maar zonder lip, en zag er
+     daardoor half af uit.
+
+     Nu dezelfde knop als .btn, in de kleuren die de haltes al hadden:
+       gespeeld  diep paars verloop (--halte-vulling-top/--halte-vulling) met een
+                 donkerpaarse lip, en een lichtere rand
+       perfect   hetzelfde, mét de gouden ring; de lip schuift daar een fractie
+                 breder onder, anders verdwijnt hij achter de ring
+       hier      het goud van de Speel-knop, met zijn oranje lip
+                 (--gold-cta-shadow), net als .btn
+       op slot   het stoffige violet met een donkere lip, kleiner (zie hoger)
+     De toestanden zelf veranderen niet: rand, ring, vulling en maat zeggen nog
+     precies hetzelfde. Alleen de vorm is die van de rest van het spel.
+
+     De lip is een box-shadow zonder vervaging (0 0,9cqw 0) -- geen extra
+     element, en hij drukt mee in met de indrukveer van .stop-body. Daaronder
+     een zachte contactschaduw, zodat de knop op de tekening staat. Het cijfer
+     krijgt een donker lipje mee, zoals de titel op het beginscherm. */
+  .tour-stop .dot { border-width: 0.45cqw; text-shadow: 0 0.3cqw 0 rgba(40,6,70,.45); }
+  .tour-stop.done .dot {
+    background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
+    border-color: rgba(255,255,255,.55);
+    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--halte-lip), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.done.perfect .dot {
+    background: linear-gradient(180deg, var(--halte-vulling-top), var(--halte-vulling));
+    border-color: var(--gold-accent);
+    box-shadow: var(--dot-key), 0 0 0 0.55cqw var(--perfect-ring),
+                0 1.1cqw 0 0.25cqw var(--halte-lip), 0 1.8cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.next .dot { border-color: var(--gold-light); text-shadow: none;
+    box-shadow: var(--dot-key), 0 0.9cqw 0 var(--gold-cta-shadow), 0 1.6cqw 1.6cqw rgba(12,2,26,.35); }
+  .tour-stop.locked .dot {
+    box-shadow: var(--dot-key), 0 0.8cqw 0 var(--slot-lip), 0 1.2cqw 1.2cqw rgba(12,2,26,.25); }
 
   /* ---- Terug uit een show: het punt gaat op de kaart ----------------------
      FASE 4C. Wie uit een show terugkwam zag zijn score er gewoon stáán: het
@@ -762,7 +748,9 @@
 
      Statisch, geen animatie: zij moet ook stilstaand meteen leesbaar zijn. */
   .tour-hero svg { width: 100%; height: auto; display: block; position: relative; z-index: 1;
-    filter: url(#tourHeroContour) drop-shadow(0 0 2px rgba(255,250,235,.3)) saturate(1.2) contrast(1.09); }
+    filter: url(#tourHeroContour) saturate(1.15); }
+  /* Sinds de stickerrand (zie #tourHeroContour in index.html) zonder de lichte
+     drop-shadow en de extra contrast: de witte rand dóét dat werk nu, en scherp. */
   /* FASE 4I -- ::before (een 24cqw brede grondgloed, breder dan zijzelf) is weg.
      Op de ondiepe zak van FASE 4H stond hij niet meer ín de halte maar zichtbaar
      ÓP het gouden rondje: een brede donkere waas die links en rechts van haar
