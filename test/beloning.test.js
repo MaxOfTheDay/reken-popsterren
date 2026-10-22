@@ -868,7 +868,16 @@ function check(ok, label, detail) {
   {
     const { ctx, page } = await fresh();
     await nieuweSter(page);
+    /* Alleen vlak voor het eind: bij haltes 1 tot 7 is de kaart rustig, en pas als
+       de volgende show die van de laatste halte is, staat de prijs erbij. */
+    const begin = await page.evaluate(async () => {
+      goMap(1);
+      await new Promise(res => setTimeout(res, 400));
+      return document.querySelectorAll('.stop-schat').length;
+    });
+    check(begin === 0, 'L · aan het begin van een wereld staat er nog geen prijs op de kaart', String(begin));
     const voor = await page.evaluate(async () => {
+      P().level = WORLD_START[0] + WORLDS[0].levels - 1;
       goMap(1);
       await new Promise(res => setTimeout(res, 400));
       const haltes = [...document.querySelectorAll('.tour-stop')];
@@ -878,7 +887,7 @@ function check(ok, label, detail) {
       };
     });
     check(voor.haltes > 0 && voor.met.join() === String(voor.haltes - 1),
-      'L · precies één fonkeling, bij de laatste halte', JSON.stringify(voor));
+      'L · vóór de laatste show: precies één prijs, bij de laatste halte', JSON.stringify(voor));
     const na = await page.evaluate(async () => {
       P().owned.push('acc_wereld_muziek');
       goMap(1);
