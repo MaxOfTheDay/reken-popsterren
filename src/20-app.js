@@ -3447,7 +3447,7 @@ function show(id) {
   appKnopZet();   // het knopje linksboven hoort ook alleen bij de sterrenkeuze
   // de vaste navigatie hoort alleen bij de rustpunten, niet bij spel/einde/instellingen
   const navId = navVolgtScherm();
-  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
+  navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
   // de tekening-ophaler van de reis kijkt naar een scherm dat er niet meer is
   if (id !== 'screen-journey') reisStopWaarnemer();
@@ -3484,12 +3484,29 @@ function naTik(fn) {
   tikWacht = true;
   requestAnimationFrame(() => setTimeout(() => { tikWacht = false; fn(); }, 0));
 }
+/* Welk tabblad is het: de klasse voor het oog, aria-current voor een schermlezer
+   (die ziet het blauwe vlak niet), en --nav-i voor het vlak zelf, dat ernaartoe
+   schuift (zie .nav-sel). Op één plek, zodat die drie nooit uit elkaar lopen.
+   Zonder tabblad (een scherm zonder balk) blijft het vlak staan waar het stond:
+   de balk is dan toch weg. */
+function navZet(navId) {
+  // binnen de functie en niet als const erboven: show() kan al bij het opstarten
+  // lopen, en dan zou een const die verderop staat nog niet bestaan
+  const tabs = ['nav-map', 'nav-dress', 'nav-tro'];
+  tabs.forEach(n => {
+    const knop = $(n), aan = n === navId;
+    knop.classList.toggle('active', aan);
+    if (aan) knop.setAttribute('aria-current', 'page'); else knop.removeAttribute('aria-current');
+  });
+  const i = tabs.indexOf(navId);
+  if (i >= 0) $('main-nav').style.setProperty('--nav-i', i);
+}
 // De tabbladbalk: het tabblad licht meteen op, de rest volgt na het beeldje.
 function navTik(t) {
   if (tikWacht) return;
   sndClick();
   const wasActive = $('nav-' + t).classList.contains('active');
-  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === 'nav-' + t));
+  navZet('nav-' + t);
   naTik(() => navGo(t, wasActive, true));
 }
 function navGo(t, wasActiveAl, stil) {
@@ -8745,7 +8762,10 @@ function memPayout(p) { return buildMemoryDeck(p).pairs * MEM_PAIR_GAIN + MEM_DO
 function updateTroDot() {
   if (!cur) return;
   const p = P();
-  $('nav-tro').classList.toggle('has-new', (p.readyTrophies || []).length > 0);
+  const nieuw = (p.readyTrophies || []).length > 0;
+  $('nav-tro').classList.toggle('has-new', nieuw);
+  // het stipje zegt "er ligt iets klaar"; een schermlezer krijgt dat in woorden
+  $('nav-tro').setAttribute('aria-label', nieuw ? 'Trofeeën, nieuw' : 'Trofeeën');
 }
 
 /* ================= Vragen maken =================

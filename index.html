@@ -659,8 +659,9 @@
 
 
 
+
     --veilig-onder: env(safe-area-inset-bottom, 0px);
-    --balk-h: 60px;
+    --balk-h: 64px;
     --balk-rand: 10px;
     --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
 
@@ -767,6 +768,8 @@
 
     --tx-feest: clamp(24px, 7vw, 32px);
     --tx-feest-kort: clamp(19px, 5.4vw, 25px);
+
+
 
 
 
@@ -2978,7 +2981,7 @@
   .main-nav {
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: calc(var(--balk-rand) + var(--veilig-onder)); z-index: 40;
-    display: none; gap: 5px; padding: 6px; border-radius: var(--r-lg); width: var(--balk-w);
+    display: none; gap: var(--tab-gap); padding: 6px var(--tab-gap); border-radius: var(--r-lg); width: max-content;
     background: var(--nav-bg);
     backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
     -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(1.25);
@@ -3103,27 +3106,60 @@
 
 
   .main-nav, .dress-bar, .reis-terug { margin-bottom: var(--vh-drift, 0px); }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-family: inherit; font-size: var(--tx-klein); font-weight: 700; color: var(--c-white); opacity: .82;
-
-
-    text-shadow: var(--nav-ink);
 
 
 
 
 
-    background: transparent; border: none; border-radius: var(--r-md); padding: 7px 4px; cursor: pointer;
-    transition: transform var(--t-tik), background .15s, opacity .15s;
-    justify-content: center;
+
+
+
+
+
+
+
+
+
+  :root { --tab-w: 76px; --tab-h: 52px; --tab-gap: 8px; --tab-ico: 32px; }
+  @media (min-width: 600px) and (min-height: 700px) {
+    :root { --tab-w: 88px; --tab-h: 60px; --tab-ico: 36px; --balk-h: 72px; }
   }
-  .nav-item .nav-ico { font-size: 31px; line-height: 1.1; filter: var(--emoji-schaduw); }
+  .nav-item {
+    flex: none; width: var(--tab-w); height: var(--tab-h);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: inherit; color: var(--c-white);
+
+
+    opacity: .75;
+    background: transparent; border: none; border-radius: var(--r-md); padding: 0; cursor: pointer;
+    position: relative; z-index: 1;
+    transition: transform var(--t-tik), background .15s, opacity .15s;
+  }
+  .nav-item .nav-ico { font-size: var(--tab-ico); line-height: 1.1; filter: var(--emoji-schaduw); }
   .nav-item:active { transform: scale(.94); }
+  .nav-item.active { opacity: 1; }
+
+
+  @media (hover: hover) {
+    .nav-item:not(.active):hover { opacity: 1; background: rgba(255,255,255,.08); }
+  }
 
 
 
-  .nav-item.active { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+
+
+
+
+
+
+  .nav-sel {
+    position: absolute; left: var(--tab-gap); top: 6px; width: var(--tab-w); height: var(--tab-h);
+    border-radius: var(--r-md); background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
+    pointer-events: none;
+    transform: translateX(calc(var(--nav-i, 0) * (var(--tab-w) + var(--tab-gap))));
+    transition: transform var(--t-snel) cubic-bezier(.2, .8, .2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) { .nav-sel { transition: none; } }
 
 
 
@@ -9622,12 +9658,16 @@
 
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën.
      Alleen de iconen: wie hier speelt leest meestal nog niet, 🗺️ 👕 🏆 zeggen het zelf
-     en het blauwe vlak zegt waar je bent. De woorden staan in aria-label en title. -->
-<div class="main-nav" id="main-nav">
+     en het blauwe vlak zegt waar je bent. De woorden staan in aria-label en title.
+     Een echte <nav>, zodat een schermlezer hem als menu vindt; het tabblad waar je
+     bent draagt aria-current (zie navZet). .nav-sel is het blauwe vlak zelf: één
+     stuk dat naar het gekozen tabblad schuift, in plaats van drie die aan en uit knippen. -->
+<nav class="main-nav" id="main-nav" aria-label="Menu">
+  <span class="nav-sel" aria-hidden="true"></span>
   <button class="nav-item" id="nav-map" onclick="navTik('map')" aria-label="Kaart" title="Kaart"><span class="nav-ico" aria-hidden="true">🗺️</span></button>
   <button class="nav-item" id="nav-dress" onclick="navTik('dress')" aria-label="Kleedkamer" title="Kleedkamer"><span class="nav-ico" aria-hidden="true">👕</span></button>
   <button class="nav-item" id="nav-tro" onclick="navTik('tro')" aria-label="Trofeeën" title="Trofeeën"><span class="nav-ico" aria-hidden="true">🏆</span><span class="nav-dot"></span></button>
-</div>
+</nav>
 
 <!-- Linksboven, het spiegelbeeld van het tandwiel: "Als app". Alleen op de
      sterrenkeuze en alleen in de browser -- appKnopZet zet hem aan en uit. -->
@@ -14052,7 +14092,7 @@ function show(id) {
   appKnopZet();
 
   const navId = navVolgtScherm();
-  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === navId));
+  navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
 
   if (id !== 'screen-journey') reisStopWaarnemer();
@@ -14090,11 +14130,28 @@ function naTik(fn) {
   requestAnimationFrame(() => setTimeout(() => { tikWacht = false; fn(); }, 0));
 }
 
+
+
+
+
+function navZet(navId) {
+
+
+  const tabs = ['nav-map', 'nav-dress', 'nav-tro'];
+  tabs.forEach(n => {
+    const knop = $(n), aan = n === navId;
+    knop.classList.toggle('active', aan);
+    if (aan) knop.setAttribute('aria-current', 'page'); else knop.removeAttribute('aria-current');
+  });
+  const i = tabs.indexOf(navId);
+  if (i >= 0) $('main-nav').style.setProperty('--nav-i', i);
+}
+
 function navTik(t) {
   if (tikWacht) return;
   sndClick();
   const wasActive = $('nav-' + t).classList.contains('active');
-  ['nav-map', 'nav-dress', 'nav-tro'].forEach(n => $(n).classList.toggle('active', n === 'nav-' + t));
+  navZet('nav-' + t);
   naTik(() => navGo(t, wasActive, true));
 }
 function navGo(t, wasActiveAl, stil) {
@@ -19350,7 +19407,10 @@ function memPayout(p) { return buildMemoryDeck(p).pairs * MEM_PAIR_GAIN + MEM_DO
 function updateTroDot() {
   if (!cur) return;
   const p = P();
-  $('nav-tro').classList.toggle('has-new', (p.readyTrophies || []).length > 0);
+  const nieuw = (p.readyTrophies || []).length > 0;
+  $('nav-tro').classList.toggle('has-new', nieuw);
+
+  $('nav-tro').setAttribute('aria-label', nieuw ? 'Trofeeën, nieuw' : 'Trofeeën');
 }
 
 

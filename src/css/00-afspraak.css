@@ -614,7 +614,8 @@
          --veilig-onder  de veilige zone van het toestel (0 op alles zonder
                          streepje; zonder viewport-fit=cover kadert de browser
                          zelf al af, dan is dit óók 0 en verandert er niets)
-         --balk-h        hoe hoog .main-nav is (een knop van 48 plus 2x6 padding)
+         --balk-h        hoe hoog .main-nav is (een knop plus 2x6 padding; de knopmaat
+                         en de tabletmaat staan bij .nav-item in 40-kaart.css)
          --balk-rand     hoe ver de balk van de schermrand zweeft
          --balk-ruimte   wat een scherm mét vaste navigatie onderaan vrij moet
                          houden, veilige zone incl. Elk scherm telt daar zijn
@@ -624,7 +625,7 @@
        kaart bij het openen zélf opmeet (zie meetChroom) en die de balk plús wat
        eronder zit plús marge bevat. Vandaar --balk-* voor de vaste waarden. */
     --veilig-onder: env(safe-area-inset-bottom, 0px);
-    --balk-h: 60px;
+    --balk-h: 64px;
     --balk-rand: 10px;
     --balk-ruimte: calc(var(--balk-h) + var(--balk-rand) * 2 + var(--veilig-onder));
 
@@ -741,10 +742,12 @@
        boven een kolom van 680, met een balk van 430 eronder: drie randen op drie
        plekken, alsof de drie bij verschillende schermen hoorden.
 
-         --balk-w   de zwevende balken ONDERaan: .main-nav en .dress-bar. Voor
+         --balk-w   de zwevende balk ONDERaan in de kleedkamer (.dress-bar). Voor
                     duimen gemaakt, dus bewust telefoonbreed en niet meegroeiend.
                     Ook de kop van de kaart en van Werelden in liggende stand,
                     zodat podium + kop + balk daar samen één toestel vormen.
+                    De navigatie zelf (.main-nav) is sinds oktober 2026 smaller:
+                    zo breed als zijn drie knoppen (zie .nav-item).
          --kolom    de inhoudskolom van ÉÉN scherm. Elk scherm zet zijn eigen
                     waarde (zie .screen hieronder) en zowel de kop als de inhoud
                     lezen hem -- daarmee is "de kop is net zo breed als wat
