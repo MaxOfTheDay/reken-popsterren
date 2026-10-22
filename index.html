@@ -2479,6 +2479,11 @@
 
 
   .avatar-holder.move-buig   > .pas-laag { animation: mvBuig var(--t-pas, .9s) ease-in-out; }
+
+
+
+
+  .avatar-holder.move-huppel > .pas-laag { animation: mvHuppel var(--t-huppel, .66s) cubic-bezier(.3,.7,.4,1); }
   @keyframes mvJump {
     0%,100% { transform: translateY(0) scale(1); }
     30% { transform: translateY(-38px) scale(1.06); }
@@ -2508,6 +2513,14 @@
     40% { transform: translateY(0) rotate(-6deg); }
     60% { transform: translateY(-8px) rotate(6deg); }
     80% { transform: translateY(0) rotate(-4deg); }
+  }
+  @keyframes mvHuppel {
+    0%   { transform: none; }
+    16%  { transform: scale(1.1, .86); }
+    42%  { transform: translateY(-24px) scale(.94, 1.08); }
+    62%  { transform: translateY(0) scale(1.12, .88); }
+    78%  { transform: scale(.97, 1.03); }
+    100% { transform: none; }
   }
   @keyframes mvBuig {
     0%,100% { transform: none; }
@@ -5025,23 +5038,17 @@
 
 
 
+
+
   .tour-stop.next .stop-body::after {
     content: ''; position: absolute; z-index: -1; pointer-events: none; opacity: 0;
-    left: 50%; top: 5.15cqw; width: 34cqw; height: 34cqw; margin: -17cqw 0 0 -17cqw;
-    border-radius: 50%;
-    background: radial-gradient(closest-side,
-      rgba(var(--warm-licht-rgb),.26),
-      rgba(var(--warm-licht-rgb),.72) 44%,
-      rgba(var(--warm-licht-rgb),.36) 68%,
-      transparent 92%);
+    left: 50%; top: 5.15cqw; width: 20cqw; height: 20cqw; margin: -10cqw 0 0 -10cqw;
+    border-radius: 50%; border: 1cqw solid var(--halte-sticker);
+    box-shadow: 0 0 0 .5cqw var(--gold-cta-top), inset 0 0 0 .5cqw var(--gold-cta-top);
   }
-  .tour-stop.next.aangekomen .stop-body::after { animation: haltePuls 680ms var(--ease-uit); }
-
-
-
-  @keyframes haltePuls {
-    0%   { opacity: 0; transform: scale(.88); }
-    30%  { opacity: 1; transform: scale(1.18); }
+  .tour-stop.next.aangekomen .stop-body::after { animation: aankomstRing 560ms var(--ease-uit); }
+  @keyframes aankomstRing {
+    0%   { opacity: 1; transform: scale(.6); }
     100% { opacity: 0; transform: scale(1.5); }
   }
 
@@ -5437,19 +5444,6 @@
 
 
   .tour-hero .avatar-holder { position: relative; z-index: 1; }
-
-
-  .tour-hero .hero-vonk {
-    position: absolute; z-index: 2; top: 4%; right: -5%; width: 16%;
-    opacity: 0; animation: heroVonk 6.5s ease-in-out infinite;
-  }
-  .tour-hero .hero-vonk svg { width: 100%; height: auto; display: block; fill: #fff7dc;
-    filter: drop-shadow(0 0 4px rgba(var(--warm-licht-rgb),.85)); }
-  @keyframes heroVonk {
-    0%, 80%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
-    86%           { opacity: 1; transform: scale(1.05) rotate(10deg); }
-    93%           { opacity: .5; transform: scale(.7) rotate(-8deg); }
-  }
 
 
 
@@ -6185,7 +6179,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .map-sky span, .avatar-holder.idle { animation: none; }
-    .tour-hero .hero-vonk { display: none; }
 
 
 
@@ -9559,7 +9552,15 @@ const MOVES = [
 
 
 const BUIGING = { cls: 'move-buig', label: '🙇 Buiging!' };
-const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls);
+
+
+
+
+
+
+const HUPPEL = { cls: 'move-huppel', duur: 660, landt: .62 };
+document.documentElement.style.setProperty('--t-huppel', HUPPEL.duur + 'ms');
+const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls, HUPPEL.cls);
 
 
 
@@ -14737,6 +14738,7 @@ function zijReistMee(plaats, vier) {
       if (!z || !z.animate || motionOff() || !$('screen-map').classList.contains('active')) return vier();
       z.animate([{ opacity: 0, translate: '0 -70px', scale: '.85' }, { opacity: 1, translate: '0 0', scale: '1' }],
         { duration: WERELDREIS.sprong, easing: MOTION.plop });
+      setTimeout(haltePuls, Math.round(WERELDREIS.sprong * .45));
       setTimeout(vier, Math.round(WERELDREIS.sprong * .8));
     },
   };
@@ -16221,14 +16223,20 @@ function goMapNaShow() { sndClick(); cancelSpeech(); goMap(naShowLvl); }
 
 
 
+
+
+
 const GROET = {
   koeltijd: 2500,
 
+  pas: HUPPEL,
+  duur: HUPPEL.duur + 50,
 
-
-  pas: { cls: 'move-wave' },
-  duur: PAS + 50,
+  landt: Math.round(HUPPEL.duur * HUPPEL.landt),
 };
+
+
+
 
 
 
@@ -16268,13 +16276,7 @@ function kaartGroet(mag) {
 
 
 
-
-
-
-
-
-
-  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + 300);
+  pulsTimer = setTimeout(() => { pulsTimer = null; haltePuls(); }, MOTION.totaal + GROET.landt);
   groetTimer = setTimeout(() => {
     groetTimer = null;
     const map = $('tour-map');
@@ -16879,8 +16881,6 @@ function reisGlansSVG() {
   return _reisGlans;
 }
 
-const TOUR_VONK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${VONK(10, 10, 7)}"/></svg>`;
-
 
 
 
@@ -17455,8 +17455,12 @@ function kaartOpbouw(map, start) {
   haltes.forEach((h, i) => h.animate([{ opacity: 0, scale: '.55' }, { opacity: 1, scale: '1' }],
     tijd(start + VLUCHT.haltePas * (i + 1), VLUCHT.opbouwDuur, MOTION.plop)));
   const zij = map.querySelector('.tour-hero');
-  if (zij) zij.animate([{ opacity: 0, translate: '0 -34px' }, { opacity: 1, translate: '0 0' }],
-    tijd(start + VLUCHT.haltePas * (haltes.length + 2), VLUCHT.landing, MOTION.plop));
+  if (!zij) return;
+  const na = start + VLUCHT.haltePas * (haltes.length + 2);
+  zij.animate([{ opacity: 0, translate: '0 -34px' }, { opacity: 1, translate: '0 0' }],
+    tijd(na, VLUCHT.landing, MOTION.plop));
+
+  setTimeout(haltePuls, na + Math.round(VLUCHT.landing * .45));
 }
 function reisNaarWereld(idx, el, stil, alGetikt) {
   if (overgangBezig) return;
@@ -17707,8 +17711,7 @@ function haltKnop(shown, nodes, i, stand) {
 
   if (open && st === 3) b.classList.add('perfect');
   const hero = lvl === heroLvl
-    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div>`
-      + `<span class="hero-vonk">${TOUR_VONK}</span></div>` : '';
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div></div>` : '';
 
 
 

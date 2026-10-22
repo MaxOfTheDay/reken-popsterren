@@ -1342,13 +1342,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   }
 
   /* ================= 9 · De kaart zegt hallo =================
-     Eén zwaai als de kaart zélf de aankomst is, en geen als er al iets beweegt
+     Eén huppel als de kaart zélf de aankomst is, en geen als er al iets beweegt
      dat uitlegt waaróm de ster daar staat. Dat is de hele regel (zie kaartGroet
      boven goMap), en hij is alleen iets waard als hij aan beide kanten klopt --
-     dus staan hier de wegen die wél zwaaien naast de wegen die dat niet mogen.
+     dus staan hier de wegen die wél huppelen naast de wegen die dat niet mogen.
 
      Er wordt gekeken naar de klassen op de pop en niet naar een schermafdruk:
-     "ze zwaait" is in dit bestand letterlijk .dancing.move-wave, en "ze staat
+     "ze huppelt" is in dit bestand letterlijk .dancing.move-huppel, en "ze staat
      gewoon" is .idle. Het onderscheid dat ertoe doet -- gebeurt er íets, of
      niet -- is daarmee een waarde en geen oordeel. */
   {
@@ -1366,20 +1366,20 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     });
     await g.goto(SPEL_URL);
     await g.evaluate(() => {
-      // de pop op de kaart, in klassen: 'dancing move-wave' of 'idle'
+      // de pop op de kaart, in klassen: 'dancing move-huppel' of 'idle'
       window.__ster = () => {
         const el = document.querySelector('#tour-map .tour-hero .avatar-holder');
         return el ? el.className : '(geen ster op de kaart)';
       };
     });
-    // de zwaai begint op MOTION.totaal en duurt .9s: hier zit hij er middenin
+    // de huppel begint op MOTION.totaal en duurt HUPPEL.duur: hier zit hij er middenin
     const kijk = async (ms) => { await g.waitForTimeout(ms == null ? 450 : ms); return g.evaluate(() => window.__ster()); };
     const rust = () => g.waitForTimeout(2700);   // ruim over de koeltijd heen
 
     let k = (await g.evaluate(() => selectProfile('p1')), await kijk());
-    check(/move-wave/.test(k), 'een ster kiezen komt aan op de kaart, en daar wordt gezwaaid', k);
+    check(/move-huppel/.test(k), 'een ster kiezen komt aan op de kaart, en daar huppelt ze', k);
 
-    // binnen de koeltijd heen en weer: één zwaai per bezoek, niet drie
+    // binnen de koeltijd heen en weer: één huppel per bezoek, niet drie
     k = await g.evaluate(async () => {
       openKleedkamer();
       await new Promise(r => setTimeout(r, 150));
@@ -1387,7 +1387,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 450));
       return window.__ster();
     });
-    check(!/move-wave/.test(k), 'meteen heen en weer naar de kleedkamer zwaait niet nóg een keer', k);
+    check(!/move-huppel/.test(k), 'meteen heen en weer naar de kleedkamer huppelt niet nóg een keer', k);
 
     await rust();
     k = await g.evaluate(async () => {
@@ -1397,13 +1397,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 450));
       return window.__ster();
     });
-    check(/move-wave/.test(k), 'maar een echte terugkomst uit de kast later wél', k);
+    check(/move-huppel/.test(k), 'maar een echte terugkomst uit de kast later wél', k);
 
     // en daarna staat ze gewoon weer te wiegen -- geen klasse blijft hangen
     k = await kijk(900);
-    check(k === 'avatar-holder idle', 'na de zwaai staat ze weer gewoon op haar plek', k);
+    check(k === 'avatar-holder idle', 'na de huppel staat ze weer gewoon op haar plek', k);
 
-    /* Wegwandelen middenin de zwaai stopt hem. Niet uit netheid: een zwaai die
+    /* Wegwandelen middenin de huppel stopt hem. Niet uit netheid: een huppel die
        doorloopt op een scherm dat je verlaten hebt vecht om beeldjes met wat er
        dán begint, en dat is meestal de vlucht naar Werelden -- de enige animatie
        in de app die van élk beeldje afhangt. Opgemeten lag de tekening op het
@@ -1419,13 +1419,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 80));
       return { tijdens, nog: window.__ster() };
     });
-    check(/move-wave/.test(onderbroken.tijdens) && !/move-wave|dancing/.test(onderbroken.nog),
-      'wegwandelen middenin de zwaai stopt hem, en laat niets bewegen op een scherm dat weg is',
+    check(/move-huppel/.test(onderbroken.tijdens) && !/move-huppel|dancing/.test(onderbroken.nog),
+      'wegwandelen middenin de huppel stopt hem, en laat niets bewegen op een scherm dat weg is',
       JSON.stringify(onderbroken));
     await g.evaluate(() => goMap());
     await g.waitForTimeout(600);
 
-    /* ---- De naad tussen wiegen en zwaaien ----
+    /* ---- De naad tussen wiegen en huppelen ----
        Het wiegen en het pasje zijn twee lagen (zie de CSS bij de danspasjes) en
        juist daarom is er geen wissel meer: het pasje staat op de tekening, het
        wiegen op de pop, en elk pasje voegt op 0% en 100% niets toe. Wat hier
@@ -1452,7 +1452,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         if (!laag) return null;
         const M = el => new DOMMatrixReadOnly(getComputedStyle(el).transform);
         const m = M(h).multiply(M(laag));
-        return { deg: Math.atan2(m.b, m.a) * 180 / Math.PI, pas: /move-/.test(h.className) };
+        return { deg: Math.atan2(m.b, m.a) * 180 / Math.PI, y: m.f, pas: /move-/.test(h.className) };
       };
       const rij = [];
       await new Promise(klaar => {
@@ -1468,13 +1468,13 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       for (let i = 1; i < rij.length; i++) {
         if (rij[i].pas !== rij[i - 1].pas) stappen.push(+Math.abs(rij[i].deg - rij[i - 1].deg).toFixed(2));
       }
-      return { stappen, beeldjes: rij.length, uitslag: +Math.max(...rij.map(x => Math.abs(x.deg))).toFixed(1) };
+      return { stappen, beeldjes: rij.length, hoogte: +Math.max(...rij.map(x => Math.abs(x.y))).toFixed(1) };
     });
     check(naad.stappen.length === 2 && naad.stappen.every(d => d < 0.5),
       'het pasje zet in en loopt uit zonder tikje: het wiegen loopt gewoon door',
       JSON.stringify(naad));
-    check(naad.uitslag > 4,
-      'en het is nog steeds een echte zwaai, geen beleefd knikje', JSON.stringify(naad));
+    check(naad.hoogte > 12,
+      'en het is een echte huppel, geen beleefd knikje', JSON.stringify(naad));
     await g.evaluate(() => goMap());
     await g.waitForTimeout(600);
 
@@ -1486,7 +1486,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 450));
       return window.__ster();
     });
-    check(!/move-wave/.test(k), 'terugkomen uit een show is geen begroeting maar een afloop', k);
+    check(!/move-huppel/.test(k), 'terugkomen uit een show is geen begroeting maar een afloop', k);
 
     await rust();
     k = await g.evaluate(async () => {
@@ -1494,7 +1494,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 450));
       return window.__ster();
     });
-    check(!/move-wave/.test(k), 'de kaart opnieuw tekenen is geen aankomst', k);
+    check(!/move-huppel/.test(k), 'de kaart opnieuw tekenen is geen aankomst', k);
 
     await rust();
     k = await g.evaluate(async () => {
@@ -1502,7 +1502,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       await new Promise(r => setTimeout(r, 450));
       return window.__ster();
     });
-    check(!/move-wave/.test(k), 'en op Kaart tikken terwijl je er al staat ook niet', k);
+    check(!/move-huppel/.test(k), 'en op Kaart tikken terwijl je er al staat ook niet', k);
 
     // een wereld kiezen op de reis: de vlucht is al een aankomst
     await rust();
@@ -1512,9 +1512,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       reisNaarWereld(0, document.querySelector('.reis-halte[data-w="0"]'));
       const uit = [];
       for (let i = 0; i < 8; i++) { await new Promise(r => setTimeout(r, 180)); uit.push(window.__ster()); }
-      return uit.filter(x => /move-wave/.test(x));
+      return uit.filter(x => /move-huppel/.test(x));
     });
-    check(reis.length === 0, 'een wereld kiezen op de reis vliegt al -- er komt geen zwaai overheen',
+    check(reis.length === 0, 'een wereld kiezen op de reis vliegt al -- er komt geen huppel overheen',
       JSON.stringify(reis));
     await groetCtx.close();
 
@@ -1538,7 +1538,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       return { klas: el ? el.className : '(geen ster)', beweegt: el ? getComputedStyle(el).animationName : '?' };
     });
     check(stil.klas === 'avatar-holder idle' && stil.beweegt === 'none',
-      'zonder beweging wordt er niet gezwaaid en staat ze in haar gewone stand', JSON.stringify(stil));
+      'zonder beweging wordt er niet gehuppeld en staat ze in haar gewone stand', JSON.stringify(stil));
     await stilCtx.close();
   }
 
@@ -1815,7 +1815,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
   /* ================= 11 · De halte waar je heen moet =================
      De huidige halte ademde lang (stopSpot, een gouden gloed achter het
      rondje). Die gloed is weg: de ster stond er middenin, en licht op licht
-     maakte haar wazig. Wat blijft is één puls bij het binnenkomen.
+     maakte haar wazig. Wat blijft is één scherpe ring als ze landt.
 
      Wat hier vastligt is vooral wat er NIET mag: geen halte die nog doorlopend
      ademt, niet pulsen als de ster net zelf over de route naar die halte toe
@@ -1844,7 +1844,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         for (let i = 0; i < ms / 40; i++) {
           await new Promise(r => setTimeout(r, 40));
           const b = document.querySelector('#tour-map .tour-stop.next.aangekomen .stop-body');
-          if (b && getComputedStyle(b, '::after').animationName === 'haltePuls'
+          if (b && getComputedStyle(b, '::after').animationName === 'aankomstRing'
               && +getComputedStyle(b, '::after').opacity > .02) gezien = true;
         }
         return gezien;
@@ -1865,7 +1865,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       'en een gespeelde of gesloten halte doet niets', JSON.stringify(wie));
 
     check(await h.evaluate(() => window.__pulst(() => { openKleedkamer(); setTimeout(goMap, 300); }, 1800)),
-      'gewoon terugkomen op de kaart laat de halte één keer oplichten', 'geen puls gezien');
+      'gewoon terugkomen op de kaart laat de ring één keer uit de halte springen', 'geen ring gezien');
 
     /* Ná een show huppelt de ster zelf naar de volgende halte. Dát is de
        aankomst; er hoort geen tweede aankondiging overheen. */
