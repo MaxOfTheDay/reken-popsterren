@@ -1177,10 +1177,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
           woord verandert. Op een liggende telefoon heette de ene 20 en de andere
           24, en op de kleinste telefoon andersom 20 en 17. De kaart houdt zijn
           eigen rij: ZONE is uit de onderrand van díé kop gemeten.
-       B  de kleedkamer gaat gescrold dicht in de band onder de spiegel, zoals de
-          kast gescrold dichtgaat -- maar de spiegel zelf blijft open, en de kop
-          wordt er niet hoger of lager van. Behalve op een laag staand scherm:
-          daar krimpt de spiegel, en blijft het rek eronder stil staan.
+       B  de balk met de laden is de dichte bovenkant van de lade: gescrold
+          blijft hij helemaal in beeld en schuift het rek eronder door, niet
+          erdoorheen. De kop wordt er niet hoger of lager van. Behalve op een
+          laag staand scherm: daar krimpt de spiegel, en blijft het rek eronder
+          stil staan.
        D  de kleedkamer en de kast hebben geen ← als je er via de tabbladbalk
           komt: de balk zelf is de weg terug. Onzichtbaar en niet weg, zodat zijn
           kolom de titel in het midden houdt (C).
@@ -1217,10 +1218,11 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         openKleedkamer(); await wacht(500); uit.kleed = rij();
         const sc = document.getElementById('screen-dress'), kop = sc.querySelector('.hub-sticky');
         const lade = () => {
-          const k = kop.getBoundingClientRect(), laag = getComputedStyle(kop, '::after');
-          return { klasse: sc.classList.contains('gescrold'), op: +laag.opacity,
+          const balk = document.getElementById('shop-tabs-wrap'), b = balk.getBoundingClientRect();
+          return { klasse: sc.classList.contains('gescrold'),
             kopH: parseFloat(getComputedStyle(kop).height),
-            laagBoven: +(k.bottom - parseFloat(getComputedStyle(kop).borderBottomWidth) - parseFloat(laag.height)).toFixed(1) };
+            balkBoven: +b.top.toFixed(1), balkOnder: +b.bottom.toFixed(1),
+            dicht: /^rgb\(/.test(getComputedStyle(balk).backgroundColor) };
         };
         uit.ladeOpen = lade();
         const kaartje = () => { const c = sc.querySelector('#item-grid .item-card'); return +(c.getBoundingClientRect().top + sc.scrollTop).toFixed(1); };
@@ -1229,8 +1231,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         uit.ladeDicht = lade();
         uit.rekDicht = kaartje();
         uit.laagStaand = matchMedia('(orientation: portrait) and (max-height: 700px)').matches;
-        uit.spiegelOnder = +document.getElementById('shop-spiegel').getBoundingClientRect().bottom.toFixed(1);
-        uit.rijBoven = +document.getElementById('shop-tabs-wrap').getBoundingClientRect().top.toFixed(1);
+        uit.scrolt = sc.scrollTop > 0;
+        uit.schermBoven = +sc.getBoundingClientRect().top.toFixed(1);
+        uit.eersteRij = +(sc.querySelector('#item-grid .item-card').getBoundingClientRect().top).toFixed(1);
         uit.balk = [...document.querySelectorAll('#shop-tabs .tab-btn')].map(b => { const r = b.getBoundingClientRect();
           return { in: r.left >= 0 && r.right <= innerWidth + 0.5, b: Math.round(r.width), h: Math.round(r.height) }; });
         openTrophies(); await wacht(500); uit.kast = rij();
@@ -1250,11 +1253,12 @@ const SPEL_URL = APP_URL.replace('?debug', '');
       check(r.kleed.terugZicht === 'hidden' && r.kast.terugZicht === 'hidden',
         'D · vanaf de tabbladbalk hebben de kleedkamer en de kast geen ←' + maat,
         JSON.stringify([r.kleed, r.kast]));
-      check(!r.ladeOpen.klasse && r.ladeOpen.op === 0 && r.ladeDicht.klasse && r.ladeDicht.op === 1,
-        'B · gescrold gaat de band onder de spiegel dicht, bovenaan staat hij open' + maat,
-        JSON.stringify([r.ladeOpen, r.ladeDicht]));
-      check(r.ladeDicht.laagBoven >= r.spiegelOnder - 0.5 && r.ladeDicht.laagBoven <= r.rijBoven,
-        'B · die band begint onder de spiegel en vóór de categorierij' + maat, JSON.stringify(r));
+      /* op een bureaublad past de lade soms helemaal: dan scrolt er niets, en is
+         er ook niets dat onder de balk door kan */
+      if (r.scrolt) check(!r.ladeOpen.klasse && r.ladeDicht.klasse && r.ladeDicht.dicht
+        && r.ladeDicht.balkBoven >= r.schermBoven - 0.5 && r.eersteRij < r.ladeDicht.balkOnder,
+        'B · gescrold blijft de balk met de laden dicht in beeld en schuift het rek eronder door' + maat,
+        JSON.stringify([r.ladeOpen, r.ladeDicht, r.schermBoven, r.eersteRij]));
       /* Op een laag staand scherm krimpt de spiegel gescrold wél (zie "Laag en
          staand" in 75-kleedkamer.css), zodat er meer rek in beeld komt. Wat daar
          blijft gelden: het rek eronder schuift er geen pixel van op. */
