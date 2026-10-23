@@ -820,6 +820,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     kast: document.getElementById('screen-trophies').classList.contains('active'),
     kaarten: document.querySelectorAll('.trophy-card, .tro-card').length,
     teller: document.getElementById('trophy-count').textContent,
+    tellerLabel: document.getElementById('trophy-count').getAttribute('aria-label'),
     // fase 5C: geen kastbalk, geen plankbalk, geen balk per kaartje. PS-32 heeft
     // daar één uitzondering op gemaakt en die staat hieronder apart: de stand-pil
     // in de kop vult zichzelf. Een balk als éígen element blijft weg.
@@ -833,13 +834,15 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     kopRuim: !document.getElementById('screen-trophies').classList.contains('gescrold'),
   }));
   check(r.kast && r.kaarten > 10, 'de trofeeënkast staat vol kaarten', JSON.stringify(r));
-  /* PS-32 -- de stand staat als pil in de kop, met dezelfde woorden waarmee het
-     schattenvak in de kleedkamer telt: "3 verzameld". Zonder totaal: dat groeide
-     met elke wereld die erbij kwam (zie .kast-telling). */
-  check(/^\s*\d+\s+verzameld\s*$/.test(r.teller), 'de kastteller staat er, zonder totaal', r.teller);
+  /* De stand staat als pil in de koprij, naast het saldo: 🏆 en een getal, met de
+     woorden ("3 verzameld") in de aria-label. Zonder totaal: dat groeide met elke
+     wereld die erbij kwam (zie .kast-chip). */
+  check(/^\s*🏆\s*\d+\s*$/.test(r.teller) && /^\d+ verzameld$/.test(r.tellerLabel || ''),
+    'de kastteller staat er, zonder totaal', JSON.stringify([r.teller, r.tellerLabel]));
   check(r.balken === 0, 'en er staat geen losse voortgangsbalk op het scherm', r.balken);
-  check(r.panelen === 0 && r.groepen === 4 && r.groepTelling === 4,
-    'de vier groepen staan als kopregel met een eigen stand, niet als paneel', JSON.stringify(r));
+  /* Oktober 2026: de stand per plank is weg -- de 🏆 in de kop telt al. */
+  check(r.panelen === 0 && r.groepen === 4 && r.groepTelling === 0,
+    'de vier groepen staan als kopregel zonder eigen stand, niet als paneel', JSON.stringify(r));
   check(r.rangStrook === 0, 'de kast eindigt bij de trofeeën, zonder ster-statusstrook', r.rangStrook);
   /* De horizon: de perfecte plank toont wat je hebt plus de werelden tot aan
      laatsteZichtbareWereld -- dezelfde grens als de reis -- en daarboven één
@@ -852,7 +855,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     const mist = plank ? plank.querySelectorAll('.horizon-mist').length : -1;
     const verwacht = TROPHIES.filter(t => t.perfect && (binnenHorizon(p, t.index)
       || p.trophies.includes(t.id) || (p.readyTrophies || []).includes(t.id))).length;
-    const telling = plank ? plank.parentNode.querySelector('.groep-telling').textContent : '';
+    const telling = plank ? plank.parentNode.querySelector('.groep-kop').textContent : '';
     return { echt, mist, verwacht, alle: WORLD_AVAIL, meer: meerWereldenVooruit(p), telling };
   });
   check(hz.echt === hz.verwacht && hz.mist === (hz.echt < hz.alle ? 1 : 0),
@@ -861,8 +864,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'en met mist erachter verklapt de plankteller geen totaal', JSON.stringify(hz));
   check(r.kopRuim, 'bovenaan staat de ruime kop', 'kop staat meteen in de krappe stand');
 
-  /* De krappe kop: zodra er gescrold wordt klapt de zin met de stand weg en wordt
-     de plaat dekkender, zodat er geen trofeenamen meer door de kop heen lezen. */
+  /* De krappe kop: zodra er gescrold wordt wordt hij dicht (de kleur van de lade),
+     zodat er geen trofeenamen meer door de kop heen lezen. De stand blijft staan:
+     die zit sinds oktober 2026 in de koprij zelf. */
   const gescrold = await page.evaluate(async () => {
     const sc = document.getElementById('screen-trophies');
     const inhoudRuim = document.getElementById('trophy-shelves').offsetTop;
@@ -871,17 +875,19 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     // te krap voor en viel onder belasting soms om
     await new Promise(res => setTimeout(res, 400));
     const zin = document.getElementById('trophy-count');
+    const kopKleur = getComputedStyle(sc.querySelector('.hub-sticky')).backgroundColor;
     return {
       klasse: sc.classList.contains('gescrold'),
-      zinWeg: zin.getBoundingClientRect().height < 2,
+      zinStaat: zin.getBoundingClientRect().height > 20,
+      dicht: /^rgb\(/.test(kopKleur), kopKleur,
       titel: !!document.querySelector('#screen-trophies .header-title'),
       terug: !!document.querySelector('#screen-trophies .header-left'),
       inhoudRuim, inhoudKrap: document.getElementById('trophy-shelves').offsetTop,
     };
   });
-  check(gescrold.klasse && gescrold.zinWeg, 'gescrold krimpt de kop en klapt de stand-zin weg',
+  check(gescrold.klasse && gescrold.dicht, 'gescrold wordt de kop dicht', JSON.stringify(gescrold));
+  check(gescrold.titel && gescrold.terug && gescrold.zinStaat, 'en terug en de stand blijven staan',
     JSON.stringify(gescrold));
-  check(gescrold.titel && gescrold.terug, 'maar terug en de titel blijven staan', JSON.stringify(gescrold));
   /* Wat de kop krimpt komt er als marge onder weer bij (--kop-krimp, zie
      kopKrimpMeten): de plaat wordt kleiner, de plek in de stroom niet. Zonder dat
      trok de krimpende kop de kaartjes eronder mee omhoog. */

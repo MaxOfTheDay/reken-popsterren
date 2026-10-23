@@ -8633,12 +8633,14 @@ function renderShelves() {
   // alleen wat er ook echt in de kast staat telt mee (zie RETIRED_TROPHIES)
   const earned = earnedActiveCount(p);
   telNu($('trophy-diamonds'), p.diamonds);
-  /* De stand als pil: "4 verzameld", de woorden waarmee het schattenvak in de
-     kleedkamer vroeger telde. Zonder totaal -- zie .kast-telling in het stijlblad: dat
-     totaal groeide met elke wereld die erbij kwam, en dan loopt een volle kast
-     leeg zonder dat een kind iets kwijt is. */
-  $('trophy-count').innerHTML =
-    `<span class="kt-tekst"><b>${earned}</b> <span class="kt-woord">verzameld</span></span>`;
+  /* De stand als pil in de kop: 🏆 en het getal, in dezelfde pil als het saldo
+     ernaast (zie .kast-chip). Zonder totaal -- dat groeide met elke wereld die
+     erbij kwam, en dan loopt een volle kast leeg zonder dat een kind iets kwijt
+     is. Wat er nog te halen valt, zie je aan de kaartjes eronder. De woorden
+     ("4 verzameld") staan in de aria-label, voor wie voorgelezen wordt. */
+  const teller = $('trophy-count');
+  teller.innerHTML = `<span aria-hidden="true">🏆</span> <b>${earned}</b>`;
+  teller.setAttribute('aria-label', `${earned} verzameld`);
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
@@ -8655,12 +8657,14 @@ function renderShelves() {
         || (p.readyTrophies || []).includes(id);
     }) : alle;
     const mist = perfectPlank && ids.length < alle.length;
-    const klaar = alle.filter(id => p.trophies.includes(id)).length;
     const groep = document.createElement('section');
-    groep.className = 'kast-groep' + (klaar === alle.length ? ' vol' : '');
-    /* De kopregel van de groep: icoon | naam + regeltje | stand. Het icoon staat
-       aria-hidden -- het herhaalt de naam ernaast, en een voorlezer die "microfoon
-       Avontuur" zegt maakt de kop juist onduidelijker. */
+    groep.className = 'kast-groep';
+    /* De kopregel van de groep: icoon en naam. Het icoon staat aria-hidden -- het
+       herhaalt de naam ernaast, en een voorlezer die "microfoon Avontuur" zegt
+       maakt de kop juist onduidelijker.
+       Er stond rechts nog een stand per plank ("2/4", en voorbij de horizon een
+       kaal "3"). Weg, oktober 2026: de 🏆 in de kop telt al, en vier tellers
+       onder elkaar maakten van de kast weer een lijst. */
     const head = document.createElement('div');
     head.className = 'groep-kop';
     if (shelf.note) head.setAttribute('aria-label', `${shelf.name}: ${shelf.note}`);
@@ -8668,14 +8672,7 @@ function renderShelves() {
       /* Geen regeltje meer onder de naam (shelf.note): de kast is een plek om naar
          te kíjken, en vier zinnen boven de planken maakten er een leesblad van. De
          tekst staat nog in TROPHY_SHELVES; wie hem wil, vindt hem in de aria-label. */
-      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div></div>`
-      /* Ligt er voorbij de horizon nog meer, dan geen "van de": het totaal zou
-         verklappen hoeveel werelden er nog komen, en precies dat laat de mist
-         open. Dan alleen wat je hebt, zoals de pil bovenaan. */
-      + (mist
-        ? `<span class="groep-telling" aria-label="${klaar} behaald"><b>${klaar}</b></span>`
-        : `<span class="groep-telling" aria-label="${klaar} van de ${alle.length} behaald">`
-          + `<b>${klaar}</b>/${alle.length}</span>`);
+      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div></div>`;
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
