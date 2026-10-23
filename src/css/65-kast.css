@@ -13,93 +13,37 @@
      alleen deelt de kast die breedte nu met de kleedkamer in plaats van er zijn
      eigen getal voor te hebben -- zie --stage-breed in het skelet bovenaan en de
      regel bij #screen-dress, #screen-trophies daar.) */
-  /* ---- De stand: één pil, geen losse regel -------------------------------
-     Hier stond "Je hebt er 4 van de 18" als kale zin onder de titel: een
-     bijschrift dat aan niets vastzat en dus las als hulptekst die iemand erbij
-     had getypt. De stand is geen bijschrift maar het antwoord op de vraag
-     waarvoor een kind dit scherm opent, en dan hoort hij een ding te zijn.
+  /* ---- De stand: 🏆 en een getal, in de pil van het saldo ---------------
+     Hier stond eerst "Je hebt er 4 van de 18" als kale zin, daarna een pil
+     "4 verzameld" onder de titel "🏆 Trofeeënkast". Sinds de kleedkamer zichzelf
+     niet meer noemt (het tabblad onderin zegt waar je bent) doet de kast dat ook
+     niet: op de plek van de naam staat de stand, in precies dezelfde pil als het
+     saldo ernaast (.diamond-badge, zie de opmaak). Twee pillen, twee getallen:
+     wat je verdiend hebt en wat je kunt uitgeven.
 
-     Het was bewust dezelfde pil als het schattenvak dat de kleedkamer had
-     (zelfde maat, rand, vulling, goud op het getal, het woord "verzameld"). Dat
-     vak is sinds Podia weg; de pil hier houdt die vorm.
-
-     GEEN TOTAAL EN GEEN VULLING MEER. Er stond "4 / 23 verzameld" met een pil
-     die van binnen meekleurde. Maar dat totaal groeit met elke wereld die er
-     bijkomt -- elf daarvan waren perfecte werelden die een kind in wereld twee
-     nog lang niet ziet -- en dan zakt een volle kast vanzelf leeg zonder dat ze
-     iets kwijt is. Het schattenvak liep daar eerder tegenaan en telde daarom
-     alleen wat je had; de kast doet nu hetzelfde ("4 verzameld"). Wat er nog
-     te halen valt, zie je aan de kaartjes eronder, tot aan de horizon (zie
-     binnenHorizon in de app). */
-  .kast-telling {
-    position: relative; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    width: auto; max-width: calc(var(--kolom) - 24px);
-    height: 27px; margin-top: 7px; padding: 4px 14px;
-    border-radius: var(--r-pill);
-    /* De rand is een schaduw naar binnen en geen border -- zelfde pixel, zelfde
-       kleur, maar zonder plek in de opmaak. Een border kan niet mee dichtklappen:
-       Chrome rondt alles tussen 0 en 1px op naar 1px, dus de rand bleef tot het
-       laatste beeldje staan en viel er dan in één keer uit, en de kop met hem
-       2px. De padding hierboven is 3+1 en 13+1: de tekst staat waar hij stond. */
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.13);
-    background: rgba(12,3,26,.34);
-    font-size: var(--tx-klein); font-weight: 700; color: rgba(255,255,255,.72);
-    /* Zie .gescrold hieronder: hij klapt weg zodra er gescrold wordt -- via de
-       hoogte en niet display:none, anders springt de kop in plaats van te krimpen.
-
-       Een vaste height, en niet meer min-height 27 met max-height 34. Dat paar
-       klapte niet gelijkmatig dicht: min-height sprong in één beeldje naar nul,
-       de rand ook, en daarna bepaalde eerst de tekst de hoogte en pas later
-       max-height. De kop kromp dus eerst langzaam en dan snel, terwijl de marge
-       die dat opvangt (--kop-krimp, zie #screen-trophies.gescrold .hub-sticky)
-       gewoon de curve volgt -- en dan schuift de inhoud tijdens de overgang
-       alsnog een paar pixel heen en terug. Met één hoogte die van 27 naar 0
-       loopt, lopen ze in de pas. 27 is wat de pil al wás: een regel van
-       --tx-klein plus 2x4 padding; de tekst past er ruim in. */
-    transition: height var(--t-snel, .22s) ease, opacity var(--t-tik, .1s) ease,
-                margin-top var(--t-snel, .22s) ease, padding var(--t-snel, .22s) ease;
-  }
-  .kast-telling .kt-tekst { position: relative; white-space: nowrap; }
-  /* Het woord eromheen is stil, het getal
-     dat je verdiend hebt is goud. Dát is wat een kind komt bekijken. */
-  .kast-telling b { color: var(--gold-accent); font-weight: 700; }
-  .kast-telling .kt-woord { font-weight: 600; opacity: .76; }
+     GEEN TOTAAL. Er stond ooit "4 / 23 verzameld". Maar dat totaal groeit met
+     elke wereld die erbij komt -- elf daarvan waren perfecte werelden die een
+     kind in wereld twee nog lang niet ziet -- en dan zakt een volle kast vanzelf
+     leeg zonder dat een kind iets kwijt is. Wat er nog te halen valt, zie je aan
+     de kaartjes eronder, tot aan de horizon (zie binnenHorizon in de app).
+     Het getal is goud: dát is wat een kind komt bekijken. */
+  .kast-chip { vertical-align: middle; }
+  .kast-chip b { color: var(--gold-accent); font-weight: 700; }
   /* ---- De plakkende kop, twee standen ----
-     Bovenaan is dit een kop met lucht: titel, saldo en de zin met de stand, op
-     dezelfde halfdoorzichtige paarse plaat als elk ander rustpunt.
-
-     Maar zodra er gescrold wordt schuiven er trofeekaarten onderdoor, en op .82
-     dekking bleven hun namen daar gewoon leesbaar staan: "Goudzoeker" dwars door
-     "Trofeeënkast" heen. Glas hoort te tonen dát er iets onder zit, niet wát.
-     Gescrold wordt de plaat daarom dichter en de waas twee keer zo sterk, en
-     tegelijk krimpt de kop: de zin met de stand klapt weg (die heb je bovenaan
-     al gelezen) en de randen worden krapper. Wat overblijft is precies wat je
-     onderweg nodig hebt -- terug, waar je bent, en je saldo.
-
-     Gescrold dekt hij vólledig, en dat is met tegenzin zo gekomen. Nagemeten op een
-     telefoon met de kast half gescrold, als het grootste licht/donker-verschil in de
-     strook naast de titel (0-255): .82 gaf 28-33, .95 nog 9-14, .97 nog 5-11. Ook op
-     .97 stonden er dus nog spookletters achter "Trofeeënkast" -- op armlengte niet te
-     zien, maar wel zodra je het scherm van dichtbij bekijkt, en dát was precies de
-     klacht. Alleen volledig dekken haalt ze helemaal weg.
-
-     Wat er wél blijft van het glas: de waas staat er nog (hij pakt wat er langs de
-     ronde onderhoeken heen kijkt), de kop bovenaan is onveranderd doorschijnend
-     (.82, zie de regel hierboven), en de plaat is geen vlakke rechthoek maar een
-     verloop -- dezelfde truc als de kleedkamerkop, die ook een laag over zijn
-     grondkleur legt. Een plakkende kop is hier geen raam maar een richel waar de
-     kast onderdoor schuift, en een richel hoort dicht te zijn.
-
-     De overgang loopt over de kop zelf en niet over een tweede laag: één element,
-     twee standen, dus er kan niets uit de pas gaan lopen. */
-  /* PS-32 -- de kop staat niet meer op een vlakke plaat maar op dezelfde veeg
-     als de kleedkamer: een vleugje goudglans bovenin (het licht van de vitrine
-     valt van boven) dat naar onderen dichttrekt tot de aubergine waarop de
-     kaartjes rusten. Eén element, één laag, dezelfde vormtaal als het scherm
-     ernaast -- en bovenaan schuift er niets onderdoor, dus daar mág hij open
-     zijn. Gescrold wordt hij alsnog volledig dicht, zie hieronder: dáár is het
-     leesbaarheid en geen sfeer. */
+     Bovenaan staat de kop in de kamer, zonder plaat -- net als in de kleedkamer:
+     de twee pillen op de kamer, en eronder begint de kast (de lade, zie
+     #trophy-shelves). Er schuift dan niets onder de kop door, dus hij hoeft
+     niets af te dekken.
+     Zodra er gescrold wordt, schuiven er trofeekaarten onderdoor, en op glas
+     bleven hun namen daar leesbaar staan ("Goudzoeker" dwars door de kop heen;
+     nagemeten: alleen volledig dekken haalde de spookletters weg). Gescrold wordt
+     de kop daarom de kleur van de kast zelf, vol: de kaartjes schuiven onder een
+     richel van hetzelfde hout door.
+     Er krimpt niets meer. Eerst klapte hier een stand-pil weg onder de titel;
+     die pil is de 🏆 in de koprij geworden en blijft dus staan. kopKrimpMeten
+     meet nog steeds wat de kop krimpt (nu niets), en de marge hieronder telt dat
+     erbij -- zodat een latere wijziging die de kop wél laat krimpen niet
+     ongemerkt de kaartjes laat meeschuiven. */
   /* 9 en niet 10 bovenaan: dezelfde rand als de kleedkamer (#screen-dress
      .hub-sticky). Die twee zijn buren in de tabbladbalk, en bij een wissel
      vloeien hun koppen op dezelfde plek in elkaar over -- terugknop, naam en
@@ -107,45 +51,21 @@
      wissel bewoog. Houd ze gelijk; ook in de lage stand hieronder. */
   #screen-trophies .hub-sticky {
     padding-top: 9px; padding-bottom: 9px;
-    background:
-      radial-gradient(82% 90% at 50% 0%, rgba(var(--goud-glans-rgb),.11), transparent 72%),
-      linear-gradient(180deg, rgba(30,8,54,.5) 0%, rgba(30,8,54,.62) 44%,
-                              rgba(32,9,56,.76) 100%);
-    border-bottom: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 10px 22px rgba(8,1,20,.26);
-    transition: padding var(--t-snel, .22s) ease, margin-bottom var(--t-snel, .22s) ease,
-                background var(--t-snel, .22s) ease, box-shadow var(--t-snel, .22s) ease;
-  }
-  /* Titel, saldo en de pil in één ritme: de drie staan op 2 / 7 px uit elkaar en
-     niet op de gedeelde 4, zodat de kop één blok is en geen stapeltje regels.
-     Die 2 gaat gescrold naar 0 en loopt mee in de overgang -- alles wat de kop
-     hoger of lager maakt hoort dat te doen, anders klopt de som met de marge
-     hieronder niet meer. */
-  #screen-trophies .hub-sticky .screen-header {
-    margin-bottom: 2px; transition: margin-bottom var(--t-snel, .22s) ease;
+    background: transparent; border-bottom: 0; border-radius: 0; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    transition: background var(--t-snel, .22s) ease;
   }
   #screen-trophies.gescrold .hub-sticky {
-    padding-top: 8px; padding-bottom: 7px;
     /* ---- De inhoud schuift niet mee met de kop ----
-       Wat de kop krimpt (de pil klapt weg, de randen worden krapper) komt er als
-       marge onder weer bij, zodat de plek die hij in de stroom inneemt gelijk
-       blijft. Zonder dat trok hij de kaartjes eronder mee omhoog, zette de scroll
-       anchoring de schuifstand met de krimp terug, viel die onder de drempel van
-       kastScroll, en werd de kop weer ruim: op 10px stilgezet wisselde hij élk
-       beeldje van stand, en onder de 40px sprong de kast steeds terug naar
-       boven. Hoeveel het is meet kopKrimpMeten; het verhaal staat daar. */
+       Wat de kop krimpt komt er als marge onder weer bij, zodat de plek die hij
+       in de stroom inneemt gelijk blijft. Zonder dat trok hij de kaartjes eronder
+       mee omhoog, zette de scroll anchoring de schuifstand met de krimp terug,
+       viel die onder de drempel van kastScroll, en werd de kop weer ruim: op 10px
+       stilgezet wisselde hij élk beeldje van stand. Hoeveel het is meet
+       kopKrimpMeten; het verhaal staat daar. */
     margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
-    background: var(--kop-plaat-vol);
-    backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
-    box-shadow: var(--e-3);
+    background: var(--lade);
   }
-  /* De padding gaat mee naar nul: de pil is border-box, en een doos kan niet
-     lager worden dan zijn eigen padding -- anders bleef er een streepje van 8px
-     staan. */
-  #screen-trophies.gescrold .kast-telling {
-    height: 0; opacity: 0; margin-top: 0; padding-top: 0; padding-bottom: 0;
-  }
-  #screen-trophies.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
   /* Uit bij wie geen beweging wil, en even uit terwijl kopKrimpMeten meet. Het
      `.screen` in de kiezer is er om te winnen van `#screen-trophies .hub-sticky
      .screen-header` hierboven. */
@@ -187,7 +107,34 @@
      tekenen per beeldje, en van 6 naar 2ms rasteren. Veilig: wat er bij het
      openen van een trofee rondvliegt (burst-bit, tap-ripple, fly-badge) hangt aan
      de body en niet in de kast, en er staan geen tellers of quotes in. */
-  #trophy-shelves { width: 100%; max-width: var(--kolom); contain: layout style; }
+  /* ---- De kast is één lade ----------------------------------------------
+     Zoals in de kleedkamer (zie "Het podium en de lade" daar): bovenin de kamer,
+     daaronder één vlak met afgeronde bovenhoeken in dezelfde kleur (--lade), en
+     daarin liggen de planken. Eerst lagen de kaartjes los op de kamer, en waren
+     de kleedkamer en de kast twee schermen van verschillend hout.
+     Op een telefoon bloedt het vlak tot de schermrand door: 100% plus twee keer
+     de schermpadding, en het scherm centreert het (een flexkolom laat een te
+     breed kind naar beide kanten even ver uitsteken). Vanaf de kolombreedte is
+     het de kolom plus die rand, net als de lade van de kleedkamer.
+     Onderaan loopt het door tot onder de navigatie: de lucht voor de balk is hier
+     padding van het vlak en de negatieve marge geeft die terug, zodat er geen
+     pixel extra te scrollen valt. Een korte kast op een hoog scherm (een tablet
+     staand) houdt dan nog op halverwege; de schaduwen tekenen het vlak daar door
+     tot onder de rand -- schaduw en geen min-height, want die zou scrollen. */
+  /* De kamer erachter gedempt, zoals in de kleedkamer: het lichtste op het scherm
+     horen de kaartjes in de lade te zijn, niet de gloed eromheen. Een echte
+     schermtekening (.kunst) heeft zijn eigen sluier en blijft zoals hij is. */
+  #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
+  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #trophy-shelves {
+    width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
+    contain: layout style;
+    margin-top: 4px; padding: 6px 12px calc(var(--lade-onder) + 16px);
+    margin-bottom: calc(var(--lade-onder) * -1);
+    background: var(--lade); border-radius: 26px 26px 0 0;
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14),
+      0 25vh 0 var(--lade), 0 50vh 0 var(--lade), 0 75vh 0 var(--lade), 0 100vh 0 var(--lade);
+  }
   /* ---- Een plank is een kopregel geworden, geen doos ---------------------
      PS-32. De kast stond in drie dozen tegelijk: het scherm, daarin vier grote
      afgeronde panelen met eigen rand en eigen schaduw, en dáárin per kaartje
@@ -195,18 +142,12 @@
      paneel droeg niets -- het zei alleen "deze vier horen bij elkaar", en dat
      zegt een kopregel met een haarlijn eronder net zo goed.
 
-     Wat de groep nu is: een rij met het icoon, de naam, het regeltje eronder en
-     rechts de stand van díe groep, met één haarlijn eronder en dan de kaartjes.
-     De lucht tussen twee groepen (22px) doet de rest van het groeperen. Daarmee
-     zijn de kaartjes het enige dat op dit scherm een vlak is -- precies zoals in
-     de kleedkamer, waar het rek ook gewoon op de kamer ligt.
-
-     De stand rechts is nieuw en vervangt niets: fase 5C haalde "2 van 5" wég bij
-     elke plank omdat het er vier keer als een takenlijst onder elkaar stond, als
-     volle regel tekst binnen een doos. Als stil chipje aan het eind van de
-     kopregel leest het als een hoofdstuknummer, en het is het enige wat de
-     kopregel over jóu zegt. Vol wordt hij goud -- hetzelfde goud als de kaartjes
-     eronder, dus de groep en haar inhoud spreken dezelfde taal. */
+     Wat de groep nu is: een rij met het icoon en de naam, en dan de kaartjes.
+     De lucht tussen twee groepen doet de rest van het groeperen. Er stond nog een
+     haarlijn onder de kopregel en een stand per plank ("2/4") rechts; allebei
+     weg sinds de kast een lade is (oktober 2026). De lade houdt de planken al
+     bij elkaar, en de 🏆 in de kop telt al -- vier tellers onder elkaar lazen
+     weer als een takenlijst, en voorbij de horizon stond er een kaal "3". */
   /* Krapper dan eerst (22 -> 16, kop 12/9 -> 9/7): sinds de kaartjes geen
      beschrijving meer dragen zijn ze lager, en met de oude lucht ertussen viel de
      kast uiteen in losse rijtjes. */
@@ -220,26 +161,12 @@
      groeit alleen het regeltje eronder mee. */
   .groep-kop {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 0 4px 7px; margin-bottom: 9px;
-    border-bottom: 1px solid rgba(255,255,255,.085);
+    padding: 0 4px 2px; margin-bottom: 9px;
   }
   .groep-ico { flex: none; font-size: 22px; line-height: 1; margin-top: 2px; filter: var(--emoji-schaduw); }
   .groep-tekst { flex: 1 1 auto; min-width: 0; }
   .groep-naam { font-size: var(--tx-body); font-weight: 700; letter-spacing: .01em; text-shadow: var(--op-vlak-ink); }
   /* (Hier stond .groep-note, het regeltje onder de plaknaam. Weg: zie renderShelves.) */
-  .groep-telling {
-    flex: none; font-size: var(--tx-klein); font-weight: 700; margin-top: 1px;
-    color: rgba(255,255,255,.6); white-space: nowrap;
-    padding: 3px 9px; border-radius: var(--r-pill);
-    background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.08);
-  }
-  .groep-telling b { color: rgba(255,255,255,.88); font-weight: 700; }
-  .kast-groep.vol .groep-telling {
-    color: var(--gold-light); background: var(--goud-tint-zacht);
-    border-color: var(--goud-rand-zacht);
-  }
-  .kast-groep.vol .groep-telling b { color: var(--gold-accent); }
-  .kast-groep.vol .groep-kop { border-bottom-color: var(--goud-rand-zacht); }
   /* flex i.p.v. grid, zelfde reden als .item-grid in de kleedkamer: planken hebben
      een oneven aantal kaartjes, en CSS Grid geeft elke rij dezelfde kolomposities --
      de laatste, onvolledige rij bleef daardoor links hangen i.p.v. te centreren. */
@@ -310,20 +237,30 @@
      goud betekent "verdiend". "Onderweg" is geen van beide, en zou in cyaan de
      enige plek zijn waar die kleur iets anders zegt dan waar je staat. Violet ligt
      naast de grondkleur van het scherm, is koel genoeg om niet met goud te
-     concurreren, en is hier vrij. */
+     concurreren, en is hier vrij.
+
+     OKTOBER 2026 -- die trap is weer platgeslagen, naar de drie standen van de
+     kleedkamer: behaald is het lichte plankje (zie .trophy-card.done), onderweg
+     en nog niet zijn allebei het donkere, met het getal als verschil, en goud is
+     alleen nog "klaar om te openen". Het gedempte icoon van nog-niet blijft. */
+  /* Oktober 2026: het donkere plankje van de kleedkamer voor wat nog niet van jou
+     is (zie .trophy-card.done). */
   .trophy-card.fresh {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(255,255,255,.06);
+    background: rgba(0,0,0,.16);
+    border-color: rgba(255,255,255,.07);
   }
   /* half ontkleurd, zoals .locked hieronder het uitlegt: "nog niet" zonder dat het
      kaartje grijs en kapot oogt -- maar wel duidelijk anders dan een behaalde */
   .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
   .trophy-card.fresh .tname { opacity: .84; }
   /* ONDERWEG: actief, maar een trap onder goud. */
+  /* Onderweg is hetzelfde donkere plankje: het getal zegt al dat je bezig bent,
+     zoals een prijs zegt dat je het nog kunt kopen. Er lag hier een violet
+     verloop overheen, en dat was een vierde stand die de kleedkamer niet kent. */
   .trophy-card.busy {
-    background: linear-gradient(180deg, rgba(178,140,255,.115), rgba(178,140,255,.05));
-    border-color: rgba(186,150,255,.26);
-    box-shadow: inset 0 1px 0 rgba(216,192,255,.14);
+    background: rgba(0,0,0,.16);
+    border-color: rgba(255,255,255,.07);
+    box-shadow: none;
   }
   .trophy-card.busy .temoji { opacity: .9; }
   /* LOCKED: het stilste kaartje, maar niet uitgezet. Het icoon was hier
@@ -363,15 +300,26 @@
      nauwelijks te zien, op een plank vol behaalde kaarten precies de warmte die
      het verschil met violet meteen duidelijk maakt. De rand blijft
      --goud-rand-zacht, dus .ready blijft ook op afstand de enige volle rand. */
-  .trophy-card.done {
-    background:
-      radial-gradient(82% 62% at 50% 22%, rgba(var(--goud-rgb),.22), transparent 76%),
-      linear-gradient(180deg, rgba(var(--goud-rgb),.13), rgba(var(--goud-rgb),.07));
-    border-color: var(--goud-rand-zacht);
-    box-shadow: inset 0 1px 0 rgba(var(--goud-glans-rgb),.2),
-                0 0 14px rgba(var(--goud-gloed-rgb),.12);
+  /* ---- Behaald = "van jou", zoals in de kleedkamer ----------------------
+     Hier stond een goudbruin vlak met een gouden naam en een ✓-pil onderaan. Maar
+     in de kleedkamer is goud alleen nog "dit draag je" en "de ene knop", en is
+     wat van jou is gewoon een tikje lichter dan wat nog niet van jou is, zonder
+     pil (.item-card.owned). De kast spreekt nu dezelfde taal: behaald is het
+     lichte plankje, nog niet is het donkere met een getal erop (zoals een prijs),
+     en klaar om te openen is de enige gouden rand. Wie van het ene tabblad naar
+     het andere gaat, leest dezelfde drie standen.
+     De ✓ blijft in de opmaak staan (onzichtbaar), zodat elk kaartje dezelfde
+     hoogte houdt; icoon en naam schuiven een halve voet omlaag naar het midden,
+     met een transform, zodat er niets in de plank verschuift. Het zachte
+     lichtje erachter is dat van de kleedkamer: het vakje leest zo niet leeg. */
+  .trophy-card.done { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.2); box-shadow: none; }
+  .trophy-card.done:not(.pw-card) .tvoet { visibility: hidden; }
+  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname { transform: translateY(17px); }
+  .trophy-card.done::before {
+    content: ''; position: absolute; left: 50%; top: 40%; width: 84px; height: 84px;
+    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.2), rgba(255,255,255,.07) 62%, transparent);
   }
-  .trophy-card.done .tname { color: var(--gold-light); }
   /* Het vinkje. Stond als gouden rondje in de hoek rechtsboven, en dat sprong: een
      kind tikte op "🎁 Open!" onderaan, en het teken dat daarna kwam verscheen
      ergens anders. Nu staat het precies waar Open! stond, als stil pilletje:

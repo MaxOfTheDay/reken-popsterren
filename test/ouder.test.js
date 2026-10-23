@@ -722,7 +722,7 @@ function check(ok, label, detail) {
       return {
         teller: oogst[2],
         bron: `${earnedActiveCount(p)}/${activeTrophies().length}`,
-        kast: document.getElementById('trophy-count').textContent,
+        kast: document.getElementById('trophy-count').getAttribute('aria-label'),
         actief: activeTrophies().length,
         tabel: TROPHIES.length,
         // de kast: de vaste trofeeën plus één perfecte per uitgebrachte wereld
@@ -735,7 +735,7 @@ function check(ok, label, detail) {
       'de teller toont het verdiende aantal en het totaal', r.teller + ' (verwacht 2/' + r.verwacht + ')');
     check(r.teller.indexOf(r.bron) >= 0, 'en die komen rechtstreeks uit activeTrophies()', `${r.teller} vs ${r.bron}`);
     /* De kast zelf noemt alleen wat er verzameld is, zonder totaal (zie
-       .kast-telling): dat totaal groeit met elke wereld, en voor een kind leest
+       .kast-chip; de woorden staan in de aria-label): dat totaal groeit met elke wereld, en voor een kind leest
        dat als een kast die leegloopt. De ouder ziet het totaal hierboven wél. */
     check(/^\s*2\s+verzameld\s*$/.test(r.kast),
       'de kast noemt hetzelfde verdiende aantal, zonder totaal', r.kast);

@@ -6498,64 +6498,8 @@
 
 
 
-
-
-
-
-  .kast-telling {
-    position: relative; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    width: auto; max-width: calc(var(--kolom) - 24px);
-    height: 27px; margin-top: 7px; padding: 4px 14px;
-    border-radius: var(--r-pill);
-
-
-
-
-
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.13);
-    background: rgba(12,3,26,.34);
-    font-size: var(--tx-klein); font-weight: 700; color: rgba(255,255,255,.72);
-
-
-
-
-
-
-
-
-
-
-
-
-    transition: height var(--t-snel, .22s) ease, opacity var(--t-tik, .1s) ease,
-                margin-top var(--t-snel, .22s) ease, padding var(--t-snel, .22s) ease;
-  }
-  .kast-telling .kt-tekst { position: relative; white-space: nowrap; }
-
-
-  .kast-telling b { color: var(--gold-accent); font-weight: 700; }
-  .kast-telling .kt-woord { font-weight: 600; opacity: .76; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  .kast-chip { vertical-align: middle; }
+  .kast-chip b { color: var(--gold-accent); font-weight: 700; }
 
 
 
@@ -6578,26 +6522,11 @@
 
   #screen-trophies .hub-sticky {
     padding-top: 9px; padding-bottom: 9px;
-    background:
-      radial-gradient(82% 90% at 50% 0%, rgba(var(--goud-glans-rgb),.11), transparent 72%),
-      linear-gradient(180deg, rgba(30,8,54,.5) 0%, rgba(30,8,54,.62) 44%,
-                              rgba(32,9,56,.76) 100%);
-    border-bottom: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 10px 22px rgba(8,1,20,.26);
-    transition: padding var(--t-snel, .22s) ease, margin-bottom var(--t-snel, .22s) ease,
-                background var(--t-snel, .22s) ease, box-shadow var(--t-snel, .22s) ease;
-  }
-
-
-
-
-
-  #screen-trophies .hub-sticky .screen-header {
-    margin-bottom: 2px; transition: margin-bottom var(--t-snel, .22s) ease;
+    background: transparent; border-bottom: 0; border-radius: 0; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    transition: background var(--t-snel, .22s) ease;
   }
   #screen-trophies.gescrold .hub-sticky {
-    padding-top: 8px; padding-bottom: 7px;
-
 
 
 
@@ -6606,17 +6535,8 @@
 
 
     margin-bottom: calc(var(--kop-gap, 12px) + var(--kop-krimp, 0px));
-    background: var(--kop-plaat-vol);
-    backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
-    box-shadow: var(--e-3);
+    background: var(--lade);
   }
-
-
-
-  #screen-trophies.gescrold .kast-telling {
-    height: 0; opacity: 0; margin-top: 0; padding-top: 0; padding-bottom: 0;
-  }
-  #screen-trophies.gescrold .hub-sticky .screen-header { margin-bottom: 0; }
 
 
 
@@ -6658,13 +6578,34 @@
 
 
 
-  #trophy-shelves { width: 100%; max-width: var(--kolom); contain: layout style; }
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+  #screen-trophies:not(.kunst).app-sfeer::before { filter: brightness(.6) saturate(.85); }
+  #screen-trophies { --lade: rgb(40,12,68); --lade-onder: calc(var(--balk-ruimte) + 14px); }
+  #trophy-shelves {
+    width: min(100% + var(--rand, 12px) * 2, var(--kolom) + 24px); max-width: none; flex-shrink: 0;
+    contain: layout style;
+    margin-top: 4px; padding: 6px 12px calc(var(--lade-onder) + 16px);
+    margin-bottom: calc(var(--lade-onder) * -1);
+    background: var(--lade); border-radius: 26px 26px 0 0;
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14),
+      0 25vh 0 var(--lade), 0 50vh 0 var(--lade), 0 75vh 0 var(--lade), 0 100vh 0 var(--lade);
+  }
 
 
 
@@ -6691,26 +6632,12 @@
 
   .groep-kop {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 0 4px 7px; margin-bottom: 9px;
-    border-bottom: 1px solid rgba(255,255,255,.085);
+    padding: 0 4px 2px; margin-bottom: 9px;
   }
   .groep-ico { flex: none; font-size: 22px; line-height: 1; margin-top: 2px; filter: var(--emoji-schaduw); }
   .groep-tekst { flex: 1 1 auto; min-width: 0; }
   .groep-naam { font-size: var(--tx-body); font-weight: 700; letter-spacing: .01em; text-shadow: var(--op-vlak-ink); }
 
-  .groep-telling {
-    flex: none; font-size: var(--tx-klein); font-weight: 700; margin-top: 1px;
-    color: rgba(255,255,255,.6); white-space: nowrap;
-    padding: 3px 9px; border-radius: var(--r-pill);
-    background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.08);
-  }
-  .groep-telling b { color: rgba(255,255,255,.88); font-weight: 700; }
-  .kast-groep.vol .groep-telling {
-    color: var(--gold-light); background: var(--goud-tint-zacht);
-    border-color: var(--goud-rand-zacht);
-  }
-  .kast-groep.vol .groep-telling b { color: var(--gold-accent); }
-  .kast-groep.vol .groep-kop { border-bottom-color: var(--goud-rand-zacht); }
 
 
 
@@ -6782,19 +6709,29 @@
 
 
 
+
+
+
+
+
+
+
   .trophy-card.fresh {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(255,255,255,.06);
+    background: rgba(0,0,0,.16);
+    border-color: rgba(255,255,255,.07);
   }
 
 
   .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
   .trophy-card.fresh .tname { opacity: .84; }
 
+
+
+
   .trophy-card.busy {
-    background: linear-gradient(180deg, rgba(178,140,255,.115), rgba(178,140,255,.05));
-    border-color: rgba(186,150,255,.26);
-    box-shadow: inset 0 1px 0 rgba(216,192,255,.14);
+    background: rgba(0,0,0,.16);
+    border-color: rgba(255,255,255,.07);
+    box-shadow: none;
   }
   .trophy-card.busy .temoji { opacity: .9; }
 
@@ -6834,15 +6771,26 @@
 
 
 
-  .trophy-card.done {
-    background:
-      radial-gradient(82% 62% at 50% 22%, rgba(var(--goud-rgb),.22), transparent 76%),
-      linear-gradient(180deg, rgba(var(--goud-rgb),.13), rgba(var(--goud-rgb),.07));
-    border-color: var(--goud-rand-zacht);
-    box-shadow: inset 0 1px 0 rgba(var(--goud-glans-rgb),.2),
-                0 0 14px rgba(var(--goud-gloed-rgb),.12);
+
+
+
+
+
+
+
+
+
+
+
+
+  .trophy-card.done { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.2); box-shadow: none; }
+  .trophy-card.done:not(.pw-card) .tvoet { visibility: hidden; }
+  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname { transform: translateY(17px); }
+  .trophy-card.done::before {
+    content: ''; position: absolute; left: 50%; top: 40%; width: 84px; height: 84px;
+    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.2), rgba(255,255,255,.07) 62%, transparent);
   }
-  .trophy-card.done .tname { color: var(--gold-light); }
 
 
 
@@ -9749,10 +9697,13 @@
     <div class="hub-sticky">
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(goMap)" aria-label="Terug naar de kaart" title="Terug naar de kaart"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
-        <div class="header-title">🏆 Trofeeënkast</div>
+        <!-- Geen schermnaam meer maar de stand, in de pil van het saldo ernaast: de
+             kleedkamer noemt zichzelf ook niet, het tabblad onderin zegt al waar je
+             bent. Wat een kind hier komt vragen is "hoeveel heb ik er", en dat is
+             één getal. De tekst staat in de aria-label (zie renderShelves). -->
+        <div class="header-title"><span class="diamond-badge kast-chip" id="trophy-count"></span></div>
         <div class="diamond-badge header-right">💎 <span id="trophy-diamonds">0</span></div>
       </div>
-      <div class="kast-telling" id="trophy-count"></div>
     </div>
     <!-- En hier houdt het op. Er stond een strookje ster-status onder de planken
          (en daarvóór bovenaan, met balk). Weg: dit scherm gaat over prestaties, en
@@ -19531,8 +19482,10 @@ function renderShelves() {
 
 
 
-  $('trophy-count').innerHTML =
-    `<span class="kt-tekst"><b>${earned}</b> <span class="kt-woord">verzameld</span></span>`;
+
+  const teller = $('trophy-count');
+  teller.innerHTML = `<span aria-hidden="true">🏆</span> <b>${earned}</b>`;
+  teller.setAttribute('aria-label', `${earned} verzameld`);
   const wrap = $('trophy-shelves');
   wrap.innerHTML = '';
   TROPHY_SHELVES.forEach(shelf => {
@@ -19549,9 +19502,11 @@ function renderShelves() {
         || (p.readyTrophies || []).includes(id);
     }) : alle;
     const mist = perfectPlank && ids.length < alle.length;
-    const klaar = alle.filter(id => p.trophies.includes(id)).length;
     const groep = document.createElement('section');
-    groep.className = 'kast-groep' + (klaar === alle.length ? ' vol' : '');
+    groep.className = 'kast-groep';
+
+
+
 
 
 
@@ -19562,14 +19517,7 @@ function renderShelves() {
 
 
 
-      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div></div>`
-
-
-
-      + (mist
-        ? `<span class="groep-telling" aria-label="${klaar} behaald"><b>${klaar}</b></span>`
-        : `<span class="groep-telling" aria-label="${klaar} van de ${alle.length} behaald">`
-          + `<b>${klaar}</b>/${alle.length}</span>`);
+      + `<div class="groep-tekst"><div class="groep-naam">${shelf.name}</div></div>`;
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
