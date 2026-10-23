@@ -11770,15 +11770,13 @@ function openKleedkamerItem(id) {
   if (kaart && kaart.scrollIntoView) kaart.scrollIntoView({ block: 'center' });
 }
 /* De kop van de kleedkamer heeft twee standen, net als die van de kast (zie
-   kastScroll): open bovenaan, en zodra er kaartjes onder de kop door schuiven
-   gaat de band met de categorierij dicht. Hoe dat eruitziet
-   staat bij .hub-sticky::after in het stijlblad; hier wordt alleen de klasse
-   gezet. Zelfde drempel en zelfde rAF als bij de kast.
+   kastScroll): bovenaan, en gescrold. Hier wordt alleen de klasse gezet, met
+   dezelfde drempel en dezelfde rAF als bij de kast.
 
-   Op een gewoon scherm gaat er alleen een laag aan en wordt de kop geen pixel
-   hoger of lager. Op een laag staand scherm krimpt ook de spiegel; dan moet de
-   inhoud eronder stil blijven staan, net als bij de kast, en daarvoor meet
-   renderShop met kopKrimpMeten. */
+   Op een gewoon scherm verandert er gescrold niets meer: de balk is de dichte
+   bovenkant van de lade, dus daar schuift niets zichtbaar onderdoor. Op een
+   laag staand scherm krimpt de spiegel; dan moet de inhoud eronder stil blijven
+   staan, net als bij de kast, en daarvoor meet renderShop met kopKrimpMeten. */
 function kleedScroll() { rafKlem(kleedGescrold); }
 function kleedGescrold() { gescrold($('screen-dress')); }
 /* Het rek opnieuw opbouwen. Eén keer per categoriewissel, per aankoop en per
@@ -11798,6 +11796,7 @@ function renderShop() {
      naar de kast waar je vandaan kwam (zie dressBack). Vanaf het tabblad is de
      balk zelf de weg terug, net als op de kaart. */
   $('screen-dress').classList.toggle('met-terug', dressReturnTo === 'trophies');
+  ladenPlaatsen();
   kleedScroll();
   const grid = $('item-grid');
   /* De nieuwe kaartjes komen eerst in een los stapeltje en gaan pas onderaan in
@@ -11967,6 +11966,24 @@ function rekBreedte() {
   rekBreedteBij = `${innerWidth}x${innerHeight}`;
 }
 addEventListener('resize', () => rafKlem(rekBreedte));
+/* Waar de balk met de laden staat. Op een telefoon in de kop: die plakt, dus de
+   balk blijft in beeld terwijl het rek eronder scrolt. Liggend en breed is de kop
+   een kolom links, en dan is de balk de bovenkant van de lade rechts -- daar
+   hoort hij in het scherm zelf, vlak vóór het rek, waar hij in zijn eigen kolom
+   plakt. Eén element dat verhuist, geen tweede balk: renderShop en het licht
+   blijven precies hetzelfde. Hoe hij er op elke plek uitziet staat bij "Het
+   podium en de lade" in 75-kleedkamer.css; deze vraag moet daar gelijk mee
+   lopen. */
+const LADE_NAAST = '(orientation: landscape) and (max-height: 500px), (min-width: 1000px) and (orientation: landscape)';
+function ladenPlaatsen() {
+  const balk = $('shop-tabs-wrap'), scherm = $('screen-dress'), rek = $('item-grid');
+  if (!balk || !scherm || !rek || !window.matchMedia || !scherm.insertBefore) return;
+  const kop = scherm.querySelector('.hub-sticky');
+  const doel = matchMedia(LADE_NAAST).matches ? scherm : kop;
+  if (!doel || balk.parentNode === doel) return;
+  if (doel === scherm) scherm.insertBefore(balk, rek); else kop.appendChild(balk);
+}
+addEventListener('resize', () => rafKlem(ladenPlaatsen));
 /* Wat er in het rek staat, en in welke volgorde. Twee groepen:
 
      0  van jou   -- je eigen kast, meteen bovenaan en meteen aan te doen
