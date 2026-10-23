@@ -338,7 +338,7 @@ function confetti(n, scherm) {
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
     d.className = 'confetti-bit';
-    d.textContent = pick(emo);
+    d.textContent = feestStukje(emo);   // met de stukjes van de wereld erbij (zie wereldConfetti)
     d.style.left = rnd(0, 96) + 'vw';
     d.style.animationDuration = (rnd(18, 34) / 10) + 's';
     d.style.animationDelay = (rnd(0, 8) / 10) + 's';
@@ -383,7 +383,7 @@ function confettiBurst(cx, cy, n, hero) {
   for (let i = 0; i < n; i++) {
     const b = document.createElement('div');
     b.className = 'burst-bit';
-    b.textContent = (hero && i % 4 === 0) ? hero : pick(emo);
+    b.textContent = (hero && i % 4 === 0) ? hero : feestStukje(emo);
     const ang = rnd(0, 359) * Math.PI / 180;
     const dist = rnd(60, 190);
     const dx = Math.round(Math.cos(ang) * dist);
