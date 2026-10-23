@@ -138,20 +138,6 @@
      in de zaal ook doet zodra de zaal een tekening heeft (.venue-aan). Korte,
      vette tekst op kunst: geval a uit §4 van de afspraak bovenaan. */
   #screen-dress .screen-header .header-title { text-shadow: var(--op-kunst-ink); }
-  /* De schakelaar in de kop, 👕 | 🎪 (renderShop): twee tekens in één stille
-     pil, en de helft die aanstaat in de kleur van een gekozen categorieknop.
-     Samen 44px hoog, net als de ← en de 💎-pil ernaast; elke helft is 40 hoog en
-     56 breed, zodat hij ook op 320px nog tussen die twee past. De letter van de
-     kop blijft staan (de kast en de kleedkamer meten hun koprij tegen elkaar):
-     de tekens hebben hun eigen maat. */
-  .kleed-schakel { display: flex; justify-self: center; gap: 2px; padding: 2px; border-radius: 99px;
-    background: rgba(20,6,40,.45); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14); }
-  .kleed-helft { width: 56px; height: 40px; border: 0; border-radius: 99px; background: none; cursor: pointer;
-    display: grid; place-items: center; font-size: 22px; line-height: 1; font-family: inherit;
-    opacity: .55; transition: transform var(--t-tik), opacity var(--t-tik); }
-  .kleed-helft span { filter: var(--emoji-schaduw-diep); }
-  .kleed-helft.aan { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
-  .kleed-helft:active { transform: scale(.94); }
   /* ---- Gescrold gaat de lade dicht ----------------------------------------
      Onder deze kop schuift het rek door, en de veeg hierboven is onderin maar .58
      tot .72, met 8px waas. Voor de kamer is dat genoeg, voor een kaartje dat
@@ -165,17 +151,18 @@
      overvloeien (de kast springt daarom in één beeldje om); een laag met opacity
      wel, en die kost de compositor niets.
 
-     Hij loopt van de onderrand van de spiegel tot de onderrand van de kop: 59px,
-     op élke maat van 320 tot 1440 breed gelijk, want wat erin staat -- de rij van
-     44 -- groeit niet mee met het scherm; alleen de pop doet
-     dat, en die staat erboven. De eerste 4px lopen in, in de kier tussen de
-     spiegel en de rij, dus de spiegel zelf raakt hij niet. De twee lage-
-     schermregels hieronder maken die band krapper, en zetten hem op 57.
+     Hij loopt van de onderrand van de spiegel tot de onderrand van de kop: 71px
+     op een telefoon (72 min de rand onderaan de kop), want wat erin staat -- de balk met de laden, 58 hoog --
+     groeit niet mee met het scherm; alleen de pop doet dat, en die staat
+     erboven. De eerste 4px lopen in, in de kier tussen de spiegel en de balk, dus
+     de spiegel zelf raakt hij niet. Een laag staand scherm heeft minder lucht en
+     zet hem op 69; breed (balk 66 hoog, 12 lucht erboven) op 80, en liggend,
+     waar de balk twee rijen is, op 110.
      De laag zelf krimpt niets en maakt de kop niet hoger. Wat op een laag
      staand scherm wél krimpt is de spiegel (zie "Laag en staand" hieronder), en
      dáárvoor meet kopKrimpMeten. kleedScroll zet de klasse. */
   #screen-dress .hub-sticky::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 59px;
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 71px;
     z-index: -1; pointer-events: none; border-radius: inherit;
     background: linear-gradient(180deg, rgba(32,9,56,0), rgb(32,9,56) 4px);
     opacity: 0; transition: opacity var(--t-snel) ease;
@@ -265,7 +252,7 @@
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
     /* de band onder de spiegel is hier krapper -- zie de lade, bovenaan */
-    #screen-dress .hub-sticky::after { height: 57px; }
+    #screen-dress .hub-sticky::after { height: 69px; }
   }
   /* Een telefoon in liggende stand (844x390) is de krapste stand die dit scherm
      kent: na de kop en de navigatiebalk blijft er ~100px over, en dat is minder
@@ -282,7 +269,7 @@
     #screen-dress .item-thumb .wereldprijs svg { height: 100%; }
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
-    #screen-dress .hub-sticky::after { height: 57px; }
+    #screen-dress .hub-sticky::after { height: 69px; }
   }
   /* Smalle telefoon: de naam van het scherm past niet meer tussen twee even brede
      zijkolommen van elk 108px, en werd afgekapt tot "Kleedka…". De drie cellen
@@ -345,6 +332,7 @@
     }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 1; max-width: none; }
     #screen-dress .shop-tabs-wrap { max-width: 100%; }
+    #screen-dress .hub-sticky::after { height: 110px; }
     /* de kop staat hier naast het rek: niets schuift eronder, dus het waas van
        vroeger (zie "De kamer achter de kop") */
     #screen-dress:not(.kunst) .hub-sticky {
@@ -399,6 +387,7 @@
       grid-column: 2; grid-row: 1; max-width: none; margin-top: 60px; --kaart-min: 130px;
     }
     #screen-dress .shop-tabs-wrap { max-width: 100%; margin-top: 12px; }
+    #screen-dress .hub-sticky::after { height: 80px; }
     /* net als liggend: de kop heeft zijn eigen kolom en houdt het waas */
     #screen-dress:not(.kunst) .hub-sticky {
       background: var(--kleed-veeg);
@@ -505,43 +494,36 @@
   .shuffle-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
   .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
   .shuffle-btn:active { transform: scale(.92); }
-  /* Eén scrollende rij met alleen iconen -- alleen de categorie die aanstaat zet
-     er zijn woord bij. Het was een vaste 4x2-grid waarin de helft van de labels
-     werd afgekapt ("Schoe…", "Microf…", "Acces…"): een emoji plus een half woord
-     is slechter dan één van de twee. Twee rijen worden zo één rij, en het woord
-     staat er nog steeds -- alleen bij de categorie waar je nú in kijkt. */
+  /* DE BALK MET DE LADEN (renderShop). Acht knoppen in één stuk, zonder scrollen
+     en zonder woorden: de zeven kledingsoorten en 🎪 Podia. Hetzelfde materiaal
+     als de tabbalk onderaan -- een donker vlak met een ring -- en hetzelfde
+     blauwe licht dat naar de lade schuift die je kiest.
+
+     Wat hij verving: een scrollende rij pilletjes van 46 breed waar er op een
+     telefoon vijf à zes van in beeld stonden, met het woord bij de gekozen lade,
+     en Podia als een klein schakelaartje in de kop. Losse knopjes, ver van wat ze
+     schakelden. Een kolom per lade (1fr) maakt ze op een telefoon van 390 zo'n
+     42 breed en 50 hoog, op 320 nog 33 breed; op een bureaublad 60.
+
+     Gebruikt .tab-btn, net als de rij sterren in het ouderdeel. Die houdt de
+     algemene regels hieronder; alles wat hier anders is hangt aan .shop-tabs. */
   .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 5px; }
-  /* In Podia valt er niets te kiezen in de rij: hij gaat weg (zie renderShop). */
-  #screen-dress.in-podia .shop-tabs-wrap { display: none; }
-  /* padding-inline 12 en niet 4: aan het begin en het eind van de rij hoort lucht
-     te staan. Zonder die lucht lag de eerste knop tegen de schermrand en las een
-     half weggeschoven knop als een fout in plaats van als "er staat hier meer".
-     Waar de rij landt als hij zichzelf verschuift (een categoriewissel) rekent
-     tabRijDoel() uit -- daar staat ook waarom dat niet met scrollIntoView en
-     scroll-padding-inline gaat. */
   .shop-tabs {
-    display: flex; gap: 7px; padding: 1px 12px; overflow-x: auto;
-    /* Past de hele rij (een breed venster, of een ster met weinig categorieën),
-       dan staat hij in het midden onder de spiegel in plaats van links tegen de
-       kolomrand. Op --stage-breed was dat zichtbaar scheef: de spiegel
-       gecentreerd, de categorierij eronder tegen de linkerkant.
-       Met 'safe' blijft hij bij overloop gewoon links beginnen -- anders zou de
-       eerste knop buiten het scrollbereik vallen en niet meer te bereiken zijn.
-       Een browser die het woord niet kent laat de hele regel vallen en doet wat
-       hij nu al deed. tabRijDoel() merkt er niets van: die geeft 0 terug zodra
-       alles past, en meet verder alleen met rechthoeken. */
-    justify-content: safe center;
-    /* 22 en niet de gedeelde 34: deze knopjes zijn maar ~50px breed, dus van het
-       knopje dat over de rand steekt is er hooguit 38 te zien (zie TAB_KIER). Een
-       fade van 34 legt daar bijna zijn hele overgang overheen en maakt er een
-       spookje van; op 22 blijft het icoon te herkennen én is de rechterkant
-       zichtbaar afgesneden. Dat is precies wat die kier moet zeggen: hier gaat
-       het verder. */
-    --fade: 22px;
-    scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
+    position: relative; display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr));
+    gap: 3px; padding: 4px; border-radius: var(--r-lg);
+    background: rgba(20,6,40,.55); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14);
   }
-  .shop-tabs::-webkit-scrollbar { display: none; }
-  @media (prefers-reduced-motion: reduce) { .shop-tabs { scroll-behavior: auto; } }
+  /* het licht: één stuk dat onder de knoppen door schuift, zoals .nav-sel. Zijn
+     breedte is die van één kolom, dus 100% van zichzelf plus de kier is precies
+     één stap. */
+  .shop-tabs .rij-licht {
+    position: absolute; left: 4px; top: 4px; bottom: 4px; pointer-events: none;
+    width: calc((100% - 8px - (var(--n, 8) - 1) * 3px) / var(--n, 8));
+    border-radius: var(--r-md); background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
+    transform: translateX(calc(var(--i, 0) * (100% + 3px)));
+    transition: transform var(--t-snel) cubic-bezier(.2, .8, .2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) { .shop-tabs .rij-licht { transition: none; } }
   .tab-btn {
     font-family: inherit; font-size: var(--tx-label); font-weight: 700; border: none; cursor: pointer;
     padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: rgba(255,255,255,.18);
@@ -552,22 +534,30 @@
   .tab-btn .tab-ico { font-size: 21px; line-height: 1; filter: var(--emoji-schaduw); }
   .tab-label { white-space: nowrap; }
   .tab-btn:active { transform: scale(.95); }
-  /* PS-45 -- de rij staat nu op een tekening in plaats van op een plaat. Twee
-     bijstellingen, allebei ten gunste van de gekozen knop:
-       - de niet-gekozen knopjes een trap stiller (.18 -> .13). Zeven lichte
-         rondjes op .18 waren samen het lichtste vlak van de kop; op .13 zijn het
-         nog steeds knoppen en wint het cyaan van "hier kijk je" moeiteloos.
-       - de emoji krijgen de diepe schaduw. Dat is precies de afspraak uit het
-         schaduwblok in :root: op een vlak van de app de gewone, op een tekening
-         de diepe -- en deze rij ligt nu op een tekening.
-     De maat verandert niet: 44px hoog, 46px breed, want daar past een kindervinger
-     op en dat is niet iets om aan te polijsten.
-     De .active-regel staat er nog een keer bij en dat is geen dubbelop: een
-     selector met een id erin wint van .tab-btn.active, dus zonder deze regel zou
-     de gekozen knop hier zijn cyaan kwijtraken aan die .13 hierboven. */
-  #screen-dress .tab-btn { background: rgba(255,255,255,.13); }
+  /* Wat niet gekozen is staat iets stiller (zoals .nav-item); het vlak eronder
+     is het licht (zie .shop-tabs .tab-btn verderop, na .tab-btn.active). */
+  .shop-tabs .tab-btn {
+    position: relative; min-width: 0; min-height: 50px; padding: 0;
+    border-radius: var(--r-md); opacity: .78;
+  }
+  .shop-tabs .tab-btn.active { opacity: 1; }
+  .shop-tabs .tab-btn .tab-ico { font-size: 24px; }
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    .shop-tabs .tab-btn { min-height: 58px; }
+    .shop-tabs .tab-btn .tab-ico { font-size: 28px; }
+  }
+  /* Liggend op een telefoon is de kolom van de kop maar ~300 breed: acht op een
+     rij wordt daar 31. Daar twee rijen van vier, van 44 hoog -- de hoogte is er
+     in die kolom wel. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .shop-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .shop-tabs .tab-btn { min-height: 44px; }
+    .shop-tabs .rij-licht { display: none; }
+  }
+  /* PS-45 -- de balk staat op een tekening en niet op een plaat, dus krijgen de
+     emoji de diepe schaduw. Dat is de afspraak uit het schaduwblok in :root: op
+     een vlak van de app de gewone, op een tekening de diepe. */
   #screen-dress .tab-btn .tab-ico { filter: var(--emoji-schaduw-diep); }
-  #screen-dress .tab-btn.active { background: var(--nav-sel); }
   /* FASE 5B.1 -- hetzelfde cyaan als hiervoor, maar als licht in plaats van als
      vlak. Het was een dekkende cyaan pil met donkere letter: samen met het woord
      erbij werd dat het felste ding op het scherm, feller dan de pop en feller dan
@@ -579,6 +569,17 @@
     background: var(--nav-sel); color: var(--c-white);
     box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
     text-shadow: var(--nav-ink);
+  }
+  /* In de balk doet het schuivende licht (.rij-licht) wat .active elders zelf
+     doet: de knop blijft doorzichtig, anders lag er een tweede blauw vlak boven
+     het licht en schoof er niets. Behalve liggend, waar de balk twee rijen is
+     en het licht niet over een regelovergang kan: daar licht de knop zelf op. */
+  .shop-tabs .tab-btn, .shop-tabs .tab-btn.active { background: none; box-shadow: none; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    .shop-tabs .tab-btn.active { background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+  }
+  @media (hover: hover) {
+    .shop-tabs .tab-btn:not(.active):hover { opacity: 1; background: rgba(255,255,255,.08); }
   }
   /* flex i.p.v. grid: bij een oneven aantal spulletjes bleef het laatste kaartje
      in een CSS-grid altijd in de eerste kolom hangen (grid deelt élke rij

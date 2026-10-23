@@ -7517,19 +7517,6 @@
 
 
 
-  .kleed-schakel { display: flex; justify-self: center; gap: 2px; padding: 2px; border-radius: 99px;
-    background: rgba(20,6,40,.45); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14); }
-  .kleed-helft { width: 56px; height: 40px; border: 0; border-radius: 99px; background: none; cursor: pointer;
-    display: grid; place-items: center; font-size: 22px; line-height: 1; font-family: inherit;
-    opacity: .55; transition: transform var(--t-tik), opacity var(--t-tik); }
-  .kleed-helft span { filter: var(--emoji-schaduw-diep); }
-  .kleed-helft.aan { opacity: 1; background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
-  .kleed-helft:active { transform: scale(.94); }
-
-
-
-
-
 
 
 
@@ -7548,7 +7535,7 @@
 
 
   #screen-dress .hub-sticky::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 59px;
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 71px;
     z-index: -1; pointer-events: none; border-radius: inherit;
     background: linear-gradient(180deg, rgba(32,9,56,0), rgb(32,9,56) 4px);
     opacity: 0; transition: opacity var(--t-snel) ease;
@@ -7638,7 +7625,7 @@
     #screen-dress .header-title { font-size: var(--tx-sub); }
     #screen-dress .shop-tabs-wrap { margin-top: 4px; }
 
-    #screen-dress .hub-sticky::after { height: 57px; }
+    #screen-dress .hub-sticky::after { height: 69px; }
   }
 
 
@@ -7655,7 +7642,7 @@
     #screen-dress .item-thumb .wereldprijs svg { height: 100%; }
     #screen-dress .item-thumb .thumb-emo { font-size: 30px; }
     #screen-dress .item-thumb .thumb-swatch { width: 34px; height: 34px; }
-    #screen-dress .hub-sticky::after { height: 57px; }
+    #screen-dress .hub-sticky::after { height: 69px; }
   }
 
 
@@ -7718,6 +7705,7 @@
     }
     #screen-dress > .item-grid { grid-column: 2; grid-row: 1; max-width: none; }
     #screen-dress .shop-tabs-wrap { max-width: 100%; }
+    #screen-dress .hub-sticky::after { height: 110px; }
 
 
     #screen-dress:not(.kunst) .hub-sticky {
@@ -7772,6 +7760,7 @@
       grid-column: 2; grid-row: 1; max-width: none; margin-top: 60px; --kaart-min: 130px;
     }
     #screen-dress .shop-tabs-wrap { max-width: 100%; margin-top: 12px; }
+    #screen-dress .hub-sticky::after { height: 80px; }
 
     #screen-dress:not(.kunst) .hub-sticky {
       background: var(--kleed-veeg);
@@ -7883,38 +7872,31 @@
 
 
 
+
+
+
+
+
+
+
+
   .shop-tabs-wrap { width: 100%; max-width: var(--kolom); margin-top: 5px; }
-
-  #screen-dress.in-podia .shop-tabs-wrap { display: none; }
-
-
-
-
-
-
   .shop-tabs {
-    display: flex; gap: 7px; padding: 1px 12px; overflow-x: auto;
-
-
-
-
-
-
-
-
-
-    justify-content: safe center;
-
-
-
-
-
-
-    --fade: 22px;
-    scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
+    position: relative; display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr));
+    gap: 3px; padding: 4px; border-radius: var(--r-lg);
+    background: rgba(20,6,40,.55); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14);
   }
-  .shop-tabs::-webkit-scrollbar { display: none; }
-  @media (prefers-reduced-motion: reduce) { .shop-tabs { scroll-behavior: auto; } }
+
+
+
+  .shop-tabs .rij-licht {
+    position: absolute; left: 4px; top: 4px; bottom: 4px; pointer-events: none;
+    width: calc((100% - 8px - (var(--n, 8) - 1) * 3px) / var(--n, 8));
+    border-radius: var(--r-md); background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
+    transform: translateX(calc(var(--i, 0) * (100% + 3px)));
+    transition: transform var(--t-snel) cubic-bezier(.2, .8, .2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) { .shop-tabs .rij-licht { transition: none; } }
   .tab-btn {
     font-family: inherit; font-size: var(--tx-label); font-weight: 700; border: none; cursor: pointer;
     padding: 0 12px; border-radius: var(--r-pill); color: var(--c-white); background: rgba(255,255,255,.18);
@@ -7927,20 +7909,28 @@
   .tab-btn:active { transform: scale(.95); }
 
 
+  .shop-tabs .tab-btn {
+    position: relative; min-width: 0; min-height: 50px; padding: 0;
+    border-radius: var(--r-md); opacity: .78;
+  }
+  .shop-tabs .tab-btn.active { opacity: 1; }
+  .shop-tabs .tab-btn .tab-ico { font-size: 24px; }
+  @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
+    .shop-tabs .tab-btn { min-height: 58px; }
+    .shop-tabs .tab-btn .tab-ico { font-size: 28px; }
+  }
 
 
 
+  @media (orientation: landscape) and (max-height: 500px) {
+    .shop-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .shop-tabs .tab-btn { min-height: 44px; }
+    .shop-tabs .rij-licht { display: none; }
+  }
 
 
 
-
-
-
-
-
-  #screen-dress .tab-btn { background: rgba(255,255,255,.13); }
   #screen-dress .tab-btn .tab-ico { filter: var(--emoji-schaduw-diep); }
-  #screen-dress .tab-btn.active { background: var(--nav-sel); }
 
 
 
@@ -7952,6 +7942,17 @@
     background: var(--nav-sel); color: var(--c-white);
     box-shadow: inset 0 0 0 2px var(--nav-sel-ring);
     text-shadow: var(--nav-ink);
+  }
+
+
+
+
+  .shop-tabs .tab-btn, .shop-tabs .tab-btn.active { background: none; box-shadow: none; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    .shop-tabs .tab-btn.active { background: var(--nav-sel); box-shadow: inset 0 0 0 2px var(--nav-sel-ring); }
+  }
+  @media (hover: hover) {
+    .shop-tabs .tab-btn:not(.active):hover { opacity: 1; background: rgba(255,255,255,.08); }
   }
 
 
@@ -9747,9 +9748,10 @@
       <div class="kop-kamer" aria-hidden="true"></div>
       <div class="screen-header">
         <button class="btn icon-btn header-left" onclick="naTik(dressBack)" aria-label="Terug" title="Terug"><svg class="ico" aria-hidden="true"><use href="#ico-terug"/></svg></button>
-        <!-- De naam van het scherm is hier een schakelaar: 👕 de kleren | 🎪 Podia
-             (renderShop vult hem). De tabbladbalk zegt al "Kleedkamer". -->
-        <div class="header-title kleed-schakel" id="kleed-schakel" role="group" aria-label="Kleedkamer"></div>
+        <!-- Geen naam en geen schakelaar: de tabbladbalk zegt al "Kleedkamer", en
+             de laden (Podia ook) staan in de balk onder de spiegel. De lege cel
+             houdt de terugknop en het saldo op hun plek, gelijk met de kast. -->
+        <div class="header-title" aria-hidden="true"></div>
         <div class="diamond-badge header-right">💎 <span id="shop-diamonds">0</span></div>
       </div>
       <div class="stage-wrap">
@@ -9771,7 +9773,7 @@
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
       <div class="shop-tabs-wrap" id="shop-tabs-wrap">
-        <div class="shop-tabs hscroll-fade" id="shop-tabs"></div>
+        <div class="shop-tabs" id="shop-tabs" role="group" aria-label="Laden"></div>
       </div>
     </div>
     <div class="item-grid" id="item-grid"></div>
@@ -11423,14 +11425,21 @@ const mv = (n, enkel, meer) => (n === 1 ? enkel : meer);
 
 
 
+
+
+
+
+
+
 const CATS = [
+  { id: 'hair',  ico: '💇', name: 'Kapsels' },
+  { id: 'acc',   ico: '🎀', name: 'Accessoires' },
   { id: 'dress', ico: '👕', name: 'Kleren' },
   { id: 'shoes', ico: '👟', name: 'Schoenen' },
-  { id: 'hair',  ico: '💇', name: 'Kapsels' },
   { id: 'mic',   ico: '🎤', name: 'Microfoons' },
   { id: 'instrument', ico: '🎸', name: 'Muziek' },
-  { id: 'acc',   ico: '🎀', name: 'Accessoires' },
   { id: 'pet',   ico: '🐾', name: 'Dieren' },
+
 
 
 
@@ -22502,8 +22511,6 @@ function itemThumb(it, base) {
 }
 
 let shopCat = 'dress';
-
-let kleedLaatsteCat = 'dress';
 let shopSelectedId = null;
 
 
@@ -22601,75 +22608,6 @@ function openKleedkamerItem(id) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const TAB_LUCHT = 12;
-const TAB_SNIPPER = 24;
-const TAB_KIER = 38;
-function tabRijDoel(rij, gekozen) {
-  const max = rij.scrollWidth - rij.clientWidth;
-  if (max <= 0) return 0;
-  const breed = rij.clientWidth;
-
-  const nul = rij.getBoundingClientRect().left - rij.scrollLeft;
-  const vak = el => { const r = el.getBoundingClientRect(); return { l: r.left - nul, r: r.right - nul }; };
-
-
-
-  const g = vak(gekozen);
-  let x = Math.min(rij.scrollLeft, g.l - TAB_LUCHT);
-  x = Math.max(x, g.r + TAB_LUCHT - breed);
-  x = Math.max(0, Math.min(x, max));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  for (const knop of rij.children) {
-    const k = vak(knop);
-    if (k.r <= x + breed) continue;
-    if (x + breed - k.l < TAB_SNIPPER) {
-      const doel = Math.min(k.l + TAB_KIER - breed, max, g.l - TAB_LUCHT);
-      if (doel + breed - k.l >= TAB_SNIPPER) x = doel;
-    }
-    break;
-  }
-  return Math.max(0, x);
-}
-
-
-
-
-
-
-
-
-
-
 function kleedScroll() { rafKlem(kleedGescrold); }
 function kleedGescrold() { gescrold($('screen-dress')); }
 
@@ -22702,71 +22640,45 @@ function renderShop() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
   const tabs = $('shop-tabs');
-  tabs.innerHTML = '';
-  let activeTab = null;
-
-
-  const chip = (opts) => {
-    const b = document.createElement('button');
-    b.className = 'tab-btn' + (opts.on ? ' active' : '') + (opts.extra ? ' ' + opts.extra : '');
-    b.setAttribute('aria-label', opts.name);
-    b.setAttribute('aria-pressed', opts.on ? 'true' : 'false');
-    b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
-      + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
-    b.onclick = opts.go;
-    tabs.appendChild(b);
-    if (opts.on) activeTab = b;
-    return b;
-  };
-
-
-
-
-
-
-
-
-  const inPodia = shopCat === PODIA_CAT;
-  if (!inPodia) kleedLaatsteCat = shopCat;
-  $('screen-dress').classList.toggle('in-podia', inPodia);
-  const schakel = $('kleed-schakel');
-  if (schakel) {
-    schakel.innerHTML = '';
-    [{ ico: '👕', name: 'Kleren', on: !inPodia, cat: () => kleedLaatsteCat },
-     { ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, on: inPodia, cat: () => PODIA_CAT }].forEach(h => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'kleed-helft' + (h.on ? ' aan' : '');
-      b.setAttribute('aria-label', h.name);
-      b.setAttribute('aria-pressed', h.on ? 'true' : 'false');
-      b.innerHTML = `<span aria-hidden="true">${h.ico}</span>`;
-      b.onclick = () => {
-        sndClick();
-        if (h.on) return;
-        shopCat = h.cat(); shopSelectedId = null; podiumStuk = null; renderShop();
-        $('screen-dress').scrollTop = 0;
-      };
-      schakel.appendChild(b);
-    });
+  tabs.querySelectorAll('.tab-btn').forEach(b => b.remove());
+  let licht = tabs.querySelector('.rij-licht');
+  if (!licht) {
+    licht = document.createElement('span');
+    licht.className = 'rij-licht';
+    licht.setAttribute('aria-hidden', 'true');
+    tabs.appendChild(licht);
   }
-  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
-    sndClick();
-    shopCat = c.id; shopSelectedId = null; renderShop();
-    $('screen-dress').scrollTop = 0;
-  } }));
-
-  fadesVolgen(tabs);
-
-
-
-
-
-
-  requestAnimationFrame(() => {
-    if (activeTab && activeTab.isConnected) tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
-    updateFades(tabs);
+  const laden = [...CATS, { id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name }];
+  laden.forEach((c, i) => {
+    const b = document.createElement('button');
+    const aan = c.id === shopCat;
+    b.type = 'button';
+    b.className = 'tab-btn' + (aan ? ' active' : '');
+    b.setAttribute('aria-label', c.name);
+    b.setAttribute('aria-pressed', aan ? 'true' : 'false');
+    b.innerHTML = `<span class="tab-ico" aria-hidden="true">${c.ico}</span>`;
+    b.onclick = () => {
+      sndClick();
+      if (aan) return;
+      shopCat = c.id; shopSelectedId = null; podiumStuk = null; renderShop();
+      $('screen-dress').scrollTop = 0;
+    };
+    tabs.appendChild(b);
+    if (aan) tabs.style.setProperty('--i', i);
   });
+  tabs.style.setProperty('--n', laden.length);
   shopItems(p).forEach(it => {
     const card = document.createElement('div');
     card.dataset.item = it.id;

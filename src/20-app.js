@@ -593,22 +593,29 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
    "1 shows gespeeld". Het is één regel en geen taalbibliotheek: Nederlands
    gebruikt het enkelvoud alléén bij precies 1, óók bij 0 ("0 shows"). */
 const mv = (n, enkel, meer) => (n === 1 ? enkel : meer);
-// Kleren eerst: het is een kleedkamer, de outfit is het sterartikel.
-// Icoon en woord staan los: de categorierij toont alleen het icoon, behalve bij
-// de categorie die aanstaat -- die zet er zijn woord bij (zie renderShop).
+// De volgorde is die van de pop, van top tot teen: haar, wat erop staat (de
+// accessoires zijn bijna allemaal hoofddingen: kroon, strik, bloem, bril), de
+// kleren, de schoenen. Dan wat ze vasthoudt, wie er naast haar staat, en als
+// laatste -- in de balk, zie PODIA_CHIP -- de vloer onder haar voeten. Zo leest
+// de balk onder de spiegel als de pop erboven. Eerst stond Kleren vooraan ("het
+// is een kleedkamer"), en de rest in de volgorde waarin het ooit erbij kwam.
+// De kleedkamer opent nog steeds in Kleren (shopCat); alleen de plek verschilt.
+// Icoon en woord staan los: de balk toont alleen het icoon, het woord staat in
+// het aria-label (zie renderShop).
 const CATS = [
+  { id: 'hair',  ico: '💇', name: 'Kapsels' },
+  { id: 'acc',   ico: '🎀', name: 'Accessoires' },
   { id: 'dress', ico: '👕', name: 'Kleren' },
   { id: 'shoes', ico: '👟', name: 'Schoenen' },
-  { id: 'hair',  ico: '💇', name: 'Kapsels' },
   { id: 'mic',   ico: '🎤', name: 'Microfoons' },
   { id: 'instrument', ico: '🎸', name: 'Muziek' },
-  { id: 'acc',   ico: '🎀', name: 'Accessoires' },
   { id: 'pet',   ico: '🐾', name: 'Dieren' },
   // 'stage' staat hier niet bij: Podia is een lade, maar geen kledingsoort. De
   // 🎲 (surpriseOutfit) loopt over deze rij, en die hoort haar niet van haar
-  // podium af te halen. Podia staat dan ook niet in de rij maar in de kop.
+  // podium af te halen. Podia staat wél als achtste lade in de balk (zie
+  // renderShop), maar dan als PODIA_CHIP achter deze zeven.
 ];
-/* Podia, de tweede helft van de schakelaar in de kop (👕 | 🎪, zie renderShop).
+/* Podia, de achtste lade in de balk onder de spiegel (zie renderShop).
    Een stand van de kleedkamer (shopCat) zoals elke categorie, en ook echt de
    categorie van zijn spulletjes: een podium is cat 'stage', en p.equipped.stage
    is waar ze op staat. */
@@ -11675,8 +11682,6 @@ function itemThumb(it, base) {
 }
 
 let shopCat = 'dress';
-// de kledinglade waar ze het laatst was: 👕 in de kop brengt haar uit Podia daar terug
-let kleedLaatsteCat = 'dress';
 let shopSelectedId = null;
 /* Het stuk dat in de podiumbalk gekozen is (zie renderPodiumBar): een stuk van het
    gekozen podium dat nog niet van haar is. Leeg = de balk gaat over het hele podium. */
@@ -11764,75 +11769,6 @@ function openKleedkamerItem(id) {
   const kaart = $('item-grid').querySelector(`.item-card[data-item="${id}"]`);
   if (kaart && kaart.scrollIntoView) kaart.scrollIntoView({ block: 'center' });
 }
-/* Waar de categorierij hoort te staan.
-
-   De rij is breder dan een telefoon: er staan zeven laden in en er passen er vijf
-   à zes. Dat is geen probleem zolang je kunt zíen dat het doorloopt, en precies
-   daar ging het mis. Het enige wat "er staat hier meer" zei was het fade-masker
-   aan de rand (.hscroll-fade), en dat masker wist net zo goed uit wat het moest
-   aankondigen: stond Accessoires aan, dan landde die knop kraakhelder tegen de
-   fade aan en was Dieren erachter nog een grauwsluier van 28px -- een rij die
-   ophield bij het felste ding op het scherm.
-
-   Het stond hiervoor op scrollIntoView({ inline: 'nearest' }) plus
-   scroll-padding-inline. Dat kan dit niet, om twee redenen:
-     - scroll-padding werkt alleen als de rij écht moet schuiven. Staat de gekozen
-       knop al in beeld (Microfoons, Schoenen) dan gebeurt er niets, en dan is de
-       kier aan de rand wat het toeval ervan maakt -- 8px bij Microfoons.
-     - het reserveert lucht ná de gekozen knop, niet een stuk van de volgende.
-       Lucht zegt niets; een half knopje wel.
-
-   Dus rekent deze functie het zelf uit, in twee stappen die allebei over de rand
-   gaan waar nog iets achter zit:
-     1  de gekozen knop helemaal in beeld, met een randje lucht ernaast
-     2  valt er dan een knopje over de rechterrand, dan hoort daar een kier van te
-        zien die groot genoeg is om een knopje te zijn.
-
-   Wat er expres NÍET staat: centreren. De gekozen knop midden in de rij zetten
-   verschuift hem ook als hij al lang in beeld staat, en bij de eerste en de
-   laatste categorie duwt het de rand die je juist wilt zien uit beeld. */
-const TAB_LUCHT = 12;      // lucht tussen de gekozen knop en de rand -- dezelfde als de padding van de rij
-const TAB_SNIPPER = 24;    // minder dan dit is een snipper: daar maakt de fade een spookje van
-const TAB_KIER = 38;       // ... en dan schuiven we door tot zoveel: icoon leesbaar, rechterkant zichtbaar afgesneden
-function tabRijDoel(rij, gekozen) {
-  const max = rij.scrollWidth - rij.clientWidth;
-  if (max <= 0) return 0;                      // alles past: er valt niets aan te wijzen
-  const breed = rij.clientWidth;
-  // schermpositie van inhoud-x 0, zodat elke knop in één stelsel te meten is
-  const nul = rij.getBoundingClientRect().left - rij.scrollLeft;
-  const vak = el => { const r = el.getBoundingClientRect(); return { l: r.left - nul, r: r.right - nul }; };
-
-  // 1 -- de gekozen knop helemaal in beeld. Alleen schuiven als het moet: staat
-  //      hij er al, dan blijft de rij staan waar het kind hem liet staan.
-  const g = vak(gekozen);
-  let x = Math.min(rij.scrollLeft, g.l - TAB_LUCHT);
-  x = Math.max(x, g.r + TAB_LUCHT - breed);
-  x = Math.max(0, Math.min(x, max));
-
-  /* 2 -- de kier. De eerste knop die er niet hélemaal in past is degene die het
-        moet doen: die steekt over de rechterrand. Toont hij minder dan een
-        snipper -- of staat hij er zelfs nog nipt buiten, want tussen twee knoppen
-        zit ruimte -- dan schuiven we door tot er TAB_KIER van te zien is.
-
-        Alles of niets, en dat is de hele reden dat dit geen éénregelaar is. De
-        gekozen knop houdt zijn lucht (de rem hieronder), en op een smal toestel
-        kan die rem de kier in de weg zitten: bij de eerste categorie op een 320px
-        scherm is er links niets om weg te schuiven. Half schuiven is dan het
-        slechtste van twee: de eerste knop verliest zijn lucht, er verschijnt een
-        fade links naar niks, en de kier rechts is nog steeds te klein om te zien.
-        Levert het schuiven geen echte kier op, dan blijft de rij dus gewoon staan
-        en doet de fade over de laatste hele knop het werk. */
-  for (const knop of rij.children) {
-    const k = vak(knop);
-    if (k.r <= x + breed) continue;          // past er helemaal in
-    if (x + breed - k.l < TAB_SNIPPER) {
-      const doel = Math.min(k.l + TAB_KIER - breed, max, g.l - TAB_LUCHT);
-      if (doel + breed - k.l >= TAB_SNIPPER) x = doel;
-    }
-    break;
-  }
-  return Math.max(0, x);
-}
 /* De kop van de kleedkamer heeft twee standen, net als die van de kast (zie
    kastScroll): open bovenaan, en zodra er kaartjes onder de kop door schuiven
    gaat de band met de categorierij dicht. Hoe dat eruitziet
@@ -11872,74 +11808,48 @@ function renderShop() {
      kleedkamer vroeger haar plek als je van een ander tabblad terugkwam (zie
      resumeKleedkamer). */
   const kaarten = document.createDocumentFragment();
-  // Eén keuzerij: de kledingsoorten. Er stond hier eerder eerst een
-  // Spullen/Looks-schakelaar bóven deze rij en daarna "Looks" als eerste chip
-  // in de rij zelf; sinds fase 1 is de lijst met thema-looks er helemaal uit.
+  /* DE BALK MET DE LADEN. Acht knoppen in één stuk: de zeven kledingsoorten en
+     als achtste 🎪 Podia. Alleen tekens, geen woorden -- het woord staat in het
+     aria-label -- en niets om te scrollen: elke lade staat altijd in beeld.
+
+     Zo is hij er niet altijd geweest. Eerst een scrollende rij pilletjes waar er
+     op een telefoon vijf à zes van in beeld stonden (met een berekende kier om te
+     laten zien dat er meer was), en Podia als schakelaar 👕 | 🎪 in de kop: klein,
+     ver weg van wat hij schakelde, en het shirt drie keer op het scherm. Nu is het
+     één onderdeel van hetzelfde materiaal als de tabbalk onderaan, en wat aanstaat
+     zegt hetzelfde blauwe licht dat daar schuift. Podia staat achteraan: het is
+     de vloer onder haar voeten, het laatste wat je aankleedt.
+
+     Het licht (.rij-licht) blijft staan als de knoppen opnieuw gebouwd worden --
+     anders kan het niet schuiven -- en weet via --i waar het heen moet. */
   const tabs = $('shop-tabs');
-  tabs.innerHTML = '';
-  let activeTab = null;
-  // Alleen iconen, plus het woord bij wat aanstaat. aria-label houdt de naam
-  // voor een schermlezer altijd beschikbaar.
-  const chip = (opts) => {
-    const b = document.createElement('button');
-    b.className = 'tab-btn' + (opts.on ? ' active' : '') + (opts.extra ? ' ' + opts.extra : '');
-    b.setAttribute('aria-label', opts.name);
-    b.setAttribute('aria-pressed', opts.on ? 'true' : 'false');
-    b.innerHTML = `<span class="tab-ico">${opts.ico}</span>`
-      + (opts.on || opts.keepLabel ? `<span class="tab-label">${opts.name}</span>` : '');
-    b.onclick = opts.go;
-    tabs.appendChild(b);
-    if (opts.on) activeTab = b;
-    return b;
-  };
-  /* Podia staat niet in deze rij maar in de kop: de naam van het scherm is een
-     schakelaar met twee tekens, 👕 de kleren en 🎪 Podia. Eerst stond Podia
-     vooraan in de rij, toen vast vóór de rij; allebei las het als "de eerste
-     lade", en dat is hij niet -- het is een andere stand van de kleedkamer, met
-     een rek dat er anders uitziet. In de kop kost hij geen rij en geen knop
-     extra, en hij spreekt de taal van de rij eronder: alleen tekens, en wat
-     aanstaat licht op. Het woord staat in het aria-label. In Podia gaat de rij
-     weg (.in-podia): daar valt niets te kiezen. */
-  const inPodia = shopCat === PODIA_CAT;
-  if (!inPodia) kleedLaatsteCat = shopCat;
-  $('screen-dress').classList.toggle('in-podia', inPodia);
-  const schakel = $('kleed-schakel');
-  if (schakel) {
-    schakel.innerHTML = '';
-    [{ ico: '👕', name: 'Kleren', on: !inPodia, cat: () => kleedLaatsteCat },
-     { ico: PODIA_CHIP.ico, name: PODIA_CHIP.name, on: inPodia, cat: () => PODIA_CAT }].forEach(h => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'kleed-helft' + (h.on ? ' aan' : '');
-      b.setAttribute('aria-label', h.name);
-      b.setAttribute('aria-pressed', h.on ? 'true' : 'false');
-      b.innerHTML = `<span aria-hidden="true">${h.ico}</span>`;
-      b.onclick = () => {
-        sndClick();
-        if (h.on) return;
-        shopCat = h.cat(); shopSelectedId = null; podiumStuk = null; renderShop();
-        $('screen-dress').scrollTop = 0;
-      };
-      schakel.appendChild(b);
-    });
+  tabs.querySelectorAll('.tab-btn').forEach(b => b.remove());
+  let licht = tabs.querySelector('.rij-licht');
+  if (!licht) {
+    licht = document.createElement('span');
+    licht.className = 'rij-licht';
+    licht.setAttribute('aria-hidden', 'true');
+    tabs.appendChild(licht);
   }
-  CATS.forEach(c => chip({ ico: c.ico, name: c.name, on: c.id === shopCat, go: () => {
-    sndClick();
-    shopCat = c.id; shopSelectedId = null; renderShop();
-    $('screen-dress').scrollTop = 0;   // een nieuwe categorie begint bovenaan
-  } }));
-  // de rij zelf blijft altijd staan; alleen wat eronder komt verschilt
-  fadesVolgen(tabs);
-  /* De rij rechtzetten en de fade-randen bijwerken, allebei in het eerstvolgende
-     beeldje en niet hier. Beide meten de rij op, en hier is dat een opmaak die de
-     browser midden in de tik moet afdwingen -- met een rek dat op dat moment net
-     leeggemaakt is en daarna meteen weer gevuld wordt. In de rAF staat alles er
-     al, en is het die ene opmaak die dat beeldje toch al nodig had. Het beeldje
-     wordt pas daarna getekend, dus er is nooit een rand te zien van vóór de wissel. */
-  requestAnimationFrame(() => {
-    if (activeTab && activeTab.isConnected) tabs.scrollTo({ left: tabRijDoel(tabs, activeTab) });
-    updateFades(tabs);   // schuift de rij echt, dan werkt onscroll hem onderweg nog bij
+  const laden = [...CATS, { id: PODIA_CAT, ico: PODIA_CHIP.ico, name: PODIA_CHIP.name }];
+  laden.forEach((c, i) => {
+    const b = document.createElement('button');
+    const aan = c.id === shopCat;
+    b.type = 'button';
+    b.className = 'tab-btn' + (aan ? ' active' : '');
+    b.setAttribute('aria-label', c.name);
+    b.setAttribute('aria-pressed', aan ? 'true' : 'false');
+    b.innerHTML = `<span class="tab-ico" aria-hidden="true">${c.ico}</span>`;
+    b.onclick = () => {
+      sndClick();
+      if (aan) return;
+      shopCat = c.id; shopSelectedId = null; podiumStuk = null; renderShop();
+      $('screen-dress').scrollTop = 0;   // een nieuwe lade begint bovenaan
+    };
+    tabs.appendChild(b);
+    if (aan) tabs.style.setProperty('--i', i);
   });
+  tabs.style.setProperty('--n', laden.length);
   shopItems(p).forEach(it => {
     const card = document.createElement('div');
     card.dataset.item = it.id;
