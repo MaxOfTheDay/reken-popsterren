@@ -407,6 +407,7 @@ const ITEMS = [
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
   { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjemicrofoon',       price: 45, emoji: '🍺' },
+  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelsmicrofoon',      price: 50, emoji: '🥂' },
   { id: 'mic_zwart',  cat: 'mic', name: 'Rock', full: 'Rockmicrofoon', price: 55, color: '#37474f' },
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
