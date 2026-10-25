@@ -156,6 +156,11 @@
     display: inline-flex; align-items: center; justify-content: center; flex: none;
     width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 20px;
   }
+  /* Even groot als de terugknop aan de andere kant van de kop: die groeit op een
+     tablet naar --hud-h (zie 40-kaart.css), en dan stond de ▶ ernaast op 44. */
+  @media (min-width: 600px) and (min-height: 700px) {
+    .btn.speel-als { width: var(--hud-h); height: var(--hud-h); font-size: 24px; }
+  }
   .speel-als[hidden] { display: none; }
   /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje.
      Een tikje naar rechts, want een driehoek met zijn punt naar rechts staat

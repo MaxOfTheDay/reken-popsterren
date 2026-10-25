@@ -193,6 +193,11 @@
     .screen-header .icon-btn.header-left { width: var(--hud-h); height: var(--hud-h); }
     .screen-header .icon-btn.header-left .ico { width: 26px; height: 26px; }
     #screen-journey .reis-titel .rt-ico { font-size: 36px; }
+    /* Het tandwiel en "Als app" op de sterrenkeuze zijn een paar in dezelfde
+       stof als de terugknop; ze groeien dus mee, anders stond het ⚙️ op een tablet
+       als enige ronde kopknop op 44. (De ▶ in het ouderdeel: zie .btn.speel-als.) */
+    .corner-btns .icon-btn { width: var(--hud-h); height: var(--hud-h); }
+    .app-knop { height: var(--hud-h); }
   }
 
   /* 12 links, 14 rechts: het portretje draagt zelf 2px onzichtbare padding voor
