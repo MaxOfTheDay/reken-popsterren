@@ -3171,9 +3171,15 @@ function baseOf(p) { return (p && BASES[p.base]) ? p.base : DEFAULT_BASE; }
 function curBase() { return baseOf(db && db.profiles ? db.profiles[cur] : null); }
 
 /* ---- Basis "meisje": staartjes, jurk, blote benen onder de zoom ---- */
-function hairBackStaartjes(hc) {
-  return `<circle cx="100" cy="62" r="37" fill="${hc}"/>`
-    + `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+// glans: een verloop dat er als tweede laag overheen gaat (licht linksboven,
+// schaduw rechtsonder). De pop geeft hem mee; het haarstaaltje in de kleedkamer
+// niet, dat blijft een vlakke kleur.
+// Elk staartje is een eigen groep, zodat het kan naslingeren (zie .av-staart).
+function hairBackStaartjes(hc, glans) {
+  const bol = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${hc}"/>`
+    + (glans ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${glans}"/>` : '');
+  return bol(100, 62, 37)
+    + `<g class="av-staart av-staart-l">${bol(56, 86, 13)}</g><g class="av-staart av-staart-r">${bol(144, 86, 13)}</g>`;
 }
 function hairFrontStaartjes(hc) {
   return `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
@@ -3191,7 +3197,7 @@ function torsoJurk(dc) {
 /* ---- Basis "jongen": kort haar, shirt met korte mouwen, lange broek ----
    De broek hoort bij de benen-laag (de broek ís de benen), het shirt bij de romp.
    Dezelfde kleur voor allebei: het is één kledingstuk uit de kast, geen twee. */
-function hairBackKort(hc) {
+function hairBackKort(hc, glans) {
   // Een kapje dat óp het hoofd zit in plaats van eromheen valt: tien pixels haar
   // bovenop, langs de slaap nog maar een randje, en op oorhoogte (y=80) is het
   // afgelopen. Zakt het lager, dan omlijst het het gezicht en leest het meteen
@@ -3202,7 +3208,8 @@ function hairBackKort(hc) {
   // steeltje, en dan is het een appel. Het karakter zit nu in de haargrens
   // (zie hairFrontKort): die loopt schuin, en dat is aan de zíjkant zichtbaar
   // in plaats van bovenop.
-  return `<path d="M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z" fill="${hc}"/>`;
+  const d = 'M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z';
+  return `<path d="${d}" fill="${hc}"/>` + (glans ? `<path d="${d}" fill="${glans}"/>` : '');
 }
 function hairFrontKort(hc) {
   // Eén schuine haargrens: rechts hoog bij de slaap (y≈48), links laag tot bijna
@@ -3246,6 +3253,23 @@ function torsoShirt(dc, mic) {
     // ronde halslijn: een V leest als een overhemd, dit als een T-shirt
     + `<path d="M89 105 Q100 116 111 105" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none" stroke-linecap="round"/>`
     + `<path d="M78 165 Q100 171 122 165" stroke="rgba(0,0,0,.2)" stroke-width="2" fill="none"/>`;
+}
+
+/* ---- Licht op de stof ----
+   Dezelfde vorm als het kledingstuk nog een keer, nu gevuld met een verloop:
+   licht links, schaduw rechts, en een donkerder zoom. Omdat het een laag óp de
+   kleur is, werkt het voor élke kleur, élk patroon en de regenboog -- geen item
+   hoeft ervan te weten. stof = de url van dat verloop (zie avatarSVG). */
+const ZOOM_SCHADUW = `stroke="#000" stroke-opacity=".13" stroke-width="4" fill="none" stroke-linecap="round"`;
+function stofJurk(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L66 196 Q100 210 134 196 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M67 193 Q100 207 133 193" ${ZOOM_SCHADUW}/>`;
+}
+function stofShirt(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M79 162 Q100 168 121 162" ${ZOOM_SCHADUW}/>`
+    // de broekspijpen krijgen hetzelfde licht
+    + `<path d="M78 156 L77 208 Q86 213 95 208 L100 188 L105 208 Q114 213 123 208 L122 156 Z" fill="${stof}"/>`;
 }
 
 /* ---- Patronen ----
@@ -3307,8 +3331,8 @@ const PAT_SHIRT = {
 // Een basis erbij? Eén regel hier en één patronentabel hierboven -- de rest van
 // de app (winkel, kleedkamer, trofeeën, opslag) hoeft er niets van te weten.
 const BASES = {
-  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  pat: PAT_JURK },
-  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, pat: PAT_SHIRT },
+  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  stof: stofJurk,  pat: PAT_JURK },
+  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, stof: stofShirt, pat: PAT_SHIRT },
 };
 // De keuze bij het maken van een ster. Vaste volgorde, met het woord erbij voor
 // de ouder en de tekening zelf voor het kind dat nog niet leest. Dit hoort bij
@@ -3333,6 +3357,22 @@ const PROP_MAAT = {
   norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
   klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
 };
+/* Het licht op de pop: één lamp linksboven, voor alles hetzelfde. Elk verloop
+   ligt als tweede laag óp een vorm (zie stofJurk, hairBackStaartjes), en kent
+   dus geen kleur -- alleen licht en schaduw. Met het nummer van de tekening
+   erin, want er staan vaak tien poppen tegelijk op het scherm. */
+function lichtDefs(uid) {
+  return `<radialGradient id="bol${uid}" cx=".34" cy=".3" r=".8">
+      <stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+    <radialGradient id="huid${uid}" cx=".42" cy=".38" r=".7">
+      <stop offset=".6" stop-color="#e8836a" stop-opacity="0"/><stop offset="1" stop-color="#e8836a" stop-opacity=".22"/></radialGradient>
+    <linearGradient id="stof${uid}" x1="0" y1="0" x2="1" y2=".35">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+    <radialGradient id="wang${uid}"><stop offset="0" stop-color="#ff8fa3" stop-opacity=".75"/><stop offset="1" stop-color="#ff8fa3" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+}
 function avatarSVG(p, width, propMaat) {
   // true blijft 'groot': de kleedkamer geeft nog altijd een vlaggetje mee
   const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
@@ -3351,16 +3391,33 @@ function avatarSVG(p, width, propMaat) {
   s += `<defs><linearGradient id="rb${uid}" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
-    <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
+    <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
   if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
   if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
+  /* nek: een bruggetje tussen kin en kraag, áchter het hoofd. Zo valt de kin er
+     vanzelf overheen en werpt hij een sikkeltje schaduw op de hals (dezelfde
+     cirkel als het hoofd, een tikje lager, binnen de hals gehouden). Hier lag de
+     nek eerst bóvenop het hoofd: dat verstopte de kin, en een open mond werd
+     onderaan plat afgesneden. */
+  s += `<clipPath id="nek${uid}"><rect x="90" y="94" width="20" height="18" rx="8"/></clipPath>`
+    + `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`
+    + `<circle cx="100" cy="76.5" r="32" fill="#e6a183" opacity=".7" clip-path="url(#nek${uid})"/>`;
+  /* Het hoofd is één groep, met alles wat erop zit: dan kan het los van het lijf
+     meeknikken (.av-hoofd), en de staartjes erin nog eens naslingeren. */
+  s += `<g class="av-hoofd">`;
   // haar achter het hoofd (staartjes, of de rand van een kort kapsel)
-  s += B.hairBack(hc);
-  // hoofd
-  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
+  s += B.hairBack(hc, `url(#bol${uid})`);
+  // hoofd, met een warme rand
+  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/><circle cx="100" cy="72" r="32" fill="url(#huid${uid})"/>`;
   s += B.hairFront(hc);
-  s += `<circle class="av-oog" cx="88" cy="72" r="3.6" fill="#333"/><circle class="av-oog" cx="112" cy="72" r="3.6" fill="#333"/>`;
-  s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
+  // glans: een zachte lichtvlek op de kruin. Een glansstreep las als een kras.
+  s += `<ellipse cx="88" cy="41" rx="15" ry="7" transform="rotate(-18 88 41)" fill="url(#vlek${uid})"/>`;
+  /* Ogen: een ovaaltje met een lichtje erin -- dat ene witte stipje maakt van een
+     tekening een gezicht. Oog en lichtje zijn één groep, zodat knipperen (en
+     schrikken, zie .oeps) ze samen meeneemt. */
+  const oog = x => `<g class="av-oog"><ellipse cx="${x}" cy="72" rx="3.7" ry="4.6" fill="#2b2238"/><circle cx="${x + 1.4}" cy="70.2" r="1.45" fill="#fff"/></g>`;
+  s += oog(88) + oog(112);
+  s += `<circle cx="79" cy="82" r="7" fill="url(#wang${uid})"/><circle cx="121" cy="82" r="7" fill="url(#wang${uid})"/>`;
   /* Twee monden, en er staat er altijd maar één aan. De lach is de gewone; het
      rondje eronder is "oh!" -- de pop die schrikt van een misser (zie .oeps in
      het stijlblad en oepsGezicht). Het rondje staat met opacity="0" als
@@ -3368,8 +3425,10 @@ function avatarSVG(p, width, propMaat) {
      stijlblad over straat (een miniatuur, een geëxporteerd plaatje), en dan
      hoort ze gewoon te lachen. Een CSS-regel wint het van een attribuut, dus
      .oeps kan hem wél aanzetten. */
-  s += `<path class="av-mond" d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#c2572b" opacity="0"/>`;
+  // de lach is een open, zingende mond met een tongetje -- ze staat op een podium
+  s += `<g class="av-mond"><path d="M91 85.5 Q100 89 109 85.5 Q107.5 94.5 100 94.5 Q92.5 94.5 91 85.5 Z" fill="#8a2f36"/>`
+    + `<path d="M95 92.2 Q100 89.6 105 92.2 Q103 94.5 100 94.5 Q97 94.5 95 92.2 Z" fill="#ff8f9c"/></g>`;
+  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#8a2f36" opacity="0"/>`;
   // accessoire op het hoofd / gezicht
   if (acc) {
     /* Een item mag zijn eigen tekening meebrengen: acc.draw() geeft een stukje SVG
@@ -3396,9 +3455,7 @@ function avatarSVG(p, width, propMaat) {
       if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
     }
   }
-  // nek: klein bruggetje tussen kin en kraag -- voorkomt een donker gaatje
-  // tussen hoofd en kleren, met toch nog een vleugje hals zichtbaar
-  s += `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`;
+  s += `</g>`;   // einde van het hoofd
   // armen: vóór de kleren getekend (i.p.v. erna), zodat de schouders van het
   // kledingstuk er straks overheen vallen -- ziet er zo aan het lichaam vast uit
   // i.p.v. los bovenop geplakt. In rust zijn beide armen elkaars exacte
@@ -3406,35 +3463,43 @@ function avatarSVG(p, width, propMaat) {
   // met een mic/toverstaf wijkt de rechter vanzelfsprekend af (opgeheven naar
   // het gezicht). De bijbehorende decoratie (mic-kop, sterpunt, ...) komt
   // pas ná de kleren (zie verderop) zodat die zelf nooit erdoor verdwijnt.
-  s += `<path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  // Elke arm eindigt in een handje (zonder leek het een stompje). De vrije arm is
+  // een groep: bij een danspasje gaat hij de lucht in (.av-arm-l).
+  const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
+  s += `<g class="av-arm-l"><path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(64, 158)}</g>`;
   s += mic
     ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
-    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
   // benen: blote benen onder een zoom, of de broekspijpen zelf
   s += B.legs(dc);
   // romp: jurk of shirt, in de kleur (en het patroon) van hetzelfde ene item
   s += B.torso(dc, mic);
   if (dress.pattern && B.pat[dress.pattern]) s += B.pat[dress.pattern];
+  s += B.stof(`url(#stof${uid})`);
   // schoenen (schoenkleur is een eigen categorie in de kleedkamer)
   const shoe = eq.shoes ? item(eq.shoes) : null;
   const sc = shoe ? (shoe.color === 'RAINBOW' ? `url(#rb${uid})` : shoe.color) : '#e91e63';
   s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
+  // een zooltje en een glimlichtje: lak, geen pantoffel
+  s += `<path d="M75.5 236 Q86 241 96.5 236 M103.5 236 Q114 241 124.5 236" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`
+    + `<ellipse cx="82" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/><ellipse cx="110" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/>`;
   // vastgehouden voorwerp: pas ná de kleren getekend (en na de arm zelf,
-  // hierboven), zodat de decoratie nooit onder een schouder verdwijnt
+  // hierboven), zodat de decoratie nooit onder een schouder verdwijnt. De hand
+  // komt over de steel en onder de kop: zo houdt ze hem echt vast.
   if (mic) {
     if (mic.id === 'mic_pintje') {
       // proost! een pintje in de opgeheven hand
-      s += `<text x="135" y="82" font-size="26">🍺</text>`;
+      s += hand(145, 81) + `<text x="135" y="82" font-size="26">🍺</text>`;
     } else if (mic.id === 'mic_toverstaf') {
       // toverstaf met fonkelende sterpunt
-      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="150" y="58" font-size="18">⭐</text><text x="165" y="40" font-size="12">✨</text>`;
     } else if (mic.emoji) {
       // emoji-microfoon (ijsje, vuur): zelfde steel, het emoji als kop
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="144" y="70" font-size="22">${mic.emoji}</text>`;
     } else {
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
       s += `<text x="163" y="47" font-size="15">🎵</text>`;
     }
@@ -4273,7 +4338,7 @@ function sterTegel(key, p) {
   const tegel = document.createElement('button');
   tegel.className = 'ster-tegel';
   tegel.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
+    `<div class="stage st-podium"><div class="avatar-holder levend">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
      <div class="st-voet">
        <div class="st-rij">
          <span class="st-ico" aria-hidden="true">${w.icon}</span>
@@ -12929,7 +12994,7 @@ function renderNewStar() {
      papier, erbuiten is het dezelfde pop op dezelfde poort als op de
      sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>

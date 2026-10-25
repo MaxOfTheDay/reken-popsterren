@@ -551,6 +551,42 @@
     45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
     70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
   }
+  /* ---- Wat er ín haar beweegt ----------------------------------------------
+     Alleen op een .levend pop: de show, het eindscherm, de spiegel, de
+     sterrenkeuze en het maakformulier. Niet op de kaart en de reis: daar draagt
+     ze een SVG-filter (zie .tour-hero svg), en een onderdeel dat binnen dat
+     filter beweegt laat de browser het filter elk beeldje opnieuw uitrekenen.
+     Daar huppelt ze, en dat is genoeg.
+
+     Ze knippert met haar ogen. Het hoofd knikt mee op het wiegen, en de
+     staartjes slingeren een tel later na -- daardoor wiegt het lijf zelf maar
+     half zo ver als vroeger (swayZacht): de beweging zit nu in haar, niet alleen
+     onder haar voeten. Bij een danspasje zwieren de staartjes en gaat de vrije
+     arm de lucht in. De draaipunten liggen in de tekening zelf: de hals
+     (100|104), de aanzet van elk staartje, de schouder (84|112). */
+  .av-hoofd, .av-staart, .av-arm-l { transform-box: view-box; }
+  .av-hoofd { transform-origin: 100px 104px; }
+  .av-staart-l { transform-origin: 68px 80px; }
+  .av-staart-r { transform-origin: 132px 80px; }
+  .av-arm-l { transform-origin: 84px 112px; }
+  .avatar-holder.levend .av-oog { animation: knipper 4.6s infinite; }
+  @keyframes knipper { 0%, 93%, 100% { transform: none; } 95.5% { transform: scaleY(.12); } }
+  .avatar-holder.levend.idle { animation-name: swayZacht; }
+  @keyframes swayZacht { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+  .avatar-holder.levend.idle .av-hoofd { animation: knik 2.6s ease-in-out infinite; }
+  @keyframes knik { 0%,100% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } }
+  .avatar-holder.levend.idle .av-staart { animation: slinger 2.6s ease-in-out -.35s infinite; }
+  @keyframes slinger { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+  .avatar-holder.levend.dancing .av-staart { animation: zwier .3s ease-in-out 3 alternate; }
+  @keyframes zwier { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+  /* niet bij de buiging: wie buigt, steekt geen arm in de lucht */
+  .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
+  @keyframes armOp { 0%,100% { transform: none; } 30%,65% { transform: rotate(100deg); } 48% { transform: rotate(80deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .avatar-holder.levend .av-oog, .avatar-holder.levend .av-hoofd,
+    .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
+    .avatar-holder.levend.idle { animation: none; }
+  }
   /* Wie geen beweging wil: de lampen ademen niet en er wordt niet gedanst.
      Het licht blijft liggen (het is een kleur op het podium, geen beweging) en
      de pop staat rechtop op haar plek -- dezelfde eindstand als na een pasje,

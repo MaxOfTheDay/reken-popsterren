@@ -2547,6 +2547,42 @@
 
 
 
+
+
+
+
+
+
+
+  .av-hoofd, .av-staart, .av-arm-l { transform-box: view-box; }
+  .av-hoofd { transform-origin: 100px 104px; }
+  .av-staart-l { transform-origin: 68px 80px; }
+  .av-staart-r { transform-origin: 132px 80px; }
+  .av-arm-l { transform-origin: 84px 112px; }
+  .avatar-holder.levend .av-oog { animation: knipper 4.6s infinite; }
+  @keyframes knipper { 0%, 93%, 100% { transform: none; } 95.5% { transform: scaleY(.12); } }
+  .avatar-holder.levend.idle { animation-name: swayZacht; }
+  @keyframes swayZacht { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+  .avatar-holder.levend.idle .av-hoofd { animation: knik 2.6s ease-in-out infinite; }
+  @keyframes knik { 0%,100% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } }
+  .avatar-holder.levend.idle .av-staart { animation: slinger 2.6s ease-in-out -.35s infinite; }
+  @keyframes slinger { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+  .avatar-holder.levend.dancing .av-staart { animation: zwier .3s ease-in-out 3 alternate; }
+  @keyframes zwier { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+
+  .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
+  @keyframes armOp { 0%,100% { transform: none; } 30%,65% { transform: rotate(100deg); } 48% { transform: rotate(80deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .avatar-holder.levend .av-oog, .avatar-holder.levend .av-hoofd,
+    .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
+    .avatar-holder.levend.idle { animation: none; }
+  }
+
+
+
+
+
+
   @media (prefers-reduced-motion: reduce) {
     .stage::after { animation: none; }
     .avatar-holder.dancing, .avatar-holder[class*="move-"],
@@ -4271,7 +4307,7 @@
 
 
   .av-oog { transform-box: fill-box; transform-origin: center; }
-  .avatar-holder.oeps .av-oog { transform: scale(1.35); }
+  .avatar-holder.oeps .av-oog { animation: none; transform: scale(1.35); }
   .avatar-holder.oeps .av-mond { opacity: 0; }
   .avatar-holder.oeps .av-mond-o { opacity: 1; }
   .avatar-holder.oeps > .pas-laag { transform-origin: 50% 95%; animation: oepsSchrik .45s var(--ease-uit); }
@@ -9751,7 +9787,7 @@
         <div class="venue-bundel" aria-hidden="true"></div>
         <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage stage-frame show-stage" id="show-stage">
-          <div class="avatar-holder idle" id="game-avatar-inner"></div>
+          <div class="avatar-holder idle levend" id="game-avatar-inner"></div>
         </div>
       </div>
       <div class="math-panel">
@@ -9850,7 +9886,7 @@
         <div class="venue-bundel" aria-hidden="true"></div>
         <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
-          <div class="avatar-holder idle" id="end-avatar"></div>
+          <div class="avatar-holder idle levend" id="end-avatar"></div>
         </div>
       </div>
       <div class="result-stars" id="end-stars"></div>
@@ -9898,7 +9934,7 @@
           <!-- Het podium waar ze op staat (paintShop tekent hem). Een tik erop
                opent Podia: de snelkoppeling naar de lade waar je er een kiest. -->
           <div class="spiegel-podium" id="shop-podium" onclick="openPodia(event)"></div>
-          <div class="avatar-holder idle" id="shop-avatar"></div>
+          <div class="avatar-holder idle levend" id="shop-avatar"></div>
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
@@ -14151,9 +14187,15 @@ function baseOf(p) { return (p && BASES[p.base]) ? p.base : DEFAULT_BASE; }
 function curBase() { return baseOf(db && db.profiles ? db.profiles[cur] : null); }
 
 
-function hairBackStaartjes(hc) {
-  return `<circle cx="100" cy="62" r="37" fill="${hc}"/>`
-    + `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+
+
+
+
+function hairBackStaartjes(hc, glans) {
+  const bol = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${hc}"/>`
+    + (glans ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${glans}"/>` : '');
+  return bol(100, 62, 37)
+    + `<g class="av-staart av-staart-l">${bol(56, 86, 13)}</g><g class="av-staart av-staart-r">${bol(144, 86, 13)}</g>`;
 }
 function hairFrontStaartjes(hc) {
   return `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
@@ -14171,7 +14213,7 @@ function torsoJurk(dc) {
 
 
 
-function hairBackKort(hc) {
+function hairBackKort(hc, glans) {
 
 
 
@@ -14182,7 +14224,8 @@ function hairBackKort(hc) {
 
 
 
-  return `<path d="M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z" fill="${hc}"/>`;
+  const d = 'M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z';
+  return `<path d="${d}" fill="${hc}"/>` + (glans ? `<path d="${d}" fill="${glans}"/>` : '');
 }
 function hairFrontKort(hc) {
 
@@ -14226,6 +14269,23 @@ function torsoShirt(dc, mic) {
 
     + `<path d="M89 105 Q100 116 111 105" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none" stroke-linecap="round"/>`
     + `<path d="M78 165 Q100 171 122 165" stroke="rgba(0,0,0,.2)" stroke-width="2" fill="none"/>`;
+}
+
+
+
+
+
+
+const ZOOM_SCHADUW = `stroke="#000" stroke-opacity=".13" stroke-width="4" fill="none" stroke-linecap="round"`;
+function stofJurk(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L66 196 Q100 210 134 196 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M67 193 Q100 207 133 193" ${ZOOM_SCHADUW}/>`;
+}
+function stofShirt(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M79 162 Q100 168 121 162" ${ZOOM_SCHADUW}/>`
+
+    + `<path d="M78 156 L77 208 Q86 213 95 208 L100 188 L105 208 Q114 213 123 208 L122 156 Z" fill="${stof}"/>`;
 }
 
 
@@ -14287,8 +14347,8 @@ const PAT_SHIRT = {
 
 
 const BASES = {
-  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  pat: PAT_JURK },
-  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, pat: PAT_SHIRT },
+  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  stof: stofJurk,  pat: PAT_JURK },
+  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, stof: stofShirt, pat: PAT_SHIRT },
 };
 
 
@@ -14313,6 +14373,22 @@ const PROP_MAAT = {
   norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
   klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
 };
+
+
+
+
+function lichtDefs(uid) {
+  return `<radialGradient id="bol${uid}" cx=".34" cy=".3" r=".8">
+      <stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+    <radialGradient id="huid${uid}" cx=".42" cy=".38" r=".7">
+      <stop offset=".6" stop-color="#e8836a" stop-opacity="0"/><stop offset="1" stop-color="#e8836a" stop-opacity=".22"/></radialGradient>
+    <linearGradient id="stof${uid}" x1="0" y1="0" x2="1" y2=".35">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+    <radialGradient id="wang${uid}"><stop offset="0" stop-color="#ff8fa3" stop-opacity=".75"/><stop offset="1" stop-color="#ff8fa3" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+}
 function avatarSVG(p, width, propMaat) {
 
   const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
@@ -14331,16 +14407,33 @@ function avatarSVG(p, width, propMaat) {
   s += `<defs><linearGradient id="rb${uid}" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
-    <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
+    <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
   if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
   if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
 
-  s += B.hairBack(hc);
 
-  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
+
+
+
+  s += `<clipPath id="nek${uid}"><rect x="90" y="94" width="20" height="18" rx="8"/></clipPath>`
+    + `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`
+    + `<circle cx="100" cy="76.5" r="32" fill="#e6a183" opacity=".7" clip-path="url(#nek${uid})"/>`;
+
+
+  s += `<g class="av-hoofd">`;
+
+  s += B.hairBack(hc, `url(#bol${uid})`);
+
+  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/><circle cx="100" cy="72" r="32" fill="url(#huid${uid})"/>`;
   s += B.hairFront(hc);
-  s += `<circle class="av-oog" cx="88" cy="72" r="3.6" fill="#333"/><circle class="av-oog" cx="112" cy="72" r="3.6" fill="#333"/>`;
-  s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
+
+  s += `<ellipse cx="88" cy="41" rx="15" ry="7" transform="rotate(-18 88 41)" fill="url(#vlek${uid})"/>`;
+
+
+
+  const oog = x => `<g class="av-oog"><ellipse cx="${x}" cy="72" rx="3.7" ry="4.6" fill="#2b2238"/><circle cx="${x + 1.4}" cy="70.2" r="1.45" fill="#fff"/></g>`;
+  s += oog(88) + oog(112);
+  s += `<circle cx="79" cy="82" r="7" fill="url(#wang${uid})"/><circle cx="121" cy="82" r="7" fill="url(#wang${uid})"/>`;
 
 
 
@@ -14348,8 +14441,10 @@ function avatarSVG(p, width, propMaat) {
 
 
 
-  s += `<path class="av-mond" d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#c2572b" opacity="0"/>`;
+
+  s += `<g class="av-mond"><path d="M91 85.5 Q100 89 109 85.5 Q107.5 94.5 100 94.5 Q92.5 94.5 91 85.5 Z" fill="#8a2f36"/>`
+    + `<path d="M95 92.2 Q100 89.6 105 92.2 Q103 94.5 100 94.5 Q97 94.5 95 92.2 Z" fill="#ff8f9c"/></g>`;
+  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#8a2f36" opacity="0"/>`;
 
   if (acc) {
 
@@ -14376,45 +14471,51 @@ function avatarSVG(p, width, propMaat) {
       if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
     }
   }
-
-
-  s += `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`;
-
+  s += `</g>`;
 
 
 
 
 
 
-  s += `<path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+
+
+
+  const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
+  s += `<g class="av-arm-l"><path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(64, 158)}</g>`;
   s += mic
     ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
-    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
 
   s += B.legs(dc);
 
   s += B.torso(dc, mic);
   if (dress.pattern && B.pat[dress.pattern]) s += B.pat[dress.pattern];
+  s += B.stof(`url(#stof${uid})`);
 
   const shoe = eq.shoes ? item(eq.shoes) : null;
   const sc = shoe ? (shoe.color === 'RAINBOW' ? `url(#rb${uid})` : shoe.color) : '#e91e63';
   s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
 
+  s += `<path d="M75.5 236 Q86 241 96.5 236 M103.5 236 Q114 241 124.5 236" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`
+    + `<ellipse cx="82" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/><ellipse cx="110" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/>`;
+
+
 
   if (mic) {
     if (mic.id === 'mic_pintje') {
 
-      s += `<text x="135" y="82" font-size="26">🍺</text>`;
+      s += hand(145, 81) + `<text x="135" y="82" font-size="26">🍺</text>`;
     } else if (mic.id === 'mic_toverstaf') {
 
-      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="150" y="58" font-size="18">⭐</text><text x="165" y="40" font-size="12">✨</text>`;
     } else if (mic.emoji) {
 
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="144" y="70" font-size="22">${mic.emoji}</text>`;
     } else {
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
       s += `<text x="163" y="47" font-size="15">🎵</text>`;
     }
@@ -15253,7 +15354,7 @@ function sterTegel(key, p) {
   const tegel = document.createElement('button');
   tegel.className = 'ster-tegel';
   tegel.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
+    `<div class="stage st-podium"><div class="avatar-holder levend">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
      <div class="st-voet">
        <div class="st-rij">
          <span class="st-ico" aria-hidden="true">${w.icon}</span>
@@ -23909,7 +24010,7 @@ function renderNewStar() {
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>
