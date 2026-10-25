@@ -218,6 +218,8 @@ const BRUG = `globalThis.__api = {
   // het ouderrapport: de laatste shows
   RECENT_N, onthoudUitkomst, uitdagingStand, groeiMoment, wenPlafond, grensOmhoog, WEN_SHOWS, moeilijkheid,
   wereldAccent, planSpecials,
+  // de antwoordknoppen
+  genQuestion, keuzeGrens, makeChoices,
 };`;
 
 function laadApp(opties) {

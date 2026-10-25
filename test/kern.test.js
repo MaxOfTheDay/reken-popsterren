@@ -38,6 +38,7 @@
  *   W  gegroeid                         -> "Nieuw!" bij een fase hoger, een nieuwe vraagsoort, grotere getallen
  *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
  *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
+ *   Z  de antwoordknoppen               -> binnen de grens, één echte fout, en het middelste kiezen loont niet
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -1223,6 +1224,51 @@ zaak('Y', () => {
   // nog niet vrij: dan geen accent, gewoon wat er wél kan
   p.settings.missNum = false;
   check(soorten(L + 1) === 'chain', 'Y · zoek het getal uit: de zoek-wereld speelt gewoon', soorten(L + 1));
+});
+
+/* De vier knoppen moeten je laten rekenen (zie makeChoices). Gemeten met de
+   gok die de oude knoppen beloonden: "neem het getal met de meeste buren", en
+   bij gelijkspel het getal dat het dichtst bij het gemiddelde ligt. Dat was
+   65%; blind gokken is 25%. */
+zaak('Z', () => {
+  const { app, p } = verseSter('Knoppen');
+  const s = p.settings;
+  const gok = c => {
+    const buren = v => c.filter(w => w !== v && Math.abs(w - v) <= 2).length;
+    const gem = c.reduce((a, b) => a + b, 0) / c.length;
+    return c.slice().sort((x, y) => buren(y) - buren(x) || Math.abs(x - gem) - Math.abs(y - gem))[0];
+  };
+  for (const [max, lvl, naam] of [[20, 1, 'wereld 1, tot tien'], [20, 9, 'wereld 2, tot twintig'], [100, 41, 'tot honderd']]) {
+    s.max = max; s.ops = ['+', '-']; s.wennen = 0;
+    let raak = 0, buiten = 0, fout = 0, vier = 0, plaats = [0, 0, 0, 0];
+    const N = 3000;
+    for (let i = 0; i < N; i++) {
+      const q = app.genQuestion(s, lvl, 0.5);
+      const grens = app.keuzeGrens(q, s, lvl);
+      const c = app.makeChoices(q, grens);
+      if (c.length === 4 && new Set(c).size === 4 && c.filter(v => v === q.ans).length === 1) vier++;
+      if (c.some(v => v < 0 || v > grens)) buiten++;
+      if (gok(c) === q.ans) raak++;
+      plaats[c.filter(v => v < q.ans).length]++;
+      const getallen = q.tmpl.match(/\d+/g).map(Number);
+      const echt = new Set(getallen.concat(getallen[0] + getallen[1], Math.abs(getallen[0] - getallen[1]), q.ans + 10, q.ans - 10));
+      if (c.some(v => v !== q.ans && echt.has(v))) fout++;
+    }
+    check(vier === N, `Z · ${naam}: altijd vier verschillende knoppen, het antwoord één keer`, `${vier}/${N}`);
+    check(buiten === 0, `Z · ${naam}: geen knop buiten de grens`, `${buiten}/${N}`);
+    check(raak / N < 0.35, `Z · ${naam}: het middelste kiezen loont niet (was 65%)`, `${Math.round(raak / N * 100)}%`);
+    check(fout / N > 0.8, `Z · ${naam}: bijna altijd één echte fout (verkeerd teken, een getal uit de som)`, `${Math.round(fout / N * 100)}%`);
+    check(plaats.every(n => n > N * 0.12), `Z · ${naam}: het antwoord is even goed de kleinste als de grootste`, plaats.join(','));
+  }
+  // tafels: de grens is het volgende tiental, en er komt geen negatief getal
+  s.ops = ['x']; s.tables = [2, 5, 10];
+  let ok = true;
+  for (let i = 0; i < 500; i++) {
+    const q = app.genQuestion(s, 41, 0.5);
+    const c = app.makeChoices(q, app.keuzeGrens(q, s, 41));
+    if (c.length !== 4 || new Set(c).size !== 4 || c.some(v => v < 0)) ok = false;
+  }
+  check(ok, 'Z · tafels: vier verschillende knoppen, niets negatief', '');
 });
 
 klaar();
