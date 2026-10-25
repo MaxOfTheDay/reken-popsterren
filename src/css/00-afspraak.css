@@ -602,6 +602,13 @@
        dezelfde, en meteen als token: lip en diepte horen bij elkaar. */
     --btn-lip: 5px; --btn-lip-sm: 4px;
     --btn-diep: 0 8px 14px rgba(0,0,0,.3);
+    /* --btn-glans: het licht óp de knop. Een dun licht randje bovenaan en een
+       zweem schaduw onderin, zodat een knop een bolling heeft in plaats van een
+       vlak met een lip eronder: hij leest als iets dat je indrukt. Staat vóór de
+       lip in elke box-shadow (inset telt niet mee voor de lip), ook in :active --
+       ingedrukt verdwijnt de lip, niet het licht. De glimlap bovenin de grote
+       knoppen staat in 10-basis.css (.btn.big::after) en 40-kaart.css. */
+    --btn-glans: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(0,0,0,.12);
 
     /* ---- De veilige zone van het toestel, en de ruimte onder de balk ----
        FASE 5D. Dit stond vijf keer met de hand uitgerekend: de balk op bottom 10
