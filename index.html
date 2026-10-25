@@ -2446,9 +2446,12 @@
   .stage.tappable:active { transform: scale(.98); }
   .avatar-holder { line-height: 0; }
   .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
+
+
+
   @keyframes sway {
-    0%,100% { transform: rotate(-2.5deg); }
-    50%     { transform: rotate(2.5deg); }
+    0%,100% { transform: rotate(-1.2deg); }
+    50%     { transform: rotate(1.2deg); }
   }
 
 
@@ -2559,18 +2562,12 @@
 
 
 
-
   .av-hoofd, .av-staart, .av-arm-l { transform-box: view-box; }
   .av-hoofd { transform-origin: 100px 104px; }
   .av-staart-l { transform-origin: 68px 80px; }
   .av-staart-r { transform-origin: 132px 80px; }
   .av-arm-l { transform-origin: 84px 112px; }
-  .avatar-holder.levend .av-oog { animation: knipper 4.6s infinite; }
-
   .avatar-holder.knipoog .av-oog { transform: scaleY(.12); }
-  @keyframes knipper { 0%, 93%, 100% { transform: none; } 95.5% { transform: scaleY(.12); } }
-  .avatar-holder.levend.idle { animation-name: swayZacht; }
-  @keyframes swayZacht { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
   .avatar-holder.levend.idle .av-hoofd { animation: knik 2.6s ease-in-out infinite; }
   @keyframes knik { 0%,100% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } }
   .avatar-holder.levend.idle .av-staart { animation: slinger 2.6s ease-in-out -.35s infinite; }
@@ -2581,7 +2578,7 @@
   .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
   @keyframes armOp { 0%,100% { transform: none; } 30%,65% { transform: rotate(100deg); } 48% { transform: rotate(80deg); } }
   @media (prefers-reduced-motion: reduce) {
-    .avatar-holder.levend .av-oog, .avatar-holder.levend .av-hoofd,
+    .avatar-holder.levend .av-hoofd,
     .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
     .avatar-holder.levend.idle { animation: none; }
   }
@@ -14447,14 +14444,38 @@ function applyStage(el, p) {
 
 
 
-const KNIPPER = { om: 4600, dicht: 130 };
-function kaartKnipper() {
-  const pop = document.querySelector('#screen-map.active .tour-hero .avatar-holder');
-  if (!pop || document.hidden || motionOff()) return;
+
+
+
+
+
+
+
+
+const KNIPPER = { tik: 250, min: 3000, max: 7000, dicht: 130, dubbel: .18, tussen: 280, uitDePas: 900 };
+let knipperLaatst = 0;
+const KNIPPER_POPS = '.screen.active .avatar-holder.levend, #screen-map.active .tour-hero .avatar-holder';
+function knipOog(pop) {
   pop.classList.add('knipoog');
   setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
 }
-setInterval(kaartKnipper, KNIPPER.om);
+function knipperLus() {
+  if (document.hidden || motionOff()) return;
+  const nu = Date.now();
+  document.querySelectorAll(KNIPPER_POPS).forEach(pop => {
+    const wacht = () => KNIPPER.min + Math.random() * (KNIPPER.max - KNIPPER.min);
+    if (!pop.knipperOp) { pop.knipperOp = nu + Math.random() * KNIPPER.max; return; }
+    if (nu < pop.knipperOp) return;
+
+
+    if (nu - knipperLaatst < KNIPPER.uitDePas) { pop.knipperOp = nu + KNIPPER.uitDePas; return; }
+    knipperLaatst = nu;
+    knipOog(pop);
+    if (Math.random() < KNIPPER.dubbel) setTimeout(() => knipOog(pop), KNIPPER.tussen);
+    pop.knipperOp = nu + wacht();
+  });
+}
+setInterval(knipperLus, KNIPPER.tik);
 
 
 

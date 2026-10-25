@@ -3540,19 +3540,43 @@ function applyStage(el, p) {
   el.insertBefore(schijf, el.firstChild);
 }
 
-/* Knipperen op de kaart. Daar mag er niets ín haar animeren (zie .levend in het
-   stijlblad: ze draagt een SVG-filter dat dan elk beeldje opnieuw berekend
-   wordt), dus knippert ze hier met een klasse die even aan en weer uit gaat:
-   twee keer tekenen per knipoog, en verder niets. Alleen als de kaart echt in
-   beeld is, het tabblad zichtbaar, en er beweging mag. */
-const KNIPPER = { om: 4600, dicht: 130 };
-function kaartKnipper() {
-  const pop = document.querySelector('#screen-map.active .tour-hero .avatar-holder');
-  if (!pop || document.hidden || motionOff()) return;
+/* Knipperen. Elke pop in beeld knippert op haar eigen, onregelmatige ritme:
+   ergens tussen drie en zeven tellen, en af en toe twee keer kort na elkaar --
+   zoals mensen knipperen. Eerst was het een CSS-animatie van 4,6 tellen, en dan
+   knipperden alle sterren op de sterrenkeuze precies tegelijk: een schermpje dat
+   een animatie afspeelt, terwijl daar juist nooit twee tegelijk iets doen (zie
+   "= De sterrenkeuze leeft").
+
+   Het is een klasse die even aan en weer uit gaat, geen animatie: op de kaart
+   draagt ze een SVG-filter dat bij elke beweging ín haar opnieuw berekend wordt,
+   en zo kost een knipoog daar twee keer tekenen en verder niets. De volgende
+   knipoog van elke pop hangt aan de pop zelf (een nieuwe tekening begint op een
+   toevallig moment), en er draait maar één klokje voor allemaal. Alleen in het
+   scherm dat open is, met het tabblad zichtbaar, en als er beweging mag. */
+const KNIPPER = { tik: 250, min: 3000, max: 7000, dicht: 130, dubbel: .18, tussen: 280, uitDePas: 900 };
+let knipperLaatst = 0;
+const KNIPPER_POPS = '.screen.active .avatar-holder.levend, #screen-map.active .tour-hero .avatar-holder';
+function knipOog(pop) {
   pop.classList.add('knipoog');
   setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
 }
-setInterval(kaartKnipper, KNIPPER.om);
+function knipperLus() {
+  if (document.hidden || motionOff()) return;
+  const nu = Date.now();
+  document.querySelectorAll(KNIPPER_POPS).forEach(pop => {
+    const wacht = () => KNIPPER.min + Math.random() * (KNIPPER.max - KNIPPER.min);
+    if (!pop.knipperOp) { pop.knipperOp = nu + Math.random() * KNIPPER.max; return; }
+    if (nu < pop.knipperOp) return;
+    // nooit twee tegelijk: wie aan de beurt is terwijl een ander net knippert,
+    // wacht een tel langer
+    if (nu - knipperLaatst < KNIPPER.uitDePas) { pop.knipperOp = nu + KNIPPER.uitDePas; return; }
+    knipperLaatst = nu;
+    knipOog(pop);
+    if (Math.random() < KNIPPER.dubbel) setTimeout(() => knipOog(pop), KNIPPER.tussen);
+    pop.knipperOp = nu + wacht();
+  });
+}
+setInterval(knipperLus, KNIPPER.tik);
 
 /* ================= Schermen ================= */
 /* De reis hoort bij Kaart: hij is dezelfde plek, alleen verder weg. Daardoor
