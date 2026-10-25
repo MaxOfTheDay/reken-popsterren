@@ -6854,7 +6854,10 @@
 
 
 
-  .trophy-card.kies .temoji { outline: 3px solid rgb(143,214,255); outline-offset: 3px; }
+
+  .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
+  .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
+  .trophy-card.kies .tname { color: var(--c-white); }
 
 
 
@@ -6916,7 +6919,6 @@
     border-color: var(--gold-accent);
     box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
   }
-  .trophy-card.kies .pw-medal:not(.pw-prijs) { outline: 3px solid rgb(143,214,255); outline-offset: 3px; }
 
 
 
