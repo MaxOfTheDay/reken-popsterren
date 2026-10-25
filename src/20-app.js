@@ -15127,6 +15127,9 @@ function backTarget() {
   //    (":not(.closing)" want de drie hieronder faden al enkele honderden ms uit; een druk
   //    tijdens die overgang moet niet nogmaals "sluiten", maar meteen de vólgende laag raken.)
   const modal = document.querySelector('.modal-bg.open');
+  //    Het stopkaartje is de uitzondering: dáár is terug juist "ja, stoppen", dus
+  //    geen wachtpost en de volgende druk verlaat de app (zie toonStopKaart).
+  if (modal && $('stop-blijf')) return null;
   if (modal) return modal.id === 'quit-modal' ? closeQuitModal : closeConfirmModal;
   //    Alle zwevende lagen dragen '.rp-overlay' (zie openOverlay), dus één vraag
   //    volstaat. De láátste in de DOM is de bovenste op het scherm -- en dat is de
@@ -15153,7 +15156,24 @@ function backTarget() {
   if ($('screen-map').classList.contains('active') && !$('world-back').hidden
       && $('world-back').onclick) return $('world-back').onclick;
   if ($('screen-map').classList.contains('active')) return goProfiles;
-  return null;   // screen-profile, niets open: dit ís de bodem -- browser/PWA handelt terug zelf verder af
+  // de sterrenkeuze is de bodem: eerst nog vragen of je echt wil stoppen
+  if ($('screen-profile').classList.contains('active')) return toonStopKaart;
+  return null;
+}
+
+/* Het stopkaartje: de laatste terug-druk, op de sterrenkeuze. Een webapp kan
+   zichzelf niet sluiten -- window.close() mag niet en history kan er niet uit,
+   zeker niet als geïnstalleerde app -- dus er is geen knop "Stoppen" die het
+   ook echt doet. Wat wél kan: dit kaartje zet géén nieuwe wachtpost (backTarget
+   geeft er null voor), dus de vólgende terug-druk verlaat de app zelf. Het
+   kaartje zegt dat, en de gouden knop is de weg terug het spel in. */
+function toonStopKaart() {
+  $('confirm-title').textContent = '👋 Stoppen?';
+  $('confirm-body').textContent = 'Druk nog eens op terug om te stoppen.';
+  $('confirm-actions').innerHTML = `<button class="btn" id="stop-blijf">Blijven spelen</button>`;
+  $('stop-blijf').onclick = () => { sndClick(); closeConfirmModal(); };
+  $('confirm-modal').classList.add('open');
+  syncBackGuard();
 }
 
 /* Waarom terug na de eerste keer vooruit gaat in plaats van opnieuw te duwen:
@@ -15188,6 +15208,11 @@ function syncBackGuard() {
     const want = !!backTarget();
     if (want === backGuardArmed) return;
     if (want) {
+      // Nog nooit getikt (net geopend)? Dan zou Chrome een nieuwe wachtpost meteen
+      // als overslaanbaar markeren, en de eerste terug sloeg de app over zonder
+      // stopkaartje. Dus wachten op de eerste tik -- de klik-luisteraar hieronder.
+      const ua = navigator.userActivation;
+      if (!guardVooruit && ua && !ua.hasBeenActive) return;
       if (guardVooruit) history.forward();                    // de oude wachtpost, zie hierboven
       else history.pushState({ rpGuard: 1 }, '');
       backGuardArmed = true;
@@ -15208,8 +15233,12 @@ window.addEventListener('popstate', () => {
 // Na terugkeer uit de bfcache (bv. via Recents) kan de wachtpost-entry intussen
 // alweer weg zijn -- lees de status dan opnieuw af i.p.v. hem zomaar aan te nemen.
 window.addEventListener('pageshow', () => { backGuardArmed = !!(history.state && history.state.rpGuard); syncBackGuard(); });
-// Escape is dezelfde intentie als terug, ook zonder touchscherm.
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act) act(); } });
+// De wachtpost die bij het opstarten nog niet mocht (zie syncBackGuard): bij elke
+// tik opnieuw kijken. Kost niets als hij er al staat of niet hoeft.
+document.addEventListener('click', syncBackGuard, true);
+// Escape is dezelfde intentie als terug, ook zonder touchscherm. Behalve het
+// stopkaartje: "druk nog eens op terug" zegt een toetsenbord niets.
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { const act = backTarget(); if (act && act !== toonStopKaart) act(); } });
 
 /* De schermtekeningen van de kleedkamer en de kast aanzetten, als er een is.
    Eén plek, en hij leest SCHERMKUNST -- er staat nergens anders een pad.
