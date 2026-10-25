@@ -618,23 +618,31 @@
   .choice-btn {
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 18px 8px; border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     /* de snelste trede van de bewegingstaal: een antwoordknop moet indrukken
        vóórdat een kind zich afvraagt of de tik aankwam */
     transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
-  .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
-  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
+  /* de glimlap van --btn-glans, zoals op .btn.big (10-basis.css). ::after en niet
+     ::before: die is van de ring om een goed antwoord (50-zaal.css) */
+  .choice-btn { position: relative; }
+  .choice-btn::after {
+    content: ''; position: absolute; left: 8%; right: 8%; top: 5px; height: 38%;
+    border-radius: var(--r-pill); pointer-events: none;
+    background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
+  }
+  .choice-btn:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 13px 0; border-radius: var(--r-md);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
   }
-  .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .num-btn:active { transform: translateY(3px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
   /* wissen is neutraal (grijs), niet rood: rood = fout antwoord, dat verwarren we niet */
-  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
 
