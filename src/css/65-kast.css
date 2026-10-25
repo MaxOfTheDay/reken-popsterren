@@ -295,31 +295,64 @@
   .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
   .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
   .trophy-card.kies .tname { color: var(--c-white); }
-  /* De tikken (zie kastKlink en kastDof). Behaald: één keer om als een munt,
-     met een ring licht die eraf gaat. Nog niet: een kort schuddinkje, "nog niet". */
-  .trophy-card.klink .temoji, .trophy-card.klink .pw-medal { animation: kastKlink .55s cubic-bezier(.3,.7,.3,1); }
-  .trophy-card.klink .temoji::before {
-    content: ''; position: absolute; inset: -8px; border-radius: 50%; pointer-events: none;
-    border: 2px solid rgba(var(--goud-glans-rgb),.9); animation: kastKlinkRing .55s ease-out forwards;
+  /* De tikken (zie kastKlink en kastDof). Eén beweging die eindigt waar "getikt"
+     staat (translateY(-3px) scale(1.08), hierboven): de laatste stap van elke
+     animatie hieronder ís die stand, dus tik en keuze zijn hetzelfde ding.
+     Hier stond eerst een munt die een keer omdraaide. Dat sloeg de lift over (de
+     animatie nam de transform over, dus de medaille zakte terug, draaide plat en
+     sprong pas daarna omhoog), en een platte schijf die om zijn as draait staat
+     halverwege op zijn kant met het icoon in spiegelbeeld (Max, oktober 2026).
+       behaald   kastKlop: kort indrukken, dan omhoog de lift in met een kleine
+                 uitloop; een glans gaat één keer over het vlak, en een ring licht
+                 in het eigen metaal gaat eraf
+       nog niet  kastNee: omhoog de lift in en daar nee schudden */
+  .trophy-card.klink .temoji, .trophy-card.klink .pw-medal { animation: kastKlop .5s cubic-bezier(.3,.8,.4,1) both; }
+  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: kastNee .45s ease-out both; }
+  @keyframes kastKlop {
+    0% { transform: translateY(0) scale(1); }
+    22% { transform: translateY(1px) scale(.9); }
+    58% { transform: translateY(-6px) scale(1.17); }
+    100% { transform: translateY(-3px) scale(1.08); }
   }
-  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: kastDof .38s ease-out; }
-  @keyframes kastKlink {
-    0% { transform: perspective(300px) rotateY(0) scale(1); }
-    45% { transform: perspective(300px) rotateY(200deg) scale(1.14); }
-    100% { transform: perspective(300px) rotateY(360deg) scale(1); }
+  @keyframes kastNee {
+    0% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-3px) scale(1.08) rotate(0); }
+    45% { transform: translateY(-3px) scale(1.08) rotate(-5deg); }
+    65% { transform: translateY(-3px) scale(1.08) rotate(4deg); }
+    82% { transform: translateY(-3px) scale(1.08) rotate(-2deg); }
+    100% { transform: translateY(-3px) scale(1.08) rotate(0); }
   }
-  @keyframes kastKlinkRing { from { opacity: .9; transform: scale(.8); } to { opacity: 0; transform: scale(1.5); } }
-  @keyframes kastDof {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-4px) rotate(-3deg); }
-    45% { transform: translateX(4px) rotate(3deg); }
-    70% { transform: translateX(-2px); }
+  /* De glans: dezelfde schuine streep als op de bovenste trap, één keer. Hij
+     schuift als achtergrond door een rondje ter grootte van het vlak, zodat hij
+     vanzelf binnen de medaille blijft. Bij de bovenste trap neemt hij de eeuwige
+     glans even over (zelfde ::after). */
+  .trophy-card.klink .temoji::after {
+    content: ''; position: absolute; inset: 0; left: 0; width: auto; border-radius: 50%; pointer-events: none;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.65) 50%, transparent 62%) 130% 0 / 300% 100% no-repeat;
+    transform: none; animation: kastGlans .55s ease-out .12s both;
   }
+  @keyframes kastGlans { from { background-position: 130% 0; opacity: 1; } 80% { opacity: 1; } to { background-position: -30% 0; opacity: 0; } }
+  /* De ring hangt aan het kaartje en niet aan de medaille: zo draait en schaalt
+     hij niet mee en blijft hij rond. Midden op de getikte medaille (8px padding,
+     68px medaille, 3px omhoog). Een groeiende medaille geeft hem zijn eigen
+     metaal (--ring, zie .nu-N); op de perfecte plank staat een podium, geen
+     rondje, dus daar niet. */
+  .trophy-card.klink::before {
+    content: ''; position: absolute; top: -1px; left: 50%; width: 80px; height: 80px; margin-left: -40px;
+    border-radius: 50%; pointer-events: none; border: 2px solid var(--ring, rgba(var(--goud-glans-rgb),.9));
+    animation: kastRing .5s ease-out .1s both;
+  }
+  .trophy-card.pw-card.klink::before { content: none; }
+  .trophy-card.ladder.nu-0 { --ring: var(--m-0); }
+  .trophy-card.ladder.nu-1 { --ring: var(--m-1); }
+  .trophy-card.ladder.nu-2 { --ring: var(--m-2); }
+  .trophy-card.ladder.nu-3 { --ring: var(--m-3); }
+  @keyframes kastRing { from { opacity: .85; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
   @media (prefers-reduced-motion: reduce) {
     .trophy-card.ladder.top .temoji::after { animation: none; display: none; }
     .trophy-card.klink .temoji, .trophy-card.klink .pw-medal,
     .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: none; }
-    .trophy-card.klink .temoji::before { display: none; }
+    .trophy-card.klink::before, .trophy-card.klink .temoji::after { content: none; }
   }
   /* De naam: wit als hij van jou is, een slag zachter als hij nog moet komen.
      De letter een maat kleiner dan op het oude kaartje (15 -> 13): op een derde

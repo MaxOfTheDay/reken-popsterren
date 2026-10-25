@@ -9059,7 +9059,7 @@ function tapLadder(ladder, card, e) {
   const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
   if (klaar) { openTrophy(klaar.id); return; }
   // een medaille met al een metaal klinkt; nog geen enkel metaal blijft gedempt
-  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (niveau) kastKlink(card); else kastDof(card);
   if (card.classList.contains('kies')) { kastBalk(null); return; }
   const kop = { emoji: ladder.emoji, name: ladder.name };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
@@ -9166,24 +9166,28 @@ function tapTrophy(t, card, e) {
 /* De tikken in de kast (oktober 2026). Max miste hoe speels het aantikken eerst
    was: behaald klonk en deed iets, nog niet was stiller. Dat is er weer, en de
    balk onderin blijft wat hij is.
-     behaald   kastKlink: de medaille draait een keer om als een munt, er gaat
-               een ring licht van af en een 🎵 op, en hij speelt een noot op zijn
-               plek op de plank (zie 'kast.klink': langs een rij tikken is een
-               wijsje). Een medaille die meegroeit vonkt in zijn eigen metaal.
-     nog niet  kastDof: de gewone tik, een kort "nog niet"-schuddinkje, en de boog
-               in de rand loopt opnieuw vol van leeg tot waar je bent -- zo zie
-               je bij elke tik hoe ver je al bent.
+     behaald   kastKlink: de medaille wordt kort ingedrukt en wipt dan omhoog de
+               getikte stand in, er gaat een glans over en een ring licht van af,
+               en hij speelt een noot op zijn plek op de plank (zie 'kast.klink':
+               langs een rij tikken is een wijsje). Een medaille die meegroeit
+               geeft een ring in zijn eigen metaal (zie --ring in de kast).
+     nog niet  kastDof: de gewone tik, omhoog en daar "nog niet" schudden, en de
+               boog in de rand loopt opnieuw vol van leeg tot waar je bent -- zo
+               zie je bij elke tik hoe ver je al bent.
+   Een tweede tik op dezelfde (de balk gaat weer weg) is alleen het klankje: de
+   medaille zakt dan gewoon terug. Hier draaide eerst de medaille om als een munt,
+   met drie vonkjes erbij, ook bij die tweede tik; dat waren te veel bewegingen na
+   elkaar (Max, oktober 2026, zie kastKlop in de kast).
    Zonder beweging (motionOff) blijft alleen het klankje over. */
-const KLINK_VONK = [['✨', '🥉', '🎵'], ['✨', '🥈', '🎵'], ['✨', '🥇', '🎵'], ['✨', '💎', '🎵']];
-function kastKlink(card, trap) {
+function kastKlink(card) {
   playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
-  if (motionOff()) return;
+  if (motionOff() || card.classList.contains('kies')) return;
   opnieuw(card, 'klink');
-  sparkle(card, trap != null ? KLINK_VONK[trap] : ['✨', '🎵', '⭐']);
+  sparkle(card, ['✨']);
 }
 function kastDof(card) {
   sndClick();
-  if (motionOff()) return;
+  if (motionOff() || card.classList.contains('kies')) return;
   opnieuw(card, 'dof');
   // de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop
   const m = card.querySelector('.temoji');
