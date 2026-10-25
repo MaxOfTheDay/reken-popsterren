@@ -456,6 +456,24 @@ function check(ok, label, detail) {
     check(stappen.join() === 'screen-map,screen-map,screen-profile,screen-profile',
       'terug doet nog elke stap: kast, kleedkamer, kaart, en weer de kaart', stappen.join());
     check(duw === 0, 'na de eerste wachtpost komt er geen pushState meer bij (Chrome zou de app dan overslaan)', 'pushState ' + duw + 'x');
+    /* De bodem: op de sterrenkeuze vraagt terug eerst of je wil stoppen. Het
+       kaartje zet géén wachtpost terug, zodat de volgende druk de app verlaat;
+       "Blijven spelen" zet hem wél terug (hergebruikt, weer zonder pushState). */
+    await page.click('.ster-tegel'); await page.waitForTimeout(600);
+    await page.goBack(); await page.waitForTimeout(500);
+    await page.goBack(); await page.waitForTimeout(500);
+    let k = await page.evaluate(() => ({ scherm: document.querySelector('.screen.active').id,
+      kaart: document.getElementById('confirm-modal').classList.contains('open') && !!document.getElementById('stop-blijf'),
+      wacht: !!(history.state && history.state.rpGuard) }));
+    check(k.scherm === 'screen-profile' && k.kaart && !k.wacht,
+      'terug op de sterrenkeuze toont het stopkaartje, zonder nieuwe wachtpost', JSON.stringify(k));
+    await page.click('#stop-blijf'); await page.waitForTimeout(500);
+    k = await page.evaluate(() => ({ kaart: document.getElementById('confirm-modal').classList.contains('open'),
+      wacht: !!(history.state && history.state.rpGuard), duw: window.__duw }));
+    check(!k.kaart && k.wacht && k.duw === 0, 'Blijven spelen sluit het kaartje en zet de wachtpost terug, zonder pushState', JSON.stringify(k));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    check(!(await page.evaluate(() => document.getElementById('confirm-modal').classList.contains('open'))),
+      'Escape op de sterrenkeuze toont geen stopkaartje (dat praat over de terugknop)', '');
     await ctx.close();
   }
 
