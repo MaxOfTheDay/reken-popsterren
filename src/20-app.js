@@ -8984,9 +8984,9 @@ function trophyCard(t, p) {
 /* Een medaille die meegroeit (zie TROPHY_LADDERS): één kaartje voor alle trappen.
      klaar     ligt er een trap klaar, dan is dit kaartje het cadeautje
                (giftMedaille) en opent een tik de laagste die klaarligt
-     anders    het icoon van de ladder in een rand van het metaal dat je al hebt
-               (nog niets: de gewone donkere rand), met daarover een boog in het
-               metaal van de volgende trap: zo ver ben je op weg naar zilver
+     anders    het icoon van de ladder op een vlak van het metaal dat je al hebt
+               (nog niets: het gewone donkere vlak), met in de rand een boog in
+               het metaal van de volgende trap: zo ver ben je op weg naar zilver
      eronder   de naam en een stipje per trap, gekleurd voor wat je al hebt
    Alles uit wat er al bewaard is: welke trap-id's in p.trophies staan. */
 function ladderStand(ladder, p) {
@@ -9009,9 +9009,15 @@ function ladderCard(ladder, p) {
     card.innerHTML = giftMedaille(ladder) + stippen;
     card.setAttribute('aria-label', `Open ${klaar.name}`);
   } else {
+    /* De boog telt vanaf de trap die je al hebt, niet vanaf nul: een net
+       behaalde zilveren medaille staat met een lege rand op weg naar goud, en
+       niet al voor een vijfde vol (100 van de 500 sommen). */
     let boog = 0;
-    if (volgende) { const pr = volgende.progress(p); boog = Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target))); }
-    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '') + (nu != null ? `;--nu:var(--m-${nu})` : '');
+    if (volgende) {
+      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+      boog = Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (pr.target - vorig))));
+    }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
     card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
       + `<div class="tname">${ladder.name}</div>` + stippen;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
@@ -9227,7 +9233,7 @@ function celebrateTrophy(t) {
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
     // een trap van een medaille die meegroeit: de rand in zijn eigen metaal
-    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-rand:var(--m-${t.trap})"` : ''}>${t.emoji}</div>`
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',

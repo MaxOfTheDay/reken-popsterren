@@ -244,33 +244,45 @@
   .trophy-card.ready .temoji { box-shadow: 0 0 22px rgba(var(--goud-rgb),.75), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
   .trophy-card.ready .tico { font-size: 38px; }
   /* ---- Een medaille die meegroeit (ladderCard) ----
-     De rand is het metaal dat je al hebt (--nu), en de boog erover het metaal
-     van de volgende trap (--straks), zo ver als je al bent: een bronzen
-     medaille die voor 40% zilver is, is op 40% van de weg naar zilver. Nog
-     niets: de gewone donkere rand met een bronzen boog. Heb je een metaal, dan
-     een zachte gloed in die kleur (nu-0 .. nu-3). */
+     Eén regel voor elke medaille in de kast: de rand is de weg erheen, een
+     volle rand is af. Een medaille die meegroeit heeft daar één ding bij: het
+     vlak zelf is het metaal dat je al hebt (--m-vlak-*, nu-0 .. nu-3) -- "mijn
+     medaille is goud geworden" zie je in één oogopslag. De rand is daardoor
+     alleen nog de weg naar het volgende metaal: een stil spoor met een boog in
+     de kleur van de volgende trap (--straks), en bij elke nieuwe trap begint
+     hij weer leeg (zie ladderCard). Op de hoogste trap (.top) is de rand vol,
+     in zijn eigen metaal, en gaat er traag een glans over.
+
+     Eerst was alleen de rand van kleur: zilver, goud en diamant leken op een
+     telefoon op elkaar, en de rand zei twee dingen tegelijk (welk metaal, en hoe
+     ver). */
   .trophy-card.ladder:not(.ready) .temoji {
     background:
       var(--medaille-vul) padding-box,
-      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu, rgba(255,255,255,.13)) 0) border-box;
+      conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
   }
+  .trophy-card.ladder.nu-0:not(.ready) .temoji { --vlak: var(--m-vlak-0); --rand: var(--m-rand-0); box-shadow: 0 0 14px rgba(217,143,85,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.25); }
+  .trophy-card.ladder.nu-1:not(.ready) .temoji { --vlak: var(--m-vlak-1); --rand: var(--m-rand-1); box-shadow: 0 0 14px rgba(219,228,238,.35), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
+  .trophy-card.ladder.nu-2:not(.ready) .temoji { --vlak: var(--m-vlak-2); --rand: var(--m-rand-2); box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.3); }
+  .trophy-card.ladder.nu-3:not(.ready) .temoji { --vlak: var(--m-vlak-3); --rand: var(--m-rand-3); box-shadow: 0 0 20px rgba(159,232,255,.55), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
   .trophy-card.ladder.done:not(.ready) .temoji {
     background:
-      var(--medaille-vul-goud) padding-box,
-      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu) 0) border-box;
+      var(--vlak) padding-box,
+      conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
   }
-  /* De gloed in het metaal (nu-0 .. nu-3, zet ladderCard). Per metaal uitgeschreven
-     en niet met color-mix(): zie de oudere tablets bij de wereldkleuren in :root. */
-  .trophy-card.ladder.nu-0:not(.ready) .temoji { box-shadow: 0 0 14px rgba(217,143,85,.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
-  .trophy-card.ladder.nu-1:not(.ready) .temoji { box-shadow: 0 0 14px rgba(219,228,238,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
-  .trophy-card.ladder.nu-2:not(.ready) .temoji { box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
-  .trophy-card.ladder.nu-3:not(.ready) .temoji { box-shadow: 0 0 20px rgba(159,232,255,.6), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.2); }
+  .trophy-card.ladder.top:not(.ready) .temoji { background: var(--vlak) padding-box, var(--rand) border-box; overflow: hidden; }
+  .trophy-card.ladder.top:not(.ready) .temoji::after {
+    content: ''; position: absolute; top: -10%; bottom: -10%; left: -60%; width: 45%; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+    animation: shineSweep 3.6s ease-in-out 1s infinite;
+  }
+  .trophy-card.ladder .tico { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
   /* Ligt er een trap klaar, dan is het gewoon het cadeautje (zie giftMedaille):
-     daarom staat er overal :not(.ready), anders won deze rand van de gouden. */
+     daarom staat er overal :not(.ready), anders won dit van de gouden rand. */
   /* Een stipje per trap onder de naam, gekleurd voor wat je al hebt: zo zie je
      zonder woorden dat er meer metalen zijn, en hoeveel. */
-  .trap-stippen { display: flex; gap: 5px; margin-top: 6px; }
-  .trap-stippen i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .trap-stippen { display: flex; gap: 6px; margin-top: 6px; }
+  .trap-stippen i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.16); }
   .trap-stippen i.m-0 { background: var(--m-0); }
   .trap-stippen i.m-1 { background: var(--m-1); }
   .trap-stippen i.m-2 { background: var(--m-2); }
@@ -304,6 +316,7 @@
     70% { transform: translateX(-2px); }
   }
   @media (prefers-reduced-motion: reduce) {
+    .trophy-card.ladder.top .temoji::after { animation: none; display: none; }
     .trophy-card.klink .temoji, .trophy-card.klink .pw-medal,
     .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: none; }
     .trophy-card.klink .temoji::before { display: none; }
