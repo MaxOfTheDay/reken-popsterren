@@ -615,6 +615,14 @@
 
 
 
+    --m-0: #d98f55;
+    --m-1: #dbe4ee;
+    --m-2: var(--gold-accent);
+    --m-3: #9fe8ff;
+
+
+
+
 
 
 
@@ -6814,7 +6822,42 @@
 
 
 
-  .trophy-card.kies .temoji { outline: 3px solid rgb(143,214,255); outline-offset: 3px; }
+
+
+  .trophy-card.ladder:not(.ready) .temoji {
+    background:
+      var(--medaille-vul) padding-box,
+      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu, rgba(255,255,255,.13)) 0) border-box;
+  }
+  .trophy-card.ladder.done:not(.ready) .temoji {
+    background:
+      var(--medaille-vul-goud) padding-box,
+      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu) 0) border-box;
+  }
+
+
+  .trophy-card.ladder.nu-0:not(.ready) .temoji { box-shadow: 0 0 14px rgba(217,143,85,.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ladder.nu-1:not(.ready) .temoji { box-shadow: 0 0 14px rgba(219,228,238,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ladder.nu-2:not(.ready) .temoji { box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ladder.nu-3:not(.ready) .temoji { box-shadow: 0 0 20px rgba(159,232,255,.6), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.2); }
+
+
+
+
+  .trap-stippen { display: flex; gap: 5px; margin-top: 6px; }
+  .trap-stippen i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .trap-stippen i.m-0 { background: var(--m-0); }
+  .trap-stippen i.m-1 { background: var(--m-1); }
+  .trap-stippen i.m-2 { background: var(--m-2); }
+  .trap-stippen i.m-3 { background: var(--m-3); }
+
+
+
+
+
+  .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
+  .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
+  .trophy-card.kies .tname { color: var(--c-white); }
 
 
 
@@ -6876,7 +6919,6 @@
     border-color: var(--gold-accent);
     box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
   }
-  .trophy-card.kies .pw-medal:not(.pw-prijs) { outline: 3px solid rgb(143,214,255); outline-offset: 3px; }
 
 
 
@@ -7120,7 +7162,7 @@
     width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center;
     font-size: 64px; line-height: 1;
     border: 5px solid transparent;
-    background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
+    background: var(--medaille-vul-goud) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
     box-shadow: 0 0 32px rgba(var(--goud-rgb),.6), 0 6px 18px rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.2);
   }
   .tp-rays {
@@ -13039,12 +13081,19 @@ function rebuildWorldBadges() {
 
 
 
+
 const TROPHIES = [
 
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
 
-  { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
+
+
+
+
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
+
+
+  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
 
 
 
@@ -13057,15 +13106,47 @@ const TROPHIES = [
 
   { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
 
-  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',   desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
-  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',  desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester', desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende', desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker',   desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',   emoji: '👑', name: 'Gouden kroon', desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
 
-  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
 
+
+
+
+  { id: 'sums25',   emoji: '🧮', name: 'Rekenmedaille · Brons',   trap: 0, desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenmedaille · Zilver',  trap: 1, desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '🧮', name: 'Rekenmedaille · Goud',    trap: 2, desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🧮', name: 'Rekenmedaille · Diamant', trap: 3, desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker · Brons',  trap: 0, desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',   emoji: '🌟', name: 'Goudzoeker · Zilver', trap: 1, desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+
+
+  { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '50 gouden vragen', has: p => p.goldHits >= 50, progress: p => trophyProgress(p.goldHits, 50, 'gouden vragen goed') },
+
+
+
+
+
+
+
+
+
+
+
+  { id: 'leer-brug',   emoji: '🌉', name: 'Over de brug',   desc: '10 sommen over de tien goed',
+    voor: p => !telModus(p) && p.settings.max > 10 && p.settings.ops.some(o => o === '+' || o === '-'),
+    has: p => leerTel(p, 'brug') >= 10, progress: p => trophyProgress(leerTel(p, 'brug'), 10, 'sommen over de tien') },
+  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer zoek het getal goed',
+    voor: p => !telModus(p) && p.settings.missNum !== false && p.settings.ops.some(o => o === '+' || o === '-' || o === 'x'),
+    has: p => leerTel(p, 'zoek') >= 10, progress: p => trophyProgress(leerTel(p, 'zoek'), 10, 'zoeksommen') },
+  { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
+    voor: p => !telModus(p) && p.settings.chain3 !== false && p.settings.ops.includes('+'),
+    has: p => leerTel(p, 'drie') >= 10, progress: p => trophyProgress(leerTel(p, 'drie'), 10, 'sommen met drie getallen') },
+
+  { id: 'leer-cijfers', emoji: '🔢', name: 'Cijferkenner',  desc: 'Je telt met cijfers',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 6,
+    has: p => telModus(p) && telFase(p) >= 6 },
+  { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
+    has: p => telModus(p) && telFase(p) >= 9 },
 
 
 
@@ -13075,7 +13156,25 @@ const TROPHIES = [
   { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar',  desc: '10 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
 
+
+  { id: 'eigenpodium', emoji: '🎪', name: 'Eigen podium', desc: 'Je eerste eigen podium', naar: 'stage',
+    has: p => ITEMS.some(it => it.cat === 'stage' && it.id !== 'stage_disco' && podiumVanJou(p, it)) },
+
 ];
+
+
+
+
+
+
+
+
+const TRAP_NAMEN = ['Brons', 'Zilver', 'Goud', 'Diamant'];
+const TROPHY_LADDERS = [
+  { key: 'reken', emoji: '🧮', name: 'Rekenmedaille', ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
+  { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',    ids: ['gold5', 'gold20', 'gold50'] },
+];
+
 
 
 
@@ -13089,16 +13188,18 @@ const TROPHIES = [
 
 const TROPHY_SHELVES = [
   { key: 'avontuur', ico: '🎤', name: 'Avontuur',          note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'toegift', 'perfect1', 'worldtour'] },
+    ids: ['first', 'perfect1', 'perfect10', 'worldtour'] },
   { key: 'rekenen',  ico: '🧮', name: 'Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
-    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50'] },
+  { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
+    ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
 
 
 
   { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
     ids: [] },
-  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Voor een echte popster',
-    ids: ['perfect10', 'shopper'] },
+  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Je eigen stijl in de kleedkamer',
+    ids: ['shopper', 'eigenpodium'] },
 ];
 
 
@@ -13127,6 +13228,8 @@ const RETIRED_TROPHIES = new Set([
   'rich', 'diamond250',
 
   'collector',
+
+  'toegift',
 
   'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
 
@@ -13170,6 +13273,22 @@ function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if
 function boughtCount(p) {
   return Math.max(0, p.owned.filter(id => !isBeloning(id)).length - (p.freebies || 5));
 }
+
+
+
+
+
+
+
+function leerTel(p, soort) { return (p.leer && p.leer[soort]) || 0; }
+function telLeer(p, q) {
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
+  const soort = q.kind === 'missing' ? 'zoek' : q.kind === 'chain' ? 'drie' : q.brug ? 'brug' : null;
+  if (soort) p.leer[soort] = (p.leer[soort] || 0) + 1;
+}
+function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
+
+function telFase(p) { return (p.countTrack && p.countTrack.stage) || 1; }
 
 
 
@@ -13288,6 +13407,7 @@ function defaultProfile(name, dress, opts) {
 
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },
+    leer: { brug: 0, zoek: 0, drie: 0 },
     recent: [],
     gezien: {}
   };
@@ -13307,6 +13427,7 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
 
 
   if (!p.gezien) p.gezien = {
@@ -19664,11 +19785,18 @@ function renderShelves() {
 
 
     const perfectPlank = shelf.key === 'perfect';
+    const vanJou = id => p.trophies.includes(id) || (p.readyTrophies || []).includes(id);
+
+
+
     const ids = perfectPlank ? alle.filter(id => {
       const t = TROPHIES.find(x => x.id === id);
-      return !t || binnenHorizon(p, t.index) || p.trophies.includes(id)
-        || (p.readyTrophies || []).includes(id);
-    }) : alle;
+      return !t || binnenHorizon(p, t.index) || vanJou(id);
+    }) : alle.filter(id => {
+      const t = TROPHIES.find(x => x.id === id);
+      return !t || !t.voor || t.voor(p) || vanJou(id);
+    });
+    if (!ids.length) return;
     const mist = perfectPlank && ids.length < alle.length;
     const groep = document.createElement('section');
     groep.className = 'kast-groep';
@@ -19689,7 +19817,15 @@ function renderShelves() {
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
+
+
+    const getekend = new Set();
     ids.forEach(id => {
+      const ladder = TROPHY_LADDERS.find(l => l.ids.includes(id));
+      if (ladder) {
+        if (!getekend.has(ladder.key)) { getekend.add(ladder.key); grid.appendChild(ladderCard(ladder, p)); }
+        return;
+      }
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
     });
@@ -19722,6 +19858,8 @@ const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'sommen': 'som',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
   'spulletjes': 'spulletje',
+  'sommen over de tien': 'som over de tien', 'zoeksommen': 'zoeksom',
+  'sommen met drie getallen': 'som met drie getallen',
 
 
   'werelden uit': 'wereld uit'
@@ -19747,7 +19885,15 @@ function trophyBoog(t, p, status) {
 
 
 
-  if (t.telWerelden && meerWereldenVooruit(p)) return 0;
+  if (t.telWerelden && meerWereldenVooruit(p)) {
+
+
+
+
+
+
+    return Math.max(0, Math.min(100, Math.round(100 * doneWorldCount(p) / (laatsteZichtbareWereld(p) + 1))));
+  }
   const pr = t.progress(p);
   return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
@@ -19766,6 +19912,58 @@ function trophyCard(t, p) {
   card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
+}
+
+
+
+
+
+
+
+
+function ladderStand(ladder, p) {
+  const trappen = ladder.ids.map(id => TROPHIES.find(t => t.id === id)).filter(Boolean);
+  const klaar = trappen.find(t => (p.readyTrophies || []).includes(t.id)) || null;
+  const niveau = trappen.filter(t => p.trophies.includes(t.id)).length;
+  const volgende = trappen.find(t => !p.trophies.includes(t.id) && !(p.readyTrophies || []).includes(t.id)) || null;
+  return { trappen, klaar, niveau, volgende };
+}
+function ladderCard(ladder, p) {
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  const card = document.createElement('div');
+  const status = klaar ? 'ready' : niveau ? 'done' : (volgende && volgende.progress(p).now > 0 ? 'busy' : 'fresh');
+  const nu = niveau ? trappen[niveau - 1].trap : null;
+  card.className = `trophy-card ladder ${status}` + (nu != null ? ` nu-${nu}` : '') + (niveau === trappen.length ? ' top' : '');
+  if (trappen.some(t => t.id === justClaimed)) card.classList.add('just-claimed');
+  const stippen = '<div class="trap-stippen" aria-hidden="true">'
+    + trappen.map((t, i) => `<i class="${i < niveau ? 'm-' + t.trap : ''}"></i>`).join('') + '</div>';
+  if (klaar) {
+    card.innerHTML = giftMedaille(ladder) + stippen;
+    card.setAttribute('aria-label', `Open ${klaar.name}`);
+  } else {
+    let boog = 0;
+    if (volgende) { const pr = volgende.progress(p); boog = Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target))); }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '') + (nu != null ? `;--nu:var(--m-${nu})` : '');
+    card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
+      + `<div class="tname">${ladder.name}</div>` + stippen;
+    card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
+  }
+  card.onclick = (e) => tapLadder(ladder, card, e);
+  return card;
+}
+function tapLadder(ladder, card, e) {
+  if (e) tapRipple(e.clientX, e.clientY);
+  const p = P();
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  if (klaar) { openTrophy(klaar.id); return; }
+  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
+  const kop = { emoji: ladder.emoji, name: ladder.name };
+  const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
+  if (!volgende) { sndTap(); sparkle(card); kastBalk(kop, card, metaal + '!'); return; }
+  sndClick();
+  const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
+  kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
 }
 
 
@@ -19848,7 +20046,8 @@ function tapTrophy(t, card, e) {
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
 
-  if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
+
+
 
   if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
   if (st === 'done') { sndTap(); sparkle(card); kastBalk(t, card, t.desc); return; }
@@ -19877,8 +20076,13 @@ function kastBalk(t, card, tekst, getal) {
   card.classList.add('kies');
   kast.classList.add('balk-aan');
   const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
+
+
+
+  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="Naar de kleedkamer">${t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
   bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
-    + `<span class="db-sub">· ${sub}</span></div>`;
+    + `<span class="db-sub">· ${sub}</span></div>` + knop;
+  if (knop) $('kast-naar').onclick = () => { sndClick(); kastBalk(null); openKleedkamerCat(t.naar); };
   bar.style.display = 'flex';
   speak(tekst);
 
@@ -19911,7 +20115,8 @@ function celebrateTrophy(t) {
     +   '<div class="tp-rays" aria-hidden="true"></div>'
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
-    +   `<div class="tp-emoji">${t.emoji}</div>`
+
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-rand:var(--m-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
@@ -20214,7 +20419,9 @@ function genQuestion(s, lvl, perf) {
   const ops = s.ops.length ? s.ops : ['+'];
   const op = pick(ops);
   const { a, b, c, sym } = genTriple(s, lvl, perf, op);
-  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic' };
+
+  const brug = (op === '+' || op === '-') && overTiental(a, b, c, op);
+  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
 
 
@@ -21979,6 +22186,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
+  telLeer(p, q);
 
 
   if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
