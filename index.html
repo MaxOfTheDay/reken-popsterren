@@ -6732,44 +6732,52 @@
 
 
 
-
-  .trophy-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; align-items: stretch; }
-
+  #screen-trophies.balk-aan #trophy-shelves { padding-bottom: calc(var(--lade-onder) + 16px + 62px); }
 
 
 
 
 
 
-  .trophy-card {
-    position: relative; flex: 0 1 calc(50% - 5px); max-width: 210px;
-    background: var(--vlak);
-    border: 2px solid var(--vlak-rand);
-    border-radius: var(--r-md); padding: 10px 8px 10px; text-align: center; cursor: pointer;
-    display: flex; flex-direction: column; align-items: stretch; gap: 0;
-    box-shadow: var(--vlak-top);
-    transition: filter .12s, transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .trophy-grid {
+    --wand-rij: 156px; --wand-tussen: 16px;
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: var(--wand-rij);
+    gap: var(--wand-tussen) 8px;
+
+    width: calc(100% + 12px); margin: 0 -6px; padding: 0 6px;
+    background: repeating-linear-gradient(180deg,
+      transparent 0 calc(var(--wand-rij) - 7px),
+      rgba(255,255,255,.17) calc(var(--wand-rij) - 7px) calc(var(--wand-rij) - 5px),
+      rgba(255,255,255,.06) calc(var(--wand-rij) - 5px) calc(var(--wand-rij) - 3px),
+      rgba(0,0,0,.3) calc(var(--wand-rij) - 3px) var(--wand-rij),
+      rgba(0,0,0,.18) var(--wand-rij) calc(var(--wand-rij) + 2px),
+      transparent calc(var(--wand-rij) + 8px) calc(var(--wand-rij) + var(--wand-tussen)));
   }
-  .trophy-card:hover { filter: brightness(1.1); }
-  .trophy-card:active { transform: scale(.97); }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  @media (min-width: 560px) { .trophy-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 900px) { .trophy-grid { grid-template-columns: repeat(6, 1fr); } }
+  .trophy-card {
+    position: relative; min-width: 0; padding: 4px 2px 12px; text-align: center; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center;
+    transition: transform var(--t-tik);
+  }
+  .trophy-card:active { transform: scale(.96); }
 
 
 
@@ -6780,8 +6788,9 @@
 
 
   .trophy-card .temoji {
-    width: 62px; height: 62px; margin: 0 auto; border-radius: 50%;
-    display: grid; place-items: center; font-size: 31px; line-height: 1;
+    position: relative; flex: none;
+    width: 68px; height: 68px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 34px; line-height: 1;
     border: 3px solid transparent;
     background:
       var(--medaille-vul) padding-box,
@@ -6793,165 +6802,54 @@
     background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
     box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18);
   }
-  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 8px; line-height: 1.16; }
 
 
-  .tvoet { margin-top: auto; padding-top: 7px; display: flex; flex-direction: column; align-items: center; }
 
-  @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
-  @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 7.5px); } }
+  .trophy-card.ready .temoji { box-shadow: 0 0 22px rgba(var(--goud-rgb),.75), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
 
 
 
 
+  .trophy-card.kies .temoji { outline: 3px solid rgb(143,214,255); outline-offset: 3px; }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .trophy-card.fresh {
-    background: rgba(0,0,0,.16);
-    border-color: rgba(255,255,255,.07);
+  .trophy-card .tname {
+    font-size: var(--tx-klein); font-weight: 700; margin-top: 7px; line-height: 1.2;
+    overflow-wrap: break-word; max-width: 100%;
   }
+  .trophy-card.fresh .tname, .trophy-card.busy .tname { color: rgba(255,255,255,.72); }
+  .trophy-card.locked .tname { color: rgba(255,255,255,.56); }
+
+
+  .tvoet { margin-top: 6px; display: flex; flex-direction: column; align-items: center; }
+
+
 
 
   .trophy-card.fresh .tico { opacity: .5; filter: var(--emoji-schaduw) saturate(.35); }
-  .trophy-card.fresh .tname { opacity: .84; }
-
-
-
-
-  .trophy-card.busy {
-    background: rgba(0,0,0,.16);
-    border-color: rgba(255,255,255,.07);
-    box-shadow: none;
-  }
-
   .trophy-card.busy .tico { opacity: .6; filter: var(--emoji-schaduw) saturate(.5); }
 
 
-
-
-
-  .trophy-card.locked { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.05); box-shadow: none; }
   .trophy-card.locked .tico { filter: grayscale(.55); opacity: .52; }
-  .trophy-card.locked .tname { opacity: .64; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .trophy-card.done { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.2); box-shadow: none; }
-  .trophy-card.done:not(.pw-card) .tvoet { visibility: hidden; }
-  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname,
-  .trophy-card.zonder-voet .temoji, .trophy-card.zonder-voet .tname { transform: translateY(14px); }
-
-
-
-
-
-
-
-
-  .tvink {
-    min-width: 34px; padding: 3px 10px; border-radius: var(--r-pill);
-    font-size: 14px; font-weight: 800; line-height: 1.15;
-    color: var(--gold-accent); background: rgba(var(--goud-rgb),.16);
-  }
-
-
-
-
-
 
   .tstand {
     padding: 3px 10px; border-radius: var(--r-pill);
     font-size: var(--tx-klein); font-weight: 700; line-height: 1.15; white-space: nowrap;
     color: var(--c-white); background: rgba(255,255,255,.12);
-    transition: background var(--t-tik, .1s) ease, transform var(--t-tik, .1s) ease;
   }
-  .tstand.omgeklapt { background: rgba(255,255,255,.24); transform: scale(1.06); }
+
+
+
+  .tbalk { width: 56px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
+  .tbalk i { display: block; height: 100%; border-radius: inherit; background: var(--gold-accent); }
 
 
 
 
 
-
-
-
-
-
-
-  .pw-grid { gap: 11px; }
-
-
-
-
-  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 12px 8px 11px; }
-  @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  .pw-card .tname { margin-top: 7px; font-size: var(--tx-label); }
   .pw-medal {
-    position: relative; width: 60px; height: 60px; margin: 2px auto 0;
+    position: relative; flex: none; width: 68px; height: 68px;
     border-radius: 50%; display: grid; place-items: center;
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
@@ -6959,17 +6857,14 @@
     border: 2px solid rgba(255,255,255,.3);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  .pw-ico { font-size: 28px; line-height: 1; filter: var(--emoji-schaduw); }
-
+  .pw-ico { font-size: 30px; line-height: 1; filter: var(--emoji-schaduw); }
 
   .pw-medal.pw-prijs, .trophy-card.done .pw-medal.pw-prijs {
-    width: 72px; height: 62px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+    width: 76px; height: 68px; border: 0; border-radius: 0; background: none; box-shadow: none; }
 
 
   .pw-card.fresh .pw-medal { opacity: .68; }
   .pw-card.fresh .pw-ico { opacity: .85; }
-
-
   .pw-card.busy .pw-medal { opacity: .84; }
   .pw-card.busy .pw-ico { opacity: .94; }
 
@@ -6977,19 +6872,11 @@
     border-color: var(--gold-accent);
     box-shadow: inset 0 2px 0 rgba(var(--goud-glans-rgb),.3), 0 0 16px rgba(var(--goud-rgb),.5);
   }
+  .trophy-card.kies .pw-medal:not(.pw-prijs) { outline: 3px solid rgb(143,214,255); outline-offset: 3px; }
 
 
 
 
-
-
-
-
-
-  .trophy-card.ready {
-    border-color: var(--gold-accent); background: var(--goud-tint);
-    box-shadow: var(--goud-gloed);
-  }
   .ready-open {
     display: block; text-align: center;
     color: var(--ink-on-gold); background: var(--gold-accent);
@@ -7101,6 +6988,9 @@
   }
   .horizon-mist:hover { background: transparent; }
   .horizon-mist:active { transform: none; }
+
+
+  .trophy-grid .horizon-mist { border-radius: var(--r-md); height: calc(var(--wand-rij) - 22px); padding: 8px; }
   .horizon-wolk { font-size: 30px; line-height: 1; opacity: .7; }
   .horizon-tekst {
     margin-top: 8px; font-size: var(--tx-klein); font-weight: 700;
@@ -7196,8 +7086,11 @@
 
 
 
-  .trophy-card.ready { overflow: hidden; }
-  .trophy-card.ready::after {
+
+
+
+  .trophy-card.ready .temoji { overflow: hidden; }
+  .trophy-card.ready .temoji::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
     transform: translateX(0) skewX(-18deg);
@@ -7234,7 +7127,7 @@
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
 
 
-  #trophy-shelves.schuift .trophy-card.ready::after,
+  #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
   #trophy-shelves.schuift .trophy-card.ready .pw-medal,
   #trophy-shelves.schuift .ready-open,
@@ -7308,7 +7201,9 @@
 
 
 
-  .trophy-card.just-claimed::after {
+
+  .trophy-card.just-claimed .temoji { overflow: hidden; }
+  .trophy-card.just-claimed .temoji::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.7) 50%, transparent 62%);
     background-size: 250% 100%; background-position: 120% 0;
@@ -7317,13 +7212,13 @@
   @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready, .ready-open { animation: none; }
+    .ready-open { animation: none; }
 
 
 
     .ready-open::before, .ready-open::after { display: none; }
-    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
-    .trophy-card.just-claimed::after { animation: none; }
+    .trophy-card.ready .temoji::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
+    .trophy-card.just-claimed .temoji::after { animation: none; }
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
@@ -10021,6 +9916,8 @@
 
 <!-- actiebalk van de kleedkamer: passen/kopen, altijd in beeld boven de navigatie -->
 <div class="dress-bar" id="dress-bar"></div>
+<!-- en dezelfde balk in de kast: wat de getikte trofee is of nog vraagt (kastBalk) -->
+<div class="dress-bar" id="kast-bar"></div>
 
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën.
      Alleen de iconen: wie hier speelt leest meestal nog niet, 🗺️ 👕 🏆 zeggen het zelf
@@ -14625,6 +14522,7 @@ function show(id) {
   const navId = navVolgtScherm();
   navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
+  kastBalk(null);
 
   if (id !== 'screen-journey') reisStopWaarnemer();
   if (navId) updateTroDot();
@@ -19799,6 +19697,7 @@ function renderShelves() {
     wrap.appendChild(groep);
   });
   justClaimed = null;
+  kastBalk(null);
   save();
   updateTroDot();
 }
@@ -19857,10 +19756,6 @@ function trophyCard(t, p) {
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
 
-
-
-  if (!t.perfect && !card.querySelector('.tvoet')) card.classList.add('zonder-voet');
-
   card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
@@ -19868,10 +19763,7 @@ function trophyCard(t, p) {
 
 
 
-
-
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
-
 
 
 
@@ -19884,7 +19776,6 @@ function normalCardHTML(t, p, status) {
   return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
       : status === 'locked' ? '<div class="tstand">🔒</div>'
       : '');
 }
@@ -19914,8 +19805,11 @@ function perfectCardHTML(t, p, status) {
 
 
 
+
+  const balk = () => { const pr = t.progress(p);
+    return `<div class="tbalk"><i style="width:${Math.round(100 * pr.now / pr.target)}%"></i></div>`; };
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
+    : status === 'busy' ? balk()
     : '';
 
 
@@ -19941,17 +19835,16 @@ function tapTrophy(t, card, e) {
   if (st === 'ready') { openTrophy(t.id); return; }
 
   if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
-  if (st === 'done') { sndTap(); sparkle(card); return; }
 
-
-
-  if (st === 'locked') { sndClick(); pilOmklappen(card, '🔒 Nog niet'); return; }
+  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
+  if (st === 'done') { sndTap(); sparkle(card); kastBalk(t, card, t.desc); return; }
   sndClick();
-  if (!t.progress) { pilOmklappen(card, t.desc); return; }
+  if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
+  if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
 
-  if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
-  pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
+  if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
+  kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
 
 
@@ -19959,25 +19852,26 @@ function tapTrophy(t, card, e) {
 
 
 
-function pilOmklappen(card, tekst) {
-  let voet = card.querySelector('.tvoet');
-  if (!voet) { voet = document.createElement('div'); voet.className = 'tvoet tijdelijk'; card.appendChild(voet); }
-  let pil = voet.querySelector('.tstand');
-  if (!pil) { pil = document.createElement('div'); pil.className = 'tstand tijdelijk'; voet.appendChild(pil); }
-  if (pil.dataset.terug === undefined) pil.dataset.terug = pil.textContent;
-  pil.textContent = tekst;
-  pil.classList.add('omgeklapt');
+
+
+
+function kastBalk(t, card, tekst, getal) {
+  const bar = $('kast-bar');
+  document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
+  const kast = $('screen-trophies');
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  card.classList.add('kies');
+  kast.classList.add('balk-aan');
+  const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
+  bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
+    + `<span class="db-sub">· ${sub}</span></div>`;
+  bar.style.display = 'flex';
   speak(tekst);
-  clearTimeout(pil._omklap);
-  pil._omklap = setTimeout(() => {
-    if (pil.classList.contains('tijdelijk')) {
-      pil.remove();
-      if (voet.classList.contains('tijdelijk')) voet.remove();
-      return;
-    }
-    pil.textContent = pil.dataset.terug; delete pil.dataset.terug;
-    pil.classList.remove('omgeklapt');
-  }, 2000);
+
+
+
+  const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
 }
 
 function openTrophy(id) {
