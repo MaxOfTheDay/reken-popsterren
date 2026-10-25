@@ -244,16 +244,24 @@
     border-radius: var(--r-pill); pointer-events: none;
     background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
   }
-  /* .purple/.gray zetten hun eigen achtergrond, dus ook expliciet hun
+  /* .purple zet zijn eigen achtergrond, dus ook expliciet hun
      eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
      gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is.
      (Er was ook een .green; geen enkele knop droeg hem nog. De groene
      kleurtrap --green-* zelf is wél in gebruik: goede antwoorden.) */
   .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
   .btn.purple:active { box-shadow: var(--btn-glans), 0 1px 0 var(--purple-shadow); }
-  /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
-  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); }
-  .btn.gray:active { box-shadow: var(--btn-glans), 0 1px 0 var(--gray-shadow); }
+  /* De tweede keuze op een wit kaartje, op volle maat ("Stoppen" in Show
+     stoppen?, "Kaart" na memory). Hier stond een grijze knop: even hoog en even
+     zwaar als de gouden erboven, en het enige grijs van het spel. Nu dezelfde
+     taal als .btn.small.paper hieronder (en een niet-gekozen .chip): witte
+     vulling, paarse letter, een lip in de kleur van de rand. Zo blijft goud
+     zonder twijfel de eerste keuze, en is de tweede nog steeds een knop. */
+  .btn.paper {
+    color: var(--purple-mid); background: var(--c-white);
+    box-shadow: inset 0 0 0 1.5px var(--paper-border), 0 var(--btn-lip) 0 var(--paper-border);
+  }
+  .btn.paper:active { box-shadow: inset 0 0 0 1.5px var(--paper-border), 0 1px 0 var(--paper-border); }
   /* .small zet alleen de MAAT (en dus de kleinere lip); de kleur van die lip
      hoort bij de kleurvariant. Dat ging hier mis: .btn.small stond ná .btn.purple
      in het blad en overschreef diens paarse lip met de gouden -- elke kleine
@@ -261,10 +269,8 @@
      oranje randje. Nu draagt elke variant zijn eigen kleine lip. */
   .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: var(--btn-glans), 0 3px 0 var(--gold-cta-shadow); }
   .btn.small.purple { box-shadow: var(--btn-glans), 0 3px 0 var(--purple-shadow); }
-  .btn.small.gray   { box-shadow: var(--btn-glans), 0 3px 0 var(--gray-shadow); }
   .btn.small:active { box-shadow: var(--btn-glans), 0 1px 0 var(--gold-cta-shadow); }
   .btn.small.purple:active { box-shadow: var(--btn-glans), 0 1px 0 var(--purple-shadow); }
-  .btn.small.gray:active   { box-shadow: var(--btn-glans), 0 1px 0 var(--gray-shadow); }
   /* De tweede knop op een wit vel. .soft is gemaakt voor het paarse scherm (een
      lichte glazen vulling) en verdwijnt op papier. Dit is dezelfde taal als een
      niet-gekozen .chip -- witte vulling, paarse letter, een fijne rand -- en dus
