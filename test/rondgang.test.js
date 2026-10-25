@@ -1238,6 +1238,7 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         uit.rekDicht = kaartje();
         uit.laagStaand = matchMedia('(orientation: portrait) and (max-height: 700px)').matches;
         uit.scrolt = sc.scrollTop > 0;
+        uit.scroltHeel = sc.scrollTop >= 199.5;   // de hele 200px, of liep het rek eerder op?
         uit.schermBoven = +sc.getBoundingClientRect().top.toFixed(1);
         uit.eersteRij = +(sc.querySelector('#item-grid .item-card').getBoundingClientRect().top).toFixed(1);
         uit.balk = [...document.querySelectorAll('#shop-tabs .tab-btn')].map(b => { const r = b.getBoundingClientRect();
@@ -1260,11 +1261,14 @@ const SPEL_URL = APP_URL.replace('?debug', '');
         'D · vanaf de tabbladbalk hebben de kleedkamer en de kast geen ←' + maat,
         JSON.stringify([r.kleed, r.kast]));
       /* op een bureaublad past de lade soms helemaal: dan scrolt er niets, en is
-         er ook niets dat onder de balk door kan */
+         er ook niets dat onder de balk door kan. En soms nét niet (1024x768: het
+         rek is 41px te lang): dan schuift het rek die 41px op, maar komt de eerste
+         rij niet tot onder de balk -- er is gewoon niet meer te scrollen. Dan geldt
+         alleen de balk zelf. */
       if (r.scrolt) check(!r.ladeOpen.klasse && r.ladeDicht.klasse && r.ladeDicht.dicht
-        && r.ladeDicht.balkBoven >= r.schermBoven - 0.5 && r.eersteRij < r.ladeDicht.balkOnder,
+        && r.ladeDicht.balkBoven >= r.schermBoven - 0.5 && (!r.scroltHeel || r.eersteRij < r.ladeDicht.balkOnder),
         'B · gescrold blijft de balk met de laden dicht in beeld en schuift het rek eronder door' + maat,
-        JSON.stringify([r.ladeOpen, r.ladeDicht, r.schermBoven, r.eersteRij]));
+        JSON.stringify([r.ladeOpen, r.ladeDicht, r.schermBoven, r.eersteRij, r.scroltHeel]));
       /* Op een laag staand scherm krimpt de spiegel gescrold wél (zie "Laag en
          staand" in 75-kleedkamer.css), zodat er meer rek in beeld komt. Wat daar
          blijft gelden: het rek eronder schuift er geen pixel van op. */

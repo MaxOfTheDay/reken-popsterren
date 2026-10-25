@@ -205,8 +205,32 @@
      en het kaartje is daarmee een derde lager: icoon 38 -> 32, de randen krapper.
      Behaald en nog-niet zijn nu even hoog; met een regel tekst op het ene en niet
      op het andere stond de plank scheef. */
-  .trophy-card .temoji { font-size: 32px; line-height: 1; height: 38px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
-  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 4px; line-height: 1.16; }
+  /* De medaille. Een trofee was een los emoji op een plankje, en daardoor zag een
+     behaalde trofee er hetzelfde uit als een die je nog moet halen -- alleen het
+     plankje was een tikje lichter. Nu staat elk icoon in een rond medaillon, de
+     vorm die de perfecte plank al had (.pw-medal): de rand zegt de stand.
+       behaald / klaar   een gouden rand met een zachte gloed
+       nog niet          een donkere rand, het icoon gedempt
+       onderweg          een gouden boog die de rand vult (--p, in procenten,
+                         zet trophyCard) -- in plaats van "180 / 500" eronder
+     De rand is een conic-gradient in de border-box onder een gevulde padding-box:
+     één element, geen svg, en hij tekent mee met elke maat. Het icoon zelf staat
+     in .tico, zodat dempen het icoon dempt en niet de boog eromheen. */
+  .trophy-card .temoji {
+    width: 62px; height: 62px; margin: 0 auto; border-radius: 50%;
+    display: grid; place-items: center; font-size: 31px; line-height: 1;
+    border: 3px solid transparent;
+    background:
+      var(--medaille-vul) padding-box,
+      conic-gradient(var(--gold-accent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.1);
+  }
+  .trophy-card .tico { filter: var(--emoji-schaduw); }
+  .trophy-card.done .temoji, .trophy-card.ready .temoji {
+    background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
+    box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18);
+  }
+  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 8px; line-height: 1.16; }
   /* De voet: één pil, gecentreerd. Ook "🎁 Open!" is een pil en geen balk over de
      hele breedte meer -- dezelfde maat als het ✓ dat ervoor in de plaats komt. */
   .tvoet { margin-top: auto; padding-top: 7px; display: flex; flex-direction: column; align-items: center; }
@@ -251,7 +275,7 @@
   }
   /* half ontkleurd, zoals .locked hieronder het uitlegt: "nog niet" zonder dat het
      kaartje grijs en kapot oogt -- maar wel duidelijk anders dan een behaalde */
-  .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
+  .trophy-card.fresh .tico { opacity: .5; filter: var(--emoji-schaduw) saturate(.35); }
   .trophy-card.fresh .tname { opacity: .84; }
   /* ONDERWEG: actief, maar een trap onder goud. */
   /* Onderweg is hetzelfde donkere plankje: het getal zegt al dat je bezig bent,
@@ -262,14 +286,15 @@
     border-color: rgba(255,255,255,.07);
     box-shadow: none;
   }
-  .trophy-card.busy .temoji { opacity: .9; }
+  /* Iets minder gedempt dan nog niets: de boog in de rand zegt al dat je bezig bent. */
+  .trophy-card.busy .tico { opacity: .6; filter: var(--emoji-schaduw) saturate(.5); }
   /* LOCKED: het stilste kaartje, maar niet uitgezet. Het icoon was hier
      grayscale(1) op .45 -- een grijze vlek, en dat is precies de "grijs = kapot"
      die de rest van dit blok vermijdt. Half ontkleurd zegt "nog niet" net zo
      goed en houdt het kaartje vriendelijk. (Voorlopig sluimerend, zie
      trophyStatus: geen enkele trofee gebruikt deze stand vandaag.) */
   .trophy-card.locked { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.05); box-shadow: none; }
-  .trophy-card.locked .temoji { filter: grayscale(.55); opacity: .52; }
+  .trophy-card.locked .tico { filter: grayscale(.55); opacity: .52; }
   .trophy-card.locked .tname { opacity: .64; }
   /* BEHAALD: trots, maar stil.
      Dit is de 'verdiend'-taal die de rest van de app al spreekt (afgelegde halte op
@@ -305,21 +330,19 @@
      in de kleedkamer is goud alleen nog "dit draag je" en "de ene knop", en is
      wat van jou is gewoon een tikje lichter dan wat nog niet van jou is, zonder
      pil (.item-card.owned). De kast spreekt nu dezelfde taal: behaald is het
-     lichte plankje, nog niet is het donkere met een getal erop (zoals een prijs),
+     lichte plankje, nog niet is het donkere (onderweg met een gouden boog om de medaille),
      en klaar om te openen is de enige gouden rand. Wie van het ene tabblad naar
      het andere gaat, leest dezelfde drie standen.
      De ✓ blijft in de opmaak staan (onzichtbaar), zodat elk kaartje dezelfde
      hoogte houdt; icoon en naam schuiven een halve voet omlaag naar het midden,
-     met een transform, zodat er niets in de plank verschuift. Het zachte
-     lichtje erachter is dat van de kleedkamer: het vakje leest zo niet leeg. */
+     met een transform, zodat er niets in de plank verschuift. Dat het van jou
+     is, zegt verder de gouden rand van de medaille (zie .temoji hierboven). */
   .trophy-card.done { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.2); box-shadow: none; }
   .trophy-card.done:not(.pw-card) .tvoet { visibility: hidden; }
-  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname { transform: translateY(17px); }
-  .trophy-card.done::before {
-    content: ''; position: absolute; left: 50%; top: 40%; width: 84px; height: 84px;
-    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,255,255,.2), rgba(255,255,255,.07) 62%, transparent);
-  }
+  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname,
+  .trophy-card.zonder-voet .temoji, .trophy-card.zonder-voet .tname { transform: translateY(14px); }
+  /* Er stond hier nog een zacht lichtje achter het icoon (::before), zodat het
+     vakje niet leeg las. Dat doet de gouden medaille nu zelf. */
   /* Het vinkje. Stond als gouden rondje in de hoek rechtsboven, en dat sprong: een
      kind tikte op "🎁 Open!" onderaan, en het teken dat daarna kwam verscheen
      ergens anders. Nu staat het precies waar Open! stond, als stil pilletje:
@@ -410,6 +433,8 @@
     font-size: var(--tx-klein); font-weight: 700; letter-spacing: .01em;
     border-radius: var(--r-pill); padding: 5px 8px;
     position: relative;
+    /* hetzelfde licht als elke knop (--btn-glans): Open! is de ene knop op dit scherm */
+    box-shadow: var(--btn-glans);
     animation: readyAdem 1.4s ease-in-out infinite;
   }
   /* De gloed eromheen, in twee lagen die elkaar aflossen: ::before is de gewone

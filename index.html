@@ -608,6 +608,14 @@
 
 
 
+    --medaille-vul: radial-gradient(80% 80% at 50% 25%, #4a2a6e, #1c0b33 75%);
+    --medaille-vul-goud: radial-gradient(80% 80% at 50% 25%, #6a3d86, #2a1240 75%);
+    --medaille-goud: linear-gradient(160deg, rgb(var(--goud-glans-rgb)), var(--gold-accent) 45%, var(--gold-cta-shadow));
+
+
+
+
+
 
 
 
@@ -6712,8 +6720,32 @@
 
 
 
-  .trophy-card .temoji { font-size: 32px; line-height: 1; height: 38px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
-  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 4px; line-height: 1.16; }
+
+
+
+
+
+
+
+
+
+
+
+  .trophy-card .temoji {
+    width: 62px; height: 62px; margin: 0 auto; border-radius: 50%;
+    display: grid; place-items: center; font-size: 31px; line-height: 1;
+    border: 3px solid transparent;
+    background:
+      var(--medaille-vul) padding-box,
+      conic-gradient(var(--gold-accent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.1);
+  }
+  .trophy-card .tico { filter: var(--emoji-schaduw); }
+  .trophy-card.done .temoji, .trophy-card.ready .temoji {
+    background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
+    box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18);
+  }
+  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 8px; line-height: 1.16; }
 
 
   .tvoet { margin-top: auto; padding-top: 7px; display: flex; flex-direction: column; align-items: center; }
@@ -6758,7 +6790,7 @@
   }
 
 
-  .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
+  .trophy-card.fresh .tico { opacity: .5; filter: var(--emoji-schaduw) saturate(.35); }
   .trophy-card.fresh .tname { opacity: .84; }
 
 
@@ -6769,14 +6801,15 @@
     border-color: rgba(255,255,255,.07);
     box-shadow: none;
   }
-  .trophy-card.busy .temoji { opacity: .9; }
+
+  .trophy-card.busy .tico { opacity: .6; filter: var(--emoji-schaduw) saturate(.5); }
 
 
 
 
 
   .trophy-card.locked { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.05); box-shadow: none; }
-  .trophy-card.locked .temoji { filter: grayscale(.55); opacity: .52; }
+  .trophy-card.locked .tico { filter: grayscale(.55); opacity: .52; }
   .trophy-card.locked .tname { opacity: .64; }
 
 
@@ -6821,12 +6854,10 @@
 
   .trophy-card.done { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.2); box-shadow: none; }
   .trophy-card.done:not(.pw-card) .tvoet { visibility: hidden; }
-  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname { transform: translateY(17px); }
-  .trophy-card.done::before {
-    content: ''; position: absolute; left: 50%; top: 40%; width: 84px; height: 84px;
-    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,255,255,.2), rgba(255,255,255,.07) 62%, transparent);
-  }
+  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname,
+  .trophy-card.zonder-voet .temoji, .trophy-card.zonder-voet .tname { transform: translateY(14px); }
+
+
 
 
 
@@ -6917,6 +6948,8 @@
     font-size: var(--tx-klein); font-weight: 700; letter-spacing: .01em;
     border-radius: var(--r-pill); padding: 5px 8px;
     position: relative;
+
+    box-shadow: var(--btn-glans);
     animation: readyAdem 1.4s ease-in-out infinite;
   }
 
@@ -7026,16 +7059,27 @@
     color: rgba(255,255,255,.62); overflow-wrap: break-word;
   }
 
+
+
+
+
+
+
+
+
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
-    background: rgba(20,4,40,.45); animation: popFade .25s ease; cursor: pointer;
+    background: radial-gradient(60% 45% at 50% 45%, rgba(60,20,90,.78), rgba(10,2,24,.92));
+    animation: popFade .25s ease; cursor: pointer;
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
-  .trophy-pop { padding: 22px 30px; }
-  .tp-head { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
-  .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.8)); }
-  .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
-  .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
+  .trophy-pop {
+    padding: 0 20px; background: none; border: 0; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  .tp-head { font-size: var(--tx-sub); font-weight: 700; color: var(--gold-light); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .tp-name { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .tp-joepie { font-size: var(--tx-body); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
 
 
@@ -7163,16 +7207,31 @@
   @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
 
 
-  .tp-stage { position: relative; width: 150px; height: 118px; margin: 6px auto 2px; display: flex; align-items: center; justify-content: center; }
-  .tp-chest { position: absolute; z-index: 2; font-size: 74px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
+  .tp-stage { position: relative; width: 240px; height: 230px; margin: 4px auto 6px; display: flex; align-items: center; justify-content: center; }
+  .tp-chest { position: absolute; z-index: 2; font-size: 108px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
   @keyframes chestShake { 0%,100% { transform: rotate(-5deg) translateY(0); } 25% { transform: rotate(5deg) translateY(-2px); } 50% { transform: rotate(-4deg); } 75% { transform: rotate(4deg) translateY(-2px); } }
-  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.85)); opacity: 0; transform: scale(.2); }
+  .tp-emoji {
+    position: relative; z-index: 3; opacity: 0; transform: scale(.2);
+    width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 64px; line-height: 1;
+    border: 5px solid transparent;
+    background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
+    box-shadow: 0 0 32px rgba(var(--goud-rgb),.6), 0 6px 18px rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.2);
+  }
   .tp-rays {
-    position: absolute; width: 210px; height: 210px; z-index: 1; opacity: 0; border-radius: 50%;
+    position: absolute; width: 340px; height: 340px; z-index: 1; opacity: 0; border-radius: 50%;
     background: repeating-conic-gradient(from 0deg, rgba(var(--goud-glans-rgb),.5) 0deg 9deg, transparent 9deg 21deg);
     -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
   }
-  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+  .tp-ring { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+
+
+  @media (max-height: 460px) {
+    .tp-stage { width: 200px; height: 170px; }
+    .tp-emoji { width: 100px; height: 100px; font-size: 48px; border-width: 4px; }
+    .tp-chest { font-size: 84px; }
+    .tp-rays { width: 260px; height: 260px; }
+  }
   .trophy-pop .tp-name, .trophy-pop .tp-joepie { opacity: 0; }
   .trophy-pop.burst .tp-chest { animation: chestBurst .4s ease forwards; }
   @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
@@ -8143,6 +8202,23 @@
     box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .03) var(--pr);
   }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
+
+
+
+
+
+
+
+
+  .item-card .item-thumb { height: 62px; position: relative; margin-bottom: 8px; }
+  .item-card .item-thumb svg { height: 62px; }
+  .item-card .item-thumb .thumb-emo { font-size: 46px; }
+  .item-card .item-thumb > * { position: relative; z-index: 1; }
+  .item-card .item-thumb:not(.thumb-podium):not(.thumb-prijs):not(.thumb-staal)::after {
+    content: ''; position: absolute; left: 50%; bottom: -4px; width: 58%; height: 9px;
+    transform: translateX(-50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(0,0,0,.38), transparent);
+  }
 
 
   .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
@@ -19629,14 +19705,18 @@ function unitText(label, remaining) {
 
 
 
-function trophyStand(t, p, status) {
-  if (status !== 'busy' || !t.progress) return '';
+
+
+
+function trophyBoog(t, p, status) {
+  if (status !== 'busy' || !t.progress) return 0;
+
+
+
+
+  if (t.telWerelden && meerWereldenVooruit(p)) return 0;
   const pr = t.progress(p);
-
-
-
-  if (t.telWerelden && meerWereldenVooruit(p)) return `<div class="tstand">${pr.now}</div>`;
-  return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
+  return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
 
 
@@ -19648,6 +19728,10 @@ function trophyCard(t, p) {
   card.className = `trophy-card ${t.perfect ? 'pw-card ' : ''}${status}`;
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
+
+
+
+  if (!t.perfect && !card.querySelector('.tvoet')) card.classList.add('zonder-voet');
 
   card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
@@ -19668,12 +19752,13 @@ function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>`
 
 
 function normalCardHTML(t, p, status) {
-  return `<div class="temoji">${t.emoji}</div>`
+  const boog = trophyBoog(t, p, status);
+  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
       : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
       : status === 'locked' ? '<div class="tstand">🔒</div>'
-      : trophyStand(t, p, status));
+      : '');
 }
 
 
@@ -22676,7 +22761,7 @@ function itemThumb(it, base) {
     const prijs = (i >= 0 && cur) ? wereldPrijsHTML(P(), i, 60) : '';
     return prijs ? zone(prijs, 'thumb-prijs') : zone(podiumHTML(it), 'thumb-podium');
   }
-  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
+  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`, 'thumb-staal');
 }
 
 let shopCat = 'dress';
