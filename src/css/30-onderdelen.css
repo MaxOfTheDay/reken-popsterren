@@ -450,9 +450,12 @@
   .stage.tappable:active { transform: scale(.98); }
   .avatar-holder { line-height: 0; }
   .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
+  /* ±1,2 graden, overal hetzelfde (oktober 2026). Het was ±2,5: op de kaart een
+     pion die op zijn munt wiebelt, en sinds het hoofd op het podium zelf meeknikt
+     (zie .av-hoofd) was het daar te veel. Eén pop, één wiegen. */
   @keyframes sway {
-    0%,100% { transform: rotate(-2.5deg); }
-    50%     { transform: rotate(2.5deg); }
+    0%,100% { transform: rotate(-1.2deg); }
+    50%     { transform: rotate(1.2deg); }
   }
   /* ---- Danspasjes: elke juiste som = een pasje in de show ----------------
      HET PASJE ZIT OP DE TEKENING, HET WIEGEN OP DE HOUDER. Twee lagen, en dat
@@ -558,10 +561,9 @@
      filter beweegt laat de browser het filter elk beeldje opnieuw uitrekenen.
      Daar huppelt ze, en dat is genoeg.
 
-     Ze knippert met haar ogen. Het hoofd knikt mee op het wiegen, en de
-     staartjes slingeren een tel later na -- daardoor wiegt het lijf zelf maar
-     half zo ver als vroeger (swayZacht): de beweging zit nu in haar, niet alleen
-     onder haar voeten. Bij een danspasje zwieren de staartjes en gaat de vrije
+     Het hoofd knikt mee op het wiegen, en de staartjes slingeren een tel later
+     na: de beweging zit nu in haar, niet alleen onder haar voeten. (Knipperen
+     doet élke pop, ook op de kaart, maar vanuit JS -- zie knipperLus.) Bij een danspasje zwieren de staartjes en gaat de vrije
      arm de lucht in. De draaipunten liggen in de tekening zelf: de hals
      (100|104), de aanzet van elk staartje, de schouder (84|112). */
   .av-hoofd, .av-staart, .av-arm-l { transform-box: view-box; }
@@ -569,12 +571,7 @@
   .av-staart-l { transform-origin: 68px 80px; }
   .av-staart-r { transform-origin: 132px 80px; }
   .av-arm-l { transform-origin: 84px 112px; }
-  .avatar-holder.levend .av-oog { animation: knipper 4.6s infinite; }
-  /* op de kaart: dezelfde knipoog, maar als klasse vanuit JS (zie kaartKnipper) */
   .avatar-holder.knipoog .av-oog { transform: scaleY(.12); }
-  @keyframes knipper { 0%, 93%, 100% { transform: none; } 95.5% { transform: scaleY(.12); } }
-  .avatar-holder.levend.idle { animation-name: swayZacht; }
-  @keyframes swayZacht { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
   .avatar-holder.levend.idle .av-hoofd { animation: knik 2.6s ease-in-out infinite; }
   @keyframes knik { 0%,100% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } }
   .avatar-holder.levend.idle .av-staart { animation: slinger 2.6s ease-in-out -.35s infinite; }
@@ -585,7 +582,7 @@
   .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
   @keyframes armOp { 0%,100% { transform: none; } 30%,65% { transform: rotate(100deg); } 48% { transform: rotate(80deg); } }
   @media (prefers-reduced-motion: reduce) {
-    .avatar-holder.levend .av-oog, .avatar-holder.levend .av-hoofd,
+    .avatar-holder.levend .av-hoofd,
     .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
     .avatar-holder.levend.idle { animation: none; }
   }
