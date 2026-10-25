@@ -26173,7 +26173,21 @@ function backTarget() {
   return null;
 }
 
-let backGuardArmed = false, syncingBackGuard = false, backSyncQueued = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let backGuardArmed = false, syncingBackGuard = false, backSyncQueued = false, guardVooruit = false;
 
 
 
@@ -26190,12 +26204,20 @@ function syncBackGuard() {
     backSyncQueued = false;
     const want = !!backTarget();
     if (want === backGuardArmed) return;
-    if (want) { history.pushState({ rpGuard: 1 }, ''); backGuardArmed = true; }
+    if (want) {
+      if (guardVooruit) history.forward();
+      else history.pushState({ rpGuard: 1 }, '');
+      backGuardArmed = true;
+    }
     else { syncingBackGuard = true; history.back(); }
   });
 }
 window.addEventListener('popstate', () => {
+
+
+  if (history.state && history.state.rpGuard) { backGuardArmed = true; return; }
   backGuardArmed = false;
+  guardVooruit = true;
   if (syncingBackGuard) { syncingBackGuard = false; return; }
   const act = backTarget();
   if (act) { act(); syncBackGuard(); }
