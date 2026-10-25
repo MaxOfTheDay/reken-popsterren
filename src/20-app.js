@@ -6830,25 +6830,34 @@ function kanalen(hex) {
      zoom   hoe ver je erop inzoomt, als percentage van de schermbreedte. 100 zou
             de hele tekening in beeld persen -- dan kijk je naar een landschap,
             niet naar een zaal.
-     focus  wélk stuk je dan ziet (background-position). Alle zes de wereldkaarten
-            hebben hun podium op ongeveer dezelfde plek: rechts van het midden,
-            bovenin. Vandaar dat één terugval voor alle zes werkt.
-     blur   hoeveel onscherpte eroverheen. Dit is het verschil tussen "een tweede
-            kaart" en "de zaal achter je".
+     focus  wélk stuk je dan ziet. Staat er niets, dan is dat de halte van déze
+            show: de plek die het kind net op de kaart aantikte komt boven haar
+            hoofd te staan (zie applyVenue). Zo is elke show een andere plek, en
+            klimt het decor met de wereld mee tot de laatste show, die op het grote
+            podium bovenaan de kaart uitkomt. Daarvóór stond hier voor élke show
+            dat grote podium, en was de finale dus al vanaf show 1 verbruikt.
+            Een wereld die focus wél opgeeft ('x% y%', een punt in de tekening)
+            krijgt bij elke show dat ene punt -- dat is voor een eigen
+            zaaltekening.
+     blur   hoeveel onscherpte eroverheen. Net genoeg dat de felste plekjes van
+            de tekening (lampjes, sterren) niet meer met haar hoofd concurreren;
+            de plek zelf moet herkenbaar blijven. Stond lang op 11, en dan was het
+            geen plek meer maar een kleurvlek.
      dim    hoe donker. De Snoep- en IJswereld zijn bijna wit getekend en zouden
             zonder dit met de somkaart gaan concurreren; de Toverwereld is al
             donker en mag juist iets lichter.
-     op     de dekking van de tekening. Onder de één, zodat de sfeerlaag
-            (.venue-sfeer) er doorheen blijft praten.
+     op     de dekking van de tekening.
 
    Wordt hier ooit een echte zaaltekening ingehangen, dan hoort zoom op ~100,
    focus op '50% 50%', blur op 0-4, dim en op op 1 -- verder verandert er niets.
+   Die tekening is dan in hetzelfde staande formaat als een kaart (ART_W x ART_H):
+   de laag rekent met die verhouding.
 
    Waarom dit een terugval is en geen zes kopieën: dedicated zaaltekeningen komen
    er later. Wat hier staat moet het tot dan toe fatsoenlijk doen én in één regel
    te vervangen zijn. Zes handmatig afgestelde uitsnedes zouden straks zes keer
    weggegooid worden. */
-const VENUE_TERUGVAL = { art: null, zoom: 220, focus: '70% 14%', blur: 11, dim: .62, op: .96 };
+const VENUE_TERUGVAL = { art: null, zoom: 220, focus: null, blur: 2.5, dim: .66, op: 1 };
 // Altijd een verse samenvoeging en nooit VENUE_TERUGVAL zelf: die is de bron voor
 // élke wereld, en één aanroeper die er per ongeluk iets in zet, zet het overal in.
 function venueFor(world) {
@@ -6857,6 +6866,17 @@ function venueFor(world) {
 function venueArt(world) {
   const v = venueFor(world);
   return v.art || (world && world.art) || '';
+}
+/* Welk punt van de tekening boven haar hoofd komt, in procenten van de tekening.
+   Zonder eigen focus: de halte van deze show, uit dezelfde lijst waar de kaart
+   hem tekent (worldNodes). Zonder level: de laatste halte, het grote podium. */
+function venuePunt(v, world, lvl) {
+  const m = /^\s*(-?[\d.]+)%\s+(-?[\d.]+)%\s*$/.exec(v.focus || '');
+  if (m) return { x: +m[1], y: +m[2] };
+  if (!world) return { x: 50, y: 20 };
+  const nr = lvl ? worldFor(lvl).nr : world.levels;
+  const n = worldNodes({ world, levels: world.levels })[nr - 1] || { x: 50, y: 20 };
+  return { x: Math.round(n.x * 10) / 10, y: Math.round(n.y * 10) / 10 };
 }
 /* Zet de zaal op een scherm. Eén injectiepunt voor álle zaaldecor -- de
    spelscherm-kop, het podium onder de ster en het eindscherm lezen daarna alleen
@@ -6867,14 +6887,16 @@ function venueArt(world) {
    .venue-sfeer de zaal in zijn eentje op de wereldkleuren, en dat is nog steeds
    een zaal -- geen tekening is niet hetzelfde als geen plek. Vandaar dat deze
    functie niets meer teruggeeft: er valt niets meer te beslissen. */
-function applyVenue(el, world) {
+function applyVenue(el, world, lvl) {
   const v = venueFor(world);
   const src = venueArt(world);
+  const punt = venuePunt(v, world, lvl);
   el.classList.add('venue-aan');
   applyWorldTheme(el, world);   // nooit de kleuren van de vórige wereld
   el.style.setProperty('--venue-art', src ? `url("${src}")` : 'none');
-  el.style.setProperty('--venue-focus', v.focus);
-  el.style.setProperty('--venue-zoom', v.zoom + '%');
+  el.style.setProperty('--venue-x', String(punt.x));
+  el.style.setProperty('--venue-y', String(punt.y));
+  el.style.setProperty('--venue-zoom', String(v.zoom));
   el.style.setProperty('--venue-blur', v.blur + 'px');
   el.style.setProperty('--venue-dim', String(v.dim));
   el.style.setProperty('--venue-op', String(v.op));
@@ -10787,7 +10809,7 @@ function startLevel(lvl, eigenOvergang) {
   // terug, blijft .venue-aan eraf en is dit scherm letterlijk wat het was: het
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
-  applyVenue($('screen-game'), wl.world);
+  applyVenue($('screen-game'), wl.world, lvl);
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -11680,7 +11702,7 @@ function endLevel(success) {
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
   // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
-  applyVenue($('screen-end'), wl.world);
+  applyVenue($('screen-end'), wl.world, lvl);
   naShowLvl = lvl;   // élke uitgang van dit scherm komt straks op déze halte uit
   if (success) {
     /* Alles wat er aan dit kind verandert, in één keer -- zie applyShowResult.

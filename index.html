@@ -3474,18 +3474,9 @@
     position: absolute; inset: 0;
     background:
       radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
-      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 64%, var(--w-deep) 100%);
+      linear-gradient(180deg, transparent 35%, rgba(10,2,22,.45) 100%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 40%, var(--w-deep) 100%);
   }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -3510,22 +3501,28 @@
 
   .venue-art {
     position: absolute; inset: -8%;
-    background-image: var(--venue-art, none);
+    container-type: size;
+    --z: var(--venue-zoom, 220);
+
+
+    filter: blur(var(--venue-blur, 2.5px)) brightness(var(--venue-dim, .66));
+    opacity: var(--venue-op, 1);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 26%, rgba(0,0,0,.55) 42%, transparent 60%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 26%, rgba(0,0,0,.55) 42%, transparent 60%);
+  }
 
 
 
 
-    background-size: var(--venue-zoom, 220%) auto;
-    background-position: var(--venue-focus, 70% 14%);
-    background-repeat: no-repeat;
 
-
-    filter: blur(var(--venue-blur, 11px)) brightness(var(--venue-dim, .62)) saturate(1.1);
-    opacity: var(--venue-op, .96);
-    -webkit-mask-image: radial-gradient(74% 86% at 50% 18%,
-      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
-    mask-image: radial-gradient(74% 86% at 50% 18%,
-      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+  .venue-art::before {
+    content: ''; position: absolute;
+    width: calc(var(--z) * 1cqw);
+    aspect-ratio: 1215 / 2160;
+    left: clamp(calc(100cqw - var(--z) * 1cqw),
+                calc(50cqw - var(--venue-x, 50) * var(--z) * 1cqw / 100), 0px);
+    top: min(0px, calc(37cqh - var(--venue-y, 20) * var(--z) * 1cqw * 2160 / 1215 / 100));
+    background: var(--venue-art, none) center / 100% 100% no-repeat;
   }
 
 
@@ -3534,9 +3531,9 @@
 
   @media (min-aspect-ratio: 1/1) {
     .venue-art {
-      background-size: calc(var(--venue-zoom, 220%) * 1.75) auto;
-      filter: blur(calc(var(--venue-blur, 11px) * 2.1)) brightness(var(--venue-dim, .62)) saturate(1.1);
-      opacity: calc(var(--venue-op, .96) * .7);
+      --z: calc(var(--venue-zoom, 220) * 1.75);
+      filter: blur(calc(var(--venue-blur, 2.5px) * 2.1)) brightness(var(--venue-dim, .66));
+      opacity: calc(var(--venue-op, 1) * .7);
     }
   }
 
@@ -3549,7 +3546,12 @@
 
   .venue-licht {
     position: absolute; inset: 0;
+
+
+
     background:
+      linear-gradient(180deg, rgba(var(--w-deep-rgb),.55) 0, rgba(var(--w-deep-rgb),0) 110px),
+      radial-gradient(60% 13% at 50% 43%, rgba(var(--warm-licht-rgb),.16), transparent 70%),
       radial-gradient(112% 40% at 50% 2%, rgba(var(--goud-glans-rgb),.30), transparent 64%),
       radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
@@ -3655,6 +3657,14 @@
 
   .venue-aan .show-stage .avatar-holder, .venue-aan .end-stage .avatar-holder {
     height: 104%; filter: drop-shadow(0 6px 10px rgba(14,2,30,.55));
+  }
+
+
+
+  .venue-aan .game-arena .show-panel::before {
+    content: ''; position: absolute; z-index: 0; pointer-events: none;
+    left: -14%; right: -14%; top: -14%; bottom: -10%;
+    background: radial-gradient(closest-side at 50% 45%, rgba(var(--w-deep-rgb),.6), rgba(var(--w-deep-rgb),0));
   }
 
 
@@ -3773,17 +3783,12 @@
 
   @media (max-height: 700px) {
     .venue-licht { background:
+      linear-gradient(180deg, rgba(var(--w-deep-rgb),.55) 0, rgba(var(--w-deep-rgb),0) 90px),
       radial-gradient(112% 34% at 50% 0%, rgba(var(--goud-glans-rgb),.26), transparent 62%),
       radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 18%, rgba(var(--w-deep-rgb), .54) 40%,
                       rgba(var(--w-deep-rgb), .84) 58%, rgba(var(--w-deep-rgb), .93) 100%); }
     .venue-licht::after { top: 38%; }
-
-
-    .venue-art { -webkit-mask-image: radial-gradient(74% 72% at 50% 12%,
-        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%);
-      mask-image: radial-gradient(74% 72% at 50% 12%,
-        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%); }
   }
 
 
@@ -4142,6 +4147,17 @@
 
   @media (min-height: 780px) {
     .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
+  }
+
+
+
+
+
+
+
+  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
+    .game-arena { align-content: flex-end; row-gap: 14px; padding-bottom: 22px; }
+    .show-stage { width: 214px; height: 180px; }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
@@ -17798,7 +17814,16 @@ function kanalen(hex) {
 
 
 
-const VENUE_TERUGVAL = { art: null, zoom: 220, focus: '70% 14%', blur: 11, dim: .62, op: .96 };
+
+
+
+
+
+
+
+
+
+const VENUE_TERUGVAL = { art: null, zoom: 220, focus: null, blur: 2.5, dim: .66, op: 1 };
 
 
 function venueFor(world) {
@@ -17811,20 +17836,33 @@ function venueArt(world) {
 
 
 
+function venuePunt(v, world, lvl) {
+  const m = /^\s*(-?[\d.]+)%\s+(-?[\d.]+)%\s*$/.exec(v.focus || '');
+  if (m) return { x: +m[1], y: +m[2] };
+  if (!world) return { x: 50, y: 20 };
+  const nr = lvl ? worldFor(lvl).nr : world.levels;
+  const n = worldNodes({ world, levels: world.levels })[nr - 1] || { x: 50, y: 20 };
+  return { x: Math.round(n.x * 10) / 10, y: Math.round(n.y * 10) / 10 };
+}
 
 
 
 
 
 
-function applyVenue(el, world) {
+
+
+
+function applyVenue(el, world, lvl) {
   const v = venueFor(world);
   const src = venueArt(world);
+  const punt = venuePunt(v, world, lvl);
   el.classList.add('venue-aan');
   applyWorldTheme(el, world);
   el.style.setProperty('--venue-art', src ? `url("${src}")` : 'none');
-  el.style.setProperty('--venue-focus', v.focus);
-  el.style.setProperty('--venue-zoom', v.zoom + '%');
+  el.style.setProperty('--venue-x', String(punt.x));
+  el.style.setProperty('--venue-y', String(punt.y));
+  el.style.setProperty('--venue-zoom', String(v.zoom));
   el.style.setProperty('--venue-blur', v.blur + 'px');
   el.style.setProperty('--venue-dim', String(v.dim));
   el.style.setProperty('--venue-op', String(v.op));
@@ -21737,7 +21775,7 @@ function startLevel(lvl, eigenOvergang) {
 
 
   applyStage($('show-stage'), p);
-  applyVenue($('screen-game'), wl.world);
+  applyVenue($('screen-game'), wl.world, lvl);
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -22630,7 +22668,7 @@ function endLevel(success) {
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
 
-  applyVenue($('screen-end'), wl.world);
+  applyVenue($('screen-end'), wl.world, lvl);
   naShowLvl = lvl;
   if (success) {
 
