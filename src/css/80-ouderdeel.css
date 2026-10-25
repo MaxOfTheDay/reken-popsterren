@@ -522,7 +522,10 @@
   }
   .newstar-preview .deco { display: none; }
   /* haar podium: dezelfde tegelmaat als op het startscherm (zie .ster-tegel .stage-podium) */
-  .newstar-preview .stage-podium { width: 80%; bottom: 6.4%; }
+  .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
+  /* 90% en niet 92%: met de 9% marge onderaan (een procent van de breedte) stak
+     haar hoofddeksel anders net boven het vlak uit (zie .ster-tegel) */
+  .newstar-preview .stage.op-podium .avatar-holder { height: 90%; }
   /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
      toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
      Kop (59) plus voorbeeld (136) is daar de helft van het beeld voordat er één
