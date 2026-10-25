@@ -902,7 +902,7 @@
      Hier viel eerst een grijs nootje van 52px over haar heen. Dat las als een
      vlek op de pop, en zij deed zelf niets. */
   .av-oog { transform-box: fill-box; transform-origin: center; }
-  .avatar-holder.oeps .av-oog { transform: scale(1.35); }
+  .avatar-holder.oeps .av-oog { animation: none; transform: scale(1.35); }
   .avatar-holder.oeps .av-mond { opacity: 0; }
   .avatar-holder.oeps .av-mond-o { opacity: 1; }
   .avatar-holder.oeps > .pas-laag { transform-origin: 50% 95%; animation: oepsSchrik .45s var(--ease-uit); }
