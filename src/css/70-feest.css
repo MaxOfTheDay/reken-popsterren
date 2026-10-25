@@ -87,9 +87,12 @@
      een ripple, (3) het openen is een schatkist die openknalt met stralen,
      schokgolf en een confetti-kanon, (4) de behaalde kaart glimt kort na. */
 
-  /* (1) Klare trofee: een glans-veeg glijdt over de kaart + het cadeau wiebelt */
-  .trophy-card.ready { overflow: hidden; }
-  .trophy-card.ready::after {
+  /* (1) Klare trofee: een glans-veeg glijdt over de medaille + hij wiebelt.
+     Over de medaille en niet meer over de kaart: sinds de medaillewand heeft een
+     trofee geen kaartje meer om overheen te glanzen (zie 65-kast.css), en een
+     veeg over de lege lucht om de naam heen leest als een streep. */
+  .trophy-card.ready .temoji { overflow: hidden; }
+  .trophy-card.ready .temoji::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
     transform: translateX(0) skewX(-18deg);
@@ -111,7 +114,7 @@
      ook niet op 8x -- dit is dus geen haperingsbug maar werk dat nergens voor
      nodig is, en het groeit mee met het aantal trofeeën dat klaarligt.
 
-     De veeg is 45% van de kaart breed, dus die 190% van de kaart is 422,2% van de
+     De veeg is 45% van de medaille breed, dus die 190% daarvan is 422,2% van de
      veeg zelf (procenten in translateX gaan over het element zelf). De skew komt
      erachteraan en staat op dezelfde plek in de keten als eerst, dus het beeld is
      pixel voor pixel hetzelfde -- nagemeten op zes standen van de animatie. */
@@ -126,7 +129,7 @@
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
   /* Stil zolang er geschoven wordt (zie kastSchuift): anders rekent de browser de
      stijl van al deze animaties bij elk beeldje van het schuiven opnieuw uit. */
-  #trophy-shelves.schuift .trophy-card.ready::after,
+  #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
   #trophy-shelves.schuift .trophy-card.ready .pw-medal,
   #trophy-shelves.schuift .ready-open,
@@ -197,10 +200,12 @@
     100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; }
   }
 
-  /* (4) Net behaald: een eenmalige gouden shimmer over de kaart. Blijft binnen de
-     kaart (inset:0 + verschuivende gradient); z-index 2 houdt 'm onder een eventueel
-     hoekbadge (het slotje staat op z-index 3). */
-  .trophy-card.just-claimed::after {
+  /* (4) Net behaald: een eenmalige gouden shimmer over de medaille (inset:0 + een
+     verschuivende gradient, in de ronding van de medaille zelf). De perfecte
+     wereld heeft geen medaille maar een podium, en glanst daarom niet na: de
+     onthulling ging over het hele scherm, en de gouden rand staat er al. */
+  .trophy-card.just-claimed .temoji { overflow: hidden; }
+  .trophy-card.just-claimed .temoji::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.7) 50%, transparent 62%);
     background-size: 250% 100%; background-position: 120% 0;
@@ -209,13 +214,13 @@
   @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready, .ready-open { animation: none; }
+    .ready-open { animation: none; }
     /* De gloed van .ready-open zat vroeger alleen in de keyframes en viel hier dus
        vanzelf weg. Nu staat hij op twee eigen lagen -- die gaan hier uit, zodat
        de pil stilstaand precies blijft zoals hij was: goud, zonder gloed. */
     .ready-open::before, .ready-open::after { display: none; }
-    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
-    .trophy-card.just-claimed::after { animation: none; }
+    .trophy-card.ready .temoji::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
+    .trophy-card.just-claimed .temoji::after { animation: none; }
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
