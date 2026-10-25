@@ -2770,7 +2770,8 @@ function check(ok, label, detail) {
     });
     check(!stil.bewoog && stil.timers === 0,
       'zonder beweging wordt er niet gegroet en wacht er niets', JSON.stringify(stil));
-    check(stil.klas === 'avatar-holder' && stil.tekening,
+    // .levend mag: dat zegt alleen dat ze mag knipperen, en zonder beweging doet ze dat niet
+    check(stil.klas === 'avatar-holder levend' && stil.tekening,
       'en de tegels staan er precies zoals ze horen te staan', JSON.stringify(stil));
     check(stil.vonkjes === 0 && stil.laag === 'none',
       'en er sprankelt niets op de achtergrond', JSON.stringify(stil));

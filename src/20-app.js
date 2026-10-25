@@ -3351,10 +3351,18 @@ let svgUid = 0;
      norm   overal waar de pop op ware grootte staat (show, eindscherm, kaart)
      klein  de sterrenkeuze -- daar staan zes tegels van ~112px naast elkaar, en op
             die maat werd een gitaar van 42px een tweede hoofdonderwerp naast een
-            kind van 90px. Kleiner blijft het gewoon háár gitaar. */
+            kind van 90px. Kleiner blijft het gewoon háár gitaar.
+     kaart  de wereldkaart en de reis: daar staan ze er helemaal niet bij, en het
+            zwevende nootje ook niet. Op de kaart zegt ze alleen "hier ben ik, en
+            dat ben ik" -- wat ze áánheeft (haar, kleren, hoofddeksel, micro) doet
+            dat. Elk los ding kreeg er zijn eigen witte stickerrand en werd een
+            tweede en derde sticker naast de hare; een keyboard of DJ-set werd een
+            wit vierkant tegeltje op de rand van haar halte. Huisdier en
+            instrument horen bij het optreden: show, eindscherm, spiegel. */
 const PROP_MAAT = {
   groot: { pet: [6, 244, 46],  instr: [112, 248, 52] },
   norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
+  kaart: null,
   klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
 };
 /* Het licht op de pop: één lamp linksboven, voor alles hetzelfde. Elk verloop
@@ -3375,14 +3383,15 @@ function lichtDefs(uid) {
 }
 function avatarSVG(p, width, propMaat) {
   // true blijft 'groot': de kleedkamer geeft nog altijd een vlaggetje mee
+  const kaart = propMaat === 'kaart';
   const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
   const eq = p.equipped;
   const B = BASES[baseOf(p)];
   const hair = itemOr(eq.hair, 'hair_blond'), dress = itemOr(eq.dress, 'dress_roze');
   const mic = eq.mic ? item(eq.mic) : null;
   const acc = eq.acc ? item(eq.acc) : null;
-  const pet = eq.pet ? item(eq.pet) : null;
-  const instr = eq.instrument ? item(eq.instrument) : null;
+  const pet = eq.pet && !kaart ? item(eq.pet) : null;
+  const instr = eq.instrument && !kaart ? item(eq.instrument) : null;
   const uid = ++svgUid;
   const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
   const dc = dress.color === 'RAINBOW' ? `url(#rb${uid})` : dress.color;
@@ -3501,7 +3510,7 @@ function avatarSVG(p, width, propMaat) {
     } else {
       s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
-      s += `<text x="163" y="47" font-size="15">🎵</text>`;
+      if (!kaart) s += `<text x="163" y="47" font-size="15">🎵</text>`;
     }
   }
   s += `</svg>`;
@@ -3530,6 +3539,20 @@ function applyStage(el, p) {
   schijf.innerHTML = podiumHTML(st);
   el.insertBefore(schijf, el.firstChild);
 }
+
+/* Knipperen op de kaart. Daar mag er niets ín haar animeren (zie .levend in het
+   stijlblad: ze draagt een SVG-filter dat dan elk beeldje opnieuw berekend
+   wordt), dus knippert ze hier met een klasse die even aan en weer uit gaat:
+   twee keer tekenen per knipoog, en verder niets. Alleen als de kaart echt in
+   beeld is, het tabblad zichtbaar, en er beweging mag. */
+const KNIPPER = { om: 4600, dicht: 130 };
+function kaartKnipper() {
+  const pop = document.querySelector('#screen-map.active .tour-hero .avatar-holder');
+  if (!pop || document.hidden || motionOff()) return;
+  pop.classList.add('knipoog');
+  setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
+}
+setInterval(kaartKnipper, KNIPPER.om);
 
 /* ================= Schermen ================= */
 /* De reis hoort bij Kaart: hij is dezelfde plek, alleen verder weg. Daardoor
@@ -7110,7 +7133,7 @@ function renderReis() {
       const kant = volgende ? Math.max(-12, Math.min(12, (volgende.x - b.x) * 1.2)) : 0;
       knop.style.setProperty('--pop-kant', kant.toFixed(1) + 'px');
       knop.insertAdjacentHTML('beforeend',
-        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
+        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56, 'kaart')}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
     if (b.open) {
@@ -7857,7 +7880,7 @@ function haltKnop(shown, nodes, i, stand) {
   // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
   if (open && st === 3) b.classList.add('perfect');
   const hero = lvl === heroLvl
-    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div></div>` : '';
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96, 'kaart'))}</div></div>` : '';
 
   // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
   // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar

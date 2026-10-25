@@ -570,6 +570,8 @@
   .av-staart-r { transform-origin: 132px 80px; }
   .av-arm-l { transform-origin: 84px 112px; }
   .avatar-holder.levend .av-oog { animation: knipper 4.6s infinite; }
+  /* op de kaart: dezelfde knipoog, maar als klasse vanuit JS (zie kaartKnipper) */
+  .avatar-holder.knipoog .av-oog { transform: scaleY(.12); }
   @keyframes knipper { 0%, 93%, 100% { transform: none; } 95.5% { transform: scaleY(.12); } }
   .avatar-holder.levend.idle { animation-name: swayZacht; }
   @keyframes swayZacht { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }

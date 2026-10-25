@@ -2566,6 +2566,8 @@
   .av-staart-r { transform-origin: 132px 80px; }
   .av-arm-l { transform-origin: 84px 112px; }
   .avatar-holder.levend .av-oog { animation: knipper 4.6s infinite; }
+
+  .avatar-holder.knipoog .av-oog { transform: scaleY(.12); }
   @keyframes knipper { 0%, 93%, 100% { transform: none; } 95.5% { transform: scaleY(.12); } }
   .avatar-holder.levend.idle { animation-name: swayZacht; }
   @keyframes swayZacht { 0%,100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
@@ -5746,9 +5748,14 @@
 
 
 
+
+
+
+
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.1cqw; transform: translateX(-50%);
-    width: 11cqw; height: 2.2cqw; border-radius: 50%; background: rgba(110,45,0,.42); filter: blur(1px); }
+    left: 50%; bottom: -0.5cqw; transform: translateX(-50%);
+    width: 17cqw; height: 2.8cqw; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(110,45,0,.55), rgba(110,45,0,.25) 70%, transparent); }
 
 
 
@@ -14292,9 +14299,17 @@ let svgUid = 0;
 
 
 
+
+
+
+
+
+
+
 const PROP_MAAT = {
   groot: { pet: [6, 244, 46],  instr: [112, 248, 52] },
   norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
+  kaart: null,
   klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
 };
 
@@ -14315,14 +14330,15 @@ function lichtDefs(uid) {
 }
 function avatarSVG(p, width, propMaat) {
 
+  const kaart = propMaat === 'kaart';
   const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
   const eq = p.equipped;
   const B = BASES[baseOf(p)];
   const hair = itemOr(eq.hair, 'hair_blond'), dress = itemOr(eq.dress, 'dress_roze');
   const mic = eq.mic ? item(eq.mic) : null;
   const acc = eq.acc ? item(eq.acc) : null;
-  const pet = eq.pet ? item(eq.pet) : null;
-  const instr = eq.instrument ? item(eq.instrument) : null;
+  const pet = eq.pet && !kaart ? item(eq.pet) : null;
+  const instr = eq.instrument && !kaart ? item(eq.instrument) : null;
   const uid = ++svgUid;
   const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
   const dc = dress.color === 'RAINBOW' ? `url(#rb${uid})` : dress.color;
@@ -14441,7 +14457,7 @@ function avatarSVG(p, width, propMaat) {
     } else {
       s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
-      s += `<text x="163" y="47" font-size="15">🎵</text>`;
+      if (!kaart) s += `<text x="163" y="47" font-size="15">🎵</text>`;
     }
   }
   s += `</svg>`;
@@ -14470,6 +14486,20 @@ function applyStage(el, p) {
   schijf.innerHTML = podiumHTML(st);
   el.insertBefore(schijf, el.firstChild);
 }
+
+
+
+
+
+
+const KNIPPER = { om: 4600, dicht: 130 };
+function kaartKnipper() {
+  const pop = document.querySelector('#screen-map.active .tour-hero .avatar-holder');
+  if (!pop || document.hidden || motionOff()) return;
+  pop.classList.add('knipoog');
+  setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
+}
+setInterval(kaartKnipper, KNIPPER.om);
 
 
 
@@ -18050,7 +18080,7 @@ function renderReis() {
       const kant = volgende ? Math.max(-12, Math.min(12, (volgende.x - b.x) * 1.2)) : 0;
       knop.style.setProperty('--pop-kant', kant.toFixed(1) + 'px');
       knop.insertAdjacentHTML('beforeend',
-        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
+        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56, 'kaart')}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
     if (b.open) {
@@ -18797,7 +18827,7 @@ function haltKnop(shown, nodes, i, stand) {
 
   if (open && st === 3) b.classList.add('perfect');
   const hero = lvl === heroLvl
-    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div></div>` : '';
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96, 'kaart'))}</div></div>` : '';
 
 
 
