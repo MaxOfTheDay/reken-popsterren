@@ -765,6 +765,12 @@
   /* Op de sterrentegel: 80% van de tegel (zie .stage-podium), en zo hoog dat haar
      voeten midden op de schijf staan en de zijband niet tegen de onderrand valt
      (die knipt af, zie .stage). */
-  .ster-tegel .stage-podium { width: 80%; bottom: 10.4%; }
+  /* En de pop een slag kleiner dan de 92% van elk ander vlak (zie .stage), met
+     de schijf in dezelfde verhouding mee (80% x 84/92). Haar marge onderaan is
+     een procent van de bréédte, en op 92% plus die marge stak ze boven de tegel
+     uit: liggend (10/8) een twaalfde van haar hoogte, en de tegel knipt af. Daar
+     valt meestal alleen lucht weg, maar een tovenaarshoed of feesthoedje verloor
+     zijn punt. 84% plus 12% van de breedte past ook in de liggende tegel. */
+  .ster-tegel .stage-podium { width: 73%; bottom: 10.4%; }
   .ster-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
-  .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }
+  .ster-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }
