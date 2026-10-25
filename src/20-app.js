@@ -3517,6 +3517,7 @@ function show(id) {
   const navId = navVolgtScherm();
   navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
+  kastBalk(null);   // de balk van de kast hoort bij een tik daar, niet bij het volgende bezoek
   // de tekening-ophaler van de reis kijkt naar een scherm dat er niet meer is
   if (id !== 'screen-journey') reisStopWaarnemer();
   if (navId) updateTroDot();
@@ -8691,6 +8692,7 @@ function renderShelves() {
     wrap.appendChild(groep);
   });
   justClaimed = null;   // shimmer geldt maar voor deze ene render
+  kastBalk(null);       // de kaartjes zijn nieuw, dus is er niets meer getikt
   save();
   updateTroDot();
 }
@@ -8725,8 +8727,8 @@ function unitText(label, remaining) {
 /* De stand op een kaart die nog loopt, als boog in de rand van de medaille: hoe
    ver die rand vol is, in procenten (zie .temoji in de kast). Hier stond eerst
    "180 / 500" als pil onder het kaartje -- een getal dat een kleuter niet leest,
-   een rand die bijna rond is wel. Het getal in woorden komt nog steeds bij een
-   tik ("nog 320 sommen", zie pilOmklappen). Geeft 0 als er niets te tonen valt:
+   een rand die bijna rond is wel. Het getal in woorden komt bij een tik, in de
+   balk onderin ("nog 320 sommen", zie kastBalk). Geeft 0 als er niets te tonen valt:
    op nul is er nog geen boog, en buiten 'onderweg' ook niet. */
 function trophyBoog(t, p, status) {
   if (status !== 'busy' || !t.progress) return 0;
@@ -8748,35 +8750,27 @@ function trophyCard(t, p) {
   card.className = `trophy-card ${t.perfect ? 'pw-card ' : ''}${status}`;
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
-  /* Zonder voet (nog niets, of onderweg: dat zegt de medaille zelf) schuiven
-     medaille en naam naar het midden, net als op een behaalde kaart -- zo staan
-     de medailles van een rij op één lijn (zie .zonder-voet in de kast). */
-  if (!t.perfect && !card.querySelector('.tvoet')) card.classList.add('zonder-voet');
   // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
   card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
-/* Elke kaart heeft dezelfde vier zones, in dezelfde volgorde: icoon, naam,
-   waarvoor hij is, en de voet. De voet is er alleen als er iets in staat, maar
-   staat er altijd onderaan (.tvoet heeft margin-top:auto) -- zo hangen de standen
-   van drie kaarten naast elkaar op één lijn, ook als de ene naam over twee regels
-   loopt en de andere niet. */
+/* Medaille, naam en de voet, in die volgorde. De voet is er alleen als er iets
+   in staat, en schuift niets op: de rij op de plank is even hoog met of zonder
+   (zie .trophy-grid). */
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
-/* Icoon, naam en één pil -- meer niet. De beschrijving ("500 sommen goed") stond
-   eerst op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een
-   trofee vraagt, zie je als je erop tikt: de pil klapt om naar "nog 320 sommen"
-   (zie pilOmklappen). De voet heeft één plek en er staat altijd hoogstens één ding:
+/* Medaille en naam -- meer niet. De beschrijving ("500 sommen goed") stond eerst
+   op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een trofee
+   vraagt, zie je als je erop tikt, in de balk onderin (zie kastBalk). De voet:
      klaar     🎁 Open!  (goud, de enige knop op het scherm)
-     behaald   ✓         (op dezelfde plek waar Open! stond: er springt niets)
-     onderweg  niets     (de boog om de medaille zegt het; het woord komt bij een tik)
+     behaald   niets     (de gouden rand zegt het; hier stond een ✓)
+     onderweg  niets     (de boog om de medaille zegt het)
      op slot   🔒 */
 function normalCardHTML(t, p, status) {
   const boog = trophyBoog(t, p, status);
   return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
       : status === 'locked' ? '<div class="tstand">🔒</div>'
       : '');
 }
@@ -8802,12 +8796,15 @@ function perfectCardHTML(t, p, status) {
      een prijzenkast een formulier. Wat een kaartje hier moet zeggen is welke wereld
      het is; wat je ervoor moet doen staat één regel hoger, voor alle zes tegelijk.
 
-     Het getal ("5 / 8 perfect") komt er alleen bij als er iets te tellen valt --
-     dezelfde regel als op elke andere kaart. Op een wereld waar nog geen ster staat
-     zegt "0 / 8" niets wat het gedempte medaillon niet al zegt, en op een behaalde
-     wereld zou het 8/8 zijn, wat de gouden ring al vertelt. */
+     Hoe ver de wereld al is komt er alleen bij als er iets te tellen valt, als
+     balkje (.tbalk): de boog van een medaille, recht -- hier staat een podium en
+     geen rand om te vullen. Het stond er als "5 / 8". Op een wereld waar nog geen
+     ster staat zegt een leeg balkje niets wat het gedempte podium niet al zegt, en
+     op een behaalde wereld zou het vol zijn, wat het goud al vertelt. */
+  const balk = () => { const pr = t.progress(p);
+    return `<div class="tbalk"><i style="width:${Math.round(100 * pr.now / pr.target)}%"></i></div>`; };
   const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
+    : status === 'busy' ? balk()
     : '';
   /* Het kaartje toont de prijs van die wereld (zie "= De prijs van een wereld"):
      hetzelfde podium met dezelfde schat als op de reis en in Podia, en behaald
@@ -8824,8 +8821,8 @@ function perfectCardHTML(t, p, status) {
     + `<div class="tname">${t.name}</div>`
     + cardVoet(stand);
 }
-// tikken mag: klaar opent de trofee; een behaalde glinstert; anders vertelt hij
-// in één regel wat er nog moet gebeuren.
+// tikken mag: klaar opent de trofee; anders zegt de balk onderin wat hij is
+// of wat er nog moet gebeuren, en een behaalde glinstert er nog bij.
 function tapTrophy(t, card, e) {
   if (e) tapRipple(e.clientX, e.clientY);   // tactiel: kringetje vanaf de vinger
   const p = P();
@@ -8833,43 +8830,43 @@ function tapTrophy(t, card, e) {
   if (st === 'ready') { openTrophy(t.id); return; }
   // een trofee die ergens anders verdiend wordt, wijst de weg erheen
   if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
-  if (st === 'done') { sndTap(); sparkle(card); return; }
-  /* Op slot of zonder teller: ook dat zegt het kaartje zelf, in zijn pil -- net als
-     de trofeeën mét een teller. Hier stond eerst een melding bovenaan het scherm,
-     dus zei de kast het ene ding op het kaartje en het andere ver erboven. */
-  if (st === 'locked') { sndClick(); pilOmklappen(card, '🔒 Nog niet'); return; }
+  // nog een keer op dezelfde: de balk gaat weer weg, zoals in de kleedkamer
+  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
+  if (st === 'done') { sndTap(); sparkle(card); kastBalk(t, card, t.desc); return; }
   sndClick();
-  if (!t.progress) { pilOmklappen(card, t.desc); return; }
+  if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
+  if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
-  if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
-  pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
+  if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
+  kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
-/* Wat telt dit getal? Dat staat niet op het kaartje maar komt bij een tik: de pil
-   in de voet klapt twee tellen om naar "nog 320 sommen" en dan weer terug. Geen
-   ballon en geen melding onderaan het scherm -- het antwoord verschijnt precies op
-   de plek waar je keek, en het scherm blijft leeg van tekst. Een kaartje dat nog
-   op nul staat heeft geen pil; dat krijgt er twee tellen een. In de telmodus (en
-   met Voorlezen aan) zegt de stem het hardop. */
-function pilOmklappen(card, tekst) {
-  let voet = card.querySelector('.tvoet');
-  if (!voet) { voet = document.createElement('div'); voet.className = 'tvoet tijdelijk'; card.appendChild(voet); }
-  let pil = voet.querySelector('.tstand');
-  if (!pil) { pil = document.createElement('div'); pil.className = 'tstand tijdelijk'; voet.appendChild(pil); }
-  if (pil.dataset.terug === undefined) pil.dataset.terug = pil.textContent;
-  pil.textContent = tekst;
-  pil.classList.add('omgeklapt');
+/* De balk onderin de kast: wat de getikte trofee is of vraagt. Dezelfde balk als
+   in de kleedkamer (.dress-bar: naam links, het verdere ernaast) en op dezelfde
+   plek, zodat "tik op iets en onderin staat wat het is" op beide verzamelschermen
+   hetzelfde werkt. Hier stond eerst een pil die op het kaartje zelf twee tellen
+   omklapte -- en op een kaartje zonder pil kwam er eentje bij, bovenop de naam.
+   De balk blijft staan tot je iets anders tikt, dezelfde nog eens, of weggaat
+   (toonHub en renderShelves zetten hem uit). Het getal in de tekst staat in goud
+   (getal), net als "Nog 12 💎" in de kleedkamer. De stem leest hem voor, zoals
+   de pil deed. kastBalk(null) zet hem uit. */
+function kastBalk(t, card, tekst, getal) {
+  const bar = $('kast-bar');
+  document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
+  const kast = $('screen-trophies');
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  card.classList.add('kies');
+  kast.classList.add('balk-aan');   // ruimte onderin, zodat ook de onderste plank boven de balk kan
+  const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
+  bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
+    + `<span class="db-sub">· ${sub}</span></div>`;
+  bar.style.display = 'flex';
   speak(tekst);
-  clearTimeout(pil._omklap);
-  pil._omklap = setTimeout(() => {
-    if (pil.classList.contains('tijdelijk')) {
-      pil.remove();
-      if (voet.classList.contains('tijdelijk')) voet.remove();
-      return;
-    }
-    pil.textContent = pil.dataset.terug; delete pil.dataset.terug;
-    pil.classList.remove('omgeklapt');
-  }, 2000);
+  /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan
+     schuift de kast hem erboven -- hetzelfde als zichtbaarBovenBalk in de
+     kleedkamer. */
+  const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
 }
 // Het claim-moment: van 'klaar' naar 'behaald', met een kort, vrolijk feestje.
 function openTrophy(id) {
