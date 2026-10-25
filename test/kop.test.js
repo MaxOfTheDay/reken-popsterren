@@ -14,6 +14,12 @@
  *   B  de kop toont alleen de globe; de volle naam staat in het label, en
  *      korteNaam ("Onderwater") blijft goed voor de show en het eindscherm
  *   C  liggend op een telefoon dimt de kop maar half, en alleen als je ster er echt achter staat
+ *   D  de ronde kopknoppen zijn per rij even groot: ← naast 🌍 op Werelden, ← en ▶
+ *      in het ouderdeel, ⚙️ op de sterrenkeuze -- op elke maat (de ← op Werelden
+ *      kromp op een smalle telefoon, de ▶ en het ⚙️ groeiden op een tablet niet mee)
+ *   E  een tik op de 🎲 in de kleedkamer komt op de 🎲 aan, en een tik op de schijf
+ *      naast haar voeten op het podium (de spiegel lag eroverheen, en haar tekening
+ *      ving met haar hele rechthoek)
  *
  * Draaien:  npm run test:kop
  */
@@ -120,6 +126,73 @@ async function zetKaart(page, { wereld, diamanten, wens }) {
     });
     check(!r.thuis.dim || r.thuis.op >= 0.5, 'C · liggend blijft een gedimde kop leesbaar', JSON.stringify(r.thuis));
     check(!r.elders.dim && r.elders.op === 1, 'C · in een wereld waar je ster niet staat dimt er niets', JSON.stringify(r.elders));
+    await ctx.close();
+  }
+
+  /* ---- D · ronde kopknoppen: één maat per rij ---- */
+  for (const [w, h] of MATEN) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const maat = async (scherm, sels) => {
+      const page = await ctx.newPage();
+      page.on('pageerror', e => fouten.push(e.message));
+      await page.goto(APP_URL + '&demo&star=p1&wereld=4&stand=halverwege&screen=' + scherm);
+      await page.waitForTimeout(1600);
+      const r = await page.evaluate(sels => sels.map(s => {
+        const b = document.querySelector(s).getBoundingClientRect();
+        return [Math.round(b.width), Math.round(b.height)];
+      }), sels);
+      await page.close();
+      return r;
+    };
+    const hud = await maat('map', ['#screen-map .world-pick']);
+    const [reisTerug, reisGlobe] = await maat('reis', ['#screen-journey .header-left', '#screen-journey .reis-titel']);
+    const [ouderTerug, speel] = await maat('ouder', ['#screen-settings .header-left', '#screen-settings .speel-als']);
+    const [tandwiel] = await maat('profile', ['#corner-btns .icon-btn']);
+    const rond = (a, b) => a[0] === b[0] && a[1] === b[1];
+    check(rond(reisTerug, reisGlobe), `D · ${w}x${h} op Werelden is de ← even groot als de 🌍`,
+      JSON.stringify({ reisTerug, reisGlobe }));
+    // het ouderdeel heeft op een laag scherm zijn eigen compacte kop (38)
+    check(rond(ouderTerug, speel), `D · ${w}x${h} in het ouderdeel is de ▶ even groot als de ←`,
+      JSON.stringify({ ouderTerug, speel }));
+    check(rond(tandwiel, hud[0]), `D · ${w}x${h} het ⚙️ is zo groot als de knoppen in de kop`,
+      JSON.stringify({ tandwiel, hud: hud[0] }));
+    await ctx.close();
+  }
+
+  /* ---- E · de 🎲 en de schijf zijn raak ---- */
+  for (const [w, h] of [[320, 568], [390, 844], [1024, 768]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => fouten.push(e.message));
+    await page.goto(APP_URL + '&demo&star=p1&wereld=4&stand=halverwege&screen=dress');
+    await page.waitForTimeout(1600);
+    const r = await page.evaluate(() => {
+      const raak = (el, fx, fy) => {
+        const b = el.getBoundingClientRect();
+        const t = document.elementFromPoint(b.left + b.width * fx, b.top + b.height * fy);
+        return !!t && el.contains(t);
+      };
+      const dobbel = document.querySelector('#screen-dress .shuffle-btn');
+      const punten = [[.5, .5], [.25, .5], [.75, .5], [.5, .25], [.5, .75]];
+      const mis = punten.filter(([x, y]) => !raak(dobbel, x, y));
+      // de bovenkant van de schijf, van rand tot rand: wat niet op haar, haar dier
+      // of haar instrument valt, hoort Podia te openen. Wat er misging was de
+      // lege rechthoek van haar tekening (het <svg> zelf) die erbovenop lag.
+      const schijf = document.getElementById('shop-podium');
+      const b = schijf.getBoundingClientRect();
+      const leeg = [];
+      let podium = 0;
+      for (let x = .04; x < 1; x += .04) {
+        const t = document.elementFromPoint(b.left + b.width * x, b.top + b.height * .3);
+        if (schijf.contains(t)) podium++;
+        else if (t && t.closest('.avatar-holder') && t.tagName.toLowerCase() === 'svg' && !t.parentElement.closest('svg')) leeg.push(+x.toFixed(2));
+      }
+      return { mis, podium, leeg };
+    });
+    check(r.mis.length === 0, `E · ${w}x${h} de hele 🎲 is raak`, JSON.stringify(r.mis));
+    check(r.leeg.length === 0 && r.podium > 0, `E · ${w}x${h} de schijf naast haar voeten opent Podia`, JSON.stringify(r));
     await ctx.close();
   }
 

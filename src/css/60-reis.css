@@ -707,13 +707,10 @@
     /* Hier stond dat de globe verdween en het woord bleef: op een krap scherm moest
        er iets wijken, en van die twee was het woord het duidelijkst. Nu is de globe
        het enige dat er staat -- en dan is "hem verbergen" hetzelfde als de kop
-       leegmaken. Hij wordt dus alleen een maatje kleiner, net als de knoppen ernaast. */
+       leegmaken. Hij wordt dus alleen een maatje kleiner, net als de letter in de 💎 ernaast. */
     #screen-journey .rt-ico { font-size: 26px; }
-    /* Kleiner om te zien, niet om te raken: het onzichtbare vlakje eromheen
-       maakt er weer 44px van, net als bij de wereldpil. */
-    #screen-journey .icon-btn { width: 34px; height: 34px; position: relative; }
-    #screen-journey .icon-btn .ico { width: 18px; height: 18px; }
-    #screen-journey .icon-btn::before { content: ''; position: absolute; inset: -5px; }
+    /* De terugknop krimpt hier niet mee: de globe en de 💎 ernaast blijven
+       --hud-h, en een kleinere ← stond als enige uit de rij. */
     #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
