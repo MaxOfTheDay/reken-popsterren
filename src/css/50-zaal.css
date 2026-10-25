@@ -752,8 +752,13 @@
   /* gedockte kaart is compacter dan de losse variant (kleiner pilletje,
      minder padding) -- moet altijd tussen kop en paspop passen, ook op
      smallere formaten waar de paspop hoger in het scherm begint */
+  /* In de show is de juichkaart een pil van één regel: "Wauw! 💎 +3" naast
+     elkaar, net als de meldingen. Als kaart van twee regels was hij ~80px hoog,
+     en dat past niet in het gat tussen de kop en de ster: op een smalle
+     telefoon hing hij over haar gezicht. */
   .praise.docked {
-    top: 98px; transform: scale(.7); gap: 5px; padding: 9px 18px 11px;
+    top: 98px; transform: scale(.7); flex-direction: row; gap: 10px;
+    border-radius: var(--r-pill); padding: 7px 9px 7px 18px;
   }
   .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
@@ -792,6 +797,8 @@
     pointer-events: none;
   }
   .toast.met-sub, .toast.teken, .toast.hint { border-radius: var(--r-md); padding: 11px 20px 12px; }
+  /* in de show is de hint één regel (het getal en de pijl), dus ook een pil */
+  .toast.hint.docked { border-radius: var(--r-pill); padding: 7px 20px; }
   .toast.goud { border-color: rgba(var(--goud-rgb),.6); box-shadow: var(--e-2), 0 0 20px rgba(var(--goud-gloed-rgb),.28); }
   .toast.goud .toast-main { color: var(--gold-light); }
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
@@ -828,6 +835,7 @@
      ruimte ertussen niet te overschrijden */
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .praise.docked { gap: 8px; padding: 5px 6px 5px 14px; }
     .praise.docked .praise-headline { font-size: var(--tx-klein); }
     .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
     .toast.docked .toast-main { font-size: var(--tx-label); }

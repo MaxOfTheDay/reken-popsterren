@@ -9211,15 +9211,72 @@ function genChain(s, lvl, perf) {
   if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
   return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
 }
-function makeChoices(ans) {
-  const set = new Set([ans]);
-  const cand = shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]);
-  for (const c of cand) {
-    if (set.size >= 4) break;
-    if (c >= 0 && !set.has(c)) set.add(c);
+/* ---- De vier antwoordknoppen --------------------------------------------
+   Drie foute keuzes naast het goede antwoord. Die moeten je laten rekenen, en
+   dat deden ze niet. Hier stond: het antwoord ±1, ±2 en ±10. Dan staat het
+   goede antwoord bijna altijd in het midden van een rijtje (6 7 8), en wie
+   gewoon "het middelste van de getallen die dicht bij elkaar liggen" koos, had
+   het in 65% van de sommen in één keer goed -- tegen 25% voor blind gokken.
+   En ±10 gaf in de eerste wereld (sommen tot tien) bij twee op de drie sommen
+   een 17 of een 19 op een knop: een getal dat je zonder rekenen wegstreept.
+
+   Nu, in drie regels:
+     * alles blijft binnen de grens van de som (keuzeGrens): geen 17 bij een
+       som tot tien;
+     * één foute keuze is een fout die een kind echt maakt: het verkeerde teken
+       (5 + 2 -> 3, 13 − 6 -> 19), een getal uit de som zelf (5 + 2 -> 5), bij
+       drie getallen er één vergeten, en bij grote getallen een tiental ernaast;
+     * de rest ligt er vlak naast (1 tot 3), en hoeveel ervan onder het
+       antwoord liggen wordt geloot. Het goede antwoord is dus even vaak het
+       kleinste, het grootste of een van de twee in het midden.
+   Het middelste kiezen geeft zo nog 26%: gokken loont niet meer dan gokken.
+   test/kern.test.js zaak Z meet het na.
+
+   Er verandert niets aan hoe een vraag eruitziet, aan de hint (die zegt alleen
+   meer of minder) of aan de beloningen. */
+function keuzeGrens(q, s, lvl) {
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number).concat(q.ans);
+  const hoogste = Math.max(...getallen);
+  // plus en min: de grens van de leerstap, zoals genTriple hem rekent (zonder
+  // de bijsturing op hoe het gaat -- daarom ook nooit onder wat er al staat)
+  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, Math.round(s.max * stapVan(lvl, s).t));
+  // tafels: tot het volgende tiental
+  return Math.max(10, Math.ceil(hoogste / 10) * 10);
+}
+function makeChoices(q, grens) {
+  const ans = q.ans;
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
+  const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
+  // fouten die een kind echt maakt
+  const fouten = new Set(getallen);
+  for (let i = 0; i < getallen.length; i++)
+    for (let j = i + 1; j < getallen.length; j++) {
+      fouten.add(getallen[i] + getallen[j]);             // plus i.p.v. min, of er één vergeten
+      fouten.add(Math.abs(getallen[i] - getallen[j]));   // min i.p.v. plus
+    }
+  if (ans >= 10 && grens >= 50) { fouten.add(ans + 10); fouten.add(ans - 10); }
+  // Eerst loten hoeveel keuzes er onder het antwoord liggen (0 tot 3), en pas
+  // dan de echte fout kiezen, aan een kant waar nog plaats is. Andersom lag de
+  // fout meestal onder het antwoord (een getal uit de som is kleiner), en was
+  // het antwoord bijna nooit meer het kleinste.
+  const onder = rnd(0, 3);
+  const keuze = new Set([ans]);
+  const fout = shuffle([...fouten].filter(v => mag(v) && (v < ans ? onder > 0 : onder < 3)))[0];
+  if (fout != null) keuze.add(fout);
+  // de rest vlak ernaast
+  const ernaast = kant => shuffle([1, 2, 3].map(d => ans + kant * d).filter(v => mag(v) && !keuze.has(v)))[0];
+  while (keuze.size < 4) {
+    const nuOnder = [...keuze].filter(v => v < ans).length;
+    const kant = nuOnder < onder ? -1 : 1;
+    let v = ernaast(kant);
+    if (v == null) v = ernaast(-kant);
+    // allebei op (een som op de rand van een kleine grens): het dichtstbijzijnde
+    // getal dat nog vrij is, en pas als er echt niets meer is, voorbij de grens
+    for (let d = 4; v == null && d <= grens + 1; d++) v = [ans - d, ans + d].find(x => mag(x) && !keuze.has(x));
+    if (v == null) v = Math.max(...keuze) + 1;
+    keuze.add(v);
   }
-  while (set.size < 4) set.add(rnd(0, ans + 12));
-  return shuffle([...set]);
+  return shuffle([...keuze]);
 }
 
 /* ================= Telmodus: lees-vrije vragen (fase 1–12) =================
@@ -10346,9 +10403,10 @@ function planSpecials(p, s, total, stap, goldIdx) {
    Hier stond een zin: "Net iets te weinig — probeer een groter getal! 👆". De
    jongste rekenaars lezen cijfers maar nog geen zinnen, dus voor hen was een
    misser een rode kleur en een regel die ze niet konden lezen. De woorden
-   blijven, klein onder het plaatje, voor wie wél leest -- en ze kloppen nu ook:
+   staan nu alleen nog in het label voor een schermlezer (zie toonHint) -- en ze kloppen ook:
    "net iets" staat er alleen als het ook net iets was. De foute keuzes liggen
-   op ±1, ±2 en ±10 (zie makeChoices), en bij tien ernaast is "net iets" niet
+   meestal 1 tot 3 ernaast, maar één ervan is een echte fout en die kan ver
+   weg liggen (13 + 6 bij 13 − 6, zie makeChoices) -- dan is "net iets" niet
    waar.
 
    Bewust géén stippen of ander hoeveelheidsplaatje: de rekenmodus is cijfers,
@@ -10373,8 +10431,11 @@ function toonHint(q, val, btnEl) {
   const h = hintVoor(q, val);
   if (!h) { showToast('🤔', null, null, 'teken'); return; }
   if (btnEl) btnEl.insertAdjacentHTML('beforeend', `<span class="tegel-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`);
-  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`,
-            null, h.woorden, 'hint');
+  // De woorden ("Net iets meer dan 5") staan niet meer onder de pil: wie ze kan
+  // lezen heeft ze niet nodig, en wie ze nodig heeft kan ze niet lezen -- de pijl
+  // zegt het al, en op de rode tegel nog eens. Ze blijven voor een schermlezer.
+  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+            null, null, 'hint');
 }
 
 /* ================= Spel ================= */
@@ -10411,7 +10472,8 @@ function startLevel(lvl, eigenOvergang) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
-        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
+        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
+        uitslag: [] };   // per vraag: 'goed' | 'hint' | 'mis' -- zie showBalk
   // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
   // en heette het optreden daarna "Rome".
@@ -10480,7 +10542,7 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
   // voortgang
-  renderSegBar($('qprogress'), G.total, G.idx);
+  showBalk(G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
@@ -10492,7 +10554,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q.ans);
+    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -10564,6 +10626,27 @@ function kaartWiebelt(kaart) {
     { transform: 'rotate(-1deg)', offset: .85 },
     { transform: 'rotate(0) scale(1)' },
   ], { duration: WIEBEL, easing: 'ease' });
+}
+/* De balk van de show zegt ook HOE een vraag ging, want dat is waar de sterren
+   op staan: drie sterren is geen enkele misser, ook geen eerste die je daarna
+   goed maakte. Hier werd elk beantwoord vakje gewoon goud, ook na een hint of
+   een gemiste vraag -- en dan eindigde een kind met drie volle hartjes op twee
+   sterren zonder te zien waarom (de hartjes tellen alleen de tweede misser).
+   Nu, met dezelfde vakjes:
+     goud           in één keer goed
+     half goud      goed na een hint
+     leeg (rand)    gemist
+   Een rijtje helemaal goud is meteen ook "3 op een rij", zonder meter erbij.
+   En de gouden vraag heeft van bij de start een gouden rand om zijn vakje,
+   zodat er iets is om naar uit te kijken; zodra hij aan de beurt is, is de
+   kaart zelf goud en gaat de rand eraf. */
+function showBalk(done, hasNow) {
+  const el = $('qprogress');
+  renderSegBar(el, G.total, done, hasNow);
+  [...el.children].forEach((seg, i) => {
+    if (i < done && G.uitslag[i] && G.uitslag[i] !== 'goed') seg.classList.add(G.uitslag[i]);
+    if (i === G.goldIdx && i > G.idx) seg.classList.add('goudvraag');
+  });
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
@@ -10878,6 +10961,7 @@ function antwoordGoed(q, p, btnEl) {
   if (q.gold) { gain *= 3; p.goldHits++; }     // gouden vraag: 3× zoveel
   G.earned += gain;
   p.diamonds += gain;
+  G.uitslag[G.idx] = firstTry ? 'goed' : 'hint';
   // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
   // je speelt, hoe sneller hij volloopt. Vol = applaus, met bonusdiamanten.
   let fanMul = 1;
@@ -10944,7 +11028,7 @@ function antwoordGoed(q, p, btnEl) {
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
     zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
-    renderSegBar($('qprogress'), G.total, G.idx + 1, false);   // dit vakje is nu gehaald
+    showBalk(G.idx + 1, false);   // dit vakje is nu gehaald
   };
   if (vlucht) setTimeout(feest, vlucht); else feest();
   // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
@@ -10999,6 +11083,7 @@ function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
+  G.uitslag[G.idx] = 'mis';
   // definitief fout telt mee in de per-bewerking-beheersing / drie-getallen-tempo
   if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);

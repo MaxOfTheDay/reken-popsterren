@@ -252,9 +252,29 @@ function finaleDance(elId, count) {
 // de vaste kop i.p.v. los in het midden, zodat hij nooit over de paspop valt.
 // blauw (optioneel): "hier ben je" -- een nieuwe wereld. Wit op een blauwe rand
 // in plaats van goud, want aankomen is iets anders dan verdienen.
+/* Waar een gedockte kaart hangt. Gewoon: midden onder de kop, in het gat tussen
+   de voortgangsrij en de ster (zie .docked). Maar op een liggende telefoon staat
+   de som naast de ster en reikt ze tot vlak onder de kop -- daar viel de hint
+   precies óp de som die het kind opnieuw moest maken. Dan hangt hij boven háár
+   kolom. Alleen op zo'n laag liggend scherm wordt er gemeten; elders blijft de
+   kaart in het midden en kost dit niets. */
+const DOCK_LAAG = '(min-aspect-ratio: 1/1) and (max-height: 520px)';
+function dockPlek(el) {
+  el.style.left = el.style.right = '';
+  if (!el.classList.contains('docked') || !matchMedia(DOCK_LAAG).matches) return;
+  const ster = document.querySelector('#screen-game .show-panel');
+  const som = document.querySelector('#screen-game .math-panel');
+  if (!ster || !som) return;
+  const a = ster.getBoundingClientRect(), b = som.getBoundingClientRect();
+  if (b.left < a.right - 1) return;   // onder elkaar: het midden is vrij
+  const mid = a.left + a.width / 2, half = 170;
+  el.style.left = Math.max(8, mid - half) + 'px';
+  el.style.right = Math.max(8, innerWidth - mid - half) + 'px';
+}
 function showPraise(txt, reward, blauw) {
   const el = $('praise');
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  dockPlek(el);
   el.classList.toggle('blauw', !!blauw);
   el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
   el.classList.remove('pop');
@@ -300,6 +320,7 @@ function showToast(txt, onTap, sub, soort) {
   const t = $('toast');
   if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  dockPlek(t);
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
   t.classList.toggle('goud', soort === 'goud');

@@ -3235,6 +3235,11 @@
 
   .segbar > span.done { background: var(--gold-accent); }
   .segbar > span.now { background: var(--c-white); box-shadow: 0 0 6px rgba(255,255,255,.55); }
+
+
+  .segbar > span.done.hint { background: linear-gradient(90deg, var(--gold-accent) 50%, rgba(255,255,255,.3) 50%); }
+  .segbar > span.done.mis { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
+  .segbar > span.goudvraag { box-shadow: 0 0 0 1.5px var(--gold-accent), 0 0 7px rgba(var(--goud-gloed-rgb),.7); }
   @media (max-width: 430px) {
     .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
@@ -4089,8 +4094,13 @@
 
 
 
+
+
+
+
   .praise.docked {
-    top: 98px; transform: scale(.7); gap: 5px; padding: 9px 18px 11px;
+    top: 98px; transform: scale(.7); flex-direction: row; gap: 10px;
+    border-radius: var(--r-pill); padding: 7px 9px 7px 18px;
   }
   .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
@@ -4129,6 +4139,8 @@
     pointer-events: none;
   }
   .toast.met-sub, .toast.teken, .toast.hint { border-radius: var(--r-md); padding: 11px 20px 12px; }
+
+  .toast.hint.docked { border-radius: var(--r-pill); padding: 7px 20px; }
   .toast.goud { border-color: rgba(var(--goud-rgb),.6); box-shadow: var(--e-2), 0 0 20px rgba(var(--goud-gloed-rgb),.28); }
   .toast.goud .toast-main { color: var(--gold-light); }
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
@@ -4165,6 +4177,7 @@
 
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .praise.docked { gap: 8px; padding: 5px 6px 5px 14px; }
     .praise.docked .praise-headline { font-size: var(--tx-klein); }
     .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
     .toast.docked .toast-main { font-size: var(--tx-label); }
@@ -10179,9 +10192,29 @@ function finaleDance(elId, count) {
 
 
 
+
+
+
+
+
+
+const DOCK_LAAG = '(min-aspect-ratio: 1/1) and (max-height: 520px)';
+function dockPlek(el) {
+  el.style.left = el.style.right = '';
+  if (!el.classList.contains('docked') || !matchMedia(DOCK_LAAG).matches) return;
+  const ster = document.querySelector('#screen-game .show-panel');
+  const som = document.querySelector('#screen-game .math-panel');
+  if (!ster || !som) return;
+  const a = ster.getBoundingClientRect(), b = som.getBoundingClientRect();
+  if (b.left < a.right - 1) return;
+  const mid = a.left + a.width / 2, half = 170;
+  el.style.left = Math.max(8, mid - half) + 'px';
+  el.style.right = Math.max(8, innerWidth - mid - half) + 'px';
+}
 function showPraise(txt, reward, blauw) {
   const el = $('praise');
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  dockPlek(el);
   el.classList.toggle('blauw', !!blauw);
   el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
   el.classList.remove('pop');
@@ -10227,6 +10260,7 @@ function showToast(txt, onTap, sub, soort) {
   const t = $('toast');
   if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  dockPlek(t);
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
   t.classList.toggle('goud', soort === 'goud');
@@ -20056,15 +20090,72 @@ function genChain(s, lvl, perf) {
   if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
   return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
 }
-function makeChoices(ans) {
-  const set = new Set([ans]);
-  const cand = shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]);
-  for (const c of cand) {
-    if (set.size >= 4) break;
-    if (c >= 0 && !set.has(c)) set.add(c);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function keuzeGrens(q, s, lvl) {
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number).concat(q.ans);
+  const hoogste = Math.max(...getallen);
+
+
+  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, Math.round(s.max * stapVan(lvl, s).t));
+
+  return Math.max(10, Math.ceil(hoogste / 10) * 10);
+}
+function makeChoices(q, grens) {
+  const ans = q.ans;
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
+  const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
+
+  const fouten = new Set(getallen);
+  for (let i = 0; i < getallen.length; i++)
+    for (let j = i + 1; j < getallen.length; j++) {
+      fouten.add(getallen[i] + getallen[j]);
+      fouten.add(Math.abs(getallen[i] - getallen[j]));
+    }
+  if (ans >= 10 && grens >= 50) { fouten.add(ans + 10); fouten.add(ans - 10); }
+
+
+
+
+  const onder = rnd(0, 3);
+  const keuze = new Set([ans]);
+  const fout = shuffle([...fouten].filter(v => mag(v) && (v < ans ? onder > 0 : onder < 3)))[0];
+  if (fout != null) keuze.add(fout);
+
+  const ernaast = kant => shuffle([1, 2, 3].map(d => ans + kant * d).filter(v => mag(v) && !keuze.has(v)))[0];
+  while (keuze.size < 4) {
+    const nuOnder = [...keuze].filter(v => v < ans).length;
+    const kant = nuOnder < onder ? -1 : 1;
+    let v = ernaast(kant);
+    if (v == null) v = ernaast(-kant);
+
+
+    for (let d = 4; v == null && d <= grens + 1; d++) v = [ans - d, ans + d].find(x => mag(x) && !keuze.has(x));
+    if (v == null) v = Math.max(...keuze) + 1;
+    keuze.add(v);
   }
-  while (set.size < 4) set.add(rnd(0, ans + 12));
-  return shuffle([...set]);
+  return shuffle([...keuze]);
 }
 
 
@@ -21199,6 +21290,7 @@ function planSpecials(p, s, total, stap, goldIdx) {
 
 
 
+
 const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
   if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
@@ -21218,8 +21310,11 @@ function toonHint(q, val, btnEl) {
   const h = hintVoor(q, val);
   if (!h) { showToast('🤔', null, null, 'teken'); return; }
   if (btnEl) btnEl.insertAdjacentHTML('beforeend', `<span class="tegel-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`);
-  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`,
-            null, h.woorden, 'hint');
+
+
+
+  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+            null, null, 'hint');
 }
 
 
@@ -21256,7 +21351,8 @@ function startLevel(lvl, eigenOvergang) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
-        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
+        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
+        uitslag: [] };
 
 
 
@@ -21325,7 +21421,7 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
 
-  renderSegBar($('qprogress'), G.total, G.idx);
+  showBalk(G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
@@ -21337,7 +21433,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q.ans);
+    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -21409,6 +21505,27 @@ function kaartWiebelt(kaart) {
     { transform: 'rotate(-1deg)', offset: .85 },
     { transform: 'rotate(0) scale(1)' },
   ], { duration: WIEBEL, easing: 'ease' });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function showBalk(done, hasNow) {
+  const el = $('qprogress');
+  renderSegBar(el, G.total, done, hasNow);
+  [...el.children].forEach((seg, i) => {
+    if (i < done && G.uitslag[i] && G.uitslag[i] !== 'goed') seg.classList.add(G.uitslag[i]);
+    if (i === G.goldIdx && i > G.idx) seg.classList.add('goudvraag');
+  });
 }
 
 
@@ -21723,6 +21840,7 @@ function antwoordGoed(q, p, btnEl) {
   if (q.gold) { gain *= 3; p.goldHits++; }
   G.earned += gain;
   p.diamonds += gain;
+  G.uitslag[G.idx] = firstTry ? 'goed' : 'hint';
 
 
   let fanMul = 1;
@@ -21789,7 +21907,7 @@ function antwoordGoed(q, p, btnEl) {
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
     zaalJuicht();
-    renderSegBar($('qprogress'), G.total, G.idx + 1, false);
+    showBalk(G.idx + 1, false);
   };
   if (vlucht) setTimeout(feest, vlucht); else feest();
 
@@ -21844,6 +21962,7 @@ function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
+  G.uitslag[G.idx] = 'mis';
 
   if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);

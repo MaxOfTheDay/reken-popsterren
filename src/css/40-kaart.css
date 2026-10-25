@@ -533,6 +533,11 @@
   /* goud = gehaald (zelfde betekenis als overal elders), wit = waar je nu bent */
   .segbar > span.done { background: var(--gold-accent); }
   .segbar > span.now { background: var(--c-white); box-shadow: 0 0 6px rgba(255,255,255,.55); }
+  /* alleen in de show (zie showBalk): hoe de vraag ging. Half goud = goed na een
+     hint, een lege rand = gemist, en een gouden rand = de gouden vraag die nog komt */
+  .segbar > span.done.hint { background: linear-gradient(90deg, var(--gold-accent) 50%, rgba(255,255,255,.3) 50%); }
+  .segbar > span.done.mis { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
+  .segbar > span.goudvraag { box-shadow: 0 0 0 1.5px var(--gold-accent), 0 0 7px rgba(var(--goud-gloed-rgb),.7); }
   @media (max-width: 430px) {
     .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
