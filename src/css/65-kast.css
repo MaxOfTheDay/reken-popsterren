@@ -283,6 +283,31 @@
   .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
   .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
   .trophy-card.kies .tname { color: var(--c-white); }
+  /* De tikken (zie kastKlink en kastDof). Behaald: één keer om als een munt,
+     met een ring licht die eraf gaat. Nog niet: een kort schuddinkje, "nog niet". */
+  .trophy-card.klink .temoji, .trophy-card.klink .pw-medal { animation: kastKlink .55s cubic-bezier(.3,.7,.3,1); }
+  .trophy-card.klink .temoji::before {
+    content: ''; position: absolute; inset: -8px; border-radius: 50%; pointer-events: none;
+    border: 2px solid rgba(var(--goud-glans-rgb),.9); animation: kastKlinkRing .55s ease-out forwards;
+  }
+  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: kastDof .38s ease-out; }
+  @keyframes kastKlink {
+    0% { transform: perspective(300px) rotateY(0) scale(1); }
+    45% { transform: perspective(300px) rotateY(200deg) scale(1.14); }
+    100% { transform: perspective(300px) rotateY(360deg) scale(1); }
+  }
+  @keyframes kastKlinkRing { from { opacity: .9; transform: scale(.8); } to { opacity: 0; transform: scale(1.5); } }
+  @keyframes kastDof {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-3deg); }
+    45% { transform: translateX(4px) rotate(3deg); }
+    70% { transform: translateX(-2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .trophy-card.klink .temoji, .trophy-card.klink .pw-medal,
+    .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: none; }
+    .trophy-card.klink .temoji::before { display: none; }
+  }
   /* De naam: wit als hij van jou is, een slag zachter als hij nog moet komen.
      De letter een maat kleiner dan op het oude kaartje (15 -> 13): op een derde
      van de breedte past "Eerste optreden" anders niet meer op één regel. */
