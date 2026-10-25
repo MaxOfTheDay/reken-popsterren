@@ -8990,7 +8990,11 @@ function wereldFeest(f) {
      wegtikken, het eindscherm lezen, de tweede knop vinden, de kleedkamer in. */
   // "Doe aan" en niet "Aandoen": dat is woord voor woord de knop in de kleedkamer
   // (zie renderDressBar). Eén zin voor één handeling, waar hij ook staat.
-  const aanKnop = f.spul ? `<button class="btn wf-aan" type="button">Doe aan</button>` : '';
+  // En hij ziet eruit als die knop ook: de gewone verhoogde .btn.small, zoals
+  // "Koop" in de kleedkamer. Hij was een plat geel pilletje, vlak onder het
+  // even platte gele "Perfecte wereld!" dat níét tikbaar is -- twee keer
+  // hetzelfde vorm voor twee verschillende dingen.
+  const aanKnop = f.spul ? `<button class="btn small wf-aan" type="button">Doe aan</button>` : '';
   const ov = openOverlay('wereld-feest-overlay',
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
@@ -11408,11 +11412,13 @@ function endLevel(success) {
     // de juichtekst groeit mee met de prestatie
     // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
     // de gouden haltes op de kaart (.tour-stop.perfect) naartoe lokken.
+    // Zonder emoji aan het eind (de regel voor meldingen sinds de pil): die viel op
+    // een telefoon alleen op een eigen regel. De kop heeft er al een vooraan.
     const juich = beter
-      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren! 🤩' : 'Beter dan de vorige keer! ⭐')
-      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
-      : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
-      : 'Het publiek klapt hard voor je! 👏';
+      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!')
+      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak!'
+      : stars === 2 ? 'Het publiek juicht en danst mee!'
+      : 'Het publiek klapt hard voor je!';
     $('end-text').textContent = juich;
     /* Eén vakje: alle 💎 van deze show, de sterrenbonus erbij. Hier stonden er
        twee, en het tweede was "⭐ +15" -- maar die 15 waren diamanten (5 per ster,
@@ -11437,9 +11443,14 @@ function endLevel(success) {
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {
-      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
-      mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
+      /* De trofee staat naast de 💎, op één rij: allebei "wat je kreeg". Ze
+         stonden op twee rijen onder elkaar, en dat maakte de kaart een regel
+         langer dan nodig. Zelfde woorden als de toast (zie noticeReady). */
+      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee' : `🎁 ${nieuwKlaar} nieuwe trofeeën`;
+      const pil = document.createElement('button');
+      pil.className = 'gold-pill'; pil.type = 'button'; pil.textContent = label;
+      pil.onclick = () => { sndClick(); naTik(openTrophies); };
+      $('end-earn').appendChild(pil);
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
