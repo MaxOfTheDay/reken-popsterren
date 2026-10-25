@@ -2918,7 +2918,9 @@ function noot(freq, dur, delay, type, vol) {
    toggleHaptics -- die hoort bij geen enkel klankje.
 
    Veertien regels en dertien gebeurtenissen -- 'tap' en 'tap.blij' zijn twee
-   kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol. Dit is een spel voor
+   kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol.
+   (Eén erbij in oktober 2026: 'kast.klink', omdat Max de kast speelser wilde --
+   een behaalde trofee hoort anders te klinken dan een knop.) Dit is een spel voor
    vijfjarigen op één tablet in een woonkamer, geen instrument: wat er nog stil is
    -- een schermwissel, een vraag die verschijnt, elk deeltjesfeestje, de
    zaalgloed bij een goed antwoord -- is stil gehouden en niet vergeten. Zie
@@ -2931,6 +2933,13 @@ const SFX = {
   /* Dezelfde tik, maar speels: de pop aantikken geeft elke keer een andere noot.
      Eén gebeurtenis met twee kleuren, en met opzet geen tweede gebeurtenis. */
   'tap.blij':       { noten: [[0, 0.12, 0, 'triangle', 0.12]], keuze: [784, 880, 988, 1047, 1175], tril: 12 },
+  /* Een behaalde trofee aantikken: een noot op zijn plek op de plank. Van links
+     naar rechts loopt hij een pentatonische toonladder op, dus wie langs een rij
+     tikt speelt een wijsje -- de kast als xylofoon. Pentatonisch omdat elke
+     volgorde dan mooi klinkt, ook kriskras. Langer en ronder dan tap.blij: dit
+     is een ding van jou dat klinkt, geen tik. (oktober 2026, zie kastKlink) */
+  'kast.klink':     { noten: [[0, 0.34, 0, 'triangle', 0.13], [0, 0.22, 0.02, 'sine', 0.04]],
+                      ladder: [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568], tril: 12 },
   /* Iets aandoen. Dit stond hier als 'reward.claim' op de lijst, maar de drie
      plekken die overbleven doen alle drie hetzelfde en het is geen beloning: je
      zet iets op. Het cadeau-moment zelf -- een trofee die openknalt -- heeft zijn
@@ -8981,9 +8990,9 @@ function trophyCard(t, p) {
 /* Een medaille die meegroeit (zie TROPHY_LADDERS): één kaartje voor alle trappen.
      klaar     ligt er een trap klaar, dan is dit kaartje het cadeautje
                (giftMedaille) en opent een tik de laagste die klaarligt
-     anders    het icoon van de ladder in een rand van het metaal dat je al hebt
-               (nog niets: de gewone donkere rand), met daarover een boog in het
-               metaal van de volgende trap: zo ver ben je op weg naar zilver
+     anders    het icoon van de ladder op een vlak van het metaal dat je al hebt
+               (nog niets: het gewone donkere vlak), met in de rand een boog in
+               het metaal van de volgende trap: zo ver ben je op weg naar zilver
      eronder   de naam en een stipje per trap, gekleurd voor wat je al hebt
    Alles uit wat er al bewaard is: welke trap-id's in p.trophies staan. */
 function ladderStand(ladder, p) {
@@ -9006,9 +9015,15 @@ function ladderCard(ladder, p) {
     card.innerHTML = giftMedaille(ladder) + stippen;
     card.setAttribute('aria-label', `Open ${klaar.name}`);
   } else {
+    /* De boog telt vanaf de trap die je al hebt, niet vanaf nul: een net
+       behaalde zilveren medaille staat met een lege rand op weg naar goud, en
+       niet al voor een vijfde vol (100 van de 500 sommen). */
     let boog = 0;
-    if (volgende) { const pr = volgende.progress(p); boog = Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target))); }
-    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '') + (nu != null ? `;--nu:var(--m-${nu})` : '');
+    if (volgende) {
+      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+      boog = Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (pr.target - vorig))));
+    }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
     card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
       + `<div class="tname">${ladder.name}</div>` + stippen;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
@@ -9021,11 +9036,12 @@ function tapLadder(ladder, card, e) {
   const p = P();
   const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
   if (klaar) { openTrophy(klaar.id); return; }
-  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
+  // een medaille met al een metaal klinkt; nog geen enkel metaal blijft gedempt
+  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
   const kop = { emoji: ladder.emoji, name: ladder.name };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
-  if (!volgende) { sndTap(); sparkle(card); kastBalk(kop, card, metaal + '!'); return; }
-  sndClick();
+  if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
   kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
@@ -9110,19 +9126,61 @@ function tapTrophy(t, card, e) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
+  // eerst het klankje en het bewegen: behaald klinkt, de rest blijft gedempt (zie kastKlink)
+  if (st === 'done') kastKlink(card); else kastDof(card);
   /* Een trofee die ergens anders verdiend wordt (t.naar) ging hier eerst meteen
      naar de kleedkamer -- en dus zag je bij Verzamelaar nooit hoe ver je was. Nu
      doet hij wat elke trofee doet, en staat de weg erheen als knop in de balk. */
   // nog een keer op dezelfde: de balk gaat weer weg, zoals in de kleedkamer
-  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
-  if (st === 'done') { sndTap(); sparkle(card); kastBalk(t, card, t.desc); return; }
-  sndClick();
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  if (st === 'done') { kastBalk(t, card, t.desc); return; }
   if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
   if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
   if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
+}
+/* De tikken in de kast (oktober 2026). Max miste hoe speels het aantikken eerst
+   was: behaald klonk en deed iets, nog niet was stiller. Dat is er weer, en de
+   balk onderin blijft wat hij is.
+     behaald   kastKlink: de medaille draait een keer om als een munt, er gaat
+               een ring licht van af en een 🎵 op, en hij speelt een noot op zijn
+               plek op de plank (zie 'kast.klink': langs een rij tikken is een
+               wijsje). Een medaille die meegroeit vonkt in zijn eigen metaal.
+     nog niet  kastDof: de gewone tik, een kort "nog niet"-schuddinkje, en de boog
+               in de rand loopt opnieuw vol van leeg tot waar je bent -- zo zie
+               je bij elke tik hoe ver je al bent.
+   Zonder beweging (motionOff) blijft alleen het klankje over. */
+const KLINK_VONK = [['✨', '🥉', '🎵'], ['✨', '🥈', '🎵'], ['✨', '🥇', '🎵'], ['✨', '💎', '🎵']];
+function kastKlink(card, trap) {
+  playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
+  if (motionOff()) return;
+  opnieuw(card, 'klink');
+  sparkle(card, trap != null ? KLINK_VONK[trap] : ['✨', '🎵', '⭐']);
+}
+function kastDof(card) {
+  sndClick();
+  if (motionOff()) return;
+  opnieuw(card, 'dof');
+  // de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop
+  const m = card.querySelector('.temoji');
+  const doel = m ? parseFloat(m.style.getPropertyValue('--p')) || 0 : 0;
+  if (!doel) return;
+  const t0 = performance.now();
+  const stap = t => {
+    const k = Math.min(1, (t - t0) / 520);
+    m.style.setProperty('--p', (doel * (1 - Math.pow(1 - k, 3))).toFixed(1));
+    if (k < 1) requestAnimationFrame(stap);
+  };
+  m.style.setProperty('--p', 0);
+  requestAnimationFrame(stap);
+}
+// Een klasse opnieuw laten afspelen, ook als hij er nog op stond (tweede tik).
+function opnieuw(el, klasse) {
+  el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
+  clearTimeout(el['_' + klasse]);
+  el['_' + klasse] = setTimeout(() => el.classList.remove(klasse), 650);
 }
 /* De balk onderin de kast: wat de getikte trofee is of vraagt. Dezelfde balk als
    in de kleedkamer (.dress-bar: naam links, het verdere ernaast) en op dezelfde
@@ -9181,7 +9239,7 @@ function celebrateTrophy(t) {
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
     // een trap van een medaille die meegroeit: de rand in zijn eigen metaal
-    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-rand:var(--m-${t.trap})"` : ''}>${t.emoji}</div>`
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',

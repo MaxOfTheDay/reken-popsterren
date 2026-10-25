@@ -155,7 +155,7 @@
     width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center;
     font-size: 64px; line-height: 1;
     border: 5px solid transparent;
-    background: var(--medaille-vul-goud) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
+    background: var(--tp-vlak, var(--medaille-vul-goud)) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
     box-shadow: 0 0 32px rgba(var(--goud-rgb),.6), 0 6px 18px rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.2);
   }
   .tp-rays {
