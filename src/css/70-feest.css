@@ -131,10 +131,7 @@
      stijl van al deze animaties bij elk beeldje van het schuiven opnieuw uit. */
   #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
-  #trophy-shelves.schuift .trophy-card.ready .pw-medal,
-  #trophy-shelves.schuift .ready-open,
-  #trophy-shelves.schuift .ready-open::before,
-  #trophy-shelves.schuift .ready-open::after { animation-play-state: paused; }
+  #trophy-shelves.schuift .trophy-card.ready .pw-medal { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -214,11 +211,6 @@
   @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .ready-open { animation: none; }
-    /* De gloed van .ready-open zat vroeger alleen in de keyframes en viel hier dus
-       vanzelf weg. Nu staat hij op twee eigen lagen -- die gaan hier uit, zodat
-       de pil stilstaand precies blijft zoals hij was: goud, zonder gloed. */
-    .ready-open::before, .ready-open::after { display: none; }
     .trophy-card.ready .temoji::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
     .trophy-card.just-claimed .temoji::after { animation: none; }
 
