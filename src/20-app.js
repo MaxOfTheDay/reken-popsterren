@@ -3358,12 +3358,18 @@ let svgUid = 0;
             dat. Elk los ding kreeg er zijn eigen witte stickerrand en werd een
             tweede en derde sticker naast de hare; een keyboard of DJ-set werd een
             wit vierkant tegeltje op de rand van haar halte. Huisdier en
-            instrument horen bij het optreden: show, eindscherm, spiegel. */
+            instrument horen bij het optreden: show, eindscherm, spiegel.
+   De tekening is 250 hoog en de svg knipt alles weg wat eronder valt. Een emoji
+   hangt tot bijna een kwart van zijn maat ónder zijn basislijn (de pootjes van
+   een krab, de onderkant van een drumstel), dus staat die basislijn op
+   248 - een kwart van de maat, en niet op de voeten. Een paar pixels hoger zie je
+   niet; een afgehakt drumstel wel. Rechts is er ruimte genoeg: het breedste
+   ding komt tot ~1,2 keer zijn maat voorbij x. */
 const PROP_MAAT = {
-  groot: { pet: [6, 244, 46],  instr: [112, 248, 52] },
-  norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
+  groot: { pet: [6, 236, 46],  instr: [112, 235, 52] },
+  norm:  { pet: [18, 239, 34], instr: [120, 237, 42] },
   kaart: null,
-  klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
+  klein: { pet: [30, 238, 24], instr: [134, 241, 29] },
 };
 /* Het licht op de pop: één lamp linksboven, voor alles hetzelfde. Elk verloop
    ligt als tweede laag óp een vorm (zie stofJurk, hairBackStaartjes), en kent
