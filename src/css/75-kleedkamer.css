@@ -492,6 +492,11 @@
   /* 38px is wat je ziet; het raakvlak is 50, zoals elke knop van een kinderspel
      hoort te hebben. Doorzichtig. */
   .shuffle-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
+  /* Boven de spiegel: die staat op z-index 1 (de pop en de schijf rekenen op dat
+     vak) en is breed genoeg om het grootste deel van de 🎲 te bedekken. Zonder
+     dit ging een tik midden op de dobbelsteen naar de spiegel -- ze danste, en er
+     kwam geen outfit; alleen de rechterrand deed het. */
+  .shuffle-btn { z-index: 2; }
   .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
   .shuffle-btn:active { transform: scale(.92); }
   /* DE BALK MET DE LADEN (renderShop). Acht knoppen in één stuk, zonder scrollen
@@ -780,6 +785,23 @@
     box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .03) var(--pr);
   }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
+  /* In het rek een maat groter, op een eigen schaduw. Op 52px stond een jurk als
+     klein icoontje midden in een groot vak, en dan leest het rek als een lijst
+     symbolen; op 62 met een plek op de grond is het een spulletje dat je kunt
+     pakken. Alleen het rek (.item-card): het wereldfeest leent hetzelfde vakje en
+     blijft op 52, en een liggende telefoon zet het hierboven terug op 40 (de
+     #screen-dress-regels wegen zwaarder dan deze). Een podium en een wereldprijs
+     hebben hun eigen schijf als grond en krijgen geen schaduw; een kleurstaal
+     ook niet, want die ligt niet ergens op maar ís een kleur. */
+  .item-card .item-thumb { height: 62px; position: relative; margin-bottom: 8px; }
+  .item-card .item-thumb svg { height: 62px; }
+  .item-card .item-thumb .thumb-emo { font-size: 46px; }
+  .item-card .item-thumb > * { position: relative; z-index: 1; }
+  .item-card .item-thumb:not(.thumb-podium):not(.thumb-prijs):not(.thumb-staal)::after {
+    content: ''; position: absolute; left: 50%; bottom: -4px; width: 58%; height: 9px;
+    transform: translateX(-50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(0,0,0,.38), transparent);
+  }
   /* het naambordje (naamBordje): even boven in de spiegel na het aandoen, in het
      stille vlak van de knoppen eromheen. De kaartjes zelf hebben geen naam meer. */
   .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
@@ -908,13 +930,9 @@
     box-shadow: 0 2px 6px rgba(8,1,20,.5), 0 0 0 2px rgba(38,12,70,.9); pointer-events: none;
   }
 
-  /* De Aandoen-knop op het wereldfeest: de enige knop op die laag, dus hij mag de
-     gouden zijn -- maar niet groter dan de regel erboven waar hij bij hoort. */
-  .wereld-feest .wf-aan {
-    margin-top: 11px; padding: 9px 20px; font-size: var(--tx-body);
-    background: var(--gold-accent); color: var(--ink-on-gold); border: 0;
-    box-shadow: var(--goud-gloed);
-  }
+  /* De Aandoen-knop op het wereldfeest: de enige knop op die laag. Het is de
+     gewone .btn.small (de Koop-knop van de lade), alleen met wat lucht erboven. */
+  .wereld-feest .wf-aan { margin-top: 12px; padding: 9px 22px; }
   .wereld-feest .wf-aan + .wf-verder { margin-top: 7px; }
   /* De actiebalk: naam + prijs + dé knop, altijd in beeld boven de navigatie.
      FASE 5B.1 -- hij hoort bij die navigatie en was van ander materiaal gemaakt:
@@ -1001,7 +1019,12 @@
   }
   .spiegel-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .spiegel .avatar-holder { position: relative; z-index: 1; height: 84%; margin-bottom: 8.5%; pointer-events: none; }
-  .spiegel .avatar-holder svg { pointer-events: auto; }
+  /* Alleen wat er getekend is vangt een tik: de rechthoek van de tekening is
+     veel breder dan zij, en ving zo de tikken op de schijf naast haar voeten die
+     Podia hadden moeten openen. Tussen haar benen door kom je op de spiegel, en
+     die laat haar evengoed dansen. */
+  .spiegel .avatar-holder svg { pointer-events: none; }
+  .spiegel .avatar-holder svg * { pointer-events: visiblePainted; }
   /* De lade onderaan bij een podium: drie stukken als kleine kaartjes met + ertussen,
      en daaronder de ene knop. Zelfde balk, alleen hoger en in twee rijen. */
   .dress-bar.podium-bar { flex-direction: column; gap: 8px; padding: 10px 10px 11px; }

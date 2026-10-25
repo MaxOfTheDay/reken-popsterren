@@ -81,13 +81,13 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
             drawQuestion();
             const area = document.getElementById('answer-area');
             renderQuestion.length;                       // (renderQuestion zou opnieuw genereren)
-            const choices = makeChoices(q.ans);
+            const choices = makeChoices(q, keuzeGrens(q, s, lvl));
             const card = document.getElementById('question-text');
             out.push(Object.assign({
               tmpl: q.tmpl, ans: q.ans, op: q.op, kind: q.kind,
               blanks: card.querySelectorAll('.q-blank').length,
               overflow: card.scrollWidth > card.clientWidth + 1,
-              choices,
+              choices, grens: keuzeGrens(q, s, lvl),
             }, extra || {}));
           };
           for (let i = 0; i < samples; i++) {
@@ -149,6 +149,8 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
           check(r.choices.filter(v => v === r.ans).length === 1, 'juist antwoord staat precies één keer bij de keuzes', `${where} keuzes=${r.choices}`);
           check(new Set(r.choices).size === r.choices.length, 'geen dubbele antwoordknoppen', `${where} keuzes=${r.choices}`);
           check(r.choices.every(v => v >= 0), 'geen negatieve antwoordknoppen', `${where} keuzes=${r.choices}`);
+          check(r.choices.length === 4, 'altijd vier antwoordknoppen', `${where} keuzes=${r.choices}`);
+          check(r.choices.every(v => v <= Math.max(r.grens, r.ans)), 'geen knop boven de grens van de som (geen 17 bij sommen tot tien)', `${where} grens=${r.grens} keuzes=${r.choices}`);
 
           /* --- weergave --- */
           check(r.blanks === 1, 'precies één in-te-vullen vakje op de kaart', `${where} zag ${r.blanks}`);

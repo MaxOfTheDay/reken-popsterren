@@ -407,6 +407,7 @@ const ITEMS = [
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
   { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjemicrofoon',       price: 45, emoji: '🍺' },
+  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelsmicrofoon',      price: 50, emoji: '🥂' },
   { id: 'mic_zwart',  cat: 'mic', name: 'Rock', full: 'Rockmicrofoon', price: 55, color: '#37474f' },
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
@@ -2131,20 +2132,27 @@ function rebuildWorldBadges() {
        praktijk een winkellijst. Er blijft één rustige verzamelmijlpaal over.
      - 'Kast vol!': zie RETIRED_TROPHIES.
 
-   Wat blijft heeft een van deze vier vormen: een eerste keer (die vergeet je
-   nooit), een lange rekenweg, een perfecte wereld, of één rustige mijlpaal in
-   het sterrenleven. Id's blijven ongewijzigd, dus wie een trofee al had houdt 'm.
+   Wat blijft heeft een van deze vijf vormen: een eerste keer (die vergeet je
+   nooit), een lange rekenweg (als medaille die meegroeit), iets nieuws dat je
+   geleerd hebt, een perfecte wereld, of een rustige mijlpaal in de kleedkamer.
+   Id's blijven ongewijzigd, dus wie een trofee al had houdt 'm.
 
    Over voortgang: `progress` is er alleen waar het getal zélf iets zegt
    ("82 / 100 sommen"). Trofeeën die één keer gebeuren (eerste show, eerste
-   toegift, eerste perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
+   perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
    dat is alleen de mededeling dat het nog niet gebeurd is. */
 const TROPHIES = [
   // 🎤 Avontuur — de momenten die je je herinnert
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
-  // id blijft 'toegift' (zo staat hij in de saves); het kind ziet "Applaus!"
-  { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
+  /* (Hier stond 'toegift', "Applaus!": de publieksmeter één keer vol. Met pensioen
+     sinds oktober 2026 -- die meter loopt in bijna elke show vol, dus lag hij
+     samen met Eerste optreden en Sterrenhit al na show 1 klaar: drie cadeautjes
+     tegelijk, en dit was er geen prestatie. Het applaus zelf beloont al, met
+     geluid en 5 💎. Zie RETIRED_TROPHIES.) */
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
+  // Het vervolg op Sterrenhit, dus ernaast: 1 perfecte show, dan 10. Stond eerst
+  // op Sterrenleven, naast een kooptrofee waar hij niets mee te maken had.
+  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
   /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en nu
      elke uitgebrachte. De enige trofee die weer onwaar kan worden: komt er een
      wereld bij, dan is de tournee niet meer uit. Wat er dan gebeurt:
@@ -2156,32 +2164,82 @@ const TROPHIES = [
          wereld bij kwam die ze nog nooit gezien heeft. Zie het einde van migrate();
          telWerelden is de vlag die zegt dat deze trofee daaronder valt. */
   { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
-  // 🧮 Rekenkracht — de lange weg (stats.correct telt elk goed antwoord)
-  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',   desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
-  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',  desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester', desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende', desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker',   desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',   emoji: '👑', name: 'Gouden kroon', desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
-  // ✨ Sterrenleven — twee rustige mijlpalen naast de rest
-  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  /* 🧮 Rekenkracht — twee medailles die meegroeien (zie TROPHY_LADDERS). Elke trap
+     is nog altijd een eigen trofee met een eigen id, een eigen 🎁 en een eigen
+     plek in p.trophies: wie "Rekenritme" al had, heeft nu de bronzen
+     rekenmedaille, zonder dat er in de save iets verandert. Alleen de kast
+     tekent ze als één kaartje (zie ladderCard). `trap` is de plek op de ladder:
+     0 brons, 1 zilver, 2 goud, 3 diamant. stats.correct telt elk goed antwoord. */
+  { id: 'sums25',   emoji: '🧮', name: 'Rekenmedaille · Brons',   trap: 0, desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenmedaille · Zilver',  trap: 1, desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '🧮', name: 'Rekenmedaille · Goud',    trap: 2, desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🧮', name: 'Rekenmedaille · Diamant', trap: 3, desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker · Brons',  trap: 0, desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',   emoji: '🌟', name: 'Goudzoeker · Zilver', trap: 1, desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+  // Nieuw in oktober 2026: de derde trap, zodat ook deze medaille tot goud groeit.
+  // Een gouden vraag staat in ongeveer de helft van de shows; 50 is rond wereld 11.
+  { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '50 gouden vragen', has: p => p.goldHits >= 50, progress: p => trophyProgress(p.goldHits, 50, 'gouden vragen goed') },
+  /* 💡 Nieuwe sommen — wat ze leert, gevierd. Elke wereld leert iets nieuws (zie
+     "De leerstap"), en dát is de echte vooruitgang in het spel: over het tiental
+     in wereld 3, zoek het getal in wereld 4, drie getallen in wereld 5. Tien
+     keer goed is genoeg om te zeggen "dit kan je nu". De tellers staan in p.leer
+     (zie telLeer) en tellen elk goed antwoord, ook na een hint.
+
+     `voor` zegt of de trofee voor dit kind te halen ís met wat de ouder
+     instelde: tot 10 gaat er niets over het tiental, en wie zoek-het-getal of
+     drie getallen uitzette, krijgt die nooit. Een trofee die niet te halen is
+     staat er niet (zie renderShelves) -- tenzij ze hem al heeft. In de telmodus
+     staan er de twee grote stappen van het tellen in plaats van de sommen. */
+  { id: 'leer-brug',   emoji: '🌉', name: 'Over de brug',   desc: '10 sommen over de tien goed',
+    voor: p => !telModus(p) && p.settings.max > 10 && p.settings.ops.some(o => o === '+' || o === '-'),
+    has: p => leerTel(p, 'brug') >= 10, progress: p => trophyProgress(leerTel(p, 'brug'), 10, 'sommen over de tien') },
+  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer zoek het getal goed',
+    voor: p => !telModus(p) && p.settings.missNum !== false && p.settings.ops.some(o => o === '+' || o === '-' || o === 'x'),
+    has: p => leerTel(p, 'zoek') >= 10, progress: p => trophyProgress(leerTel(p, 'zoek'), 10, 'zoeksommen') },
+  { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
+    voor: p => !telModus(p) && p.settings.chain3 !== false && p.settings.ops.includes('+'),
+    has: p => leerTel(p, 'drie') >= 10, progress: p => trophyProgress(leerTel(p, 'drie'), 10, 'sommen met drie getallen') },
+  // de telmodus: fase 6 is waar de cijfers komen, fase 9 de eerste sommen (zie countStageInfo)
+  { id: 'leer-cijfers', emoji: '🔢', name: 'Cijferkenner',  desc: 'Je telt met cijfers',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 6,
+    has: p => telModus(p) && telFase(p) >= 6 },
+  { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
+    has: p => telModus(p) && telFase(p) >= 9 },
+  /* ✨ Sterrenleven — de kleedkamer. De twee trofeeën die je ergens anders in de
+     app verdient; `naar` is de lade die de knop in de balk opent (zie kastBalk). */
   /* De enige koop-trofee die overblijft, en met opzet de láágste drempel van de
      twee die er stonden (10, niet 25): een vrolijke "je hebt je eigen stijl"-tik,
      geen winkelopdracht. Zelfde id en zelfde voorwaarde als voorheen, dus wie hem
-     al had houdt hem. boughtCount telt startspullen en wereldbeloningen niet mee.
-     `naar` is de kleedkamercategorie die een tik op dit kaartje opent: dit is de
-     enige trofee waarvoor je ergens anders in de app moet zijn, dus wijst hij de
-     weg (zie tapTrophy). */
+     al had houdt hem. boughtCount telt startspullen en wereldbeloningen niet mee. */
   { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar',  desc: '10 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
+  // Je eerste eigen podium: alle drie de stukken van een podium van jou (het
+  // Parelpodium waar iedereen op begint telt niet). Zie podiumVanJou.
+  { id: 'eigenpodium', emoji: '🎪', name: 'Eigen podium', desc: 'Je eerste eigen podium', naar: 'stage',
+    has: p => ITEMS.some(it => it.cat === 'stage' && it.id !== 'stage_disco' && podiumVanJou(p, it)) },
   // 🥇 Perfecte werelden — één per wereld, aangelegd door rebuildWorldBadges()
 ];
-/* De kast heeft vier planken, en niet meer. Elke plank is één soort prestatie, zodat
+/* De medailles die meegroeien: per ladder de trappen van laag naar hoog, en de
+   naam en het icoon van het kaartje dat ze samen zijn. Een ladder hangt op één
+   plank, en zijn id's staan daar ook gewoon in `ids` (dus "elke trofee hangt
+   ergens" blijft waar); renderShelves tekent ze als één kaartje.
+
+   Waarom. Rekenkracht was zes tellers naast elkaar -- 25, 100, 500, 1000 sommen
+   en 5, 20 gouden vragen -- en zo las de plank als een lijst getallen. "Mijn
+   medaille is goud geworden" zegt meer dan "ik heb kaartje 3 van 4". */
+const TRAP_NAMEN = ['Brons', 'Zilver', 'Goud', 'Diamant'];
+const TROPHY_LADDERS = [
+  { key: 'reken', emoji: '🧮', name: 'Rekenmedaille', ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
+  { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',    ids: ['gold5', 'gold20', 'gold50'] },
+];
+/* De kast heeft vijf planken, en niet meer. Elke plank is één soort prestatie, zodat
    een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen plank is die
    bestaat omdat er nog trofeeën over waren.
 
    De volgorde is de volgorde waarin je ze tegenkomt: eerst wat je meemaakt, dan de
-   lange rekenweg, dan de zes grote prijzen, en helemaal onderaan het sterrenleven. */
+   lange rekenweg en wat je leert, dan de grote prijzen, en helemaal onderaan de
+   kleedkamer. */
 /* `ico` staat los van `name` sinds de kopregel van een groep uit drie cellen
    bestaat (icoon | naam + regeltje | stand). Stond het emoji nog vóór de naam in
    dezelfde string, dan zou het meeschuiven met de tekst en niet op één lijn staan
@@ -2189,16 +2247,18 @@ const TROPHIES = [
    maakt. Een groep erbij heeft dus één veld meer, en verder niets. */
 const TROPHY_SHELVES = [
   { key: 'avontuur', ico: '🎤', name: 'Avontuur',          note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'toegift', 'perfect1', 'worldtour'] },
+    ids: ['first', 'perfect1', 'perfect10', 'worldtour'] },
   { key: 'rekenen',  ico: '🧮', name: 'Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
-    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50'] },
+  { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
+    ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
   /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
      staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen zou
      meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
   { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
     ids: [] },
-  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Voor een echte popster',
-    ids: ['perfect10', 'shopper'] },
+  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Je eigen stijl in de kleedkamer',
+    ids: ['shopper', 'eigenpodium'] },
 ];
 /* Trofeeën met pensioen.
    Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies
@@ -2227,6 +2287,8 @@ const RETIRED_TROPHIES = new Set([
   'rich', 'diamond250',
   // de lange winkelgrind; 'shopper' (10 spulletjes) blijft als enige koop-mijlpaal
   'collector',
+  // oktober 2026 -- "Applaus!": de publieksmeter loopt in bijna elke show vol (zie TROPHIES)
+  'toegift',
   // "koop alles uit deze categorie": betekent iets anders zodra er één item bijkomt
   'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
   /* 'Kast vol!' -- alle andere trofeeën. Dat was geen voorwaarde maar een
@@ -2270,6 +2332,22 @@ function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if
 function boughtCount(p) {
   return Math.max(0, p.owned.filter(id => !isBeloning(id)).length - (p.freebies || 5));
 }
+/* Voor de plank Nieuwe sommen. p.leer telt per nieuwe soort som hoe vaak hij
+   goed was: brug (over het tiental, 8 + 5), zoek (3 + ▢ = 7) en drie
+   (3 + 4 + 2). Er werd al bijgehouden hoe vaak zoek-het-getal en drie getallen
+   gezien werden (opTrack, chainTrack), maar niet hoe vaak ze goed waren, en
+   over het tiental helemaal niet. Een oude save heeft het veld niet en begint
+   op nul: wat ze vóór oktober 2026 goed deed telt niet mee, maar tien keer
+   is zo weer gehaald. */
+function leerTel(p, soort) { return (p.leer && p.leer[soort]) || 0; }
+function telLeer(p, q) {
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
+  const soort = q.kind === 'missing' ? 'zoek' : q.kind === 'chain' ? 'drie' : q.brug ? 'brug' : null;
+  if (soort) p.leer[soort] = (p.leer[soort] || 0) + 1;
+}
+function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
+// De fase waar de telmodus nu staat (zie countTrack; klimt mee met wat ze kan).
+function telFase(p) { return (p.countTrack && p.countTrack.stage) || 1; }
 
 /* ================= Sterrencarrière ================= */
 /* MET PENSIOEN (oktober 2026). Hier stond een ster-status: acht rangen op het
@@ -2388,6 +2466,7 @@ function defaultProfile(name, dress, opts) {
     // streak = juiste-op-rij in de show (stuurt de rung omhoog), reset bij een misser
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },  // voor het ouder-overzicht
+    leer: { brug: 0, zoek: 0, drie: 0 },  // nieuwe soorten sommen goed, voor de kast (zie telLeer)
     recent: [],                       // de laatste shows: sterren, of 0 als hij mislukte (zie onthoudUitkomst)
     gezien: {}                        // welke groei het kind al gevierd heeft (zie groeiMoment)
   };
@@ -2407,6 +2486,7 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
   /* Een ster van vóór groeiMoment: wat ze al kende telt als gevierd, anders
      kreeg een kind dat al maanden zoek-het-getal speelt morgen "Nieuw!". */
   if (!p.gezien) p.gezien = {
@@ -2838,7 +2918,9 @@ function noot(freq, dur, delay, type, vol) {
    toggleHaptics -- die hoort bij geen enkel klankje.
 
    Veertien regels en dertien gebeurtenissen -- 'tap' en 'tap.blij' zijn twee
-   kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol. Dit is een spel voor
+   kleuren van één tik en geen twee dingen. Daarmee is de woordenschat vol.
+   (Eén erbij in oktober 2026: 'kast.klink', omdat Max de kast speelser wilde --
+   een behaalde trofee hoort anders te klinken dan een knop.) Dit is een spel voor
    vijfjarigen op één tablet in een woonkamer, geen instrument: wat er nog stil is
    -- een schermwissel, een vraag die verschijnt, elk deeltjesfeestje, de
    zaalgloed bij een goed antwoord -- is stil gehouden en niet vergeten. Zie
@@ -2851,6 +2933,13 @@ const SFX = {
   /* Dezelfde tik, maar speels: de pop aantikken geeft elke keer een andere noot.
      Eén gebeurtenis met twee kleuren, en met opzet geen tweede gebeurtenis. */
   'tap.blij':       { noten: [[0, 0.12, 0, 'triangle', 0.12]], keuze: [784, 880, 988, 1047, 1175], tril: 12 },
+  /* Een behaalde trofee aantikken: een noot op zijn plek op de plank. Van links
+     naar rechts loopt hij een pentatonische toonladder op, dus wie langs een rij
+     tikt speelt een wijsje -- de kast als xylofoon. Pentatonisch omdat elke
+     volgorde dan mooi klinkt, ook kriskras. Langer en ronder dan tap.blij: dit
+     is een ding van jou dat klinkt, geen tik. (oktober 2026, zie kastKlink) */
+  'kast.klink':     { noten: [[0, 0.34, 0, 'triangle', 0.13], [0, 0.22, 0.02, 'sine', 0.04]],
+                      ladder: [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568], tril: 12 },
   /* Iets aandoen. Dit stond hier als 'reward.claim' op de lijst, maar de drie
      plekken die overbleven doen alle drie hetzelfde en het is geen beloning: je
      zet iets op. Het cadeau-moment zelf -- een trofee die openknalt -- heeft zijn
@@ -3170,9 +3259,15 @@ function baseOf(p) { return (p && BASES[p.base]) ? p.base : DEFAULT_BASE; }
 function curBase() { return baseOf(db && db.profiles ? db.profiles[cur] : null); }
 
 /* ---- Basis "meisje": staartjes, jurk, blote benen onder de zoom ---- */
-function hairBackStaartjes(hc) {
-  return `<circle cx="100" cy="62" r="37" fill="${hc}"/>`
-    + `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+// glans: een verloop dat er als tweede laag overheen gaat (licht linksboven,
+// schaduw rechtsonder). De pop geeft hem mee; het haarstaaltje in de kleedkamer
+// niet, dat blijft een vlakke kleur.
+// Elk staartje is een eigen groep, zodat het kan naslingeren (zie .av-staart).
+function hairBackStaartjes(hc, glans) {
+  const bol = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${hc}"/>`
+    + (glans ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${glans}"/>` : '');
+  return bol(100, 62, 37)
+    + `<g class="av-staart av-staart-l">${bol(56, 86, 13)}</g><g class="av-staart av-staart-r">${bol(144, 86, 13)}</g>`;
 }
 function hairFrontStaartjes(hc) {
   return `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
@@ -3190,7 +3285,7 @@ function torsoJurk(dc) {
 /* ---- Basis "jongen": kort haar, shirt met korte mouwen, lange broek ----
    De broek hoort bij de benen-laag (de broek ís de benen), het shirt bij de romp.
    Dezelfde kleur voor allebei: het is één kledingstuk uit de kast, geen twee. */
-function hairBackKort(hc) {
+function hairBackKort(hc, glans) {
   // Een kapje dat óp het hoofd zit in plaats van eromheen valt: tien pixels haar
   // bovenop, langs de slaap nog maar een randje, en op oorhoogte (y=80) is het
   // afgelopen. Zakt het lager, dan omlijst het het gezicht en leest het meteen
@@ -3201,7 +3296,8 @@ function hairBackKort(hc) {
   // steeltje, en dan is het een appel. Het karakter zit nu in de haargrens
   // (zie hairFrontKort): die loopt schuin, en dat is aan de zíjkant zichtbaar
   // in plaats van bovenop.
-  return `<path d="M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z" fill="${hc}"/>`;
+  const d = 'M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z';
+  return `<path d="${d}" fill="${hc}"/>` + (glans ? `<path d="${d}" fill="${glans}"/>` : '');
 }
 function hairFrontKort(hc) {
   // Eén schuine haargrens: rechts hoog bij de slaap (y≈48), links laag tot bijna
@@ -3245,6 +3341,23 @@ function torsoShirt(dc, mic) {
     // ronde halslijn: een V leest als een overhemd, dit als een T-shirt
     + `<path d="M89 105 Q100 116 111 105" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none" stroke-linecap="round"/>`
     + `<path d="M78 165 Q100 171 122 165" stroke="rgba(0,0,0,.2)" stroke-width="2" fill="none"/>`;
+}
+
+/* ---- Licht op de stof ----
+   Dezelfde vorm als het kledingstuk nog een keer, nu gevuld met een verloop:
+   licht links, schaduw rechts, en een donkerder zoom. Omdat het een laag óp de
+   kleur is, werkt het voor élke kleur, élk patroon en de regenboog -- geen item
+   hoeft ervan te weten. stof = de url van dat verloop (zie avatarSVG). */
+const ZOOM_SCHADUW = `stroke="#000" stroke-opacity=".13" stroke-width="4" fill="none" stroke-linecap="round"`;
+function stofJurk(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L66 196 Q100 210 134 196 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M67 193 Q100 207 133 193" ${ZOOM_SCHADUW}/>`;
+}
+function stofShirt(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M79 162 Q100 168 121 162" ${ZOOM_SCHADUW}/>`
+    // de broekspijpen krijgen hetzelfde licht
+    + `<path d="M78 156 L77 208 Q86 213 95 208 L100 188 L105 208 Q114 213 123 208 L122 156 Z" fill="${stof}"/>`;
 }
 
 /* ---- Patronen ----
@@ -3306,8 +3419,8 @@ const PAT_SHIRT = {
 // Een basis erbij? Eén regel hier en één patronentabel hierboven -- de rest van
 // de app (winkel, kleedkamer, trofeeën, opslag) hoeft er niets van te weten.
 const BASES = {
-  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  pat: PAT_JURK },
-  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, pat: PAT_SHIRT },
+  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  stof: stofJurk,  pat: PAT_JURK },
+  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, stof: stofShirt, pat: PAT_SHIRT },
 };
 // De keuze bij het maken van een ster. Vaste volgorde, met het woord erbij voor
 // de ouder en de tekening zelf voor het kind dat nog niet leest. Dit hoort bij
@@ -3326,22 +3439,53 @@ let svgUid = 0;
      norm   overal waar de pop op ware grootte staat (show, eindscherm, kaart)
      klein  de sterrenkeuze -- daar staan zes tegels van ~112px naast elkaar, en op
             die maat werd een gitaar van 42px een tweede hoofdonderwerp naast een
-            kind van 90px. Kleiner blijft het gewoon háár gitaar. */
+            kind van 90px. Kleiner blijft het gewoon háár gitaar.
+     kaart  de wereldkaart en de reis: daar staan ze er helemaal niet bij, en het
+            zwevende nootje ook niet. Op de kaart zegt ze alleen "hier ben ik, en
+            dat ben ik" -- wat ze áánheeft (haar, kleren, hoofddeksel, micro) doet
+            dat. Elk los ding kreeg er zijn eigen witte stickerrand en werd een
+            tweede en derde sticker naast de hare; een keyboard of DJ-set werd een
+            wit vierkant tegeltje op de rand van haar halte. Huisdier en
+            instrument horen bij het optreden: show, eindscherm, spiegel.
+   De tekening is 250 hoog en de svg knipt alles weg wat eronder valt. Een emoji
+   hangt tot bijna een kwart van zijn maat ónder zijn basislijn (de pootjes van
+   een krab, de onderkant van een drumstel), dus staat die basislijn op
+   248 - een kwart van de maat, en niet op de voeten. Een paar pixels hoger zie je
+   niet; een afgehakt drumstel wel. Rechts is er ruimte genoeg: het breedste
+   ding komt tot ~1,2 keer zijn maat voorbij x. */
 const PROP_MAAT = {
-  groot: { pet: [6, 244, 46],  instr: [112, 248, 52] },
-  norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
-  klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
+  groot: { pet: [6, 236, 46],  instr: [112, 235, 52] },
+  norm:  { pet: [18, 239, 34], instr: [120, 237, 42] },
+  kaart: null,
+  klein: { pet: [30, 238, 24], instr: [134, 241, 29] },
 };
+/* Het licht op de pop: één lamp linksboven, voor alles hetzelfde. Elk verloop
+   ligt als tweede laag óp een vorm (zie stofJurk, hairBackStaartjes), en kent
+   dus geen kleur -- alleen licht en schaduw. Met het nummer van de tekening
+   erin, want er staan vaak tien poppen tegelijk op het scherm. */
+function lichtDefs(uid) {
+  return `<radialGradient id="bol${uid}" cx=".34" cy=".3" r=".8">
+      <stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+    <radialGradient id="huid${uid}" cx=".42" cy=".38" r=".7">
+      <stop offset=".6" stop-color="#e8836a" stop-opacity="0"/><stop offset="1" stop-color="#e8836a" stop-opacity=".22"/></radialGradient>
+    <linearGradient id="stof${uid}" x1="0" y1="0" x2="1" y2=".35">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+    <radialGradient id="wang${uid}"><stop offset="0" stop-color="#ff8fa3" stop-opacity=".75"/><stop offset="1" stop-color="#ff8fa3" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+}
 function avatarSVG(p, width, propMaat) {
   // true blijft 'groot': de kleedkamer geeft nog altijd een vlaggetje mee
+  const kaart = propMaat === 'kaart';
   const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
   const eq = p.equipped;
   const B = BASES[baseOf(p)];
   const hair = itemOr(eq.hair, 'hair_blond'), dress = itemOr(eq.dress, 'dress_roze');
   const mic = eq.mic ? item(eq.mic) : null;
   const acc = eq.acc ? item(eq.acc) : null;
-  const pet = eq.pet ? item(eq.pet) : null;
-  const instr = eq.instrument ? item(eq.instrument) : null;
+  const pet = eq.pet && !kaart ? item(eq.pet) : null;
+  const instr = eq.instrument && !kaart ? item(eq.instrument) : null;
   const uid = ++svgUid;
   const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
   const dc = dress.color === 'RAINBOW' ? `url(#rb${uid})` : dress.color;
@@ -3350,16 +3494,33 @@ function avatarSVG(p, width, propMaat) {
   s += `<defs><linearGradient id="rb${uid}" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
-    <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
+    <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
   if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
   if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
+  /* nek: een bruggetje tussen kin en kraag, áchter het hoofd. Zo valt de kin er
+     vanzelf overheen en werpt hij een sikkeltje schaduw op de hals (dezelfde
+     cirkel als het hoofd, een tikje lager, binnen de hals gehouden). Hier lag de
+     nek eerst bóvenop het hoofd: dat verstopte de kin, en een open mond werd
+     onderaan plat afgesneden. */
+  s += `<clipPath id="nek${uid}"><rect x="90" y="94" width="20" height="18" rx="8"/></clipPath>`
+    + `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`
+    + `<circle cx="100" cy="76.5" r="32" fill="#e6a183" opacity=".7" clip-path="url(#nek${uid})"/>`;
+  /* Het hoofd is één groep, met alles wat erop zit: dan kan het los van het lijf
+     meeknikken (.av-hoofd), en de staartjes erin nog eens naslingeren. */
+  s += `<g class="av-hoofd">`;
   // haar achter het hoofd (staartjes, of de rand van een kort kapsel)
-  s += B.hairBack(hc);
-  // hoofd
-  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
+  s += B.hairBack(hc, `url(#bol${uid})`);
+  // hoofd, met een warme rand
+  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/><circle cx="100" cy="72" r="32" fill="url(#huid${uid})"/>`;
   s += B.hairFront(hc);
-  s += `<circle class="av-oog" cx="88" cy="72" r="3.6" fill="#333"/><circle class="av-oog" cx="112" cy="72" r="3.6" fill="#333"/>`;
-  s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
+  // glans: een zachte lichtvlek op de kruin. Een glansstreep las als een kras.
+  s += `<ellipse cx="88" cy="41" rx="15" ry="7" transform="rotate(-18 88 41)" fill="url(#vlek${uid})"/>`;
+  /* Ogen: een ovaaltje met een lichtje erin -- dat ene witte stipje maakt van een
+     tekening een gezicht. Oog en lichtje zijn één groep, zodat knipperen (en
+     schrikken, zie .oeps) ze samen meeneemt. */
+  const oog = x => `<g class="av-oog"><ellipse cx="${x}" cy="72" rx="3.7" ry="4.6" fill="#2b2238"/><circle cx="${x + 1.4}" cy="70.2" r="1.45" fill="#fff"/></g>`;
+  s += oog(88) + oog(112);
+  s += `<circle cx="79" cy="82" r="7" fill="url(#wang${uid})"/><circle cx="121" cy="82" r="7" fill="url(#wang${uid})"/>`;
   /* Twee monden, en er staat er altijd maar één aan. De lach is de gewone; het
      rondje eronder is "oh!" -- de pop die schrikt van een misser (zie .oeps in
      het stijlblad en oepsGezicht). Het rondje staat met opacity="0" als
@@ -3367,8 +3528,10 @@ function avatarSVG(p, width, propMaat) {
      stijlblad over straat (een miniatuur, een geëxporteerd plaatje), en dan
      hoort ze gewoon te lachen. Een CSS-regel wint het van een attribuut, dus
      .oeps kan hem wél aanzetten. */
-  s += `<path class="av-mond" d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#c2572b" opacity="0"/>`;
+  // de lach is een open, zingende mond met een tongetje -- ze staat op een podium
+  s += `<g class="av-mond"><path d="M91 85.5 Q100 89 109 85.5 Q107.5 94.5 100 94.5 Q92.5 94.5 91 85.5 Z" fill="#8a2f36"/>`
+    + `<path d="M95 92.2 Q100 89.6 105 92.2 Q103 94.5 100 94.5 Q97 94.5 95 92.2 Z" fill="#ff8f9c"/></g>`;
+  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#8a2f36" opacity="0"/>`;
   // accessoire op het hoofd / gezicht
   if (acc) {
     /* Een item mag zijn eigen tekening meebrengen: acc.draw() geeft een stukje SVG
@@ -3395,9 +3558,7 @@ function avatarSVG(p, width, propMaat) {
       if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
     }
   }
-  // nek: klein bruggetje tussen kin en kraag -- voorkomt een donker gaatje
-  // tussen hoofd en kleren, met toch nog een vleugje hals zichtbaar
-  s += `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`;
+  s += `</g>`;   // einde van het hoofd
   // armen: vóór de kleren getekend (i.p.v. erna), zodat de schouders van het
   // kledingstuk er straks overheen vallen -- ziet er zo aan het lichaam vast uit
   // i.p.v. los bovenop geplakt. In rust zijn beide armen elkaars exacte
@@ -3405,37 +3566,45 @@ function avatarSVG(p, width, propMaat) {
   // met een mic/toverstaf wijkt de rechter vanzelfsprekend af (opgeheven naar
   // het gezicht). De bijbehorende decoratie (mic-kop, sterpunt, ...) komt
   // pas ná de kleren (zie verderop) zodat die zelf nooit erdoor verdwijnt.
-  s += `<path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  // Elke arm eindigt in een handje (zonder leek het een stompje). De vrije arm is
+  // een groep: bij een danspasje gaat hij de lucht in (.av-arm-l).
+  const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
+  s += `<g class="av-arm-l"><path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(64, 158)}</g>`;
   s += mic
     ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
-    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
   // benen: blote benen onder een zoom, of de broekspijpen zelf
   s += B.legs(dc);
   // romp: jurk of shirt, in de kleur (en het patroon) van hetzelfde ene item
   s += B.torso(dc, mic);
   if (dress.pattern && B.pat[dress.pattern]) s += B.pat[dress.pattern];
+  s += B.stof(`url(#stof${uid})`);
   // schoenen (schoenkleur is een eigen categorie in de kleedkamer)
   const shoe = eq.shoes ? item(eq.shoes) : null;
   const sc = shoe ? (shoe.color === 'RAINBOW' ? `url(#rb${uid})` : shoe.color) : '#e91e63';
   s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
+  // een zooltje en een glimlichtje: lak, geen pantoffel
+  s += `<path d="M75.5 236 Q86 241 96.5 236 M103.5 236 Q114 241 124.5 236" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`
+    + `<ellipse cx="82" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/><ellipse cx="110" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/>`;
   // vastgehouden voorwerp: pas ná de kleren getekend (en na de arm zelf,
-  // hierboven), zodat de decoratie nooit onder een schouder verdwijnt
+  // hierboven), zodat de decoratie nooit onder een schouder verdwijnt. De hand
+  // komt over de steel en onder de kop: zo houdt ze hem echt vast.
   if (mic) {
     if (mic.id === 'mic_pintje') {
       // proost! een pintje in de opgeheven hand
-      s += `<text x="135" y="82" font-size="26">🍺</text>`;
+      s += hand(145, 81) + `<text x="135" y="82" font-size="26">🍺</text>`;
     } else if (mic.id === 'mic_toverstaf') {
       // toverstaf met fonkelende sterpunt
-      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="150" y="58" font-size="18">⭐</text><text x="165" y="40" font-size="12">✨</text>`;
     } else if (mic.emoji) {
       // emoji-microfoon (ijsje, vuur): zelfde steel, het emoji als kop
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="144" y="70" font-size="22">${mic.emoji}</text>`;
     } else {
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
-      s += `<text x="163" y="47" font-size="15">🎵</text>`;
+      if (!kaart) s += `<text x="163" y="47" font-size="15">🎵</text>`;
     }
   }
   s += `</svg>`;
@@ -3464,6 +3633,44 @@ function applyStage(el, p) {
   schijf.innerHTML = podiumHTML(st);
   el.insertBefore(schijf, el.firstChild);
 }
+
+/* Knipperen. Elke pop in beeld knippert op haar eigen, onregelmatige ritme:
+   ergens tussen drie en zeven tellen, en af en toe twee keer kort na elkaar --
+   zoals mensen knipperen. Eerst was het een CSS-animatie van 4,6 tellen, en dan
+   knipperden alle sterren op de sterrenkeuze precies tegelijk: een schermpje dat
+   een animatie afspeelt, terwijl daar juist nooit twee tegelijk iets doen (zie
+   "= De sterrenkeuze leeft").
+
+   Het is een klasse die even aan en weer uit gaat, geen animatie: op de kaart
+   draagt ze een SVG-filter dat bij elke beweging ín haar opnieuw berekend wordt,
+   en zo kost een knipoog daar twee keer tekenen en verder niets. De volgende
+   knipoog van elke pop hangt aan de pop zelf (een nieuwe tekening begint op een
+   toevallig moment), en er draait maar één klokje voor allemaal. Alleen in het
+   scherm dat open is, met het tabblad zichtbaar, en als er beweging mag. */
+const KNIPPER = { tik: 250, min: 3000, max: 7000, dicht: 130, dubbel: .18, tussen: 280, uitDePas: 900 };
+let knipperLaatst = 0;
+const KNIPPER_POPS = '.screen.active .avatar-holder.levend, #screen-map.active .tour-hero .avatar-holder';
+function knipOog(pop) {
+  pop.classList.add('knipoog');
+  setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
+}
+function knipperLus() {
+  if (document.hidden || motionOff()) return;
+  const nu = Date.now();
+  document.querySelectorAll(KNIPPER_POPS).forEach(pop => {
+    const wacht = () => KNIPPER.min + Math.random() * (KNIPPER.max - KNIPPER.min);
+    if (!pop.knipperOp) { pop.knipperOp = nu + Math.random() * KNIPPER.max; return; }
+    if (nu < pop.knipperOp) return;
+    // nooit twee tegelijk: wie aan de beurt is terwijl een ander net knippert,
+    // wacht een tel langer
+    if (nu - knipperLaatst < KNIPPER.uitDePas) { pop.knipperOp = nu + KNIPPER.uitDePas; return; }
+    knipperLaatst = nu;
+    knipOog(pop);
+    if (Math.random() < KNIPPER.dubbel) setTimeout(() => knipOog(pop), KNIPPER.tussen);
+    pop.knipperOp = nu + wacht();
+  });
+}
+setInterval(knipperLus, KNIPPER.tik);
 
 /* ================= Schermen ================= */
 /* De reis hoort bij Kaart: hij is dezelfde plek, alleen verder weg. Daardoor
@@ -3516,6 +3723,7 @@ function show(id) {
   const navId = navVolgtScherm();
   navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
+  kastBalk(null);   // de balk van de kast hoort bij een tik daar, niet bij het volgende bezoek
   // de tekening-ophaler van de reis kijkt naar een scherm dat er niet meer is
   if (id !== 'screen-journey') reisStopWaarnemer();
   if (navId) updateTroDot();
@@ -4272,7 +4480,7 @@ function sterTegel(key, p) {
   const tegel = document.createElement('button');
   tegel.className = 'ster-tegel';
   tegel.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
+    `<div class="stage st-podium"><div class="avatar-holder levend">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
      <div class="st-voet">
        <div class="st-rij">
          <span class="st-ico" aria-hidden="true">${w.icon}</span>
@@ -6631,25 +6839,34 @@ function kanalen(hex) {
      zoom   hoe ver je erop inzoomt, als percentage van de schermbreedte. 100 zou
             de hele tekening in beeld persen -- dan kijk je naar een landschap,
             niet naar een zaal.
-     focus  wélk stuk je dan ziet (background-position). Alle zes de wereldkaarten
-            hebben hun podium op ongeveer dezelfde plek: rechts van het midden,
-            bovenin. Vandaar dat één terugval voor alle zes werkt.
-     blur   hoeveel onscherpte eroverheen. Dit is het verschil tussen "een tweede
-            kaart" en "de zaal achter je".
+     focus  wélk stuk je dan ziet. Staat er niets, dan is dat de halte van déze
+            show: de plek die het kind net op de kaart aantikte komt boven haar
+            hoofd te staan (zie applyVenue). Zo is elke show een andere plek, en
+            klimt het decor met de wereld mee tot de laatste show, die op het grote
+            podium bovenaan de kaart uitkomt. Daarvóór stond hier voor élke show
+            dat grote podium, en was de finale dus al vanaf show 1 verbruikt.
+            Een wereld die focus wél opgeeft ('x% y%', een punt in de tekening)
+            krijgt bij elke show dat ene punt -- dat is voor een eigen
+            zaaltekening.
+     blur   hoeveel onscherpte eroverheen. Net genoeg dat de felste plekjes van
+            de tekening (lampjes, sterren) niet meer met haar hoofd concurreren;
+            de plek zelf moet herkenbaar blijven. Stond lang op 11, en dan was het
+            geen plek meer maar een kleurvlek.
      dim    hoe donker. De Snoep- en IJswereld zijn bijna wit getekend en zouden
             zonder dit met de somkaart gaan concurreren; de Toverwereld is al
             donker en mag juist iets lichter.
-     op     de dekking van de tekening. Onder de één, zodat de sfeerlaag
-            (.venue-sfeer) er doorheen blijft praten.
+     op     de dekking van de tekening.
 
    Wordt hier ooit een echte zaaltekening ingehangen, dan hoort zoom op ~100,
    focus op '50% 50%', blur op 0-4, dim en op op 1 -- verder verandert er niets.
+   Die tekening is dan in hetzelfde staande formaat als een kaart (ART_W x ART_H):
+   de laag rekent met die verhouding.
 
    Waarom dit een terugval is en geen zes kopieën: dedicated zaaltekeningen komen
    er later. Wat hier staat moet het tot dan toe fatsoenlijk doen én in één regel
    te vervangen zijn. Zes handmatig afgestelde uitsnedes zouden straks zes keer
    weggegooid worden. */
-const VENUE_TERUGVAL = { art: null, zoom: 220, focus: '70% 14%', blur: 11, dim: .62, op: .96 };
+const VENUE_TERUGVAL = { art: null, zoom: 220, focus: null, blur: 2.5, dim: .66, op: 1 };
 // Altijd een verse samenvoeging en nooit VENUE_TERUGVAL zelf: die is de bron voor
 // élke wereld, en één aanroeper die er per ongeluk iets in zet, zet het overal in.
 function venueFor(world) {
@@ -6658,6 +6875,17 @@ function venueFor(world) {
 function venueArt(world) {
   const v = venueFor(world);
   return v.art || (world && world.art) || '';
+}
+/* Welk punt van de tekening boven haar hoofd komt, in procenten van de tekening.
+   Zonder eigen focus: de halte van deze show, uit dezelfde lijst waar de kaart
+   hem tekent (worldNodes). Zonder level: de laatste halte, het grote podium. */
+function venuePunt(v, world, lvl) {
+  const m = /^\s*(-?[\d.]+)%\s+(-?[\d.]+)%\s*$/.exec(v.focus || '');
+  if (m) return { x: +m[1], y: +m[2] };
+  if (!world) return { x: 50, y: 20 };
+  const nr = lvl ? worldFor(lvl).nr : world.levels;
+  const n = worldNodes({ world, levels: world.levels })[nr - 1] || { x: 50, y: 20 };
+  return { x: Math.round(n.x * 10) / 10, y: Math.round(n.y * 10) / 10 };
 }
 /* Zet de zaal op een scherm. Eén injectiepunt voor álle zaaldecor -- de
    spelscherm-kop, het podium onder de ster en het eindscherm lezen daarna alleen
@@ -6668,14 +6896,16 @@ function venueArt(world) {
    .venue-sfeer de zaal in zijn eentje op de wereldkleuren, en dat is nog steeds
    een zaal -- geen tekening is niet hetzelfde als geen plek. Vandaar dat deze
    functie niets meer teruggeeft: er valt niets meer te beslissen. */
-function applyVenue(el, world) {
+function applyVenue(el, world, lvl) {
   const v = venueFor(world);
   const src = venueArt(world);
+  const punt = venuePunt(v, world, lvl);
   el.classList.add('venue-aan');
   applyWorldTheme(el, world);   // nooit de kleuren van de vórige wereld
   el.style.setProperty('--venue-art', src ? `url("${src}")` : 'none');
-  el.style.setProperty('--venue-focus', v.focus);
-  el.style.setProperty('--venue-zoom', v.zoom + '%');
+  el.style.setProperty('--venue-x', String(punt.x));
+  el.style.setProperty('--venue-y', String(punt.y));
+  el.style.setProperty('--venue-zoom', String(v.zoom));
   el.style.setProperty('--venue-blur', v.blur + 'px');
   el.style.setProperty('--venue-dim', String(v.dim));
   el.style.setProperty('--venue-op', String(v.op));
@@ -7043,7 +7273,7 @@ function renderReis() {
       const kant = volgende ? Math.max(-12, Math.min(12, (volgende.x - b.x) * 1.2)) : 0;
       knop.style.setProperty('--pop-kant', kant.toFixed(1) + 'px');
       knop.insertAdjacentHTML('beforeend',
-        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
+        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56, 'kaart')}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
     if (b.open) {
@@ -7790,7 +8020,7 @@ function haltKnop(shown, nodes, i, stand) {
   // eroverheen glijdt -- er valt dus ook niets meer te ontregelen in de tijd.
   if (open && st === 3) b.classList.add('perfect');
   const hero = lvl === heroLvl
-    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div></div>` : '';
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96, 'kaart'))}</div></div>` : '';
 
   // gespeeld = deze show is al een keer gedaan, dus er hóórt een score te staan
   // (ook 0 van 3 is een score). De huidige halte krijgt alleen een rij als daar
@@ -8651,11 +8881,18 @@ function renderShelves() {
        vooruit. Daarboven één mistkaartje. De andere planken zijn vaste rijen
        zonder wereld eraan en staan er helemaal. */
     const perfectPlank = shelf.key === 'perfect';
+    const vanJou = id => p.trophies.includes(id) || (p.readyTrophies || []).includes(id);
+    /* Op de andere planken valt alleen weg wat dit kind niet kán halen (t.voor,
+       zie Nieuwe sommen) -- en ook dat alleen zolang ze hem niet heeft. Blijft
+       er niets over, dan staat de plank er niet. */
     const ids = perfectPlank ? alle.filter(id => {
       const t = TROPHIES.find(x => x.id === id);
-      return !t || binnenHorizon(p, t.index) || p.trophies.includes(id)
-        || (p.readyTrophies || []).includes(id);
-    }) : alle;
+      return !t || binnenHorizon(p, t.index) || vanJou(id);
+    }) : alle.filter(id => {
+      const t = TROPHIES.find(x => x.id === id);
+      return !t || !t.voor || t.voor(p) || vanJou(id);
+    });
+    if (!ids.length) return;
     const mist = perfectPlank && ids.length < alle.length;
     const groep = document.createElement('section');
     groep.className = 'kast-groep';
@@ -8676,7 +8913,15 @@ function renderShelves() {
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
+    /* Een ladder (zie TROPHY_LADDERS) is één kaartje, op de plek van zijn
+       eerste trap; de andere trappen slaan we over. */
+    const getekend = new Set();
     ids.forEach(id => {
+      const ladder = TROPHY_LADDERS.find(l => l.ids.includes(id));
+      if (ladder) {
+        if (!getekend.has(ladder.key)) { getekend.add(ladder.key); grid.appendChild(ladderCard(ladder, p)); }
+        return;
+      }
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
     });
@@ -8690,6 +8935,7 @@ function renderShelves() {
     wrap.appendChild(groep);
   });
   justClaimed = null;   // shimmer geldt maar voor deze ene render
+  kastBalk(null);       // de kaartjes zijn nieuw, dus is er niets meer getikt
   save();
   updateTroDot();
 }
@@ -8708,6 +8954,8 @@ const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'sommen': 'som',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
   'spulletjes': 'spulletje',
+  'sommen over de tien': 'som over de tien', 'zoeksommen': 'zoeksom',
+  'sommen met drie getallen': 'som met drie getallen',
   // 'uit' is geen telwoord-achtervoegsel maar hoort bij het label ("werelden uit"),
   // dus unitText() knipt het er niet af en staat de hele zin hier.
   'werelden uit': 'wereld uit'
@@ -8721,22 +8969,34 @@ function unitText(label, remaining) {
   if (remaining === 1 && TROPHY_UNIT_SINGULAR[noun]) noun = TROPHY_UNIT_SINGULAR[noun];
   return noun;
 }
-/* De stand op een kaart die nog loopt: "82 / 100 sommen". Alleen als er al iets
-   staat -- op nul is het geen stand maar een nul, en dat weet je al doordat de
-   kaart gedempt is. Geeft '' als er niets te melden valt. */
-function trophyStand(t, p, status) {
-  if (status !== 'busy' || !t.progress) return '';
-  const pr = t.progress(p);
+/* De stand op een kaart die nog loopt, als boog in de rand van de medaille: hoe
+   ver die rand vol is, in procenten (zie .temoji in de kast). Hier stond eerst
+   "180 / 500" als pil onder het kaartje -- een getal dat een kleuter niet leest,
+   een rand die bijna rond is wel. Het getal in woorden komt bij een tik, in de
+   balk onderin ("nog 320 sommen", zie kastBalk). Geeft 0 als er niets te tonen valt:
+   op nul is er nog geen boog, en buiten 'onderweg' ook niet. */
+function trophyBoog(t, p, status) {
+  if (status !== 'busy' || !t.progress) return 0;
   /* De Wereldtournee telt werelden, en zijn totaal is precies wat de horizon
-     verbergt (zie binnenHorizon): "2 / 11" verklapte hoeveel werelden er nog
-     komen. Ligt er nog mist, dan alleen wat je hebt -- zoals de perfecte plank. */
-  if (t.telWerelden && meerWereldenVooruit(p)) return `<div class="tstand">${pr.now}</div>`;
-  return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
+     verbergt (zie binnenHorizon): een boog die halfvol staat verklapt net zo goed
+     hoeveel werelden er nog komen als "2 / 11" deed. Ligt er nog mist, dan geen
+     boog -- een tik zegt hoeveel je er al hebt. */
+  if (t.telWerelden && meerWereldenVooruit(p)) {
+    /* Eerst stond hier 0: geen boog zolang er mist ligt, want een halfvolle boog
+       verklapt hoeveel werelden er nog komen. Maar dan bleef de rand bijna het
+       hele spel leeg, en leek de tournee niet begonnen. Nu telt hij tegen de
+       werelden die ze kán zien (tot en met de horizon): de boog loopt vol, en
+       zakt een stukje terug als er een wereld uit de mist komt. Het totaal
+       blijft geheim. */
+    return Math.max(0, Math.min(100, Math.round(100 * doneWorldCount(p) / (laatsteZichtbareWereld(p) + 1))));
+  }
+  const pr = t.progress(p);
+  return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
-// Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop.
-// Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
-// gouden rand en "🎁 Open!" onderaan -- zelfde vorm, zelfde plek voor de naam,
-// zodat vijf klaarliggende trofeeën vijf verschillende dingen blijven.
+// Een klare trofee: de medaille wordt zélf het cadeautje, en dus de knop.
+// Klaar om te openen = een gouden medaille met 🎁 erin in plaats van het eigen
+// icoon (zie giftMedaille). Welke trofee het is zegt de naam eronder; wát je
+// gewonnen hebt zie je pas bij het openen, over het hele scherm.
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
   const card = document.createElement('div');
@@ -8744,31 +9004,96 @@ function trophyCard(t, p) {
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
   // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
-  card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
+  // Klaar: het 🎁 vervangt het icoon, dus zegt het label wat een tik doet.
+  card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
-/* Elke kaart heeft dezelfde vier zones, in dezelfde volgorde: icoon, naam,
-   waarvoor hij is, en de voet. De voet is er alleen als er iets in staat, maar
-   staat er altijd onderaan (.tvoet heeft margin-top:auto) -- zo hangen de standen
-   van drie kaarten naast elkaar op één lijn, ook als de ene naam over twee regels
-   loopt en de andere niet. */
+/* Een medaille die meegroeit (zie TROPHY_LADDERS): één kaartje voor alle trappen.
+     klaar     ligt er een trap klaar, dan is dit kaartje het cadeautje
+               (giftMedaille) en opent een tik de laagste die klaarligt
+     anders    het icoon van de ladder op een vlak van het metaal dat je al hebt
+               (nog niets: het gewone donkere vlak), met in de rand een boog in
+               het metaal van de volgende trap: zo ver ben je op weg naar zilver
+     eronder   de naam en een stipje per trap, gekleurd voor wat je al hebt
+   Alles uit wat er al bewaard is: welke trap-id's in p.trophies staan. */
+function ladderStand(ladder, p) {
+  const trappen = ladder.ids.map(id => TROPHIES.find(t => t.id === id)).filter(Boolean);
+  const klaar = trappen.find(t => (p.readyTrophies || []).includes(t.id)) || null;
+  const niveau = trappen.filter(t => p.trophies.includes(t.id)).length;
+  const volgende = trappen.find(t => !p.trophies.includes(t.id) && !(p.readyTrophies || []).includes(t.id)) || null;
+  return { trappen, klaar, niveau, volgende };
+}
+function ladderCard(ladder, p) {
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  const card = document.createElement('div');
+  const status = klaar ? 'ready' : niveau ? 'done' : (volgende && volgende.progress(p).now > 0 ? 'busy' : 'fresh');
+  const nu = niveau ? trappen[niveau - 1].trap : null;
+  card.className = `trophy-card ladder ${status}` + (nu != null ? ` nu-${nu}` : '') + (niveau === trappen.length ? ' top' : '');
+  if (trappen.some(t => t.id === justClaimed)) card.classList.add('just-claimed');
+  const stippen = '<div class="trap-stippen" aria-hidden="true">'
+    + trappen.map((t, i) => `<i class="${i < niveau ? 'm-' + t.trap : ''}"></i>`).join('') + '</div>';
+  if (klaar) {
+    card.innerHTML = giftMedaille(ladder) + stippen;
+    card.setAttribute('aria-label', `Open ${klaar.name}`);
+  } else {
+    /* De boog telt vanaf de trap die je al hebt, niet vanaf nul: een net
+       behaalde zilveren medaille staat met een lege rand op weg naar goud, en
+       niet al voor een vijfde vol (100 van de 500 sommen). */
+    let boog = 0;
+    if (volgende) {
+      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+      boog = Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (pr.target - vorig))));
+    }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
+    card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
+      + `<div class="tname">${ladder.name}</div>` + stippen;
+    card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
+  }
+  card.onclick = (e) => tapLadder(ladder, card, e);
+  return card;
+}
+function tapLadder(ladder, card, e) {
+  if (e) tapRipple(e.clientX, e.clientY);
+  const p = P();
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  if (klaar) { openTrophy(klaar.id); return; }
+  // een medaille met al een metaal klinkt; nog geen enkel metaal blijft gedempt
+  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  const kop = { emoji: ladder.emoji, name: ladder.name };
+  const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
+  if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
+  const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
+  kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
+}
+/* Medaille, naam en de voet, in die volgorde. De voet is er alleen als er iets
+   in staat: 🔒, of het balkje op de perfecte plank. */
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
-/* Icoon, naam en één pil -- meer niet. De beschrijving ("500 sommen goed") stond
-   eerst op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een
-   trofee vraagt, zie je als je erop tikt: de pil klapt om naar "nog 320 sommen"
-   (zie pilOmklappen). De voet heeft één plek en er staat altijd hoogstens één ding:
-     klaar     🎁 Open!  (goud, de enige knop op het scherm)
-     behaald   ✓         (op dezelfde plek waar Open! stond: er springt niets)
-     onderweg  180 / 500 (kaal getal; het woord komt bij een tik)
-     op slot   🔒 */
+/* Klaar om te openen: een gouden medaille met een 🎁 erin. Hier stond eerst het
+   eigen icoon met een gouden "🎁 Open!"-pil eronder, en daarna (als voorstel) een
+   🎁-badge rechtsboven op de medaille: twee signalen voor één ding. Nu is de
+   medaille zelf het cadeautje -- één signaal, en het hele rondje is het raakvlak.
+   De perfecte plank krijgt hetzelfde, ook waar daar normaal een podium staat:
+   "hier ligt iets voor je klaar" moet overal er hetzelfde uitzien. */
+function giftMedaille(t) {
+  return '<div class="temoji"><span class="tico">🎁</span></div>'
+    + `<div class="tname">${t.name}</div>`;
+}
+/* Medaille en naam -- meer niet. De beschrijving ("500 sommen goed") stond eerst
+   op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een trofee
+   vraagt, zie je als je erop tikt, in de balk onderin (zie kastBalk).
+     klaar     het 🎁 in de medaille (zie giftMedaille)
+     behaald   de gouden rand (hier stond een ✓)
+     onderweg  de boog om de medaille
+     op slot   🔒 eronder */
 function normalCardHTML(t, p, status) {
-  return `<div class="temoji">${t.emoji}</div>`
+  if (status === 'ready') return giftMedaille(t);
+  const boog = trophyBoog(t, p, status);
+  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
-    + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
-      : status === 'locked' ? '<div class="tstand">🔒</div>'
-      : trophyStand(t, p, status));
+    + cardVoet(status === 'locked' ? '<div class="tstand">🔒</div>' : '');
 }
 /* De perfecte werelden. Dit is de duurste kaart van de kast en dat mag je zien:
    het wereldicoon staat in een medaillon met de kleuren van díe wereld (theme.sky
@@ -8792,13 +9117,15 @@ function perfectCardHTML(t, p, status) {
      een prijzenkast een formulier. Wat een kaartje hier moet zeggen is welke wereld
      het is; wat je ervoor moet doen staat één regel hoger, voor alle zes tegelijk.
 
-     Het getal ("5 / 8 perfect") komt er alleen bij als er iets te tellen valt --
-     dezelfde regel als op elke andere kaart. Op een wereld waar nog geen ster staat
-     zegt "0 / 8" niets wat het gedempte medaillon niet al zegt, en op een behaalde
-     wereld zou het 8/8 zijn, wat de gouden ring al vertelt. */
-  const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
-    : '';
+     Hoe ver de wereld al is komt er alleen bij als er iets te tellen valt, als
+     balkje (.tbalk): de boog van een medaille, recht -- hier staat een podium en
+     geen rand om te vullen. Het stond er als "5 / 8". Op een wereld waar nog geen
+     ster staat zegt een leeg balkje niets wat het gedempte podium niet al zegt, en
+     op een behaalde wereld zou het vol zijn, wat het goud al vertelt. */
+  const balk = () => { const pr = t.progress(p);
+    return `<div class="tbalk"><i style="width:${Math.round(100 * pr.now / pr.target)}%"></i></div>`; };
+  if (status === 'ready') return giftMedaille(t);
+  const stand = status === 'busy' ? balk() : '';
   /* Het kaartje toont de prijs van die wereld (zie "= De prijs van een wereld"):
      hetzelfde podium met dezelfde schat als op de reis en in Podia, en behaald
      in goud. Zo is de grootste prijs van het spel geen los medaillon meer dat je
@@ -8806,7 +9133,7 @@ function perfectCardHTML(t, p, status) {
      wereld zonder podium houdt het medaillon. */
   const i = typeof t.index === 'number' ? t.index : -1;
   const st = i >= 0 ? wereldPrijsStand(p, i) : null;
-  if (st) st.goud = status === 'done' || status === 'ready';
+  if (st) st.goud = status === 'done';
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
   if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
     + `<div class="tname">${t.name}</div>` + cardVoet(stand);
@@ -8814,52 +9141,100 @@ function perfectCardHTML(t, p, status) {
     + `<div class="tname">${t.name}</div>`
     + cardVoet(stand);
 }
-// tikken mag: klaar opent de trofee; een behaalde glinstert; anders vertelt hij
-// in één regel wat er nog moet gebeuren.
+// tikken mag: klaar opent de trofee; anders zegt de balk onderin wat hij is
+// of wat er nog moet gebeuren, en een behaalde glinstert er nog bij.
 function tapTrophy(t, card, e) {
   if (e) tapRipple(e.clientX, e.clientY);   // tactiel: kringetje vanaf de vinger
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  // een trofee die ergens anders verdiend wordt, wijst de weg erheen
-  if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
-  if (st === 'done') { sndTap(); sparkle(card); return; }
-  /* Op slot of zonder teller: ook dat zegt het kaartje zelf, in zijn pil -- net als
-     de trofeeën mét een teller. Hier stond eerst een melding bovenaan het scherm,
-     dus zei de kast het ene ding op het kaartje en het andere ver erboven. */
-  if (st === 'locked') { sndClick(); pilOmklappen(card, '🔒 Nog niet'); return; }
-  sndClick();
-  if (!t.progress) { pilOmklappen(card, t.desc); return; }
+  // eerst het klankje en het bewegen: behaald klinkt, de rest blijft gedempt (zie kastKlink)
+  if (st === 'done') kastKlink(card); else kastDof(card);
+  /* Een trofee die ergens anders verdiend wordt (t.naar) ging hier eerst meteen
+     naar de kleedkamer -- en dus zag je bij Verzamelaar nooit hoe ver je was. Nu
+     doet hij wat elke trofee doet, en staat de weg erheen als knop in de balk. */
+  // nog een keer op dezelfde: de balk gaat weer weg, zoals in de kleedkamer
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  if (st === 'done') { kastBalk(t, card, t.desc); return; }
+  if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
+  if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
   // achter de horizon geen "nog 9 werelden": dat is hetzelfde totaal, anders gezegd
-  if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
-  pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
+  if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
+  kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
-/* Wat telt dit getal? Dat staat niet op het kaartje maar komt bij een tik: de pil
-   in de voet klapt twee tellen om naar "nog 320 sommen" en dan weer terug. Geen
-   ballon en geen melding onderaan het scherm -- het antwoord verschijnt precies op
-   de plek waar je keek, en het scherm blijft leeg van tekst. Een kaartje dat nog
-   op nul staat heeft geen pil; dat krijgt er twee tellen een. In de telmodus (en
-   met Voorlezen aan) zegt de stem het hardop. */
-function pilOmklappen(card, tekst) {
-  let voet = card.querySelector('.tvoet');
-  if (!voet) { voet = document.createElement('div'); voet.className = 'tvoet tijdelijk'; card.appendChild(voet); }
-  let pil = voet.querySelector('.tstand');
-  if (!pil) { pil = document.createElement('div'); pil.className = 'tstand tijdelijk'; voet.appendChild(pil); }
-  if (pil.dataset.terug === undefined) pil.dataset.terug = pil.textContent;
-  pil.textContent = tekst;
-  pil.classList.add('omgeklapt');
+/* De tikken in de kast (oktober 2026). Max miste hoe speels het aantikken eerst
+   was: behaald klonk en deed iets, nog niet was stiller. Dat is er weer, en de
+   balk onderin blijft wat hij is.
+     behaald   kastKlink: de medaille draait een keer om als een munt, er gaat
+               een ring licht van af en een 🎵 op, en hij speelt een noot op zijn
+               plek op de plank (zie 'kast.klink': langs een rij tikken is een
+               wijsje). Een medaille die meegroeit vonkt in zijn eigen metaal.
+     nog niet  kastDof: de gewone tik, een kort "nog niet"-schuddinkje, en de boog
+               in de rand loopt opnieuw vol van leeg tot waar je bent -- zo zie
+               je bij elke tik hoe ver je al bent.
+   Zonder beweging (motionOff) blijft alleen het klankje over. */
+const KLINK_VONK = [['✨', '🥉', '🎵'], ['✨', '🥈', '🎵'], ['✨', '🥇', '🎵'], ['✨', '💎', '🎵']];
+function kastKlink(card, trap) {
+  playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
+  if (motionOff()) return;
+  opnieuw(card, 'klink');
+  sparkle(card, trap != null ? KLINK_VONK[trap] : ['✨', '🎵', '⭐']);
+}
+function kastDof(card) {
+  sndClick();
+  if (motionOff()) return;
+  opnieuw(card, 'dof');
+  // de boog opnieuw laten vollopen: --p van 0 naar wat er stond, met een uitloop
+  const m = card.querySelector('.temoji');
+  const doel = m ? parseFloat(m.style.getPropertyValue('--p')) || 0 : 0;
+  if (!doel) return;
+  const t0 = performance.now();
+  const stap = t => {
+    const k = Math.min(1, (t - t0) / 520);
+    m.style.setProperty('--p', (doel * (1 - Math.pow(1 - k, 3))).toFixed(1));
+    if (k < 1) requestAnimationFrame(stap);
+  };
+  m.style.setProperty('--p', 0);
+  requestAnimationFrame(stap);
+}
+// Een klasse opnieuw laten afspelen, ook als hij er nog op stond (tweede tik).
+function opnieuw(el, klasse) {
+  el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
+  clearTimeout(el['_' + klasse]);
+  el['_' + klasse] = setTimeout(() => el.classList.remove(klasse), 650);
+}
+/* De balk onderin de kast: wat de getikte trofee is of vraagt. Dezelfde balk als
+   in de kleedkamer (.dress-bar: naam links, het verdere ernaast) en op dezelfde
+   plek, zodat "tik op iets en onderin staat wat het is" op beide verzamelschermen
+   hetzelfde werkt. Hier stond eerst een pil die op het kaartje zelf twee tellen
+   omklapte -- en op een kaartje zonder pil kwam er eentje bij, bovenop de naam.
+   De balk blijft staan tot je iets anders tikt, dezelfde nog eens, of weggaat
+   (toonHub en renderShelves zetten hem uit). Het getal in de tekst staat in goud
+   (getal), net als "Nog 12 💎" in de kleedkamer. De stem leest hem voor, zoals
+   de pil deed. kastBalk(null) zet hem uit. */
+function kastBalk(t, card, tekst, getal) {
+  const bar = $('kast-bar');
+  document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
+  const kast = $('screen-trophies');
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  card.classList.add('kies');
+  kast.classList.add('balk-aan');   // ruimte onderin, zodat ook de onderste plank boven de balk kan
+  const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
+  /* t.naar: deze trofee verdien je in de kleedkamer, dus staat er rechts één
+     knop die die lade opent -- dezelfde kleine knop als Speel in de balk van de
+     kleedkamer. Alleen het icoon van waar je heen gaat, geen woord. */
+  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="Naar de kleedkamer">${t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
+  bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
+    + `<span class="db-sub">· ${sub}</span></div>` + knop;
+  if (knop) $('kast-naar').onclick = () => { sndClick(); kastBalk(null); openKleedkamerCat(t.naar); };
+  bar.style.display = 'flex';
   speak(tekst);
-  clearTimeout(pil._omklap);
-  pil._omklap = setTimeout(() => {
-    if (pil.classList.contains('tijdelijk')) {
-      pil.remove();
-      if (voet.classList.contains('tijdelijk')) voet.remove();
-      return;
-    }
-    pil.textContent = pil.dataset.terug; delete pil.dataset.terug;
-    pil.classList.remove('omgeklapt');
-  }, 2000);
+  /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan
+     schuift de kast hem erboven -- hetzelfde als zichtbaarBovenBalk in de
+     kleedkamer. */
+  const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
 }
 // Het claim-moment: van 'klaar' naar 'behaald', met een kort, vrolijk feestje.
 function openTrophy(id) {
@@ -8885,7 +9260,8 @@ function celebrateTrophy(t) {
     +   '<div class="tp-rays" aria-hidden="true"></div>'
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
-    +   `<div class="tp-emoji">${t.emoji}</div>`
+    // een trap van een medaille die meegroeit: de rand in zijn eigen metaal
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
@@ -8989,7 +9365,11 @@ function wereldFeest(f) {
      wegtikken, het eindscherm lezen, de tweede knop vinden, de kleedkamer in. */
   // "Doe aan" en niet "Aandoen": dat is woord voor woord de knop in de kleedkamer
   // (zie renderDressBar). Eén zin voor één handeling, waar hij ook staat.
-  const aanKnop = f.spul ? `<button class="btn wf-aan" type="button">Doe aan</button>` : '';
+  // En hij ziet eruit als die knop ook: de gewone verhoogde .btn.small, zoals
+  // "Koop" in de kleedkamer. Hij was een plat geel pilletje, vlak onder het
+  // even platte gele "Perfecte wereld!" dat níét tikbaar is -- twee keer
+  // hetzelfde vorm voor twee verschillende dingen.
+  const aanKnop = f.spul ? `<button class="btn small wf-aan" type="button">Doe aan</button>` : '';
   const ov = openOverlay('wereld-feest-overlay',
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
@@ -9184,7 +9564,9 @@ function genQuestion(s, lvl, perf) {
   const ops = s.ops.length ? s.ops : ['+'];
   const op = pick(ops);
   const { a, b, c, sym } = genTriple(s, lvl, perf, op);
-  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic' };
+  // brug: gaat hij over het tiental? Telt mee voor "Over de brug" (zie telLeer)
+  const brug = (op === '+' || op === '-') && overTiental(a, b, c, op);
+  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
 // Zoek-het-getal: het tweede getal ontbreekt ("3 + ? = 7"). Alleen + − × (delen
 // blijft voorlopig buiten beeld). 0/1 als antwoord mag, maar niet te vaak.
@@ -9210,15 +9592,72 @@ function genChain(s, lvl, perf) {
   if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
   return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
 }
-function makeChoices(ans) {
-  const set = new Set([ans]);
-  const cand = shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]);
-  for (const c of cand) {
-    if (set.size >= 4) break;
-    if (c >= 0 && !set.has(c)) set.add(c);
+/* ---- De vier antwoordknoppen --------------------------------------------
+   Drie foute keuzes naast het goede antwoord. Die moeten je laten rekenen, en
+   dat deden ze niet. Hier stond: het antwoord ±1, ±2 en ±10. Dan staat het
+   goede antwoord bijna altijd in het midden van een rijtje (6 7 8), en wie
+   gewoon "het middelste van de getallen die dicht bij elkaar liggen" koos, had
+   het in 65% van de sommen in één keer goed -- tegen 25% voor blind gokken.
+   En ±10 gaf in de eerste wereld (sommen tot tien) bij twee op de drie sommen
+   een 17 of een 19 op een knop: een getal dat je zonder rekenen wegstreept.
+
+   Nu, in drie regels:
+     * alles blijft binnen de grens van de som (keuzeGrens): geen 17 bij een
+       som tot tien;
+     * één foute keuze is een fout die een kind echt maakt: het verkeerde teken
+       (5 + 2 -> 3, 13 − 6 -> 19), een getal uit de som zelf (5 + 2 -> 5), bij
+       drie getallen er één vergeten, en bij grote getallen een tiental ernaast;
+     * de rest ligt er vlak naast (1 tot 3), en hoeveel ervan onder het
+       antwoord liggen wordt geloot. Het goede antwoord is dus even vaak het
+       kleinste, het grootste of een van de twee in het midden.
+   Het middelste kiezen geeft zo nog 26%: gokken loont niet meer dan gokken.
+   test/kern.test.js zaak Z meet het na.
+
+   Er verandert niets aan hoe een vraag eruitziet, aan de hint (die zegt alleen
+   meer of minder) of aan de beloningen. */
+function keuzeGrens(q, s, lvl) {
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number).concat(q.ans);
+  const hoogste = Math.max(...getallen);
+  // plus en min: de grens van de leerstap, zoals genTriple hem rekent (zonder
+  // de bijsturing op hoe het gaat -- daarom ook nooit onder wat er al staat)
+  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, Math.round(s.max * stapVan(lvl, s).t));
+  // tafels: tot het volgende tiental
+  return Math.max(10, Math.ceil(hoogste / 10) * 10);
+}
+function makeChoices(q, grens) {
+  const ans = q.ans;
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
+  const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
+  // fouten die een kind echt maakt
+  const fouten = new Set(getallen);
+  for (let i = 0; i < getallen.length; i++)
+    for (let j = i + 1; j < getallen.length; j++) {
+      fouten.add(getallen[i] + getallen[j]);             // plus i.p.v. min, of er één vergeten
+      fouten.add(Math.abs(getallen[i] - getallen[j]));   // min i.p.v. plus
+    }
+  if (ans >= 10 && grens >= 50) { fouten.add(ans + 10); fouten.add(ans - 10); }
+  // Eerst loten hoeveel keuzes er onder het antwoord liggen (0 tot 3), en pas
+  // dan de echte fout kiezen, aan een kant waar nog plaats is. Andersom lag de
+  // fout meestal onder het antwoord (een getal uit de som is kleiner), en was
+  // het antwoord bijna nooit meer het kleinste.
+  const onder = rnd(0, 3);
+  const keuze = new Set([ans]);
+  const fout = shuffle([...fouten].filter(v => mag(v) && (v < ans ? onder > 0 : onder < 3)))[0];
+  if (fout != null) keuze.add(fout);
+  // de rest vlak ernaast
+  const ernaast = kant => shuffle([1, 2, 3].map(d => ans + kant * d).filter(v => mag(v) && !keuze.has(v)))[0];
+  while (keuze.size < 4) {
+    const nuOnder = [...keuze].filter(v => v < ans).length;
+    const kant = nuOnder < onder ? -1 : 1;
+    let v = ernaast(kant);
+    if (v == null) v = ernaast(-kant);
+    // allebei op (een som op de rand van een kleine grens): het dichtstbijzijnde
+    // getal dat nog vrij is, en pas als er echt niets meer is, voorbij de grens
+    for (let d = 4; v == null && d <= grens + 1; d++) v = [ans - d, ans + d].find(x => mag(x) && !keuze.has(x));
+    if (v == null) v = Math.max(...keuze) + 1;
+    keuze.add(v);
   }
-  while (set.size < 4) set.add(rnd(0, ans + 12));
-  return shuffle([...set]);
+  return shuffle([...keuze]);
 }
 
 /* ================= Telmodus: lees-vrije vragen (fase 1–12) =================
@@ -10345,9 +10784,10 @@ function planSpecials(p, s, total, stap, goldIdx) {
    Hier stond een zin: "Net iets te weinig — probeer een groter getal! 👆". De
    jongste rekenaars lezen cijfers maar nog geen zinnen, dus voor hen was een
    misser een rode kleur en een regel die ze niet konden lezen. De woorden
-   blijven, klein onder het plaatje, voor wie wél leest -- en ze kloppen nu ook:
+   staan nu alleen nog in het label voor een schermlezer (zie toonHint) -- en ze kloppen ook:
    "net iets" staat er alleen als het ook net iets was. De foute keuzes liggen
-   op ±1, ±2 en ±10 (zie makeChoices), en bij tien ernaast is "net iets" niet
+   meestal 1 tot 3 ernaast, maar één ervan is een echte fout en die kan ver
+   weg liggen (13 + 6 bij 13 − 6, zie makeChoices) -- dan is "net iets" niet
    waar.
 
    Bewust géén stippen of ander hoeveelheidsplaatje: de rekenmodus is cijfers,
@@ -10372,8 +10812,11 @@ function toonHint(q, val, btnEl) {
   const h = hintVoor(q, val);
   if (!h) { showToast('🤔', null, null, 'teken'); return; }
   if (btnEl) btnEl.insertAdjacentHTML('beforeend', `<span class="tegel-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`);
-  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`,
-            null, h.woorden, 'hint');
+  // De woorden ("Net iets meer dan 5") staan niet meer onder de pil: wie ze kan
+  // lezen heeft ze niet nodig, en wie ze nodig heeft kan ze niet lezen -- de pijl
+  // zegt het al, en op de rode tegel nog eens. Ze blijven voor een schermlezer.
+  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+            null, null, 'hint');
 }
 
 /* ================= Spel ================= */
@@ -10410,7 +10853,8 @@ function startLevel(lvl, eigenOvergang) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
-        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
+        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
+        uitslag: [] };   // per vraag: 'goed' | 'hint' | 'mis' -- zie showBalk
   // De kop zegt hetzelfde als de kaart: welke wereld, en de hoeveelste show erin.
   // Hiervoor stond hier de stad uit CITIES -- dan wees de kaart je IJswereld binnen
   // en heette het optreden daarna "Rome".
@@ -10423,7 +10867,7 @@ function startLevel(lvl, eigenOvergang) {
   // terug, blijft .venue-aan eraf en is dit scherm letterlijk wat het was: het
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
-  applyVenue($('screen-game'), wl.world);
+  applyVenue($('screen-game'), wl.world, lvl);
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -10479,7 +10923,7 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
   // voortgang
-  renderSegBar($('qprogress'), G.total, G.idx);
+  showBalk(G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
@@ -10491,7 +10935,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q.ans);
+    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -10563,6 +11007,27 @@ function kaartWiebelt(kaart) {
     { transform: 'rotate(-1deg)', offset: .85 },
     { transform: 'rotate(0) scale(1)' },
   ], { duration: WIEBEL, easing: 'ease' });
+}
+/* De balk van de show zegt ook HOE een vraag ging, want dat is waar de sterren
+   op staan: drie sterren is geen enkele misser, ook geen eerste die je daarna
+   goed maakte. Hier werd elk beantwoord vakje gewoon goud, ook na een hint of
+   een gemiste vraag -- en dan eindigde een kind met drie volle hartjes op twee
+   sterren zonder te zien waarom (de hartjes tellen alleen de tweede misser).
+   Nu, met dezelfde vakjes:
+     goud           in één keer goed
+     half goud      goed na een hint
+     leeg (rand)    gemist
+   Een rijtje helemaal goud is meteen ook "3 op een rij", zonder meter erbij.
+   En de gouden vraag heeft van bij de start een gouden rand om zijn vakje,
+   zodat er iets is om naar uit te kijken; zodra hij aan de beurt is, is de
+   kaart zelf goud en gaat de rand eraf. */
+function showBalk(done, hasNow) {
+  const el = $('qprogress');
+  renderSegBar(el, G.total, done, hasNow);
+  [...el.children].forEach((seg, i) => {
+    if (i < done && G.uitslag[i] && G.uitslag[i] !== 'goed') seg.classList.add(G.uitslag[i]);
+    if (i === G.goldIdx && i > G.idx) seg.classList.add('goudvraag');
+  });
 }
 // Eén voortgangsbalk in vakjes: gehaald / nu bezig / nog te gaan. Gedeeld door de
 // show (vakje = vraag) en het memory-spel (vakje = paar); 'now' mag ontbreken.
@@ -10866,6 +11331,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
+  telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuwe sommen)
   // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
   // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
   if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
@@ -10877,6 +11343,7 @@ function antwoordGoed(q, p, btnEl) {
   if (q.gold) { gain *= 3; p.goldHits++; }     // gouden vraag: 3× zoveel
   G.earned += gain;
   p.diamonds += gain;
+  G.uitslag[G.idx] = firstTry ? 'goed' : 'hint';
   // Stille publieksteller (geen meter meer op het scherm, zie startLevel): hoe béter
   // je speelt, hoe sneller hij volloopt. Vol = applaus, met bonusdiamanten.
   let fanMul = 1;
@@ -10943,7 +11410,7 @@ function antwoordGoed(q, p, btnEl) {
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
     zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
-    renderSegBar($('qprogress'), G.total, G.idx + 1, false);   // dit vakje is nu gehaald
+    showBalk(G.idx + 1, false);   // dit vakje is nu gehaald
   };
   if (vlucht) setTimeout(feest, vlucht); else feest();
   // 950 i.p.v. 1100 voor een gewoon goed antwoord: de knop plopt, zij danst, de
@@ -10998,6 +11465,7 @@ function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
+  G.uitslag[G.idx] = 'mis';
   // definitief fout telt mee in de per-bewerking-beheersing / drie-getallen-tempo
   if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);
@@ -11292,7 +11760,7 @@ function endLevel(success) {
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
   // hetzelfde decor als tijdens de show: het applaus valt in de zaal waar ze stond
-  applyVenue($('screen-end'), wl.world);
+  applyVenue($('screen-end'), wl.world, lvl);
   naShowLvl = lvl;   // élke uitgang van dit scherm komt straks op déze halte uit
   if (success) {
     /* Alles wat er aan dit kind verandert, in één keer -- zie applyShowResult.
@@ -11322,11 +11790,13 @@ function endLevel(success) {
     // de juichtekst groeit mee met de prestatie
     // Een verbeterde herkansing krijgt zijn eigen regel: dát is het moment waar
     // de gouden haltes op de kaart (.tour-stop.perfect) naartoe lokken.
+    // Zonder emoji aan het eind (de regel voor meldingen sinds de pil): die viel op
+    // een telefoon alleen op een eigen regel. De kop heeft er al een vooraan.
     const juich = beter
-      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren! 🤩' : 'Beter dan de vorige keer! ⭐')
-      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
-      : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
-      : 'Het publiek klapt hard voor je! 👏';
+      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!')
+      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak!'
+      : stars === 2 ? 'Het publiek juicht en danst mee!'
+      : 'Het publiek klapt hard voor je!';
     $('end-text').textContent = juich;
     /* Eén vakje: alle 💎 van deze show, de sterrenbonus erbij. Hier stonden er
        twee, en het tweede was "⭐ +15" -- maar die 15 waren diamanten (5 per ster,
@@ -11351,9 +11821,14 @@ function endLevel(success) {
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {
-      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
-      mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
+      /* De trofee staat naast de 💎, op één rij: allebei "wat je kreeg". Ze
+         stonden op twee rijen onder elkaar, en dat maakte de kaart een regel
+         langer dan nodig. Zelfde woorden als de toast (zie noticeReady). */
+      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee' : `🎁 ${nieuwKlaar} nieuwe trofeeën`;
+      const pil = document.createElement('button');
+      pil.className = 'gold-pill'; pil.type = 'button'; pil.textContent = label;
+      pil.onclick = () => { sndClick(); naTik(openTrophies); };
+      $('end-earn').appendChild(pil);
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
@@ -11675,7 +12150,7 @@ function itemThumb(it, base) {
     const prijs = (i >= 0 && cur) ? wereldPrijsHTML(P(), i, 60) : '';
     return prijs ? zone(prijs, 'thumb-prijs') : zone(podiumHTML(it), 'thumb-podium');
   }
-  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
+  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`, 'thumb-staal');
 }
 
 let shopCat = 'dress';
@@ -12823,7 +13298,7 @@ function renderNewStar() {
      papier, erbuiten is het dezelfde pop op dezelfde poort als op de
      sterrenkeuze, en het vel eronder is er een schermhoogte korter van. */
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>

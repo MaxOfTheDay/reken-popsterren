@@ -41,58 +41,55 @@
     position: absolute; inset: 0;
     background:
       radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
-      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 64%, var(--w-deep) 100%);
+      linear-gradient(180deg, transparent 35%, rgba(10,2,22,.45) 100%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 40%, var(--w-deep) 100%);
   }
 
-  /* ---- De wereldtekening, als licht en niet als landschap ----
+  /* ---- De wereldtekening: de plek van deze show ----
      Zolang er geen eigen zaaltekening is, leent de zaal de wereldkaart zelf: het
      kind stapt ín de plek die het net aantikte, en dat bestand staat al in het
      geheugen omdat de kaart het een tel geleden getoond heeft. Nul extra bytes.
 
-     Dat leent alleen niet vanzelf. Een kaart is een staande tekening met een
-     horizon, een kustlijn en gebouwen die aan de rand ophouden. Zoom je daarop in
-     en laat je hem het scherm vullen, dan valt de snede precies dáár: op een breed
-     venster liep er een kaarsrechte kustlijn dwars door het beeld en stond er een
-     halve tent tegen de schermrand -- de tekening lag zichtbaar afgeknipt op het
-     scherm in plaats van erachter.
+     Bovenin staat de wereld, herkenbaar; naar onderen dooft hij uit in een rustige
+     vloer (.venue-sfeer). Daarvóór was deze laag een ovaal van 11px blur -- licht
+     en geen vormen -- omdat een kaart een staande tekening is met kustlijnen en
+     daken die aan de rand ophouden. Dat probleem is er nog steeds, maar alléén
+     aan de onderkant en de zijkanten, en die lossen twee dingen op:
+       het masker  van boven dicht, op 60% weg. Waar de snede valt doet er niet
+                   toe: hij valt in het doorzichtige deel.
+       de klem     de tekening schuift nooit zo ver op dat er boven of opzij een
+                   rand in beeld komt (zie ::before).
 
-     De oplossing is niet een grotere zoom of een andere uitsnede (elke uitsnede
-     heeft randen), maar het omdraaien van de rol. Deze laag hoeft het scherm niet
-     te vullen: .venue-sfeer doet dat al. Ze mag dus naar alle kanten wégvallen --
-     en een rand die op nul staat is geen rand meer.
-
-     Drie dingen doen dat samen:
-       het masker een ovaal dat naar buiten toe uitdooft. Hij staat in procenten
-                  van het element, dus hij past zich aan élke vensterverhouding
-                  aan: de schermrand ligt altijd op dezelfde plek in het ovaal en
-                  is daar altijd (bijna) doorzichtig. Waar de snede zit doet er
-                  niet meer toe -- hij valt per definitie in het doorzichtige deel.
-       de blur    genoeg om vorm in kleur te veranderen. Een gebouw dat je kunt
-                  aanwijzen hoort op de kaart; hier hoort alleen zijn licht.
-       de dekking net onder de één, zodat de sfeerlaag er doorheen blijft praten
-                  en de tekening nooit als tweede achtergrond gaat lezen.
-
-     Het blijft een noodoplossing, en een goedkope: één regel in de wereld
-     (venue.art) hangt hier later een echte zaaltekening in, en dan mag zoom terug
-     naar ~100, blur naar 0-4 en de dekking naar 1. Verder verandert er niets. */
+     Wélk stuk je ziet komt uit applyVenue: --venue-x/--venue-y is het punt van de
+     tekening (in procenten) dat boven haar hoofd komt te staan, normaal de halte
+     van deze show. De tekening zelf is ::before, en niet een background-position
+     op dit element: dat punt op een vaste plek op het scherm zetten vraagt om
+     breedte én hoogte van de tekening tegelijk, en dat kan alleen in container-
+     eenheden. Dit element is de container; ::before rekent erin. */
   .venue-art {
     position: absolute; inset: -8%;
-    background-image: var(--venue-art, none);
-    /* Zoom op de breedte en niet 'cover', want cover perst de héle wereldkaart in
-       het scherm en dan kijk je naar een landschap in plaats van naar een zaal.
-       Op de breedte, omdat de tekening staand is: dan is de uitsnede horizontaal
-       altijd hetzelfde stuk, op elk toestel. --venue-focus kiest wélk stuk. */
-    background-size: var(--venue-zoom, 220%) auto;
-    background-position: var(--venue-focus, 70% 14%);
-    background-repeat: no-repeat;
+    container-type: size;
+    --z: var(--venue-zoom, 220);   /* breedte van de tekening, in % van dit element */
     /* geen background-color: .venue-sfeer is de bodem. Stond die hier wél, dan
        zou dit element zijn eigen vlak meebrengen en was het masker zinloos. */
-    filter: blur(var(--venue-blur, 11px)) brightness(var(--venue-dim, .62)) saturate(1.1);
-    opacity: var(--venue-op, .96);
-    -webkit-mask-image: radial-gradient(74% 86% at 50% 18%,
-      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
-    mask-image: radial-gradient(74% 86% at 50% 18%,
-      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+    filter: blur(var(--venue-blur, 2.5px)) brightness(var(--venue-dim, .66));
+    opacity: var(--venue-op, 1);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 26%, rgba(0,0,0,.55) 42%, transparent 60%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 26%, rgba(0,0,0,.55) 42%, transparent 60%);
+  }
+  /* Het punt komt op 37% van de hoogte (net boven haar hoofd, op een telefoon
+     staand) en in het midden. Daarna de klem: links tussen "rechterrand tegen de
+     schermrand" en 0, boven nooit lager dan 0 -- een halte vlak bij de rand van
+     de kaart schuift dus niet verder dan de tekening reikt. De verhouding is die
+     van een wereldkaart (ART_W x ART_H in 15-kaart-en-weg.js). */
+  .venue-art::before {
+    content: ''; position: absolute;
+    width: calc(var(--z) * 1cqw);
+    aspect-ratio: 1215 / 2160;
+    left: clamp(calc(100cqw - var(--z) * 1cqw),
+                calc(50cqw - var(--venue-x, 50) * var(--z) * 1cqw / 100), 0px);
+    top: min(0px, calc(37cqh - var(--venue-y, 20) * var(--z) * 1cqw * 2160 / 1215 / 100));
+    background: var(--venue-art, none) center / 100% 100% no-repeat;
   }
   /* Ligt het venster op zijn kant, dan zie je van een staande tekening een brede,
      lage strook -- en juist in zo'n strook komen kustlijnen en daken als rechte
@@ -101,9 +98,9 @@
      Drie kleine draaien aan dezelfde knoppen; geen aparte laag, geen apart beeld. */
   @media (min-aspect-ratio: 1/1) {
     .venue-art {
-      background-size: calc(var(--venue-zoom, 220%) * 1.75) auto;
-      filter: blur(calc(var(--venue-blur, 11px) * 2.1)) brightness(var(--venue-dim, .62)) saturate(1.1);
-      opacity: calc(var(--venue-op, .96) * .7);
+      --z: calc(var(--venue-zoom, 220) * 1.75);
+      filter: blur(calc(var(--venue-blur, 2.5px) * 2.1)) brightness(var(--venue-dim, .66));
+      opacity: calc(var(--venue-op, 1) * .7);
     }
   }
   /* Zaallicht + vloer. Vier verlopen, één element: warm van boven (het is een
@@ -116,7 +113,12 @@
      verschil dat een wereld hoort te maken. */
   .venue-licht {
     position: absolute; inset: 0;
+    /* De eerste twee lagen horen bij de scherpe tekening erachter: een schaduw
+       onder de kop, zodat de pillen niet op een druk stuk tekening staan, en een
+       warme plas licht op de vloer waar zij staat. */
     background:
+      linear-gradient(180deg, rgba(var(--w-deep-rgb),.55) 0, rgba(var(--w-deep-rgb),0) 110px),
+      radial-gradient(60% 13% at 50% 43%, rgba(var(--warm-licht-rgb),.16), transparent 70%),
       radial-gradient(112% 40% at 50% 2%, rgba(var(--goud-glans-rgb),.30), transparent 64%),
       radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
@@ -222,6 +224,14 @@
      van een vakje. Een zachte schaduw onder haar houdt haar op de richel. */
   .venue-aan .show-stage .avatar-holder, .venue-aan .end-stage .avatar-holder {
     height: 104%; filter: drop-shadow(0 6px 10px rgba(14,2,30,.55));
+  }
+  /* Een zachte schaduw áchter haar, in het spelscherm: de tekening erachter is nu
+     scherp genoeg om lampjes en sterren te tonen, en die mogen niet precies om
+     haar hoofd heen gaan staan twinkelen. Ligt onder de bundel (eerder in de doos). */
+  .venue-aan .game-arena .show-panel::before {
+    content: ''; position: absolute; z-index: 0; pointer-events: none;
+    left: -14%; right: -14%; top: -14%; bottom: -10%;
+    background: radial-gradient(closest-side at 50% 45%, rgba(var(--w-deep-rgb),.6), rgba(var(--w-deep-rgb),0));
   }
 
   /* ---- De kop van een show ----
@@ -340,17 +350,12 @@
      som nog evenveel rustig vlak overblijft. */
   @media (max-height: 700px) {
     .venue-licht { background:
+      linear-gradient(180deg, rgba(var(--w-deep-rgb),.55) 0, rgba(var(--w-deep-rgb),0) 90px),
       radial-gradient(112% 34% at 50% 0%, rgba(var(--goud-glans-rgb),.26), transparent 62%),
       radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 18%, rgba(var(--w-deep-rgb), .54) 40%,
                       rgba(var(--w-deep-rgb), .84) 58%, rgba(var(--w-deep-rgb), .93) 100%); }
     .venue-licht::after { top: 38%; }
-    /* minder hoogte = de vloer begint hoger, dus het ovaal moet ook hoger
-       uitdoven; verder hetzelfde masker en dezelfde redenering */
-    .venue-art { -webkit-mask-image: radial-gradient(74% 72% at 50% 12%,
-        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%);
-      mask-image: radial-gradient(74% 72% at 50% 12%,
-        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%); }
   }
 
   /* ---- Telmodus (lees-vrij): hoeveelheden i.p.v. cijfers ---- */
@@ -522,7 +527,7 @@
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
     min-height: 88px; padding: 12px 8px; border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform var(--t-tik), box-shadow var(--t-tik);
     /* de tegel is de maatstok voor alles wat erin staat (cqw hierboven): hoeveel
@@ -530,9 +535,9 @@
        vw-maat zou bij 2 tegels te klein en bij 4 te groot uitvallen */
     container-type: inline-size;
   }
-  .count-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
-  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
+  .count-tile:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
   .count-tile .cg-obj { font-size: 27px; }
   .count-tile .cg-dot { width: 20px; height: 20px; }
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
@@ -666,6 +671,10 @@
   .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
   .mem-done-title { font-size: 54px; line-height: 1; }
   .mem-done-earn { margin: 12px auto 4px; }
+  /* Het vakje van .earn-chip.dia is gemaakt voor een donker vlak (witte letter op
+     een blauwe waas); op dit witte kaartje werd dat wit op lichtblauw, en las je
+     "+9" nauwelijks. Hier dus een donkerblauwe letter op dezelfde waas. */
+  .mem-done-card .earn-chip.dia { color: #0b4f7a; background: rgba(41,182,246,.2); }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
   /* op smalle schermen: show compacter zodat het rekenen prominent blijft */
@@ -705,6 +714,17 @@
      (99px hoog) juist kleiner dan het decor ernaast (147px). */
   @media (min-height: 780px) {
     .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
+  }
+  /* Een hoge telefoon, staand. Stond alles in het midden, dan bleef er onder de
+     antwoorden een strook leeg en boven haar ook -- twee keer lucht, en de
+     antwoorden het verst van de duim. Nu is zij met de som en de antwoorden één
+     groep, onderaan, en krijgt de zaal (de plek van de show) de ruimte erboven.
+     Ze wordt er een maat groter van, op haar echte maat en niet met een scale:
+     dan schuift alles eromheen gewoon mee. Tablets hebben hun eigen regel
+     hieronder; korte schermen houden wat ze hadden. */
+  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
+    .game-arena { align-content: flex-end; row-gap: 14px; padding-bottom: 22px; }
+    .show-stage { width: 214px; height: 180px; }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
@@ -752,8 +772,13 @@
   /* gedockte kaart is compacter dan de losse variant (kleiner pilletje,
      minder padding) -- moet altijd tussen kop en paspop passen, ook op
      smallere formaten waar de paspop hoger in het scherm begint */
+  /* In de show is de juichkaart een pil van één regel: "Wauw! 💎 +3" naast
+     elkaar, net als de meldingen. Als kaart van twee regels was hij ~80px hoog,
+     en dat past niet in het gat tussen de kop en de ster: op een smalle
+     telefoon hing hij over haar gezicht. */
   .praise.docked {
-    top: 98px; transform: scale(.7); gap: 5px; padding: 9px 18px 11px;
+    top: 98px; transform: scale(.7); flex-direction: row; gap: 10px;
+    border-radius: var(--r-pill); padding: 7px 9px 7px 18px;
   }
   .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
@@ -792,6 +817,8 @@
     pointer-events: none;
   }
   .toast.met-sub, .toast.teken, .toast.hint { border-radius: var(--r-md); padding: 11px 20px 12px; }
+  /* in de show is de hint één regel (het getal en de pijl), dus ook een pil */
+  .toast.hint.docked { border-radius: var(--r-pill); padding: 7px 20px; }
   .toast.goud { border-color: rgba(var(--goud-rgb),.6); box-shadow: var(--e-2), 0 0 20px rgba(var(--goud-gloed-rgb),.28); }
   .toast.goud .toast-main { color: var(--gold-light); }
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
@@ -828,6 +855,7 @@
      ruimte ertussen niet te overschrijden */
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .praise.docked { gap: 8px; padding: 5px 6px 5px 14px; }
     .praise.docked .praise-headline { font-size: var(--tx-klein); }
     .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
     .toast.docked .toast-main { font-size: var(--tx-label); }
@@ -890,7 +918,7 @@
      Hier viel eerst een grijs nootje van 52px over haar heen. Dat las als een
      vlek op de pop, en zij deed zelf niets. */
   .av-oog { transform-box: fill-box; transform-origin: center; }
-  .avatar-holder.oeps .av-oog { transform: scale(1.35); }
+  .avatar-holder.oeps .av-oog { animation: none; transform: scale(1.35); }
   .avatar-holder.oeps .av-mond { opacity: 0; }
   .avatar-holder.oeps .av-mond-o { opacity: 1; }
   .avatar-holder.oeps > .pas-laag { transform-origin: 50% 95%; animation: oepsSchrik .45s var(--ease-uit); }

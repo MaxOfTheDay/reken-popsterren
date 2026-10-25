@@ -156,6 +156,11 @@
     display: inline-flex; align-items: center; justify-content: center; flex: none;
     width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 20px;
   }
+  /* Even groot als de terugknop aan de andere kant van de kop: die groeit op een
+     tablet naar --hud-h (zie 40-kaart.css), en dan stond de ▶ ernaast op 44. */
+  @media (min-width: 600px) and (min-height: 700px) {
+    .btn.speel-als { width: var(--hud-h); height: var(--hud-h); font-size: 24px; }
+  }
   .speel-als[hidden] { display: none; }
   /* de getekende ▶ (zie .ico): als teken werd hij op een iPhone een emoji-knopje.
      Een tikje naar rechts, want een driehoek met zijn punt naar rechts staat
@@ -517,7 +522,10 @@
   }
   .newstar-preview .deco { display: none; }
   /* haar podium: dezelfde tegelmaat als op het startscherm (zie .ster-tegel .stage-podium) */
-  .newstar-preview .stage-podium { width: 80%; bottom: 6.4%; }
+  .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
+  /* 90% en niet 92%: met de 9% marge onderaan (een procent van de breedte) stak
+     haar hoofddeksel anders net boven het vlak uit (zie .ster-tegel) */
+  .newstar-preview .stage.op-podium .avatar-holder { height: 90%; }
   /* Een laag scherm: een kleine telefoon staand, elke telefoon liggend, en het
      toestel waarop de browser bij een open toetsenbord de indeling meekrimpt.
      Kop (59) plus voorbeeld (136) is daar de helft van het beeld voordat er één

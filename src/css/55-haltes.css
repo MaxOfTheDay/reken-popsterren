@@ -787,9 +787,14 @@
      geen meer achter haar lijf, zie #tourHeroContour): een warme vlek op het
      goud van haar halte, iets breder dan haar voeten, zodat ze er zichtbaar óp
      staat. */
+  /* Breder dan haar schoenen mét hun witte rand (oktober 2026): op 11cqw viel hij
+     helemaal achter die rand weg, en dan staat ze er niet op maar plakt ze
+     ertegen. Nu komt hij links en rechts onder haar voeten uit. Een verloop i.p.v.
+     een blur: zacht aan de rand, en geen filter dat de huppel moet meenemen. */
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.1cqw; transform: translateX(-50%);
-    width: 11cqw; height: 2.2cqw; border-radius: 50%; background: rgba(110,45,0,.42); filter: blur(1px); }
+    left: 50%; bottom: -0.5cqw; transform: translateX(-50%);
+    width: 17cqw; height: 2.8cqw; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(110,45,0,.55), rgba(110,45,0,.25) 70%, transparent); }
   /* En die schaduw hoort ónder haar te liggen. De svg hierboven heeft z-index 1,
      maar haar wiegen (.avatar-holder.idle, een transform) maakt van de houder
      een eigen stapellaag, en daar zat die z-index in gevangen. De schaduw komt
@@ -801,7 +806,7 @@
      dat omhoog schuift en niet als een meisje dat loskomt van de grond. Nu op
      dezelfde klok en dezelfde curve als mvHuppel (30-onderdelen.css): iets breder
      als ze door de knieën gaat (16%), klein en licht in de lucht (42%), breder
-     als ze neerkomt (62%). Alleen transform en opacity van een laag die zijn blur
+     als ze neerkomt (62%). Alleen transform en opacity van een laag die zijn verloop
      één keer krijgt, dus de compositor doet het en het kost per beeldje niets.
      Hangt aan de klasse van de houder via :has, zodat zetPas en pasUit de enige
      baas blijven over wanneer er gehuppeld wordt; kaartGroetStop zet hem samen

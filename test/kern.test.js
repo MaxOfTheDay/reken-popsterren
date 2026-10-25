@@ -38,6 +38,7 @@
  *   W  gegroeid                         -> "Nieuw!" bij een fase hoger, een nieuwe vraagsoort, grotere getallen
  *   X  wennen aan een hogere grens      -> het plafond klimt in acht shows van 0.6 naar 1
  *   Y  het accent per wereld            -> na de laatste leerstap om de beurt zoek / drie / gewoon
+ *   Z  de antwoordknoppen               -> binnen de grens, één echte fout, en het middelste kiezen loont niet
  *
  * Draaien:
  *   npm run test:kern      (of: npm test voor alle suites)
@@ -474,7 +475,8 @@ zaak('L', () => {
   const actief = app.activeTrophies();
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);
-  check(vast.length === 12, 'L · het vaste deel van de kast groeit niet mee', vast.length);
+  check(vast.length === 18,   // 12 -> 18 in oktober 2026, zie inhoud.test.js zaak F
+    'L · het vaste deel van de kast groeit niet mee', vast.length);
   check(perfect.length === app.WORLDS.length && perfect.length === voorErbij + 1,
     'L · en het perfecte deel precies wel', perfect.length + '/' + app.WORLDS.length);
   check(actief.length === vast.length + app.WORLDS.length,
@@ -1223,6 +1225,99 @@ zaak('Y', () => {
   // nog niet vrij: dan geen accent, gewoon wat er wél kan
   p.settings.missNum = false;
   check(soorten(L + 1) === 'chain', 'Y · zoek het getal uit: de zoek-wereld speelt gewoon', soorten(L + 1));
+});
+
+/* De vier knoppen moeten je laten rekenen (zie makeChoices). Gemeten met de
+   gok die de oude knoppen beloonden: "neem het getal met de meeste buren", en
+   bij gelijkspel het getal dat het dichtst bij het gemiddelde ligt. Dat was
+   65%; blind gokken is 25%. */
+zaak('Z', () => {
+  const { app, p } = verseSter('Knoppen');
+  const s = p.settings;
+  const gok = c => {
+    const buren = v => c.filter(w => w !== v && Math.abs(w - v) <= 2).length;
+    const gem = c.reduce((a, b) => a + b, 0) / c.length;
+    return c.slice().sort((x, y) => buren(y) - buren(x) || Math.abs(x - gem) - Math.abs(y - gem))[0];
+  };
+  for (const [max, lvl, naam] of [[20, 1, 'wereld 1, tot tien'], [20, 9, 'wereld 2, tot twintig'], [100, 41, 'tot honderd']]) {
+    s.max = max; s.ops = ['+', '-']; s.wennen = 0;
+    let raak = 0, buiten = 0, fout = 0, vier = 0, plaats = [0, 0, 0, 0];
+    const N = 3000;
+    for (let i = 0; i < N; i++) {
+      const q = app.genQuestion(s, lvl, 0.5);
+      const grens = app.keuzeGrens(q, s, lvl);
+      const c = app.makeChoices(q, grens);
+      if (c.length === 4 && new Set(c).size === 4 && c.filter(v => v === q.ans).length === 1) vier++;
+      if (c.some(v => v < 0 || v > grens)) buiten++;
+      if (gok(c) === q.ans) raak++;
+      plaats[c.filter(v => v < q.ans).length]++;
+      const getallen = q.tmpl.match(/\d+/g).map(Number);
+      const echt = new Set(getallen.concat(getallen[0] + getallen[1], Math.abs(getallen[0] - getallen[1]), q.ans + 10, q.ans - 10));
+      if (c.some(v => v !== q.ans && echt.has(v))) fout++;
+    }
+    check(vier === N, `Z · ${naam}: altijd vier verschillende knoppen, het antwoord één keer`, `${vier}/${N}`);
+    check(buiten === 0, `Z · ${naam}: geen knop buiten de grens`, `${buiten}/${N}`);
+    check(raak / N < 0.35, `Z · ${naam}: het middelste kiezen loont niet (was 65%)`, `${Math.round(raak / N * 100)}%`);
+    check(fout / N > 0.8, `Z · ${naam}: bijna altijd één echte fout (verkeerd teken, een getal uit de som)`, `${Math.round(fout / N * 100)}%`);
+    check(plaats.every(n => n > N * 0.12), `Z · ${naam}: het antwoord is even goed de kleinste als de grootste`, plaats.join(','));
+  }
+  // tafels: de grens is het volgende tiental, en er komt geen negatief getal
+  s.ops = ['x']; s.tables = [2, 5, 10];
+  let ok = true;
+  for (let i = 0; i < 500; i++) {
+    const q = app.genQuestion(s, 41, 0.5);
+    const c = app.makeChoices(q, app.keuzeGrens(q, s, 41));
+    if (c.length !== 4 || new Set(c).size !== 4 || c.some(v => v < 0)) ok = false;
+  }
+  check(ok, 'Z · tafels: vier verschillende knoppen, niets negatief', '');
+});
+
+/* ================= ZA · De nieuwe trofeeën (oktober 2026) =================
+   De plank Nieuwe sommen telt per soort som hoe vaak hij goed was (p.leer), de
+   medailles groeien mee uit wat er al in p.trophies staat, en de Wereldtournee
+   heeft achter de mist een boog die tegen de zichtbare werelden telt. */
+zaak('ZA', () => {
+  const { app, p } = verseSter();
+  check(p.leer && p.leer.brug === 0 && p.leer.zoek === 0 && p.leer.drie === 0, 'ZA · een verse ster begint met p.leer op nul', JSON.stringify(p.leer));
+  const oud = app.defaultProfile('Oud', 'dress_roze'); delete oud.leer; app.migrate(oud);
+  check(oud.leer && oud.leer.brug === 0, 'ZA · een oude save krijgt p.leer erbij', JSON.stringify(oud.leer));
+  app.telLeer(p, { kind: 'missing' }); app.telLeer(p, { kind: 'chain' });
+  app.telLeer(p, { kind: 'classic', brug: true }); app.telLeer(p, { kind: 'classic', brug: false });
+  check(p.leer.zoek === 1 && p.leer.drie === 1 && p.leer.brug === 1, 'ZA · elke soort telt bij zijn eigen teller, een gewone som nergens', JSON.stringify(p.leer));
+  // over het tiental: 8 + 5 wel, 12 + 5 niet (genQuestion zet q.brug)
+  const s = Object.assign({}, p.settings, { ops: ['+'], max: 20 });
+  let brug = 0, juist = 0;
+  for (let i = 0; i < 300; i++) {
+    const q = app.genQuestion(s, 17, 0.6);
+    const [a, , b] = q.tmpl.split(' ').map(Number);
+    if (q.brug) brug++;
+    if (q.brug === ((a % 10) + (b % 10) > 10)) juist++;
+  }
+  check(juist === 300, 'ZA · q.brug klopt met de som', `${juist}/300`);
+  // voor(): tot 10 is er geen brug, en in de telmodus geen sommen-trofeeën
+  const t = id => app.TROPHIES.find(x => x.id === id);
+  p.settings.max = 10;
+  check(!t('leer-brug').voor(p), 'ZA · tot 10 staat Over de brug er niet', '');
+  p.settings.max = 20;
+  check(t('leer-brug').voor(p), 'ZA · tot 20 wel', '');
+  const tel = app.defaultProfile('Tel', 'dress_roze', app.COUNT_OPTS);
+  check(!t('leer-zoek').voor(tel) && t('leer-cijfers').voor(tel), 'ZA · in de telmodus de telstappen in plaats van de sommen', '');
+  // de ladder: niveau uit p.trophies, de laagste klare trap eerst
+  const reken = app.TROPHY_LADDERS.find(l => l.key === 'reken');
+  p.trophies = ['sums25']; p.readyTrophies = ['sums100'];
+  const st = app.ladderStand(reken, p);
+  check(st.niveau === 1 && st.klaar && st.klaar.id === 'sums100' && st.volgende.id === 'sums500', 'ZA · ladder: brons in de kast, zilver klaar, goud is de volgende', JSON.stringify({ n: st.niveau, k: st.klaar && st.klaar.id, v: st.volgende && st.volgende.id }));
+  // Wereldtournee: behalve een lege boog achter de mist
+  const wt = t('worldtour');
+  const w = verseSter(), q = w.p;
+  check(w.app.trophyBoog(wt, q, 'busy') === 0, 'ZA · Wereldtournee zonder uitgespeelde wereld: lege boog', w.app.trophyBoog(wt, q, 'busy'));
+  speel(w.app, q, 0, { sterren: 2 });
+  const wt2 = w.app.TROPHIES.find(x => x.id === 'worldtour');
+  if (w.app.meerWereldenVooruit(q)) {
+    const zicht = w.app.laatsteZichtbareWereld(q) + 1;
+    check(w.app.trophyBoog(wt2, q, 'busy') === Math.round(100 / zicht),
+      'ZA · achter de mist telt de boog tegen de werelden die ze ziet', w.app.trophyBoog(wt2, q, 'busy') + ' bij ' + zicht + ' zichtbaar');
+  }
 });
 
 klaar();

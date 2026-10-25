@@ -2476,10 +2476,10 @@ function check(ok, label, detail) {
     const r = await page.evaluate(() => {
       const p = db.profiles[profileKeys()[0]];
       p.equipped.dress = 'dress_disco';
-      // avatarSVG stempelt per aanroep een uniek verloop-id (rb1, rb2, ...);
-      // zonder dat weg te halen verschilt élke twee tekeningen en zegt de
-      // vergelijking niets over de vorm
-      const kaal = t => t.replace(/rb\d+/g, 'rb');
+      // avatarSVG stempelt per aanroep een uniek id op elk verloop en de
+      // halsuitsnede (rb1, bol1, nek1, ...); zonder dat weg te halen verschilt
+      // élke twee tekeningen en zegt de vergelijking niets over de vorm
+      const kaal = t => t.replace(/\b(rb|bol|huid|stof|wang|vlek|nek)\d+/g, '$1');
       const meisje = kaal(avatarSVG({ ...p, base: 'meisje' }, 132));
       const jongen = kaal(avatarSVG(p, 132));
       return {
@@ -2517,7 +2517,7 @@ function check(ok, label, detail) {
     await page.waitForTimeout(250);
     const r = await page.evaluate(() => {
       const p = db.profiles.p1;
-      const kaal = t => t.replace(/rb\d+/g, 'rb');   // zie 11b: uniek verloop-id per aanroep
+      const kaal = t => t.replace(/\b(rb|bol|huid|stof|wang|vlek|nek)\d+/g, '$1');   // zie 11b: uniek id per aanroep
       return { base: p.base, zelfde: kaal(avatarSVG(p, 132)) === kaal(avatarSVG({ ...p, base: 'meisje' }, 132)) };
     });
     check(r.base === 'meisje', 'een save zonder basis wordt een meisje', String(r.base));
@@ -2803,7 +2803,8 @@ function check(ok, label, detail) {
     });
     check(!stil.bewoog && stil.timers === 0,
       'zonder beweging wordt er niet gegroet en wacht er niets', JSON.stringify(stil));
-    check(stil.klas === 'avatar-holder' && stil.tekening,
+    // .levend mag: dat zegt alleen dat ze mag knipperen, en zonder beweging doet ze dat niet
+    check(stil.klas === 'avatar-holder levend' && stil.tekening,
       'en de tegels staan er precies zoals ze horen te staan', JSON.stringify(stil));
     check(stil.vonkjes === 0 && stil.laag === 'none',
       'en er sprankelt niets op de achtergrond', JSON.stringify(stil));

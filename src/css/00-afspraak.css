@@ -567,6 +567,35 @@
     --goud-rand: rgba(var(--goud-rgb),.5);
     --goud-gloed-zacht: 0 0 12px rgba(var(--goud-gloed-rgb),.24);
     --goud-gloed: 0 0 16px rgba(var(--goud-gloed-rgb),.46);
+    /* De medaille: het ronde vak waar een trofee in staat, in de kast én als hij
+       opengaat (.trophy-card .temoji, .tp-emoji). Een donker aubergine bolletje
+       met het licht bovenin; behaald wordt het iets warmer en krijgt het de
+       gouden rand, die van licht bovenaan naar donker goud onderaan loopt zodat
+       hij als metaal leest en niet als een gele lijn. */
+    --medaille-vul: radial-gradient(80% 80% at 50% 25%, #4a2a6e, #1c0b33 75%);
+    --medaille-vul-goud: radial-gradient(80% 80% at 50% 25%, #6a3d86, #2a1240 75%);
+    --medaille-goud: linear-gradient(160deg, rgb(var(--goud-glans-rgb)), var(--gold-accent) 45%, var(--gold-cta-shadow));
+    /* De metalen van een medaille die meegroeit (TROPHY_LADDERS, TRAP_NAMEN):
+       0 brons, 1 zilver, 2 goud, 3 diamant. Effen kleuren en geen verloop, want
+       ze staan als boog in een conic-gradient (zie .trophy-card.ladder). Goud
+       is hetzelfde goud als elke andere behaalde trofee. */
+    --m-0: #d98f55;
+    --m-1: #dbe4ee;
+    --m-2: var(--gold-accent);
+    --m-3: #9fe8ff;
+    /* En de medaille zelf in dat metaal: het vlak van een medaille die meegroeit
+       (.trophy-card.ladder) en zijn rand als hij af is, en de grote medaille als
+       een trap opengaat (.tp-emoji). Het licht bovenin, net als --medaille-vul.
+       Het goud is in het midden een slag donkerder dan je zou denken: anders
+       verdwijnt een gele ster erop. */
+    --m-vlak-0: radial-gradient(80% 80% at 50% 25%, #d9a06e, #7a3f1c 78%);
+    --m-vlak-1: radial-gradient(80% 80% at 50% 25%, #f4f7fb, #8794a5 78%);
+    --m-vlak-2: radial-gradient(80% 80% at 50% 25%, #eec35a, #8a5c08 78%);
+    --m-vlak-3: radial-gradient(80% 80% at 50% 25%, #effcff, #58b9db 78%);
+    --m-rand-0: linear-gradient(160deg, #f3c08f, var(--m-0) 45%, #6e3412);
+    --m-rand-1: linear-gradient(160deg, #ffffff, var(--m-1) 45%, #75808f);
+    --m-rand-2: var(--medaille-goud);
+    --m-rand-3: linear-gradient(160deg, #ffffff, var(--m-3) 45%, #3e9fc4);
 
     /* ---- Emoji staan ergens op ---------------------------------------------
        FASE 5E. De app tekent met emoji, en die komen plat en zonder eigen licht
@@ -602,6 +631,13 @@
        dezelfde, en meteen als token: lip en diepte horen bij elkaar. */
     --btn-lip: 5px; --btn-lip-sm: 4px;
     --btn-diep: 0 8px 14px rgba(0,0,0,.3);
+    /* --btn-glans: het licht óp de knop. Een dun licht randje bovenaan en een
+       zweem schaduw onderin, zodat een knop een bolling heeft in plaats van een
+       vlak met een lip eronder: hij leest als iets dat je indrukt. Staat vóór de
+       lip in elke box-shadow (inset telt niet mee voor de lip), ook in :active --
+       ingedrukt verdwijnt de lip, niet het licht. De glimlap bovenin de grote
+       knoppen staat in 10-basis.css (.btn.big::after) en 40-kaart.css. */
+    --btn-glans: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(0,0,0,.12);
 
     /* ---- De veilige zone van het toestel, en de ruimte onder de balk ----
        FASE 5D. Dit stond vijf keer met de hand uitgerekend: de balk op bottom 10

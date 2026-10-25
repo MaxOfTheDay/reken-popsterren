@@ -1,14 +1,25 @@
-  /* ---- Claim-feestje: klein, vrolijk, blijft open tot er getikt wordt ---- */
+  /* ---- Claim-feestje: blijft open tot er getikt wordt ----
+     Oktober 2026: geen kaartje meer. Het was een klein paneel boven een kast die
+     er nauwelijks gedempt doorheen bleef staan, en daarmee de kleinste beloning
+     van de app terwijl een trofee de grootste hoort te zijn. Nu wordt de kamer
+     donker (een spot in het midden, de randen bijna zwart) en staat de trofee
+     als grote gouden medaille onder de stralen -- dezelfde medaille als op zijn
+     plank (zie .trophy-card .temoji), dus een kind ziet wat er straks in de kast
+     staat. .pop-panel blijft op het element voor de ingang (popIn); alleen zijn
+     vlak, rand en waas gaan uit. */
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
-    background: rgba(20,4,40,.45); animation: popFade .25s ease; cursor: pointer;
+    background: radial-gradient(60% 45% at 50% 45%, rgba(60,20,90,.78), rgba(10,2,24,.92));
+    animation: popFade .25s ease; cursor: pointer;
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
-  .trophy-pop { padding: 22px 30px; }
-  .tp-head { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
-  .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.8)); }
-  .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
-  .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
+  .trophy-pop {
+    padding: 0 20px; background: none; border: 0; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  .tp-head { font-size: var(--tx-sub); font-weight: 700; color: var(--gold-light); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .tp-name { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .tp-joepie { font-size: var(--tx-body); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
   /* De tekst die opkomt: de naam en "Joepie!" onder de trofee, en de rijen van
      het wereldfeest. Deze keyframes gingen mee weg met de ster-status (die ze
@@ -59,8 +70,9 @@
   .wf-som .mini-kaart .item-thumb svg { height: 30px; }
   .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
   .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
-  .wf-goud { margin-top: 4px; padding: 4px 12px; border-radius: 99px; font-size: var(--tx-klein); font-weight: 700;
-    color: #3a2200; background: linear-gradient(var(--gold-light), var(--gold-accent)); }
+  /* Een gouden regel en geen pil: een plat geel vlak leest als een knop, en de
+     knop ("Doe aan") staat er vlak onder. De gouden rand van het podium zegt het al. */
+  .wf-goud { margin-top: 4px; font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); }
   .wereld-feest .wf-een > * { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-een > :nth-child(2) { animation-delay: .1s; }
   .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
@@ -75,9 +87,12 @@
      een ripple, (3) het openen is een schatkist die openknalt met stralen,
      schokgolf en een confetti-kanon, (4) de behaalde kaart glimt kort na. */
 
-  /* (1) Klare trofee: een glans-veeg glijdt over de kaart + het cadeau wiebelt */
-  .trophy-card.ready { overflow: hidden; }
-  .trophy-card.ready::after {
+  /* (1) Klare trofee: een glans-veeg glijdt over de medaille + hij wiebelt.
+     Over de medaille en niet meer over de kaart: sinds de medaillewand heeft een
+     trofee geen kaartje meer om overheen te glanzen (zie 65-kast.css), en een
+     veeg over de lege lucht om de naam heen leest als een streep. */
+  .trophy-card.ready .temoji { overflow: hidden; }
+  .trophy-card.ready .temoji::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
     transform: translateX(0) skewX(-18deg);
@@ -99,7 +114,7 @@
      ook niet op 8x -- dit is dus geen haperingsbug maar werk dat nergens voor
      nodig is, en het groeit mee met het aantal trofeeën dat klaarligt.
 
-     De veeg is 45% van de kaart breed, dus die 190% van de kaart is 422,2% van de
+     De veeg is 45% van de medaille breed, dus die 190% daarvan is 422,2% van de
      veeg zelf (procenten in translateX gaan over het element zelf). De skew komt
      erachteraan en staat op dezelfde plek in de keten als eerst, dus het beeld is
      pixel voor pixel hetzelfde -- nagemeten op zes standen van de animatie. */
@@ -114,12 +129,9 @@
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
   /* Stil zolang er geschoven wordt (zie kastSchuift): anders rekent de browser de
      stijl van al deze animaties bij elk beeldje van het schuiven opnieuw uit. */
-  #trophy-shelves.schuift .trophy-card.ready::after,
+  #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
-  #trophy-shelves.schuift .trophy-card.ready .pw-medal,
-  #trophy-shelves.schuift .ready-open,
-  #trophy-shelves.schuift .ready-open::before,
-  #trophy-shelves.schuift .ready-open::after { animation-play-state: paused; }
+  #trophy-shelves.schuift .trophy-card.ready .pw-medal { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -135,16 +147,31 @@
   @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
 
   /* (3) Openen: schatkist-moment met stralen, schokgolf en emoji-inslag */
-  .tp-stage { position: relative; width: 150px; height: 118px; margin: 6px auto 2px; display: flex; align-items: center; justify-content: center; }
-  .tp-chest { position: absolute; z-index: 2; font-size: 74px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
+  .tp-stage { position: relative; width: 240px; height: 230px; margin: 4px auto 6px; display: flex; align-items: center; justify-content: center; }
+  .tp-chest { position: absolute; z-index: 2; font-size: 108px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
   @keyframes chestShake { 0%,100% { transform: rotate(-5deg) translateY(0); } 25% { transform: rotate(5deg) translateY(-2px); } 50% { transform: rotate(-4deg); } 75% { transform: rotate(4deg) translateY(-2px); } }
-  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.85)); opacity: 0; transform: scale(.2); }
+  .tp-emoji {
+    position: relative; z-index: 3; opacity: 0; transform: scale(.2);
+    width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 64px; line-height: 1;
+    border: 5px solid transparent;
+    background: var(--tp-vlak, var(--medaille-vul-goud)) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
+    box-shadow: 0 0 32px rgba(var(--goud-rgb),.6), 0 6px 18px rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.2);
+  }
   .tp-rays {
-    position: absolute; width: 210px; height: 210px; z-index: 1; opacity: 0; border-radius: 50%;
+    position: absolute; width: 340px; height: 340px; z-index: 1; opacity: 0; border-radius: 50%;
     background: repeating-conic-gradient(from 0deg, rgba(var(--goud-glans-rgb),.5) 0deg 9deg, transparent 9deg 21deg);
     -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
   }
-  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+  .tp-ring { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+  /* Een liggende telefoon heeft ~390px hoogte: daar moet kop, medaille, naam en
+     Joepie er samen in, dus wordt het podium van de medaille daar kleiner. */
+  @media (max-height: 460px) {
+    .tp-stage { width: 200px; height: 170px; }
+    .tp-emoji { width: 100px; height: 100px; font-size: 48px; border-width: 4px; }
+    .tp-chest { font-size: 84px; }
+    .tp-rays { width: 260px; height: 260px; }
+  }
   .trophy-pop .tp-name, .trophy-pop .tp-joepie { opacity: 0; }
   .trophy-pop.burst .tp-chest { animation: chestBurst .4s ease forwards; }
   @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
@@ -170,10 +197,12 @@
     100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; }
   }
 
-  /* (4) Net behaald: een eenmalige gouden shimmer over de kaart. Blijft binnen de
-     kaart (inset:0 + verschuivende gradient); z-index 2 houdt 'm onder een eventueel
-     hoekbadge (het slotje staat op z-index 3). */
-  .trophy-card.just-claimed::after {
+  /* (4) Net behaald: een eenmalige gouden shimmer over de medaille (inset:0 + een
+     verschuivende gradient, in de ronding van de medaille zelf). De perfecte
+     wereld heeft geen medaille maar een podium, en glanst daarom niet na: de
+     onthulling ging over het hele scherm, en de gouden rand staat er al. */
+  .trophy-card.just-claimed .temoji { overflow: hidden; }
+  .trophy-card.just-claimed .temoji::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.7) 50%, transparent 62%);
     background-size: 250% 100%; background-position: 120% 0;
@@ -182,13 +211,8 @@
   @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready, .ready-open { animation: none; }
-    /* De gloed van .ready-open zat vroeger alleen in de keyframes en viel hier dus
-       vanzelf weg. Nu staat hij op twee eigen lagen -- die gaan hier uit, zodat
-       de pil stilstaand precies blijft zoals hij was: goud, zonder gloed. */
-    .ready-open::before, .ready-open::after { display: none; }
-    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
-    .trophy-card.just-claimed::after { animation: none; }
+    .trophy-card.ready .temoji::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
+    .trophy-card.just-claimed .temoji::after { animation: none; }
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
@@ -239,7 +263,8 @@
      smalle-scherm-maat, zodat 'm ook op een laag/liggend toestel nooit
      afgesneden wordt */
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
-  .end-text { font-size: var(--tx-body); }
+  /* balance: geen los woord ("eens!") op de laatste regel */
+  .end-text { font-size: var(--tx-body); text-wrap: balance; }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
   /* korte schermen: het eindscherm moet ook op een 320x568 in één beeld passen --
      het is een vier-seconden-moment, daar hoort geen scrollen bij */
@@ -251,6 +276,7 @@
     .end-text { font-size: var(--tx-label); }
     .earn-line { gap: 6px; margin: 7px 0 8px; }
     .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
+    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; }
     .end-milestone { min-height: 30px; margin-bottom: 8px; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
@@ -267,10 +293,13 @@
      groot, vlak erboven; dit is de munt. Een nul tonen we niet: een mislukte
      show zonder opbrengst laat het vakje leeg (zie endLevel).
      (Er was ooit ook 👏 publiek, bij de publieksmeter; die is vervallen.) */
-  .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
+  /* Eén rij: de 💎 en, als er een klaarligt, de trofee-pil ernaast. Even hoog
+     (34px), zodat ze als twee kaartjes van dezelfde soort naast elkaar staan. */
+  .earn-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
+  .earn-line .earn-chip { min-height: 34px; box-sizing: border-box; padding: 7px 16px; }
   /* Het vakje draagt het blauw van de diamant: de munt. */
   .earn-chip.dia { background: rgba(41,182,246,.32); }
   /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een trofee

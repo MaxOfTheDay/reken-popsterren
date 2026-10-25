@@ -608,6 +608,35 @@
 
 
 
+    --medaille-vul: radial-gradient(80% 80% at 50% 25%, #4a2a6e, #1c0b33 75%);
+    --medaille-vul-goud: radial-gradient(80% 80% at 50% 25%, #6a3d86, #2a1240 75%);
+    --medaille-goud: linear-gradient(160deg, rgb(var(--goud-glans-rgb)), var(--gold-accent) 45%, var(--gold-cta-shadow));
+
+
+
+
+    --m-0: #d98f55;
+    --m-1: #dbe4ee;
+    --m-2: var(--gold-accent);
+    --m-3: #9fe8ff;
+
+
+
+
+
+    --m-vlak-0: radial-gradient(80% 80% at 50% 25%, #d9a06e, #7a3f1c 78%);
+    --m-vlak-1: radial-gradient(80% 80% at 50% 25%, #f4f7fb, #8794a5 78%);
+    --m-vlak-2: radial-gradient(80% 80% at 50% 25%, #eec35a, #8a5c08 78%);
+    --m-vlak-3: radial-gradient(80% 80% at 50% 25%, #effcff, #58b9db 78%);
+    --m-rand-0: linear-gradient(160deg, #f3c08f, var(--m-0) 45%, #6e3412);
+    --m-rand-1: linear-gradient(160deg, #ffffff, var(--m-1) 45%, #75808f);
+    --m-rand-2: var(--medaille-goud);
+    --m-rand-3: linear-gradient(160deg, #ffffff, var(--m-3) 45%, #3e9fc4);
+
+
+
+
+
 
 
 
@@ -638,6 +667,13 @@
 
     --btn-lip: 5px; --btn-lip-sm: 4px;
     --btn-diep: 0 8px 14px rgba(0,0,0,.3);
+
+
+
+
+
+
+    --btn-glans: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(0,0,0,.12);
 
 
 
@@ -1262,34 +1298,48 @@
     font-family: inherit; font-size: var(--tx-sub); font-weight: 600; color: var(--purple-shadow);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     border: none; border-radius: var(--r-md); padding: 14px 26px; cursor: pointer;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
+    box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
     transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
-  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
+  .btn:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--gold-cta-shadow); }
 
   a.btn { display: inline-block; text-decoration: none; text-align: center; }
-  .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; }
+  .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; position: relative; }
+
+
+
+  .btn.big::after {
+    content: ''; position: absolute; left: 8%; right: 8%; top: 5px; height: 38%;
+    border-radius: var(--r-pill); pointer-events: none;
+    background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
+  }
 
 
 
 
 
-  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
-  .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-
-  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); }
-  .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
+  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
+  .btn.purple:active { box-shadow: var(--btn-glans), 0 1px 0 var(--purple-shadow); }
 
 
 
 
 
-  .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
-  .btn.small.purple { box-shadow: 0 3px 0 var(--purple-shadow); }
-  .btn.small.gray   { box-shadow: 0 3px 0 var(--gray-shadow); }
-  .btn.small:active { box-shadow: 0 1px 0 var(--gold-cta-shadow); }
-  .btn.small.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.small.gray:active   { box-shadow: 0 1px 0 var(--gray-shadow); }
+
+  .btn.paper {
+    color: var(--purple-mid); background: var(--c-white);
+    box-shadow: inset 0 0 0 1.5px var(--paper-border), 0 var(--btn-lip) 0 var(--paper-border);
+  }
+  .btn.paper:active { box-shadow: inset 0 0 0 1.5px var(--paper-border), 0 1px 0 var(--paper-border); }
+
+
+
+
+
+  .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: var(--btn-glans), 0 3px 0 var(--gold-cta-shadow); }
+  .btn.small.purple { box-shadow: var(--btn-glans), 0 3px 0 var(--purple-shadow); }
+  .btn.small:active { box-shadow: var(--btn-glans), 0 1px 0 var(--gold-cta-shadow); }
+  .btn.small.purple:active { box-shadow: var(--btn-glans), 0 1px 0 var(--purple-shadow); }
 
 
 
@@ -1306,9 +1356,9 @@
     font-size: var(--tx-body); padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
     border: 1.5px solid rgba(255,255,255,.28);
     background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.28);
   }
-  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .btn.soft:active { transform: translateY(3px); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.18), 0 1px 0 rgba(0,0,0,.28); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
 
@@ -2417,9 +2467,12 @@
   .stage.tappable:active { transform: scale(.98); }
   .avatar-holder { line-height: 0; }
   .avatar-holder.idle { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 95%; }
+
+
+
   @keyframes sway {
-    0%,100% { transform: rotate(-2.5deg); }
-    50%     { transform: rotate(2.5deg); }
+    0%,100% { transform: rotate(-1.2deg); }
+    50%     { transform: rotate(1.2deg); }
   }
 
 
@@ -2517,6 +2570,38 @@
     20% { transform: translateY(0) scaleY(.82) scaleX(1.1); }
     45% { transform: translateY(-30px) scaleY(1.12) scaleX(.92); }
     70% { transform: translateY(0) scaleY(.9) scaleX(1.06); }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+  .av-hoofd, .av-staart, .av-arm-l { transform-box: view-box; }
+  .av-hoofd { transform-origin: 100px 104px; }
+  .av-staart-l { transform-origin: 68px 80px; }
+  .av-staart-r { transform-origin: 132px 80px; }
+  .av-arm-l { transform-origin: 84px 112px; }
+  .avatar-holder.knipoog .av-oog { transform: scaleY(.12); }
+  .avatar-holder.levend.idle .av-hoofd { animation: knik 2.6s ease-in-out infinite; }
+  @keyframes knik { 0%,100% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } }
+  .avatar-holder.levend.idle .av-staart { animation: slinger 2.6s ease-in-out -.35s infinite; }
+  @keyframes slinger { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+  .avatar-holder.levend.dancing .av-staart { animation: zwier .3s ease-in-out 3 alternate; }
+  @keyframes zwier { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+
+  .avatar-holder.levend.dancing:not(.move-buig) .av-arm-l { animation: armOp var(--t-pas, .9s) ease-in-out; }
+  @keyframes armOp { 0%,100% { transform: none; } 30%,65% { transform: rotate(100deg); } 48% { transform: rotate(80deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .avatar-holder.levend .av-hoofd,
+    .avatar-holder.levend .av-staart, .avatar-holder.levend .av-arm-l,
+    .avatar-holder.levend.idle { animation: none; }
   }
 
 
@@ -2697,9 +2782,15 @@
 
 
 
-  .ster-tegel .stage-podium { width: 80%; bottom: 10.4%; }
+
+
+
+
+
+
+  .ster-tegel .stage-podium { width: 73%; bottom: 10.4%; }
   .ster-tegel .stage-podium .podium, .newstar-preview .stage-podium .podium { --pod-dik: 4px; }
-  .ster-tegel .stage.op-podium .avatar-holder { margin-bottom: 12%; }
+  .ster-tegel .stage.op-podium .avatar-holder { height: 84%; margin-bottom: 12%; }
 
 
 
@@ -2895,6 +2986,11 @@
     .screen-header .icon-btn.header-left { width: var(--hud-h); height: var(--hud-h); }
     .screen-header .icon-btn.header-left .ico { width: 26px; height: 26px; }
     #screen-journey .reis-titel .rt-ico { font-size: 36px; }
+
+
+
+    .corner-btns .icon-btn { width: var(--hud-h); height: var(--hud-h); }
+    .app-knop { height: var(--hud-h); }
   }
 
 
@@ -3235,6 +3331,11 @@
 
   .segbar > span.done { background: var(--gold-accent); }
   .segbar > span.now { background: var(--c-white); box-shadow: 0 0 6px rgba(255,255,255,.55); }
+
+
+  .segbar > span.done.hint { background: linear-gradient(90deg, var(--gold-accent) 50%, rgba(255,255,255,.3) 50%); }
+  .segbar > span.done.mis { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5); }
+  .segbar > span.goudvraag { box-shadow: 0 0 0 1.5px var(--gold-accent), 0 0 7px rgba(var(--goud-gloed-rgb),.7); }
   @media (max-width: 430px) {
     .notes-left { font-size: var(--tx-body); letter-spacing: 0; }
     .segbar { width: min(44vw, 150px); }
@@ -3315,25 +3416,33 @@
   .choice-btn {
     font-family: inherit; font-size: 34px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 18px 8px; border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
 
 
     transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
-  .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
-  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
+
+
+  .choice-btn { position: relative; }
+  .choice-btn::after {
+    content: ''; position: absolute; left: 8%; right: 8%; top: 5px; height: 38%;
+    border-radius: var(--r-pill); pointer-events: none;
+    background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
+  }
+  .choice-btn:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .choice-btn.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .choice-btn.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
 
   .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(78vw, 300px); margin-top: 4px; }
   .num-btn {
     font-family: inherit; font-size: 28px; font-weight: 700; color: var(--c-white); border: none; cursor: pointer;
     padding: 13px 0; border-radius: var(--r-md);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
   }
-  .num-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .num-btn:active { transform: translateY(3px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .num-btn.ok { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
 
-  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
+  .num-btn.del { background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); font-size: 22px; }
 
 
 
@@ -3378,18 +3487,9 @@
     position: absolute; inset: 0;
     background:
       radial-gradient(124% 56% at 50% 0%, rgba(var(--w-glow-rgb), .34), transparent 70%),
-      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 64%, var(--w-deep) 100%);
+      linear-gradient(180deg, transparent 35%, rgba(10,2,22,.45) 100%),
+      linear-gradient(180deg, var(--w-sky) 0%, var(--w-deep) 40%, var(--w-deep) 100%);
   }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -3414,22 +3514,28 @@
 
   .venue-art {
     position: absolute; inset: -8%;
-    background-image: var(--venue-art, none);
+    container-type: size;
+    --z: var(--venue-zoom, 220);
+
+
+    filter: blur(var(--venue-blur, 2.5px)) brightness(var(--venue-dim, .66));
+    opacity: var(--venue-op, 1);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 26%, rgba(0,0,0,.55) 42%, transparent 60%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 26%, rgba(0,0,0,.55) 42%, transparent 60%);
+  }
 
 
 
 
-    background-size: var(--venue-zoom, 220%) auto;
-    background-position: var(--venue-focus, 70% 14%);
-    background-repeat: no-repeat;
 
-
-    filter: blur(var(--venue-blur, 11px)) brightness(var(--venue-dim, .62)) saturate(1.1);
-    opacity: var(--venue-op, .96);
-    -webkit-mask-image: radial-gradient(74% 86% at 50% 18%,
-      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
-    mask-image: radial-gradient(74% 86% at 50% 18%,
-      #000 0 24%, rgba(0,0,0,.74) 48%, rgba(0,0,0,.30) 70%, transparent 92%);
+  .venue-art::before {
+    content: ''; position: absolute;
+    width: calc(var(--z) * 1cqw);
+    aspect-ratio: 1215 / 2160;
+    left: clamp(calc(100cqw - var(--z) * 1cqw),
+                calc(50cqw - var(--venue-x, 50) * var(--z) * 1cqw / 100), 0px);
+    top: min(0px, calc(37cqh - var(--venue-y, 20) * var(--z) * 1cqw * 2160 / 1215 / 100));
+    background: var(--venue-art, none) center / 100% 100% no-repeat;
   }
 
 
@@ -3438,9 +3544,9 @@
 
   @media (min-aspect-ratio: 1/1) {
     .venue-art {
-      background-size: calc(var(--venue-zoom, 220%) * 1.75) auto;
-      filter: blur(calc(var(--venue-blur, 11px) * 2.1)) brightness(var(--venue-dim, .62)) saturate(1.1);
-      opacity: calc(var(--venue-op, .96) * .7);
+      --z: calc(var(--venue-zoom, 220) * 1.75);
+      filter: blur(calc(var(--venue-blur, 2.5px) * 2.1)) brightness(var(--venue-dim, .66));
+      opacity: calc(var(--venue-op, 1) * .7);
     }
   }
 
@@ -3453,7 +3559,12 @@
 
   .venue-licht {
     position: absolute; inset: 0;
+
+
+
     background:
+      linear-gradient(180deg, rgba(var(--w-deep-rgb),.55) 0, rgba(var(--w-deep-rgb),0) 110px),
+      radial-gradient(60% 13% at 50% 43%, rgba(var(--warm-licht-rgb),.16), transparent 70%),
       radial-gradient(112% 40% at 50% 2%, rgba(var(--goud-glans-rgb),.30), transparent 64%),
       radial-gradient(86% 58% at 50% 26%, transparent 34%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 26%, rgba(var(--w-deep-rgb), .50) 46%,
@@ -3559,6 +3670,14 @@
 
   .venue-aan .show-stage .avatar-holder, .venue-aan .end-stage .avatar-holder {
     height: 104%; filter: drop-shadow(0 6px 10px rgba(14,2,30,.55));
+  }
+
+
+
+  .venue-aan .game-arena .show-panel::before {
+    content: ''; position: absolute; z-index: 0; pointer-events: none;
+    left: -14%; right: -14%; top: -14%; bottom: -10%;
+    background: radial-gradient(closest-side at 50% 45%, rgba(var(--w-deep-rgb),.6), rgba(var(--w-deep-rgb),0));
   }
 
 
@@ -3677,17 +3796,12 @@
 
   @media (max-height: 700px) {
     .venue-licht { background:
+      linear-gradient(180deg, rgba(var(--w-deep-rgb),.55) 0, rgba(var(--w-deep-rgb),0) 90px),
       radial-gradient(112% 34% at 50% 0%, rgba(var(--goud-glans-rgb),.26), transparent 62%),
       radial-gradient(86% 56% at 50% 22%, transparent 32%, rgba(var(--w-deep-rgb), .62) 100%),
       linear-gradient(180deg, transparent 18%, rgba(var(--w-deep-rgb), .54) 40%,
                       rgba(var(--w-deep-rgb), .84) 58%, rgba(var(--w-deep-rgb), .93) 100%); }
     .venue-licht::after { top: 38%; }
-
-
-    .venue-art { -webkit-mask-image: radial-gradient(74% 72% at 50% 12%,
-        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%);
-      mask-image: radial-gradient(74% 72% at 50% 12%,
-        #000 0 20%, rgba(0,0,0,.70) 44%, rgba(0,0,0,.26) 66%, transparent 88%); }
   }
 
 
@@ -3859,7 +3973,7 @@
   .count-tile {
     font-family: inherit; border: none; cursor: pointer; color: var(--c-white);
     min-height: 88px; padding: 12px 8px; border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
+    background: linear-gradient(180deg, var(--purple-input-top), var(--purple-input-bottom)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-input-shadow), var(--btn-diep);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform var(--t-tik), box-shadow var(--t-tik);
 
@@ -3867,9 +3981,9 @@
 
     container-type: inline-size;
   }
-  .count-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--purple-input-shadow); }
-  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
-  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
+  .count-tile:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--purple-input-shadow); }
+  .count-tile.good { background: linear-gradient(180deg, var(--green-top), var(--green-deep)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--green-shadow), var(--btn-diep); }
+  .count-tile.bad { background: linear-gradient(180deg, var(--red-500), var(--red-answer-600)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--red-answer-shadow), var(--btn-diep); }
   .count-tile .cg-obj { font-size: 27px; }
   .count-tile .cg-dot { width: 20px; height: 20px; }
   .count-tile .ct-num { font-size: 40px; font-weight: 700; line-height: 1; }
@@ -4003,6 +4117,10 @@
   .mem-done-card { background: var(--c-white); border-radius: var(--r-lg); padding: 22px 26px; text-align: center; box-shadow: var(--e-3); }
   .mem-done-title { font-size: 54px; line-height: 1; }
   .mem-done-earn { margin: 12px auto 4px; }
+
+
+
+  .mem-done-card .earn-chip.dia { color: #0b4f7a; background: rgba(41,182,246,.2); }
   .mem-done-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
 
@@ -4042,6 +4160,17 @@
 
   @media (min-height: 780px) {
     .question-card { font-size: clamp(46px, 13vw, 62px); padding: 22px 30px 30px; }
+  }
+
+
+
+
+
+
+
+  @media (orientation: portrait) and (max-width: 599px) and (min-height: 760px) {
+    .game-arena { align-content: flex-end; row-gap: 14px; padding-bottom: 22px; }
+    .show-stage { width: 214px; height: 180px; }
   }
   @media (min-width: 900px) and (min-height: 760px) {
     .show-stage { width: 240px; height: 202px; }
@@ -4089,8 +4218,13 @@
 
 
 
+
+
+
+
   .praise.docked {
-    top: 98px; transform: scale(.7); gap: 5px; padding: 9px 18px 11px;
+    top: 98px; transform: scale(.7); flex-direction: row; gap: 10px;
+    border-radius: var(--r-pill); padding: 7px 9px 7px 18px;
   }
   .praise.docked .earn-chip { font-size: var(--tx-label); padding: 5px 12px; }
   .praise-headline {
@@ -4129,6 +4263,8 @@
     pointer-events: none;
   }
   .toast.met-sub, .toast.teken, .toast.hint { border-radius: var(--r-md); padding: 11px 20px 12px; }
+
+  .toast.hint.docked { border-radius: var(--r-pill); padding: 7px 20px; }
   .toast.goud { border-color: rgba(var(--goud-rgb),.6); box-shadow: var(--e-2), 0 0 20px rgba(var(--goud-gloed-rgb),.28); }
   .toast.goud .toast-main { color: var(--gold-light); }
   .toast.blauw, .praise.blauw { border-color: rgba(41,182,246,.8); box-shadow: var(--e-2), 0 0 20px rgba(41,182,246,.3); }
@@ -4165,6 +4301,7 @@
 
   @media (max-height: 700px) {
     .praise.docked, .toast.docked { top: 94px; padding: 5px 13px 6px; gap: 2px; }
+    .praise.docked { gap: 8px; padding: 5px 6px 5px 14px; }
     .praise.docked .praise-headline { font-size: var(--tx-klein); }
     .praise.docked .earn-chip { font-size: var(--tx-mini); padding: 2px 7px; }
     .toast.docked .toast-main { font-size: var(--tx-label); }
@@ -4227,7 +4364,7 @@
 
 
   .av-oog { transform-box: fill-box; transform-origin: center; }
-  .avatar-holder.oeps .av-oog { transform: scale(1.35); }
+  .avatar-holder.oeps .av-oog { animation: none; transform: scale(1.35); }
   .avatar-holder.oeps .av-mond { opacity: 0; }
   .avatar-holder.oeps .av-mond-o { opacity: 1; }
   .avatar-holder.oeps > .pas-laag { transform-origin: 50% 95%; animation: oepsSchrik .45s var(--ease-uit); }
@@ -5651,9 +5788,14 @@
 
 
 
+
+
+
+
   .tour-hero::after { content: ""; position: absolute; z-index: 0;
-    left: 50%; bottom: 0.1cqw; transform: translateX(-50%);
-    width: 11cqw; height: 2.2cqw; border-radius: 50%; background: rgba(110,45,0,.42); filter: blur(1px); }
+    left: 50%; bottom: -0.5cqw; transform: translateX(-50%);
+    width: 17cqw; height: 2.8cqw; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(110,45,0,.55), rgba(110,45,0,.25) 70%, transparent); }
 
 
 
@@ -6431,9 +6573,6 @@
     #screen-journey .rt-ico { font-size: 26px; }
 
 
-    #screen-journey .icon-btn { width: 34px; height: 34px; position: relative; }
-    #screen-journey .icon-btn .ico { width: 18px; height: 18px; }
-    #screen-journey .icon-btn::before { content: ''; position: absolute; inset: -5px; }
     #screen-journey .diamond-badge { font-size: var(--tx-label); padding: 0 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -6622,8 +6761,17 @@
 
 
 
-  .kast-groep { width: 100%; margin-top: 16px; }
-  .kast-groep:first-child { margin-top: 4px; }
+
+
+
+
+
+  .kast-groep {
+    width: 100%; margin-top: 14px; padding: 12px 10px 16px; border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .kast-groep:first-child { margin-top: 6px; }
   .kast-groep:last-child { margin-bottom: 4px; }
 
 
@@ -6632,7 +6780,7 @@
 
   .groep-kop {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 0 4px 2px; margin-bottom: 9px;
+    padding: 2px 4px; margin-bottom: 8px;
   }
   .groep-ico { flex: none; font-size: 22px; line-height: 1; margin-top: 2px; filter: var(--emoji-schaduw); }
   .groep-tekst { flex: 1 1 auto; min-width: 0; }
@@ -6640,26 +6788,41 @@
 
 
 
-
-  .trophy-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; align-items: stretch; }
-
+  #screen-trophies.balk-aan #trophy-shelves { padding-bottom: calc(var(--lade-onder) + 16px + 62px); }
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .trophy-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 18px 6px;
+  }
+  @media (min-width: 560px) { .trophy-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 900px) { .trophy-grid { grid-template-columns: repeat(6, 1fr); } }
   .trophy-card {
-    position: relative; flex: 0 1 calc(50% - 5px); max-width: 210px;
-    background: var(--vlak);
-    border: 2px solid var(--vlak-rand);
-    border-radius: var(--r-md); padding: 10px 8px 10px; text-align: center; cursor: pointer;
-    display: flex; flex-direction: column; align-items: stretch; gap: 0;
-    box-shadow: var(--vlak-top);
-    transition: filter .12s, transform var(--t-tik), background .12s, border-color .12s, box-shadow .12s;
+    position: relative; min-width: 0; padding: 8px 2px 2px; text-align: center; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center;
+    transition: transform var(--t-tik);
   }
-  .trophy-card:hover { filter: brightness(1.1); }
-  .trophy-card:active { transform: scale(.97); }
+  .trophy-card:active { transform: scale(.96); }
 
 
 
@@ -6669,174 +6832,144 @@
 
 
 
-
-
-
-
-
-
-
-  .trophy-card .temoji { font-size: 32px; line-height: 1; height: 38px; display: grid; place-items: center; filter: var(--emoji-schaduw); }
-  .trophy-card .tname { font-size: var(--tx-label); font-weight: 700; margin-top: 4px; line-height: 1.16; }
-
-
-  .tvoet { margin-top: auto; padding-top: 7px; display: flex; flex-direction: column; align-items: center; }
-
-  @media (min-width: 560px) { .trophy-card { flex-basis: calc(33.333% - 6.7px); } }
-  @media (min-width: 760px) { .trophy-card { flex-basis: calc(25% - 7.5px); } }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .trophy-card.fresh {
-    background: rgba(0,0,0,.16);
-    border-color: rgba(255,255,255,.07);
+  .trophy-card .temoji {
+    position: relative; flex: none;
+    width: 68px; height: 68px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 34px; line-height: 1;
+    border: 3px solid transparent;
+    background:
+      var(--medaille-vul) padding-box,
+      conic-gradient(var(--gold-accent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.1);
   }
-
-
-  .trophy-card.fresh .temoji { opacity: .6; filter: var(--emoji-schaduw) saturate(.45); }
-  .trophy-card.fresh .tname { opacity: .84; }
-
-
-
-
-  .trophy-card.busy {
-    background: rgba(0,0,0,.16);
-    border-color: rgba(255,255,255,.07);
-    box-shadow: none;
-  }
-  .trophy-card.busy .temoji { opacity: .9; }
-
-
-
-
-
-  .trophy-card.locked { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.05); box-shadow: none; }
-  .trophy-card.locked .temoji { filter: grayscale(.55); opacity: .52; }
-  .trophy-card.locked .tname { opacity: .64; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .trophy-card.done { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.2); box-shadow: none; }
-  .trophy-card.done:not(.pw-card) .tvoet { visibility: hidden; }
-  .trophy-card.done:not(.pw-card) .temoji, .trophy-card.done:not(.pw-card) .tname { transform: translateY(17px); }
-  .trophy-card.done::before {
-    content: ''; position: absolute; left: 50%; top: 40%; width: 84px; height: 84px;
-    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255,255,255,.2), rgba(255,255,255,.07) 62%, transparent);
+  .trophy-card .tico { filter: var(--emoji-schaduw); }
+  .trophy-card.done .temoji, .trophy-card.ready .temoji {
+    background: var(--medaille-vul-goud) padding-box, var(--medaille-goud) border-box;
+    box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18);
   }
 
 
 
 
+  .trophy-card.ready .temoji { box-shadow: 0 0 22px rgba(var(--goud-rgb),.75), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ready .tico { font-size: 38px; }
 
 
-  .tvink {
-    min-width: 34px; padding: 3px 10px; border-radius: var(--r-pill);
-    font-size: 14px; font-weight: 800; line-height: 1.15;
-    color: var(--gold-accent); background: rgba(var(--goud-rgb),.16);
+
+
+
+
+
+
+
+
+
+
+
+  .trophy-card.ladder:not(.ready) .temoji {
+    background:
+      var(--medaille-vul) padding-box,
+      conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
+  }
+  .trophy-card.ladder.nu-0:not(.ready) .temoji { --vlak: var(--m-vlak-0); --rand: var(--m-rand-0); box-shadow: 0 0 14px rgba(217,143,85,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.25); }
+  .trophy-card.ladder.nu-1:not(.ready) .temoji { --vlak: var(--m-vlak-1); --rand: var(--m-rand-1); box-shadow: 0 0 14px rgba(219,228,238,.35), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
+  .trophy-card.ladder.nu-2:not(.ready) .temoji { --vlak: var(--m-vlak-2); --rand: var(--m-rand-2); box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.3); }
+  .trophy-card.ladder.nu-3:not(.ready) .temoji { --vlak: var(--m-vlak-3); --rand: var(--m-rand-3); box-shadow: 0 0 20px rgba(159,232,255,.55), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
+  .trophy-card.ladder.done:not(.ready) .temoji {
+    background:
+      var(--vlak) padding-box,
+      conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
+  }
+  .trophy-card.ladder.top:not(.ready) .temoji { background: var(--vlak) padding-box, var(--rand) border-box; overflow: hidden; }
+  .trophy-card.ladder.top:not(.ready) .temoji::after {
+    content: ''; position: absolute; top: -10%; bottom: -10%; left: -60%; width: 45%; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+    animation: shineSweep 3.6s ease-in-out 1s infinite;
+  }
+  .trophy-card.ladder .tico { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+
+
+
+
+  .trap-stippen { display: flex; gap: 6px; margin-top: 6px; }
+  .trap-stippen i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .trap-stippen i.m-0 { background: var(--m-0); }
+  .trap-stippen i.m-1 { background: var(--m-1); }
+  .trap-stippen i.m-2 { background: var(--m-2); }
+  .trap-stippen i.m-3 { background: var(--m-3); }
+
+
+
+
+
+  .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
+  .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
+  .trophy-card.kies .tname { color: var(--c-white); }
+
+
+  .trophy-card.klink .temoji, .trophy-card.klink .pw-medal { animation: kastKlink .55s cubic-bezier(.3,.7,.3,1); }
+  .trophy-card.klink .temoji::before {
+    content: ''; position: absolute; inset: -8px; border-radius: 50%; pointer-events: none;
+    border: 2px solid rgba(var(--goud-glans-rgb),.9); animation: kastKlinkRing .55s ease-out forwards;
+  }
+  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: kastDof .38s ease-out; }
+  @keyframes kastKlink {
+    0% { transform: perspective(300px) rotateY(0) scale(1); }
+    45% { transform: perspective(300px) rotateY(200deg) scale(1.14); }
+    100% { transform: perspective(300px) rotateY(360deg) scale(1); }
+  }
+  @keyframes kastKlinkRing { from { opacity: .9; transform: scale(.8); } to { opacity: 0; transform: scale(1.5); } }
+  @keyframes kastDof {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-3deg); }
+    45% { transform: translateX(4px) rotate(3deg); }
+    70% { transform: translateX(-2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .trophy-card.ladder.top .temoji::after { animation: none; display: none; }
+    .trophy-card.klink .temoji, .trophy-card.klink .pw-medal,
+    .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: none; }
+    .trophy-card.klink .temoji::before { display: none; }
   }
 
 
 
+  .trophy-card .tname {
+    font-size: var(--tx-klein); font-weight: 700; margin-top: 9px; line-height: 1.2;
+    overflow-wrap: break-word; max-width: 100%;
+  }
+  .trophy-card.ready .tname { color: var(--gold-light); }
+  .trophy-card.fresh .tname, .trophy-card.busy .tname { color: rgba(255,255,255,.72); }
+  .trophy-card.locked .tname { color: rgba(255,255,255,.56); }
+
+  .tvoet { margin-top: 6px; display: flex; flex-direction: column; align-items: center; }
 
 
+
+
+  .trophy-card.fresh .tico { opacity: .5; filter: var(--emoji-schaduw) saturate(.35); }
+  .trophy-card.busy .tico { opacity: .6; filter: var(--emoji-schaduw) saturate(.5); }
+
+
+  .trophy-card.locked .tico { filter: grayscale(.55); opacity: .52; }
 
   .tstand {
     padding: 3px 10px; border-radius: var(--r-pill);
     font-size: var(--tx-klein); font-weight: 700; line-height: 1.15; white-space: nowrap;
     color: var(--c-white); background: rgba(255,255,255,.12);
-    transition: background var(--t-tik, .1s) ease, transform var(--t-tik, .1s) ease;
   }
-  .tstand.omgeklapt { background: rgba(255,255,255,.24); transform: scale(1.06); }
+
+
+
+  .tbalk { width: 56px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
+  .tbalk i { display: block; height: 100%; border-radius: inherit; background: var(--gold-accent); }
 
 
 
 
 
-
-
-
-
-
-
-  .pw-grid { gap: 11px; }
-
-
-
-
-  .pw-card { flex: 0 1 calc(50% - 5.5px); max-width: 240px; padding: 12px 8px 11px; }
-  @media (min-width: 560px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  @media (min-width: 760px) { .pw-card { flex-basis: calc(33.333% - 7.4px); } }
-  .pw-card .tname { margin-top: 7px; font-size: var(--tx-label); }
   .pw-medal {
-    position: relative; width: 60px; height: 60px; margin: 2px auto 0;
+    position: relative; flex: none; width: 68px; height: 68px;
     border-radius: 50%; display: grid; place-items: center;
     background:
       radial-gradient(76% 76% at 50% 22%, var(--pw-glow, #7a2f63), transparent 74%),
@@ -6844,17 +6977,14 @@
     border: 2px solid rgba(255,255,255,.3);
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 10px rgba(0,0,0,.3);
   }
-  .pw-ico { font-size: 28px; line-height: 1; filter: var(--emoji-schaduw); }
-
+  .pw-ico { font-size: 30px; line-height: 1; filter: var(--emoji-schaduw); }
 
   .pw-medal.pw-prijs, .trophy-card.done .pw-medal.pw-prijs {
-    width: 72px; height: 62px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+    width: 76px; height: 68px; border: 0; border-radius: 0; background: none; box-shadow: none; }
 
 
   .pw-card.fresh .pw-medal { opacity: .68; }
   .pw-card.fresh .pw-ico { opacity: .85; }
-
-
   .pw-card.busy .pw-medal { opacity: .84; }
   .pw-card.busy .pw-ico { opacity: .94; }
 
@@ -6865,49 +6995,6 @@
 
 
 
-
-
-
-
-
-
-  .trophy-card.ready {
-    border-color: var(--gold-accent); background: var(--goud-tint);
-    box-shadow: var(--goud-gloed);
-  }
-  .ready-open {
-    display: block; text-align: center;
-    color: var(--ink-on-gold); background: var(--gold-accent);
-    font-size: var(--tx-klein); font-weight: 700; letter-spacing: .01em;
-    border-radius: var(--r-pill); padding: 5px 8px;
-    position: relative;
-    animation: readyAdem 1.4s ease-in-out infinite;
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .ready-open::before, .ready-open::after {
-    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  }
-  .ready-open::before { box-shadow: var(--goud-gloed); animation: readyRust 1.4s ease-in-out infinite; }
-  .ready-open::after { box-shadow: 0 0 26px rgba(var(--goud-gloed-rgb),.7); opacity: 0; animation: readyTop 1.4s ease-in-out infinite; }
-  @keyframes readyAdem { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-  @keyframes readyRust { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-  @keyframes readyTop { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
 
 
 
@@ -6984,22 +7071,35 @@
   }
   .horizon-mist:hover { background: transparent; }
   .horizon-mist:active { transform: none; }
+
+  .trophy-grid .horizon-mist { border-radius: var(--r-md); min-height: 100px; align-self: stretch; padding: 8px; }
   .horizon-wolk { font-size: 30px; line-height: 1; opacity: .7; }
   .horizon-tekst {
     margin-top: 8px; font-size: var(--tx-klein); font-weight: 700;
     color: rgba(255,255,255,.62); overflow-wrap: break-word;
   }
 
+
+
+
+
+
+
+
+
   .trophy-pop-overlay {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
-    background: rgba(20,4,40,.45); animation: popFade .25s ease; cursor: pointer;
+    background: radial-gradient(60% 45% at 50% 45%, rgba(60,20,90,.78), rgba(10,2,24,.92));
+    animation: popFade .25s ease; cursor: pointer;
   }
   .trophy-pop-overlay.closing { animation: popFade .3s ease reverse forwards; }
-  .trophy-pop { padding: 22px 30px; }
-  .tp-head { font-size: var(--tx-body); font-weight: 700; color: var(--gold-light); }
-  .tp-emoji { font-size: 66px; line-height: 1.1; margin: 4px 0; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.8)); }
-  .tp-name { font-size: var(--tx-sub); font-weight: 700; color: var(--c-white); }
-  .tp-joepie { font-size: var(--tx-label); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
+  .trophy-pop {
+    padding: 0 20px; background: none; border: 0; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  .tp-head { font-size: var(--tx-sub); font-weight: 700; color: var(--gold-light); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .tp-name { font-size: var(--tx-feest); font-weight: 700; color: var(--c-white); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .tp-joepie { font-size: var(--tx-body); font-weight: 700; color: var(--pink-light); margin-top: 4px; }
   @keyframes popFade { from { opacity: 0; } to { opacity: 1; } }
 
 
@@ -7050,8 +7150,9 @@
   .wf-som .mini-kaart .item-thumb svg { height: 30px; }
   .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
   .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
-  .wf-goud { margin-top: 4px; padding: 4px 12px; border-radius: 99px; font-size: var(--tx-klein); font-weight: 700;
-    color: #3a2200; background: linear-gradient(var(--gold-light), var(--gold-accent)); }
+
+
+  .wf-goud { margin-top: 4px; font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); }
   .wereld-feest .wf-een > * { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-een > :nth-child(2) { animation-delay: .1s; }
   .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
@@ -7067,8 +7168,11 @@
 
 
 
-  .trophy-card.ready { overflow: hidden; }
-  .trophy-card.ready::after {
+
+
+
+  .trophy-card.ready .temoji { overflow: hidden; }
+  .trophy-card.ready .temoji::after {
     content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%; z-index: 3; pointer-events: none;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
     transform: translateX(0) skewX(-18deg);
@@ -7105,12 +7209,9 @@
   .trophy-card.ready .temoji, .trophy-card.ready .pw-medal { animation: giftWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
 
 
-  #trophy-shelves.schuift .trophy-card.ready::after,
+  #trophy-shelves.schuift .trophy-card.ready .temoji::after,
   #trophy-shelves.schuift .trophy-card.ready .temoji,
-  #trophy-shelves.schuift .trophy-card.ready .pw-medal,
-  #trophy-shelves.schuift .ready-open,
-  #trophy-shelves.schuift .ready-open::before,
-  #trophy-shelves.schuift .ready-open::after { animation-play-state: paused; }
+  #trophy-shelves.schuift .trophy-card.ready .pw-medal { animation-play-state: paused; }
   @keyframes giftWiggle {
     0%, 58%, 100% { transform: rotate(0) translateY(0); }
     66% { transform: rotate(-9deg); } 74% { transform: rotate(8deg); }
@@ -7126,16 +7227,31 @@
   @keyframes tapRipple { 0% { transform: translate(-50%,-50%) scale(0); opacity: .9; } 100% { transform: translate(-50%,-50%) scale(9); opacity: 0; } }
 
 
-  .tp-stage { position: relative; width: 150px; height: 118px; margin: 6px auto 2px; display: flex; align-items: center; justify-content: center; }
-  .tp-chest { position: absolute; z-index: 2; font-size: 74px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
+  .tp-stage { position: relative; width: 240px; height: 230px; margin: 4px auto 6px; display: flex; align-items: center; justify-content: center; }
+  .tp-chest { position: absolute; z-index: 2; font-size: 108px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: chestShake .5s ease-in-out infinite; }
   @keyframes chestShake { 0%,100% { transform: rotate(-5deg) translateY(0); } 25% { transform: rotate(5deg) translateY(-2px); } 50% { transform: rotate(-4deg); } 75% { transform: rotate(4deg) translateY(-2px); } }
-  .tp-emoji { position: relative; z-index: 3; font-size: 66px; line-height: 1.1; filter: drop-shadow(0 0 10px rgba(var(--goud-rgb),.85)); opacity: 0; transform: scale(.2); }
+  .tp-emoji {
+    position: relative; z-index: 3; opacity: 0; transform: scale(.2);
+    width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 64px; line-height: 1;
+    border: 5px solid transparent;
+    background: var(--tp-vlak, var(--medaille-vul-goud)) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
+    box-shadow: 0 0 32px rgba(var(--goud-rgb),.6), 0 6px 18px rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.2);
+  }
   .tp-rays {
-    position: absolute; width: 210px; height: 210px; z-index: 1; opacity: 0; border-radius: 50%;
+    position: absolute; width: 340px; height: 340px; z-index: 1; opacity: 0; border-radius: 50%;
     background: repeating-conic-gradient(from 0deg, rgba(var(--goud-glans-rgb),.5) 0deg 9deg, transparent 9deg 21deg);
     -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); mask: radial-gradient(circle, #000 20%, transparent 68%);
   }
-  .tp-ring { position: absolute; width: 58px; height: 58px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+  .tp-ring { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(var(--goud-glans-rgb),.9); z-index: 1; opacity: 0; }
+
+
+  @media (max-height: 460px) {
+    .tp-stage { width: 200px; height: 170px; }
+    .tp-emoji { width: 100px; height: 100px; font-size: 48px; border-width: 4px; }
+    .tp-chest { font-size: 84px; }
+    .tp-rays { width: 260px; height: 260px; }
+  }
   .trophy-pop .tp-name, .trophy-pop .tp-joepie { opacity: 0; }
   .trophy-pop.burst .tp-chest { animation: chestBurst .4s ease forwards; }
   @keyframes chestBurst { 0% { transform: scale(1) rotate(0); opacity: 1; } 45% { transform: scale(1.25) rotate(-4deg); } 100% { transform: scale(1.75); opacity: 0; } }
@@ -7164,7 +7280,9 @@
 
 
 
-  .trophy-card.just-claimed::after {
+
+  .trophy-card.just-claimed .temoji { overflow: hidden; }
+  .trophy-card.just-claimed .temoji::after {
     content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
     background: linear-gradient(105deg, transparent 38%, rgba(var(--goud-glans-rgb),.7) 50%, transparent 62%);
     background-size: 250% 100%; background-position: 120% 0;
@@ -7173,13 +7291,8 @@
   @keyframes claimShimmer { from { background-position: 120% 0; } to { background-position: -40% 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .trophy-card.ready, .ready-open { animation: none; }
-
-
-
-    .ready-open::before, .ready-open::after { display: none; }
-    .trophy-card.ready::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
-    .trophy-card.just-claimed::after { animation: none; }
+    .trophy-card.ready .temoji::after, .trophy-card.ready .temoji, .trophy-card.ready .pw-medal,
+    .trophy-card.just-claimed .temoji::after { animation: none; }
 
     .tp-chest, .tp-rays, .tp-ring, .burst-bit, .tap-ripple { display: none; }
     .trophy-pop .tp-name, .trophy-pop .tp-joepie, .trophy-pop.burst .tp-emoji { opacity: 1; transform: none; animation: none; }
@@ -7230,7 +7343,8 @@
 
 
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
-  .end-text { font-size: var(--tx-body); }
+
+  .end-text { font-size: var(--tx-body); text-wrap: balance; }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
 
 
@@ -7242,6 +7356,7 @@
     .end-text { font-size: var(--tx-label); }
     .earn-line { gap: 6px; margin: 7px 0 8px; }
     .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
+    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; }
     .end-milestone { min-height: 30px; margin-bottom: 8px; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
@@ -7258,10 +7373,13 @@
 
 
 
-  .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
+
+
+  .earn-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
+  .earn-line .earn-chip { min-height: 34px; box-sizing: border-box; padding: 7px 16px; }
 
   .earn-chip.dia { background: rgba(41,182,246,.32); }
 
@@ -7813,6 +7931,11 @@
 
 
   .shuffle-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
+
+
+
+
+  .shuffle-btn { z-index: 2; }
   .shuffle-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(8,1,20,.5), inset 0 0 0 1.5px rgba(255,255,255,.4); }
   .shuffle-btn:active { transform: scale(.92); }
 
@@ -8103,6 +8226,23 @@
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
 
 
+
+
+
+
+
+
+  .item-card .item-thumb { height: 62px; position: relative; margin-bottom: 8px; }
+  .item-card .item-thumb svg { height: 62px; }
+  .item-card .item-thumb .thumb-emo { font-size: 46px; }
+  .item-card .item-thumb > * { position: relative; z-index: 1; }
+  .item-card .item-thumb:not(.thumb-podium):not(.thumb-prijs):not(.thumb-staal)::after {
+    content: ''; position: absolute; left: 50%; bottom: -4px; width: 58%; height: 9px;
+    transform: translateX(-50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(0,0,0,.38), transparent);
+  }
+
+
   .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
     width: max-content; max-width: calc(100% - 16px); text-align: center; pointer-events: none; font-size: var(--tx-klein); font-weight: 700; color: #fff;
     padding: 8px 14px; border-radius: 99px; background: rgba(38,12,70,.86);
@@ -8231,11 +8371,7 @@
 
 
 
-  .wereld-feest .wf-aan {
-    margin-top: 11px; padding: 9px 20px; font-size: var(--tx-body);
-    background: var(--gold-accent); color: var(--ink-on-gold); border: 0;
-    box-shadow: var(--goud-gloed);
-  }
+  .wereld-feest .wf-aan { margin-top: 12px; padding: 9px 22px; }
   .wereld-feest .wf-aan + .wf-verder { margin-top: 7px; }
 
 
@@ -8322,7 +8458,12 @@
   }
   .spiegel-podium .podium { width: 100%; height: 100%; --pod-dik: 7px; }
   .spiegel .avatar-holder { position: relative; z-index: 1; height: 84%; margin-bottom: 8.5%; pointer-events: none; }
-  .spiegel .avatar-holder svg { pointer-events: auto; }
+
+
+
+
+  .spiegel .avatar-holder svg { pointer-events: none; }
+  .spiegel .avatar-holder svg * { pointer-events: visiblePainted; }
 
 
   .dress-bar.podium-bar { flex-direction: column; gap: 8px; padding: 10px 10px 11px; }
@@ -8522,6 +8663,11 @@
   .btn.speel-als {
     display: inline-flex; align-items: center; justify-content: center; flex: none;
     width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 20px;
+  }
+
+
+  @media (min-width: 600px) and (min-height: 700px) {
+    .btn.speel-als { width: var(--hud-h); height: var(--hud-h); font-size: 24px; }
   }
   .speel-als[hidden] { display: none; }
 
@@ -8884,7 +9030,10 @@
   }
   .newstar-preview .deco { display: none; }
 
-  .newstar-preview .stage-podium { width: 80%; bottom: 6.4%; }
+  .newstar-preview .stage-podium { width: 78%; bottom: 6.4%; }
+
+
+  .newstar-preview .stage.op-podium .avatar-holder { height: 90%; }
 
 
 
@@ -9603,7 +9752,7 @@
         <div class="mem-done-earn earn-chip dia" id="mem-done-earn"></div>
         <div class="mem-done-btns">
           <button class="btn" onclick="naTik(startMemory)">🎤 Nog een keer</button>
-          <button class="btn gray" onclick="naTik(exitMemory)">🗺️ Kaart</button>
+          <button class="btn paper" onclick="naTik(exitMemory)">🗺️ Kaart</button>
         </div>
       </div>
     </div>
@@ -9637,7 +9786,7 @@
         <div class="venue-bundel" aria-hidden="true"></div>
         <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage stage-frame show-stage" id="show-stage">
-          <div class="avatar-holder idle" id="game-avatar-inner"></div>
+          <div class="avatar-holder idle levend" id="game-avatar-inner"></div>
         </div>
       </div>
       <div class="math-panel">
@@ -9661,7 +9810,7 @@
       <div class="modal-body">Dan stopt dit optreden en ga je terug naar de kaart.</div>
       <div class="modal-actions">
         <button class="btn" onclick="closeQuitModal()">🎤 Doorspelen</button>
-        <button class="btn gray" onclick="quitGame()">Stoppen</button>
+        <button class="btn paper" onclick="quitGame()">Stoppen</button>
       </div>
       <!-- Het geluid, hier ook. Het tandwiel staat alleen op de sterrenkeuze, dus
            wie midden in een show stilte wilde, moest de show uit. Dit venster is
@@ -9736,7 +9885,7 @@
         <div class="venue-bundel" aria-hidden="true"></div>
         <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
-          <div class="avatar-holder idle" id="end-avatar"></div>
+          <div class="avatar-holder idle levend" id="end-avatar"></div>
         </div>
       </div>
       <div class="result-stars" id="end-stars"></div>
@@ -9784,7 +9933,7 @@
           <!-- Het podium waar ze op staat (paintShop tekent hem). Een tik erop
                opent Podia: de snelkoppeling naar de lade waar je er een kiest. -->
           <div class="spiegel-podium" id="shop-podium" onclick="openPodia(event)"></div>
-          <div class="avatar-holder idle" id="shop-avatar"></div>
+          <div class="avatar-holder idle levend" id="shop-avatar"></div>
         </div>
         <button class="shuffle-btn" onclick="surpriseOutfit()" aria-label="Verras me met een outfit" title="Verras me!">🎲</button>
       </div>
@@ -9844,6 +9993,8 @@
 
 <!-- actiebalk van de kleedkamer: passen/kopen, altijd in beeld boven de navigatie -->
 <div class="dress-bar" id="dress-bar"></div>
+<!-- en dezelfde balk in de kast: wat de getikte trofee is of nog vraagt (kastBalk) -->
+<div class="dress-bar" id="kast-bar"></div>
 
 <!-- vaste navigatie op de drie rustpunten: kaart (spelen), kleedkamer (passen/kopen), trofeeën.
      Alleen de iconen: wie hier speelt leest meestal nog niet, 🗺️ 👕 🏆 zeggen het zelf
@@ -10179,9 +10330,29 @@ function finaleDance(elId, count) {
 
 
 
+
+
+
+
+
+
+const DOCK_LAAG = '(min-aspect-ratio: 1/1) and (max-height: 520px)';
+function dockPlek(el) {
+  el.style.left = el.style.right = '';
+  if (!el.classList.contains('docked') || !matchMedia(DOCK_LAAG).matches) return;
+  const ster = document.querySelector('#screen-game .show-panel');
+  const som = document.querySelector('#screen-game .math-panel');
+  if (!ster || !som) return;
+  const a = ster.getBoundingClientRect(), b = som.getBoundingClientRect();
+  if (b.left < a.right - 1) return;
+  const mid = a.left + a.width / 2, half = 170;
+  el.style.left = Math.max(8, mid - half) + 'px';
+  el.style.right = Math.max(8, innerWidth - mid - half) + 'px';
+}
 function showPraise(txt, reward, blauw) {
   const el = $('praise');
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  dockPlek(el);
   el.classList.toggle('blauw', !!blauw);
   el.innerHTML = `<div class="praise-headline">${txt}</div>` + (reward ? `<div class="earn-chip dia">${reward}</div>` : '');
   el.classList.remove('pop');
@@ -10227,6 +10398,7 @@ function showToast(txt, onTap, sub, soort) {
   const t = $('toast');
   if (toastFade) { toastFade.cancel(); toastFade = null; }
   t.classList.toggle('docked', $('screen-game').classList.contains('active'));
+  dockPlek(t);
   t.classList.toggle('teken', soort === 'teken');
   t.classList.toggle('hint', soort === 'hint');
   t.classList.toggle('goud', soort === 'goud');
@@ -11252,6 +11424,7 @@ const ITEMS = [
   { id: 'mic_blauw',  cat: 'mic', name: 'Blauw',   full: 'Blauwe microfoon', price: 35, color: '#42a5f5' },
   { id: 'mic_groen',  cat: 'mic', name: 'Groen',   full: 'Groene microfoon', price: 40, color: '#66bb6a' },
   { id: 'mic_pintje', cat: 'mic', name: 'Pintje',  full: 'Pintjemicrofoon',       price: 45, emoji: '🍺' },
+  { id: 'mic_bubbels', cat: 'mic', name: 'Bubbels', full: 'Bubbelsmicrofoon',      price: 50, emoji: '🥂' },
   { id: 'mic_zwart',  cat: 'mic', name: 'Rock', full: 'Rockmicrofoon', price: 55, color: '#37474f' },
   { id: 'mic_toverstaf', cat: 'mic', name: 'Toverstaf', full: 'Toverstafmicrofoon', price: 70, emoji: '🪄' },
   { id: 'mic_goud',   cat: 'mic', name: 'Goud',   full: 'Gouden microfoon', price: 60, color: '#ffd54f' },
@@ -12984,12 +13157,19 @@ function rebuildWorldBadges() {
 
 
 
+
 const TROPHIES = [
 
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
 
-  { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
+
+
+
+
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
+
+
+  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
 
 
 
@@ -13002,15 +13182,47 @@ const TROPHIES = [
 
   { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
 
-  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',   desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
-  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',  desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester', desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende', desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker',   desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',   emoji: '👑', name: 'Gouden kroon', desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
 
-  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
 
+
+
+
+  { id: 'sums25',   emoji: '🧮', name: 'Rekenmedaille · Brons',   trap: 0, desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenmedaille · Zilver',  trap: 1, desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '🧮', name: 'Rekenmedaille · Goud',    trap: 2, desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🧮', name: 'Rekenmedaille · Diamant', trap: 3, desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker · Brons',  trap: 0, desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',   emoji: '🌟', name: 'Goudzoeker · Zilver', trap: 1, desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+
+
+  { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '50 gouden vragen', has: p => p.goldHits >= 50, progress: p => trophyProgress(p.goldHits, 50, 'gouden vragen goed') },
+
+
+
+
+
+
+
+
+
+
+
+  { id: 'leer-brug',   emoji: '🌉', name: 'Over de brug',   desc: '10 sommen over de tien goed',
+    voor: p => !telModus(p) && p.settings.max > 10 && p.settings.ops.some(o => o === '+' || o === '-'),
+    has: p => leerTel(p, 'brug') >= 10, progress: p => trophyProgress(leerTel(p, 'brug'), 10, 'sommen over de tien') },
+  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer zoek het getal goed',
+    voor: p => !telModus(p) && p.settings.missNum !== false && p.settings.ops.some(o => o === '+' || o === '-' || o === 'x'),
+    has: p => leerTel(p, 'zoek') >= 10, progress: p => trophyProgress(leerTel(p, 'zoek'), 10, 'zoeksommen') },
+  { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
+    voor: p => !telModus(p) && p.settings.chain3 !== false && p.settings.ops.includes('+'),
+    has: p => leerTel(p, 'drie') >= 10, progress: p => trophyProgress(leerTel(p, 'drie'), 10, 'sommen met drie getallen') },
+
+  { id: 'leer-cijfers', emoji: '🔢', name: 'Cijferkenner',  desc: 'Je telt met cijfers',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 6,
+    has: p => telModus(p) && telFase(p) >= 6 },
+  { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
+    has: p => telModus(p) && telFase(p) >= 9 },
 
 
 
@@ -13020,7 +13232,25 @@ const TROPHIES = [
   { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar',  desc: '10 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
 
+
+  { id: 'eigenpodium', emoji: '🎪', name: 'Eigen podium', desc: 'Je eerste eigen podium', naar: 'stage',
+    has: p => ITEMS.some(it => it.cat === 'stage' && it.id !== 'stage_disco' && podiumVanJou(p, it)) },
+
 ];
+
+
+
+
+
+
+
+
+const TRAP_NAMEN = ['Brons', 'Zilver', 'Goud', 'Diamant'];
+const TROPHY_LADDERS = [
+  { key: 'reken', emoji: '🧮', name: 'Rekenmedaille', ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
+  { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',    ids: ['gold5', 'gold20', 'gold50'] },
+];
+
 
 
 
@@ -13034,16 +13264,18 @@ const TROPHIES = [
 
 const TROPHY_SHELVES = [
   { key: 'avontuur', ico: '🎤', name: 'Avontuur',          note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'toegift', 'perfect1', 'worldtour'] },
+    ids: ['first', 'perfect1', 'perfect10', 'worldtour'] },
   { key: 'rekenen',  ico: '🧮', name: 'Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
-    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50'] },
+  { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
+    ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
 
 
 
   { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
     ids: [] },
-  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Voor een echte popster',
-    ids: ['perfect10', 'shopper'] },
+  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Je eigen stijl in de kleedkamer',
+    ids: ['shopper', 'eigenpodium'] },
 ];
 
 
@@ -13072,6 +13304,8 @@ const RETIRED_TROPHIES = new Set([
   'rich', 'diamond250',
 
   'collector',
+
+  'toegift',
 
   'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
 
@@ -13115,6 +13349,22 @@ function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if
 function boughtCount(p) {
   return Math.max(0, p.owned.filter(id => !isBeloning(id)).length - (p.freebies || 5));
 }
+
+
+
+
+
+
+
+function leerTel(p, soort) { return (p.leer && p.leer[soort]) || 0; }
+function telLeer(p, q) {
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
+  const soort = q.kind === 'missing' ? 'zoek' : q.kind === 'chain' ? 'drie' : q.brug ? 'brug' : null;
+  if (soort) p.leer[soort] = (p.leer[soort] || 0) + 1;
+}
+function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
+
+function telFase(p) { return (p.countTrack && p.countTrack.stage) || 1; }
 
 
 
@@ -13233,6 +13483,7 @@ function defaultProfile(name, dress, opts) {
 
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },
+    leer: { brug: 0, zoek: 0, drie: 0 },
     recent: [],
     gezien: {}
   };
@@ -13252,6 +13503,7 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
 
 
   if (!p.gezien) p.gezien = {
@@ -13688,6 +13940,8 @@ function noot(freq, dur, delay, type, vol) {
 
 
 
+
+
 const HERHAALREM = 60;
 const klankTijd = {};
 const SFX = {
@@ -13696,6 +13950,13 @@ const SFX = {
 
 
   'tap.blij':       { noten: [[0, 0.12, 0, 'triangle', 0.12]], keuze: [784, 880, 988, 1047, 1175], tril: 12 },
+
+
+
+
+
+  'kast.klink':     { noten: [[0, 0.34, 0, 'triangle', 0.13], [0, 0.22, 0.02, 'sine', 0.04]],
+                      ladder: [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568], tril: 12 },
 
 
 
@@ -14015,9 +14276,15 @@ function baseOf(p) { return (p && BASES[p.base]) ? p.base : DEFAULT_BASE; }
 function curBase() { return baseOf(db && db.profiles ? db.profiles[cur] : null); }
 
 
-function hairBackStaartjes(hc) {
-  return `<circle cx="100" cy="62" r="37" fill="${hc}"/>`
-    + `<circle cx="56" cy="86" r="13" fill="${hc}"/><circle cx="144" cy="86" r="13" fill="${hc}"/>`;
+
+
+
+
+function hairBackStaartjes(hc, glans) {
+  const bol = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${hc}"/>`
+    + (glans ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${glans}"/>` : '');
+  return bol(100, 62, 37)
+    + `<g class="av-staart av-staart-l">${bol(56, 86, 13)}</g><g class="av-staart av-staart-r">${bol(144, 86, 13)}</g>`;
 }
 function hairFrontStaartjes(hc) {
   return `<path d="M68 66 A32 32 0 0 1 132 66 Q100 44 68 66 Z" fill="${hc}"/>`;
@@ -14035,7 +14302,7 @@ function torsoJurk(dc) {
 
 
 
-function hairBackKort(hc) {
+function hairBackKort(hc, glans) {
 
 
 
@@ -14046,7 +14313,8 @@ function hairBackKort(hc) {
 
 
 
-  return `<path d="M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z" fill="${hc}"/>`;
+  const d = 'M67 80 Q63 44 79 34 Q90 28 100 31 Q113 27 123 37 Q136 47 133 80 Q116 71 100 71 Q84 71 67 80 Z';
+  return `<path d="${d}" fill="${hc}"/>` + (glans ? `<path d="${d}" fill="${glans}"/>` : '');
 }
 function hairFrontKort(hc) {
 
@@ -14090,6 +14358,23 @@ function torsoShirt(dc, mic) {
 
     + `<path d="M89 105 Q100 116 111 105" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none" stroke-linecap="round"/>`
     + `<path d="M78 165 Q100 171 122 165" stroke="rgba(0,0,0,.2)" stroke-width="2" fill="none"/>`;
+}
+
+
+
+
+
+
+const ZOOM_SCHADUW = `stroke="#000" stroke-opacity=".13" stroke-width="4" fill="none" stroke-linecap="round"`;
+function stofJurk(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L66 196 Q100 210 134 196 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M67 193 Q100 207 133 193" ${ZOOM_SCHADUW}/>`;
+}
+function stofShirt(stof) {
+  return `<path d="M86 103 Q78 105 82 110 L78 165 Q100 171 122 165 L118 110 Q122 105 114 103 Q100 110 86 103 Z" fill="${stof}"/>`
+    + `<path d="M79 162 Q100 168 121 162" ${ZOOM_SCHADUW}/>`
+
+    + `<path d="M78 156 L77 208 Q86 213 95 208 L100 188 L105 208 Q114 213 123 208 L122 156 Z" fill="${stof}"/>`;
 }
 
 
@@ -14151,8 +14436,8 @@ const PAT_SHIRT = {
 
 
 const BASES = {
-  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  pat: PAT_JURK },
-  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, pat: PAT_SHIRT },
+  meisje: { hairBack: hairBackStaartjes, hairFront: hairFrontStaartjes, legs: legsBloot,  torso: torsoJurk,  stof: stofJurk,  pat: PAT_JURK },
+  jongen: { hairBack: hairBackKort,      hairFront: hairFrontKort,      legs: legsBroek,  torso: torsoShirt, stof: stofShirt, pat: PAT_SHIRT },
 };
 
 
@@ -14172,21 +14457,52 @@ let svgUid = 0;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 const PROP_MAAT = {
-  groot: { pet: [6, 244, 46],  instr: [112, 248, 52] },
-  norm:  { pet: [18, 240, 34], instr: [120, 246, 42] },
-  klein: { pet: [30, 238, 24], instr: [134, 243, 29] },
+  groot: { pet: [6, 236, 46],  instr: [112, 235, 52] },
+  norm:  { pet: [18, 239, 34], instr: [120, 237, 42] },
+  kaart: null,
+  klein: { pet: [30, 238, 24], instr: [134, 241, 29] },
 };
+
+
+
+
+function lichtDefs(uid) {
+  return `<radialGradient id="bol${uid}" cx=".34" cy=".3" r=".8">
+      <stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+    <radialGradient id="huid${uid}" cx=".42" cy=".38" r=".7">
+      <stop offset=".6" stop-color="#e8836a" stop-opacity="0"/><stop offset="1" stop-color="#e8836a" stop-opacity=".22"/></radialGradient>
+    <linearGradient id="stof${uid}" x1="0" y1="0" x2="1" y2=".35">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+    <radialGradient id="wang${uid}"><stop offset="0" stop-color="#ff8fa3" stop-opacity=".75"/><stop offset="1" stop-color="#ff8fa3" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vlek${uid}"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+}
 function avatarSVG(p, width, propMaat) {
 
+  const kaart = propMaat === 'kaart';
   const pm = PROP_MAAT[propMaat === true ? 'groot' : propMaat] || PROP_MAAT.norm;
   const eq = p.equipped;
   const B = BASES[baseOf(p)];
   const hair = itemOr(eq.hair, 'hair_blond'), dress = itemOr(eq.dress, 'dress_roze');
   const mic = eq.mic ? item(eq.mic) : null;
   const acc = eq.acc ? item(eq.acc) : null;
-  const pet = eq.pet ? item(eq.pet) : null;
-  const instr = eq.instrument ? item(eq.instrument) : null;
+  const pet = eq.pet && !kaart ? item(eq.pet) : null;
+  const instr = eq.instrument && !kaart ? item(eq.instrument) : null;
   const uid = ++svgUid;
   const hc = hair.color === 'RAINBOW' ? `url(#rb${uid})` : hair.color;
   const dc = dress.color === 'RAINBOW' ? `url(#rb${uid})` : dress.color;
@@ -14195,16 +14511,33 @@ function avatarSVG(p, width, propMaat) {
   s += `<defs><linearGradient id="rb${uid}" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
-    <stop offset="1" stop-color="#b06ab3"/></linearGradient></defs>`;
+    <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
   if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
   if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
 
-  s += B.hairBack(hc);
 
-  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/>`;
+
+
+
+  s += `<clipPath id="nek${uid}"><rect x="90" y="94" width="20" height="18" rx="8"/></clipPath>`
+    + `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`
+    + `<circle cx="100" cy="76.5" r="32" fill="#e6a183" opacity=".7" clip-path="url(#nek${uid})"/>`;
+
+
+  s += `<g class="av-hoofd">`;
+
+  s += B.hairBack(hc, `url(#bol${uid})`);
+
+  s += `<circle cx="100" cy="72" r="32" fill="${SKIN}"/><circle cx="100" cy="72" r="32" fill="url(#huid${uid})"/>`;
   s += B.hairFront(hc);
-  s += `<circle class="av-oog" cx="88" cy="72" r="3.6" fill="#333"/><circle class="av-oog" cx="112" cy="72" r="3.6" fill="#333"/>`;
-  s += `<circle cx="79" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/><circle cx="121" cy="82" r="5" fill="#ffb3ba" opacity="0.6"/>`;
+
+  s += `<ellipse cx="88" cy="41" rx="15" ry="7" transform="rotate(-18 88 41)" fill="url(#vlek${uid})"/>`;
+
+
+
+  const oog = x => `<g class="av-oog"><ellipse cx="${x}" cy="72" rx="3.7" ry="4.6" fill="#2b2238"/><circle cx="${x + 1.4}" cy="70.2" r="1.45" fill="#fff"/></g>`;
+  s += oog(88) + oog(112);
+  s += `<circle cx="79" cy="82" r="7" fill="url(#wang${uid})"/><circle cx="121" cy="82" r="7" fill="url(#wang${uid})"/>`;
 
 
 
@@ -14212,8 +14545,10 @@ function avatarSVG(p, width, propMaat) {
 
 
 
-  s += `<path class="av-mond" d="M88 85 Q100 96 112 85" stroke="#c2572b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#c2572b" opacity="0"/>`;
+
+  s += `<g class="av-mond"><path d="M91 85.5 Q100 89 109 85.5 Q107.5 94.5 100 94.5 Q92.5 94.5 91 85.5 Z" fill="#8a2f36"/>`
+    + `<path d="M95 92.2 Q100 89.6 105 92.2 Q103 94.5 100 94.5 Q97 94.5 95 92.2 Z" fill="#ff8f9c"/></g>`;
+  s += `<ellipse class="av-mond-o" cx="100" cy="89" rx="5" ry="6" fill="#8a2f36" opacity="0"/>`;
 
   if (acc) {
 
@@ -14240,47 +14575,53 @@ function avatarSVG(p, width, propMaat) {
       if (acc.spot === 'top') s += `<text x="85" y="34" font-size="30">${acc.emoji}</text>`;
     }
   }
-
-
-  s += `<rect x="90" y="94" width="20" height="18" rx="8" fill="${SKIN}"/>`;
-
+  s += `</g>`;
 
 
 
 
 
 
-  s += `<path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+
+
+
+  const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="5.6" fill="${SKIN}"/>`;
+  s += `<g class="av-arm-l"><path d="M84 112 Q68 132 64 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(64, 158)}</g>`;
   s += mic
     ? `<path d="M116 112 Q134 98 145 80" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`
-    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    : `<path d="M116 112 Q132 132 136 157" stroke="${SKIN}" stroke-width="9" fill="none" stroke-linecap="round"/>${hand(136, 158)}`;
 
   s += B.legs(dc);
 
   s += B.torso(dc, mic);
   if (dress.pattern && B.pat[dress.pattern]) s += B.pat[dress.pattern];
+  s += B.stof(`url(#stof${uid})`);
 
   const shoe = eq.shoes ? item(eq.shoes) : null;
   const sc = shoe ? (shoe.color === 'RAINBOW' ? `url(#rb${uid})` : shoe.color) : '#e91e63';
   s += `<ellipse cx="86" cy="234" rx="11" ry="6" fill="${sc}"/><ellipse cx="114" cy="234" rx="11" ry="6" fill="${sc}"/>`;
 
+  s += `<path d="M75.5 236 Q86 241 96.5 236 M103.5 236 Q114 241 124.5 236" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`
+    + `<ellipse cx="82" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/><ellipse cx="110" cy="231.4" rx="4" ry="1.7" fill="#fff" opacity=".55"/>`;
+
+
 
   if (mic) {
     if (mic.id === 'mic_pintje') {
 
-      s += `<text x="135" y="82" font-size="26">🍺</text>`;
+      s += hand(145, 81) + `<text x="135" y="82" font-size="26">🍺</text>`;
     } else if (mic.id === 'mic_toverstaf') {
 
-      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="159" y2="54" stroke="#6d4c41" stroke-width="4.5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="150" y="58" font-size="18">⭐</text><text x="165" y="40" font-size="12">✨</text>`;
     } else if (mic.emoji) {
 
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<text x="144" y="70" font-size="22">${mic.emoji}</text>`;
     } else {
-      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>`;
+      s += `<line x1="145" y1="80" x2="153" y2="68" stroke="#555" stroke-width="5" stroke-linecap="round"/>` + hand(145, 81);
       s += `<circle cx="156" cy="63" r="9" fill="${mic.color === 'RAINBOW' ? `url(#rb${uid})` : mic.color}" stroke="#666" stroke-width="1.5"/>`;
-      s += `<text x="163" y="47" font-size="15">🎵</text>`;
+      if (!kaart) s += `<text x="163" y="47" font-size="15">🎵</text>`;
     }
   }
   s += `</svg>`;
@@ -14309,6 +14650,44 @@ function applyStage(el, p) {
   schijf.innerHTML = podiumHTML(st);
   el.insertBefore(schijf, el.firstChild);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const KNIPPER = { tik: 250, min: 3000, max: 7000, dicht: 130, dubbel: .18, tussen: 280, uitDePas: 900 };
+let knipperLaatst = 0;
+const KNIPPER_POPS = '.screen.active .avatar-holder.levend, #screen-map.active .tour-hero .avatar-holder';
+function knipOog(pop) {
+  pop.classList.add('knipoog');
+  setTimeout(() => pop.classList.remove('knipoog'), KNIPPER.dicht);
+}
+function knipperLus() {
+  if (document.hidden || motionOff()) return;
+  const nu = Date.now();
+  document.querySelectorAll(KNIPPER_POPS).forEach(pop => {
+    const wacht = () => KNIPPER.min + Math.random() * (KNIPPER.max - KNIPPER.min);
+    if (!pop.knipperOp) { pop.knipperOp = nu + Math.random() * KNIPPER.max; return; }
+    if (nu < pop.knipperOp) return;
+
+
+    if (nu - knipperLaatst < KNIPPER.uitDePas) { pop.knipperOp = nu + KNIPPER.uitDePas; return; }
+    knipperLaatst = nu;
+    knipOog(pop);
+    if (Math.random() < KNIPPER.dubbel) setTimeout(() => knipOog(pop), KNIPPER.tussen);
+    pop.knipperOp = nu + wacht();
+  });
+}
+setInterval(knipperLus, KNIPPER.tik);
 
 
 
@@ -14361,6 +14740,7 @@ function show(id) {
   const navId = navVolgtScherm();
   navZet(navId);
   $('dress-bar').style.display = (id === 'screen-dress') ? 'flex' : 'none';
+  kastBalk(null);
 
   if (id !== 'screen-journey') reisStopWaarnemer();
   if (navId) updateTroDot();
@@ -15117,7 +15497,7 @@ function sterTegel(key, p) {
   const tegel = document.createElement('button');
   tegel.className = 'ster-tegel';
   tegel.innerHTML =
-    `<div class="stage st-podium"><div class="avatar-holder">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
+    `<div class="stage st-podium"><div class="avatar-holder levend">${pasLaag(avatarSVG(p, 132, 'klein'))}</div></div>
      <div class="st-voet">
        <div class="st-rij">
          <span class="st-ico" aria-hidden="true">${w.icon}</span>
@@ -17494,7 +17874,16 @@ function kanalen(hex) {
 
 
 
-const VENUE_TERUGVAL = { art: null, zoom: 220, focus: '70% 14%', blur: 11, dim: .62, op: .96 };
+
+
+
+
+
+
+
+
+
+const VENUE_TERUGVAL = { art: null, zoom: 220, focus: null, blur: 2.5, dim: .66, op: 1 };
 
 
 function venueFor(world) {
@@ -17507,20 +17896,33 @@ function venueArt(world) {
 
 
 
+function venuePunt(v, world, lvl) {
+  const m = /^\s*(-?[\d.]+)%\s+(-?[\d.]+)%\s*$/.exec(v.focus || '');
+  if (m) return { x: +m[1], y: +m[2] };
+  if (!world) return { x: 50, y: 20 };
+  const nr = lvl ? worldFor(lvl).nr : world.levels;
+  const n = worldNodes({ world, levels: world.levels })[nr - 1] || { x: 50, y: 20 };
+  return { x: Math.round(n.x * 10) / 10, y: Math.round(n.y * 10) / 10 };
+}
 
 
 
 
 
 
-function applyVenue(el, world) {
+
+
+
+function applyVenue(el, world, lvl) {
   const v = venueFor(world);
   const src = venueArt(world);
+  const punt = venuePunt(v, world, lvl);
   el.classList.add('venue-aan');
   applyWorldTheme(el, world);
   el.style.setProperty('--venue-art', src ? `url("${src}")` : 'none');
-  el.style.setProperty('--venue-focus', v.focus);
-  el.style.setProperty('--venue-zoom', v.zoom + '%');
+  el.style.setProperty('--venue-x', String(punt.x));
+  el.style.setProperty('--venue-y', String(punt.y));
+  el.style.setProperty('--venue-zoom', String(v.zoom));
   el.style.setProperty('--venue-blur', v.blur + 'px');
   el.style.setProperty('--venue-dim', String(v.dim));
   el.style.setProperty('--venue-op', String(v.op));
@@ -17888,7 +18290,7 @@ function renderReis() {
       const kant = volgende ? Math.max(-12, Math.min(12, (volgende.x - b.x) * 1.2)) : 0;
       knop.style.setProperty('--pop-kant', kant.toFixed(1) + 'px');
       knop.insertAdjacentHTML('beforeend',
-        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56)}</div></div>`);
+        `<div class="reis-pop"><div class="avatar-holder idle">${avatarSVG(p, 56, 'kaart')}</div></div>`);
     }
     knop.setAttribute('aria-label', reisLabel(b, doel));
     if (b.open) {
@@ -18635,7 +19037,7 @@ function haltKnop(shown, nodes, i, stand) {
 
   if (open && st === 3) b.classList.add('perfect');
   const hero = lvl === heroLvl
-    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96))}</div></div>` : '';
+    ? `<div class="tour-hero"><div class="avatar-holder idle">${pasLaag(avatarSVG(p, 96, 'kaart'))}</div></div>` : '';
 
 
 
@@ -19496,11 +19898,18 @@ function renderShelves() {
 
 
     const perfectPlank = shelf.key === 'perfect';
+    const vanJou = id => p.trophies.includes(id) || (p.readyTrophies || []).includes(id);
+
+
+
     const ids = perfectPlank ? alle.filter(id => {
       const t = TROPHIES.find(x => x.id === id);
-      return !t || binnenHorizon(p, t.index) || p.trophies.includes(id)
-        || (p.readyTrophies || []).includes(id);
-    }) : alle;
+      return !t || binnenHorizon(p, t.index) || vanJou(id);
+    }) : alle.filter(id => {
+      const t = TROPHIES.find(x => x.id === id);
+      return !t || !t.voor || t.voor(p) || vanJou(id);
+    });
+    if (!ids.length) return;
     const mist = perfectPlank && ids.length < alle.length;
     const groep = document.createElement('section');
     groep.className = 'kast-groep';
@@ -19521,7 +19930,15 @@ function renderShelves() {
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
+
+
+    const getekend = new Set();
     ids.forEach(id => {
+      const ladder = TROPHY_LADDERS.find(l => l.ids.includes(id));
+      if (ladder) {
+        if (!getekend.has(ladder.key)) { getekend.add(ladder.key); grid.appendChild(ladderCard(ladder, p)); }
+        return;
+      }
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
     });
@@ -19535,6 +19952,7 @@ function renderShelves() {
     wrap.appendChild(groep);
   });
   justClaimed = null;
+  kastBalk(null);
   save();
   updateTroDot();
 }
@@ -19553,6 +19971,8 @@ const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'sommen': 'som',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
   'spulletjes': 'spulletje',
+  'sommen over de tien': 'som over de tien', 'zoeksommen': 'zoeksom',
+  'sommen met drie getallen': 'som met drie getallen',
 
 
   'werelden uit': 'wereld uit'
@@ -19569,14 +19989,26 @@ function unitText(label, remaining) {
 
 
 
-function trophyStand(t, p, status) {
-  if (status !== 'busy' || !t.progress) return '';
+
+
+
+function trophyBoog(t, p, status) {
+  if (status !== 'busy' || !t.progress) return 0;
+
+
+
+
+  if (t.telWerelden && meerWereldenVooruit(p)) {
+
+
+
+
+
+
+    return Math.max(0, Math.min(100, Math.round(100 * doneWorldCount(p) / (laatsteZichtbareWereld(p) + 1))));
+  }
   const pr = t.progress(p);
-
-
-
-  if (t.telWerelden && meerWereldenVooruit(p)) return `<div class="tstand">${pr.now}</div>`;
-  return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
+  return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
 
 
@@ -19589,13 +20021,70 @@ function trophyCard(t, p) {
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
 
-  card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
+
+  card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
 
 
 
+
+
+
+
+
+function ladderStand(ladder, p) {
+  const trappen = ladder.ids.map(id => TROPHIES.find(t => t.id === id)).filter(Boolean);
+  const klaar = trappen.find(t => (p.readyTrophies || []).includes(t.id)) || null;
+  const niveau = trappen.filter(t => p.trophies.includes(t.id)).length;
+  const volgende = trappen.find(t => !p.trophies.includes(t.id) && !(p.readyTrophies || []).includes(t.id)) || null;
+  return { trappen, klaar, niveau, volgende };
+}
+function ladderCard(ladder, p) {
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  const card = document.createElement('div');
+  const status = klaar ? 'ready' : niveau ? 'done' : (volgende && volgende.progress(p).now > 0 ? 'busy' : 'fresh');
+  const nu = niveau ? trappen[niveau - 1].trap : null;
+  card.className = `trophy-card ladder ${status}` + (nu != null ? ` nu-${nu}` : '') + (niveau === trappen.length ? ' top' : '');
+  if (trappen.some(t => t.id === justClaimed)) card.classList.add('just-claimed');
+  const stippen = '<div class="trap-stippen" aria-hidden="true">'
+    + trappen.map((t, i) => `<i class="${i < niveau ? 'm-' + t.trap : ''}"></i>`).join('') + '</div>';
+  if (klaar) {
+    card.innerHTML = giftMedaille(ladder) + stippen;
+    card.setAttribute('aria-label', `Open ${klaar.name}`);
+  } else {
+
+
+
+    let boog = 0;
+    if (volgende) {
+      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+      boog = Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (pr.target - vorig))));
+    }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
+    card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
+      + `<div class="tname">${ladder.name}</div>` + stippen;
+    card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
+  }
+  card.onclick = (e) => tapLadder(ladder, card, e);
+  return card;
+}
+function tapLadder(ladder, card, e) {
+  if (e) tapRipple(e.clientX, e.clientY);
+  const p = P();
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  if (klaar) { openTrophy(klaar.id); return; }
+
+  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  const kop = { emoji: ladder.emoji, name: ladder.name };
+  const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
+  if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
+  const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
+  kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
+}
 
 
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
@@ -19605,15 +20094,23 @@ function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>`
 
 
 
+function giftMedaille(t) {
+  return '<div class="temoji"><span class="tico">🎁</span></div>'
+    + `<div class="tname">${t.name}</div>`;
+}
+
+
+
+
+
 
 
 function normalCardHTML(t, p, status) {
-  return `<div class="temoji">${t.emoji}</div>`
+  if (status === 'ready') return giftMedaille(t);
+  const boog = trophyBoog(t, p, status);
+  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
-    + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
-      : status === 'locked' ? '<div class="tstand">🔒</div>'
-      : trophyStand(t, p, status));
+    + cardVoet(status === 'locked' ? '<div class="tstand">🔒</div>' : '');
 }
 
 
@@ -19641,9 +20138,11 @@ function perfectCardHTML(t, p, status) {
 
 
 
-  const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? (() => { const pr = t.progress(p); return `<div class="tstand">${pr.now} / ${pr.target}</div>`; })()
-    : '';
+
+  const balk = () => { const pr = t.progress(p);
+    return `<div class="tbalk"><i style="width:${Math.round(100 * pr.now / pr.target)}%"></i></div>`; };
+  if (status === 'ready') return giftMedaille(t);
+  const stand = status === 'busy' ? balk() : '';
 
 
 
@@ -19651,7 +20150,7 @@ function perfectCardHTML(t, p, status) {
 
   const i = typeof t.index === 'number' ? t.index : -1;
   const st = i >= 0 ? wereldPrijsStand(p, i) : null;
-  if (st) st.goud = status === 'done' || status === 'ready';
+  if (st) st.goud = status === 'done';
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
   if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
     + `<div class="tname">${t.name}</div>` + cardVoet(stand);
@@ -19667,18 +20166,19 @@ function tapTrophy(t, card, e) {
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
 
-  if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
-  if (st === 'done') { sndTap(); sparkle(card); return; }
+  if (st === 'done') kastKlink(card); else kastDof(card);
 
 
 
-  if (st === 'locked') { sndClick(); pilOmklappen(card, '🔒 Nog niet'); return; }
-  sndClick();
-  if (!t.progress) { pilOmklappen(card, t.desc); return; }
+
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  if (st === 'done') { kastBalk(t, card, t.desc); return; }
+  if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
+  if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
 
-  if (t.telWerelden && meerWereldenVooruit(p)) { pilOmklappen(card, `${pr.now} ${pr.label}`); return; }
-  pilOmklappen(card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!');
+  if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
+  kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
 }
 
 
@@ -19686,25 +20186,72 @@ function tapTrophy(t, card, e) {
 
 
 
-function pilOmklappen(card, tekst) {
-  let voet = card.querySelector('.tvoet');
-  if (!voet) { voet = document.createElement('div'); voet.className = 'tvoet tijdelijk'; card.appendChild(voet); }
-  let pil = voet.querySelector('.tstand');
-  if (!pil) { pil = document.createElement('div'); pil.className = 'tstand tijdelijk'; voet.appendChild(pil); }
-  if (pil.dataset.terug === undefined) pil.dataset.terug = pil.textContent;
-  pil.textContent = tekst;
-  pil.classList.add('omgeklapt');
+
+
+
+
+
+const KLINK_VONK = [['✨', '🥉', '🎵'], ['✨', '🥈', '🎵'], ['✨', '🥇', '🎵'], ['✨', '💎', '🎵']];
+function kastKlink(card, trap) {
+  playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
+  if (motionOff()) return;
+  opnieuw(card, 'klink');
+  sparkle(card, trap != null ? KLINK_VONK[trap] : ['✨', '🎵', '⭐']);
+}
+function kastDof(card) {
+  sndClick();
+  if (motionOff()) return;
+  opnieuw(card, 'dof');
+
+  const m = card.querySelector('.temoji');
+  const doel = m ? parseFloat(m.style.getPropertyValue('--p')) || 0 : 0;
+  if (!doel) return;
+  const t0 = performance.now();
+  const stap = t => {
+    const k = Math.min(1, (t - t0) / 520);
+    m.style.setProperty('--p', (doel * (1 - Math.pow(1 - k, 3))).toFixed(1));
+    if (k < 1) requestAnimationFrame(stap);
+  };
+  m.style.setProperty('--p', 0);
+  requestAnimationFrame(stap);
+}
+
+function opnieuw(el, klasse) {
+  el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
+  clearTimeout(el['_' + klasse]);
+  el['_' + klasse] = setTimeout(() => el.classList.remove(klasse), 650);
+}
+
+
+
+
+
+
+
+
+
+function kastBalk(t, card, tekst, getal) {
+  const bar = $('kast-bar');
+  document.querySelectorAll('#trophy-shelves .trophy-card.kies').forEach(k => k.classList.remove('kies'));
+  const kast = $('screen-trophies');
+  if (!t) { bar.innerHTML = ''; bar.style.display = 'none'; kast.classList.remove('balk-aan'); return; }
+  card.classList.add('kies');
+  kast.classList.add('balk-aan');
+  const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
+
+
+
+  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="Naar de kleedkamer">${t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
+  bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
+    + `<span class="db-sub">· ${sub}</span></div>` + knop;
+  if (knop) $('kast-naar').onclick = () => { sndClick(); kastBalk(null); openKleedkamerCat(t.naar); };
+  bar.style.display = 'flex';
   speak(tekst);
-  clearTimeout(pil._omklap);
-  pil._omklap = setTimeout(() => {
-    if (pil.classList.contains('tijdelijk')) {
-      pil.remove();
-      if (voet.classList.contains('tijdelijk')) voet.remove();
-      return;
-    }
-    pil.textContent = pil.dataset.terug; delete pil.dataset.terug;
-    pil.classList.remove('omgeklapt');
-  }, 2000);
+
+
+
+  const teveel = card.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  if (teveel > 0 && kast.scrollBy) kast.scrollBy({ top: teveel, behavior: motionOff() ? 'auto' : 'smooth' });
 }
 
 function openTrophy(id) {
@@ -19730,7 +20277,8 @@ function celebrateTrophy(t) {
     +   '<div class="tp-rays" aria-hidden="true"></div>'
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
-    +   `<div class="tp-emoji">${t.emoji}</div>`
+
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
@@ -19834,7 +20382,11 @@ function wereldFeest(f) {
 
 
 
-  const aanKnop = f.spul ? `<button class="btn wf-aan" type="button">Doe aan</button>` : '';
+
+
+
+
+  const aanKnop = f.spul ? `<button class="btn small wf-aan" type="button">Doe aan</button>` : '';
   const ov = openOverlay('wereld-feest-overlay',
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
@@ -20029,7 +20581,9 @@ function genQuestion(s, lvl, perf) {
   const ops = s.ops.length ? s.ops : ['+'];
   const op = pick(ops);
   const { a, b, c, sym } = genTriple(s, lvl, perf, op);
-  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic' };
+
+  const brug = (op === '+' || op === '-') && overTiental(a, b, c, op);
+  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
 
 
@@ -20055,15 +20609,72 @@ function genChain(s, lvl, perf) {
   if (sum > effMax) { a = 1; b = 1; c = Math.max(1, effMax - 2); sum = a + b + c; }
   return { tmpl: `${a} + ${b} + ${c} = @`, ans: sum, op: '+', kind: 'chain' };
 }
-function makeChoices(ans) {
-  const set = new Set([ans]);
-  const cand = shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10]);
-  for (const c of cand) {
-    if (set.size >= 4) break;
-    if (c >= 0 && !set.has(c)) set.add(c);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function keuzeGrens(q, s, lvl) {
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number).concat(q.ans);
+  const hoogste = Math.max(...getallen);
+
+
+  if (q.op === '+' || q.op === '-') return Math.max(hoogste, 10, Math.round(s.max * stapVan(lvl, s).t));
+
+  return Math.max(10, Math.ceil(hoogste / 10) * 10);
+}
+function makeChoices(q, grens) {
+  const ans = q.ans;
+  const getallen = (q.tmpl.match(/\d+/g) || []).map(Number);
+  const mag = v => Number.isInteger(v) && v >= 0 && v <= grens && v !== ans;
+
+  const fouten = new Set(getallen);
+  for (let i = 0; i < getallen.length; i++)
+    for (let j = i + 1; j < getallen.length; j++) {
+      fouten.add(getallen[i] + getallen[j]);
+      fouten.add(Math.abs(getallen[i] - getallen[j]));
+    }
+  if (ans >= 10 && grens >= 50) { fouten.add(ans + 10); fouten.add(ans - 10); }
+
+
+
+
+  const onder = rnd(0, 3);
+  const keuze = new Set([ans]);
+  const fout = shuffle([...fouten].filter(v => mag(v) && (v < ans ? onder > 0 : onder < 3)))[0];
+  if (fout != null) keuze.add(fout);
+
+  const ernaast = kant => shuffle([1, 2, 3].map(d => ans + kant * d).filter(v => mag(v) && !keuze.has(v)))[0];
+  while (keuze.size < 4) {
+    const nuOnder = [...keuze].filter(v => v < ans).length;
+    const kant = nuOnder < onder ? -1 : 1;
+    let v = ernaast(kant);
+    if (v == null) v = ernaast(-kant);
+
+
+    for (let d = 4; v == null && d <= grens + 1; d++) v = [ans - d, ans + d].find(x => mag(x) && !keuze.has(x));
+    if (v == null) v = Math.max(...keuze) + 1;
+    keuze.add(v);
   }
-  while (set.size < 4) set.add(rnd(0, ans + 12));
-  return shuffle([...set]);
+  return shuffle([...keuze]);
 }
 
 
@@ -21198,6 +21809,7 @@ function planSpecials(p, s, total, stap, goldIdx) {
 
 
 
+
 const HINT_DICHTBIJ = 2;
 function hintVoor(q, val) {
   if (typeof val !== 'number' || isNaN(val) || val === q.ans) return null;
@@ -21217,8 +21829,11 @@ function toonHint(q, val, btnEl) {
   const h = hintVoor(q, val);
   if (!h) { showToast('🤔', null, null, 'teken'); return; }
   if (btnEl) btnEl.insertAdjacentHTML('beforeend', `<span class="tegel-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`);
-  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}">${pijlSVG(h.pijl)}</span>`,
-            null, h.woorden, 'hint');
+
+
+
+  showToast(`<span class="hint-getal">${val}</span><span class="hint-pijl ${h.pijl}" role="img" aria-label="${esc(h.woorden)}">${pijlSVG(h.pijl)}</span>`,
+            null, null, 'hint');
 }
 
 
@@ -21255,7 +21870,8 @@ function startLevel(lvl, eigenOvergang) {
   const fanStep = 100 / Math.max(5, s.perLevel - 1);
   G = { lvl, qs: [], idx: 0, total: s.perLevel, goldIdx, plan, count, errors: 0, misses: 0, streak: 0, earned: 0, lock: false, retried: false, input: '', spot: 100, timer: null, fan: 0, fanStep, moveIdx: 0, herhaald: new Set(),
         klaarBijStart: (p.readyTrophies || []).slice(),
-        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0 };
+        missShown: 0, chainShown: 0, missDirty: false, chainDirty: false, countGood: 0, countSeen: 0,
+        uitslag: [] };
 
 
 
@@ -21268,7 +21884,7 @@ function startLevel(lvl, eigenOvergang) {
 
 
   applyStage($('show-stage'), p);
-  applyVenue($('screen-game'), wl.world);
+  applyVenue($('screen-game'), wl.world, lvl);
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -21324,7 +21940,7 @@ function renderQuestion() {
   G.lock = false;
   G.retried = false;
 
-  renderSegBar($('qprogress'), G.total, G.idx);
+  showBalk(G.idx);
   $('notes-left').textContent = livesText();
   drawQuestion();
   vraagKomtIn($('question-card'), G.idx === 0);
@@ -21336,7 +21952,7 @@ function renderQuestion() {
     return;
   }
   if (G.mode === 'kies') {
-    const choices = makeChoices(q.ans);
+    const choices = makeChoices(q, keuzeGrens(q, s, G.lvl));
     area.innerHTML = '<div class="choices">' +
       choices.map(c => `<button class="choice-btn" data-v="${c}">${c}</button>`).join('') + '</div>';
     area.querySelectorAll('.choice-btn').forEach(b => {
@@ -21408,6 +22024,27 @@ function kaartWiebelt(kaart) {
     { transform: 'rotate(-1deg)', offset: .85 },
     { transform: 'rotate(0) scale(1)' },
   ], { duration: WIEBEL, easing: 'ease' });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function showBalk(done, hasNow) {
+  const el = $('qprogress');
+  renderSegBar(el, G.total, done, hasNow);
+  [...el.children].forEach((seg, i) => {
+    if (i < done && G.uitslag[i] && G.uitslag[i] !== 'goed') seg.classList.add(G.uitslag[i]);
+    if (i === G.goldIdx && i > G.idx) seg.classList.add('goudvraag');
+  });
 }
 
 
@@ -21711,6 +22348,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
+  telLeer(p, q);
 
 
   if (firstTry) { decWeak(p, q); bumpLearned(p, q); }
@@ -21722,6 +22360,7 @@ function antwoordGoed(q, p, btnEl) {
   if (q.gold) { gain *= 3; p.goldHits++; }
   G.earned += gain;
   p.diamonds += gain;
+  G.uitslag[G.idx] = firstTry ? 'goed' : 'hint';
 
 
   let fanMul = 1;
@@ -21788,7 +22427,7 @@ function antwoordGoed(q, p, btnEl) {
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
     zaalJuicht();
-    renderSegBar($('qprogress'), G.total, G.idx + 1, false);
+    showBalk(G.idx + 1, false);
   };
   if (vlucht) setTimeout(feest, vlucht); else feest();
 
@@ -21843,6 +22482,7 @@ function tweedeMisser(q, p, btnEl) {
   G.lock = true;
   stopSpot();
   G.errors++;
+  G.uitslag[G.idx] = 'mis';
 
   if (q.kind === 'classic') updateOpAcc(p, q.op, false, false);
   else if (q.kind === 'chain') updateChainAcc(p, false, false);
@@ -22137,7 +22777,7 @@ function endLevel(success) {
   $('end-avatar').innerHTML = pasLaag(avatarSVG(p, 150));
   applyStage($('end-stage'), p);
 
-  applyVenue($('screen-end'), wl.world);
+  applyVenue($('screen-end'), wl.world, lvl);
   naShowLvl = lvl;
   if (success) {
 
@@ -22167,11 +22807,13 @@ function endLevel(success) {
 
 
 
+
+
     const juich = beter
-      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren! 🤩' : 'Beter dan de vorige keer! ⭐')
-      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
-      : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
-      : 'Het publiek klapt hard voor je! 👏';
+      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!')
+      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak!'
+      : stars === 2 ? 'Het publiek juicht en danst mee!'
+      : 'Het publiek klapt hard voor je!';
     $('end-text').textContent = juich;
 
 
@@ -22196,9 +22838,14 @@ function endLevel(success) {
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {
-      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
-      mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
+
+
+
+      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee' : `🎁 ${nieuwKlaar} nieuwe trofeeën`;
+      const pil = document.createElement('button');
+      pil.className = 'gold-pill'; pil.type = 'button'; pil.textContent = label;
+      pil.onclick = () => { sndClick(); naTik(openTrophies); };
+      $('end-earn').appendChild(pil);
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
@@ -22520,7 +23167,7 @@ function itemThumb(it, base) {
     const prijs = (i >= 0 && cur) ? wereldPrijsHTML(P(), i, 60) : '';
     return prijs ? zone(prijs, 'thumb-prijs') : zone(podiumHTML(it), 'thumb-podium');
   }
-  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
+  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`, 'thumb-staal');
 }
 
 let shopCat = 'dress';
@@ -23668,7 +24315,7 @@ function renderNewStar() {
 
 
   $('newstar-body').innerHTML = `<div class="settings-panel">
-    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
+    <div class="newstar-preview${wacht ? ' wacht' : ''}"><div class="stage" id="newstar-stage"><div class="avatar-holder idle levend">${avatarSVG(preview, 132)}</div>${wacht ? '<span class="ns-vraag" aria-hidden="true">?</span>' : ''}</div></div>
     <div class="set-card newstar-vel">
       <div class="ns-groep">
         <div class="set-field"><label class="lbl">Wie ben je?</label>

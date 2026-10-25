@@ -229,34 +229,48 @@
     font-family: inherit; font-size: var(--tx-sub); font-weight: 600; color: var(--purple-shadow);
     background: linear-gradient(180deg, var(--gold-cta-top), var(--gold-cta-bottom));
     border: none; border-radius: var(--r-md); padding: 14px 26px; cursor: pointer;
-    box-shadow: 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
+    box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--gold-cta-shadow), var(--btn-diep);
     transition: transform var(--t-tik), box-shadow var(--t-tik);
   }
-  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--gold-cta-shadow); }
+  .btn:active { transform: translateY(4px); box-shadow: var(--btn-glans), 0 1px 0 var(--gold-cta-shadow); }
   /* een link die eruitziet als knop ("Bekijk de pagina" in het ouderdeel) */
   a.btn { display: inline-block; text-decoration: none; text-align: center; }
-  .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; }
-  /* .purple/.gray zetten hun eigen achtergrond, dus ook expliciet hun
+  .btn.big { font-size: var(--tx-groot); padding: 18px 40px; white-space: nowrap; position: relative; }
+  /* De glimlap: een zachte lichtvlek over de bovenkant van de grote knop, als op
+     een snoepje. Hoort bij --btn-glans (zie 00-afspraak.css). Raakt niets: geen
+     tik, geen tekst eronder. Dezelfde staat op de antwoordknoppen (40-kaart.css). */
+  .btn.big::after {
+    content: ''; position: absolute; left: 8%; right: 8%; top: 5px; height: 38%;
+    border-radius: var(--r-pill); pointer-events: none;
+    background: linear-gradient(rgba(255,255,255,.22), rgba(255,255,255,0));
+  }
+  /* .purple zet zijn eigen achtergrond, dus ook expliciet hun
      eigen (witte) tekstkleur -- anders erven ze de paarse tekst van de
      gouden basisknop, wat op deze achtergronden nauwelijks leesbaar is.
      (Er was ook een .green; geen enkele knop droeg hem nog. De groene
      kleurtrap --green-* zelf is wél in gebruik: goede antwoorden.) */
-  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
-  .btn.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  /* neutraal, niet alarmerend — zelfde taal als het grijze "wissen"-knopje op het numpad */
-  .btn.gray { color: var(--c-white); background: linear-gradient(180deg, var(--gray-top), var(--gray-bottom)); box-shadow: 0 var(--btn-lip) 0 var(--gray-shadow), var(--btn-diep); }
-  .btn.gray:active { box-shadow: 0 1px 0 var(--gray-shadow); }
+  .btn.purple { color: var(--c-white); background: linear-gradient(180deg, var(--purple-light), var(--purple-mid)); box-shadow: var(--btn-glans), 0 var(--btn-lip) 0 var(--purple-shadow), var(--btn-diep); }
+  .btn.purple:active { box-shadow: var(--btn-glans), 0 1px 0 var(--purple-shadow); }
+  /* De tweede keuze op een wit kaartje, op volle maat ("Stoppen" in Show
+     stoppen?, "Kaart" na memory). Hier stond een grijze knop: even hoog en even
+     zwaar als de gouden erboven, en het enige grijs van het spel. Nu dezelfde
+     taal als .btn.small.paper hieronder (en een niet-gekozen .chip): witte
+     vulling, paarse letter, een lip in de kleur van de rand. Zo blijft goud
+     zonder twijfel de eerste keuze, en is de tweede nog steeds een knop. */
+  .btn.paper {
+    color: var(--purple-mid); background: var(--c-white);
+    box-shadow: inset 0 0 0 1.5px var(--paper-border), 0 var(--btn-lip) 0 var(--paper-border);
+  }
+  .btn.paper:active { box-shadow: inset 0 0 0 1.5px var(--paper-border), 0 1px 0 var(--paper-border); }
   /* .small zet alleen de MAAT (en dus de kleinere lip); de kleur van die lip
      hoort bij de kleurvariant. Dat ging hier mis: .btn.small stond ná .btn.purple
      in het blad en overschreef diens paarse lip met de gouden -- elke kleine
      paarse knop in het ouderdeel (Nieuwe ster maken, Back-up maken) stond op een
      oranje randje. Nu draagt elke variant zijn eigen kleine lip. */
-  .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: 0 3px 0 var(--gold-cta-shadow); }
-  .btn.small.purple { box-shadow: 0 3px 0 var(--purple-shadow); }
-  .btn.small.gray   { box-shadow: 0 3px 0 var(--gray-shadow); }
-  .btn.small:active { box-shadow: 0 1px 0 var(--gold-cta-shadow); }
-  .btn.small.purple:active { box-shadow: 0 1px 0 var(--purple-shadow); }
-  .btn.small.gray:active   { box-shadow: 0 1px 0 var(--gray-shadow); }
+  .btn.small { font-size: var(--tx-body); padding: 8px 16px; border-radius: var(--r-sm); box-shadow: var(--btn-glans), 0 3px 0 var(--gold-cta-shadow); }
+  .btn.small.purple { box-shadow: var(--btn-glans), 0 3px 0 var(--purple-shadow); }
+  .btn.small:active { box-shadow: var(--btn-glans), 0 1px 0 var(--gold-cta-shadow); }
+  .btn.small.purple:active { box-shadow: var(--btn-glans), 0 1px 0 var(--purple-shadow); }
   /* De tweede knop op een wit vel. .soft is gemaakt voor het paarse scherm (een
      lichte glazen vulling) en verdwijnt op papier. Dit is dezelfde taal als een
      niet-gekozen .chip -- witte vulling, paarse letter, een fijne rand -- en dus
@@ -273,9 +287,9 @@
     font-size: var(--tx-body); padding: 12px 18px; border-radius: var(--r-md); color: var(--c-white);
     border: 1.5px solid rgba(255,255,255,.28);
     background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
-    box-shadow: 0 3px 0 rgba(0,0,0,.28);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.28);
   }
-  .btn.soft:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.28); }
+  .btn.soft:active { transform: translateY(3px); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.18), 0 1px 0 rgba(0,0,0,.28); }
   .btn:disabled { filter: grayscale(.8); opacity: .6; cursor: default; }
 
   /* ---- Sterrenkeuze ----
