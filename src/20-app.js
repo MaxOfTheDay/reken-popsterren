@@ -8722,17 +8722,21 @@ function unitText(label, remaining) {
   if (remaining === 1 && TROPHY_UNIT_SINGULAR[noun]) noun = TROPHY_UNIT_SINGULAR[noun];
   return noun;
 }
-/* De stand op een kaart die nog loopt: "82 / 100 sommen". Alleen als er al iets
-   staat -- op nul is het geen stand maar een nul, en dat weet je al doordat de
-   kaart gedempt is. Geeft '' als er niets te melden valt. */
-function trophyStand(t, p, status) {
-  if (status !== 'busy' || !t.progress) return '';
-  const pr = t.progress(p);
+/* De stand op een kaart die nog loopt, als boog in de rand van de medaille: hoe
+   ver die rand vol is, in procenten (zie .temoji in de kast). Hier stond eerst
+   "180 / 500" als pil onder het kaartje -- een getal dat een kleuter niet leest,
+   een rand die bijna rond is wel. Het getal in woorden komt nog steeds bij een
+   tik ("nog 320 sommen", zie pilOmklappen). Geeft 0 als er niets te tonen valt:
+   op nul is er nog geen boog, en buiten 'onderweg' ook niet. */
+function trophyBoog(t, p, status) {
+  if (status !== 'busy' || !t.progress) return 0;
   /* De Wereldtournee telt werelden, en zijn totaal is precies wat de horizon
-     verbergt (zie binnenHorizon): "2 / 11" verklapte hoeveel werelden er nog
-     komen. Ligt er nog mist, dan alleen wat je hebt -- zoals de perfecte plank. */
-  if (t.telWerelden && meerWereldenVooruit(p)) return `<div class="tstand">${pr.now}</div>`;
-  return `<div class="tstand">${pr.now} / ${pr.target}</div>`;
+     verbergt (zie binnenHorizon): een boog die halfvol staat verklapt net zo goed
+     hoeveel werelden er nog komen als "2 / 11" deed. Ligt er nog mist, dan geen
+     boog -- een tik zegt hoeveel je er al hebt. */
+  if (t.telWerelden && meerWereldenVooruit(p)) return 0;
+  const pr = t.progress(p);
+  return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
 // Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop.
 // Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
@@ -8744,6 +8748,10 @@ function trophyCard(t, p) {
   card.className = `trophy-card ${t.perfect ? 'pw-card ' : ''}${status}`;
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
+  /* Zonder voet (nog niets, of onderweg: dat zegt de medaille zelf) schuiven
+     medaille en naam naar het midden, net als op een behaalde kaart -- zo staan
+     de medailles van een rij op één lijn (zie .zonder-voet in de kast). */
+  if (!t.perfect && !card.querySelector('.tvoet')) card.classList.add('zonder-voet');
   // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
   card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
@@ -8761,15 +8769,16 @@ function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>`
    (zie pilOmklappen). De voet heeft één plek en er staat altijd hoogstens één ding:
      klaar     🎁 Open!  (goud, de enige knop op het scherm)
      behaald   ✓         (op dezelfde plek waar Open! stond: er springt niets)
-     onderweg  180 / 500 (kaal getal; het woord komt bij een tik)
+     onderweg  niets     (de boog om de medaille zegt het; het woord komt bij een tik)
      op slot   🔒 */
 function normalCardHTML(t, p, status) {
-  return `<div class="temoji">${t.emoji}</div>`
+  const boog = trophyBoog(t, p, status);
+  return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
     + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
       : status === 'done' ? '<div class="tvink" aria-hidden="true">✓</div>'
       : status === 'locked' ? '<div class="tstand">🔒</div>'
-      : trophyStand(t, p, status));
+      : '');
 }
 /* De perfecte werelden. Dit is de duurste kaart van de kast en dat mag je zien:
    het wereldicoon staat in een medaillon met de kleuren van díe wereld (theme.sky
@@ -11772,7 +11781,7 @@ function itemThumb(it, base) {
     const prijs = (i >= 0 && cur) ? wereldPrijsHTML(P(), i, 60) : '';
     return prijs ? zone(prijs, 'thumb-prijs') : zone(podiumHTML(it), 'thumb-podium');
   }
-  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`);
+  return zone(`<span class="thumb-swatch" style="background:${it.color}"></span>`, 'thumb-staal');
 }
 
 let shopCat = 'dress';

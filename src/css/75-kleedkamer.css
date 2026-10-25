@@ -780,6 +780,23 @@
     box-shadow: 0 var(--pod-dik) 0 var(--ps), 0 var(--pod-dik) 0 calc(var(--wp, 56px) * .03) var(--pr);
   }
   .item-thumb .thumb-swatch { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); }
+  /* In het rek een maat groter, op een eigen schaduw. Op 52px stond een jurk als
+     klein icoontje midden in een groot vak, en dan leest het rek als een lijst
+     symbolen; op 62 met een plek op de grond is het een spulletje dat je kunt
+     pakken. Alleen het rek (.item-card): het wereldfeest leent hetzelfde vakje en
+     blijft op 52, en een liggende telefoon zet het hierboven terug op 40 (de
+     #screen-dress-regels wegen zwaarder dan deze). Een podium en een wereldprijs
+     hebben hun eigen schijf als grond en krijgen geen schaduw; een kleurstaal
+     ook niet, want die ligt niet ergens op maar ís een kleur. */
+  .item-card .item-thumb { height: 62px; position: relative; margin-bottom: 8px; }
+  .item-card .item-thumb svg { height: 62px; }
+  .item-card .item-thumb .thumb-emo { font-size: 46px; }
+  .item-card .item-thumb > * { position: relative; z-index: 1; }
+  .item-card .item-thumb:not(.thumb-podium):not(.thumb-prijs):not(.thumb-staal)::after {
+    content: ''; position: absolute; left: 50%; bottom: -4px; width: 58%; height: 9px;
+    transform: translateX(-50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(0,0,0,.38), transparent);
+  }
   /* het naambordje (naamBordje): even boven in de spiegel na het aandoen, in het
      stille vlak van de knoppen eromheen. De kaartjes zelf hebben geen naam meer. */
   .naam-bordje { position: absolute; left: 50%; top: 10px; z-index: 5; transform: translate(-50%, -6px); opacity: 0;
