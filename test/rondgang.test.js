@@ -841,8 +841,9 @@ const SPEL_URL = APP_URL.replace('?debug', '');
     'de kastteller staat er, zonder totaal', JSON.stringify([r.teller, r.tellerLabel]));
   check(r.balken === 0, 'en er staat geen losse voortgangsbalk op het scherm', r.balken);
   /* Oktober 2026: de stand per plank is weg -- de 🏆 in de kop telt al. */
-  check(r.panelen === 0 && r.groepen === 4 && r.groepTelling === 0,
-    'de vier groepen staan als kopregel zonder eigen stand, niet als paneel', JSON.stringify(r));
+  // vijf sinds oktober 2026: Nieuwe sommen kwam erbij (een verse ster tot 20 ziet hem)
+  check(r.panelen === 0 && r.groepen === 5 && r.groepTelling === 0,
+    'de vijf groepen staan als kopregel zonder eigen stand, niet als paneel', JSON.stringify(r));
   check(r.rangStrook === 0, 'de kast eindigt bij de trofeeën, zonder ster-statusstrook', r.rangStrook);
   /* De horizon: de perfecte plank toont wat je hebt plus de werelden tot aan
      laatsteZichtbareWereld -- dezelfde grens als de reis -- en daarboven één

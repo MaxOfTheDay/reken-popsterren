@@ -575,6 +575,14 @@
     --medaille-vul: radial-gradient(80% 80% at 50% 25%, #4a2a6e, #1c0b33 75%);
     --medaille-vul-goud: radial-gradient(80% 80% at 50% 25%, #6a3d86, #2a1240 75%);
     --medaille-goud: linear-gradient(160deg, rgb(var(--goud-glans-rgb)), var(--gold-accent) 45%, var(--gold-cta-shadow));
+    /* De metalen van een medaille die meegroeit (TROPHY_LADDERS, TRAP_NAMEN):
+       0 brons, 1 zilver, 2 goud, 3 diamant. Effen kleuren en geen verloop, want
+       ze staan als boog in een conic-gradient (zie .trophy-card.ladder). Goud
+       is hetzelfde goud als elke andere behaalde trofee. */
+    --m-0: #d98f55;
+    --m-1: #dbe4ee;
+    --m-2: var(--gold-accent);
+    --m-3: #9fe8ff;
 
     /* ---- Emoji staan ergens op ---------------------------------------------
        FASE 5E. De app tekent met emoji, en die komen plat en zonder eigen licht

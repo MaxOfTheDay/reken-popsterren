@@ -2132,20 +2132,27 @@ function rebuildWorldBadges() {
        praktijk een winkellijst. Er blijft één rustige verzamelmijlpaal over.
      - 'Kast vol!': zie RETIRED_TROPHIES.
 
-   Wat blijft heeft een van deze vier vormen: een eerste keer (die vergeet je
-   nooit), een lange rekenweg, een perfecte wereld, of één rustige mijlpaal in
-   het sterrenleven. Id's blijven ongewijzigd, dus wie een trofee al had houdt 'm.
+   Wat blijft heeft een van deze vijf vormen: een eerste keer (die vergeet je
+   nooit), een lange rekenweg (als medaille die meegroeit), iets nieuws dat je
+   geleerd hebt, een perfecte wereld, of een rustige mijlpaal in de kleedkamer.
+   Id's blijven ongewijzigd, dus wie een trofee al had houdt 'm.
 
    Over voortgang: `progress` is er alleen waar het getal zélf iets zegt
    ("82 / 100 sommen"). Trofeeën die één keer gebeuren (eerste show, eerste
-   toegift, eerste perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
+   perfecte show) hebben er geen -- "0 / 1" is geen voortgang,
    dat is alleen de mededeling dat het nog niet gebeurd is. */
 const TROPHIES = [
   // 🎤 Avontuur — de momenten die je je herinnert
   { id: 'first',      emoji: '🎫', name: 'Eerste optreden', desc: 'Je allereerste show',   has: p => playedCount(p) >= 1 },
-  // id blijft 'toegift' (zo staat hij in de saves); het kind ziet "Applaus!"
-  { id: 'toegift',    emoji: '🎉', name: 'Applaus!',        desc: 'Het publiek klapte extra hard', has: p => (p.encores || 0) >= 1 },
+  /* (Hier stond 'toegift', "Applaus!": de publieksmeter één keer vol. Met pensioen
+     sinds oktober 2026 -- die meter loopt in bijna elke show vol, dus lag hij
+     samen met Eerste optreden en Sterrenhit al na show 1 klaar: drie cadeautjes
+     tegelijk, en dit was er geen prestatie. Het applaus zelf beloont al, met
+     geluid en 5 💎. Zie RETIRED_TROPHIES.) */
   { id: 'perfect1',   emoji: '⭐', name: 'Sterrenhit',      desc: 'Je eerste show met 3 sterren', has: p => perfectCount(p) >= 1 },
+  // Het vervolg op Sterrenhit, dus ernaast: 1 perfecte show, dan 10. Stond eerst
+  // op Sterrenleven, naast een kooptrofee waar hij niets mee te maken had.
+  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
   /* Was "alle 12 steden", daarna "elke geschreven wereld uitgespeeld", en nu
      elke uitgebrachte. De enige trofee die weer onwaar kan worden: komt er een
      wereld bij, dan is de tournee niet meer uit. Wat er dan gebeurt:
@@ -2157,32 +2164,82 @@ const TROPHIES = [
          wereld bij kwam die ze nog nooit gezien heeft. Zie het einde van migrate();
          telWerelden is de vlag die zegt dat deze trofee daaronder valt. */
   { id: 'worldtour',  emoji: '🌍', name: 'Wereldtournee',   desc: 'Alle werelden uitgespeeld', telWerelden: true, has: p => allWorldsDone(p), progress: p => trophyProgress(doneWorldCount(p), WORLD_AVAIL, 'werelden uit') },
-  // 🧮 Rekenkracht — de lange weg (stats.correct telt elk goed antwoord)
-  { id: 'sums25',   emoji: '🔢', name: 'Rekenritme',   desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
-  { id: 'sums100',  emoji: '🧮', name: 'Rekenkanjer',  desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
-  { id: 'sums500',  emoji: '✏️', name: 'Rekenmeester', desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
-  { id: 'sums1000', emoji: '🎓', name: 'Rekenlegende', desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
-  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker',   desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
-  { id: 'gold20',   emoji: '👑', name: 'Gouden kroon', desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
-  // ✨ Sterrenleven — twee rustige mijlpalen naast de rest
-  { id: 'perfect10',  emoji: '💿', name: 'Platina plaat', desc: '10 shows met 3 sterren', has: p => perfectCount(p) >= 10, progress: p => trophyProgress(perfectCount(p), 10, 'perfecte shows') },
+  /* 🧮 Rekenkracht — twee medailles die meegroeien (zie TROPHY_LADDERS). Elke trap
+     is nog altijd een eigen trofee met een eigen id, een eigen 🎁 en een eigen
+     plek in p.trophies: wie "Rekenritme" al had, heeft nu de bronzen
+     rekenmedaille, zonder dat er in de save iets verandert. Alleen de kast
+     tekent ze als één kaartje (zie ladderCard). `trap` is de plek op de ladder:
+     0 brons, 1 zilver, 2 goud, 3 diamant. stats.correct telt elk goed antwoord. */
+  { id: 'sums25',   emoji: '🧮', name: 'Rekenmedaille · Brons',   trap: 0, desc: '25 sommen goed',   has: p => p.stats.correct >= 25, progress: p => trophyProgress(p.stats.correct, 25, 'sommen goed') },
+  { id: 'sums100',  emoji: '🧮', name: 'Rekenmedaille · Zilver',  trap: 1, desc: '100 sommen goed',  has: p => p.stats.correct >= 100, progress: p => trophyProgress(p.stats.correct, 100, 'sommen goed') },
+  { id: 'sums500',  emoji: '🧮', name: 'Rekenmedaille · Goud',    trap: 2, desc: '500 sommen goed',  has: p => p.stats.correct >= 500, progress: p => trophyProgress(p.stats.correct, 500, 'sommen goed') },
+  { id: 'sums1000', emoji: '🧮', name: 'Rekenmedaille · Diamant', trap: 3, desc: '1000 sommen goed', has: p => p.stats.correct >= 1000, progress: p => trophyProgress(p.stats.correct, 1000, 'sommen goed') },
+  { id: 'gold5',    emoji: '🌟', name: 'Goudzoeker · Brons',  trap: 0, desc: '5 gouden vragen',  has: p => p.goldHits >= 5, progress: p => trophyProgress(p.goldHits, 5, 'gouden vragen goed') },
+  { id: 'gold20',   emoji: '🌟', name: 'Goudzoeker · Zilver', trap: 1, desc: '20 gouden vragen', has: p => p.goldHits >= 20, progress: p => trophyProgress(p.goldHits, 20, 'gouden vragen goed') },
+  // Nieuw in oktober 2026: de derde trap, zodat ook deze medaille tot goud groeit.
+  // Een gouden vraag staat in ongeveer de helft van de shows; 50 is rond wereld 11.
+  { id: 'gold50',   emoji: '🌟', name: 'Goudzoeker · Goud',   trap: 2, desc: '50 gouden vragen', has: p => p.goldHits >= 50, progress: p => trophyProgress(p.goldHits, 50, 'gouden vragen goed') },
+  /* 💡 Nieuwe sommen — wat ze leert, gevierd. Elke wereld leert iets nieuws (zie
+     "De leerstap"), en dát is de echte vooruitgang in het spel: over het tiental
+     in wereld 3, zoek het getal in wereld 4, drie getallen in wereld 5. Tien
+     keer goed is genoeg om te zeggen "dit kan je nu". De tellers staan in p.leer
+     (zie telLeer) en tellen elk goed antwoord, ook na een hint.
+
+     `voor` zegt of de trofee voor dit kind te halen ís met wat de ouder
+     instelde: tot 10 gaat er niets over het tiental, en wie zoek-het-getal of
+     drie getallen uitzette, krijgt die nooit. Een trofee die niet te halen is
+     staat er niet (zie renderShelves) -- tenzij ze hem al heeft. In de telmodus
+     staan er de twee grote stappen van het tellen in plaats van de sommen. */
+  { id: 'leer-brug',   emoji: '🌉', name: 'Over de brug',   desc: '10 sommen over de tien goed',
+    voor: p => !telModus(p) && p.settings.max > 10 && p.settings.ops.some(o => o === '+' || o === '-'),
+    has: p => leerTel(p, 'brug') >= 10, progress: p => trophyProgress(leerTel(p, 'brug'), 10, 'sommen over de tien') },
+  { id: 'leer-zoek',   emoji: '🔍', name: 'Speurneus',      desc: '10 keer zoek het getal goed',
+    voor: p => !telModus(p) && p.settings.missNum !== false && p.settings.ops.some(o => o === '+' || o === '-' || o === 'x'),
+    has: p => leerTel(p, 'zoek') >= 10, progress: p => trophyProgress(leerTel(p, 'zoek'), 10, 'zoeksommen') },
+  { id: 'leer-drie',   emoji: '🧩', name: 'Drie op een rij', desc: '10 sommen met drie getallen goed',
+    voor: p => !telModus(p) && p.settings.chain3 !== false && p.settings.ops.includes('+'),
+    has: p => leerTel(p, 'drie') >= 10, progress: p => trophyProgress(leerTel(p, 'drie'), 10, 'sommen met drie getallen') },
+  // de telmodus: fase 6 is waar de cijfers komen, fase 9 de eerste sommen (zie countStageInfo)
+  { id: 'leer-cijfers', emoji: '🔢', name: 'Cijferkenner',  desc: 'Je telt met cijfers',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 6,
+    has: p => telModus(p) && telFase(p) >= 6 },
+  { id: 'leer-telsom', emoji: '➕', name: 'Eerste sommen',  desc: 'Je maakt je eerste sommen',
+    voor: p => telModus(p) && countMaxStage(p.settings) >= 9,
+    has: p => telModus(p) && telFase(p) >= 9 },
+  /* ✨ Sterrenleven — de kleedkamer. De twee trofeeën die je ergens anders in de
+     app verdient; `naar` is de lade die de knop in de balk opent (zie kastBalk). */
   /* De enige koop-trofee die overblijft, en met opzet de láágste drempel van de
      twee die er stonden (10, niet 25): een vrolijke "je hebt je eigen stijl"-tik,
      geen winkelopdracht. Zelfde id en zelfde voorwaarde als voorheen, dus wie hem
-     al had houdt hem. boughtCount telt startspullen en wereldbeloningen niet mee.
-     `naar` is de kleedkamercategorie die een tik op dit kaartje opent: dit is de
-     enige trofee waarvoor je ergens anders in de app moet zijn, dus wijst hij de
-     weg (zie tapTrophy). */
+     al had houdt hem. boughtCount telt startspullen en wereldbeloningen niet mee. */
   { id: 'shopper',    emoji: '🛍️', name: 'Verzamelaar',  desc: '10 spulletjes gekocht',  naar: 'dress',
     has: p => boughtCount(p) >= 10, progress: p => trophyProgress(boughtCount(p), 10, 'spulletjes gekocht') },
+  // Je eerste eigen podium: alle drie de stukken van een podium van jou (het
+  // Parelpodium waar iedereen op begint telt niet). Zie podiumVanJou.
+  { id: 'eigenpodium', emoji: '🎪', name: 'Eigen podium', desc: 'Je eerste eigen podium', naar: 'stage',
+    has: p => ITEMS.some(it => it.cat === 'stage' && it.id !== 'stage_disco' && podiumVanJou(p, it)) },
   // 🥇 Perfecte werelden — één per wereld, aangelegd door rebuildWorldBadges()
 ];
-/* De kast heeft vier planken, en niet meer. Elke plank is één soort prestatie, zodat
+/* De medailles die meegroeien: per ladder de trappen van laag naar hoog, en de
+   naam en het icoon van het kaartje dat ze samen zijn. Een ladder hangt op één
+   plank, en zijn id's staan daar ook gewoon in `ids` (dus "elke trofee hangt
+   ergens" blijft waar); renderShelves tekent ze als één kaartje.
+
+   Waarom. Rekenkracht was zes tellers naast elkaar -- 25, 100, 500, 1000 sommen
+   en 5, 20 gouden vragen -- en zo las de plank als een lijst getallen. "Mijn
+   medaille is goud geworden" zegt meer dan "ik heb kaartje 3 van 4". */
+const TRAP_NAMEN = ['Brons', 'Zilver', 'Goud', 'Diamant'];
+const TROPHY_LADDERS = [
+  { key: 'reken', emoji: '🧮', name: 'Rekenmedaille', ids: ['sums25', 'sums100', 'sums500', 'sums1000'] },
+  { key: 'goud',  emoji: '🌟', name: 'Goudzoeker',    ids: ['gold5', 'gold20', 'gold50'] },
+];
+/* De kast heeft vijf planken, en niet meer. Elke plank is één soort prestatie, zodat
    een kind aan de kop al ziet waar ze naar kijkt -- en zodat er geen plank is die
    bestaat omdat er nog trofeeën over waren.
 
    De volgorde is de volgorde waarin je ze tegenkomt: eerst wat je meemaakt, dan de
-   lange rekenweg, dan de zes grote prijzen, en helemaal onderaan het sterrenleven. */
+   lange rekenweg en wat je leert, dan de grote prijzen, en helemaal onderaan de
+   kleedkamer. */
 /* `ico` staat los van `name` sinds de kopregel van een groep uit drie cellen
    bestaat (icoon | naam + regeltje | stand). Stond het emoji nog vóór de naam in
    dezelfde string, dan zou het meeschuiven met de tekst en niet op één lijn staan
@@ -2190,16 +2247,18 @@ const TROPHIES = [
    maakt. Een groep erbij heeft dus één veld meer, en verder niets. */
 const TROPHY_SHELVES = [
   { key: 'avontuur', ico: '🎤', name: 'Avontuur',          note: 'De momenten die je je blijft herinneren',
-    ids: ['first', 'toegift', 'perfect1', 'worldtour'] },
+    ids: ['first', 'perfect1', 'perfect10', 'worldtour'] },
   { key: 'rekenen',  ico: '🧮', name: 'Rekenkracht',       note: 'Elke goede som telt mee, je hele leven lang',
-    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20'] },
+    ids: ['sums25', 'sums100', 'sums500', 'sums1000', 'gold5', 'gold20', 'gold50'] },
+  { key: 'leren',    ico: '💡', name: 'Nieuwe sommen',     note: 'Wat je nieuw geleerd hebt',
+    ids: ['leer-brug', 'leer-zoek', 'leer-drie', 'leer-cijfers', 'leer-telsom'] },
   /* De grote prijzen. De lijst wordt gevuld door rebuildWorldBadges() -- de werelden
      staan in WORLDS en kunnen in de studio veranderen, dus hier hardcoderen zou
      meteen uit de pas lopen. De `key` is waar die functie deze plank aan herkent. */
   { key: 'perfect',  ico: '🥇', name: 'Perfecte werelden', note: 'Overal drie sterren: de grootste prijs van het spel',
     ids: [] },
-  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Voor een echte popster',
-    ids: ['perfect10', 'shopper'] },
+  { key: 'sterren',  ico: '✨', name: 'Sterrenleven',      note: 'Je eigen stijl in de kleedkamer',
+    ids: ['shopper', 'eigenpodium'] },
 ];
 /* Trofeeën met pensioen.
    Een kind dat zo'n trofee ooit behaald heeft, heeft die id nog in p.trophies
@@ -2228,6 +2287,8 @@ const RETIRED_TROPHIES = new Set([
   'rich', 'diamond250',
   // de lange winkelgrind; 'shopper' (10 spulletjes) blijft als enige koop-mijlpaal
   'collector',
+  // oktober 2026 -- "Applaus!": de publieksmeter loopt in bijna elke show vol (zie TROPHIES)
+  'toegift',
   // "koop alles uit deze categorie": betekent iets anders zodra er één item bijkomt
   'modekoningin', 'schoenenkast', 'haarstylist', 'orkest', 'dierenkoning',
   /* 'Kast vol!' -- alle andere trofeeën. Dat was geen voorwaarde maar een
@@ -2271,6 +2332,22 @@ function doneWorldCount(p) { let n = 0; for (let i = 0; i < WORLD_AVAIL; i++) if
 function boughtCount(p) {
   return Math.max(0, p.owned.filter(id => !isBeloning(id)).length - (p.freebies || 5));
 }
+/* Voor de plank Nieuwe sommen. p.leer telt per nieuwe soort som hoe vaak hij
+   goed was: brug (over het tiental, 8 + 5), zoek (3 + ▢ = 7) en drie
+   (3 + 4 + 2). Er werd al bijgehouden hoe vaak zoek-het-getal en drie getallen
+   gezien werden (opTrack, chainTrack), maar niet hoe vaak ze goed waren, en
+   over het tiental helemaal niet. Een oude save heeft het veld niet en begint
+   op nul: wat ze vóór oktober 2026 goed deed telt niet mee, maar tien keer
+   is zo weer gehaald. */
+function leerTel(p, soort) { return (p.leer && p.leer[soort]) || 0; }
+function telLeer(p, q) {
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
+  const soort = q.kind === 'missing' ? 'zoek' : q.kind === 'chain' ? 'drie' : q.brug ? 'brug' : null;
+  if (soort) p.leer[soort] = (p.leer[soort] || 0) + 1;
+}
+function telModus(p) { return !!p.settings && p.settings.track === 'count'; }
+// De fase waar de telmodus nu staat (zie countTrack; klimt mee met wat ze kan).
+function telFase(p) { return (p.countTrack && p.countTrack.stage) || 1; }
 
 /* ================= Sterrencarrière ================= */
 /* MET PENSIOEN (oktober 2026). Hier stond een ster-status: acht rangen op het
@@ -2389,6 +2466,7 @@ function defaultProfile(name, dress, opts) {
     // streak = juiste-op-rij in de show (stuurt de rung omhoog), reset bij een misser
     countTrack: { stage: opts.stage || 1, rung: 0, streak: 0, seen: 0, acc: 0.5 },
     stats: { correct: 0, wrong: 0 },  // voor het ouder-overzicht
+    leer: { brug: 0, zoek: 0, drie: 0 },  // nieuwe soorten sommen goed, voor de kast (zie telLeer)
     recent: [],                       // de laatste shows: sterren, of 0 als hij mislukte (zie onthoudUitkomst)
     gezien: {}                        // welke groei het kind al gevierd heeft (zie groeiMoment)
   };
@@ -2408,6 +2486,7 @@ function migrate(p) {
   p.readyTrophies = p.readyTrophies.filter(id => !isRetiredTrophy(id));
   if (p.goldHits == null) p.goldHits = 0;
   if (p.encores == null) p.encores = 0;
+  if (!p.leer) p.leer = { brug: 0, zoek: 0, drie: 0 };
   /* Een ster van vóór groeiMoment: wat ze al kende telt als gevierd, anders
      kreeg een kind dat al maanden zoek-het-getal speelt morgen "Nieuw!". */
   if (!p.gezien) p.gezien = {
@@ -8771,11 +8850,18 @@ function renderShelves() {
        vooruit. Daarboven één mistkaartje. De andere planken zijn vaste rijen
        zonder wereld eraan en staan er helemaal. */
     const perfectPlank = shelf.key === 'perfect';
+    const vanJou = id => p.trophies.includes(id) || (p.readyTrophies || []).includes(id);
+    /* Op de andere planken valt alleen weg wat dit kind niet kán halen (t.voor,
+       zie Nieuwe sommen) -- en ook dat alleen zolang ze hem niet heeft. Blijft
+       er niets over, dan staat de plank er niet. */
     const ids = perfectPlank ? alle.filter(id => {
       const t = TROPHIES.find(x => x.id === id);
-      return !t || binnenHorizon(p, t.index) || p.trophies.includes(id)
-        || (p.readyTrophies || []).includes(id);
-    }) : alle;
+      return !t || binnenHorizon(p, t.index) || vanJou(id);
+    }) : alle.filter(id => {
+      const t = TROPHIES.find(x => x.id === id);
+      return !t || !t.voor || t.voor(p) || vanJou(id);
+    });
+    if (!ids.length) return;
     const mist = perfectPlank && ids.length < alle.length;
     const groep = document.createElement('section');
     groep.className = 'kast-groep';
@@ -8796,7 +8882,15 @@ function renderShelves() {
     groep.appendChild(head);
     const grid = document.createElement('div');
     grid.className = 'trophy-grid' + (shelf.key === 'perfect' ? ' pw-grid' : '');
+    /* Een ladder (zie TROPHY_LADDERS) is één kaartje, op de plek van zijn
+       eerste trap; de andere trappen slaan we over. */
+    const getekend = new Set();
     ids.forEach(id => {
+      const ladder = TROPHY_LADDERS.find(l => l.ids.includes(id));
+      if (ladder) {
+        if (!getekend.has(ladder.key)) { getekend.add(ladder.key); grid.appendChild(ladderCard(ladder, p)); }
+        return;
+      }
       const t = TROPHIES.find(x => x.id === id);
       if (t) grid.appendChild(trophyCard(t, p));
     });
@@ -8829,6 +8923,8 @@ const TROPHY_UNIT_SINGULAR = {
   'shows': 'show', 'sommen': 'som',
   'gouden vragen': 'gouden vraag', 'perfecte shows': 'perfecte show',
   'spulletjes': 'spulletje',
+  'sommen over de tien': 'som over de tien', 'zoeksommen': 'zoeksom',
+  'sommen met drie getallen': 'som met drie getallen',
   // 'uit' is geen telwoord-achtervoegsel maar hoort bij het label ("werelden uit"),
   // dus unitText() knipt het er niet af en staat de hele zin hier.
   'werelden uit': 'wereld uit'
@@ -8854,7 +8950,15 @@ function trophyBoog(t, p, status) {
      verbergt (zie binnenHorizon): een boog die halfvol staat verklapt net zo goed
      hoeveel werelden er nog komen als "2 / 11" deed. Ligt er nog mist, dan geen
      boog -- een tik zegt hoeveel je er al hebt. */
-  if (t.telWerelden && meerWereldenVooruit(p)) return 0;
+  if (t.telWerelden && meerWereldenVooruit(p)) {
+    /* Eerst stond hier 0: geen boog zolang er mist ligt, want een halfvolle boog
+       verklapt hoeveel werelden er nog komen. Maar dan bleef de rand bijna het
+       hele spel leeg, en leek de tournee niet begonnen. Nu telt hij tegen de
+       werelden die ze kán zien (tot en met de horizon): de boog loopt vol, en
+       zakt een stukje terug als er een wereld uit de mist komt. Het totaal
+       blijft geheim. */
+    return Math.max(0, Math.min(100, Math.round(100 * doneWorldCount(p) / (laatsteZichtbareWereld(p) + 1))));
+  }
   const pr = t.progress(p);
   return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
@@ -8873,6 +8977,58 @@ function trophyCard(t, p) {
   card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
+}
+/* Een medaille die meegroeit (zie TROPHY_LADDERS): één kaartje voor alle trappen.
+     klaar     ligt er een trap klaar, dan is dit kaartje het cadeautje
+               (giftMedaille) en opent een tik de laagste die klaarligt
+     anders    het icoon van de ladder in een rand van het metaal dat je al hebt
+               (nog niets: de gewone donkere rand), met daarover een boog in het
+               metaal van de volgende trap: zo ver ben je op weg naar zilver
+     eronder   de naam en een stipje per trap, gekleurd voor wat je al hebt
+   Alles uit wat er al bewaard is: welke trap-id's in p.trophies staan. */
+function ladderStand(ladder, p) {
+  const trappen = ladder.ids.map(id => TROPHIES.find(t => t.id === id)).filter(Boolean);
+  const klaar = trappen.find(t => (p.readyTrophies || []).includes(t.id)) || null;
+  const niveau = trappen.filter(t => p.trophies.includes(t.id)).length;
+  const volgende = trappen.find(t => !p.trophies.includes(t.id) && !(p.readyTrophies || []).includes(t.id)) || null;
+  return { trappen, klaar, niveau, volgende };
+}
+function ladderCard(ladder, p) {
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  const card = document.createElement('div');
+  const status = klaar ? 'ready' : niveau ? 'done' : (volgende && volgende.progress(p).now > 0 ? 'busy' : 'fresh');
+  const nu = niveau ? trappen[niveau - 1].trap : null;
+  card.className = `trophy-card ladder ${status}` + (nu != null ? ` nu-${nu}` : '') + (niveau === trappen.length ? ' top' : '');
+  if (trappen.some(t => t.id === justClaimed)) card.classList.add('just-claimed');
+  const stippen = '<div class="trap-stippen" aria-hidden="true">'
+    + trappen.map((t, i) => `<i class="${i < niveau ? 'm-' + t.trap : ''}"></i>`).join('') + '</div>';
+  if (klaar) {
+    card.innerHTML = giftMedaille(ladder) + stippen;
+    card.setAttribute('aria-label', `Open ${klaar.name}`);
+  } else {
+    let boog = 0;
+    if (volgende) { const pr = volgende.progress(p); boog = Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target))); }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '') + (nu != null ? `;--nu:var(--m-${nu})` : '');
+    card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
+      + `<div class="tname">${ladder.name}</div>` + stippen;
+    card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
+  }
+  card.onclick = (e) => tapLadder(ladder, card, e);
+  return card;
+}
+function tapLadder(ladder, card, e) {
+  if (e) tapRipple(e.clientX, e.clientY);
+  const p = P();
+  const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
+  if (klaar) { openTrophy(klaar.id); return; }
+  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
+  const kop = { emoji: ladder.emoji, name: ladder.name };
+  const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
+  if (!volgende) { sndTap(); sparkle(card); kastBalk(kop, card, metaal + '!'); return; }
+  sndClick();
+  const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
+  const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
+  kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
 }
 /* Medaille, naam en de voet, in die volgorde. De voet is er alleen als er iets
    in staat: 🔒, of het balkje op de perfecte plank. */
@@ -8954,8 +9110,9 @@ function tapTrophy(t, card, e) {
   const p = P();
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
-  // een trofee die ergens anders verdiend wordt, wijst de weg erheen
-  if (t.naar) { sndClick(); openKleedkamerCat(t.naar); return; }
+  /* Een trofee die ergens anders verdiend wordt (t.naar) ging hier eerst meteen
+     naar de kleedkamer -- en dus zag je bij Verzamelaar nooit hoe ver je was. Nu
+     doet hij wat elke trofee doet, en staat de weg erheen als knop in de balk. */
   // nog een keer op dezelfde: de balk gaat weer weg, zoals in de kleedkamer
   if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
   if (st === 'done') { sndTap(); sparkle(card); kastBalk(t, card, t.desc); return; }
@@ -8984,8 +9141,13 @@ function kastBalk(t, card, tekst, getal) {
   card.classList.add('kies');
   kast.classList.add('balk-aan');   // ruimte onderin, zodat ook de onderste plank boven de balk kan
   const sub = getal != null ? esc(tekst).replace(String(getal), `<span class="db-highlight">${getal}</span>`) : esc(tekst);
+  /* t.naar: deze trofee verdien je in de kleedkamer, dus staat er rechts één
+     knop die die lade opent -- dezelfde kleine knop als Speel in de balk van de
+     kleedkamer. Alleen het icoon van waar je heen gaat, geen woord. */
+  const knop = t.naar ? `<button class="btn small" id="kast-naar" type="button" aria-label="Naar de kleedkamer">${t.naar === 'stage' ? '🎪' : '👕'}</button>` : '';
   bar.innerHTML = `<div class="db-info"><span class="db-name">${t.perfect ? '' : t.emoji + ' '}${esc(t.name)}</span>`
-    + `<span class="db-sub">· ${sub}</span></div>`;
+    + `<span class="db-sub">· ${sub}</span></div>` + knop;
+  if (knop) $('kast-naar').onclick = () => { sndClick(); kastBalk(null); openKleedkamerCat(t.naar); };
   bar.style.display = 'flex';
   speak(tekst);
   /* Viel de getikte trofee achter de balk (een tik vlak boven de navigatie), dan
@@ -9018,7 +9180,8 @@ function celebrateTrophy(t) {
     +   '<div class="tp-rays" aria-hidden="true"></div>'
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
-    +   `<div class="tp-emoji">${t.emoji}</div>`
+    // een trap van een medaille die meegroeit: de rand in zijn eigen metaal
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-rand:var(--m-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
@@ -9321,7 +9484,9 @@ function genQuestion(s, lvl, perf) {
   const ops = s.ops.length ? s.ops : ['+'];
   const op = pick(ops);
   const { a, b, c, sym } = genTriple(s, lvl, perf, op);
-  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic' };
+  // brug: gaat hij over het tiental? Telt mee voor "Over de brug" (zie telLeer)
+  const brug = (op === '+' || op === '-') && overTiental(a, b, c, op);
+  return { tmpl: `${a} ${sym} ${b} = @`, ans: c, op, kind: 'classic', brug };
 }
 // Zoek-het-getal: het tweede getal ontbreekt ("3 + ? = 7"). Alleen + − × (delen
 // blijft voorlopig buiten beeld). 0/1 als antwoord mag, maar niet te vaak.
@@ -11086,6 +11251,7 @@ function antwoordGoed(q, p, btnEl) {
   else if (q.kind === 'chain') updateChainAcc(p, true, firstTry);
   else if (q.count) updateCountAcc(p, true, firstTry);
   p.stats.correct++;
+  telLeer(p, q);   // over het tiental, zoek het getal, drie getallen (zie de plank Nieuwe sommen)
   // enkel een directe treffer telt als "beheerst" -- en zet het onderhoudsinterval
   // van een al geleerde som verder vooruit (zie toLearned/bumpLearned)
   if (firstTry) { decWeak(p, q); bumpLearned(p, q); }

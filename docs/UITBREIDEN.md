@@ -338,8 +338,15 @@ Moet het toch:
    `progress: p => trophyProgress(nu, doel, 'label')` als het getal zélf iets
    zegt ("82 / 100 sommen"). Voor iets wat één keer gebeurt géén `progress` —
    "0 / 1" is geen voortgang.
-2. Het id bij een plank in `TROPHY_SHELVES`. Er zijn er vier en dat blijven er
-   vier; een plank met één kaartje is geen plank.
+2. Het id bij een plank in `TROPHY_SHELVES`. Er zijn er vijf (Avontuur,
+   Rekenkracht, Nieuwe sommen, Perfecte werelden, Sterrenleven); een plank met
+   één kaartje is geen plank. Is de trofee niet voor elk kind te halen (hangt
+   hij af van wat de ouder instelde), geef hem dan `voor: p => …`: dan staat hij
+   er alleen bij wie hem kán halen.
+   Is het een nieuwe trap van een bestaande teller (500 sommen, 1000 sommen),
+   maak er dan geen los kaartje van maar zet hem op een ladder in
+   `TROPHY_LADDERS`, met `trap` = zijn plek (0 brons, 1 zilver, 2 goud,
+   3 diamant). De kast tekent een ladder als één medaille die meegroeit.
 3. Is het label van `progress` nieuw, dan één regel in
    `TROPHY_UNIT_SINGULAR` — anders staat er "Nog 1 sommen". `inhoud.test.js`
    valt om als dat vergeten wordt.

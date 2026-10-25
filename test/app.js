@@ -176,7 +176,7 @@ const BROWSER = [
 // een test altijd de huidige waarde ziet en geen momentopname.
 const BRUG = `globalThis.__api = {
   // tabellen
-  WORLDS, WORLDS_SHIPPED, SCHERMKUNST, ITEMS, TROPHIES, TROPHY_SHELVES, RETIRED_TROPHIES, CATS,
+  WORLDS, WORLDS_SHIPPED, SCHERMKUNST, ITEMS, TROPHIES, TROPHY_SHELVES, TROPHY_LADDERS, TRAP_NAMEN, RETIRED_TROPHIES, CATS,
   BASES, DEFAULT_BASE, START_HAIR, START_DRESS, COUNT_OPTS,
   LS_KEY, SCHEMA_V, LEGACY_TOUR_END, WERELD_BADGE, PERFECT_BADGE, MAX_PROFILES,
   get WORLD_START() { return WORLD_START; },
@@ -206,6 +206,7 @@ const BRUG = `globalThis.__api = {
   PODIA_CAT, podiumStukken, podiumVanJou, podiumRest, podiumPrijs, podiumOpSlot, zichtbarePodia, podiumVan, bezit, tagStand,
   grantWorldRewards, grantHistoricRewards, checkTrophies,
   activeTrophies, isRetiredTrophy, earnedActiveCount, trophyProgress, unitText, trophyStatus,
+  trophyBoog, ladderStand, telLeer, leerTel, telModus,
   // tellers
   totalStarCount, perfectCount, playedCount, doneWorldCount, boughtCount,
   // opslag
