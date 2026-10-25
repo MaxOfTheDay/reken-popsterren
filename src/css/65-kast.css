@@ -243,6 +243,38 @@
      wiebelen en de glans staan in 70-feest.css. */
   .trophy-card.ready .temoji { box-shadow: 0 0 22px rgba(var(--goud-rgb),.75), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
   .trophy-card.ready .tico { font-size: 38px; }
+  /* ---- Een medaille die meegroeit (ladderCard) ----
+     De rand is het metaal dat je al hebt (--nu), en de boog erover het metaal
+     van de volgende trap (--straks), zo ver als je al bent: een bronzen
+     medaille die voor 40% zilver is, is op 40% van de weg naar zilver. Nog
+     niets: de gewone donkere rand met een bronzen boog. Heb je een metaal, dan
+     een zachte gloed in die kleur (nu-0 .. nu-3). */
+  .trophy-card.ladder:not(.ready) .temoji {
+    background:
+      var(--medaille-vul) padding-box,
+      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu, rgba(255,255,255,.13)) 0) border-box;
+  }
+  .trophy-card.ladder.done:not(.ready) .temoji {
+    background:
+      var(--medaille-vul-goud) padding-box,
+      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu) 0) border-box;
+  }
+  /* De gloed in het metaal (nu-0 .. nu-3, zet ladderCard). Per metaal uitgeschreven
+     en niet met color-mix(): zie de oudere tablets bij de wereldkleuren in :root. */
+  .trophy-card.ladder.nu-0:not(.ready) .temoji { box-shadow: 0 0 14px rgba(217,143,85,.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ladder.nu-1:not(.ready) .temoji { box-shadow: 0 0 14px rgba(219,228,238,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ladder.nu-2:not(.ready) .temoji { box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
+  .trophy-card.ladder.nu-3:not(.ready) .temoji { box-shadow: 0 0 20px rgba(159,232,255,.6), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.2); }
+  /* Ligt er een trap klaar, dan is het gewoon het cadeautje (zie giftMedaille):
+     daarom staat er overal :not(.ready), anders won deze rand van de gouden. */
+  /* Een stipje per trap onder de naam, gekleurd voor wat je al hebt: zo zie je
+     zonder woorden dat er meer metalen zijn, en hoeveel. */
+  .trap-stippen { display: flex; gap: 5px; margin-top: 6px; }
+  .trap-stippen i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .trap-stippen i.m-0 { background: var(--m-0); }
+  .trap-stippen i.m-1 { background: var(--m-1); }
+  .trap-stippen i.m-2 { background: var(--m-2); }
+  .trap-stippen i.m-3 { background: var(--m-3); }
   /* Getikt: de ring van "hier kijk je naar", net als een getikt kaartje in de
      kleedkamer (.item-card.selected). Een outline volgt de ronde hoek. Het
      cyaan op volle sterkte en niet --cyaan-rand (.55): daar ligt die rand op een

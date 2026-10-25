@@ -251,7 +251,10 @@ zaak('F', () => {
      Een wereld erbij verandert alleen het tweede getal, en dat mag. Een trofee die
      iemand er "even bij" zet valt hier onmiddellijk uit, hoeveel werelden er ook
      zijn. */
-  const VASTE_KAST = 12;
+  /* 12 -> 18 (oktober 2026): Applaus! met pensioen, Goudzoeker kreeg een gouden
+     trap (gold50), en er kwamen de plank Nieuwe sommen (vijf, waarvan een kind er
+     hoogstens drie ziet: zie t.voor) en Eigen podium bij. */
+  const VASTE_KAST = 18;
   const actief = app.activeTrophies();
   const vast = actief.filter(t => !t.perfect);
   const perfect = actief.filter(t => t.perfect);
@@ -265,7 +268,22 @@ zaak('F', () => {
   check(perfect.every(t => t.id.indexOf(app.PERFECT_BADGE) === 0),
     'F · en een perfecte wereld is te herkennen aan zijn id',
     JSON.stringify(perfect.filter(t => t.id.indexOf(app.PERFECT_BADGE) !== 0).map(t => t.id)));
-  check(TROPHY_SHELVES.length === 4, 'F · en er zijn vier planken', TROPHY_SHELVES.length);
+  check(TROPHY_SHELVES.length === 5, 'F · en er zijn vijf planken', TROPHY_SHELVES.length);
+  /* De medailles die meegroeien (TROPHY_LADDERS): elke trap is een echte trofee,
+     alle trappen van een ladder hangen op dezelfde plank, en ze lopen op van
+     brons naar boven -- trap 0, 1, 2 ... in de volgorde van de ladder, met een
+     drempel die telkens hoger ligt (wie de hogere heeft, heeft de lagere ook). */
+  app.TROPHY_LADDERS.forEach(l => {
+    const trappen = l.ids.map(id => TROPHIES.find(t => t.id === id));
+    check(trappen.every(Boolean), `F · ladder ${l.key}: elke trap is een trofee`, JSON.stringify(l.ids));
+    if (!trappen.every(Boolean)) return;
+    const plankVan = id => TROPHY_SHELVES.filter(sh => sh.ids.includes(id)).map(sh => sh.key)[0];
+    check(new Set(l.ids.map(plankVan)).size === 1, `F · ladder ${l.key}: op één plank`, JSON.stringify(l.ids.map(plankVan)));
+    check(trappen.every((t, i) => t.trap === i), `F · ladder ${l.key}: trappen 0, 1, 2 ... op volgorde`, JSON.stringify(trappen.map(t => t.trap)));
+    check(trappen.every(t => t.trap < app.TRAP_NAMEN.length), `F · ladder ${l.key}: elke trap heeft een metaal`, '');
+    check(trappen.every((t, i) => !i || t.progress(app.defaultProfile('L', 'dress_roze')).target > trappen[i - 1].progress(app.defaultProfile('L', 'dress_roze')).target),
+      `F · ladder ${l.key}: elke trap vraagt meer dan de vorige`, '');
+  });
   /* "Nog 1 sommen" is geen zin. unitText() zet een voortgangslabel in het
      enkelvoud via TROPHY_UNIT_SINGULAR, en dat is een tabel die per trofee
      bijgewerkt moet worden -- precies het soort regel dat vergeten wordt. Dus:
