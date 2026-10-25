@@ -426,6 +426,39 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- 7a · Terug duwt geen nieuwe history-entry ----
+     Chrome slaat bij de systeem-terugknop elke entry van de pagina over zodra
+     die er één bijzet ná een terug-druk en vóór een nieuwe tik (zie
+     "= Terug-navigatie" in de app). page.goBack() hier kent die regel niet, dus
+     dat kan deze suite niet zelf zien gebeuren. Wat hij wél kan zien: dat er na
+     de eerste wachtpost nooit meer een pushState komt, hoe vaak er ook terug
+     gedrukt wordt -- en dat terug intussen nog steeds elke stap doet. */
+  {
+    const { ctx, page } = await fresh();
+    await makeStar(page, { name: 'Terug' });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const echt = history.pushState.bind(history);
+      window.__duw = 0;
+      history.pushState = (...a) => { window.__duw++; return echt(...a); };
+    });
+    const scherm = () => page.evaluate(() => document.querySelector('.screen.active').id);
+    const stappen = [];
+    await page.click('#nav-tro'); await page.waitForTimeout(500);
+    await page.goBack(); await page.waitForTimeout(500); stappen.push(await scherm());
+    await page.click('#nav-dress'); await page.waitForTimeout(500);
+    await page.goBack(); await page.waitForTimeout(500); stappen.push(await scherm());
+    await page.goBack(); await page.waitForTimeout(500); stappen.push(await scherm());
+    // en weer naar binnen: de oude wachtpost wordt hergebruikt, ook dan geen nieuwe
+    await page.click('.ster-tegel'); await page.waitForTimeout(600);
+    await page.goBack(); await page.waitForTimeout(500); stappen.push(await scherm());
+    const duw = await page.evaluate(() => window.__duw);
+    check(stappen.join() === 'screen-map,screen-map,screen-profile,screen-profile',
+      'terug doet nog elke stap: kast, kleedkamer, kaart, en weer de kaart', stappen.join());
+    check(duw === 0, 'na de eerste wachtpost komt er geen pushState meer bij (Chrome zou de app dan overslaan)', 'pushState ' + duw + 'x');
+    await ctx.close();
+  }
+
   /* ================= 7b · Werelden: indeling, staart en de leerstap =================
    * Een wereld is een hergroepering van p.level, en sinds de review van september
    * 2026 ook een stap in het rekenen (zie "De leerstap" in de app). Twee dingen

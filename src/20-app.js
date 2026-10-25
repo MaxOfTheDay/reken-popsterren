@@ -14681,7 +14681,21 @@ function backTarget() {
   return null;   // screen-profile, niets open: dit ís de bodem -- browser/PWA handelt terug zelf verder af
 }
 
-let backGuardArmed = false, syncingBackGuard = false, backSyncQueued = false;
+/* Waarom terug na de eerste keer vooruit gaat in plaats van opnieuw te duwen:
+   Chrome slaat bij de terugknop history-entries over die een pagina toevoegde
+   "zonder tik van de speler" (de history manipulation intervention). En na een
+   terug-druk van de systeemknop telt de vorige tik daarvoor niet meer mee, tot
+   er een nieuwe komt (crbug.com/1248529, honor_sticky_activation_for_history_intervention
+   in Chromium). Een pushState in de popstate maakte dus élke entry van deze
+   pagina overslaanbaar: de eerste terug deed wat hij moest, de tweede sloeg de
+   hele app over en sloot hem -- op welk scherm je ook stond. Desktop ziet dit
+   niet, want daar is terug een toets of muisknop, en dat telt wél als tik.
+   Daarom wordt de wachtpost maar één keer geduwd, bij een tik (een ster kiezen),
+   en daarna hergebruikt: na een terug staat hij nog vóór ons in de history, en
+   history.forward() stapt er weer op zonder iets nieuws toe te voegen -- dan
+   valt er voor Chrome ook niets te markeren. guardVooruit zegt of hij daar ligt;
+   dat is zo vanaf de eerste popstate tot de volgende pushState. */
+let backGuardArmed = false, syncingBackGuard = false, backSyncQueued = false, guardVooruit = false;
 // Zorgt dat er precies dan een "wachtpost"-entry op de history staat als backTarget()
 // iets teruggeeft. Eén tussenstap (bv. een venster dat eerst dichtgaat en pas
 // dáárna show() naar het echte scherm) kan tussentijds heel even "niks" laten
@@ -14698,12 +14712,20 @@ function syncBackGuard() {
     backSyncQueued = false;
     const want = !!backTarget();
     if (want === backGuardArmed) return;
-    if (want) { history.pushState({ rpGuard: 1 }, ''); backGuardArmed = true; }
+    if (want) {
+      if (guardVooruit) history.forward();                    // de oude wachtpost, zie hierboven
+      else history.pushState({ rpGuard: 1 }, '');
+      backGuardArmed = true;
+    }
     else { syncingBackGuard = true; history.back(); }
   });
 }
 window.addEventListener('popstate', () => {
+  // Weer óp de wachtpost: dat is onze eigen forward() die aankomt (of de
+  // vooruitknop van een desktopbrowser). Er is niets gedrukt dat iets moet doen.
+  if (history.state && history.state.rpGuard) { backGuardArmed = true; return; }
   backGuardArmed = false;                                       // onze entry is net verbruikt
+  guardVooruit = true;                                          // ... maar hij ligt nog vóór ons
   if (syncingBackGuard) { syncingBackGuard = false; return; }    // wíj stuurden dit terug, niet de speler
   const act = backTarget();
   if (act) { act(); syncBackGuard(); }
