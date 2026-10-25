@@ -59,8 +59,9 @@
   .wf-som .mini-kaart .item-thumb svg { height: 30px; }
   .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
   .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
-  .wf-goud { margin-top: 4px; padding: 4px 12px; border-radius: 99px; font-size: var(--tx-klein); font-weight: 700;
-    color: #3a2200; background: linear-gradient(var(--gold-light), var(--gold-accent)); }
+  /* Een gouden regel en geen pil: een plat geel vlak leest als een knop, en de
+     knop ("Doe aan") staat er vlak onder. De gouden rand van het podium zegt het al. */
+  .wf-goud { margin-top: 4px; font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); }
   .wereld-feest .wf-een > * { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-een > :nth-child(2) { animation-delay: .1s; }
   .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
@@ -239,7 +240,8 @@
      smalle-scherm-maat, zodat 'm ook op een laag/liggend toestel nooit
      afgesneden wordt */
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
-  .end-text { font-size: var(--tx-body); }
+  /* balance: geen los woord ("eens!") op de laatste regel */
+  .end-text { font-size: var(--tx-body); text-wrap: balance; }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
   /* korte schermen: het eindscherm moet ook op een 320x568 in één beeld passen --
      het is een vier-seconden-moment, daar hoort geen scrollen bij */
@@ -251,6 +253,7 @@
     .end-text { font-size: var(--tx-label); }
     .earn-line { gap: 6px; margin: 7px 0 8px; }
     .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
+    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; }
     .end-milestone { min-height: 30px; margin-bottom: 8px; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
@@ -267,10 +270,13 @@
      groot, vlak erboven; dit is de munt. Een nul tonen we niet: een mislukte
      show zonder opbrengst laat het vakje leeg (zie endLevel).
      (Er was ooit ook 👏 publiek, bij de publieksmeter; die is vervallen.) */
-  .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
+  /* Eén rij: de 💎 en, als er een klaarligt, de trofee-pil ernaast. Even hoog
+     (34px), zodat ze als twee kaartjes van dezelfde soort naast elkaar staan. */
+  .earn-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
+  .earn-line .earn-chip { min-height: 34px; box-sizing: border-box; padding: 7px 16px; }
   /* Het vakje draagt het blauw van de diamant: de munt. */
   .earn-chip.dia { background: rgba(41,182,246,.32); }
   /* Mijlpaal: precies één regel, en alleen als er iets gehaald is -- een trofee

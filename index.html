@@ -7063,8 +7063,9 @@
   .wf-som .mini-kaart .item-thumb svg { height: 30px; }
   .wf-som .mini-kaart .item-thumb .thumb-emo { font-size: 24px; }
   .wf-som .mini-kaart .item-status { font-size: 11px; padding: 1px 6px; min-height: 16px; }
-  .wf-goud { margin-top: 4px; padding: 4px 12px; border-radius: 99px; font-size: var(--tx-klein); font-weight: 700;
-    color: #3a2200; background: linear-gradient(var(--gold-light), var(--gold-accent)); }
+
+
+  .wf-goud { margin-top: 4px; font-size: var(--tx-klein); font-weight: 700; color: var(--gold-light); }
   .wereld-feest .wf-een > * { animation: rankTextRise .45s ease both; }
   .wereld-feest .wf-een > :nth-child(2) { animation-delay: .1s; }
   .wereld-feest .wf-een > :nth-child(3) { animation-delay: .2s; }
@@ -7243,7 +7244,8 @@
 
 
   .end-stage { width: 150px; height: 168px; margin: 4px auto 0; }
-  .end-text { font-size: var(--tx-body); }
+
+  .end-text { font-size: var(--tx-body); text-wrap: balance; }
   .result-stars { font-size: 48px; letter-spacing: 4px; margin: 6px 0 2px; }
 
 
@@ -7255,6 +7257,7 @@
     .end-text { font-size: var(--tx-label); }
     .earn-line { gap: 6px; margin: 7px 0 8px; }
     .earn-chip { font-size: var(--tx-label); padding: 7px 4px; }
+    .result-card .earn-line .earn-chip { padding: 6px 13px; min-height: 30px; }
     .end-milestone { min-height: 30px; margin-bottom: 8px; }
     .end-actions { gap: 7px; }
     .end-actions .btn.big { font-size: var(--tx-sub); padding: 11px 18px; }
@@ -7271,10 +7274,13 @@
 
 
 
-  .earn-line { display: grid; grid-template-columns: minmax(0, 50%); justify-content: center; gap: 8px; margin: 10px 0 12px; }
+
+
+  .earn-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 12px; }
   .earn-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     font-size: var(--tx-body); font-weight: 700; line-height: 1;
     background: rgba(0,0,0,.3); border-radius: var(--r-pill); padding: 9px 6px; }
+  .earn-line .earn-chip { min-height: 34px; box-sizing: border-box; padding: 7px 16px; }
 
   .earn-chip.dia { background: rgba(41,182,246,.32); }
 
@@ -8244,11 +8250,7 @@
 
 
 
-  .wereld-feest .wf-aan {
-    margin-top: 11px; padding: 9px 20px; font-size: var(--tx-body);
-    background: var(--gold-accent); color: var(--ink-on-gold); border: 0;
-    box-shadow: var(--goud-gloed);
-  }
+  .wereld-feest .wf-aan { margin-top: 12px; padding: 9px 22px; }
   .wereld-feest .wf-aan + .wf-verder { margin-top: 7px; }
 
 
@@ -19869,7 +19871,11 @@ function wereldFeest(f) {
 
 
 
-  const aanKnop = f.spul ? `<button class="btn wf-aan" type="button">Doe aan</button>` : '';
+
+
+
+
+  const aanKnop = f.spul ? `<button class="btn small wf-aan" type="button">Doe aan</button>` : '';
   const ov = openOverlay('wereld-feest-overlay',
     `<div class="pop-panel wereld-feest">`
     + `<div class="wf-kop">${kop}</div>`
@@ -22287,11 +22293,13 @@ function endLevel(success) {
 
 
 
+
+
     const juich = beter
-      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren! 🤩' : 'Beter dan de vorige keer! ⭐')
-      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak! 🤩'
-      : stars === 2 ? 'Het publiek juicht en danst mee! 👏'
-      : 'Het publiek klapt hard voor je! 👏';
+      ? (stars === 3 ? 'Nog beter — nu alle drie de sterren!' : 'Beter dan de vorige keer!')
+      : stars === 3 ? 'Foutloos — het publiek gaat uit zijn dak!'
+      : stars === 2 ? 'Het publiek juicht en danst mee!'
+      : 'Het publiek klapt hard voor je!';
     $('end-text').textContent = juich;
 
 
@@ -22316,9 +22324,14 @@ function endLevel(success) {
       mile.innerHTML = `<span class="groei-pil">${groei.pil}</span>`;
       if (groei.zin) zin += ' ' + groei.zin;
     } else if (nieuwKlaar) {
-      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee klaar!' : `🎁 ${nieuwKlaar} nieuwe trofeeën klaar!`;
-      mile.innerHTML = `<button class="gold-pill" type="button">${label}</button>`;
-      mile.firstChild.onclick = () => { sndClick(); naTik(openTrophies); };
+
+
+
+      const label = nieuwKlaar === 1 ? '🎁 Nieuwe trofee' : `🎁 ${nieuwKlaar} nieuwe trofeeën`;
+      const pil = document.createElement('button');
+      pil.className = 'gold-pill'; pil.type = 'button'; pil.textContent = label;
+      pil.onclick = () => { sndClick(); naTik(openTrophies); };
+      $('end-earn').appendChild(pil);
     }
     $('btn-end-next').textContent = '🗺️ Verder op tournee';
     $('btn-end-next').onclick = () => { sndClick(); naTik(() => goMap(lvl)); };
