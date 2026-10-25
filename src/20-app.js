@@ -8828,10 +8828,10 @@ function trophyBoog(t, p, status) {
   const pr = t.progress(p);
   return Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target)));
 }
-// Een klare trofee: dit kaartje wordt zélf de 'Open trofee'-knop.
-// Klaar om te openen = de gewone kaart (eigen icoon + naam + beschrijving) met een
-// gouden rand en "🎁 Open!" onderaan -- zelfde vorm, zelfde plek voor de naam,
-// zodat vijf klaarliggende trofeeën vijf verschillende dingen blijven.
+// Een klare trofee: de medaille wordt zélf het cadeautje, en dus de knop.
+// Klaar om te openen = een gouden medaille met 🎁 erin in plaats van het eigen
+// icoon (zie giftMedaille). Welke trofee het is zegt de naam eronder; wát je
+// gewonnen hebt zie je pas bij het openen, over het hele scherm.
 function trophyCard(t, p) {
   const status = trophyStatus(p, t);
   const card = document.createElement('div');
@@ -8839,28 +8839,37 @@ function trophyCard(t, p) {
   if (status === 'done' && t.id === justClaimed) card.classList.add('just-claimed');
   card.innerHTML = t.perfect ? perfectCardHTML(t, p, status) : normalCardHTML(t, p, status);
   // De beschrijving staat niet meer op het kaartje (zie normalCardHTML), wel hier.
-  card.setAttribute('aria-label', `${t.name}: ${t.desc}`);
+  // Klaar: het 🎁 vervangt het icoon, dus zegt het label wat een tik doet.
+  card.setAttribute('aria-label', status === 'ready' ? `Open ${t.name}` : `${t.name}: ${t.desc}`);
   card.onclick = (e) => tapTrophy(t, card, e);
   return card;
 }
 /* Medaille, naam en de voet, in die volgorde. De voet is er alleen als er iets
-   in staat, en schuift niets op: de rij op de plank is even hoog met of zonder
-   (zie .trophy-grid). */
+   in staat: 🔒, of het balkje op de perfecte plank. */
 function cardVoet(inhoud) { return inhoud ? `<div class="tvoet">${inhoud}</div>` : ''; }
+/* Klaar om te openen: een gouden medaille met een 🎁 erin. Hier stond eerst het
+   eigen icoon met een gouden "🎁 Open!"-pil eronder, en daarna (als voorstel) een
+   🎁-badge rechtsboven op de medaille: twee signalen voor één ding. Nu is de
+   medaille zelf het cadeautje -- één signaal, en het hele rondje is het raakvlak.
+   De perfecte plank krijgt hetzelfde, ook waar daar normaal een podium staat:
+   "hier ligt iets voor je klaar" moet overal er hetzelfde uitzien. */
+function giftMedaille(t) {
+  return '<div class="temoji"><span class="tico">🎁</span></div>'
+    + `<div class="tname">${t.name}</div>`;
+}
 /* Medaille en naam -- meer niet. De beschrijving ("500 sommen goed") stond eerst
    op elk kaartje, en een kast vol zinnen leest als een takenlijst. Wat een trofee
-   vraagt, zie je als je erop tikt, in de balk onderin (zie kastBalk). De voet:
-     klaar     🎁 Open!  (goud, de enige knop op het scherm)
-     behaald   niets     (de gouden rand zegt het; hier stond een ✓)
-     onderweg  niets     (de boog om de medaille zegt het)
-     op slot   🔒 */
+   vraagt, zie je als je erop tikt, in de balk onderin (zie kastBalk).
+     klaar     het 🎁 in de medaille (zie giftMedaille)
+     behaald   de gouden rand (hier stond een ✓)
+     onderweg  de boog om de medaille
+     op slot   🔒 eronder */
 function normalCardHTML(t, p, status) {
+  if (status === 'ready') return giftMedaille(t);
   const boog = trophyBoog(t, p, status);
   return `<div class="temoji"${boog ? ` style="--p:${boog}"` : ''}><span class="tico">${t.emoji}</span></div>`
     + `<div class="tname">${t.name}</div>`
-    + cardVoet(status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-      : status === 'locked' ? '<div class="tstand">🔒</div>'
-      : '');
+    + cardVoet(status === 'locked' ? '<div class="tstand">🔒</div>' : '');
 }
 /* De perfecte werelden. Dit is de duurste kaart van de kast en dat mag je zien:
    het wereldicoon staat in een medaillon met de kleuren van díe wereld (theme.sky
@@ -8891,9 +8900,8 @@ function perfectCardHTML(t, p, status) {
      op een behaalde wereld zou het vol zijn, wat het goud al vertelt. */
   const balk = () => { const pr = t.progress(p);
     return `<div class="tbalk"><i style="width:${Math.round(100 * pr.now / pr.target)}%"></i></div>`; };
-  const stand = status === 'ready' ? '<div class="ready-open">🎁 Open!</div>'
-    : status === 'busy' ? balk()
-    : '';
+  if (status === 'ready') return giftMedaille(t);
+  const stand = status === 'busy' ? balk() : '';
   /* Het kaartje toont de prijs van die wereld (zie "= De prijs van een wereld"):
      hetzelfde podium met dezelfde schat als op de reis en in Podia, en behaald
      in goud. Zo is de grootste prijs van het spel geen los medaillon meer dat je
@@ -8901,7 +8909,7 @@ function perfectCardHTML(t, p, status) {
      wereld zonder podium houdt het medaillon. */
   const i = typeof t.index === 'number' ? t.index : -1;
   const st = i >= 0 ? wereldPrijsStand(p, i) : null;
-  if (st) st.goud = status === 'done' || status === 'ready';
+  if (st) st.goud = status === 'done';
   const prijs = st ? wereldPrijsHTML(p, i, 72, st) : '';
   if (prijs) return `<div class="pw-medal pw-prijs">${prijs}</div>`
     + `<div class="tname">${t.name}</div>` + cardVoet(stand);
