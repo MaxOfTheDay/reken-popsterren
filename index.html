@@ -624,6 +624,19 @@
 
 
 
+    --m-vlak-0: radial-gradient(80% 80% at 50% 25%, #d9a06e, #7a3f1c 78%);
+    --m-vlak-1: radial-gradient(80% 80% at 50% 25%, #f4f7fb, #8794a5 78%);
+    --m-vlak-2: radial-gradient(80% 80% at 50% 25%, #eec35a, #8a5c08 78%);
+    --m-vlak-3: radial-gradient(80% 80% at 50% 25%, #effcff, #58b9db 78%);
+    --m-rand-0: linear-gradient(160deg, #f3c08f, var(--m-0) 45%, #6e3412);
+    --m-rand-1: linear-gradient(160deg, #ffffff, var(--m-1) 45%, #75808f);
+    --m-rand-2: var(--medaille-goud);
+    --m-rand-3: linear-gradient(160deg, #ffffff, var(--m-3) 45%, #3e9fc4);
+
+
+
+
+
 
 
 
@@ -6846,28 +6859,40 @@
 
 
 
+
+
+
+
+
+
+
   .trophy-card.ladder:not(.ready) .temoji {
     background:
       var(--medaille-vul) padding-box,
-      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu, rgba(255,255,255,.13)) 0) border-box;
+      conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
   }
+  .trophy-card.ladder.nu-0:not(.ready) .temoji { --vlak: var(--m-vlak-0); --rand: var(--m-rand-0); box-shadow: 0 0 14px rgba(217,143,85,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.25); }
+  .trophy-card.ladder.nu-1:not(.ready) .temoji { --vlak: var(--m-vlak-1); --rand: var(--m-rand-1); box-shadow: 0 0 14px rgba(219,228,238,.35), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
+  .trophy-card.ladder.nu-2:not(.ready) .temoji { --vlak: var(--m-vlak-2); --rand: var(--m-rand-2); box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.3); }
+  .trophy-card.ladder.nu-3:not(.ready) .temoji { --vlak: var(--m-vlak-3); --rand: var(--m-rand-3); box-shadow: 0 0 20px rgba(159,232,255,.55), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.4); }
   .trophy-card.ladder.done:not(.ready) .temoji {
     background:
-      var(--medaille-vul-goud) padding-box,
-      conic-gradient(var(--straks, var(--nu)) calc(var(--p, 0) * 1%), var(--nu) 0) border-box;
+      var(--vlak) padding-box,
+      conic-gradient(var(--straks, transparent) calc(var(--p, 0) * 1%), rgba(255,255,255,.13) 0) border-box;
   }
+  .trophy-card.ladder.top:not(.ready) .temoji { background: var(--vlak) padding-box, var(--rand) border-box; overflow: hidden; }
+  .trophy-card.ladder.top:not(.ready) .temoji::after {
+    content: ''; position: absolute; top: -10%; bottom: -10%; left: -60%; width: 45%; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+    animation: shineSweep 3.6s ease-in-out 1s infinite;
+  }
+  .trophy-card.ladder .tico { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
 
 
-  .trophy-card.ladder.nu-0:not(.ready) .temoji { box-shadow: 0 0 14px rgba(217,143,85,.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
-  .trophy-card.ladder.nu-1:not(.ready) .temoji { box-shadow: 0 0 14px rgba(219,228,238,.4), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
-  .trophy-card.ladder.nu-2:not(.ready) .temoji { box-shadow: 0 0 16px rgba(var(--goud-rgb),.45), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.18); }
-  .trophy-card.ladder.nu-3:not(.ready) .temoji { box-shadow: 0 0 20px rgba(159,232,255,.6), 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.2); }
 
 
-
-
-  .trap-stippen { display: flex; gap: 5px; margin-top: 6px; }
-  .trap-stippen i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .trap-stippen { display: flex; gap: 6px; margin-top: 6px; }
+  .trap-stippen i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.16); }
   .trap-stippen i.m-0 { background: var(--m-0); }
   .trap-stippen i.m-1 { background: var(--m-1); }
   .trap-stippen i.m-2 { background: var(--m-2); }
@@ -6880,6 +6905,32 @@
   .trophy-card .temoji, .trophy-card .pw-medal { transition: transform var(--t-snel) var(--ease-plop); }
   .trophy-card.kies .temoji, .trophy-card.kies .pw-medal { transform: translateY(-3px) scale(1.08); }
   .trophy-card.kies .tname { color: var(--c-white); }
+
+
+  .trophy-card.klink .temoji, .trophy-card.klink .pw-medal { animation: kastKlink .55s cubic-bezier(.3,.7,.3,1); }
+  .trophy-card.klink .temoji::before {
+    content: ''; position: absolute; inset: -8px; border-radius: 50%; pointer-events: none;
+    border: 2px solid rgba(var(--goud-glans-rgb),.9); animation: kastKlinkRing .55s ease-out forwards;
+  }
+  .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: kastDof .38s ease-out; }
+  @keyframes kastKlink {
+    0% { transform: perspective(300px) rotateY(0) scale(1); }
+    45% { transform: perspective(300px) rotateY(200deg) scale(1.14); }
+    100% { transform: perspective(300px) rotateY(360deg) scale(1); }
+  }
+  @keyframes kastKlinkRing { from { opacity: .9; transform: scale(.8); } to { opacity: 0; transform: scale(1.5); } }
+  @keyframes kastDof {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-3deg); }
+    45% { transform: translateX(4px) rotate(3deg); }
+    70% { transform: translateX(-2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .trophy-card.ladder.top .temoji::after { animation: none; display: none; }
+    .trophy-card.klink .temoji, .trophy-card.klink .pw-medal,
+    .trophy-card.dof .temoji, .trophy-card.dof .pw-medal { animation: none; }
+    .trophy-card.klink .temoji::before { display: none; }
+  }
 
 
 
@@ -7184,7 +7235,7 @@
     width: 130px; height: 130px; border-radius: 50%; display: grid; place-items: center;
     font-size: 64px; line-height: 1;
     border: 5px solid transparent;
-    background: var(--medaille-vul-goud) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
+    background: var(--tp-vlak, var(--medaille-vul-goud)) padding-box, var(--tp-rand, var(--medaille-goud)) border-box;
     box-shadow: 0 0 32px rgba(var(--goud-rgb),.6), 0 6px 18px rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.2);
   }
   .tp-rays {
@@ -13889,6 +13940,8 @@ function noot(freq, dur, delay, type, vol) {
 
 
 
+
+
 const HERHAALREM = 60;
 const klankTijd = {};
 const SFX = {
@@ -13897,6 +13950,13 @@ const SFX = {
 
 
   'tap.blij':       { noten: [[0, 0.12, 0, 'triangle', 0.12]], keuze: [784, 880, 988, 1047, 1175], tril: 12 },
+
+
+
+
+
+  'kast.klink':     { noten: [[0, 0.34, 0, 'triangle', 0.13], [0, 0.22, 0.02, 'sine', 0.04]],
+                      ladder: [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568], tril: 12 },
 
 
 
@@ -19994,9 +20054,15 @@ function ladderCard(ladder, p) {
     card.innerHTML = giftMedaille(ladder) + stippen;
     card.setAttribute('aria-label', `Open ${klaar.name}`);
   } else {
+
+
+
     let boog = 0;
-    if (volgende) { const pr = volgende.progress(p); boog = Math.max(0, Math.min(100, Math.round(100 * pr.now / pr.target))); }
-    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '') + (nu != null ? `;--nu:var(--m-${nu})` : '');
+    if (volgende) {
+      const pr = volgende.progress(p), vorig = niveau ? trappen[niveau - 1].progress(p).target : 0;
+      boog = Math.max(0, Math.min(100, Math.round(100 * (pr.now - vorig) / (pr.target - vorig))));
+    }
+    const stijl = `--p:${boog}` + (volgende ? `;--straks:var(--m-${volgende.trap})` : '');
     card.innerHTML = `<div class="temoji" style="${stijl}"><span class="tico">${ladder.emoji}</span></div>`
       + `<div class="tname">${ladder.name}</div>` + stippen;
     card.setAttribute('aria-label', niveau ? `${trappen[niveau - 1].name}` : `${ladder.name}: ${trappen[0].desc}`);
@@ -20009,11 +20075,12 @@ function tapLadder(ladder, card, e) {
   const p = P();
   const { trappen, klaar, niveau, volgende } = ladderStand(ladder, p);
   if (klaar) { openTrophy(klaar.id); return; }
-  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
+
+  if (niveau) kastKlink(card, trappen[niveau - 1].trap); else kastDof(card);
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
   const kop = { emoji: ladder.emoji, name: ladder.name };
   const metaal = niveau ? TRAP_NAMEN[trappen[niveau - 1].trap] : '';
-  if (!volgende) { sndTap(); sparkle(card); kastBalk(kop, card, metaal + '!'); return; }
-  sndClick();
+  if (!volgende) { kastBalk(kop, card, metaal + '!'); return; }
   const pr = volgende.progress(p), rem = Math.max(0, pr.target - pr.now);
   const nog = rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!';
   kastBalk(kop, card, metaal ? `${metaal} · ${nog}` : nog, rem > 0 ? rem : null);
@@ -20099,18 +20166,60 @@ function tapTrophy(t, card, e) {
   const st = trophyStatus(p, t);
   if (st === 'ready') { openTrophy(t.id); return; }
 
+  if (st === 'done') kastKlink(card); else kastDof(card);
 
 
 
-  if (card.classList.contains('kies')) { sndTap(); kastBalk(null); return; }
-  if (st === 'done') { sndTap(); sparkle(card); kastBalk(t, card, t.desc); return; }
-  sndClick();
+
+  if (card.classList.contains('kies')) { kastBalk(null); return; }
+  if (st === 'done') { kastBalk(t, card, t.desc); return; }
   if (st === 'locked') { kastBalk(t, card, '🔒 Nog niet'); return; }
   if (!t.progress) { kastBalk(t, card, t.desc); return; }
   const pr = t.progress(p), rem = Math.max(0, pr.target - pr.now);
 
   if (t.telWerelden && meerWereldenVooruit(p)) { kastBalk(t, card, `${pr.now} ${pr.label}`, pr.now); return; }
   kastBalk(t, card, rem > 0 ? `nog ${rem} ${unitText(pr.label, rem)}` : 'bijna!', rem > 0 ? rem : null);
+}
+
+
+
+
+
+
+
+
+
+
+
+const KLINK_VONK = [['✨', '🥉', '🎵'], ['✨', '🥈', '🎵'], ['✨', '🥇', '🎵'], ['✨', '💎', '🎵']];
+function kastKlink(card, trap) {
+  playSfx('kast.klink', { i: [...card.parentElement.children].indexOf(card) % 9 });
+  if (motionOff()) return;
+  opnieuw(card, 'klink');
+  sparkle(card, trap != null ? KLINK_VONK[trap] : ['✨', '🎵', '⭐']);
+}
+function kastDof(card) {
+  sndClick();
+  if (motionOff()) return;
+  opnieuw(card, 'dof');
+
+  const m = card.querySelector('.temoji');
+  const doel = m ? parseFloat(m.style.getPropertyValue('--p')) || 0 : 0;
+  if (!doel) return;
+  const t0 = performance.now();
+  const stap = t => {
+    const k = Math.min(1, (t - t0) / 520);
+    m.style.setProperty('--p', (doel * (1 - Math.pow(1 - k, 3))).toFixed(1));
+    if (k < 1) requestAnimationFrame(stap);
+  };
+  m.style.setProperty('--p', 0);
+  requestAnimationFrame(stap);
+}
+
+function opnieuw(el, klasse) {
+  el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
+  clearTimeout(el['_' + klasse]);
+  el['_' + klasse] = setTimeout(() => el.classList.remove(klasse), 650);
 }
 
 
@@ -20169,7 +20278,7 @@ function celebrateTrophy(t) {
     +   '<div class="tp-ring" aria-hidden="true"></div>'
     +   '<div class="tp-chest" aria-hidden="true">🎁</div>'
 
-    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-rand:var(--m-${t.trap})"` : ''}>${t.emoji}</div>`
+    +   `<div class="tp-emoji"${t.trap != null ? ` style="--tp-vlak:var(--m-vlak-${t.trap});--tp-rand:var(--m-rand-${t.trap})"` : ''}>${t.emoji}</div>`
     + '</div>'
     + `<div class="tp-name">${t.name}</div>`
     + '<div class="tp-joepie">Joepie!</div></div>',
