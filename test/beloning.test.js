@@ -1021,6 +1021,35 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- O · Het eindscherm luistert pas als je de knoppen ziet ----
+   * "Kleedkamer" staat waar tijdens de show de bovenste rij antwoorden stond.
+   * Een tik daar vlak na het laatste antwoord opende de kleedkamer, en dan zag
+   * een kind haar sterren niet (zie eindWacht). Een echte vinger, geen click(). */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    await page.goto(APP_URL + '&demo&star=p1');
+    await page.waitForFunction(() => typeof selectProfile === 'function');
+    await page.evaluate(() => { selectProfile('p1'); startLevel(6); G.stars = 3; endLevel(true); });
+    const midden = await page.evaluate(() => {
+      const r = document.getElementById('btn-end-alt').getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.waitForTimeout(250);
+    await page.touchscreen.tap(midden.x, midden.y);
+    await page.waitForTimeout(400);
+    const vroeg = await page.evaluate(() => document.querySelector('.screen.active').id);
+    check(vroeg === 'screen-end', 'O · een tik op een onzichtbare knop doet niets', vroeg);
+    await page.waitForFunction(() => !document.querySelector('#screen-end .end-actions').classList.contains('wacht'));
+    await page.touchscreen.tap(midden.x, midden.y);
+    await page.waitForTimeout(600);
+    const laat = await page.evaluate(() => document.querySelector('.screen.active').id);
+    check(laat === 'screen-dress', 'O · en zodra ze er staan werkt dezelfde tik wel', laat);
+    await ctx.close();
+  }
+
   /* ---- Uitslag ---- */
   check(pageErrors.length === 0, 'geen fouten in de pagina', pageErrors.slice(0, 5).join(' | '));
   await browser.close();
