@@ -10943,6 +10943,7 @@ function startLevel(lvl, eigenOvergang) {
   // podiumkader van applyStage op het app-verloop.
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world, lvl);
+  bundelAan();
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -10983,6 +10984,23 @@ function quitGame() {
   const lvl = G ? G.lvl : null;
   G = null;
   goMap(lvl);
+}
+
+/* Het licht gaat aan op haar. Bij het begin van een show, nét nadat de zaal
+   ingezoomd is (enterLevel: MOTION.komNa + MOTION.kom), komt de bundel van
+   boven op: van niets naar vol, en een klein stukje vanaf de lamp naar
+   beneden gerekt. Eén keer per show, niet per vraag. Alleen opacity en
+   transform, dus de samensteller doet het. Zonder zaal staat er geen bundel
+   en doet dit niets; bij beperkte beweging is het licht er gewoon. */
+const BUNDEL_AAN = { na: 220, duur: 520 };
+function bundelAan() {
+  const b = $('screen-game').querySelector('.venue-bundel');
+  if (!b || !b.animate || motionOff()) return;
+  if (!$('screen-game').classList.contains('venue-aan')) return;
+  b.animate([
+    { opacity: 0, transform: 'translateX(-50%) scaleY(.82)' },
+    { opacity: 1, transform: 'translateX(-50%) scaleY(1)' }],
+    { duration: BUNDEL_AAN.duur, delay: BUNDEL_AAN.na, easing: MOTION.uit, fill: 'backwards' });
 }
 
 function renderQuestion() {

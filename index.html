@@ -3622,12 +3622,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
   .venue-aan .venue-bundel {
     left: 50%; bottom: 8%; width: 210%; height: 260%; transform: translateX(-50%);
+    transform-origin: 50% 0;
     background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.42) 0%, rgba(var(--warm-licht-rgb),.15) 54%, rgba(var(--warm-licht-rgb),0) 86%);
     -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
-    filter: blur(13px);
   }
 
 
@@ -7954,6 +7964,7 @@
 
 
 
+
   #screen-dress .stage-wrap::before {
     content: ''; position: absolute; z-index: 0; pointer-events: none;
     left: 50%; transform: translateX(-50%);
@@ -7961,7 +7972,6 @@
     background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.36) 0%, rgba(var(--warm-licht-rgb),.15) 54%, rgba(var(--warm-licht-rgb),0) 86%);
     -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
-    filter: blur(13px);
   }
   @media (min-width: 1000px) and (orientation: landscape) and (min-height: 501px) {
     #screen-dress .stage-wrap::before { top: -110px; }
@@ -22016,6 +22026,7 @@ function startLevel(lvl, eigenOvergang) {
 
   applyStage($('show-stage'), p);
   applyVenue($('screen-game'), wl.world, lvl);
+  bundelAan();
   if (eigenOvergang) show('screen-game');
   else toonHub('screen-game');
   renderQuestion();
@@ -22056,6 +22067,23 @@ function quitGame() {
   const lvl = G ? G.lvl : null;
   G = null;
   goMap(lvl);
+}
+
+
+
+
+
+
+
+const BUNDEL_AAN = { na: 220, duur: 520 };
+function bundelAan() {
+  const b = $('screen-game').querySelector('.venue-bundel');
+  if (!b || !b.animate || motionOff()) return;
+  if (!$('screen-game').classList.contains('venue-aan')) return;
+  b.animate([
+    { opacity: 0, transform: 'translateX(-50%) scaleY(.82)' },
+    { opacity: 1, transform: 'translateX(-50%) scaleY(1)' }],
+    { duration: BUNDEL_AAN.duur, delay: BUNDEL_AAN.na, easing: MOTION.uit, fill: 'backwards' });
 }
 
 function renderQuestion() {

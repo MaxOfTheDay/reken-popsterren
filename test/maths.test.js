@@ -682,6 +682,15 @@ const APPLY = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a 
         'zetSpot volgt dezelfde zachte curve (halverwege de meting nog bijna 90% vol)', JSON.stringify(balk));
     }
     check(balk.rail !== 'none', 'in de rekenmodus is de spotlight-balk er gewoon', balk.rail);
+    // de lichtbundel op haar: geen filter (dat liet hem bij elke show te laat
+    // binnenploppen), en hij gaat aan met één animatie bij het begin van de show
+    const bundel = await p2.evaluate(() => {
+      startLevel(P().level);
+      const b = document.querySelector('#screen-game .venue-bundel');
+      return { filter: getComputedStyle(b).filter, aan: b.getAnimations().length };
+    });
+    check(bundel.filter === 'none' && bundel.aan === 1,
+      'de lichtbundel tekent zonder filter en gaat aan bij het begin van een show', JSON.stringify(bundel));
     // het Stoppen?-venster: de klok staat stil zolang het openstaat
     const pauze = await p2.evaluate(async () => {
       startLevel(P().level);

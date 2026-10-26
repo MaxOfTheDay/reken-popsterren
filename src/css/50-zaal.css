@@ -174,13 +174,23 @@
   .venue-aan .venue-bundel, .venue-aan .venue-vloer { display: block; position: absolute; z-index: 0; }
   /* De bundel valt van boven het scherm op haar. Loopt bewust boven het paneel
      uit: overloop naar bóven maakt een scrollvak nooit scrollbaar (alleen naar
-     onderen), dus dit kost geen schuifbalk en geen extra hoogte. */
+     onderen), dus dit kost geen schuifbalk en geen extra hoogte.
+
+     GEEN FILTER. Hier stond filter: blur(13px), en dat deed vrijwel niets: een
+     clip-path knipt ná het filter, dus de randen waren toch scherp, en het
+     verloop zelf is al zacht (zonder: gemiddeld 0,2 op 255 verschil). Wat het
+     wél deed: van een vlak van zo'n 450 bij 480 pixel een onscherpe kopie laten
+     rekenen, opnieuw bij elke show, want het scherm komt binnen met een zoom.
+     Tot dat klaar was, stond de zaal er zonder licht, en dan ploepte de bundel
+     er ineens vol in -- "hij begint uit het niets", zei Max. Een tel op een
+     snelle telefoon, langer op een trage. Nu tekent hij in het eerste beeldje
+     mee, en gaat hij aan op het moment dat wij kiezen (bundelAan). */
   .venue-aan .venue-bundel {
     left: 50%; bottom: 8%; width: 210%; height: 260%; transform: translateX(-50%);
+    transform-origin: 50% 0;   /* bundelAan rekt hem vanaf de lamp */
     background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),.42) 0%, rgba(var(--warm-licht-rgb),.15) 54%, rgba(var(--warm-licht-rgb),0) 86%);
     -webkit-clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
-    filter: blur(13px);
   }
   /* De richel waar ze op staat: een ellips onder haar voeten met een warme lip
      aan de voorkant. Dit is wat "zij staat ergens" van "zij zweeft" onderscheidt. */
