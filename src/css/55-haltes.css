@@ -755,6 +755,15 @@
      blijven ongemoeid. */
   .tour-hero { position: absolute; left: 50%; bottom: calc(100% - 3.5cqw); transform: translateX(-50%);
     width: 20.24cqw; pointer-events: none; z-index: 2; }
+  /* Een liggende telefoon: daar is de kaart breed en laag, en rekende ze met
+     dezelfde 20cqw uit op ruim de halve schermhoogte -- haar hoofd stond over de
+     wereldpil in de kop. Zeven tiende is daar wat 20cqw staand is: groot genoeg
+     om haar te zien, en ze past tussen kop en navigatiebalk. Alleen de maat; de
+     huppels, de schaduw en de landing rekenen mee omdat ze in haar doos staan.
+     Dezelfde vraag als de liggende kaart in 40-kaart.css. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .tour-hero { width: 14.2cqw; }
+  }
   /* Silhouet, niet sfeer. url(#tourHeroContour) (zie de verborgen <svg> boven
      #screen-map) snijdt met feMorphology een even dikke rand rond haar échte
      silhouet uit -- ook tussen haar armen en haar lijf door, waar een cirkel

@@ -7979,6 +7979,9 @@ function renderTourMap(travelFrom) {
 
   const map = $('tour-map');
   map.innerHTML = '';
+  // een uitstapje: zij speelt in een andere wereld (zie kaartHierDoel)
+  if (!travelling && shown.index !== worldFor(hereLevel(p)).index) map.dataset.uitstap = '1';
+  else delete map.dataset.uitstap;
   /* Op <html> en niet op het kaartvak: de liggende stand rekent er op
      #screen-map mee uit hoeveel lucht er boven en onder het podium overblijft
      (--podium-lucht in het stijlblad), en die kan niet bij een variabele die
@@ -8232,9 +8235,18 @@ function meetChroom() {
 /* Schuift de kaart (liggend, of een tablet), dan staat de halte waar zij staat in
    het midden. renderTourMap doet dit bij elke opbouw, de draai hieronder ook, en
    kaartThuis (🗺 op je eigen kaart) glijdt naar dezelfde plek. kaartHierDoel is
-   die plek als schuifstand, of null als de kaart niet schuift. */
+   die plek als schuifstand, of null als de kaart niet schuift.
+
+   Op een uitstapje (een eerdere wereld, via Werelden) staat zij er niet, en dan
+   is de plek de eerste halte waar nog een ster ontbreekt -- daarvoor kom je er.
+   Is alles perfect, dan halte 1. Hier viel de kaart eerst terug op de láátste
+   halte, en dan opende hij liggend en op een staande tablet bovenaan: halte 8 in
+   beeld, halte 1 en 2 eronder of onder de navigatiebalk. renderTourMap zet het
+   vlaggetje; tijdens een reis staat het nooit aan. */
 function kaartHierDoel(map) {
-  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+  const here = map.querySelector('.tour-stop.next')
+    || (map.dataset.uitstap ? map.querySelector('.tour-stop.done:not(.perfect)') || map.querySelector('.tour-stop')
+      : map.querySelector('.tour-stop.done:last-of-type'));
   const f = map.querySelector('.world-frame');
   const schuift = here && f && map.scrollHeight > map.clientHeight + 4
     && getComputedStyle(map).overflowY !== 'hidden';

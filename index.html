@@ -5936,6 +5936,15 @@
 
 
 
+  @media (orientation: landscape) and (max-height: 500px) {
+    .tour-hero { width: 14.2cqw; }
+  }
+
+
+
+
+
+
 
 
 
@@ -19312,6 +19321,9 @@ function renderTourMap(travelFrom) {
   const map = $('tour-map');
   map.innerHTML = '';
 
+  if (!travelling && shown.index !== worldFor(hereLevel(p)).index) map.dataset.uitstap = '1';
+  else delete map.dataset.uitstap;
+
 
 
 
@@ -19565,8 +19577,17 @@ function meetChroom() {
 
 
 
+
+
+
+
+
+
+
 function kaartHierDoel(map) {
-  const here = map.querySelector('.tour-stop.next') || map.querySelector('.tour-stop.done:last-of-type');
+  const here = map.querySelector('.tour-stop.next')
+    || (map.dataset.uitstap ? map.querySelector('.tour-stop.done:not(.perfect)') || map.querySelector('.tour-stop')
+      : map.querySelector('.tour-stop.done:last-of-type'));
   const f = map.querySelector('.world-frame');
   const schuift = here && f && map.scrollHeight > map.clientHeight + 4
     && getComputedStyle(map).overflowY !== 'hidden';
