@@ -3528,8 +3528,14 @@ function avatarSVG(p, width, propMaat) {
     <stop offset="0" stop-color="#ff5f6d"/><stop offset="0.25" stop-color="#ffc371"/>
     <stop offset="0.5" stop-color="#8bd450"/><stop offset="0.75" stop-color="#47c9ff"/>
     <stop offset="1" stop-color="#b06ab3"/></linearGradient>${lichtDefs(uid)}</defs>`;
-  if (pet) s += `<text x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
-  if (instr) s += `<text x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
+  /* Huisdier en instrument staan óp het podium, niet aan haar vast: in een
+     eigen groep, zodat pasLaag ze uit de dansende tekening kan tillen (zie daar). */
+  if (pet || instr) {
+    s += '<g class="av-props">';
+    if (pet) s += `<text class="av-dier" x="${pm.pet[0]}" y="${pm.pet[1]}" font-size="${pm.pet[2]}">${pet.emoji}</text>`;
+    if (instr) s += `<text class="av-instr" x="${pm.instr[0]}" y="${pm.instr[1]}" font-size="${pm.instr[2]}">${instr.emoji}</text>`;
+    s += '</g>';
+  }
   /* nek: een bruggetje tussen kin en kraag, áchter het hoofd. Zo valt de kin er
      vanzelf overheen en werpt hij een sikkeltje schaduw op de hals (dezelfde
      cirkel als het hoofd, een tikje lager, binnen de hals gehouden). Hier lag de
@@ -11544,17 +11550,30 @@ function antwoordGoed(q, p, btnEl) {
      ("het laatste getal is hoeveel het er zijn") is waar tellen om draait.
      speak() zwijgt zelf in de rekenmodus zonder Voorlezen (zie stemAan).
      Hij klinkt onderaan, via zegEnDan: de volgende vraag wacht erop. */
-  const lof = 'Ja, ' + numWord(q.ans) + '! ' + pick(['Super!', 'Goed zo!', 'Knap gedaan!', 'Goed!', 'Wauw!']);
+  /* Kort: alleen het getal. Met "Knap gedaan!" erachter duurde de lof zo'n twee
+     seconden, en de volgende vraag wacht erop -- in de telmodus, waar daarna ook
+     de opdracht nog voorgelezen wordt, ruim het dubbele van tik tot vraag.
+     Het getal is het stuk dat iets leert; het extra woord komt er alleen nog bij
+     als er ook iets extra's gebeurt (3 op een rij, gouden vraag, applaus). De
+     lof op het scherm zegt het intussen toch al. */
+  const lof = 'Ja, ' + numWord(q.ans) + '!'
+    + (encore || q.gold || streakBonus ? ' ' + pick(['Super!', 'Knap gedaan!', 'Wauw!']) : '');
   const trofees = checkTrophies(p);
   if (trofees.length) { save(); updateTroDot(); }   // stipje aan; het feestje volgt bij 'Open trofee'
   const g = G;
+  /* De volgende vraag komt na `rust` (of later, als de stem nog praat). De lof
+     begint pas als het getal geland is (vlucht), dus met zijn gewone duur stond
+     "Super! 💎 +2" er nog voluit toen de nieuwe som er al was. Nu is hij weg op
+     rust, zonder dat er tijd bijkomt. */
+  const rust = encore || q.gold ? 1400 : 950;
+  const lofDuur = Math.min(LOF_DUUR, rust - vlucht);
   const feest = () => {
     if (G !== g) return;   // de show is intussen gestopt
-    if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5'); }
-    else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain); }
-    else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain);
-    else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain);
-    else showPraise(pick(PRAISE), '💎 +' + gain);
+    if (encore) { confetti(24); showPraise('👏 Applaus!', '💎 +5', false, lofDuur); }
+    else if (q.gold) { confetti(10); showPraise('🌟 Gouden vraag!', '💎 +' + gain, false, lofDuur); }
+    else if (streakBonus) showPraise('🔥 3 op een rij!', '💎 +' + gain, false, lofDuur);
+    else if (!firstTry) showPraise('Goed zo!', '💎 +' + gain, false, lofDuur);
+    else showPraise(pick(PRAISE), '💎 +' + gain, false, lofDuur);
     if (encore) buiging('game-avatar-inner');
     else dance('game-avatar-inner');
     zaalJuicht();   // de zaal licht één tel op -- het enige wat er nieuw bij komt
@@ -11568,7 +11587,7 @@ function antwoordGoed(q, p, btnEl) {
   // De volgende vraag zegt zelf iets, dus die wacht tot de lof uit is (zegEnDan):
   // anders breekt hij "Knap gedaan!" midden in het woord af. Is de show
   // intussen gestopt (of al een nieuwe begonnen), dan is er geen volgende vraag.
-  zegEnDan(lof, null, encore || q.gold ? 1400 : 950, () => { if (G === g) nextStep(); });
+  zegEnDan(lof, null, rust, () => { if (G === g) nextStep(); });
 }
 /* Een fout antwoord (zachte, vriendelijke animatie). Wat élke misser doet staat
    hier; daarna splitst het in de eerste (een hint, nog een kans) en de tweede

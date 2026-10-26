@@ -83,8 +83,23 @@ const MOVE_CLASSES = MOVES.map(m => m.cls).concat(BUIGING.cls, HUPPEL.cls);
 /* Het laagje waar een danspasje op draait. Alleen de vier poppen die ook echt
    dansen krijgen het; de rest (de sterrenkeuze, het kaartje op de reis, het
    maakformulier) heeft niets om erop te zetten. Zie de CSS bij de danspasjes
-   voor waarom het pasje niet op de tekening zelf staat. */
-function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
+   voor waarom het pasje niet op de tekening zelf staat.
+
+   HUISDIER EN INSTRUMENT DANSEN NIET MEE. Ze stonden in dezelfde tekening en
+   sprongen, wiegden en draaiden dus met haar mee -- in de pirouette werden een
+   eenhoorn en een gitaar een dun streepje. Ze staan op het podium, dus blijven
+   ze daar: avatarSVG zet ze in een eigen groep (.av-props), en die gaat hier
+   naar een tweede svg ernaast, met hetzelfde kader en dus op precies dezelfde
+   plek. Die laag staat ná de pas-laag (zetPas en popKleren rekenen erop dat de
+   pas-laag het eerste kind is) maar wordt erachter getekend, zoals eerst. */
+const PROPS_RE = /<g class="av-props">.*?<\/g>/;
+function propLaag(svg) {
+  const g = svg.match(PROPS_RE);
+  return g ? `<div class="prop-laag">${svg.match(/^<svg[^>]*>/)[0]}${g[0]}</svg></div>` : '';
+}
+function pasLaag(svg) {
+  return `<div class="pas-laag">${svg.replace(PROPS_RE, '')}</div>${propLaag(svg)}`;
+}
 /* Een pop die al op het scherm staat andere kleren aandoen, zonder haar pasje te
    breken. De hele houder opnieuw vullen gooit ook de pas-laag weg, en een nieuwe
    pas-laag begint zijn animatie van voren af aan: ze klikte dan midden in een
@@ -92,8 +107,12 @@ function pasLaag(svg) { return `<div class="pas-laag">${svg}</div>`; }
    nieuwe kleren, en het pasje loopt gewoon door. */
 function popKleren(el, svg) {
   const laag = el.firstElementChild;
-  if (laag && laag.classList.contains('pas-laag')) laag.innerHTML = svg;
-  else el.innerHTML = pasLaag(svg);
+  if (laag && laag.classList.contains('pas-laag')) {
+    laag.innerHTML = svg.replace(PROPS_RE, '');
+    const oud = laag.nextElementSibling;
+    if (oud && oud.classList.contains('prop-laag')) oud.remove();
+    laag.insertAdjacentHTML('afterend', propLaag(svg));
+  } else el.innerHTML = pasLaag(svg);
 }
 /* Een pasje aanzetten -- of, bij beperkte beweging, niet.
 
@@ -271,8 +290,15 @@ function dockPlek(el) {
   el.style.left = Math.max(8, mid - half) + 'px';
   el.style.right = Math.max(8, innerWidth - mid - half) + 'px';
 }
-function showPraise(txt, reward, blauw) {
+/* LOF_DUUR is hoe lang de lof gewoonlijk staat; de CSS leest hem als --t-lof.
+   duur (optioneel, ms): korter dan dat. De show geeft die mee, zodat
+   de lof weg is op het moment dat de volgende som er staat (zie antwoordGoed);
+   zonder duur geldt weer gewoon LOF_DUUR. */
+const LOF_DUUR = 900;
+document.documentElement.style.setProperty('--t-lof', LOF_DUUR + 'ms');
+function showPraise(txt, reward, blauw, duur) {
   const el = $('praise');
+  el.style.animationDuration = duur ? duur + 'ms' : '';
   el.classList.toggle('docked', $('screen-game').classList.contains('active'));
   dockPlek(el);
   el.classList.toggle('blauw', !!blauw);
