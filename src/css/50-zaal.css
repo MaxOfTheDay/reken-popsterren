@@ -1626,3 +1626,31 @@
   /* de bundel valt op haar podium (zie OP HAAR PODIUM): dat is hier 139% van
      het vlak in plaats van 99%, dus de bundel in dezelfde verhouding mee */
   .venue-aan .end-panel > .venue-bundel { width: 165%; }
+  /* WAAR HIJ DOOR DE TITEL LOOPT. Staand valt de bundel recht door "Show 4 was
+     geweldig!", en zijn twee harde randen knipten de titel in een lichte en twee
+     donkere stukken. Een tekstschaduw hielp nauwelijks; een donkere ovaal achter
+     de titel zag je als ovaal ("te veel die ronde vorm", zei Max). Nu dooft de
+     bundel zelf daar: een strook in de kleur van de kaart (--paneel), ín de
+     bundel, dus alleen waar licht is -- buiten de bundel verandert er niets.
+     Waar hij staat: de bundel is 330% van het paneel hoog en eindigt op 10%
+     ervan, dus de bovenkant van het paneel ligt op 90/330 = 27,27% van onderen;
+     daarboven de marge van het paneel (24, 12 of 4px, zie .end-panel), en dan
+     de titel. Liggend staat de titel niet in de bundel en is de strook weg. */
+  .bundel-titel {
+    position: absolute; left: 0; right: 0; height: 70px;
+    bottom: calc(27.27% + var(--titel-lucht, 24px) - 6px);
+    background: linear-gradient(180deg, rgba(32,8,54,0), rgba(32,8,54,.62) 35%,
+                                rgba(32,8,54,.62) 65%, rgba(32,8,54,0));
+  }
+  @media (max-height: 740px) { .bundel-titel { --titel-lucht: 12px; height: 56px; } }
+  @media (max-height: 600px) { .bundel-titel { --titel-lucht: 4px; } }
+  @media (orientation: landscape) and (max-height: 500px) { .bundel-titel { display: none; } }
+  /* Het licht gloeit op bij elke ster die landt (bundelFlits). Een laag ín de
+     bundel, zodat de clip-path en het masker van de bundel hem meteen zijn vorm
+     geven; alleen opacity, dus de samensteller doet het. Bovenin doorzichtig:
+     de lamp zelf flitst niet, het licht op haar wel. */
+  .bundel-flits {
+    position: absolute; inset: 0; opacity: 0;
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),0) 0%, rgba(var(--goud-glans-rgb),.55) 40%,
+                                rgba(var(--warm-licht-rgb),.35) 80%, rgba(var(--warm-licht-rgb),0) 96%);
+  }

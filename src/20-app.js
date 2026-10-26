@@ -12190,6 +12190,18 @@ function eindKomtOp(success) {
   return weg + DIA_AANKOMST;
 }
 
+/* Het licht reageert op de sterren: bij elke ster die landt gloeit de bundel
+   even op, samen met haar toon. Eén ster is één flits, drie sterren drie. Het
+   was het enige op het eindscherm dat er bij één ster precies zo uitzag als bij
+   drie. Alleen bij een geslaagde ster, en niet bij beperkte beweging (daar
+   roept renderEndStars dit niet aan). */
+const FLITS = { duur: 420 };
+function bundelFlits() {
+  const f = document.querySelector('#screen-end .bundel-flits');
+  if (!f || !f.animate || !$('screen-end').classList.contains('venue-aan')) return;
+  f.animate([{ opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: 0 }],
+    { duration: FLITS.duur, easing: 'ease-out' });
+}
 // Het sterrenmoment: de verdiende sterren ploppen één voor één op, elk met een
 // hoger klankje; een gemiste ster verschijnt stil en dof. Dé ceremonie van het
 // eindscherm — bij prefers-reduced-motion staan ze er meteen, en klinken hun
@@ -12218,6 +12230,7 @@ function renderEndStars(n) {
           { transform: 'scale(1) rotate(0deg)', opacity: 1 }
         ], { duration: STERCEREMONIE.land, easing: 'ease-out' });
         playSfx('star.land', { i });
+        bundelFlits();
       } else {
         s.animate([{ opacity: 0 }, { opacity: .25 }], { duration: 400, easing: 'ease-out' });
       }
