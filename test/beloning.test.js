@@ -1050,6 +1050,32 @@ function check(ok, label, detail) {
     await ctx.close();
   }
 
+  /* ---- P · Het licht gloeit op bij elke ster die landt ----
+   * Eén flits per gehaalde ster (zie bundelFlits), en geen voor een gemiste. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await cacheFonts(ctx);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => pageErrors.push('PAGEERROR ' + e.message));
+    for (const [missers, sterren] of [[0, 3], [5, 1]]) {
+      await page.goto(APP_URL + '&demo&star=p1');
+      await page.waitForFunction(() => typeof selectProfile === 'function');
+      const n = await page.evaluate(async m => {
+        selectProfile('p1'); startLevel(6);
+        let flitsen = 0;
+        const f = document.querySelector('#screen-end .bundel-flits');
+        const echt = f.animate.bind(f);
+        f.animate = (...a) => { flitsen++; return echt(...a); };
+        G.misses = m; endLevel(true);
+        await new Promise(r => setTimeout(r, STERCEREMONIE.totaal + 200));
+        return { flitsen, sterren: document.querySelectorAll('#end-stars span:not(.dim)').length };
+      }, missers);
+      check(n.flitsen === n.sterren && n.sterren === sterren,
+        `P · ${sterren} ${sterren === 1 ? 'ster' : 'sterren'}, ${sterren} keer licht`, JSON.stringify(n));
+    }
+    await ctx.close();
+  }
+
   /* ---- Uitslag ---- */
   check(pageErrors.length === 0, 'geen fouten in de pagina', pageErrors.slice(0, 5).join(' | '));
   await browser.close();

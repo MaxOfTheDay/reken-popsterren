@@ -5111,6 +5111,34 @@
 
 
 
+  .bundel-titel {
+    position: absolute; left: 0; right: 0; height: 70px;
+    bottom: calc(27.27% + var(--titel-lucht, 24px) - 6px);
+    background: linear-gradient(180deg, rgba(32,8,54,0), rgba(32,8,54,.62) 35%,
+                                rgba(32,8,54,.62) 65%, rgba(32,8,54,0));
+  }
+  @media (max-height: 740px) { .bundel-titel { --titel-lucht: 12px; height: 56px; } }
+  @media (max-height: 600px) { .bundel-titel { --titel-lucht: 4px; } }
+  @media (orientation: landscape) and (max-height: 500px) { .bundel-titel { display: none; } }
+
+
+
+
+  .bundel-flits {
+    position: absolute; inset: 0; opacity: 0;
+    background: linear-gradient(180deg, rgba(var(--goud-glans-rgb),0) 0%, rgba(var(--goud-glans-rgb),.55) 40%,
+                                rgba(var(--warm-licht-rgb),.35) 80%, rgba(var(--warm-licht-rgb),0) 96%);
+  }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10025,7 +10053,10 @@
     <div class="result-card">
       <h1 class="title" id="end-title"></h1>
       <div class="show-panel end-panel">
-        <div class="venue-bundel" aria-hidden="true"></div>
+        <!-- bundel-titel: de bundel dooft waar hij door de titel loopt;
+             bundel-flits: het licht dat even opgloeit als er een ster landt
+             (zie bundelFlits). Allebei binnen de bundel, dus met zijn vorm mee geknipt -->
+        <div class="venue-bundel" aria-hidden="true"><div class="bundel-titel"></div><div class="bundel-flits"></div></div>
         <div class="venue-vloer" aria-hidden="true"></div>
         <div class="stage tappable stage-frame end-stage" id="end-stage" onclick="tapDance('end-avatar')">
           <div class="avatar-holder idle levend" id="end-avatar"></div>
@@ -23380,6 +23411,18 @@ function eindKomtOp(success) {
 
 
 
+
+const FLITS = { duur: 420 };
+function bundelFlits() {
+  const f = document.querySelector('#screen-end .bundel-flits');
+  if (!f || !f.animate || !$('screen-end').classList.contains('venue-aan')) return;
+  f.animate([{ opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: 0 }],
+    { duration: FLITS.duur, easing: 'ease-out' });
+}
+
+
+
+
 function renderEndStars(n) {
   const wrap = $('end-stars');
   wrap.innerHTML = '';
@@ -23404,6 +23447,7 @@ function renderEndStars(n) {
           { transform: 'scale(1) rotate(0deg)', opacity: 1 }
         ], { duration: STERCEREMONIE.land, easing: 'ease-out' });
         playSfx('star.land', { i });
+        bundelFlits();
       } else {
         s.animate([{ opacity: 0 }, { opacity: .25 }], { duration: 400, easing: 'ease-out' });
       }
